@@ -103,8 +103,8 @@ export default class TopsScreen {
     topArea.setAttribute("data-bbm-tops-screen-area", "top");
     topArea.style.display = "flex";
     topArea.style.flexDirection = "column";
-    topArea.style.gap = "6px";
-    topArea.style.padding = "8px 10px 6px";
+    topArea.style.gap = "0";
+    topArea.style.padding = "0";
     topArea.style.borderBottom = "1px solid #d9e2ec";
     topArea.style.background = "#ffffff";
 
@@ -112,9 +112,11 @@ export default class TopsScreen {
     quicklane.setAttribute("data-bbm-tops-screen-quicklane", "true");
     quicklane.style.display = "inline-flex";
     quicklane.style.alignItems = "center";
-    quicklane.style.gap = "8px";
+    quicklane.style.gap = "5px";
     quicklane.style.flexWrap = "wrap";
-    quicklane.style.minHeight = "24px";
+    quicklane.style.minHeight = "0";
+    quicklane.style.margin = "0";
+    quicklane.style.padding = "0 10px 2px";
 
     const sheetArea = document.createElement("section");
     sheetArea.setAttribute("data-bbm-tops-screen-area", "sheet");
@@ -253,10 +255,21 @@ export default class TopsScreen {
       topBar.style.left = "";
       topBar.style.right = "";
       topBar.style.height = "auto";
-      topBar.style.minHeight = "42px";
+      topBar.style.minHeight = "0";
       topBar.style.maxHeight = "none";
-      topBar.style.padding = "4px 2px";
+      topBar.style.padding = "0";
+      topBar.style.gap = "4px";
+      topBar.style.margin = "0";
       topBar.style.overflowY = "visible";
+      topBar.style.borderBottom = "0";
+      topBar.style.boxShadow = "none";
+      topBar.style.background = "transparent";
+
+      if (this._legacy.topsTitleEl instanceof HTMLElement) {
+        this._legacy.topsTitleEl.style.lineHeight = "1.05";
+        this._legacy.topsTitleEl.style.paddingRight = "4px";
+      }
+
       this.topArea.insertBefore(topBar, this.quicklane);
     }
 
@@ -308,12 +321,32 @@ export default class TopsScreen {
 
   _syncQuicklaneState() {
     const canUseProject = !!(this._legacy.projectId || this.router?.currentProjectId);
-    for (const btn of this.quicklaneButtons) {
-      if (!btn) continue;
-      btn.disabled = !canUseProject;
+    const readOnly = !!this._legacy.isReadOnly;
+    const [btnProject, btnFirms, btnOutput] = this.quicklaneButtons;
+
+    const setState = (btn, enabled) => {
+      if (!btn) return;
+      btn.disabled = !enabled;
       btn.style.opacity = btn.disabled ? "0.55" : "1";
       btn.style.cursor = btn.disabled ? "default" : "pointer";
-    }
+    };
+
+    setState(btnProject, canUseProject && !readOnly);
+    setState(btnFirms, canUseProject && !readOnly);
+    setState(btnOutput, canUseProject);
+  }
+
+  _syncTopMetaSlot() {
+    const topMeta = this._legacy.topMetaEl;
+    if (!(topMeta instanceof HTMLElement)) return;
+
+    const showMeta = !!this._legacy.showLongtextInList;
+    const width = Number(this._legacy.META_COL_W) || 133;
+    topMeta.style.flex = showMeta ? `0 0 ${width}px` : "0 0 0px";
+    topMeta.style.width = showMeta ? `${width}px` : "0";
+    topMeta.style.paddingLeft = showMeta ? "10px" : "0";
+    topMeta.style.marginLeft = showMeta ? "0" : "0";
+    topMeta.style.overflow = "hidden";
   }
 
   _inferLevelFromRow(row) {
@@ -638,6 +671,7 @@ export default class TopsScreen {
     }
 
     this._syncQuicklaneState();
+    this._syncTopMetaSlot();
   }
 
   _enforceShellLayout(steps) {
