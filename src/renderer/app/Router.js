@@ -511,7 +511,7 @@ export default class Router {
   }
 
   async showTops(meetingId, projectId, options = {}) {
-    const mod = await import("../views/TopsView.js");
+    const mod = await import("../views/TopsScreen.js");
     const V = mod.default;
 
     const opts = options && typeof options === "object" ? options : {};
