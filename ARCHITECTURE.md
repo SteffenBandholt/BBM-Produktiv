@@ -2,10 +2,20 @@
 
 ## Zweck
 
-Diese Datei beschreibt die Zielrichtung für die schrittweise Weiterentwicklung der bestehenden Electron-/Vanilla-JS-Anwendung zu einer besser wartbaren React-Architektur.
+Diese Datei beschreibt die aktuelle Zielrichtung der Weiterentwicklung.
 
-Sie ist keine Aufforderung für einen Big-Bang-Umbau.  
-Alle Änderungen erfolgen inkrementell und mit möglichst geringem Risiko.
+Die App bleibt grundsätzlich eine gewachsene Electron-Anwendung.
+Große globale Umbauten bleiben weiterhin die Ausnahme.
+
+Es gibt jedoch einen bewusst freigegebenen Sonderfall:
+
+## TopsView als zentraler Arbeitsbildschirm
+
+Die `TopsView` ist das Herz der Protokollerstellung.
+Sie wird nicht mehr nur schrittweise „modernisiert“, sondern gezielt als einzelner Arbeitsbildschirm neu zusammengesetzt.
+
+Das ist kein Komplettumbau der ganzen App.
+Es ist ein fokussierter Neuaufbau genau dieser einen Seite.
 
 ---
 
@@ -15,285 +25,189 @@ Die aktuelle Anwendung ist eine Electron-App mit klassischem Renderer-Aufbau und
 
 Bekannte Struktur:
 
-- `src/main/`  
+- `src/main/`
   Electron-Main-Prozess und Preload
 
-- `src/main/preload.js`  
-  Bridge zwischen Renderer und Electron-/IPC-Funktionen  
-  Exponiert u. a.:
-  - `window.bbmDb`
-  - `window.bbmPrint`
-  - `window.bbmMail`
+- `src/main/preload.js`
+  Bridge zwischen Renderer und Electron-/IPC-Funktionen
 
-- `src/renderer/main.js`  
-  Aufbau der Renderer-App-Shell, globale UI-Initialisierung, Header/Sidebar-Verdrahtung
+- `src/renderer/main.js`
+  Aufbau der Renderer-App-Shell
 
-- `src/renderer/app/Router.js`  
-  Navigation, Kontextverwaltung, View-Wechsel, Lazy-Loading von Views
+- `src/renderer/app/Router.js`
+  Navigation, Kontextverwaltung, View-Wechsel
 
-- `src/renderer/views/`  
+- `src/renderer/views/`
   Seitenlogik als Klassen
 
-- `src/renderer/ui/`  
+- `src/renderer/ui/`
   UI-Bausteine, Modals, Popups, Hilfslogik
 
-- `src/renderer/features/`  
-  fachliche Teilfunktionen
+- `src/renderer/features/`
+  Fachliche Teilfunktionen
 
-Es existiert bereits mindestens ein React-Integrationspfad unter:
-
-- `src/renderer/ui/react/`
-
-Dieser vorhandene React-Pfad ist bevorzugt als Blaupause zu prüfen, bevor neue Integrationsmuster eingeführt werden.
+Diese Struktur bleibt außerhalb der TopsView grundsätzlich respektiert.
 
 ---
 
-## Zielarchitektur
+## Allgemeine Architekturprinzipien
 
-### Kurzfassung
-
-Die Anwendung soll schrittweise in eine Struktur überführt werden, in der:
-
-1. React UI-Rendering und lokalen UI-Zustand übernimmt
-2. Legacy-Business-Logik nicht unnötig neu erfunden wird
-3. Electron-/IPC-Zugriffe klar getrennt bleiben
-4. bestehende Legacy-Bereiche kontrolliert weiterlaufen können
-5. neue React-Bausteine parallel zu Legacy-Views eingeführt werden können
+1. Arbeitsfluss vor Technik
+2. Bestehende fachliche Logik nur ändern, wenn nötig
+3. Infrastruktur nur ändern, wenn es der Aufgabe wirklich dient
+4. Keine globalen Umbauten ohne klaren Nutzen
+5. Keine Dashboard-Logik für echte Arbeitsbildschirme
+6. Sichtbare Klarheit ist wichtiger als abstrakte technische Schönheit
 
 ---
 
-## Architekturprinzipien
+## Sonderregel TopsView
 
-### 1. Inselstrategie statt Komplettumbau
+Für die TopsView gilt ausdrücklich:
 
-React wird zunächst als klar abgegrenzte Insel in die bestehende App integriert.
+- Sie darf neu aufgebaut werden.
+- Sie darf als eigener Arbeitsbildschirm separat behandelt werden.
+- Ziel ist nicht React um jeden Preis.
+- Ziel ist ein klarer, ruhiger, fachlich starker Protokoll-Arbeitsplatz.
+- Bewährte fachliche Regeln der bisherigen TopsView werden übernommen.
+- Sichtbarer Ballast wird entfernt.
 
-Geeignete erste Kandidaten:
-- Dialoge
-- Popups
-- Auswahlkomponenten
-- lokal gekapselte UI-Bereiche
-- kleine Teilbereiche einzelner Views
-
-Nicht als erste Kandidaten:
-- kompletter Router
-- globale App-Shell
-- flächiger Austausch aller View-Klassen
-- globale Zustandsneustrukturierung in einem Schritt
+Das ist eine Sonderregel nur für TopsView.
+Sie gilt nicht automatisch für andere Bereiche der App.
 
 ---
 
-### 2. Trennung von UI und Seiteneffekten
+## Zielbild der TopsView
 
-Ziel ist eine klarere Trennung zwischen:
+Die neue TopsView besteht aus drei sichtbaren Hauptbereichen plus Read-only-Verhalten.
 
-- Rendering
-- lokalem UI-Zustand
-- fachlicher Logik
-- Datenzugriff
-- Electron-/IPC-Kommunikation
+### 1. Steuerleiste oben
+Sie betrifft immer das ganze Protokoll.
 
-React-Komponenten sollen möglichst nicht direkt alle Seiteneffekte und Infrastrukturdetails in sich bündeln.
+Inhalt:
+- Protokollnummer
+- Datum
+- Schlagwort
+- Teilnehmer
+- PDF-Vorschau
+- Langtext an/aus
+- Protokoll beenden
+- Schließen
+- Beenden-Symbol
+- Quicklane:
+  - Projekt
+  - Firmen
+  - Ausgabe
 
----
+### 2. Protokollblatt in der Mitte
+Es ist der Haupt-Lese- und Auswahlbereich.
 
-### 3. Bestehende Integrationen respektieren
+Inhalt:
+- TOP-Nummerierung
+- Farben/Zustände
+- Hierarchie
+- Titel
+- optional Langtext
+- Status, Termin, Verantwortliche
+- Auswahl
 
-Vorhandene Integrationen wie:
+Nicht dort hinein:
+- kein fixer Protokollkopf
+- keine Teilnehmerliste
+- keine allgemeine Navigation
 
-- `window.bbmDb`
-- `window.bbmPrint`
-- `window.bbmMail`
-- bestehende Router-Methoden
-- bestehende View-Lifecycle-Muster
+### 3. Editbox unten
+Sie ist die Werkbank für den ausgewählten TOP.
 
-werden zunächst respektiert und nur dann angepasst, wenn es für einen konkreten Migrationsschritt nötig ist.
+Inhalt:
+- Kurztext
+- Langtext
+- Metaspalte
+- Speichern
+- Löschen oder vorübergehend Papierkorb
+- + Titel
+- + TOP
+- Schieben
+- Diktat direkt an Kurztext/Langtext
 
----
-
-### 4. Adapter statt harter Brüche
-
-Wo Legacy und React zusammenarbeiten müssen, sind kleine Adapter oder Brücken erlaubt und erwünscht.
-
-Beispiele:
-- Legacy-Code öffnet eine React-Komponente in einem Dialog-Container
-- Router übergibt Kontextdaten an eine React-Insel
-- React ruft bestehende Actions/Services auf, statt Business-Logik neu zu erfinden
-
-Nicht erwünscht:
-- globale Architekturbrüche ohne Not
-- gleichzeitiger Austausch mehrerer Schichten
-
----
-
-### 5. Lokaler Zustand vor globalem Store
-
-Es soll nicht vorschnell ein globaler Store eingeführt werden.
-
-Reihenfolge:
-1. lokaler Komponenten-Zustand
-2. props / klarer Datendurchfluss
-3. gezielte Context-Nutzung nur bei echtem Bedarf
-4. globaler Store erst dann, wenn die Problemgröße das wirklich rechtfertigt
-
----
-
-## Zielbild pro Schicht
-
-### UI / Darstellung
-Soll zunehmend in React-Komponenten liegen.
-
-Eigenschaften:
-- deklaratives Rendering
-- lokale Zustandsverwaltung
-- nachvollziehbare Ein-/Ausgaben
-- möglichst wenig direkte DOM-Manipulation
+### 4. Read-only
+Bei alten Protokollen:
+- keine Editbox
+- mehr Lesefläche
+- Fokus auf Lesen und Vorschau
 
 ---
 
-### View-Komposition
-Legacy-Views dürfen übergangsweise bestehen bleiben, sollen aber nach und nach eher zu Containern/Koordinatoren werden statt komplettes DOM selbst zusammenzubauen.
+## Verbotene Muster für TopsView
 
-Langfristige Richtung:
-- View-Klasse koordiniert
-- React rendert UI-Teilbereiche
-- Seiteneffekte und Datenzugriffe werden gezielter ausgelagert
+In der TopsView vermeiden:
 
----
-
-### Routing / Navigation
-Der bestehende Router bleibt zunächst bestehen.
-
-Ziel:
-- keine frühe Router-Neuerfindung
-- React-Komponenten werden zunächst innerhalb der bestehenden Navigationsstruktur verwendet
-- Router-Ablösung erst dann, wenn ein signifikanter Teil der UI bereits stabil in React läuft
+- Sidebar
+- leerer allgemeiner Header
+- Dashboard-Kacheln
+- modulare Hauptnavigation während des Arbeitens
+- globaler Diktat-Button mit Zielwahl
+- zusätzlicher Protokollkopf im Blatt
+- unnötige visuelle Füllflächen
 
 ---
 
-### Datenzugriff / IPC
-Preload-Bridge und IPC-Schnittstellen bleiben vorerst die maßgebliche Infrastruktur.
+## Erlaubte Architektur für TopsView
 
-Ziel:
-- keine direkte Vermischung von React-Migration und IPC-Neudesign
-- bestehende IPC-Zugriffe möglichst stabil halten
-- falls nötig, dünne Service-/Adapter-Schicht zwischen UI und `window.bbm*` schaffen
+Die neue TopsView darf aus mehreren klaren Bildschirm-Bausteinen zusammengesetzt werden, zum Beispiel:
 
----
+- Steuerleiste
+- TOP-Blatt
+- Editbox
+- Read-only-Variante
+- Quicklane
 
-## Empfohlene Migrationsreihenfolge
-
-### Phase 1 – React-Inseln
-- kleine Dialoge
-- Popups
-- Auswahl- oder Bestätigungs-Flows
-- einzelne lokale UI-Bausteine
-
-### Phase 2 – Teilbereiche einzelner Views
-- begrenzte UI-Sektionen mit klaren Props
-- wenig Router-Kopplung
-- wenig globale Seiteneffekte
-
-### Phase 3 – Koordination und Entkopplung
-- View-Klassen vereinfachen
-- Logik sauberer zwischen UI, Services und Koordination trennen
-- wiederverwendbare React-Bausteine etablieren
-
-### Phase 4 – Größere Strukturanpassungen
-- erst jetzt über Router-Nähe, globaleren Zustand oder Shell-Umbau nachdenken
-- nur auf Basis echter Notwendigkeit, nicht aus Dogma
+Wichtig ist nicht das Framework, sondern die klare Trennung der sichtbaren Aufgaben.
 
 ---
 
-## Erlaubte Muster
+## Leitlinie für die Umsetzung
 
-Bevorzugt:
+Alles, was den einzelnen TOP betrifft, gehört in die Editbox.
 
-- React als isolierte Render-Insel
-- kleine Host-/Mount-Funktionen für React-Komponenten
-- Übergabe klarer Parameter statt versteckter Globals
-- Wiederverwendung vorhandener React-Loader-/Bootstrap-Muster
-- Legacy-Callback oder Adapter, wenn dadurch das Risiko sinkt
+Alles, was das ganze Protokoll betrifft, gehört in die obere Steuerleiste.
 
-Ebenfalls okay:
-- temporäre Mischformen, wenn sie sauber eingegrenzt sind
-- schmale Brücken zwischen Legacy und React
+Alles, was gelesen und ausgewählt wird, gehört ins Protokollblatt.
 
 ---
 
-## Unerwünschte Muster
+## Reihenfolge des TopsView-Neuaufbaus
 
-Vermeiden:
+1. Leere TopsView-Hülle
+2. Protokollblatt
+3. Editbox mit Metaspalte
+4. Steuerleiste und Quicklane
+5. Read-only-Verhalten
 
-- direkte Großumbauten über mehrere Architektur-Schichten gleichzeitig
-- großflächige DOM-Manipulation innerhalb neuer React-Komponenten
-- unklare Mischzustände ohne klaren Besitz von State
-- neue Abhängigkeiten oder Frameworks ohne klaren Mehrwert
-- Refactors, die nur „moderner aussehen“, aber das Risiko erhöhen
-- das Nachbauen des bestehenden Chaos in React-Komponenten
-
----
-
-## Definition einer guten React-Insel
-
-Eine React-Insel ist gut, wenn sie:
-
-1. klar abgegrenzt ist
-2. einen kleinen, verständlichen Zweck hat
-3. wenig globale Abhängigkeiten besitzt
-4. keine Änderung am globalen Router erzwingt
-5. bestehende Business-Logik weiterverwenden kann
-6. mit wenig Seiteneffekten integrierbar ist
-7. sich leicht manuell testen lässt
+Diese Reihenfolge ist verbindlich sinnvoller als wahlloses Umbauen am alten Bildschirm.
 
 ---
 
-## Definition of Done für Architektursicht
+## Außerhalb der TopsView
 
-Ein Migrationsschritt ist architektonisch gelungen, wenn:
+Für andere Teile der App bleibt die allgemeine vorsichtige Weiterentwicklung gültig:
 
-1. React-Anteil sinnvoll erweitert wurde
-2. Risiko begrenzt blieb
-3. keine unnötigen globalen Umbauten passiert sind
-4. Legacy-/React-Grenzen nachvollziehbar sind
-5. bestehendes Verhalten erhalten blieb
-6. die Änderung eine Blaupause für weitere Schritte liefert
+- kleine Änderungen
+- keine unnötigen Router-Umbauten
+- keine globale Shell-Neuordnung ohne Bedarf
+- keine neue Architekturkomplexität ohne klaren Gewinn
 
 ---
 
-## Entscheidungskriterien bei mehreren Optionen
+## Entscheidungskriterien
 
-Wenn es mehrere technische Wege gibt, ist zu bevorzugen:
+Wenn mehrere Wege möglich sind, ist zu bevorzugen:
 
-1. der kleinere und reversiblere Eingriff
-2. der Weg mit weniger Router-/Shell-Kopplung
-3. der Weg mit weniger IPC-/Infrastrukturänderung
-4. der Weg, der vorhandene React-Muster wiederverwendet
-5. der Weg, der manuell leicht testbar ist
-
----
-
-## Dokumentationspflicht bei neuen Mustern
-
-Wenn ein neuer React-Integrationsweg eingeführt wird, soll dokumentiert werden:
-
-- wo er verwendet wird
-- wie Legacy-Code ihn aufruft
-- welche Daten reingehen
-- welche Events/Callbacks rausgehen
-- ob das Muster für weitere Migrationen taugt
-
----
-
-## Praktische Leitfrage vor jeder größeren Änderung
-
-Vor jeder Änderung soll geprüft werden:
-
-- Ist das wirklich der kleinste sinnvolle Schritt?
-- Muss dafür Router, Shell oder IPC angefasst werden?
-- Gibt es schon ein bestehendes React-Muster im Projekt?
-- Kann dieselbe Wirkung mit einer kleineren React-Insel erreicht werden?
-- Wird hier echte Struktur verbessert oder nur Technik ausgetauscht?
+1. der Weg mit dem klareren Arbeitsbildschirm
+2. der Weg mit weniger sichtbarem Ballast
+3. der Weg mit weniger zusätzlicher Navigation
+4. der Weg mit geringerem globalen Risiko
+5. der Weg, der bestehendes gutes Fachverhalten erhält
 
 ---
 
@@ -302,8 +216,8 @@ Vor jeder Änderung soll geprüft werden:
 Das Ziel ist nicht, möglichst schnell „alles in React“ zu haben.
 
 Das Ziel ist:
+- ein starker Protokoll-Arbeitsbildschirm
+- weniger Ballast
 - weniger Kopplung
-- besser wartbare UI
-- kontrollierte Migration
-- stabile App während des Umbaus
-- wiederverwendbare Migrationsmuster statt hektischer Komplettsanierung
+- klare sichtbare Bereiche
+- stabile App außerhalb dieses Sonderumbaus

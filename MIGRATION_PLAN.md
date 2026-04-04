@@ -1,28 +1,44 @@
+
+---
+
+## `MIGRATION_PLAN.md`
+
+```md
 # MIGRATION_PLAN.md
 
 ## Ziel
 
-Die bestehende Electron-/Vanilla-JS-Anwendung wird schrittweise in eine besser wartbare React-Architektur überführt, ohne Big-Bang-Refactor und ohne die laufende App unnötig zu destabilisieren.
+Die bestehende Electron-/Vanilla-JS-Anwendung wird kontrolliert weiterentwickelt.
 
-Dieser Plan beschreibt die bevorzugte Reihenfolge der Migration.
+Die allgemeine App bleibt vorsichtig und schrittweise veränderbar.
+Es gibt jedoch einen freigegebenen Sonderpfad:
+
+## TopsView-Sonderumbau
+
+Die TopsView wird nicht weiter nur in kleinen React-Inseln zerlegt.
+Sie wird als zentraler Arbeitsbildschirm gezielt neu zusammengesetzt.
+
+Das ist kein Komplettumbau der App.
+Es betrifft genau diesen einen Kernbildschirm.
 
 ---
 
 ## Grundsatz
 
-Die Migration erfolgt in kleinen, überprüfbaren Schritten.
+Allgemein gilt weiterhin:
 
-Jeder Schritt soll:
-- fachlich klein sein
-- technisch reversibel sein
-- möglichst wenig globale Abhängigkeiten berühren
-- nach Möglichkeit manuell einfach testbar sein
+- kleine, prüfbare Schritte
+- wenig globale Abhängigkeiten
+- geringe Risiken
+- stabile App
 
-Nicht Ziel dieses Plans:
-- alles sofort nach React umzubauen
-- den bestehenden Router früh zu ersetzen
-- die gesamte App-Shell in einem Schritt neu zu bauen
-- neue Komplexität durch überstürzte Architekturentscheidungen einzuführen
+Für TopsView gilt ergänzend:
+
+- nicht weiter am alten überfrachteten Bildschirm herumflicken
+- fachlich Bewährtes übernehmen
+- sichtbaren Ballast entfernen
+- Arbeitsfluss vor Technik
+- kein Dashboard-Ansatz
 
 ---
 
@@ -30,222 +46,214 @@ Nicht Ziel dieses Plans:
 
 Bekannte zentrale Bereiche:
 
-- `src/main/main.js`  
-  Electron-Main-Prozess
+- `src/main/main.js`
+- `src/main/preload.js`
+- `src/renderer/main.js`
+- `src/renderer/app/Router.js`
+- `src/renderer/views/`
+- `src/renderer/ui/`
+- `src/renderer/features/`
 
-- `src/main/preload.js`  
-  Bridge zu Renderer-Funktionen (`window.bbmDb`, `window.bbmPrint`, `window.bbmMail`)
-
-- `src/renderer/main.js`  
-  Start der Renderer-App und Aufbau der Shell
-
-- `src/renderer/app/Router.js`  
-  Navigation, Kontext, View-Wechsel
-
-- `src/renderer/views/`  
-  Bestehende Seitenklassen
-
-- `src/renderer/ui/`  
-  UI-Bausteine, Modals, Hilfsfunktionen
-
-- `src/renderer/ui/react/`  
-  Bereits vorhandene React-Integration, bevorzugt als Blaupause zu prüfen
+Diese Struktur bleibt außerhalb der TopsView grundsätzlich respektiert.
 
 ---
 
-## Migrationsprinzip
+## Allgemeine Migrationslinie außerhalb der TopsView
 
-Die Migration verläuft in vier Phasen:
+Außerhalb der TopsView bleibt die bevorzugte Reihenfolge:
 
-1. React-Inseln für kleine UI-Elemente
-2. React für abgegrenzte Teilbereiche einzelner Views
-3. Entkopplung von View-Logik und UI-Struktur
-4. Erst danach größere Strukturentscheidungen
-
----
-
-## Phase 1 – Kleine React-Inseln
-
-### Ziel
-React zunächst nur dort einsetzen, wo das Risiko niedrig ist und der Nutzen direkt sichtbar wird.
-
-### Geeignete Kandidaten
-- Dialoge
-- Popups
-- Auswahlkomponenten
-- Bestätigungs- oder Entscheidungs-Flows
-- lokal zustandsbehaftete UI-Bausteine
-
-### Anforderungen
-- kein Eingriff in globalen Router, wenn vermeidbar
-- möglichst keine Änderungen an IPC-/Preload-Schnittstellen
-- Business-Logik bleibt außerhalb, wenn möglich
-- bestehende React-Mechanik unter `src/renderer/ui/react/` wiederverwenden
-
-### Ergebnis dieser Phase
-- mindestens 1 bis 3 funktionierende React-Inseln
-- wiederverwendbares Integrationsmuster
-- erste belastbare Erfahrung, wie React sauber im Legacy-Renderer eingebettet wird
+1. kleine UI-Bausteine
+2. isolierte Dialoge oder Popups
+3. lokale View-Bereiche
+4. erst später größere Strukturthemen
 
 ---
 
-## Phase 2 – Teilbereiche einzelner Views
+## Sonderpfad TopsView
 
-### Ziel
-Nicht mehr nur einzelne Dialoge, sondern klar eingegrenzte Bereiche innerhalb bestehender Views mit React rendern.
+Die TopsView folgt ab jetzt einem eigenen Pfad.
 
-### Geeignete Kandidaten
-- Seitenbereiche mit klaren Props und lokalem Zustand
-- UI-Abschnitte mit wiederkehrender Darstellung
-- Bereiche, die aktuell viel DOM-Code enthalten, aber wenig globale Kopplung haben
+### Warum
+Weil sie:
+- das Herz der Protokollerstellung ist
+- fachlich weitgehend geklärt ist
+- sichtbaren Ballast angesammelt hat
+- als Arbeitsbildschirm ruhiger und klarer werden muss
 
-### Anforderungen
-- bestehende View-Klasse darf übergangsweise Host/Container bleiben
-- React übernimmt primär Rendering und lokalen UI-Zustand
-- Datenzugriffe bleiben zunächst in vorhandenen Flows oder werden in kleine Adapter ausgelagert
+### Zielbild
+Die TopsView besteht aus:
 
-### Ergebnis dieser Phase
-- erste hybride Views
-- weniger DOM-Zusammenbau in View-Klassen
-- klarere Grenze zwischen Koordination und Darstellung
-
----
-
-## Phase 3 – Entkopplung und Konsolidierung
-
-### Ziel
-Die Legacy-View-Klassen schrittweise vereinfachen und wiederverwendbare Muster schaffen.
-
-### Fokus
-- UI-Rendering weiter aus Klassen herauslösen
-- Seiteneffekte, Datenzugriffe und Koordination klarer trennen
-- Hilfsfunktionen oder Adapter schaffen, wo Legacy und React zusammenarbeiten müssen
-
-### Anforderungen
-- keine unkontrollierte Parallelstruktur
-- keine neue Architekturkomplexität ohne klaren Nutzen
-- Wiederverwendung bereits etablierter React-Integrationsmuster
-
-### Ergebnis dieser Phase
-- weniger schwergewichtige View-Klassen
-- bessere Wartbarkeit
-- klarere technische Zuständigkeiten
+1. Steuerleiste oben
+2. Protokollblatt in der Mitte
+3. Editbox unten
+4. Read-only ohne Editbox
+5. Quicklane für Projekt, Firmen, Ausgabe
+6. keine Sidebar
+7. kein leerer allgemeiner Header
 
 ---
 
-## Phase 4 – Größere Architekturentscheidungen
+## Fachliche Leitplanken für TopsView
 
-### Ziel
-Erst auf Basis stabiler Teilergebnisse prüfen, ob größere Umbauten sinnvoll sind.
+### Steuerleiste
+Links:
+- Protokollnummer
+- Datum
+- Schlagwort
 
-### Mögliche Themen
-- Router-nahe Migration
-- globalere Zustandsorganisation
-- Umbau von Shell-/Layout-Bereichen
-- Vereinheitlichung alter und neuer UI-Strukturen
+Rechts:
+- Teilnehmer
+- PDF-Vorschau
+- Langtext an/aus
+- Protokoll beenden
+- Schließen
+- Beenden-Symbol
 
-### Bedingung
-Diese Phase startet nicht automatisch, sondern nur wenn die vorherigen Phasen stabile und sinnvolle Grundlagen geliefert haben.
+Quicklane:
+- Projekt
+- Firmen
+- Ausgabe
+
+### Protokollblatt
+- Nummern
+- Farben/Zustände
+- Hierarchie
+- Titel
+- optional Langtext
+- Status, Termin, Verantwortliche
+- klare Auswahl
+
+Nicht im Blatt:
+- kein fixer Protokollkopf
+- keine Teilnehmerliste
+
+### Editbox
+- Kurztext
+- Langtext
+- Metaspalte
+- Speichern
+- Löschen oder vorübergehend Papierkorb
+- + Titel
+- + TOP
+- Schieben
+- Diktat direkt an Kurztext/Langtext
+
+### Read-only
+- keine Editbox
+- mehr Lesefläche
 
 ---
 
-## Konkrete Reihenfolge für die nächsten Schritte
+## Reihenfolge des TopsView-Neuaufbaus
 
-### Schritt 1
-Bestehende React-Integration prüfen und als Referenz festhalten.
-
-Zu untersuchen:
-- `src/renderer/ui/react/ClosedProtocolSelector.js`
-- `src/renderer/ui/react/loadReactRuntime.js`
-
+### Schritt 1 – Neue leere TopsView-Hülle
 Ziel:
-- verstehen, wie React aktuell eingebunden wird
-- entscheiden, was davon für weitere React-Inseln wiederverwendet werden soll
+- obere Steuerleiste
+- mittlere Blattfläche
+- untere Editbox-Fläche
+- keine Sidebar
+- kein leerer Header
 
-### Schritt 2
-Einen kleinen, isolierten Dialog-/Popup-/Auswahl-Flow als erste echte React-Insel auswählen.
+### Schritt 2 – Protokollblatt
+Ziel:
+- TOP-Liste
+- Nummern
+- Farben
+- Hierarchie
+- Auswahl
+- Langtext an/aus
 
-Kriterien:
-- klein
-- lokal
-- wenig globale Abhängigkeiten
-- wenig Router-Kopplung
-- einfach manuell testbar
+### Schritt 3 – Editbox
+Ziel:
+- Kurztext
+- Langtext
+- Metaspalte
+- Diktat an den Feldern
+- Speichern
+- + Titel
+- + TOP
+- Schieben
+- Löschen/Papierkorb
 
-### Schritt 3
-Genau diesen Kandidaten auf React umstellen, ohne Router- oder Business-Logik unnötig zu verändern.
+### Schritt 4 – Steuerleiste und Quicklane
+Ziel:
+- Teilnehmer
+- PDF-Vorschau
+- Protokoll beenden
+- Schließen
+- Beenden-Symbol
+- Quicklane:
+  - Projekt
+  - Firmen
+  - Ausgabe
 
-### Schritt 4
-Manuell prüfen:
-- App startet
-- betroffener Flow öffnet korrekt
-- Speichern/Auswahl/Abbruch funktioniert wie vorher
-- keine offensichtlichen UI- oder Konsolenfehler
-
-### Schritt 5
-Das entstandene Integrationsmuster dokumentieren und als Vorlage für den nächsten Kandidaten verwenden.
-
----
-
-## Entscheidungskriterien für jeden einzelnen Migrationsschritt
-
-Wenn mehrere Optionen bestehen, ist zu bevorzugen:
-
-1. der kleinere Eingriff
-2. der Eingriff mit weniger globalen Seiteneffekten
-3. der Eingriff mit weniger Router-/Shell-Abhängigkeit
-4. der Eingriff mit besserer manueller Testbarkeit
-5. der Eingriff, der ein wiederverwendbares Muster erzeugt
-
----
-
-## Was vorerst nicht angefasst werden soll
-
-Solange nicht zwingend nötig, vermeiden:
-
-- kompletter Austausch von `src/renderer/app/Router.js`
-- Umbau der gesamten App-Shell aus `src/renderer/main.js`
-- Einführung eines globalen State-Management-Frameworks
-- großflächige Datei-Umsortierungen
-- gleichzeitige Migration mehrerer großer Views
-- Mischung aus React-Migration und allgemeiner Schönheitsreparatur
+### Schritt 5 – Read-only
+Ziel:
+- alte Protokolle ohne Editbox
+- mehr Raum zum Lesen
+- nur sinnvolle obere Aktionen
 
 ---
 
-## Definition of Done pro Migrationsschritt
+## Was bei TopsView vorerst nicht passieren soll
 
-Ein Schritt gilt nur dann als abgeschlossen, wenn:
-
-1. der betroffene Bereich klar abgegrenzt war
-2. die App weiter startet
-3. der betroffene Flow weiter funktioniert
-4. Änderungen klein und nachvollziehbar geblieben sind
-5. relevante Checks versucht und dokumentiert wurden
-6. ein einfacher manueller Test beschrieben wurde
-7. klar ist, ob das Muster für weitere Schritte taugt
+- kein Dashboard
+- keine Sidebar-Rückkehr
+- kein leerer allgemeiner Header
+- keine globale Audio-Zielwahl
+- kein zusätzlicher Protokollkopf im Blatt
+- keine unnötige Umleitung auf andere App-Seiten
 
 ---
 
-## Pflichtausgabe für jeden umgesetzten Schritt
+## Entscheidungskriterien für TopsView-Schritte
+
+Wenn mehrere Wege möglich sind, ist zu bevorzugen:
+
+1. der Weg mit dem ruhigeren Bildschirm
+2. der Weg mit weniger Navigation
+3. der Weg mit klarerer Trennung von:
+   - Steuerung
+   - Anzeige
+   - Bearbeitung
+4. der Weg mit geringerem globalen Risiko
+5. der Weg, der fachlich Bewährtes übernimmt
+
+---
+
+## Definition of Done für TopsView-Schritte
+
+Ein TopsView-Schritt gilt nur dann als fertig, wenn:
+
+1. der sichtbare Bereich klarer geworden ist
+2. der fachliche Ablauf erhalten blieb
+3. keine unnötige Zusatznavigation entstand
+4. Sidebar/Header-Ballast nicht zurückkam
+5. die Änderung manuell leicht prüfbar ist
+6. die Seite stärker wie ein Arbeitsbildschirm wirkt
+
+---
+
+## Pflichtausgabe für jeden TopsView-Schritt
 
 Nach jeder Umsetzung soll geliefert werden:
 
 - welche Dateien geändert wurden
-- was funktional geändert wurde
+- welcher sichtbare Bereich betroffen war
+- was am Bildschirm anders ist
 - welche Prüfungen ausgeführt wurden
 - welche Risiken offen bleiben
-- wie ein Nicht-Entwickler die Änderung manuell testen kann
+- wie ein Nicht-Entwickler den Schritt manuell testen kann
 
 ---
 
-## Nächster unmittelbarer Fokus
+## Unmittelbarer Fokus
 
-Der nächste praktische Fokus ist **nicht**:
+Der nächste Fokus für TopsView ist nicht:
 - Router-Ersatz
 - globaler State
-- Komplettumbau einer großen View
+- allgemeine React-Inseln
 
-Der nächste praktische Fokus ist:
-- vorhandene React-Integration prüfen
-- einen kleinen realen Kandidaten auswählen
-- genau einen ersten sauberen React-Insel-Schritt umsetzen
+Der nächste Fokus ist:
+- die TopsView als Arbeitsbildschirm gezielt neu zusammensetzen
+- zuerst Hülle, dann Blatt, dann Editbox, dann Steuerung, dann Read-only
