@@ -152,7 +152,7 @@ export default class TopsScreen {
     editArea.style.flex = "0 0 auto";
     editArea.style.borderTop = "1px solid #d9e2ec";
     editArea.style.background = "linear-gradient(180deg, #f8fbff 0%, #f2f7fd 100%)";
-    editArea.style.padding = "10px 12px 12px";
+    editArea.style.padding = "6px 10px 8px";
 
     const editCanvas = document.createElement("div");
     editCanvas.setAttribute("data-bbm-tops-screen-edit-canvas", "true");
@@ -288,7 +288,7 @@ export default class TopsScreen {
       box.style.bottom = "";
       box.style.maxHeight = "none";
       box.style.overflow = "visible";
-      box.style.padding = "10px 12px 12px";
+      box.style.padding = "6px 8px 8px";
       box.style.borderLeft = "0";
       box.style.borderRight = "0";
       box.style.margin = "0";
@@ -480,10 +480,10 @@ export default class TopsScreen {
 
   _styleWorkbenchButton(btn, tone) {
     if (!(btn instanceof HTMLElement)) return;
-    btn.style.borderRadius = "8px";
-    btn.style.padding = "4px 10px";
-    btn.style.minHeight = "28px";
-    btn.style.fontSize = "9pt";
+    btn.style.borderRadius = "6px";
+    btn.style.padding = "1px 7px";
+    btn.style.minHeight = "20px";
+    btn.style.fontSize = "7.5pt";
     btn.style.lineHeight = "1.2";
     btn.style.fontWeight = "600";
     if (tone === "primary") {
@@ -509,9 +509,9 @@ export default class TopsScreen {
 
     box.style.background = "#ffffff";
     box.style.border = "1px solid #d5e1ee";
-    box.style.borderRadius = "12px";
-    box.style.boxShadow = "0 8px 18px rgba(15, 23, 42, 0.08)";
-    box.style.padding = "10px 12px 12px";
+    box.style.borderRadius = "10px";
+    box.style.boxShadow = "0 6px 14px rgba(15, 23, 42, 0.07)";
+    box.style.padding = "4px 6px 6px";
 
     const boxHeader = box.children[0];
     const editorRow = box.children[1];
@@ -520,9 +520,9 @@ export default class TopsScreen {
     boxHeader.style.display = "flex";
     boxHeader.style.flexWrap = "wrap";
     boxHeader.style.alignItems = "center";
-    boxHeader.style.gap = "8px";
-    boxHeader.style.marginBottom = "10px";
-    boxHeader.style.paddingBottom = "8px";
+    boxHeader.style.gap = "4px";
+    boxHeader.style.marginBottom = "4px";
+    boxHeader.style.paddingBottom = "4px";
     boxHeader.style.borderBottom = "1px solid #e4ebf4";
 
     const boxTitle = boxHeader.children[0];
@@ -532,11 +532,11 @@ export default class TopsScreen {
     if (boxTitle instanceof HTMLElement) {
       boxTitle.style.color = "#154570";
       boxTitle.style.fontWeight = "700";
-      boxTitle.style.fontSize = "10.5pt";
+      boxTitle.style.fontSize = "8.5pt";
       boxTitle.style.minWidth = "unset";
       boxTitle.style.maxWidth = "unset";
-      boxTitle.style.flex = "1 1 260px";
-      boxTitle.style.padding = "2px 4px 2px 0";
+      boxTitle.style.flex = "1 1 220px";
+      boxTitle.style.padding = "1px 2px 1px 0";
     }
 
     if (addActions instanceof HTMLElement) {
@@ -544,8 +544,8 @@ export default class TopsScreen {
       addActions.style.display = "inline-flex";
       addActions.style.alignItems = "center";
       addActions.style.flexWrap = "wrap";
-      addActions.style.gap = "6px";
-      addActions.style.padding = "2px 8px";
+      addActions.style.gap = "3px";
+      addActions.style.padding = "1px 5px";
       addActions.style.background = "#f7fbff";
       addActions.style.border = "1px solid #d9e6f3";
       addActions.style.borderRadius = "999px";
@@ -558,8 +558,8 @@ export default class TopsScreen {
       headerActions.style.display = "inline-flex";
       headerActions.style.alignItems = "center";
       headerActions.style.flexWrap = "wrap";
-      headerActions.style.gap = "6px";
-      headerActions.style.padding = "2px 8px";
+      headerActions.style.gap = "3px";
+      headerActions.style.padding = "1px 5px";
       headerActions.style.background = "#f7fbff";
       headerActions.style.border = "1px solid #d9e6f3";
       headerActions.style.borderRadius = "999px";
@@ -571,27 +571,27 @@ export default class TopsScreen {
     editorRow.style.display = "grid";
     editorRow.style.gridTemplateColumns = "minmax(0, 1fr) 1px minmax(220px, 240px)";
     editorRow.style.alignItems = "stretch";
-    editorRow.style.gap = "12px";
+    editorRow.style.gap = "6px";
 
     const leftCol = editorRow.children[0];
     const sep = editorRow.children[1];
     const metaCol = editorRow.children[2];
 
     if (leftCol instanceof HTMLElement) {
-      leftCol.style.gap = "10px";
+      leftCol.style.gap = "4px";
       leftCol.style.minWidth = "0";
       const titleWrap = leftCol.children[0];
       const longWrap = leftCol.children[1];
 
       if (titleWrap instanceof HTMLElement) {
-        titleWrap.style.padding = "8px 10px";
+        titleWrap.style.padding = "4px 6px";
         titleWrap.style.border = "1px solid #dce7f2";
         titleWrap.style.borderRadius = "10px";
         titleWrap.style.background = "#fbfdff";
       }
       if (longWrap instanceof HTMLElement) {
         longWrap.style.marginTop = "0";
-        longWrap.style.padding = "8px 10px";
+        longWrap.style.padding = "4px 6px";
         longWrap.style.border = "1px solid #dce7f2";
         longWrap.style.borderRadius = "10px";
         longWrap.style.background = "#fbfdff";
@@ -607,29 +607,29 @@ export default class TopsScreen {
     if (metaCol instanceof HTMLElement) {
       metaCol.style.flex = "1 1 auto";
       metaCol.style.width = "auto";
-      metaCol.style.minWidth = "220px";
+      metaCol.style.minWidth = "200px";
       metaCol.style.maxWidth = "none";
-      metaCol.style.padding = "8px 10px";
+      metaCol.style.padding = "4px 6px";
       metaCol.style.border = "1px solid #dce7f2";
       metaCol.style.borderRadius = "10px";
       metaCol.style.background = "#f8fbff";
-      metaCol.style.gap = "8px";
+      metaCol.style.gap = "4px";
 
       if (!metaCol.querySelector('[data-bbm-workbench-meta-title="true"]')) {
         const metaTitle = document.createElement("div");
         metaTitle.setAttribute("data-bbm-workbench-meta-title", "true");
         metaTitle.textContent = "Metaspalte";
-        metaTitle.style.fontSize = "9pt";
+        metaTitle.style.fontSize = "8pt";
         metaTitle.style.fontWeight = "700";
         metaTitle.style.color = "#234d72";
-        metaTitle.style.marginBottom = "2px";
+        metaTitle.style.marginBottom = "1px";
         metaCol.prepend(metaTitle);
       }
 
       for (const field of Array.from(metaCol.children || [])) {
         if (!(field instanceof HTMLElement)) continue;
         if (field.getAttribute("data-bbm-workbench-meta-title") === "true") continue;
-        field.style.padding = "6px 7px";
+        field.style.padding = "3px 4px";
         field.style.border = "1px solid #d9e4ef";
         field.style.borderRadius = "8px";
         field.style.background = "#ffffff";
@@ -657,23 +657,25 @@ export default class TopsScreen {
     if (inpTitle instanceof HTMLElement) {
       inpTitle.style.width = "100%";
       inpTitle.style.boxSizing = "border-box";
-      inpTitle.style.padding = "6px 8px";
+      inpTitle.style.padding = "3px 5px";
       inpTitle.style.border = "1px solid #cad8e6";
       inpTitle.style.borderRadius = "7px";
       inpTitle.style.background = "#ffffff";
+      inpTitle.style.fontSize = "8.5pt";
     }
 
     const taLong = this._legacy.taLongtext;
     if (taLong instanceof HTMLElement) {
       taLong.style.width = "100%";
       taLong.style.boxSizing = "border-box";
-      taLong.style.padding = "7px 8px";
+      taLong.style.padding = "4px 5px";
       taLong.style.border = "1px solid #cad8e6";
       taLong.style.borderRadius = "7px";
       taLong.style.background = "#ffffff";
-      taLong.style.minHeight = "110px";
+      taLong.style.minHeight = "64px";
       taLong.style.resize = "vertical";
       taLong.style.lineHeight = "1.35";
+      taLong.style.fontSize = "8.5pt";
     }
 
     this._styleWorkbenchButton(this._legacy.btnTitleDictate, "neutral");
