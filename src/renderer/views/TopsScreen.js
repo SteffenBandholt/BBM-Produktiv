@@ -7,7 +7,6 @@ export default class TopsScreen {
     this.meetingId = options.meetingId || null;
 
     this.root = null;
-    this.topArea = null;
     this.sheetArea = null;
     this.sheetCanvas = null;
     this.sheetPaper = null;
@@ -77,6 +76,15 @@ export default class TopsScreen {
         return res;
       };
     }
+
+    const updateTopBarProtocolTitle = legacy._updateTopBarProtocolTitle?.bind(legacy);
+    if (updateTopBarProtocolTitle) {
+      legacy._updateTopBarProtocolTitle = (...args) => {
+        const res = updateTopBarProtocolTitle(...args);
+        this._compactWorkingTopBar();
+        return res;
+      };
+    }
   }
 
   render() {
@@ -99,24 +107,17 @@ export default class TopsScreen {
     root.style.minHeight = "0";
     root.style.background = "linear-gradient(180deg, #f6f9fc 0%, #eef3f8 100%)";
 
-    const topArea = document.createElement("section");
-    topArea.setAttribute("data-bbm-tops-screen-area", "top");
-    topArea.style.display = "flex";
-    topArea.style.flexDirection = "column";
-    topArea.style.gap = "0";
-    topArea.style.padding = "0";
-    topArea.style.borderBottom = "1px solid #d9e2ec";
-    topArea.style.background = "#ffffff";
-
     const quicklane = document.createElement("div");
     quicklane.setAttribute("data-bbm-tops-screen-quicklane", "true");
     quicklane.style.display = "inline-flex";
     quicklane.style.alignItems = "center";
     quicklane.style.gap = "5px";
     quicklane.style.flexWrap = "wrap";
-    quicklane.style.minHeight = "0";
+    quicklane.style.minHeight = "22px";
     quicklane.style.margin = "0";
-    quicklane.style.padding = "0 10px 2px";
+    quicklane.style.padding = "2px 10px 4px";
+    quicklane.style.borderBottom = "1px solid #d9e2ec";
+    quicklane.style.background = "#ffffff";
 
     const sheetArea = document.createElement("section");
     sheetArea.setAttribute("data-bbm-tops-screen-area", "sheet");
@@ -160,7 +161,6 @@ export default class TopsScreen {
     editCanvas.style.margin = "0 auto";
 
     this.root = root;
-    this.topArea = topArea;
     this.sheetArea = sheetArea;
     this.sheetCanvas = sheetCanvas;
     this.sheetPaper = sheetPaper;
@@ -168,11 +168,10 @@ export default class TopsScreen {
     this.editCanvas = editCanvas;
     this.quicklane = quicklane;
 
-    topArea.appendChild(quicklane);
     sheetCanvas.appendChild(sheetPaper);
     sheetArea.appendChild(sheetCanvas);
     editArea.appendChild(editCanvas);
-    root.append(topArea, sheetArea, editArea);
+    root.append(quicklane, sheetArea, editArea);
 
     this._buildQuicklane();
   }
@@ -255,10 +254,10 @@ export default class TopsScreen {
       topBar.style.left = "";
       topBar.style.right = "";
       topBar.style.height = "auto";
-      topBar.style.minHeight = "0";
+      topBar.style.minHeight = "38px";
       topBar.style.maxHeight = "none";
-      topBar.style.padding = "0";
-      topBar.style.gap = "4px";
+      topBar.style.padding = "3px 2px 2px";
+      topBar.style.gap = "8px";
       topBar.style.margin = "0";
       topBar.style.overflowY = "visible";
       topBar.style.borderBottom = "0";
@@ -270,7 +269,8 @@ export default class TopsScreen {
         this._legacy.topsTitleEl.style.paddingRight = "4px";
       }
 
-      this.topArea.insertBefore(topBar, this.quicklane);
+      this.root.insertBefore(topBar, this.quicklane);
+      this._compactWorkingTopBar();
     }
 
     if (list) {
@@ -340,13 +340,40 @@ export default class TopsScreen {
     const topMeta = this._legacy.topMetaEl;
     if (!(topMeta instanceof HTMLElement)) return;
 
-    const showMeta = !!this._legacy.showLongtextInList;
-    const width = Number(this._legacy.META_COL_W) || 133;
-    topMeta.style.flex = showMeta ? `0 0 ${width}px` : "0 0 0px";
-    topMeta.style.width = showMeta ? `${width}px` : "0";
-    topMeta.style.paddingLeft = showMeta ? "10px" : "0";
-    topMeta.style.marginLeft = showMeta ? "0" : "0";
+    topMeta.style.flex = "0 0 0px";
+    topMeta.style.width = "0";
+    topMeta.style.paddingLeft = "0";
+    topMeta.style.marginLeft = "0";
     topMeta.style.overflow = "hidden";
+  }
+
+  _compactWorkingTopBar() {
+    const topBar = this._legacy.topBarEl;
+    if (!(topBar instanceof HTMLElement)) return;
+
+    const actionWrap = Array.from(topBar.children || []).find(
+      (el) => el instanceof HTMLElement && el.contains?.(this._legacy.btnCloseMeeting)
+    );
+    if (actionWrap instanceof HTMLElement) {
+      actionWrap.style.marginRight = "0";
+      actionWrap.style.gap = "6px";
+    }
+
+    const title = this._legacy.topsTitleEl;
+    if (title instanceof HTMLElement) {
+      title.style.margin = "0";
+      title.style.padding = "0 4px 0 0";
+      title.style.maxHeight = "28px";
+      title.style.overflow = "hidden";
+      title.style.gap = "0";
+
+      const lines = Array.from(title.children || []);
+      if (lines[0] instanceof HTMLElement) lines[0].style.margin = "0";
+      if (lines[1] instanceof HTMLElement) lines[1].style.margin = "0";
+      for (let i = 2; i < lines.length; i += 1) {
+        if (lines[i] instanceof HTMLElement) lines[i].style.display = "none";
+      }
+    }
   }
 
   _inferLevelFromRow(row) {
@@ -672,6 +699,7 @@ export default class TopsScreen {
 
     this._syncQuicklaneState();
     this._syncTopMetaSlot();
+    this._compactWorkingTopBar();
   }
 
   _enforceShellLayout(steps) {

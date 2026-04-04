@@ -663,6 +663,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   router.refreshHeader = () => {
     applyThemeFromRouterContext();
+    const isTopsView = !!router?.context?.ui?.isTopsView;
+    headerEl.style.display = isTopsView ? "none" : "";
     header.refresh();
   };
   window.addEventListener("bbm:header-refresh", () => {
