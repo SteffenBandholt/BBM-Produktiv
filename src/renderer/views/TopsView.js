@@ -2,6 +2,8 @@
 //
 // TECH-CONTRACT (verbindlich): docs/UI-TECH-CONTRACT.md
 // CONTRACT-VERSION: 1.0.0
+// LEGACY-BOUNDARY: TopsView ist Legacy-Implementierung hinter TopsScreen.
+// REMOVE-IN-PHASE-X: direkte Nutzung entfernen, sobald TopsScreen fachlich v2 traegt.
 
 import { shouldShowTopForMeeting, shouldGrayTopForMeeting } from "../utils/topVisibility.js";
 import { ampelHexFrom } from "../utils/ampelColors.js";

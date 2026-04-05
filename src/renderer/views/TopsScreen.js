@@ -1,5 +1,7 @@
 import TopsView from "./TopsView.js";
 
+// TOPS-V2: offizieller Einstiegspunkt fuer Tops-UI.
+// LEGACY-BOUNDARY: fachliche Bestandslogik bleibt bis zur v2-Ablosung in TopsView.
 export default class TopsScreen {
   constructor(options = {}) {
     this.router = options.router || null;
@@ -17,6 +19,8 @@ export default class TopsScreen {
     this._sidebarEl = null;
     this._sidebarDisplay = "";
 
+    // LEGACY-BOUNDARY: delegiert derzeit vollstaendig an TopsView (Legacy).
+    // REMOVE-IN-PHASE-X: ersetzen, sobald v2-Implementierung fachlich bereit ist.
     this._legacy = new TopsView(options);
     this._wrapLegacyHooks();
 
@@ -38,6 +42,8 @@ export default class TopsScreen {
   }
 
   _wrapLegacyHooks() {
+    // LEGACY-BOUNDARY: Hook-Wrapping ist reine Uebergangsverdrahtung.
+    // REMOVE-IN-PHASE-X: entfällt mit nativen TopsScreen-v2 Hooks.
     const legacy = this._legacy;
 
     const applyReadOnlyState = legacy._applyReadOnlyState?.bind(legacy);
@@ -87,6 +93,7 @@ export default class TopsScreen {
   }
 
   render() {
+    // LEGACY-BOUNDARY: Shell ist v2-Rahmen; Inhalt kommt aktuell noch aus Legacy-Renderbaum.
     const legacyRoot = this._legacy.render();
     this._buildShell();
     this._detachLegacyPinnedLayout();
