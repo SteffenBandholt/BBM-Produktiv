@@ -1,4 +1,6 @@
 import TopsView from "./TopsView.js";
+import { createTopsStore } from "../tops/state/TopsStore.js";
+import { hasSelection, isEditable } from "../tops/state/TopsSelectors.js";
 
 // TOPS-V2: offizieller Einstiegspunkt fuer Tops-UI.
 // LEGACY-BOUNDARY: fachliche Bestandslogik bleibt bis zur v2-Ablosung in TopsView.
@@ -18,6 +20,10 @@ export default class TopsScreen {
 
     this._sidebarEl = null;
     this._sidebarDisplay = "";
+    this.store = createTopsStore({
+      projectId: this.projectId,
+      meetingId: this.meetingId,
+    });
 
     // LEGACY-BOUNDARY: delegiert derzeit vollstaendig an TopsView (Legacy).
     // REMOVE-IN-PHASE-X: ersetzen, sobald v2-Implementierung fachlich bereit ist.
@@ -184,7 +190,7 @@ export default class TopsScreen {
     };
 
     const btnProject = mkButton("Projekt", async () => {
-      const pid = this._legacy.projectId || this.router?.currentProjectId || null;
+      const pid = this.store.getState().projectId || this.router?.currentProjectId || null;
       if (!pid) return;
       if (typeof this.router?.openProjectFormModal === "function") {
         await this.router.openProjectFormModal({ projectId: pid });
@@ -192,7 +198,7 @@ export default class TopsScreen {
     });
 
     const btnFirms = mkButton("Firmen", async () => {
-      const pid = this._legacy.projectId || this.router?.currentProjectId || null;
+      const pid = this.store.getState().projectId || this.router?.currentProjectId || null;
       if (!pid) return;
       if (typeof this.router?.showProjectFirms === "function") {
         await this.router.showProjectFirms(pid);
@@ -200,7 +206,7 @@ export default class TopsScreen {
     });
 
     const btnOutput = mkButton("Ausgabe", async () => {
-      const pid = this._legacy.projectId || this.router?.currentProjectId || null;
+      const pid = this.store.getState().projectId || this.router?.currentProjectId || null;
       if (!pid) return;
       if (typeof this.router?.openPrintModal === "function") {
         await this.router.openPrintModal({ projectId: pid });
@@ -337,8 +343,9 @@ export default class TopsScreen {
   }
 
   _syncQuicklaneState() {
-    const canUseProject = !!(this._legacy.projectId || this.router?.currentProjectId);
-    const readOnly = !!this._legacy.isReadOnly;
+    const state = this.store.getState();
+    const canUseProject = !!(state.projectId || this.router?.currentProjectId);
+    const editable = isEditable(state);
     const [btnProject, btnFirms, btnOutput] = this.quicklaneButtons;
 
     const setState = (btn, enabled) => {
@@ -348,8 +355,8 @@ export default class TopsScreen {
       btn.style.cursor = btn.disabled ? "default" : "pointer";
     };
 
-    setState(btnProject, canUseProject && !readOnly);
-    setState(btnFirms, canUseProject && !readOnly);
+    setState(btnProject, canUseProject && editable);
+    setState(btnFirms, canUseProject && editable);
     setState(btnOutput, canUseProject);
   }
 
@@ -751,6 +758,12 @@ export default class TopsScreen {
     const list = this._legacy.listEl;
     const box = this._legacy.box;
     const hasVisibleBox = !!box && box.style.display !== "none";
+    this._syncStoreFromLegacy({
+      editor: {
+        ...this._readEditorState(),
+        hasVisibleBox,
+      },
+    });
 
     if (list) {
       list.style.paddingTop = "10px";
@@ -767,6 +780,11 @@ export default class TopsScreen {
     this._syncQuicklaneState();
     this._syncTopMetaSlot();
     this._compactWorkingTopBar();
+
+    if (this.editArea) {
+      const state = this.store.getState();
+      this.editArea.dataset.bbmHasSelection = hasSelection(state) ? "true" : "false";
+    }
   }
 
   _enforceShellLayout(steps) {
@@ -778,9 +796,19 @@ export default class TopsScreen {
   }
 
   async load() {
+    this.store.setState({ isLoading: true, error: null });
     if (typeof this._legacy.load === "function") {
-      await this._legacy.load();
+      try {
+        await this._legacy.load();
+      } catch (err) {
+        this.store.setState({
+          isLoading: false,
+          error: err?.message ? String(err.message) : String(err || "Load failed"),
+        });
+        throw err;
+      }
     }
+    this._syncStoreFromLegacy({ isLoading: false, error: null });
     this._syncScreenState();
   }
 
@@ -789,5 +817,30 @@ export default class TopsScreen {
       await this._legacy.destroy();
     }
     this._showSidebar();
+  }
+
+  _readEditorState() {
+    return {
+      title: String(this._legacy?.inpTitle?.value || ""),
+      longtext: String(this._legacy?.taLongtext?.value || ""),
+    };
+  }
+
+  _syncStoreFromLegacy(partial = {}) {
+    const legacy = this._legacy;
+    const state = this.store.getState();
+    this.store.setState({
+      projectId: legacy?.projectId || this.projectId || null,
+      meetingId: legacy?.meetingId || this.meetingId || null,
+      tops: Array.isArray(legacy?.items) ? legacy.items : [],
+      selectedTopId: legacy?.selectedTopId ?? null,
+      editor: {
+        ...state.editor,
+        ...this._readEditorState(),
+      },
+      isReadOnly: !!legacy?.isReadOnly,
+      isMoveMode: !!legacy?.moveModeActive,
+      ...partial,
+    });
   }
 }
