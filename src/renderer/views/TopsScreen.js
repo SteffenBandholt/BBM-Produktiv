@@ -1,8 +1,8 @@
-import TopsView from "./TopsView.js";
 import { createTopsStore } from "../tops/state/TopsStore.js";
 import { getSelectedTop, hasSelection } from "../tops/state/TopsSelectors.js";
 import { TopsRepository } from "../tops/data/TopsRepository.js";
 import { TopsCommands } from "../tops/domain/TopsCommands.js";
+import { TopsCloseFlow } from "../tops/domain/TopsCloseFlow.js";
 import { TopsQuicklane } from "../tops/components/TopsQuicklane.js";
 import { TopsWorkbench } from "../tops/components/TopsWorkbench.js";
 import { TopsList } from "../tops/components/TopsList.js";
@@ -32,7 +32,7 @@ function ensureTopsV2Styles() {
 }
 
 // TOPS-V2: eigenstaendiger Screen.
-// LEGACY-REST: TopsView wird nur noch fuer den Output/Close-Flow als Bruecke gehalten.
+// LEGACY-REST: verbleibende Close-/Output-Kopplung ist in TopsCloseFlow gekapselt.
 export default class TopsScreen {
   constructor(options = {}) {
     this.router = options.router || null;
@@ -52,6 +52,7 @@ export default class TopsScreen {
     this.quicklane = null;
     this.workbench = null;
     this.topsList = null;
+    this.closeFlow = null;
 
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.store = createTopsStore({
@@ -70,12 +71,11 @@ export default class TopsScreen {
       store: this.store,
       repository: this.topsRepository,
     });
-
-    // LEGACY-REST: nur fuer "Protokoll beenden"/Output-Flow.
-    this._legacyBridge = new TopsView({
+    this.closeFlow = new TopsCloseFlow({
       ...options,
       topsRepository: this.topsRepository,
     });
+    this._syncCloseFlowContext();
   }
 
   render() {
@@ -132,11 +132,9 @@ export default class TopsScreen {
         }
       },
       onEndMeeting: async () => {
-        if (typeof this._legacyBridge?._runCloseMeetingOutputFlow === "function") {
-          await this._legacyBridge._runCloseMeetingOutputFlow();
-          await this._reloadTops({ keepSelection: true });
-          this._syncScreenState();
-        }
+        await this.closeFlow?.run?.();
+        await this._reloadTops({ keepSelection: true });
+        this._syncScreenState();
       },
     });
   }
@@ -272,6 +270,7 @@ export default class TopsScreen {
 
   _syncScreenState() {
     const state = this.store.getState();
+    this._syncCloseFlowContext();
     this._syncHeaderState();
     this._syncQuicklaneState();
     this._syncListState();
@@ -281,6 +280,17 @@ export default class TopsScreen {
       this.editArea.dataset.bbmWorkbenchVisible = shouldShowWorkbench(state) ? "true" : "false";
       this.editArea.dataset.bbmHasSelection = hasSelection(state) ? "true" : "false";
     }
+  }
+
+  _syncCloseFlowContext() {
+    const state = this.store.getState();
+    if (!(this.closeFlow instanceof TopsCloseFlow)) return;
+    this.closeFlow.setContext({
+      projectId: state.projectId || this.projectId || this.router?.currentProjectId || null,
+      meetingId: state.meetingId || this.meetingId || null,
+      meetingMeta: state.meetingMeta || null,
+      isReadOnly: !!state.isReadOnly,
+    });
   }
 
   _handleWorkbenchDraftChange(draft) {
@@ -385,9 +395,7 @@ export default class TopsScreen {
   }
 
   async destroy() {
-    if (typeof this._legacyBridge?.destroy === "function") {
-      await this._legacyBridge.destroy();
-    }
+    await this.closeFlow?.destroy?.();
     this._showSidebar();
   }
 }
