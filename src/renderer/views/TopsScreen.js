@@ -2,6 +2,7 @@ import TopsView from "./TopsView.js";
 import { createTopsStore } from "../tops/state/TopsStore.js";
 import { hasSelection, isEditable } from "../tops/state/TopsSelectors.js";
 import { TopsRepository } from "../tops/data/TopsRepository.js";
+import { TopsCommands } from "../tops/domain/TopsCommands.js";
 
 // TOPS-V2: offizieller Einstiegspunkt fuer Tops-UI.
 // LEGACY-BOUNDARY: fachliche Bestandslogik bleibt bis zur v2-Ablosung in TopsView.
@@ -25,6 +26,10 @@ export default class TopsScreen {
     this.store = createTopsStore({
       projectId: this.projectId,
       meetingId: this.meetingId,
+    });
+    this.commands = new TopsCommands({
+      store: this.store,
+      repository: this.topsRepository,
     });
 
     // LEGACY-BOUNDARY: delegiert derzeit vollstaendig an TopsView (Legacy).
@@ -801,14 +806,17 @@ export default class TopsScreen {
   }
 
   async load() {
-    this.store.setState({ isLoading: true, error: null });
+    await this.commands.loadTops({
+      meetingId: this.meetingId || null,
+      projectId: this.projectId || null,
+    });
     if (typeof this._legacy.load === "function") {
       try {
         await this._legacy.load();
       } catch (err) {
         this.store.setState({
-          isLoading: false,
           error: err?.message ? String(err.message) : String(err || "Load failed"),
+          isLoading: false,
         });
         throw err;
       }
@@ -834,17 +842,18 @@ export default class TopsScreen {
   _syncStoreFromLegacy(partial = {}) {
     const legacy = this._legacy;
     const state = this.store.getState();
+    this.commands.selectTop(legacy?.selectedTopId ?? null);
+    this.commands.updateDraft(this._readEditorState());
+    this.commands.toggleMoveMode(!!legacy?.moveModeActive);
     this.store.setState({
       projectId: legacy?.projectId || this.projectId || null,
       meetingId: legacy?.meetingId || this.meetingId || null,
       tops: Array.isArray(legacy?.items) ? legacy.items : [],
-      selectedTopId: legacy?.selectedTopId ?? null,
       editor: {
         ...state.editor,
         ...this._readEditorState(),
       },
       isReadOnly: !!legacy?.isReadOnly,
-      isMoveMode: !!legacy?.moveModeActive,
       ...partial,
     });
   }
