@@ -54,7 +54,7 @@
 
 [data-bbm-tops-header-v2="true"] {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   padding: 4px 10px;
   border-bottom: 1px solid #d9e2ec;
@@ -64,7 +64,8 @@
 .bbm-tops-header-title-wrap {
   display: grid;
   gap: 1px;
-  min-width: 0;
+  min-width: max-content;
+  flex: 0 0 auto;
 }
 
 .bbm-tops-header-line1 {
@@ -78,8 +79,23 @@
   font-weight: 700;
   color: #1b5e20;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-height: 1.2em;
+  min-width: 12ch;
+  display: inline-block;
+}
+
+.bbm-tops-header-line2[data-editable="true"] {
+  cursor: pointer;
+}
+
+.bbm-tops-header-line2[data-editable="true"]:hover {
+  text-decoration: underline;
+}
+
+.bbm-tops-header-line2[data-editable="true"]:focus {
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  border-radius: 3px;
 }
 
 [data-bbm-tops-header-v2="true"][data-protocol-status="closed"] .bbm-tops-header-line1,

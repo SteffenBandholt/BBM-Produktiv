@@ -1,7 +1,8 @@
 export class TopsHeader {
-  constructor({ onClose, onEndMeeting } = {}) {
+  constructor({ onClose, onEndMeeting, onKeywordClick } = {}) {
     this.onClose = typeof onClose === "function" ? onClose : null;
     this.onEndMeeting = typeof onEndMeeting === "function" ? onEndMeeting : null;
+    this.onKeywordClick = typeof onKeywordClick === "function" ? onKeywordClick : null;
 
     this.root = document.createElement("header");
     this.root.setAttribute("data-bbm-tops-header-v2", "true");
@@ -16,6 +17,17 @@ export class TopsHeader {
     this.line2El = document.createElement("div");
     this.line2El.className = "bbm-tops-header-line2";
     this.line2El.textContent = "";
+    this.line2El.tabIndex = 0;
+    this.line2El.setAttribute("role", "button");
+    this.line2El.setAttribute("aria-label", "Schlagwort");
+    this.line2El.addEventListener("click", () => {
+      void this._handleKeywordClick();
+    });
+    this.line2El.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      void this._handleKeywordClick();
+    });
 
     this.titleWrap.append(this.line1El, this.line2El);
 
@@ -51,13 +63,23 @@ export class TopsHeader {
     return this.actionsWrap;
   }
 
-  update({ titleLine, keywordLine, isReadOnly, canEndMeeting, isBusy } = {}) {
+  async _handleKeywordClick() {
+    if (this.line2El.dataset.editable !== "true") return;
+    if (!this.onKeywordClick) return;
+    await this.onKeywordClick();
+  }
+
+  update({ titleLine, keywordLine, isReadOnly, canEndMeeting, isBusy, canEditKeyword } = {}) {
     const busy = !!isBusy;
     const readOnly = !!isReadOnly;
     const canEnd = !!canEndMeeting;
 
     this.line1El.textContent = titleLine || "Protokoll";
-    this.line2El.textContent = keywordLine || "";
+    this.line2El.textContent = String(keywordLine || "").trim();
+    const canEdit = !!canEditKeyword;
+    this.line2El.dataset.editable = canEdit ? "true" : "false";
+    this.line2El.title = "";
+    this.line2El.tabIndex = canEdit ? 0 : -1;
 
     this.root.dataset.isBusy = busy ? "true" : "false";
     this.root.dataset.isReadOnly = readOnly ? "true" : "false";
