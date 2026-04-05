@@ -1,6 +1,7 @@
 import TopsView from "./TopsView.js";
 import { createTopsStore } from "../tops/state/TopsStore.js";
 import { hasSelection, isEditable } from "../tops/state/TopsSelectors.js";
+import { TopsRepository } from "../tops/data/TopsRepository.js";
 
 // TOPS-V2: offizieller Einstiegspunkt fuer Tops-UI.
 // LEGACY-BOUNDARY: fachliche Bestandslogik bleibt bis zur v2-Ablosung in TopsView.
@@ -20,6 +21,7 @@ export default class TopsScreen {
 
     this._sidebarEl = null;
     this._sidebarDisplay = "";
+    this.topsRepository = options.topsRepository || new TopsRepository();
     this.store = createTopsStore({
       projectId: this.projectId,
       meetingId: this.meetingId,
@@ -27,7 +29,10 @@ export default class TopsScreen {
 
     // LEGACY-BOUNDARY: delegiert derzeit vollstaendig an TopsView (Legacy).
     // REMOVE-IN-PHASE-X: ersetzen, sobald v2-Implementierung fachlich bereit ist.
-    this._legacy = new TopsView(options);
+    this._legacy = new TopsView({
+      ...options,
+      topsRepository: this.topsRepository,
+    });
     this._wrapLegacyHooks();
 
     return new Proxy(this, {
