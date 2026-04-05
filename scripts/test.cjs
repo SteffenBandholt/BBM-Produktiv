@@ -8,6 +8,7 @@ const {
 const { runTopsStoreTests } = require("./tests/topsStore.test.cjs");
 const { runTopsSelectorsTests } = require("./tests/topsSelectors.test.cjs");
 const { runTopsCommandsTests } = require("./tests/topsCommands.test.cjs");
+const { runTopsActionPolicyTests } = require("./tests/topsActionPolicy.test.cjs");
 
 let failed = false;
 
@@ -62,6 +63,7 @@ async function main() {
   await runTopsStoreTests(run);
   await runTopsSelectorsTests(run);
   await runTopsCommandsTests(run);
+  await runTopsActionPolicyTests(run);
 
   if (failed) {
     process.exitCode = 1;
