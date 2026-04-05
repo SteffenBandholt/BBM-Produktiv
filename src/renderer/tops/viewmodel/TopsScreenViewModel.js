@@ -1,4 +1,12 @@
 import { getSelectedTop } from "../state/TopsSelectors.js";
+import {
+  isAllowedMoveTarget,
+  canCreateChildFromState,
+  canDeleteFromState,
+  canMoveFromState,
+} from "../domain/TopsActionPolicy.js";
+
+export { isAllowedMoveTarget, canCreateChildFromState, canDeleteFromState, canMoveFromState };
 
 export function buildHeaderContext(state, { projectLabel } = {}) {
   const m = state?.meetingMeta || null;
@@ -15,14 +23,6 @@ export function buildHeaderContext(state, { projectLabel } = {}) {
 
   if (!parts.length) return state?.meetingId ? "Protokoll" : "kein Protokoll aktiv";
   return parts.join(" | ");
-}
-
-export function isAllowedMoveTarget(target, movingTop) {
-  if (!movingTop || !target) return false;
-  if (String(target.id) === String(movingTop.id)) return false;
-  const tl = Number(target.level);
-  if (!Number.isFinite(tl)) return false;
-  return tl >= 1 && tl <= 3;
 }
 
 export function buildListItemsFromState(state) {
@@ -118,36 +118,6 @@ export function buildPatchFromDraft(selectedTop, draft) {
   }
 
   return patch;
-}
-
-export function hasChildren(tops, topId) {
-  const list = Array.isArray(tops) ? tops : [];
-  const key = String(topId ?? "");
-  return list.some((t) => String(t?.parent_top_id ?? "") === key);
-}
-
-export function isBlue(top) {
-  return Number(top?.is_carried_over) !== 1;
-}
-
-export function canCreateChildFromState(state, selectedTop) {
-  if (state?.isReadOnly || !selectedTop) return false;
-  const level = Number(selectedTop.level);
-  return Number.isFinite(level) && level < 4;
-}
-
-export function canDeleteFromState(state, selectedTop) {
-  if (state?.isReadOnly || !selectedTop) return false;
-  if (!isBlue(selectedTop)) return false;
-  if (hasChildren(state?.tops, selectedTop.id)) return false;
-  return true;
-}
-
-export function canMoveFromState(state, selectedTop) {
-  if (state?.isReadOnly || !selectedTop) return false;
-  if (!isBlue(selectedTop)) return false;
-  if (hasChildren(state?.tops, selectedTop.id)) return false;
-  return true;
 }
 
 export function shouldShowWorkbench(state) {
