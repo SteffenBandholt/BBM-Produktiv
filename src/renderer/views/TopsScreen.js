@@ -12,7 +12,6 @@ export default class TopsScreen {
     this.sheetPaper = null;
     this.editArea = null;
     this.editCanvas = null;
-    this.quicklane = null;
     this.quicklaneButtons = [];
 
     this._sidebarEl = null;
@@ -107,18 +106,6 @@ export default class TopsScreen {
     root.style.minHeight = "0";
     root.style.background = "linear-gradient(180deg, #f6f9fc 0%, #eef3f8 100%)";
 
-    const quicklane = document.createElement("div");
-    quicklane.setAttribute("data-bbm-tops-screen-quicklane", "true");
-    quicklane.style.display = "inline-flex";
-    quicklane.style.alignItems = "center";
-    quicklane.style.gap = "4px";
-    quicklane.style.flexWrap = "wrap";
-    quicklane.style.minHeight = "18px";
-    quicklane.style.margin = "0";
-    quicklane.style.padding = "1px 10px 2px";
-    quicklane.style.borderBottom = "1px solid #e2e8f0";
-    quicklane.style.background = "#ffffff";
-
     const sheetArea = document.createElement("section");
     sheetArea.setAttribute("data-bbm-tops-screen-area", "sheet");
     sheetArea.style.flex = "1 1 auto";
@@ -166,12 +153,11 @@ export default class TopsScreen {
     this.sheetPaper = sheetPaper;
     this.editArea = editArea;
     this.editCanvas = editCanvas;
-    this.quicklane = quicklane;
 
     sheetCanvas.appendChild(sheetPaper);
     sheetArea.appendChild(sheetCanvas);
     editArea.appendChild(editCanvas);
-    root.append(quicklane, sheetArea, editArea);
+    root.append(sheetArea, editArea);
 
     this._buildQuicklane();
   }
@@ -215,7 +201,6 @@ export default class TopsScreen {
     });
 
     this.quicklaneButtons = [btnProject, btnFirms, btnOutput];
-    this.quicklane.replaceChildren(btnProject, btnFirms, btnOutput);
   }
 
   _detachLegacyPinnedLayout() {
@@ -269,7 +254,8 @@ export default class TopsScreen {
         this._legacy.topsTitleEl.style.paddingRight = "4px";
       }
 
-      this.root.insertBefore(topBar, this.quicklane);
+      this.root.insertBefore(topBar, this.sheetArea);
+      this._mountQuicklaneIntoTopBar();
       this._compactWorkingTopBar();
     }
 
@@ -300,6 +286,30 @@ export default class TopsScreen {
     }
 
     this._legacy.root = this.root;
+  }
+
+  _mountQuicklaneIntoTopBar() {
+    const topBar = this._legacy.topBarEl;
+    if (!(topBar instanceof HTMLElement)) return;
+    if (!Array.isArray(this.quicklaneButtons) || !this.quicklaneButtons.length) return;
+
+    const actionWrap = Array.from(topBar.children || []).find(
+      (el) => el instanceof HTMLElement && el.contains?.(this._legacy.btnCloseMeeting)
+    );
+    if (!(actionWrap instanceof HTMLElement)) return;
+
+    const [btnProject, btnFirms, btnOutput] = this.quicklaneButtons;
+    for (const btn of [btnProject, btnFirms, btnOutput]) {
+      if (!(btn instanceof HTMLElement)) continue;
+      btn.style.padding = "1px 7px";
+      btn.style.minHeight = "0";
+      btn.style.fontSize = "7.5pt";
+      btn.style.lineHeight = "1.15";
+      btn.style.borderRadius = "6px";
+      if (btn.parentElement !== actionWrap) {
+        actionWrap.insertBefore(btn, actionWrap.firstChild || null);
+      }
+    }
   }
 
   _hideSidebar() {
@@ -351,6 +361,7 @@ export default class TopsScreen {
     const topBar = this._legacy.topBarEl;
     if (!(topBar instanceof HTMLElement)) return;
     topBar.style.alignItems = "center";
+    this._mountQuicklaneIntoTopBar();
 
     const actionWrap = Array.from(topBar.children || []).find(
       (el) => el instanceof HTMLElement && el.contains?.(this._legacy.btnCloseMeeting)
@@ -358,7 +369,9 @@ export default class TopsScreen {
     if (actionWrap instanceof HTMLElement) {
       actionWrap.style.marginRight = "0";
       actionWrap.style.gap = "4px";
+      actionWrap.style.display = "inline-flex";
       actionWrap.style.alignItems = "center";
+      actionWrap.style.justifyContent = "center";
       const actionButtons = Array.from(actionWrap.querySelectorAll("button"));
       for (const btn of actionButtons) {
         if (!(btn instanceof HTMLElement)) continue;
@@ -366,6 +379,9 @@ export default class TopsScreen {
         btn.style.padding = "1px 6px";
         btn.style.fontSize = "7.5pt";
         btn.style.lineHeight = "1.15";
+        btn.style.display = "inline-flex";
+        btn.style.alignItems = "center";
+        btn.style.justifyContent = "center";
       }
     }
 
@@ -373,11 +389,13 @@ export default class TopsScreen {
     if (title instanceof HTMLElement) {
       title.style.margin = "0";
       title.style.padding = "0 3px 0 0";
-      title.style.maxHeight = "20px";
-      title.style.overflow = "hidden";
-      title.style.gap = "4px";
-      title.style.display = "inline-flex";
-      title.style.flexDirection = "row";
+      title.style.maxHeight = "30px";
+      title.style.overflow = "visible";
+      title.style.gap = "0";
+      title.style.display = "grid";
+      title.style.gridTemplateColumns = "auto auto";
+      title.style.columnGap = "6px";
+      title.style.rowGap = "1px";
       title.style.alignItems = "center";
       title.style.lineHeight = "1";
 
@@ -386,13 +404,31 @@ export default class TopsScreen {
         lines[0].style.margin = "0";
         lines[0].style.fontSize = "8pt";
         lines[0].style.lineHeight = "1";
+        lines[0].style.gridColumn = "1";
+        lines[0].style.gridRow = "1";
       }
       if (lines[1] instanceof HTMLElement) {
         lines[1].style.margin = "0";
         lines[1].style.fontSize = "8pt";
         lines[1].style.lineHeight = "1";
+        lines[1].style.gridColumn = "2";
+        lines[1].style.gridRow = "1";
+        const line1Children = Array.from(lines[1].children || []);
+        for (const child of line1Children) {
+          if (!(child instanceof HTMLElement)) continue;
+          child.style.fontSize = "8pt";
+          child.style.lineHeight = "1";
+        }
       }
-      for (let i = 2; i < lines.length; i += 1) {
+      if (lines[2] instanceof HTMLElement) {
+        lines[2].style.display = "";
+        lines[2].style.margin = "0";
+        lines[2].style.fontSize = "8pt";
+        lines[2].style.lineHeight = "1";
+        lines[2].style.gridColumn = "1 / span 2";
+        lines[2].style.gridRow = "2";
+      }
+      for (let i = 3; i < lines.length; i += 1) {
         if (lines[i] instanceof HTMLElement) lines[i].style.display = "none";
       }
     }
