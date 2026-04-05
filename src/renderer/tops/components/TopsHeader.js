@@ -43,14 +43,14 @@ export class TopsHeader {
     this.metaLegend.className = "bbm-tops-header-meta-legend";
     this.metaLegend.dataset.visible = "false";
 
-    this.metaLegendStatus = document.createElement("div");
-    this.metaLegendStatus.textContent = "Status";
     this.metaLegendDue = document.createElement("div");
     this.metaLegendDue.textContent = "Fertig bis";
+    this.metaLegendStatus = document.createElement("div");
+    this.metaLegendStatus.textContent = "Status";
     this.metaLegendResponsible = document.createElement("div");
     this.metaLegendResponsible.textContent = "verantw";
 
-    this.metaLegend.append(this.metaLegendStatus, this.metaLegendDue, this.metaLegendResponsible);
+    this.metaLegend.append(this.metaLegendDue, this.metaLegendStatus, this.metaLegendResponsible);
 
     this.actionsWrap = document.createElement("div");
     this.actionsWrap.className = "bbm-tops-header-actions";

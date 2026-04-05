@@ -159,8 +159,8 @@ export function buildListItemsFromState(state) {
     const status = (top?.status || "").toString().trim();
     const responsible = (top?.responsible_label || top?.responsibleLabel || "").toString().trim();
     const meta = [];
-    if (status) meta.push(status);
     if (due) meta.push(due);
+    if (status) meta.push(status);
     if (responsible) meta.push(responsible);
 
     let isMoveTarget = null;
