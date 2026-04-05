@@ -1,9 +1,10 @@
 import TopsView from "./TopsView.js";
 import { createTopsStore } from "../tops/state/TopsStore.js";
-import { hasSelection } from "../tops/state/TopsSelectors.js";
+import { getSelectedTop, hasSelection } from "../tops/state/TopsSelectors.js";
 import { TopsRepository } from "../tops/data/TopsRepository.js";
 import { TopsCommands } from "../tops/domain/TopsCommands.js";
 import { TopsQuicklane } from "../tops/components/TopsQuicklane.js";
+import { TopsWorkbench } from "../tops/components/TopsWorkbench.js";
 
 // TOPS-V2: offizieller Einstiegspunkt fuer Tops-UI.
 // LEGACY-BOUNDARY: fachliche Bestandslogik bleibt bis zur v2-Ablosung in TopsView.
@@ -23,6 +24,7 @@ export default class TopsScreen {
     this._sidebarEl = null;
     this._sidebarDisplay = "";
     this.quicklane = null;
+    this.workbench = null;
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.store = createTopsStore({
       projectId: this.projectId,
@@ -94,7 +96,7 @@ export default class TopsScreen {
     if (applyEditBoxState) {
       legacy.applyEditBoxState = (...args) => {
         const res = applyEditBoxState(...args);
-        this._polishEditWorkbench();
+        this._syncScreenState();
         return res;
       };
     }
@@ -184,6 +186,7 @@ export default class TopsScreen {
     root.append(sheetArea, editArea);
 
     this._buildQuicklane();
+    this._buildWorkbench();
   }
 
   _buildQuicklane() {
@@ -206,6 +209,18 @@ export default class TopsScreen {
         }
       },
     });
+  }
+
+  _buildWorkbench() {
+    this.workbench = new TopsWorkbench({
+      onDraftChange: (draft) => this._handleWorkbenchDraftChange(draft),
+      onSave: async () => this._handleWorkbenchSave(),
+      onDelete: async () => this._handleWorkbenchDelete(),
+      onToggleMove: async () => this._handleWorkbenchToggleMove(),
+      onCreateLevel1: async () => this._handleWorkbenchCreateLevel1(),
+      onCreateChild: async () => this._handleWorkbenchCreateChild(),
+    });
+    this.editCanvas.appendChild(this.workbench.root);
   }
 
   _detachLegacyPinnedLayout() {
@@ -273,17 +288,7 @@ export default class TopsScreen {
     }
 
     if (box) {
-      box.style.position = "static";
-      box.style.left = "";
-      box.style.right = "";
-      box.style.bottom = "";
-      box.style.maxHeight = "none";
-      box.style.overflow = "visible";
-      box.style.padding = "6px 8px 8px";
-      box.style.borderLeft = "0";
-      box.style.borderRight = "0";
-      box.style.margin = "0";
-      this.editCanvas.appendChild(box);
+      box.style.display = "none";
     }
 
     if (legacyRoot && legacyRoot.parentElement) {
@@ -733,14 +738,7 @@ export default class TopsScreen {
 
   _syncScreenState() {
     const list = this._legacy.listEl;
-    const box = this._legacy.box;
-    const hasVisibleBox = !!box && box.style.display !== "none";
-    this._syncStoreFromLegacy({
-      editor: {
-        ...this._readEditorState(),
-        hasVisibleBox,
-      },
-    });
+    this._syncStoreFromLegacy();
 
     if (list) {
       list.style.paddingTop = "10px";
@@ -748,12 +746,12 @@ export default class TopsScreen {
       this._polishSheetList();
     }
 
-    this._polishEditWorkbench();
-
     if (this.editArea) {
-      this.editArea.style.display = hasVisibleBox ? "" : "none";
+      const state = this.store.getState();
+      this.editArea.style.display = this._shouldShowWorkbench(state) ? "" : "none";
     }
 
+    this._syncWorkbenchState();
     this._syncQuicklaneState();
     this._syncTopMetaSlot();
     this._compactWorkingTopBar();
@@ -762,6 +760,20 @@ export default class TopsScreen {
       const state = this.store.getState();
       this.editArea.dataset.bbmHasSelection = hasSelection(state) ? "true" : "false";
     }
+  }
+
+  _shouldShowWorkbench(state) {
+    const selectedTop = getSelectedTop(state);
+    const hasSelection = !!selectedTop;
+    const hasMeeting = !!(state?.meetingId || this._legacy?.meetingId);
+
+    // Sichtbarkeit am Bearbeitungskontext ausrichten:
+    // - mit Auswahl immer sichtbar (auch read-only, dann nur gesperrt)
+    // - ohne Auswahl nur im aktiven, editierbaren Meeting sichtbar
+    if (hasSelection) return true;
+    if (!hasMeeting) return false;
+    if (state?.isReadOnly) return false;
+    return true;
   }
 
   _enforceShellLayout(steps) {
@@ -800,26 +812,184 @@ export default class TopsScreen {
   }
 
   _readEditorState() {
+    if (this.workbench instanceof TopsWorkbench) {
+      return this.workbench.getDraft();
+    }
     return {
-      title: String(this._legacy?.inpTitle?.value || ""),
-      longtext: String(this._legacy?.taLongtext?.value || ""),
+      title: "",
+      longtext: "",
     };
+  }
+
+  _editorFromTop(top) {
+    if (!top) {
+      return {
+        title: "",
+        longtext: "",
+        due_date: null,
+        status: "-",
+        responsible_label: "",
+        is_important: 0,
+        is_hidden: 0,
+        is_decision: 0,
+      };
+    }
+    return {
+      title: String(top.title || ""),
+      longtext: String(top.longtext || ""),
+      due_date: top.due_date || top.dueDate || null,
+      status: String(top.status || "-"),
+      responsible_label: String(top.responsible_label || top.responsibleLabel || ""),
+      is_important: Number(top.is_important) === 1 ? 1 : 0,
+      is_hidden: Number(top.is_hidden) === 1 ? 1 : 0,
+      is_decision: Number(top.is_decision) === 1 ? 1 : 0,
+    };
+  }
+
+  _buildPatchFromDraft(selectedTop, draft) {
+    if (!selectedTop || !draft) return {};
+    const patch = {};
+
+    const title = String(draft.title || "");
+    if (title !== String(selectedTop.title || "")) patch.title = title;
+
+    const longtext = String(draft.longtext || "");
+    if (longtext !== String(selectedTop.longtext || "")) patch.longtext = longtext;
+
+    const dueDate = (draft.due_date || null) || null;
+    const selectedDue = (selectedTop.due_date || selectedTop.dueDate || null) || null;
+    if (dueDate !== selectedDue) patch.due_date = dueDate;
+
+    const status = String(draft.status || "-");
+    if (status !== String(selectedTop.status || "-")) patch.status = status;
+
+    const responsibleLabel = String(draft.responsible_label || "");
+    if (responsibleLabel !== String(selectedTop.responsible_label || selectedTop.responsibleLabel || "")) {
+      patch.responsible_label = responsibleLabel;
+    }
+
+    for (const k of ["is_important", "is_hidden", "is_decision"]) {
+      const nextVal = Number(draft[k]) === 1 ? 1 : 0;
+      const curVal = Number(selectedTop[k]) === 1 ? 1 : 0;
+      if (nextVal !== curVal) patch[k] = nextVal;
+    }
+
+    return patch;
+  }
+
+  _canCreateChildFromState(state, selectedTop) {
+    if (state.isReadOnly || !selectedTop) return false;
+    const level = Number(selectedTop.level);
+    return Number.isFinite(level) && level < 4;
+  }
+
+  _canDeleteFromState(state, selectedTop) {
+    if (state.isReadOnly || !selectedTop) return false;
+    if (typeof this._legacy?._canDeleteSelected === "function") {
+      return !!this._legacy._canDeleteSelected();
+    }
+    return Number(selectedTop.is_carried_over) !== 1;
+  }
+
+  _canMoveFromState(state, selectedTop) {
+    if (state.isReadOnly || !selectedTop) return false;
+    if (typeof this._legacy?._isBlue === "function" && !this._legacy._isBlue(selectedTop)) return false;
+    if (typeof this._legacy?._selectedHasChildren === "function" && this._legacy._selectedHasChildren()) {
+      return false;
+    }
+    return true;
+  }
+
+  _syncWorkbenchState() {
+    if (!(this.workbench instanceof TopsWorkbench)) return;
+    const state = this.store.getState();
+    const selectedTop = getSelectedTop(state);
+    this.workbench.setState({
+      editor: state.editor || this._editorFromTop(selectedTop),
+      isReadOnly: !!state.isReadOnly,
+      hasSelection: !!selectedTop,
+      isMoveMode: !!state.isMoveMode,
+      canSave: !!selectedTop,
+      canDelete: this._canDeleteFromState(state, selectedTop),
+      canMove: this._canMoveFromState(state, selectedTop),
+      canCreateChild: this._canCreateChildFromState(state, selectedTop),
+    });
+  }
+
+  _handleWorkbenchDraftChange(draft) {
+    this.commands.updateDraft(draft || {});
+    this._syncWorkbenchState();
+  }
+
+  async _handleWorkbenchSave() {
+    const state = this.store.getState();
+    const selectedTop = getSelectedTop(state);
+    if (!selectedTop) return;
+    const patch = this._buildPatchFromDraft(selectedTop, state.editor || {});
+    if (!Object.keys(patch).length) return;
+    await this.commands.saveDraft(patch);
+    await this._legacy.reloadList(true);
+    this._syncScreenState();
+  }
+
+  async _handleWorkbenchDelete() {
+    await this._legacy.deleteSelectedTop();
+    this._syncScreenState();
+  }
+
+  async _handleWorkbenchToggleMove() {
+    this._legacy.toggleMoveMode();
+    this._syncScreenState();
+  }
+
+  async _handleWorkbenchCreateLevel1() {
+    await this._legacy.createTop(1, null);
+    this._syncScreenState();
+  }
+
+  async _handleWorkbenchCreateChild() {
+    const selected = this._legacy.selectedTop || this._legacy._findTopById?.(this._legacy.selectedTopId);
+    if (!selected) return;
+
+    if (this._legacy._userSelectedTop) {
+      const nextLevel = Number(selected.level) + 1;
+      if (nextLevel > 4) return;
+      await this._legacy.createTop(nextLevel, selected.id);
+      this._syncScreenState();
+      return;
+    }
+
+    const siblingLevel = Number(selected.level);
+    if (siblingLevel < 2) {
+      await this._legacy.createTop(2, selected.id);
+      this._syncScreenState();
+      return;
+    }
+    if (siblingLevel > 4) return;
+    const parentId = selected.parent_top_id || null;
+    await this._legacy.createTop(siblingLevel, parentId);
+    this._syncScreenState();
   }
 
   _syncStoreFromLegacy(partial = {}) {
     const legacy = this._legacy;
     const state = this.store.getState();
-    this.commands.selectTop(legacy?.selectedTopId ?? null);
-    this.commands.updateDraft(this._readEditorState());
+    const selectedTopId = legacy?.selectedTopId ?? null;
+    const tops = Array.isArray(legacy?.items) ? legacy.items : [];
+    const selectedTop = tops.find((t) => String(t?.id) === String(selectedTopId)) || null;
+    const selectedChanged = String(state.selectedTopId ?? "") !== String(selectedTopId ?? "");
+    const nextEditor = selectedChanged
+      ? this._editorFromTop(selectedTop)
+      : { ...(state.editor || {}), ...this._readEditorState() };
+
+    this.commands.selectTop(selectedTopId);
+    this.commands.updateDraft(nextEditor);
     this.commands.toggleMoveMode(!!legacy?.moveModeActive);
     this.store.setState({
       projectId: legacy?.projectId || this.projectId || null,
       meetingId: legacy?.meetingId || this.meetingId || null,
-      tops: Array.isArray(legacy?.items) ? legacy.items : [],
-      editor: {
-        ...state.editor,
-        ...this._readEditorState(),
-      },
+      tops,
+      editor: nextEditor,
       isReadOnly: !!legacy?.isReadOnly,
       ...partial,
     });

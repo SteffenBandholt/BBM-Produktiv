@@ -1,0 +1,117 @@
+export class TopsMetaPanel {
+  constructor({ onChange } = {}) {
+    this.onChange = typeof onChange === "function" ? onChange : null;
+    this.root = document.createElement("div");
+    this.root.style.display = "grid";
+    this.root.style.gap = "6px";
+    this.root.style.padding = "4px 6px";
+    this.root.style.border = "1px solid #dce7f2";
+    this.root.style.borderRadius = "10px";
+    this.root.style.background = "#f8fbff";
+
+    this.inpDueDate = document.createElement("input");
+    this.inpDueDate.type = "date";
+    this.selStatus = document.createElement("select");
+    for (const value of ["-", "todo", "inprogress", "done"]) {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = value === "-" ? "-" : value;
+      this.selStatus.appendChild(opt);
+    }
+    this.inpResponsible = document.createElement("input");
+    this.inpResponsible.type = "text";
+    this.inpResponsible.placeholder = "verantwortlich";
+
+    this.chkImportant = this._mkCheckbox("wichtig");
+    this.chkHidden = this._mkCheckbox("TOP ausblenden");
+    this.chkDecision = this._mkCheckbox("Entscheidung");
+
+    this._appendField("Fertig bis", this.inpDueDate);
+    this._appendField("Status", this.selStatus);
+    this._appendField("Verantwortlich", this.inpResponsible);
+    this.root.append(this.chkImportant.wrap, this.chkHidden.wrap, this.chkDecision.wrap);
+
+    for (const el of [
+      this.inpDueDate,
+      this.selStatus,
+      this.inpResponsible,
+      this.chkImportant.input,
+      this.chkHidden.input,
+      this.chkDecision.input,
+    ]) {
+      el.addEventListener("change", () => this._emitChange());
+      el.addEventListener("input", () => this._emitChange());
+    }
+  }
+
+  _mkCheckbox(label) {
+    const wrap = document.createElement("label");
+    wrap.style.display = "inline-flex";
+    wrap.style.alignItems = "center";
+    wrap.style.gap = "6px";
+    wrap.style.fontSize = "8.5pt";
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    const text = document.createElement("span");
+    text.textContent = label;
+    wrap.append(input, text);
+    return { wrap, input };
+  }
+
+  _appendField(label, control) {
+    const row = document.createElement("label");
+    row.style.display = "grid";
+    row.style.gap = "3px";
+    row.style.fontSize = "8.5pt";
+    const t = document.createElement("span");
+    t.textContent = label;
+    control.style.width = "100%";
+    control.style.boxSizing = "border-box";
+    control.style.padding = "3px 5px";
+    control.style.border = "1px solid #cad8e6";
+    control.style.borderRadius = "7px";
+    control.style.background = "#ffffff";
+    row.append(t, control);
+    this.root.appendChild(row);
+  }
+
+  _emitChange() {
+    if (this.onChange) this.onChange(this.getValue());
+  }
+
+  getValue() {
+    return {
+      due_date: (this.inpDueDate.value || "").trim() || null,
+      status: (this.selStatus.value || "").trim() || "-",
+      responsible_label: (this.inpResponsible.value || "").trim() || "",
+      is_important: this.chkImportant.input.checked ? 1 : 0,
+      is_hidden: this.chkHidden.input.checked ? 1 : 0,
+      is_decision: this.chkDecision.input.checked ? 1 : 0,
+    };
+  }
+
+  setValue(value = {}) {
+    this.inpDueDate.value = value?.due_date || "";
+    this.selStatus.value = value?.status || "-";
+    this.inpResponsible.value = value?.responsible_label || "";
+    this.chkImportant.input.checked = Number(value?.is_important) === 1;
+    this.chkHidden.input.checked = Number(value?.is_hidden) === 1;
+    this.chkDecision.input.checked = Number(value?.is_decision) === 1;
+  }
+
+  setDisabled(disabled) {
+    const dis = !!disabled;
+    for (const el of [
+      this.inpDueDate,
+      this.selStatus,
+      this.inpResponsible,
+      this.chkImportant.input,
+      this.chkHidden.input,
+      this.chkDecision.input,
+    ]) {
+      el.disabled = dis;
+    }
+    this.root.style.opacity = dis ? "0.7" : "1";
+  }
+}
+
