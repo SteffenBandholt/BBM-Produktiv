@@ -5,6 +5,7 @@ import { TopsRepository } from "../tops/data/TopsRepository.js";
 import { TopsCommands } from "../tops/domain/TopsCommands.js";
 import { TopsQuicklane } from "../tops/components/TopsQuicklane.js";
 import { TopsWorkbench } from "../tops/components/TopsWorkbench.js";
+import { TopsList } from "../tops/components/TopsList.js";
 
 // TOPS-V2: offizieller Einstiegspunkt fuer Tops-UI.
 // LEGACY-BOUNDARY: fachliche Bestandslogik bleibt bis zur v2-Ablosung in TopsView.
@@ -25,6 +26,7 @@ export default class TopsScreen {
     this._sidebarDisplay = "";
     this.quicklane = null;
     this.workbench = null;
+    this.topsList = null;
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.store = createTopsStore({
       projectId: this.projectId,
@@ -87,7 +89,7 @@ export default class TopsScreen {
     if (renderListOnly) {
       legacy._renderListOnly = (...args) => {
         const res = renderListOnly(...args);
-        this._polishSheetList();
+        this._syncListState();
         return res;
       };
     }
@@ -186,6 +188,7 @@ export default class TopsScreen {
     root.append(sheetArea, editArea);
 
     this._buildQuicklane();
+    this._buildList();
     this._buildWorkbench();
   }
 
@@ -221,6 +224,13 @@ export default class TopsScreen {
       onCreateChild: async () => this._handleWorkbenchCreateChild(),
     });
     this.editCanvas.appendChild(this.workbench.root);
+  }
+
+  _buildList() {
+    this.topsList = new TopsList({
+      onRowClick: async (item) => this._handleListRowClick(item),
+    });
+    this.sheetPaper.appendChild(this.topsList.root);
   }
 
   _detachLegacyPinnedLayout() {
@@ -280,11 +290,7 @@ export default class TopsScreen {
     }
 
     if (list) {
-      list.style.margin = "0";
-      list.style.paddingTop = "10px";
-      list.style.paddingBottom = "12px";
-      list.style.paddingLeft = "0";
-      this.sheetPaper.appendChild(list);
+      list.style.display = "none";
     }
 
     if (box) {
@@ -430,106 +436,12 @@ export default class TopsScreen {
     }
   }
 
-  _inferLevelFromRow(row) {
-    const numLabel = row?.firstElementChild?.querySelector("span");
-    const raw = String(numLabel?.textContent || "")
-      .trim()
-      .replace(/\.$/, "");
-    if (!raw) return 1;
-    const parts = raw.split(".").filter(Boolean);
-    if (!parts.length) return 1;
-    return Math.max(1, Math.min(4, parts.length));
+  _inferLevelFromRow(_row) {
+    return 1;
   }
 
   _polishSheetList() {
-    const list = this._legacy.listEl;
-    if (!list) return;
-
-    for (const node of Array.from(list.children || [])) {
-      if (!(node instanceof HTMLElement)) continue;
-
-      if (node.tagName !== "LI") {
-        node.style.margin = "24px auto";
-        node.style.maxWidth = "620px";
-        node.style.padding = "18px 14px";
-        node.style.border = "1px dashed #d5e0ec";
-        node.style.borderRadius = "12px";
-        node.style.background = "#fcfdff";
-        continue;
-      }
-
-      const li = node;
-      const row = li.firstElementChild;
-      if (!(row instanceof HTMLElement)) continue;
-
-      const level = this._inferLevelFromRow(row);
-      const isSelected = String(li.style.border || "").includes("#7aa7ff");
-      const isMarked = String(li.style.border || "").includes("#f9a825");
-      const inMoveMode = !!this._legacy.moveModeActive;
-
-      const indent = Math.max(0, level - 1) * 12;
-      li.style.margin = "6px 0";
-      li.style.marginLeft = `${indent}px`;
-      li.style.padding = "8px 10px";
-      li.style.borderRadius = "10px";
-      li.style.transition = "background 120ms ease, border-color 120ms ease, box-shadow 120ms ease";
-
-      if (!inMoveMode) {
-        const baseBg = level === 1 ? "#f7fafc" : "#ffffff";
-        if (!isSelected && !isMarked) {
-          li.style.background = baseBg;
-          li.style.border = "1px solid #dfe7f1";
-          li.style.boxShadow = "none";
-        }
-        if (isSelected && !isMarked) {
-          li.style.background = "#eaf3ff";
-          li.style.border = "1px solid #7aa7ff";
-          li.style.boxShadow = "0 0 0 2px rgba(122, 167, 255, 0.16)";
-        }
-      }
-
-      row.style.alignItems = "stretch";
-      row.style.gap = "12px";
-
-      const numBlock = row.children[0];
-      if (numBlock instanceof HTMLElement) {
-        numBlock.style.alignSelf = "stretch";
-        numBlock.style.paddingTop = "1px";
-        numBlock.style.paddingRight = "8px";
-        numBlock.style.borderRight = "1px solid #edf2f7";
-        numBlock.style.opacity = level === 1 ? "0.95" : "0.88";
-      }
-
-      const textCol = row.children[1];
-      if (textCol instanceof HTMLElement) {
-        textCol.style.paddingTop = "1px";
-        const titleLine = textCol.firstElementChild;
-        if (titleLine instanceof HTMLElement) {
-          titleLine.style.whiteSpace = "normal";
-          titleLine.style.overflow = "visible";
-          titleLine.style.textOverflow = "clip";
-          titleLine.style.lineHeight = "1.35";
-          titleLine.style.fontWeight = level === 1 ? "700" : isSelected ? "700" : "600";
-        }
-        const longPreview = textCol.children[1];
-        if (longPreview instanceof HTMLElement) {
-          longPreview.style.marginTop = "2px";
-          longPreview.style.padding = "6px 8px";
-          longPreview.style.borderRadius = "7px";
-          longPreview.style.border = "1px solid #e3ebf5";
-          longPreview.style.background = "#f6f9fc";
-          longPreview.style.lineHeight = "1.4";
-          longPreview.style.opacity = "0.96";
-        }
-      }
-
-      const metaCol = row.children[2];
-      if (metaCol instanceof HTMLElement) {
-        metaCol.style.borderLeft = "1px solid #edf2f7";
-        metaCol.style.paddingLeft = "10px";
-        metaCol.style.marginLeft = "4px";
-      }
-    }
+    // LIST-V2: alte DOM-Nachpolitur bleibt nur als inaktiver Legacy-Rest.
   }
 
   _styleWorkbenchButton(btn, tone) {
@@ -741,10 +653,9 @@ export default class TopsScreen {
     this._syncStoreFromLegacy();
 
     if (list) {
-      list.style.paddingTop = "10px";
-      list.style.paddingBottom = "12px";
-      this._polishSheetList();
+      list.style.display = "none";
     }
+    this._syncListState();
 
     if (this.editArea) {
       const state = this.store.getState();
@@ -760,6 +671,86 @@ export default class TopsScreen {
       const state = this.store.getState();
       this.editArea.dataset.bbmHasSelection = hasSelection(state) ? "true" : "false";
     }
+  }
+
+  _buildListItemsFromState() {
+    const state = this.store.getState();
+    const tops = Array.isArray(state.tops) ? state.tops : [];
+    const selectedId = state.selectedTopId;
+    const selectedTop = getSelectedTop(state);
+    const movingTop = state.isMoveMode ? selectedTop : null;
+    const showLongtext = !!this._legacy?.showLongtextInList;
+    const rows = [];
+
+    let collapsedParentId = null;
+    for (const top of tops) {
+      if (typeof this._legacy?._shouldHideTopInList === "function" && this._legacy._shouldHideTopInList(top)) {
+        continue;
+      }
+
+      const isLevel1 = Number(top?.level) === 1;
+      const topIdKey = String(top?.id || "");
+      const isCollapsed = isLevel1 && !!this._legacy?.level1Collapsed?.has?.(topIdKey);
+      if (isLevel1) {
+        collapsedParentId = isCollapsed ? topIdKey : null;
+      } else if (collapsedParentId) {
+        continue;
+      }
+
+      const due = (top?.due_date || top?.dueDate || "").toString().trim();
+      const status = (top?.status || "").toString().trim();
+      const responsible = (top?.responsible_label || top?.responsibleLabel || "").toString().trim();
+      const meta = [];
+      if (due) meta.push(`Fertig bis: ${due}`);
+      if (status) meta.push(`Status: ${status}`);
+      if (responsible) meta.push(`Verantw.: ${responsible}`);
+
+      let isMoveTarget = null;
+      if (state.isMoveMode && movingTop && typeof this._legacy?._isAllowedTarget === "function") {
+        isMoveTarget = !!this._legacy._isAllowedTarget(top, movingTop);
+      }
+
+      rows.push({
+        id: top?.id,
+        level: Number(top?.level) || 1,
+        title: String(top?.title || ""),
+        number: `${top?.displayNumber ?? top?.number ?? ""}.`,
+        preview: showLongtext ? String(top?.longtext || "") : "",
+        meta,
+        isSelected: String(top?.id) === String(selectedId ?? ""),
+        isMoveMode: !!state.isMoveMode,
+        isMoveTarget,
+        raw: top,
+      });
+    }
+    return rows;
+  }
+
+  _syncListState() {
+    if (!(this.topsList instanceof TopsList)) return;
+    this.topsList.setItems(this._buildListItemsFromState());
+  }
+
+  async _handleListRowClick(item) {
+    const top = item?.raw || null;
+    if (!top) return;
+    const state = this.store.getState();
+    const movingTop = state.isMoveMode ? getSelectedTop(state) : null;
+
+    if (state.isMoveMode && movingTop && !state.isReadOnly) {
+      if (!item.isMoveTarget) return;
+      await this._legacy.performMove(top.id);
+      this._syncScreenState();
+      return;
+    }
+
+    this._legacy.selectedTopId = top.id;
+    this._legacy.selectedTop = top;
+    this._legacy._userSelectedTop = true;
+    this._legacy._updateMoveControls?.();
+    this._legacy._updateCreateChildControls?.();
+    this._legacy._updateDeleteControls?.();
+    this._syncScreenState();
   }
 
   _shouldShowWorkbench(state) {
