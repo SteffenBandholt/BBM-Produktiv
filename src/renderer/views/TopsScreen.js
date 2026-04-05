@@ -8,8 +8,8 @@ import { TopsWorkbench } from "../tops/components/TopsWorkbench.js";
 import { TopsList } from "../tops/components/TopsList.js";
 import { TopsHeader } from "../tops/components/TopsHeader.js";
 
-// TOPS-V2: offizieller Einstiegspunkt fuer Tops-UI.
-// LEGACY-BOUNDARY: fachliche Bestandslogik bleibt bis zur v2-Ablosung in TopsView.
+// TOPS-V2: eigenstaendiger Screen.
+// LEGACY-REST: TopsView wird nur noch fuer den Output/Close-Flow als Bruecke gehalten.
 export default class TopsScreen {
   constructor(options = {}) {
     this.router = options.router || null;
@@ -29,101 +29,36 @@ export default class TopsScreen {
     this.quicklane = null;
     this.workbench = null;
     this.topsList = null;
+
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.store = createTopsStore({
       projectId: this.projectId,
       meetingId: this.meetingId,
+      tops: [],
+      selectedTopId: null,
+      editor: {},
+      isReadOnly: false,
+      isMoveMode: false,
+      isLoading: false,
+      error: null,
+      meetingMeta: null,
     });
     this.commands = new TopsCommands({
       store: this.store,
       repository: this.topsRepository,
     });
 
-    // LEGACY-BOUNDARY: delegiert derzeit vollstaendig an TopsView (Legacy).
-    // REMOVE-IN-PHASE-X: ersetzen, sobald v2-Implementierung fachlich bereit ist.
-    this._legacy = new TopsView({
+    // LEGACY-REST: nur fuer "Protokoll beenden"/Output-Flow.
+    this._legacyBridge = new TopsView({
       ...options,
       topsRepository: this.topsRepository,
     });
-    this._wrapLegacyHooks();
-
-    return new Proxy(this, {
-      get: (target, prop, receiver) => {
-        if (Reflect.has(target, prop)) return Reflect.get(target, prop, receiver);
-        const value = target._legacy?.[prop];
-        return typeof value === "function" ? value.bind(target._legacy) : value;
-      },
-      set: (target, prop, value, receiver) => {
-        if (Reflect.has(target, prop)) return Reflect.set(target, prop, value, receiver);
-        if (target._legacy && prop in target._legacy) {
-          target._legacy[prop] = value;
-          return true;
-        }
-        return Reflect.set(target, prop, value, receiver);
-      },
-    });
-  }
-
-  _wrapLegacyHooks() {
-    // LEGACY-BOUNDARY: Hook-Wrapping ist reine Uebergangsverdrahtung.
-    // REMOVE-IN-PHASE-X: entfällt mit nativen TopsScreen-v2 Hooks.
-    const legacy = this._legacy;
-
-    const applyReadOnlyState = legacy._applyReadOnlyState?.bind(legacy);
-    if (applyReadOnlyState) {
-      legacy._applyReadOnlyState = (...args) => {
-        const res = applyReadOnlyState(...args);
-        this._syncScreenState();
-        return res;
-      };
-    }
-
-    const renderIdleState = legacy._renderIdleState?.bind(legacy);
-    if (renderIdleState) {
-      legacy._renderIdleState = (...args) => {
-        const res = renderIdleState(...args);
-        this._syncScreenState();
-        return res;
-      };
-    }
-
-    const renderListOnly = legacy._renderListOnly?.bind(legacy);
-    if (renderListOnly) {
-      legacy._renderListOnly = (...args) => {
-        const res = renderListOnly(...args);
-        this._syncListState();
-        return res;
-      };
-    }
-
-    const applyEditBoxState = legacy.applyEditBoxState?.bind(legacy);
-    if (applyEditBoxState) {
-      legacy.applyEditBoxState = (...args) => {
-        const res = applyEditBoxState(...args);
-        this._syncScreenState();
-        return res;
-      };
-    }
-
-    const updateTopBarProtocolTitle = legacy._updateTopBarProtocolTitle?.bind(legacy);
-    if (updateTopBarProtocolTitle) {
-      legacy._updateTopBarProtocolTitle = (...args) => {
-        const res = updateTopBarProtocolTitle(...args);
-        this._syncHeaderState();
-        return res;
-      };
-    }
   }
 
   render() {
-    // LEGACY-BOUNDARY: Shell ist v2-Rahmen; Inhalt kommt aktuell noch aus Legacy-Renderbaum.
-    const legacyRoot = this._legacy.render();
     this._buildShell();
-    this._detachLegacyPinnedLayout();
-    this._mountLegacyAreas(legacyRoot);
     this._hideSidebar();
     this._syncScreenState();
-    this._enforceShellLayout(10);
     return this.root;
   }
 
@@ -185,30 +120,28 @@ export default class TopsScreen {
     this.editCanvas = editCanvas;
 
     this._buildHeader();
+    this._buildQuicklane();
+    this._buildList();
+    this._buildWorkbench();
+
     sheetCanvas.appendChild(sheetPaper);
     sheetArea.appendChild(sheetCanvas);
     editArea.appendChild(editCanvas);
     root.append(this.header.root, sheetArea, editArea);
-
-    this._buildQuicklane();
-    this._buildList();
-    this._buildWorkbench();
   }
 
   _buildHeader() {
     this.header = new TopsHeader({
       onClose: async () => {
-        if (typeof this._legacy?._closeViewOnly === "function") {
-          await this._legacy._closeViewOnly();
-          return;
-        }
         if (typeof this.router?.showProjects === "function") {
           await this.router.showProjects();
         }
       },
       onEndMeeting: async () => {
-        if (typeof this._legacy?._runCloseMeetingOutputFlow === "function") {
-          await this._legacy._runCloseMeetingOutputFlow();
+        if (typeof this._legacyBridge?._runCloseMeetingOutputFlow === "function") {
+          await this._legacyBridge._runCloseMeetingOutputFlow();
+          await this._reloadTops({ keepSelection: true });
+          this._syncScreenState();
         }
       },
     });
@@ -237,6 +170,13 @@ export default class TopsScreen {
     this._mountQuicklaneIntoHeader();
   }
 
+  _buildList() {
+    this.topsList = new TopsList({
+      onRowClick: async (item) => this._handleListRowClick(item),
+    });
+    this.sheetPaper.appendChild(this.topsList.root);
+  }
+
   _buildWorkbench() {
     this.workbench = new TopsWorkbench({
       onDraftChange: (draft) => this._handleWorkbenchDraftChange(draft),
@@ -247,62 +187,6 @@ export default class TopsScreen {
       onCreateChild: async () => this._handleWorkbenchCreateChild(),
     });
     this.editCanvas.appendChild(this.workbench.root);
-  }
-
-  _buildList() {
-    this.topsList = new TopsList({
-      onRowClick: async (item) => this._handleListRowClick(item),
-    });
-    this.sheetPaper.appendChild(this.topsList.root);
-  }
-
-  _detachLegacyPinnedLayout() {
-    const legacy = this._legacy;
-
-    if (legacy._fixedResizeObs) {
-      try {
-        legacy._fixedResizeObs.disconnect();
-      } catch (_e) {
-        // ignore
-      }
-      legacy._fixedResizeObs = null;
-    }
-
-    if (legacy._fixedHorzResizeObs) {
-      try {
-        legacy._fixedHorzResizeObs.disconnect();
-      } catch (_e) {
-        // ignore
-      }
-      legacy._fixedHorzResizeObs = null;
-    }
-
-    legacy._syncPinnedBars = () => {};
-    legacy._syncPinnedHorizontal = () => {};
-  }
-
-  _mountLegacyAreas(legacyRoot) {
-    const topBar = this._legacy.topBarEl;
-    const list = this._legacy.listEl;
-    const box = this._legacy.box;
-
-    if (topBar) {
-      topBar.style.display = "none";
-    }
-
-    if (list) {
-      list.style.display = "none";
-    }
-
-    if (box) {
-      box.style.display = "none";
-    }
-
-    if (legacyRoot && legacyRoot.parentElement) {
-      legacyRoot.parentElement.removeChild(legacyRoot);
-    }
-
-    this._legacy.root = this.root;
   }
 
   _mountQuicklaneIntoHeader() {
@@ -329,6 +213,11 @@ export default class TopsScreen {
     this._sidebarDisplay = "";
   }
 
+  _getQuicklaneProjectId() {
+    const state = this.store.getState();
+    return state.projectId || this.router?.currentProjectId || null;
+  }
+
   _syncQuicklaneState() {
     const state = this.store.getState();
     if (!(this.quicklane instanceof TopsQuicklane)) return;
@@ -339,260 +228,21 @@ export default class TopsScreen {
     this._mountQuicklaneIntoHeader();
   }
 
-  _getQuicklaneProjectId() {
-    const state = this.store.getState();
-    return state.projectId || this.router?.currentProjectId || null;
-  }
-
-  _inferLevelFromRow(_row) {
-    return 1;
-  }
-
-  _polishSheetList() {
-    // LIST-V2: alte DOM-Nachpolitur bleibt nur als inaktiver Legacy-Rest.
-  }
-
-  _styleWorkbenchButton(btn, tone) {
-    if (!(btn instanceof HTMLElement)) return;
-    btn.style.borderRadius = "6px";
-    btn.style.padding = "1px 7px";
-    btn.style.minHeight = "20px";
-    btn.style.fontSize = "7.5pt";
-    btn.style.lineHeight = "1.2";
-    btn.style.fontWeight = "600";
-    if (tone === "primary") {
-      btn.style.background = "#2f6fb7";
-      btn.style.color = "#ffffff";
-      btn.style.border = "1px solid #285f9b";
-      return;
-    }
-    if (tone === "danger") {
-      btn.style.background = "#fff4e6";
-      btn.style.color = "#8a4b00";
-      btn.style.border = "1px solid #e7bf84";
-      return;
-    }
-    btn.style.background = "#f5f8fc";
-    btn.style.color = "#1f344a";
-    btn.style.border = "1px solid #d3dfec";
-  }
-
-  _polishEditWorkbench() {
-    const box = this._legacy.box;
-    if (!(box instanceof HTMLElement)) return;
-
-    box.style.background = "#ffffff";
-    box.style.border = "1px solid #d5e1ee";
-    box.style.borderRadius = "10px";
-    box.style.boxShadow = "0 6px 14px rgba(15, 23, 42, 0.07)";
-    box.style.padding = "4px 6px 6px";
-
-    const boxHeader = box.children[0];
-    const editorRow = box.children[1];
-    if (!(boxHeader instanceof HTMLElement) || !(editorRow instanceof HTMLElement)) return;
-
-    boxHeader.style.display = "flex";
-    boxHeader.style.flexWrap = "wrap";
-    boxHeader.style.alignItems = "center";
-    boxHeader.style.gap = "4px";
-    boxHeader.style.marginBottom = "4px";
-    boxHeader.style.paddingBottom = "4px";
-    boxHeader.style.borderBottom = "1px solid #e4ebf4";
-
-    const boxTitle = boxHeader.children[0];
-    const addActions = boxHeader.children[1];
-    const headerActions = boxHeader.children[2];
-
-    if (boxTitle instanceof HTMLElement) {
-      boxTitle.style.color = "#154570";
-      boxTitle.style.fontWeight = "700";
-      boxTitle.style.fontSize = "8.5pt";
-      boxTitle.style.minWidth = "unset";
-      boxTitle.style.maxWidth = "unset";
-      boxTitle.style.flex = "1 1 220px";
-      boxTitle.style.padding = "1px 2px 1px 0";
-    }
-
-    if (addActions instanceof HTMLElement) {
-      addActions.style.marginLeft = "0";
-      addActions.style.display = "inline-flex";
-      addActions.style.alignItems = "center";
-      addActions.style.flexWrap = "wrap";
-      addActions.style.gap = "3px";
-      addActions.style.padding = "1px 5px";
-      addActions.style.background = "#f7fbff";
-      addActions.style.border = "1px solid #d9e6f3";
-      addActions.style.borderRadius = "999px";
-      this._styleWorkbenchButton(this._legacy.btnL1, "neutral");
-      this._styleWorkbenchButton(this._legacy.btnChild, "neutral");
-    }
-
-    if (headerActions instanceof HTMLElement) {
-      headerActions.style.marginLeft = "auto";
-      headerActions.style.display = "inline-flex";
-      headerActions.style.alignItems = "center";
-      headerActions.style.flexWrap = "wrap";
-      headerActions.style.gap = "3px";
-      headerActions.style.padding = "1px 5px";
-      headerActions.style.background = "#f7fbff";
-      headerActions.style.border = "1px solid #d9e6f3";
-      headerActions.style.borderRadius = "999px";
-      this._styleWorkbenchButton(this._legacy.btnMove, "neutral");
-      this._styleWorkbenchButton(this._legacy.btnSaveTop, "primary");
-      this._styleWorkbenchButton(this._legacy.btnTrashTop, "danger");
-    }
-
-    editorRow.style.display = "grid";
-    editorRow.style.gridTemplateColumns = "minmax(0, 1fr) 1px minmax(220px, 240px)";
-    editorRow.style.alignItems = "stretch";
-    editorRow.style.gap = "6px";
-
-    const leftCol = editorRow.children[0];
-    const sep = editorRow.children[1];
-    const metaCol = editorRow.children[2];
-
-    if (leftCol instanceof HTMLElement) {
-      leftCol.style.gap = "4px";
-      leftCol.style.minWidth = "0";
-      const titleWrap = leftCol.children[0];
-      const longWrap = leftCol.children[1];
-
-      if (titleWrap instanceof HTMLElement) {
-        titleWrap.style.padding = "4px 6px";
-        titleWrap.style.border = "1px solid #dce7f2";
-        titleWrap.style.borderRadius = "10px";
-        titleWrap.style.background = "#fbfdff";
-      }
-      if (longWrap instanceof HTMLElement) {
-        longWrap.style.marginTop = "0";
-        longWrap.style.padding = "4px 6px";
-        longWrap.style.border = "1px solid #dce7f2";
-        longWrap.style.borderRadius = "10px";
-        longWrap.style.background = "#fbfdff";
-      }
-    }
-
-    if (sep instanceof HTMLElement) {
-      sep.style.width = "1px";
-      sep.style.margin = "0";
-      sep.style.background = "#d9e4ef";
-    }
-
-    if (metaCol instanceof HTMLElement) {
-      metaCol.style.flex = "1 1 auto";
-      metaCol.style.width = "auto";
-      metaCol.style.minWidth = "200px";
-      metaCol.style.maxWidth = "none";
-      metaCol.style.padding = "4px 6px";
-      metaCol.style.border = "1px solid #dce7f2";
-      metaCol.style.borderRadius = "10px";
-      metaCol.style.background = "#f8fbff";
-      metaCol.style.gap = "4px";
-
-      if (!metaCol.querySelector('[data-bbm-workbench-meta-title="true"]')) {
-        const metaTitle = document.createElement("div");
-        metaTitle.setAttribute("data-bbm-workbench-meta-title", "true");
-        metaTitle.textContent = "Metaspalte";
-        metaTitle.style.fontSize = "8pt";
-        metaTitle.style.fontWeight = "700";
-        metaTitle.style.color = "#234d72";
-        metaTitle.style.marginBottom = "1px";
-        metaCol.prepend(metaTitle);
-      }
-
-      for (const field of Array.from(metaCol.children || [])) {
-        if (!(field instanceof HTMLElement)) continue;
-        if (field.getAttribute("data-bbm-workbench-meta-title") === "true") continue;
-        field.style.padding = "3px 4px";
-        field.style.border = "1px solid #d9e4ef";
-        field.style.borderRadius = "8px";
-        field.style.background = "#ffffff";
-
-        for (const control of Array.from(field.querySelectorAll("input, select"))) {
-          if (!(control instanceof HTMLElement)) continue;
-          control.style.marginLeft = "0";
-          control.style.width = "100%";
-          control.style.boxSizing = "border-box";
-        }
-      }
-    }
-
-    if (window.innerWidth < 1120) {
-      editorRow.style.gridTemplateColumns = "minmax(0, 1fr)";
-      if (sep instanceof HTMLElement) sep.style.display = "none";
-      if (metaCol instanceof HTMLElement) {
-        metaCol.style.minWidth = "0";
-      }
-    } else if (sep instanceof HTMLElement) {
-      sep.style.display = "";
-    }
-
-    const inpTitle = this._legacy.inpTitle;
-    if (inpTitle instanceof HTMLElement) {
-      inpTitle.style.width = "100%";
-      inpTitle.style.boxSizing = "border-box";
-      inpTitle.style.padding = "3px 5px";
-      inpTitle.style.border = "1px solid #cad8e6";
-      inpTitle.style.borderRadius = "7px";
-      inpTitle.style.background = "#ffffff";
-      inpTitle.style.fontSize = "8.5pt";
-    }
-
-    const taLong = this._legacy.taLongtext;
-    if (taLong instanceof HTMLElement) {
-      taLong.style.width = "100%";
-      taLong.style.boxSizing = "border-box";
-      taLong.style.padding = "4px 5px";
-      taLong.style.border = "1px solid #cad8e6";
-      taLong.style.borderRadius = "7px";
-      taLong.style.background = "#ffffff";
-      taLong.style.minHeight = "64px";
-      taLong.style.resize = "vertical";
-      taLong.style.lineHeight = "1.35";
-      taLong.style.fontSize = "8.5pt";
-    }
-
-    this._styleWorkbenchButton(this._legacy.btnTitleDictate, "neutral");
-    this._styleWorkbenchButton(this._legacy.btnLongDictate, "neutral");
-  }
-
-  _syncScreenState() {
-    const list = this._legacy.listEl;
-    this._syncStoreFromLegacy();
-
-    if (list) {
-      list.style.display = "none";
-    }
-    this._syncListState();
-
-    if (this.editArea) {
-      const state = this.store.getState();
-      this.editArea.style.display = this._shouldShowWorkbench(state) ? "" : "none";
-    }
-
-    this._syncWorkbenchState();
-    this._syncQuicklaneState();
-    this._syncHeaderState();
-
-    if (this.editArea) {
-      const state = this.store.getState();
-      this.editArea.dataset.bbmHasSelection = hasSelection(state) ? "true" : "false";
-    }
-  }
-
   _buildHeaderContext(state) {
-    const parts = typeof this._legacy?._parseMeetingTitleParts === "function"
-      ? this._legacy._parseMeetingTitleParts()
-      : {};
-    const index = String(parts?.meetingIndex || "").trim();
-    const date = String(parts?.meetingDateText || "").trim();
-    const keyword = String(parts?.meetingKeyword || "").trim();
-    const meetingLine = [index, date].filter(Boolean).join(" - ");
+    const m = state?.meetingMeta || null;
+    const parts = [];
     const projectLine = String(this.router?.context?.projectLabel || "").trim();
-    const text = [projectLine, meetingLine, keyword].filter(Boolean).join(" | ");
-    if (text) return text;
-    if (!state?.meetingId) return "kein Protokoll aktiv";
-    return "Protokoll";
+    if (projectLine) parts.push(projectLine);
+
+    const meetingNo = String(m?.meeting_number ?? m?.meetingNumber ?? "").trim();
+    const meetingDate = String(m?.meeting_date ?? m?.meetingDate ?? "").trim();
+    const meetingKeyword = String(m?.keyword || m?.meeting_keyword || "").trim();
+    const meetingLine = [meetingNo, meetingDate].filter(Boolean).join(" - ");
+    if (meetingLine) parts.push(meetingLine);
+    if (meetingKeyword) parts.push(meetingKeyword);
+
+    if (!parts.length) return state?.meetingId ? "Protokoll" : "kein Protokoll aktiv";
+    return parts.join(" | ");
   }
 
   _syncHeaderState() {
@@ -603,9 +253,8 @@ export default class TopsScreen {
       context: this._buildHeaderContext(state),
       isReadOnly: !!state.isReadOnly,
       canEndMeeting: !!state.meetingId,
-      isBusy: !!this._legacy?._busy,
+      isBusy: !!state.isLoading,
     });
-    this._mountQuicklaneIntoHeader();
   }
 
   _buildListItemsFromState() {
@@ -614,24 +263,9 @@ export default class TopsScreen {
     const selectedId = state.selectedTopId;
     const selectedTop = getSelectedTop(state);
     const movingTop = state.isMoveMode ? selectedTop : null;
-    const showLongtext = !!this._legacy?.showLongtextInList;
     const rows = [];
 
-    let collapsedParentId = null;
     for (const top of tops) {
-      if (typeof this._legacy?._shouldHideTopInList === "function" && this._legacy._shouldHideTopInList(top)) {
-        continue;
-      }
-
-      const isLevel1 = Number(top?.level) === 1;
-      const topIdKey = String(top?.id || "");
-      const isCollapsed = isLevel1 && !!this._legacy?.level1Collapsed?.has?.(topIdKey);
-      if (isLevel1) {
-        collapsedParentId = isCollapsed ? topIdKey : null;
-      } else if (collapsedParentId) {
-        continue;
-      }
-
       const due = (top?.due_date || top?.dueDate || "").toString().trim();
       const status = (top?.status || "").toString().trim();
       const responsible = (top?.responsible_label || top?.responsibleLabel || "").toString().trim();
@@ -641,8 +275,8 @@ export default class TopsScreen {
       if (responsible) meta.push(`Verantw.: ${responsible}`);
 
       let isMoveTarget = null;
-      if (state.isMoveMode && movingTop && typeof this._legacy?._isAllowedTarget === "function") {
-        isMoveTarget = !!this._legacy._isAllowedTarget(top, movingTop);
+      if (state.isMoveMode && movingTop) {
+        isMoveTarget = this._isAllowedMoveTarget(top, movingTop);
       }
 
       rows.push({
@@ -650,7 +284,7 @@ export default class TopsScreen {
         level: Number(top?.level) || 1,
         title: String(top?.title || ""),
         number: `${top?.displayNumber ?? top?.number ?? ""}.`,
-        preview: showLongtext ? String(top?.longtext || "") : "",
+        preview: String(top?.longtext || ""),
         meta,
         isSelected: String(top?.id) === String(selectedId ?? ""),
         isMoveMode: !!state.isMoveMode,
@@ -666,6 +300,25 @@ export default class TopsScreen {
     this.topsList.setItems(this._buildListItemsFromState());
   }
 
+  _hasChildren(topId) {
+    const state = this.store.getState();
+    const tops = Array.isArray(state.tops) ? state.tops : [];
+    const key = String(topId ?? "");
+    return tops.some((t) => String(t?.parent_top_id ?? "") === key);
+  }
+
+  _isBlue(top) {
+    return Number(top?.is_carried_over) !== 1;
+  }
+
+  _isAllowedMoveTarget(target, movingTop) {
+    if (!movingTop || !target) return false;
+    if (String(target.id) === String(movingTop.id)) return false;
+    const tl = Number(target.level);
+    if (!Number.isFinite(tl)) return false;
+    return tl >= 1 && tl <= 3;
+  }
+
   async _handleListRowClick(item) {
     const top = item?.raw || null;
     if (!top) return;
@@ -674,77 +327,29 @@ export default class TopsScreen {
 
     if (state.isMoveMode && movingTop && !state.isReadOnly) {
       if (!item.isMoveTarget) return;
-      await this._legacy.performMove(top.id);
+      await this.topsRepository.moveTop({
+        topId: movingTop.id,
+        targetParentId: top.id || null,
+      });
+      this.commands.toggleMoveMode(false);
+      await this._reloadTops({ keepSelection: true, selectTopId: movingTop.id });
       this._syncScreenState();
       return;
     }
 
-    this._legacy.selectedTopId = top.id;
-    this._legacy.selectedTop = top;
-    this._legacy._userSelectedTop = true;
-    this._legacy._updateMoveControls?.();
-    this._legacy._updateCreateChildControls?.();
-    this._legacy._updateDeleteControls?.();
+    this.commands.selectTop(top.id);
+    this.commands.updateDraft(this._editorFromTop(top));
     this._syncScreenState();
   }
 
   _shouldShowWorkbench(state) {
     const selectedTop = getSelectedTop(state);
     const hasSelection = !!selectedTop;
-    const hasMeeting = !!(state?.meetingId || this._legacy?.meetingId);
-
-    // Sichtbarkeit am Bearbeitungskontext ausrichten:
-    // - mit Auswahl immer sichtbar (auch read-only, dann nur gesperrt)
-    // - ohne Auswahl nur im aktiven, editierbaren Meeting sichtbar
+    const hasMeeting = !!state?.meetingId;
     if (hasSelection) return true;
     if (!hasMeeting) return false;
     if (state?.isReadOnly) return false;
     return true;
-  }
-
-  _enforceShellLayout(steps) {
-    if (steps <= 0) return;
-    requestAnimationFrame(() => {
-      this._syncScreenState();
-      this._enforceShellLayout(steps - 1);
-    });
-  }
-
-  async load() {
-    await this.commands.loadTops({
-      meetingId: this.meetingId || null,
-      projectId: this.projectId || null,
-    });
-    if (typeof this._legacy.load === "function") {
-      try {
-        await this._legacy.load();
-      } catch (err) {
-        this.store.setState({
-          error: err?.message ? String(err.message) : String(err || "Load failed"),
-          isLoading: false,
-        });
-        throw err;
-      }
-    }
-    this._syncStoreFromLegacy({ isLoading: false, error: null });
-    this._syncScreenState();
-  }
-
-  async destroy() {
-    if (typeof this._legacy.destroy === "function") {
-      await this._legacy.destroy();
-    }
-    this._showSidebar();
-  }
-
-  _readEditorState() {
-    if (this.workbench instanceof TopsWorkbench) {
-      return this.workbench.getDraft();
-    }
-    return {
-      title: "",
-      longtext: "",
-    };
   }
 
   _editorFromTop(top) {
@@ -811,18 +416,15 @@ export default class TopsScreen {
 
   _canDeleteFromState(state, selectedTop) {
     if (state.isReadOnly || !selectedTop) return false;
-    if (typeof this._legacy?._canDeleteSelected === "function") {
-      return !!this._legacy._canDeleteSelected();
-    }
-    return Number(selectedTop.is_carried_over) !== 1;
+    if (!this._isBlue(selectedTop)) return false;
+    if (this._hasChildren(selectedTop.id)) return false;
+    return true;
   }
 
   _canMoveFromState(state, selectedTop) {
     if (state.isReadOnly || !selectedTop) return false;
-    if (typeof this._legacy?._isBlue === "function" && !this._legacy._isBlue(selectedTop)) return false;
-    if (typeof this._legacy?._selectedHasChildren === "function" && this._legacy._selectedHasChildren()) {
-      return false;
-    }
+    if (!this._isBlue(selectedTop)) return false;
+    if (this._hasChildren(selectedTop.id)) return false;
     return true;
   }
 
@@ -842,6 +444,19 @@ export default class TopsScreen {
     });
   }
 
+  _syncScreenState() {
+    const state = this.store.getState();
+    this._syncHeaderState();
+    this._syncQuicklaneState();
+    this._syncListState();
+    this._syncWorkbenchState();
+
+    if (this.editArea) {
+      this.editArea.style.display = this._shouldShowWorkbench(state) ? "" : "none";
+      this.editArea.dataset.bbmHasSelection = hasSelection(state) ? "true" : "false";
+    }
+  }
+
   _handleWorkbenchDraftChange(draft) {
     this.commands.updateDraft(draft || {});
     this._syncWorkbenchState();
@@ -854,70 +469,100 @@ export default class TopsScreen {
     const patch = this._buildPatchFromDraft(selectedTop, state.editor || {});
     if (!Object.keys(patch).length) return;
     await this.commands.saveDraft(patch);
-    await this._legacy.reloadList(true);
+    await this._reloadTops({ keepSelection: true, selectTopId: selectedTop.id });
     this._syncScreenState();
   }
 
   async _handleWorkbenchDelete() {
-    await this._legacy.deleteSelectedTop();
+    const state = this.store.getState();
+    const selectedTop = getSelectedTop(state);
+    if (!this._canDeleteFromState(state, selectedTop)) return;
+
+    await this.commands.saveDraft({ is_hidden: 1 });
+    await this.commands.deleteSelectedTop();
+    await this._reloadTops({ keepSelection: false });
     this._syncScreenState();
   }
 
   async _handleWorkbenchToggleMove() {
-    this._legacy.toggleMoveMode();
+    const state = this.store.getState();
+    const selectedTop = getSelectedTop(state);
+    if (!state.isMoveMode && !this._canMoveFromState(state, selectedTop)) return;
+    this.commands.toggleMoveMode();
     this._syncScreenState();
   }
 
   async _handleWorkbenchCreateLevel1() {
-    await this._legacy.createTop(1, null);
+    const state = this.store.getState();
+    if (state.isReadOnly || !state.meetingId || !state.projectId) return;
+
+    const res = await this.topsRepository.createTop({
+      projectId: state.projectId,
+      meetingId: state.meetingId,
+      level: 1,
+      parentTopId: null,
+      title: "(ohne Bezeichnung)",
+    });
+    const createdId = res?.top?.id || null;
+    await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
     this._syncScreenState();
   }
 
   async _handleWorkbenchCreateChild() {
-    const selected = this._legacy.selectedTop || this._legacy._findTopById?.(this._legacy.selectedTopId);
-    if (!selected) return;
+    const state = this.store.getState();
+    const selectedTop = getSelectedTop(state);
+    if (!this._canCreateChildFromState(state, selectedTop)) return;
 
-    if (this._legacy._userSelectedTop) {
-      const nextLevel = Number(selected.level) + 1;
-      if (nextLevel > 4) return;
-      await this._legacy.createTop(nextLevel, selected.id);
-      this._syncScreenState();
-      return;
-    }
+    const level = Number(selectedTop.level) + 1;
+    if (!Number.isFinite(level) || level > 4) return;
 
-    const siblingLevel = Number(selected.level);
-    if (siblingLevel < 2) {
-      await this._legacy.createTop(2, selected.id);
-      this._syncScreenState();
-      return;
-    }
-    if (siblingLevel > 4) return;
-    const parentId = selected.parent_top_id || null;
-    await this._legacy.createTop(siblingLevel, parentId);
+    const res = await this.topsRepository.createTop({
+      projectId: state.projectId,
+      meetingId: state.meetingId,
+      level,
+      parentTopId: selectedTop.id,
+      title: "(ohne Bezeichnung)",
+    });
+    const createdId = res?.top?.id || null;
+    await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
     this._syncScreenState();
   }
 
-  _syncStoreFromLegacy(partial = {}) {
-    const legacy = this._legacy;
-    const state = this.store.getState();
-    const selectedTopId = legacy?.selectedTopId ?? null;
-    const tops = Array.isArray(legacy?.items) ? legacy.items : [];
-    const selectedTop = tops.find((t) => String(t?.id) === String(selectedTopId)) || null;
-    const selectedChanged = String(state.selectedTopId ?? "") !== String(selectedTopId ?? "");
-    const nextEditor = selectedChanged
-      ? this._editorFromTop(selectedTop)
-      : { ...(state.editor || {}), ...this._readEditorState() };
+  async _reloadTops({ keepSelection = true, selectTopId = null } = {}) {
+    const before = this.store.getState();
+    const prevSelectedId = before.selectedTopId ?? null;
+    const res = await this.commands.loadTops({
+      meetingId: this.meetingId || before.meetingId || null,
+      projectId: this.projectId || before.projectId || null,
+    });
 
-    this.commands.selectTop(selectedTopId);
-    this.commands.updateDraft(nextEditor);
-    this.commands.toggleMoveMode(!!legacy?.moveModeActive);
+    const tops = Array.isArray(res?.list) ? res.list : [];
+    let nextSelectedId = null;
+    if (selectTopId !== null && selectTopId !== undefined) {
+      nextSelectedId = tops.some((t) => String(t?.id) === String(selectTopId)) ? selectTopId : null;
+    } else if (keepSelection && prevSelectedId !== null && prevSelectedId !== undefined) {
+      nextSelectedId = tops.some((t) => String(t?.id) === String(prevSelectedId)) ? prevSelectedId : null;
+    }
+
+    this.commands.selectTop(nextSelectedId);
+    const selectedTop = tops.find((t) => String(t?.id) === String(nextSelectedId ?? "")) || null;
+    this.commands.updateDraft(this._editorFromTop(selectedTop));
+    this.commands.toggleMoveMode(false);
     this.store.setState({
-      projectId: legacy?.projectId || this.projectId || null,
-      meetingId: legacy?.meetingId || this.meetingId || null,
-      tops,
-      editor: nextEditor,
-      isReadOnly: !!legacy?.isReadOnly,
-      ...partial,
+      meetingMeta: res?.meeting || null,
     });
   }
+
+  async load() {
+    await this._reloadTops({ keepSelection: true });
+    this._syncScreenState();
+  }
+
+  async destroy() {
+    if (typeof this._legacyBridge?.destroy === "function") {
+      await this._legacyBridge.destroy();
+    }
+    this._showSidebar();
+  }
 }
+

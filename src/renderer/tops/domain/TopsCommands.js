@@ -38,6 +38,7 @@ export class TopsCommands {
         error: res?.ok ? null : res?.error || "load failed",
         tops: list,
         isReadOnly,
+        meetingMeta: res?.meeting || null,
       });
       return res;
     } catch (err) {
@@ -97,4 +98,3 @@ export class TopsCommands {
     return next;
   }
 }
-
