@@ -111,12 +111,12 @@ export default class TopsScreen {
     quicklane.setAttribute("data-bbm-tops-screen-quicklane", "true");
     quicklane.style.display = "inline-flex";
     quicklane.style.alignItems = "center";
-    quicklane.style.gap = "5px";
+    quicklane.style.gap = "4px";
     quicklane.style.flexWrap = "wrap";
-    quicklane.style.minHeight = "22px";
+    quicklane.style.minHeight = "18px";
     quicklane.style.margin = "0";
-    quicklane.style.padding = "2px 10px 4px";
-    quicklane.style.borderBottom = "1px solid #d9e2ec";
+    quicklane.style.padding = "1px 10px 2px";
+    quicklane.style.borderBottom = "1px solid #e2e8f0";
     quicklane.style.background = "#ffffff";
 
     const sheetArea = document.createElement("section");
@@ -254,10 +254,10 @@ export default class TopsScreen {
       topBar.style.left = "";
       topBar.style.right = "";
       topBar.style.height = "auto";
-      topBar.style.minHeight = "38px";
+      topBar.style.minHeight = "30px";
       topBar.style.maxHeight = "none";
-      topBar.style.padding = "3px 2px 2px";
-      topBar.style.gap = "8px";
+      topBar.style.padding = "1px 2px 1px";
+      topBar.style.gap = "6px";
       topBar.style.margin = "0";
       topBar.style.overflowY = "visible";
       topBar.style.borderBottom = "0";
@@ -350,26 +350,48 @@ export default class TopsScreen {
   _compactWorkingTopBar() {
     const topBar = this._legacy.topBarEl;
     if (!(topBar instanceof HTMLElement)) return;
+    topBar.style.alignItems = "center";
 
     const actionWrap = Array.from(topBar.children || []).find(
       (el) => el instanceof HTMLElement && el.contains?.(this._legacy.btnCloseMeeting)
     );
     if (actionWrap instanceof HTMLElement) {
       actionWrap.style.marginRight = "0";
-      actionWrap.style.gap = "6px";
+      actionWrap.style.gap = "4px";
+      actionWrap.style.alignItems = "center";
+      const actionButtons = Array.from(actionWrap.querySelectorAll("button"));
+      for (const btn of actionButtons) {
+        if (!(btn instanceof HTMLElement)) continue;
+        btn.style.minHeight = "0";
+        btn.style.padding = "1px 6px";
+        btn.style.fontSize = "7.5pt";
+        btn.style.lineHeight = "1.15";
+      }
     }
 
     const title = this._legacy.topsTitleEl;
     if (title instanceof HTMLElement) {
       title.style.margin = "0";
-      title.style.padding = "0 4px 0 0";
-      title.style.maxHeight = "28px";
+      title.style.padding = "0 3px 0 0";
+      title.style.maxHeight = "20px";
       title.style.overflow = "hidden";
-      title.style.gap = "0";
+      title.style.gap = "4px";
+      title.style.display = "inline-flex";
+      title.style.flexDirection = "row";
+      title.style.alignItems = "center";
+      title.style.lineHeight = "1";
 
       const lines = Array.from(title.children || []);
-      if (lines[0] instanceof HTMLElement) lines[0].style.margin = "0";
-      if (lines[1] instanceof HTMLElement) lines[1].style.margin = "0";
+      if (lines[0] instanceof HTMLElement) {
+        lines[0].style.margin = "0";
+        lines[0].style.fontSize = "8pt";
+        lines[0].style.lineHeight = "1";
+      }
+      if (lines[1] instanceof HTMLElement) {
+        lines[1].style.margin = "0";
+        lines[1].style.fontSize = "8pt";
+        lines[1].style.lineHeight = "1";
+      }
       for (let i = 2; i < lines.length; i += 1) {
         if (lines[i] instanceof HTMLElement) lines[i].style.display = "none";
       }
