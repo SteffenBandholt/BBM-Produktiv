@@ -93,6 +93,22 @@
   position: relative;
 }
 
+.bbm-tops-header-line3 {
+  font-size: 7.5pt;
+  font-weight: 500;
+  color: #1b5e20;
+  opacity: 0.76;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 52ch;
+}
+
+.bbm-tops-header-line3[data-empty="true"] {
+  display: none;
+}
+
 .bbm-tops-header-line2[data-editable="true"] {
   cursor: pointer;
 }
@@ -123,7 +139,8 @@
 }
 
 [data-bbm-tops-header-v2="true"][data-protocol-status="closed"] .bbm-tops-header-line1,
-[data-bbm-tops-header-v2="true"][data-protocol-status="closed"] .bbm-tops-header-line2 {
+[data-bbm-tops-header-v2="true"][data-protocol-status="closed"] .bbm-tops-header-line2,
+[data-bbm-tops-header-v2="true"][data-protocol-status="closed"] .bbm-tops-header-line3 {
   color: #b71c1c;
 }
 

@@ -109,12 +109,23 @@ export function buildHeaderState(state) {
     titleLine = `${titleLine} READ ONLY!`;
   }
 
+  const contextLine = cleanString(
+    state?.headerContext ??
+      state?.projectLabel ??
+      meetingMeta?.context_label ??
+      meetingMeta?.contextLabel ??
+      meetingMeta?.work_context ??
+      meetingMeta?.workContext ??
+      ""
+  );
+
   return {
     meetingId,
     meetingNo,
     meetingDate,
     titleLine,
     keywordLine,
+    contextLine,
     isReadOnly,
   };
 }

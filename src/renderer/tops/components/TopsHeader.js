@@ -29,7 +29,12 @@ export class TopsHeader {
       void this._handleKeywordClick();
     });
 
-    this.titleWrap.append(this.line1El, this.line2El);
+    this.line3El = document.createElement("div");
+    this.line3El.className = "bbm-tops-header-line3";
+    this.line3El.textContent = "";
+    this.line3El.dataset.empty = "true";
+
+    this.titleWrap.append(this.line1El, this.line2El, this.line3El);
 
     this.spacer = document.createElement("div");
     this.spacer.className = "bbm-tops-header-spacer";
@@ -69,7 +74,7 @@ export class TopsHeader {
     await this.onKeywordClick();
   }
 
-  update({ titleLine, keywordLine, isReadOnly, canEndMeeting, isBusy, canEditKeyword } = {}) {
+  update({ titleLine, keywordLine, contextLine, isReadOnly, canEndMeeting, isBusy, canEditKeyword } = {}) {
     const busy = !!isBusy;
     const readOnly = !!isReadOnly;
     const canEnd = !!canEndMeeting;
@@ -82,6 +87,10 @@ export class TopsHeader {
     this.line2El.dataset.editable = canEdit ? "true" : "false";
     this.line2El.title = "";
     this.line2El.tabIndex = canEdit ? 0 : -1;
+
+    const context = String(contextLine || "").trim();
+    this.line3El.textContent = context;
+    this.line3El.dataset.empty = context ? "false" : "true";
 
     this.root.dataset.isBusy = busy ? "true" : "false";
     this.root.dataset.isReadOnly = readOnly ? "true" : "false";

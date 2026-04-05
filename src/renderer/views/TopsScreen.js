@@ -227,10 +227,15 @@ export default class TopsScreen {
   _syncHeaderState() {
     if (!(this.header instanceof TopsHeader)) return;
     const state = this.store.getState();
-    const headerState = buildHeaderState(state);
+    const projectLabel = String(this.router?.context?.projectLabel || "").trim();
+    const headerState = buildHeaderState({
+      ...state,
+      projectLabel,
+    });
     this.header.update({
       titleLine: headerState.titleLine,
       keywordLine: headerState.keywordLine,
+      contextLine: headerState.contextLine,
       isReadOnly: headerState.isReadOnly,
       canEndMeeting: !!state.meetingId,
       isBusy: !!state.isLoading,
