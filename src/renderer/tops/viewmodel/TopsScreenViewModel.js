@@ -159,9 +159,9 @@ export function buildListItemsFromState(state) {
     const status = (top?.status || "").toString().trim();
     const responsible = (top?.responsible_label || top?.responsibleLabel || "").toString().trim();
     const meta = [];
-    if (due) meta.push(`Fertig bis: ${due}`);
-    if (status) meta.push(`Status: ${status}`);
-    if (responsible) meta.push(`Verantw.: ${responsible}`);
+    if (status) meta.push(status);
+    if (due) meta.push(due);
+    if (responsible) meta.push(responsible);
 
     let isMoveTarget = null;
     if (state?.isMoveMode && movingTop) {

@@ -39,8 +39,21 @@ export class TopsListRow {
 
     const meta = document.createElement("div");
     meta.className = "bbm-tops-list-row-meta";
-    for (const line of this.item.meta || []) {
+    const statusTokens = new Set(["-", "todo", "inprogress", "done", "erledigt", "offen"]);
+    for (const [index, line] of (this.item.meta || []).entries()) {
       const el = document.createElement("div");
+      el.className = "bbm-tops-list-row-meta-line";
+      const value = String(line || "").trim();
+      const normalized = value.toLowerCase();
+      const isIsoDate = /^\d{4}-\d{2}-\d{2}$/.test(value);
+      const isDeDate = /^\d{2}\.\d{2}\.\d{4}$/.test(value);
+      if (statusTokens.has(normalized)) {
+        el.classList.add("bbm-tops-list-row-meta-line-status");
+      } else if (!isIsoDate && !isDeDate) {
+        el.classList.add("bbm-tops-list-row-meta-line-responsible");
+      } else if (index === 2) {
+        el.classList.add("bbm-tops-list-row-meta-line-responsible");
+      }
       el.textContent = line;
       meta.appendChild(el);
     }

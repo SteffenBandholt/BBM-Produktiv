@@ -39,6 +39,19 @@ export class TopsHeader {
     this.spacer = document.createElement("div");
     this.spacer.className = "bbm-tops-header-spacer";
 
+    this.metaLegend = document.createElement("div");
+    this.metaLegend.className = "bbm-tops-header-meta-legend";
+    this.metaLegend.dataset.visible = "false";
+
+    this.metaLegendStatus = document.createElement("div");
+    this.metaLegendStatus.textContent = "Status";
+    this.metaLegendDue = document.createElement("div");
+    this.metaLegendDue.textContent = "Fertig bis";
+    this.metaLegendResponsible = document.createElement("div");
+    this.metaLegendResponsible.textContent = "verantw";
+
+    this.metaLegend.append(this.metaLegendStatus, this.metaLegendDue, this.metaLegendResponsible);
+
     this.actionsWrap = document.createElement("div");
     this.actionsWrap.className = "bbm-tops-header-actions";
 
@@ -61,7 +74,7 @@ export class TopsHeader {
     };
 
     this.actionsWrap.append(this.btnEndMeeting, this.btnClose);
-    this.root.append(this.titleWrap, this.spacer, this.actionsWrap);
+    this.root.append(this.titleWrap, this.spacer, this.actionsWrap, this.metaLegend);
   }
 
   getActionsHost() {
@@ -74,7 +87,16 @@ export class TopsHeader {
     await this.onKeywordClick();
   }
 
-  update({ titleLine, keywordLine, contextLine, isReadOnly, canEndMeeting, isBusy, canEditKeyword } = {}) {
+  update({
+    titleLine,
+    keywordLine,
+    contextLine,
+    isReadOnly,
+    canEndMeeting,
+    isBusy,
+    canEditKeyword,
+    showMetaLegend,
+  } = {}) {
     const busy = !!isBusy;
     const readOnly = !!isReadOnly;
     const canEnd = !!canEndMeeting;
@@ -91,6 +113,7 @@ export class TopsHeader {
     const context = String(contextLine || "").trim();
     this.line3El.textContent = context;
     this.line3El.dataset.empty = context ? "false" : "true";
+    this.metaLegend.dataset.visible = showMetaLegend ? "true" : "false";
 
     this.root.dataset.isBusy = busy ? "true" : "false";
     this.root.dataset.isReadOnly = readOnly ? "true" : "false";

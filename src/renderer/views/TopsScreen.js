@@ -240,6 +240,7 @@ export default class TopsScreen {
       canEndMeeting: !!state.meetingId,
       isBusy: !!state.isLoading,
       canEditKeyword: !!state.meetingId,
+      showMetaLegend: !!state.meetingId,
     });
   }
 
