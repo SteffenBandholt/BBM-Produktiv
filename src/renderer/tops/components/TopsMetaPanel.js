@@ -18,42 +18,25 @@ export class TopsMetaPanel {
     this.inpResponsible.type = "text";
     this.inpResponsible.placeholder = "verantwortlich";
 
-    this.chkImportant = this._mkCheckbox("wichtig");
-    this.chkHidden = this._mkCheckbox("TOP ausblenden");
-    this.chkDecision = this._mkCheckbox("Entscheidung");
+    // Flags bleiben im Draft erhalten, sind in diesem UI-Schritt aber ausgeblendet.
+    this.isImportant = 0;
+    this.isHidden = 0;
+    this.isDecision = 0;
 
-    this._appendField("Fertig bis", this.inpDueDate);
+    this._appendField("Fertig bis", this.inpDueDate, { rowClass: "bbm-tops-meta-field-date" });
     this._appendField("Status", this.selStatus);
     this._appendField("Verantwortlich", this.inpResponsible);
-    this.root.append(this.chkImportant.wrap, this.chkHidden.wrap, this.chkDecision.wrap);
 
-    for (const el of [
-      this.inpDueDate,
-      this.selStatus,
-      this.inpResponsible,
-      this.chkImportant.input,
-      this.chkHidden.input,
-      this.chkDecision.input,
-    ]) {
+    for (const el of [this.inpDueDate, this.selStatus, this.inpResponsible]) {
       el.addEventListener("change", () => this._emitChange());
       el.addEventListener("input", () => this._emitChange());
     }
   }
 
-  _mkCheckbox(label) {
-    const wrap = document.createElement("label");
-    wrap.className = "bbm-tops-meta-checkbox";
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    const text = document.createElement("span");
-    text.textContent = label;
-    wrap.append(input, text);
-    return { wrap, input };
-  }
-
-  _appendField(label, control) {
+  _appendField(label, control, { rowClass = "" } = {}) {
     const row = document.createElement("label");
     row.className = "bbm-tops-meta-field";
+    if (rowClass) row.classList.add(rowClass);
     const t = document.createElement("span");
     t.textContent = label;
     control.classList.add("bbm-tops-input");
@@ -70,9 +53,9 @@ export class TopsMetaPanel {
       due_date: (this.inpDueDate.value || "").trim() || null,
       status: (this.selStatus.value || "").trim() || "-",
       responsible_label: (this.inpResponsible.value || "").trim() || "",
-      is_important: this.chkImportant.input.checked ? 1 : 0,
-      is_hidden: this.chkHidden.input.checked ? 1 : 0,
-      is_decision: this.chkDecision.input.checked ? 1 : 0,
+      is_important: this.isImportant,
+      is_hidden: this.isHidden,
+      is_decision: this.isDecision,
     };
   }
 
@@ -80,22 +63,15 @@ export class TopsMetaPanel {
     this.inpDueDate.value = value?.due_date || "";
     this.selStatus.value = value?.status || "-";
     this.inpResponsible.value = value?.responsible_label || "";
-    this.chkImportant.input.checked = Number(value?.is_important) === 1;
-    this.chkHidden.input.checked = Number(value?.is_hidden) === 1;
-    this.chkDecision.input.checked = Number(value?.is_decision) === 1;
+    this.isImportant = Number(value?.is_important) === 1 ? 1 : 0;
+    this.isHidden = Number(value?.is_hidden) === 1 ? 1 : 0;
+    this.isDecision = Number(value?.is_decision) === 1 ? 1 : 0;
   }
 
   setDisabled(disabled) {
     const dis = !!disabled;
     this.root.dataset.disabled = dis ? "true" : "false";
-    for (const el of [
-      this.inpDueDate,
-      this.selStatus,
-      this.inpResponsible,
-      this.chkImportant.input,
-      this.chkHidden.input,
-      this.chkDecision.input,
-    ]) {
+    for (const el of [this.inpDueDate, this.selStatus, this.inpResponsible]) {
       el.disabled = dis;
     }
   }

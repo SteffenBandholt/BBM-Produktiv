@@ -58,11 +58,15 @@ export class TopsWorkbench {
 
     this.left.append(this._mkField("Kurztext", this.inpTitle), this._mkField("Langtext", this.taLong));
 
+    this.gutter = document.createElement("div");
+    this.gutter.className = "bbm-tops-workbench-gutter";
+    this.gutter.setAttribute("aria-hidden", "true");
+
     this.metaPanel = new TopsMetaPanel({
       onChange: () => this._emitDraftChange(),
     });
 
-    this.body.append(this.left, this.metaPanel.root);
+    this.body.append(this.left, this.gutter, this.metaPanel.root);
     this.root.append(this.header, this.body);
 
     this.inpTitle.addEventListener("input", () => this._emitDraftChange());
