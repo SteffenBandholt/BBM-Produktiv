@@ -8,6 +8,117 @@ import {
 
 export { isAllowedMoveTarget, canCreateChildFromState, canDeleteFromState, canMoveFromState };
 
+function cleanString(value) {
+  return String(value ?? "").trim();
+}
+
+function normalizeMeetingNumber(rawValue) {
+  const raw = cleanString(rawValue).replace(/^#\s*/, "");
+  if (!raw) return "";
+  if (/^\d+(?:\.0+)?$/.test(raw)) {
+    return `#${Math.trunc(Number(raw))}`;
+  }
+  return `#${raw}`;
+}
+
+function formatDateToDdMmYyyy(rawValue) {
+  const raw = cleanString(rawValue);
+  if (!raw) return "";
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(raw)) return raw;
+
+  const iso = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[3]}.${iso[2]}.${iso[1]}`;
+
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return "";
+  const dd = String(date.getDate()).padStart(2, "0");
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const yyyy = String(date.getFullYear());
+  return `${dd}.${mm}.${yyyy}`;
+}
+
+function parseMeetingTitle(titleValue) {
+  const title = cleanString(titleValue);
+  if (!title) return { meetingNo: "", meetingDate: "", keyword: "" };
+
+  const noWithHash = title.match(/^#\s*(\d+)\b/);
+  const noBeforeDate = title.match(/^(\d+)\s+(?=\d{2}\.\d{2}\.\d{4}\b)/);
+  const meetingNo = noWithHash ? `#${noWithHash[1]}` : noBeforeDate ? `#${noBeforeDate[1]}` : "";
+
+  const withoutNo = title
+    .replace(/^#\s*\d+\s*-?\s*/, "")
+    .replace(/^\d+\s+(?=\d{2}\.\d{2}\.\d{4}\b)/, "")
+    .trim();
+
+  const dateMatch = withoutNo.match(/(\d{2}\.\d{2}\.\d{4})/);
+  const meetingDate = dateMatch ? dateMatch[1] : "";
+
+  let keyword = "";
+  if (dateMatch) {
+    const after = withoutNo.slice(withoutNo.indexOf(dateMatch[1]) + dateMatch[1].length);
+    keyword = cleanString(after.replace(/^\s*-\s*/, ""));
+  } else {
+    keyword = cleanString(withoutNo);
+  }
+
+  return {
+    meetingNo: cleanString(meetingNo),
+    meetingDate: cleanString(meetingDate),
+    keyword: cleanString(keyword),
+  };
+}
+
+export function buildHeaderState(state) {
+  const meetingId = state?.meetingId ?? null;
+  const meetingMeta = state?.meetingMeta || null;
+
+  const titleParts = parseMeetingTitle(meetingMeta?.title || "");
+
+  const meetingNo = normalizeMeetingNumber(
+    meetingMeta?.meeting_number ??
+      meetingMeta?.meetingNumber ??
+      meetingMeta?.meeting_index ??
+      meetingMeta?.meetingIndex ??
+      titleParts.meetingNo
+  );
+
+  const meetingDate = formatDateToDdMmYyyy(
+    meetingMeta?.meeting_date ??
+      meetingMeta?.meetingDate ??
+      meetingMeta?.date ??
+      meetingMeta?.created_at ??
+      meetingMeta?.createdAt ??
+      titleParts.meetingDate
+  );
+
+  let keywordLine = cleanString(
+    meetingMeta?.keyword ?? meetingMeta?.meeting_keyword ?? meetingMeta?.meetingKeyword ?? titleParts.keyword
+  );
+
+  let titleLine = "kein Protokoll aktiv";
+  if (meetingId) {
+    const meetingLine = [meetingNo, meetingDate].filter(Boolean).join(" - ");
+    titleLine = meetingLine ? `Protokoll ${meetingLine}` : "Protokoll";
+  } else {
+    keywordLine = "";
+  }
+
+  const isReadOnly = Number(meetingMeta?.is_closed) === 1 || !!state?.isReadOnly;
+
+  if (isReadOnly && titleLine && titleLine !== "kein Protokoll aktiv") {
+    titleLine = `${titleLine} READ ONLY!`;
+  }
+
+  return {
+    meetingId,
+    meetingNo,
+    meetingDate,
+    titleLine,
+    keywordLine,
+    isReadOnly,
+  };
+}
+
 export function buildHeaderContext(state, { projectLabel } = {}) {
   const m = state?.meetingMeta || null;
   const parts = [];

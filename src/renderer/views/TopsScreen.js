@@ -8,7 +8,7 @@ import { TopsWorkbench } from "../tops/components/TopsWorkbench.js";
 import { TopsList } from "../tops/components/TopsList.js";
 import { TopsHeader } from "../tops/components/TopsHeader.js";
 import {
-  buildHeaderContext,
+  buildHeaderState,
   buildListItemsFromState,
   editorFromTop,
   buildPatchFromDraft,
@@ -222,12 +222,11 @@ export default class TopsScreen {
   _syncHeaderState() {
     if (!(this.header instanceof TopsHeader)) return;
     const state = this.store.getState();
+    const headerState = buildHeaderState(state);
     this.header.update({
-      title: "Protokoll",
-      context: buildHeaderContext(state, {
-        projectLabel: this.router?.context?.projectLabel || "",
-      }),
-      isReadOnly: !!state.isReadOnly,
+      titleLine: headerState.titleLine,
+      keywordLine: headerState.keywordLine,
+      isReadOnly: headerState.isReadOnly,
       canEndMeeting: !!state.meetingId,
       isBusy: !!state.isLoading,
     });
