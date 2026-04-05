@@ -28,6 +28,10 @@ export class TopsQuicklane {
       await this.onOpenOutput(pid);
     });
 
+    this.btnProject.dataset.quicklaneAction = "project";
+    this.btnFirms.dataset.quicklaneAction = "firms";
+    this.btnOutput.dataset.quicklaneAction = "output";
+
     this.update({ projectId, isReadOnly });
   }
 
@@ -35,11 +39,7 @@ export class TopsQuicklane {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = label;
-    btn.style.padding = "1px 8px";
-    btn.style.minHeight = "0";
-    btn.style.fontSize = "8pt";
-    btn.style.lineHeight = "1.2";
-    btn.style.borderRadius = "6px";
+    btn.className = "bbm-tops-btn bbm-tops-quicklane-btn";
     btn.onclick = onClick;
     return btn;
   }
@@ -61,23 +61,16 @@ export class TopsQuicklane {
   _setEnabled(btn, enabled) {
     if (!(btn instanceof HTMLElement)) return;
     btn.disabled = !enabled;
-    btn.style.opacity = btn.disabled ? "0.55" : "1";
-    btn.style.cursor = btn.disabled ? "default" : "pointer";
+    btn.dataset.enabled = btn.disabled ? "false" : "true";
   }
 
   mountInto(actionWrap) {
     if (!(actionWrap instanceof HTMLElement)) return;
     for (const btn of this.getButtons()) {
       if (!(btn instanceof HTMLElement)) continue;
-      btn.style.padding = "1px 7px";
-      btn.style.minHeight = "0";
-      btn.style.fontSize = "7.5pt";
-      btn.style.lineHeight = "1.15";
-      btn.style.borderRadius = "6px";
       if (btn.parentElement !== actionWrap) {
         actionWrap.insertBefore(btn, actionWrap.firstChild || null);
       }
     }
   }
 }
-

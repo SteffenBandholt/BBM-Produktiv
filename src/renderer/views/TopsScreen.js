@@ -8,6 +8,18 @@ import { TopsWorkbench } from "../tops/components/TopsWorkbench.js";
 import { TopsList } from "../tops/components/TopsList.js";
 import { TopsHeader } from "../tops/components/TopsHeader.js";
 
+const TOPS_V2_STYLE_TAG = "bbm-tops-v2-styles";
+
+function ensureTopsV2Styles() {
+  if (typeof document === "undefined") return;
+  if (document.querySelector(`link[data-${TOPS_V2_STYLE_TAG}="true"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = new URL("../tops/styles/tops.css", import.meta.url).href;
+  link.setAttribute(`data-${TOPS_V2_STYLE_TAG}`, "true");
+  document.head.appendChild(link);
+}
+
 // TOPS-V2: eigenstaendiger Screen.
 // LEGACY-REST: TopsView wird nur noch fuer den Output/Close-Flow als Bruecke gehalten.
 export default class TopsScreen {
@@ -63,54 +75,25 @@ export default class TopsScreen {
   }
 
   _buildShell() {
+    ensureTopsV2Styles();
     const root = document.createElement("div");
     root.setAttribute("data-bbm-tops-screen", "true");
-    root.style.display = "flex";
-    root.style.flexDirection = "column";
-    root.style.height = "100%";
-    root.style.minHeight = "0";
-    root.style.background = "linear-gradient(180deg, #f6f9fc 0%, #eef3f8 100%)";
 
     const sheetArea = document.createElement("section");
     sheetArea.setAttribute("data-bbm-tops-screen-area", "sheet");
-    sheetArea.style.flex = "1 1 auto";
-    sheetArea.style.minHeight = "0";
-    sheetArea.style.overflow = "auto";
-    sheetArea.style.padding = "12px 14px 14px";
-    sheetArea.style.background = "transparent";
 
     const sheetCanvas = document.createElement("div");
     sheetCanvas.setAttribute("data-bbm-tops-screen-sheet-canvas", "true");
-    sheetCanvas.style.width = "100%";
-    sheetCanvas.style.maxWidth = "1280px";
-    sheetCanvas.style.minHeight = "100%";
-    sheetCanvas.style.margin = "0 auto";
-    sheetCanvas.style.display = "flex";
-    sheetCanvas.style.flexDirection = "column";
 
     const sheetPaper = document.createElement("div");
     sheetPaper.setAttribute("data-bbm-tops-screen-sheet-paper", "true");
-    sheetPaper.style.width = "100%";
-    sheetPaper.style.minHeight = "100%";
-    sheetPaper.style.background = "#ffffff";
-    sheetPaper.style.border = "1px solid #dce6f2";
-    sheetPaper.style.borderRadius = "12px";
-    sheetPaper.style.boxShadow = "0 10px 24px rgba(15, 23, 42, 0.08)";
-    sheetPaper.style.padding = "8px 12px 12px";
-    sheetPaper.style.boxSizing = "border-box";
 
     const editArea = document.createElement("section");
     editArea.setAttribute("data-bbm-tops-screen-area", "edit");
-    editArea.style.flex = "0 0 auto";
-    editArea.style.borderTop = "1px solid #d9e2ec";
-    editArea.style.background = "linear-gradient(180deg, #f8fbff 0%, #f2f7fd 100%)";
-    editArea.style.padding = "6px 10px 8px";
+    editArea.dataset.bbmWorkbenchVisible = "false";
 
     const editCanvas = document.createElement("div");
     editCanvas.setAttribute("data-bbm-tops-screen-edit-canvas", "true");
-    editCanvas.style.width = "100%";
-    editCanvas.style.maxWidth = "1280px";
-    editCanvas.style.margin = "0 auto";
 
     this.root = root;
     this.sheetArea = sheetArea;
@@ -452,7 +435,7 @@ export default class TopsScreen {
     this._syncWorkbenchState();
 
     if (this.editArea) {
-      this.editArea.style.display = this._shouldShowWorkbench(state) ? "" : "none";
+      this.editArea.dataset.bbmWorkbenchVisible = this._shouldShowWorkbench(state) ? "true" : "false";
       this.editArea.dataset.bbmHasSelection = hasSelection(state) ? "true" : "false";
     }
   }
@@ -565,4 +548,3 @@ export default class TopsScreen {
     this._showSidebar();
   }
 }
-

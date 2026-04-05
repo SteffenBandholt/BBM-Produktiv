@@ -2,12 +2,8 @@ export class TopsMetaPanel {
   constructor({ onChange } = {}) {
     this.onChange = typeof onChange === "function" ? onChange : null;
     this.root = document.createElement("div");
-    this.root.style.display = "grid";
-    this.root.style.gap = "6px";
-    this.root.style.padding = "4px 6px";
-    this.root.style.border = "1px solid #dce7f2";
-    this.root.style.borderRadius = "10px";
-    this.root.style.background = "#f8fbff";
+    this.root.className = "bbm-tops-meta-panel";
+    this.root.dataset.disabled = "false";
 
     this.inpDueDate = document.createElement("input");
     this.inpDueDate.type = "date";
@@ -46,10 +42,7 @@ export class TopsMetaPanel {
 
   _mkCheckbox(label) {
     const wrap = document.createElement("label");
-    wrap.style.display = "inline-flex";
-    wrap.style.alignItems = "center";
-    wrap.style.gap = "6px";
-    wrap.style.fontSize = "8.5pt";
+    wrap.className = "bbm-tops-meta-checkbox";
     const input = document.createElement("input");
     input.type = "checkbox";
     const text = document.createElement("span");
@@ -60,17 +53,10 @@ export class TopsMetaPanel {
 
   _appendField(label, control) {
     const row = document.createElement("label");
-    row.style.display = "grid";
-    row.style.gap = "3px";
-    row.style.fontSize = "8.5pt";
+    row.className = "bbm-tops-meta-field";
     const t = document.createElement("span");
     t.textContent = label;
-    control.style.width = "100%";
-    control.style.boxSizing = "border-box";
-    control.style.padding = "3px 5px";
-    control.style.border = "1px solid #cad8e6";
-    control.style.borderRadius = "7px";
-    control.style.background = "#ffffff";
+    control.classList.add("bbm-tops-input");
     row.append(t, control);
     this.root.appendChild(row);
   }
@@ -101,6 +87,7 @@ export class TopsMetaPanel {
 
   setDisabled(disabled) {
     const dis = !!disabled;
+    this.root.dataset.disabled = dis ? "true" : "false";
     for (const el of [
       this.inpDueDate,
       this.selStatus,
@@ -111,7 +98,5 @@ export class TopsMetaPanel {
     ]) {
       el.disabled = dis;
     }
-    this.root.style.opacity = dis ? "0.7" : "1";
   }
 }
-

@@ -17,21 +17,13 @@ export class TopsWorkbench {
     this.onCreateChild = typeof onCreateChild === "function" ? onCreateChild : null;
 
     this.root = document.createElement("div");
-    this.root.style.background = "#ffffff";
-    this.root.style.border = "1px solid #d5e1ee";
-    this.root.style.borderRadius = "10px";
-    this.root.style.boxShadow = "0 6px 14px rgba(15, 23, 42, 0.07)";
-    this.root.style.padding = "4px 6px 6px";
-    this.root.style.display = "grid";
-    this.root.style.gap = "6px";
+    this.root.className = "bbm-tops-workbench";
+    this.root.dataset.hasSelection = "false";
+    this.root.dataset.isReadOnly = "false";
+    this.root.dataset.isMoveMode = "false";
 
     this.header = document.createElement("div");
-    this.header.style.display = "flex";
-    this.header.style.flexWrap = "wrap";
-    this.header.style.alignItems = "center";
-    this.header.style.gap = "4px";
-    this.header.style.paddingBottom = "4px";
-    this.header.style.borderBottom = "1px solid #e4ebf4";
+    this.header.className = "bbm-tops-workbench-header";
 
     this.btnL1 = this._mkBtn("+ Titel", this.onCreateLevel1, "neutral");
     this.btnChild = this._mkBtn("+ TOP", this.onCreateChild, "neutral");
@@ -40,52 +32,29 @@ export class TopsWorkbench {
     this.btnDelete = this._mkBtn("Papierkorb", this.onDelete, "danger");
 
     const addWrap = document.createElement("div");
-    addWrap.style.display = "inline-flex";
-    addWrap.style.alignItems = "center";
-    addWrap.style.gap = "3px";
+    addWrap.className = "bbm-tops-workbench-add-wrap";
     addWrap.append(this.btnL1, this.btnChild);
 
     const actionWrap = document.createElement("div");
-    actionWrap.style.marginLeft = "auto";
-    actionWrap.style.display = "inline-flex";
-    actionWrap.style.alignItems = "center";
-    actionWrap.style.gap = "3px";
+    actionWrap.className = "bbm-tops-workbench-action-wrap";
     actionWrap.append(this.btnMove, this.btnSave, this.btnDelete);
 
     this.header.append(addWrap, actionWrap);
 
     this.body = document.createElement("div");
-    this.body.style.display = "grid";
-    this.body.style.gridTemplateColumns = "minmax(0,1fr) minmax(220px,240px)";
-    this.body.style.gap = "6px";
+    this.body.className = "bbm-tops-workbench-body";
 
     this.left = document.createElement("div");
-    this.left.style.display = "grid";
-    this.left.style.gap = "6px";
+    this.left.className = "bbm-tops-workbench-left";
 
     this.inpTitle = document.createElement("input");
     this.inpTitle.type = "text";
     this.inpTitle.placeholder = "Kurztext...";
-    this.inpTitle.style.width = "100%";
-    this.inpTitle.style.boxSizing = "border-box";
-    this.inpTitle.style.padding = "3px 5px";
-    this.inpTitle.style.border = "1px solid #cad8e6";
-    this.inpTitle.style.borderRadius = "7px";
-    this.inpTitle.style.background = "#ffffff";
-    this.inpTitle.style.fontSize = "8.5pt";
+    this.inpTitle.className = "bbm-tops-input";
 
     this.taLong = document.createElement("textarea");
     this.taLong.placeholder = "Langtext...";
-    this.taLong.style.width = "100%";
-    this.taLong.style.boxSizing = "border-box";
-    this.taLong.style.padding = "4px 5px";
-    this.taLong.style.border = "1px solid #cad8e6";
-    this.taLong.style.borderRadius = "7px";
-    this.taLong.style.background = "#ffffff";
-    this.taLong.style.minHeight = "64px";
-    this.taLong.style.resize = "vertical";
-    this.taLong.style.lineHeight = "1.35";
-    this.taLong.style.fontSize = "8.5pt";
+    this.taLong.className = "bbm-tops-input bbm-tops-textarea";
 
     this.left.append(this._mkField("Kurztext", this.inpTitle), this._mkField("Langtext", this.taLong));
 
@@ -102,9 +71,7 @@ export class TopsWorkbench {
 
   _mkField(label, control) {
     const wrap = document.createElement("label");
-    wrap.style.display = "grid";
-    wrap.style.gap = "3px";
-    wrap.style.fontSize = "8.5pt";
+    wrap.className = "bbm-tops-workbench-field";
     const t = document.createElement("span");
     t.textContent = label;
     wrap.append(t, control);
@@ -115,25 +82,7 @@ export class TopsWorkbench {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.textContent = label;
-    btn.style.borderRadius = "6px";
-    btn.style.padding = "1px 7px";
-    btn.style.minHeight = "20px";
-    btn.style.fontSize = "7.5pt";
-    btn.style.lineHeight = "1.2";
-    btn.style.fontWeight = "600";
-    if (tone === "primary") {
-      btn.style.background = "#2f6fb7";
-      btn.style.color = "#ffffff";
-      btn.style.border = "1px solid #285f9b";
-    } else if (tone === "danger") {
-      btn.style.background = "#fff4e6";
-      btn.style.color = "#8a4b00";
-      btn.style.border = "1px solid #e7bf84";
-    } else {
-      btn.style.background = "#f5f8fc";
-      btn.style.color = "#1f344a";
-      btn.style.border = "1px solid #d3dfec";
-    }
+    btn.className = `bbm-tops-btn bbm-tops-workbench-btn bbm-tops-workbench-btn-${tone}`;
     btn.onclick = async () => {
       if (typeof onClick === "function") await onClick();
     };
@@ -178,7 +127,11 @@ export class TopsWorkbench {
     this.btnMove.disabled = !!isReadOnly || !canMove;
     this.btnSave.disabled = !!isReadOnly || !canSave;
     this.btnDelete.disabled = !!isReadOnly || !canDelete;
+
+    this.root.dataset.hasSelection = hasSelection ? "true" : "false";
+    this.root.dataset.isReadOnly = isReadOnly ? "true" : "false";
+    this.root.dataset.isMoveMode = isMoveMode ? "true" : "false";
+
     this.btnMove.textContent = isMoveMode ? "Schieben aktiv" : "Schieben";
   }
 }
-
