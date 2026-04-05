@@ -74,8 +74,10 @@ export class TopsHeader {
     const readOnly = !!isReadOnly;
     const canEnd = !!canEndMeeting;
 
+    const keyword = String(keywordLine || "").trim();
     this.line1El.textContent = titleLine || "Protokoll";
-    this.line2El.textContent = String(keywordLine || "").trim();
+    this.line2El.textContent = keyword;
+    this.line2El.dataset.empty = keyword ? "false" : "true";
     const canEdit = !!canEditKeyword;
     this.line2El.dataset.editable = canEdit ? "true" : "false";
     this.line2El.title = "";

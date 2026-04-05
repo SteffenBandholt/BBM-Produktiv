@@ -7,6 +7,7 @@ import { TopsQuicklane } from "../tops/components/TopsQuicklane.js";
 import { TopsWorkbench } from "../tops/components/TopsWorkbench.js";
 import { TopsList } from "../tops/components/TopsList.js";
 import { TopsHeader } from "../tops/components/TopsHeader.js";
+import { TopsViewDialogs } from "../features/dialogs/TopsViewDialogs.js";
 import {
   buildHeaderState,
   buildListItemsFromState,
@@ -52,6 +53,8 @@ export default class TopsScreen {
     this.workbench = null;
     this.topsList = null;
     this.closeFlow = null;
+    this.dialogs = null;
+    this._dialogViewAdapter = this._createDialogViewAdapter();
 
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.store = createTopsStore({
@@ -135,7 +138,9 @@ export default class TopsScreen {
         await this._reloadTops({ keepSelection: true });
         this._syncScreenState();
       },
+      onKeywordClick: async () => this._openKeywordDialog(),
     });
+    this.dialogs = new TopsViewDialogs({ view: this._dialogViewAdapter });
   }
 
   _buildQuicklane() {
@@ -229,7 +234,52 @@ export default class TopsScreen {
       isReadOnly: headerState.isReadOnly,
       canEndMeeting: !!state.meetingId,
       isBusy: !!state.isLoading,
+      canEditKeyword: !!state.meetingId,
     });
+  }
+
+  _createDialogViewAdapter() {
+    const owner = this;
+    return {
+      get meetingId() {
+        const state = owner.store.getState();
+        return state.meetingId || owner.meetingId || null;
+      },
+      set meetingMeta(value) {
+        const nextMeta = value || null;
+        owner.store.setState({
+          meetingMeta: nextMeta,
+          isReadOnly: nextMeta ? Number(nextMeta.is_closed) === 1 : false,
+        });
+      },
+      get meetingMeta() {
+        return owner.store.getState().meetingMeta || null;
+      },
+      set isReadOnly(value) {
+        owner.store.setState({ isReadOnly: !!value });
+      },
+      get isReadOnly() {
+        return !!owner.store.getState().isReadOnly;
+      },
+      _parseMeetingTitleParts() {
+        const headerState = buildHeaderState(owner.store.getState());
+        return {
+          meetingIndex: headerState.meetingNo || "",
+          meetingDateText: headerState.meetingDate || "",
+          meetingKeyword: headerState.keywordLine || "",
+        };
+      },
+      _updateTopBarProtocolTitle() {
+        owner._syncScreenState();
+      },
+    };
+  }
+
+  async _openKeywordDialog() {
+    const state = this.store.getState();
+    if (!state.meetingId) return;
+    if (!(this.dialogs instanceof TopsViewDialogs)) return;
+    await this.dialogs.handleOpenMeetingKeyword();
   }
 
   _syncListState() {

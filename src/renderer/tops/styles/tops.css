@@ -82,10 +82,26 @@
   min-height: 1.2em;
   min-width: 12ch;
   display: inline-block;
+  position: relative;
 }
 
 .bbm-tops-header-line2[data-editable="true"] {
   cursor: pointer;
+}
+
+.bbm-tops-header-line2[data-editable="true"][data-empty="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.08em;
+  border-bottom: 1px dashed currentColor;
+  opacity: 0.24;
+}
+
+.bbm-tops-header-line2[data-editable="true"][data-empty="true"]:hover::after,
+.bbm-tops-header-line2[data-editable="true"][data-empty="true"]:focus::after {
+  opacity: 0.44;
 }
 
 .bbm-tops-header-line2[data-editable="true"]:hover {
