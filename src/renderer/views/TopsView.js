@@ -27,6 +27,7 @@ import { TopPatchService } from "../features/tops/TopPatchService.js";
 import { TopGapFlow } from "../features/tops/TopGapFlow.js";
 import { TopService } from "../features/tops/TopService.js";
 import { TopTrashService } from "../features/tops/TopTrashService.js";
+import { TopsRepository } from "../tops/data/TopsRepository.js";
 import { POPOVER_MENU } from "../ui/zIndex.js";
 import { fireAndForget } from "../utils/async.js";
 
@@ -35,10 +36,11 @@ const TODO_PNG = new URL("../assets/todo.png", import.meta.url).href;
 const RED_FLAG_PNG = new URL("../assets/redFlag.png", import.meta.url).href;
 
 export default class TopsView {
-  constructor({ router, projectId, meetingId }) {
+  constructor({ router, projectId, meetingId, topsRepository }) {
     this.router = router;
     this.projectId = projectId;
     this.meetingId = meetingId;
+    this.topsRepository = topsRepository || new TopsRepository();
 
     this.root = null;
     this.listEl = null;
@@ -262,8 +264,8 @@ export default class TopsView {
     this.responsibleEditor = new ResponsibleEditorController({ view: this });
     this.topEditor = new TopEditorController({ view: this });
     this.topGapFlow = new TopGapFlow({ view: this });
-    this.topService = new TopService();
-    this.topTrash = new TopTrashService();
+    this.topService = new TopService({ repository: this.topsRepository });
+    this.topTrash = new TopTrashService({ repository: this.topsRepository });
     this._initAssignmentDelegates();
   }
 
@@ -3226,7 +3228,7 @@ async _closeViewOnly() {
         return;
       }
 
-      if (typeof window.bbmDb?.topsMarkTrashed === "function") {
+      if (this.topTrash.canMarkTrashed()) {
         const markRes = await this.topTrash.markTrashed(currentId);
         if (markRes?.ok === false) {
           console.warn("[tops] topsMarkTrashed failed:", markRes.error);
@@ -3300,7 +3302,7 @@ async _closeViewOnly() {
         await this.reloadList(false);
         return;
       }
-      if (typeof window.bbmDb?.topsMarkTrashed === "function") {
+      if (this.topTrash.canMarkTrashed()) {
         const markRes = await this.topTrash.markTrashed(currentId);
         if (markRes?.ok === false) {
           console.warn("[tops] topsMarkTrashed failed:", markRes.error);
