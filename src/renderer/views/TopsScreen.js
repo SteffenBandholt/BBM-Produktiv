@@ -1,8 +1,9 @@
 import TopsView from "./TopsView.js";
 import { createTopsStore } from "../tops/state/TopsStore.js";
-import { hasSelection, isEditable } from "../tops/state/TopsSelectors.js";
+import { hasSelection } from "../tops/state/TopsSelectors.js";
 import { TopsRepository } from "../tops/data/TopsRepository.js";
 import { TopsCommands } from "../tops/domain/TopsCommands.js";
+import { TopsQuicklane } from "../tops/components/TopsQuicklane.js";
 
 // TOPS-V2: offizieller Einstiegspunkt fuer Tops-UI.
 // LEGACY-BOUNDARY: fachliche Bestandslogik bleibt bis zur v2-Ablosung in TopsView.
@@ -18,10 +19,10 @@ export default class TopsScreen {
     this.sheetPaper = null;
     this.editArea = null;
     this.editCanvas = null;
-    this.quicklaneButtons = [];
 
     this._sidebarEl = null;
     this._sidebarDisplay = "";
+    this.quicklane = null;
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.store = createTopsStore({
       projectId: this.projectId,
@@ -186,44 +187,25 @@ export default class TopsScreen {
   }
 
   _buildQuicklane() {
-    const mkButton = (label, onClick) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = label;
-      btn.style.padding = "1px 8px";
-      btn.style.minHeight = "0";
-      btn.style.fontSize = "8pt";
-      btn.style.lineHeight = "1.2";
-      btn.style.borderRadius = "6px";
-      btn.onclick = onClick;
-      return btn;
-    };
-
-    const btnProject = mkButton("Projekt", async () => {
-      const pid = this.store.getState().projectId || this.router?.currentProjectId || null;
-      if (!pid) return;
-      if (typeof this.router?.openProjectFormModal === "function") {
-        await this.router.openProjectFormModal({ projectId: pid });
-      }
+    this.quicklane = new TopsQuicklane({
+      projectId: this._getQuicklaneProjectId(),
+      isReadOnly: !!this.store.getState().isReadOnly,
+      onOpenProject: async (projectId) => {
+        if (typeof this.router?.openProjectFormModal === "function") {
+          await this.router.openProjectFormModal({ projectId });
+        }
+      },
+      onOpenFirms: async (projectId) => {
+        if (typeof this.router?.showProjectFirms === "function") {
+          await this.router.showProjectFirms(projectId);
+        }
+      },
+      onOpenOutput: async (projectId) => {
+        if (typeof this.router?.openPrintModal === "function") {
+          await this.router.openPrintModal({ projectId });
+        }
+      },
     });
-
-    const btnFirms = mkButton("Firmen", async () => {
-      const pid = this.store.getState().projectId || this.router?.currentProjectId || null;
-      if (!pid) return;
-      if (typeof this.router?.showProjectFirms === "function") {
-        await this.router.showProjectFirms(pid);
-      }
-    });
-
-    const btnOutput = mkButton("Ausgabe", async () => {
-      const pid = this.store.getState().projectId || this.router?.currentProjectId || null;
-      if (!pid) return;
-      if (typeof this.router?.openPrintModal === "function") {
-        await this.router.openPrintModal({ projectId: pid });
-      }
-    });
-
-    this.quicklaneButtons = [btnProject, btnFirms, btnOutput];
   }
 
   _detachLegacyPinnedLayout() {
@@ -314,25 +296,14 @@ export default class TopsScreen {
   _mountQuicklaneIntoTopBar() {
     const topBar = this._legacy.topBarEl;
     if (!(topBar instanceof HTMLElement)) return;
-    if (!Array.isArray(this.quicklaneButtons) || !this.quicklaneButtons.length) return;
+    if (!(this.quicklane instanceof TopsQuicklane)) return;
 
     const actionWrap = Array.from(topBar.children || []).find(
       (el) => el instanceof HTMLElement && el.contains?.(this._legacy.btnCloseMeeting)
     );
     if (!(actionWrap instanceof HTMLElement)) return;
 
-    const [btnProject, btnFirms, btnOutput] = this.quicklaneButtons;
-    for (const btn of [btnProject, btnFirms, btnOutput]) {
-      if (!(btn instanceof HTMLElement)) continue;
-      btn.style.padding = "1px 7px";
-      btn.style.minHeight = "0";
-      btn.style.fontSize = "7.5pt";
-      btn.style.lineHeight = "1.15";
-      btn.style.borderRadius = "6px";
-      if (btn.parentElement !== actionWrap) {
-        actionWrap.insertBefore(btn, actionWrap.firstChild || null);
-      }
-    }
+    this.quicklane.mountInto(actionWrap);
   }
 
   _hideSidebar() {
@@ -354,20 +325,16 @@ export default class TopsScreen {
 
   _syncQuicklaneState() {
     const state = this.store.getState();
-    const canUseProject = !!(state.projectId || this.router?.currentProjectId);
-    const editable = isEditable(state);
-    const [btnProject, btnFirms, btnOutput] = this.quicklaneButtons;
+    if (!(this.quicklane instanceof TopsQuicklane)) return;
+    this.quicklane.update({
+      projectId: this._getQuicklaneProjectId(),
+      isReadOnly: !!state.isReadOnly,
+    });
+  }
 
-    const setState = (btn, enabled) => {
-      if (!btn) return;
-      btn.disabled = !enabled;
-      btn.style.opacity = btn.disabled ? "0.55" : "1";
-      btn.style.cursor = btn.disabled ? "default" : "pointer";
-    };
-
-    setState(btnProject, canUseProject && editable);
-    setState(btnFirms, canUseProject && editable);
-    setState(btnOutput, canUseProject);
+  _getQuicklaneProjectId() {
+    const state = this.store.getState();
+    return state.projectId || this.router?.currentProjectId || null;
   }
 
   _syncTopMetaSlot() {
