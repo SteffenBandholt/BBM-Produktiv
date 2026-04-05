@@ -1,47 +1,64 @@
 import { mapLoadByMeetingResult, mapMutationResult } from "./TopsMapper.js";
+import {
+  createLoadByMeetingRequest,
+  createSaveTopRequest,
+  createCreateTopRequest,
+  createMoveTopRequest,
+  createDeleteTopRequest,
+  toApiSaveTopPayload,
+  toApiCreateTopPayload,
+  toApiMoveTopPayload,
+  toApiDeleteTopPayload,
+  createRepositoryUnavailableResult,
+} from "./TopsDtos.js";
 
 export class TopsRepository {
   constructor({ api } = {}) {
     this.api = api || window.bbmDb || {};
   }
 
-  async loadByMeeting(meetingId) {
+  async loadByMeeting(input) {
+    const req = createLoadByMeetingRequest(input);
     if (typeof this.api.topsListByMeeting !== "function") {
-      return { ok: false, meeting: null, list: [], error: "topsListByMeeting unavailable" };
+      return createRepositoryUnavailableResult("topsListByMeeting unavailable", "load");
     }
-    const res = await this.api.topsListByMeeting(meetingId);
+    const res = await this.api.topsListByMeeting(req.meetingId);
     return mapLoadByMeetingResult(res);
   }
 
-  async saveTop(draft) {
+  async saveTop(input) {
+    const req = createSaveTopRequest(input);
     if (typeof this.api.meetingTopsUpdate !== "function") {
-      return { ok: false, error: "meetingTopsUpdate unavailable" };
+      return createRepositoryUnavailableResult("meetingTopsUpdate unavailable", "mutation");
     }
-    const res = await this.api.meetingTopsUpdate(draft);
+    const res = await this.api.meetingTopsUpdate(toApiSaveTopPayload(req));
     return mapMutationResult(res);
   }
 
-  async createTop(draft) {
+  async createTop(input) {
+    const req = createCreateTopRequest(input);
     if (typeof this.api.topsCreate !== "function") {
-      return { ok: false, error: "topsCreate unavailable" };
+      return createRepositoryUnavailableResult("topsCreate unavailable", "mutation");
     }
-    const res = await this.api.topsCreate(draft);
+    const res = await this.api.topsCreate(toApiCreateTopPayload(req));
     return mapMutationResult(res);
   }
 
-  async moveTop(draft) {
+  async moveTop(input) {
+    const req = createMoveTopRequest(input);
     if (typeof this.api.topsMove !== "function") {
-      return { ok: false, error: "topsMove unavailable" };
+      return createRepositoryUnavailableResult("topsMove unavailable", "mutation");
     }
-    const res = await this.api.topsMove(draft);
+    const res = await this.api.topsMove(toApiMoveTopPayload(req));
     return mapMutationResult(res);
   }
 
-  async deleteTop(topId) {
+  async deleteTop(input) {
+    const req = createDeleteTopRequest(input);
     if (typeof this.api.topsMarkTrashed !== "function") {
-      return { ok: false, error: "topsMarkTrashed unavailable" };
+      return createRepositoryUnavailableResult("topsMarkTrashed unavailable", "mutation");
     }
-    const res = await this.api.topsMarkTrashed({ topId });
+    const res = await this.api.topsMarkTrashed(toApiDeleteTopPayload(req));
     return mapMutationResult(res);
   }
 
@@ -49,4 +66,3 @@ export class TopsRepository {
     return typeof this.api.topsMarkTrashed === "function";
   }
 }
-

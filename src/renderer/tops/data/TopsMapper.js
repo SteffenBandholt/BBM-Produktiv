@@ -1,18 +1,9 @@
+import { createLoadByMeetingResult, createMutationResult } from "./TopsDtos.js";
+
 export function mapLoadByMeetingResult(res) {
-  return {
-    ok: !!res?.ok,
-    meeting: res?.meeting || null,
-    list: Array.isArray(res?.list) ? res.list : [],
-    error: res?.error || null,
-  };
+  return createLoadByMeetingResult(res);
 }
 
 export function mapMutationResult(res) {
-  return {
-    ok: !!res?.ok,
-    top: res?.top || null,
-    error: res?.error || null,
-    ...res,
-  };
+  return createMutationResult(res);
 }
-

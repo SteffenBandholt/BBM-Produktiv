@@ -98,7 +98,8 @@ async function runTopsScreenIntegrationTests(run) {
         return { ok: true };
       },
       async deleteTop(topId) {
-        db.tops = db.tops.filter((t) => String(t.id) !== String(topId));
+        const id = topId && typeof topId === "object" ? topId.topId : topId;
+        db.tops = db.tops.filter((t) => String(t.id) !== String(id));
         return { ok: true };
       },
     };

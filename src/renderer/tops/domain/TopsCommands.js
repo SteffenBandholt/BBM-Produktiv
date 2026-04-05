@@ -1,3 +1,9 @@
+import {
+  createLoadByMeetingRequest,
+  createSaveTopRequest,
+  createDeleteTopRequest,
+} from "../data/TopsDtos.js";
+
 export class TopsCommands {
   constructor({ store, repository } = {}) {
     this.store = store;
@@ -16,10 +22,11 @@ export class TopsCommands {
 
   async loadTops({ meetingId, projectId } = {}) {
     const meetingKey = meetingId ?? this._getState().meetingId ?? null;
+    const loadReq = createLoadByMeetingRequest({ meetingId: meetingKey });
     this._setState({
       isLoading: true,
       error: null,
-      meetingId: meetingKey,
+      meetingId: loadReq.meetingId,
       projectId: projectId ?? this._getState().projectId ?? null,
     });
 
@@ -29,7 +36,7 @@ export class TopsCommands {
     }
 
     try {
-      const res = await this.repository.loadByMeeting(meetingKey);
+      const res = await this.repository.loadByMeeting(loadReq);
       const list = Array.isArray(res?.list) ? res.list : [];
       const isReadOnly = Number(res?.meeting?.is_closed) === 1;
 
@@ -62,29 +69,32 @@ export class TopsCommands {
 
   async saveDraft(patch = {}) {
     const state = this._getState();
-    const meetingId = state.meetingId ?? null;
-    const topId = state.selectedTopId ?? null;
-    if (!meetingId || !topId) {
+    const req = createSaveTopRequest({
+      meetingId: state.meetingId ?? null,
+      topId: state.selectedTopId ?? null,
+      patch: patch || {},
+    });
+    if (!req.meetingId || !req.topId) {
       return { ok: false, error: "meetingId or selectedTopId missing" };
     }
     if (!this.repository || typeof this.repository.saveTop !== "function") {
       return { ok: false, error: "TopsRepository unavailable" };
     }
 
-    const res = await this.repository.saveTop({ meetingId, topId, patch: patch || {} });
+    const res = await this.repository.saveTop(req);
     if (res?.ok) this.updateDraft(patch);
     return res;
   }
 
   async deleteSelectedTop() {
     const state = this._getState();
-    const topId = state.selectedTopId ?? null;
-    if (!topId) return { ok: false, error: "selectedTopId missing" };
+    const req = createDeleteTopRequest({ topId: state.selectedTopId ?? null });
+    if (!req.topId) return { ok: false, error: "selectedTopId missing" };
     if (!this.repository || typeof this.repository.deleteTop !== "function") {
       return { ok: false, error: "TopsRepository unavailable" };
     }
 
-    const res = await this.repository.deleteTop(topId);
+    const res = await this.repository.deleteTop(req);
     if (res?.ok) {
       this._setState({ selectedTopId: null });
     }

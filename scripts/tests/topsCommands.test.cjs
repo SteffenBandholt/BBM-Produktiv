@@ -12,7 +12,8 @@ async function runTopsCommandsTests(run) {
     const store = createTopsStore({ meetingId: null, projectId: null });
     const repository = {
       async loadByMeeting(meetingId) {
-        assert.equal(meetingId, 7);
+        const id = meetingId && typeof meetingId === "object" ? meetingId.meetingId : meetingId;
+        assert.equal(id, 7);
         return {
           ok: true,
           meeting: { id: 7, is_closed: 1 },
@@ -61,7 +62,7 @@ async function runTopsCommandsTests(run) {
         return { ok: true };
       },
       async deleteTop(topId) {
-        deletedId = topId;
+        deletedId = topId && typeof topId === "object" ? topId.topId : topId;
         return { ok: true };
       },
     };
