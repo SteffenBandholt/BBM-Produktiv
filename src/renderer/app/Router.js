@@ -511,7 +511,9 @@ export default class Router {
   }
 
   async showTops(meetingId, projectId, options = {}) {
-    const mod = await import("../views/TopsView.js");
+    // TOPS-V2: offizieller und einziger Router-Einstiegspunkt fuer Tops.
+    // LEGACY-BOUNDARY: Router zeigt ausschliesslich TopsScreen; Legacy-Details bleiben intern gekapselt.
+    const mod = await import("../views/TopsScreen.js");
     const V = mod.default;
 
     const opts = options && typeof options === "object" ? options : {};

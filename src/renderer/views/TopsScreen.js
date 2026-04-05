@@ -1,0 +1,400 @@
+import { createTopsStore } from "../tops/state/TopsStore.js";
+import { getSelectedTop, hasSelection } from "../tops/state/TopsSelectors.js";
+import { TopsRepository } from "../tops/data/TopsRepository.js";
+import { TopsCommands } from "../tops/domain/TopsCommands.js";
+import { TopsCloseFlow } from "../tops/domain/TopsCloseFlow.js";
+import { TopsQuicklane } from "../tops/components/TopsQuicklane.js";
+import { TopsWorkbench } from "../tops/components/TopsWorkbench.js";
+import { TopsList } from "../tops/components/TopsList.js";
+import { TopsHeader } from "../tops/components/TopsHeader.js";
+import {
+  buildHeaderContext,
+  buildListItemsFromState,
+  editorFromTop,
+  buildPatchFromDraft,
+  canCreateChildFromState,
+  canDeleteFromState,
+  canMoveFromState,
+  shouldShowWorkbench,
+  buildWorkbenchState,
+} from "../tops/viewmodel/TopsScreenViewModel.js";
+
+const TOPS_V2_STYLE_TAG = "bbm-tops-v2-styles";
+
+function ensureTopsV2Styles() {
+  if (typeof document === "undefined") return;
+  if (document.querySelector(`link[data-${TOPS_V2_STYLE_TAG}="true"]`)) return;
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = new URL("../tops/styles/tops.css", import.meta.url).href;
+  link.setAttribute(`data-${TOPS_V2_STYLE_TAG}`, "true");
+  document.head.appendChild(link);
+}
+
+// TOPS-V2: eigenstaendiger Screen inkl. nativer Close-/Output-Flow.
+export default class TopsScreen {
+  constructor(options = {}) {
+    this.router = options.router || null;
+    this.projectId = options.projectId || null;
+    this.meetingId = options.meetingId || null;
+
+    this.root = null;
+    this.header = null;
+    this.sheetArea = null;
+    this.sheetCanvas = null;
+    this.sheetPaper = null;
+    this.editArea = null;
+    this.editCanvas = null;
+
+    this._sidebarEl = null;
+    this._sidebarDisplay = "";
+    this.quicklane = null;
+    this.workbench = null;
+    this.topsList = null;
+    this.closeFlow = null;
+
+    this.topsRepository = options.topsRepository || new TopsRepository();
+    this.store = createTopsStore({
+      projectId: this.projectId,
+      meetingId: this.meetingId,
+      tops: [],
+      selectedTopId: null,
+      editor: {},
+      isReadOnly: false,
+      isMoveMode: false,
+      isLoading: false,
+      error: null,
+      meetingMeta: null,
+    });
+    this.commands = new TopsCommands({
+      store: this.store,
+      repository: this.topsRepository,
+    });
+    this.closeFlow = new TopsCloseFlow({
+      ...options,
+      topsRepository: this.topsRepository,
+    });
+    this._syncCloseFlowContext();
+  }
+
+  render() {
+    this._buildShell();
+    this._hideSidebar();
+    this._syncScreenState();
+    return this.root;
+  }
+
+  _buildShell() {
+    ensureTopsV2Styles();
+    const root = document.createElement("div");
+    root.setAttribute("data-bbm-tops-screen", "true");
+
+    const sheetArea = document.createElement("section");
+    sheetArea.setAttribute("data-bbm-tops-screen-area", "sheet");
+
+    const sheetCanvas = document.createElement("div");
+    sheetCanvas.setAttribute("data-bbm-tops-screen-sheet-canvas", "true");
+
+    const sheetPaper = document.createElement("div");
+    sheetPaper.setAttribute("data-bbm-tops-screen-sheet-paper", "true");
+
+    const editArea = document.createElement("section");
+    editArea.setAttribute("data-bbm-tops-screen-area", "edit");
+    editArea.dataset.bbmWorkbenchVisible = "false";
+
+    const editCanvas = document.createElement("div");
+    editCanvas.setAttribute("data-bbm-tops-screen-edit-canvas", "true");
+
+    this.root = root;
+    this.sheetArea = sheetArea;
+    this.sheetCanvas = sheetCanvas;
+    this.sheetPaper = sheetPaper;
+    this.editArea = editArea;
+    this.editCanvas = editCanvas;
+
+    this._buildHeader();
+    this._buildQuicklane();
+    this._buildList();
+    this._buildWorkbench();
+
+    sheetCanvas.appendChild(sheetPaper);
+    sheetArea.appendChild(sheetCanvas);
+    editArea.appendChild(editCanvas);
+    root.append(this.header.root, sheetArea, editArea);
+  }
+
+  _buildHeader() {
+    this.header = new TopsHeader({
+      onClose: async () => {
+        if (typeof this.router?.showProjects === "function") {
+          await this.router.showProjects();
+        }
+      },
+      onEndMeeting: async () => {
+        await this.closeFlow?.run?.();
+        await this._reloadTops({ keepSelection: true });
+        this._syncScreenState();
+      },
+    });
+  }
+
+  _buildQuicklane() {
+    this.quicklane = new TopsQuicklane({
+      projectId: this._getQuicklaneProjectId(),
+      isReadOnly: !!this.store.getState().isReadOnly,
+      onOpenProject: async (projectId) => {
+        if (typeof this.router?.openProjectFormModal === "function") {
+          await this.router.openProjectFormModal({ projectId });
+        }
+      },
+      onOpenFirms: async (projectId) => {
+        if (typeof this.router?.showProjectFirms === "function") {
+          await this.router.showProjectFirms(projectId);
+        }
+      },
+      onOpenOutput: async (projectId) => {
+        if (typeof this.router?.openPrintModal === "function") {
+          await this.router.openPrintModal({ projectId });
+        }
+      },
+    });
+    this._mountQuicklaneIntoHeader();
+  }
+
+  _buildList() {
+    this.topsList = new TopsList({
+      onRowClick: async (item) => this._handleListRowClick(item),
+    });
+    this.sheetPaper.appendChild(this.topsList.root);
+  }
+
+  _buildWorkbench() {
+    this.workbench = new TopsWorkbench({
+      onDraftChange: (draft) => this._handleWorkbenchDraftChange(draft),
+      onSave: async () => this._handleWorkbenchSave(),
+      onDelete: async () => this._handleWorkbenchDelete(),
+      onToggleMove: async () => this._handleWorkbenchToggleMove(),
+      onCreateLevel1: async () => this._handleWorkbenchCreateLevel1(),
+      onCreateChild: async () => this._handleWorkbenchCreateChild(),
+    });
+    this.editCanvas.appendChild(this.workbench.root);
+  }
+
+  _mountQuicklaneIntoHeader() {
+    const host = this.header?.getActionsHost?.();
+    if (!(host instanceof HTMLElement)) return;
+    if (!(this.quicklane instanceof TopsQuicklane)) return;
+    this.quicklane.mountInto(host);
+  }
+
+  _hideSidebar() {
+    const sidebar = document.querySelector('[data-bbm-sidebar="true"]');
+    if (!sidebar) return;
+    if (!this._sidebarEl) {
+      this._sidebarEl = sidebar;
+      this._sidebarDisplay = sidebar.style.display || "";
+    }
+    sidebar.style.display = "none";
+  }
+
+  _showSidebar() {
+    if (!this._sidebarEl) return;
+    this._sidebarEl.style.display = this._sidebarDisplay;
+    this._sidebarEl = null;
+    this._sidebarDisplay = "";
+  }
+
+  _getQuicklaneProjectId() {
+    const state = this.store.getState();
+    return state.projectId || this.router?.currentProjectId || null;
+  }
+
+  _syncQuicklaneState() {
+    const state = this.store.getState();
+    if (!(this.quicklane instanceof TopsQuicklane)) return;
+    this.quicklane.update({
+      projectId: this._getQuicklaneProjectId(),
+      isReadOnly: !!state.isReadOnly,
+    });
+    this._mountQuicklaneIntoHeader();
+  }
+
+  _syncHeaderState() {
+    if (!(this.header instanceof TopsHeader)) return;
+    const state = this.store.getState();
+    this.header.update({
+      title: "Protokoll",
+      context: buildHeaderContext(state, {
+        projectLabel: this.router?.context?.projectLabel || "",
+      }),
+      isReadOnly: !!state.isReadOnly,
+      canEndMeeting: !!state.meetingId,
+      isBusy: !!state.isLoading,
+    });
+  }
+
+  _syncListState() {
+    if (!(this.topsList instanceof TopsList)) return;
+    this.topsList.setItems(buildListItemsFromState(this.store.getState()));
+  }
+
+  async _handleListRowClick(item) {
+    const top = item?.raw || null;
+    if (!top) return;
+    const state = this.store.getState();
+    const movingTop = state.isMoveMode ? getSelectedTop(state) : null;
+
+    if (state.isMoveMode && movingTop && !state.isReadOnly) {
+      if (!item.isMoveTarget) return;
+      await this.topsRepository.moveTop({
+        topId: movingTop.id,
+        targetParentId: top.id || null,
+      });
+      this.commands.toggleMoveMode(false);
+      await this._reloadTops({ keepSelection: true, selectTopId: movingTop.id });
+      this._syncScreenState();
+      return;
+    }
+
+    this.commands.selectTop(top.id);
+    this.commands.updateDraft(editorFromTop(top));
+    this._syncScreenState();
+  }
+
+  _syncWorkbenchState() {
+    if (!(this.workbench instanceof TopsWorkbench)) return;
+    const state = this.store.getState();
+    this.workbench.setState(buildWorkbenchState(state));
+  }
+
+  _syncScreenState() {
+    const state = this.store.getState();
+    this._syncCloseFlowContext();
+    this._syncHeaderState();
+    this._syncQuicklaneState();
+    this._syncListState();
+    this._syncWorkbenchState();
+
+    if (this.editArea) {
+      this.editArea.dataset.bbmWorkbenchVisible = shouldShowWorkbench(state) ? "true" : "false";
+      this.editArea.dataset.bbmHasSelection = hasSelection(state) ? "true" : "false";
+    }
+  }
+
+  _syncCloseFlowContext() {
+    const state = this.store.getState();
+    if (!(this.closeFlow instanceof TopsCloseFlow)) return;
+    this.closeFlow.setContext({
+      projectId: state.projectId || this.projectId || this.router?.currentProjectId || null,
+      meetingId: state.meetingId || this.meetingId || null,
+      meetingMeta: state.meetingMeta || null,
+      isReadOnly: !!state.isReadOnly,
+    });
+  }
+
+  _handleWorkbenchDraftChange(draft) {
+    this.commands.updateDraft(draft || {});
+    this._syncWorkbenchState();
+  }
+
+  async _handleWorkbenchSave() {
+    const state = this.store.getState();
+    const selectedTop = getSelectedTop(state);
+    if (!selectedTop) return;
+    const patch = buildPatchFromDraft(selectedTop, state.editor || {});
+    if (!Object.keys(patch).length) return;
+    await this.commands.saveDraft(patch);
+    await this._reloadTops({ keepSelection: true, selectTopId: selectedTop.id });
+    this._syncScreenState();
+  }
+
+  async _handleWorkbenchDelete() {
+    const state = this.store.getState();
+    const selectedTop = getSelectedTop(state);
+    if (!canDeleteFromState(state, selectedTop)) return;
+
+    await this.commands.saveDraft({ is_hidden: 1 });
+    await this.commands.deleteSelectedTop();
+    await this._reloadTops({ keepSelection: false });
+    this._syncScreenState();
+  }
+
+  async _handleWorkbenchToggleMove() {
+    const state = this.store.getState();
+    const selectedTop = getSelectedTop(state);
+    if (!state.isMoveMode && !canMoveFromState(state, selectedTop)) return;
+    this.commands.toggleMoveMode();
+    this._syncScreenState();
+  }
+
+  async _handleWorkbenchCreateLevel1() {
+    const state = this.store.getState();
+    if (state.isReadOnly || !state.meetingId || !state.projectId) return;
+
+    const res = await this.topsRepository.createTop({
+      projectId: state.projectId,
+      meetingId: state.meetingId,
+      level: 1,
+      parentTopId: null,
+      title: "(ohne Bezeichnung)",
+    });
+    const createdId = res?.top?.id || null;
+    await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
+    this._syncScreenState();
+  }
+
+  async _handleWorkbenchCreateChild() {
+    const state = this.store.getState();
+    const selectedTop = getSelectedTop(state);
+    if (!canCreateChildFromState(state, selectedTop)) return;
+
+    const level = Number(selectedTop.level) + 1;
+    if (!Number.isFinite(level) || level > 4) return;
+
+    const res = await this.topsRepository.createTop({
+      projectId: state.projectId,
+      meetingId: state.meetingId,
+      level,
+      parentTopId: selectedTop.id,
+      title: "(ohne Bezeichnung)",
+    });
+    const createdId = res?.top?.id || null;
+    await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
+    this._syncScreenState();
+  }
+
+  async _reloadTops({ keepSelection = true, selectTopId = null } = {}) {
+    const before = this.store.getState();
+    const prevSelectedId = before.selectedTopId ?? null;
+    const res = await this.commands.loadTops({
+      meetingId: this.meetingId || before.meetingId || null,
+      projectId: this.projectId || before.projectId || null,
+    });
+
+    const tops = Array.isArray(res?.list) ? res.list : [];
+    let nextSelectedId = null;
+    if (selectTopId !== null && selectTopId !== undefined) {
+      nextSelectedId = tops.some((t) => String(t?.id) === String(selectTopId)) ? selectTopId : null;
+    } else if (keepSelection && prevSelectedId !== null && prevSelectedId !== undefined) {
+      nextSelectedId = tops.some((t) => String(t?.id) === String(prevSelectedId)) ? prevSelectedId : null;
+    }
+
+    this.commands.selectTop(nextSelectedId);
+    const selectedTop = tops.find((t) => String(t?.id) === String(nextSelectedId ?? "")) || null;
+    this.commands.updateDraft(editorFromTop(selectedTop));
+    this.commands.toggleMoveMode(false);
+    this.store.setState({
+      meetingMeta: res?.meeting || null,
+    });
+  }
+
+  async load() {
+    await this._reloadTops({ keepSelection: true });
+    this._syncScreenState();
+  }
+
+  async destroy() {
+    await this.closeFlow?.destroy?.();
+    this._showSidebar();
+  }
+}
