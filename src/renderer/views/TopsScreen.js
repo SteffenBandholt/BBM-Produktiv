@@ -6,6 +6,7 @@ import { TopsCommands } from "../tops/domain/TopsCommands.js";
 import { TopsQuicklane } from "../tops/components/TopsQuicklane.js";
 import { TopsWorkbench } from "../tops/components/TopsWorkbench.js";
 import { TopsList } from "../tops/components/TopsList.js";
+import { TopsHeader } from "../tops/components/TopsHeader.js";
 
 // TOPS-V2: offizieller Einstiegspunkt fuer Tops-UI.
 // LEGACY-BOUNDARY: fachliche Bestandslogik bleibt bis zur v2-Ablosung in TopsView.
@@ -16,6 +17,7 @@ export default class TopsScreen {
     this.meetingId = options.meetingId || null;
 
     this.root = null;
+    this.header = null;
     this.sheetArea = null;
     this.sheetCanvas = null;
     this.sheetPaper = null;
@@ -107,7 +109,7 @@ export default class TopsScreen {
     if (updateTopBarProtocolTitle) {
       legacy._updateTopBarProtocolTitle = (...args) => {
         const res = updateTopBarProtocolTitle(...args);
-        this._compactWorkingTopBar();
+        this._syncHeaderState();
         return res;
       };
     }
@@ -182,14 +184,34 @@ export default class TopsScreen {
     this.editArea = editArea;
     this.editCanvas = editCanvas;
 
+    this._buildHeader();
     sheetCanvas.appendChild(sheetPaper);
     sheetArea.appendChild(sheetCanvas);
     editArea.appendChild(editCanvas);
-    root.append(sheetArea, editArea);
+    root.append(this.header.root, sheetArea, editArea);
 
     this._buildQuicklane();
     this._buildList();
     this._buildWorkbench();
+  }
+
+  _buildHeader() {
+    this.header = new TopsHeader({
+      onClose: async () => {
+        if (typeof this._legacy?._closeViewOnly === "function") {
+          await this._legacy._closeViewOnly();
+          return;
+        }
+        if (typeof this.router?.showProjects === "function") {
+          await this.router.showProjects();
+        }
+      },
+      onEndMeeting: async () => {
+        if (typeof this._legacy?._runCloseMeetingOutputFlow === "function") {
+          await this._legacy._runCloseMeetingOutputFlow();
+        }
+      },
+    });
   }
 
   _buildQuicklane() {
@@ -212,6 +234,7 @@ export default class TopsScreen {
         }
       },
     });
+    this._mountQuicklaneIntoHeader();
   }
 
   _buildWorkbench() {
@@ -264,29 +287,7 @@ export default class TopsScreen {
     const box = this._legacy.box;
 
     if (topBar) {
-      topBar.style.position = "static";
-      topBar.style.top = "";
-      topBar.style.left = "";
-      topBar.style.right = "";
-      topBar.style.height = "auto";
-      topBar.style.minHeight = "30px";
-      topBar.style.maxHeight = "none";
-      topBar.style.padding = "1px 2px 1px";
-      topBar.style.gap = "6px";
-      topBar.style.margin = "0";
-      topBar.style.overflowY = "visible";
-      topBar.style.borderBottom = "0";
-      topBar.style.boxShadow = "none";
-      topBar.style.background = "transparent";
-
-      if (this._legacy.topsTitleEl instanceof HTMLElement) {
-        this._legacy.topsTitleEl.style.lineHeight = "1.05";
-        this._legacy.topsTitleEl.style.paddingRight = "4px";
-      }
-
-      this.root.insertBefore(topBar, this.sheetArea);
-      this._mountQuicklaneIntoTopBar();
-      this._compactWorkingTopBar();
+      topBar.style.display = "none";
     }
 
     if (list) {
@@ -304,17 +305,11 @@ export default class TopsScreen {
     this._legacy.root = this.root;
   }
 
-  _mountQuicklaneIntoTopBar() {
-    const topBar = this._legacy.topBarEl;
-    if (!(topBar instanceof HTMLElement)) return;
+  _mountQuicklaneIntoHeader() {
+    const host = this.header?.getActionsHost?.();
+    if (!(host instanceof HTMLElement)) return;
     if (!(this.quicklane instanceof TopsQuicklane)) return;
-
-    const actionWrap = Array.from(topBar.children || []).find(
-      (el) => el instanceof HTMLElement && el.contains?.(this._legacy.btnCloseMeeting)
-    );
-    if (!(actionWrap instanceof HTMLElement)) return;
-
-    this.quicklane.mountInto(actionWrap);
+    this.quicklane.mountInto(host);
   }
 
   _hideSidebar() {
@@ -341,99 +336,12 @@ export default class TopsScreen {
       projectId: this._getQuicklaneProjectId(),
       isReadOnly: !!state.isReadOnly,
     });
+    this._mountQuicklaneIntoHeader();
   }
 
   _getQuicklaneProjectId() {
     const state = this.store.getState();
     return state.projectId || this.router?.currentProjectId || null;
-  }
-
-  _syncTopMetaSlot() {
-    const topMeta = this._legacy.topMetaEl;
-    if (!(topMeta instanceof HTMLElement)) return;
-
-    topMeta.style.flex = "0 0 0px";
-    topMeta.style.width = "0";
-    topMeta.style.paddingLeft = "0";
-    topMeta.style.marginLeft = "0";
-    topMeta.style.overflow = "hidden";
-  }
-
-  _compactWorkingTopBar() {
-    const topBar = this._legacy.topBarEl;
-    if (!(topBar instanceof HTMLElement)) return;
-    topBar.style.alignItems = "center";
-    this._mountQuicklaneIntoTopBar();
-
-    const actionWrap = Array.from(topBar.children || []).find(
-      (el) => el instanceof HTMLElement && el.contains?.(this._legacy.btnCloseMeeting)
-    );
-    if (actionWrap instanceof HTMLElement) {
-      actionWrap.style.marginRight = "0";
-      actionWrap.style.gap = "4px";
-      actionWrap.style.display = "inline-flex";
-      actionWrap.style.alignItems = "center";
-      actionWrap.style.justifyContent = "center";
-      const actionButtons = Array.from(actionWrap.querySelectorAll("button"));
-      for (const btn of actionButtons) {
-        if (!(btn instanceof HTMLElement)) continue;
-        btn.style.minHeight = "0";
-        btn.style.padding = "1px 6px";
-        btn.style.fontSize = "7.5pt";
-        btn.style.lineHeight = "1.15";
-        btn.style.display = "inline-flex";
-        btn.style.alignItems = "center";
-        btn.style.justifyContent = "center";
-      }
-    }
-
-    const title = this._legacy.topsTitleEl;
-    if (title instanceof HTMLElement) {
-      title.style.margin = "0";
-      title.style.padding = "0 3px 0 0";
-      title.style.maxHeight = "30px";
-      title.style.overflow = "visible";
-      title.style.gap = "0";
-      title.style.display = "grid";
-      title.style.gridTemplateColumns = "auto auto";
-      title.style.columnGap = "6px";
-      title.style.rowGap = "1px";
-      title.style.alignItems = "center";
-      title.style.lineHeight = "1";
-
-      const lines = Array.from(title.children || []);
-      if (lines[0] instanceof HTMLElement) {
-        lines[0].style.margin = "0";
-        lines[0].style.fontSize = "8pt";
-        lines[0].style.lineHeight = "1";
-        lines[0].style.gridColumn = "1";
-        lines[0].style.gridRow = "1";
-      }
-      if (lines[1] instanceof HTMLElement) {
-        lines[1].style.margin = "0";
-        lines[1].style.fontSize = "8pt";
-        lines[1].style.lineHeight = "1";
-        lines[1].style.gridColumn = "2";
-        lines[1].style.gridRow = "1";
-        const line1Children = Array.from(lines[1].children || []);
-        for (const child of line1Children) {
-          if (!(child instanceof HTMLElement)) continue;
-          child.style.fontSize = "8pt";
-          child.style.lineHeight = "1";
-        }
-      }
-      if (lines[2] instanceof HTMLElement) {
-        lines[2].style.display = "";
-        lines[2].style.margin = "0";
-        lines[2].style.fontSize = "8pt";
-        lines[2].style.lineHeight = "1";
-        lines[2].style.gridColumn = "1 / span 2";
-        lines[2].style.gridRow = "2";
-      }
-      for (let i = 3; i < lines.length; i += 1) {
-        if (lines[i] instanceof HTMLElement) lines[i].style.display = "none";
-      }
-    }
   }
 
   _inferLevelFromRow(_row) {
@@ -664,13 +572,40 @@ export default class TopsScreen {
 
     this._syncWorkbenchState();
     this._syncQuicklaneState();
-    this._syncTopMetaSlot();
-    this._compactWorkingTopBar();
+    this._syncHeaderState();
 
     if (this.editArea) {
       const state = this.store.getState();
       this.editArea.dataset.bbmHasSelection = hasSelection(state) ? "true" : "false";
     }
+  }
+
+  _buildHeaderContext(state) {
+    const parts = typeof this._legacy?._parseMeetingTitleParts === "function"
+      ? this._legacy._parseMeetingTitleParts()
+      : {};
+    const index = String(parts?.meetingIndex || "").trim();
+    const date = String(parts?.meetingDateText || "").trim();
+    const keyword = String(parts?.meetingKeyword || "").trim();
+    const meetingLine = [index, date].filter(Boolean).join(" - ");
+    const projectLine = String(this.router?.context?.projectLabel || "").trim();
+    const text = [projectLine, meetingLine, keyword].filter(Boolean).join(" | ");
+    if (text) return text;
+    if (!state?.meetingId) return "kein Protokoll aktiv";
+    return "Protokoll";
+  }
+
+  _syncHeaderState() {
+    if (!(this.header instanceof TopsHeader)) return;
+    const state = this.store.getState();
+    this.header.update({
+      title: "Protokoll",
+      context: this._buildHeaderContext(state),
+      isReadOnly: !!state.isReadOnly,
+      canEndMeeting: !!state.meetingId,
+      isBusy: !!this._legacy?._busy,
+    });
+    this._mountQuicklaneIntoHeader();
   }
 
   _buildListItemsFromState() {
