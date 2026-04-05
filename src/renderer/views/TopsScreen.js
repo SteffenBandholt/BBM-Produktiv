@@ -31,8 +31,7 @@ function ensureTopsV2Styles() {
   document.head.appendChild(link);
 }
 
-// TOPS-V2: eigenstaendiger Screen.
-// LEGACY-REST: verbleibende Close-/Output-Kopplung ist in TopsCloseFlow gekapselt.
+// TOPS-V2: eigenstaendiger Screen inkl. nativer Close-/Output-Flow.
 export default class TopsScreen {
   constructor(options = {}) {
     this.router = options.router || null;
