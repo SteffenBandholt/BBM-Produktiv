@@ -1,42 +1,32 @@
 export class TopsMetaPanel {
   constructor({ onChange } = {}) {
     this.onChange = typeof onChange === "function" ? onChange : null;
+
     this.root = document.createElement("div");
     this.root.className = "bbm-tops-meta-panel";
     this.root.dataset.disabled = "false";
 
-    this.inpDueDate = document.createElement("input");
-    this.inpDueDate.type = "date";
-    this.selStatus = document.createElement("select");
-    for (const value of ["-", "todo", "inprogress", "done"]) {
-      const opt = document.createElement("option");
-      opt.value = value;
-      opt.textContent = value === "-" ? "-" : value;
-      this.selStatus.appendChild(opt);
-    }
-    this.inpResponsible = document.createElement("input");
-    this.inpResponsible.type = "text";
-    this.inpResponsible.placeholder = "verantwortlich";
+    this._disabled = false;
+    this._value = {
+      due_date: null,
+      status: "-",
+      responsible_label: "",
+    };
 
-    this._appendField("Fertig bis", this.inpDueDate, { rowClass: "bbm-tops-meta-field-date" });
-    this._appendField("Status", this.selStatus);
-    this._appendField("Verantwortlich", this.inpResponsible);
-
-    for (const el of [this.inpDueDate, this.selStatus, this.inpResponsible]) {
-      el.addEventListener("change", () => this._emitChange());
-      el.addEventListener("input", () => this._emitChange());
-    }
+    this._statusOptions = [
+      { value: "-", label: "-", disabled: false },
+      { value: "todo", label: "todo", disabled: false },
+      { value: "inprogress", label: "inprogress", disabled: false },
+      { value: "done", label: "done", disabled: false },
+    ];
   }
 
-  _appendField(label, control, { rowClass = "" } = {}) {
-    const row = document.createElement("label");
-    row.className = "bbm-tops-meta-field";
-    if (rowClass) row.classList.add(rowClass);
-    const t = document.createElement("span");
-    t.textContent = label;
-    control.classList.add("bbm-tops-input");
-    row.append(t, control);
-    this.root.appendChild(row);
+  _normalizeValue(value = {}) {
+    return {
+      due_date: (value?.due_date || "").trim() || null,
+      status: (value?.status || "").trim() || "-",
+      responsible_label: (value?.responsible_label || "").trim() || "",
+    };
   }
 
   _emitChange() {
@@ -44,24 +34,45 @@ export class TopsMetaPanel {
   }
 
   getValue() {
-    return {
-      due_date: (this.inpDueDate.value || "").trim() || null,
-      status: (this.selStatus.value || "").trim() || "-",
-      responsible_label: (this.inpResponsible.value || "").trim() || "",
-    };
+    return { ...this._value };
   }
 
-  setValue(value = {}) {
-    this.inpDueDate.value = value?.due_date || "";
-    this.selStatus.value = value?.status || "-";
-    this.inpResponsible.value = value?.responsible_label || "";
+  setValue(value = {}, { silent = true } = {}) {
+    this._value = this._normalizeValue(value);
+    if (!silent) this._emitChange();
+  }
+
+  updatePartial(partial = {}, { silent = false } = {}) {
+    this._value = this._normalizeValue({
+      ...this._value,
+      ...(partial || {}),
+    });
+    if (!silent) this._emitChange();
   }
 
   setDisabled(disabled) {
-    const dis = !!disabled;
-    this.root.dataset.disabled = dis ? "true" : "false";
-    for (const el of [this.inpDueDate, this.selStatus, this.inpResponsible]) {
-      el.disabled = dis;
-    }
+    this._disabled = !!disabled;
+    this.root.dataset.disabled = this._disabled ? "true" : "false";
+  }
+
+  isDisabled() {
+    return this._disabled;
+  }
+
+  getStatusOptions() {
+    return this._statusOptions.map((item) => ({ ...item }));
+  }
+
+  setStatusOptions(options = []) {
+    const normalized = Array.isArray(options)
+      ? options.map((item) => ({
+          value: String(item?.value || ""),
+          label: String(item?.label || item?.value || ""),
+          disabled: !!item?.disabled,
+        }))
+      : [];
+
+    if (!normalized.length) return;
+    this._statusOptions = normalized;
   }
 }

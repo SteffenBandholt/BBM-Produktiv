@@ -74,6 +74,7 @@ export class TopsWorkbench {
     this.metaPanel = new TopsMetaPanel({
       onChange: () => this._emitDraftChange(),
     });
+
     this.statusAmpelBridge = new TopsStatusAmpelBridge({
       metaPanel: this.metaPanel,
       onChange: () => this._emitDraftChange(),
@@ -165,18 +166,17 @@ export class TopsWorkbench {
   }
 
   setState({
+    header = {},
     editor = {},
-    topNumber = "",
-    isReadOnly = false,
+    editorState = {},
+    metaState = {},
     hasSelection = false,
+    isReadOnly = false,
     isMoveMode = false,
     canSave = false,
     canDelete = false,
     canMove = false,
     canCreateChild = false,
-    shortTextReadOnly = false,
-    longTextReadOnly = false,
-    flagsDisabled = false,
   } = {}) {
     const nextTitle = editor?.title || "";
     const nextLong = editor?.longtext || "";
@@ -198,17 +198,11 @@ export class TopsWorkbench {
       this.editbox.setValue(nextEditboxValue);
     }
 
-    const normalizedTopNumber = String(topNumber || "").trim();
-    this.leftHeaderTitle.textContent =
-      hasSelection && normalizedTopNumber
-        ? `TOP ${normalizedTopNumber} bearbeiten`
-        : "TOP bearbeiten";
+    this.leftHeaderTitle.textContent = String(header?.title || "TOP bearbeiten");
 
     this.metaPanel.setValue(editor || {});
     this.statusAmpelBridge.applyDraftValue(editor || {});
     this.responsibleBridge.applyDraftValue(editor?.responsible_label || "");
-
-    const disableInputs = !!isReadOnly || !hasSelection;
 
     if (!hasSelection) {
       this.editbox.setValue({
@@ -232,15 +226,16 @@ export class TopsWorkbench {
     } else {
       this.editbox.setState("normal");
       this.editbox.setFieldAccess({
-        shortTextReadOnly: !!shortTextReadOnly,
-        longTextReadOnly: !!longTextReadOnly,
-        flagsDisabled: !!flagsDisabled,
+        shortTextReadOnly: !!editorState?.shortTextReadOnly,
+        longTextReadOnly: !!editorState?.longTextReadOnly,
+        flagsDisabled: !!editorState?.flagsDisabled,
       });
     }
 
-    this.metaPanel.setDisabled(disableInputs);
-    this.statusAmpelBridge.setDisabled(disableInputs);
-    this.responsibleBridge.setDisabled(disableInputs);
+    const metaDisabled = !!metaState?.disabled;
+    this.metaPanel.setDisabled(metaDisabled);
+    this.statusAmpelBridge.setDisabled(metaDisabled);
+    this.responsibleBridge.setDisabled(metaDisabled);
 
     this.btnL1.disabled = !!isReadOnly;
     this.btnChild.disabled = !!isReadOnly || !canCreateChild;

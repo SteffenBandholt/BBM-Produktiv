@@ -18,6 +18,7 @@ export class TopsStatusAmpelBridge {
         trafficLight: "Ampel",
       },
     });
+
     this.root = this._buildRow();
     this._bindEvents();
     this._syncStatusOptionsFromMetaPanel();
@@ -46,28 +47,28 @@ export class TopsStatusAmpelBridge {
   }
 
   _syncStatusOptionsFromMetaPanel() {
-    const options = Array.from(this.metaPanel?.selStatus?.options || []).map((option) => ({
-      value: String(option.value || ""),
-      label: String(option.textContent || option.value || ""),
-      disabled: !!option.disabled,
-    }));
+    const options =
+      typeof this.metaPanel?.getStatusOptions === "function"
+        ? this.metaPanel.getStatusOptions()
+        : [];
     this.field.setStatusOptions(options);
   }
 
   mount() {
     if (!this.metaPanel?.root) return;
     this.metaPanel.root.appendChild(this.root);
-
-    this.legacyDueRow = this.metaPanel.inpDueDate?.closest(".bbm-tops-meta-field");
-    this.legacyStatusRow = this.metaPanel.selStatus?.closest(".bbm-tops-meta-field");
-    if (this.legacyDueRow) this.legacyDueRow.style.display = "none";
-    if (this.legacyStatusRow) this.legacyStatusRow.style.display = "none";
   }
 
   _syncToMetaPanel() {
     const value = this.field.getValue();
-    if (this.metaPanel?.inpDueDate) this.metaPanel.inpDueDate.value = value.dueDate || "";
-    if (this.metaPanel?.selStatus) this.metaPanel.selStatus.value = value.status || "-";
+
+    if (typeof this.metaPanel?.updatePartial === "function") {
+      this.metaPanel.updatePartial({
+        due_date: value.dueDate || null,
+        status: value.status || "-",
+      });
+    }
+
     if (this.onChange) this.onChange();
   }
 
@@ -75,15 +76,23 @@ export class TopsStatusAmpelBridge {
     this.field.setValue({
       status: editor?.status ?? "-",
       dueDate: editor?.due_date ?? "",
-      trafficLight: toTrafficLight(editor?.trafficLight ?? editor?.traffic_light ?? editor?.ampel ?? "off"),
+      trafficLight: toTrafficLight(
+        editor?.trafficLight ?? editor?.traffic_light ?? editor?.ampel ?? "off"
+      ),
     });
 
-    if (this.metaPanel?.inpDueDate) this.metaPanel.inpDueDate.value = editor?.due_date || "";
-    if (this.metaPanel?.selStatus) this.metaPanel.selStatus.value = editor?.status || "-";
+    if (typeof this.metaPanel?.updatePartial === "function") {
+      this.metaPanel.updatePartial(
+        {
+          due_date: editor?.due_date || null,
+          status: editor?.status || "-",
+        },
+        { silent: true }
+      );
+    }
   }
 
   setDisabled(disabled) {
     this.field.setDisabled(!!disabled);
   }
 }
-

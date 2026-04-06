@@ -18,8 +18,12 @@ import {
   canDeleteFromState,
   canMoveFromState,
   shouldShowWorkbench,
-  buildWorkbenchState,
 } from "../tops/viewmodel/TopsScreenViewModel.js";
+import {
+  buildWorkbenchHeaderState,
+  buildWorkbenchEditorState,
+  buildWorkbenchMetaState,
+} from "../tops/viewmodel/TopsWorkbenchViewModel.js";
 
 const TOPS_V2_STYLE_TAG = "bbm-tops-v2-styles";
 
@@ -326,8 +330,23 @@ export default class TopsScreen {
 
   _syncWorkbenchState() {
     if (!(this.workbench instanceof TopsWorkbench)) return;
+
     const state = this.store.getState();
-    this.workbench.setState(buildWorkbenchState(state));
+    const selectedTop = getSelectedTop(state);
+
+    this.workbench.setState({
+      header: buildWorkbenchHeaderState(state, selectedTop),
+      editor: state?.editor || editorFromTop(selectedTop),
+      editorState: buildWorkbenchEditorState(state, selectedTop),
+      metaState: buildWorkbenchMetaState(state),
+      hasSelection: !!selectedTop,
+      isReadOnly: !!state?.isReadOnly,
+      isMoveMode: !!state?.isMoveMode,
+      canSave: !!selectedTop && !state?.isReadOnly,
+      canDelete: canDeleteFromState(state, selectedTop),
+      canMove: canMoveFromState(state, selectedTop),
+      canCreateChild: canCreateChildFromState(state, selectedTop),
+    });
   }
 
   _syncScreenState() {
@@ -364,8 +383,10 @@ export default class TopsScreen {
     const state = this.store.getState();
     const selectedTop = getSelectedTop(state);
     if (!selectedTop) return;
+
     const patch = buildPatchFromDraft(selectedTop, state.editor || {});
     if (!Object.keys(patch).length) return;
+
     await this.commands.saveDraft(patch);
     await this._reloadTops({ keepSelection: true, selectTopId: selectedTop.id });
     this._syncScreenState();
@@ -429,6 +450,7 @@ export default class TopsScreen {
   async _reloadTops({ keepSelection = true, selectTopId = null } = {}) {
     const before = this.store.getState();
     const prevSelectedId = before.selectedTopId ?? null;
+
     const res = await this.commands.loadTops({
       meetingId: this.meetingId || before.meetingId || null,
       projectId: this.projectId || before.projectId || null,
@@ -436,6 +458,7 @@ export default class TopsScreen {
 
     const tops = Array.isArray(res?.list) ? res.list : [];
     let nextSelectedId = null;
+
     if (selectTopId !== null && selectTopId !== undefined) {
       nextSelectedId = tops.some((t) => String(t?.id) === String(selectTopId)) ? selectTopId : null;
     } else if (keepSelection && prevSelectedId !== null && prevSelectedId !== undefined) {

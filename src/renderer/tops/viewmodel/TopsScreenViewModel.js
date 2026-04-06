@@ -1,4 +1,4 @@
-import { getSelectedTop } from "../state/TopsSelectors.js";
+﻿import { getSelectedTop } from "../state/TopsSelectors.js";
 import {
   isAllowedMoveTarget,
   canCreateChildFromState,
@@ -130,23 +130,6 @@ export function buildHeaderState(state) {
   };
 }
 
-export function buildHeaderContext(state, { projectLabel } = {}) {
-  const m = state?.meetingMeta || null;
-  const parts = [];
-  const projectLine = String(projectLabel || "").trim();
-  if (projectLine) parts.push(projectLine);
-
-  const meetingNo = String(m?.meeting_number ?? m?.meetingNumber ?? "").trim();
-  const meetingDate = String(m?.meeting_date ?? m?.meetingDate ?? "").trim();
-  const meetingKeyword = String(m?.keyword || m?.meeting_keyword || "").trim();
-  const meetingLine = [meetingNo, meetingDate].filter(Boolean).join(" - ");
-  if (meetingLine) parts.push(meetingLine);
-  if (meetingKeyword) parts.push(meetingKeyword);
-
-  if (!parts.length) return state?.meetingId ? "Protokoll" : "kein Protokoll aktiv";
-  return parts.join(" | ");
-}
-
 export function getTopVisualState(top) {
   const isCarriedOver = Number(top?.is_carried_over ?? top?.isCarriedOver) === 1;
   const isTouched =
@@ -270,27 +253,4 @@ export function shouldShowWorkbench(state) {
   const hasMeeting = !!state?.meetingId;
   if (!hasMeeting) return false;
   return !state?.isReadOnly;
-}
-
-export function buildWorkbenchState(state) {
-  const selectedTop = getSelectedTop(state);
-  const isCarriedOver = Number(selectedTop?.is_carried_over ?? selectedTop?.isCarriedOver) === 1;
-  const isClosedMeeting = !!state?.isReadOnly;
-  const rawTopNumber = String(selectedTop?.displayNumber ?? selectedTop?.number ?? "").trim();
-  const topNumber = rawTopNumber ? (rawTopNumber.endsWith(".") ? rawTopNumber : `${rawTopNumber}.`) : "";
-
-  return {
-    editor: state?.editor || editorFromTop(selectedTop),
-    topNumber,
-    isReadOnly: isClosedMeeting,
-    hasSelection: !!selectedTop,
-    isMoveMode: !!state?.isMoveMode,
-    canSave: !!selectedTop && !isClosedMeeting,
-    canDelete: canDeleteFromState(state, selectedTop),
-    canMove: canMoveFromState(state, selectedTop),
-    canCreateChild: canCreateChildFromState(state, selectedTop),
-    shortTextReadOnly: !isClosedMeeting && isCarriedOver,
-    longTextReadOnly: false,
-    flagsDisabled: false,
-  };
 }

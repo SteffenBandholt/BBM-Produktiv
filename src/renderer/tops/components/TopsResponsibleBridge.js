@@ -55,8 +55,6 @@ export class TopsResponsibleBridge {
   mount() {
     if (!this.metaPanel?.root) return;
     this.metaPanel.root.appendChild(this.root);
-    this.legacyRow = this.metaPanel.inpResponsible?.closest(".bbm-tops-meta-field");
-    if (this.legacyRow) this.legacyRow.style.display = "none";
   }
 
   async initialize() {
@@ -93,7 +91,7 @@ export class TopsResponsibleBridge {
         const list = await this.loadEmployeesByCompany(companyId);
         if (Array.isArray(list)) rows.push(...list);
       } catch {
-        // keep robust fallback
+        // robust fallback
       }
     }
     return rows;
@@ -105,8 +103,14 @@ export class TopsResponsibleBridge {
     return raw.slice("company:".length).trim();
   }
 
+  _getMetaResponsibleLabel() {
+    if (typeof this.metaPanel?.getValue !== "function") return "";
+    return String(this.metaPanel.getValue()?.responsible_label || "").trim();
+  }
+
   _refreshOptions() {
     const selectedCompanyId = this._extractCompanyId(this.currentValue);
+
     this.options = buildAssigneeOptions(this.sources, {
       companyId: selectedCompanyId || undefined,
       companyValuePrefix: "company",
@@ -117,7 +121,7 @@ export class TopsResponsibleBridge {
       this.currentValue &&
       !this.options.some((item) => String(item?.value || "") === String(this.currentValue || ""))
     ) {
-      const fallbackLabel = this.metaPanel?.inpResponsible?.value || this.currentValue;
+      const fallbackLabel = this._getMetaResponsibleLabel() || this.currentValue;
       this.options = [{ value: this.currentValue, label: fallbackLabel }, ...this.options];
     }
 
@@ -128,8 +132,12 @@ export class TopsResponsibleBridge {
   _syncFromField() {
     this.currentValue = this.field.getValue();
     const selected = this.options.find((item) => item.value === this.currentValue);
-    if (this.metaPanel?.inpResponsible) {
-      this.metaPanel.inpResponsible.value = selected?.label || "";
+    const label = selected?.label || "";
+
+    if (typeof this.metaPanel?.updatePartial === "function") {
+      this.metaPanel.updatePartial({
+        responsible_label: label,
+      });
     }
 
     const selectedCompanyId = this._extractCompanyId(this.currentValue);
@@ -152,20 +160,26 @@ export class TopsResponsibleBridge {
 
   applyDraftValue(label) {
     const wanted = String(label || "").trim();
+
     if (!wanted) {
       this.currentValue = "";
       this.field.setValue("");
-      if (this.metaPanel?.inpResponsible) this.metaPanel.inpResponsible.value = "";
+      if (typeof this.metaPanel?.updatePartial === "function") {
+        this.metaPanel.updatePartial({ responsible_label: "" }, { silent: true });
+      }
       return;
     }
 
     const match = this.options.find(
       (item) => String(item?.label || "").trim().toLowerCase() === wanted.toLowerCase()
     );
+
     if (match) {
       this.currentValue = match.value;
       this.field.setValue(match.value);
-      if (this.metaPanel?.inpResponsible) this.metaPanel.inpResponsible.value = match.label;
+      if (typeof this.metaPanel?.updatePartial === "function") {
+        this.metaPanel.updatePartial({ responsible_label: match.label }, { silent: true });
+      }
       return;
     }
 
@@ -174,7 +188,10 @@ export class TopsResponsibleBridge {
     this.field.setOptions(this.options);
     this.field.setValue(legacyValue);
     this.currentValue = legacyValue;
-    if (this.metaPanel?.inpResponsible) this.metaPanel.inpResponsible.value = wanted;
+
+    if (typeof this.metaPanel?.updatePartial === "function") {
+      this.metaPanel.updatePartial({ responsible_label: wanted }, { silent: true });
+    }
   }
 
   setDisabled(disabled) {
