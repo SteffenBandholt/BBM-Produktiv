@@ -1,0 +1,268 @@
+import { EditboxStateService, EDITBOX_STATE } from "./EditboxStateService.js";
+import {
+  DEFAULT_TEXT_LIMITS,
+  DEFAULT_WARNING_RATIO,
+  evaluateShortText,
+  evaluateLongText,
+} from "../textregeln/index.js";
+
+const FLAG_KEYS = ["hidden", "important", "task", "decision"];
+
+function asText(value) {
+  return String(value || "");
+}
+
+function asFlags(rawFlags) {
+  const source = rawFlags && typeof rawFlags === "object" ? rawFlags : {};
+  return {
+    hidden: Boolean(source.hidden),
+    important: Boolean(source.important),
+    task: Boolean(source.task),
+    decision: Boolean(source.decision),
+  };
+}
+
+function mkEl(doc, tag, className, text) {
+  const el = doc.createElement(tag);
+  if (className) el.className = className;
+  if (text !== undefined) el.textContent = text;
+  return el;
+}
+
+export class EditboxShell {
+  constructor({ documentRef, stateService, limits, warningRatio } = {}) {
+    this.documentRef = documentRef || window.document;
+    this.stateService = stateService || new EditboxStateService();
+    this._limits = {
+      shortText: this._asPositiveInt(limits?.shortText, DEFAULT_TEXT_LIMITS.shortText),
+      longText: this._asPositiveInt(limits?.longText, DEFAULT_TEXT_LIMITS.longText),
+    };
+    this._warningRatio = this._asWarningRatio(warningRatio, DEFAULT_WARNING_RATIO);
+    this._shortTextEvaluation = evaluateShortText("", {
+      limit: this._limits.shortText,
+      warningRatio: this._warningRatio,
+    });
+    this._longTextEvaluation = evaluateLongText("", {
+      limit: this._limits.longText,
+      warningRatio: this._warningRatio,
+    });
+    this._state = EDITBOX_STATE.EMPTY;
+    this._build();
+    this.setState(EDITBOX_STATE.EMPTY);
+  }
+
+  _asPositiveInt(value, fallback) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0) return fallback;
+    return Math.floor(n);
+  }
+
+  _asWarningRatio(value, fallback) {
+    const n = Number(value);
+    if (!Number.isFinite(n) || n <= 0 || n > 1) return fallback;
+    return n;
+  }
+
+  _build() {
+    const doc = this.documentRef;
+
+    this.root = mkEl(doc, "section", "editbox-shell");
+    this.root.setAttribute("data-component", "editbox-shell");
+
+    this.mainCol = mkEl(doc, "div", "editbox-main");
+    this.metaCol = mkEl(doc, "aside", "editbox-meta-slot");
+
+    this.shortWrap = mkEl(doc, "div", "editbox-field");
+    this.shortLabel = mkEl(doc, "label", "editbox-label", "Kurztext");
+    this.shortInput = mkEl(doc, "input", "editbox-input");
+    this.shortInput.type = "text";
+    this.shortInput.autocomplete = "off";
+    this.shortCounter = mkEl(doc, "div", "editbox-counter", "0");
+    this.shortWrap.append(this.shortLabel, this.shortInput, this.shortCounter);
+
+    this.longWrap = mkEl(doc, "div", "editbox-field");
+    this.longLabel = mkEl(doc, "label", "editbox-label", "Langtext");
+    this.longInput = mkEl(doc, "textarea", "editbox-textarea");
+    this.longInput.rows = 6;
+    this.longCounter = mkEl(doc, "div", "editbox-counter", "0");
+    this.longWrap.append(this.longLabel, this.longInput, this.longCounter);
+
+    this.flagsWrap = mkEl(doc, "div", "editbox-flags");
+    this.flagInputs = {};
+    FLAG_KEYS.forEach((key) => {
+      const item = mkEl(doc, "label", "editbox-flag");
+      const input = mkEl(doc, "input");
+      input.type = "checkbox";
+      input.dataset.flag = key;
+      const text = mkEl(doc, "span", null, key);
+      item.append(input, text);
+      this.flagsWrap.appendChild(item);
+      this.flagInputs[key] = input;
+    });
+
+    this.mainCol.append(this.shortWrap, this.longWrap, this.flagsWrap);
+    this.root.append(this.mainCol, this.metaCol);
+
+    this.shortInput.addEventListener("input", () => this._updateCounters());
+    this.longInput.addEventListener("input", () => this._updateCounters());
+    this._updateCounters();
+  }
+
+  mount(container) {
+    if (!container) return;
+    container.appendChild(this.root);
+  }
+
+  getElement() {
+    return this.root;
+  }
+
+  getMetaSlotElement() {
+    return this.metaCol;
+  }
+
+  clearMetaContent() {
+    this.metaCol.innerHTML = "";
+  }
+
+  setMetaContent(content) {
+    this.clearMetaContent();
+    if (!content) return;
+    if (typeof content === "string") {
+      this.metaCol.textContent = content;
+      return;
+    }
+    this.metaCol.appendChild(content);
+  }
+
+  attachMetaComponent(component) {
+    if (!component) {
+      this.clearMetaContent();
+      return null;
+    }
+
+    const element =
+      typeof component.getElement === "function" ? component.getElement() : component;
+
+    if (!element || !element.nodeType) {
+      throw new Error("Meta component must provide a DOM element.");
+    }
+
+    this.setMetaContent(element);
+    return element;
+  }
+
+  _updateCounters() {
+    this._shortTextEvaluation = evaluateShortText(this.shortInput.value, {
+      limit: this._limits.shortText,
+      warningRatio: this._warningRatio,
+    });
+    this._longTextEvaluation = evaluateLongText(this.longInput.value, {
+      limit: this._limits.longText,
+      warningRatio: this._warningRatio,
+    });
+
+    this._applyCounterState(this.shortWrap, this.shortCounter, this._shortTextEvaluation);
+    this._applyCounterState(this.longWrap, this.longCounter, this._longTextEvaluation);
+  }
+
+  _applyCounterState(fieldWrap, counterEl, evaluation) {
+    counterEl.textContent = `${evaluation.length} / ${evaluation.limit} (Rest: ${evaluation.remaining})`;
+    counterEl.dataset.level = evaluation.level;
+    fieldWrap.dataset.level = evaluation.level;
+    fieldWrap.classList.toggle("is-over-limit", evaluation.isOverLimit);
+  }
+
+  setValue(value = {}) {
+    if (value.shortText !== undefined) this.shortInput.value = asText(value.shortText);
+    if (value.longText !== undefined) this.longInput.value = asText(value.longText);
+
+    const flags = asFlags(value.flags);
+    Object.entries(this.flagInputs).forEach(([key, input]) => {
+      if (value.flags === undefined) return;
+      input.checked = flags[key];
+    });
+
+    this._updateCounters();
+  }
+
+  getValue() {
+    const flags = {};
+    Object.entries(this.flagInputs).forEach(([key, input]) => {
+      flags[key] = Boolean(input.checked);
+    });
+    return {
+      shortText: this.shortInput.value,
+      longText: this.longInput.value,
+      flags,
+    };
+  }
+
+  isShortTextFocused() {
+    return this.shortInput === this.documentRef.activeElement;
+  }
+
+  isLongTextFocused() {
+    return this.longInput === this.documentRef.activeElement;
+  }
+
+  isAnyFlagFocused() {
+    const active = this.documentRef.activeElement;
+    if (!active) return false;
+    return Object.values(this.flagInputs).includes(active);
+  }
+
+  setLimits(limits = {}) {
+    this._limits = {
+      shortText: this._asPositiveInt(limits.shortText, this._limits.shortText),
+      longText: this._asPositiveInt(limits.longText, this._limits.longText),
+    };
+    this._updateCounters();
+  }
+
+  getLimits() {
+    return {
+      shortText: this._limits.shortText,
+      longText: this._limits.longText,
+    };
+  }
+
+  getTextRulesState() {
+    return {
+      shortText: { ...this._shortTextEvaluation },
+      longText: { ...this._longTextEvaluation },
+      warningRatio: this._warningRatio,
+      limits: this.getLimits(),
+    };
+  }
+
+  setState(nextState) {
+    const state = this.stateService.resolveControlState(nextState);
+    this._state = state.mode;
+
+    if (state.isEmpty) {
+      this.setValue({ shortText: "", longText: "", flags: {} });
+    }
+
+    this.shortInput.readOnly = state.isReadOnly;
+    this.longInput.readOnly = state.isReadOnly;
+
+    const hardDisabled = state.isDisabled;
+    this.shortInput.disabled = hardDisabled;
+    this.longInput.disabled = hardDisabled;
+
+    Object.values(this.flagInputs).forEach((input) => {
+      input.disabled = state.isReadOnly || hardDisabled;
+    });
+
+    this.root.dataset.state = state.mode;
+    this.root.classList.toggle("is-empty", state.isEmpty);
+    this.root.classList.toggle("is-read-only", state.isReadOnly);
+    this.root.classList.toggle("is-disabled", hardDisabled);
+    this.root.classList.toggle("is-busy", state.isBusy);
+  }
+
+  getState() {
+    return this._state;
+  }
+}

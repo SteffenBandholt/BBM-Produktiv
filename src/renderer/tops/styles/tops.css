@@ -342,6 +342,79 @@
   min-width: 0;
 }
 
+.bbm-tops-workbench-editbox {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+}
+
+.bbm-tops-workbench-editbox .editbox-main {
+  display: grid;
+  gap: 6px;
+}
+
+.bbm-tops-workbench-editbox .editbox-meta-slot {
+  display: none;
+}
+
+.bbm-tops-workbench-editbox .editbox-field {
+  display: grid;
+  gap: 3px;
+}
+
+.bbm-tops-workbench-editbox .editbox-label {
+  font-size: 8.5pt;
+  font-weight: 400;
+  color: #1f344a;
+}
+
+.bbm-tops-workbench-editbox .editbox-input,
+.bbm-tops-workbench-editbox .editbox-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 3px 5px;
+  border: 1px solid #cad8e6;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 8.5pt;
+}
+
+.bbm-tops-workbench-editbox .editbox-textarea {
+  min-height: 64px;
+  resize: vertical;
+  line-height: 1.35;
+  padding: 4px 5px;
+}
+
+.bbm-tops-workbench-editbox .editbox-counter {
+  justify-self: end;
+  font-size: 8pt;
+  color: #5f6877;
+}
+
+.bbm-tops-workbench-editbox .editbox-counter[data-level="warning"] {
+  color: #a66a00;
+}
+
+.bbm-tops-workbench-editbox .editbox-counter[data-level="limit"] {
+  color: #b3261e;
+  font-weight: 600;
+}
+
+.bbm-tops-workbench-editbox .editbox-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.bbm-tops-workbench-editbox .editbox-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 8pt;
+  color: #2f3744;
+}
+
 .bbm-tops-workbench-gutter {
   min-width: 0;
 }
@@ -426,6 +499,83 @@
 .bbm-tops-meta-field-date .bbm-tops-input {
   width: 52%;
   min-width: 0;
+}
+
+.bbm-tops-meta-field-status-ampel-bridge {
+  align-items: stretch;
+}
+
+.bbm-tops-status-ampel-slot {
+  min-height: 0;
+}
+
+.bbm-tops-status-ampel-slot .status-ampel-field {
+  gap: 4px;
+}
+
+.bbm-tops-status-ampel-slot .status-ampel-group {
+  gap: 2px;
+}
+
+.bbm-tops-status-ampel-slot .status-ampel-label {
+  font-size: 8pt;
+  font-weight: 400;
+  color: inherit;
+}
+
+.bbm-tops-status-ampel-slot .status-ampel-select,
+.bbm-tops-status-ampel-slot .status-ampel-date {
+  width: 15ch;
+  max-width: 15ch;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 2px 4px;
+  border: 1px solid #cad8e6;
+  border-radius: 7px;
+  font-size: 8pt;
+  background: #fff;
+}
+
+.bbm-tops-status-ampel-slot .status-ampel-traffic {
+  gap: 6px;
+}
+
+.bbm-tops-status-ampel-slot .status-ampel-value {
+  font-size: 8pt;
+}
+
+.bbm-tops-meta-field-responsible-bridge {
+  align-items: stretch;
+}
+
+.bbm-tops-responsible-slot {
+  border-left: none;
+  padding-left: 0;
+  min-height: 0;
+}
+
+.bbm-tops-responsible-slot .responsible-field-label {
+  display: grid;
+  gap: 3px;
+  font-size: 8pt;
+  font-weight: 400;
+  color: inherit;
+}
+
+.bbm-tops-responsible-slot .responsible-field-label-text {
+  display: none;
+}
+
+.bbm-tops-responsible-slot .responsible-field-select {
+  width: 15ch;
+  max-width: 15ch;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 2px 4px;
+  border: 1px solid #cad8e6;
+  border-radius: 7px;
+  font-size: 8pt;
+  background: #fff;
 }
 
 .bbm-tops-meta-panel[data-disabled="true"] {

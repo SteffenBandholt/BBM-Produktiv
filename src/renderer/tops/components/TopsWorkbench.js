@@ -1,4 +1,7 @@
 import { TopsMetaPanel } from "./TopsMetaPanel.js";
+import { TopsResponsibleBridge } from "./TopsResponsibleBridge.js";
+import { TopsStatusAmpelBridge } from "./TopsStatusAmpelBridge.js";
+import { EditboxShell } from "../../core/editbox/index.js";
 
 export class TopsWorkbench {
   constructor({
@@ -8,6 +11,8 @@ export class TopsWorkbench {
     onToggleMove,
     onCreateLevel1,
     onCreateChild,
+    loadCompanies,
+    loadEmployeesByCompany,
   } = {}) {
     this.onDraftChange = typeof onDraftChange === "function" ? onDraftChange : null;
     this.onSave = typeof onSave === "function" ? onSave : null;
@@ -15,6 +20,9 @@ export class TopsWorkbench {
     this.onToggleMove = typeof onToggleMove === "function" ? onToggleMove : null;
     this.onCreateLevel1 = typeof onCreateLevel1 === "function" ? onCreateLevel1 : null;
     this.onCreateChild = typeof onCreateChild === "function" ? onCreateChild : null;
+    this.loadCompanies = typeof loadCompanies === "function" ? loadCompanies : null;
+    this.loadEmployeesByCompany =
+      typeof loadEmployeesByCompany === "function" ? loadEmployeesByCompany : null;
 
     this.root = document.createElement("div");
     this.root.className = "bbm-tops-workbench";
@@ -47,16 +55,10 @@ export class TopsWorkbench {
     this.left = document.createElement("div");
     this.left.className = "bbm-tops-workbench-left";
 
-    this.inpTitle = document.createElement("input");
-    this.inpTitle.type = "text";
-    this.inpTitle.placeholder = "Kurztext...";
-    this.inpTitle.className = "bbm-tops-input";
-
-    this.taLong = document.createElement("textarea");
-    this.taLong.placeholder = "Langtext...";
-    this.taLong.className = "bbm-tops-input bbm-tops-textarea";
-
-    this.left.append(this._mkField("Kurztext", this.inpTitle), this._mkField("Langtext", this.taLong));
+    this.editbox = new EditboxShell();
+    this.editboxRoot = this.editbox.getElement();
+    this.editboxRoot.classList.add("bbm-tops-workbench-editbox");
+    this.left.appendChild(this.editboxRoot);
 
     this.gutter = document.createElement("div");
     this.gutter.className = "bbm-tops-workbench-gutter";
@@ -65,21 +67,26 @@ export class TopsWorkbench {
     this.metaPanel = new TopsMetaPanel({
       onChange: () => this._emitDraftChange(),
     });
+    this.statusAmpelBridge = new TopsStatusAmpelBridge({
+      metaPanel: this.metaPanel,
+      onChange: () => this._emitDraftChange(),
+    });
+    this.statusAmpelBridge.mount();
+
+    this.responsibleBridge = new TopsResponsibleBridge({
+      metaPanel: this.metaPanel,
+      loadCompanies: this.loadCompanies,
+      loadEmployeesByCompany: this.loadEmployeesByCompany,
+      onChange: () => this._emitDraftChange(),
+    });
+    this.responsibleBridge.mount();
 
     this.body.append(this.left, this.gutter, this.metaPanel.root);
     this.root.append(this.header, this.body);
 
-    this.inpTitle.addEventListener("input", () => this._emitDraftChange());
-    this.taLong.addEventListener("input", () => this._emitDraftChange());
-  }
-
-  _mkField(label, control) {
-    const wrap = document.createElement("label");
-    wrap.className = "bbm-tops-workbench-field";
-    const t = document.createElement("span");
-    t.textContent = label;
-    wrap.append(t, control);
-    return wrap;
+    this.editboxRoot.addEventListener("input", () => this._emitDraftChange());
+    this.editboxRoot.addEventListener("change", () => this._emitDraftChange());
+    this.responsibleBridge.initialize();
   }
 
   _mkBtn(label, onClick, tone) {
@@ -97,11 +104,20 @@ export class TopsWorkbench {
     if (this.onDraftChange) this.onDraftChange(this.getDraft());
   }
 
+  _isEditboxFlagFocused() {
+    return this.editbox.isAnyFlagFocused();
+  }
+
   getDraft() {
+    const textValue = this.editbox.getValue();
     return {
-      title: String(this.inpTitle.value || ""),
-      longtext: String(this.taLong.value || ""),
+      title: String(textValue.shortText || ""),
+      longtext: String(textValue.longText || ""),
       ...this.metaPanel.getValue(),
+      is_important: textValue.flags?.important ? 1 : 0,
+      is_hidden: textValue.flags?.hidden ? 1 : 0,
+      is_task: textValue.flags?.task ? 1 : 0,
+      is_decision: textValue.flags?.decision ? 1 : 0,
     };
   }
 
@@ -117,14 +133,37 @@ export class TopsWorkbench {
   } = {}) {
     const nextTitle = editor?.title || "";
     const nextLong = editor?.longtext || "";
-    if (this.inpTitle !== document.activeElement) this.inpTitle.value = nextTitle;
-    if (this.taLong !== document.activeElement) this.taLong.value = nextLong;
+    const nextEditboxValue = {};
+    if (!this.editbox.isShortTextFocused()) nextEditboxValue.shortText = nextTitle;
+    if (!this.editbox.isLongTextFocused()) nextEditboxValue.longText = nextLong;
+    if (!this._isEditboxFlagFocused()) {
+      nextEditboxValue.flags = {
+        hidden: Number(editor?.is_hidden) === 1,
+        important: Number(editor?.is_important) === 1,
+        task: Number(editor?.is_task) === 1,
+        decision: Number(editor?.is_decision) === 1,
+      };
+    }
+    if (Object.keys(nextEditboxValue).length) this.editbox.setValue(nextEditboxValue);
+
     this.metaPanel.setValue(editor || {});
+    this.statusAmpelBridge.applyDraftValue(editor || {});
+    this.responsibleBridge.applyDraftValue(editor?.responsible_label || "");
 
     const disableInputs = !!isReadOnly || !hasSelection;
-    this.inpTitle.disabled = disableInputs;
-    this.taLong.disabled = disableInputs;
+    if (!hasSelection) {
+      this.editbox.setValue({
+        shortText: "",
+        longText: "",
+        flags: { hidden: false, important: false, task: false, decision: false },
+      });
+      this.editbox.setState("disabled");
+    }
+    else if (isReadOnly) this.editbox.setState("read-only");
+    else this.editbox.setState("normal");
     this.metaPanel.setDisabled(disableInputs);
+    this.statusAmpelBridge.setDisabled(disableInputs);
+    this.responsibleBridge.setDisabled(disableInputs);
 
     this.btnL1.disabled = !!isReadOnly;
     this.btnChild.disabled = !!isReadOnly || !canCreateChild;

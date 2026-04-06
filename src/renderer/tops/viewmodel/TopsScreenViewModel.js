@@ -195,6 +195,7 @@ export function editorFromTop(top) {
       responsible_label: "",
       is_important: 0,
       is_hidden: 0,
+      is_task: 0,
       is_decision: 0,
     };
   }
@@ -207,6 +208,7 @@ export function editorFromTop(top) {
     responsible_label: String(top.responsible_label || top.responsibleLabel || ""),
     is_important: Number(top.is_important) === 1 ? 1 : 0,
     is_hidden: Number(top.is_hidden) === 1 ? 1 : 0,
+    is_task: Number(top.is_task ?? top.isTask) === 1 ? 1 : 0,
     is_decision: Number(top.is_decision) === 1 ? 1 : 0,
   };
 }
@@ -233,7 +235,7 @@ export function buildPatchFromDraft(selectedTop, draft) {
     patch.responsible_label = responsibleLabel;
   }
 
-  for (const k of ["is_important", "is_hidden", "is_decision"]) {
+  for (const k of ["is_important", "is_hidden", "is_task", "is_decision"]) {
     const nextVal = Number(draft[k]) === 1 ? 1 : 0;
     const curVal = Number(selectedTop[k]) === 1 ? 1 : 0;
     if (nextVal !== curVal) patch[k] = nextVal;

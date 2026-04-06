@@ -1,0 +1,35 @@
+.responsible-field {
+  display: block;
+}
+
+.responsible-field-label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #30353d;
+}
+
+.responsible-field-label-text {
+  line-height: 1.2;
+}
+
+.responsible-field-select {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #c8d0dc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  color: #202632;
+  background: #fff;
+}
+
+.responsible-field.is-read-only .responsible-field-select {
+  background: #f7f8fa;
+}
+
+.responsible-field.is-disabled {
+  opacity: 0.75;
+}
+

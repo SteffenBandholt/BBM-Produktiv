@@ -18,11 +18,6 @@ export class TopsMetaPanel {
     this.inpResponsible.type = "text";
     this.inpResponsible.placeholder = "verantwortlich";
 
-    // Flags bleiben im Draft erhalten, sind in diesem UI-Schritt aber ausgeblendet.
-    this.isImportant = 0;
-    this.isHidden = 0;
-    this.isDecision = 0;
-
     this._appendField("Fertig bis", this.inpDueDate, { rowClass: "bbm-tops-meta-field-date" });
     this._appendField("Status", this.selStatus);
     this._appendField("Verantwortlich", this.inpResponsible);
@@ -53,9 +48,6 @@ export class TopsMetaPanel {
       due_date: (this.inpDueDate.value || "").trim() || null,
       status: (this.selStatus.value || "").trim() || "-",
       responsible_label: (this.inpResponsible.value || "").trim() || "",
-      is_important: this.isImportant,
-      is_hidden: this.isHidden,
-      is_decision: this.isDecision,
     };
   }
 
@@ -63,9 +55,6 @@ export class TopsMetaPanel {
     this.inpDueDate.value = value?.due_date || "";
     this.selStatus.value = value?.status || "-";
     this.inpResponsible.value = value?.responsible_label || "";
-    this.isImportant = Number(value?.is_important) === 1 ? 1 : 0;
-    this.isHidden = Number(value?.is_hidden) === 1 ? 1 : 0;
-    this.isDecision = Number(value?.is_decision) === 1 ? 1 : 0;
   }
 
   setDisabled(disabled) {

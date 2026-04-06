@@ -1,0 +1,68 @@
+.status-ampel-field {
+  display: grid;
+  gap: 10px;
+}
+
+.status-ampel-group {
+  display: grid;
+  gap: 6px;
+}
+
+.status-ampel-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #30353d;
+  line-height: 1.2;
+}
+
+.status-ampel-select,
+.status-ampel-date {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #c8d0dc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  color: #202632;
+  background: #fff;
+}
+
+.status-ampel-traffic {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-ampel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #9ca5b3;
+}
+
+.status-ampel-field[data-traffic-light="green"] .status-ampel-dot {
+  background: #2e7d32;
+}
+
+.status-ampel-field[data-traffic-light="yellow"] .status-ampel-dot {
+  background: #f9a825;
+}
+
+.status-ampel-field[data-traffic-light="red"] .status-ampel-dot {
+  background: #c62828;
+}
+
+.status-ampel-value {
+  font-size: 12px;
+  color: #4b5563;
+}
+
+.status-ampel-field.is-read-only .status-ampel-select,
+.status-ampel-field.is-read-only .status-ampel-date {
+  background: #f7f8fa;
+}
+
+.status-ampel-field.is-disabled {
+  opacity: 0.75;
+}
+

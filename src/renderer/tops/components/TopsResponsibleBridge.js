@@ -1,0 +1,183 @@
+import {
+  ResponsibleField,
+  buildAssigneeOptions,
+  buildEmployeeAssigneeOptions,
+} from "../../core/responsible/index.js";
+
+function asId(value) {
+  return String(value ?? "").trim();
+}
+
+export class TopsResponsibleBridge {
+  constructor({
+    metaPanel,
+    loadCompanies,
+    loadEmployeesByCompany,
+    onChange,
+  } = {}) {
+    this.metaPanel = metaPanel || null;
+    this.loadCompanies = typeof loadCompanies === "function" ? loadCompanies : null;
+    this.loadEmployeesByCompany =
+      typeof loadEmployeesByCompany === "function" ? loadEmployeesByCompany : null;
+    this.onChange = typeof onChange === "function" ? onChange : null;
+
+    this.sources = { companies: [], employees: [] };
+    this.options = [];
+    this.currentValue = "";
+
+    this.field = new ResponsibleField({ label: "Verantwortlich" });
+    this.root = this._buildRow();
+    this._bindFieldEvents();
+  }
+
+  _buildRow() {
+    const row = document.createElement("label");
+    row.className = "bbm-tops-meta-field";
+    row.classList.add("bbm-tops-meta-field-responsible-bridge");
+
+    const title = document.createElement("span");
+    title.textContent = "Verantwortlich";
+
+    const slot = document.createElement("div");
+    slot.className = "bbm-tops-responsible-slot";
+    slot.appendChild(this.field.getElement());
+
+    row.append(title, slot);
+    return row;
+  }
+
+  _bindFieldEvents() {
+    const el = this.field.getElement();
+    el.addEventListener("change", () => this._syncFromField());
+    el.addEventListener("input", () => this._syncFromField());
+  }
+
+  mount() {
+    if (!this.metaPanel?.root) return;
+    this.metaPanel.root.appendChild(this.root);
+    this.legacyRow = this.metaPanel.inpResponsible?.closest(".bbm-tops-meta-field");
+    if (this.legacyRow) this.legacyRow.style.display = "none";
+  }
+
+  async initialize() {
+    const companies = await this._loadCompaniesSafe();
+    const employees = await this._loadEmployeesSafe(companies);
+    this.sources = { companies, employees };
+    this._refreshOptions();
+  }
+
+  async _loadCompaniesSafe() {
+    if (!this.loadCompanies) return [];
+    try {
+      const list = await this.loadCompanies();
+      return Array.isArray(list) ? list : [];
+    } catch {
+      return [];
+    }
+  }
+
+  async _loadEmployeesSafe(companies) {
+    if (!this.loadEmployeesByCompany) return [];
+    const companyIds = Array.from(
+      new Set(
+        (Array.isArray(companies) ? companies : [])
+          .map((item) => asId(item?.id ?? item?.companyId ?? item?.firmId))
+          .filter(Boolean)
+      )
+    );
+    if (!companyIds.length) return [];
+
+    const rows = [];
+    for (const companyId of companyIds) {
+      try {
+        const list = await this.loadEmployeesByCompany(companyId);
+        if (Array.isArray(list)) rows.push(...list);
+      } catch {
+        // keep robust fallback
+      }
+    }
+    return rows;
+  }
+
+  _extractCompanyId(value) {
+    const raw = String(value || "").trim();
+    if (!raw.startsWith("company:")) return "";
+    return raw.slice("company:".length).trim();
+  }
+
+  _refreshOptions() {
+    const selectedCompanyId = this._extractCompanyId(this.currentValue);
+    this.options = buildAssigneeOptions(this.sources, {
+      companyId: selectedCompanyId || undefined,
+      companyValuePrefix: "company",
+      employeeValuePrefix: "employee",
+    });
+
+    if (
+      this.currentValue &&
+      !this.options.some((item) => String(item?.value || "") === String(this.currentValue || ""))
+    ) {
+      const fallbackLabel = this.metaPanel?.inpResponsible?.value || this.currentValue;
+      this.options = [{ value: this.currentValue, label: fallbackLabel }, ...this.options];
+    }
+
+    this.field.setOptions(this.options);
+    if (this.currentValue) this.field.setValue(this.currentValue);
+  }
+
+  _syncFromField() {
+    this.currentValue = this.field.getValue();
+    const selected = this.options.find((item) => item.value === this.currentValue);
+    if (this.metaPanel?.inpResponsible) {
+      this.metaPanel.inpResponsible.value = selected?.label || "";
+    }
+
+    const selectedCompanyId = this._extractCompanyId(this.currentValue);
+    if (selectedCompanyId) {
+      const companyOptions = buildAssigneeOptions(
+        { companies: this.sources.companies, employees: [] },
+        { companyValuePrefix: "company", employeeValuePrefix: "employee" }
+      );
+      const employeeOptions = buildEmployeeAssigneeOptions(this.sources.employees, {
+        companyId: selectedCompanyId,
+        valuePrefix: "employee",
+      });
+      this.options = [...companyOptions, ...employeeOptions];
+      this.field.setOptions(this.options);
+      this.field.setValue(this.currentValue);
+    }
+
+    if (this.onChange) this.onChange();
+  }
+
+  applyDraftValue(label) {
+    const wanted = String(label || "").trim();
+    if (!wanted) {
+      this.currentValue = "";
+      this.field.setValue("");
+      if (this.metaPanel?.inpResponsible) this.metaPanel.inpResponsible.value = "";
+      return;
+    }
+
+    const match = this.options.find(
+      (item) => String(item?.label || "").trim().toLowerCase() === wanted.toLowerCase()
+    );
+    if (match) {
+      this.currentValue = match.value;
+      this.field.setValue(match.value);
+      if (this.metaPanel?.inpResponsible) this.metaPanel.inpResponsible.value = match.label;
+      return;
+    }
+
+    const legacyValue = `legacy:${wanted}`;
+    this.options = [{ value: legacyValue, label: wanted }, ...this.options];
+    this.field.setOptions(this.options);
+    this.field.setValue(legacyValue);
+    this.currentValue = legacyValue;
+    if (this.metaPanel?.inpResponsible) this.metaPanel.inpResponsible.value = wanted;
+  }
+
+  setDisabled(disabled) {
+    this.field.setDisabled(!!disabled);
+  }
+}

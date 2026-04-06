@@ -1,0 +1,99 @@
+.editbox-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 16px;
+  align-items: start;
+}
+
+.editbox-main {
+  display: grid;
+  gap: 12px;
+}
+
+.editbox-field {
+  display: grid;
+  gap: 6px;
+}
+
+.editbox-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #30353d;
+}
+
+.editbox-input,
+.editbox-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid #c8d0dc;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font: inherit;
+  color: #202632;
+  background: #fff;
+}
+
+.editbox-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.editbox-counter {
+  justify-self: end;
+  font-size: 11px;
+  color: #5f6877;
+}
+
+.editbox-counter[data-level="warning"] {
+  color: #a66a00;
+}
+
+.editbox-counter[data-level="limit"] {
+  color: #b3261e;
+  font-weight: 600;
+}
+
+.editbox-field[data-level="warning"] .editbox-input,
+.editbox-field[data-level="warning"] .editbox-textarea {
+  border-color: #e0b04a;
+}
+
+.editbox-field[data-level="limit"] .editbox-input,
+.editbox-field[data-level="limit"] .editbox-textarea {
+  border-color: #c23b33;
+}
+
+.editbox-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.editbox-flag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #2f3744;
+}
+
+.editbox-meta-slot {
+  min-height: 100%;
+  border-left: 1px solid #d8deea;
+  padding-left: 12px;
+}
+
+.editbox-shell.is-empty .editbox-input,
+.editbox-shell.is-empty .editbox-textarea {
+  background: #fafbfc;
+}
+
+.editbox-shell.is-read-only .editbox-input,
+.editbox-shell.is-read-only .editbox-textarea {
+  background: #f7f8fa;
+}
+
+.editbox-shell.is-disabled,
+.editbox-shell.is-busy {
+  opacity: 0.75;
+}

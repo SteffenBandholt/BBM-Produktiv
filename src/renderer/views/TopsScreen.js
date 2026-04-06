@@ -1,6 +1,7 @@
 import { createTopsStore } from "../tops/state/TopsStore.js";
 import { getSelectedTop, hasSelection } from "../tops/state/TopsSelectors.js";
 import { TopsRepository } from "../tops/data/TopsRepository.js";
+import { TopsAssigneeDataSource } from "../tops/data/TopsAssigneeDataSource.js";
 import { TopsCommands } from "../tops/domain/TopsCommands.js";
 import { TopsCloseFlow } from "../tops/domain/TopsCloseFlow.js";
 import { TopsQuicklane } from "../tops/components/TopsQuicklane.js";
@@ -57,6 +58,7 @@ export default class TopsScreen {
     this._dialogViewAdapter = this._createDialogViewAdapter();
 
     this.topsRepository = options.topsRepository || new TopsRepository();
+    this.assigneeDataSource = options.assigneeDataSource || new TopsAssigneeDataSource();
     this.store = createTopsStore({
       projectId: this.projectId,
       meetingId: this.meetingId,
@@ -181,6 +183,12 @@ export default class TopsScreen {
       onToggleMove: async () => this._handleWorkbenchToggleMove(),
       onCreateLevel1: async () => this._handleWorkbenchCreateLevel1(),
       onCreateChild: async () => this._handleWorkbenchCreateChild(),
+      loadCompanies: async () => {
+        return await this.assigneeDataSource.loadCompaniesByProject(this._getQuicklaneProjectId());
+      },
+      loadEmployeesByCompany: async (companyId) => {
+        return await this.assigneeDataSource.loadEmployeesByCompany(companyId);
+      },
     });
     this.editCanvas.appendChild(this.workbench.root);
   }
