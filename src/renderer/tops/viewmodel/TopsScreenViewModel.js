@@ -5,6 +5,7 @@ import {
   canDeleteFromState,
   canMoveFromState,
 } from "../domain/TopsActionPolicy.js";
+import { computeAmpelColorForTop } from "../../../shared/ampel/pdfAmpelRule.js";
 
 export { isAllowedMoveTarget, canCreateChildFromState, canDeleteFromState, canMoveFromState };
 
@@ -157,6 +158,15 @@ export function buildListItemsFromState(state) {
     const visual = getTopVisualState(top);
     const due = (top?.due_date || top?.dueDate || "").toString().trim();
     const status = (top?.status || "").toString().trim();
+    const ampelColor =
+      computeAmpelColorForTop({
+        top: {
+          status,
+          due_date: due || null,
+        },
+        childrenColors: [],
+        now: new Date(),
+      }) || null;
     const responsible = (top?.responsible_label || top?.responsibleLabel || "").toString().trim();
     const meta = [];
     if (due) meta.push(due);
@@ -183,6 +193,7 @@ export function buildListItemsFromState(state) {
       showChangedMarker: visual.showChangedMarker,
       changedMarkerText: visual.changedMarkerText,
       titleTone: visual.titleTone,
+      ampelColor,
       raw: top,
     });
   }

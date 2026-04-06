@@ -44,12 +44,16 @@
   background: #2e7d32;
 }
 
-.status-ampel-field[data-traffic-light="yellow"] .status-ampel-dot {
+.status-ampel-field[data-traffic-light="orange"] .status-ampel-dot {
   background: #f9a825;
 }
 
 .status-ampel-field[data-traffic-light="red"] .status-ampel-dot {
   background: #c62828;
+}
+
+.status-ampel-field[data-traffic-light="blue"] .status-ampel-dot {
+  background: #1565c0;
 }
 
 .status-ampel-value {
@@ -65,4 +69,3 @@
 .status-ampel-field.is-disabled {
   opacity: 0.75;
 }
-

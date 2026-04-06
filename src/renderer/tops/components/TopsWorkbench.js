@@ -62,7 +62,7 @@ export class TopsWorkbench {
     this.editbox = new EditboxShell();
     this.editboxRoot = this.editbox.getElement();
     this.editboxRoot.classList.add("bbm-tops-workbench-editbox");
-    this.editbox.setVisibleFlags(["important", "decision"]);
+    this.editbox.setVisibleFlags(["important", "task", "decision"]);
     this.editbox.setCounterFormatter((evaluation) => String(evaluation?.remaining ?? ""));
     this._configureEditboxPresentation();
     this.left.appendChild(this.editboxRoot);
@@ -74,6 +74,12 @@ export class TopsWorkbench {
     this.metaPanel = new TopsMetaPanel({
       onChange: () => this._emitDraftChange(),
     });
+    this.flagsMetaRow = document.createElement("div");
+    this.flagsMetaRow.className = "bbm-tops-meta-flags";
+    this.flagsMetaRow.appendChild(this.editbox.flagsWrap);
+    this.flagsMetaRow.addEventListener("input", () => this._emitDraftChange());
+    this.flagsMetaRow.addEventListener("change", () => this._emitDraftChange());
+    this.metaPanel.root.appendChild(this.flagsMetaRow);
 
     this.statusAmpelBridge = new TopsStatusAmpelBridge({
       metaPanel: this.metaPanel,
@@ -102,10 +108,7 @@ export class TopsWorkbench {
     this._attachCounterToLabel(this.editbox.longLabel, this.editbox.longCounter);
     this.editbox.shortWrap.classList.add("bbm-tops-editbox-short-wrap");
     this.editbox.longWrap.classList.add("bbm-tops-editbox-long-wrap");
-
-    if (this.editbox.flagsWrap?.parentElement !== this.editbox.shortLabel) {
-      this.editbox.shortLabel.appendChild(this.editbox.flagsWrap);
-    }
+    this.editbox.flagsWrap.classList.add("bbm-tops-editbox-flags-in-meta");
 
     const germanFlags = {
       important: "Wichtig",
@@ -165,21 +168,23 @@ export class TopsWorkbench {
     };
   }
 
-  setState({
-    header = {},
-    editor = {},
-    editorState = {},
-    metaState = {},
-    hasSelection = false,
-    isReadOnly = false,
-    isMoveMode = false,
-    canSave = false,
-    canDelete = false,
-    canMove = false,
-    canCreateChild = false,
-  } = {}) {
-    const nextTitle = editor?.title || "";
-    const nextLong = editor?.longtext || "";
+  setState(vm = {}) {
+    this._applyHeaderState(vm.header || {});
+    this._applyEditorState(vm.editor || {}, vm.actions || {});
+    this._applyMetaState(vm.meta || {});
+    this._applyActionState(vm.actions || {});
+  }
+
+  _applyHeaderState(headerVm = {}) {
+    this.leftHeaderTitle.textContent = String(headerVm?.title || "TOP bearbeiten");
+  }
+
+  _applyEditorState(editorVm = {}, actionsVm = {}) {
+    const editorValue = editorVm?.value || {};
+    const editorAccess = editorVm?.access || {};
+
+    const nextTitle = editorValue?.title || "";
+    const nextLong = editorValue?.longtext || "";
     const nextEditboxValue = {};
 
     if (!this.editbox.isShortTextFocused()) nextEditboxValue.shortText = nextTitle;
@@ -187,10 +192,10 @@ export class TopsWorkbench {
 
     if (!this._isEditboxFlagFocused()) {
       nextEditboxValue.flags = {
-        hidden: Number(editor?.is_hidden) === 1,
-        important: Number(editor?.is_important) === 1,
-        task: Number(editor?.is_task) === 1,
-        decision: Number(editor?.is_decision) === 1,
+        hidden: Number(editorValue?.is_hidden) === 1,
+        important: Number(editorValue?.is_important) === 1,
+        task: Number(editorValue?.is_task) === 1,
+        decision: Number(editorValue?.is_decision) === 1,
       };
     }
 
@@ -198,11 +203,8 @@ export class TopsWorkbench {
       this.editbox.setValue(nextEditboxValue);
     }
 
-    this.leftHeaderTitle.textContent = String(header?.title || "TOP bearbeiten");
-
-    this.metaPanel.setValue(editor || {});
-    this.statusAmpelBridge.applyDraftValue(editor || {});
-    this.responsibleBridge.applyDraftValue(editor?.responsible_label || "");
+    const hasSelection = !!actionsVm?.hasSelection;
+    const isReadOnly = !!actionsVm?.isReadOnly;
 
     if (!hasSelection) {
       this.editbox.setValue({
@@ -216,32 +218,55 @@ export class TopsWorkbench {
         longTextReadOnly: false,
         flagsDisabled: false,
       });
-    } else if (isReadOnly) {
+      return;
+    }
+
+    if (isReadOnly) {
       this.editbox.setState("read-only");
       this.editbox.setFieldAccess({
         shortTextReadOnly: true,
         longTextReadOnly: true,
         flagsDisabled: true,
       });
-    } else {
-      this.editbox.setState("normal");
-      this.editbox.setFieldAccess({
-        shortTextReadOnly: !!editorState?.shortTextReadOnly,
-        longTextReadOnly: !!editorState?.longTextReadOnly,
-        flagsDisabled: !!editorState?.flagsDisabled,
-      });
+      return;
     }
 
-    const metaDisabled = !!metaState?.disabled;
+    this.editbox.setState("normal");
+    this.editbox.setFieldAccess({
+      shortTextReadOnly: !!editorAccess?.shortTextReadOnly,
+      longTextReadOnly: !!editorAccess?.longTextReadOnly,
+      flagsDisabled: !!editorAccess?.flagsDisabled,
+    });
+  }
+
+  _applyMetaState(metaVm = {}) {
+    const metaValue = metaVm?.value || {};
+    const metaAccess = metaVm?.access || {};
+    const metaDisabled = !!metaAccess?.disabled;
+
+    this.metaPanel.setValue(metaValue);
+    this.statusAmpelBridge.applyDraftValue(metaValue);
+    this.responsibleBridge.applyDraftValue(metaValue?.responsible_label || "");
+
     this.metaPanel.setDisabled(metaDisabled);
     this.statusAmpelBridge.setDisabled(metaDisabled);
     this.responsibleBridge.setDisabled(metaDisabled);
+  }
 
-    this.btnL1.disabled = !!isReadOnly;
-    this.btnChild.disabled = !!isReadOnly || !canCreateChild;
-    this.btnMove.disabled = !!isReadOnly || !canMove;
-    this.btnSave.disabled = !!isReadOnly || !canSave;
-    this.btnDelete.disabled = !!isReadOnly || !canDelete;
+  _applyActionState(actionsVm = {}) {
+    const hasSelection = !!actionsVm?.hasSelection;
+    const isReadOnly = !!actionsVm?.isReadOnly;
+    const isMoveMode = !!actionsVm?.isMoveMode;
+    const canSave = !!actionsVm?.canSave;
+    const canDelete = !!actionsVm?.canDelete;
+    const canMove = !!actionsVm?.canMove;
+    const canCreateChild = !!actionsVm?.canCreateChild;
+
+    this.btnL1.disabled = isReadOnly;
+    this.btnChild.disabled = isReadOnly || !canCreateChild;
+    this.btnMove.disabled = isReadOnly || !canMove;
+    this.btnSave.disabled = isReadOnly || !canSave;
+    this.btnDelete.disabled = isReadOnly || !canDelete;
 
     this.root.dataset.hasSelection = hasSelection ? "true" : "false";
     this.root.dataset.isReadOnly = isReadOnly ? "true" : "false";

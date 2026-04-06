@@ -15,9 +15,11 @@ export class TopsMetaPanel {
 
     this._statusOptions = [
       { value: "-", label: "-", disabled: false },
-      { value: "todo", label: "todo", disabled: false },
-      { value: "inprogress", label: "inprogress", disabled: false },
-      { value: "done", label: "done", disabled: false },
+      { value: "offen", label: "offen", disabled: false },
+      { value: "in arbeit", label: "in arbeit", disabled: false },
+      { value: "erledigt", label: "erledigt", disabled: false },
+      { value: "blockiert", label: "blockiert", disabled: false },
+      { value: "verzug", label: "verzug", disabled: false },
     ];
   }
 

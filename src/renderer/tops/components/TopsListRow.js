@@ -39,7 +39,7 @@ export class TopsListRow {
 
     const meta = document.createElement("div");
     meta.className = "bbm-tops-list-row-meta";
-    const statusTokens = new Set(["-", "todo", "inprogress", "done", "erledigt", "offen"]);
+    const statusTokens = new Set(["-", "offen", "in arbeit", "erledigt", "blockiert", "verzug"]);
     for (const [index, line] of (this.item.meta || []).entries()) {
       const el = document.createElement("div");
       el.className = "bbm-tops-list-row-meta-line";
@@ -55,6 +55,13 @@ export class TopsListRow {
         el.classList.add("bbm-tops-list-row-meta-line-responsible");
       }
       el.textContent = line;
+      if (index === 1 && this.item.ampelColor) {
+        const dot = document.createElement("span");
+        dot.className = "bbm-tops-list-row-ampel";
+        dot.dataset.color = String(this.item.ampelColor || "");
+        dot.setAttribute("aria-label", `Ampel ${this.item.ampelColor}`);
+        el.append(" ", dot);
+      }
       meta.appendChild(el);
     }
 

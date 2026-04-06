@@ -28,8 +28,11 @@ function normalizeOptions(rawOptions) {
 
 function normalizeTrafficLight(value) {
   const raw = String(value || "").trim().toLowerCase();
-  if (raw === "red" || raw === "yellow" || raw === "green") return raw;
-  return "off";
+  if (raw === "red") return "red";
+  if (raw === "orange" || raw === "yellow") return "orange";
+  if (raw === "green") return "green";
+  if (raw === "blue") return "blue";
+  return "none";
 }
 
 export class StatusAmpelField {
@@ -37,7 +40,7 @@ export class StatusAmpelField {
     this.documentRef = documentRef || window.document;
     this._readOnly = false;
     this._disabled = false;
-    this._trafficLight = "off";
+    this._trafficLight = "none";
     this._build(labels || {});
   }
 
@@ -61,7 +64,7 @@ export class StatusAmpelField {
     this.trafficLabel = mkEl(doc, "span", "status-ampel-label", labels.trafficLight || "Ampel");
     this.trafficDot = mkEl(doc, "span", "status-ampel-dot");
     this.trafficDot.setAttribute("aria-hidden", "true");
-    this.trafficValue = mkEl(doc, "span", "status-ampel-value", "off");
+    this.trafficValue = mkEl(doc, "span", "status-ampel-value", "none");
     this.trafficWrap.append(this.trafficLabel, this.trafficDot, this.trafficValue);
 
     this.root.append(this.statusWrap, this.dueWrap, this.trafficWrap);
@@ -130,4 +133,3 @@ export class StatusAmpelField {
     this.root.classList.toggle("is-disabled", this._disabled);
   }
 }
-

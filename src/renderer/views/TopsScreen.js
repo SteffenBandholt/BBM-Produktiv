@@ -19,11 +19,7 @@ import {
   canMoveFromState,
   shouldShowWorkbench,
 } from "../tops/viewmodel/TopsScreenViewModel.js";
-import {
-  buildWorkbenchHeaderState,
-  buildWorkbenchEditorState,
-  buildWorkbenchMetaState,
-} from "../tops/viewmodel/TopsWorkbenchViewModel.js";
+import { buildWorkbenchVm } from "../tops/viewmodel/TopsWorkbenchViewModel.js";
 
 const TOPS_V2_STYLE_TAG = "bbm-tops-v2-styles";
 
@@ -333,20 +329,9 @@ export default class TopsScreen {
 
     const state = this.store.getState();
     const selectedTop = getSelectedTop(state);
+    const vm = buildWorkbenchVm(state, selectedTop);
 
-    this.workbench.setState({
-      header: buildWorkbenchHeaderState(state, selectedTop),
-      editor: state?.editor || editorFromTop(selectedTop),
-      editorState: buildWorkbenchEditorState(state, selectedTop),
-      metaState: buildWorkbenchMetaState(state),
-      hasSelection: !!selectedTop,
-      isReadOnly: !!state?.isReadOnly,
-      isMoveMode: !!state?.isMoveMode,
-      canSave: !!selectedTop && !state?.isReadOnly,
-      canDelete: canDeleteFromState(state, selectedTop),
-      canMove: canMoveFromState(state, selectedTop),
-      canCreateChild: canCreateChildFromState(state, selectedTop),
-    });
+    this.workbench.setState(vm);
   }
 
   _syncScreenState() {

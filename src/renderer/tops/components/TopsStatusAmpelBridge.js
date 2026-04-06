@@ -1,9 +1,19 @@
 import { StatusAmpelField } from "../../core/status-ampel/index.js";
+import { computeAmpelColorForTop } from "../../../shared/ampel/pdfAmpelRule.js";
 
 function toTrafficLight(value) {
   const raw = String(value || "").trim().toLowerCase();
-  if (raw === "red" || raw === "yellow" || raw === "green") return raw;
-  return "off";
+  if (raw === "blue" || raw === "red" || raw === "orange" || raw === "green") return raw;
+  return "none";
+}
+
+function deriveTrafficLight({ status, due_date }) {
+  const color = computeAmpelColorForTop({
+    top: { status, due_date },
+    childrenColors: [],
+    now: new Date(),
+  });
+  return toTrafficLight(color);
 }
 
 export class TopsStatusAmpelBridge {
@@ -25,18 +35,15 @@ export class TopsStatusAmpelBridge {
   }
 
   _buildRow() {
-    const row = document.createElement("label");
+    const row = document.createElement("div");
     row.className = "bbm-tops-meta-field";
     row.classList.add("bbm-tops-meta-field-status-ampel-bridge");
-
-    const title = document.createElement("span");
-    title.textContent = "Status / Fertig bis";
 
     const slot = document.createElement("div");
     slot.className = "bbm-tops-status-ampel-slot";
     slot.appendChild(this.field.getElement());
 
-    row.append(title, slot);
+    row.appendChild(slot);
     return row;
   }
 
@@ -61,6 +68,11 @@ export class TopsStatusAmpelBridge {
 
   _syncToMetaPanel() {
     const value = this.field.getValue();
+    const trafficLight = deriveTrafficLight({
+      status: value.status || "-",
+      due_date: value.dueDate || null,
+    });
+    this.field.setTrafficLight(trafficLight);
 
     if (typeof this.metaPanel?.updatePartial === "function") {
       this.metaPanel.updatePartial({
@@ -73,12 +85,15 @@ export class TopsStatusAmpelBridge {
   }
 
   applyDraftValue(editor = {}) {
+    const trafficLight = deriveTrafficLight({
+      status: editor?.status ?? "-",
+      due_date: editor?.due_date ?? null,
+    });
+
     this.field.setValue({
       status: editor?.status ?? "-",
       dueDate: editor?.due_date ?? "",
-      trafficLight: toTrafficLight(
-        editor?.trafficLight ?? editor?.traffic_light ?? editor?.ampel ?? "off"
-      ),
+      trafficLight,
     });
 
     if (typeof this.metaPanel?.updatePartial === "function") {
