@@ -166,7 +166,6 @@ export class TopsWorkbench {
 
   setState({
     editor = {},
-    topNumber = "",
     isReadOnly = false,
     hasSelection = false,
     isMoveMode = false,
@@ -174,12 +173,17 @@ export class TopsWorkbench {
     canDelete = false,
     canMove = false,
     canCreateChild = false,
+    shortTextReadOnly = false,
+    longTextReadOnly = false,
+    flagsDisabled = false,
   } = {}) {
     const nextTitle = editor?.title || "";
     const nextLong = editor?.longtext || "";
     const nextEditboxValue = {};
+
     if (!this.editbox.isShortTextFocused()) nextEditboxValue.shortText = nextTitle;
     if (!this.editbox.isLongTextFocused()) nextEditboxValue.longText = nextLong;
+
     if (!this._isEditboxFlagFocused()) {
       nextEditboxValue.flags = {
         hidden: Number(editor?.is_hidden) === 1,
@@ -188,17 +192,19 @@ export class TopsWorkbench {
         decision: Number(editor?.is_decision) === 1,
       };
     }
-    if (Object.keys(nextEditboxValue).length) this.editbox.setValue(nextEditboxValue);
 
-    const normalizedTopNumber = String(topNumber || "").trim();
-    this.leftHeaderTitle.textContent =
-      hasSelection && normalizedTopNumber ? `TOP ${normalizedTopNumber} bearbeiten` : "TOP bearbeiten";
+    if (Object.keys(nextEditboxValue).length) {
+      this.editbox.setValue(nextEditboxValue);
+    }
+
+    this.leftHeaderTitle.textContent = "TOP bearbeiten";
 
     this.metaPanel.setValue(editor || {});
     this.statusAmpelBridge.applyDraftValue(editor || {});
     this.responsibleBridge.applyDraftValue(editor?.responsible_label || "");
 
     const disableInputs = !!isReadOnly || !hasSelection;
+
     if (!hasSelection) {
       this.editbox.setValue({
         shortText: "",
@@ -206,9 +212,27 @@ export class TopsWorkbench {
         flags: { hidden: false, important: false, task: false, decision: false },
       });
       this.editbox.setState("disabled");
+      this.editbox.setFieldAccess({
+        shortTextReadOnly: false,
+        longTextReadOnly: false,
+        flagsDisabled: false,
+      });
+    } else if (isReadOnly) {
+      this.editbox.setState("read-only");
+      this.editbox.setFieldAccess({
+        shortTextReadOnly: true,
+        longTextReadOnly: true,
+        flagsDisabled: true,
+      });
+    } else {
+      this.editbox.setState("normal");
+      this.editbox.setFieldAccess({
+        shortTextReadOnly: !!shortTextReadOnly,
+        longTextReadOnly: !!longTextReadOnly,
+        flagsDisabled: !!flagsDisabled,
+      });
     }
-    else if (isReadOnly) this.editbox.setState("read-only");
-    else this.editbox.setState("normal");
+
     this.metaPanel.setDisabled(disableInputs);
     this.statusAmpelBridge.setDisabled(disableInputs);
     this.responsibleBridge.setDisabled(disableInputs);

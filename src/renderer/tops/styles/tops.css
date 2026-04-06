@@ -253,12 +253,30 @@
 .bbm-tops-list-row-number {
   opacity: 0.88;
   font-variant-numeric: tabular-nums;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
 }
 
 .bbm-tops-list-row-title {
   font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
+  color: #111;
+}
+
+.bbm-tops-list-row-title[data-tone="blue"] {
+  color: #1d4ed8;
+}
+
+.bbm-tops-list-row-title[data-tone="black"] {
+  color: #111;
+}
+
+.bbm-tops-list-row-star {
+  color: #1d4ed8;
+  font-weight: 700;
 }
 
 .bbm-tops-list-row[data-is-selected="true"] .bbm-tops-list-row-title {

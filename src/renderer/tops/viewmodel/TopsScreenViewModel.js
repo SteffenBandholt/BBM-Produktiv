@@ -147,6 +147,22 @@ export function buildHeaderContext(state, { projectLabel } = {}) {
   return parts.join(" | ");
 }
 
+export function getTopVisualState(top) {
+  const isCarriedOver = Number(top?.is_carried_over ?? top?.isCarriedOver) === 1;
+  const isTouched =
+    Number(top?.is_touched ?? top?.isTouched ?? top?.frozen_is_touched ?? top?.frozenIsTouched) === 1;
+
+  const visualState = !isCarriedOver ? "new" : isTouched ? "carriedChanged" : "carried";
+
+  return {
+    visualState,
+    showStar: visualState === "new",
+    showChangedMarker: visualState === "carriedChanged",
+    changedMarkerText: "Text geändert",
+    titleTone: visualState === "new" ? "blue" : "black",
+  };
+}
+
 export function buildListItemsFromState(state) {
   const tops = Array.isArray(state?.tops) ? state.tops : [];
   const selectedId = state?.selectedTopId;
@@ -155,6 +171,7 @@ export function buildListItemsFromState(state) {
   const rows = [];
 
   for (const top of tops) {
+    const visual = getTopVisualState(top);
     const due = (top?.due_date || top?.dueDate || "").toString().trim();
     const status = (top?.status || "").toString().trim();
     const responsible = (top?.responsible_label || top?.responsibleLabel || "").toString().trim();
@@ -178,6 +195,11 @@ export function buildListItemsFromState(state) {
       isSelected: String(top?.id) === String(selectedId ?? ""),
       isMoveMode: !!state?.isMoveMode,
       isMoveTarget,
+      visualState: visual.visualState,
+      showStar: visual.showStar,
+      showChangedMarker: visual.showChangedMarker,
+      changedMarkerText: visual.changedMarkerText,
+      titleTone: visual.titleTone,
       raw: top,
     });
   }
@@ -245,27 +267,27 @@ export function buildPatchFromDraft(selectedTop, draft) {
 }
 
 export function shouldShowWorkbench(state) {
-  const selectedTop = getSelectedTop(state);
-  const hasSelection = !!selectedTop;
   const hasMeeting = !!state?.meetingId;
-  if (hasSelection) return true;
   if (!hasMeeting) return false;
-  if (state?.isReadOnly) return false;
-  return true;
+  return !state?.isReadOnly;
 }
 
 export function buildWorkbenchState(state) {
   const selectedTop = getSelectedTop(state);
-  const topNumber = selectedTop ? String(selectedTop.displayNumber ?? selectedTop.number ?? "").trim() : "";
+  const isCarriedOver = Number(selectedTop?.is_carried_over ?? selectedTop?.isCarriedOver) === 1;
+  const isClosedMeeting = !!state?.isReadOnly;
+
   return {
     editor: state?.editor || editorFromTop(selectedTop),
-    topNumber,
-    isReadOnly: !!state?.isReadOnly,
+    isReadOnly: isClosedMeeting,
     hasSelection: !!selectedTop,
     isMoveMode: !!state?.isMoveMode,
-    canSave: !!selectedTop,
+    canSave: !!selectedTop && !isClosedMeeting,
     canDelete: canDeleteFromState(state, selectedTop),
     canMove: canMoveFromState(state, selectedTop),
     canCreateChild: canCreateChildFromState(state, selectedTop),
+    shortTextReadOnly: !isClosedMeeting && isCarriedOver,
+    longTextReadOnly: false,
+    flagsDisabled: false,
   };
 }

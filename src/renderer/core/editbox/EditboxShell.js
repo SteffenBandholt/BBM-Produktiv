@@ -48,7 +48,12 @@ export class EditboxShell {
     });
     this._counterFormatter = (evaluation) =>
       `${evaluation.length} / ${evaluation.limit} (Rest: ${evaluation.remaining})`;
-    this._state = EDITBOX_STATE.EMPTY;
+        this._state = EDITBOX_STATE.EMPTY;
+    this._fieldAccess = {
+      shortTextReadOnly: false,
+      longTextReadOnly: false,
+      flagsDisabled: false,
+    };
     this._build();
     this.setState(EDITBOX_STATE.EMPTY);
   }
@@ -247,7 +252,33 @@ export class EditboxShell {
       limits: this.getLimits(),
     };
   }
+  setFieldAccess(nextAccess = {}) {
+    this._fieldAccess = {
+      shortTextReadOnly: Boolean(nextAccess.shortTextReadOnly),
+      longTextReadOnly: Boolean(nextAccess.longTextReadOnly),
+      flagsDisabled: Boolean(nextAccess.flagsDisabled),
+    };
+    this._applyControlState();
+  }
 
+  _applyControlState() {
+    const state = this.stateService.resolveControlState(this._state);
+    const hardDisabled = state.isDisabled;
+    const globalReadOnly = state.isReadOnly;
+
+    this.shortInput.readOnly = globalReadOnly || this._fieldAccess.shortTextReadOnly;
+    this.longInput.readOnly = globalReadOnly || this._fieldAccess.longTextReadOnly;
+
+    this.shortInput.disabled = hardDisabled;
+    this.longInput.disabled = hardDisabled;
+
+    Object.values(this.flagInputs).forEach((input) => {
+      input.disabled = globalReadOnly || hardDisabled || this._fieldAccess.flagsDisabled;
+    });
+
+    this.root.dataset.shortReadonly = this.shortInput.readOnly ? "true" : "false";
+    this.root.dataset.longReadonly = this.longInput.readOnly ? "true" : "false";
+  }
   setCounterFormatter(formatter) {
     this._counterFormatter = typeof formatter === "function"
       ? formatter
@@ -263,22 +294,12 @@ export class EditboxShell {
       this.setValue({ shortText: "", longText: "", flags: {} });
     }
 
-    this.shortInput.readOnly = state.isReadOnly;
-    this.longInput.readOnly = state.isReadOnly;
-
-    const hardDisabled = state.isDisabled;
-    this.shortInput.disabled = hardDisabled;
-    this.longInput.disabled = hardDisabled;
-
-    Object.values(this.flagInputs).forEach((input) => {
-      input.disabled = state.isReadOnly || hardDisabled;
-    });
-
     this.root.dataset.state = state.mode;
     this.root.classList.toggle("is-empty", state.isEmpty);
     this.root.classList.toggle("is-read-only", state.isReadOnly);
-    this.root.classList.toggle("is-disabled", hardDisabled);
+        this.root.classList.toggle("is-disabled", state.isDisabled);
     this.root.classList.toggle("is-busy", state.isBusy);
+    this._applyControlState();
   }
 
   getState() {
