@@ -276,9 +276,12 @@ export function buildWorkbenchState(state) {
   const selectedTop = getSelectedTop(state);
   const isCarriedOver = Number(selectedTop?.is_carried_over ?? selectedTop?.isCarriedOver) === 1;
   const isClosedMeeting = !!state?.isReadOnly;
+  const rawTopNumber = String(selectedTop?.displayNumber ?? selectedTop?.number ?? "").trim();
+  const topNumber = rawTopNumber ? (rawTopNumber.endsWith(".") ? rawTopNumber : `${rawTopNumber}.`) : "";
 
   return {
     editor: state?.editor || editorFromTop(selectedTop),
+    topNumber,
     isReadOnly: isClosedMeeting,
     hasSelection: !!selectedTop,
     isMoveMode: !!state?.isMoveMode,

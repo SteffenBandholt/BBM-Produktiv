@@ -166,6 +166,7 @@ export class TopsWorkbench {
 
   setState({
     editor = {},
+    topNumber = "",
     isReadOnly = false,
     hasSelection = false,
     isMoveMode = false,
@@ -197,7 +198,11 @@ export class TopsWorkbench {
       this.editbox.setValue(nextEditboxValue);
     }
 
-    this.leftHeaderTitle.textContent = "TOP bearbeiten";
+    const normalizedTopNumber = String(topNumber || "").trim();
+    this.leftHeaderTitle.textContent =
+      hasSelection && normalizedTopNumber
+        ? `TOP ${normalizedTopNumber} bearbeiten`
+        : "TOP bearbeiten";
 
     this.metaPanel.setValue(editor || {});
     this.statusAmpelBridge.applyDraftValue(editor || {});
