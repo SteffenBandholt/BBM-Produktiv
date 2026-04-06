@@ -311,8 +311,8 @@
 }
 
 .bbm-tops-workbench-header {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) auto minmax(220px, 1fr);
   align-items: center;
   gap: 4px;
   padding-bottom: 4px;
@@ -326,8 +326,22 @@
   gap: 3px;
 }
 
+.bbm-tops-workbench-left-title {
+  color: #1b8f3a;
+  font-size: 9pt;
+  font-weight: 700;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bbm-tops-workbench-add-wrap {
+  justify-self: center;
+}
+
 .bbm-tops-workbench-action-wrap {
-  margin-left: auto;
+  justify-self: end;
 }
 
 .bbm-tops-workbench-body {
@@ -338,41 +352,41 @@
 
 .bbm-tops-workbench-left {
   display: grid;
-  gap: 6px;
+  gap: 4px;
   min-width: 0;
 }
 
 .bbm-tops-workbench-editbox {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
+  gap: 4px;
 }
 
 .bbm-tops-workbench-editbox .editbox-main {
   display: grid;
-  gap: 6px;
+  row-gap: 4px;
 }
 
 .bbm-tops-workbench-editbox .editbox-meta-slot {
   display: none;
 }
 
-.bbm-tops-workbench-editbox .editbox-field {
-  display: grid;
-  gap: 3px;
-}
-
 .bbm-tops-workbench-editbox .editbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
   font-size: 8.5pt;
   font-weight: 400;
   color: #1f344a;
+  line-height: 1.1;
 }
 
 .bbm-tops-workbench-editbox .editbox-input,
 .bbm-tops-workbench-editbox .editbox-textarea {
   width: 100%;
   box-sizing: border-box;
-  padding: 3px 5px;
+  padding: 2px 5px;
   border: 1px solid #cad8e6;
   border-radius: 7px;
   background: #fff;
@@ -380,31 +394,46 @@
 }
 
 .bbm-tops-workbench-editbox .editbox-textarea {
-  min-height: 64px;
+  min-height: 60px;
   resize: vertical;
   line-height: 1.35;
   padding: 4px 5px;
 }
 
 .bbm-tops-workbench-editbox .editbox-counter {
-  justify-self: end;
   font-size: 8pt;
   color: #5f6877;
+  white-space: nowrap;
+  margin-left: 10px;
 }
 
-.bbm-tops-workbench-editbox .editbox-counter[data-level="warning"] {
-  color: #a66a00;
+.bbm-tops-workbench-editbox .bbm-tops-editbox-short-wrap {
+  display: grid;
+  row-gap: 2px;
 }
 
-.bbm-tops-workbench-editbox .editbox-counter[data-level="limit"] {
-  color: #b3261e;
-  font-weight: 600;
+.bbm-tops-workbench-editbox .bbm-tops-editbox-short-wrap .editbox-label {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+
+.bbm-tops-workbench-editbox .bbm-tops-editbox-short-wrap .editbox-input {
+  width: 100%;
+}
+
+.bbm-tops-workbench-editbox .bbm-tops-editbox-long-wrap {
+  display: grid;
+  row-gap: 2px;
 }
 
 .bbm-tops-workbench-editbox .editbox-flags {
   display: flex;
+  flex: 0 1 auto;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
 }
 
 .bbm-tops-workbench-editbox .editbox-flag {
@@ -413,6 +442,15 @@
   gap: 4px;
   font-size: 8pt;
   color: #2f3744;
+  line-height: 1;
+}
+
+.bbm-tops-workbench-editbox .editbox-flag input {
+  margin: 0;
+}
+
+.bbm-tops-editbox-label-text {
+  min-width: 0;
 }
 
 .bbm-tops-workbench-gutter {

@@ -46,6 +46,8 @@ export class EditboxShell {
       limit: this._limits.longText,
       warningRatio: this._warningRatio,
     });
+    this._counterFormatter = (evaluation) =>
+      `${evaluation.length} / ${evaluation.limit} (Rest: ${evaluation.remaining})`;
     this._state = EDITBOX_STATE.EMPTY;
     this._build();
     this.setState(EDITBOX_STATE.EMPTY);
@@ -89,6 +91,7 @@ export class EditboxShell {
 
     this.flagsWrap = mkEl(doc, "div", "editbox-flags");
     this.flagInputs = {};
+    this.flagItems = {};
     FLAG_KEYS.forEach((key) => {
       const item = mkEl(doc, "label", "editbox-flag");
       const input = mkEl(doc, "input");
@@ -98,6 +101,7 @@ export class EditboxShell {
       item.append(input, text);
       this.flagsWrap.appendChild(item);
       this.flagInputs[key] = input;
+      this.flagItems[key] = item;
     });
 
     this.mainCol.append(this.shortWrap, this.longWrap, this.flagsWrap);
@@ -167,7 +171,7 @@ export class EditboxShell {
   }
 
   _applyCounterState(fieldWrap, counterEl, evaluation) {
-    counterEl.textContent = `${evaluation.length} / ${evaluation.limit} (Rest: ${evaluation.remaining})`;
+    counterEl.textContent = this._counterFormatter(evaluation);
     counterEl.dataset.level = evaluation.level;
     fieldWrap.dataset.level = evaluation.level;
     fieldWrap.classList.toggle("is-over-limit", evaluation.isOverLimit);
@@ -196,6 +200,14 @@ export class EditboxShell {
       longText: this.longInput.value,
       flags,
     };
+  }
+
+  setVisibleFlags(flagKeys) {
+    const visible = new Set(Array.isArray(flagKeys) ? flagKeys.map((key) => String(key || "").trim()) : FLAG_KEYS);
+    Object.entries(this.flagItems).forEach(([key, item]) => {
+      const show = visible.has(key);
+      item.style.display = show ? "" : "none";
+    });
   }
 
   isShortTextFocused() {
@@ -234,6 +246,13 @@ export class EditboxShell {
       warningRatio: this._warningRatio,
       limits: this.getLimits(),
     };
+  }
+
+  setCounterFormatter(formatter) {
+    this._counterFormatter = typeof formatter === "function"
+      ? formatter
+      : (evaluation) => `${evaluation.length} / ${evaluation.limit} (Rest: ${evaluation.remaining})`;
+    this._updateCounters();
   }
 
   setState(nextState) {

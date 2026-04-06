@@ -256,8 +256,10 @@ export function shouldShowWorkbench(state) {
 
 export function buildWorkbenchState(state) {
   const selectedTop = getSelectedTop(state);
+  const topNumber = selectedTop ? String(selectedTop.displayNumber ?? selectedTop.number ?? "").trim() : "";
   return {
     editor: state?.editor || editorFromTop(selectedTop),
+    topNumber,
     isReadOnly: !!state?.isReadOnly,
     hasSelection: !!selectedTop,
     isMoveMode: !!state?.isMoveMode,

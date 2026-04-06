@@ -33,8 +33,12 @@ export class TopsWorkbench {
     this.header = document.createElement("div");
     this.header.className = "bbm-tops-workbench-header";
 
-    this.btnL1 = this._mkBtn("+ Titel", this.onCreateLevel1, "neutral");
-    this.btnChild = this._mkBtn("+ TOP", this.onCreateChild, "neutral");
+    this.leftHeaderTitle = document.createElement("div");
+    this.leftHeaderTitle.className = "bbm-tops-workbench-left-title";
+    this.leftHeaderTitle.textContent = "TOP bearbeiten";
+
+    this.btnL1 = this._mkBtn("+Titel", this.onCreateLevel1, "neutral");
+    this.btnChild = this._mkBtn("+TOP", this.onCreateChild, "neutral");
     this.btnMove = this._mkBtn("Schieben", this.onToggleMove, "neutral");
     this.btnSave = this._mkBtn("Speichern", this.onSave, "primary");
     this.btnDelete = this._mkBtn("Papierkorb", this.onDelete, "danger");
@@ -47,7 +51,7 @@ export class TopsWorkbench {
     actionWrap.className = "bbm-tops-workbench-action-wrap";
     actionWrap.append(this.btnMove, this.btnSave, this.btnDelete);
 
-    this.header.append(addWrap, actionWrap);
+    this.header.append(this.leftHeaderTitle, addWrap, actionWrap);
 
     this.body = document.createElement("div");
     this.body.className = "bbm-tops-workbench-body";
@@ -58,6 +62,9 @@ export class TopsWorkbench {
     this.editbox = new EditboxShell();
     this.editboxRoot = this.editbox.getElement();
     this.editboxRoot.classList.add("bbm-tops-workbench-editbox");
+    this.editbox.setVisibleFlags(["important", "decision"]);
+    this.editbox.setCounterFormatter((evaluation) => String(evaluation?.remaining ?? ""));
+    this._configureEditboxPresentation();
     this.left.appendChild(this.editboxRoot);
 
     this.gutter = document.createElement("div");
@@ -87,6 +94,42 @@ export class TopsWorkbench {
     this.editboxRoot.addEventListener("input", () => this._emitDraftChange());
     this.editboxRoot.addEventListener("change", () => this._emitDraftChange());
     this.responsibleBridge.initialize();
+  }
+
+  _configureEditboxPresentation() {
+    this._attachCounterToLabel(this.editbox.shortLabel, this.editbox.shortCounter);
+    this._attachCounterToLabel(this.editbox.longLabel, this.editbox.longCounter);
+    this.editbox.shortWrap.classList.add("bbm-tops-editbox-short-wrap");
+    this.editbox.longWrap.classList.add("bbm-tops-editbox-long-wrap");
+
+    if (this.editbox.flagsWrap?.parentElement !== this.editbox.shortLabel) {
+      this.editbox.shortLabel.appendChild(this.editbox.flagsWrap);
+    }
+
+    const germanFlags = {
+      important: "Wichtig",
+      task: "ToDo",
+      decision: "Beschluss",
+    };
+    Object.entries(germanFlags).forEach(([key, label]) => {
+      const input = this.editbox.flagInputs?.[key];
+      const textEl = input?.parentElement?.querySelector("span");
+      if (textEl) textEl.textContent = label;
+    });
+  }
+
+  _attachCounterToLabel(labelEl, counterEl) {
+    if (!labelEl || !counterEl || labelEl.contains(counterEl)) return;
+
+    const currentText = String(labelEl.textContent || "").trim();
+    labelEl.textContent = "";
+
+    const text = document.createElement("span");
+    text.className = "bbm-tops-editbox-label-text";
+    text.textContent = currentText;
+
+    counterEl.classList.add("bbm-tops-editbox-remaining");
+    labelEl.append(text, counterEl);
   }
 
   _mkBtn(label, onClick, tone) {
@@ -123,6 +166,7 @@ export class TopsWorkbench {
 
   setState({
     editor = {},
+    topNumber = "",
     isReadOnly = false,
     hasSelection = false,
     isMoveMode = false,
@@ -145,6 +189,10 @@ export class TopsWorkbench {
       };
     }
     if (Object.keys(nextEditboxValue).length) this.editbox.setValue(nextEditboxValue);
+
+    const normalizedTopNumber = String(topNumber || "").trim();
+    this.leftHeaderTitle.textContent =
+      hasSelection && normalizedTopNumber ? `TOP ${normalizedTopNumber} bearbeiten` : "TOP bearbeiten";
 
     this.metaPanel.setValue(editor || {});
     this.statusAmpelBridge.applyDraftValue(editor || {});
