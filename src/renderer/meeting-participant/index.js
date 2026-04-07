@@ -28,6 +28,11 @@ export {
 } from "./meetingParticipantDerivation.js";
 
 export { MeetingParticipantRegistry } from "./MeetingParticipantRegistry.js";
+export { MeetingParticipantRepository } from "./MeetingParticipantRepository.js";
+export {
+  buildMeetingParticipantMailRecipients,
+  buildMeetingParticipantPrintModel,
+} from "./adapters.js";
 
 export {
   MeetingParticipantDialog,
@@ -36,4 +41,3 @@ export {
   MeetingParticipantManagementPanel,
   MeetingParticipantSelector,
 } from "./ui/index.js";
-

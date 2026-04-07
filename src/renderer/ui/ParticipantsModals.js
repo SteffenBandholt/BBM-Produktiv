@@ -1,4 +1,4 @@
-// src/renderer/ui/ParticipantsModals.js
+﻿// src/renderer/ui/ParticipantsModals.js
 //
 // Blockierende Modals:
 // - Kandidaten (Projekt)  => openCandidates({ projectId })
@@ -6,6 +6,16 @@
 
 import { applyPopupButtonStyle } from "./popupButtonStyles.js";
 import { createPopupOverlay, stylePopupCard, registerPopupCloseHandlers } from "./popupCommon.js";
+import {
+  MeetingParticipantManagementPanel,
+  MeetingParticipantRepository,
+  normalizeMeetingParticipantList,
+} from "../meeting-participant/index.js";
+import {
+  PROJECT_COMPANY_SOURCE_LOCAL,
+  PROJECT_COMPANY_SOURCE_STAMM,
+  buildProjectCompanyKey,
+} from "../project-company/index.js";
 
 const PARTICIPANTS_EMPTY_HINT_STYLE_ID = "bbm-participants-empty-hint-style";
 function _ensureParticipantsEmptyHintStyle() {
@@ -32,10 +42,10 @@ function _ensureParticipantsEmptyHintStyle() {
 //
 // UX / Regeln:
 // - Dual-List, flach: Name, Rolle, Firma
-// - Auswahl/Abwahl per Doppelklick (keine Hinzufügen/Entfernen Buttons)
+// - Auswahl/Abwahl per Doppelklick (keine HinzufÃ¼gen/Entfernen Buttons)
 // - App-Font wie Rest (system-ui, im Zweifel Calibri)
 // - Kandidaten entfernen ist BLOCKIERT, wenn Person Teilnehmer in irgendeiner OFFENEN Besprechung des Projekts ist
-// - Teilnehmer: beim Hinzufügen sind "Anwesend" und "Im Verteiler" standardmäßig ANGEHAKT (1/1)
+// - Teilnehmer: beim HinzufÃ¼gen sind "Anwesend" und "Im Verteiler" standardmÃ¤ÃŸig ANGEHAKT (1/1)
 // - Meeting geschlossen => Modal read-only (Toggles disabled, Save disabled)
 //
 // WICHTIG: IPC/Preload kann je nach Stand entweder Objekt-Payload ODER String erwarten.
@@ -65,6 +75,15 @@ export default class ParticipantsModals {
     this.projectCandidates = []; // right in participants modal
     this.participants = []; // left in participants modal
     this.distributionHintKeys = new Set();
+    this.meetingParticipantPanel = null;
+    this.meetingParticipantPanelParticipants = [];
+    this.meetingParticipantProjectCompanies = [];
+    this.meetingParticipantProjectEmployees = [];
+    this.isParticipantPersisting = false;
+    this.meetingParticipantRepository = new MeetingParticipantRepository({
+      api: (typeof window !== "undefined" ? window.bbmDb : null) || {},
+    });
+    this.isParticipantPersisting = false;
 
     this.searchLeft = "";
     this.searchRight = "";
@@ -227,6 +246,11 @@ export default class ParticipantsModals {
     this.searchLeft = "";
     this.searchRight = "";
     this.distributionHintKeys = new Set();
+    this.meetingParticipantPanel = null;
+    this.meetingParticipantPanelParticipants = [];
+    this.meetingParticipantProjectCompanies = [];
+    this.meetingParticipantProjectEmployees = [];
+    this.isParticipantPersisting = false;
     this._setError("");
 
     this.overlayEl.style.display = "flex";
@@ -257,6 +281,10 @@ export default class ParticipantsModals {
     this.candidates = [];
     this.projectCandidates = [];
     this.participants = [];
+    this.meetingParticipantPanel = null;
+    this.meetingParticipantPanelParticipants = [];
+    this.meetingParticipantProjectCompanies = [];
+    this.meetingParticipantProjectEmployees = [];
 
     this.searchLeft = "";
     this.searchRight = "";
@@ -300,10 +328,10 @@ export default class ParticipantsModals {
 
     const title = document.createElement("div");
     title.style.fontWeight = "bold";
-    title.textContent = "€”";
+    title.textContent = "â‚¬â€";
 
     const btnClose = document.createElement("button");
-    btnClose.textContent = "œ•";
+    btnClose.textContent = "Å“â€¢";
     applyPopupButtonStyle(btnClose);
     btnClose.onclick = () => this.close();
 
@@ -428,6 +456,86 @@ export default class ParticipantsModals {
     return { name, rolle, firm };
   }
 
+  _sourceTypeFromPersonKind(kind) {
+    const normalized = (kind || "").toString().trim();
+    if (normalized === "global_person") return PROJECT_COMPANY_SOURCE_STAMM;
+    return PROJECT_COMPANY_SOURCE_LOCAL;
+  }
+
+  _kindFromSourceType(sourceType) {
+    return sourceType === PROJECT_COMPANY_SOURCE_STAMM ? "global_person" : "project_person";
+  }
+
+  _toProjectCompanyFromPoolPerson(person) {
+    const sourceType = this._sourceTypeFromPersonKind(person?.kind);
+    const firmId = String(person?.firmId ?? person?.firm_id ?? "").trim();
+    return {
+      projectId: this.projectId || "",
+      sourceType,
+      companyId: sourceType === PROJECT_COMPANY_SOURCE_STAMM ? firmId || null : null,
+      localCompanyId: sourceType === PROJECT_COMPANY_SOURCE_LOCAL ? firmId || "local-fallback" : "",
+      name1: (person?.firm || person?.firm_name || person?.firmName || "").toString().trim() || "Firma",
+      short: (person?.firm || person?.firm_name || person?.firmName || "").toString().trim() || "Firma",
+      active:
+        this._parseActiveFlag(
+          person?.firmIsActive ?? person?.firm_is_active ?? person?.is_firm_active
+        ) === 1,
+    };
+  }
+
+  _toProjectCompanyEmployeeFromPoolPerson(person) {
+    const sourceType = this._sourceTypeFromPersonKind(person?.kind);
+    const projectCompany = this._toProjectCompanyFromPoolPerson(person);
+    const projectCompanyId = buildProjectCompanyKey(projectCompany);
+    const isEmployeeActive = this._parseActiveFlag(person?.is_active ?? person?.isActive) === 1;
+    const isFirmActive =
+      this._parseActiveFlag(
+        person?.firmIsActive ?? person?.firm_is_active ?? person?.is_firm_active
+      ) === 1;
+    const personId = String(person?.personId ?? person?.person_id ?? person?.id ?? "").trim();
+    return {
+      projectId: this.projectId || "",
+      projectCompanyId,
+      companyId: sourceType === PROJECT_COMPANY_SOURCE_STAMM ? projectCompany.companyId : null,
+      employeeId: sourceType === PROJECT_COMPANY_SOURCE_STAMM ? personId || null : null,
+      localEmployeeId:
+        sourceType === PROJECT_COMPANY_SOURCE_LOCAL ? personId || "project-person-fallback" : "",
+      sourceType,
+      displayName: (person?.name || "").toString().trim(),
+      role: (person?.rolle || person?.role || "").toString().trim(),
+      phone: (person?.phone || person?.tel || "").toString().trim(),
+      email: this._personEmail(person),
+      active: isEmployeeActive && isFirmActive,
+    };
+  }
+
+  _toMeetingParticipantFromApiEntry(entry, poolPersonMap) {
+    const kind = this._normKind(entry);
+    const personId = this._normPersonId(entry);
+    if (!kind || !personId) return null;
+    const key = this._key(kind, personId);
+    const fromPool = poolPersonMap.get(key) || null;
+    const sourceType = this._sourceTypeFromPersonKind(kind);
+    const company = this._toProjectCompanyFromPoolPerson(fromPool || entry);
+    const companyLabel = company.short || company.name1 || "";
+
+    return {
+      meetingId: this.meetingId || "",
+      projectId: this.projectId || "",
+      projectCompanyId: buildProjectCompanyKey(company),
+      employeeId: sourceType === PROJECT_COMPANY_SOURCE_STAMM ? String(personId) : null,
+      localEmployeeId: sourceType === PROJECT_COMPANY_SOURCE_LOCAL ? String(personId) : "",
+      sourceType,
+      displayName: (fromPool?.name || entry?.name || "").toString().trim() || "-",
+      companyLabel,
+      role: (fromPool?.rolle || fromPool?.role || entry?.rolle || "").toString().trim(),
+      phone: (fromPool?.phone || entry?.phone || "").toString().trim(),
+      email: this._personEmail(fromPool) || this._personEmail(entry),
+      active: Number(entry?.isPresent ?? entry?.is_present ?? 0) === 1,
+      invited: Number(entry?.isInDistribution ?? entry?.is_in_distribution ?? 0) === 1,
+    };
+  }
+
   _sortPersons(list) {
     const arr = [...(list || [])];
     arr.sort((a, b) => {
@@ -445,7 +553,7 @@ export default class ParticipantsModals {
     return arr;
   }
 
-  _renderEmpty(container, text = "Keine Einträge") {
+  _renderEmpty(container, text = "Keine EintrÃ¤ge") {
     _ensureParticipantsEmptyHintStyle();
     const empty = document.createElement("div");
     empty.className = "list-empty-hint";
@@ -600,6 +708,31 @@ export default class ParticipantsModals {
     container.appendChild(row);
   }
 
+  async _persistMeetingParticipantPanelState() {
+    if (this.readOnly) return { ok: false, error: "read-only" };
+    if (!this.meetingId) return { ok: false, error: "meetingId fehlt." };
+    if (this.isParticipantPersisting) return { ok: false, error: "persisting" };
+    this.isParticipantPersisting = true;
+    try {
+      const source =
+        this.meetingParticipantPanel?.getParticipants?.() || this.meetingParticipantPanelParticipants || [];
+      const participants = normalizeMeetingParticipantList(source);
+      const res = await this.meetingParticipantRepository.saveByMeeting({
+        meetingId: this.meetingId,
+        participants,
+      });
+      if (!res?.ok) {
+        this._setError(res?.error || "Teilnehmer konnten nicht gespeichert werden.");
+        return res;
+      }
+      this.meetingParticipantPanelParticipants = participants;
+      this._setError("");
+      return { ok: true };
+    } finally {
+      this.isParticipantPersisting = false;
+    }
+  }
+
   // ============================================================
   // IPC compat helpers (Objekt vs. String)
   // ============================================================
@@ -682,7 +815,7 @@ export default class ParticipantsModals {
         .sort((a, b) => Number(b?.meeting_index || 0) - Number(a?.meeting_index || 0));
 
       // Explizit gesetzte Meeting-ID nicht auf ein anderes offenes Meeting umbiegen
-      // (wichtig direkt nach Neuanlage, wenn List-Refresh verzögert ist).
+      // (wichtig direkt nach Neuanlage, wenn List-Refresh verzÃ¶gert ist).
       if (this.meetingId && !current) return;
       if (current && Number(current?.is_closed || 0) !== 1) return;
       if (open.length > 0) {
@@ -839,7 +972,7 @@ export default class ParticipantsModals {
           const key = this._key(it.kind, it.personId);
           const arr = this.openParticipantRefs.get(key) || [];
           const idx = idxById.get(m.id);
-          if (idx != null && !arr.includes(idx)) arr.push(idx);
+          if (idx !== null && idx !== undefined && !arr.includes(idx)) arr.push(idx);
           this.openParticipantRefs.set(key, arr);
         }
       }
@@ -850,6 +983,41 @@ export default class ParticipantsModals {
 
   async _loadParticipantsData() {
     this._setError("");
+    const repoRes = await this.meetingParticipantRepository.listByMeeting({
+      meetingId: this.meetingId,
+      projectId: this.projectId,
+    });
+    if (repoRes?.ok) {
+      this.readOnly = Boolean(repoRes?.isClosed);
+      this.pool = this._sortPersons(
+        (repoRes.pool || []).map((x) => ({
+          ...x,
+          firmIsActive: this._parseActiveFlag(x?.firm_is_active ?? x?.firmIsActive),
+        }))
+      );
+      this.projectCandidates = this._sortPersons(
+        this.pool.filter((x) => this._parseActiveFlag(x?.is_active ?? x?.isActive) === 1)
+      );
+      this.meetingParticipantProjectCompanies = repoRes.projectCompanies || [];
+      this.meetingParticipantProjectEmployees = repoRes.projectCompanyEmployees || [];
+      this.meetingParticipantPanelParticipants = normalizeMeetingParticipantList(
+        repoRes.participants || []
+      );
+
+      const legacyParticipants = (repoRes.participants || []).map((p) => ({
+        kind: this._kindFromSourceType(p.sourceType),
+        personId:
+          p.sourceType === PROJECT_COMPANY_SOURCE_STAMM ? p.employeeId : p.localEmployeeId,
+        name: p.displayName,
+        email: p.email,
+        rolle: p.role,
+        firm: p.companyLabel,
+        isPresent: p.active ? 1 : 0,
+        isInDistribution: p.invited ? 1 : 0,
+      }));
+      this.participants = this._sortPersons(legacyParticipants);
+      return;
+    }
 
     const api = window.bbmDb || {};
     if (typeof api.projectParticipantsPool !== "function") {
@@ -902,9 +1070,33 @@ export default class ParticipantsModals {
             is_active: 1,
           }))
       );
+
+      const companiesById = new Map();
+      for (const person of this.pool) {
+        const projectCompany = this._toProjectCompanyFromPoolPerson(person);
+        const companyId = buildProjectCompanyKey(projectCompany);
+        if (!companiesById.has(companyId)) {
+          companiesById.set(companyId, {
+            ...projectCompany,
+            id: companyId,
+          });
+        }
+      }
+      this.meetingParticipantProjectCompanies = [...companiesById.values()];
+      this.meetingParticipantProjectEmployees = this.pool.map((person) => {
+        const projectEmployee = this._toProjectCompanyEmployeeFromPoolPerson(person);
+        return {
+          ...projectEmployee,
+          id: `${projectEmployee.projectCompanyId}|${projectEmployee.sourceType}|${
+            projectEmployee.employeeId || projectEmployee.localEmployeeId || "-"
+          }`,
+        };
+      });
     } else {
       this.pool = [];
       this.projectCandidates = [];
+      this.meetingParticipantProjectCompanies = [];
+      this.meetingParticipantProjectEmployees = [];
     }
 
     const poolMap = new Map(this.pool.map((p) => [this._key(p.kind, p.personId), p]));
@@ -931,7 +1123,7 @@ export default class ParticipantsModals {
         return {
           kind,
           personId,
-          name: (p?.name || x.name || "").toString() || "€”",
+          name: (p?.name || x.name || "").toString() || "â‚¬â€",
           email: this._personEmail(p) || this._personEmail(x),
           rolle: (p?.rolle || x.rolle || "").toString(),
           firm: (p?.firm || x.firm || x.firm_name || "").toString(),
@@ -947,6 +1139,11 @@ export default class ParticipantsModals {
       .filter((x) => x.kind && x.personId);
 
     this.participants = this._sortPersons(items);
+    this.meetingParticipantPanelParticipants = normalizeMeetingParticipantList(
+      (plist || [])
+        .map((entry) => this._toMeetingParticipantFromApiEntry(entry, poolMap))
+        .filter(Boolean)
+    );
   }
 
   // ============================================================
@@ -1164,21 +1361,34 @@ export default class ParticipantsModals {
 
     this.bodyEl.innerHTML = "";
     this.footerEl.innerHTML = "";
+    this.meetingParticipantPanel = null;
 
     if (this.readOnly) {
       this._setError("Diese Besprechung ist geschlossen. Teilnehmer sind nur lesbar.");
     }
 
-    const grid = document.createElement("div");
-    grid.style.display = "grid";
-    grid.style.gridTemplateColumns = "1fr 1fr";
-    grid.style.gap = "12px";
+    const panelWrap = document.createElement("div");
+    panelWrap.style.display = "block";
+    panelWrap.style.minHeight = "360px";
+    this.bodyEl.appendChild(panelWrap);
 
-    const leftCol = this._mkListCol("Teilnehmer dieser Besprechung");
-    const rightCol = this._mkListCol("Personen im Projekt");
-
-    grid.append(leftCol.col, rightCol.col);
-    this.bodyEl.appendChild(grid);
+    const panel = new MeetingParticipantManagementPanel({
+      documentRef: document,
+      meetingId: this.meetingId || "",
+      projectId: this.projectId || "",
+      onParticipantsChange: (nextParticipants) => {
+        this.meetingParticipantPanelParticipants = normalizeMeetingParticipantList(nextParticipants);
+        this._persistMeetingParticipantPanelState().catch(() => {});
+      },
+    });
+    panel.setReadOnly(this.readOnly || this.isSaving);
+    panel.setProjectData({
+      projectCompanies: this.meetingParticipantProjectCompanies || [],
+      projectCompanyEmployees: this.meetingParticipantProjectEmployees || [],
+    });
+    panel.setParticipants(this.meetingParticipantPanelParticipants || []);
+    panel.mount(panelWrap);
+    this.meetingParticipantPanel = panel;
 
     const btnCancel = document.createElement("button");
     btnCancel.textContent = "Abbrechen";
@@ -1196,7 +1406,7 @@ export default class ParticipantsModals {
     this.footerEl.style.justifyContent = "space-between";
     this.footerEl.style.alignItems = "center";
     const hint = document.createElement("div");
-    hint.textContent = "Auswahl mit Doppelklick";
+    hint.textContent = "Teilnehmer aus aktiven Projekt-Mitarbeitern";
     hint.style.fontSize = "12px";
     hint.style.opacity = "0.75";
     const actions = document.createElement("div");
@@ -1204,8 +1414,6 @@ export default class ParticipantsModals {
     actions.style.gap = "8px";
     actions.append(btnCancel, btnSave);
     this.footerEl.append(hint, actions);
-
-    this._renderParticipantsLists(leftCol.list, rightCol.list);
   }
 
   _renderParticipantsLists(leftListEl, rightListEl) {
@@ -1335,7 +1543,7 @@ export default class ParticipantsModals {
     if (!leftSorted.length) {
       this._renderEmpty(
         leftListEl,
-        '„Mitarbeiter aus Liste "Personen im Projekt" mit Doppelklick auswählen“'
+        'â€žMitarbeiter aus Liste "Personen im Projekt" mit Doppelklick auswÃ¤hlenâ€œ'
       );
     }
 
@@ -1368,7 +1576,7 @@ export default class ParticipantsModals {
           const key = this._key(c.kind, c.personId);
           if (selSet.has(key)) return;
 
-          // œ… beim Wählen sind beide Toggles angehakt
+          // Å“â€¦ beim WÃ¤hlen sind beide Toggles angehakt
           const newP = {
             kind: c.kind,
             personId: c.personId,
@@ -1388,7 +1596,7 @@ export default class ParticipantsModals {
     if (!rightSorted.length) {
       this._renderEmpty(
         rightListEl,
-        "„zunächst Firmen incl. Mitarbeitern anlegen“"
+        "â€žzunÃ¤chst Firmen incl. Mitarbeitern anlegenâ€œ"
       );
     }
   }
@@ -1396,26 +1604,12 @@ export default class ParticipantsModals {
   async _saveParticipants() {
     if (this.readOnly) return;
 
-    const api = window.bbmDb || {};
-    if (typeof api.meetingParticipantsSet !== "function") {
-      this._setError("API fehlt: meetingParticipantsSet");
-      return;
-    }
-
     if (this.isSaving) return;
     this.isSaving = true;
 
     try {
-      const items = (this.participants || []).map((p) => ({
-        kind: p.kind,
-        personId: p.personId,
-        isPresent: Number(p.isPresent) === 1,
-        isInDistribution: Number(p.isInDistribution) === 1 && this._hasPersonEmail(p),
-      }));
-
-      const res = await api.meetingParticipantsSet({ meetingId: this.meetingId, items });
+      const res = await this._persistMeetingParticipantPanelState();
       if (!res?.ok) {
-        this._setError(res?.error || "Speichern fehlgeschlagen");
         return;
       }
 
@@ -1428,3 +1622,5 @@ export default class ParticipantsModals {
     }
   }
 }
+
+

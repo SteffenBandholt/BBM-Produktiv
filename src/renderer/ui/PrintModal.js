@@ -35,6 +35,7 @@ import { applyPopupButtonStyle } from "./popupButtonStyles.js";
 import { createPopupOverlay, stylePopupCard, registerPopupCloseHandlers } from "./popupCommon.js";
 import { OVERLAY_TOP } from "./zIndex.js";
 import { buildProtocolPdfFileName } from "../utils/protocolPdfNaming.js";
+import { buildMeetingParticipantPrintModel } from "../meeting-participant/index.js";
 
 export default class PrintModal {
   constructor({ router } = {}) {
@@ -2895,29 +2896,21 @@ export default class PrintModal {
     const watermarkHtml = isVorabzug ? `<div class="watermark" aria-hidden="true">VORABZUG</div>` : "";
     const statusHtml = statusLine ? `<div class="status">${statusLine}</div>` : "";
 
-    const partRows = (participants || [])
-      .filter((p) => Number(p?.isPresent ?? p?.is_present ?? 0) === 1)
-      .map((p) => {
-        const name = String(p?.name || "").trim();
-        const rolle = String(p?.rolle || "").trim();
-        const firm = String(p?.firm || "").trim();
-        const funk = String(p?.funk || "").trim();
-        const email = String(p?.email || "").trim();
-        const isPresent = true;
-        const isInDist = Number(p?.isInDistribution ?? p?.is_in_distribution ?? 0) === 1;
-        const presentMark = isPresent ? "x" : "-";
-        const distMark = isInDist ? "x" : "-";
+    const participantModel = buildMeetingParticipantPrintModel(participants || []);
+    const partRows = (participantModel?.rows || [])
+      .filter((row) => String(row?.presentMark || "").trim().toLowerCase() === "x")
+      .map((row) => {
         return `
           <tr>
-            <td>${this._escapeHtml(name)}</td>
-            <td>${this._escapeHtml(rolle)}</td>
-            <td>${this._escapeHtml(firm)}</td>
-            <td>${this._escapeHtml(funk)}</td>
-            <td>${this._escapeHtml(email)}</td>
+            <td>${this._escapeHtml(String(row?.name || "").trim())}</td>
+            <td>${this._escapeHtml(String(row?.role || "").trim())}</td>
+            <td>${this._escapeHtml(String(row?.firm || "").trim())}</td>
+            <td>${this._escapeHtml(String(row?.phone || "").trim())}</td>
+            <td>${this._escapeHtml(String(row?.email || "").trim())}</td>
             <td class="chk">
               <div class="chkStack">
-                <div class="chkRow">${presentMark}</div>
-                <div class="chkRow">${distMark}</div>
+                <div class="chkRow">${String(row?.presentMark || "-")}</div>
+                <div class="chkRow">${String(row?.distributionMark || "-")}</div>
               </div>
             </td>
           </tr>

@@ -5,6 +5,7 @@ import { renderV2GlobalHeader } from "./v2/header/GlobalHeader.js";
 import { renderV2FullHeader } from "./v2/header/FullHeader.js";
 import { renderV2MiniHeader } from "./v2/header/MiniHeader.js";
 import { V2_LAYOUT } from "./v2/v2LayoutConfig.js";
+import { buildMeetingParticipantPrintModel } from "../meeting-participant/index.js";
 
 const app = document.getElementById("app");
 
@@ -512,28 +513,7 @@ function _measureTopsTailHeight(data) {
 function _buildParticipantsIntroData(data) {
   const mode = String(data?.mode || "").trim().toLowerCase();
   if (!["protocol", "preview", "vorabzug"].includes(mode)) return null;
-  const src = Array.isArray(data?.participants) ? data.participants : [];
-  const rows = src.map((p) => {
-    const name = String(p?.name || "").trim();
-    const role = String(p?.rolle || p?.role || "").trim();
-    const firm = String(p?.firm || "").trim();
-    const mobileOrFunk = String(p?.handy ?? p?.mobile ?? p?.funk ?? p?.mobil ?? p?.cell ?? "").trim();
-    const phoneFallback = String(p?.telefon ?? p?.phone ?? "").trim();
-    const phone = mobileOrFunk || phoneFallback;
-    const email = String(p?.email || "").trim();
-    const isPresent = Number(p?.isPresent ?? p?.is_present ?? 0) === 1;
-    const isInDistribution = Number(p?.isInDistribution ?? p?.is_in_distribution ?? 0) === 1;
-    return {
-      name,
-      role,
-      firm,
-      phone,
-      email,
-      presentMark: isPresent ? "x" : "-",
-      distributionMark: isInDistribution ? "x" : "-",
-    };
-  });
-  return { type: "participants", title: "Teilnehmer", rows };
+  return buildMeetingParticipantPrintModel(data?.participants || []);
 }
 
 function _buildParticipantsIntroElement(intro) {

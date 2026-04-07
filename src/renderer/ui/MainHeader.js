@@ -7,6 +7,10 @@ import { HEADER, POPOVER_MENU } from "./zIndex.js";
 import { sendMailPayload } from "../services/mail/sendMailPayload.js";
 import { openClosedProtocolSelector } from "./react/ClosedProtocolSelector.js";
 import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
+import {
+  MeetingParticipantRepository,
+  buildMeetingParticipantMailRecipients,
+} from "../meeting-participant/index.js";
 
 export default class MainHeader {
   constructor({ router, version = "1.0", sidebarWidth = 220, padding = 12 } = {}) {
@@ -1956,85 +1960,21 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
     const mid = meetingId || selectedMeeting?.id || null;
     if (!mid) return { distribution: [], all: [], anyDistributionField: false };
 
-    const api = window.bbmDb || {};
-    if (typeof api.meetingParticipantsList !== "function") {
-      return { distribution: [], all: [], anyDistributionField: false };
-    }
-
-    const getRows = (res) =>
-      Array.isArray(res?.items) ? res.items : Array.isArray(res?.list) ? res.list : [];
-
-    const readEmail = (item) =>
-      String(
-        item?.email ??
-          item?.email_raw ??
-          item?.mail ??
-          item?.e_mail ??
-          item?.person_email ??
-          item?.personEmail ??
-          item?.participant_email ??
-          item?.participantEmail ??
-          ""
-      ).trim();
-
-    const hasDistributionField = (item) =>
-      item &&
-      (Object.prototype.hasOwnProperty.call(item, "isInDistribution") ||
-        Object.prototype.hasOwnProperty.call(item, "is_in_distribution") ||
-        Object.prototype.hasOwnProperty.call(item, "inDistribution") ||
-        Object.prototype.hasOwnProperty.call(item, "in_distribution") ||
-        Object.prototype.hasOwnProperty.call(item, "send_email") ||
-        Object.prototype.hasOwnProperty.call(item, "sendEmail") ||
-        Object.prototype.hasOwnProperty.call(item, "email_enabled") ||
-        Object.prototype.hasOwnProperty.call(item, "emailEnabled"));
-
-    const inDistribution = (item) =>
-      Number(
-        item?.isInDistribution ??
-          item?.is_in_distribution ??
-          item?.inDistribution ??
-          item?.in_distribution ??
-          item?.send_email ??
-          item?.sendEmail ??
-          item?.email_enabled ??
-          item?.emailEnabled ??
-          0
-      ) === 1;
-
     try {
-      const res = await api.meetingParticipantsList({ meetingId: mid });
-      const rows = getRows(res);
-      if (!res?.ok || !rows.length) return { distribution: [], all: [], anyDistributionField: false };
-
-      const anyDistributionField = rows.some((item) => hasDistributionField(item));
-      const seenAll = new Set();
-      const all = [];
-      for (const item of rows) {
-        const email = readEmail(item);
-        if (!email) continue;
-        const key = email.toLowerCase();
-        if (seenAll.has(key)) continue;
-        seenAll.add(key);
-        all.push(email);
-      }
-
-      if (!anyDistributionField) {
-        return { distribution: [...all], all, anyDistributionField: false };
-      }
-
-      const dist = [];
-      const seenDist = new Set();
-      for (const item of rows) {
-        if (!inDistribution(item)) continue;
-        const email = readEmail(item);
-        if (!email) continue;
-        const key = email.toLowerCase();
-        if (seenDist.has(key)) continue;
-        seenDist.add(key);
-        dist.push(email);
-      }
-
-      return { distribution: dist, all, anyDistributionField: true };
+      const api = window.bbmDb || {};
+      const projectId =
+        this.router?.currentProjectId ||
+        this.router?.activeView?.projectId ||
+        selectedMeeting?.project_id ||
+        selectedMeeting?.projectId ||
+        null;
+      const repository = new MeetingParticipantRepository({ api });
+      const res = await repository.listByMeeting({
+        meetingId: mid,
+        projectId,
+      });
+      if (!res?.ok) return { distribution: [], all: [], anyDistributionField: false };
+      return buildMeetingParticipantMailRecipients(res.participants || []);
     } catch (err) {
       console.warn("[header] recipients lookup failed:", err);
       return { distribution: [], all: [], anyDistributionField: false };
