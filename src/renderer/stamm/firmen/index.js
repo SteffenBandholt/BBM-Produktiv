@@ -4,5 +4,5 @@ export {
   findCompanyById,
   toCompanyOptions,
   filterCompanies,
+  getCompanyDisplayLabel,
 } from "./FirmenStamm.js";
-

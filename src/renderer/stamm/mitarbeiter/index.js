@@ -4,5 +4,5 @@ export {
   findEmployeeById,
   filterEmployeesByCompany,
   toEmployeeOptions,
+  getEmployeeDisplayName,
 } from "./MitarbeiterStamm.js";
-
