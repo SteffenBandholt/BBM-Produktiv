@@ -6,6 +6,10 @@
 
 import { applyPopupButtonStyle } from "./popupButtonStyles.js";
 import { createPopupOverlay, stylePopupCard, registerPopupCloseHandlers } from "./popupCommon.js";
+import {
+  MeetingParticipantRepository,
+  normalizeMeetingParticipantList,
+} from "../meeting-participant/index.js";
 
 const PARTICIPANTS_EMPTY_HINT_STYLE_ID = "bbm-participants-empty-hint-style";
 function _ensureParticipantsEmptyHintStyle() {
@@ -65,6 +69,11 @@ export default class ParticipantsModals {
     this.projectCandidates = []; // right in participants modal
     this.participants = []; // left in participants modal
     this.distributionHintKeys = new Set();
+    this.meetingParticipantPanel = null;
+    this.meetingParticipantPanelParticipants = [];
+    this.meetingParticipantProjectCompanies = [];
+    this.meetingParticipantProjectEmployees = [];
+    this.isParticipantPersisting = false;
 
     this.searchLeft = "";
     this.searchRight = "";
@@ -72,6 +81,9 @@ export default class ParticipantsModals {
     // key => [meeting_index,...] (offene Meetings)
     this.openParticipantRefs = new Map();
     this.isNewUi = this._readUiMode() === "new";
+    this.meetingParticipantRepository = new MeetingParticipantRepository({
+      api: (typeof window !== "undefined" ? window.bbmDb || {} : {}),
+    });
 
     this._ensureDom();
 
@@ -227,6 +239,11 @@ export default class ParticipantsModals {
     this.searchLeft = "";
     this.searchRight = "";
     this.distributionHintKeys = new Set();
+    this.meetingParticipantPanel = null;
+    this.meetingParticipantPanelParticipants = [];
+    this.meetingParticipantProjectCompanies = [];
+    this.meetingParticipantProjectEmployees = [];
+    this.isParticipantPersisting = false;
     this._setError("");
 
     this.overlayEl.style.display = "flex";
@@ -257,11 +274,16 @@ export default class ParticipantsModals {
     this.candidates = [];
     this.projectCandidates = [];
     this.participants = [];
+    this.meetingParticipantPanel = null;
+    this.meetingParticipantPanelParticipants = [];
+    this.meetingParticipantProjectCompanies = [];
+    this.meetingParticipantProjectEmployees = [];
 
     this.searchLeft = "";
     this.searchRight = "";
     this.openParticipantRefs = new Map();
     this.distributionHintKeys = new Set();
+    this.isParticipantPersisting = false;
 
     this._setError("");
 
@@ -302,12 +324,7 @@ export default class ParticipantsModals {
     title.style.fontWeight = "bold";
     title.textContent = "€”";
 
-    const btnClose = document.createElement("button");
-    btnClose.textContent = "œ•";
-    applyPopupButtonStyle(btnClose);
-    btnClose.onclick = () => this.close();
-
-    head.append(title, btnClose);
+    head.append(title);
 
     const err = document.createElement("div");
     err.style.color = "#c62828";
@@ -850,26 +867,22 @@ export default class ParticipantsModals {
 
   async _loadParticipantsData() {
     this._setError("");
-
     const api = window.bbmDb || {};
     if (typeof api.projectParticipantsPool !== "function") {
       this._setError("API fehlt: projectParticipantsPool");
       this.pool = [];
       this.projectCandidates = [];
-      return;
-    }
-    if (typeof api.meetingParticipantsList !== "function") {
-      this._setError("API fehlt: meetingParticipantsList");
+      this.meetingParticipantProjectCompanies = [];
+      this.meetingParticipantProjectEmployees = [];
+      this.meetingParticipantPanelParticipants = [];
       this.participants = [];
       return;
     }
-
     const resPool = await this._invokeCompatList(
       api.projectParticipantsPool,
       { projectId: this.projectId },
       this.projectId
     );
-
     if (resPool?.ok) {
       const poolRaw = this._pickArray(resPool);
       const pool = (poolRaw || [])
@@ -892,7 +905,6 @@ export default class ParticipantsModals {
           };
         })
         .filter((x) => x.kind && x.personId);
-
       this.pool = this._sortPersons(pool);
       this.projectCandidates = this._sortPersons(
         pool
@@ -906,47 +918,132 @@ export default class ParticipantsModals {
       this.pool = [];
       this.projectCandidates = [];
     }
-
-    const poolMap = new Map(this.pool.map((p) => [this._key(p.kind, p.personId), p]));
-
-    const resP = await api.meetingParticipantsList({ meetingId: this.meetingId });
-    if (!resP?.ok) {
-      this._setError(resP?.error || "Fehler beim Laden der Teilnehmer");
+    const projectData = this._deriveProjectDataFromPool(this.pool);
+    this.meetingParticipantProjectCompanies = projectData.projectCompanies;
+    this.meetingParticipantProjectEmployees = projectData.projectCompanyEmployees;
+    const repoRes = await this.meetingParticipantRepository.listByMeeting({
+      meetingId: this.meetingId,
+      projectId: this.projectId,
+      projectCompanies: this.meetingParticipantProjectCompanies,
+      projectCompanyEmployees: this.meetingParticipantProjectEmployees,
+    });
+    if (!repoRes?.ok) {
+      this._setError(repoRes?.error || "Fehler beim Laden der Teilnehmer");
+      this.meetingParticipantPanelParticipants = [];
       this.participants = [];
       return;
     }
-    this.readOnly = Number(resP?.isClosed ?? 0) === 1;
-
-    const plist = this._pickArray(resP);
-    const items = (plist || [])
-      .map((x) => {
-        const kind = this._normKind(x);
-        const personId = this._normPersonId(x);
-        const k = this._key(kind, personId);
-        const p = poolMap.get(k);
-
-        const rawPresent = Number(x.isPresent ?? x.is_present ?? 0) ? 1 : 0;
-        const rawDistribution = Number(x.isInDistribution ?? x.is_in_distribution ?? 0) ? 1 : 0;
-
-        return {
-          kind,
-          personId,
-          name: (p?.name || x.name || "").toString() || "€”",
-          email: this._personEmail(p) || this._personEmail(x),
-          rolle: (p?.rolle || x.rolle || "").toString(),
-          firm: (p?.firm || x.firm || x.firm_name || "").toString(),
-          firmId: p?.firmId ?? p?.firm_id ?? null,
-          firmIsActive: this._parseActiveFlag(
-            p?.firmIsActive ?? p?.firm_is_active ?? p?.is_firm_active
-          ),
-          invalidReason: p ? "" : "Person nicht mehr verfuegbar",
-          isPresent: rawPresent,
-          isInDistribution: rawDistribution,
-        };
-      })
-      .filter((x) => x.kind && x.personId);
-
-    this.participants = this._sortPersons(items);
+    this.readOnly = Boolean(repoRes?.isClosed);
+    this.meetingParticipantPanelParticipants = normalizeMeetingParticipantList(
+      repoRes.participants || []
+    );
+    this.participants = this.meetingParticipantPanelParticipants.map((p) => ({
+      kind: p.sourceType === "stamm" ? "global_person" : "project_person",
+      personId: p.sourceType === "stamm" ? p.employeeId : p.localEmployeeId,
+      name: p.displayName,
+      email: p.email,
+      rolle: p.role,
+      firm: p.companyLabel,
+      isPresent: p.active ? 1 : 0,
+      isInDistribution: p.invited ? 1 : 0,
+    }));
+  }
+  _deriveProjectDataFromPool(pool) {
+    const source = Array.isArray(pool) ? pool : [];
+    const companyById = new Map();
+    const employees = [];
+    const toText = (value) => (value === null || value === undefined ? "" : String(value).trim());
+    const toSourceType = (kind) =>
+      String(kind || "").trim() === "global_person" ? "stamm" : "projektlokal";
+    for (const person of source) {
+      const sourceType = toSourceType(person?.kind);
+      const firmId = toText(person?.firmId ?? person?.firm_id);
+      const projectCompanyId = `${toText(this.projectId) || "-"}|${sourceType}|${firmId || "-"}`;
+      if (!companyById.has(projectCompanyId)) {
+        companyById.set(projectCompanyId, {
+          id: projectCompanyId,
+          projectCompanyId,
+          projectId: toText(this.projectId),
+          sourceType,
+          companyId: sourceType === "stamm" ? firmId || null : null,
+          localCompanyId: sourceType === "projektlokal" ? firmId || "" : "",
+          name1: toText(person?.firm || person?.firm_name || person?.firmName) || "Firma",
+          short: toText(person?.firm || person?.firm_name || person?.firmName) || "Firma",
+          active:
+            this._parseActiveFlag(
+              person?.firmIsActive ?? person?.firm_is_active ?? person?.is_firm_active
+            ) === 1,
+        });
+      }
+      const personId = toText(person?.personId ?? person?.person_id ?? person?.id);
+      if (!personId) continue;
+      const isEmployeeActive = this._parseActiveFlag(person?.is_active ?? person?.isActive) === 1;
+      const isFirmActive =
+        this._parseActiveFlag(
+          person?.firmIsActive ?? person?.firm_is_active ?? person?.is_firm_active
+        ) === 1;
+      employees.push({
+        id: `${projectCompanyId}|${sourceType}|${personId}`,
+        projectId: toText(this.projectId),
+        projectCompanyId,
+        sourceType,
+        employeeId: sourceType === "stamm" ? personId : null,
+        localEmployeeId: sourceType === "projektlokal" ? personId : "",
+        displayName: toText(person?.name),
+        role: toText(person?.rolle || person?.role),
+        phone: toText(person?.phone || person?.tel),
+        email: this._personEmail(person),
+        active: isEmployeeActive && isFirmActive,
+      });
+    }
+    return {
+      projectCompanies: [...companyById.values()],
+      projectCompanyEmployees: employees,
+    };
+  }
+  async _persistMeetingParticipantPanelState() {
+    if (this.readOnly) return { ok: true };
+    if (!this.meetingId) return { ok: false, error: "Meeting-Kontext fehlt." };
+    if (this.isParticipantPersisting) return { ok: false, error: "Speichern laeuft bereits." };
+    this.isParticipantPersisting = true;
+    this.isSaving = true;
+    try {
+      const panelParticipants =
+        this.meetingParticipantPanel?.getParticipants?.() ||
+        this.meetingParticipantPanelParticipants ||
+        [];
+      const participants = normalizeMeetingParticipantList(panelParticipants);
+      const res = await this.meetingParticipantRepository.saveByMeeting({
+        meetingId: this.meetingId,
+        projectId: this.projectId,
+        participants,
+      });
+      if (!res?.ok) {
+        this._setError(res?.error || "Speichern fehlgeschlagen");
+        return res;
+      }
+      this.meetingParticipantPanelParticipants = normalizeMeetingParticipantList(
+        res.participants || participants
+      );
+      this.participants = this.meetingParticipantPanelParticipants.map((p) => ({
+        kind: p.sourceType === "stamm" ? "global_person" : "project_person",
+        personId: p.sourceType === "stamm" ? p.employeeId : p.localEmployeeId,
+        name: p.displayName,
+        email: p.email,
+        rolle: p.role,
+        firm: p.companyLabel,
+        isPresent: p.active ? 1 : 0,
+        isInDistribution: p.invited ? 1 : 0,
+      }));
+      this._setError("");
+      return { ok: true };
+    } finally {
+      this.isSaving = false;
+      this.isParticipantPersisting = false;
+      if (this.meetingParticipantPanel) {
+        this.meetingParticipantPanel.setReadOnly(this.readOnly || this.isSaving);
+      }
+    }
   }
 
   // ============================================================
@@ -1161,7 +1258,6 @@ export default class ParticipantsModals {
   // ============================================================
   _renderParticipantsModal() {
     if (!this.bodyEl || !this.footerEl) return;
-
     this.bodyEl.innerHTML = "";
     this.footerEl.innerHTML = "";
 
@@ -1368,7 +1464,7 @@ export default class ParticipantsModals {
           const key = this._key(c.kind, c.personId);
           if (selSet.has(key)) return;
 
-          // œ… beim Wählen sind beide Toggles angehakt
+          // … beim Wählen sind beide Toggles angehakt
           const newP = {
             kind: c.kind,
             personId: c.personId,
@@ -1393,38 +1489,63 @@ export default class ParticipantsModals {
     }
   }
 
+  _buildMeetingParticipantsFromLegacyRows() {
+    const rows = Array.isArray(this.participants) ? this.participants : [];
+    const employees = Array.isArray(this.meetingParticipantProjectEmployees)
+      ? this.meetingParticipantProjectEmployees
+      : [];
+    const employeeByRef = new Map();
+    for (const employee of employees) {
+      const sourceType = String(employee?.sourceType || "").trim() === "stamm" ? "stamm" : "projektlokal";
+      const personRef = sourceType === "stamm"
+        ? String(employee?.employeeId || "").trim()
+        : String(employee?.localEmployeeId || "").trim();
+      if (!personRef) continue;
+      employeeByRef.set(`${sourceType}:${personRef}`, employee);
+    }
+
+    const mapped = rows
+      .map((row) => {
+        const kind = String(row?.kind || "").trim();
+        const sourceType = kind === "global_person" ? "stamm" : "projektlokal";
+        const personId = String(row?.personId ?? row?.person_id ?? "").trim();
+        if (!personId) return null;
+        const employee = employeeByRef.get(`${sourceType}:${personId}`) || null;
+        const fallbackFirmId = String(row?.firmId ?? row?.firm_id ?? "").trim();
+        const fallbackProjectCompanyId = `${String(this.projectId || "").trim() || "-"}|${sourceType}|${fallbackFirmId || "-"}`;
+        return {
+          meetingId: this.meetingId || "",
+          projectId: this.projectId || "",
+          projectCompanyId:
+            String(employee?.projectCompanyId || employee?.project_company_id || "").trim() ||
+            fallbackProjectCompanyId,
+          sourceType,
+          employeeId: sourceType === "stamm" ? personId : null,
+          localEmployeeId: sourceType === "projektlokal" ? personId : "",
+          displayName: String(row?.name || employee?.displayName || "").trim(),
+          companyLabel: String(row?.firm || "").trim(),
+          role: String(row?.rolle || row?.role || employee?.role || "").trim(),
+          phone: String(row?.phone || employee?.phone || "").trim(),
+          email: String(row?.email || employee?.email || "").trim(),
+          active: Number(row?.isPresent ?? 0) === 1,
+          invited:
+            Number(row?.isInDistribution ?? 0) === 1 &&
+            String(row?.email || employee?.email || "").trim() !== "",
+        };
+      })
+      .filter(Boolean);
+
+    return normalizeMeetingParticipantList(mapped);
+  }
+
   async _saveParticipants() {
     if (this.readOnly) return;
-
-    const api = window.bbmDb || {};
-    if (typeof api.meetingParticipantsSet !== "function") {
-      this._setError("API fehlt: meetingParticipantsSet");
-      return;
-    }
-
-    if (this.isSaving) return;
-    this.isSaving = true;
-
-    try {
-      const items = (this.participants || []).map((p) => ({
-        kind: p.kind,
-        personId: p.personId,
-        isPresent: Number(p.isPresent) === 1,
-        isInDistribution: Number(p.isInDistribution) === 1 && this._hasPersonEmail(p),
-      }));
-
-      const res = await api.meetingParticipantsSet({ meetingId: this.meetingId, items });
-      if (!res?.ok) {
-        this._setError(res?.error || "Speichern fehlgeschlagen");
-        return;
-      }
-
-      this.close();
-    } catch (e) {
-      this._setError(e?.message || "Speichern fehlgeschlagen");
-    } finally {
-      this.isSaving = false;
-      this._rerenderCurrentModal();
-    }
+    this.meetingParticipantPanelParticipants = this._buildMeetingParticipantsFromLegacyRows();
+    const res = await this._persistMeetingParticipantPanelState();
+    if (!res?.ok) return;
+    this.close();
   }
 }
+
+
+
