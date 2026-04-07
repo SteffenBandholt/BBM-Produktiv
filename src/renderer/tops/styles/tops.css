@@ -4,6 +4,7 @@
   --bbm-tops-doc-width: 940px;
   --bbm-tops-meta-col-min: 70px;
   --bbm-tops-meta-col-max: 90px;
+  --bbm-tops-accent-green: #1b8f3a;
   --bbm-top-text-font-family: "Noto Sans", Arial, sans-serif;
   --bbm-top-short-font-size: 10pt;
   --bbm-top-long-font-size: 9.5pt;
@@ -92,13 +93,13 @@
 .bbm-tops-header-line1 {
   font-size: 9pt;
   font-weight: 700;
-  color: #1b5e20;
+  color: var(--bbm-tops-accent-green);
 }
 
 .bbm-tops-header-line2 {
   font-size: 8.5pt;
   font-weight: 700;
-  color: #1b5e20;
+  color: var(--bbm-tops-accent-green);
   white-space: nowrap;
   min-height: 1.2em;
   min-width: 12ch;
@@ -109,7 +110,7 @@
 .bbm-tops-header-line3 {
   font-size: 7.5pt;
   font-weight: 500;
-  color: #1b5e20;
+  color: var(--bbm-tops-accent-green);
   opacity: 0.76;
   line-height: 1.2;
   white-space: nowrap;
@@ -400,7 +401,7 @@
 }
 
 .bbm-tops-workbench-left-title {
-  color: #1b8f3a;
+  color: var(--bbm-tops-accent-green);
   font-size: 9pt;
   font-weight: 700;
   line-height: 1.1;

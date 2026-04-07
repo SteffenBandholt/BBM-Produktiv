@@ -94,9 +94,6 @@ export class TopsList {
     row.append(num, text, meta);
     rowEl.appendChild(row);
 
-    const indent = Math.max(0, Number(item.level || 1) - 1) * 12;
-    rowEl.style.marginLeft = `${indent}px`;
-
     rowEl.onclick = async () => {
       if (this.onRowClick) await this.onRowClick(item);
     };
