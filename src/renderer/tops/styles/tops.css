@@ -5,7 +5,14 @@
   --bbm-tops-meta-col-min: 70px;
   --bbm-tops-meta-col-max: 90px;
   --bbm-top-text-font-family: "Noto Sans", Arial, sans-serif;
+  --bbm-top-short-font-size: 10pt;
+  --bbm-top-long-font-size: 9.5pt;
   --bbm-top-text-line-height: 1.35;
+  --bbm-top-text-pad-x: 5px;
+  --bbm-top-short-measure: 72ch;
+  --bbm-top-long-measure: 77ch;
+  --bbm-top-long-edit-measure: 65ch;
+  --bbm-top-short-input-measure: 62ch;
 }
 
 [data-bbm-tops-screen="true"] {
@@ -265,9 +272,15 @@
 
 .bbm-tops-list-row-title {
   font-weight: 600;
+  font-size: var(--bbm-top-short-font-size);
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
+  max-inline-size: var(--bbm-top-short-measure);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   overflow-wrap: anywhere;
+  word-break: break-word;
   color: #111;
 }
 
@@ -290,12 +303,21 @@
 
 .bbm-tops-list-row-preview {
   margin-top: 4px;
-  font-size: 8.5pt;
+  font-size: var(--bbm-top-long-font-size);
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
+  max-inline-size: var(--bbm-top-long-measure);
   opacity: 0.9;
   overflow-wrap: anywhere;
+  word-break: break-word;
   white-space: pre-wrap;
+}
+
+.bbm-tops-list-row-text {
+  width: 100%;
+  max-inline-size: min(100%, var(--bbm-top-long-measure));
+  padding-left: var(--bbm-top-text-pad-x);
+  padding-right: var(--bbm-top-text-pad-x);
 }
 
 .bbm-tops-list-row-preview[data-has-preview="false"] {
@@ -437,19 +459,22 @@
 .bbm-tops-workbench-editbox .editbox-textarea {
   width: 100%;
   box-sizing: border-box;
-  padding: 2px 5px;
+  padding: 2px var(--bbm-top-text-pad-x);
   border: 1px solid #cad8e6;
   border-radius: 7px;
   background: #fff;
-  font-size: 8.5pt;
+  font-size: var(--bbm-top-short-font-size);
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .bbm-tops-workbench-editbox .editbox-textarea {
   min-height: 60px;
   resize: vertical;
-  padding: 4px 5px;
+  font-size: var(--bbm-top-long-font-size);
+  padding: 4px var(--bbm-top-text-pad-x);
 }
 
 .bbm-tops-workbench-editbox .editbox-counter {
@@ -470,12 +495,18 @@
 }
 
 .bbm-tops-workbench-editbox .bbm-tops-editbox-short-wrap .editbox-input {
-  width: 100%;
+  width: min(100%, var(--bbm-top-short-input-measure));
+  max-inline-size: var(--bbm-top-short-input-measure);
 }
 
 .bbm-tops-workbench-editbox .bbm-tops-editbox-long-wrap {
   display: grid;
   row-gap: 2px;
+}
+
+.bbm-tops-workbench-editbox .bbm-tops-editbox-long-wrap .editbox-textarea {
+  width: min(100%, var(--bbm-top-long-edit-measure));
+  max-inline-size: var(--bbm-top-long-edit-measure);
 }
 
 .bbm-tops-workbench-editbox .editbox-flags {

@@ -84,6 +84,7 @@ export class EditboxShell {
     this.shortInput = mkEl(doc, "input", "editbox-input");
     this.shortInput.type = "text";
     this.shortInput.autocomplete = "off";
+    this.shortInput.maxLength = this._limits.shortText;
     this.shortCounter = mkEl(doc, "div", "editbox-counter", "0");
     this.shortWrap.append(this.shortLabel, this.shortInput, this.shortCounter);
 
@@ -113,7 +114,10 @@ export class EditboxShell {
     this.mainCol.append(this.shortWrap, this.longWrap, this.flagsWrap);
     this.root.append(this.mainCol, this.metaCol);
 
-    this.shortInput.addEventListener("input", () => this._updateCounters());
+    this.shortInput.addEventListener("input", () => {
+      this._enforceShortTextLimit();
+      this._updateCounters();
+    });
     this.longInput.addEventListener("input", () => this._updateCounters());
     this._updateCounters();
   }
@@ -176,6 +180,16 @@ export class EditboxShell {
     this._applyCounterState(this.longWrap, this.longCounter, this._longTextEvaluation);
   }
 
+  _clampShortText(value) {
+    const text = asText(value);
+    return text.slice(0, this._limits.shortText);
+  }
+
+  _enforceShortTextLimit() {
+    const next = this._clampShortText(this.shortInput.value);
+    if (next !== this.shortInput.value) this.shortInput.value = next;
+  }
+
   _applyCounterState(fieldWrap, counterEl, evaluation) {
     counterEl.textContent = this._counterFormatter(evaluation);
     counterEl.dataset.level = evaluation.level;
@@ -210,7 +224,7 @@ export class EditboxShell {
   }
 
   setValue(value = {}) {
-    if (value.shortText !== undefined) this.shortInput.value = asText(value.shortText);
+    if (value.shortText !== undefined) this.shortInput.value = this._clampShortText(value.shortText);
     if (value.longText !== undefined) this.longInput.value = asText(value.longText);
 
     const flags = asFlags(value.flags);
@@ -229,7 +243,7 @@ export class EditboxShell {
       flags[key] = Boolean(input.checked);
     });
     return {
-      shortText: this.shortInput.value,
+      shortText: this._clampShortText(this.shortInput.value),
       longText: this.longInput.value,
       flags,
     };
@@ -262,6 +276,8 @@ export class EditboxShell {
       shortText: this._asPositiveInt(limits.shortText, this._limits.shortText),
       longText: this._asPositiveInt(limits.longText, this._limits.longText),
     };
+    this.shortInput.maxLength = this._limits.shortText;
+    this._enforceShortTextLimit();
     this._updateCounters();
   }
 

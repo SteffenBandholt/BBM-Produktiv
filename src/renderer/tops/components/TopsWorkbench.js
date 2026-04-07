@@ -64,6 +64,7 @@ export class TopsWorkbench {
     this.left.className = "bbm-tops-workbench-left";
 
     this.editbox = new EditboxShell();
+    this.editbox.setLimits({ shortText: 70 });
     this.editboxRoot = this.editbox.getElement();
     this.editboxRoot.classList.add("bbm-tops-workbench-editbox");
     this.editbox.setVisibleFlags(["important", "task", "decision"]);
