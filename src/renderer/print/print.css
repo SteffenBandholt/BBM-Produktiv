@@ -1,4 +1,6 @@
-﻿@page {
+@import "../shared/styles/notoSans.css";
+
+@page {
   size: A4;
   margin: 0;
 }
@@ -13,8 +15,10 @@ body {
   padding: 0;
   background: #fff;
   color: #111;
-  font-family: Calibri, Arial, sans-serif;
+  font-family: "Noto Sans", Arial, sans-serif;
   font-size: 11pt;
+  --bbm-top-text-font-family: "Noto Sans", Arial, sans-serif;
+  --bbm-top-text-line-height: 1.35;
   --page-w: 210mm;
   --page-h: 297mm;
   --pad-left: 22mm;
@@ -343,7 +347,7 @@ body {
   font-size: 7pt;
   line-height: 1.1;
 }
-/* Das ist die Kennzeichnungseinstellung für ausgeblendete Tops */
+/* Das ist die Kennzeichnungseinstellung f�r ausgeblendete Tops */
 .nrHint {
   font-size: 7pt;
   line-height: 1.1;
@@ -389,12 +393,15 @@ body {
 
 .topsTable .shortText {
   font-weight: 600;
+  font-family: var(--bbm-top-text-font-family);
+  line-height: var(--bbm-top-text-line-height);
 }
 
 .topsTable .longText {
   margin-top: 2mm;
   font-size: 10.5pt;
-  line-height: 1.35;
+  line-height: var(--bbm-top-text-line-height);
+  font-family: var(--bbm-top-text-font-family);
   white-space: pre-wrap;
 }
 
@@ -478,6 +485,8 @@ body {
   flex: 1 1 auto;
   text-align: left;
   font-weight: 700;
+  font-family: var(--bbm-top-text-font-family);
+  line-height: var(--bbm-top-text-line-height);
   padding-left: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -497,3 +506,4 @@ body {
   visibility: hidden;
   pointer-events: none;
 }
+

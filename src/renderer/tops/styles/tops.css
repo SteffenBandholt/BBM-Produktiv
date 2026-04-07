@@ -1,7 +1,11 @@
+@import "../../shared/styles/notoSans.css";
+
 :root {
   --bbm-tops-doc-width: 940px;
   --bbm-tops-meta-col-min: 70px;
   --bbm-tops-meta-col-max: 90px;
+  --bbm-top-text-font-family: "Noto Sans", Arial, sans-serif;
+  --bbm-top-text-line-height: 1.35;
 }
 
 [data-bbm-tops-screen="true"] {
@@ -261,7 +265,8 @@
 
 .bbm-tops-list-row-title {
   font-weight: 600;
-  line-height: 1.35;
+  line-height: var(--bbm-top-text-line-height);
+  font-family: var(--bbm-top-text-font-family);
   overflow-wrap: anywhere;
   color: #111;
 }
@@ -286,6 +291,8 @@
 .bbm-tops-list-row-preview {
   margin-top: 4px;
   font-size: 8.5pt;
+  line-height: var(--bbm-top-text-line-height);
+  font-family: var(--bbm-top-text-font-family);
   opacity: 0.9;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
@@ -435,12 +442,13 @@
   border-radius: 7px;
   background: #fff;
   font-size: 8.5pt;
+  line-height: var(--bbm-top-text-line-height);
+  font-family: var(--bbm-top-text-font-family);
 }
 
 .bbm-tops-workbench-editbox .editbox-textarea {
   min-height: 60px;
   resize: vertical;
-  line-height: 1.35;
   padding: 4px 5px;
 }
 
