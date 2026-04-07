@@ -288,6 +288,7 @@
   font-size: 8.5pt;
   opacity: 0.9;
   overflow-wrap: anywhere;
+  white-space: pre-wrap;
 }
 
 .bbm-tops-list-row-preview[data-has-preview="false"] {

@@ -29,15 +29,17 @@ function buildEditorAccessVm(state, selectedTop) {
   };
 }
 
-function buildMetaVm(editorValue, state) {
+function buildMetaVm(editorValue, state, selectedTop) {
+  const isTitleLevel = Number(selectedTop?.level || 1) === 1;
   return {
     value: {
       due_date: editorValue?.due_date ?? null,
       status: editorValue?.status ?? "-",
-      responsible_label: editorValue?.responsible_label ?? "",
+      responsible_label: isTitleLevel ? "" : editorValue?.responsible_label ?? "",
     },
     access: {
       disabled: !!state?.isReadOnly,
+      responsibleDisabled: !!state?.isReadOnly || isTitleLevel,
     },
   };
 }
@@ -63,7 +65,7 @@ export function buildWorkbenchVm(state, selectedTop) {
       value: editorValue,
       access: buildEditorAccessVm(state, selectedTop),
     },
-    meta: buildMetaVm(editorValue, state),
+    meta: buildMetaVm(editorValue, state, selectedTop),
     actions: buildActionsVm(state, selectedTop),
   };
 }

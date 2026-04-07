@@ -6,6 +6,10 @@ import {
   canMoveFromState,
 } from "../domain/TopsActionPolicy.js";
 import { computeAmpelColorForTop } from "../../../shared/ampel/pdfAmpelRule.js";
+import {
+  normalizeTopLongText,
+  normalizeTopShortText,
+} from "../../shared/text/topTextPresentation.js";
 
 export { isAllowedMoveTarget, canCreateChildFromState, canDeleteFromState, canMoveFromState };
 
@@ -181,9 +185,9 @@ export function buildListItemsFromState(state) {
     rows.push({
       id: top?.id,
       level: Number(top?.level) || 1,
-      title: String(top?.title || ""),
+      title: normalizeTopShortText(top?.title),
       number: `${top?.displayNumber ?? top?.number ?? ""}.`,
-      preview: String(top?.longtext || ""),
+      preview: normalizeTopLongText(top?.longtext),
       meta,
       isSelected: String(top?.id) === String(selectedId ?? ""),
       isMoveMode: !!state?.isMoveMode,
@@ -217,8 +221,8 @@ export function editorFromTop(top) {
   }
 
   return {
-    title: String(top.title || ""),
-    longtext: String(top.longtext || ""),
+    title: normalizeTopShortText(top.title),
+    longtext: normalizeTopLongText(top.longtext),
     due_date: top.due_date || top.dueDate || null,
     status: String(top.status || "-"),
     responsible_label: String(top.responsible_label || top.responsibleLabel || ""),
@@ -233,11 +237,11 @@ export function buildPatchFromDraft(selectedTop, draft) {
   if (!selectedTop || !draft) return {};
   const patch = {};
 
-  const title = String(draft.title || "");
-  if (title !== String(selectedTop.title || "")) patch.title = title;
+  const title = normalizeTopShortText(draft.title);
+  if (title !== normalizeTopShortText(selectedTop.title)) patch.title = title;
 
-  const longtext = String(draft.longtext || "");
-  if (longtext !== String(selectedTop.longtext || "")) patch.longtext = longtext;
+  const longtext = normalizeTopLongText(draft.longtext);
+  if (longtext !== normalizeTopLongText(selectedTop.longtext)) patch.longtext = longtext;
 
   const dueDate = (draft.due_date || null) || null;
   const selectedDue = (selectedTop.due_date || selectedTop.dueDate || null) || null;

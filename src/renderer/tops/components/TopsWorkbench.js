@@ -2,6 +2,10 @@ import { TopsMetaPanel } from "./TopsMetaPanel.js";
 import { TopsResponsibleBridge } from "./TopsResponsibleBridge.js";
 import { TopsStatusAmpelBridge } from "./TopsStatusAmpelBridge.js";
 import { EditboxShell } from "../../core/editbox/index.js";
+import {
+  normalizeTopLongText,
+  normalizeTopShortText,
+} from "../../shared/text/topTextPresentation.js";
 
 export class TopsWorkbench {
   constructor({
@@ -158,8 +162,8 @@ export class TopsWorkbench {
   getDraft() {
     const textValue = this.editbox.getValue();
     return {
-      title: String(textValue.shortText || ""),
-      longtext: String(textValue.longText || ""),
+      title: normalizeTopShortText(textValue.shortText),
+      longtext: normalizeTopLongText(textValue.longText),
       ...this.metaPanel.getValue(),
       is_important: textValue.flags?.important ? 1 : 0,
       is_hidden: textValue.flags?.hidden ? 1 : 0,
@@ -183,8 +187,8 @@ export class TopsWorkbench {
     const editorValue = editorVm?.value || {};
     const editorAccess = editorVm?.access || {};
 
-    const nextTitle = editorValue?.title || "";
-    const nextLong = editorValue?.longtext || "";
+    const nextTitle = normalizeTopShortText(editorValue?.title || "");
+    const nextLong = normalizeTopLongText(editorValue?.longtext || "");
     const nextEditboxValue = {};
 
     if (!this.editbox.isShortTextFocused()) nextEditboxValue.shortText = nextTitle;
@@ -243,6 +247,7 @@ export class TopsWorkbench {
     const metaValue = metaVm?.value || {};
     const metaAccess = metaVm?.access || {};
     const metaDisabled = !!metaAccess?.disabled;
+    const responsibleDisabled = !!metaAccess?.responsibleDisabled;
 
     this.metaPanel.setValue(metaValue);
     this.statusAmpelBridge.applyDraftValue(metaValue);
@@ -250,7 +255,7 @@ export class TopsWorkbench {
 
     this.metaPanel.setDisabled(metaDisabled);
     this.statusAmpelBridge.setDisabled(metaDisabled);
-    this.responsibleBridge.setDisabled(metaDisabled);
+    this.responsibleBridge.setDisabled(metaDisabled || responsibleDisabled);
   }
 
   _applyActionState(actionsVm = {}) {

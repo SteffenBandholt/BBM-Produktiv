@@ -5,6 +5,10 @@ import { renderV2GlobalHeader } from "./v2/header/GlobalHeader.js";
 import { renderV2FullHeader } from "./v2/header/FullHeader.js";
 import { renderV2MiniHeader } from "./v2/header/MiniHeader.js";
 import { V2_LAYOUT } from "./v2/v2LayoutConfig.js";
+import {
+  normalizeTopLongText,
+  normalizeTopShortText,
+} from "../shared/text/topTextPresentation.js";
 
 const app = document.getElementById("app");
 
@@ -83,9 +87,11 @@ function _buildTopRowData(top, longtextOverride, ampelColor) {
   const isHiddenTop =
     Number(top?.isHiddenTop ?? top?.is_hidden ?? top?.isHidden ?? 0) === 1 ||
     Number(top?.frozen_is_hidden ?? top?.frozenIsHidden ?? 0) === 1;
-  const title = String(top.title || "").trim() || "(ohne Bezeichnung)";
+  const title = normalizeTopShortText(top.title) || "(ohne Bezeichnung)";
   const longtext =
-    longtextOverride != null ? String(longtextOverride) : String(top.longtext || "").trim();
+    longtextOverride != null
+      ? normalizeTopLongText(longtextOverride)
+      : normalizeTopLongText(top.longtext);
   const status = String(top.status || "").trim();
   const due = _formatDateIso(top.due_date || top.dueDate || "");
   const resp = String(top.responsible_label || top.responsibleLabel || "").trim();

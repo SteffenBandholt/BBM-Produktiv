@@ -1,3 +1,8 @@
+import {
+  normalizeTopLongText,
+  normalizeTopShortText,
+} from "../../shared/text/topTextPresentation.js";
+
 export class TopsListRow {
   constructor({ item, onClick } = {}) {
     this.item = item || {};
@@ -28,12 +33,13 @@ export class TopsListRow {
 
     const title = document.createElement("div");
     title.className = "bbm-tops-list-row-title";
-    title.textContent = this.item.title || "";
+    title.textContent = normalizeTopShortText(this.item.title);
 
     const preview = document.createElement("div");
     preview.className = "bbm-tops-list-row-preview";
-    preview.textContent = this.item.preview || "";
-    preview.dataset.hasPreview = this.item.preview ? "true" : "false";
+    const previewText = normalizeTopLongText(this.item.preview);
+    preview.textContent = previewText;
+    preview.dataset.hasPreview = previewText ? "true" : "false";
 
     text.append(title, preview);
 

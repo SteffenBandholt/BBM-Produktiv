@@ -1,12 +1,7 @@
 import {
   ResponsibleField,
-  buildAssigneeOptions,
-  buildEmployeeAssigneeOptions,
+  buildCompanyAssigneeOptions,
 } from "../../core/responsible/index.js";
-
-function asId(value) {
-  return String(value ?? "").trim();
-}
 
 export class TopsResponsibleBridge {
   constructor({
@@ -21,7 +16,7 @@ export class TopsResponsibleBridge {
       typeof loadEmployeesByCompany === "function" ? loadEmployeesByCompany : null;
     this.onChange = typeof onChange === "function" ? onChange : null;
 
-    this.sources = { companies: [], employees: [] };
+    this.sources = { companies: [] };
     this.options = [];
     this.currentValue = "";
 
@@ -59,8 +54,7 @@ export class TopsResponsibleBridge {
 
   async initialize() {
     const companies = await this._loadCompaniesSafe();
-    const employees = await this._loadEmployeesSafe(companies);
-    this.sources = { companies, employees };
+    this.sources = { companies };
     this._refreshOptions();
   }
 
@@ -74,47 +68,14 @@ export class TopsResponsibleBridge {
     }
   }
 
-  async _loadEmployeesSafe(companies) {
-    if (!this.loadEmployeesByCompany) return [];
-    const companyIds = Array.from(
-      new Set(
-        (Array.isArray(companies) ? companies : [])
-          .map((item) => asId(item?.id ?? item?.companyId ?? item?.firmId))
-          .filter(Boolean)
-      )
-    );
-    if (!companyIds.length) return [];
-
-    const rows = [];
-    for (const companyId of companyIds) {
-      try {
-        const list = await this.loadEmployeesByCompany(companyId);
-        if (Array.isArray(list)) rows.push(...list);
-      } catch {
-        // robust fallback
-      }
-    }
-    return rows;
-  }
-
-  _extractCompanyId(value) {
-    const raw = String(value || "").trim();
-    if (!raw.startsWith("company:")) return "";
-    return raw.slice("company:".length).trim();
-  }
-
   _getMetaResponsibleLabel() {
     if (typeof this.metaPanel?.getValue !== "function") return "";
     return String(this.metaPanel.getValue()?.responsible_label || "").trim();
   }
 
   _refreshOptions() {
-    const selectedCompanyId = this._extractCompanyId(this.currentValue);
-
-    this.options = buildAssigneeOptions(this.sources, {
-      companyId: selectedCompanyId || undefined,
-      companyValuePrefix: "company",
-      employeeValuePrefix: "employee",
+    this.options = buildCompanyAssigneeOptions(this.sources.companies || [], {
+      valuePrefix: "company",
     });
 
     if (
@@ -138,21 +99,6 @@ export class TopsResponsibleBridge {
       this.metaPanel.updatePartial({
         responsible_label: label,
       });
-    }
-
-    const selectedCompanyId = this._extractCompanyId(this.currentValue);
-    if (selectedCompanyId) {
-      const companyOptions = buildAssigneeOptions(
-        { companies: this.sources.companies, employees: [] },
-        { companyValuePrefix: "company", employeeValuePrefix: "employee" }
-      );
-      const employeeOptions = buildEmployeeAssigneeOptions(this.sources.employees, {
-        companyId: selectedCompanyId,
-        valuePrefix: "employee",
-      });
-      this.options = [...companyOptions, ...employeeOptions];
-      this.field.setOptions(this.options);
-      this.field.setValue(this.currentValue);
     }
 
     if (this.onChange) this.onChange();

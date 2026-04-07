@@ -2,6 +2,10 @@ import { renderV2GlobalHeader } from "../v2/header/GlobalHeader.js";
 import { renderV2FullHeader } from "../v2/header/FullHeader.js";
 import { renderV2MiniHeader } from "../v2/header/MiniHeader.js";
 import { V2_LAYOUT } from "../v2/v2LayoutConfig.js";
+import {
+  normalizeTopLongText,
+  normalizeTopShortText,
+} from "../../shared/text/topTextPresentation.js";
 
 const APP_ICON_URL = new URL("../assets/bbm-icon.png", window.location.href).toString();
 
@@ -96,7 +100,7 @@ function _buildTopRow(row) {
     if (row.isHiddenTop) numBox.appendChild(_el("div", "nrHint", "(ausgeblendet)"));
     // Hinweis "(Text geändert ...)" im v2-Druck unterdrückt
 
-    const lvl1TextEl = _el("div", "lvl1Text", row.title);
+    const lvl1TextEl = _el("div", "lvl1Text", normalizeTopShortText(row.title));
     wrap.append(numBox, lvl1TextEl);
     if (row.isImportant) _applyImportantPrintColor(topNumberEl, lvl1TextEl);
     td.appendChild(wrap);
@@ -120,14 +124,15 @@ function _buildTopRow(row) {
 
   const tdText = _el("td", "colText");
   const txtBlock = _el("div", "txtBlock");
-  const shortTextEl = _el("div", "shortText", row.title);
+  const shortTextEl = _el("div", "shortText", normalizeTopShortText(row.title));
   txtBlock.appendChild(shortTextEl);
   if (row.isImportant) _applyImportantPrintColor(topNumberEl, shortTextEl);
 
   // IMPORTANT: final print DOM is built here (not in printApp.js)
   // carried-over TOP + longtext edited later => mark and FORCE blue (PDF-safe)
-  if (row.longtext) {
-    const lt = _el("div", "longText", row.longtext);
+  const normalizedLongText = normalizeTopLongText(row.longtext);
+  if (normalizedLongText) {
+    const lt = _el("div", "longText", normalizedLongText);
 
     const isTouched = Number(row?.isTouched ?? row?.is_touched ?? 0) === 1;
     const isCarriedOver = !row.isNewTop;
