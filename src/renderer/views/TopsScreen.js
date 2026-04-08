@@ -309,11 +309,11 @@ export default class TopsScreen {
 
     if (state.isMoveMode && movingTop && !state.isReadOnly) {
       if (!item.isMoveTarget) return;
-      await this.topsRepository.moveTop({
+      const res = await this.topsRepository.moveTop({
         topId: movingTop.id,
         targetParentId: top.id || null,
       });
-      this.commands.toggleMoveMode(false);
+      if (!res?.ok) return;
       await this._reloadTops({ keepSelection: true, selectTopId: movingTop.id });
       this._syncScreenState();
       return;
