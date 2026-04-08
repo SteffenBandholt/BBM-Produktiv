@@ -575,10 +575,10 @@ Paket 3 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentra
 ---
 
 # Phase 5 – App-Einstellungen und Lizenzierung zentralisieren
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 ## Schritt 5.1 – App-Einstellungen zentralisieren
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Globale Einstellungen vom Fachmodul lösen.
@@ -595,7 +595,22 @@ Globale Einstellungen vom Fachmodul lösen.
 - globale Steuerung liegt im App-Kern
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat den ersten Kernschnitt konservativ vorbereitet. Die globale App-Einstellungslogik in `src/main/ipc/settingsIpc.js` wurde sichtbarer gemacht; globale App-Settings, projektbezogene Settings und Settings-UI-/Werkzeugfunktionen sind klarer getrennt. `src/main/preload.js` ordnet die Bruecken fuer globale und projektbezogene Settings klarer, und `src/renderer/app/Router.js` laedt sichtbarer nur die App-Kern-/Shell-relevanten globalen Settings vor. Ein vollstaendiger Zentralisierungsumbau oder ein neues Settings-System wurde damit noch nicht umgesetzt.
+
+## Paket 1 – App-Settings-Zugriffe sichtbar schneiden
+**Status:** ERLEDIGT
+
+**Ziel**
+Die zentralen globalen App-Einstellungs-Zugriffspunkte konservativ so vorbereiten, dass globale App-Einstellungen im App-Kern klarer von projektbezogenen Settings und UI-naher Nutzung unterschieden werden koennen, ohne bereits einen grossen Zentralisierungsumbau auszuloesen.
+
+**Ergebnis**
+- die globale App-Einstellungslogik in `src/main/ipc/settingsIpc.js` ist sichtbarer gemacht.
+- globale App-Settings, projektbezogene Settings und Settings-UI-/Werkzeugfunktionen sind klarer getrennt.
+- `src/main/preload.js` ordnet die Bruecken fuer globale und projektbezogene Settings klarer.
+- `src/renderer/app/Router.js` laedt sichtbarer nur die App-Kern-/Shell-relevanten globalen Settings vor.
+
+**Stand / Notiz**
+Paket 1 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentralen App-Settings-Zugriffspunkte wurden auf wenige relevante Dateien fokussiert; in `src/main/ipc/settingsIpc.js` wurde die globale App-Einstellungslogik sichtbarer gegliedert, waehrend projektbezogene Settings getrennt bleiben und der Router nur kernrelevante globale Settings vorlaedt. Die bestehende Funktionalitaet wurde dabei beibehalten; ein vollstaendiger Zentralisierungsumbau oder ein neues Settings-System ist noch nicht umgesetzt.
 
 ---
 

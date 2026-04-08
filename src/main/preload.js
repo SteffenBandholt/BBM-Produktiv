@@ -149,20 +149,24 @@ contextBridge.exposeInMainWorld("bbmDb", {
   devGetStoragePreview: (payload) => ipcRenderer.invoke("dev:getStoragePreview", payload),
 
   // ============================================================
-  // Settings: Kategorien
-  // ============================================================
-  settingsCategoriesDelete: (data) => ipcRenderer.invoke("settings:categoriesDelete", data),
-
-  // ============================================================
-  // App-Settings (Key/Value)
+  // App-Kern: globale App-Settings
   // ============================================================
   appSettingsGetMany: (keys) => ipcRenderer.invoke("appSettings:getMany", keys),
   appSettingsSetMany: (data) => ipcRenderer.invoke("appSettings:setMany", data),
-  projectSettingsGetMany: (data) => ipcRenderer.invoke("projectSettings:getMany", data),
-  projectSettingsSetMany: (data) => ipcRenderer.invoke("projectSettings:setMany", data),
   securitySettingsPinStatus: () => ipcRenderer.invoke("security:settingsPinStatus"),
   securitySettingsPinSet: (data) => ipcRenderer.invoke("security:settingsPinSet", data),
   securitySettingsPinDisable: (data) => ipcRenderer.invoke("security:settingsPinDisable", data),
+
+  // ============================================================
+  // Projektbezogene Settings
+  // ============================================================
+  projectSettingsGetMany: (data) => ipcRenderer.invoke("projectSettings:getMany", data),
+  projectSettingsSetMany: (data) => ipcRenderer.invoke("projectSettings:setMany", data),
+
+  // ============================================================
+  // Settings-UI / Werkzeugfunktionen / Uebergangslogik
+  // ============================================================
+  settingsCategoriesDelete: (data) => ipcRenderer.invoke("settings:categoriesDelete", data),
   selectDirectory: (data) => ipcRenderer.invoke("dialog:selectDirectory", data),
   selectCsvFile: (data) => ipcRenderer.invoke("dialog:selectCsvFile", data),
   dictionaryListFiles: (data) => ipcRenderer.invoke("dictionary:listFiles", data),

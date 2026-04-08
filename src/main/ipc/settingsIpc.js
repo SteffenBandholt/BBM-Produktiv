@@ -197,6 +197,94 @@ const DICTIONARY_COMMON_WORDS = new Set([
   "bitte",
   "danke",
 ]);
+// Globale App-Einstellungen:
+// persistente App-Kern-Settings; projektbezogene Settings bleiben in
+// `projectSettingsIpc.js` getrennt.
+const GLOBAL_APP_SETTING_KEYS = new Set([
+  "user_name",
+  "user_company",
+  "user_name1",
+  "user_name2",
+  "user_street",
+  "user_zip",
+  "user_city",
+  "firm_role_order",
+  "firm_role_labels",
+  "email_subject",
+  "email_body",
+  "header.logoSizePx",
+  "header.logoPadLeftPx",
+  "header.logoPadTopPx",
+  "header.logoPadRightPx",
+  "header.logoPosition",
+  "header.logoEnabled",
+  "ui.themeHeaderBaseColor",
+  "ui.themeSidebarBaseColor",
+  "ui.themeMainBaseColor",
+  "ui.themeHeaderTone",
+  "ui.themeSidebarTone",
+  "ui.themeMainTone",
+  "ui.themeHeaderMode",
+  "ui.themeSidebarMode",
+  "ui.themeMainMode",
+  "ui.themeHeaderUseDefault",
+  "ui.themeSidebarUseDefault",
+  "ui.themeMainUseDefault",
+  "pdf.userLogoPngDataUrl",
+  "pdf.userLogoEnabled",
+  "pdf.userLogoWidthMm",
+  "pdf.userLogoTopMm",
+  "pdf.userLogoRightMm",
+  "pdf.protocolTitle",
+  "pdf.preRemarks",
+  "pdf.userLogoFilePath",
+  "pdf.trafficLightAllEnabled",
+  "pdf.protocolsDir",
+  "pdf.footerPlace",
+  "pdf.footerDate",
+  "pdf.footerName1",
+  "pdf.footerName2",
+  "pdf.footerRecorder",
+  "pdf.footerStreet",
+  "pdf.footerZip",
+  "pdf.footerCity",
+  "pdf.footerUseUserData",
+  "print.preRemarks.enabled",
+  "print.logo1.enabled",
+  "print.logo1.size",
+  "print.logo1.align",
+  "print.logo1.vAlign",
+  "print.logo1.pngDataUrl",
+  "print.logo2.enabled",
+  "print.logo2.size",
+  "print.logo2.align",
+  "print.logo2.vAlign",
+  "print.logo2.pngDataUrl",
+  "print.logo3.enabled",
+  "print.logo3.size",
+  "print.logo3.align",
+  "print.logo3.vAlign",
+  "print.logo3.pngDataUrl",
+  "print.logoSizePreset",
+  "print.v2.globalHeaderAdaptive",
+  "print.v2.pagePadLeftMm",
+  "print.v2.pagePadRightMm",
+  "print.v2.pagePadTopMm",
+  "print.v2.pagePadBottomMm",
+  "print.v2.footerReserveMm",
+  "dbMigrationPromptDismissed",
+  "tops.titleMax",
+  "tops.longMax",
+  "tops.level1Collapsed",
+  "tops.showLongtextInList",
+  "tops.fontscale.list",
+  "tops.fontscale.editbox",
+  "audio.whisper.quality",
+  "trial.enabled",
+  "trial.daysLimit",
+  "trial.firstStartAt",
+]);
+const GLOBAL_APP_SETTING_ALLOWED_PREFIXES = ["defaults.", "meta.touched.", "bbm_whatsnew_seen_"];
 
 function _normalizePin(raw) {
   return String(raw == null ? "" : raw).replace(/\D+/g, "").slice(0, 4);
@@ -231,6 +319,24 @@ function _verifyPinAgainstSettings(pinRaw, settings) {
   if (!enabled || !salt || !hash) return false;
   const calc = _hashPin(pin, salt);
   return _timingSafeHexEq(calc, hash);
+}
+
+function _cleanAppSettingKeys(keys) {
+  return (Array.isArray(keys) ? keys : [])
+    .map((key) => (key == null ? "" : String(key)).trim())
+    .filter(Boolean);
+}
+
+function _cleanGlobalAppSettingPatch(payload) {
+  const data = {};
+  for (const [k, v] of Object.entries(payload || {})) {
+    const key = (k == null ? "" : String(k)).trim();
+    if (!key) continue;
+    const isPrefixAllowed = GLOBAL_APP_SETTING_ALLOWED_PREFIXES.some((prefix) => key.startsWith(prefix));
+    if (!GLOBAL_APP_SETTING_KEYS.has(key) && !isPrefixAllowed) continue;
+    data[key] = (v == null ? "" : String(v)).trim();
+  }
+  return data;
 }
 
 function _normalizeRoleLabels(raw) {
@@ -547,11 +653,12 @@ function _listDictionaryFiles(rootDir) {
 }
 
 function registerSettingsIpc() {
+  // App-Kern: globale App-Einstellungen
   ipcMain.handle("appSettings:getMany", async (_evt, keys) => {
     try {
       if (!Array.isArray(keys)) return { ok: false, error: "keys muss ein Array sein" };
 
-      const clean = keys.map((k) => (k == null ? "" : String(k)).trim()).filter(Boolean);
+      const clean = _cleanAppSettingKeys(keys);
       const data = appSettingsGetMany(clean);
       return { ok: true, data };
     } catch (err) {
@@ -564,101 +671,7 @@ function registerSettingsIpc() {
       if (!payload || typeof payload !== "object") {
         return { ok: false, error: "payload muss ein Objekt sein" };
       }
-
-      // Nur diese Keys zulassen (Header rechts 2 Zeilen + Firmen-Kategorien-Order)
-      const allowed = new Set([
-        "user_name",
-        "user_company",
-        "user_name1",
-        "user_name2",
-        "user_street",
-        "user_zip",
-        "user_city",
-        "firm_role_order",
-        "firm_role_labels",
-        "email_subject",
-        "email_body",
-        "header.logoSizePx",
-        "header.logoPadLeftPx",
-        "header.logoPadTopPx",
-        "header.logoPadRightPx",
-        "header.logoPosition",
-        "header.logoEnabled",
-        "ui.themeHeaderBaseColor",
-        "ui.themeSidebarBaseColor",
-        "ui.themeMainBaseColor",
-        "ui.themeHeaderTone",
-        "ui.themeSidebarTone",
-        "ui.themeMainTone",
-        "ui.themeHeaderMode",
-        "ui.themeSidebarMode",
-        "ui.themeMainMode",
-        "ui.themeHeaderUseDefault",
-        "ui.themeSidebarUseDefault",
-        "ui.themeMainUseDefault",
-        "pdf.userLogoPngDataUrl",
-        "pdf.userLogoEnabled",
-        "pdf.userLogoWidthMm",
-        "pdf.userLogoTopMm",
-        "pdf.userLogoRightMm",
-        "pdf.protocolTitle",
-        "pdf.preRemarks",
-        "pdf.userLogoFilePath",
-        "pdf.trafficLightAllEnabled",
-        "pdf.protocolsDir",
-        "pdf.footerPlace",
-        "pdf.footerDate",
-        "pdf.footerName1",
-        "pdf.footerName2",
-        "pdf.footerRecorder",
-        "pdf.footerStreet",
-        "pdf.footerZip",
-        "pdf.footerCity",
-        "pdf.footerUseUserData",
-        "print.preRemarks.enabled",
-        "print.logo1.enabled",
-        "print.logo1.size",
-        "print.logo1.align",
-        "print.logo1.vAlign",
-        "print.logo1.pngDataUrl",
-        "print.logo2.enabled",
-        "print.logo2.size",
-        "print.logo2.align",
-        "print.logo2.vAlign",
-        "print.logo2.pngDataUrl",
-        "print.logo3.enabled",
-        "print.logo3.size",
-        "print.logo3.align",
-        "print.logo3.vAlign",
-        "print.logo3.pngDataUrl",
-        "print.logoSizePreset",
-        "print.v2.globalHeaderAdaptive",
-        "print.v2.pagePadLeftMm",
-        "print.v2.pagePadRightMm",
-        "print.v2.pagePadTopMm",
-        "print.v2.pagePadBottomMm",
-        "print.v2.footerReserveMm",
-        "dbMigrationPromptDismissed",
-        "tops.titleMax",
-        "tops.longMax",
-        "tops.level1Collapsed",
-        "tops.showLongtextInList",
-        "tops.fontscale.list",
-        "tops.fontscale.editbox",
-        "audio.whisper.quality",
-        "trial.enabled",
-        "trial.daysLimit",
-        "trial.firstStartAt",
-      ]);
-      const allowedPrefixes = ["defaults.", "meta.touched."];
-      const data = {};
-
-      for (const [k, v] of Object.entries(payload)) {
-        const key = (k || "").toString().trim();
-        const isPrefixAllowed = allowedPrefixes.some((prefix) => key.startsWith(prefix));
-        if (!allowed.has(key) && !isPrefixAllowed) continue;
-        data[key] = (v == null ? "" : String(v)).trim();
-      }
+      const data = _cleanGlobalAppSettingPatch(payload);
 
       appSettingsSetMany(data);
       return { ok: true };
@@ -667,6 +680,7 @@ function registerSettingsIpc() {
     }
   });
 
+  // Globale Settings-Sicherheit: bewusst getrennt vom allgemeinen Key/Value-Pfad
   ipcMain.handle("security:settingsPinStatus", async () => {
     try {
       const data = appSettingsGetMany(SETTINGS_PIN_KEYS);
