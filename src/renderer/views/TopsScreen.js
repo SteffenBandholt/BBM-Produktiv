@@ -309,11 +309,22 @@ export default class TopsScreen {
 
     if (state.isMoveMode && movingTop && !state.isReadOnly) {
       if (!item.isMoveTarget) return;
-      const res = await this.topsRepository.moveTop({
-        topId: movingTop.id,
-        targetParentId: top.id || null,
-      });
-      if (!res?.ok) return;
+      this.store.setState({ error: null });
+      let res;
+      try {
+        res = await this.topsRepository.moveTop({
+          topId: movingTop.id,
+          targetParentId: top.id || null,
+        });
+      } catch (err) {
+        const error = err?.message ? String(err.message) : String(err || "move failed");
+        this.store.setState({ error });
+        return;
+      }
+      if (!res?.ok) {
+        this.store.setState({ error: res?.error || "move failed" });
+        return;
+      }
       await this._reloadTops({ keepSelection: true, selectTopId: movingTop.id });
       this._syncScreenState();
       return;
