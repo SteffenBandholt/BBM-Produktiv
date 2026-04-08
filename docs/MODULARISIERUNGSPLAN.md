@@ -47,7 +47,7 @@ Dabei gilt:
 | 2 | App-Kern fachlich entschlacken | IN ARBEIT |
 | 3 | Gemeinsame Domänen sauber schneiden | OFFEN |
 | 4 | Gemeinsame Dienste sauber schneiden | OFFEN |
-| 5 | App-Einstellungen und Lizenzierung zentralisieren | OFFEN |
+| 5 | App-Einstellungen und Lizenzierung zentralisieren | IN ARBEIT |
 | 6 | Gemeinsame Kernbausteine sauber schneiden | OFFEN |
 | 7 | Modul `Protokoll` sauber ausschneiden | OFFEN |
 | 8 | Modulrahmen produktiv machen | OFFEN |
@@ -615,7 +615,7 @@ Paket 1 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentra
 ---
 
 ## Schritt 5.2 – Lizenzierung zentralisieren
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Lizenzlogik an einer zentralen Stelle bündeln.
@@ -632,7 +632,23 @@ Lizenzlogik an einer zentralen Stelle bündeln.
 - Lizenzierung ist Kernaufgabe, nicht Modulbestandteil
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 2 hat den ersten Kernschnitt fuer die Lizenzierung konservativ vorbereitet. Die zentrale Lizenzlogik in `src/main/licensing/` wurde sichtbarer gegliedert; `src/main/ipc/licenseIpc.js` trennt Status/Diagnose, Installation und Dev-Generatorfluss klarer, und `src/main/preload.js` ordnet die Renderer-Bruecken fuer zentrale Lizenzzugaenge sowie Dev-/Werkzeugfluss besser. `docs/licensing.md` dokumentiert den aktuellen Schnitt der Lizenz-Zugriffspunkte. Ein vollstaendiger Neuaufbau oder ein finales Lizenzsystem wurde damit noch nicht umgesetzt.
+
+## Paket 2 – Lizenzierungslogik sichtbar schneiden
+**Status:** ERLEDIGT
+
+**Ziel**
+Die tatsaechlich zentralen Lizenzierungs-Zugriffspunkte konservativ so vorbereiten, dass zentrale Lizenzlogik im App-Kern klarer von UI-naher, fachnaher und uebergangsbezogener Nutzung unterschieden werden kann, ohne bereits einen grossen Zentralisierungsumbau oder ein neues Lizenzsystem einzufuehren.
+
+**Ergebnis**
+- die zentrale Lizenzlogik in `src/main/licensing/` wurde sichtbarer gegliedert.
+- `src/main/ipc/licenseIpc.js` trennt Status/Diagnose, Installation und Dev-Generatorfluss klarer.
+- `src/main/preload.js` ordnet die Renderer-Bruecken fuer zentrale Lizenzzugaenge und Dev-/Werkzeugfluss klarer.
+- `docs/licensing.md` dokumentiert den aktuellen Schnitt der Lizenz-Zugriffspunkte.
+- ein vollstaendiger Neuaufbau oder ein finales Lizenzsystem wurde noch nicht umgesetzt.
+
+**Stand / Notiz**
+Paket 2 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentralen Lizenzierungs-Zugriffspunkte wurden auf wenige relevante Dateien fokussiert; in `src/main/licensing/` wurde die Kernlogik sichtbarer gegliedert, waehrend `src/main/ipc/licenseIpc.js` Status/Diagnose, Installation und Dev-Generatorfluss klarer trennt. `src/main/preload.js` ordnet die Renderer-Bruecken fuer zentrale Lizenzzugaenge und Dev-/Werkzeugfluss besser, und `docs/licensing.md` haelt den aktuellen Schnitt der Lizenz-Zugriffspunkte fest. Die bestehende Funktionalitaet wurde dabei beibehalten; ein vollstaendiger Zentralisierungsumbau oder ein finales Lizenzsystem ist noch nicht umgesetzt.
 
 ---
 

@@ -304,7 +304,8 @@ function _extractGeneratedPath(runResult, inputData) {
   return fs.existsSync(fallbackPath) ? fallbackPath : "";
 }
 
-function registerLicenseIpc() {
+// Zentrale Laufzeit-/Diagnose-Einstiege des App-Kerns.
+function registerLicenseStatusIpc() {
   ipcMain.handle("license:get-status", async () => {
     try {
       const status = refreshStatus();
@@ -321,6 +322,19 @@ function registerLicenseIpc() {
     }
   });
 
+  ipcMain.handle("license:get-diagnostics", async () => {
+    try {
+      const payload = _toStatusPayload(refreshStatus());
+      return { ok: true, ...payload };
+    } catch (err) {
+      const payload = _toStatusPayload({ valid: false, reason: "INVALID_FORMAT" });
+      return { ok: false, error: err?.message || String(err), ...payload };
+    }
+  });
+}
+
+// Zentrale Lizenzverwaltung fuer installierte Lizenzen und Anforderungsdateien.
+function registerLicenseInstallationIpc() {
   ipcMain.handle("license:import", async (event) => {
     try {
       const result = await dialog.showOpenDialog(_pickWindow(event), {
@@ -412,16 +426,6 @@ function registerLicenseIpc() {
     }
   });
 
-  ipcMain.handle("license:get-diagnostics", async () => {
-    try {
-      const payload = _toStatusPayload(refreshStatus());
-      return { ok: true, ...payload };
-    } catch (err) {
-      const payload = _toStatusPayload({ valid: false, reason: "INVALID_FORMAT" });
-      return { ok: false, error: err?.message || String(err), ...payload };
-    }
-  });
-
   ipcMain.handle("license:create-request", async (event, raw) => {
     try {
       const machineId = String(getMachineId() || "").trim();
@@ -456,7 +460,11 @@ function registerLicenseIpc() {
       return { ok: false, error: String(err?.code || err?.message || "REQUEST_SAVE_FAILED").trim() || "REQUEST_SAVE_FAILED" };
     }
   });
+}
 
+// Dev-/Werkzeuglogik:
+// nur fuer den internen Generatorfluss, bewusst getrennt von installierter Laufzeitlizenzierung.
+function registerLicenseDevGeneratorIpc() {
   ipcMain.handle("license:load-request-for-generate", async (event) => {
     if (!_isDevLicenseGenerationAllowed()) {
       return { ok: false, error: "LICENSE_GENERATION_NOT_ALLOWED" };
@@ -586,6 +594,12 @@ function registerLicenseIpc() {
       return { ok: false, error: err?.message || String(err) };
     }
   });
+}
+
+function registerLicenseIpc() {
+  registerLicenseStatusIpc();
+  registerLicenseInstallationIpc();
+  registerLicenseDevGeneratorIpc();
 }
 
 module.exports = {

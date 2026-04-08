@@ -188,7 +188,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   personsImportApplyStaging: (data) => ipcRenderer.invoke("persons:importApplyStaging", data),
 
   // ============================================================
-  // Lizenzierung (DEV + Diagnose)
+  // App-Kern: zentrale Lizenzstatus-/Installationszugaenge
   // ============================================================
   licenseGetStatus: () => ipcRenderer.invoke("license:get-status"),
   licenseGetDiagnostics: () => ipcRenderer.invoke("license:get-diagnostics"),
@@ -196,6 +196,9 @@ contextBridge.exposeInMainWorld("bbmDb", {
   licenseDelete: () => ipcRenderer.invoke("license:delete"),
   licenseGetInstalled: () => ipcRenderer.invoke("license:get-installed"),
   licenseCreateRequest: (data) => ipcRenderer.invoke("license:create-request", data),
+  // ============================================================
+  // Lizenzierung: Dev-/Werkzeugfluss fuer internen Generator
+  // ============================================================
   licenseLoadRequestForGenerate: (data) => ipcRenderer.invoke("license:load-request-for-generate", data),
   licenseLoadForEdit: (data) => ipcRenderer.invoke("license:load-for-edit", data),
   licenseGenerate: (data) => ipcRenderer.invoke("license:generate", data),

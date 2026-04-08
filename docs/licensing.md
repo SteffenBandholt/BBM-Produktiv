@@ -12,6 +12,54 @@
 - `C:\01_Projekte\Protokoll\src\main\licensing\public_key.pem`
   Öffentlicher Schlüssel für die Verifikation. Nur Public Key, niemals Private Key.
 
+## Aktueller Schnitt der Zugriffspunkte
+
+### Zentrale Lizenzlogik im App-Kern
+- `src/main/licensing/licenseService.js`
+  - zentrale Laufzeitpruefung
+  - Status-Cache
+  - `requireValidLicense` und `requireFeature`
+- `src/main/licensing/licenseVerifier.js`
+  - Signatur-, Produkt-, Ablauf- und Machine-ID-Pruefung
+- `src/main/licensing/licenseStorage.js`
+  - installierte Lizenz lokal lesen, schreiben und loeschen
+- `src/main/licensing/deviceIdentity.js`
+  - lokale Machine-ID fuer Binding-Pruefung
+- `src/main/licensing/licenseFeatures.js`
+  - zentrale Feature-Namen und Standard-/Optional-Trennung
+- `src/main/licensing/featureGuard.js`
+  - zentraler Guard fuer nutzende technische Dienste
+  - zentrale Fehler-/Meldungsabbildung fuer Lizenzfehler
+- `src/main/ipc/licenseIpc.js`
+  - zentraler Main-Einstieg fuer Status, Import, Diagnose, Anforderung und Dev-Generatorfluss
+
+### UI-/View-nahe Nutzung
+- `src/main/preload.js`
+  - Renderer-Bruecke fuer Lizenzstatus, Import, Diagnose und Dev-Werkzeugfluss
+- `src/renderer/views/SettingsView.js`
+  - Lizenzstatus anzeigen
+  - Lizenz importieren
+  - Lizenzanforderung erzeugen
+  - interne Dev-Maske fuer Lizenz erzeugen / verlaengern
+
+### Fachnahe oder modulnahe Nutzung
+- `src/main/ipc/audioIpc.js`
+  - derzeit einzige sichtbar aktive Feature-Freigabe ueber `enforceLicensedFeature(...)`
+  - betrifft Audio-/Whisper-Ablauf, nicht den allgemeinen Lizenzkern selbst
+
+### Uebergangs-/Altlogik
+- `src/main/licensing/featureGuard.js`
+  - Dev-Audio-Override
+  - Legacy-Audio-Suggestions-Schalter
+- `src/main/ipc/licenseIpc.js`
+  - Dev-only Generatorfluss ueber externes `C:\license-tool`
+
+### Sichtbarer Abgleich zum Ist-Stand
+- Die zentrale Kernlogik liegt heute bereits ueberwiegend unter `src/main/licensing/` plus `src/main/ipc/licenseIpc.js`.
+- Renderer-seitig ist Lizenzierung aktuell vor allem Settings-/Werkzeug-UI, nicht allgemeine Screen- oder Modulnavigation.
+- Stand jetzt ist im Code nur fuer Audio eine klar sichtbare Feature-Freigabe direkt verdrahtet.
+- Die Doku-Notiz zu PDF/Export/Mail als bereits geschuetzte Features sollte bei Gelegenheit gegen den aktuellen Codepfad gegengeprueft werden.
+
 ## Wo `public_key.pem` hingehört
 Die Datei liegt lokal unter:
 - `C:\01_Projekte\Protokoll\src\main\licensing\public_key.pem`

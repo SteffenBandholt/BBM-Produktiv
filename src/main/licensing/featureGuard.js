@@ -6,6 +6,8 @@ const {
   isStandardLicensedFeature,
 } = require("./licenseFeatures");
 
+// Zentrale Kernlogik fuer nutzende Stellen:
+// liefert nur kompakte Lizenzinfos fuer technische Dienste und UI-nahe Diagnose.
 function _extractLicenseInfo(status) {
   const license = status?.license && typeof status.license === "object" ? status.license : {};
 
@@ -43,6 +45,8 @@ function _readEnvFlag(name) {
   return null;
 }
 
+// Uebergangs-/Altlogik:
+// Dev-Override bleibt vorerst hier gebuendelt, damit er nicht in einzelnen Addons verteilt wird.
 function isDevAudioOverrideEnabled() {
   // Dev override: set BBM_DEV_UNLOCK_AUDIO=true (DEV only).
   const explicit = _readEnvFlag("BBM_DEV_UNLOCK_AUDIO");
@@ -51,6 +55,8 @@ function isDevAudioOverrideEnabled() {
   return !app.isPackaged;
 }
 
+// Uebergangs-/Altlogik:
+// Legacy-Audio-Suggestions bleiben sichtbar getrennt von der eigentlichen Kern-Lizenzpruefung.
 function isDevAudioSuggestionsEnabled() {
   // Dev-only legacy audio suggestions flow.
   const explicit = _readEnvFlag("BBM_DEV_ENABLE_AUDIO_SUGGESTIONS");
@@ -59,12 +65,18 @@ function isDevAudioSuggestionsEnabled() {
   return false;
 }
 
+function _isCoveredByBaseLicense(feature) {
+  return isStandardLicensedFeature(feature);
+}
+
+// Zentraler Guard fuer technische Dienste/Addons:
+// Views und Fachablaeufe fragen nicht direkt die Lizenzdatei ab, sondern laufen ueber diesen Einstieg.
 function enforceLicensedFeature(feature) {
   const normalizedFeature = String(feature || "").trim().toLowerCase();
   if (normalizedFeature === LICENSE_FEATURES.AUDIO && isDevAudioOverrideEnabled()) {
     return _extractLicenseInfo(getStatus({ fresh: true }));
   }
-  if (isStandardLicensedFeature(normalizedFeature)) {
+  if (_isCoveredByBaseLicense(normalizedFeature)) {
     return _extractLicenseInfo(getStatus({ fresh: true }));
   }
 
@@ -131,6 +143,8 @@ function safeGetStatus() {
   }
 }
 
+// UI-/View-nahe Rueckmeldung:
+// Fehler werden hier in kompakte Payloads/Meldungen fuer Renderer und technische IPCs uebersetzt.
 function mapLicenseReasonToMessage(reason) {
   switch (reason) {
     case "NO_LICENSE":
@@ -153,6 +167,8 @@ function mapLicenseReasonToMessage(reason) {
   }
 }
 
+// UI-/View-nahe Rueckmeldung:
+// Feature-Ablehnungen bleiben textlich zentral, damit nutzende Stellen keine eigenen Meldungen bauen muessen.
 function mapFeatureToMessage(feature) {
   switch (feature) {
     case LICENSE_FEATURES.PDF:

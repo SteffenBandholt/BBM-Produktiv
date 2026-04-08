@@ -8,6 +8,8 @@ const {
 
 let cachedStatus = null;
 
+// Zentrale Kernlogik:
+// Lizenzdatei lesen, verifizieren und den aktuellen Laufzeitstatus cachen.
 function checkLicense() {
   const licenseData = loadLicense();
   cachedStatus = verifyLicense(licenseData);
@@ -26,6 +28,8 @@ function refreshStatus() {
   return checkLicense();
 }
 
+// Zentrale Kernlogik:
+// "gueltige Lizenz erforderlich" bleibt hier gebuendelt, nicht in den nutzenden IPCs/Views.
 function requireValidLicense({ fresh = false } = {}) {
   const result = getStatus({ fresh });
 
@@ -36,8 +40,14 @@ function requireValidLicense({ fresh = false } = {}) {
   return result.license;
 }
 
+function _normalizeRequestedFeature(feature) {
+  return String(feature || "").trim();
+}
+
+// Zentrale Kernlogik:
+// Standard-Features gehoeren zur Grundlizenz, optionale Features werden explizit aus der Lizenz gelesen.
 function requireFeature(feature) {
-  const normalizedFeature = String(feature || "").trim();
+  const normalizedFeature = _normalizeRequestedFeature(feature);
   if (!normalizedFeature) {
     throw new Error("FEATURE_NOT_ALLOWED:");
   }
