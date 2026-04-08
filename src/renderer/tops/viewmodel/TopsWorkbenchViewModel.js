@@ -19,17 +19,19 @@ function buildHeaderVm(selectedTop) {
 
 function buildEditorAccessVm(state, selectedTop) {
   const isReadOnly = !!state?.isReadOnly;
+  const isWriting = !!state?.isWriting;
   const isCarriedOver =
     Number(selectedTop?.is_carried_over ?? selectedTop?.isCarriedOver) === 1;
 
   return {
-    shortTextReadOnly: !isReadOnly && isCarriedOver,
-    longTextReadOnly: false,
-    flagsDisabled: false,
+    shortTextReadOnly: isWriting || (!isReadOnly && isCarriedOver),
+    longTextReadOnly: isWriting,
+    flagsDisabled: isWriting,
   };
 }
 
 function buildMetaVm(editorValue, state, selectedTop) {
+  const isWriting = !!state?.isWriting;
   const isTitleLevel = Number(selectedTop?.level || 1) === 1;
   return {
     value: {
@@ -38,21 +40,24 @@ function buildMetaVm(editorValue, state, selectedTop) {
       responsible_label: isTitleLevel ? "" : editorValue?.responsible_label ?? "",
     },
     access: {
-      disabled: !!state?.isReadOnly,
-      responsibleDisabled: !!state?.isReadOnly || isTitleLevel,
+      disabled: !!state?.isReadOnly || isWriting,
+      responsibleDisabled: !!state?.isReadOnly || isWriting || isTitleLevel,
     },
   };
 }
 
 function buildActionsVm(state, selectedTop) {
+  const isWriting = !!state?.isWriting;
   return {
     hasSelection: !!selectedTop,
     isReadOnly: !!state?.isReadOnly,
+    isWriting,
     isMoveMode: !!state?.isMoveMode,
-    canSave: !!selectedTop && !state?.isReadOnly,
-    canDelete: canDeleteFromState(state, selectedTop),
-    canMove: canMoveFromState(state, selectedTop),
-    canCreateChild: canCreateChildFromState(state, selectedTop),
+    canSave: !!selectedTop && !state?.isReadOnly && !isWriting,
+    canDelete: canDeleteFromState(state, selectedTop) && !isWriting,
+    canMove: canMoveFromState(state, selectedTop) && !isWriting,
+    canCreateLevel1: !state?.isReadOnly && !isWriting,
+    canCreateChild: canCreateChildFromState(state, selectedTop) && !isWriting,
   };
 }
 

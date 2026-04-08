@@ -262,17 +262,19 @@ export class TopsWorkbench {
   _applyActionState(actionsVm = {}) {
     const hasSelection = !!actionsVm?.hasSelection;
     const isReadOnly = !!actionsVm?.isReadOnly;
+    const isWriting = !!actionsVm?.isWriting;
     const isMoveMode = !!actionsVm?.isMoveMode;
     const canSave = !!actionsVm?.canSave;
     const canDelete = !!actionsVm?.canDelete;
     const canMove = !!actionsVm?.canMove;
+    const canCreateLevel1 = !!actionsVm?.canCreateLevel1;
     const canCreateChild = !!actionsVm?.canCreateChild;
 
-    this.btnL1.disabled = isReadOnly;
-    this.btnChild.disabled = isReadOnly || !canCreateChild;
-    this.btnMove.disabled = isReadOnly || !canMove;
-    this.btnSave.disabled = isReadOnly || !canSave;
-    this.btnDelete.disabled = isReadOnly || !canDelete;
+    this.btnL1.disabled = isReadOnly || isWriting || !canCreateLevel1;
+    this.btnChild.disabled = isReadOnly || isWriting || !canCreateChild;
+    this.btnMove.disabled = isReadOnly || isWriting || !canMove;
+    this.btnSave.disabled = isReadOnly || isWriting || !canSave;
+    this.btnDelete.disabled = isReadOnly || isWriting || !canDelete;
 
     this.root.dataset.hasSelection = hasSelection ? "true" : "false";
     this.root.dataset.isReadOnly = isReadOnly ? "true" : "false";

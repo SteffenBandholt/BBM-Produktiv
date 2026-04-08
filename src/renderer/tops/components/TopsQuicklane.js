@@ -2,12 +2,14 @@ export class TopsQuicklane {
   constructor({
     projectId = null,
     isReadOnly = false,
+    isWriting = false,
     onOpenProject = null,
     onOpenFirms = null,
     onOpenOutput = null,
   } = {}) {
     this.projectId = projectId || null;
     this.isReadOnly = !!isReadOnly;
+    this.isWriting = !!isWriting;
     this.onOpenProject = typeof onOpenProject === "function" ? onOpenProject : null;
     this.onOpenFirms = typeof onOpenFirms === "function" ? onOpenFirms : null;
     this.onOpenOutput = typeof onOpenOutput === "function" ? onOpenOutput : null;
@@ -32,7 +34,7 @@ export class TopsQuicklane {
     this.btnFirms.dataset.quicklaneAction = "firms";
     this.btnOutput.dataset.quicklaneAction = "output";
 
-    this.update({ projectId, isReadOnly });
+    this.update({ projectId, isReadOnly, isWriting });
   }
 
   _mkButton(label, onClick) {
@@ -48,14 +50,15 @@ export class TopsQuicklane {
     return [this.btnProject, this.btnFirms, this.btnOutput];
   }
 
-  update({ projectId, isReadOnly } = {}) {
+  update({ projectId, isReadOnly, isWriting } = {}) {
     this.projectId = projectId || null;
     this.isReadOnly = !!isReadOnly;
+    this.isWriting = !!isWriting;
 
     const canUseProject = !!this.projectId;
-    this._setEnabled(this.btnProject, canUseProject && !this.isReadOnly);
-    this._setEnabled(this.btnFirms, canUseProject && !this.isReadOnly);
-    this._setEnabled(this.btnOutput, canUseProject);
+    this._setEnabled(this.btnProject, canUseProject && !this.isReadOnly && !this.isWriting);
+    this._setEnabled(this.btnFirms, canUseProject && !this.isReadOnly && !this.isWriting);
+    this._setEnabled(this.btnOutput, canUseProject && !this.isWriting);
   }
 
   _setEnabled(btn, enabled) {

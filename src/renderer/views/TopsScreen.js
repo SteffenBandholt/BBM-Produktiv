@@ -137,6 +137,7 @@ export default class TopsScreen {
         }
       },
       onEndMeeting: async () => {
+        if (this.store.getState().isWriting) return;
         await this.closeFlow?.run?.();
         await this._reloadTops({ keepSelection: true });
         this._syncScreenState();
@@ -150,6 +151,7 @@ export default class TopsScreen {
     this.quicklane = new TopsQuicklane({
       projectId: this._getQuicklaneProjectId(),
       isReadOnly: !!this.store.getState().isReadOnly,
+      isWriting: !!this.store.getState().isWriting,
       onOpenProject: async (projectId) => {
         if (typeof this.router?.openProjectFormModal === "function") {
           await this.router.openProjectFormModal({ projectId });
@@ -229,6 +231,7 @@ export default class TopsScreen {
     this.quicklane.update({
       projectId: this._getQuicklaneProjectId(),
       isReadOnly: !!state.isReadOnly,
+      isWriting: !!state.isWriting,
     });
     this._mountQuicklaneIntoHeader();
   }
@@ -247,7 +250,7 @@ export default class TopsScreen {
       contextLine: headerState.contextLine,
       isReadOnly: headerState.isReadOnly,
       canEndMeeting: !!state.meetingId,
-      isBusy: !!state.isLoading,
+      isBusy: !!state.isLoading || !!state.isWriting,
       canEditKeyword: !!state.meetingId,
       showMetaLegend: !!state.meetingId,
     });
@@ -335,6 +338,7 @@ export default class TopsScreen {
       }
     }
 
+    if (state.isWriting) return;
     this.commands.selectTop(top.id);
     this.commands.updateDraft(editorFromTop(top));
     this._syncScreenState();
@@ -391,6 +395,7 @@ export default class TopsScreen {
 
     this.store.setState({ isWriting: true });
     try {
+      this.store.setState({ error: null });
       const res = await this.commands.saveDraft(patch);
       if (!res?.ok) return;
       this.commands.updateDraft(editorFromTop(getSelectedTop(this.store.getState())));
@@ -409,7 +414,9 @@ export default class TopsScreen {
 
     this.store.setState({ isWriting: true });
     try {
-      await this.commands.saveDraft({ is_hidden: 1 });
+      this.store.setState({ error: null });
+      const saveRes = await this.commands.saveDraft({ is_hidden: 1 });
+      if (!saveRes?.ok) return;
       const res = await this.commands.deleteSelectedTop();
       if (!res?.ok) return;
       this.commands.updateDraft(editorFromTop(getSelectedTop(this.store.getState())));
@@ -422,6 +429,7 @@ export default class TopsScreen {
 
   async _handleWorkbenchToggleMove() {
     const state = this.store.getState();
+    if (state.isWriting) return;
     const selectedTop = getSelectedTop(state);
     if (!state.isMoveMode && !canMoveFromState(state, selectedTop)) return;
     this.commands.toggleMoveMode();
@@ -430,38 +438,74 @@ export default class TopsScreen {
 
   async _handleWorkbenchCreateLevel1() {
     const state = this.store.getState();
+    if (state.isWriting) return;
     if (state.isReadOnly || !state.meetingId || !state.projectId) return;
 
-    const res = await this.topsRepository.createTop({
-      projectId: state.projectId,
-      meetingId: state.meetingId,
-      level: 1,
-      parentTopId: null,
-      title: "(ohne Bezeichnung)",
-    });
-    const createdId = res?.top?.id || null;
-    await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
-    this._syncScreenState();
+    this.store.setState({ isWriting: true });
+    try {
+      this.store.setState({ error: null });
+      let res;
+      try {
+        res = await this.topsRepository.createTop({
+          projectId: state.projectId,
+          meetingId: state.meetingId,
+          level: 1,
+          parentTopId: null,
+          title: "(ohne Bezeichnung)",
+        });
+      } catch (err) {
+        const error = err?.message ? String(err.message) : String(err || "create failed");
+        this.store.setState({ error });
+        return;
+      }
+      if (!res?.ok) {
+        this.store.setState({ error: res?.error || "create failed" });
+        return;
+      }
+      const createdId = res?.top?.id || null;
+      await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
+      this._syncScreenState();
+    } finally {
+      this.store.setState({ isWriting: false });
+    }
   }
 
   async _handleWorkbenchCreateChild() {
     const state = this.store.getState();
+    if (state.isWriting) return;
     const selectedTop = getSelectedTop(state);
     if (!canCreateChildFromState(state, selectedTop)) return;
 
     const level = Number(selectedTop.level) + 1;
     if (!Number.isFinite(level) || level > 4) return;
 
-    const res = await this.topsRepository.createTop({
-      projectId: state.projectId,
-      meetingId: state.meetingId,
-      level,
-      parentTopId: selectedTop.id,
-      title: "(ohne Bezeichnung)",
-    });
-    const createdId = res?.top?.id || null;
-    await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
-    this._syncScreenState();
+    this.store.setState({ isWriting: true });
+    try {
+      this.store.setState({ error: null });
+      let res;
+      try {
+        res = await this.topsRepository.createTop({
+          projectId: state.projectId,
+          meetingId: state.meetingId,
+          level,
+          parentTopId: selectedTop.id,
+          title: "(ohne Bezeichnung)",
+        });
+      } catch (err) {
+        const error = err?.message ? String(err.message) : String(err || "create failed");
+        this.store.setState({ error });
+        return;
+      }
+      if (!res?.ok) {
+        this.store.setState({ error: res?.error || "create failed" });
+        return;
+      }
+      const createdId = res?.top?.id || null;
+      await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
+      this._syncScreenState();
+    } finally {
+      this.store.setState({ isWriting: false });
+    }
   }
 
   async _reloadTops({ keepSelection = true, selectTopId = null } = {}) {
