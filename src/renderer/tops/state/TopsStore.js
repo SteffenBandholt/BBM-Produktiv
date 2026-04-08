@@ -8,6 +8,7 @@
 //   isReadOnly: boolean,
 //   isMoveMode: boolean,
 //   isLoading: boolean,
+//   isWriting: boolean,
 //   error: string|null
 // }
 
@@ -21,6 +22,7 @@ export function createTopsStore(initialState = {}) {
     isReadOnly: false,
     isMoveMode: false,
     isLoading: false,
+    isWriting: false,
     error: null,
     ...initialState,
   };
@@ -67,4 +69,3 @@ export function createTopsStore(initialState = {}) {
 
   return { getState, setState, subscribe, reset };
 }
-

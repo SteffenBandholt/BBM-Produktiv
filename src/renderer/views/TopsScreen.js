@@ -68,6 +68,7 @@ export default class TopsScreen {
       isReadOnly: false,
       isMoveMode: false,
       isLoading: false,
+      isWriting: false,
       error: null,
       meetingMeta: null,
     });
@@ -308,26 +309,30 @@ export default class TopsScreen {
     const movingTop = state.isMoveMode ? getSelectedTop(state) : null;
 
     if (state.isMoveMode && movingTop && !state.isReadOnly) {
+      if (state.isWriting) return;
       if (!item.isMoveTarget) return;
+      this.store.setState({ isWriting: true });
       this.store.setState({ error: null });
-      let res;
       try {
+        let res;
         res = await this.topsRepository.moveTop({
           topId: movingTop.id,
           targetParentId: top.id || null,
         });
+        if (!res?.ok) {
+          this.store.setState({ error: res?.error || "move failed" });
+          return;
+        }
+        await this._reloadTops({ keepSelection: true, selectTopId: movingTop.id });
+        this._syncScreenState();
+        return;
       } catch (err) {
         const error = err?.message ? String(err.message) : String(err || "move failed");
         this.store.setState({ error });
         return;
+      } finally {
+        this.store.setState({ isWriting: false });
       }
-      if (!res?.ok) {
-        this.store.setState({ error: res?.error || "move failed" });
-        return;
-      }
-      await this._reloadTops({ keepSelection: true, selectTopId: movingTop.id });
-      this._syncScreenState();
-      return;
     }
 
     this.commands.selectTop(top.id);
@@ -377,26 +382,38 @@ export default class TopsScreen {
 
   async _handleWorkbenchSave() {
     const state = this.store.getState();
+    if (state.isWriting) return;
     const selectedTop = getSelectedTop(state);
     if (!selectedTop) return;
 
     const patch = buildPatchFromDraft(selectedTop, state.editor || {});
     if (!Object.keys(patch).length) return;
 
-    await this.commands.saveDraft(patch);
-    await this._reloadTops({ keepSelection: true, selectTopId: selectedTop.id });
-    this._syncScreenState();
+    this.store.setState({ isWriting: true });
+    try {
+      await this.commands.saveDraft(patch);
+      await this._reloadTops({ keepSelection: true, selectTopId: selectedTop.id });
+      this._syncScreenState();
+    } finally {
+      this.store.setState({ isWriting: false });
+    }
   }
 
   async _handleWorkbenchDelete() {
     const state = this.store.getState();
+    if (state.isWriting) return;
     const selectedTop = getSelectedTop(state);
     if (!canDeleteFromState(state, selectedTop)) return;
 
-    await this.commands.saveDraft({ is_hidden: 1 });
-    await this.commands.deleteSelectedTop();
-    await this._reloadTops({ keepSelection: false });
-    this._syncScreenState();
+    this.store.setState({ isWriting: true });
+    try {
+      await this.commands.saveDraft({ is_hidden: 1 });
+      await this.commands.deleteSelectedTop();
+      await this._reloadTops({ keepSelection: false });
+      this._syncScreenState();
+    } finally {
+      this.store.setState({ isWriting: false });
+    }
   }
 
   async _handleWorkbenchToggleMove() {
