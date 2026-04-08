@@ -18,6 +18,9 @@ function toId(value) {
   return String(value).trim();
 }
 
+// Gemeinsame Mitarbeiter-/Beteiligten-Stammdatenfelder:
+// Diese Ableitungen sollen rendererweit wiederverwendbar bleiben und keine
+// projekt- oder protokollnahen Annahmen enthalten.
 function pickEmployeeNames(raw) {
   if (!raw || typeof raw !== "object") {
     return { firstName: "", lastName: "" };
@@ -44,6 +47,7 @@ function pickDisplayName(raw, firstName, lastName) {
   return combined;
 }
 
+// Gemeinsame Such-/Anzeigeprojektion fuer Mitarbeiterstammdaten.
 function buildSearchText({ id, name, companyId, raw }) {
   const parts = [id, name, companyId];
   if (raw && typeof raw === "object") {
@@ -59,6 +63,9 @@ function buildSearchText({ id, name, companyId, raw }) {
   return parts.filter(Boolean).join(" ").toLowerCase();
 }
 
+// Gemeinsame Mitarbeiter-Normalisierung:
+// akzeptiert heutige Uebergangsformen (employeeId, personId), damit
+// nutzende Schichten eine gemeinsame Stammsicht beziehen koennen.
 export function normalizeEmployee(employee, index = 0) {
   const raw = employee && typeof employee === "object" ? employee : {};
   const id = toId(raw.id ?? raw.employeeId ?? raw.personId ?? raw.value ?? index + 1);
@@ -105,11 +112,16 @@ export function filterEmployeesByCompany(employees, companyId) {
   return normalizedList.filter((employee) => employee.companyId === wantedCompanyId);
 }
 
-export function toEmployeeOptions(employees) {
+function buildEmployeeOptionList(employees) {
   return normalizeEmployeeList(employees).map((employee) => ({
     value: employee.id,
     label: getEmployeeDisplayName(employee),
   }));
+}
+
+// Gemeinsame Auswahloptionen fuer Mitarbeiter-/Beteiligten-Stammdaten.
+export function toEmployeeOptions(employees) {
+  return buildEmployeeOptionList(employees);
 }
 
 export function getEmployeeDisplayName(employee) {

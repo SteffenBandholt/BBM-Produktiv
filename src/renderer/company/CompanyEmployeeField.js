@@ -73,6 +73,14 @@ function normalizeOptions(rawOptions) {
     .filter(Boolean);
 }
 
+function buildEmployeeSelectionOptions(employees) {
+  return normalizeOptions(
+    buildEmployeeAssigneeOptions(employees, {
+      valuePrefix: "",
+    })
+  );
+}
+
 export class CompanyEmployeeField {
   constructor({
     documentRef,
@@ -211,16 +219,8 @@ export class CompanyEmployeeField {
 
   _renderEmployeeOptions() {
     const companyId = this._value.companyId;
-    const filteredEmployees = companyId
-      ? filterEmployeesByCompany(this._employees, companyId)
-      : this._employees;
-
-    let options = normalizeOptions(
-      buildEmployeeAssigneeOptions(filteredEmployees, {
-        companyId: null,
-        valuePrefix: "",
-      })
-    );
+    const filteredEmployees = this._getEmployeesForSelectedCompany();
+    let options = buildEmployeeSelectionOptions(filteredEmployees);
 
     const employeeKnown = this._value.employeeId
       ? findEmployeeById(filteredEmployees, this._value.employeeId)
@@ -263,6 +263,20 @@ export class CompanyEmployeeField {
     }
   }
 
+  // UI-nahe Nutzung gemeinsamer Mitarbeiter-Stammdaten:
+  // die Feldlogik filtert nur nach der gewaehlten Firma, baut aber keine eigene
+  // MitarbeiterdomÃ¤ne auf.
+  _getEmployeesForSelectedCompany() {
+    const companyId = this._value.companyId;
+    return companyId ? filterEmployeesByCompany(this._employees, companyId) : this._employees;
+  }
+
+  _resolveEmployeeLabel(employeeId) {
+    const employee = findEmployeeById(this._employees, employeeId);
+    if (employee) return getEmployeeDisplayName(employee);
+    return optionLabelByValue(buildEmployeeSelectionOptions(this._employees), employeeId);
+  }
+
   _syncCompanyFromSelect() {
     const companyId = asId(this.companySelect.value);
     this._value.companyId = companyId;
@@ -295,7 +309,7 @@ export class CompanyEmployeeField {
 
     const employee = findEmployeeById(this._employees, employeeId);
     if (employee) {
-      this._value.employeeLabel = employee.displayName || employee.name;
+      this._value.employeeLabel = getEmployeeDisplayName(employee);
       if (!this._value.companyId && employee.companyId) {
         this._value.companyId = employee.companyId;
         const company = findCompanyById(this._companies, employee.companyId);
@@ -305,14 +319,7 @@ export class CompanyEmployeeField {
       return;
     }
 
-    this._value.employeeLabel = optionLabelByValue(
-      normalizeOptions(
-        buildEmployeeAssigneeOptions(this._employees, {
-          valuePrefix: "",
-        })
-      ),
-      employeeId
-    );
+    this._value.employeeLabel = this._resolveEmployeeLabel(employeeId);
   }
 
   _emitChange() {

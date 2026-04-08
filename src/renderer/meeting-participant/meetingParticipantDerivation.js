@@ -41,6 +41,23 @@ export function deriveActiveProjectCompanyEmployees(projectCompanyEmployees) {
   return source.filter((item) => toBool(item?.active ?? item?.is_active ?? item?.isActive, false));
 }
 
+function buildProjectCompanyLookup(projectCompanies) {
+  const companyById = new Map();
+  const companies = Array.isArray(projectCompanies) ? projectCompanies : [];
+
+  for (const company of companies) {
+    const id = toText(company?.id || company?.projectCompanyId || company?.project_company_id);
+    if (!id) continue;
+    companyById.set(id, company);
+  }
+
+  return companyById;
+}
+
+// Protokollnahe Teilnehmerprojektion:
+// aktive Projekt-Mitarbeiter werden hier in Kandidaten fuer die
+// Besprechungsteilnehmerliste uebersetzt. Das ist bewusst nicht die
+// gemeinsame MitarbeiterdomÃ¤ne selbst.
 export function buildMeetingParticipantCandidateOptions({
   meetingId,
   projectId,
@@ -48,16 +65,9 @@ export function buildMeetingParticipantCandidateOptions({
   projectCompanyEmployees,
   currentParticipants,
 } = {}) {
-  const companies = Array.isArray(projectCompanies) ? projectCompanies : [];
   const employees = deriveActiveProjectCompanyEmployees(projectCompanyEmployees);
   const participants = normalizeMeetingParticipantList(currentParticipants);
-  const companyById = new Map();
-
-  for (const company of companies) {
-    const id = toText(company?.id || company?.projectCompanyId || company?.project_company_id);
-    if (!id) continue;
-    companyById.set(id, company);
-  }
+  const companyById = buildProjectCompanyLookup(projectCompanies);
 
   const options = [];
   for (const employee of employees) {

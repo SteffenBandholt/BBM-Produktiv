@@ -1694,6 +1694,75 @@ const taFirmNotes = document.createElement("textarea");
     return activeById;
   }
 
+  // Projektspezifische Mitarbeiter-Nutzung:
+  // Stammdaten-Mitarbeiter bleiben global, werden hier aber mit dem
+  // Projektkandidatenstatus fuer die Projektfirma zusammengesetzt.
+  async _loadGlobalFirmPersonsForProjectContext(firmId) {
+    const api = window.bbmDb || {};
+    if (typeof api.personsListByFirm !== "function") {
+      return { ok: true, persons: [] };
+    }
+
+    const [personsRes, candidatesRes] = await Promise.all([
+      api.personsListByFirm(firmId),
+      typeof api.projectCandidatesList === "function"
+        ? api.projectCandidatesList({ projectId: this.projectId })
+        : Promise.resolve(null),
+    ]);
+
+    if (!personsRes?.ok) {
+      return {
+        ok: false,
+        error: personsRes?.error || "Fehler beim Laden der Mitarbeiter",
+        persons: [],
+      };
+    }
+
+    const activeById = this._candidateActiveById(candidatesRes?.items, "global_person");
+    return {
+      ok: true,
+      persons: (personsRes.list || []).map((person) => ({
+        ...person,
+        __personKind: "global_person",
+        is_active: activeById.has(String(person?.id ?? ""))
+          ? activeById.get(String(person?.id ?? ""))
+          : 0,
+      })),
+    };
+  }
+
+  // Projektspezifische lokale Mitarbeiter:
+  // Projektpersonen bleiben in der Projekt-Schicht und werden hier nur
+  // mit dem Kandidatenstatus derselben Projektfirma angereichert.
+  async _loadProjectFirmPersonsForProjectContext(projectFirmId) {
+    const api = window.bbmDb || {};
+    const [personsRes, candidatesRes] = await Promise.all([
+      api.projectPersonsListByProjectFirm(projectFirmId),
+      typeof api.projectCandidatesList === "function"
+        ? api.projectCandidatesList({ projectId: this.projectId })
+        : Promise.resolve(null),
+    ]);
+
+    if (!personsRes?.ok) {
+      return {
+        ok: false,
+        error: personsRes?.error || "Fehler beim Laden der Mitarbeiter",
+        persons: [],
+      };
+    }
+
+    const activeById = this._candidateActiveById(candidatesRes?.items, "project_person");
+    return {
+      ok: true,
+      persons: (personsRes.list || []).map((person) => ({
+        ...person,
+        is_active: activeById.has(String(person?.id ?? ""))
+          ? activeById.get(String(person?.id ?? ""))
+          : 1,
+      })),
+    };
+  }
+
   async _setPersonActive(person, isActive) {
     const api = window.bbmDb || {};
     const kind = this._selectedPersonCandidateKind();
@@ -1975,60 +2044,28 @@ const taFirmNotes = document.createElement("textarea");
     }
 
     if (this._selectedFirmIsAssignedGlobal()) {
-      const api = window.bbmDb || {};
-      if (typeof api.personsListByFirm !== "function") {
+      const result = await this._loadGlobalFirmPersonsForProjectContext(this.selectedFirmId);
+      if (!result.ok) {
+        this._setMsg(result.error || "Fehler beim Laden der Mitarbeiter");
         this.persons = [];
         this._renderPersonsOnly();
         return;
       }
 
-      const [personsRes, candidatesRes] = await Promise.all([
-        api.personsListByFirm(this.selectedFirmId),
-        typeof api.projectCandidatesList === "function"
-          ? api.projectCandidatesList({ projectId: this.projectId })
-          : Promise.resolve(null),
-      ]);
-      if (!personsRes?.ok) {
-        this._setMsg(personsRes?.error || "Fehler beim Laden der Mitarbeiter");
-        this.persons = [];
-        this._renderPersonsOnly();
-        return;
-      }
-
-      const activeById = this._candidateActiveById(candidatesRes?.items, "global_person");
-
-      this.persons = (personsRes.list || []).map((person) => ({
-        ...person,
-        __personKind: "global_person",
-        is_active: activeById.has(String(person?.id ?? ""))
-          ? activeById.get(String(person?.id ?? ""))
-          : 0,
-      }));
+      this.persons = result.persons || [];
       this._renderPersonsOnly();
       return;
     }
 
-    const api = window.bbmDb || {};
-    const [res, candidatesRes] = await Promise.all([
-      window.bbmDb.projectPersonsListByProjectFirm(this.selectedFirmId),
-      typeof api.projectCandidatesList === "function"
-        ? api.projectCandidatesList({ projectId: this.projectId })
-        : Promise.resolve(null),
-    ]);
-    if (!res?.ok) {
-      this._setMsg(res?.error || "Fehler beim Laden der Mitarbeiter");
+    const result = await this._loadProjectFirmPersonsForProjectContext(this.selectedFirmId);
+    if (!result.ok) {
+      this._setMsg(result.error || "Fehler beim Laden der Mitarbeiter");
       this.persons = [];
       this._renderPersonsOnly();
       return;
     }
 
-    const activeById = this._candidateActiveById(candidatesRes?.items, "project_person");
-    this.persons = (res.list || []).map((person) => ({
-      ...person,
-      is_active: activeById.has(String(person?.id ?? ""))
-        ? activeById.get(String(person?.id ?? ""))
-        : 1,
-    }));
+    this.persons = result.persons || [];
     this._renderPersonsOnly();
   }
 

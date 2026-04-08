@@ -386,7 +386,7 @@ Paket 1 ist als konservative Vorbereitung abgeschlossen. Im Renderer wurden die 
 ---
 
 ## Schritt 3.2 – Mitarbeiter / Beteiligte als gemeinsame Domäne schneiden
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Mitarbeiter und Beteiligte als modulübergreifende Grundlage sauber zuordnen.
@@ -403,7 +403,21 @@ Mitarbeiter und Beteiligte als modulübergreifende Grundlage sauber zuordnen.
 - Beteiligte/Mitarbeiter liegen als gemeinsame Domäne vor
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 2 hat den naechsten Schnitt im Renderer konservativ vorbereitet. Gemeinsame Mitarbeiter-/Beteiligten-Stammdatenlogik in `stamm/mitarbeiter` wurde sichtbarer gemacht und gemeinsame Mitarbeiteroptionen bzw. Stammprojektionen werden staerker zentral genutzt. Projektspezifische und protokollnahe Nutzung bleibt weiterhin in den nutzenden Schichten; insbesondere `src/renderer/views/ProjectFirmsView.js` und `src/renderer/meeting-participant/meetingParticipantDerivation.js` sind noch keine gemeinsame Domaene selbst, sondern weiterhin Uebergangs- bzw. Nutzungsschichten. Ein vollstaendiger Domaenenumzug wurde damit noch nicht umgesetzt.
+
+## Paket 2 â€“ Mitarbeiter-/Beteiligtenzugriffe im Renderer sichtbar schneiden
+**Status:** ERLEDIGT
+
+**Ziel**
+Die zentralen Mitarbeiter-/Beteiligten-Zugriffspunkte im Renderer konservativ so vorbereiten, dass gemeinsame Mitarbeiter-/Beteiligten-Stammdatenlogik sichtbarer von projektspezifischer und protokollnaher Nutzung unterschieden werden kann, ohne bereits einen grossen Domaenenumbau auszuloesen.
+
+**Ergebnis**
+- `stamm/mitarbeiter` ist als gemeinsame Mitarbeiter-/Beteiligten-Stammdatenprojektion im Renderer sichtbarer gemacht.
+- Gemeinsame Mitarbeiteroptionen und Stammprojektionen werden in nutzenden Komponenten staerker zentral bezogen.
+- Projektspezifische und protokollnahe Mitarbeiter-/Beteiligtenlogik bleibt in den nutzenden Schichten und wurde nicht vorzeitig in eine neue Zielstruktur verschoben.
+
+**Stand / Notiz**
+Paket 2 ist als konservative Vorbereitung abgeschlossen. Im Renderer wurden die tatsaechlich zentralen Mitarbeiter-/Beteiligten-Zugriffspunkte auf wenige relevante Dateien fokussiert; gemeinsame Mitarbeiter-/Beteiligten-Stammdatenlogik in `src/renderer/stamm/mitarbeiter` wurde sichtbarer gegliedert, waehrend `src/renderer/views/ProjectFirmsView.js` und `src/renderer/meeting-participant/meetingParticipantDerivation.js` weiterhin als projektspezifische bzw. protokollnahe Uebergangs- und Nutzungsschichten kenntlich bleiben. Die bestehende Funktionalitaet wurde dabei erhalten; ein vollstaendiges Ausschneiden der gemeinsamen Mitarbeiter-/Beteiligten-Domaene ist noch offen.
 
 ---
 
