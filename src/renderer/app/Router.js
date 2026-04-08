@@ -2,9 +2,11 @@
 
 export default class Router {
   constructor({ contentRoot, onSectionChange } = {}) {
+    // App-Kernzustand: Router als Screen-Host und Integrationspunkt.
     this.contentRoot = contentRoot;
     this.onSectionChange = onSectionChange;
 
+    // Fachlich verdrahteter Laufzeitkontext: heute noch stark protokollzentriert.
     this.currentProjectId = null;
     this.currentMeetingId = null;
     this.lastTopsProjectId = null;
@@ -52,6 +54,7 @@ export default class Router {
     });
   }
 
+  // App-Kern: Router-Kontext nach außen melden, ohne Fachabläufe zu verschieben.
   _emitContextChange() {
     try {
       window.dispatchEvent(
@@ -170,6 +173,7 @@ export default class Router {
     }
   }
 
+  // Gemeinsame Dienste / service-nahe Integrationen: Settings- und Kontext-Vorladen.
   async ensureAppSettingsLoaded({ force = false } = {}) {
     if (!force && this._appSettingsLoaded) return this.context.settings || {};
     if (this._appSettingsLoading) return await this._appSettingsLoading;
@@ -388,6 +392,33 @@ export default class Router {
     this._refreshHeaderSafe();
   }
 
+  _resolveProjectId(projectId) {
+    return projectId || this.currentProjectId || null;
+  }
+
+  _resolveMeetingId(meetingId) {
+    return meetingId || this.currentMeetingId || null;
+  }
+
+  _requireProjectContext(projectId, message = "Bitte zuerst ein Projekt auswählen.") {
+    const effectiveProjectId = this._resolveProjectId(projectId);
+    if (!effectiveProjectId) {
+      alert(message);
+      return null;
+    }
+    return effectiveProjectId;
+  }
+
+  _requireMeetingContext(meetingId, message = "Bitte zuerst eine Besprechung öffnen.") {
+    const effectiveMeetingId = this._resolveMeetingId(meetingId);
+    if (!effectiveMeetingId) {
+      alert(message);
+      return null;
+    }
+    return effectiveMeetingId;
+  }
+
+  // App-Kern: einheitlicher View-Host. Fachspezifische Pfade landen derzeit noch hier.
   async show(v, { section, isTopsView = false, pageTitle = null } = {}) {
     const prevView = this.currentView;
     if (prevView && prevView !== v) {
@@ -446,6 +477,7 @@ export default class Router {
     this._emitContextChange();
   }
 
+  // Navigation / UI-Rahmenlogik: View-Wechsel bleiben im Router gebündelt.
   async showProjects() {
     const mod = await import("../views/ProjectsView.js");
     const V = mod.default;
@@ -568,6 +600,7 @@ export default class Router {
   // … Rest unverändert …
   // (Participants/Print Modal Code bleibt wie gehabt)
 
+  // Gemeinsame Dienste / service-nahe Integrationen: lazy geladene Modals und Helfer.
   async _ensureParticipantsModals() {
     if (this._participantsModals) return this._participantsModals;
     if (this._participantsModalsLoading) return await this._participantsModalsLoading;
@@ -587,11 +620,8 @@ export default class Router {
   }
 
   async openCandidatesModal({ projectId } = {}) {
-    const effectiveProjectId = projectId || this.currentProjectId || null;
-    if (!effectiveProjectId) {
-      alert("Projekt-Kontext fehlt.");
-      return;
-    }
+    const effectiveProjectId = this._requireProjectContext(projectId, "Projekt-Kontext fehlt.");
+    if (!effectiveProjectId) return;
     this.currentProjectId = effectiveProjectId;
     const pm = await this._ensureParticipantsModals();
     await pm.openCandidates({ projectId: effectiveProjectId });
@@ -732,6 +762,7 @@ export default class Router {
     }
   }
 
+  // Fachlich verdrahtete Altlogik: Druck-/Protokollflüsse laufen noch direkt über den Router.
   async openMeetingsForPrintSelection({ projectId, printKind } = {}) {
     const effectiveProjectId = projectId || this.currentProjectId || null;
     if (!effectiveProjectId) {
@@ -1043,7 +1074,7 @@ export default class Router {
   }
 
   async openProjectFormModal({ projectId } = {}) {
-    const effectiveProjectId = projectId || this.currentProjectId || null;
+    const effectiveProjectId = this._resolveProjectId(projectId);
     if (!effectiveProjectId) return;
     if (this._projectFormModal) return;
 

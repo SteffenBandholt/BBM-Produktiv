@@ -44,7 +44,7 @@ Dabei gilt:
 | Phase | Titel | Status |
 |---|---|---|
 | 1 | Architektur verbindlich festziehen | ERLEDIGT |
-| 2 | App-Kern fachlich entschlacken | OFFEN |
+| 2 | App-Kern fachlich entschlacken | IN ARBEIT |
 | 3 | Gemeinsame Domänen sauber schneiden | OFFEN |
 | 4 | Gemeinsame Dienste sauber schneiden | OFFEN |
 | 5 | App-Einstellungen und Lizenzierung zentralisieren | OFFEN |
@@ -204,10 +204,24 @@ Bereits bereinigt:
 ---
 
 # Phase 2 – App-Kern fachlich entschlacken
-**Status:** OFFEN
+**Status:** IN ARBEIT
+
+## Paket 1 – `main.js` und `Router.js` vorsortieren
+**Status:** ERLEDIGT
+
+**Ziel**
+`src/renderer/main.js` und `src/renderer/app/Router.js` entlang der Zielarchitektur konservativ vorstrukturieren, ohne bereits einen tieferen Kernumbau auszulösen.
+
+**Ergebnis**
+- Kernlogik, service-nahe Logik und fachlich verdrahtete Altlogik wurden in beiden Dateien sichtbarer gegliedert.
+- Es wurde keine Modulregistrierung und keine neue Navigation eingeführt.
+- Es wurden keine großen Fachpfade entfernt.
+
+**Stand / Notiz**
+Paket 1 ist als konservative Vorstrukturierung von `src/renderer/main.js` und `src/renderer/app/Router.js` abgeschlossen. Die Dateien sind für Phase 2 lesbarer gegliedert, ohne große Funktionsverschiebungen oder neue Architekturpfade.
 
 ## Schritt 2.1 – App-Shell bestimmen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Festlegen, was die App-Shell wirklich leisten muss und was nicht.
@@ -225,12 +239,12 @@ Festlegen, was die App-Shell wirklich leisten muss und was nicht.
 - kein fachlicher Wildwuchs in der App-Hülle
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat `src/renderer/main.js` konservativ vorstrukturiert. Shell-/Bootstrap-Logik, service-nahe Logik und fachlich verdrahtete Altlogik sind sichtbarer getrennt; eine neue Navigation oder ein größerer Shell-Umbau wurde noch nicht begonnen.
 
 ---
 
 ## Schritt 2.2 – Router-Verantwortung begrenzen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Den Router auf Navigation und Screen-Wechsel zurückführen.
@@ -247,7 +261,7 @@ Den Router auf Navigation und Screen-Wechsel zurückführen.
 - Router wird Integrationsschicht statt Fachsteuerung
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat `src/renderer/app/Router.js` konservativ vorstrukturiert. Kernlogik, service-nahe Integrationen und fachlich verdrahtete Altlogik sind sichtbarer markiert; modulinterne Abläufe wurden noch nicht aus dem Router herausgelöst.
 
 ---
 
