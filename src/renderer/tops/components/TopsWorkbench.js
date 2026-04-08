@@ -7,6 +7,25 @@ import {
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
 
+const TOPS_WORKBENCH_FLAG_LABELS = Object.freeze({
+  important: "Wichtig",
+  task: "ToDo",
+  decision: "Beschluss",
+});
+
+function createEmptyWorkbenchEditboxValue() {
+  return {
+    shortText: "",
+    longText: "",
+    flags: {
+      hidden: false,
+      important: false,
+      task: false,
+      decision: false,
+    },
+  };
+}
+
 export class TopsWorkbench {
   constructor({
     onDraftChange,
@@ -63,6 +82,26 @@ export class TopsWorkbench {
     this.left = document.createElement("div");
     this.left.className = "bbm-tops-workbench-left";
 
+    this._buildSharedEditboxCore();
+    this.left.appendChild(this.editboxRoot);
+
+    this.gutter = document.createElement("div");
+    this.gutter.className = "bbm-tops-workbench-gutter";
+    this.gutter.setAttribute("aria-hidden", "true");
+
+    this._buildProtocolMetaPanel();
+    this._buildProtocolMetaBridges();
+
+    this.body.append(this.left, this.gutter, this.metaPanel.root);
+    this.root.append(this.header, this.body);
+
+    this._bindDraftChangeSources();
+    this.responsibleBridge.initialize();
+  }
+
+  // Gemeinsamer Bearbeitungskern:
+  // wiederverwendbarer Editbox-Baustein ohne TOP-spezifische Meta-/Ablauflogik.
+  _buildSharedEditboxCore() {
     this.editbox = new EditboxShell();
     this.editbox.setLimits({ shortText: 70 });
     this.editboxRoot = this.editbox.getElement();
@@ -70,22 +109,23 @@ export class TopsWorkbench {
     this.editbox.setVisibleFlags(["important", "task", "decision"]);
     this.editbox.setCounterFormatter((evaluation) => String(evaluation?.remaining ?? ""));
     this._configureEditboxPresentation();
-    this.left.appendChild(this.editboxRoot);
+  }
 
-    this.gutter = document.createElement("div");
-    this.gutter.className = "bbm-tops-workbench-gutter";
-    this.gutter.setAttribute("aria-hidden", "true");
-
+  // Protokollspezifische Workbench-Huelle:
+  // Meta-Spalte und Flag-Platzierung spiegeln den heutigen TOP-Arbeitsfluss.
+  _buildProtocolMetaPanel() {
     this.metaPanel = new TopsMetaPanel({
       onChange: () => this._emitDraftChange(),
     });
     this.flagsMetaRow = document.createElement("div");
     this.flagsMetaRow.className = "bbm-tops-meta-flags";
     this.flagsMetaRow.appendChild(this.editbox.flagsWrap);
-    this.flagsMetaRow.addEventListener("input", () => this._emitDraftChange());
-    this.flagsMetaRow.addEventListener("change", () => this._emitDraftChange());
     this.metaPanel.root.appendChild(this.flagsMetaRow);
+  }
 
+  // Protokollspezifische Workbench-Bridges:
+  // wiederverwendbare Kernfelder werden hier an die TOP-Meta-/Draft-Struktur gekoppelt.
+  _buildProtocolMetaBridges() {
     this.statusAmpelBridge = new TopsStatusAmpelBridge({
       metaPanel: this.metaPanel,
       onChange: () => this._emitDraftChange(),
@@ -99,13 +139,13 @@ export class TopsWorkbench {
       onChange: () => this._emitDraftChange(),
     });
     this.responsibleBridge.mount();
+  }
 
-    this.body.append(this.left, this.gutter, this.metaPanel.root);
-    this.root.append(this.header, this.body);
-
+  _bindDraftChangeSources() {
     this.editboxRoot.addEventListener("input", () => this._emitDraftChange());
     this.editboxRoot.addEventListener("change", () => this._emitDraftChange());
-    this.responsibleBridge.initialize();
+    this.flagsMetaRow.addEventListener("input", () => this._emitDraftChange());
+    this.flagsMetaRow.addEventListener("change", () => this._emitDraftChange());
   }
 
   _configureEditboxPresentation() {
@@ -115,12 +155,7 @@ export class TopsWorkbench {
     this.editbox.longWrap.classList.add("bbm-tops-editbox-long-wrap");
     this.editbox.flagsWrap.classList.add("bbm-tops-editbox-flags-in-meta");
 
-    const germanFlags = {
-      important: "Wichtig",
-      task: "ToDo",
-      decision: "Beschluss",
-    };
-    Object.entries(germanFlags).forEach(([key, label]) => {
+    Object.entries(TOPS_WORKBENCH_FLAG_LABELS).forEach(([key, label]) => {
       const input = this.editbox.flagInputs?.[key];
       const textEl = input?.parentElement?.querySelector("span");
       if (textEl) textEl.textContent = label;
@@ -212,11 +247,7 @@ export class TopsWorkbench {
     const isReadOnly = !!actionsVm?.isReadOnly;
 
     if (!hasSelection) {
-      this.editbox.setValue({
-        shortText: "",
-        longText: "",
-        flags: { hidden: false, important: false, task: false, decision: false },
-      });
+      this.editbox.setValue(createEmptyWorkbenchEditboxValue());
       this.editbox.setState("disabled");
       this.editbox.setFieldAccess({
         shortTextReadOnly: false,

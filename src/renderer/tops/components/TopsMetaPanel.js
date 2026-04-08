@@ -1,3 +1,18 @@
+const TOPS_META_DEFAULT_VALUE = Object.freeze({
+  due_date: null,
+  status: "-",
+  responsible_label: "",
+});
+
+const TOPS_META_STATUS_OPTIONS = Object.freeze([
+  { value: "-", label: "-", disabled: false },
+  { value: "offen", label: "offen", disabled: false },
+  { value: "in arbeit", label: "in arbeit", disabled: false },
+  { value: "erledigt", label: "erledigt", disabled: false },
+  { value: "blockiert", label: "blockiert", disabled: false },
+  { value: "verzug", label: "verzug", disabled: false },
+]);
+
 export class TopsMetaPanel {
   constructor({ onChange } = {}) {
     this.onChange = typeof onChange === "function" ? onChange : null;
@@ -7,20 +22,10 @@ export class TopsMetaPanel {
     this.root.dataset.disabled = "false";
 
     this._disabled = false;
-    this._value = {
-      due_date: null,
-      status: "-",
-      responsible_label: "",
-    };
-
-    this._statusOptions = [
-      { value: "-", label: "-", disabled: false },
-      { value: "offen", label: "offen", disabled: false },
-      { value: "in arbeit", label: "in arbeit", disabled: false },
-      { value: "erledigt", label: "erledigt", disabled: false },
-      { value: "blockiert", label: "blockiert", disabled: false },
-      { value: "verzug", label: "verzug", disabled: false },
-    ];
+    // Protokollspezifische Workbench-Huelle:
+    // haelt den TOP-Draft fuer Meta-Felder, ist aber kein gemeinsamer generischer Kernbaustein.
+    this._value = { ...TOPS_META_DEFAULT_VALUE };
+    this._statusOptions = TOPS_META_STATUS_OPTIONS.map((item) => ({ ...item }));
   }
 
   _normalizeValue(value = {}) {

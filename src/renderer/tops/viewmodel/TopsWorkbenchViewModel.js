@@ -17,7 +17,7 @@ function buildHeaderVm(selectedTop) {
   };
 }
 
-function buildEditorAccessVm(state, selectedTop) {
+function buildSharedEditorAccessVm(state, selectedTop) {
   const isReadOnly = !!state?.isReadOnly;
   const isWriting = !!state?.isWriting;
   const isCarriedOver =
@@ -30,7 +30,17 @@ function buildEditorAccessVm(state, selectedTop) {
   };
 }
 
-function buildMetaVm(editorValue, state, selectedTop) {
+function buildSharedEditorVm(state, selectedTop) {
+  const editorValue = state?.editor || editorFromTop(selectedTop);
+  return {
+    value: editorValue,
+    access: buildSharedEditorAccessVm(state, selectedTop),
+  };
+}
+
+// Protokollspezifische Workbench-Regel:
+// Titel auf Level 1 haben in der TOP-Workbench keine operative Meta-Belegung.
+function buildProtocolMetaVm(editorValue, state, selectedTop) {
   const isWriting = !!state?.isWriting;
   const isTitleLevel = Number(selectedTop?.level || 1) === 1;
   return {
@@ -46,7 +56,7 @@ function buildMetaVm(editorValue, state, selectedTop) {
   };
 }
 
-function buildActionsVm(state, selectedTop) {
+function buildWorkbenchActionsVm(state, selectedTop) {
   const isWriting = !!state?.isWriting;
   return {
     hasSelection: !!selectedTop,
@@ -62,15 +72,12 @@ function buildActionsVm(state, selectedTop) {
 }
 
 export function buildWorkbenchVm(state, selectedTop) {
-  const editorValue = state?.editor || editorFromTop(selectedTop);
+  const sharedEditorVm = buildSharedEditorVm(state, selectedTop);
 
   return {
     header: buildHeaderVm(selectedTop),
-    editor: {
-      value: editorValue,
-      access: buildEditorAccessVm(state, selectedTop),
-    },
-    meta: buildMetaVm(editorValue, state, selectedTop),
-    actions: buildActionsVm(state, selectedTop),
+    editor: sharedEditorVm,
+    meta: buildProtocolMetaVm(sharedEditorVm.value, state, selectedTop),
+    actions: buildWorkbenchActionsVm(state, selectedTop),
   };
 }

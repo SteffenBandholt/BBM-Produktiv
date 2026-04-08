@@ -7,6 +7,12 @@ import {
 } from "../textregeln/index.js";
 
 const FLAG_KEYS = ["hidden", "important", "task", "decision"];
+const DEFAULT_EDITBOX_FLAGS = Object.freeze({
+  hidden: false,
+  important: false,
+  task: false,
+  decision: false,
+});
 
 function asText(value) {
   return String(value || "");
@@ -29,6 +35,18 @@ function mkEl(doc, tag, className, text) {
   return el;
 }
 
+function createEmptyEditboxValue() {
+  return {
+    shortText: "",
+    longText: "",
+    flags: { ...DEFAULT_EDITBOX_FLAGS },
+  };
+}
+
+function defaultCounterFormatter(evaluation) {
+  return `${evaluation.length} / ${evaluation.limit} (Rest: ${evaluation.remaining})`;
+}
+
 export class EditboxShell {
   constructor({ documentRef, stateService, limits, warningRatio } = {}) {
     this.documentRef = documentRef || window.document;
@@ -46,9 +64,8 @@ export class EditboxShell {
       limit: this._limits.longText,
       warningRatio: this._warningRatio,
     });
-    this._counterFormatter = (evaluation) =>
-      `${evaluation.length} / ${evaluation.limit} (Rest: ${evaluation.remaining})`;
-        this._state = EDITBOX_STATE.EMPTY;
+    this._counterFormatter = defaultCounterFormatter;
+    this._state = EDITBOX_STATE.EMPTY;
     this._fieldAccess = {
       shortTextReadOnly: false,
       longTextReadOnly: false,
@@ -70,6 +87,8 @@ export class EditboxShell {
     return n;
   }
 
+  // Gemeinsamer Bearbeitungskern:
+  // nur generische Text-/Flag-Felder und neutraler Meta-Slot, keine Protokoll-Workbench-Logik.
   _build() {
     const doc = this.documentRef;
 
@@ -207,6 +226,14 @@ export class EditboxShell {
     }
   }
 
+  _applyEditboxFlags(flags = {}) {
+    const normalizedFlags = asFlags(flags);
+    Object.entries(this.flagInputs).forEach(([key, input]) => {
+      input.checked = normalizedFlags[key];
+    });
+    this._enforceTaskDecisionExclusion();
+  }
+
   _enforceTaskDecisionExclusion(preferredKey) {
     const taskChecked = Boolean(this.flagInputs.task?.checked);
     const decisionChecked = Boolean(this.flagInputs.decision?.checked);
@@ -226,13 +253,7 @@ export class EditboxShell {
   setValue(value = {}) {
     if (value.shortText !== undefined) this.shortInput.value = this._clampShortText(value.shortText);
     if (value.longText !== undefined) this.longInput.value = asText(value.longText);
-
-    const flags = asFlags(value.flags);
-    Object.entries(this.flagInputs).forEach(([key, input]) => {
-      if (value.flags === undefined) return;
-      input.checked = flags[key];
-    });
-    this._enforceTaskDecisionExclusion();
+    if (value.flags !== undefined) this._applyEditboxFlags(value.flags);
 
     this._updateCounters();
   }
@@ -326,7 +347,7 @@ export class EditboxShell {
   setCounterFormatter(formatter) {
     this._counterFormatter = typeof formatter === "function"
       ? formatter
-      : (evaluation) => `${evaluation.length} / ${evaluation.limit} (Rest: ${evaluation.remaining})`;
+      : defaultCounterFormatter;
     this._updateCounters();
   }
 
@@ -335,13 +356,13 @@ export class EditboxShell {
     this._state = state.mode;
 
     if (state.isEmpty) {
-      this.setValue({ shortText: "", longText: "", flags: {} });
+      this.setValue(createEmptyEditboxValue());
     }
 
     this.root.dataset.state = state.mode;
     this.root.classList.toggle("is-empty", state.isEmpty);
     this.root.classList.toggle("is-read-only", state.isReadOnly);
-        this.root.classList.toggle("is-disabled", state.isDisabled);
+    this.root.classList.toggle("is-disabled", state.isDisabled);
     this.root.classList.toggle("is-busy", state.isBusy);
     this._applyControlState();
   }

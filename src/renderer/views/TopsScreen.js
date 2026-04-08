@@ -179,7 +179,14 @@ export default class TopsScreen {
   }
 
   _buildWorkbench() {
-    this.workbench = new TopsWorkbench({
+    this.workbench = new TopsWorkbench(this._createWorkbenchUiAdapter());
+    this.editCanvas.appendChild(this.workbench.root);
+  }
+
+  // UI-/View-nahe Verdrahtung:
+  // TopsScreen hostet die Workbench nur und koppelt sie an Screen-Commands/-Datenquellen.
+  _createWorkbenchUiAdapter() {
+    return {
       onDraftChange: (draft) => this._handleWorkbenchDraftChange(draft),
       onSave: async () => this._handleWorkbenchSave(),
       onDelete: async () => this._handleWorkbenchDelete(),
@@ -192,8 +199,7 @@ export default class TopsScreen {
       loadEmployeesByCompany: async (companyId) => {
         return await this.assigneeDataSource.loadEmployeesByCompany(companyId);
       },
-    });
-    this.editCanvas.appendChild(this.workbench.root);
+    };
   }
 
   _mountQuicklaneIntoHeader() {

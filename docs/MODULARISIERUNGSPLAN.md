@@ -653,7 +653,7 @@ Paket 2 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentra
 ---
 
 # Phase 6 – Gemeinsame Kernbausteine sauber schneiden
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 ## Schritt 6.1 – Bearbeitungskerne identifizieren
 **Status:** ERLEDIGT
@@ -681,8 +681,25 @@ Die heutige Bearbeitungsfläche im `TopsScreen` besteht aus
 
 ---
 
+## Paket 1 – Bearbeitungskern / Editbox sichtbar schneiden
+**Status:** ERLEDIGT
+
+**Ziel**
+Die tatsaechlich zentralen Bearbeitungs-Zugriffspunkte konservativ so vorbereiten, dass gemeinsamer Bearbeitungskern, protokollspezifische Workbench-Huelle und UI-nahe Verdrahtung klarer unterscheidbar werden, ohne bereits einen vollstaendigen Kernbaustein-Auszug oder ein allgemeines Workbench-System umzusetzen.
+
+**Ergebnis**
+- `src/renderer/core/editbox/EditboxShell.js` wurde sichtbarer als gemeinsamer Bearbeitungskern gegliedert.
+- `src/renderer/tops/components/TopsWorkbench.js`, `src/renderer/tops/components/TopsMetaPanel.js` und `src/renderer/tops/viewmodel/TopsWorkbenchViewModel.js` unterscheiden klarer zwischen gemeinsamem Kern, protokollspezifischer Workbench-Huelle und TOP-spezifischer Meta-/Ablauflogik.
+- `src/renderer/views/TopsScreen.js` bleibt weiterhin UI-/View-nahe Host- und Verdrahtungsschicht.
+- Ein vollstaendiger gemeinsamer Kernbaustein-Auszug oder ein allgemein wiederverwendbares Workbench-System wurde noch nicht umgesetzt.
+
+**Stand / Notiz**
+Paket 1 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentralen Bearbeitungs-Zugriffspunkte wurden auf wenige relevante Renderer-Dateien fokussiert; `src/renderer/core/editbox/EditboxShell.js` wurde sichtbarer als gemeinsamer Bearbeitungskern gegliedert, waehrend `src/renderer/tops/components/TopsWorkbench.js`, `src/renderer/tops/components/TopsMetaPanel.js` und `src/renderer/tops/viewmodel/TopsWorkbenchViewModel.js` die Trennung zwischen gemeinsamem Kern, protokollspezifischer Workbench-Huelle und TOP-spezifischer Meta-/Ablauflogik klarer machen. `src/renderer/views/TopsScreen.js` bleibt bewusst UI-/View-nahe Host- und Verdrahtungsschicht. Die bestehende Funktionalitaet wurde dabei beibehalten; ein vollstaendiger gemeinsamer Kernbaustein-Auszug oder ein allgemein wiederverwendbares Workbench-System ist noch nicht umgesetzt.
+
+---
+
 ## Schritt 6.2 – Gemeinsame Kernbausteine festziehen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Gemeinsame Bearbeitungskerne stabil und sauber zuordnen.
@@ -699,7 +716,7 @@ Gemeinsame Bearbeitungskerne stabil und sauber zuordnen.
 - wiederverwendbare Bearbeitungskerne sind definiert und sauber abgegrenzt
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat den ersten Sichtbarkeits- und Trennungsschnitt konservativ vorbereitet. `src/renderer/core/editbox/EditboxShell.js` ist sichtbarer als gemeinsamer Bearbeitungskern gegliedert; `src/renderer/tops/components/TopsWorkbench.js`, `src/renderer/tops/components/TopsMetaPanel.js` und `src/renderer/tops/viewmodel/TopsWorkbenchViewModel.js` unterscheiden klarer zwischen gemeinsamem Kern, protokollspezifischer Workbench-Huelle und TOP-spezifischer Meta-/Ablauflogik. `src/renderer/views/TopsScreen.js` bleibt weiterhin UI-/View-nahe Host- und Verdrahtungsschicht. Ein vollstaendiger gemeinsamer Kernbaustein-Auszug oder ein allgemein wiederverwendbares Workbench-System wurde damit noch nicht umgesetzt.
 
 ---
 
