@@ -55,6 +55,34 @@ Dabei gilt:
 | 10 | Modulfähigkeit praktisch beweisen | OFFEN |
 | 11 | Altbestand zurückbauen | OFFEN |
 
+
+## Arbeitsform für die Umsetzung
+
+Die Umsetzung dieses Plans erfolgt paketweise.
+
+Dabei gilt:
+
+1. Eine Phase wird in **Pakete** zerlegt.
+2. Jedes Paket wird in folgende Schritte gegliedert:
+   - Scout
+   - Builder
+   - Reviewer
+   - Doc
+3. Scout dient der Analyse und Grenzziehung.
+4. Builder dient der eigentlichen Umsetzung.
+5. Reviewer dient der unabhängigen Prüfung.
+6. Doc dient der Dokumentation und Planpflege.
+7. Ein Paket gilt erst dann als abgeschlossen, wenn alle erforderlichen Schritte durchgeführt, geprüft und dokumentiert wurden.
+8. Erst danach wird das nächste Paket begonnen.
+
+Wichtig:
+
+- Es werden keine konkurrierenden Parallelpläne aufgebaut.
+- Pakete werden nacheinander abgearbeitet.
+- Bei festgestellten Mängeln erfolgt erst Nacharbeit, dann erneute Prüfung.
+- Erst danach darf das nächste Paket starten.
+
+
 ---
 
 ## Ausgangspunkt

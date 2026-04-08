@@ -405,7 +405,46 @@ Ein Paket-Prompt an Codex muss daher enthalten:
 
 ---
 
-## 21. Prüfregel für Pakete
+## 21. Git-Grundregel für die Umsetzung
+
+Die technische Umsetzung erfolgt paketweise auch in Git.
+
+Dabei gilt:
+
+1. Jedes Arbeitspaket arbeitet in einem eigenen Branch.
+2. Neue Paket-Branches starten grundsätzlich von `main`.
+3. Scout, Builder, Reviewer, Nacharbeit und Doc laufen im selben Paket-Branch.
+4. Erst nach Prüfung, erforderlicher Nacharbeit, Dokumentation und Planpflege wird nach `main` gemergt.
+5. Das nächste Paket startet wieder von `main`.
+6. Ein Paket ist die Git-Einheit.
+7. Eine Phase ist keine eigene Git-Einheit.
+
+Nicht gewollt sind:
+
+- ein einziger Großumbau-Branch für mehrere Pakete
+- ein Phasen-Branch als dauerhafte Sammelstelle
+- mehrere abgeschlossene Pakete in einem gemeinsamen Branch
+- Start eines neuen Pakets auf unsauberem Git-Stand
+
+Branch-Namen sollen sprechend sein, z. B.:
+
+- `phase2-paket1-main-router-vorsortieren`
+- `phase2-paket2-navigation-trennen`
+- `phase7-paket1-protokoll-modulgrenze`
+
+Wenn für ein Paket mit Codex gearbeitet wird, gibt ChatGPT bei Bedarf auch die konkrete Git-Anweisung vor:
+
+- Ausgangsbranch
+- neuer Branch-Name
+- Startbefehle
+- Merge-Zeitpunkt
+- Hinweis, dass Merge erst nach Prüfung und Freigabe erfolgt
+
+Weitere Details zur paketweisen Git-Führung stehen in `docs/ARBEITSMODUS-CODEX.md`.
+
+---
+
+## 22. Prüfregel für Pakete
 
 Ein Paket gilt erst dann als abgeschlossen, wenn:
 
