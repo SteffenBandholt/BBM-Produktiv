@@ -1001,6 +1001,22 @@ Der erste echte Beweis für Modularität ist daher:
 
 ---
 
+## Arbeitsform für die Umsetzung
+
+Die Umsetzung dieses Plans erfolgt paketweise.
+
+Dabei gilt:
+
+- Eine Phase wird in Arbeitspakete zerlegt.
+- Ein Arbeitspaket kann mehrere aufeinander aufbauende Prompts / Schritte enthalten.
+- Codex erhält pro Arbeitspaket einen Sammelprompt mit allen Schritten des Pakets.
+- Diese Schritte sind von Codex nacheinander abzuarbeiten.
+- Erst nach Prüfung des Gesamtergebnisses gilt ein Paket als abgeschlossen.
+- Erst danach wird das nächste Paket begonnen.
+
+
+
+
 ## Schlussregel
 
 Der Umbau erfolgt professionell, schrittweise und nachvollziehbar.

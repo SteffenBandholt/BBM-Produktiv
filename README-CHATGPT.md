@@ -369,3 +369,50 @@ Vor jeder größeren Antwort oder Änderung gilt:
 - Plan fortschreiben statt Parallelplan erzeugen
 - Ergebnis prüfen und dokumentieren
 - notwendige Doku- oder Planänderungen als Prompt an Codex formulieren
+
+---
+
+## 20. Arbeitsmodus für Umbau- und Entwicklungsaufgaben
+
+Größere Aufgaben werden nicht als unstrukturierter Einzelauftrag bearbeitet.
+
+Stattdessen gilt folgende Arbeitsform:
+
+1. Die Gesamtaufgabe wird in **Pakete** geschnitten.
+2. Jedes Paket wird in **mehrere klar abgegrenzte Prompts / Arbeitsschritte** zerlegt.
+3. Codex erhält pro Paket **einen Sammelprompt**, der alle Schritte des Pakets enthält.
+4. Codex soll diese Schritte **streng nacheinander** abarbeiten.
+5. Spätere Schritte eines Pakets dürfen nicht vorgezogen werden.
+6. Nach Abschluss des gesamten Pakets wird das Ergebnis geprüft.
+7. Erst nach erfolgreicher Prüfung gilt das Paket als abgeschlossen.
+8. Danach wird das nächste Paket vorbereitet.
+
+Wichtig:
+
+- Nicht die ganze Phase wird auf einmal an Codex gegeben.
+- Nicht jeder Einzelschritt wird als eigener isolierter Mini-Chat behandelt.
+- Die sinnvolle Arbeitseinheit ist das **Paket**.
+- Die sinnvolle Prüfeinheit ist ebenfalls das **Paket**.
+
+Ein Paket-Prompt an Codex muss daher enthalten:
+
+- Ziel des Pakets
+- Grenzen des Pakets
+- betroffene Dateien
+- die Schritte / Prompts in Reihenfolge
+- klare Nicht-Ziele
+- gewünschte Abschlussausgabe
+
+---
+
+## 21. Prüfregel für Pakete
+
+Ein Paket gilt erst dann als abgeschlossen, wenn:
+
+- Codex alle Schritte des Pakets in Reihenfolge abgearbeitet hat
+- das Gesamtergebnis des Pakets vorliegt
+- die Änderung gegen Architektur, Plan und Fachregeln geprüft wurde
+- offene Risiken benannt wurden
+- notwendige Doku- oder Planänderungen als Codex-Prompt vorbereitet oder umgesetzt wurden
+
+Erst danach wird das nächste Paket begonnen.
