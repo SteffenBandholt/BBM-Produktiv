@@ -2,22 +2,34 @@
 
 ## Zweck
 
-Diese Datei beschreibt die aktuelle Zielrichtung der Weiterentwicklung.
+Diese Datei beschreibt die Architektur des Protokoll-Arbeitsbildschirms und des Protokollmoduls im laufenden Produktivrepo.
+
+Sie ist keine allgemeine Gesamtarchitektur-Datei der ganzen App.
+Die führenden Leitplanken für das Gesamtzielbild stehen in `docs/ARCHITEKTUR-LEITPLANKEN.md`.
+
+## Einordnung in das Gesamtzielbild
+
+Das Protokoll ist fachlich ein zentraler Arbeitsbereich der aktuellen Produktivphase.
+Architektonisch bleibt es dennoch ein Fachmodul unter mehreren.
+
+`TopsScreen` ist der Arbeitsbildschirm dieses Protokollmoduls.
+Er ist nicht als neues Zentrum der gesamten App zu verstehen.
+
+## Aktueller Fokus
 
 Die App bleibt grundsätzlich eine gewachsene Electron-Anwendung.
 Große globale Umbauten bleiben weiterhin die Ausnahme.
 
 Es gibt jedoch einen bewusst freigegebenen Sonderfall:
 
-## TopsView als zentraler Arbeitsbildschirm
+## Protokoll-Arbeitsbildschirm als Sonderpfad
 
-Die `TopsView` ist das Herz der Protokollerstellung.
-Sie wird nicht mehr nur schrittweise „modernisiert“, sondern gezielt als einzelner Arbeitsbildschirm neu zusammengesetzt.
+`TopsView` wird schrittweise durch `TopsScreen` abgelöst.
+
+`TopsScreen` wird nicht nur kosmetisch modernisiert, sondern gezielt als einzelner Arbeitsbildschirm des Protokollmoduls neu zusammengesetzt.
 
 Das ist kein Komplettumbau der ganzen App.
-Es ist ein fokussierter Neuaufbau genau dieser einen Seite.
-
----
+Es ist ein fokussierter Neuaufbau genau dieses einen fachlichen Bildschirms.
 
 ## Ausgangslage
 
@@ -26,31 +38,16 @@ Die aktuelle Anwendung ist eine Electron-App mit klassischem Renderer-Aufbau und
 Bekannte Struktur:
 
 - `src/main/`
-  Electron-Main-Prozess und Preload
-
 - `src/main/preload.js`
-  Bridge zwischen Renderer und Electron-/IPC-Funktionen
-
 - `src/renderer/main.js`
-  Aufbau der Renderer-App-Shell
-
 - `src/renderer/app/Router.js`
-  Navigation, Kontextverwaltung, View-Wechsel
-
 - `src/renderer/views/`
-  Seitenlogik als Klassen
-
 - `src/renderer/ui/`
-  UI-Bausteine, Modals, Popups, Hilfslogik
-
 - `src/renderer/features/`
-  Fachliche Teilfunktionen
 
-Diese Struktur bleibt außerhalb der TopsView grundsätzlich respektiert.
+Diese Struktur bleibt außerhalb des Protokoll-Arbeitsbildschirms grundsätzlich respektiert.
 
----
-
-## Allgemeine Architekturprinzipien
+## Allgemeine Prinzipien für diesen Bildschirm
 
 1. Arbeitsfluss vor Technik
 2. Bestehende fachliche Logik nur ändern, wenn nötig
@@ -59,32 +56,30 @@ Diese Struktur bleibt außerhalb der TopsView grundsätzlich respektiert.
 5. Keine Dashboard-Logik für echte Arbeitsbildschirme
 6. Sichtbare Klarheit ist wichtiger als abstrakte technische Schönheit
 
----
+## Sonderregel für das Protokollmodul
 
-## Sonderregel TopsView
+Für den Protokoll-Arbeitsbildschirm gilt ausdrücklich:
 
-Für die TopsView gilt ausdrücklich:
-
-- Sie darf neu aufgebaut werden.
-- Sie darf als eigener Arbeitsbildschirm separat behandelt werden.
-- Ziel ist nicht React um jeden Preis.
+- Er darf gezielt neu aufgebaut werden.
+- Er darf als eigener Arbeitsbildschirm separat behandelt werden.
+- Ziel ist nicht Technik um der Technik willen.
 - Ziel ist ein klarer, ruhiger, fachlich starker Protokoll-Arbeitsplatz.
-- Bewährte fachliche Regeln der bisherigen TopsView werden übernommen.
+- Bewährte fachliche Regeln der bisherigen `TopsView` werden übernommen.
 - Sichtbarer Ballast wird entfernt.
 
-Das ist eine Sonderregel nur für TopsView.
+Das ist eine Sonderregel für diesen Arbeitsbildschirm des Protokollmoduls.
 Sie gilt nicht automatisch für andere Bereiche der App.
 
----
+## Zielbild des Protokoll-Arbeitsbildschirms
 
-## Zielbild der TopsView
-
-Die neue TopsView besteht aus drei sichtbaren Hauptbereichen plus Read-only-Verhalten.
+Der neue Arbeitsbildschirm des Protokollmoduls besteht aus drei sichtbaren Hauptbereichen plus Read-only-Verhalten.
 
 ### 1. Steuerleiste oben
+
 Sie betrifft immer das ganze Protokoll.
 
 Inhalt:
+
 - Protokollnummer
 - Datum
 - Schlagwort
@@ -100,11 +95,13 @@ Inhalt:
   - Ausgabe
 
 ### 2. Protokollblatt in der Mitte
+
 Es ist der Haupt-Lese- und Auswahlbereich.
 
 Inhalt:
+
 - TOP-Nummerierung
-- Farben/Zustände
+- Farben und Zustände
 - Hierarchie
 - Titel
 - optional Langtext
@@ -112,14 +109,17 @@ Inhalt:
 - Auswahl
 
 Nicht dort hinein:
+
 - kein fixer Protokollkopf
 - keine Teilnehmerliste
 - keine allgemeine Navigation
 
 ### 3. Editbox unten
+
 Sie ist die Werkbank für den ausgewählten TOP.
 
 Inhalt:
+
 - Kurztext
 - Langtext
 - Metaspalte
@@ -128,19 +128,19 @@ Inhalt:
 - + Titel
 - + TOP
 - Schieben
-- Diktat direkt an Kurztext/Langtext
+- Diktat direkt an Kurztext und Langtext
 
 ### 4. Read-only
+
 Bei alten Protokollen:
+
 - keine Editbox
 - mehr Lesefläche
 - Fokus auf Lesen und Vorschau
 
----
+## Verbotene Muster
 
-## Verbotene Muster für TopsView
-
-In der TopsView vermeiden:
+Im Protokoll-Arbeitsbildschirm vermeiden:
 
 - Sidebar
 - leerer allgemeiner Header
@@ -150,11 +150,9 @@ In der TopsView vermeiden:
 - zusätzlicher Protokollkopf im Blatt
 - unnötige visuelle Füllflächen
 
----
+## Erlaubte Bildschirmarchitektur
 
-## Erlaubte Architektur für TopsView
-
-Die neue TopsView darf aus mehreren klaren Bildschirm-Bausteinen zusammengesetzt werden, zum Beispiel:
+Der Protokoll-Arbeitsbildschirm darf aus mehreren klaren Bildschirm-Bausteinen zusammengesetzt werden, zum Beispiel:
 
 - Steuerleiste
 - TOP-Blatt
@@ -164,8 +162,6 @@ Die neue TopsView darf aus mehreren klaren Bildschirm-Bausteinen zusammengesetzt
 
 Wichtig ist nicht das Framework, sondern die klare Trennung der sichtbaren Aufgaben.
 
----
-
 ## Leitlinie für die Umsetzung
 
 Alles, was den einzelnen TOP betrifft, gehört in die Editbox.
@@ -174,21 +170,17 @@ Alles, was das ganze Protokoll betrifft, gehört in die obere Steuerleiste.
 
 Alles, was gelesen und ausgewählt wird, gehört ins Protokollblatt.
 
----
+## Reihenfolge des Neuaufbaus
 
-## Reihenfolge des TopsView-Neuaufbaus
-
-1. Leere TopsView-Hülle
+1. Leere `TopsScreen`-Hülle
 2. Protokollblatt
 3. Editbox mit Metaspalte
 4. Steuerleiste und Quicklane
 5. Read-only-Verhalten
 
-Diese Reihenfolge ist verbindlich sinnvoller als wahlloses Umbauen am alten Bildschirm.
+Diese Reihenfolge ist verbindlich sinnvoller als weiteres wahlloses Umbauen am alten Bildschirm.
 
----
-
-## Außerhalb der TopsView
+## Außerhalb des Protokoll-Arbeitsbildschirms
 
 Für andere Teile der App bleibt die allgemeine vorsichtige Weiterentwicklung gültig:
 
@@ -196,8 +188,6 @@ Für andere Teile der App bleibt die allgemeine vorsichtige Weiterentwicklung g�
 - keine unnötigen Router-Umbauten
 - keine globale Shell-Neuordnung ohne Bedarf
 - keine neue Architekturkomplexität ohne klaren Gewinn
-
----
 
 ## Entscheidungskriterien
 
@@ -209,13 +199,12 @@ Wenn mehrere Wege möglich sind, ist zu bevorzugen:
 4. der Weg mit geringerem globalen Risiko
 5. der Weg, der bestehendes gutes Fachverhalten erhält
 
----
-
 ## Schlussregel
 
-Das Ziel ist nicht, möglichst schnell „alles in React“ zu haben.
+Das Ziel ist nicht, möglichst schnell alles in eine neue Technik zu übertragen.
 
 Das Ziel ist:
+
 - ein starker Protokoll-Arbeitsbildschirm
 - weniger Ballast
 - weniger Kopplung

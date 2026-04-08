@@ -1,149 +1,243 @@
-# TOP-Regeln BBM-App
+
+---
+
+## `docs/TOP-REGELN.md`
+
+```md
+# TOP-REGELN.md
+
+## Zweck
+
+Diese Datei definiert die verbindlichen fachlichen Regeln für TOPs.
+
+Sie ist kein Architekturpapier.
+Sie beschreibt das Verhalten der Fachobjekte im Protokollmodul.
+
+---
 
 ## 1. Grundprinzip
+
 - Ein TOP ist ein langlebiges fachliches Objekt innerhalb eines Projekts.
-- Ein TOP kann über viele Protokolle hinweg bestehen bleiben.
-- Je Projekt gibt es eine Folge von Protokollen: `#1`, `#2`, `#3`, ...
+- Ein TOP kann über mehrere Protokolle hinweg bestehen bleiben.
+- Protokolle laufen je Projekt fort: `#1`, `#2`, `#3`, ...
 - Ein neues Protokoll baut auf dem vorherigen Stand auf.
 
+---
+
 ## 2. Protokollkopf
-- Protokollnummer wird vom System vergeben und ist nicht editierbar.
+
+- Protokollnummer wird vom System vergeben.
 - Format: `#<Nummer>`
+- Nummer ist nicht editierbar.
 - Datum wird beim Anlegen mit heute vorgeschlagen.
 - Datum kann vor Abschluss geändert werden.
 - Nach Abschluss ist das Datum fix.
-- Schlagwort ist optional und jederzeit änderbar.
+- Schlagwort ist optional.
 
-## 3. Herkunft im aktuellen Protokoll
-- Blau = im aktuellen offenen Protokoll neu angelegt.
-- Schwarz = aus vorherigen Protokollen übernommen.
-- Schriftfarbe zeigt Herkunft, nicht Status.
+---
+
+## 3. Herkunft
+
+- Blau = im aktuellen offenen Protokoll neu
+- Schwarz = aus früheren Protokollen übernommen
+
+Die Farbe zeigt Herkunft, nicht Status.
+
+---
 
 ## 4. Hierarchie
+
 - Level 1 = nur Titel
 - Level 2 bis 4 = nur TOPs
-- Maximale Tiefe = 4
-- Titel unter Titeln sind nicht zulässig.
-- TOPs auf Level 1 sind nicht zulässig.
+- maximale Tiefe = 4
+- Titel unter Titeln sind verboten
+- TOPs auf Level 1 sind verboten
+
+---
 
 ## 5. Titel
-- Ein Titel ist eine reine Überschrift / Kapitelstruktur.
-- Beispiele: Erdarbeiten, Betonarbeiten, Architektur und Planung
-- Ein Titel hat nur Kurztext.
-- Kurztext = Beschreibung des Titels.
-- Ein Titel hat:
-  - keinen Verantwortlichen
-  - kein Fertig bis
-  - keine Ampel
-  - keinen Langtext
+
+Ein Titel ist nur Struktur.
+
+Ein Titel hat:
+
+- Kurztext
+- keinen Verantwortlichen
+- kein Fertig-bis
+- keine Ampel
+- keinen Langtext
+
+---
 
 ## 6. Normale TOPs
+
 - TOPs liegen auf Level 2 bis 4.
-- Sie beschreiben die eigentlichen Inhalte unterhalb eines Titels.
-- Sie haben mindestens einen Kurztext.
-- Weitere Felder können je nach Regelwerk vorhanden sein.
+- Sie enthalten die eigentlichen Inhalte.
+- Sie haben mindestens Kurztext.
+
+---
 
 ## 7. Nummernlogik
-- Titel auf Level 1 geben die führende Nummer der Familie vor.
-- Anzeige hierarchisch, z. B.:
-  - `1`
-  - `1.1`
-  - `1.1.1`
-  - `1.1.1.1`
-- Solange ein TOP in der veränderbaren Zone ist, kann sich seine Nummer noch ändern:
+
+- Titel auf Level 1 geben die führende Nummer vor.
+- Anzeige ist hierarchisch, z. B. `1`, `1.1`, `1.1.1`, `1.1.1.1`.
+- In der veränderbaren Zone kann sich die Nummer ändern:
   - durch Verschieben
   - durch Lückenschluss
-- Nach Schließen des Protokolls ist die dann gültige Nummer fix.
+- Nach Schließen des Protokolls ist die Nummer fix.
 
-## 8. Anlagedatum je TOP
+---
+
+## 8. Anlagedatum
+
 - Jeder TOP hat ein ursprüngliches Anlagedatum.
-- Dieses wird unter der TOP-Nummer klein angezeigt.
-- Das Anlagedatum ändert sich nie.
+- Dieses wird angezeigt.
+- Es ändert sich nie.
+
+---
 
 ## 9. Anlegen und Schieben
-- Anlegen und Schieben sind fachlich gleichzusetzen, wenn es um die Einordnung in bestehende Strukturen geht.
+
+- Anlegen und Schieben folgen denselben fachlichen Regeln.
 - Was beim Anlegen verboten ist, ist auch beim Schieben verboten.
 
+---
+
 ## 10. Schieben
-- Schieben nur in offenen Protokollen.
-- Geschlossene Protokolle erlauben kein Schieben.
-- Verschiebbar sind nur TOPs, die:
-  - blau / neu sind
-  - keine Kinder haben
-  - nicht übernommen sind
-- Verboten:
-  - unter sich selbst
-  - unter eigene Kinder
-  - Verletzung von Level 4
-  - Verschieben übernommener TOPs
+
+Schieben ist nur in offenen Protokollen erlaubt.
+
+Verschiebbar sind nur TOPs, die:
+
+- blau sind
+- keine Kinder haben
+- nicht übernommen sind
+
+Verboten ist:
+
+- unter sich selbst
+- unter eigene Kinder
+- über Level 4 hinaus
+- Verschieben übernommener TOPs
+
+Zusätzlich gilt:
+
 - Level-1-Elemente bleiben Root.
-- Bei Verschiebung wird Level angepasst und Nummer neu berechnet.
+- Beim Verschieben werden Level und Nummer neu berechnet.
+
+---
 
 ## 11. Schieben in schwarze Strukturen
-- Unter schwarzen Titeln oder schwarzen TOPs dürfen neue blaue TOPs nur am Ende angehängt werden.
-- Sie dürfen nicht zwischen bestehende schwarze Geschwister einsortiert werden.
-- Sie dürfen nicht vor bestehende schwarze Geschwister gesetzt werden.
-- Grund: Die bestehende Nummerierung schwarzer TOPs darf nicht beschädigt werden.
+
+Unter schwarze Titel oder schwarze TOPs dürfen neue blaue TOPs nur am Ende angehängt werden.
+
+Nicht erlaubt:
+
+- zwischen schwarze Geschwister setzen
+- vor schwarze Geschwister setzen
+
+Grund:
+Die Nummerierung schwarzer TOPs bleibt unberührt.
+
+---
 
 ## 12. Löschen
-- Löschen nur in offenen Protokollen.
-- Löschbar sind nur blaue / neue TOPs.
-- Übernommene TOPs sind nicht löschbar.
-- Ein TOP mit Kindern ist nicht löschbar.
-- Erst Kinder löschen, dann Parent.
+
+Löschen ist nur in offenen Protokollen erlaubt.
+
+Löschbar sind nur blaue TOPs ohne Kinder.
+
+Nicht löschbar sind:
+
+- übernommene TOPs
+- TOPs mit Kindern
+
+Erst Kinder löschen, dann Parent.
+
+---
 
 ## 13. Nummernlücke
-- Eine Nummernlücke entsteht nur, wenn ein blauer TOP ohne Kinder gelöscht wird.
-- Dann rückt der letzte blaue TOP derselben Geschwistergruppe in die Lücke.
-- Das betrifft nur die blaue veränderbare Zone.
-- Schwarze TOPs bleiben unberührt.
+
+Wird ein blauer TOP ohne Kinder gelöscht, entsteht eine Nummernlücke.
+
+Dann rückt der letzte blaue TOP derselben Geschwistergruppe in die Lücke.
+
+Das betrifft nur die blaue veränderbare Zone.
+Schwarze TOPs bleiben unberührt.
+
+---
 
 ## 14. Status
+
 Verfügbare Status:
+
 - offen
 - in arbeit
 - blockiert
 - verzug
 - erledigt
 
-## 15. Ampellogik
-- Ampel ist ein Symbol neben Fertig bis bzw. beim Statusfeld.
-- Ampel ist getrennt von der Schriftfarbe.
-- Schriftfarbe:
-  - blau = neu
-  - schwarz = übernommen
-- Status-Ausnahmen:
-  - blockiert = blaue Ampel
-  - verzug = rote Ampel
-  - erledigt = grüne Ampel
-- Für offen / in arbeit gilt Fertig-bis-Logik:
-  - ohne Fertig bis = keine Ampel
-  - Restzeit <= 0 Tage = rot
-  - Restzeit 1–10 Tage = orange
-  - Restzeit > 10 Tage = grün
+---
+
+## 15. Ampel
+
+Die Ampel ist getrennt von der Schriftfarbe.
+
+Schriftfarbe:
+
+- blau = neu
+- schwarz = übernommen
+
+Status-Ausnahmen:
+
+- blockiert = blaue Ampel
+- verzug = rote Ampel
+- erledigt = grüne Ampel
+
+Für `offen` und `in arbeit` gilt:
+
+- ohne Fertig-bis = keine Ampel
+- Restzeit <= 0 Tage = rot
+- Restzeit 1–10 Tage = orange
+- Restzeit > 10 Tage = grün
+
+---
 
 ## 16. Fertig bis
-- Neue TOPs erhalten standardmäßig heute als Fertig-bis-Datum.
-- Fertig bis ist in offenen Protokollen bearbeitbar.
-- Bei Status erledigt wird Fertig bis auf heute gesetzt.
+
+- Neue TOPs erhalten standardmäßig heute als `Fertig bis`.
+- `Fertig bis` ist in offenen Protokollen bearbeitbar.
+- Bei `erledigt` wird `Fertig bis` auf heute gesetzt.
+
+---
 
 ## 17. Verantwortlich / Ansprechpartner
+
 - Verantwortlich ist fachlich die Firma.
-- Wenn vorhanden, möglichst Kurzbezeichnung der Firma verwenden.
-- Die Firma ist Vertragspartner und damit die verantwortliche Einheit.
-- Ansprechpartner / Kontaktperson ist Zusatzinformation.
-- Eine evtl. persönliche ToDo-/Haftungslogik über Ansprechpartner ist noch offen und derzeit nicht verbindlich.
+- Nach Möglichkeit wird die Kurzbezeichnung der Firma verwendet.
+- Ansprechpartner ist Zusatzinformation.
+
+Die fachliche Rolle des Ansprechpartners ist noch nicht abschließend geklärt.
+
+---
 
 ## 18. Bearbeitbarkeit
+
 ### Geschlossenes Protokoll
-- Ein geschlossenes Protokoll ist vollständig read only.
-- Keine Erstellung
-- Keine Bearbeitung
-- Keine Löschung
-- Keine Verschiebung
+
+Ein geschlossenes Protokoll ist vollständig read only.
+
+Nicht erlaubt:
+
+- Erstellen
+- Bearbeiten
+- Löschen
+- Verschieben
 
 ### Offenes Protokoll – neue blaue TOPs
+
 Bearbeitbar:
+
 - Titel/Kurztext
 - Langtext
 - Fertig bis
@@ -152,50 +246,94 @@ Bearbeitbar:
 - Ansprechpartner
 
 ### Offenes Protokoll – übernommene schwarze TOPs
+
 Nicht bearbeitbar:
+
 - Titel/Kurztext
 - Nummer / Position
 - Löschen
 - Verschieben
 
 Weiterhin bearbeitbar:
+
 - Fertig bis
 - Status
 - Verantwortlich
 - Ansprechpartner
-- Langtext mit Markerregel
+- Langtext nach Markerregel
+
+---
 
 ## 19. Markerregel Langtext
-- Wenn der Langtext eines übernommenen / alten TOPs geändert wird, wird ein zusätzlicher Marker angehängt:
-  - `(verändert <Datum>)`
-- Bei jeder weiteren Änderung kommt ein weiterer zusätzlicher Marker hinzu.
-- Bestehende Marker bleiben stehen.
 
-## 20. Erledigte TOPs über Folgeprotokolle
-- Wird ein TOP auf erledigt gesetzt:
-  - Ampel = grün
-  - Fertig bis = heute
-- Im nächsten Protokoll:
-  - Kurztext grau
-  - Langtext grau
-- Im darauf folgenden Protokoll:
-  - wenn unverändert, wird der TOP ausgeblendet
-- Wenn der Nutzer den Status wieder ändert, gilt diese Ausblendekette nicht unverändert weiter.
+Wird der Langtext eines übernommenen TOPs geändert, wird angehängt:
 
-## 21. Nicht weiterführen
-- Manuelles hidden / Top ausblenden ist nicht Teil des gewünschten Regelwerks.
-- task / decision ist derzeit nicht Teil des verbindlichen Regelwerks.
+`(verändert <Datum>)`
+
+Bei jeder weiteren Änderung kommt ein weiterer Marker dazu.
+Bestehende Marker bleiben stehen.
+
+---
+
+## 20. Erledigte TOPs in Folgeprotokollen
+
+Wird ein TOP auf `erledigt` gesetzt:
+
+- Ampel = grün
+- Fertig bis = heute
+
+Im nächsten Protokoll:
+
+- Kurztext grau
+- Langtext grau
+
+Im darauf folgenden Protokoll:
+
+- unveränderte erledigte TOPs werden ausgeblendet
+
+Wenn der Status später wieder geändert wird, läuft diese Kette nicht unverändert weiter.
+
+---
+
+## 21. Nicht Teil des Regelwerks
+
+Nicht verbindlich geregelt sind derzeit:
+
+- manuelles hidden / Ausblenden
+- `task`
+- `decision`
+
+---
 
 ## 22. Abschluss
-- Beim Klick auf einen Button wie `Schluss jetzt!` wird das Protokoll geschlossen.
-- Der abgeschlossene Protokollstand ist vollständig read only.
-- Übernommene TOPs im nächsten offenen Protokoll bleiben nach den oben genannten Regeln teilweise bearbeitbar.
 
-## 23. Prozess
-- Fachlich gehört zum Abschluss:
-  - PDF erzeugen
-  - an Teilnehmer per Mail senden
-- Technisch muss das hier noch nicht umgesetzt werden.
+Mit dem Abschluss-Button wird das Protokoll geschlossen.
+
+Danach ist der Protokollstand vollständig read only.
+
+Übernommene TOPs im nächsten offenen Protokoll bleiben nach den obigen Regeln teilweise bearbeitbar.
+
+---
+
+## 23. Prozess beim Abschluss
+
+Fachlich gehört dazu:
+
+- PDF erzeugen
+- an Teilnehmer per Mail senden
+
+Technisch muss das nicht in jedem Schritt schon vollständig umgesetzt sein.
+
+---
 
 ## 24. Noch offen
-- Finale fachliche Rolle des Ansprechpartners als evtl. persönliche ToDo-/Haftungslogik
+
+Noch offen ist insbesondere die fachliche Rolle des Ansprechpartners.
+
+---
+
+## Schlussregel
+
+TOPs sind fachliche Langläufer innerhalb eines Projekts.
+
+Änderungen an Verhalten, Bearbeitung, Nummerierung oder Folgeprotokollen müssen mit diesem Regelwerk vereinbar sein.

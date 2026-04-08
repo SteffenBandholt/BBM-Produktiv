@@ -1,27 +1,27 @@
-
----
-
-## `MIGRATION_PLAN.md`
-
-```md
 # MIGRATION_PLAN.md
+
+## Zweck
+
+Diese Datei ist die operative Migrationsdatei für den Übergang von `TopsView` zu `TopsScreen`.
+
+Sie beschreibt nicht die Gesamtarchitektur der App.
+Die führenden architektonischen Leitplanken stehen in `docs/ARCHITEKTUR-LEITPLANKEN.md`.
+Die Architektur des Protokoll-Arbeitsbildschirms steht in `ARCHITECTURE.md`.
 
 ## Ziel
 
 Die bestehende Electron-/Vanilla-JS-Anwendung wird kontrolliert weiterentwickelt.
 
-Die allgemeine App bleibt vorsichtig und schrittweise veränderbar.
+Allgemein bleibt die App vorsichtig und schrittweise veränderbar.
 Es gibt jedoch einen freigegebenen Sonderpfad:
 
-## TopsView-Sonderumbau
+## Operativer Sonderpfad: Migration `TopsView -> TopsScreen`
 
-Die TopsView wird nicht weiter nur in kleinen React-Inseln zerlegt.
-Sie wird als zentraler Arbeitsbildschirm gezielt neu zusammengesetzt.
+`TopsView` wird nicht weiter nur in kleinen Einzelinseln verändert.
+Stattdessen wird der Protokoll-Arbeitsbildschirm schrittweise in `TopsScreen` überführt.
 
 Das ist kein Komplettumbau der App.
-Es betrifft genau diesen einen Kernbildschirm.
-
----
+Es betrifft genau diesen einen fachlichen Bildschirm des Protokollmoduls.
 
 ## Grundsatz
 
@@ -32,7 +32,7 @@ Allgemein gilt weiterhin:
 - geringe Risiken
 - stabile App
 
-Für TopsView gilt ergänzend:
+Für die Migration `TopsView -> TopsScreen` gilt ergänzend:
 
 - nicht weiter am alten überfrachteten Bildschirm herumflicken
 - fachlich Bewährtes übernehmen
@@ -40,7 +40,12 @@ Für TopsView gilt ergänzend:
 - Arbeitsfluss vor Technik
 - kein Dashboard-Ansatz
 
----
+## Einordnung in das Gesamtzielbild
+
+Das Protokoll ist in der aktuellen Produktivphase fachlich wichtig.
+Architektonisch bleibt es trotzdem ein Fachmodul unter mehreren.
+
+Die Migration zu `TopsScreen` dient deshalb nicht nur der UI-Verbesserung, sondern auch der Vorbereitung auf eine sauberere modulare Einordnung des Protokollmoduls.
 
 ## Aktuelle Ausgangslage
 
@@ -54,34 +59,29 @@ Bekannte zentrale Bereiche:
 - `src/renderer/ui/`
 - `src/renderer/features/`
 
-Diese Struktur bleibt außerhalb der TopsView grundsätzlich respektiert.
+Diese Struktur bleibt außerhalb des Protokoll-Arbeitsbildschirms grundsätzlich respektiert.
 
----
+## Allgemeine Migrationslinie außerhalb dieses Sonderpfads
 
-## Allgemeine Migrationslinie außerhalb der TopsView
-
-Außerhalb der TopsView bleibt die bevorzugte Reihenfolge:
+Außerhalb der Migration `TopsView -> TopsScreen` bleibt die bevorzugte Reihenfolge:
 
 1. kleine UI-Bausteine
 2. isolierte Dialoge oder Popups
 3. lokale View-Bereiche
 4. erst später größere Strukturthemen
 
----
+## Warum dieser Sonderpfad
 
-## Sonderpfad TopsView
+Der Protokoll-Arbeitsbildschirm braucht einen eigenen Migrationspfad, weil er:
 
-Die TopsView folgt ab jetzt einem eigenen Pfad.
-
-### Warum
-Weil sie:
-- das Herz der Protokollerstellung ist
 - fachlich weitgehend geklärt ist
 - sichtbaren Ballast angesammelt hat
 - als Arbeitsbildschirm ruhiger und klarer werden muss
+- im Produktivrepo aktuell der wichtigste Ausbaupfad ist
 
-### Zielbild
-Die TopsView besteht aus:
+## Zielbild des Migrationspfads
+
+Der Zielbild-Screen `TopsScreen` besteht aus:
 
 1. Steuerleiste oben
 2. Protokollblatt in der Mitte
@@ -91,17 +91,18 @@ Die TopsView besteht aus:
 6. keine Sidebar
 7. kein leerer allgemeiner Header
 
----
-
-## Fachliche Leitplanken für TopsView
+## Fachliche Leitplanken für die Migration
 
 ### Steuerleiste
+
 Links:
+
 - Protokollnummer
 - Datum
 - Schlagwort
 
 Rechts:
+
 - Teilnehmer
 - PDF-Vorschau
 - Langtext an/aus
@@ -110,13 +111,15 @@ Rechts:
 - Beenden-Symbol
 
 Quicklane:
+
 - Projekt
 - Firmen
 - Ausgabe
 
 ### Protokollblatt
+
 - Nummern
-- Farben/Zustände
+- Farben und Zustände
 - Hierarchie
 - Titel
 - optional Langtext
@@ -124,10 +127,12 @@ Quicklane:
 - klare Auswahl
 
 Nicht im Blatt:
+
 - kein fixer Protokollkopf
 - keine Teilnehmerliste
 
 ### Editbox
+
 - Kurztext
 - Langtext
 - Metaspalte
@@ -136,26 +141,29 @@ Nicht im Blatt:
 - + Titel
 - + TOP
 - Schieben
-- Diktat direkt an Kurztext/Langtext
+- Diktat direkt an Kurztext und Langtext
 
 ### Read-only
+
 - keine Editbox
 - mehr Lesefläche
 
----
+## Reihenfolge des Neuaufbaus
 
-## Reihenfolge des TopsView-Neuaufbaus
+### Schritt 1 - Neue leere `TopsScreen`-Hülle
 
-### Schritt 1 – Neue leere TopsView-Hülle
 Ziel:
+
 - obere Steuerleiste
 - mittlere Blattfläche
 - untere Editbox-Fläche
 - keine Sidebar
 - kein leerer Header
 
-### Schritt 2 – Protokollblatt
+### Schritt 2 - Protokollblatt
+
 Ziel:
+
 - TOP-Liste
 - Nummern
 - Farben
@@ -163,8 +171,10 @@ Ziel:
 - Auswahl
 - Langtext an/aus
 
-### Schritt 3 – Editbox
+### Schritt 3 - Editbox
+
 Ziel:
+
 - Kurztext
 - Langtext
 - Metaspalte
@@ -173,10 +183,12 @@ Ziel:
 - + Titel
 - + TOP
 - Schieben
-- Löschen/Papierkorb
+- Löschen oder Papierkorb
 
-### Schritt 4 – Steuerleiste und Quicklane
+### Schritt 4 - Steuerleiste und Quicklane
+
 Ziel:
+
 - Teilnehmer
 - PDF-Vorschau
 - Protokoll beenden
@@ -187,15 +199,15 @@ Ziel:
   - Firmen
   - Ausgabe
 
-### Schritt 5 – Read-only
+### Schritt 5 - Read-only
+
 Ziel:
+
 - alte Protokolle ohne Editbox
 - mehr Raum zum Lesen
 - nur sinnvolle obere Aktionen
 
----
-
-## Was bei TopsView vorerst nicht passieren soll
+## Was bei diesem Sonderpfad vorerst nicht passieren soll
 
 - kein Dashboard
 - keine Sidebar-Rückkehr
@@ -204,37 +216,28 @@ Ziel:
 - kein zusätzlicher Protokollkopf im Blatt
 - keine unnötige Umleitung auf andere App-Seiten
 
----
-
-## Entscheidungskriterien für TopsView-Schritte
+## Entscheidungskriterien für Migrationsschritte
 
 Wenn mehrere Wege möglich sind, ist zu bevorzugen:
 
 1. der Weg mit dem ruhigeren Bildschirm
 2. der Weg mit weniger Navigation
-3. der Weg mit klarerer Trennung von:
-   - Steuerung
-   - Anzeige
-   - Bearbeitung
+3. der Weg mit klarerer Trennung von Steuerung, Anzeige und Bearbeitung
 4. der Weg mit geringerem globalen Risiko
 5. der Weg, der fachlich Bewährtes übernimmt
 
----
+## Definition of Done für Migrationsschritte
 
-## Definition of Done für TopsView-Schritte
-
-Ein TopsView-Schritt gilt nur dann als fertig, wenn:
+Ein Schritt der Migration `TopsView -> TopsScreen` gilt nur dann als fertig, wenn:
 
 1. der sichtbare Bereich klarer geworden ist
 2. der fachliche Ablauf erhalten blieb
 3. keine unnötige Zusatznavigation entstand
-4. Sidebar/Header-Ballast nicht zurückkam
+4. Sidebar- oder Header-Ballast nicht zurückkam
 5. die Änderung manuell leicht prüfbar ist
-6. die Seite stärker wie ein Arbeitsbildschirm wirkt
+6. der Bildschirm stärker wie ein Arbeitsbildschirm wirkt
 
----
-
-## Pflichtausgabe für jeden TopsView-Schritt
+## Pflichtausgabe für jeden Schritt
 
 Nach jeder Umsetzung soll geliefert werden:
 
@@ -245,15 +248,15 @@ Nach jeder Umsetzung soll geliefert werden:
 - welche Risiken offen bleiben
 - wie ein Nicht-Entwickler den Schritt manuell testen kann
 
----
-
 ## Unmittelbarer Fokus
 
-Der nächste Fokus für TopsView ist nicht:
+Der nächste Fokus dieser Migration ist nicht:
+
 - Router-Ersatz
 - globaler State
-- allgemeine React-Inseln
+- allgemeine Technik-Umbauten ohne direkten Nutzwert
 
 Der nächste Fokus ist:
-- die TopsView als Arbeitsbildschirm gezielt neu zusammensetzen
+
+- `TopsView` fachlich und schrittweise nach `TopsScreen` zu überführen
 - zuerst Hülle, dann Blatt, dann Editbox, dann Steuerung, dann Read-only
