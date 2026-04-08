@@ -106,6 +106,14 @@ export default class ProjectsView {
     return s;
   }
 
+  // UI-nahe Projektkontext-Nutzung:
+  // ProjectsView startet und bearbeitet Projekte, haelt den laufenden
+  // Projektkontext aber nur fuer anschliessende Router-/Protokollpfade.
+  _setProjectRuntimeContext(projectId, meetingId = null) {
+    this.router.currentProjectId = projectId || null;
+    this.router.currentMeetingId = meetingId || null;
+  }
+
   _labelForTile(p) {
     if (!p) return "(ohne Name)";
     const short = String(p.short || "").trim();
@@ -1150,24 +1158,10 @@ export default class ProjectsView {
       const openMeetings = list.filter((m) => Number(m?.is_closed) !== 1);
       if (openMeetings.length === 0) return false;
 
-      const pickLatest = (arr) =>
-        arr.reduce((best, cur) => {
-          const bestIdx = Number(best?.meeting_index ?? best?.meetingIndex ?? 0);
-          const curIdx = Number(cur?.meeting_index ?? cur?.meetingIndex ?? 0);
-          if (curIdx > bestIdx) return cur;
-          if (curIdx === bestIdx) {
-            const bestId = Number(best?.id ?? 0);
-            const curId = Number(cur?.id ?? 0);
-            return curId > bestId ? cur : best;
-          }
-          return best;
-        }, openMeetings[0]);
-
-      const meeting = pickLatest(openMeetings);
+      const meeting = this._pickLatestOpenMeeting(openMeetings);
       if (!meeting?.id) return false;
 
-      this.router.currentProjectId = projectId;
-      this.router.currentMeetingId = meeting.id;
+      this._setProjectRuntimeContext(projectId, meeting.id);
       await this.router.showTops(meeting.id, projectId);
       this._rememberLastProject(projectId);
       return true;
@@ -1188,8 +1182,7 @@ export default class ProjectsView {
     this._setMsg("Öffne Projekt...");
 
     try {
-      this.router.currentProjectId = projectId;
-      this.router.currentMeetingId = null;
+      this._setProjectRuntimeContext(projectId, null);
 
       const api = window.bbmDb || {};
       if (typeof api.meetingsCreate !== "function") {
@@ -1251,8 +1244,7 @@ export default class ProjectsView {
         return false;
       }
 
-      this.router.currentProjectId = projectId;
-      this.router.currentMeetingId = meetingId;
+      this._setProjectRuntimeContext(projectId, meetingId);
 
       this._setMsg("Öffne Protokoll...");
 
@@ -1279,6 +1271,23 @@ export default class ProjectsView {
     }
 
     return result;
+  }
+
+  _pickLatestOpenMeeting(openMeetings) {
+    const list = Array.isArray(openMeetings) ? openMeetings : [];
+    if (!list.length) return null;
+
+    return list.reduce((best, cur) => {
+      const bestIdx = Number(best?.meeting_index ?? best?.meetingIndex ?? 0);
+      const curIdx = Number(cur?.meeting_index ?? cur?.meetingIndex ?? 0);
+      if (curIdx > bestIdx) return cur;
+      if (curIdx === bestIdx) {
+        const bestId = Number(best?.id ?? 0);
+        const curId = Number(cur?.id ?? 0);
+        return curId > bestId ? cur : best;
+      }
+      return best;
+    }, list[0]);
   }
 
   destroy() {

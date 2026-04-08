@@ -422,7 +422,7 @@ Paket 2 ist als konservative Vorbereitung abgeschlossen. Im Renderer wurden die 
 ---
 
 ## Schritt 3.3 – Projekte als gemeinsame Domäne festziehen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Projektbasis und Projektkontext sauber vom Fachmodul trennen.
@@ -440,7 +440,21 @@ Projektbasis und Projektkontext sauber vom Fachmodul trennen.
 - Projekte sind als gemeinsame Grundlage verfügbar
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 3 hat den naechsten Schnitt im Renderer konservativ vorbereitet. Projektbezogener Runtime-/Renderer-Kontext wurde sichtbarer gemacht und der Router traegt den Projektkontext konsistenter und gibt ihn an UI-nahe Nutzung weiter. `src/renderer/ui/ProjectContextQuicklane.js` und `src/renderer/views/ProjectsView.js` bleiben weiterhin UI-nahe bzw. nutzende Schichten; `src/renderer/views/TopsScreen.js` stellt weiterhin protokollnahe Projektnutzung dar und ist noch keine gemeinsame Projektdomaene selbst. Ein vollstaendiger Domaenenumzug wurde damit noch nicht umgesetzt.
+
+## Paket 3 â€“ Projektkontext im Renderer sichtbar festziehen
+**Status:** ERLEDIGT
+
+**Ziel**
+Die zentralen Projekt-Zugriffspunkte im Renderer konservativ so vorbereiten, dass gemeinsamer Projekt-/Projektkontext sichtbarer von UI-naher und protokollnaher Nutzung unterschieden werden kann, ohne bereits einen grossen Domaenenumbau auszuloesen.
+
+**Ergebnis**
+- projektbezogener Runtime-/Renderer-Kontext ist im Renderer sichtbarer gemacht.
+- der Router traegt den Projektkontext konsistenter und gibt ihn an UI-nahe Nutzung weiter.
+- UI-nahe und protokollnahe Projektlogik bleibt in den nutzenden Schichten und wurde nicht vorzeitig in eine neue Zielstruktur verschoben.
+
+**Stand / Notiz**
+Paket 3 ist als konservative Vorbereitung abgeschlossen. Im Renderer wurden die tatsaechlich zentralen Projekt-Zugriffspunkte auf wenige relevante Dateien fokussiert; der projektbezogene Runtime-/Renderer-Kontext im Router wurde sichtbarer gegliedert und konsistenter an nutzende Schichten weitergegeben, waehrend `src/renderer/ui/ProjectContextQuicklane.js` und `src/renderer/views/ProjectsView.js` weiterhin UI-nahe bzw. nutzende Schichten bleiben und `src/renderer/views/TopsScreen.js` weiterhin protokollnahe Projektnutzung darstellt. Die bestehende Funktionalitaet wurde dabei erhalten; ein vollstaendiges Ausschneiden der gemeinsamen Projektdomaene ist noch offen.
 
 ---
 

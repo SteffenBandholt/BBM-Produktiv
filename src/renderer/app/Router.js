@@ -392,6 +392,37 @@ export default class Router {
     this._refreshHeaderSafe();
   }
 
+  // Gemeinsamer Projekt-/Projektkontext im Renderer:
+  // Der Router traegt heute noch den laufenden Projektkontext, auch wenn viele
+  // fachnahe Nutzungen ihn direkt verbrauchen.
+  _getProjectContextState() {
+    return {
+      projectId: this.currentProjectId || this.lastTopsProjectId || null,
+      meetingId: this.currentMeetingId || this.lastTopsMeetingId || null,
+      projectLabel: this.context?.projectLabel || null,
+    };
+  }
+
+  _setProjectRuntimeContext({ projectId, meetingId } = {}) {
+    if (projectId !== undefined) {
+      this.currentProjectId = projectId || null;
+    }
+    if (meetingId !== undefined) {
+      this.currentMeetingId = meetingId || null;
+    }
+  }
+
+  async _syncProjectContextUi() {
+    await this.ensureCurrentProjectLabelLoaded({ force: false });
+
+    try {
+      const lane = await this._ensureProjectContextQuicklane();
+      lane?.setContext?.(this._getProjectContextState());
+    } catch (_e) {
+      // ignore
+    }
+  }
+
   _resolveProjectId(projectId) {
     return projectId || this.currentProjectId || null;
   }
@@ -453,18 +484,7 @@ export default class Router {
     this._setActiveSection(section);
 
     await this.ensureAppSettingsLoaded({ force: false });
-    await this.ensureCurrentProjectLabelLoaded({ force: false });
-
-    try {
-      const lane = await this._ensureProjectContextQuicklane();
-      lane?.setContext?.({
-        projectId: this.currentProjectId || this.lastTopsProjectId || null,
-        meetingId: this.currentMeetingId || this.lastTopsMeetingId || null,
-        projectLabel: this.context.projectLabel || null,
-      });
-    } catch (_e) {
-      // ignore
-    }
+    await this._syncProjectContextUi();
 
     this.contentRoot.innerHTML = "";
     const e = v.render();
@@ -488,8 +508,10 @@ export default class Router {
   async showFirmsPool(projectId) {
     const mod = await import("../views/FirmsPoolView.js");
     const V = mod.default;
-    this.currentProjectId = projectId || this.currentProjectId || null;
-    this.currentMeetingId = null;
+    this._setProjectRuntimeContext({
+      projectId: projectId || this.currentProjectId || null,
+      meetingId: null,
+    });
     await this.show(new V({ router: this, projectId: this.currentProjectId }), {
       section: "firmsPool",
       isTopsView: false,
@@ -500,8 +522,7 @@ export default class Router {
   async showHome() {
     const mod = await import("../views/HomeView.js");
     const V = mod.default;
-    this.currentProjectId = null;
-    this.currentMeetingId = null;
+    this._setProjectRuntimeContext({ projectId: null, meetingId: null });
     await this.show(new V({ router: this }), { section: "home", isTopsView: false });
   }
 
@@ -510,16 +531,12 @@ export default class Router {
     const mod = await import("../views/ProjectFormView.js");
     const V = mod.default;
 
-    this.currentMeetingId = null;
+    this._setProjectRuntimeContext({ meetingId: null });
 
     const effectiveProjectId =
       projectId === undefined ? this.currentProjectId || null : projectId || null;
 
-    if (effectiveProjectId) {
-      this.currentProjectId = effectiveProjectId;
-    } else {
-      this.currentProjectId = null;
-    }
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId });
 
     await this.show(new V({ router: this, projectId: effectiveProjectId }), {
       section: "projects",
@@ -532,8 +549,7 @@ export default class Router {
     const mod = await import("../views/MeetingsView.js");
     const V = mod.default;
 
-    this.currentProjectId = projectId || null;
-    this.currentMeetingId = null;
+    this._setProjectRuntimeContext({ projectId: projectId || null, meetingId: null });
     await this.show(
       new V({
         router: this,
@@ -554,8 +570,10 @@ export default class Router {
     const opts = options && typeof options === "object" ? options : {};
     const readOnly = !!opts.readOnly;
 
-    this.currentProjectId = projectId || this.currentProjectId || null;
-    this.currentMeetingId = meetingId || null;
+    this._setProjectRuntimeContext({
+      projectId: projectId || this.currentProjectId || null,
+      meetingId: meetingId || null,
+    });
     this.lastTopsProjectId = this.currentProjectId || null;
     this.lastTopsMeetingId = this.currentMeetingId || null;
 
@@ -578,7 +596,7 @@ export default class Router {
     const mod = await import("../views/ProjectFirmsView.js");
     const V = mod.default;
 
-    this.currentProjectId = projectId || this.currentProjectId || null;
+    this._setProjectRuntimeContext({ projectId: projectId || this.currentProjectId || null });
     await this.show(new V({ router: this, projectId: this.currentProjectId }), {
       section: "projectFirms",
       isTopsView: false,
@@ -596,7 +614,7 @@ export default class Router {
     const mod = await import("../views/ArchiveView.js");
     const V = mod.default;
 
-    this.currentMeetingId = null;
+    this._setProjectRuntimeContext({ meetingId: null });
     await this.show(new V({ router: this }), { section: "archive", isTopsView: false });
   }
 
@@ -623,7 +641,7 @@ export default class Router {
   async openCandidatesModal({ projectId } = {}) {
     const effectiveProjectId = this._requireProjectContext(projectId, "Projekt-Kontext fehlt.");
     if (!effectiveProjectId) return;
-    this.currentProjectId = effectiveProjectId;
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId });
     const pm = await this._ensureParticipantsModals();
     await pm.openCandidates({ projectId: effectiveProjectId });
   }
@@ -639,8 +657,10 @@ export default class Router {
       alert("Bitte zuerst eine Besprechung öffnen.");
       return;
     }
-    this.currentProjectId = effectiveProjectId;
-    this.currentMeetingId = effectiveMeetingId;
+    this._setProjectRuntimeContext({
+      projectId: effectiveProjectId,
+      meetingId: effectiveMeetingId,
+    });
     const pm = await this._ensureParticipantsModals();
     await pm.openParticipants({ projectId: effectiveProjectId, meetingId: effectiveMeetingId });
   }
@@ -832,7 +852,7 @@ export default class Router {
       alert("Bitte zuerst ein Projekt auswählen.");
       return;
     }
-    this.currentProjectId = effectiveProjectId;
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId });
     const pm = await this._ensurePrintModal();
     try {
       if (typeof pm.close === "function") {
@@ -935,8 +955,10 @@ export default class Router {
       alert("Bitte zuerst ein Projekt ausw\u00e4hlen.");
       return;
     }
-    this.currentProjectId = effectiveProjectId;
-    if (meetingId) this.currentMeetingId = meetingId;
+    this._setProjectRuntimeContext({
+      projectId: effectiveProjectId,
+      meetingId: meetingId || this.currentMeetingId || null,
+    });
     const pm = await this._ensurePrintModal();
     if (typeof pm?.openFirmsPrintPreview !== "function") {
       alert("PrintModal unterst\u00fctzt keine Firmenliste.");
@@ -955,7 +977,7 @@ export default class Router {
       alert("Bitte zuerst ein Projekt ausw\u00e4hlen.");
       return;
     }
-    this.currentProjectId = effectiveProjectId;
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId });
     const pm = await this._ensurePrintModal();
     if (typeof pm?.openStoredFirmsPdfSelection !== "function") {
       alert("PrintModal unterst\u00fctzt keine gespeicherten Firmenlisten.");
@@ -974,8 +996,10 @@ export default class Router {
       alert("Bitte zuerst ein Projekt auswählen.");
       return;
     }
-    this.currentProjectId = effectiveProjectId;
-    if (meetingId) this.currentMeetingId = meetingId;
+    this._setProjectRuntimeContext({
+      projectId: effectiveProjectId,
+      meetingId: meetingId || this.currentMeetingId || null,
+    });
     const pm = await this._ensurePrintModal();
     if (typeof pm?.printClosedMeetingDirect !== "function") {
       alert("PrintModal unterstützt keinen Protokoll-Direktdruck.");
@@ -995,8 +1019,10 @@ export default class Router {
       alert("Bitte zuerst ein Projekt ausw\u00e4hlen.");
       return;
     }
-    this.currentProjectId = effectiveProjectId;
-    if (meetingId) this.currentMeetingId = meetingId;
+    this._setProjectRuntimeContext({
+      projectId: effectiveProjectId,
+      meetingId: meetingId || this.currentMeetingId || null,
+    });
     const pm = await this._ensurePrintModal();
     if (typeof pm?.printFirmsDirect !== "function") {
       alert("PrintModal unterst\u00fctzt keine Firmenliste.");
@@ -1016,8 +1042,10 @@ export default class Router {
       alert("Bitte zuerst ein Projekt ausw\u00e4hlen.");
       return;
     }
-    this.currentProjectId = effectiveProjectId;
-    if (meetingId) this.currentMeetingId = meetingId;
+    this._setProjectRuntimeContext({
+      projectId: effectiveProjectId,
+      meetingId: meetingId || this.currentMeetingId || null,
+    });
     const pm = await this._ensurePrintModal();
     if (typeof pm?.printTodoDirect !== "function") {
       alert("PrintModal unterst\u00fctzt keine ToDo-Liste.");
@@ -1037,8 +1065,10 @@ export default class Router {
       alert("Bitte zuerst ein Projekt ausw\u00e4hlen.");
       return;
     }
-    this.currentProjectId = effectiveProjectId;
-    if (meetingId) this.currentMeetingId = meetingId;
+    this._setProjectRuntimeContext({
+      projectId: effectiveProjectId,
+      meetingId: meetingId || this.currentMeetingId || null,
+    });
     const pm = await this._ensurePrintModal();
     if (typeof pm?.printTopListAllDirect !== "function") {
       alert("PrintModal unterst\u00fctzt keine Top-Liste.");
@@ -1096,12 +1126,7 @@ export default class Router {
         onClose: cleanup,
         onSaved: async () => {
           await this.ensureCurrentProjectLabelLoaded({ force: true });
-          const lane = await this._ensureProjectContextQuicklane();
-          lane?.setContext?.({
-            projectId: this.currentProjectId || this.lastTopsProjectId || null,
-            meetingId: this.currentMeetingId || this.lastTopsMeetingId || null,
-            projectLabel: this.context.projectLabel || null,
-          });
+          await this._syncProjectContextUi();
           this._refreshHeaderSafe();
           cleanup();
         },

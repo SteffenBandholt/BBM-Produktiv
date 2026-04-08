@@ -225,11 +225,23 @@ export default class TopsScreen {
     return state.projectId || this.router?.currentProjectId || null;
   }
 
+  // Protokollnahe Projektnutzung:
+  // TopsScreen verbraucht den vorhandenen Projektkontext fuer Header, Quicklane
+  // und Fachaktionen, bildet aber keine gemeinsame Projektdomaene selbst.
+  _getProjectScreenContext() {
+    const state = this.store.getState();
+    return {
+      projectId: state.projectId || this.router?.currentProjectId || null,
+      projectLabel: String(this.router?.context?.projectLabel || "").trim(),
+    };
+  }
+
   _syncQuicklaneState() {
     const state = this.store.getState();
     if (!(this.quicklane instanceof TopsQuicklane)) return;
+    const projectContext = this._getProjectScreenContext();
     this.quicklane.update({
-      projectId: this._getQuicklaneProjectId(),
+      projectId: projectContext.projectId,
       isReadOnly: !!state.isReadOnly,
       isWriting: !!state.isWriting,
     });
@@ -239,10 +251,10 @@ export default class TopsScreen {
   _syncHeaderState() {
     if (!(this.header instanceof TopsHeader)) return;
     const state = this.store.getState();
-    const projectLabel = String(this.router?.context?.projectLabel || "").trim();
+    const projectContext = this._getProjectScreenContext();
     const headerState = buildHeaderState({
       ...state,
-      projectLabel,
+      projectLabel: projectContext.projectLabel,
     });
     this.header.update({
       titleLine: headerState.titleLine,

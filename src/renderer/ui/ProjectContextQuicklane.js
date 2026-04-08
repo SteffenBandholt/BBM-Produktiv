@@ -475,7 +475,7 @@ export default class ProjectContextQuicklane {
     return wrap;
   }
 
-  _renderContext() {
+  _getNormalizedProjectMeta() {
     const projectLabel = String(this._lastOpts?.projectLabel || "").trim();
     let projectNumber = String(this._lastOpts?.projectNumber || "").trim();
     let projectShort = String(this._lastOpts?.projectShort || "").trim();
@@ -496,6 +496,22 @@ export default class ProjectContextQuicklane {
       }
     }
 
+    return {
+      projectNumber,
+      projectShort,
+      hasProject: !!this._lastOpts?.projectId,
+      hasMeeting: !!this._lastOpts?.meetingId,
+    };
+  }
+
+  // UI-nahe Projektnutzung:
+  // die Quicklane liest den bereits vorhandenen Projektkontext und bereitet ihn
+  // nur fuer Anzeige und Aktionen auf.
+  _renderContext() {
+    const meta = this._getNormalizedProjectMeta();
+    const projectNumber = meta.projectNumber;
+    const projectShort = meta.projectShort;
+
     if (this.projectNumberValueEl) this.projectNumberValueEl.textContent = projectNumber || "—";
     if (this.projectShortValueEl) this.projectShortValueEl.textContent = projectShort || "—";
     if (this.projectIdValueEl) {
@@ -511,9 +527,9 @@ export default class ProjectContextQuicklane {
           : String(this._lastOpts.meetingId);
     }
 
-    const hasProject = !!this._lastOpts?.projectId;
-    const hasParticipants = hasProject && !!this._lastOpts?.meetingId;
-    const hasPreview = hasProject && !!this._lastOpts?.meetingId;
+    const hasProject = meta.hasProject;
+    const hasParticipants = meta.hasProject && meta.hasMeeting;
+    const hasPreview = meta.hasProject && meta.hasMeeting;
     const ampelOn =
       typeof this._ampelEnabled === "boolean"
         ? this._ampelEnabled
