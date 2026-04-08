@@ -459,10 +459,10 @@ Paket 3 ist als konservative Vorbereitung abgeschlossen. Im Renderer wurden die 
 ---
 
 # Phase 4 – Gemeinsame Dienste sauber schneiden
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 ## Schritt 4.1 – Druck-/PDF-Infrastruktur schneiden
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Technische Ausgabe von fachlichen Ausgabeinhalten trennen.
@@ -481,7 +481,21 @@ Technische Ausgabe von fachlichen Ausgabeinhalten trennen.
 - Fachmodule liefern Inhalte, nicht die ganze Drucktechnik
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat den ersten Dienstschnitt konservativ vorbereitet. Die technische Druck-/PDF-Infrastruktur in `src/main/ipc/printIpc.js` und `src/main/print/printData.js` wurde sichtbarer gemacht; technischer Runtime-Kontext und fachliche Dokumentinhalte wurden dort klarer getrennt. `src/renderer/ui/PrintModal.js` bleibt weiterhin UI-nahe Nutzungsschicht und nutzt den technischen Dienst, statt selbst gemeinsamer Dienst zu sein. Ein vollstaendiger Dienstumzug oder ein neuer Dienstbereich wurde damit noch nicht umgesetzt.
+
+## Paket 1 â€“ Druck-/PDF-Zugriffe sichtbar schneiden
+**Status:** ERLEDIGT
+
+**Ziel**
+Die zentralen Druck-/PDF-Zugriffspunkte konservativ so vorbereiten, dass gemeinsamer technischer Dienst klarer von fachlichen Ausgabeinhalten und UI-naher Nutzung unterschieden werden kann, ohne bereits einen grossen Infrastrukturumbau auszuloesen.
+
+**Ergebnis**
+- technische Druck-/PDF-Infrastruktur in `src/main/ipc/printIpc.js` und `src/main/print/printData.js` ist sichtbarer gemacht.
+- technischer Runtime-Kontext und fachliche Dokumentinhalte sind dort klarer getrennt.
+- `src/renderer/ui/PrintModal.js` bleibt UI-nahe Nutzungsschicht und verwendet den technischen Dienst weiter.
+
+**Stand / Notiz**
+Paket 1 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentralen Druck-/PDF-Zugriffspunkte wurden auf wenige relevante Dateien fokussiert; in `src/main/ipc/printIpc.js` und `src/main/print/printData.js` wurde die technische Infrastruktur sichtbarer gegliedert, waehrend `src/renderer/ui/PrintModal.js` weiterhin als UI-nahe Nutzungs- und Ablaufsteuerung erhalten bleibt. Die bestehende Funktionalitaet wurde dabei beibehalten; ein vollstaendiger Dienstumzug oder ein neuer gemeinsamer Dienstbereich ist noch nicht umgesetzt.
 
 ---
 

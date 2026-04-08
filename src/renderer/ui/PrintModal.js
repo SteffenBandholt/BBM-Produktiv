@@ -1212,6 +1212,30 @@ export default class PrintModal {
     return this._sanitizeFileName(parts.join(" - ")) + ".pdf";
   }
 
+  // UI-nahe Nutzung:
+  // Listen-/Vorschau-Workflows bleiben hier, delegieren die technische PDF-Erzeugung
+  // aber konsistent an den gemeinsamen Druckdienst.
+  _buildProjectListPrintRequest({
+    mode,
+    projectId,
+    meetingId,
+    fileName,
+    protocolsDir,
+    projectNumber,
+    preview,
+  } = {}) {
+    return {
+      mode,
+      projectId,
+      meetingId: meetingId || null,
+      fileName,
+      baseDir: protocolsDir,
+      projectNumber,
+      overwrite: true,
+      ...(preview ? { targetDir: "temp" } : { silent: true }),
+    };
+  }
+
   async _printFirmsPdf({ projectId, meetingId, preview = true } = {}) {
     const pid = projectId || this.router?.currentProjectId || null;
     if (!pid) {
@@ -1423,13 +1447,17 @@ export default class PrintModal {
         meetingIndex: meetingNr,
         meetingDate: meetingDateRaw,
       });
-      const out = await window.bbmPrint.printPdf({
-        mode: "firms",
-        projectId: pid,
-        meetingId: meetingId || null,
-        fileName: fn,
-        ...(preview ? { targetDir: "temp" } : { baseDir: protocolsDir, projectNumber, overwrite: true, silent: true }),
-      });
+      const out = await window.bbmPrint.printPdf(
+        this._buildProjectListPrintRequest({
+          mode: "firms",
+          projectId: pid,
+          meetingId,
+          fileName: fn,
+          protocolsDir,
+          projectNumber,
+          preview,
+        })
+      );
       if (!out?.ok) {
         alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
         return;
@@ -1910,16 +1938,16 @@ export default class PrintModal {
       });
 
       const out = await window.bbmPrint.printPdf({
-        mode: "todo",
-        projectId: pid,
-        meetingId: mid,
-        fileName,
         bbmVersion: "1.0",
-        baseDir: protocolsDir,
-        projectNumber,
-        overwrite: true,
-        ...(!preview ? { silent: true } : {}),
-        ...(preview ? { targetDir: "temp" } : {}),
+        ...this._buildProjectListPrintRequest({
+          mode: "todo",
+          projectId: pid,
+          meetingId: mid,
+          fileName,
+          protocolsDir,
+          projectNumber,
+          preview,
+        }),
       });
       if (!out?.ok) {
         alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
@@ -2063,16 +2091,16 @@ export default class PrintModal {
       });
 
       const out = await window.bbmPrint.printPdf({
-        mode: "topsAll",
-        projectId: pid,
-        meetingId: mid,
-        fileName,
         bbmVersion: "1.0",
-        baseDir: protocolsDir,
-        projectNumber,
-        overwrite: true,
-        ...(!preview ? { silent: true } : {}),
-        ...(preview ? { targetDir: "temp" } : {}),
+        ...this._buildProjectListPrintRequest({
+          mode: "topsAll",
+          projectId: pid,
+          meetingId: mid,
+          fileName,
+          protocolsDir,
+          projectNumber,
+          preview,
+        }),
       });
       if (!out?.ok) {
         alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
@@ -4838,5 +4866,3 @@ export default class PrintModal {
     }
   }
 }
-
-

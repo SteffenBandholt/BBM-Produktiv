@@ -765,22 +765,8 @@ function _buildUserData(settings) {
   };
 }
 
-async function getPrintData({ mode, projectId, meetingId, settingsOverride } = {}) {
-  const db = initDatabase();
-  const project = projectId ? projectsRepo.getById(projectId) : null;
-  const meeting = meetingId ? meetingsRepo.getMeetingById(meetingId) : null;
-  const settingsBase = _loadSettings(db);
-  const projectSettings = projectId
-    ? projectSettingsRepo.getMany(projectId, PROJECT_PRINT_SETTINGS_KEYS)
-    : {};
-  const settings = { ...(settingsBase || {}), ...(projectSettings || {}), ...(settingsOverride || {}) };
-  const protocolTitle = String(settings?.["pdf.protocolTitle"] || "").trim();
-  const printProfile = _resolvePrintProfile(mode);
-  const userData = _buildUserData(settings);
-  const logos = _buildLogos(settings);
-  const v2Layout = _buildV2Layout(settings, logos);
-
-  const interludeText = String(settings?.["print.interludeText"] || "").trim();
+function _resolveNextMeetingForPrint({ mode, meeting, settings } = {}) {
+  const normalizedMode = String(mode || "").trim().toLowerCase();
   const meetingNextMeeting = {
     enabled: _parseBool(meeting?.next_meeting_enabled),
     date: String(meeting?.next_meeting_date || "").trim(),
@@ -803,11 +789,51 @@ async function getPrintData({ mode, projectId, meetingId, settingsOverride } = {
     place: String(settings?.["print.nextMeeting.place"] || "").trim(),
     extra: String(settings?.["print.nextMeeting.extra"] || "").trim(),
   };
-  const nextMeeting =
-    String(mode || "").trim().toLowerCase() === "protocol"
-      ? (hasMeetingNextMeeting ? meetingNextMeeting : { enabled: false, date: "", time: "", place: "", extra: "" })
-      : (hasMeetingNextMeeting ? meetingNextMeeting : settingsNextMeeting);
 
+  if (normalizedMode === "protocol") {
+    return hasMeetingNextMeeting
+      ? meetingNextMeeting
+      : { enabled: false, date: "", time: "", place: "", extra: "" };
+  }
+
+  return hasMeetingNextMeeting ? meetingNextMeeting : settingsNextMeeting;
+}
+
+// Gemeinsamer technischer Laufzeitkontext fuer den Druckdienst:
+// Projekt/Meeting, effektive Einstellungen, Profil und Layout werden hier vorbereitet.
+function _buildPrintRuntimeContext({ db, mode, projectId, meetingId, settingsOverride } = {}) {
+  const project = projectId ? projectsRepo.getById(projectId) : null;
+  const meeting = meetingId ? meetingsRepo.getMeetingById(meetingId) : null;
+  const settingsBase = _loadSettings(db);
+  const projectSettings = projectId
+    ? projectSettingsRepo.getMany(projectId, PROJECT_PRINT_SETTINGS_KEYS)
+    : {};
+  const settings = { ...(settingsBase || {}), ...(projectSettings || {}), ...(settingsOverride || {}) };
+  const protocolTitle = String(settings?.["pdf.protocolTitle"] || "").trim();
+  const printProfile = _resolvePrintProfile(mode);
+  const userData = _buildUserData(settings);
+  const logos = _buildLogos(settings);
+  const v2Layout = _buildV2Layout(settings, logos);
+  const interludeText = String(settings?.["print.interludeText"] || "").trim();
+  const nextMeeting = _resolveNextMeetingForPrint({ mode, meeting, settings });
+
+  return {
+    project,
+    meeting,
+    settings,
+    protocolTitle,
+    printProfile,
+    v2Layout,
+    userData,
+    logos,
+    interludeText,
+    nextMeeting,
+  };
+}
+
+// Fachliche Dokumentinhalte bleiben mode-bezogen:
+// Teilnehmer, TOPs, Firmen und ToDo-Zeilen werden hier je Ausgabeart geladen.
+function _loadPrintDocumentContent({ db, mode, projectId, meetingId, meeting, settings } = {}) {
   let participants = [];
   let tops = [];
   let firms = [];
@@ -838,21 +864,35 @@ async function getPrintData({ mode, projectId, meetingId, settingsOverride } = {
   }
 
   return {
-    mode,
-    project,
-    meeting,
-    settings,
-    protocolTitle,
-    printProfile,
-    v2Layout,
-    userData,
-    logos,
-    interludeText,
-    nextMeeting,
     participants,
     tops,
     firms,
     todoRows,
+  };
+}
+
+async function getPrintData({ mode, projectId, meetingId, settingsOverride } = {}) {
+  const db = initDatabase();
+  const runtimeContext = _buildPrintRuntimeContext({
+    db,
+    mode,
+    projectId,
+    meetingId,
+    settingsOverride,
+  });
+  const documentContent = _loadPrintDocumentContent({
+    db,
+    mode,
+    projectId,
+    meetingId,
+    meeting: runtimeContext.meeting,
+    settings: runtimeContext.settings,
+  });
+
+  return {
+    mode,
+    ...runtimeContext,
+    ...documentContent,
   };
 }
 

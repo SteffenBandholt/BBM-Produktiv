@@ -65,6 +65,8 @@ function buildPrintToPdfOptions() {
   };
 }
 
+// Shared technical output infrastructure:
+// directory selection and file path creation stay centralized in this print service.
 function _folderForMode(mode) {
   const m = String(mode || "").trim().toLowerCase();
   if (m === "protocol") return "Protokolle";
@@ -116,7 +118,7 @@ async function _buildOutputPath({
     : uniquePath(outDir, fileName || "BBM.pdf");
 }
 
-
+// Transitional infrastructure for already generated PDFs.
 function findStoredProtocolPdf({
   baseDir,
   project,
@@ -268,6 +270,14 @@ function listStoredProjectPdfs({ baseDir, project, kind } = {}) {
   return { ok: true, dir: targetDir, projectFolder, files };
 }
 
+async function _runIpcTask(task) {
+  try {
+    return await task();
+  } catch (err) {
+    return { ok: false, error: err?.message || String(err) };
+  }
+}
+
 function attachPrintDebugPipes(win, jobId) {
   win.webContents.on("console-message", (_event, level, message, line, sourceId) => {
     const lvl = ["LOG", "WARN", "ERROR", "DEBUG"][level] || String(level);
@@ -410,8 +420,9 @@ async function printToPdf(payload = {}) {
 }
 
 function registerPrintIpc() {
-  ipcMain.handle("print:getData", async (_evt, payload) => {
-    try {
+  // Stable technical service entry points for renderer callers.
+  ipcMain.handle("print:getData", async (_evt, payload) =>
+    _runIpcTask(async () => {
       const p = payload || {};
       const data = await getPrintData({
         mode: p.mode,
@@ -423,13 +434,11 @@ function registerPrintIpc() {
       data.appVersion = app.getVersion ? app.getVersion() : "";
       data.buildChannel = app.isPackaged ? "STABLE" : "DEV";
       return { ok: true, data };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
-  ipcMain.handle("print:toPdf", async (_evt, payload) => {
-    try {
+  ipcMain.handle("print:toPdf", async (_evt, payload) =>
+    _runIpcTask(async () => {
       console.log(
         `[PRINT_ACTIVE] handler=print:toPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""
@@ -437,14 +446,12 @@ function registerPrintIpc() {
       );
       const outPath = await printToPdf(payload || {});
       return { ok: true, filePath: outPath };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
 
-  ipcMain.handle("protocol:findStoredPdf", async (_evt, payload) => {
-    try {
+  ipcMain.handle("protocol:findStoredPdf", async (_evt, payload) =>
+    _runIpcTask(async () => {
       const p = payload || {};
       return findStoredProtocolPdf({
         baseDir: p.baseDir,
@@ -452,38 +459,32 @@ function registerPrintIpc() {
         expectedFileNames: p.expectedFileNames || [],
         meetingIndex: p.meetingIndex,
       });
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
-  ipcMain.handle("firms:listStoredPdfs", async (_evt, payload) => {
-    try {
+  ipcMain.handle("firms:listStoredPdfs", async (_evt, payload) =>
+    _runIpcTask(async () => {
       const p = payload || {};
       return listStoredFirmsPdfs({
         baseDir: p.baseDir,
         project: p.project || null,
       });
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
-  ipcMain.handle("print:listStoredProjectPdfs", async (_evt, payload) => {
-    try {
+  ipcMain.handle("print:listStoredProjectPdfs", async (_evt, payload) =>
+    _runIpcTask(async () => {
       const p = payload || {};
       return listStoredProjectPdfs({
         baseDir: p.baseDir,
         project: p.project || null,
         kind: p.kind || "",
       });
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
-  ipcMain.handle("print:htmlToPdf", async (_evt, payload) => {
-    try {
+  ipcMain.handle("print:htmlToPdf", async (_evt, payload) =>
+    _runIpcTask(async () => {
       console.log(
         `[PRINT_ACTIVE] handler=print:htmlToPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""
@@ -491,10 +492,8 @@ function registerPrintIpc() {
       );
       const outPath = await printToPdf(payload || {});
       return { ok: true, filePath: outPath };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 }
 
 module.exports = { registerPrintIpc };
