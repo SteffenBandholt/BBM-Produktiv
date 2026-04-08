@@ -35,6 +35,91 @@ export class TopsAssigneeDataSource {
     return this._asText(kind) === "global_person" ? "stamm" : "projektlokal";
   }
 
+  // Protokollnahe Projektion gemeinsamer Firmenstammdaten:
+  // Hier werden Stammdaten in die fuer Tops/Verantwortlich benoetigte
+  // projektbezogene Lesesicht uebersetzt.
+  _createSharedCompanyProjection(projectId, row) {
+    const sourceType = "stamm";
+    const baseId =
+      this._asText(row?.firmId ?? row?.firm_id ?? row?.companyId ?? row?.company_id ?? row?.id) || "-";
+    const projectCompanyId = this._projectCompanyKey({
+      projectId,
+      sourceType,
+      baseId,
+    });
+
+    return {
+      projectCompanyId,
+      company: {
+        id: projectCompanyId,
+        projectCompanyId,
+        companyId: baseId,
+        sourceType,
+        name1:
+          this._asText(row?.name1 ?? row?.Name1 ?? row?.name ?? row?.firm_name ?? row?.firmName) ||
+          "Firma",
+        short:
+          this._asText(row?.short ?? row?.kurz ?? row?.label ?? row?.name1 ?? row?.Name1) ||
+          this._asText(row?.name1 ?? row?.Name1 ?? row?.name) ||
+          "Firma",
+        active: this._asBool(row?.active ?? row?.is_active ?? row?.isActive, true),
+      },
+    };
+  }
+
+  // Uebergangs-/Poolsicht:
+  // Der Teilnehmerpool mischt heute stammbezogene und projektlokale Firmenpfade.
+  _createPoolCompanyProjection(projectId, row) {
+    const sourceType = this._sourceTypeFromKind(row?.kind);
+    const baseId = this._asText(row?.firmId ?? row?.firm_id) || "-";
+    const projectCompanyId = this._projectCompanyKey({
+      projectId,
+      sourceType,
+      baseId,
+    });
+
+    return {
+      projectCompanyId,
+      company: {
+        id: projectCompanyId,
+        projectCompanyId,
+        companyId: sourceType === "stamm" ? baseId : null,
+        localCompanyId: sourceType === "projektlokal" ? baseId : "",
+        sourceType,
+        name1: this._asText(row?.firm || row?.firm_name || row?.firmName) || "Firma",
+        short: this._asText(row?.firm || row?.firm_name || row?.firmName) || "Firma",
+        active: this._asBool(
+          row?.firmIsActive ?? row?.firm_is_active ?? row?.is_firm_active,
+          true
+        ),
+      },
+    };
+  }
+
+  _createActivePoolEmployee(projectCompanyId, row) {
+    const personId = this._asText(row?.personId ?? row?.person_id ?? row?.id);
+    if (!personId) return null;
+
+    const isEmployeeActive = this._asBool(row?.is_active ?? row?.isActive, true);
+    const isFirmActive = this._asBool(
+      row?.firmIsActive ?? row?.firm_is_active ?? row?.is_firm_active,
+      true
+    );
+    if (!isEmployeeActive || !isFirmActive) return null;
+
+    return {
+      id: personId,
+      companyId: projectCompanyId,
+      firstName: this._asText(row?.firstName ?? row?.vorname),
+      lastName: this._asText(row?.lastName ?? row?.nachname),
+      displayName: this._asText(row?.name),
+      role: this._asText(row?.rolle ?? row?.role),
+      email: this._asText(row?.email ?? row?.email_raw),
+      phone: this._asText(row?.phone ?? row?.tel),
+      active: true,
+    };
+  }
+
   async loadCompaniesByProject(projectId) {
     const id = String(projectId || "").trim();
     if (!id) return [];
@@ -49,29 +134,10 @@ export class TopsAssigneeDataSource {
         const res = await this.api.projectFirmsListByProject(id);
         if (res?.ok !== false) {
           for (const row of this._pickRows(res)) {
-            const sourceType = "stamm";
-            const baseId =
-              this._asText(row?.firmId ?? row?.firm_id ?? row?.companyId ?? row?.company_id ?? row?.id) || "-";
-            const projectCompanyId = this._projectCompanyKey({
-              projectId: id,
-              sourceType,
-              baseId,
-            });
+            const projection = this._createSharedCompanyProjection(id, row);
+            const { projectCompanyId, company } = projection;
             if (!companiesById.has(projectCompanyId)) {
-              companiesById.set(projectCompanyId, {
-                id: projectCompanyId,
-                projectCompanyId,
-                companyId: baseId,
-                sourceType,
-                name1:
-                  this._asText(row?.name1 ?? row?.Name1 ?? row?.name ?? row?.firm_name ?? row?.firmName) ||
-                  "Firma",
-                short:
-                  this._asText(row?.short ?? row?.kurz ?? row?.label ?? row?.name1 ?? row?.Name1) ||
-                  this._asText(row?.name1 ?? row?.Name1 ?? row?.name) ||
-                  "Firma",
-                active: this._asBool(row?.active ?? row?.is_active ?? row?.isActive, true),
-              });
+              companiesById.set(projectCompanyId, company);
             }
           }
         }
@@ -85,51 +151,17 @@ export class TopsAssigneeDataSource {
         const poolRes = await this.api.projectParticipantsPool({ projectId: id });
         if (poolRes?.ok !== false) {
           for (const row of this._pickRows(poolRes)) {
-            const sourceType = this._sourceTypeFromKind(row?.kind);
-            const baseId = this._asText(row?.firmId ?? row?.firm_id) || "-";
-            const projectCompanyId = this._projectCompanyKey({
-              projectId: id,
-              sourceType,
-              baseId,
-            });
+            const projection = this._createPoolCompanyProjection(id, row);
+            const { projectCompanyId, company } = projection;
 
             if (!companiesById.has(projectCompanyId)) {
-              companiesById.set(projectCompanyId, {
-                id: projectCompanyId,
-                projectCompanyId,
-                companyId: sourceType === "stamm" ? baseId : null,
-                localCompanyId: sourceType === "projektlokal" ? baseId : "",
-                sourceType,
-                name1: this._asText(row?.firm || row?.firm_name || row?.firmName) || "Firma",
-                short: this._asText(row?.firm || row?.firm_name || row?.firmName) || "Firma",
-                active: this._asBool(
-                  row?.firmIsActive ?? row?.firm_is_active ?? row?.is_firm_active,
-                  true
-                ),
-              });
+              companiesById.set(projectCompanyId, company);
             }
 
-            const personId = this._asText(row?.personId ?? row?.person_id ?? row?.id);
-            if (!personId) continue;
-            const isEmployeeActive = this._asBool(row?.is_active ?? row?.isActive, true);
-            const isFirmActive = this._asBool(
-              row?.firmIsActive ?? row?.firm_is_active ?? row?.is_firm_active,
-              true
-            );
-            if (!isEmployeeActive || !isFirmActive) continue;
-
+            const employee = this._createActivePoolEmployee(projectCompanyId, row);
+            if (!employee) continue;
             const employees = this._employeesByProjectCompany.get(projectCompanyId) || [];
-            employees.push({
-              id: personId,
-              companyId: projectCompanyId,
-              firstName: this._asText(row?.firstName ?? row?.vorname),
-              lastName: this._asText(row?.lastName ?? row?.nachname),
-              displayName: this._asText(row?.name),
-              role: this._asText(row?.rolle ?? row?.role),
-              email: this._asText(row?.email ?? row?.email_raw),
-              phone: this._asText(row?.phone ?? row?.tel),
-              active: true,
-            });
+            employees.push(employee);
             this._employeesByProjectCompany.set(projectCompanyId, employees);
           }
         }

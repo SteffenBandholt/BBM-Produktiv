@@ -347,10 +347,10 @@ Paket 2 und Paket 4 haben die Navigation in `src/renderer/main.js` konservativ w
 ---
 
 # Phase 3 – Gemeinsame Domänen sauber schneiden
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 ## Schritt 3.1 – Firmen als gemeinsame Domäne schneiden
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Firmen aus modulspezifischen Mischlagen lösen.
@@ -367,7 +367,21 @@ Firmen aus modulspezifischen Mischlagen lösen.
 - Firmen sind gemeinsame Domäne statt Protokoll-Anhängsel
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat den ersten Schnitt im Renderer konservativ vorbereitet. Gemeinsame Firmen-/Stammdatenlogik in `stamm/firmen` wurde sichtbarer gemacht und gemeinsame Firmenoptionen bzw. Stammprojektionen werden staerker zentral genutzt. Projektbezogene und protokollnahe Nutzung bleibt weiterhin in den nutzenden Schichten; insbesondere `src/renderer/views/ProjectFirmsView.js` und `src/renderer/tops/data/TopsAssigneeDataSource.js` sind noch keine gemeinsame Domaene selbst, sondern weiterhin Uebergangs- bzw. Nutzungsschichten. Ein vollstaendiger Domaenenumzug wurde damit noch nicht umgesetzt.
+
+## Paket 1 â€“ Firmenzugriffe im Renderer sichtbar schneiden
+**Status:** ERLEDIGT
+
+**Ziel**
+Die zentralen Firmen-Zugriffspunkte im Renderer konservativ so vorbereiten, dass gemeinsame Firmen-/Stammdatenlogik sichtbarer von projektbezogener und protokollnaher Nutzung unterschieden werden kann, ohne bereits einen grossen Domaenenumbau auszuloesen.
+
+**Ergebnis**
+- `stamm/firmen` ist als gemeinsame Firmen-/Stammdatenprojektion im Renderer sichtbarer gemacht.
+- Gemeinsame Firmenoptionen und Stammprojektionen werden in nutzenden Komponenten staerker zentral bezogen.
+- Projektbezogene und protokollnahe Firmenlogik bleibt in den nutzenden Schichten und wurde nicht vorzeitig in eine neue Zielstruktur verschoben.
+
+**Stand / Notiz**
+Paket 1 ist als konservative Vorbereitung abgeschlossen. Im Renderer wurden die tatsaechlich zentralen Firmen-Zugriffspunkte auf wenige relevante Dateien fokussiert; gemeinsame Firmen-/Stammdatenlogik in `src/renderer/stamm/firmen` wurde sichtbarer gegliedert, waehrend `src/renderer/views/ProjectFirmsView.js` und `src/renderer/tops/data/TopsAssigneeDataSource.js` weiterhin als projektbezogene bzw. protokollnahe Uebergangs- und Nutzungsschichten kenntlich bleiben. Die bestehende Funktionalitaet wurde dabei erhalten; ein vollstaendiges Ausschneiden der gemeinsamen Firmen-Domaene ist noch offen.
 
 ---
 

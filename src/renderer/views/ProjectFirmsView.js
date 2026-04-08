@@ -3581,6 +3581,53 @@ const taFirmNotes = document.createElement("textarea");
     }
   }
   // ------------------------------------------------------------
+  // Gemeinsame Firmen-/Stammzugriffe
+  // ------------------------------------------------------------
+  async _loadGlobalFirmCatalog() {
+    const res = await window.bbmDb.firmsListGlobal();
+    if (!res?.ok) {
+      return {
+        ok: false,
+        error: res?.error || "Fehler beim Laden der globalen Firmen",
+        list: [],
+      };
+    }
+
+    const list = res.list || [];
+    list.sort((a, b) => {
+      const as = this._firmShortText(a).toLowerCase();
+      const bs = this._firmShortText(b).toLowerCase();
+      if (as < bs) return -1;
+      if (as > bs) return 1;
+      return 0;
+    });
+    return {
+      ok: true,
+      error: "",
+      list,
+    };
+  }
+
+  // Projektbezogene Nutzung gemeinsamer Firmen:
+  // candidates liefern hier die Zuordnung der Stammfirmen in den Projektkontext.
+  async _loadAssignedGlobalFirmCandidates(projectId) {
+    const res = await window.bbmDb.projectFirmsListFirmCandidatesByProject(projectId);
+    if (!res?.ok) {
+      return {
+        ok: false,
+        error: res?.error || "Fehler beim Laden der Zuordnungen",
+        list: [],
+      };
+    }
+
+    return {
+      ok: true,
+      error: "",
+      list: (res.list || []).filter((x) => x.kind === "global_firm"),
+    };
+  }
+
+  // ------------------------------------------------------------
   // Global-Firmen ? Projekt: Daten laden (Hauptscreen rechts)
   // ------------------------------------------------------------
   async reloadGlobalAssignments() {
@@ -3595,29 +3642,17 @@ const taFirmNotes = document.createElement("textarea");
     }
 
     // 1) alle globalen Firmen
-    const resF = await window.bbmDb.firmsListGlobal();
-    if (resF?.ok) {
-      const list = resF.list || [];
-      list.sort((a, b) => {
-        const as = this._firmShortText(a).toLowerCase();
-        const bs = this._firmShortText(b).toLowerCase();
-        if (as < bs) return -1;
-        if (as > bs) return 1;
-        return 0;
-      });
-      this.globalFirms = list;
-    } else {
-      this.globalFirms = [];
-    }
+    const globalCatalog = await this._loadGlobalFirmCatalog();
+    this.globalFirms = globalCatalog.list || [];
 
     // 2) zugeordnet (aktuell wird dafÃ¼r candidates-API verwendet)
-    const resC = await window.bbmDb.projectFirmsListFirmCandidatesByProject(this.projectId);
+    const resC = await this._loadAssignedGlobalFirmCandidates(this.projectId);
     const assignedIds = new Set();
     let fallbackAssigned = [];
     const activeById = new Map();
 
     if (resC?.ok) {
-      const list = (resC.list || []).filter((x) => x.kind === "global_firm");
+      const list = resC.list || [];
       for (const x of list) {
         if (x?.id) {
           assignedIds.add(x.id);
@@ -3807,31 +3842,23 @@ const taFirmNotes = document.createElement("textarea");
     this._setGlobalAssignError("");
 
     // 1) alle globalen Firmen
-    const resF = await window.bbmDb.firmsListGlobal();
-    if (!resF?.ok) {
+    const globalCatalog = await this._loadGlobalFirmCatalog();
+    if (!globalCatalog.ok) {
       this.globalAssignAll = [];
-      this._setGlobalAssignError(resF?.error || "Fehler beim Laden der globalen Firmen");
+      this._setGlobalAssignError(globalCatalog.error || "Fehler beim Laden der globalen Firmen");
       this._renderGlobalAssignLists();
       return;
     }
 
-    const all = resF.list || [];
-    all.sort((a, b) => {
-      const as = this._firmShortText(a).toLowerCase();
-      const bs = this._firmShortText(b).toLowerCase();
-      if (as < bs) return -1;
-      if (as > bs) return 1;
-      return 0;
-    });
-
+    const all = globalCatalog.list || [];
     this.globalAssignAll = all;
 
     // 2) zugeordnet (aktuell via candidates)
-    const resC = await window.bbmDb.projectFirmsListFirmCandidatesByProject(this.projectId);
+    const resC = await this._loadAssignedGlobalFirmCandidates(this.projectId);
     const assignedIds = new Set();
 
     if (resC?.ok) {
-      const list = (resC.list || []).filter((x) => x.kind === "global_firm");
+      const list = resC.list || [];
       for (const x of list) if (x?.id) assignedIds.add(x.id);
     } else {
       // nicht hart abbrechen: Modal kann trotzdem offen bleiben, aber ohne initiale Selektion

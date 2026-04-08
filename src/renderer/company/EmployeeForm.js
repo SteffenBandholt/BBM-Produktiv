@@ -2,7 +2,7 @@
   normalizeEmployee,
   toEmployeeOptions,
 } from "../stamm/mitarbeiter/index.js";
-import { normalizeCompanyList, getCompanyDisplayLabel } from "../stamm/firmen/index.js";
+import { toCompanyOptions } from "../stamm/firmen/index.js";
 
 function mkEl(doc, tag, className, text) {
   const el = doc.createElement(tag);
@@ -111,11 +111,8 @@ export class EmployeeForm {
   }
 
   setCompanyOptions(companies) {
-    const normalizedCompanies = normalizeCompanyList(companies);
-    this._companyOptions = normalizedCompanies.map((company) => ({
-      value: company.id,
-      label: getCompanyDisplayLabel(company),
-    }));
+    // Gemeinsame Firmen-Stammdatenoptionen direkt aus der Stammprojektion beziehen.
+    this._companyOptions = toCompanyOptions(companies);
     this._renderCompanyOptions();
   }
 

@@ -19,6 +19,9 @@ function toId(value) {
   return text;
 }
 
+// Gemeinsame Firmen-/Stammdatenfelder:
+// Diese Ableitungen sollen rendererweit wiederverwendbar bleiben und keine
+// projekt- oder protokollspezifischen Annahmen enthalten.
 function pickCompanyName1(raw, index) {
   if (!raw || typeof raw !== "object") return "";
   const candidates = [
@@ -57,6 +60,7 @@ function pickShort(raw) {
   return "";
 }
 
+// Gemeinsame Such-/Anzeigeprojektion fuer Firmenstammdaten.
 function buildSearchText({ id, name, raw }) {
   const parts = [id, name];
   if (raw && typeof raw === "object") {
@@ -81,6 +85,9 @@ function buildSearchText({ id, name, raw }) {
   return parts.filter(Boolean).join(" ").toLowerCase();
 }
 
+// Gemeinsame Firmen-Normalisierung:
+// akzeptiert heutige Uebergangsformen (companyId, firmId, value), damit fachnahe
+// Altpfade dieselbe Stammsicht verwenden koennen.
 export function normalizeCompany(company, index = 0) {
   const raw = company && typeof company === "object" ? company : {};
   const id = toId(raw.id ?? raw.companyId ?? raw.firmId ?? raw.value ?? index + 1);
@@ -127,11 +134,16 @@ export function findCompanyById(companies, companyId) {
   return normalizedList.find((company) => company.id === wantedId) || null;
 }
 
-export function toCompanyOptions(companies) {
+function buildCompanyOptionList(companies) {
   return normalizeCompanyList(companies).map((company) => ({
     value: company.id,
     label: getCompanyDisplayLabel(company),
   }));
+}
+
+// Gemeinsame Auswahloptionen fuer Firmenstammdaten.
+export function toCompanyOptions(companies) {
+  return buildCompanyOptionList(companies);
 }
 
 export function filterCompanies(companies, query) {
