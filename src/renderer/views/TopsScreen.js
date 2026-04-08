@@ -391,8 +391,10 @@ export default class TopsScreen {
 
     this.store.setState({ isWriting: true });
     try {
-      await this.commands.saveDraft(patch);
-      await this._reloadTops({ keepSelection: true, selectTopId: selectedTop.id });
+      const res = await this.commands.saveDraft(patch);
+      if (!res?.ok) return;
+      this.commands.updateDraft(editorFromTop(getSelectedTop(this.store.getState())));
+      this.commands.toggleMoveMode(false);
       this._syncScreenState();
     } finally {
       this.store.setState({ isWriting: false });
@@ -408,8 +410,10 @@ export default class TopsScreen {
     this.store.setState({ isWriting: true });
     try {
       await this.commands.saveDraft({ is_hidden: 1 });
-      await this.commands.deleteSelectedTop();
-      await this._reloadTops({ keepSelection: false });
+      const res = await this.commands.deleteSelectedTop();
+      if (!res?.ok) return;
+      this.commands.updateDraft(editorFromTop(getSelectedTop(this.store.getState())));
+      this.commands.toggleMoveMode(false);
       this._syncScreenState();
     } finally {
       this.store.setState({ isWriting: false });
