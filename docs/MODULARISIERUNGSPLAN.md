@@ -206,6 +206,12 @@ Bereits bereinigt:
 # Phase 2 – App-Kern fachlich entschlacken
 **Status:** IN ARBEIT
 
+**Zwischenstand**
+- Paket 1 bis 4 haben den App-Kern konservativ vorstrukturiert, aber keinen vollständigen Kernumbau umgesetzt.
+- `src/renderer/main.js` und `src/renderer/app/Router.js` machen Kern-, Service-, Fach- und Übergangslogik sichtbarer.
+- Navigation und Router wurden vorsortiert, ohne Modulregistrierung, ohne modulbasierte Navigation und ohne modulbasierte Screen-Auflösung.
+- Für spätere Modulaufnahme ist nur eine sichtbare Vorstruktur vorbereitet, kein fertiger Modulrahmen.
+
 ## Paket 1 – `main.js` und `Router.js` vorsortieren
 **Status:** ERLEDIGT
 
@@ -239,7 +245,7 @@ Festlegen, was die App-Shell wirklich leisten muss und was nicht.
 - kein fachlicher Wildwuchs in der App-Hülle
 
 **Stand / Notiz**
-Paket 1 hat `src/renderer/main.js` konservativ vorstrukturiert. Shell-/Bootstrap-Logik, service-nahe Logik und fachlich verdrahtete Altlogik sind sichtbarer getrennt; eine neue Navigation oder ein größerer Shell-Umbau wurde noch nicht begonnen.
+Paket 1 hat `src/renderer/main.js` konservativ vorstrukturiert. Shell-/Bootstrap-Logik, service-nahe Logik und fachlich verdrahtete Altlogik sind sichtbarer getrennt; eine neue Navigation oder ein größerer Shell-Umbau wurde noch nicht begonnen. Die Shell ist damit besser lesbar vorbereitet, aber noch nicht abschließend fachlich entschlackt.
 
 ---
 
@@ -261,7 +267,7 @@ Den Router auf Navigation und Screen-Wechsel zurückführen.
 - Router wird Integrationsschicht statt Fachsteuerung
 
 **Stand / Notiz**
-Paket 1 und Paket 3 haben `src/renderer/app/Router.js` konservativ vorstrukturiert. Kern-Routing, service-nahe Integrationen, fachlich/protokollzentrierte Pfade und Übergangslogik sind sichtbarer gegliedert; modulinterne Abläufe wurden noch nicht aus dem Router herausgelöst und keine modulbasierte Screen-Auflösung wurde eingeführt.
+Paket 1 und Paket 3 haben `src/renderer/app/Router.js` konservativ vorstrukturiert. Kern-Routing, service-nahe Integrationen, fachlich/protokollzentrierte Pfade und Übergangslogik sind sichtbarer gegliedert; modulinterne Abläufe wurden noch nicht aus dem Router herausgelöst und keine modulbasierte Screen-Auflösung wurde eingeführt. Der Router ist damit besser vorbereitet, aber noch nicht auf eine reine Integrationsrolle zurückgeführt.
 
 ---
 
@@ -336,7 +342,7 @@ Die Navigation darf nicht mehr fest um `Protokoll` herum gebaut sein.
 - Navigation kann später aus aktiven Modulen gespeist werden
 
 **Stand / Notiz**
-Paket 2 und Paket 4 haben die Navigation in `src/renderer/main.js` konservativ weiter vorbereitet. Kernnavigation, fachlich/projektbezogene Navigation, aktionsbezogene Buttons und sichtbare Route-/Button-Definitionen fuer eine spaetere modulbezogene Navigation sind klarer gegliedert; direkte bestehende Router-Aufrufe blieben erhalten, ohne Modulregistrierung, ohne modulbasierte Navigation und ohne modulbasierte Screen-Aufloesung.
+Paket 2 und Paket 4 haben die Navigation in `src/renderer/main.js` konservativ weiter vorbereitet. Kernnavigation, fachlich/projektbezogene Navigation, aktionsbezogene Buttons und sichtbare Route-/Button-Definitionen fuer eine spaetere modulbezogene Navigation sind klarer gegliedert; direkte bestehende Router-Aufrufe blieben erhalten, ohne Modulregistrierung, ohne modulbasierte Navigation und ohne modulbasierte Screen-Aufloesung. Die Navigation ist damit entkoppelt vorbereitet, aber noch nicht von fachlicher Verdrahtung befreit.
 
 ---
 
