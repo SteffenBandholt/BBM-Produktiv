@@ -1948,6 +1948,128 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
   return base ? `${base} - ${typePart}` : typePart;
 }
 
+  // Fachlicher Mailaufbau:
+  // Projekt-/Protokollbezug, Betreff-Templates und Standardtexte
+  // bleiben hier in der nutzenden Schicht und sind noch kein technischer Versanddienst.
+  _getDefaultMailBody() {
+    return (
+      "Sehr geehrte Damen und Herren,\n\n" +
+      "anbei erhalten Sie das neue Protokoll für das oben genannte Projekt mit der Bitte um Beachtung und Veranlassung."
+    );
+  }
+
+  _buildInitialRecipientSelection(recOptions = {}) {
+    const allRecipients = Array.isArray(recOptions?.all) ? recOptions.all : [];
+    const distributionRecipients = Array.isArray(recOptions?.distribution) ? recOptions.distribution : [];
+    if (recOptions?.anyDistributionField && distributionRecipients.length) {
+      return [...distributionRecipients];
+    }
+    return [...allRecipients];
+  }
+
+  _buildMailAttachmentEntries(attachmentsByKey = {}) {
+    return [
+      { key: "protocol", label: "Protokoll", path: String(attachmentsByKey?.protocol || "").trim(), selected: true },
+      { key: "firms", label: "Firmenliste", path: String(attachmentsByKey?.firms || "").trim(), selected: true },
+      { key: "todo", label: "ToDo-Liste", path: String(attachmentsByKey?.todo || "").trim(), selected: true },
+      { key: "tops", label: "Top-Liste", path: String(attachmentsByKey?.tops || "").trim(), selected: true },
+    ];
+  }
+
+  async _buildMeetingMailDraft({ projectId = null, meeting = null, mailType = "", subject = "", body } = {}) {
+    const { projectNumber, projectShortName } = await this._getCurrentProjectMailContext();
+    const protocolTitle = await this._resolveProtocolTitleForEmail(projectId);
+    const emailTemplate = await this._getStoredEmailTemplate();
+    const templateContext = this._buildEmailTemplateContext({
+      projectNumber,
+      projectShortName,
+      protocolTitle,
+      meeting,
+    });
+
+    let nextSubject = String(subject || "").trim();
+    if (!nextSubject) {
+      nextSubject =
+        this._applyEmailSubjectTemplate(emailTemplate.subject || "", templateContext) ||
+        this._buildFallbackEmailSubject({ projectNumber, projectShortName, mailType }) ||
+        this._defaultMeetingEmailSubject(templateContext) ||
+        "Protokoll";
+    }
+
+    let nextBody = typeof body === "string" ? body : String(emailTemplate.body || "");
+    if (!nextBody.trim()) nextBody = this._getDefaultMailBody();
+
+    return {
+      subject: nextSubject,
+      body: nextBody,
+      templateContext,
+    };
+  }
+
+  // Technischer Versanddienst:
+  // Transport vorbereiten, Anhaenge normieren und an Outlook/mailto uebergeben.
+  _normalizeMailTransportPayload(payload = {}) {
+    const recipients = Array.isArray(payload?.recipients) ? payload.recipients.filter(Boolean) : [];
+    const attachments = Array.isArray(payload?.attachments) ? payload.attachments.filter(Boolean) : [];
+    const uniqueAttachments = [];
+    const seenAttachments = new Set();
+    for (const attachment of attachments) {
+      const value = String(attachment || "").trim();
+      const key = value.toLowerCase();
+      if (!value || seenAttachments.has(key)) continue;
+      seenAttachments.add(key);
+      uniqueAttachments.push(value);
+    }
+    return {
+      recipients,
+      subject: String(payload?.subject || "").trim(),
+      body: typeof payload?.body === "string" ? payload.body : String(payload?.body || ""),
+      attachments: uniqueAttachments,
+      forceMailto: !!payload?.forceMailto,
+    };
+  }
+
+  _sendMailtoFallback(payload = {}) {
+    sendMailPayload({
+      to: payload.recipients || [],
+      subject: payload.subject || "",
+      body: payload.body || "",
+      attachments: payload.attachments || [],
+    });
+  }
+
+  async _tryOpenOutlookDraft(payload = {}) {
+    if (!payload.attachments?.length || !window.bbmMail?.createOutlookDraft) return false;
+    try {
+      const draftRes = await window.bbmMail.createOutlookDraft({
+        to: payload.recipients,
+        subject: payload.subject,
+        body: payload.body,
+        attachments: payload.attachments,
+        attachmentPath: payload.attachments[0] || "",
+      });
+      if (draftRes?.ok) return true;
+      console.warn("[header] Outlook draft failed, fallback to mailto:", draftRes?.error || draftRes);
+    } catch (err) {
+      console.warn("[header] Outlook draft failed, fallback to mailto:", err);
+    }
+    return false;
+  }
+
+  async _dispatchMailTransport(payload = {}) {
+    const mailPayload = this._normalizeMailTransportPayload(payload);
+    if (!mailPayload.forceMailto) {
+      const opened = await this._tryOpenOutlookDraft(mailPayload);
+      if (opened) return;
+    }
+    try {
+      this._sendMailtoFallback(mailPayload);
+    } catch (err) {
+      console.error("[header] mailto fallback failed:", err);
+      alert("E-Mail konnte nicht geöffnet werden.");
+    }
+  }
+
   async _getMeetingRecipientOptions(meetingId = null) {
     const selectedMeeting =
       this.router?.activeView?.getSelectedClosedMeetingForEmail?.() ||
@@ -2135,7 +2257,6 @@ async _buildProtocolPdfLookupPayload(selectedMeeting, projectId) {
 
 async _openMailClient(mailType = "", options = {}) {
   const opts = options && typeof options === "object" ? options : {};
-  const forceMailto = !!opts.forceMailto;
   const providedRecipients = Array.isArray(opts.recipients) ? opts.recipients.filter(Boolean) : null;
   const providedAttachments = Array.isArray(opts.attachments) ? opts.attachments.filter(Boolean) : [];
   const projectId = this.router?.currentProjectId || this.router?.context?.projectId || null;
@@ -2146,34 +2267,13 @@ async _openMailClient(mailType = "", options = {}) {
     return;
   }
 
-  const { projectNumber, projectShortName } = await this._getCurrentProjectMailContext();
-  const emailTemplate = await this._getStoredEmailTemplate();
-  const protocolTitle = await this._resolveProtocolTitleForEmail(projectId);
-
-  let subject = String(opts.subject || "").trim();
-  if (!subject) {
-    let tplSubject = String(emailTemplate.subject || "").trim();
-    if (selectedMeeting) {
-      const templateContext = this._buildEmailTemplateContext({
-        projectNumber,
-        projectShortName,
-        protocolTitle,
-        meeting: selectedMeeting,
-      });
-      tplSubject = this._applyEmailSubjectTemplate(tplSubject, templateContext);
-    }
-    if (!tplSubject) {
-      tplSubject = this._buildFallbackEmailSubject({ projectNumber, projectShortName, mailType }) || "Protokoll";
-    }
-    subject = tplSubject;
-  }
-
-  let body = typeof opts.body === "string" ? opts.body : String(emailTemplate.body || "");
-  if (!body.trim()) {
-    body =
-      "Sehr geehrte Damen und Herren,\n\n" +
-      "anbei erhalten Sie das neue Protokoll für das oben genannte Projekt mit der Bitte um Beachtung und Veranlassung.";
-  }
+  const draft = await this._buildMeetingMailDraft({
+    projectId,
+    meeting: selectedMeeting,
+    mailType,
+    subject: opts.subject,
+    body: opts.body,
+  });
 
   const recipients = providedRecipients || (await this._getSelectedMeetingRecipients());
   const lookupPayload = await this._buildProtocolPdfLookupPayload(selectedMeeting, projectId);
@@ -2190,57 +2290,13 @@ async _openMailClient(mailType = "", options = {}) {
     console.warn("[header] protocol pdf resolve failed:", err);
   }
 
-  const sendViaMailto = () => {
-    try {
-      sendMailPayload({
-        to: recipients,
-        subject,
-        body,
-        attachments,
-      });
-    } catch (err) {
-      console.error("[header] mailto fallback failed:", err);
-      alert("E-Mail konnte nicht geöffnet werden.");
-    }
-  };
-
-  // Dedup attachments
-  const uniqAttachments = [];
-  const seenAtt = new Set();
-  for (const a of attachments) {
-    const key = String(a || "").trim().toLowerCase();
-    if (!key) continue;
-    if (seenAtt.has(key)) continue;
-    seenAtt.add(key);
-    uniqAttachments.push(String(a || "").trim());
-  }
-
-  if (forceMailto) {
-    attachments.length = 0;
-    attachments.push(...uniqAttachments);
-    sendViaMailto();
-    return;
-  }
-
-  if (uniqAttachments.length && window.bbmMail?.createOutlookDraft) {
-    try {
-      const draftRes = await window.bbmMail.createOutlookDraft({
-        to: recipients,
-        subject,
-        body,
-        attachments: uniqAttachments,
-        attachmentPath: uniqAttachments[0] || "",
-      });
-      if (draftRes?.ok) return;
-      console.warn("[header] Outlook draft failed, fallback to mailto:", draftRes?.error || draftRes);
-    } catch (err) {
-      console.warn("[header] Outlook draft failed, fallback to mailto:", err);
-    }
-  }
-
-  attachments.length = 0;
-  attachments.push(...uniqAttachments);
-  sendViaMailto();
+  await this._dispatchMailTransport({
+    recipients,
+    subject: draft.subject,
+    body: draft.body,
+    attachments,
+    forceMailto: !!opts.forceMailto,
+  });
 }
 
   async _openMailFileFlow() {
@@ -2734,34 +2790,15 @@ async _openMailClient(mailType = "", options = {}) {
 
     const recOptions = await this._getMeetingRecipientOptions(meetingId);
     const allRecipients = recOptions.all || [];
-    const distRecipients =
-      (recOptions.anyDistributionField && recOptions.distribution.length ? recOptions.distribution : allRecipients) || [];
-    let selectedRecipients = [...distRecipients];
+    let selectedRecipients = this._buildInitialRecipientSelection(recOptions);
 
     const attachmentsFound = await this._generateEmailAttachmentsForMeeting({ projectId, meetingId });
-    const attachments = [
-      { key: "protocol", label: "Protokoll", path: attachmentsFound.protocol || "", selected: true },
-      { key: "firms", label: "Firmenliste", path: attachmentsFound.firms || "", selected: true },
-      { key: "todo", label: "ToDo-Liste", path: attachmentsFound.todo || "", selected: true },
-      { key: "tops", label: "Top-Liste", path: attachmentsFound.tops || "", selected: true },
-    ];
-
-    const { projectNumber, projectShortName } = await this._getCurrentProjectMailContext();
-    const protocolTitle = await this._resolveProtocolTitleForEmail(projectId);
-    const emailTemplate = await this._getStoredEmailTemplate();
-    const templateContext = this._buildEmailTemplateContext({
-      projectNumber,
-      projectShortName,
-      protocolTitle,
+    const attachments = this._buildMailAttachmentEntries(attachmentsFound);
+    const draft = await this._buildMeetingMailDraft({
+      projectId,
       meeting,
+      mailType: "",
     });
-    const baseSubject =
-      this._applyEmailSubjectTemplate(emailTemplate.subject || "", templateContext) ||
-      this._buildFallbackEmailSubject({ projectNumber, projectShortName, mailType: "" }) ||
-      this._defaultMeetingEmailSubject(templateContext);
-    const baseBody =
-      (emailTemplate.body || "").trim() ||
-      "Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie das neue Protokoll für das oben genannte Projekt mit der Bitte um Beachtung und Veranlassung.";
 
     const overlay = document.createElement("div");
     overlay.style.position = "fixed";
@@ -2920,7 +2957,7 @@ async _openMailClient(mailType = "", options = {}) {
 
     const subjectInput = document.createElement("input");
     subjectInput.type = "text";
-    subjectInput.value = baseSubject;
+    subjectInput.value = draft.subject;
     subjectInput.style.width = "100%";
     subjectInput.style.maxWidth = "100%";
     subjectInput.style.boxSizing = "border-box";
@@ -2933,7 +2970,7 @@ async _openMailClient(mailType = "", options = {}) {
     bodyLabel.style.gridColumn = "1 / -1";
 
     const bodyInput = document.createElement("textarea");
-    bodyInput.value = baseBody;
+    bodyInput.value = draft.body;
     bodyInput.style.width = "100%";
     bodyInput.style.maxWidth = "100%";
     bodyInput.style.boxSizing = "border-box";

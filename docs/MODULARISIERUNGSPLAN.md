@@ -500,7 +500,7 @@ Paket 1 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentra
 ---
 
 ## Schritt 4.2 – Mailversand schneiden
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Technischen Mailversand zentralisieren.
@@ -517,7 +517,22 @@ Technischen Mailversand zentralisieren.
 - Mailversand ist gemeinsamer Dienst statt Fachmodultechnik
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 2 hat den naechsten Dienstschnitt konservativ vorbereitet. Die technische Versandlogik in `src/main/main.js` und der technische `mailto`-Fallback in `src/renderer/services/mail/sendMailPayload.js` wurden sichtbarer gemacht; fachlicher Mailaufbau und technischer Transport sind klarer getrennt. `src/renderer/ui/MainHeader.js` und `src/renderer/features/mail/MailFlow.js` bleiben weiterhin nutzende bzw. fachnahe Schichten. Ein vollstaendiger Dienstumzug oder ein neuer gemeinsamer Dienstbereich wurde damit noch nicht umgesetzt.
+
+## Paket 2 – Mail-/Versandzugriffe sichtbar schneiden
+**Status:** ERLEDIGT
+
+**Ziel**
+Die zentralen Mail-/Versand-Zugriffspunkte konservativ so vorbereiten, dass gemeinsamer technischer Versand klarer von fachlichen Mailinhalten und UI-naher Nutzung unterschieden werden kann, ohne bereits einen grossen Dienstumbau auszuloesen.
+
+**Ergebnis**
+- die technische Versandlogik in `src/main/main.js` ist sichtbarer gemacht.
+- fachlicher Mailaufbau und technischer Transport sind klarer getrennt.
+- `src/renderer/services/mail/sendMailPayload.js` ist als technischer `mailto`-Fallback klarer eingeordnet.
+- `src/renderer/ui/MainHeader.js` und `src/renderer/features/mail/MailFlow.js` bleiben nutzende bzw. fachnahe Schichten.
+
+**Stand / Notiz**
+Paket 2 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentralen Mail-/Versand-Zugriffspunkte wurden auf wenige relevante Dateien fokussiert; in `src/main/main.js` wurde die technische Versandlogik sichtbarer gegliedert, waehrend `src/renderer/ui/MainHeader.js` und `src/renderer/features/mail/MailFlow.js` weiterhin als nutzende und fachnahe Ablaufsteuerung erhalten bleiben. `src/renderer/services/mail/sendMailPayload.js` ist als technischer `mailto`-Fallback klarer einsortiert. Die bestehende Funktionalitaet wurde dabei beibehalten; ein vollstaendiger Dienstumzug oder ein neuer gemeinsamer Dienstbereich ist noch nicht umgesetzt.
 
 ---
 

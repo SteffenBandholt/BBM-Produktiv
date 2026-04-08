@@ -22,36 +22,20 @@ export class MailFlow {
 
     const recOptions = await headerHelper._getMeetingRecipientOptions(meetingId);
     const allRecipients = recOptions.all || [];
-    const distRecipients =
-      (recOptions.anyDistributionField && recOptions.distribution.length ? recOptions.distribution : allRecipients) ||
-      [];
-    let selectedRecipients = [...distRecipients];
+    let selectedRecipients = headerHelper._buildInitialRecipientSelection(recOptions);
 
-    const { projectNumber, projectShortName } = await headerHelper._getCurrentProjectMailContext();
-    const protocolTitle = await headerHelper._resolveProtocolTitleForEmail(
-      this.view.projectId || this.router?.currentProjectId
-    );
-    const emailTemplate = await headerHelper._getStoredEmailTemplate();
-    const templateContext = headerHelper._buildEmailTemplateContext({
-      projectNumber,
-      projectShortName,
-      protocolTitle,
+    const draft = await headerHelper._buildMeetingMailDraft({
+      projectId: this.view.projectId || this.router?.currentProjectId,
       meeting: meetingRef,
+      mailType: "",
     });
-    const baseSubject =
-      headerHelper._applyEmailSubjectTemplate(emailTemplate.subject || "", templateContext) ||
-      headerHelper._buildFallbackEmailSubject({ projectNumber, projectShortName, mailType: "" }) ||
-      headerHelper._defaultMeetingEmailSubject(templateContext);
-    const baseBody =
-      (emailTemplate.body || "").trim() ||
-      "Sehr geehrte Damen und Herren,\n\nanbei erhalten Sie das neue Protokoll f\u00fcr das oben genannte Projekt mit der Bitte um Beachtung und Veranlassung.";
 
-    const attachments = [
-      { key: "protocol", label: "Protokoll", path: printResults?.protocol?.filePath || "" },
-      { key: "firms", label: "Firmenliste", path: printResults?.firms?.filePath || "" },
-      { key: "todo", label: "ToDo-Liste", path: printResults?.todo?.filePath || "" },
-      { key: "tops", label: "Top-Liste", path: printResults?.tops?.filePath || "" },
-    ];
+    const attachments = headerHelper._buildMailAttachmentEntries({
+      protocol: printResults?.protocol?.filePath || "",
+      firms: printResults?.firms?.filePath || "",
+      todo: printResults?.todo?.filePath || "",
+      tops: printResults?.tops?.filePath || "",
+    });
 
     if (!attachments[0].path) {
       try {
@@ -216,7 +200,7 @@ export class MailFlow {
 
     const subjectInput = document.createElement("input");
     subjectInput.type = "text";
-    subjectInput.value = baseSubject;
+    subjectInput.value = draft.subject;
     subjectInput.style.width = "100%";
     subjectInput.style.maxWidth = "100%";
     subjectInput.style.boxSizing = "border-box";
@@ -229,7 +213,7 @@ export class MailFlow {
     bodyLabel.style.gridColumn = "1 / -1";
 
     const bodyInput = document.createElement("textarea");
-    bodyInput.value = baseBody;
+    bodyInput.value = draft.body;
     bodyInput.style.width = "100%";
     bodyInput.style.maxWidth = "100%";
     bodyInput.style.boxSizing = "border-box";

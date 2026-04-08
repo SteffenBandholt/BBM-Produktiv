@@ -231,6 +231,71 @@ async function _writeRepoBuildChannel(next) {
   return channel;
 }
 
+function _normalizeMailRecipients(value) {
+  if (Array.isArray(value)) {
+    return value.map((entry) => String(entry || "").trim()).filter(Boolean);
+  }
+  return String(value || "")
+    .split(/[;,]/)
+    .map((entry) => String(entry || "").trim())
+    .filter(Boolean);
+}
+
+function _normalizeMailAttachmentPaths(payload) {
+  const attachmentPath = String(payload?.attachmentPath || "").trim();
+  const attachments = Array.isArray(payload?.attachments)
+    ? payload.attachments.map((entry) => String(entry || "").trim()).filter(Boolean)
+    : [];
+  const combined = [...attachments];
+  if (attachmentPath) combined.push(attachmentPath);
+
+  const deduped = [];
+  const seen = new Set();
+  for (const filePath of combined) {
+    const key = filePath.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(filePath);
+  }
+  return deduped;
+}
+
+function _buildOutlookDraftScript() {
+  return [
+    'param(',
+    '  [string]$To = "",',
+    '  [string]$Subject = "",',
+    '  [string]$Body = "",',
+    '  [string]$AttachmentsBase64 = ""',
+    ')',
+    '$ErrorActionPreference = "Stop"',
+    '$Attachments = @()',
+    'if ($AttachmentsBase64) {',
+    '  $attachmentsJson = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($AttachmentsBase64))',
+    '  $parsedAttachments = ConvertFrom-Json -InputObject $attachmentsJson',
+    '  if ($parsedAttachments -is [System.Array]) {',
+    '    $Attachments = @($parsedAttachments | ForEach-Object { [string]$_ })',
+    '  } elseif ($parsedAttachments) {',
+    '    $Attachments = @([string]$parsedAttachments)',
+    '  }',
+    '}',
+    '$outlook = New-Object -ComObject Outlook.Application',
+    '$mail = $outlook.CreateItem(0)',
+    'if ($To) { $mail.To = $To }',
+    'if ($Subject) { $mail.Subject = $Subject }',
+    'if ($Body) { $mail.Body = $Body }',
+    'if ($Attachments) {',
+    '  foreach ($att in $Attachments) {',
+    '    if ($att -and (Test-Path -LiteralPath $att)) {',
+    '      [void]$mail.Attachments.Add($att)',
+    '    }',
+    '  }',
+    '}',
+    '$mail.Display()',
+    '',
+  ].join("\r\n");
+}
+
 // ✅ für EXE: buildChannel aus gepackter package.json (extraMetadata)
 function _readPackagedBuildChannel() {
   try {
@@ -431,83 +496,32 @@ app.whenReady().then(async () => {
     }
   });
 
-ipcMain.handle("mail:createOutlookDraft", async (_event, payload) => {
+  // Gemeinsamer technischer Mailversand:
+  // Renderer liefert fachliche Inhalte und Auswahl,
+  // Main kapselt nur die Outlook-/Windows-spezifische Transporttechnik.
+  ipcMain.handle("mail:createOutlookDraft", async (_event, payload) => {
   try {
     if (process.platform !== "win32") {
       return { ok: false, error: "Outlook-Entwurf ist nur unter Windows verfügbar." };
     }
 
-    const to = Array.isArray(payload?.to)
-      ? payload.to.map((v) => String(v || "").trim()).filter(Boolean)
-      : String(payload?.to || "")
-          .split(/[;,]/)
-          .map((v) => String(v || "").trim())
-          .filter(Boolean);
+    const to = _normalizeMailRecipients(payload?.to);
 
     const subject = String(payload?.subject || "").trim();
     const body = String(payload?.body || "");
-    const attachmentPath = String(payload?.attachmentPath || "").trim();
-    const attachmentsArr = Array.isArray(payload?.attachments)
-      ? payload.attachments.map((v) => String(v || "").trim()).filter(Boolean)
-      : [];
-    const allAttachments = [];
-    if (attachmentsArr.length) allAttachments.push(...attachmentsArr);
-    if (attachmentPath) allAttachments.push(attachmentPath);
+    const attachments = _normalizeMailAttachmentPaths(payload);
 
-    const dedup = [];
-    const seen = new Set();
-    for (const a of allAttachments) {
-      const key = a.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      dedup.push(a);
-    }
-
-    if (!dedup.length) {
+    if (!attachments.length) {
       return { ok: false, error: "Anhangspfad fehlt." };
     }
-    const missing = dedup.find((p) => !fs.existsSync(p));
+    const missing = attachments.find((p) => !fs.existsSync(p));
     if (missing) {
       return { ok: false, error: "Anhang nicht gefunden." };
     }
 
     const tempDir = app.getPath("temp");
     const scriptPath = path.join(tempDir, `bbm_outlook_draft_${Date.now()}.ps1`);
-    const script = [
-      'param(',
-      '  [string]$To = "",',
-      '  [string]$Subject = "",',
-      '  [string]$Body = "",',
-      '  [string]$AttachmentsBase64 = ""',
-      ')',
-      '$ErrorActionPreference = "Stop"',
-      '$Attachments = @()',
-      'if ($AttachmentsBase64) {',
-      '  $attachmentsJson = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($AttachmentsBase64))',
-      '  $parsedAttachments = ConvertFrom-Json -InputObject $attachmentsJson',
-      '  if ($parsedAttachments -is [System.Array]) {',
-      '    $Attachments = @($parsedAttachments | ForEach-Object { [string]$_ })',
-      '  } elseif ($parsedAttachments) {',
-      '    $Attachments = @([string]$parsedAttachments)',
-      '  }',
-      '}',
-      '$outlook = New-Object -ComObject Outlook.Application',
-      '$mail = $outlook.CreateItem(0)',
-      'if ($To) { $mail.To = $To }',
-      'if ($Subject) { $mail.Subject = $Subject }',
-      'if ($Body) { $mail.Body = $Body }',
-      'if ($Attachments) {',
-      '  foreach ($att in $Attachments) {',
-      '    if ($att -and (Test-Path -LiteralPath $att)) {',
-      '      [void]$mail.Attachments.Add($att)',
-      '    }',
-      '  }',
-      '}',
-      '$mail.Display()',
-      ''
-    ].join("\r\n");
-
-    fs.writeFileSync(scriptPath, script, "utf8");
+    fs.writeFileSync(scriptPath, _buildOutlookDraftScript(), "utf8");
 
     const args = [
       "-NoProfile",
@@ -523,7 +537,7 @@ ipcMain.handle("mail:createOutlookDraft", async (_event, payload) => {
       "-Body",
       body,
       "-AttachmentsBase64",
-      Buffer.from(JSON.stringify(dedup), "utf8").toString("base64"),
+      Buffer.from(JSON.stringify(attachments), "utf8").toString("base64"),
     ];
 
     const result = await new Promise((resolve) => {
@@ -567,7 +581,7 @@ ipcMain.handle("mail:createOutlookDraft", async (_event, payload) => {
   } catch (err) {
     return { ok: false, error: err?.message || String(err) };
   }
-});
+  });
 
   // ✅ App beenden (ohne Confirm) – über IPC
   ipcMain.handle("app:quit", () => {
