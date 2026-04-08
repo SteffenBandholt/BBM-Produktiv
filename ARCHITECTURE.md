@@ -2,211 +2,323 @@
 
 ## Zweck
 
-Diese Datei beschreibt die Architektur des Protokoll-Arbeitsbildschirms und des Protokollmoduls im laufenden Produktivrepo.
+Diese Datei ist die verbindliche Architekturgrundlage für BBM.
 
-Sie ist keine allgemeine Gesamtarchitektur-Datei der ganzen App.
-Die führenden Leitplanken für das Gesamtzielbild stehen in `docs/ARCHITEKTUR-LEITPLANKEN.md`.
+Sie legt fest, wie die App strukturell gedacht ist, damit neue Chats, neue Entwickler oder neue KI-/Codex-Läufe die Architektur nicht immer wieder neu interpretieren.
 
-## Einordnung in das Gesamtzielbild
+Diese Datei beschreibt das Zielbild und die festen Leitplanken.
+Sie ist kein Arbeitsprotokoll und kein Detailregelwerk einzelner Fachbereiche.
 
-Das Protokoll ist fachlich ein zentraler Arbeitsbereich der aktuellen Produktivphase.
-Architektonisch bleibt es dennoch ein Fachmodul unter mehreren.
+---
 
-`TopsScreen` ist der Arbeitsbildschirm dieses Protokollmoduls.
-Er ist nicht als neues Zentrum der gesamten App zu verstehen.
+## Zielbild
 
-## Aktueller Fokus
+BBM wird zu einer modularen App-Plattform ausgebaut.
 
-Die App bleibt grundsätzlich eine gewachsene Electron-Anwendung.
-Große globale Umbauten bleiben weiterhin die Ausnahme.
+Die App soll so aufgebaut sein, dass sie:
 
-Es gibt jedoch einen bewusst freigegebenen Sonderfall:
+- nur mit dem Modul `Protokoll` laufen kann
+- nur mit dem Modul `Restarbeiten` laufen kann
+- mit mehreren Modulen parallel laufen kann
+- später mit weiteren Modulen erweitert werden kann
 
-## Protokoll-Arbeitsbildschirm als Sonderpfad
+Das Modul `Protokoll` ist damit nicht das Zentrum der Gesamtarchitektur, sondern ein Fachmodul unter mehreren.
 
-`TopsView` wird schrittweise durch `TopsScreen` abgelöst.
+---
 
-`TopsScreen` wird nicht nur kosmetisch modernisiert, sondern gezielt als einzelner Arbeitsbildschirm des Protokollmoduls neu zusammengesetzt.
+## Grundprinzip der Architektur
 
-Das ist kein Komplettumbau der ganzen App.
-Es ist ein fokussierter Neuaufbau genau dieses einen fachlichen Bildschirms.
+Die App trennt sich in vier klar unterscheidbare Bereiche:
 
-## Ausgangslage
+1. App-Kern
+2. Gemeinsame Domänen / Stamm
+3. Gemeinsame Dienste / Addons
+4. Fachmodule
 
-Die aktuelle Anwendung ist eine Electron-App mit klassischem Renderer-Aufbau und stark DOM-zentrierter UI-Logik.
+Diese Trennung ist verbindlich.
 
-Bekannte Struktur:
+---
 
-- `src/main/`
-- `src/main/preload.js`
-- `src/renderer/main.js`
-- `src/renderer/app/Router.js`
-- `src/renderer/views/`
-- `src/renderer/ui/`
-- `src/renderer/features/`
+## 1. App-Kern
 
-Diese Struktur bleibt außerhalb des Protokoll-Arbeitsbildschirms grundsätzlich respektiert.
+Der App-Kern enthält alles, was unabhängig von einem konkreten Fachmodul gebraucht wird.
 
-## Allgemeine Prinzipien für diesen Bildschirm
+Dazu gehören insbesondere:
 
-1. Arbeitsfluss vor Technik
-2. Bestehende fachliche Logik nur ändern, wenn nötig
-3. Infrastruktur nur ändern, wenn es der Aufgabe wirklich dient
-4. Keine globalen Umbauten ohne klaren Nutzen
-5. Keine Dashboard-Logik für echte Arbeitsbildschirme
-6. Sichtbare Klarheit ist wichtiger als abstrakte technische Schönheit
+- App-Start und Bootstrap
+- App-Shell / Grundlayout
+- Modulregistrierung
+- Navigation-Grundgerüst
+- Screen-Host / Routing-Grundmechanik
+- globaler Projektkontext
+- globale App-Einstellungen
+- Lizenzierung
+- gemeinsame technische Dienstschnittstellen
 
-## Sonderregel für das Protokollmodul
+Der App-Kern darf keine unnötige Fachlogik einzelner Module enthalten.
 
-Für den Protokoll-Arbeitsbildschirm gilt ausdrücklich:
+Insbesondere gehören nicht in den App-Kern:
 
-- Er darf gezielt neu aufgebaut werden.
-- Er darf als eigener Arbeitsbildschirm separat behandelt werden.
-- Ziel ist nicht Technik um der Technik willen.
-- Ziel ist ein klarer, ruhiger, fachlich starker Protokoll-Arbeitsplatz.
-- Bewährte fachliche Regeln der bisherigen `TopsView` werden übernommen.
-- Sichtbarer Ballast wird entfernt.
+- TOP-Regeln
+- Protokoll-Abschlusslogik
+- Restarbeiten-Fachlogik
+- modulinterne Spezialdialoge
+- modulinterne Bearbeitungslogik
 
-Das ist eine Sonderregel für diesen Arbeitsbildschirm des Protokollmoduls.
-Sie gilt nicht automatisch für andere Bereiche der App.
+---
 
-## Zielbild des Protokoll-Arbeitsbildschirms
+## 2. Gemeinsame Domänen / Stamm
 
-Der neue Arbeitsbildschirm des Protokollmoduls besteht aus drei sichtbaren Hauptbereichen plus Read-only-Verhalten.
+Gemeinsame Domänen enthalten fachliche Grundlagen, die von mehreren Modulen genutzt werden.
 
-### 1. Steuerleiste oben
+Dazu gehören voraussichtlich:
 
-Sie betrifft immer das ganze Protokoll.
+- Firmen
+- Mitarbeiter / Beteiligte
+- Projekte
+- weitere gemeinsame Stammdaten
 
-Inhalt:
+Diese Bereiche gehören nicht in ein einzelnes Fachmodul, wenn sie modulübergreifend benötigt werden.
 
-- Protokollnummer
-- Datum
-- Schlagwort
-- Teilnehmer
-- PDF-Vorschau
-- Langtext an/aus
-- Protokoll beenden
-- Schließen
-- Beenden-Symbol
-- Quicklane:
-  - Projekt
-  - Firmen
-  - Ausgabe
+---
 
-### 2. Protokollblatt in der Mitte
+## 3. Gemeinsame Dienste / Addons
 
-Es ist der Haupt-Lese- und Auswahlbereich.
+Gemeinsame Dienste liefern technische oder modulübergreifende Fähigkeiten.
 
-Inhalt:
+Dazu gehören voraussichtlich:
 
-- TOP-Nummerierung
-- Farben und Zustände
-- Hierarchie
-- Titel
-- optional Langtext
-- Status, Termin, Verantwortliche
-- Auswahl
+- Mailversand
+- Drucken
+- PDF-Infrastruktur
+- Export
+- Diktat / Whisper
+- weitere technische Zusatzfunktionen
 
-Nicht dort hinein:
+Wichtig:
 
-- kein fixer Protokollkopf
-- keine Teilnehmerliste
-- keine allgemeine Navigation
+Die technische Fähigkeit gehört in gemeinsame Dienste.
+Die fachliche Inhaltserzeugung bleibt im jeweiligen Fachmodul.
 
-### 3. Editbox unten
+Beispiel:
 
-Sie ist die Werkbank für den ausgewählten TOP.
+- wie ein PDF erzeugt, gespeichert oder gedruckt wird = gemeinsamer Dienst
+- welche Daten im Protokoll-PDF stehen = Modul `Protokoll`
+- welche Daten in einer Restarbeiten-Ausgabe stehen = Modul `Restarbeiten`
 
-Inhalt:
+Gemeinsame Dienste sind keine Fachmodule.
 
-- Kurztext
-- Langtext
-- Metaspalte
-- Speichern
-- Löschen oder vorübergehend Papierkorb
-- + Titel
-- + TOP
-- Schieben
-- Diktat direkt an Kurztext und Langtext
+---
 
-### 4. Read-only
+## 4. Fachmodule
 
-Bei alten Protokollen:
+Fachmodule enthalten konkrete fachliche Arbeitslogik.
 
-- keine Editbox
-- mehr Lesefläche
-- Fokus auf Lesen und Vorschau
+Beispiele:
 
-## Verbotene Muster
+- `Protokoll`
+- `Restarbeiten`
+- `Mängelmanagement`
+- weitere spätere Module
 
-Im Protokoll-Arbeitsbildschirm vermeiden:
+Ein Fachmodul enthält insbesondere:
 
-- Sidebar
-- leerer allgemeiner Header
-- Dashboard-Kacheln
-- modulare Hauptnavigation während des Arbeitens
-- globaler Diktat-Button mit Zielwahl
-- zusätzlicher Protokollkopf im Blatt
-- unnötige visuelle Füllflächen
+- Screens
+- Komponenten
+- modulinterne Dialoge
+- Domain-Logik
+- State
+- ViewModels
+- modulinterne Datenzugriffe
+- fachliche Regeln
+- modulbezogene Ausgabeinhalte
 
-## Erlaubte Bildschirmarchitektur
+Fachlogik bleibt in Fachmodulen.
 
-Der Protokoll-Arbeitsbildschirm darf aus mehreren klaren Bildschirm-Bausteinen zusammengesetzt werden, zum Beispiel:
+---
 
-- Steuerleiste
-- TOP-Blatt
-- Editbox
-- Read-only-Variante
-- Quicklane
+## Das Modul `Protokoll`
 
-Wichtig ist nicht das Framework, sondern die klare Trennung der sichtbaren Aufgaben.
+`Protokoll` ist ein Fachmodul.
 
-## Leitlinie für die Umsetzung
+Es enthält die gesamte Protokoll-Fachlichkeit, insbesondere:
 
-Alles, was den einzelnen TOP betrifft, gehört in die Editbox.
+- Protokollübersichten
+- Protokollverwaltung
+- Teilnehmerbezug im Protokollkontext
+- TOP-/Protokollregeln
+- Abschlusslogik
+- protokollbezogene Ausgabe
+- den Arbeitsscreen für die Protokollerstellung
 
-Alles, was das ganze Protokoll betrifft, gehört in die obere Steuerleiste.
+### Rolle von `TopsScreen`
 
-Alles, was gelesen und ausgewählt wird, gehört ins Protokollblatt.
+`TopsScreen` ist **nicht** das Modul `Protokoll`.
 
-## Reihenfolge des Neuaufbaus
+`TopsScreen` ist nur ein Screen innerhalb des Moduls `Protokoll`, genauer:
+der Arbeitsscreen für die Protokollerstellung.
 
-1. Leere `TopsScreen`-Hülle
-2. Protokollblatt
-3. Editbox mit Metaspalte
-4. Steuerleiste und Quicklane
-5. Read-only-Verhalten
+Diese Unterscheidung ist verbindlich.
 
-Diese Reihenfolge ist verbindlich sinnvoller als weiteres wahlloses Umbauen am alten Bildschirm.
+Es gilt also:
 
-## Außerhalb des Protokoll-Arbeitsbildschirms
+- `TopsScreen` = Screen
+- `Protokoll` = Fachmodul
+- `Restarbeiten` = anderes Fachmodul
+- BBM = App-Plattform, die Fachmodule trägt
 
-Für andere Teile der App bleibt die allgemeine vorsichtige Weiterentwicklung gültig:
+---
 
-- kleine Änderungen
-- keine unnötigen Router-Umbauten
-- keine globale Shell-Neuordnung ohne Bedarf
-- keine neue Architekturkomplexität ohne klaren Gewinn
+## Das Modul `Restarbeiten`
 
-## Entscheidungskriterien
+`Restarbeiten` ist ein eigenes Fachmodul.
 
-Wenn mehrere Wege möglich sind, ist zu bevorzugen:
+Es darf nicht als Unterbereich des Moduls `Protokoll` gedacht oder gebaut werden.
 
-1. der Weg mit dem klareren Arbeitsbildschirm
-2. der Weg mit weniger sichtbarem Ballast
-3. der Weg mit weniger zusätzlicher Navigation
-4. der Weg mit geringerem globalen Risiko
-5. der Weg, der bestehendes gutes Fachverhalten erhält
+Es soll fachlich und technisch so aufgebaut werden, dass es:
 
-## Schlussregel
+- allein betrieben werden kann
+- gemeinsam mit `Protokoll` betrieben werden kann
+- dieselben gemeinsamen Domänen und Dienste nutzen kann, ohne in Protokollstrukturen zu hängen
 
-Das Ziel ist nicht, möglichst schnell alles in eine neue Technik zu übertragen.
+---
 
-Das Ziel ist:
+## Wiederverwendbare Bearbeitungsbausteine
 
-- ein starker Protokoll-Arbeitsbildschirm
-- weniger Ballast
-- weniger Kopplung
-- klare sichtbare Bereiche
-- stabile App außerhalb dieses Sonderumbaus
+Die App darf gemeinsame Bearbeitungsmuster und gemeinsame Kernbausteine besitzen.
+
+Dabei gilt verbindlich:
+
+- wiederverwendet werden sollen Kernbausteine
+- nicht wiederverwendet werden soll fachmodulspezifische Bearbeitungslogik als versteckter Standard für andere Module
+
+### Einordnung der heutigen Editbox / Workbench-Idee
+
+Die heutige Bearbeitungsfläche im `TopsScreen` ist nicht als Ganzes ein allgemeiner App-Baustein.
+
+Sie besteht aus drei Ebenen:
+
+1. **generischer Kern**
+   - Textbearbeitung
+   - Zustandslogik
+   - Counter / Textregeln
+   - Meta-Slot-Prinzip
+
+2. **wiederverwendbare Fachkernfelder**
+   - Verantwortlich
+   - Status / Fertig-bis / Ampel
+   - ggf. weitere allgemeine Metafelder
+
+3. **modulspezifische Workbench-Logik**
+   - TOP-spezifische Aktionen
+   - TOP-spezifische Draft-Struktur
+   - TOP-spezifische Regeln
+   - TOP-spezifische Meta-Kopplung
+
+### Verbindliche Konsequenz
+
+- generische Editbox-Bausteine bleiben in gemeinsamen Kernbereichen
+- wiederverwendbare Metafelder bleiben in gemeinsamen Kernbereichen
+- modulspezifische Workbenches bleiben in den Fachmodulen
+
+Das bedeutet:
+
+- das Bedienmuster darf wiederverwendet werden
+- die Fachlogik darf nicht einfach aus einem Modul ins andere kopiert werden
+
+Beispiel:
+
+- Modul `Protokoll` → eigene `ProtokollWorkbench`
+- Modul `Restarbeiten` → eigene `RestarbeitenWorkbench`
+
+Nicht gewollt ist, dass die heutige TOP-Workbench stillschweigend zum globalen Standard für alle späteren Module wird.
+
+---
+
+## Modul-Sicht auf die App
+
+Die App ist nicht mehr als „Protokoll-App mit Anbauten“ zu verstehen.
+
+Die richtige Sicht ist:
+
+- Die App trägt Fachmodule.
+- Fachmodule nutzen gemeinsame Grundlagen.
+- Fachmodule sind fachlich getrennt.
+- Gemeinsame Infrastruktur bleibt außerhalb der Fachmodule.
+
+---
+
+## Zielstruktur
+
+Die Zielstruktur der Anwendung folgt dieser Grundordnung:
+
+```text
+src/
+  main/
+    app/
+    ipc/
+    services/
+    settings/
+    licensing/
+
+  renderer/
+    app/
+      bootstrap/
+      shell/
+      navigation/
+      routing/
+      context/
+      modules/
+
+    stamm/
+      firmen/
+      mitarbeiter/
+      projekte/
+
+    addons/
+      mail/
+      print/
+      pdf/
+      whisper/
+      export/
+
+    modules/
+      protokoll/
+        screens/
+        components/
+        domain/
+        data/
+        state/
+        viewmodel/
+        dialogs/
+        rules/
+
+      restarbeiten/
+        screens/
+        components/
+        domain/
+        data/
+        state/
+        viewmodel/
+        dialogs/
+        rules/
+
+      weitere-module/
+
+    ui/
+      components/
+      overlays/
+      layout/
+
+    shared/
+      utils/
+      date/
+      text/
+      validation/
+
+    core/
+      editbox/
+      responsible/
+      status-ampel/
+      textregeln/
+      weitere-kernbausteine/

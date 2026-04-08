@@ -1,18 +1,59 @@
-
----
-
-## `docs/MODULARISIERUNGSPLAN.md`
-
-```md
 # MODULARISIERUNGSPLAN.md
 
 ## Zweck
 
-Diese Datei beschreibt den Umbauplan für die Modularisierung der App BBM.
+Diese Datei beschreibt den Umbau- und Entwicklungsplan für die Modularisierung der App BBM.
 
 Sie ergänzt `ARCHITECTURE.md`.
-`ARCHITECTURE.md` definiert das Zielbild und die Leitplanken.
-Diese Datei beschreibt die operative Reihenfolge, die Phasen und die dazugehörigen Aufgaben.
+
+- `ARCHITECTURE.md` definiert das Zielbild und die verbindlichen Leitplanken.
+- Diese Datei beschreibt die operative Reihenfolge, die Phasen, die Schritte und den jeweils erreichten Stand.
+
+Diese Datei ist kein loses Notizpapier, sondern ein fortlaufend gepflegtes Arbeitsinstrument.
+
+---
+
+## Arbeitsregel für spätere Weiterarbeit
+
+Diese Datei ist die verbindliche operative Grundlage für den Umbau.
+
+Neue Chats, neue Entwickler oder neue KI-/Codex-Läufe sollen den Umbauplan nicht neu erfinden, sondern anhand dieser Datei weiterarbeiten.
+
+Dabei gilt:
+
+1. Bestehende Phasen und Schritte werden weitergeführt, nicht parallel neu erfunden.
+2. Status dürfen nur geändert werden, wenn der tatsächliche Stand dies rechtfertigt.
+3. Ein Schritt ist erst dann `ERLEDIGT`, wenn das Ergebnis dokumentiert ist.
+4. Bei `IN ARBEIT` muss der aktuelle Stand kurz festgehalten werden.
+5. Neue Erkenntnisse werden in diesen Plan eingearbeitet, nicht in konkurrierenden Parallelplänen gesammelt.
+
+---
+
+## Statuslegende
+
+- `OFFEN` = noch nicht begonnen
+- `IN ARBEIT` = begonnen, aber nicht abgeschlossen
+- `ERLEDIGT` = abgeschlossen und Ergebnis dokumentiert
+- `BLOCKIERT` = aktuell nicht weiterführbar
+- `ZURÜCKGESTELLT` = bewusst vertagt
+
+---
+
+## Fortschrittsübersicht
+
+| Phase | Titel | Status |
+|---|---|---|
+| 1 | Architektur verbindlich festziehen | ERLEDIGT |
+| 2 | App-Kern fachlich entschlacken | OFFEN |
+| 3 | Gemeinsame Domänen sauber schneiden | OFFEN |
+| 4 | Gemeinsame Dienste sauber schneiden | OFFEN |
+| 5 | App-Einstellungen und Lizenzierung zentralisieren | OFFEN |
+| 6 | Gemeinsame Kernbausteine sauber schneiden | OFFEN |
+| 7 | Modul `Protokoll` sauber ausschneiden | OFFEN |
+| 8 | Modulrahmen produktiv machen | OFFEN |
+| 9 | Modul `Restarbeiten` aufbauen | OFFEN |
+| 10 | Modulfähigkeit praktisch beweisen | OFFEN |
+| 11 | Altbestand zurückbauen | OFFEN |
 
 ---
 
@@ -50,161 +91,503 @@ sondern weil es bereits existiert und als reales Fachmodul die schärfste Trennu
 
 ---
 
-## Phase 1 – Architektur verbindlich festziehen
+# Phase 1 – Architektur verbindlich festziehen
+**Status:** ERLEDIGT
 
-### Ziel
-Die Grundarchitektur und die Begriffe dürfen nicht weiter driftig oder widersprüchlich sein.
+## Schritt 1.1 – Grundsatzdateien festziehen
+**Status:** ERLEDIGT
 
-### Aufgaben
+**Ziel**  
+Verbindliche Architektur-, Planungs- und Fachgrundlagen schaffen.
 
-#### 1.1 Grundsatzdateien festziehen
+**Aufgaben**
 - `ARCHITECTURE.md` finalisieren
-- `docs/MODULARISIERUNGSPLAN.md` finalisieren
-- fachliche Regeldateien getrennt halten, z. B. `docs/domain/TOP-REGELN.md`
+- `docs/MODULARISIERUNGSPLAN.md` anlegen/finalisieren
+- `docs/domain/TOP-REGELN.md` getrennt führen
 
-#### 1.2 Begriffe verbindlich festlegen
-- App-Kern
-- gemeinsame Domänen / Stamm
-- gemeinsame Dienste / Addons
-- Fachmodul
-- Modul `Protokoll`
-- Modul `Restarbeiten`
-- `TopsScreen` als Screen des Moduls `Protokoll`
+**Abhängigkeiten**
+- keine
 
-#### 1.3 Alte widersprüchliche Architekturtexte entfernen oder ersetzen
-- alte Leitplanken-Dateien prüfen
-- veraltete oder widersprüchliche Dateien löschen oder in neue Grundsatzdateien überführen
+**Ergebnis**
+- zentrale Architekturdatei vorhanden
+- operativer Plan vorhanden
+- TOP-Fachregeln getrennt von Architektur
 
-### Ergebnis
-- kein Widerspruch in Zielbild und Benennung
-- spätere Chats und Entwickler arbeiten von denselben Grundlagen aus
+**Stand / Notiz**
+Grundsatzstruktur wurde festgezogen. Architektur, Plan und Fachregeln sind als getrennte Dokumenttypen definiert.
 
 ---
 
-## Phase 2 – App-Kern fachlich entschlacken
+## Schritt 1.2 – Begriffe verbindlich festlegen
+**Status:** ERLEDIGT
 
-### Ziel
-Die App-Hülle soll keine fest eingebaute Protokoll-Architektur mehr sein.
+**Ziel**  
+Zentrale Begriffe und Rollen eindeutig machen.
 
-### Aufgaben
+**Aufgaben**
+- App-Kern definieren
+- gemeinsame Domänen / Stamm definieren
+- gemeinsame Dienste / Addons definieren
+- gemeinsame Kernbausteine definieren
+- Fachmodule definieren
+- `Protokoll` als Fachmodul definieren
+- `Restarbeiten` als Fachmodul definieren
+- `TopsScreen` als Screen des Moduls `Protokoll` definieren
 
-#### 2.1 App-Shell bestimmen
-- festlegen, was die Shell wirklich leisten muss
-- Layout, Grundstruktur und Screen-Host sauber definieren
-- unnötige fachliche Sonderlogik aus der Shell fernhalten
+**Abhängigkeiten**
+- Schritt 1.1
 
-#### 2.2 Router-Verantwortung begrenzen
-- Router auf Navigation und Screen-Wechsel zurückführen
-- fachliche Spezialpfade und modulinterne Abläufe aus dem Router herauslösen
+**Ergebnis**
+- Begriffe und Rollen eindeutig festgelegt
+- zentrale Architekturbegriffe dürfen nicht mehr neu uminterpretiert werden
+
+**Stand / Notiz**
+Verbindlich festgelegt wurde insbesondere:
+- `TopsScreen` = Screen
+- `Protokoll` = Fachmodul
+- `Restarbeiten` = anderes Fachmodul
+
+---
+
+## Schritt 1.3 – Alte konkurrierende Architekturtexte abbauen
+**Status:** ERLEDIGT
+
+**Ziel**  
+Widersprüchliche oder doppelte Architektur-Grundlagen entfernen.
+
+**Aufgaben**
+- konkurrierende Architekturdateien im `docs`-Ordner prüfen
+- überholte Dateien löschen oder in neue Grundsatzdateien überführen
+- doppelte Architekturführung beenden
+
+**Abhängigkeiten**
+- Schritt 1.1
+- Schritt 1.2
+
+**Ergebnis**
+- nur noch eine führende Architekturgrundlage
+- keine konkurrierenden Leitplanken-Dateien mehr
+
+**Stand / Notiz**
+Bereits bereinigt:
+- konkurrierende Architekturdateien in `docs` entfernt
+- Zielstruktur der Doku auf zentrale Grundsatzdateien reduziert
+
+---
+
+# Phase 2 – App-Kern fachlich entschlacken
+**Status:** OFFEN
+
+## Schritt 2.1 – App-Shell bestimmen
+**Status:** OFFEN
+
+**Ziel**  
+Festlegen, was die App-Shell wirklich leisten muss und was nicht.
+
+**Aufgaben**
+- Shell-Verantwortung definieren
+- Layout, Grundstruktur und Screen-Host abgrenzen
+- fachliche Sonderlogik aus der Shell heraushalten
+
+**Abhängigkeiten**
+- Phase 1 abgeschlossen
+
+**Ergebnis**
+- klare Shell-Verantwortung
+- kein fachlicher Wildwuchs in der App-Hülle
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 2.2 – Router-Verantwortung begrenzen
+**Status:** OFFEN
+
+**Ziel**  
+Den Router auf Navigation und Screen-Wechsel zurückführen.
+
+**Aufgaben**
+- fachliche Spezialpfade im Router identifizieren
+- modulinterne Abläufe aus dem Router herauslösen
 - spätere Modul-/Screen-Aufrufe vorbereiten
 
-#### 2.3 Navigation entfachlichen
-- feste, fachlich hart codierte Navigation identifizieren
-- Navigation in Kernnavigation und Modulnavigation trennen
-- spätere modulbasierte Navigation vorbereiten
+**Abhängigkeiten**
+- Schritt 2.1
 
-### Ergebnis
-- App-Kern kennt keine protokollzentrierte App-Struktur mehr
-- App-Kern wird tragfähiger für mehrere Module
+**Ergebnis**
+- Router wird Integrationsschicht statt Fachsteuerung
+
+**Stand / Notiz**
+Noch nicht begonnen.
 
 ---
 
-## Phase 3 – Gemeinsame Domänen sauber schneiden
+## Schritt 2.3 – Navigation entfachlichen
+**Status:** OFFEN
 
-### Ziel
-Gemeinsame fachliche Grundlagen sollen nicht mehr im Protokollbereich oder in allgemeinen Mischstrukturen hängen.
+**Ziel**  
+Die Navigation darf nicht mehr fest um `Protokoll` herum gebaut sein.
 
-### Aufgaben
+**Aufgaben**
+- harte fachliche Navigation identifizieren
+- Kernnavigation und Modulnavigation trennen
+- modulbasierte Navigation vorbereiten
 
-#### 3.1 Firmen als gemeinsame Domäne schneiden
+**Abhängigkeiten**
+- Schritt 2.1
+- Schritt 2.2
+
+**Ergebnis**
+- Navigation kann später aus aktiven Modulen gespeist werden
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+# Phase 3 – Gemeinsame Domänen sauber schneiden
+**Status:** OFFEN
+
+## Schritt 3.1 – Firmen als gemeinsame Domäne schneiden
+**Status:** OFFEN
+
+**Ziel**  
+Firmen aus modulspezifischen Mischlagen lösen.
+
+**Aufgaben**
 - Firmenverwaltung und Firmenzugriffe prüfen
 - gemeinsame Firmenlogik von protokollspezifischer Nutzung trennen
 - Zielzuordnung nach `stamm/firmen`
 
-#### 3.2 Mitarbeiter / Beteiligte als gemeinsame Domäne schneiden
+**Abhängigkeiten**
+- Phase 2 sinnvoll vorbereitet
+
+**Ergebnis**
+- Firmen sind gemeinsame Domäne statt Protokoll-Anhängsel
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 3.2 – Mitarbeiter / Beteiligte als gemeinsame Domäne schneiden
+**Status:** OFFEN
+
+**Ziel**  
+Mitarbeiter und Beteiligte als modulübergreifende Grundlage sauber zuordnen.
+
+**Aufgaben**
 - gemeinsame Nutzung prüfen
+- modulspezifische und modulübergreifende Teile trennen
 - Zielzuordnung nach `stamm/mitarbeiter`
 
-#### 3.3 Projekte als gemeinsame Domäne festziehen
-- Projektkontext von modulspezifischer Fachlogik trennen
-- Zielzuordnung nach `stamm/projekte`
+**Abhängigkeiten**
+- Schritt 3.1 sinnvollerweise vorbereitet
 
-### Ergebnis
-- gemeinsame Stammdaten hängen nicht mehr an einem einzelnen Modul
-- spätere Module können dieselben Grundlagen nutzen
+**Ergebnis**
+- Beteiligte/Mitarbeiter liegen als gemeinsame Domäne vor
+
+**Stand / Notiz**
+Noch nicht begonnen.
 
 ---
 
-## Phase 4 – Gemeinsame Dienste sauber schneiden
+## Schritt 3.3 – Projekte als gemeinsame Domäne festziehen
+**Status:** OFFEN
 
-### Ziel
-Technische Fähigkeiten sollen nicht mehr in Fachmodulen oder im Altbestand verklebt sein.
+**Ziel**  
+Projektbasis und Projektkontext sauber vom Fachmodul trennen.
 
-### Aufgaben
+**Aufgaben**
+- Projektkontext von modulspezifischer Logik trennen
+- Zielzuordnung nach `stamm/projekte`
+- Übergänge zwischen Kern und Projektdomäne klären
 
-#### 4.1 Druck-/PDF-Infrastruktur schneiden
+**Abhängigkeiten**
+- Phase 2
+- Schritt 3.1 / 3.2 sinnvollerweise vorbereitet
+
+**Ergebnis**
+- Projekte sind als gemeinsame Grundlage verfügbar
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+# Phase 4 – Gemeinsame Dienste sauber schneiden
+**Status:** OFFEN
+
+## Schritt 4.1 – Druck-/PDF-Infrastruktur schneiden
+**Status:** OFFEN
+
+**Ziel**  
+Technische Ausgabe von fachlichen Ausgabeinhalten trennen.
+
+**Aufgaben**
 - technische Druck- und PDF-Funktionen identifizieren
 - Vorschau, Speichern, Drucken als gemeinsame Dienste ordnen
-- fachliche Ausgabeinhalte im jeweiligen Modul belassen
+- fachliche Ausgabeinhalte im Modul belassen
 
-#### 4.2 Mailversand schneiden
-- technischen Versand zentralisieren
-- modulbezogene Inhalte vom Versandmechanismus trennen
-- Zielzuordnung in gemeinsamen Dienstbereich
+**Abhängigkeiten**
+- Phase 2 vorbereitet
+- Phase 3 sinnvoll vorbereitet
 
-#### 4.3 Weitere technische Zusatzdienste prüfen
-- Whisper / Diktat
-- Export
-- weitere modulübergreifende Fähigkeiten
-- sinnvolle Zuordnung in `addons`
+**Ergebnis**
+- technische Ausgabe ist gemeinsamer Dienst
+- Fachmodule liefern Inhalte, nicht die ganze Drucktechnik
 
-### Ergebnis
-- gemeinsame Dienste sind als gemeinsame Fähigkeiten nutzbar
-- Fachmodule müssen nicht jeweils eigene Technikinseln bauen
+**Stand / Notiz**
+Noch nicht begonnen.
 
 ---
 
-## Phase 5 – App-Einstellungen und Lizenzierung zentralisieren
+## Schritt 4.2 – Mailversand schneiden
+**Status:** OFFEN
 
-### Ziel
-Globale Steuerung darf nicht an Fachmodulen hängen.
+**Ziel**  
+Technischen Mailversand zentralisieren.
 
-### Aufgaben
+**Aufgaben**
+- Versandmechanik von fachlichen Mailinhalten trennen
+- Zielzuordnung in gemeinsamen Dienstbereich
+- klare Schnittstelle definieren
 
-#### 5.1 App-Einstellungen zentralisieren
+**Abhängigkeiten**
+- Phase 2 vorbereitet
+
+**Ergebnis**
+- Mailversand ist gemeinsamer Dienst statt Fachmodultechnik
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 4.3 – Weitere technische Zusatzdienste prüfen
+**Status:** OFFEN
+
+**Ziel**  
+Weitere modulübergreifende Technik sauber einsortieren.
+
+**Aufgaben**
+- Whisper / Diktat prüfen
+- Export prüfen
+- weitere technische Zusatzdienste prüfen
+- Zuordnung in `addons` festziehen
+
+**Abhängigkeiten**
+- Phase 2 vorbereitet
+
+**Ergebnis**
+- modulübergreifende Technik liegt nicht mehr ungeordnet im Altbestand
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+# Phase 5 – App-Einstellungen und Lizenzierung zentralisieren
+**Status:** OFFEN
+
+## Schritt 5.1 – App-Einstellungen zentralisieren
+**Status:** OFFEN
+
+**Ziel**  
+Globale Einstellungen vom Fachmodul lösen.
+
+**Aufgaben**
 - globale Settings identifizieren
 - von modulspezifischen Settings trennen
 - in Kernstruktur überführen
 
-#### 5.2 Lizenzierung zentralisieren
-- bestehende Lizenzlogik an einer Stelle bündeln
-- prüfen, ob modulbezogene Lizenzfreigaben später nötig sind
-- Lizenzprüfung als Kernservice definieren
+**Abhängigkeiten**
+- Phase 2
 
-### Ergebnis
+**Ergebnis**
 - globale Steuerung liegt im App-Kern
-- Fachmodule bleiben fachlich fokussiert
+
+**Stand / Notiz**
+Noch nicht begonnen.
 
 ---
 
-## Phase 6 – Modul `Protokoll` sauber ausschneiden
+## Schritt 5.2 – Lizenzierung zentralisieren
+**Status:** OFFEN
 
-### Ziel
-Das Modul `Protokoll` soll als echte Fachmoduleinheit sichtbar und tragfähig werden.
+**Ziel**  
+Lizenzlogik an einer zentralen Stelle bündeln.
 
-### Aufgaben
+**Aufgaben**
+- bestehende Lizenzlogik sammeln
+- modulbezogene Lizenzfreigaben als Zukunftsoption prüfen
+- Lizenzprüfung als Kernservice definieren
 
-#### 6.1 Modulgrenze `Protokoll` festlegen
-- bestimmen, was vollständig zum Modul `Protokoll` gehört
+**Abhängigkeiten**
+- Phase 2
+
+**Ergebnis**
+- Lizenzierung ist Kernaufgabe, nicht Modulbestandteil
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+# Phase 6 – Gemeinsame Kernbausteine sauber schneiden
+**Status:** OFFEN
+
+## Schritt 6.1 – Bearbeitungskerne identifizieren
+**Status:** ERLEDIGT
+
+**Ziel**  
+Wiederverwendbare Bearbeitungsbausteine fachlich von Workbench-Logik unterscheiden.
+
+**Aufgaben**
+- generische Editbox-Bestandteile identifizieren
+- allgemeine Textregeln und Zustandslogik identifizieren
+- wiederverwendbare Metafelder identifizieren
+
+**Abhängigkeiten**
+- Phase 1 abgeschlossen
+
+**Ergebnis**
+- Bearbeitungskerne und modulspezifische Workbench-Logik sind konzeptionell getrennt
+
+**Stand / Notiz**
+Erkenntnis festgehalten:
+Die heutige Bearbeitungsfläche im `TopsScreen` besteht aus
+1. generischem Kern,
+2. wiederverwendbaren Fachkernfeldern,
+3. modulspezifischer Workbench-Logik.
+
+---
+
+## Schritt 6.2 – Gemeinsame Kernbausteine festziehen
+**Status:** OFFEN
+
+**Ziel**  
+Gemeinsame Bearbeitungskerne stabil und sauber zuordnen.
+
+**Aufgaben**
+- Editbox-Kern als gemeinsamen Baustein festziehen
+- allgemeine Metafelder wie Verantwortlich oder Status/Fälligkeitsfeld sauber zuordnen
+- fachlich vorgeprägte Elemente in gemeinsamen Kernen kritisch prüfen
+
+**Abhängigkeiten**
+- Schritt 6.1
+
+**Ergebnis**
+- wiederverwendbare Bearbeitungskerne sind definiert und sauber abgegrenzt
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 6.3 – Workbench-Muster vom Fachmodul trennen
+**Status:** OFFEN
+
+**Ziel**  
+Gemeinsames Bearbeitungsmuster ermöglichen, ohne Fachlogik zu verallgemeinern.
+
+**Aufgaben**
+- generisches Bearbeitungsmuster dokumentieren
+- modulspezifische Workbench-Logik ausdrücklich im jeweiligen Modul belassen
+- verhindern, dass die heutige TOP-Workbench zum stillen Globalstandard wird
+
+**Abhängigkeiten**
+- Schritt 6.1
+- Schritt 6.2
+
+**Ergebnis**
+- Muster wiederverwendbar, Fachlogik nicht verschleppt
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+# Phase 7 – Modul `Protokoll` sauber ausschneiden
+**Status:** OFFEN
+
+## Schritt 7.1 – Modulgrenze `Protokoll` festlegen
+**Status:** OFFEN
+
+**Ziel**  
+Bestimmen, was vollständig zum Fachmodul `Protokoll` gehört.
+
+**Aufgaben**
 - Protokollübersicht, Protokollverwaltung, TOP-Regeln, Abschlusslogik, Ausgabeinhalte und protokollinterne Dialoge klar zuordnen
 
-#### 6.2 `TopsScreen` richtig einordnen
-- `TopsScreen` als Arbeitsscreen im Modul `Protokoll` behandeln
-- nicht als Modul und nicht als globale Sonderarchitektur behandeln
+**Abhängigkeiten**
+- Phase 2 vorbereitet
+- Phase 3 sinnvoll vorbereitet
+- Phase 6 vorbereitet
 
-#### 6.3 Modulstruktur `Protokoll` anlegen
+**Ergebnis**
+- Fachgrenze des Moduls `Protokoll` ist klar dokumentiert
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 7.2 – `TopsScreen` richtig einordnen
+**Status:** OFFEN
+
+**Ziel**  
+`TopsScreen` sauber als Arbeitsscreen im Modul `Protokoll` einordnen.
+
+**Aufgaben**
+- `TopsScreen` nicht mehr als Architektursondersystem behandeln
+- Zuordnung nach `modules/protokoll/screens/` vorbereiten
+
+**Abhängigkeiten**
+- Schritt 7.1
+
+**Ergebnis**
+- `TopsScreen` ist klar als Screen des Moduls `Protokoll` eingeordnet
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 7.3 – Editbox und Workbench im Protokoll richtig schneiden
+**Status:** OFFEN
+
+**Ziel**  
+Bearbeitungskern und protokollspezifische Workbench sauber trennen.
+
+**Aufgaben**
+- generischen Editbox-Kern nicht mit dem Modul verwechseln
+- protokollspezifische Workbench-Logik im Modul `Protokoll` halten
+- TOP-spezifische Aktionen und Draft-Struktur nicht als allgemeine App-Standards behandeln
+
+**Abhängigkeiten**
+- Phase 6
+- Schritt 7.1
+
+**Ergebnis**
+- `ProtokollWorkbench` bleibt modulspezifisch
+- gemeinsame Kernbausteine bleiben außerhalb des Moduls wiederverwendbar
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 7.4 – Modulstruktur `Protokoll` anlegen
+**Status:** OFFEN
+
+**Ziel**  
+Die technische Heimat des Moduls `Protokoll` schaffen.
+
+**Aufgaben**
 - `src/renderer/modules/protokoll/` aufbauen
-- sinnvolle Unterordner definieren:
+- Unterordner anlegen:
   - `screens/`
   - `components/`
   - `domain/`
@@ -214,140 +597,388 @@ Das Modul `Protokoll` soll als echte Fachmoduleinheit sichtbar und tragfähig we
   - `dialogs/`
   - `rules/`
 
-#### 6.4 Bestehende Protokollbestandteile umziehen
+**Abhängigkeiten**
+- Schritt 7.1
+
+**Ergebnis**
+- Modulstruktur vorhanden
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 7.5 – Bestehende Protokollbestandteile umziehen
+**Status:** OFFEN
+
+**Ziel**  
+Bestehende Protokollteile in die Modulstruktur überführen.
+
+**Aufgaben**
 - `TopsScreen`
 - bestehender Tops-Unterbau
 - protokollbezogene Dialoge
 - protokollbezogene Regeln
 - protokollbezogene Datenflüsse
 
-#### 6.5 Modul-Einstieg definieren
+**Abhängigkeiten**
+- Schritt 7.2
+- Schritt 7.3
+- Schritt 7.4
+
+**Ergebnis**
+- `Protokoll` ist als technisches und fachliches Modul sichtbar
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 7.6 – Modul-Einstieg definieren
+**Status:** OFFEN
+
+**Ziel**  
+Das Modul registrierbar und vom Kern aus ansprechbar machen.
+
+**Aufgaben**
 - `index.js` für Modulregistrierung vorbereiten
 - Screens und Navigation des Moduls kapseln
 
-### Ergebnis
-- `Protokoll` existiert als echtes Fachmodul
-- `TopsScreen` ist sauber als Screen dieses Moduls eingeordnet
+**Abhängigkeiten**
+- Schritt 7.4
+- Schritt 7.5
+
+**Ergebnis**
+- `Protokoll` besitzt einen klaren Moduleinstieg
+
+**Stand / Notiz**
+Noch nicht begonnen.
 
 ---
 
-## Phase 7 – Modulrahmen produktiv machen
+# Phase 8 – Modulrahmen produktiv machen
+**Status:** OFFEN
 
-### Ziel
-Der App-Kern soll Fachmodule tragen, statt selbst Facharchitektur zu sein.
+## Schritt 8.1 – Modulkatalog einführen
+**Status:** OFFEN
 
-### Aufgaben
+**Ziel**  
+Aktive Module definierbar machen.
 
-#### 7.1 Modulkatalog einführen
-- aktive Module definierbar machen
+**Aufgaben**
+- Modulkatalog definieren
 - Modulregistrierung strukturieren
 
-#### 7.2 Modul-/Screen-Auflösung einführen
+**Abhängigkeiten**
+- Phase 2
+- Phase 7 vorbereitet
+
+**Ergebnis**
+- Module können vom Kern verwaltet werden
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 8.2 – Modul-/Screen-Auflösung einführen
+**Status:** OFFEN
+
+**Ziel**  
+Den Kern auf modulbasierte Screen-Auflösung umstellen.
+
+**Aufgaben**
 - Screen-Host an Modulkatalog anbinden
 - Router auf modulbasierte Aufrufe ausrichten
 
-#### 7.3 Modulnavigation dynamisch machen
-- Navigation aus aktiven Modulen speisen
-- Kernnavigation und Modulnavigation sauber trennen
+**Abhängigkeiten**
+- Schritt 8.1
 
-### Ergebnis
-- der Kern arbeitet mit Modulen
-- nicht mehr mit fest eingebauten Fachwegen
+**Ergebnis**
+- Kern und Module sprechen über definierte Auflösung statt feste Fachpfade
+
+**Stand / Notiz**
+Noch nicht begonnen.
 
 ---
 
-## Phase 8 – Modul `Restarbeiten` aufbauen
+## Schritt 8.3 – Modulnavigation dynamisch machen
+**Status:** OFFEN
 
-### Ziel
-Ein zweites echtes Fachmodul soll auf demselben Rahmen aufsetzen.
+**Ziel**  
+Navigation aus aktiven Modulen ableiten.
 
-### Aufgaben
+**Aufgaben**
+- Navigation aus Moduldefinitionen speisen
+- Kernnavigation und Modulnavigation sauber trennen
 
-#### 8.1 Fachschnitt `Restarbeiten` definieren
+**Abhängigkeiten**
+- Schritt 8.1
+- Schritt 8.2
+
+**Ergebnis**
+- modulbasierte Navigation statt hart codierter Fachnavigation
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+# Phase 9 – Modul `Restarbeiten` aufbauen
+**Status:** OFFEN
+
+## Schritt 9.1 – Fachschnitt `Restarbeiten` definieren
+**Status:** OFFEN
+
+**Ziel**  
+Das Modul `Restarbeiten` fachlich sauber abgrenzen.
+
+**Aufgaben**
 - Grenzen des Moduls festlegen
 - Regeln, Screens und Zuständigkeiten bestimmen
 
-#### 8.2 Modulstruktur `Restarbeiten` anlegen
+**Abhängigkeiten**
+- Phase 1
+- Phase 3
+- Phase 4
+- Phase 8 vorbereitet
+
+**Ergebnis**
+- fachlicher Zuschnitt von `Restarbeiten` ist klar beschrieben
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 9.2 – Modulstruktur `Restarbeiten` anlegen
+**Status:** OFFEN
+
+**Ziel**  
+Die technische Heimat des Moduls `Restarbeiten` anlegen.
+
+**Aufgaben**
 - `src/renderer/modules/restarbeiten/` aufbauen
 - entsprechende Unterordner anlegen
 
-#### 8.3 Modul-Einstieg definieren
+**Abhängigkeiten**
+- Schritt 9.1
+
+**Ergebnis**
+- Modulstruktur vorhanden
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 9.3 – Eigene Restarbeiten-Workbench bauen
+**Status:** OFFEN
+
+**Ziel**  
+Eine eigene Bearbeitungsfläche für `Restarbeiten` auf gemeinsamen Kernen aufsetzen.
+
+**Aufgaben**
+- prüfen, welche gemeinsamen Bearbeitungskerne genutzt werden
+- eigene Draft-Struktur definieren
+- eigene Aktionen definieren
+- eigene Regeln und Metafelder zuordnen
+
+**Abhängigkeiten**
+- Phase 6
+- Schritt 9.1
+- Schritt 9.2
+
+**Ergebnis**
+- `RestarbeitenWorkbench` ist fachlich eigenständig, nutzt aber gemeinsame Kernbausteine
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 9.4 – Modul-Einstieg definieren
+**Status:** OFFEN
+
+**Ziel**  
+`Restarbeiten` als registrierbares Fachmodul aufsetzen.
+
+**Aufgaben**
 - Navigation
 - Screens
 - Startpunkt
-- gemeinsame Dienste-Nutzung
+- gemeinsame Dienste-Nutzung definieren
 
-### Ergebnis
-- `Restarbeiten` ist kein Anbau an `Protokoll`, sondern ein eigenes Fachmodul
+**Abhängigkeiten**
+- Schritt 9.2
+- Schritt 9.3
+- Phase 8
 
----
+**Ergebnis**
+- `Restarbeiten` ist als eigenes Fachmodul integrierbar
 
-## Phase 9 – Modulfähigkeit praktisch beweisen
-
-### Ziel
-Die Architektur muss praktisch tragfähig sein, nicht nur theoretisch.
-
-### Aufgaben
-
-#### 9.1 Szenario A testen
-- BBM läuft nur mit `Protokoll`
-
-#### 9.2 Szenario B testen
-- BBM läuft nur mit `Restarbeiten`
-
-#### 9.3 Szenario C testen
-- BBM läuft mit beiden Modulen
-
-#### 9.4 Szenario D vorbereiten
-- ein drittes Modul muss grundsätzlich möglich sein, ohne Kernarchitektur neu zu erfinden
-
-### Ergebnis
-- Modularität ist praktisch überprüft
-- Austauschbarkeit ist nicht mehr nur behauptet
+**Stand / Notiz**
+Noch nicht begonnen.
 
 ---
 
-## Phase 10 – Altbestand zurückbauen
+# Phase 10 – Modulfähigkeit praktisch beweisen
+**Status:** OFFEN
 
-### Ziel
-Übergangslösungen und Monolithreste sollen verschwinden.
+## Schritt 10.1 – Szenario A testen
+**Status:** OFFEN
 
-### Aufgaben
+**Ziel**  
+BBM läuft nur mit `Protokoll`.
 
-#### 10.1 Alte Fachpfade zurückbauen
-- nicht mehr benötigte Alt-Views prüfen
-- alte fachliche Pfade abbauen
+**Aufgaben**
+- Modulstart nur mit `Protokoll` prüfen
+
+**Abhängigkeiten**
+- Phase 7
+- Phase 8
+
+**Ergebnis**
+- Einzelbetrieb `Protokoll` nachweisbar
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 10.2 – Szenario B testen
+**Status:** OFFEN
+
+**Ziel**  
+BBM läuft nur mit `Restarbeiten`.
+
+**Aufgaben**
+- Modulstart nur mit `Restarbeiten` prüfen
+
+**Abhängigkeiten**
+- Phase 8
+- Phase 9
+
+**Ergebnis**
+- Einzelbetrieb `Restarbeiten` nachweisbar
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 10.3 – Szenario C testen
+**Status:** OFFEN
+
+**Ziel**  
+BBM läuft mit beiden Modulen.
+
+**Aufgaben**
+- Parallelbetrieb `Protokoll` + `Restarbeiten` prüfen
+
+**Abhängigkeiten**
+- Schritt 10.1
+- Schritt 10.2
+
+**Ergebnis**
+- Parallelbetrieb nachweisbar
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 10.4 – Szenario D vorbereiten
+**Status:** OFFEN
+
+**Ziel**  
+Ein drittes Modul muss grundsätzlich möglich sein.
+
+**Aufgaben**
+- prüfen, ob ein weiteres Modul ohne Kernumbau integrierbar wäre
+- Resthürden dokumentieren
+
+**Abhängigkeiten**
+- Schritt 10.3 sinnvollerweise vorbereitet
+
+**Ergebnis**
+- Modularität ist nicht nur für zwei bekannte Module gedacht
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+# Phase 11 – Altbestand zurückbauen
+**Status:** OFFEN
+
+## Schritt 11.1 – Alte Fachpfade zurückbauen
+**Status:** OFFEN
+
+**Ziel**  
+Nicht mehr benötigte Altpfade entfernen.
+
+**Aufgaben**
+- alte Fach-Views prüfen
+- überholte Fachpfade abbauen
 - Doppelstrukturen entfernen
 
-#### 10.2 Monolithreste beseitigen
+**Abhängigkeiten**
+- Phase 7
+- Phase 8
+- Phase 9
+
+**Ergebnis**
+- Altpfade werden nicht künstlich weitergetragen
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 11.2 – Monolithreste beseitigen
+**Status:** OFFEN
+
+**Ziel**  
+Verbliebene Fachlogik aus dem Kern und Mischzonen entfernen.
+
+**Aufgaben**
 - verbliebene Fachlogik aus dem Kern herausziehen
 - Mischstrukturen beenden
+- versteckte Protokollzentrierung beseitigen
 
-#### 10.3 Abschlussprüfung
+**Abhängigkeiten**
+- Schritt 11.1
+
+**Ergebnis**
+- kein dauerhafter Mischzustand mehr
+
+**Stand / Notiz**
+Noch nicht begonnen.
+
+---
+
+## Schritt 11.3 – Abschlussprüfung
+**Status:** OFFEN
+
+**Ziel**  
+Den erreichten Zustand gegen Zielarchitektur und Plan prüfen.
+
+**Aufgaben**
 - Ist-Zustand gegen `ARCHITECTURE.md` prüfen
 - Restabweichungen dokumentieren
 - offene Architektur-Schulden sichtbar machen
 
-### Ergebnis
-- kein dauerhafter Mischzustand mehr
-- klare Plattformstruktur
+**Abhängigkeiten**
+- Schritt 11.1
+- Schritt 11.2
 
----
+**Ergebnis**
+- Abschlussstand dokumentiert
+- Restschulden klar benannt
 
-## Priorisierte Reihenfolge
-
-Die operative Priorität lautet:
-
-1. Architektur verbindlich festziehen
-2. App-Kern fachlich entschlacken
-3. gemeinsame Domänen schneiden
-4. gemeinsame Dienste schneiden
-5. App-Einstellungen und Lizenzierung zentralisieren
-6. Modul `Protokoll` sauber ausschneiden
-7. Modulrahmen produktiv machen
-8. Modul `Restarbeiten` aufbauen
-9. Modulfähigkeit praktisch beweisen
-10. Altbestand zurückbauen
+**Stand / Notiz**
+Noch nicht begonnen.
 
 ---
 
@@ -357,25 +988,16 @@ Der häufigste Fehlweg wäre:
 
 - ein weiteres Fachmodul schnell dazusetzen
 - den App-Kern aber protokollzentriert zu lassen
+- oder eine bestehende Modul-Workbench stillschweigend als globalen Standard für andere Module zu übernehmen
 
-Dann entsteht keine modulare Plattform, sondern nur ein zweiter Sonderfall neben dem ersten.
+Dann entsteht keine modulare Plattform, sondern nur ein weiterer Sonderfall.
 
 Der erste echte Beweis für Modularität ist daher:
 
 - `Protokoll` als Modul sauber schneiden
 - den Kern so umbauen, dass er Fachmodule trägt
+- gemeinsame Bearbeitungskerne von modulspezifischer Workbench-Logik trennen
 - danach `Restarbeiten` auf denselben Rahmen setzen
-
----
-
-## Arbeitsregel für spätere Weiterarbeit
-
-Diese Datei ist die verbindliche operative Grundlage für den Umbau.
-
-Neue Chats, neue Entwickler oder neue KI-/Codex-Läufe sollen den Umbauplan nicht neu erfinden, sondern anhand dieser Phasen und Schritte weiterarbeiten.
-
-Wenn sich Erkenntnisse ändern, wird diese Datei angepasst.
-Nicht jeder neue Lauf erfindet eine neue Reihenfolge.
 
 ---
 
