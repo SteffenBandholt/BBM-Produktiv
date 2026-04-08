@@ -32,6 +32,49 @@ function _sanitizeFilePart(value, fallback = "Projekt") {
   return sanitizeDirName(clean).replace(/\s+/g, "-");
 }
 
+function _buildProjectTransferManifest({ projectId, project, storage, data, exportedAt, filesCount }) {
+  return {
+    formatVersion: 2,
+    exportDate: exportedAt,
+    appVersion: app.getVersion ? app.getVersion() : "",
+    projectId,
+    projectNumber: project.project_number ?? project.projectNumber ?? null,
+    projectShortName: project.short ?? null,
+    projectName: project.name ?? null,
+    projectFolder: {
+      baseDir: storage.baseDir,
+      folder: storage.projectFolder,
+    },
+    counts: {
+      meetings: data.meetings.length,
+      tops: data.tops.length,
+      meetingTops: data.meetingTops.length,
+      meetingParticipants: data.meetingParticipants.length,
+      projectFirms: data.projectFirms.length,
+      projectPersons: data.projectPersons.length,
+      projectCandidates: data.projectCandidates.length,
+      projectGlobalFirms: data.projectGlobalFirms.length,
+      projectSettings: data.projectSettings.length,
+      filesCount,
+    },
+  };
+}
+
+function _buildProjectTransferPayloads({ project, data }) {
+  return [
+    { name: "data/project.json", data: { project } },
+    { name: "data/settings.json", data: { projectSettings: data.projectSettings || [] } },
+    { name: "data/meetings.json", data: { meetings: data.meetings || [] } },
+    { name: "data/tops.json", data: { tops: data.tops || [] } },
+    { name: "data/meeting_tops.json", data: { meeting_tops: data.meetingTops || [] } },
+    { name: "data/meeting_participants.json", data: { meeting_participants: data.meetingParticipants || [] } },
+    { name: "data/project_firms.json", data: { project_firms: data.projectFirms || [] } },
+    { name: "data/project_persons.json", data: { project_persons: data.projectPersons || [] } },
+    { name: "data/project_candidates.json", data: { project_candidates: data.projectCandidates || [] } },
+    { name: "data/project_global_firms.json", data: { project_global_firms: data.projectGlobalFirms || [] } },
+  ];
+}
+
 function _fetchProjectData(projectId) {
   const db = initDatabase();
 
@@ -382,6 +425,8 @@ async function _importProjectZip(filePath) {
 }
 
 function registerProjectTransferIpc() {
+  // Gemeinsamer technischer Export-/Import-Dienst:
+  // Archiv, Dateisystem und Validierung bleiben hier in der technischen Schicht.
   ipcMain.handle("projectTransfer:export", async (_evt, raw) => {
     const projectId = raw?.projectId ?? raw?.project_id ?? raw?.id ?? null;
     if (!projectId) return { ok: false, error: "projectId required" };
@@ -404,50 +449,16 @@ function registerProjectTransferIpc() {
 
       const data = _fetchProjectData(projectId);
       const exportedAt = new Date().toISOString();
-      const counts = {
-        meetings: data.meetings.length,
-        tops: data.tops.length,
-        meetingTops: data.meetingTops.length,
-        meetingParticipants: data.meetingParticipants.length,
-        projectFirms: data.projectFirms.length,
-        projectPersons: data.projectPersons.length,
-        projectCandidates: data.projectCandidates.length,
-        projectGlobalFirms: data.projectGlobalFirms.length,
-        projectSettings: data.projectSettings.length,
-      };
-
       const filesCount = projectDir && fs.existsSync(projectDir) ? await _countFilesRecursive(projectDir) : 0;
-
-      const manifest = {
-        formatVersion: 2,
-        exportDate: exportedAt,
-        appVersion: app.getVersion ? app.getVersion() : "",
+      const manifest = _buildProjectTransferManifest({
         projectId,
-        projectNumber: project.project_number ?? project.projectNumber ?? null,
-        projectShortName: project.short ?? null,
-        projectName: project.name ?? null,
-        projectFolder: {
-          baseDir: storage.baseDir,
-          folder: storage.projectFolder,
-        },
-        counts: {
-          ...counts,
-          filesCount,
-        },
-      };
-
-      const payloads = [
-        { name: "data/project.json", data: { project } },
-        { name: "data/settings.json", data: { projectSettings: data.projectSettings || [] } },
-        { name: "data/meetings.json", data: { meetings: data.meetings || [] } },
-        { name: "data/tops.json", data: { tops: data.tops || [] } },
-        { name: "data/meeting_tops.json", data: { meeting_tops: data.meetingTops || [] } },
-        { name: "data/meeting_participants.json", data: { meeting_participants: data.meetingParticipants || [] } },
-        { name: "data/project_firms.json", data: { project_firms: data.projectFirms || [] } },
-        { name: "data/project_persons.json", data: { project_persons: data.projectPersons || [] } },
-        { name: "data/project_candidates.json", data: { project_candidates: data.projectCandidates || [] } },
-        { name: "data/project_global_firms.json", data: { project_global_firms: data.projectGlobalFirms || [] } },
-      ];
+        project,
+        storage,
+        data,
+        exportedAt,
+        filesCount,
+      });
+      const payloads = _buildProjectTransferPayloads({ project, data });
 
       await _createExportZip({
         exportPath,
@@ -484,6 +495,7 @@ function registerProjectTransferIpc() {
     return _importProjectZip(filePath);
   });
 
+  // Technische Exportablage und Dateizugriffe
   ipcMain.handle("projectTransfer:listExports", async () => {
     const exportRoot = _getExportRoot();
     try {
@@ -549,4 +561,3 @@ function registerProjectTransferIpc() {
 }
 
 module.exports = { registerProjectTransferIpc };
-

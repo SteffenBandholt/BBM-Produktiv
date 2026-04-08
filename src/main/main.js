@@ -296,6 +296,30 @@ function _buildOutlookDraftScript() {
   ].join("\r\n");
 }
 
+async function _openQuickAssistViaProtocol() {
+  await shell.openExternal("ms-quick-assist:");
+  return { ok: true, method: "protocol" };
+}
+
+async function _openQuickAssistViaSpawn() {
+  await new Promise((resolve, reject) => {
+    const child = spawn("quickassist.exe", [], {
+      detached: true,
+      stdio: "ignore",
+      windowsHide: true,
+    });
+
+    child.once("error", (spawnErr) => reject(spawnErr));
+    child.once("spawn", () => {
+      try {
+        child.unref();
+      } catch (_) {}
+      resolve(true);
+    });
+  });
+  return { ok: true, method: "spawn" };
+}
+
 // ✅ für EXE: buildChannel aus gepackter package.json (extraMetadata)
 function _readPackagedBuildChannel() {
   try {
@@ -716,30 +740,16 @@ app.whenReady().then(async () => {
     }
 
     try {
-      await shell.openExternal("ms-quick-assist:");
-      return { ok: true, method: "protocol" };
+      // Kleiner technischer Hilfsdienst:
+      // UI triggert nur den Start, die Windows-spezifische Startlogik bleibt hier im Main-Prozess.
+      return await _openQuickAssistViaProtocol();
     } catch (errProtocol) {
       console.error("[main] app:openQuickAssist protocol failed", {
         error: errProtocol?.stack || errProtocol?.message || String(errProtocol),
       });
 
       try {
-        await new Promise((resolve, reject) => {
-          const child = spawn("quickassist.exe", [], {
-            detached: true,
-            stdio: "ignore",
-            windowsHide: true,
-          });
-
-          child.once("error", (spawnErr) => reject(spawnErr));
-          child.once("spawn", () => {
-            try {
-              child.unref();
-            } catch (_) {}
-            resolve(true);
-          });
-        });
-        return { ok: true, method: "spawn" };
+        return await _openQuickAssistViaSpawn();
       } catch (errSpawn) {
         console.error("[main] app:openQuickAssist fallback spawn failed", {
           error: errSpawn?.stack || errSpawn?.message || String(errSpawn),

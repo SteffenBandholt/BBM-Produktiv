@@ -3,20 +3,29 @@ export class TranscriptionService {
     this.api = api;
   }
 
-  ensureSuggestionsAvailable() {
-    const hasTranscribe = typeof this.api.audioTranscribe === "function";
-    const hasAnalyze = typeof this.api.audioAnalyze === "function";
-    if (!hasTranscribe || !hasAnalyze) {
-      throw new Error("Audio-Funktionen sind nicht verf\u00fcgbar.");
+  // Renderer-seitige Zusatzdienst-Bruecke:
+  // Diese Klasse kapselt nur den Zugriff auf den technischen Audio-/Whisper-Dienst.
+  // UI- und Fachlogik bleiben in den nutzenden Schichten.
+  _requireAudioMethod(methodName, errorText = "Audio-Funktionen sind nicht verfuegbar.") {
+    const fn = this.api?.[methodName];
+    if (typeof fn !== "function") {
+      throw new Error(errorText);
     }
+    return fn.bind(this.api);
+  }
+
+  ensureSuggestionsAvailable() {
+    this._requireAudioMethod("audioTranscribe");
+    this._requireAudioMethod("audioAnalyze");
     return true;
   }
 
   async transcribeBlob({ base64, mimeType, meetingId, projectId }) {
-    if (typeof this.api.audioTranscribeBlob !== "function") {
-      throw new Error("Audio-Transkription ist nicht verf\u00fcgbar.");
-    }
-    return this.api.audioTranscribeBlob({
+    const transcribeBlob = this._requireAudioMethod(
+      "audioTranscribeBlob",
+      "Audio-Transkription ist nicht verfuegbar."
+    );
+    return transcribeBlob({
       base64,
       mimeType,
       meetingId,
@@ -26,13 +35,10 @@ export class TranscriptionService {
 
   async transcribe({ audioImportId }) {
     this.ensureSuggestionsAvailable();
-    return this.api.audioTranscribe({ audioImportId });
+    return this._requireAudioMethod("audioTranscribe")({ audioImportId });
   }
 
   async analyze({ audioImportId, processingMode }) {
-    if (typeof this.api.audioAnalyze !== "function") {
-      throw new Error("Audio-Funktionen sind nicht verf\u00fcgbar.");
-    }
-    return this.api.audioAnalyze({ audioImportId, processingMode });
+    return this._requireAudioMethod("audioAnalyze")({ audioImportId, processingMode });
   }
 }

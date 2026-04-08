@@ -433,6 +433,13 @@ export default class ProjectsView {
     return `${dd}.${mm}.${yyyy} ${hh}:${mi}`;
   }
 
+  // UI-nahe Nutzung des Export-Addons:
+  // ProjectsView oeffnet nur den Import-/Export-Dialog und ruft die
+  // technische Transfer-Schnittstelle an.
+  _getProjectTransferAddonApi() {
+    return window.bbmProjectTransfer || {};
+  }
+
   async _openProjectTransferModal() {
     if (this._transferModalEl) return;
 
@@ -554,20 +561,7 @@ export default class ProjectsView {
       }
       try {
         status.textContent = "Exportiere Projekt...";
-        const api = window.bbmProjectTransfer || {};
-
-    btnOpenExportDir.onclick = async () => {
-      if (typeof api.openExportFolder !== "function") {
-        status.textContent = "Export-Ordner ?ffnen ist nicht verf?gbar (Preload/IPC fehlt).";
-        return;
-      }
-      const res = await api.openExportFolder();
-      if (!res?.ok) {
-        status.textContent = res?.error || "Export-Ordner konnte nicht ge?ffnet werden.";
-        return;
-      }
-      if (res?.exportRoot) exportDirHint.textContent = `Export-Ordner: ${res.exportRoot}`;
-    };
+        const api = this._getProjectTransferAddonApi();
         if (typeof api.exportProject !== "function") {
           status.textContent = "Export ist nicht verf?gbar (Preload/IPC fehlt).";
           return;
@@ -643,7 +637,7 @@ export default class ProjectsView {
     importList.style.flexDirection = "column";
     importList.style.gap = "6px";
 
-    const api = window.bbmProjectTransfer || {};
+    const api = this._getProjectTransferAddonApi();
 
     btnOpenExportDir.onclick = async () => {
       if (typeof api.openExportFolder !== "function") {

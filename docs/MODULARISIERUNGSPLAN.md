@@ -537,7 +537,7 @@ Paket 2 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentra
 ---
 
 ## Schritt 4.3 – Weitere technische Zusatzdienste prüfen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Weitere modulübergreifende Technik sauber einsortieren.
@@ -555,7 +555,22 @@ Weitere modulübergreifende Technik sauber einsortieren.
 - modulübergreifende Technik liegt nicht mehr ungeordnet im Altbestand
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 3 hat den naechsten Dienstschnitt konservativ vorbereitet. Technische Zusatzdienste fuer Audio/Whisper, Projekt-Transfer und Quick Assist wurden sichtbarer gemacht; die technischen Dienst-/Addon-Einstiege in `src/main/ipc/audioIpc.js`, `src/main/ipc/projectTransferIpc.js` und `src/main/main.js` wurden klarer gegliedert. `src/main/preload.js` trennt die Renderer-Bruecken fuer Zusatzdienste klarer, waehrend `src/renderer/features/audio-dictation/DictationController.js`, `src/renderer/services/audio/TranscriptionService.js`, `src/renderer/ui/HelpModal.js` und `src/renderer/views/ProjectsView.js` weiterhin nutzende bzw. UI-nahe Schichten bleiben. Ein vollstaendiger Dienstumzug oder ein neuer Addon-Bereich wurde damit noch nicht umgesetzt.
+
+## Paket 3 – Zusatzdienst-Zugriffe sichtbar schneiden
+**Status:** ERLEDIGT
+
+**Ziel**
+Die zentralen technischen Zusatzdienste konservativ so vorbereiten, dass gemeinsamer technischer Dienst bzw. Addon klarer von fachnaher oder UI-naher Nutzung unterschieden werden kann, ohne bereits einen grossen Umbau oder neuen Addon-Bereich ausgeloest zu haben.
+
+**Ergebnis**
+- technische Zusatzdienste fuer Audio/Whisper, Projekt-Transfer und Quick Assist sind sichtbarer gemacht.
+- die technischen Dienst-/Addon-Einstiege in `src/main/ipc/audioIpc.js`, `src/main/ipc/projectTransferIpc.js` und `src/main/main.js` sind klarer gegliedert.
+- `src/main/preload.js` trennt die Renderer-Bruecken fuer Zusatzdienste klarer.
+- `src/renderer/features/audio-dictation/DictationController.js`, `src/renderer/services/audio/TranscriptionService.js`, `src/renderer/ui/HelpModal.js` und `src/renderer/views/ProjectsView.js` bleiben nutzende bzw. UI-nahe Schichten.
+
+**Stand / Notiz**
+Paket 3 ist als konservative Vorbereitung abgeschlossen. Die tatsaechlich zentralen Zusatzdienst-Zugriffspunkte wurden auf wenige relevante Dateien fokussiert; technische Audio-/Whisper-, Projekt-Transfer- und Quick-Assist-Einstiege wurden sichtbarer gegliedert, waehrend die nutzenden Renderer-Schichten bewusst erhalten bleiben. Die bestehende Funktionalitaet wurde dabei beibehalten; ein vollstaendiger Dienstumzug oder ein neuer gemeinsamer Addon-Bereich ist noch nicht umgesetzt.
 
 ---
 

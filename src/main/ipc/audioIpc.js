@@ -68,17 +68,44 @@ function _inferAudioExt(mimeType) {
   return ".webm";
 }
 
-function registerAudioIpc() {
+function _buildWhisperModelState(fileName, availability) {
+  const modelPath = availability?.modelPath || null;
+  const executablePath = availability?.executablePath || null;
+  const available = !!availability?.available;
+  let missingReason = null;
+  if (!available) {
+    if (!executablePath) {
+      missingReason = "Whisper-Executable fehlt.";
+    } else if (!modelPath) {
+      missingReason = `Modell fehlt: ${fileName}`;
+    } else {
+      missingReason = "Whisper-Runtime nicht verfuegbar.";
+    }
+  }
+  return { fileName, available, missingReason };
+}
+
+function _createAudioAddonServices() {
   const transcriptionEngine = createWhisperCppEngine();
-  const audioImportService = createAudioImportService({ meetingsRepo, audioImportsRepo });
-  const transcriptionService = createTranscriptionService({
-    meetingsRepo,
-    audioImportsRepo,
-    transcriptsRepo,
-    engine: transcriptionEngine,
-    appSettingsRepo,
-  });
-  const segmentationService = createTranscriptSegmentationService();
+  return {
+    transcriptionEngine,
+    audioImportService: createAudioImportService({ meetingsRepo, audioImportsRepo }),
+    transcriptionService: createTranscriptionService({
+      meetingsRepo,
+      audioImportsRepo,
+      transcriptsRepo,
+      engine: transcriptionEngine,
+      appSettingsRepo,
+    }),
+    segmentationService: createTranscriptSegmentationService(),
+  };
+}
+
+function registerAudioIpc() {
+  // Gemeinsamer technischer Audio-/Whisper-Dienst:
+  // Import, Transkription und Modellstatus werden hier zentral verdrahtet.
+  const { transcriptionEngine, audioImportService, transcriptionService, segmentationService } =
+    _createAudioAddonServices();
   const mappingService = createMeetingMappingService({
     meetingsRepo,
     meetingTopsRepo,
@@ -91,6 +118,7 @@ function registerAudioIpc() {
     audioSuggestionsRepo,
   });
 
+  // Technische Audio-Dienst-Einstiege
   ipcMain.handle("audio:import", async (evt, payload) => {
     try {
       _ensureAudioLicensed();
@@ -131,30 +159,13 @@ function registerAudioIpc() {
       const small = transcriptionEngine.getModelAvailability("ggml-small.bin");
       const medium = transcriptionEngine.getModelAvailability("ggml-medium.bin");
       const large = transcriptionEngine.getModelAvailability("ggml-large.bin");
-
-      const toModelState = (fileName, availability) => {
-        const modelPath = availability?.modelPath || null;
-        const executablePath = availability?.executablePath || null;
-        const available = !!availability?.available;
-        let missingReason = null;
-        if (!available) {
-          if (!executablePath) {
-            missingReason = "Whisper-Executable fehlt.";
-          } else if (!modelPath) {
-            missingReason = `Modell fehlt: ${fileName}`;
-          } else {
-            missingReason = "Whisper-Runtime nicht verfuegbar.";
-          }
-        }
-        return { fileName, available, missingReason };
-      };
       return {
         ok: true,
         models: {
-          fast: toModelState("ggml-base.bin", base),
-          balanced: toModelState("ggml-small.bin", small),
-          best: toModelState("ggml-medium.bin", medium),
-          large: toModelState("ggml-large.bin", large),
+          fast: _buildWhisperModelState("ggml-base.bin", base),
+          balanced: _buildWhisperModelState("ggml-small.bin", small),
+          best: _buildWhisperModelState("ggml-medium.bin", medium),
+          large: _buildWhisperModelState("ggml-large.bin", large),
         },
       };
     } catch (err) {
@@ -215,6 +226,8 @@ function registerAudioIpc() {
     }
   });
 
+  // Uebergangs- / fachnahe Audio-Auswertung:
+  // Mapping, Vorschlaege und Uebernahme bleiben vorerst eng an der Protokoll-Fachnutzung.
   ipcMain.handle("audio:analyze", async (_evt, payload) => {
     try {
       _ensureAudioLicensed();
@@ -331,6 +344,8 @@ function registerAudioIpc() {
     }
   });
 
+  // Feldnahe Projekt-Wortkorrekturen:
+  // technisch ueber den Audio-Dienst erreichbar, fachlich aber noch direkt im Diktatfluss genutzt.
   ipcMain.handle("audio:termCorrectionsList", async (_evt, payload) => {
     try {
       _ensureAudioLicensed();

@@ -22,6 +22,12 @@ export default class HelpModal {
     this.infoOverlay = null;
   }
 
+  // UI-nahe Hilfsnutzung:
+  // HelpModal startet den technischen Schnellhilfe-Dienst nur ueber die App-Bruecke.
+  _getQuickAssistAddonApi() {
+    return window.bbmDb || {};
+  }
+
   _ensureDom() {
     if (this.root) return;
     const overlay = createPopupOverlay();
@@ -223,7 +229,7 @@ export default class HelpModal {
   }
 
   async _syncQuickAssistUi() {
-    const api = window.bbmDb || {};
+    const api = this._getQuickAssistAddonApi();
     let isWin = false;
 
     if (typeof api.appIsWindows === "function") {
@@ -253,7 +259,7 @@ export default class HelpModal {
   }
 
   async _openQuickAssist() {
-    const api = window.bbmDb || {};
+    const api = this._getQuickAssistAddonApi();
     if (!this._isWindows) {
       alert("Schnellhilfe ist nur unter Windows verfügbar.");
       return;

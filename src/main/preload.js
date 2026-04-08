@@ -73,21 +73,6 @@ contextBridge.exposeInMainWorld("bbmDb", {
   audioTermCorrectionUpsert: (data) => ipcRenderer.invoke("audio:termCorrectionUpsert", data),
 
   // ============================================================
-  // Audio / KI
-  // ============================================================
-  audioImport: (data) => ipcRenderer.invoke("audio:import", data),
-  audioTranscribe: (data) => ipcRenderer.invoke("audio:transcribe", data),
-  audioTranscribeBlob: (data) => ipcRenderer.invoke("audio:transcribeBlob", data),
-  audioAnalyze: (data) => ipcRenderer.invoke("audio:analyze", data),
-  audioGetSuggestions: (data) => ipcRenderer.invoke("audio:getSuggestions", data),
-  audioCreateDemoSuggestion: (data) => ipcRenderer.invoke("audio:createDemoSuggestion", data),
-  audioApplySuggestion: (data) => ipcRenderer.invoke("audio:applySuggestion", data),
-  audioRejectSuggestion: (data) => ipcRenderer.invoke("audio:rejectSuggestion", data),
-  audioWhisperModelsStatus: () => ipcRenderer.invoke("audio:whisperModelsStatus"),
-  audioTermCorrectionsList: (data) => ipcRenderer.invoke("audio:termCorrectionsList", data),
-  audioTermCorrectionUpsert: (data) => ipcRenderer.invoke("audio:termCorrectionUpsert", data),
-
-  // ============================================================
   // GLOBAL Firmen
   // ============================================================
   firmsListGlobal: () => ipcRenderer.invoke("firms:listGlobal"),
@@ -146,15 +131,11 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // App
   // ============================================================
   appQuit: () => ipcRenderer.invoke("app:quit"),
-    appGetBundledIconPath: () => ipcRenderer.invoke("app:getBundledIconPath"),
-    appIsWindows: () => ipcRenderer.invoke("app:isWindows"),
-    appIsPackaged: () => ipcRenderer.invoke("app:isPackaged"),
-    appGetBuildChannel: () => ipcRenderer.invoke("app:getBuildChannel"),
-    appGetVersion: () => ipcRenderer.invoke("app:getVersion"),
-
-  // ✅ vom Build eingebrannt (packaged) / DEV (unpackaged)
+  appGetBundledIconPath: () => ipcRenderer.invoke("app:getBundledIconPath"),
+  appIsWindows: () => ipcRenderer.invoke("app:isWindows"),
+  appIsPackaged: () => ipcRenderer.invoke("app:isPackaged"),
   appGetBuildChannel: () => ipcRenderer.invoke("app:getBuildChannel"),
-
+  appGetVersion: () => ipcRenderer.invoke("app:getVersion"),
   openQuickAssist: () => ipcRenderer.invoke("app:openQuickAssist"),
 
   // ✅ Build-Kanal Umschalten (schreibt channel.json im Repo) – nur DEV-Umgebung
@@ -241,6 +222,9 @@ contextBridge.exposeInMainWorld("bbmPrint", {
   listStoredFirmsPdfs: (data) => ipcRenderer.invoke("firms:listStoredPdfs", data),
   listStoredProjectPdfs: (data) => ipcRenderer.invoke("print:listStoredProjectPdfs", data),
 });
+
+// Zusatzdienste mit eigener Renderer-Bruecke:
+// Mail und Projekt-Transfer sind technische Addons, keine Views.
 contextBridge.exposeInMainWorld("bbmMail", {
   createOutlookDraft: (payload) => ipcRenderer.invoke("mail:createOutlookDraft", payload),
 });

@@ -21,6 +21,13 @@ export class DictationController {
     this.transcriptionService = new TranscriptionService();
   }
 
+  // UI-nahe Nutzung des Audio-Addons:
+  // Der Controller steuert Feld-Diktat und Term-Hinweise,
+  // die technische Transkriptionslogik bleibt im Audio-Dienst.
+  _getAudioAddonApi() {
+    return window.bbmDb || {};
+  }
+
   updateButtons({ readOnly = null, busy = null, meetingId = null } = {}) {
     const view = this.view || {};
     const btnShort = view.btnTitleDictate;
@@ -323,7 +330,7 @@ export class DictationController {
         return this._termCorrections;
       }
 
-      const api = window.bbmDb || {};
+      const api = this._getAudioAddonApi();
       if (typeof api.audioTermCorrectionsList !== "function") {
         this._termCorrectionsLoaded = true;
         return this._termCorrections;
@@ -438,7 +445,7 @@ export class DictationController {
     };
 
     btnYes.onclick = async () => {
-      const api = window.bbmDb || {};
+      const api = this._getAudioAddonApi();
       if (typeof api.audioTermCorrectionUpsert === "function" && this.view?.projectId) {
         try {
           const res = await api.audioTermCorrectionUpsert({
