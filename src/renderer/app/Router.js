@@ -477,7 +477,7 @@ export default class Router {
     this._emitContextChange();
   }
 
-  // Navigation / UI-Rahmenlogik: View-Wechsel bleiben im Router gebündelt.
+  // Kern-Routing / UI-Rahmenlogik: allgemeine Screen-Wechsel bleiben im Router gebuendelt.
   async showProjects() {
     const mod = await import("../views/ProjectsView.js");
     const V = mod.default;
@@ -496,6 +496,7 @@ export default class Router {
     });
   }
 
+  // Kern-Routing / Screen-Host-Grundpfad: Start ohne Projekt- oder Protokollkontext.
   async showHome() {
     const mod = await import("../views/HomeView.js");
     const V = mod.default;
@@ -504,6 +505,7 @@ export default class Router {
     await this.show(new V({ router: this }), { section: "home", isTopsView: false });
   }
 
+  // Kern-Routing mit Projektkontext: allgemeine Fachscreens ohne direkten Protokollmodus.
   async showProjectForm({ projectId } = {}) {
     const mod = await import("../views/ProjectFormView.js");
     const V = mod.default;
@@ -525,6 +527,7 @@ export default class Router {
     });
   }
 
+  // Fachlich/protokollzentrierte Pfade: Besprechungen und Tops bleiben noch direkt verdrahtet.
   async showMeetings(projectId, { printSelectionMode = false, printKind = null } = {}) {
     const mod = await import("../views/MeetingsView.js");
     const V = mod.default;
@@ -597,10 +600,8 @@ export default class Router {
     await this.show(new V({ router: this }), { section: "archive", isTopsView: false });
   }
 
-  // … Rest unverändert …
-  // (Participants/Print Modal Code bleibt wie gehabt)
-
-  // Gemeinsame Dienste / service-nahe Integrationen: lazy geladene Modals und Helfer.
+  // Uebergangsbestand: die folgenden Integrationen bleiben in Phase 2 noch im Router.
+  // Service-nahe Integrationen: lazy geladene Modals und UI-Bridges bleiben vorerst im Router.
   async _ensureParticipantsModals() {
     if (this._participantsModals) return this._participantsModals;
     if (this._participantsModalsLoading) return await this._participantsModalsLoading;
@@ -644,6 +645,7 @@ export default class Router {
     await pm.openParticipants({ projectId: effectiveProjectId, meetingId: effectiveMeetingId });
   }
 
+  // Service-nahe Integrationen mit fachlichem Kontext: Druck-UI und Rueckkehr in bestehende Screens.
   async _ensurePrintModal() {
     if (this._printModal) return this._printModal;
     if (this._printModalLoading) return await this._printModalLoading;
@@ -1050,16 +1052,17 @@ export default class Router {
     }
   }
 
+  // Service-nahe Integrationen fuer Projektkontext-Quicklane und modale Kontextbearbeitung.
   async _ensureProjectContextQuicklane() {
     if (this._projectContextLane) return this._projectContextLane;
     if (this._projectContextLaneLoading) return await this._projectContextLaneLoading;
 
-      this._projectContextLaneLoading = (async () => {
-        const mod = await import("../ui/ProjectContextQuicklane.js");
-        const Lane = mod.default;
-        this._projectContextLane = new Lane({ router: this });
-        return this._projectContextLane;
-      })();
+    this._projectContextLaneLoading = (async () => {
+      const mod = await import("../ui/ProjectContextQuicklane.js");
+      const Lane = mod.default;
+      this._projectContextLane = new Lane({ router: this });
+      return this._projectContextLane;
+    })();
 
     try {
       return await this._projectContextLaneLoading;

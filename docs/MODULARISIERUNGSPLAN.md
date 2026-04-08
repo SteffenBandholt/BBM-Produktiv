@@ -261,7 +261,7 @@ Den Router auf Navigation und Screen-Wechsel zurückführen.
 - Router wird Integrationsschicht statt Fachsteuerung
 
 **Stand / Notiz**
-Paket 1 hat `src/renderer/app/Router.js` konservativ vorstrukturiert. Kernlogik, service-nahe Integrationen und fachlich verdrahtete Altlogik sind sichtbarer markiert; modulinterne Abläufe wurden noch nicht aus dem Router herausgelöst.
+Paket 1 und Paket 3 haben `src/renderer/app/Router.js` konservativ vorstrukturiert. Kern-Routing, service-nahe Integrationen, fachlich/protokollzentrierte Pfade und Übergangslogik sind sichtbarer gegliedert; modulinterne Abläufe wurden noch nicht aus dem Router herausgelöst und keine modulbasierte Screen-Auflösung wurde eingeführt.
 
 ---
 
@@ -279,6 +279,41 @@ Die Navigation in `src/renderer/main.js` so vorstrukturieren, dass Kernnavigatio
 
 **Stand / Notiz**
 Paket 2 ist als konservative Vorstrukturierung der Navigation in `src/renderer/main.js` abgeschlossen. Die Navigationsbereiche sind sichtbarer getrennt, ohne Router-Eingriffe, ohne neue Modulnavigation und ohne funktionale Neudefinition der Buttons.
+
+---
+
+## Paket 3 – Router auf Kern-Routing und Fachpfade zuschneiden
+**Status:** ERLEDIGT
+
+**Ziel**
+`src/renderer/app/Router.js` so weiter vorbereiten, dass Kern-Routing, service-nahe Integrationen, fachlich/protokollzentrierte Pfade und Übergangslogik klarer voneinander abgegrenzt sind, ohne bereits einen Modulrahmen einzuführen.
+
+**Ergebnis**
+- `src/renderer/app/Router.js` wurde konservativ so gegliedert, dass Kern-Routing, service-nahe Integrationen, fachlich/protokollzentrierte Pfade und Übergangslogik sichtbarer getrennt sind.
+- Es wurde keine Modulregistrierung eingeführt.
+- Es wurde keine modulbasierte Screen-Auflösung eingeführt.
+- Es wurden keine bestehenden Fachpfade gelöscht; die bestehende Funktionalität sollte erhalten bleiben.
+
+**Stand / Notiz**
+Paket 3 ist als konservative Vorstrukturierung des Routers abgeschlossen. Die interne Abschnittslogik in `src/renderer/app/Router.js` macht Kern-Routing und fachlich verdrahtete Übergangspfade sichtbarer, ohne `main.js` anzufassen oder eine tiefere fachliche Umverdrahtung vorzuziehen.
+
+---
+
+## Paket 4 – erste Andockstelle für spätere Modulaufnahme vorbereiten
+**Status:** ERLEDIGT
+
+**Ziel**
+In `src/renderer/main.js` und vorbereitend im Zusammenspiel mit dem bestehenden Router eine kleine, konservative Andockstelle sichtbar machen, damit spätere modulbezogene Navigation sauberer anschließen kann, ohne bereits ein echtes Modulsystem einzuführen.
+
+**Ergebnis**
+- In `src/renderer/main.js` wurden sichtbare Route-/Button-Definitionen für Kernnavigation und kontextbezogene Navigation vorbereitet.
+- Direkte bestehende Router-Aufrufe blieben erhalten.
+- Es wurde keine Modulregistrierung eingeführt.
+- Es wurde keine modulbasierte Screen-Auflösung eingeführt.
+- Es wurden keine bestehenden Fachpfade gelöscht.
+
+**Stand / Notiz**
+Paket 4 ist als konservative Vorstrukturierung einer späteren Navigations-Andockstelle abgeschlossen. In `src/renderer/main.js` ist sichtbarer vorbereitet, wo spätere modulbezogene Navigation anschließen könnte, ohne eine zentrale Router-Abstraktion oder ein echtes Modulsystem einzuführen.
 
 ---
 
@@ -301,7 +336,7 @@ Die Navigation darf nicht mehr fest um `Protokoll` herum gebaut sein.
 - Navigation kann später aus aktiven Modulen gespeist werden
 
 **Stand / Notiz**
-Paket 2 hat die Navigation in `src/renderer/main.js` konservativ in Kernnavigation, fachlich/projektbezogene Navigation, aktionsbezogene Buttons und Exit-/Randaktionen sichtbarer getrennt. Es wurde keine Modulregistrierung, keine modulbasierte Navigation und keine Router-Änderung eingeführt; die bestehende Funktionalität sollte erhalten bleiben.
+Paket 2 und Paket 4 haben die Navigation in `src/renderer/main.js` konservativ weiter vorbereitet. Kernnavigation, fachlich/projektbezogene Navigation, aktionsbezogene Buttons und sichtbare Route-/Button-Definitionen fuer eine spaetere modulbezogene Navigation sind klarer gegliedert; direkte bestehende Router-Aufrufe blieben erhalten, ohne Modulregistrierung, ohne modulbasierte Navigation und ohne modulbasierte Screen-Aufloesung.
 
 ---
 

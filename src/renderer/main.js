@@ -790,22 +790,68 @@ document.addEventListener("DOMContentLoaded", async () => {
       container.append(...buttons.filter(Boolean));
     };
 
+    // Konservative Andockstelle fuer spaetere modulbezogene Navigation:
+    // heute noch statische Sidebar-Definitionen mit direkten Router-Aufrufen.
+    const createScreenRouteButton = ({ key, label, onClick, getPayload, onMissingContext } = {}) =>
+      mkNavBtn(key, label, async () => {
+        const payload = typeof getPayload === "function" ? (getPayload() || {}) : {};
+        if (payload.missingContext) {
+          if (typeof onMissingContext === "function") {
+            await onMissingContext();
+          }
+          return;
+        }
+        if (typeof onClick === "function") {
+          await onClick(payload);
+        }
+      });
+
+    const shellNavigationRouteDefs = [
+      { key: "home", label: "Home", onClick: () => router.showHome() },
+      { key: "projects", label: "Projekte", onClick: () => router.showProjects() },
+      { key: "firms", label: "Firmen (Stamm)", onClick: () => router.showFirms() },
+      { key: "settings", label: "Einstellungen", onClick: () => router.showSettings() },
+    ];
+
+    const contextualNavigationRouteDefs = [
+      {
+        key: "meetings",
+        label: "Protokolle",
+        onClick: ({ projectId }) => router.showMeetings(projectId),
+        getPayload: () => ({
+          projectId: router.currentProjectId || null,
+          missingContext: !router.currentProjectId,
+        }),
+        onMissingContext: async () => {
+          alert("Bitte zuerst ein Projekt auswählen.");
+          await router.showProjects();
+        },
+      },
+      {
+        key: "projectFirms",
+        label: "Projektfirmen",
+        onClick: ({ projectId }) => router.showProjectFirms(projectId),
+        getPayload: () => ({
+          projectId: router.currentProjectId || null,
+          missingContext: !router.currentProjectId,
+        }),
+        onMissingContext: async () => {
+          alert("Bitte zuerst ein Projekt auswählen.");
+          await router.showProjects();
+        },
+      },
+    ];
+
     // Kernnavigation: allgemeine App-Einstiege ohne aktiven Projekt-/Protokollkontext.
-    const btnHome = mkNavBtn("home", "Home", () => router.showHome());
-    const btnProjects = mkNavBtn("projects", "Projekte", () => router.showProjects());
-    const btnFirms = mkNavBtn("firms", "Firmen (Stamm)", () => router.showFirms());
-    const btnSettings = mkNavBtn("settings", "Einstellungen", () => router.showSettings());
+    const [btnHome, btnProjects, btnFirms, btnSettings] = shellNavigationRouteDefs.map((def) =>
+      createScreenRouteButton(def)
+    );
     const btnHelp = mkNavBtn("help", "Hilfe", () => router.openHelpModal());
 
     // Fachlich/projektbezogene Navigation: heute noch direkt an Projekt-/Protokollpfade gekoppelt.
-    const btnMeetings = mkNavBtn("meetings", "Protokolle", async () => {
-      if (router.currentProjectId) {
-        await router.showMeetings(router.currentProjectId);
-        return;
-      }
-      alert("Bitte zuerst ein Projekt auswählen.");
-      await router.showProjects();
-    });
+    const [btnMeetings, btnProjectFirms] = contextualNavigationRouteDefs.map((def) =>
+      createScreenRouteButton(def)
+    );
 
     // Aktionsbezogene Buttons: lösen kontextabhängige Arbeitsschritte aus statt View-Wechsel.
     const btnParticipants = mkActionBtn("Teilnehmer", async () => {
@@ -821,14 +867,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         projectId: router.currentProjectId,
         meetingId: router.currentMeetingId,
       });
-    });
-    const btnProjectFirms = mkNavBtn("projectFirms", "Projektfirmen", async () => {
-      if (router.currentProjectId) {
-        await router.showProjectFirms(router.currentProjectId);
-        return;
-      }
-      alert("Bitte zuerst ein Projekt auswählen.");
-      await router.showProjects();
     });
 
     const coreNavigationButtons = [
