@@ -265,8 +265,25 @@ Paket 1 hat `src/renderer/app/Router.js` konservativ vorstrukturiert. Kernlogik,
 
 ---
 
+## Paket 2 – Navigation in Kernnavigation und Fachnavigation trennen
+**Status:** ERLEDIGT
+
+**Ziel**
+Die Navigation in `src/renderer/main.js` so vorstrukturieren, dass Kernnavigation, fachlich/projektbezogene Navigation, aktionsbezogene Buttons und Exit-/Randaktionen klarer getrennt sind, ohne bereits eine modulbasierte Navigation einzuführen.
+
+**Ergebnis**
+- Die Navigation in `src/renderer/main.js` wurde konservativ in Kernnavigation, fachlich/projektbezogene Navigation, aktionsbezogene Buttons und Exit-/Randaktionen sichtbarer getrennt.
+- Es wurde keine Modulregistrierung eingeführt.
+- Es wurde keine modulbasierte Navigation eingeführt.
+- Eine Router-Änderung war nicht Teil dieses Pakets; die bestehende Funktionalität sollte erhalten bleiben.
+
+**Stand / Notiz**
+Paket 2 ist als konservative Vorstrukturierung der Navigation in `src/renderer/main.js` abgeschlossen. Die Navigationsbereiche sind sichtbarer getrennt, ohne Router-Eingriffe, ohne neue Modulnavigation und ohne funktionale Neudefinition der Buttons.
+
+---
+
 ## Schritt 2.3 – Navigation entfachlichen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Die Navigation darf nicht mehr fest um `Protokoll` herum gebaut sein.
@@ -284,7 +301,7 @@ Die Navigation darf nicht mehr fest um `Protokoll` herum gebaut sein.
 - Navigation kann später aus aktiven Modulen gespeist werden
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 2 hat die Navigation in `src/renderer/main.js` konservativ in Kernnavigation, fachlich/projektbezogene Navigation, aktionsbezogene Buttons und Exit-/Randaktionen sichtbarer getrennt. Es wurde keine Modulregistrierung, keine modulbasierte Navigation und keine Router-Änderung eingeführt; die bestehende Funktionalität sollte erhalten bleiben.
 
 ---
 

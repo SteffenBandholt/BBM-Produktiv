@@ -785,9 +785,19 @@ document.addEventListener("DOMContentLoaded", async () => {
       btn.title = isEnabled ? "" : (titleWhenDisabled || "");
     };
 
+    const appendButtonGroup = (container, buttons) => {
+      if (!container || !Array.isArray(buttons) || buttons.length === 0) return;
+      container.append(...buttons.filter(Boolean));
+    };
+
+    // Kernnavigation: allgemeine App-Einstiege ohne aktiven Projekt-/Protokollkontext.
     const btnHome = mkNavBtn("home", "Home", () => router.showHome());
     const btnProjects = mkNavBtn("projects", "Projekte", () => router.showProjects());
+    const btnFirms = mkNavBtn("firms", "Firmen (Stamm)", () => router.showFirms());
+    const btnSettings = mkNavBtn("settings", "Einstellungen", () => router.showSettings());
+    const btnHelp = mkNavBtn("help", "Hilfe", () => router.openHelpModal());
 
+    // Fachlich/projektbezogene Navigation: heute noch direkt an Projekt-/Protokollpfade gekoppelt.
     const btnMeetings = mkNavBtn("meetings", "Protokolle", async () => {
       if (router.currentProjectId) {
         await router.showMeetings(router.currentProjectId);
@@ -797,6 +807,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await router.showProjects();
     });
 
+    // Aktionsbezogene Buttons: lösen kontextabhängige Arbeitsschritte aus statt View-Wechsel.
     const btnParticipants = mkActionBtn("Teilnehmer", async () => {
       if (!router.currentProjectId) {
         alert("Bitte zuerst ein Projekt auswählen.");
@@ -811,7 +822,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         meetingId: router.currentMeetingId,
       });
     });
-
     const btnProjectFirms = mkNavBtn("projectFirms", "Projektfirmen", async () => {
       if (router.currentProjectId) {
         await router.showProjectFirms(router.currentProjectId);
@@ -821,21 +831,26 @@ document.addEventListener("DOMContentLoaded", async () => {
       await router.showProjects();
     });
 
-    const btnFirms = mkNavBtn("firms", "Firmen (Stamm)", () => router.showFirms());
-    const btnSettings = mkNavBtn("settings", "Einstellungen", () => router.showSettings());
-    const btnHelp = mkNavBtn("help", "Hilfe", () => router.openHelpModal());
-
-    topBox.append(
+    const coreNavigationButtons = [
       btnHome,
       btnProjects,
-      btnMeetings,
-      btnParticipants,
-      btnProjectFirms,
       btnFirms,
       btnSettings,
-      btnHelp
-    );
+      btnHelp,
+    ];
+    const projectNavigationButtons = [
+      btnMeetings,
+      btnProjectFirms,
+    ];
+    const actionButtons = [
+      btnParticipants,
+    ];
 
+    appendButtonGroup(topBox, coreNavigationButtons);
+    appendButtonGroup(topBox, projectNavigationButtons);
+    appendButtonGroup(topBox, actionButtons);
+
+    // Exit-/Randaktionen: bleiben außerhalb der fachlichen Navigationsgruppen.
     const btnQuit = document.createElement("button");
     btnQuit.textContent = "Beenden";
     btnQuit.dataset.variant = "danger";
@@ -877,7 +892,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       }
     };
 
-    bottomBox.append(btnQuit);
+    appendButtonGroup(bottomBox, [btnQuit]);
 
     const updateContextButtons = () => {
       const hasProject = !!router.currentProjectId;
