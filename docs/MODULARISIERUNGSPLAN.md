@@ -1415,7 +1415,7 @@ Paket 1 ist als kleiner Einzelbetriebsnachweis abgeschlossen. `Restarbeiten` ist
 ---
 
 ## Schritt 10.3 – Szenario C testen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 BBM läuft mit beiden Modulen.
@@ -1431,7 +1431,28 @@ BBM läuft mit beiden Modulen.
 - Parallelbetrieb nachweisbar
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 2 hat den ersten konservativen Zusammenspiel-Nachweis fuer `Protokoll` und `Restarbeiten` hergestellt. Beide Module werden jetzt als aktive Fachmodule im gemeinsamen Modulkatalog gefuehrt und ihre jeweiligen Work-Screens lassen sich ueber die bestehende kleine Modul-/Screen-Aufloesung getrennt nachweisen; breite Navigation, Shell-Integration und Vollausbau wurden dabei bewusst noch nicht eingefuehrt.
+
+---
+
+## Paket 2 – Zusammenspiel `Protokoll` + `Restarbeiten` nachweisen
+**Status:** ERLEDIGT
+
+**Ziel**
+In kleinem, kontrolliertem Rahmen nachweisen, dass `Protokoll` und `Restarbeiten` im aktuellen Modulrahmen nebeneinander bestehen koennen, ohne ihre Fachlogiken, Work-Screens oder Modulzustaendigkeiten zu vermischen.
+
+**Ergebnis**
+- Als minimale relevante Zugriffspunkte wurden der Modulkatalog in `src/renderer/app/modules/moduleCatalog.js`, die kleine Screen-Aufloesung in `src/renderer/app/modules/moduleScreenResolver.js`, die beiden Moduleinstiege unter `src/renderer/modules/protokoll/` und `src/renderer/modules/restarbeiten/` sowie die Testsuite unter `scripts/tests/` fokussiert.
+- Ein kleiner Integrationsnachweis prueft jetzt:
+  - beide Module sind gleichzeitig als aktive Module im Katalog vorhanden
+  - beide Module besitzen jeweils einen eigenen Work-Screen
+  - beide Work-Screens lassen sich getrennt ueber die bestehende Modul-/Screen-Aufloesung aufloesen
+  - die Modulgrenzen bleiben im Katalog sichtbar verschieden
+- Fuer den Testpfad wurde ein kleiner Shared-Pfadanker fuer die bereits genutzte Ampel-Regel unter `src/renderer/shared/ampel/pdfAmpelRule.js` ergänzt, ohne Fachlogik zu verschieben.
+- Es wurde keine breite Navigation fuer beide Module, kein grosser Router-Umbau und keine Plattformmechanik im grossen Stil eingefuehrt.
+
+**Stand / Notiz**
+Paket 2 ist als kleiner Koexistenz-Nachweis abgeschlossen. `Protokoll` und `Restarbeiten` sind im aktuellen Modulrahmen jetzt nicht nur einzeln, sondern auch gemeinsam als getrennte aktive Fachmodule nachweisbar. Produktive Navigation, breitere Shell-Integration und weitergehende Modulinterop bleiben weiterhin spaeteren Paketen vorbehalten.
 
 ---
 
