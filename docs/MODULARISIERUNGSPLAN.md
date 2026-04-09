@@ -738,7 +738,7 @@ Paket 2 ist als konservative Festigung abgeschlossen. Der gemeinsame Bearbeitung
 ---
 
 ## Schritt 6.3 – Workbench-Muster vom Fachmodul trennen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Gemeinsames Bearbeitungsmuster ermöglichen, ohne Fachlogik zu verallgemeinern.
@@ -756,7 +756,25 @@ Gemeinsames Bearbeitungsmuster ermöglichen, ohne Fachlogik zu verallgemeinern.
 - Muster wiederverwendbar, Fachlogik nicht verschleppt
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 3 hat den ersten Trennungsschnitt fuer das Workbench-Muster konservativ vorbereitet. `src/renderer/tops/components/TopsWorkbench.js`, `src/renderer/tops/viewmodel/TopsWorkbenchViewModel.js` und `src/renderer/views/TopsScreen.js` machen sichtbarer, welche Teile als gemeinsames Workbench-Muster bzw. als UI-nahe Host-Struktur lesbar sind und welche Teile ausdruecklich als protokollspezifische Header-, Aktions-, Meta- und TOP-Regellogik im Fachmodul bleiben. Ein allgemeines Workbench-System oder ein tieferer Modulumbau wurde damit noch nicht umgesetzt.
+
+---
+
+## Paket 3 – Workbench-Muster vom Fachmodul trennen
+**Status:** ERLEDIGT
+
+**Ziel**
+Das in der TOP-Workbench erkennbare Bearbeitungsmuster konservativ so weiter vorbereiten, dass gemeinsames Workbench-Muster, wiederverwendbare Kernbausteine, protokollspezifische Workbench-Logik und UI-nahe Host-Verdrahtung stabiler voneinander unterscheidbar werden, ohne ein allgemeines Workbench-Framework einzufuehren.
+
+**Ergebnis**
+- Die tatsaechlich relevanten Zugriffspunkte wurden auf `src/renderer/tops/components/TopsWorkbench.js`, `src/renderer/tops/viewmodel/TopsWorkbenchViewModel.js` und `src/renderer/views/TopsScreen.js` begrenzt.
+- `TopsWorkbench` unterscheidet jetzt klarer zwischen wiederverwendbarer Workbench-Grundstruktur, gemeinsamem Bearbeitungskern und protokollspezifischer Header-/Meta-/Draft-Huelle.
+- `TopsWorkbenchViewModel` trennt sichtbarer zwischen gemeinsamem Workbench-Zustandsmuster und protokollspezifischer TOP-Action-/Meta-Bedeutung.
+- `TopsScreen` bleibt bewusst UI-/View-naher Host und benennt die protokollspezifische Host-Verdrahtung ausdruecklicher.
+- Ein neues Workbench-Framework, eine neue Modulstruktur oder ein tiefer API-Umbau wurden nicht eingefuehrt.
+
+**Stand / Notiz**
+Paket 3 ist als konservative Mustertrennung abgeschlossen. Das wiederverwendbare Muster bleibt weiterhin nur als interne Ordnung innerhalb der heutigen TOP-Workbench sichtbar; die eigentlichen TOP-Aktionen, TOP-Meta-Regeln, TOP-Draft-Zuschnitte und Screen-Commands bleiben klar beim Fachmodul `Protokoll`. Die bestehende Funktionalitaet wurde beibehalten. Fuer spaetere Arbeit ist nun besser lesbar, welche Teile als gemeinsames Muster taugen koennten und welche nicht stillschweigend zum globalen Standard werden duerfen.
 
 ---
 

@@ -121,7 +121,7 @@ export default class TopsScreen {
     this._buildHeader();
     this._buildQuicklane();
     this._buildList();
-    this._buildWorkbench();
+    this._buildProtocolWorkbenchHost();
 
     sheetCanvas.appendChild(sheetPaper);
     sheetArea.appendChild(sheetCanvas);
@@ -178,14 +178,16 @@ export default class TopsScreen {
     this.sheetPaper.appendChild(this.topsList.root);
   }
 
-  _buildWorkbench() {
-    this.workbench = new TopsWorkbench(this._createWorkbenchUiAdapter());
+  // UI-/View-nahe Host-Logik:
+  // TopsScreen bleibt Host fuer die Workbench und hebt nur die Screen-Verdrahtung hervor.
+  _buildProtocolWorkbenchHost() {
+    this.workbench = new TopsWorkbench(this._createProtocolWorkbenchUiAdapter());
     this.editCanvas.appendChild(this.workbench.root);
   }
 
-  // UI-/View-nahe Verdrahtung:
-  // TopsScreen hostet die Workbench nur und koppelt sie an Screen-Commands/-Datenquellen.
-  _createWorkbenchUiAdapter() {
+  // Protokollspezifische Host-Verdrahtung:
+  // Screen-Commands und Datenquellen bleiben Fachmodul-nahe und werden nicht Teil eines allgemeinen Musters.
+  _createProtocolWorkbenchUiAdapter() {
     return {
       onDraftChange: (draft) => this._handleWorkbenchDraftChange(draft),
       onSave: async () => this._handleWorkbenchSave(),
@@ -335,8 +337,7 @@ export default class TopsScreen {
       this.store.setState({ isWriting: true });
       this.store.setState({ error: null });
       try {
-        let res;
-        res = await this.topsRepository.moveTop({
+        const res = await this.topsRepository.moveTop({
           topId: movingTop.id,
           targetParentId: top.id || null,
         });
@@ -362,7 +363,7 @@ export default class TopsScreen {
     this._syncScreenState();
   }
 
-  _syncWorkbenchState() {
+  _syncProtocolWorkbenchHostState() {
     if (!(this.workbench instanceof TopsWorkbench)) return;
 
     const state = this.store.getState();
@@ -378,7 +379,7 @@ export default class TopsScreen {
     this._syncHeaderState();
     this._syncQuicklaneState();
     this._syncListState();
-    this._syncWorkbenchState();
+    this._syncProtocolWorkbenchHostState();
 
     if (this.editArea) {
       this.editArea.dataset.bbmWorkbenchVisible = shouldShowWorkbench(state) ? "true" : "false";
@@ -399,7 +400,7 @@ export default class TopsScreen {
 
   _handleWorkbenchDraftChange(draft) {
     this.commands.updateDraft(draft || {});
-    this._syncWorkbenchState();
+    this._syncProtocolWorkbenchHostState();
   }
 
   async _handleWorkbenchSave() {

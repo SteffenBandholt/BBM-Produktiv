@@ -13,6 +13,14 @@ const TOPS_WORKBENCH_FLAG_LABELS = Object.freeze({
   decision: "Beschluss",
 });
 
+const PROTOCOL_WORKBENCH_BUTTON_SPECS = Object.freeze({
+  createLevel1: { label: "+Titel", tone: "neutral" },
+  createChild: { label: "+TOP", tone: "neutral" },
+  toggleMove: { label: "Schieben", tone: "neutral" },
+  save: { label: "Speichern", tone: "primary" },
+  delete: { label: "Papierkorb", tone: "danger" },
+});
+
 function createEmptyWorkbenchEditboxValue() {
   return {
     shortText: "",
@@ -56,6 +64,18 @@ export class TopsWorkbench {
     this.loadEmployeesByCompany =
       typeof loadEmployeesByCompany === "function" ? loadEmployeesByCompany : null;
 
+    this._buildWorkbenchShell();
+    this._buildProtocolWorkbenchHeader();
+    this._buildProtocolWorkbenchEditorArea();
+    this._buildProtocolWorkbenchMetaArea();
+    this._assembleWorkbenchShell();
+    this._bindDraftChangeSources();
+    this.responsibleBridge.initialize();
+  }
+
+  // Gemeinsames Workbench-Muster:
+  // Header, Arbeitsflaeche und Meta-Spalte bilden die wiederverwendbare Grundstruktur.
+  _buildWorkbenchShell() {
     this.root = document.createElement("div");
     this.root.className = "bbm-tops-workbench";
     this.root.dataset.hasSelection = "false";
@@ -67,21 +87,14 @@ export class TopsWorkbench {
 
     this.leftHeaderTitle = document.createElement("div");
     this.leftHeaderTitle.className = "bbm-tops-workbench-left-title";
-    this.leftHeaderTitle.textContent = "TOP bearbeiten";
-
-    this.btnL1 = this._mkBtn("+Titel", this.onCreateLevel1, "neutral");
-    this.btnChild = this._mkBtn("+TOP", this.onCreateChild, "neutral");
-    this.btnMove = this._mkBtn("Schieben", this.onToggleMove, "neutral");
-    this.btnSave = this._mkBtn("Speichern", this.onSave, "primary");
-    this.btnDelete = this._mkBtn("Papierkorb", this.onDelete, "danger");
 
     const addWrap = document.createElement("div");
     addWrap.className = "bbm-tops-workbench-add-wrap";
-    addWrap.append(this.btnL1, this.btnChild);
+    this.headerAddActions = addWrap;
 
     const actionWrap = document.createElement("div");
     actionWrap.className = "bbm-tops-workbench-action-wrap";
-    actionWrap.append(this.btnMove, this.btnSave, this.btnDelete);
+    this.headerPrimaryActions = actionWrap;
 
     this.header.append(this.leftHeaderTitle, addWrap, actionWrap);
 
@@ -91,21 +104,39 @@ export class TopsWorkbench {
     this.left = document.createElement("div");
     this.left.className = "bbm-tops-workbench-left";
 
-    this._buildSharedEditboxCore();
-    this.left.appendChild(this.editboxRoot);
-
     this.gutter = document.createElement("div");
     this.gutter.className = "bbm-tops-workbench-gutter";
     this.gutter.setAttribute("aria-hidden", "true");
+  }
 
+  // Protokollspezifische Workbench-Huelle:
+  // Button-Bedeutungen und Header-Titel bleiben im Modul `Protokoll`.
+  _buildProtocolWorkbenchHeader() {
+    this.leftHeaderTitle.textContent = "TOP bearbeiten";
+
+    this.btnL1 = this._createWorkbenchButton(PROTOCOL_WORKBENCH_BUTTON_SPECS.createLevel1, this.onCreateLevel1);
+    this.btnChild = this._createWorkbenchButton(PROTOCOL_WORKBENCH_BUTTON_SPECS.createChild, this.onCreateChild);
+    this.btnMove = this._createWorkbenchButton(PROTOCOL_WORKBENCH_BUTTON_SPECS.toggleMove, this.onToggleMove);
+    this.btnSave = this._createWorkbenchButton(PROTOCOL_WORKBENCH_BUTTON_SPECS.save, this.onSave);
+    this.btnDelete = this._createWorkbenchButton(PROTOCOL_WORKBENCH_BUTTON_SPECS.delete, this.onDelete);
+
+    this.headerAddActions.append(this.btnL1, this.btnChild);
+    this.headerPrimaryActions.append(this.btnMove, this.btnSave, this.btnDelete);
+  }
+
+  _buildProtocolWorkbenchEditorArea() {
+    this._buildSharedEditboxCore();
+    this.left.appendChild(this.editboxRoot);
+  }
+
+  _buildProtocolWorkbenchMetaArea() {
     this._buildProtocolMetaPanel();
     this._buildProtocolMetaBridges();
+  }
 
+  _assembleWorkbenchShell() {
     this.body.append(this.left, this.gutter, this.metaPanel.root);
     this.root.append(this.header, this.body);
-
-    this._bindDraftChangeSources();
-    this.responsibleBridge.initialize();
   }
 
   // Gemeinsamer Bearbeitungskern:
@@ -185,11 +216,11 @@ export class TopsWorkbench {
     labelEl.append(text, counterEl);
   }
 
-  _mkBtn(label, onClick, tone) {
+  _createWorkbenchButton(spec, onClick) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = label;
-    btn.className = `bbm-tops-btn bbm-tops-workbench-btn bbm-tops-workbench-btn-${tone}`;
+    btn.textContent = String(spec?.label || "");
+    btn.className = `bbm-tops-btn bbm-tops-workbench-btn bbm-tops-workbench-btn-${spec?.tone || "neutral"}`;
     btn.onclick = async () => {
       if (typeof onClick === "function") await onClick();
     };
