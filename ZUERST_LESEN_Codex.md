@@ -305,3 +305,49 @@ git merge <branchname>
 git branch -d <branchname>
 git push
 git status
+
+## 14. Verbindlicher Git-Ablauf pro Arbeitsschritt
+
+Es wird immer genau in **Paketen** gearbeitet, nicht in unscharfen Großaufträgen.
+
+### Feste Begriffe
+- **Phase** = größerer Themenblock im Plan
+- **Paket** = kleinster konkret prüfbarer Arbeitsschritt innerhalb einer Phase
+
+Beispiel:
+- Phase 9 = `Restarbeiten` aufbauen
+- Phase 9 Paket 2 = `Modulstruktur Restarbeiten anlegen`
+
+### Harte Regel
+**1 Paket = 1 Branch = 1 Commit = 1 Merge**
+
+Keine Ausnahmen ohne ausdrückliche Anweisung.
+
+### Verbindlicher Ablauf
+1. Zuerst `main` aktualisieren
+2. Dann genau **einen** Branch für genau **ein** Paket anlegen
+3. Nur dieses Paket bearbeiten
+4. Vor jedem Commit erst den echten Diff zeigen
+5. Erst nach ausdrücklicher Freigabe committen
+6. Danach sauber in `main` mergen
+7. Danach Branch löschen
+8. Danach pushen
+9. Danach `git status` prüfen
+
+### Verbindliches Branch-Schema
+`phaseX-paketY-kurzname`
+
+Beispiel:
+`phase9-paket2-modulstruktur-restarbeiten`
+
+### Verbindliches Commit-Schema
+`Phase X Paket Y: Beschreibung`
+
+Beispiel:
+`Phase 9 Paket 2: Modulstruktur Restarbeiten anlegen`
+
+### Verbindliche Befehlsfolge
+```powershell
+git switch main
+git pull
+git switch -c phaseX-paketY-kurzname
