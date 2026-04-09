@@ -1079,7 +1079,7 @@ Paket 1 ist als konservative Katalogeinfuehrung abgeschlossen. Der App-Kern besi
 ---
 
 ## Schritt 8.2 – Modul-/Screen-Auflösung einführen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Den Kern auf modulbasierte Screen-Auflösung umstellen.
@@ -1095,7 +1095,26 @@ Den Kern auf modulbasierte Screen-Auflösung umstellen.
 - Kern und Module sprechen über definierte Auflösung statt feste Fachpfade
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 2 hat die erste kleine modulbezogene Screen-Aufloesung konservativ eingefuehrt. Im App-Kern gibt es jetzt eine kleine Resolver-Schicht, ueber die der Protokoll-Arbeitsscreen aus dem aktiven Modulkatalog aufgeloest werden kann; modulbasierte Navigation oder eine breitere Plattformmechanik wurden dabei bewusst noch nicht eingefuehrt.
+
+---
+
+## Paket 2 – Modul-/Screen-Auflösung einführen
+**Status:** ERLEDIGT
+
+**Ziel**
+Eine kleine, klare und konservative Aufloesungsschicht einfuehren, ueber die der Kern einen Screen eines aktiven Moduls gezielter ansprechen kann, ohne modulbasierte Navigation oder eine allgemeine Plattformmechanik vorwegzunehmen.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js`, `src/renderer/modules/protokoll/index.js`, `src/renderer/app/modules/moduleScreenResolver.js` und der bestehende Kernpfad `src/renderer/app/Router.js` identifiziert.
+- Mit `src/renderer/app/modules/moduleScreenResolver.js` existiert jetzt eine kleine Resolver-Schicht fuer aktive Modul-Screens.
+- Der Resolver arbeitet bewusst einfach ueber `moduleId` und `screenId` gegen den statischen Modulkatalog.
+- `Protokoll` ist darueber jetzt ueber `PROTOKOLL_MODULE_ID` und `PROTOKOLL_WORK_SCREEN_ID` sauber erreichbar.
+- `Router.showTops()` nutzt diese kleine Aufloesung jetzt konservativ fuer den Protokoll-Arbeitsscreen, faellt aber weiterhin defensiv auf den bisherigen Bestands-Pfad zurueck.
+- Es wurde keine modulbasierte Navigation, keine dynamische Discovery, keine globale Plattformmechanik und kein grosser Router-Umbau eingefuehrt.
+
+**Stand / Notiz**
+Paket 2 ist als konservative Screen-Aufloesung abgeschlossen. Der App-Kern kann jetzt erstmals einen Screen eines aktiven Moduls ueber eine kleine definierte Aufloesungsschicht erreichen. `Protokoll` ist darueber sauber angebunden. Navigation, Shell und breitere Plattformmechanik bleiben weiterhin spaeteren Paketen vorbehalten.
 
 ---
 

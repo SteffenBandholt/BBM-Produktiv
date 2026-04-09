@@ -1,5 +1,11 @@
 // src/renderer/app/Router.js
 
+import {
+  PROTOKOLL_MODULE_ID,
+  resolveActiveModuleScreen,
+} from "./modules/index.js";
+import { PROTOKOLL_WORK_SCREEN_ID } from "../modules/protokoll/index.js";
+
 // App-Kern: globale Settings, die der Router als Shell-/Kontextzustand vorlaedt.
 const APP_KERNEL_SETTINGS_KEYS = [
   "user_name",
@@ -524,11 +530,11 @@ export default class Router {
 
   async showTops(meetingId, projectId, options = {}) {
     // App-Kern / Screen-Host:
-    // Router kennt nur den Einstieg in den Protokoll-Arbeitsscreen und nicht das Modul selbst.
-    // Modulinterner Unterbau und Workbench-Anbindung bleiben ausdruecklich in TopsScreen bzw. im Tops-Unterbau.
-    // LEGACY-BOUNDARY: Router zeigt ausschliesslich TopsScreen; Legacy-Details bleiben intern gekapselt.
-    const mod = await import("../views/TopsScreen.js");
-    const V = mod.default;
+    // Router nutzt jetzt eine kleine modulbezogene Screen-Aufloesung, aber keine Modulnavigation.
+    // Modulinterner Unterbau und Workbench-Anbindung bleiben ausdruecklich im Fachmodul.
+    const V =
+      resolveActiveModuleScreen(PROTOKOLL_MODULE_ID, PROTOKOLL_WORK_SCREEN_ID) ||
+      (await import("../views/TopsScreen.js")).default;
 
     const opts = options && typeof options === "object" ? options : {};
     const readOnly = !!opts.readOnly;
