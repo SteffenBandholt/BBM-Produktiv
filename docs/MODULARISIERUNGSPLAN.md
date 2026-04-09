@@ -996,7 +996,7 @@ Paket 5 ist als erster kontrollierter Teil-Umzug abgeschlossen. Die neue Modulst
 ---
 
 ## Schritt 7.6 – Modul-Einstieg definieren
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Das Modul registrierbar und vom Kern aus ansprechbar machen.
@@ -1013,7 +1013,24 @@ Das Modul registrierbar und vom Kern aus ansprechbar machen.
 - `Protokoll` besitzt einen klaren Moduleinstieg
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 6 hat den heute vorhandenen Einstieg in `src/renderer/modules/protokoll/` konservativ geschaerft. Der Modul-Einstieg benennt jetzt klarer Modulkennung, Arbeitsscreen und bereits umgezogenen modulinternen Bestand, ohne eine globale Modulregistrierung, dynamische Modulaufloesung oder Plattformmechanik einzufuehren.
+
+---
+
+## Paket 6 – Modul-Einstieg definieren
+**Status:** ERLEDIGT
+
+**Ziel**
+Fuer `src/renderer/modules/protokoll/` einen kleinen, klaren und fachlich passenden Modul-Einstieg definieren, ohne Phase 8 mit globaler Modulregistrierung oder dynamischer Modulaufloesung vorwegzunehmen.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/modules/protokoll/index.js`, `src/renderer/modules/protokoll/screens/index.js`, `src/renderer/modules/protokoll/screens/TopsScreen.js` und `src/renderer/modules/protokoll/viewmodel/index.js` fokussiert.
+- `index.js` macht jetzt sichtbarer, was der heutige Modul-Einstieg leisten darf: Modulkennung, Modulbezeichnung, Arbeitsscreen-ID, Arbeitsscreen-Zugriff und Sicht auf bereits umgezogenen modulinternen Bestand.
+- Der Modul-Einstieg benennt ausdruecklich nur den heutigen Arbeitsscreen `TopsScreen` und die bereits real umgezogenen ViewModels; der restliche Bestand bleibt weiterhin ausserhalb und spaeteren Umzugspaketen vorbehalten.
+- Es wurde keine globale Modul-Registry, keine dynamische Modulaufloesung, keine modulbasierte Plattformmechanik und kein Vollumzug eingefuehrt.
+
+**Stand / Notiz**
+Paket 6 ist als konservative Scharfstellung abgeschlossen. `src/renderer/modules/protokoll/` ist jetzt als echter kleiner Modul-Einstieg lesbar: Der Einstieg fasst den aktuellen Arbeitsscreen des Moduls und den bereits umgezogenen modulinternen Bestand sauber zusammen. Router/App-Kern, gemeinsame Kernbausteine, gemeinsame Domaenen, gemeinsame Dienste und der grosse Rest des Protokoll-Unterbaus bleiben weiterhin ausdruecklich ausserhalb.
 
 ---
 

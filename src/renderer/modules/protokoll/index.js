@@ -1,17 +1,36 @@
 import TopsScreen from "./screens/TopsScreen.js";
+import { PROTOKOLL_WORK_SCREEN_ID } from "./screens/index.js";
+import * as protokollViewModels from "./viewmodel/index.js";
 
 export const PROTOKOLL_MODULE_ID = "protokoll";
+export const PROTOKOLL_MODULE_LABEL = "Protokoll";
+
+function buildProtokollModuleScreens() {
+  return Object.freeze({
+    [PROTOKOLL_WORK_SCREEN_ID]: TopsScreen,
+  });
+}
+
+function buildMovedProtocolModuleParts() {
+  return Object.freeze({
+    viewmodel: protokollViewModels,
+  });
+}
 
 // Technische Heimat fuer das Fachmodul `Protokoll`.
 // Der heutige Bestand bleibt vorerst in seinen vorhandenen Pfaden und wird hier
 // nur ueber kleine Einstiegspunkte angedockt.
+// Kein globaler Modulkatalog, keine Plattformlogik und kein Vollumzug.
 export function getProtokollModuleEntry() {
   return Object.freeze({
     moduleId: PROTOKOLL_MODULE_ID,
-    screens: {
-      work: TopsScreen,
-    },
+    moduleLabel: PROTOKOLL_MODULE_LABEL,
+    workScreenId: PROTOKOLL_WORK_SCREEN_ID,
+    screens: buildProtokollModuleScreens(),
+    movedParts: buildMovedProtocolModuleParts(),
   });
 }
 
-export { TopsScreen };
+export { TopsScreen, PROTOKOLL_WORK_SCREEN_ID };
+export * from "./screens/index.js";
+export * from "./viewmodel/index.js";
