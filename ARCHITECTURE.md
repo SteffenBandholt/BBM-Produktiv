@@ -280,6 +280,39 @@ Die richtige Sicht ist:
 
 ---
 
+## Aktueller dokumentierter Umsetzungsstand
+
+Der aktuell erreichte Stand ist ein konservativ modularisierter Zwischenstand.
+
+Heute gilt sichtbar:
+
+- `Protokoll` besitzt einen echten Moduleinstieg unter `src/renderer/modules/protokoll/`
+- `Restarbeiten` besitzt einen echten Moduleinstieg unter `src/renderer/modules/restarbeiten/`
+- der App-Kern fuehrt beide Module ueber einen kleinen statischen Modulkatalog
+- der App-Kern besitzt eine kleine Modul-/Screen-Aufloesung
+- der gemeinsame Bearbeitungskern bleibt ausserhalb der Fachmodule in `src/renderer/core/`
+
+Produktiv nutzbar vorbereitet ist insbesondere:
+
+- `Protokoll` als weiter genutztes Fachmodul mit angebundenem Arbeitsscreen
+- `Restarbeiten` als eigenes Fachmodul mit eigener kleiner Workbench und eigenem Screen-Anker
+- das Nebeneinander beider Module im Katalog und in der Screen-Aufloesung
+
+Bewusst noch Uebergang bleiben derzeit:
+
+- `TopsScreen` selbst liegt weiter unter `src/renderer/views/` und wird fuer das Modul `Protokoll` ueber einen Screen-Anker angebunden
+- ein erheblicher Teil des Protokoll-Unterbaus liegt weiter unter `src/renderer/tops/`
+- die produktive modulbezogene Navigation ist bisher nur klein und im Wesentlichen fuer `Protokoll` angeschlossen
+- `Restarbeiten` ist noch nicht produktiv ueber Router und Navigation verdrahtet
+- weitere Restmischzonen und Altpfade sind noch vorhanden und werden nur schrittweise abgebaut
+
+Dieser Stand ist bewusst kein Vollabschluss der Zielarchitektur.
+Er ist ein belastbarer Zwischenstand, in dem Modulgrenzen, gemeinsame Kernbausteine
+und kleine Kernmechaniken bereits sichtbar sind, waehrend breitere Integration und
+Restabbau noch offen bleiben.
+
+---
+
 ## Zielstruktur
 
 Die Zielstruktur der Anwendung folgt dieser Grundordnung:

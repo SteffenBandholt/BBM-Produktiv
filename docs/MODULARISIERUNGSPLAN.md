@@ -1566,7 +1566,7 @@ Paket 2 ist als kleiner Mischzustands-Abbau abgeschlossen. Es wurde bewusst nur 
 ---
 
 ## Schritt 11.3 – Abschlussprüfung
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Den erreichten Zustand gegen Zielarchitektur und Plan prüfen.
@@ -1585,7 +1585,33 @@ Den erreichten Zustand gegen Zielarchitektur und Plan prüfen.
 - Restschulden klar benannt
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 3 hat den erreichten Architektur- und Migrationsstand in den zentralen Doku-Dateien konsolidiert. Dokumentiert ist jetzt klarer, was fuer `Protokoll`, `Restarbeiten`, Modulkatalog, Screen-Aufloesung und gemeinsamen Bearbeitungskern bereits erreicht ist und welche Uebergangs- bzw. Restmischzonen bewusst noch offen bleiben.
+
+---
+
+## Paket 3 – Abschlussstand dokumentieren
+**Status:** ERLEDIGT
+
+**Ziel**
+Den erreichten Architektur- und Migrationsstand ehrlich und belastbar dokumentieren, ohne daraus einen neuen technischen Umbau, eine kuenstliche Vollstaendigkeitsbehauptung oder eine neue Plattformmechanik abzuleiten.
+
+**Ergebnis**
+- Als zentrale Abschlussdokumente wurden `ARCHITECTURE.md` und `docs/MODULARISIERUNGSPLAN.md` fokussiert.
+- In `ARCHITECTURE.md` ist jetzt ein knapper aktueller Umsetzungsstand dokumentiert:
+  - `Protokoll` und `Restarbeiten` besitzen echte Moduleinstiege
+  - der App-Kern fuehrt beide Module ueber einen kleinen statischen Modulkatalog
+  - eine kleine Modul-/Screen-Aufloesung ist vorhanden
+  - der gemeinsame Bearbeitungskern bleibt ausserhalb der Fachmodule
+- Gleichzeitig ist ausdruecklich festgehalten, was noch Uebergang bleibt:
+  - `TopsScreen` liegt weiter unter `src/renderer/views/`
+  - grosser Protokoll-Unterbau liegt weiter unter `src/renderer/tops/`
+  - produktive modulbezogene Navigation ist nur klein und bisher im Wesentlichen fuer `Protokoll` vorhanden
+  - `Restarbeiten` ist noch nicht produktiv ueber Router und Navigation verdrahtet
+- In `docs/MODULARISIERUNGSPLAN.md` ist der Abschlussstand fuer Phase 11 jetzt als eigene Dokumentationsleistung festgehalten.
+- Restoffenheiten werden nuechtern benannt, ohne den bereits erreichten Modularisierungsstand kleinzureden.
+
+**Stand / Notiz**
+Paket 3 ist als Abschlussdokumentation abgeschlossen. Der dokumentierte Stand unterscheidet jetzt klarer zwischen bereits modularisiertem Kernrahmen, produktiv genutzter Vorbereitung und bewusst weiter bestehendem Uebergang. Es wurde kein neuer technischer Umbau vorgenommen; dokumentiert wurde nur der tatsaechlich erreichte Stand.
 
 ---
 
