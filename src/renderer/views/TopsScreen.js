@@ -18,8 +18,8 @@ import {
   canDeleteFromState,
   canMoveFromState,
   shouldShowWorkbench,
-} from "../tops/viewmodel/TopsScreenViewModel.js";
-import { buildWorkbenchVm } from "../tops/viewmodel/TopsWorkbenchViewModel.js";
+} from "../modules/protokoll/viewmodel/TopsScreenViewModel.js";
+import { buildWorkbenchVm } from "../modules/protokoll/viewmodel/TopsWorkbenchViewModel.js";
 
 const TOPS_V2_STYLE_TAG = "bbm-tops-v2-styles";
 

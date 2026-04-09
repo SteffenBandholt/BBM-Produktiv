@@ -951,7 +951,7 @@ Paket 4 ist als technische Heimatstruktur abgeschlossen. Das Modul `Protokoll` b
 ---
 
 ## Schritt 7.5 – Bestehende Protokollbestandteile umziehen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Bestehende Protokollteile in die Modulstruktur überführen.
@@ -972,7 +972,26 @@ Bestehende Protokollteile in die Modulstruktur überführen.
 - `Protokoll` ist als technisches und fachliches Modul sichtbar
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 5 hat den ersten echten Teil-Umzug konservativ umgesetzt. Nach `src/renderer/modules/protokoll/viewmodel/` wurden die beiden eng zusammenhaengenden Protokoll-ViewModels fuer Screen- und Workbench-Zuschnitt verschoben; die bisherigen Pfade in `src/renderer/tops/viewmodel/` bleiben als Uebergangs-Re-Exports erhalten. Ein Vollumzug des Tops-Unterbaus wurde damit bewusst noch nicht begonnen.
+
+---
+
+## Paket 5 – bestehende Protokollbestandteile umziehen
+**Status:** ERLEDIGT
+
+**Ziel**
+Einen ersten kleinen, stabilen und nachvollziehbaren Teil des bestehenden Protokoll-Bestands in die neue technische Heimat `src/renderer/modules/protokoll/` umziehen, ohne gemeinsame Kernbausteine, gemeinsame Domaenen, gemeinsame Dienste oder App-Kernlogik mitzuziehen.
+
+**Ergebnis**
+- Als erste kleine Umzugsmenge wurden `src/renderer/tops/viewmodel/TopsScreenViewModel.js` und `src/renderer/tops/viewmodel/TopsWorkbenchViewModel.js` gewaehlt.
+- Beide Dateien gehoeren eindeutig zum Fachmodul `Protokoll`, haengen eng zusammen, enthalten keinen gemeinsamen Kernbaustein und haben nur begrenzte direkte Abhaengigkeiten.
+- Die Implementierungen liegen jetzt real unter `src/renderer/modules/protokoll/viewmodel/`.
+- Die bisherigen Pfade unter `src/renderer/tops/viewmodel/` wurden zu konservativen Re-Export-Ankern reduziert, damit bestehende Nutzung nicht hart bricht.
+- `src/renderer/views/TopsScreen.js` nutzt den neuen Modulpfad fuer diese ViewModels bereits direkt und macht damit die Modulstruktur sichtbar produktiver, ohne einen breiten Import-Umbau ausgeloest zu haben.
+- Gemeinsame Kernbausteine, gemeinsame Domaenen, gemeinsame Dienste, Router-/App-Kernlogik und der restliche Tops-Unterbau wurden bewusst nicht mit umgezogen.
+
+**Stand / Notiz**
+Paket 5 ist als erster kontrollierter Teil-Umzug abgeschlossen. Die neue Modulstruktur unter `src/renderer/modules/protokoll/` traegt jetzt erstmals echten fachlichen Bestand. Gleichzeitig bleiben die bisherigen Pfade als Uebergang lesbar und nutzbar. Der Umzugsstand wird bewusst nicht uebertrieben: Screen, Komponenten, Domain/Data, Dialoge und Regeln liegen weiterhin im Bestandsbereich und sind spaeteren Paketen vorbehalten.
 
 ---
 

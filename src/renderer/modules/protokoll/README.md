@@ -6,6 +6,7 @@ Aktuell ist nur ein kleiner Einstieg angelegt:
 
 - `index.js` als Modul-Andockstelle
 - `screens/` mit einem konservativen Einstieg auf den heutigen `TopsScreen`
+- `viewmodel/` mit den ersten real umgezogenen Protokoll-ViewModels
 
 Die Ordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/`
 sind absichtlich schon angelegt, damit spaetere Umzuege dort sauber anschliessen koennen.
