@@ -416,12 +416,16 @@ export default class TopsScreen {
   // Screen-Zustand: UI-nahe Synchronisation des Protokoll-Arbeitsscreens
   // ---------------------------------------------------------------------------
 
+  _buildProtocolWorkbenchScreenVm(state, selectedTop) {
+    return buildWorkbenchVm(state, selectedTop);
+  }
+
   _syncProtocolWorkbenchHostState() {
     if (!(this.workbench instanceof TopsWorkbench)) return;
 
     const state = this.store.getState();
     const selectedTop = getSelectedTop(state);
-    const vm = buildWorkbenchVm(state, selectedTop);
+    const vm = this._buildProtocolWorkbenchScreenVm(state, selectedTop);
 
     this.workbench.setState(vm);
   }

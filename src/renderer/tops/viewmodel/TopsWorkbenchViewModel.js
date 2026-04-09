@@ -17,6 +17,8 @@ function buildHeaderVm(selectedTop) {
   };
 }
 
+// Gemeinsames Workbench-Muster:
+// Auswahl-, Read-only-, Busy- und Move-Zustand sind generische Zustandstypen.
 function buildSharedWorkbenchStateVm(state, selectedTop) {
   return {
     hasSelection: !!selectedTop,
@@ -26,6 +28,8 @@ function buildSharedWorkbenchStateVm(state, selectedTop) {
   };
 }
 
+// TOP-spezifische Fachlogik:
+// Level 1 bedeutet Titel und damit andere Bearbeitungsregeln als fuer normale TOPs.
 function isTitleLevelTop(selectedTop) {
   return Number(selectedTop?.level || 1) === 1;
 }
@@ -43,6 +47,8 @@ function buildSharedEditorAccessVm(state, selectedTop) {
   };
 }
 
+// Gemeinsamer Bearbeitungskern:
+// Editbox-Wert und Feldzugriff bleiben ein generischer Bearbeitungszuschnitt.
 function buildSharedEditorVm(state, selectedTop) {
   const editorValue = state?.editor || editorFromTop(selectedTop);
   return {
@@ -51,6 +57,8 @@ function buildSharedEditorVm(state, selectedTop) {
   };
 }
 
+// TOP-spezifische Fachlogik:
+// Titel auf Level 1 haben keine operative Meta-Belegung fuer Verantwortlich.
 function buildProtocolMetaValueVm(editorValue, selectedTop) {
   const titleLevel = isTitleLevelTop(selectedTop);
   return {
@@ -69,6 +77,12 @@ function buildProtocolMetaAccessVm(state, selectedTop) {
   };
 }
 
+function buildProtocolWorkbenchStructureVm(selectedTop) {
+  return {
+    header: buildHeaderVm(selectedTop),
+  };
+}
+
 // Protokollspezifische Workbench-Regel:
 // Titel auf Level 1 haben in der TOP-Workbench keine operative Meta-Belegung.
 function buildProtocolMetaVm(editorValue, state, selectedTop) {
@@ -79,7 +93,7 @@ function buildProtocolMetaVm(editorValue, state, selectedTop) {
 }
 
 // Gemeinsames Workbench-Muster:
-// Auswahl-, Read-only- und Busy-Zustand sind wiederverwendbare Musterzustandsarten.
+// Auswahl- und Bearbeitungsmuster bleiben wiederverwendbar, ohne TOP-Fachlogik mitzunehmen.
 function buildSharedWorkbenchPatternVm(state, selectedTop) {
   const sharedWorkbenchState = buildSharedWorkbenchStateVm(state, selectedTop);
   const sharedEditorVm = buildSharedEditorVm(state, selectedTop);
@@ -103,13 +117,18 @@ function buildProtocolWorkbenchActionsVm(sharedWorkbenchState, state, selectedTo
   };
 }
 
-export function buildWorkbenchVm(state, selectedTop) {
+function buildProtocolWorkbenchVm(state, selectedTop) {
+  const protocolWorkbenchStructure = buildProtocolWorkbenchStructureVm(selectedTop);
   const sharedPatternVm = buildSharedWorkbenchPatternVm(state, selectedTop);
 
   return {
-    header: buildHeaderVm(selectedTop),
+    header: protocolWorkbenchStructure.header,
     editor: sharedPatternVm.editor,
     meta: buildProtocolMetaVm(sharedPatternVm.editor.value, state, selectedTop),
     actions: buildProtocolWorkbenchActionsVm(sharedPatternVm.state, state, selectedTop),
   };
+}
+
+export function buildWorkbenchVm(state, selectedTop) {
+  return buildProtocolWorkbenchVm(state, selectedTop);
 }

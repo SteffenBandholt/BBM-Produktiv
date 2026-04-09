@@ -43,6 +43,16 @@ function buildEditboxFlagsFromEditorValue(editorValue = {}) {
   };
 }
 
+function buildProtocolActionButtonSpecs() {
+  return [
+    ["btnL1", PROTOCOL_WORKBENCH_BUTTON_SPECS.createLevel1, "onCreateLevel1"],
+    ["btnChild", PROTOCOL_WORKBENCH_BUTTON_SPECS.createChild, "onCreateChild"],
+    ["btnMove", PROTOCOL_WORKBENCH_BUTTON_SPECS.toggleMove, "onToggleMove"],
+    ["btnSave", PROTOCOL_WORKBENCH_BUTTON_SPECS.save, "onSave"],
+    ["btnDelete", PROTOCOL_WORKBENCH_BUTTON_SPECS.delete, "onDelete"],
+  ];
+}
+
 export class TopsWorkbench {
   constructor({
     onDraftChange,
@@ -114,14 +124,16 @@ export class TopsWorkbench {
   _buildProtocolWorkbenchHeader() {
     this.leftHeaderTitle.textContent = "TOP bearbeiten";
 
-    this.btnL1 = this._createWorkbenchButton(PROTOCOL_WORKBENCH_BUTTON_SPECS.createLevel1, this.onCreateLevel1);
-    this.btnChild = this._createWorkbenchButton(PROTOCOL_WORKBENCH_BUTTON_SPECS.createChild, this.onCreateChild);
-    this.btnMove = this._createWorkbenchButton(PROTOCOL_WORKBENCH_BUTTON_SPECS.toggleMove, this.onToggleMove);
-    this.btnSave = this._createWorkbenchButton(PROTOCOL_WORKBENCH_BUTTON_SPECS.save, this.onSave);
-    this.btnDelete = this._createWorkbenchButton(PROTOCOL_WORKBENCH_BUTTON_SPECS.delete, this.onDelete);
+    this._buildProtocolWorkbenchActionButtons();
 
     this.headerAddActions.append(this.btnL1, this.btnChild);
     this.headerPrimaryActions.append(this.btnMove, this.btnSave, this.btnDelete);
+  }
+
+  _buildProtocolWorkbenchActionButtons() {
+    buildProtocolActionButtonSpecs().forEach(([propertyName, spec, handlerName]) => {
+      this[propertyName] = this._createWorkbenchButton(spec, this[handlerName]);
+    });
   }
 
   _buildProtocolWorkbenchEditorArea() {
@@ -252,6 +264,10 @@ export class TopsWorkbench {
     return this._buildProtocolDraftFromUiState();
   }
 
+  // ---------------------------------------------------------------------------
+  // Workbench-Zustand: gemeinsames Muster vs. Protokoll-Workbench-Huelle
+  // ---------------------------------------------------------------------------
+
   setState(vm = {}) {
     this._applyHeaderState(vm.header || {});
     this._applyEditorState(vm.editor || {}, vm.actions || {});
@@ -263,6 +279,8 @@ export class TopsWorkbench {
     this.leftHeaderTitle.textContent = String(headerVm?.title || "TOP bearbeiten");
   }
 
+  // Gemeinsamer Bearbeitungskern im Workbench-Rahmen:
+  // Editbox-Zustand und Feldzugriff bleiben generisch, auch wenn die Workbench TOP-bezogen ist.
   _applyEditorState(editorVm = {}, actionsVm = {}) {
     const editorValue = editorVm?.value || {};
     const editorAccess = editorVm?.access || {};
@@ -326,6 +344,8 @@ export class TopsWorkbench {
     });
   }
 
+  // Protokoll-Workbench:
+  // Meta-Pane und Button-Zustaende bleiben Huelle des Moduls `Protokoll`.
   _applyMetaState(metaVm = {}) {
     const metaValue = metaVm?.value || {};
     const metaAccess = metaVm?.access || {};
@@ -341,6 +361,8 @@ export class TopsWorkbench {
     this.responsibleBridge.setDisabled(metaDisabled || responsibleDisabled);
   }
 
+  // Protokoll-Workbench mit TOP-Regelwirkung:
+  // Aktivierungen fuer Speichern, Schieben, Loeschen und Anlegen bleiben explizit TOP-bezogen.
   _applyActionState(actionsVm = {}) {
     const hasSelection = !!actionsVm?.hasSelection;
     const isReadOnly = !!actionsVm?.isReadOnly;

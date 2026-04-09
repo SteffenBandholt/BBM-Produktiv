@@ -862,7 +862,7 @@ Paket 2 ist als konservative Einordnung abgeschlossen. `TopsScreen` ist im aktue
 ---
 
 ## Schritt 7.3 – Editbox und Workbench im Protokoll richtig schneiden
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Bearbeitungskern und protokollspezifische Workbench sauber trennen.
@@ -881,7 +881,25 @@ Bearbeitungskern und protokollspezifische Workbench sauber trennen.
 - gemeinsame Kernbausteine bleiben außerhalb des Moduls wiederverwendbar
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 3 hat den naechsten Trennungsschnitt konservativ vorbereitet. In den relevanten Zugriffspunkten rund um `src/renderer/tops/components/TopsWorkbench.js`, `src/renderer/tops/viewmodel/TopsWorkbenchViewModel.js` und `src/renderer/views/TopsScreen.js` ist sichtbarer gemacht, was gemeinsamer Bearbeitungskern bleibt, was hoechstens als Workbench-Muster taugt und was ausdruecklich Protokoll-Workbench bzw. TOP-spezifische Fachlogik bleibt. Ein Framework-Umbau oder Modulumzug wurde damit noch nicht begonnen.
+
+---
+
+## Paket 3 – Editbox und Workbench im Protokoll richtig schneiden
+**Status:** ERLEDIGT
+
+**Ziel**
+Im Kontext des Fachmoduls `Protokoll` den aktuellen Bestand konservativ so weiter vorbereiten, dass gemeinsamer Bearbeitungskern, wiederverwendbares Workbench-Muster, Protokoll-Workbench und TOP-spezifische Fachlogik stabiler voneinander getrennt lesbar werden, ohne neue Frameworks, Datei-Verschiebungen oder einen Modulumzug einzufuehren.
+
+**Ergebnis**
+- Die tatsaechlich relevanten Zugriffspunkte wurden auf `src/renderer/tops/components/TopsWorkbench.js`, `src/renderer/tops/viewmodel/TopsWorkbenchViewModel.js`, `src/renderer/views/TopsScreen.js` und den bereits bestehenden gemeinsamen Bearbeitungskern in `src/renderer/core/editbox/EditboxShell.js` begrenzt.
+- `TopsWorkbench` gruppiert klarer zwischen gemeinsamem Editbox-Kern im Workbench-Rahmen, protokollspezifischer Workbench-Huelle, Meta-Bridges und TOP-bezogenen Aktionszustaenden.
+- `TopsWorkbenchViewModel` unterscheidet lesbarer zwischen gemeinsamem Bearbeitungs-/Workbench-Muster, Protokoll-Workbench-Struktur und ausdruecklicher TOP-Fachlogik wie Titel-Level-1-Regeln, Meta-Zuschnitt und TOP-Aktionsfreigaben.
+- `TopsScreen` bleibt UI-/View-nahe Host-Schicht und macht sichtbarer, dass es nur das Screen-VM fuer die Protokoll-Workbench zusammensetzt, nicht aber selbst den gemeinsamen Bearbeitungskern oder ein allgemeines Workbench-System bereitstellt.
+- Ein neues allgemeines Workbench-Framework, ein App-Kern-Umbau oder eine neue Modulstruktur wurden nicht eingefuehrt.
+
+**Stand / Notiz**
+Paket 3 ist als konservative Trennung abgeschlossen. Der generische Editbox-Kern bleibt ausserhalb des Fachmoduls wiederverwendbar. Das erkennbare Workbench-Muster bleibt weiterhin nur als interne Ordnung lesbar. Die konkrete TOP-Workbench, ihre Buttons, Meta-Huelle, Draft-Zuschnitte und TOP-Regelwirkungen bleiben klar im Fachmodul `Protokoll`. Die bestehende Funktionalitaet wurde beibehalten; ein technischer Modulumzug nach `modules/protokoll/` ist weiterhin spaeteren Paketen vorbehalten.
 
 ---
 
