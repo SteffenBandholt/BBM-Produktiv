@@ -1448,7 +1448,7 @@ In kleinem, kontrolliertem Rahmen nachweisen, dass `Protokoll` und `Restarbeiten
   - beide Module besitzen jeweils einen eigenen Work-Screen
   - beide Work-Screens lassen sich getrennt ueber die bestehende Modul-/Screen-Aufloesung aufloesen
   - die Modulgrenzen bleiben im Katalog sichtbar verschieden
-- Fuer den Testpfad wurde ein kleiner Shared-Pfadanker fuer die bereits genutzte Ampel-Regel unter `src/renderer/shared/ampel/pdfAmpelRule.js` ergänzt, ohne Fachlogik zu verschieben.
+- Fuer den damaligen Testpfad wurde kurzzeitig ein kleiner Shared-Pfadanker fuer die bereits genutzte Ampel-Regel unter `src/renderer/shared/ampel/pdfAmpelRule.js` genutzt; dieser Uebergangsanker wurde spaeter wieder entfernt, ohne Fachlogik zu verschieben.
 - Es wurde keine breite Navigation fuer beide Module, kein grosser Router-Umbau und keine Plattformmechanik im grossen Stil eingefuehrt.
 
 **Stand / Notiz**
@@ -1523,7 +1523,7 @@ Paket 1 ist als kleiner bereinigender Restmigrationsschritt abgeschlossen. Es wu
 ---
 
 ## Schritt 11.2 – Monolithreste beseitigen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Verbliebene Fachlogik aus dem Kern und Mischzonen entfernen.
@@ -1540,7 +1540,28 @@ Verbliebene Fachlogik aus dem Kern und Mischzonen entfernen.
 - kein dauerhafter Mischzustand mehr
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 2 hat einen kleinen technischen Mischzustand weiter reduziert. Fuer dieselbe Ampel-Regel existierten parallel ein direkter Shared-Pfad und ein zusaetzlicher Renderer-Re-Export-Anker; der betroffene Restimport nutzt jetzt den direkten Shared-Normalpfad, und der unnoetige Zwischenanker wurde entfernt.
+
+---
+
+## Paket 2 – Mischzustand weiter abbauen
+**Status:** ERLEDIGT
+
+**Ziel**
+Einen weiteren kleinen, risikoarmen Mischzustand abbauen, bei dem alte und neue Zugriffspfade fuer denselben fachlichen Baustein unnoetig parallel weitergetragen wurden, ohne dabei einen breiten Restabbau oder Plattformumbau ausgeloest zu haben.
+
+**Ergebnis**
+- Als kleine Abbaustelle wurde die doppelte Zugriffsfuehrung fuer `pdfAmpelRule` gewaehlt.
+- Fuer dieselbe Ampel-Regel existierten parallel:
+  - direkte Importe auf `src/shared/ampel/pdfAmpelRule.js`
+  - ein zusaetzlicher Re-Export-Anker unter `src/renderer/shared/ampel/pdfAmpelRule.js`
+- Der verbliebene Restimport in `src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js` wurde auf den direkten Shared-Normalpfad umgestellt.
+- Der unnoetige Renderer-Re-Export-Anker `src/renderer/shared/ampel/pdfAmpelRule.js` wurde entfernt.
+- Der normale Pfad fuer diese gemeinsame Regel ist damit wieder sichtbarer: `src/shared/ampel/pdfAmpelRule.js`.
+- App-Kern, gemeinsame Kernbausteine, gemeinsame Dienste, Router und weitere Modulpfade wurden bewusst nicht angetastet.
+
+**Stand / Notiz**
+Paket 2 ist als kleiner Mischzustands-Abbau abgeschlossen. Es wurde bewusst nur eine sehr kleine Parallelstruktur bereinigt, bei der der direkte Shared-Pfad bereits die eigentliche Normalform war. Weitere Restabbauten in `views/`, `tops/`, `modules/` und im App-Kern bleiben spaeteren Paketen vorbehalten.
 
 ---
 

@@ -5,7 +5,7 @@ import {
   canDeleteFromState,
   canMoveFromState,
 } from "../../../tops/domain/TopsActionPolicy.js";
-import { computeAmpelColorForTop } from "../../../shared/ampel/pdfAmpelRule.js";
+import { computeAmpelColorForTop } from "../../../../shared/ampel/pdfAmpelRule.js";
 import {
   normalizeTopLongText,
   normalizeTopShortText,
