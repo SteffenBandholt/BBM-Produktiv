@@ -33,6 +33,22 @@ function ensureTopsV2Styles() {
   document.head.appendChild(link);
 }
 
+function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
+  return {
+    projectId,
+    meetingId,
+    tops: [],
+    selectedTopId: null,
+    editor: {},
+    isReadOnly: false,
+    isMoveMode: false,
+    isLoading: false,
+    isWriting: false,
+    error: null,
+    meetingMeta: null,
+  };
+}
+
 // TOPS-V2: eigenstaendiger Screen inkl. nativer Close-/Output-Flow.
 export default class TopsScreen {
   constructor(options = {}) {
@@ -60,24 +76,21 @@ export default class TopsScreen {
     this._buildProtocolModuleRuntime(options);
   }
 
+  // ---------------------------------------------------------------------------
+  // Fachmodul `Protokoll`: Screen-Host und modulinterner Unterbau
+  // ---------------------------------------------------------------------------
+
   // Fachmodul `Protokoll`:
   // TopsScreen ist der Screen-Host des Moduls und baut den heutigen Protokoll-Unterbau zusammen.
   _buildProtocolModuleRuntime(options = {}) {
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.assigneeDataSource = options.assigneeDataSource || new TopsAssigneeDataSource();
-    this.store = createTopsStore({
-      projectId: this.projectId,
-      meetingId: this.meetingId,
-      tops: [],
-      selectedTopId: null,
-      editor: {},
-      isReadOnly: false,
-      isMoveMode: false,
-      isLoading: false,
-      isWriting: false,
-      error: null,
-      meetingMeta: null,
-    });
+    this.store = createTopsStore(
+      buildInitialProtocolScreenState({
+        projectId: this.projectId,
+        meetingId: this.meetingId,
+      })
+    );
     this.commands = new TopsCommands({
       store: this.store,
       repository: this.topsRepository,
@@ -98,6 +111,10 @@ export default class TopsScreen {
     this._syncScreenState();
     return this.root;
   }
+
+  // ---------------------------------------------------------------------------
+  // Arbeitsscreen `TopsScreen`: sichtbare Screen-Bereiche und UI-Host
+  // ---------------------------------------------------------------------------
 
   _buildShell() {
     ensureTopsV2Styles();
@@ -127,15 +144,19 @@ export default class TopsScreen {
     this.editArea = editArea;
     this.editCanvas = editCanvas;
 
-    this._buildHeader();
-    this._buildQuicklane();
-    this._buildList();
-    this._buildProtocolWorkbenchHost();
+    this._buildProtocolScreenRegions();
 
     sheetCanvas.appendChild(sheetPaper);
     sheetArea.appendChild(sheetCanvas);
     editArea.appendChild(editCanvas);
     root.append(this.header.root, sheetArea, editArea);
+  }
+
+  _buildProtocolScreenRegions() {
+    this._buildHeader();
+    this._buildQuicklane();
+    this._buildList();
+    this._buildProtocolWorkbenchHost();
   }
 
   _buildHeader() {
@@ -187,6 +208,10 @@ export default class TopsScreen {
     this.sheetPaper.appendChild(this.topsList.root);
   }
 
+  // ---------------------------------------------------------------------------
+  // Screen-Host-Bruecke: protokollspezifische UI-Verdrahtung zur Workbench
+  // ---------------------------------------------------------------------------
+
   // UI-/View-nahe Host-Logik im Modul `Protokoll`:
   // Der Screen bleibt Verdrahtungsschicht; gemeinsamer Bearbeitungskern liegt weiterhin ausserhalb.
   _buildProtocolWorkbenchHost() {
@@ -194,9 +219,7 @@ export default class TopsScreen {
     this.editCanvas.appendChild(this.workbench.root);
   }
 
-  // Protokollspezifische Screen-Verdrahtung:
-  // Router-, Projektkontext- und Datenquellenzugriffe bleiben Host-/Integrationslogik und nicht Kernbaustein.
-  _createProtocolWorkbenchUiAdapter() {
+  _createProtocolWorkbenchActionBridge() {
     return {
       onDraftChange: (draft) => this._handleWorkbenchDraftChange(draft),
       onSave: async () => this._handleWorkbenchSave(),
@@ -204,6 +227,11 @@ export default class TopsScreen {
       onToggleMove: async () => this._handleWorkbenchToggleMove(),
       onCreateLevel1: async () => this._handleWorkbenchCreateLevel1(),
       onCreateChild: async () => this._handleWorkbenchCreateChild(),
+    };
+  }
+
+  _createProtocolWorkbenchDataBridge() {
+    return {
       loadCompanies: async () => {
         return await this.assigneeDataSource.loadCompaniesByProject(this._getQuicklaneProjectId());
       },
@@ -213,12 +241,25 @@ export default class TopsScreen {
     };
   }
 
+  // Protokollspezifische Screen-Verdrahtung:
+  // Router-, Projektkontext- und Datenquellenzugriffe bleiben Host-/Integrationslogik und nicht Kernbaustein.
+  _createProtocolWorkbenchUiAdapter() {
+    return {
+      ...this._createProtocolWorkbenchActionBridge(),
+      ...this._createProtocolWorkbenchDataBridge(),
+    };
+  }
+
   _mountQuicklaneIntoHeader() {
     const host = this.header?.getActionsHost?.();
     if (!(host instanceof HTMLElement)) return;
     if (!(this.quicklane instanceof TopsQuicklane)) return;
     this.quicklane.mountInto(host);
   }
+
+  // ---------------------------------------------------------------------------
+  // Host-/Kontextintegration: Router-, Sidebar- und gemeinsame Domänenzugriffe
+  // ---------------------------------------------------------------------------
 
   _hideSidebar() {
     const sidebar = document.querySelector('[data-bbm-sidebar="true"]');
@@ -370,6 +411,10 @@ export default class TopsScreen {
     this.commands.updateDraft(editorFromTop(top));
     this._syncScreenState();
   }
+
+  // ---------------------------------------------------------------------------
+  // Screen-Zustand: UI-nahe Synchronisation des Protokoll-Arbeitsscreens
+  // ---------------------------------------------------------------------------
 
   _syncProtocolWorkbenchHostState() {
     if (!(this.workbench instanceof TopsWorkbench)) return;
@@ -566,6 +611,10 @@ export default class TopsScreen {
     await this._reloadTops({ keepSelection: true });
     this._syncScreenState();
   }
+
+  // ---------------------------------------------------------------------------
+  // Lebenszyklus / Uebergangsgrenze
+  // ---------------------------------------------------------------------------
 
   async destroy() {
     await this.closeFlow?.destroy?.();

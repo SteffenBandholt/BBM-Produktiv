@@ -823,7 +823,7 @@ Paket 1 ist als erster sichtbarer Grenzschnitt abgeschlossen. Das Fachmodul `Pro
 ---
 
 ## Schritt 7.2 – `TopsScreen` richtig einordnen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 `TopsScreen` sauber als Arbeitsscreen im Modul `Protokoll` einordnen.
@@ -839,7 +839,25 @@ Paket 1 ist als erster sichtbarer Grenzschnitt abgeschlossen. Das Fachmodul `Pro
 - `TopsScreen` ist klar als Screen des Moduls `Protokoll` eingeordnet
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 2 hat den naechsten Einordnungsschnitt konservativ vorbereitet. `src/renderer/views/TopsScreen.js` macht sichtbarer, dass `TopsScreen` nur der Arbeitsscreen des Moduls `Protokoll` ist, waehrend modulinterner Unterbau, gemeinsame Kernbausteine, gemeinsame Domaenen, gemeinsame Dienste und Router-/Host-Logik ausdruecklich ausserhalb bleiben. Ein Modulumzug oder ein allgemeines Screen-Framework wurde damit noch nicht begonnen.
+
+---
+
+## Paket 2 – `TopsScreen` richtig einordnen
+**Status:** ERLEDIGT
+
+**Ziel**
+`src/renderer/views/TopsScreen.js` konservativ so weiter vorbereiten, dass klarer sichtbar wird: `TopsScreen` ist der Arbeitsscreen des Fachmoduls `Protokoll` und nicht selbst das Modul, nicht der App-Kern und nicht ein allgemeines globales Workbench-System.
+
+**Ergebnis**
+- Die tatsaechlich relevanten Zugriffspunkte wurden auf `src/renderer/views/TopsScreen.js`, `src/renderer/app/Router.js` und die bereits vorhandenen modulinternen bzw. gemeinsamen Unterbauten rund um `src/renderer/tops/` begrenzt.
+- `TopsScreen` ist sichtbarer in Screen-Host, modulinterne Runtime-Zusammenstellung, Workbench-Host-Bruecke, Host-/Kontextintegration und UI-nahe Zustandssynchronisation gegliedert.
+- Kleine interne Hilfsstrukturen machen lesbarer, welche Verdrahtung direkt zu `TopsScreen` als Arbeitsscreen gehoert und welche Teile nur gemeinsame Kernbausteine oder gemeinsame Domaenen/Dienste anbinden.
+- `Router.js` macht noch klarer, dass der Router nur den Einstieg in den Protokoll-Arbeitsscreen hostet und nicht den internen Modulunterbau oder ein allgemeines Workbench-System.
+- Eine neue Modulstruktur, ein globales Screen-Framework oder ein tiefer API-Umbau wurden nicht eingefuehrt.
+
+**Stand / Notiz**
+Paket 2 ist als konservative Einordnung abgeschlossen. `TopsScreen` ist im aktuellen Bestand jetzt lesbarer als UI-/View-naher Arbeitsscreen des Moduls `Protokoll` erkennbar. Der modulinterne Unterbau bleibt in `src/renderer/tops/`, gemeinsame Bearbeitungskerne und gemeinsame Domaenen bleiben ausdruecklich ausserhalb, und der Router bleibt App-Kern-/Screen-Host statt Protokoll-Modul selbst. Die bestehende Funktionalitaet wurde beibehalten; ein technischer Modulumzug nach `modules/protokoll/` ist weiterhin spaeteren Paketen vorbehalten.
 
 ---
 
