@@ -35,7 +35,8 @@ export class TopsAssigneeDataSource {
     return this._asText(kind) === "global_person" ? "stamm" : "projektlokal";
   }
 
-  // Protokollnahe Projektion gemeinsamer Firmenstammdaten:
+  // Uebergangsschicht an der Modulgrenze:
+  // Protokollnahe Projektion gemeinsamer Firmenstammdaten.
   // Hier werden Stammdaten in die fuer Tops/Verantwortlich benoetigte
   // projektbezogene Lesesicht uebersetzt.
   _createSharedCompanyProjection(projectId, row) {

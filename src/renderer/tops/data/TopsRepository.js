@@ -12,6 +12,8 @@ import {
   createRepositoryUnavailableResult,
 } from "./TopsDtos.js";
 
+// Fachmodul `Protokoll`:
+// modulinterner Datenzugriff fuer TOP-/Protokolloperationen ueber die bestehende API-Bruecke.
 export class TopsRepository {
   constructor({ api } = {}) {
     this.api = api || window.bbmDb || {};

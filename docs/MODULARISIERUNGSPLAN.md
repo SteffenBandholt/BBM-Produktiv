@@ -782,7 +782,7 @@ Paket 3 ist als konservative Mustertrennung abgeschlossen. Das wiederverwendbare
 **Status:** OFFEN
 
 ## Schritt 7.1 – Modulgrenze `Protokoll` festlegen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Bestimmen, was vollständig zum Fachmodul `Protokoll` gehört.
@@ -799,7 +799,26 @@ Bestimmen, was vollständig zum Fachmodul `Protokoll` gehört.
 - Fachgrenze des Moduls `Protokoll` ist klar dokumentiert
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat den ersten Grenzschnitt konservativ vorbereitet. In den heute zentralen Zugriffspunkten fuer `TopsScreen`, Router/Host, Tops-Domain/Data und angrenzende gemeinsame Bausteine ist sichtbarer gemacht, was eindeutig zum Fachmodul `Protokoll` gehoert, was gemeinsame Kernbausteine oder gemeinsame Domaenen/Dienste nutzt und was weiterhin App-Kern-, Host- oder Uebergangslogik bleibt. Ein grosser Modulumzug oder eine neue Modulstruktur wurde damit noch nicht begonnen.
+
+---
+
+## Paket 1 – Modulgrenze `Protokoll` festlegen
+**Status:** ERLEDIGT
+
+**Ziel**
+Die fachliche und technische Modulgrenze von `Protokoll` konservativ so vorbereiten, dass klarer sichtbar wird, welche Teile eindeutig zum Fachmodul `Protokoll` gehoeren und welche ausdruecklich im App-Kern, in gemeinsamen Domaenen, in gemeinsamen Diensten oder in gemeinsamen Kernbausteinen bleiben.
+
+**Ergebnis**
+- Die tatsaechlich relevanten Zugriffspunkte wurden auf `src/renderer/views/TopsScreen.js`, `src/renderer/tops/domain/TopsCommands.js`, `src/renderer/tops/domain/TopsCloseFlow.js`, `src/renderer/tops/data/TopsRepository.js`, `src/renderer/tops/data/TopsAssigneeDataSource.js` und `src/renderer/app/Router.js` begrenzt.
+- `TopsScreen` ist sichtbarer als Screen-Host des Fachmoduls `Protokoll` gegliedert, ohne ihn bereits in eine neue Modulstruktur zu verschieben.
+- `tops/domain` und `tops/data` sind ausdruecklicher als modulinterner Unterbau markiert.
+- `Router.js` macht klarer, dass der Router nur den Screen-Einstieg hostet und nicht der Ort des internen Protokoll-Modulunterbaus ist.
+- `TopsCloseFlow` und `TopsAssigneeDataSource` machen sichtbarer, wo das Modul gemeinsame Dienste bzw. gemeinsame Domaenen nutzt und wo heute noch Uebergangsschichten liegen.
+- Ein verfruehter Gesamtumzug, eine neue Modul-Registry oder ein globaler Architekturpfad wurden nicht eingefuehrt.
+
+**Stand / Notiz**
+Paket 1 ist als erster sichtbarer Grenzschnitt abgeschlossen. Das Fachmodul `Protokoll` ist im aktuellen Bestand jetzt lesbarer als Zusammenspiel aus Screen, modulinterner Domain/Data-Logik und TOP-Regeln erkennbar, waehrend gemeinsamer Bearbeitungskern, gemeinsame Domaenen, gemeinsame Dienste und App-Kern-/Host-Logik ausdruecklich ausserhalb bleiben. Die bestehende Funktionalitaet wurde beibehalten; die eigentliche technische Modulstruktur fuer `Protokoll` ist weiterhin spaeteren Paketen vorbehalten.
 
 ---
 

@@ -1,6 +1,7 @@
 import { MailFlow } from "../../features/mail/MailFlow.js";
 
-// TOPS-V2 close/output flow ohne TopsView.
+// Fachmodul `Protokoll`:
+// Abschluss- und Ausgabeablauf des Protokolls; Mail/Print bleiben gemeinsame Dienste.
 export class TopsCloseFlow {
   constructor(options = {}) {
     this.router = options.router || null;
@@ -28,6 +29,8 @@ export class TopsCloseFlow {
       _owner: this,
     };
 
+    // Gemeinsamer Dienst / Addon:
+    // MailFlow bleibt ausserhalb des Moduls und wird hier nur fachlich angestossen.
     this.mailFlow = new MailFlow({
       view: this._mailViewAdapter,
       router: this.router,
@@ -107,6 +110,8 @@ export class TopsCloseFlow {
   }
 
   async _printAllOutputs({ projectId, meetingId }) {
+    // Gemeinsame Dienste / Addons:
+    // PDF-/Print-Erzeugung bleibt technisch im Router/PrintModal und nicht im Modul-Unterbau selbst.
     const printResults = {
       protocol: { ok: false, filePath: "" },
       firms: { ok: false, filePath: "" },

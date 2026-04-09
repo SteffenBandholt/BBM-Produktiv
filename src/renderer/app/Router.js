@@ -523,7 +523,8 @@ export default class Router {
   }
 
   async showTops(meetingId, projectId, options = {}) {
-    // TOPS-V2: offizieller und einziger Router-Einstiegspunkt fuer Tops.
+    // App-Kern / Screen-Host:
+    // Router kennt nur den Einstieg in den Protokoll-Screen und nicht den internen Modul-Unterbau.
     // LEGACY-BOUNDARY: Router zeigt ausschliesslich TopsScreen; Legacy-Details bleiben intern gekapselt.
     const mod = await import("../views/TopsScreen.js");
     const V = mod.default;

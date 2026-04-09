@@ -57,6 +57,12 @@ export default class TopsScreen {
     this.dialogs = null;
     this._dialogViewAdapter = this._createDialogViewAdapter();
 
+    this._buildProtocolModuleRuntime(options);
+  }
+
+  // Fachmodul `Protokoll`:
+  // TopsScreen ist der Screen-Host des Moduls und baut den heutigen Protokoll-Unterbau zusammen.
+  _buildProtocolModuleRuntime(options = {}) {
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.assigneeDataSource = options.assigneeDataSource || new TopsAssigneeDataSource();
     this.store = createTopsStore({
@@ -76,6 +82,9 @@ export default class TopsScreen {
       store: this.store,
       repository: this.topsRepository,
     });
+
+    // Fachmodul `Protokoll` mit gemeinsamer Dienstnutzung:
+    // Close-/Output-Flow bleibt fachlich im Modul, nutzt aber Router- und Mail-/Print-Dienste.
     this.closeFlow = new TopsCloseFlow({
       ...options,
       topsRepository: this.topsRepository,
@@ -178,15 +187,15 @@ export default class TopsScreen {
     this.sheetPaper.appendChild(this.topsList.root);
   }
 
-  // UI-/View-nahe Host-Logik:
-  // TopsScreen bleibt Host fuer die Workbench und hebt nur die Screen-Verdrahtung hervor.
+  // UI-/View-nahe Host-Logik im Modul `Protokoll`:
+  // Der Screen bleibt Verdrahtungsschicht; gemeinsamer Bearbeitungskern liegt weiterhin ausserhalb.
   _buildProtocolWorkbenchHost() {
     this.workbench = new TopsWorkbench(this._createProtocolWorkbenchUiAdapter());
     this.editCanvas.appendChild(this.workbench.root);
   }
 
-  // Protokollspezifische Host-Verdrahtung:
-  // Screen-Commands und Datenquellen bleiben Fachmodul-nahe und werden nicht Teil eines allgemeinen Musters.
+  // Protokollspezifische Screen-Verdrahtung:
+  // Router-, Projektkontext- und Datenquellenzugriffe bleiben Host-/Integrationslogik und nicht Kernbaustein.
   _createProtocolWorkbenchUiAdapter() {
     return {
       onDraftChange: (draft) => this._handleWorkbenchDraftChange(draft),
@@ -233,9 +242,8 @@ export default class TopsScreen {
     return state.projectId || this.router?.currentProjectId || null;
   }
 
-  // Protokollnahe Projektnutzung:
-  // TopsScreen verbraucht den vorhandenen Projektkontext fuer Header, Quicklane
-  // und Fachaktionen, bildet aber keine gemeinsame Projektdomaene selbst.
+  // Gemeinsame Domaene, modulnah verbraucht:
+  // TopsScreen nutzt den vorhandenen Projektkontext, ist aber nicht selbst die Projektdomaene.
   _getProjectScreenContext() {
     const state = this.store.getState();
     return {

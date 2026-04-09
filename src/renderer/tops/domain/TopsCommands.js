@@ -4,6 +4,8 @@ import {
   createDeleteTopRequest,
 } from "../data/TopsDtos.js";
 
+// Fachmodul `Protokoll`:
+// Screen-nahe Befehle fuer Laden, Draft-Speichern, Loeschen und Bewegungsmodus.
 export class TopsCommands {
   constructor({ store, repository } = {}) {
     this.store = store;
