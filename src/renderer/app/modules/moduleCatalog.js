@@ -2,9 +2,14 @@ import {
   getProtokollModuleEntry,
   PROTOKOLL_MODULE_ID,
 } from "../../modules/protokoll/index.js";
+import {
+  getRestarbeitenModuleEntry,
+  RESTARBEITEN_MODULE_ID,
+} from "../../modules/restarbeiten/index.js";
 
 const ACTIVE_MODULE_ENTRIES = Object.freeze([
   getProtokollModuleEntry(),
+  getRestarbeitenModuleEntry(),
 ]);
 
 const ACTIVE_MODULE_IDS = Object.freeze(
@@ -31,4 +36,4 @@ export function hasActiveModule(moduleId) {
   return !!findActiveModuleEntry(moduleId);
 }
 
-export { PROTOKOLL_MODULE_ID };
+export { PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID };

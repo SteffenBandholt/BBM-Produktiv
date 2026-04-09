@@ -1,34 +1,25 @@
 import { findActiveModuleEntry } from "./moduleCatalog.js";
-
-function normalizeKey(value) {
-  return String(value || "").trim();
-}
+import {
+  resolveModuleScreenFromEntry,
+  resolveModuleWorkScreenFromEntry,
+} from "./moduleEntryScreenResolver.js";
 
 // App-Kern: kleine modulbezogene Screen-Aufloesung.
 // Keine Navigation, keine Discovery und keine allgemeine Plattformmechanik.
 export function resolveActiveModuleScreen(moduleId, screenId) {
-  const normalizedModuleId = normalizeKey(moduleId);
-  const normalizedScreenId = normalizeKey(screenId);
+  const normalizedModuleId = String(moduleId || "").trim();
+  const normalizedScreenId = String(screenId || "").trim();
   if (!normalizedModuleId || !normalizedScreenId) return null;
 
   const moduleEntry = findActiveModuleEntry(normalizedModuleId);
   if (!moduleEntry) return null;
-
-  const screens = moduleEntry?.screens && typeof moduleEntry.screens === "object"
-    ? moduleEntry.screens
-    : null;
-  if (!screens) return null;
-
-  return screens[normalizedScreenId] || null;
+  return resolveModuleScreenFromEntry(moduleEntry, normalizedScreenId);
 }
 
 export function resolveActiveModuleWorkScreen(moduleId) {
-  const normalizedModuleId = normalizeKey(moduleId);
+  const normalizedModuleId = String(moduleId || "").trim();
   if (!normalizedModuleId) return null;
 
   const moduleEntry = findActiveModuleEntry(normalizedModuleId);
-  const workScreenId = normalizeKey(moduleEntry?.workScreenId);
-  if (!workScreenId) return null;
-
-  return resolveActiveModuleScreen(normalizedModuleId, workScreenId);
+  return resolveModuleWorkScreenFromEntry(moduleEntry);
 }

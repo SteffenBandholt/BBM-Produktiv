@@ -1374,7 +1374,7 @@ Noch nicht begonnen.
 ---
 
 ## Schritt 10.2 – Szenario B testen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 BBM läuft nur mit `Restarbeiten`.
@@ -1390,7 +1390,27 @@ BBM läuft nur mit `Restarbeiten`.
 - Einzelbetrieb `Restarbeiten` nachweisbar
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat den ersten konservativen Einzelbetriebsnachweis fuer `Restarbeiten` hergestellt. Das Modul ist jetzt im aktiven Modulkatalog des Kerns sichtbar und sein Arbeitsscreen laesst sich ueber die bestehende kleine Modul-/Screen-Aufloesung separat aufloesen; breite Navigation, produktive Router-Anbindung und Vollausbau wurden dabei bewusst noch nicht eingefuehrt.
+
+---
+
+## Paket 1 – Einzelbetrieb `Restarbeiten` nachweisen
+**Status:** ERLEDIGT
+
+**Ziel**
+In kleinem, kontrolliertem Rahmen nachweisen, dass `Restarbeiten` als eigenes Fachmodul technisch separat ansprechbar ist, ohne eine breite Integrationswelle, produktive Navigation oder grosse Plattformmechanik auszulösen.
+
+**Ergebnis**
+- Als minimale relevante Zugriffspunkte wurden `src/renderer/modules/restarbeiten/`, der bestehende Modulkatalog in `src/renderer/app/modules/moduleCatalog.js`, die kleine Screen-Aufloesung in `src/renderer/app/modules/moduleScreenResolver.js` und die vorhandene Testsuite unter `scripts/tests/` fokussiert.
+- `Restarbeiten` wird jetzt im aktiven Modulkatalog des App-Kerns gefuehrt, ohne einen Navigationseintrag oder Router-Pfad zu erhalten.
+- Der Einzelbetriebsnachweis erfolgt ueber einen kleinen Integrationstest:
+  - Der Moduleinstieg von `Restarbeiten` ist als aktives Modul auffindbar.
+  - Der Arbeitsscreen von `Restarbeiten` ist ueber die bestehende Modul-/Screen-Aufloesung separat aufloesbar.
+  - Der Nachweis bleibt bewusst auf Moduleinstieg und Work-Screen begrenzt und fuehrt keine breite Integration ein.
+- Es wurde keine produktive Navigation fuer `Restarbeiten`, kein grosser Router-Umbau und keine Plattformmechanik im grossen Stil eingefuehrt.
+
+**Stand / Notiz**
+Paket 1 ist als kleiner Einzelbetriebsnachweis abgeschlossen. `Restarbeiten` ist jetzt nicht nur als Modulstruktur vorhanden, sondern im App-Kern als aktives Fachmodul nachweisbar und ueber die vorhandene Modul-/Screen-Aufloesung separat ansprechbar. Die produktive Nutzung in Navigation, Shell oder breiteren Fachpfaden bleibt weiterhin spaeteren Paketen vorbehalten.
 
 ---
 
