@@ -6,7 +6,7 @@ async function runTopsScreenIntegrationTests(run) {
   const [{ createTopsStore }, { TopsCommands }, vm] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/state/TopsStore.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/domain/TopsCommands.js")),
-    importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/viewmodel/TopsScreenViewModel.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js")),
   ]);
 
   const { buildWorkbenchState, shouldShowWorkbench, buildListItemsFromState, editorFromTop, buildPatchFromDraft } = vm;

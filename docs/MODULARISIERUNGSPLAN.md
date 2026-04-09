@@ -1348,7 +1348,7 @@ Noch nicht begonnen.
 **Status:** OFFEN
 
 ## Schritt 11.1 – Alte Fachpfade zurückbauen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Nicht mehr benötigte Altpfade entfernen.
@@ -1367,7 +1367,25 @@ Nicht mehr benötigte Altpfade entfernen.
 - Altpfade werden nicht künstlich weitergetragen
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat den ersten kleinen Altpfad-Abbau konservativ umgesetzt. Die beiden reinen Uebergangs-Re-Exports unter `src/renderer/tops/viewmodel/` fuer die bereits nach `src/renderer/modules/protokoll/viewmodel/` umgezogenen ViewModels wurden entfernt; der verbleibende Testzugriff wurde direkt auf den neuen Modulpfad umgestellt. Ein breiter Restabbau wurde damit bewusst noch nicht begonnen.
+
+---
+
+## Paket 1 – Erste Altpfade und Übergangs-Re-Exports abbauen
+**Status:** ERLEDIGT
+
+**Ziel**
+Einen ersten kleinen, nachvollziehbaren Restmigrationsschritt umsetzen, bei dem bereits ersetzte Altpfade und unnoetige Uebergangs-Re-Exports kontrolliert reduziert werden, ohne einen breiten Altbestand-Abbau auszuloesen.
+
+**Ergebnis**
+- Als erste Abbaustelle wurden die beiden Uebergangs-Re-Exports `src/renderer/tops/viewmodel/TopsScreenViewModel.js` und `src/renderer/tops/viewmodel/TopsWorkbenchViewModel.js` gewaehlt.
+- Diese Dateien waren bereits vollstaendig durch die neuen Modulpfade unter `src/renderer/modules/protokoll/viewmodel/` ersetzt und enthielten nur noch reine Re-Exports.
+- Der letzte verbliebene Testzugriff wurde auf den neuen Normalpfad `src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js` umgestellt.
+- Der neue Normalpfad ueber `src/renderer/modules/protokoll/viewmodel/` ist damit sichtbarer; die alten ViewModel-Altpfade unter `src/renderer/tops/viewmodel/` bestehen fuer diese beiden Dateien nicht mehr.
+- App-Kern, gemeinsame Kernbausteine, gemeinsame Domaenen, gemeinsame Dienste und der restliche Protokoll-Bestand wurden bewusst nicht angetastet.
+
+**Stand / Notiz**
+Paket 1 ist als kleiner bereinigender Restmigrationsschritt abgeschlossen. Es wurde bewusst nur eine sehr kleine, risikoarme Abbaustelle angefasst: bereits ersetzte Uebergangs-Re-Exports fuer Protokoll-ViewModels. Weitere Altpfad-Abbauten bleiben spaeteren Paketen vorbehalten.
 
 ---
 
