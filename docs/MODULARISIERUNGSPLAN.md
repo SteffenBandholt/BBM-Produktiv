@@ -1301,7 +1301,7 @@ Paket 3 ist als erster fachlicher Ausbau abgeschlossen. `Restarbeiten` besitzt j
 ---
 
 ## Schritt 9.4 – Modul-Einstieg definieren
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 `Restarbeiten` als registrierbares Fachmodul aufsetzen.
@@ -1321,7 +1321,31 @@ Paket 3 ist als erster fachlicher Ausbau abgeschlossen. `Restarbeiten` besitzt j
 - `Restarbeiten` ist als eigenes Fachmodul integrierbar
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 4 hat den kleinen Moduleinstieg von `Restarbeiten` konservativ geschaerft. Der Einstieg beschreibt jetzt klarer, welchen Arbeitsscreen und welchen bereits vorhandenen Modulbestand `Restarbeiten` heute schon bereitstellt; Navigation, Router-Anbindung und breitere Integration wurden dabei bewusst noch nicht eingefuehrt.
+
+---
+
+## Paket 4 – Modul-Einstieg `Restarbeiten` definieren
+**Status:** ERLEDIGT
+
+**Ziel**
+Fuer `src/renderer/modules/restarbeiten/` einen kleinen, klaren und fachlich passenden Moduleinstieg herstellen, der den heutigen Ausbaustand lesbar macht, ohne Navigation, Router-Anbindung oder Plattformmechanik vorwegzunehmen.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/modules/restarbeiten/index.js`, `src/renderer/modules/restarbeiten/screens/index.js`, `src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js` und `src/renderer/modules/restarbeiten/components/RestarbeitenWorkbench.js` fokussiert.
+- Der Moduleinstieg benennt jetzt klarer:
+  - Modulkennung und Modulbezeichnung
+  - Arbeitsscreen-ID und Arbeitsscreen-Bezeichnung
+  - den bereits vorhandenen modulinternen Bestand unter `components/`
+  - den heutigen kleinen Faehigkeitsstand des Moduls ohne Navigation und ohne Router-Integration
+- Die Exportstruktur ist lesbarer:
+  - Root-Exporte fuer den Arbeitsscreen
+  - Root-Exporte fuer die bestehende Restarbeiten-Workbench
+  - klarer Screen-Einstieg ueber `screens/index.js`
+- Es wurde keine modulbezogene Navigation fuer `Restarbeiten`, keine produktive Router-Anbindung, keine breite Integration und kein Vollausbau eingefuehrt.
+
+**Stand / Notiz**
+Paket 4 ist als konservative Scharfstellung abgeschlossen. `src/renderer/modules/restarbeiten/` ist jetzt als echter kleiner Moduleinstieg lesbar: Der Einstieg fasst den heutigen Arbeitsscreen, die erste fachliche Workbench und den kleinen aktuellen Leistungsstand des Moduls sauber zusammen. Gemeinsame Kernbausteine, Domaenen, Dienste und App-Kern bleiben weiterhin ausdruecklich ausserhalb.
 
 ---
 
