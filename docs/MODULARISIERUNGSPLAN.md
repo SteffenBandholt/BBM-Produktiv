@@ -904,7 +904,7 @@ Paket 3 ist als konservative Trennung abgeschlossen. Der generische Editbox-Kern
 ---
 
 ## Schritt 7.4 – Modulstruktur `Protokoll` anlegen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Die technische Heimat des Moduls `Protokoll` schaffen.
@@ -928,7 +928,25 @@ Die technische Heimat des Moduls `Protokoll` schaffen.
 - Modulstruktur vorhanden
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 4 hat die technische Heimat fuer `src/renderer/modules/protokoll/` konservativ angelegt. Die Struktur ist jetzt sichtbar vorhanden, enthaelt aber bewusst nur einen kleinen Modul-Einstieg und einen Screen-Anker auf den heutigen `TopsScreen`; ein Vollumzug des bestehenden Tops-Unterbaus wurde noch nicht begonnen.
+
+---
+
+## Paket 4 – Modulstruktur `Protokoll` anlegen
+**Status:** ERLEDIGT
+
+**Ziel**
+Fuer das Fachmodul `Protokoll` erstmals eine minimale, aber echte technische Modulstruktur anlegen, an die spaetere Umzuege sauber anschliessen koennen, ohne den bestehenden Tops-Unterbau bereits gross umzuziehen.
+
+**Ergebnis**
+- `src/renderer/modules/protokoll/` wurde als technische Heimat angelegt.
+- Mit `src/renderer/modules/protokoll/index.js` existiert jetzt ein kleiner Modul-Einstieg fuer `Protokoll`.
+- Mit `src/renderer/modules/protokoll/screens/TopsScreen.js` und `src/renderer/modules/protokoll/screens/index.js` existiert eine konservative Andockstelle fuer den heutigen Arbeitsscreen, ohne dessen Bestandsdatei bereits umzuziehen.
+- Die vorgesehenen Unterordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/` wurden als Zielstruktur angelegt, aber bewusst noch nicht mit umgezogenen Bestandsdateien befuellt.
+- Es wurde kein globaler Router-Umbau, keine Modul-Registry und kein Vollumzug des Tops-Unterbaus eingefuehrt.
+
+**Stand / Notiz**
+Paket 4 ist als technische Heimatstruktur abgeschlossen. Das Modul `Protokoll` besitzt jetzt einen sichtbaren Ort im Renderer-Bestand, an dem kuenftige Umzuege von Screen, Unterbau, Dialogen und Regeln sauber andocken koennen. Der aktuelle Arbeitsbestand bleibt weiterhin in seinen bisherigen Pfaden aktiv; die neue Struktur dient bewusst als kontrollierte Anschlussstelle und nicht als verfruehter Vollumzug.
 
 ---
 
