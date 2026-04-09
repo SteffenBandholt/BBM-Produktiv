@@ -181,6 +181,38 @@ Es soll fachlich und technisch so aufgebaut werden, dass es:
 - gemeinsam mit `Protokoll` betrieben werden kann
 - dieselben gemeinsamen Domänen und Dienste nutzen kann, ohne in Protokollstrukturen zu hängen
 
+### Fachlicher Schnitt von `Restarbeiten`
+
+`Restarbeiten` umfasst die fachliche Arbeit an offenen Arbeiten, offenen Punkten und deren Nachverfolgung.
+
+Dazu gehören insbesondere:
+
+- eine eigene Übersicht und ein eigener Arbeitsscreen für offene Arbeiten
+- die fachliche Sicht auf offene Arbeiten über Projekt- und Protokollgrenzen hinweg
+- eigene Filter-, Listen-, Bearbeitungs- und Abschlussregeln für offene Arbeiten
+- eigene Ausgabeinhalte für Restarbeiten, soweit sie fachlich nicht Protokollausgabe sind
+
+Nicht zu `Restarbeiten` gehören:
+
+- Protokollkopf, Protokollnummer, Teilnehmerbezug und Protokollabschluss
+- TOP-Hierarchie, TOP-Nummerierung und TOP-spezifische Bearbeitungsregeln
+- der Protokoll-Arbeitsscreen `TopsScreen` und die konkrete Protokoll-Workbench
+- Protokoll-PDF, Protokoll-Mailfluss und andere ausdrücklich protokollbezogene Ausgabeabläufe
+
+`Restarbeiten` darf offene Arbeiten aus dem Protokollkontext nutzen oder ableiten,
+ist aber fachlich nicht nur eine Unteransicht des Moduls `Protokoll`.
+
+### Abgrenzung zu gemeinsamen Bausteinen
+
+Außerhalb von `Restarbeiten` bleiben ausdrücklich:
+
+- gemeinsamer Bearbeitungskern wie Editbox-Kern, generische Zustandslogik und wiederverwendbare Metafeldbausteine
+- gemeinsame Domänen wie Projekte, Firmen und Mitarbeiter/Beteiligte
+- gemeinsame Dienste wie Mail, Druck, PDF-Infrastruktur und Diktat/Whisper
+- App-Kern, Router, Shell, Modulkatalog, Screen-Auflösung und modulbezogene Navigation
+
+`Restarbeiten` nutzt diese Bausteine, besitzt aber eigene Fachregeln, eigene fachliche Screens und eigene Arbeitsabläufe.
+
 ---
 
 ## Wiederverwendbare Bearbeitungsbausteine

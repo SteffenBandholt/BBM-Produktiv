@@ -1163,7 +1163,7 @@ Paket 3 ist als konservative modulbezogene Navigation abgeschlossen. Die Navigat
 **Status:** OFFEN
 
 ## Schritt 9.1 – Fachschnitt `Restarbeiten` definieren
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Das Modul `Restarbeiten` fachlich sauber abgrenzen.
@@ -1182,7 +1182,36 @@ Das Modul `Restarbeiten` fachlich sauber abgrenzen.
 - fachlicher Zuschnitt von `Restarbeiten` ist klar beschrieben
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat den fachlichen Schnitt fuer `Restarbeiten` konservativ vorbereitet. In den verbindlichen Architekturleitplanken ist jetzt sichtbarer festgehalten, was fachlich zu `Restarbeiten` gehoeren soll, was ausdruecklich beim Modul `Protokoll` bleibt und was weiterhin gemeinsame Kernbausteine, Domaenen, Dienste oder App-Kern bleibt; ein technischer Modulaufbau oder Dateiumzug wurde dabei bewusst noch nicht begonnen.
+
+---
+
+## Paket 1 – Fachschnitt `Restarbeiten` definieren
+**Status:** ERLEDIGT
+
+**Ziel**
+Den fachlichen Zuschnitt des geplanten Moduls `Restarbeiten` im heutigen Bestand sauber und belastbar sichtbar machen, ohne bereits eine technische Modulstruktur, einen Umzug oder neue Plattformmechanik einzufuehren.
+
+**Ergebnis**
+- Als minimale fachlich relevante Zugriffspunkte wurden die verbindliche Architekturgrundlage in `ARCHITECTURE.md` sowie die heutigen Protokoll-/Kern-/Katalog-Anker im Bestand identifiziert.
+- In `ARCHITECTURE.md` ist jetzt klarer beschrieben, was fachlich zu `Restarbeiten` gehoeren soll:
+  - offene Arbeiten und offene Punkte als eigener Arbeitsgegenstand
+  - eigene Uebersichts-, Listen-, Bearbeitungs- und Abschlusslogik
+  - eigene fachliche Ausgabeinhalte fuer Restarbeiten
+- Gleichzeitig ist ausdruecklich festgehalten, was bei `Protokoll` bleibt:
+  - Protokollkopf und Teilnehmerbezug
+  - TOP-Hierarchie, TOP-Nummerierung und TOP-Regeln
+  - `TopsScreen` und die konkrete Protokoll-Workbench
+  - protokollbezogene Ausgabeablaeufe
+- Ebenso ist sichtbarer festgelegt, was weiterhin ausserhalb beider Fachmodule bleibt:
+  - gemeinsamer Bearbeitungskern
+  - gemeinsame Domaenen
+  - gemeinsame Dienste
+  - App-Kern, Router, Shell, Modulkatalog und Screen-Aufloesung
+- Es wurde bewusst keine technische Modulstruktur fuer `Restarbeiten`, kein Dateiumzug und kein Router-/Navigationsumbau eingefuehrt.
+
+**Stand / Notiz**
+Paket 1 ist als fachliche Grenzziehung abgeschlossen. `Restarbeiten` ist jetzt im Zielbild nicht mehr nur als weiteres Modul benannt, sondern mit einem konservativen fachlichen Schnitt beschrieben. Die technische Heimat, der erste Umzug und eine eigene Workbench bleiben weiterhin den naechsten Paketen vorbehalten.
 
 ---
 
