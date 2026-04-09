@@ -1257,7 +1257,7 @@ Paket 2 ist als kleiner technischer Heimataufbau abgeschlossen. `Restarbeiten` b
 ---
 
 ## Schritt 9.3 – Eigene Restarbeiten-Workbench bauen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Eine eigene Bearbeitungsfläche für `Restarbeiten` auf gemeinsamen Kernen aufsetzen.
@@ -1277,7 +1277,26 @@ Eine eigene Bearbeitungsfläche für `Restarbeiten` auf gemeinsamen Kernen aufse
 - `RestarbeitenWorkbench` ist fachlich eigenständig, nutzt aber gemeinsame Kernbausteine
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 3 hat die erste kleine eigenstaendige `Restarbeiten`-Workbench konservativ aufgebaut. Sie nutzt den gemeinsamen Editbox-Kern sowie neutrale Feldbausteine fuer Verantwortlich und Status/Ampel, bleibt aber klar von der TOP-/Protokoll-Workbench getrennt; Vollausbau, produktive Integration und breitere Datenanbindung wurden bewusst noch nicht begonnen.
+
+---
+
+## Paket 3 – Eigene Restarbeiten-Workbench bauen
+**Status:** ERLEDIGT
+
+**Ziel**
+Eine kleine eigenstaendige fachliche Workbench fuer `Restarbeiten` auf Basis gemeinsamer Kernbausteine anlegen, ohne die Protokoll-Workbench zu kopieren oder einen grossen Modul- und Routerausbau vorzuziehen.
+
+**Ergebnis**
+- Als gemeinsame Kernbausteine wurden der generische Editbox-Kern in `src/renderer/core/editbox/`, das neutrale Feld `ResponsibleField` und das neutrale Feld `StatusAmpelField` wiederverwendet.
+- Ausdruecklich nicht uebernommen wurden Protokoll-/TOP-spezifische Teile wie `TopsWorkbench`, TOP-Aktionsbuttons, TOP-Draft-Strukturen, Meta-Bridges und TOP-Regeln.
+- Unter `src/renderer/modules/restarbeiten/components/` gibt es jetzt mit `RestarbeitenWorkbench.js` eine erste fachlich eigenstaendige Bearbeitungsflaeche fuer offene Arbeiten.
+- Die Workbench besitzt einen eigenen Draft-Zuschnitt fuer Restarbeiten, eigene lokale Aktionen und eine eigene Meta-Zuordnung, ohne Protokoll-Logik mitzuziehen.
+- Der bisherige Screen-Anker wurde ueber `src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js` und `src/renderer/modules/restarbeiten/screens/index.js` sinnvoll angeschlossen; die Modulstruktur traegt damit jetzt echten fachlichen Inhalt.
+- Es wurde kein Router-Grossumbau, keine modulbezogene Navigation fuer `Restarbeiten` und kein technischer Vollausbau des Moduls eingefuehrt.
+
+**Stand / Notiz**
+Paket 3 ist als erster fachlicher Ausbau abgeschlossen. `Restarbeiten` besitzt jetzt innerhalb seiner Modulstruktur eine echte kleine Workbench, die gemeinsame Kernbausteine nutzt, aber nicht mehr nur ein leerer Modulrahmen ist. Produktive Datenanbindung, eigene Navigation und spaetere Modul-Integration bleiben weiterhin folgenden Paketen vorbehalten.
 
 ---
 

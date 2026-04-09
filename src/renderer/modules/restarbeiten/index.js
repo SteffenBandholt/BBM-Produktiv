@@ -1,3 +1,4 @@
+import RestarbeitenScreen from "./screens/RestarbeitenScreen.js";
 import { RESTARBEITEN_WORK_SCREEN_ID, getRestarbeitenScreenEntry } from "./screens/index.js";
 
 export const RESTARBEITEN_MODULE_ID = "restarbeiten";
@@ -11,9 +12,9 @@ function buildRestarbeitenModuleScreens() {
 }
 
 // Technische Heimat fuer das Fachmodul `Restarbeiten`.
-// In diesem Paket wird nur die minimale Struktur und ein kleiner Moduleinstieg
-// angelegt. Es gibt bewusst noch keinen Vollumzug, keine Navigation und keine
-// Plattformmechanik.
+// In den ersten Paketen bleibt die Anbindung bewusst klein:
+// eigener Moduleinstieg, eigener Screen-Anker und eine erste fachliche
+// Workbench ohne Router-/Navigationsintegration und ohne Vollumzug.
 export function getRestarbeitenModuleEntry() {
   return Object.freeze({
     moduleId: RESTARBEITEN_MODULE_ID,
@@ -23,5 +24,5 @@ export function getRestarbeitenModuleEntry() {
   });
 }
 
-export { RESTARBEITEN_WORK_SCREEN_ID, getRestarbeitenScreenEntry };
+export { RestarbeitenScreen, RESTARBEITEN_WORK_SCREEN_ID, getRestarbeitenScreenEntry };
 export * from "./screens/index.js";

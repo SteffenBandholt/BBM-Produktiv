@@ -5,7 +5,8 @@ Diese Struktur ist die minimale technische Heimat fuer das Fachmodul `Restarbeit
 Aktuell ist bewusst nur wenig angelegt:
 
 - `index.js` als kleiner Modul-Einstieg mit Modulkennung und Arbeitsscreen-ID
-- `screens/` als konservativer Anker fuer den spaeteren Arbeitsscreen
+- `screens/` mit erstem eigenstaendigen `RestarbeitenScreen`
+- `components/` mit einer kleinen fachlichen `RestarbeitenWorkbench`
 
 Wichtig:
 
