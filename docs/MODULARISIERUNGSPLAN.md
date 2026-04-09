@@ -1216,7 +1216,7 @@ Paket 1 ist als fachliche Grenzziehung abgeschlossen. `Restarbeiten` ist jetzt i
 ---
 
 ## Schritt 9.2 – Modulstruktur `Restarbeiten` anlegen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Die technische Heimat des Moduls `Restarbeiten` anlegen.
@@ -1232,7 +1232,27 @@ Die technische Heimat des Moduls `Restarbeiten` anlegen.
 - Modulstruktur vorhanden
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 2 hat die minimale technische Heimat fuer `src/renderer/modules/restarbeiten/` angelegt. Es gibt jetzt einen kleinen Modul-Einstieg und einen konservativen Screen-Anker; ein technischer Vollausbau, ein Dateiumzug oder eine Router-/Navigationsanbindung wurden dabei bewusst noch nicht begonnen.
+
+---
+
+## Paket 2 – Modulstruktur `Restarbeiten` anlegen
+**Status:** ERLEDIGT
+
+**Ziel**
+Fuer `Restarbeiten` eine kleine reale Modulstruktur anlegen, die als technische Heimat fuer spaetere Ausbauschritte dient, ohne bereits einen Vollumzug, neue Plattformmechanik oder eine modulbezogene Navigation einzufuehren.
+
+**Ergebnis**
+- Unter `src/renderer/modules/restarbeiten/` existiert jetzt eine echte minimale Struktur.
+- Mit `src/renderer/modules/restarbeiten/index.js` gibt es einen kleinen Moduleinstieg mit Modulkennung, Modulbezeichnung und Arbeitsscreen-ID.
+- Mit `src/renderer/modules/restarbeiten/screens/index.js` gibt es einen konservativen Screen-Anker fuer den spaeteren Arbeitsscreen.
+- `src/renderer/modules/restarbeiten/README.md` dokumentiert ausdruecklich, dass es sich nur um die technische Heimat und noch nicht um einen Vollausbau handelt.
+- Es wurde kein Dateiumzug aus bestehendem Bestand vorgenommen.
+- Es wurde keine modulbezogene Navigation fuer `Restarbeiten` eingefuehrt.
+- Es wurde kein Router-Grossumbau und keine Plattformmechanik eingefuehrt.
+
+**Stand / Notiz**
+Paket 2 ist als kleiner technischer Heimataufbau abgeschlossen. `Restarbeiten` besitzt jetzt erstmals einen realen Modulordner mit Einstiegspunkt und Screen-Anker. Der eigentliche fachliche Bestand, eine spaetere Workbench und moegliche Anbindungen an Kernnavigation oder Screen-Aufloesung bleiben weiterhin den folgenden Paketen vorbehalten.
 
 ---
 
