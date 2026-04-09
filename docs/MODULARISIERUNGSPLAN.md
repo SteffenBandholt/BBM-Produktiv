@@ -1038,7 +1038,7 @@ Paket 6 ist als konservative Scharfstellung abgeschlossen. `src/renderer/modules
 **Status:** OFFEN
 
 ## Schritt 8.1 – Modulkatalog einführen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Aktive Module definierbar machen.
@@ -1055,7 +1055,26 @@ Aktive Module definierbar machen.
 - Module können vom Kern verwaltet werden
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 1 hat den ersten kleinen Modulkatalog im App-Kern konservativ angelegt. Unter `src/renderer/app/modules/` gibt es jetzt eine statische Katalogschicht, die `Protokoll` als aktives Modul fuehrt; dynamische Aufloesung, modulbasierte Navigation und Plattformmechanik wurden dabei bewusst noch nicht eingefuehrt.
+
+---
+
+## Paket 1 – Modulkatalog einführen
+**Status:** ERLEDIGT
+
+**Ziel**
+Einen kleinen, klaren und tragfaehigen Modulkatalog einfuehren, der aktive Module im App-Kern sichtbar und strukturiert fuehrt, ohne Phase 8.2 und 8.3 mit dynamischer Aufloesung, modulbasierter Navigation oder Plattformmechanik vorwegzunehmen.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/modules/protokoll/index.js` als Fachmodul-Einstieg und `src/renderer/app/modules/` als passende kleine Katalogschicht im App-Kern identifiziert.
+- Mit `src/renderer/app/modules/moduleCatalog.js` existiert jetzt ein kleiner statischer Modulkatalog.
+- Der Katalog fuehrt aktuell genau ein aktives Modul: `Protokoll`.
+- Es gibt nur kleine Kataloghilfen fuer Lesen und Nachschlagen (`getActiveModuleCatalog`, `getActiveModuleIds`, `findActiveModuleEntry`, `hasActiveModule`).
+- Router/App-Kern, Screen-Aufloesung, Navigation und Shell bleiben weiterhin ausserhalb dieser Katalogschicht und wurden nicht auf modulbasierte Mechanik umgebaut.
+- Es wurde keine dynamische Discovery, keine globale Plattformmechanik und kein zweites Fachmodul vorweggenommen.
+
+**Stand / Notiz**
+Paket 1 ist als konservative Katalogeinfuehrung abgeschlossen. Der App-Kern besitzt jetzt erstmals eine echte, kleine Katalogschicht fuer aktive Module. `Protokoll` ist dort sauber ueber seinen bestehenden Moduleinstieg angebunden. Die Katalogschicht bleibt bewusst statisch und klein; modulbasierte Screen-Aufloesung und Navigation sind weiterhin spaeteren Paketen vorbehalten.
 
 ---
 
