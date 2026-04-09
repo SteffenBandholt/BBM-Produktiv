@@ -3,6 +3,10 @@
 // src/renderer/main.js
 
 import Router from "./app/Router.js";
+import {
+  getActiveProjectModuleNavigation,
+  PROTOKOLL_MODULE_ID,
+} from "./app/modules/index.js";
 import MainHeader from "./ui/MainHeader.js";
 import { DEFAULT_THEME_SETTINGS, applyThemeForSettings } from "./theme/themes.js";
 import { applyPopupButtonStyle, applyPopupCardStyle } from "./ui/popupButtonStyles.js";
@@ -806,6 +810,32 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
       });
 
+    const createProjectModuleRouteDef = (entry = {}) => {
+      return {
+        key: String(entry?.key || "").trim(),
+        label: String(entry?.label || "").trim(),
+        onClick: async ({ projectId, meetingId, moduleId }) => {
+          if (moduleId === PROTOKOLL_MODULE_ID) {
+            if (meetingId) {
+              await router.showTops(meetingId, projectId);
+              return;
+            }
+            await router.showMeetings(projectId);
+          }
+        },
+        getPayload: () => ({
+          moduleId: String(entry?.moduleId || "").trim(),
+          projectId: router.currentProjectId || null,
+          meetingId: router.currentMeetingId || null,
+          missingContext: !router.currentProjectId,
+        }),
+        onMissingContext: async () => {
+          alert("Bitte zuerst ein Projekt auswählen.");
+          await router.showProjects();
+        },
+      };
+    };
+
     const shellNavigationRouteDefs = [
       { key: "home", label: "Home", onClick: () => router.showHome() },
       { key: "projects", label: "Projekte", onClick: () => router.showProjects() },
@@ -814,19 +844,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     ];
 
     const contextualNavigationRouteDefs = [
-      {
-        key: "meetings",
-        label: "Protokolle",
-        onClick: ({ projectId }) => router.showMeetings(projectId),
-        getPayload: () => ({
-          projectId: router.currentProjectId || null,
-          missingContext: !router.currentProjectId,
-        }),
-        onMissingContext: async () => {
-          alert("Bitte zuerst ein Projekt auswählen.");
-          await router.showProjects();
-        },
-      },
+      ...getActiveProjectModuleNavigation().map((entry) => createProjectModuleRouteDef(entry)),
       {
         key: "projectFirms",
         label: "Projektfirmen",

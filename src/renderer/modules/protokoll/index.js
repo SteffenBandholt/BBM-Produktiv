@@ -4,6 +4,7 @@ import * as protokollViewModels from "./viewmodel/index.js";
 
 export const PROTOKOLL_MODULE_ID = "protokoll";
 export const PROTOKOLL_MODULE_LABEL = "Protokoll";
+export const PROTOKOLL_NAV_ENTRY_KEY = "protokoll";
 
 function buildProtokollModuleScreens() {
   return Object.freeze({
@@ -17,6 +18,20 @@ function buildMovedProtocolModuleParts() {
   });
 }
 
+function buildProtokollModuleNavigation() {
+  return Object.freeze({
+    project: Object.freeze([
+      Object.freeze({
+        key: PROTOKOLL_NAV_ENTRY_KEY,
+        label: "Protokolle",
+        moduleId: PROTOKOLL_MODULE_ID,
+        workScreenId: PROTOKOLL_WORK_SCREEN_ID,
+        section: "meetings",
+      }),
+    ]),
+  });
+}
+
 // Technische Heimat fuer das Fachmodul `Protokoll`.
 // Der heutige Bestand bleibt vorerst in seinen vorhandenen Pfaden und wird hier
 // nur ueber kleine Einstiegspunkte angedockt.
@@ -27,6 +42,7 @@ export function getProtokollModuleEntry() {
     moduleLabel: PROTOKOLL_MODULE_LABEL,
     workScreenId: PROTOKOLL_WORK_SCREEN_ID,
     screens: buildProtokollModuleScreens(),
+    navigation: buildProtokollModuleNavigation(),
     movedParts: buildMovedProtocolModuleParts(),
   });
 }

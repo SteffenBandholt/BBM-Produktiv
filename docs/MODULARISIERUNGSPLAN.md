@@ -1119,7 +1119,7 @@ Paket 2 ist als konservative Screen-Aufloesung abgeschlossen. Der App-Kern kann 
 ---
 
 ## Schritt 8.3 – Modulnavigation dynamisch machen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 **Ziel**  
 Navigation aus aktiven Modulen ableiten.
@@ -1136,7 +1136,26 @@ Navigation aus aktiven Modulen ableiten.
 - modulbasierte Navigation statt hart codierter Fachnavigation
 
 **Stand / Notiz**
-Noch nicht begonnen.
+Paket 3 hat die erste kleine modulbezogene Navigation konservativ vorbereitet. Der App-Kern kann projektbezogene Modulnavigation jetzt aus aktiven Modulen ableiten; `Protokoll` wird darueber sichtbar, waehrend Kernnavigation und Fachaktionen weiterhin getrennt bleiben. Eine grosse Plattformnavigation wurde dabei bewusst noch nicht eingefuehrt.
+
+---
+
+## Paket 3 – Modulnavigation dynamisch machen
+**Status:** ERLEDIGT
+
+**Ziel**
+Die bestehende Navigation im Kern erstmals kontrolliert teilweise aus aktiven Modulen speisen, ohne einen grossen Shell-Umbau, eine Plattformnavigation im grossen Stil oder eine breite Modulmechanik einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/modules/protokoll/index.js`, `src/renderer/app/modules/moduleCatalog.js`, `src/renderer/app/modules/moduleNavigation.js` und `src/renderer/main.js` fokussiert.
+- Das Fachmodul `Protokoll` definiert jetzt eine kleine projektbezogene Navigationsdefinition in seinem Moduleinstieg.
+- Mit `src/renderer/app/modules/moduleNavigation.js` existiert jetzt eine kleine Ableitungsschicht fuer modulbezogene Projektnavigation aus aktiven Modulen.
+- `src/renderer/main.js` speist den modulbezogenen Teil der bestehenden Projektnavigation jetzt konservativ aus dieser Ableitung, waehrend Kernnavigation und Fachaktionsbuttons getrennt bleiben.
+- `Protokoll` wird darueber sichtbar ueber den Eintrag `Protokolle`; mit Meeting-Kontext fuehrt er in den Arbeitsscreen, sonst in die bestehende Protokoll-/Meeting-Uebersicht.
+- Es wurde keine grosse Plattformnavigation, keine dynamische Discovery, kein Vollumbau des Routers und kein zweites Modul vorweggenommen.
+
+**Stand / Notiz**
+Paket 3 ist als konservative modulbezogene Navigation abgeschlossen. Die Navigation kann jetzt erstmals einen kleinen Teil ihrer projektbezogenen Eintraege aus aktiven Modulen ableiten. `Protokoll` ist darueber sichtbar, ohne dass Kernnavigation, Fachaktionen oder die restliche Shell-Struktur in eine grosse Plattformmechanik ueberfuehrt wurden.
 
 ---
 
