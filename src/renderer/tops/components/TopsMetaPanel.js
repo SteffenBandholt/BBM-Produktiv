@@ -13,6 +13,24 @@ const TOPS_META_STATUS_OPTIONS = Object.freeze([
   { value: "verzug", label: "verzug", disabled: false },
 ]);
 
+function normalizeProtocolMetaValue(value = {}) {
+  return {
+    due_date: (value?.due_date || "").trim() || null,
+    status: (value?.status || "").trim() || "-",
+    responsible_label: (value?.responsible_label || "").trim() || "",
+  };
+}
+
+function normalizeStatusOptions(options = []) {
+  return Array.isArray(options)
+    ? options.map((item) => ({
+        value: String(item?.value || ""),
+        label: String(item?.label || item?.value || ""),
+        disabled: !!item?.disabled,
+      }))
+    : [];
+}
+
 export class TopsMetaPanel {
   constructor({ onChange } = {}) {
     this.onChange = typeof onChange === "function" ? onChange : null;
@@ -24,16 +42,8 @@ export class TopsMetaPanel {
     this._disabled = false;
     // Protokollspezifische Workbench-Huelle:
     // haelt den TOP-Draft fuer Meta-Felder, ist aber kein gemeinsamer generischer Kernbaustein.
-    this._value = { ...TOPS_META_DEFAULT_VALUE };
-    this._statusOptions = TOPS_META_STATUS_OPTIONS.map((item) => ({ ...item }));
-  }
-
-  _normalizeValue(value = {}) {
-    return {
-      due_date: (value?.due_date || "").trim() || null,
-      status: (value?.status || "").trim() || "-",
-      responsible_label: (value?.responsible_label || "").trim() || "",
-    };
+    this._value = normalizeProtocolMetaValue(TOPS_META_DEFAULT_VALUE);
+    this._statusOptions = normalizeStatusOptions(TOPS_META_STATUS_OPTIONS);
   }
 
   _emitChange() {
@@ -45,12 +55,12 @@ export class TopsMetaPanel {
   }
 
   setValue(value = {}, { silent = true } = {}) {
-    this._value = this._normalizeValue(value);
+    this._value = normalizeProtocolMetaValue(value);
     if (!silent) this._emitChange();
   }
 
   updatePartial(partial = {}, { silent = false } = {}) {
-    this._value = this._normalizeValue({
+    this._value = normalizeProtocolMetaValue({
       ...this._value,
       ...(partial || {}),
     });
@@ -71,13 +81,7 @@ export class TopsMetaPanel {
   }
 
   setStatusOptions(options = []) {
-    const normalized = Array.isArray(options)
-      ? options.map((item) => ({
-          value: String(item?.value || ""),
-          label: String(item?.label || item?.value || ""),
-          disabled: !!item?.disabled,
-        }))
-      : [];
+    const normalized = normalizeStatusOptions(options);
 
     if (!normalized.length) return;
     this._statusOptions = normalized;

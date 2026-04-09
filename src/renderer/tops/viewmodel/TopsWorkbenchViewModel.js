@@ -17,6 +17,10 @@ function buildHeaderVm(selectedTop) {
   };
 }
 
+function isTitleLevelTop(selectedTop) {
+  return Number(selectedTop?.level || 1) === 1;
+}
+
 function buildSharedEditorAccessVm(state, selectedTop) {
   const isReadOnly = !!state?.isReadOnly;
   const isWriting = !!state?.isWriting;
@@ -38,21 +42,30 @@ function buildSharedEditorVm(state, selectedTop) {
   };
 }
 
+function buildProtocolMetaValueVm(editorValue, selectedTop) {
+  const titleLevel = isTitleLevelTop(selectedTop);
+  return {
+    due_date: editorValue?.due_date ?? null,
+    status: editorValue?.status ?? "-",
+    responsible_label: titleLevel ? "" : editorValue?.responsible_label ?? "",
+  };
+}
+
+function buildProtocolMetaAccessVm(state, selectedTop) {
+  const isWriting = !!state?.isWriting;
+  const titleLevel = isTitleLevelTop(selectedTop);
+  return {
+    disabled: !!state?.isReadOnly || isWriting,
+    responsibleDisabled: !!state?.isReadOnly || isWriting || titleLevel,
+  };
+}
+
 // Protokollspezifische Workbench-Regel:
 // Titel auf Level 1 haben in der TOP-Workbench keine operative Meta-Belegung.
 function buildProtocolMetaVm(editorValue, state, selectedTop) {
-  const isWriting = !!state?.isWriting;
-  const isTitleLevel = Number(selectedTop?.level || 1) === 1;
   return {
-    value: {
-      due_date: editorValue?.due_date ?? null,
-      status: editorValue?.status ?? "-",
-      responsible_label: isTitleLevel ? "" : editorValue?.responsible_label ?? "",
-    },
-    access: {
-      disabled: !!state?.isReadOnly || isWriting,
-      responsibleDisabled: !!state?.isReadOnly || isWriting || isTitleLevel,
-    },
+    value: buildProtocolMetaValueVm(editorValue, selectedTop),
+    access: buildProtocolMetaAccessVm(state, selectedTop),
   };
 }
 

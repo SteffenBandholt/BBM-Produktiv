@@ -26,6 +26,15 @@ function createEmptyWorkbenchEditboxValue() {
   };
 }
 
+function buildEditboxFlagsFromEditorValue(editorValue = {}) {
+  return {
+    hidden: Number(editorValue?.is_hidden) === 1,
+    important: Number(editorValue?.is_important) === 1,
+    task: Number(editorValue?.is_task) === 1,
+    decision: Number(editorValue?.is_decision) === 1,
+  };
+}
+
 export class TopsWorkbench {
   constructor({
     onDraftChange,
@@ -195,7 +204,7 @@ export class TopsWorkbench {
     return this.editbox.isAnyFlagFocused();
   }
 
-  getDraft() {
+  _buildProtocolDraftFromUiState() {
     const textValue = this.editbox.getValue();
     return {
       title: normalizeTopShortText(textValue.shortText),
@@ -206,6 +215,10 @@ export class TopsWorkbench {
       is_task: textValue.flags?.task ? 1 : 0,
       is_decision: textValue.flags?.decision ? 1 : 0,
     };
+  }
+
+  getDraft() {
+    return this._buildProtocolDraftFromUiState();
   }
 
   setState(vm = {}) {
@@ -222,48 +235,18 @@ export class TopsWorkbench {
   _applyEditorState(editorVm = {}, actionsVm = {}) {
     const editorValue = editorVm?.value || {};
     const editorAccess = editorVm?.access || {};
-
-    const nextTitle = normalizeTopShortText(editorValue?.title || "");
-    const nextLong = normalizeTopLongText(editorValue?.longtext || "");
-    const nextEditboxValue = {};
-
-    if (!this.editbox.isShortTextFocused()) nextEditboxValue.shortText = nextTitle;
-    if (!this.editbox.isLongTextFocused()) nextEditboxValue.longText = nextLong;
-
-    if (!this._isEditboxFlagFocused()) {
-      nextEditboxValue.flags = {
-        hidden: Number(editorValue?.is_hidden) === 1,
-        important: Number(editorValue?.is_important) === 1,
-        task: Number(editorValue?.is_task) === 1,
-        decision: Number(editorValue?.is_decision) === 1,
-      };
-    }
-
-    if (Object.keys(nextEditboxValue).length) {
-      this.editbox.setValue(nextEditboxValue);
-    }
-
     const hasSelection = !!actionsVm?.hasSelection;
     const isReadOnly = !!actionsVm?.isReadOnly;
 
+    this._syncSharedEditboxValue(editorValue);
+
     if (!hasSelection) {
-      this.editbox.setValue(createEmptyWorkbenchEditboxValue());
-      this.editbox.setState("disabled");
-      this.editbox.setFieldAccess({
-        shortTextReadOnly: false,
-        longTextReadOnly: false,
-        flagsDisabled: false,
-      });
+      this._applyEditboxUnavailableState();
       return;
     }
 
     if (isReadOnly) {
-      this.editbox.setState("read-only");
-      this.editbox.setFieldAccess({
-        shortTextReadOnly: true,
-        longTextReadOnly: true,
-        flagsDisabled: true,
-      });
+      this._applyEditboxReadOnlyState();
       return;
     }
 
@@ -272,6 +255,43 @@ export class TopsWorkbench {
       shortTextReadOnly: !!editorAccess?.shortTextReadOnly,
       longTextReadOnly: !!editorAccess?.longTextReadOnly,
       flagsDisabled: !!editorAccess?.flagsDisabled,
+    });
+  }
+
+  _syncSharedEditboxValue(editorValue = {}) {
+    const nextEditboxValue = {};
+
+    if (!this.editbox.isShortTextFocused()) {
+      nextEditboxValue.shortText = normalizeTopShortText(editorValue?.title || "");
+    }
+    if (!this.editbox.isLongTextFocused()) {
+      nextEditboxValue.longText = normalizeTopLongText(editorValue?.longtext || "");
+    }
+    if (!this._isEditboxFlagFocused()) {
+      nextEditboxValue.flags = buildEditboxFlagsFromEditorValue(editorValue);
+    }
+
+    if (Object.keys(nextEditboxValue).length) {
+      this.editbox.setValue(nextEditboxValue);
+    }
+  }
+
+  _applyEditboxUnavailableState() {
+    this.editbox.setValue(createEmptyWorkbenchEditboxValue());
+    this.editbox.setState("disabled");
+    this.editbox.setFieldAccess({
+      shortTextReadOnly: false,
+      longTextReadOnly: false,
+      flagsDisabled: false,
+    });
+  }
+
+  _applyEditboxReadOnlyState() {
+    this.editbox.setState("read-only");
+    this.editbox.setFieldAccess({
+      shortTextReadOnly: true,
+      longTextReadOnly: true,
+      flagsDisabled: true,
     });
   }
 

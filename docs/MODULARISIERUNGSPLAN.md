@@ -720,6 +720,23 @@ Paket 1 hat den ersten Sichtbarkeits- und Trennungsschnitt konservativ vorbereit
 
 ---
 
+## Paket 2 – gemeinsame Kernbausteine festziehen
+**Status:** ERLEDIGT
+
+**Ziel**
+Die nach Paket 1 zentralen Bearbeitungs- und Metafeld-Zugriffspunkte konservativ so weiter vorbereiten, dass gemeinsamer Bearbeitungskern, wiederverwendbare Metafeld-Logik, protokollspezifische Workbench-Kopplung und UI-nahe Nutzung stabiler zugeordnet sind, ohne einen grossen Umbau oder ein neues Workbench-Framework einzufuehren.
+
+**Ergebnis**
+- Die tatsaechlich relevanten Zugriffspunkte wurden auf `src/renderer/tops/components/TopsWorkbench.js`, `src/renderer/tops/components/TopsMetaPanel.js`, `src/renderer/tops/components/TopsResponsibleBridge.js`, `src/renderer/tops/components/TopsStatusAmpelBridge.js`, `src/renderer/tops/viewmodel/TopsWorkbenchViewModel.js` und den bereits bestehenden gemeinsamen Kern in `src/renderer/core/editbox/`, `src/renderer/core/responsible/` sowie `src/renderer/core/status-ampel/` fokussiert.
+- Innerhalb der TOP-seitigen Dateien wurden gemeinsame Kernnutzung, wiederverwendbare Metafeld-Bridges, protokollspezifische Meta-Draft-Kopplung und Workbench-spezifische Zugriffsregeln klarer gruppiert.
+- `src/renderer/views/TopsScreen.js` bleibt weiterhin UI-/View-nahe Host- und Verdrahtungsschicht und wurde fuer dieses Paket bewusst nicht tiefer umgebaut.
+- Ein grosser Datei-Umzug, ein neues Editbox-/Workbench-System oder eine vorgezogene Modulstruktur wurden nicht eingefuehrt.
+
+**Stand / Notiz**
+Paket 2 ist als konservative Festigung abgeschlossen. Der gemeinsame Bearbeitungskern bleibt in `src/renderer/core/editbox/`; die wiederverwendbaren Kernfelder fuer Verantwortlich und Status/Ampel bleiben in `src/renderer/core/responsible/` bzw. `src/renderer/core/status-ampel/`. Die TOP-seitigen Bridges und das Workbench-ViewModel machen jetzt sichtbarer, dass sie diese gemeinsamen Kernbausteine nur an die protokollspezifische Meta-Draft-Struktur und TOP-Regeln ankoppeln. Die bestehende Funktionalitaet wurde beibehalten; ein vollstaendiger gemeinsamer Kernbaustein-Auszug oder ein allgemein wiederverwendbares Workbench-System ist weiterhin nicht umgesetzt.
+
+---
+
 ## Schritt 6.3 – Workbench-Muster vom Fachmodul trennen
 **Status:** OFFEN
 

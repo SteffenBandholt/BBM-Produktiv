@@ -68,9 +68,21 @@ export class TopsResponsibleBridge {
     }
   }
 
-  _getMetaResponsibleLabel() {
+  // Wiederverwendbares Kernfeld:
+  // `ResponsibleField` bleibt generisch, die Bridge uebersetzt nur zur TOP-Meta-Struktur.
+  _readMetaResponsibleLabel() {
     if (typeof this.metaPanel?.getValue !== "function") return "";
     return String(this.metaPanel.getValue()?.responsible_label || "").trim();
+  }
+
+  _writeMetaResponsibleLabel(label, { silent = false } = {}) {
+    if (typeof this.metaPanel?.updatePartial !== "function") return;
+    this.metaPanel.updatePartial(
+      {
+        responsible_label: String(label || "").trim(),
+      },
+      { silent }
+    );
   }
 
   _refreshOptions() {
@@ -82,7 +94,7 @@ export class TopsResponsibleBridge {
       this.currentValue &&
       !this.options.some((item) => String(item?.value || "") === String(this.currentValue || ""))
     ) {
-      const fallbackLabel = this._getMetaResponsibleLabel() || this.currentValue;
+      const fallbackLabel = this._readMetaResponsibleLabel() || this.currentValue;
       this.options = [{ value: this.currentValue, label: fallbackLabel }, ...this.options];
     }
 
@@ -95,13 +107,23 @@ export class TopsResponsibleBridge {
     const selected = this.options.find((item) => item.value === this.currentValue);
     const label = selected?.label || "";
 
-    if (typeof this.metaPanel?.updatePartial === "function") {
-      this.metaPanel.updatePartial({
-        responsible_label: label,
-      });
-    }
-
+    this._writeMetaResponsibleLabel(label);
     if (this.onChange) this.onChange();
+  }
+
+  _findOptionByLabel(label) {
+    const normalizedWanted = String(label || "").trim().toLowerCase();
+    return this.options.find(
+      (item) => String(item?.label || "").trim().toLowerCase() === normalizedWanted
+    );
+  }
+
+  _prependLegacyOption(label) {
+    const normalizedLabel = String(label || "").trim();
+    const legacyValue = `legacy:${normalizedLabel}`;
+    this.options = [{ value: legacyValue, label: normalizedLabel }, ...this.options];
+    this.field.setOptions(this.options);
+    return legacyValue;
   }
 
   applyDraftValue(label) {
@@ -110,34 +132,23 @@ export class TopsResponsibleBridge {
     if (!wanted) {
       this.currentValue = "";
       this.field.setValue("");
-      if (typeof this.metaPanel?.updatePartial === "function") {
-        this.metaPanel.updatePartial({ responsible_label: "" }, { silent: true });
-      }
+      this._writeMetaResponsibleLabel("", { silent: true });
       return;
     }
 
-    const match = this.options.find(
-      (item) => String(item?.label || "").trim().toLowerCase() === wanted.toLowerCase()
-    );
+    const match = this._findOptionByLabel(wanted);
 
     if (match) {
       this.currentValue = match.value;
       this.field.setValue(match.value);
-      if (typeof this.metaPanel?.updatePartial === "function") {
-        this.metaPanel.updatePartial({ responsible_label: match.label }, { silent: true });
-      }
+      this._writeMetaResponsibleLabel(match.label, { silent: true });
       return;
     }
 
-    const legacyValue = `legacy:${wanted}`;
-    this.options = [{ value: legacyValue, label: wanted }, ...this.options];
-    this.field.setOptions(this.options);
+    const legacyValue = this._prependLegacyOption(wanted);
     this.field.setValue(legacyValue);
     this.currentValue = legacyValue;
-
-    if (typeof this.metaPanel?.updatePartial === "function") {
-      this.metaPanel.updatePartial({ responsible_label: wanted }, { silent: true });
-    }
+    this._writeMetaResponsibleLabel(wanted, { silent: true });
   }
 
   setDisabled(disabled) {

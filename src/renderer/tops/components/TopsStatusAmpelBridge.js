@@ -53,6 +53,17 @@ export class TopsStatusAmpelBridge {
     el.addEventListener("input", () => this._syncToMetaPanel());
   }
 
+  // Wiederverwendbares Kernfeld:
+  // `StatusAmpelField` bleibt generisch, die Bridge koppelt nur an TOP-Meta-Draft und TOP-Ampelregel.
+  _readMetaDraftValue() {
+    return typeof this.metaPanel?.getValue === "function" ? this.metaPanel.getValue() : {};
+  }
+
+  _writeMetaDraftValue(partial, { silent = false } = {}) {
+    if (typeof this.metaPanel?.updatePartial !== "function") return;
+    this.metaPanel.updatePartial(partial, { silent });
+  }
+
   _syncStatusOptionsFromMetaPanel() {
     const options =
       typeof this.metaPanel?.getStatusOptions === "function"
@@ -68,43 +79,44 @@ export class TopsStatusAmpelBridge {
 
   _syncToMetaPanel() {
     const value = this.field.getValue();
-    const trafficLight = deriveTrafficLight({
-      status: value.status || "-",
-      due_date: value.dueDate || null,
-    });
-    this.field.setTrafficLight(trafficLight);
-
-    if (typeof this.metaPanel?.updatePartial === "function") {
-      this.metaPanel.updatePartial({
-        due_date: value.dueDate || null,
+    this.field.setTrafficLight(
+      deriveTrafficLight({
         status: value.status || "-",
-      });
-    }
+        due_date: value.dueDate || null,
+      })
+    );
+
+    this._writeMetaDraftValue({
+      due_date: value.dueDate || null,
+      status: value.status || "-",
+    });
 
     if (this.onChange) this.onChange();
   }
 
-  applyDraftValue(editor = {}) {
+  applyDraftValue(metaDraft = {}) {
+    const currentMetaDraft = {
+      ...this._readMetaDraftValue(),
+      ...(metaDraft || {}),
+    };
     const trafficLight = deriveTrafficLight({
-      status: editor?.status ?? "-",
-      due_date: editor?.due_date ?? null,
+      status: currentMetaDraft?.status ?? "-",
+      due_date: currentMetaDraft?.due_date ?? null,
     });
 
     this.field.setValue({
-      status: editor?.status ?? "-",
-      dueDate: editor?.due_date ?? "",
+      status: currentMetaDraft?.status ?? "-",
+      dueDate: currentMetaDraft?.due_date ?? "",
       trafficLight,
     });
 
-    if (typeof this.metaPanel?.updatePartial === "function") {
-      this.metaPanel.updatePartial(
-        {
-          due_date: editor?.due_date || null,
-          status: editor?.status || "-",
-        },
-        { silent: true }
-      );
-    }
+    this._writeMetaDraftValue(
+      {
+        due_date: currentMetaDraft?.due_date || null,
+        status: currentMetaDraft?.status || "-",
+      },
+      { silent: true }
+    );
   }
 
   setDisabled(disabled) {
