@@ -75,6 +75,12 @@ const MODULE_RELEASE_STATE = Object.freeze({
   },
 });
 
+const PRODUCTIVE_RELEASE_ACCESS = Object.freeze({
+  getReleasedModuleIds() {
+    return MODULE_RELEASE_STATE.getDefaultReleasedModuleIds();
+  },
+});
+
 function deriveActiveModuleEntries(moduleIds) {
   const normalizedModuleIds = normalizeModuleIds(moduleIds);
   return Object.freeze(
@@ -108,7 +114,7 @@ function findModuleEntryInCatalog(moduleCatalog, moduleId) {
   return moduleCatalog.find((entry) => entry?.moduleId === normalizedModuleId) || null;
 }
 
-const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(MODULE_RELEASE_STATE.getDefaultReleasedModuleIds());
+const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(PRODUCTIVE_RELEASE_ACCESS.getReleasedModuleIds());
 
 const ACTIVE_MODULE_IDS = deriveModuleIdsFromEntries(ACTIVE_MODULE_ENTRIES);
 
