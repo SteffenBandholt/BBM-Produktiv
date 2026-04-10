@@ -96,13 +96,24 @@ function createReleaseStateAccess(getReleaseState) {
   });
 }
 
-const PRODUCTIVE_RELEASE_ACCESS = createReleaseStateAccess(() =>
-  MODULE_RELEASE_STATE.getCurrentReleaseState()
-);
+function createProductiveReleaseAccess(releaseStateAccess) {
+  return Object.freeze({
+    getReleaseState() {
+      return releaseStateAccess.getReleaseState();
+    },
+    getReleasedModuleIds() {
+      return releaseStateAccess.getReleasedModuleIds();
+    },
+  });
+}
 
-const RELEASE_STATE_RELEASE_ACCESS = createReleaseStateAccess((releaseState) =>
+const CURRENT_RELEASE_STATE_ACCESS = createReleaseStateAccess((releaseState) =>
   MODULE_RELEASE_STATE.getCurrentReleaseState(releaseState)
 );
+
+const PRODUCTIVE_RELEASE_ACCESS = createProductiveReleaseAccess(CURRENT_RELEASE_STATE_ACCESS);
+
+const RELEASE_STATE_RELEASE_ACCESS = CURRENT_RELEASE_STATE_ACCESS;
 
 function deriveActiveModuleEntries(moduleIds) {
   const normalizedModuleIds = normalizeModuleIds(moduleIds);
@@ -167,7 +178,6 @@ function createReleasedModuleAccess(getReleasedModuleIds) {
 }
 
 function createProductiveModuleAccess(moduleAccess, getModuleIds) {
-  
   return Object.freeze({
     getCatalog() {
       return moduleAccess.getCatalog();
