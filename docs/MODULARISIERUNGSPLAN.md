@@ -1988,6 +1988,48 @@ Paket 12 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive A
 
 ---
 
+## Schritt 12.13 – Kleinen vorbereitenden Release-State-Zugriff im Katalog weiter bündeln
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog den vorbereitenden Release-State-Zugriff weiter klein bündeln, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- den vorbereitenden Release-State-Zugriff im Katalog weiter klein bündeln
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.8 vorbereitet
+- Schritt 12.12 vorbereitet
+
+**Ergebnis**
+- vorbereitender Release-State-Zugriff kleiner gebündelt
+
+**Stand / Notiz**
+Paket 13 hat im Modulkatalog den vorbereitenden Release-State-Zugriff weiter klein gebuendelt. Die produktive Standardlage mit `Protokoll` und `Restarbeiten` bleibt unveraendert; bestehende Aussenfunktionen und der vorbereitende Freigabeeingang wurden nicht verbreitert. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 13 – Kleinen vorbereitenden Release-State-Zugriff im Katalog weiter bündeln
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog den vorbereitenden Release-State-Zugriff weiter ueber eine kleine gemeinsame Zugriffsstelle fuehren, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Der vorbereitende Release-State-Zugriff ist im Katalog jetzt etwas kleiner gebuendelt.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 13 ist als kleiner interner Katalogschnitt abgeschlossen. Der vorbereitende Release-State-Zugriff ist im Modulrahmen jetzt etwas kompakter gebuendelt, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 
