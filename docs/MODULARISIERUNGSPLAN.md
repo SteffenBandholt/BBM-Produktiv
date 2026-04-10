@@ -1713,6 +1713,49 @@ Paket 5 hat den vorbereitenden Freigabeeingang im Modulkatalog mit kleinen Nachw
 
 ---
 
+## Schritt 12.6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
+**Status:** IN ARBEIT
+
+**Ziel**  
+Die bisher im Modulkatalog liegende kleine vorbereitende Freigabeableitung in eine kleine neutrale Kernstelle innerhalb von `src/renderer/app/modules/` sauberer schneiden, ohne Produktivlogik zu verbreitern.
+
+**Aufgaben**
+- kleine neutrale Kernstelle fuer den aktuellen Freigabezustand schaffen
+- `moduleCatalog.js` nur fuer den bestehenden kleinen Freigabeeingang darauf umstellen
+- produktive Standardlage stabil halten
+
+**Abhängigkeiten**
+- Schritt 12.4 vorbereitet
+- Schritt 12.5 vorbereitet
+
+**Ergebnis**
+- Freigabezustand ist im Kern kleiner und sauberer geschnitten
+
+**Stand / Notiz**
+Paket 6 hat die vorbereitende Freigabeableitung innerhalb von `src/renderer/app/modules/moduleCatalog.js` in eine kleine neutrale Kernstelle zusammengezogen. Der bestehende Freigabeeingang nutzt diese Stelle jetzt zentral; die produktive Standardlage mit `Protokoll` und `Restarbeiten` bleibt unveraendert. Echte Lizenzlogik, externe Quellen, IPC, Discovery, Registry und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
+**Status:** ERLEDIGT
+
+**Ziel**
+Die kleine vorbereitende Freigabeableitung im Modulrahmen sauberer schneiden, indem der aktuelle Freigabezustand innerhalb von `src/renderer/app/modules/` in eine neutrale kleine Kernstelle zusammengezogen wird, ohne angrenzende Produktivlogik zu verbreitern.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Innerhalb von `moduleCatalog.js` gibt es jetzt eine kleine neutrale Kernstelle fuer den aktuellen Freigabezustand.
+- Der bestehende vorbereitende Freigabeeingang im Katalog nutzt diese Kernstelle jetzt zentral fuer die Ableitung aktiver Module aus uebergebenen Freigabezustaenden.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 6 ist als kleiner Kernschnitt abgeschlossen. Der vorbereitende Freigabezustand ist im Modulrahmen jetzt kompakter und sauberer gebuendelt, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule verbreitert werden mussten.
+
+---
+
 ## Paket 5 – Kleinen Nachweis für Freigabezustände im Modulkatalog ergänzen
 **Status:** ERLEDIGT
 

@@ -94,6 +94,7 @@ Erreicht:
 - kleine Betriebsmodi sind aus dem statischen Katalog kontrolliert ableitbar
 - kleiner vorbereitender Freigabeeingang im Katalog vorhanden
 - Freigabezustaende sind im Katalog klein nachweisbar
+- Freigabezustand ist im Kern kleiner und sauberer gebuendelt
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -146,6 +147,7 @@ Noch offen:
 - kleine Betriebsmodi fuer `Protokoll`, `Restarbeiten` und beide zusammen sind nachweisbar ableitbar
 - ein neutraler vorbereitender Freigabeeingang im Katalog ist vorhanden
 - kleine Freigabezustaende koennen im Katalog belastbar nachgewiesen werden
+- der vorbereitende Freigabezustand ist im Kern kompakter gebuendelt
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
@@ -329,6 +331,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Kleine Betriebsmodi sind aus dem statischen Katalog nachweisbar ableitbar.
 - Ein kleiner vorbereitender Freigabeeingang im Katalog ist vorhanden.
 - Kleine Freigabezustaende sind im Katalog nachweisbar.
+- Der vorbereitende Freigabezustand ist im Kern kleiner geschnitten.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden
