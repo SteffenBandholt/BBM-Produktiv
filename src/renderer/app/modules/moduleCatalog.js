@@ -96,26 +96,11 @@ function createReleaseStateAccess(getReleaseState) {
   });
 }
 
-function createProductiveReleaseAccess(releaseStateAccess) {
-  const productiveReleaseStateAccess = createReleaseStateAccess(() =>
-    releaseStateAccess.getReleaseState()
-  );
-
-  return Object.freeze({
-    getReleaseState() {
-      return productiveReleaseStateAccess.getReleaseState();
-    },
-    getReleasedModuleIds() {
-      return productiveReleaseStateAccess.getReleasedModuleIds();
-    },
-  });
-}
-
 const CURRENT_RELEASE_STATE_ACCESS = createReleaseStateAccess((releaseState) =>
   MODULE_RELEASE_STATE.getCurrentReleaseState(releaseState)
 );
 
-const PRODUCTIVE_RELEASE_ACCESS = createProductiveReleaseAccess(CURRENT_RELEASE_STATE_ACCESS);
+const PRODUCTIVE_RELEASE_ACCESS = CURRENT_RELEASE_STATE_ACCESS;
 
 const RELEASE_STATE_RELEASE_ACCESS = CURRENT_RELEASE_STATE_ACCESS;
 

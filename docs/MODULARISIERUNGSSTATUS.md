@@ -118,6 +118,7 @@ Erreicht:
 - interner Funktionsschnitt im Katalog kleiner weitergesetzt
 - interner Access-Schnitt kleiner konsolidiert
 - interner Access-Schnitt kleiner glattgezogen
+- Release-/Access-Schnitt kleiner verdichtet
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -195,6 +196,7 @@ Noch offen:
 - der interne Funktionsschnitt ist im Katalog jetzt kleiner weitergesetzt
 - der interne Access-Schnitt ist im Katalog jetzt kleiner konsolidiert
 - der interne Access-Schnitt ist im Katalog jetzt kleiner glattgezogen
+- der Release-/Access-Schnitt ist im Katalog jetzt kleiner verdichtet
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
@@ -403,6 +405,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Der interne Funktionsschnitt ist im Katalog jetzt kleiner weitergesetzt.
 - Der interne Access-Schnitt ist im Katalog jetzt kleiner konsolidiert.
 - Der interne Access-Schnitt ist im Katalog jetzt kleiner glattgezogen.
+- Der Release-/Access-Schnitt ist im Katalog jetzt kleiner verdichtet.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden
