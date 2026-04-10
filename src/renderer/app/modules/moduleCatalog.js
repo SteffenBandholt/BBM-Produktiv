@@ -94,13 +94,17 @@ function deriveActiveModuleIds(moduleIds) {
   );
 }
 
-const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(
-  MODULE_RELEASE_STATE.getDefaultReleasedModuleIds()
-);
+function deriveModuleIdsFromEntries(moduleEntries) {
+  return Object.freeze(
+    moduleEntries
+      .map((entry) => String(entry?.moduleId || "").trim())
+      .filter(Boolean)
+  );
+}
 
-const ACTIVE_MODULE_IDS = Object.freeze(
-  deriveActiveModuleIds(MODULE_RELEASE_STATE.getDefaultReleasedModuleIds())
-);
+const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(MODULE_RELEASE_STATE.getDefaultReleasedModuleIds());
+
+const ACTIVE_MODULE_IDS = deriveModuleIdsFromEntries(ACTIVE_MODULE_ENTRIES);
 
 const PRODUCTIVE_ACTIVE_MODULE_ACCESS = Object.freeze({
   getCatalog() {

@@ -1862,6 +1862,48 @@ Paket 9 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive Zu
 
 ---
 
+## Schritt 12.10 – Kleine produktive Katalogableitung weiter entdoppeln
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog die produktive Katalogableitung weiter klein entdoppeln, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- die produktive Katalogableitung im Modulkatalog weiter klein entdoppeln
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.8 vorbereitet
+- Schritt 12.9 vorbereitet
+
+**Ergebnis**
+- produktive Katalogableitung kleiner entdoppelt
+
+**Stand / Notiz**
+Paket 10 hat im Modulkatalog die produktive Katalogableitung weiter klein entdoppelt. Die produktive Standardlage mit `Protokoll` und `Restarbeiten` bleibt unveraendert; bestehende Aussenfunktionen und der vorbereitende Freigabeeingang wurden nicht verbreitert. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 10 – Kleine produktive Katalogableitung weiter entdoppeln
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog die produktive Katalogableitung weiter intern entdoppeln, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Die produktive Katalogableitung ist im Katalog jetzt etwas kleiner entdoppelt.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 10 ist als kleiner interner Katalogschnitt abgeschlossen. Die produktive Katalogableitung ist im Modulrahmen jetzt etwas kompakter, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 
