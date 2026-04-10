@@ -1946,6 +1946,48 @@ Paket 11 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive M
 
 ---
 
+## Schritt 12.12 – Kleinen produktiven Active-Access im Katalog weiter vereinfachen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog den produktiven Zugriff auf aktive Module weiter klein vereinfachen, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- den produktiven Active-Access im Katalog weiter klein vereinfachen
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.9 vorbereitet
+- Schritt 12.11 vorbereitet
+
+**Ergebnis**
+- produktiver Active-Access kleiner vereinfacht
+
+**Stand / Notiz**
+Paket 12 hat im Modulkatalog den produktiven Active-Access weiter klein vereinfacht. Die produktive Standardlage mit `Protokoll` und `Restarbeiten` bleibt unveraendert; bestehende Aussenfunktionen und der vorbereitende Freigabeeingang wurden nicht verbreitert. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 12 – Kleinen produktiven Active-Access im Katalog weiter vereinfachen
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog den produktiven Active-Access weiter ueber die vorhandene kleine Zugriffsstelle vereinfachen, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Der produktive Active-Access ist im Katalog jetzt etwas kleiner vereinfacht.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 12 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive Active-Access ist im Modulrahmen jetzt etwas kompakter, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 

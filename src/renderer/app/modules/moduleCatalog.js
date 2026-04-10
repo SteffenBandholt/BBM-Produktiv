@@ -118,6 +118,9 @@ const PRODUCTIVE_ACTIVE_MODULE_ACCESS = Object.freeze({
     if (!normalizedModuleId) return null;
     return this.getCatalog().find((entry) => entry?.moduleId === normalizedModuleId) || null;
   },
+  hasModule(moduleId) {
+    return !!this.findModuleEntry(moduleId);
+  },
 });
 
 // App-Kern: kleiner statischer Modulkatalog.
@@ -136,7 +139,7 @@ export function findActiveModuleEntry(moduleId) {
 }
 
 export function hasActiveModule(moduleId) {
-  return !!findActiveModuleEntry(moduleId);
+  return PRODUCTIVE_ACTIVE_MODULE_ACCESS.hasModule(moduleId);
 }
 
 export function getDerivedActiveModuleCatalog(moduleIds) {
