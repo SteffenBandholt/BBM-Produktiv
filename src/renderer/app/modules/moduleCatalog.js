@@ -97,12 +97,16 @@ function createReleaseStateAccess(getReleaseState) {
 }
 
 function createProductiveReleaseAccess(releaseStateAccess) {
+  const productiveReleaseStateAccess = createReleaseStateAccess(() =>
+    releaseStateAccess.getReleaseState()
+  );
+
   return Object.freeze({
     getReleaseState() {
-      return releaseStateAccess.getReleaseState();
+      return productiveReleaseStateAccess.getReleaseState();
     },
     getReleasedModuleIds() {
-      return releaseStateAccess.getReleasedModuleIds();
+      return productiveReleaseStateAccess.getReleasedModuleIds();
     },
   });
 }

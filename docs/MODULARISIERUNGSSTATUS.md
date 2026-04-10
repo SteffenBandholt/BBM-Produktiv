@@ -117,6 +117,7 @@ Erreicht:
 - interne Access-Helfer kleiner vereinheitlicht
 - interner Funktionsschnitt im Katalog kleiner weitergesetzt
 - interner Access-Schnitt kleiner konsolidiert
+- interner Access-Schnitt kleiner glattgezogen
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -193,6 +194,7 @@ Noch offen:
 - die internen Access-Helfer sind im Katalog jetzt kleiner vereinheitlicht
 - der interne Funktionsschnitt ist im Katalog jetzt kleiner weitergesetzt
 - der interne Access-Schnitt ist im Katalog jetzt kleiner konsolidiert
+- der interne Access-Schnitt ist im Katalog jetzt kleiner glattgezogen
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
@@ -400,6 +402,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Die internen Access-Helfer sind im Katalog jetzt kleiner vereinheitlicht.
 - Der interne Funktionsschnitt ist im Katalog jetzt kleiner weitergesetzt.
 - Der interne Access-Schnitt ist im Katalog jetzt kleiner konsolidiert.
+- Der interne Access-Schnitt ist im Katalog jetzt kleiner glattgezogen.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden

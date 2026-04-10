@@ -2665,6 +2665,49 @@ Paket 28 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive R
 
 ---
 
+## Schritt 12.29 – Naechsten kleinen internen Access-Schnitt glattziehen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog den naechsten kleinen internen Access-Schnitt glattziehen und produktiven sowie Release-State-Zugriff intern weiter angleichen, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- den naechsten kleinen internen Access-Schnitt im Katalog glattziehen
+- produktiven und Release-State-Zugriff intern weiter angleichen
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.28 vorbereitet
+
+**Ergebnis**
+- interner Access-Schnitt kleiner glattgezogen
+
+**Stand / Notiz**
+Paket 29 hat im Modulkatalog den naechsten kleinen internen Access-Schnitt glattgezogen. Produktiver und Release-State-Zugriff sind intern weiter angeglichen, waehrend die produktive Standardlage mit `Protokoll` und `Restarbeiten` unveraendert bleibt. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 29 – Naechsten kleinen internen Access-Schnitt glattziehen
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog den naechsten kleinen internen Access-Schnitt glattziehen und produktiven sowie Release-State-Zugriff intern weiter angleichen, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Der naechste kleine interne Access-Schnitt ist im Katalog jetzt etwas glatter gezogen.
+- Produktiver und Release-State-Zugriff nutzen intern jetzt noch direkter dieselbe kleine Release-State-Access-Erzeugerlogik.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 29 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive Release-Zugriff baut im Modulrahmen jetzt intern ueber dieselbe kleine `createReleaseStateAccess`-Erzeugerlogik auf wie der vorbereitende Zugriff, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 
