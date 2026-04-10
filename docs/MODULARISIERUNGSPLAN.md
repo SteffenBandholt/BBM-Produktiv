@@ -831,7 +831,8 @@ Paket 1 ist als erster sichtbarer Grenzschnitt abgeschlossen. Das Fachmodul `Pro
 
 **Aufgaben**
 - `TopsScreen` nicht mehr als Architektursondersystem behandeln
-- Zuordnung nach `modules/protokoll/screens/` vorbereiten
+- technische Heimat unter `src/renderer/modules/protokoll/screens/` ehrlich als erreichten Stand fuehren
+- `src/renderer/views/TopsScreen.js` nur noch als Uebergangs- und Kompatibilitaetsschicht fuehren
 
 **Abhängigkeiten**
 - Schritt 7.1
@@ -840,7 +841,7 @@ Paket 1 ist als erster sichtbarer Grenzschnitt abgeschlossen. Das Fachmodul `Pro
 - `TopsScreen` ist klar als Screen des Moduls `Protokoll` eingeordnet
 
 **Stand / Notiz**
-Paket 2 hat den naechsten Einordnungsschnitt konservativ vorbereitet. `src/renderer/views/TopsScreen.js` macht sichtbarer, dass `TopsScreen` nur der Arbeitsscreen des Moduls `Protokoll` ist, waehrend modulinterner Unterbau, gemeinsame Kernbausteine, gemeinsame Domaenen, gemeinsame Dienste und Router-/Host-Logik ausdruecklich ausserhalb bleiben. Ein Modulumzug oder ein allgemeines Screen-Framework wurde damit noch nicht begonnen.
+Die fachliche Einordnung ist erreicht und die technische Heimat liegt jetzt unter `src/renderer/modules/protokoll/screens/TopsScreen.js`. `src/renderer/views/TopsScreen.js` bleibt nur noch als Uebergangs- und Kompatibilitaetsschicht bestehen, waehrend modulinterner Unterbau, gemeinsame Kernbausteine, gemeinsame Domaenen, gemeinsame Dienste und Router-/Host-Logik weiterhin ausdruecklich ausserhalb bleiben. Der groessere Unterbau unter `src/renderer/tops/` ist weiterhin offener Uebergang; ein allgemeines Screen-Framework ist nicht entstanden.
 
 ---
 
