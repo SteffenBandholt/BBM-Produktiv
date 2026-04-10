@@ -137,14 +137,29 @@ function findModuleEntryInCatalog(moduleCatalog, moduleId) {
   return moduleCatalog.find((entry) => entry?.moduleId === normalizedModuleId) || null;
 }
 
+function createModuleAccess(getCatalog) {
+  return Object.freeze({
+    getCatalog(releaseState) {
+      return getCatalog(releaseState);
+    },
+    getModuleIds(releaseState) {
+      return deriveModuleIdsFromEntries(this.getCatalog(releaseState));
+    },
+    findModuleEntry(releaseState, moduleId) {
+      return findModuleEntryInCatalog(this.getCatalog(releaseState), moduleId);
+    },
+    hasModule(releaseState, moduleId) {
+      return !!this.findModuleEntry(releaseState, moduleId);
+    },
+  });
+}
+
 const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(PRODUCTIVE_RELEASE_ACCESS.getReleasedModuleIds());
 
 const ACTIVE_MODULE_IDS = deriveModuleIdsFromEntries(ACTIVE_MODULE_ENTRIES);
 
 const PRODUCTIVE_ACTIVE_MODULE_ACCESS = Object.freeze({
-  getCatalog() {
-    return ACTIVE_MODULE_ENTRIES;
-  },
+  ...createModuleAccess(() => ACTIVE_MODULE_ENTRIES),
   getModuleIds() {
     return ACTIVE_MODULE_IDS;
   },
@@ -156,22 +171,9 @@ const PRODUCTIVE_ACTIVE_MODULE_ACCESS = Object.freeze({
   },
 });
 
-const RELEASE_STATE_MODULE_ACCESS = Object.freeze({
-  getCatalog(releaseState) {
-    return deriveActiveModuleEntries(
-      RELEASE_STATE_RELEASE_ACCESS.getReleasedModuleIds(releaseState)
-    );
-  },
-  getModuleIds(releaseState) {
-    return deriveModuleIdsFromEntries(this.getCatalog(releaseState));
-  },
-  findModuleEntry(releaseState, moduleId) {
-    return findModuleEntryInCatalog(this.getCatalog(releaseState), moduleId);
-  },
-  hasModule(releaseState, moduleId) {
-    return !!this.findModuleEntry(releaseState, moduleId);
-  },
-});
+const RELEASE_STATE_MODULE_ACCESS = createModuleAccess((releaseState) =>
+  deriveActiveModuleEntries(RELEASE_STATE_RELEASE_ACCESS.getReleasedModuleIds(releaseState))
+);
 
 // App-Kern: kleiner statischer Modulkatalog.
 // Bekannte Module und aktiver Modulumfang bleiben bewusst statisch.
