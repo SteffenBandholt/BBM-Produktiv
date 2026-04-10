@@ -2493,6 +2493,49 @@ Paket 24 ist als kleiner interner Katalogschnitt abgeschlossen. Produktiver und 
 
 ---
 
+## Schritt 12.25 – Kleinen Release-State-/Module-Access weiter glätten
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog den kleinen Release-State-/Module-Access weiter glaetten und die internen Access-Objekte gleichfoermiger machen, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- den kleinen Release-State-/Module-Access im Katalog weiter glaetten
+- die internen Access-Objekte gleichfoermiger machen
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.24 vorbereitet
+
+**Ergebnis**
+- Release-State-/Module-Access kleiner geglaettet
+
+**Stand / Notiz**
+Paket 25 hat im Modulkatalog den kleinen Release-State-/Module-Access weiter geglaettet. Die internen Access-Objekte sind jetzt gleichfoermiger, waehrend die produktive Standardlage mit `Protokoll` und `Restarbeiten` unveraendert bleibt. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 25 – Kleinen Release-State-/Module-Access weiter glätten
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog den kleinen Release-State-/Module-Access weiter glaetten und die internen Access-Objekte gleichfoermiger machen, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Der kleine Release-State-/Module-Access ist im Katalog jetzt etwas gleichfoermiger geschnitten.
+- Produktiver und vorbereitender Zugriff nutzen intern jetzt gleichfoermiger geformte Access-Objekte.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 25 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive Modul-Access wird im Modulrahmen jetzt ueber dieselbe kleine Erzeugerlogik wie der vorbereitende Modul-Access zugeschnitten, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 

@@ -160,22 +160,29 @@ function createModuleAccess(getCatalog) {
   });
 }
 
+function createProductiveModuleAccess(getCatalog, getModuleIds) {
+  return Object.freeze({
+    ...createModuleAccess(() => getCatalog()),
+    getModuleIds() {
+      return getModuleIds();
+    },
+    findModuleEntry(moduleId) {
+      return findModuleEntryInCatalog(this.getCatalog(), moduleId);
+    },
+    hasModule(moduleId) {
+      return !!this.findModuleEntry(moduleId);
+    },
+  });
+}
+
 const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(PRODUCTIVE_RELEASE_ACCESS.getReleasedModuleIds());
 
 const ACTIVE_MODULE_IDS = deriveModuleIdsFromEntries(ACTIVE_MODULE_ENTRIES);
 
-const PRODUCTIVE_ACTIVE_MODULE_ACCESS = Object.freeze({
-  ...createModuleAccess(() => ACTIVE_MODULE_ENTRIES),
-  getModuleIds() {
-    return ACTIVE_MODULE_IDS;
-  },
-  findModuleEntry(moduleId) {
-    return findModuleEntryInCatalog(this.getCatalog(), moduleId);
-  },
-  hasModule(moduleId) {
-    return !!this.findModuleEntry(moduleId);
-  },
-});
+const PRODUCTIVE_ACTIVE_MODULE_ACCESS = createProductiveModuleAccess(
+  () => ACTIVE_MODULE_ENTRIES,
+  () => ACTIVE_MODULE_IDS
+);
 
 const RELEASE_STATE_MODULE_ACCESS = createModuleAccess((releaseState) =>
   deriveActiveModuleEntries(RELEASE_STATE_RELEASE_ACCESS.getReleasedModuleIds(releaseState))
