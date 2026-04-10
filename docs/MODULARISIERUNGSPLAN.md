@@ -2198,6 +2198,48 @@ Paket 17 ist als kleiner interner Katalogschnitt abgeschlossen. Produktiver und 
 
 ---
 
+## Schritt 12.18 – Kleinen produktiven und vorbereitenden Release-Access weiter vereinheitlichen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog den produktiven und den vorbereitenden Release-Access weiter klein vereinheitlichen, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- den produktiven und den vorbereitenden Release-Access im Katalog weiter klein vereinheitlichen
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.16 vorbereitet
+- Schritt 12.17 vorbereitet
+
+**Ergebnis**
+- produktiver und vorbereitender Release-Access kleiner vereinheitlicht
+
+**Stand / Notiz**
+Paket 18 hat im Modulkatalog den produktiven und den vorbereitenden Release-Access weiter klein vereinheitlicht. Die produktive Standardlage mit `Protokoll` und `Restarbeiten` bleibt unveraendert; bestehende Aussenfunktionen und der vorbereitende Freigabeeingang wurden nicht verbreitert. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 18 – Kleinen produktiven und vorbereitenden Release-Access weiter vereinheitlichen
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog den produktiven und den vorbereitenden Release-Access intern weiter vereinheitlichen, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Der produktive und der vorbereitende Release-Access sind im Katalog jetzt etwas einheitlicher geschnitten.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 18 ist als kleiner interner Katalogschnitt abgeschlossen. Produktiver und vorbereitender Release-Access nutzen im Modulrahmen jetzt dieselbe kleine Release-State-Ableitung, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 

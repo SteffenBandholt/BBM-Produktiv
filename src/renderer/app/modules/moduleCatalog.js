@@ -75,21 +75,22 @@ const MODULE_RELEASE_STATE = Object.freeze({
   },
 });
 
-function createReleaseAccess(getReleasedModuleIds) {
+function createReleaseAccess(getReleaseState) {
   return Object.freeze({
+    getReleaseState(releaseState) {
+      return getReleaseState(releaseState);
+    },
     getReleasedModuleIds(releaseState) {
-      return getReleasedModuleIds(releaseState);
+      return MODULE_RELEASE_STATE.getReleasedModuleIds(this.getReleaseState(releaseState));
     },
   });
 }
 
 const PRODUCTIVE_RELEASE_ACCESS = createReleaseAccess(() =>
-  MODULE_RELEASE_STATE.getDefaultReleasedModuleIds()
+  MODULE_RELEASE_STATE.productiveDefaultReleaseState
 );
 
-const RELEASE_STATE_RELEASE_ACCESS = createReleaseAccess((releaseState) =>
-  MODULE_RELEASE_STATE.getReleasedModuleIds(releaseState)
-);
+const RELEASE_STATE_RELEASE_ACCESS = createReleaseAccess((releaseState) => releaseState);
 
 function deriveActiveModuleEntries(moduleIds) {
   const normalizedModuleIds = normalizeModuleIds(moduleIds);
