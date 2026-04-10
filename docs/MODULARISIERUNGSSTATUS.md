@@ -120,6 +120,7 @@ Erreicht:
 - interner Access-Schnitt kleiner glattgezogen
 - Release-/Access-Schnitt kleiner verdichtet
 - Release-/Access-Schnitt kleiner glattgezogen
+- `CURRENT_RELEASE_STATE_ACCESS` ist die einzige kleine Release-State-Access-Stelle im Katalog
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -199,6 +200,7 @@ Noch offen:
 - der interne Access-Schnitt ist im Katalog jetzt kleiner glattgezogen
 - der Release-/Access-Schnitt ist im Katalog jetzt kleiner verdichtet
 - der Release-/Access-Schnitt ist im Katalog jetzt kleiner glattgezogen
+- `CURRENT_RELEASE_STATE_ACCESS` ist im Katalog jetzt die einzige kleine Release-State-Access-Stelle
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
@@ -409,6 +411,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Der interne Access-Schnitt ist im Katalog jetzt kleiner glattgezogen.
 - Der Release-/Access-Schnitt ist im Katalog jetzt kleiner verdichtet.
 - Der Release-/Access-Schnitt ist im Katalog jetzt kleiner glattgezogen.
+- `CURRENT_RELEASE_STATE_ACCESS` ist im Katalog jetzt die einzige kleine Release-State-Access-Stelle.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden

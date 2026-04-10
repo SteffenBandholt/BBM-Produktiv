@@ -100,8 +100,6 @@ const CURRENT_RELEASE_STATE_ACCESS = createReleaseStateAccess((releaseState) =>
   MODULE_RELEASE_STATE.getCurrentReleaseState(releaseState)
 );
 
-const PRODUCTIVE_RELEASE_ACCESS = CURRENT_RELEASE_STATE_ACCESS;
-
 function deriveActiveModuleEntries(moduleIds) {
   const normalizedModuleIds = normalizeModuleIds(moduleIds);
   return Object.freeze(
@@ -182,7 +180,7 @@ function createProductiveModuleAccess(moduleAccess, getModuleIds) {
 }
 
 const PRODUCTIVE_RELEASE_STATE_MODULE_ACCESS = createReleasedModuleAccess(() =>
-  PRODUCTIVE_RELEASE_ACCESS.getReleasedModuleIds()
+  CURRENT_RELEASE_STATE_ACCESS.getReleasedModuleIds()
 );
 
 const ACTIVE_MODULE_ENTRIES = PRODUCTIVE_RELEASE_STATE_MODULE_ACCESS.getCatalog();

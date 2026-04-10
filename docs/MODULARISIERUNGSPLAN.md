@@ -2783,14 +2783,14 @@ Im kleinen statischen Modulkatalog den naechsten kleinen Release-/Access-Schnitt
 **Ergebnis**
 - Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
 - Der naechste kleine Release-/Access-Schnitt ist im Katalog jetzt glatter geschnitten.
-- Produktiver und Release-State-Zugriff nutzen intern jetzt ohne zusaetzlichen Alias dieselbe kleine aktuelle Release-State-Access-Stelle.
+- Produktiver und Release-State-Zugriff nutzen intern jetzt direkt `CURRENT_RELEASE_STATE_ACCESS` als einzige kleine Release-State-Access-Stelle.
 - Die bestehende produktive Standardlage bleibt stabil:
   - Default bleibt `Protokoll` + `Restarbeiten`
   - bestehende produktive Aussenfunktionen bleiben unveraendert
 - Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
 
 **Stand / Notiz**
-Paket 31 ist als kleiner interner Katalogschnitt abgeschlossen. Der Release-State-Zugriff verwendet im Modulrahmen jetzt ohne zusaetzlichen Alias dieselbe kleine aktuelle Release-State-Access-Stelle wie der produktive Zugriff, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+Paket 31 ist als kleiner interner Katalogschnitt abgeschlossen. Produktiver und Release-State-Zugriff verwenden im Modulrahmen jetzt direkt `CURRENT_RELEASE_STATE_ACCESS` als einzige kleine Release-State-Access-Stelle, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
 
 ---
 
