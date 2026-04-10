@@ -93,6 +93,7 @@ Erreicht:
 - bekannter Modulbestand und aktiver Modulumfang im Katalog expliziter getrennt
 - kleine Betriebsmodi sind aus dem statischen Katalog kontrolliert ableitbar
 - kleiner vorbereitender Freigabeeingang im Katalog vorhanden
+- Freigabezustaende sind im Katalog klein nachweisbar
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -144,6 +145,7 @@ Noch offen:
 - bekannter Modulbestand und aktiver Modulumfang im Katalog sind klein getrennt
 - kleine Betriebsmodi fuer `Protokoll`, `Restarbeiten` und beide zusammen sind nachweisbar ableitbar
 - ein neutraler vorbereitender Freigabeeingang im Katalog ist vorhanden
+- kleine Freigabezustaende koennen im Katalog belastbar nachgewiesen werden
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
@@ -294,6 +296,7 @@ Diese Liste ist bewusst keine vollständige Git-Historie, sondern eine Einordnun
 ### Zusammenspiel / Konsolidierung
 - Koexistenz `Protokoll` + `Restarbeiten` nachgewiesen
 - kleine Betriebsmodi `nur Protokoll`, `nur Restarbeiten` und `beide zusammen` nachweisbar gemacht
+- kleine Freigabezustaende im Modulkatalog nachweisbar gemacht
 - erste Altpfade und Übergangs-Re-Exports abgebaut
 - Mischzustand weiter reduziert
 - Abschlussstand eines erreichten Abschnitts dokumentiert
@@ -325,6 +328,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Koexistenz `Protokoll` + `Restarbeiten` ist nachgewiesen.
 - Kleine Betriebsmodi sind aus dem statischen Katalog nachweisbar ableitbar.
 - Ein kleiner vorbereitender Freigabeeingang im Katalog ist vorhanden.
+- Kleine Freigabezustaende sind im Katalog nachweisbar.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden

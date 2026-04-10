@@ -1690,6 +1690,52 @@ Paket 4 hat im Modulkatalog einen kleinen neutralen Freigabeeingang vorbereitet.
 
 ---
 
+## Schritt 12.5 – Kleinen Nachweis für Freigabezustände im Modulkatalog ergänzen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Den vorbereitenden Freigabeeingang im Modulkatalog mit einem kleinen belastbaren Nachweis absichern, ohne schon produktive Freigabelogik, Discovery, Registry oder Plattformmechanik einzufuehren.
+
+**Aufgaben**
+- Freigabezustaende im Katalog nur so weit nachschaerfen, wie es fuer belastbare Nachweise noetig ist
+- kleine Testnachweise fuer uebergebene Freigabezustaende ergaenzen
+- produktive Standardlage stabil halten
+
+**Abhängigkeiten**
+- Schritt 12.4 vorbereitet
+- bestehende Integrationsnachweise vorhanden
+
+**Ergebnis**
+- Freigabezustaende sind im Katalog klein nachweisbar
+
+**Stand / Notiz**
+Paket 5 hat den vorbereitenden Freigabeeingang im Modulkatalog mit kleinen Nachweisen abgesichert. Uebergebene Freigabezustaende lassen sich jetzt fuer `Protokoll`, `Restarbeiten` und beide zusammen belastbar gegen den Katalog pruefen; die bestehende produktive Standardlage bleibt unveraendert. Echte Lizenzlogik, externe Quellen, Discovery, Registry und produktiver freigabebasierter Betrieb wurden dabei bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 5 – Kleinen Nachweis für Freigabezustände im Modulkatalog ergänzen
+**Status:** ERLEDIGT
+
+**Ziel**
+Den vorbereitenden Freigabeeingang im Modulkatalog mit einem kleinen belastbaren Integrationsnachweis absichern, ohne produktive Freigabelogik, Discovery, Registry oder Plattformmechanik einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js`, `scripts/tests/moduleCoexistence.integration.test.cjs` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Der bestehende vorbereitende Freigabeeingang im Katalog wird jetzt mit kleinen Nachweisen fuer uebergebene Freigabezustaende abgesichert.
+- Der Integrationsnachweis prueft kontrolliert:
+  - nur `Protokoll` aus einem uebergebenen Freigabezustand
+  - nur `Restarbeiten` aus einem uebergebenen Freigabezustand
+  - `Protokoll` + `Restarbeiten` aus einem uebergebenen Freigabezustand
+- Die bestehende produktive Standardlage bleibt unveraendert:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - es wurde keine echte Lizenzpruefung eingefuehrt
+  - es wurde keine externe Quelle, keine IPC, keine Discovery und keine Registry eingefuehrt
+
+**Stand / Notiz**
+Paket 5 ist als kleiner Nachweisschritt abgeschlossen. Der vorbereitende Freigabeeingang im Modulkatalog ist jetzt belastbar gegen kleine Freigabezustaende abgesichert, ohne dass daraus schon produktive Freigabelogik oder weitere Plattformmechanik abgeleitet wurde.
+
+---
+
 ## Paket 4 – Kleine vorbereitende Freigabelogik im Kern einziehen
 **Status:** ERLEDIGT
 

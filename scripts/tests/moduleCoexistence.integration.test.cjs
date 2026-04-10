@@ -20,6 +20,8 @@ async function runModuleCoexistenceIntegrationTests(run) {
     findActiveModuleEntry,
     getDerivedActiveModuleCatalog,
     getDerivedActiveModuleIds,
+    getActiveModuleCatalogForReleaseState,
+    getActiveModuleIdsForReleaseState,
   } = moduleCatalog;
   const { resolveActiveModuleWorkScreen } = moduleScreenResolver;
   const {
@@ -52,6 +54,27 @@ async function runModuleCoexistenceIntegrationTests(run) {
     assert.equal(protokollOnlyCatalog.length, 1);
     assert.equal(protokollOnlyCatalog[0]?.moduleId, PROTOKOLL_MODULE_ID);
     assert.deepEqual(bothIds, [PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID]);
+  });
+
+  await run("Module Koexistenz: Freigabezustaende werden klein und kontrolliert auf aktive Module abgebildet", () => {
+    const protokollReleasedIds = getActiveModuleIdsForReleaseState({
+      releasedModuleIds: [PROTOKOLL_MODULE_ID],
+    });
+    const restarbeitenReleasedIds = getActiveModuleIdsForReleaseState({
+      activeModuleIds: [RESTARBEITEN_MODULE_ID],
+    });
+    const bothReleasedCatalog = getActiveModuleCatalogForReleaseState({
+      modules: {
+        [PROTOKOLL_MODULE_ID]: true,
+        [RESTARBEITEN_MODULE_ID]: true,
+      },
+    });
+
+    assert.deepEqual(protokollReleasedIds, [PROTOKOLL_MODULE_ID]);
+    assert.deepEqual(restarbeitenReleasedIds, [RESTARBEITEN_MODULE_ID]);
+    assert.equal(bothReleasedCatalog.length, 2);
+    assert.equal(bothReleasedCatalog[0]?.moduleId, PROTOKOLL_MODULE_ID);
+    assert.equal(bothReleasedCatalog[1]?.moduleId, RESTARBEITEN_MODULE_ID);
   });
 
   await run("Module Koexistenz: beide Work-Screens sind separat aufloesbar", () => {
