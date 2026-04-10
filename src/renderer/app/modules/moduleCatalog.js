@@ -97,7 +97,7 @@ function createReleaseAccess(getReleaseState) {
 }
 
 const PRODUCTIVE_RELEASE_ACCESS = createReleaseAccess(() =>
-  MODULE_RELEASE_STATE.getProductiveReleaseState()
+  MODULE_RELEASE_STATE.getCurrentReleaseState()
 );
 
 const RELEASE_STATE_RELEASE_ACCESS = createReleaseAccess((releaseState) =>
