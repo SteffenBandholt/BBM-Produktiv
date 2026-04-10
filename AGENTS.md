@@ -96,6 +96,14 @@ Vor jeder Paketwahl ist zuerst das relevante Endziel in `ARCHITECTURE.md` und da
 
 Spontane Einzelideen, lokale Code-Schoenheitskorrekturen oder isolierte technische Kleinverbesserungen reichen als Paketbegruendung nicht aus.
 
+Die Arbeitsmatrix des Modularumbaus besteht fuer Codex verbindlich aus genau 6 Containern.
+
+Codex darf keine zusaetzlichen Container einfuehren.
+
+Bestehende Container duerfen nicht ohne eigenes Doku-/Planpaket aufgespalten, umbenannt oder neu geordnet werden.
+
+Aenderungen an der Containerstruktur gehoeren ausschliesslich in ein eigenes Doku-/Planpaket in Container 1.
+
 ---
 
 ## Git-Regeln pro Paket

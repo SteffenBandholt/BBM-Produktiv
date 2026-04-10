@@ -136,6 +136,14 @@ Die Reihenfolge ist:
 
 Neue Pakete duerfen nicht direkt aus spontanen Einzelideen, lokaler Code-Schoenheit oder isolierten technischen Kleinverbesserungen abgeleitet werden.
 
+Die Arbeitsmatrix des Modularumbaus besteht fuer neue Chats verbindlich aus genau 6 Containern.
+
+Neue Chats duerfen keine zusaetzlichen Container einfuehren.
+
+Bestehende Container duerfen nicht ohne eigenes Doku-/Planpaket aufgespalten, umbenannt oder neu geordnet werden.
+
+Aenderungen an der Containerstruktur gehoeren ausschliesslich in ein eigenes Doku-/Planpaket in Container 1.
+
 Wenn eine Aufgabe nicht sauber zur Zielarchitektur passt, muss das klar benannt werden.
 
 ---

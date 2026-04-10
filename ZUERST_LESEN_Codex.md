@@ -60,6 +60,14 @@ Diese Arbeitsmatrix steuert, **wohin** ein neues Paket fachlich gehört, bevor d
 
 Sie verhindert, dass neue Chats blind irgendwo anfangen, spätere Schritte vorziehen oder unklare Mischpakete bauen.
 
+Die Arbeitsmatrix des Modularumbaus besteht verbindlich aus genau 6 Containern.
+
+Neue Chats und neue Codex-Laeufe duerfen keine zusaetzlichen Container einfuehren.
+
+Bestehende Container duerfen nicht ohne eigenes Doku-/Planpaket aufgespalten, umbenannt oder neu geordnet werden.
+
+Aenderungen an der Containerstruktur gehoeren ausschliesslich in ein eigenes Doku-/Planpaket in Container 1.
+
 ### Harte Regel zur Paket-Zuordnung
 
 Jedes neue Paket muss vor Beginn genau einem Container primär zugeordnet werden.
