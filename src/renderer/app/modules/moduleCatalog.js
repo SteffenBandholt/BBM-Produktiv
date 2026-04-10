@@ -179,21 +179,17 @@ function createProductiveModuleAccess(moduleAccess, getModuleIds) {
   });
 }
 
-const PRODUCTIVE_RELEASE_STATE_MODULE_ACCESS = createReleasedModuleAccess(() =>
-  CURRENT_RELEASE_STATE_ACCESS.getReleasedModuleIds()
-);
-
-const ACTIVE_MODULE_ENTRIES = PRODUCTIVE_RELEASE_STATE_MODULE_ACCESS.getCatalog();
-
-const ACTIVE_MODULE_IDS = deriveModuleIdsFromEntries(ACTIVE_MODULE_ENTRIES);
-
-const PRODUCTIVE_ACTIVE_MODULE_ACCESS = createProductiveModuleAccess(
-  PRODUCTIVE_RELEASE_STATE_MODULE_ACCESS,
-  () => ACTIVE_MODULE_IDS
-);
-
 const RELEASE_STATE_MODULE_ACCESS = createReleasedModuleAccess((releaseState) =>
   CURRENT_RELEASE_STATE_ACCESS.getReleasedModuleIds(releaseState)
+);
+
+const ACTIVE_MODULE_ENTRIES = RELEASE_STATE_MODULE_ACCESS.getCatalog();
+
+const ACTIVE_MODULE_IDS = RELEASE_STATE_MODULE_ACCESS.getModuleIds();
+
+const PRODUCTIVE_ACTIVE_MODULE_ACCESS = createProductiveModuleAccess(
+  RELEASE_STATE_MODULE_ACCESS,
+  () => ACTIVE_MODULE_IDS
 );
 
 // App-Kern: kleiner statischer Modulkatalog.
