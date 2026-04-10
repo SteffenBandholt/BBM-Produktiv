@@ -99,6 +99,7 @@ Erreicht:
 - Freigabezugriff im Katalog kleiner vereinheitlicht
 - produktiver Zugriff auf aktive Module zentraler geschnitten
 - produktive Katalogableitung kleiner entdoppelt
+- produktiver Modulzugriff kleiner gebuendelt
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -157,6 +158,7 @@ Noch offen:
 - der Freigabezugriff ist im Katalog jetzt kleiner vereinheitlicht
 - der produktive Zugriff auf aktive Module ist im Katalog jetzt zentraler geschnitten
 - die produktive Katalogableitung ist im Katalog jetzt kleiner entdoppelt
+- der produktive Modulzugriff ist im Katalog jetzt kleiner gebuendelt
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
@@ -346,6 +348,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Der Freigabezugriff im Katalog ist kleiner vereinheitlicht.
 - Der produktive Zugriff auf aktive Module ist im Katalog zentraler geschnitten.
 - Die produktive Katalogableitung ist im Katalog kleiner entdoppelt.
+- Der produktive Modulzugriff ist im Katalog kleiner gebuendelt.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden

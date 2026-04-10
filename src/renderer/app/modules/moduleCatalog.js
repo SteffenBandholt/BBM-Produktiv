@@ -113,6 +113,11 @@ const PRODUCTIVE_ACTIVE_MODULE_ACCESS = Object.freeze({
   getModuleIds() {
     return ACTIVE_MODULE_IDS;
   },
+  findModuleEntry(moduleId) {
+    const normalizedModuleId = String(moduleId || "").trim();
+    if (!normalizedModuleId) return null;
+    return this.getCatalog().find((entry) => entry?.moduleId === normalizedModuleId) || null;
+  },
 });
 
 // App-Kern: kleiner statischer Modulkatalog.
@@ -127,13 +132,7 @@ export function getActiveModuleIds() {
 }
 
 export function findActiveModuleEntry(moduleId) {
-  const normalizedModuleId = String(moduleId || "").trim();
-  if (!normalizedModuleId) return null;
-  return (
-    PRODUCTIVE_ACTIVE_MODULE_ACCESS.getCatalog().find(
-      (entry) => entry?.moduleId === normalizedModuleId
-    ) || null
-  );
+  return PRODUCTIVE_ACTIVE_MODULE_ACCESS.findModuleEntry(moduleId);
 }
 
 export function hasActiveModule(moduleId) {

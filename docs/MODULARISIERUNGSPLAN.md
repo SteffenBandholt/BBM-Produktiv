@@ -1904,6 +1904,48 @@ Paket 10 ist als kleiner interner Katalogschnitt abgeschlossen. Die produktive K
 
 ---
 
+## Schritt 12.11 – Kleinen produktiven Modulzugriff im Katalog weiter bündeln
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog den produktiven Zugriff auf Module weiter klein bündeln, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- den produktiven Modulzugriff im Katalog weiter klein bündeln
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.9 vorbereitet
+- Schritt 12.10 vorbereitet
+
+**Ergebnis**
+- produktiver Modulzugriff kleiner gebündelt
+
+**Stand / Notiz**
+Paket 11 hat im Modulkatalog den produktiven Modulzugriff weiter klein gebuendelt. Die produktive Standardlage mit `Protokoll` und `Restarbeiten` bleibt unveraendert; bestehende Aussenfunktionen und der vorbereitende Freigabeeingang wurden nicht verbreitert. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 11 – Kleinen produktiven Modulzugriff im Katalog weiter bündeln
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog den produktiven Modulzugriff weiter ueber die vorhandene kleine Zugriffsstelle buendeln, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Der produktive Modulzugriff ist im Katalog jetzt etwas kleiner gebuendelt.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 11 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive Modulzugriff ist im Modulrahmen jetzt etwas kompakter gebuendelt, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 
