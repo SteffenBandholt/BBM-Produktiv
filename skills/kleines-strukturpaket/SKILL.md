@@ -1,3 +1,8 @@
+---
+name: kleines-strukturpaket
+description: Verwende diesen Skill fuer kleine, klar begrenzte Strukturpakete, wenn nur wenige eng zusammenhaengende Dateien betroffen sind, keine neue Architektur eingefuehrt werden soll und kein grosser Umbau ausgeloest werden darf.
+---
+
 # Skill: kleines-strukturpaket
 
 ## Zweck

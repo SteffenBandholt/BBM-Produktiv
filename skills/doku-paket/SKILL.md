@@ -1,4 +1,9 @@
-﻿# Skill: doku-paket
+---
+name: doku-paket
+description: Verwende diesen Skill fuer kleine Doku-, Plan- und Regelpakete, wenn nur Doku-Dateien betroffen sind, keine Code-Aenderung noetig ist und nur minimale, gezielte Textaenderungen gemacht werden sollen.
+---
+
+# Skill: doku-paket
 
 ## Zweck
 
