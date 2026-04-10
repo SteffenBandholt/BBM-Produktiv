@@ -38,6 +38,15 @@ Dabei gilt verbindlich:
 - `ARCHITECTURE.md` = fuehrende Architekturgrundlage
 - `docs/MODULARISIERUNGSPLAN.md` = fuehrende operative Umbau- und Planungsgrundlage
 
+Neue Pakete duerfen verbindlich nur aus `ARCHITECTURE.md` und `docs/MODULARISIERUNGSPLAN.md` abgeleitet werden.
+
+Vor jeder Paketwahl ist deshalb zuerst zu benennen:
+1. welches relevante Endziel in `ARCHITECTURE.md` betroffen ist
+2. welcher dazu passende offene Schritt in `docs/MODULARISIERUNGSPLAN.md` gehoert
+3. warum dieses Paket jetzt vor anderen offenen Punkten dran ist
+
+Spontane Einzelideen, lokale Code-Schoenheitskorrekturen oder isolierte technische Kleinverbesserungen reichen als Paketbegruendung nicht aus.
+
 Wenn ein neuer Chat an irgendeiner späteren Stelle einsteigt, gilt trotzdem dieselbe Regel:
 Nicht von dort aus direkt weiterarbeiten, sondern zuerst diese Datei lesen und danach die Pflichtdateien in der festgelegten Reihenfolge nachziehen.
 

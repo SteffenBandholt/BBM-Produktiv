@@ -90,6 +90,12 @@ Wenn ein Paket zu gross oder unklar ist:
 * nicht blind anfangen
 * stattdessen das kleinste sinnvolle Teilpaket benennen
 
+Neue Pakete duerfen nur aus `ARCHITECTURE.md` und `docs/MODULARISIERUNGSPLAN.md` abgeleitet werden.
+
+Vor jeder Paketwahl ist zuerst das relevante Endziel in `ARCHITECTURE.md` und dann der dazu passende offene Planschritt in `docs/MODULARISIERUNGSPLAN.md` zu benennen.
+
+Spontane Einzelideen, lokale Code-Schoenheitskorrekturen oder isolierte technische Kleinverbesserungen reichen als Paketbegruendung nicht aus.
+
 ---
 
 ## Git-Regeln pro Paket

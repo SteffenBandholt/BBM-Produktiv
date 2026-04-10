@@ -127,9 +127,14 @@ Ein neuer Chat soll nicht sofort blind Änderungen vorschlagen oder Code umbauen
 Die Reihenfolge ist:
 
 1. Grunddateien lesen
-2. aktuelle Aufgabe gegen Architektur und Plan einordnen
-3. prüfen, welche Phase / welcher Schritt im `docs/MODULARISIERUNGSPLAN.md` betroffen ist
-4. erst dann Änderungsvorschlag, Prüfplan oder Umsetzungsauftrag formulieren
+2. zuerst das relevante Endziel in `ARCHITECTURE.md` benennen
+3. dann den dazu passenden offenen Schritt im `docs/MODULARISIERUNGSPLAN.md` benennen
+4. begruenden, warum dieses Paket jetzt vor anderen offenen Punkten dran ist
+5. aktuelle Aufgabe gegen Architektur und Plan einordnen
+6. prüfen, welche Phase / welcher Schritt im `docs/MODULARISIERUNGSPLAN.md` betroffen ist
+7. erst dann Änderungsvorschlag, Prüfplan oder Umsetzungsauftrag formulieren
+
+Neue Pakete duerfen nicht direkt aus spontanen Einzelideen, lokaler Code-Schoenheit oder isolierten technischen Kleinverbesserungen abgeleitet werden.
 
 Wenn eine Aufgabe nicht sauber zur Zielarchitektur passt, muss das klar benannt werden.
 
