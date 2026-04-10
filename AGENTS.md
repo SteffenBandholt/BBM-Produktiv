@@ -92,6 +92,56 @@ Wenn ein Paket zu gross oder unklar ist:
 
 ---
 
+## Git-Regeln pro Paket
+
+Jedes Paket soll auch git-seitig klar getrennt bearbeitet werden.
+
+Dabei gilt:
+
+1. Jedes neue Paket startet von `main`.
+2. Fuer jedes Paket wird ein eigener Branch angelegt.
+3. Ein Branch enthaelt genau ein Paket.
+4. Nacharbeit zum Paket bleibt im selben Branch.
+5. Vor Commit und Merge ist der aktuelle Stand zu pruefen.
+6. Merge nach `main` erst nach Pruefung und Freigabe.
+7. Das naechste Paket startet wieder von `main`.
+
+Vor der Abnahme eines Pakets mindestens pruefen:
+
+* `git status`
+* `git diff --stat`
+* `git diff`
+
+Nicht gewollt sind:
+
+* mehrere Pakete in einem Branch
+* neue Arbeit auf unsauberem Git-Stand
+* Commit oder Merge ohne vorherige Pruefung
+* Sammel-Branches fuer verschiedene Paketarten
+
+Nicht-Ziele:
+
+* keine neue Git-Datei anlegen
+* keine Aenderung anderer Dateien
+* keine Ausweitung zu einer grossen Git-Dokumentation
+* keine Aenderung des restlichen Arbeitsmodus
+
+Pruefkriterien:
+
+* `AGENTS.md` enthaelt einen kurzen, klaren Git-Block fuer den paketweisen Arbeitsmodus
+* der Git-Block ist logisch passend eingeordnet
+* keine anderen Teile von `AGENTS.md` wurden unnötig umgebaut
+* keine weiteren Dateien wurden geaendert
+
+Gewuenschte Ausgabe:
+
+* Liste der geaenderten Dateien
+* kurzer Hinweis, wo der Git-Block in `AGENTS.md` eingefuegt wurde
+* Hinweis, ob beim Einbau eine logisch bessere Position als erwartet gewaehlt wurde
+* `git diff -- AGENTS.md`
+
+---
+
 ## Doku- und Planpflicht
 
 Wenn ein Paket den dokumentierten Stand real veraendert, ist zu pruefen, ob auch Doku oder Plan angepasst werden muessen.
