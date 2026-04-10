@@ -1606,7 +1606,8 @@ Den erreichten Architektur- und Migrationsstand ehrlich und belastbar dokumentie
   - eine kleine Modul-/Screen-Aufloesung ist vorhanden
   - der gemeinsame Bearbeitungskern bleibt ausserhalb der Fachmodule
 - Gleichzeitig ist ausdruecklich festgehalten, was noch Uebergang bleibt:
-  - `TopsScreen` liegt weiter unter `src/renderer/views/`
+  - `src/renderer/modules/protokoll/screens/TopsScreen.js` ist jetzt die technische Heimat von `TopsScreen`
+  - `src/renderer/views/TopsScreen.js` bleibt nur noch als Uebergangs- und Kompatibilitaetsschicht bestehen
   - grosser Protokoll-Unterbau liegt weiter unter `src/renderer/tops/`
   - produktive modulbezogene Navigation ist nur klein und bisher im Wesentlichen fuer `Protokoll` vorhanden
   - `Restarbeiten` ist noch nicht produktiv ueber Router und Navigation verdrahtet

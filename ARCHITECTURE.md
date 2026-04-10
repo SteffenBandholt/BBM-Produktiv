@@ -300,7 +300,8 @@ Produktiv nutzbar vorbereitet ist insbesondere:
 
 Bewusst noch Uebergang bleiben derzeit:
 
-- `TopsScreen` selbst liegt weiter unter `src/renderer/views/` und wird fuer das Modul `Protokoll` ueber einen Screen-Anker angebunden
+- `src/renderer/modules/protokoll/screens/TopsScreen.js` ist jetzt die technische Heimat des Arbeitsscreens im Modul `Protokoll`
+- `src/renderer/views/TopsScreen.js` bleibt als Uebergangs- und Kompatibilitaetsschicht fuer Altimporte bestehen
 - ein erheblicher Teil des Protokoll-Unterbaus liegt weiter unter `src/renderer/tops/`
 - die produktive modulbezogene Navigation ist bisher nur klein und im Wesentlichen fuer `Protokoll` angeschlossen
 - `Restarbeiten` ist noch nicht produktiv ueber Router und Navigation verdrahtet

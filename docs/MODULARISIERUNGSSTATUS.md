@@ -70,7 +70,8 @@ Erreicht:
 - Moduleinstieg definiert
 
 Noch bewusst Übergang:
-- `TopsScreen` liegt weiter unter `src/renderer/views/`
+- `src/renderer/modules/protokoll/screens/TopsScreen.js` ist die technische Heimat von `TopsScreen`
+- `src/renderer/views/TopsScreen.js` bleibt als Uebergangs- und Kompatibilitaetsschicht bestehen
 - ein erheblicher Teil des Protokoll-Unterbaus liegt weiter unter `src/renderer/tops/`
 
 ### `Restarbeiten`
@@ -241,7 +242,7 @@ Noch offen:
 - Fachschnitt klarer
 
 **Noch offen**
-- `TopsScreen` liegt weiter unter `views/`
+- `src/renderer/views/TopsScreen.js` bleibt als Uebergangs- und Kompatibilitaetsschicht bestehen
 - großer Unterbau liegt weiter unter `tops/`
 - Mischzustände sind noch nicht klein genug, um `Protokoll` als vollständig entmischt zu bezeichnen
 
@@ -363,7 +364,7 @@ Diese Liste ist bewusst keine vollständige Git-Historie, sondern eine Einordnun
 
 Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt werden:
 
-- `TopsScreen` liegt weiter unter `src/renderer/views/`
+- `src/renderer/views/TopsScreen.js` bleibt als Uebergangs- und Kompatibilitaetsschicht bestehen
 - großer Protokoll-Unterbau liegt weiter unter `src/renderer/tops/`
 - modulbezogene Navigation ist noch klein und im Wesentlichen für `Protokoll`
 - `Restarbeiten` ist noch nicht breit produktiv über Router und Navigation verdrahtet

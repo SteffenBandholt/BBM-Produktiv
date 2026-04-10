@@ -233,7 +233,8 @@ Dieser Container bündelt die echte Fachlogik des Moduls `Protokoll` und den kon
 `Protokoll` ist fachlich sichtbar vorbereitet und teilweise umgezogen.
 
 #### Offene Übergänge
-- `TopsScreen` liegt bewusst noch unter `src/renderer/views/`
+- `src/renderer/modules/protokoll/screens/TopsScreen.js` ist jetzt die technische Heimat von `TopsScreen`
+- `src/renderer/views/TopsScreen.js` bleibt bewusst als Uebergangs- und Kompatibilitaetsschicht bestehen
 - ein großer Teil des Protokoll-Unterbaus liegt weiter unter `src/renderer/tops/`
 - Mischzonen sind noch vorhanden und nicht künstlich wegzudokumentieren
 
@@ -537,7 +538,8 @@ Erreicht:
 - Moduleinstieg definiert
 
 Noch bewusst Übergang:
-- `TopsScreen` liegt weiterhin unter `src/renderer/views/`
+- `src/renderer/modules/protokoll/screens/TopsScreen.js` ist die technische Heimat von `TopsScreen`
+- `src/renderer/views/TopsScreen.js` bleibt als Uebergangs- und Kompatibilitaetsschicht bestehen
 - ein erheblicher Teil des Protokoll-Unterbaus liegt weiter unter `src/renderer/tops/`
 
 ### 7.2 `Restarbeiten`
@@ -594,7 +596,7 @@ Bereits gemacht:
 
 Diese Punkte sind nicht „vergessen“, sondern bewusst noch offen:
 
-- `TopsScreen` liegt weiter unter `src/renderer/views/`
+- `src/renderer/views/TopsScreen.js` bleibt als Uebergangs- und Kompatibilitaetsschicht bestehen
 - großer Protokoll-Unterbau liegt weiter unter `src/renderer/tops/`
 - modulbezogene Navigation ist noch klein und im Wesentlichen für `Protokoll`
 - `Restarbeiten` ist noch nicht breit produktiv über Router und Navigation verdrahtet
