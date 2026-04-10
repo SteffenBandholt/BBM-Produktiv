@@ -35,6 +35,17 @@ async function runModuleCoexistenceIntegrationTests(run) {
     assert.equal(activeIds.length >= 2, true);
   });
 
+  await run("Module Koexistenz: aktiver Katalog bleibt ein eigener Ausschnitt des statischen Katalogs", async () => {
+    const moduleCatalogSource = await require("node:fs/promises").readFile(
+      path.join(__dirname, "../../src/renderer/app/modules/moduleCatalog.js"),
+      "utf8"
+    );
+
+    assert.match(moduleCatalogSource, /AVAILABLE_MODULE_ENTRIES/);
+    assert.match(moduleCatalogSource, /isActive:\s*true/);
+    assert.match(moduleCatalogSource, /AVAILABLE_MODULE_ENTRIES\.filter/);
+  });
+
   await run("Module Koexistenz: beide Work-Screens sind separat aufloesbar", () => {
     const protokollScreen = resolveActiveModuleWorkScreen(PROTOKOLL_MODULE_ID);
     const restarbeitenScreen = resolveActiveModuleWorkScreen(RESTARBEITEN_MODULE_ID);

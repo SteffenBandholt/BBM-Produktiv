@@ -54,6 +54,7 @@ Dabei gilt:
 | 9 | Modul `Restarbeiten` aufbauen | OFFEN |
 | 10 | Modulfähigkeit praktisch beweisen | OFFEN |
 | 11 | Altbestand zurückbauen | OFFEN |
+| 12 | Aktiven Modulumfang im Kern expliziter machen | IN ARBEIT |
 
 
 ## Arbeitsform für die Umsetzung
@@ -1057,6 +1058,8 @@ Aktive Module definierbar machen.
 **Stand / Notiz**
 Paket 1 hat den ersten kleinen Modulkatalog im App-Kern konservativ angelegt. Unter `src/renderer/app/modules/` gibt es jetzt eine statische Katalogschicht, die `Protokoll` als aktives Modul fuehrt; dynamische Aufloesung, modulbasierte Navigation und Plattformmechanik wurden dabei bewusst noch nicht eingefuehrt.
 
+Der aktuelle Stand unterscheidet im Katalog jetzt zudem expliziter zwischen bekannten/verfuegbaren Moduleintraegen und dem aktuell aktiven Ausschnitt. Diese Trennung bleibt weiterhin klein, statisch und rein im Katalog verankert; Lizenzlogik, Discovery und freigabebasierter Produktivbetrieb wurden dabei bewusst noch nicht eingefuehrt.
+
 ---
 
 ## Paket 1 – Modulkatalog einführen
@@ -1612,6 +1615,54 @@ Den erreichten Architektur- und Migrationsstand ehrlich und belastbar dokumentie
 
 **Stand / Notiz**
 Paket 3 ist als Abschlussdokumentation abgeschlossen. Der dokumentierte Stand unterscheidet jetzt klarer zwischen bereits modularisiertem Kernrahmen, produktiv genutzter Vorbereitung und bewusst weiter bestehendem Uebergang. Es wurde kein neuer technischer Umbau vorgenommen; dokumentiert wurde nur der tatsaechlich erreichte Stand.
+
+---
+
+# Phase 12 – Aktiven Modulumfang im Kern expliziter machen
+**Status:** IN ARBEIT
+
+## Schritt 12.2 – Aktive Modulauswahl vom Katalog klein trennen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im App-Kern den kleinen statischen Modulkatalog so schaerfen, dass bekannter/verfuegbarer Modulbestand und aktuell aktiver Modulumfang sauber unterschieden werden, ohne Lizenzlogik, Discovery oder Plattformmechanik vorzuziehen.
+
+**Aufgaben**
+- kleinen internen Schnitt im Modulkatalog einziehen
+- bestehende Aussenfunktionen fuer aktive Module stabil halten
+- den Schnitt mit vorhandenen Integrationsnachweisen absichern
+
+**Abhängigkeiten**
+- Phase 8 sinnvoll vorbereitet
+- Phase 10 Paket 1 und Paket 2 vorhanden
+
+**Ergebnis**
+- aktiver Modulumfang ist im Katalog expliziter gefuehrt
+
+**Stand / Notiz**
+Paket 2 hat den kleinen Kernschnitt im Modulkatalog konservativ umgesetzt. Bekannter/verfuegbarer Modulbestand und aktiver Ausschnitt sind dort jetzt expliziter getrennt; die bestehenden Aussenfunktionen fuer aktive Module bleiben stabil. Lizenzlogik, Discovery, Registry und freigabebasierter Produktivbetrieb wurden dabei bewusst noch nicht eingefuehrt.
+
+---
+
+## Paket 2 – Aktive Modulauswahl vom Katalog klein trennen
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog des App-Kerns expliziter zwischen bekannten/verfuegbaren Moduleintraegen und dem aktuell aktiven Modulumfang unterscheiden, ohne Lizenzlogik, Discovery, Registry-Mechanik oder weitere Kernbereiche vorzuziehen.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die bestehenden Integrationsnachweise unter `scripts/tests/` fokussiert.
+- `moduleCatalog.js` fuehrt bekannte/verfuegbare Module jetzt intern getrennt vom aktiven Ausschnitt.
+- Die bestehenden Aussenfunktionen `getActiveModuleCatalog`, `getActiveModuleIds`, `findActiveModuleEntry` und `hasActiveModule` bleiben stabil und arbeiten weiter gegen den aktiven Ausschnitt.
+- Die Trennung bleibt bewusst statisch und klein:
+  - keine Lizenzlogik
+  - keine Discovery
+  - keine Registry
+  - kein freigabebasierter Produktivbetrieb
+- Die bestehenden Integrationsnachweise pruefen jetzt zusaetzlich, dass dieser kleine Schnitt im Katalog sichtbar vorhanden ist.
+
+**Stand / Notiz**
+Paket 2 ist als kleiner Kernschnitt abgeschlossen. Der App-Kern kann jetzt im Modulkatalog klarer zwischen bekanntem Modulbestand und aktivem Modulumfang unterscheiden, ohne dass Resolver, Navigation oder Fachmodule dafuer umgebaut werden mussten. Die spaetere Freigabelogik bleibt weiterhin ein eigenes Folgethema und wurde hier bewusst nicht vorweggenommen.
 
 ---
 

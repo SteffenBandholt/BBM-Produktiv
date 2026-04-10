@@ -90,6 +90,7 @@ Noch bewusst klein:
 ### App-Kern / Modulrahmen
 Erreicht:
 - kleiner statischer Modulkatalog
+- bekannter Modulbestand und aktiver Modulumfang im Katalog expliziter getrennt
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -97,6 +98,7 @@ Erreicht:
 Wichtig:
 - der Kern ist noch bewusst klein
 - keine Plattformmechanik im großen Stil
+- keine Lizenzlogik im Modulkatalog
 - kontrollierter freigabefähiger Modulbetrieb ist Zielbild, aber noch nicht produktiv vollständig umgesetzt
 
 ### Nachweise / Bereinigung
@@ -137,12 +139,13 @@ Noch offen:
 
 **Bereits erreicht**
 - kleiner statischer Modulkatalog
+- bekannter Modulbestand und aktiver Modulumfang im Katalog sind klein getrennt
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
 
 **Noch offen**
-- aktiver Modulumfang ist als eigener Kernbegriff noch nicht vollständig ausgebaut
+- aktiver Modulumfang ist im Katalog expliziter, aber noch nicht über Freigabelogik gesteuert
 - freigabefähiger Modulbetrieb ist Zielbild, aber noch nicht fertig eingeführt
 - produktive Aktivierung / Nicht-Aktivierung freigegebener bzw. nicht freigegebener Module ist noch nicht vollständig durchgezogen
 
@@ -301,7 +304,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - modulbezogene Navigation ist noch klein und im Wesentlichen für `Protokoll`
 - `Restarbeiten` ist noch nicht breit produktiv über Router und Navigation verdrahtet
 - weitere Restmischzonen und Altpfade sind noch vorhanden
-- aktiver Modulumfang ist noch nicht vollständig als eigener kleiner Kernbegriff etabliert
+- aktiver Modulumfang ist im Katalog expliziter gemacht, aber noch nicht vollstaendig als freigabegesteuerter Kernbegriff etabliert
 - lizenzbasierte Aktivierung und Deaktivierung von Modulen ist Zielbild, aber noch nicht vollständig produktiv umgesetzt
 - kein Vollabschluss der Zielarchitektur
 - keine breite Plattform- oder Shell-Integration
@@ -332,6 +335,8 @@ Die nächste sinnvolle Hauptbewegung liegt auf **Achse A**.
 
 ### Fachlich sinnvoller nächster Schwerpunkt
 Den **aktiven Modulumfang im Kern expliziter machen**, ohne schon Lizenzlogik im großen Stil einzuführen.
+
+Ein erster kleiner Kernschnitt dafuer ist jetzt im Modulkatalog vorhanden: bekannter Modulbestand und aktiver Ausschnitt sind dort getrennt. Der naechste sinnvolle Schritt waere weiterhin erst danach eine kleine, kontrollierte Vorbereitung echter Freigabelogik statt vorschneller Produktivmechanik.
 
 Das wäre ein sinnvoller Zwischenschritt zwischen:
 - heutigem statischen Modulrahmen

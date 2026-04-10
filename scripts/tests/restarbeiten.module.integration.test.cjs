@@ -40,13 +40,16 @@ async function runRestarbeitenModuleIntegrationTests(run) {
     assert.equal(screenEntry?.screenComponent, RestarbeitenScreen);
   });
 
-  await run("Restarbeiten Modul-Integration: Modulkatalog fuehrt das Modul als aktiv", async () => {
+  await run("Restarbeiten Modul-Integration: Modulkatalog fuehrt bekannte und aktive Module getrennt", async () => {
     const moduleCatalogSource = await require("node:fs/promises").readFile(
       path.join(__dirname, "../../src/renderer/app/modules/moduleCatalog.js"),
       "utf8"
     );
+    assert.match(moduleCatalogSource, /AVAILABLE_MODULE_ENTRIES/);
+    assert.match(moduleCatalogSource, /ACTIVE_MODULE_ENTRIES/);
     assert.match(moduleCatalogSource, /getRestarbeitenModuleEntry\(\)/);
     assert.match(moduleCatalogSource, /RESTARBEITEN_MODULE_ID/);
+    assert.match(moduleCatalogSource, /isActive:\s*true/);
   });
 }
 
