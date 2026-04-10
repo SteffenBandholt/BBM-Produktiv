@@ -1644,6 +1644,50 @@ Paket 2 hat den kleinen Kernschnitt im Modulkatalog konservativ umgesetzt. Bekan
 
 ---
 
+## Schritt 12.3 – Kleine Betriebsmodi nachweisbar machen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Die im statischen Modulkatalog getrennte aktive Modulauswahl so klein absichern, dass unterschiedliche kleine Betriebsmodi belastbar nachweisbar sind, ohne Lizenzlogik, Discovery oder breitere Produktivmechanik einzufuehren.
+
+**Aufgaben**
+- kleine statische Ableitung fuer unterschiedliche aktive Modulkonstellationen ermoeglichen
+- produktive Aussenfunktionen fuer den aktiven Katalog stabil halten
+- die drei kleinen Betriebsmodi mit Integrationsnachweisen absichern
+
+**Abhängigkeiten**
+- Schritt 12.2 vorbereitet
+- Phase 10 Paket 1 und Paket 2 vorhanden
+
+**Ergebnis**
+- kleine Betriebsmodi sind aus dem statischen Katalog nachweisbar ableitbar
+
+**Stand / Notiz**
+Paket 3 hat den bestehenden Katalogschnitt konservativ weiter abgesichert. Unterschiedliche kleine aktive Modulkonstellationen lassen sich jetzt kontrolliert aus dem statischen Katalog ableiten und in Tests pruefen; die produktive Standardlage bleibt dabei unveraendert. Lizenzlogik, freigabebasierter Produktivbetrieb und weitere Kernmechanik wurden bewusst noch nicht eingefuehrt.
+
+---
+
+## Paket 3 – Kleine Betriebsmodi nachweisbar machen
+**Status:** ERLEDIGT
+
+**Ziel**
+Den bereits getrennten aktiven Modulumfang im Katalog so klein absichern, dass die Betriebsmodi nur `Protokoll`, nur `Restarbeiten` sowie `Protokoll` + `Restarbeiten` belastbar nachweisbar sind, ohne Resolver, Navigation oder Plattformmechanik breiter umzubauen.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die bestehenden Integrationsnachweise unter `scripts/tests/` fokussiert.
+- `moduleCatalog.js` besitzt jetzt eine kleine statische Ableitung fuer unterschiedliche aktive Modulkonstellationen.
+- Die bestehenden produktiven Aussenfunktionen `getActiveModuleCatalog`, `getActiveModuleIds`, `findActiveModuleEntry` und `hasActiveModule` bleiben stabil und arbeiten weiter gegen den produktiven aktiven Standardkatalog.
+- Fuer Tests gibt es eine kleine kontrollierte Ableitung, ueber die diese drei Betriebsmodi nachweisbar sind:
+  - nur `Protokoll`
+  - nur `Restarbeiten`
+  - `Protokoll` + `Restarbeiten`
+- Es wurde keine Lizenzlogik, keine Discovery, keine Registry, keine neue Plattformmechanik und kein freigabebasierter Produktivbetrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 3 ist als kleiner Nachweisschritt abgeschlossen. Der App-Kern kann unterschiedliche kleine Betriebsmodi jetzt aus seinem statischen Modulbestand kontrolliert ableiten und in Integrationsnachweisen belegen, ohne dass produktive Resolver-, Navigations- oder Fachlogik dafuer verbreitert werden musste.
+
+---
+
 ## Paket 2 – Aktive Modulauswahl vom Katalog klein trennen
 **Status:** ERLEDIGT
 

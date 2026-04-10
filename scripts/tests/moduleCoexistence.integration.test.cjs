@@ -15,7 +15,12 @@ async function runModuleCoexistenceIntegrationTests(run) {
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/index.js")),
   ]);
 
-  const { getActiveModuleIds, findActiveModuleEntry } = moduleCatalog;
+  const {
+    getActiveModuleIds,
+    findActiveModuleEntry,
+    getDerivedActiveModuleCatalog,
+    getDerivedActiveModuleIds,
+  } = moduleCatalog;
   const { resolveActiveModuleWorkScreen } = moduleScreenResolver;
   const {
     PROTOKOLL_MODULE_ID,
@@ -35,15 +40,18 @@ async function runModuleCoexistenceIntegrationTests(run) {
     assert.equal(activeIds.length >= 2, true);
   });
 
-  await run("Module Koexistenz: aktiver Katalog bleibt ein eigener Ausschnitt des statischen Katalogs", async () => {
-    const moduleCatalogSource = await require("node:fs/promises").readFile(
-      path.join(__dirname, "../../src/renderer/app/modules/moduleCatalog.js"),
-      "utf8"
-    );
+  await run("Module Koexistenz: kleine Betriebsmodi sind aus dem statischen Katalog ableitbar", () => {
+    const protokollOnlyIds = getDerivedActiveModuleIds([PROTOKOLL_MODULE_ID]);
+    const protokollOnlyCatalog = getDerivedActiveModuleCatalog([PROTOKOLL_MODULE_ID]);
+    const bothIds = getDerivedActiveModuleIds([
+      PROTOKOLL_MODULE_ID,
+      RESTARBEITEN_MODULE_ID,
+    ]);
 
-    assert.match(moduleCatalogSource, /AVAILABLE_MODULE_ENTRIES/);
-    assert.match(moduleCatalogSource, /isActive:\s*true/);
-    assert.match(moduleCatalogSource, /AVAILABLE_MODULE_ENTRIES\.filter/);
+    assert.deepEqual(protokollOnlyIds, [PROTOKOLL_MODULE_ID]);
+    assert.equal(protokollOnlyCatalog.length, 1);
+    assert.equal(protokollOnlyCatalog[0]?.moduleId, PROTOKOLL_MODULE_ID);
+    assert.deepEqual(bothIds, [PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID]);
   });
 
   await run("Module Koexistenz: beide Work-Screens sind separat aufloesbar", () => {

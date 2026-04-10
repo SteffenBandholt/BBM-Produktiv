@@ -4,13 +4,16 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runRestarbeitenModuleIntegrationTests(run) {
   const [
+    moduleCatalog,
     moduleEntryResolver,
     restarbeitenModule,
   ] = await Promise.all([
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/app/modules/moduleCatalog.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/app/modules/moduleEntryScreenResolver.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/index.js")),
   ]);
 
+  const { getDerivedActiveModuleCatalog, getDerivedActiveModuleIds } = moduleCatalog;
   const { resolveModuleWorkScreenFromEntry } = moduleEntryResolver;
   const {
     getRestarbeitenModuleEntry,
@@ -40,16 +43,14 @@ async function runRestarbeitenModuleIntegrationTests(run) {
     assert.equal(screenEntry?.screenComponent, RestarbeitenScreen);
   });
 
-  await run("Restarbeiten Modul-Integration: Modulkatalog fuehrt bekannte und aktive Module getrennt", async () => {
-    const moduleCatalogSource = await require("node:fs/promises").readFile(
-      path.join(__dirname, "../../src/renderer/app/modules/moduleCatalog.js"),
-      "utf8"
-    );
-    assert.match(moduleCatalogSource, /AVAILABLE_MODULE_ENTRIES/);
-    assert.match(moduleCatalogSource, /ACTIVE_MODULE_ENTRIES/);
-    assert.match(moduleCatalogSource, /getRestarbeitenModuleEntry\(\)/);
-    assert.match(moduleCatalogSource, /RESTARBEITEN_MODULE_ID/);
-    assert.match(moduleCatalogSource, /isActive:\s*true/);
+  await run("Restarbeiten Modul-Integration: Restarbeiten-Only ist als kleiner Betriebsmodus ableitbar", () => {
+    const activeIds = getDerivedActiveModuleIds([RESTARBEITEN_MODULE_ID]);
+    const activeCatalog = getDerivedActiveModuleCatalog([RESTARBEITEN_MODULE_ID]);
+
+    assert.deepEqual(activeIds, [RESTARBEITEN_MODULE_ID]);
+    assert.equal(activeCatalog.length, 1);
+    assert.equal(activeCatalog[0]?.moduleId, RESTARBEITEN_MODULE_ID);
+    assert.equal(activeCatalog[0]?.workScreenId, RESTARBEITEN_WORK_SCREEN_ID);
   });
 }
 

@@ -10,24 +10,57 @@ import {
 const AVAILABLE_MODULE_ENTRIES = Object.freeze([
   Object.freeze({
     moduleId: PROTOKOLL_MODULE_ID,
-    isActive: true,
     entry: getProtokollModuleEntry(),
   }),
   Object.freeze({
     moduleId: RESTARBEITEN_MODULE_ID,
-    isActive: true,
     entry: getRestarbeitenModuleEntry(),
   }),
 ]);
 
-const ACTIVE_MODULE_ENTRIES = Object.freeze(
-  AVAILABLE_MODULE_ENTRIES.filter((definition) => definition?.isActive)
-    .map((definition) => definition?.entry)
-    .filter(Boolean)
-);
+const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze([
+  PROTOKOLL_MODULE_ID,
+  RESTARBEITEN_MODULE_ID,
+]);
+
+function normalizeModuleIds(moduleIds) {
+  if (!Array.isArray(moduleIds)) return [];
+
+  const uniqueModuleIds = [];
+  for (const moduleId of moduleIds) {
+    const normalizedModuleId = String(moduleId || "").trim();
+    if (!normalizedModuleId || uniqueModuleIds.includes(normalizedModuleId)) {
+      continue;
+    }
+    uniqueModuleIds.push(normalizedModuleId);
+  }
+
+  return uniqueModuleIds;
+}
+
+function deriveActiveModuleEntries(moduleIds) {
+  const normalizedModuleIds = normalizeModuleIds(moduleIds);
+  return Object.freeze(
+    AVAILABLE_MODULE_ENTRIES.filter((definition) =>
+      normalizedModuleIds.includes(String(definition?.moduleId || "").trim())
+    )
+      .map((definition) => definition?.entry)
+      .filter(Boolean)
+  );
+}
+
+function deriveActiveModuleIds(moduleIds) {
+  return Object.freeze(
+    deriveActiveModuleEntries(moduleIds)
+      .map((entry) => String(entry?.moduleId || "").trim())
+      .filter(Boolean)
+  );
+}
+
+const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(DEFAULT_ACTIVE_MODULE_IDS);
 
 const ACTIVE_MODULE_IDS = Object.freeze(
-  ACTIVE_MODULE_ENTRIES.map((entry) => String(entry?.moduleId || "").trim()).filter(Boolean)
+  deriveActiveModuleIds(DEFAULT_ACTIVE_MODULE_IDS)
 );
 
 // App-Kern: kleiner statischer Modulkatalog.
@@ -49,6 +82,14 @@ export function findActiveModuleEntry(moduleId) {
 
 export function hasActiveModule(moduleId) {
   return !!findActiveModuleEntry(moduleId);
+}
+
+export function getDerivedActiveModuleCatalog(moduleIds) {
+  return deriveActiveModuleEntries(moduleIds);
+}
+
+export function getDerivedActiveModuleIds(moduleIds) {
+  return deriveActiveModuleIds(moduleIds);
 }
 
 export { PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID };

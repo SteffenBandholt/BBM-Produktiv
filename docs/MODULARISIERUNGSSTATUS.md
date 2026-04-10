@@ -91,6 +91,7 @@ Noch bewusst klein:
 Erreicht:
 - kleiner statischer Modulkatalog
 - bekannter Modulbestand und aktiver Modulumfang im Katalog expliziter getrennt
+- kleine Betriebsmodi sind aus dem statischen Katalog kontrolliert ableitbar
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -140,6 +141,7 @@ Noch offen:
 **Bereits erreicht**
 - kleiner statischer Modulkatalog
 - bekannter Modulbestand und aktiver Modulumfang im Katalog sind klein getrennt
+- kleine Betriebsmodi fuer `Protokoll`, `Restarbeiten` und beide zusammen sind nachweisbar ableitbar
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
@@ -289,6 +291,7 @@ Diese Liste ist bewusst keine vollständige Git-Historie, sondern eine Einordnun
 
 ### Zusammenspiel / Konsolidierung
 - Koexistenz `Protokoll` + `Restarbeiten` nachgewiesen
+- kleine Betriebsmodi `nur Protokoll`, `nur Restarbeiten` und `beide zusammen` nachweisbar gemacht
 - erste Altpfade und Übergangs-Re-Exports abgebaut
 - Mischzustand weiter reduziert
 - Abschlussstand eines erreichten Abschnitts dokumentiert
@@ -318,6 +321,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - `Protokoll` und `Restarbeiten` existieren als getrennte Fachmodule im Umbaupfad.
 - Einzelbetrieb `Restarbeiten` ist nachgewiesen.
 - Koexistenz `Protokoll` + `Restarbeiten` ist nachgewiesen.
+- Kleine Betriebsmodi sind aus dem statischen Katalog nachweisbar ableitbar.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden
@@ -344,10 +348,8 @@ und
 - späterem kontrolliert freigabefähigen Modulbetrieb
 
 ### Mögliche nächste kleine Pakete
-1. aktiven Modulumfang im Kern explizit machen
-2. kleinen Nachweis für unterschiedliche aktive Modulkonstellationen ergänzen
-3. danach erst kleine vorbereitende Schritte Richtung freigabefähiger Modulaktivierung prüfen
-4. anschließend wieder gezielt `Protokoll` weiter entmischen oder `Restarbeiten` dosiert sichtbarer machen
+1. kleine vorbereitende Schritte Richtung freigabefähiger Modulaktivierung prüfen
+2. anschließend wieder gezielt `Protokoll` weiter entmischen oder `Restarbeiten` dosiert sichtbarer machen
 
 Diese Reihenfolge darf angepasst werden, wenn der echte Diff oder der tatsächliche Repo-Stand einen kleineren und ehrlicheren Schritt zeigt.
 
