@@ -96,6 +96,17 @@ Vor jeder Paketwahl ist zuerst das relevante Endziel in `ARCHITECTURE.md` und da
 
 Spontane Einzelideen, lokale Code-Schoenheitskorrekturen oder isolierte technische Kleinverbesserungen reichen als Paketbegruendung nicht aus.
 
+Vor jeder neuen Paketwahl ist zusaetzlich zuerst ein 3-Schritte-Kurzfahrplan aus `ARCHITECTURE.md` und `docs/MODULARISIERUNGSPLAN.md` abzuleiten:
+1. naechster echter Schritt
+2. sinnvoller Folgeschritt
+3. naechster Entblocker danach
+
+Nur Schritt 1 darf aktiv in ein Paket und einen Prompt uebersetzt werden.
+
+Schritt 2 und 3 sind nur Orientierung und muessen nach Abschluss von Schritt 1 neu geprueft werden.
+
+Codex darf keine Prompt-Stapel fuer alle 3 Schritte als feste Abarbeitung behandeln.
+
 Die Arbeitsmatrix des Modularumbaus besteht fuer Codex verbindlich aus genau 6 Containern.
 
 Codex darf keine zusaetzlichen Container einfuehren.

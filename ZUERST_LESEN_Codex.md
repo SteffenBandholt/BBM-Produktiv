@@ -45,6 +45,17 @@ Vor jeder Paketwahl ist deshalb zuerst zu benennen:
 2. welcher dazu passende offene Schritt in `docs/MODULARISIERUNGSPLAN.md` gehoert
 3. warum dieses Paket jetzt vor anderen offenen Punkten dran ist
 
+Vor jeder neuen Paketwahl ist zusaetzlich zuerst ein 3-Schritte-Kurzfahrplan aus `ARCHITECTURE.md` und `docs/MODULARISIERUNGSPLAN.md` abzuleiten:
+1. naechster echter Schritt
+2. sinnvoller Folgeschritt
+3. naechster Entblocker danach
+
+Nur Schritt 1 darf aktiv in ein Paket und einen Prompt uebersetzt werden.
+
+Schritt 2 und 3 sind nur Orientierung und muessen nach Abschluss von Schritt 1 neu geprueft werden.
+
+Neue Chats und neue Codex-Laeufe duerfen keine Prompt-Stapel fuer alle 3 Schritte als feste Abarbeitung behandeln.
+
 Spontane Einzelideen, lokale Code-Schoenheitskorrekturen oder isolierte technische Kleinverbesserungen reichen als Paketbegruendung nicht aus.
 
 Wenn ein neuer Chat an irgendeiner späteren Stelle einsteigt, gilt trotzdem dieselbe Regel:

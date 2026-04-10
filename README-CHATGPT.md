@@ -136,6 +136,17 @@ Die Reihenfolge ist:
 
 Neue Pakete duerfen nicht direkt aus spontanen Einzelideen, lokaler Code-Schoenheit oder isolierten technischen Kleinverbesserungen abgeleitet werden.
 
+Vor jeder neuen Paketwahl ist zusaetzlich zuerst ein 3-Schritte-Kurzfahrplan aus `ARCHITECTURE.md` und `docs/MODULARISIERUNGSPLAN.md` abzuleiten:
+1. naechster echter Schritt
+2. sinnvoller Folgeschritt
+3. naechster Entblocker danach
+
+Nur Schritt 1 darf aktiv in ein Paket und einen Prompt uebersetzt werden.
+
+Schritt 2 und 3 sind nur Orientierung und muessen nach Abschluss von Schritt 1 neu geprueft werden.
+
+Neue Chats duerfen keine Prompt-Stapel fuer alle 3 Schritte als feste Abarbeitung behandeln.
+
 Die Arbeitsmatrix des Modularumbaus besteht fuer neue Chats verbindlich aus genau 6 Containern.
 
 Neue Chats duerfen keine zusaetzlichen Container einfuehren.
