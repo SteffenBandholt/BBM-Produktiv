@@ -130,6 +130,14 @@ const RELEASE_STATE_MODULE_ACCESS = Object.freeze({
   getModuleIds(releaseState) {
     return deriveModuleIdsFromEntries(this.getCatalog(releaseState));
   },
+  findModuleEntry(releaseState, moduleId) {
+    const normalizedModuleId = String(moduleId || "").trim();
+    if (!normalizedModuleId) return null;
+    return this.getCatalog(releaseState).find((entry) => entry?.moduleId === normalizedModuleId) || null;
+  },
+  hasModule(releaseState, moduleId) {
+    return !!this.findModuleEntry(releaseState, moduleId);
+  },
 });
 
 // App-Kern: kleiner statischer Modulkatalog.
