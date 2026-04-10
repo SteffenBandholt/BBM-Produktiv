@@ -2450,6 +2450,49 @@ Paket 23 ist als kleiner interner Katalogschnitt abgeschlossen. Produktiver und 
 
 ---
 
+## Schritt 12.24 – Gemeinsame interne Lookup-Stelle im Katalog weiter verdichten
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog die gemeinsame interne Lookup-Stelle weiter verdichten und den produktiven sowie den vorbereitenden Zugriff intern weiter angleichen, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- die gemeinsame interne Lookup-Stelle im Katalog weiter verdichten
+- den produktiven und den vorbereitenden Zugriff intern weiter angleichen
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.23 vorbereitet
+
+**Ergebnis**
+- gemeinsame interne Lookup-Stelle kleiner verdichtet
+
+**Stand / Notiz**
+Paket 24 hat im Modulkatalog die gemeinsame interne Lookup-Stelle weiter verdichtet. Produktiver und vorbereitender Zugriff wurden intern weiter angeglichen; die produktive Standardlage mit `Protokoll` und `Restarbeiten` bleibt unveraendert. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 24 – Gemeinsame interne Lookup-Stelle im Katalog weiter verdichten
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog die gemeinsame interne Lookup-Stelle weiter verdichten und den produktiven sowie den vorbereitenden Zugriff intern weiter angleichen, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Die gemeinsame interne Lookup-Stelle ist im Katalog jetzt etwas dichter gebuendelt.
+- Der produktive und der vorbereitende Zugriff sind intern weiter angeglichen.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 24 ist als kleiner interner Katalogschnitt abgeschlossen. Produktiver und vorbereitender Modulzugriff nutzen im Modulrahmen jetzt dieselbe kleinere interne Lookup-Stelle, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 

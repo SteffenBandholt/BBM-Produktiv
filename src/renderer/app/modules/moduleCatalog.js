@@ -137,6 +137,17 @@ function findModuleEntryInCatalog(moduleCatalog, moduleId) {
   return moduleCatalog.find((entry) => entry?.moduleId === normalizedModuleId) || null;
 }
 
+function createModuleLookupAccess(getCatalog) {
+  return Object.freeze({
+    findModuleEntry(releaseState, moduleId) {
+      return findModuleEntryInCatalog(getCatalog(releaseState), moduleId);
+    },
+    hasModule(releaseState, moduleId) {
+      return !!this.findModuleEntry(releaseState, moduleId);
+    },
+  });
+}
+
 function createModuleAccess(getCatalog) {
   return Object.freeze({
     getCatalog(releaseState) {
@@ -145,12 +156,7 @@ function createModuleAccess(getCatalog) {
     getModuleIds(releaseState) {
       return deriveModuleIdsFromEntries(this.getCatalog(releaseState));
     },
-    findModuleEntry(releaseState, moduleId) {
-      return findModuleEntryInCatalog(this.getCatalog(releaseState), moduleId);
-    },
-    hasModule(releaseState, moduleId) {
-      return !!this.findModuleEntry(releaseState, moduleId);
-    },
+    ...createModuleLookupAccess(getCatalog),
   });
 }
 
