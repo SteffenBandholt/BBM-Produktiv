@@ -85,17 +85,6 @@ const MODULE_RELEASE_STATE = Object.freeze({
   },
 });
 
-function createReleaseAccess(getReleaseState) {
-  return Object.freeze({
-    getReleaseState(releaseState) {
-      return getReleaseState(releaseState);
-    },
-    getReleasedModuleIds(releaseState) {
-      return MODULE_RELEASE_STATE.getReleasedModuleIds(this.getReleaseState(releaseState));
-    },
-  });
-}
-
 function createReleaseStateAccess(getReleaseState) {
   return Object.freeze({
     getReleaseState(releaseState) {
