@@ -2579,6 +2579,49 @@ Paket 26 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive M
 
 ---
 
+## Schritt 12.27 – Naechsten kleinen internen Funktionsschnitt im Katalog setzen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog den naechsten kleinen internen Funktionsschnitt setzen und produktiven sowie Release-State-Zugriff intern weiter vereinheitlichen, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- den naechsten kleinen internen Funktionsschnitt im Katalog setzen
+- produktiven und Release-State-Zugriff intern weiter vereinheitlichen
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.26 vorbereitet
+
+**Ergebnis**
+- interner Funktionsschnitt im Katalog kleiner weitergesetzt
+
+**Stand / Notiz**
+Paket 27 hat im Modulkatalog den naechsten kleinen internen Funktionsschnitt gesetzt. Produktiver und Release-State-Zugriff sind intern weiter vereinheitlicht, waehrend die produktive Standardlage mit `Protokoll` und `Restarbeiten` unveraendert bleibt. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 27 – Naechsten kleinen internen Funktionsschnitt im Katalog setzen
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog den naechsten kleinen internen Funktionsschnitt setzen und produktiven sowie Release-State-Zugriff intern weiter vereinheitlichen, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Der naechste kleine internen Funktionsschnitt ist im Katalog jetzt gesetzt.
+- Produktiver und Release-State-Zugriff nutzen intern jetzt noch direkter dieselbe kleine Ableitung aus freigegebenen Modul-IDs.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 27 ist als kleiner interner Katalogschnitt abgeschlossen. Produktiver und Release-State-Zugriff laufen im Modulrahmen jetzt ueber dieselbe kleine `createReleasedModuleAccess`-Stelle, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 

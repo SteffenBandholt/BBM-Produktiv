@@ -160,9 +160,14 @@ function createModuleAccess(getCatalog) {
   });
 }
 
-function createProductiveModuleAccess(getCatalog, getModuleIds) {
-  const moduleAccess = createModuleAccess(() => getCatalog());
+function createReleasedModuleAccess(getReleasedModuleIds) {
+  return createModuleAccess((releaseState) =>
+    deriveActiveModuleEntries(getReleasedModuleIds(releaseState))
+  );
+}
 
+function createProductiveModuleAccess(moduleAccess, getModuleIds) {
+  
   return Object.freeze({
     getCatalog() {
       return moduleAccess.getCatalog();
@@ -179,17 +184,21 @@ function createProductiveModuleAccess(getCatalog, getModuleIds) {
   });
 }
 
-const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(PRODUCTIVE_RELEASE_ACCESS.getReleasedModuleIds());
+const PRODUCTIVE_RELEASE_STATE_MODULE_ACCESS = createReleasedModuleAccess(() =>
+  PRODUCTIVE_RELEASE_ACCESS.getReleasedModuleIds()
+);
+
+const ACTIVE_MODULE_ENTRIES = PRODUCTIVE_RELEASE_STATE_MODULE_ACCESS.getCatalog();
 
 const ACTIVE_MODULE_IDS = deriveModuleIdsFromEntries(ACTIVE_MODULE_ENTRIES);
 
 const PRODUCTIVE_ACTIVE_MODULE_ACCESS = createProductiveModuleAccess(
-  () => ACTIVE_MODULE_ENTRIES,
+  PRODUCTIVE_RELEASE_STATE_MODULE_ACCESS,
   () => ACTIVE_MODULE_IDS
 );
 
-const RELEASE_STATE_MODULE_ACCESS = createModuleAccess((releaseState) =>
-  deriveActiveModuleEntries(RELEASE_STATE_RELEASE_ACCESS.getReleasedModuleIds(releaseState))
+const RELEASE_STATE_MODULE_ACCESS = createReleasedModuleAccess((releaseState) =>
+  RELEASE_STATE_RELEASE_ACCESS.getReleasedModuleIds(releaseState)
 );
 
 // App-Kern: kleiner statischer Modulkatalog.

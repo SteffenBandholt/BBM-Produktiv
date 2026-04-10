@@ -115,6 +115,7 @@ Erreicht:
 - gemeinsame interne Lookup-Stelle im Katalog kleiner verdichtet
 - Release-State-/Module-Access kleiner geglaettet
 - interne Access-Helfer kleiner vereinheitlicht
+- interner Funktionsschnitt im Katalog kleiner weitergesetzt
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -189,6 +190,7 @@ Noch offen:
 - die gemeinsame interne Lookup-Stelle ist im Katalog jetzt kleiner verdichtet
 - der Release-State-/Module-Access ist im Katalog jetzt kleiner geglaettet
 - die internen Access-Helfer sind im Katalog jetzt kleiner vereinheitlicht
+- der interne Funktionsschnitt ist im Katalog jetzt kleiner weitergesetzt
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
@@ -394,6 +396,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Die gemeinsame interne Lookup-Stelle ist im Katalog jetzt kleiner verdichtet.
 - Der Release-State-/Module-Access ist im Katalog jetzt kleiner geglaettet.
 - Die internen Access-Helfer sind im Katalog jetzt kleiner vereinheitlicht.
+- Der interne Funktionsschnitt ist im Katalog jetzt kleiner weitergesetzt.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden
