@@ -161,16 +161,20 @@ function createModuleAccess(getCatalog) {
 }
 
 function createProductiveModuleAccess(getCatalog, getModuleIds) {
+  const moduleAccess = createModuleAccess(() => getCatalog());
+
   return Object.freeze({
-    ...createModuleAccess(() => getCatalog()),
+    getCatalog() {
+      return moduleAccess.getCatalog();
+    },
     getModuleIds() {
       return getModuleIds();
     },
     findModuleEntry(moduleId) {
-      return findModuleEntryInCatalog(this.getCatalog(), moduleId);
+      return moduleAccess.findModuleEntry(undefined, moduleId);
     },
     hasModule(moduleId) {
-      return !!this.findModuleEntry(moduleId);
+      return moduleAccess.hasModule(undefined, moduleId);
     },
   });
 }

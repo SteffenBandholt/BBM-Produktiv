@@ -2536,6 +2536,49 @@ Paket 25 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive M
 
 ---
 
+## Schritt 12.26 – Interne Access-Helfer weiter vereinheitlichen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog die internen Access-Helfer weiter vereinheitlichen und Release-State- sowie produktiven Zugriff intern gleichfoermiger machen, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- die internen Access-Helfer im Katalog weiter vereinheitlichen
+- Release-State- und produktiven Zugriff intern gleichfoermiger machen
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.25 vorbereitet
+
+**Ergebnis**
+- interne Access-Helfer kleiner vereinheitlicht
+
+**Stand / Notiz**
+Paket 26 hat im Modulkatalog die internen Access-Helfer weiter vereinheitlicht. Release-State- und produktiver Zugriff sind intern jetzt gleichfoermiger geschnitten, waehrend die produktive Standardlage mit `Protokoll` und `Restarbeiten` unveraendert bleibt. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 26 – Interne Access-Helfer weiter vereinheitlichen
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog die internen Access-Helfer weiter vereinheitlichen und Release-State- sowie produktiven Zugriff intern gleichfoermiger machen, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Die internen Access-Helfer sind im Katalog jetzt etwas einheitlicher geschnitten.
+- Release-State- und produktiver Zugriff nutzen intern jetzt noch direkter dieselbe kleine Modul-Access-Logik.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 26 ist als kleiner interner Katalogschnitt abgeschlossen. Der produktive Modul-Access delegiert im Modulrahmen jetzt intern direkt an dieselbe kleine Modul-Access-Hilfe wie der vorbereitende Zugriff, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 
