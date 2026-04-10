@@ -102,21 +102,34 @@ const ACTIVE_MODULE_IDS = Object.freeze(
   deriveActiveModuleIds(MODULE_RELEASE_STATE.getDefaultReleasedModuleIds())
 );
 
+const PRODUCTIVE_ACTIVE_MODULE_ACCESS = Object.freeze({
+  getCatalog() {
+    return ACTIVE_MODULE_ENTRIES;
+  },
+  getModuleIds() {
+    return ACTIVE_MODULE_IDS;
+  },
+});
+
 // App-Kern: kleiner statischer Modulkatalog.
 // Bekannte Module und aktiver Modulumfang bleiben bewusst statisch.
 // Keine dynamische Discovery, keine Plattformmechanik und keine Lizenzlogik im Katalog.
 export function getActiveModuleCatalog() {
-  return ACTIVE_MODULE_ENTRIES;
+  return PRODUCTIVE_ACTIVE_MODULE_ACCESS.getCatalog();
 }
 
 export function getActiveModuleIds() {
-  return ACTIVE_MODULE_IDS;
+  return PRODUCTIVE_ACTIVE_MODULE_ACCESS.getModuleIds();
 }
 
 export function findActiveModuleEntry(moduleId) {
   const normalizedModuleId = String(moduleId || "").trim();
   if (!normalizedModuleId) return null;
-  return ACTIVE_MODULE_ENTRIES.find((entry) => entry?.moduleId === normalizedModuleId) || null;
+  return (
+    PRODUCTIVE_ACTIVE_MODULE_ACCESS.getCatalog().find(
+      (entry) => entry?.moduleId === normalizedModuleId
+    ) || null
+  );
 }
 
 export function hasActiveModule(moduleId) {
