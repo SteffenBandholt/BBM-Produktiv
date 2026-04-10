@@ -142,6 +142,59 @@ Gewuenschte Ausgabe:
 
 ---
 
+## Standardkommandos und Mindestpruefung
+
+Wenn fuer das Paket sinnvoll und technisch moeglich, gelten diese repo-weiten Standardkommandos:
+
+* Start: `npm start`
+* Lint: `npm run lint`
+* Tests: `npm test`
+
+Bei kleinen Doku-Paketen reichen in der Regel:
+
+* relevante Doku-Pruefung
+* `git status`
+* `git diff --stat`
+* `git diff`
+
+Bei kleinen Strukturpaketen mindestens pruefen:
+
+* `git status`
+* `git diff --stat`
+* `git diff`
+* zusaetzlich die kleinsten sinnvoll passenden Tests oder Checks fuer den betroffenen Bereich
+
+Wenn ein kompletter App-Start, Lint oder Gesamttest fuer das kleine Paket nicht sinnvoll ist:
+
+* nicht blind alles laufen lassen
+* klar benennen, was bewusst nicht geprueft wurde und warum
+
+Checks nicht erfinden.
+Nur reale im Repo vorhandene und zum Paket passende Kommandos verwenden.
+
+Nicht-Ziele:
+
+* keine neue Teststrategie definieren
+* keine Ausweitung zu einer grossen Build-/Test-Dokumentation
+* keine Aenderung anderer Dateien
+* keine Aenderung des restlichen Arbeitsmodus
+
+Pruefkriterien:
+
+* `AGENTS.md` enthaelt einen kurzen, klaren Block fuer Standardkommandos und Mindestpruefung
+* nur reale im Repo vorhandene Standardkommandos werden genannt
+* der Block ist logisch passend eingeordnet
+* keine weiteren Dateien wurden geaendert
+
+Gewuenschte Ausgabe:
+
+* Liste der geaenderten Dateien
+* kurzer Hinweis, wo der neue Block in `AGENTS.md` eingefuegt wurde
+* Hinweis, ob beim Einbau eine logisch bessere Position als erwartet gewaehlt wurde
+* `git diff -- AGENTS.md`
+
+---
+
 ## Doku- und Planpflicht
 
 Wenn ein Paket den dokumentierten Stand real veraendert, ist zu pruefen, ob auch Doku oder Plan angepasst werden muessen.
