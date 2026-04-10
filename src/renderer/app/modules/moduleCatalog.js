@@ -102,8 +102,6 @@ const CURRENT_RELEASE_STATE_ACCESS = createReleaseStateAccess((releaseState) =>
 
 const PRODUCTIVE_RELEASE_ACCESS = CURRENT_RELEASE_STATE_ACCESS;
 
-const RELEASE_STATE_RELEASE_ACCESS = CURRENT_RELEASE_STATE_ACCESS;
-
 function deriveActiveModuleEntries(moduleIds) {
   const normalizedModuleIds = normalizeModuleIds(moduleIds);
   return Object.freeze(
@@ -197,7 +195,7 @@ const PRODUCTIVE_ACTIVE_MODULE_ACCESS = createProductiveModuleAccess(
 );
 
 const RELEASE_STATE_MODULE_ACCESS = createReleasedModuleAccess((releaseState) =>
-  RELEASE_STATE_RELEASE_ACCESS.getReleasedModuleIds(releaseState)
+  CURRENT_RELEASE_STATE_ACCESS.getReleasedModuleIds(releaseState)
 );
 
 // App-Kern: kleiner statischer Modulkatalog.
