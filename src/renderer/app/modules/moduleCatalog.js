@@ -102,6 +102,12 @@ function deriveModuleIdsFromEntries(moduleEntries) {
   );
 }
 
+function findModuleEntryInCatalog(moduleCatalog, moduleId) {
+  const normalizedModuleId = String(moduleId || "").trim();
+  if (!normalizedModuleId) return null;
+  return moduleCatalog.find((entry) => entry?.moduleId === normalizedModuleId) || null;
+}
+
 const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(MODULE_RELEASE_STATE.getDefaultReleasedModuleIds());
 
 const ACTIVE_MODULE_IDS = deriveModuleIdsFromEntries(ACTIVE_MODULE_ENTRIES);
@@ -114,9 +120,7 @@ const PRODUCTIVE_ACTIVE_MODULE_ACCESS = Object.freeze({
     return ACTIVE_MODULE_IDS;
   },
   findModuleEntry(moduleId) {
-    const normalizedModuleId = String(moduleId || "").trim();
-    if (!normalizedModuleId) return null;
-    return this.getCatalog().find((entry) => entry?.moduleId === normalizedModuleId) || null;
+    return findModuleEntryInCatalog(this.getCatalog(), moduleId);
   },
   hasModule(moduleId) {
     return !!this.findModuleEntry(moduleId);
@@ -131,9 +135,7 @@ const RELEASE_STATE_MODULE_ACCESS = Object.freeze({
     return deriveModuleIdsFromEntries(this.getCatalog(releaseState));
   },
   findModuleEntry(releaseState, moduleId) {
-    const normalizedModuleId = String(moduleId || "").trim();
-    if (!normalizedModuleId) return null;
-    return this.getCatalog(releaseState).find((entry) => entry?.moduleId === normalizedModuleId) || null;
+    return findModuleEntryInCatalog(this.getCatalog(releaseState), moduleId);
   },
   hasModule(releaseState, moduleId) {
     return !!this.findModuleEntry(releaseState, moduleId);
