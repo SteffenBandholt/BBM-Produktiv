@@ -44,12 +44,15 @@ function normalizeModuleIds(moduleIds) {
 
 const MODULE_RELEASE_STATE = Object.freeze({
   productiveDefaultReleaseState: PRODUCTIVE_DEFAULT_RELEASE_STATE,
+  getDefaultReleasedModuleIds() {
+    return this.productiveDefaultReleaseState.releasedModuleIds;
+  },
   hasOwnField(releaseState, fieldName) {
     return !!releaseState && Object.prototype.hasOwnProperty.call(releaseState, fieldName);
   },
   getReleasedModuleIds(releaseState) {
     if (!releaseState || typeof releaseState !== "object") {
-      return this.productiveDefaultReleaseState.releasedModuleIds;
+      return this.getDefaultReleasedModuleIds();
     }
 
     if (this.hasOwnField(releaseState, "activeModuleIds")) {
@@ -68,7 +71,7 @@ const MODULE_RELEASE_STATE = Object.freeze({
       );
     }
 
-    return this.productiveDefaultReleaseState.releasedModuleIds;
+    return this.getDefaultReleasedModuleIds();
   },
 });
 
@@ -91,10 +94,12 @@ function deriveActiveModuleIds(moduleIds) {
   );
 }
 
-const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(DEFAULT_ACTIVE_MODULE_IDS);
+const ACTIVE_MODULE_ENTRIES = deriveActiveModuleEntries(
+  MODULE_RELEASE_STATE.getDefaultReleasedModuleIds()
+);
 
 const ACTIVE_MODULE_IDS = Object.freeze(
-  deriveActiveModuleIds(DEFAULT_ACTIVE_MODULE_IDS)
+  deriveActiveModuleIds(MODULE_RELEASE_STATE.getDefaultReleasedModuleIds())
 );
 
 // App-Kern: kleiner statischer Modulkatalog.

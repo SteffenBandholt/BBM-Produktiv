@@ -1778,6 +1778,48 @@ Paket 7 ist als kleinster sinnvoller Kernschnitt abgeschlossen. Der produktive F
 
 ---
 
+## Schritt 12.8 – Kleinen produktiven Freigabezugriff im Katalog vereinheitlichen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog den Zugriff auf den produktiven Freigabe-Default und den vorbereitenden Freigabeeingang klein vereinheitlichen, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- den produktiven Default-Zugriff und den vorbereitenden Freigabezugriff im Katalog klein vereinheitlichen
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.6 vorbereitet
+- Schritt 12.7 vorbereitet
+
+**Ergebnis**
+- Freigabezugriff im Katalog kleiner vereinheitlicht
+
+**Stand / Notiz**
+Paket 8 hat im Modulkatalog den Zugriff auf den produktiven Freigabe-Default und den vorbereitenden Freigabeeingang klein vereinheitlicht. Die produktive Standardlage mit `Protokoll` und `Restarbeiten` bleibt unveraendert; bestehende Aussenfunktionen und der vorbereitende Freigabeeingang wurden nicht verbreitert. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 8 – Kleinen produktiven Freigabezugriff im Katalog vereinheitlichen
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog den Zugriff auf den bereits benannten produktiven Freigabe-Default und den vorbereitenden Freigabeeingang ueber eine kleine gemeinsame Katalogstelle fuehren, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Der produktive Default-Zugriff und der vorbereitende Freigabezugriff laufen im Katalog jetzt ueber eine kleinere gemeinsame Zugriffsstelle.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 8 ist als kleiner interner Katalogschnitt abgeschlossen. Der Freigabezugriff ist im Modulrahmen jetzt etwas einheitlicher, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 

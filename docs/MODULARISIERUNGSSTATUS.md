@@ -96,6 +96,7 @@ Erreicht:
 - Freigabezustaende sind im Katalog klein nachweisbar
 - Freigabezustand ist im Kern kleiner und sauberer gebuendelt
 - produktiver Freigabe-Default im Katalog zentral benannt
+- Freigabezugriff im Katalog kleiner vereinheitlicht
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -151,6 +152,7 @@ Noch offen:
 - kleine Freigabezustaende koennen im Katalog belastbar nachgewiesen werden
 - der vorbereitende Freigabezustand ist im Kern kompakter gebuendelt
 - der produktive Freigabe-Default ist im Katalog jetzt zentral benannt
+- der Freigabezugriff ist im Katalog jetzt kleiner vereinheitlicht
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
@@ -337,6 +339,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Kleine Freigabezustaende sind im Katalog nachweisbar.
 - Der vorbereitende Freigabezustand ist im Kern kleiner geschnitten.
 - Der produktive Freigabe-Default ist im Katalog zentral benannt.
+- Der Freigabezugriff im Katalog ist kleiner vereinheitlicht.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden
