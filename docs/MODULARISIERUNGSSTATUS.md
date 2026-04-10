@@ -109,6 +109,7 @@ Erreicht:
 - produktiver und vorbereitender Release-Access kleiner vereinheitlicht
 - produktiver und vorbereitender Release-State-Zugriff kleiner angenaehert
 - produktiver und vorbereitender Release-State-Zugriff kleiner vereinheitlicht
+- produktiver und vorbereitender Release-State-Access kleiner gebuendelt
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -177,6 +178,7 @@ Noch offen:
 - produktiver und vorbereitender Release-Access sind im Katalog jetzt kleiner vereinheitlicht
 - produktiver und vorbereitender Release-State-Zugriff sind im Katalog jetzt kleiner angenaehert
 - produktiver und vorbereitender Release-State-Zugriff sind im Katalog jetzt kleiner vereinheitlicht
+- produktiver und vorbereitender Release-State-Access sind im Katalog jetzt kleiner gebuendelt
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
@@ -376,6 +378,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Produktiver und vorbereitender Release-Access sind im Katalog jetzt kleiner vereinheitlicht.
 - Produktiver und vorbereitender Release-State-Zugriff sind im Katalog jetzt kleiner angenaehert.
 - Produktiver und vorbereitender Release-State-Zugriff sind im Katalog jetzt kleiner vereinheitlicht.
+- Produktiver und vorbereitender Release-State-Access sind im Katalog jetzt kleiner gebuendelt.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden

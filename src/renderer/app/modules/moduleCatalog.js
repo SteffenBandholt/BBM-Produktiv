@@ -96,11 +96,22 @@ function createReleaseAccess(getReleaseState) {
   });
 }
 
-const PRODUCTIVE_RELEASE_ACCESS = createReleaseAccess(() =>
+function createReleaseStateAccess(getReleaseState) {
+  return Object.freeze({
+    getReleaseState(releaseState) {
+      return getReleaseState(releaseState);
+    },
+    getReleasedModuleIds(releaseState) {
+      return MODULE_RELEASE_STATE.getReleasedModuleIds(this.getReleaseState(releaseState));
+    },
+  });
+}
+
+const PRODUCTIVE_RELEASE_ACCESS = createReleaseStateAccess(() =>
   MODULE_RELEASE_STATE.getCurrentReleaseState()
 );
 
-const RELEASE_STATE_RELEASE_ACCESS = createReleaseAccess((releaseState) =>
+const RELEASE_STATE_RELEASE_ACCESS = createReleaseStateAccess((releaseState) =>
   MODULE_RELEASE_STATE.getCurrentReleaseState(releaseState)
 );
 
