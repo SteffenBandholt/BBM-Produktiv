@@ -44,8 +44,18 @@ function normalizeModuleIds(moduleIds) {
 
 const MODULE_RELEASE_STATE = Object.freeze({
   productiveDefaultReleaseState: PRODUCTIVE_DEFAULT_RELEASE_STATE,
+  getProductiveReleaseState() {
+    return this.productiveDefaultReleaseState;
+  },
+  getCurrentReleaseState(releaseState) {
+    if (!releaseState || typeof releaseState !== "object") {
+      return this.getProductiveReleaseState();
+    }
+
+    return releaseState;
+  },
   getDefaultReleasedModuleIds() {
-    return this.productiveDefaultReleaseState.releasedModuleIds;
+    return this.getProductiveReleaseState().releasedModuleIds;
   },
   hasOwnField(releaseState, fieldName) {
     return !!releaseState && Object.prototype.hasOwnProperty.call(releaseState, fieldName);
@@ -87,10 +97,12 @@ function createReleaseAccess(getReleaseState) {
 }
 
 const PRODUCTIVE_RELEASE_ACCESS = createReleaseAccess(() =>
-  MODULE_RELEASE_STATE.productiveDefaultReleaseState
+  MODULE_RELEASE_STATE.getProductiveReleaseState()
 );
 
-const RELEASE_STATE_RELEASE_ACCESS = createReleaseAccess((releaseState) => releaseState);
+const RELEASE_STATE_RELEASE_ACCESS = createReleaseAccess((releaseState) =>
+  MODULE_RELEASE_STATE.getCurrentReleaseState(releaseState)
+);
 
 function deriveActiveModuleEntries(moduleIds) {
   const normalizedModuleIds = normalizeModuleIds(moduleIds);
