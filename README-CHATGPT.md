@@ -62,7 +62,9 @@ Codex arbeitet innerhalb der bereits festgelegten Architektur, Leitplanken und A
 
 ## 3. Verbindliche Grunddateien, die zuerst zu lesen sind
 
-Ein neuer Chat soll zuerst diese Dateien lesen und als verbindliche Grundlage behandeln:
+Ein neuer Chat beginnt verbindlich mit `ZUERST_LESEN_Codex.md`.
+
+Danach sind diese Dateien als verbindliche Grundlage in dieser Reihenfolge zu lesen:
 
 1. `ARCHITECTURE.md`
 2. `docs/MODULARISIERUNGSPLAN.md`
@@ -76,9 +78,14 @@ Diese Reihenfolge ist wichtig.
 
 ## 4. Bei Widersprüchen zwischen Quellen gilt diese Reihenfolge
 
+Die Einstiegs- und Arbeitsregel bleibt dabei separat:
+Zuerst `ZUERST_LESEN_Codex.md` lesen.
+
+Für fachlich-inhaltliche Führungsquellen gilt dann diese Reihenfolge:
+
 1. der aktuelle Stand im Repo
-2. `ARCHITECTURE.md`
-3. `docs/MODULARISIERUNGSPLAN.md`
+2. `ARCHITECTURE.md` als führende Architekturgrundlage
+3. `docs/MODULARISIERUNGSPLAN.md` als führende operative Umbau- und Planungsgrundlage
 4. die jeweils betroffene Fachregeldatei, z. B. `docs/domain/TOP-REGELN.md`
 5. technische Spezialdokumente
 6. ältere Chat-Aussagen
@@ -362,7 +369,8 @@ Das Ziel ist:
 
 Vor jeder größeren Antwort oder Änderung gilt:
 
-- zuerst `ARCHITECTURE.md` lesen
+- zuerst `ZUERST_LESEN_Codex.md` lesen
+- dann `ARCHITECTURE.md` lesen
 - dann `docs/MODULARISIERUNGSPLAN.md` lesen
 - bei Protokoll-Themen zusätzlich `docs/domain/TOP-REGELN.md` lesen
 - Architektur nicht neu erfinden

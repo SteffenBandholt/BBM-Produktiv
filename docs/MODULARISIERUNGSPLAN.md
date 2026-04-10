@@ -45,15 +45,15 @@ Dabei gilt:
 |---|---|---|
 | 1 | Architektur verbindlich festziehen | ERLEDIGT |
 | 2 | App-Kern fachlich entschlacken | IN ARBEIT |
-| 3 | Gemeinsame Domänen sauber schneiden | OFFEN |
-| 4 | Gemeinsame Dienste sauber schneiden | OFFEN |
+| 3 | Gemeinsame Domänen sauber schneiden | IN ARBEIT |
+| 4 | Gemeinsame Dienste sauber schneiden | IN ARBEIT |
 | 5 | App-Einstellungen und Lizenzierung zentralisieren | IN ARBEIT |
-| 6 | Gemeinsame Kernbausteine sauber schneiden | OFFEN |
-| 7 | Modul `Protokoll` sauber ausschneiden | OFFEN |
-| 8 | Modulrahmen produktiv machen | OFFEN |
-| 9 | Modul `Restarbeiten` aufbauen | OFFEN |
-| 10 | Modulfähigkeit praktisch beweisen | OFFEN |
-| 11 | Altbestand zurückbauen | OFFEN |
+| 6 | Gemeinsame Kernbausteine sauber schneiden | IN ARBEIT |
+| 7 | Modul `Protokoll` sauber ausschneiden | IN ARBEIT |
+| 8 | Modulrahmen produktiv machen | IN ARBEIT |
+| 9 | Modul `Restarbeiten` aufbauen | IN ARBEIT |
+| 10 | Modulfähigkeit praktisch beweisen | IN ARBEIT |
+| 11 | Altbestand zurückbauen | IN ARBEIT |
 | 12 | Aktiven Modulumfang im Kern expliziter machen | IN ARBEIT |
 
 
@@ -780,7 +780,7 @@ Paket 3 ist als konservative Mustertrennung abgeschlossen. Das wiederverwendbare
 ---
 
 # Phase 7 – Modul `Protokoll` sauber ausschneiden
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 ## Schritt 7.1 – Modulgrenze `Protokoll` festlegen
 **Status:** IN ARBEIT
@@ -1036,7 +1036,7 @@ Paket 6 ist als konservative Scharfstellung abgeschlossen. `src/renderer/modules
 ---
 
 # Phase 8 – Modulrahmen produktiv machen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 ## Schritt 8.1 – Modulkatalog einführen
 **Status:** IN ARBEIT
@@ -1163,7 +1163,7 @@ Paket 3 ist als konservative modulbezogene Navigation abgeschlossen. Die Navigat
 ---
 
 # Phase 9 – Modul `Restarbeiten` aufbauen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 ## Schritt 9.1 – Fachschnitt `Restarbeiten` definieren
 **Status:** IN ARBEIT
@@ -1353,7 +1353,7 @@ Paket 4 ist als konservative Scharfstellung abgeschlossen. `src/renderer/modules
 ---
 
 # Phase 10 – Modulfähigkeit praktisch beweisen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 ## Schritt 10.1 – Szenario A testen
 **Status:** OFFEN
@@ -1481,7 +1481,7 @@ Noch nicht begonnen.
 ---
 
 # Phase 11 – Altbestand zurückbauen
-**Status:** OFFEN
+**Status:** IN ARBEIT
 
 ## Schritt 11.1 – Alte Fachpfade zurückbauen
 **Status:** IN ARBEIT

@@ -33,6 +33,11 @@ Verbindliche Reihenfolge:
 5. `docs/ARBEITSMODUS-CODEX.md`
 6. `docs/domain/TOP-REGELN.md`
 
+Dabei gilt verbindlich:
+- `ZUERST_LESEN_Codex.md` = verbindlicher Einstieg fuer neue Chats und neue Codex-Laeufe
+- `ARCHITECTURE.md` = fuehrende Architekturgrundlage
+- `docs/MODULARISIERUNGSPLAN.md` = fuehrende operative Umbau- und Planungsgrundlage
+
 Wenn ein neuer Chat an irgendeiner späteren Stelle einsteigt, gilt trotzdem dieselbe Regel:
 Nicht von dort aus direkt weiterarbeiten, sondern zuerst diese Datei lesen und danach die Pflichtdateien in der festgelegten Reihenfolge nachziehen.
 
@@ -830,4 +835,3 @@ Ein wesentlicher Zielzustand ist erst dann erreicht, wenn der Modulrahmen fachli
 5. Router, Navigation, Modul-/Screen-Auflösung und Moduleinstiege auf diesen aktiven Modulumfang korrekt reagieren.
 
 Die dafür nötige Freigabelogik gehört in den App-Kern und den Modulrahmen. Die Fachlogik bleibt in den Modulen.
-

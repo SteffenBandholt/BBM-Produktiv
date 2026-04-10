@@ -5,8 +5,10 @@
 Diese Datei ist die operative Migrationsdatei für den Übergang von `TopsView` zu `TopsScreen`.
 
 Sie beschreibt nicht die Gesamtarchitektur der App.
-Die führenden architektonischen Leitplanken stehen in `docs/ARCHITEKTUR-LEITPLANKEN.md`.
-Die Architektur des Protokoll-Arbeitsbildschirms steht in `ARCHITECTURE.md`.
+Der verbindliche Einstieg fuer neue Chats und neue Codex-Laeufe ist `ZUERST_LESEN_Codex.md`.
+Die fuehrende Architekturgrundlage ist `ARCHITECTURE.md`.
+Die fuehrende operative Umbau- und Planungsgrundlage ist `docs/MODULARISIERUNGSPLAN.md`.
+Diese Datei ist nur der operative Sonderpfad fuer die Migration `TopsView -> TopsScreen`.
 
 ## Ziel
 
