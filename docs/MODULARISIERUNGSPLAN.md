@@ -1667,6 +1667,49 @@ Paket 3 hat den bestehenden Katalogschnitt konservativ weiter abgesichert. Unter
 
 ---
 
+## Schritt 12.4 – Kleine vorbereitende Freigabelogik im Kern einziehen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog einen kleinen neutralen Freigabeeingang vorbereiten, ueber den aktive Module aus einem uebergebenen Freigabe- oder Lizenzstand abgeleitet werden koennen, ohne schon echte Lizenzlogik oder weitere Kernmechanik einzufuehren.
+
+**Aufgaben**
+- kleinen neutralen Freigabeeingang im Katalog vorbereiten
+- produktive Standardlage stabil halten
+- noch keine echte Lizenzpruefung oder externe Quelle anbinden
+
+**Abhängigkeiten**
+- Schritt 12.2 vorbereitet
+- Schritt 12.3 vorbereitet
+
+**Ergebnis**
+- vorbereitender Freigabeeingang im Kern vorhanden
+
+**Stand / Notiz**
+Paket 4 hat im Modulkatalog einen kleinen neutralen Freigabeeingang vorbereitet. Aktive Module lassen sich damit aus einem uebergebenen Freigabestand ableiten; die bestehende produktive Standardlage mit `Protokoll` und `Restarbeiten` bleibt unveraendert Default. Echte Lizenzlogik, externe Quellen, Discovery, Registry und produktiver freigabebasierter Betrieb wurden dabei bewusst noch nicht eingefuehrt.
+
+---
+
+## Paket 4 – Kleine vorbereitende Freigabelogik im Kern einziehen
+**Status:** ERLEDIGT
+
+**Ziel**
+Im Modulkatalog einen kleinen vorbereitenden Freigabeeingang einziehen, ueber den aktive Module aus einem uebergebenen Freigabe- oder Lizenzstand abgeleitet werden koennen, ohne bereits echte Lizenzpruefung, Discovery, Registry oder Plattformmechanik einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- `moduleCatalog.js` besitzt jetzt einen kleinen neutralen Freigabeeingang fuer uebergebene Freigabestaende.
+- Der vorbereitende Eingang akzeptiert weiterhin nur kleine statische Datenformen im Katalog selbst; es wurde keine externe Quelle, kein Store, keine IPC und keine Discovery angebunden.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - die bestehenden produktiven Aussenfunktionen fuer den aktiven Katalog bleiben unveraendert
+- Es wurde bewusst noch keine echte Lizenzpruefung und noch kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 4 ist als kleiner vorbereitender Kernschnitt abgeschlossen. Der Modulrahmen besitzt jetzt im Katalog einen neutralen Eingang fuer spaetere Freigabesteuerung, ohne dass die aktuelle Standardlage oder angrenzende Kernstellen dafuer verbreitert werden mussten.
+
+---
+
 ## Paket 3 – Kleine Betriebsmodi nachweisbar machen
 **Status:** ERLEDIGT
 

@@ -23,6 +23,10 @@ const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze([
   RESTARBEITEN_MODULE_ID,
 ]);
 
+function hasOwnReleaseField(releaseState, fieldName) {
+  return !!releaseState && Object.prototype.hasOwnProperty.call(releaseState, fieldName);
+}
+
 function normalizeModuleIds(moduleIds) {
   if (!Array.isArray(moduleIds)) return [];
 
@@ -36,6 +40,30 @@ function normalizeModuleIds(moduleIds) {
   }
 
   return uniqueModuleIds;
+}
+
+function getReleasedModuleIds(releaseState) {
+  if (!releaseState || typeof releaseState !== "object") {
+    return DEFAULT_ACTIVE_MODULE_IDS;
+  }
+
+  if (hasOwnReleaseField(releaseState, "activeModuleIds")) {
+    return normalizeModuleIds(releaseState.activeModuleIds);
+  }
+
+  if (hasOwnReleaseField(releaseState, "releasedModuleIds")) {
+    return normalizeModuleIds(releaseState.releasedModuleIds);
+  }
+
+  if (releaseState.modules && typeof releaseState.modules === "object") {
+    return normalizeModuleIds(
+      Object.entries(releaseState.modules)
+        .filter(([, isReleased]) => !!isReleased)
+        .map(([moduleId]) => moduleId)
+    );
+  }
+
+  return DEFAULT_ACTIVE_MODULE_IDS;
 }
 
 function deriveActiveModuleEntries(moduleIds) {
@@ -90,6 +118,14 @@ export function getDerivedActiveModuleCatalog(moduleIds) {
 
 export function getDerivedActiveModuleIds(moduleIds) {
   return deriveActiveModuleIds(moduleIds);
+}
+
+export function getActiveModuleCatalogForReleaseState(releaseState) {
+  return deriveActiveModuleEntries(getReleasedModuleIds(releaseState));
+}
+
+export function getActiveModuleIdsForReleaseState(releaseState) {
+  return deriveActiveModuleIds(getReleasedModuleIds(releaseState));
 }
 
 export { PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID };

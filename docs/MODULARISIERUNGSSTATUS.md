@@ -92,6 +92,7 @@ Erreicht:
 - kleiner statischer Modulkatalog
 - bekannter Modulbestand und aktiver Modulumfang im Katalog expliziter getrennt
 - kleine Betriebsmodi sind aus dem statischen Katalog kontrolliert ableitbar
+- kleiner vorbereitender Freigabeeingang im Katalog vorhanden
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -142,12 +143,13 @@ Noch offen:
 - kleiner statischer Modulkatalog
 - bekannter Modulbestand und aktiver Modulumfang im Katalog sind klein getrennt
 - kleine Betriebsmodi fuer `Protokoll`, `Restarbeiten` und beide zusammen sind nachweisbar ableitbar
+- ein neutraler vorbereitender Freigabeeingang im Katalog ist vorhanden
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
 
 **Noch offen**
-- aktiver Modulumfang ist im Katalog expliziter, aber noch nicht über Freigabelogik gesteuert
+- aktiver Modulumfang besitzt jetzt einen vorbereitenden Freigabeeingang, ist aber noch nicht über echte Freigabelogik gesteuert
 - freigabefähiger Modulbetrieb ist Zielbild, aber noch nicht fertig eingeführt
 - produktive Aktivierung / Nicht-Aktivierung freigegebener bzw. nicht freigegebener Module ist noch nicht vollständig durchgezogen
 
@@ -307,7 +309,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - modulbezogene Navigation ist noch klein und im Wesentlichen für `Protokoll`
 - `Restarbeiten` ist noch nicht breit produktiv über Router und Navigation verdrahtet
 - weitere Restmischzonen und Altpfade sind noch vorhanden
-- aktiver Modulumfang ist im Katalog expliziter gemacht, aber noch nicht vollstaendig als freigabegesteuerter Kernbegriff etabliert
+- aktiver Modulumfang ist im Katalog expliziter gemacht und besitzt einen vorbereitenden Freigabeeingang, aber noch nicht vollstaendig als freigabegesteuerter Kernbegriff etabliert
 - lizenzbasierte Aktivierung und Deaktivierung von Modulen ist Zielbild, aber noch nicht vollständig produktiv umgesetzt
 - kein Vollabschluss der Zielarchitektur
 - keine breite Plattform- oder Shell-Integration
@@ -322,6 +324,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Einzelbetrieb `Restarbeiten` ist nachgewiesen.
 - Koexistenz `Protokoll` + `Restarbeiten` ist nachgewiesen.
 - Kleine Betriebsmodi sind aus dem statischen Katalog nachweisbar ableitbar.
+- Ein kleiner vorbereitender Freigabeeingang im Katalog ist vorhanden.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden
