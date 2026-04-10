@@ -264,8 +264,20 @@ export function buildPatchFromDraft(selectedTop, draft) {
   return patch;
 }
 
+export function buildWorkbenchState(state) {
+  const selectedTop = getSelectedTop(state);
+  const isWriting = !!state?.isWriting;
+
+  return {
+    hasSelection: !!selectedTop,
+    canSave: !!selectedTop,
+    canMove: canMoveFromState(state, selectedTop) && !isWriting,
+    canDelete: canDeleteFromState(state, selectedTop) && !isWriting,
+  };
+}
+
 export function shouldShowWorkbench(state) {
   const hasMeeting = !!state?.meetingId;
   if (!hasMeeting) return false;
-  return !state?.isReadOnly;
+  return true;
 }
