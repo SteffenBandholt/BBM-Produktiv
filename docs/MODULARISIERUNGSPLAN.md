@@ -1736,6 +1736,48 @@ Paket 6 hat die vorbereitende Freigabeableitung innerhalb von `src/renderer/app/
 
 ---
 
+## Schritt 12.7 – Kleinen produktiven Freigabe-Default zentral benennen
+**Status:** IN ARBEIT
+
+**Ziel**  
+Im Modulkatalog den bestehenden produktiven Standard-Freigabezustand klein und zentral benennen, ohne neue Produktivmechanik, echte Lizenzlogik oder weitere Kernlogik einzufuehren.
+
+**Aufgaben**
+- den bestehenden produktiven Freigabe-Default im Katalog zentral benennen
+- die bestehende produktive Standardlage stabil halten
+- noch keinen produktiven freigabebasierten Betrieb einfuehren
+
+**Abhängigkeiten**
+- Schritt 12.4 vorbereitet
+- Schritt 12.6 vorbereitet
+
+**Ergebnis**
+- produktiver Freigabe-Default im Katalog zentral benannt
+
+**Stand / Notiz**
+Paket 7 hat im Modulkatalog den bestehenden produktiven Standard-Freigabezustand klein und zentral benannt. Die produktive Standardlage mit `Protokoll` und `Restarbeiten` bleibt unveraendert; bestehende Aussenfunktionen und der vorbereitende Freigabeeingang wurden nicht verbreitert. Echte Lizenzlogik und produktiver freigabebasierter Betrieb wurden bewusst weiterhin nicht eingefuehrt.
+
+---
+
+## Paket 7 – Kleinen produktiven Freigabe-Default zentral benennen
+**Status:** ERLEDIGT
+
+**Ziel**
+Im kleinen statischen Modulkatalog den bereits bestehenden produktiven Standard-Freigabezustand als zentrale benannte Stelle sichtbar machen, ohne neue Freigabemechanik, echte Lizenzlogik oder weitere Produktivverdrahtung einzufuehren.
+
+**Ergebnis**
+- Als zentrale Einstiegspunkte wurden `src/renderer/app/modules/moduleCatalog.js` sowie die zentrale Plan- und Statuspflege fokussiert.
+- Der bisher nur implizit vorhandene produktive Standard-Freigabezustand ist im Katalog jetzt als kleine zentrale Stelle benannt.
+- Die bestehende produktive Standardlage bleibt stabil:
+  - Default bleibt `Protokoll` + `Restarbeiten`
+  - bestehende produktive Aussenfunktionen bleiben unveraendert
+- Es wurde bewusst keine echte Lizenzlogik, keine externe Quelle, keine IPC, keine Discovery, keine Registry und kein produktiver freigabebasierter Betrieb eingefuehrt.
+
+**Stand / Notiz**
+Paket 7 ist als kleinster sinnvoller Kernschnitt abgeschlossen. Der produktive Freigabe-Default ist im Modulrahmen jetzt expliziter benannt, ohne dass dafuer Tests, Resolver, Navigation oder Fachmodule angepasst werden mussten.
+
+---
+
 ## Paket 6 – Kleine Kernstelle für aktuellen Freigabezustand auslagern
 **Status:** ERLEDIGT
 

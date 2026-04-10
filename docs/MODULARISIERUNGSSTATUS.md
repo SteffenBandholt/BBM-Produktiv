@@ -95,6 +95,7 @@ Erreicht:
 - kleiner vorbereitender Freigabeeingang im Katalog vorhanden
 - Freigabezustaende sind im Katalog klein nachweisbar
 - Freigabezustand ist im Kern kleiner und sauberer gebuendelt
+- produktiver Freigabe-Default im Katalog zentral benannt
 - kleine Modul-/Screen-Auflösung
 - kleine modulbezogene Navigation
 - Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
@@ -103,6 +104,7 @@ Wichtig:
 - der Kern ist noch bewusst klein
 - keine Plattformmechanik im großen Stil
 - keine Lizenzlogik im Modulkatalog
+- noch kein produktiver freigabebasierter Betrieb
 - kontrollierter freigabefähiger Modulbetrieb ist Zielbild, aber noch nicht produktiv vollständig umgesetzt
 
 ### Nachweise / Bereinigung
@@ -148,12 +150,14 @@ Noch offen:
 - ein neutraler vorbereitender Freigabeeingang im Katalog ist vorhanden
 - kleine Freigabezustaende koennen im Katalog belastbar nachgewiesen werden
 - der vorbereitende Freigabezustand ist im Kern kompakter gebuendelt
+- der produktive Freigabe-Default ist im Katalog jetzt zentral benannt
 - kleine Screen-/Entry-Auflösung
 - kleine modulbezogene Navigation
 - Rahmen trägt `Protokoll` und `Restarbeiten`
 
 **Noch offen**
 - aktiver Modulumfang besitzt jetzt einen vorbereitenden Freigabeeingang, ist aber noch nicht über echte Freigabelogik gesteuert
+- es gibt noch keinen produktiven freigabebasierten Betrieb
 - freigabefähiger Modulbetrieb ist Zielbild, aber noch nicht fertig eingeführt
 - produktive Aktivierung / Nicht-Aktivierung freigegebener bzw. nicht freigegebener Module ist noch nicht vollständig durchgezogen
 
@@ -332,6 +336,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - Ein kleiner vorbereitender Freigabeeingang im Katalog ist vorhanden.
 - Kleine Freigabezustaende sind im Katalog nachweisbar.
 - Der vorbereitende Freigabezustand ist im Kern kleiner geschnitten.
+- Der produktive Freigabe-Default ist im Katalog zentral benannt.
 - Der Kern bleibt bewusst klein und ohne große Plattformmechanik.
 
 ### Das darf noch nicht behauptet werden
@@ -339,6 +344,7 @@ Diese Punkte sind offen und dürfen nicht stillschweigend als erledigt behandelt
 - `Protokoll` sei vollständig entmischt.
 - `Restarbeiten` sei bereits breit produktiv eingebunden.
 - lizenzbasierter Modulbetrieb sei bereits vollständig realisiert.
+- es gebe bereits produktiven freigabebasierten Betrieb.
 - der Modulrahmen sei schon eine allgemeine Plattformarchitektur.
 
 ---

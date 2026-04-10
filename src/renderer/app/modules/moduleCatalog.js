@@ -23,6 +23,10 @@ const DEFAULT_ACTIVE_MODULE_IDS = Object.freeze([
   RESTARBEITEN_MODULE_ID,
 ]);
 
+const PRODUCTIVE_DEFAULT_RELEASE_STATE = Object.freeze({
+  releasedModuleIds: DEFAULT_ACTIVE_MODULE_IDS,
+});
+
 function normalizeModuleIds(moduleIds) {
   if (!Array.isArray(moduleIds)) return [];
 
@@ -39,13 +43,13 @@ function normalizeModuleIds(moduleIds) {
 }
 
 const MODULE_RELEASE_STATE = Object.freeze({
-  defaultActiveModuleIds: DEFAULT_ACTIVE_MODULE_IDS,
+  productiveDefaultReleaseState: PRODUCTIVE_DEFAULT_RELEASE_STATE,
   hasOwnField(releaseState, fieldName) {
     return !!releaseState && Object.prototype.hasOwnProperty.call(releaseState, fieldName);
   },
   getReleasedModuleIds(releaseState) {
     if (!releaseState || typeof releaseState !== "object") {
-      return this.defaultActiveModuleIds;
+      return this.productiveDefaultReleaseState.releasedModuleIds;
     }
 
     if (this.hasOwnField(releaseState, "activeModuleIds")) {
@@ -64,7 +68,7 @@ const MODULE_RELEASE_STATE = Object.freeze({
       );
     }
 
-    return this.defaultActiveModuleIds;
+    return this.productiveDefaultReleaseState.releasedModuleIds;
   },
 });
 
