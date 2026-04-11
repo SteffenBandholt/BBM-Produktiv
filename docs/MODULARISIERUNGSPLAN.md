@@ -111,15 +111,13 @@ Die Container sind nicht gleichrangig aktiv.
 
 ## 5. Aktueller operativer Fokus
 
-Der aktuell sinnvolle Hauptfokus liegt auf **Achse A**:
+Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert von Container 6:
 
-- aktiven Modulumfang im Kern weiter explizit und kontrollierbar machen
-- vorbereitende Freigabelogik weiterfuehren
-- weiterhin ohne grosse Lizenz- oder Plattformmechanik
+- `Protokoll` schrittweise weiter entmischen
+- `Restarbeiten` dosiert sichtbarer und tragfaehiger machen
+- kleine Nachweise und Konsolidierungen mitziehen, wo sie den Umbau direkt belegen
 
-Danach bleiben als naechste reale Richtungen:
-- `Protokoll` weiter entmischen
-- `Restarbeiten` dosiert sichtbarer machen
+Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 
 Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeigt, darf die Reihenfolge innerhalb der aktiven Achsen angepasst werden.
 
@@ -137,10 +135,13 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - kleine Modul-/Screen-Aufloesung
 - kleine modulbezogene Navigation
 - vorbereitende Freigabelogik ist vorhanden
+- aktiver Modulumfang wird an einer zweiten kleinen Kernstelle sichtbar genutzt
+- `showTops()` nutzt keinen Fallback mehr ueber `views/TopsScreen.js`
 
 **Noch offen**
 - kein vollstaendig produktiver freigabebasierter Betrieb
 - Aktivierung / Nicht-Aktivierung freigegebener bzw. nicht freigegebener Module ist noch nicht vollstaendig durchgezogen
+- weitere kleine Kernstellen fuer den aktiven Modulumfang sind noch moeglich
 
 ### 6.2 Container 4 – Fachmodul `Protokoll`
 **Status:** weit vorbereitet, Uebergangscontainer aktiv
@@ -152,13 +153,16 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Fachschnitt klarer
 - `src/renderer/modules/protokoll/screens/TopsScreen.js` ist die technische Heimat
 - `src/renderer/views/TopsScreen.js` bleibt Uebergangs- und Kompatibilitaetsschicht
+- modulnaher Style-Einstieg ist eingefuehrt
+- `TopsScreen` bindet Styles nicht mehr direkt ueber den globalen `tops/`-Pfad ein
 
 **Noch offen**
 - grosser Unterbau liegt weiter unter `src/renderer/tops/`
 - Mischzustaende sind noch nicht klein genug, um `Protokoll` als vollstaendig entmischt zu bezeichnen
+- weitere direkte `tops/`-Altpfade sind fuer spaetere Minischritte noch vorhanden
 
 ### 6.3 Container 5 – Fachmodul `Restarbeiten`
-**Status:** vorbereitet, klein, kontrolliert ausbaufaehig
+**Status:** sichtbar, klein, kontrolliert ausbaufaehig
 
 **Erreicht**
 - Modulstruktur
@@ -166,11 +170,14 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Moduleinstieg
 - Einzelbetrieb
 - Koexistenz mit `Protokoll`
+- kleiner projektbezogener Navigationseintrag ist vorhanden
+- `Restarbeiten` ist im aktiven Modulumfang sichtbar
 
 **Noch offen**
 - noch keine breite produktive Verdrahtung
 - Navigation / Router nur klein angebunden
 - noch kein freigabebezogener Produktivbetrieb
+- weiterer Ausbau bleibt bewusst dosiert
 
 ### 6.4 Container 6 – Nachweis / Entmischung / Konsolidierung
 **Status:** aktiv, flankierend
@@ -179,6 +186,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - erste Integrationsnachweise
 - erste kleine Bereinigungen
 - erste Konsolidierungsschritte
+- kleine Nachweise zur Kernnavigation, Router-Entkopplung und Modulsichtbarkeit sind nachgezogen
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
