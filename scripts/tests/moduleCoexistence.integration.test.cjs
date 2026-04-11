@@ -5,11 +5,17 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 async function runModuleCoexistenceIntegrationTests(run) {
   const [
     moduleCatalog,
+    moduleNavigation,
+    moduleEntryScreenResolver,
     moduleScreenResolver,
     protokollModule,
     restarbeitenModule,
   ] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/app/modules/moduleCatalog.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/app/modules/moduleNavigation.js")),
+    importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/app/modules/moduleEntryScreenResolver.js")
+    ),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/app/modules/moduleScreenResolver.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/index.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/index.js")),
@@ -23,6 +29,8 @@ async function runModuleCoexistenceIntegrationTests(run) {
     getActiveModuleCatalogForReleaseState,
     getActiveModuleIdsForReleaseState,
   } = moduleCatalog;
+  const { getActiveProjectModuleNavigation } = moduleNavigation;
+  const { resolveModuleScreenFromEntry } = moduleEntryScreenResolver;
   const { resolveActiveModuleWorkScreen } = moduleScreenResolver;
   const {
     PROTOKOLL_MODULE_ID,
@@ -96,6 +104,26 @@ async function runModuleCoexistenceIntegrationTests(run) {
     assert.equal(restarbeitenEntry?.capabilities?.hasNavigation, false);
     assert.equal(Boolean(protokollEntry?.movedParts?.viewmodel), true);
     assert.equal(Boolean(restarbeitenEntry?.movedParts?.components), true);
+  });
+
+  await run("Module Koexistenz: Projektnavigation enthaelt nur aufloesbare Modulziele", () => {
+    const activeCatalog = getActiveModuleCatalogForReleaseState({
+      releasedModuleIds: [PROTOKOLL_MODULE_ID, RESTARBEITEN_MODULE_ID],
+    });
+    const navigation = getActiveProjectModuleNavigation();
+
+    assert.equal(navigation.length > 0, true);
+
+    for (const navEntry of navigation) {
+      const moduleEntry =
+        activeCatalog.find((entry) => entry?.moduleId === navEntry?.moduleId) || null;
+      const screenId = String(navEntry?.workScreenId || moduleEntry?.workScreenId || "").trim();
+      const resolvedScreen = resolveModuleScreenFromEntry(moduleEntry, screenId);
+
+      assert.equal(Boolean(moduleEntry), true);
+      assert.equal(Boolean(screenId), true);
+      assert.equal(Boolean(resolvedScreen), true);
+    }
   });
 }
 
