@@ -164,6 +164,23 @@ async function runProtokollRouterFallbackTests(run) {
       );
     }
   );
+
+  await run("Protokoll Store-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const storeFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/createTopsStore.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const storeSource = fs.readFileSync(storeFile, "utf8");
+
+    assert.equal(screenSource.includes("tops/state/TopsStore.js"), false);
+    assert.equal(screenSource.includes('from "../createTopsStore.js"'), true);
+    assert.equal(storeSource.includes("tops/state/TopsStore.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
