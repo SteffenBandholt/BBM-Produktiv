@@ -1,4 +1,3 @@
-import { TopsViewDialogs } from "../../../features/dialogs/TopsViewDialogs.js";
 import { TopsHeader } from "../TopsHeader.js";
 import { TopsList } from "../TopsList.js";
 import { TopsWorkbench } from "../TopsWorkbench.js";
@@ -9,6 +8,7 @@ import { TopsRepository } from "../TopsRepository.js";
 import { TopsAssigneeDataSource } from "../TopsAssigneeDataSource.js";
 import { createTopsStore } from "../createTopsStore.js";
 import { getSelectedTop, hasSelection } from "../TopsSelectors.js";
+import { TopsViewDialogs } from "../TopsViewDialogs.js";
 import { ensureProtokollModuleStyles } from "../styles.js";
 import {
   buildHeaderState,
