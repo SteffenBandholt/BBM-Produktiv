@@ -433,6 +433,23 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(vmSource.includes('from "../computeAmpelColorForTop.js"'), true);
     assert.equal(ampelSource.includes("shared/ampel/pdfAmpelRule.js"), true);
   });
+
+  await run("Protokoll ViewModel-Entmischung: TopsScreenViewModel nutzt keinen direkten Text-Altpfad", () => {
+    const vmFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js"
+    );
+    const textFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/topTextPresentation.js"
+    );
+    const vmSource = fs.readFileSync(vmFile, "utf8");
+    const textSource = fs.readFileSync(textFile, "utf8");
+
+    assert.equal(vmSource.includes("shared/text/topTextPresentation.js"), false);
+    assert.equal(vmSource.includes('from "../topTextPresentation.js"'), true);
+    assert.equal(textSource.includes("shared/text/topTextPresentation.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
