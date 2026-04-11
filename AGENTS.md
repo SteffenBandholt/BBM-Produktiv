@@ -93,6 +93,12 @@ Nicht erlaubt:
 
 ---
 
+## Git- und Integrationsablauf pro Paket
+
+Jedes kleine fachlich abgeschlossene Paket wird auf einem eigenen Branch umgesetzt und erst nach sauberem Git-Nachweis nach `main` integriert. Der Ablauf ist immer gleich: neuer Branch, ein klar begrenztes Paket, Prüfung über `git status --short` sowie echte `git diff`-Nachweise, danach Commit und Merge. Für BBM werden Pakete per Merge-Commit mit `--no-ff` nach `main` übernommen, damit die Historie paketbezogen nachvollziehbar bleibt.
+
+
+
 ## Harte Ausfuehrungsgrenzen
 
 Codex soll nicht:
