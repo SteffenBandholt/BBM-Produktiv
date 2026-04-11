@@ -181,6 +181,23 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes('from "../createTopsStore.js"'), true);
     assert.equal(storeSource.includes("tops/state/TopsStore.js"), true);
   });
+
+  await run("Protokoll Selector-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const selectorsFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/TopsSelectors.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const selectorsSource = fs.readFileSync(selectorsFile, "utf8");
+
+    assert.equal(screenSource.includes("tops/state/TopsSelectors.js"), false);
+    assert.equal(screenSource.includes('from "../TopsSelectors.js"'), true);
+    assert.equal(selectorsSource.includes("tops/state/TopsSelectors.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };

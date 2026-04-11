@@ -1,4 +1,3 @@
-import { getSelectedTop, hasSelection } from "../../../tops/state/TopsSelectors.js";
 import { TopsViewDialogs } from "../../../features/dialogs/TopsViewDialogs.js";
 import { TopsHeader } from "../TopsHeader.js";
 import { TopsList } from "../TopsList.js";
@@ -9,6 +8,7 @@ import { TopsCloseFlow } from "../TopsCloseFlow.js";
 import { TopsRepository } from "../TopsRepository.js";
 import { TopsAssigneeDataSource } from "../TopsAssigneeDataSource.js";
 import { createTopsStore } from "../createTopsStore.js";
+import { getSelectedTop, hasSelection } from "../TopsSelectors.js";
 import { ensureProtokollModuleStyles } from "../styles.js";
 import {
   buildHeaderState,
