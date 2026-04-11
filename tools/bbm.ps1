@@ -12,7 +12,17 @@ function Start-BbmPackage {
     git pull
     if (-not $?) { return }
 
+    $existingBranch = git branch --list -- $BranchName
+    if (-not $?) { return }
+
+    if ($existingBranch) {
+        Write-Host "Branch existiert bereits: $BranchName"
+        Write-Host "Wechsle mit: git switch $BranchName"
+        return
+    }
+
     git switch -c $BranchName
+    if (-not $?) { return }
 }
 
 function Show-BbmProof {
@@ -54,6 +64,16 @@ function Complete-BbmPackage {
         [string[]]$Files
     )
 
+    $currentBranch = git branch --show-current
+    if (-not $?) { return }
+
+    if ($currentBranch -ne $BranchName) {
+        Write-Host "Falscher Branch aktiv: $currentBranch"
+        Write-Host "Erwartet wird: $BranchName"
+        Write-Host "Wechsle mit: git switch $BranchName"
+        return
+    }
+
     git add -- @Files
     if (-not $?) { return }
 
@@ -70,10 +90,15 @@ function Complete-BbmPackage {
     if (-not $?) { return }
 
     git push origin main
+    if (-not $?) { return }
 }
 
 function Reset-BbmPackageChanges {
     git restore .
+    if (-not $?) { return }
+
     git restore --staged .
+    if (-not $?) { return }
+
     git status --short
 }
