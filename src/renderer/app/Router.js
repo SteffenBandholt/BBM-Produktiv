@@ -5,7 +5,10 @@ import {
   hasActiveModule,
   resolveActiveModuleScreen,
 } from "./modules/index.js";
-import { PROTOKOLL_WORK_SCREEN_ID } from "../modules/protokoll/index.js";
+import {
+  PROTOKOLL_WORK_SCREEN_ID,
+  TopsScreen as ProtokollTopsScreen,
+} from "../modules/protokoll/index.js";
 
 // App-Kern: globale Settings, die der Router als Shell-/Kontextzustand vorlaedt.
 const APP_KERNEL_SETTINGS_KEYS = [
@@ -541,7 +544,7 @@ export default class Router {
     // Modulinterner Unterbau und Workbench-Anbindung bleiben ausdruecklich im Fachmodul.
     const V =
       resolveActiveModuleScreen(PROTOKOLL_MODULE_ID, PROTOKOLL_WORK_SCREEN_ID) ||
-      (await import("../views/TopsScreen.js")).default;
+      ProtokollTopsScreen;
 
     const opts = options && typeof options === "object" ? options : {};
     const readOnly = !!opts.readOnly;
