@@ -252,6 +252,22 @@ async function runProtokollRouterFallbackTests(run) {
       assert.equal(listItemsSource.includes("viewmodel/TopsScreenViewModel.js"), true);
     }
   );
+
+  await run("Protokoll editorFromTop-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const editorFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/editorFromTop.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const editorSource = fs.readFileSync(editorFile, "utf8");
+
+    assert.equal(screenSource.includes('from "../editorFromTop.js"'), true);
+    assert.equal(editorSource.includes("viewmodel/TopsScreenViewModel.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
