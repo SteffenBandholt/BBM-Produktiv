@@ -416,6 +416,23 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(vmSource.includes('from "../TopsActionPolicy.js"'), true);
     assert.equal(policySource.includes("tops/domain/TopsActionPolicy.js"), true);
   });
+
+  await run("Protokoll ViewModel-Entmischung: TopsScreenViewModel nutzt keinen direkten Ampel-Altpfad", () => {
+    const vmFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js"
+    );
+    const ampelFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/computeAmpelColorForTop.js"
+    );
+    const vmSource = fs.readFileSync(vmFile, "utf8");
+    const ampelSource = fs.readFileSync(ampelFile, "utf8");
+
+    assert.equal(vmSource.includes("shared/ampel/pdfAmpelRule.js"), false);
+    assert.equal(vmSource.includes('from "../computeAmpelColorForTop.js"'), true);
+    assert.equal(ampelSource.includes("shared/ampel/pdfAmpelRule.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
