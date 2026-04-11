@@ -1,10 +1,70 @@
 Set-StrictMode -Version Latest
 
+function Test-BbmGitSpecialState {
+    $gitDir = git rev-parse --git-dir
+    if (-not $?) { return $true }
+
+    foreach ($statePath in @(
+        (Join-Path $gitDir "MERGE_HEAD"),
+        (Join-Path $gitDir "REVERT_HEAD"),
+        (Join-Path $gitDir "CHERRY_PICK_HEAD"),
+        (Join-Path $gitDir "rebase-apply"),
+        (Join-Path $gitDir "rebase-merge")
+    )) {
+        if (Test-Path $statePath) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Test-BbmWorkingTreeClean {
+    $status = git status --short --untracked-files=all
+    if (-not $?) { return $false }
+
+    return @($status).Count -eq 0
+}
+
+function Test-BbmGitDiffExists {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string[]]$Paths,
+
+        [switch]$Cached
+    )
+
+    if ($Paths.Count -eq 0) {
+        return $false
+    }
+
+    if ($Cached) {
+        git diff --cached --quiet -- @Paths
+    } else {
+        git diff --quiet -- @Paths
+    }
+
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -gt 1) { return $false }
+
+    return $exitCode -eq 1
+}
+
 function Start-BbmPackage {
     param(
         [Parameter(Mandatory = $true)]
         [string]$BranchName
     )
+
+    if (Test-BbmGitSpecialState) {
+        Write-Host "Git-Sonderzustand aktiv. Bitte Merge/Rebase/Cherry-Pick/Revert zuerst abschliessen oder abbrechen."
+        return
+    }
+
+    if (-not (Test-BbmWorkingTreeClean)) {
+        Write-Host "Working Tree ist nicht sauber. Bitte uncommittete, unstaged oder untracked Aenderungen zuerst bereinigen."
+        return
+    }
 
     git switch main
     if (-not $?) { return }
@@ -33,22 +93,39 @@ function Show-BbmProof {
         [string[]]$NewFiles = @()
     )
 
+    $fileList = @($Files | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+    $newFileList = @($NewFiles | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+
+    if (($fileList.Count -eq 0) -and ($newFileList.Count -eq 0)) {
+        Write-Host "Keine gueltigen Dateien fuer die BBM-Pruefung uebergeben."
+        return
+    }
+
     git status --short
     if (-not $?) { return }
 
-    if ($Files.Count -gt 0) {
-        git diff --stat -- @Files
-        if (-not $?) { return }
+    if ($fileList.Count -gt 0) {
+        if (Test-BbmGitDiffExists -Paths $fileList) {
+            git diff --stat -- @fileList
+            if (-not $?) { return }
 
-        git diff -- @Files
-        if (-not $?) { return }
+            git diff -- @fileList
+            if (-not $?) { return }
+        } else {
+            Write-Host "Keine unstaged Diffs fuer die angegebenen Files gefunden."
+        }
     }
 
-    if ($NewFiles.Count -gt 0) {
-        git diff --cached --stat -- @NewFiles
-        if (-not $?) { return }
+    if ($newFileList.Count -gt 0) {
+        if (Test-BbmGitDiffExists -Paths $newFileList -Cached) {
+            git diff --cached --stat -- @newFileList
+            if (-not $?) { return }
 
-        git diff --cached -- @NewFiles
+            git diff --cached -- @newFileList
+            if (-not $?) { return }
+        } else {
+            Write-Host "Keine cached Diffs fuer die angegebenen NewFiles gefunden."
+        }
     }
 }
 
@@ -95,20 +172,20 @@ function Show-BbmPromptBlock {
     Write-Output "3. ..."
     Write-Output ""
     Write-Output "### Aktives Paket"
-    Write-Output "- Paketname: $PackageName"
-    Write-Output "- Container: $Container"
-    Write-Output "- Ziel: $Goal"
-    Write-Output "- Nicht-Ziele:"
-
+    Write-Output "* Paketname: $PackageName"
+    Write-Output "* Container: $Container"
+    Write-Output "* Ziel: $Goal"
+    Write-Output "* Nicht-Ziele:"
     foreach ($nonGoal in $NonGoals) {
         Write-Output "  * $nonGoal"
     }
-
     Write-Output ""
     Write-Output "## Git-Start"
+    Write-Output '```powershell'
     Write-Output "git switch main"
     Write-Output "git pull"
     Write-Output "git switch -c $BranchName"
+    Write-Output '```'
     Write-Output ""
     Write-Output "## Codex-Empfehlung"
     Write-Output "Codex-Modell: $CodexModel"
@@ -116,12 +193,12 @@ function Show-BbmPromptBlock {
     Write-Output "Begruendung: $Justification"
     Write-Output ""
     Write-Output "## Codex-Prompt"
-    Write-Output "```text"
+    Write-Output '```text'
     Write-Output $CodexPrompt
-    Write-Output "```"
+    Write-Output '```'
     Write-Output ""
     Write-Output "## Git-Pruefbefehle"
-    Write-Output "```powershell"
+    Write-Output '```powershell'
     Write-Output "git status --short"
 
     if ($ProofFiles.Count -gt 0) {
@@ -136,7 +213,7 @@ function Show-BbmPromptBlock {
         Write-Output "git diff --cached -- $proofNewFilesLine"
     }
 
-    Write-Output "```"
+    Write-Output '```'
 }
 
 function Complete-BbmPackage {
@@ -161,11 +238,29 @@ function Complete-BbmPackage {
         return
     }
 
+    if (Test-BbmGitSpecialState) {
+        Write-Host "Git-Sonderzustand aktiv. Bitte Merge/Rebase/Cherry-Pick/Revert zuerst abschliessen oder abbrechen."
+        return
+    }
+
+    $fileStatus = git status --short --untracked-files=all -- @Files
+    if (-not $?) { return }
+
+    if (-not $fileStatus) {
+        Write-Host "Keine Aenderungen in den angegebenen Dateien gefunden."
+        return
+    }
+
     git add -- @Files
     if (-not $?) { return }
 
     git commit -m $CommitMessage
     if (-not $?) { return }
+
+    if (-not (Test-BbmWorkingTreeClean)) {
+        Write-Host "Working Tree ist nach dem Commit nicht sauber. Bitte vor dem Switch bereinigen."
+        return
+    }
 
     git switch main
     if (-not $?) { return }
@@ -184,7 +279,7 @@ function Reset-BbmPackageChanges {
     git restore .
     if (-not $?) { return }
 
-    git restore --staged .
+    git restore --staged .    
     if (-not $?) { return }
 
     git status --short
