@@ -9,9 +9,9 @@ import { TopsAssigneeDataSource } from "../TopsAssigneeDataSource.js";
 import { createTopsStore } from "../createTopsStore.js";
 import { getSelectedTop, hasSelection } from "../TopsSelectors.js";
 import { TopsViewDialogs } from "../TopsViewDialogs.js";
+import { buildHeaderState } from "../buildHeaderState.js";
 import { ensureProtokollModuleStyles } from "../styles.js";
 import {
-  buildHeaderState,
   buildListItemsFromState,
   editorFromTop,
   buildPatchFromDraft,
