@@ -322,6 +322,22 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes('from "../canDeleteFromState.js"'), true);
     assert.equal(deleteSource.includes("viewmodel/TopsScreenViewModel.js"), true);
   });
+
+  await run("Protokoll canMoveFromState-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const moveFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/canMoveFromState.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const moveSource = fs.readFileSync(moveFile, "utf8");
+
+    assert.equal(screenSource.includes('from "../canMoveFromState.js"'), true);
+    assert.equal(moveSource.includes("viewmodel/TopsScreenViewModel.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
