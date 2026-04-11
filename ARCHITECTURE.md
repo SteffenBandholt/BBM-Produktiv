@@ -2,389 +2,144 @@
 
 ## Zweck
 
-Diese Datei ist die verbindliche Architekturgrundlage für BBM.
+Diese Datei beschreibt die **fuehrende Zielarchitektur** des Modularumbaus.
 
-Sie legt fest, wie die App strukturell gedacht ist, damit neue Chats, neue Entwickler oder neue KI-/Codex-Läufe die Architektur nicht immer wieder neu interpretieren.
+Sie haelt fest:
+- welches Endziel erreicht werden soll
+- welche strukturellen Leitplanken dauerhaft gelten
+- welche grobe Zielordnung zwischen App-Kern, gemeinsamen Bereichen und Fachmodulen gilt
 
-Diese Datei beschreibt das Zielbild und die festen Leitplanken.
-Sie ist kein Arbeitsprotokoll und kein Detailregelwerk einzelner Fachbereiche.
-
----
-
-## Zielbild
-
-BBM wird zu einer modularen App-Plattform ausgebaut.
-
-Die App soll so aufgebaut sein, dass sie:
-
-- nur mit dem Modul `Protokoll` laufen kann
-- nur mit dem Modul `Restarbeiten` laufen kann
-- mit mehreren Modulen parallel laufen kann
-- später mit weiteren Modulen erweitert werden kann
-
-Das Modul `Protokoll` ist damit nicht das Zentrum der Gesamtarchitektur, sondern ein Fachmodul unter mehreren.
+Diese Datei ist **kein** Tagesstatus, **kein** Detailplan und **kein** Git- oder Arbeitsmodus-Handbuch.
 
 ---
 
-## Grundprinzip der Architektur
+## 1. Architekturziel
 
-Die App trennt sich in vier klar unterscheidbare Bereiche:
+BBM wird schrittweise zu einer **modularen App** umgebaut.
 
-1. App-Kern
-2. Gemeinsame Domänen / Stamm
-3. Gemeinsame Dienste / Addons
-4. Fachmodule
+Das Ziel ist:
+- die App kann mit einem, mehreren oder spaeter anderen Fachmodulen laufen
+- `Protokoll` ist ein Fachmodul
+- `Restarbeiten` ist ein eigenes Fachmodul
+- der App-Kern bleibt fuer Host-, Navigations- und Aktivierungsaufgaben zustaendig
+- gemeinsame Kernbausteine, gemeinsame Domaenen und gemeinsame Dienste bleiben ausserhalb der Fachmodule
 
-Diese Trennung ist verbindlich.
-
----
-
-## 1. App-Kern
-
-Der App-Kern enthält alles, was unabhängig von einem konkreten Fachmodul gebraucht wird.
-
-Dazu gehören insbesondere:
-
-- App-Start und Bootstrap
-- App-Shell / Grundlayout
-- Modulregistrierung
-- Navigation-Grundgerüst
-- Screen-Host / Routing-Grundmechanik
-- globaler Projektkontext
-- globale App-Einstellungen
-- Lizenzierung
-- gemeinsame technische Dienstschnittstellen
-
-Der App-Kern darf keine unnötige Fachlogik einzelner Module enthalten.
-
-Insbesondere gehören nicht in den App-Kern:
-
-- TOP-Regeln
-- Protokoll-Abschlusslogik
-- Restarbeiten-Fachlogik
-- modulinterne Spezialdialoge
-- modulinterne Bearbeitungslogik
+Der Umbau erfolgt:
+- konservativ
+- paketweise
+- ohne unnoetige Grossumbauten
+- ohne kuenstliche Plattformmechanik
 
 ---
 
-## 2. Gemeinsame Domänen / Stamm
+## 2. Zielbild des modularen Betriebs
 
-Gemeinsame Domänen enthalten fachliche Grundlagen, die von mehreren Modulen genutzt werden.
+Der modulare Umbau dient nicht nur saubererer Code-Struktur, sondern einem klaren Betriebsziel.
 
-Dazu gehören voraussichtlich:
+Die App soll kontrolliert mit unterschiedlichem aktivem Modulumfang laufen koennen.
 
-- Firmen
-- Mitarbeiter / Beteiligte
-- Projekte
-- weitere gemeinsame Stammdaten
+Insbesondere bedeutet das:
+- Betrieb nur mit `Protokoll`
+- Betrieb nur mit `Restarbeiten`
+- Betrieb mit `Protokoll` und `Restarbeiten` zusammen
+- spaetere Erweiterbarkeit auf weitere Module, ohne den Kern kuenstlich zur Plattform auszubauen
 
-Diese Bereiche gehören nicht in ein einzelnes Fachmodul, wenn sie modulübergreifend benötigt werden.
-
----
-
-## 3. Gemeinsame Dienste / Addons
-
-Gemeinsame Dienste liefern technische oder modulübergreifende Fähigkeiten.
-
-Dazu gehören voraussichtlich:
-
-- Mailversand
-- Drucken
-- PDF-Infrastruktur
-- Export
-- Diktat / Whisper
-- weitere technische Zusatzfunktionen
+Die Aktivierung von Modulen erfolgt nicht ueber beliebige UI-Schalter, sondern ueber die fachlich vorgesehene Freigabelogik, insbesondere ueber Lizenz- oder Produktfreigaben.
 
 Wichtig:
-
-Die technische Fähigkeit gehört in gemeinsame Dienste.
-Die fachliche Inhaltserzeugung bleibt im jeweiligen Fachmodul.
-
-Beispiel:
-
-- wie ein PDF erzeugt, gespeichert oder gedruckt wird = gemeinsamer Dienst
-- welche Daten im Protokoll-PDF stehen = Modul `Protokoll`
-- welche Daten in einer Restarbeiten-Ausgabe stehen = Modul `Restarbeiten`
-
-Gemeinsame Dienste sind keine Fachmodule.
+- nicht freigegebene Module sollen im Rahmen des aktuellen Ausbaustands sauber nicht aktiviert sein
+- Router, Navigation, Modul-/Screen-Aufloesung und Moduleinstiege muessen sich am aktiven freigegebenen Modulumfang orientieren
+- die dafuer noetige Aktivierungslogik gehoert in den App-Kern und den Modulrahmen
+- die Fachlogik selbst bleibt in den Modulen
 
 ---
 
-## 4. Fachmodule
+## 3. Zielstruktur
 
-Fachmodule enthalten konkrete fachliche Arbeitslogik.
+Die Zielstruktur trennt sich in diese Bereiche:
 
-Beispiele:
+### 3.1 App-Kern / Modulrahmen
+Hier liegen:
+- Router / Shell
+- Modulkatalog
+- Modul-/Screen-Aufloesung
+- modulbezogene Navigation
+- Aktivierungslogik freigegebener Module
 
+### 3.2 Gemeinsame Domaenen / gemeinsame Dienste / gemeinsame Kernbausteine
+Hier liegt, was mehreren Modulen oder dem Bearbeitungskern dient, ohne selbst Fachmodul zu sein.
+
+Dazu koennen insbesondere gehoeren:
+- gemeinsame Domaenen wie Firmen, Projekte, Mitarbeiter/Beteiligte, wenn sie moduluebergreifend gebraucht werden
+- gemeinsame Dienste / Addons wie Mail, Drucken, PDF, Export, Whisper
+- wiederverwendbare Bearbeitungskerne und neutrale Feldbausteine
+
+### 3.3 Fachmodule
+Aktuell relevante Fachmodule:
 - `Protokoll`
 - `Restarbeiten`
-- `Mängelmanagement`
-- weitere spätere Module
 
-Ein Fachmodul enthält insbesondere:
+Diese bleiben fachlich getrennt.
 
-- Screens
-- Komponenten
-- modulinterne Dialoge
-- Domain-Logik
-- State
-- ViewModels
-- modulinterne Datenzugriffe
-- fachliche Regeln
-- modulbezogene Ausgabeinhalte
+`TopsScreen` ist **nicht** das Modul `Protokoll`, sondern nur der Arbeitsscreen fuer die Protokollerstellung innerhalb des Moduls `Protokoll`.
 
-Fachlogik bleibt in Fachmodulen.
+Die heutige TOP-Workbench ist **nicht automatisch** der globale Standard fuer andere Module.
 
 ---
 
-## Das Modul `Protokoll`
+## 4. Dauerhafte Leitplanken
 
-`Protokoll` ist ein Fachmodul.
+Bei allen Umbauten gelten dauerhaft diese Leitplanken:
 
-Es enthält die gesamte Protokoll-Fachlichkeit, insbesondere:
-
-- Protokollübersichten
-- Protokollverwaltung
-- Teilnehmerbezug im Protokollkontext
-- TOP-/Protokollregeln
-- Abschlusslogik
-- protokollbezogene Ausgabe
-- den Arbeitsscreen für die Protokollerstellung
-
-### Rolle von `TopsScreen`
-
-`TopsScreen` ist **nicht** das Modul `Protokoll`.
-
-`TopsScreen` ist nur ein Screen innerhalb des Moduls `Protokoll`, genauer:
-der Arbeitsscreen für die Protokollerstellung.
-
-Diese Unterscheidung ist verbindlich.
-
-Es gilt also:
-
-- `TopsScreen` = Screen
-- `Protokoll` = Fachmodul
-- `Restarbeiten` = anderes Fachmodul
-- BBM = App-Plattform, die Fachmodule trägt
+- keine neue Zielarchitektur pro Chat erfinden
+- keine kuenstliche Plattform-Engine
+- keine allgemeine Discovery-/Registry-Architektur im grossen Stil
+- kein abrupter Komplettumbau
+- keine aggressive Massenmigration
+- keine vorschnelle Generalisierung von Fachlogik
+- bestehende Funktionalitaet bleibt erhalten
+- Uebergaenge duerfen voruebergehend bestehen, muessen aber bewusst und ehrlich benannt bleiben
 
 ---
 
-## Das Modul `Restarbeiten`
+## 5. Was ausserhalb der Fachmodule bleiben soll
 
-`Restarbeiten` ist ein eigenes Fachmodul.
+Ausdruecklich ausserhalb der Fachmodule bleiben:
+- gemeinsamer Bearbeitungskern
+- gemeinsame Domaenen
+- gemeinsame Dienste
+- App-Kern
+- Router / Shell
+- Modulkatalog
+- Modul-/Screen-Aufloesung
 
-Es darf nicht als Unterbereich des Moduls `Protokoll` gedacht oder gebaut werden.
-
-Es soll fachlich und technisch so aufgebaut werden, dass es:
-
-- allein betrieben werden kann
-- gemeinsam mit `Protokoll` betrieben werden kann
-- dieselben gemeinsamen Domänen und Dienste nutzen kann, ohne in Protokollstrukturen zu hängen
-
-### Fachlicher Schnitt von `Restarbeiten`
-
-`Restarbeiten` umfasst die fachliche Arbeit an offenen Arbeiten, offenen Punkten und deren Nachverfolgung.
-
-Dazu gehören insbesondere:
-
-- eine eigene Übersicht und ein eigener Arbeitsscreen für offene Arbeiten
-- die fachliche Sicht auf offene Arbeiten über Projekt- und Protokollgrenzen hinweg
-- eigene Filter-, Listen-, Bearbeitungs- und Abschlussregeln für offene Arbeiten
-- eigene Ausgabeinhalte für Restarbeiten, soweit sie fachlich nicht Protokollausgabe sind
-
-Nicht zu `Restarbeiten` gehören:
-
-- Protokollkopf, Protokollnummer, Teilnehmerbezug und Protokollabschluss
-- TOP-Hierarchie, TOP-Nummerierung und TOP-spezifische Bearbeitungsregeln
-- der Protokoll-Arbeitsscreen `TopsScreen` und die konkrete Protokoll-Workbench
-- Protokoll-PDF, Protokoll-Mailfluss und andere ausdrücklich protokollbezogene Ausgabeabläufe
-
-`Restarbeiten` darf offene Arbeiten aus dem Protokollkontext nutzen oder ableiten,
-ist aber fachlich nicht nur eine Unteransicht des Moduls `Protokoll`.
-
-### Abgrenzung zu gemeinsamen Bausteinen
-
-Außerhalb von `Restarbeiten` bleiben ausdrücklich:
-
-- gemeinsamer Bearbeitungskern wie Editbox-Kern, generische Zustandslogik und wiederverwendbare Metafeldbausteine
-- gemeinsame Domänen wie Projekte, Firmen und Mitarbeiter/Beteiligte
-- gemeinsame Dienste wie Mail, Druck, PDF-Infrastruktur und Diktat/Whisper
-- App-Kern, Router, Shell, Modulkatalog, Screen-Auflösung und modulbezogene Navigation
-
-`Restarbeiten` nutzt diese Bausteine, besitzt aber eigene Fachregeln, eigene fachliche Screens und eigene Arbeitsabläufe.
+Fachlogik soll nicht aus Bequemlichkeit in diese Bereiche zurueckgezogen werden.
 
 ---
 
-## Wiederverwendbare Bearbeitungsbausteine
+## 6. Was architektonisch nicht passieren soll
 
-Die App darf gemeinsame Bearbeitungsmuster und gemeinsame Kernbausteine besitzen.
-
-Dabei gilt verbindlich:
-
-- wiederverwendet werden sollen Kernbausteine
-- nicht wiederverwendet werden soll fachmodulspezifische Bearbeitungslogik als versteckter Standard für andere Module
-
-### Einordnung der heutigen Editbox / Workbench-Idee
-
-Die heutige Bearbeitungsfläche im `TopsScreen` ist nicht als Ganzes ein allgemeiner App-Baustein.
-
-Sie besteht aus drei Ebenen:
-
-1. **generischer Kern**
-   - Textbearbeitung
-   - Zustandslogik
-   - Counter / Textregeln
-   - Meta-Slot-Prinzip
-
-2. **wiederverwendbare Fachkernfelder**
-   - Verantwortlich
-   - Status / Fertig-bis / Ampel
-   - ggf. weitere allgemeine Metafelder
-
-3. **modulspezifische Workbench-Logik**
-   - TOP-spezifische Aktionen
-   - TOP-spezifische Draft-Struktur
-   - TOP-spezifische Regeln
-   - TOP-spezifische Meta-Kopplung
-
-### Verbindliche Konsequenz
-
-- generische Editbox-Bausteine bleiben in gemeinsamen Kernbereichen
-- wiederverwendbare Metafelder bleiben in gemeinsamen Kernbereichen
-- modulspezifische Workbenches bleiben in den Fachmodulen
-
-Das bedeutet:
-
-- das Bedienmuster darf wiederverwendet werden
-- die Fachlogik darf nicht einfach aus einem Modul ins andere kopiert werden
-
-Beispiel:
-
-- Modul `Protokoll` → eigene `ProtokollWorkbench`
-- Modul `Restarbeiten` → eigene `RestarbeitenWorkbench`
-
-Nicht gewollt ist, dass die heutige TOP-Workbench stillschweigend zum globalen Standard für alle späteren Module wird.
+Nicht ohne klares Paket und klare Begruendung:
+- Fachlogiken vermischen
+- Plattformmechanik vorziehen
+- breite Navigationserweiterung ohne konkretes Paket
+- neue globale Registry-Logik im grossen Stil
+- aggressive Altpfadbereinigung
+- Massenmigration
+- Doku oder Struktur schoenreden, wenn der technische Stand das noch nicht traegt
 
 ---
 
-## Modul-Sicht auf die App
+## 7. Zielkriterium fuer einen wesentlichen Modularisierungszustand
 
-Die App ist nicht mehr als „Protokoll-App mit Anbauten“ zu verstehen.
+Ein wesentlicher Zielzustand ist nicht schon deshalb erreicht, weil Code nur in Modulordner verschoben wurde.
 
-Die richtige Sicht ist:
+Ein tragfaehiger Zustand ist erst dann erreicht, wenn der Modulrahmen fachlich und technisch tragen kann, dass:
+1. `Protokoll` fuer sich freigegeben betrieben werden kann
+2. `Restarbeiten` fuer sich freigegeben betrieben werden kann
+3. beide Module gemeinsam betrieben werden koennen
+4. nicht freigegebene Module im Rahmen des aktuellen Ausbaustands sauber nicht aktiviert sind
+5. Router, Navigation, Modul-/Screen-Aufloesung und Moduleinstiege auf diesen aktiven Modulumfang korrekt reagieren
 
-- Die App trägt Fachmodule.
-- Fachmodule nutzen gemeinsame Grundlagen.
-- Fachmodule sind fachlich getrennt.
-- Gemeinsame Infrastruktur bleibt außerhalb der Fachmodule.
-
----
-
-## Aktueller dokumentierter Umsetzungsstand
-
-Der aktuell erreichte Stand ist ein konservativ modularisierter Zwischenstand.
-
-Heute gilt sichtbar:
-
-- `Protokoll` besitzt einen echten Moduleinstieg unter `src/renderer/modules/protokoll/`
-- `Restarbeiten` besitzt einen echten Moduleinstieg unter `src/renderer/modules/restarbeiten/`
-- der App-Kern fuehrt beide Module ueber einen kleinen statischen Modulkatalog
-- der App-Kern besitzt eine kleine Modul-/Screen-Aufloesung
-- der gemeinsame Bearbeitungskern bleibt ausserhalb der Fachmodule in `src/renderer/core/`
-
-Produktiv nutzbar vorbereitet ist insbesondere:
-
-- `Protokoll` als weiter genutztes Fachmodul mit angebundenem Arbeitsscreen
-- `Restarbeiten` als eigenes Fachmodul mit eigener kleiner Workbench und eigenem Screen-Anker
-- das Nebeneinander beider Module im Katalog und in der Screen-Aufloesung
-
-Bewusst noch Uebergang bleiben derzeit:
-
-- `src/renderer/modules/protokoll/screens/TopsScreen.js` ist jetzt die technische Heimat des Arbeitsscreens im Modul `Protokoll`
-- `src/renderer/views/TopsScreen.js` bleibt als Uebergangs- und Kompatibilitaetsschicht fuer Altimporte bestehen
-- ein erheblicher Teil des Protokoll-Unterbaus liegt weiter unter `src/renderer/tops/`
-- die produktive modulbezogene Navigation ist bisher nur klein und im Wesentlichen fuer `Protokoll` angeschlossen
-- `Restarbeiten` ist noch nicht produktiv ueber Router und Navigation verdrahtet
-- weitere Restmischzonen und Altpfade sind noch vorhanden und werden nur schrittweise abgebaut
-
-Dieser Stand ist bewusst kein Vollabschluss der Zielarchitektur.
-Er ist ein belastbarer Zwischenstand, in dem Modulgrenzen, gemeinsame Kernbausteine
-und kleine Kernmechaniken bereits sichtbar sind, waehrend breitere Integration und
-Restabbau noch offen bleiben.
-
----
-
-## Zielstruktur
-
-Die Zielstruktur der Anwendung folgt dieser Grundordnung:
-
-```text
-src/
-  main/
-    app/
-    ipc/
-    services/
-    settings/
-    licensing/
-
-  renderer/
-    app/
-      bootstrap/
-      shell/
-      navigation/
-      routing/
-      context/
-      modules/
-
-    stamm/
-      firmen/
-      mitarbeiter/
-      projekte/
-
-    addons/
-      mail/
-      print/
-      pdf/
-      whisper/
-      export/
-
-    modules/
-      protokoll/
-        screens/
-        components/
-        domain/
-        data/
-        state/
-        viewmodel/
-        dialogs/
-        rules/
-
-      restarbeiten/
-        screens/
-        components/
-        domain/
-        data/
-        state/
-        viewmodel/
-        dialogs/
-        rules/
-
-      weitere-module/
-
-    ui/
-      components/
-      overlays/
-      layout/
-
-    shared/
-      utils/
-      date/
-      text/
-      validation/
-
-    core/
-      editbox/
-      responsible/
-      status-ampel/
-      textregeln/
-      weitere-kernbausteine/
+Die dafuer noetige Freigabelogik gehoert in den App-Kern und den Modulrahmen.
+Die Fachlogik bleibt in den Modulen.

@@ -1,125 +1,95 @@
-﻿# AGENTS.md
+# AGENTS.md
 
 ## Zweck
 
-Diese Datei ist die allgemeine Arbeitsgrundlage fuer Codex in diesem Repo.
+Diese Datei regelt den **operativen Arbeitsmodus fuer Codex** in diesem Repo.
 
-Sie soll den wiederkehrenden Arbeitsmodus direkt im Repo verankern, damit Grundregeln nicht in jedem Prompt neu erklaert werden muessen.
+Sie ist **kein** Architekturhandbuch, **kein** Planersatz und **keine** Einstiegsdatei fuer neue Chats.
 
-Diese Datei definiert **nicht** die gesamte Architektur im Detail.
-Fuehrende Grundlagen bleiben:
-
+Fuehrend bleiben:
 1. `ZUERST_LESEN_Codex.md`
 2. `ARCHITECTURE.md`
 3. `docs/MODULARISIERUNGSPLAN.md`
 
-Wenn Aussagen aus dieser Datei dazu im Widerspruch stehen, gelten die oben genannten Dateien.
+Wenn Aussagen aus `AGENTS.md` dazu im Widerspruch stehen, gelten die drei Dateien oben.
 
 ---
 
-## Grundsatz
+## Aufgabe dieser Datei
 
-Dieses Repo wird kontrolliert, paketweise und ohne unnoetige Grossumbauten weiterentwickelt.
+`AGENTS.md` beantwortet nur diese Fragen:
 
-Allgemein gilt:
+- Wie setzt Codex ein Paket praktisch um?
+- Wie klein muessen Pakete geschnitten werden?
+- Welche Standardpruefungen gelten?
+- Wie soll die Rueckgabe aussehen?
+- Wann muss Codex stoppen statt blind weiterzubauen?
+- Wie laeuft Git pro Paket?
 
-* immer nur **ein sinnvolles Paket**
-* kleine, klar begrenzte Aenderungen
-* keine neue Zielarchitektur erfinden
-* keine unnoetigen Nebenumbauten
-* bestehendes Verhalten nicht leichtfertig beschaedigen
-* aktive Uebergangszustaende ehrlich benennen, nicht schoenreden
+Alles andere gehoert nicht fuehrend in diese Datei.
 
 ---
 
 ## Arbeitsmodus fuer Codex
 
-Vor jeder Umsetzung:
+Codex arbeitet immer paketweise.
 
-1. zuerst `ZUERST_LESEN_Codex.md` lesen
-2. dann `ARCHITECTURE.md` lesen
-3. dann `docs/MODULARISIERUNGSPLAN.md` lesen
-4. nur die weiteren Dateien lesen, die fuer das konkrete Paket wirklich noetig sind
+Dabei gilt:
 
-Dann:
+- immer nur **ein** aktives Paket
+- nur der beauftragte Schritt wird umgesetzt
+- keine Parallelbaustellen
+- keine spaeteren Schritte vorziehen
+- nur wenige, eng zusammenhaengende Dateien aendern
+- keine verdeckten Nebenumbauten
 
-1. das Paket klar einordnen
-2. die Paketgrenzen einhalten
-3. nur die beauftragten Bereiche aendern
-4. keine stillen Strukturbrueche oder Parallelpfade einfuehren
-
----
-
-## Harte Regeln
-
-Codex soll:
-
-* immer nur das beauftragte Paket bearbeiten
-* Aenderungen auf wenige, eng zusammenhaengende Dateien begrenzen
-* keine neue Architektur erfinden
-* keine konkurrierenden neuen Leitlinien aufbauen
-* keine grossen Umbenennungen oder Verschiebungen ohne klaren Auftrag ausloesen
-* Doku nicht schoener schreiben als den echten technischen Stand
-* bei Doku-Paketen nur minimale, gezielte Textaenderungen machen
-* offene Risiken klar benennen
-
-Codex soll **nicht**:
-
-* aus einem kleinen Paket einen Rundumschlag machen
-* Router, Shell, IPC oder Modulrahmen breit umbauen, wenn das nicht explizit Teil des Pakets ist
-* Fachlogik aus Bequemlichkeit in den Kern ziehen
-* allgemeine Plattformmechanik, Discovery oder Registry-Logik vorziehen
-* aus Altbestand stillschweigend eine neue Zielstruktur behaupten
+Wenn ein Auftrag zu gross, zu unklar oder zu breit ist:
+- nicht blind anfangen
+- den Auftrag als zu gross benennen
+- das kleinste sinnvolle Teilpaket vorschlagen
 
 ---
 
-## Paketdenken
-
-Jede Arbeit ist genau einem Paket zuzuordnen.
+## Paketregeln
 
 Ein Paket ist nur dann sauber genug, wenn:
 
-* es ein klares Ziel hat
-* es klar benannte betroffene Dateien hat
-* es klare Nicht-Ziele hat
-* es in wenigen zusammenhaengenden Aenderungen bearbeitbar ist
-* es nicht gleichzeitig mehrere Baustellen vermischt
+- Ziel klar benannt ist
+- primaer betroffene Dateien klar benannt sind
+- Nicht-Ziele klar benannt sind
+- der Eingriff klein und pruefbar bleibt
+- der Zweck eindeutig ist
 
-Wenn ein Paket zu gross oder unklar ist:
+Nicht erlaubt:
 
-* nicht blind anfangen
-* stattdessen das kleinste sinnvolle Teilpaket benennen
+- aus einem kleinen Paket einen Rundumschlag machen
+- spaetere Schritte vorziehen
+- Paketgrenzen still aufweichen
+- fachfremde Nebenreparaturen ohne Auftrag mitziehen
 
-Neue Pakete duerfen nur aus `ARCHITECTURE.md` und `docs/MODULARISIERUNGSPLAN.md` abgeleitet werden.
+---
 
-Vor jeder Paketwahl ist zuerst das relevante Endziel in `ARCHITECTURE.md` und dann der dazu passende offene Planschritt in `docs/MODULARISIERUNGSPLAN.md` zu benennen.
+## Harte Ausfuehrungsgrenzen
 
-Spontane Einzelideen, lokale Code-Schoenheitskorrekturen oder isolierte technische Kleinverbesserungen reichen als Paketbegruendung nicht aus.
+Codex soll nicht:
 
-Vor jeder neuen Paketwahl ist zusaetzlich zuerst ein 3-Schritte-Kurzfahrplan aus `ARCHITECTURE.md` und `docs/MODULARISIERUNGSPLAN.md` abzuleiten:
-1. naechster echter Schritt
-2. sinnvoller Folgeschritt
-3. naechster Entblocker danach
+- neue Architektur erfinden
+- Discovery-, Registry- oder Plattformlogik vorziehen
+- Router, Shell oder IPC breit umbauen, wenn das nicht ausdruecklich Teil des Pakets ist
+- Fachlogik aus Bequemlichkeit in den Kern ziehen
+- Altbestand aggressiv im grossen Stil bereinigen
+- Doku schoener schreiben als den echten technischen Stand
 
-Nur Schritt 1 darf aktiv in ein Paket und einen Prompt uebersetzt werden.
-
-Schritt 2 und 3 sind nur Orientierung und muessen nach Abschluss von Schritt 1 neu geprueft werden.
-
-Codex darf keine Prompt-Stapel fuer alle 3 Schritte als feste Abarbeitung behandeln.
-
-Die Arbeitsmatrix des Modularumbaus besteht fuer Codex verbindlich aus genau 6 Containern.
-
-Codex darf keine zusaetzlichen Container einfuehren.
-
-Bestehende Container duerfen nicht ohne eigenes Doku-/Planpaket aufgespalten, umbenannt oder neu geordnet werden.
-
-Aenderungen an der Containerstruktur gehoeren ausschliesslich in ein eigenes Doku-/Planpaket in Container 1.
+Wenn ein Paket in Wahrheit groesseren Umbau ausloest:
+- stoppen
+- Problemursache klar benennen
+- kleinstes sinnvolles Folgepaket vorschlagen
 
 ---
 
 ## Git-Regeln pro Paket
 
-Jedes Paket soll auch git-seitig klar getrennt bearbeitet werden.
+Jedes Paket soll auch git-seitig sauber getrennt bearbeitet werden.
 
 Dabei gilt:
 
@@ -133,37 +103,16 @@ Dabei gilt:
 
 Vor der Abnahme eines Pakets mindestens pruefen:
 
-* `git status`
-* `git diff --stat`
-* `git diff`
+- `git status`
+- `git diff --stat`
+- `git diff`
 
 Nicht gewollt sind:
 
-* mehrere Pakete in einem Branch
-* neue Arbeit auf unsauberem Git-Stand
-* Commit oder Merge ohne vorherige Pruefung
-* Sammel-Branches fuer verschiedene Paketarten
-
-Nicht-Ziele:
-
-* keine neue Git-Datei anlegen
-* keine Aenderung anderer Dateien
-* keine Ausweitung zu einer grossen Git-Dokumentation
-* keine Aenderung des restlichen Arbeitsmodus
-
-Pruefkriterien:
-
-* `AGENTS.md` enthaelt einen kurzen, klaren Git-Block fuer den paketweisen Arbeitsmodus
-* der Git-Block ist logisch passend eingeordnet
-* keine anderen Teile von `AGENTS.md` wurden unnötig umgebaut
-* keine weiteren Dateien wurden geaendert
-
-Gewuenschte Ausgabe:
-
-* Liste der geaenderten Dateien
-* kurzer Hinweis, wo der Git-Block in `AGENTS.md` eingefuegt wurde
-* Hinweis, ob beim Einbau eine logisch bessere Position als erwartet gewaehlt wurde
-* `git diff -- AGENTS.md`
+- mehrere Pakete in einem Branch
+- neue Arbeit auf unsauberem Git-Stand
+- Commit oder Merge ohne vorherige Pruefung
+- Sammel-Branches fuer verschiedene Paketarten
 
 ---
 
@@ -171,175 +120,111 @@ Gewuenschte Ausgabe:
 
 Wenn fuer das Paket sinnvoll und technisch moeglich, gelten diese repo-weiten Standardkommandos:
 
-* Start: `npm start`
-* Lint: `npm run lint`
-* Tests: `npm test`
+- Start: `npm start`
+- Lint: `npm run lint`
+- Tests: `npm test`
 
 Bei kleinen Doku-Paketen reichen in der Regel:
 
-* relevante Doku-Pruefung
-* `git status`
-* `git diff --stat`
-* `git diff`
+- relevante Doku-Pruefung
+- `git status`
+- `git diff --stat`
+- `git diff`
 
-Bei kleinen Strukturpaketen mindestens pruefen:
+Bei kleinen Struktur- oder Modulpaketen mindestens pruefen:
 
-* `git status`
-* `git diff --stat`
-* `git diff`
-* zusaetzlich die kleinsten sinnvoll passenden Tests oder Checks fuer den betroffenen Bereich
+- `git status`
+- `git diff --stat`
+- `git diff`
+- zusaetzlich die kleinsten sinnvoll passenden Tests oder Checks fuer den betroffenen Bereich
 
 Wenn ein kompletter App-Start, Lint oder Gesamttest fuer das kleine Paket nicht sinnvoll ist:
 
-* nicht blind alles laufen lassen
-* klar benennen, was bewusst nicht geprueft wurde und warum
+- nicht blind alles laufen lassen
+- klar benennen, was bewusst nicht geprueft wurde und warum
 
 Checks nicht erfinden.
 Nur reale im Repo vorhandene und zum Paket passende Kommandos verwenden.
 
-Nicht-Ziele:
-
-* keine neue Teststrategie definieren
-* keine Ausweitung zu einer grossen Build-/Test-Dokumentation
-* keine Aenderung anderer Dateien
-* keine Aenderung des restlichen Arbeitsmodus
-
-Pruefkriterien:
-
-* `AGENTS.md` enthaelt einen kurzen, klaren Block fuer Standardkommandos und Mindestpruefung
-* nur reale im Repo vorhandene Standardkommandos werden genannt
-* der Block ist logisch passend eingeordnet
-* keine weiteren Dateien wurden geaendert
-
-Gewuenschte Ausgabe:
-
-* Liste der geaenderten Dateien
-* kurzer Hinweis, wo der neue Block in `AGENTS.md` eingefuegt wurde
-* Hinweis, ob beim Einbau eine logisch bessere Position als erwartet gewaehlt wurde
-* `git diff -- AGENTS.md`
-
 ---
 
-## Doku- und Planpflicht
+## Doku- und Planpflege
 
-Wenn ein Paket den dokumentierten Stand real veraendert, ist zu pruefen, ob auch Doku oder Plan angepasst werden muessen.
+Wenn ein Paket den dokumentierten Stand real veraendert, ist zu pruefen, ob Doku oder Plan mitgezogen werden muessen.
 
 Dabei gilt:
 
-* `docs/MODULARISIERUNGSPLAN.md` ist die fuehrende operative Planungsgrundlage
-* `MODULARISIERUNGSSTATUS.md` darf nur angepasst werden, wenn sich der reale Status wirklich veraendert
-* keine konkurrierenden Parallelplaene anlegen
-* keine Doku-Aussagen einfuehren, die technisch noch nicht erreicht sind
+- `docs/MODULARISIERUNGSPLAN.md` ist die fuehrende operative Planungsgrundlage
+- keine konkurrierenden Parallelplaene anlegen
+- keine Doku-Aussagen einfuehren, die technisch noch nicht erreicht sind
 
 Wenn keine echte Statusaenderung vorliegt:
-
-* Doku nicht unnoetig anfassen
-
----
-
-## Sonderfall Protokoll-Arbeitsscreen
-
-Der Protokoll-Arbeitsscreen ist ein fachlich wichtiger Sonderpfad.
-
-Dabei gilt:
-
-* `TopsScreen` ist der aktuelle Arbeitsscreen
-* `Protokoll` ist das Fachmodul
-* alter Bestand kann noch als Uebergang vorhanden sein
-* Uebergangszonen duerfen nicht schoengefaerbt werden
-* kein grosser Komplettumbau in einem Zug
-* sichtbarer Ballast soll reduziert werden
-* Arbeitsfluss geht vor Technikshow
-
-Bei Arbeit am Protokoll-Arbeitsscreen besonders beachten:
-
-* kein Dashboard-Ansatz
-* keine unnoetige Zusatznavigation
-* keine Rueckkehr von Sidebar- oder Header-Ballast
-* fachlich bewaehrtes Verhalten erhalten
-* nur klar begrenzte sichtbare oder strukturelle Teilpakete bearbeiten
+- Doku nicht unnoetig anfassen
 
 ---
 
 ## Ergebnisformat fuer jede Aufgabe
 
-Jede Antwort von Codex soll enthalten:
+Jede Rueckgabe von Codex soll enthalten:
 
 ### Ergebnis
-
-* Was wurde geaendert?
-* Welche Dateien wurden geaendert?
-* Welcher Bereich ist betroffen?
-* Warum ist die Aenderung sinnvoll?
+- Was wurde geaendert?
+- Welche Dateien wurden geaendert?
+- Warum ist die Aenderung sinnvoll?
 
 ### Pruefungen
-
-* Welche Checks wurden ausgefuehrt?
-* Was war erfolgreich?
-* Was war nicht moeglich oder fehlgeschlagen?
+- Welche Checks wurden ausgefuehrt?
+- Was war erfolgreich?
+- Was war nicht moeglich oder fehlgeschlagen?
 
 ### Risiken / offen
-
-* Welche Unsicherheiten bleiben?
-* Welche Randfaelle wurden nicht geprueft?
-* Was sollte als Naechstes kontrolliert werden?
+- Welche Unsicherheiten bleiben?
+- Welche Randfaelle wurden nicht geprueft?
+- Was sollte als Naechstes kontrolliert werden?
 
 ### Manueller Check fuer Nicht-Entwickler
-
-* 3 bis 6 einfache Schritte, um die Aenderung zu pruefen
+- 3 bis 6 einfache Schritte, um die Aenderung zu pruefen
 
 ### Kurzfazit
-
-* Status: `FERTIG` / `TEILWEISE FERTIG` / `BLOCKIERT`
-* Ein Satz mit Begruendung
+- Status: `FERTIG` / `TEILWEISE FERTIG` / `BLOCKIERT`
+- Ein Satz mit Begruendung
 
 ---
 
-## Stoppregeln
+## Stopregeln
 
 Stoppen und klar melden, wenn:
 
-* das Paket ploetzlich deutlich groesser wird als beauftragt
-* Router, Shell, IPC oder Modulrahmen unerwartet breit betroffen sind
-* fachliche Zuordnung unklar wird
-* die Aenderung eine neue Architekturentscheidung erzwingen wuerde
-* der Bildschirm unruhiger oder voller statt klarer wird
-* Build, Tests oder zentrale Checks fehlschlagen
+- das Paket deutlich groesser wird als beauftragt
+- der primaere Zweck des Pakets kippt
+- ein versteckter Grossumbau entsteht
+- Router, Shell, IPC oder Modulrahmen unerwartet breit betroffen sind
+- die Stabilitaet der bestehenden Funktion unklar wird
+- Pruefungen fehlschlagen und nicht mit kleinem lokalem Fix geklaert werden koennen
+- Ziel, Plan und realer Repo-Stand nicht sauber zusammenpassen
 
-Dann:
+Dann gilt:
 
-* nicht blind weiterbauen
-* Problemursache klar benennen
-* kleinstes sinnvolles Folgepaket oder Nacharbeitspaket vorschlagen
+- nicht blind weiterbauen
+- Problemursache klar benennen
+- kleinstes sinnvolles Folge- oder Nacharbeitspaket vorschlagen
 
 ---
 
-## Ziel dieser Datei
+## Skills
 
-Diese Datei soll Grundregeln wiederholbar machen.
+Wenn passende Repo-Skills vorhanden sind, sollen sie genutzt werden.
 
-Sie soll Prompts kuerzer und Codex-Laeufe konsistenter machen.
+Der Skill ersetzt aber nicht:
+- Paketgrenzen
+- Pruefpflicht
+- ehrliche Risikobewertung
+- Stopregeln
 
-Sie ersetzt nicht die Architektur- und Planungsdokumente, sondern sorgt dafuer, dass Codex im Repo jedes Paket mit demselben Arbeitsmodus beginnt.
+---
 
-Nicht-Ziele:
+## Zielzustand dieser Datei
 
-* keine Aenderung anderer Dateien
-* keine neue Architektur formulieren
-* keine neue Planstruktur einziehen
-* keine stillen Zusatzregeln erfinden
-* keine Rueckkehr zu `TopsView` als fuehrendem Sonderfall
+`AGENTS.md` soll ein **reines Codex-Ausfuehrungsmanual** sein.
 
-Pruefkriterien:
-
-* `AGENTS.md` ist nachher allgemeine Repo-Arbeitsgrundlage statt veralteter `TopsView`-Sondertext
-* `TopsScreen` ist korrekt als aktueller Arbeitsscreen benannt
-* der allgemeine Arbeitsmodus ist fuer Doku-, Struktur- und Fachpakete nutzbar
-* keine weiteren Dateien wurden geaendert
-
-Gewuenschte Ausgabe:
-
-* Liste der geaenderten Dateien
-* kurze Beschreibung, wie die alte `TopsView`-Zentrierung ersetzt wurde
-* Hinweis, ob beim Ersetzen noch ein aktueller Begriff oder Verweis in `AGENTS.md` unklar geblieben ist
-* `git diff -- AGENTS.md`
+Nicht mehr und nicht weniger.
