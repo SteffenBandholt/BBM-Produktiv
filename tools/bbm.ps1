@@ -52,6 +52,64 @@ function Show-BbmProof {
     }
 }
 
+function Show-BbmPromptBlock {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$PackageName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Container,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Goal,
+
+        [Parameter(Mandatory = $true)]
+        [string[]]$NonGoals,
+
+        [Parameter(Mandatory = $true)]
+        [string]$BranchName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$CodexModel,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Reasoning,
+
+        [Parameter(Mandatory = $true)]
+        [string]$Justification
+    )
+
+    Write-Output "### Repo-Abgleich"
+    Write-Output "* noch offen"
+    Write-Output "* vor Paketstart nicht geprueft"
+    Write-Output ""
+    Write-Output "### 3-Schritte-Kurzfahrplan"
+    Write-Output "1. ..."
+    Write-Output "2. ..."
+    Write-Output "3. ..."
+    Write-Output ""
+    Write-Output "### Aktives Paket"
+    Write-Output "- Paketname: $PackageName"
+    Write-Output "- Container: $Container"
+    Write-Output "- Ziel: $Goal"
+    Write-Output "- Nicht-Ziele:"
+
+    foreach ($nonGoal in $NonGoals) {
+        Write-Output "  * $nonGoal"
+    }
+
+    Write-Output ""
+    Write-Output "## Git-Start"
+    Write-Output "git switch main"
+    Write-Output "git pull"
+    Write-Output "git switch -c $BranchName"
+    Write-Output ""
+    Write-Output "## Codex-Empfehlung"
+    Write-Output "Codex-Modell: $CodexModel"
+    Write-Output "Reasoning: $Reasoning"
+    Write-Output "Begruendung: $Justification"
+}
+
 function Complete-BbmPackage {
     param(
         [Parameter(Mandatory = $true)]
