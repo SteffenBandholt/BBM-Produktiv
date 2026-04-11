@@ -9,6 +9,7 @@ import { TopsWorkbench } from "../../../tops/components/TopsWorkbench.js";
 import { TopsList } from "../../../tops/components/TopsList.js";
 import { TopsHeader } from "../../../tops/components/TopsHeader.js";
 import { TopsViewDialogs } from "../../../features/dialogs/TopsViewDialogs.js";
+import { ensureProtokollModuleStyles } from "../styles.js";
 import {
   buildHeaderState,
   buildListItemsFromState,
@@ -20,18 +21,6 @@ import {
   shouldShowWorkbench,
 } from "../viewmodel/TopsScreenViewModel.js";
 import { buildWorkbenchVm } from "../viewmodel/TopsWorkbenchViewModel.js";
-
-const TOPS_V2_STYLE_TAG = "bbm-tops-v2-styles";
-
-function ensureTopsV2Styles() {
-  if (typeof document === "undefined") return;
-  if (document.querySelector(`link[data-${TOPS_V2_STYLE_TAG}="true"]`)) return;
-  const link = document.createElement("link");
-  link.rel = "stylesheet";
-  link.href = new URL("../../../tops/styles/tops.css", import.meta.url).href;
-  link.setAttribute(`data-${TOPS_V2_STYLE_TAG}`, "true");
-  document.head.appendChild(link);
-}
 
 function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
   return {
@@ -117,7 +106,7 @@ export default class TopsScreen {
   // ---------------------------------------------------------------------------
 
   _buildShell() {
-    ensureTopsV2Styles();
+    ensureProtokollModuleStyles();
     const root = document.createElement("div");
     root.setAttribute("data-bbm-tops-screen", "true");
 

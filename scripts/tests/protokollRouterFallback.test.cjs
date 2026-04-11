@@ -14,6 +14,20 @@ async function runProtokollRouterFallbackTests(run) {
     );
     assert.equal(source.includes("ProtokollTopsScreen"), true);
   });
+
+  await run("Protokoll Style-Einstieg: TopsScreen nutzt eine modulnahe Style-Datei", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const styleFile = path.join(__dirname, "../../src/renderer/modules/protokoll/styles.js");
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const styleSource = fs.readFileSync(styleFile, "utf8");
+
+    assert.equal(screenSource.includes("tops/styles/tops.css"), false);
+    assert.equal(screenSource.includes('from "../styles.js"'), true);
+    assert.equal(styleSource.includes("tops/styles/tops.css"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
