@@ -5,10 +5,10 @@ import { TopsAssigneeDataSource } from "../../../tops/data/TopsAssigneeDataSourc
 import { TopsCommands } from "../../../tops/domain/TopsCommands.js";
 import { TopsCloseFlow } from "../../../tops/domain/TopsCloseFlow.js";
 import { TopsQuicklane } from "../../../tops/components/TopsQuicklane.js";
-import { TopsWorkbench } from "../../../tops/components/TopsWorkbench.js";
 import { TopsViewDialogs } from "../../../features/dialogs/TopsViewDialogs.js";
 import { TopsHeader } from "../TopsHeader.js";
 import { TopsList } from "../TopsList.js";
+import { TopsWorkbench } from "../TopsWorkbench.js";
 import { ensureProtokollModuleStyles } from "../styles.js";
 import {
   buildHeaderState,
