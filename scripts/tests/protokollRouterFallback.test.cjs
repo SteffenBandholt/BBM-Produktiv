@@ -42,6 +42,20 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes('from "../TopsHeader.js"'), true);
     assert.equal(headerSource.includes("tops/components/TopsHeader.js"), true);
   });
+
+  await run("Protokoll Listen-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const listFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsList.js");
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const listSource = fs.readFileSync(listFile, "utf8");
+
+    assert.equal(screenSource.includes("tops/components/TopsList.js"), false);
+    assert.equal(screenSource.includes('from "../TopsList.js"'), true);
+    assert.equal(listSource.includes("tops/components/TopsList.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
