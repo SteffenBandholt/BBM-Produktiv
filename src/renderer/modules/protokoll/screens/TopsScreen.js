@@ -12,7 +12,6 @@ import { TopsViewDialogs } from "../TopsViewDialogs.js";
 import { buildHeaderState } from "../buildHeaderState.js";
 import { ensureProtokollModuleStyles } from "../styles.js";
 import {
-  buildPatchFromDraft,
   canCreateChildFromState,
   canDeleteFromState,
   canMoveFromState,
@@ -21,6 +20,7 @@ import {
 import { buildWorkbenchVm } from "../viewmodel/TopsWorkbenchViewModel.js";
 import { buildListItemsFromState } from "../buildListItemsFromState.js";
 import { editorFromTop } from "../editorFromTop.js";
+import { buildPatchFromDraft } from "../buildPatchFromDraft.js";
 
 function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
   return {
