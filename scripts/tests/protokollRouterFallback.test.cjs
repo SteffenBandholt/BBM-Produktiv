@@ -107,6 +107,23 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes('from "../TopsCommands.js"'), true);
     assert.equal(commandsSource.includes("tops/domain/TopsCommands.js"), true);
   });
+
+  await run("Protokoll CloseFlow-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const closeFlowFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/TopsCloseFlow.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const closeFlowSource = fs.readFileSync(closeFlowFile, "utf8");
+
+    assert.equal(screenSource.includes("tops/domain/TopsCloseFlow.js"), false);
+    assert.equal(screenSource.includes('from "../TopsCloseFlow.js"'), true);
+    assert.equal(closeFlowSource.includes("tops/domain/TopsCloseFlow.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };

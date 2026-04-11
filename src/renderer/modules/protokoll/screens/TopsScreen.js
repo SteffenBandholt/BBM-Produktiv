@@ -2,13 +2,13 @@ import { createTopsStore } from "../../../tops/state/TopsStore.js";
 import { getSelectedTop, hasSelection } from "../../../tops/state/TopsSelectors.js";
 import { TopsRepository } from "../../../tops/data/TopsRepository.js";
 import { TopsAssigneeDataSource } from "../../../tops/data/TopsAssigneeDataSource.js";
-import { TopsCloseFlow } from "../../../tops/domain/TopsCloseFlow.js";
 import { TopsViewDialogs } from "../../../features/dialogs/TopsViewDialogs.js";
 import { TopsHeader } from "../TopsHeader.js";
 import { TopsList } from "../TopsList.js";
 import { TopsWorkbench } from "../TopsWorkbench.js";
 import { TopsQuicklane } from "../TopsQuicklane.js";
 import { TopsCommands } from "../TopsCommands.js";
+import { TopsCloseFlow } from "../TopsCloseFlow.js";
 import { ensureProtokollModuleStyles } from "../styles.js";
 import {
   buildHeaderState,
