@@ -338,6 +338,22 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes('from "../canMoveFromState.js"'), true);
     assert.equal(moveSource.includes("viewmodel/TopsScreenViewModel.js"), true);
   });
+
+  await run("Protokoll shouldShowWorkbench-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const workbenchFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/shouldShowWorkbench.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const workbenchSource = fs.readFileSync(workbenchFile, "utf8");
+
+    assert.equal(screenSource.includes('from "../shouldShowWorkbench.js"'), true);
+    assert.equal(workbenchSource.includes("viewmodel/TopsScreenViewModel.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
