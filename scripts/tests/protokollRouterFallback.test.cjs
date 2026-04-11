@@ -287,6 +287,25 @@ async function runProtokollRouterFallbackTests(run) {
       assert.equal(patchSource.includes("viewmodel/TopsScreenViewModel.js"), true);
     }
   );
+
+  await run(
+    "Protokoll canCreateChildFromState-Einstieg: TopsScreen nutzt einen modulnahen Re-Export",
+    () => {
+      const screenFile = path.join(
+        __dirname,
+        "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+      );
+      const createChildFile = path.join(
+        __dirname,
+        "../../src/renderer/modules/protokoll/canCreateChildFromState.js"
+      );
+      const screenSource = fs.readFileSync(screenFile, "utf8");
+      const createChildSource = fs.readFileSync(createChildFile, "utf8");
+
+      assert.equal(screenSource.includes('from "../canCreateChildFromState.js"'), true);
+      assert.equal(createChildSource.includes("viewmodel/TopsScreenViewModel.js"), true);
+    }
+  );
 }
 
 module.exports = { runProtokollRouterFallbackTests };
