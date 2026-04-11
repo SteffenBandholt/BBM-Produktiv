@@ -1,4 +1,4 @@
-import { getSelectedTop } from "../../../tops/state/TopsSelectors.js";
+import { getSelectedTop } from "../TopsSelectors.js";
 import {
   isAllowedMoveTarget,
   canCreateChildFromState,

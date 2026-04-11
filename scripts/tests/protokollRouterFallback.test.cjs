@@ -385,6 +385,23 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes("tops/state/"), false);
     assert.equal(screenSource.includes("features/dialogs/"), false);
   });
+
+  await run("Protokoll ViewModel-Entmischung: TopsScreenViewModel nutzt keinen direkten Selector-Altpfad", () => {
+    const vmFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js"
+    );
+    const selectorsFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/TopsSelectors.js"
+    );
+    const vmSource = fs.readFileSync(vmFile, "utf8");
+    const selectorsSource = fs.readFileSync(selectorsFile, "utf8");
+
+    assert.equal(vmSource.includes("tops/state/TopsSelectors.js"), false);
+    assert.equal(vmSource.includes('from "../TopsSelectors.js"'), true);
+    assert.equal(selectorsSource.includes("tops/state/TopsSelectors.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
