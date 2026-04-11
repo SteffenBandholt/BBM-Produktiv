@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
@@ -101,7 +102,7 @@ async function runModuleCoexistenceIntegrationTests(run) {
     assert.equal(protokollEntry?.workScreenId, PROTOKOLL_WORK_SCREEN_ID);
     assert.equal(restarbeitenEntry?.workScreenId, RESTARBEITEN_WORK_SCREEN_ID);
     assert.equal(Array.isArray(protokollEntry?.navigation?.project), true);
-    assert.equal(restarbeitenEntry?.capabilities?.hasNavigation, false);
+    assert.equal(restarbeitenEntry?.capabilities?.hasNavigation, true);
     assert.equal(Boolean(protokollEntry?.movedParts?.viewmodel), true);
     assert.equal(Boolean(restarbeitenEntry?.movedParts?.components), true);
   });
@@ -124,6 +125,26 @@ async function runModuleCoexistenceIntegrationTests(run) {
       assert.equal(Boolean(screenId), true);
       assert.equal(Boolean(resolvedScreen), true);
     }
+  });
+
+  await run("Module Koexistenz: Restarbeiten wird in der aktiven Projektnavigation sichtbar", () => {
+    const navigation = getActiveProjectModuleNavigation();
+    const restarbeitenEntry =
+      navigation.find((entry) => entry?.moduleId === RESTARBEITEN_MODULE_ID) || null;
+
+    assert.equal(Boolean(restarbeitenEntry), true);
+    assert.equal(restarbeitenEntry?.workScreenId, RESTARBEITEN_WORK_SCREEN_ID);
+  });
+
+  await run("Module Koexistenz: Projektfirmen bleibt in der Sidebar-Verdrahtung erhalten", () => {
+    const mainFile = path.join(__dirname, "../../src/renderer/main.js");
+    const source = fs.readFileSync(mainFile, "utf8");
+
+    assert.equal(source.includes('key: "projectFirms"'), true);
+    assert.equal(
+      source.includes("const projectNavigationButtons = contextualNavigationRouteDefs.map"),
+      true
+    );
   });
 }
 

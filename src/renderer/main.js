@@ -6,6 +6,8 @@ import Router from "./app/Router.js";
 import {
   getActiveProjectModuleNavigation,
   PROTOKOLL_MODULE_ID,
+  RESTARBEITEN_MODULE_ID,
+  resolveActiveModuleWorkScreen,
 } from "./app/modules/index.js";
 import MainHeader from "./ui/MainHeader.js";
 import { DEFAULT_THEME_SETTINGS, applyThemeForSettings } from "./theme/themes.js";
@@ -821,6 +823,17 @@ document.addEventListener("DOMContentLoaded", async () => {
               return;
             }
             await router.showMeetings(projectId);
+            return;
+          }
+
+          if (moduleId === RESTARBEITEN_MODULE_ID) {
+            const V = resolveActiveModuleWorkScreen(RESTARBEITEN_MODULE_ID);
+            if (!V) return;
+            await router.show(new V({ router }), {
+              section: "meetings",
+              isTopsView: false,
+              pageTitle: "Restarbeiten",
+            });
           }
         },
         getPayload: () => ({
@@ -866,8 +879,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
     const btnHelp = mkNavBtn("help", "Hilfe", () => router.openHelpModal());
 
-    // Fachlich/projektbezogene Navigation: heute noch direkt an Projekt-/Protokollpfade gekoppelt.
-    const [btnMeetings, btnProjectFirms] = contextualNavigationRouteDefs.map((def) =>
+    // Fachlich/projektbezogene Navigation: kleine listenbasierte Ableitung.
+    const projectNavigationButtons = contextualNavigationRouteDefs.map((def) =>
       createScreenRouteButton(def)
     );
 
@@ -893,10 +906,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       btnFirms,
       btnSettings,
       btnHelp,
-    ];
-    const projectNavigationButtons = [
-      btnMeetings,
-      btnProjectFirms,
     ];
     const actionButtons = [
       btnParticipants,
@@ -954,8 +963,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       const hasProject = !!router.currentProjectId;
       const hasMeeting = !!router.currentMeetingId;
 
-      setBtnEnabled(btnMeetings, hasProject, "Bitte zuerst ein Projekt auswählen.");
-      setBtnEnabled(btnProjectFirms, hasProject, "Bitte zuerst ein Projekt auswählen.");
+      for (const btn of projectNavigationButtons) {
+        setBtnEnabled(btn, hasProject, "Bitte zuerst ein Projekt auswählen.");
+      }
 
       if (!hasProject) {
         setBtnEnabled(btnParticipants, false, "Bitte zuerst ein Projekt auswählen.");
