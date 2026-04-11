@@ -141,6 +141,29 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes('from "../TopsRepository.js"'), true);
     assert.equal(repositorySource.includes("tops/data/TopsRepository.js"), true);
   });
+
+  await run(
+    "Protokoll AssigneeDataSource-Einstieg: TopsScreen nutzt einen modulnahen Re-Export",
+    () => {
+      const screenFile = path.join(
+        __dirname,
+        "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+      );
+      const assigneeDataSourceFile = path.join(
+        __dirname,
+        "../../src/renderer/modules/protokoll/TopsAssigneeDataSource.js"
+      );
+      const screenSource = fs.readFileSync(screenFile, "utf8");
+      const assigneeDataSourceSource = fs.readFileSync(assigneeDataSourceFile, "utf8");
+
+      assert.equal(screenSource.includes("tops/data/TopsAssigneeDataSource.js"), false);
+      assert.equal(screenSource.includes('from "../TopsAssigneeDataSource.js"'), true);
+      assert.equal(
+        assigneeDataSourceSource.includes("tops/data/TopsAssigneeDataSource.js"),
+        true
+      );
+    }
+  );
 }
 
 module.exports = { runProtokollRouterFallbackTests };
