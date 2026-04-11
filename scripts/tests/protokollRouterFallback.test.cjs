@@ -402,6 +402,20 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(vmSource.includes('from "../TopsSelectors.js"'), true);
     assert.equal(selectorsSource.includes("tops/state/TopsSelectors.js"), true);
   });
+
+  await run("Protokoll ViewModel-Entmischung: TopsScreenViewModel nutzt keine direkte ActionPolicy", () => {
+    const vmFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js"
+    );
+    const policyFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsActionPolicy.js");
+    const vmSource = fs.readFileSync(vmFile, "utf8");
+    const policySource = fs.readFileSync(policyFile, "utf8");
+
+    assert.equal(vmSource.includes("tops/domain/TopsActionPolicy.js"), false);
+    assert.equal(vmSource.includes('from "../TopsActionPolicy.js"'), true);
+    assert.equal(policySource.includes("tops/domain/TopsActionPolicy.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
