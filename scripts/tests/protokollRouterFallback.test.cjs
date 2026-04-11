@@ -370,6 +370,21 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes('from "../buildWorkbenchVm.js"'), true);
     assert.equal(vmSource.includes("viewmodel/TopsWorkbenchViewModel.js"), true);
   });
+
+  await run("Protokoll Screen-Entmischung: TopsScreen nutzt keine direkten tiefen Altpfade", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+
+    assert.equal(screenSource.includes("viewmodel/TopsScreenViewModel.js"), false);
+    assert.equal(screenSource.includes("tops/components/"), false);
+    assert.equal(screenSource.includes("tops/domain/"), false);
+    assert.equal(screenSource.includes("tops/data/"), false);
+    assert.equal(screenSource.includes("tops/state/"), false);
+    assert.equal(screenSource.includes("features/dialogs/"), false);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
