@@ -50,6 +50,30 @@ Wenn ein Auftrag zu gross, zu unklar oder zu breit ist:
 
 ---
 
+## Verbindliche Knappheit und Git-Start
+
+Rueckgaben fuer neue Pakete muessen knapp, arbeitsbezogen und formatgebunden sein.
+
+Nicht erlaubt:
+- lange Analyse-Einleitungen
+- Theorie-Runden ohne direkten Arbeitsnutzen
+- freie Architektur-Wiederholungen
+- Platzhalter in Git-Befehlen
+
+Vor jedem Codex-Auftrag muessen immer konkret angegeben werden:
+- Codex-Modell
+- Reasoning
+- Begruendung
+- Git-Start mit echtem Branch-Namen
+
+Git-Start ist immer konkret anzugeben, zum Beispiel:
+
+```powershell
+git switch main
+git pull
+git switch -c phase12-paket1-kurzname
+
+---
 ## Paketregeln
 
 Ein Paket ist nur dann sauber genug, wenn:

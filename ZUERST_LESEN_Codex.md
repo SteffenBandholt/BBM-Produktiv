@@ -32,6 +32,42 @@ Nicht direkt weiterarbeiten, sondern zuerst diese Datei lesen und danach die Pfl
 
 Wenn der tatsaechliche Repo-Stand und die Arbeitsgrundlage auseinanderlaufen, muss das **zuerst ausdruecklich benannt** werden.
 
+## 1.1 Verbindliches Antwortformat fuer neue Chats
+
+Neue Chats duerfen keine langen Analyse-Einleitungen, keine Theorie-Wiederholungen und kein Architektur-Nacherzaehlen liefern.
+
+Die erste arbeitsbezogene Antwort ist knapp und formatgebunden.
+
+Pflichtformat:
+
+### Repo-Abgleich
+- passt / passt nicht
+- maximal 3 Saetze
+
+### 3-Schritte-Kurzfahrplan
+- 3 kurze Punkte
+- nur Schritt 1 wird aktiv
+
+### Aktives Paket
+- Paketname
+- Container
+- Ziel
+- Nicht-Ziele
+
+### Git-Start
+- vor jedem Codex-Auftrag sind konkrete Git-Startbefehle mit echtem Branch-Namen anzugeben
+
+### Codex-Auftrag
+- Codex-Modell
+- Reasoning
+- Begruendung
+- dann erst der eigentliche Prompt
+
+Nicht erlaubt:
+- lange Vorreden
+- freie Theorie
+- Wiederholung von Architekturinhalt ohne Arbeitsnutzen
+- Platzhalter wie `<branchname>`, `<dateien>` oder aehnliche Dummy-Texte
 ---
 
 ## 2. Pflichtdateien und Lesereihenfolge
