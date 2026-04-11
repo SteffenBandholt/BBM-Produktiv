@@ -8,7 +8,7 @@ import {
 import {
   normalizeTopLongText,
   normalizeTopShortText,
-} from "../../../shared/text/topTextPresentation.js";
+} from "../topTextPresentation.js";
 import { computeAmpelColorForTop } from "../computeAmpelColorForTop.js";
 
 export { isAllowedMoveTarget, canCreateChildFromState, canDeleteFromState, canMoveFromState };
