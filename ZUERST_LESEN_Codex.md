@@ -68,6 +68,26 @@ Nicht erlaubt:
 - freie Theorie
 - Wiederholung von Architekturinhalt ohne Arbeitsnutzen
 - Platzhalter wie `<branchname>`, `<dateien>` oder aehnliche Dummy-Texte
+
+## 1.2 Verbindliche Git-Pruefung vor jeder Ergebnisbewertung
+
+Ein Codex-Ergebnis darf nicht fachlich bewertet oder freigegeben werden, wenn der Git-Pruefblock fehlt.
+
+Pflicht vor jeder Bewertung sind immer:
+
+- `git status --short`
+- `git diff --stat -- <echte betroffene dateien>`
+- `git diff -- <echte betroffene dateien>`
+
+Dabei gilt:
+- es sind echte betroffene Dateien anzugeben
+- keine Platzhalter
+- keine allgemeine Formulierung statt echter Git-Ausgabe
+
+Fehlt dieser Git-Pruefblock, ist das Ergebnis nicht bewertbar.
+
+Dann darf weder `ANNEHMEN` noch `KLEINE NACHARBEIT` noch `VERWERFEN` fachlich ausgesprochen werden, bevor die Git-Pruefung nachgeliefert wurde.
+
 ---
 
 ## 2. Pflichtdateien und Lesereihenfolge

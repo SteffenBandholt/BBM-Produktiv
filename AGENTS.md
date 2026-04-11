@@ -110,7 +110,24 @@ Wenn ein Paket in Wahrheit groesseren Umbau ausloest:
 - kleinstes sinnvolles Folgepaket vorschlagen
 
 ---
+## Verbindlicher Git-Pflichtblock in jeder Rueckgabe
 
+Jede Codex-Rueckgabe muss einen echten Git-Pflichtblock enthalten.
+
+Pflicht sind immer:
+
+- `git status --short`
+- `git diff --stat -- <echte betroffene dateien>`
+- `git diff -- <echte betroffene dateien>`
+
+Dabei gilt:
+- nur echte betroffene Dateien
+- keine Platzhalter
+- keine Bewertung ohne diesen Block
+
+Bereichschecks wie Lint, Tests oder Build kommen zusaetzlich, aber nicht an Stelle der Git-Pruefung.
+
+Fehlt der Git-Pflichtblock, ist die Rueckgabe unvollstaendig.
 ## Git-Regeln pro Paket
 
 Jedes Paket soll auch git-seitig sauber getrennt bearbeitet werden.
