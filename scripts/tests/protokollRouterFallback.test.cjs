@@ -215,6 +215,23 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes('from "../TopsViewDialogs.js"'), true);
     assert.equal(viewDialogsSource.includes("features/dialogs/TopsViewDialogs.js"), true);
   });
+
+  await run("Protokoll HeaderState-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const headerStateFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/buildHeaderState.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const headerStateSource = fs.readFileSync(headerStateFile, "utf8");
+
+    assert.equal(screenSource.includes("buildHeaderState,\n"), false);
+    assert.equal(screenSource.includes('from "../buildHeaderState.js"'), true);
+    assert.equal(headerStateSource.includes("viewmodel/TopsScreenViewModel.js"), true);
+  });
 }
 
 module.exports = { runProtokollRouterFallbackTests };
