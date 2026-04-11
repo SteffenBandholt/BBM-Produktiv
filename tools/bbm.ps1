@@ -50,6 +50,18 @@ function Test-BbmGitDiffExists {
     return $exitCode -eq 1
 }
 
+function Test-BbmLocalBranchExists {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$BranchName
+    )
+
+    $existingBranch = git branch --list -- $BranchName
+    if (-not $?) { return $false }
+
+    return [bool]$existingBranch
+}
+
 function Start-BbmPackage {
     param(
         [Parameter(Mandatory = $true)]
@@ -83,6 +95,54 @@ function Start-BbmPackage {
 
     git switch -c $BranchName
     if (-not $?) { return }
+}
+
+function bbm-start {
+    if (Test-BbmGitSpecialState) {
+        Write-Host "Git-Sonderzustand aktiv. Bitte Merge/Rebase/Cherry-Pick/Revert zuerst abschliessen oder abbrechen."
+        return
+    }
+
+    if (-not (Test-BbmWorkingTreeClean)) {
+        Write-Host "Working Tree ist nicht sauber. Bitte uncommittete, unstaged oder untracked Aenderungen zuerst bereinigen."
+        return
+    }
+
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $baseBranchName = "phase12-$timestamp"
+
+    for ($suffix = 0; $suffix -le 9; $suffix++) {
+        $branchName = if ($suffix -eq 0) {
+            $baseBranchName
+        } else {
+            "$baseBranchName-$suffix"
+        }
+
+        if (Test-BbmLocalBranchExists -BranchName $branchName) {
+            continue
+        }
+
+        Start-BbmPackage -BranchName $branchName
+        if (-not $?) { return }
+
+        $currentBranch = git branch --show-current
+        if (-not $?) { return }
+
+        if ($currentBranch -eq $branchName) {
+            Write-Host "Branch angelegt: $branchName"
+            Write-Host "Den Paketinhalt klaeren wir danach im Chat."
+            return
+        }
+
+        if (Test-BbmLocalBranchExists -BranchName $branchName) {
+            continue
+        }
+
+        Write-Host "bbm-start konnte den Branch nicht anlegen. Bitte Git-Zustand pruefen."
+        return
+    }
+
+    Write-Host "Kein freier Branchname gefunden. Bitte spaeter erneut versuchen."
 }
 
 function Show-BbmProof {
