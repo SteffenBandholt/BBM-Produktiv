@@ -116,6 +116,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - `Protokoll` schrittweise weiter entmischen
 - `Restarbeiten` dosiert sichtbarer und tragfaehiger machen
 - kleine Nachweise und Konsolidierungen mitziehen, wo sie den Umbau direkt belegen
+- der erreichte Screen-Stand in `Protokoll` bleibt dabei sichtbar abgesichert
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 
@@ -155,10 +156,12 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - `src/renderer/views/TopsScreen.js` bleibt Uebergangs- und Kompatibilitaetsschicht
 - modulnaher Style-Einstieg ist eingefuehrt
 - `TopsScreen` bindet Styles nicht mehr direkt ueber den globalen `tops/`-Pfad ein
+- `TopsScreen` ist fuer die bisher bearbeitete Kleinschnitt-Achse weitgehend von direkten Tiefenimports entlastet
+- ein kleiner Nachweis fuer den entmischten Screen-Stand ist vorhanden
 
 **Noch offen**
 - grosser Unterbau liegt weiter unter `src/renderer/tops/`
-- Mischzustaende sind noch nicht klein genug, um `Protokoll` als vollstaendig entmischt zu bezeichnen
+- tieferer Unterbau und weitere Restentmischung in `Protokoll` bleiben offen
 - weitere direkte `tops/`-Altpfade sind fuer spaetere Minischritte noch vorhanden
 
 ### 6.3 Container 5 – Fachmodul `Restarbeiten`
@@ -187,6 +190,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - erste kleine Bereinigungen
 - erste Konsolidierungsschritte
 - kleine Nachweise zur Kernnavigation, Router-Entkopplung und Modulsichtbarkeit sind nachgezogen
+- der entmischte `TopsScreen`-Zwischenstand ist per Test abgesichert
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
