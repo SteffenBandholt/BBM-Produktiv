@@ -7,8 +7,8 @@ import { TopsCloseFlow } from "../../../tops/domain/TopsCloseFlow.js";
 import { TopsQuicklane } from "../../../tops/components/TopsQuicklane.js";
 import { TopsWorkbench } from "../../../tops/components/TopsWorkbench.js";
 import { TopsList } from "../../../tops/components/TopsList.js";
-import { TopsHeader } from "../../../tops/components/TopsHeader.js";
 import { TopsViewDialogs } from "../../../features/dialogs/TopsViewDialogs.js";
+import { TopsHeader } from "../TopsHeader.js";
 import { ensureProtokollModuleStyles } from "../styles.js";
 import {
   buildHeaderState,
