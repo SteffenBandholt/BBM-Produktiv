@@ -4,11 +4,11 @@ import { TopsRepository } from "../../../tops/data/TopsRepository.js";
 import { TopsAssigneeDataSource } from "../../../tops/data/TopsAssigneeDataSource.js";
 import { TopsCommands } from "../../../tops/domain/TopsCommands.js";
 import { TopsCloseFlow } from "../../../tops/domain/TopsCloseFlow.js";
-import { TopsQuicklane } from "../../../tops/components/TopsQuicklane.js";
 import { TopsViewDialogs } from "../../../features/dialogs/TopsViewDialogs.js";
 import { TopsHeader } from "../TopsHeader.js";
 import { TopsList } from "../TopsList.js";
 import { TopsWorkbench } from "../TopsWorkbench.js";
+import { TopsQuicklane } from "../TopsQuicklane.js";
 import { ensureProtokollModuleStyles } from "../styles.js";
 import {
   buildHeaderState,
