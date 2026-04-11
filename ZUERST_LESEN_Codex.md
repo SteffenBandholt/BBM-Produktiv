@@ -161,3 +161,30 @@ nicht sauber zusammenpassen, dann gilt:
 - erst danach neues Paket ableiten
 
 Ohne diese Klaerung darf kein neues Paket sauber gestartet werden.
+
+## 9. Verbindliche Modellwahl fuer Codex-Auftraege
+
+Vor jedem Auftrag an Codex sind immer ausdruecklich anzugeben:
+
+- verwendetes Codex-Modell
+- verwendete Reasoning-Stufe
+- kurze Begruendung der Wahl
+
+Dabei gilt als Standard:
+
+- Modell: `gpt-5.4-mini`
+- Reasoning: `medium`
+
+Diese Standardwahl ist zu verwenden, wenn kein technischer Grund fuer ein staerkeres oder teureres Modell besteht.
+
+Ziel ist immer die wirtschaftlich effizienteste Wahl aus Kosten und Leistungsfaehigkeit.
+
+Nur wenn es fuer den konkreten Auftrag technisch wirklich noetig ist, darf davon abgewichen werden.
+
+Dann muss ausdruecklich benannt werden:
+
+- welches Modell stattdessen verwendet wird
+- welche Reasoning-Stufe stattdessen verwendet wird
+- warum die Abweichung technisch notwendig ist
+
+Ohne diese Angabe soll kein neuer Codex-Auftrag formuliert werden.
