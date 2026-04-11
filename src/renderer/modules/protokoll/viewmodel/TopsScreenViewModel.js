@@ -4,7 +4,7 @@ import {
   canCreateChildFromState,
   canDeleteFromState,
   canMoveFromState,
-} from "../../../tops/domain/TopsActionPolicy.js";
+} from "../TopsActionPolicy.js";
 import { computeAmpelColorForTop } from "../../../../shared/ampel/pdfAmpelRule.js";
 import {
   normalizeTopLongText,
