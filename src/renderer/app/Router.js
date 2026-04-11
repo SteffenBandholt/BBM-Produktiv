@@ -2,6 +2,7 @@
 
 import {
   PROTOKOLL_MODULE_ID,
+  hasActiveModule,
   resolveActiveModuleScreen,
 } from "./modules/index.js";
 import { PROTOKOLL_WORK_SCREEN_ID } from "../modules/protokoll/index.js";
@@ -530,7 +531,13 @@ export default class Router {
 
   async showTops(meetingId, projectId, options = {}) {
     // App-Kern / Screen-Host:
-    // Router nutzt jetzt eine kleine modulbezogene Screen-Aufloesung, aber keine Modulnavigation.
+    // Tops laeuft nur, wenn das Protokoll-Modul im aktiven Modulumfang liegt.
+    // Der Router umgeht diese Entscheidung an dieser Stelle nicht mehr stillschweigend.
+    if (!hasActiveModule(PROTOKOLL_MODULE_ID)) {
+      alert("Das Protokoll-Modul ist im aktiven Modulumfang nicht freigegeben.");
+      return;
+    }
+
     // Modulinterner Unterbau und Workbench-Anbindung bleiben ausdruecklich im Fachmodul.
     const V =
       resolveActiveModuleScreen(PROTOKOLL_MODULE_ID, PROTOKOLL_WORK_SCREEN_ID) ||
