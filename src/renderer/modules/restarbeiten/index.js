@@ -8,6 +8,7 @@ import * as restarbeitenComponents from "./components/index.js";
 
 export const RESTARBEITEN_MODULE_ID = "restarbeiten";
 export const RESTARBEITEN_MODULE_LABEL = "Restarbeiten";
+export const RESTARBEITEN_NAV_ENTRY_KEY = "restarbeiten";
 
 function buildRestarbeitenModuleScreens() {
   const workScreenEntry = getRestarbeitenScreenEntry();
@@ -22,10 +23,24 @@ function buildMovedRestarbeitenModuleParts() {
   });
 }
 
+function buildRestarbeitenModuleNavigation() {
+  return Object.freeze({
+    project: Object.freeze([
+      Object.freeze({
+        key: RESTARBEITEN_NAV_ENTRY_KEY,
+        label: "Restarbeiten",
+        moduleId: RESTARBEITEN_MODULE_ID,
+        workScreenId: RESTARBEITEN_WORK_SCREEN_ID,
+        section: "meetings",
+      }),
+    ]),
+  });
+}
+
 function buildRestarbeitenModuleCapabilities() {
   return Object.freeze({
     hasWorkScreen: true,
-    hasNavigation: false,
+    hasNavigation: true,
     hasRouterIntegration: false,
     hasPersistentDataFlow: false,
   });
@@ -42,6 +57,7 @@ export function getRestarbeitenModuleEntry() {
     workScreenId: RESTARBEITEN_WORK_SCREEN_ID,
     workScreenLabel: RESTARBEITEN_WORK_SCREEN_LABEL,
     screens: buildRestarbeitenModuleScreens(),
+    navigation: buildRestarbeitenModuleNavigation(),
     movedParts: buildMovedRestarbeitenModuleParts(),
     capabilities: buildRestarbeitenModuleCapabilities(),
   });

@@ -28,8 +28,13 @@ async function runRestarbeitenModuleIntegrationTests(run) {
     assert.equal(entry?.workScreenId, RESTARBEITEN_WORK_SCREEN_ID);
     assert.equal(entry?.workScreenLabel, "Restarbeiten");
     assert.equal(entry?.capabilities?.hasWorkScreen, true);
-    assert.equal(entry?.capabilities?.hasNavigation, false);
+    assert.equal(entry?.capabilities?.hasNavigation, true);
     assert.equal(entry?.capabilities?.hasRouterIntegration, false);
+    const projectNavigation = entry?.navigation?.project || [];
+    assert.equal(Array.isArray(projectNavigation), true);
+    assert.equal(projectNavigation.length, 1);
+    assert.equal(projectNavigation[0]?.moduleId, RESTARBEITEN_MODULE_ID);
+    assert.equal(projectNavigation[0]?.workScreenId, RESTARBEITEN_WORK_SCREEN_ID);
   });
 
   await run("Restarbeiten Modul-Integration: Work-Screen ist separat aufloesbar", () => {
