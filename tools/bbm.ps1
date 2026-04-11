@@ -76,7 +76,13 @@ function Show-BbmPromptBlock {
         [string]$Reasoning,
 
         [Parameter(Mandatory = $true)]
-        [string]$Justification
+        [string]$Justification,
+
+        [string]$CodexPrompt = "",
+
+        [string[]]$ProofFiles = @(),
+
+        [string[]]$ProofNewFiles = @()
     )
 
     Write-Output "### Repo-Abgleich"
@@ -108,6 +114,29 @@ function Show-BbmPromptBlock {
     Write-Output "Codex-Modell: $CodexModel"
     Write-Output "Reasoning: $Reasoning"
     Write-Output "Begruendung: $Justification"
+    Write-Output ""
+    Write-Output "## Codex-Prompt"
+    Write-Output "```text"
+    Write-Output $CodexPrompt
+    Write-Output "```"
+    Write-Output ""
+    Write-Output "## Git-Pruefbefehle"
+    Write-Output "```powershell"
+    Write-Output "git status --short"
+
+    if ($ProofFiles.Count -gt 0) {
+        $proofFilesLine = $ProofFiles -join " "
+        Write-Output "git diff --stat -- $proofFilesLine"
+        Write-Output "git diff -- $proofFilesLine"
+    }
+
+    if ($ProofNewFiles.Count -gt 0) {
+        $proofNewFilesLine = $ProofNewFiles -join " "
+        Write-Output "git diff --cached --stat -- $proofNewFilesLine"
+        Write-Output "git diff --cached -- $proofNewFilesLine"
+    }
+
+    Write-Output "```"
 }
 
 function Complete-BbmPackage {
