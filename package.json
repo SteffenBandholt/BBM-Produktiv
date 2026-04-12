@@ -6,7 +6,7 @@
   "main": "src/main/main.js",
   "type": "commonjs",
   "scripts": {
-    "start": "electron .",
+    "start": "set ELECTRON_RUN_AS_NODE=&& electron .",
     "pack": "electron-builder --dir",
     "dist": "node scripts/dist.cjs",
     "test": "node scripts/test.cjs",
