@@ -83,12 +83,21 @@ async function runProtokollRouterFallbackTests(run) {
       __dirname,
       "../../src/renderer/modules/protokoll/TopsQuicklane.js"
     );
+    const legacyQuicklaneFile = path.join(
+      __dirname,
+      "../../src/renderer/tops/components/TopsQuicklane.js"
+    );
     const screenSource = fs.readFileSync(screenFile, "utf8");
     const quicklaneSource = fs.readFileSync(quicklaneFile, "utf8");
+    const legacyQuicklaneSource = fs.readFileSync(legacyQuicklaneFile, "utf8");
 
     assert.equal(screenSource.includes("tops/components/TopsQuicklane.js"), false);
     assert.equal(screenSource.includes('from "../TopsQuicklane.js"'), true);
-    assert.equal(quicklaneSource.includes("tops/components/TopsQuicklane.js"), true);
+    assert.equal(quicklaneSource.includes("tops/components/TopsQuicklane.js"), false);
+    assert.equal(
+      legacyQuicklaneSource.includes('from "../../modules/protokoll/TopsQuicklane.js"'),
+      true
+    );
   });
 
   await run("Protokoll Commands-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
