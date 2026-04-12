@@ -35,12 +35,21 @@ async function runProtokollRouterFallbackTests(run) {
       "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
     );
     const headerFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsHeader.js");
+    const legacyHeaderFile = path.join(
+      __dirname,
+      "../../src/renderer/tops/components/TopsHeader.js"
+    );
     const screenSource = fs.readFileSync(screenFile, "utf8");
     const headerSource = fs.readFileSync(headerFile, "utf8");
+    const legacyHeaderSource = fs.readFileSync(legacyHeaderFile, "utf8");
 
     assert.equal(screenSource.includes("tops/components/TopsHeader.js"), false);
     assert.equal(screenSource.includes('from "../TopsHeader.js"'), true);
-    assert.equal(headerSource.includes("tops/components/TopsHeader.js"), true);
+    assert.equal(headerSource.includes("tops/components/TopsHeader.js"), false);
+    assert.equal(
+      legacyHeaderSource.includes('from "../../modules/protokoll/TopsHeader.js"'),
+      true
+    );
   });
 
   await run("Protokoll Listen-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
