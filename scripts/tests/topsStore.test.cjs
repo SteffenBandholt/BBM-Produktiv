@@ -3,7 +3,7 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runTopsStoreTests(run) {
-  const mod = await importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/state/TopsStore.js"));
+  const mod = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/createTopsStore.js"));
   const { createTopsStore } = mod;
 
   await run("TopsStore: getState liefert Initialzustand", () => {

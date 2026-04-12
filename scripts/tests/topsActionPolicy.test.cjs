@@ -3,7 +3,7 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runTopsActionPolicyTests(run) {
-  const mod = await importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/domain/TopsActionPolicy.js"));
+  const mod = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/TopsActionPolicy.js"));
   const {
     hasChildren,
     isBlue,

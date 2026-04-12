@@ -4,7 +4,7 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runTopsScreenIntegrationTests(run) {
   const [{ createTopsStore }, { TopsCommands }, vm] = await Promise.all([
-    importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/state/TopsStore.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/createTopsStore.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/domain/TopsCommands.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js")),
   ]);

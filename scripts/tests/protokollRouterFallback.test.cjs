@@ -165,38 +165,30 @@ async function runProtokollRouterFallbackTests(run) {
     }
   );
 
-  await run("Protokoll Store-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
-    const screenFile = path.join(
-      __dirname,
-      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
-    );
-    const storeFile = path.join(
+  await run("Protokoll Store-Einstieg: Moduldatei trägt die Implementierung, Altpfad bleibt als Bruecke", () => {
+    const moduleFile = path.join(
       __dirname,
       "../../src/renderer/modules/protokoll/createTopsStore.js"
     );
-    const screenSource = fs.readFileSync(screenFile, "utf8");
-    const storeSource = fs.readFileSync(storeFile, "utf8");
+    const legacyFile = path.join(__dirname, "../../src/renderer/tops/state/TopsStore.js");
+    const moduleSource = fs.readFileSync(moduleFile, "utf8");
+    const legacySource = fs.readFileSync(legacyFile, "utf8");
 
-    assert.equal(screenSource.includes("tops/state/TopsStore.js"), false);
-    assert.equal(screenSource.includes('from "../createTopsStore.js"'), true);
-    assert.equal(storeSource.includes("tops/state/TopsStore.js"), true);
+    assert.equal(moduleSource.includes("tops/state/TopsStore.js"), false);
+    assert.equal(legacySource.includes('from "../../modules/protokoll/createTopsStore.js"'), true);
   });
 
-  await run("Protokoll Selector-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
-    const screenFile = path.join(
-      __dirname,
-      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
-    );
-    const selectorsFile = path.join(
+  await run("Protokoll Selector-Einstieg: Moduldatei trägt die Implementierung, Altpfad bleibt als Bruecke", () => {
+    const moduleFile = path.join(
       __dirname,
       "../../src/renderer/modules/protokoll/TopsSelectors.js"
     );
-    const screenSource = fs.readFileSync(screenFile, "utf8");
-    const selectorsSource = fs.readFileSync(selectorsFile, "utf8");
+    const legacyFile = path.join(__dirname, "../../src/renderer/tops/state/TopsSelectors.js");
+    const moduleSource = fs.readFileSync(moduleFile, "utf8");
+    const legacySource = fs.readFileSync(legacyFile, "utf8");
 
-    assert.equal(screenSource.includes("tops/state/TopsSelectors.js"), false);
-    assert.equal(screenSource.includes('from "../TopsSelectors.js"'), true);
-    assert.equal(selectorsSource.includes("tops/state/TopsSelectors.js"), true);
+    assert.equal(moduleSource.includes("tops/state/TopsSelectors.js"), false);
+    assert.equal(legacySource.includes('from "../../modules/protokoll/TopsSelectors.js"'), true);
   });
 
   await run("Protokoll ViewDialogs-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
@@ -391,16 +383,10 @@ async function runProtokollRouterFallbackTests(run) {
       __dirname,
       "../../src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js"
     );
-    const selectorsFile = path.join(
-      __dirname,
-      "../../src/renderer/modules/protokoll/TopsSelectors.js"
-    );
     const vmSource = fs.readFileSync(vmFile, "utf8");
-    const selectorsSource = fs.readFileSync(selectorsFile, "utf8");
 
     assert.equal(vmSource.includes("tops/state/TopsSelectors.js"), false);
     assert.equal(vmSource.includes('from "../TopsSelectors.js"'), true);
-    assert.equal(selectorsSource.includes("tops/state/TopsSelectors.js"), true);
   });
 
   await run("Protokoll ViewModel-Entmischung: TopsScreenViewModel nutzt keine direkte ActionPolicy", () => {
@@ -414,7 +400,7 @@ async function runProtokollRouterFallbackTests(run) {
 
     assert.equal(vmSource.includes("tops/domain/TopsActionPolicy.js"), false);
     assert.equal(vmSource.includes('from "../TopsActionPolicy.js"'), true);
-    assert.equal(policySource.includes("tops/domain/TopsActionPolicy.js"), true);
+    assert.equal(policySource.includes("tops/domain/TopsActionPolicy.js"), false);
   });
 
   await run("Protokoll ViewModel-Entmischung: TopsScreenViewModel nutzt keinen direkten Ampel-Altpfad", () => {

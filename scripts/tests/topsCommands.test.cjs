@@ -5,7 +5,7 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 async function runTopsCommandsTests(run) {
   const [{ TopsCommands }, { createTopsStore }] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/domain/TopsCommands.js")),
-    importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/state/TopsStore.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/createTopsStore.js")),
   ]);
 
   await run("TopsCommands: loadTops schreibt Liste und readOnly", async () => {

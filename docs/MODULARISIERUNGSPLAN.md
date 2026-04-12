@@ -152,6 +152,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Moduleinstieg
 - Teile des Bestands umgezogen
 - Fachschnitt klarer
+- `TopsSelectors`, `TopsActionPolicy` und `createTopsStore` liegen als modulinterner Kern unter `modules/protokoll/`
 - `src/renderer/modules/protokoll/screens/TopsScreen.js` ist die technische Heimat
 - `src/renderer/views/TopsScreen.js` bleibt Uebergangs- und Kompatibilitaetsschicht
 - modulnaher Style-Einstieg ist eingefuehrt
@@ -160,9 +161,9 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - ein kleiner Nachweis fuer den entmischten Screen-Stand ist vorhanden
 
 **Noch offen**
-- grosser Unterbau liegt weiter unter `src/renderer/tops/`
+- weiterer Unterbau liegt weiter unter `src/renderer/tops/`
 - tieferer Unterbau und weitere Restentmischung in `Protokoll` bleiben offen
-- weitere direkte `tops/`-Altpfade sind fuer spaetere Minischritte noch vorhanden
+- weitere direkte `tops/`-Altpfade bestehen noch als bewusste Bruecken fuer andere Bausteine
 
 ### 6.3 Container 5 – Fachmodul `Restarbeiten`
 **Status:** sichtbar, klein, kontrolliert ausbaufaehig
