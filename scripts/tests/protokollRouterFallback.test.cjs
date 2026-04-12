@@ -91,7 +91,7 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(quicklaneSource.includes("tops/components/TopsQuicklane.js"), true);
   });
 
-  await run("Protokoll Commands-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
+  await run("Protokoll Commands-Einstieg: Moduldatei traegt die Implementierung, Altpfad bleibt als Bruecke", () => {
     const screenFile = path.join(
       __dirname,
       "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
@@ -100,12 +100,15 @@ async function runProtokollRouterFallbackTests(run) {
       __dirname,
       "../../src/renderer/modules/protokoll/TopsCommands.js"
     );
+    const legacyCommandsFile = path.join(__dirname, "../../src/renderer/tops/domain/TopsCommands.js");
     const screenSource = fs.readFileSync(screenFile, "utf8");
     const commandsSource = fs.readFileSync(commandsFile, "utf8");
+    const legacyCommandsSource = fs.readFileSync(legacyCommandsFile, "utf8");
 
-    assert.equal(screenSource.includes("tops/domain/TopsCommands.js"), false);
     assert.equal(screenSource.includes('from "../TopsCommands.js"'), true);
-    assert.equal(commandsSource.includes("tops/domain/TopsCommands.js"), true);
+    assert.equal(commandsSource.includes("tops/data/TopsDtos.js"), true);
+    assert.equal(commandsSource.includes("tops/domain/TopsCommands.js"), false);
+    assert.equal(legacyCommandsSource.includes('from "../../modules/protokoll/TopsCommands.js"'), true);
   });
 
   await run("Protokoll CloseFlow-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {

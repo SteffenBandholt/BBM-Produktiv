@@ -4,8 +4,8 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runTopsCommandsTests(run) {
   const [{ TopsCommands }, { createTopsStore }] = await Promise.all([
-    importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/domain/TopsCommands.js")),
-    importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/state/TopsStore.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/TopsCommands.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/createTopsStore.js")),
   ]);
 
   await run("TopsCommands: loadTops schreibt Liste und readOnly", async () => {
@@ -57,6 +57,14 @@ async function runTopsCommandsTests(run) {
     let deletedId = null;
 
     const repository = {
+      async loadByMeeting({ meetingId }) {
+        assert.equal(meetingId, 9);
+        return {
+          ok: true,
+          meeting: { id: 9, is_closed: 0 },
+          list: [{ id: 33, title: "A" }],
+        };
+      },
       async saveTop(payload) {
         savedPayload = payload;
         return { ok: true };

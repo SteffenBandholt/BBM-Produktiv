@@ -152,6 +152,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Moduleinstieg
 - Teile des Bestands umgezogen
 - Fachschnitt klarer
+- `TopsCommands` liegt als modulinterner Screen-Befehlssatz unter `modules/protokoll/`
 - `src/renderer/modules/protokoll/screens/TopsScreen.js` ist die technische Heimat
 - `src/renderer/views/TopsScreen.js` bleibt Uebergangs- und Kompatibilitaetsschicht
 - modulnaher Style-Einstieg ist eingefuehrt

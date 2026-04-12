@@ -7,6 +7,9 @@ Aktuell ist nur ein kleiner Einstieg angelegt:
 - `index.js` als kleiner Modul-Einstieg mit Modulkennung, Arbeitsscreen und Sicht auf bereits umgezogenen Modulbestand
 - `screens/` mit einem konservativen Einstieg auf den heutigen `TopsScreen`
 - `viewmodel/` mit den ersten real umgezogenen Protokoll-ViewModels
+- `TopsSelectors.js`, `TopsActionPolicy.js` und `createTopsStore.js` als modulinterner Kern fuer den Protokoll-Arbeitsscreen
+- `TopsCommands.js` als modulinterner Screen-Befehlssatz fuer Protokoll
+- die alten `src/renderer/tops/`-Pfadfiles bleiben vorerst als Rueckwaerts-Bruecke bestehen
 
 Die Ordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/`
 sind absichtlich schon angelegt, damit spaetere Umzuege dort sauber anschliessen koennen.
