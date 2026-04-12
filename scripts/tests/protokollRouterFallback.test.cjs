@@ -113,16 +113,16 @@ async function runProtokollRouterFallbackTests(run) {
       __dirname,
       "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
     );
-    const closeFlowFile = path.join(
-      __dirname,
-      "../../src/renderer/modules/protokoll/TopsCloseFlow.js"
-    );
+    const closeFlowFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsCloseFlow.js");
+    const legacyCloseFlowFile = path.join(__dirname, "../../src/renderer/tops/domain/TopsCloseFlow.js");
     const screenSource = fs.readFileSync(screenFile, "utf8");
     const closeFlowSource = fs.readFileSync(closeFlowFile, "utf8");
+    const legacyCloseFlowSource = fs.readFileSync(legacyCloseFlowFile, "utf8");
 
-    assert.equal(screenSource.includes("tops/domain/TopsCloseFlow.js"), false);
     assert.equal(screenSource.includes('from "../TopsCloseFlow.js"'), true);
-    assert.equal(closeFlowSource.includes("tops/domain/TopsCloseFlow.js"), true);
+    assert.equal(closeFlowSource.includes("features/mail/MailFlow.js"), true);
+    assert.equal(closeFlowSource.includes("run()"), true);
+    assert.equal(legacyCloseFlowSource.includes('from "../../modules/protokoll/TopsCloseFlow.js"'), true);
   });
 
   await run("Protokoll Repository-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
