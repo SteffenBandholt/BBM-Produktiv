@@ -216,6 +216,27 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(viewDialogsSource.includes("features/dialogs/TopsViewDialogs.js"), true);
   });
 
+  await run(
+    "Protokoll NumberGapRepairPopup-Einstieg: TopsViewDialogs nutzt einen modulnahen Popup-Block",
+    () => {
+      const popupFile = path.join(
+        __dirname,
+        "../../src/renderer/modules/protokoll/NumberGapRepairPopup.js"
+      );
+      const featureFile = path.join(__dirname, "../../src/renderer/features/dialogs/TopsViewDialogs.js");
+      const popupSource = fs.readFileSync(popupFile, "utf8");
+      const featureSource = fs.readFileSync(featureFile, "utf8");
+
+      assert.equal(popupSource.includes("features/dialogs/TopsViewDialogs.js"), false);
+      assert.equal(popupSource.includes("buildGapDetailsText"), true);
+      assert.equal(popupSource.includes("showNumberGapPopup"), true);
+      assert.equal(
+        featureSource.includes('from "../../modules/protokoll/NumberGapRepairPopup.js"'),
+        true
+      );
+    }
+  );
+
   await run("Protokoll HeaderState-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
     const screenFile = path.join(
       __dirname,
