@@ -1,6 +1,7 @@
 import { SharedEditboxCore } from "../../modules/protokoll/SharedEditboxCore.js";
 import { WorkbenchMetaColumn } from "../../modules/protokoll/WorkbenchMetaColumn.js";
 import { WorkbenchShellFrame } from "../../modules/protokoll/WorkbenchShellFrame.js";
+import { WorkbenchActionDraftState } from "../../modules/protokoll/WorkbenchActionDraftState.js";
 
 const PROTOCOL_WORKBENCH_BUTTON_SPECS = Object.freeze({
   createLevel1: { label: "+Titel", tone: "neutral" },
@@ -45,6 +46,7 @@ export class TopsWorkbench {
     this._buildProtocolWorkbenchHeader();
     this._buildProtocolWorkbenchEditorArea();
     this._buildProtocolWorkbenchMetaArea();
+    this._buildProtocolWorkbenchActionDraftState();
     this._assembleWorkbenchShell();
     this.metaColumn.initialize();
   }
@@ -110,6 +112,21 @@ export class TopsWorkbench {
     });
   }
 
+  _buildProtocolWorkbenchActionDraftState() {
+    this.actionDraftState = new WorkbenchActionDraftState({
+      sharedEditboxCore: this.sharedEditboxCore,
+      metaColumn: this.metaColumn,
+      root: this.workbenchShell.root,
+      buttons: {
+        btnL1: this.btnL1,
+        btnChild: this.btnChild,
+        btnMove: this.btnMove,
+        btnSave: this.btnSave,
+        btnDelete: this.btnDelete,
+      },
+    });
+  }
+
   _createWorkbenchButton(spec, onClick) {
     const btn = document.createElement("button");
     btn.type = "button";
@@ -126,10 +143,7 @@ export class TopsWorkbench {
   }
 
   getDraft() {
-    return {
-      ...this.sharedEditboxCore.getDraft(),
-      ...this.metaColumn.getDraft(),
-    };
+    return this.actionDraftState.getDraft();
   }
 
   // ---------------------------------------------------------------------------
@@ -162,26 +176,6 @@ export class TopsWorkbench {
   // Protokoll-Workbench mit TOP-Regelwirkung:
   // Aktivierungen fuer Speichern, Schieben, Loeschen und Anlegen bleiben explizit TOP-bezogen.
   _applyActionState(actionsVm = {}) {
-    const hasSelection = !!actionsVm?.hasSelection;
-    const isReadOnly = !!actionsVm?.isReadOnly;
-    const isWriting = !!actionsVm?.isWriting;
-    const isMoveMode = !!actionsVm?.isMoveMode;
-    const canSave = !!actionsVm?.canSave;
-    const canDelete = !!actionsVm?.canDelete;
-    const canMove = !!actionsVm?.canMove;
-    const canCreateLevel1 = !!actionsVm?.canCreateLevel1;
-    const canCreateChild = !!actionsVm?.canCreateChild;
-
-    this.btnL1.disabled = isReadOnly || isWriting || !canCreateLevel1;
-    this.btnChild.disabled = isReadOnly || isWriting || !canCreateChild;
-    this.btnMove.disabled = isReadOnly || isWriting || !canMove;
-    this.btnSave.disabled = isReadOnly || isWriting || !canSave;
-    this.btnDelete.disabled = isReadOnly || isWriting || !canDelete;
-
-    this.workbenchShell.root.dataset.hasSelection = hasSelection ? "true" : "false";
-    this.workbenchShell.root.dataset.isReadOnly = isReadOnly ? "true" : "false";
-    this.workbenchShell.root.dataset.isMoveMode = isMoveMode ? "true" : "false";
-
-    this.btnMove.textContent = isMoveMode ? "Schieben aktiv" : "Schieben";
+    this.actionDraftState.applyActionState(actionsVm);
   }
 }

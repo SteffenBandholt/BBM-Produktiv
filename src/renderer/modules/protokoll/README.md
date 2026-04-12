@@ -10,6 +10,7 @@ Aktuell ist nur ein kleiner Einstieg angelegt:
 - `SharedEditboxCore.js` als modulinterner Kern fuer den generischen Editbox-Aufbau und die Value-/Read-only-Synchronisation
 - `WorkbenchMetaColumn.js` als modulinterner Kern fuer die Workbench-Meta-Spalte
 - `WorkbenchShellFrame.js` als modulinterner Kern fuer die technische Workbench-Huelle
+- `WorkbenchActionDraftState.js` als modulinterner Kern fuer Draft-Zusammenfuehrung und Action-State
 
 Die Ordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/`
 sind absichtlich schon angelegt, damit spaetere Umzuege dort sauber anschliessen koennen.
