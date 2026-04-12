@@ -216,6 +216,23 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(viewDialogsSource.includes("features/dialogs/TopsViewDialogs.js"), true);
   });
 
+  await run("Protokoll MeetingKeywordPopup-Einstieg: ViewDialogs nutzt einen modulnahen Dialogblock", () => {
+    const popupFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/MeetingKeywordPopup.js"
+    );
+    const featureFile = path.join(__dirname, "../../src/renderer/features/dialogs/TopsViewDialogs.js");
+    const popupSource = fs.readFileSync(popupFile, "utf8");
+    const featureSource = fs.readFileSync(featureFile, "utf8");
+
+    assert.equal(popupSource.includes("features/dialogs/TopsViewDialogs.js"), false);
+    assert.equal(popupSource.includes("openMeetingKeywordPopup"), true);
+    assert.equal(
+      featureSource.includes('from "../../modules/protokoll/MeetingKeywordPopup.js"'),
+      true
+    );
+  });
+
   await run("Protokoll HeaderState-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
     const screenFile = path.join(
       __dirname,
