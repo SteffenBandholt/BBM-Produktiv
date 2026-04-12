@@ -1,7 +1,5 @@
-import { TopsMetaPanel } from "./TopsMetaPanel.js";
-import { TopsResponsibleBridge } from "./TopsResponsibleBridge.js";
-import { TopsStatusAmpelBridge } from "./TopsStatusAmpelBridge.js";
 import { SharedEditboxCore } from "../../modules/protokoll/SharedEditboxCore.js";
+import { WorkbenchMetaColumn } from "../../modules/protokoll/WorkbenchMetaColumn.js";
 
 const PROTOCOL_WORKBENCH_BUTTON_SPECS = Object.freeze({
   createLevel1: { label: "+Titel", tone: "neutral" },
@@ -47,7 +45,7 @@ export class TopsWorkbench {
     this._buildProtocolWorkbenchEditorArea();
     this._buildProtocolWorkbenchMetaArea();
     this._assembleWorkbenchShell();
-    this.responsibleBridge.initialize();
+    this.metaColumn.initialize();
   }
 
   // Gemeinsames Workbench-Muster:
@@ -109,12 +107,11 @@ export class TopsWorkbench {
   }
 
   _buildProtocolWorkbenchMetaArea() {
-    this._buildProtocolMetaPanel();
-    this._buildProtocolMetaBridges();
+    this._buildProtocolMetaColumn();
   }
 
   _assembleWorkbenchShell() {
-    this.body.append(this.left, this.gutter, this.metaPanel.root);
+    this.body.append(this.left, this.gutter, this.metaColumn.root);
     this.root.append(this.header, this.body);
   }
 
@@ -126,34 +123,13 @@ export class TopsWorkbench {
     });
   }
 
-  // Protokollspezifische Workbench-Huelle:
-  // Meta-Spalte und Flag-Platzierung spiegeln den heutigen TOP-Arbeitsfluss.
-  _buildProtocolMetaPanel() {
-    this.metaPanel = new TopsMetaPanel({
-      onChange: () => this._emitDraftChange(),
-    });
-    this.flagsMetaRow = document.createElement("div");
-    this.flagsMetaRow.className = "bbm-tops-meta-flags";
-    this.flagsMetaRow.appendChild(this.sharedEditboxCore.flagsWrap);
-    this.metaPanel.root.appendChild(this.flagsMetaRow);
-  }
-
-  // Protokollspezifische Workbench-Bridges:
-  // wiederverwendbare Kernfelder werden hier an die TOP-Meta-/Draft-Struktur gekoppelt.
-  _buildProtocolMetaBridges() {
-    this.statusAmpelBridge = new TopsStatusAmpelBridge({
-      metaPanel: this.metaPanel,
-      onChange: () => this._emitDraftChange(),
-    });
-    this.statusAmpelBridge.mount();
-
-    this.responsibleBridge = new TopsResponsibleBridge({
-      metaPanel: this.metaPanel,
+  _buildProtocolMetaColumn() {
+    this.metaColumn = new WorkbenchMetaColumn({
+      flagsWrap: this.sharedEditboxCore.flagsWrap,
       loadCompanies: this.loadCompanies,
       loadEmployeesByCompany: this.loadEmployeesByCompany,
       onChange: () => this._emitDraftChange(),
     });
-    this.responsibleBridge.mount();
   }
 
   _createWorkbenchButton(spec, onClick) {
@@ -174,7 +150,7 @@ export class TopsWorkbench {
   getDraft() {
     return {
       ...this.sharedEditboxCore.getDraft(),
-      ...this.metaPanel.getValue(),
+      ...this.metaColumn.getDraft(),
     };
   }
 
@@ -202,18 +178,7 @@ export class TopsWorkbench {
   // Protokoll-Workbench:
   // Meta-Pane und Button-Zustaende bleiben Huelle des Moduls `Protokoll`.
   _applyMetaState(metaVm = {}) {
-    const metaValue = metaVm?.value || {};
-    const metaAccess = metaVm?.access || {};
-    const metaDisabled = !!metaAccess?.disabled;
-    const responsibleDisabled = !!metaAccess?.responsibleDisabled;
-
-    this.metaPanel.setValue(metaValue);
-    this.statusAmpelBridge.applyDraftValue(metaValue);
-    this.responsibleBridge.applyDraftValue(metaValue?.responsible_label || "");
-
-    this.metaPanel.setDisabled(metaDisabled);
-    this.statusAmpelBridge.setDisabled(metaDisabled);
-    this.responsibleBridge.setDisabled(metaDisabled || responsibleDisabled);
+    this.metaColumn.applyState(metaVm);
   }
 
   // Protokoll-Workbench mit TOP-Regelwirkung:

@@ -8,6 +8,7 @@ Aktuell ist nur ein kleiner Einstieg angelegt:
 - `screens/` mit einem konservativen Einstieg auf den heutigen `TopsScreen`
 - `viewmodel/` mit den ersten real umgezogenen Protokoll-ViewModels
 - `SharedEditboxCore.js` als modulinterner Kern fuer den generischen Editbox-Aufbau und die Value-/Read-only-Synchronisation
+- `WorkbenchMetaColumn.js` als modulinterner Kern fuer die Workbench-Meta-Spalte
 
 Die Ordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/`
 sind absichtlich schon angelegt, damit spaetere Umzuege dort sauber anschliessen koennen.
