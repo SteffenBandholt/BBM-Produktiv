@@ -1,1 +1,1 @@
-export { computeAmpelColorForTop } from "../../../../shared/ampel/pdfAmpelRule.js";
+export { computeAmpelColorForTop } from "../../../shared/ampel/pdfAmpelRule.js";

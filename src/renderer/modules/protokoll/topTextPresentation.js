@@ -1,4 +1,4 @@
 export {
   normalizeTopLongText,
   normalizeTopShortText,
-} from "../../../shared/text/topTextPresentation.js";
+} from "../../shared/text/topTextPresentation.js";
