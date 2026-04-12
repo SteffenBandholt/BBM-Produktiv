@@ -1,0 +1,90 @@
+{
+  "name": "baubesprechungs-manager",
+  "version": "1.5.0",
+  "description": "BBM - Baubesprechungsmanager",
+  "author": "Steffen Bandholt",
+  "main": "src/main/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "node scripts/dist.cjs",
+    "test": "node scripts/test.cjs",
+    "lint": "eslint \"src/**/*.js\"",
+    "lint:fix": "eslint \"src/**/*.js\" --fix",
+    "postinstall": "electron-builder install-app-deps"
+  },
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.6.2",
+    "pdfjs-dist": "^4.10.38",
+    "archiver": "^5.3.2",
+    "extract-zip": "^2.0.1",
+    "yauzl": "^3.2.1"
+  },
+  "build": {
+    "appId": "de.bbm.baubesprechungsmanager",
+    "productName": "BBM",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json",
+      "build/bbm-icon.ico",
+      "!src/main/db/app.db",
+      "!**/backups/**",
+      "!**/*.db",
+      "!**/*.sqlite",
+      "!**/*.sqlite3"
+    ],
+    "asarUnpack": [
+      "node_modules/better-sqlite3/**"
+    ],
+    "extraResources": [
+      {
+        "from": "dev/tools/whisper.cpp/Release",
+        "to": "audio/whisper",
+        "filter": [
+          "whisper-cli.exe",
+          "whisper-server.exe",
+          "*.dll"
+        ]
+      },
+      {
+        "from": "dev/tools/ffmpeg",
+        "to": "audio/ffmpeg",
+        "filter": [
+          "ffmpeg.exe"
+        ]
+      },
+      {
+        "from": "dev/models",
+        "to": "audio/models",
+        "filter": [
+          "ggml-base.bin",
+          "ggml-small.bin",
+          "ggml-medium.bin"
+        ]
+      }
+    ],
+    "win": {
+      "icon": "build/bbm-icon.ico",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "installerIcon": "build/nsis-icon.ico",
+      "uninstallerIcon": "build/nsis-icon.ico",
+      "installerHeaderIcon": "build/nsis-icon.ico",
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "BBM"
+    }
+  }
+}

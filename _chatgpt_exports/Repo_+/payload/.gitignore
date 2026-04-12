@@ -1,0 +1,11 @@
+dev/models/ggml-*.bin
+dev/tools/ffmpeg/
+dev/tools/whisper.cpp/Release/
+.vs/
+.env
+node_modules/
+dist/
+build/
+out/
+.next/
+coverage/

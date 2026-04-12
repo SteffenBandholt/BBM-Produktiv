@@ -1,0 +1,4 @@
+﻿Quelle: C:\01_Projekte\BBM-Produktiv
+Zeitstempel: +
+ZIP: C:\01_Projekte\BBM-Produktiv\_chatgpt_exports\Repo_+.zip
+Dateigroessenlimit: 20 MB

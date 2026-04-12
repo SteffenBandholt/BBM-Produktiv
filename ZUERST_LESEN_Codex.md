@@ -23,7 +23,6 @@ Vorher duerfen **nicht** begonnen werden:
 - Standzusammenfassung
 - Paketvorschlaege
 - Architektur-Einordnung
-- Builder-/Reviewer-/Doc-Schritte
 - Umsetzungsarbeit
 - Commit-, Merge- oder Push-Vorbereitung
 
@@ -31,62 +30,6 @@ Wenn ein Chat spaeter einsteigt, gilt dieselbe Regel:
 Nicht direkt weiterarbeiten, sondern zuerst diese Datei lesen und danach die Pflichtdateien in der festgelegten Reihenfolge nachziehen.
 
 Wenn der tatsaechliche Repo-Stand und die Arbeitsgrundlage auseinanderlaufen, muss das **zuerst ausdruecklich benannt** werden.
-
-## 1.1 Verbindliches Antwortformat fuer neue Chats
-
-Neue Chats duerfen keine langen Analyse-Einleitungen, keine Theorie-Wiederholungen und kein Architektur-Nacherzaehlen liefern.
-
-Die erste arbeitsbezogene Antwort ist knapp und formatgebunden.
-
-Pflichtformat:
-
-### Repo-Abgleich
-- passt / passt nicht
-- maximal 3 Saetze
-
-### 3-Schritte-Kurzfahrplan
-- 3 kurze Punkte
-- nur Schritt 1 wird aktiv
-
-### Aktives Paket
-- Paketname
-- Container
-- Ziel
-- Nicht-Ziele
-
-### Git-Start
-- vor jedem Codex-Auftrag sind konkrete Git-Startbefehle mit echtem Branch-Namen anzugeben
-
-### Codex-Auftrag
-- Codex-Modell
-- Reasoning
-- Begruendung
-- dann erst der eigentliche Prompt
-
-Nicht erlaubt:
-- lange Vorreden
-- freie Theorie
-- Wiederholung von Architekturinhalt ohne Arbeitsnutzen
-- Platzhalter wie `<branchname>`, `<dateien>` oder aehnliche Dummy-Texte
-
-## 1.2 Verbindliche Git-Pruefung vor jeder Ergebnisbewertung
-
-Ein Codex-Ergebnis darf nicht fachlich bewertet oder freigegeben werden, wenn der Git-Pruefblock fehlt.
-
-Pflicht vor jeder Bewertung sind immer:
-
-- `git status --short`
-- `git diff --stat -- <echte betroffene dateien>`
-- `git diff -- <echte betroffene dateien>`
-
-Dabei gilt:
-- es sind echte betroffene Dateien anzugeben
-- keine Platzhalter
-- keine allgemeine Formulierung statt echter Git-Ausgabe
-
-Fehlt dieser Git-Pruefblock, ist das Ergebnis nicht bewertbar.
-
-Dann darf weder `ANNEHMEN` noch `KLEINE NACHARBEIT` noch `VERWERFEN` fachlich ausgesprochen werden, bevor die Git-Pruefung nachgeliefert wurde.
 
 ---
 
@@ -97,7 +40,7 @@ Verbindliche Reihenfolge:
 1. `ZUERST_LESEN_Codex.md`
 2. `ARCHITECTURE.md`
 3. `docs/MODULARISIERUNGSPLAN.md`
-4. `AGENTS.md` nur fuer die operative Ausfuehrung
+4. `AGENTS.md`
 5. weitere Fach- oder Spezialdateien nur, wenn das konkrete Paket sie wirklich braucht
 
 Dabei gilt verbindlich:
@@ -108,7 +51,21 @@ Dabei gilt verbindlich:
 
 ---
 
-## 3. Harte Quellenprioritaet
+## 3. Aktiv fuehrende Dateien
+
+Aktiv fuehrend sind in diesem Repo nur:
+
+- `ZUERST_LESEN_Codex.md`
+- `ARCHITECTURE.md`
+- `docs/MODULARISIERUNGSPLAN.md`
+- `AGENTS.md`
+- `.codex/config.toml`
+
+Andere Dateien duerfen Hintergrund, Historie oder Arbeitsmaterial enthalten, sind aber **nicht** gleichrangige Fuehrungsquellen.
+
+---
+
+## 4. Harte Quellenprioritaet
 
 Neue Pakete duerfen verbindlich nur aus folgenden beiden Fuehrungsquellen abgeleitet werden:
 
@@ -124,7 +81,7 @@ Spontane Einzelideen, lokale Code-Schoenheitskorrekturen oder isolierte technisc
 
 ---
 
-## 4. Verbindlicher 3-Schritte-Kurzfahrplan
+## 5. Verbindlicher 3-Schritte-Kurzfahrplan
 
 Vor jeder neuen Paketwahl ist zuerst ein 3-Schritte-Kurzfahrplan aus `ARCHITECTURE.md` und `docs/MODULARISIERUNGSPLAN.md` abzuleiten:
 
@@ -140,7 +97,7 @@ Dabei gilt:
 
 ---
 
-## 5. Verbindliche Arbeitsmatrix
+## 6. Verbindliche Arbeitsmatrix
 
 Die Arbeitsmatrix des Modularumbaus besteht verbindlich aus genau **6 Containern**.
 
@@ -167,7 +124,7 @@ Fuer Details, Prioritaetsachsen und operative Einordnung gilt fuehrend:
 
 ---
 
-## 6. Harte Arbeitsregeln fuer neue Pakete
+## 7. Harte Arbeitsregeln fuer neue Pakete
 
 Vor jedem neuen Paket ist in dieser Reihenfolge zu pruefen:
 
@@ -183,7 +140,79 @@ Wenn das nicht klar beantwortet werden kann:
 
 ---
 
-## 7. Was diese Datei ausdruecklich nicht leisten soll
+## 8. Verbindliche Startstruktur fuer neue Chats
+
+Die erste arbeitsbezogene Antwort nach dem Einstieg soll knapp und arbeitsnah sein.
+
+Sie soll im Regelfall enthalten:
+
+### Repo-Abgleich
+- passt / passt nicht
+- kurze Benennung eines moeglichen Widerspruchs
+
+### 3-Schritte-Kurzfahrplan
+- 3 kurze Punkte
+- nur Schritt 1 wird aktiv
+
+### Aktives Paket
+- Paketname
+- Container
+- Ziel
+- Nicht-Ziele
+
+### Git-Start
+- konkrete Startbefehle mit echtem Branch-Namen, wenn ein Codex-Paket vorbereitet wird
+
+### Codex-Auftrag
+- nur wenn wirklich ein Paket gestartet wird
+- als genau ein klarer Auftrag fuer genau ein Paket
+
+Dabei gilt:
+- keine langen Vorreden
+- keine freie Theorie
+- keine Wiederholung von Architekturinhalt ohne Arbeitsnutzen
+- keine Platzhalter wie `<branchname>` oder `<dateien>`
+
+---
+
+## 9. Verbindliche Git-Pruefung vor jeder Ergebnisbewertung
+
+Ein Codex-Ergebnis darf nicht fachlich bewertet oder freigegeben werden, wenn der Git-Pruefblock fehlt.
+
+Pflicht vor jeder Bewertung sind immer:
+
+- `git status --short`
+- `git diff --stat -- <echte betroffene dateien>`
+- `git diff -- <echte betroffene dateien>`
+
+Dabei gilt:
+- es sind echte betroffene Dateien anzugeben
+- keine Platzhalter
+- keine allgemeine Formulierung statt echter Git-Ausgabe
+
+Fehlt dieser Git-Pruefblock, ist das Ergebnis nicht bewertbar.
+
+Dann darf weder `ANNEHMEN` noch `NACHARBEIT` noch `VERWERFEN` fachlich ausgesprochen werden, bevor die Git-Pruefung nachgeliefert wurde.
+
+---
+
+## 10. Modellwahl fuer Codex-Auftraege
+
+Der technische Standard fuer Codex wird ueber `.codex/config.toml` festgelegt.
+
+Dieser Standard ist zu verwenden, wenn kein technischer Grund fuer eine Abweichung besteht.
+
+Nur wenn fuer einen konkreten Auftrag bewusst davon abgewichen wird, ist ausdruecklich zu benennen:
+
+- welches Modell stattdessen verwendet wird
+- welche Reasoning-Stufe stattdessen verwendet wird
+- warum die Abweichung technisch notwendig ist
+
+Ohne konkrete technische Notwendigkeit soll keine Modell-Diskussion gefuehrt werden.
+
+---
+
+## 11. Was diese Datei ausdruecklich nicht leisten soll
 
 Diese Datei ist **nicht** zustaendig fuer:
 - ausfuehrliche Zielarchitektur
@@ -201,7 +230,7 @@ Dafuer gelten:
 
 ---
 
-## 8. Abbruchregel bei Widerspruch
+## 12. Abbruchregel bei Widerspruch
 
 Wenn beim Lesen oder Arbeiten auffaellt, dass
 - Ziel,
@@ -217,30 +246,3 @@ nicht sauber zusammenpassen, dann gilt:
 - erst danach neues Paket ableiten
 
 Ohne diese Klaerung darf kein neues Paket sauber gestartet werden.
-
-## 9. Verbindliche Modellwahl fuer Codex-Auftraege
-
-Vor jedem Auftrag an Codex sind immer ausdruecklich anzugeben:
-
-- verwendetes Codex-Modell
-- verwendete Reasoning-Stufe
-- kurze Begruendung der Wahl
-
-Dabei gilt als Standard:
-
-- Modell: `gpt-5.4-mini`
-- Reasoning: `medium`
-
-Diese Standardwahl ist zu verwenden, wenn kein technischer Grund fuer ein staerkeres oder teureres Modell besteht.
-
-Ziel ist immer die wirtschaftlich effizienteste Wahl aus Kosten und Leistungsfaehigkeit.
-
-Nur wenn es fuer den konkreten Auftrag technisch wirklich noetig ist, darf davon abgewichen werden.
-
-Dann muss ausdruecklich benannt werden:
-
-- welches Modell stattdessen verwendet wird
-- welche Reasoning-Stufe stattdessen verwendet wird
-- warum die Abweichung technisch notwendig ist
-
-Ohne diese Angabe soll kein neuer Codex-Auftrag formuliert werden.

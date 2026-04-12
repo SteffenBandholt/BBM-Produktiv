@@ -1,0 +1,50 @@
+fa420ff Merge branch 'phase12-20260411-232033'
+d4f5aca Protokoll: entkopple ViewModel vom Text-Altpfad
+3a8036e Tools: vereinfache bbm-start
+3ed017f Merge branch 'phase12-paket35-protokoll-viewmodel-naechster-restimport'
+2470763 Protokoll: entkopple ViewModel vom Ampel-Altpfad
+409afb9 Merge branch 'phase12-paket34-tools-haertung'
+a58da73 Tools: haerte BBM-Workflow-Helfer
+af13dea Merge branch 'phase12-paket33-tools-promptblock-ausbau'
+71c9da7 Tools: erweitere BBM-Promptblock
+6bb127c Merge branch 'phase12-paket32-tools-promptblock'
+ee98c41 Tools: ergaenze BBM-Promptblock-Helfer
+6360dbf Tools: haerte BBM-Workflow-Helfer ab
+3102657 Tools: fuehre BBM-Workflow-Helfer ein
+84a1b23 Merge branch 'phase12-paket30-protokoll-viewmodel-restimport'
+0026832 Protokoll: entkopple ViewModel von ActionPolicy
+21a3d28 Merge branch 'phase12-paket29-protokoll-naechster-restschnitt'
+f907add Protokoll: entkopple ViewModel vom Selector-Altpfad
+68929f1 Merge branch 'phase12-paket28-plan-protokoll-reststand'
+38530d6 Plan: ziehe Protokoll-Reststand nach
+bc38a36 Merge branch 'phase12-paket27-protokoll-screen-nachweis'
+014617a Protokoll: sichere Screen-Entmischung per Nachweis ab
+0ba97e7 Merge branch 'phase12-paket26-protokoll-buildworkbenchvm-einstieg'
+cdfd92a Protokoll: kapsle BuildWorkbenchVm ueber Modulpfad
+4881d82 Merge branch 'phase12-paket25-protokoll-shouldshowworkbench-einstieg'
+b8ec2ae Protokoll: kapsle ShouldShowWorkbench ueber Modulpfad
+6d535a8 Merge branch 'phase12-paket24-protokoll-canmove-einstieg'
+f0402fd Protokoll: kapsle CanMoveFromState ueber Modulpfad
+27dce66 Protokoll: kapsle CanDeleteFromState ueber Modulpfad
+229806c Merge branch 'phase12-paket22-protokoll-cancreatechild-einstieg'
+2f6ae0e Protokoll: kapsle CanCreateChildFromState ueber Modulpfad
+ec6f08c Merge branch 'phase12-paket21-protokoll-buildpatch-einstieg'
+0f48c3f Protokoll: kapsle BuildPatchFromDraft ueber Modulpfad
+6dfa106 Merge branch 'phase12-paket20-protokoll-editorfromtop-einstieg'
+cae15f8 Protokoll: kapsle editorFromTop ueber Modulpfad
+895cb96 Merge branch 'phase12-paket19-protokoll-listitems-einstieg'
+42dbcc9 Protokoll: kapsle ListItemsFromState ueber Modulpfad
+260e733 Merge branch 'phase12-paket18-protokoll-headerstate-einstieg'
+161b70f Protokoll: kapsle HeaderState ueber Modulpfad
+a94975f Merge branch 'phase12-paket17-protokoll-viewdialogs-einstieg'
+517b736 Protokoll: kapsle ViewDialogs ueber Modulpfad
+0936806 Merge branch 'phase12-paket16-protokoll-selectors-einstieg'
+4a1fdab Protokoll: kapsle Selectors ueber Modulpfad
+11ed725 Merge branch 'phase12-paket15-protokoll-store-einstieg'
+bd4a957 Protokoll: kapsle Store ueber Modulpfad
+69b9037 Merge branch 'phase12-paket14-protokoll-assignee-datasource-einstieg'
+9191b39 Protokoll: kapsle AssigneeDataSource ueber Modulpfad
+e64ef8c Merge branch 'phase12-paket13-protokoll-repository-einstieg'
+1017d51 Protokoll: kapsle Repository ueber Modulpfad
+af4cfdc Merge branch 'phase12-paket12-protokoll-closeflow-einstieg'
+825528d Protokoll: kapsle CloseFlow ueber Modulpfad

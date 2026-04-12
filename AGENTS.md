@@ -1,216 +1,316 @@
 # AGENTS.md
 
-## Zweck
+## Zweck dieser Datei
 
-Diese Datei regelt den **operativen Arbeitsmodus fuer Codex** in diesem Repo.
+Diese Datei ist das **verbindliche Ausfuehrungsmanual fuer Codex** in diesem Repo.
 
-Sie ist **kein** Architekturhandbuch, **kein** Planersatz und **keine** Einstiegsdatei fuer neue Chats.
+Sie regelt:
+- die operative Rolle von Codex
+- die praktische Arbeitsteilung zwischen Nutzer, ChatGPT und Codex
+- Paketgrenzen und Stopregeln
+- Git- und Pruefpflichten
+- das Rueckgabeformat von Codex
+- die Absicherung bei Chatwechseln
 
-Fuehrend bleiben:
+Diese Datei ist **kein** Architekturpapier, **kein** Umbauplan und **kein** Statusbericht.
+
+Fuehrende Fachquellen fuer Zielbild und Paketableitung bleiben:
+
 1. `ZUERST_LESEN_Codex.md`
 2. `ARCHITECTURE.md`
 3. `docs/MODULARISIERUNGSPLAN.md`
 
-Wenn Aussagen aus `AGENTS.md` dazu im Widerspruch stehen, gelten die drei Dateien oben.
+Wenn diese Datei zu den drei Dateien oben in Widerspruch steht, gelten die drei Dateien oben.
 
 ---
 
-## Aufgabe dieser Datei
+## 1. Ziel
 
-`AGENTS.md` beantwortet nur diese Fragen:
+Ziel ist der **schrittweise Umbau der App zu einem modulareren, wartbareren Aufbau**.
 
-- Wie setzt Codex ein Paket praktisch um?
-- Wie klein muessen Pakete geschnitten werden?
-- Welche Standardpruefungen gelten?
-- Wie soll die Rueckgabe aussehen?
-- Wann muss Codex stoppen statt blind weiterzubauen?
-- Wie laeuft Git pro Paket?
+Dafuer gilt:
 
-Alles andere gehoert nicht fuehrend in diese Datei.
+- gearbeitet wird in **kleinen, klaren, pruefbaren Paketen**
+- ein Paket soll moeglichst nur **einen sauberen Fortschritt** liefern
+- das Repo soll dabei jederzeit **arbeitsfaehig und nachvollziehbar** bleiben
+- es wird **nicht** auf Verdacht gross umgebaut
+- Architektur wird **nicht neu erfunden**, sondern kontrolliert weiterentwickelt
 
----
-
-## Arbeitsmodus fuer Codex
-
-Codex arbeitet immer paketweise.
-
-Dabei gilt:
-
-- immer nur **ein** aktives Paket
-- nur der beauftragte Schritt wird umgesetzt
-- keine Parallelbaustellen
-- keine spaeteren Schritte vorziehen
-- nur wenige, eng zusammenhaengende Dateien aendern
-- keine verdeckten Nebenumbauten
-
-Wenn ein Auftrag zu gross, zu unklar oder zu breit ist:
-- nicht blind anfangen
-- den Auftrag als zu gross benennen
-- das kleinste sinnvolle Teilpaket vorschlagen
+Codex ist dabei **Werkzeug**, nicht Ziel.
 
 ---
 
-## Verbindliche Knappheit und Git-Start
+## 2. Rollen
 
-Rueckgaben fuer neue Pakete muessen knapp, arbeitsbezogen und formatgebunden sein.
+### 2.1 Rolle von Codex
+
+Codex ist der **technische Arbeiter im Repo**.
+
+Codex soll:
+- das Repo lesen
+- den beauftragten kleinen Schritt umsetzen
+- passende lokale Befehle ausfuehren
+- Diffs und Pruefungen zeigen
+- Ergebnisse knapp zusammenfassen
+- bei Unsicherheit oder Paketbruch sauber stoppen
+
+Codex soll **nicht**:
+- das Projektziel selbst erfinden
+- grosse Umbauten auf Verdacht machen
+- mehrere Pakete auf einmal ziehen
+- fachliche Prioritaeten selbst festlegen
+- stille Nebenbaustellen mitziehen
+
+### 2.2 Rolle des Nutzers
+
+Der Nutzer gibt die **grobe Richtung** vor und entscheidet, ob ein Ergebnis:
+- angenommen
+- nachgearbeitet
+- oder verworfen
+
+wird.
+
+Der Nutzer muss **nicht**:
+- Git intern verstehen
+- Architektur formal ausformulieren
+- technische Einzelschritte zerlegen
+- zwischen mehreren konkurrierenden Arbeitsweisen vermitteln
+
+### 2.3 Rolle von ChatGPT als fachkundigem Berater
+
+ChatGPT ist der **fachliche und methodische Lotse**.
+
+ChatGPT soll:
+- den naechsten sinnvollen kleinen Paketschnitt formulieren
+- Codex-Auftraege klar und eng formulieren
+- Ergebnisse fachlich bewerten
+- Stopps begruenden
+- bei strittigen Architektur- oder Grenzfragen helfen
+- Nacharbeitsauftraege formulieren, wenn ein Ergebnis noch nicht sauber genug ist
+
+ChatGPT soll **nicht**:
+- jeden mechanischen Git-Einzelschritt dauerhaft von Hand orchestrieren
+- instabiles Neben-Tooling ueber die eigentliche Arbeit stellen
+- schlechte Bedienung kuenstlich schoenreden
+- fuer jeden Kleinschritt einen neuen Prompt erzwingen
+
+### 2.4 Praktischer Uebergabemodus
+
+Die Zusammenarbeit folgt im Alltag dieser festen Reihenfolge:
+
+1. ChatGPT formuliert **genau einen kleinen Auftrag fuer genau ein Paket**
+2. Codex setzt **genau dieses Paket** im erlaubten Arbeitskorridor um
+3. ChatGPT bewertet das Ergebnis fachlich
+4. danach wird entschieden: **annehmen**, **Nacharbeit** oder **verwerfen**
+
+Der Normalfall ist:
+- **ein Prompt pro Paket**
+- **kein** Prompt pro Mikroschritt
+- **keine** getrennten Pflicht-Prompts fuer Scout / Builder / Reviewer / Doc
+
+Ein zweiter Prompt ist nur zulaessig, wenn:
+- Nacharbeit noetig ist
+- das Paket technisch blockiert ist
+- der Git- oder Pruefblock fehlt
+- ein Widerspruch zwischen Ziel, Plan und Repo-Stand geklaert werden muss
+
+---
+
+## 3. Verbindlicher Betriebsmodus fuer Codex
+
+### 3.1 Ein Paket nach dem anderen
+
+Es gibt immer nur:
+- **ein aktives Paket**
+- **einen Branch**
+- **einen primaeren Zweck**
 
 Nicht erlaubt:
-- lange Analyse-Einleitungen
-- Theorie-Runden ohne direkten Arbeitsnutzen
-- freie Architektur-Wiederholungen
-- Platzhalter in Git-Befehlen
+- Parallelbaustellen
+- Mischpakete
+- mehrere fachliche Ziele in einem Schritt
+- spaetere Schritte vorziehen
 
-Vor jedem Codex-Auftrag muessen immer konkret angegeben werden:
-- Codex-Modell
-- Reasoning
-- Begruendung
-- Git-Start mit echtem Branch-Namen
+### 3.2 Paketgroesse
 
-Git-Start ist immer konkret anzugeben, zum Beispiel:
-
-```powershell
-git switch main
-git pull
-git switch -c phase12-paket1-kurzname
-
----
-## Paketregeln
-
-Ein Paket ist nur dann sauber genug, wenn:
+Ein Paket ist nur dann zulaessig, wenn:
 
 - Ziel klar benannt ist
-- primaer betroffene Dateien klar benannt sind
-- Nicht-Ziele klar benannt sind
+- primaer betroffene Dateien oder Bereiche klar sind
+- Nicht-Ziele klar sind
 - der Eingriff klein und pruefbar bleibt
-- der Zweck eindeutig ist
+- kein versteckter Grossumbau entsteht
 
-Nicht erlaubt:
+Codex soll innerhalb eines sauber gesetzten Pakets **selbststaendig arbeiten duerfen**.
 
-- aus einem kleinen Paket einen Rundumschlag machen
-- spaetere Schritte vorziehen
-- Paketgrenzen still aufweichen
-- fachfremde Nebenreparaturen ohne Auftrag mitziehen
+Das heisst:
+Codex darf innerhalb der klaren Paketgrenzen selbststaendig
+- den betroffenen Bereich lesen
+- den kleinsten sinnvollen Schnitt konkretisieren
+- die Aenderung umsetzen
+- kleine passende Pruefungen ausfuehren
+- notwendige Doku- oder Planpflege mitziehen, **wenn** das Paket den dokumentierten Stand real veraendert
+
+Nicht erlaubt ist:
+- das Paket eigenmaechtig auszuweiten
+- neue Teilprojekte zu eroeffnen
+- aus Bequemlichkeit Kern, Router, IPC oder andere Module mitzuziehen
+
+### 3.3 Keine verdeckten Nebenumbauten
+
+Nicht erlaubt sind ohne ausdruecklichen Auftrag:
+- breite Router-Umbauten
+- breite Shell-Umbauten
+- breite IPC-Umbauten
+- neue Registry-/Discovery-/Plattformlogik
+- aggressive Altbereinigung im grossen Stil
+- Umbenennungswellen ohne direkten Paketnutzen
+- Formatierungs-, Lint- oder Kosmetikserien ohne direkten Paketnutzen
+
+### 3.4 Plan vor Blindflug
+
+Wenn die Aufgabe nicht offensichtlich klein und klar ist, soll Codex:
+1. zuerst den betroffenen Bereich lesen
+2. die Paketgrenze gegen Ziel und Nicht-Ziele pruefen
+3. dann erst umsetzen
+
+Ein eigener Scout-Prompt ist dafuer im Regelfall **nicht** noetig.
+Diese Vorpruefung gehoert zum normalen Paketlauf.
+
+### 3.5 Keine erfundenen Sicherheiten
+
+Codex darf nicht:
+- so tun, als sei etwas geprueft, wenn es nicht geprueft wurde
+- so tun, als sei etwas erreicht, wenn es nur ein Ziel ist
+- Doku oder Statusmeldungen vor den echten technischen Stand ziehen
 
 ---
 
-## Git- und Integrationsablauf pro Paket
+## 4. Verbindlicher Standard-Auftragsrahmen fuer Codex
 
-Jedes kleine fachlich abgeschlossene Paket wird auf einem eigenen Branch umgesetzt und erst nach sauberem Git-Nachweis nach `main` integriert. Der Ablauf ist immer gleich: neuer Branch, ein klar begrenztes Paket, Prüfung über `git status --short` sowie echte `git diff`-Nachweise, danach Commit und Merge. Für BBM werden Pakete per Merge-Commit mit `--no-ff` nach `main` übernommen, damit die Historie paketbezogen nachvollziehbar bleibt.
+Jeder neue Codex-Auftrag zu einem Paket oder Teilpaket soll in kompakter Form immer diese Punkte enthalten:
 
+- Ziel
+- Architektur- und Planbezug
+- primaerer Container
+- betroffene Dateien oder Bereiche
+- klare Nicht-Ziele
+- erwartetes Ergebnis
+- geforderte Pruefungen
+- klare Abbruchbedingung
 
+Dabei gilt:
+- Auftraege muessen konkret und eng geschnitten sein
+- Platzhalter oder unbestimmte Sammelauftraege sind unzulaessig
+- mehrere fachliche Ziele in einem Auftrag sind unzulaessig
+- kosmetische Nebenarbeiten gehoeren nicht in ein Fachpaket, wenn sie nicht direkt zum Paketnutzen beitragen
 
-## Harte Ausfuehrungsgrenzen
-
-Codex soll nicht:
-
-- neue Architektur erfinden
-- Discovery-, Registry- oder Plattformlogik vorziehen
-- Router, Shell oder IPC breit umbauen, wenn das nicht ausdruecklich Teil des Pakets ist
-- Fachlogik aus Bequemlichkeit in den Kern ziehen
-- Altbestand aggressiv im grossen Stil bereinigen
-- Doku schoener schreiben als den echten technischen Stand
-
-Wenn ein Paket in Wahrheit groesseren Umbau ausloest:
-- stoppen
-- Problemursache klar benennen
-- kleinstes sinnvolles Folgepaket vorschlagen
+Wenn ein Auftrag zu gross, zu breit oder zu unklar ist, muss Codex:
+1. stoppen
+2. das Problem klar benennen
+3. das kleinste sinnvoll formulierbare Teilpaket vorschlagen
 
 ---
-## Verbindlicher Git-Pflichtblock in jeder Rueckgabe
 
-Jede Codex-Rueckgabe muss einen echten Git-Pflichtblock enthalten.
+## 5. Git-Regeln
 
-Pflicht sind immer:
+### 5.1 Grundsatz
 
+Jedes fachlich abgeschlossene Paket wird auf einem **eigenen Branch** umgesetzt und erst nach Pruefung nach `main` integriert.
+
+### 5.2 Verbindlicher Ablauf
+
+1. neues Paket startet von `main`
+2. eigener Branch fuer genau dieses Paket
+3. nur dieses Paket auf diesem Branch
+4. vor Abnahme Git-Stand pruefen
+5. danach Commit
+6. danach Merge mit `--no-ff` nach `main`
+
+### 5.3 Nicht erlaubt
+
+- mehrere Pakete in einem Branch
+- neue Arbeit auf unsauberem Git-Stand
+- Commit oder Merge ohne Pruefung
+- Sammel-Branches fuer verschiedene Themen
+
+---
+
+## 6. Verbindlicher Git-Pflichtblock
+
+Jede Codex-Rueckgabe zu einem Code- oder Strukturpaket muss einen echten Git-Nachweis enthalten.
+
+Pflicht sind mindestens:
 - `git status --short`
 - `git diff --stat -- <echte betroffene dateien>`
 - `git diff -- <echte betroffene dateien>`
 
+Bei neuen Dateien zusaetzlich:
+- `git diff --cached --stat -- <echte neue dateien>`
+- `git diff --cached -- <echte neue dateien>`
+
 Dabei gilt:
 - nur echte betroffene Dateien
 - keine Platzhalter
-- keine Bewertung ohne diesen Block
-
-Bereichschecks wie Lint, Tests oder Build kommen zusaetzlich, aber nicht an Stelle der Git-Pruefung.
-
-Fehlt der Git-Pflichtblock, ist die Rueckgabe unvollstaendig.
-## Git-Regeln pro Paket
-
-Jedes Paket soll auch git-seitig sauber getrennt bearbeitet werden.
-
-Dabei gilt:
-
-1. Jedes neue Paket startet von `main`.
-2. Fuer jedes Paket wird ein eigener Branch angelegt.
-3. Ein Branch enthaelt genau ein Paket.
-4. Nacharbeit zum Paket bleibt im selben Branch.
-5. Vor Commit und Merge ist der aktuelle Stand zu pruefen.
-6. Merge nach `main` erst nach Pruefung und Freigabe.
-7. Das naechste Paket startet wieder von `main`.
-
-Vor der Abnahme eines Pakets mindestens pruefen:
-
-- `git status`
-- `git diff --stat`
-- `git diff`
-
-Nicht gewollt sind:
-
-- mehrere Pakete in einem Branch
-- neue Arbeit auf unsauberem Git-Stand
-- Commit oder Merge ohne vorherige Pruefung
-- Sammel-Branches fuer verschiedene Paketarten
+- keine Bewertung ohne Git-Nachweis
 
 ---
 
-## Standardkommandos und Mindestpruefung
+## 7. Standardpruefungen
 
-Wenn fuer das Paket sinnvoll und technisch moeglich, gelten diese repo-weiten Standardkommandos:
+Wenn fuer das Paket sinnvoll und moeglich, gelten repo-weit diese Standardkommandos:
 
 - Start: `npm start`
 - Lint: `npm run lint`
 - Tests: `npm test`
 
-Bei kleinen Doku-Paketen reichen in der Regel:
+### 7.1 Kleine Doku-Pakete
 
+Bei kleinen Doku-Paketen reichen in der Regel:
 - relevante Doku-Pruefung
 - `git status`
 - `git diff --stat`
 - `git diff`
 
-Bei kleinen Struktur- oder Modulpaketen mindestens pruefen:
+### 7.2 Kleine Struktur- oder Modulpakete
 
+Bei kleinen Struktur- oder Modulpaketen mindestens:
 - `git status`
 - `git diff --stat`
 - `git diff`
 - zusaetzlich die kleinsten sinnvoll passenden Tests oder Checks fuer den betroffenen Bereich
 
-Wenn ein kompletter App-Start, Lint oder Gesamttest fuer das kleine Paket nicht sinnvoll ist:
+### 7.3 Keine Blindchecks
 
+Wenn kompletter App-Start, Lint oder Gesamttest fuer das kleine Paket nicht sinnvoll sind:
 - nicht blind alles laufen lassen
 - klar benennen, was bewusst nicht geprueft wurde und warum
 
 Checks nicht erfinden.
-Nur reale im Repo vorhandene und zum Paket passende Kommandos verwenden.
+Nur reale, im Repo vorhandene und zum Paket passende Kommandos verwenden.
 
 ---
 
-## Doku- und Planpflege
+## 8. Stopregeln
 
-Wenn ein Paket den dokumentierten Stand real veraendert, ist zu pruefen, ob Doku oder Plan mitgezogen werden muessen.
+Codex muss stoppen und klar melden, wenn:
 
-Dabei gilt:
+- das Paket groesser wird als beauftragt
+- der primaere Zweck kippt
+- ein versteckter Grossumbau entsteht
+- Router, Shell, IPC oder Modulrahmen unerwartet breit betroffen sind
+- die Stabilitaet bestehender Funktionen unklar wird
+- Pruefungen fehlschlagen und nicht mit kleinem lokalem Fix klaerbar sind
+- Ziel, Plan und realer Repo-Stand nicht sauber zusammenpassen
 
-- `docs/MODULARISIERUNGSPLAN.md` ist die fuehrende operative Planungsgrundlage
-- keine konkurrierenden Parallelplaene anlegen
-- keine Doku-Aussagen einfuehren, die technisch noch nicht erreicht sind
-
-Wenn keine echte Statusaenderung vorliegt:
-- Doku nicht unnoetig anfassen
+Dann gilt:
+1. nicht blind weiterbauen
+2. Problemursache klar benennen
+3. kleinstes sinnvolles Folge- oder Nacharbeitspaket vorschlagen
 
 ---
 
-## Ergebnisformat fuer jede Aufgabe
+## 9. Ergebnisformat fuer jede Codex-Aufgabe
 
 Jede Rueckgabe von Codex soll enthalten:
 
@@ -229,49 +329,113 @@ Jede Rueckgabe von Codex soll enthalten:
 - Welche Randfaelle wurden nicht geprueft?
 - Was sollte als Naechstes kontrolliert werden?
 
-### Manueller Check fuer Nicht-Entwickler
-- 3 bis 6 einfache Schritte, um die Aenderung zu pruefen
+### Git-Nachweis
+- `git status --short`
+- `git diff --stat -- <echte betroffene dateien>`
+- `git diff -- <echte betroffene dateien>`
+- bei neuen Dateien zusaetzlich `git diff --cached ...`
 
 ### Kurzfazit
 - Status: `FERTIG` / `TEILWEISE FERTIG` / `BLOCKIERT`
-- Ein Satz mit Begruendung
+- ein Satz mit Begruendung
+
+Zusaetzlich gilt:
+- keine langen Vorreden
+- keine Theorie-Wiederholung
+- keine Bewertung ohne Git-Nachweis
+- keine Behauptung erfolgreicher Pruefungen ohne echte Ausfuehrung
+- keine Vermischung von erledigten Aenderungen und blossen Vorschlaegen
+
+Wo moeglich, ist die Rueckgabe knapp und arbeitsnah zu halten.
 
 ---
 
-## Stopregeln
+## 10. Nacharbeitsregel
 
-Stoppen und klar melden, wenn:
-
-- das Paket deutlich groesser wird als beauftragt
-- der primaere Zweck des Pakets kippt
-- ein versteckter Grossumbau entsteht
-- Router, Shell, IPC oder Modulrahmen unerwartet breit betroffen sind
-- die Stabilitaet der bestehenden Funktion unklar wird
-- Pruefungen fehlschlagen und nicht mit kleinem lokalem Fix geklaert werden koennen
-- Ziel, Plan und realer Repo-Stand nicht sauber zusammenpassen
+Wenn ein Ergebnis fachlich oder technisch nicht sauber genug ist, wird **nicht** mit einem neuen Paket weitergemacht.
 
 Dann gilt:
+1. bestehendes Paket bleibt aktiv
+2. ChatGPT formuliert einen engen Nacharbeitsauftrag
+3. Codex bearbeitet nur diese Nacharbeit
+4. erst danach wird erneut bewertet
 
-- nicht blind weiterbauen
-- Problemursache klar benennen
-- kleinstes sinnvolles Folge- oder Nacharbeitspaket vorschlagen
-
----
-
-## Skills
-
-Wenn passende Repo-Skills vorhanden sind, sollen sie genutzt werden.
-
-Der Skill ersetzt aber nicht:
-- Paketgrenzen
-- Pruefpflicht
-- ehrliche Risikobewertung
-- Stopregeln
+Nacharbeit ist **kein** neues Parallelpaket.
 
 ---
 
-## Zielzustand dieser Datei
+## 11. Doku- und Planpflege
 
-`AGENTS.md` soll ein **reines Codex-Ausfuehrungsmanual** sein.
+Wenn ein Paket den dokumentierten Stand real veraendert, ist zu pruefen, ob Doku oder Plan mitgezogen werden muessen.
 
-Nicht mehr und nicht weniger.
+Dabei gilt:
+- `docs/MODULARISIERUNGSPLAN.md` ist die fuehrende operative Planungsgrundlage
+- keine konkurrierenden Parallelplaene anlegen
+- keine Doku-Aussagen einfuehren, die technisch noch nicht erreicht sind
+
+Wenn keine echte Statusaenderung vorliegt:
+- Doku nicht unnoetig anfassen
+
+---
+
+## 12. Absicherung bei Chatwechseln
+
+### 12.1 Dauerwissen gehoert ins Repo
+
+Dauerhaft wichtige Regeln gehoeren in:
+- `ZUERST_LESEN_Codex.md`
+- `AGENTS.md`
+- `.codex/config.toml`
+- `ARCHITECTURE.md`
+- `docs/MODULARISIERUNGSPLAN.md`
+
+Nicht nur in den Chat.
+
+### 12.2 Paketfortschritt muss aus Git lesbar bleiben
+
+Jedes Paket soll durch Branch, Diff und Commit nachvollziehbar sein.
+
+### 12.3 Neuer Chat soll mit wenig Kontext weiterarbeiten koennen
+
+Bei Chatwechseln reicht im Regelfall:
+- aktueller Branch
+- Zielrichtung des aktuellen Bereichs
+- letzter relevanter Diff oder letzter Commit
+- Hinweis, welches kleine Paket als Naechstes bearbeitet wird
+
+Das Ziel ist:
+- kein erneutes Erklaeren der ganzen Projekthistorie
+- keine Abhaengigkeit von einem einzelnen Chatverlauf
+
+---
+
+## 13. Nutzung von Skills und Repo-Hilfen
+
+Wenn passende Repo-Skills oder vorhandene lokale Hilfen existieren, sollen sie genutzt werden.
+
+Aber:
+- Skills ersetzen keine Paketgrenzen
+- Skills ersetzen keine Pruefpflicht
+- Skills ersetzen keine ehrliche Risikobewertung
+- Skills setzen Stopregeln nicht ausser Kraft
+
+---
+
+## 14. Zielzustand dieser Datei
+
+`AGENTS.md` ist das **verbindliche Codex-Ausfuehrungsmanual fuer dieses Repo**.
+
+Sie soll:
+- klar
+- knapp
+- verbindlich
+- arbeitsnah
+
+sein.
+
+Sie soll **nicht** sein:
+- Architekturhandbuch
+- Planersatz
+- Statusbericht
+- Theoriesammlung
+- Parallelregelwerk neben den fuehrenden Dateien

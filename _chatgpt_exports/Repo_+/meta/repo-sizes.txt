@@ -1,0 +1,29 @@
+﻿
+Name                  SizeMB
+----                  ------
+experiments            39,32
+src                     6,37
+.vs                     2,11
+package-lock.json       0,18
+docs                    0,06
+scripts                 0,06
+AGENTS.md               0,01
+MIGRATION_PLAN.md       0,01
+ZUERST_LESEN_Codex.md   0,01
+skills                  0,01
+tools                   0,01
+channel.json               0
+codex.instruction.md       0
+start.log                  0
+package.json               0
+.codex                     0
+.eslintignore              0
+.env                       0
+.codexignore               0
+.eslintrc.cjs              0
+ARCHITECTURE.md            0
+.gitignore                 0
+.gitattributes             0
+
+
+
