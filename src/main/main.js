@@ -3,7 +3,14 @@
 // TECH-CONTRACT (verbindlich): docs/UI-TECH-CONTRACT.md
 // CONTRACT-VERSION: 1.0.1
 //
-const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = require("electron");
+const electron = (() => {
+  try {
+    return require("electron/main");
+  } catch {
+    return require("electron");
+  }
+})();
+const { app, BrowserWindow, ipcMain, dialog, shell, Menu } = electron;
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -388,7 +395,7 @@ function createWindow() {
   }
 }
 
-if (process.platform === "win32") {
+if (process.platform === "win32" && typeof app?.setAppUserModelId === "function") {
   app.setAppUserModelId(WINDOWS_APP_ID);
 }
 
@@ -454,7 +461,8 @@ async function maybePromptLegacyMigration(win) {
   }
 }
 
-app.whenReady().then(async () => {
+if (app && typeof app.whenReady === "function" && typeof app.on === "function") {
+  app.whenReady().then(async () => {
   // ✅ IPCs zuerst registrieren (verhindert "No handler registered" beim invoke)
   registerProjectsIpc();
   registerMeetingsIpc();
@@ -766,12 +774,15 @@ app.whenReady().then(async () => {
   // Fenster erst danach (damit Renderer nichts "zu früh" invoken kann)
   createWindow();
   await maybePromptLegacyMigration(mainWindow);
-});
+  });
 
-app.on("window-all-closed", () => {
-  if (process.platform === "win32") {
-    app.quit();
-    return;
-  }
-  if (process.platform !== "darwin") app.quit();
-});
+  app.on("window-all-closed", () => {
+    if (process.platform === "win32") {
+      app.quit();
+      return;
+    }
+    if (process.platform !== "darwin") app.quit();
+  });
+} else {
+  console.error("[main] electron app bootstrap unavailable");
+}
