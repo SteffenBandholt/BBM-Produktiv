@@ -223,15 +223,36 @@ async function runProtokollRouterFallbackTests(run) {
         __dirname,
         "../../src/renderer/modules/protokoll/NumberGapRepairPopup.js"
       );
-      const featureFile = path.join(__dirname, "../../src/renderer/features/dialogs/TopsViewDialogs.js");
+      const flowFile = path.join(
+        __dirname,
+        "../../src/renderer/modules/protokoll/NumberGapRepairFlow.js"
+      );
       const popupSource = fs.readFileSync(popupFile, "utf8");
-      const featureSource = fs.readFileSync(featureFile, "utf8");
+      const flowSource = fs.readFileSync(flowFile, "utf8");
 
       assert.equal(popupSource.includes("features/dialogs/TopsViewDialogs.js"), false);
       assert.equal(popupSource.includes("buildGapDetailsText"), true);
       assert.equal(popupSource.includes("showNumberGapPopup"), true);
+      assert.equal(flowSource.includes('from "./NumberGapRepairPopup.js"'), true);
+    }
+  );
+
+  await run(
+    "Protokoll NumberGapRepairFlow-Einstieg: TopsViewDialogs nutzt einen modulnahen Repair-Flow",
+    () => {
+      const flowFile = path.join(
+        __dirname,
+        "../../src/renderer/modules/protokoll/NumberGapRepairFlow.js"
+      );
+      const featureFile = path.join(__dirname, "../../src/renderer/features/dialogs/TopsViewDialogs.js");
+      const flowSource = fs.readFileSync(flowFile, "utf8");
+      const featureSource = fs.readFileSync(featureFile, "utf8");
+
+      assert.equal(flowSource.includes("features/dialogs/TopsViewDialogs.js"), false);
+      assert.equal(flowSource.includes("NumberGapRepairPopup"), true);
+      assert.equal(flowSource.includes("handleNumberGap"), true);
       assert.equal(
-        featureSource.includes('from "../../modules/protokoll/NumberGapRepairPopup.js"'),
+        featureSource.includes('from "../../modules/protokoll/NumberGapRepairFlow.js"'),
         true
       );
     }

@@ -1,10 +1,10 @@
 import { applyPopupButtonStyle, applyPopupCardStyle } from "../../ui/popupButtonStyles.js";
-import { NumberGapRepairPopup } from "../../modules/protokoll/NumberGapRepairPopup.js";
+import { NumberGapRepairFlow } from "../../modules/protokoll/NumberGapRepairFlow.js";
 
 export class TopsViewDialogs {
   constructor({ view }) {
     this.view = view;
-    this.numberGapRepairPopup = new NumberGapRepairPopup({
+    this.numberGapRepairFlow = new NumberGapRepairFlow({
       view: this.view,
       clearGapPopup: () => this.clearGapPopup(),
     });
@@ -18,32 +18,7 @@ export class TopsViewDialogs {
   }
 
   async handleNumberGap({ gap, markTopIds, onResolved }) {
-    this.view._setMarkedTopIds(markTopIds || []);
-    await this.numberGapRepairPopup.showNumberGapPopup({
-      gap,
-      onCancel: () => {
-        this.view._clearMarkedTopIds();
-      },
-      onConfirm: async () => {
-        const fixRes = await window.bbmDb.meetingTopsFixNumberGap({
-          meetingId: this.view.meetingId,
-          level: gap?.level,
-          parentTopId: gap?.parentTopId ?? null,
-          fromTopId: gap?.lastTopId,
-          toNumber: gap?.missingNumber,
-        });
-
-        if (!fixRes?.ok) {
-          alert(fixRes?.error || fixRes?.errorCode || "Reparatur fehlgeschlagen");
-          return;
-        }
-
-        this.clearGapPopup();
-        this.view._clearMarkedTopIds();
-        await this.view.reloadList(true);
-        if (typeof onResolved === "function") await onResolved();
-      },
-    });
+    return this.numberGapRepairFlow.handleNumberGap({ gap, markTopIds, onResolved });
   }
 
   async openMeetingKeywordPopup() {
