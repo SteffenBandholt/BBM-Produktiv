@@ -1,5 +1,6 @@
 import { SharedEditboxCore } from "../../modules/protokoll/SharedEditboxCore.js";
 import { WorkbenchMetaColumn } from "../../modules/protokoll/WorkbenchMetaColumn.js";
+import { WorkbenchShellFrame } from "../../modules/protokoll/WorkbenchShellFrame.js";
 
 const PROTOCOL_WORKBENCH_BUTTON_SPECS = Object.freeze({
   createLevel1: { label: "+Titel", tone: "neutral" },
@@ -51,37 +52,15 @@ export class TopsWorkbench {
   // Gemeinsames Workbench-Muster:
   // Header, Arbeitsflaeche und Meta-Spalte bilden die wiederverwendbare Grundstruktur.
   _buildWorkbenchShell() {
-    this.root = document.createElement("div");
-    this.root.className = "bbm-tops-workbench";
-    this.root.dataset.hasSelection = "false";
-    this.root.dataset.isReadOnly = "false";
-    this.root.dataset.isMoveMode = "false";
-
-    this.header = document.createElement("div");
-    this.header.className = "bbm-tops-workbench-header";
-
-    this.leftHeaderTitle = document.createElement("div");
-    this.leftHeaderTitle.className = "bbm-tops-workbench-left-title";
-
-    const addWrap = document.createElement("div");
-    addWrap.className = "bbm-tops-workbench-add-wrap";
-    this.headerAddActions = addWrap;
-
-    const actionWrap = document.createElement("div");
-    actionWrap.className = "bbm-tops-workbench-action-wrap";
-    this.headerPrimaryActions = actionWrap;
-
-    this.header.append(this.leftHeaderTitle, addWrap, actionWrap);
-
-    this.body = document.createElement("div");
-    this.body.className = "bbm-tops-workbench-body";
-
-    this.left = document.createElement("div");
-    this.left.className = "bbm-tops-workbench-left";
-
-    this.gutter = document.createElement("div");
-    this.gutter.className = "bbm-tops-workbench-gutter";
-    this.gutter.setAttribute("aria-hidden", "true");
+    this.workbenchShell = new WorkbenchShellFrame();
+    this.root = this.workbenchShell.root;
+    this.header = this.workbenchShell.header;
+    this.leftHeaderTitle = this.workbenchShell.leftHeaderTitle;
+    this.headerAddActions = this.workbenchShell.headerAddActions;
+    this.headerPrimaryActions = this.workbenchShell.headerPrimaryActions;
+    this.body = this.workbenchShell.body;
+    this.left = this.workbenchShell.left;
+    this.gutter = this.workbenchShell.gutter;
   }
 
   // Protokollspezifische Workbench-Huelle:
@@ -111,8 +90,7 @@ export class TopsWorkbench {
   }
 
   _assembleWorkbenchShell() {
-    this.body.append(this.left, this.gutter, this.metaColumn.root);
-    this.root.append(this.header, this.body);
+    this.workbenchShell.mount(this.metaColumn.root);
   }
 
   // Gemeinsamer Bearbeitungskern:
@@ -200,9 +178,9 @@ export class TopsWorkbench {
     this.btnSave.disabled = isReadOnly || isWriting || !canSave;
     this.btnDelete.disabled = isReadOnly || isWriting || !canDelete;
 
-    this.root.dataset.hasSelection = hasSelection ? "true" : "false";
-    this.root.dataset.isReadOnly = isReadOnly ? "true" : "false";
-    this.root.dataset.isMoveMode = isMoveMode ? "true" : "false";
+    this.workbenchShell.root.dataset.hasSelection = hasSelection ? "true" : "false";
+    this.workbenchShell.root.dataset.isReadOnly = isReadOnly ? "true" : "false";
+    this.workbenchShell.root.dataset.isMoveMode = isMoveMode ? "true" : "false";
 
     this.btnMove.textContent = isMoveMode ? "Schieben aktiv" : "Schieben";
   }
