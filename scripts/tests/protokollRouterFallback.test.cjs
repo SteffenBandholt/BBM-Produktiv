@@ -57,6 +57,19 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(listSource.includes("tops/components/TopsList.js"), true);
   });
 
+  await run("Protokoll ListRow-Einstieg: TopsListRow liegt im Modul", () => {
+    const rowFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsListRow.js");
+    const legacyRowFile = path.join(
+      __dirname,
+      "../../src/renderer/tops/components/TopsListRow.js"
+    );
+    const rowSource = fs.readFileSync(rowFile, "utf8");
+    const legacyRowSource = fs.readFileSync(legacyRowFile, "utf8");
+
+    assert.equal(rowSource.includes("tops/components/TopsListRow.js"), false);
+    assert.equal(legacyRowSource.includes('from "../../modules/protokoll/TopsListRow.js"'), true);
+  });
+
   await run("Protokoll Workbench-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
     const screenFile = path.join(
       __dirname,
