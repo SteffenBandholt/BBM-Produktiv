@@ -21,12 +21,16 @@ async function runProtokollRouterFallbackTests(run) {
       "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
     );
     const styleFile = path.join(__dirname, "../../src/renderer/modules/protokoll/styles.js");
+    const styleCssFile = path.join(__dirname, "../../src/renderer/modules/protokoll/styles.css");
     const screenSource = fs.readFileSync(screenFile, "utf8");
     const styleSource = fs.readFileSync(styleFile, "utf8");
+    const styleCssSource = fs.readFileSync(styleCssFile, "utf8");
 
     assert.equal(screenSource.includes("tops/styles/tops.css"), false);
     assert.equal(screenSource.includes('from "../styles.js"'), true);
-    assert.equal(styleSource.includes("tops/styles/tops.css"), true);
+    assert.equal(styleSource.includes('./styles.css'), true);
+    assert.equal(styleSource.includes("tops/styles/tops.css"), false);
+    assert.equal(styleCssSource.includes("tops/styles/tops.css"), true);
   });
 
   await run("Protokoll Header-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {

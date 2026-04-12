@@ -1,5 +1,5 @@
 const TOPS_V2_STYLE_TAG = "bbm-tops-v2-styles";
-const TOPS_V2_STYLE_HREF = new URL("../../tops/styles/tops.css", import.meta.url).href;
+const TOPS_V2_STYLE_HREF = new URL("./styles.css", import.meta.url).href;
 
 export function ensureProtokollModuleStyles() {
   if (typeof document === "undefined") return;

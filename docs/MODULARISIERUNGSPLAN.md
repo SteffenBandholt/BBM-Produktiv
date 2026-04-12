@@ -157,6 +157,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - modulnaher Style-Einstieg ist eingefuehrt
 - `TopsScreen` bindet Styles nicht mehr direkt ueber den globalen `tops/`-Pfad ein
 - `TopsScreen` ist fuer die bisher bearbeitete Kleinschnitt-Achse weitgehend von direkten Tiefenimports entlastet
+- `styles.js` nutzt eine modulinterne `styles.css` als kleinen Style-Einstieg
 - ein kleiner Nachweis fuer den entmischten Screen-Stand ist vorhanden
 
 **Noch offen**
