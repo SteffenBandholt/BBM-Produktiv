@@ -7,6 +7,7 @@ const {
 } = require("../src/main/ipc/projectStoragePaths");
 const { runTopsStoreTests } = require("./tests/topsStore.test.cjs");
 const { runTopsSelectorsTests } = require("./tests/topsSelectors.test.cjs");
+const { runTopsRepositoryTests } = require("./tests/topsRepository.test.cjs");
 const { runTopsCommandsTests } = require("./tests/topsCommands.test.cjs");
 const { runTopsActionPolicyTests } = require("./tests/topsActionPolicy.test.cjs");
 const { runTopsScreenIntegrationTests } = require("./tests/topsScreen.integration.test.cjs");
@@ -68,6 +69,7 @@ async function main() {
 
   await runTopsStoreTests(run);
   await runTopsSelectorsTests(run);
+  await runTopsRepositoryTests(run);
   await runTopsDtosTests(run);
   await runTopsCommandsTests(run);
   await runTopsCloseFlowTests(run);

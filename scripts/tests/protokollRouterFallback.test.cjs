@@ -134,12 +134,14 @@ async function runProtokollRouterFallbackTests(run) {
       __dirname,
       "../../src/renderer/modules/protokoll/TopsRepository.js"
     );
+    const legacyRepositoryFile = path.join(__dirname, "../../src/renderer/tops/data/TopsRepository.js");
     const screenSource = fs.readFileSync(screenFile, "utf8");
     const repositorySource = fs.readFileSync(repositoryFile, "utf8");
+    const legacyRepositorySource = fs.readFileSync(legacyRepositoryFile, "utf8");
 
-    assert.equal(screenSource.includes("tops/data/TopsRepository.js"), false);
     assert.equal(screenSource.includes('from "../TopsRepository.js"'), true);
-    assert.equal(repositorySource.includes("tops/data/TopsRepository.js"), true);
+    assert.equal(repositorySource.includes("tops/data/TopsRepository.js"), false);
+    assert.equal(legacyRepositorySource.includes('from "../../modules/protokoll/TopsRepository.js"'), true);
   });
 
   await run(
