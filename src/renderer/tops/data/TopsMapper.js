@@ -1,9 +1,1 @@
-import { createLoadByMeetingResult, createMutationResult } from "./TopsDtos.js";
-
-export function mapLoadByMeetingResult(res) {
-  return createLoadByMeetingResult(res);
-}
-
-export function mapMutationResult(res) {
-  return createMutationResult(res);
-}
+export { mapLoadByMeetingResult, mapMutationResult } from "../../modules/protokoll/TopsMapper.js";

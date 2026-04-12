@@ -144,6 +144,22 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(legacyRepositorySource.includes('from "../../modules/protokoll/TopsRepository.js"'), true);
   });
 
+  await run("Protokoll Datenhilfen-Einstieg: TopsRepository nutzt modulnahe Helper", () => {
+    const dtoFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsDtos.js");
+    const mapperFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsMapper.js");
+    const legacyDtoFile = path.join(__dirname, "../../src/renderer/tops/data/TopsDtos.js");
+    const legacyMapperFile = path.join(__dirname, "../../src/renderer/tops/data/TopsMapper.js");
+    const dtoSource = fs.readFileSync(dtoFile, "utf8");
+    const mapperSource = fs.readFileSync(mapperFile, "utf8");
+    const legacyDtoSource = fs.readFileSync(legacyDtoFile, "utf8");
+    const legacyMapperSource = fs.readFileSync(legacyMapperFile, "utf8");
+
+    assert.equal(dtoSource.includes("tops/data/TopsDtos.js"), false);
+    assert.equal(mapperSource.includes("tops/data/TopsMapper.js"), false);
+    assert.equal(legacyDtoSource.includes('from "../../modules/protokoll/TopsDtos.js"'), true);
+    assert.equal(legacyMapperSource.includes('from "../../modules/protokoll/TopsMapper.js"'), true);
+  });
+
   await run(
     "Protokoll AssigneeDataSource-Einstieg: TopsScreen nutzt einen modulnahen Re-Export",
     () => {

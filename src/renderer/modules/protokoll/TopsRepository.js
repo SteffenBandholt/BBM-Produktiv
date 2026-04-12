@@ -1,4 +1,4 @@
-import { mapLoadByMeetingResult, mapMutationResult } from "../../tops/data/TopsMapper.js";
+import { mapLoadByMeetingResult, mapMutationResult } from "./TopsMapper.js";
 import {
   createLoadByMeetingRequest,
   createSaveTopRequest,
@@ -10,7 +10,7 @@ import {
   toApiMoveTopPayload,
   toApiDeleteTopPayload,
   createRepositoryUnavailableResult,
-} from "../../tops/data/TopsDtos.js";
+} from "./TopsDtos.js";
 
 // Fachmodul `Protokoll`:
 // Modulinterner Datenzugriff fuer TOP-/Protokolloperationen ueber die bestehende API-Bruecke.

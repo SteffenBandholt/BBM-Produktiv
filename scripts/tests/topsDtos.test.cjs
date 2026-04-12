@@ -3,7 +3,12 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runTopsDtosTests(run) {
-  const dto = await importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/data/TopsDtos.js"));
+  const dto = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/modules/protokoll/TopsDtos.js")
+  );
+  const mapper = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/modules/protokoll/TopsMapper.js")
+  );
 
   await run("TopsDtos: Request-DTOs normalisieren Input", () => {
     const loadReq = dto.createLoadByMeetingRequest(7);
@@ -27,6 +32,21 @@ async function runTopsDtosTests(run) {
     assert.equal(mutResult.ok, false);
     assert.equal(mutResult.error, "bad");
     assert.equal(mutResult.detail, 5);
+  });
+
+  await run("TopsMapper: Mapping delegiert an TopsDtos", () => {
+    assert.deepEqual(mapper.mapLoadByMeetingResult({ ok: 1, meeting: { id: 5 }, list: null }), {
+      ok: true,
+      meeting: { id: 5 },
+      list: [],
+      error: null,
+    });
+
+    assert.deepEqual(mapper.mapMutationResult({ ok: 0, top: null, error: "bad" }), {
+      ok: false,
+      top: null,
+      error: "bad",
+    });
   });
 }
 

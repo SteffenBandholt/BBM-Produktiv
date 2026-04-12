@@ -157,6 +157,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - modulnaher Style-Einstieg ist eingefuehrt
 - `TopsScreen` bindet Styles nicht mehr direkt ueber den globalen `tops/`-Pfad ein
 - `TopsScreen` ist fuer die bisher bearbeitete Kleinschnitt-Achse weitgehend von direkten Tiefenimports entlastet
+- `TopsDtos` und `TopsMapper` liegen als modulinterne Datenhilfen unter `modules/protokoll/`
 - `TopsRepository` liegt als modulinterner Datenzugriff unter `modules/protokoll/`
 - ein kleiner Nachweis fuer den entmischten Screen-Stand ist vorhanden
 

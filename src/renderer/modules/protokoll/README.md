@@ -7,6 +7,7 @@ Aktuell ist nur ein kleiner Einstieg angelegt:
 - `index.js` als kleiner Modul-Einstieg mit Modulkennung, Arbeitsscreen und Sicht auf bereits umgezogenen Modulbestand
 - `screens/` mit einem konservativen Einstieg auf den heutigen `TopsScreen`
 - `viewmodel/` mit den ersten real umgezogenen Protokoll-ViewModels
+- `TopsDtos.js` und `TopsMapper.js` als modulinterne Datenhilfen fuer Protokoll
 - `TopsRepository.js` als modulinterner Datenzugriff fuer Protokoll
 
 Die Ordner `components/`, `domain/`, `data/`, `state/`, `viewmodel/`, `dialogs/` und `rules/`
