@@ -49,12 +49,15 @@ async function runProtokollRouterFallbackTests(run) {
       "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
     );
     const listFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsList.js");
+    const legacyListFile = path.join(__dirname, "../../src/renderer/tops/components/TopsList.js");
     const screenSource = fs.readFileSync(screenFile, "utf8");
     const listSource = fs.readFileSync(listFile, "utf8");
+    const legacyListSource = fs.readFileSync(legacyListFile, "utf8");
 
     assert.equal(screenSource.includes("tops/components/TopsList.js"), false);
     assert.equal(screenSource.includes('from "../TopsList.js"'), true);
-    assert.equal(listSource.includes("tops/components/TopsList.js"), true);
+    assert.equal(listSource.includes("tops/components/TopsList.js"), false);
+    assert.equal(legacyListSource.includes('from "../../modules/protokoll/TopsList.js"'), true);
   });
 
   await run("Protokoll Workbench-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
