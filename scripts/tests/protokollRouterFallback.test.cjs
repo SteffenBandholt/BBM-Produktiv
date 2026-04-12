@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runProtokollRouterFallbackTests(run) {
   await run("Protokoll Router-Fallback: showTops nutzt keinen Altpfad unter views", () => {
@@ -153,17 +154,87 @@ async function runProtokollRouterFallbackTests(run) {
         __dirname,
         "../../src/renderer/modules/protokoll/TopsAssigneeDataSource.js"
       );
+      const legacyAssigneeDataSourceFile = path.join(
+        __dirname,
+        "../../src/renderer/tops/data/TopsAssigneeDataSource.js"
+      );
       const screenSource = fs.readFileSync(screenFile, "utf8");
       const assigneeDataSourceSource = fs.readFileSync(assigneeDataSourceFile, "utf8");
+      const legacyAssigneeDataSourceSource = fs.readFileSync(
+        legacyAssigneeDataSourceFile,
+        "utf8"
+      );
 
       assert.equal(screenSource.includes("tops/data/TopsAssigneeDataSource.js"), false);
       assert.equal(screenSource.includes('from "../TopsAssigneeDataSource.js"'), true);
       assert.equal(
         assigneeDataSourceSource.includes("tops/data/TopsAssigneeDataSource.js"),
+        false
+      );
+      assert.equal(
+        legacyAssigneeDataSourceSource.includes(
+          'from "../../modules/protokoll/TopsAssigneeDataSource.js"'
+        ),
         true
       );
     }
   );
+
+  await run("Protokoll AssigneeDataSource-Verhalten: Moduldatei projiziert Firmen und Mitarbeitende", async () => {
+    const moduleFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/TopsAssigneeDataSource.js"
+    );
+    const { TopsAssigneeDataSource } = await importEsmFromFile(moduleFile);
+    const source = new TopsAssigneeDataSource({
+      api: {
+        async projectFirmsListByProject(projectId) {
+          assert.equal(projectId, "p-1");
+          return {
+            ok: true,
+            rows: [
+              { id: "b", name1: "Beta", active: 1 },
+              { id: "a", name1: "Alpha", active: 1 },
+            ],
+          };
+        },
+        async projectParticipantsPool(payload) {
+          assert.deepEqual(payload, { projectId: "p-1" });
+          return {
+            ok: true,
+            items: [
+              {
+                id: "emp-1",
+                firmId: "b",
+                firm: "Gamma",
+                name: "Erika Beispiel",
+                firstName: "Erika",
+                lastName: "Beispiel",
+                is_active: 1,
+                firm_is_active: 1,
+              },
+            ],
+          };
+        },
+      },
+    });
+
+    const companies = await source.loadCompaniesByProject("p-1");
+    assert.deepEqual(companies.map((company) => company.short), ["Alpha", "Beta", "Gamma"]);
+    assert.deepEqual(await source.loadEmployeesByCompany(companies[2].id), [
+      {
+        id: "emp-1",
+        companyId: companies[2].id,
+        firstName: "Erika",
+        lastName: "Beispiel",
+        displayName: "Erika Beispiel",
+        role: "",
+        email: "",
+        phone: "",
+        active: true,
+      },
+    ]);
+  });
 
   await run("Protokoll Store-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
     const screenFile = path.join(
