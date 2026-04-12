@@ -1,17 +1,5 @@
-import { TopsMetaPanel } from "./TopsMetaPanel.js";
-import { TopsResponsibleBridge } from "./TopsResponsibleBridge.js";
-import { TopsStatusAmpelBridge } from "./TopsStatusAmpelBridge.js";
-import { EditboxShell } from "../../core/editbox/index.js";
-import {
-  normalizeTopLongText,
-  normalizeTopShortText,
-} from "../../shared/text/topTextPresentation.js";
-
-const TOPS_WORKBENCH_FLAG_LABELS = Object.freeze({
-  important: "Wichtig",
-  task: "ToDo",
-  decision: "Beschluss",
-});
+import { SharedEditboxCore } from "../../modules/protokoll/SharedEditboxCore.js";
+import { WorkbenchMetaColumn } from "../../modules/protokoll/WorkbenchMetaColumn.js";
 
 const PROTOCOL_WORKBENCH_BUTTON_SPECS = Object.freeze({
   createLevel1: { label: "+Titel", tone: "neutral" },
@@ -20,28 +8,6 @@ const PROTOCOL_WORKBENCH_BUTTON_SPECS = Object.freeze({
   save: { label: "Speichern", tone: "primary" },
   delete: { label: "Papierkorb", tone: "danger" },
 });
-
-function createEmptyWorkbenchEditboxValue() {
-  return {
-    shortText: "",
-    longText: "",
-    flags: {
-      hidden: false,
-      important: false,
-      task: false,
-      decision: false,
-    },
-  };
-}
-
-function buildEditboxFlagsFromEditorValue(editorValue = {}) {
-  return {
-    hidden: Number(editorValue?.is_hidden) === 1,
-    important: Number(editorValue?.is_important) === 1,
-    task: Number(editorValue?.is_task) === 1,
-    decision: Number(editorValue?.is_decision) === 1,
-  };
-}
 
 function buildProtocolActionButtonSpecs() {
   return [
@@ -79,12 +45,9 @@ export class TopsWorkbench {
     this._buildProtocolWorkbenchEditorArea();
     this._buildProtocolWorkbenchMetaArea();
     this._assembleWorkbenchShell();
-    this._bindDraftChangeSources();
-    this.responsibleBridge.initialize();
+    this.metaColumn.initialize();
   }
 
-  // Gemeinsames Workbench-Muster:
-  // Header, Arbeitsflaeche und Meta-Spalte bilden die wiederverwendbare Grundstruktur.
   _buildWorkbenchShell() {
     this.root = document.createElement("div");
     this.root.className = "bbm-tops-workbench";
@@ -119,8 +82,6 @@ export class TopsWorkbench {
     this.gutter.setAttribute("aria-hidden", "true");
   }
 
-  // Protokollspezifische Workbench-Huelle:
-  // Button-Bedeutungen und Header-Titel bleiben im Modul `Protokoll`.
   _buildProtocolWorkbenchHeader() {
     this.leftHeaderTitle.textContent = "TOP bearbeiten";
 
@@ -138,94 +99,31 @@ export class TopsWorkbench {
 
   _buildProtocolWorkbenchEditorArea() {
     this._buildSharedEditboxCore();
-    this.left.appendChild(this.editboxRoot);
+    this.left.appendChild(this.sharedEditboxCore.root);
   }
 
   _buildProtocolWorkbenchMetaArea() {
-    this._buildProtocolMetaPanel();
-    this._buildProtocolMetaBridges();
+    this._buildProtocolMetaColumn();
   }
 
   _assembleWorkbenchShell() {
-    this.body.append(this.left, this.gutter, this.metaPanel.root);
+    this.body.append(this.left, this.gutter, this.metaColumn.root);
     this.root.append(this.header, this.body);
   }
 
-  // Gemeinsamer Bearbeitungskern:
-  // wiederverwendbarer Editbox-Baustein ohne TOP-spezifische Meta-/Ablauflogik.
   _buildSharedEditboxCore() {
-    this.editbox = new EditboxShell();
-    this.editbox.setLimits({ shortText: 70 });
-    this.editboxRoot = this.editbox.getElement();
-    this.editboxRoot.classList.add("bbm-tops-workbench-editbox");
-    this.editbox.setVisibleFlags(["important", "task", "decision"]);
-    this.editbox.setCounterFormatter((evaluation) => String(evaluation?.remaining ?? ""));
-    this._configureEditboxPresentation();
+    this.sharedEditboxCore = new SharedEditboxCore({
+      onDraftChange: () => this._emitDraftChange(),
+    });
   }
 
-  // Protokollspezifische Workbench-Huelle:
-  // Meta-Spalte und Flag-Platzierung spiegeln den heutigen TOP-Arbeitsfluss.
-  _buildProtocolMetaPanel() {
-    this.metaPanel = new TopsMetaPanel({
-      onChange: () => this._emitDraftChange(),
-    });
-    this.flagsMetaRow = document.createElement("div");
-    this.flagsMetaRow.className = "bbm-tops-meta-flags";
-    this.flagsMetaRow.appendChild(this.editbox.flagsWrap);
-    this.metaPanel.root.appendChild(this.flagsMetaRow);
-  }
-
-  // Protokollspezifische Workbench-Bridges:
-  // wiederverwendbare Kernfelder werden hier an die TOP-Meta-/Draft-Struktur gekoppelt.
-  _buildProtocolMetaBridges() {
-    this.statusAmpelBridge = new TopsStatusAmpelBridge({
-      metaPanel: this.metaPanel,
-      onChange: () => this._emitDraftChange(),
-    });
-    this.statusAmpelBridge.mount();
-
-    this.responsibleBridge = new TopsResponsibleBridge({
-      metaPanel: this.metaPanel,
+  _buildProtocolMetaColumn() {
+    this.metaColumn = new WorkbenchMetaColumn({
+      flagsWrap: this.sharedEditboxCore.flagsWrap,
       loadCompanies: this.loadCompanies,
       loadEmployeesByCompany: this.loadEmployeesByCompany,
       onChange: () => this._emitDraftChange(),
     });
-    this.responsibleBridge.mount();
-  }
-
-  _bindDraftChangeSources() {
-    this.editboxRoot.addEventListener("input", () => this._emitDraftChange());
-    this.editboxRoot.addEventListener("change", () => this._emitDraftChange());
-    this.flagsMetaRow.addEventListener("input", () => this._emitDraftChange());
-    this.flagsMetaRow.addEventListener("change", () => this._emitDraftChange());
-  }
-
-  _configureEditboxPresentation() {
-    this._attachCounterToLabel(this.editbox.shortLabel, this.editbox.shortCounter);
-    this._attachCounterToLabel(this.editbox.longLabel, this.editbox.longCounter);
-    this.editbox.shortWrap.classList.add("bbm-tops-editbox-short-wrap");
-    this.editbox.longWrap.classList.add("bbm-tops-editbox-long-wrap");
-    this.editbox.flagsWrap.classList.add("bbm-tops-editbox-flags-in-meta");
-
-    Object.entries(TOPS_WORKBENCH_FLAG_LABELS).forEach(([key, label]) => {
-      const input = this.editbox.flagInputs?.[key];
-      const textEl = input?.parentElement?.querySelector("span");
-      if (textEl) textEl.textContent = label;
-    });
-  }
-
-  _attachCounterToLabel(labelEl, counterEl) {
-    if (!labelEl || !counterEl || labelEl.contains(counterEl)) return;
-
-    const currentText = String(labelEl.textContent || "").trim();
-    labelEl.textContent = "";
-
-    const text = document.createElement("span");
-    text.className = "bbm-tops-editbox-label-text";
-    text.textContent = currentText;
-
-    counterEl.classList.add("bbm-tops-editbox-remaining");
-    labelEl.append(text, counterEl);
   }
 
   _createWorkbenchButton(spec, onClick) {
@@ -243,30 +141,12 @@ export class TopsWorkbench {
     if (this.onDraftChange) this.onDraftChange(this.getDraft());
   }
 
-  _isEditboxFlagFocused() {
-    return this.editbox.isAnyFlagFocused();
-  }
-
-  _buildProtocolDraftFromUiState() {
-    const textValue = this.editbox.getValue();
+  getDraft() {
     return {
-      title: normalizeTopShortText(textValue.shortText),
-      longtext: normalizeTopLongText(textValue.longText),
-      ...this.metaPanel.getValue(),
-      is_important: textValue.flags?.important ? 1 : 0,
-      is_hidden: textValue.flags?.hidden ? 1 : 0,
-      is_task: textValue.flags?.task ? 1 : 0,
-      is_decision: textValue.flags?.decision ? 1 : 0,
+      ...this.sharedEditboxCore.getDraft(),
+      ...this.metaColumn.getDraft(),
     };
   }
-
-  getDraft() {
-    return this._buildProtocolDraftFromUiState();
-  }
-
-  // ---------------------------------------------------------------------------
-  // Workbench-Zustand: gemeinsames Muster vs. Protokoll-Workbench-Huelle
-  // ---------------------------------------------------------------------------
 
   setState(vm = {}) {
     this._applyHeaderState(vm.header || {});
@@ -279,90 +159,14 @@ export class TopsWorkbench {
     this.leftHeaderTitle.textContent = String(headerVm?.title || "TOP bearbeiten");
   }
 
-  // Gemeinsamer Bearbeitungskern im Workbench-Rahmen:
-  // Editbox-Zustand und Feldzugriff bleiben generisch, auch wenn die Workbench TOP-bezogen ist.
   _applyEditorState(editorVm = {}, actionsVm = {}) {
-    const editorValue = editorVm?.value || {};
-    const editorAccess = editorVm?.access || {};
-    const hasSelection = !!actionsVm?.hasSelection;
-    const isReadOnly = !!actionsVm?.isReadOnly;
-
-    this._syncSharedEditboxValue(editorValue);
-
-    if (!hasSelection) {
-      this._applyEditboxUnavailableState();
-      return;
-    }
-
-    if (isReadOnly) {
-      this._applyEditboxReadOnlyState();
-      return;
-    }
-
-    this.editbox.setState("normal");
-    this.editbox.setFieldAccess({
-      shortTextReadOnly: !!editorAccess?.shortTextReadOnly,
-      longTextReadOnly: !!editorAccess?.longTextReadOnly,
-      flagsDisabled: !!editorAccess?.flagsDisabled,
-    });
+    this.sharedEditboxCore.applyEditorState(editorVm, actionsVm);
   }
 
-  _syncSharedEditboxValue(editorValue = {}) {
-    const nextEditboxValue = {};
-
-    if (!this.editbox.isShortTextFocused()) {
-      nextEditboxValue.shortText = normalizeTopShortText(editorValue?.title || "");
-    }
-    if (!this.editbox.isLongTextFocused()) {
-      nextEditboxValue.longText = normalizeTopLongText(editorValue?.longtext || "");
-    }
-    if (!this._isEditboxFlagFocused()) {
-      nextEditboxValue.flags = buildEditboxFlagsFromEditorValue(editorValue);
-    }
-
-    if (Object.keys(nextEditboxValue).length) {
-      this.editbox.setValue(nextEditboxValue);
-    }
-  }
-
-  _applyEditboxUnavailableState() {
-    this.editbox.setValue(createEmptyWorkbenchEditboxValue());
-    this.editbox.setState("disabled");
-    this.editbox.setFieldAccess({
-      shortTextReadOnly: false,
-      longTextReadOnly: false,
-      flagsDisabled: false,
-    });
-  }
-
-  _applyEditboxReadOnlyState() {
-    this.editbox.setState("read-only");
-    this.editbox.setFieldAccess({
-      shortTextReadOnly: true,
-      longTextReadOnly: true,
-      flagsDisabled: true,
-    });
-  }
-
-  // Protokoll-Workbench:
-  // Meta-Pane und Button-Zustaende bleiben Huelle des Moduls `Protokoll`.
   _applyMetaState(metaVm = {}) {
-    const metaValue = metaVm?.value || {};
-    const metaAccess = metaVm?.access || {};
-    const metaDisabled = !!metaAccess?.disabled;
-    const responsibleDisabled = !!metaAccess?.responsibleDisabled;
-
-    this.metaPanel.setValue(metaValue);
-    this.statusAmpelBridge.applyDraftValue(metaValue);
-    this.responsibleBridge.applyDraftValue(metaValue?.responsible_label || "");
-
-    this.metaPanel.setDisabled(metaDisabled);
-    this.statusAmpelBridge.setDisabled(metaDisabled);
-    this.responsibleBridge.setDisabled(metaDisabled || responsibleDisabled);
+    this.metaColumn.applyState(metaVm);
   }
 
-  // Protokoll-Workbench mit TOP-Regelwirkung:
-  // Aktivierungen fuer Speichern, Schieben, Loeschen und Anlegen bleiben explizit TOP-bezogen.
   _applyActionState(actionsVm = {}) {
     const hasSelection = !!actionsVm?.hasSelection;
     const isReadOnly = !!actionsVm?.isReadOnly;
