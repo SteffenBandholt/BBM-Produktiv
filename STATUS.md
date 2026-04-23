@@ -20,6 +20,7 @@ Sie ergänzt:
 - `AGENTS.md` und `PLAN.md` sind vorhanden.
 - Codex Cloud ist eingerichtet und kann das Repo lesen.
 - Der erste CSS-Schritt im Modul `Protokoll` wurde umgesetzt.
+- Der Speichern-/Löschen-Vertrag im Tops-Bereich wurde zwischen Verhalten und Tests synchronisiert.
 
 ---
 
@@ -40,18 +41,30 @@ Sie ergänzt:
 - Hinweise:
   - Commit enthält zusätzlich das Entfernen von ChatGPT-Export-Artefakten
 
+#### Paket: Speichern-/Löschen-Vertrag im Tops-Bereich stabilisieren
+- Status: erledigt
+- Beschreibung:
+  - `topsCommands`-Testvertrag an den realen Reload-Ablauf nach `saveDraft` und `deleteSelectedTop` angepasst
+  - Reload nach Speichern/Löschen im Test explizit abgedeckt (inkl. Erhalt/Entfernung der Selektion im Ablauf)
+- Betroffene Dateien:
+  - `scripts/tests/topsCommands.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `50cdbc3`
+- Hinweise:
+  - Keine Änderungen an Router, UI, Restarbeiten oder fachlicher Tops-Logik
+
 ---
 
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen
-2. Speichern-/Löschen-Vertrag im Tops-Bereich stabilisieren
-3. Restarbeiten-Modul sauberer an die bestehende Navigation anbinden
+2. Restarbeiten-Modul sauberer an die bestehende Navigation anbinden
 
 ---
 
 ## Zuletzt bearbeitet
 - Letzter sinnvoller bestätigter Stand:
-  - CSS-Altpfad im Modul `Protokoll` bereinigt
+  - Speichern-/Löschen-Vertrag im Tops-Bereich über zugehörigen Testvertrag stabilisiert
 - Letzter Cloud-Kontrolllauf:
   - `AGENTS.md` gefunden
   - `PLAN.md` gefunden
@@ -64,13 +77,13 @@ Sie ergänzt:
 ## Aktuell nächster sinnvoller Schritt
 Der nächste noch nicht erledigte Meilenstein ist:
 
-### Weitere kleine Altpfade im Modul Protokoll abbauen
+### Restarbeiten-Modul sauberer an die bestehende Navigation anbinden
 - Ziel:
-  - einen weiteren kleinen, klar abgegrenzten Altpfad aus der Altstruktur in die Modulstruktur überführen
+  - einen kleinen, klar abgegrenzten Integrationsschritt für `Restarbeiten` in der bestehenden Navigation umsetzen
 - Wichtig:
   - nur ein kleines Paket
   - keine Nebenumbauten
-  - keine neue Fachlogik
+  - keine breiten Router-Umbauten
   - keine Änderungen außerhalb des aktuellen Meilensteins
 
 ---
@@ -78,7 +91,6 @@ Der nächste noch nicht erledigte Meilenstein ist:
 ## Offene Hindernisse / bekannte Probleme
 - Bestehende Tests sind aktuell nicht vollständig grün.
 - Frühere Läufe zeigten bestehende Altprobleme, u. a.:
-  - `topsCommands`-bezogene Testfehler
   - `ERR_INVALID_URL` im Zusammenhang mit ESM/CSS-Importpfaden
 - Diese Probleme gelten nicht automatisch als Teil jedes neuen Mini-Pakets.
 - Wenn ein neuer Meilenstein an diesen Punkten hängen bleibt, stoppen und offen berichten.

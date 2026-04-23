@@ -55,6 +55,7 @@ async function runTopsCommandsTests(run) {
 
     let savedPayload = null;
     let deletedId = null;
+    const reloadedMeetingIds = [];
 
     const repository = {
       async saveTop(payload) {
@@ -64,6 +65,16 @@ async function runTopsCommandsTests(run) {
       async deleteTop(topId) {
         deletedId = topId && typeof topId === "object" ? topId.topId : topId;
         return { ok: true };
+      },
+      async loadByMeeting(payload) {
+        const id = payload && typeof payload === "object" ? payload.meetingId : payload;
+        reloadedMeetingIds.push(id);
+        const isAfterSaveReload = reloadedMeetingIds.length === 1;
+        return {
+          ok: true,
+          meeting: { id, is_closed: 0 },
+          list: isAfterSaveReload ? [{ id: 33, title: "TOP 33" }] : [],
+        };
       },
     };
 
@@ -81,6 +92,7 @@ async function runTopsCommandsTests(run) {
     });
     assert.equal(deletedId, 33);
     assert.equal(store.getState().selectedTopId, null);
+    assert.deepEqual(reloadedMeetingIds, [9, 9]);
   });
 }
 
