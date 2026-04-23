@@ -1,2 +1,0 @@
-- Release-Workflow: Lint-Schritt vor Dist verpflichtend ergänzt
-- Security hardening: BrowserWindow defaults, CSP und ESLint-Parser fix
