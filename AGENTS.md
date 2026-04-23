@@ -143,3 +143,10 @@ Wenn `PLAN.md` oder eine vergleichbare Plandatei fehlt und die Aufgabe größer 
 
 ## Merksatz
 Lieber ein kleiner sauberer Schritt mit klarer Abnahme als ein großer cleverer Umbau mit unklaren Folgen.
+
+## Nach jedem abgeschlossenen Meilenstein:
+- STATUS.md aktualisieren
+- erledigten Schritt eintragen
+- Commit-Hash oder PR erwähnen, wenn vorhanden
+- nächsten offenen Schritt nennen
+- offene Risiken/Hindernisse ergänzen
