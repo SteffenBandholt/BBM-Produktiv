@@ -55,6 +55,12 @@ ARCHITEKTUR-FLAG:
 - Der aktuelle Stand bleibt bestehen; keine weiteren Modularisierungsarbeiten ohne ausdrücklichen Auftrag.
 - `TopsHeader` und `TopsList` sind wieder im Protokoll-Modul verankert.
 - `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen, ausser bei echtem Fehler oder konkretem Featurebedarf.
+- Keine neuen Mini-Helfer oder Mini-Module ohne echten Nutzen.
+- Keine Architekturarbeit nur zur Verschönerung.
+- Vorlagen / Textbausteine sind vorgesehen, aber aktuell nicht aktiv zu bearbeiten.
+- Drucklayouts gehören zur Ausgabeabteilung.
+- Nächster fachlicher Fokus ist Projektverwaltung.
+- Neue Module nur bauen, wenn sie einen echten fachlichen Nutzen haben und nicht nur Kleinkram auslagern.
 
 Wichtig:
 - Der Umbau ist **nicht abgeschlossen**.

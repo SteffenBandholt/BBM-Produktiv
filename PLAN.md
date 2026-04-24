@@ -18,6 +18,31 @@ Der aktuelle Fokus liegt auf:
 1. Modul **Protokoll**
 2. Konsolidierung verbliebener Altpfade
 
+## Zielstruktur
+Die App soll langfristig in diese Struktur wachsen:
+
+- App-Shell / Navigation
+- Projektverwaltung
+- Protokoll
+- Ausgabe / Drucken / E-Mail
+  - Drucklayouts
+  - PDF / Druck
+  - E-Mail-Versand
+  - später Scan-Anbindung
+- Audio / Diktat
+- Kontakte / Beteiligte
+- Vorlagen / Textbausteine
+- Einstellungen / Schaltraum
+- Lizenz
+- Daten / Backup / Import-Export
+- Suche / Archiv
+- Diagnose / Wartung
+
+Wichtig:
+- Drucklayouts gehören zur Ausgabeabteilung, nicht zu Vorlagen.
+- Vorlagen / Textbausteine sind als Bereich vorgesehen, werden aktuell aber nicht weiter verfolgt.
+- Nächster fachlicher Fokus ist Projektverwaltung.
+
 ---
 
 ## Meilenstein 1

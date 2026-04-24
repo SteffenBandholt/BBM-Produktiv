@@ -29,6 +29,14 @@ Sie ergänzt:
 - `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen.
 - Weitere Änderungen nur bei echtem Fehler oder konkretem Featurebedarf.
 
+## Aktueller Arbeitsrahmen
+- Restarbeiten-Dummy entfernt.
+- Protokoll-Modul eingefroren.
+- Keine weitere Protokoll-Modularisierung.
+- Vorlagen / Textbausteine sind nur vorgemerkt, nicht aktueller Arbeitsbereich.
+- Drucklayouts sind Teil der Ausgabeabteilung.
+- Nächster sinnvoller Arbeitsbereich: Projektverwaltung.
+
 ---
 
 ## Erledigte Meilensteine / Pakete
