@@ -1048,9 +1048,16 @@ export default class ProjectsView {
       const name = String(p.name || "").trim();
       subtitle.textContent = hasShort ? name : String(p.city || "").trim();
 
+      const actionHint = document.createElement("div");
+      actionHint.style.marginTop = "8px";
+      actionHint.style.fontSize = "12px";
+      actionHint.style.lineHeight = "1.3";
+      actionHint.style.color = "var(--text-muted, rgba(0,0,0,0.7))";
+      actionHint.textContent = "Klick: Projekt öffnen / Protokoll starten";
+
       const btnEdit = document.createElement("button");
       btnEdit.type = "button";
-      btnEdit.textContent = "Edit";
+      btnEdit.textContent = "Bearbeiten";
       btnEdit.className = "bbm-btn-edit";
       btnEdit.style.position = "absolute";
       btnEdit.style.top = "10px";
@@ -1109,7 +1116,7 @@ export default class ProjectsView {
         openProject();
       });
 
-      tile.append(btnEdit, pnLine, title, subtitle);
+      tile.append(btnEdit, pnLine, title, subtitle, actionHint);
       grid.appendChild(tile);
     }
 
