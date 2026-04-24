@@ -16,6 +16,7 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Die Projektverwaltung ist als sichtbares Renderer-Modul eingebunden, aber nicht als eigener Sidebar-Modulknoten.
 - Repo ist auf GitHub aktualisiert.
 - `AGENTS.md` und `PLAN.md` sind vorhanden.
 - Codex Cloud ist eingerichtet und kann das Repo lesen.
@@ -122,4 +123,3 @@ Wichtig:
 - `AGENTS.md` = Hausordnung
 - `PLAN.md` = Bauablaufplan
 - `STATUS.md` = Bautagebuch / Ist-Stand
-

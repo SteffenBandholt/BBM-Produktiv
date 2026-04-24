@@ -811,6 +811,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       });
 
     const createProjectModuleRouteDef = (entry = {}) => {
+      const entryModuleId = String(entry?.moduleId || "").trim();
       return {
         key: String(entry?.key || "").trim(),
         label: String(entry?.label || "").trim(),
@@ -823,13 +824,12 @@ document.addEventListener("DOMContentLoaded", async () => {
             await router.showMeetings(projectId);
             return;
           }
-
         },
         getPayload: () => ({
-          moduleId: String(entry?.moduleId || "").trim(),
+          moduleId: entryModuleId,
           projectId: router.currentProjectId || null,
           meetingId: router.currentMeetingId || null,
-          missingContext: !router.currentProjectId,
+          missingContext: entryModuleId === PROTOKOLL_MODULE_ID ? !router.currentProjectId : false,
         }),
         onMissingContext: async () => {
           alert("Bitte zuerst ein Projekt auswählen.");
