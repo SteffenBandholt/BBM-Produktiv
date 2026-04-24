@@ -37,6 +37,16 @@ Sie ergänzt:
 - Drucklayouts sind Teil der Ausgabeabteilung.
 - Nächster sinnvoller Arbeitsbereich: Projektverwaltung.
 
+## Projektverwaltung
+- Erster Durchlauf erledigt.
+- Der Projekt-Lifecycle ist testseitig abgesichert.
+- Die Projektübersicht ist verständlicher geworden:
+  - Projektkacheln benennen den Hauptklick klarer.
+  - Das Archiv ist direkt aus der Projektübersicht erreichbar.
+  - Nach Projektanlage und Bearbeitung gibt es klarere Rückmeldungen.
+- Es wurde keine neue Projektverwaltungs-Architektur gebaut.
+- Der nächste mögliche Fokus ist noch offen.
+
 ---
 
 ## Erledigte Meilensteine / Pakete

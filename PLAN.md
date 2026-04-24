@@ -41,7 +41,7 @@ Die App soll langfristig in diese Struktur wachsen:
 Wichtig:
 - Drucklayouts gehören zur Ausgabeabteilung, nicht zu Vorlagen.
 - Vorlagen / Textbausteine sind als Bereich vorgesehen, werden aktuell aber nicht weiter verfolgt.
-- Nächster fachlicher Fokus ist Projektverwaltung.
+- Nächster möglicher fachlicher Fokus ist Projektverwaltung.
 
 ---
 
