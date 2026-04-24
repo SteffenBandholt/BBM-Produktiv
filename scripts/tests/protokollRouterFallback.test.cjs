@@ -55,7 +55,8 @@ async function runProtokollRouterFallbackTests(run) {
 
     assert.equal(screenSource.includes("tops/components/TopsList.js"), false);
     assert.equal(screenSource.includes('from "../TopsList.js"'), true);
-    assert.equal(listSource.includes("tops/components/TopsList.js"), true);
+    assert.equal(listSource.includes("../../tops/components/TopsList.js"), false);
+    assert.equal(listSource.includes("data-bbm-tops-list-v2"), true);
   });
 
   await run("Protokoll Workbench-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
