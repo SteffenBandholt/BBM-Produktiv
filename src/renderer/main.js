@@ -6,8 +6,6 @@ import Router from "./app/Router.js";
 import {
   getActiveProjectModuleNavigation,
   PROTOKOLL_MODULE_ID,
-  RESTARBEITEN_MODULE_ID,
-  resolveActiveModuleWorkScreen,
 } from "./app/modules/index.js";
 import MainHeader from "./ui/MainHeader.js";
 import { DEFAULT_THEME_SETTINGS, applyThemeForSettings } from "./theme/themes.js";
@@ -826,15 +824,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             return;
           }
 
-          if (moduleId === RESTARBEITEN_MODULE_ID) {
-            const V = resolveActiveModuleWorkScreen(RESTARBEITEN_MODULE_ID);
-            if (!V) return;
-            await router.show(new V({ router }), {
-              section: "meetings",
-              isTopsView: false,
-              pageTitle: "Restarbeiten",
-            });
-          }
         },
         getPayload: () => ({
           moduleId: String(entry?.moduleId || "").trim(),

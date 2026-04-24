@@ -135,7 +135,7 @@ Dazu gehören:
 
 Der Modulrahmen ist klein, statisch und bewusst nicht zu einer Plattformmechanik ausgebaut.
 
-Er trägt den aktuellen Stand mit `Protokoll` und `Restarbeiten`.
+Er trägt den aktuellen Stand mit `Protokoll` und `weitere Module`.
 
 #### Offene Übergänge
 
@@ -253,21 +253,21 @@ Reduziert das Paket wirklich einen Protokoll-Mischzustand, ohne einen Komplettum
 
 \---
 
-### Container 5 – Fachmodul `Restarbeiten`
+### Container 5 – Fachmodul `weitere Module`
 
 #### Zweck
 
-Dieser Container hält `Restarbeiten` als eigenständiges Fachmodul klein, klar und fachlich getrennt.
+Dieser Container hält `weitere Module` als eigenständiges Fachmodul klein, klar und fachlich getrennt.
 
 #### Gehört hinein
 
-* `src/renderer/modules/restarbeiten/`
+* `src/renderer/modules/weitere Module/`
 * modulinterne Screens, Komponenten und fachnahe Hilfen
 * kleine produktive Sichtbarkeit dieses Moduls
 
 #### Aktueller Stand
 
-`Restarbeiten` ist als eigenes Fachmodul vorbereitet, mit eigener kleiner Workbench und eigenem Einstieg.
+`weitere Module` ist als eigenes Fachmodul vorbereitet, mit eigener kleiner Workbench und eigenem Einstieg.
 
 #### Offene Übergänge
 
@@ -290,7 +290,7 @@ Dieser Container hält `Restarbeiten` als eigenständiges Fachmodul klein, klar 
 
 #### Pflichtfrage
 
-Stärkt das Paket `Restarbeiten` als eigenes Fachmodul — oder macht es das Modul nur indirekt von `Protokoll` oder vom Kern abhängig?
+Stärkt das Paket `weitere Module` als eigenes Fachmodul — oder macht es das Modul nur indirekt von `Protokoll` oder vom Kern abhängig?
 
 \---
 
@@ -355,7 +355,7 @@ Container 4 + Container 6
 #### Aktuelle Priorität 3 – Achse C
 
 Container 5 + Container 2  
-`Restarbeiten` dosiert sichtbarer machen.
+`weitere Module` dosiert sichtbarer machen.
 
 #### Nur reaktiv – Achse D
 
@@ -402,8 +402,8 @@ Die App soll so aufgebaut werden, dass sie kontrolliert mit unterschiedlichem ak
 Insbesondere bedeutet das:
 
 * Betrieb nur mit `Protokoll`
-* Betrieb nur mit `Restarbeiten`
-* Betrieb mit `Protokoll` und `Restarbeiten` zusammen
+* Betrieb nur mit `weitere Module`
+* Betrieb mit `Protokoll` und `weitere Module` zusammen
 * spätere Erweiterbarkeit auf weitere Module, ohne den Kern künstlich zur Plattform auszubauen
 
 Die Aktivierung von Modulen erfolgt dabei nicht über UI-Schalter, sondern über die fachlich vorgesehene Freigabelogik, insbesondere über Lizenz- oder Produktfreigaben.
@@ -446,7 +446,7 @@ Wenn unklar ist, ob ein großer oder kleiner Schritt richtig ist, gilt immer der
 Aktuell relevante Fachmodule:
 
 * `Protokoll`
-* `Restarbeiten`
+* `weitere Module`
 
 Diese bleiben fachlich getrennt.
 
@@ -545,8 +545,8 @@ Nur nach Freigabe:
 
 Beispiele:
 
-* `phase9-paket2-modulstruktur-restarbeiten`
-* `phase10-paket1-einzelbetrieb-restarbeiten`
+* `phase9-paket2-modulstruktur-weitere Module`
+* `phase10-paket1-einzelbetrieb-weitere Module`
 * `phase11-paket2-mischzustand-abbauen`
 
 ### Commit-Schema
@@ -555,8 +555,8 @@ Beispiele:
 
 Beispiele:
 
-* `Phase 9 Paket 3: Eigene Restarbeiten-Workbench bauen`
-* `Phase 10 Paket 2: Zusammenspiel Protokoll und Restarbeiten nachweisen`
+* `Phase 9 Paket 3: Eigene weitere Module-Workbench bauen`
+* `Phase 10 Paket 2: Zusammenspiel Protokoll und weitere Module nachweisen`
 * `Phase 11 Paket 2: Mischzustand weiter abbauen`
 
 \---
@@ -581,9 +581,9 @@ Noch bewusst Übergang:
 * `TopsScreen` liegt weiterhin unter `src/renderer/views/`
 * ein erheblicher Teil des Protokoll-Unterbaus liegt weiter unter `src/renderer/tops/`
 
-### 7.2 `Restarbeiten`
+### 7.2 `weitere Module`
 
-`Restarbeiten` ist als eigenes Fachmodul sichtbar vorbereitet.
+`weitere Module` ist als eigenes Fachmodul sichtbar vorbereitet.
 
 Erreicht:
 
@@ -605,7 +605,7 @@ Erreicht:
 * kleiner statischer Modulkatalog
 * kleine Modul-/Screen-Auflösung
 * kleine modulbezogene Navigation
-* Koexistenz von `Protokoll` und `Restarbeiten` nachgewiesen
+* Koexistenz von `Protokoll` und `weitere Module` nachgewiesen
 
 Wichtig:
 
@@ -650,7 +650,7 @@ Diese Punkte sind nicht „vergessen“, sondern bewusst noch offen:
 * `TopsScreen` liegt weiter unter `src/renderer/views/`
 * großer Protokoll-Unterbau liegt weiter unter `src/renderer/tops/`
 * modulbezogene Navigation ist noch klein und im Wesentlichen für `Protokoll`
-* `Restarbeiten` ist noch nicht breit produktiv über Router und Navigation verdrahtet
+* `weitere Module` ist noch nicht breit produktiv über Router und Navigation verdrahtet
 * weitere Restmischzonen und Altpfade sind noch vorhanden
 * kein Vollabschluss der Zielarchitektur
 * keine breite Plattform- oder Shell-Integration
@@ -756,8 +756,8 @@ Es wird immer genau in **Paketen** gearbeitet, nicht in unscharfen Großaufträg
 
 Beispiel:
 
-* Phase 9 = `Restarbeiten` aufbauen
-* Phase 9 Paket 2 = `Modulstruktur Restarbeiten anlegen`
+* Phase 9 = `weitere Module` aufbauen
+* Phase 9 Paket 2 = `Modulstruktur weitere Module anlegen`
 
 ### Harte Regel
 
@@ -782,14 +782,14 @@ Keine Ausnahmen ohne ausdrückliche Anweisung.
 `phaseX-paketY-kurzname`
 
 Beispiel:
-`phase9-paket2-modulstruktur-restarbeiten`
+`phase9-paket2-modulstruktur-weitere Module`
 
 ### Verbindliches Commit-Schema
 
 `Phase X Paket Y: Beschreibung`
 
 Beispiel:
-`Phase 9 Paket 2: Modulstruktur Restarbeiten anlegen`
+`Phase 9 Paket 2: Modulstruktur weitere Module anlegen`
 
 ### Verbindliche Befehlsfolge zu Beginn eines Pakets
 
@@ -904,10 +904,11 @@ Der modulare Umbau ist nicht schon deshalb ausreichend erreicht, weil Code nur i
 Ein wesentlicher Zielzustand ist erst dann erreicht, wenn der Modulrahmen fachlich und technisch tragen kann, dass:
 
 1. `Protokoll` für sich freigegeben betrieben werden kann,
-2. `Restarbeiten` für sich freigegeben betrieben werden kann,
+2. `weitere Module` für sich freigegeben betrieben werden kann,
 3. beide Module gemeinsam betrieben werden können,
 4. nicht freigegebene Module im Rahmen des aktuellen Ausbaustands sauber nicht aktiviert sind,
 5. Router, Navigation, Modul-/Screen-Auflösung und Moduleinstiege auf diesen aktiven Modulumfang korrekt reagieren.
 
 Die dafür nötige Freigabelogik gehört in den App-Kern und den Modulrahmen. Die Fachlogik bleibt in den Modulen.
+
 

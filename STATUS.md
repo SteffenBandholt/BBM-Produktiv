@@ -52,13 +52,12 @@ Sie ergänzt:
 - Commit:
   - `50cdbc3`
 - Hinweise:
-  - Keine Änderungen an Router, UI, Restarbeiten oder fachlicher Tops-Logik
+  - Keine Änderungen an Router, UI oder fachlicher Tops-Logik
 
 ---
 
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen
-2. Restarbeiten-Modul sauberer an die bestehende Navigation anbinden
 
 ---
 
@@ -77,9 +76,9 @@ Sie ergänzt:
 ## Aktuell nächster sinnvoller Schritt
 Der nächste noch nicht erledigte Meilenstein ist:
 
-### Restarbeiten-Modul sauberer an die bestehende Navigation anbinden
+### Weitere kleine Altpfade im Modul `Protokoll` abbauen
 - Ziel:
-  - einen kleinen, klar abgegrenzten Integrationsschritt für `Restarbeiten` in der bestehenden Navigation umsetzen
+  - einen weiteren kleinen, klar abgegrenzten Altpfad für `Protokoll` reduzieren
 - Wichtig:
   - nur ein kleines Paket
   - keine Nebenumbauten
@@ -116,3 +115,4 @@ Wichtig:
 - `AGENTS.md` = Hausordnung
 - `PLAN.md` = Bauablaufplan
 - `STATUS.md` = Bautagebuch / Ist-Stand
+

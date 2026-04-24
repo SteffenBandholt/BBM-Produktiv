@@ -49,7 +49,6 @@ Dieses Repo befindet sich in einem kontrollierten Umbau von einer stärker monol
 
 Aktuell wichtige Bereiche:
 - `Protokoll`
-- `Restarbeiten`
 
 Wichtig:
 - Der Umbau ist **nicht abgeschlossen**.

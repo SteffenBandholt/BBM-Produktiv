@@ -16,8 +16,7 @@ Bestehendes Verhalten soll stabil bleiben, außer wenn ein Meilenstein ausdrück
 ## Priorität
 Der aktuelle Fokus liegt auf:
 1. Modul **Protokoll**
-2. Modul **Restarbeiten**
-3. Konsolidierung verbliebener Altpfade
+2. Konsolidierung verbliebener Altpfade
 
 ---
 
@@ -38,7 +37,6 @@ Ein verbliebener Style-Altpfad soll in eine modul-lokale Struktur überführt we
 - Router
 - Navigation
 - Datenbank
-- Restarbeiten-Modul
 - weitere Dateien außerhalb dieses Mini-Pakets
 
 ### Fertig wenn
@@ -72,7 +70,6 @@ Verbliebene klar abgegrenzte Altpfade unter `src/renderer/tops/` schrittweise re
 ### Nicht anfassen
 - fachliche Logik
 - Datenfluss
-- Restarbeiten-Modul
 - globale App-Struktur
 
 ### Fertig wenn
@@ -106,7 +103,6 @@ Der Ablauf beim Speichern und Löschen soll technisch und testseitig sauber zusa
 ### Nicht anfassen
 - UI-Umbauten
 - Router
-- Restarbeiten
 - nicht betroffene Tests
 
 ### Fertig wenn
@@ -121,35 +117,6 @@ Der Ablauf beim Speichern und Löschen soll technisch und testseitig sauber zusa
 
 ### Status
 - bei größerem Umbau stoppen und berichten
-
----
-
-## Meilenstein 4
-### Titel
-Restarbeiten-Modul sauberer an die bestehende Navigation anbinden
-
-### Ziel
-Das Modul Restarbeiten soll einen kleinen, klar abgegrenzten Integrationsschritt in der bestehenden Navigation erhalten.
-
-### Betroffene Bereiche
-- `src/renderer/modules/restarbeiten/`
-- minimal nötige Navigationsanbindung
-
-### Nicht anfassen
-- Protokoll-Modul
-- Datenbank
-- größere Routing-Umbauten
-- globale Architekturänderungen
-
-### Fertig wenn
-- die definierte kleine Anbindung umgesetzt ist
-- keine weiteren Module betroffen sind
-- Verhalten außerhalb dieses Bereichs unverändert bleibt
-
-### Prüfung
-- geänderte Dateien auflisten
-- Diff zeigen
-- offen berichten, ob nur der geplante Bereich betroffen ist
 
 ---
 
@@ -190,3 +157,4 @@ Standardverhalten:
 - genau den nächsten offenen Meilenstein bearbeiten
 - danach berichten
 - erst dann mit dem nächsten weitermachen
+

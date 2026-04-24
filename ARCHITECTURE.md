@@ -20,7 +20,6 @@ BBM wird schrittweise zu einer **modularen App** umgebaut.
 Das Ziel ist:
 - die App kann mit einem, mehreren oder spaeter anderen Fachmodulen laufen
 - `Protokoll` ist ein Fachmodul
-- `Restarbeiten` ist ein eigenes Fachmodul
 - der App-Kern bleibt fuer Host-, Navigations- und Aktivierungsaufgaben zustaendig
 - gemeinsame Kernbausteine, gemeinsame Domaenen und gemeinsame Dienste bleiben ausserhalb der Fachmodule
 
@@ -40,8 +39,7 @@ Die App soll kontrolliert mit unterschiedlichem aktivem Modulumfang laufen koenn
 
 Insbesondere bedeutet das:
 - Betrieb nur mit `Protokoll`
-- Betrieb nur mit `Restarbeiten`
-- Betrieb mit `Protokoll` und `Restarbeiten` zusammen
+- Betrieb mit `Protokoll` und weiteren freigegebenen Modulen zusammen
 - spaetere Erweiterbarkeit auf weitere Module, ohne den Kern kuenstlich zur Plattform auszubauen
 
 Die Aktivierung von Modulen erfolgt nicht ueber beliebige UI-Schalter, sondern ueber die fachlich vorgesehene Freigabelogik, insbesondere ueber Lizenz- oder Produktfreigaben.
@@ -77,7 +75,6 @@ Dazu koennen insbesondere gehoeren:
 ### 3.3 Fachmodule
 Aktuell relevante Fachmodule:
 - `Protokoll`
-- `Restarbeiten`
 
 Diese bleiben fachlich getrennt.
 
@@ -136,10 +133,9 @@ Ein wesentlicher Zielzustand ist nicht schon deshalb erreicht, weil Code nur in 
 
 Ein tragfaehiger Zustand ist erst dann erreicht, wenn der Modulrahmen fachlich und technisch tragen kann, dass:
 1. `Protokoll` fuer sich freigegeben betrieben werden kann
-2. `Restarbeiten` fuer sich freigegeben betrieben werden kann
-3. beide Module gemeinsam betrieben werden koennen
-4. nicht freigegebene Module im Rahmen des aktuellen Ausbaustands sauber nicht aktiviert sind
-5. Router, Navigation, Modul-/Screen-Aufloesung und Moduleinstiege auf diesen aktiven Modulumfang korrekt reagieren
+2. weitere freigegebene Module gemeinsam betrieben werden koennen
+3. nicht freigegebene Module im Rahmen des aktuellen Ausbaustands sauber nicht aktiviert sind
+4. Router, Navigation, Modul-/Screen-Aufloesung und Moduleinstiege auf diesen aktiven Modulumfang korrekt reagieren
 
 Die dafuer noetige Freigabelogik gehoert in den App-Kern und den Modulrahmen.
 Die Fachlogik bleibt in den Modulen.

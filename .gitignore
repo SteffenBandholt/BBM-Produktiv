@@ -9,3 +9,5 @@ build/
 out/
 .next/
 coverage/
+
+_chatgpt_exports/

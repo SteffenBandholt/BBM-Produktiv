@@ -25,7 +25,7 @@ Sie gelten insbesondere für:
 - Bearbeitung, Verschiebung, Löschung und Abschluss
 - Status-, Ampel- und Folgeprotokoll-Logik
 
-Diese Datei beschreibt keine Regeln für andere Fachmodule wie `Restarbeiten`.
+Diese Datei beschreibt keine Regeln für andere Fachmodule wie `weitere Module`.
 
 ---
 
@@ -402,7 +402,7 @@ Sie macht keine Aussage darüber,
 - wie der App-Kern gebaut ist
 - wie andere Module aufgebaut sind
 - wie gemeinsame Dienste strukturiert werden
-- wie `Restarbeiten` funktioniert
+- wie `weitere Module` funktioniert
 
 Diese Trennung ist gewollt und verbindlich.
 

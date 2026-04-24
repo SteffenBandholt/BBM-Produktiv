@@ -53,8 +53,8 @@ Neutraler wiederverwendbarer Kern ausserhalb der Fachmodule
 ### Container 4 – Fachmodul `Protokoll`
 Modulinterne Logik und kontrollierter Abbau von Protokoll-Mischzonen
 
-### Container 5 – Fachmodul `Restarbeiten`
-Eigenstaendige, kleine und klar getrennte Weiterentwicklung von `Restarbeiten`
+### Container 5 – Fachmodul `weitere Module`
+Eigenstaendige, kleine und klar getrennte Weiterentwicklung von `weitere Module`
 
 ### Container 6 – Nachweis / Entmischung / Konsolidierung
 Kleine belegende, bereinigende und konsolidierende Schritte
@@ -80,7 +80,7 @@ Die Container sind nicht gleichrangig aktiv.
 
 ### Prioritaet 3 – Achse C
 **Container 5 + Container 2**
-- `Restarbeiten` dosiert sichtbarer und tragfaehiger machen
+- `weitere Module` dosiert sichtbarer und tragfaehiger machen
 - kleine produktive Anbindung
 - weiterhin ohne Grossausbau
 
@@ -102,7 +102,7 @@ Die Container sind nicht gleichrangig aktiv.
 | 6 | Gemeinsame Kernbausteine sauber schneiden | IN ARBEIT |
 | 7 | Modul `Protokoll` sauber ausschneiden | IN ARBEIT |
 | 8 | Modulrahmen produktiv machen | IN ARBEIT |
-| 9 | Modul `Restarbeiten` aufbauen | IN ARBEIT |
+| 9 | Modul `weitere Module` aufbauen | IN ARBEIT |
 | 10 | Modulfaehigkeit praktisch beweisen | IN ARBEIT |
 | 11 | Altbestand zurueckbauen | IN ARBEIT |
 | 12 | Aktiven Modulumfang im Kern expliziter machen | IN ARBEIT |
@@ -114,7 +114,7 @@ Die Container sind nicht gleichrangig aktiv.
 Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert von Container 6:
 
 - `Protokoll` schrittweise weiter entmischen
-- `Restarbeiten` dosiert sichtbarer und tragfaehiger machen
+- `weitere Module` dosiert sichtbarer und tragfaehiger machen
 - kleine Nachweise und Konsolidierungen mitziehen, wo sie den Umbau direkt belegen
 - der erreichte Screen-Stand in `Protokoll` bleibt dabei sichtbar abgesichert
 
@@ -131,7 +131,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 
 **Erreicht**
 - kleiner statischer Modulkatalog
-- kleiner Modulrahmen traegt `Protokoll` und `Restarbeiten`
+- kleiner Modulrahmen traegt `Protokoll` und `weitere Module`
 - bekannte Module und aktiver Modulumfang sind klarer getrennt
 - kleine Modul-/Screen-Aufloesung
 - kleine modulbezogene Navigation
@@ -164,7 +164,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - tieferer Unterbau und weitere Restentmischung in `Protokoll` bleiben offen
 - weitere direkte `tops/`-Altpfade sind fuer spaetere Minischritte noch vorhanden
 
-### 6.3 Container 5 – Fachmodul `Restarbeiten`
+### 6.3 Container 5 – Fachmodul `weitere Module`
 **Status:** sichtbar, klein, kontrolliert ausbaufaehig
 
 **Erreicht**
@@ -174,7 +174,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Einzelbetrieb
 - Koexistenz mit `Protokoll`
 - kleiner projektbezogener Navigationseintrag ist vorhanden
-- `Restarbeiten` ist im aktiven Modulumfang sichtbar
+- `weitere Module` ist im aktiven Modulumfang sichtbar
 
 **Noch offen**
 - noch keine breite produktive Verdrahtung
@@ -235,3 +235,4 @@ Dabei gilt:
 - Uebergaenge ehrlich benennen
 - keine Parallelplaene anlegen
 - keine Fortschritte groesser schreiben, als sie technisch sind
+
