@@ -58,9 +58,17 @@ export default class ProjectsView {
         projectId: projectId || null,
         mode: "modal",
         onClose: () => this._cleanupProjectFormModal(),
-        onSaved: async () => {
+        onSaved: async (result) => {
           await this.reloadProjects();
           this._cleanupProjectFormModal();
+          const action = String(result?.action || "").trim();
+          if (action === "create") {
+            this._flashMsg("Projekt wurde angelegt. Du kannst es jetzt öffnen oder bearbeiten.", 7000);
+            return;
+          }
+          if (action === "update") {
+            this._flashMsg("Projekt wurde gespeichert.", 5000);
+          }
         },
       });
 

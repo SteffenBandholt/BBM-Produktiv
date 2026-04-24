@@ -270,7 +270,7 @@ export default class ProjectFormView {
 
       if (this.isModal) {
         this._closeModal();
-        await this._notifySaved();
+        await this._notifySaved({ action: "archive" });
         return;
       }
 
@@ -361,7 +361,7 @@ export default class ProjectFormView {
 
         if (this.isModal) {
           this._closeModal();
-          await this._notifySaved();
+          await this._notifySaved({ action: "create", project: created });
           return;
         }
 
@@ -385,7 +385,7 @@ export default class ProjectFormView {
 
       if (this.isModal) {
         this._closeModal();
-        await this._notifySaved();
+        await this._notifySaved({ action: "update", project: res.project || null });
         return;
       }
 
@@ -1327,10 +1327,10 @@ export default class ProjectFormView {
     this._setBusy(this.busy);
   }
 
-  async _notifySaved() {
+  async _notifySaved(payload = {}) {
     if (typeof this.onSaved !== "function") return;
     try {
-      await this.onSaved();
+      await this.onSaved(payload);
     } catch (err) {
       console.warn("[ProjectFormView] onSaved handler failed", err);
     }
