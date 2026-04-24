@@ -21,6 +21,10 @@ Der aktuelle Fokus liegt auf:
 Hinweis:
 - Die Projektverwaltung ist als Renderer-Modul aufgestellt und der erste Modul-Meilenstein ist abgeschlossen.
 - Der bestehende Sidebar-Einstieg `Projekte` bleibt der einzige sichtbare Einstieg.
+- Ausgabe / Drucken / E-Mail ist als Renderer-Modul aufgestellt; kein Sidebar-Eintrag und kein Modulkatalog-Eintrag.
+- Audio / Diktat ist als Renderer-Modul begonnen; aktuell nur `TranscriptionService`, ohne Sidebar- oder Modulkatalog-Eintrag.
+- Das Protokoll-Modul bleibt eingefroren.
+- `npm test` war gruen.
 
 ---
 

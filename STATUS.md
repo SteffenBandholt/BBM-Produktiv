@@ -16,7 +16,18 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
-- Die Projektverwaltung ist als sichtbares Renderer-Modul eingebunden, aber nicht als eigener Sidebar-Modulknoten.
+- Die Projektverwaltung ist als Renderer-Modul abgeschlossen.
+- Ausgabe / Drucken / E-Mail ist als Renderer-Modul aufgestellt.
+  - Keine Sidebar-Anbindung.
+  - Kein Modulkatalog-Eintrag.
+  - Main-/IPC-/Drucktechnik bleibt im Main-Prozess.
+- Audio / Diktat ist als Renderer-Modul begonnen.
+  - Aktuell nur `TranscriptionService` als Renderer-Adapter.
+  - Keine Sidebar-Anbindung.
+  - Kein Modulkatalog-Eintrag.
+  - Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
+- Protokoll-Modul ist eingefroren.
+- `npm test` war gruen.
 - Repo ist auf GitHub aktualisiert.
 - `AGENTS.md` und `PLAN.md` sind vorhanden.
 - Codex Cloud ist eingerichtet und kann das Repo lesen.
@@ -39,6 +50,17 @@ Sie ergänzt:
 - Die alten View-Dateien bleiben als Compatibility-Re-Exports bestehen.
 - Keine DB-/IPC-Logik wurde verschoben.
 - `npm test` war gruen.
+
+## Ausgabe
+- Das Renderer-Modul ist aufgestellt.
+- Es gibt keine Sidebar-Anbindung und keinen Modulkatalog-Eintrag.
+- Die Main-/IPC-/Drucktechnik bleibt im Main-Prozess.
+
+## Audio
+- Das Renderer-Modul ist begonnen.
+- Aktuell ist nur `TranscriptionService` als Renderer-Adapter im Modul verankert.
+- Es gibt keine Sidebar-Anbindung und keinen Modulkatalog-Eintrag.
+- Die Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
 
 ---
 
