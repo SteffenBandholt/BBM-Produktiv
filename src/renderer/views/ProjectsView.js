@@ -1019,6 +1019,39 @@ export default class ProjectsView {
 
     grid.appendChild(transferTile);
 
+    // Archiv-Kachel
+    const archiveTile = mkTile();
+    archiveTile.style.background = "var(--card-bg)";
+    archiveTile.style.borderStyle = "dashed";
+
+    const archiveTitle = document.createElement("div");
+    archiveTitle.textContent = "Archiv öffnen";
+    archiveTitle.style.fontWeight = "800";
+    archiveTitle.style.fontSize = "16px";
+    archiveTitle.style.marginBottom = "6px";
+
+    const archiveHint = document.createElement("div");
+    archiveHint.textContent = "Archivierte Projekte anzeigen";
+    archiveHint.style.opacity = "0.8";
+    archiveHint.style.fontSize = "12px";
+
+    archiveTile.append(archiveTitle, archiveHint);
+
+    const openArchive = async () => {
+      if (!this.router || typeof this.router.showArchive !== "function") return;
+      await this.router.showArchive();
+    };
+
+    archiveTile.addEventListener("click", openArchive);
+    archiveTile.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      e.stopPropagation();
+      openArchive();
+    });
+
+    grid.appendChild(archiveTile);
+
     // Projektkacheln
     for (const p of this.projects || []) {
       const tile = mkTile();
