@@ -59,6 +59,8 @@ ARCHITEKTUR-FLAG:
 - Keine Architekturarbeit nur zur Verschönerung.
 - Vorlagen / Textbausteine sind vorgesehen, aber aktuell nicht aktiv zu bearbeiten.
 - Drucklayouts gehören zur Ausgabeabteilung.
+- Die Lizenzabteilung ist ein eigener fachlicher Bereich; Einstellungen / Schaltraum bleiben für App-Konfiguration zuständig.
+- Lizenz-Erzeugung, Lizenz-Verwaltung und Lizenz-Prüfung gehören fachlich zur Lizenzabteilung, nicht als Hauptzuständigkeit in die Settings.
 - Nächster fachlicher Fokus ist Projektverwaltung.
 - Neue Module nur bauen, wenn sie einen echten fachlichen Nutzen haben und nicht nur Kleinkram auslagern.
 

@@ -35,6 +35,7 @@ Sie ergänzt:
 - Keine weitere Protokoll-Modularisierung.
 - Vorlagen / Textbausteine sind nur vorgemerkt, nicht aktueller Arbeitsbereich.
 - Drucklayouts sind Teil der Ausgabeabteilung.
+- Die Lizenzabteilung ist ein eigener fachlicher Bereich; Settings zeigen Lizenzstatus nur an und bleiben für App-Konfiguration zuständig.
 - Nächster sinnvoller Arbeitsbereich: Projektverwaltung.
 
 ## Projektverwaltung

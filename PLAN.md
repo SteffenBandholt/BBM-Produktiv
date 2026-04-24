@@ -33,7 +33,7 @@ Die App soll langfristig in diese Struktur wachsen:
 - Kontakte / Beteiligte
 - Vorlagen / Textbausteine
 - Einstellungen / Schaltraum
-- Lizenz
+- Lizenz / Lizenzabteilung
 - Daten / Backup / Import-Export
 - Suche / Archiv
 - Diagnose / Wartung
@@ -41,6 +41,7 @@ Die App soll langfristig in diese Struktur wachsen:
 Wichtig:
 - Drucklayouts gehören zur Ausgabeabteilung, nicht zu Vorlagen.
 - Vorlagen / Textbausteine sind als Bereich vorgesehen, werden aktuell aber nicht weiter verfolgt.
+- Die Lizenzabteilung ist ein eigener fachlicher Bereich; Einstellungen / Schaltraum bleiben für App-Konfiguration zuständig.
 - Nächster möglicher fachlicher Fokus ist Projektverwaltung.
 
 ---
