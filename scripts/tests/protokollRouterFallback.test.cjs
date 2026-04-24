@@ -26,7 +26,7 @@ async function runProtokollRouterFallbackTests(run) {
 
     assert.equal(screenSource.includes("tops/styles/tops.css"), false);
     assert.equal(screenSource.includes('from "../styles.js"'), true);
-    assert.equal(styleSource.includes("tops/styles/tops.css"), true);
+    assert.equal(styleSource.includes("./styles/tops.css"), true);
   });
 
   await run("Protokoll Header-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
