@@ -13,6 +13,7 @@ const { runTopsScreenIntegrationTests } = require("./tests/topsScreen.integratio
 const { runTopsDtosTests } = require("./tests/topsDtos.test.cjs");
 const { runTopsCloseFlowTests } = require("./tests/topsCloseFlow.test.cjs");
 const { runProtokollRouterFallbackTests } = require("./tests/protokollRouterFallback.test.cjs");
+const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungModule.test.cjs");
 
 let failed = false;
 
@@ -72,6 +73,7 @@ async function main() {
   await runTopsActionPolicyTests(run);
   await runTopsScreenIntegrationTests(run);
   await runProtokollRouterFallbackTests(run);
+  await runProjektverwaltungModuleTests(run);
 
   if (failed) {
     process.exitCode = 1;

@@ -470,8 +470,8 @@ export default class Router {
 
   // Kern-Routing / UI-Rahmenlogik: allgemeine Screen-Wechsel bleiben im Router gebuendelt.
   async showProjects() {
-    const mod = await import("../views/ProjectsView.js");
-    const V = mod.default;
+    const mod = await import("../modules/projektverwaltung/index.js");
+    const V = mod.ProjectsScreen;
     this.currentMeetingId = null;
     await this.show(new V({ router: this }), { section: "projects", isTopsView: false });
   }
@@ -499,8 +499,8 @@ export default class Router {
 
   // Kern-Routing mit Projektkontext: allgemeine Fachscreens ohne direkten Protokollmodus.
   async showProjectForm({ projectId } = {}) {
-    const mod = await import("../views/ProjectFormView.js");
-    const V = mod.default;
+    const mod = await import("../modules/projektverwaltung/index.js");
+    const V = mod.ProjectFormScreen;
 
     this._setProjectRuntimeContext({ meetingId: null });
 
@@ -590,8 +590,8 @@ export default class Router {
   }
 
   async showArchive() {
-    const mod = await import("../views/ArchiveView.js");
-    const V = mod.default;
+    const mod = await import("../modules/projektverwaltung/index.js");
+    const V = mod.ArchiveScreen;
 
     this._setProjectRuntimeContext({ meetingId: null });
     await this.show(new V({ router: this }), { section: "archive", isTopsView: false });
@@ -1095,10 +1095,10 @@ export default class Router {
     };
 
     try {
-      const mod = await import("../views/ProjectFormView.js");
-      const ProjectFormView = mod.default;
+      const mod = await import("../modules/projektverwaltung/index.js");
+      const ProjectFormScreen = mod.ProjectFormScreen;
 
-      const view = new ProjectFormView({
+      const view = new ProjectFormScreen({
         router: this,
         projectId: effectiveProjectId,
         mode: "modal",
