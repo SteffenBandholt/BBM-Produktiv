@@ -18,6 +18,10 @@ Der aktuelle Fokus liegt auf:
 1. Modul **Protokoll**
 2. Konsolidierung verbliebener Altpfade
 
+Hinweis:
+- Die Projektverwaltung ist als Renderer-Modul aufgestellt und der erste Modul-Meilenstein ist abgeschlossen.
+- Der bestehende Sidebar-Einstieg `Projekte` bleibt der einzige sichtbare Einstieg.
+
 ---
 
 ## Meilenstein 1
@@ -157,4 +161,3 @@ Standardverhalten:
 - genau den nächsten offenen Meilenstein bearbeiten
 - danach berichten
 - erst dann mit dem nächsten weitermachen
-

@@ -30,6 +30,16 @@ Sie ergänzt:
 - `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen.
 - Weitere Änderungen nur bei echtem Fehler oder konkretem Featurebedarf.
 
+## Projektverwaltung
+- Der erste Modul-Meilenstein ist abgeschlossen.
+- Die Projektverwaltung ist als Renderer-Modul unter `src/renderer/modules/projektverwaltung` aufgestellt.
+- Der bestehende Sidebar-Einstieg `Projekte` bleibt der einzige sichtbare Einstieg.
+- Es gibt keinen zusätzlichen Sidebar-Button `Projektverwaltung`.
+- Der Router nutzt den Modulpfad.
+- Die alten View-Dateien bleiben als Compatibility-Re-Exports bestehen.
+- Keine DB-/IPC-Logik wurde verschoben.
+- `npm test` war gruen.
+
 ---
 
 ## Erledigte Meilensteine / Pakete
