@@ -22,6 +22,13 @@ Sie ergänzt:
 - Der erste CSS-Schritt im Modul `Protokoll` wurde umgesetzt.
 - Der Speichern-/Löschen-Vertrag im Tops-Bereich wurde zwischen Verhalten und Tests synchronisiert.
 
+## Architektur-Flag
+- Das Protokoll-Modul ist aktuell eingefroren.
+- Keine weitere Mini-Modularisierung ohne ausdrücklichen Auftrag.
+- `TopsHeader` und `TopsList` wurden heimgeholt.
+- `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen.
+- Weitere Änderungen nur bei echtem Fehler oder konkretem Featurebedarf.
+
 ---
 
 ## Erledigte Meilensteine / Pakete

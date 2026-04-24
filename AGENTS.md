@@ -50,6 +50,12 @@ Dieses Repo befindet sich in einem kontrollierten Umbau von einer stärker monol
 Aktuell wichtige Bereiche:
 - `Protokoll`
 
+ARCHITEKTUR-FLAG:
+- Das Protokoll-Modul wird aktuell nicht weiter modularisiert.
+- Der aktuelle Stand bleibt bestehen; keine weiteren Modularisierungsarbeiten ohne ausdrücklichen Auftrag.
+- `TopsHeader` und `TopsList` sind wieder im Protokoll-Modul verankert.
+- `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen, ausser bei echtem Fehler oder konkretem Featurebedarf.
+
 Wichtig:
 - Der Umbau ist **nicht abgeschlossen**.
 - Altpfade und Übergangsstrukturen können noch vorhanden sein.
