@@ -61,11 +61,18 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(projektEntry.moduleLabel, "Projektverwaltung");
   });
 
-  await run("Lizenzverwaltung: Entwicklung enthaelt den Einstieg Adminbereich als Kachel, nicht als Tab", () => {
+  await run("Lizenzverwaltung: Einstellungen enthaelt den Einstieg Adminbereich auf oberster Ebene", () => {
     assert.equal(settingsViewSource.includes("../modules/lizenzverwaltung/index.js"), true);
-    assert.equal(settingsViewSource.includes("makeDevTabButton(\"Adminbereich\", \"admin\")"), false);
+    assert.equal(settingsViewSource.includes("tiles.append(tileUser, tilePrint, tileLicense, tileAdmin);"), true);
     assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), true);
-    assert.equal(settingsViewSource.includes("openAdminbereichPopup"), true);
+    assert.equal(settingsViewSource.includes("subText: \"Adminmodule und Verwaltungswerkzeuge\""), true);
+  });
+
+  await run("Lizenzverwaltung: Entwicklung enthaelt keinen Einstieg oder Tab fuer Adminbereich", () => {
+    assert.equal(settingsViewSource.includes("makeDevTabButton(\"Adminbereich\", \"admin\")"), false);
+    assert.equal(settingsViewSource.includes("const devEntryTiles = document.createElement(\"div\")"), false);
+    assert.equal(settingsViewSource.includes("devTabWrap.append(devEntryTiles, devTabHead, devTabBody);"), false);
+    assert.equal(settingsViewSource.includes("title: \"Entwicklung\""), true);
   });
 
   await run("Lizenzverwaltung: Adminbereich-Popup enthaelt Kachel Lizenzverwaltung", () => {
@@ -85,6 +92,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("Standardumfang"), true);
     assert.equal(settingsViewSource.includes("Zusatzfunktionen"), true);
     assert.equal(settingsViewSource.includes("Module"), true);
+  });
+
+  await run("Lizenz / bearbeiten: ist nicht mehr als normaler Entwicklung-Tab sichtbar", () => {
+    assert.equal(settingsViewSource.includes("makeDevTabButton(\"Lizenz / bearbeiten\", \"license\")"), false);
+    assert.equal(settingsViewSource.includes("{ key: \"license\", label: \"Lizenz / bearbeiten\", el: tabLicense }"), false);
   });
 
   await run("Lizenz / bearbeiten: Standardumfang enthaelt app/pdf/export", () => {
