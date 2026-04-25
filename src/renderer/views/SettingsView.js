@@ -13,6 +13,7 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
+import { LicenseAdminScreen } from "../modules/lizenzverwaltung/index.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -4638,9 +4639,16 @@ export default class SettingsView {
         tabTools.style.gap = "10px";
         tabTools.append(printBox, topsLimitBox);
 
+        const tabAdmin = document.createElement("div");
+        tabAdmin.style.display = "grid";
+        tabAdmin.style.gap = "10px";
+        const licenseAdminScreen = new LicenseAdminScreen();
+        tabAdmin.append(licenseAdminScreen.render());
+
         const devTabs = [
           { key: "version", label: "Versionierung", el: tabVersion },
           { key: "license", label: "Lizenz / bearbeiten", el: tabLicense },
+          { key: "admin", label: "Adminbereich", el: tabAdmin },
           { key: "db", label: "DB-Diagnose", el: tabDb },
           { key: "dictation", label: "Diktieren", el: tabDictation },
           { key: "tools", label: "Druck / TOP-Liste", el: tabTools },
@@ -4679,12 +4687,13 @@ export default class SettingsView {
         devTabHead.append(
           makeDevTabButton("Versionierung", "version"),
           makeDevTabButton("Lizenz / bearbeiten", "license"),
+          makeDevTabButton("Adminbereich", "admin"),
           makeDevTabButton("DB-Diagnose", "db"),
           makeDevTabButton("Diktieren", "dictation"),
           makeDevTabButton("Druck / TOP-Liste", "tools")
         );
 
-        devTabBody.append(tabVersion, tabLicense, tabDb, tabDictation, tabTools);
+        devTabBody.append(tabVersion, tabLicense, tabAdmin, tabDb, tabDictation, tabTools);
         devTabWrap.append(devTabHead, devTabBody);
         setDevTab("version");
 
