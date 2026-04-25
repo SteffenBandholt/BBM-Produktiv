@@ -15,6 +15,13 @@ async function runLizenzverwaltungModuleTests(run) {
       LIZENZVERWALTUNG_WORK_SCREEN_ID,
       LicenseAdminScreen,
       createLicenseEditorSection,
+      CUSTOMER_RECORD_FIELDS,
+      LICENSE_RECORD_FIELDS,
+      LICENSE_MODES,
+      createDefaultCustomerRecord,
+      createDefaultLicenseRecord,
+      normalizeCustomerRecord,
+      normalizeLicenseRecord,
     },
     {
       getProjektverwaltungModuleEntry,
@@ -32,6 +39,7 @@ async function runLizenzverwaltungModuleTests(run) {
 
   const screenSource = read("src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js");
   const productScopeSource = read("src/renderer/modules/lizenzverwaltung/productScope.js");
+  const licenseRecordsSource = read("src/renderer/modules/lizenzverwaltung/licenseRecords.js");
   const licenseEditorSource = read("src/renderer/modules/lizenzverwaltung/screens/createLicenseEditorSection.js");
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const projectWorkspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
@@ -49,6 +57,86 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(entry.screens?.licenseAdmin, LicenseAdminScreen);
   });
 
+
+  await run("Lizenzverwaltung: Kundendatensatz zentral vorbereitet", () => {
+    const customerKeys = CUSTOMER_RECORD_FIELDS.map((entry) => entry.key);
+    assert.deepEqual(customerKeys, [
+      "customerNumber",
+      "companyName",
+      "contactPerson",
+      "email",
+      "phone",
+      "notes",
+    ]);
+
+    const customerLabels = CUSTOMER_RECORD_FIELDS.map((entry) => entry.label);
+    assert.deepEqual(customerLabels, [
+      "Kundennummer",
+      "Firma / Kundenname",
+      "Ansprechpartner",
+      "E-Mail",
+      "Telefon",
+      "Notizen",
+    ]);
+
+    assert.equal(typeof createDefaultCustomerRecord, "function");
+    assert.equal(typeof normalizeCustomerRecord, "function");
+    assert.equal(licenseRecordsSource.includes("CUSTOMER_RECORD_FIELDS"), true);
+  });
+
+  await run("Lizenzverwaltung: Lizenzdatensatz zentral vorbereitet", () => {
+    const licenseKeys = LICENSE_RECORD_FIELDS.map((entry) => entry.key);
+    assert.deepEqual(licenseKeys, [
+      "licenseId",
+      "customerNumber",
+      "productScope",
+      "validFrom",
+      "validUntil",
+      "licenseMode",
+      "machineId",
+      "notes",
+    ]);
+
+    const licenseLabels = LICENSE_RECORD_FIELDS.map((entry) => entry.label);
+    assert.deepEqual(licenseLabels, [
+      "Lizenz-ID",
+      "Kunde",
+      "Produktumfang",
+      "gueltig von",
+      "gueltig bis",
+      "Lizenzmodus",
+      "Machine-ID",
+      "Notizen",
+    ]);
+
+    assert.deepEqual(LICENSE_MODES.map((entry) => entry.label), ["Soft-Lizenz", "Vollversion"]);
+    assert.equal(typeof createDefaultLicenseRecord, "function");
+    assert.equal(typeof normalizeLicenseRecord, "function");
+    assert.equal(licenseRecordsSource.includes("LICENSE_RECORD_FIELDS"), true);
+  });
+
+  await run("Lizenzverwaltung: Datensatz-Normalisierung bleibt minimal und robust", () => {
+    const normalizedCustomer = normalizeCustomerRecord({
+      customerNumber: "  K-100  ",
+      companyName: "  Musterbau GmbH  ",
+      email: "  info@example.org  ",
+    });
+    assert.equal(normalizedCustomer.customerNumber, "K-100");
+    assert.equal(normalizedCustomer.companyName, "Musterbau GmbH");
+    assert.equal(normalizedCustomer.email, "info@example.org");
+
+    const normalizedLicense = normalizeLicenseRecord({
+      licenseId: "  LIC-1  ",
+      customerNumber: "  K-100  ",
+      licenseMode: "FULL",
+      productScope: { zusatzfunktionen: ["mail"] },
+    });
+    assert.equal(normalizedLicense.licenseId, "LIC-1");
+    assert.equal(normalizedLicense.customerNumber, "K-100");
+    assert.equal(normalizedLicense.licenseMode, "full");
+    assert.deepEqual(normalizedLicense.productScope.zusatzfunktionen, ["mail"]);
+    assert.deepEqual(normalizedLicense.productScope.standardumfang, []);
+  });
   await run("Lizenzverwaltung: Skeleton enthaelt Einstieg und Platzhalterbereiche", () => {
     assert.equal(screenSource.includes("Lizenzverwaltung"), true);
     assert.equal(screenSource.includes("Admin-/Mutter-App-Modul"), true);
@@ -56,6 +144,9 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Lizenz erstellen / bearbeiten"), true);
     assert.equal(screenSource.includes("Kunden"), true);
     assert.equal(screenSource.includes("Lizenzen"), true);
+    assert.equal(screenSource.includes("Vorbereitete Felder:"), true);
+    assert.equal(screenSource.includes("CUSTOMER_RECORD_FIELDS"), true);
+    assert.equal(screenSource.includes("LICENSE_RECORD_FIELDS"), true);
     assert.equal(screenSource.includes("Produktumfang"), true);
     assert.equal(screenSource.includes("Historie"), true);
   });

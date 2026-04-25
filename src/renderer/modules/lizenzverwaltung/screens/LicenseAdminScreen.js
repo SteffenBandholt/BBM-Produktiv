@@ -1,3 +1,5 @@
+import { CUSTOMER_RECORD_FIELDS, LICENSE_RECORD_FIELDS } from "../licenseRecords.js";
+
 function buildSectionCard({ title, hint = "", actionLabel = "", onClick = null }) {
   const card = document.createElement("section");
   card.style.border = "1px solid var(--card-border)";
@@ -35,6 +37,10 @@ function buildSectionCard({ title, hint = "", actionLabel = "", onClick = null }
   return card;
 }
 
+function buildPreparedFieldHint(fields) {
+  return `Vorbereitete Felder: ${fields.map((field) => field.label).join(", ")}.`;
+}
+
 export default class LicenseAdminScreen {
   constructor({ onOpenLicenseEditor } = {}) {
     this.onOpenLicenseEditor = onOpenLicenseEditor;
@@ -70,8 +76,14 @@ export default class LicenseAdminScreen {
         actionLabel: "Oeffnen",
         onClick: this.onOpenLicenseEditor,
       }),
-      buildSectionCard({ title: "Kunden" }),
-      buildSectionCard({ title: "Lizenzen" }),
+      buildSectionCard({
+        title: "Kunden",
+        hint: buildPreparedFieldHint(CUSTOMER_RECORD_FIELDS),
+      }),
+      buildSectionCard({
+        title: "Lizenzen",
+        hint: buildPreparedFieldHint(LICENSE_RECORD_FIELDS),
+      }),
       buildSectionCard({ title: "Produktumfang" }),
       buildSectionCard({ title: "Historie" })
     );

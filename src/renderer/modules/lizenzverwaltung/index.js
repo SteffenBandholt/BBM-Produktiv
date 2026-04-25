@@ -20,3 +20,5 @@ export function getLizenzverwaltungModuleEntry() {
 
 export { LicenseAdminScreen, createLicenseEditorSection, LIZENZVERWALTUNG_WORK_SCREEN_ID };
 export * from "./screens/index.js";
+export * from "./productScope.js";
+export * from "./licenseRecords.js";
