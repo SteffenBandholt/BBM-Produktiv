@@ -47,6 +47,7 @@ Sie ergänzt:
 - `Ausgabe / Drucken / E-Mail` und `Audio / Diktat` sind Maschinenraum-Dienste, keine Projektmodule.
 - `Lizenzierung`, `Settings`, `Updates`, `Backup` und `Diagnose` sind Verwaltung oder Maschinenraum, keine Projektmodule.
 - Die Projektverwaltung setzt den Projektkontext und oeffnet spaeter einen Projekt-Arbeitsbereich.
+- Ein Projektklick startet nicht direkt `Protokoll`.
 - Im Projekt-Arbeitsbereich werden nur auswählbare Projektmodule angeboten.
 - Das Protokoll-Modul ist aktuell eingefroren.
 - Keine weitere Mini-Modularisierung ohne ausdruecklichen Auftrag.

@@ -29,6 +29,7 @@ Hinweis:
 - `npm test` war gruen.
 - Das Mutter-/Kind-Prinzip ist die verbindliche Leitlinie fuer alle weiteren Modularisierungsschritte.
 - Auswählbare Projektmodule und Maschinenraum-Bereiche sind architektonisch getrennt.
+- Der naechste Planungsschritt ist die fachliche Beschreibung von Projektverwaltung und Projekt-Arbeitsbereich.
 
 ---
 

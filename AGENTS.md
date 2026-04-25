@@ -61,6 +61,7 @@ ARCHITEKTUR-LEITLINIE:
 - Aktuell auswählbares Projektmodul ist `Protokoll`; `Restarbeiten` kann spaeter als Projektmodul hinzukommen.
 - `Ausgabe / Drucken / E-Mail` und `Audio / Diktat` sind Maschinenraum-Dienste, keine Projektmodule.
 - `Lizenzierung`, `Settings`, `Updates`, `Backup` und `Diagnose` sind Verwaltung oder Maschinenraum, keine Projektmodule.
+- Die Projektverwaltung setzt den Projektkontext; ein Projektklick startet nicht direkt `Protokoll`.
 
 ARCHITEKTUR-FLAG:
 - Das Protokoll-Modul wird aktuell nicht weiter modularisiert.
