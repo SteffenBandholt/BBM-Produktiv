@@ -13,6 +13,7 @@ Bestehendes Verhalten soll stabil bleiben, außer wenn ein Meilenstein ausdrück
 - bei Problemen erst stoppen und berichten
 - erst nach erfolgreicher Prüfung mit dem nächsten Meilenstein weitermachen
 - die weitere Modularisierung folgt verbindlich dem Mutter-/Kind-Prinzip: Die Codebasis ist die Mutter-App / Bauzentrale; spaetere Kinder-Apps sind freigegebene Produktvarianten mit eingegrenztem Funktionsumfang
+- im Projektkontext gelten nur fachliche Arbeitsbereiche als auswählbare Projektmodule; Maschinenraum-Dienste und Verwaltungsbereiche bleiben davon getrennt
 
 ## Priorität
 Der aktuelle Fokus liegt auf:
@@ -27,6 +28,7 @@ Hinweis:
 - Das Protokoll-Modul bleibt eingefroren.
 - `npm test` war gruen.
 - Das Mutter-/Kind-Prinzip ist die verbindliche Leitlinie fuer alle weiteren Modularisierungsschritte.
+- Auswählbare Projektmodule und Maschinenraum-Bereiche sind architektonisch getrennt.
 
 ---
 

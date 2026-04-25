@@ -32,6 +32,18 @@ Die gesamte App folgt dabei verbindlich dem **Mutter-/Kind-Prinzip**:
 - Kinder-Apps pruefen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
 - Dieses Prinzip gilt fuer die gesamte App, nicht nur fuer die Lizenzierung.
 
+Nicht jedes Modul ist ein auswählbares Projektmodul:
+- Auswählbare Projektmodule sind nur fachliche Arbeitsbereiche innerhalb eines Projekts.
+- Aktuell auswählbar ist `Protokoll`.
+- Spaeter moeglich ist `Restarbeiten`.
+- `Ausgabe / Drucken / E-Mail` ist kein auswählbares Projektmodul, sondern ein Maschinenraum-Dienst.
+- `Audio / Diktat` ist kein auswählbares Projektmodul, sondern ein Maschinenraum-Dienst.
+- `Lizenzierung` ist in der Mutter-App ein Verwaltungs-/Maschinenraum-Bereich, in Kinder-Apps nur Lizenzpruefung und Status.
+- `Settings`, `Updates`, `Backup` und `Diagnose` sind Maschinenraum oder Verwaltung, keine Projektmodule.
+- Die Projektverwaltung setzt den Projektkontext und oeffnet spaeter einen Projekt-Arbeitsbereich.
+- Im Projekt-Arbeitsbereich werden nur auswählbare Projektmodule angeboten.
+- Maschinenraum-Dienste werden von Fachmodulen genutzt, aber nicht als gleichberechtigte Projektmodule angeboten.
+
 Der Umbau erfolgt:
 - konservativ
 - paketweise
