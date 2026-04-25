@@ -19,12 +19,19 @@ async function runLizenzverwaltungModuleTests(run) {
     {
       getProjektverwaltungModuleEntry,
     },
+    {
+      PRODUCT_SCOPE,
+      formatProductScopeFeatureLabel,
+      normalizeProductScopeFeatureKey,
+    },
   ] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/lizenzverwaltung/index.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/projektverwaltung/index.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/lizenzverwaltung/productScope.js")),
   ]);
 
   const screenSource = read("src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js");
+  const productScopeSource = read("src/renderer/modules/lizenzverwaltung/productScope.js");
   const licenseEditorSource = read("src/renderer/modules/lizenzverwaltung/screens/createLicenseEditorSection.js");
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const projectWorkspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
@@ -93,32 +100,49 @@ async function runLizenzverwaltungModuleTests(run) {
   await run("Lizenz / bearbeiten: enthaelt Produktumfang statt flacher Feature-Zeile", () => {
     assert.equal(licenseEditorSource.includes("mkRow(\"Produktumfang\", productScopeWrap)"), true);
     assert.equal(licenseEditorSource.includes("mkRow(\"Features\", featureWrap)"), false);
-    assert.equal(licenseEditorSource.includes("Standardumfang"), true);
-    assert.equal(licenseEditorSource.includes("Zusatzfunktionen"), true);
-    assert.equal(licenseEditorSource.includes("Module"), true);
+    assert.equal(licenseEditorSource.includes("Standardumfang"), false);
+    assert.equal(licenseEditorSource.includes("Zusatzfunktionen"), false);
+    assert.equal(licenseEditorSource.includes("Module"), false);
+  });
+
+  await run("Lizenzverwaltung: Produktumfang zentral im Modul definiert", () => {
+    assert.equal(productScopeSource.includes("export const PRODUCT_SCOPE"), true);
+    assert.equal(productScopeSource.includes("standardumfang"), true);
+    assert.equal(productScopeSource.includes("zusatzfunktionen"), true);
+    assert.equal(productScopeSource.includes("module"), true);
   });
 
   await run("Lizenz / bearbeiten: Standardumfang enthaelt app/pdf/export", () => {
-    assert.equal(licenseEditorSource.includes("const standardFeatureInputs = [\"app\", \"pdf\", \"export\"]"), true);
-    assert.equal(licenseEditorSource.includes("Immer enthalten, nicht abwaehlbar."), true);
+    const standardKeys = PRODUCT_SCOPE.standardumfang.entries.map((entry) => entry.key);
+    assert.deepEqual(standardKeys, ["app", "pdf", "export"]);
+    assert.equal(PRODUCT_SCOPE.standardumfang.note, "Immer enthalten, nicht abwaehlbar.");
   });
 
   await run("Lizenz / bearbeiten: Zusatzfunktionen enthaelt mail/Dictate (audio-kompatibel)", () => {
-    assert.equal(licenseEditorSource.includes("const optionalFeatureInputs = [\"mail\", \"audio\"]"), true);
-    assert.equal(licenseEditorSource.includes("return normalizedFeature === \"audio\" ? \"Dictate\" : normalizedFeature;"), true);
-    assert.equal(licenseEditorSource.includes("if (normalized === \"dictate\") return \"audio\";"), true);
+    const optionalKeys = PRODUCT_SCOPE.zusatzfunktionen.entries.map((entry) => entry.key);
+    const optionalLabels = PRODUCT_SCOPE.zusatzfunktionen.entries.map((entry) => entry.label);
+    assert.deepEqual(optionalKeys, ["mail", "audio"]);
+    assert.deepEqual(optionalLabels, ["mail", "Dictate"]);
+    assert.equal(formatProductScopeFeatureLabel("audio"), "Dictate");
+    assert.equal(normalizeProductScopeFeatureKey("Dictate"), "audio");
   });
 
   await run("Lizenz / bearbeiten: zeigt nicht audio und Dictate parallel an", () => {
-    assert.equal(licenseEditorSource.includes("mkFeatureInput(\"Dictate\""), false);
-    assert.equal(licenseEditorSource.includes("mkFeatureInput(\"audio\""), false);
-    assert.equal(licenseEditorSource.includes("return normalizedFeature === \"audio\" ? \"Dictate\" : normalizedFeature;"), true);
+    assert.equal(PRODUCT_SCOPE.zusatzfunktionen.entries.filter((entry) => entry.label === "Dictate").length, 1);
+    assert.equal(PRODUCT_SCOPE.zusatzfunktionen.entries.filter((entry) => entry.label === "audio").length, 0);
   });
 
   await run("Lizenz / bearbeiten: Module enthaelt Protokoll/Dummy als vorbereitete Eintraege", () => {
-    assert.equal(licenseEditorSource.includes("const moduleFeatureInputs = [\"Protokoll\", \"Dummy\"]"), true);
-    assert.equal(licenseEditorSource.includes("Vorbereitet, noch nicht aktiv angebunden."), true);
-    assert.equal(licenseEditorSource.includes("hint: \"(vorbereitet)\""), true);
+    const moduleLabels = PRODUCT_SCOPE.module.entries.map((entry) => entry.label);
+    assert.deepEqual(moduleLabels, ["Protokoll", "Dummy"]);
+    assert.equal(PRODUCT_SCOPE.module.note, "Vorbereitet, noch nicht aktiv angebunden.");
+  });
+
+  await run("Lizenz / bearbeiten: createLicenseEditorSection nutzt zentrale Produktumfang-Struktur", () => {
+    assert.equal(licenseEditorSource.includes('from "../productScope.js"'), true);
+    assert.equal(licenseEditorSource.includes("PRODUCT_SCOPE.standardumfang.entries"), true);
+    assert.equal(licenseEditorSource.includes("PRODUCT_SCOPE.zusatzfunktionen.entries"), true);
+    assert.equal(licenseEditorSource.includes("PRODUCT_SCOPE.module.entries"), true);
   });
 }
 
