@@ -44,6 +44,7 @@ Nicht jedes Modul ist ein auswählbares Projektmodul:
 - `Whisper` ist aktuell nur die technische Engine unter dem `Diktierprodukt`; die Whisper-Modelle haengen deshalb unter `Diktierprodukt / Engine Whisper`.
 - `Woerterbuch` ist ein vorbereiteter Baustein innerhalb von `Diktieren`.
 - `Lizenzierung` ist in der Mutter-App ein Verwaltungs-/Maschinenraum-Bereich, in Kinder-Apps nur Lizenzpruefung und Status.
+- Die geplante Lizenzverwaltung wird als eigenes Adminmodul beschrieben: [docs/modules/lizenzverwaltung.md](docs/modules/lizenzverwaltung.md).
 - `Settings`, `Updates`, `Backup` und `Diagnose` sind Maschinenraum oder Verwaltung, keine Projektmodule.
 - Die Projektverwaltung setzt den Projektkontext und oeffnet den Projekt-Arbeitsbereich.
 - Die Projektverwaltung ist nicht fachlicher Besitzer des `Protokoll`-Moduls.

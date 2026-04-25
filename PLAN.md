@@ -25,6 +25,7 @@ Hinweis:
 - Der bestehende Sidebar-Einstieg `Projekte` bleibt der einzige sichtbare Einstieg.
 - Ausgabe / Drucken / E-Mail ist als Renderer-Modul aufgestellt; kein Sidebar-Eintrag und kein Modulkatalog-Eintrag.
 - Audio / Diktat ist als Renderer-Modul begonnen; aktuell nur `TranscriptionService`, ohne Sidebar- oder Modulkatalog-Eintrag.
+- Lizenzverwaltung wird als naechster Admin-Meilenstein vorbereitet; Detailauftrag: [docs/modules/lizenzverwaltung.md](docs/modules/lizenzverwaltung.md).
 - Das Protokoll-Modul bleibt eingefroren.
 - `npm test` war gruen.
 - Das Mutter-/Kind-Prinzip ist die verbindliche Leitlinie fuer alle weiteren Modularisierungsschritte.

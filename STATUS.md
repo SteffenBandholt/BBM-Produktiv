@@ -36,6 +36,7 @@ Sie ergänzt:
   - `Audio / Diktat` bleibt Maschinenraum und ist kein auswählbares Projektmodul.
   - Der interne Key bleibt `audio`.
   - Die sichtbare Feature-Liste zeigt kein `audio` und `Dictate` nebeneinander.
+- Lizenzverwaltung ist als eigenes Zielmodul geplant; die Detailbeschreibung liegt unter `docs/modules/lizenzverwaltung.md`.
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
