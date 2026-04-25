@@ -16,6 +16,7 @@ async function runAudioModuleTests(run) {
   const moduleReadmeSource = read("src/renderer/modules/audio/README.md");
   const serviceSource = read("src/renderer/modules/audio/TranscriptionService.js");
   const dictationDevUiSource = read("src/renderer/modules/audio/ui/createDictationDevSection.js");
+  const licenseEditorSource = read("src/renderer/modules/lizenzverwaltung/screens/createLicenseEditorSection.js");
   const settingsViewSource = read("src/renderer/views/SettingsView.js");
   const legacyServiceSource = read("src/renderer/services/audio/TranscriptionService.js");
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
@@ -65,16 +66,16 @@ async function runAudioModuleTests(run) {
   });
 
   await run("Lizenz-Editor zeigt audio fachlich als Dictate", () => {
-    assert.equal(settingsViewSource.includes('const formatLicenseFeatureLabel = (feature) =>'), true);
-    assert.equal(settingsViewSource.includes('normalizedFeature === "audio" ? "Dictate" : normalizedFeature'), true);
-    assert.equal(settingsViewSource.includes('document.createTextNode(formatLicenseFeatureLabel(feature))'), true);
+    assert.equal(licenseEditorSource.includes('const formatLicenseFeatureLabel = (feature) =>'), true);
+    assert.equal(licenseEditorSource.includes('normalizedFeature === "audio" ? "Dictate" : normalizedFeature'), true);
+    assert.equal(licenseEditorSource.includes('document.createTextNode(formatLicenseFeatureLabel(feature))'), true);
     assert.equal(
-      settingsViewSource.includes(
+      licenseEditorSource.includes(
         'res.features.map(formatLicenseFeatureLabel).join(", ")'
       ),
       true
     );
-    assert.equal(settingsViewSource.includes('checkbox.value = feature;'), true);
+    assert.equal(licenseEditorSource.includes('checkbox.value = feature;'), true);
   });
 }
 

@@ -14,6 +14,7 @@ async function runLizenzverwaltungModuleTests(run) {
       LIZENZVERWALTUNG_MODULE_ID,
       LIZENZVERWALTUNG_WORK_SCREEN_ID,
       LicenseAdminScreen,
+      createLicenseEditorSection,
     },
     {
       getProjektverwaltungModuleEntry,
@@ -24,6 +25,7 @@ async function runLizenzverwaltungModuleTests(run) {
   ]);
 
   const screenSource = read("src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js");
+  const licenseEditorSource = read("src/renderer/modules/lizenzverwaltung/screens/createLicenseEditorSection.js");
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const projectWorkspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const settingsViewSource = read("src/renderer/views/SettingsView.js");
@@ -34,15 +36,17 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(LIZENZVERWALTUNG_MODULE_ID, "lizenzverwaltung");
     assert.equal(LIZENZVERWALTUNG_WORK_SCREEN_ID, "licenseAdmin");
     assert.equal(typeof LicenseAdminScreen, "function");
+    assert.equal(typeof createLicenseEditorSection, "function");
     assert.equal(entry.moduleId, "lizenzverwaltung");
     assert.equal(entry.workScreenId, "licenseAdmin");
     assert.equal(entry.screens?.licenseAdmin, LicenseAdminScreen);
   });
 
-  await run("Lizenzverwaltung: Skeleton enthaelt alle Platzhalterbereiche", () => {
+  await run("Lizenzverwaltung: Skeleton enthaelt Einstieg und Platzhalterbereiche", () => {
     assert.equal(screenSource.includes("Lizenzverwaltung"), true);
     assert.equal(screenSource.includes("Admin-/Mutter-App-Modul"), true);
     assert.equal(screenSource.includes("Umsetzung erfolgt schrittweise"), true);
+    assert.equal(screenSource.includes("Lizenz erstellen / bearbeiten"), true);
     assert.equal(screenSource.includes("Kunden"), true);
     assert.equal(screenSource.includes("Lizenzen"), true);
     assert.equal(screenSource.includes("Produktumfang"), true);
@@ -68,11 +72,10 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("subText: \"Adminmodule und Verwaltungswerkzeuge\""), true);
   });
 
-  await run("Lizenzverwaltung: Entwicklung enthaelt keinen Einstieg oder Tab fuer Adminbereich", () => {
-    assert.equal(settingsViewSource.includes("makeDevTabButton(\"Adminbereich\", \"admin\")"), false);
-    assert.equal(settingsViewSource.includes("const devEntryTiles = document.createElement(\"div\")"), false);
-    assert.equal(settingsViewSource.includes("devTabWrap.append(devEntryTiles, devTabHead, devTabBody);"), false);
-    assert.equal(settingsViewSource.includes("title: \"Entwicklung\""), true);
+  await run("Lizenzverwaltung: Entwicklung enthaelt keinen sichtbaren Tab Lizenz / bearbeiten", () => {
+    assert.equal(settingsViewSource.includes("makeDevTabButton(\"Lizenz / bearbeiten\", \"license\")"), false);
+    assert.equal(settingsViewSource.includes("{ key: \"license\", label: \"Lizenz / bearbeiten\", el: tabLicense }"), false);
+    assert.equal(settingsViewSource.includes("tabLicense.append(licenseBox, licenseGenBox);"), false);
   });
 
   await run("Lizenzverwaltung: Adminbereich-Popup enthaelt Kachel Lizenzverwaltung", () => {
@@ -81,45 +84,41 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("openLicenseAdminPopup"), true);
   });
 
-  await run("Lizenzverwaltung: Kachel Lizenzverwaltung zeigt weiter den LicenseAdminScreen-Skeleton", () => {
-    assert.equal(settingsViewSource.includes("title: \"Lizenzverwaltung\""), true);
-    assert.equal(settingsViewSource.includes("new LicenseAdminScreen()"), true);
+  await run("LicenseAdminScreen enthaelt Einstieg Lizenz erstellen / bearbeiten", () => {
+    assert.equal(settingsViewSource.includes("new LicenseAdminScreen({"), true);
+    assert.equal(settingsViewSource.includes("onOpenLicenseEditor: openLicenseEditorPopup"), true);
+    assert.equal(settingsViewSource.includes("title: \"Lizenz erstellen / bearbeiten\""), true);
   });
 
   await run("Lizenz / bearbeiten: enthaelt Produktumfang statt flacher Feature-Zeile", () => {
-    assert.equal(settingsViewSource.includes("mkRow(\"Produktumfang\", productScopeWrap)"), true);
-    assert.equal(settingsViewSource.includes("mkRow(\"Features\", featureWrap)"), false);
-    assert.equal(settingsViewSource.includes("Standardumfang"), true);
-    assert.equal(settingsViewSource.includes("Zusatzfunktionen"), true);
-    assert.equal(settingsViewSource.includes("Module"), true);
-  });
-
-  await run("Lizenz / bearbeiten: ist nicht mehr als normaler Entwicklung-Tab sichtbar", () => {
-    assert.equal(settingsViewSource.includes("makeDevTabButton(\"Lizenz / bearbeiten\", \"license\")"), false);
-    assert.equal(settingsViewSource.includes("{ key: \"license\", label: \"Lizenz / bearbeiten\", el: tabLicense }"), false);
+    assert.equal(licenseEditorSource.includes("mkRow(\"Produktumfang\", productScopeWrap)"), true);
+    assert.equal(licenseEditorSource.includes("mkRow(\"Features\", featureWrap)"), false);
+    assert.equal(licenseEditorSource.includes("Standardumfang"), true);
+    assert.equal(licenseEditorSource.includes("Zusatzfunktionen"), true);
+    assert.equal(licenseEditorSource.includes("Module"), true);
   });
 
   await run("Lizenz / bearbeiten: Standardumfang enthaelt app/pdf/export", () => {
-    assert.equal(settingsViewSource.includes("const standardFeatureInputs = [\"app\", \"pdf\", \"export\"]"), true);
-    assert.equal(settingsViewSource.includes("Immer enthalten, nicht abwaehlbar."), true);
+    assert.equal(licenseEditorSource.includes("const standardFeatureInputs = [\"app\", \"pdf\", \"export\"]"), true);
+    assert.equal(licenseEditorSource.includes("Immer enthalten, nicht abwaehlbar."), true);
   });
 
   await run("Lizenz / bearbeiten: Zusatzfunktionen enthaelt mail/Dictate (audio-kompatibel)", () => {
-    assert.equal(settingsViewSource.includes("const optionalFeatureInputs = [\"mail\", \"audio\"]"), true);
-    assert.equal(settingsViewSource.includes("return normalizedFeature === \"audio\" ? \"Dictate\" : normalizedFeature;"), true);
-    assert.equal(settingsViewSource.includes("if (normalized === \"dictate\") return \"audio\";"), true);
+    assert.equal(licenseEditorSource.includes("const optionalFeatureInputs = [\"mail\", \"audio\"]"), true);
+    assert.equal(licenseEditorSource.includes("return normalizedFeature === \"audio\" ? \"Dictate\" : normalizedFeature;"), true);
+    assert.equal(licenseEditorSource.includes("if (normalized === \"dictate\") return \"audio\";"), true);
   });
 
   await run("Lizenz / bearbeiten: zeigt nicht audio und Dictate parallel an", () => {
-    assert.equal(settingsViewSource.includes("mkFeatureInput(\"Dictate\""), false);
-    assert.equal(settingsViewSource.includes("mkFeatureInput(\"audio\""), false);
-    assert.equal(settingsViewSource.includes("return normalizedFeature === \"audio\" ? \"Dictate\" : normalizedFeature;"), true);
+    assert.equal(licenseEditorSource.includes("mkFeatureInput(\"Dictate\""), false);
+    assert.equal(licenseEditorSource.includes("mkFeatureInput(\"audio\""), false);
+    assert.equal(licenseEditorSource.includes("return normalizedFeature === \"audio\" ? \"Dictate\" : normalizedFeature;"), true);
   });
 
   await run("Lizenz / bearbeiten: Module enthaelt Protokoll/Dummy als vorbereitete Eintraege", () => {
-    assert.equal(settingsViewSource.includes("const moduleFeatureInputs = [\"Protokoll\", \"Dummy\"]"), true);
-    assert.equal(settingsViewSource.includes("Vorbereitet, noch nicht aktiv angebunden."), true);
-    assert.equal(settingsViewSource.includes("hint: \"(vorbereitet)\""), true);
+    assert.equal(licenseEditorSource.includes("const moduleFeatureInputs = [\"Protokoll\", \"Dummy\"]"), true);
+    assert.equal(licenseEditorSource.includes("Vorbereitet, noch nicht aktiv angebunden."), true);
+    assert.equal(licenseEditorSource.includes("hint: \"(vorbereitet)\""), true);
   });
 }
 

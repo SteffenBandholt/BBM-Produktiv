@@ -1,27 +1,45 @@
-function buildPlaceholderCard(title) {
+function buildSectionCard({ title, hint = "", actionLabel = "", onClick = null }) {
   const card = document.createElement("section");
   card.style.border = "1px solid var(--card-border)";
   card.style.borderRadius = "10px";
   card.style.padding = "12px";
   card.style.background = "var(--card-bg)";
   card.style.minHeight = "90px";
+  card.style.display = "grid";
+  card.style.gap = "8px";
 
   const heading = document.createElement("h3");
   heading.textContent = title;
-  heading.style.margin = "0 0 6px";
+  heading.style.margin = "0";
   heading.style.fontSize = "16px";
 
-  const hint = document.createElement("p");
-  hint.textContent = "Platzhalter";
-  hint.style.margin = "0";
-  hint.style.fontSize = "12px";
-  hint.style.opacity = "0.75";
+  const hintEl = document.createElement("p");
+  hintEl.textContent = hint || "Platzhalter";
+  hintEl.style.margin = "0";
+  hintEl.style.fontSize = "12px";
+  hintEl.style.opacity = "0.75";
 
-  card.append(heading, hint);
+  card.append(heading, hintEl);
+
+  if (actionLabel) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = actionLabel;
+    btn.style.justifySelf = "start";
+    btn.onclick = () => {
+      if (typeof onClick === "function") onClick();
+    };
+    card.appendChild(btn);
+  }
+
   return card;
 }
 
 export default class LicenseAdminScreen {
+  constructor({ onOpenLicenseEditor } = {}) {
+    this.onOpenLicenseEditor = onOpenLicenseEditor;
+  }
+
   render() {
     const root = document.createElement("div");
     root.style.display = "grid";
@@ -46,10 +64,16 @@ export default class LicenseAdminScreen {
     grid.style.gap = "10px";
 
     grid.append(
-      buildPlaceholderCard("Kunden"),
-      buildPlaceholderCard("Lizenzen"),
-      buildPlaceholderCard("Produktumfang"),
-      buildPlaceholderCard("Historie")
+      buildSectionCard({
+        title: "Lizenz erstellen / bearbeiten",
+        hint: "Bestehende Lizenz-UI aus SettingsView.",
+        actionLabel: "Oeffnen",
+        onClick: this.onOpenLicenseEditor,
+      }),
+      buildSectionCard({ title: "Kunden" }),
+      buildSectionCard({ title: "Lizenzen" }),
+      buildSectionCard({ title: "Produktumfang" }),
+      buildSectionCard({ title: "Historie" })
     );
 
     root.append(title, adminHint, rolloutHint, grid);
