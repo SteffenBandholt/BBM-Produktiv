@@ -8,13 +8,15 @@ function read(relPath) {
 }
 
 async function runAudioModuleTests(run) {
-  const [{ TranscriptionService }] = await Promise.all([
+  const [{ TranscriptionService, createDictationDevSection }] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/audio/index.js")),
   ]);
 
   const moduleIndexSource = read("src/renderer/modules/audio/index.js");
   const moduleReadmeSource = read("src/renderer/modules/audio/README.md");
   const serviceSource = read("src/renderer/modules/audio/TranscriptionService.js");
+  const dictationDevUiSource = read("src/renderer/modules/audio/ui/createDictationDevSection.js");
+  const settingsViewSource = read("src/renderer/views/SettingsView.js");
   const legacyServiceSource = read("src/renderer/services/audio/TranscriptionService.js");
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
 
@@ -24,6 +26,18 @@ async function runAudioModuleTests(run) {
       moduleIndexSource.includes('export { TranscriptionService } from "./TranscriptionService.js";'),
       true
     );
+  });
+
+  await run("Audio: Modul exportiert den Diktieren-UI-Baustein", () => {
+    assert.equal(typeof createDictationDevSection, "function");
+    assert.equal(
+      moduleIndexSource.includes('export { createDictationDevSection } from "./ui/createDictationDevSection.js";'),
+      true
+    );
+    assert.equal(dictationDevUiSource.includes("Aktuelle Engine: Whisper"), true);
+    assert.equal(dictationDevUiSource.includes("Whisper-Modelle"), true);
+    assert.equal(dictationDevUiSource.includes("noch nicht eingerichtet"), true);
+    assert.equal(settingsViewSource.includes("createDictationDevSection"), true);
   });
 
   await run("Audio: neue Renderer-Datei enthaelt die Implementierung", () => {
@@ -47,6 +61,7 @@ async function runAudioModuleTests(run) {
     assert.equal(moduleReadmeSource.includes("Audio / Diktat"), true);
     assert.equal(moduleReadmeSource.includes("Main-/IPC-/Whisper-Technik"), true);
     assert.equal(moduleReadmeSource.includes("kein Sidebar-Modul"), true);
+    assert.equal(moduleReadmeSource.includes("Diktieren"), true);
   });
 }
 

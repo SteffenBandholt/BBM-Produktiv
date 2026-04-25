@@ -2,7 +2,9 @@
 
 Dieses Modul kapselt den rendererseitigen Einstieg fuer Audio und Diktat.
 
-Enthalten ist aktuell nur der `TranscriptionService`.
+Enthalten sind aktuell:
+- `TranscriptionService` als Renderer-Adapter
+- der Entwicklungs-UI-Baustein fuer `Einstellungen -> Entwicklung -> Diktieren`
 
 Hinweis:
 - Die eigentliche Main-/IPC-/Whisper-Technik bleibt im Main-Prozess.
