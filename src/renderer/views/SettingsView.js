@@ -2147,17 +2147,54 @@ export default class SettingsView {
     inpLicenseNotes.style.width = "100%";
     inpLicenseNotes.style.boxSizing = "border-box";
 
-    const featureWrap = document.createElement("div");
-    featureWrap.style.display = "flex";
-    featureWrap.style.flexWrap = "wrap";
-    featureWrap.style.gap = "8px 12px";
+    const productScopeWrap = document.createElement("div");
+    productScopeWrap.style.display = "grid";
+    productScopeWrap.style.gap = "8px";
 
     const formatLicenseFeatureLabel = (feature) => {
       const normalizedFeature = String(feature || "").trim();
       return normalizedFeature === "audio" ? "Dictate" : normalizedFeature;
     };
 
-    const featureInputs = ["app", "pdf", "export", "mail", "audio"].map((feature) => {
+    const normalizeLicenseFeatureKey = (feature) => {
+      const normalized = String(feature || "").trim().toLowerCase();
+      if (normalized === "dictate") return "audio";
+      return normalized;
+    };
+
+    const mkScopeGroup = (title, note = "") => {
+      const box = document.createElement("div");
+      box.style.border = "1px solid rgba(0,0,0,0.08)";
+      box.style.borderRadius = "8px";
+      box.style.padding = "8px 10px";
+      box.style.background = "#ffffff";
+
+      const titleEl = document.createElement("div");
+      titleEl.textContent = title;
+      titleEl.style.fontWeight = "600";
+      titleEl.style.fontSize = "12px";
+      titleEl.style.marginBottom = "6px";
+      box.appendChild(titleEl);
+
+      if (note) {
+        const noteEl = document.createElement("div");
+        noteEl.textContent = note;
+        noteEl.style.fontSize = "12px";
+        noteEl.style.color = "#4b5563";
+        noteEl.style.marginBottom = "6px";
+        box.appendChild(noteEl);
+      }
+
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.flexWrap = "wrap";
+      row.style.gap = "8px 12px";
+      box.appendChild(row);
+
+      return { box, row };
+    };
+
+    const mkFeatureInput = (feature, { checked = true, disabled = false, hint = "" } = {}) => {
       const label = document.createElement("label");
       label.style.display = "inline-flex";
       label.style.alignItems = "center";
@@ -2166,18 +2203,58 @@ export default class SettingsView {
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.value = feature;
-      checkbox.checked = true;
+      checkbox.checked = !!checked;
+      checkbox.disabled = !!disabled;
       label.append(checkbox, document.createTextNode(formatLicenseFeatureLabel(feature)));
-      featureWrap.appendChild(label);
+      if (hint) {
+        const hintEl = document.createElement("span");
+        hintEl.textContent = hint;
+        hintEl.style.color = "#6b7280";
+        hintEl.style.fontSize = "11px";
+        label.appendChild(hintEl);
+      }
+      return checkbox;
+    };
+
+    const standardScope = mkScopeGroup("Standardumfang", "Immer enthalten, nicht abwaehlbar.");
+    const optionalScope = mkScopeGroup("Zusatzfunktionen");
+    const moduleScope = mkScopeGroup("Module", "Vorbereitet, noch nicht aktiv angebunden.");
+
+    const standardFeatureInputs = ["app", "pdf", "export"].map((feature) => {
+      const checkbox = mkFeatureInput(feature, { checked: true, disabled: true });
+      standardScope.row.appendChild(checkbox.parentElement);
       return checkbox;
     });
+
+    const optionalFeatureInputs = ["mail", "audio"].map((feature) => {
+      const checkbox = mkFeatureInput(feature, { checked: feature !== "audio" });
+      optionalScope.row.appendChild(checkbox.parentElement);
+      return checkbox;
+    });
+
+    const moduleFeatureInputs = ["Protokoll", "Dummy"].map((moduleLabel) => {
+      const checkbox = mkFeatureInput(moduleLabel, { checked: false, disabled: true, hint: "(vorbereitet)" });
+      checkbox.value = moduleLabel.toLowerCase();
+      moduleScope.row.appendChild(checkbox.parentElement);
+      return checkbox;
+    });
+
+    productScopeWrap.append(standardScope.box, optionalScope.box, moduleScope.box);
 
     let activeLicenseTemplate = "";
 
     const setFeatureSelection = (selectedFeatures) => {
-      const selected = new Set((Array.isArray(selectedFeatures) ? selectedFeatures : []).map((v) => String(v || "").trim()));
-      featureInputs.forEach((inp) => {
+      const selected = new Set(
+        (Array.isArray(selectedFeatures) ? selectedFeatures : []).map((v) => normalizeLicenseFeatureKey(v))
+      );
+      standardFeatureInputs.forEach((inp) => {
+        inp.checked = true;
+      });
+      optionalFeatureInputs.forEach((inp) => {
         inp.checked = selected.has(inp.value);
+      });
+      moduleFeatureInputs.forEach((inp) => {
+        inp.checked = false;
       });
     };
 
@@ -2324,9 +2401,17 @@ export default class SettingsView {
         inpLicenseValidUntil,
         inpLicenseMaxDevices,
         inpLicenseNotes,
-        ...featureInputs,
+        ...standardFeatureInputs,
+        ...optionalFeatureInputs,
+        ...moduleFeatureInputs,
       ].forEach((el) => {
         if (el) el.disabled = isBusy;
+      });
+      standardFeatureInputs.forEach((el) => {
+        if (el) el.disabled = true;
+      });
+      moduleFeatureInputs.forEach((el) => {
+        if (el) el.disabled = true;
       });
       btnLicenseLoad.disabled = isBusy;
       btnLicenseLoadRequest.disabled = isBusy;
@@ -2413,7 +2498,10 @@ export default class SettingsView {
       validUntil: String(inpLicenseValidUntil.value || "").trim(),
       durationDays: String(inpLicenseDuration.value || "").trim(),
       maxDevices: String(inpLicenseMaxDevices.value || "").trim(),
-      features: featureInputs.filter((inp) => !!inp.checked).map((inp) => inp.value),
+      features: [
+        ...standardFeatureInputs.map((inp) => inp.value),
+        ...optionalFeatureInputs.filter((inp) => !!inp.checked).map((inp) => inp.value),
+      ],
       notes: String(inpLicenseNotes.value || "").trim(),
     });
 
@@ -2582,7 +2670,7 @@ export default class SettingsView {
       mkRow("Nutzungstage", inpLicenseDuration),
       mkRow("Gueltig bis", inpLicenseValidUntil),
       mkRow("Max. Geraete", inpLicenseMaxDevices),
-      mkRow("Features", featureWrap),
+      mkRow("Produktumfang", productScopeWrap),
       mkRow("Notizen", inpLicenseNotes),
       licenseGenActions,
       licenseGenStatus,

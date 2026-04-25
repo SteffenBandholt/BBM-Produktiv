@@ -36,6 +36,10 @@ Sie ergänzt:
   - `Audio / Diktat` bleibt Maschinenraum und ist kein auswählbares Projektmodul.
   - Der interne Key bleibt `audio`.
   - Die sichtbare Feature-Liste zeigt kein `audio` und `Dictate` nebeneinander.
+- Im Bereich `Lizenz / bearbeiten` ist `Produktumfang` jetzt sichtbar gegliedert:
+  - `Standardumfang` (app, pdf, export) ist immer enthalten und nicht abwaehlbar.
+  - `Zusatzfunktionen` (mail, Dictate) bleiben auswaehlbar.
+  - `Module` (Protokoll, Dummy) sind als vorbereitet markiert und noch nicht aktiv angebunden.
 - Lizenzverwaltung ist als eigenes Zielmodul geplant; die Detailbeschreibung liegt unter `docs/modules/lizenzverwaltung.md`.
 - Lizenzverwaltung Paket 1 ist vorbereitet:
   - neues Modulverzeichnis `src/renderer/modules/lizenzverwaltung/` mit Skeleton-Screen
@@ -223,6 +227,24 @@ Sie ergänzt:
 - Hinweise:
   - Keine Aenderung an Lizenzlogik, Projektmodulen, Sidebar oder Whisper/Diktier-Backends
 
+#### Paket: Lizenzverwaltung Paket 2 (Produktumfang im Popup gliedern)
+- Status: erledigt
+- Beschreibung:
+  - im Popup `Lizenz / bearbeiten` wurde die flache `Features`-Zeile durch den gegliederten Bereich `Produktumfang` ersetzt
+  - `Standardumfang` (`app`, `pdf`, `export`) ist sichtbar und dauerhaft enthalten (nicht abwaehlbar)
+  - `Zusatzfunktionen` enthalten `mail` und die sichtbare Bezeichnung `Dictate` (intern weiter `audio` kompatibel)
+  - `Module` enthalten `Protokoll` und `Dummy` als klar vorbereitete, noch nicht aktiv angebundene Eintraege
+  - bestehende Buttons unten (`Lizenz laden`, `Lizenzanforderung laden`, `Lizenz verlaengern`, `Ausgabeordner oeffnen`) bleiben unveraendert erhalten
+  - Testvertrag in `lizenzverwaltungModule.test.cjs` um Produktumfang-Nachweise erweitert
+- Betroffene Dateien:
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine Aenderung an Projektmodul-Katalog, Sidebar, Whisper, Diktierfunktion oder Protokoll-Modul
+
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen
 
@@ -259,9 +281,9 @@ Der naechste sinnvolle kleine Schritt nach diesem Paket ist:
 
 ### Lizenzverwaltung Paket 3 vorbereiten
 - Ziel:
-  - Adminbereich-Popup fachlich weiter strukturieren, ohne neue Logik freizuschalten
+  - Produktumfang intern als getrennte Datenstruktur (Standardumfang/Zusatzfunktionen/Module) weiter vorbereiten, ohne neue Lizenzlogik freizuschalten
 - Wichtig:
-  - weiterhin keine Lizenzlogik oder Dateierzeugung umbauen
+  - weiterhin keine tiefgreifende Umstellung der Lizenzdatei-Erzeugung
   - Audio / Diktat bleibt Maschinenraum ohne Projektmodul- oder Sidebar-Eintrag
 
 ---

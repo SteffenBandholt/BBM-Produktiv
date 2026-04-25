@@ -78,6 +78,37 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("title: \"Lizenzverwaltung\""), true);
     assert.equal(settingsViewSource.includes("new LicenseAdminScreen()"), true);
   });
+
+  await run("Lizenz / bearbeiten: enthaelt Produktumfang statt flacher Feature-Zeile", () => {
+    assert.equal(settingsViewSource.includes("mkRow(\"Produktumfang\", productScopeWrap)"), true);
+    assert.equal(settingsViewSource.includes("mkRow(\"Features\", featureWrap)"), false);
+    assert.equal(settingsViewSource.includes("Standardumfang"), true);
+    assert.equal(settingsViewSource.includes("Zusatzfunktionen"), true);
+    assert.equal(settingsViewSource.includes("Module"), true);
+  });
+
+  await run("Lizenz / bearbeiten: Standardumfang enthaelt app/pdf/export", () => {
+    assert.equal(settingsViewSource.includes("const standardFeatureInputs = [\"app\", \"pdf\", \"export\"]"), true);
+    assert.equal(settingsViewSource.includes("Immer enthalten, nicht abwaehlbar."), true);
+  });
+
+  await run("Lizenz / bearbeiten: Zusatzfunktionen enthaelt mail/Dictate (audio-kompatibel)", () => {
+    assert.equal(settingsViewSource.includes("const optionalFeatureInputs = [\"mail\", \"audio\"]"), true);
+    assert.equal(settingsViewSource.includes("return normalizedFeature === \"audio\" ? \"Dictate\" : normalizedFeature;"), true);
+    assert.equal(settingsViewSource.includes("if (normalized === \"dictate\") return \"audio\";"), true);
+  });
+
+  await run("Lizenz / bearbeiten: zeigt nicht audio und Dictate parallel an", () => {
+    assert.equal(settingsViewSource.includes("mkFeatureInput(\"Dictate\""), false);
+    assert.equal(settingsViewSource.includes("mkFeatureInput(\"audio\""), false);
+    assert.equal(settingsViewSource.includes("return normalizedFeature === \"audio\" ? \"Dictate\" : normalizedFeature;"), true);
+  });
+
+  await run("Lizenz / bearbeiten: Module enthaelt Protokoll/Dummy als vorbereitete Eintraege", () => {
+    assert.equal(settingsViewSource.includes("const moduleFeatureInputs = [\"Protokoll\", \"Dummy\"]"), true);
+    assert.equal(settingsViewSource.includes("Vorbereitet, noch nicht aktiv angebunden."), true);
+    assert.equal(settingsViewSource.includes("hint: \"(vorbereitet)\""), true);
+  });
 }
 
 module.exports = { runLizenzverwaltungModuleTests };
