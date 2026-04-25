@@ -64,6 +64,9 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(typeof ProjectWorkspaceScreen, "function");
     assert.equal(workspaceSource.includes("export default class ProjectWorkspaceScreen"), true);
     assert.equal(workspaceSource.includes("Protokoll öffnen"), true);
+    assert.equal(workspaceSource.includes("Zur Projektliste"), true);
+    assert.equal(workspaceSource.includes("showProjectsList"), true);
+    assert.equal(workspaceSource.includes("Projekt konnte nicht gefunden werden."), true);
     assert.equal(workspaceSource.includes("Ausgabe"), false);
     assert.equal(workspaceSource.includes("Audio"), false);
     assert.equal(workspaceSource.includes("Lizenzierung"), false);
@@ -103,6 +106,88 @@ async function runProjektverwaltungModuleTests(run) {
     const opened = await screen.openProjectModule("protokoll");
     assert.equal(opened, true);
     assert.deepEqual(routerCalls, [{ meetingId: null, projectId: "9" }]);
+  });
+
+  await run("Projektverwaltung: Projektanzeige ist robust und Projektliste-Button nutzt showProjects", async () => {
+    const calls = [];
+    const screen = new ProjectWorkspaceScreen({
+      router: {
+        currentProjectId: "77",
+        async showProjects() {
+          calls.push("showProjects");
+        },
+      },
+      projectId: "77",
+      project: {
+        id: "77",
+        projectNumber: "X-77",
+        project_name: "Umbau Schule",
+      },
+    });
+
+    assert.equal(screen.getProjectDisplayText(), "X-77 - Umbau Schule");
+
+    const opened = await screen.showProjectsList();
+    assert.equal(opened, true);
+    assert.deepEqual(calls, ["showProjects"]);
+  });
+
+  await run("Projektverwaltung: Projektdaten werden bei fehlendem Projekt weiter ueber projectsList geladen", async () => {
+    const previousWindow = global.window;
+    let listCalls = 0;
+    global.window = {
+      bbmDb: {
+        async projectsList() {
+          listCalls += 1;
+          return {
+            ok: true,
+            list: [{ id: "4", project_number: "P-4", short: "Nord" }],
+          };
+        },
+      },
+    };
+
+    try {
+      const screen = new ProjectWorkspaceScreen({
+        router: { currentProjectId: "4" },
+        projectId: "4",
+      });
+
+      const loaded = await screen._loadProject();
+      assert.equal(listCalls, 1);
+      assert.equal(loaded?.id, "4");
+      assert.equal(screen.projectMissing, false);
+    } finally {
+      global.window = previousWindow;
+    }
+  });
+
+  await run("Projektverwaltung: nicht gefundenes Projekt wird klar markiert", async () => {
+    const previousWindow = global.window;
+    global.window = {
+      bbmDb: {
+        async projectsList() {
+          return {
+            ok: true,
+            list: [{ id: "1", project_number: "P-1", short: "Sued" }],
+          };
+        },
+      },
+    };
+
+    try {
+      const screen = new ProjectWorkspaceScreen({
+        router: { currentProjectId: "404" },
+        projectId: "404",
+      });
+
+      const loaded = await screen._loadProject();
+      assert.equal(loaded, null);
+      assert.equal(screen.projectMissing, true);
+      assert.equal(screen.getProjectDisplayText(), "#404");
+    } finally {
+      global.window = previousWindow;
+    }
   });
 
   await run("Projektverwaltung: Projektklick öffnet den Arbeitsbereich statt direkt Tops", async () => {
