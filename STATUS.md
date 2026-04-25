@@ -22,7 +22,8 @@ Sie ergänzt:
   - Kein Modulkatalog-Eintrag.
   - Main-/IPC-/Drucktechnik bleibt im Main-Prozess.
 - Audio / Diktat ist als Renderer-Modul begonnen.
-  - Aktuell nur `TranscriptionService` als Renderer-Adapter.
+  - `TranscriptionService` ist als Renderer-Adapter verankert.
+  - Entwicklungs-UI fuer `Einstellungen -> Entwicklung -> Diktieren` ist als Modul-Baustein angebunden.
   - Keine Sidebar-Anbindung.
   - Kein Modulkatalog-Eintrag.
   - Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
@@ -76,7 +77,8 @@ Sie ergänzt:
 
 ## Audio
 - Das Renderer-Modul ist begonnen.
-- Aktuell ist nur `TranscriptionService` als Renderer-Adapter im Modul verankert.
+- `TranscriptionService` ist als Renderer-Adapter im Modul verankert.
+- Die Entwicklungs-UI fuer den Bereich `Diktieren` wurde in das Audio-Modul ausgegliedert und in Settings eingehaengt.
 - Es gibt keine Sidebar-Anbindung und keinen Modulkatalog-Eintrag.
 - Die Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
 
@@ -113,6 +115,27 @@ Sie ergänzt:
   - Keine Änderungen an Router, UI oder fachlicher Tops-Logik
 
 ---
+
+
+#### Paket: Einstellungen/Entwicklung strukturiert auf Diktieren umgestellt
+- Status: erledigt
+- Beschreibung:
+  - Entwicklungsbereich um den neuen Tab `Diktieren` erweitert
+  - `Diktierprodukt` als fachliche Klammer eingefuehrt und `Aktuelle Engine: Whisper` sichtbar gemacht
+  - bestehende Whisper-Modellauswahl unveraendert unter `Diktierprodukt` einsortiert
+  - vorbereiteter Abschnitt `Woerterbuch` als `noch nicht eingerichtet` gekennzeichnet
+  - Diktieren-UI nach `src/renderer/modules/audio/ui/createDictationDevSection.js` ausgelagert
+  - Audio-Modultest um den neuen UI-Baustein erweitert
+- Betroffene Dateien:
+  - `src/renderer/modules/audio/ui/createDictationDevSection.js`
+  - `src/renderer/modules/audio/index.js`
+  - `src/renderer/modules/audio/README.md`
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/audioModule.test.cjs`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine Router-, Sidebar-, Projektmodul- oder TranscriptionService-Aenderung
 
 #### Paket: ProjectWorkspaceScreen minimal stabilisiert
 - Status: erledigt
@@ -162,16 +185,15 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 ---
 
 ## Aktuell nächster sinnvoller Schritt
-Der nächste noch nicht erledigte Meilenstein ist:
+Der naechste sinnvolle kleine Schritt nach diesem Paket ist:
 
-### Weitere kleine Altpfade im Modul `Protokoll` abbauen
+### Diktieren-Tab fachlich gegen App-Sichtung pruefen
 - Ziel:
-  - einen weiteren kleinen, klar abgegrenzten Altpfad für `Protokoll` reduzieren
+  - visuell bestaetigen, dass `Diktieren -> Diktierprodukt -> Aktuelle Engine: Whisper -> Whisper-Modelle` wie geplant sichtbar ist
+  - bestaetigen, dass `Woerterbuch` als vorbereitet/noch nicht eingerichtet erscheint
 - Wichtig:
-  - nur ein kleines Paket
-  - keine Nebenumbauten
-  - keine breiten Router-Umbauten
-  - keine Änderungen außerhalb des aktuellen Meilensteins
+  - keine weitere Funktionslogik nachziehen
+  - Audio / Diktat bleibt Maschinenraum ohne Projektmodul- oder Sidebar-Eintrag
 
 ---
 

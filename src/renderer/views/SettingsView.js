@@ -12,6 +12,7 @@ import {
   normalizeThemeSettings,
   parseCssColor,
 } from "../theme/themes.js";
+import { createDictationDevSection } from "../modules/audio/index.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -764,7 +765,7 @@ export default class SettingsView {
     if (hasActiveProject) {
       btnBackToProject = document.createElement("button");
       btnBackToProject.type = "button";
-      btnBackToProject.textContent = "Zurück zum Protokoll";
+      btnBackToProject.textContent = "ZurÃ¼ck zum Protokoll";
       applyPopupButtonStyle(btnBackToProject, { variant: "neutral" });
       btnBackToProject.onclick = async () => {
         const projectId = this.router?.currentProjectId || null;
@@ -1040,7 +1041,6 @@ export default class SettingsView {
     const TRIAL_ENABLED_KEY = "trial.enabled";
     const TOPS_FONT_LIST_KEY = "tops.fontscale.list";
     const TOPS_FONT_EDIT_KEY = "tops.fontscale.editbox";
-    const AUDIO_WHISPER_QUALITY_KEY = "audio.whisper.quality";
     const PRINT_V2_PAD_LEFT_KEY = "print.v2.pagePadLeftMm";
     const PRINT_V2_PAD_RIGHT_KEY = "print.v2.pagePadRightMm";
     const PRINT_V2_PAD_TOP_KEY = "print.v2.pagePadTopMm";
@@ -1153,7 +1153,7 @@ export default class SettingsView {
         return false;
       }
       if (!titleValid || !longValid) {
-        setTopsLimitMsg("Ungültiger Wert – Standard wurde verwendet.");
+        setTopsLimitMsg("UngÃ¼ltiger Wert Â– Standard wurde verwendet.");
       } else {
         setTopsLimitMsg("Gespeichert");
       }
@@ -1461,7 +1461,7 @@ export default class SettingsView {
     fontScaleBox.style.marginLeft = "auto";
 
     const fontScaleTitle = document.createElement("div");
-    fontScaleTitle.textContent = "Top-Liste (Schriftgrößen)";
+    fontScaleTitle.textContent = "Top-Liste (SchriftgrÃ¶ÃŸen)";
     fontScaleTitle.style.fontWeight = "bold";
     fontScaleTitle.style.marginBottom = "6px";
 
@@ -1529,14 +1529,14 @@ export default class SettingsView {
     btnListMedium.textContent = "mittel";
     applyScaleBtnBase(btnListMedium);
     const btnListLarge = document.createElement("button");
-    btnListLarge.textContent = "groß";
+    btnListLarge.textContent = "groÃŸ";
     applyScaleBtnBase(btnListLarge);
 
     const btnEditSmall = document.createElement("button");
     btnEditSmall.textContent = "klein";
     applyScaleBtnBase(btnEditSmall);
     const btnEditLarge = document.createElement("button");
-    btnEditLarge.textContent = "groß";
+    btnEditLarge.textContent = "groÃŸ";
     applyScaleBtnBase(btnEditLarge);
 
     const applyFontScaleUi = () => {
@@ -1556,7 +1556,7 @@ export default class SettingsView {
       }
       const res = await api.appSettingsGetMany([TOPS_FONT_LIST_KEY, TOPS_FONT_EDIT_KEY]);
       if (!res?.ok) {
-        fontScaleMsg.textContent = res?.error || "Fehler beim Laden der Schriftgrößen";
+        fontScaleMsg.textContent = res?.error || "Fehler beim Laden der SchriftgrÃ¶ÃŸen";
         applyFontScaleUi();
         return;
       }
@@ -1621,143 +1621,6 @@ export default class SettingsView {
 
     fontScaleBox.append(fontScaleTitle, rowList, rowEdit, fontScaleMsg);
 
-    const whisperBox = document.createElement("div");
-    applyPopupCardStyle(whisperBox);
-    whisperBox.style.padding = "6px 8px";
-    whisperBox.style.maxWidth = "680px";
-    whisperBox.style.marginTop = "0";
-    whisperBox.style.width = "calc(100% - 8mm)";
-    whisperBox.style.justifySelf = "end";
-    whisperBox.style.marginLeft = "auto";
-
-    const whisperTitle = document.createElement("div");
-    whisperTitle.textContent = "Spracherkennung (Qualit?t)";
-    whisperTitle.style.fontWeight = "bold";
-    whisperTitle.style.marginBottom = "4px";
-    whisperTitle.style.fontSize = "13px";
-
-    const whisperMsg = document.createElement("div");
-    whisperMsg.style.fontSize = "11px";
-    whisperMsg.style.opacity = "0.75";
-    whisperMsg.style.marginTop = "2px";
-
-    let whisperQuality = "fast";
-    let whisperModels = {
-      fast: { available: true },
-      balanced: { available: true },
-      best: { available: true },
-      large: { available: true },
-    };
-
-    let allowLarge = true;
-
-
-    const btnWhisperFast = document.createElement("button");
-    btnWhisperFast.textContent = "Schnell";
-    applyScaleBtnBase(btnWhisperFast);
-    const btnWhisperBalanced = document.createElement("button");
-    btnWhisperBalanced.textContent = "Ausgewogen";
-    applyScaleBtnBase(btnWhisperBalanced);
-    const btnWhisperBest = document.createElement("button");
-    btnWhisperBest.textContent = "Beste Qualit?t";
-    applyScaleBtnBase(btnWhisperBest);
-    const btnWhisperLarge = document.createElement("button");
-    btnWhisperLarge.textContent = "Large";
-    applyScaleBtnBase(btnWhisperLarge);
-
-    const setWhisperBtnEnabled = (btn, enabled) => {
-      btn.disabled = !enabled;
-      btn.style.opacity = enabled ? "1" : "0.55";
-      btn.style.cursor = enabled ? "pointer" : "default";
-      btn.title = enabled ? "" : "Modell nicht installiert";
-    };
-
-    const applyWhisperUi = () => {
-      const fastAvailable = !!whisperModels.fast?.available;
-      const balancedAvailable = !!whisperModels.balanced?.available;
-      const bestAvailable = !!whisperModels.best?.available;
-      const largeAvailable = !!whisperModels.large?.available;
-
-      setScaleBtnActive(btnWhisperFast, whisperQuality === "fast" && fastAvailable);
-      setScaleBtnActive(btnWhisperBalanced, whisperQuality === "balanced" && balancedAvailable);
-      setScaleBtnActive(btnWhisperBest, whisperQuality === "best" && bestAvailable);
-      setScaleBtnActive(btnWhisperLarge, whisperQuality === "large" && largeAvailable);
-      setWhisperBtnEnabled(btnWhisperFast, fastAvailable);
-      setWhisperBtnEnabled(btnWhisperBalanced, balancedAvailable);
-      setWhisperBtnEnabled(btnWhisperBest, bestAvailable);
-      setWhisperBtnEnabled(btnWhisperLarge, largeAvailable);
-      const current = whisperModels[whisperQuality];
-      if (current && current.available) {
-        whisperMsg.textContent = "";
-      } else {
-        whisperMsg.textContent =
-          (current && current.missingReason) || "Modell nicht installiert.";
-      }
-    };
-
-    const loadWhisperQualitySettings = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsGetMany === "function") {
-        const res = await api.appSettingsGetMany([AUDIO_WHISPER_QUALITY_KEY]);
-        if (res?.ok) {
-          const raw = String(res.data?.[AUDIO_WHISPER_QUALITY_KEY] || "").trim().toLowerCase();
-          whisperQuality = ["fast", "balanced", "best", "large"].includes(raw) ? raw : "fast";
-        }
-      }
-      if (typeof api.audioWhisperModelsStatus === "function") {
-        const res = await api.audioWhisperModelsStatus();
-        if (res?.ok && res.models) whisperModels = res.models;
-      }
-      applyWhisperUi();
-    };
-
-    const saveWhisperQualitySettings = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsSetMany !== "function") {
-        whisperMsg.textContent = "Settings-API fehlt (IPC noch nicht aktiv).";
-        return false;
-      }
-      const res = await api.appSettingsSetMany({
-        [AUDIO_WHISPER_QUALITY_KEY]: whisperQuality,
-      });
-      if (!res?.ok) {
-        whisperMsg.textContent = res?.error || "Speichern fehlgeschlagen";
-        return false;
-      }
-      whisperMsg.textContent = "Gespeichert";
-      setTimeout(() => {
-        if (whisperMsg.textContent === "Gespeichert") whisperMsg.textContent = "";
-      }, 900);
-      return true;
-    };
-
-    btnWhisperFast.onclick = async () => {
-      if (!whisperModels.fast?.available) return;
-      whisperQuality = "fast";
-      applyWhisperUi();
-      await saveWhisperQualitySettings();
-    };
-    btnWhisperBalanced.onclick = async () => {
-      if (!whisperModels.balanced?.available) return;
-      whisperQuality = "balanced";
-      applyWhisperUi();
-      await saveWhisperQualitySettings();
-    };
-    btnWhisperBest.onclick = async () => {
-      if (!whisperModels.best?.available) return;
-      whisperQuality = "best";
-      applyWhisperUi();
-      await saveWhisperQualitySettings();
-    };
-    btnWhisperLarge.onclick = async () => {
-      if (!whisperModels.large?.available) return;
-      whisperQuality = "large";
-      applyWhisperUi();
-      await saveWhisperQualitySettings();
-    };
-
-    const whisperRow = mkScaleGroup("Modell", [btnWhisperFast, btnWhisperBalanced, btnWhisperBest, btnWhisperLarge]);
-    whisperBox.append(whisperTitle, whisperRow, whisperMsg);
 
     const devTopCardsRow = document.createElement("div");
     devTopCardsRow.style.display = "grid";
@@ -3064,32 +2927,6 @@ export default class SettingsView {
     );
     devDefaultsBox.append(devDefaultsTitle, devDefaultsHint, devDefaultsActions, devDefaultsStatus);
 
-    const dictionaryBox = document.createElement("div");
-    applyPopupCardStyle(dictionaryBox);
-    dictionaryBox.style.padding = "8px 10px";
-    dictionaryBox.style.maxWidth = "720px";
-    dictionaryBox.style.marginTop = "0";
-    dictionaryBox.style.display = "grid";
-    dictionaryBox.style.gap = "6px";
-
-    const dictionaryTitle = document.createElement("div");
-    dictionaryTitle.textContent = "Wörterbuch";
-    dictionaryTitle.style.fontWeight = "700";
-
-    const dictionaryHint = document.createElement("div");
-    dictionaryHint.style.fontSize = "12px";
-    dictionaryHint.style.opacity = "0.8";
-    dictionaryHint.textContent = "Fachbegriffe aus Ordnern sammeln, gruppieren und prüfen.";
-
-    const btnDictionaryOpen = document.createElement("button");
-    btnDictionaryOpen.type = "button";
-    btnDictionaryOpen.textContent = "Wörterbuch öffnen";
-    applyPopupButtonStyle(btnDictionaryOpen);
-    btnDictionaryOpen.onclick = async () => {
-      await this._openDictionaryPopup();
-    };
-
-    dictionaryBox.append(dictionaryTitle, dictionaryHint, btnDictionaryOpen);
 
     const printBox = document.createElement("div");
     applyPopupCardStyle(printBox);
@@ -3154,7 +2991,7 @@ export default class SettingsView {
 
     licenseBox.append(licenseTitle, licenseHint, btnLicenseOpen);
 
-    devRightCol.append(licenseGenBox, devDefaultsBox, licenseBox, dictionaryBox, topsLimitBox, trialBox);
+    devRightCol.append(licenseGenBox, devDefaultsBox, licenseBox, topsLimitBox, trialBox);
     devTopCardsRow.append(versionBox, devRightCol);
 
     const themeBox = document.createElement("div");
@@ -4205,7 +4042,7 @@ export default class SettingsView {
     rolesTitle.style.fontWeight = "bold";
 
     const roleMoveHint = document.createElement("div");
-    roleMoveHint.textContent = "neue Position mit Pfeiltasten wählen";
+    roleMoveHint.textContent = "neue Position mit Pfeiltasten wÃ¤hlen";
     roleMoveHint.style.color = "#1e5fbf";
     roleMoveHint.style.fontSize = "16px";
     roleMoveHint.style.display = "none";
@@ -4297,7 +4134,7 @@ export default class SettingsView {
 
     const btnOpenThemePopup = document.createElement("button");
     btnOpenThemePopup.type = "button";
-    btnOpenThemePopup.textContent = "Farbschema öffnen";
+    btnOpenThemePopup.textContent = "Farbschema Ã¶ffnen";
     btnOpenThemePopup.style.width = "100%";
     applyPopupButtonStyle(btnOpenThemePopup, { variant: "primary" });
     btnOpenThemePopup.onclick = () => openThemePopup();
@@ -4486,7 +4323,7 @@ export default class SettingsView {
             "{projectNumber} - {projectShortName}  |  {protocolTitle} #{meetingIndex} - {meetingDate}";
           const BODY_PLACEHOLDER =
             "Sehr geehrte Damen und Herren,\n" +
-            "anbei erhalten Sie das neue Protokoll für das oben genannte Projekt mit der Bitte um Beachtung und Veranlassung.";
+            "anbei erhalten Sie das neue Protokoll fÃ¼r das oben genannte Projekt mit der Bitte um Beachtung und Veranlassung.";
 
           // Gespeicherte Werte laden (falls vorhanden)
           let subjectValue = "";
@@ -4592,7 +4429,7 @@ export default class SettingsView {
           const syncRemaining = () => {
             const len = (inpBody.value || "").length;
             const rest = Math.max(0, 300 - len);
-            remainingBadge.textContent = `${rest} Zeichen übrig`;
+            remainingBadge.textContent = `${rest} Zeichen Ã¼brig`;
           };
           syncRemaining();
 
@@ -4621,7 +4458,7 @@ export default class SettingsView {
               const tSubject = rawSubject.trim();
               const tBody = rawBody.trim();
 
-              // Wenn leer -> zurücksetzen auf "" (Placeholder erscheint wieder)
+              // Wenn leer -> zurÃ¼cksetzen auf "" (Placeholder erscheint wieder)
               const payload = {
                 email_subject: tSubject ? rawSubject : "",
                 email_body: tBody ? rawBody : "",
@@ -4781,31 +4618,36 @@ export default class SettingsView {
         tabDb.style.gap = "10px";
         tabDb.append(dbDiagBox);
 
-        const tabWhisper = document.createElement("div");
-    tabWhisper.style.display = "grid";
-    tabWhisper.style.gap = "10px";
-    tabWhisper.append(whisperBox);
+        const dictationSection = createDictationDevSection({
+          applyPopupCardStyle,
+          mkScaleGroup,
+          applyScaleBtnBase,
+          setScaleBtnActive,
+          settingsApi: () => window.bbmDb || {},
+        });
 
-    const tabTools = document.createElement("div");
+        const tabDictation = dictationSection.tab;
+
+        const tabTools = document.createElement("div");
         tabTools.style.display = "grid";
         tabTools.style.gap = "10px";
-        tabTools.append(dictionaryBox, printBox, topsLimitBox);
+        tabTools.append(printBox, topsLimitBox);
 
         const devTabs = [
           { key: "version", label: "Versionierung", el: tabVersion },
           { key: "license", label: "Lizenz / bearbeiten", el: tabLicense },
           { key: "db", label: "DB-Diagnose", el: tabDb },
-          { key: "whisper", label: "Whisper Modelle", el: tabWhisper },
-          { key: "tools", label: "W?rterbuch / Druck / TOP-Liste", el: tabTools },
+          { key: "dictation", label: "Diktieren", el: tabDictation },
+          { key: "tools", label: "Druck / TOP-Liste", el: tabTools },
         ];
 
         const tabButtons = new Map();
-        let whisperLoaded = false;
+        let dictationLoaded = false;
         const setDevTab = (key) => {
-          if (key === "whisper" && !whisperLoaded) {
-            whisperLoaded = true;
-            if (typeof loadWhisperQualitySettings === "function") {
-              loadWhisperQualitySettings();
+          if (key === "dictation" && !dictationLoaded) {
+            dictationLoaded = true;
+            if (typeof dictationSection.load === "function") {
+              dictationSection.load();
             }
           }
           devTabs.forEach((tab) => {
@@ -4833,11 +4675,11 @@ export default class SettingsView {
           makeDevTabButton("Versionierung", "version"),
           makeDevTabButton("Lizenz / bearbeiten", "license"),
           makeDevTabButton("DB-Diagnose", "db"),
-          makeDevTabButton("Whisper Modelle", "whisper"),
-          makeDevTabButton("W?rterbuch / Druck / TOP-Liste", "tools")
+          makeDevTabButton("Diktieren", "dictation"),
+          makeDevTabButton("Druck / TOP-Liste", "tools")
         );
 
-        devTabBody.append(tabVersion, tabLicense, tabDb, tabWhisper, tabTools);
+        devTabBody.append(tabVersion, tabLicense, tabDb, tabDictation, tabTools);
         devTabWrap.append(devTabHead, devTabBody);
         setDevTab("version");
 
@@ -4866,7 +4708,7 @@ export default class SettingsView {
       }
     })();
 
-    // Overlay im Body, damit kein Header-Stacking-Context stört
+    // Overlay im Body, damit kein Header-Stacking-Context stÃ¶rt
     const settingsOverlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)" });
     settingsOverlay.style.alignItems = "center";
     settingsOverlay.style.justifyContent = "center";
@@ -5203,7 +5045,7 @@ export default class SettingsView {
   async _openDictionaryPopup() {
     const api = window.bbmDb || {};
     if (typeof api.dictionaryListSuggestions !== "function") {
-      alert("Wörterbuch ist nicht verfügbar (IPC fehlt).");
+      alert("WÃ¶rterbuch ist nicht verfÃ¼gbar (IPC fehlt).");
       return;
     }
 
@@ -5224,7 +5066,7 @@ export default class SettingsView {
 
     const sourceCard = mkCard();
     const sourceTitle = document.createElement("div");
-    sourceTitle.textContent = "Quelle wählen";
+    sourceTitle.textContent = "Quelle wÃ¤hlen";
     sourceTitle.style.fontWeight = "800";
 
     const sourceRow = document.createElement("div");
@@ -5235,7 +5077,7 @@ export default class SettingsView {
 
     const btnPickFolder = document.createElement("button");
     btnPickFolder.type = "button";
-    btnPickFolder.textContent = "Ordner auswählen";
+    btnPickFolder.textContent = "Ordner auswÃ¤hlen";
     applyPopupButtonStyle(btnPickFolder, { variant: "primary" });
 
     const sourcePath = document.createElement("div");
@@ -5246,7 +5088,7 @@ export default class SettingsView {
     sourcePath.style.border = "1px solid rgba(0,0,0,0.1)";
     sourcePath.style.flex = "1 1 auto";
     sourcePath.style.minWidth = "220px";
-    sourcePath.textContent = "Kein Ordner ausgewählt";
+    sourcePath.textContent = "Kein Ordner ausgewÃ¤hlt";
 
     sourceRow.append(btnPickFolder, sourcePath);
     sourceCard.append(sourceTitle, sourceRow);
@@ -5286,7 +5128,7 @@ export default class SettingsView {
     const progressFail = document.createElement("div");
     progressFiles.textContent = "Dateien gefunden: -";
     progressCurrent.textContent = "Aktuelle Datei: -";
-    progressTerms.textContent = "Vorschläge gesammelt: -";
+    progressTerms.textContent = "VorschlÃ¤ge gesammelt: -";
     progressOk.textContent = "Erfolgreich verarbeitet: -";
     progressFail.textContent = "Fehlgeschlagen: -";
     progressList.append(progressFiles, progressCurrent, progressTerms, progressOk, progressFail);
@@ -5307,7 +5149,7 @@ export default class SettingsView {
     const resultHint = document.createElement("div");
     resultHint.style.fontSize = "12px";
     resultHint.style.opacity = "0.8";
-    resultHint.textContent = "Keine automatische Übernahme – bitte einzeln prüfen.";
+    resultHint.textContent = "Keine automatische Ãœbernahme Â– bitte einzeln prÃ¼fen.";
 
     const resultHead = document.createElement("div");
     resultHead.style.display = "grid";
@@ -5324,7 +5166,7 @@ export default class SettingsView {
       Object.assign(document.createElement("div"), { textContent: "" }),
       Object.assign(document.createElement("div"), { textContent: "Begriff" }),
       Object.assign(document.createElement("div"), { textContent: "Varianten" }),
-      Object.assign(document.createElement("div"), { textContent: "Häufigkeit" }),
+      Object.assign(document.createElement("div"), { textContent: "HÃ¤ufigkeit" }),
       Object.assign(document.createElement("div"), { textContent: "Quelle" })
     );
 
@@ -5336,7 +5178,7 @@ export default class SettingsView {
 
     const btnSelectAll = document.createElement("button");
     btnSelectAll.type = "button";
-    btnSelectAll.textContent = "Alle auswählen";
+    btnSelectAll.textContent = "Alle auswÃ¤hlen";
     applyPopupButtonStyle(btnSelectAll);
     btnSelectAll.style.fontSize = "11px";
     btnSelectAll.style.padding = "3px 8px";
@@ -5344,7 +5186,7 @@ export default class SettingsView {
 
     const btnSelectNone = document.createElement("button");
     btnSelectNone.type = "button";
-    btnSelectNone.textContent = "Alle abwählen";
+    btnSelectNone.textContent = "Alle abwÃ¤hlen";
     applyPopupButtonStyle(btnSelectNone);
     btnSelectNone.style.fontSize = "11px";
     btnSelectNone.style.padding = "3px 8px";
@@ -5352,7 +5194,7 @@ export default class SettingsView {
 
     const btnBulkAccept = document.createElement("button");
     btnBulkAccept.type = "button";
-    btnBulkAccept.textContent = "Ausgewählte übernehmen";
+    btnBulkAccept.textContent = "AusgewÃ¤hlte Ã¼bernehmen";
     applyPopupButtonStyle(btnBulkAccept, { variant: "primary" });
     btnBulkAccept.style.fontSize = "11px";
     btnBulkAccept.style.padding = "3px 8px";
@@ -5360,7 +5202,7 @@ export default class SettingsView {
 
     const btnBulkReject = document.createElement("button");
     btnBulkReject.type = "button";
-    btnBulkReject.textContent = "Ausgewählte verwerfen";
+    btnBulkReject.textContent = "AusgewÃ¤hlte verwerfen";
     applyPopupButtonStyle(btnBulkReject);
     btnBulkReject.style.fontSize = "11px";
     btnBulkReject.style.padding = "3px 8px";
@@ -5376,7 +5218,7 @@ export default class SettingsView {
 
     const acceptedCard = mkCard();
     const acceptedTitle = document.createElement("div");
-    acceptedTitle.textContent = "Übernommene Wörter";
+    acceptedTitle.textContent = "Ãœbernommene WÃ¶rter";
     acceptedTitle.style.fontWeight = "800";
 
     const acceptedList = document.createElement("div");
@@ -5403,13 +5245,13 @@ export default class SettingsView {
 
     const setSourcePath = (value) => {
       selectedDir = String(value || "").trim();
-      sourcePath.textContent = selectedDir || "Kein Ordner ausgewählt";
+      sourcePath.textContent = selectedDir || "Kein Ordner ausgewÃ¤hlt";
     };
 
     const setProgress = ({ total = "-", current = "-", terms = "-", ok = "-", fail = "-" } = {}) => {
       progressFiles.textContent = `Dateien gefunden: ${total}`;
       progressCurrent.textContent = `Aktuelle Datei: ${current}`;
-      progressTerms.textContent = `Vorschläge gesammelt: ${terms}`;
+      progressTerms.textContent = `VorschlÃ¤ge gesammelt: ${terms}`;
       progressOk.textContent = `Erfolgreich verarbeitet: ${ok}`;
       progressFail.textContent = `Fehlgeschlagen: ${fail}`;
     };
@@ -5543,7 +5385,7 @@ export default class SettingsView {
         const empty = document.createElement("div");
         empty.textContent = lastScanFileCount > 0
           ? "Dateien erkannt, aber noch keine extrahierbaren Texttreffer (z.B. nur PDFs)."
-          : "Keine offenen Vorschläge.";
+          : "Keine offenen VorschlÃ¤ge.";
         empty.style.fontSize = "12px";
         empty.style.opacity = "0.75";
         resultList.append(empty);
@@ -5622,7 +5464,7 @@ export default class SettingsView {
       acceptedList.innerHTML = "";
       if (!rows || !rows.length) {
         const empty = document.createElement("div");
-        empty.textContent = "Noch keine übernommenen Wörter.";
+        empty.textContent = "Noch keine Ã¼bernommenen WÃ¶rter.";
         empty.style.fontSize = "12px";
         empty.style.opacity = "0.75";
         acceptedList.append(empty);
@@ -5660,7 +5502,7 @@ export default class SettingsView {
 
         const btnDelete = document.createElement("button");
         btnDelete.type = "button";
-        btnDelete.textContent = "Löschen";
+        btnDelete.textContent = "LÃ¶schen";
         btnDelete.style.background = "#c62828";
         btnDelete.style.color = "white";
         btnDelete.style.border = "1px solid rgba(0,0,0,0.25)";
@@ -5678,7 +5520,7 @@ export default class SettingsView {
             isActive: !isActive,
           });
           if (!res?.ok) {
-            alert(res?.error || "Status konnte nicht geändert werden.");
+            alert(res?.error || "Status konnte nicht geÃ¤ndert werden.");
             return;
           }
           await loadAllLists();
@@ -5686,11 +5528,11 @@ export default class SettingsView {
 
         btnDelete.onclick = async () => {
           if (busy) return;
-          const ok = confirm("Wort wirklich löschen?");
+          const ok = confirm("Wort wirklich lÃ¶schen?");
           if (!ok) return;
           const res = await api.dictionaryDeleteTerm({ normKey: row?.norm_key });
           if (!res?.ok) {
-            alert(res?.error || "Löschen fehlgeschlagen.");
+            alert(res?.error || "LÃ¶schen fehlgeschlagen.");
             return;
           }
           await loadAllLists();
@@ -5763,12 +5605,12 @@ export default class SettingsView {
     btnPickFolder.onclick = async () => {
       if (busy) return;
       if (typeof api.selectDirectory !== "function") {
-        alert("Ordnerauswahl ist nicht verfügbar.");
+        alert("Ordnerauswahl ist nicht verfÃ¼gbar.");
         return;
       }
-      const res = await api.selectDirectory({ title: "Ordner für Wörterbuch wählen" });
+      const res = await api.selectDirectory({ title: "Ordner fÃ¼r WÃ¶rterbuch wÃ¤hlen" });
       if (!res?.ok) {
-        alert(res?.error || "Ordner konnte nicht geöffnet werden.");
+        alert(res?.error || "Ordner konnte nicht geÃ¶ffnet werden.");
         return;
       }
       if (res.canceled) return;
@@ -5779,16 +5621,16 @@ export default class SettingsView {
     btnScan.onclick = async () => {
       if (busy) return;
       if (!selectedDir) {
-        alert("Bitte zuerst einen Ordner auswählen.");
+        alert("Bitte zuerst einen Ordner auswÃ¤hlen.");
         return;
       }
       if (typeof api.dictionaryListFiles !== "function" || typeof api.dictionaryExtractTermsFromFile !== "function") {
-        alert("Wörterbuch-Scan ist nicht verfügbar.");
+        alert("WÃ¶rterbuch-Scan ist nicht verfÃ¼gbar.");
         return;
       }
 
       setBusy(true);
-      scanStatus.textContent = "Suche läuft...";
+      scanStatus.textContent = "Suche lÃ¤uft...";
       setProgress({ total: "-", current: "-", terms: "0", ok: "0", fail: "0" });
       errorList.innerHTML = "";
 
@@ -5897,14 +5739,14 @@ export default class SettingsView {
       if (noTermsCount > 0) summaryParts.push(`Dateien ohne Treffer: ${noTermsCount}`);
       if (errorCount > 0) summaryParts.push(`Fehler: ${errorCount}`);
       const summary = summaryParts.length ? ` (${summaryParts.join(", ")})` : "";
-      scanStatus.textContent = `Suche abgeschlossen: ${payload.length} Vorschläge${summary}`;
+      scanStatus.textContent = `Suche abgeschlossen: ${payload.length} VorschlÃ¤ge${summary}`;
       await loadAllLists();
       setBusy(false);
     };
 
     await loadAllLists();
     this._openSettingsModal({
-      title: "Wörterbuch",
+      title: "WÃ¶rterbuch",
       content: [wrap],
       closeOnly: true,
     });
@@ -5923,7 +5765,7 @@ export default class SettingsView {
         titleNorm === "nutzereinstellungen" ||
         titleNorm === "entwicklung" ||
         titleNorm === "woerterbuch" ||
-        titleNorm === "wörterbuch";
+        titleNorm === "wÃ¶rterbuch";
       const isUserSettingsPopup = titleNorm === "nutzereinstellungen";
       const isPrintSettingsPopup = titleNorm === "druckeinstellungen";
       const isLayoutPopup = titleNorm === "druck-layout";
@@ -6911,7 +6753,7 @@ export default class SettingsView {
       rosa: "#FFC0CB",
       weinrot: "#722F37",
       samtgruen: "#3E6B48",
-      "samtgrün": "#3E6B48",
+      "samtgrÃ¼n": "#3E6B48",
     };
     const aliasHex = aliases[raw.toLowerCase()] || null;
     if (!aliasHex) return null;
@@ -7059,7 +6901,7 @@ export default class SettingsView {
       sidebar: { ...sidebarRgb },
       main: { ...mainRgb },
     };
-    // Werkseinstellung wird über den Reset-Button gesetzt, nicht über eine Checkbox.
+    // Werkseinstellung wird Ã¼ber den Reset-Button gesetzt, nicht Ã¼ber eine Checkbox.
     this._setThemeAreaRgbInputs("header", headerRgb);
     this._setThemeAreaRgbInputs("sidebar", sidebarRgb);
     this._setThemeAreaRgbInputs("main", mainRgb);
