@@ -10,3 +10,5 @@ Status:
 Enthaelt:
 - `screens/LicenseAdminScreen.js` als einfacher Admin-Skeleton-Screen
 - `index.js` als Modul-Einstieg
+
+- `licenseRecords.js` als zentrale Feldlisten/Defaults/Normalisierung fuer Kunden- und Lizenzdatensaetze

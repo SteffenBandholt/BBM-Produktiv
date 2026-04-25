@@ -51,6 +51,12 @@ Sie ergänzt:
   - `LicenseAdminScreen` enthaelt jetzt den Einstieg `Lizenz erstellen / bearbeiten`
   - der Einstieg oeffnet die verschobene UI im Adminbereich
   - `SettingsView` bleibt Host/Einstieg und zeigt keinen sichtbaren Entwicklungs-Tab `Lizenz / bearbeiten`
+
+- Lizenzverwaltung Paket 4 (Datensatz-Vorbereitung) ist umgesetzt:
+  - zentrale Datei `licenseRecords.js` fuer Kunden- und Lizenzdatensatz vorbereitet
+  - Feldlisten, Default-Strukturen und Normalisierungsfunktionen fuer Kunde/Lizenz vorhanden
+  - `LicenseAdminScreen` zeigt die Bereiche `Kunden` und `Lizenzen` mit aussagekraeftigeren vorbereiteten Feldhinweisen
+  - bestehende Lizenz-erstellen-/bearbeiten-UI und Produktumfangsstruktur bleiben unveraendert nutzbar
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
@@ -292,6 +298,28 @@ Sie ergänzt:
   - keine neue Kundenverwaltung, Historie oder Produktumfang-Datenstruktur eingefuehrt
   - keine Projektmodul-, Sidebar-, Whisper-, Diktier- oder Lizenzdatei-Logik-Aenderung
 
+
+#### Paket: Lizenzverwaltung Paket 4 (Kunden- und Lizenzdatensatz vorbereiten)
+- Status: erledigt
+- Beschreibung:
+  - zentrale Datei `src/renderer/modules/lizenzverwaltung/licenseRecords.js` mit Feldlisten fuer Kunde und Lizenz angelegt
+  - Default-Strukturen und kleine Normalisierungsfunktionen fuer beide Datensaetze eingefuehrt
+  - `LicenseAdminScreen` zeigt die Bereiche `Kunden` und `Lizenzen` weiter als vorbereitete Bereiche, aber mit Feldhinweisen
+  - bestehende Lizenz-erstellen-/bearbeiten-UI bleibt unveraendert als Einstieg nutzbar
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/licenseRecords.js`
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `src/renderer/modules/lizenzverwaltung/index.js`
+  - `src/renderer/modules/lizenzverwaltung/README.md`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine neue Datenbank/Persistenz
+  - Keine Kundenverwaltung/Historie implementiert
+  - Keine Projektmodul-/Sidebar-/Whisper-Aenderung
+
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen
 
@@ -326,11 +354,11 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 ## Aktuell nächster sinnvoller Schritt
 Der naechste sinnvolle kleine Schritt nach diesem Paket ist:
 
-### Lizenzverwaltung Paket 4 vorbereiten
+### Lizenzverwaltung Paket 5 vorbereiten
 - Ziel:
-  - Adminbereich-Popup in kleinen Schritten um weitere echte Adminbereiche erweiterbar halten, ohne neue Lizenzlogik freizuschalten
+  - bestehende Lizenz laden, aendern und neu ausgeben als naechsten kleinen Adminschritt vorbereiten
 - Wichtig:
-  - weiterhin keine tiefgreifende Umstellung der Lizenzdatei-Erzeugung oder Kundenverwaltung
+  - Kundenverwaltung/Historie weiter nicht vorziehen
   - Audio / Diktat bleibt Maschinenraum ohne Projektmodul- oder Sidebar-Eintrag
 
 ---
