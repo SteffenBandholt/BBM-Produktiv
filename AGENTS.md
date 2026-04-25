@@ -153,6 +153,37 @@ Achte bei Reviews besonders auf:
   - was nicht angefasst wurde
   - welche Prüfungen gelaufen sind
 
+## Codex-Cloud-Regeln
+Diese Regeln gelten für alle Aufgaben, die in Codex Cloud laufen.
+
+- Jede Cloud-Aufgabe muss mit einem klaren Base-Branch starten.
+- Der Base-Branch wird im jeweiligen Auftrag ausdrücklich genannt.
+- Codex Cloud darf keinen Base-Branch selbst raten.
+- Jede Cloud-Aufgabe muss auf einem eigenen Branch arbeiten, z. B. `codex/<kurzer-aufgabenname>`.
+- Am Ende muss Codex Cloud entweder einen GitHub-Branch veröffentlichen oder einen Pull Request gegen den genannten Base-Branch erstellen.
+- Ein Cloud-Ergebnis ohne veröffentlichten GitHub-Branch und ohne Pull Request gilt als nicht geliefert.
+- Ein Commit-Hash aus der Cloud-Sandbox reicht nicht als Übergabe.
+- Wenn Codex Cloud keinen Branch oder PR erstellen kann, muss der Status lauten: `gestoppt – nicht veröffentlicht`.
+
+Die Abschlussmeldung muss immer enthalten:
+
+- Base-Branch
+- Ergebnis-Branch
+- Pull-Request-Link oder klare Meldung, dass kein PR erstellt wurde
+- geänderte Dateien
+- ausgeführte Tests
+- `git status`-Ergebnis
+
+Codex Cloud darf nicht behaupten, ein Paket sei fertig übernommen, solange es nicht über GitHub als Branch oder PR sichtbar ist.
+
+Lokale Übernahme erfolgt erst nach:
+
+```bash
+git fetch origin
+git diff --name-status <base-branch>...origin/<cloud-branch>
+npm test
+```
+
 ## Wenn keine Plan-Datei existiert
 Wenn `PLAN.md` oder eine vergleichbare Plandatei fehlt und die Aufgabe größer als ein Mini-Paket ist:
 - nicht direkt losbauen

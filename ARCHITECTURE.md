@@ -47,6 +47,7 @@ Nicht jedes Modul ist ein auswählbares Projektmodul:
 - Der Projekt-Arbeitsbereich zeigt das aktive Projekt und bietet nur auswaehlbare Projektmodule an.
 - Aktuell ist `Protokoll` auswaehlbar; spaeter kann `Restarbeiten` hinzukommen.
 - Maschinenraum-Dienste werden von Fachmodulen genutzt, aber nicht als gleichberechtigte Projektmodule angeboten.
+- Der Projekt-Arbeitsbereich ist technisch umgesetzt; der Projektklick fuehrt jetzt zuerst dort hin.
 
 Der Umbau erfolgt:
 - konservativ

@@ -74,6 +74,7 @@ Die fachliche Rolle der Projektverwaltung und des Projekt-Arbeitsbereichs soll k
 - kein Code
 - kein Merge
 - kein Push
+- Technischer Stand: Projekt-Arbeitsbereich ist umgesetzt, der Projektklick fuehrt dorthin statt direkt ins Protokoll.
 
 ---
 

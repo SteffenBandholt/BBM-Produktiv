@@ -126,9 +126,14 @@ Sie ergänzt:
   - `modularisierung/projektverwaltung`
   - `HEAD` und `origin/modularisierung/projektverwaltung` sind identisch
   - der lokale Diff ist leer
-- Neuer Planungsschritt:
-  - Projektverwaltung und Projekt-Arbeitsbereich sind fachlich beschrieben
-  - Projektverwaltung setzt den Projektkontext, der Projekt-Arbeitsbereich fuehrt den Modulstart
+- Abgeschlossener Meilenstein:
+  - Projekt-Arbeitsbereich ist technisch umgesetzt
+  - Projektklick oeffnet nicht mehr direkt Protokoll
+  - Projektklick oeffnet den Projekt-Arbeitsbereich
+  - einziges auswaehlbares Projektmodul ist aktuell Protokoll
+  - Maschinenraumdienste erscheinen dort nicht als Projektmodule
+  - Protokoll-Logik blieb unveraendert
+  - `npm test` war gruen
 - Beobachtung:
   - Ohne Fortschrittsdatei interpretiert Codex den Plan zu wörtlich und nimmt erledigte Meilensteine erneut als offen an.
 
