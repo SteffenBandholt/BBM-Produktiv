@@ -37,6 +37,10 @@ Sie ergänzt:
   - Der interne Key bleibt `audio`.
   - Die sichtbare Feature-Liste zeigt kein `audio` und `Dictate` nebeneinander.
 - Lizenzverwaltung ist als eigenes Zielmodul geplant; die Detailbeschreibung liegt unter `docs/modules/lizenzverwaltung.md`.
+- Lizenzverwaltung Paket 1 ist vorbereitet:
+  - neues Modulverzeichnis `src/renderer/modules/lizenzverwaltung/` mit Skeleton-Screen
+  - Einstieg im Entwicklungsbereich unter `Adminbereich` angebunden
+  - weiterhin kein Modulkatalog-/Projektmodul-Eintrag
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
@@ -178,6 +182,29 @@ Sie ergänzt:
 - Hinweise:
   - Keine Router-Aenderungen, keine Protokoll-Aenderungen
 
+#### Paket: Lizenzverwaltung Paket 1 (Adminbereich + Modul-Skeleton)
+- Status: erledigt
+- Beschreibung:
+  - neues Admin-Modul `src/renderer/modules/lizenzverwaltung/` mit `index.js`, `README.md`, `screens/index.js` und `screens/LicenseAdminScreen.js` angelegt
+  - Skeleton-Screen mit Platzhaltern `Kunden`, `Lizenzen`, `Produktumfang`, `Historie` ergänzt
+  - Entwicklungsbereich in `SettingsView` minimal um den Einstieg `Adminbereich` erweitert
+  - Modulkatalog und Projektmodule bleiben unverändert (`Protokoll` bleibt einziges Projektmodul)
+  - Testlauf um `lizenzverwaltungModule.test.cjs` ergänzt
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/index.js`
+  - `src/renderer/modules/lizenzverwaltung/README.md`
+  - `src/renderer/modules/lizenzverwaltung/screens/index.js`
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `scripts/test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Kein Umbau am bestehenden Lizenz-bearbeiten-Popup
+  - Keine Lizenzlogik-, Produktumfangs-, Kunden- oder Historienimplementierung
+
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen
 
@@ -212,12 +239,11 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 ## Aktuell nächster sinnvoller Schritt
 Der naechste sinnvolle kleine Schritt nach diesem Paket ist:
 
-### Diktieren-Tab fachlich gegen App-Sichtung pruefen
+### Lizenzverwaltung Paket 2 vorbereiten
 - Ziel:
-  - visuell bestaetigen, dass `Diktieren -> Diktierprodukt -> Aktuelle Engine: Whisper -> Whisper-Modelle` wie geplant sichtbar ist
-  - bestaetigen, dass `Woerterbuch` als vorbereitet/noch nicht eingerichtet erscheint
+  - bestehendes Lizenz-bearbeiten-Popup schrittweise in Richtung Produktumfangsgliederung vorbereiten
 - Wichtig:
-  - keine weitere Funktionslogik nachziehen
+  - weiterhin keine Lizenzlogik oder Dateierzeugung umbauen
   - Audio / Diktat bleibt Maschinenraum ohne Projektmodul- oder Sidebar-Eintrag
 
 ---
