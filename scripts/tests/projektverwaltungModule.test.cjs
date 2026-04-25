@@ -9,7 +9,12 @@ function read(relPath) {
 
 async function runProjektverwaltungModuleTests(run) {
   const [
-    { getProjektverwaltungModuleEntry, PROJEKTVERWALTUNG_MODULE_ID, ProjectsScreen },
+    {
+      getProjektverwaltungModuleEntry,
+      PROJEKTVERWALTUNG_MODULE_ID,
+      ProjectsScreen,
+      ProjectWorkspaceScreen,
+    },
     { resolveModuleScreenFromEntry },
   ] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/projektverwaltung/index.js")),
@@ -20,6 +25,7 @@ async function runProjektverwaltungModuleTests(run) {
   const routerSource = read("src/renderer/app/Router.js");
   const mainSource = read("src/renderer/main.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
+  const workspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const formSource = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
   const archiveSource = read("src/renderer/modules/projektverwaltung/screens/ArchiveScreen.js");
   const projectsViewSource = read("src/renderer/views/ProjectsView.js");
@@ -31,6 +37,8 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(routerSource.includes("../views/ProjectsView.js"), false);
     assert.equal(routerSource.includes("../views/ProjectFormView.js"), false);
     assert.equal(routerSource.includes("../views/ArchiveView.js"), false);
+    assert.equal(routerSource.includes("showProjectWorkspace(projectId, options = {})"), true);
+    assert.equal(routerSource.includes("ProjectWorkspaceScreen"), true);
   });
 
   await run("Projektverwaltung: Modul ist im Resolver vorhanden, aber nicht im Katalog", () => {
@@ -52,8 +60,104 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(typeof resolveModuleScreenFromEntry(entry, "projects"), "function");
   });
 
+  await run("Projektverwaltung: Projekt-Arbeitsbereich ist exportiert und beschraenkt die Module", async () => {
+    assert.equal(typeof ProjectWorkspaceScreen, "function");
+    assert.equal(workspaceSource.includes("export default class ProjectWorkspaceScreen"), true);
+    assert.equal(workspaceSource.includes("Protokoll öffnen"), true);
+    assert.equal(workspaceSource.includes("Ausgabe"), false);
+    assert.equal(workspaceSource.includes("Audio"), false);
+    assert.equal(workspaceSource.includes("Lizenzierung"), false);
+    assert.equal(workspaceSource.includes("Settings"), false);
+    assert.equal(workspaceSource.includes("Updates"), false);
+    assert.equal(workspaceSource.includes("Backup"), false);
+    assert.equal(workspaceSource.includes("Diagnose"), false);
+
+    const routerCalls = [];
+    const screen = new ProjectWorkspaceScreen({
+      router: {
+        currentProjectId: "9",
+        async showTops(meetingId, projectId) {
+          routerCalls.push({ meetingId, projectId });
+        },
+      },
+      projectId: "9",
+      project: {
+        id: "9",
+        project_number: "P-12",
+        short: "Rohbau",
+        name: "Rohbau Nord",
+      },
+    });
+
+    const modules = screen.getAvailableProjectModules();
+    assert.deepEqual(
+      modules.map((item) => item.moduleId),
+      ["protokoll"]
+    );
+    assert.deepEqual(
+      modules.map((item) => item.label),
+      ["Protokoll öffnen"]
+    );
+    assert.equal(screen.getProjectDisplayText(), "P-12 - Rohbau");
+
+    const opened = await screen.openProjectModule("protokoll");
+    assert.equal(opened, true);
+    assert.deepEqual(routerCalls, [{ meetingId: null, projectId: "9" }]);
+  });
+
+  await run("Projektverwaltung: Projektklick öffnet den Arbeitsbereich statt direkt Tops", async () => {
+    const calls = [];
+    const previousWindow = global.window;
+    global.window = {
+      localStorage: {
+        setItem() {},
+      },
+    };
+
+    try {
+      const screen = new ProjectsScreen({
+        router: {
+          currentProjectId: null,
+          currentMeetingId: null,
+          async showProjectWorkspace(projectId, options) {
+            calls.push({ projectId, options });
+          },
+        },
+      });
+
+      screen.projects = [
+        {
+          id: "17",
+          short: "Projekt A",
+          name: "Projekt A",
+          project_number: "17",
+        },
+      ];
+
+      const result = await screen.openProjectById("17");
+      assert.equal(result, true);
+      assert.deepEqual(calls, [
+        {
+          projectId: "17",
+          options: {
+            project: {
+              id: "17",
+              short: "Projekt A",
+              name: "Projekt A",
+              project_number: "17",
+            },
+          },
+        },
+      ]);
+      assert.equal(projectsSource.includes("showProjectWorkspace(project.id, { project })"), true);
+    } finally {
+      global.window = previousWindow;
+    }
+  });
+
   await run("Projektverwaltung: neue Screen-Dateien enthalten die Implementierung", () => {
     assert.equal(projectsSource.includes("export default class ProjectsScreen"), true);
+    assert.equal(workspaceSource.includes("export default class ProjectWorkspaceScreen"), true);
     assert.equal(projectsSource.includes("../../../ui/popupButtonStyles.js"), true);
     assert.equal(formSource.includes("export default class ProjectFormScreen"), true);
     assert.equal(formSource.includes("../../../ui/popupButtonStyles.js"), true);

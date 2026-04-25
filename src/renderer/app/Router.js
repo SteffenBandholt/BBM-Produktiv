@@ -476,6 +476,32 @@ export default class Router {
     await this.show(new V({ router: this }), { section: "projects", isTopsView: false });
   }
 
+  async showProjectWorkspace(projectId, options = {}) {
+    const mod = await import("../modules/projektverwaltung/index.js");
+    const V = mod.ProjectWorkspaceScreen;
+    const opts = options && typeof options === "object" ? options : {};
+    const effectiveProjectId = projectId || this.currentProjectId || null;
+
+    if (!effectiveProjectId) {
+      alert("Bitte zuerst ein Projekt auswählen.");
+      return;
+    }
+
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
+    await this.show(
+      new V({
+        router: this,
+        projectId: effectiveProjectId,
+        project: opts.project || null,
+      }),
+      {
+        section: "projectWorkspace",
+        isTopsView: false,
+        pageTitle: "Projekt-Arbeitsbereich",
+      }
+    );
+  }
+
   async showFirmsPool(projectId) {
     const mod = await import("../views/FirmsPoolView.js");
     const V = mod.default;
