@@ -91,7 +91,7 @@ Sie ergänzt:
   - `src/renderer/modules/protokoll/styles.js`
   - `src/renderer/modules/protokoll/styles/tops.css`
 - Commit:
-  - `a0585ef`
+  - `siehe aktuellen Branch-Commit`
 - Hinweise:
   - Commit enthält zusätzlich das Entfernen von ChatGPT-Export-Artefakten
 
@@ -109,6 +109,22 @@ Sie ergänzt:
   - Keine Änderungen an Router, UI oder fachlicher Tops-Logik
 
 ---
+
+#### Paket: ProjectWorkspaceScreen minimal stabilisiert
+- Status: erledigt
+- Beschreibung:
+  - robuste Anzeige fuer Projektnummer und Projektname im Projekt-Arbeitsbereich nachgezogen
+  - Nachladen ohne direkt uebergebenes Projekt bleibt ueber `window.bbmDb.projectsList()` erhalten
+  - klare Meldung fuer nicht gefundenes Projekt und Ruecksprung-Button `Zur Projektliste` ueber `showProjects()` ergaenzt
+  - Projektauswahl bleibt auf `Protokoll` begrenzt; Maschinenraumdienste weiterhin unsichtbar
+  - passende Modul-Tests fuer robuste Anzeige, Ruecksprung und Projektlade-Faelle erweitert
+- Betroffene Dateien:
+  - `src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine Router-Aenderungen, keine Protokoll-Aenderungen
 
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen

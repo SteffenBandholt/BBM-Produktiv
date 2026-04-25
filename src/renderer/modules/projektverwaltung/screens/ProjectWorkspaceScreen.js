@@ -13,18 +13,27 @@ function normalizeText(value) {
 }
 
 function getProjectNumber(project) {
-  const raw = project?.project_number ?? project?.projectNumber ?? "";
+  const raw =
+    project?.project_number ??
+    project?.projectNumber ??
+    project?.nummer ??
+    project?.number ??
+    "";
   return normalizeText(raw);
+}
+
+function getProjectName(project) {
+  const short = normalizeText(project?.short);
+  const name = normalizeText(project?.name ?? project?.project_name ?? project?.title);
+  return short || name;
 }
 
 function getProjectTitle(project, fallbackProjectId = null) {
   const number = getProjectNumber(project);
-  const short = normalizeText(project?.short);
-  const name = normalizeText(project?.name);
+  const name = getProjectName(project);
 
-  if (number && short) return `${number} - ${short}`;
+  if (number && name) return `${number} - ${name}`;
   if (number) return number;
-  if (short) return short;
   if (name) return name;
   if (fallbackProjectId) return `#${fallbackProjectId}`;
   return "Projekt";
@@ -41,6 +50,7 @@ export default class ProjectWorkspaceScreen {
     this.msgEl = null;
 
     this.loading = false;
+    this.projectMissing = false;
   }
 
   getAvailableProjectModules() {
@@ -71,17 +81,27 @@ export default class ProjectWorkspaceScreen {
     try {
       const res = await api.projectsList();
       if (res?.ok && Array.isArray(res.list)) {
-        this.project =
-          res.list.find((item) => String(item?.id ?? "") === String(effectiveProjectId)) ||
-          { id: effectiveProjectId };
+        const foundProject = res.list.find(
+          (item) => String(item?.id ?? "") === String(effectiveProjectId)
+        );
+        this.project = foundProject || null;
+        this.projectMissing = !foundProject;
       } else {
         this.project = { id: effectiveProjectId };
+        this.projectMissing = false;
       }
     } catch (_err) {
       this.project = { id: effectiveProjectId };
+      this.projectMissing = false;
     }
 
     return this.project;
+  }
+
+  async showProjectsList() {
+    if (typeof this.router?.showProjects !== "function") return false;
+    await this.router.showProjects();
+    return true;
   }
 
   async openProjectModule(moduleId) {
@@ -141,27 +161,17 @@ export default class ProjectWorkspaceScreen {
     title.style.fontSize = "20px";
     title.style.marginBottom = "6px";
 
-    const number = getProjectNumber(project);
-    if (number) {
-      const numberLine = document.createElement("div");
-      numberLine.textContent = `Projektnummer: ${number}`;
-      numberLine.style.fontSize = "12px";
-      numberLine.style.opacity = "0.85";
-      container.appendChild(numberLine);
-    }
+    const numberLine = document.createElement("div");
+    numberLine.textContent = `Projektnummer: ${getProjectNumber(project) || "-"}`;
+    numberLine.style.fontSize = "12px";
+    numberLine.style.opacity = "0.85";
 
-    const name = normalizeText(project?.name);
-    const short = normalizeText(project?.short);
-    const extraLine = document.createElement("div");
-    extraLine.textContent = name && short && name !== short ? name : short || name || "";
-    extraLine.style.fontSize = "12px";
-    extraLine.style.opacity = "0.85";
-    if (extraLine.textContent) {
-      container.appendChild(title);
-      container.appendChild(extraLine);
-    } else {
-      container.appendChild(title);
-    }
+    const nameLine = document.createElement("div");
+    nameLine.textContent = `Projektname: ${getProjectName(project) || "-"}`;
+    nameLine.style.fontSize = "12px";
+    nameLine.style.opacity = "0.85";
+
+    container.append(title, numberLine, nameLine);
   }
 
   _renderContent() {
@@ -184,7 +194,19 @@ export default class ProjectWorkspaceScreen {
 
     this._renderModuleTiles(grid);
 
-    this.hostEl.append(info, sectionTitle, grid);
+    this.hostEl.append(info);
+
+    if (this.projectMissing) {
+      const missing = document.createElement("div");
+      missing.textContent = "Projekt konnte nicht gefunden werden.";
+      missing.style.fontSize = "14px";
+      missing.style.fontWeight = "700";
+      missing.style.color = "var(--danger-text, #a40000)";
+      this.hostEl.appendChild(missing);
+      return;
+    }
+
+    this.hostEl.append(sectionTitle, grid);
   }
 
   render() {
@@ -200,12 +222,20 @@ export default class ProjectWorkspaceScreen {
     h.textContent = "Projekt-Arbeitsbereich";
     h.style.margin = "0";
 
+    const navBtn = document.createElement("button");
+    navBtn.type = "button";
+    navBtn.textContent = "Zur Projektliste";
+    applyPopupButtonStyle(navBtn, { variant: "secondary" });
+    navBtn.onclick = async () => {
+      await this.showProjectsList();
+    };
+
     const msg = document.createElement("div");
     msg.style.marginLeft = "auto";
     msg.style.fontSize = "12px";
     msg.style.opacity = "0.85";
 
-    head.append(h, msg);
+    head.append(h, navBtn, msg);
 
     const host = document.createElement("div");
     root.append(head, host);
