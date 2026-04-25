@@ -30,6 +30,8 @@ Hinweis:
 - Das Mutter-/Kind-Prinzip ist die verbindliche Leitlinie fuer alle weiteren Modularisierungsschritte.
 - Auswählbare Projektmodule und Maschinenraum-Bereiche sind architektonisch getrennt.
 - Der naechste Planungsschritt ist die fachliche Beschreibung von Projektverwaltung und Projekt-Arbeitsbereich.
+- Die Projektverwaltung setzt den Projektkontext; ein Projektklick startet kuenftig nicht direkt `Protokoll`.
+- Der Projekt-Arbeitsbereich bietet auswählbare Projektmodule: aktuell `Protokoll`, spaeter `Restarbeiten`.
 
 ---
 
