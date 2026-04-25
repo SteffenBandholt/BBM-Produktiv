@@ -122,6 +122,10 @@ Sie ergänzt:
   - `AGENTS.md` gefunden
   - `PLAN.md` gefunden
   - Codex konnte den Repo-Stand lesen
+- Aktueller Branch:
+  - `modularisierung/projektverwaltung`
+  - `HEAD` und `origin/modularisierung/projektverwaltung` sind identisch
+  - der lokale Diff ist leer
 - Beobachtung:
   - Ohne Fortschrittsdatei interpretiert Codex den Plan zu wörtlich und nimmt erledigte Meilensteine erneut als offen an.
 
@@ -169,3 +173,5 @@ Wichtig:
 - `AGENTS.md` = Hausordnung
 - `PLAN.md` = Bauablaufplan
 - `STATUS.md` = Bautagebuch / Ist-Stand
+
+<!-- Cloud-Diff-Test: nur temporaer fuer VS-Code-Codex-Cloud-Start. -->
