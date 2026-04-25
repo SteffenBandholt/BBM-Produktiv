@@ -38,6 +38,11 @@ Nicht jedes Modul ist ein auswählbares Projektmodul:
 - Spaeter moeglich ist `Restarbeiten`.
 - `Ausgabe / Drucken / E-Mail` ist kein auswählbares Projektmodul, sondern ein Maschinenraum-Dienst.
 - `Audio / Diktat` ist kein auswählbares Projektmodul, sondern ein Maschinenraum-Dienst.
+- `Dictate` ist das Lizenz-/Produktfeature hinter dem sichtbaren Feature `audio`.
+- `Diktieren` ist der Entwicklungs-/Technikbereich in `Einstellungen -> Entwicklung`.
+- `Diktierprodukt` ist die fachliche Einheit unter `Diktieren`.
+- `Whisper` ist aktuell nur die technische Engine unter dem `Diktierprodukt`; die Whisper-Modelle haengen deshalb unter `Diktierprodukt / Engine Whisper`.
+- `Woerterbuch` ist ein vorbereiteter Baustein innerhalb von `Diktieren`.
 - `Lizenzierung` ist in der Mutter-App ein Verwaltungs-/Maschinenraum-Bereich, in Kinder-Apps nur Lizenzpruefung und Status.
 - `Settings`, `Updates`, `Backup` und `Diagnose` sind Maschinenraum oder Verwaltung, keine Projektmodule.
 - Die Projektverwaltung setzt den Projektkontext und oeffnet den Projekt-Arbeitsbereich.

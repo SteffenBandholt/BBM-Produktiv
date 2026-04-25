@@ -22,12 +22,18 @@ Sie ergänzt:
   - Kein Modulkatalog-Eintrag.
   - Main-/IPC-/Drucktechnik bleibt im Main-Prozess.
 - Audio / Diktat ist als Renderer-Modul begonnen.
+  - `Dictate` ist das zugehoerige Lizenz-/Produktfeature; das sichtbare Feature `audio` wird fachlich als `Dictate` gefuehrt.
+  - `Diktieren` ist der Entwicklungs-/Technikbereich unter `Einstellungen -> Entwicklung`.
+  - `Diktierprodukt` ist die austauschbare fachliche Einheit unter `Diktieren`.
+  - `Whisper` ist aktuell nur die technische Engine unter dem `Diktierprodukt`.
+  - `Woerterbuch` ist ein vorbereiteter Baustein innerhalb von `Diktieren`.
   - `TranscriptionService` ist als Renderer-Adapter verankert.
   - Entwicklungs-UI fuer `Einstellungen -> Entwicklung -> Diktieren` ist als Modul-Baustein angebunden.
   - Keine Sidebar-Anbindung.
   - Kein Modulkatalog-Eintrag.
   - Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
 - Im Bereich `Lizenz / bearbeiten` wird das Feature `audio` sichtbar als `Dictate` angezeigt.
+  - `Audio / Diktat` bleibt Maschinenraum und ist kein auswählbares Projektmodul.
   - Der interne Key bleibt `audio`.
   - Die sichtbare Feature-Liste zeigt kein `audio` und `Dictate` nebeneinander.
 - Protokoll-Modul ist eingefroren.
