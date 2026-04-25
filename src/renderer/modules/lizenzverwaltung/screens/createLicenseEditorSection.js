@@ -1,3 +1,9 @@
+import {
+  PRODUCT_SCOPE,
+  formatProductScopeFeatureLabel,
+  normalizeProductScopeFeatureKey,
+} from "../productScope.js";
+
 export function createLicenseEditorSection({
   mkRow,
   applyPopupCardStyle,
@@ -134,16 +140,8 @@ export function createLicenseEditorSection({
   productScopeWrap.style.display = "grid";
   productScopeWrap.style.gap = "8px";
 
-  const formatLicenseFeatureLabel = (feature) => {
-    const normalizedFeature = String(feature || "").trim();
-    return normalizedFeature === "audio" ? "Dictate" : normalizedFeature;
-  };
-
-  const normalizeLicenseFeatureKey = (feature) => {
-    const normalized = String(feature || "").trim().toLowerCase();
-    if (normalized === "dictate") return "audio";
-    return normalized;
-  };
+  const formatLicenseFeatureLabel = formatProductScopeFeatureLabel;
+  const normalizeLicenseFeatureKey = normalizeProductScopeFeatureKey;
 
   const mkScopeGroup = (title, note = "") => {
     const box = document.createElement("div");
@@ -199,25 +197,27 @@ export function createLicenseEditorSection({
     return checkbox;
   };
 
-  const standardScope = mkScopeGroup("Standardumfang", "Immer enthalten, nicht abwaehlbar.");
-  const optionalScope = mkScopeGroup("Zusatzfunktionen");
-  const moduleScope = mkScopeGroup("Module", "Vorbereitet, noch nicht aktiv angebunden.");
+  const standardScope = mkScopeGroup(PRODUCT_SCOPE.standardumfang.title, PRODUCT_SCOPE.standardumfang.note);
+  const optionalScope = mkScopeGroup(PRODUCT_SCOPE.zusatzfunktionen.title);
+  const moduleScope = mkScopeGroup(PRODUCT_SCOPE.module.title, PRODUCT_SCOPE.module.note);
 
-  const standardFeatureInputs = ["app", "pdf", "export"].map((feature) => {
-    const checkbox = mkFeatureInput(feature, { checked: true, disabled: true });
+  const standardFeatureInputs = PRODUCT_SCOPE.standardumfang.entries.map((entry) => {
+    const checkbox = mkFeatureInput(entry.key, { checked: true, disabled: true });
+    checkbox.value = entry.key;
     standardScope.row.appendChild(checkbox.parentElement);
     return checkbox;
   });
 
-  const optionalFeatureInputs = ["mail", "audio"].map((feature) => {
-    const checkbox = mkFeatureInput(feature, { checked: feature !== "audio" });
+  const optionalFeatureInputs = PRODUCT_SCOPE.zusatzfunktionen.entries.map((entry) => {
+    const checkbox = mkFeatureInput(entry.key, { checked: !!entry.defaultEnabled });
+    checkbox.value = entry.key;
     optionalScope.row.appendChild(checkbox.parentElement);
     return checkbox;
   });
 
-  const moduleFeatureInputs = ["Protokoll", "Dummy"].map((moduleLabel) => {
-    const checkbox = mkFeatureInput(moduleLabel, { checked: false, disabled: true, hint: "(vorbereitet)" });
-    checkbox.value = moduleLabel.toLowerCase();
+  const moduleFeatureInputs = PRODUCT_SCOPE.module.entries.map((entry) => {
+    const checkbox = mkFeatureInput(entry.label, { checked: false, disabled: true, hint: "(vorbereitet)" });
+    checkbox.value = entry.key;
     moduleScope.row.appendChild(checkbox.parentElement);
     return checkbox;
   });

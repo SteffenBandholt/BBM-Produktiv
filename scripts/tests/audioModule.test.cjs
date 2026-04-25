@@ -66,8 +66,8 @@ async function runAudioModuleTests(run) {
   });
 
   await run("Lizenz-Editor zeigt audio fachlich als Dictate", () => {
-    assert.equal(licenseEditorSource.includes('const formatLicenseFeatureLabel = (feature) =>'), true);
-    assert.equal(licenseEditorSource.includes('normalizedFeature === "audio" ? "Dictate" : normalizedFeature'), true);
+    assert.equal(licenseEditorSource.includes('const formatLicenseFeatureLabel = formatProductScopeFeatureLabel;'), true);
+    assert.equal(licenseEditorSource.includes('formatProductScopeFeatureLabel'), true);
     assert.equal(licenseEditorSource.includes('document.createTextNode(formatLicenseFeatureLabel(feature))'), true);
     assert.equal(
       licenseEditorSource.includes(
@@ -75,7 +75,6 @@ async function runAudioModuleTests(run) {
       ),
       true
     );
-    assert.equal(licenseEditorSource.includes('checkbox.value = feature;'), true);
   });
 }
 

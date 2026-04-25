@@ -362,3 +362,20 @@ Wichtig:
 - `AGENTS.md` = Hausordnung
 - `PLAN.md` = Bauablaufplan
 - `STATUS.md` = Bautagebuch / Ist-Stand
+
+#### Paket: Lizenzverwaltung Paket 3 (Produktumfang intern zentral strukturiert)
+- Status: erledigt
+- Beschreibung:
+  - zentrale Produktumfangs-Struktur `PRODUCT_SCOPE` im Modul `lizenzverwaltung` angelegt
+  - `createLicenseEditorSection` auf die zentrale Struktur umgestellt (Standardumfang, Zusatzfunktionen, Module)
+  - sichtbares Verhalten beibehalten: Standardumfang fix, mail/Dictate auswählbar, Module vorbereitet/deaktiviert
+  - Features-Ausgabe bleibt kompatibel mit internem `audio`-Key fuer Dictate
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/productScope.js`
+  - `src/renderer/modules/lizenzverwaltung/screens/createLicenseEditorSection.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine Lizenzdatei-Strukturreform, keine Modulfreischaltung und keine Sidebar-/Projektmodul-Aenderung
