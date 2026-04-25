@@ -29,28 +29,29 @@ Hinweis:
 - `npm test` war gruen.
 - Das Mutter-/Kind-Prinzip ist die verbindliche Leitlinie fuer alle weiteren Modularisierungsschritte.
 - Auswählbare Projektmodule und Maschinenraum-Bereiche sind architektonisch getrennt.
-- Der naechste Planungsschritt ist die fachliche Beschreibung von Projektverwaltung und Projekt-Arbeitsbereich.
+- Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist fachlich und technisch abgeschlossen und dokumentiert.
 
 ---
 
-## Planungsmeilenstein: Projektverwaltung und Projekt-Arbeitsbereich
+## Meilensteinabschluss: Projektverwaltung / Projekt-Arbeitsbereich
 
-### Ziel
-Die fachliche Rolle der Projektverwaltung und des Projekt-Arbeitsbereichs soll klar beschrieben sein, bevor der Projekt-Arbeitsbereich technisch gebaut wird.
+### Ziel (abgeschlossen)
+Der Projekt-Arbeitsbereich ist als eigener Schritt nach der Projektverwaltung fachlich und technisch abgeschlossen und in der Doku konsistent nachgezogen.
 
-### Fachliche Planung
-- Projektverwaltung ist der Einstieg in den Projektkontext.
+### Fachliches Ergebnis
+- Projektverwaltung bleibt Einstieg in den Projektkontext.
 - Projektverwaltung kann Projekte anlegen, bearbeiten, archivieren, wiederherstellen und auswaehlen.
-- Projektverwaltung setzt den aktiven Projektkontext.
-- Die Projektverwaltung ist nicht fachlicher Besitzer des Protokolls.
-- Der Projekt-Arbeitsbereich zeigt das aktive Projekt.
-- Der Projekt-Arbeitsbereich zeigt nur auswaehlbare Projektmodule.
-- Aktuell ist `Protokoll` auswaehlbar.
-- Spaeter kann `Restarbeiten` als weiteres Projektmodul hinzukommen.
-- Maschinenraum-Dienste wie Ausgabe, Audio, Lizenzierung, Settings, Updates, Backup und Diagnose erscheinen nicht als Projektmodule.
-- Ein Projektklick oeffnet kuenftig den Projekt-Arbeitsbereich.
-- `Protokoll` wird erst im Projekt-Arbeitsbereich aktiv geoeffnet.
-- Der bisherige direkte Start ins `Protokoll` bleibt bis dahin Alt-/Uebergangsverhalten.
+- Projektklick fuehrt in den Projekt-Arbeitsbereich (nicht direkt in `Protokoll`).
+- Der Projekt-Arbeitsbereich zeigt das aktive Projekt und nur auswaehlbare Projektmodule.
+- Aktuell ist `Protokoll` der einzige auswaehlbare Projektmodul-Einstieg.
+- `Restarbeiten` bleibt nur als spaetere Option benannt, ohne aktuelle Freischaltung.
+- Maschinenraum-Dienste (`Ausgabe / Drucken / E-Mail`, `Audio / Diktat`, `Lizenzierung`, `Settings`, `Updates`, `Backup`, `Diagnose`) sind keine Projektmodule.
+
+### Nachweise
+- Technischer Stand in der Doku: Projekt-Arbeitsbereich eingebaut und stabilisiert.
+- `npm test` laeuft gruen.
+- GitHub Action `.github/workflows/npm-test.yml` fuehrt `npm test` fuer `main` und `modularisierung/projektverwaltung` bei Push und Pull Request aus.
+- App-Sichtung ist als fachliche Abnahme fuer diesen Meilenstein dokumentiert.
 
 ### Betroffene Dateien
 - `PLAN.md`
@@ -64,17 +65,9 @@ Die fachliche Rolle der Projektverwaltung und des Projekt-Arbeitsbereichs soll k
 - Navigationsverhalten
 - Datenbank
 
-### Fertig wenn
-- die fachliche Abfolge von Projektverwaltung und Projekt-Arbeitsbereich kurz und eindeutig beschrieben ist
-- die Uebergangsregel zum direkten Protokollstart klar benannt ist
-- keine Implementierungsdetails enthalten sind
-
 ### Status
-- nur Dokumentation
+- abgeschlossen (Dokumentations-Meilenstein)
 - kein Code
-- kein Merge
-- kein Push
-- Technischer Stand: Projekt-Arbeitsbereich ist umgesetzt, der Projektklick fuehrt dorthin statt direkt ins Protokoll.
 
 ---
 

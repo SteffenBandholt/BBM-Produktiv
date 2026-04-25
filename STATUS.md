@@ -28,6 +28,8 @@ Sie ergänzt:
   - Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
+- GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
+- App-Sichtung fuer den Projekt-Arbeitsbereich wurde durchgefuehrt und passt (Projektklick -> Arbeitsbereich, Modulauswahl unveraendert auf `Protokoll`).
 - Repo ist auf GitHub aktualisiert.
 - `AGENTS.md` und `PLAN.md` sind vorhanden.
 - Codex Cloud ist eingerichtet und kann das Repo lesen.
@@ -46,7 +48,7 @@ Sie ergänzt:
 - Aktuell auswählbares Projektmodul ist `Protokoll`; `Restarbeiten` kann spaeter als Projektmodul hinzukommen.
 - `Ausgabe / Drucken / E-Mail` und `Audio / Diktat` sind Maschinenraum-Dienste, keine Projektmodule.
 - `Lizenzierung`, `Settings`, `Updates`, `Backup` und `Diagnose` sind Verwaltung oder Maschinenraum, keine Projektmodule.
-- Die Projektverwaltung setzt den Projektkontext und oeffnet spaeter einen Projekt-Arbeitsbereich.
+- Die Projektverwaltung setzt den Projektkontext und oeffnet den Projekt-Arbeitsbereich.
 - Ein Projektklick startet nicht direkt `Protokoll`.
 - Im Projekt-Arbeitsbereich werden nur auswählbare Projektmodule angeboten.
 - Das Protokoll-Modul ist aktuell eingefroren.
@@ -64,6 +66,8 @@ Sie ergänzt:
 - Die alten View-Dateien bleiben als Compatibility-Re-Exports bestehen.
 - Keine DB-/IPC-Logik wurde verschoben.
 - `npm test` war gruen.
+- GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
+- App-Sichtung fuer den Projekt-Arbeitsbereich wurde durchgefuehrt und passt (Projektklick -> Arbeitsbereich, Modulauswahl unveraendert auf `Protokoll`).
 
 ## Ausgabe
 - Das Renderer-Modul ist aufgestellt.
@@ -129,6 +133,8 @@ Sie ergänzt:
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen
 
+Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist abgeschlossen und dokumentiert.
+
 ---
 
 ## Zuletzt bearbeitet
@@ -138,12 +144,12 @@ Sie ergänzt:
   - `AGENTS.md` gefunden
   - `PLAN.md` gefunden
   - Codex konnte den Repo-Stand lesen
-- Aktueller Branch:
-  - `modularisierung/projektverwaltung`
-  - `HEAD` und `origin/modularisierung/projektverwaltung` sind identisch
-  - der lokale Diff ist leer
+- Cloud-Kontrolllauf (zum damaligen Stand):
+  - Branch: `modularisierung/projektverwaltung`
+  - `HEAD` und `origin/modularisierung/projektverwaltung` waren identisch
+  - der lokale Diff war leer
 - Abgeschlossener Meilenstein:
-  - Projekt-Arbeitsbereich ist technisch umgesetzt
+  - Projekt-Arbeitsbereich ist technisch umgesetzt und stabilisiert
   - Projektklick oeffnet nicht mehr direkt Protokoll
   - Projektklick oeffnet den Projekt-Arbeitsbereich
   - einziges auswaehlbares Projektmodul ist aktuell Protokoll
@@ -170,7 +176,6 @@ Der nächste noch nicht erledigte Meilenstein ist:
 ---
 
 ## Offene Hindernisse / bekannte Probleme
-- Bestehende Tests sind aktuell nicht vollständig grün.
 - Frühere Läufe zeigten bestehende Altprobleme, u. a.:
   - `ERR_INVALID_URL` im Zusammenhang mit ESM/CSS-Importpfaden
 - Diese Probleme gelten nicht automatisch als Teil jedes neuen Mini-Pakets.
