@@ -46,6 +46,11 @@ Sie ergänzt:
   - Einstieg `Adminbereich` als eigene Kachel auf oberster Ebene in `Einstellungen` angebunden
   - `Adminbereich` oeffnet als eigenes Popup mit Kachel `Lizenzverwaltung`
   - weiterhin kein Modulkatalog-/Projektmodul-Eintrag
+- Lizenzverwaltung Paket 4 ist umgesetzt:
+  - die bisherige UI `Lizenz verlaengern / bearbeiten` wurde aus `SettingsView` in das Modul `src/renderer/modules/lizenzverwaltung/` verschoben
+  - `LicenseAdminScreen` enthaelt jetzt den Einstieg `Lizenz erstellen / bearbeiten`
+  - der Einstieg oeffnet die verschobene UI im Adminbereich
+  - `SettingsView` bleibt Host/Einstieg und zeigt keinen sichtbaren Entwicklungs-Tab `Lizenz / bearbeiten`
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
@@ -263,6 +268,29 @@ Sie ergänzt:
 - Hinweise:
   - Keine Lizenzlogik-Aenderung
   - Keine Projektmodul-, Sidebar-, Diktier- oder Whisper-Aenderung
+
+#### Paket: Lizenzverwaltung Paket 4 (Lizenz-erstellen-/bearbeiten-UI ins Modul verschoben)
+- Status: erledigt
+- Beschreibung:
+  - neue Moduldatei `createLicenseEditorSection.js` eingefuehrt und die bestehende Lizenz-erstellen-/bearbeiten-UI dorthin verschoben
+  - bestehende Lizenzlogik/IPC-Aufrufe und Buttons (`Lizenz laden`, `Lizenzanforderung laden`, `Lizenz verlaengern`, `Ausgabeordner oeffnen`) unveraendert beibehalten
+  - `LicenseAdminScreen` um den Einstieg `Lizenz erstellen / bearbeiten` erweitert
+  - Klick auf den Einstieg oeffnet die verschobene UI aus dem Modul im Adminbereich
+  - `SettingsView` enthaelt keinen sichtbaren Entwicklungs-Tab `Lizenz / bearbeiten` mehr
+  - Tests auf Modul-Export, Einstieg im `LicenseAdminScreen`, gegliederten Produktumfang und Adminbereich-Abgrenzung angepasst
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/createLicenseEditorSection.js`
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `src/renderer/modules/lizenzverwaltung/screens/index.js`
+  - `src/renderer/modules/lizenzverwaltung/index.js`
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - keine neue Kundenverwaltung, Historie oder Produktumfang-Datenstruktur eingefuehrt
+  - keine Projektmodul-, Sidebar-, Whisper-, Diktier- oder Lizenzdatei-Logik-Aenderung
 
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen
