@@ -33,6 +33,50 @@ Hinweis:
 
 ---
 
+## Planungsmeilenstein: Projektverwaltung und Projekt-Arbeitsbereich
+
+### Ziel
+Die fachliche Rolle der Projektverwaltung und des Projekt-Arbeitsbereichs soll klar beschrieben sein, bevor der Projekt-Arbeitsbereich technisch gebaut wird.
+
+### Fachliche Planung
+- Projektverwaltung ist der Einstieg in den Projektkontext.
+- Projektverwaltung kann Projekte anlegen, bearbeiten, archivieren, wiederherstellen und auswaehlen.
+- Projektverwaltung setzt den aktiven Projektkontext.
+- Die Projektverwaltung ist nicht fachlicher Besitzer des Protokolls.
+- Der Projekt-Arbeitsbereich zeigt das aktive Projekt.
+- Der Projekt-Arbeitsbereich zeigt nur auswaehlbare Projektmodule.
+- Aktuell ist `Protokoll` auswaehlbar.
+- Spaeter kann `Restarbeiten` als weiteres Projektmodul hinzukommen.
+- Maschinenraum-Dienste wie Ausgabe, Audio, Lizenzierung, Settings, Updates, Backup und Diagnose erscheinen nicht als Projektmodule.
+- Ein Projektklick oeffnet kuenftig den Projekt-Arbeitsbereich.
+- `Protokoll` wird erst im Projekt-Arbeitsbereich aktiv geoeffnet.
+- Der bisherige direkte Start ins `Protokoll` bleibt bis dahin Alt-/Uebergangsverhalten.
+
+### Betroffene Dateien
+- `PLAN.md`
+- `ARCHITECTURE.md`
+- `STATUS.md`
+
+### Nicht anfassen
+- Code
+- Router
+- UI
+- Navigationsverhalten
+- Datenbank
+
+### Fertig wenn
+- die fachliche Abfolge von Projektverwaltung und Projekt-Arbeitsbereich kurz und eindeutig beschrieben ist
+- die Uebergangsregel zum direkten Protokollstart klar benannt ist
+- keine Implementierungsdetails enthalten sind
+
+### Status
+- nur Dokumentation
+- kein Code
+- kein Merge
+- kein Push
+
+---
+
 ## Meilenstein 1
 ### Titel
 CSS-Altpfad im Modul Protokoll abbauen

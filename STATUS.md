@@ -126,6 +126,9 @@ Sie ergänzt:
   - `modularisierung/projektverwaltung`
   - `HEAD` und `origin/modularisierung/projektverwaltung` sind identisch
   - der lokale Diff ist leer
+- Neuer Planungsschritt:
+  - Projektverwaltung und Projekt-Arbeitsbereich sind fachlich beschrieben
+  - Projektverwaltung setzt den Projektkontext, der Projekt-Arbeitsbereich fuehrt den Modulstart
 - Beobachtung:
   - Ohne Fortschrittsdatei interpretiert Codex den Plan zu wörtlich und nimmt erledigte Meilensteine erneut als offen an.
 
@@ -173,5 +176,3 @@ Wichtig:
 - `AGENTS.md` = Hausordnung
 - `PLAN.md` = Bauablaufplan
 - `STATUS.md` = Bautagebuch / Ist-Stand
-
-<!-- Cloud-Diff-Test: nur temporaer fuer VS-Code-Codex-Cloud-Start. -->

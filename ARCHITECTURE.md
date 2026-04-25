@@ -41,8 +41,11 @@ Nicht jedes Modul ist ein auswählbares Projektmodul:
 - `Lizenzierung` ist in der Mutter-App ein Verwaltungs-/Maschinenraum-Bereich, in Kinder-Apps nur Lizenzpruefung und Status.
 - `Settings`, `Updates`, `Backup` und `Diagnose` sind Maschinenraum oder Verwaltung, keine Projektmodule.
 - Die Projektverwaltung setzt den Projektkontext und oeffnet spaeter einen Projekt-Arbeitsbereich.
-- Ein Projektklick startet nicht direkt `Protokoll`.
-- Im Projekt-Arbeitsbereich werden nur auswählbare Projektmodule angeboten.
+- Die Projektverwaltung ist nicht fachlicher Besitzer des `Protokoll`-Moduls.
+- Die Projektverwaltung kann Projekte anlegen, bearbeiten, archivieren, wiederherstellen und auswaehlen.
+- Ein Projektklick startet nicht direkt `Protokoll`; er oeffnet den Projekt-Arbeitsbereich.
+- Der Projekt-Arbeitsbereich zeigt das aktive Projekt und bietet nur auswaehlbare Projektmodule an.
+- Aktuell ist `Protokoll` auswaehlbar; spaeter kann `Restarbeiten` hinzukommen.
 - Maschinenraum-Dienste werden von Fachmodulen genutzt, aber nicht als gleichberechtigte Projektmodule angeboten.
 
 Der Umbau erfolgt:
