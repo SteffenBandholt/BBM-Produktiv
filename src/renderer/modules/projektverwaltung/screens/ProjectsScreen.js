@@ -859,12 +859,6 @@ export default class ProjectsScreen {
     this._flashMsg("Projekt-Arbeitsbereich ist nicht verfuegbar.", 9000);
     return false;
 
-    /* if (this._isNewUiMode()) {
-      return await this._openProjectInNewMode(project.id, project);
-    }
-
-    // Alt-Modus: unveränderter bisheriger Klickpfad.
-    return await this._createMeetingAndOpenTops(project.id, project); */
   }
 
   _rememberLastProject(projectId) {
