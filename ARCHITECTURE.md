@@ -23,6 +23,15 @@ Das Ziel ist:
 - der App-Kern bleibt fuer Host-, Navigations- und Aktivierungsaufgaben zustaendig
 - gemeinsame Kernbausteine, gemeinsame Domaenen und gemeinsame Dienste bleiben ausserhalb der Fachmodule
 
+Die gesamte App folgt dabei verbindlich dem **Mutter-/Kind-Prinzip**:
+- Diese Codebasis ist die **Mutter-App / Bauzentrale**.
+- Aus ihr entstehen spaeter **Kinder-Apps / Produktvarianten** mit unterschiedlichen freigegebenen Modulen.
+- Die Mutter-App verwaltet Module, Kunden/Nutzer, Lizenzen, Laufzeiten, Updateberechtigungen und Varianten.
+- Kinder-Apps enthalten nur die jeweils freigegebenen Module und Funktionen.
+- Kinder-Apps enthalten keine vollstaendige Lizenzverwaltung und keine Verwaltungszentrale fuer andere Kunden oder Varianten.
+- Kinder-Apps pruefen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
+- Dieses Prinzip gilt fuer die gesamte App, nicht nur fuer die Lizenzierung.
+
 Der Umbau erfolgt:
 - konservativ
 - paketweise
@@ -43,6 +52,11 @@ Insbesondere bedeutet das:
 - spaetere Erweiterbarkeit auf weitere Module, ohne den Kern kuenstlich zur Plattform auszubauen
 
 Die Aktivierung von Modulen erfolgt nicht ueber beliebige UI-Schalter, sondern ueber die fachlich vorgesehene Freigabelogik, insbesondere ueber Lizenz- oder Produktfreigaben.
+
+Im Mutter-/Kind-Modell bedeutet das:
+- Die Mutter-App bleibt die Stelle fuer Freigabe, Verwaltung und Erzeugung von Varianten.
+- Kind-Apps bleiben produktive Zielprodukte mit eingegrenztem Funktionsumfang.
+- Das Zielbild darf nicht so umgedeutet werden, dass Kind-Apps selbst zur Verwaltungszentrale werden.
 
 Wichtig:
 - nicht freigegebene Module sollen im Rahmen des aktuellen Ausbaustands sauber nicht aktiviert sein

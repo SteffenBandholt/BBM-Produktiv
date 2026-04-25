@@ -31,12 +31,19 @@ Sie ergänzt:
 - Repo ist auf GitHub aktualisiert.
 - `AGENTS.md` und `PLAN.md` sind vorhanden.
 - Codex Cloud ist eingerichtet und kann das Repo lesen.
+- Das Mutter-/Kind-Prinzip ist als verbindliche Leitlinie fuer die gesamte App festgehalten.
 - Der erste CSS-Schritt im Modul `Protokoll` wurde umgesetzt.
 - Der Speichern-/Löschen-Vertrag im Tops-Bereich wurde zwischen Verhalten und Tests synchronisiert.
 
 ## Architektur-Flag
+- Die gesamte App folgt dem Mutter-/Kind-Prinzip.
+- Diese Codebasis ist die Mutter-App / Bauzentrale.
+- Spaetere Kinder-Apps sind freigegebene Produktvarianten mit eingegrenztem Modul- und Funktionsumfang.
+- Die Mutter-App verwaltet Module, Kunden/Nutzer, Lizenzen, Laufzeiten, Updateberechtigungen und Varianten.
+- Kinder-Apps pruefen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
+- Kinder-Apps werden nicht zur Verwaltungszentrale fuer andere Kunden oder Varianten ausgebaut.
 - Das Protokoll-Modul ist aktuell eingefroren.
-- Keine weitere Mini-Modularisierung ohne ausdrücklichen Auftrag.
+- Keine weitere Mini-Modularisierung ohne ausdruecklichen Auftrag.
 - `TopsHeader` und `TopsList` wurden heimgeholt.
 - `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen.
 - Weitere Änderungen nur bei echtem Fehler oder konkretem Featurebedarf.

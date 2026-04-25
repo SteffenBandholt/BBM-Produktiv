@@ -50,6 +50,14 @@ Dieses Repo befindet sich in einem kontrollierten Umbau von einer stärker monol
 Aktuell wichtige Bereiche:
 - `Protokoll`
 
+ARCHITEKTUR-LEITLINIE:
+- Die gesamte App folgt dem Mutter-/Kind-Prinzip.
+- Diese Codebasis ist die Mutter-App / Bauzentrale.
+- Spaetere Kinder-Apps sind freigegebene Produktvarianten mit eingegrenztem Modul- und Funktionsumfang.
+- Die Mutter-App verwaltet Module, Kunden/Nutzer, Lizenzen, Laufzeiten, Updateberechtigungen und Varianten.
+- Kinder-Apps pruefen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
+- Kinder-Apps werden nicht zur Verwaltungszentrale fuer andere Kunden oder Varianten ausgebaut.
+
 ARCHITEKTUR-FLAG:
 - Das Protokoll-Modul wird aktuell nicht weiter modularisiert.
 - Der aktuelle Stand bleibt bestehen; keine weiteren Modularisierungsarbeiten ohne ausdrücklichen Auftrag.
