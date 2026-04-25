@@ -50,6 +50,19 @@ Dieses Repo befindet sich in einem kontrollierten Umbau von einer stärker monol
 Aktuell wichtige Bereiche:
 - `Protokoll`
 
+ARCHITEKTUR-LEITLINIE:
+- Die gesamte App folgt dem Mutter-/Kind-Prinzip.
+- Diese Codebasis ist die Mutter-App / Bauzentrale.
+- Spaetere Kinder-Apps sind freigegebene Produktvarianten mit eingegrenztem Modul- und Funktionsumfang.
+- Die Mutter-App verwaltet Module, Kunden/Nutzer, Lizenzen, Laufzeiten, Updateberechtigungen und Varianten.
+- Kinder-Apps pruefen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
+- Kinder-Apps werden nicht zur Verwaltungszentrale fuer andere Kunden oder Varianten ausgebaut.
+- Nicht jedes Modul ist ein auswählbares Projektmodul; Maschinenraum-Dienste und Verwaltungsbereiche bleiben getrennt.
+- Aktuell auswählbares Projektmodul ist `Protokoll`; `Restarbeiten` kann spaeter als Projektmodul hinzukommen.
+- `Ausgabe / Drucken / E-Mail` und `Audio / Diktat` sind Maschinenraum-Dienste, keine Projektmodule.
+- `Lizenzierung`, `Settings`, `Updates`, `Backup` und `Diagnose` sind Verwaltung oder Maschinenraum, keine Projektmodule.
+- Die Projektverwaltung setzt den Projektkontext; ein Projektklick startet nicht direkt `Protokoll`.
+
 ARCHITEKTUR-FLAG:
 - Das Protokoll-Modul wird aktuell nicht weiter modularisiert.
 - Der aktuelle Stand bleibt bestehen; keine weiteren Modularisierungsarbeiten ohne ausdrücklichen Auftrag.
@@ -139,6 +152,37 @@ Achte bei Reviews besonders auf:
   - welches Paket bearbeitet wurde
   - was nicht angefasst wurde
   - welche Prüfungen gelaufen sind
+
+## Codex-Cloud-Regeln
+Diese Regeln gelten für alle Aufgaben, die in Codex Cloud laufen.
+
+- Jede Cloud-Aufgabe muss mit einem klaren Base-Branch starten.
+- Der Base-Branch wird im jeweiligen Auftrag ausdrücklich genannt.
+- Codex Cloud darf keinen Base-Branch selbst raten.
+- Jede Cloud-Aufgabe muss auf einem eigenen Branch arbeiten, z. B. `codex/<kurzer-aufgabenname>`.
+- Am Ende muss Codex Cloud entweder einen GitHub-Branch veröffentlichen oder einen Pull Request gegen den genannten Base-Branch erstellen.
+- Ein Cloud-Ergebnis ohne veröffentlichten GitHub-Branch und ohne Pull Request gilt als nicht geliefert.
+- Ein Commit-Hash aus der Cloud-Sandbox reicht nicht als Übergabe.
+- Wenn Codex Cloud keinen Branch oder PR erstellen kann, muss der Status lauten: `gestoppt – nicht veröffentlicht`.
+
+Die Abschlussmeldung muss immer enthalten:
+
+- Base-Branch
+- Ergebnis-Branch
+- Pull-Request-Link oder klare Meldung, dass kein PR erstellt wurde
+- geänderte Dateien
+- ausgeführte Tests
+- `git status`-Ergebnis
+
+Codex Cloud darf nicht behaupten, ein Paket sei fertig übernommen, solange es nicht über GitHub als Branch oder PR sichtbar ist.
+
+Lokale Übernahme erfolgt erst nach:
+
+```bash
+git fetch origin
+git diff --name-status <base-branch>...origin/<cloud-branch>
+npm test
+```
 
 ## Wenn keine Plan-Datei existiert
 Wenn `PLAN.md` oder eine vergleichbare Plandatei fehlt und die Aufgabe größer als ein Mini-Paket ist:

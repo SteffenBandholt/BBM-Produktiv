@@ -16,18 +16,69 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Die Projektverwaltung ist als Renderer-Modul abgeschlossen.
+- Ausgabe / Drucken / E-Mail ist als Renderer-Modul aufgestellt.
+  - Keine Sidebar-Anbindung.
+  - Kein Modulkatalog-Eintrag.
+  - Main-/IPC-/Drucktechnik bleibt im Main-Prozess.
+- Audio / Diktat ist als Renderer-Modul begonnen.
+  - Aktuell nur `TranscriptionService` als Renderer-Adapter.
+  - Keine Sidebar-Anbindung.
+  - Kein Modulkatalog-Eintrag.
+  - Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
+- Protokoll-Modul ist eingefroren.
+- `npm test` war gruen.
+- GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
+- App-Sichtung fuer den Projekt-Arbeitsbereich wurde durchgefuehrt und passt (Projektklick -> Arbeitsbereich, Modulauswahl unveraendert auf `Protokoll`).
 - Repo ist auf GitHub aktualisiert.
 - `AGENTS.md` und `PLAN.md` sind vorhanden.
 - Codex Cloud ist eingerichtet und kann das Repo lesen.
+- Das Mutter-/Kind-Prinzip ist als verbindliche Leitlinie fuer die gesamte App festgehalten.
 - Der erste CSS-Schritt im Modul `Protokoll` wurde umgesetzt.
 - Der Speichern-/Löschen-Vertrag im Tops-Bereich wurde zwischen Verhalten und Tests synchronisiert.
 
 ## Architektur-Flag
+- Die gesamte App folgt dem Mutter-/Kind-Prinzip.
+- Diese Codebasis ist die Mutter-App / Bauzentrale.
+- Spaetere Kinder-Apps sind freigegebene Produktvarianten mit eingegrenztem Modul- und Funktionsumfang.
+- Die Mutter-App verwaltet Module, Kunden/Nutzer, Lizenzen, Laufzeiten, Updateberechtigungen und Varianten.
+- Kinder-Apps pruefen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
+- Kinder-Apps werden nicht zur Verwaltungszentrale fuer andere Kunden oder Varianten ausgebaut.
+- Nicht jedes Modul ist ein auswählbares Projektmodul; Maschinenraum-Dienste und Verwaltungsbereiche bleiben getrennt.
+- Aktuell auswählbares Projektmodul ist `Protokoll`; `Restarbeiten` kann spaeter als Projektmodul hinzukommen.
+- `Ausgabe / Drucken / E-Mail` und `Audio / Diktat` sind Maschinenraum-Dienste, keine Projektmodule.
+- `Lizenzierung`, `Settings`, `Updates`, `Backup` und `Diagnose` sind Verwaltung oder Maschinenraum, keine Projektmodule.
+- Die Projektverwaltung setzt den Projektkontext und oeffnet den Projekt-Arbeitsbereich.
+- Ein Projektklick startet nicht direkt `Protokoll`.
+- Im Projekt-Arbeitsbereich werden nur auswählbare Projektmodule angeboten.
 - Das Protokoll-Modul ist aktuell eingefroren.
-- Keine weitere Mini-Modularisierung ohne ausdrücklichen Auftrag.
+- Keine weitere Mini-Modularisierung ohne ausdruecklichen Auftrag.
 - `TopsHeader` und `TopsList` wurden heimgeholt.
 - `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen.
 - Weitere Änderungen nur bei echtem Fehler oder konkretem Featurebedarf.
+
+## Projektverwaltung
+- Der erste Modul-Meilenstein ist abgeschlossen.
+- Die Projektverwaltung ist als Renderer-Modul unter `src/renderer/modules/projektverwaltung` aufgestellt.
+- Der bestehende Sidebar-Einstieg `Projekte` bleibt der einzige sichtbare Einstieg.
+- Es gibt keinen zusätzlichen Sidebar-Button `Projektverwaltung`.
+- Der Router nutzt den Modulpfad.
+- Die alten View-Dateien bleiben als Compatibility-Re-Exports bestehen.
+- Keine DB-/IPC-Logik wurde verschoben.
+- `npm test` war gruen.
+- GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
+- App-Sichtung fuer den Projekt-Arbeitsbereich wurde durchgefuehrt und passt (Projektklick -> Arbeitsbereich, Modulauswahl unveraendert auf `Protokoll`).
+
+## Ausgabe
+- Das Renderer-Modul ist aufgestellt.
+- Es gibt keine Sidebar-Anbindung und keinen Modulkatalog-Eintrag.
+- Die Main-/IPC-/Drucktechnik bleibt im Main-Prozess.
+
+## Audio
+- Das Renderer-Modul ist begonnen.
+- Aktuell ist nur `TranscriptionService` als Renderer-Adapter im Modul verankert.
+- Es gibt keine Sidebar-Anbindung und keinen Modulkatalog-Eintrag.
+- Die Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
 
 ---
 
@@ -44,7 +95,7 @@ Sie ergänzt:
   - `src/renderer/modules/protokoll/styles.js`
   - `src/renderer/modules/protokoll/styles/tops.css`
 - Commit:
-  - `a0585ef`
+  - `siehe aktuellen Branch-Commit`
 - Hinweise:
   - Commit enthält zusätzlich das Entfernen von ChatGPT-Export-Artefakten
 
@@ -63,8 +114,26 @@ Sie ergänzt:
 
 ---
 
+#### Paket: ProjectWorkspaceScreen minimal stabilisiert
+- Status: erledigt
+- Beschreibung:
+  - robuste Anzeige fuer Projektnummer und Projektname im Projekt-Arbeitsbereich nachgezogen
+  - Nachladen ohne direkt uebergebenes Projekt bleibt ueber `window.bbmDb.projectsList()` erhalten
+  - klare Meldung fuer nicht gefundenes Projekt und Ruecksprung-Button `Zur Projektliste` ueber `showProjects()` ergaenzt
+  - Projektauswahl bleibt auf `Protokoll` begrenzt; Maschinenraumdienste weiterhin unsichtbar
+  - passende Modul-Tests fuer robuste Anzeige, Ruecksprung und Projektlade-Faelle erweitert
+- Betroffene Dateien:
+  - `src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine Router-Aenderungen, keine Protokoll-Aenderungen
+
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen
+
+Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist abgeschlossen und dokumentiert.
 
 ---
 
@@ -75,6 +144,18 @@ Sie ergänzt:
   - `AGENTS.md` gefunden
   - `PLAN.md` gefunden
   - Codex konnte den Repo-Stand lesen
+- Cloud-Kontrolllauf (zum damaligen Stand):
+  - Branch: `modularisierung/projektverwaltung`
+  - `HEAD` und `origin/modularisierung/projektverwaltung` waren identisch
+  - der lokale Diff war leer
+- Abgeschlossener Meilenstein:
+  - Projekt-Arbeitsbereich ist technisch umgesetzt und stabilisiert
+  - Projektklick oeffnet nicht mehr direkt Protokoll
+  - Projektklick oeffnet den Projekt-Arbeitsbereich
+  - einziges auswaehlbares Projektmodul ist aktuell Protokoll
+  - Maschinenraumdienste erscheinen dort nicht als Projektmodule
+  - Protokoll-Logik blieb unveraendert
+  - `npm test` war gruen
 - Beobachtung:
   - Ohne Fortschrittsdatei interpretiert Codex den Plan zu wörtlich und nimmt erledigte Meilensteine erneut als offen an.
 
@@ -95,7 +176,6 @@ Der nächste noch nicht erledigte Meilenstein ist:
 ---
 
 ## Offene Hindernisse / bekannte Probleme
-- Bestehende Tests sind aktuell nicht vollständig grün.
 - Frühere Läufe zeigten bestehende Altprobleme, u. a.:
   - `ERR_INVALID_URL` im Zusammenhang mit ESM/CSS-Importpfaden
 - Diese Probleme gelten nicht automatisch als Teil jedes neuen Mini-Pakets.
@@ -122,4 +202,3 @@ Wichtig:
 - `AGENTS.md` = Hausordnung
 - `PLAN.md` = Bauablaufplan
 - `STATUS.md` = Bautagebuch / Ist-Stand
-

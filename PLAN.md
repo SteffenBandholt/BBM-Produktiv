@@ -12,11 +12,62 @@ Bestehendes Verhalten soll stabil bleiben, außer wenn ein Meilenstein ausdrück
 - keine Änderungen außerhalb des aktuellen Meilensteins
 - bei Problemen erst stoppen und berichten
 - erst nach erfolgreicher Prüfung mit dem nächsten Meilenstein weitermachen
+- die weitere Modularisierung folgt verbindlich dem Mutter-/Kind-Prinzip: Die Codebasis ist die Mutter-App / Bauzentrale; spaetere Kinder-Apps sind freigegebene Produktvarianten mit eingegrenztem Funktionsumfang
+- im Projektkontext gelten nur fachliche Arbeitsbereiche als auswählbare Projektmodule; Maschinenraum-Dienste und Verwaltungsbereiche bleiben davon getrennt
 
 ## Priorität
 Der aktuelle Fokus liegt auf:
 1. Modul **Protokoll**
 2. Konsolidierung verbliebener Altpfade
+
+Hinweis:
+- Die Projektverwaltung ist als Renderer-Modul aufgestellt und der erste Modul-Meilenstein ist abgeschlossen.
+- Der bestehende Sidebar-Einstieg `Projekte` bleibt der einzige sichtbare Einstieg.
+- Ausgabe / Drucken / E-Mail ist als Renderer-Modul aufgestellt; kein Sidebar-Eintrag und kein Modulkatalog-Eintrag.
+- Audio / Diktat ist als Renderer-Modul begonnen; aktuell nur `TranscriptionService`, ohne Sidebar- oder Modulkatalog-Eintrag.
+- Das Protokoll-Modul bleibt eingefroren.
+- `npm test` war gruen.
+- Das Mutter-/Kind-Prinzip ist die verbindliche Leitlinie fuer alle weiteren Modularisierungsschritte.
+- Auswählbare Projektmodule und Maschinenraum-Bereiche sind architektonisch getrennt.
+- Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist fachlich und technisch abgeschlossen und dokumentiert.
+
+---
+
+## Meilensteinabschluss: Projektverwaltung / Projekt-Arbeitsbereich
+
+### Ziel (abgeschlossen)
+Der Projekt-Arbeitsbereich ist als eigener Schritt nach der Projektverwaltung fachlich und technisch abgeschlossen und in der Doku konsistent nachgezogen.
+
+### Fachliches Ergebnis
+- Projektverwaltung bleibt Einstieg in den Projektkontext.
+- Projektverwaltung kann Projekte anlegen, bearbeiten, archivieren, wiederherstellen und auswaehlen.
+- Projektklick fuehrt in den Projekt-Arbeitsbereich (nicht direkt in `Protokoll`).
+- Der Projekt-Arbeitsbereich zeigt das aktive Projekt und nur auswaehlbare Projektmodule.
+- Aktuell ist `Protokoll` der einzige auswaehlbare Projektmodul-Einstieg.
+- `Restarbeiten` bleibt nur als spaetere Option benannt, ohne aktuelle Freischaltung.
+- Maschinenraum-Dienste (`Ausgabe / Drucken / E-Mail`, `Audio / Diktat`, `Lizenzierung`, `Settings`, `Updates`, `Backup`, `Diagnose`) sind keine Projektmodule.
+
+### Nachweise
+- Technischer Stand in der Doku: Projekt-Arbeitsbereich eingebaut und stabilisiert.
+- `npm test` laeuft gruen.
+- GitHub Action `.github/workflows/npm-test.yml` fuehrt `npm test` fuer `main` und `modularisierung/projektverwaltung` bei Push und Pull Request aus.
+- App-Sichtung ist als fachliche Abnahme fuer diesen Meilenstein dokumentiert.
+
+### Betroffene Dateien
+- `PLAN.md`
+- `ARCHITECTURE.md`
+- `STATUS.md`
+
+### Nicht anfassen
+- Code
+- Router
+- UI
+- Navigationsverhalten
+- Datenbank
+
+### Status
+- abgeschlossen (Dokumentations-Meilenstein)
+- kein Code
 
 ---
 
@@ -157,4 +208,3 @@ Standardverhalten:
 - genau den nächsten offenen Meilenstein bearbeiten
 - danach berichten
 - erst dann mit dem nächsten weitermachen
-
