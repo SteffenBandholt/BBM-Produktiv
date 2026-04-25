@@ -27,6 +27,9 @@ Sie ergänzt:
   - Keine Sidebar-Anbindung.
   - Kein Modulkatalog-Eintrag.
   - Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
+- Im Bereich `Lizenz / bearbeiten` wird das Feature `audio` sichtbar als `Dictate` angezeigt.
+  - Der interne Key bleibt `audio`.
+  - Die sichtbare Feature-Liste zeigt kein `audio` und `Dictate` nebeneinander.
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
@@ -136,6 +139,21 @@ Sie ergänzt:
   - `siehe aktuellen Branch-Commit`
 - Hinweise:
   - Keine Router-, Sidebar-, Projektmodul- oder TranscriptionService-Aenderung
+
+#### Paket: Lizenz-Featurelabel `audio` als `Dictate` anzeigen
+- Status: erledigt
+- Beschreibung:
+  - sichtbares Feature-Label `audio` im Bereich `Lizenz / bearbeiten` auf `Dictate` umgestellt
+  - interner Feature-Key `audio` unverändert gelassen
+  - Ergebnisanzeige der erzeugten Lizenz zeigt den sichtbaren Feature-Namen ebenfalls als `Dictate`
+- Betroffene Dateien:
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/audioModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine Änderungen an Settings-/Diktieren-Tab, Sidebar, Projektmodul oder Whisper-Logik
 
 #### Paket: ProjectWorkspaceScreen minimal stabilisiert
 - Status: erledigt

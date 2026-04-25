@@ -63,6 +63,19 @@ async function runAudioModuleTests(run) {
     assert.equal(moduleReadmeSource.includes("kein Sidebar-Modul"), true);
     assert.equal(moduleReadmeSource.includes("Diktieren"), true);
   });
+
+  await run("Lizenz-Editor zeigt audio fachlich als Dictate", () => {
+    assert.equal(settingsViewSource.includes('const formatLicenseFeatureLabel = (feature) =>'), true);
+    assert.equal(settingsViewSource.includes('normalizedFeature === "audio" ? "Dictate" : normalizedFeature'), true);
+    assert.equal(settingsViewSource.includes('document.createTextNode(formatLicenseFeatureLabel(feature))'), true);
+    assert.equal(
+      settingsViewSource.includes(
+        'res.features.map(formatLicenseFeatureLabel).join(", ")'
+      ),
+      true
+    );
+    assert.equal(settingsViewSource.includes('checkbox.value = feature;'), true);
+  });
 }
 
 module.exports = { runAudioModuleTests };

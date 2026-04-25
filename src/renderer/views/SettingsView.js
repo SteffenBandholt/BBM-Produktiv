@@ -2151,6 +2151,11 @@ export default class SettingsView {
     featureWrap.style.flexWrap = "wrap";
     featureWrap.style.gap = "8px 12px";
 
+    const formatLicenseFeatureLabel = (feature) => {
+      const normalizedFeature = String(feature || "").trim();
+      return normalizedFeature === "audio" ? "Dictate" : normalizedFeature;
+    };
+
     const featureInputs = ["app", "pdf", "export", "mail", "audio"].map((feature) => {
       const label = document.createElement("label");
       label.style.display = "inline-flex";
@@ -2161,7 +2166,7 @@ export default class SettingsView {
       checkbox.type = "checkbox";
       checkbox.value = feature;
       checkbox.checked = true;
-      label.append(checkbox, document.createTextNode(feature));
+      label.append(checkbox, document.createTextNode(formatLicenseFeatureLabel(feature)));
       featureWrap.appendChild(label);
       return checkbox;
     });
@@ -2528,7 +2533,7 @@ export default class SettingsView {
           `Kunde: ${res?.customerName || "-"}`,
           `Lizenznummer: ${res?.licenseId || "-"}`,
           `Machine-ID: ${res?.machineId || "-"}`,
-          `Features: ${Array.isArray(res?.features) && res.features.length ? res.features.join(", ") : "-"}`,
+          `Features: ${Array.isArray(res?.features) && res.features.length ? res.features.map(formatLicenseFeatureLabel).join(", ") : "-"}`,
         ].join("\n");
       } catch (err) {
         licenseGenStatus.textContent = this._formatLicenseGenerationError(err?.message || err);
