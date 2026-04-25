@@ -39,7 +39,8 @@ Sie ergänzt:
 - Lizenzverwaltung ist als eigenes Zielmodul geplant; die Detailbeschreibung liegt unter `docs/modules/lizenzverwaltung.md`.
 - Lizenzverwaltung Paket 1 ist vorbereitet:
   - neues Modulverzeichnis `src/renderer/modules/lizenzverwaltung/` mit Skeleton-Screen
-  - Einstieg im Entwicklungsbereich unter `Adminbereich` angebunden
+  - Einstieg im Entwicklungsbereich unter `Adminbereich` als eigene Kachel angebunden
+  - `Adminbereich` oeffnet als eigenes Popup mit Kachel `Lizenzverwaltung`
   - weiterhin kein Modulkatalog-/Projektmodul-Eintrag
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
@@ -205,6 +206,23 @@ Sie ergänzt:
   - Kein Umbau am bestehenden Lizenz-bearbeiten-Popup
   - Keine Lizenzlogik-, Produktumfangs-, Kunden- oder Historienimplementierung
 
+#### Paket: Lizenzverwaltung Paket 2 (Adminbereich als eigenes Popup)
+- Status: erledigt
+- Beschreibung:
+  - `Adminbereich` aus den Entwicklung-Tabs entfernt und als eigener Einstieg/Kachel im Entwicklungs-Popup verankert
+  - neues Adminbereich-Popup mit Kachel `Lizenzverwaltung` ergänzt
+  - Klick auf `Lizenzverwaltung` zeigt weiterhin den bestehenden `LicenseAdminScreen`-Skeleton
+  - bestehende Entwicklung-Tabs (`Versionierung`, `Lizenz / bearbeiten`, `DB-Diagnose`, `Diktieren`, `Druck / TOP-Liste`) bleiben unverändert erhalten
+  - Testvertrag fuer Adminbereich-/Lizenzverwaltung-Einstieg entsprechend erweitert
+- Betroffene Dateien:
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine Aenderung an Lizenzlogik, Projektmodulen, Sidebar oder Whisper/Diktier-Backends
+
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen
 
@@ -239,9 +257,9 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 ## Aktuell nächster sinnvoller Schritt
 Der naechste sinnvolle kleine Schritt nach diesem Paket ist:
 
-### Lizenzverwaltung Paket 2 vorbereiten
+### Lizenzverwaltung Paket 3 vorbereiten
 - Ziel:
-  - bestehendes Lizenz-bearbeiten-Popup schrittweise in Richtung Produktumfangsgliederung vorbereiten
+  - Adminbereich-Popup fachlich weiter strukturieren, ohne neue Logik freizuschalten
 - Wichtig:
   - weiterhin keine Lizenzlogik oder Dateierzeugung umbauen
   - Audio / Diktat bleibt Maschinenraum ohne Projektmodul- oder Sidebar-Eintrag

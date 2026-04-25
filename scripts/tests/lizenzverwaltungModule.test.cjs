@@ -61,9 +61,21 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(projektEntry.moduleLabel, "Projektverwaltung");
   });
 
-  await run("Lizenzverwaltung: Entwicklung enthaelt den Einstieg Adminbereich", () => {
+  await run("Lizenzverwaltung: Entwicklung enthaelt den Einstieg Adminbereich als Kachel, nicht als Tab", () => {
     assert.equal(settingsViewSource.includes("../modules/lizenzverwaltung/index.js"), true);
-    assert.equal(settingsViewSource.includes("makeDevTabButton(\"Adminbereich\", \"admin\")"), true);
+    assert.equal(settingsViewSource.includes("makeDevTabButton(\"Adminbereich\", \"admin\")"), false);
+    assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), true);
+    assert.equal(settingsViewSource.includes("openAdminbereichPopup"), true);
+  });
+
+  await run("Lizenzverwaltung: Adminbereich-Popup enthaelt Kachel Lizenzverwaltung", () => {
+    assert.equal(settingsViewSource.includes("title: \"Adminbereich\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Lizenzverwaltung\""), true);
+    assert.equal(settingsViewSource.includes("openLicenseAdminPopup"), true);
+  });
+
+  await run("Lizenzverwaltung: Kachel Lizenzverwaltung zeigt weiter den LicenseAdminScreen-Skeleton", () => {
+    assert.equal(settingsViewSource.includes("title: \"Lizenzverwaltung\""), true);
     assert.equal(settingsViewSource.includes("new LicenseAdminScreen()"), true);
   });
 }

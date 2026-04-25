@@ -4639,16 +4639,55 @@ export default class SettingsView {
         tabTools.style.gap = "10px";
         tabTools.append(printBox, topsLimitBox);
 
-        const tabAdmin = document.createElement("div");
-        tabAdmin.style.display = "grid";
-        tabAdmin.style.gap = "10px";
-        const licenseAdminScreen = new LicenseAdminScreen();
-        tabAdmin.append(licenseAdminScreen.render());
+        const openLicenseAdminPopup = () => {
+          const licenseAdminScreen = new LicenseAdminScreen();
+          openSettingsModal({
+            title: "Lizenzverwaltung",
+            content: [licenseAdminScreen.render()],
+            closeOnly: true,
+          });
+        };
+
+        const openAdminbereichPopup = () => {
+          const adminTiles = document.createElement("div");
+          adminTiles.style.display = "grid";
+          adminTiles.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
+          adminTiles.style.gap = "10px";
+          adminTiles.style.maxWidth = "720px";
+          adminTiles.append(
+            mkTile({
+              titleText: "Lizenzverwaltung",
+              subText: "Kunden, Lizenzen, Produktumfang, Historie",
+              onClick: async () => {
+                openLicenseAdminPopup();
+              },
+            })
+          );
+          openSettingsModal({
+            title: "Adminbereich",
+            content: [adminTiles],
+            closeOnly: true,
+          });
+        };
+
+        const devEntryTiles = document.createElement("div");
+        devEntryTiles.style.display = "grid";
+        devEntryTiles.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
+        devEntryTiles.style.gap = "10px";
+        devEntryTiles.style.maxWidth = "720px";
+        devEntryTiles.append(
+          mkTile({
+            titleText: "Adminbereich",
+            subText: "Adminmodule und Verwaltungswerkzeuge",
+            onClick: async () => {
+              openAdminbereichPopup();
+            },
+          })
+        );
 
         const devTabs = [
           { key: "version", label: "Versionierung", el: tabVersion },
           { key: "license", label: "Lizenz / bearbeiten", el: tabLicense },
-          { key: "admin", label: "Adminbereich", el: tabAdmin },
           { key: "db", label: "DB-Diagnose", el: tabDb },
           { key: "dictation", label: "Diktieren", el: tabDictation },
           { key: "tools", label: "Druck / TOP-Liste", el: tabTools },
@@ -4687,14 +4726,13 @@ export default class SettingsView {
         devTabHead.append(
           makeDevTabButton("Versionierung", "version"),
           makeDevTabButton("Lizenz / bearbeiten", "license"),
-          makeDevTabButton("Adminbereich", "admin"),
           makeDevTabButton("DB-Diagnose", "db"),
           makeDevTabButton("Diktieren", "dictation"),
           makeDevTabButton("Druck / TOP-Liste", "tools")
         );
 
-        devTabBody.append(tabVersion, tabLicense, tabAdmin, tabDb, tabDictation, tabTools);
-        devTabWrap.append(devTabHead, devTabBody);
+        devTabBody.append(tabVersion, tabLicense, tabDb, tabDictation, tabTools);
+        devTabWrap.append(devEntryTiles, devTabHead, devTabBody);
         setDevTab("version");
 
         this._openSettingsModal({
