@@ -29,6 +29,12 @@ async function runLizenzverwaltungModuleTests(run) {
       normalizeCustomerRecord,
       normalizeLicenseRecord,
       normalizeLicenseHistoryRecord,
+      listCustomers,
+      saveCustomer,
+      listLicenses,
+      saveLicense,
+      listHistory,
+      addHistoryEntry,
     },
     {
       getProjektverwaltungModuleEntry,
@@ -155,6 +161,92 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(normalizedLicense.licenseMode, "full");
     assert.deepEqual(normalizedLicense.productScope.zusatzfunktionen, ["mail"]);
     assert.deepEqual(normalizedLicense.productScope.standardumfang, []);
+  });
+
+
+  await run("Lizenzverwaltung: Storage-Service wird exportiert und ist Promise-kompatibel", async () => {
+    assert.equal(typeof listCustomers, "function");
+    assert.equal(typeof saveCustomer, "function");
+    assert.equal(typeof listLicenses, "function");
+    assert.equal(typeof saveLicense, "function");
+    assert.equal(typeof listHistory, "function");
+    assert.equal(typeof addHistoryEntry, "function");
+
+    assert.equal(listCustomers.constructor.name, "AsyncFunction");
+    assert.equal(saveCustomer.constructor.name, "AsyncFunction");
+    assert.equal(listLicenses.constructor.name, "AsyncFunction");
+    assert.equal(saveLicense.constructor.name, "AsyncFunction");
+    assert.equal(listHistory.constructor.name, "AsyncFunction");
+    assert.equal(addHistoryEntry.constructor.name, "AsyncFunction");
+
+    assert.equal(typeof listCustomers().then, "function");
+    assert.equal(typeof listLicenses().then, "function");
+    assert.equal(typeof listHistory().then, "function");
+  });
+
+  await run("Lizenzverwaltung: listCustomers liefert initial eine Liste", async () => {
+    const customers = await listCustomers();
+    assert.equal(Array.isArray(customers), true);
+    assert.equal(customers.length, 0);
+  });
+
+  await run("Lizenzverwaltung: saveCustomer normalisiert und speichert im Stub", async () => {
+    const record = await saveCustomer({
+      customerNumber: "  K-200  ",
+      companyName: "  Beispiel GmbH  ",
+      contactPerson: "  Max Mustermann  ",
+      email: "  kontakt@example.org  ",
+    });
+
+    assert.equal(record.customerNumber, "K-200");
+    assert.equal(record.companyName, "Beispiel GmbH");
+
+    const customers = await listCustomers();
+    assert.equal(customers.some((entry) => entry.customerNumber === "K-200"), true);
+  });
+
+  await run("Lizenzverwaltung: listLicenses liefert initial eine Liste", async () => {
+    const licenses = await listLicenses();
+    assert.equal(Array.isArray(licenses), true);
+    assert.equal(licenses.length, 0);
+  });
+
+  await run("Lizenzverwaltung: saveLicense normalisiert und speichert im Stub", async () => {
+    const record = await saveLicense({
+      licenseId: "  LIC-200  ",
+      customerNumber: "  K-200  ",
+      licenseMode: "FULL",
+      productScope: { zusatzfunktionen: ["mail"] },
+    });
+
+    assert.equal(record.licenseId, "LIC-200");
+    assert.equal(record.licenseMode, "full");
+
+    const licenses = await listLicenses();
+    assert.equal(licenses.some((entry) => entry.licenseId === "LIC-200"), true);
+  });
+
+  await run("Lizenzverwaltung: listHistory liefert initial eine Liste", async () => {
+    const history = await listHistory();
+    assert.equal(Array.isArray(history), true);
+    assert.equal(history.length, 0);
+  });
+
+  await run("Lizenzverwaltung: addHistoryEntry normalisiert und speichert im Stub", async () => {
+    const record = await addHistoryEntry({
+      createdAt: "  2026-04-26  ",
+      licenseId: "  LIC-200  ",
+      customer: "  Beispiel GmbH  ",
+      productScope: "  app,pdf,export  ",
+      validUntil: "  2027-04-26  ",
+      outputPath: "  /tmp/license.json  ",
+    });
+
+    assert.equal(record.createdAt, "2026-04-26");
+    assert.equal(record.licenseId, "LIC-200");
+
+    const history = await listHistory();
+    assert.equal(history.some((entry) => entry.licenseId === "LIC-200"), true);
   });
 
   await run("Lizenzverwaltung: Historien-Datensatz zentral vorbereitet", () => {
