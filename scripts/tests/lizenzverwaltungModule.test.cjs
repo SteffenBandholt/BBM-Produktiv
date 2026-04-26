@@ -497,10 +497,49 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(storageServiceSource.includes("window.api"), false);
   });
 
-  await run("Lizenzverwaltung: keine IPC-/Preload-Umstellung fuer Main-Service erfolgt", () => {
-    assert.equal(preloadSource.includes("licenseAdminService"), false);
-    assert.equal(licenseIpcSource.includes("licenseAdminService"), false);
+  await run("Lizenzverwaltung: IPC-Handler fuer Admin-Lizenzkunden sind vorbereitet", () => {
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license-admin:list-customers"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license-admin:save-customer"'), true);
   });
+
+  await run("Lizenzverwaltung: IPC-Handler fuer Admin-Lizenzen sind vorbereitet", () => {
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license-admin:list-records"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license-admin:save-record"'), true);
+  });
+
+  await run("Lizenzverwaltung: IPC-Handler fuer Admin-Lizenzhistorie sind vorbereitet", () => {
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license-admin:list-history"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license-admin:add-history-entry"'), true);
+  });
+
+  await run("Lizenzverwaltung: licenseAdminService wird in der Lizenz-IPC genutzt", () => {
+    assert.equal(licenseIpcSource.includes('require("../licensing/licenseAdminService")'), true);
+    assert.equal(licenseIpcSource.includes("licenseAdminService.listCustomers"), true);
+    assert.equal(licenseIpcSource.includes("licenseAdminService.saveCustomer"), true);
+    assert.equal(licenseIpcSource.includes("licenseAdminService.listLicenses"), true);
+    assert.equal(licenseIpcSource.includes("licenseAdminService.saveLicense"), true);
+    assert.equal(licenseIpcSource.includes("licenseAdminService.listHistory"), true);
+    assert.equal(licenseIpcSource.includes("licenseAdminService.addHistoryEntry"), true);
+  });
+
+  await run("Lizenzverwaltung: bestehende Lizenzdatei-/Status-IPC bleibt vorhanden", () => {
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license:get-status"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license:get-installed"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license:import"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license:delete"'), true);
+  });
+
+  await run(
+    "Lizenzverwaltung: Preload-API enthaelt list/save fuer Admin-Lizenzkunden, -Lizenzen und -Historie",
+    () => {
+      assert.equal(preloadSource.includes("licenseAdminListLicenseCustomers"), true);
+      assert.equal(preloadSource.includes("licenseAdminSaveLicenseCustomer"), true);
+      assert.equal(preloadSource.includes("licenseAdminListLicenseRecords"), true);
+      assert.equal(preloadSource.includes("licenseAdminSaveLicenseRecord"), true);
+      assert.equal(preloadSource.includes("licenseAdminListLicenseHistory"), true);
+      assert.equal(preloadSource.includes("licenseAdminAddLicenseHistoryEntry"), true);
+    }
+  );
 
   await run("Lizenzverwaltung: bleibt Adminbereich und erscheint nicht als Projektmodul", () => {
     const projektEntry = getProjektverwaltungModuleEntry();

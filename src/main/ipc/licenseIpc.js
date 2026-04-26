@@ -10,6 +10,7 @@ const { saveLicense, loadLicense, deleteLicense } = require("../licensing/licens
 const { getMachineId } = require("../licensing/deviceIdentity");
 const { verifyLicense } = require("../licensing/licenseVerifier");
 const { refreshStatus } = require("../licensing/licenseService");
+const licenseAdminService = require("../licensing/licenseAdminService");
 
 const LICENSE_FILE_FILTER = [
   {
@@ -596,10 +597,37 @@ function registerLicenseDevGeneratorIpc() {
   });
 }
 
+function registerLicenseAdminDataIpc() {
+  ipcMain.handle("license-admin:list-customers", async () => {
+    return licenseAdminService.listCustomers();
+  });
+
+  ipcMain.handle("license-admin:save-customer", async (_event, customer) => {
+    return licenseAdminService.saveCustomer(customer || {});
+  });
+
+  ipcMain.handle("license-admin:list-records", async () => {
+    return licenseAdminService.listLicenses();
+  });
+
+  ipcMain.handle("license-admin:save-record", async (_event, license) => {
+    return licenseAdminService.saveLicense(license || {});
+  });
+
+  ipcMain.handle("license-admin:list-history", async () => {
+    return licenseAdminService.listHistory();
+  });
+
+  ipcMain.handle("license-admin:add-history-entry", async (_event, entry) => {
+    return licenseAdminService.addHistoryEntry(entry || {});
+  });
+}
+
 function registerLicenseIpc() {
   registerLicenseStatusIpc();
   registerLicenseInstallationIpc();
   registerLicenseDevGeneratorIpc();
+  registerLicenseAdminDataIpc();
 }
 
 module.exports = {

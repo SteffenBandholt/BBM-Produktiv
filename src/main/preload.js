@@ -203,6 +203,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
   licenseLoadForEdit: (data) => ipcRenderer.invoke("license:load-for-edit", data),
   licenseGenerate: (data) => ipcRenderer.invoke("license:generate", data),
   licenseOpenOutputDir: (data) => ipcRenderer.invoke("license:open-output-dir", data),
+  licenseAdminListLicenseCustomers: () => ipcRenderer.invoke("license-admin:list-customers"),
+  licenseAdminSaveLicenseCustomer: (customer) => ipcRenderer.invoke("license-admin:save-customer", customer),
+  licenseAdminListLicenseRecords: () => ipcRenderer.invoke("license-admin:list-records"),
+  licenseAdminSaveLicenseRecord: (license) => ipcRenderer.invoke("license-admin:save-record", license),
+  licenseAdminListLicenseHistory: () => ipcRenderer.invoke("license-admin:list-history"),
+  licenseAdminAddLicenseHistoryEntry: (entry) => ipcRenderer.invoke("license-admin:add-history-entry", entry),
 
   // DEV: Audio Override Status
   devAudioUnlockStatus: () => ipcRenderer.invoke("dev:audioUnlockStatus"),

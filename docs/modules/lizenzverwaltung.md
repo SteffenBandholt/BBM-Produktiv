@@ -230,6 +230,7 @@ Kurzstand (Paket DB-Schema/Migration):
 - Die Tabellen `license_customers`, `license_records` und `license_history` sind in `src/main/db/database.js` als nicht-destruktive Tabellenanlage vorbereitet.
 - `licenseStorageService` bleibt weiterhin In-Memory; UI und IPC wurden in diesem Paket nicht umgestellt.
 - Main-Process-Service ist vorbereitet (`src/main/licensing/licenseAdminService.js`), aber noch nicht per IPC angebunden.
+- IPC-/Preload-Schnitt ist vorbereitet; Renderer-`licenseStorageService` bleibt weiterhin In-Memory und wurde noch nicht umgestellt.
 
 ### Abgrenzung
 Nicht Teil dieses Schritts:
