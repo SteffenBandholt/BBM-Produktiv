@@ -101,6 +101,9 @@ Sie ergänzt:
   - IPC-/Preload-Schnitt fuer Admin-Lizenzdaten ist vorbereitet (`license-admin:*` + `licenseAdmin*` im Preload)
   - Renderer-`licenseStorageService` nutzt jetzt die Preload-/IPC-Schnitt (`window.bbmDb.licenseAdmin*`) statt In-Memory
   - Kunden, Lizenzen und Historie werden dadurch dauerhaft in `app.db` gespeichert; UI blieb minimal angepasst
+- Lizenzverwaltung naechstes Paket ist umgesetzt:
+  - Lizenzen-Maske laedt gespeicherte Kunden per `listCustomers()` als Auswahlfeld und speichert Lizenzen mit `customer_id/customerId`-Verknuepfung.
+  - Gespeicherte Lizenzen zeigen Kundennummer/Firma lesbar an; ohne vorhandene Kunden blockiert die Maske das erfolgreiche Speichern mit Hinweis.
 
 - Lizenzverwaltung Neuversuch (In-Memory-Listenansichten) ist nachgezogen:
   - Testnachweise in `scripts/tests/lizenzverwaltungModule.test.cjs` fuer Kunden/Lizenzen/Historie um Listenfelder und Refresh nach `Merken` ergaenzt

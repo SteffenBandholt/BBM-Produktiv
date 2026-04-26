@@ -48,6 +48,8 @@ export function createDefaultCustomerRecord(overrides = {}) {
 export function createDefaultLicenseRecord(overrides = {}) {
   return {
     licenseId: "",
+    customerId: "",
+    customer_id: "",
     customerNumber: "",
     productScope: {
       standardumfang: [],
@@ -95,6 +97,8 @@ export function normalizeLicenseRecord(input = {}) {
 
   return {
     licenseId: String(input.licenseId ?? base.licenseId).trim(),
+    customerId: String(input.customerId ?? input.customer_id ?? base.customerId).trim(),
+    customer_id: String(input.customer_id ?? input.customerId ?? base.customer_id).trim(),
     customerNumber: String(input.customerNumber ?? base.customerNumber).trim(),
     productScope: {
       standardumfang: Array.isArray(input?.productScope?.standardumfang)

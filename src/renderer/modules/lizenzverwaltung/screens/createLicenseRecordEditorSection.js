@@ -4,11 +4,12 @@ import {
   createDefaultLicenseRecord,
   normalizeLicenseRecord,
 } from "../licenseRecords.js";
-import { listLicenses, saveLicense } from "../licenseStorageService.js";
+import { listCustomers, listLicenses, saveLicense } from "../licenseStorageService.js";
 
 export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPopupButtonStyle } = {}) {
   const model = createDefaultLicenseRecord();
   const fieldInputs = new Map();
+  let knownCustomers = [];
 
   const card = document.createElement("div");
   if (typeof applyPopupCardStyle === "function") {
@@ -22,7 +23,7 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
   title.style.margin = "0";
 
   const hint = document.createElement("p");
-  hint.textContent = "vorbereitet, noch ohne Speicherung";
+  hint.textContent = "vorbereitet, mit dauerhafter Speicherung";
   hint.style.margin = "0";
   hint.style.fontSize = "12px";
   hint.style.opacity = "0.8";
@@ -53,6 +54,68 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
   listContent.style.display = "grid";
   listContent.style.gap = "4px";
 
+  const customerHint = document.createElement("div");
+  customerHint.style.fontSize = "12px";
+  customerHint.style.padding = "8px";
+  customerHint.style.borderRadius = "8px";
+  customerHint.style.background = "#f8fafc";
+  customerHint.style.border = "1px solid rgba(0,0,0,0.08)";
+
+  const getCustomerKey = (customer = {}) =>
+    String(customer.id || customer.customerId || customer.customer_id || "");
+
+  const getCustomerNumber = (customer = {}) =>
+    String(customer.customerNumber || customer.customer_number || "").trim();
+
+  const getCustomerCompany = (customer = {}) =>
+    String(customer.companyName || customer.company_name || "").trim();
+
+  const buildCustomerLabel = (customer = {}) => {
+    const customerNumber = getCustomerNumber(customer) || "-";
+    const companyName = getCustomerCompany(customer) || "-";
+    return `${customerNumber} | ${companyName}`;
+  };
+
+  const refreshCustomers = async () => {
+    const select = fieldInputs.get("customerNumber");
+    if (!select) return;
+
+    const customers = await listCustomers();
+    knownCustomers = Array.isArray(customers) ? customers : [];
+
+    select.replaceChildren();
+    if (knownCustomers.length < 1) {
+      const empty = document.createElement("option");
+      empty.value = "";
+      empty.textContent = "Bitte zuerst einen Kunden anlegen.";
+      select.appendChild(empty);
+      select.value = "";
+      model.customerId = "";
+      model.customer_id = "";
+      model.customerNumber = "";
+      customerHint.textContent = "Bitte zuerst einen Kunden anlegen.";
+      customerHint.style.background = "#fef2f2";
+      customerHint.style.borderColor = "rgba(220, 38, 38, 0.35)";
+      return;
+    }
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Kunden auswaehlen";
+    select.appendChild(placeholder);
+
+    knownCustomers.forEach((customer) => {
+      const option = document.createElement("option");
+      option.value = getCustomerKey(customer);
+      option.textContent = buildCustomerLabel(customer);
+      select.appendChild(option);
+    });
+
+    customerHint.textContent = "Kunde wird ueber customer_id/customerId mit der Lizenz verknuepft.";
+    customerHint.style.background = "#f8fafc";
+    customerHint.style.borderColor = "rgba(0,0,0,0.08)";
+  };
+
   const refreshRememberedLicenses = async () => {
     const licenses = await listLicenses();
     listContent.replaceChildren();
@@ -64,7 +127,18 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
 
     licenses.forEach((entry) => {
       const row = document.createElement("div");
-      row.textContent = `${entry.licenseId || "-"} | ${entry.customerNumber || "-"} | ${entry.validUntil || "-"} | ${entry.licenseMode || "-"}`;
+      const customerDisplay =
+        String(entry.customerDisplay || "").trim() ||
+        [
+          String(entry.customerNumber || entry.customer_number || "").trim(),
+          String(entry.companyName || entry.company_name || "").trim(),
+        ]
+          .filter(Boolean)
+          .join(" | ") ||
+        String(entry.customerId || entry.customer_id || "").trim() ||
+        "-";
+
+      row.textContent = `${entry.licenseId || entry.license_id || "-"} | ${customerDisplay} | ${entry.validUntil || entry.valid_until || "-"} | ${entry.licenseMode || entry.license_mode || "-"}`;
       listContent.appendChild(row);
     });
   };
@@ -84,6 +158,16 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
         continue;
       }
 
+      if (field.key === "customerNumber") {
+        const selectedCustomer = knownCustomers.find(
+          (entry) => getCustomerKey(entry) === String(input.value || "")
+        );
+        model.customerId = selectedCustomer ? getCustomerKey(selectedCustomer) : "";
+        model.customer_id = model.customerId;
+        model.customerNumber = selectedCustomer ? getCustomerNumber(selectedCustomer) : "";
+        continue;
+      }
+
       model[field.key] = String(input.value || "");
     }
   };
@@ -95,6 +179,8 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
 
       if (field.key === "productScope") {
         input.value = String(model.productScope?._display || "");
+      } else if (field.key === "customerNumber") {
+        input.value = String(model.customerId || model.customer_id || "");
       } else {
         input.value = model[field.key] || "";
       }
@@ -105,11 +191,15 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
   const runValidation = () => {
     updateModelFromInputs();
     const normalized = normalizeLicenseRecord(model);
+    const hasCustomers = knownCustomers.length > 0;
 
     const missingRequired = LICENSE_RECORD_FIELDS.filter((field) => {
       if (!field.required) return false;
       if (field.key === "productScope") {
         return !String(model.productScope?._display || "").trim();
+      }
+      if (field.key === "customerNumber") {
+        return !String(normalized.customerId || normalized.customer_id || "").trim();
       }
       return !String(normalized[field.key] || "").trim();
     });
@@ -119,6 +209,15 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
       if (!input) continue;
       const isMissing = missingRequired.some((entry) => entry.key === field.key);
       input.style.borderColor = isMissing ? "#dc2626" : "";
+    }
+
+    if (!hasCustomers) {
+      const customerInput = fieldInputs.get("customerNumber");
+      if (customerInput) customerInput.style.borderColor = "#dc2626";
+      message.textContent = "Bitte zuerst einen Kunden anlegen.";
+      message.style.background = "#fef2f2";
+      message.style.borderColor = "rgba(220, 38, 38, 0.35)";
+      return false;
     }
 
     if (missingRequired.length > 0) {
@@ -150,6 +249,8 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
     if (field.key === "notes") {
       input = document.createElement("textarea");
       input.rows = 4;
+    } else if (field.key === "customerNumber") {
+      input = document.createElement("select");
     } else if (field.key === "licenseMode") {
       input = document.createElement("select");
       LICENSE_MODES.forEach((mode) => {
@@ -182,6 +283,8 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
   btnReset.onclick = () => {
     Object.assign(model, createDefaultLicenseRecord());
     model.productScope._display = "";
+    model.customerId = "";
+    model.customer_id = "";
     applyModelToInputs();
     message.textContent = "Formular geleert. Noch ohne Speicherung.";
     message.style.background = "#f8fafc";
@@ -216,7 +319,8 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
 
   applyModelToInputs();
   listWrap.append(listTitle, listContent);
-  card.append(title, hint, form, buttons, message, listWrap);
+  card.append(title, hint, customerHint, form, buttons, message, listWrap);
+  refreshCustomers();
   refreshRememberedLicenses();
   return card;
 }
