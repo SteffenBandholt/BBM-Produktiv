@@ -2,6 +2,7 @@ import {
   LicenseAdminScreen,
   createCustomerEditorSection,
   createLicenseEditorSection,
+  createProductScopeEditorSection,
   createLicenseRecordEditorSection,
   LIZENZVERWALTUNG_WORK_SCREEN_ID,
 } from "./screens/index.js";
@@ -28,6 +29,7 @@ export {
   LicenseAdminScreen,
   createCustomerEditorSection,
   createLicenseEditorSection,
+  createProductScopeEditorSection,
   createLicenseRecordEditorSection,
   LIZENZVERWALTUNG_WORK_SCREEN_ID,
 };

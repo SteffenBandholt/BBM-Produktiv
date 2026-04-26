@@ -42,10 +42,16 @@ function buildPreparedFieldHint(fields) {
 }
 
 export default class LicenseAdminScreen {
-  constructor({ onOpenLicenseEditor, onOpenCustomerEditor, onOpenLicenseRecordEditor } = {}) {
+  constructor({
+    onOpenLicenseEditor,
+    onOpenCustomerEditor,
+    onOpenLicenseRecordEditor,
+    onOpenProductScopeEditor,
+  } = {}) {
     this.onOpenLicenseEditor = onOpenLicenseEditor;
     this.onOpenCustomerEditor = onOpenCustomerEditor;
     this.onOpenLicenseRecordEditor = onOpenLicenseRecordEditor;
+    this.onOpenProductScopeEditor = onOpenProductScopeEditor;
   }
 
   render() {
@@ -90,7 +96,12 @@ export default class LicenseAdminScreen {
         actionLabel: "Oeffnen",
         onClick: this.onOpenLicenseRecordEditor,
       }),
-      buildSectionCard({ title: "Produktumfang" }),
+      buildSectionCard({
+        title: "Produktumfang",
+        hint: "vorbereitet, noch ohne Speicherung",
+        actionLabel: "Oeffnen",
+        onClick: this.onOpenProductScopeEditor,
+      }),
       buildSectionCard({ title: "Historie" })
     );
 

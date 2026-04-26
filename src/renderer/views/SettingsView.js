@@ -17,6 +17,7 @@ import {
   LicenseAdminScreen,
   createCustomerEditorSection,
   createLicenseEditorSection,
+  createProductScopeEditorSection,
   createLicenseRecordEditorSection,
 } from "../modules/lizenzverwaltung/index.js";
 
@@ -4056,11 +4057,24 @@ export default class SettingsView {
       });
     };
 
+    const openProductScopeEditorPopup = () => {
+      const productScopeEditor = createProductScopeEditorSection({
+        applyPopupCardStyle,
+        applyPopupButtonStyle,
+      });
+      openSettingsModal({
+        title: "Produktumfang",
+        content: [productScopeEditor],
+        closeOnly: true,
+      });
+    };
+
     const openLicenseAdminPopup = () => {
       const licenseAdminScreen = new LicenseAdminScreen({
         onOpenLicenseEditor: openLicenseEditorPopup,
         onOpenCustomerEditor: openCustomerEditorPopup,
         onOpenLicenseRecordEditor: openLicenseRecordEditorPopup,
+        onOpenProductScopeEditor: openProductScopeEditorPopup,
       });
       openSettingsModal({
         title: "Lizenzverwaltung",

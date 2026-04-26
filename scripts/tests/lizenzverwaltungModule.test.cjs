@@ -16,6 +16,7 @@ async function runLizenzverwaltungModuleTests(run) {
       LicenseAdminScreen,
       createCustomerEditorSection,
       createLicenseEditorSection,
+      createProductScopeEditorSection,
       createLicenseRecordEditorSection,
       CUSTOMER_RECORD_FIELDS,
       LICENSE_RECORD_FIELDS,
@@ -45,6 +46,9 @@ async function runLizenzverwaltungModuleTests(run) {
   const licenseEditorSource = read("src/renderer/modules/lizenzverwaltung/screens/createLicenseEditorSection.js");
   const customerEditorSource = read("src/renderer/modules/lizenzverwaltung/screens/createCustomerEditorSection.js");
   const licenseRecordEditorSource = read("src/renderer/modules/lizenzverwaltung/screens/createLicenseRecordEditorSection.js");
+  const productScopeEditorSource = read(
+    "src/renderer/modules/lizenzverwaltung/screens/createProductScopeEditorSection.js"
+  );
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const projectWorkspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const settingsViewSource = read("src/renderer/views/SettingsView.js");
@@ -57,6 +61,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(typeof LicenseAdminScreen, "function");
     assert.equal(typeof createCustomerEditorSection, "function");
     assert.equal(typeof createLicenseEditorSection, "function");
+    assert.equal(typeof createProductScopeEditorSection, "function");
     assert.equal(typeof createLicenseRecordEditorSection, "function");
     assert.equal(entry.moduleId, "lizenzverwaltung");
     assert.equal(entry.workScreenId, "licenseAdmin");
@@ -208,6 +213,34 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordEditorSource.includes("Keine Speicherung"), true);
   });
 
+  await run("Produktumfang-UI: nutzt PRODUCT_SCOPE und enthaelt Gruppen", () => {
+    assert.equal(productScopeEditorSource.includes('from "../productScope.js"'), true);
+    assert.equal(productScopeEditorSource.includes("PRODUCT_SCOPE.standardumfang"), true);
+    assert.equal(productScopeEditorSource.includes("PRODUCT_SCOPE.zusatzfunktionen"), true);
+    assert.equal(productScopeEditorSource.includes("PRODUCT_SCOPE.module"), true);
+    assert.equal(PRODUCT_SCOPE.standardumfang.title, "Standardumfang");
+    assert.equal(PRODUCT_SCOPE.zusatzfunktionen.title, "Zusatzfunktionen");
+    assert.equal(PRODUCT_SCOPE.module.title, "Module");
+  });
+
+  await run("Produktumfang-UI: enthaelt app, pdf, export, mail, Dictate, Protokoll, Dummy", () => {
+    const standardLabels = PRODUCT_SCOPE.standardumfang.entries.map((entry) => entry.label);
+    const optionalLabels = PRODUCT_SCOPE.zusatzfunktionen.entries.map((entry) => entry.label);
+    const moduleLabels = PRODUCT_SCOPE.module.entries.map((entry) => entry.label);
+    assert.deepEqual(standardLabels, ["app", "pdf", "export"]);
+    assert.deepEqual(optionalLabels, ["mail", "Dictate"]);
+    assert.deepEqual(moduleLabels, ["Protokoll", "Dummy"]);
+  });
+
+  await run("Produktumfang-UI: bietet Neu / leeren und Pruefen mit lokaler Standardumfang-Pruefung", () => {
+    assert.equal(productScopeEditorSource.includes("Produktumfang"), true);
+    assert.equal(productScopeEditorSource.includes("vorbereitet, noch ohne Speicherung"), true);
+    assert.equal(productScopeEditorSource.includes("Neu / leeren"), true);
+    assert.equal(productScopeEditorSource.includes("Pruefen"), true);
+    assert.equal(productScopeEditorSource.includes("Standardumfang muss app, pdf und export enthalten"), true);
+    assert.equal(productScopeEditorSource.includes("Keine Speicherung"), true);
+  });
+
   await run("Lizenzverwaltung: bleibt Adminbereich und erscheint nicht als Projektmodul", () => {
     const projektEntry = getProjektverwaltungModuleEntry();
 
@@ -244,6 +277,16 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("onOpenLicenseEditor: openLicenseEditorPopup"), true);
     assert.equal(settingsViewSource.includes("onOpenCustomerEditor: openCustomerEditorPopup"), true);
     assert.equal(settingsViewSource.includes("title: \"Lizenz erstellen / bearbeiten\""), true);
+  });
+
+  await run("LicenseAdminScreen enthaelt Einstieg fuer Produktumfang", () => {
+    assert.equal(screenSource.includes("onOpenProductScopeEditor"), true);
+    assert.equal(screenSource.includes("title: \"Produktumfang\""), true);
+    assert.equal(screenSource.includes("hint: \"vorbereitet, noch ohne Speicherung\""), true);
+    assert.equal(screenSource.includes("actionLabel: \"Oeffnen\""), true);
+    assert.equal(settingsViewSource.includes("createProductScopeEditorSection"), true);
+    assert.equal(settingsViewSource.includes("const openProductScopeEditorPopup = () =>"), true);
+    assert.equal(settingsViewSource.includes("onOpenProductScopeEditor: openProductScopeEditorPopup"), true);
   });
 
   await run("Lizenz / bearbeiten: enthaelt Produktumfang statt flacher Feature-Zeile", () => {
