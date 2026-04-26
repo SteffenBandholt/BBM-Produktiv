@@ -3,7 +3,7 @@ import {
   createDefaultLicenseHistoryRecord,
   normalizeLicenseHistoryRecord,
 } from "../licenseRecords.js";
-import { addHistoryEntry } from "../licenseStorageService.js";
+import { addHistoryEntry, listHistory } from "../licenseStorageService.js";
 
 export function createLicenseHistorySection({ applyPopupCardStyle, applyPopupButtonStyle } = {}) {
   const model = createDefaultLicenseHistoryRecord();
@@ -37,6 +37,36 @@ export function createLicenseHistorySection({ applyPopupCardStyle, applyPopupBut
   message.style.background = "#f8fafc";
   message.style.border = "1px solid rgba(0,0,0,0.08)";
   message.textContent = "Noch keine Pruefung ausgefuehrt.";
+
+  const listWrap = document.createElement("div");
+  listWrap.style.display = "grid";
+  listWrap.style.gap = "6px";
+
+  const listTitle = document.createElement("h4");
+  listTitle.textContent = "Temporär gemerkte Historie";
+  listTitle.style.margin = "0";
+  listTitle.style.fontSize = "13px";
+
+  const listContent = document.createElement("div");
+  listContent.style.fontSize = "12px";
+  listContent.style.display = "grid";
+  listContent.style.gap = "4px";
+
+  const refreshRememberedHistory = async () => {
+    const history = await listHistory();
+    listContent.replaceChildren();
+
+    if (!Array.isArray(history) || history.length < 1) {
+      listContent.textContent = "Noch keine temporär gemerkte Historie.";
+      return;
+    }
+
+    history.forEach((entry) => {
+      const row = document.createElement("div");
+      row.textContent = `${entry.createdAt || "-"} | ${entry.licenseId || "-"} | ${entry.customer || "-"} | ${entry.validUntil || "-"}`;
+      listContent.appendChild(row);
+    });
+  };
 
   const updateModelFromInputs = () => {
     for (const field of LICENSE_HISTORY_FIELDS) {
@@ -143,6 +173,7 @@ export function createLicenseHistorySection({ applyPopupCardStyle, applyPopupBut
     if (!isValid) return;
 
     await addHistoryEntry(model);
+    await refreshRememberedHistory();
     message.textContent =
       "Datensatz temporaer gemerkt, noch keine dauerhafte Speicherung (nur In-Memory-Storage-Service).";
     message.style.background = "#f0fdf4";
@@ -152,6 +183,8 @@ export function createLicenseHistorySection({ applyPopupCardStyle, applyPopupBut
   buttons.append(btnReset, btnValidate, btnRemember);
 
   applyModelToInputs();
-  card.append(title, hint, form, buttons, message);
+  listWrap.append(listTitle, listContent);
+  card.append(title, hint, form, buttons, message, listWrap);
+  refreshRememberedHistory();
   return card;
 }

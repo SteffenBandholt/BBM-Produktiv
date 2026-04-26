@@ -86,6 +86,11 @@ Sie ergänzt:
   - vorbereitete Masken `Kunden`, `Lizenzen` und `Historie` enthalten zusaetzlich den Button `Merken`
   - `Merken` validiert lokal und ruft danach den In-Memory-Storage-Service auf (`saveCustomer`, `saveLicense`, `addHistoryEntry`)
   - Erfolgsmeldung in allen drei Masken: nur temporaer/In-Memory gemerkt, keine dauerhafte Speicherung
+- Lizenzverwaltung naechstes Paket ist umgesetzt:
+  - Kunden-, Lizenzen- und Historie-Maske zeigen unterhalb der Buttons einfache In-Memory-Listenansichten
+  - Listen werden ueber `listCustomers`, `listLicenses` und `listHistory` geladen
+  - Nach erfolgreichem `Merken` wird die jeweilige Liste sofort aktualisiert (ohne Persistenz, nur im laufenden App-Prozess)
+  - Leerer Zustand ist in allen drei Masken sichtbar
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
@@ -433,7 +438,7 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 ## Aktuell nächster sinnvoller Schritt
 Der naechste sinnvolle kleine Schritt nach diesem Paket ist:
 
-### Lizenzverwaltung Paket 5 vorbereiten
+### Lizenzverwaltung Paket 6 vorbereiten
 - Ziel:
   - bestehende Lizenz laden, aendern und neu ausgeben als naechsten kleinen Adminschritt vorbereiten
 - Wichtig:

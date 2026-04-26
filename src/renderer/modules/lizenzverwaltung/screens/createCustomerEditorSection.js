@@ -3,7 +3,7 @@ import {
   createDefaultCustomerRecord,
   normalizeCustomerRecord,
 } from "../licenseRecords.js";
-import { saveCustomer } from "../licenseStorageService.js";
+import { listCustomers, saveCustomer } from "../licenseStorageService.js";
 
 export function createCustomerEditorSection({ applyPopupCardStyle, applyPopupButtonStyle } = {}) {
   const model = createDefaultCustomerRecord();
@@ -37,6 +37,36 @@ export function createCustomerEditorSection({ applyPopupCardStyle, applyPopupBut
   message.style.background = "#f8fafc";
   message.style.border = "1px solid rgba(0,0,0,0.08)";
   message.textContent = "Noch keine Pruefung ausgefuehrt.";
+
+  const listWrap = document.createElement("div");
+  listWrap.style.display = "grid";
+  listWrap.style.gap = "6px";
+
+  const listTitle = document.createElement("h4");
+  listTitle.textContent = "Temporär gemerkte Kunden";
+  listTitle.style.margin = "0";
+  listTitle.style.fontSize = "13px";
+
+  const listContent = document.createElement("div");
+  listContent.style.fontSize = "12px";
+  listContent.style.display = "grid";
+  listContent.style.gap = "4px";
+
+  const refreshRememberedCustomers = async () => {
+    const customers = await listCustomers();
+    listContent.replaceChildren();
+
+    if (!Array.isArray(customers) || customers.length < 1) {
+      listContent.textContent = "Noch keine temporär gemerkten Kunden.";
+      return;
+    }
+
+    customers.forEach((entry) => {
+      const row = document.createElement("div");
+      row.textContent = `${entry.customerNumber || "-"} | ${entry.companyName || "-"} | ${entry.email || "-"}`;
+      listContent.appendChild(row);
+    });
+  };
 
   const updateModelFromInputs = () => {
     for (const field of CUSTOMER_RECORD_FIELDS) {
@@ -142,6 +172,7 @@ export function createCustomerEditorSection({ applyPopupCardStyle, applyPopupBut
     if (!isValid) return;
 
     await saveCustomer(model);
+    await refreshRememberedCustomers();
     message.textContent =
       "Datensatz temporaer gemerkt, noch keine dauerhafte Speicherung (nur In-Memory-Storage-Service).";
     message.style.background = "#f0fdf4";
@@ -151,6 +182,8 @@ export function createCustomerEditorSection({ applyPopupCardStyle, applyPopupBut
   buttons.append(btnReset, btnValidate, btnRemember);
 
   applyModelToInputs();
-  card.append(title, hint, form, buttons, message);
+  listWrap.append(listTitle, listContent);
+  card.append(title, hint, form, buttons, message, listWrap);
+  refreshRememberedCustomers();
   return card;
 }
