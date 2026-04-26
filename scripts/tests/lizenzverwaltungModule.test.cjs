@@ -66,6 +66,9 @@ async function runLizenzverwaltungModuleTests(run) {
   const projectWorkspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const settingsViewSource = read("src/renderer/views/SettingsView.js");
   const databaseSource = read("src/main/db/database.js");
+  const licenseAdminServiceSource = read("src/main/licensing/licenseAdminService.js");
+  const preloadSource = read("src/main/preload.js");
+  const licenseIpcSource = read("src/main/ipc/licenseIpc.js");
 
   await run("Lizenzverwaltung: Modul exportiert LicenseAdminScreen", () => {
     const entry = getLizenzverwaltungModuleEntry();
@@ -454,6 +457,35 @@ async function runLizenzverwaltungModuleTests(run) {
     );
   });
 
+  await run("Lizenzverwaltung Main-Service: Datei existiert und exportiert die geplanten Funktionen", () => {
+    const service = require(path.join(process.cwd(), "src/main/licensing/licenseAdminService.js"));
+
+    assert.equal(typeof service.listCustomers, "function");
+    assert.equal(typeof service.saveCustomer, "function");
+    assert.equal(typeof service.listLicenses, "function");
+    assert.equal(typeof service.saveLicense, "function");
+    assert.equal(typeof service.listHistory, "function");
+    assert.equal(typeof service.addHistoryEntry, "function");
+  });
+
+  await run("Lizenzverwaltung Main-Service: nutzt database.js und Admin-Tabellen", () => {
+    assert.equal(licenseAdminServiceSource.includes('require("../db/database")'), true);
+    assert.equal(licenseAdminServiceSource.includes("license_customers"), true);
+    assert.equal(licenseAdminServiceSource.includes("license_records"), true);
+    assert.equal(licenseAdminServiceSource.includes("license_history"), true);
+  });
+
+  await run("Lizenzverwaltung Main-Service: speichert product_scope_json als JSON-String", () => {
+    assert.equal(licenseAdminServiceSource.includes("product_scope_json"), true);
+    assert.equal(licenseAdminServiceSource.includes("JSON.stringify"), true);
+    assert.equal(licenseAdminServiceSource.includes("JSON.parse"), true);
+  });
+
+  await run("Lizenzverwaltung Main-Service: bleibt im Main-Prozess ohne Renderer-Import", () => {
+    assert.equal(licenseAdminServiceSource.includes("../renderer"), false);
+    assert.equal(licenseAdminServiceSource.includes("licenseStorageService"), false);
+  });
+
   await run("Lizenzverwaltung: keine IPC-Umstellung und Renderer-Storage bleibt In-Memory", () => {
     const storageServiceSource = read("src/renderer/modules/lizenzverwaltung/licenseStorageService.js");
 
@@ -463,6 +495,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(storageServiceSource.includes("history: []"), true);
     assert.equal(storageServiceSource.includes("ipcRenderer"), false);
     assert.equal(storageServiceSource.includes("window.api"), false);
+  });
+
+  await run("Lizenzverwaltung: keine IPC-/Preload-Umstellung fuer Main-Service erfolgt", () => {
+    assert.equal(preloadSource.includes("licenseAdminService"), false);
+    assert.equal(licenseIpcSource.includes("licenseAdminService"), false);
   });
 
   await run("Lizenzverwaltung: bleibt Adminbereich und erscheint nicht als Projektmodul", () => {
