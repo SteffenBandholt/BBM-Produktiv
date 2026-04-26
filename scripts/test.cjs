@@ -17,6 +17,7 @@ const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungMo
 const { runAusgabeModuleTests } = require("./tests/ausgabeModule.test.cjs");
 const { runAudioModuleTests } = require("./tests/audioModule.test.cjs");
 const { runLizenzverwaltungModuleTests } = require("./tests/lizenzverwaltungModule.test.cjs");
+const { runLicenseAdminDataflowTests } = require("./tests/licenseAdminDataflow.test.cjs");
 
 let failed = false;
 
@@ -80,6 +81,7 @@ async function main() {
   await runAusgabeModuleTests(run);
   await runAudioModuleTests(run);
   await runLizenzverwaltungModuleTests(run);
+  await runLicenseAdminDataflowTests(run);
 
   if (failed) {
     process.exitCode = 1;

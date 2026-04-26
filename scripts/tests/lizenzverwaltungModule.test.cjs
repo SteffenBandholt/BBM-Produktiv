@@ -371,20 +371,14 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(typeof normalizeLicenseHistoryRecord, "function");
     assert.equal(licenseRecordsSource.includes("LICENSE_HISTORY_FIELDS"), true);
   });
-  await run("Lizenzverwaltung: Skeleton enthaelt Einstieg und Platzhalterbereiche", () => {
-    assert.equal(screenSource.includes("Lizenzverwaltung"), true);
-    assert.equal(screenSource.includes("Admin-/Mutter-App-Modul"), true);
-    assert.equal(screenSource.includes("Umsetzung erfolgt schrittweise"), true);
-    assert.equal(screenSource.includes("Lizenz erstellen / bearbeiten"), true);
-    assert.equal(screenSource.includes("Kunden"), true);
-    assert.equal(screenSource.includes('actionLabel: "Oeffnen"'), true);
-    assert.equal(screenSource.includes("Lizenzen"), true);
-    assert.equal(screenSource.includes("onOpenLicenseRecordEditor"), true);
-    assert.equal(screenSource.includes("Vorbereitete Felder:"), true);
-    assert.equal(screenSource.includes("CUSTOMER_RECORD_FIELDS"), true);
-    assert.equal(screenSource.includes("LICENSE_RECORD_FIELDS"), true);
-    assert.equal(screenSource.includes("Produktumfang"), true);
-    assert.equal(screenSource.includes("Historie"), true);
+  await run("Lizenzverwaltung: Screen startet mit Kundenliste und Rueck-Navigation", () => {
+    assert.equal(screenSource.includes("Kundenliste"), true);
+    assert.equal(screenSource.includes("Neuer Kunde"), true);
+    assert.equal(screenSource.includes("Zurueck zum Adminbereich"), true);
+    assert.equal(screenSource.includes("Kundennummer"), true);
+    assert.equal(screenSource.includes("Firma / Kundenname"), true);
+    assert.equal(screenSource.includes("Ansprechpartner"), true);
+    assert.equal(screenSource.includes("E-Mail"), true);
   });
 
 
@@ -721,30 +715,23 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("openLicenseAdminPopup"), true);
   });
 
-  await run("LicenseAdminScreen enthaelt Einstieg Lizenz erstellen / bearbeiten", () => {
+  await run("LicenseAdminScreen wird direkt aus SettingsView geoeffnet", () => {
     assert.equal(settingsViewSource.includes("new LicenseAdminScreen({"), true);
-    assert.equal(settingsViewSource.includes("onOpenLicenseEditor: openLicenseEditorPopup"), true);
-    assert.equal(settingsViewSource.includes("onOpenCustomerEditor: openCustomerEditorPopup"), true);
-    assert.equal(settingsViewSource.includes("title: \"Lizenz erstellen / bearbeiten\""), true);
+    assert.equal(settingsViewSource.includes("onBackToAdminbereich"), true);
+    assert.equal(settingsViewSource.includes("onOpenLicenseEditor"), false);
   });
 
-  await run("LicenseAdminScreen enthaelt Einstieg fuer Produktumfang", () => {
-    assert.equal(screenSource.includes("onOpenProductScopeEditor"), true);
-    assert.equal(screenSource.includes("title: \"Produktumfang\""), true);
-    assert.equal(screenSource.includes("hint: \"vorbereitet, noch ohne Speicherung\""), true);
-    assert.equal(screenSource.includes("actionLabel: \"Oeffnen\""), true);
-    assert.equal(settingsViewSource.includes("createProductScopeEditorSection"), true);
-    assert.equal(settingsViewSource.includes("const openProductScopeEditorPopup = () =>"), true);
-    assert.equal(settingsViewSource.includes("onOpenProductScopeEditor: openProductScopeEditorPopup"), true);
+  await run("LicenseAdminScreen enthaelt kundenbezogene Lizenzfunktionen", () => {
+    assert.equal(screenSource.includes("Lizenzen dieses Kunden"), true);
+    assert.equal(screenSource.includes("Neue Lizenz"), true);
+    assert.equal(screenSource.includes("Zurueck zur Kundenliste"), true);
+    assert.equal(screenSource.includes("Zurueck zum Kunden"), true);
   });
 
-  await run("LicenseAdminScreen enthaelt Einstieg fuer Historie", () => {
-    assert.equal(screenSource.includes("onOpenLicenseHistory"), true);
-    assert.equal(screenSource.includes("title: \"Historie\""), true);
-    assert.equal(screenSource.includes("hint: \"vorbereitet, noch ohne Speicherung\""), true);
-    assert.equal(settingsViewSource.includes("createLicenseHistorySection"), true);
-    assert.equal(settingsViewSource.includes("const openLicenseHistoryPopup = () =>"), true);
-    assert.equal(settingsViewSource.includes("onOpenLicenseHistory: openLicenseHistoryPopup"), true);
+  await run("LicenseAdminScreen zeigt Speicherkontext und Kundenpflicht", () => {
+    assert.equal(screenSource.includes("Kunde:"), true);
+    assert.equal(screenSource.includes("CUSTOMER_CONTEXT_REQUIRED"), true);
+    assert.equal(screenSource.includes("Speichern ohne geoeffneten Kunden ist unmoeglich"), true);
   });
 
   await run("Lizenz / bearbeiten: enthaelt Produktumfang statt flacher Feature-Zeile", () => {

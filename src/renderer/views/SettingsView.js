@@ -13,14 +13,7 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
-import {
-  LicenseAdminScreen,
-  createCustomerEditorSection,
-  createLicenseEditorSection,
-  createProductScopeEditorSection,
-  createLicenseRecordEditorSection,
-  createLicenseHistorySection,
-} from "../modules/lizenzverwaltung/index.js";
+import { LicenseAdminScreen } from "../modules/lizenzverwaltung/index.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -4017,78 +4010,12 @@ export default class SettingsView {
       },
     });
 
-    const openLicenseEditorPopup = () => {
-      const licenseEditor = createLicenseEditorSection({
-        mkRow,
-        applyPopupCardStyle,
-        applyPopupButtonStyle,
-        formatLicenseBinding: (binding) => this._formatLicenseBinding(binding),
-        formatLicenseGenerationError: (raw) => this._formatLicenseGenerationError(raw),
-      });
-      openSettingsModal({
-        title: "Lizenz erstellen / bearbeiten",
-        content: [licenseEditor],
-        closeOnly: true,
-      });
-    };
-
-
-    const openCustomerEditorPopup = () => {
-      const customerEditor = createCustomerEditorSection({
-        applyPopupCardStyle,
-        applyPopupButtonStyle,
-      });
-      openSettingsModal({
-        title: "Kunden",
-        content: [customerEditor],
-        closeOnly: true,
-      });
-    };
-
-
-    const openLicenseRecordEditorPopup = () => {
-      const licenseRecordEditor = createLicenseRecordEditorSection({
-        applyPopupCardStyle,
-        applyPopupButtonStyle,
-      });
-      openSettingsModal({
-        title: "Lizenzen",
-        content: [licenseRecordEditor],
-        closeOnly: true,
-      });
-    };
-
-    const openProductScopeEditorPopup = () => {
-      const productScopeEditor = createProductScopeEditorSection({
-        applyPopupCardStyle,
-        applyPopupButtonStyle,
-      });
-      openSettingsModal({
-        title: "Produktumfang",
-        content: [productScopeEditor],
-        closeOnly: true,
-      });
-    };
-
-    const openLicenseHistoryPopup = () => {
-      const licenseHistoryEditor = createLicenseHistorySection({
-        applyPopupCardStyle,
-        applyPopupButtonStyle,
-      });
-      openSettingsModal({
-        title: "Historie",
-        content: [licenseHistoryEditor],
-        closeOnly: true,
-      });
-    };
-
     const openLicenseAdminPopup = () => {
       const licenseAdminScreen = new LicenseAdminScreen({
-        onOpenLicenseEditor: openLicenseEditorPopup,
-        onOpenCustomerEditor: openCustomerEditorPopup,
-        onOpenLicenseRecordEditor: openLicenseRecordEditorPopup,
-        onOpenProductScopeEditor: openProductScopeEditorPopup,
-        onOpenLicenseHistory: openLicenseHistoryPopup,
+        onBackToAdminbereich: () => {
+          this._closeSettingsModal();
+          openAdminbereichPopup();
+        },
       });
       openSettingsModal({
         title: "Lizenzverwaltung",
