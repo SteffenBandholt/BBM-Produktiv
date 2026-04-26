@@ -178,6 +178,20 @@ Sie ergänzt:
 ## Erledigte Meilensteine / Pakete
 
 ### Erledigt
+#### Paket: Zeitzonenstabiler Test fuer erzeugte Lizenz-ID
+- Status: erledigt
+- Beschreibung:
+  - Zeitzonenabhaengiger Testfall in `scripts/tests/licenseAdminDataflow.test.cjs` stabilisiert
+  - UTC-String-Zeitpunkt (`new Date("2026-04-26T13:14:15Z")`) durch lokale Datumskonstruktion ersetzt
+  - Erwartete Lizenz-ID `LIC-20260426-131415` bleibt unveraendert
+- Betroffene Dateien:
+  - `scripts/tests/licenseAdminDataflow.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine Aenderung an Lizenzlogik, DB, UI oder Lizenzdatei-Erzeugung
+
 #### Paket: CSS-Altpfad im Modul Protokoll abbauen
 - Status: erledigt
 - Beschreibung:

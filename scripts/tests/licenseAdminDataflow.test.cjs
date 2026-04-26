@@ -363,7 +363,8 @@ async function runLicenseAdminDataflowTests(run) {
 
     assert.equal(assertCustomerContext({ id: "customer-1" }), "customer-1");
     assert.throws(() => assertCustomerContext({}), /CUSTOMER_CONTEXT_REQUIRED/);
-    assert.equal(createGeneratedLicenseId(new Date("2026-04-26T13:14:15Z")), "LIC-20260426-131415");
+    const fixedLocalDate = new Date(2026, 3, 26, 13, 14, 15);
+    assert.equal(createGeneratedLicenseId(fixedLocalDate), "LIC-20260426-131415");
 
     const payload = buildLicenseEditorPayload({
       customer: { id: "customer-55" },
@@ -376,7 +377,7 @@ async function runLicenseAdminDataflowTests(run) {
         machine_id: "MID-55",
         notes: "note",
       },
-      now: new Date("2026-04-26T13:14:15Z"),
+      now: fixedLocalDate,
     });
 
     assert.equal(payload.customer_id, "customer-55");
