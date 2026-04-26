@@ -10,6 +10,13 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
   const model = createDefaultLicenseRecord();
   const fieldInputs = new Map();
   let knownCustomers = [];
+  const generateLicenseId = () => {
+    const now = new Date();
+    const part = (value) => String(value).padStart(2, "0");
+    const datePart = `${now.getFullYear()}${part(now.getMonth() + 1)}${part(now.getDate())}`;
+    const timePart = `${part(now.getHours())}${part(now.getMinutes())}${part(now.getSeconds())}`;
+    return `LIC-${datePart}-${timePart}`;
+  };
 
   const card = document.createElement("div");
   if (typeof applyPopupCardStyle === "function") {
@@ -190,6 +197,15 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
 
   const runValidation = () => {
     updateModelFromInputs();
+
+    if (!String(model.licenseId || "").trim()) {
+      model.licenseId = generateLicenseId();
+      const licenseIdInput = fieldInputs.get("licenseId");
+      if (licenseIdInput) {
+        licenseIdInput.value = model.licenseId;
+      }
+    }
+
     const normalized = normalizeLicenseRecord(model);
     const hasCustomers = knownCustomers.length > 0;
 

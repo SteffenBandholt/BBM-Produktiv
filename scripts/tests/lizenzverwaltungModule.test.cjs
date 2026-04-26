@@ -469,6 +469,10 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordEditorSource.includes("customer_id/customerId"), true);
     assert.equal(licenseRecordEditorSource.includes('input = document.createElement("select")'), true);
     assert.equal(licenseRecordEditorSource.includes("runValidation();"), true);
+    assert.equal(licenseRecordEditorSource.includes("generateLicenseId"), true);
+    assert.equal(licenseRecordEditorSource.includes("LIC-"), true);
+    assert.equal(licenseRecordEditorSource.includes("model.licenseId = generateLicenseId();"), true);
+    assert.equal(licenseRecordEditorSource.includes("licenseIdInput.value = model.licenseId;"), true);
   });
 
   await run("Lizenzen-UI: Speichern ohne Kunden ist nicht erfolgreich", () => {
@@ -476,6 +480,21 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordEditorSource.includes('message.textContent = "Bitte zuerst einen Kunden anlegen."'), true);
     assert.equal(licenseRecordEditorSource.includes("if (!isValid) return;"), true);
     assert.equal(licenseRecordEditorSource.includes("await saveLicense(model);"), true);
+  });
+
+  await run("Lizenzen-UI: Leere Lizenz-ID wird automatisch erzeugt und blockiert Pruefen nicht", () => {
+    assert.equal(licenseRecordEditorSource.includes('if (!String(model.licenseId || "").trim())'), true);
+    assert.equal(licenseRecordEditorSource.includes("model.licenseId = generateLicenseId();"), true);
+    assert.equal(
+      licenseRecordEditorSource.includes("Pruefung erfolgreich: Pflichtfelder sind befuellt. Keine Speicherung erfolgt."),
+      true
+    );
+  });
+
+  await run("Lizenzen-UI: Manuelle Lizenz-ID bleibt erhalten und wird nicht ueberschrieben", () => {
+    assert.equal(licenseRecordEditorSource.includes("if (!String(model.licenseId || \"\").trim())"), true);
+    assert.equal(licenseRecordEditorSource.includes("model[field.key] = String(input.value || \"\");"), true);
+    assert.equal(licenseRecordEditorSource.includes("model.licenseId = generateLicenseId();"), true);
   });
 
   await run("Lizenzen-UI: Save vorbereitet mit customerId/customer_id", () => {
