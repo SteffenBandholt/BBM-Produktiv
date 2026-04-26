@@ -4,6 +4,7 @@ import {
   createLicenseEditorSection,
   createProductScopeEditorSection,
   createLicenseRecordEditorSection,
+  createLicenseHistorySection,
   LIZENZVERWALTUNG_WORK_SCREEN_ID,
 } from "./screens/index.js";
 
@@ -31,6 +32,7 @@ export {
   createLicenseEditorSection,
   createProductScopeEditorSection,
   createLicenseRecordEditorSection,
+  createLicenseHistorySection,
   LIZENZVERWALTUNG_WORK_SCREEN_ID,
 };
 export * from "./screens/index.js";

@@ -19,6 +19,7 @@ import {
   createLicenseEditorSection,
   createProductScopeEditorSection,
   createLicenseRecordEditorSection,
+  createLicenseHistorySection,
 } from "../modules/lizenzverwaltung/index.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
@@ -4069,12 +4070,25 @@ export default class SettingsView {
       });
     };
 
+    const openLicenseHistoryPopup = () => {
+      const licenseHistoryEditor = createLicenseHistorySection({
+        applyPopupCardStyle,
+        applyPopupButtonStyle,
+      });
+      openSettingsModal({
+        title: "Historie",
+        content: [licenseHistoryEditor],
+        closeOnly: true,
+      });
+    };
+
     const openLicenseAdminPopup = () => {
       const licenseAdminScreen = new LicenseAdminScreen({
         onOpenLicenseEditor: openLicenseEditorPopup,
         onOpenCustomerEditor: openCustomerEditorPopup,
         onOpenLicenseRecordEditor: openLicenseRecordEditorPopup,
         onOpenProductScopeEditor: openProductScopeEditorPopup,
+        onOpenLicenseHistory: openLicenseHistoryPopup,
       });
       openSettingsModal({
         title: "Lizenzverwaltung",
