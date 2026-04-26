@@ -4,6 +4,7 @@ import {
   createDefaultLicenseRecord,
   normalizeLicenseRecord,
 } from "../licenseRecords.js";
+import { saveLicense } from "../licenseStorageService.js";
 
 export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPopupButtonStyle } = {}) {
   const model = createDefaultLicenseRecord();
@@ -165,7 +166,22 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
     runValidation();
   };
 
-  buttons.append(btnReset, btnValidate);
+  const btnRemember = document.createElement("button");
+  btnRemember.type = "button";
+  btnRemember.textContent = "Merken";
+  if (typeof applyPopupButtonStyle === "function") applyPopupButtonStyle(btnRemember);
+  btnRemember.onclick = async () => {
+    const isValid = runValidation();
+    if (!isValid) return;
+
+    await saveLicense(model);
+    message.textContent =
+      "Datensatz temporaer gemerkt, noch keine dauerhafte Speicherung (nur In-Memory-Storage-Service).";
+    message.style.background = "#f0fdf4";
+    message.style.borderColor = "rgba(34, 197, 94, 0.35)";
+  };
+
+  buttons.append(btnReset, btnValidate, btnRemember);
 
   applyModelToInputs();
   card.append(title, hint, form, buttons, message);
