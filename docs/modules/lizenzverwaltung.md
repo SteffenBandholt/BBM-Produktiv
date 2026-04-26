@@ -140,6 +140,31 @@ Sie ist nicht die Kundenverwaltung.
 Sie ist nicht die Historie.
 Sie ist nicht die vollständige Admin-Datenbank.
 
+### Bestandsaufnahme vorhandene Speicherung
+1. Gefundene bestehende Speicherwege
+   - Hauptspeicherweg der App: lokale SQLite-Datenbank `app.db` unter `app.getPath("userData")` via `better-sqlite3`; darin liegen u. a. Projekte, Meetings, Tops, App-Settings, Projekt-Settings, Firmen/Personen, Audio- und Wörterbuchdaten.
+   - Dateibasierte Speicherung ist vorhanden:
+     - installierte Laufzeitlizenz als `license.json` unter `userData`
+     - Import/Export- und Arbeitsdateien als JSON/ZIP/PDF in Dateisystempfaden (u. a. Downloads/Temp/Projektordner).
+   - Renderer-seitig gibt es kleine `localStorage`-Nutzung für UI-Zustände/Fallbacks (z. B. UI-Modus, letztes Projekt, einzelne View-Settings).
+   - Aktuelles Lizenzverwaltungs-Modul (`licenseStorageService.js`) ist nur In-Memory (Arrays im Prozess) und derzeit nicht dauerhaft.
+
+2. Bewertung für Lizenzverwaltung
+   - Für Kunden-/Lizenz-/Historien-Daten ist In-Memory ungeeignet (kein Neustart-Überleben, kein belastbarer Admin-Bestand).
+   - `localStorage` ist für Admin-Fachdaten ungeeignet (Renderer-gebunden, nur für leichte UI-Zustände sinnvoll).
+   - Reine Dateiablage (einzelne JSON-Dateien) ist für Exporte/Transfer gut, aber für relationale Admin-Verwaltung (Kunde ↔ Lizenzen ↔ Historie) fehleranfälliger als strukturierte Tabellen.
+   - Der bestehende App-Speicherpfad über SQLite ist bereits produktiv etabliert und passt fachlich zum benötigten Datenmodell.
+
+3. Empfehlung für den nächsten technischen Schritt
+   - Als nächstes nur ein technisches Speicherkonzept festziehen (ohne Implementierung): Zielrichtung `app.db` mit klar getrennten Admin-Tabellen für Kunden, Lizenzen und Lizenzhistorie.
+   - Parallel Datenabgrenzung dokumentieren: welche Felder nur Admin-intern sind und welche Felder später in exportierte Lizenzdateien dürfen.
+   - Danach erst Migrations-/IPC-Schnitt planen (weiterhin noch ohne Persistenzbau in diesem Paket).
+
+4. Abgrenzung Kind-App / Admin-App
+   - Bleibt in der Admin-/Mutter-App: vollständige Kundenstammdaten, interne Notizen, Verlängerungs-/Neuausgabe-Historie, interne Bearbeitungsmetadaten.
+   - Darf in die Kind-App: nur prüfrelevante Lizenzdaten (z. B. Lizenz-ID, Gültigkeit, freigegebener Umfang, ggf. Binding/Machine-ID) plus Status/Import/Prüfung.
+   - Darf die Kind-App nicht mitbekommen: Kundenliste, Gesamt-Lizenzhistorie, interne Admin-Notizen, Daten anderer Kunden/Installationen.
+
 ### Technisches Speicherkonzept
 - Zielrichtung: Die bestehende lokale `app.db` wird später genutzt.
 - Trennung: Lizenzverwaltungsdaten liegen in eigenen Admin-Tabellen und werden nicht mit Projekt-/Meeting-/Protokolldaten vermischt.
