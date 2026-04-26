@@ -153,7 +153,7 @@ async function runLicenseAdminDataflowTests(run) {
     });
   });
 
-  await run("Lizenzverwaltung Renderer-Service: saveLicense sendet Pflichtfelder", async () => {
+  await run("Lizenzverwaltung Renderer-Service: saveLicense mit snake_case uebergibt Pflichtfelder vollstaendig", async () => {
     const { saveLicense } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
     );
@@ -169,30 +169,126 @@ async function runLicenseAdminDataflowTests(run) {
     };
 
     await saveLicense({
-      customerId: "c-1",
-      licenseId: "LIC-TEST-1",
+      license_id: "LIC-SNAKE-1",
+      customer_id: "customer-snake",
+      product_scope_json: "nur-text-produktscope",
+      valid_from: "2026-02-01",
+      valid_until: "2026-12-31",
+      license_mode: "full",
+      machine_id: "MACHINE-1",
+    });
+
+    assert.equal(received.license_id, "LIC-SNAKE-1");
+    assert.equal(received.customer_id, "customer-snake");
+    assert.equal(received.valid_from, "2026-02-01");
+    assert.equal(received.valid_until, "2026-12-31");
+    assert.equal(received.license_mode, "full");
+    assert.equal(received.product_scope_json, JSON.stringify({ raw: "nur-text-produktscope" }));
+  });
+
+  await run("Lizenzverwaltung Renderer-Service: saveLicense mit camelCase funktioniert ebenfalls", async () => {
+    const { saveLicense } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
+    );
+
+    let received = null;
+    global.window = {
+      bbmDb: {
+        licenseAdminSaveLicenseRecord: async (payload) => {
+          received = payload;
+          return payload;
+        },
+      },
+    };
+
+    await saveLicense({
+      licenseId: "LIC-CAMEL-1",
+      customerId: "customer-camel",
       productScope: { standardumfang: ["app"] },
       validFrom: "2026-01-01",
       validUntil: "2026-12-31",
       licenseMode: "full",
     });
 
-    assert.equal(received.licenseId, "LIC-TEST-1");
-    assert.equal(received.customerId, "c-1");
-    assert.equal(received.customer_id, "c-1");
+    assert.equal(received.licenseId, "LIC-CAMEL-1");
+    assert.equal(received.customerId, "customer-camel");
+    assert.equal(received.customer_id, "customer-camel");
     assert.equal(received.validFrom, "2026-01-01");
+    assert.equal(received.valid_from, "2026-01-01");
     assert.equal(received.validUntil, "2026-12-31");
+    assert.equal(received.valid_until, "2026-12-31");
     assert.equal(received.licenseMode, "full");
+    assert.equal(received.license_mode, "full");
   });
 
-  await run("Lizenzverwaltung UI-Logik: Kundenkontext und automatische Lizenz-ID", async () => {
-    const { assertCustomerContext, createGeneratedLicenseId } = await importEsmFromFile(
+  await run("Lizenzverwaltung normalizeLicenseRecord: snake_case und camelCase werden vollstaendig abgebildet", async () => {
+    const { normalizeLicenseRecord } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseRecords.js")
+    );
+
+    const snake = normalizeLicenseRecord({
+      license_id: "LIC-1",
+      customer_id: "c-1",
+      product_scope_json: "freitext",
+      valid_from: "2026-01-01",
+      valid_until: "2026-12-31",
+      license_mode: "soft",
+      machine_id: "MID-1",
+    });
+    assert.equal(snake.license_id, "LIC-1");
+    assert.equal(snake.customer_id, "c-1");
+    assert.equal(snake.valid_from, "2026-01-01");
+    assert.equal(snake.valid_until, "2026-12-31");
+    assert.equal(snake.license_mode, "soft");
+    assert.equal(snake.machine_id, "MID-1");
+    assert.equal(snake.product_scope_json, JSON.stringify({ raw: "freitext" }));
+
+    const camel = normalizeLicenseRecord({
+      licenseId: "LIC-2",
+      customerId: "c-2",
+      productScope: { zusatzfunktionen: ["mail"] },
+      validFrom: "2026-03-01",
+      validUntil: "2026-10-31",
+      licenseMode: "full",
+      machineId: "MID-2",
+    });
+    assert.equal(camel.license_id, "LIC-2");
+    assert.equal(camel.customer_id, "c-2");
+    assert.equal(camel.valid_from, "2026-03-01");
+    assert.equal(camel.valid_until, "2026-10-31");
+    assert.equal(camel.license_mode, "full");
+    assert.equal(camel.machine_id, "MID-2");
+  });
+
+  await run("Lizenzverwaltung UI-Lizenz-Editor: Eingabewerte werden vollstaendig ins Save-Payload uebernommen", async () => {
+    const { assertCustomerContext, createGeneratedLicenseId, buildLicenseEditorPayload } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
     );
 
     assert.equal(assertCustomerContext({ id: "customer-1" }), "customer-1");
     assert.throws(() => assertCustomerContext({}), /CUSTOMER_CONTEXT_REQUIRED/);
     assert.equal(createGeneratedLicenseId(new Date("2026-04-26T13:14:15Z")), "LIC-20260426-131415");
+
+    const payload = buildLicenseEditorPayload({
+      customer: { id: "customer-55" },
+      inputs: {
+        license_id: "",
+        product_scope_json: "scope-text",
+        valid_from: "2026-05-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        machine_id: "MID-55",
+        notes: "note",
+      },
+      now: new Date("2026-04-26T13:14:15Z"),
+    });
+
+    assert.equal(payload.customer_id, "customer-55");
+    assert.equal(payload.license_id, "LIC-20260426-131415");
+    assert.equal(payload.product_scope_json, "scope-text");
+    assert.equal(payload.valid_from, "2026-05-01");
+    assert.equal(payload.valid_until, "2026-12-31");
+    assert.equal(payload.license_mode, "full");
   });
 }
 

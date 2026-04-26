@@ -15,6 +15,21 @@ export function assertCustomerContext(customer) {
   return customerId;
 }
 
+
+export function buildLicenseEditorPayload({ license = {}, inputs = {}, customer = null, now = new Date() } = {}) {
+  const customerId = assertCustomerContext(customer);
+  return {
+    id: license.id,
+    customer_id: customerId,
+    license_id: String(inputs.license_id || "").trim() || createGeneratedLicenseId(now),
+    product_scope_json: String(inputs.product_scope_json || "").trim(),
+    valid_from: String(inputs.valid_from || "").trim(),
+    valid_until: String(inputs.valid_until || "").trim(),
+    license_mode: String(inputs.license_mode || "").trim(),
+    machine_id: String(inputs.machine_id || "").trim(),
+    notes: String(inputs.notes || "").trim(),
+  };
+}
 function customerLabel(customer) {
   const number = String(customer?.customer_number || customer?.customerNumber || "-").trim() || "-";
   const company = String(customer?.company_name || customer?.companyName || "-").trim() || "-";
@@ -241,18 +256,20 @@ export default class LicenseAdminScreen {
     actions.style.gap = "8px";
     const saveBtn = this._button("Merken", async () => {
       try {
-        const customerId = assertCustomerContext(customer);
-        const saved = await saveLicense({
-          id: license.id,
-          customer_id: customerId,
-          license_id: String(inputs.license_id.value || "").trim() || createGeneratedLicenseId(),
-          product_scope_json: inputs.product_scope_json.value,
-          valid_from: inputs.valid_from.value,
-          valid_until: inputs.valid_until.value,
-          license_mode: inputs.license_mode.value,
-          machine_id: inputs.machine_id.value,
-          notes: inputs.notes.value,
+        const payload = buildLicenseEditorPayload({
+          license,
+          customer,
+          inputs: {
+            license_id: inputs.license_id.value,
+            product_scope_json: inputs.product_scope_json.value,
+            valid_from: inputs.valid_from.value,
+            valid_until: inputs.valid_until.value,
+            license_mode: inputs.license_mode.value,
+            machine_id: inputs.machine_id.value,
+            notes: inputs.notes.value,
+          },
         });
+        const saved = await saveLicense(payload);
         this.currentLicense = saved;
         message.textContent = "Lizenz gespeichert.";
       } catch (err) {
