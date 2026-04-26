@@ -43,7 +43,7 @@ export function createCustomerEditorSection({ applyPopupCardStyle, applyPopupBut
   listWrap.style.gap = "6px";
 
   const listTitle = document.createElement("h4");
-  listTitle.textContent = "Temporär gemerkte Kunden";
+  listTitle.textContent = "Gespeicherte Kunden";
   listTitle.style.margin = "0";
   listTitle.style.fontSize = "13px";
 
@@ -57,7 +57,7 @@ export function createCustomerEditorSection({ applyPopupCardStyle, applyPopupBut
     listContent.replaceChildren();
 
     if (!Array.isArray(customers) || customers.length < 1) {
-      listContent.textContent = "Noch keine temporär gemerkten Kunden.";
+      listContent.textContent = "Noch keine gespeicherten Kunden.";
       return;
     }
 
@@ -174,7 +174,7 @@ export function createCustomerEditorSection({ applyPopupCardStyle, applyPopupBut
     await saveCustomer(model);
     await refreshRememberedCustomers();
     message.textContent =
-      "Datensatz temporaer gemerkt, noch keine dauerhafte Speicherung (nur In-Memory-Storage-Service).";
+      "Datensatz dauerhaft gespeichert.";
     message.style.background = "#f0fdf4";
     message.style.borderColor = "rgba(34, 197, 94, 0.35)";
   };

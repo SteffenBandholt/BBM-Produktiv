@@ -8,6 +8,11 @@ function read(relPath) {
 }
 
 async function runLizenzverwaltungModuleTests(run) {
+  const originalWindow = global.window;
+  const restoreWindow = () => {
+    if (typeof originalWindow === "undefined") delete global.window;
+    else global.window = originalWindow;
+  };
   const [
     {
       getLizenzverwaltungModuleEntry,
@@ -169,6 +174,13 @@ async function runLizenzverwaltungModuleTests(run) {
 
 
   await run("Lizenzverwaltung: Storage-Service wird exportiert und ist Promise-kompatibel", async () => {
+    global.window = {
+      bbmDb: {
+        licenseAdminListLicenseCustomers: async () => [],
+        licenseAdminListLicenseRecords: async () => [],
+        licenseAdminListLicenseHistory: async () => [],
+      },
+    };
     assert.equal(typeof listCustomers, "function");
     assert.equal(typeof saveCustomer, "function");
     assert.equal(typeof listLicenses, "function");
@@ -186,15 +198,36 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(typeof listCustomers().then, "function");
     assert.equal(typeof listLicenses().then, "function");
     assert.equal(typeof listHistory().then, "function");
+    restoreWindow();
   });
 
-  await run("Lizenzverwaltung: listCustomers liefert initial eine Liste", async () => {
+  await run("Lizenzverwaltung: listCustomers nutzt licenseAdminListLicenseCustomers", async () => {
+    let calls = 0;
+    global.window = {
+      bbmDb: {
+        licenseAdminListLicenseCustomers: async () => {
+          calls += 1;
+          return [{ customerNumber: "K-200" }];
+        },
+      },
+    };
     const customers = await listCustomers();
     assert.equal(Array.isArray(customers), true);
-    assert.equal(customers.length, 0);
+    assert.equal(customers.length, 1);
+    assert.equal(calls, 1);
+    restoreWindow();
   });
 
-  await run("Lizenzverwaltung: saveCustomer normalisiert und speichert im Stub", async () => {
+  await run("Lizenzverwaltung: saveCustomer nutzt licenseAdminSaveLicenseCustomer", async () => {
+    let payload = null;
+    global.window = {
+      bbmDb: {
+        licenseAdminSaveLicenseCustomer: async (customer) => {
+          payload = customer;
+          return { ...customer, id: "customer-1" };
+        },
+      },
+    };
     const record = await saveCustomer({
       customerNumber: "  K-200  ",
       companyName: "  Beispiel GmbH  ",
@@ -204,18 +237,39 @@ async function runLizenzverwaltungModuleTests(run) {
 
     assert.equal(record.customerNumber, "K-200");
     assert.equal(record.companyName, "Beispiel GmbH");
-
-    const customers = await listCustomers();
-    assert.equal(customers.some((entry) => entry.customerNumber === "K-200"), true);
+    assert.equal(record.id, "customer-1");
+    assert.equal(payload.customerNumber, "K-200");
+    assert.equal(payload.companyName, "Beispiel GmbH");
+    restoreWindow();
   });
 
-  await run("Lizenzverwaltung: listLicenses liefert initial eine Liste", async () => {
+  await run("Lizenzverwaltung: listLicenses nutzt licenseAdminListLicenseRecords", async () => {
+    let calls = 0;
+    global.window = {
+      bbmDb: {
+        licenseAdminListLicenseRecords: async () => {
+          calls += 1;
+          return [{ licenseId: "LIC-200" }];
+        },
+      },
+    };
     const licenses = await listLicenses();
     assert.equal(Array.isArray(licenses), true);
-    assert.equal(licenses.length, 0);
+    assert.equal(licenses.length, 1);
+    assert.equal(calls, 1);
+    restoreWindow();
   });
 
-  await run("Lizenzverwaltung: saveLicense normalisiert und speichert im Stub", async () => {
+  await run("Lizenzverwaltung: saveLicense nutzt licenseAdminSaveLicenseRecord", async () => {
+    let payload = null;
+    global.window = {
+      bbmDb: {
+        licenseAdminSaveLicenseRecord: async (license) => {
+          payload = license;
+          return { ...license, id: "license-1" };
+        },
+      },
+    };
     const record = await saveLicense({
       licenseId: "  LIC-200  ",
       customerNumber: "  K-200  ",
@@ -225,18 +279,38 @@ async function runLizenzverwaltungModuleTests(run) {
 
     assert.equal(record.licenseId, "LIC-200");
     assert.equal(record.licenseMode, "full");
-
-    const licenses = await listLicenses();
-    assert.equal(licenses.some((entry) => entry.licenseId === "LIC-200"), true);
+    assert.equal(record.id, "license-1");
+    assert.equal(payload.licenseId, "LIC-200");
+    restoreWindow();
   });
 
-  await run("Lizenzverwaltung: listHistory liefert initial eine Liste", async () => {
+  await run("Lizenzverwaltung: listHistory nutzt licenseAdminListLicenseHistory", async () => {
+    let calls = 0;
+    global.window = {
+      bbmDb: {
+        licenseAdminListLicenseHistory: async () => {
+          calls += 1;
+          return [{ licenseId: "LIC-200" }];
+        },
+      },
+    };
     const history = await listHistory();
     assert.equal(Array.isArray(history), true);
-    assert.equal(history.length, 0);
+    assert.equal(history.length, 1);
+    assert.equal(calls, 1);
+    restoreWindow();
   });
 
-  await run("Lizenzverwaltung: addHistoryEntry normalisiert und speichert im Stub", async () => {
+  await run("Lizenzverwaltung: addHistoryEntry nutzt licenseAdminAddLicenseHistoryEntry", async () => {
+    let payload = null;
+    global.window = {
+      bbmDb: {
+        licenseAdminAddLicenseHistoryEntry: async (entry) => {
+          payload = entry;
+          return { ...entry, id: "history-1" };
+        },
+      },
+    };
     const record = await addHistoryEntry({
       createdAt: "  2026-04-26  ",
       licenseId: "  LIC-200  ",
@@ -248,9 +322,23 @@ async function runLizenzverwaltungModuleTests(run) {
 
     assert.equal(record.createdAt, "2026-04-26");
     assert.equal(record.licenseId, "LIC-200");
+    assert.equal(record.id, "history-1");
+    assert.equal(payload.createdAt, "2026-04-26");
+    restoreWindow();
+  });
 
-    const history = await listHistory();
-    assert.equal(history.some((entry) => entry.licenseId === "LIC-200"), true);
+  await run("Lizenzverwaltung: fehlende Preload-API erzeugt klare Fehlermeldung", async () => {
+    delete global.window;
+    await assert.rejects(
+      () => listCustomers(),
+      /Preload-API nicht verfügbar \(window\.bbmDb fehlt\)\. Speicherung nicht möglich\./
+    );
+    global.window = { bbmDb: {} };
+    await assert.rejects(
+      () => saveCustomer({ customerNumber: "K-1" }),
+      /Preload-API-Methode fehlt \(licenseAdminSaveLicenseCustomer\)\./
+    );
+    restoreWindow();
   });
 
   await run("Lizenzverwaltung: Historien-Datensatz zentral vorbereitet", () => {
@@ -318,10 +406,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(customerEditorSource.includes("Keine Speicherung"), true);
     assert.equal(customerEditorSource.includes("saveCustomer"), true);
     assert.equal(customerEditorSource.includes("listCustomers"), true);
-    assert.equal(customerEditorSource.includes("temporaer gemerkt"), true);
-    assert.equal(customerEditorSource.includes("nur In-Memory-Storage-Service"), true);
-    assert.equal(customerEditorSource.includes("Temporär gemerkte Kunden"), true);
-    assert.equal(customerEditorSource.includes("Noch keine temporär gemerkten Kunden."), true);
+    assert.equal(customerEditorSource.includes("temporaer gemerkt"), false);
+    assert.equal(customerEditorSource.includes("nur In-Memory-Storage-Service"), false);
+    assert.equal(customerEditorSource.includes("dauerhaft gespeichert"), true);
+    assert.equal(customerEditorSource.includes("Gespeicherte Kunden"), true);
+    assert.equal(customerEditorSource.includes("Noch keine gespeicherten Kunden."), true);
     assert.equal(customerEditorSource.includes("entry.customerNumber"), true);
     assert.equal(customerEditorSource.includes("entry.companyName"), true);
     assert.equal(customerEditorSource.includes("entry.email"), true);
@@ -357,10 +446,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordEditorSource.includes("Keine Speicherung"), true);
     assert.equal(licenseRecordEditorSource.includes("saveLicense"), true);
     assert.equal(licenseRecordEditorSource.includes("listLicenses"), true);
-    assert.equal(licenseRecordEditorSource.includes("temporaer gemerkt"), true);
-    assert.equal(licenseRecordEditorSource.includes("nur In-Memory-Storage-Service"), true);
-    assert.equal(licenseRecordEditorSource.includes("Temporär gemerkte Lizenzen"), true);
-    assert.equal(licenseRecordEditorSource.includes("Noch keine temporär gemerkten Lizenzen."), true);
+    assert.equal(licenseRecordEditorSource.includes("temporaer gemerkt"), false);
+    assert.equal(licenseRecordEditorSource.includes("nur In-Memory-Storage-Service"), false);
+    assert.equal(licenseRecordEditorSource.includes("dauerhaft gespeichert"), true);
+    assert.equal(licenseRecordEditorSource.includes("Gespeicherte Lizenzen"), true);
+    assert.equal(licenseRecordEditorSource.includes("Noch keine gespeicherten Lizenzen."), true);
     assert.equal(licenseRecordEditorSource.includes("entry.licenseId"), true);
     assert.equal(licenseRecordEditorSource.includes("entry.customerNumber"), true);
     assert.equal(licenseRecordEditorSource.includes("entry.validUntil"), true);
@@ -417,10 +507,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseHistoryEditorSource.includes("Keine Speicherung"), true);
     assert.equal(licenseHistoryEditorSource.includes("addHistoryEntry"), true);
     assert.equal(licenseHistoryEditorSource.includes("listHistory"), true);
-    assert.equal(licenseHistoryEditorSource.includes("temporaer gemerkt"), true);
-    assert.equal(licenseHistoryEditorSource.includes("nur In-Memory-Storage-Service"), true);
-    assert.equal(licenseHistoryEditorSource.includes("Temporär gemerkte Historie"), true);
-    assert.equal(licenseHistoryEditorSource.includes("Noch keine temporär gemerkte Historie."), true);
+    assert.equal(licenseHistoryEditorSource.includes("temporaer gemerkt"), false);
+    assert.equal(licenseHistoryEditorSource.includes("nur In-Memory-Storage-Service"), false);
+    assert.equal(licenseHistoryEditorSource.includes("dauerhaft gespeichert"), true);
+    assert.equal(licenseHistoryEditorSource.includes("Gespeicherte Historie"), true);
+    assert.equal(licenseHistoryEditorSource.includes("Noch keine gespeicherte Historie."), true);
     assert.equal(licenseHistoryEditorSource.includes("entry.createdAt"), true);
     assert.equal(licenseHistoryEditorSource.includes("entry.licenseId"), true);
     assert.equal(licenseHistoryEditorSource.includes("entry.customer"), true);
@@ -486,13 +577,20 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseAdminServiceSource.includes("licenseStorageService"), false);
   });
 
-  await run("Lizenzverwaltung: keine IPC-Umstellung und Renderer-Storage bleibt In-Memory", () => {
+  await run("Lizenzverwaltung: Renderer-Storage nutzt Preload-API statt In-Memory", () => {
     const storageServiceSource = read("src/renderer/modules/lizenzverwaltung/licenseStorageService.js");
 
-    assert.equal(storageServiceSource.includes("const storage = {"), true);
-    assert.equal(storageServiceSource.includes("customers: []"), true);
-    assert.equal(storageServiceSource.includes("licenses: []"), true);
-    assert.equal(storageServiceSource.includes("history: []"), true);
+    assert.equal(storageServiceSource.includes("const storage = {"), false);
+    assert.equal(storageServiceSource.includes("customers: []"), false);
+    assert.equal(storageServiceSource.includes("licenses: []"), false);
+    assert.equal(storageServiceSource.includes("history: []"), false);
+    assert.equal(storageServiceSource.includes("window.bbmDb"), true);
+    assert.equal(storageServiceSource.includes("licenseAdminListLicenseCustomers"), true);
+    assert.equal(storageServiceSource.includes("licenseAdminSaveLicenseCustomer"), true);
+    assert.equal(storageServiceSource.includes("licenseAdminListLicenseRecords"), true);
+    assert.equal(storageServiceSource.includes("licenseAdminSaveLicenseRecord"), true);
+    assert.equal(storageServiceSource.includes("licenseAdminListLicenseHistory"), true);
+    assert.equal(storageServiceSource.includes("licenseAdminAddLicenseHistoryEntry"), true);
     assert.equal(storageServiceSource.includes("ipcRenderer"), false);
     assert.equal(storageServiceSource.includes("window.api"), false);
   });

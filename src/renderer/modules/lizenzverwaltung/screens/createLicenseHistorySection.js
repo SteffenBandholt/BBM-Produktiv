@@ -43,7 +43,7 @@ export function createLicenseHistorySection({ applyPopupCardStyle, applyPopupBut
   listWrap.style.gap = "6px";
 
   const listTitle = document.createElement("h4");
-  listTitle.textContent = "Temporär gemerkte Historie";
+  listTitle.textContent = "Gespeicherte Historie";
   listTitle.style.margin = "0";
   listTitle.style.fontSize = "13px";
 
@@ -57,7 +57,7 @@ export function createLicenseHistorySection({ applyPopupCardStyle, applyPopupBut
     listContent.replaceChildren();
 
     if (!Array.isArray(history) || history.length < 1) {
-      listContent.textContent = "Noch keine temporär gemerkte Historie.";
+      listContent.textContent = "Noch keine gespeicherte Historie.";
       return;
     }
 
@@ -175,7 +175,7 @@ export function createLicenseHistorySection({ applyPopupCardStyle, applyPopupBut
     await addHistoryEntry(model);
     await refreshRememberedHistory();
     message.textContent =
-      "Datensatz temporaer gemerkt, noch keine dauerhafte Speicherung (nur In-Memory-Storage-Service).";
+      "Datensatz dauerhaft gespeichert.";
     message.style.background = "#f0fdf4";
     message.style.borderColor = "rgba(34, 197, 94, 0.35)";
   };

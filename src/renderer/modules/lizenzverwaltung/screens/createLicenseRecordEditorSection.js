@@ -44,7 +44,7 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
   listWrap.style.gap = "6px";
 
   const listTitle = document.createElement("h4");
-  listTitle.textContent = "Temporär gemerkte Lizenzen";
+  listTitle.textContent = "Gespeicherte Lizenzen";
   listTitle.style.margin = "0";
   listTitle.style.fontSize = "13px";
 
@@ -58,7 +58,7 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
     listContent.replaceChildren();
 
     if (!Array.isArray(licenses) || licenses.length < 1) {
-      listContent.textContent = "Noch keine temporär gemerkten Lizenzen.";
+      listContent.textContent = "Noch keine gespeicherten Lizenzen.";
       return;
     }
 
@@ -207,7 +207,7 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
     await saveLicense(model);
     await refreshRememberedLicenses();
     message.textContent =
-      "Datensatz temporaer gemerkt, noch keine dauerhafte Speicherung (nur In-Memory-Storage-Service).";
+      "Datensatz dauerhaft gespeichert.";
     message.style.background = "#f0fdf4";
     message.style.borderColor = "rgba(34, 197, 94, 0.35)";
   };
