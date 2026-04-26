@@ -91,6 +91,10 @@ Sie ergänzt:
   - Listen werden ueber `listCustomers`, `listLicenses` und `listHistory` geladen
   - Nach erfolgreichem `Merken` wird die jeweilige Liste sofort aktualisiert (ohne Persistenz, nur im laufenden App-Prozess)
   - Leerer Zustand ist in allen drei Masken sichtbar
+- Lizenzverwaltung naechstes Paket ist umgesetzt:
+  - DB-Schema/Migration in `src/main/db/database.js` um getrennte Admin-Tabellen `license_customers`, `license_records`, `license_history` erweitert (nicht-destruktiv, ohne UI-/IPC-Umstellung)
+  - `licenseStorageService` bleibt bewusst In-Memory; keine Lizenzdatei-Logik und kein Projektmodul-Verhalten geändert
+
 - Lizenzverwaltung Neuversuch (In-Memory-Listenansichten) ist nachgezogen:
   - Testnachweise in `scripts/tests/lizenzverwaltungModule.test.cjs` fuer Kunden/Lizenzen/Historie um Listenfelder und Refresh nach `Merken` ergaenzt
   - Leerer Zustand und Adminbereich-Abgrenzung bleiben weiterhin abgesichert

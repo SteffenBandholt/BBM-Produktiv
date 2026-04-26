@@ -226,6 +226,10 @@ Sie ist nicht die vollständige Admin-Datenbank.
 4. Renderer-`licenseStorageService` von In-Memory auf IPC umstellen.
 5. Danach erst Masken wirklich dauerhaft speichern.
 
+Kurzstand (Paket DB-Schema/Migration):
+- Die Tabellen `license_customers`, `license_records` und `license_history` sind in `src/main/db/database.js` als nicht-destruktive Tabellenanlage vorbereitet.
+- `licenseStorageService` bleibt weiterhin In-Memory; UI und IPC wurden in diesem Paket nicht umgestellt.
+
 ### Abgrenzung
 Nicht Teil dieses Schritts:
 - Kunden speichern

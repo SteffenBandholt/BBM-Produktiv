@@ -65,6 +65,7 @@ async function runLizenzverwaltungModuleTests(run) {
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const projectWorkspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const settingsViewSource = read("src/renderer/views/SettingsView.js");
+  const databaseSource = read("src/main/db/database.js");
 
   await run("Lizenzverwaltung: Modul exportiert LicenseAdminScreen", () => {
     const entry = getLizenzverwaltungModuleEntry();
@@ -424,6 +425,44 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseHistoryEditorSource.includes("refreshRememberedHistory"), true);
     assert.equal(licenseHistoryEditorSource.includes("refreshRememberedHistory();"), true);
     assert.equal(licenseHistoryEditorSource.includes("await refreshRememberedHistory();"), true);
+  });
+
+  await run("Lizenzverwaltung DB-Schema: Tabellen fuer Admin-Lizenzdaten sind vorbereitet", () => {
+    assert.equal(databaseSource.includes("CREATE TABLE IF NOT EXISTS license_customers"), true);
+    assert.equal(databaseSource.includes("CREATE TABLE IF NOT EXISTS license_records"), true);
+    assert.equal(databaseSource.includes("CREATE TABLE IF NOT EXISTS license_history"), true);
+  });
+
+  await run("Lizenzverwaltung DB-Schema: product_scope_json ist fuer Lizenz und Historie vorhanden", () => {
+    assert.equal(databaseSource.includes("license_records"), true);
+    assert.equal(databaseSource.includes("product_scope_json TEXT NOT NULL"), true);
+    assert.equal(databaseSource.includes("license_history"), true);
+  });
+
+  await run("Lizenzverwaltung DB-Schema: Referenzen customer_id und license_record_id sind vorbereitet", () => {
+    assert.equal(databaseSource.includes("customer_id TEXT NOT NULL"), true);
+    assert.equal(
+      databaseSource.includes("FOREIGN KEY (customer_id) REFERENCES license_customers(id) ON DELETE RESTRICT"),
+      true
+    );
+    assert.equal(databaseSource.includes("license_record_id TEXT NOT NULL"), true);
+    assert.equal(
+      databaseSource.includes(
+        "FOREIGN KEY (license_record_id) REFERENCES license_records(id) ON DELETE RESTRICT"
+      ),
+      true
+    );
+  });
+
+  await run("Lizenzverwaltung: keine IPC-Umstellung und Renderer-Storage bleibt In-Memory", () => {
+    const storageServiceSource = read("src/renderer/modules/lizenzverwaltung/licenseStorageService.js");
+
+    assert.equal(storageServiceSource.includes("const storage = {"), true);
+    assert.equal(storageServiceSource.includes("customers: []"), true);
+    assert.equal(storageServiceSource.includes("licenses: []"), true);
+    assert.equal(storageServiceSource.includes("history: []"), true);
+    assert.equal(storageServiceSource.includes("ipcRenderer"), false);
+    assert.equal(storageServiceSource.includes("window.api"), false);
   });
 
   await run("Lizenzverwaltung: bleibt Adminbereich und erscheint nicht als Projektmodul", () => {
