@@ -94,18 +94,34 @@ export function normalizeLicenseRecord(input = {}) {
   const base = createDefaultLicenseRecord();
   const mode = String(input.licenseMode ?? base.licenseMode).trim().toLowerCase();
   const normalizedMode = LICENSE_MODES.some((entry) => entry.key === mode) ? mode : base.licenseMode;
+  const rawProductScope = input.productScope ?? input.product_scope_json ?? base.productScope;
+  let productScopeInput = rawProductScope;
+  if (typeof productScopeInput === "string") {
+    const trimmed = productScopeInput.trim();
+    if (trimmed) {
+      try {
+        productScopeInput = JSON.parse(trimmed);
+      } catch (_error) {
+        productScopeInput = { _display: trimmed };
+      }
+    } else {
+      productScopeInput = {};
+    }
+  }
   const productScope = {
-    standardumfang: Array.isArray(input?.productScope?.standardumfang)
-      ? [...input.productScope.standardumfang]
+    standardumfang: Array.isArray(productScopeInput?.standardumfang)
+      ? [...productScopeInput.standardumfang]
       : [...base.productScope.standardumfang],
-    zusatzfunktionen: Array.isArray(input?.productScope?.zusatzfunktionen)
-      ? [...input.productScope.zusatzfunktionen]
+    zusatzfunktionen: Array.isArray(productScopeInput?.zusatzfunktionen)
+      ? [...productScopeInput.zusatzfunktionen]
       : [...base.productScope.zusatzfunktionen],
-    module: Array.isArray(input?.productScope?.module)
-      ? [...input.productScope.module]
+    module: Array.isArray(productScopeInput?.module)
+      ? [...productScopeInput.module]
       : [...base.productScope.module],
+    _display: String(productScopeInput?._display ?? "").trim(),
   };
   const customerId = String(input.customerId ?? input.customer_id ?? base.customerId).trim();
+  const validFrom = String(input.validFrom ?? input.valid_from ?? base.validFrom).trim();
   const validUntil = String(input.validUntil ?? input.valid_until ?? base.validUntil).trim();
   const licenseMode = String(input.licenseMode ?? input.license_mode ?? normalizedMode).trim().toLowerCase();
   const normalizedLicenseMode = LICENSE_MODES.some((entry) => entry.key === licenseMode)
@@ -119,7 +135,8 @@ export function normalizeLicenseRecord(input = {}) {
     customerNumber: String(input.customerNumber ?? base.customerNumber).trim(),
     productScope,
     product_scope_json: productScope,
-    validFrom: String(input.validFrom ?? base.validFrom).trim(),
+    validFrom,
+    valid_from: validFrom,
     validUntil,
     valid_until: validUntil,
     licenseMode: normalizedLicenseMode,

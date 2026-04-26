@@ -190,6 +190,17 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(normalizedLicense.licenseMode, "full");
     assert.deepEqual(normalizedLicense.productScope.zusatzfunktionen, ["mail"]);
     assert.deepEqual(normalizedLicense.productScope.standardumfang, []);
+    assert.equal(normalizedLicense.valid_from, "");
+    assert.equal(normalizedLicense.valid_until, "");
+    assert.equal(normalizedLicense.license_mode, "full");
+  });
+
+  await run("Lizenzverwaltung: normalizeLicenseRecord behaelt productScope._display", () => {
+    const normalized = normalizeLicenseRecord({
+      productScope: { _display: "app,pdf,export,mail,Protokoll" },
+    });
+    assert.equal(normalized.productScope._display, "app,pdf,export,mail,Protokoll");
+    assert.equal(normalized.product_scope_json._display, "app,pdf,export,mail,Protokoll");
   });
 
 
@@ -308,6 +319,9 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(payload.customer_id, "customer-200");
     assert.equal(typeof payload.productScope, "object");
     assert.equal(typeof payload.product_scope_json, "object");
+    assert.equal(payload.product_scope_json._display, "");
+    assert.equal(payload.validFrom, "");
+    assert.equal(payload.valid_from, "");
     assert.equal(payload.validUntil, "");
     assert.equal(payload.valid_until, "");
     assert.equal(payload.licenseMode, "full");
@@ -333,6 +347,35 @@ async function runLizenzverwaltungModuleTests(run) {
         }),
       /customer_id\/customerId fehlt/
     );
+    restoreWindow();
+  });
+
+  await run("Lizenzverwaltung: saveLicense-Payload behaelt UI-Produktumfang und Pflichtfelder", async () => {
+    let payload = null;
+    global.window = {
+      bbmDb: {
+        licenseAdminSaveLicenseRecord: async (license) => {
+          payload = license;
+          return { ...license, id: "license-2" };
+        },
+      },
+    };
+    await saveLicense({
+      licenseId: "LIC-202",
+      customerId: "customer-202",
+      productScope: { _display: "app,pdf,export,mail,Protokoll" },
+      validFrom: "2026-04-26",
+      validUntil: "2027-04-26",
+      licenseMode: "soft",
+    });
+    assert.equal(payload.productScope._display, "app,pdf,export,mail,Protokoll");
+    assert.equal(payload.product_scope_json._display, "app,pdf,export,mail,Protokoll");
+    assert.equal(payload.validFrom, "2026-04-26");
+    assert.equal(payload.valid_from, "2026-04-26");
+    assert.equal(payload.validUntil, "2027-04-26");
+    assert.equal(payload.valid_until, "2027-04-26");
+    assert.equal(payload.licenseMode, "soft");
+    assert.equal(payload.license_mode, "soft");
     restoreWindow();
   });
 
@@ -512,6 +555,10 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordEditorSource.includes("entry.license_id"), true);
     assert.equal(licenseRecordEditorSource.includes("entry.customer_number"), true);
     assert.equal(licenseRecordEditorSource.includes("entry.company_name"), true);
+    assert.equal(licenseRecordEditorSource.includes("entry.productScope ?? entry.product_scope_json"), true);
+    assert.equal(licenseRecordEditorSource.includes("JSON.parse(trimmed)"), true);
+    assert.equal(licenseRecordEditorSource.includes("productScopeDisplay"), true);
+    assert.equal(licenseRecordEditorSource.includes("entry.validFrom || entry.valid_from"), true);
     assert.equal(licenseRecordEditorSource.includes("entry.valid_until"), true);
     assert.equal(licenseRecordEditorSource.includes("entry.license_mode"), true);
     assert.equal(licenseRecordEditorSource.includes("refreshRememberedLicenses"), true);
@@ -562,6 +609,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordsSource.includes("input.customerId"), true);
     assert.equal(licenseRecordsSource.includes("input.customer_id"), true);
     assert.equal(licenseRecordsSource.includes("product_scope_json"), true);
+    assert.equal(licenseRecordsSource.includes("valid_from"), true);
     assert.equal(licenseRecordsSource.includes("valid_until"), true);
     assert.equal(licenseRecordsSource.includes("license_mode"), true);
   });

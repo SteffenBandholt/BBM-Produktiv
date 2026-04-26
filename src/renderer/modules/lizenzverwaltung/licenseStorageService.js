@@ -49,7 +49,8 @@ export async function saveLicense(license) {
     ...record,
     customerId,
     customer_id: customerId,
-    product_scope_json: record.productScope,
+    product_scope_json: record.product_scope_json,
+    valid_from: record.validFrom,
     valid_until: record.validUntil,
     license_mode: record.licenseMode,
   };

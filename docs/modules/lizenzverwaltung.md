@@ -240,6 +240,11 @@ Kurzstand (Bugfix Persistenz Lizenzen, April 2026):
 - `saveLicense`-Payload bleibt kompatibel fuer camelCase und snake_case (`licenseId/license_id`, `customerId/customer_id`, `productScope/product_scope_json`, `validUntil/valid_until`, `licenseMode/license_mode`).
 - `listLicenses` bleibt lesbar fuer die UI-Liste mit `customerDisplay` sowie vorhandenen Fallback-Feldern.
 
+Kurzstand (Bugfix Pflichtfelder in gespeicherter Lizenz, April 2026):
+- `normalizeLicenseRecord` behaelt bei Texteingaben den UI-Wert `productScope._display` und reduziert Produktumfang nicht mehr still auf leere Arrays.
+- Renderer-Save-Payload fuehrt `validFrom/valid_from` zusaetzlich konsistent mit.
+- Die UI-Liste zeigt gespeicherte Pflichtfelder jetzt vollstaendig mit Produktumfang sowie `gueltig von`/`gueltig bis` an.
+
 ### Abgrenzung
 Nicht Teil dieses Schritts:
 - Kunden speichern

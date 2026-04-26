@@ -132,6 +132,28 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
       return;
     }
 
+    const formatProductScope = (entry = {}) => {
+      const productScopeValue = entry.productScope ?? entry.product_scope_json;
+      if (typeof productScopeValue === "string") {
+        const trimmed = productScopeValue.trim();
+        if (!trimmed) return "-";
+        try {
+          const parsed = JSON.parse(trimmed);
+          const display = String(parsed?._display || "").trim();
+          return display || trimmed;
+        } catch (_error) {
+          return trimmed;
+        }
+      }
+      if (productScopeValue && typeof productScopeValue === "object") {
+        const display = String(productScopeValue._display || "").trim();
+        if (display) return display;
+        const normalized = JSON.stringify(productScopeValue);
+        return normalized === "{}" ? "-" : normalized;
+      }
+      return "-";
+    };
+
     licenses.forEach((entry) => {
       const row = document.createElement("div");
       const customerDisplay =
@@ -144,8 +166,9 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
           .join(" | ") ||
         String(entry.customerId || entry.customer_id || "").trim() ||
         "-";
+      const productScopeDisplay = formatProductScope(entry);
 
-      row.textContent = `${entry.licenseId || entry.license_id || "-"} | ${customerDisplay} | ${entry.validUntil || entry.valid_until || "-"} | ${entry.licenseMode || entry.license_mode || "-"}`;
+      row.textContent = `${entry.licenseId || entry.license_id || "-"} | ${customerDisplay} | ${productScopeDisplay} | ${entry.validFrom || entry.valid_from || "-"} | ${entry.validUntil || entry.valid_until || "-"} | ${entry.licenseMode || entry.license_mode || "-"}`;
       listContent.appendChild(row);
     });
   };

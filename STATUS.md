@@ -111,6 +111,10 @@ Sie ergänzt:
   - `Merken` ruft `saveLicense(...)` nur auf, wenn `customerId/customer_id` gesetzt ist.
   - Save-Payload fuehrt relevante camelCase/snake_case-Felder mit (`customerId/customer_id`, `productScope/product_scope_json`, `validUntil/valid_until`, `licenseMode/license_mode`).
   - Main-Service meldet ungueltige `customer_id` nachvollziehbar (`customer_id invalid: ...`), und die gespeicherte Lizenzliste bleibt lesbar ueber `customerDisplay`/Fallbacks.
+- Lizenzverwaltung Bugfix (Pflichtfelder dauerhaft sichtbar) ist umgesetzt:
+  - `normalizeLicenseRecord(...)` behaelt `productScope._display` jetzt bei und uebernimmt alternativ `product_scope_json`.
+  - Save-Payload fuehrt jetzt auch `validFrom/valid_from` konsistent mit.
+  - Die Liste `Gespeicherte Lizenzen` zeigt jetzt mindestens: Lizenz-ID | Kunde | Produktumfang | gueltig von | gueltig bis | Lizenzmodus.
 
 - Lizenzverwaltung Neuversuch (In-Memory-Listenansichten) ist nachgezogen:
   - Testnachweise in `scripts/tests/lizenzverwaltungModule.test.cjs` fuer Kunden/Lizenzen/Historie um Listenfelder und Refresh nach `Merken` ergaenzt
