@@ -14,6 +14,7 @@ async function runLizenzverwaltungModuleTests(run) {
       LIZENZVERWALTUNG_MODULE_ID,
       LIZENZVERWALTUNG_WORK_SCREEN_ID,
       LicenseAdminScreen,
+      createCustomerEditorSection,
       createLicenseEditorSection,
       CUSTOMER_RECORD_FIELDS,
       LICENSE_RECORD_FIELDS,
@@ -41,6 +42,7 @@ async function runLizenzverwaltungModuleTests(run) {
   const productScopeSource = read("src/renderer/modules/lizenzverwaltung/productScope.js");
   const licenseRecordsSource = read("src/renderer/modules/lizenzverwaltung/licenseRecords.js");
   const licenseEditorSource = read("src/renderer/modules/lizenzverwaltung/screens/createLicenseEditorSection.js");
+  const customerEditorSource = read("src/renderer/modules/lizenzverwaltung/screens/createCustomerEditorSection.js");
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const projectWorkspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const settingsViewSource = read("src/renderer/views/SettingsView.js");
@@ -51,6 +53,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(LIZENZVERWALTUNG_MODULE_ID, "lizenzverwaltung");
     assert.equal(LIZENZVERWALTUNG_WORK_SCREEN_ID, "licenseAdmin");
     assert.equal(typeof LicenseAdminScreen, "function");
+    assert.equal(typeof createCustomerEditorSection, "function");
     assert.equal(typeof createLicenseEditorSection, "function");
     assert.equal(entry.moduleId, "lizenzverwaltung");
     assert.equal(entry.workScreenId, "licenseAdmin");
@@ -143,6 +146,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Umsetzung erfolgt schrittweise"), true);
     assert.equal(screenSource.includes("Lizenz erstellen / bearbeiten"), true);
     assert.equal(screenSource.includes("Kunden"), true);
+    assert.equal(screenSource.includes('actionLabel: "Oeffnen"'), true);
     assert.equal(screenSource.includes("Lizenzen"), true);
     assert.equal(screenSource.includes("Vorbereitete Felder:"), true);
     assert.equal(screenSource.includes("CUSTOMER_RECORD_FIELDS"), true);
@@ -151,6 +155,28 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Historie"), true);
   });
 
+
+  await run("Kunden-UI: nutzt CUSTOMER_RECORD_FIELDS und enthaelt alle Kundenfelder", () => {
+    assert.equal(customerEditorSource.includes('from "../licenseRecords.js"'), true);
+    assert.equal(customerEditorSource.includes("CUSTOMER_RECORD_FIELDS"), true);
+    assert.equal(customerEditorSource.includes("createDefaultCustomerRecord"), true);
+    assert.equal(customerEditorSource.includes("normalizeCustomerRecord"), true);
+    assert.deepEqual(CUSTOMER_RECORD_FIELDS.map((entry) => entry.label), [
+      "Kundennummer",
+      "Firma / Kundenname",
+      "Ansprechpartner",
+      "E-Mail",
+      "Telefon",
+      "Notizen",
+    ]);
+  });
+
+  await run("Kunden-UI: bietet Neu / leeren und Pruefen", () => {
+    assert.equal(customerEditorSource.includes("Neu / leeren"), true);
+    assert.equal(customerEditorSource.includes("Pruefen"), true);
+    assert.equal(customerEditorSource.includes("ohne Speicherung"), true);
+    assert.equal(customerEditorSource.includes("Keine Speicherung"), true);
+  });
   await run("Lizenzverwaltung: bleibt Adminbereich und erscheint nicht als Projektmodul", () => {
     const projektEntry = getProjektverwaltungModuleEntry();
 
@@ -185,6 +211,7 @@ async function runLizenzverwaltungModuleTests(run) {
   await run("LicenseAdminScreen enthaelt Einstieg Lizenz erstellen / bearbeiten", () => {
     assert.equal(settingsViewSource.includes("new LicenseAdminScreen({"), true);
     assert.equal(settingsViewSource.includes("onOpenLicenseEditor: openLicenseEditorPopup"), true);
+    assert.equal(settingsViewSource.includes("onOpenCustomerEditor: openCustomerEditorPopup"), true);
     assert.equal(settingsViewSource.includes("title: \"Lizenz erstellen / bearbeiten\""), true);
   });
 

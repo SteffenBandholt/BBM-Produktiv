@@ -13,7 +13,11 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
-import { LicenseAdminScreen, createLicenseEditorSection } from "../modules/lizenzverwaltung/index.js";
+import {
+  LicenseAdminScreen,
+  createCustomerEditorSection,
+  createLicenseEditorSection,
+} from "../modules/lizenzverwaltung/index.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -4025,9 +4029,23 @@ export default class SettingsView {
       });
     };
 
+
+    const openCustomerEditorPopup = () => {
+      const customerEditor = createCustomerEditorSection({
+        applyPopupCardStyle,
+        applyPopupButtonStyle,
+      });
+      openSettingsModal({
+        title: "Kunden",
+        content: [customerEditor],
+        closeOnly: true,
+      });
+    };
+
     const openLicenseAdminPopup = () => {
       const licenseAdminScreen = new LicenseAdminScreen({
         onOpenLicenseEditor: openLicenseEditorPopup,
+        onOpenCustomerEditor: openCustomerEditorPopup,
       });
       openSettingsModal({
         title: "Lizenzverwaltung",

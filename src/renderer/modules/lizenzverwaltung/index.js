@@ -1,4 +1,9 @@
-import { LicenseAdminScreen, createLicenseEditorSection, LIZENZVERWALTUNG_WORK_SCREEN_ID } from "./screens/index.js";
+import {
+  LicenseAdminScreen,
+  createCustomerEditorSection,
+  createLicenseEditorSection,
+  LIZENZVERWALTUNG_WORK_SCREEN_ID,
+} from "./screens/index.js";
 
 export const LIZENZVERWALTUNG_MODULE_ID = "lizenzverwaltung";
 export const LIZENZVERWALTUNG_MODULE_LABEL = "Lizenzverwaltung";
@@ -18,7 +23,12 @@ export function getLizenzverwaltungModuleEntry() {
   });
 }
 
-export { LicenseAdminScreen, createLicenseEditorSection, LIZENZVERWALTUNG_WORK_SCREEN_ID };
+export {
+  LicenseAdminScreen,
+  createCustomerEditorSection,
+  createLicenseEditorSection,
+  LIZENZVERWALTUNG_WORK_SCREEN_ID,
+};
 export * from "./screens/index.js";
 export * from "./productScope.js";
 export * from "./licenseRecords.js";
