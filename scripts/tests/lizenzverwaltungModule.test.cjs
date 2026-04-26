@@ -19,11 +19,6 @@ async function runLizenzverwaltungModuleTests(run) {
       LIZENZVERWALTUNG_MODULE_ID,
       LIZENZVERWALTUNG_WORK_SCREEN_ID,
       LicenseAdminScreen,
-      createCustomerEditorSection,
-      createLicenseEditorSection,
-      createProductScopeEditorSection,
-      createLicenseRecordEditorSection,
-      createLicenseHistorySection,
       CUSTOMER_RECORD_FIELDS,
       LICENSE_RECORD_FIELDS,
       LICENSE_HISTORY_FIELDS,
@@ -81,15 +76,19 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(LIZENZVERWALTUNG_MODULE_ID, "lizenzverwaltung");
     assert.equal(LIZENZVERWALTUNG_WORK_SCREEN_ID, "licenseAdmin");
     assert.equal(typeof LicenseAdminScreen, "function");
-    assert.equal(typeof createCustomerEditorSection, "function");
-    assert.equal(typeof createLicenseEditorSection, "function");
-    assert.equal(typeof createProductScopeEditorSection, "function");
-    assert.equal(typeof createLicenseRecordEditorSection, "function");
-    assert.equal(typeof createLicenseHistorySection, "function");
+    assert.equal(typeof LicenseAdminScreen, "function");
     assert.equal(entry.moduleId, "lizenzverwaltung");
     assert.equal(entry.workScreenId, "licenseAdmin");
     assert.equal(entry.screens?.licenseAdmin, LicenseAdminScreen);
   });
+
+
+  await run("Lizenzverwaltung Modulindex: kein Pflicht-Export createLicenseEditorSection fuer Admin", () => {
+    assert.equal("createLicenseEditorSection" in { getLizenzverwaltungModuleEntry }, false);
+    assert.equal(read("src/renderer/modules/lizenzverwaltung/index.js").includes("createLicenseEditorSection"), false);
+    assert.equal(read("src/renderer/modules/lizenzverwaltung/screens/index.js").includes("createLicenseEditorSection"), false);
+  });
+
 
 
   await run("Lizenzverwaltung: Kundendatensatz zentral vorbereitet", () => {
@@ -713,6 +712,14 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("title: \"Adminbereich\""), true);
     assert.equal(settingsViewSource.includes("titleText: \"Lizenzverwaltung\""), true);
     assert.equal(settingsViewSource.includes("openLicenseAdminPopup"), true);
+  });
+
+
+  await run("SettingsView: neuer Adminbereich nutzt keine alten Popup-Callbacks", () => {
+    assert.equal(settingsViewSource.includes("onOpenLicenseEditor:"), false);
+    assert.equal(settingsViewSource.includes("onOpenCustomerEditor:"), false);
+    assert.equal(settingsViewSource.includes("onOpenProductScopeEditor:"), false);
+    assert.equal(settingsViewSource.includes("onOpenLicenseHistory:"), false);
   });
 
   await run("LicenseAdminScreen wird direkt aus SettingsView geoeffnet", () => {

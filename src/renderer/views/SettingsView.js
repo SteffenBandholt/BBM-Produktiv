@@ -14,6 +14,7 @@ import {
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
 import { LicenseAdminScreen } from "../modules/lizenzverwaltung/index.js";
+import { createLicenseEditorSection as createLegacyLicenseEditorSection } from "../modules/lizenzverwaltung/screens/createLicenseEditorSection.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -2023,7 +2024,7 @@ export default class SettingsView {
       }
     };
 
-    const licenseGenBox = createLicenseEditorSection({
+    const licenseGenBox = createLegacyLicenseEditorSection({
       mkRow,
       applyPopupCardStyle,
       applyPopupButtonStyle,
