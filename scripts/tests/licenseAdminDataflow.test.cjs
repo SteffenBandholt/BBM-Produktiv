@@ -260,6 +260,35 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(camel.machine_id, "MID-2");
   });
 
+
+  await run("Lizenzverwaltung UI-Liste: Produktumfang aus product_scope_json raw wird lesbar", async () => {
+    const { formatProductScopeForList } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const out = formatProductScopeForList({ product_scope_json: JSON.stringify({ raw: "Sonderumfang A" }) });
+    assert.equal(out, "Sonderumfang A");
+  });
+
+  await run("Lizenzverwaltung UI-Liste: Produktumfang aus standardumfang/zusatzfunktionen/module wird kurz formatiert", async () => {
+    const { formatProductScopeForList } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const out = formatProductScopeForList({
+      product_scope_json: JSON.stringify({
+        standardumfang: ["app", "pdf"],
+        zusatzfunktionen: ["mail"],
+        module: ["Protokoll"],
+      }),
+    });
+    assert.equal(out, "std:app,pdf | zus:mail | mod:Protokoll");
+  });
+
+  await run("Lizenzverwaltung UI-Liste: Produktumfang ohne Daten zeigt '-'", async () => {
+    const { formatProductScopeForList } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    assert.equal(formatProductScopeForList({}), "-");
+  });
   await run("Lizenzverwaltung UI-Lizenz-Editor: Eingabewerte werden vollstaendig ins Save-Payload uebernommen", async () => {
     const { assertCustomerContext, createGeneratedLicenseId, buildLicenseEditorPayload } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")

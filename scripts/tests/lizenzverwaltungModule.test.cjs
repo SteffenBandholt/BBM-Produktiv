@@ -721,11 +721,22 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("onOpenLicenseEditor"), false);
   });
 
+
+  await run("LicenseAdminScreen Liste zeigt Produktumfang in Kunden-Lizenzzeile", () => {
+    assert.equal(screenSource.includes("formatProductScopeForList(record)"), true);
+  });
+
   await run("LicenseAdminScreen enthaelt kundenbezogene Lizenzfunktionen", () => {
     assert.equal(screenSource.includes("Lizenzen dieses Kunden"), true);
     assert.equal(screenSource.includes("Neue Lizenz"), true);
     assert.equal(screenSource.includes("Zurueck zur Kundenliste"), true);
     assert.equal(screenSource.includes("Zurueck zum Kunden"), true);
+  });
+
+
+  await run("Kundendetail: Neue Lizenz ist ohne gespeicherten Kunden blockiert", () => {
+    assert.equal(screenSource.includes("Bitte zuerst den Kunden speichern."), true);
+    assert.equal(screenSource.includes("newLicenseBtn.disabled = !this.currentCustomer?.id;"), true);
   });
 
   await run("LicenseAdminScreen zeigt Speicherkontext und Kundenpflicht", () => {

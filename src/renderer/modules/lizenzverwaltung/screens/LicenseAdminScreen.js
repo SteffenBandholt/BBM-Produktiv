@@ -44,6 +44,48 @@ function valueOf(item, ...keys) {
   return "";
 }
 
+
+
+export function formatProductScopeForList(entry = {}) {
+  const fromObject = entry?.productScope;
+  if (fromObject && typeof fromObject === "object" && !Array.isArray(fromObject)) {
+    const label = buildProductScopeLabel(fromObject);
+    if (label) return label;
+  }
+
+  const rawJson = String(entry?.product_scope_json || "").trim();
+  if (rawJson) {
+    try {
+      const parsed = JSON.parse(rawJson);
+      if (parsed && typeof parsed === "object") {
+        if (String(parsed.raw || "").trim()) return String(parsed.raw).trim();
+        const label = buildProductScopeLabel(parsed);
+        if (label) return label;
+      }
+    } catch (_err) {
+      return rawJson;
+    }
+  }
+
+  if (String(entry?.product_scope_json || "").trim()) {
+    return String(entry.product_scope_json).trim();
+  }
+
+  return "-";
+}
+
+function buildProductScopeLabel(scope = {}) {
+  const collect = [];
+  const add = (prefix, key) => {
+    if (Array.isArray(scope[key]) && scope[key].length) {
+      collect.push(`${prefix}:${scope[key].map((v) => String(v || "").trim()).filter(Boolean).join(",")}`);
+    }
+  };
+  add("std", "standardumfang");
+  add("zus", "zusatzfunktionen");
+  add("mod", "module");
+  return collect.join(" | ").trim();
+}
 export default class LicenseAdminScreen {
   constructor({ onBackToAdminbereich } = {}) {
     this.onBackToAdminbereich = onBackToAdminbereich;
@@ -172,9 +214,14 @@ export default class LicenseAdminScreen {
     });
 
     const newLicenseBtn = this._button("Neue Lizenz", () => {
+      if (!this.currentCustomer?.id) {
+        message.textContent = "Bitte zuerst den Kunden speichern.";
+        return;
+      }
       this.currentView = "license-editor";
       this._render();
     });
+    newLicenseBtn.disabled = !this.currentCustomer?.id;
 
     const backBtn = this._button("Zurueck zur Kundenliste", () => {
       this.currentView = "customers";
@@ -203,11 +250,11 @@ export default class LicenseAdminScreen {
       for (const record of records) {
         const row = document.createElement("button");
         row.type = "button";
-        row.textContent = `${valueOf(record, "license_id", "licenseId") || "-"} | ${valueOf(
-          record,
-          "valid_from",
-          "validFrom"
-        )} - ${valueOf(record, "valid_until", "validUntil")} | ${valueOf(record, "license_mode", "licenseMode")}`;
+        row.textContent = `${valueOf(record, "license_id", "licenseId") || "-"} | ${formatProductScopeForList(record)} | ${
+          valueOf(record, "valid_from", "validFrom") || "-"
+        } | ${valueOf(record, "valid_until", "validUntil") || "-"} | ${
+          valueOf(record, "license_mode", "licenseMode") || "-"
+        }`;
         row.onclick = () => {
           this.currentView = "license-editor";
           this.currentLicense = record;
