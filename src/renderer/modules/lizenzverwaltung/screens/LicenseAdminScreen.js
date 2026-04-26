@@ -30,6 +30,19 @@ export function buildLicenseEditorPayload({ license = {}, inputs = {}, customer 
     notes: String(inputs.notes || "").trim(),
   };
 }
+
+export function buildCustomerEditorPayload({ customer = {}, inputs = {} } = {}) {
+  return {
+    id: customer.id,
+    customer_number: String(inputs.customer_number || "").trim(),
+    company_name: String(inputs.company_name || "").trim(),
+    contact_person: String(inputs.contact_person || "").trim(),
+    email: String(inputs.email || "").trim(),
+    phone: String(inputs.phone || "").trim(),
+    notes: String(inputs.notes || "").trim(),
+  };
+}
+
 function customerLabel(customer) {
   const number = String(customer?.customer_number || customer?.customerNumber || "-").trim() || "-";
   const company = String(customer?.company_name || customer?.companyName || "-").trim() || "-";
@@ -196,15 +209,19 @@ export default class LicenseAdminScreen {
 
     const saveBtn = this._button("Kunde speichern", async () => {
       try {
-        const saved = await saveCustomer({
-          id: customer.id,
-          customer_number: inputs.customer_number.value,
-          company_name: inputs.company_name.value,
-          contact_person: inputs.contact_person.value,
-          email: inputs.email.value,
-          phone: inputs.phone.value,
-          notes: inputs.notes.value,
-        });
+        const saved = await saveCustomer(
+          buildCustomerEditorPayload({
+            customer,
+            inputs: {
+              customer_number: inputs.customer_number.value,
+              company_name: inputs.company_name.value,
+              contact_person: inputs.contact_person.value,
+              email: inputs.email.value,
+              phone: inputs.phone.value,
+              notes: inputs.notes.value,
+            },
+          })
+        );
         this.currentCustomer = saved;
         message.textContent = "Kunde gespeichert.";
         await renderLicenses();

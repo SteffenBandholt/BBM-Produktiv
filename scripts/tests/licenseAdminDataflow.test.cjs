@@ -153,6 +153,70 @@ async function runLicenseAdminDataflowTests(run) {
     });
   });
 
+
+  await run("Lizenzverwaltung normalizeCustomerRecord: snake_case und camelCase werden vollstaendig abgebildet", async () => {
+    const { normalizeCustomerRecord } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseRecords.js")
+    );
+
+    const snake = normalizeCustomerRecord({
+      customer_number: "K-900",
+      company_name: "Bau GmbH",
+      contact_person: "Max Muster",
+      email: "max@bau.de",
+      phone: "123",
+      notes: "hinweis",
+    });
+    assert.equal(snake.customer_number, "K-900");
+    assert.equal(snake.company_name, "Bau GmbH");
+    assert.equal(snake.contact_person, "Max Muster");
+    assert.equal(snake.customerNumber, "K-900");
+
+    const camel = normalizeCustomerRecord({
+      customerNumber: "K-901",
+      companyName: "Plan AG",
+      contactPerson: "Erika Plan",
+      email: "erika@plan.de",
+      phone: "555",
+      notes: "ok",
+    });
+    assert.equal(camel.customer_number, "K-901");
+    assert.equal(camel.company_name, "Plan AG");
+    assert.equal(camel.contact_person, "Erika Plan");
+    assert.equal(camel.customerNumber, "K-901");
+  });
+
+  await run("Lizenzverwaltung Renderer-Service: saveCustomer mit snake_case uebergibt vollstaendiges Payload", async () => {
+    const { saveCustomer } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
+    );
+
+    let received = null;
+    global.window = {
+      bbmDb: {
+        licenseAdminSaveLicenseCustomer: async (payload) => {
+          received = payload;
+          return { ...payload, id: "customer-1" };
+        },
+      },
+    };
+
+    const saved = await saveCustomer({
+      customer_number: "K-1000",
+      company_name: "Musterbau",
+      contact_person: "Anna",
+      email: "anna@example.org",
+      phone: "0171",
+      notes: "note",
+    });
+
+    assert.equal(received.customer_number, "K-1000");
+    assert.equal(received.company_name, "Musterbau");
+    assert.equal(received.contact_person, "Anna");
+    assert.equal(received.email, "anna@example.org");
+    assert.equal(saved.id, "customer-1");
+  });
+
   await run("Lizenzverwaltung Renderer-Service: saveLicense mit snake_case uebergibt Pflichtfelder vollstaendig", async () => {
     const { saveLicense } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
@@ -290,9 +354,12 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(formatProductScopeForList({}), "-");
   });
   await run("Lizenzverwaltung UI-Lizenz-Editor: Eingabewerte werden vollstaendig ins Save-Payload uebernommen", async () => {
-    const { assertCustomerContext, createGeneratedLicenseId, buildLicenseEditorPayload } = await importEsmFromFile(
-      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
-    );
+    const {
+      assertCustomerContext,
+      createGeneratedLicenseId,
+      buildLicenseEditorPayload,
+      buildCustomerEditorPayload,
+    } = await importEsmFromFile(path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js"));
 
     assert.equal(assertCustomerContext({ id: "customer-1" }), "customer-1");
     assert.throws(() => assertCustomerContext({}), /CUSTOMER_CONTEXT_REQUIRED/);
@@ -318,6 +385,22 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(payload.valid_from, "2026-05-01");
     assert.equal(payload.valid_until, "2026-12-31");
     assert.equal(payload.license_mode, "full");
+
+    const customerPayload = buildCustomerEditorPayload({
+      customer: { id: "c-44" },
+      inputs: {
+        customer_number: "K-44",
+        company_name: "Firma 44",
+        contact_person: "Kontakt 44",
+        email: "44@example.org",
+        phone: "444",
+        notes: "n",
+      },
+    });
+    assert.equal(customerPayload.id, "c-44");
+    assert.equal(customerPayload.customer_number, "K-44");
+    assert.equal(customerPayload.company_name, "Firma 44");
+    assert.equal(customerPayload.contact_person, "Kontakt 44");
   });
 }
 

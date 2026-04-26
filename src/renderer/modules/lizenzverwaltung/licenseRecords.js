@@ -36,8 +36,11 @@ export const LICENSE_HISTORY_FIELDS = Object.freeze([
 export function createDefaultCustomerRecord(overrides = {}) {
   return {
     customerNumber: "",
+    customer_number: "",
     companyName: "",
+    company_name: "",
     contactPerson: "",
+    contact_person: "",
     email: "",
     phone: "",
     notes: "",
@@ -86,13 +89,23 @@ export function createDefaultLicenseHistoryRecord(overrides = {}) {
 
 export function normalizeCustomerRecord(input = {}) {
   const base = createDefaultCustomerRecord();
+  const customerNumber = String(input.customerNumber ?? input.customer_number ?? base.customerNumber).trim();
+  const companyName = String(input.companyName ?? input.company_name ?? base.companyName).trim();
+  const contactPerson = String(input.contactPerson ?? input.contact_person ?? base.contactPerson).trim();
+  const email = String(input.email ?? base.email).trim();
+  const phone = String(input.phone ?? base.phone).trim();
+  const notes = String(input.notes ?? base.notes).trim();
+
   return {
-    customerNumber: String(input.customerNumber ?? base.customerNumber).trim(),
-    companyName: String(input.companyName ?? base.companyName).trim(),
-    contactPerson: String(input.contactPerson ?? base.contactPerson).trim(),
-    email: String(input.email ?? base.email).trim(),
-    phone: String(input.phone ?? base.phone).trim(),
-    notes: String(input.notes ?? base.notes).trim(),
+    customerNumber,
+    customer_number: customerNumber,
+    companyName,
+    company_name: companyName,
+    contactPerson,
+    contact_person: contactPerson,
+    email,
+    phone,
+    notes,
   };
 }
 
