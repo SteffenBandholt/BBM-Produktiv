@@ -106,6 +106,11 @@ Sie ergänzt:
   - Gespeicherte Lizenzen zeigen Kundennummer/Firma lesbar an; ohne vorhandene Kunden blockiert die Maske das erfolgreiche Speichern mit Hinweis.
   - Leere Lizenz-ID wird in der Lizenzen-Maske beim Pruefen/Merken automatisch als lesbare `LIC-YYYYMMDD-HHMMSS`-ID erzeugt.
   - Die erzeugte Lizenz-ID wird sichtbar ins Feld uebernommen; manuelle IDs bleiben weiterhin bearbeitbar.
+- Lizenzverwaltung Bugfix (Persistenz Lizenzen) ist umgesetzt:
+  - Lizenzen-Maske zeigt Speicherkonflikte sichtbar in der Maske (inkl. Fehlerdetails).
+  - `Merken` ruft `saveLicense(...)` nur auf, wenn `customerId/customer_id` gesetzt ist.
+  - Save-Payload fuehrt relevante camelCase/snake_case-Felder mit (`customerId/customer_id`, `productScope/product_scope_json`, `validUntil/valid_until`, `licenseMode/license_mode`).
+  - Main-Service meldet ungueltige `customer_id` nachvollziehbar (`customer_id invalid: ...`), und die gespeicherte Lizenzliste bleibt lesbar ueber `customerDisplay`/Fallbacks.
 
 - Lizenzverwaltung Neuversuch (In-Memory-Listenansichten) ist nachgezogen:
   - Testnachweise in `scripts/tests/lizenzverwaltungModule.test.cjs` fuer Kunden/Lizenzen/Historie um Listenfelder und Refresh nach `Merken` ergaenzt

@@ -322,13 +322,30 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
   btnRemember.onclick = async () => {
     const isValid = runValidation();
     if (!isValid) return;
+    const payload = normalizeLicenseRecord(model);
+    const customerId = String(payload.customerId || payload.customer_id || "").trim();
+    if (!customerId) {
+      message.textContent =
+        "Speichern fehlgeschlagen: customer_id/customerId fehlt. Bitte Kunde neu auswaehlen.";
+      message.style.background = "#fef2f2";
+      message.style.borderColor = "rgba(220, 38, 38, 0.35)";
+      const customerInput = fieldInputs.get("customerNumber");
+      if (customerInput) customerInput.style.borderColor = "#dc2626";
+      return;
+    }
 
-    await saveLicense(model);
-    await refreshRememberedLicenses();
-    message.textContent =
-      "Datensatz dauerhaft gespeichert.";
-    message.style.background = "#f0fdf4";
-    message.style.borderColor = "rgba(34, 197, 94, 0.35)";
+    try {
+      await saveLicense(payload);
+      await refreshRememberedLicenses();
+      message.textContent = "Datensatz dauerhaft gespeichert.";
+      message.style.background = "#f0fdf4";
+      message.style.borderColor = "rgba(34, 197, 94, 0.35)";
+    } catch (error) {
+      const detail = String(error?.message || error || "").trim() || "Unbekannter Fehler";
+      message.textContent = `Speichern fehlgeschlagen: ${detail}`;
+      message.style.background = "#fef2f2";
+      message.style.borderColor = "rgba(220, 38, 38, 0.35)";
+    }
   };
 
   buttons.append(btnReset, btnValidate, btnRemember);

@@ -41,8 +41,20 @@ export async function listLicenses() {
 
 export async function saveLicense(license) {
   const record = normalizeLicenseRecord(license);
+  const customerId = String(record.customerId || record.customer_id || "").trim();
+  if (!customerId) {
+    throw new Error("Lizenzverwaltung: customer_id/customerId fehlt.");
+  }
+  const payload = {
+    ...record,
+    customerId,
+    customer_id: customerId,
+    product_scope_json: record.productScope,
+    valid_until: record.validUntil,
+    license_mode: record.licenseMode,
+  };
   const save = requireApiMethod("licenseAdminSaveLicenseRecord");
-  return save(record);
+  return save(payload);
 }
 
 export async function listHistory() {

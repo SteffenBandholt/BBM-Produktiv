@@ -7,6 +7,26 @@ function read(relPath) {
   return fs.readFileSync(path.join(process.cwd(), relPath), "utf8");
 }
 
+function loadLicenseAdminServiceWithDb(mockDbFactory) {
+  const servicePath = path.join(process.cwd(), "src/main/licensing/licenseAdminService.js");
+  const databasePath = path.join(process.cwd(), "src/main/db/database.js");
+  const previousDatabaseModule = require.cache[databasePath];
+  delete require.cache[servicePath];
+  require.cache[databasePath] = {
+    id: databasePath,
+    filename: databasePath,
+    loaded: true,
+    exports: {
+      initDatabase: mockDbFactory,
+    },
+  };
+  const service = require(servicePath);
+  if (previousDatabaseModule) require.cache[databasePath] = previousDatabaseModule;
+  else delete require.cache[databasePath];
+  delete require.cache[servicePath];
+  return service;
+}
+
 async function runLizenzverwaltungModuleTests(run) {
   const originalWindow = global.window;
   const restoreWindow = () => {
@@ -286,6 +306,33 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(payload.licenseId, "LIC-200");
     assert.equal(payload.customerId, "customer-200");
     assert.equal(payload.customer_id, "customer-200");
+    assert.equal(typeof payload.productScope, "object");
+    assert.equal(typeof payload.product_scope_json, "object");
+    assert.equal(payload.validUntil, "");
+    assert.equal(payload.valid_until, "");
+    assert.equal(payload.licenseMode, "full");
+    assert.equal(payload.license_mode, "full");
+    restoreWindow();
+  });
+
+  await run("Lizenzverwaltung: saveLicense lehnt fehlende customerId/customer_id ab", async () => {
+    global.window = {
+      bbmDb: {
+        licenseAdminSaveLicenseRecord: async () => {
+          throw new Error("darf nicht aufgerufen werden");
+        },
+      },
+    };
+    await assert.rejects(
+      () =>
+        saveLicense({
+          licenseId: "LIC-201",
+          productScope: { standardumfang: ["app", "pdf", "export"] },
+          validUntil: "2027-04-26",
+          licenseMode: "soft",
+        }),
+      /customer_id\/customerId fehlt/
+    );
     restoreWindow();
   });
 
@@ -462,6 +509,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordEditorSource.includes("entry.customerId"), true);
     assert.equal(licenseRecordEditorSource.includes("entry.validUntil"), true);
     assert.equal(licenseRecordEditorSource.includes("entry.licenseMode"), true);
+    assert.equal(licenseRecordEditorSource.includes("entry.license_id"), true);
+    assert.equal(licenseRecordEditorSource.includes("entry.customer_number"), true);
+    assert.equal(licenseRecordEditorSource.includes("entry.company_name"), true);
+    assert.equal(licenseRecordEditorSource.includes("entry.valid_until"), true);
+    assert.equal(licenseRecordEditorSource.includes("entry.license_mode"), true);
     assert.equal(licenseRecordEditorSource.includes("refreshRememberedLicenses"), true);
     assert.equal(licenseRecordEditorSource.includes("refreshRememberedLicenses();"), true);
     assert.equal(licenseRecordEditorSource.includes("await refreshRememberedLicenses();"), true);
@@ -479,7 +531,14 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordEditorSource.includes("if (!hasCustomers)"), true);
     assert.equal(licenseRecordEditorSource.includes('message.textContent = "Bitte zuerst einen Kunden anlegen."'), true);
     assert.equal(licenseRecordEditorSource.includes("if (!isValid) return;"), true);
-    assert.equal(licenseRecordEditorSource.includes("await saveLicense(model);"), true);
+    assert.equal(licenseRecordEditorSource.includes("const payload = normalizeLicenseRecord(model);"), true);
+    assert.equal(licenseRecordEditorSource.includes("if (!customerId)"), true);
+    assert.equal(
+      licenseRecordEditorSource.includes("customer_id/customerId fehlt. Bitte Kunde neu auswaehlen."),
+      true
+    );
+    assert.equal(licenseRecordEditorSource.includes("await saveLicense(payload);"), true);
+    assert.equal(licenseRecordEditorSource.includes("Speichern fehlgeschlagen:"), true);
   });
 
   await run("Lizenzen-UI: Leere Lizenz-ID wird automatisch erzeugt und blockiert Pruefen nicht", () => {
@@ -502,6 +561,9 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordsSource.includes("customer_id"), true);
     assert.equal(licenseRecordsSource.includes("input.customerId"), true);
     assert.equal(licenseRecordsSource.includes("input.customer_id"), true);
+    assert.equal(licenseRecordsSource.includes("product_scope_json"), true);
+    assert.equal(licenseRecordsSource.includes("valid_until"), true);
+    assert.equal(licenseRecordsSource.includes("license_mode"), true);
   });
 
   await run("Produktumfang-UI: nutzt PRODUCT_SCOPE und enthaelt Gruppen", () => {
@@ -617,10 +679,117 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseAdminServiceSource.includes("companyName"), true);
   });
 
+  await run("Lizenzverwaltung Main-Service: saveLicense akzeptiert customerId und customer_id", () => {
+    const calls = [];
+    const fakeDb = {
+      prepare(sql) {
+        return {
+          get(...args) {
+            calls.push({ type: "get", sql, args });
+            if (sql.includes("SELECT id FROM license_records")) return undefined;
+            if (sql.includes("SELECT * FROM license_records WHERE id = ?")) {
+              return {
+                id: args[0],
+                license_id: "LIC-300",
+                customer_id: "customer-300",
+              };
+            }
+            return undefined;
+          },
+          run(...args) {
+            calls.push({ type: "run", sql, args });
+            return { changes: 1 };
+          },
+          all() {
+            return [];
+          },
+        };
+      },
+    };
+    const service = loadLicenseAdminServiceWithDb(() => fakeDb);
+
+    service.saveLicense({
+      licenseId: "LIC-300",
+      customerId: "customer-300",
+      productScope: { standardumfang: ["app", "pdf", "export"] },
+      validUntil: "2027-04-26",
+      licenseMode: "soft",
+    });
+    service.saveLicense({
+      license_id: "LIC-301",
+      customer_id: "customer-301",
+      product_scope_json: JSON.stringify({ standardumfang: ["app", "pdf", "export"] }),
+      valid_until: "2027-05-26",
+      license_mode: "full",
+    });
+
+    const insertCalls = calls.filter((entry) => entry.type === "run" && entry.sql.includes("INSERT INTO license_records"));
+    assert.equal(insertCalls.length, 2);
+    assert.equal(insertCalls[0].args[1], "LIC-300");
+    assert.equal(insertCalls[0].args[2], "customer-300");
+    assert.equal(insertCalls[1].args[1], "LIC-301");
+    assert.equal(insertCalls[1].args[2], "customer-301");
+  });
+
+  await run("Lizenzverwaltung Main-Service: listLicenses liefert customerDisplay", () => {
+    const fakeRows = [{ license_id: "LIC-401", customerDisplay: "K-401 | Bau AG" }];
+    const fakeDb = {
+      prepare(sql) {
+        return {
+          all() {
+            if (sql.includes("FROM license_records")) return fakeRows;
+            return [];
+          },
+          get() {
+            return undefined;
+          },
+          run() {
+            return { changes: 1 };
+          },
+        };
+      },
+    };
+    const service = loadLicenseAdminServiceWithDb(() => fakeDb);
+    const rows = service.listLicenses();
+    assert.deepEqual(rows, fakeRows);
+    assert.equal(rows[0].customerDisplay, "K-401 | Bau AG");
+  });
+
   await run("Lizenzverwaltung Main-Service: speichert product_scope_json als JSON-String", () => {
     assert.equal(licenseAdminServiceSource.includes("product_scope_json"), true);
     assert.equal(licenseAdminServiceSource.includes("JSON.stringify"), true);
     assert.equal(licenseAdminServiceSource.includes("JSON.parse"), true);
+  });
+
+  await run("Lizenzverwaltung Main-Service: meldet ungueltige customer_id nachvollziehbar", () => {
+    const fakeDb = {
+      prepare(sql) {
+        return {
+          get() {
+            return undefined;
+          },
+          run() {
+            if (sql.includes("INSERT INTO license_records")) {
+              throw new Error("FOREIGN KEY constraint failed");
+            }
+            return { changes: 1 };
+          },
+          all() {
+            return [];
+          },
+        };
+      },
+    };
+    const service = loadLicenseAdminServiceWithDb(() => fakeDb);
+    assert.throws(
+      () =>
+        service.saveLicense({
+          licenseId: "LIC-999",
+          customerId: "unknown-customer",
+          productScope: {},
+        }),
+      /customer_id invalid: unknown-customer/
+    );
   });
 
   await run("Lizenzverwaltung Main-Service: bleibt im Main-Prozess ohne Renderer-Import", () => {

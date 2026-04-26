@@ -234,6 +234,12 @@ Kurzstand (Paket DB-Schema/Migration):
 - IPC-/Preload-Schnitt ist vorbereitet und angebunden; Renderer-`licenseStorageService` nutzt jetzt IPC/Preload, sodass Kunden, Lizenzen und Historie dauerhaft in `app.db` gespeichert werden.
 - Lizenzen koennen jetzt einem gespeicherten Kunden zugeordnet werden (`customer_id` / `customerId`) und die Listenansicht zeigt Kundendaten lesbar an.
 
+Kurzstand (Bugfix Persistenz Lizenzen, April 2026):
+- Die Lizenzen-Maske speichert nur noch, wenn `customerId/customer_id` wirklich gesetzt ist.
+- Speichern zeigt Fehler jetzt sichtbar in der Maske (inklusive nachvollziehbarer Meldung bei ungueltiger `customer_id`).
+- `saveLicense`-Payload bleibt kompatibel fuer camelCase und snake_case (`licenseId/license_id`, `customerId/customer_id`, `productScope/product_scope_json`, `validUntil/valid_until`, `licenseMode/license_mode`).
+- `listLicenses` bleibt lesbar fuer die UI-Liste mit `customerDisplay` sowie vorhandenen Fallback-Feldern.
+
 ### Abgrenzung
 Nicht Teil dieses Schritts:
 - Kunden speichern

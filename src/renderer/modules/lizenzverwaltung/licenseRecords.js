@@ -94,26 +94,36 @@ export function normalizeLicenseRecord(input = {}) {
   const base = createDefaultLicenseRecord();
   const mode = String(input.licenseMode ?? base.licenseMode).trim().toLowerCase();
   const normalizedMode = LICENSE_MODES.some((entry) => entry.key === mode) ? mode : base.licenseMode;
+  const productScope = {
+    standardumfang: Array.isArray(input?.productScope?.standardumfang)
+      ? [...input.productScope.standardumfang]
+      : [...base.productScope.standardumfang],
+    zusatzfunktionen: Array.isArray(input?.productScope?.zusatzfunktionen)
+      ? [...input.productScope.zusatzfunktionen]
+      : [...base.productScope.zusatzfunktionen],
+    module: Array.isArray(input?.productScope?.module)
+      ? [...input.productScope.module]
+      : [...base.productScope.module],
+  };
+  const customerId = String(input.customerId ?? input.customer_id ?? base.customerId).trim();
+  const validUntil = String(input.validUntil ?? input.valid_until ?? base.validUntil).trim();
+  const licenseMode = String(input.licenseMode ?? input.license_mode ?? normalizedMode).trim().toLowerCase();
+  const normalizedLicenseMode = LICENSE_MODES.some((entry) => entry.key === licenseMode)
+    ? licenseMode
+    : base.licenseMode;
 
   return {
     licenseId: String(input.licenseId ?? base.licenseId).trim(),
-    customerId: String(input.customerId ?? input.customer_id ?? base.customerId).trim(),
-    customer_id: String(input.customer_id ?? input.customerId ?? base.customer_id).trim(),
+    customerId,
+    customer_id: customerId,
     customerNumber: String(input.customerNumber ?? base.customerNumber).trim(),
-    productScope: {
-      standardumfang: Array.isArray(input?.productScope?.standardumfang)
-        ? [...input.productScope.standardumfang]
-        : [...base.productScope.standardumfang],
-      zusatzfunktionen: Array.isArray(input?.productScope?.zusatzfunktionen)
-        ? [...input.productScope.zusatzfunktionen]
-        : [...base.productScope.zusatzfunktionen],
-      module: Array.isArray(input?.productScope?.module)
-        ? [...input.productScope.module]
-        : [...base.productScope.module],
-    },
+    productScope,
+    product_scope_json: productScope,
     validFrom: String(input.validFrom ?? base.validFrom).trim(),
-    validUntil: String(input.validUntil ?? base.validUntil).trim(),
-    licenseMode: normalizedMode,
+    validUntil,
+    valid_until: validUntil,
+    licenseMode: normalizedLicenseMode,
+    license_mode: normalizedLicenseMode,
     machineId: String(input.machineId ?? base.machineId).trim(),
     notes: String(input.notes ?? base.notes).trim(),
   };

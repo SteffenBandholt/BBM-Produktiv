@@ -186,58 +186,72 @@ function saveLicense(license = {}) {
   const now = _nowIso();
 
   if (existing) {
-    db.prepare(
+    try {
+      db.prepare(
+        `
+        UPDATE license_records
+        SET license_id = ?,
+            customer_id = ?,
+            product_scope_json = ?,
+            valid_from = ?,
+            valid_until = ?,
+            license_mode = ?,
+            machine_id = ?,
+            notes = ?,
+            updated_at = ?
+        WHERE id = ?
       `
-      UPDATE license_records
-      SET license_id = ?,
-          customer_id = ?,
-          product_scope_json = ?,
-          valid_from = ?,
-          valid_until = ?,
-          license_mode = ?,
-          machine_id = ?,
-          notes = ?,
-          updated_at = ?
-      WHERE id = ?
-    `
-    ).run(
-      record.license_id,
-      record.customer_id,
-      record.product_scope_json,
-      record.valid_from,
-      record.valid_until,
-      record.license_mode,
-      record.machine_id,
-      record.notes,
-      now,
-      record.id
-    );
+      ).run(
+        record.license_id,
+        record.customer_id,
+        record.product_scope_json,
+        record.valid_from,
+        record.valid_until,
+        record.license_mode,
+        record.machine_id,
+        record.notes,
+        now,
+        record.id
+      );
+    } catch (error) {
+      if (String(error?.message || "").includes("FOREIGN KEY constraint failed")) {
+        throw new Error(`customer_id invalid: ${record.customer_id}`);
+      }
+      throw error;
+    }
   } else {
-    db.prepare(
+    try {
+      db.prepare(
+        `
+        INSERT INTO license_records (
+          id,
+          license_id,
+          customer_id,
+          product_scope_json,
+          valid_from,
+          valid_until,
+          license_mode,
+          machine_id,
+          notes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `
-      INSERT INTO license_records (
-        id,
-        license_id,
-        customer_id,
-        product_scope_json,
-        valid_from,
-        valid_until,
-        license_mode,
-        machine_id,
-        notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `
-    ).run(
-      record.id,
-      record.license_id,
-      record.customer_id,
-      record.product_scope_json,
-      record.valid_from,
-      record.valid_until,
-      record.license_mode,
-      record.machine_id,
-      record.notes
-    );
+      ).run(
+        record.id,
+        record.license_id,
+        record.customer_id,
+        record.product_scope_json,
+        record.valid_from,
+        record.valid_until,
+        record.license_mode,
+        record.machine_id,
+        record.notes
+      );
+    } catch (error) {
+      if (String(error?.message || "").includes("FOREIGN KEY constraint failed")) {
+        throw new Error(`customer_id invalid: ${record.customer_id}`);
+      }
+      throw error;
+    }
   }
 
   return db.prepare(`SELECT * FROM license_records WHERE id = ?`).get(record.id);
