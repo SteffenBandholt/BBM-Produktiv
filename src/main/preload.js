@@ -206,6 +206,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   licenseAdminListLicenseCustomers: () => ipcRenderer.invoke("license-admin:list-customers"),
   licenseAdminSaveLicenseCustomer: (customer) => ipcRenderer.invoke("license-admin:save-customer", customer),
   licenseAdminListLicenseRecords: () => ipcRenderer.invoke("license-admin:list-records"),
+  licenseAdminListLicenseRecordsByCustomer: (customerId) =>
+    ipcRenderer.invoke("license-admin:list-records-by-customer", customerId),
   licenseAdminSaveLicenseRecord: (license) => ipcRenderer.invoke("license-admin:save-record", license),
   licenseAdminListLicenseHistory: () => ipcRenderer.invoke("license-admin:list-history"),
   licenseAdminAddLicenseHistoryEntry: (entry) => ipcRenderer.invoke("license-admin:add-history-entry", entry),

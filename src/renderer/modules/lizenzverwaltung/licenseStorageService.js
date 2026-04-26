@@ -39,6 +39,11 @@ export async function listLicenses() {
   return list();
 }
 
+export async function listLicensesByCustomer(customerId) {
+  const list = requireApiMethod("licenseAdminListLicenseRecordsByCustomer");
+  return list(String(customerId || "").trim());
+}
+
 export async function saveLicense(license) {
   const record = normalizeLicenseRecord(license);
   const save = requireApiMethod("licenseAdminSaveLicenseRecord");

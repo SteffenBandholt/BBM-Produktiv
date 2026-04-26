@@ -610,6 +610,10 @@ function registerLicenseAdminDataIpc() {
     return licenseAdminService.listLicenses();
   });
 
+  ipcMain.handle("license-admin:list-records-by-customer", async (_event, customerId) => {
+    return licenseAdminService.listLicensesByCustomer(customerId);
+  });
+
   ipcMain.handle("license-admin:save-record", async (_event, license) => {
     return licenseAdminService.saveLicense(license || {});
   });

@@ -1125,6 +1125,41 @@ function ensureLicenseAdminSchema(dbConn) {
     `);
   }
 
+  if (!columnExists(dbConn, "license_records", "license_id")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN license_id TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "customer_id")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN customer_id TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "product_scope_json")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN product_scope_json TEXT NOT NULL DEFAULT '{}';`);
+  }
+  if (!columnExists(dbConn, "license_records", "valid_from")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN valid_from TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "valid_until")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN valid_until TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "license_mode")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN license_mode TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "machine_id")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN machine_id TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "notes")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN notes TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "created_at")) {
+    dbConn.exec(
+      `ALTER TABLE license_records ADD COLUMN created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));`
+    );
+  }
+  if (!columnExists(dbConn, "license_records", "updated_at")) {
+    dbConn.exec(
+      `ALTER TABLE license_records ADD COLUMN updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));`
+    );
+  }
+
   if (!tableExists(dbConn, "license_history")) {
     dbConn.exec(`
       CREATE TABLE IF NOT EXISTS license_history (

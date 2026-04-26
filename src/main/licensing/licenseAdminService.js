@@ -19,6 +19,17 @@ function _nowIso() {
   return new Date().toISOString();
 }
 
+function _timestampForLicenseId(date = new Date()) {
+  const part = (value) => String(value).padStart(2, "0");
+  return `${date.getFullYear()}${part(date.getMonth() + 1)}${part(date.getDate())}-${part(date.getHours())}${part(
+    date.getMinutes()
+  )}${part(date.getSeconds())}`;
+}
+
+function _generateLicenseId(date = new Date()) {
+  return `LIC-${_timestampForLicenseId(date)}`;
+}
+
 function _normalizeProductScopeJson(input) {
   if (typeof input === "string") {
     const trimmed = input.trim();
@@ -86,6 +97,28 @@ function _normalizeHistoryEntry(entry = {}) {
   };
 }
 
+function _baseListLicensesQuery() {
+  return `
+    SELECT
+      lr.*,
+      lc.customer_number AS customer_number,
+      lc.company_name AS company_name,
+      lc.customer_number AS customerNumber,
+      lc.company_name AS companyName,
+      CASE
+        WHEN COALESCE(TRIM(lc.customer_number), '') <> '' AND COALESCE(TRIM(lc.company_name), '') <> ''
+          THEN lc.customer_number || ' | ' || lc.company_name
+        WHEN COALESCE(TRIM(lc.customer_number), '') <> ''
+          THEN lc.customer_number
+        WHEN COALESCE(TRIM(lc.company_name), '') <> ''
+          THEN lc.company_name
+        ELSE COALESCE(lr.customer_id, '')
+      END AS customerDisplay
+    FROM license_records lr
+    LEFT JOIN license_customers lc ON lc.id = lr.customer_id
+  `;
+}
+
 function listCustomers() {
   return _db().prepare(`SELECT * FROM license_customers ORDER BY company_name COLLATE NOCASE, customer_number COLLATE NOCASE`).all();
 }
@@ -151,36 +184,31 @@ function saveCustomer(customer = {}) {
 
 function listLicenses() {
   return _db()
-    .prepare(
-      `
-      SELECT
-        lr.*,
-        lc.customer_number AS customer_number,
-        lc.company_name AS company_name,
-        lc.customer_number AS customerNumber,
-        lc.company_name AS companyName,
-        CASE
-          WHEN COALESCE(TRIM(lc.customer_number), '') <> '' AND COALESCE(TRIM(lc.company_name), '') <> ''
-            THEN lc.customer_number || ' | ' || lc.company_name
-          WHEN COALESCE(TRIM(lc.customer_number), '') <> ''
-            THEN lc.customer_number
-          WHEN COALESCE(TRIM(lc.company_name), '') <> ''
-            THEN lc.company_name
-          ELSE COALESCE(lr.customer_id, '')
-        END AS customerDisplay
-      FROM license_records lr
-      LEFT JOIN license_customers lc ON lc.id = lr.customer_id
-      ORDER BY lr.created_at DESC, lr.license_id COLLATE NOCASE
-    `
-    )
+    .prepare(`${_baseListLicensesQuery()} ORDER BY lr.created_at DESC, lr.license_id COLLATE NOCASE`)
     .all();
+}
+
+function listLicensesByCustomer(customerId) {
+  const normalizedCustomerId = _trimText(customerId);
+  if (!normalizedCustomerId) throw new Error("customer_id required");
+  return _db()
+    .prepare(
+      `${_baseListLicensesQuery()} WHERE lr.customer_id = ? ORDER BY lr.created_at DESC, lr.license_id COLLATE NOCASE`
+    )
+    .all(normalizedCustomerId);
 }
 
 function saveLicense(license = {}) {
   const db = _db();
   const record = _normalizeLicenseRecord(license);
-  if (!record.license_id) throw new Error("license_id required");
+  if (!record.license_id) {
+    record.license_id = _generateLicenseId();
+  }
   if (!record.customer_id) throw new Error("customer_id required");
+  if (!record.product_scope_json) throw new Error("product_scope_json required");
+  if (!record.valid_from) throw new Error("valid_from required");
+  if (!record.valid_until) throw new Error("valid_until required");
+  if (!record.license_mode) throw new Error("license_mode required");
 
   const existing = db.prepare(`SELECT id FROM license_records WHERE id = ?`).get(record.id);
   const now = _nowIso();
@@ -281,6 +309,7 @@ module.exports = {
   listCustomers,
   saveCustomer,
   listLicenses,
+  listLicensesByCustomer,
   saveLicense,
   listHistory,
   addHistoryEntry,
