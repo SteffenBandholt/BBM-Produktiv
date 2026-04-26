@@ -4,7 +4,7 @@ import {
   createDefaultLicenseRecord,
   normalizeLicenseRecord,
 } from "../licenseRecords.js";
-import { saveLicense } from "../licenseStorageService.js";
+import { listLicenses, saveLicense } from "../licenseStorageService.js";
 
 export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPopupButtonStyle } = {}) {
   const model = createDefaultLicenseRecord();
@@ -145,6 +145,44 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
   buttons.style.display = "flex";
   buttons.style.gap = "8px";
 
+  const memoryListWrap = document.createElement("div");
+  memoryListWrap.style.display = "grid";
+  memoryListWrap.style.gap = "6px";
+
+  const memoryListTitle = document.createElement("h4");
+  memoryListTitle.textContent = "Temporär gemerkte Lizenzen";
+  memoryListTitle.style.margin = "0";
+  memoryListTitle.style.fontSize = "13px";
+
+  const memoryList = document.createElement("ul");
+  memoryList.style.margin = "0";
+  memoryList.style.paddingLeft = "18px";
+  memoryList.style.display = "grid";
+  memoryList.style.gap = "4px";
+
+  const renderLicenseList = (licenses) => {
+    memoryList.innerHTML = "";
+    if (!Array.isArray(licenses) || licenses.length === 0) {
+      const empty = document.createElement("li");
+      empty.textContent = "Noch keine temporär gemerkten Lizenzen.";
+      memoryList.appendChild(empty);
+      return;
+    }
+
+    licenses.forEach((entry) => {
+      const item = document.createElement("li");
+      item.textContent = `${entry.licenseId || "—"} | ${entry.customerNumber || "—"} | ${
+        entry.validUntil || "—"
+      } | ${entry.licenseMode || "—"}`;
+      memoryList.appendChild(item);
+    });
+  };
+
+  const refreshLicenseList = async () => {
+    const licenses = await listLicenses();
+    renderLicenseList(licenses);
+  };
+
   const btnReset = document.createElement("button");
   btnReset.type = "button";
   btnReset.textContent = "Neu / leeren";
@@ -175,6 +213,7 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
     if (!isValid) return;
 
     await saveLicense(model);
+    await refreshLicenseList();
     message.textContent =
       "Datensatz temporaer gemerkt, noch keine dauerhafte Speicherung (nur In-Memory-Storage-Service).";
     message.style.background = "#f0fdf4";
@@ -182,8 +221,10 @@ export function createLicenseRecordEditorSection({ applyPopupCardStyle, applyPop
   };
 
   buttons.append(btnReset, btnValidate, btnRemember);
+  memoryListWrap.append(memoryListTitle, memoryList);
 
   applyModelToInputs();
-  card.append(title, hint, form, buttons, message);
+  void refreshLicenseList();
+  card.append(title, hint, form, buttons, memoryListWrap, message);
   return card;
 }

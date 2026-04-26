@@ -313,6 +313,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(customerEditorSource.includes("ohne Speicherung"), true);
     assert.equal(customerEditorSource.includes("Keine Speicherung"), true);
     assert.equal(customerEditorSource.includes("saveCustomer"), true);
+    assert.equal(customerEditorSource.includes("listCustomers"), true);
+    assert.equal(customerEditorSource.includes("refreshCustomerList"), true);
+    assert.equal(customerEditorSource.includes("Temporär gemerkte Kunden"), true);
+    assert.equal(customerEditorSource.includes("Noch keine temporär gemerkten Kunden."), true);
+    assert.equal(customerEditorSource.includes("await refreshCustomerList();"), true);
     assert.equal(customerEditorSource.includes("temporaer gemerkt"), true);
     assert.equal(customerEditorSource.includes("nur In-Memory-Storage-Service"), true);
   });
@@ -343,6 +348,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordEditorSource.includes("Merken"), true);
     assert.equal(licenseRecordEditorSource.includes("Keine Speicherung"), true);
     assert.equal(licenseRecordEditorSource.includes("saveLicense"), true);
+    assert.equal(licenseRecordEditorSource.includes("listLicenses"), true);
+    assert.equal(licenseRecordEditorSource.includes("refreshLicenseList"), true);
+    assert.equal(licenseRecordEditorSource.includes("Temporär gemerkte Lizenzen"), true);
+    assert.equal(licenseRecordEditorSource.includes("Noch keine temporär gemerkten Lizenzen."), true);
+    assert.equal(licenseRecordEditorSource.includes("await refreshLicenseList();"), true);
     assert.equal(licenseRecordEditorSource.includes("temporaer gemerkt"), true);
     assert.equal(licenseRecordEditorSource.includes("nur In-Memory-Storage-Service"), true);
   });
@@ -393,6 +403,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseHistoryEditorSource.includes("Merken"), true);
     assert.equal(licenseHistoryEditorSource.includes("Keine Speicherung"), true);
     assert.equal(licenseHistoryEditorSource.includes("addHistoryEntry"), true);
+    assert.equal(licenseHistoryEditorSource.includes("listHistory"), true);
+    assert.equal(licenseHistoryEditorSource.includes("refreshHistoryList"), true);
+    assert.equal(licenseHistoryEditorSource.includes("Temporär gemerkte Historie"), true);
+    assert.equal(licenseHistoryEditorSource.includes("Noch keine temporär gemerkte Historie."), true);
+    assert.equal(licenseHistoryEditorSource.includes("await refreshHistoryList();"), true);
     assert.equal(licenseHistoryEditorSource.includes("temporaer gemerkt"), true);
     assert.equal(licenseHistoryEditorSource.includes("nur In-Memory-Storage-Service"), true);
   });

@@ -486,3 +486,23 @@ Wichtig:
   - `siehe aktuellen Branch-Commit`
 - Hinweise:
   - Keine Lizenzdatei-Strukturreform, keine Modulfreischaltung und keine Sidebar-/Projektmodul-Aenderung
+
+#### Paket: Lizenzverwaltung naechstes Paket (In-Memory-Listen in Kunden/Lizenzen/Historie)
+- Status: erledigt
+- Beschreibung:
+  - Kunden-, Lizenzen- und Historie-Maske zeigen unterhalb der Buttons jeweils eine einfache Liste mit temporaer gemerkten In-Memory-Datensaetzen
+  - Listen laden ueber `listCustomers`, `listLicenses` und `listHistory` beim Oeffnen der Maske
+  - Nach erfolgreichem `Merken` wird die jeweilige Liste direkt aktualisiert
+  - Leerer Zustand ist je Maske sichtbar (`Noch keine temporär gemerkten ...`)
+  - Bestehende Buttons `Pruefen` und `Merken` bleiben unveraendert im Ablauf
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/createCustomerEditorSection.js`
+  - `src/renderer/modules/lizenzverwaltung/screens/createLicenseRecordEditorSection.js`
+  - `src/renderer/modules/lizenzverwaltung/screens/createLicenseHistorySection.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine Datenbank/Persistenz/Dateischreiben/IPC
+  - Keine Lizenzdatei-Logik, keine Sidebar- oder Projektmodul-Aenderung
