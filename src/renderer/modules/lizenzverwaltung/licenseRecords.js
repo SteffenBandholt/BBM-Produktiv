@@ -23,6 +23,16 @@ export const LICENSE_MODES = Object.freeze([
   Object.freeze({ key: "full", label: "Vollversion" }),
 ]);
 
+export const LICENSE_HISTORY_FIELDS = Object.freeze([
+  Object.freeze({ key: "createdAt", label: "erzeugt am", required: true }),
+  Object.freeze({ key: "licenseId", label: "Lizenz-ID", required: true }),
+  Object.freeze({ key: "customer", label: "Kunde", required: true }),
+  Object.freeze({ key: "productScope", label: "Produktumfang", required: true }),
+  Object.freeze({ key: "validUntil", label: "gueltig bis", required: true }),
+  Object.freeze({ key: "outputPath", label: "Datei / Ausgabeort", required: true }),
+  Object.freeze({ key: "notes", label: "Notizen", required: false }),
+]);
+
 export function createDefaultCustomerRecord(overrides = {}) {
   return {
     customerNumber: "",
@@ -48,6 +58,19 @@ export function createDefaultLicenseRecord(overrides = {}) {
     validUntil: "",
     licenseMode: "soft",
     machineId: "",
+    notes: "",
+    ...overrides,
+  };
+}
+
+export function createDefaultLicenseHistoryRecord(overrides = {}) {
+  return {
+    createdAt: "",
+    licenseId: "",
+    customer: "",
+    productScope: "",
+    validUntil: "",
+    outputPath: "",
     notes: "",
     ...overrides,
   };
@@ -88,6 +111,19 @@ export function normalizeLicenseRecord(input = {}) {
     validUntil: String(input.validUntil ?? base.validUntil).trim(),
     licenseMode: normalizedMode,
     machineId: String(input.machineId ?? base.machineId).trim(),
+    notes: String(input.notes ?? base.notes).trim(),
+  };
+}
+
+export function normalizeLicenseHistoryRecord(input = {}) {
+  const base = createDefaultLicenseHistoryRecord();
+  return {
+    createdAt: String(input.createdAt ?? base.createdAt).trim(),
+    licenseId: String(input.licenseId ?? base.licenseId).trim(),
+    customer: String(input.customer ?? base.customer).trim(),
+    productScope: String(input.productScope ?? base.productScope).trim(),
+    validUntil: String(input.validUntil ?? base.validUntil).trim(),
+    outputPath: String(input.outputPath ?? base.outputPath).trim(),
     notes: String(input.notes ?? base.notes).trim(),
   };
 }

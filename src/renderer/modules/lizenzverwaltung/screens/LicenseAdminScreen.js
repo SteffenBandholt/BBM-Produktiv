@@ -47,11 +47,13 @@ export default class LicenseAdminScreen {
     onOpenCustomerEditor,
     onOpenLicenseRecordEditor,
     onOpenProductScopeEditor,
+    onOpenLicenseHistory,
   } = {}) {
     this.onOpenLicenseEditor = onOpenLicenseEditor;
     this.onOpenCustomerEditor = onOpenCustomerEditor;
     this.onOpenLicenseRecordEditor = onOpenLicenseRecordEditor;
     this.onOpenProductScopeEditor = onOpenProductScopeEditor;
+    this.onOpenLicenseHistory = onOpenLicenseHistory;
   }
 
   render() {
@@ -102,7 +104,12 @@ export default class LicenseAdminScreen {
         actionLabel: "Oeffnen",
         onClick: this.onOpenProductScopeEditor,
       }),
-      buildSectionCard({ title: "Historie" })
+      buildSectionCard({
+        title: "Historie",
+        hint: "vorbereitet, noch ohne Speicherung",
+        actionLabel: "Oeffnen",
+        onClick: this.onOpenLicenseHistory,
+      })
     );
 
     root.append(title, adminHint, rolloutHint, grid);

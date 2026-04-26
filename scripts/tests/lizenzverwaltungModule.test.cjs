@@ -18,13 +18,17 @@ async function runLizenzverwaltungModuleTests(run) {
       createLicenseEditorSection,
       createProductScopeEditorSection,
       createLicenseRecordEditorSection,
+      createLicenseHistorySection,
       CUSTOMER_RECORD_FIELDS,
       LICENSE_RECORD_FIELDS,
+      LICENSE_HISTORY_FIELDS,
       LICENSE_MODES,
       createDefaultCustomerRecord,
       createDefaultLicenseRecord,
+      createDefaultLicenseHistoryRecord,
       normalizeCustomerRecord,
       normalizeLicenseRecord,
+      normalizeLicenseHistoryRecord,
     },
     {
       getProjektverwaltungModuleEntry,
@@ -49,6 +53,9 @@ async function runLizenzverwaltungModuleTests(run) {
   const productScopeEditorSource = read(
     "src/renderer/modules/lizenzverwaltung/screens/createProductScopeEditorSection.js"
   );
+  const licenseHistoryEditorSource = read(
+    "src/renderer/modules/lizenzverwaltung/screens/createLicenseHistorySection.js"
+  );
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const projectWorkspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const settingsViewSource = read("src/renderer/views/SettingsView.js");
@@ -63,6 +70,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(typeof createLicenseEditorSection, "function");
     assert.equal(typeof createProductScopeEditorSection, "function");
     assert.equal(typeof createLicenseRecordEditorSection, "function");
+    assert.equal(typeof createLicenseHistorySection, "function");
     assert.equal(entry.moduleId, "lizenzverwaltung");
     assert.equal(entry.workScreenId, "licenseAdmin");
     assert.equal(entry.screens?.licenseAdmin, LicenseAdminScreen);
@@ -147,6 +155,32 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(normalizedLicense.licenseMode, "full");
     assert.deepEqual(normalizedLicense.productScope.zusatzfunktionen, ["mail"]);
     assert.deepEqual(normalizedLicense.productScope.standardumfang, []);
+  });
+
+  await run("Lizenzverwaltung: Historien-Datensatz zentral vorbereitet", () => {
+    const historyKeys = LICENSE_HISTORY_FIELDS.map((entry) => entry.key);
+    assert.deepEqual(historyKeys, [
+      "createdAt",
+      "licenseId",
+      "customer",
+      "productScope",
+      "validUntil",
+      "outputPath",
+      "notes",
+    ]);
+    const historyLabels = LICENSE_HISTORY_FIELDS.map((entry) => entry.label);
+    assert.deepEqual(historyLabels, [
+      "erzeugt am",
+      "Lizenz-ID",
+      "Kunde",
+      "Produktumfang",
+      "gueltig bis",
+      "Datei / Ausgabeort",
+      "Notizen",
+    ]);
+    assert.equal(typeof createDefaultLicenseHistoryRecord, "function");
+    assert.equal(typeof normalizeLicenseHistoryRecord, "function");
+    assert.equal(licenseRecordsSource.includes("LICENSE_HISTORY_FIELDS"), true);
   });
   await run("Lizenzverwaltung: Skeleton enthaelt Einstieg und Platzhalterbereiche", () => {
     assert.equal(screenSource.includes("Lizenzverwaltung"), true);
@@ -241,6 +275,24 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(productScopeEditorSource.includes("Keine Speicherung"), true);
   });
 
+  await run("Historie-UI: enthaelt vorbereitete Felder und lokale Validierung", () => {
+    assert.equal(licenseHistoryEditorSource.includes("Historie"), true);
+    assert.equal(licenseHistoryEditorSource.includes("vorbereitet, noch ohne Speicherung"), true);
+    assert.equal(licenseHistoryEditorSource.includes("LICENSE_HISTORY_FIELDS"), true);
+    assert.deepEqual(LICENSE_HISTORY_FIELDS.map((entry) => entry.label), [
+      "erzeugt am",
+      "Lizenz-ID",
+      "Kunde",
+      "Produktumfang",
+      "gueltig bis",
+      "Datei / Ausgabeort",
+      "Notizen",
+    ]);
+    assert.equal(licenseHistoryEditorSource.includes("Neu / leeren"), true);
+    assert.equal(licenseHistoryEditorSource.includes("Pruefen"), true);
+    assert.equal(licenseHistoryEditorSource.includes("Keine Speicherung"), true);
+  });
+
   await run("Lizenzverwaltung: bleibt Adminbereich und erscheint nicht als Projektmodul", () => {
     const projektEntry = getProjektverwaltungModuleEntry();
 
@@ -287,6 +339,15 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("createProductScopeEditorSection"), true);
     assert.equal(settingsViewSource.includes("const openProductScopeEditorPopup = () =>"), true);
     assert.equal(settingsViewSource.includes("onOpenProductScopeEditor: openProductScopeEditorPopup"), true);
+  });
+
+  await run("LicenseAdminScreen enthaelt Einstieg fuer Historie", () => {
+    assert.equal(screenSource.includes("onOpenLicenseHistory"), true);
+    assert.equal(screenSource.includes("title: \"Historie\""), true);
+    assert.equal(screenSource.includes("hint: \"vorbereitet, noch ohne Speicherung\""), true);
+    assert.equal(settingsViewSource.includes("createLicenseHistorySection"), true);
+    assert.equal(settingsViewSource.includes("const openLicenseHistoryPopup = () =>"), true);
+    assert.equal(settingsViewSource.includes("onOpenLicenseHistory: openLicenseHistoryPopup"), true);
   });
 
   await run("Lizenz / bearbeiten: enthaelt Produktumfang statt flacher Feature-Zeile", () => {
