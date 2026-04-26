@@ -94,6 +94,9 @@ Sie ergänzt:
 - Lizenzverwaltung naechstes Paket ist umgesetzt:
   - DB-Schema/Migration in `src/main/db/database.js` um getrennte Admin-Tabellen `license_customers`, `license_records`, `license_history` erweitert (nicht-destruktiv, ohne UI-/IPC-Umstellung)
   - `licenseStorageService` bleibt bewusst In-Memory; keine Lizenzdatei-Logik und kein Projektmodul-Verhalten geändert
+- Lizenzverwaltung naechstes Paket ist umgesetzt:
+  - Main-Process-Service `src/main/licensing/licenseAdminService.js` fuer Admin-Lizenzdaten vorbereitet (list/save fuer Kunden und Lizenzen, Historien-Read/Write)
+  - noch keine IPC-/Preload-Anbindung; Renderer-Storage bleibt In-Memory
 
 - Lizenzverwaltung Neuversuch (In-Memory-Listenansichten) ist nachgezogen:
   - Testnachweise in `scripts/tests/lizenzverwaltungModule.test.cjs` fuer Kunden/Lizenzen/Historie um Listenfelder und Refresh nach `Merken` ergaenzt
