@@ -309,8 +309,12 @@ async function runLizenzverwaltungModuleTests(run) {
   await run("Kunden-UI: bietet Neu / leeren und Pruefen", () => {
     assert.equal(customerEditorSource.includes("Neu / leeren"), true);
     assert.equal(customerEditorSource.includes("Pruefen"), true);
+    assert.equal(customerEditorSource.includes("Merken"), true);
     assert.equal(customerEditorSource.includes("ohne Speicherung"), true);
     assert.equal(customerEditorSource.includes("Keine Speicherung"), true);
+    assert.equal(customerEditorSource.includes("saveCustomer"), true);
+    assert.equal(customerEditorSource.includes("temporaer gemerkt"), true);
+    assert.equal(customerEditorSource.includes("nur In-Memory-Storage-Service"), true);
   });
 
   await run("Lizenzen-UI: nutzt LICENSE_RECORD_FIELDS und enthaelt alle Lizenzfelder", () => {
@@ -336,7 +340,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordEditorSource.includes("vorbereitet, noch ohne Speicherung"), true);
     assert.equal(licenseRecordEditorSource.includes("Neu / leeren"), true);
     assert.equal(licenseRecordEditorSource.includes("Pruefen"), true);
+    assert.equal(licenseRecordEditorSource.includes("Merken"), true);
     assert.equal(licenseRecordEditorSource.includes("Keine Speicherung"), true);
+    assert.equal(licenseRecordEditorSource.includes("saveLicense"), true);
+    assert.equal(licenseRecordEditorSource.includes("temporaer gemerkt"), true);
+    assert.equal(licenseRecordEditorSource.includes("nur In-Memory-Storage-Service"), true);
   });
 
   await run("Produktumfang-UI: nutzt PRODUCT_SCOPE und enthaelt Gruppen", () => {
@@ -382,7 +390,11 @@ async function runLizenzverwaltungModuleTests(run) {
     ]);
     assert.equal(licenseHistoryEditorSource.includes("Neu / leeren"), true);
     assert.equal(licenseHistoryEditorSource.includes("Pruefen"), true);
+    assert.equal(licenseHistoryEditorSource.includes("Merken"), true);
     assert.equal(licenseHistoryEditorSource.includes("Keine Speicherung"), true);
+    assert.equal(licenseHistoryEditorSource.includes("addHistoryEntry"), true);
+    assert.equal(licenseHistoryEditorSource.includes("temporaer gemerkt"), true);
+    assert.equal(licenseHistoryEditorSource.includes("nur In-Memory-Storage-Service"), true);
   });
 
   await run("Lizenzverwaltung: bleibt Adminbereich und erscheint nicht als Projektmodul", () => {
