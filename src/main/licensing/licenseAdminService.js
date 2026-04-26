@@ -150,7 +150,30 @@ function saveCustomer(customer = {}) {
 }
 
 function listLicenses() {
-  return _db().prepare(`SELECT * FROM license_records ORDER BY created_at DESC, license_id COLLATE NOCASE`).all();
+  return _db()
+    .prepare(
+      `
+      SELECT
+        lr.*,
+        lc.customer_number AS customer_number,
+        lc.company_name AS company_name,
+        lc.customer_number AS customerNumber,
+        lc.company_name AS companyName,
+        CASE
+          WHEN COALESCE(TRIM(lc.customer_number), '') <> '' AND COALESCE(TRIM(lc.company_name), '') <> ''
+            THEN lc.customer_number || ' | ' || lc.company_name
+          WHEN COALESCE(TRIM(lc.customer_number), '') <> ''
+            THEN lc.customer_number
+          WHEN COALESCE(TRIM(lc.company_name), '') <> ''
+            THEN lc.company_name
+          ELSE COALESCE(lr.customer_id, '')
+        END AS customerDisplay
+      FROM license_records lr
+      LEFT JOIN license_customers lc ON lc.id = lr.customer_id
+      ORDER BY lr.created_at DESC, lr.license_id COLLATE NOCASE
+    `
+    )
+    .all();
 }
 
 function saveLicense(license = {}) {

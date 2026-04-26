@@ -272,15 +272,20 @@ async function runLizenzverwaltungModuleTests(run) {
     };
     const record = await saveLicense({
       licenseId: "  LIC-200  ",
+      customerId: "  customer-200  ",
       customerNumber: "  K-200  ",
       licenseMode: "FULL",
       productScope: { zusatzfunktionen: ["mail"] },
     });
 
     assert.equal(record.licenseId, "LIC-200");
+    assert.equal(record.customerId, "customer-200");
+    assert.equal(record.customer_id, "customer-200");
     assert.equal(record.licenseMode, "full");
     assert.equal(record.id, "license-1");
     assert.equal(payload.licenseId, "LIC-200");
+    assert.equal(payload.customerId, "customer-200");
+    assert.equal(payload.customer_id, "customer-200");
     restoreWindow();
   });
 
@@ -439,11 +444,12 @@ async function runLizenzverwaltungModuleTests(run) {
 
   await run("Lizenzen-UI: bietet Neu / leeren und Pruefen", () => {
     assert.equal(licenseRecordEditorSource.includes("Lizenzen"), true);
-    assert.equal(licenseRecordEditorSource.includes("vorbereitet, noch ohne Speicherung"), true);
+    assert.equal(licenseRecordEditorSource.includes("vorbereitet, mit dauerhafter Speicherung"), true);
     assert.equal(licenseRecordEditorSource.includes("Neu / leeren"), true);
     assert.equal(licenseRecordEditorSource.includes("Pruefen"), true);
     assert.equal(licenseRecordEditorSource.includes("Merken"), true);
     assert.equal(licenseRecordEditorSource.includes("Keine Speicherung"), true);
+    assert.equal(licenseRecordEditorSource.includes("listCustomers"), true);
     assert.equal(licenseRecordEditorSource.includes("saveLicense"), true);
     assert.equal(licenseRecordEditorSource.includes("listLicenses"), true);
     assert.equal(licenseRecordEditorSource.includes("temporaer gemerkt"), false);
@@ -452,12 +458,31 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseRecordEditorSource.includes("Gespeicherte Lizenzen"), true);
     assert.equal(licenseRecordEditorSource.includes("Noch keine gespeicherten Lizenzen."), true);
     assert.equal(licenseRecordEditorSource.includes("entry.licenseId"), true);
-    assert.equal(licenseRecordEditorSource.includes("entry.customerNumber"), true);
+    assert.equal(licenseRecordEditorSource.includes("entry.customerDisplay"), true);
+    assert.equal(licenseRecordEditorSource.includes("entry.customerId"), true);
     assert.equal(licenseRecordEditorSource.includes("entry.validUntil"), true);
     assert.equal(licenseRecordEditorSource.includes("entry.licenseMode"), true);
     assert.equal(licenseRecordEditorSource.includes("refreshRememberedLicenses"), true);
     assert.equal(licenseRecordEditorSource.includes("refreshRememberedLicenses();"), true);
     assert.equal(licenseRecordEditorSource.includes("await refreshRememberedLicenses();"), true);
+    assert.equal(licenseRecordEditorSource.includes("Bitte zuerst einen Kunden anlegen."), true);
+    assert.equal(licenseRecordEditorSource.includes("customer_id/customerId"), true);
+    assert.equal(licenseRecordEditorSource.includes('input = document.createElement("select")'), true);
+    assert.equal(licenseRecordEditorSource.includes("runValidation();"), true);
+  });
+
+  await run("Lizenzen-UI: Speichern ohne Kunden ist nicht erfolgreich", () => {
+    assert.equal(licenseRecordEditorSource.includes("if (!hasCustomers)"), true);
+    assert.equal(licenseRecordEditorSource.includes('message.textContent = "Bitte zuerst einen Kunden anlegen."'), true);
+    assert.equal(licenseRecordEditorSource.includes("if (!isValid) return;"), true);
+    assert.equal(licenseRecordEditorSource.includes("await saveLicense(model);"), true);
+  });
+
+  await run("Lizenzen-UI: Save vorbereitet mit customerId/customer_id", () => {
+    assert.equal(licenseRecordsSource.includes("customerId"), true);
+    assert.equal(licenseRecordsSource.includes("customer_id"), true);
+    assert.equal(licenseRecordsSource.includes("input.customerId"), true);
+    assert.equal(licenseRecordsSource.includes("input.customer_id"), true);
   });
 
   await run("Produktumfang-UI: nutzt PRODUCT_SCOPE und enthaelt Gruppen", () => {
@@ -564,6 +589,13 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseAdminServiceSource.includes("license_customers"), true);
     assert.equal(licenseAdminServiceSource.includes("license_records"), true);
     assert.equal(licenseAdminServiceSource.includes("license_history"), true);
+  });
+
+  await run("Lizenzverwaltung Main-Service: listLicenses liefert Kundendaten lesbar mit", () => {
+    assert.equal(licenseAdminServiceSource.includes("LEFT JOIN license_customers"), true);
+    assert.equal(licenseAdminServiceSource.includes("customerDisplay"), true);
+    assert.equal(licenseAdminServiceSource.includes("customerNumber"), true);
+    assert.equal(licenseAdminServiceSource.includes("companyName"), true);
   });
 
   await run("Lizenzverwaltung Main-Service: speichert product_scope_json als JSON-String", () => {

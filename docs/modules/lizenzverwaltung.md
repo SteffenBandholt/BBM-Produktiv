@@ -230,6 +230,7 @@ Kurzstand (Paket DB-Schema/Migration):
 - Die Tabellen `license_customers`, `license_records` und `license_history` sind in `src/main/db/database.js` als nicht-destruktive Tabellenanlage vorbereitet.
 - Main-Process-Service ist vorbereitet und per IPC angebunden (`src/main/licensing/licenseAdminService.js`, `src/main/ipc/licenseIpc.js`, `src/main/preload.js`).
 - IPC-/Preload-Schnitt ist vorbereitet und angebunden; Renderer-`licenseStorageService` nutzt jetzt IPC/Preload, sodass Kunden, Lizenzen und Historie dauerhaft in `app.db` gespeichert werden.
+- Lizenzen koennen jetzt einem gespeicherten Kunden zugeordnet werden (`customer_id` / `customerId`) und die Listenansicht zeigt Kundendaten lesbar an.
 
 ### Abgrenzung
 Nicht Teil dieses Schritts:
