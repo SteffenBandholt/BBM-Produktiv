@@ -4,38 +4,54 @@ import {
   normalizeLicenseHistoryRecord,
 } from "./licenseRecords.js";
 
-const storage = {
-  customers: [],
-  licenses: [],
-  history: [],
-};
+function getLicenseAdminDbApi() {
+  const api = globalThis?.window?.bbmDb;
+  if (!api) {
+    throw new Error(
+      "Lizenzverwaltung: Preload-API nicht verfügbar (window.bbmDb fehlt). Speicherung nicht möglich."
+    );
+  }
+  return api;
+}
+
+function requireApiMethod(methodName) {
+  const api = getLicenseAdminDbApi();
+  const method = api[methodName];
+  if (typeof method !== "function") {
+    throw new Error(`Lizenzverwaltung: Preload-API-Methode fehlt (${methodName}).`);
+  }
+  return method;
+}
 
 export async function listCustomers() {
-  return [...storage.customers];
+  const list = requireApiMethod("licenseAdminListLicenseCustomers");
+  return list();
 }
 
 export async function saveCustomer(customer) {
   const record = normalizeCustomerRecord(customer);
-  storage.customers.push(record);
-  return record;
+  const save = requireApiMethod("licenseAdminSaveLicenseCustomer");
+  return save(record);
 }
 
 export async function listLicenses() {
-  return [...storage.licenses];
+  const list = requireApiMethod("licenseAdminListLicenseRecords");
+  return list();
 }
 
 export async function saveLicense(license) {
   const record = normalizeLicenseRecord(license);
-  storage.licenses.push(record);
-  return record;
+  const save = requireApiMethod("licenseAdminSaveLicenseRecord");
+  return save(record);
 }
 
 export async function listHistory() {
-  return [...storage.history];
+  const list = requireApiMethod("licenseAdminListLicenseHistory");
+  return list();
 }
 
 export async function addHistoryEntry(entry) {
   const record = normalizeLicenseHistoryRecord(entry);
-  storage.history.push(record);
-  return record;
+  const add = requireApiMethod("licenseAdminAddLicenseHistoryEntry");
+  return add(record);
 }
