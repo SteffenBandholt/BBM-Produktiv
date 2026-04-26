@@ -91,6 +91,9 @@ Sie ergänzt:
   - Listen werden ueber `listCustomers`, `listLicenses` und `listHistory` geladen
   - Nach erfolgreichem `Merken` wird die jeweilige Liste sofort aktualisiert (ohne Persistenz, nur im laufenden App-Prozess)
   - Leerer Zustand ist in allen drei Masken sichtbar
+- Lizenzverwaltung Neuversuch (In-Memory-Listenansichten) ist nachgezogen:
+  - Testnachweise in `scripts/tests/lizenzverwaltungModule.test.cjs` fuer Kunden/Lizenzen/Historie um Listenfelder und Refresh nach `Merken` ergaenzt
+  - Leerer Zustand und Adminbereich-Abgrenzung bleiben weiterhin abgesichert
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
