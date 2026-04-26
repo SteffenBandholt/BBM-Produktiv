@@ -57,6 +57,11 @@ Sie ergänzt:
   - Feldlisten, Default-Strukturen und Normalisierungsfunktionen fuer Kunde/Lizenz vorhanden
   - `LicenseAdminScreen` zeigt die Bereiche `Kunden` und `Lizenzen` mit aussagekraeftigeren vorbereiteten Feldhinweisen
   - bestehende Lizenz-erstellen-/bearbeiten-UI und Produktumfangsstruktur bleiben unveraendert nutzbar
+- Lizenzverwaltung naechstes Paket ist umgesetzt:
+  - Kachel `Kunden` im `LicenseAdminScreen` oeffnet jetzt eine einfache vorbereitete Kundenmaske
+  - Kundenmaske nutzt `CUSTOMER_RECORD_FIELDS` und bietet die Felder Kundennummer, Firma/Kundenname, Ansprechpartner, E-Mail, Telefon, Notizen
+  - Kundenmaske bietet `Neu / leeren` und `Pruefen`; Pruefen validiert nur lokal Pflichtfelder ohne Speicherung, Datenbank oder Persistenz
+  - `SettingsView` bleibt Host/Einstieg und oeffnet die Kundenmaske nur ueber den Adminbereich
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
@@ -318,6 +323,30 @@ Sie ergänzt:
 - Hinweise:
   - Keine neue Datenbank/Persistenz
   - Keine Kundenverwaltung/Historie implementiert
+  - Keine Projektmodul-/Sidebar-/Whisper-Aenderung
+
+#### Paket: Lizenzverwaltung naechstes Paket (Kunden-UI als vorbereitete Maske)
+- Status: erledigt
+- Beschreibung:
+  - neue Moduldatei `src/renderer/modules/lizenzverwaltung/screens/createCustomerEditorSection.js` angelegt
+  - Kundenmaske mit Ueberschrift `Kunden`, Hinweis `vorbereitet, noch ohne Speicherung` und allen vorbereiteten Kundenfeldern aus `CUSTOMER_RECORD_FIELDS` umgesetzt
+  - Buttons `Neu / leeren` und `Pruefen` ergaenzt; Pruefen validiert lokal die Pflichtfelder ohne Speicherung/Persistenz
+  - `LicenseAdminScreen` um den Einstieg fuer die Kundenmaske erweitert
+  - `SettingsView` bleibt Host/Einstieg und oeffnet die Kundenmaske im Adminbereich
+  - Testvertrag fuer Modul-Export, Feldnutzung, Buttons, Kunden-Einstieg und Nicht-Projektmodul-Verhalten erweitert
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/createCustomerEditorSection.js`
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `src/renderer/modules/lizenzverwaltung/screens/index.js`
+  - `src/renderer/modules/lizenzverwaltung/index.js`
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine Datenbank/Persistenz/Kundenliste/Historie implementiert
+  - Keine Lizenzdatei- oder Produktumfang-Logik geaendert
   - Keine Projektmodul-/Sidebar-/Whisper-Aenderung
 
 ## Offene Meilensteine
