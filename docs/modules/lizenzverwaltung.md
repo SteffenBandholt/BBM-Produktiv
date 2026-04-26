@@ -123,6 +123,8 @@ Vorgesehene Felder:
 - Machine-ID optional
 - Notizen
 
+Hinweis: Bei neuen Lizenzen kann die Lizenz-ID automatisch erzeugt werden, wenn das Feld leer bleibt.
+
 ### Historie
 Die Historie dokumentiert erzeugte oder neu ausgegebene Lizenzdateien.
 Vorgesehene Felder:
