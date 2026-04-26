@@ -1088,6 +1088,60 @@ function ensureAppSettingsSchema(dbConn) {
   }
 }
 
+
+function ensureLicenseAdminSchema(dbConn) {
+  if (!tableExists(dbConn, "license_customers")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS license_customers (
+        id TEXT PRIMARY KEY,
+        customer_number TEXT NOT NULL,
+        company_name TEXT NOT NULL,
+        contact_person TEXT,
+        email TEXT,
+        phone TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+      );
+    `);
+  }
+
+  if (!tableExists(dbConn, "license_records")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS license_records (
+        id TEXT PRIMARY KEY,
+        license_id TEXT NOT NULL,
+        customer_id TEXT NOT NULL,
+        product_scope_json TEXT NOT NULL,
+        valid_from TEXT,
+        valid_until TEXT,
+        license_mode TEXT,
+        machine_id TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        FOREIGN KEY (customer_id) REFERENCES license_customers(id) ON DELETE RESTRICT
+      );
+    `);
+  }
+
+  if (!tableExists(dbConn, "license_history")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS license_history (
+        id TEXT PRIMARY KEY,
+        license_record_id TEXT NOT NULL,
+        generated_at TEXT,
+        product_scope_json TEXT NOT NULL,
+        valid_until TEXT,
+        output_path TEXT,
+        notes TEXT,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        FOREIGN KEY (license_record_id) REFERENCES license_records(id) ON DELETE RESTRICT
+      );
+    `);
+  }
+}
+
 function ensureDictionarySchema(dbConn) {
   if (!tableExists(dbConn, "dictionary_suggestions")) {
     dbConn.exec(`
@@ -1403,6 +1457,7 @@ function ensureSchema(dbConn) {
 
   ensureDictionarySchema(dbConn);
   ensureAppSettingsSchema(dbConn);
+  ensureLicenseAdminSchema(dbConn);
 }
 
 function initDatabase() {
