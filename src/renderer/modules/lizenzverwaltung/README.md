@@ -12,3 +12,4 @@ Enthaelt:
 - `index.js` als Modul-Einstieg
 
 - `licenseRecords.js` als zentrale Feldlisten/Defaults/Normalisierung fuer Kunden- und Lizenzdatensaetze
+- `screens/createLicenseRecordEditorSection.js` als einfache vorbereitete Lizenzen-Maske ohne Persistenz
