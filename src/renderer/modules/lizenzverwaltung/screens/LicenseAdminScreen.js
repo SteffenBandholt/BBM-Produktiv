@@ -689,16 +689,19 @@ export default class LicenseAdminScreen {
     const inputs = { product_scope_json: document.createElement("input") };
     inputs.product_scope_json.type = "hidden";
     form.style.display = "grid";
-    form.style.gridTemplateColumns = "180px minmax(260px, 1fr)";
-    form.style.columnGap = "12px";
-    form.style.rowGap = "8px";
+    form.style.gridTemplateColumns = "minmax(320px, 1fr)";
+    form.style.rowGap = "10px";
 
     const appendFieldRow = (labelText, fieldNode) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gap = "6px";
       const title = document.createElement("label");
       title.textContent = labelText;
-      title.style.alignSelf = "center";
-      form.append(title, fieldNode);
-      return { title, fieldNode };
+      title.style.fontWeight = "600";
+      row.append(title, fieldNode);
+      form.append(row);
+      return { title, fieldNode, row };
     };
 
     const fieldRows = {};
@@ -733,6 +736,9 @@ export default class LicenseAdminScreen {
         input = document.createElement("div");
         input.style.display = "grid";
         input.style.gap = "8px";
+        const trialTitle = document.createElement("div");
+        trialTitle.textContent = "Testdauer";
+        trialTitle.style.fontWeight = "500";
         const durationSelect = document.createElement("select");
         [
           { value: "14", label: "14 Tage" },
@@ -764,7 +770,7 @@ export default class LicenseAdminScreen {
         trialHint.style.fontSize = "12px";
         trialHint.style.opacity = "0.85";
         trialHint.textContent = "Der Testzeitraum beginnt bei erster Installation / erstem Start.";
-        input.append(durationSelect, customRow, trialHint);
+        input.append(trialTitle, durationSelect, customRow, trialHint);
         input._durationSelect = durationSelect;
         input._customInput = customInput;
         input._customRow = customRow;
@@ -966,15 +972,16 @@ export default class LicenseAdminScreen {
       if (fieldRows.valid_from) {
         fieldRows.valid_from.title.textContent = isTestLicense ? "Ausgestellt am (technisch)" : "gueltig von";
         fieldRows.valid_from.title.style.opacity = isTestLicense ? "0.65" : "1";
-        fieldRows.valid_from.fieldNode.style.display = isTestLicense ? "none" : "";
+        fieldRows.valid_from.row.style.display = isTestLicense ? "none" : "";
       }
       if (fieldRows.valid_until) {
-        fieldRows.valid_until.fieldNode.style.display = isTestLicense ? "none" : "";
-        fieldRows.valid_until.title.style.display = isTestLicense ? "none" : "";
+        fieldRows.valid_until.row.style.display = isTestLicense ? "none" : "";
       }
       if (fieldRows.trial_duration_days) {
-        fieldRows.trial_duration_days.fieldNode.style.display = isTestLicense ? "" : "none";
-        fieldRows.trial_duration_days.title.style.display = isTestLicense ? "" : "none";
+        fieldRows.trial_duration_days.row.style.display = isTestLicense ? "" : "none";
+      }
+      if (fieldRows.machine_id) {
+        fieldRows.machine_id.row.style.display = isTestLicense ? "none" : "";
       }
     };
     inputs.license_binding?.addEventListener("change", syncMachineIdState);

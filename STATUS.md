@@ -20,6 +20,7 @@ Sie ergänzt:
   - Testlizenzen tragen jetzt `trialDurationDays` signiert im Generator-Payload; der Testzeitraum startet erst bei erster erfolgreicher Lizenzinstallation/-nutzung.
   - Laufzeitpruefung fuer Testlizenzen nutzt `trialStartedAt + trialDurationDays` statt `valid_from + Dauer`; Vollversion bleibt bei `validUntil`.
   - Admin-UI zeigt fuer Testlizenz den Bereich `Testzeitraum` (14/30/60/90/Individuell, 1..365) inkl. Hinweis auf Start bei erster Installation/erstem Start; `gueltig von/bis` wird fuer Test nicht mehr als fachlicher Start/Ende dargestellt.
+  - Formularlayout im Lizenzeditor wurde auf klare Feld-zu-Beschriftung-Blocks umgebaut; bei Testlizenz ist `Machine-ID` ausgeblendet.
   - Alte Entwicklungs-Parallel-Logik fuer Nutzungstage (`trial.enabled`, `trial.daysLimit`, `trial.firstStartAt`, `enforceTrialLimit`) ist aus UI/Runtime entfernt.
   - Lizenz-Admin-Datenmodell wurde minimal um `trial_duration_days` erweitert; Kunden-Setup-Fluss blieb unveraendert.
   - Testabdeckung erweitert (Generator-/Verifier-/Storage-/UI/IPC-Faelle); `npm test` ist gruen.
