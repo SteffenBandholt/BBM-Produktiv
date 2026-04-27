@@ -21,6 +21,7 @@ const { runLicenseAdminDataflowTests } = require("./tests/licenseAdminDataflow.t
 const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cjs");
 const { runLicenseStorageBootstrapTests } = require("./tests/licenseStorageBootstrap.test.cjs");
 const { runLicenseIpcCustomerSetupTests } = require("./tests/licenseIpcCustomerSetup.test.cjs");
+const { runLicenseTrialRuntimeTests } = require("./tests/licenseTrialRuntime.test.cjs");
 
 let failed = false;
 
@@ -87,6 +88,7 @@ async function main() {
   await runLicenseAdminDataflowTests(run);
   await runDistCustomerBuildTests(run);
   await runLicenseIpcCustomerSetupTests(run);
+  await runLicenseTrialRuntimeTests(run);
   await runLicenseStorageBootstrapTests(run);
 
   if (failed) {

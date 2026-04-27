@@ -73,6 +73,14 @@ function isIsoDateString(value) {
   return !Number.isNaN(parsed.getTime());
 }
 
+function parsePositiveInt(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return null;
+  const int = Math.floor(num);
+  if (int < 1) return null;
+  return int;
+}
+
 function verifyLicense(licenseData) {
   if (!licenseData) {
     return { valid: false, reason: "NO_LICENSE" };
@@ -91,7 +99,6 @@ function verifyLicense(licenseData) {
     "customerName",
     "edition",
     "issuedAt",
-    "validUntil",
     "maxDevices",
     "features",
   ];
@@ -117,12 +124,20 @@ function verifyLicense(licenseData) {
     return { valid: false, reason: "INVALID_FORMAT" };
   }
 
+  const edition = String(license.edition || "").trim().toLowerCase();
+  if (!["test", "full"].includes(edition)) {
+    return { valid: false, reason: "INVALID_FORMAT" };
+  }
+
   const binding = String(license.binding || "").trim().toLowerCase() || "none";
   if (!["none", "machine"].includes(binding)) {
     return { valid: false, reason: "INVALID_FORMAT" };
   }
 
-  if (!isIsoDateString(license.issuedAt) || !isIsoDateString(license.validUntil)) {
+  if (!isIsoDateString(license.issuedAt)) {
+    return { valid: false, reason: "INVALID_FORMAT" };
+  }
+  if (edition === "full" && !isIsoDateString(license.validUntil)) {
     return { valid: false, reason: "INVALID_FORMAT" };
   }
 
@@ -147,12 +162,29 @@ function verifyLicense(licenseData) {
   }
 
   const now = Date.now();
-  const expiresAt = new Date(license.validUntil).getTime();
-  if (Number.isNaN(expiresAt)) {
+  let expiresAt = null;
+  if (edition === "test" && binding === "none") {
+    const trialDurationDays = parsePositiveInt(license.trialDurationDays);
+    if (!trialDurationDays) {
+      return { valid: false, reason: "INVALID_FORMAT", license };
+    }
+    const startedAtRaw = String(licenseData.trialStartedAt || licenseData.installedAt || "").trim();
+    if (startedAtRaw) {
+      const startedAt = new Date(startedAtRaw).getTime();
+      if (Number.isNaN(startedAt)) {
+        return { valid: false, reason: "INVALID_FORMAT", license };
+      }
+      expiresAt = startedAt + trialDurationDays * 24 * 60 * 60 * 1000;
+    }
+  } else {
+    expiresAt = new Date(license.validUntil).getTime();
+  }
+
+  if (expiresAt !== null && Number.isNaN(expiresAt)) {
     return { valid: false, reason: "INVALID_FORMAT", license };
   }
 
-  if (now > expiresAt) {
+  if (expiresAt !== null && now > expiresAt) {
     return {
       valid: false,
       reason: "LICENSE_EXPIRED",
@@ -162,9 +194,9 @@ function verifyLicense(licenseData) {
     };
   }
 
-  const msRemaining = expiresAt - now;
-  const daysRemaining = Math.ceil(msRemaining / (1000 * 60 * 60 * 24));
-  const expiresSoon = daysRemaining <= 14;
+  const msRemaining = expiresAt === null ? null : expiresAt - now;
+  const daysRemaining = msRemaining === null ? null : Math.ceil(msRemaining / (1000 * 60 * 60 * 24));
+  const expiresSoon = typeof daysRemaining === "number" ? daysRemaining <= 14 : false;
 
   return {
     valid: true,

@@ -1589,58 +1589,12 @@ export default class MainHeader {
   // Trial: Fenster-Titel AN, Header-Anzeige AUS
   // ============================================================
   async _refreshTrialInfo() {
-    const api = window.bbmDb || {};
-
-    // Header-Anzeige immer aus
     if (this.elTrialInfo) {
       this.elTrialInfo.textContent = "";
       this.elTrialInfo.style.display = "none";
     }
-
-    if (typeof api.appSettingsGetMany !== "function") {
-      this._trialInfoText = "";
-      document.title = this._baseWindowTitle;
-      return;
-    }
-    if (this._trialInfoLoading) return;
-
-    this._trialInfoLoading = (async () => {
-      try {
-        const res = await api.appSettingsGetMany(["trial.enabled", "trial.daysLimit", "trial.firstStartAt"]);
-        if (!res?.ok) {
-          this._trialInfoText = "";
-          return;
-        }
-        const data = res.data || {};
-        const enabledRaw = String(data["trial.enabled"] || "").trim().toLowerCase();
-        const enabled = enabledRaw === "1" || enabledRaw === "true" || enabledRaw === "yes" || enabledRaw === "on";
-        const limit = Math.max(0, Math.floor(Number(data["trial.daysLimit"] || 0) || 0));
-        const firstStart = Math.floor(Number(data["trial.firstStartAt"] || 0) || 0);
-
-        if (!enabled || limit <= 0 || firstStart <= 0) {
-          this._trialInfoText = "";
-          return;
-        }
-
-        const dayMs = 24 * 60 * 60 * 1000;
-        const usedDays = Math.floor((Date.now() - firstStart) / dayMs) + 1;
-        const remaining = Math.max(0, limit - usedDays + 1);
-        this._trialInfoText = `Testversion: noch ${remaining} Tage`;
-      } catch (_e) {
-        this._trialInfoText = "";
-      } finally {
-        // ✅ nur Fenster-Titel setzen (Electron/Windows-Zeile)
-        document.title = this._trialInfoText ? `${this._baseWindowTitle} - ${this._trialInfoText}` : this._baseWindowTitle;
-
-        // ✅ Header bleibt aus
-        if (this.elTrialInfo) {
-          this.elTrialInfo.textContent = "";
-          this.elTrialInfo.style.display = "none";
-        }
-
-        this._trialInfoLoading = null;
-      }
-    })();
+    this._trialInfoText = "";
+    document.title = this._baseWindowTitle;
   }
 
   async _refreshBuildChannelBadge() {

@@ -280,9 +280,6 @@ const GLOBAL_APP_SETTING_KEYS = new Set([
   "tops.fontscale.list",
   "tops.fontscale.editbox",
   "audio.whisper.quality",
-  "trial.enabled",
-  "trial.daysLimit",
-  "trial.firstStartAt",
 ]);
 const GLOBAL_APP_SETTING_ALLOWED_PREFIXES = ["defaults.", "meta.touched.", "bbm_whatsnew_seen_"];
 

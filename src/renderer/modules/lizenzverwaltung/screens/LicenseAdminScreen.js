@@ -150,13 +150,16 @@ export function assertCustomerContext(customer) {
 
 export function buildLicenseEditorPayload({ license = {}, inputs = {}, customer = null, now = new Date() } = {}) {
   const customerId = assertCustomerContext(customer);
+  const normalizedTrialDurationDays = normalizeTrialDurationDays(inputs.trial_duration_days, 30);
+  const isTestLicense = String(inputs.license_edition || "").trim().toLowerCase() === "test";
   return {
     id: license.id,
     customer_id: customerId,
     license_id: String(inputs.license_id || "").trim() || createGeneratedLicenseId(now),
     product_scope_json: String(inputs.product_scope_json || "").trim(),
     valid_from: String(inputs.valid_from || "").trim(),
-    valid_until: String(inputs.valid_until || "").trim(),
+    valid_until: isTestLicense ? "" : String(inputs.valid_until || "").trim(),
+    trial_duration_days: isTestLicense ? String(normalizedTrialDurationDays) : "",
     license_mode: String(inputs.license_mode || "").trim(),
     machine_id: String(inputs.machine_id || "").trim(),
     license_file_path: valueOf(license, "license_file_path", "licenseFilePath"),
@@ -223,6 +226,15 @@ export function normalizeDateForGenerator(value) {
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+export function normalizeTrialDurationDays(value, fallback = 30) {
+  const raw = String(value ?? "").trim();
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return fallback;
+  const days = Math.floor(parsed);
+  if (days < 1 || days > 365) return fallback;
+  return days;
+}
+
 export function getLicenseEditionAndBinding(license = {}) {
   const editionRaw = String(valueOf(license, "license_edition", "licenseEdition")).trim().toLowerCase();
   const bindingRaw = String(valueOf(license, "license_binding", "licenseBinding")).trim().toLowerCase();
@@ -275,6 +287,7 @@ export function buildLicenseGeneratorPayload({ customer = {}, license = {} } = {
   const model = getLicenseEditionAndBinding(license);
   const binding = model.binding;
   const edition = model.edition;
+  const trialDurationDays = normalizeTrialDurationDays(valueOf(license, "trial_duration_days", "trialDurationDays"), 30);
   const features = parseGeneratorFeaturesFromProductScope(valueOf(license, "product_scope_json", "productScope"));
   const machineId = valueOf(license, "machine_id", "machineId");
   return {
@@ -284,7 +297,8 @@ export function buildLicenseGeneratorPayload({ customer = {}, license = {} } = {
     edition,
     binding,
     validFrom,
-    validUntil,
+    validUntil: edition === "test" && binding === "none" ? "" : validUntil,
+    ...(edition === "test" && binding === "none" ? { trialDurationDays } : {}),
     maxDevices: 1,
     ...(binding === "machine" && machineId ? { machineId } : {}),
     features,
@@ -666,6 +680,7 @@ export default class LicenseAdminScreen {
       ["valid_until", "gueltig bis"],
       ["license_edition", "Lizenzart"],
       ["license_binding", "Gerätebindung"],
+      ["trial_duration_days", "Testzeitraum"],
       ["machine_id", "Machine-ID"],
       ["notes", "Notizen"],
     ];
@@ -674,16 +689,22 @@ export default class LicenseAdminScreen {
     const inputs = { product_scope_json: document.createElement("input") };
     inputs.product_scope_json.type = "hidden";
     form.style.display = "grid";
-    form.style.gridTemplateColumns = "180px minmax(260px, 1fr)";
-    form.style.columnGap = "12px";
-    form.style.rowGap = "8px";
+    form.style.gridTemplateColumns = "minmax(320px, 1fr)";
+    form.style.rowGap = "10px";
 
     const appendFieldRow = (labelText, fieldNode) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gap = "6px";
       const title = document.createElement("label");
       title.textContent = labelText;
-      title.style.alignSelf = "center";
-      form.append(title, fieldNode);
+      title.style.fontWeight = "600";
+      row.append(title, fieldNode);
+      form.append(row);
+      return { title, fieldNode, row };
     };
+
+    const fieldRows = {};
 
     for (const [key, label] of fields) {
       let input = key === "notes" ? document.createElement("textarea") : document.createElement("input");
@@ -711,10 +732,68 @@ export default class LicenseAdminScreen {
           input.appendChild(option);
         });
       }
+      if (key === "trial_duration_days") {
+        input = document.createElement("div");
+        input.style.display = "grid";
+        input.style.gap = "8px";
+        const trialTitle = document.createElement("div");
+        trialTitle.textContent = "Testdauer";
+        trialTitle.style.fontWeight = "500";
+        const durationSelect = document.createElement("select");
+        [
+          { value: "14", label: "14 Tage" },
+          { value: "30", label: "30 Tage" },
+          { value: "60", label: "60 Tage" },
+          { value: "90", label: "90 Tage" },
+          { value: "custom", label: "Individuell" },
+        ].forEach((entry) => {
+          const option = document.createElement("option");
+          option.value = entry.value;
+          option.textContent = entry.label;
+          durationSelect.appendChild(option);
+        });
+        const customRow = document.createElement("div");
+        customRow.style.display = "none";
+        customRow.style.gridTemplateColumns = "80px minmax(120px, 1fr)";
+        customRow.style.gap = "8px";
+        const customLabel = document.createElement("div");
+        customLabel.textContent = "Tage";
+        customLabel.style.alignSelf = "center";
+        const customInput = document.createElement("input");
+        customInput.type = "number";
+        customInput.min = "1";
+        customInput.max = "365";
+        customInput.step = "1";
+        customInput.style.width = "100%";
+        customRow.append(customLabel, customInput);
+        const trialHint = document.createElement("div");
+        trialHint.style.fontSize = "12px";
+        trialHint.style.opacity = "0.85";
+        trialHint.textContent = "Der Testzeitraum beginnt bei erster Installation / erstem Start.";
+        input.append(trialTitle, durationSelect, customRow, trialHint);
+        input._durationSelect = durationSelect;
+        input._customInput = customInput;
+        input._customRow = customRow;
+      }
       if (key === "notes") input.rows = 3;
       const currentMode = getLicenseEditionAndBinding(license);
       if (key === "license_edition") input.value = currentMode.edition;
       else if (key === "license_binding") input.value = currentMode.binding;
+      else if (key === "trial_duration_days") {
+        const initialTrialDays = normalizeTrialDurationDays(
+          valueOf(license, "trial_duration_days", "trialDurationDays"),
+          30
+        );
+        if ([14, 30, 60, 90].includes(initialTrialDays)) {
+          input._durationSelect.value = String(initialTrialDays);
+          input._customInput.value = String(initialTrialDays);
+          input._customRow.style.display = "none";
+        } else {
+          input._durationSelect.value = "custom";
+          input._customInput.value = String(initialTrialDays);
+          input._customRow.style.display = "grid";
+        }
+      }
       else input.value = valueOf(license, key, key.replace("_", ""));
       if (key === "valid_from" || key === "valid_until") {
         input.type = "date";
@@ -723,7 +802,7 @@ export default class LicenseAdminScreen {
       input.style.width = "100%";
       input.id = `license-${key}`;
       inputs[key] = input;
-      appendFieldRow(label, input);
+      fieldRows[key] = appendFieldRow(label, input);
     }
 
     const scopeModel = createDefaultScopeSelection();
@@ -871,7 +950,50 @@ export default class LicenseAdminScreen {
         inputs.machine_id.value = "";
       }
     };
+    const syncTrialDurationState = () => {
+      const selector = inputs.trial_duration_days?._durationSelect;
+      const customInput = inputs.trial_duration_days?._customInput;
+      const customRow = inputs.trial_duration_days?._customRow;
+      if (!selector || !customInput || !customRow) return;
+      const isCustom = selector.value === "custom";
+      customRow.style.display = isCustom ? "grid" : "none";
+      if (!isCustom) {
+        customInput.value = selector.value;
+      }
+    };
+    const syncEditionUiState = () => {
+      const edition = String(inputs.license_edition?.value || "test").trim().toLowerCase();
+      const isTestLicense = edition === "test";
+      if (isTestLicense) {
+        inputs.license_binding.value = "none";
+      }
+      inputs.license_binding.disabled = isTestLicense;
+      syncMachineIdState();
+      if (fieldRows.valid_from) {
+        fieldRows.valid_from.title.textContent = isTestLicense ? "Ausgestellt am (technisch)" : "gueltig von";
+        fieldRows.valid_from.title.style.opacity = isTestLicense ? "0.65" : "1";
+        fieldRows.valid_from.row.style.display = isTestLicense ? "none" : "";
+      }
+      if (fieldRows.valid_until) {
+        fieldRows.valid_until.row.style.display = isTestLicense ? "none" : "";
+      }
+      if (fieldRows.trial_duration_days) {
+        fieldRows.trial_duration_days.row.style.display = isTestLicense ? "" : "none";
+      }
+      if (fieldRows.machine_id) {
+        fieldRows.machine_id.row.style.display = isTestLicense ? "none" : "";
+      }
+    };
     inputs.license_binding?.addEventListener("change", syncMachineIdState);
+    inputs.trial_duration_days?._durationSelect?.addEventListener("change", syncTrialDurationState);
+    inputs.license_edition?.addEventListener("change", syncEditionUiState);
+    inputs.trial_duration_days?._customInput?.addEventListener("change", () => {
+      inputs.trial_duration_days._customInput.value = String(
+        normalizeTrialDurationDays(inputs.trial_duration_days._customInput.value, 30)
+      );
+    });
+    syncTrialDurationState();
+    syncEditionUiState();
     syncMachineIdState();
 
     const licenseIdHint = document.createElement("div");
@@ -975,6 +1097,17 @@ export default class LicenseAdminScreen {
             license_mode: inputs.license_binding.value === "machine" ? "full" : "soft",
             license_edition: inputs.license_edition.value,
             license_binding: inputs.license_binding.value,
+            trial_duration_days:
+              String(inputs.license_edition.value || "").trim().toLowerCase() === "test"
+                ? String(
+                    normalizeTrialDurationDays(
+                      inputs.trial_duration_days?._durationSelect?.value === "custom"
+                        ? inputs.trial_duration_days?._customInput?.value
+                        : inputs.trial_duration_days?._durationSelect?.value,
+                      30
+                    )
+                  )
+                : "",
             machine_id: inputs.machine_id.value,
             notes: inputs.notes.value,
           },
@@ -998,7 +1131,15 @@ export default class LicenseAdminScreen {
           license: saved || {},
         });
         if (!generatorPayload.validFrom || !generatorPayload.validUntil) {
-          message.textContent = "Bitte gültige Datumswerte eintragen.";
+          if (generatorPayload.edition === "test" && generatorPayload.binding === "none") {
+            // Testlizenz nutzt trialDurationDays statt manuellem validUntil.
+          } else {
+            message.textContent = "Bitte gültige Datumswerte eintragen.";
+            return;
+          }
+        }
+        if (generatorPayload.edition === "test" && generatorPayload.binding === "none" && !generatorPayload.trialDurationDays) {
+          message.textContent = "Bitte Testdauer waehlen (1 bis 365 Tage).";
           return;
         }
         if (!generatorPayload.features.length) {

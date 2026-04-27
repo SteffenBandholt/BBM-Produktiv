@@ -59,11 +59,23 @@ function saveLicense(licensePayload) {
   const filePath = getLicenseFilePath();
   const machineId = getMachineId();
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  const existing = fs.existsSync(filePath) ? _readJsonSafe(filePath) || {} : {};
+  const previousTrialStartedAt = String(existing?.trialStartedAt || "").trim();
+  const previousInstalledAt = String(existing?.installedAt || "").trim();
+  const binding = String(licensePayload?.license?.binding || "").trim().toLowerCase() || "none";
+  const edition = String(licensePayload?.license?.edition || "").trim().toLowerCase();
+  const trialStartIso =
+    previousTrialStartedAt ||
+    String(licensePayload?.trialStartedAt || "").trim() ||
+    String(licensePayload?.installedAt || "").trim() ||
+    previousInstalledAt ||
+    new Date().toISOString();
 
   const stored = {
     ...licensePayload,
     machineId,
-    installedAt: new Date().toISOString(),
+    installedAt: previousInstalledAt || String(licensePayload?.installedAt || "").trim() || new Date().toISOString(),
+    ...(edition === "test" && binding === "none" ? { trialStartedAt: trialStartIso } : {}),
   };
 
   fs.writeFileSync(

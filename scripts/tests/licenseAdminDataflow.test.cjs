@@ -80,6 +80,7 @@ function createMemoryDb() {
               product_scope_json,
               valid_from,
               valid_until,
+              trial_duration_days,
               license_mode,
               license_edition,
               license_binding,
@@ -96,6 +97,7 @@ function createMemoryDb() {
               product_scope_json,
               valid_from,
               valid_until,
+              trial_duration_days,
               license_mode,
               license_edition,
               license_binding,
@@ -113,6 +115,7 @@ function createMemoryDb() {
               product_scope_json,
               valid_from,
               valid_until,
+              trial_duration_days,
               license_mode,
               license_edition,
               license_binding,
@@ -131,6 +134,7 @@ function createMemoryDb() {
               product_scope_json,
               valid_from,
               valid_until,
+              trial_duration_days,
               license_mode,
               license_edition,
               license_binding,
@@ -196,6 +200,7 @@ async function runLicenseAdminDataflowTests(run) {
         product_scope_json: { standardumfang: ["app", "pdf", "export"] },
         valid_from: "2026-01-01",
         valid_until: "2026-12-31",
+        trial_duration_days: 30,
         license_mode: "soft",
         license_file_path: "C:\\license-tool\\output\\k101.bbmlic",
         license_file_created_at: "2026-04-27T10:00:00.000Z",
@@ -211,6 +216,7 @@ async function runLicenseAdminDataflowTests(run) {
       assert.equal(listedByCustomer[0].valid_from, "2026-01-01");
       assert.equal(listedByCustomer[0].valid_until, "2026-12-31");
       assert.equal(listedByCustomer[0].license_mode, "soft");
+      assert.equal(listedByCustomer[0].trial_duration_days, 30);
       assert.equal(listedByCustomer[0].license_edition, "test");
       assert.equal(listedByCustomer[0].license_binding, "none");
       assert.equal(listedByCustomer[0].licenseEdition, "test");
@@ -519,6 +525,22 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(payload.valid_until, "2026-12-31");
     assert.equal(payload.license_mode, "full");
 
+    const trialPayload = buildLicenseEditorPayload({
+      customer: { id: "customer-55" },
+      inputs: {
+        license_id: "LIC-TRIAL",
+        product_scope_json: "scope-text",
+        valid_from: "2026-05-01",
+        valid_until: "2026-12-31",
+        license_edition: "test",
+        license_binding: "none",
+        trial_duration_days: "60",
+      },
+      now: fixedLocalDate,
+    });
+    assert.equal(trialPayload.valid_until, "");
+    assert.equal(trialPayload.trial_duration_days, "60");
+
     const customerPayload = buildCustomerEditorPayload({
       customer: { id: "c-44" },
       inputs: {
@@ -575,7 +597,8 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(payload.customerName, "Musterfirma GmbH");
     assert.equal(payload.licenseId, "LIC-77");
     assert.equal(payload.validFrom, "2026-05-01");
-    assert.equal(payload.validUntil, "2027-05-01");
+    assert.equal(payload.validUntil, "");
+    assert.equal(payload.trialDurationDays, 30);
     assert.equal(payload.binding, "none");
     assert.equal(payload.product, "bbm-protokoll");
     assert.equal(payload.edition, "test");
@@ -663,6 +686,27 @@ async function runLicenseAdminDataflowTests(run) {
     });
     assert.equal(payload.binding, "machine");
     assert.equal(payload.machineId, "MID-M-1");
+  });
+
+  await run("Lizenzverwaltung Generator-Payload: Testlizenz uebernimmt trialDurationDays", async () => {
+    const { buildLicenseGeneratorPayload } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const payload = buildLicenseGeneratorPayload({
+      customer: { company_name: "Testdauer GmbH" },
+      license: {
+        license_id: "LIC-TRIAL-1",
+        valid_from: "2026-06-01",
+        trial_duration_days: "60",
+        license_edition: "test",
+        license_binding: "none",
+        product_scope_json: JSON.stringify({ standardumfang: ["app"] }),
+      },
+    });
+    assert.equal(payload.edition, "test");
+    assert.equal(payload.binding, "none");
+    assert.equal(payload.trialDurationDays, 60);
+    assert.equal(payload.validUntil, "");
   });
 }
 

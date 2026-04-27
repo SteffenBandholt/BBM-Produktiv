@@ -12,7 +12,8 @@ export const LICENSE_RECORD_FIELDS = Object.freeze([
   Object.freeze({ key: "customerNumber", label: "Kunde", required: true }),
   Object.freeze({ key: "productScope", label: "Produktumfang", required: true }),
   Object.freeze({ key: "validFrom", label: "gueltig von", required: true }),
-  Object.freeze({ key: "validUntil", label: "gueltig bis", required: true }),
+  Object.freeze({ key: "validUntil", label: "gueltig bis", required: false }),
+  Object.freeze({ key: "trialDurationDays", label: "Testdauer (Tage)", required: false }),
   Object.freeze({ key: "licenseEdition", label: "Lizenzart", required: true }),
   Object.freeze({ key: "licenseBinding", label: "Gerätebindung", required: true }),
   Object.freeze({ key: "machineId", label: "Machine-ID", required: false }),
@@ -66,6 +67,8 @@ export function createDefaultLicenseRecord(overrides = {}) {
     valid_from: "",
     validUntil: "",
     valid_until: "",
+    trialDurationDays: 30,
+    trial_duration_days: 30,
     licenseMode: "soft",
     license_mode: "soft",
     licenseEdition: "test",
@@ -166,6 +169,14 @@ export function normalizeLicenseRecord(input = {}) {
   const customerId = String(input.customerId ?? input.customer_id ?? base.customerId).trim();
   const validFrom = String(input.validFrom ?? input.valid_from ?? base.validFrom).trim();
   const validUntil = String(input.validUntil ?? input.valid_until ?? base.validUntil).trim();
+  const trialDurationDaysRaw = String(
+    input.trialDurationDays ?? input.trial_duration_days ?? base.trialDurationDays
+  ).trim();
+  const trialDurationDaysParsed = Math.floor(Number(trialDurationDaysRaw));
+  const trialDurationDays =
+    Number.isFinite(trialDurationDaysParsed) && trialDurationDaysParsed >= 1 && trialDurationDaysParsed <= 365
+      ? trialDurationDaysParsed
+      : 30;
   const machineId = String(input.machineId ?? input.machine_id ?? base.machineId).trim();
   const licenseFilePath = String(input.licenseFilePath ?? input.license_file_path ?? base.licenseFilePath).trim();
   const licenseFileCreatedAt = String(
@@ -196,6 +207,8 @@ export function normalizeLicenseRecord(input = {}) {
     valid_from: validFrom,
     validUntil,
     valid_until: validUntil,
+    trialDurationDays,
+    trial_duration_days: trialDurationDays,
     licenseMode: normalizedMode || compatMode,
     license_mode: compatMode,
     licenseEdition: normalizedEdition,
