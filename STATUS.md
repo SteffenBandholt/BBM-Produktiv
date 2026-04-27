@@ -126,6 +126,37 @@ Sie ergänzt:
   - Lizenzformular zeigt `Neue Lizenz fuer: ...`, Produktumfang als mehrzeiliges Feld, Lizenzmodus als Auswahl (`soft`/`full`) und den neuen Button `Lizenz-ID erzeugen`.
   - `Lizenz-ID erzeugen` schreibt nur bei leerem Feld sofort eine `LIC-YYYYMMDD-HHMMSS`-ID ins Feld; gesetzte IDs werden nicht ueberschrieben.
   - Bestehende Speicherlogik (Auto-ID beim Speichern, Kundenkontext-Pflicht, DB-/IPC-Fluss) bleibt unveraendert.
+- Lizenzverwaltung naechstes Paket ist umgesetzt:
+  - Im Lizenzformular gibt es den Button `Lizenzdatei erzeugen`.
+  - Erzeugung ist ohne gespeicherte Lizenz blockiert (`Bitte zuerst die Lizenz speichern.`).
+  - Gespeicherte Lizenz + aktueller Kunde werden auf bestehendes `window.bbmDb.licenseGenerate(...)` gemappt.
+  - Generator-Produkt bleibt technisch `bbm-protokoll` (UI bleibt `BBM-Produktiv`).
+  - `license_mode` wird kompatibel gemappt (`soft -> none`, `full -> machine`, `none/machine` bleiben erhalten).
+  - Features werden aus `product_scope_json` fuer Generator aufgebaut (inkl. `audio`-Kompatibilitaet als `dictate`).
+  - Ohne ableitbare Features wird Erzeugung blockiert (`Produktumfang enthält keine erzeugbaren Features.`).
+  - Bei Erfolg wird der Ausgabepfad angezeigt und `Ausgabeordner öffnen` nutzt bestehendes `window.bbmDb.licenseOpenOutputDir(...)`.
+  - Bestehende Main-IPC-Infrastruktur (`license:generate`, `license:open-output-dir`) wurde weiterverwendet, keine neue Generator-Architektur.
+- Lizenzverwaltung Nachbesserung ist umgesetzt:
+  - Lizenzformular trennt jetzt fachlich `Lizenzart` (Testlizenz/Vollversion) und `Gerätebindung` (none/machine); `Lizenzmodus` ist nicht mehr das führende Bedienfeld.
+  - Datumsfelder im Admin-Lizenzformular laufen als Date-Inputs; Generator-Payload normalisiert zusaetzlich ISO- und deutsche Eingaben (`TT.MM.JJJJ` -> `JJJJ-MM-TT`), um `VALID_FROM_REQUIRED` zu vermeiden.
+  - Bei `Gerätebindung = machine` wird `Machine-ID` vor `licenseGenerate` verpflichtend geprüft; bei `none` bleibt Machine-ID optional und wird nicht übergeben.
+  - Kompatibilität fuer Altwerte in `license_mode` bleibt erhalten (`soft/full/none/machine` -> sinnvolle Edition/Binding-Ableitung), neue Felder `license_edition`/`license_binding` haben Vorrang.
+  - DB-Schema `license_records` wurde nicht-destruktiv um optionale Spalten `license_edition` und `license_binding` ergänzt.
+  - Main-Service und Renderer-Normalisierung akzeptieren/liefern snake_case + camelCase für Edition/Binding.
+- Lizenzverwaltung UI-Nachbesserung ist umgesetzt:
+  - Nach `Kunde speichern` ist `Neue Lizenz` sofort aktiv; kein Zurueck-/Neuoeffnen noetig.
+  - Im Lizenzformular wurden Buttontexte vereinheitlicht: `Lizenz speichern`, `Formular leeren`, `Zurueck`.
+  - Kundendetail ist klarer getrennt in `Kundendaten` und `Lizenzen dieses Kunden`.
+  - Die Lizenzliste je Kunde ist als saubere Tabelle mit Spalten fuer Lizenz-ID, Lizenzart, Gerätebindung, Produktumfang, gueltig von/bis und Aktion aufgebaut.
+  - Bearbeiten erfolgt ueber sichtbaren Button `Öffnen` in der Aktion-Spalte statt ueber unsichtbaren Zeilenklick.
+- Lizenzverwaltung Abschluss fuer PR #39 ist umgesetzt:
+  - Im Lizenzformular gibt es jetzt den kombinierten Hauptbutton `Lizenz erstellen`.
+  - Der Ablauf dahinter ist: Admin-Lizenz speichern -> vorhandenen Generator aufrufen -> Ausgabepfad anzeigen -> Ausgabeordner öffnen.
+  - Es gibt keinen separaten Bedienpfad mehr mit erst `Lizenz speichern` und danach `Lizenzdatei erzeugen`.
+- Lizenzverwaltung finale UI-Vereinfachung ist umgesetzt:
+  - Im sichtbaren Lizenzformular wurden restliche Einzelbuttons entfernt (`Lizenz-ID erzeugen`, `Formular leeren`).
+  - Lizenz-ID bleibt sichtbar, wird aber beim Hauptablauf `Lizenz erstellen` automatisch erzeugt, wenn leer.
+  - Sichtbarer Hauptablauf im Formular ist jetzt auf `Lizenz erstellen` + `Zurueck` reduziert; `Ausgabeordner öffnen` erscheint nur nach erfolgreicher Erzeugung.
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
@@ -186,6 +217,92 @@ Sie ergänzt:
 ## Erledigte Meilensteine / Pakete
 
 ### Erledigt
+#### Paket: PR #39 final - sichtbare Einzelbuttons im Lizenzformular entfernt
+- Status: erledigt
+- Beschreibung:
+  - Entfernt: `Lizenz-ID erzeugen` (Button) und `Formular leeren` (Button) aus dem sichtbaren Lizenzformular.
+  - Hinweistext bei Lizenz-ID auf automatischen Erstell-Ablauf angepasst.
+  - Tests auf reduzierte sichtbare Bedienung aktualisiert.
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine DB-/Generator-/Setup-/Persistenz-/Sidebar-/Projektmodul-Aenderung
+
+#### Paket: PR #39 Abschluss - kombinierter Button `Lizenz erstellen`
+- Status: erledigt
+- Beschreibung:
+  - Lizenzformular auf einen klaren Hauptablauf mit einem Button `Lizenz erstellen` umgestellt.
+  - Klick speichert zuerst den Lizenzdatensatz und erzeugt danach direkt die `.bbmlic` über die bestehende Generator-Infrastruktur.
+  - Ausgabepfad bleibt sichtbar; `Ausgabeordner öffnen` bleibt verfügbar.
+  - Tests auf neue UI-Begriffe/Bedienlogik aktualisiert.
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Kein neuer Generator-IPC, keine Setup-/Sidebar-/Projektmodul-/Persistenzarchitektur-Aenderung
+
+#### Paket: PR #39 UI-Feinschliff Kundendetail/Lizenzformular
+- Status: erledigt
+- Beschreibung:
+  - Kundendetail-Screen so angepasst, dass `Neue Lizenz` nach erfolgreichem Kundenspeichern sofort nutzbar bleibt.
+  - Lizenzformular-Buttons sprachlich auf klare Begriffe umgestellt (`Lizenz speichern`, `Formular leeren`, `Zurueck`).
+  - Lizenzliste je Kunde optisch/strukturell bereinigt (eigene Aktion-Spalte mit `Öffnen`; kein gesamter Zeilenklick).
+  - Tests auf neue Begriffe/Struktur und Direktnutzbarkeit nach Kundenspeichern erweitert.
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine DB-/Generator-/Setup-/Sidebar-/Projektmodul-Aenderung in diesem UI-Nachschritt
+
+#### Paket: PR #39 Nachbesserung - Lizenzart/Geraetebindung getrennt und Datumsnormalisierung
+- Status: erledigt
+- Beschreibung:
+  - `LicenseAdminScreen` trennt nun `Lizenzart` und `Gerätebindung` im Formular, inklusive Machine-ID-Enable/Disable je Binding.
+  - Generator-Payload nutzt jetzt Edition/Binding aus neuen Feldern (mit Legacy-Fallback), normalisiert Datumswerte und validiert Machine-ID/Data vor dem IPC-Aufruf.
+  - DB-Schema und Main-Service wurden fuer optionale Felder `license_edition`/`license_binding` erweitert (nicht-destruktiv, keine neue Tabelle).
+  - Normalisierer/Tests wurden auf Kompatibilität von legacy `license_mode` + neue Felder angepasst.
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `src/renderer/modules/lizenzverwaltung/licenseRecords.js`
+  - `src/main/licensing/licenseAdminService.js`
+  - `src/main/db/database.js`
+  - `scripts/tests/licenseAdminDataflow.test.cjs`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine neue Generator-IPC, keine Setup-/App-Sperrlogik-Aenderung, keine Sidebar-/Projektmodul-Aenderung
+
+#### Paket: Admin-Lizenzformular an bestehende Lizenzdatei-Erzeugung angebunden
+- Status: erledigt
+- Beschreibung:
+  - Lizenzformular in `LicenseAdminScreen` um `Lizenzdatei erzeugen` erweitert; Erzeugung nur fuer gespeicherte Lizenzen.
+  - Neue Mapping-Helfer bauen Generator-Payload aus Kunde+Lizenz (customerName, licenseId, product `bbm-protokoll`, edition, binding, validFrom/validUntil, maxDevices, machineId, features).
+  - Features-Mapping aus `product_scope_json` deckt Standardumfang, Zusatzfunktionen und Module ab; `audio` bleibt kompatibel als `dictate`.
+  - UI zeigt Statusmeldungen fuer laufende Erzeugung, Erfolg/Fehler, Ausgabepfad und optional `Ausgabeordner öffnen`.
+  - Tests fuer Payload-Mapping, Binding-/Produkt-Mapping, Feature-Mapping und Feature-Leerfall wurden in `licenseAdminDataflow.test.cjs` erweitert.
+  - Strukturtests wurden um Nachweise fuer Button, Blockiermeldungen und bestehende IPC-Infrastruktur erweitert.
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `scripts/tests/licenseAdminDataflow.test.cjs`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine DB-/Schema-Aenderung, keine Setup-Aenderung, keine Sidebar-/Projektmodul-Aenderung, keine App-Sperrlogik-Aenderung
+
 #### Paket: Gefuehrter Lizenzumfang-Editor in der Admin-Lizenzverwaltung
 - Status: erledigt
 - Beschreibung:

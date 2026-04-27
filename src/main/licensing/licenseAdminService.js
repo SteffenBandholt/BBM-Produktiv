@@ -65,6 +65,21 @@ function _normalizeCustomerRecord(customer = {}) {
 
 function _normalizeLicenseRecord(license = {}) {
   const id = _trimText(license.id) || randomUUID();
+  const modeRaw = _trimText(license.license_mode || license.licenseMode).toLowerCase();
+  const editionRaw = _trimText(license.license_edition || license.licenseEdition).toLowerCase();
+  const bindingRaw = _trimText(license.license_binding || license.licenseBinding).toLowerCase();
+  const legacyDefaults =
+    modeRaw === "full" || modeRaw === "machine"
+      ? { license_edition: "full", license_binding: "machine", license_mode: "full" }
+      : { license_edition: "test", license_binding: "none", license_mode: "soft" };
+  const license_edition = editionRaw === "full" || editionRaw === "test" ? editionRaw : legacyDefaults.license_edition;
+  const license_binding = bindingRaw === "machine" || bindingRaw === "none" ? bindingRaw : legacyDefaults.license_binding;
+  const license_mode =
+    modeRaw === "full" || modeRaw === "soft" || modeRaw === "machine" || modeRaw === "none"
+      ? modeRaw
+      : license_binding === "machine"
+        ? "full"
+        : "soft";
 
   return {
     id,
@@ -75,7 +90,9 @@ function _normalizeLicenseRecord(license = {}) {
     ),
     valid_from: _optionalText(license.valid_from || license.validFrom),
     valid_until: _optionalText(license.valid_until || license.validUntil),
-    license_mode: _optionalText(license.license_mode || license.licenseMode),
+    license_mode: _optionalText(license_mode),
+    license_edition: _optionalText(license_edition),
+    license_binding: _optionalText(license_binding),
     machine_id: _optionalText(license.machine_id || license.machineId),
     notes: _optionalText(license.notes),
   };
@@ -101,6 +118,8 @@ function _baseListLicensesQuery() {
   return `
     SELECT
       lr.*,
+      lr.license_edition AS licenseEdition,
+      lr.license_binding AS licenseBinding,
       lc.customer_number AS customer_number,
       lc.company_name AS company_name,
       lc.customer_number AS customerNumber,
@@ -209,6 +228,8 @@ function saveLicense(license = {}) {
   if (!record.valid_from) throw new Error("valid_from required");
   if (!record.valid_until) throw new Error("valid_until required");
   if (!record.license_mode) throw new Error("license_mode required");
+  if (!record.license_edition) throw new Error("license_edition required");
+  if (!record.license_binding) throw new Error("license_binding required");
 
   const existing = db.prepare(`SELECT id FROM license_records WHERE id = ?`).get(record.id);
   const now = _nowIso();
@@ -223,6 +244,8 @@ function saveLicense(license = {}) {
           valid_from = ?,
           valid_until = ?,
           license_mode = ?,
+          license_edition = ?,
+          license_binding = ?,
           machine_id = ?,
           notes = ?,
           updated_at = ?
@@ -235,6 +258,8 @@ function saveLicense(license = {}) {
       record.valid_from,
       record.valid_until,
       record.license_mode,
+      record.license_edition,
+      record.license_binding,
       record.machine_id,
       record.notes,
       now,
@@ -251,9 +276,11 @@ function saveLicense(license = {}) {
         valid_from,
         valid_until,
         license_mode,
+        license_edition,
+        license_binding,
         machine_id,
         notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     ).run(
       record.id,
@@ -263,6 +290,8 @@ function saveLicense(license = {}) {
       record.valid_from,
       record.valid_until,
       record.license_mode,
+      record.license_edition,
+      record.license_binding,
       record.machine_id,
       record.notes
     );

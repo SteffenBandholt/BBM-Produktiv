@@ -1116,6 +1116,8 @@ function ensureLicenseAdminSchema(dbConn) {
         valid_from TEXT,
         valid_until TEXT,
         license_mode TEXT,
+        license_edition TEXT,
+        license_binding TEXT,
         machine_id TEXT,
         notes TEXT,
         created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
@@ -1142,6 +1144,12 @@ function ensureLicenseAdminSchema(dbConn) {
   }
   if (!columnExists(dbConn, "license_records", "license_mode")) {
     dbConn.exec(`ALTER TABLE license_records ADD COLUMN license_mode TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "license_edition")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN license_edition TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "license_binding")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN license_binding TEXT;`);
   }
   if (!columnExists(dbConn, "license_records", "machine_id")) {
     dbConn.exec(`ALTER TABLE license_records ADD COLUMN machine_id TEXT;`);

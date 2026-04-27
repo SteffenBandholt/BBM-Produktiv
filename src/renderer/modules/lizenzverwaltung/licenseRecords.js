@@ -13,7 +13,8 @@ export const LICENSE_RECORD_FIELDS = Object.freeze([
   Object.freeze({ key: "productScope", label: "Produktumfang", required: true }),
   Object.freeze({ key: "validFrom", label: "gueltig von", required: true }),
   Object.freeze({ key: "validUntil", label: "gueltig bis", required: true }),
-  Object.freeze({ key: "licenseMode", label: "Lizenzmodus", required: true }),
+  Object.freeze({ key: "licenseEdition", label: "Lizenzart", required: true }),
+  Object.freeze({ key: "licenseBinding", label: "Gerätebindung", required: true }),
   Object.freeze({ key: "machineId", label: "Machine-ID", required: false }),
   Object.freeze({ key: "notes", label: "Notizen", required: false }),
 ]);
@@ -67,6 +68,10 @@ export function createDefaultLicenseRecord(overrides = {}) {
     valid_until: "",
     licenseMode: "soft",
     license_mode: "soft",
+    licenseEdition: "test",
+    license_edition: "test",
+    licenseBinding: "none",
+    license_binding: "none",
     machineId: "",
     machine_id: "",
     notes: "",
@@ -159,7 +164,16 @@ export function normalizeLicenseRecord(input = {}) {
   const validUntil = String(input.validUntil ?? input.valid_until ?? base.validUntil).trim();
   const machineId = String(input.machineId ?? input.machine_id ?? base.machineId).trim();
   const modeRaw = String(input.licenseMode ?? input.license_mode ?? base.licenseMode).trim().toLowerCase();
+  const editionRaw = String(input.licenseEdition ?? input.license_edition ?? "").trim().toLowerCase();
+  const bindingRaw = String(input.licenseBinding ?? input.license_binding ?? "").trim().toLowerCase();
   const normalizedMode = LICENSE_MODES.some((entry) => entry.key === modeRaw) ? modeRaw : base.licenseMode;
+  const legacyDefaults =
+    modeRaw === "full" || modeRaw === "machine"
+      ? { licenseEdition: "full", licenseBinding: "machine" }
+      : { licenseEdition: "test", licenseBinding: "none" };
+  const normalizedEdition = editionRaw === "test" || editionRaw === "full" ? editionRaw : legacyDefaults.licenseEdition;
+  const normalizedBinding = bindingRaw === "none" || bindingRaw === "machine" ? bindingRaw : legacyDefaults.licenseBinding;
+  const compatMode = normalizedBinding === "machine" ? "full" : "soft";
   const productScope = normalizeProductScope(input.productScope, input.product_scope_json, base.productScope);
 
   return {
@@ -174,8 +188,12 @@ export function normalizeLicenseRecord(input = {}) {
     valid_from: validFrom,
     validUntil,
     valid_until: validUntil,
-    licenseMode: normalizedMode,
-    license_mode: normalizedMode,
+    licenseMode: normalizedMode || compatMode,
+    license_mode: compatMode,
+    licenseEdition: normalizedEdition,
+    license_edition: normalizedEdition,
+    licenseBinding: normalizedBinding,
+    license_binding: normalizedBinding,
     machineId,
     machine_id: machineId,
     notes: String(input.notes ?? base.notes).trim(),

@@ -125,7 +125,8 @@ async function runLizenzverwaltungModuleTests(run) {
       "productScope",
       "validFrom",
       "validUntil",
-      "licenseMode",
+      "licenseEdition",
+      "licenseBinding",
       "machineId",
       "notes",
     ]);
@@ -137,7 +138,8 @@ async function runLizenzverwaltungModuleTests(run) {
       "Produktumfang",
       "gueltig von",
       "gueltig bis",
-      "Lizenzmodus",
+      "Lizenzart",
+      "Gerätebindung",
       "Machine-ID",
       "Notizen",
     ]);
@@ -167,6 +169,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(normalizedLicense.licenseId, "LIC-1");
     assert.equal(normalizedLicense.customerNumber, "K-100");
     assert.equal(normalizedLicense.licenseMode, "full");
+    assert.equal(normalizedLicense.licenseEdition, "full");
+    assert.equal(normalizedLicense.licenseBinding, "machine");
     assert.deepEqual(normalizedLicense.productScope.zusatzfunktionen, ["mail"]);
     assert.deepEqual(normalizedLicense.productScope.standardumfang, []);
   });
@@ -429,7 +433,8 @@ async function runLizenzverwaltungModuleTests(run) {
       "Produktumfang",
       "gueltig von",
       "gueltig bis",
-      "Lizenzmodus",
+      "Lizenzart",
+      "Gerätebindung",
       "Machine-ID",
       "Notizen",
     ]);
@@ -570,6 +575,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(databaseSource.includes("license_history"), true);
   });
 
+  await run("Lizenzverwaltung DB-Schema: optionale Spalten license_edition/license_binding sind vorhanden", () => {
+    assert.equal(databaseSource.includes("license_edition TEXT"), true);
+    assert.equal(databaseSource.includes("license_binding TEXT"), true);
+  });
+
   await run("Lizenzverwaltung DB-Schema: Referenzen customer_id und license_record_id sind vorbereitet", () => {
     assert.equal(databaseSource.includes("customer_id TEXT NOT NULL"), true);
     assert.equal(
@@ -669,6 +679,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseIpcSource.includes('ipcMain.handle("license:get-installed"'), true);
     assert.equal(licenseIpcSource.includes('ipcMain.handle("license:import"'), true);
     assert.equal(licenseIpcSource.includes('ipcMain.handle("license:delete"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license:generate"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license:open-output-dir"'), true);
   });
 
   await run(
@@ -735,9 +747,35 @@ async function runLizenzverwaltungModuleTests(run) {
 
   await run("LicenseAdminScreen enthaelt kundenbezogene Lizenzfunktionen", () => {
     assert.equal(screenSource.includes("Lizenzen dieses Kunden"), true);
+    assert.equal(screenSource.includes("Kundendaten"), true);
     assert.equal(screenSource.includes("Neue Lizenz"), true);
     assert.equal(screenSource.includes("Zurueck zur Kundenliste"), true);
-    assert.equal(screenSource.includes("Zurueck zum Kunden"), true);
+    assert.equal(screenSource.includes("Lizenz erstellen"), true);
+    assert.equal(screenSource.includes("Lizenz speichern"), false);
+    assert.equal(screenSource.includes("Formular leeren"), false);
+    assert.equal(screenSource.includes("Lizenz-ID erzeugen"), false);
+    assert.equal(screenSource.includes("Zurueck"), true);
+    assert.equal(screenSource.includes("Merken"), false);
+    assert.equal(screenSource.includes("Neu / leeren"), false);
+    assert.equal(screenSource.includes("Zurueck zum Kunden"), false);
+    assert.equal(screenSource.includes("Aktion"), true);
+    assert.equal(screenSource.includes("Öffnen"), true);
+    assert.equal(screenSource.includes("Lizenzdatei erzeugen"), false);
+    assert.equal(screenSource.includes("Ausgabeordner öffnen"), true);
+    assert.equal(screenSource.includes("Lizenzdatei wird erzeugt ..."), true);
+    assert.equal(screenSource.includes("Lizenzdatei wurde erzeugt."), true);
+    assert.equal(screenSource.includes("Produktumfang enthält keine erzeugbaren Features."), true);
+    assert.equal(screenSource.includes("Machine-ID ist erforderlich, wenn die Lizenz an ein Gerät gebunden wird."), true);
+    assert.equal(screenSource.includes("Bitte gültige Datumswerte eintragen."), true);
+    assert.equal(screenSource.includes("\"Lizenzart\""), true);
+    assert.equal(screenSource.includes("\"Gerätebindung\""), true);
+    assert.equal(screenSource.includes("licenseGenerate"), true);
+    assert.equal(screenSource.includes("licenseOpenOutputDir"), true);
+  });
+
+  await run("Kundendetail: nach Kunde speichern ist Neue Lizenz direkt nutzbar", () => {
+    assert.equal(screenSource.includes("this.currentCustomer = saved;"), true);
+    assert.equal(screenSource.includes("newLicenseBtn.disabled = false;"), true);
   });
 
 

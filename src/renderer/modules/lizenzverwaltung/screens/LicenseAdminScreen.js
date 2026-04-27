@@ -2,6 +2,7 @@ import { listCustomers, listLicensesByCustomer, saveCustomer, saveLicense } from
 
 const PRODUCT_KEY = "bbm-produktiv";
 const PRODUCT_LABEL = "BBM-Produktiv";
+const GENERATOR_PRODUCT_KEY = "bbm-protokoll";
 const STANDARD_SCOPE_KEYS = Object.freeze(["app", "pdf", "export"]);
 const ADDITIONAL_FEATURES = Object.freeze([
   Object.freeze({ key: "mail", label: "Mail" }),
@@ -29,6 +30,10 @@ function normalizeAdditionalFeatureKey(value) {
   if (!normalized) return "";
   if (normalized === "audio") return "dictate";
   return normalized;
+}
+
+function normalizeModuleKey(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function parseProductScopeObject(rawValue) {
@@ -161,6 +166,120 @@ export function buildCustomerEditorPayload({ customer = {}, inputs = {} } = {}) 
     email: String(inputs.email || "").trim(),
     phone: String(inputs.phone || "").trim(),
     notes: String(inputs.notes || "").trim(),
+  };
+}
+
+export function mapLicenseModeToGeneratorBinding(licenseMode) {
+  const normalized = String(licenseMode || "").trim().toLowerCase();
+  if (normalized === "full") return "machine";
+  if (normalized === "machine") return "machine";
+  if (normalized === "soft") return "none";
+  if (normalized === "none") return "none";
+  return "";
+}
+
+export function mapLegacyLicenseModeToEditionAndBinding(licenseMode) {
+  const normalized = String(licenseMode || "").trim().toLowerCase();
+  if (normalized === "full") return { edition: "full", binding: "machine" };
+  if (normalized === "machine") return { edition: "full", binding: "machine" };
+  if (normalized === "none") return { edition: "test", binding: "none" };
+  if (normalized === "soft") return { edition: "test", binding: "none" };
+  return { edition: "test", binding: "none" };
+}
+
+export function normalizeDateForGenerator(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const date = new Date(`${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}T00:00:00Z`);
+    if (Number.isNaN(date.getTime())) return "";
+    if (
+      date.getUTCFullYear() !== Number(isoMatch[1]) ||
+      date.getUTCMonth() + 1 !== Number(isoMatch[2]) ||
+      date.getUTCDate() !== Number(isoMatch[3])
+    ) {
+      return "";
+    }
+    return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  }
+
+  const deMatch = raw.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (!deMatch) return "";
+  const day = Number(deMatch[1]);
+  const month = Number(deMatch[2]);
+  const year = Number(deMatch[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (Number.isNaN(date.getTime())) return "";
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() + 1 !== month || date.getUTCDate() !== day) return "";
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function getLicenseEditionAndBinding(license = {}) {
+  const editionRaw = String(valueOf(license, "license_edition", "licenseEdition")).trim().toLowerCase();
+  const bindingRaw = String(valueOf(license, "license_binding", "licenseBinding")).trim().toLowerCase();
+  const hasEdition = editionRaw === "test" || editionRaw === "full";
+  const hasBinding = bindingRaw === "none" || bindingRaw === "machine";
+  const legacy = mapLegacyLicenseModeToEditionAndBinding(valueOf(license, "license_mode", "licenseMode"));
+  return {
+    edition: hasEdition ? editionRaw : legacy.edition,
+    binding: hasBinding ? bindingRaw : legacy.binding,
+  };
+}
+
+export function parseGeneratorFeaturesFromProductScope(rawValue) {
+  const trimmed = String(rawValue || "").trim();
+  if (!trimmed) return [];
+
+  let parsed = null;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch (_err) {
+    return [];
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return [];
+
+  const features = new Set();
+
+  toUniqueNormalizedArray(parsed.standardumfang || [])
+    .filter((key) => STANDARD_SCOPE_KEYS.includes(key))
+    .forEach((key) => features.add(key));
+
+  toUniqueNormalizedArray(parsed.zusatzfunktionen || [])
+    .map((key) => normalizeAdditionalFeatureKey(key))
+    .filter((key) => ADDITIONAL_FEATURES.some((entry) => entry.key === key))
+    .forEach((key) => features.add(key));
+
+  toUniqueNormalizedArray(parsed.module || [])
+    .map((key) => normalizeModuleKey(key))
+    .filter((key) => MODULE_KEYS.some((entry) => entry.key === key))
+    .forEach((key) => features.add(key));
+
+  return [...features];
+}
+
+export function buildLicenseGeneratorPayload({ customer = {}, license = {} } = {}) {
+  const customerName =
+    valueOf(customer, "company_name", "companyName") || valueOf(customer, "customer_number", "customerNumber");
+  const licenseId = valueOf(license, "license_id", "licenseId");
+  const validFrom = normalizeDateForGenerator(valueOf(license, "valid_from", "validFrom"));
+  const validUntil = normalizeDateForGenerator(valueOf(license, "valid_until", "validUntil"));
+  const model = getLicenseEditionAndBinding(license);
+  const binding = model.binding;
+  const edition = model.edition;
+  const features = parseGeneratorFeaturesFromProductScope(valueOf(license, "product_scope_json", "productScope"));
+  const machineId = valueOf(license, "machine_id", "machineId");
+  return {
+    customerName,
+    licenseId,
+    product: GENERATOR_PRODUCT_KEY,
+    edition,
+    binding,
+    validFrom,
+    validUntil,
+    maxDevices: 1,
+    ...(binding === "machine" && machineId ? { machineId } : {}),
+    features,
   };
 }
 
@@ -360,11 +479,25 @@ export default class LicenseAdminScreen {
       form.append(title, input);
     }
 
+    const customerActions = document.createElement("div");
+    customerActions.style.display = "flex";
+    customerActions.style.gap = "8px";
+
     const actions = document.createElement("div");
     actions.style.display = "flex";
     actions.style.gap = "8px";
+    actions.style.justifyContent = "space-between";
+    actions.style.alignItems = "center";
 
     const licenseSection = document.createElement("div");
+    const customerSection = document.createElement("div");
+    customerSection.style.display = "grid";
+    customerSection.style.gap = "8px";
+    customerSection.style.border = "1px solid #ddd";
+    customerSection.style.borderRadius = "8px";
+    customerSection.style.padding = "12px";
+    const customerTitle = document.createElement("h4");
+    customerTitle.textContent = "Kundendaten";
 
     const saveBtn = this._button("Kunde speichern", async () => {
       try {
@@ -382,6 +515,7 @@ export default class LicenseAdminScreen {
           })
         );
         this.currentCustomer = saved;
+        newLicenseBtn.disabled = false;
         message.textContent = "Kunde gespeichert.";
         await renderLicenses();
       } catch (err) {
@@ -405,15 +539,16 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    actions.append(saveBtn, newLicenseBtn, backBtn);
+    customerActions.append(saveBtn, backBtn);
 
     const renderLicenses = async () => {
       licenseSection.replaceChildren();
       const title = document.createElement("h4");
       title.textContent = "Lizenzen dieses Kunden";
       licenseSection.appendChild(title);
-      licenseSection.style.borderTop = "1px solid #ddd";
-      licenseSection.style.paddingTop = "10px";
+      licenseSection.style.border = "1px solid #ddd";
+      licenseSection.style.borderRadius = "8px";
+      licenseSection.style.padding = "12px";
       if (!this.currentCustomer?.id) {
         const hint = document.createElement("div");
         hint.textContent = "Lizenzen sind verfuegbar, sobald der Kunde gespeichert wurde.";
@@ -430,7 +565,7 @@ export default class LicenseAdminScreen {
       const thead = document.createElement("thead");
       const tbody = document.createElement("tbody");
       const tr = document.createElement("tr");
-      ["Lizenz-ID", "Produktumfang", "gueltig von", "gueltig bis", "Lizenzmodus"].forEach((label) => {
+      ["Lizenz-ID", "Lizenzart", "Gerätebindung", "Produktumfang", "gueltig von", "gueltig bis", "Aktion"].forEach((label) => {
         const th = document.createElement("th");
         th.textContent = label;
         tr.appendChild(th);
@@ -440,30 +575,36 @@ export default class LicenseAdminScreen {
 
       for (const record of records) {
         const row = document.createElement("tr");
-        row.style.cursor = "pointer";
-        row.onclick = () => {
-          this.currentView = "license-editor";
-          this.currentLicense = record;
-          this._render();
-        };
+        const mode = getLicenseEditionAndBinding(record);
         [
           valueOf(record, "license_id", "licenseId") || "-",
+          mode.edition === "full" ? "Vollversion" : "Testlizenz",
+          mode.binding === "machine" ? "An Machine-ID binden" : "Ohne Gerätebindung",
           formatProductScopeForList(record),
           valueOf(record, "valid_from", "validFrom") || "-",
           valueOf(record, "valid_until", "validUntil") || "-",
-          valueOf(record, "license_mode", "licenseMode") || "-",
         ].forEach((text) => {
           const td = document.createElement("td");
           td.textContent = text;
           row.appendChild(td);
         });
+        const actionCell = document.createElement("td");
+        const openBtn = this._button("Öffnen", () => {
+          this.currentView = "license-editor";
+          this.currentLicense = record;
+          this._render();
+        });
+        actionCell.appendChild(openBtn);
+        row.appendChild(actionCell);
         tbody.appendChild(row);
       }
       licenseSection.appendChild(table);
     };
 
     await renderLicenses();
-    container.append(header, form, actions, message, licenseSection);
+    actions.append(newLicenseBtn);
+    customerSection.append(customerTitle, form, customerActions);
+    container.append(header, customerSection, licenseSection, actions, message);
   }
 
   async _renderLicenseEditor(container) {
@@ -476,6 +617,9 @@ export default class LicenseAdminScreen {
     const message = document.createElement("div");
     message.style.minHeight = "20px";
     message.style.fontSize = "13px";
+    const generationOutput = document.createElement("div");
+    generationOutput.style.fontSize = "12px";
+    generationOutput.style.opacity = "0.9";
 
     const license = this.currentLicense || {};
     const parsedScope = parseProductScopeObject(valueOf(license, "product_scope_json", "productScope"));
@@ -484,7 +628,8 @@ export default class LicenseAdminScreen {
       ["license_id", "Lizenz-ID"],
       ["valid_from", "gueltig von"],
       ["valid_until", "gueltig bis"],
-      ["license_mode", "Lizenzmodus"],
+      ["license_edition", "Lizenzart"],
+      ["license_binding", "Gerätebindung"],
       ["machine_id", "Machine-ID"],
       ["notes", "Notizen"],
     ];
@@ -506,17 +651,39 @@ export default class LicenseAdminScreen {
 
     for (const [key, label] of fields) {
       let input = key === "notes" ? document.createElement("textarea") : document.createElement("input");
-      if (key === "license_mode") {
+      if (key === "license_edition") {
         input = document.createElement("select");
-        ["", "soft", "full"].forEach((mode) => {
+        [
+          { value: "test", label: "Testlizenz" },
+          { value: "full", label: "Vollversion" },
+        ].forEach((entry) => {
           const option = document.createElement("option");
-          option.value = mode;
-          option.textContent = mode || "- auswaehlen -";
+          option.value = entry.value;
+          option.textContent = entry.label;
+          input.appendChild(option);
+        });
+      }
+      if (key === "license_binding") {
+        input = document.createElement("select");
+        [
+          { value: "none", label: "Ohne Gerätebindung" },
+          { value: "machine", label: "An Machine-ID binden" },
+        ].forEach((entry) => {
+          const option = document.createElement("option");
+          option.value = entry.value;
+          option.textContent = entry.label;
           input.appendChild(option);
         });
       }
       if (key === "notes") input.rows = 3;
-      input.value = valueOf(license, key, key.replace("_", ""));
+      const currentMode = getLicenseEditionAndBinding(license);
+      if (key === "license_edition") input.value = currentMode.edition;
+      else if (key === "license_binding") input.value = currentMode.binding;
+      else input.value = valueOf(license, key, key.replace("_", ""));
+      if (key === "valid_from" || key === "valid_until") {
+        input.type = "date";
+        input.value = normalizeDateForGenerator(input.value);
+      }
       input.style.width = "100%";
       input.id = `license-${key}`;
       inputs[key] = input;
@@ -660,84 +827,125 @@ export default class LicenseAdminScreen {
       inputs.product_scope_json.value = JSON.stringify(buildStructuredProductScopeJson(scopeModel, scopeModel.previous));
     };
     syncScopeJson();
+    const syncMachineIdState = () => {
+      const binding = String(inputs.license_binding?.value || "none").trim().toLowerCase();
+      const isMachine = binding === "machine";
+      inputs.machine_id.disabled = !isMachine;
+      if (!isMachine) {
+        inputs.machine_id.value = "";
+      }
+    };
+    inputs.license_binding?.addEventListener("change", syncMachineIdState);
+    syncMachineIdState();
 
     const licenseIdHint = document.createElement("div");
     licenseIdHint.textContent =
-      "Lizenz-ID-Hinweis: Wenn leer, wird spaetestens beim Speichern automatisch eine ID erzeugt.";
+      "Wenn die Lizenz-ID leer ist, wird beim Erstellen automatisch eine ID erzeugt.";
     licenseIdHint.style.fontSize = "12px";
-
-    const generateIdBtn = this._button("Lizenz-ID erzeugen", () => {
-      const result = tryGenerateLicenseId(inputs.license_id.value);
-      if (!result.generated) {
-        message.textContent = "Lizenz-ID ist bereits gesetzt.";
-        return;
-      }
-      inputs.license_id.value = result.value;
-      message.textContent = "Lizenz-ID wurde erzeugt.";
-      syncGenerateIdButton();
-    });
-
-    const syncGenerateIdButton = () => {
-      generateIdBtn.disabled = Boolean(String(inputs.license_id.value || "").trim());
-    };
-    inputs.license_id.addEventListener("input", syncGenerateIdButton);
-    syncGenerateIdButton();
 
     const actions = document.createElement("div");
     actions.style.display = "flex";
     actions.style.gap = "8px";
-    const saveBtn = this._button("Merken", async () => {
+    const openOutputDirBtn = this._button("Ausgabeordner öffnen", async () => {
+      const api = window?.bbmDb || {};
+      const outputPath = String(openOutputDirBtn.dataset.outputPath || "").trim();
+      if (!outputPath || typeof api.licenseOpenOutputDir !== "function") return;
       try {
+        const res = await api.licenseOpenOutputDir({ outputPath });
+        if (!res?.ok) {
+          message.textContent = `Fehler: ${res?.error || "Ausgabeordner konnte nicht geoeffnet werden."}`;
+          return;
+        }
+      } catch (err) {
+        message.textContent = `Fehler: ${err?.message || err || "Ausgabeordner konnte nicht geoeffnet werden."}`;
+      }
+    });
+    openOutputDirBtn.style.display = "none";
+
+    const createBtn = this._button("Lizenz erstellen", async () => {
+      const previousText = createBtn.textContent;
+      createBtn.disabled = true;
+      openOutputDirBtn.disabled = true;
+      try {
+        const activeLicense = this.currentLicense || license || {};
         const payload = buildLicenseEditorPayload({
-          license,
+          license: activeLicense,
           customer,
           inputs: {
             license_id: inputs.license_id.value,
             product_scope_json: inputs.product_scope_json.value,
             valid_from: inputs.valid_from.value,
             valid_until: inputs.valid_until.value,
-            license_mode: inputs.license_mode.value,
+            license_mode: inputs.license_binding.value === "machine" ? "full" : "soft",
+            license_edition: inputs.license_edition.value,
+            license_binding: inputs.license_binding.value,
             machine_id: inputs.machine_id.value,
             notes: inputs.notes.value,
           },
         });
         const saved = await saveLicense(payload);
         this.currentLicense = saved;
-        message.textContent = "Lizenz gespeichert.";
+        openOutputDirBtn.style.display = "none";
+        openOutputDirBtn.dataset.outputPath = "";
+        generationOutput.textContent = "";
+
+        const api = window?.bbmDb || {};
+        if (typeof api.licenseGenerate !== "function") {
+          message.textContent = "Fehler: Lizenz-Generator-IPC ist nicht verfuegbar.";
+          return;
+        }
+
+        const generatorPayload = buildLicenseGeneratorPayload({
+          customer: this.currentCustomer || {},
+          license: saved || {},
+        });
+        if (!generatorPayload.validFrom || !generatorPayload.validUntil) {
+          message.textContent = "Bitte gültige Datumswerte eintragen.";
+          return;
+        }
+        if (!generatorPayload.features.length) {
+          message.textContent = "Produktumfang enthält keine erzeugbaren Features.";
+          return;
+        }
+        if (generatorPayload.binding === "machine" && !String(generatorPayload.machineId || "").trim()) {
+          message.textContent = "Machine-ID ist erforderlich, wenn die Lizenz an ein Gerät gebunden wird.";
+          return;
+        }
+
+        message.textContent = "Lizenzdatei wird erzeugt ...";
+        const res = await api.licenseGenerate(generatorPayload);
+        if (!res?.ok) {
+          message.textContent = `Fehler: ${res?.error || "Lizenz konnte nicht erzeugt werden."}`;
+          return;
+        }
+        message.textContent = "Lizenzdatei wurde erzeugt.";
+        const outputPath = String(res?.outputPath || "").trim();
+        if (outputPath) {
+          generationOutput.textContent = `Ausgabepfad: ${outputPath}`;
+          openOutputDirBtn.dataset.outputPath = outputPath;
+          openOutputDirBtn.style.display = "";
+          openOutputDirBtn.disabled = false;
+        }
       } catch (err) {
         if (String(err?.message || "") === "CUSTOMER_CONTEXT_REQUIRED") {
           message.textContent = "Fehler: Speichern ohne geoeffneten Kunden ist unmoeglich.";
         } else {
           message.textContent = `Fehler: ${err?.message || err}`;
         }
+      } finally {
+        createBtn.textContent = previousText;
+        createBtn.disabled = false;
       }
     });
 
-    const clearBtn = this._button("Neu / leeren", () => {
-      Object.values(inputs).forEach((el) => {
-        el.value = "";
-      });
-      resetScopeSelectionToDefault(scopeModel);
-      zusatzfunktionChecks.forEach((checkbox) => {
-        checkbox.checked = false;
-      });
-      moduleChecks.forEach((checkbox) => {
-        checkbox.checked = false;
-      });
-      syncScopeJson();
-      this.currentLicense = null;
-      message.textContent = "Formular geleert.";
-      syncGenerateIdButton();
-    });
-
-    const backBtn = this._button("Zurueck zum Kunden", () => {
+    const backBtn = this._button("Zurueck", () => {
       this.currentLicense = null;
       this.currentView = "customer-detail";
       this._render();
     });
 
-    actions.append(saveBtn, clearBtn, backBtn);
-    container.append(header, context, form, licenseIdHint, generateIdBtn, actions, message);
+    actions.append(createBtn, backBtn, openOutputDirBtn);
+    container.append(header, context, form, licenseIdHint, actions, message, generationOutput);
   }
 
   async _render() {

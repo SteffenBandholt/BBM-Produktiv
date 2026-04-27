@@ -15,6 +15,8 @@ function createMemoryDb() {
     const customer = getCustomerById(record.customer_id) || {};
     return {
       ...record,
+      licenseEdition: record.license_edition || null,
+      licenseBinding: record.license_binding || null,
       customer_number: customer.customer_number || null,
       company_name: customer.company_name || null,
       customerNumber: customer.customer_number || null,
@@ -69,16 +71,64 @@ function createMemoryDb() {
             return;
           }
           if (text.includes("INSERT INTO license_records")) {
-            const [id, license_id, customer_id, product_scope_json, valid_from, valid_until, license_mode, machine_id, notes] =
+            const [
+              id,
+              license_id,
+              customer_id,
+              product_scope_json,
+              valid_from,
+              valid_until,
+              license_mode,
+              license_edition,
+              license_binding,
+              machine_id,
+              notes,
+            ] =
               args;
-            licenses.push({ id, license_id, customer_id, product_scope_json, valid_from, valid_until, license_mode, machine_id, notes });
+            licenses.push({
+              id,
+              license_id,
+              customer_id,
+              product_scope_json,
+              valid_from,
+              valid_until,
+              license_mode,
+              license_edition,
+              license_binding,
+              machine_id,
+              notes,
+            });
             return;
           }
           if (text.includes("UPDATE license_records")) {
-            const [license_id, customer_id, product_scope_json, valid_from, valid_until, license_mode, machine_id, notes, _updated_at, id] =
+            const [
+              license_id,
+              customer_id,
+              product_scope_json,
+              valid_from,
+              valid_until,
+              license_mode,
+              license_edition,
+              license_binding,
+              machine_id,
+              notes,
+              _updated_at,
+              id,
+            ] =
               args;
             const row = licenses.find((entry) => entry.id === id);
-            Object.assign(row, { license_id, customer_id, product_scope_json, valid_from, valid_until, license_mode, machine_id, notes });
+            Object.assign(row, {
+              license_id,
+              customer_id,
+              product_scope_json,
+              valid_from,
+              valid_until,
+              license_mode,
+              license_edition,
+              license_binding,
+              machine_id,
+              notes,
+            });
           }
         },
       };
@@ -149,6 +199,10 @@ async function runLicenseAdminDataflowTests(run) {
       assert.equal(listedByCustomer[0].valid_from, "2026-01-01");
       assert.equal(listedByCustomer[0].valid_until, "2026-12-31");
       assert.equal(listedByCustomer[0].license_mode, "soft");
+      assert.equal(listedByCustomer[0].license_edition, "test");
+      assert.equal(listedByCustomer[0].license_binding, "none");
+      assert.equal(listedByCustomer[0].licenseEdition, "test");
+      assert.equal(listedByCustomer[0].licenseBinding, "none");
       assert.equal(typeof listedByCustomer[0].product_scope_json, "string");
     });
   });
@@ -272,6 +326,8 @@ async function runLicenseAdminDataflowTests(run) {
       validFrom: "2026-01-01",
       validUntil: "2026-12-31",
       licenseMode: "full",
+      licenseEdition: "full",
+      licenseBinding: "machine",
     });
 
     assert.equal(received.licenseId, "LIC-CAMEL-1");
@@ -283,6 +339,10 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(received.valid_until, "2026-12-31");
     assert.equal(received.licenseMode, "full");
     assert.equal(received.license_mode, "full");
+    assert.equal(received.licenseEdition, "full");
+    assert.equal(received.license_edition, "full");
+    assert.equal(received.licenseBinding, "machine");
+    assert.equal(received.license_binding, "machine");
   });
 
   await run("Lizenzverwaltung normalizeLicenseRecord: snake_case und camelCase werden vollstaendig abgebildet", async () => {
@@ -304,6 +364,8 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(snake.valid_from, "2026-01-01");
     assert.equal(snake.valid_until, "2026-12-31");
     assert.equal(snake.license_mode, "soft");
+    assert.equal(snake.license_edition, "test");
+    assert.equal(snake.license_binding, "none");
     assert.equal(snake.machine_id, "MID-1");
     assert.equal(snake.product_scope_json, JSON.stringify({ raw: "freitext" }));
 
@@ -321,6 +383,8 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(camel.valid_from, "2026-03-01");
     assert.equal(camel.valid_until, "2026-10-31");
     assert.equal(camel.license_mode, "full");
+    assert.equal(camel.license_edition, "full");
+    assert.equal(camel.license_binding, "machine");
     assert.equal(camel.machine_id, "MID-2");
   });
 
@@ -449,6 +513,122 @@ async function runLicenseAdminDataflowTests(run) {
     assert.deepEqual(normalizedScope.standardumfang, ["app", "pdf", "export"]);
     assert.deepEqual(normalizedScope.zusatzfunktionen, []);
     assert.deepEqual(normalizedScope.module, []);
+  });
+
+  await run("Lizenzverwaltung Generator-Payload: Kunde + Lizenz werden korrekt gemappt", async () => {
+    const { buildLicenseGeneratorPayload } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const payload = buildLicenseGeneratorPayload({
+      customer: { company_name: "Musterfirma GmbH", customer_number: "K-77" },
+      license: {
+        license_id: "LIC-77",
+        valid_from: "01.05.2026",
+        valid_until: "01.05.2027",
+        license_edition: "test",
+        license_binding: "none",
+        license_mode: "soft",
+        machine_id: "M-ID-77",
+        product_scope_json: JSON.stringify({
+          product: "bbm-produktiv",
+          standardumfang: ["app", "pdf", "export"],
+          zusatzfunktionen: ["mail", "audio"],
+          module: ["protokoll", "dummy"],
+        }),
+      },
+    });
+
+    assert.equal(payload.customerName, "Musterfirma GmbH");
+    assert.equal(payload.licenseId, "LIC-77");
+    assert.equal(payload.validFrom, "2026-05-01");
+    assert.equal(payload.validUntil, "2027-05-01");
+    assert.equal(payload.binding, "none");
+    assert.equal(payload.product, "bbm-protokoll");
+    assert.equal(payload.edition, "test");
+    assert.equal(payload.maxDevices, 1);
+    assert.equal(payload.machineId, undefined);
+    assert.deepEqual(payload.features, ["app", "pdf", "export", "mail", "dictate", "protokoll", "dummy"]);
+  });
+
+  await run("Lizenzverwaltung Generator-Payload: fallback customer_number und edition/binding full+machine", async () => {
+    const { buildLicenseGeneratorPayload } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const payload = buildLicenseGeneratorPayload({
+      customer: { customer_number: "K-88" },
+      license: {
+        license_id: "LIC-88",
+        valid_from: "31.12.2026",
+        valid_until: "2027-12-31",
+        license_edition: "full",
+        license_binding: "machine",
+        product_scope_json: JSON.stringify({
+          standardumfang: ["app"],
+          zusatzfunktionen: ["mail"],
+          module: ["protokoll"],
+        }),
+      },
+    });
+    assert.equal(payload.customerName, "K-88");
+    assert.equal(payload.edition, "full");
+    assert.equal(payload.binding, "machine");
+  });
+
+  await run("Lizenzverwaltung Generator-Payload: keine ableitbaren Features ergibt leeres Feature-Set", async () => {
+    const { buildLicenseGeneratorPayload } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const payload = buildLicenseGeneratorPayload({
+      customer: { company_name: "Ohne Feature GmbH" },
+      license: {
+        license_id: "LIC-99",
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        license_mode: "none",
+        product_scope_json: JSON.stringify({ raw: "legacy-freitext" }),
+      },
+    });
+    assert.deepEqual(payload.features, []);
+  });
+
+  await run("Lizenzverwaltung Datum: normalizeDateForGenerator unterstuetzt ISO und Deutsch", async () => {
+    const { normalizeDateForGenerator } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    assert.equal(normalizeDateForGenerator("2026-05-01"), "2026-05-01");
+    assert.equal(normalizeDateForGenerator("01.05.2026"), "2026-05-01");
+    assert.equal(normalizeDateForGenerator("31.12.2026"), "2026-12-31");
+    assert.equal(normalizeDateForGenerator("31.13.2026"), "");
+  });
+
+  await run("Lizenzverwaltung Kompatibilitaet license_mode: soft/full/none/machine", async () => {
+    const { getLicenseEditionAndBinding } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    assert.deepEqual(getLicenseEditionAndBinding({ license_mode: "soft" }), { edition: "test", binding: "none" });
+    assert.deepEqual(getLicenseEditionAndBinding({ license_mode: "full" }), { edition: "full", binding: "machine" });
+    assert.deepEqual(getLicenseEditionAndBinding({ license_mode: "none" }), { edition: "test", binding: "none" });
+    assert.deepEqual(getLicenseEditionAndBinding({ license_mode: "machine" }), { edition: "full", binding: "machine" });
+  });
+
+  await run("Lizenzverwaltung Generator-Payload: binding machine erzwingt machineId im Payload", async () => {
+    const { buildLicenseGeneratorPayload } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const payload = buildLicenseGeneratorPayload({
+      customer: { company_name: "Vollversion GmbH" },
+      license: {
+        license_id: "LIC-MACHINE-1",
+        valid_from: "2026-06-01",
+        valid_until: "2026-07-01",
+        license_edition: "full",
+        license_binding: "machine",
+        machine_id: "MID-M-1",
+        product_scope_json: JSON.stringify({ standardumfang: ["app"] }),
+      },
+    });
+    assert.equal(payload.binding, "machine");
+    assert.equal(payload.machineId, "MID-M-1");
   });
 }
 
