@@ -1,5 +1,119 @@
 import { listCustomers, listLicensesByCustomer, saveCustomer, saveLicense } from "../licenseStorageService.js";
 
+const PRODUCT_KEY = "bbm-produktiv";
+const PRODUCT_LABEL = "BBM-Produktiv";
+const STANDARD_SCOPE_KEYS = Object.freeze(["app", "pdf", "export"]);
+const ADDITIONAL_FEATURES = Object.freeze([
+  Object.freeze({ key: "mail", label: "Mail" }),
+  Object.freeze({ key: "dictate", label: "Dictate", aliases: ["audio"] }),
+]);
+const MODULE_KEYS = Object.freeze([
+  Object.freeze({ key: "protokoll", label: "Protokoll" }),
+  Object.freeze({ key: "dummy", label: "Dummy" }),
+]);
+
+function toUniqueNormalizedArray(values = []) {
+  const seen = new Set();
+  const output = [];
+  values.forEach((value) => {
+    const normalized = String(value || "").trim().toLowerCase();
+    if (!normalized || seen.has(normalized)) return;
+    seen.add(normalized);
+    output.push(normalized);
+  });
+  return output;
+}
+
+function normalizeAdditionalFeatureKey(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (!normalized) return "";
+  if (normalized === "audio") return "dictate";
+  return normalized;
+}
+
+function parseProductScopeObject(rawValue) {
+  const trimmed = String(rawValue || "").trim();
+  const fallback = {
+    original: {},
+    product: PRODUCT_KEY,
+    standardumfang: [...STANDARD_SCOPE_KEYS],
+    zusatzfunktionen: [],
+    module: [],
+    raw: "",
+  };
+
+  if (!trimmed) {
+    return fallback;
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return { ...fallback, raw: trimmed };
+    }
+
+    const standardumfang = toUniqueNormalizedArray(parsed.standardumfang || []).filter((key) =>
+      STANDARD_SCOPE_KEYS.includes(key)
+    );
+
+    const extraKeys = toUniqueNormalizedArray(parsed.zusatzfunktionen || [])
+      .map((key) => normalizeAdditionalFeatureKey(key))
+      .filter((key) => ADDITIONAL_FEATURES.some((entry) => entry.key === key));
+
+    const moduleKeys = toUniqueNormalizedArray(parsed.module || []).filter((key) =>
+      MODULE_KEYS.some((entry) => entry.key === key)
+    );
+
+    return {
+      original: parsed,
+      product: String(parsed.product || "").trim().toLowerCase() || PRODUCT_KEY,
+      standardumfang: standardumfang.length ? standardumfang : [...STANDARD_SCOPE_KEYS],
+      zusatzfunktionen: extraKeys,
+      module: moduleKeys,
+      raw: String(parsed.raw || "").trim(),
+    };
+  } catch (_err) {
+    return { ...fallback, raw: trimmed };
+  }
+}
+
+function formatEntryLabel(key, entries = []) {
+  const found = entries.find((entry) => entry.key === String(key || "").trim().toLowerCase());
+  return found?.label || String(key || "").trim();
+}
+
+export function buildStructuredProductScopeJson(model = {}, previous = {}) {
+  const previousObject = previous && typeof previous === "object" && !Array.isArray(previous) ? previous : {};
+  const raw = String(previousObject.raw || model.raw || "").trim();
+  return {
+    ...previousObject,
+    product: PRODUCT_KEY,
+    standardumfang: [...STANDARD_SCOPE_KEYS],
+    zusatzfunktionen: toUniqueNormalizedArray(model.zusatzfunktionen || [])
+      .map((key) => normalizeAdditionalFeatureKey(key))
+      .filter((key) => ADDITIONAL_FEATURES.some((entry) => entry.key === key)),
+    module: toUniqueNormalizedArray(model.module || []).filter((key) => MODULE_KEYS.some((entry) => entry.key === key)),
+    ...(raw ? { raw } : {}),
+  };
+}
+
+export function createDefaultScopeSelection() {
+  return {
+    raw: "",
+    zusatzfunktionen: [],
+    module: [],
+    previous: {},
+  };
+}
+
+export function resetScopeSelectionToDefault(selection = {}) {
+  selection.raw = "";
+  selection.zusatzfunktionen = [];
+  selection.module = [];
+  selection.previous = {};
+  return selection;
+}
+
 export function createGeneratedLicenseId(now = new Date()) {
   const part = (value) => String(value).padStart(2, "0");
   return `LIC-${now.getFullYear()}${part(now.getMonth() + 1)}${part(now.getDate())}-${part(now.getHours())}${part(
@@ -22,7 +136,6 @@ export function assertCustomerContext(customer) {
   }
   return customerId;
 }
-
 
 export function buildLicenseEditorPayload({ license = {}, inputs = {}, customer = null, now = new Date() } = {}) {
   const customerId = assertCustomerContext(customer);
@@ -65,8 +178,6 @@ function valueOf(item, ...keys) {
   return "";
 }
 
-
-
 export function formatProductScopeForList(entry = {}) {
   const fromObject = entry?.productScope;
   if (fromObject && typeof fromObject === "object" && !Array.isArray(fromObject)) {
@@ -75,39 +186,62 @@ export function formatProductScopeForList(entry = {}) {
   }
 
   const rawJson = String(entry?.product_scope_json || "").trim();
-  if (rawJson) {
-    try {
-      const parsed = JSON.parse(rawJson);
-      if (parsed && typeof parsed === "object") {
-        if (String(parsed.raw || "").trim()) return String(parsed.raw).trim();
-        const label = buildProductScopeLabel(parsed);
-        if (label) return label;
-        return "-";
+  if (!rawJson) return "-";
+
+  try {
+    const parsed = JSON.parse(rawJson);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+      if (String(parsed.raw || "").trim() && !parsed.product && !Array.isArray(parsed.standardumfang) && !Array.isArray(parsed.zusatzfunktionen) && !Array.isArray(parsed.module)) {
+        return String(parsed.raw).trim();
       }
-    } catch (_err) {
-      return rawJson;
+      const label = buildProductScopeLabel(parsed);
+      if (label) return label;
+      if (String(parsed.raw || "").trim()) return String(parsed.raw).trim();
+      return "-";
     }
+    return rawJson;
+  } catch (_err) {
+    return rawJson;
   }
-
-  if (String(entry?.product_scope_json || "").trim()) {
-    return String(entry.product_scope_json).trim();
-  }
-
-  return "-";
 }
 
 function buildProductScopeLabel(scope = {}) {
-  const collect = [];
-  const add = (prefix, key) => {
-    if (Array.isArray(scope[key]) && scope[key].length) {
-      collect.push(`${prefix}:${scope[key].map((v) => String(v || "").trim()).filter(Boolean).join(",")}`);
-    }
-  };
-  add("std", "standardumfang");
-  add("zus", "zusatzfunktionen");
-  add("mod", "module");
-  return collect.join(" | ").trim();
+  const parts = [];
+
+  const product = String(scope.product || "").trim().toLowerCase();
+  if (product === PRODUCT_KEY) {
+    parts.push(PRODUCT_LABEL);
+  } else if (product) {
+    parts.push(product);
+  }
+
+  const standardEntries = toUniqueNormalizedArray(scope.standardumfang || [])
+    .filter((key) => STANDARD_SCOPE_KEYS.includes(key))
+    .map((key) => ({ app: "App", pdf: "PDF", export: "Export" }[key] || key));
+  if (standardEntries.length) {
+    parts.push(standardEntries.join(", "));
+  }
+
+  const extras = toUniqueNormalizedArray(scope.zusatzfunktionen || [])
+    .map((key) => normalizeAdditionalFeatureKey(key))
+    .filter((key) => ADDITIONAL_FEATURES.some((entry) => entry.key === key))
+    .map((key) => formatEntryLabel(key, ADDITIONAL_FEATURES));
+  if (extras.length) {
+    parts.push(extras.join(", "));
+  }
+
+  const modules = toUniqueNormalizedArray(scope.module || [])
+    .filter((key) => MODULE_KEYS.some((entry) => entry.key === key))
+    .map((key) => formatEntryLabel(key, MODULE_KEYS));
+  if (modules.length) {
+    const prefix = modules.length === 1 ? "Modul" : "Module";
+    parts.push(`${prefix}: ${modules.join(", ")}`);
+  }
+
+  if (!parts.length) return "";
+  return parts.join(" | ");
 }
+
 export default class LicenseAdminScreen {
   constructor({ onBackToAdminbereich } = {}) {
     this.onBackToAdminbereich = onBackToAdminbereich;
@@ -344,9 +478,10 @@ export default class LicenseAdminScreen {
     message.style.fontSize = "13px";
 
     const license = this.currentLicense || {};
+    const parsedScope = parseProductScopeObject(valueOf(license, "product_scope_json", "productScope"));
+
     const fields = [
       ["license_id", "Lizenz-ID"],
-      ["product_scope_json", "Produktumfang"],
       ["valid_from", "gueltig von"],
       ["valid_until", "gueltig bis"],
       ["license_mode", "Lizenzmodus"],
@@ -355,20 +490,22 @@ export default class LicenseAdminScreen {
     ];
 
     const form = document.createElement("div");
-    const inputs = {};
+    const inputs = { product_scope_json: document.createElement("input") };
+    inputs.product_scope_json.type = "hidden";
     form.style.display = "grid";
     form.style.gridTemplateColumns = "180px minmax(260px, 1fr)";
     form.style.columnGap = "12px";
     form.style.rowGap = "8px";
-    for (const [key, label] of fields) {
+
+    const appendFieldRow = (labelText, fieldNode) => {
       const title = document.createElement("label");
-      title.textContent = label;
+      title.textContent = labelText;
       title.style.alignSelf = "center";
+      form.append(title, fieldNode);
+    };
+
+    for (const [key, label] of fields) {
       let input = key === "notes" ? document.createElement("textarea") : document.createElement("input");
-      if (key === "product_scope_json") {
-        input = document.createElement("textarea");
-        input.rows = 4;
-      }
       if (key === "license_mode") {
         input = document.createElement("select");
         ["", "soft", "full"].forEach((mode) => {
@@ -381,11 +518,148 @@ export default class LicenseAdminScreen {
       if (key === "notes") input.rows = 3;
       input.value = valueOf(license, key, key.replace("_", ""));
       input.style.width = "100%";
-      title.htmlFor = `license-${key}`;
       input.id = `license-${key}`;
       inputs[key] = input;
-      form.append(title, input);
+      appendFieldRow(label, input);
     }
+
+    const scopeModel = createDefaultScopeSelection();
+    scopeModel.raw = parsedScope.raw;
+    scopeModel.zusatzfunktionen = [...parsedScope.zusatzfunktionen];
+    scopeModel.module = [...parsedScope.module];
+    scopeModel.previous = parsedScope.original;
+    const zusatzfunktionChecks = new Map();
+    const moduleChecks = new Map();
+
+    const standardWrap = document.createElement("div");
+    standardWrap.style.display = "grid";
+    standardWrap.style.gap = "6px";
+    STANDARD_SCOPE_KEYS.forEach((key) => {
+      const row = document.createElement("label");
+      row.style.display = "flex";
+      row.style.gap = "8px";
+      row.style.alignItems = "center";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = true;
+      checkbox.disabled = true;
+      const text = document.createElement("span");
+      text.textContent = { app: "App", pdf: "PDF", export: "Export" }[key] || key;
+      row.append(checkbox, text);
+      standardWrap.appendChild(row);
+    });
+
+    const extrasWrap = document.createElement("div");
+    extrasWrap.style.display = "grid";
+    extrasWrap.style.gap = "6px";
+
+    ADDITIONAL_FEATURES.forEach((entry) => {
+      const row = document.createElement("label");
+      row.style.display = "flex";
+      row.style.gap = "8px";
+      row.style.alignItems = "center";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = scopeModel.zusatzfunktionen.includes(entry.key);
+      zusatzfunktionChecks.set(entry.key, checkbox);
+      checkbox.onchange = () => {
+        if (checkbox.checked) {
+          if (!scopeModel.zusatzfunktionen.includes(entry.key)) scopeModel.zusatzfunktionen.push(entry.key);
+        } else {
+          scopeModel.zusatzfunktionen = scopeModel.zusatzfunktionen.filter((item) => item !== entry.key);
+        }
+        syncScopeJson();
+      };
+      const text = document.createElement("span");
+      text.textContent = entry.label;
+      row.append(checkbox, text);
+      extrasWrap.appendChild(row);
+    });
+
+    const moduleWrap = document.createElement("div");
+    moduleWrap.style.display = "grid";
+    moduleWrap.style.gap = "6px";
+
+    MODULE_KEYS.forEach((entry) => {
+      const row = document.createElement("label");
+      row.style.display = "flex";
+      row.style.gap = "8px";
+      row.style.alignItems = "center";
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = scopeModel.module.includes(entry.key);
+      moduleChecks.set(entry.key, checkbox);
+      checkbox.onchange = () => {
+        if (checkbox.checked) {
+          if (!scopeModel.module.includes(entry.key)) scopeModel.module.push(entry.key);
+        } else {
+          scopeModel.module = scopeModel.module.filter((item) => item !== entry.key);
+        }
+        syncScopeJson();
+      };
+      const text = document.createElement("span");
+      text.textContent = entry.label;
+      row.append(checkbox, text);
+      moduleWrap.appendChild(row);
+    });
+
+    const scopeEditorWrap = document.createElement("div");
+    scopeEditorWrap.style.display = "grid";
+    scopeEditorWrap.style.gap = "10px";
+
+    const productCard = document.createElement("div");
+    productCard.style.border = "1px solid #ddd";
+    productCard.style.borderRadius = "8px";
+    productCard.style.padding = "10px";
+    productCard.style.display = "grid";
+    productCard.style.gap = "4px";
+    const productTitle = document.createElement("div");
+    productTitle.textContent = "Produkt";
+    productTitle.style.fontWeight = "600";
+    const productHint = document.createElement("div");
+    productHint.textContent = PRODUCT_LABEL;
+    productCard.append(productTitle, productHint);
+
+    const categoryGrid = document.createElement("div");
+    categoryGrid.style.display = "grid";
+    categoryGrid.style.gridTemplateColumns = "repeat(auto-fit, minmax(180px, 1fr))";
+    categoryGrid.style.gap = "10px";
+
+    const createCategoryCard = (title, body) => {
+      const card = document.createElement("div");
+      card.style.border = "1px solid #ddd";
+      card.style.borderRadius = "8px";
+      card.style.padding = "10px";
+      card.style.display = "grid";
+      card.style.gap = "8px";
+      const heading = document.createElement("div");
+      heading.textContent = title;
+      heading.style.fontWeight = "600";
+      card.append(heading, body);
+      return card;
+    };
+
+    categoryGrid.append(
+      createCategoryCard("Standardumfang", standardWrap),
+      createCategoryCard("Zusatzfunktionen", extrasWrap),
+      createCategoryCard("Module", moduleWrap)
+    );
+
+    scopeEditorWrap.append(productCard, categoryGrid);
+    appendFieldRow("Lizenzumfang", scopeEditorWrap);
+
+    if (scopeModel.raw) {
+      const legacyHint = document.createElement("div");
+      legacyHint.style.fontSize = "12px";
+      legacyHint.style.opacity = "0.8";
+      legacyHint.textContent = `Bestehender Freitext wird beibehalten: ${scopeModel.raw}`;
+      appendFieldRow("Legacy-Hinweis", legacyHint);
+    }
+
+    const syncScopeJson = () => {
+      inputs.product_scope_json.value = JSON.stringify(buildStructuredProductScopeJson(scopeModel, scopeModel.previous));
+    };
+    syncScopeJson();
 
     const licenseIdHint = document.createElement("div");
     licenseIdHint.textContent =
@@ -443,6 +717,14 @@ export default class LicenseAdminScreen {
       Object.values(inputs).forEach((el) => {
         el.value = "";
       });
+      resetScopeSelectionToDefault(scopeModel);
+      zusatzfunktionChecks.forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+      moduleChecks.forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+      syncScopeJson();
       this.currentLicense = null;
       message.textContent = "Formular geleert.";
       syncGenerateIdButton();

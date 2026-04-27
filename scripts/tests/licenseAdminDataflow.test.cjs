@@ -333,18 +333,33 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(out, "Sonderumfang A");
   });
 
-  await run("Lizenzverwaltung UI-Liste: Produktumfang aus standardumfang/zusatzfunktionen/module wird kurz formatiert", async () => {
+  await run("Lizenzverwaltung UI-Liste: Produktumfang aus Struktur wird lesbar formatiert", async () => {
     const { formatProductScopeForList } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
     );
     const out = formatProductScopeForList({
       product_scope_json: JSON.stringify({
-        standardumfang: ["app", "pdf"],
+        product: "bbm-produktiv",
+        standardumfang: ["app", "pdf", "export"],
         zusatzfunktionen: ["mail"],
-        module: ["Protokoll"],
+        module: ["protokoll"],
       }),
     });
-    assert.equal(out, "std:app,pdf | zus:mail | mod:Protokoll");
+    assert.equal(out, "BBM-Produktiv | App, PDF, Export | Mail | Modul: Protokoll");
+  });
+
+  await run("Lizenzverwaltung UI-Liste: Dictate wird angezeigt, auch wenn audio gespeichert ist", async () => {
+    const { formatProductScopeForList } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const out = formatProductScopeForList({
+      product_scope_json: JSON.stringify({
+        product: "bbm-produktiv",
+        standardumfang: ["app", "pdf", "export"],
+        zusatzfunktionen: ["mail", "audio"],
+      }),
+    });
+    assert.equal(out, "BBM-Produktiv | App, PDF, Export | Mail, Dictate");
   });
 
   await run("Lizenzverwaltung UI-Liste: Produktumfang ohne Daten zeigt '-'", async () => {
@@ -371,6 +386,9 @@ async function runLicenseAdminDataflowTests(run) {
       createGeneratedLicenseId,
       tryGenerateLicenseId,
       buildLicenseEditorPayload,
+      buildStructuredProductScopeJson,
+      createDefaultScopeSelection,
+      resetScopeSelectionToDefault,
       buildCustomerEditorPayload,
     } = await importEsmFromFile(path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js"));
 
@@ -418,6 +436,19 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(customerPayload.customer_number, "K-44");
     assert.equal(customerPayload.company_name, "Firma 44");
     assert.equal(customerPayload.contact_person, "Kontakt 44");
+
+    const scopeSelection = createDefaultScopeSelection();
+    scopeSelection.zusatzfunktionen = ["mail", "dictate"];
+    scopeSelection.module = ["protokoll"];
+    scopeSelection.raw = "legacy";
+    scopeSelection.previous = { raw: "legacy" };
+    resetScopeSelectionToDefault(scopeSelection);
+
+    const normalizedScope = buildStructuredProductScopeJson(scopeSelection, scopeSelection.previous);
+    assert.equal(normalizedScope.product, "bbm-produktiv");
+    assert.deepEqual(normalizedScope.standardumfang, ["app", "pdf", "export"]);
+    assert.deepEqual(normalizedScope.zusatzfunktionen, []);
+    assert.deepEqual(normalizedScope.module, []);
   });
 }
 

@@ -186,6 +186,25 @@ Sie ergänzt:
 ## Erledigte Meilensteine / Pakete
 
 ### Erledigt
+#### Paket: Gefuehrter Lizenzumfang-Editor in der Admin-Lizenzverwaltung
+- Status: erledigt
+- Beschreibung:
+  - Im Lizenzformular (`Neue Lizenz / Lizenz bearbeiten`) wurde ein gefuehrter Editor fuer `Produkt`, `Standardumfang`, `Zusatzfunktionen` und `Module` eingebaut.
+  - UI-Nachforderung umgesetzt: `Produkt` steht separat oben; `Standardumfang`, `Zusatzfunktionen` und `Module` werden als drei klar getrennte Karten in einer responsiven 3-Spalten-Zeile dargestellt.
+  - Fehlerkorrektur: `Neu / leeren` setzt den Scope-Zustand jetzt konsistent zurueck (Standardumfang aktiv, Zusatzfunktionen/Module leer) und erzeugt `product_scope_json` sofort neu aus dem sichtbaren Modell.
+  - `product_scope_json` wird weiterhin ueber die bestehende Save-Logik gespeichert, jetzt aber strukturiert mit `product`, `standardumfang`, `zusatzfunktionen` und `module`.
+  - Bestehende Altwerte bleiben kompatibel: `{ raw: ... }`, Freitext, leere Arrays und vorhandene Strukturwerte werden weiterhin gelesen/angezeigt.
+  - Die Liste `Lizenzen dieses Kunden` zeigt den Produktumfang jetzt lesbar (inkl. `Dictate` statt `audio`).
+  - Tests fuer lesbare Ausgabe und `Dictate`-Darstellung wurden in `licenseAdminDataflow.test.cjs` erweitert.
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `scripts/tests/licenseAdminDataflow.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine DB-/Schema-Aenderung, keine Lizenzdatei-/Setup-Aenderung, keine IPC-Erweiterung
+
 #### Paket: Zeitzonenstabiler Test fuer erzeugte Lizenz-ID
 - Status: erledigt
 - Beschreibung:
