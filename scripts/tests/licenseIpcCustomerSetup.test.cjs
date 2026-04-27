@@ -6,7 +6,7 @@ const EventEmitter = require('node:events');
 const Module = require('node:module');
 const REAL_REPO_ROOT = process.cwd();
 
-function createFakeChild({ exitCode = 0, stdout = '', stderr = '', error = null } = {}) {
+function createFakeChild({ exitCode = 0, stdout = '', stderr = '', error = null, stayAlive = false } = {}) {
   const child = new EventEmitter();
   child.stdout = new EventEmitter();
   child.stderr = new EventEmitter();
@@ -17,6 +17,7 @@ function createFakeChild({ exitCode = 0, stdout = '', stderr = '', error = null 
       child.emit('error', error);
       return;
     }
+    if (stayAlive) return;
     child.emit('close', exitCode);
   });
   return child;
@@ -106,6 +107,30 @@ async function runLicenseIpcCustomerSetupTests(run) {
     });
   });
 
+  await run('licenseIpc: resolveNodeExecutableForBuild bevorzugt npm_node_execpath', () => {
+    withLicenseIpcModule({}, (mod) => {
+      const nodePath = mod.resolveNodeExecutableForBuild({
+        env: { npm_node_execpath: '/tmp/node-a', NODE_EXE: '/tmp/node-b' },
+        existsSync: (candidate) => candidate === '/tmp/node-a' || candidate === '/tmp/node-b',
+        execPath: '/tmp/electron.exe',
+        isElectronRuntime: true,
+      });
+      assert.equal(nodePath, '/tmp/node-a');
+    });
+  });
+
+  await run('licenseIpc: resolveNodeExecutableForBuild nutzt bei Electron nicht blind process.execPath', () => {
+    withLicenseIpcModule({}, (mod) => {
+      const nodePath = mod.resolveNodeExecutableForBuild({
+        env: {},
+        existsSync: () => true,
+        execPath: '/tmp/electron.exe',
+        isElectronRuntime: true,
+      });
+      assert.equal(nodePath, 'node');
+    });
+  });
+
   await run('licenseIpc: exitCode 0 aber outputDir fehlt -> CUSTOMER_SETUP_ARTIFACT_NOT_FOUND', async () => {
     await withTempRepo(
       () => {},
@@ -173,6 +198,49 @@ async function runLicenseIpcCustomerSetupTests(run) {
             assert.equal(res.artifactPath.includes('K-12-Gamma-GmbH'), true);
             assert.equal(res.setupPath.includes('.exe'), true);
             assert.equal(res.stdout.includes('builder-start'), true);
+          }
+        );
+      }
+    );
+  });
+
+  await run('licenseIpc: Timeout liefert CUSTOMER_SETUP_BUILD_TIMEOUT', async () => {
+    await withTempRepo(
+      () => {},
+      async ({ repoRoot, licenseFilePath }) => {
+        await withLicenseIpcModule(
+          { cwd: repoRoot, spawnImpl: () => createFakeChild({ stayAlive: true }) },
+          async (mod) => {
+            const res = await mod._runCustomerSetupBuild(
+              {
+                customer: { customer_number: 'K-13', company_name: 'Delta GmbH' },
+                license: { license_binding: 'none' },
+                licenseFilePath,
+              },
+              { timeoutMs: 5 }
+            );
+            assert.equal(res.ok, false);
+            assert.equal(res.error, 'CUSTOMER_SETUP_BUILD_TIMEOUT');
+          }
+        );
+      }
+    );
+  });
+
+  await run('licenseIpc: Spawn-Error liefert CUSTOMER_SETUP_BUILD_FAILED', async () => {
+    await withTempRepo(
+      () => {},
+      async ({ repoRoot, licenseFilePath }) => {
+        await withLicenseIpcModule(
+          { cwd: repoRoot, spawnImpl: () => createFakeChild({ error: new Error('spawn kaputt') }) },
+          async (mod) => {
+            const res = await mod._runCustomerSetupBuild({
+              customer: { customer_number: 'K-14', company_name: 'Epsilon GmbH' },
+              license: { license_binding: 'none' },
+              licenseFilePath,
+            });
+            assert.equal(res.ok, false);
+            assert.equal(res.error, 'CUSTOMER_SETUP_BUILD_FAILED');
           }
         );
       }

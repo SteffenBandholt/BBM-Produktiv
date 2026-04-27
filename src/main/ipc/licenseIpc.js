@@ -335,6 +335,32 @@ function _buildCustomerSetupSlug(customer = {}) {
   return _sanitizeCustomerSlug(combined);
 }
 
+function resolveNodeExecutableForBuild({
+  env = process.env,
+  existsSync = fs.existsSync,
+  execPath = process.execPath,
+  isElectronRuntime = !!process.versions?.electron,
+} = {}) {
+  const npmNodeExecPath = String(env?.npm_node_execpath || "").trim();
+  if (npmNodeExecPath && existsSync(npmNodeExecPath)) {
+    return npmNodeExecPath;
+  }
+
+  const nodeExe = String(env?.NODE_EXE || "").trim();
+  if (nodeExe && existsSync(nodeExe)) {
+    return nodeExe;
+  }
+
+  if (!isElectronRuntime) {
+    const currentExec = String(execPath || "").trim();
+    if (currentExec && existsSync(currentExec)) {
+      return currentExec;
+    }
+  }
+
+  return "node";
+}
+
 function _resolveCustomerSetupArtifactPath(outputDir, customerSlug) {
   const normalizedOutputDir = String(outputDir || "").trim();
   if (!normalizedOutputDir || !fs.existsSync(normalizedOutputDir)) return "";
@@ -366,7 +392,7 @@ function _validateCustomerSetupPayload(raw = {}) {
   };
 }
 
-async function _runCustomerSetupBuild(payload = {}) {
+async function _runCustomerSetupBuild(payload = {}, options = {}) {
   if (app.isPackaged) return { ok: false, error: "CUSTOMER_SETUP_BUILD_NOT_ALLOWED" };
   const repoRoot = _findRepoRoot(process.cwd());
   if (!repoRoot) return { ok: false, error: "REPO_ROOT_NOT_FOUND" };
@@ -375,9 +401,14 @@ async function _runCustomerSetupBuild(payload = {}) {
 
   const validated = _validateCustomerSetupPayload(payload);
   const outputDir = path.join(repoRoot, "dist", "customers", validated.customerSlug);
+  const nodeExe = resolveNodeExecutableForBuild();
+  const timeoutMs =
+    Number.isFinite(Number(options?.timeoutMs)) && Number(options.timeoutMs) > 0
+      ? Math.floor(Number(options.timeoutMs))
+      : 15 * 60 * 1000;
 
   return await new Promise((resolve) => {
-    const child = spawn(process.execPath, [distScriptPath], {
+    const child = spawn(nodeExe, [distScriptPath], {
       cwd: repoRoot,
       env: {
         ...process.env,
@@ -391,9 +422,11 @@ async function _runCustomerSetupBuild(payload = {}) {
     let stdout = "";
     let stderr = "";
     let finished = false;
+    let timeoutHandle = null;
     const finish = (result) => {
       if (finished) return;
       finished = true;
+      if (timeoutHandle) clearTimeout(timeoutHandle);
       resolve(result);
     };
 
@@ -412,10 +445,31 @@ async function _runCustomerSetupBuild(payload = {}) {
         customerSlug: validated.customerSlug,
         licenseFilePath: validated.licenseFilePath,
         exitCode: null,
+        nodeExecutable: nodeExe,
         stdout,
         stderr: `${stderr}\n${String(err?.message || err || "")}`.trim(),
       });
     });
+
+    timeoutHandle = setTimeout(() => {
+      try {
+        child.kill();
+      } catch (_err) {
+        // ignore
+      }
+      finish({
+        ok: false,
+        error: "CUSTOMER_SETUP_BUILD_TIMEOUT",
+        repoRoot,
+        outputDir,
+        customerSlug: validated.customerSlug,
+        licenseFilePath: validated.licenseFilePath,
+        exitCode: null,
+        nodeExecutable: nodeExe,
+        stdout,
+        stderr,
+      });
+    }, timeoutMs);
 
     child.on("close", (code) => {
       const artifactPath = _resolveCustomerSetupArtifactPath(outputDir, validated.customerSlug);
@@ -425,6 +479,7 @@ async function _runCustomerSetupBuild(payload = {}) {
         customerSlug: validated.customerSlug,
         licenseFilePath: validated.licenseFilePath,
         exitCode: code,
+        nodeExecutable: nodeExe,
         stdout,
         stderr,
       };
@@ -804,6 +859,7 @@ function registerLicenseIpc() {
 module.exports = {
   registerLicenseIpc,
   _buildCustomerSetupSlug,
+  resolveNodeExecutableForBuild,
   _validateCustomerSetupPayload,
   _runCustomerSetupBuild,
 };

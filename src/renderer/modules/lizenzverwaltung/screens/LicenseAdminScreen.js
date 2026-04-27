@@ -913,6 +913,8 @@ export default class LicenseAdminScreen {
           message.textContent = `Fehler: ${res?.error || "Kunden-Setup konnte nicht erstellt werden."}`;
           const diagnostics = [];
           if (res?.outputDir) diagnostics.push(`outputDir: ${res.outputDir}`);
+          if (res?.customerSlug) diagnostics.push(`customerSlug: ${res.customerSlug}`);
+          if (res?.exitCode !== undefined && res?.exitCode !== null) diagnostics.push(`exitCode: ${res.exitCode}`);
           if (res?.setupPath || res?.artifactPath) diagnostics.push(`setupPath: ${res.setupPath || res?.artifactPath}`);
           const stdout = truncateText(res?.stdout);
           const stderr = truncateText(res?.stderr);
