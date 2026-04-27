@@ -150,6 +150,7 @@ function _toEditableLicensePayload(parsed = {}, filePath = "") {
     issuedAt,
     validFrom,
     validUntil: String(license.validUntil || "").trim(),
+    trialDurationDays: _normalizeTrialDurationDays(license.trialDurationDays),
     maxDevices:
       typeof license.maxDevices === "number"
         ? license.maxDevices
@@ -196,6 +197,14 @@ function _computeValidUntil(validFrom, durationDays) {
   return dt.toISOString().slice(0, 10);
 }
 
+function _normalizeTrialDurationDays(value) {
+  const num = Number(value);
+  if (!Number.isFinite(num)) return null;
+  const days = Math.floor(num);
+  if (days < 1 || days > 365) return null;
+  return days;
+}
+
 function _validateGenerationPayload(raw = {}) {
   const product = String(raw?.product || "bbm-protokoll").trim() || "bbm-protokoll";
   const customerName = String(raw?.customerName || "").trim();
@@ -209,6 +218,7 @@ function _validateGenerationPayload(raw = {}) {
       : Number(raw.durationDays);
   const explicitValidUntil = _normalizeIsoDate(raw?.validUntil);
   const validUntil = explicitValidUntil || _computeValidUntil(validFrom, durationDays);
+  const trialDurationDays = _normalizeTrialDurationDays(raw?.trialDurationDays);
   const maxDevices = Number(raw?.maxDevices);
   const features = Array.isArray(raw?.features)
     ? raw.features.map((v) => String(v || "").trim()).filter(Boolean)
@@ -219,8 +229,13 @@ function _validateGenerationPayload(raw = {}) {
   if (!licenseId) throw new Error("LICENSE_ID_REQUIRED");
   if (!["none", "machine"].includes(binding)) throw new Error("BINDING_INVALID");
   if (!validFrom) throw new Error("VALID_FROM_REQUIRED");
-  if (!validUntil) throw new Error("VALID_UNTIL_REQUIRED");
-  if (new Date(`${validUntil}T00:00:00Z`).getTime() < new Date(`${validFrom}T00:00:00Z`).getTime()) {
+  const isTestLicense = edition === "test" && binding === "none";
+  if (!isTestLicense && !validUntil) throw new Error("VALID_UNTIL_REQUIRED");
+  if (isTestLicense && !trialDurationDays) throw new Error("TRIAL_DURATION_DAYS_REQUIRED");
+  if (
+    !isTestLicense &&
+    new Date(`${validUntil}T00:00:00Z`).getTime() < new Date(`${validFrom}T00:00:00Z`).getTime()
+  ) {
     throw new Error("VALID_UNTIL_BEFORE_VALID_FROM");
   }
   if (!Number.isFinite(maxDevices) || maxDevices < 1) throw new Error("MAX_DEVICES_INVALID");
@@ -237,7 +252,8 @@ function _validateGenerationPayload(raw = {}) {
     edition,
     binding,
     validFrom,
-    validUntil,
+    validUntil: isTestLicense ? "" : validUntil,
+    trialDurationDays: isTestLicense ? trialDurationDays : null,
     durationDays: Number.isFinite(durationDays) && durationDays > 0 ? Math.floor(durationDays) : null,
     maxDevices: Math.floor(maxDevices),
     features,
@@ -993,6 +1009,7 @@ function registerLicenseDevGeneratorIpc() {
             binding: inputData.binding,
             validFrom: inputData.validFrom,
             validUntil: inputData.validUntil,
+            ...(inputData.trialDurationDays ? { trialDurationDays: inputData.trialDurationDays } : {}),
             maxDevices: inputData.maxDevices,
             features: inputData.features,
             notes: inputData.notes,
@@ -1026,6 +1043,7 @@ function registerLicenseDevGeneratorIpc() {
         machineId: inputData.binding === "machine" ? inputData.machineId : "",
         validFrom: inputData.validFrom,
         validUntil: inputData.validUntil,
+        trialDurationDays: inputData.trialDurationDays,
         features: inputData.features,
       };
     } catch (err) {
@@ -1103,6 +1121,7 @@ function registerLicenseIpc() {
 module.exports = {
   registerLicenseIpc,
   _buildCustomerSetupSlug,
+  _validateGenerationPayload,
   resolveNodeExecutableForBuild,
   _validateCustomerSetupPayload,
   _runCustomerSetupBuild,

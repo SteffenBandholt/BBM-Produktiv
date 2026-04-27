@@ -1115,6 +1115,7 @@ function ensureLicenseAdminSchema(dbConn) {
         product_scope_json TEXT NOT NULL,
         valid_from TEXT,
         valid_until TEXT,
+        trial_duration_days INTEGER,
         license_mode TEXT,
         license_edition TEXT,
         license_binding TEXT,
@@ -1141,6 +1142,9 @@ function ensureLicenseAdminSchema(dbConn) {
   }
   if (!columnExists(dbConn, "license_records", "valid_until")) {
     dbConn.exec(`ALTER TABLE license_records ADD COLUMN valid_until TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "trial_duration_days")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN trial_duration_days INTEGER;`);
   }
   if (!columnExists(dbConn, "license_records", "license_mode")) {
     dbConn.exec(`ALTER TABLE license_records ADD COLUMN license_mode TEXT;`);

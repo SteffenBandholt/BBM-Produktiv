@@ -135,6 +135,40 @@ async function runLicenseIpcCustomerSetupTests(run) {
     });
   });
 
+  await run('licenseIpc: Testlizenz-Payload verlangt trialDurationDays statt validUntil', () => {
+    withLicenseIpcModule({}, (mod) => {
+      const parsed = mod._validateGenerationPayload({
+        customerName: 'Testkunde',
+        licenseId: 'LIC-T-1',
+        edition: 'test',
+        binding: 'none',
+        validFrom: '2026-06-01',
+        trialDurationDays: 30,
+        maxDevices: 1,
+        features: ['app'],
+      });
+      assert.equal(parsed.validUntil, '');
+      assert.equal(parsed.trialDurationDays, 30);
+    });
+  });
+
+  await run('licenseIpc: Testlizenz ohne trialDurationDays wird abgewiesen', () => {
+    withLicenseIpcModule({}, (mod) => {
+      assert.throws(
+        () => mod._validateGenerationPayload({
+          customerName: 'Testkunde',
+          licenseId: 'LIC-T-2',
+          edition: 'test',
+          binding: 'none',
+          validFrom: '2026-06-01',
+          maxDevices: 1,
+          features: ['app'],
+        }),
+        /TRIAL_DURATION_DAYS_REQUIRED/
+      );
+    });
+  });
+
   await run('licenseIpc: exitCode 0 aber outputDir fehlt -> CUSTOMER_SETUP_ARTIFACT_NOT_FOUND', async () => {
     await withTempRepo(
       () => {},

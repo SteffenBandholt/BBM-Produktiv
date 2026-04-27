@@ -127,6 +127,7 @@ async function runLizenzverwaltungModuleTests(run) {
       "productScope",
       "validFrom",
       "validUntil",
+      "trialDurationDays",
       "licenseEdition",
       "licenseBinding",
       "machineId",
@@ -140,6 +141,7 @@ async function runLizenzverwaltungModuleTests(run) {
       "Produktumfang",
       "gueltig von",
       "gueltig bis",
+      "Testdauer (Tage)",
       "Lizenzart",
       "Gerätebindung",
       "Machine-ID",
@@ -477,6 +479,7 @@ async function runLizenzverwaltungModuleTests(run) {
       "Produktumfang",
       "gueltig von",
       "gueltig bis",
+      "Testdauer (Tage)",
       "Lizenzart",
       "Gerätebindung",
       "Machine-ID",
@@ -622,6 +625,7 @@ async function runLizenzverwaltungModuleTests(run) {
   await run("Lizenzverwaltung DB-Schema: optionale Spalten license_edition/license_binding sind vorhanden", () => {
     assert.equal(databaseSource.includes("license_edition TEXT"), true);
     assert.equal(databaseSource.includes("license_binding TEXT"), true);
+    assert.equal(databaseSource.includes("trial_duration_days INTEGER"), true);
   });
 
   await run("Lizenzverwaltung DB-Schema: Referenzen customer_id und license_record_id sind vorbereitet", () => {
@@ -811,6 +815,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Produktumfang enthält keine erzeugbaren Features."), true);
     assert.equal(screenSource.includes("Machine-ID ist erforderlich, wenn die Lizenz an ein Gerät gebunden wird."), true);
     assert.equal(screenSource.includes("Bitte gültige Datumswerte eintragen."), true);
+    assert.equal(screenSource.includes("Der Testzeitraum beginnt bei erster Installation / erstem Start."), true);
+    assert.equal(screenSource.includes("Testzeitraum"), true);
     assert.equal(screenSource.includes("\"Lizenzart\""), true);
     assert.equal(screenSource.includes("\"Gerätebindung\""), true);
     assert.equal(screenSource.includes("licenseGenerate"), true);
@@ -832,6 +838,14 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Kundenkontext:"), true);
     assert.equal(screenSource.includes("CUSTOMER_CONTEXT_REQUIRED"), true);
     assert.equal(screenSource.includes("Speichern ohne geoeffneten Kunden ist unmoeglich"), true);
+  });
+
+  await run("Entwicklungs-Trial-Einstellungen bleiben entfernt", () => {
+    assert.equal(settingsViewSource.includes("Nutzungstage-Limit aktiv"), false);
+    assert.equal(settingsViewSource.includes("Nutzungstage (0 = aus)"), false);
+    assert.equal(settingsViewSource.includes("trial.enabled"), false);
+    assert.equal(settingsViewSource.includes("trial.daysLimit"), false);
+    assert.equal(settingsViewSource.includes("trial.firstStartAt"), false);
   });
 
   await run("Lizenz / bearbeiten: enthaelt Produktumfang statt flacher Feature-Zeile", () => {

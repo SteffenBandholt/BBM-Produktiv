@@ -15,6 +15,14 @@ function _optionalText(value) {
   return trimmed || null;
 }
 
+function _optionalInt(value) {
+  if (value === null || value === undefined || value === "") return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  const int = Math.floor(parsed);
+  return int > 0 ? int : null;
+}
+
 function _nowIso() {
   return new Date().toISOString();
 }
@@ -90,6 +98,7 @@ function _normalizeLicenseRecord(license = {}) {
     ),
     valid_from: _optionalText(license.valid_from || license.validFrom),
     valid_until: _optionalText(license.valid_until || license.validUntil),
+    trial_duration_days: _optionalInt(license.trial_duration_days || license.trialDurationDays),
     license_mode: _optionalText(license_mode),
     license_edition: _optionalText(license_edition),
     license_binding: _optionalText(license_binding),
@@ -230,7 +239,9 @@ function saveLicense(license = {}) {
   if (!record.customer_id) throw new Error("customer_id required");
   if (!record.product_scope_json) throw new Error("product_scope_json required");
   if (!record.valid_from) throw new Error("valid_from required");
-  if (!record.valid_until) throw new Error("valid_until required");
+  const isTestLicense = record.license_edition === "test" && record.license_binding === "none";
+  if (!isTestLicense && !record.valid_until) throw new Error("valid_until required");
+  if (isTestLicense && !record.trial_duration_days) throw new Error("trial_duration_days required");
   if (!record.license_mode) throw new Error("license_mode required");
   if (!record.license_edition) throw new Error("license_edition required");
   if (!record.license_binding) throw new Error("license_binding required");
@@ -247,6 +258,7 @@ function saveLicense(license = {}) {
           product_scope_json = ?,
           valid_from = ?,
           valid_until = ?,
+          trial_duration_days = ?,
           license_mode = ?,
           license_edition = ?,
           license_binding = ?,
@@ -263,6 +275,7 @@ function saveLicense(license = {}) {
       record.product_scope_json,
       record.valid_from,
       record.valid_until,
+      record.trial_duration_days,
       record.license_mode,
       record.license_edition,
       record.license_binding,
@@ -283,6 +296,7 @@ function saveLicense(license = {}) {
         product_scope_json,
         valid_from,
         valid_until,
+        trial_duration_days,
         license_mode,
         license_edition,
         license_binding,
@@ -290,7 +304,7 @@ function saveLicense(license = {}) {
         license_file_path,
         license_file_created_at,
         notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     ).run(
       record.id,
@@ -299,6 +313,7 @@ function saveLicense(license = {}) {
       record.product_scope_json,
       record.valid_from,
       record.valid_until,
+      record.trial_duration_days,
       record.license_mode,
       record.license_edition,
       record.license_binding,
