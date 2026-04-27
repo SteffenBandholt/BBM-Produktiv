@@ -7,6 +7,14 @@ export function createGeneratedLicenseId(now = new Date()) {
   )}${part(now.getSeconds())}`;
 }
 
+export function tryGenerateLicenseId(currentValue, now = new Date()) {
+  const existing = String(currentValue || "").trim();
+  if (existing) {
+    return { value: existing, generated: false, reason: "already-set" };
+  }
+  return { value: createGeneratedLicenseId(now), generated: true, reason: null };
+}
+
 export function assertCustomerContext(customer) {
   const customerId = String(customer?.id || "").trim();
   if (!customerId) {
@@ -74,6 +82,7 @@ export function formatProductScopeForList(entry = {}) {
         if (String(parsed.raw || "").trim()) return String(parsed.raw).trim();
         const label = buildProductScopeLabel(parsed);
         if (label) return label;
+        return "-";
       }
     } catch (_err) {
       return rawJson;
@@ -116,8 +125,11 @@ export default class LicenseAdminScreen {
   }
 
   async _renderCustomers(container) {
+    const title = document.createElement("h2");
+    title.textContent = "Lizenzverwaltung";
+
     const header = document.createElement("h3");
-    header.textContent = "Kundenliste";
+    header.textContent = "Kunden";
 
     const table = document.createElement("table");
     const thead = document.createElement("thead");
@@ -146,6 +158,11 @@ export default class LicenseAdminScreen {
     );
 
     const customers = await listCustomers();
+    if (!customers.length) {
+      const empty = document.createElement("caption");
+      empty.textContent = "Noch keine Kunden gespeichert.";
+      table.appendChild(empty);
+    }
     for (const customer of customers) {
       const row = document.createElement("tr");
       row.style.cursor = "pointer";
@@ -167,16 +184,18 @@ export default class LicenseAdminScreen {
       body.appendChild(row);
     }
 
-    container.append(header, actions, table);
+    container.append(title, header, actions, table);
   }
 
   async _renderCustomerDetail(container) {
     const customer = this.currentCustomer || {};
 
     const header = document.createElement("h3");
-    header.textContent = this.currentCustomer ? `Kundendetail: ${customerLabel(customer)}` : "Neuer Kunde";
+    header.textContent = `Kundendetail: ${customerLabel(customer)}`;
 
     const message = document.createElement("div");
+    message.style.minHeight = "20px";
+    message.style.fontSize = "13px";
 
     const fields = [
       ["customer_number", "Kundennummer"],
@@ -190,15 +209,21 @@ export default class LicenseAdminScreen {
     const inputs = {};
     const form = document.createElement("div");
     form.style.display = "grid";
-    form.style.gap = "8px";
+    form.style.gridTemplateColumns = "180px minmax(260px, 1fr)";
+    form.style.columnGap = "12px";
+    form.style.rowGap = "8px";
     for (const [key, label] of fields) {
-      const wrap = document.createElement("label");
-      wrap.textContent = label;
+      const title = document.createElement("label");
+      title.textContent = label;
+      title.style.alignSelf = "center";
       const input = key === "notes" ? document.createElement("textarea") : document.createElement("input");
+      if (key === "notes") input.rows = 4;
       input.value = valueOf(customer, key, key.replace("_", ""));
-      wrap.appendChild(input);
+      input.style.width = "100%";
+      title.htmlFor = `customer-${key}`;
+      input.id = `customer-${key}`;
       inputs[key] = input;
-      form.appendChild(wrap);
+      form.append(title, input);
     }
 
     const actions = document.createElement("div");
@@ -236,6 +261,7 @@ export default class LicenseAdminScreen {
         return;
       }
       this.currentView = "license-editor";
+      this.currentLicense = null;
       this._render();
     });
     newLicenseBtn.disabled = !this.currentCustomer?.id;
@@ -252,6 +278,8 @@ export default class LicenseAdminScreen {
       const title = document.createElement("h4");
       title.textContent = "Lizenzen dieses Kunden";
       licenseSection.appendChild(title);
+      licenseSection.style.borderTop = "1px solid #ddd";
+      licenseSection.style.paddingTop = "10px";
       if (!this.currentCustomer?.id) {
         const hint = document.createElement("div");
         hint.textContent = "Lizenzen sind verfuegbar, sobald der Kunde gespeichert wurde.";
@@ -264,21 +292,40 @@ export default class LicenseAdminScreen {
         empty.textContent = "Noch keine Lizenz gespeichert.";
         licenseSection.appendChild(empty);
       }
+      const table = document.createElement("table");
+      const thead = document.createElement("thead");
+      const tbody = document.createElement("tbody");
+      const tr = document.createElement("tr");
+      ["Lizenz-ID", "Produktumfang", "gueltig von", "gueltig bis", "Lizenzmodus"].forEach((label) => {
+        const th = document.createElement("th");
+        th.textContent = label;
+        tr.appendChild(th);
+      });
+      thead.appendChild(tr);
+      table.append(thead, tbody);
+
       for (const record of records) {
-        const row = document.createElement("button");
-        row.type = "button";
-        row.textContent = `${valueOf(record, "license_id", "licenseId") || "-"} | ${formatProductScopeForList(record)} | ${
-          valueOf(record, "valid_from", "validFrom") || "-"
-        } | ${valueOf(record, "valid_until", "validUntil") || "-"} | ${
-          valueOf(record, "license_mode", "licenseMode") || "-"
-        }`;
+        const row = document.createElement("tr");
+        row.style.cursor = "pointer";
         row.onclick = () => {
           this.currentView = "license-editor";
           this.currentLicense = record;
           this._render();
         };
-        licenseSection.appendChild(row);
+        [
+          valueOf(record, "license_id", "licenseId") || "-",
+          formatProductScopeForList(record),
+          valueOf(record, "valid_from", "validFrom") || "-",
+          valueOf(record, "valid_until", "validUntil") || "-",
+          valueOf(record, "license_mode", "licenseMode") || "-",
+        ].forEach((text) => {
+          const td = document.createElement("td");
+          td.textContent = text;
+          row.appendChild(td);
+        });
+        tbody.appendChild(row);
       }
+      licenseSection.appendChild(table);
     };
 
     await renderLicenses();
@@ -287,9 +334,14 @@ export default class LicenseAdminScreen {
 
   async _renderLicenseEditor(container) {
     const customer = this.currentCustomer;
+    const header = document.createElement("h3");
+    header.textContent = `Neue Lizenz fuer: ${customerLabel(customer || {})}`;
+
     const context = document.createElement("div");
-    context.textContent = `Kunde: ${customerLabel(customer || {})}`;
+    context.textContent = `Kundenkontext: ${customerLabel(customer || {})}`;
     const message = document.createElement("div");
+    message.style.minHeight = "20px";
+    message.style.fontSize = "13px";
 
     const license = this.currentLicense || {};
     const fields = [
@@ -305,15 +357,57 @@ export default class LicenseAdminScreen {
     const form = document.createElement("div");
     const inputs = {};
     form.style.display = "grid";
+    form.style.gridTemplateColumns = "180px minmax(260px, 1fr)";
+    form.style.columnGap = "12px";
+    form.style.rowGap = "8px";
     for (const [key, label] of fields) {
-      const wrap = document.createElement("label");
-      wrap.textContent = label;
-      const input = key === "notes" ? document.createElement("textarea") : document.createElement("input");
+      const title = document.createElement("label");
+      title.textContent = label;
+      title.style.alignSelf = "center";
+      let input = key === "notes" ? document.createElement("textarea") : document.createElement("input");
+      if (key === "product_scope_json") {
+        input = document.createElement("textarea");
+        input.rows = 4;
+      }
+      if (key === "license_mode") {
+        input = document.createElement("select");
+        ["", "soft", "full"].forEach((mode) => {
+          const option = document.createElement("option");
+          option.value = mode;
+          option.textContent = mode || "- auswaehlen -";
+          input.appendChild(option);
+        });
+      }
+      if (key === "notes") input.rows = 3;
       input.value = valueOf(license, key, key.replace("_", ""));
-      wrap.appendChild(input);
+      input.style.width = "100%";
+      title.htmlFor = `license-${key}`;
+      input.id = `license-${key}`;
       inputs[key] = input;
-      form.appendChild(wrap);
+      form.append(title, input);
     }
+
+    const licenseIdHint = document.createElement("div");
+    licenseIdHint.textContent =
+      "Lizenz-ID-Hinweis: Wenn leer, wird spaetestens beim Speichern automatisch eine ID erzeugt.";
+    licenseIdHint.style.fontSize = "12px";
+
+    const generateIdBtn = this._button("Lizenz-ID erzeugen", () => {
+      const result = tryGenerateLicenseId(inputs.license_id.value);
+      if (!result.generated) {
+        message.textContent = "Lizenz-ID ist bereits gesetzt.";
+        return;
+      }
+      inputs.license_id.value = result.value;
+      message.textContent = "Lizenz-ID wurde erzeugt.";
+      syncGenerateIdButton();
+    });
+
+    const syncGenerateIdButton = () => {
+      generateIdBtn.disabled = Boolean(String(inputs.license_id.value || "").trim());
+    };
+    inputs.license_id.addEventListener("input", syncGenerateIdButton);
+    syncGenerateIdButton();
 
     const actions = document.createElement("div");
     actions.style.display = "flex";
@@ -351,6 +445,7 @@ export default class LicenseAdminScreen {
       });
       this.currentLicense = null;
       message.textContent = "Formular geleert.";
+      syncGenerateIdButton();
     });
 
     const backBtn = this._button("Zurueck zum Kunden", () => {
@@ -360,7 +455,7 @@ export default class LicenseAdminScreen {
     });
 
     actions.append(saveBtn, clearBtn, backBtn);
-    container.append(context, form, actions, message);
+    container.append(header, context, form, licenseIdHint, generateIdBtn, actions, message);
   }
 
   async _render() {
