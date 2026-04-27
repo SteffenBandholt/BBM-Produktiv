@@ -109,25 +109,29 @@ async function runLicenseIpcCustomerSetupTests(run) {
 
   await run('licenseIpc: resolveNodeExecutableForBuild bevorzugt npm_node_execpath', () => {
     withLicenseIpcModule({}, (mod) => {
-      const nodePath = mod.resolveNodeExecutableForBuild({
+      const resolved = mod.resolveNodeExecutableForBuild({
         env: { npm_node_execpath: '/tmp/node-a', NODE_EXE: '/tmp/node-b' },
         existsSync: (candidate) => candidate === '/tmp/node-a' || candidate === '/tmp/node-b',
         execPath: '/tmp/electron.exe',
         isElectronRuntime: true,
+        spawnSyncImpl: () => ({ status: 0 }),
       });
-      assert.equal(nodePath, '/tmp/node-a');
+      assert.equal(resolved.ok, true);
+      assert.equal(resolved.nodeExecutable, '/tmp/node-a');
     });
   });
 
   await run('licenseIpc: resolveNodeExecutableForBuild nutzt bei Electron nicht blind process.execPath', () => {
     withLicenseIpcModule({}, (mod) => {
-      const nodePath = mod.resolveNodeExecutableForBuild({
+      const resolved = mod.resolveNodeExecutableForBuild({
         env: {},
-        existsSync: () => true,
+        existsSync: () => false,
         execPath: '/tmp/electron.exe',
         isElectronRuntime: true,
+        spawnSyncImpl: () => ({ status: 1 }),
       });
-      assert.equal(nodePath, 'node');
+      assert.equal(resolved.ok, false);
+      assert.equal(resolved.error, 'NODE_EXECUTABLE_NOT_FOUND');
     });
   });
 
@@ -142,6 +146,8 @@ async function runLicenseIpcCustomerSetupTests(run) {
               customer: { customer_number: 'K-10', company_name: 'Alpha GmbH' },
               license: { license_binding: 'none' },
               licenseFilePath,
+            }, {
+              nodeResolver: () => ({ ok: true, nodeExecutable: 'node', trace: ['test'] }),
             });
             assert.equal(res.ok, false);
             assert.equal(res.error, 'CUSTOMER_SETUP_ARTIFACT_NOT_FOUND');
@@ -149,6 +155,8 @@ async function runLicenseIpcCustomerSetupTests(run) {
             assert.equal(res.exitCode, 0);
             assert.equal(res.stdout.includes('ok-log'), true);
             assert.equal(res.stderr.includes('warn-log'), true);
+            assert.equal(typeof res.logPath, 'string');
+            assert.equal(fs.existsSync(res.logPath), true);
           }
         );
       }
@@ -169,9 +177,12 @@ async function runLicenseIpcCustomerSetupTests(run) {
               customer: { customer_number: 'K-11', company_name: 'Beta GmbH' },
               license: { license_binding: 'none' },
               licenseFilePath,
+            }, {
+              nodeResolver: () => ({ ok: true, nodeExecutable: 'node', trace: ['test'] }),
             });
             assert.equal(res.ok, false);
             assert.equal(res.error, 'CUSTOMER_SETUP_ARTIFACT_NOT_FOUND');
+            assert.equal(fs.existsSync(res.logPath), true);
           }
         );
       }
@@ -193,11 +204,18 @@ async function runLicenseIpcCustomerSetupTests(run) {
               customer: { customer_number: 'K-12', company_name: 'Gamma GmbH' },
               license: { license_binding: 'none' },
               licenseFilePath,
+            }, {
+              nodeResolver: () => ({ ok: true, nodeExecutable: 'node', trace: ['test'] }),
             });
             assert.equal(res.ok, true);
             assert.equal(res.artifactPath.includes('K-12-Gamma-GmbH'), true);
             assert.equal(res.setupPath.includes('.exe'), true);
             assert.equal(res.stdout.includes('builder-start'), true);
+            assert.equal(fs.existsSync(res.logPath), true);
+            assert.equal(res.cwd, repoRoot);
+            assert.equal(res.env.BBM_CUSTOMER_LICENSE_FILE, licenseFilePath);
+            assert.equal(res.env.BBM_CUSTOMER_SLUG, 'K-12-Gamma-GmbH');
+            assert.equal(res.env.BBM_CUSTOMER_NAME, 'Gamma GmbH');
           }
         );
       }
@@ -217,10 +235,40 @@ async function runLicenseIpcCustomerSetupTests(run) {
                 license: { license_binding: 'none' },
                 licenseFilePath,
               },
-              { timeoutMs: 5 }
+              {
+                timeoutMs: 5,
+                nodeResolver: () => ({ ok: true, nodeExecutable: 'node', trace: ['test'] }),
+              }
             );
             assert.equal(res.ok, false);
             assert.equal(res.error, 'CUSTOMER_SETUP_BUILD_TIMEOUT');
+            assert.equal(fs.existsSync(res.logPath), true);
+          }
+        );
+      }
+    );
+  });
+
+  await run('licenseIpc: fehlender Node liefert NODE_EXECUTABLE_NOT_FOUND', async () => {
+    await withTempRepo(
+      () => {},
+      async ({ repoRoot, licenseFilePath }) => {
+        await withLicenseIpcModule(
+          { cwd: repoRoot, spawnImpl: () => createFakeChild({ stayAlive: true }) },
+          async (mod) => {
+            const res = await mod._runCustomerSetupBuild(
+              {
+                customer: { customer_number: 'K-15', company_name: 'Zeta GmbH' },
+                license: { license_binding: 'none' },
+                licenseFilePath,
+              },
+              {
+                nodeResolver: () => ({ ok: false, error: 'NODE_EXECUTABLE_NOT_FOUND', nodeExecutable: '', trace: [] }),
+              }
+            );
+            assert.equal(res.ok, false);
+            assert.equal(res.error, 'NODE_EXECUTABLE_NOT_FOUND');
+            assert.equal(fs.existsSync(res.logPath), true);
           }
         );
       }
@@ -238,9 +286,12 @@ async function runLicenseIpcCustomerSetupTests(run) {
               customer: { customer_number: 'K-14', company_name: 'Epsilon GmbH' },
               license: { license_binding: 'none' },
               licenseFilePath,
+            }, {
+              nodeResolver: () => ({ ok: true, nodeExecutable: 'node', trace: ['test'] }),
             });
             assert.equal(res.ok, false);
             assert.equal(res.error, 'CUSTOMER_SETUP_BUILD_FAILED');
+            assert.equal(fs.existsSync(res.logPath), true);
           }
         );
       }

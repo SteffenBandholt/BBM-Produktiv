@@ -312,6 +312,15 @@ function truncateText(value, maxLen = 280) {
   return `${raw.slice(0, maxLen)} ...`;
 }
 
+function tailLines(value, maxLines = 6) {
+  const lines = String(value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (!lines.length) return "";
+  return lines.slice(-Math.max(1, maxLines)).join(" | ");
+}
+
 export function buildCustomerSetupPayload({ customer = {}, license = {} } = {}) {
   const licenseFilePath = valueOf(license, "license_file_path", "licenseFilePath");
   return {
@@ -915,11 +924,12 @@ export default class LicenseAdminScreen {
           if (res?.outputDir) diagnostics.push(`outputDir: ${res.outputDir}`);
           if (res?.customerSlug) diagnostics.push(`customerSlug: ${res.customerSlug}`);
           if (res?.exitCode !== undefined && res?.exitCode !== null) diagnostics.push(`exitCode: ${res.exitCode}`);
+          if (res?.logPath) diagnostics.push(`logPath: ${res.logPath}`);
           if (res?.setupPath || res?.artifactPath) diagnostics.push(`setupPath: ${res.setupPath || res?.artifactPath}`);
-          const stdout = truncateText(res?.stdout);
-          const stderr = truncateText(res?.stderr);
-          if (stdout) diagnostics.push(`stdout: ${stdout}`);
-          if (stderr) diagnostics.push(`stderr: ${stderr}`);
+          const stdout = truncateText(tailLines(res?.stdout));
+          const stderr = truncateText(tailLines(res?.stderr));
+          if (stdout) diagnostics.push(`stdout(last): ${stdout}`);
+          if (stderr) diagnostics.push(`stderr(last): ${stderr}`);
           setupOutput.textContent = diagnostics.join("\n");
           return;
         }
