@@ -919,7 +919,14 @@ export default class LicenseAdminScreen {
         setupOutput.textContent = "";
         const res = await createCustomerSetup(payload);
         if (!res?.ok) {
-          message.textContent = `Fehler: ${res?.error || "Kunden-Setup konnte nicht erstellt werden."}`;
+          const combinedErrorText = `${String(res?.stderr || "")}\n${String(res?.stdout || "")}`.toUpperCase();
+          const isFileLockError = combinedErrorText.includes("EBUSY") || combinedErrorText.includes("RESOURCE BUSY OR LOCKED");
+          if (isFileLockError) {
+            message.textContent =
+              "Kunden-Setup konnte nicht erstellt werden, weil eine Build-Datei gesperrt ist. Bitte App schließen und Kunden-Setup manuell über den Build-Befehl erstellen.";
+          } else {
+            message.textContent = `Fehler: ${res?.error || "Kunden-Setup konnte nicht erstellt werden."}`;
+          }
           const diagnostics = [];
           if (res?.outputDir) diagnostics.push(`outputDir: ${res.outputDir}`);
           if (res?.customerSlug) diagnostics.push(`customerSlug: ${res.customerSlug}`);

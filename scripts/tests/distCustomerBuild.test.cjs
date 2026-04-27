@@ -9,6 +9,8 @@ async function runDistCustomerBuildTests(run) {
       directories: { output: 'dist' },
       extraResources: [{ from: 'a', to: 'b' }],
       nsis: { artifactName: 'Default-${version}.exe' },
+      npmRebuild: true,
+      buildDependenciesFromSource: true,
     };
     const out = buildCustomerDistConfig({ baseBuild, baseVersion: '1.2.3', customerLicenseFile: '' });
     assert.equal(out.outputDir, 'dist');
@@ -16,6 +18,8 @@ async function runDistCustomerBuildTests(run) {
     assert.deepEqual(out.build.directories, { output: 'dist' });
     assert.equal(out.build.extraResources.length, 1);
     assert.equal(out.build.nsis.artifactName, 'Default-${version}.exe');
+    assert.equal(out.build.npmRebuild, true);
+    assert.equal(out.build.buildDependenciesFromSource, true);
   });
 
   await run('dist.cjs: mit BBM_CUSTOMER_LICENSE_FILE wird extraResource und Kundenziel gesetzt', () => {
@@ -37,6 +41,8 @@ async function runDistCustomerBuildTests(run) {
     assert.equal(embedded.from.endsWith('customer.bbmlic'), true);
     assert.equal(out.build.directories.output, path.join('dist', 'customers', 'K-100-Musterfirma-GmbH'));
     assert.equal(out.build.nsis.artifactName, 'BBM-2.0.0-K-100-Musterfirma-GmbH-Setup.exe');
+    assert.equal(out.build.npmRebuild, false);
+    assert.equal(out.build.buildDependenciesFromSource, false);
   });
 }
 

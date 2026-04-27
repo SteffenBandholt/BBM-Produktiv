@@ -374,6 +374,12 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("customerSlug:"), true);
     assert.equal(screenSource.includes("exitCode:"), true);
     assert.equal(screenSource.includes("logPath:"), true);
+    assert.equal(
+      screenSource.includes(
+        "Kunden-Setup konnte nicht erstellt werden, weil eine Build-Datei gesperrt ist. Bitte App schließen und Kunden-Setup manuell über den Build-Befehl erstellen."
+      ),
+      true
+    );
     assert.equal(screenSource.includes("Lizenz erstellen"), true);
     assert.equal(screenSource.includes("Lizenz-ID erzeugen"), false);
     assert.equal(screenSource.includes("Formular leeren"), false);

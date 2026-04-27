@@ -83,6 +83,8 @@ function buildCustomerDistConfig({
   return {
     build: {
       ...baseBuild,
+      npmRebuild: false,
+      buildDependenciesFromSource: false,
       directories: {
         ...(baseBuild.directories || {}),
         output: outputDir,
