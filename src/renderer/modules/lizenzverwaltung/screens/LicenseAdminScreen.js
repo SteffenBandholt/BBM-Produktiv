@@ -2,6 +2,7 @@ import { listCustomers, listLicensesByCustomer, saveCustomer, saveLicense } from
 
 const PRODUCT_KEY = "bbm-produktiv";
 const PRODUCT_LABEL = "BBM-Produktiv";
+const GENERATOR_PRODUCT_KEY = "bbm-protokoll";
 const STANDARD_SCOPE_KEYS = Object.freeze(["app", "pdf", "export"]);
 const ADDITIONAL_FEATURES = Object.freeze([
   Object.freeze({ key: "mail", label: "Mail" }),
@@ -29,6 +30,10 @@ function normalizeAdditionalFeatureKey(value) {
   if (!normalized) return "";
   if (normalized === "audio") return "dictate";
   return normalized;
+}
+
+function normalizeModuleKey(value) {
+  return String(value || "").trim().toLowerCase();
 }
 
 function parseProductScopeObject(rawValue) {
@@ -161,6 +166,69 @@ export function buildCustomerEditorPayload({ customer = {}, inputs = {} } = {}) 
     email: String(inputs.email || "").trim(),
     phone: String(inputs.phone || "").trim(),
     notes: String(inputs.notes || "").trim(),
+  };
+}
+
+export function mapLicenseModeToGeneratorBinding(licenseMode) {
+  const normalized = String(licenseMode || "").trim().toLowerCase();
+  if (normalized === "full") return "machine";
+  if (normalized === "machine") return "machine";
+  if (normalized === "soft") return "none";
+  if (normalized === "none") return "none";
+  return "";
+}
+
+export function parseGeneratorFeaturesFromProductScope(rawValue) {
+  const trimmed = String(rawValue || "").trim();
+  if (!trimmed) return [];
+
+  let parsed = null;
+  try {
+    parsed = JSON.parse(trimmed);
+  } catch (_err) {
+    return [];
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return [];
+
+  const features = new Set();
+
+  toUniqueNormalizedArray(parsed.standardumfang || [])
+    .filter((key) => STANDARD_SCOPE_KEYS.includes(key))
+    .forEach((key) => features.add(key));
+
+  toUniqueNormalizedArray(parsed.zusatzfunktionen || [])
+    .map((key) => normalizeAdditionalFeatureKey(key))
+    .filter((key) => ADDITIONAL_FEATURES.some((entry) => entry.key === key))
+    .forEach((key) => features.add(key));
+
+  toUniqueNormalizedArray(parsed.module || [])
+    .map((key) => normalizeModuleKey(key))
+    .filter((key) => MODULE_KEYS.some((entry) => entry.key === key))
+    .forEach((key) => features.add(key));
+
+  return [...features];
+}
+
+export function buildLicenseGeneratorPayload({ customer = {}, license = {} } = {}) {
+  const customerName =
+    valueOf(customer, "company_name", "companyName") || valueOf(customer, "customer_number", "customerNumber");
+  const licenseId = valueOf(license, "license_id", "licenseId");
+  const validFrom = valueOf(license, "valid_from", "validFrom");
+  const validUntil = valueOf(license, "valid_until", "validUntil");
+  const binding = mapLicenseModeToGeneratorBinding(valueOf(license, "license_mode", "licenseMode"));
+  const features = parseGeneratorFeaturesFromProductScope(valueOf(license, "product_scope_json", "productScope"));
+  const machineId = valueOf(license, "machine_id", "machineId");
+  return {
+    customerName,
+    licenseId,
+    product: GENERATOR_PRODUCT_KEY,
+    edition: "standard",
+    binding,
+    validFrom,
+    validUntil,
+    maxDevices: 1,
+    ...(machineId ? { machineId } : {}),
+    features,
   };
 }
 
@@ -476,6 +544,9 @@ export default class LicenseAdminScreen {
     const message = document.createElement("div");
     message.style.minHeight = "20px";
     message.style.fontSize = "13px";
+    const generationOutput = document.createElement("div");
+    generationOutput.style.fontSize = "12px";
+    generationOutput.style.opacity = "0.9";
 
     const license = this.currentLicense || {};
     const parsedScope = parseProductScopeObject(valueOf(license, "product_scope_json", "productScope"));
@@ -686,6 +757,73 @@ export default class LicenseAdminScreen {
     const actions = document.createElement("div");
     actions.style.display = "flex";
     actions.style.gap = "8px";
+    const generationActions = document.createElement("div");
+    generationActions.style.display = "flex";
+    generationActions.style.gap = "8px";
+    const generateLicenseFileBtn = this._button("Lizenzdatei erzeugen", async () => {
+      if (!this.currentLicense?.id) {
+        message.textContent = "Bitte zuerst die Lizenz speichern.";
+        generationOutput.textContent = "";
+        return;
+      }
+      const api = window?.bbmDb || {};
+      if (typeof api.licenseGenerate !== "function") {
+        message.textContent = "Fehler: Lizenz-Generator-IPC ist nicht verfuegbar.";
+        generationOutput.textContent = "";
+        return;
+      }
+      const payload = buildLicenseGeneratorPayload({
+        customer: this.currentCustomer || {},
+        license: this.currentLicense || {},
+      });
+      if (!payload.features.length) {
+        message.textContent = "Produktumfang enthält keine erzeugbaren Features.";
+        generationOutput.textContent = "";
+        return;
+      }
+
+      const previousText = generateLicenseFileBtn.textContent;
+      generateLicenseFileBtn.disabled = true;
+      openOutputDirBtn.disabled = true;
+      message.textContent = "Lizenzdatei wird erzeugt ...";
+      generationOutput.textContent = "";
+      try {
+        const res = await api.licenseGenerate(payload);
+        if (!res?.ok) {
+          message.textContent = `Fehler: ${res?.error || "Lizenz konnte nicht erzeugt werden."}`;
+          return;
+        }
+        message.textContent = "Lizenzdatei wurde erzeugt.";
+        const outputPath = String(res?.outputPath || "").trim();
+        if (outputPath) {
+          generationOutput.textContent = `Ausgabepfad: ${outputPath}`;
+          openOutputDirBtn.dataset.outputPath = outputPath;
+          openOutputDirBtn.style.display = "";
+          openOutputDirBtn.disabled = false;
+        }
+      } catch (err) {
+        message.textContent = `Fehler: ${err?.message || err || "Lizenz konnte nicht erzeugt werden."}`;
+      } finally {
+        generateLicenseFileBtn.textContent = previousText;
+        generateLicenseFileBtn.disabled = false;
+      }
+    });
+    const openOutputDirBtn = this._button("Ausgabeordner öffnen", async () => {
+      const api = window?.bbmDb || {};
+      const outputPath = String(openOutputDirBtn.dataset.outputPath || "").trim();
+      if (!outputPath || typeof api.licenseOpenOutputDir !== "function") return;
+      try {
+        const res = await api.licenseOpenOutputDir({ outputPath });
+        if (!res?.ok) {
+          message.textContent = `Fehler: ${res?.error || "Ausgabeordner konnte nicht geoeffnet werden."}`;
+          return;
+        }
+      } catch (err) {
+        message.textContent = `Fehler: ${err?.message || err || "Ausgabeordner konnte nicht geoeffnet werden."}`;
+      }
+    });
+    openOutputDirBtn.style.display = "none";
+
     const saveBtn = this._button("Merken", async () => {
       try {
         const payload = buildLicenseEditorPayload({
@@ -704,6 +842,9 @@ export default class LicenseAdminScreen {
         const saved = await saveLicense(payload);
         this.currentLicense = saved;
         message.textContent = "Lizenz gespeichert.";
+        openOutputDirBtn.style.display = "none";
+        openOutputDirBtn.dataset.outputPath = "";
+        generationOutput.textContent = "";
       } catch (err) {
         if (String(err?.message || "") === "CUSTOMER_CONTEXT_REQUIRED") {
           message.textContent = "Fehler: Speichern ohne geoeffneten Kunden ist unmoeglich.";
@@ -737,7 +878,8 @@ export default class LicenseAdminScreen {
     });
 
     actions.append(saveBtn, clearBtn, backBtn);
-    container.append(header, context, form, licenseIdHint, generateIdBtn, actions, message);
+    generationActions.append(generateLicenseFileBtn, openOutputDirBtn);
+    container.append(header, context, form, licenseIdHint, generateIdBtn, actions, generationActions, message, generationOutput);
   }
 
   async _render() {

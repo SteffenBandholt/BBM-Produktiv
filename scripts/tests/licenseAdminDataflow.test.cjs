@@ -450,6 +450,78 @@ async function runLicenseAdminDataflowTests(run) {
     assert.deepEqual(normalizedScope.zusatzfunktionen, []);
     assert.deepEqual(normalizedScope.module, []);
   });
+
+  await run("Lizenzverwaltung Generator-Payload: Kunde + Lizenz werden korrekt gemappt", async () => {
+    const { buildLicenseGeneratorPayload } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const payload = buildLicenseGeneratorPayload({
+      customer: { company_name: "Musterfirma GmbH", customer_number: "K-77" },
+      license: {
+        license_id: "LIC-77",
+        valid_from: "2026-01-10",
+        valid_until: "2026-12-31",
+        license_mode: "soft",
+        machine_id: "M-ID-77",
+        product_scope_json: JSON.stringify({
+          product: "bbm-produktiv",
+          standardumfang: ["app", "pdf", "export"],
+          zusatzfunktionen: ["mail", "audio"],
+          module: ["protokoll", "dummy"],
+        }),
+      },
+    });
+
+    assert.equal(payload.customerName, "Musterfirma GmbH");
+    assert.equal(payload.licenseId, "LIC-77");
+    assert.equal(payload.validFrom, "2026-01-10");
+    assert.equal(payload.validUntil, "2026-12-31");
+    assert.equal(payload.binding, "none");
+    assert.equal(payload.product, "bbm-protokoll");
+    assert.equal(payload.edition, "standard");
+    assert.equal(payload.maxDevices, 1);
+    assert.equal(payload.machineId, "M-ID-77");
+    assert.deepEqual(payload.features, ["app", "pdf", "export", "mail", "dictate", "protokoll", "dummy"]);
+  });
+
+  await run("Lizenzverwaltung Generator-Payload: fallback customer_number und binding full->machine", async () => {
+    const { buildLicenseGeneratorPayload } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const payload = buildLicenseGeneratorPayload({
+      customer: { customer_number: "K-88" },
+      license: {
+        license_id: "LIC-88",
+        valid_from: "2026-02-01",
+        valid_until: "2026-11-30",
+        license_mode: "full",
+        product_scope_json: JSON.stringify({
+          standardumfang: ["app"],
+          zusatzfunktionen: ["mail"],
+          module: ["protokoll"],
+        }),
+      },
+    });
+    assert.equal(payload.customerName, "K-88");
+    assert.equal(payload.binding, "machine");
+  });
+
+  await run("Lizenzverwaltung Generator-Payload: keine ableitbaren Features ergibt leeres Feature-Set", async () => {
+    const { buildLicenseGeneratorPayload } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const payload = buildLicenseGeneratorPayload({
+      customer: { company_name: "Ohne Feature GmbH" },
+      license: {
+        license_id: "LIC-99",
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        license_mode: "none",
+        product_scope_json: JSON.stringify({ raw: "legacy-freitext" }),
+      },
+    });
+    assert.deepEqual(payload.features, []);
+  });
 }
 
 module.exports = { runLicenseAdminDataflowTests };

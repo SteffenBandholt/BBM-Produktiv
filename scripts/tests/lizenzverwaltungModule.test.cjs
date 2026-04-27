@@ -669,6 +669,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseIpcSource.includes('ipcMain.handle("license:get-installed"'), true);
     assert.equal(licenseIpcSource.includes('ipcMain.handle("license:import"'), true);
     assert.equal(licenseIpcSource.includes('ipcMain.handle("license:delete"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license:generate"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license:open-output-dir"'), true);
   });
 
   await run(
@@ -738,6 +740,14 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Neue Lizenz"), true);
     assert.equal(screenSource.includes("Zurueck zur Kundenliste"), true);
     assert.equal(screenSource.includes("Zurueck zum Kunden"), true);
+    assert.equal(screenSource.includes("Lizenzdatei erzeugen"), true);
+    assert.equal(screenSource.includes("Ausgabeordner öffnen"), true);
+    assert.equal(screenSource.includes("Bitte zuerst die Lizenz speichern."), true);
+    assert.equal(screenSource.includes("Lizenzdatei wird erzeugt ..."), true);
+    assert.equal(screenSource.includes("Lizenzdatei wurde erzeugt."), true);
+    assert.equal(screenSource.includes("Produktumfang enthält keine erzeugbaren Features."), true);
+    assert.equal(screenSource.includes("licenseGenerate"), true);
+    assert.equal(screenSource.includes("licenseOpenOutputDir"), true);
   });
 
 
