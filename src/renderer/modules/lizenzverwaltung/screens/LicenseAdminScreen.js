@@ -863,67 +863,6 @@ export default class LicenseAdminScreen {
     const actions = document.createElement("div");
     actions.style.display = "flex";
     actions.style.gap = "8px";
-    const generationActions = document.createElement("div");
-    generationActions.style.display = "flex";
-    generationActions.style.gap = "8px";
-    const generateLicenseFileBtn = this._button("Lizenzdatei erzeugen", async () => {
-      if (!this.currentLicense?.id) {
-        message.textContent = "Bitte zuerst die Lizenz speichern.";
-        generationOutput.textContent = "";
-        return;
-      }
-      const api = window?.bbmDb || {};
-      if (typeof api.licenseGenerate !== "function") {
-        message.textContent = "Fehler: Lizenz-Generator-IPC ist nicht verfuegbar.";
-        generationOutput.textContent = "";
-        return;
-      }
-      const payload = buildLicenseGeneratorPayload({
-        customer: this.currentCustomer || {},
-        license: this.currentLicense || {},
-      });
-      if (!payload.validFrom || !payload.validUntil) {
-        message.textContent = "Bitte gültige Datumswerte eintragen.";
-        generationOutput.textContent = "";
-        return;
-      }
-      if (!payload.features.length) {
-        message.textContent = "Produktumfang enthält keine erzeugbaren Features.";
-        generationOutput.textContent = "";
-        return;
-      }
-      if (payload.binding === "machine" && !String(payload.machineId || "").trim()) {
-        message.textContent = "Machine-ID ist erforderlich, wenn die Lizenz an ein Gerät gebunden wird.";
-        generationOutput.textContent = "";
-        return;
-      }
-
-      const previousText = generateLicenseFileBtn.textContent;
-      generateLicenseFileBtn.disabled = true;
-      openOutputDirBtn.disabled = true;
-      message.textContent = "Lizenzdatei wird erzeugt ...";
-      generationOutput.textContent = "";
-      try {
-        const res = await api.licenseGenerate(payload);
-        if (!res?.ok) {
-          message.textContent = `Fehler: ${res?.error || "Lizenz konnte nicht erzeugt werden."}`;
-          return;
-        }
-        message.textContent = "Lizenzdatei wurde erzeugt.";
-        const outputPath = String(res?.outputPath || "").trim();
-        if (outputPath) {
-          generationOutput.textContent = `Ausgabepfad: ${outputPath}`;
-          openOutputDirBtn.dataset.outputPath = outputPath;
-          openOutputDirBtn.style.display = "";
-          openOutputDirBtn.disabled = false;
-        }
-      } catch (err) {
-        message.textContent = `Fehler: ${err?.message || err || "Lizenz konnte nicht erzeugt werden."}`;
-      } finally {
-        generateLicenseFileBtn.textContent = previousText;
-        generateLicenseFileBtn.disabled = false;
-      }
-    });
     const openOutputDirBtn = this._button("Ausgabeordner öffnen", async () => {
       const api = window?.bbmDb || {};
       const outputPath = String(openOutputDirBtn.dataset.outputPath || "").trim();
@@ -940,10 +879,14 @@ export default class LicenseAdminScreen {
     });
     openOutputDirBtn.style.display = "none";
 
-    const saveBtn = this._button("Lizenz speichern", async () => {
+    const createBtn = this._button("Lizenz erstellen", async () => {
+      const previousText = createBtn.textContent;
+      createBtn.disabled = true;
+      openOutputDirBtn.disabled = true;
       try {
+        const activeLicense = this.currentLicense || license || {};
         const payload = buildLicenseEditorPayload({
-          license,
+          license: activeLicense,
           customer,
           inputs: {
             license_id: inputs.license_id.value,
@@ -959,16 +902,56 @@ export default class LicenseAdminScreen {
         });
         const saved = await saveLicense(payload);
         this.currentLicense = saved;
-        message.textContent = "Lizenz gespeichert.";
         openOutputDirBtn.style.display = "none";
         openOutputDirBtn.dataset.outputPath = "";
         generationOutput.textContent = "";
+
+        const api = window?.bbmDb || {};
+        if (typeof api.licenseGenerate !== "function") {
+          message.textContent = "Fehler: Lizenz-Generator-IPC ist nicht verfuegbar.";
+          return;
+        }
+
+        const generatorPayload = buildLicenseGeneratorPayload({
+          customer: this.currentCustomer || {},
+          license: saved || {},
+        });
+        if (!generatorPayload.validFrom || !generatorPayload.validUntil) {
+          message.textContent = "Bitte gültige Datumswerte eintragen.";
+          return;
+        }
+        if (!generatorPayload.features.length) {
+          message.textContent = "Produktumfang enthält keine erzeugbaren Features.";
+          return;
+        }
+        if (generatorPayload.binding === "machine" && !String(generatorPayload.machineId || "").trim()) {
+          message.textContent = "Machine-ID ist erforderlich, wenn die Lizenz an ein Gerät gebunden wird.";
+          return;
+        }
+
+        message.textContent = "Lizenzdatei wird erzeugt ...";
+        const res = await api.licenseGenerate(generatorPayload);
+        if (!res?.ok) {
+          message.textContent = `Fehler: ${res?.error || "Lizenz konnte nicht erzeugt werden."}`;
+          return;
+        }
+        message.textContent = "Lizenzdatei wurde erzeugt.";
+        const outputPath = String(res?.outputPath || "").trim();
+        if (outputPath) {
+          generationOutput.textContent = `Ausgabepfad: ${outputPath}`;
+          openOutputDirBtn.dataset.outputPath = outputPath;
+          openOutputDirBtn.style.display = "";
+          openOutputDirBtn.disabled = false;
+        }
       } catch (err) {
         if (String(err?.message || "") === "CUSTOMER_CONTEXT_REQUIRED") {
           message.textContent = "Fehler: Speichern ohne geoeffneten Kunden ist unmoeglich.";
         } else {
           message.textContent = `Fehler: ${err?.message || err}`;
         }
+      } finally {
+        createBtn.textContent = previousText;
+        createBtn.disabled = false;
       }
     });
 
@@ -995,9 +978,8 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    actions.append(saveBtn, clearBtn, backBtn);
-    generationActions.append(generateLicenseFileBtn, openOutputDirBtn);
-    container.append(header, context, form, licenseIdHint, generateIdBtn, actions, generationActions, message, generationOutput);
+    actions.append(createBtn, clearBtn, backBtn, openOutputDirBtn);
+    container.append(header, context, form, licenseIdHint, generateIdBtn, actions, message, generationOutput);
   }
 
   async _render() {

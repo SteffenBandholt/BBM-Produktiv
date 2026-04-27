@@ -149,6 +149,10 @@ Sie ergänzt:
   - Kundendetail ist klarer getrennt in `Kundendaten` und `Lizenzen dieses Kunden`.
   - Die Lizenzliste je Kunde ist als saubere Tabelle mit Spalten fuer Lizenz-ID, Lizenzart, Gerätebindung, Produktumfang, gueltig von/bis und Aktion aufgebaut.
   - Bearbeiten erfolgt ueber sichtbaren Button `Öffnen` in der Aktion-Spalte statt ueber unsichtbaren Zeilenklick.
+- Lizenzverwaltung Abschluss fuer PR #39 ist umgesetzt:
+  - Im Lizenzformular gibt es jetzt den kombinierten Hauptbutton `Lizenz erstellen`.
+  - Der Ablauf dahinter ist: Admin-Lizenz speichern -> vorhandenen Generator aufrufen -> Ausgabepfad anzeigen -> Ausgabeordner öffnen.
+  - Es gibt keinen separaten Bedienpfad mehr mit erst `Lizenz speichern` und danach `Lizenzdatei erzeugen`.
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
@@ -209,6 +213,22 @@ Sie ergänzt:
 ## Erledigte Meilensteine / Pakete
 
 ### Erledigt
+#### Paket: PR #39 Abschluss - kombinierter Button `Lizenz erstellen`
+- Status: erledigt
+- Beschreibung:
+  - Lizenzformular auf einen klaren Hauptablauf mit einem Button `Lizenz erstellen` umgestellt.
+  - Klick speichert zuerst den Lizenzdatensatz und erzeugt danach direkt die `.bbmlic` über die bestehende Generator-Infrastruktur.
+  - Ausgabepfad bleibt sichtbar; `Ausgabeordner öffnen` bleibt verfügbar.
+  - Tests auf neue UI-Begriffe/Bedienlogik aktualisiert.
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Kein neuer Generator-IPC, keine Setup-/Sidebar-/Projektmodul-/Persistenzarchitektur-Aenderung
+
 #### Paket: PR #39 UI-Feinschliff Kundendetail/Lizenzformular
 - Status: erledigt
 - Beschreibung:

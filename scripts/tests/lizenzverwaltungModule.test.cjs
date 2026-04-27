@@ -750,7 +750,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Kundendaten"), true);
     assert.equal(screenSource.includes("Neue Lizenz"), true);
     assert.equal(screenSource.includes("Zurueck zur Kundenliste"), true);
-    assert.equal(screenSource.includes("Lizenz speichern"), true);
+    assert.equal(screenSource.includes("Lizenz erstellen"), true);
+    assert.equal(screenSource.includes("Lizenz speichern"), false);
     assert.equal(screenSource.includes("Formular leeren"), true);
     assert.equal(screenSource.includes("Zurueck"), true);
     assert.equal(screenSource.includes("Merken"), false);
@@ -758,9 +759,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Zurueck zum Kunden"), false);
     assert.equal(screenSource.includes("Aktion"), true);
     assert.equal(screenSource.includes("Öffnen"), true);
-    assert.equal(screenSource.includes("Lizenzdatei erzeugen"), true);
+    assert.equal(screenSource.includes("Lizenzdatei erzeugen"), false);
     assert.equal(screenSource.includes("Ausgabeordner öffnen"), true);
-    assert.equal(screenSource.includes("Bitte zuerst die Lizenz speichern."), true);
     assert.equal(screenSource.includes("Lizenzdatei wird erzeugt ..."), true);
     assert.equal(screenSource.includes("Lizenzdatei wurde erzeugt."), true);
     assert.equal(screenSource.includes("Produktumfang enthält keine erzeugbaren Features."), true);
