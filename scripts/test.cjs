@@ -22,6 +22,7 @@ const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cj
 const { runLicenseStorageBootstrapTests } = require("./tests/licenseStorageBootstrap.test.cjs");
 const { runLicenseIpcCustomerSetupTests } = require("./tests/licenseIpcCustomerSetup.test.cjs");
 const { runLicenseTrialRuntimeTests } = require("./tests/licenseTrialRuntime.test.cjs");
+const { runLicenseRequestTests } = require("./tests/licenseRequest.test.cjs");
 
 let failed = false;
 
@@ -90,6 +91,7 @@ async function main() {
   await runLicenseIpcCustomerSetupTests(run);
   await runLicenseTrialRuntimeTests(run);
   await runLicenseStorageBootstrapTests(run);
+  await runLicenseRequestTests(run);
 
   if (failed) {
     process.exitCode = 1;

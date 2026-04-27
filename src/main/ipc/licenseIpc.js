@@ -3,7 +3,6 @@
 const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
-const os = require("os");
 const { spawn, spawnSync } = require("child_process");
 
 const { saveLicense, loadLicense, deleteLicense } = require("../licensing/licenseStorage");
@@ -130,9 +129,37 @@ function _readLicenseRequestFile(filePath) {
     machineId,
     appVersion: String(parsed.appVersion || "").trim(),
     createdAt: String(parsed.createdAt || "").trim(),
-    customerHint: String(parsed.customerHint || "").trim(),
-    deviceName: String(parsed.deviceName || "").trim(),
+    customerHint: String(parsed.customerHint || parsed.customerName || "").trim(),
   };
+}
+
+function _buildLicenseRequestPayload(raw = {}) {
+  const machineId = String(raw?.machineId || "").trim();
+  if (!machineId) {
+    const err = new Error("MACHINE_ID_REQUIRED_FOR_BINDING");
+    err.code = "MACHINE_ID_REQUIRED_FOR_BINDING";
+    throw err;
+  }
+
+  const createdAt = String(raw?.createdAt || new Date().toISOString()).trim();
+  const payload = {
+    schemaVersion: 1,
+    requestType: "machine-license-request",
+    product: "bbm-protokoll",
+    appName: "BBM",
+    appVersion: String(raw?.appVersion || app?.getVersion?.() || "").trim(),
+    createdAt,
+    machineId,
+    notes: String(raw?.notes || "").trim(),
+  };
+
+  const customerName = String(raw?.customerName || "").trim();
+  if (customerName) payload.customerName = customerName;
+
+  const licenseId = String(raw?.licenseId || "").trim();
+  if (licenseId) payload.licenseId = licenseId;
+
+  return payload;
 }
 
 function _toEditableLicensePayload(parsed = {}, filePath = "") {
@@ -900,34 +927,28 @@ function registerLicenseInstallationIpc() {
 
   ipcMain.handle("license:create-request", async (event, raw) => {
     try {
-      const machineId = String(getMachineId() || "").trim();
-      if (!machineId) return { ok: false, error: "MACHINE_ID_REQUIRED_FOR_BINDING" };
-
-      const product = String(raw?.product || "bbm-protokoll").trim() || "bbm-protokoll";
-      const customerHint = String(raw?.customerHint || "").trim();
-      const createdAt = new Date().toISOString();
-      const appVersion = String(app?.getVersion?.() || "").trim();
-      const deviceName = String(os.hostname() || "").trim();
-      const shortMachineId = machineId.slice(0, 8) || "machine";
-      const suggestedName = `BBM_Lizenzanfrage_${createdAt.slice(0, 10)}_${shortMachineId}${customerHint ? `_${_sanitizeFilePart(customerHint, "kunde")}` : ""}.json`;
+      const installed = loadLicense();
+      const installedLicense =
+        installed?.license && typeof installed.license === "object" ? installed.license : {};
+      const payload = _buildLicenseRequestPayload({
+        machineId: getMachineId(),
+        appVersion: app?.getVersion?.(),
+        customerName:
+          String(raw?.customerName || "").trim() ||
+          String(installedLicense.customerName || installedLicense.customer || "").trim(),
+        licenseId: String(raw?.licenseId || "").trim() || String(installedLicense.licenseId || "").trim(),
+        notes: raw?.notes,
+      });
 
       const result = await dialog.showSaveDialog(_pickWindow(event), {
         title: "Lizenzanforderung speichern",
-        defaultPath: suggestedName,
+        defaultPath: "bbm-license-request.json",
         filters: [{ name: "Lizenzanforderung", extensions: ["json"] }],
       });
-      if (result.canceled || !result.filePath) return { ok: true, canceled: true };
+      if (result.canceled || !result.filePath) return { ok: false, canceled: true };
 
-      const payload = {
-        product,
-        machineId,
-        appVersion,
-        createdAt,
-        customerHint,
-        deviceName,
-      };
       await fs.promises.writeFile(result.filePath, JSON.stringify(payload, null, 2), "utf8");
-      return { ok: true, filePath: result.filePath, ...payload };
+      return { ok: true, filePath: result.filePath };
     } catch (err) {
       return { ok: false, error: String(err?.code || err?.message || "REQUEST_SAVE_FAILED").trim() || "REQUEST_SAVE_FAILED" };
     }
@@ -1122,6 +1143,7 @@ module.exports = {
   registerLicenseIpc,
   _buildCustomerSetupSlug,
   _validateGenerationPayload,
+  _buildLicenseRequestPayload,
   resolveNodeExecutableForBuild,
   _validateCustomerSetupPayload,
   _runCustomerSetupBuild,
