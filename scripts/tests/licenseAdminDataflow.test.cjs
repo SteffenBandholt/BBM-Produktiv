@@ -17,6 +17,8 @@ function createMemoryDb() {
       ...record,
       licenseEdition: record.license_edition || null,
       licenseBinding: record.license_binding || null,
+      licenseFilePath: record.license_file_path || null,
+      licenseFileCreatedAt: record.license_file_created_at || null,
       customer_number: customer.customer_number || null,
       company_name: customer.company_name || null,
       customerNumber: customer.customer_number || null,
@@ -82,6 +84,8 @@ function createMemoryDb() {
               license_edition,
               license_binding,
               machine_id,
+              license_file_path,
+              license_file_created_at,
               notes,
             ] =
               args;
@@ -96,6 +100,8 @@ function createMemoryDb() {
               license_edition,
               license_binding,
               machine_id,
+              license_file_path,
+              license_file_created_at,
               notes,
             });
             return;
@@ -111,6 +117,8 @@ function createMemoryDb() {
               license_edition,
               license_binding,
               machine_id,
+              license_file_path,
+              license_file_created_at,
               notes,
               _updated_at,
               id,
@@ -127,6 +135,8 @@ function createMemoryDb() {
               license_edition,
               license_binding,
               machine_id,
+              license_file_path,
+              license_file_created_at,
               notes,
             });
           }
@@ -187,6 +197,8 @@ async function runLicenseAdminDataflowTests(run) {
         valid_from: "2026-01-01",
         valid_until: "2026-12-31",
         license_mode: "soft",
+        license_file_path: "C:\\license-tool\\output\\k101.bbmlic",
+        license_file_created_at: "2026-04-27T10:00:00.000Z",
       });
 
       assert.equal(savedLicense.customer_id, customer.id);
@@ -203,6 +215,10 @@ async function runLicenseAdminDataflowTests(run) {
       assert.equal(listedByCustomer[0].license_binding, "none");
       assert.equal(listedByCustomer[0].licenseEdition, "test");
       assert.equal(listedByCustomer[0].licenseBinding, "none");
+      assert.equal(listedByCustomer[0].license_file_path, "C:\\license-tool\\output\\k101.bbmlic");
+      assert.equal(listedByCustomer[0].licenseFilePath, "C:\\license-tool\\output\\k101.bbmlic");
+      assert.equal(listedByCustomer[0].license_file_created_at, "2026-04-27T10:00:00.000Z");
+      assert.equal(listedByCustomer[0].licenseFileCreatedAt, "2026-04-27T10:00:00.000Z");
       assert.equal(typeof listedByCustomer[0].product_scope_json, "string");
     });
   });
@@ -328,6 +344,8 @@ async function runLicenseAdminDataflowTests(run) {
       licenseMode: "full",
       licenseEdition: "full",
       licenseBinding: "machine",
+      licenseFilePath: "C:\\tmp\\camel-1.bbmlic",
+      licenseFileCreatedAt: "2026-04-27T12:30:00.000Z",
     });
 
     assert.equal(received.licenseId, "LIC-CAMEL-1");
@@ -343,6 +361,10 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(received.license_edition, "full");
     assert.equal(received.licenseBinding, "machine");
     assert.equal(received.license_binding, "machine");
+    assert.equal(received.licenseFilePath, "C:\\tmp\\camel-1.bbmlic");
+    assert.equal(received.license_file_path, "C:\\tmp\\camel-1.bbmlic");
+    assert.equal(received.licenseFileCreatedAt, "2026-04-27T12:30:00.000Z");
+    assert.equal(received.license_file_created_at, "2026-04-27T12:30:00.000Z");
   });
 
   await run("Lizenzverwaltung normalizeLicenseRecord: snake_case und camelCase werden vollstaendig abgebildet", async () => {
@@ -358,6 +380,8 @@ async function runLicenseAdminDataflowTests(run) {
       valid_until: "2026-12-31",
       license_mode: "soft",
       machine_id: "MID-1",
+      license_file_path: "C:\\tmp\\snake.bbmlic",
+      license_file_created_at: "2026-04-27T11:00:00.000Z",
     });
     assert.equal(snake.license_id, "LIC-1");
     assert.equal(snake.customer_id, "c-1");
@@ -367,6 +391,10 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(snake.license_edition, "test");
     assert.equal(snake.license_binding, "none");
     assert.equal(snake.machine_id, "MID-1");
+    assert.equal(snake.license_file_path, "C:\\tmp\\snake.bbmlic");
+    assert.equal(snake.licenseFilePath, "C:\\tmp\\snake.bbmlic");
+    assert.equal(snake.license_file_created_at, "2026-04-27T11:00:00.000Z");
+    assert.equal(snake.licenseFileCreatedAt, "2026-04-27T11:00:00.000Z");
     assert.equal(snake.product_scope_json, JSON.stringify({ raw: "freitext" }));
 
     const camel = normalizeLicenseRecord({
@@ -377,6 +405,8 @@ async function runLicenseAdminDataflowTests(run) {
       validUntil: "2026-10-31",
       licenseMode: "full",
       machineId: "MID-2",
+      licenseFilePath: "C:\\tmp\\camel.bbmlic",
+      licenseFileCreatedAt: "2026-04-27T12:00:00.000Z",
     });
     assert.equal(camel.license_id, "LIC-2");
     assert.equal(camel.customer_id, "c-2");
@@ -386,6 +416,10 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(camel.license_edition, "full");
     assert.equal(camel.license_binding, "machine");
     assert.equal(camel.machine_id, "MID-2");
+    assert.equal(camel.license_file_path, "C:\\tmp\\camel.bbmlic");
+    assert.equal(camel.licenseFilePath, "C:\\tmp\\camel.bbmlic");
+    assert.equal(camel.license_file_created_at, "2026-04-27T12:00:00.000Z");
+    assert.equal(camel.licenseFileCreatedAt, "2026-04-27T12:00:00.000Z");
   });
 
 

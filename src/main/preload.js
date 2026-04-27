@@ -211,6 +211,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   licenseAdminSaveLicenseRecord: (license) => ipcRenderer.invoke("license-admin:save-record", license),
   licenseAdminListLicenseHistory: () => ipcRenderer.invoke("license-admin:list-history"),
   licenseAdminAddLicenseHistoryEntry: (entry) => ipcRenderer.invoke("license-admin:add-history-entry", entry),
+  licenseAdminCreateCustomerSetup: (payload) => ipcRenderer.invoke("license-admin:create-customer-setup", payload),
 
   // DEV: Audio Override Status
   devAudioUnlockStatus: () => ipcRenderer.invoke("dev:audioUnlockStatus"),

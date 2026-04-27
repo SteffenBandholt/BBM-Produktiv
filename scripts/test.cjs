@@ -18,6 +18,9 @@ const { runAusgabeModuleTests } = require("./tests/ausgabeModule.test.cjs");
 const { runAudioModuleTests } = require("./tests/audioModule.test.cjs");
 const { runLizenzverwaltungModuleTests } = require("./tests/lizenzverwaltungModule.test.cjs");
 const { runLicenseAdminDataflowTests } = require("./tests/licenseAdminDataflow.test.cjs");
+const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cjs");
+const { runLicenseStorageBootstrapTests } = require("./tests/licenseStorageBootstrap.test.cjs");
+const { runLicenseIpcCustomerSetupTests } = require("./tests/licenseIpcCustomerSetup.test.cjs");
 
 let failed = false;
 
@@ -82,6 +85,9 @@ async function main() {
   await runAudioModuleTests(run);
   await runLizenzverwaltungModuleTests(run);
   await runLicenseAdminDataflowTests(run);
+  await runDistCustomerBuildTests(run);
+  await runLicenseIpcCustomerSetupTests(run);
+  await runLicenseStorageBootstrapTests(run);
 
   if (failed) {
     process.exitCode = 1;

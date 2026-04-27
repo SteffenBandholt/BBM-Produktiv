@@ -1157,6 +1157,12 @@ function ensureLicenseAdminSchema(dbConn) {
   if (!columnExists(dbConn, "license_records", "notes")) {
     dbConn.exec(`ALTER TABLE license_records ADD COLUMN notes TEXT;`);
   }
+  if (!columnExists(dbConn, "license_records", "license_file_path")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN license_file_path TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "license_file_created_at")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN license_file_created_at TEXT;`);
+  }
   if (!columnExists(dbConn, "license_records", "created_at")) {
     dbConn.exec(
       `ALTER TABLE license_records ADD COLUMN created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));`

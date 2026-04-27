@@ -10,16 +10,45 @@ function getLicenseFilePath() {
   return path.join(userData, "license.json");
 }
 
+function getBundledCustomerLicensePath() {
+  const packagedResources = process.resourcesPath || path.join(app.getAppPath(), "resources");
+  const resourcesPath = app?.isPackaged ? packagedResources : path.join(app.getAppPath(), "resources");
+  return path.join(resourcesPath, "license", "customer.bbmlic");
+}
+
+function _readJsonSafe(filePath) {
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    return JSON.parse(raw);
+  } catch (_err) {
+    return null;
+  }
+}
+
 function loadLicense() {
   try {
     const filePath = getLicenseFilePath();
 
-    if (!fs.existsSync(filePath)) {
+    if (fs.existsSync(filePath)) {
+      return _readJsonSafe(filePath);
+    }
+
+    const bundledPath = getBundledCustomerLicensePath();
+    if (!fs.existsSync(bundledPath)) {
       return null;
     }
 
-    const raw = fs.readFileSync(filePath, "utf8");
-    return JSON.parse(raw);
+    const bundledLicense = _readJsonSafe(bundledPath);
+    if (!bundledLicense) {
+      return null;
+    }
+
+    try {
+      saveLicense(bundledLicense);
+    } catch (_err) {
+      // fallback only: still return bundled content
+    }
+    return bundledLicense;
   } catch (err) {
     console.error("[licenseStorage] load failed:", err?.message || err);
     return null;
@@ -68,4 +97,5 @@ module.exports = {
   saveLicense,
   deleteLicense,
   getLicenseFilePath,
+  getBundledCustomerLicensePath,
 };

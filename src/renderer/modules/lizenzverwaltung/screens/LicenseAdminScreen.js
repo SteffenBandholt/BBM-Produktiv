@@ -1,4 +1,10 @@
-import { listCustomers, listLicensesByCustomer, saveCustomer, saveLicense } from "../licenseStorageService.js";
+import {
+  createCustomerSetup,
+  listCustomers,
+  listLicensesByCustomer,
+  saveCustomer,
+  saveLicense,
+} from "../licenseStorageService.js";
 
 const PRODUCT_KEY = "bbm-produktiv";
 const PRODUCT_LABEL = "BBM-Produktiv";
@@ -153,6 +159,8 @@ export function buildLicenseEditorPayload({ license = {}, inputs = {}, customer 
     valid_until: String(inputs.valid_until || "").trim(),
     license_mode: String(inputs.license_mode || "").trim(),
     machine_id: String(inputs.machine_id || "").trim(),
+    license_file_path: valueOf(license, "license_file_path", "licenseFilePath"),
+    license_file_created_at: valueOf(license, "license_file_created_at", "licenseFileCreatedAt"),
     notes: String(inputs.notes || "").trim(),
   };
 }
@@ -295,6 +303,15 @@ function valueOf(item, ...keys) {
     if (value !== null && value !== undefined && String(value).trim()) return String(value).trim();
   }
   return "";
+}
+
+export function buildCustomerSetupPayload({ customer = {}, license = {} } = {}) {
+  const licenseFilePath = valueOf(license, "license_file_path", "licenseFilePath");
+  return {
+    customer,
+    license,
+    licenseFilePath,
+  };
 }
 
 export function formatProductScopeForList(entry = {}) {
@@ -620,6 +637,9 @@ export default class LicenseAdminScreen {
     const generationOutput = document.createElement("div");
     generationOutput.style.fontSize = "12px";
     generationOutput.style.opacity = "0.9";
+    const setupOutput = document.createElement("div");
+    setupOutput.style.fontSize = "12px";
+    setupOutput.style.opacity = "0.9";
 
     const license = this.currentLicense || {};
     const parsedScope = parseProductScopeObject(valueOf(license, "product_scope_json", "productScope"));
@@ -861,6 +881,47 @@ export default class LicenseAdminScreen {
       }
     });
     openOutputDirBtn.style.display = "none";
+    const createCustomerSetupBtn = this._button("Kunden-Setup erstellen", async () => {
+      const activeLicense = this.currentLicense || license || {};
+      const payload = buildCustomerSetupPayload({
+        customer: this.currentCustomer || {},
+        license: activeLicense,
+      });
+      if (!String(payload.licenseFilePath || "").trim()) {
+        message.textContent = "Bitte zuerst die Lizenz erstellen.";
+        return;
+      }
+      const binding = String(activeLicense.license_binding || activeLicense.licenseBinding || "").trim().toLowerCase();
+      const machineId = String(activeLicense.machine_id || activeLicense.machineId || "").trim();
+      if (binding === "machine" && !machineId) {
+        message.textContent = "Machine-ID ist erforderlich, wenn die Lizenz an ein Gerät gebunden wird.";
+        return;
+      }
+      createCustomerSetupBtn.disabled = true;
+      try {
+        message.textContent = "Kunden-Setup wird erstellt ...";
+        const res = await createCustomerSetup(payload);
+        if (!res?.ok) {
+          message.textContent = `Fehler: ${res?.error || "Kunden-Setup konnte nicht erstellt werden."}`;
+          return;
+        }
+        message.textContent = "Kunden-Setup wurde erstellt.";
+        const outPath = String(res?.setupPath || res?.artifactPath || "").trim();
+        const outDir = String(res?.outputDir || "").trim();
+        setupOutput.textContent = outPath ? `Ausgabepfad: ${outPath}` : outDir ? `Ausgabepfad: ${outDir}` : "";
+        const dirToOpen = outPath || outDir;
+        if (dirToOpen) {
+          openOutputDirBtn.dataset.outputPath = dirToOpen;
+          openOutputDirBtn.style.display = "";
+          openOutputDirBtn.disabled = false;
+        }
+      } catch (err) {
+        message.textContent = `Fehler: ${err?.message || err}`;
+      } finally {
+        createCustomerSetupBtn.disabled = false;
+      }
+    });
+    createCustomerSetupBtn.disabled = !valueOf(license, "license_file_path", "licenseFilePath");
 
     const createBtn = this._button("Lizenz erstellen", async () => {
       const previousText = createBtn.textContent;
@@ -885,9 +946,11 @@ export default class LicenseAdminScreen {
         });
         const saved = await saveLicense(payload);
         this.currentLicense = saved;
+        createCustomerSetupBtn.disabled = true;
         openOutputDirBtn.style.display = "none";
         openOutputDirBtn.dataset.outputPath = "";
         generationOutput.textContent = "";
+        setupOutput.textContent = "";
 
         const api = window?.bbmDb || {};
         if (typeof api.licenseGenerate !== "function") {
@@ -922,6 +985,13 @@ export default class LicenseAdminScreen {
         const outputPath = String(res?.outputPath || "").trim();
         if (outputPath) {
           generationOutput.textContent = `Ausgabepfad: ${outputPath}`;
+          const updated = await saveLicense({
+            ...(saved || {}),
+            license_file_path: outputPath,
+            license_file_created_at: new Date().toISOString(),
+          });
+          this.currentLicense = updated;
+          createCustomerSetupBtn.disabled = false;
           openOutputDirBtn.dataset.outputPath = outputPath;
           openOutputDirBtn.style.display = "";
           openOutputDirBtn.disabled = false;
@@ -944,8 +1014,8 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    actions.append(createBtn, backBtn, openOutputDirBtn);
-    container.append(header, context, form, licenseIdHint, actions, message, generationOutput);
+    actions.append(createBtn, createCustomerSetupBtn, backBtn, openOutputDirBtn);
+    container.append(header, context, form, licenseIdHint, actions, message, generationOutput, setupOutput);
   }
 
   async _render() {

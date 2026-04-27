@@ -157,6 +157,14 @@ Sie ergänzt:
   - Im sichtbaren Lizenzformular wurden restliche Einzelbuttons entfernt (`Lizenz-ID erzeugen`, `Formular leeren`).
   - Lizenz-ID bleibt sichtbar, wird aber beim Hauptablauf `Lizenz erstellen` automatisch erzeugt, wenn leer.
   - Sichtbarer Hauptablauf im Formular ist jetzt auf `Lizenz erstellen` + `Zurueck` reduziert; `Ausgabeordner öffnen` erscheint nur nach erfolgreicher Erzeugung.
+- Lizenzverwaltung naechster Schritt (Kunden-Setup) ist umgesetzt:
+  - Nach erfolgreicher Lizenzerzeugung wird der Lizenzpfad im Lizenzdatensatz gespeichert (`license_file_path`, `license_file_created_at`).
+  - Im Lizenzformular ist `Kunden-Setup erstellen` verfuegbar; ohne bekannte erzeugte Lizenzdatei erscheint `Bitte zuerst die Lizenz erstellen.`.
+  - Kunden-Setup-Build nutzt bestehende `scripts/dist.cjs`/electron-builder-Infrastruktur im optionalen Kundenmodus (kein neuer Installer-Generator).
+  - Kundenmodus uebergibt `.bbmlic` als `extraResource` nach `license/customer.bbmlic`, baut nach `dist/customers/<slug>/` und setzt kundenbezogenen Setup-Dateinamen.
+  - Main-/Preload-IPC fuer Build-Aufruf ist angebunden (`license-admin:create-customer-setup` / `licenseAdminCreateCustomerSetup`).
+  - Lizenz-Bootstrap liest bei fehlender `userData/license.json` eine gebuendelte `resources/license/customer.bbmlic` und uebernimmt sie als installierte Lizenz; bestehende `userData/license.json` bleibt vorrangig.
+  - `licenseVerifier.js` Produktpruefung bleibt unveraendert.
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.

@@ -305,6 +305,113 @@ function _extractGeneratedPath(runResult, inputData) {
   return fs.existsSync(fallbackPath) ? fallbackPath : "";
 }
 
+function _findRepoRoot(startDir) {
+  let current = path.resolve(startDir || process.cwd());
+  const root = path.parse(current).root;
+  while (true) {
+    if (fs.existsSync(path.join(current, "package.json")) && fs.existsSync(path.join(current, "scripts", "dist.cjs"))) {
+      return current;
+    }
+    if (current === root) break;
+    current = path.dirname(current);
+  }
+  return "";
+}
+
+function _sanitizeCustomerSlug(value, fallback = "customer") {
+  const cleaned = String(value || "")
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, " ")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return cleaned || fallback;
+}
+
+function _buildCustomerSetupSlug(customer = {}) {
+  const customerNumber = String(customer.customer_number || customer.customerNumber || "").trim();
+  const companyName = String(customer.company_name || customer.companyName || "").trim();
+  const combined = [customerNumber, companyName].filter(Boolean).join(" ");
+  return _sanitizeCustomerSlug(combined);
+}
+
+function _resolveCustomerSetupArtifactPath(outputDir, customerSlug) {
+  const normalizedOutputDir = String(outputDir || "").trim();
+  if (!normalizedOutputDir || !fs.existsSync(normalizedOutputDir)) return "";
+  const safeSlug = _sanitizeCustomerSlug(customerSlug || "");
+  const files = fs.readdirSync(normalizedOutputDir);
+  const setupFile = files.find((name) => name.toLowerCase().endsWith(".exe") && name.includes(safeSlug));
+  if (setupFile) return path.join(normalizedOutputDir, setupFile);
+  const anyExe = files.find((name) => name.toLowerCase().endsWith(".exe"));
+  return anyExe ? path.join(normalizedOutputDir, anyExe) : "";
+}
+
+function _validateCustomerSetupPayload(raw = {}) {
+  const customer = raw?.customer && typeof raw.customer === "object" ? raw.customer : {};
+  const license = raw?.license && typeof raw.license === "object" ? raw.license : {};
+  const licenseFilePath = String(raw?.licenseFilePath || raw?.license_file_path || "").trim();
+  if (!licenseFilePath) throw new Error("LICENSE_FILE_PATH_REQUIRED");
+  if (!fs.existsSync(licenseFilePath)) throw new Error("LICENSE_FILE_NOT_FOUND");
+
+  const binding = String(license.license_binding || license.licenseBinding || "").trim().toLowerCase();
+  const machineId = String(license.machine_id || license.machineId || "").trim();
+  if (binding === "machine" && !machineId) {
+    throw new Error("MACHINE_ID_REQUIRED_FOR_BINDING");
+  }
+
+  return {
+    customer,
+    license,
+    licenseFilePath,
+    customerSlug: _buildCustomerSetupSlug(customer),
+    customerName: String(customer.company_name || customer.companyName || "").trim(),
+  };
+}
+
+async function _runCustomerSetupBuild(payload = {}) {
+  if (app.isPackaged) return { ok: false, error: "CUSTOMER_SETUP_BUILD_NOT_ALLOWED" };
+  const repoRoot = _findRepoRoot(process.cwd());
+  if (!repoRoot) return { ok: false, error: "REPO_ROOT_NOT_FOUND" };
+  const distScriptPath = path.join(repoRoot, "scripts", "dist.cjs");
+  if (!fs.existsSync(distScriptPath)) return { ok: false, error: "DIST_SCRIPT_NOT_FOUND" };
+
+  const validated = _validateCustomerSetupPayload(payload);
+  const outputDir = path.join(repoRoot, "dist", "customers", validated.customerSlug);
+
+  return await new Promise((resolve) => {
+    const child = spawn(process.execPath, [distScriptPath], {
+      cwd: repoRoot,
+      env: {
+        ...process.env,
+        BBM_CUSTOMER_LICENSE_FILE: validated.licenseFilePath,
+        BBM_CUSTOMER_SLUG: validated.customerSlug,
+        BBM_CUSTOMER_NAME: validated.customerName,
+      },
+      windowsHide: true,
+    });
+
+    let stderr = "";
+    child.stderr.on("data", (chunk) => {
+      stderr += String(chunk || "");
+    });
+
+    child.on("close", (code) => {
+      if (code !== 0) {
+        resolve({ ok: false, error: (stderr || "").trim() || "CUSTOMER_SETUP_BUILD_FAILED" });
+        return;
+      }
+      const artifactPath = _resolveCustomerSetupArtifactPath(outputDir, validated.customerSlug);
+      resolve({
+        ok: true,
+        outputDir,
+        setupPath: artifactPath,
+        artifactPath,
+        customerSlug: validated.customerSlug,
+      });
+    });
+  });
+}
+
 // Zentrale Laufzeit-/Diagnose-Einstiege des App-Kerns.
 function registerLicenseStatusIpc() {
   ipcMain.handle("license:get-status", async () => {
@@ -625,6 +732,17 @@ function registerLicenseAdminDataIpc() {
   ipcMain.handle("license-admin:add-history-entry", async (_event, entry) => {
     return licenseAdminService.addHistoryEntry(entry || {});
   });
+
+  ipcMain.handle("license-admin:create-customer-setup", async (_event, payload) => {
+    try {
+      return await _runCustomerSetupBuild(payload || {});
+    } catch (err) {
+      return {
+        ok: false,
+        error: String(err?.message || err || "CUSTOMER_SETUP_BUILD_FAILED").trim() || "CUSTOMER_SETUP_BUILD_FAILED",
+      };
+    }
+  });
 }
 
 function registerLicenseIpc() {
@@ -636,4 +754,6 @@ function registerLicenseIpc() {
 
 module.exports = {
   registerLicenseIpc,
+  _buildCustomerSetupSlug,
+  _validateCustomerSetupPayload,
 };

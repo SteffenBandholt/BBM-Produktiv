@@ -94,6 +94,8 @@ function _normalizeLicenseRecord(license = {}) {
     license_edition: _optionalText(license_edition),
     license_binding: _optionalText(license_binding),
     machine_id: _optionalText(license.machine_id || license.machineId),
+    license_file_path: _optionalText(license.license_file_path || license.licenseFilePath),
+    license_file_created_at: _optionalText(license.license_file_created_at || license.licenseFileCreatedAt),
     notes: _optionalText(license.notes),
   };
 }
@@ -120,6 +122,8 @@ function _baseListLicensesQuery() {
       lr.*,
       lr.license_edition AS licenseEdition,
       lr.license_binding AS licenseBinding,
+      lr.license_file_path AS licenseFilePath,
+      lr.license_file_created_at AS licenseFileCreatedAt,
       lc.customer_number AS customer_number,
       lc.company_name AS company_name,
       lc.customer_number AS customerNumber,
@@ -247,6 +251,8 @@ function saveLicense(license = {}) {
           license_edition = ?,
           license_binding = ?,
           machine_id = ?,
+          license_file_path = ?,
+          license_file_created_at = ?,
           notes = ?,
           updated_at = ?
       WHERE id = ?
@@ -261,6 +267,8 @@ function saveLicense(license = {}) {
       record.license_edition,
       record.license_binding,
       record.machine_id,
+      record.license_file_path,
+      record.license_file_created_at,
       record.notes,
       now,
       record.id
@@ -279,8 +287,10 @@ function saveLicense(license = {}) {
         license_edition,
         license_binding,
         machine_id,
+        license_file_path,
+        license_file_created_at,
         notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `
     ).run(
       record.id,
@@ -293,6 +303,8 @@ function saveLicense(license = {}) {
       record.license_edition,
       record.license_binding,
       record.machine_id,
+      record.license_file_path,
+      record.license_file_created_at,
       record.notes
     );
   }
