@@ -504,18 +504,24 @@ export default class SettingsView {
     btnReload.textContent = "Status aktualisieren";
     applyPopupButtonStyle(btnReload);
 
+    const requestTitle = document.createElement("div");
+    requestTitle.style.fontSize = "12px";
+    requestTitle.style.fontWeight = "700";
+    requestTitle.textContent = "Lizenzanforderung";
+
     const btnCreateRequest = document.createElement("button");
     btnCreateRequest.type = "button";
-    btnCreateRequest.textContent = "Lizenzanforderung erzeugen";
+    btnCreateRequest.textContent = "Lizenzanforderung speichern";
     applyPopupButtonStyle(btnCreateRequest);
 
     const requestHint = document.createElement("div");
     requestHint.style.fontSize = "11px";
     requestHint.style.opacity = "0.8";
-    requestHint.textContent = "Soft-Lizenz: direkt importierbar. Vollversion: zuerst auf dem Zielrechner eine Lizenzanforderung erzeugen und danach die passende Lizenz importieren.";
+    requestHint.textContent =
+      "Diese Datei enthält die Machine-ID dieses Geräts und kann zur Erstellung einer gerätegebundenen Lizenz verwendet werden.";
 
     buttonRow.append(btnImport, btnReload, btnCreateRequest);
-    statusCard.append(statusRow, messageEl, licenseBanner, infoGrid, requestHint, buttonRow);
+    statusCard.append(statusRow, messageEl, licenseBanner, infoGrid, requestTitle, requestHint, buttonRow);
     wrap.append(statusCard, diagnosticsCard);
 
     const setBusy = (busy) => {
@@ -688,21 +694,23 @@ export default class SettingsView {
         return;
       }
       setBusy(true);
-      setMessage("Lizenzanforderung wird erzeugt ...", false);
+      setMessage("Lizenzanforderung wird gespeichert ...", false);
       try {
-        const customerHint = String(valueCustomer.textContent || "").trim();
-        const res = await api.licenseCreateRequest({ product: "bbm-protokoll", customerHint });
+        const customerName = String(valueCustomer.textContent || "").trim();
+        const licenseId = String(valueLicenseId.textContent || "").trim();
+        const res = await api.licenseCreateRequest({ customerName, licenseId });
         if (res?.canceled) {
           setMessage("Lizenzanforderung abgebrochen.", false);
           return;
         }
         if (!res?.ok) {
-          setMessage(this._formatLicenseGenerationError(res?.error), true);
+          setMessage("Lizenzanforderung konnte nicht gespeichert werden.", true);
           return;
         }
-        setMessage(`Lizenzanforderung gespeichert: ${res?.filePath || "-"}`, false);
+        setMessage("Lizenzanforderung wurde gespeichert.", false);
       } catch (err) {
-        setMessage(this._formatLicenseGenerationError(err?.message || err), true);
+        console.error("[SettingsView] licenseCreateRequest failed", err);
+        setMessage("Lizenzanforderung konnte nicht gespeichert werden.", true);
       } finally {
         setBusy(false);
       }
