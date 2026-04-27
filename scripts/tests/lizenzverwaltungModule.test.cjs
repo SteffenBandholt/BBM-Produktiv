@@ -35,6 +35,8 @@ async function runLizenzverwaltungModuleTests(run) {
       saveLicense,
       listHistory,
       addHistoryEntry,
+      createCustomerSetup,
+      buildCustomerSetupPayload,
     },
     {
       getProjektverwaltungModuleEntry,
@@ -190,6 +192,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(typeof saveLicense, "function");
     assert.equal(typeof listHistory, "function");
     assert.equal(typeof addHistoryEntry, "function");
+    assert.equal(typeof createCustomerSetup, "function");
 
     assert.equal(listCustomers.constructor.name, "AsyncFunction");
     assert.equal(saveCustomer.constructor.name, "AsyncFunction");
@@ -197,6 +200,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(saveLicense.constructor.name, "AsyncFunction");
     assert.equal(listHistory.constructor.name, "AsyncFunction");
     assert.equal(addHistoryEntry.constructor.name, "AsyncFunction");
+    assert.equal(createCustomerSetup.constructor.name, "AsyncFunction");
 
     assert.equal(typeof listCustomers().then, "function");
     assert.equal(typeof listLicenses().then, "function");
@@ -347,6 +351,46 @@ async function runLizenzverwaltungModuleTests(run) {
       /Preload-API-Methode fehlt \(licenseAdminSaveLicenseCustomer\)\./
     );
     restoreWindow();
+  });
+
+  await run("Lizenzverwaltung: Build-Mapping fuer Kunden-Setup Payload", () => {
+    const payload = buildCustomerSetupPayload({
+      customer: { customer_number: "K-100", company_name: "Musterfirma GmbH" },
+      license: { license_file_path: "C:\\tmp\\customer.bbmlic" },
+    });
+    assert.equal(payload.customer.customer_number, "K-100");
+    assert.equal(payload.license.license_file_path, "C:\\tmp\\customer.bbmlic");
+    assert.equal(payload.licenseFilePath, "C:\\tmp\\customer.bbmlic");
+  });
+
+  await run("Lizenzverwaltung UI: Kunden-Setup-Texte und Hinweise vorhanden", () => {
+    assert.equal(screenSource.includes("Kunden-Setup erstellen"), true);
+    assert.equal(screenSource.includes("Bitte zuerst die Lizenz erstellen."), true);
+    assert.equal(screenSource.includes("Kunden-Setup wird erstellt ..."), true);
+    assert.equal(screenSource.includes("Kunden-Setup wurde erstellt."), true);
+    assert.equal(screenSource.includes("if (!res?.ok)"), true);
+    assert.equal(screenSource.includes("stdout(last):"), true);
+    assert.equal(screenSource.includes("stderr(last):"), true);
+    assert.equal(screenSource.includes("customerSlug:"), true);
+    assert.equal(screenSource.includes("exitCode:"), true);
+    assert.equal(screenSource.includes("logPath:"), true);
+    assert.equal(
+      screenSource.includes(
+        "Kunden-Setup konnte nicht erstellt werden, weil eine Build-Datei gesperrt ist. Bitte App schließen und Kunden-Setup manuell über den Build-Befehl erstellen."
+      ),
+      true
+    );
+    assert.equal(screenSource.includes("Lizenz erstellen"), true);
+    assert.equal(screenSource.includes("Lizenz-ID erzeugen"), false);
+    assert.equal(screenSource.includes("Formular leeren"), false);
+    assert.equal(screenSource.includes("Lizenzdatei erzeugen"), false);
+  });
+
+  await run("Lizenzverwaltung Main/Preload/Schema: Kunden-Setup-IPC und Lizenzpfad-Spalten vorhanden", () => {
+    assert.equal(databaseSource.includes("license_file_path"), true);
+    assert.equal(databaseSource.includes("license_file_created_at"), true);
+    assert.equal(preloadSource.includes("licenseAdminCreateCustomerSetup"), true);
+    assert.equal(licenseIpcSource.includes("license-admin:create-customer-setup"), true);
   });
 
   await run("Lizenzverwaltung: Historien-Datensatz zentral vorbereitet", () => {

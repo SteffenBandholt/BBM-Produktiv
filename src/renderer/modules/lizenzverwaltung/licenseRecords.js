@@ -74,6 +74,10 @@ export function createDefaultLicenseRecord(overrides = {}) {
     license_binding: "none",
     machineId: "",
     machine_id: "",
+    licenseFilePath: "",
+    license_file_path: "",
+    licenseFileCreatedAt: "",
+    license_file_created_at: "",
     notes: "",
     ...overrides,
   };
@@ -163,6 +167,10 @@ export function normalizeLicenseRecord(input = {}) {
   const validFrom = String(input.validFrom ?? input.valid_from ?? base.validFrom).trim();
   const validUntil = String(input.validUntil ?? input.valid_until ?? base.validUntil).trim();
   const machineId = String(input.machineId ?? input.machine_id ?? base.machineId).trim();
+  const licenseFilePath = String(input.licenseFilePath ?? input.license_file_path ?? base.licenseFilePath).trim();
+  const licenseFileCreatedAt = String(
+    input.licenseFileCreatedAt ?? input.license_file_created_at ?? base.licenseFileCreatedAt
+  ).trim();
   const modeRaw = String(input.licenseMode ?? input.license_mode ?? base.licenseMode).trim().toLowerCase();
   const editionRaw = String(input.licenseEdition ?? input.license_edition ?? "").trim().toLowerCase();
   const bindingRaw = String(input.licenseBinding ?? input.license_binding ?? "").trim().toLowerCase();
@@ -196,6 +204,10 @@ export function normalizeLicenseRecord(input = {}) {
     license_binding: normalizedBinding,
     machineId,
     machine_id: machineId,
+    licenseFilePath,
+    license_file_path: licenseFilePath,
+    licenseFileCreatedAt,
+    license_file_created_at: licenseFileCreatedAt,
     notes: String(input.notes ?? base.notes).trim(),
   };
 }

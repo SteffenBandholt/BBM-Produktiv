@@ -60,3 +60,8 @@ export async function addHistoryEntry(entry) {
   const add = requireApiMethod("licenseAdminAddLicenseHistoryEntry");
   return add(record);
 }
+
+export async function createCustomerSetup(payload) {
+  const create = requireApiMethod("licenseAdminCreateCustomerSetup");
+  return create(payload || {});
+}

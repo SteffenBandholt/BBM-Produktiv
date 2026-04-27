@@ -1,4 +1,10 @@
-import { listCustomers, listLicensesByCustomer, saveCustomer, saveLicense } from "../licenseStorageService.js";
+import {
+  createCustomerSetup,
+  listCustomers,
+  listLicensesByCustomer,
+  saveCustomer,
+  saveLicense,
+} from "../licenseStorageService.js";
 
 const PRODUCT_KEY = "bbm-produktiv";
 const PRODUCT_LABEL = "BBM-Produktiv";
@@ -153,6 +159,8 @@ export function buildLicenseEditorPayload({ license = {}, inputs = {}, customer 
     valid_until: String(inputs.valid_until || "").trim(),
     license_mode: String(inputs.license_mode || "").trim(),
     machine_id: String(inputs.machine_id || "").trim(),
+    license_file_path: valueOf(license, "license_file_path", "licenseFilePath"),
+    license_file_created_at: valueOf(license, "license_file_created_at", "licenseFileCreatedAt"),
     notes: String(inputs.notes || "").trim(),
   };
 }
@@ -295,6 +303,31 @@ function valueOf(item, ...keys) {
     if (value !== null && value !== undefined && String(value).trim()) return String(value).trim();
   }
   return "";
+}
+
+function truncateText(value, maxLen = 280) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.length <= maxLen) return raw;
+  return `${raw.slice(0, maxLen)} ...`;
+}
+
+function tailLines(value, maxLines = 6) {
+  const lines = String(value || "")
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+  if (!lines.length) return "";
+  return lines.slice(-Math.max(1, maxLines)).join(" | ");
+}
+
+export function buildCustomerSetupPayload({ customer = {}, license = {} } = {}) {
+  const licenseFilePath = valueOf(license, "license_file_path", "licenseFilePath");
+  return {
+    customer,
+    license,
+    licenseFilePath,
+  };
 }
 
 export function formatProductScopeForList(entry = {}) {
@@ -620,6 +653,9 @@ export default class LicenseAdminScreen {
     const generationOutput = document.createElement("div");
     generationOutput.style.fontSize = "12px";
     generationOutput.style.opacity = "0.9";
+    const setupOutput = document.createElement("div");
+    setupOutput.style.fontSize = "12px";
+    setupOutput.style.opacity = "0.9";
 
     const license = this.currentLicense || {};
     const parsedScope = parseProductScopeObject(valueOf(license, "product_scope_json", "productScope"));
@@ -861,6 +897,66 @@ export default class LicenseAdminScreen {
       }
     });
     openOutputDirBtn.style.display = "none";
+    const createCustomerSetupBtn = this._button("Kunden-Setup erstellen", async () => {
+      const activeLicense = this.currentLicense || license || {};
+      const payload = buildCustomerSetupPayload({
+        customer: this.currentCustomer || {},
+        license: activeLicense,
+      });
+      if (!String(payload.licenseFilePath || "").trim()) {
+        message.textContent = "Bitte zuerst die Lizenz erstellen.";
+        return;
+      }
+      const binding = String(activeLicense.license_binding || activeLicense.licenseBinding || "").trim().toLowerCase();
+      const machineId = String(activeLicense.machine_id || activeLicense.machineId || "").trim();
+      if (binding === "machine" && !machineId) {
+        message.textContent = "Machine-ID ist erforderlich, wenn die Lizenz an ein Gerät gebunden wird.";
+        return;
+      }
+      createCustomerSetupBtn.disabled = true;
+      try {
+        message.textContent = "Kunden-Setup wird erstellt ...";
+        setupOutput.textContent = "";
+        const res = await createCustomerSetup(payload);
+        if (!res?.ok) {
+          const combinedErrorText = `${String(res?.stderr || "")}\n${String(res?.stdout || "")}`.toUpperCase();
+          const isFileLockError = combinedErrorText.includes("EBUSY") || combinedErrorText.includes("RESOURCE BUSY OR LOCKED");
+          if (isFileLockError) {
+            message.textContent =
+              "Kunden-Setup konnte nicht erstellt werden, weil eine Build-Datei gesperrt ist. Bitte App schließen und Kunden-Setup manuell über den Build-Befehl erstellen.";
+          } else {
+            message.textContent = `Fehler: ${res?.error || "Kunden-Setup konnte nicht erstellt werden."}`;
+          }
+          const diagnostics = [];
+          if (res?.outputDir) diagnostics.push(`outputDir: ${res.outputDir}`);
+          if (res?.customerSlug) diagnostics.push(`customerSlug: ${res.customerSlug}`);
+          if (res?.exitCode !== undefined && res?.exitCode !== null) diagnostics.push(`exitCode: ${res.exitCode}`);
+          if (res?.logPath) diagnostics.push(`logPath: ${res.logPath}`);
+          if (res?.setupPath || res?.artifactPath) diagnostics.push(`setupPath: ${res.setupPath || res?.artifactPath}`);
+          const stdout = truncateText(tailLines(res?.stdout));
+          const stderr = truncateText(tailLines(res?.stderr));
+          if (stdout) diagnostics.push(`stdout(last): ${stdout}`);
+          if (stderr) diagnostics.push(`stderr(last): ${stderr}`);
+          setupOutput.textContent = diagnostics.join("\n");
+          return;
+        }
+        message.textContent = "Kunden-Setup wurde erstellt.";
+        const outPath = String(res?.setupPath || res?.artifactPath || "").trim();
+        const outDir = String(res?.outputDir || "").trim();
+        setupOutput.textContent = outPath ? `Ausgabepfad: ${outPath}` : outDir ? `Ausgabepfad: ${outDir}` : "";
+        const dirToOpen = outPath || outDir;
+        if (dirToOpen) {
+          openOutputDirBtn.dataset.outputPath = dirToOpen;
+          openOutputDirBtn.style.display = "";
+          openOutputDirBtn.disabled = false;
+        }
+      } catch (err) {
+        message.textContent = `Fehler: ${err?.message || err}`;
+      } finally {
+        createCustomerSetupBtn.disabled = false;
+      }
+    });
+    createCustomerSetupBtn.disabled = !valueOf(license, "license_file_path", "licenseFilePath");
 
     const createBtn = this._button("Lizenz erstellen", async () => {
       const previousText = createBtn.textContent;
@@ -885,9 +981,11 @@ export default class LicenseAdminScreen {
         });
         const saved = await saveLicense(payload);
         this.currentLicense = saved;
+        createCustomerSetupBtn.disabled = true;
         openOutputDirBtn.style.display = "none";
         openOutputDirBtn.dataset.outputPath = "";
         generationOutput.textContent = "";
+        setupOutput.textContent = "";
 
         const api = window?.bbmDb || {};
         if (typeof api.licenseGenerate !== "function") {
@@ -922,6 +1020,13 @@ export default class LicenseAdminScreen {
         const outputPath = String(res?.outputPath || "").trim();
         if (outputPath) {
           generationOutput.textContent = `Ausgabepfad: ${outputPath}`;
+          const updated = await saveLicense({
+            ...(saved || {}),
+            license_file_path: outputPath,
+            license_file_created_at: new Date().toISOString(),
+          });
+          this.currentLicense = updated;
+          createCustomerSetupBtn.disabled = false;
           openOutputDirBtn.dataset.outputPath = outputPath;
           openOutputDirBtn.style.display = "";
           openOutputDirBtn.disabled = false;
@@ -944,8 +1049,8 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    actions.append(createBtn, backBtn, openOutputDirBtn);
-    container.append(header, context, form, licenseIdHint, actions, message, generationOutput);
+    actions.append(createBtn, createCustomerSetupBtn, backBtn, openOutputDirBtn);
+    container.append(header, context, form, licenseIdHint, actions, message, generationOutput, setupOutput);
   }
 
   async _render() {

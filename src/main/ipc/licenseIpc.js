@@ -4,7 +4,7 @@ const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
-const { spawn } = require("child_process");
+const { spawn, spawnSync } = require("child_process");
 
 const { saveLicense, loadLicense, deleteLicense } = require("../licensing/licenseStorage");
 const { getMachineId } = require("../licensing/deviceIdentity");
@@ -303,6 +303,461 @@ function _extractGeneratedPath(runResult, inputData) {
   )}.bbmlic`;
   const fallbackPath = path.join(LICENSE_TOOL_OUTPUT_DIR, fileName);
   return fs.existsSync(fallbackPath) ? fallbackPath : "";
+}
+
+function _findRepoRoot(startDir) {
+  let current = path.resolve(startDir || process.cwd());
+  const root = path.parse(current).root;
+  while (true) {
+    if (fs.existsSync(path.join(current, "package.json")) && fs.existsSync(path.join(current, "scripts", "dist.cjs"))) {
+      return current;
+    }
+    if (current === root) break;
+    current = path.dirname(current);
+  }
+  return "";
+}
+
+function _sanitizeCustomerSlug(value, fallback = "customer") {
+  const cleaned = String(value || "")
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, " ")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return cleaned || fallback;
+}
+
+function _buildCustomerSetupSlug(customer = {}) {
+  const customerNumber = String(customer.customer_number || customer.customerNumber || "").trim();
+  const companyName = String(customer.company_name || customer.companyName || "").trim();
+  const combined = [customerNumber, companyName].filter(Boolean).join(" ");
+  return _sanitizeCustomerSlug(combined);
+}
+
+function _isNodeRunnable(command, { spawnSyncImpl = spawnSync } = {}) {
+  const candidate = String(command || "").trim();
+  if (!candidate) return false;
+  try {
+    const probe = spawnSyncImpl(candidate, ["-v"], {
+      windowsHide: true,
+      stdio: "pipe",
+      encoding: "utf8",
+    });
+    return probe && probe.status === 0;
+  } catch (_err) {
+    return false;
+  }
+}
+
+function resolveNodeExecutableForBuild({
+  env = process.env,
+  existsSync = fs.existsSync,
+  execPath = process.execPath,
+  isElectronRuntime = !!process.versions?.electron,
+  platform = process.platform,
+  spawnSyncImpl = spawnSync,
+} = {}) {
+  const trace = [];
+  const checkExistingExecutable = (label, candidate) => {
+    const value = String(candidate || "").trim();
+    if (!value) return "";
+    if (!existsSync(value)) {
+      trace.push(`${label}:missing`);
+      return "";
+    }
+    if (!_isNodeRunnable(value, { spawnSyncImpl })) {
+      trace.push(`${label}:not-runnable`);
+      return "";
+    }
+    trace.push(`${label}:ok`);
+    return value;
+  };
+
+  const npmNodeExecPath = checkExistingExecutable("npm_node_execpath", env?.npm_node_execpath);
+  if (npmNodeExecPath) return { ok: true, nodeExecutable: npmNodeExecPath, trace };
+
+  const nodeExe = checkExistingExecutable("NODE_EXE", env?.NODE_EXE);
+  if (nodeExe) return { ok: true, nodeExecutable: nodeExe, trace };
+
+  if (!isElectronRuntime) {
+    const currentExec = checkExistingExecutable("process.execPath", execPath);
+    if (currentExec) return { ok: true, nodeExecutable: currentExec, trace };
+  } else {
+    trace.push("process.execPath:skip-electron-runtime");
+  }
+
+  if (_isNodeRunnable("node", { spawnSyncImpl })) {
+    trace.push("node-path:ok");
+    return { ok: true, nodeExecutable: "node", trace };
+  }
+  trace.push("node-path:not-runnable");
+
+  if (platform === "win32") {
+    try {
+      const whereResult = spawnSyncImpl("where.exe", ["node"], {
+        windowsHide: true,
+        stdio: "pipe",
+        encoding: "utf8",
+      });
+      if (whereResult?.status === 0) {
+        const candidates = String(whereResult.stdout || "")
+          .split(/\r?\n/)
+          .map((entry) => entry.trim())
+          .filter(Boolean);
+        for (const candidate of candidates) {
+          if (_isNodeRunnable(candidate, { spawnSyncImpl })) {
+            trace.push(`where.exe:ok:${candidate}`);
+            return { ok: true, nodeExecutable: candidate, trace };
+          }
+        }
+      }
+      trace.push("where.exe:not-runnable");
+    } catch (_err) {
+      trace.push("where.exe:error");
+    }
+  }
+
+  return { ok: false, error: "NODE_EXECUTABLE_NOT_FOUND", nodeExecutable: "", trace };
+}
+
+function _collectSetupArtifacts(outputDir) {
+  const normalizedOutputDir = String(outputDir || "").trim();
+  if (!normalizedOutputDir || !fs.existsSync(normalizedOutputDir)) return [];
+  return fs
+    .readdirSync(normalizedOutputDir)
+    .filter((name) => name.toLowerCase().endsWith(".exe"))
+    .map((name) => path.join(normalizedOutputDir, name));
+}
+
+function _writeCustomerSetupBuildLog({
+  logPath,
+  nodeExecutable,
+  distScriptPath,
+  repoRoot,
+  cwd,
+  outputDir,
+  customerSlug,
+  customerName,
+  licenseFilePath,
+  envSnapshot = {},
+  stdout = "",
+  stderr = "",
+  exitCode = null,
+  artifacts = [],
+}) {
+  try {
+    fs.mkdirSync(path.dirname(logPath), { recursive: true });
+    const lines = [
+      `timestamp: ${new Date().toISOString()}`,
+      `nodeExecutable: ${nodeExecutable || "-"}`,
+      `distScriptPath: ${distScriptPath || "-"}`,
+      `repoRoot: ${repoRoot || "-"}`,
+      `cwd: ${cwd || "-"}`,
+      `outputDir: ${outputDir || "-"}`,
+      `customerSlug: ${customerSlug || "-"}`,
+      `customerName: ${customerName || "-"}`,
+      `licenseFilePath: ${licenseFilePath || "-"}`,
+      `exitCode: ${exitCode === null || exitCode === undefined ? "-" : exitCode}`,
+      `env.BBM_CUSTOMER_LICENSE_FILE: ${envSnapshot.BBM_CUSTOMER_LICENSE_FILE || "-"}`,
+      `env.BBM_CUSTOMER_SLUG: ${envSnapshot.BBM_CUSTOMER_SLUG || "-"}`,
+      `env.BBM_CUSTOMER_NAME: ${envSnapshot.BBM_CUSTOMER_NAME || "-"}`,
+      `artifacts: ${artifacts.length ? artifacts.join(" | ") : "-"}`,
+      "",
+      "stdout:",
+      String(stdout || ""),
+      "",
+      "stderr:",
+      String(stderr || ""),
+    ];
+    fs.writeFileSync(logPath, `${lines.join("\n")}\n`, "utf8");
+  } catch (_err) {
+    // ignore log-write failures
+  }
+}
+
+function _resolveCustomerSetupArtifactPath(outputDir, customerSlug) {
+  const normalizedOutputDir = String(outputDir || "").trim();
+  if (!normalizedOutputDir || !fs.existsSync(normalizedOutputDir)) return "";
+  const safeSlug = _sanitizeCustomerSlug(customerSlug || "");
+  const files = fs.readdirSync(normalizedOutputDir);
+  const setupFile = files.find((name) => name.toLowerCase().endsWith(".exe") && name.includes(safeSlug));
+  return setupFile ? path.join(normalizedOutputDir, setupFile) : "";
+}
+
+function _validateCustomerSetupPayload(raw = {}) {
+  const customer = raw?.customer && typeof raw.customer === "object" ? raw.customer : {};
+  const license = raw?.license && typeof raw.license === "object" ? raw.license : {};
+  const licenseFilePath = String(raw?.licenseFilePath || raw?.license_file_path || "").trim();
+  if (!licenseFilePath) throw new Error("LICENSE_FILE_PATH_REQUIRED");
+  if (!fs.existsSync(licenseFilePath)) throw new Error("LICENSE_FILE_NOT_FOUND");
+
+  const binding = String(license.license_binding || license.licenseBinding || "").trim().toLowerCase();
+  const machineId = String(license.machine_id || license.machineId || "").trim();
+  if (binding === "machine" && !machineId) {
+    throw new Error("MACHINE_ID_REQUIRED_FOR_BINDING");
+  }
+
+  return {
+    customer,
+    license,
+    licenseFilePath,
+    customerSlug: _buildCustomerSetupSlug(customer),
+    customerName: String(customer.company_name || customer.companyName || "").trim(),
+  };
+}
+
+async function _runCustomerSetupBuild(payload = {}, options = {}) {
+  if (app.isPackaged) return { ok: false, error: "CUSTOMER_SETUP_BUILD_NOT_ALLOWED" };
+  const repoRoot = _findRepoRoot(process.cwd());
+  if (!repoRoot) return { ok: false, error: "REPO_ROOT_NOT_FOUND" };
+  const distScriptPath = path.join(repoRoot, "scripts", "dist.cjs");
+  if (!fs.existsSync(distScriptPath)) return { ok: false, error: "DIST_SCRIPT_NOT_FOUND" };
+
+  const validated = _validateCustomerSetupPayload(payload);
+  const outputDir = path.join(repoRoot, "dist", "customers", validated.customerSlug);
+  const nodeResolver = typeof options?.nodeResolver === "function" ? options.nodeResolver : resolveNodeExecutableForBuild;
+  const resolvedNode = nodeResolver();
+  const nodeExe = String(resolvedNode?.nodeExecutable || "").trim();
+  const envForBuild = {
+    ...process.env,
+    BBM_CUSTOMER_LICENSE_FILE: validated.licenseFilePath,
+    BBM_CUSTOMER_SLUG: validated.customerSlug,
+    BBM_CUSTOMER_NAME: validated.customerName,
+  };
+  fs.mkdirSync(outputDir, { recursive: true });
+  const logPath = path.join(outputDir, "customer-setup-build.log");
+  const timeoutMs =
+    Number.isFinite(Number(options?.timeoutMs)) && Number(options.timeoutMs) > 0
+      ? Math.floor(Number(options.timeoutMs))
+      : 15 * 60 * 1000;
+  if (!resolvedNode?.ok || !nodeExe) {
+    _writeCustomerSetupBuildLog({
+      logPath,
+      nodeExecutable: nodeExe,
+      distScriptPath,
+      repoRoot,
+      cwd: repoRoot,
+      outputDir,
+      customerSlug: validated.customerSlug,
+      customerName: validated.customerName,
+      licenseFilePath: validated.licenseFilePath,
+      envSnapshot: envForBuild,
+      stdout: "",
+      stderr: String(resolvedNode?.error || "NODE_EXECUTABLE_NOT_FOUND"),
+      exitCode: null,
+      artifacts: _collectSetupArtifacts(outputDir),
+    });
+    return {
+      ok: false,
+      error: "NODE_EXECUTABLE_NOT_FOUND",
+      nodeExecutable: nodeExe,
+      nodeResolutionTrace: Array.isArray(resolvedNode?.trace) ? resolvedNode.trace : [],
+      distScriptPath,
+      repoRoot,
+      cwd: repoRoot,
+      outputDir,
+      customerSlug: validated.customerSlug,
+      customerName: validated.customerName,
+      licenseFilePath: validated.licenseFilePath,
+      exitCode: null,
+      stdout: "",
+      stderr: "NODE_EXECUTABLE_NOT_FOUND",
+      logPath,
+      env: {
+        BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+        BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
+        BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
+      },
+    };
+  }
+
+  return await new Promise((resolve) => {
+    const child = spawn(nodeExe, [distScriptPath], {
+      cwd: repoRoot,
+      env: envForBuild,
+      windowsHide: true,
+    });
+
+    let stdout = "";
+    let stderr = "";
+    let finished = false;
+    let timeoutHandle = null;
+    const finish = (result) => {
+      if (finished) return;
+      finished = true;
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+      resolve(result);
+    };
+
+    child.stdout.on("data", (chunk) => {
+      stdout += String(chunk || "");
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += String(chunk || "");
+    });
+    child.on("error", (err) => {
+      const localStderr = `${stderr}\n${String(err?.message || err || "")}`.trim();
+      const artifacts = _collectSetupArtifacts(outputDir);
+      _writeCustomerSetupBuildLog({
+        logPath,
+        nodeExecutable: nodeExe,
+        distScriptPath,
+        repoRoot,
+        cwd: repoRoot,
+        outputDir,
+        customerSlug: validated.customerSlug,
+        customerName: validated.customerName,
+        licenseFilePath: validated.licenseFilePath,
+        envSnapshot: envForBuild,
+        stdout,
+        stderr: localStderr,
+        exitCode: null,
+        artifacts,
+      });
+      finish({
+        ok: false,
+        error: "CUSTOMER_SETUP_BUILD_FAILED",
+        repoRoot,
+        outputDir,
+        customerSlug: validated.customerSlug,
+        customerName: validated.customerName,
+        licenseFilePath: validated.licenseFilePath,
+        exitCode: null,
+        nodeExecutable: nodeExe,
+        nodeResolutionTrace: Array.isArray(resolvedNode?.trace) ? resolvedNode.trace : [],
+        distScriptPath,
+        cwd: repoRoot,
+        stdout,
+        stderr: localStderr,
+        logPath,
+        env: {
+          BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+          BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
+          BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
+        },
+      });
+    });
+
+    timeoutHandle = setTimeout(() => {
+      try {
+        child.kill();
+      } catch (_err) {
+        // ignore
+      }
+      const artifacts = _collectSetupArtifacts(outputDir);
+      _writeCustomerSetupBuildLog({
+        logPath,
+        nodeExecutable: nodeExe,
+        distScriptPath,
+        repoRoot,
+        cwd: repoRoot,
+        outputDir,
+        customerSlug: validated.customerSlug,
+        customerName: validated.customerName,
+        licenseFilePath: validated.licenseFilePath,
+        envSnapshot: envForBuild,
+        stdout,
+        stderr,
+        exitCode: null,
+        artifacts,
+      });
+      finish({
+        ok: false,
+        error: "CUSTOMER_SETUP_BUILD_TIMEOUT",
+        repoRoot,
+        outputDir,
+        customerSlug: validated.customerSlug,
+        customerName: validated.customerName,
+        licenseFilePath: validated.licenseFilePath,
+        exitCode: null,
+        nodeExecutable: nodeExe,
+        nodeResolutionTrace: Array.isArray(resolvedNode?.trace) ? resolvedNode.trace : [],
+        distScriptPath,
+        cwd: repoRoot,
+        stdout,
+        stderr,
+        logPath,
+        env: {
+          BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+          BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
+          BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
+        },
+        artifacts,
+      });
+    }, timeoutMs);
+
+    child.on("close", (code) => {
+      const artifactPath = _resolveCustomerSetupArtifactPath(outputDir, validated.customerSlug);
+      const artifacts = _collectSetupArtifacts(outputDir);
+      const diagnostics = {
+        repoRoot,
+        distScriptPath,
+        cwd: repoRoot,
+        outputDir,
+        customerSlug: validated.customerSlug,
+        customerName: validated.customerName,
+        licenseFilePath: validated.licenseFilePath,
+        exitCode: code,
+        nodeExecutable: nodeExe,
+        nodeResolutionTrace: Array.isArray(resolvedNode?.trace) ? resolvedNode.trace : [],
+        stdout,
+        stderr,
+        logPath,
+        env: {
+          BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+          BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
+          BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
+        },
+        artifacts,
+      };
+      _writeCustomerSetupBuildLog({
+        logPath,
+        nodeExecutable: nodeExe,
+        distScriptPath,
+        repoRoot,
+        cwd: repoRoot,
+        outputDir,
+        customerSlug: validated.customerSlug,
+        customerName: validated.customerName,
+        licenseFilePath: validated.licenseFilePath,
+        envSnapshot: envForBuild,
+        stdout,
+        stderr,
+        exitCode: code,
+        artifacts,
+      });
+      if (code !== 0) {
+        const text = `${stdout}\n${stderr}`.toUpperCase();
+        const mappedError = text.includes("ELECTRON_BUILDER_NOT_FOUND")
+          ? "ELECTRON_BUILDER_NOT_FOUND"
+          : "CUSTOMER_SETUP_BUILD_FAILED";
+        finish({ ok: false, error: mappedError, ...diagnostics });
+        return;
+      }
+      const hasOutputDir = fs.existsSync(outputDir);
+      const hasArtifact = !!artifactPath && fs.existsSync(artifactPath);
+      const pathHasSlug = hasArtifact && artifactPath.includes(validated.customerSlug);
+      if (!hasOutputDir || !hasArtifact || !pathHasSlug) {
+        finish({
+          ok: false,
+          error: "CUSTOMER_SETUP_ARTIFACT_NOT_FOUND",
+          setupPath: artifactPath,
+          artifactPath,
+          ...diagnostics,
+        });
+        return;
+      }
+      finish({
+        ok: true,
+        outputDir,
+        setupPath: artifactPath,
+        artifactPath,
+        customerSlug: validated.customerSlug,
+        ...diagnostics,
+      });
+    });
+  });
 }
 
 // Zentrale Laufzeit-/Diagnose-Einstiege des App-Kerns.
@@ -625,6 +1080,17 @@ function registerLicenseAdminDataIpc() {
   ipcMain.handle("license-admin:add-history-entry", async (_event, entry) => {
     return licenseAdminService.addHistoryEntry(entry || {});
   });
+
+  ipcMain.handle("license-admin:create-customer-setup", async (_event, payload) => {
+    try {
+      return await _runCustomerSetupBuild(payload || {});
+    } catch (err) {
+      return {
+        ok: false,
+        error: String(err?.message || err || "CUSTOMER_SETUP_BUILD_FAILED").trim() || "CUSTOMER_SETUP_BUILD_FAILED",
+      };
+    }
+  });
 }
 
 function registerLicenseIpc() {
@@ -636,4 +1102,8 @@ function registerLicenseIpc() {
 
 module.exports = {
   registerLicenseIpc,
+  _buildCustomerSetupSlug,
+  resolveNodeExecutableForBuild,
+  _validateCustomerSetupPayload,
+  _runCustomerSetupBuild,
 };

@@ -47,18 +47,71 @@ function findRepoRoot(start) {
   return null;
 }
 
-function main() {
-  const repoRoot = findRepoRoot(process.cwd());
+function sanitizeCustomerSlug(value) {
+  const cleaned = String(value || "")
+    .trim()
+    .replace(/[<>:"/\\|?*\x00-\x1f]/g, " ")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return cleaned || "customer";
+}
+
+function buildCustomerDistConfig({
+  baseBuild = {},
+  baseVersion = "0.0.0",
+  customerLicenseFile = "",
+  customerSlug = "",
+} = {}) {
+  if (!customerLicenseFile) {
+    return {
+      build: { ...baseBuild },
+      outputDir: String(baseBuild?.directories?.output || "").trim() || "dist",
+      artifactName: null,
+    };
+  }
+
+  const safeSlug = sanitizeCustomerSlug(customerSlug);
+  const outputDir = path.join("dist", "customers", safeSlug);
+  const artifactName = `BBM-${baseVersion}-${safeSlug}-Setup.exe`;
+  const extraResources = Array.isArray(baseBuild.extraResources) ? [...baseBuild.extraResources] : [];
+  extraResources.push({
+    from: customerLicenseFile,
+    to: "license/customer.bbmlic",
+  });
+
+  return {
+    build: {
+      ...baseBuild,
+      npmRebuild: false,
+      buildDependenciesFromSource: false,
+      directories: {
+        ...(baseBuild.directories || {}),
+        output: outputDir,
+      },
+      extraResources,
+      nsis: {
+        ...(baseBuild.nsis || {}),
+        artifactName,
+      },
+    },
+    outputDir,
+    artifactName,
+  };
+}
+
+function runDist({ cwd = process.cwd(), env = process.env } = {}) {
+  const repoRoot = findRepoRoot(cwd);
   if (!repoRoot) {
     console.error("[dist] Fehler: package.json nicht gefunden (Repo-Root).");
-    process.exit(1);
+    return Promise.resolve(1);
   }
 
   const pkgPath = path.join(repoRoot, "package.json");
   const pkg = readJsonSafe(pkgPath);
   if (!pkg) {
     console.error("[dist] Fehler: package.json konnte nicht gelesen werden.");
-    process.exit(1);
+    return Promise.resolve(1);
   }
 
   const baseBuild = pkg.build || {};
@@ -83,10 +136,18 @@ function main() {
 
   const prefix = isDev ? "BBM-DEV" : "BBM";
   const nsisName = `${prefix}-${baseVersion}-Setup.\${ext}`;
+  const customerLicenseFile = String(env.BBM_CUSTOMER_LICENSE_FILE || "").trim();
+  const customerSlug = sanitizeCustomerSlug(env.BBM_CUSTOMER_SLUG || env.BBM_CUSTOMER_NAME || "");
+  const customerConfig = buildCustomerDistConfig({
+    baseBuild,
+    baseVersion,
+    customerLicenseFile,
+    customerSlug,
+  });
 
   // Override-Config für electron-builder (als separate Config-Datei)
   const override = {
-    ...baseBuild,
+    ...customerConfig.build,
     appId,
     productName,
     extraMetadata: {
@@ -95,10 +156,12 @@ function main() {
       buildChannel: channel,
     },
     // ✅ pro Target eigene artifactName (kein ${target})
-    nsis: {
-      ...(baseBuild.nsis || {}),
-      artifactName: nsisName,
-    },
+    nsis: customerLicenseFile
+      ? { ...(customerConfig.build.nsis || {}) }
+      : {
+          ...(baseBuild.nsis || {}),
+          artifactName: nsisName,
+        },
   };
 
   const tmpConfigPath = path.join(repoRoot, "dist", `builder-config-${Date.now()}.json`);
@@ -110,31 +173,64 @@ function main() {
   console.log(" Version: ", baseVersion);
   console.log(" appId:   ", appId);
   console.log(" Name:    ", productName);
-  console.log(" NSIS:    ", nsisName);
+  console.log(" NSIS:    ", customerConfig.artifactName || nsisName);
+  if (customerLicenseFile) {
+    console.log(" Kundenmodus: aktiv");
+    console.log(" Lizenzdatei: ", customerLicenseFile);
+    console.log(" Ausgabe:     ", customerConfig.outputDir);
+  }
   console.log("======================================");
 
   const cliJs = path.join(repoRoot, "node_modules", "electron-builder", "out", "cli", "cli.js");
   if (!fs.existsSync(cliJs)) {
+    console.error("ELECTRON_BUILDER_NOT_FOUND");
     console.error("[dist] Fehler: electron-builder CLI nicht gefunden:", cliJs);
-    process.exit(1);
+    try {
+      fs.unlinkSync(tmpConfigPath);
+    } catch (_e) {}
+    return Promise.resolve(1);
   }
 
   console.log("[dist] Starte electron-builder...");
   console.log("[dist] node", cliJs);
 
-  const child = spawn(process.execPath, [cliJs, "--config", tmpConfigPath], {
-    cwd: repoRoot,
-    stdio: "inherit",
-    windowsHide: false,
-  });
+  return new Promise((resolve) => {
+    const child = spawn(process.execPath, [cliJs, "--config", tmpConfigPath], {
+      cwd: repoRoot,
+      stdio: "inherit",
+      windowsHide: false,
+    });
 
-  child.on("close", (code) => {
-    console.log("[dist] Exitcode:", code);
-    try {
-      fs.unlinkSync(tmpConfigPath);
-    } catch (_e) {}
-    process.exit(code || 0);
+    child.on("error", (err) => {
+      console.error("CUSTOMER_SETUP_BUILD_FAILED");
+      console.error("[dist] Spawn-Fehler:", err?.message || err);
+      try {
+        fs.unlinkSync(tmpConfigPath);
+      } catch (_e) {}
+      resolve(1);
+    });
+
+    child.on("close", (code) => {
+      console.log("[dist] Exitcode:", code);
+      try {
+        fs.unlinkSync(tmpConfigPath);
+      } catch (_e) {}
+      resolve(code || 0);
+    });
   });
 }
 
-main();
+async function main() {
+  const code = await runDist();
+  process.exit(code || 0);
+}
+
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  sanitizeCustomerSlug,
+  buildCustomerDistConfig,
+  runDist,
+};
