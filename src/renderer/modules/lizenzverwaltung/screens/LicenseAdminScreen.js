@@ -479,11 +479,25 @@ export default class LicenseAdminScreen {
       form.append(title, input);
     }
 
+    const customerActions = document.createElement("div");
+    customerActions.style.display = "flex";
+    customerActions.style.gap = "8px";
+
     const actions = document.createElement("div");
     actions.style.display = "flex";
     actions.style.gap = "8px";
+    actions.style.justifyContent = "space-between";
+    actions.style.alignItems = "center";
 
     const licenseSection = document.createElement("div");
+    const customerSection = document.createElement("div");
+    customerSection.style.display = "grid";
+    customerSection.style.gap = "8px";
+    customerSection.style.border = "1px solid #ddd";
+    customerSection.style.borderRadius = "8px";
+    customerSection.style.padding = "12px";
+    const customerTitle = document.createElement("h4");
+    customerTitle.textContent = "Kundendaten";
 
     const saveBtn = this._button("Kunde speichern", async () => {
       try {
@@ -501,6 +515,7 @@ export default class LicenseAdminScreen {
           })
         );
         this.currentCustomer = saved;
+        newLicenseBtn.disabled = false;
         message.textContent = "Kunde gespeichert.";
         await renderLicenses();
       } catch (err) {
@@ -524,15 +539,16 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    actions.append(saveBtn, newLicenseBtn, backBtn);
+    customerActions.append(saveBtn, backBtn);
 
     const renderLicenses = async () => {
       licenseSection.replaceChildren();
       const title = document.createElement("h4");
       title.textContent = "Lizenzen dieses Kunden";
       licenseSection.appendChild(title);
-      licenseSection.style.borderTop = "1px solid #ddd";
-      licenseSection.style.paddingTop = "10px";
+      licenseSection.style.border = "1px solid #ddd";
+      licenseSection.style.borderRadius = "8px";
+      licenseSection.style.padding = "12px";
       if (!this.currentCustomer?.id) {
         const hint = document.createElement("div");
         hint.textContent = "Lizenzen sind verfuegbar, sobald der Kunde gespeichert wurde.";
@@ -549,7 +565,7 @@ export default class LicenseAdminScreen {
       const thead = document.createElement("thead");
       const tbody = document.createElement("tbody");
       const tr = document.createElement("tr");
-      ["Lizenz-ID", "Produktumfang", "gueltig von", "gueltig bis", "Lizenzart", "Gerätebindung"].forEach((label) => {
+      ["Lizenz-ID", "Lizenzart", "Gerätebindung", "Produktumfang", "gueltig von", "gueltig bis", "Aktion"].forEach((label) => {
         const th = document.createElement("th");
         th.textContent = label;
         tr.appendChild(th);
@@ -559,32 +575,36 @@ export default class LicenseAdminScreen {
 
       for (const record of records) {
         const row = document.createElement("tr");
-        row.style.cursor = "pointer";
-        row.onclick = () => {
-          this.currentView = "license-editor";
-          this.currentLicense = record;
-          this._render();
-        };
         const mode = getLicenseEditionAndBinding(record);
         [
           valueOf(record, "license_id", "licenseId") || "-",
+          mode.edition === "full" ? "Vollversion" : "Testlizenz",
+          mode.binding === "machine" ? "An Machine-ID binden" : "Ohne Gerätebindung",
           formatProductScopeForList(record),
           valueOf(record, "valid_from", "validFrom") || "-",
           valueOf(record, "valid_until", "validUntil") || "-",
-          mode.edition === "full" ? "Vollversion" : "Testlizenz",
-          mode.binding === "machine" ? "An Machine-ID binden" : "Ohne Gerätebindung",
         ].forEach((text) => {
           const td = document.createElement("td");
           td.textContent = text;
           row.appendChild(td);
         });
+        const actionCell = document.createElement("td");
+        const openBtn = this._button("Öffnen", () => {
+          this.currentView = "license-editor";
+          this.currentLicense = record;
+          this._render();
+        });
+        actionCell.appendChild(openBtn);
+        row.appendChild(actionCell);
         tbody.appendChild(row);
       }
       licenseSection.appendChild(table);
     };
 
     await renderLicenses();
-    container.append(header, form, actions, message, licenseSection);
+    actions.append(newLicenseBtn);
+    customerSection.append(customerTitle, form, customerActions);
+    container.append(header, customerSection, licenseSection, actions, message);
   }
 
   async _renderLicenseEditor(container) {
@@ -920,7 +940,7 @@ export default class LicenseAdminScreen {
     });
     openOutputDirBtn.style.display = "none";
 
-    const saveBtn = this._button("Merken", async () => {
+    const saveBtn = this._button("Lizenz speichern", async () => {
       try {
         const payload = buildLicenseEditorPayload({
           license,
@@ -952,7 +972,7 @@ export default class LicenseAdminScreen {
       }
     });
 
-    const clearBtn = this._button("Neu / leeren", () => {
+    const clearBtn = this._button("Formular leeren", () => {
       Object.values(inputs).forEach((el) => {
         el.value = "";
       });
@@ -969,7 +989,7 @@ export default class LicenseAdminScreen {
       syncGenerateIdButton();
     });
 
-    const backBtn = this._button("Zurueck zum Kunden", () => {
+    const backBtn = this._button("Zurueck", () => {
       this.currentLicense = null;
       this.currentView = "customer-detail";
       this._render();

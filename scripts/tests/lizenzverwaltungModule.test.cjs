@@ -747,9 +747,17 @@ async function runLizenzverwaltungModuleTests(run) {
 
   await run("LicenseAdminScreen enthaelt kundenbezogene Lizenzfunktionen", () => {
     assert.equal(screenSource.includes("Lizenzen dieses Kunden"), true);
+    assert.equal(screenSource.includes("Kundendaten"), true);
     assert.equal(screenSource.includes("Neue Lizenz"), true);
     assert.equal(screenSource.includes("Zurueck zur Kundenliste"), true);
-    assert.equal(screenSource.includes("Zurueck zum Kunden"), true);
+    assert.equal(screenSource.includes("Lizenz speichern"), true);
+    assert.equal(screenSource.includes("Formular leeren"), true);
+    assert.equal(screenSource.includes("Zurueck"), true);
+    assert.equal(screenSource.includes("Merken"), false);
+    assert.equal(screenSource.includes("Neu / leeren"), false);
+    assert.equal(screenSource.includes("Zurueck zum Kunden"), false);
+    assert.equal(screenSource.includes("Aktion"), true);
+    assert.equal(screenSource.includes("Öffnen"), true);
     assert.equal(screenSource.includes("Lizenzdatei erzeugen"), true);
     assert.equal(screenSource.includes("Ausgabeordner öffnen"), true);
     assert.equal(screenSource.includes("Bitte zuerst die Lizenz speichern."), true);
@@ -762,6 +770,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("\"Gerätebindung\""), true);
     assert.equal(screenSource.includes("licenseGenerate"), true);
     assert.equal(screenSource.includes("licenseOpenOutputDir"), true);
+  });
+
+  await run("Kundendetail: nach Kunde speichern ist Neue Lizenz direkt nutzbar", () => {
+    assert.equal(screenSource.includes("this.currentCustomer = saved;"), true);
+    assert.equal(screenSource.includes("newLicenseBtn.disabled = false;"), true);
   });
 
 
