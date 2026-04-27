@@ -15,9 +15,6 @@ import { applyPopupButtonStyle, applyPopupCardStyle } from "./ui/popupButtonStyl
 const APP_VERSION = "1.0";
 const FEATURE_FLAG_KEY = "bbm.useNewCompanyWorkflow";
 const UI_MODE_KEY = "bbm.uiMode";
-const TRIAL_DAYS_KEY = "trial.daysLimit";
-const TRIAL_ENABLED_KEY = "trial.enabled";
-const TRIAL_FIRST_START_KEY = "trial.firstStartAt";
 const PRINT_V2_PAD_LEFT_KEY = "print.v2.pagePadLeftMm";
 const PRINT_V2_PAD_RIGHT_KEY = "print.v2.pagePadRightMm";
 const PRINT_V2_PAD_TOP_KEY = "print.v2.pagePadTopMm";
@@ -157,68 +154,6 @@ const showStartupOverlay = ({ durationMs = 3000 } = {}) => {
       if (overlay.parentElement) overlay.parentElement.removeChild(overlay);
     }, 280);
   }, Math.max(500, Number(durationMs) || 3000));
-};
-
-const enforceTrialLimit = async () => {
-  const api = window.bbmDb || {};
-  if (typeof api.appSettingsGetMany !== "function") return true;
-
-  let data = {};
-  try {
-    const res = await api.appSettingsGetMany([TRIAL_ENABLED_KEY, TRIAL_DAYS_KEY, TRIAL_FIRST_START_KEY]);
-    if (!res?.ok) return true;
-    data = res.data || {};
-  } catch (_e) {
-    return true;
-  }
-
-  const enabledRaw = String(data[TRIAL_ENABLED_KEY] || "").trim().toLowerCase();
-  const enabled = enabledRaw === "1" || enabledRaw === "true" || enabledRaw === "yes" || enabledRaw === "on";
-  const limit = Math.max(0, Math.floor(Number(data[TRIAL_DAYS_KEY] || 0) || 0));
-  if (!enabled || limit <= 0) return true;
-
-  let firstStart = Math.floor(Number(data[TRIAL_FIRST_START_KEY] || 0) || 0);
-  if (!Number.isFinite(firstStart) || firstStart <= 0) {
-    firstStart = Date.now();
-    if (typeof api.appSettingsSetMany === "function") {
-      try {
-        await api.appSettingsSetMany({ [TRIAL_FIRST_START_KEY]: String(firstStart) });
-      } catch (_e) {
-        // ignore
-      }
-    }
-  }
-
-  const dayMs = 24 * 60 * 60 * 1000;
-  const usedDays = Math.floor((Date.now() - firstStart) / dayMs) + 1;
-  const remainingDays = limit - usedDays;
-
-  // Hinweis in den letzten 5 Tagen vor Ablauf
-  if (remainingDays >= 0 && remainingDays <= 4) {
-    const msg =
-      remainingDays === 0
-        ? "Hinweis: Die Testversion läuft heute ab."
-        : `Hinweis: Die Testversion läuft in ${remainingDays + 1} Tagen ab.`;
-    alert(msg);
-  }
-
-  if (usedDays <= limit) return true;
-
-  alert(`Testversion abgelaufen (${limit} Nutzungstage).`);
-  if (typeof api.appQuit === "function") {
-    try {
-      await api.appQuit();
-      return false;
-    } catch (_e) {
-      // ignore
-    }
-  }
-  try {
-    window.close();
-  } catch (_e) {
-    // ignore
-  }
-  return false;
 };
 
 const ensureInitialPrintLayoutDefaults = async () => {
@@ -1018,8 +953,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     bottomSection.replaceChildren(btnQuit);
   };
 
-  const canContinue = await enforceTrialLimit();
-  if (!canContinue) return;
   await ensureInitialPrintLayoutDefaults();
 
   const uiMode = readUiMode();

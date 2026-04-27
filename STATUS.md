@@ -16,6 +16,16 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Lizenzverwaltung Testzeitraum ist integriert:
+  - Im Admin-Lizenzformular (`Neue Lizenz`) zeigt `Lizenzart = Testlizenz` jetzt den Bereich `Testzeitraum` mit `gueltig von`, `Testdauer` (14/30/60/90/Individuell) und automatischer Berechnung von `gueltig bis`.
+  - Neue Testlizenzen starten mit `Testlizenz`, `Ohne Gerätebindung`, `gueltig von = heute`, `Testdauer = 30 Tage`, `gueltig bis = gueltig von + 30`.
+  - Bei bestehenden Testlizenzen wird die Dauer aus `valid_from`/`valid_until` abgeleitet (14/30/60/90 oder `Individuell`).
+  - Generator-Payload bleibt unverändert maßgeblich über `validFrom`/`validUntil`, `edition=test`, `binding=none`, ohne `machineId` bei `none`.
+- Alte Entwicklungs-Testversionseinstellung ist aus der UI entfernt:
+  - sichtbare Entwicklungstexte `Nutzungstage-Limit aktiv` und `Nutzungstage (0 = aus)` werden nicht mehr angezeigt.
+  - parallele Renderer-Startprüfung über `trial.daysLimit` wurde entfernt; maßgeblich bleibt die signierte Lizenzprüfung.
+- Nächster offener Schritt:
+  - fachliche Sichtprüfung im Adminbereich (Testlizenz 30 Tage, Individuell, Vollversion) und PR-Review gegen `main`.
 - Die Projektverwaltung ist als Renderer-Modul abgeschlossen.
 - Ausgabe / Drucken / E-Mail ist als Renderer-Modul aufgestellt.
   - Keine Sidebar-Anbindung.

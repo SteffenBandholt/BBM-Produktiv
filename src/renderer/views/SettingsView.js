@@ -1039,8 +1039,6 @@ export default class SettingsView {
 
     const TOPS_TITLE_KEY = "tops.titleMax";
     const TOPS_LONG_KEY = "tops.longMax";
-    const TRIAL_DAYS_KEY = "trial.daysLimit";
-    const TRIAL_ENABLED_KEY = "trial.enabled";
     const TOPS_FONT_LIST_KEY = "tops.fontscale.list";
     const TOPS_FONT_EDIT_KEY = "tops.fontscale.editbox";
     const PRINT_V2_PAD_LEFT_KEY = "print.v2.pagePadLeftMm";
@@ -1097,17 +1095,6 @@ export default class SettingsView {
     const isValidInt = (val) => {
       const n = Math.floor(Number(val));
       return Number.isFinite(n) && n > 0;
-    };
-
-    const clampNonNegativeInt = (val, min, max, fallback) => {
-      const n = Math.floor(Number(val));
-      if (!Number.isFinite(n) || n < 0) return fallback;
-      return Math.max(min, Math.min(max, n));
-    };
-
-    const isValidNonNegativeInt = (val) => {
-      const n = Math.floor(Number(val));
-      return Number.isFinite(n) && n >= 0;
     };
 
     const loadTopLimitSettings = async () => {
@@ -1171,107 +1158,6 @@ export default class SettingsView {
     const topsRowLong = mkRow("Langtext max", inpTopsLongMax);
     topsRowLong.style.marginBottom = "4px";
     topsLimitBox.append(topsLimitTitle, topsRowShort, topsRowLong, topsLimitMsg);
-
-    const trialBox = document.createElement("div");
-    applyPopupCardStyle(trialBox);
-    trialBox.style.padding = "8px 10px";
-    trialBox.style.maxWidth = "720px";
-    trialBox.style.marginTop = "0";
-    trialBox.style.boxSizing = "border-box";
-
-    const trialTitle = document.createElement("div");
-    trialTitle.textContent = "Testversion";
-    trialTitle.style.fontWeight = "bold";
-    trialTitle.style.marginBottom = "6px";
-
-    const trialEnabled = document.createElement("input");
-    trialEnabled.type = "checkbox";
-    trialEnabled.checked = false;
-
-    const trialEnabledWrap = document.createElement("div");
-    trialEnabledWrap.style.display = "flex";
-    trialEnabledWrap.style.alignItems = "center";
-    trialEnabledWrap.style.gap = "8px";
-
-    const trialEnabledLabel = document.createElement("div");
-    trialEnabledLabel.textContent = "Nutzungstage-Limit aktiv";
-    trialEnabledWrap.append(trialEnabled, trialEnabledLabel);
-
-    const inpTrialDays = document.createElement("input");
-    inpTrialDays.type = "number";
-    inpTrialDays.min = "0";
-    inpTrialDays.step = "1";
-    inpTrialDays.style.width = "100%";
-
-    const trialStatus = document.createElement("div");
-    trialStatus.style.fontSize = "12px";
-    trialStatus.style.opacity = "0.75";
-    trialStatus.style.marginTop = "4px";
-
-    const loadTrialSettings = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsGetMany !== "function") {
-        trialEnabled.checked = false;
-        inpTrialDays.value = "0";
-        inpTrialDays.disabled = true;
-        inpTrialDays.style.opacity = "0.55";
-        return;
-      }
-      const res = await api.appSettingsGetMany([TRIAL_ENABLED_KEY, TRIAL_DAYS_KEY]);
-      if (!res?.ok) {
-        trialEnabled.checked = false;
-        inpTrialDays.value = "0";
-        inpTrialDays.disabled = true;
-        inpTrialDays.style.opacity = "0.55";
-        return;
-      }
-      const data = res.data || {};
-      const enabledRaw = String(data[TRIAL_ENABLED_KEY] || "").trim().toLowerCase();
-      const enabled = enabledRaw === "1" || enabledRaw === "true" || enabledRaw === "yes" || enabledRaw === "on";
-      const trialDays = clampNonNegativeInt(data[TRIAL_DAYS_KEY], 0, 3650, 0);
-      trialEnabled.checked = enabled;
-      inpTrialDays.value = String(trialDays);
-      inpTrialDays.disabled = !enabled;
-      inpTrialDays.style.opacity = enabled ? "1" : "0.55";
-      trialStatus.textContent = "";
-    };
-
-    const saveTrialSettings = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsSetMany !== "function") {
-        trialStatus.textContent = "Settings-API fehlt (IPC noch nicht aktiv).";
-        return false;
-      }
-      const valid = isValidNonNegativeInt(inpTrialDays.value);
-      const trialDays = clampNonNegativeInt(inpTrialDays.value, 0, 3650, 0);
-      inpTrialDays.value = String(trialDays);
-      const res = await api.appSettingsSetMany({
-        [TRIAL_ENABLED_KEY]: trialEnabled.checked ? "1" : "0",
-        [TRIAL_DAYS_KEY]: String(trialDays),
-      });
-      if (!res?.ok) {
-        trialStatus.textContent = res?.error || "Speichern fehlgeschlagen";
-        return false;
-      }
-      trialStatus.textContent = valid ? "Gespeichert" : "Ung?ltiger Wert ? Standard wurde verwendet.";
-      return true;
-    };
-
-    trialEnabled.addEventListener("change", async () => {
-      inpTrialDays.disabled = !trialEnabled.checked;
-      inpTrialDays.style.opacity = trialEnabled.checked ? "1" : "0.55";
-      await saveTrialSettings();
-    });
-    inpTrialDays.addEventListener("change", async () => {
-      if (!trialEnabled.checked) return;
-      await saveTrialSettings();
-    });
-
-    const trialRowDays = mkRow("Nutzungstage (0 = aus)", inpTrialDays);
-    trialRowDays.style.marginBottom = "4px";
-
-    trialBox.append(trialTitle, trialEnabledWrap, trialRowDays, trialStatus);
-
 
     const printV2LayoutBox = document.createElement("div");
     applyPopupCardStyle(printV2LayoutBox);
@@ -2438,7 +2324,7 @@ export default class SettingsView {
 
     licenseBox.append(licenseTitle, licenseHint, btnLicenseOpen);
 
-    devRightCol.append(devDefaultsBox, licenseBox, topsLimitBox, trialBox);
+    devRightCol.append(devDefaultsBox, licenseBox, topsLimitBox);
     devTopCardsRow.append(versionBox, devRightCol);
 
     const themeBox = document.createElement("div");
@@ -4070,7 +3956,6 @@ export default class SettingsView {
         this._devPopupOpen = true;
         await loadDbDiagnostics();
         await loadTopLimitSettings();
-        await loadTrialSettings();
         await loadVersioningData();
 
         if (versionBox) {
@@ -4097,7 +3982,7 @@ export default class SettingsView {
         const tabVersion = document.createElement("div");
         tabVersion.style.display = "grid";
         tabVersion.style.gap = "10px";
-        tabVersion.append(versionBox, buildChannelBox, devDefaultsBox, trialBox);
+        tabVersion.append(versionBox, buildChannelBox, devDefaultsBox);
 
         const tabDb = document.createElement("div");
         tabDb.style.display = "grid";
@@ -4173,8 +4058,7 @@ export default class SettingsView {
           closeOnly: false,
           saveFn: async () => {
             const okTops = (await saveTopLimitSettings()) !== false;
-            const okTrial = (await saveTrialSettings()) !== false;
-            return okTops && okTrial;
+            return okTops;
           },
         });
       },

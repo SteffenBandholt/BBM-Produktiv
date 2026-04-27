@@ -635,6 +635,18 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(normalizeDateForGenerator("31.13.2026"), "");
   });
 
+  await run("Lizenzverwaltung Testzeitraum: addDaysToIsoDate und getTestDurationDays arbeiten konsistent", async () => {
+    const { addDaysToIsoDate, getTestDurationDays } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+
+    assert.equal(addDaysToIsoDate("2026-01-10", 30), "2026-02-09");
+    assert.equal(addDaysToIsoDate("2026-01-10", 14), "2026-01-24");
+    assert.equal(getTestDurationDays("2026-01-10", "2026-01-24"), 14);
+    assert.equal(getTestDurationDays("2026-01-10", "2026-02-09"), 30);
+    assert.equal(getTestDurationDays("2026-01-10", "2025-12-31"), null);
+  });
+
   await run("Lizenzverwaltung Kompatibilitaet license_mode: soft/full/none/machine", async () => {
     const { getLicenseEditionAndBinding } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")

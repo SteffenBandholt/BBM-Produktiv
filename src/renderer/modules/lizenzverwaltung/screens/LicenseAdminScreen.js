@@ -223,6 +223,30 @@ export function normalizeDateForGenerator(value) {
   return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+export function addDaysToIsoDate(isoDate, daysToAdd = 0) {
+  const normalized = normalizeDateForGenerator(isoDate);
+  if (!normalized) return "";
+  const base = new Date(`${normalized}T00:00:00Z`);
+  if (Number.isNaN(base.getTime())) return "";
+  const normalizedDays = Math.max(0, Math.floor(Number(daysToAdd) || 0));
+  base.setUTCDate(base.getUTCDate() + normalizedDays);
+  return `${String(base.getUTCFullYear()).padStart(4, "0")}-${String(base.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    base.getUTCDate()
+  ).padStart(2, "0")}`;
+}
+
+export function getTestDurationDays(validFrom, validUntil) {
+  const fromIso = normalizeDateForGenerator(validFrom);
+  const untilIso = normalizeDateForGenerator(validUntil);
+  if (!fromIso || !untilIso) return null;
+  const fromDate = new Date(`${fromIso}T00:00:00Z`);
+  const untilDate = new Date(`${untilIso}T00:00:00Z`);
+  if (Number.isNaN(fromDate.getTime()) || Number.isNaN(untilDate.getTime())) return null;
+  const diffMs = untilDate.getTime() - fromDate.getTime();
+  if (diffMs < 0) return null;
+  return Math.floor(diffMs / (24 * 60 * 60 * 1000));
+}
+
 export function getLicenseEditionAndBinding(license = {}) {
   const editionRaw = String(valueOf(license, "license_edition", "licenseEdition")).trim().toLowerCase();
   const bindingRaw = String(valueOf(license, "license_binding", "licenseBinding")).trim().toLowerCase();
@@ -726,6 +750,15 @@ export default class LicenseAdminScreen {
       appendFieldRow(label, input);
     }
 
+    const todayIso = new Date().toISOString().slice(0, 10);
+    const isExistingLicense = !!String(valueOf(license, "id")).trim();
+    if (!isExistingLicense) {
+      inputs.license_edition.value = "test";
+      inputs.license_binding.value = "none";
+      inputs.valid_from.value = todayIso;
+      inputs.valid_until.value = addDaysToIsoDate(todayIso, 30);
+    }
+
     const scopeModel = createDefaultScopeSelection();
     scopeModel.raw = parsedScope.raw;
     scopeModel.zusatzfunktionen = [...parsedScope.zusatzfunktionen];
@@ -873,6 +906,98 @@ export default class LicenseAdminScreen {
     };
     inputs.license_binding?.addEventListener("change", syncMachineIdState);
     syncMachineIdState();
+
+    const testDurationWrap = document.createElement("div");
+    testDurationWrap.style.display = "grid";
+    testDurationWrap.style.gap = "8px";
+    const testDurationSelect = document.createElement("select");
+    [
+      { value: "14", label: "14 Tage" },
+      { value: "30", label: "30 Tage" },
+      { value: "60", label: "60 Tage" },
+      { value: "90", label: "90 Tage" },
+      { value: "custom", label: "Individuell" },
+    ].forEach((entry) => {
+      const option = document.createElement("option");
+      option.value = entry.value;
+      option.textContent = entry.label;
+      testDurationSelect.appendChild(option);
+    });
+    testDurationSelect.id = "license-test-duration";
+    testDurationSelect.style.width = "100%";
+
+    const customDaysInput = document.createElement("input");
+    customDaysInput.type = "number";
+    customDaysInput.min = "1";
+    customDaysInput.max = "365";
+    customDaysInput.step = "1";
+    customDaysInput.id = "license-test-days";
+    customDaysInput.value = "30";
+    customDaysInput.style.width = "100%";
+
+    const customDaysWrap = document.createElement("div");
+    customDaysWrap.style.display = "grid";
+    customDaysWrap.style.gap = "6px";
+    const customDaysLabel = document.createElement("label");
+    customDaysLabel.textContent = "Tage";
+    customDaysWrap.append(customDaysLabel, customDaysInput);
+    testDurationWrap.append(mkSingleFieldWrap("Testdauer", testDurationSelect), customDaysWrap);
+    appendFieldRow("Testzeitraum", testDurationWrap);
+
+    const normalizeCustomDays = () => {
+      const raw = Math.floor(Number(customDaysInput.value) || 30);
+      const normalized = Math.max(1, Math.min(365, raw));
+      customDaysInput.value = String(normalized);
+      return normalized;
+    };
+
+    const resolveDurationForSelection = () => {
+      const selected = String(testDurationSelect.value || "30").trim();
+      if (selected === "custom") return normalizeCustomDays();
+      const numeric = Math.max(1, Math.floor(Number(selected) || 30));
+      return numeric;
+    };
+
+    const applyComputedValidUntil = () => {
+      const validFrom = normalizeDateForGenerator(inputs.valid_from.value);
+      if (!validFrom) return;
+      const durationDays = resolveDurationForSelection();
+      inputs.valid_from.value = validFrom;
+      inputs.valid_until.value = addDaysToIsoDate(validFrom, durationDays);
+    };
+
+    const syncTestPeriodState = () => {
+      const isTest = String(inputs.license_edition?.value || "test").trim().toLowerCase() === "test";
+      const useCustom = String(testDurationSelect.value || "") === "custom";
+      testDurationWrap.style.display = isTest ? "grid" : "none";
+      customDaysWrap.style.display = isTest && useCustom ? "grid" : "none";
+      inputs.valid_until.disabled = isTest;
+      if (isTest) {
+        inputs.license_binding.value = "none";
+        applyComputedValidUntil();
+      }
+      syncMachineIdState();
+    };
+
+    const initialDuration = getTestDurationDays(inputs.valid_from.value, inputs.valid_until.value);
+    if (initialDuration !== null && ["14", "30", "60", "90"].includes(String(initialDuration))) {
+      testDurationSelect.value = String(initialDuration);
+    } else if (initialDuration !== null && initialDuration > 0) {
+      testDurationSelect.value = "custom";
+      customDaysInput.value = String(Math.max(1, Math.min(365, initialDuration)));
+    } else {
+      testDurationSelect.value = "30";
+      customDaysInput.value = "30";
+    }
+
+    testDurationSelect.addEventListener("change", syncTestPeriodState);
+    customDaysInput.addEventListener("change", () => {
+      normalizeCustomDays();
+      syncTestPeriodState();
+    });
+    inputs.valid_from.addEventListener("change", syncTestPeriodState);
+    inputs.license_edition.addEventListener("change", syncTestPeriodState);
+    syncTestPeriodState();
 
     const licenseIdHint = document.createElement("div");
     licenseIdHint.textContent =
@@ -1074,4 +1199,14 @@ export default class LicenseAdminScreen {
     this._render();
     return this.root;
   }
+}
+
+function mkSingleFieldWrap(labelText, fieldNode) {
+  const wrap = document.createElement("div");
+  wrap.style.display = "grid";
+  wrap.style.gap = "6px";
+  const label = document.createElement("label");
+  label.textContent = labelText;
+  wrap.append(label, fieldNode);
+  return wrap;
 }

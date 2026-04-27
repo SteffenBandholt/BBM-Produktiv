@@ -67,6 +67,7 @@ async function runLizenzverwaltungModuleTests(run) {
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const projectWorkspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const settingsViewSource = read("src/renderer/views/SettingsView.js");
+  const rendererMainSource = read("src/renderer/main.js");
   const databaseSource = read("src/main/db/database.js");
   const licenseAdminServiceSource = read("src/main/licensing/licenseAdminService.js");
   const preloadSource = read("src/main/preload.js");
@@ -89,6 +90,29 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal("createLicenseEditorSection" in { getLizenzverwaltungModuleEntry }, false);
     assert.equal(read("src/renderer/modules/lizenzverwaltung/index.js").includes("createLicenseEditorSection"), false);
     assert.equal(read("src/renderer/modules/lizenzverwaltung/screens/index.js").includes("createLicenseEditorSection"), false);
+  });
+
+  await run("Lizenzverwaltung: Testzeitraum-Texte sind im Lizenzeditor vorhanden", () => {
+    assert.equal(screenSource.includes("Testzeitraum"), true);
+    assert.equal(screenSource.includes("Testdauer"), true);
+    assert.equal(screenSource.includes("14 Tage"), true);
+    assert.equal(screenSource.includes("30 Tage"), true);
+    assert.equal(screenSource.includes("60 Tage"), true);
+    assert.equal(screenSource.includes("90 Tage"), true);
+    assert.equal(screenSource.includes("Individuell"), true);
+    assert.equal(screenSource.includes("Tage"), true);
+  });
+
+  await run("Entwicklungseinstellungen: alte Nutzungstage-Texte werden nicht mehr angezeigt", () => {
+    assert.equal(settingsViewSource.includes("Nutzungstage-Limit aktiv"), false);
+    assert.equal(settingsViewSource.includes("Nutzungstage (0 = aus)"), false);
+  });
+
+  await run("Renderer-Start: keine parallele trial.daysLimit-Laufzeitpruefung mehr", () => {
+    assert.equal(rendererMainSource.includes("trial.daysLimit"), false);
+    assert.equal(rendererMainSource.includes("trial.enabled"), false);
+    assert.equal(rendererMainSource.includes("trial.firstStartAt"), false);
+    assert.equal(rendererMainSource.includes("enforceTrialLimit"), false);
   });
 
 
