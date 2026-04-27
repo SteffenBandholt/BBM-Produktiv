@@ -368,6 +368,9 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Bitte zuerst die Lizenz erstellen."), true);
     assert.equal(screenSource.includes("Kunden-Setup wird erstellt ..."), true);
     assert.equal(screenSource.includes("Kunden-Setup wurde erstellt."), true);
+    assert.equal(screenSource.includes("if (!res?.ok)"), true);
+    assert.equal(screenSource.includes("stdout:"), true);
+    assert.equal(screenSource.includes("stderr:"), true);
     assert.equal(screenSource.includes("Lizenz erstellen"), true);
     assert.equal(screenSource.includes("Lizenz-ID erzeugen"), false);
     assert.equal(screenSource.includes("Formular leeren"), false);

@@ -73,7 +73,7 @@ function buildCustomerDistConfig({
 
   const safeSlug = sanitizeCustomerSlug(customerSlug);
   const outputDir = path.join("dist", "customers", safeSlug);
-  const artifactName = `BBM-${baseVersion}-${safeSlug}-Setup.\${ext}`;
+  const artifactName = `BBM-${baseVersion}-${safeSlug}-Setup.exe`;
   const extraResources = Array.isArray(baseBuild.extraResources) ? [...baseBuild.extraResources] : [];
   extraResources.push({
     from: customerLicenseFile,
@@ -181,7 +181,11 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
 
   const cliJs = path.join(repoRoot, "node_modules", "electron-builder", "out", "cli", "cli.js");
   if (!fs.existsSync(cliJs)) {
+    console.error("ELECTRON_BUILDER_NOT_FOUND");
     console.error("[dist] Fehler: electron-builder CLI nicht gefunden:", cliJs);
+    try {
+      fs.unlinkSync(tmpConfigPath);
+    } catch (_e) {}
     return Promise.resolve(1);
   }
 
@@ -193,6 +197,15 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
       cwd: repoRoot,
       stdio: "inherit",
       windowsHide: false,
+    });
+
+    child.on("error", (err) => {
+      console.error("CUSTOMER_SETUP_BUILD_FAILED");
+      console.error("[dist] Spawn-Fehler:", err?.message || err);
+      try {
+        fs.unlinkSync(tmpConfigPath);
+      } catch (_e) {}
+      resolve(1);
     });
 
     child.on("close", (code) => {

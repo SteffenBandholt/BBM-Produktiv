@@ -305,6 +305,13 @@ function valueOf(item, ...keys) {
   return "";
 }
 
+function truncateText(value, maxLen = 280) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (raw.length <= maxLen) return raw;
+  return `${raw.slice(0, maxLen)} ...`;
+}
+
 export function buildCustomerSetupPayload({ customer = {}, license = {} } = {}) {
   const licenseFilePath = valueOf(license, "license_file_path", "licenseFilePath");
   return {
@@ -900,9 +907,18 @@ export default class LicenseAdminScreen {
       createCustomerSetupBtn.disabled = true;
       try {
         message.textContent = "Kunden-Setup wird erstellt ...";
+        setupOutput.textContent = "";
         const res = await createCustomerSetup(payload);
         if (!res?.ok) {
           message.textContent = `Fehler: ${res?.error || "Kunden-Setup konnte nicht erstellt werden."}`;
+          const diagnostics = [];
+          if (res?.outputDir) diagnostics.push(`outputDir: ${res.outputDir}`);
+          if (res?.setupPath || res?.artifactPath) diagnostics.push(`setupPath: ${res.setupPath || res?.artifactPath}`);
+          const stdout = truncateText(res?.stdout);
+          const stderr = truncateText(res?.stderr);
+          if (stdout) diagnostics.push(`stdout: ${stdout}`);
+          if (stderr) diagnostics.push(`stderr: ${stderr}`);
+          setupOutput.textContent = diagnostics.join("\n");
           return;
         }
         message.textContent = "Kunden-Setup wurde erstellt.";

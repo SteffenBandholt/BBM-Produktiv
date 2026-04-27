@@ -165,6 +165,10 @@ Sie ergänzt:
   - Main-/Preload-IPC fuer Build-Aufruf ist angebunden (`license-admin:create-customer-setup` / `licenseAdminCreateCustomerSetup`).
   - Lizenz-Bootstrap liest bei fehlender `userData/license.json` eine gebuendelte `resources/license/customer.bbmlic` und uebernimmt sie als installierte Lizenz; bestehende `userData/license.json` bleibt vorrangig.
   - `licenseVerifier.js` Produktpruefung bleibt unveraendert.
+- Lizenzverwaltung Kunden-Setup-Nachbesserung ist umgesetzt:
+  - Erfolgsmeldung fuer `Kunden-Setup wurde erstellt.` wird nur noch gesetzt, wenn ein echtes Setup-Artefakt im Kunden-Ausgabeordner gefunden wurde.
+  - Fehlt Kunden-Ausgabeordner oder Setup-`.exe`, liefert der Main-Flow `CUSTOMER_SETUP_ARTIFACT_NOT_FOUND` statt false-positive Erfolg.
+  - Build-Diagnose wird mitgegeben (`repoRoot`, `outputDir`, `customerSlug`, `licenseFilePath`, `exitCode`, `stdout`, `stderr`) und im UI bei Fehlern sichtbar gemacht.
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.

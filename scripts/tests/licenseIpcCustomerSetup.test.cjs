@@ -1,9 +1,32 @@
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
+const EventEmitter = require('node:events');
 const Module = require('node:module');
+const REAL_REPO_ROOT = process.cwd();
 
-function withLicenseIpcModule(fn) {
+function createFakeChild({ exitCode = 0, stdout = '', stderr = '', error = null } = {}) {
+  const child = new EventEmitter();
+  child.stdout = new EventEmitter();
+  child.stderr = new EventEmitter();
+  process.nextTick(() => {
+    if (stdout) child.stdout.emit('data', stdout);
+    if (stderr) child.stderr.emit('data', stderr);
+    if (error) {
+      child.emit('error', error);
+      return;
+    }
+    child.emit('close', exitCode);
+  });
+  return child;
+}
+
+function withLicenseIpcModule({ spawnImpl, cwd } = {}, fn) {
   const originalLoad = Module._load;
+  const originalCwd = process.cwd();
+  if (cwd) process.chdir(cwd);
+
   Module._load = function patched(request, parent, isMain) {
     if (request === 'electron' && String(parent?.filename || '').endsWith('licenseIpc.js')) {
       return {
@@ -13,6 +36,9 @@ function withLicenseIpcModule(fn) {
         ipcMain: { handle: () => {} },
         shell: { openPath: async () => '' },
       };
+    }
+    if (request === 'child_process' && String(parent?.filename || '').endsWith('licenseIpc.js')) {
+      return { spawn: spawnImpl || (() => createFakeChild()) };
     }
     if (request.endsWith('/licenseStorage') || request === '../licensing/licenseStorage') {
       return { saveLicense: () => ({}), loadLicense: () => null, deleteLicense: () => true };
@@ -40,27 +66,117 @@ function withLicenseIpcModule(fn) {
     return originalLoad.apply(this, arguments);
   };
   try {
-    const modPath = path.join(process.cwd(), 'src/main/ipc/licenseIpc.js');
+    const modPath = path.join(REAL_REPO_ROOT, 'src/main/ipc/licenseIpc.js');
     delete require.cache[require.resolve(modPath)];
     const mod = require(modPath);
     return fn(mod);
   } finally {
     Module._load = originalLoad;
+    if (cwd) process.chdir(originalCwd);
+  }
+}
+
+async function withTempRepo(setupFn, fn) {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'bbm-license-ipc-'));
+  const repoRoot = path.join(tmp, 'repo');
+  fs.mkdirSync(path.join(repoRoot, 'scripts'), { recursive: true });
+  fs.writeFileSync(path.join(repoRoot, 'package.json'), '{"name":"x"}', 'utf8');
+  fs.writeFileSync(path.join(repoRoot, 'scripts', 'dist.cjs'), 'console.log("fake");', 'utf8');
+  const licenseFilePath = path.join(repoRoot, 'tmp-license.bbmlic');
+  fs.writeFileSync(licenseFilePath, '{}', 'utf8');
+  setupFn({ repoRoot, licenseFilePath });
+  try {
+    return await fn({ repoRoot, licenseFilePath });
+  } finally {
+    fs.rmSync(tmp, { recursive: true, force: true });
   }
 }
 
 async function runLicenseIpcCustomerSetupTests(run) {
   await run('licenseIpc: Kunden-Slug aus Kundennummer + Firmenname wird sicher gebaut', () => {
-    withLicenseIpcModule((mod) => {
+    withLicenseIpcModule({}, (mod) => {
       const slug = mod._buildCustomerSetupSlug({ customer_number: 'K-100', company_name: 'Musterfirma GmbH' });
       assert.equal(slug, 'K-100-Musterfirma-GmbH');
     });
   });
 
   await run('licenseIpc: fehlender licenseFilePath blockiert Kunden-Setup-Payload', () => {
-    withLicenseIpcModule((mod) => {
+    withLicenseIpcModule({}, (mod) => {
       assert.throws(() => mod._validateCustomerSetupPayload({ customer: {}, license: {} }), /LICENSE_FILE_PATH_REQUIRED/);
     });
+  });
+
+  await run('licenseIpc: exitCode 0 aber outputDir fehlt -> CUSTOMER_SETUP_ARTIFACT_NOT_FOUND', async () => {
+    await withTempRepo(
+      () => {},
+      async ({ repoRoot, licenseFilePath }) => {
+        await withLicenseIpcModule(
+          { cwd: repoRoot, spawnImpl: () => createFakeChild({ exitCode: 0, stdout: 'ok-log', stderr: 'warn-log' }) },
+          async (mod) => {
+            const res = await mod._runCustomerSetupBuild({
+              customer: { customer_number: 'K-10', company_name: 'Alpha GmbH' },
+              license: { license_binding: 'none' },
+              licenseFilePath,
+            });
+            assert.equal(res.ok, false);
+            assert.equal(res.error, 'CUSTOMER_SETUP_ARTIFACT_NOT_FOUND');
+            assert.equal(res.customerSlug, 'K-10-Alpha-GmbH');
+            assert.equal(res.exitCode, 0);
+            assert.equal(res.stdout.includes('ok-log'), true);
+            assert.equal(res.stderr.includes('warn-log'), true);
+          }
+        );
+      }
+    );
+  });
+
+  await run('licenseIpc: outputDir ohne .exe -> CUSTOMER_SETUP_ARTIFACT_NOT_FOUND', async () => {
+    await withTempRepo(
+      ({ repoRoot }) => {
+        fs.mkdirSync(path.join(repoRoot, 'dist', 'customers', 'K-11-Beta-GmbH'), { recursive: true });
+        fs.writeFileSync(path.join(repoRoot, 'dist', 'customers', 'K-11-Beta-GmbH', 'readme.txt'), 'x', 'utf8');
+      },
+      async ({ repoRoot, licenseFilePath }) => {
+        await withLicenseIpcModule(
+          { cwd: repoRoot, spawnImpl: () => createFakeChild({ exitCode: 0 }) },
+          async (mod) => {
+            const res = await mod._runCustomerSetupBuild({
+              customer: { customer_number: 'K-11', company_name: 'Beta GmbH' },
+              license: { license_binding: 'none' },
+              licenseFilePath,
+            });
+            assert.equal(res.ok, false);
+            assert.equal(res.error, 'CUSTOMER_SETUP_ARTIFACT_NOT_FOUND');
+          }
+        );
+      }
+    );
+  });
+
+  await run('licenseIpc: outputDir mit slug-.exe -> ok true + artifactPath', async () => {
+    await withTempRepo(
+      ({ repoRoot }) => {
+        const outDir = path.join(repoRoot, 'dist', 'customers', 'K-12-Gamma-GmbH');
+        fs.mkdirSync(outDir, { recursive: true });
+        fs.writeFileSync(path.join(outDir, 'BBM-1.5.0-K-12-Gamma-GmbH-Setup.exe'), 'bin', 'utf8');
+      },
+      async ({ repoRoot, licenseFilePath }) => {
+        await withLicenseIpcModule(
+          { cwd: repoRoot, spawnImpl: () => createFakeChild({ exitCode: 0, stdout: 'builder-start' }) },
+          async (mod) => {
+            const res = await mod._runCustomerSetupBuild({
+              customer: { customer_number: 'K-12', company_name: 'Gamma GmbH' },
+              license: { license_binding: 'none' },
+              licenseFilePath,
+            });
+            assert.equal(res.ok, true);
+            assert.equal(res.artifactPath.includes('K-12-Gamma-GmbH'), true);
+            assert.equal(res.setupPath.includes('.exe'), true);
+            assert.equal(res.stdout.includes('builder-start'), true);
+          }
+        );
+      }
+    );
   });
 }
 

@@ -341,9 +341,7 @@ function _resolveCustomerSetupArtifactPath(outputDir, customerSlug) {
   const safeSlug = _sanitizeCustomerSlug(customerSlug || "");
   const files = fs.readdirSync(normalizedOutputDir);
   const setupFile = files.find((name) => name.toLowerCase().endsWith(".exe") && name.includes(safeSlug));
-  if (setupFile) return path.join(normalizedOutputDir, setupFile);
-  const anyExe = files.find((name) => name.toLowerCase().endsWith(".exe"));
-  return anyExe ? path.join(normalizedOutputDir, anyExe) : "";
+  return setupFile ? path.join(normalizedOutputDir, setupFile) : "";
 }
 
 function _validateCustomerSetupPayload(raw = {}) {
@@ -390,23 +388,74 @@ async function _runCustomerSetupBuild(payload = {}) {
       windowsHide: true,
     });
 
+    let stdout = "";
     let stderr = "";
+    let finished = false;
+    const finish = (result) => {
+      if (finished) return;
+      finished = true;
+      resolve(result);
+    };
+
+    child.stdout.on("data", (chunk) => {
+      stdout += String(chunk || "");
+    });
     child.stderr.on("data", (chunk) => {
       stderr += String(chunk || "");
     });
+    child.on("error", (err) => {
+      finish({
+        ok: false,
+        error: "CUSTOMER_SETUP_BUILD_FAILED",
+        repoRoot,
+        outputDir,
+        customerSlug: validated.customerSlug,
+        licenseFilePath: validated.licenseFilePath,
+        exitCode: null,
+        stdout,
+        stderr: `${stderr}\n${String(err?.message || err || "")}`.trim(),
+      });
+    });
 
     child.on("close", (code) => {
+      const artifactPath = _resolveCustomerSetupArtifactPath(outputDir, validated.customerSlug);
+      const diagnostics = {
+        repoRoot,
+        outputDir,
+        customerSlug: validated.customerSlug,
+        licenseFilePath: validated.licenseFilePath,
+        exitCode: code,
+        stdout,
+        stderr,
+      };
       if (code !== 0) {
-        resolve({ ok: false, error: (stderr || "").trim() || "CUSTOMER_SETUP_BUILD_FAILED" });
+        const text = `${stdout}\n${stderr}`.toUpperCase();
+        const mappedError = text.includes("ELECTRON_BUILDER_NOT_FOUND")
+          ? "ELECTRON_BUILDER_NOT_FOUND"
+          : "CUSTOMER_SETUP_BUILD_FAILED";
+        finish({ ok: false, error: mappedError, ...diagnostics });
         return;
       }
-      const artifactPath = _resolveCustomerSetupArtifactPath(outputDir, validated.customerSlug);
-      resolve({
+      const hasOutputDir = fs.existsSync(outputDir);
+      const hasArtifact = !!artifactPath && fs.existsSync(artifactPath);
+      const pathHasSlug = hasArtifact && artifactPath.includes(validated.customerSlug);
+      if (!hasOutputDir || !hasArtifact || !pathHasSlug) {
+        finish({
+          ok: false,
+          error: "CUSTOMER_SETUP_ARTIFACT_NOT_FOUND",
+          setupPath: artifactPath,
+          artifactPath,
+          ...diagnostics,
+        });
+        return;
+      }
+      finish({
         ok: true,
         outputDir,
         setupPath: artifactPath,
         artifactPath,
         customerSlug: validated.customerSlug,
+        ...diagnostics,
       });
     });
   });
@@ -756,4 +805,5 @@ module.exports = {
   registerLicenseIpc,
   _buildCustomerSetupSlug,
   _validateCustomerSetupPayload,
+  _runCustomerSetupBuild,
 };
