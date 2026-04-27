@@ -353,10 +353,23 @@ async function runLicenseAdminDataflowTests(run) {
     );
     assert.equal(formatProductScopeForList({}), "-");
   });
+
+  await run("Lizenzverwaltung UI-Liste: Produktumfang mit leeren Arrays zeigt '-'", async () => {
+    const { formatProductScopeForList } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    assert.equal(
+      formatProductScopeForList({
+        product_scope_json: JSON.stringify({ standardumfang: [], zusatzfunktionen: [], module: [] }),
+      }),
+      "-"
+    );
+  });
   await run("Lizenzverwaltung UI-Lizenz-Editor: Eingabewerte werden vollstaendig ins Save-Payload uebernommen", async () => {
     const {
       assertCustomerContext,
       createGeneratedLicenseId,
+      tryGenerateLicenseId,
       buildLicenseEditorPayload,
       buildCustomerEditorPayload,
     } = await importEsmFromFile(path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js"));
@@ -365,6 +378,9 @@ async function runLicenseAdminDataflowTests(run) {
     assert.throws(() => assertCustomerContext({}), /CUSTOMER_CONTEXT_REQUIRED/);
     const fixedLocalDate = new Date(2026, 3, 26, 13, 14, 15);
     assert.equal(createGeneratedLicenseId(fixedLocalDate), "LIC-20260426-131415");
+    assert.equal(tryGenerateLicenseId("", fixedLocalDate).value, "LIC-20260426-131415");
+    assert.equal(tryGenerateLicenseId("MANUELL-1", fixedLocalDate).generated, false);
+    assert.equal(tryGenerateLicenseId("MANUELL-1", fixedLocalDate).value, "MANUELL-1");
 
     const payload = buildLicenseEditorPayload({
       customer: { id: "customer-55" },

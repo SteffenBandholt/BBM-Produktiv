@@ -747,7 +747,7 @@ async function runLizenzverwaltungModuleTests(run) {
   });
 
   await run("LicenseAdminScreen zeigt Speicherkontext und Kundenpflicht", () => {
-    assert.equal(screenSource.includes("Kunde:"), true);
+    assert.equal(screenSource.includes("Kundenkontext:"), true);
     assert.equal(screenSource.includes("CUSTOMER_CONTEXT_REQUIRED"), true);
     assert.equal(screenSource.includes("Speichern ohne geoeffneten Kunden ist unmoeglich"), true);
   });
