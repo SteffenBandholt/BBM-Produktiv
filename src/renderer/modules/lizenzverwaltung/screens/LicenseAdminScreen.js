@@ -513,16 +513,9 @@ export default class LicenseAdminScreen {
       previous: parsedScope.original,
     };
 
-    const productWrap = document.createElement("div");
-    productWrap.style.display = "grid";
-    productWrap.style.gap = "8px";
-
-    const productHint = document.createElement("div");
-    productHint.textContent = `Produkt: ${PRODUCT_LABEL}`;
-
     const standardWrap = document.createElement("div");
     standardWrap.style.display = "grid";
-    standardWrap.style.gap = "4px";
+    standardWrap.style.gap = "6px";
     STANDARD_SCOPE_KEYS.forEach((key) => {
       const row = document.createElement("label");
       row.style.display = "flex";
@@ -540,7 +533,7 @@ export default class LicenseAdminScreen {
 
     const extrasWrap = document.createElement("div");
     extrasWrap.style.display = "grid";
-    extrasWrap.style.gap = "4px";
+    extrasWrap.style.gap = "6px";
 
     ADDITIONAL_FEATURES.forEach((entry) => {
       const row = document.createElement("label");
@@ -566,7 +559,7 @@ export default class LicenseAdminScreen {
 
     const moduleWrap = document.createElement("div");
     moduleWrap.style.display = "grid";
-    moduleWrap.style.gap = "4px";
+    moduleWrap.style.gap = "6px";
 
     MODULE_KEYS.forEach((entry) => {
       const row = document.createElement("label");
@@ -590,12 +583,50 @@ export default class LicenseAdminScreen {
       moduleWrap.appendChild(row);
     });
 
-    productWrap.append(productHint);
+    const scopeEditorWrap = document.createElement("div");
+    scopeEditorWrap.style.display = "grid";
+    scopeEditorWrap.style.gap = "10px";
 
-    appendFieldRow("Produkt", productWrap);
-    appendFieldRow("Standardumfang", standardWrap);
-    appendFieldRow("Zusatzfunktionen", extrasWrap);
-    appendFieldRow("Module", moduleWrap);
+    const productCard = document.createElement("div");
+    productCard.style.border = "1px solid #ddd";
+    productCard.style.borderRadius = "8px";
+    productCard.style.padding = "10px";
+    productCard.style.display = "grid";
+    productCard.style.gap = "4px";
+    const productTitle = document.createElement("div");
+    productTitle.textContent = "Produkt";
+    productTitle.style.fontWeight = "600";
+    const productHint = document.createElement("div");
+    productHint.textContent = PRODUCT_LABEL;
+    productCard.append(productTitle, productHint);
+
+    const categoryGrid = document.createElement("div");
+    categoryGrid.style.display = "grid";
+    categoryGrid.style.gridTemplateColumns = "repeat(auto-fit, minmax(180px, 1fr))";
+    categoryGrid.style.gap = "10px";
+
+    const createCategoryCard = (title, body) => {
+      const card = document.createElement("div");
+      card.style.border = "1px solid #ddd";
+      card.style.borderRadius = "8px";
+      card.style.padding = "10px";
+      card.style.display = "grid";
+      card.style.gap = "8px";
+      const heading = document.createElement("div");
+      heading.textContent = title;
+      heading.style.fontWeight = "600";
+      card.append(heading, body);
+      return card;
+    };
+
+    categoryGrid.append(
+      createCategoryCard("Standardumfang", standardWrap),
+      createCategoryCard("Zusatzfunktionen", extrasWrap),
+      createCategoryCard("Module", moduleWrap)
+    );
+
+    scopeEditorWrap.append(productCard, categoryGrid);
+    appendFieldRow("Lizenzumfang", scopeEditorWrap);
 
     if (scopeModel.raw) {
       const legacyHint = document.createElement("div");
