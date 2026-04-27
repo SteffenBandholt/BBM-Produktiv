@@ -333,18 +333,33 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(out, "Sonderumfang A");
   });
 
-  await run("Lizenzverwaltung UI-Liste: Produktumfang aus standardumfang/zusatzfunktionen/module wird kurz formatiert", async () => {
+  await run("Lizenzverwaltung UI-Liste: Produktumfang aus Struktur wird lesbar formatiert", async () => {
     const { formatProductScopeForList } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
     );
     const out = formatProductScopeForList({
       product_scope_json: JSON.stringify({
-        standardumfang: ["app", "pdf"],
+        product: "bbm-produktiv",
+        standardumfang: ["app", "pdf", "export"],
         zusatzfunktionen: ["mail"],
-        module: ["Protokoll"],
+        module: ["protokoll"],
       }),
     });
-    assert.equal(out, "std:app,pdf | zus:mail | mod:Protokoll");
+    assert.equal(out, "BBM-Produktiv | App, PDF, Export | Mail | Modul: Protokoll");
+  });
+
+  await run("Lizenzverwaltung UI-Liste: Dictate wird angezeigt, auch wenn audio gespeichert ist", async () => {
+    const { formatProductScopeForList } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    const out = formatProductScopeForList({
+      product_scope_json: JSON.stringify({
+        product: "bbm-produktiv",
+        standardumfang: ["app", "pdf", "export"],
+        zusatzfunktionen: ["mail", "audio"],
+      }),
+    });
+    assert.equal(out, "BBM-Produktiv | App, PDF, Export | Mail, Dictate");
   });
 
   await run("Lizenzverwaltung UI-Liste: Produktumfang ohne Daten zeigt '-'", async () => {
