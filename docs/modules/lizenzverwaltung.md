@@ -43,6 +43,49 @@ Module:
 - `Protokoll`
 - `Dummy`
 
+### Begriffe und Bindung
+Die Lizenzverwaltung unterscheidet fachlich zwischen zwei Achsen:
+- `Lizenzart`: `Testlizenz` / `Vollversion`
+- `Gerätebindung`: `Ohne Gerätebindung` / `An Machine-ID gebunden`
+
+Wichtig:
+- `Vollversion` bedeutet nicht automatisch eine Machine-ID-Bindung.
+- `Machine-Binding` ist eine eigene Gerätebindungs-Entscheidung und kein bloßer Unterfall der Lizenzart.
+
+#### Testlizenz
+- keine Machine-ID
+- `trialDurationDays` ist signiert in der Lizenz enthalten
+- der Testzeitraum startet bei erster Installation oder erstem Start
+- der bestehende Stand bleibt unverändert
+
+#### Vollversion ohne Machine-ID
+- grundsätzlich möglich
+- nicht an ein Gerät gebunden
+
+#### Vollversion mit Machine-ID
+- die endgültige Lizenz kann erst erzeugt werden, wenn die Machine-ID bekannt ist
+- der Ablauf läuft über Lizenzanforderung und Antwortlizenz
+
+### Geplanter Machine-Binding-Ablauf
+Der geplante Ablauf für Vollversionen mit Machine-ID ist verbindlich wie folgt beschrieben:
+1. Kunde installiert die App.
+2. Die App zeigt `Lizenz erforderlich`.
+3. Die App erzeugt eine Lizenzanforderung mit Machine-ID.
+4. Der Admin importiert die Lizenzanforderung.
+5. Die Machine-ID wird in die Kundenlizenz übernommen.
+6. Der Admin erzeugt eine signierte `.bbmlic` mit `binding=machine` und `machineId`.
+7. Der Kunde importiert die Antwortlizenz.
+8. Die App prüft die Machine-ID.
+
+### Nicht Teil dieses Schrittes
+- keine Lizenzanforderungs-UI
+- kein Import
+- kein Mailversand
+- keine PDF-Anzeige
+- keine Header/Home-Lizenzinfo
+- keine Änderung an `licenseVerifier.js`
+- keine Änderung an Setup/Kunden-Setup
+
 ### Regeln
 - Standardumfang ist immer enthalten.
 - Zusatzfunktionen sind zuschaltbar.
@@ -119,11 +162,19 @@ Vorgesehene Felder:
 - Produktumfang
 - gültig von
 - gültig bis
-- Lizenzmodus: Soft-Lizenz / Vollversion
+- Lizenzart: Testlizenz / Vollversion
+- Gerätebindung: Ohne Gerätebindung / An Machine-ID gebunden
 - Machine-ID optional
 - Notizen
 
 Hinweis: Bei neuen Lizenzen kann die Lizenz-ID automatisch erzeugt werden, wenn das Feld leer bleibt.
+
+#### Zielbild für Machine-Binding
+- Testlizenzen enthalten keine Machine-ID.
+- Vollversionen können ohne Machine-ID ausgegeben werden.
+- Vollversionen mit Machine-ID brauchen vor der finalen Erzeugung eine bekannte Machine-ID.
+- Die Machine-ID ist bei gebundenen Vollversionen Teil der auszugebenden Antwortlizenz.
+- Die Kind-App erhält später nur prüfrelevante Lizenzdaten und die Maschinenbindung, nicht die Admin-Historie.
 
 ### Historie
 Die Historie dokumentiert erzeugte oder neu ausgegebene Lizenzdateien.

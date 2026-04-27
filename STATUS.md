@@ -49,6 +49,8 @@ Sie ergänzt:
   - `Zusatzfunktionen` (mail, Dictate) bleiben auswaehlbar.
   - `Module` (Protokoll, Dummy) sind als vorbereitet markiert und noch nicht aktiv angebunden.
 - Lizenzverwaltung ist als eigenes Zielmodul geplant; die Detailbeschreibung liegt unter `docs/modules/lizenzverwaltung.md`.
+  - Dort ist jetzt auch der geplante Machine-Binding-Ablauf fuer Vollversionen mit Machine-ID verbindlich beschrieben.
+  - Lizenzart (`Testlizenz` / `Vollversion`) und Gerätebindung (`Ohne Gerätebindung` / `An Machine-ID gebunden`) sind dort fachlich getrennt festgehalten.
 - Lizenzverwaltung Paket 1 ist vorbereitet:
   - neues Modulverzeichnis `src/renderer/modules/lizenzverwaltung/` mit Skeleton-Screen
   - Einstieg `Adminbereich` als eigene Kachel auf oberster Ebene in `Einstellungen` angebunden
