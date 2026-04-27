@@ -136,6 +136,13 @@ Sie ergänzt:
   - Ohne ableitbare Features wird Erzeugung blockiert (`Produktumfang enthält keine erzeugbaren Features.`).
   - Bei Erfolg wird der Ausgabepfad angezeigt und `Ausgabeordner öffnen` nutzt bestehendes `window.bbmDb.licenseOpenOutputDir(...)`.
   - Bestehende Main-IPC-Infrastruktur (`license:generate`, `license:open-output-dir`) wurde weiterverwendet, keine neue Generator-Architektur.
+- Lizenzverwaltung Nachbesserung ist umgesetzt:
+  - Lizenzformular trennt jetzt fachlich `Lizenzart` (Testlizenz/Vollversion) und `Gerätebindung` (none/machine); `Lizenzmodus` ist nicht mehr das führende Bedienfeld.
+  - Datumsfelder im Admin-Lizenzformular laufen als Date-Inputs; Generator-Payload normalisiert zusaetzlich ISO- und deutsche Eingaben (`TT.MM.JJJJ` -> `JJJJ-MM-TT`), um `VALID_FROM_REQUIRED` zu vermeiden.
+  - Bei `Gerätebindung = machine` wird `Machine-ID` vor `licenseGenerate` verpflichtend geprüft; bei `none` bleibt Machine-ID optional und wird nicht übergeben.
+  - Kompatibilität fuer Altwerte in `license_mode` bleibt erhalten (`soft/full/none/machine` -> sinnvolle Edition/Binding-Ableitung), neue Felder `license_edition`/`license_binding` haben Vorrang.
+  - DB-Schema `license_records` wurde nicht-destruktiv um optionale Spalten `license_edition` und `license_binding` ergänzt.
+  - Main-Service und Renderer-Normalisierung akzeptieren/liefern snake_case + camelCase für Edition/Binding.
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
@@ -196,6 +203,26 @@ Sie ergänzt:
 ## Erledigte Meilensteine / Pakete
 
 ### Erledigt
+#### Paket: PR #39 Nachbesserung - Lizenzart/Geraetebindung getrennt und Datumsnormalisierung
+- Status: erledigt
+- Beschreibung:
+  - `LicenseAdminScreen` trennt nun `Lizenzart` und `Gerätebindung` im Formular, inklusive Machine-ID-Enable/Disable je Binding.
+  - Generator-Payload nutzt jetzt Edition/Binding aus neuen Feldern (mit Legacy-Fallback), normalisiert Datumswerte und validiert Machine-ID/Data vor dem IPC-Aufruf.
+  - DB-Schema und Main-Service wurden fuer optionale Felder `license_edition`/`license_binding` erweitert (nicht-destruktiv, keine neue Tabelle).
+  - Normalisierer/Tests wurden auf Kompatibilität von legacy `license_mode` + neue Felder angepasst.
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `src/renderer/modules/lizenzverwaltung/licenseRecords.js`
+  - `src/main/licensing/licenseAdminService.js`
+  - `src/main/db/database.js`
+  - `scripts/tests/licenseAdminDataflow.test.cjs`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine neue Generator-IPC, keine Setup-/App-Sperrlogik-Aenderung, keine Sidebar-/Projektmodul-Aenderung
+
 #### Paket: Admin-Lizenzformular an bestehende Lizenzdatei-Erzeugung angebunden
 - Status: erledigt
 - Beschreibung:

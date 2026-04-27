@@ -178,6 +178,55 @@ export function mapLicenseModeToGeneratorBinding(licenseMode) {
   return "";
 }
 
+export function mapLegacyLicenseModeToEditionAndBinding(licenseMode) {
+  const normalized = String(licenseMode || "").trim().toLowerCase();
+  if (normalized === "full") return { edition: "full", binding: "machine" };
+  if (normalized === "machine") return { edition: "full", binding: "machine" };
+  if (normalized === "none") return { edition: "test", binding: "none" };
+  if (normalized === "soft") return { edition: "test", binding: "none" };
+  return { edition: "test", binding: "none" };
+}
+
+export function normalizeDateForGenerator(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const isoMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoMatch) {
+    const date = new Date(`${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}T00:00:00Z`);
+    if (Number.isNaN(date.getTime())) return "";
+    if (
+      date.getUTCFullYear() !== Number(isoMatch[1]) ||
+      date.getUTCMonth() + 1 !== Number(isoMatch[2]) ||
+      date.getUTCDate() !== Number(isoMatch[3])
+    ) {
+      return "";
+    }
+    return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  }
+
+  const deMatch = raw.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (!deMatch) return "";
+  const day = Number(deMatch[1]);
+  const month = Number(deMatch[2]);
+  const year = Number(deMatch[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (Number.isNaN(date.getTime())) return "";
+  if (date.getUTCFullYear() !== year || date.getUTCMonth() + 1 !== month || date.getUTCDate() !== day) return "";
+  return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+export function getLicenseEditionAndBinding(license = {}) {
+  const editionRaw = String(valueOf(license, "license_edition", "licenseEdition")).trim().toLowerCase();
+  const bindingRaw = String(valueOf(license, "license_binding", "licenseBinding")).trim().toLowerCase();
+  const hasEdition = editionRaw === "test" || editionRaw === "full";
+  const hasBinding = bindingRaw === "none" || bindingRaw === "machine";
+  const legacy = mapLegacyLicenseModeToEditionAndBinding(valueOf(license, "license_mode", "licenseMode"));
+  return {
+    edition: hasEdition ? editionRaw : legacy.edition,
+    binding: hasBinding ? bindingRaw : legacy.binding,
+  };
+}
+
 export function parseGeneratorFeaturesFromProductScope(rawValue) {
   const trimmed = String(rawValue || "").trim();
   if (!trimmed) return [];
@@ -213,21 +262,23 @@ export function buildLicenseGeneratorPayload({ customer = {}, license = {} } = {
   const customerName =
     valueOf(customer, "company_name", "companyName") || valueOf(customer, "customer_number", "customerNumber");
   const licenseId = valueOf(license, "license_id", "licenseId");
-  const validFrom = valueOf(license, "valid_from", "validFrom");
-  const validUntil = valueOf(license, "valid_until", "validUntil");
-  const binding = mapLicenseModeToGeneratorBinding(valueOf(license, "license_mode", "licenseMode"));
+  const validFrom = normalizeDateForGenerator(valueOf(license, "valid_from", "validFrom"));
+  const validUntil = normalizeDateForGenerator(valueOf(license, "valid_until", "validUntil"));
+  const model = getLicenseEditionAndBinding(license);
+  const binding = model.binding;
+  const edition = model.edition;
   const features = parseGeneratorFeaturesFromProductScope(valueOf(license, "product_scope_json", "productScope"));
   const machineId = valueOf(license, "machine_id", "machineId");
   return {
     customerName,
     licenseId,
     product: GENERATOR_PRODUCT_KEY,
-    edition: "standard",
+    edition,
     binding,
     validFrom,
     validUntil,
     maxDevices: 1,
-    ...(machineId ? { machineId } : {}),
+    ...(binding === "machine" && machineId ? { machineId } : {}),
     features,
   };
 }
@@ -498,7 +549,7 @@ export default class LicenseAdminScreen {
       const thead = document.createElement("thead");
       const tbody = document.createElement("tbody");
       const tr = document.createElement("tr");
-      ["Lizenz-ID", "Produktumfang", "gueltig von", "gueltig bis", "Lizenzmodus"].forEach((label) => {
+      ["Lizenz-ID", "Produktumfang", "gueltig von", "gueltig bis", "Lizenzart", "Gerätebindung"].forEach((label) => {
         const th = document.createElement("th");
         th.textContent = label;
         tr.appendChild(th);
@@ -514,12 +565,14 @@ export default class LicenseAdminScreen {
           this.currentLicense = record;
           this._render();
         };
+        const mode = getLicenseEditionAndBinding(record);
         [
           valueOf(record, "license_id", "licenseId") || "-",
           formatProductScopeForList(record),
           valueOf(record, "valid_from", "validFrom") || "-",
           valueOf(record, "valid_until", "validUntil") || "-",
-          valueOf(record, "license_mode", "licenseMode") || "-",
+          mode.edition === "full" ? "Vollversion" : "Testlizenz",
+          mode.binding === "machine" ? "An Machine-ID binden" : "Ohne Gerätebindung",
         ].forEach((text) => {
           const td = document.createElement("td");
           td.textContent = text;
@@ -555,7 +608,8 @@ export default class LicenseAdminScreen {
       ["license_id", "Lizenz-ID"],
       ["valid_from", "gueltig von"],
       ["valid_until", "gueltig bis"],
-      ["license_mode", "Lizenzmodus"],
+      ["license_edition", "Lizenzart"],
+      ["license_binding", "Gerätebindung"],
       ["machine_id", "Machine-ID"],
       ["notes", "Notizen"],
     ];
@@ -577,17 +631,39 @@ export default class LicenseAdminScreen {
 
     for (const [key, label] of fields) {
       let input = key === "notes" ? document.createElement("textarea") : document.createElement("input");
-      if (key === "license_mode") {
+      if (key === "license_edition") {
         input = document.createElement("select");
-        ["", "soft", "full"].forEach((mode) => {
+        [
+          { value: "test", label: "Testlizenz" },
+          { value: "full", label: "Vollversion" },
+        ].forEach((entry) => {
           const option = document.createElement("option");
-          option.value = mode;
-          option.textContent = mode || "- auswaehlen -";
+          option.value = entry.value;
+          option.textContent = entry.label;
+          input.appendChild(option);
+        });
+      }
+      if (key === "license_binding") {
+        input = document.createElement("select");
+        [
+          { value: "none", label: "Ohne Gerätebindung" },
+          { value: "machine", label: "An Machine-ID binden" },
+        ].forEach((entry) => {
+          const option = document.createElement("option");
+          option.value = entry.value;
+          option.textContent = entry.label;
           input.appendChild(option);
         });
       }
       if (key === "notes") input.rows = 3;
-      input.value = valueOf(license, key, key.replace("_", ""));
+      const currentMode = getLicenseEditionAndBinding(license);
+      if (key === "license_edition") input.value = currentMode.edition;
+      else if (key === "license_binding") input.value = currentMode.binding;
+      else input.value = valueOf(license, key, key.replace("_", ""));
+      if (key === "valid_from" || key === "valid_until") {
+        input.type = "date";
+        input.value = normalizeDateForGenerator(input.value);
+      }
       input.style.width = "100%";
       input.id = `license-${key}`;
       inputs[key] = input;
@@ -731,6 +807,16 @@ export default class LicenseAdminScreen {
       inputs.product_scope_json.value = JSON.stringify(buildStructuredProductScopeJson(scopeModel, scopeModel.previous));
     };
     syncScopeJson();
+    const syncMachineIdState = () => {
+      const binding = String(inputs.license_binding?.value || "none").trim().toLowerCase();
+      const isMachine = binding === "machine";
+      inputs.machine_id.disabled = !isMachine;
+      if (!isMachine) {
+        inputs.machine_id.value = "";
+      }
+    };
+    inputs.license_binding?.addEventListener("change", syncMachineIdState);
+    syncMachineIdState();
 
     const licenseIdHint = document.createElement("div");
     licenseIdHint.textContent =
@@ -776,8 +862,18 @@ export default class LicenseAdminScreen {
         customer: this.currentCustomer || {},
         license: this.currentLicense || {},
       });
+      if (!payload.validFrom || !payload.validUntil) {
+        message.textContent = "Bitte gültige Datumswerte eintragen.";
+        generationOutput.textContent = "";
+        return;
+      }
       if (!payload.features.length) {
         message.textContent = "Produktumfang enthält keine erzeugbaren Features.";
+        generationOutput.textContent = "";
+        return;
+      }
+      if (payload.binding === "machine" && !String(payload.machineId || "").trim()) {
+        message.textContent = "Machine-ID ist erforderlich, wenn die Lizenz an ein Gerät gebunden wird.";
         generationOutput.textContent = "";
         return;
       }
@@ -834,7 +930,9 @@ export default class LicenseAdminScreen {
             product_scope_json: inputs.product_scope_json.value,
             valid_from: inputs.valid_from.value,
             valid_until: inputs.valid_until.value,
-            license_mode: inputs.license_mode.value,
+            license_mode: inputs.license_binding.value === "machine" ? "full" : "soft",
+            license_edition: inputs.license_edition.value,
+            license_binding: inputs.license_binding.value,
             machine_id: inputs.machine_id.value,
             notes: inputs.notes.value,
           },
