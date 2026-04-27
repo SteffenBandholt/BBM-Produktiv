@@ -386,6 +386,9 @@ async function runLicenseAdminDataflowTests(run) {
       createGeneratedLicenseId,
       tryGenerateLicenseId,
       buildLicenseEditorPayload,
+      buildStructuredProductScopeJson,
+      createDefaultScopeSelection,
+      resetScopeSelectionToDefault,
       buildCustomerEditorPayload,
     } = await importEsmFromFile(path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js"));
 
@@ -433,6 +436,19 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(customerPayload.customer_number, "K-44");
     assert.equal(customerPayload.company_name, "Firma 44");
     assert.equal(customerPayload.contact_person, "Kontakt 44");
+
+    const scopeSelection = createDefaultScopeSelection();
+    scopeSelection.zusatzfunktionen = ["mail", "dictate"];
+    scopeSelection.module = ["protokoll"];
+    scopeSelection.raw = "legacy";
+    scopeSelection.previous = { raw: "legacy" };
+    resetScopeSelectionToDefault(scopeSelection);
+
+    const normalizedScope = buildStructuredProductScopeJson(scopeSelection, scopeSelection.previous);
+    assert.equal(normalizedScope.product, "bbm-produktiv");
+    assert.deepEqual(normalizedScope.standardumfang, ["app", "pdf", "export"]);
+    assert.deepEqual(normalizedScope.zusatzfunktionen, []);
+    assert.deepEqual(normalizedScope.module, []);
   });
 }
 

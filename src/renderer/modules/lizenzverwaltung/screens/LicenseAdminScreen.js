@@ -82,7 +82,7 @@ function formatEntryLabel(key, entries = []) {
   return found?.label || String(key || "").trim();
 }
 
-function buildStructuredProductScopeJson(model = {}, previous = {}) {
+export function buildStructuredProductScopeJson(model = {}, previous = {}) {
   const previousObject = previous && typeof previous === "object" && !Array.isArray(previous) ? previous : {};
   const raw = String(previousObject.raw || model.raw || "").trim();
   return {
@@ -95,6 +95,23 @@ function buildStructuredProductScopeJson(model = {}, previous = {}) {
     module: toUniqueNormalizedArray(model.module || []).filter((key) => MODULE_KEYS.some((entry) => entry.key === key)),
     ...(raw ? { raw } : {}),
   };
+}
+
+export function createDefaultScopeSelection() {
+  return {
+    raw: "",
+    zusatzfunktionen: [],
+    module: [],
+    previous: {},
+  };
+}
+
+export function resetScopeSelectionToDefault(selection = {}) {
+  selection.raw = "";
+  selection.zusatzfunktionen = [];
+  selection.module = [];
+  selection.previous = {};
+  return selection;
 }
 
 export function createGeneratedLicenseId(now = new Date()) {
@@ -506,12 +523,13 @@ export default class LicenseAdminScreen {
       appendFieldRow(label, input);
     }
 
-    const scopeModel = {
-      raw: parsedScope.raw,
-      zusatzfunktionen: [...parsedScope.zusatzfunktionen],
-      module: [...parsedScope.module],
-      previous: parsedScope.original,
-    };
+    const scopeModel = createDefaultScopeSelection();
+    scopeModel.raw = parsedScope.raw;
+    scopeModel.zusatzfunktionen = [...parsedScope.zusatzfunktionen];
+    scopeModel.module = [...parsedScope.module];
+    scopeModel.previous = parsedScope.original;
+    const zusatzfunktionChecks = new Map();
+    const moduleChecks = new Map();
 
     const standardWrap = document.createElement("div");
     standardWrap.style.display = "grid";
@@ -543,6 +561,7 @@ export default class LicenseAdminScreen {
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.checked = scopeModel.zusatzfunktionen.includes(entry.key);
+      zusatzfunktionChecks.set(entry.key, checkbox);
       checkbox.onchange = () => {
         if (checkbox.checked) {
           if (!scopeModel.zusatzfunktionen.includes(entry.key)) scopeModel.zusatzfunktionen.push(entry.key);
@@ -569,6 +588,7 @@ export default class LicenseAdminScreen {
       const checkbox = document.createElement("input");
       checkbox.type = "checkbox";
       checkbox.checked = scopeModel.module.includes(entry.key);
+      moduleChecks.set(entry.key, checkbox);
       checkbox.onchange = () => {
         if (checkbox.checked) {
           if (!scopeModel.module.includes(entry.key)) scopeModel.module.push(entry.key);
@@ -697,6 +717,14 @@ export default class LicenseAdminScreen {
       Object.values(inputs).forEach((el) => {
         el.value = "";
       });
+      resetScopeSelectionToDefault(scopeModel);
+      zusatzfunktionChecks.forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+      moduleChecks.forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+      syncScopeJson();
       this.currentLicense = null;
       message.textContent = "Formular geleert.";
       syncGenerateIdButton();
