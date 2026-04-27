@@ -752,7 +752,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Zurueck zur Kundenliste"), true);
     assert.equal(screenSource.includes("Lizenz erstellen"), true);
     assert.equal(screenSource.includes("Lizenz speichern"), false);
-    assert.equal(screenSource.includes("Formular leeren"), true);
+    assert.equal(screenSource.includes("Formular leeren"), false);
+    assert.equal(screenSource.includes("Lizenz-ID erzeugen"), false);
     assert.equal(screenSource.includes("Zurueck"), true);
     assert.equal(screenSource.includes("Merken"), false);
     assert.equal(screenSource.includes("Neu / leeren"), false);

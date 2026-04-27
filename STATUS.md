@@ -153,6 +153,10 @@ Sie ergänzt:
   - Im Lizenzformular gibt es jetzt den kombinierten Hauptbutton `Lizenz erstellen`.
   - Der Ablauf dahinter ist: Admin-Lizenz speichern -> vorhandenen Generator aufrufen -> Ausgabepfad anzeigen -> Ausgabeordner öffnen.
   - Es gibt keinen separaten Bedienpfad mehr mit erst `Lizenz speichern` und danach `Lizenzdatei erzeugen`.
+- Lizenzverwaltung finale UI-Vereinfachung ist umgesetzt:
+  - Im sichtbaren Lizenzformular wurden restliche Einzelbuttons entfernt (`Lizenz-ID erzeugen`, `Formular leeren`).
+  - Lizenz-ID bleibt sichtbar, wird aber beim Hauptablauf `Lizenz erstellen` automatisch erzeugt, wenn leer.
+  - Sichtbarer Hauptablauf im Formular ist jetzt auf `Lizenz erstellen` + `Zurueck` reduziert; `Ausgabeordner öffnen` erscheint nur nach erfolgreicher Erzeugung.
 - Protokoll-Modul ist eingefroren.
 - `npm test` war gruen.
 - GitHub Action `.github/workflows/npm-test.yml` ist eingerichtet und fuehrt `npm test` auf `main` sowie `modularisierung/projektverwaltung` bei Push/Pull-Request aus.
@@ -213,6 +217,21 @@ Sie ergänzt:
 ## Erledigte Meilensteine / Pakete
 
 ### Erledigt
+#### Paket: PR #39 final - sichtbare Einzelbuttons im Lizenzformular entfernt
+- Status: erledigt
+- Beschreibung:
+  - Entfernt: `Lizenz-ID erzeugen` (Button) und `Formular leeren` (Button) aus dem sichtbaren Lizenzformular.
+  - Hinweistext bei Lizenz-ID auf automatischen Erstell-Ablauf angepasst.
+  - Tests auf reduzierte sichtbare Bedienung aktualisiert.
+- Betroffene Dateien:
+  - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Hinweise:
+  - Keine DB-/Generator-/Setup-/Persistenz-/Sidebar-/Projektmodul-Aenderung
+
 #### Paket: PR #39 Abschluss - kombinierter Button `Lizenz erstellen`
 - Status: erledigt
 - Beschreibung:

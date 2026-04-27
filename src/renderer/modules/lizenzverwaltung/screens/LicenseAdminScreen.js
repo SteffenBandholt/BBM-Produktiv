@@ -840,25 +840,8 @@ export default class LicenseAdminScreen {
 
     const licenseIdHint = document.createElement("div");
     licenseIdHint.textContent =
-      "Lizenz-ID-Hinweis: Wenn leer, wird spaetestens beim Speichern automatisch eine ID erzeugt.";
+      "Wenn die Lizenz-ID leer ist, wird beim Erstellen automatisch eine ID erzeugt.";
     licenseIdHint.style.fontSize = "12px";
-
-    const generateIdBtn = this._button("Lizenz-ID erzeugen", () => {
-      const result = tryGenerateLicenseId(inputs.license_id.value);
-      if (!result.generated) {
-        message.textContent = "Lizenz-ID ist bereits gesetzt.";
-        return;
-      }
-      inputs.license_id.value = result.value;
-      message.textContent = "Lizenz-ID wurde erzeugt.";
-      syncGenerateIdButton();
-    });
-
-    const syncGenerateIdButton = () => {
-      generateIdBtn.disabled = Boolean(String(inputs.license_id.value || "").trim());
-    };
-    inputs.license_id.addEventListener("input", syncGenerateIdButton);
-    syncGenerateIdButton();
 
     const actions = document.createElement("div");
     actions.style.display = "flex";
@@ -955,31 +938,14 @@ export default class LicenseAdminScreen {
       }
     });
 
-    const clearBtn = this._button("Formular leeren", () => {
-      Object.values(inputs).forEach((el) => {
-        el.value = "";
-      });
-      resetScopeSelectionToDefault(scopeModel);
-      zusatzfunktionChecks.forEach((checkbox) => {
-        checkbox.checked = false;
-      });
-      moduleChecks.forEach((checkbox) => {
-        checkbox.checked = false;
-      });
-      syncScopeJson();
-      this.currentLicense = null;
-      message.textContent = "Formular geleert.";
-      syncGenerateIdButton();
-    });
-
     const backBtn = this._button("Zurueck", () => {
       this.currentLicense = null;
       this.currentView = "customer-detail";
       this._render();
     });
 
-    actions.append(createBtn, clearBtn, backBtn, openOutputDirBtn);
-    container.append(header, context, form, licenseIdHint, generateIdBtn, actions, message, generationOutput);
+    actions.append(createBtn, backBtn, openOutputDirBtn);
+    container.append(header, context, form, licenseIdHint, actions, message, generationOutput);
   }
 
   async _render() {
