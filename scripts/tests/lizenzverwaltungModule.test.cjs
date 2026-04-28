@@ -84,6 +84,14 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(entry.screens?.licenseAdmin, LicenseAdminScreen);
   });
 
+  await run("Lizenzverwaltung UI: Lizenzanforderung-Import im Lizenzformular vorhanden", () => {
+    assert.equal(screenSource.includes("Lizenzanforderung importieren"), true);
+    assert.equal(screenSource.includes("licenseAdminImportLicenseRequest"), true);
+    assert.equal(screenSource.includes("inputs.license_binding.value = \"machine\""), true);
+    assert.equal(screenSource.includes("inputs.license_edition.value = \"full\""), true);
+    assert.equal(screenSource.includes("inputs.machine_id.value = String(request.machineId || \"\").trim()"), true);
+  });
+
 
   await run("Lizenzverwaltung Modulindex: kein Pflicht-Export createLicenseEditorSection fuer Admin", () => {
     assert.equal("createLicenseEditorSection" in { getLizenzverwaltungModuleEntry }, false);

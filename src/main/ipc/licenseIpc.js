@@ -111,25 +111,59 @@ function _readLicenseFile(filePath) {
 function _readLicenseRequestFile(filePath) {
   const raw = fs.readFileSync(filePath, "utf8");
   const parsed = JSON.parse(raw);
+  return _validateLicenseRequestPayload(parsed, filePath);
+}
+
+function _validateLicenseRequestPayload(payload, filePath = "") {
+  const parsed = payload;
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
     const err = new Error("INVALID_FORMAT");
     err.code = "INVALID_FORMAT";
     throw err;
   }
-  const product = String(parsed.product || "").trim();
+  const schemaVersion = Number(parsed.schemaVersion);
+  const requestType = String(parsed.requestType || "").trim();
+  const product = String(parsed.product || "").trim().toLowerCase();
   const machineId = String(parsed.machineId || "").trim();
-  if (!product || !machineId) {
+  const createdAt = String(parsed.createdAt || "").trim();
+  const appVersion = String(parsed.appVersion || "").trim();
+  if (schemaVersion !== 1 || requestType !== "machine-license-request") {
+    const err = new Error("INVALID_REQUEST_TYPE");
+    err.code = "INVALID_REQUEST_TYPE";
+    throw err;
+  }
+  if (product !== "bbm-protokoll") {
+    const err = new Error("INVALID_PRODUCT");
+    err.code = "INVALID_PRODUCT";
+    throw err;
+  }
+  if (!machineId) {
+    const err = new Error("MISSING_MACHINE_ID");
+    err.code = "MISSING_MACHINE_ID";
+    throw err;
+  }
+  if (!createdAt || !appVersion) {
     const err = new Error("INVALID_FORMAT");
     err.code = "INVALID_FORMAT";
     throw err;
   }
+  const appName = String(parsed.appName || "").trim();
+  const customerName = String(parsed.customerName || "").trim();
+  const licenseId = String(parsed.licenseId || "").trim();
+  const notes = String(parsed.notes || "").trim();
   return {
     filePath: String(filePath || "").trim(),
+    schemaVersion: 1,
+    requestType: "machine-license-request",
     product,
     machineId,
-    appVersion: String(parsed.appVersion || "").trim(),
-    createdAt: String(parsed.createdAt || "").trim(),
-    customerHint: String(parsed.customerHint || parsed.customerName || "").trim(),
+    appName,
+    appVersion,
+    createdAt,
+    customerName,
+    licenseId,
+    notes,
+    customerHint: String(parsed.customerHint || customerName).trim(),
   };
 }
 
@@ -1127,6 +1161,26 @@ function registerLicenseAdminDataIpc() {
       return {
         ok: false,
         error: String(err?.message || err || "CUSTOMER_SETUP_BUILD_FAILED").trim() || "CUSTOMER_SETUP_BUILD_FAILED",
+      };
+    }
+  });
+
+  ipcMain.handle("license-admin:import-license-request", async (event) => {
+    try {
+      const result = await dialog.showOpenDialog(_pickWindow(event), {
+        title: "Lizenzanforderung importieren",
+        properties: ["openFile"],
+        filters: [{ name: "Lizenzanforderung", extensions: ["json"] }],
+      });
+      if (result.canceled || !Array.isArray(result.filePaths) || !result.filePaths[0]) {
+        return { ok: false, canceled: true };
+      }
+      const request = _readLicenseRequestFile(String(result.filePaths[0] || "").trim());
+      return { ok: true, request };
+    } catch (err) {
+      return {
+        ok: false,
+        error: String(err?.code || err?.message || "INVALID_FORMAT").trim() || "INVALID_FORMAT",
       };
     }
   });
