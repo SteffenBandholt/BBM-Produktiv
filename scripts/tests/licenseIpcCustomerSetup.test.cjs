@@ -208,6 +208,15 @@ async function runLicenseIpcCustomerSetupTests(run) {
       source.includes('inputData.edition === "test" && inputData.binding === "none" ? {} : { validUntil: inputData.validUntil }'),
       true
     );
+    assert.equal(source.includes('inputData.trialDurationDays ? { trialDurationDays: inputData.trialDurationDays }'), true);
+  });
+
+  await run('licenseIpc: externe Generator-validUntil-Fehler werden fuer Testversion klar erkannt', () => {
+    withLicenseIpcModule({}, (mod) => {
+      assert.equal(mod._hasExternalGeneratorValidUntilMismatch('Pflichtfeld fehlt oder ist leer: validUntil'), true);
+      assert.equal(mod._hasExternalGeneratorValidUntilMismatch('VALID_UNTIL_REQUIRED'), true);
+      assert.equal(mod._hasExternalGeneratorValidUntilMismatch('alles ok'), false);
+    });
   });
 
   await run('licenseIpc: exitCode 0 aber outputDir fehlt -> CUSTOMER_SETUP_ARTIFACT_NOT_FOUND', async () => {

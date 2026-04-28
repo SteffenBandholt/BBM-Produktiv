@@ -257,6 +257,16 @@ function _normalizeTrialDurationDays(value) {
   return days;
 }
 
+function _hasExternalGeneratorValidUntilMismatch(text) {
+  const upper = String(text || "").toUpperCase();
+  if (!upper) return false;
+  return (
+    upper.includes("VALIDUNTIL") ||
+    upper.includes("VALID_UNTIL") ||
+    upper.includes("PFLICHTFELD FEHLT ODER IST LEER")
+  );
+}
+
 function _validateGenerationPayload(raw = {}) {
   const product = String(raw?.product || "bbm-protokoll").trim() || "bbm-protokoll";
   const customerName = String(raw?.customerName || "").trim();
@@ -1040,12 +1050,13 @@ function registerLicenseDevGeneratorIpc() {
       return { ok: false, error: "LICENSE_GENERATION_NOT_ALLOWED" };
     }
 
+    let inputData = null;
     try {
       if (!fs.existsSync(LICENSE_TOOL_ROOT)) return { ok: false, error: "LICENSE_TOOL_NOT_FOUND" };
       if (!fs.existsSync(LICENSE_TOOL_SCRIPT)) return { ok: false, error: "LICENSE_TOOL_SCRIPT_MISSING" };
       if (!fs.existsSync(LICENSE_TOOL_PRIVATE_KEY)) return { ok: false, error: "PRIVATE_KEY_MISSING" };
 
-      const inputData = _validateGenerationPayload(raw || {});
+      inputData = _validateGenerationPayload(raw || {});
       await fs.promises.mkdir(LICENSE_TOOL_INPUT_DIR, { recursive: true });
       await fs.promises.mkdir(LICENSE_TOOL_OUTPUT_DIR, { recursive: true });
 
@@ -1079,6 +1090,15 @@ function registerLicenseDevGeneratorIpc() {
       const runResult = await _runLicenseTool(inputPath);
       const outputPath = _extractGeneratedPath(runResult, inputData);
       if (!outputPath) {
+        const generatorCombinedOutput = `${String(runResult?.stderr || "")}\n${String(runResult?.stdout || "")}`;
+        const isTestLicense = inputData.edition === "test" && inputData.binding === "none";
+        if (isTestLicense && _hasExternalGeneratorValidUntilMismatch(generatorCombinedOutput)) {
+          return {
+            ok: false,
+            error: "EXTERNAL_GENERATOR_INCOMPATIBLE_TEST_NO_VALID_UNTIL",
+            message: "Externer Lizenzgenerator ist nicht kompatibel mit Testversion ohne validUntil.",
+          };
+        }
         if (runResult?.timedOut) {
           return { ok: false, error: "GENERATOR_TIMEOUT" };
         }
@@ -1100,9 +1120,18 @@ function registerLicenseDevGeneratorIpc() {
         features: inputData.features,
       };
     } catch (err) {
+      const errorText = String(err?.message || err || "LICENSE_GENERATION_FAILED").trim() || "LICENSE_GENERATION_FAILED";
+      const isTestLicense = inputData?.edition === "test" && inputData?.binding === "none";
+      if (isTestLicense && _hasExternalGeneratorValidUntilMismatch(errorText)) {
+        return {
+          ok: false,
+          error: "EXTERNAL_GENERATOR_INCOMPATIBLE_TEST_NO_VALID_UNTIL",
+          message: "Externer Lizenzgenerator ist nicht kompatibel mit Testversion ohne validUntil.",
+        };
+      }
       return {
         ok: false,
-        error: String(err?.message || err || "LICENSE_GENERATION_FAILED").trim() || "LICENSE_GENERATION_FAILED",
+        error: errorText,
       };
     }
   });
@@ -1195,6 +1224,7 @@ module.exports = {
   registerLicenseIpc,
   _buildCustomerSetupSlug,
   _validateGenerationPayload,
+  _hasExternalGeneratorValidUntilMismatch,
   _buildLicenseRequestPayload,
   resolveNodeExecutableForBuild,
   _validateCustomerSetupPayload,
