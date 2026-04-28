@@ -90,6 +90,10 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Mailtext einfügen"), true);
     assert.equal(screenSource.includes("Lizenzanforderung erkannt."), true);
     assert.equal(screenSource.includes("Keine Machine-ID im Mailtext gefunden."), true);
+    assert.equal(screenSource.includes("setup_status: \"machine_id_received\""), true);
+    assert.equal(screenSource.includes("setup_status: \"waiting_for_machine_id\""), true);
+    assert.equal(screenSource.includes("setup_status: isMachineResponseLicense ? \"response_license_created\""), true);
+    assert.equal(screenSource.includes("Machine-Binding-Status:"), true);
     assert.equal(screenSource.includes("parseMachineLicenseRequestMail"), true);
     assert.equal(screenSource.includes("licenseAdminImportLicenseRequest"), true);
     assert.equal(screenSource.includes("inputs.license_binding.value = \"machine\""), true);
@@ -427,6 +431,10 @@ async function runLizenzverwaltungModuleTests(run) {
   await run("Lizenzverwaltung Main/Preload/Schema: Kunden-Setup-IPC und Lizenzpfad-Spalten vorhanden", () => {
     assert.equal(databaseSource.includes("license_file_path"), true);
     assert.equal(databaseSource.includes("license_file_created_at"), true);
+    assert.equal(databaseSource.includes("setup_type"), true);
+    assert.equal(databaseSource.includes("setup_status"), true);
+    assert.equal(databaseSource.includes("setup_file_path"), true);
+    assert.equal(databaseSource.includes("setup_created_at"), true);
     assert.equal(preloadSource.includes("licenseAdminCreateCustomerSetup"), true);
     assert.equal(licenseIpcSource.includes("license-admin:create-customer-setup"), true);
   });

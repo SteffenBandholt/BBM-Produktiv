@@ -1120,6 +1120,10 @@ function ensureLicenseAdminSchema(dbConn) {
         license_edition TEXT,
         license_binding TEXT,
         machine_id TEXT,
+        setup_type TEXT,
+        setup_status TEXT,
+        setup_file_path TEXT,
+        setup_created_at TEXT,
         notes TEXT,
         created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
         updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
@@ -1157,6 +1161,18 @@ function ensureLicenseAdminSchema(dbConn) {
   }
   if (!columnExists(dbConn, "license_records", "machine_id")) {
     dbConn.exec(`ALTER TABLE license_records ADD COLUMN machine_id TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "setup_type")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN setup_type TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "setup_status")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN setup_status TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "setup_file_path")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN setup_file_path TEXT;`);
+  }
+  if (!columnExists(dbConn, "license_records", "setup_created_at")) {
+    dbConn.exec(`ALTER TABLE license_records ADD COLUMN setup_created_at TEXT;`);
   }
   if (!columnExists(dbConn, "license_records", "notes")) {
     dbConn.exec(`ALTER TABLE license_records ADD COLUMN notes TEXT;`);

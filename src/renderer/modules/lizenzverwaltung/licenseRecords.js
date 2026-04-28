@@ -77,6 +77,14 @@ export function createDefaultLicenseRecord(overrides = {}) {
     license_binding: "none",
     machineId: "",
     machine_id: "",
+    setupType: "",
+    setup_type: "",
+    setupStatus: "",
+    setup_status: "",
+    setupFilePath: "",
+    setup_file_path: "",
+    setupCreatedAt: "",
+    setup_created_at: "",
     licenseFilePath: "",
     license_file_path: "",
     licenseFileCreatedAt: "",
@@ -178,6 +186,10 @@ export function normalizeLicenseRecord(input = {}) {
       ? trialDurationDaysParsed
       : 30;
   const machineId = String(input.machineId ?? input.machine_id ?? base.machineId).trim();
+  const setupType = String(input.setupType ?? input.setup_type ?? base.setupType).trim().toLowerCase();
+  const setupStatus = String(input.setupStatus ?? input.setup_status ?? base.setupStatus).trim().toLowerCase();
+  const setupFilePath = String(input.setupFilePath ?? input.setup_file_path ?? base.setupFilePath).trim();
+  const setupCreatedAt = String(input.setupCreatedAt ?? input.setup_created_at ?? base.setupCreatedAt).trim();
   const licenseFilePath = String(input.licenseFilePath ?? input.license_file_path ?? base.licenseFilePath).trim();
   const licenseFileCreatedAt = String(
     input.licenseFileCreatedAt ?? input.license_file_created_at ?? base.licenseFileCreatedAt
@@ -217,6 +229,14 @@ export function normalizeLicenseRecord(input = {}) {
     license_binding: normalizedBinding,
     machineId,
     machine_id: machineId,
+    setupType,
+    setup_type: setupType,
+    setupStatus,
+    setup_status: setupStatus,
+    setupFilePath,
+    setup_file_path: setupFilePath,
+    setupCreatedAt,
+    setup_created_at: setupCreatedAt,
     licenseFilePath,
     license_file_path: licenseFilePath,
     licenseFileCreatedAt,
