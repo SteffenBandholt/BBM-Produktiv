@@ -627,22 +627,29 @@ export default class LicenseAdminScreen {
 
     const saveBtn = this._button("Kunde speichern", async () => {
       try {
+        const activeCustomer = this.currentCustomer || customer || {};
         const saved = await saveCustomer(
           buildCustomerEditorPayload({
-            customer,
+            customer: { id: activeCustomer.id },
             inputs: {
-              customer_number: inputs.customer_number.value,
-              company_name: inputs.company_name.value,
-              contact_person: inputs.contact_person.value,
-              email: inputs.email.value,
-              phone: inputs.phone.value,
-              notes: inputs.notes.value,
+              customer_number: String(inputs.customer_number.value || "").trim(),
+              company_name: String(inputs.company_name.value || "").trim(),
+              contact_person: String(inputs.contact_person.value || "").trim(),
+              email: String(inputs.email.value || "").trim(),
+              phone: String(inputs.phone.value || "").trim(),
+              notes: String(inputs.notes.value || "").trim(),
             },
           })
         );
         this.currentCustomer = saved;
         newLicenseBtn.disabled = false;
         message.textContent = "Kunde gespeichert.";
+        inputs.customer_number.value = valueOf(saved, "customer_number", "customerNumber") || "";
+        inputs.company_name.value = valueOf(saved, "company_name", "companyName") || "";
+        inputs.contact_person.value = valueOf(saved, "contact_person", "contactPerson") || "";
+        inputs.email.value = valueOf(saved, "email") || "";
+        inputs.phone.value = valueOf(saved, "phone") || "";
+        inputs.notes.value = valueOf(saved, "notes") || "";
         await renderLicenses();
       } catch (err) {
         message.textContent = `Fehler: ${err?.message || err}`;

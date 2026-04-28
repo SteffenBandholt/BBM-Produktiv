@@ -168,6 +168,26 @@ function createMemoryDb() {
             });
             return;
           }
+          if (text.includes("DELETE FROM license_history WHERE license_record_id = ?")) {
+            const [licenseRecordId] = args;
+            for (let i = history.length - 1; i >= 0; i -= 1) {
+              if (history[i].license_record_id === licenseRecordId) history.splice(i, 1);
+            }
+            return;
+          }
+          if (text.includes("DELETE FROM license_records WHERE customer_id = ?")) {
+            const [customerId] = args;
+            for (let i = licenses.length - 1; i >= 0; i -= 1) {
+              if (licenses[i].customer_id === customerId) licenses.splice(i, 1);
+            }
+            return;
+          }
+          if (text.includes("DELETE FROM license_customers WHERE id = ?")) {
+            const [customerId] = args;
+            const idx = customers.findIndex((entry) => entry.id === customerId);
+            if (idx >= 0) customers.splice(idx, 1);
+            return;
+          }
           if (text.includes("DELETE FROM license_records WHERE id = ?")) {
             const [id] = args;
             const index = licenses.findIndex((entry) => entry.id === id);
@@ -296,7 +316,7 @@ async function runLicenseAdminDataflowTests(run) {
     });
   });
 
-  await run("Lizenzverwaltung Main-Service: deleteLicenseRecord laesst Kundendaten und Historie unberuehrt", () => {
+  await run("Lizenzverwaltung Main-Service: deleteLicenseRecord loescht zugehoerige Historie", () => {
     withMockedDatabase((service) => {
       const customer = service.saveCustomer({
         customer_number: "K-103",
@@ -325,13 +345,67 @@ async function runLicenseAdminDataflowTests(run) {
       const history = service.listHistory();
       assert.equal(customers.length, 1);
       assert.equal(customers[0].id, customer.id);
-      assert.equal(history.length, 1);
-      assert.equal(history[0].id, historyEntry.id);
-      assert.equal(history[0].license_record_id, savedLicense.id);
+      assert.equal(history.length, 0);
     });
   });
 
 
+
+
+  await run("Lizenzverwaltung Main-Service: Kunde bearbeiten aktualisiert Felder und behaelt id", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({ customer_number: "K-500", company_name: "Alpha GmbH", email: "a@x.de" });
+      const updated = service.saveCustomer({
+        id: customer.id,
+        customer_number: "K-500-NEU",
+        company_name: "Alpha Neu GmbH",
+        contact_person: "Max",
+        email: "neu@x.de",
+        phone: "123",
+        notes: "note",
+      });
+      assert.equal(updated.id, customer.id);
+      assert.equal(updated.customer_number, "K-500-NEU");
+      assert.equal(updated.company_name, "Alpha Neu GmbH");
+      assert.equal(updated.email, "neu@x.de");
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: Kunde bearbeiten behaelt zugeordnete Lizenzen", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({ customer_number: "K-501", company_name: "Beta GmbH" });
+      service.saveLicense({
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app"] },
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+        machine_id: "MID-501",
+      });
+      service.saveCustomer({ id: customer.id, customer_number: "K-501", company_name: "Beta Neu GmbH" });
+      const records = service.listLicensesByCustomer(customer.id);
+      assert.equal(records.length, 1);
+      assert.equal(records[0].customer_id, customer.id);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: Kunde loeschen entfernt Kunde + Lizenzen + Historie", () => {
+    withMockedDatabase((service) => {
+      const a = service.saveCustomer({ customer_number: "K-A", company_name: "A GmbH" });
+      const b = service.saveCustomer({ customer_number: "K-B", company_name: "B GmbH" });
+      const licA = service.saveLicense({ customer_id: a.id, product_scope_json: { standardumfang: ["app"] }, valid_from: "2026-01-01", valid_until: "2026-12-31", license_mode: "full", license_edition: "full", license_binding: "machine", machine_id: "MID-A" });
+      service.addHistoryEntry({ license_record_id: licA.id, generated_at: "2026-01-02T00:00:00.000Z", product_scope_json: { standardumfang: ["app"] } });
+      service.saveLicense({ customer_id: b.id, product_scope_json: { standardumfang: ["app"] }, valid_from: "2026-01-01", valid_until: "2026-12-31", license_mode: "full", license_edition: "full", license_binding: "machine", machine_id: "MID-B" });
+      service.deleteCustomer(a.id);
+      assert.equal(service.listCustomers().length, 1);
+      assert.equal(service.listCustomers()[0].id, b.id);
+      assert.equal(service.listLicensesByCustomer(a.id).length, 0);
+      assert.equal(service.listLicensesByCustomer(b.id).length, 1);
+      assert.equal(service.listHistory().length, 0);
+    });
+  });
   await run("Lizenzverwaltung normalizeCustomerRecord: snake_case und camelCase werden vollstaendig abgebildet", async () => {
     const { normalizeCustomerRecord } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseRecords.js")
