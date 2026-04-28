@@ -16,6 +16,14 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Admin-Lizenzverwaltung kann Machine-ID direkt aus Kunden-E-Mailtext uebernehmen:
+  - Neuer Vollversions-Button `Lizenzanforderung aus E-Mail übernehmen` im Lizenzformular.
+  - Eingabebereich `Mailtext einfügen` parst robust die Zeilen `Kunde`, `Kundennummer`, `Lizenz-ID`, `Machine-ID`, `App-Version` (case-insensitive, tolerant bei Leerzeichen, CRLF/LF).
+  - Bei Erfolg meldet die UI `Lizenzanforderung erkannt.` und `Machine-ID wurde übernommen.` und uebernimmt die Machine-ID in das Formular.
+  - Bei Abweichung von Kundennummer oder Lizenz-ID erscheint die Warnung `Achtung: Die Lizenzanforderung passt möglicherweise nicht zur geöffneten Lizenz.` ohne Blockierung.
+  - Wenn keine Machine-ID enthalten ist, erscheint `Keine Machine-ID im Mailtext gefunden.`.
+  - Bestehender Ablauf bleibt unveraendert: Lizenz erstellen -> `.bbmlic` erzeugen -> Antwortlizenz zurueck an den Kunden.
+- Nächster offener Schritt: manuelle Sichtpruefung im Adminbereich mit echtem Mailtext-Paste aus einer Kundenanfrage.
 - Machine-Setup-Metadaten wurden fuer eindeutige Lizenzzuordnung erweitert:
   - `customer-setup.json` enthaelt bei `setupType=machine` jetzt zusaetzlich `product=bbm-protokoll`, `expectedBinding=machine`, `customerName`, `customerNumber` und `licenseId`.
   - Die Werte werden aus dem bestehenden Admin-/Build-Payload uebernommen (Kunde/Firma, Kundennummer, Lizenz-ID) und ueber Build-Env bis in die Setup-Metadatei durchgereicht.

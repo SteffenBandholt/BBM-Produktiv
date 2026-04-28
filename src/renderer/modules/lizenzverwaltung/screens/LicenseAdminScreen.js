@@ -189,6 +189,48 @@ export function buildCustomerEditorPayload({ customer = {}, inputs = {} } = {}) 
   };
 }
 
+function normalizeMachineRequestMailFieldKey(key) {
+  return String(key || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+export function parseMachineLicenseRequestMail(text) {
+  const lines = String(text || "").split(/\r?\n/);
+  const result = {
+    customerName: "",
+    customerNumber: "",
+    licenseId: "",
+    machineId: "",
+    appVersion: "",
+  };
+  const keyMap = {
+    kunde: "customerName",
+    kundennummer: "customerNumber",
+    lizenzid: "licenseId",
+    machineid: "machineId",
+    appversion: "appVersion",
+  };
+
+  for (const line of lines) {
+    const match = String(line || "").match(/^\s*([^:]+?)\s*:\s*(.*?)\s*$/);
+    if (!match) continue;
+    const targetKey = keyMap[normalizeMachineRequestMailFieldKey(match[1])];
+    if (!targetKey) continue;
+    result[targetKey] = String(match[2] || "").trim();
+  }
+
+  if (!result.machineId) {
+    const err = new Error("MISSING_MACHINE_ID");
+    err.code = "MISSING_MACHINE_ID";
+    throw err;
+  }
+
+  return result;
+}
+
 export function mapLicenseModeToGeneratorBinding(licenseMode) {
   const normalized = String(licenseMode || "").trim().toLowerCase();
   if (normalized === "full") return "machine";
@@ -1117,6 +1159,72 @@ export default class LicenseAdminScreen {
         message.textContent = "Lizenzanforderung konnte nicht importiert werden.";
       }
     });
+    const importMailWrap = document.createElement("div");
+    importMailWrap.style.display = "none";
+    importMailWrap.style.gap = "8px";
+    importMailWrap.style.border = "1px solid #cbd5e1";
+    importMailWrap.style.borderRadius = "6px";
+    importMailWrap.style.padding = "10px";
+    importMailWrap.style.background = "#f8fafc";
+
+    const importMailTitle = document.createElement("div");
+    importMailTitle.textContent = "Mailtext einfügen";
+    importMailTitle.style.fontWeight = "600";
+
+    const importMailText = document.createElement("textarea");
+    importMailText.rows = 8;
+    importMailText.style.width = "100%";
+    importMailText.style.boxSizing = "border-box";
+
+    const importMailApplyBtn = this._button("Mailtext übernehmen", () => {
+      const previousMachineId = String(inputs.machine_id?.value || "").trim();
+      let parsedRequest;
+      try {
+        parsedRequest = parseMachineLicenseRequestMail(importMailText.value);
+      } catch (err) {
+        if (String(err?.code || "").trim().toUpperCase() === "MISSING_MACHINE_ID") {
+          message.textContent = "Keine Machine-ID im Mailtext gefunden.";
+          return;
+        }
+        message.textContent = "Lizenzanforderung konnte nicht verarbeitet werden.";
+        return;
+      }
+
+      inputs.machine_id.value = String(parsedRequest.machineId || "").trim();
+      inputs.license_binding.value = "machine";
+      inputs.license_edition.value = "full";
+      syncEditionUiState();
+      syncMachineIdState();
+
+      const currentCustomerNumber = String(customer?.customer_number || customer?.customerNumber || "").trim();
+      const currentLicenseId = String(inputs.license_id?.value || "").trim();
+      const hasCustomerMismatch =
+        !!currentCustomerNumber &&
+        !!String(parsedRequest.customerNumber || "").trim() &&
+        currentCustomerNumber !== String(parsedRequest.customerNumber || "").trim();
+      const hasLicenseMismatch =
+        !!currentLicenseId &&
+        !!String(parsedRequest.licenseId || "").trim() &&
+        currentLicenseId !== String(parsedRequest.licenseId || "").trim();
+
+      const infoLines = ["Lizenzanforderung erkannt.", "Machine-ID wurde übernommen."];
+      if (previousMachineId && previousMachineId !== inputs.machine_id.value) {
+        infoLines.push("Vorhandene Machine-ID wurde durch die importierte Machine-ID ersetzt.");
+      }
+      if (hasCustomerMismatch || hasLicenseMismatch) {
+        infoLines.push("Achtung: Die Lizenzanforderung passt möglicherweise nicht zur geöffneten Lizenz.");
+      }
+      message.textContent = infoLines.join("\n");
+    });
+
+    importMailWrap.append(importMailTitle, importMailText, importMailApplyBtn);
+
+    const importRequestFromMailBtn = this._button("Lizenzanforderung aus E-Mail übernehmen", () => {
+      importMailWrap.style.display = importMailWrap.style.display === "none" ? "grid" : "none";
+      if (importMailWrap.style.display !== "none") {
+        importMailText.focus();
+      }
+    });
     const openOutputDirBtn = this._button("Ausgabeordner öffnen", async () => {
       const api = window?.bbmDb || {};
       const outputPath = String(openOutputDirBtn.dataset.outputPath || "").trim();
@@ -1327,6 +1435,10 @@ export default class LicenseAdminScreen {
       const isFull = edition === "full";
       const hasMachineId = !!machineId;
       importRequestBtn.style.display = isFull ? "" : "none";
+      importRequestFromMailBtn.style.display = isFull ? "" : "none";
+      if (!isFull) {
+        importMailWrap.style.display = "none";
+      }
       createMachineSetupBtn.style.display = isFull ? "" : "none";
       createCustomerSetupBtn.style.display = isFull ? "none" : "";
       if (isFull && !hasMachineId) {
@@ -1348,7 +1460,16 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    actions.append(importRequestBtn, createBtn, createCustomerSetupBtn, createMachineSetupBtn, deleteBtn, backBtn, openOutputDirBtn);
+    actions.append(
+      importRequestBtn,
+      importRequestFromMailBtn,
+      createBtn,
+      createCustomerSetupBtn,
+      createMachineSetupBtn,
+      deleteBtn,
+      backBtn,
+      openOutputDirBtn
+    );
     container.append(
       header,
       context,
@@ -1356,6 +1477,7 @@ export default class LicenseAdminScreen {
       licenseIdHint,
       machineBindingHint,
       machineFlowHint,
+      importMailWrap,
       machineSetupHint,
       actions,
       message,

@@ -86,6 +86,11 @@ async function runLizenzverwaltungModuleTests(run) {
 
   await run("Lizenzverwaltung UI: Lizenzanforderung-Import im Lizenzformular vorhanden", () => {
     assert.equal(screenSource.includes("Lizenzanforderung importieren"), true);
+    assert.equal(screenSource.includes("Lizenzanforderung aus E-Mail übernehmen"), true);
+    assert.equal(screenSource.includes("Mailtext einfügen"), true);
+    assert.equal(screenSource.includes("Lizenzanforderung erkannt."), true);
+    assert.equal(screenSource.includes("Keine Machine-ID im Mailtext gefunden."), true);
+    assert.equal(screenSource.includes("parseMachineLicenseRequestMail"), true);
     assert.equal(screenSource.includes("licenseAdminImportLicenseRequest"), true);
     assert.equal(screenSource.includes("inputs.license_binding.value = \"machine\""), true);
     assert.equal(screenSource.includes("inputs.license_edition.value = \"full\""), true);

@@ -683,6 +683,36 @@ async function runLicenseAdminDataflowTests(run) {
     assert.deepEqual(normalizedScope.module, []);
   });
 
+  await run("Lizenzverwaltung Mail-Parser: erkennt Felder robust und meldet fehlende Machine-ID klar", async () => {
+    const { parseMachineLicenseRequestMail } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+
+    const parsed = parseMachineLicenseRequestMail(
+      [
+        "  kunde : Musterfirma GmbH  ",
+        "KUNDENNUMMER: K-123",
+        " lizenz-id : LIC-123 ",
+        "MACHINE-ID : MID-XYZ-1",
+        "App-Version: 2.4.1",
+      ].join("\r\n")
+    );
+
+    assert.equal(parsed.customerName, "Musterfirma GmbH");
+    assert.equal(parsed.customerNumber, "K-123");
+    assert.equal(parsed.licenseId, "LIC-123");
+    assert.equal(parsed.machineId, "MID-XYZ-1");
+    assert.equal(parsed.appVersion, "2.4.1");
+
+    assert.throws(
+      () =>
+        parseMachineLicenseRequestMail(
+          ["Kunde: Ohne Machine", "Kundennummer: K-999", "Lizenz-ID: LIC-999", "App-Version: 1.0.0"].join("\n")
+        ),
+      /MISSING_MACHINE_ID/
+    );
+  });
+
   await run("Lizenzverwaltung Generator-Payload: Kunde + Lizenz werden korrekt gemappt", async () => {
     const { buildLicenseGeneratorPayload } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
