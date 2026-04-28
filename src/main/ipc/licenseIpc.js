@@ -537,6 +537,7 @@ function _writeCustomerSetupBuildLog({
       `licenseFilePath: ${licenseFilePath || "-"}`,
       `exitCode: ${exitCode === null || exitCode === undefined ? "-" : exitCode}`,
       `env.BBM_CUSTOMER_LICENSE_FILE: ${envSnapshot.BBM_CUSTOMER_LICENSE_FILE || "-"}`,
+      `env.BBM_CUSTOMER_SETUP_TYPE: ${envSnapshot.BBM_CUSTOMER_SETUP_TYPE || "-"}`,
       `env.BBM_CUSTOMER_SLUG: ${envSnapshot.BBM_CUSTOMER_SLUG || "-"}`,
       `env.BBM_CUSTOMER_NAME: ${envSnapshot.BBM_CUSTOMER_NAME || "-"}`,
       `artifacts: ${artifacts.length ? artifacts.join(" | ") : "-"}`,
@@ -565,19 +566,21 @@ function _resolveCustomerSetupArtifactPath(outputDir, customerSlug) {
 function _validateCustomerSetupPayload(raw = {}) {
   const customer = raw?.customer && typeof raw.customer === "object" ? raw.customer : {};
   const license = raw?.license && typeof raw.license === "object" ? raw.license : {};
-  const licenseFilePath = String(raw?.licenseFilePath || raw?.license_file_path || "").trim();
-  if (!licenseFilePath) throw new Error("LICENSE_FILE_PATH_REQUIRED");
-  if (!fs.existsSync(licenseFilePath)) throw new Error("LICENSE_FILE_NOT_FOUND");
+  const setupType = String(raw?.setupType || raw?.setup_type || "").trim().toLowerCase() === "machine" ? "machine" : "test";
+  const licenseFilePath = setupType === "test" ? String(raw?.licenseFilePath || raw?.license_file_path || "").trim() : "";
+  if (setupType === "test" && !licenseFilePath) throw new Error("LICENSE_FILE_PATH_REQUIRED");
+  if (setupType === "test" && !fs.existsSync(licenseFilePath)) throw new Error("LICENSE_FILE_NOT_FOUND");
 
   const binding = String(license.license_binding || license.licenseBinding || "").trim().toLowerCase();
   const machineId = String(license.machine_id || license.machineId || "").trim();
-  if (binding === "machine" && !machineId) {
+  if (setupType !== "machine" && binding === "machine" && !machineId) {
     throw new Error("MACHINE_ID_REQUIRED_FOR_BINDING");
   }
 
   return {
     customer,
     license,
+    setupType,
     licenseFilePath,
     customerSlug: _buildCustomerSetupSlug(customer),
     customerName: String(customer.company_name || customer.companyName || "").trim(),
@@ -598,10 +601,15 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
   const nodeExe = String(resolvedNode?.nodeExecutable || "").trim();
   const envForBuild = {
     ...process.env,
-    BBM_CUSTOMER_LICENSE_FILE: validated.licenseFilePath,
+    BBM_CUSTOMER_SETUP_TYPE: validated.setupType,
     BBM_CUSTOMER_SLUG: validated.customerSlug,
     BBM_CUSTOMER_NAME: validated.customerName,
   };
+  if (validated.setupType === "test" && validated.licenseFilePath) {
+    envForBuild.BBM_CUSTOMER_LICENSE_FILE = validated.licenseFilePath;
+  } else {
+    delete envForBuild.BBM_CUSTOMER_LICENSE_FILE;
+  }
   fs.mkdirSync(outputDir, { recursive: true });
   const logPath = path.join(outputDir, "customer-setup-build.log");
   const timeoutMs =
@@ -643,6 +651,7 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
       logPath,
       env: {
         BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+        BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
         BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
         BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
       },
@@ -710,6 +719,7 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
         logPath,
         env: {
           BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+          BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
           BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
           BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
         },
@@ -757,6 +767,7 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
         logPath,
         env: {
           BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+          BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
           BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
           BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
         },
@@ -783,6 +794,7 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
         logPath,
         env: {
           BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+          BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
           BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
           BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
         },

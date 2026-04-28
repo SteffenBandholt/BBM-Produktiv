@@ -62,8 +62,11 @@ function buildCustomerDistConfig({
   baseVersion = "0.0.0",
   customerLicenseFile = "",
   customerSlug = "",
+  customerSetupType = "",
 } = {}) {
-  if (!customerLicenseFile) {
+  const setupType = String(customerSetupType || "").trim().toLowerCase();
+  const isCustomerMode = Boolean(customerLicenseFile) || setupType === "machine";
+  if (!isCustomerMode) {
     return {
       build: { ...baseBuild },
       outputDir: String(baseBuild?.directories?.output || "").trim() || "dist",
@@ -75,10 +78,12 @@ function buildCustomerDistConfig({
   const outputDir = path.join("dist", "customers", safeSlug);
   const artifactName = `BBM-${baseVersion}-${safeSlug}-Setup.exe`;
   const extraResources = Array.isArray(baseBuild.extraResources) ? [...baseBuild.extraResources] : [];
-  extraResources.push({
-    from: customerLicenseFile,
-    to: "license/customer.bbmlic",
-  });
+  if (customerLicenseFile) {
+    extraResources.push({
+      from: customerLicenseFile,
+      to: "license/customer.bbmlic",
+    });
+  }
 
   return {
     build: {
@@ -137,12 +142,14 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
   const prefix = isDev ? "BBM-DEV" : "BBM";
   const nsisName = `${prefix}-${baseVersion}-Setup.\${ext}`;
   const customerLicenseFile = String(env.BBM_CUSTOMER_LICENSE_FILE || "").trim();
+  const customerSetupType = String(env.BBM_CUSTOMER_SETUP_TYPE || "").trim();
   const customerSlug = sanitizeCustomerSlug(env.BBM_CUSTOMER_SLUG || env.BBM_CUSTOMER_NAME || "");
   const customerConfig = buildCustomerDistConfig({
     baseBuild,
     baseVersion,
     customerLicenseFile,
     customerSlug,
+    customerSetupType,
   });
 
   // Override-Config für electron-builder (als separate Config-Datei)
@@ -156,7 +163,7 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
       buildChannel: channel,
     },
     // ✅ pro Target eigene artifactName (kein ${target})
-    nsis: customerLicenseFile
+    nsis: customerConfig.artifactName
       ? { ...(customerConfig.build.nsis || {}) }
       : {
           ...(baseBuild.nsis || {}),
@@ -174,9 +181,10 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
   console.log(" appId:   ", appId);
   console.log(" Name:    ", productName);
   console.log(" NSIS:    ", customerConfig.artifactName || nsisName);
-  if (customerLicenseFile) {
+  if (customerConfig.artifactName) {
     console.log(" Kundenmodus: aktiv");
-    console.log(" Lizenzdatei: ", customerLicenseFile);
+    console.log(" Setup-Typ:   ", customerSetupType || (customerLicenseFile ? "test" : "customer"));
+    console.log(" Lizenzdatei: ", customerLicenseFile || "-");
     console.log(" Ausgabe:     ", customerConfig.outputDir);
   }
   console.log("======================================");

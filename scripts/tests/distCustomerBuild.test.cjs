@@ -44,6 +44,29 @@ async function runDistCustomerBuildTests(run) {
     assert.equal(out.build.npmRebuild, false);
     assert.equal(out.build.buildDependenciesFromSource, false);
   });
+
+  await run('dist.cjs: Machine-Setup ohne Lizenzdatei nutzt Kundenziel ohne customer.bbmlic', () => {
+    const out = buildCustomerDistConfig({
+      baseBuild: {
+        directories: { output: 'dist' },
+        extraResources: [{ from: 'dev/models', to: 'audio/models' }],
+        nsis: {},
+      },
+      baseVersion: '2.0.0',
+      customerLicenseFile: '',
+      customerSlug: 'K-100-Musterfirma-GmbH',
+      customerSetupType: 'machine',
+    });
+
+    assert.equal(out.outputDir, path.join('dist', 'customers', 'K-100-Musterfirma-GmbH'));
+    assert.equal(out.artifactName, 'BBM-2.0.0-K-100-Musterfirma-GmbH-Setup.exe');
+    const embedded = out.build.extraResources.find((entry) => entry.to === 'license/customer.bbmlic');
+    assert.equal(Boolean(embedded), false);
+    assert.equal(out.build.directories.output, path.join('dist', 'customers', 'K-100-Musterfirma-GmbH'));
+    assert.equal(out.build.nsis.artifactName, 'BBM-2.0.0-K-100-Musterfirma-GmbH-Setup.exe');
+    assert.equal(out.build.npmRebuild, false);
+    assert.equal(out.build.buildDependenciesFromSource, false);
+  });
 }
 
 module.exports = {

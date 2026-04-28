@@ -364,20 +364,38 @@ async function runLizenzverwaltungModuleTests(run) {
   });
 
   await run("Lizenzverwaltung: Build-Mapping fuer Kunden-Setup Payload", () => {
-    const payload = buildCustomerSetupPayload({
+    const testPayload = buildCustomerSetupPayload({
       customer: { customer_number: "K-100", company_name: "Musterfirma GmbH" },
       license: { license_file_path: "C:\\tmp\\customer.bbmlic" },
     });
-    assert.equal(payload.customer.customer_number, "K-100");
-    assert.equal(payload.license.license_file_path, "C:\\tmp\\customer.bbmlic");
-    assert.equal(payload.licenseFilePath, "C:\\tmp\\customer.bbmlic");
+    assert.equal(testPayload.customer.customer_number, "K-100");
+    assert.equal(testPayload.license.license_file_path, "C:\\tmp\\customer.bbmlic");
+    assert.equal(testPayload.licenseFilePath, "C:\\tmp\\customer.bbmlic");
+    assert.equal(testPayload.setupType, "test");
+
+    const machinePayload = buildCustomerSetupPayload({
+      customer: { customer_number: "K-100", company_name: "Musterfirma GmbH" },
+      license: { license_file_path: "C:\\tmp\\customer.bbmlic" },
+      setupType: "machine",
+    });
+    assert.equal(machinePayload.setupType, "machine");
+    assert.equal(machinePayload.licenseFilePath, "");
   });
 
   await run("Lizenzverwaltung UI: Kunden-Setup-Texte und Hinweise vorhanden", () => {
     assert.equal(screenSource.includes("Kunden-Setup erstellen"), true);
+    assert.equal(screenSource.includes("Machine-Setup erstellen"), true);
+    assert.equal(screenSource.includes("Machine-Setup wird erstellt ..."), true);
+    assert.equal(screenSource.includes("Machine-Setup wurde erstellt."), true);
+    assert.equal(screenSource.includes("Lizenztyp"), true);
+    assert.equal(screenSource.includes("Testversion"), true);
     assert.equal(screenSource.includes("Bitte zuerst die Lizenz erstellen."), true);
     assert.equal(screenSource.includes("Kunden-Setup wird erstellt ..."), true);
     assert.equal(screenSource.includes("Kunden-Setup wurde erstellt."), true);
+    assert.equal(screenSource.includes("Schritt 1: Machine-Setup erstellen"), true);
+    assert.equal(screenSource.includes("Schritt 2: Lizenzanforderung importieren"), true);
+    assert.equal(screenSource.includes("Schritt 3: Antwortlizenz erstellen"), true);
+    assert.equal(screenSource.includes("Dieses Setup enthält noch keine fertige Lizenz."), true);
     assert.equal(screenSource.includes("if (!res?.ok)"), true);
     assert.equal(screenSource.includes("stdout(last):"), true);
     assert.equal(screenSource.includes("stderr(last):"), true);
@@ -829,8 +847,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Bitte gültige Datumswerte eintragen."), true);
     assert.equal(screenSource.includes("Der Testzeitraum beginnt bei erster Installation / erstem Start."), true);
     assert.equal(screenSource.includes("Testzeitraum"), true);
-    assert.equal(screenSource.includes("\"Lizenzart\""), true);
-    assert.equal(screenSource.includes("\"Gerätebindung\""), true);
+    assert.equal(screenSource.includes("\"Lizenztyp\""), true);
+    assert.equal(screenSource.includes("Gerätebindung (automatisch)"), true);
     assert.equal(screenSource.includes("licenseGenerate"), true);
     assert.equal(screenSource.includes("licenseOpenOutputDir"), true);
   });

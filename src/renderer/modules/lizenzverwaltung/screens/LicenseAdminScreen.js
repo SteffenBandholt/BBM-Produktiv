@@ -335,11 +335,13 @@ function tailLines(value, maxLines = 6) {
   return lines.slice(-Math.max(1, maxLines)).join(" | ");
 }
 
-export function buildCustomerSetupPayload({ customer = {}, license = {} } = {}) {
-  const licenseFilePath = valueOf(license, "license_file_path", "licenseFilePath");
+export function buildCustomerSetupPayload({ customer = {}, license = {}, setupType = "test" } = {}) {
+  const normalizedSetupType = String(setupType || "").trim().toLowerCase() === "machine" ? "machine" : "test";
+  const licenseFilePath = normalizedSetupType === "test" ? valueOf(license, "license_file_path", "licenseFilePath") : "";
   return {
     customer,
     license,
+    setupType: normalizedSetupType,
     licenseFilePath,
   };
 }
@@ -678,8 +680,8 @@ export default class LicenseAdminScreen {
       ["license_id", "Lizenz-ID"],
       ["valid_from", "gueltig von"],
       ["valid_until", "gueltig bis"],
-      ["license_edition", "Lizenzart"],
-      ["license_binding", "Gerätebindung"],
+      ["license_edition", "Lizenztyp"],
+      ["license_binding", "Gerätebindung (automatisch)"],
       ["trial_duration_days", "Testzeitraum"],
       ["machine_id", "Machine-ID"],
       ["notes", "Notizen"],
@@ -711,7 +713,7 @@ export default class LicenseAdminScreen {
       if (key === "license_edition") {
         input = document.createElement("select");
         [
-          { value: "test", label: "Testlizenz" },
+          { value: "test", label: "Testversion" },
           { value: "full", label: "Vollversion" },
         ].forEach((entry) => {
           const option = document.createElement("option");
@@ -939,6 +941,8 @@ export default class LicenseAdminScreen {
     }
 
     let machineBindingHint = null;
+    let machineFlowHint = null;
+    let machineSetupHint = null;
     const syncScopeJson = () => {
       inputs.product_scope_json.value = JSON.stringify(buildStructuredProductScopeJson(scopeModel, scopeModel.previous));
     };
@@ -962,13 +966,16 @@ export default class LicenseAdminScreen {
         customInput.value = selector.value;
       }
     };
+    let syncActionButtonsState = () => {};
     const syncEditionUiState = () => {
       const edition = String(inputs.license_edition?.value || "test").trim().toLowerCase();
       const isTestLicense = edition === "test";
       if (isTestLicense) {
         inputs.license_binding.value = "none";
+      } else {
+        inputs.license_binding.value = "machine";
       }
-      inputs.license_binding.disabled = isTestLicense;
+      inputs.license_binding.disabled = true;
       syncMachineIdState();
       if (fieldRows.valid_from) {
         fieldRows.valid_from.title.textContent = isTestLicense ? "Ausgestellt am (technisch)" : "gueltig von";
@@ -984,12 +991,21 @@ export default class LicenseAdminScreen {
       if (fieldRows.machine_id) {
         fieldRows.machine_id.row.style.display = isTestLicense ? "none" : "";
       }
-      const binding = String(inputs.license_binding?.value || "none").trim().toLowerCase();
-      const showMachineHint = !isTestLicense && binding === "machine";
+      if (fieldRows.license_binding) {
+        fieldRows.license_binding.row.style.display = "none";
+      }
+      const showMachineHint = !isTestLicense;
       if (machineBindingHint) {
         machineBindingHint.style.display = showMachineHint ? "" : "none";
         machineBindingHint.style.whiteSpace = showMachineHint ? "pre-line" : "normal";
       }
+      if (machineFlowHint) {
+        machineFlowHint.style.display = showMachineHint ? "" : "none";
+      }
+      if (machineSetupHint) {
+        machineSetupHint.style.display = showMachineHint ? "" : "none";
+      }
+      syncActionButtonsState();
     };
     inputs.license_binding?.addEventListener("change", syncMachineIdState);
     inputs.trial_duration_days?._durationSelect?.addEventListener("change", syncTrialDurationState);
@@ -1016,6 +1032,20 @@ export default class LicenseAdminScreen {
     machineBindingHint.style.display = "none";
     machineBindingHint.textContent =
       "Gerätegebundene Vollversion:\nImportieren Sie zuerst die Lizenzanforderung des Kunden.\nDanach erzeugen Sie mit „Lizenz erstellen“ die Antwortlizenz.";
+    machineFlowHint = document.createElement("div");
+    machineFlowHint.style.fontSize = "12px";
+    machineFlowHint.style.padding = "8px";
+    machineFlowHint.style.border = "1px solid #cbd5e1";
+    machineFlowHint.style.borderRadius = "6px";
+    machineFlowHint.style.background = "#f8fafc";
+    machineFlowHint.style.display = "none";
+    machineFlowHint.style.whiteSpace = "pre-line";
+    machineFlowHint.textContent =
+      "Schritt 1: Machine-Setup erstellen\nSchritt 2: Lizenzanforderung importieren\nSchritt 3: Antwortlizenz erstellen";
+    machineSetupHint = document.createElement("div");
+    machineSetupHint.style.fontSize = "12px";
+    machineSetupHint.style.display = "none";
+    machineSetupHint.textContent = "Dieses Setup enthält noch keine fertige Lizenz.";
 
     const actions = document.createElement("div");
     actions.style.display = "flex";
@@ -1079,25 +1109,21 @@ export default class LicenseAdminScreen {
       }
     });
     openOutputDirBtn.style.display = "none";
-    const createCustomerSetupBtn = this._button("Kunden-Setup erstellen", async () => {
+    const runSetupBuild = async ({ setupType = "test" } = {}) => {
       const activeLicense = this.currentLicense || license || {};
       const payload = buildCustomerSetupPayload({
         customer: this.currentCustomer || {},
         license: activeLicense,
+        setupType,
       });
-      if (!String(payload.licenseFilePath || "").trim()) {
+      if (setupType === "test" && !String(payload.licenseFilePath || "").trim()) {
         message.textContent = "Bitte zuerst die Lizenz erstellen.";
         return;
       }
-      const binding = String(activeLicense.license_binding || activeLicense.licenseBinding || "").trim().toLowerCase();
-      const machineId = String(activeLicense.machine_id || activeLicense.machineId || "").trim();
-      if (binding === "machine" && !machineId) {
-        message.textContent = "Machine-ID ist erforderlich, wenn die Lizenz an ein Gerät gebunden wird.";
-        return;
-      }
       createCustomerSetupBtn.disabled = true;
+      createMachineSetupBtn.disabled = true;
       try {
-        message.textContent = "Kunden-Setup wird erstellt ...";
+        message.textContent = setupType === "machine" ? "Machine-Setup wird erstellt ..." : "Kunden-Setup wird erstellt ...";
         setupOutput.textContent = "";
         const res = await createCustomerSetup(payload);
         if (!res?.ok) {
@@ -1122,7 +1148,7 @@ export default class LicenseAdminScreen {
           setupOutput.textContent = diagnostics.join("\n");
           return;
         }
-        message.textContent = "Kunden-Setup wurde erstellt.";
+        message.textContent = setupType === "machine" ? "Machine-Setup wurde erstellt." : "Kunden-Setup wurde erstellt.";
         const outPath = String(res?.setupPath || res?.artifactPath || "").trim();
         const outDir = String(res?.outputDir || "").trim();
         setupOutput.textContent = outPath ? `Ausgabepfad: ${outPath}` : outDir ? `Ausgabepfad: ${outDir}` : "";
@@ -1136,8 +1162,11 @@ export default class LicenseAdminScreen {
         message.textContent = `Fehler: ${err?.message || err}`;
       } finally {
         createCustomerSetupBtn.disabled = false;
+        createMachineSetupBtn.disabled = false;
       }
-    });
+    };
+    const createCustomerSetupBtn = this._button("Kunden-Setup erstellen", async () => runSetupBuild({ setupType: "test" }));
+    const createMachineSetupBtn = this._button("Machine-Setup erstellen", async () => runSetupBuild({ setupType: "machine" }));
     createCustomerSetupBtn.disabled = !valueOf(license, "license_file_path", "licenseFilePath");
 
     const createBtn = this._button("Lizenz erstellen", async () => {
@@ -1247,9 +1276,30 @@ export default class LicenseAdminScreen {
         }
       } finally {
         createBtn.textContent = previousText;
-        createBtn.disabled = false;
+        syncActionButtonsState();
       }
     });
+
+    syncActionButtonsState = () => {
+      const edition = String(inputs.license_edition?.value || "test").trim().toLowerCase();
+      const machineId = String(inputs.machine_id?.value || "").trim();
+      const isFull = edition === "full";
+      const hasMachineId = !!machineId;
+      importRequestBtn.style.display = isFull ? "" : "none";
+      createMachineSetupBtn.style.display = isFull ? "" : "none";
+      createCustomerSetupBtn.style.display = isFull ? "none" : "";
+      if (isFull && !hasMachineId) {
+        createBtn.disabled = true;
+        createBtn.title = "Antwortlizenz erst nach Import einer Machine-ID erstellen.";
+      } else {
+        createBtn.disabled = false;
+        createBtn.title = "";
+      }
+    };
+    inputs.machine_id?.addEventListener("input", syncActionButtonsState);
+    inputs.license_edition?.addEventListener("change", syncActionButtonsState);
+    syncActionButtonsState();
+    syncEditionUiState();
 
     const backBtn = this._button("Zurueck", () => {
       this.currentLicense = null;
@@ -1257,8 +1307,20 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    actions.append(importRequestBtn, createBtn, createCustomerSetupBtn, backBtn, openOutputDirBtn);
-    container.append(header, context, form, licenseIdHint, machineBindingHint, actions, message, generationOutput, setupOutput);
+    actions.append(importRequestBtn, createBtn, createCustomerSetupBtn, createMachineSetupBtn, backBtn, openOutputDirBtn);
+    container.append(
+      header,
+      context,
+      form,
+      licenseIdHint,
+      machineBindingHint,
+      machineFlowHint,
+      machineSetupHint,
+      actions,
+      message,
+      generationOutput,
+      setupOutput
+    );
   }
 
   async _render() {

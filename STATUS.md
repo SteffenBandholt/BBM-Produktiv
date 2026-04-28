@@ -16,6 +16,13 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Lizenzverwaltung Nachsteuerung fuer PR #46 ist umgesetzt:
+  - Lizenzformular fuehrt jetzt zwei fachlich getrennte Wege ueber `Lizenztyp`: `Testversion` und `Vollversion`.
+  - `Testversion` bleibt ohne Machine-ID, zeigt Testdauer, nutzt weiter `Lizenz erstellen` + `Kunden-Setup erstellen` mit eingebetteter fertiger `customer.bbmlic`.
+  - `Vollversion` ist fest an Machine-Binding gekoppelt, blendet den freien Binding-Mix aus und fuehrt in den Schritten `Machine-Setup erstellen` -> `Lizenzanforderung importieren` -> `Antwortlizenz erstellen`.
+  - `Machine-Setup erstellen` baut bewusst ohne eingebettete `customer.bbmlic`; die Antwortlizenz wird weiterhin erst nach Import der Machine-ID ueber `Lizenz erstellen` erzeugt.
+  - Dist-/IPC-Flow wurde minimal erweitert, damit Kunden-Setups wahlweise mit (Testversion) oder ohne (Machine-Setup) eingebettete Lizenz gebaut werden koennen.
+  - Testabdeckung wurde fuer UI-Trennung, Payload-/Setup-Typ und Build-Embedding (mit/ohne `customer.bbmlic`) erweitert; `npm test` bleibt Pflicht.
 - Machine-Binding Schritt 3 (Antwortlizenz-UI-Fuehrung) ist umgesetzt:
   - Admin-Lizenzformular zeigt bei `Gerätebindung = An Machine-ID binden` den Hinweis `Gerätegebundene Vollversion` mit klarer Schrittfuehrung (Import Lizenzanforderung -> `Lizenz erstellen` -> Antwortlizenz).
   - Nach erfolgreichem `Lizenz erstellen` wird bei Vollversion + Machine-Binding + vorhandener Machine-ID zusaetzlich angezeigt: `Antwortlizenz wurde erstellt.` sowie `Diese .bbmlic-Datei an den Kunden zurückgeben.`.
