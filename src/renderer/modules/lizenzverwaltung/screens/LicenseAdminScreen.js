@@ -5,6 +5,7 @@ import {
   listLicensesByCustomer,
   saveCustomer,
   saveLicense,
+  sendResponseLicenseMail,
 } from "../licenseStorageService.js";
 
 const PRODUCT_KEY = "bbm-produktiv";
@@ -1278,6 +1279,59 @@ export default class LicenseAdminScreen {
       }
     });
     openOutputDirBtn.style.display = "none";
+    const copyMailTextBtn = this._button("Mailtext kopieren", async () => {
+      const mailText = [
+        "Guten Tag,",
+        "",
+        "anbei erhalten Sie Ihre BBM-Lizenzdatei.",
+        "",
+        "Bitte importieren Sie die angehängte .bbmlic-Datei in der Anwendung.",
+        "",
+        "Viele Grüße",
+        "Planungsbüro Steffen Bandholt",
+      ].join("\n");
+      try {
+        if (globalThis?.navigator?.clipboard?.writeText) {
+          await globalThis.navigator.clipboard.writeText(mailText);
+          message.textContent = "Mailtext wurde in die Zwischenablage kopiert.";
+          return;
+        }
+      } catch (_err) {
+        // fallback below
+      }
+      message.textContent = "Mailtext konnte nicht automatisch kopiert werden.";
+    });
+    copyMailTextBtn.style.display = "none";
+    const sendResponseLicenseMailBtn = this._button("Antwortlizenz per Outlook senden", async () => {
+      const activeCustomer = this.currentCustomer || customer || {};
+      const activeLicense = this.currentLicense || license || {};
+      const customerEmail = valueOf(activeCustomer, "email");
+      const licenseFilePath = valueOf(activeLicense, "license_file_path", "licenseFilePath");
+      try {
+        const res = await sendResponseLicenseMail({ customerEmail, licenseFilePath });
+        if (!res?.ok) {
+          message.textContent = res?.message || "Outlook konnte nicht geöffnet werden.";
+          if (licenseFilePath) {
+            openOutputDirBtn.dataset.outputPath = licenseFilePath;
+            openOutputDirBtn.style.display = "";
+            openOutputDirBtn.disabled = false;
+          }
+          copyMailTextBtn.style.display = "";
+          return;
+        }
+        message.textContent = res?.message || "Outlook-Mail wurde vorbereitet.";
+        copyMailTextBtn.style.display = "none";
+      } catch (_err) {
+        message.textContent = "Outlook konnte nicht geöffnet werden.";
+        if (licenseFilePath) {
+          openOutputDirBtn.dataset.outputPath = licenseFilePath;
+          openOutputDirBtn.style.display = "";
+          openOutputDirBtn.disabled = false;
+        }
+        copyMailTextBtn.style.display = "";
+      }
+    });
+    sendResponseLicenseMailBtn.style.display = "none";
     const buildCurrentEditorLicensePayload = (activeLicense = {}) =>
       buildLicenseEditorPayload({
         license: activeLicense,
@@ -1494,6 +1548,7 @@ export default class LicenseAdminScreen {
           openOutputDirBtn.style.display = "";
           openOutputDirBtn.disabled = false;
         }
+        copyMailTextBtn.style.display = "none";
       } catch (err) {
         if (String(err?.message || "") === "CUSTOMER_CONTEXT_REQUIRED") {
           message.textContent = "Fehler: Speichern ohne geoeffneten Kunden ist unmoeglich.";
@@ -1509,12 +1564,17 @@ export default class LicenseAdminScreen {
     syncActionButtonsState = () => {
       const edition = String(inputs.license_edition?.value || "test").trim().toLowerCase();
       const machineId = String(inputs.machine_id?.value || "").trim();
+      const activeLicense = this.currentLicense || license || {};
+      const licenseFilePath = valueOf(activeLicense, "license_file_path", "licenseFilePath");
       const isFull = edition === "full";
       const hasMachineId = !!machineId;
+      const hasResponseLicenseFile = !!licenseFilePath && licenseFilePath.toLowerCase().endsWith(".bbmlic");
       importRequestBtn.style.display = isFull ? "" : "none";
       importRequestFromMailBtn.style.display = isFull ? "" : "none";
+      sendResponseLicenseMailBtn.style.display = isFull && hasResponseLicenseFile ? "" : "none";
       if (!isFull) {
         importMailWrap.style.display = "none";
+        copyMailTextBtn.style.display = "none";
       }
       createMachineSetupBtn.style.display = isFull ? "" : "none";
       createCustomerSetupBtn.style.display = isFull ? "none" : "";
@@ -1541,11 +1601,13 @@ export default class LicenseAdminScreen {
       importRequestBtn,
       importRequestFromMailBtn,
       createBtn,
+      sendResponseLicenseMailBtn,
       createCustomerSetupBtn,
       createMachineSetupBtn,
       deleteBtn,
       backBtn,
-      openOutputDirBtn
+      openOutputDirBtn,
+      copyMailTextBtn
     );
     container.append(
       header,

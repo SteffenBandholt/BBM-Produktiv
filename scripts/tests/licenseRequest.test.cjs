@@ -66,6 +66,7 @@ function createDefaultStubs({
         listLicenses: () => [],
         listLicensesByCustomer: () => [],
         saveLicense: (v) => v,
+        deleteLicenseRecord: () => ({ ok: true }),
         listHistory: () => [],
         addHistoryEntry: (v) => v,
       },
@@ -179,6 +180,12 @@ async function runLicenseRequestTests(run) {
     assert.equal(preloadSource.includes('ipcRenderer.invoke("license-admin:import-license-request"'), true);
   });
 
+  await run("Preload: window.bbmDb.licenseAdminSendResponseLicenseMail ist vorhanden", () => {
+    const preloadSource = read("src/main/preload.js");
+    assert.equal(preloadSource.includes("licenseAdminSendResponseLicenseMail"), true);
+    assert.equal(preloadSource.includes('ipcRenderer.invoke("license-admin:send-response-license-mail"'), true);
+  });
+
   await run("Renderer/UI: Texte fuer Lizenzanforderung sind vorhanden", () => {
     const settingsSource = read("src/renderer/views/SettingsView.js");
     const mainSource = read("src/renderer/main.js");
@@ -190,6 +197,12 @@ async function runLicenseRequestTests(run) {
     assert.equal(settingsSource.includes("Antwortlizenz erhalten?"), true);
     assert.equal(settingsSource.includes("Importieren Sie hier die .bbmlic-Datei"), true);
     assert.equal(licenseAdminSource.includes("Lizenzanforderung importieren"), true);
+    assert.equal(licenseAdminSource.includes("Antwortlizenz per Outlook senden"), true);
+    assert.equal(licenseAdminSource.includes("Outlook-Mail wurde vorbereitet."), true);
+    assert.equal(licenseAdminSource.includes("Outlook konnte nicht geöffnet werden."), true);
+    assert.equal(licenseAdminSource.includes("Ausgabeordner öffnen"), true);
+    assert.equal(licenseAdminSource.includes("Mailtext kopieren"), true);
+    assert.equal(licenseAdminSource.includes("hasResponseLicenseFile"), true);
     assert.equal(licenseAdminSource.includes("Gerätegebundene Vollversion:"), true);
     assert.equal(licenseAdminSource.includes("Antwortlizenz wurde erstellt."), true);
     assert.equal(licenseAdminSource.includes("Diese .bbmlic-Datei an den Kunden zurückgeben."), true);
@@ -239,6 +252,23 @@ async function runLicenseRequestTests(run) {
       mod.registerLicenseIpc();
       assert.equal(handlers.has("license-admin:import-license-request"), true);
     });
+  });
+
+  await run("Main/IPC: license-admin:send-response-license-mail wird registriert", () => {
+    const { handlers, stubs } = createDefaultStubs({});
+    return withPatchedLicenseIpc(stubs, (mod) => {
+      mod.registerLicenseIpc();
+      assert.equal(handlers.has("license-admin:send-response-license-mail"), true);
+    });
+  });
+
+  await run("Main/IPC: Outlook-Draft nutzt Display() und nicht Send()", () => {
+    const ipcSource = read("src/main/ipc/licenseIpc.js");
+    assert.equal(ipcSource.includes("Keine Kunden-E-Mail hinterlegt."), true);
+    assert.equal(ipcSource.includes("Antwortlizenz-Datei wurde nicht gefunden."), true);
+    assert.equal(ipcSource.includes("Outlook konnte nicht geöffnet werden."), true);
+    assert.equal(ipcSource.includes("$mail.Display()"), true);
+    assert.equal(ipcSource.includes("$mail.Send()"), false);
   });
 
   await run("Main/IPC: gueltige Lizenzanforderung wird importiert", async () => {
