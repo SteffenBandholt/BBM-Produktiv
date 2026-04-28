@@ -54,6 +54,7 @@ async function runDistCustomerBuildTests(run) {
       },
       baseVersion: '2.0.0',
       customerLicenseFile: '',
+      customerSetupFile: path.join('C:', 'tmp', 'customer-setup.json'),
       customerSlug: 'K-100-Musterfirma-GmbH',
       customerSetupType: 'machine',
     });
@@ -61,7 +62,10 @@ async function runDistCustomerBuildTests(run) {
     assert.equal(out.outputDir, path.join('dist', 'customers', 'K-100-Musterfirma-GmbH'));
     assert.equal(out.artifactName, 'BBM-2.0.0-K-100-Musterfirma-GmbH-Setup.exe');
     const embedded = out.build.extraResources.find((entry) => entry.to === 'license/customer.bbmlic');
+    const setupMeta = out.build.extraResources.find((entry) => entry.to === 'license/customer-setup.json');
     assert.equal(Boolean(embedded), false);
+    assert.equal(Boolean(setupMeta), true);
+    assert.equal(setupMeta.from.endsWith('customer-setup.json'), true);
     assert.equal(out.build.directories.output, path.join('dist', 'customers', 'K-100-Musterfirma-GmbH'));
     assert.equal(out.build.nsis.artifactName, 'BBM-2.0.0-K-100-Musterfirma-GmbH-Setup.exe');
     assert.equal(out.build.npmRebuild, false);

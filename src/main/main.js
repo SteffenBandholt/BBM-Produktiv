@@ -22,6 +22,7 @@ const { registerProjectTransferIpc } = require("./ipc/projectTransferIpc");
 const { registerLicenseIpc } = require("./ipc/licenseIpc");
 const { registerAudioIpc } = require("./ipc/audioIpc");
 const { checkLicense } = require("./licensing/licenseService");
+const { loadCustomerSetup } = require("./licensing/licenseStorage");
 const {
   toLicenseErrorPayload,
   isDevAudioOverrideEnabled,
@@ -664,6 +665,14 @@ app.whenReady().then(async () => {
       return { ok: true, version: app.getVersion() };
     } catch (err) {
       return { ok: false, error: err?.message || String(err), version: "" };
+    }
+  });
+
+  ipcMain.handle("app:get-customer-setup", () => {
+    try {
+      return { ok: true, setup: loadCustomerSetup() };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err), setup: null };
     }
   });
 
