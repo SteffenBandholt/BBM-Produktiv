@@ -249,15 +249,6 @@ function _normalizeIsoDate(value) {
   return raw;
 }
 
-function _computeValidUntil(validFrom, durationDays) {
-  const start = _normalizeIsoDate(validFrom);
-  const days = Number(durationDays);
-  if (!start || !Number.isFinite(days) || days < 1) return "";
-  const dt = new Date(`${start}T00:00:00Z`);
-  dt.setUTCDate(dt.getUTCDate() + Math.floor(days));
-  return dt.toISOString().slice(0, 10);
-}
-
 function _normalizeTrialDurationDays(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) return null;
@@ -273,12 +264,8 @@ function _validateGenerationPayload(raw = {}) {
   const edition = String(raw?.edition || "test").trim() || "test";
   const binding = String(raw?.binding || "").trim().toLowerCase() || "none";
   const validFrom = _normalizeIsoDate(raw?.validFrom);
-  const durationDays =
-    raw?.durationDays === "" || raw?.durationDays === null || raw?.durationDays === undefined
-      ? null
-      : Number(raw.durationDays);
   const explicitValidUntil = _normalizeIsoDate(raw?.validUntil);
-  const validUntil = explicitValidUntil || _computeValidUntil(validFrom, durationDays);
+  const validUntil = explicitValidUntil;
   const trialDurationDays = _normalizeTrialDurationDays(raw?.trialDurationDays);
   const maxDevices = Number(raw?.maxDevices);
   const features = Array.isArray(raw?.features)
@@ -315,7 +302,6 @@ function _validateGenerationPayload(raw = {}) {
     validFrom,
     validUntil: isTestLicense ? "" : validUntil,
     trialDurationDays: isTestLicense ? trialDurationDays : null,
-    durationDays: Number.isFinite(durationDays) && durationDays > 0 ? Math.floor(durationDays) : null,
     maxDevices: Math.floor(maxDevices),
     features,
     notes,
@@ -1075,7 +1061,7 @@ function registerLicenseDevGeneratorIpc() {
             edition: inputData.edition,
             binding: inputData.binding,
             validFrom: inputData.validFrom,
-            validUntil: inputData.validUntil,
+            ...(inputData.edition === "test" && inputData.binding === "none" ? {} : { validUntil: inputData.validUntil }),
             ...(inputData.trialDurationDays ? { trialDurationDays: inputData.trialDurationDays } : {}),
             maxDevices: inputData.maxDevices,
             features: inputData.features,

@@ -24,6 +24,9 @@ Sie ergänzt:
 - PR #46 Bugfix (Testversion ohne validUntil im gesamten Erzeugungsweg) ist umgesetzt:
   - Save-Payload erzwingt fuer Testversion intern `license_edition=test`, `license_binding=none`, `license_mode=soft`, `machine_id=""` und laesst `valid_until` leer.
   - Damit wird Testversion ohne `validUntil` durch Save -> Generator-Payload -> Main-IPC konsistent akzeptiert; Vollversion ohne `validUntil` bleibt weiterhin Fehlerfall.
+- PR #46 Bugfix (Generator-Input fuer Testversion ohne validUntil-Feld) ist umgesetzt:
+  - Main-IPC `license:generate` schreibt fuer Testversion `validUntil` nicht mehr in die Input-JSON an den Generator.
+  - Die alte Hilfslogik zur Ableitung `validUntil` aus `validFrom + Dauer` wurde entfernt; kein Rueckfall auf das Altmodell.
 - Lizenzverwaltung Nachsteuerung fuer PR #46 ist umgesetzt:
   - Lizenzformular fuehrt jetzt zwei fachlich getrennte Wege ueber `Lizenztyp`: `Testversion` und `Vollversion`.
   - `Testversion` bleibt ohne Machine-ID, zeigt Testdauer, nutzt weiter `Lizenz erstellen` + `Kunden-Setup erstellen` mit eingebetteter fertiger `customer.bbmlic`.

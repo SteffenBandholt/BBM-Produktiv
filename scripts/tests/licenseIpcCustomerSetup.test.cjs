@@ -201,6 +201,15 @@ async function runLicenseIpcCustomerSetupTests(run) {
     });
   });
 
+  await run('licenseIpc: kein validFrom+Testdauer-Fallback auf validUntil mehr vorhanden', () => {
+    const source = fs.readFileSync(path.join(REAL_REPO_ROOT, 'src/main/ipc/licenseIpc.js'), 'utf8');
+    assert.equal(source.includes('_computeValidUntil'), false);
+    assert.equal(
+      source.includes('inputData.edition === "test" && inputData.binding === "none" ? {} : { validUntil: inputData.validUntil }'),
+      true
+    );
+  });
+
   await run('licenseIpc: exitCode 0 aber outputDir fehlt -> CUSTOMER_SETUP_ARTIFACT_NOT_FOUND', async () => {
     await withTempRepo(
       () => {},
