@@ -182,9 +182,17 @@ async function runLicenseRequestTests(run) {
     const settingsSource = read("src/renderer/views/SettingsView.js");
     const licenseAdminSource = read("src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js");
     assert.equal(settingsSource.includes("Lizenzanforderung speichern"), true);
+    assert.equal(settingsSource.includes("Lizenz importieren"), true);
     assert.equal(settingsSource.includes("Lizenzanforderung wurde gespeichert."), true);
     assert.equal(settingsSource.includes("Lizenzanforderung konnte nicht gespeichert werden."), true);
+    assert.equal(settingsSource.includes("Antwortlizenz erhalten?"), true);
+    assert.equal(settingsSource.includes("Importieren Sie hier die .bbmlic-Datei"), true);
     assert.equal(licenseAdminSource.includes("Lizenzanforderung importieren"), true);
+    assert.equal(licenseAdminSource.includes("Gerätegebundene Vollversion:"), true);
+    assert.equal(licenseAdminSource.includes("Antwortlizenz wurde erstellt."), true);
+    assert.equal(licenseAdminSource.includes("Diese .bbmlic-Datei an den Kunden zurückgeben."), true);
+    assert.equal(licenseAdminSource.includes("Antwortlizenz erzeugen"), false);
+    assert.equal(licenseAdminSource.includes("Lizenz erstellen"), true);
     assert.equal(
       licenseAdminSource.includes("Lizenzanforderung importiert. Machine-ID wurde übernommen."),
       true

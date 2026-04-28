@@ -938,6 +938,7 @@ export default class LicenseAdminScreen {
       appendFieldRow("Legacy-Hinweis", legacyHint);
     }
 
+    let machineBindingHint = null;
     const syncScopeJson = () => {
       inputs.product_scope_json.value = JSON.stringify(buildStructuredProductScopeJson(scopeModel, scopeModel.previous));
     };
@@ -983,6 +984,12 @@ export default class LicenseAdminScreen {
       if (fieldRows.machine_id) {
         fieldRows.machine_id.row.style.display = isTestLicense ? "none" : "";
       }
+      const binding = String(inputs.license_binding?.value || "none").trim().toLowerCase();
+      const showMachineHint = !isTestLicense && binding === "machine";
+      if (machineBindingHint) {
+        machineBindingHint.style.display = showMachineHint ? "" : "none";
+        machineBindingHint.style.whiteSpace = showMachineHint ? "pre-line" : "normal";
+      }
     };
     inputs.license_binding?.addEventListener("change", syncMachineIdState);
     inputs.trial_duration_days?._durationSelect?.addEventListener("change", syncTrialDurationState);
@@ -1000,6 +1007,15 @@ export default class LicenseAdminScreen {
     licenseIdHint.textContent =
       "Wenn die Lizenz-ID leer ist, wird beim Erstellen automatisch eine ID erzeugt.";
     licenseIdHint.style.fontSize = "12px";
+    machineBindingHint = document.createElement("div");
+    machineBindingHint.style.fontSize = "12px";
+    machineBindingHint.style.padding = "8px";
+    machineBindingHint.style.border = "1px solid #cbd5e1";
+    machineBindingHint.style.borderRadius = "6px";
+    machineBindingHint.style.background = "#f8fafc";
+    machineBindingHint.style.display = "none";
+    machineBindingHint.textContent =
+      "Gerätegebundene Vollversion:\nImportieren Sie zuerst die Lizenzanforderung des Kunden.\nDanach erzeugen Sie mit „Lizenz erstellen“ die Antwortlizenz.";
 
     const actions = document.createElement("div");
     actions.style.display = "flex";
@@ -1201,7 +1217,14 @@ export default class LicenseAdminScreen {
           message.textContent = `Fehler: ${res?.error || "Lizenz konnte nicht erzeugt werden."}`;
           return;
         }
-        message.textContent = "Lizenzdatei wurde erzeugt.";
+        const isMachineResponseLicense =
+          generatorPayload.edition === "full" &&
+          generatorPayload.binding === "machine" &&
+          String(generatorPayload.machineId || "").trim();
+        message.textContent = isMachineResponseLicense
+          ? "Lizenzdatei wurde erzeugt.\nAntwortlizenz wurde erstellt.\nDiese .bbmlic-Datei an den Kunden zurückgeben."
+          : "Lizenzdatei wurde erzeugt.";
+        message.style.whiteSpace = "pre-line";
         const outputPath = String(res?.outputPath || "").trim();
         if (outputPath) {
           generationOutput.textContent = `Ausgabepfad: ${outputPath}`;
@@ -1235,7 +1258,7 @@ export default class LicenseAdminScreen {
     });
 
     actions.append(importRequestBtn, createBtn, createCustomerSetupBtn, backBtn, openOutputDirBtn);
-    container.append(header, context, form, licenseIdHint, actions, message, generationOutput, setupOutput);
+    container.append(header, context, form, licenseIdHint, machineBindingHint, actions, message, generationOutput, setupOutput);
   }
 
   async _render() {

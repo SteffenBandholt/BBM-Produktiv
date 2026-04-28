@@ -820,6 +820,10 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Ausgabeordner öffnen"), true);
     assert.equal(screenSource.includes("Lizenzdatei wird erzeugt ..."), true);
     assert.equal(screenSource.includes("Lizenzdatei wurde erzeugt."), true);
+    assert.equal(screenSource.includes("Gerätegebundene Vollversion:"), true);
+    assert.equal(screenSource.includes("Antwortlizenz wurde erstellt."), true);
+    assert.equal(screenSource.includes("Diese .bbmlic-Datei an den Kunden zurückgeben."), true);
+    assert.equal(screenSource.includes("Antwortlizenz erzeugen"), false);
     assert.equal(screenSource.includes("Produktumfang enthält keine erzeugbaren Features."), true);
     assert.equal(screenSource.includes("Machine-ID ist erforderlich, wenn die Lizenz an ein Gerät gebunden wird."), true);
     assert.equal(screenSource.includes("Bitte gültige Datumswerte eintragen."), true);
@@ -829,6 +833,12 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("\"Gerätebindung\""), true);
     assert.equal(screenSource.includes("licenseGenerate"), true);
     assert.equal(screenSource.includes("licenseOpenOutputDir"), true);
+  });
+
+  await run("SettingsView: Lizenzstatusbereich fuehrt Antwortlizenz-Import ohne neuen Mechanismus", () => {
+    assert.equal(settingsViewSource.includes("Antwortlizenz erhalten?"), true);
+    assert.equal(settingsViewSource.includes("Importieren Sie hier die .bbmlic-Datei"), true);
+    assert.equal(settingsViewSource.includes("Lizenz importieren"), true);
   });
 
   await run("Kundendetail: nach Kunde speichern ist Neue Lizenz direkt nutzbar", () => {
