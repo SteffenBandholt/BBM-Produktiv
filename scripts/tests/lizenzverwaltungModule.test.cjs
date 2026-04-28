@@ -880,6 +880,19 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("licenseOpenOutputDir"), true);
   });
 
+
+
+  await run("LicenseAdminScreen: Kunde speichern rendert Detailansicht frisch", () => {
+    assert.equal(screenSource.includes('this.flashMessage = "Kunde gespeichert."'), true);
+    assert.equal(screenSource.includes('await this._render();'), true);
+  });
+
+  await run("LicenseAdminScreen: Kunde loeschen setzt State zurueck und rendert Kundenliste neu", () => {
+    assert.equal(screenSource.includes('this.currentCustomer = null;'), true);
+    assert.equal(screenSource.includes('this.currentLicense = null;'), true);
+    assert.equal(screenSource.includes('this.currentView = "customers";'), true);
+    assert.equal(screenSource.includes('await this._render();'), true);
+  });
   await run("SettingsView: Lizenzstatusbereich fuehrt Antwortlizenz-Import ohne neuen Mechanismus", () => {
     assert.equal(settingsViewSource.includes("Antwortlizenz erhalten?"), true);
     assert.equal(settingsViewSource.includes("Importieren Sie hier die .bbmlic-Datei"), true);
@@ -888,7 +901,7 @@ async function runLizenzverwaltungModuleTests(run) {
 
   await run("Kundendetail: nach Kunde speichern ist Neue Lizenz direkt nutzbar", () => {
     assert.equal(screenSource.includes("this.currentCustomer = saved;"), true);
-    assert.equal(screenSource.includes("newLicenseBtn.disabled = false;"), true);
+    assert.equal(screenSource.includes('this.flashMessage = "Kunde gespeichert.";'), true);
   });
 
 

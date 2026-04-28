@@ -642,15 +642,8 @@ export default class LicenseAdminScreen {
           })
         );
         this.currentCustomer = saved;
-        newLicenseBtn.disabled = false;
-        message.textContent = "Kunde gespeichert.";
-        inputs.customer_number.value = valueOf(saved, "customer_number", "customerNumber") || "";
-        inputs.company_name.value = valueOf(saved, "company_name", "companyName") || "";
-        inputs.contact_person.value = valueOf(saved, "contact_person", "contactPerson") || "";
-        inputs.email.value = valueOf(saved, "email") || "";
-        inputs.phone.value = valueOf(saved, "phone") || "";
-        inputs.notes.value = valueOf(saved, "notes") || "";
-        await renderLicenses();
+        this.flashMessage = "Kunde gespeichert.";
+        await this._render();
       } catch (err) {
         message.textContent = `Fehler: ${err?.message || err}`;
       }
