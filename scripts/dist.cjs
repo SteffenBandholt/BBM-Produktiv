@@ -57,6 +57,20 @@ function sanitizeCustomerSlug(value) {
   return cleaned || "customer";
 }
 
+function buildMachineSetupMetaFromEnv(env = {}) {
+  return {
+    schemaVersion: 1,
+    setupType: "machine",
+    product: "bbm-protokoll",
+    expectedBinding: "machine",
+    customerSlug: sanitizeCustomerSlug(env.BBM_CUSTOMER_SLUG || env.BBM_CUSTOMER_NAME || ""),
+    customerName: String(env.BBM_CUSTOMER_NAME || "").trim(),
+    customerNumber: String(env.BBM_CUSTOMER_NUMBER || "").trim(),
+    licenseId: String(env.BBM_LICENSE_ID || "").trim(),
+    createdAt: new Date().toISOString(),
+  };
+}
+
 function buildCustomerDistConfig({
   baseBuild = {},
   baseVersion = "0.0.0",
@@ -157,13 +171,7 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
       ? path.join(repoRoot, "dist", `customer-setup-${Date.now()}.json`)
       : "";
   if (customerSetupMetaFile) {
-    writeJsonAtomic(customerSetupMetaFile, {
-      schemaVersion: 1,
-      setupType: "machine",
-      customerSlug,
-      customerName,
-      createdAt: new Date().toISOString(),
-    });
+    writeJsonAtomic(customerSetupMetaFile, buildMachineSetupMetaFromEnv(env));
   }
   const customerConfig = buildCustomerDistConfig({
     baseBuild,
@@ -276,6 +284,7 @@ if (require.main === module) {
 
 module.exports = {
   sanitizeCustomerSlug,
+  buildMachineSetupMetaFromEnv,
   buildCustomerDistConfig,
   runDist,
 };

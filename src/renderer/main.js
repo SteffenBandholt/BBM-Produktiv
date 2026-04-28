@@ -262,7 +262,7 @@ const renderMachineSetupLicenseRequired = () => {
       const mailBody = buildMachineSetupLicenseMailBody({
         customerName: setup.customerName || licenseStatus?.customerName || "",
         customerNumber: setup.customerNumber || setup.customer_number || "",
-        licenseId: licenseStatus?.licenseId || "",
+        licenseId: setup.licenseId || setup.license_id || licenseStatus?.licenseId || "",
         machineId: licenseStatus?.machineId || "",
         appVersion: appVersionRes?.version || APP_VERSION,
       });

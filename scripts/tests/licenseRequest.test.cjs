@@ -221,6 +221,8 @@ async function runLicenseRequestTests(run) {
     assert.equal(mainSource.includes("App-Version:"), true);
     assert.equal(mainSource.includes("Kunde:"), true);
     assert.equal(mainSource.includes("Kundennummer:"), true);
+    assert.equal(mainSource.includes("setup.customerNumber || setup.customer_number || \"\""), true);
+    assert.equal(mainSource.includes("setup.licenseId || setup.license_id || licenseStatus?.licenseId || \"\""), true);
     assert.equal(mainSource.includes("Daten kopieren"), true);
     assert.equal(mainSource.includes("E-Mail konnte nicht automatisch geöffnet werden."), true);
   });

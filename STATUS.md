@@ -16,6 +16,13 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Machine-Setup-Metadaten wurden fuer eindeutige Lizenzzuordnung erweitert:
+  - `customer-setup.json` enthaelt bei `setupType=machine` jetzt zusaetzlich `product=bbm-protokoll`, `expectedBinding=machine`, `customerName`, `customerNumber` und `licenseId`.
+  - Die Werte werden aus dem bestehenden Admin-/Build-Payload uebernommen (Kunde/Firma, Kundennummer, Lizenz-ID) und ueber Build-Env bis in die Setup-Metadatei durchgereicht.
+  - Der Mailtext in der Machine-Setup-Startansicht nutzt bei `Kundennummer` und `Lizenz-ID` jetzt vorrangig die Daten aus `customer-setup.json` (Fallback weiter auf `-`/Statuswerte).
+  - Fallback `Daten kopieren` bleibt identisch zum Mailtext und enthaelt damit ebenfalls Kundennummer + Lizenz-ID.
+  - Testabdeckung wurde fuer Metadatenfelder, Payload-Mapping und Setup-Read erweitert; `npm test` ist gruen.
+- Nächster offener Schritt: manuelle Endpruefung mit echtem Machine-Setup-Build (Mail-App-Inhalt mit Kunde/Kundennummer/Lizenz-ID/Machine-ID/App-Version).
 - Machine-Setup Lizenzfluss wurde kundentauglich auf E-Mail-Start umgestellt:
   - Startansicht zeigt jetzt `Lizenz erforderlich` mit den Buttons `Lizenz per E-Mail anfordern` und `Antwortlizenz importieren`.
   - Mailanforderung nutzt `mailto:info@bandholt.de` mit festem Betreff `BBM Lizenzanforderung` und vorbereitetem Mailtext inkl. `Kunde`, `Kundennummer`, `Lizenz-ID`, `Machine-ID`, `App-Version`.

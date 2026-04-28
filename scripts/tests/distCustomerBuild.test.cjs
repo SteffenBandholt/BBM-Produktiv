@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
-const { buildCustomerDistConfig } = require('../../scripts/dist.cjs');
+const { buildCustomerDistConfig, buildMachineSetupMetaFromEnv } = require('../../scripts/dist.cjs');
 
 async function runDistCustomerBuildTests(run) {
   await run('dist.cjs: ohne BBM_CUSTOMER_LICENSE_FILE bleibt Build unveraendert', () => {
@@ -70,6 +70,25 @@ async function runDistCustomerBuildTests(run) {
     assert.equal(out.build.nsis.artifactName, 'BBM-2.0.0-K-100-Musterfirma-GmbH-Setup.exe');
     assert.equal(out.build.npmRebuild, false);
     assert.equal(out.build.buildDependenciesFromSource, false);
+  });
+
+  await run('dist.cjs: Machine-Setup-Metadaten enthalten Kundennummer, Lizenz-ID, Produkt und Binding', () => {
+    const meta = buildMachineSetupMetaFromEnv({
+      BBM_CUSTOMER_SLUG: 'K-100-Musterfirma-GmbH',
+      BBM_CUSTOMER_NAME: 'Musterfirma GmbH',
+      BBM_CUSTOMER_NUMBER: 'K-100',
+      BBM_LICENSE_ID: 'LIC-100',
+    });
+    assert.equal(meta.schemaVersion, 1);
+    assert.equal(meta.setupType, 'machine');
+    assert.equal(meta.product, 'bbm-protokoll');
+    assert.equal(meta.expectedBinding, 'machine');
+    assert.equal(meta.customerName, 'Musterfirma GmbH');
+    assert.equal(meta.customerNumber, 'K-100');
+    assert.equal(meta.licenseId, 'LIC-100');
+    assert.equal(meta.customerSlug, 'K-100-Musterfirma-GmbH');
+    assert.equal(typeof meta.createdAt, 'string');
+    assert.equal(meta.createdAt.length > 10, true);
   });
 }
 

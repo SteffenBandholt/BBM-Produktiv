@@ -366,20 +366,25 @@ async function runLizenzverwaltungModuleTests(run) {
   await run("Lizenzverwaltung: Build-Mapping fuer Kunden-Setup Payload", () => {
     const testPayload = buildCustomerSetupPayload({
       customer: { customer_number: "K-100", company_name: "Musterfirma GmbH" },
-      license: { license_file_path: "C:\\tmp\\customer.bbmlic" },
+      license: { license_file_path: "C:\\tmp\\customer.bbmlic", license_id: "LIC-100" },
     });
     assert.equal(testPayload.customer.customer_number, "K-100");
     assert.equal(testPayload.license.license_file_path, "C:\\tmp\\customer.bbmlic");
     assert.equal(testPayload.licenseFilePath, "C:\\tmp\\customer.bbmlic");
     assert.equal(testPayload.setupType, "test");
+    assert.equal(testPayload.customerName, "Musterfirma GmbH");
+    assert.equal(testPayload.customerNumber, "K-100");
+    assert.equal(testPayload.licenseId, "LIC-100");
 
     const machinePayload = buildCustomerSetupPayload({
       customer: { customer_number: "K-100", company_name: "Musterfirma GmbH" },
-      license: { license_file_path: "C:\\tmp\\customer.bbmlic" },
+      license: { license_file_path: "C:\\tmp\\customer.bbmlic", license_id: "LIC-100" },
       setupType: "machine",
     });
     assert.equal(machinePayload.setupType, "machine");
     assert.equal(machinePayload.licenseFilePath, "");
+    assert.equal(machinePayload.customerNumber, "K-100");
+    assert.equal(machinePayload.licenseId, "LIC-100");
   });
 
   await run("Lizenzverwaltung UI: Kunden-Setup-Texte und Hinweise vorhanden", () => {

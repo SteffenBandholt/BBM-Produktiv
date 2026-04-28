@@ -536,6 +536,8 @@ function _writeCustomerSetupBuildLog({
       `env.BBM_CUSTOMER_SETUP_TYPE: ${envSnapshot.BBM_CUSTOMER_SETUP_TYPE || "-"}`,
       `env.BBM_CUSTOMER_SLUG: ${envSnapshot.BBM_CUSTOMER_SLUG || "-"}`,
       `env.BBM_CUSTOMER_NAME: ${envSnapshot.BBM_CUSTOMER_NAME || "-"}`,
+      `env.BBM_CUSTOMER_NUMBER: ${envSnapshot.BBM_CUSTOMER_NUMBER || "-"}`,
+      `env.BBM_LICENSE_ID: ${envSnapshot.BBM_LICENSE_ID || "-"}`,
       `artifacts: ${artifacts.length ? artifacts.join(" | ") : "-"}`,
       "",
       "stdout:",
@@ -573,13 +575,25 @@ function _validateCustomerSetupPayload(raw = {}) {
     throw new Error("MACHINE_ID_REQUIRED_FOR_BINDING");
   }
 
+  const customerName =
+    String(raw?.customerName || raw?.customer_name || "").trim() ||
+    String(customer.company_name || customer.companyName || "").trim();
+  const customerNumber =
+    String(raw?.customerNumber || raw?.customer_number || "").trim() ||
+    String(customer.customer_number || customer.customerNumber || "").trim();
+  const licenseId =
+    String(raw?.licenseId || raw?.license_id || "").trim() ||
+    String(license.license_id || license.licenseId || "").trim();
+
   return {
     customer,
     license,
     setupType,
     licenseFilePath,
     customerSlug: _buildCustomerSetupSlug(customer),
-    customerName: String(customer.company_name || customer.companyName || "").trim(),
+    customerName,
+    customerNumber,
+    licenseId,
   };
 }
 
@@ -600,6 +614,8 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
     BBM_CUSTOMER_SETUP_TYPE: validated.setupType,
     BBM_CUSTOMER_SLUG: validated.customerSlug,
     BBM_CUSTOMER_NAME: validated.customerName,
+    BBM_CUSTOMER_NUMBER: validated.customerNumber,
+    BBM_LICENSE_ID: validated.licenseId,
   };
   if (validated.setupType === "test" && validated.licenseFilePath) {
     envForBuild.BBM_CUSTOMER_LICENSE_FILE = validated.licenseFilePath;
@@ -650,6 +666,8 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
         BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
         BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
         BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
+        BBM_CUSTOMER_NUMBER: envForBuild.BBM_CUSTOMER_NUMBER,
+        BBM_LICENSE_ID: envForBuild.BBM_LICENSE_ID,
       },
     };
   }
@@ -718,6 +736,8 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
           BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
           BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
           BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
+          BBM_CUSTOMER_NUMBER: envForBuild.BBM_CUSTOMER_NUMBER,
+          BBM_LICENSE_ID: envForBuild.BBM_LICENSE_ID,
         },
       });
     });
@@ -766,6 +786,8 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
           BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
           BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
           BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
+          BBM_CUSTOMER_NUMBER: envForBuild.BBM_CUSTOMER_NUMBER,
+          BBM_LICENSE_ID: envForBuild.BBM_LICENSE_ID,
         },
         artifacts,
       });
@@ -793,6 +815,8 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
           BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
           BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
           BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
+          BBM_CUSTOMER_NUMBER: envForBuild.BBM_CUSTOMER_NUMBER,
+          BBM_LICENSE_ID: envForBuild.BBM_LICENSE_ID,
         },
         artifacts,
       };
