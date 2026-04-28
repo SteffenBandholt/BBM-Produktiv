@@ -115,6 +115,82 @@ const isMachineSetupWithoutLicense = async () => {
   }
 };
 
+const MACHINE_SETUP_LICENSE_MAIL_TO = "info@bandholt.de";
+const MACHINE_SETUP_LICENSE_MAIL_SUBJECT = "BBM Lizenzanforderung";
+
+const normalizeMachineSetupLicenseValue = (value) => {
+  const text = String(value || "").trim();
+  return text || "-";
+};
+
+const buildMachineSetupLicenseMailBody = ({
+  customerName = "",
+  customerNumber = "",
+  licenseId = "",
+  machineId = "",
+  appVersion = "",
+} = {}) => {
+  return [
+    "BBM Lizenzanforderung",
+    "",
+    `Kunde: ${normalizeMachineSetupLicenseValue(customerName)}`,
+    `Kundennummer: ${normalizeMachineSetupLicenseValue(customerNumber)}`,
+    `Lizenz-ID: ${normalizeMachineSetupLicenseValue(licenseId)}`,
+    `Machine-ID: ${normalizeMachineSetupLicenseValue(machineId)}`,
+    `App-Version: ${normalizeMachineSetupLicenseValue(appVersion)}`,
+    "",
+    "Bitte senden Sie mir eine gerätegebundene BBM-Lizenz zurück.",
+  ].join("\n");
+};
+
+const buildMachineSetupLicenseMailtoUri = (mailBody) => {
+  return `mailto:${MACHINE_SETUP_LICENSE_MAIL_TO}?subject=${encodeURIComponent(
+    MACHINE_SETUP_LICENSE_MAIL_SUBJECT
+  )}&body=${encodeURIComponent(mailBody)}`;
+};
+
+const renderMachineSetupLicenseFallback = ({ fallbackHost, fallbackText, status, mailBody }) => {
+  fallbackHost.innerHTML = "";
+  fallbackHost.style.display = "grid";
+  fallbackHost.style.gap = "8px";
+
+  const fallbackInfo = document.createElement("div");
+  fallbackInfo.style.whiteSpace = "pre-line";
+  fallbackInfo.style.fontSize = "13px";
+  fallbackInfo.textContent = fallbackText;
+
+  const dataPreview = document.createElement("pre");
+  dataPreview.textContent = mailBody;
+  dataPreview.style.margin = "0";
+  dataPreview.style.padding = "10px";
+  dataPreview.style.background = "#f8fafc";
+  dataPreview.style.border = "1px solid #cbd5e1";
+  dataPreview.style.borderRadius = "8px";
+  dataPreview.style.fontSize = "12px";
+  dataPreview.style.whiteSpace = "pre-wrap";
+
+  const copyBtn = document.createElement("button");
+  copyBtn.type = "button";
+  copyBtn.textContent = "Daten kopieren";
+  copyBtn.style.justifySelf = "start";
+  copyBtn.onclick = async () => {
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(mailBody);
+      } else {
+        throw new Error("CLIPBOARD_UNAVAILABLE");
+      }
+      status.textContent = "Daten wurden in die Zwischenablage kopiert.";
+      status.style.color = "#166534";
+    } catch (_err) {
+      status.textContent = "Daten konnten nicht kopiert werden.";
+      status.style.color = "#b91c1c";
+    }
+  };
+
+  fallbackHost.append(fallbackInfo, dataPreview, copyBtn);
+};
+
 const renderMachineSetupLicenseRequired = () => {
   const host = document.getElementById("content");
   if (!host) {
@@ -146,47 +222,124 @@ const renderMachineSetupLicenseRequired = () => {
   const text = document.createElement("div");
   text.style.whiteSpace = "pre-line";
   text.textContent =
-    "Diese Installation ist für eine gerätegebundene Vollversion vorbereitet.\nSpeichern Sie eine Lizenzanforderung und senden Sie diese Datei an den Anbieter.";
+    "Diese Installation ist für eine gerätegebundene Vollversion vorbereitet.\nFordern Sie Ihre Lizenz per E-Mail an.";
+
+  const mailAddressInfo = document.createElement("div");
+  mailAddressInfo.style.fontSize = "13px";
+  mailAddressInfo.style.color = "#334155";
+  mailAddressInfo.textContent = `E-Mail: ${MACHINE_SETUP_LICENSE_MAIL_TO}`;
 
   const status = document.createElement("div");
   status.style.minHeight = "18px";
   status.style.fontSize = "13px";
   status.style.color = "#475569";
 
-  const btn = document.createElement("button");
-  btn.type = "button";
-  btn.textContent = "Lizenzanforderung speichern";
-  btn.style.justifySelf = "start";
-  btn.onclick = async () => {
+  const buttonRow = document.createElement("div");
+  buttonRow.style.display = "flex";
+  buttonRow.style.flexWrap = "wrap";
+  buttonRow.style.gap = "8px";
+
+  const btnMailRequest = document.createElement("button");
+  btnMailRequest.type = "button";
+  btnMailRequest.textContent = "Lizenz per E-Mail anfordern";
+  btnMailRequest.onclick = async () => {
     const api = window.bbmDb || {};
-    if (typeof api.licenseCreateRequest !== "function") {
-      status.textContent = "Lizenzanforderung ist in dieser App-Version nicht verfuegbar.";
-      status.style.color = "#b91c1c";
-      return;
-    }
-    status.textContent = "Lizenzanforderung wird gespeichert ...";
+    status.textContent = "E-Mail wird vorbereitet ...";
     status.style.color = "#475569";
     try {
-      const res = await api.licenseCreateRequest({});
-      if (res?.canceled) {
-        status.textContent = "Lizenzanforderung speichern abgebrochen.";
-        status.style.color = "#475569";
-        return;
-      }
-      if (!res?.ok) {
-        status.textContent = "Lizenzanforderung konnte nicht gespeichert werden.";
+      const [licenseStatus, customerSetupRes, appVersionRes] = await Promise.all([
+        typeof api.licenseGetStatus === "function"
+          ? api.licenseGetStatus()
+          : Promise.resolve({}),
+        typeof api.appGetCustomerSetup === "function"
+          ? api.appGetCustomerSetup()
+          : Promise.resolve({}),
+        typeof api.appGetVersion === "function"
+          ? api.appGetVersion()
+          : Promise.resolve({ ok: true, version: APP_VERSION }),
+      ]);
+      const setup = customerSetupRes?.setup && typeof customerSetupRes.setup === "object" ? customerSetupRes.setup : {};
+      const mailBody = buildMachineSetupLicenseMailBody({
+        customerName: setup.customerName || licenseStatus?.customerName || "",
+        customerNumber: setup.customerNumber || setup.customer_number || "",
+        licenseId: setup.licenseId || setup.license_id || licenseStatus?.licenseId || "",
+        machineId: licenseStatus?.machineId || "",
+        appVersion: appVersionRes?.version || APP_VERSION,
+      });
+      const mailtoUri = buildMachineSetupLicenseMailtoUri(mailBody);
+      try {
+        window.location.href = mailtoUri;
+        status.textContent = "E-Mail wurde im Standard-Mailprogramm vorbereitet.";
+        status.style.color = "#166534";
+      } catch (_err) {
+        renderMachineSetupLicenseFallback({
+          fallbackHost,
+          fallbackText:
+            "E-Mail konnte nicht automatisch geöffnet werden.\nBitte senden Sie die unten stehenden Daten an info@bandholt.de.",
+          status,
+          mailBody,
+        });
+        status.textContent = "E-Mail konnte nicht automatisch geöffnet werden.";
         status.style.color = "#b91c1c";
-        return;
       }
-      status.textContent = "Lizenzanforderung wurde gespeichert.";
-      status.style.color = "#166534";
     } catch (_err) {
-      status.textContent = "Lizenzanforderung konnte nicht gespeichert werden.";
+      status.textContent = "E-Mail konnte nicht vorbereitet werden.";
       status.style.color = "#b91c1c";
     }
   };
 
-  card.append(title, text, btn, status);
+  const btnImportResponseLicense = document.createElement("button");
+  btnImportResponseLicense.type = "button";
+  btnImportResponseLicense.textContent = "Antwortlizenz importieren";
+  btnImportResponseLicense.onclick = async () => {
+    const api = window.bbmDb || {};
+    if (typeof api.licenseImport !== "function") {
+      status.textContent = "Lizenzimport ist in dieser App-Version nicht verfuegbar.";
+      status.style.color = "#b91c1c";
+      return;
+    }
+    status.textContent = "Antwortlizenz wird importiert ...";
+    status.style.color = "#475569";
+    try {
+      const res = await api.licenseImport({});
+      if (res?.canceled) {
+        status.textContent = "Lizenzimport abgebrochen.";
+        status.style.color = "#475569";
+        return;
+      }
+      if (!res?.ok) {
+        status.textContent = "Lizenz konnte nicht importiert werden.";
+        status.style.color = "#b91c1c";
+        return;
+      }
+      const refreshed =
+        typeof api.licenseGetStatus === "function"
+          ? await api.licenseGetStatus()
+          : { ok: true, valid: false };
+      if (refreshed?.ok && refreshed?.valid) {
+        status.textContent = "Lizenz erfolgreich importiert. Bitte App neu starten.";
+        status.style.color = "#166534";
+      } else {
+        status.textContent = "Lizenz importiert, aber noch nicht gültig.";
+        status.style.color = "#b91c1c";
+      }
+    } catch (_err) {
+      status.textContent = "Lizenz konnte nicht importiert werden.";
+      status.style.color = "#b91c1c";
+    }
+  };
+
+  const importHint = document.createElement("div");
+  importHint.style.fontSize = "13px";
+  importHint.style.color = "#475569";
+  importHint.textContent =
+    "Wenn Sie bereits eine Lizenzdatei erhalten haben, importieren Sie die .bbmlic-Datei hier.";
+
+  const fallbackHost = document.createElement("div");
+  fallbackHost.style.display = "none";
+
+  buttonRow.append(btnMailRequest, btnImportResponseLicense);
+  card.append(title, text, mailAddressInfo, buttonRow, importHint, fallbackHost, status);
   host.appendChild(card);
 };
 

@@ -347,11 +347,17 @@ function tailLines(value, maxLines = 6) {
 export function buildCustomerSetupPayload({ customer = {}, license = {}, setupType = "test" } = {}) {
   const normalizedSetupType = String(setupType || "").trim().toLowerCase() === "machine" ? "machine" : "test";
   const licenseFilePath = normalizedSetupType === "test" ? valueOf(license, "license_file_path", "licenseFilePath") : "";
+  const customerName = valueOf(customer, "company_name", "companyName");
+  const customerNumber = valueOf(customer, "customer_number", "customerNumber");
+  const licenseId = valueOf(license, "license_id", "licenseId");
   return {
     customer,
     license,
     setupType: normalizedSetupType,
     licenseFilePath,
+    customerName,
+    customerNumber,
+    licenseId,
   };
 }
 

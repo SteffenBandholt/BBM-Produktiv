@@ -112,7 +112,16 @@ async function runLicenseStorageBootstrapTests(run) {
         resourcesSetup: ({ resourcesPath }) => {
           fs.writeFileSync(
             path.join(resourcesPath, 'license', 'customer-setup.json'),
-            JSON.stringify({ schemaVersion: 1, setupType: 'machine', customerSlug: 'K-100', customerName: 'Muster GmbH' }),
+            JSON.stringify({
+              schemaVersion: 1,
+              setupType: 'machine',
+              product: 'bbm-protokoll',
+              expectedBinding: 'machine',
+              customerSlug: 'K-100',
+              customerName: 'Muster GmbH',
+              customerNumber: 'K-100',
+              licenseId: 'LIC-100',
+            }),
             'utf8'
           );
         },
@@ -120,8 +129,12 @@ async function runLicenseStorageBootstrapTests(run) {
       ({ mod }) => {
         const setup = mod.loadCustomerSetup();
         assert.equal(setup.setupType, 'machine');
+        assert.equal(setup.product, 'bbm-protokoll');
+        assert.equal(setup.expectedBinding, 'machine');
         assert.equal(setup.customerSlug, 'K-100');
         assert.equal(setup.customerName, 'Muster GmbH');
+        assert.equal(setup.customerNumber, 'K-100');
+        assert.equal(setup.licenseId, 'LIC-100');
       }
     );
   });

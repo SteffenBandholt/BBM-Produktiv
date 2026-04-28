@@ -131,12 +131,15 @@ async function runLicenseIpcCustomerSetupTests(run) {
     withLicenseIpcModule({}, (mod) => {
       const payload = mod._validateCustomerSetupPayload({
         customer: { customer_number: 'K-200', company_name: 'Maschine GmbH' },
-        license: { license_binding: 'machine', machine_id: '' },
+        license: { license_binding: 'machine', machine_id: '', license_id: 'LIC-200' },
         setupType: 'machine',
       });
       assert.equal(payload.setupType, 'machine');
       assert.equal(payload.licenseFilePath, '');
       assert.equal(payload.customerSlug, 'K-200-Maschine-GmbH');
+      assert.equal(payload.customerName, 'Maschine GmbH');
+      assert.equal(payload.customerNumber, 'K-200');
+      assert.equal(payload.licenseId, 'LIC-200');
     });
   });
 
@@ -340,7 +343,7 @@ async function runLicenseIpcCustomerSetupTests(run) {
           async (mod) => {
             const res = await mod._runCustomerSetupBuild({
               customer: { customer_number: 'K-18', company_name: 'Machine GmbH' },
-              license: { license_binding: 'machine', machine_id: '' },
+              license: { license_binding: 'machine', machine_id: '', license_id: 'LIC-18' },
               setupType: 'machine',
               licenseFilePath,
             }, {
@@ -349,6 +352,8 @@ async function runLicenseIpcCustomerSetupTests(run) {
             assert.equal(res.ok, true);
             assert.equal(res.env.BBM_CUSTOMER_SETUP_TYPE, 'machine');
             assert.equal(Boolean(res.env.BBM_CUSTOMER_LICENSE_FILE), false);
+            assert.equal(res.env.BBM_CUSTOMER_NUMBER, 'K-18');
+            assert.equal(res.env.BBM_LICENSE_ID, 'LIC-18');
           }
         );
       }

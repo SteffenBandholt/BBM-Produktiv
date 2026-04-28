@@ -71,8 +71,12 @@ function loadCustomerSetup() {
     return {
       schemaVersion: Number(parsed.schemaVersion) || 1,
       setupType: setupType === "machine" ? "machine" : "test",
+      product: String(parsed.product || "").trim(),
+      expectedBinding: String(parsed.expectedBinding || parsed.expected_binding || "").trim().toLowerCase(),
       customerSlug: String(parsed.customerSlug || parsed.customer_slug || "").trim(),
       customerName: String(parsed.customerName || parsed.customer_name || "").trim(),
+      customerNumber: String(parsed.customerNumber || parsed.customer_number || "").trim(),
+      licenseId: String(parsed.licenseId || parsed.license_id || "").trim(),
       createdAt: String(parsed.createdAt || "").trim(),
     };
   } catch (err) {
