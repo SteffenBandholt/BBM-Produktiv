@@ -152,12 +152,16 @@ export function buildLicenseEditorPayload({ license = {}, inputs = {}, customer 
   const customerId = assertCustomerContext(customer);
   const normalizedTrialDurationDays = normalizeTrialDurationDays(inputs.trial_duration_days, 30);
   const isTestLicense = String(inputs.license_edition || "").trim().toLowerCase() === "test";
+  const technicalValidFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+    now.getDate()
+  ).padStart(2, "0")}`;
+  const validFromInput = String(inputs.valid_from || "").trim();
   return {
     id: license.id,
     customer_id: customerId,
     license_id: String(inputs.license_id || "").trim() || createGeneratedLicenseId(now),
     product_scope_json: String(inputs.product_scope_json || "").trim(),
-    valid_from: String(inputs.valid_from || "").trim(),
+    valid_from: isTestLicense ? validFromInput || technicalValidFrom : validFromInput,
     valid_until: isTestLicense ? "" : String(inputs.valid_until || "").trim(),
     trial_duration_days: isTestLicense ? String(normalizedTrialDurationDays) : "",
     license_mode: String(inputs.license_mode || "").trim(),
@@ -771,7 +775,9 @@ export default class LicenseAdminScreen {
         const trialHint = document.createElement("div");
         trialHint.style.fontSize = "12px";
         trialHint.style.opacity = "0.85";
-        trialHint.textContent = "Der Testzeitraum beginnt bei erster Installation / erstem Start.";
+        trialHint.style.whiteSpace = "pre-line";
+        trialHint.textContent =
+          "Der Testzeitraum beginnt bei erster Installation / erstem Start.\nTechnisches Ausstellungsdatum wird automatisch gesetzt.";
         input.append(trialTitle, durationSelect, customRow, trialHint);
         input._durationSelect = durationSelect;
         input._customInput = customInput;

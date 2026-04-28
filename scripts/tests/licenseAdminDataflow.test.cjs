@@ -530,7 +530,6 @@ async function runLicenseAdminDataflowTests(run) {
       inputs: {
         license_id: "LIC-TRIAL",
         product_scope_json: "scope-text",
-        valid_from: "2026-05-01",
         valid_until: "2026-12-31",
         license_edition: "test",
         license_binding: "none",
@@ -538,6 +537,7 @@ async function runLicenseAdminDataflowTests(run) {
       },
       now: fixedLocalDate,
     });
+    assert.equal(trialPayload.valid_from, "2026-04-26");
     assert.equal(trialPayload.valid_until, "");
     assert.equal(trialPayload.trial_duration_days, "60");
 
