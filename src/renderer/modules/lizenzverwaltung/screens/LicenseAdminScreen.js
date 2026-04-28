@@ -525,7 +525,7 @@ export default class LicenseAdminScreen {
       this._button("Neuer Kunde", () => {
         this.currentCustomer = null;
         this.currentView = "customer-detail";
-        this._render();
+        this._safeRender();
       }),
       this._button("Zurueck zum Adminbereich", () => {
         if (typeof this.onBackToAdminbereich === "function") this.onBackToAdminbereich();
@@ -544,7 +544,7 @@ export default class LicenseAdminScreen {
       row.onclick = () => {
         this.currentCustomer = customer;
         this.currentView = "customer-detail";
-        this._render();
+        this._safeRender();
       };
       [
         valueOf(customer, "customer_number", "customerNumber") || "-",
@@ -656,13 +656,13 @@ export default class LicenseAdminScreen {
       }
       this.currentView = "license-editor";
       this.currentLicense = null;
-      this._render();
+      this._safeRender();
     });
     newLicenseBtn.disabled = !this.currentCustomer?.id;
 
     const backBtn = this._button("Zurueck zur Kundenliste", () => {
       this.currentView = "customers";
-      this._render();
+      this._safeRender();
     });
 
     const deleteCustomerBtn = this._button("Kunde löschen", async () => {
@@ -738,7 +738,7 @@ export default class LicenseAdminScreen {
         const openBtn = this._button("Öffnen", () => {
           this.currentView = "license-editor";
           this.currentLicense = record;
-          this._render();
+          this._safeRender();
         });
         actionCell.appendChild(openBtn);
         row.appendChild(actionCell);
@@ -1621,7 +1621,7 @@ export default class LicenseAdminScreen {
     const backBtn = this._button("Zurueck", () => {
       this.currentLicense = null;
       this.currentView = "customer-detail";
-      this._render();
+      this._safeRender();
     });
 
     actions.append(
@@ -1664,6 +1664,19 @@ export default class LicenseAdminScreen {
     );
   }
 
+  _renderError(messageText) {
+    if (!this.root) return;
+    this.root.replaceChildren();
+    const box = document.createElement("div");
+    box.style.border = "1px solid #fecaca";
+    box.style.background = "#fef2f2";
+    box.style.padding = "10px";
+    box.style.borderRadius = "8px";
+    box.textContent = String(messageText || "Ansicht konnte nicht geladen werden.");
+    const retry = this._button("Erneut laden", () => this._safeRender());
+    this.root.append(box, retry);
+  }
+
   async _render() {
     if (!this.root) return;
     this.root.replaceChildren();
@@ -1678,11 +1691,22 @@ export default class LicenseAdminScreen {
     await this._renderCustomers(this.root);
   }
 
+  async _safeRender() {
+    try {
+      await this._render();
+    } catch (err) {
+      this.currentView = "customers";
+      this.currentCustomer = null;
+      this.currentLicense = null;
+      this._renderError(`Fehler beim Laden der Lizenzverwaltung: ${err?.message || err}`);
+    }
+  }
+
   render() {
     this.root = document.createElement("div");
     this.root.style.display = "grid";
     this.root.style.gap = "10px";
-    this._render();
+    this._safeRender();
     return this.root;
   }
 }

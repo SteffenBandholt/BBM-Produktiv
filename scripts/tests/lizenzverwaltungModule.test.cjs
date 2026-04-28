@@ -893,6 +893,13 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes('this.currentView = "customers";'), true);
     assert.equal(screenSource.includes('await this._render();'), true);
   });
+
+  await run("LicenseAdminScreen: Renderfehler wird abgefangen", () => {
+    assert.equal(screenSource.includes("async _safeRender()"), true);
+    assert.equal(screenSource.includes("Fehler beim Laden der Lizenzverwaltung"), true);
+    assert.equal(screenSource.includes("Erneut laden"), true);
+  });
+
   await run("SettingsView: Lizenzstatusbereich fuehrt Antwortlizenz-Import ohne neuen Mechanismus", () => {
     assert.equal(settingsViewSource.includes("Antwortlizenz erhalten?"), true);
     assert.equal(settingsViewSource.includes("Importieren Sie hier die .bbmlic-Datei"), true);
