@@ -327,6 +327,16 @@ function saveLicense(license = {}) {
   return db.prepare(`SELECT * FROM license_records WHERE id = ?`).get(record.id);
 }
 
+function deleteLicenseRecord(id) {
+  const normalizedId = _trimText(id);
+  if (!normalizedId) throw new Error("license_record_id required");
+  const db = _db();
+  const existing = db.prepare(`SELECT * FROM license_records WHERE id = ?`).get(normalizedId);
+  if (!existing) throw new Error("license_record_not_found");
+  db.prepare(`DELETE FROM license_records WHERE id = ?`).run(normalizedId);
+  return { ok: true, id: normalizedId };
+}
+
 function listHistory() {
   return _db().prepare(`SELECT * FROM license_history ORDER BY created_at DESC`).all();
 }
@@ -367,6 +377,7 @@ module.exports = {
   listLicenses,
   listLicensesByCustomer,
   saveLicense,
+  deleteLicenseRecord,
   listHistory,
   addHistoryEntry,
 };

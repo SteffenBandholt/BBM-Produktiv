@@ -717,6 +717,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(storageServiceSource.includes("licenseAdminSaveLicenseCustomer"), true);
     assert.equal(storageServiceSource.includes("licenseAdminListLicenseRecords"), true);
     assert.equal(storageServiceSource.includes("licenseAdminSaveLicenseRecord"), true);
+    assert.equal(storageServiceSource.includes("licenseAdminDeleteLicenseRecord"), true);
     assert.equal(storageServiceSource.includes("licenseAdminListLicenseHistory"), true);
     assert.equal(storageServiceSource.includes("licenseAdminAddLicenseHistoryEntry"), true);
     assert.equal(storageServiceSource.includes("ipcRenderer"), false);
@@ -731,6 +732,7 @@ async function runLizenzverwaltungModuleTests(run) {
   await run("Lizenzverwaltung: IPC-Handler fuer Admin-Lizenzen sind vorbereitet", () => {
     assert.equal(licenseIpcSource.includes('ipcMain.handle("license-admin:list-records"'), true);
     assert.equal(licenseIpcSource.includes('ipcMain.handle("license-admin:save-record"'), true);
+    assert.equal(licenseIpcSource.includes('ipcMain.handle("license-admin:delete-license-record"'), true);
   });
 
   await run("Lizenzverwaltung: IPC-Handler fuer Admin-Lizenzhistorie sind vorbereitet", () => {
@@ -744,6 +746,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(licenseIpcSource.includes("licenseAdminService.saveCustomer"), true);
     assert.equal(licenseIpcSource.includes("licenseAdminService.listLicenses"), true);
     assert.equal(licenseIpcSource.includes("licenseAdminService.saveLicense"), true);
+    assert.equal(licenseIpcSource.includes("licenseAdminService.deleteLicenseRecord"), true);
     assert.equal(licenseIpcSource.includes("licenseAdminService.listHistory"), true);
     assert.equal(licenseIpcSource.includes("licenseAdminService.addHistoryEntry"), true);
   });
@@ -764,6 +767,7 @@ async function runLizenzverwaltungModuleTests(run) {
       assert.equal(preloadSource.includes("licenseAdminSaveLicenseCustomer"), true);
       assert.equal(preloadSource.includes("licenseAdminListLicenseRecords"), true);
       assert.equal(preloadSource.includes("licenseAdminSaveLicenseRecord"), true);
+      assert.equal(preloadSource.includes("licenseAdminDeleteLicenseRecord"), true);
       assert.equal(preloadSource.includes("licenseAdminListLicenseHistory"), true);
       assert.equal(preloadSource.includes("licenseAdminAddLicenseHistoryEntry"), true);
     }
@@ -823,6 +827,10 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(screenSource.includes("Lizenzen dieses Kunden"), true);
     assert.equal(screenSource.includes("Kundendaten"), true);
     assert.equal(screenSource.includes("Neue Lizenz"), true);
+    assert.equal(screenSource.includes("Lizenz löschen"), true);
+    assert.equal(screenSource.includes("Lizenz wirklich löschen?"), true);
+    assert.equal(screenSource.includes("Lizenz wurde gelöscht."), true);
+    assert.equal(screenSource.includes("Lizenz konnte nicht gelöscht werden."), true);
     assert.equal(screenSource.includes("Zurueck zur Kundenliste"), true);
     assert.equal(screenSource.includes("Lizenz erstellen"), true);
     assert.equal(screenSource.includes("Lizenz speichern"), false);
