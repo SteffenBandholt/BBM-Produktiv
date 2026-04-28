@@ -92,6 +92,10 @@ function createMemoryDb() {
               license_edition,
               license_binding,
               machine_id,
+              setup_type,
+              setup_status,
+              setup_file_path,
+              setup_created_at,
               license_file_path,
               license_file_created_at,
               notes,
@@ -109,6 +113,10 @@ function createMemoryDb() {
               license_edition,
               license_binding,
               machine_id,
+              setup_type,
+              setup_status,
+              setup_file_path,
+              setup_created_at,
               license_file_path,
               license_file_created_at,
               notes,
@@ -127,6 +135,10 @@ function createMemoryDb() {
               license_edition,
               license_binding,
               machine_id,
+              setup_type,
+              setup_status,
+              setup_file_path,
+              setup_created_at,
               license_file_path,
               license_file_created_at,
               notes,
@@ -146,6 +158,10 @@ function createMemoryDb() {
               license_edition,
               license_binding,
               machine_id,
+              setup_type,
+              setup_status,
+              setup_file_path,
+              setup_created_at,
               license_file_path,
               license_file_created_at,
               notes,
@@ -492,6 +508,8 @@ async function runLicenseAdminDataflowTests(run) {
       valid_until: "2026-12-31",
       license_mode: "soft",
       machine_id: "MID-1",
+      setup_status: "waiting_for_machine_id",
+      setup_file_path: "C:\\tmp\\machine-setup.exe",
       license_file_path: "C:\\tmp\\snake.bbmlic",
       license_file_created_at: "2026-04-27T11:00:00.000Z",
     });
@@ -503,6 +521,8 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(snake.license_edition, "test");
     assert.equal(snake.license_binding, "none");
     assert.equal(snake.machine_id, "MID-1");
+    assert.equal(snake.setup_status, "waiting_for_machine_id");
+    assert.equal(snake.setup_file_path, "C:\\tmp\\machine-setup.exe");
     assert.equal(snake.license_file_path, "C:\\tmp\\snake.bbmlic");
     assert.equal(snake.licenseFilePath, "C:\\tmp\\snake.bbmlic");
     assert.equal(snake.license_file_created_at, "2026-04-27T11:00:00.000Z");
@@ -517,6 +537,7 @@ async function runLicenseAdminDataflowTests(run) {
       validUntil: "2026-10-31",
       licenseMode: "full",
       machineId: "MID-2",
+      setupStatus: "response_license_created",
       licenseFilePath: "C:\\tmp\\camel.bbmlic",
       licenseFileCreatedAt: "2026-04-27T12:00:00.000Z",
     });
@@ -528,6 +549,7 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(camel.license_edition, "full");
     assert.equal(camel.license_binding, "machine");
     assert.equal(camel.machine_id, "MID-2");
+    assert.equal(camel.setup_status, "response_license_created");
     assert.equal(camel.license_file_path, "C:\\tmp\\camel.bbmlic");
     assert.equal(camel.licenseFilePath, "C:\\tmp\\camel.bbmlic");
     assert.equal(camel.license_file_created_at, "2026-04-27T12:00:00.000Z");
@@ -681,6 +703,55 @@ async function runLicenseAdminDataflowTests(run) {
     assert.deepEqual(normalizedScope.standardumfang, ["app", "pdf", "export"]);
     assert.deepEqual(normalizedScope.zusatzfunktionen, []);
     assert.deepEqual(normalizedScope.module, []);
+  });
+
+  await run("Lizenzverwaltung Mail-Parser: erkennt Felder robust und meldet fehlende Machine-ID klar", async () => {
+    const { parseMachineLicenseRequestMail } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+
+    const parsed = parseMachineLicenseRequestMail(
+      [
+        "  kunde : Musterfirma GmbH  ",
+        "KUNDENNUMMER: K-123",
+        " lizenz-id : LIC-123 ",
+        "MACHINE-ID : MID-XYZ-1",
+        "App-Version: 2.4.1",
+      ].join("\r\n")
+    );
+
+    assert.equal(parsed.customerName, "Musterfirma GmbH");
+    assert.equal(parsed.customerNumber, "K-123");
+    assert.equal(parsed.licenseId, "LIC-123");
+    assert.equal(parsed.machineId, "MID-XYZ-1");
+    assert.equal(parsed.appVersion, "2.4.1");
+
+    assert.throws(
+      () =>
+        parseMachineLicenseRequestMail(
+          ["Kunde: Ohne Machine", "Kundennummer: K-999", "Lizenz-ID: LIC-999", "App-Version: 1.0.0"].join("\n")
+        ),
+      /MISSING_MACHINE_ID/
+    );
+  });
+
+  await run("Lizenzverwaltung Machine-Binding-Status: Statuswerte werden korrekt formatiert", async () => {
+    const { formatMachineBindingStatus } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js")
+    );
+    assert.equal(formatMachineBindingStatus({}), "Noch kein Machine-Setup erstellt");
+    assert.equal(
+      formatMachineBindingStatus({ setup_status: "waiting_for_machine_id" }),
+      "Machine-Setup erstellt – wartet auf Machine-ID"
+    );
+    assert.equal(
+      formatMachineBindingStatus({ setupStatus: "machine_id_received" }),
+      "Machine-ID erhalten – Antwortlizenz kann erstellt werden"
+    );
+    assert.equal(
+      formatMachineBindingStatus({ setup_status: "response_license_created" }),
+      "Antwortlizenz erstellt"
+    );
   });
 
   await run("Lizenzverwaltung Generator-Payload: Kunde + Lizenz werden korrekt gemappt", async () => {

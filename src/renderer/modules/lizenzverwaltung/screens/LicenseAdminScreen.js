@@ -171,6 +171,10 @@ export function buildLicenseEditorPayload({ license = {}, inputs = {}, customer 
     license_edition: normalizedEdition,
     license_binding: normalizedBinding,
     machine_id: normalizedBinding === "machine" ? String(inputs.machine_id || "").trim() : "",
+    setup_type: String(inputs.setup_type || license.setup_type || license.setupType || "").trim(),
+    setup_status: String(inputs.setup_status || license.setup_status || license.setupStatus || "").trim(),
+    setup_file_path: String(inputs.setup_file_path || license.setup_file_path || license.setupFilePath || "").trim(),
+    setup_created_at: String(inputs.setup_created_at || license.setup_created_at || license.setupCreatedAt || "").trim(),
     license_file_path: valueOf(license, "license_file_path", "licenseFilePath"),
     license_file_created_at: valueOf(license, "license_file_created_at", "licenseFileCreatedAt"),
     notes: String(inputs.notes || "").trim(),
@@ -187,6 +191,56 @@ export function buildCustomerEditorPayload({ customer = {}, inputs = {} } = {}) 
     phone: String(inputs.phone || "").trim(),
     notes: String(inputs.notes || "").trim(),
   };
+}
+
+function normalizeMachineRequestMailFieldKey(key) {
+  return String(key || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+export function parseMachineLicenseRequestMail(text) {
+  const lines = String(text || "").split(/\r?\n/);
+  const result = {
+    customerName: "",
+    customerNumber: "",
+    licenseId: "",
+    machineId: "",
+    appVersion: "",
+  };
+  const keyMap = {
+    kunde: "customerName",
+    kundennummer: "customerNumber",
+    lizenzid: "licenseId",
+    machineid: "machineId",
+    appversion: "appVersion",
+  };
+
+  for (const line of lines) {
+    const match = String(line || "").match(/^\s*([^:]+?)\s*:\s*(.*?)\s*$/);
+    if (!match) continue;
+    const targetKey = keyMap[normalizeMachineRequestMailFieldKey(match[1])];
+    if (!targetKey) continue;
+    result[targetKey] = String(match[2] || "").trim();
+  }
+
+  if (!result.machineId) {
+    const err = new Error("MISSING_MACHINE_ID");
+    err.code = "MISSING_MACHINE_ID";
+    throw err;
+  }
+
+  return result;
+}
+
+export function formatMachineBindingStatus(license = {}) {
+  const setupStatus = String(valueOf(license, "setup_status", "setupStatus")).trim().toLowerCase();
+  if (setupStatus === "response_license_created") return "Antwortlizenz erstellt";
+  if (setupStatus === "machine_id_received") return "Machine-ID erhalten – Antwortlizenz kann erstellt werden";
+  if (setupStatus === "waiting_for_machine_id") return "Machine-Setup erstellt – wartet auf Machine-ID";
+  return "Noch kein Machine-Setup erstellt";
 }
 
 export function mapLicenseModeToGeneratorBinding(licenseMode) {
@@ -635,7 +689,7 @@ export default class LicenseAdminScreen {
       const thead = document.createElement("thead");
       const tbody = document.createElement("tbody");
       const tr = document.createElement("tr");
-      ["Lizenz-ID", "Lizenzart", "Gerätebindung", "Produktumfang", "gueltig von", "gueltig bis", "Aktion"].forEach((label) => {
+      ["Lizenz-ID", "Lizenzart", "Gerätebindung", "Machine-Binding-Status", "Produktumfang", "gueltig von", "gueltig bis", "Aktion"].forEach((label) => {
         const th = document.createElement("th");
         th.textContent = label;
         tr.appendChild(th);
@@ -650,6 +704,7 @@ export default class LicenseAdminScreen {
           valueOf(record, "license_id", "licenseId") || "-",
           mode.edition === "full" ? "Vollversion" : "Testlizenz",
           mode.binding === "machine" ? "An Machine-ID binden" : "Ohne Gerätebindung",
+          mode.binding === "machine" ? formatMachineBindingStatus(record) : "-",
           formatProductScopeForList(record),
           valueOf(record, "valid_from", "validFrom") || "-",
           valueOf(record, "valid_until", "validUntil") || "-",
@@ -693,6 +748,12 @@ export default class LicenseAdminScreen {
     const setupOutput = document.createElement("div");
     setupOutput.style.fontSize = "12px";
     setupOutput.style.opacity = "0.9";
+    const machineBindingStatus = document.createElement("div");
+    machineBindingStatus.style.fontSize = "12px";
+    machineBindingStatus.style.padding = "8px";
+    machineBindingStatus.style.border = "1px solid #cbd5e1";
+    machineBindingStatus.style.borderRadius = "6px";
+    machineBindingStatus.style.background = "#f8fafc";
 
     const license = this.currentLicense || {};
     const parsedScope = parseProductScopeObject(valueOf(license, "product_scope_json", "productScope"));
@@ -990,6 +1051,10 @@ export default class LicenseAdminScreen {
       }
     };
     let syncActionButtonsState = () => {};
+    const syncMachineBindingStatus = (licenseLike = null) => {
+      const active = licenseLike || this.currentLicense || license || {};
+      machineBindingStatus.textContent = `Machine-Binding-Status: ${formatMachineBindingStatus(active)}`;
+    };
     const syncEditionUiState = () => {
       const edition = String(inputs.license_edition?.value || "test").trim().toLowerCase();
       const isTestLicense = edition === "test";
@@ -1025,6 +1090,9 @@ export default class LicenseAdminScreen {
       if (machineFlowHint) {
         machineFlowHint.style.display = showMachineHint ? "" : "none";
       }
+      if (machineBindingStatus) {
+        machineBindingStatus.style.display = showMachineHint ? "" : "none";
+      }
       if (machineSetupHint) {
         machineSetupHint.style.display = showMachineHint ? "" : "none";
       }
@@ -1041,6 +1109,7 @@ export default class LicenseAdminScreen {
     syncTrialDurationState();
     syncEditionUiState();
     syncMachineIdState();
+    syncMachineBindingStatus();
 
     const licenseIdHint = document.createElement("div");
     licenseIdHint.textContent =
@@ -1117,6 +1186,83 @@ export default class LicenseAdminScreen {
         message.textContent = "Lizenzanforderung konnte nicht importiert werden.";
       }
     });
+    const importMailWrap = document.createElement("div");
+    importMailWrap.style.display = "none";
+    importMailWrap.style.gap = "8px";
+    importMailWrap.style.border = "1px solid #cbd5e1";
+    importMailWrap.style.borderRadius = "6px";
+    importMailWrap.style.padding = "10px";
+    importMailWrap.style.background = "#f8fafc";
+
+    const importMailTitle = document.createElement("div");
+    importMailTitle.textContent = "Mailtext einfügen";
+    importMailTitle.style.fontWeight = "600";
+
+    const importMailText = document.createElement("textarea");
+    importMailText.rows = 8;
+    importMailText.style.width = "100%";
+    importMailText.style.boxSizing = "border-box";
+
+    const importMailApplyBtn = this._button("Mailtext übernehmen", async () => {
+      const previousMachineId = String(inputs.machine_id?.value || "").trim();
+      let parsedRequest;
+      try {
+        parsedRequest = parseMachineLicenseRequestMail(importMailText.value);
+      } catch (err) {
+        if (String(err?.code || "").trim().toUpperCase() === "MISSING_MACHINE_ID") {
+          message.textContent = "Keine Machine-ID im Mailtext gefunden.";
+          return;
+        }
+        message.textContent = "Lizenzanforderung konnte nicht verarbeitet werden.";
+        return;
+      }
+
+      inputs.machine_id.value = String(parsedRequest.machineId || "").trim();
+      inputs.license_binding.value = "machine";
+      inputs.license_edition.value = "full";
+      syncEditionUiState();
+      syncMachineIdState();
+
+      const currentCustomerNumber = String(customer?.customer_number || customer?.customerNumber || "").trim();
+      const currentLicenseId = String(inputs.license_id?.value || "").trim();
+      const hasCustomerMismatch =
+        !!currentCustomerNumber &&
+        !!String(parsedRequest.customerNumber || "").trim() &&
+        currentCustomerNumber !== String(parsedRequest.customerNumber || "").trim();
+      const hasLicenseMismatch =
+        !!currentLicenseId &&
+        !!String(parsedRequest.licenseId || "").trim() &&
+        currentLicenseId !== String(parsedRequest.licenseId || "").trim();
+
+      const infoLines = ["Lizenzanforderung erkannt.", "Machine-ID wurde übernommen."];
+      if (previousMachineId && previousMachineId !== inputs.machine_id.value) {
+        infoLines.push("Vorhandene Machine-ID wurde durch die importierte Machine-ID ersetzt.");
+      }
+      if (hasCustomerMismatch || hasLicenseMismatch) {
+        infoLines.push("Achtung: Die Lizenzanforderung passt möglicherweise nicht zur geöffneten Lizenz.");
+      }
+      const activeLicense = this.currentLicense || license || {};
+      const activeLicenseId = String(valueOf(activeLicense, "id") || "").trim();
+      if (activeLicenseId) {
+        const updated = await saveLicense({
+          ...activeLicense,
+          machine_id: inputs.machine_id.value,
+          setup_status: "machine_id_received",
+        });
+        this.currentLicense = updated;
+        syncMachineBindingStatus(updated);
+      }
+      message.textContent = infoLines.join("\n");
+    });
+
+    importMailWrap.append(importMailTitle, importMailText, importMailApplyBtn);
+
+    const importRequestFromMailBtn = this._button("Lizenzanforderung aus E-Mail übernehmen", () => {
+      importMailWrap.style.display = importMailWrap.style.display === "none" ? "grid" : "none";
+      if (importMailWrap.style.display !== "none") {
+        importMailText.focus();
+      }
+    });
     const openOutputDirBtn = this._button("Ausgabeordner öffnen", async () => {
       const api = window?.bbmDb || {};
       const outputPath = String(openOutputDirBtn.dataset.outputPath || "").trim();
@@ -1132,8 +1278,56 @@ export default class LicenseAdminScreen {
       }
     });
     openOutputDirBtn.style.display = "none";
+    const buildCurrentEditorLicensePayload = (activeLicense = {}) =>
+      buildLicenseEditorPayload({
+        license: activeLicense,
+        customer,
+        inputs: {
+          license_id: inputs.license_id.value,
+          product_scope_json: inputs.product_scope_json.value,
+          valid_from: inputs.valid_from.value,
+          valid_until: inputs.valid_until.value,
+          license_edition: inputs.license_edition.value,
+          trial_duration_days:
+            String(inputs.license_edition.value || "").trim().toLowerCase() === "test"
+              ? String(
+                  normalizeTrialDurationDays(
+                    inputs.trial_duration_days?._durationSelect?.value === "custom"
+                      ? inputs.trial_duration_days?._customInput?.value
+                      : inputs.trial_duration_days?._durationSelect?.value,
+                    30
+                  )
+                )
+              : "",
+          machine_id: inputs.machine_id.value,
+          notes: inputs.notes.value,
+          setup_type: valueOf(activeLicense, "setup_type", "setupType"),
+          setup_status: valueOf(activeLicense, "setup_status", "setupStatus"),
+          setup_file_path: valueOf(activeLicense, "setup_file_path", "setupFilePath"),
+          setup_created_at: valueOf(activeLicense, "setup_created_at", "setupCreatedAt"),
+        },
+      });
     const runSetupBuild = async ({ setupType = "test" } = {}) => {
-      const activeLicense = this.currentLicense || license || {};
+      let activeLicense = this.currentLicense || license || {};
+      if (setupType === "machine") {
+        try {
+          const fullPayload = buildCurrentEditorLicensePayload(activeLicense);
+          fullPayload.license_edition = "full";
+          fullPayload.license_binding = "machine";
+          fullPayload.license_mode = "full";
+          fullPayload.machine_id = "";
+          if (!String(fullPayload.customer_id || "").trim() || !String(fullPayload.license_id || "").trim()) {
+            message.textContent = "Vollversion muss vor Machine-Setup gespeichert werden.";
+            return;
+          }
+          activeLicense = await saveLicense(fullPayload);
+          this.currentLicense = activeLicense;
+          syncMachineBindingStatus(activeLicense);
+        } catch (_err) {
+          message.textContent = "Vollversion muss vor Machine-Setup gespeichert werden.";
+          return;
+        }
+      }
       const payload = buildCustomerSetupPayload({
         customer: this.currentCustomer || {},
         license: activeLicense,
@@ -1175,6 +1369,17 @@ export default class LicenseAdminScreen {
         const outPath = String(res?.setupPath || res?.artifactPath || "").trim();
         const outDir = String(res?.outputDir || "").trim();
         setupOutput.textContent = outPath ? `Ausgabepfad: ${outPath}` : outDir ? `Ausgabepfad: ${outDir}` : "";
+        if (setupType === "machine") {
+          const updated = await saveLicense({
+            ...(this.currentLicense || activeLicense || {}),
+            setup_type: "machine",
+            setup_status: "waiting_for_machine_id",
+            setup_file_path: outPath || outDir,
+            setup_created_at: new Date().toISOString(),
+          });
+          this.currentLicense = updated;
+          syncMachineBindingStatus(updated);
+        }
         const dirToOpen = outPath || outDir;
         if (dirToOpen) {
           openOutputDirBtn.dataset.outputPath = dirToOpen;
@@ -1218,32 +1423,10 @@ export default class LicenseAdminScreen {
       openOutputDirBtn.disabled = true;
       try {
         const activeLicense = this.currentLicense || license || {};
-        const payload = buildLicenseEditorPayload({
-          license: activeLicense,
-          customer,
-          inputs: {
-            license_id: inputs.license_id.value,
-            product_scope_json: inputs.product_scope_json.value,
-            valid_from: inputs.valid_from.value,
-            valid_until: inputs.valid_until.value,
-            license_edition: inputs.license_edition.value,
-            trial_duration_days:
-              String(inputs.license_edition.value || "").trim().toLowerCase() === "test"
-                ? String(
-                    normalizeTrialDurationDays(
-                      inputs.trial_duration_days?._durationSelect?.value === "custom"
-                        ? inputs.trial_duration_days?._customInput?.value
-                        : inputs.trial_duration_days?._durationSelect?.value,
-                      30
-                    )
-                  )
-                : "",
-            machine_id: inputs.machine_id.value,
-            notes: inputs.notes.value,
-          },
-        });
+        const payload = buildCurrentEditorLicensePayload(activeLicense);
         const saved = await saveLicense(payload);
         this.currentLicense = saved;
+        syncMachineBindingStatus(saved);
         createCustomerSetupBtn.disabled = true;
         openOutputDirBtn.style.display = "none";
         openOutputDirBtn.dataset.outputPath = "";
@@ -1300,10 +1483,12 @@ export default class LicenseAdminScreen {
           generationOutput.textContent = `Ausgabepfad: ${outputPath}`;
           const updated = await saveLicense({
             ...(saved || {}),
+            setup_status: isMachineResponseLicense ? "response_license_created" : valueOf(saved, "setup_status", "setupStatus"),
             license_file_path: outputPath,
             license_file_created_at: new Date().toISOString(),
           });
           this.currentLicense = updated;
+          syncMachineBindingStatus(updated);
           createCustomerSetupBtn.disabled = false;
           openOutputDirBtn.dataset.outputPath = outputPath;
           openOutputDirBtn.style.display = "";
@@ -1327,6 +1512,10 @@ export default class LicenseAdminScreen {
       const isFull = edition === "full";
       const hasMachineId = !!machineId;
       importRequestBtn.style.display = isFull ? "" : "none";
+      importRequestFromMailBtn.style.display = isFull ? "" : "none";
+      if (!isFull) {
+        importMailWrap.style.display = "none";
+      }
       createMachineSetupBtn.style.display = isFull ? "" : "none";
       createCustomerSetupBtn.style.display = isFull ? "none" : "";
       if (isFull && !hasMachineId) {
@@ -1348,7 +1537,16 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    actions.append(importRequestBtn, createBtn, createCustomerSetupBtn, createMachineSetupBtn, deleteBtn, backBtn, openOutputDirBtn);
+    actions.append(
+      importRequestBtn,
+      importRequestFromMailBtn,
+      createBtn,
+      createCustomerSetupBtn,
+      createMachineSetupBtn,
+      deleteBtn,
+      backBtn,
+      openOutputDirBtn
+    );
     container.append(
       header,
       context,
@@ -1356,6 +1554,8 @@ export default class LicenseAdminScreen {
       licenseIdHint,
       machineBindingHint,
       machineFlowHint,
+      machineBindingStatus,
+      importMailWrap,
       machineSetupHint,
       actions,
       message,

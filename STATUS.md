@@ -16,6 +16,22 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Admin-Lizenzverwaltung dokumentiert den Machine-Setup-Lebenszyklus jetzt direkt am Vollversions-Lizenzdatensatz:
+  - `Machine-Setup erstellen` speichert vor dem Build zuerst einen Vollversionsdatensatz (`license_edition=full`, `license_binding=machine`, `license_mode=full`) im aktuellen Kundenkontext.
+  - Wenn diese Vorab-Speicherung nicht moeglich ist, wird klar abgebrochen mit `Vollversion muss vor Machine-Setup gespeichert werden.`.
+  - Nach erfolgreichem Machine-Setup-Build werden im Lizenzdatensatz gespeichert: `setup_type=machine`, `setup_status=waiting_for_machine_id`, `setup_file_path`, `setup_created_at`.
+  - Nach Mailtext-Uebernahme wird `setup_status=machine_id_received` gespeichert.
+  - Nach erfolgreicher Antwortlizenz-Erzeugung wird `setup_status=response_license_created` gespeichert; `license_file_path` bleibt wie bisher erhalten.
+  - In UI/Lizenzliste und Lizenzeditor gibt es jetzt den sichtbaren `Machine-Binding-Status` mit den 4 Statusstufen.
+- Nächster offener Schritt: manuelle Endpruefung des kompletten Ablaufes (Vollversion speichern -> Machine-Setup -> Mailtext -> Antwortlizenz) gegen eine reale lokale Mutter-Datenbank.
+- Admin-Lizenzverwaltung kann Machine-ID direkt aus Kunden-E-Mailtext uebernehmen:
+  - Neuer Vollversions-Button `Lizenzanforderung aus E-Mail übernehmen` im Lizenzformular.
+  - Eingabebereich `Mailtext einfügen` parst robust die Zeilen `Kunde`, `Kundennummer`, `Lizenz-ID`, `Machine-ID`, `App-Version` (case-insensitive, tolerant bei Leerzeichen, CRLF/LF).
+  - Bei Erfolg meldet die UI `Lizenzanforderung erkannt.` und `Machine-ID wurde übernommen.` und uebernimmt die Machine-ID in das Formular.
+  - Bei Abweichung von Kundennummer oder Lizenz-ID erscheint die Warnung `Achtung: Die Lizenzanforderung passt möglicherweise nicht zur geöffneten Lizenz.` ohne Blockierung.
+  - Wenn keine Machine-ID enthalten ist, erscheint `Keine Machine-ID im Mailtext gefunden.`.
+  - Bestehender Ablauf bleibt unveraendert: Lizenz erstellen -> `.bbmlic` erzeugen -> Antwortlizenz zurueck an den Kunden.
+- Nächster offener Schritt: manuelle Sichtpruefung im Adminbereich mit echtem Mailtext-Paste aus einer Kundenanfrage.
 - Machine-Setup-Metadaten wurden fuer eindeutige Lizenzzuordnung erweitert:
   - `customer-setup.json` enthaelt bei `setupType=machine` jetzt zusaetzlich `product=bbm-protokoll`, `expectedBinding=machine`, `customerName`, `customerNumber` und `licenseId`.
   - Die Werte werden aus dem bestehenden Admin-/Build-Payload uebernommen (Kunde/Firma, Kundennummer, Lizenz-ID) und ueber Build-Env bis in die Setup-Metadatei durchgereicht.
