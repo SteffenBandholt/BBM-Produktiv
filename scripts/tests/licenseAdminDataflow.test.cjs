@@ -524,13 +524,14 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(payload.valid_from, "2026-05-01");
     assert.equal(payload.valid_until, "2026-12-31");
     assert.equal(payload.license_mode, "full");
+    assert.equal(payload.license_edition, "full");
+    assert.equal(payload.license_binding, "machine");
 
     const trialPayload = buildLicenseEditorPayload({
       customer: { id: "customer-55" },
       inputs: {
         license_id: "LIC-TRIAL",
         product_scope_json: "scope-text",
-        valid_from: "2026-05-01",
         valid_until: "2026-12-31",
         license_edition: "test",
         license_binding: "none",
@@ -538,8 +539,13 @@ async function runLicenseAdminDataflowTests(run) {
       },
       now: fixedLocalDate,
     });
+    assert.equal(trialPayload.valid_from, "2026-04-26");
     assert.equal(trialPayload.valid_until, "");
     assert.equal(trialPayload.trial_duration_days, "60");
+    assert.equal(trialPayload.license_mode, "soft");
+    assert.equal(trialPayload.license_edition, "test");
+    assert.equal(trialPayload.license_binding, "none");
+    assert.equal(trialPayload.machine_id, "");
 
     const customerPayload = buildCustomerEditorPayload({
       customer: { id: "c-44" },

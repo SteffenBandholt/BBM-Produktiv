@@ -16,6 +16,34 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- PR #46 Bugfix (Testversion speichern ohne sichtbares Datumsfeld) ist umgesetzt:
+  - Bei `Lizenztyp = Testversion` setzt `buildLicenseEditorPayload` `valid_from` jetzt automatisch auf das technische Ausstellungsdatum (`YYYY-MM-DD`), wenn das Feld leer ist.
+  - `valid_until` bleibt bei Testversion leer; `trial_duration_days` bleibt der fachliche Laufzeitwert.
+  - Dadurch tritt beim Speichern/Erstellen der Testlizenz kein `valid_from required` mehr auf, obwohl `gueltig von/bis` in der Test-UI weiterhin nicht als Nutzerpflicht gezeigt wird.
+  - Der bestehende Testlaufzeit-Start bei erster Installation / erstem Start bleibt unveraendert.
+- PR #46 Bugfix (Testversion ohne validUntil im gesamten Erzeugungsweg) ist umgesetzt:
+  - Save-Payload erzwingt fuer Testversion intern `license_edition=test`, `license_binding=none`, `license_mode=soft`, `machine_id=""` und laesst `valid_until` leer.
+  - Damit wird Testversion ohne `validUntil` durch Save -> Generator-Payload -> Main-IPC konsistent akzeptiert; Vollversion ohne `validUntil` bleibt weiterhin Fehlerfall.
+- PR #46 Bugfix (Generator-Input fuer Testversion ohne validUntil-Feld) ist umgesetzt:
+  - Main-IPC `license:generate` schreibt fuer Testversion `validUntil` nicht mehr in die Input-JSON an den Generator.
+  - Die alte Hilfslogik zur Ableitung `validUntil` aus `validFrom + Dauer` wurde entfernt; kein Rueckfall auf das Altmodell.
+- PR #46 Hinweis externer Generator ist dokumentiert:
+  - Der produktive Generator liegt extern unter `C:\\license-tool\\generate-license.cjs` und hat keine gepflegte Repo-Quelle in diesem Projekt.
+  - Falls der externe Generator weiter `validUntil` fuer Testversion erzwingt, liefert die App jetzt klar den Hinweis: `Externer Lizenzgenerator ist nicht kompatibel mit Testversion ohne validUntil.`
+  - In diesem Fall muss `C:\\license-tool\\generate-license.cjs` manuell kompatibel angepasst werden (Testversion ohne `validUntil`, mit Pflicht `trialDurationDays`).
+- Lizenzverwaltung Nachsteuerung fuer PR #46 ist umgesetzt:
+  - Lizenzformular fuehrt jetzt zwei fachlich getrennte Wege ueber `Lizenztyp`: `Testversion` und `Vollversion`.
+  - `Testversion` bleibt ohne Machine-ID, zeigt Testdauer, nutzt weiter `Lizenz erstellen` + `Kunden-Setup erstellen` mit eingebetteter fertiger `customer.bbmlic`.
+  - `Vollversion` ist fest an Machine-Binding gekoppelt, blendet den freien Binding-Mix aus und fuehrt in den Schritten `Machine-Setup erstellen` -> `Lizenzanforderung importieren` -> `Antwortlizenz erstellen`.
+  - `Machine-Setup erstellen` baut bewusst ohne eingebettete `customer.bbmlic`; die Antwortlizenz wird weiterhin erst nach Import der Machine-ID ueber `Lizenz erstellen` erzeugt.
+  - Dist-/IPC-Flow wurde minimal erweitert, damit Kunden-Setups wahlweise mit (Testversion) oder ohne (Machine-Setup) eingebettete Lizenz gebaut werden koennen.
+  - Testabdeckung wurde fuer UI-Trennung, Payload-/Setup-Typ und Build-Embedding (mit/ohne `customer.bbmlic`) erweitert; `npm test` bleibt Pflicht.
+- Machine-Binding Schritt 3 (Antwortlizenz-UI-Fuehrung) ist umgesetzt:
+  - Admin-Lizenzformular zeigt bei `Gerätebindung = An Machine-ID binden` den Hinweis `Gerätegebundene Vollversion` mit klarer Schrittfuehrung (Import Lizenzanforderung -> `Lizenz erstellen` -> Antwortlizenz).
+  - Nach erfolgreichem `Lizenz erstellen` wird bei Vollversion + Machine-Binding + vorhandener Machine-ID zusaetzlich angezeigt: `Antwortlizenz wurde erstellt.` sowie `Diese .bbmlic-Datei an den Kunden zurückgeben.`.
+  - Ausgabepfadanzeige und Button `Ausgabeordner öffnen` bleiben unveraendert im bestehenden Generator-Hauptablauf.
+  - Kunden-Lizenzstatusbereich ergaenzt den Hinweis `Antwortlizenz erhalten?` mit Verweis auf den bestehenden Lizenzimport; kein neuer Import-Mechanismus, keine neue Navigation.
+  - Tests wurden auf die neuen UI-Texte erweitert; bestehende Flows (`licenseGenerate`, Lizenzimport) bleiben unveraendert und `npm test` bleibt Pflichtpruefung.
 - Machine-Binding Schritt 2 (Admin-Import) ist umgesetzt:
   - Admin-Lizenzformular hat den Button `Lizenzanforderung importieren` (nur im Lizenzformular, keine Kundenliste/Projektbereich).
   - Neuer Main-IPC `license-admin:import-license-request` oeffnet Datei-Dialog, liest JSON, validiert (`schemaVersion`, `requestType`, `product`, `machineId`, `createdAt`, `appVersion`) und liefert strukturierte Request-Daten.

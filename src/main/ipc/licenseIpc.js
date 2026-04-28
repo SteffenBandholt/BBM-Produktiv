@@ -249,21 +249,22 @@ function _normalizeIsoDate(value) {
   return raw;
 }
 
-function _computeValidUntil(validFrom, durationDays) {
-  const start = _normalizeIsoDate(validFrom);
-  const days = Number(durationDays);
-  if (!start || !Number.isFinite(days) || days < 1) return "";
-  const dt = new Date(`${start}T00:00:00Z`);
-  dt.setUTCDate(dt.getUTCDate() + Math.floor(days));
-  return dt.toISOString().slice(0, 10);
-}
-
 function _normalizeTrialDurationDays(value) {
   const num = Number(value);
   if (!Number.isFinite(num)) return null;
   const days = Math.floor(num);
   if (days < 1 || days > 365) return null;
   return days;
+}
+
+function _hasExternalGeneratorValidUntilMismatch(text) {
+  const upper = String(text || "").toUpperCase();
+  if (!upper) return false;
+  return (
+    upper.includes("VALIDUNTIL") ||
+    upper.includes("VALID_UNTIL") ||
+    upper.includes("PFLICHTFELD FEHLT ODER IST LEER")
+  );
 }
 
 function _validateGenerationPayload(raw = {}) {
@@ -273,12 +274,8 @@ function _validateGenerationPayload(raw = {}) {
   const edition = String(raw?.edition || "test").trim() || "test";
   const binding = String(raw?.binding || "").trim().toLowerCase() || "none";
   const validFrom = _normalizeIsoDate(raw?.validFrom);
-  const durationDays =
-    raw?.durationDays === "" || raw?.durationDays === null || raw?.durationDays === undefined
-      ? null
-      : Number(raw.durationDays);
   const explicitValidUntil = _normalizeIsoDate(raw?.validUntil);
-  const validUntil = explicitValidUntil || _computeValidUntil(validFrom, durationDays);
+  const validUntil = explicitValidUntil;
   const trialDurationDays = _normalizeTrialDurationDays(raw?.trialDurationDays);
   const maxDevices = Number(raw?.maxDevices);
   const features = Array.isArray(raw?.features)
@@ -315,7 +312,6 @@ function _validateGenerationPayload(raw = {}) {
     validFrom,
     validUntil: isTestLicense ? "" : validUntil,
     trialDurationDays: isTestLicense ? trialDurationDays : null,
-    durationDays: Number.isFinite(durationDays) && durationDays > 0 ? Math.floor(durationDays) : null,
     maxDevices: Math.floor(maxDevices),
     features,
     notes,
@@ -537,6 +533,7 @@ function _writeCustomerSetupBuildLog({
       `licenseFilePath: ${licenseFilePath || "-"}`,
       `exitCode: ${exitCode === null || exitCode === undefined ? "-" : exitCode}`,
       `env.BBM_CUSTOMER_LICENSE_FILE: ${envSnapshot.BBM_CUSTOMER_LICENSE_FILE || "-"}`,
+      `env.BBM_CUSTOMER_SETUP_TYPE: ${envSnapshot.BBM_CUSTOMER_SETUP_TYPE || "-"}`,
       `env.BBM_CUSTOMER_SLUG: ${envSnapshot.BBM_CUSTOMER_SLUG || "-"}`,
       `env.BBM_CUSTOMER_NAME: ${envSnapshot.BBM_CUSTOMER_NAME || "-"}`,
       `artifacts: ${artifacts.length ? artifacts.join(" | ") : "-"}`,
@@ -565,19 +562,21 @@ function _resolveCustomerSetupArtifactPath(outputDir, customerSlug) {
 function _validateCustomerSetupPayload(raw = {}) {
   const customer = raw?.customer && typeof raw.customer === "object" ? raw.customer : {};
   const license = raw?.license && typeof raw.license === "object" ? raw.license : {};
-  const licenseFilePath = String(raw?.licenseFilePath || raw?.license_file_path || "").trim();
-  if (!licenseFilePath) throw new Error("LICENSE_FILE_PATH_REQUIRED");
-  if (!fs.existsSync(licenseFilePath)) throw new Error("LICENSE_FILE_NOT_FOUND");
+  const setupType = String(raw?.setupType || raw?.setup_type || "").trim().toLowerCase() === "machine" ? "machine" : "test";
+  const licenseFilePath = setupType === "test" ? String(raw?.licenseFilePath || raw?.license_file_path || "").trim() : "";
+  if (setupType === "test" && !licenseFilePath) throw new Error("LICENSE_FILE_PATH_REQUIRED");
+  if (setupType === "test" && !fs.existsSync(licenseFilePath)) throw new Error("LICENSE_FILE_NOT_FOUND");
 
   const binding = String(license.license_binding || license.licenseBinding || "").trim().toLowerCase();
   const machineId = String(license.machine_id || license.machineId || "").trim();
-  if (binding === "machine" && !machineId) {
+  if (setupType !== "machine" && binding === "machine" && !machineId) {
     throw new Error("MACHINE_ID_REQUIRED_FOR_BINDING");
   }
 
   return {
     customer,
     license,
+    setupType,
     licenseFilePath,
     customerSlug: _buildCustomerSetupSlug(customer),
     customerName: String(customer.company_name || customer.companyName || "").trim(),
@@ -598,10 +597,15 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
   const nodeExe = String(resolvedNode?.nodeExecutable || "").trim();
   const envForBuild = {
     ...process.env,
-    BBM_CUSTOMER_LICENSE_FILE: validated.licenseFilePath,
+    BBM_CUSTOMER_SETUP_TYPE: validated.setupType,
     BBM_CUSTOMER_SLUG: validated.customerSlug,
     BBM_CUSTOMER_NAME: validated.customerName,
   };
+  if (validated.setupType === "test" && validated.licenseFilePath) {
+    envForBuild.BBM_CUSTOMER_LICENSE_FILE = validated.licenseFilePath;
+  } else {
+    delete envForBuild.BBM_CUSTOMER_LICENSE_FILE;
+  }
   fs.mkdirSync(outputDir, { recursive: true });
   const logPath = path.join(outputDir, "customer-setup-build.log");
   const timeoutMs =
@@ -643,6 +647,7 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
       logPath,
       env: {
         BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+        BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
         BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
         BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
       },
@@ -710,6 +715,7 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
         logPath,
         env: {
           BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+          BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
           BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
           BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
         },
@@ -757,6 +763,7 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
         logPath,
         env: {
           BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+          BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
           BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
           BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
         },
@@ -783,6 +790,7 @@ async function _runCustomerSetupBuild(payload = {}, options = {}) {
         logPath,
         env: {
           BBM_CUSTOMER_LICENSE_FILE: envForBuild.BBM_CUSTOMER_LICENSE_FILE,
+          BBM_CUSTOMER_SETUP_TYPE: envForBuild.BBM_CUSTOMER_SETUP_TYPE,
           BBM_CUSTOMER_SLUG: envForBuild.BBM_CUSTOMER_SLUG,
           BBM_CUSTOMER_NAME: envForBuild.BBM_CUSTOMER_NAME,
         },
@@ -1042,12 +1050,13 @@ function registerLicenseDevGeneratorIpc() {
       return { ok: false, error: "LICENSE_GENERATION_NOT_ALLOWED" };
     }
 
+    let inputData = null;
     try {
       if (!fs.existsSync(LICENSE_TOOL_ROOT)) return { ok: false, error: "LICENSE_TOOL_NOT_FOUND" };
       if (!fs.existsSync(LICENSE_TOOL_SCRIPT)) return { ok: false, error: "LICENSE_TOOL_SCRIPT_MISSING" };
       if (!fs.existsSync(LICENSE_TOOL_PRIVATE_KEY)) return { ok: false, error: "PRIVATE_KEY_MISSING" };
 
-      const inputData = _validateGenerationPayload(raw || {});
+      inputData = _validateGenerationPayload(raw || {});
       await fs.promises.mkdir(LICENSE_TOOL_INPUT_DIR, { recursive: true });
       await fs.promises.mkdir(LICENSE_TOOL_OUTPUT_DIR, { recursive: true });
 
@@ -1063,7 +1072,7 @@ function registerLicenseDevGeneratorIpc() {
             edition: inputData.edition,
             binding: inputData.binding,
             validFrom: inputData.validFrom,
-            validUntil: inputData.validUntil,
+            ...(inputData.edition === "test" && inputData.binding === "none" ? {} : { validUntil: inputData.validUntil }),
             ...(inputData.trialDurationDays ? { trialDurationDays: inputData.trialDurationDays } : {}),
             maxDevices: inputData.maxDevices,
             features: inputData.features,
@@ -1081,6 +1090,15 @@ function registerLicenseDevGeneratorIpc() {
       const runResult = await _runLicenseTool(inputPath);
       const outputPath = _extractGeneratedPath(runResult, inputData);
       if (!outputPath) {
+        const generatorCombinedOutput = `${String(runResult?.stderr || "")}\n${String(runResult?.stdout || "")}`;
+        const isTestLicense = inputData.edition === "test" && inputData.binding === "none";
+        if (isTestLicense && _hasExternalGeneratorValidUntilMismatch(generatorCombinedOutput)) {
+          return {
+            ok: false,
+            error: "EXTERNAL_GENERATOR_INCOMPATIBLE_TEST_NO_VALID_UNTIL",
+            message: "Externer Lizenzgenerator ist nicht kompatibel mit Testversion ohne validUntil.",
+          };
+        }
         if (runResult?.timedOut) {
           return { ok: false, error: "GENERATOR_TIMEOUT" };
         }
@@ -1102,9 +1120,18 @@ function registerLicenseDevGeneratorIpc() {
         features: inputData.features,
       };
     } catch (err) {
+      const errorText = String(err?.message || err || "LICENSE_GENERATION_FAILED").trim() || "LICENSE_GENERATION_FAILED";
+      const isTestLicense = inputData?.edition === "test" && inputData?.binding === "none";
+      if (isTestLicense && _hasExternalGeneratorValidUntilMismatch(errorText)) {
+        return {
+          ok: false,
+          error: "EXTERNAL_GENERATOR_INCOMPATIBLE_TEST_NO_VALID_UNTIL",
+          message: "Externer Lizenzgenerator ist nicht kompatibel mit Testversion ohne validUntil.",
+        };
+      }
       return {
         ok: false,
-        error: String(err?.message || err || "LICENSE_GENERATION_FAILED").trim() || "LICENSE_GENERATION_FAILED",
+        error: errorText,
       };
     }
   });
@@ -1197,6 +1224,7 @@ module.exports = {
   registerLicenseIpc,
   _buildCustomerSetupSlug,
   _validateGenerationPayload,
+  _hasExternalGeneratorValidUntilMismatch,
   _buildLicenseRequestPayload,
   resolveNodeExecutableForBuild,
   _validateCustomerSetupPayload,

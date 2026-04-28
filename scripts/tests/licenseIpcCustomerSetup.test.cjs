@@ -107,6 +107,19 @@ async function runLicenseIpcCustomerSetupTests(run) {
     });
   });
 
+  await run('licenseIpc: Machine-Setup erlaubt fehlende Lizenzdatei und fehlende Machine-ID', () => {
+    withLicenseIpcModule({}, (mod) => {
+      const payload = mod._validateCustomerSetupPayload({
+        customer: { customer_number: 'K-200', company_name: 'Maschine GmbH' },
+        license: { license_binding: 'machine', machine_id: '' },
+        setupType: 'machine',
+      });
+      assert.equal(payload.setupType, 'machine');
+      assert.equal(payload.licenseFilePath, '');
+      assert.equal(payload.customerSlug, 'K-200-Maschine-GmbH');
+    });
+  });
+
   await run('licenseIpc: resolveNodeExecutableForBuild bevorzugt npm_node_execpath', () => {
     withLicenseIpcModule({}, (mod) => {
       const resolved = mod.resolveNodeExecutableForBuild({
@@ -166,6 +179,43 @@ async function runLicenseIpcCustomerSetupTests(run) {
         }),
         /TRIAL_DURATION_DAYS_REQUIRED/
       );
+    });
+  });
+
+  await run('licenseIpc: Vollversion ohne validUntil wird weiterhin abgewiesen', () => {
+    withLicenseIpcModule({}, (mod) => {
+      assert.throws(
+        () =>
+          mod._validateGenerationPayload({
+            customerName: 'Vollkunde',
+            licenseId: 'LIC-F-1',
+            edition: 'full',
+            binding: 'machine',
+            validFrom: '2026-06-01',
+            maxDevices: 1,
+            features: ['app'],
+            machineId: 'MID-F-1',
+          }),
+        /VALID_UNTIL_REQUIRED/
+      );
+    });
+  });
+
+  await run('licenseIpc: kein validFrom+Testdauer-Fallback auf validUntil mehr vorhanden', () => {
+    const source = fs.readFileSync(path.join(REAL_REPO_ROOT, 'src/main/ipc/licenseIpc.js'), 'utf8');
+    assert.equal(source.includes('_computeValidUntil'), false);
+    assert.equal(
+      source.includes('inputData.edition === "test" && inputData.binding === "none" ? {} : { validUntil: inputData.validUntil }'),
+      true
+    );
+    assert.equal(source.includes('inputData.trialDurationDays ? { trialDurationDays: inputData.trialDurationDays }'), true);
+  });
+
+  await run('licenseIpc: externe Generator-validUntil-Fehler werden fuer Testversion klar erkannt', () => {
+    withLicenseIpcModule({}, (mod) => {
+      assert.equal(mod._hasExternalGeneratorValidUntilMismatch('Pflichtfeld fehlt oder ist leer: validUntil'), true);
+      assert.equal(mod._hasExternalGeneratorValidUntilMismatch('VALID_UNTIL_REQUIRED'), true);
+      assert.equal(mod._hasExternalGeneratorValidUntilMismatch('alles ok'), false);
     });
   });
 
@@ -248,8 +298,37 @@ async function runLicenseIpcCustomerSetupTests(run) {
             assert.equal(fs.existsSync(res.logPath), true);
             assert.equal(res.cwd, repoRoot);
             assert.equal(res.env.BBM_CUSTOMER_LICENSE_FILE, licenseFilePath);
+            assert.equal(res.env.BBM_CUSTOMER_SETUP_TYPE, 'test');
             assert.equal(res.env.BBM_CUSTOMER_SLUG, 'K-12-Gamma-GmbH');
             assert.equal(res.env.BBM_CUSTOMER_NAME, 'Gamma GmbH');
+          }
+        );
+      }
+    );
+  });
+
+  await run('licenseIpc: Machine-Setup setzt keinen BBM_CUSTOMER_LICENSE_FILE Env-Wert', async () => {
+    await withTempRepo(
+      ({ repoRoot }) => {
+        const outDir = path.join(repoRoot, 'dist', 'customers', 'K-18-Machine-GmbH');
+        fs.mkdirSync(outDir, { recursive: true });
+        fs.writeFileSync(path.join(outDir, 'BBM-1.5.0-K-18-Machine-GmbH-Setup.exe'), 'bin', 'utf8');
+      },
+      async ({ repoRoot, licenseFilePath }) => {
+        await withLicenseIpcModule(
+          { cwd: repoRoot, spawnImpl: () => createFakeChild({ exitCode: 0 }) },
+          async (mod) => {
+            const res = await mod._runCustomerSetupBuild({
+              customer: { customer_number: 'K-18', company_name: 'Machine GmbH' },
+              license: { license_binding: 'machine', machine_id: '' },
+              setupType: 'machine',
+              licenseFilePath,
+            }, {
+              nodeResolver: () => ({ ok: true, nodeExecutable: 'node', trace: ['test'] }),
+            });
+            assert.equal(res.ok, true);
+            assert.equal(res.env.BBM_CUSTOMER_SETUP_TYPE, 'machine');
+            assert.equal(Boolean(res.env.BBM_CUSTOMER_LICENSE_FILE), false);
           }
         );
       }

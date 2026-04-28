@@ -519,9 +519,15 @@ export default class SettingsView {
     requestHint.style.opacity = "0.8";
     requestHint.textContent =
       "Diese Datei enthält die Machine-ID dieses Geräts und kann zur Erstellung einer gerätegebundenen Lizenz verwendet werden.";
+    const responseLicenseHint = document.createElement("div");
+    responseLicenseHint.style.fontSize = "11px";
+    responseLicenseHint.style.opacity = "0.9";
+    responseLicenseHint.style.whiteSpace = "pre-line";
+    responseLicenseHint.textContent =
+      "Antwortlizenz erhalten?\nImportieren Sie hier die .bbmlic-Datei, die Sie vom Anbieter erhalten haben.";
 
     buttonRow.append(btnImport, btnReload, btnCreateRequest);
-    statusCard.append(statusRow, messageEl, licenseBanner, infoGrid, requestTitle, requestHint, buttonRow);
+    statusCard.append(statusRow, messageEl, licenseBanner, infoGrid, requestTitle, requestHint, responseLicenseHint, buttonRow);
     wrap.append(statusCard, diagnosticsCard);
 
     const setBusy = (busy) => {
