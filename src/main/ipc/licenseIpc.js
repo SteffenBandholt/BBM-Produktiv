@@ -1008,51 +1008,7 @@ function registerLicenseInstallationIpc() {
       }
 
       const filePath = String(result.filePaths[0] || "").trim();
-      console.log("[LICENSE] import:selected-file", { filePath });
-
-      const parsed = _readLicenseFile(filePath);
-      console.log("[LICENSE] import:json-read", {
-        product: parsed?.license?.product || null,
-        licenseId: parsed?.license?.licenseId || null,
-        hasSignature: !!parsed?.signature,
-      });
-
-      const verification = verifyLicense(parsed);
-      console.log("[LICENSE] import:verifyLicense", {
-        valid: !!verification?.valid,
-        reason: verification?.reason || null,
-        product: parsed?.license?.product || null,
-        licenseId: parsed?.license?.licenseId || null,
-      });
-
-      if (!verification.valid) {
-        return {
-          ok: false,
-          error: verification.reason || "INVALID_FORMAT",
-          reason: verification.reason || "INVALID_FORMAT",
-          ..._toStatusPayload(verification),
-        };
-      }
-
-      const stored = saveLicense(parsed);
-      console.log("[LICENSE] import:saveLicense", {
-        ok: !!stored,
-        machineId: stored?.machineId || null,
-        licenseId: stored?.license?.licenseId || null,
-      });
-
-      const refreshed = refreshStatus();
-      console.log("[LICENSE] import:refreshStatus", {
-        valid: !!refreshed?.valid,
-        reason: refreshed?.reason || null,
-        machineId: refreshed?.machineId || null,
-      });
-
-      return {
-        ok: true,
-        filePath,
-        ..._toStatusPayload(refreshed),
-      };
+      return importLicenseFromFilePath(filePath);
     } catch (err) {
       const reason = String(err?.code || err?.message || "INVALID_FORMAT").trim() || "INVALID_FORMAT";
       console.error("[LICENSE] import:error", {
@@ -1114,6 +1070,71 @@ function registerLicenseInstallationIpc() {
       return { ok: false, error: String(err?.code || err?.message || "REQUEST_SAVE_FAILED").trim() || "REQUEST_SAVE_FAILED" };
     }
   });
+}
+
+function importLicenseFromFilePath(filePath) {
+  const normalizedPath = String(filePath || "").trim();
+  try {
+    console.log("[LICENSE] import:selected-file", { filePath: normalizedPath });
+
+    const parsed = _readLicenseFile(normalizedPath);
+    console.log("[LICENSE] import:json-read", {
+      product: parsed?.license?.product || null,
+      licenseId: parsed?.license?.licenseId || null,
+      hasSignature: !!parsed?.signature,
+    });
+
+    const verification = verifyLicense(parsed);
+    console.log("[LICENSE] import:verifyLicense", {
+      valid: !!verification?.valid,
+      reason: verification?.reason || null,
+      product: parsed?.license?.product || null,
+      licenseId: parsed?.license?.licenseId || null,
+    });
+
+    if (!verification.valid) {
+      return {
+        ok: false,
+        error: verification.reason || "INVALID_FORMAT",
+        reason: verification.reason || "INVALID_FORMAT",
+        filePath: normalizedPath,
+        ..._toStatusPayload(verification),
+      };
+    }
+
+    const stored = saveLicense(parsed);
+    console.log("[LICENSE] import:saveLicense", {
+      ok: !!stored,
+      machineId: stored?.machineId || null,
+      licenseId: stored?.license?.licenseId || null,
+    });
+
+    const refreshed = refreshStatus();
+    console.log("[LICENSE] import:refreshStatus", {
+      valid: !!refreshed?.valid,
+      reason: refreshed?.reason || null,
+      machineId: refreshed?.machineId || null,
+    });
+
+    return {
+      ok: true,
+      filePath: normalizedPath,
+      ..._toStatusPayload(refreshed),
+    };
+  } catch (err) {
+    const reason = String(err?.code || err?.message || "INVALID_FORMAT").trim() || "INVALID_FORMAT";
+    console.error("[LICENSE] import:error", {
+      filePath: normalizedPath,
+      error: err?.stack || err?.message || String(err),
+    });
+    return {
+      ok: false,
+      error: reason,
+      reason,
+      filePath: normalizedPath,
+      ..._toStatusPayload({ valid: false, reason }),
+    };
+  }
 }
 
 // Dev-/Werkzeuglogik:
@@ -1383,4 +1404,5 @@ module.exports = {
   resolveNodeExecutableForBuild,
   _validateCustomerSetupPayload,
   _runCustomerSetupBuild,
+  importLicenseFromFilePath,
 };

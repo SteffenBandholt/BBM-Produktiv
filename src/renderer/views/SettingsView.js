@@ -524,7 +524,7 @@ export default class SettingsView {
     responseLicenseHint.style.opacity = "0.9";
     responseLicenseHint.style.whiteSpace = "pre-line";
     responseLicenseHint.textContent =
-      "Antwortlizenz erhalten?\nImportieren Sie hier die .bbmlic-Datei, die Sie vom Anbieter erhalten haben.";
+      "Antwortlizenz erhalten?\nImportieren Sie hier die .bbmlic-Datei, die Sie vom Anbieter erhalten haben.\nSie können eine erhaltene .bbmlic-Datei auch direkt per Doppelklick öffnen.";
 
     buttonRow.append(btnImport, btnReload, btnCreateRequest);
     statusCard.append(statusRow, messageEl, licenseBanner, infoGrid, requestTitle, requestHint, responseLicenseHint, buttonRow);
@@ -678,16 +678,16 @@ export default class SettingsView {
           return;
         }
         if (!res?.ok) {
-          renderStatus(res || {}, res?.error || "Lizenz konnte nicht importiert werden.");
+          renderStatus(res || {}, res?.error || "Lizenzdatei konnte nicht importiert werden.");
           await loadDiagnostics();
           return;
         }
         renderStatus(res);
-        setMessage("Lizenz erfolgreich importiert.", false);
+        setMessage("Lizenz wurde erfolgreich importiert.", false);
         await loadStatus();
         await loadDiagnostics();
       } catch (err) {
-        renderStatus({}, err?.message || "Lizenz konnte nicht importiert werden.");
+        renderStatus({}, err?.message || "Lizenzdatei konnte nicht importiert werden.");
         await loadDiagnostics();
       } finally {
         setBusy(false);

@@ -16,6 +16,14 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Doppelklick-Import fuer `.bbmlic` ist vorbereitet:
+  - `electron-builder`-Konfiguration enthaelt jetzt die Datei-Zuordnung fuer `.bbmlic` (`BBM Lizenzdatei`).
+  - Main-Prozess erkennt beim Start uebergebene `.bbmlic`-Pfade und importiert die Datei ueber die bestehende Importlogik (`importLicenseFromFilePath`), ohne zweiten Importmechanismus.
+  - Zweitstart unter Windows wird ueber Single-Instance-Handling verarbeitet; eine bereits laufende Instanz importiert die uebergebene `.bbmlic` ebenfalls.
+  - Nach Import erscheint bei Erfolg `Lizenz wurde erfolgreich importiert.`, bei Fehler `Lizenzdatei konnte nicht importiert werden.`; bei Fehler wird das Einstellungen/Lizenzfenster geoeffnet.
+  - Lizenzstatus-Hinweis im Lizenzfenster wurde ergaenzt: `.bbmlic` kann auch direkt per Doppelklick geoeffnet werden.
+  - Testabdeckung wurde fuer Build-File-Association, Main-Startargument, Second-Instance-Verarbeitung, Wiederverwendung der Importlogik sowie unveraenderten Trial-/Verifier-Flow erweitert.
+- Nächster offener Schritt: manuelle Windows-Pruefung (installierte App, Doppelklick auf `.bbmlic` bei geschlossenem und bei bereits geoeffnetem BBM).
 - Admin-Lizenzverwaltung kann die erzeugte Antwortlizenz jetzt direkt als Outlook-Entwurf vorbereiten:
   - Neuer Button `Antwortlizenz per Outlook senden` im Lizenzeditor.
   - Sichtbarkeit nur fuer Vollversion + vorhandenen `license_file_path` mit `.bbmlic`.

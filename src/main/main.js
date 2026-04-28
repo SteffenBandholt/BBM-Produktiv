@@ -19,7 +19,7 @@ const { registerSettingsIpc } = require("./ipc/settingsIpc");
 const { registerProjectSettingsIpc } = require("./ipc/projectSettingsIpc");
 const { registerEditorIpc } = require("./ipc/editorIpc");
 const { registerProjectTransferIpc } = require("./ipc/projectTransferIpc");
-const { registerLicenseIpc } = require("./ipc/licenseIpc");
+const { registerLicenseIpc, importLicenseFromFilePath } = require("./ipc/licenseIpc");
 const { registerAudioIpc } = require("./ipc/audioIpc");
 const { checkLicense } = require("./licensing/licenseService");
 const { loadCustomerSetup } = require("./licensing/licenseStorage");
@@ -36,6 +36,9 @@ const { buildStoragePreviewPaths } = require("./ipc/projectStoragePaths");
 
 let mainWindow;
 const WINDOWS_APP_ID = "de.bbm.baubesprechungsmanager";
+const LICENSE_FILE_EXTENSION = ".bbmlic";
+const pendingLicenseImportPaths = [];
+let licenseImportDrainRunning = false;
 
 function resolveIconPath() {
   const candidates = [
@@ -387,6 +390,94 @@ function createWindow() {
   if (!app.isPackaged) {
     // mainWindow.webContents.openDevTools();
   }
+}
+
+function _findLicenseFileArg(argv = []) {
+  if (!Array.isArray(argv)) return "";
+  for (const entry of argv) {
+    const value = String(entry || "").trim();
+    if (!value) continue;
+    const normalized = value.replace(/^"+|"+$/g, "");
+    if (!normalized.toLowerCase().endsWith(LICENSE_FILE_EXTENSION)) continue;
+    if (!path.isAbsolute(normalized)) continue;
+    return normalized;
+  }
+  return "";
+}
+
+function _ensureMainWindowVisible() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  if (!mainWindow.isVisible()) mainWindow.show();
+  mainWindow.focus();
+}
+
+function _showLicenseSection() {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const invokeOpenSettings = `
+    try {
+      if (typeof window.bbmOpenSettings === "function") {
+        window.bbmOpenSettings();
+      }
+    } catch (_e) {}
+  `;
+  mainWindow.webContents.executeJavaScript(invokeOpenSettings).catch(() => {});
+}
+
+async function _showLicenseImportDialog(importResult) {
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  const isValid = !!importResult?.ok && !!importResult?.valid;
+  const message = isValid
+    ? "Lizenz wurde erfolgreich importiert."
+    : "Lizenzdatei konnte nicht importiert werden.";
+  await dialog.showMessageBox(mainWindow, {
+    type: isValid ? "info" : "error",
+    title: "Lizenzimport",
+    message,
+    noLink: true,
+  });
+  if (!isValid) _showLicenseSection();
+}
+
+function queueLicenseImportPath(filePath) {
+  const normalizedPath = String(filePath || "").trim();
+  if (!normalizedPath) return;
+  if (!normalizedPath.toLowerCase().endsWith(LICENSE_FILE_EXTENSION)) return;
+  if (!fs.existsSync(normalizedPath)) return;
+  pendingLicenseImportPaths.push(normalizedPath);
+  if (app.isReady()) {
+    void drainQueuedLicenseImports();
+  }
+}
+
+async function drainQueuedLicenseImports() {
+  if (licenseImportDrainRunning) return;
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  licenseImportDrainRunning = true;
+  try {
+    while (pendingLicenseImportPaths.length > 0) {
+      const filePath = pendingLicenseImportPaths.shift();
+      const result = importLicenseFromFilePath(filePath);
+      await _showLicenseImportDialog(result);
+    }
+  } finally {
+    licenseImportDrainRunning = false;
+  }
+}
+
+const singleInstanceLock = app.requestSingleInstanceLock();
+if (!singleInstanceLock) {
+  app.quit();
+} else {
+  const startupLicenseFile = _findLicenseFileArg(process.argv);
+  if (startupLicenseFile) queueLicenseImportPath(startupLicenseFile);
+
+  app.on("second-instance", (_event, argv) => {
+    _ensureMainWindowVisible();
+    const secondInstanceLicenseFile = _findLicenseFileArg(argv);
+    if (!secondInstanceLicenseFile) return;
+    queueLicenseImportPath(secondInstanceLicenseFile);
+  });
 }
 
 if (process.platform === "win32") {
@@ -774,6 +865,11 @@ app.whenReady().then(async () => {
 
   // Fenster erst danach (damit Renderer nichts "zu früh" invoken kann)
   createWindow();
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.once("did-finish-load", () => {
+      void drainQueuedLicenseImports();
+    });
+  }
   await maybePromptLegacyMigration(mainWindow);
 });
 
