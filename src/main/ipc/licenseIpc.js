@@ -1173,6 +1173,10 @@ function registerLicenseAdminDataIpc() {
     return licenseAdminService.saveLicense(license || {});
   });
 
+  ipcMain.handle("license-admin:delete-license-record", async (_event, id) => {
+    return licenseAdminService.deleteLicenseRecord(id);
+  });
+
   ipcMain.handle("license-admin:list-history", async () => {
     return licenseAdminService.listHistory();
   });

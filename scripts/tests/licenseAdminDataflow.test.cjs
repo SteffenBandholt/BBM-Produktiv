@@ -6,6 +6,7 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 function createMemoryDb() {
   const customers = [];
   const licenses = [];
+  const history = [];
 
   function getCustomerById(id) {
     return customers.find((entry) => entry.id === id) || null;
@@ -35,6 +36,9 @@ function createMemoryDb() {
           if (text.includes("FROM license_customers")) {
             return [...customers];
           }
+          if (text.includes("FROM license_history")) {
+            return [...history];
+          }
           if (text.includes("FROM license_records") && text.includes("WHERE lr.customer_id = ?")) {
             return licenses.filter((entry) => entry.customer_id === arg).map(enrichLicense);
           }
@@ -57,6 +61,9 @@ function createMemoryDb() {
           }
           if (text.includes("SELECT * FROM license_records WHERE id = ?")) {
             return licenses.find((entry) => entry.id === arg) || undefined;
+          }
+          if (text.includes("SELECT * FROM license_history WHERE id = ?")) {
+            return history.find((entry) => entry.id === arg) || undefined;
           }
           return undefined;
         },
@@ -143,6 +150,18 @@ function createMemoryDb() {
               license_file_created_at,
               notes,
             });
+            return;
+          }
+          if (text.includes("DELETE FROM license_records WHERE id = ?")) {
+            const [id] = args;
+            const index = licenses.findIndex((entry) => entry.id === id);
+            if (index >= 0) licenses.splice(index, 1);
+            return;
+          }
+          if (text.includes("INSERT INTO license_history")) {
+            const [id, license_record_id, generated_at, product_scope_json, valid_until, output_path, notes] = args;
+            history.push({ id, license_record_id, generated_at, product_scope_json, valid_until, output_path, notes });
+            return;
           }
         },
       };
@@ -226,6 +245,73 @@ async function runLicenseAdminDataflowTests(run) {
       assert.equal(listedByCustomer[0].license_file_created_at, "2026-04-27T10:00:00.000Z");
       assert.equal(listedByCustomer[0].licenseFileCreatedAt, "2026-04-27T10:00:00.000Z");
       assert.equal(typeof listedByCustomer[0].product_scope_json, "string");
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: deleteLicenseRecord loescht vorhandene Lizenz", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({
+        customer_number: "K-102",
+        company_name: "Delete GmbH",
+      });
+      const savedLicense = service.saveLicense({
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app", "pdf", "export"] },
+        valid_from: "2026-02-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+        machine_id: "MID-DELETE-1",
+      });
+
+      const deleted = service.deleteLicenseRecord(savedLicense.id);
+      assert.equal(deleted.ok, true);
+      assert.equal(deleted.id, savedLicense.id);
+
+      const listedByCustomer = service.listLicensesByCustomer(customer.id);
+      assert.equal(listedByCustomer.length, 0);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: deleteLicenseRecord mit fehlender ID liefert klaren Fehler", () => {
+    withMockedDatabase((service) => {
+      assert.throws(() => service.deleteLicenseRecord(""), /license_record_id required/);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: deleteLicenseRecord laesst Kundendaten und Historie unberuehrt", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({
+        customer_number: "K-103",
+        company_name: "History GmbH",
+      });
+      const savedLicense = service.saveLicense({
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app", "pdf", "export"] },
+        valid_from: "2026-03-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+        machine_id: "MID-DELETE-2",
+      });
+      const historyEntry = service.addHistoryEntry({
+        license_record_id: savedLicense.id,
+        generated_at: "2026-04-28T10:10:10.000Z",
+        product_scope_json: { standardumfang: ["app"] },
+        output_path: "C:\\license-tool\\output\\history.bbmlic",
+      });
+
+      service.deleteLicenseRecord(savedLicense.id);
+
+      const customers = service.listCustomers();
+      const history = service.listHistory();
+      assert.equal(customers.length, 1);
+      assert.equal(customers[0].id, customer.id);
+      assert.equal(history.length, 1);
+      assert.equal(history[0].id, historyEntry.id);
+      assert.equal(history[0].license_record_id, savedLicense.id);
     });
   });
 
@@ -371,6 +457,26 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(received.license_file_path, "C:\\tmp\\camel-1.bbmlic");
     assert.equal(received.licenseFileCreatedAt, "2026-04-27T12:30:00.000Z");
     assert.equal(received.license_file_created_at, "2026-04-27T12:30:00.000Z");
+  });
+
+  await run("Lizenzverwaltung Renderer-Service: deleteLicense nutzt Preload-API", async () => {
+    const { deleteLicense } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
+    );
+
+    let receivedId = null;
+    global.window = {
+      bbmDb: {
+        licenseAdminDeleteLicenseRecord: async (id) => {
+          receivedId = id;
+          return { ok: true, id };
+        },
+      },
+    };
+
+    const result = await deleteLicense({ id: "lic-delete-1" });
+    assert.equal(receivedId, "lic-delete-1");
+    assert.equal(result.ok, true);
   });
 
   await run("Lizenzverwaltung normalizeLicenseRecord: snake_case und camelCase werden vollstaendig abgebildet", async () => {

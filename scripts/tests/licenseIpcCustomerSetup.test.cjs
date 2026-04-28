@@ -26,6 +26,8 @@ function createFakeChild({ exitCode = 0, stdout = '', stderr = '', error = null,
 function withLicenseIpcModule({ spawnImpl, cwd } = {}, fn) {
   const originalLoad = Module._load;
   const originalCwd = process.cwd();
+  const ipcHandlers = {};
+  const serviceCalls = [];
   if (cwd) process.chdir(cwd);
 
   Module._load = function patched(request, parent, isMain) {
@@ -34,7 +36,11 @@ function withLicenseIpcModule({ spawnImpl, cwd } = {}, fn) {
         app: { isPackaged: false, getVersion: () => '1.0.0' },
         BrowserWindow: { fromWebContents: () => null },
         dialog: {},
-        ipcMain: { handle: () => {} },
+        ipcMain: {
+          handle: (channel, handler) => {
+            ipcHandlers[channel] = handler;
+          },
+        },
         shell: { openPath: async () => '' },
       };
     }
@@ -60,6 +66,10 @@ function withLicenseIpcModule({ spawnImpl, cwd } = {}, fn) {
         listLicenses: () => [],
         listLicensesByCustomer: () => [],
         saveLicense: (l) => l,
+        deleteLicenseRecord: (id) => {
+          serviceCalls.push(id);
+          return { ok: true, id };
+        },
         listHistory: () => [],
         addHistoryEntry: (e) => e,
       };
@@ -70,7 +80,7 @@ function withLicenseIpcModule({ spawnImpl, cwd } = {}, fn) {
     const modPath = path.join(REAL_REPO_ROOT, 'src/main/ipc/licenseIpc.js');
     delete require.cache[require.resolve(modPath)];
     const mod = require(modPath);
-    return fn(mod);
+    return fn(mod, { ipcHandlers, serviceCalls });
   } finally {
     Module._load = originalLoad;
     if (cwd) process.chdir(originalCwd);
@@ -94,6 +104,16 @@ async function withTempRepo(setupFn, fn) {
 }
 
 async function runLicenseIpcCustomerSetupTests(run) {
+  await run('licenseIpc: license-admin delete-license-record ist registriert und ruft Service auf', async () => {
+    await withLicenseIpcModule({}, async (mod, ctx) => {
+      mod.registerLicenseIpc();
+      assert.equal(typeof ctx.ipcHandlers['license-admin:delete-license-record'], 'function');
+      const out = await ctx.ipcHandlers['license-admin:delete-license-record']({}, 'lic-77');
+      assert.equal(out.ok, true);
+      assert.equal(ctx.serviceCalls[0], 'lic-77');
+    });
+  });
+
   await run('licenseIpc: Kunden-Slug aus Kundennummer + Firmenname wird sicher gebaut', () => {
     withLicenseIpcModule({}, (mod) => {
       const slug = mod._buildCustomerSetupSlug({ customer_number: 'K-100', company_name: 'Musterfirma GmbH' });

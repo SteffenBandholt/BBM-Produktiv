@@ -1,5 +1,6 @@
 import {
   createCustomerSetup,
+  deleteLicense,
   listCustomers,
   listLicensesByCustomer,
   saveCustomer,
@@ -422,7 +423,9 @@ export default class LicenseAdminScreen {
   constructor({ onBackToAdminbereich } = {}) {
     this.onBackToAdminbereich = onBackToAdminbereich;
     this.currentCustomer = null;
+    this.currentLicense = null;
     this.currentView = "customers";
+    this.flashMessage = "";
     this.root = null;
   }
 
@@ -506,6 +509,10 @@ export default class LicenseAdminScreen {
     const message = document.createElement("div");
     message.style.minHeight = "20px";
     message.style.fontSize = "13px";
+    if (this.flashMessage) {
+      message.textContent = this.flashMessage;
+      this.flashMessage = "";
+    }
 
     const fields = [
       ["customer_number", "Kundennummer"],
@@ -1178,6 +1185,26 @@ export default class LicenseAdminScreen {
     const createCustomerSetupBtn = this._button("Kunden-Setup erstellen", async () => runSetupBuild({ setupType: "test" }));
     const createMachineSetupBtn = this._button("Machine-Setup erstellen", async () => runSetupBuild({ setupType: "machine" }));
     createCustomerSetupBtn.disabled = !valueOf(license, "license_file_path", "licenseFilePath");
+    const deleteBtn = this._button("Lizenz löschen", async () => {
+      const activeLicense = this.currentLicense || license || {};
+      const licenseId = String(valueOf(activeLicense, "id") || "").trim();
+      if (!licenseId) return;
+      const confirmText =
+        "Lizenz wirklich löschen?\nDieser Vorgang löscht nur den Lizenzdatensatz in der Lizenzverwaltung.\nBereits erzeugte Lizenzdateien und Setups bleiben erhalten.";
+      const shouldDelete = globalThis?.window?.confirm ? window.confirm(confirmText) : true;
+      if (!shouldDelete) return;
+      try {
+        await deleteLicense(activeLicense);
+        this.currentLicense = null;
+        this.currentView = "customer-detail";
+        this.flashMessage = "Lizenz wurde gelöscht.";
+        await this._render();
+      } catch (_err) {
+        message.textContent = "Lizenz konnte nicht gelöscht werden.";
+      }
+    });
+    const hasExistingLicense = !!String(valueOf(license, "id") || "").trim();
+    deleteBtn.style.display = hasExistingLicense ? "" : "none";
 
     const createBtn = this._button("Lizenz erstellen", async () => {
       const previousText = createBtn.textContent;
@@ -1315,7 +1342,7 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    actions.append(importRequestBtn, createBtn, createCustomerSetupBtn, createMachineSetupBtn, backBtn, openOutputDirBtn);
+    actions.append(importRequestBtn, createBtn, createCustomerSetupBtn, createMachineSetupBtn, deleteBtn, backBtn, openOutputDirBtn);
     container.append(
       header,
       context,

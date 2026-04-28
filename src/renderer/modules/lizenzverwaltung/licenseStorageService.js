@@ -50,6 +50,12 @@ export async function saveLicense(license) {
   return save(record);
 }
 
+export async function deleteLicense(record) {
+  const id = String(record?.id || "").trim();
+  const del = requireApiMethod("licenseAdminDeleteLicenseRecord");
+  return del(id);
+}
+
 export async function listHistory() {
   const list = requireApiMethod("licenseAdminListLicenseHistory");
   return list();
