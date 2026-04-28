@@ -16,6 +16,13 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Machine-Setup Lizenzfluss wurde kundentauglich auf E-Mail-Start umgestellt:
+  - Startansicht zeigt jetzt `Lizenz erforderlich` mit den Buttons `Lizenz per E-Mail anfordern` und `Antwortlizenz importieren`.
+  - Mailanforderung nutzt `mailto:info@bandholt.de` mit festem Betreff `BBM Lizenzanforderung` und vorbereitetem Mailtext inkl. `Kunde`, `Kundennummer`, `Lizenz-ID`, `Machine-ID`, `App-Version`.
+  - Der bisherige Antwortlizenz-Import bleibt derselbe technische Flow (`licenseImport`) und prueft nach dem Import den Lizenzstatus erneut.
+  - Bei fehlgeschlagenem automatischem E-Mail-Start wird ein Fallback mit Hinweistext und `Daten kopieren` angezeigt.
+  - Keine Aenderung an `licenseVerifier.js`; Testversion-Setup bleibt unveraendert.
+- Nächster offener Schritt: manuelle Sichtprüfung im echten Machine-Setup (mailto-Start mit Standard-Mail-App + Import einer gueltigen `.bbmlic`).
 - Machine-Setup Startverhalten ohne Lizenz ist umgesetzt:
   - Dist-Flow legt fuer Machine-Setups jetzt zusaetzlich `resources/license/customer-setup.json` ab (kein Ersatz fuer `customer.bbmlic`).
   - App liest beim Start `customer-setup.json`; wenn `setupType=machine` und keine gueltige Lizenz vorhanden ist, wird statt Mutter-App-Start eine klare Ansicht `Lizenz erforderlich` gezeigt.

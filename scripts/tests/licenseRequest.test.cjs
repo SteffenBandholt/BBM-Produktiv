@@ -213,7 +213,16 @@ async function runLicenseRequestTests(run) {
     );
     assert.equal(mainSource.includes("Lizenz erforderlich"), true);
     assert.equal(mainSource.includes("Diese Installation ist für eine gerätegebundene Vollversion vorbereitet."), true);
-    assert.equal(mainSource.includes("Lizenzanforderung speichern"), true);
+    assert.equal(mainSource.includes("Lizenz per E-Mail anfordern"), true);
+    assert.equal(mainSource.includes("Antwortlizenz importieren"), true);
+    assert.equal(mainSource.includes("info@bandholt.de"), true);
+    assert.equal(mainSource.includes("BBM Lizenzanforderung"), true);
+    assert.equal(mainSource.includes("Machine-ID:"), true);
+    assert.equal(mainSource.includes("App-Version:"), true);
+    assert.equal(mainSource.includes("Kunde:"), true);
+    assert.equal(mainSource.includes("Kundennummer:"), true);
+    assert.equal(mainSource.includes("Daten kopieren"), true);
+    assert.equal(mainSource.includes("E-Mail konnte nicht automatisch geöffnet werden."), true);
   });
 
   await run("Main/IPC: app:get-customer-setup ist registriert", () => {
