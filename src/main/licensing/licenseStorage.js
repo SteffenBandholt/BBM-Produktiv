@@ -16,6 +16,12 @@ function getBundledCustomerLicensePath() {
   return path.join(resourcesPath, "license", "customer.bbmlic");
 }
 
+function getBundledCustomerSetupPath() {
+  const packagedResources = process.resourcesPath || path.join(app.getAppPath(), "resources");
+  const resourcesPath = app?.isPackaged ? packagedResources : path.join(app.getAppPath(), "resources");
+  return path.join(resourcesPath, "license", "customer-setup.json");
+}
+
 function _readJsonSafe(filePath) {
   try {
     const raw = fs.readFileSync(filePath, "utf8");
@@ -51,6 +57,26 @@ function loadLicense() {
     return bundledLicense;
   } catch (err) {
     console.error("[licenseStorage] load failed:", err?.message || err);
+    return null;
+  }
+}
+
+function loadCustomerSetup() {
+  try {
+    const filePath = getBundledCustomerSetupPath();
+    if (!fs.existsSync(filePath)) return null;
+    const parsed = _readJsonSafe(filePath);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+    const setupType = String(parsed.setupType || parsed.setup_type || "").trim().toLowerCase();
+    return {
+      schemaVersion: Number(parsed.schemaVersion) || 1,
+      setupType: setupType === "machine" ? "machine" : "test",
+      customerSlug: String(parsed.customerSlug || parsed.customer_slug || "").trim(),
+      customerName: String(parsed.customerName || parsed.customer_name || "").trim(),
+      createdAt: String(parsed.createdAt || "").trim(),
+    };
+  } catch (err) {
+    console.error("[licenseStorage] loadCustomerSetup failed:", err?.message || err);
     return null;
   }
 }
@@ -110,4 +136,6 @@ module.exports = {
   deleteLicense,
   getLicenseFilePath,
   getBundledCustomerLicensePath,
+  getBundledCustomerSetupPath,
+  loadCustomerSetup,
 };

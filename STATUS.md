@@ -16,6 +16,14 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Machine-Setup Startverhalten ohne Lizenz ist umgesetzt:
+  - Dist-Flow legt fuer Machine-Setups jetzt zusaetzlich `resources/license/customer-setup.json` ab (kein Ersatz fuer `customer.bbmlic`).
+  - App liest beim Start `customer-setup.json`; wenn `setupType=machine` und keine gueltige Lizenz vorhanden ist, wird statt Mutter-App-Start eine klare Ansicht `Lizenz erforderlich` gezeigt.
+  - Die Startansicht enthaelt den Text zur geraetegebundenen Vollversion und den Button `Lizenzanforderung speichern`, der den bestehenden Request-Flow nutzt.
+  - Testversion-Setup mit eingebetteter `customer.bbmlic` bleibt unveraendert; `licenseVerifier.js` wurde nicht geaendert.
+  - Tests fuer Dist-Ressourcen, Setup-Read und Start-UI-Indikatoren wurden ergaenzt; `npm test` ist weiterhin Pflicht.
+- Nächster offener Schritt: manuelle Prüfung eines erzeugten Machine-Setups (Installieren + Starten + Sichtprüfung der Lizenz-erforderlich-Ansicht).
+- Commit: `67e354d` (Machine-Setup Lizenz-erforderlich-Startansicht).
 - Lizenzverwaltung Loeschfunktion fuer Lizenzdatensaetze ist umgesetzt:
   - Im Lizenzformular gibt es den Button `Lizenz löschen`, sichtbar nur bei bestehender gespeicherter Lizenz.
   - Vor dem Loeschen erscheint die Sicherheitsabfrage mit Klartext, dass nur der Lizenzdatensatz in der Lizenzverwaltung entfernt wird.

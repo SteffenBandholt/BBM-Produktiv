@@ -98,6 +98,98 @@ const writeUseNewCompanyWorkflowFlag = (value) => {
   }
 };
 
+const isMachineSetupWithoutLicense = async () => {
+  const api = window.bbmDb || {};
+  if (typeof api.licenseGetStatus !== "function") return false;
+  if (typeof api.appGetCustomerSetup !== "function") return false;
+  try {
+    const [licenseStatus, customerSetup] = await Promise.all([
+      api.licenseGetStatus(),
+      api.appGetCustomerSetup(),
+    ]);
+    const validLicense = !!licenseStatus?.ok && !!licenseStatus?.valid;
+    const setupType = String(customerSetup?.setup?.setupType || "").trim().toLowerCase();
+    return !validLicense && setupType === "machine";
+  } catch (_e) {
+    return false;
+  }
+};
+
+const renderMachineSetupLicenseRequired = () => {
+  const host = document.getElementById("content");
+  if (!host) {
+    throw new Error("Root-Container #content nicht gefunden");
+  }
+  host.innerHTML = "";
+  host.style.height = "100vh";
+  host.style.display = "flex";
+  host.style.alignItems = "center";
+  host.style.justifyContent = "center";
+  host.style.padding = "24px";
+  host.style.boxSizing = "border-box";
+  host.style.fontFamily = "Calibri, Arial, sans-serif";
+
+  const card = document.createElement("div");
+  card.style.width = "min(680px, 100%)";
+  card.style.border = "1px solid #cbd5e1";
+  card.style.borderRadius = "12px";
+  card.style.padding = "20px";
+  card.style.background = "#fff";
+  card.style.display = "grid";
+  card.style.gap = "12px";
+
+  const title = document.createElement("h1");
+  title.textContent = "Lizenz erforderlich";
+  title.style.margin = "0";
+  title.style.fontSize = "24px";
+
+  const text = document.createElement("div");
+  text.style.whiteSpace = "pre-line";
+  text.textContent =
+    "Diese Installation ist für eine gerätegebundene Vollversion vorbereitet.\nSpeichern Sie eine Lizenzanforderung und senden Sie diese Datei an den Anbieter.";
+
+  const status = document.createElement("div");
+  status.style.minHeight = "18px";
+  status.style.fontSize = "13px";
+  status.style.color = "#475569";
+
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = "Lizenzanforderung speichern";
+  btn.style.justifySelf = "start";
+  btn.onclick = async () => {
+    const api = window.bbmDb || {};
+    if (typeof api.licenseCreateRequest !== "function") {
+      status.textContent = "Lizenzanforderung ist in dieser App-Version nicht verfuegbar.";
+      status.style.color = "#b91c1c";
+      return;
+    }
+    status.textContent = "Lizenzanforderung wird gespeichert ...";
+    status.style.color = "#475569";
+    try {
+      const res = await api.licenseCreateRequest({});
+      if (res?.canceled) {
+        status.textContent = "Lizenzanforderung speichern abgebrochen.";
+        status.style.color = "#475569";
+        return;
+      }
+      if (!res?.ok) {
+        status.textContent = "Lizenzanforderung konnte nicht gespeichert werden.";
+        status.style.color = "#b91c1c";
+        return;
+      }
+      status.textContent = "Lizenzanforderung wurde gespeichert.";
+      status.style.color = "#166534";
+    } catch (_err) {
+      status.textContent = "Lizenzanforderung konnte nicht gespeichert werden.";
+      status.style.color = "#b91c1c";
+    }
+  };
+
+  card.append(title, text, btn, status);
+  host.appendChild(card);
+};
+
 const showStartupOverlay = ({ durationMs = 3000 } = {}) => {
   if (document.querySelector('[data-bbm-startup-overlay="true"]')) return;
 
@@ -953,6 +1045,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     topSection.replaceChildren(btnStart, btnProjects, btnFirmsBase, btnSettings, btnHelp);
     bottomSection.replaceChildren(btnQuit);
   };
+
+  if (await isMachineSetupWithoutLicense()) {
+    renderMachineSetupLicenseRequired();
+    return;
+  }
 
   await ensureInitialPrintLayoutDefaults();
 

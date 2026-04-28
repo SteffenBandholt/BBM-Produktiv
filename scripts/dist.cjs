@@ -61,6 +61,7 @@ function buildCustomerDistConfig({
   baseBuild = {},
   baseVersion = "0.0.0",
   customerLicenseFile = "",
+  customerSetupFile = "",
   customerSlug = "",
   customerSetupType = "",
 } = {}) {
@@ -82,6 +83,12 @@ function buildCustomerDistConfig({
     extraResources.push({
       from: customerLicenseFile,
       to: "license/customer.bbmlic",
+    });
+  }
+  if (setupType === "machine" && customerSetupFile) {
+    extraResources.push({
+      from: customerSetupFile,
+      to: "license/customer-setup.json",
     });
   }
 
@@ -144,10 +151,25 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
   const customerLicenseFile = String(env.BBM_CUSTOMER_LICENSE_FILE || "").trim();
   const customerSetupType = String(env.BBM_CUSTOMER_SETUP_TYPE || "").trim();
   const customerSlug = sanitizeCustomerSlug(env.BBM_CUSTOMER_SLUG || env.BBM_CUSTOMER_NAME || "");
+  const customerName = String(env.BBM_CUSTOMER_NAME || "").trim();
+  const customerSetupMetaFile =
+    String(customerSetupType || "").trim().toLowerCase() === "machine"
+      ? path.join(repoRoot, "dist", `customer-setup-${Date.now()}.json`)
+      : "";
+  if (customerSetupMetaFile) {
+    writeJsonAtomic(customerSetupMetaFile, {
+      schemaVersion: 1,
+      setupType: "machine",
+      customerSlug,
+      customerName,
+      createdAt: new Date().toISOString(),
+    });
+  }
   const customerConfig = buildCustomerDistConfig({
     baseBuild,
     baseVersion,
     customerLicenseFile,
+    customerSetupFile: customerSetupMetaFile,
     customerSlug,
     customerSetupType,
   });
@@ -196,6 +218,11 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
     try {
       fs.unlinkSync(tmpConfigPath);
     } catch (_e) {}
+    if (customerSetupMetaFile) {
+      try {
+        fs.unlinkSync(customerSetupMetaFile);
+      } catch (_e) {}
+    }
     return Promise.resolve(1);
   }
 
@@ -215,6 +242,11 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
       try {
         fs.unlinkSync(tmpConfigPath);
       } catch (_e) {}
+      if (customerSetupMetaFile) {
+        try {
+          fs.unlinkSync(customerSetupMetaFile);
+        } catch (_e) {}
+      }
       resolve(1);
     });
 
@@ -223,6 +255,11 @@ function runDist({ cwd = process.cwd(), env = process.env } = {}) {
       try {
         fs.unlinkSync(tmpConfigPath);
       } catch (_e) {}
+      if (customerSetupMetaFile) {
+        try {
+          fs.unlinkSync(customerSetupMetaFile);
+        } catch (_e) {}
+      }
       resolve(code || 0);
     });
   });

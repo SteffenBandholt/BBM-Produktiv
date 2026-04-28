@@ -105,6 +105,26 @@ async function runLicenseStorageBootstrapTests(run) {
       }
     );
   });
+
+  await run('Lizenz-Bootstrap: bundled customer-setup.json wird fuer Machine-Setup gelesen', () => {
+    withMockedLicenseStorage(
+      {
+        resourcesSetup: ({ resourcesPath }) => {
+          fs.writeFileSync(
+            path.join(resourcesPath, 'license', 'customer-setup.json'),
+            JSON.stringify({ schemaVersion: 1, setupType: 'machine', customerSlug: 'K-100', customerName: 'Muster GmbH' }),
+            'utf8'
+          );
+        },
+      },
+      ({ mod }) => {
+        const setup = mod.loadCustomerSetup();
+        assert.equal(setup.setupType, 'machine');
+        assert.equal(setup.customerSlug, 'K-100');
+        assert.equal(setup.customerName, 'Muster GmbH');
+      }
+    );
+  });
 }
 
 module.exports = {

@@ -170,6 +170,7 @@ async function runLicenseRequestTests(run) {
     const preloadSource = read("src/main/preload.js");
     assert.equal(preloadSource.includes("licenseCreateRequest"), true);
     assert.equal(preloadSource.includes('ipcRenderer.invoke("license:create-request"'), true);
+    assert.equal(preloadSource.includes('ipcRenderer.invoke("app:get-customer-setup"'), true);
   });
 
   await run("Preload: window.bbmDb.licenseAdminImportLicenseRequest ist vorhanden", () => {
@@ -180,6 +181,7 @@ async function runLicenseRequestTests(run) {
 
   await run("Renderer/UI: Texte fuer Lizenzanforderung sind vorhanden", () => {
     const settingsSource = read("src/renderer/views/SettingsView.js");
+    const mainSource = read("src/renderer/main.js");
     const licenseAdminSource = read("src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js");
     assert.equal(settingsSource.includes("Lizenzanforderung speichern"), true);
     assert.equal(settingsSource.includes("Lizenz importieren"), true);
@@ -209,6 +211,15 @@ async function runLicenseRequestTests(run) {
       licenseAdminSource.includes("Lizenzanforderung enthält keine Machine-ID."),
       true
     );
+    assert.equal(mainSource.includes("Lizenz erforderlich"), true);
+    assert.equal(mainSource.includes("Diese Installation ist für eine gerätegebundene Vollversion vorbereitet."), true);
+    assert.equal(mainSource.includes("Lizenzanforderung speichern"), true);
+  });
+
+  await run("Main/IPC: app:get-customer-setup ist registriert", () => {
+    const mainSource = read("src/main/main.js");
+    assert.equal(mainSource.includes('ipcMain.handle("app:get-customer-setup"'), true);
+    assert.equal(mainSource.includes("loadCustomerSetup"), true);
   });
 
   await run("Main/IPC: license-admin:import-license-request wird registriert", () => {

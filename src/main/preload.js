@@ -136,6 +136,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   appIsPackaged: () => ipcRenderer.invoke("app:isPackaged"),
   appGetBuildChannel: () => ipcRenderer.invoke("app:getBuildChannel"),
   appGetVersion: () => ipcRenderer.invoke("app:getVersion"),
+  appGetCustomerSetup: () => ipcRenderer.invoke("app:get-customer-setup"),
   openQuickAssist: () => ipcRenderer.invoke("app:openQuickAssist"),
 
   // ✅ Build-Kanal Umschalten (schreibt channel.json im Repo) – nur DEV-Umgebung
