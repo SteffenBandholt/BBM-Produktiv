@@ -23,6 +23,17 @@ const LICENSE_TOOL_INPUT_DIR = path.join(LICENSE_TOOL_ROOT, "input");
 const LICENSE_TOOL_OUTPUT_DIR = path.join(LICENSE_TOOL_ROOT, "output");
 const LICENSE_TOOL_SCRIPT = path.join(LICENSE_TOOL_ROOT, "generate-license.cjs");
 const LICENSE_TOOL_PRIVATE_KEY = path.join(LICENSE_TOOL_ROOT, "keys", "private_key.pem");
+const RESPONSE_LICENSE_MAIL_SUBJECT = "BBM Antwortlizenz";
+const RESPONSE_LICENSE_MAIL_BODY = [
+  "Guten Tag,",
+  "",
+  "anbei erhalten Sie Ihre BBM-Lizenzdatei.",
+  "",
+  "Bitte importieren Sie die angehängte .bbmlic-Datei in der Anwendung.",
+  "",
+  "Viele Grüße",
+  "Planungsbüro Steffen Bandholt",
+].join("\r\n");
 
 function _getExpiryInfo(validUntil) {
   const raw = String(validUntil || "").trim();
@@ -165,6 +176,90 @@ function _validateLicenseRequestPayload(payload, filePath = "") {
     notes,
     customerHint: String(parsed.customerHint || customerName).trim(),
   };
+}
+
+function _buildOutlookDraftScript() {
+  return [
+    'param(',
+    '  [string]$To = "",',
+    '  [string]$Subject = "",',
+    '  [string]$Body = "",',
+    '  [string]$AttachmentPath = ""',
+    ')',
+    '$ErrorActionPreference = "Stop"',
+    '$outlook = New-Object -ComObject Outlook.Application',
+    '$mail = $outlook.CreateItem(0)',
+    'if ($To) { $mail.To = $To }',
+    'if ($Subject) { $mail.Subject = $Subject }',
+    'if ($Body) { $mail.Body = $Body }',
+    'if ($AttachmentPath) { [void]$mail.Attachments.Add($AttachmentPath) }',
+    '$mail.Display()',
+    '',
+  ].join("\r\n");
+}
+
+async function _createOutlookResponseLicenseDraft({ to, subject, body, attachmentPath }) {
+  if (process.platform !== "win32") {
+    return { ok: false, error: "OUTLOOK_NOT_AVAILABLE" };
+  }
+  const tempDir = app.getPath("temp");
+  const scriptPath = path.join(tempDir, `bbm_license_outlook_${Date.now()}.ps1`);
+  fs.writeFileSync(scriptPath, _buildOutlookDraftScript(), "utf8");
+
+  const args = [
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-STA",
+    "-File",
+    scriptPath,
+    "-To",
+    String(to || "").trim(),
+    "-Subject",
+    String(subject || "").trim(),
+    "-Body",
+    String(body || ""),
+    "-AttachmentPath",
+    String(attachmentPath || "").trim(),
+  ];
+
+  const result = await new Promise((resolve) => {
+    let stderr = "";
+    let settled = false;
+    const child = spawn("powershell.exe", args, {
+      windowsHide: true,
+      stdio: ["ignore", "ignore", "pipe"],
+    });
+
+    child.on("error", (err) => {
+      if (settled) return;
+      settled = true;
+      resolve({ ok: false, error: err?.message || String(err) });
+    });
+
+    if (child.stderr) {
+      child.stderr.on("data", (chunk) => {
+        stderr += String(chunk || "");
+      });
+    }
+
+    child.on("close", (code) => {
+      if (settled) return;
+      settled = true;
+      if (Number(code) === 0) {
+        resolve({ ok: true });
+      } else {
+        resolve({ ok: false, error: stderr.trim() || `POWERSHELL_EXIT_${code}` });
+      }
+    });
+  });
+
+  try {
+    fs.unlinkSync(scriptPath);
+  } catch (_err) {
+    // ignore
+  }
+  return result;
 }
 
 function _buildLicenseRequestPayload(raw = {}) {
@@ -1237,6 +1332,37 @@ function registerLicenseAdminDataIpc() {
         ok: false,
         error: String(err?.code || err?.message || "INVALID_FORMAT").trim() || "INVALID_FORMAT",
       };
+    }
+  });
+
+  ipcMain.handle("license-admin:send-response-license-mail", async (_event, payload) => {
+    try {
+      const customerEmail = String(payload?.customerEmail || "").trim();
+      if (!customerEmail) {
+        return { ok: false, error: "MISSING_CUSTOMER_EMAIL", message: "Keine Kunden-E-Mail hinterlegt." };
+      }
+
+      const licenseFilePath = String(payload?.licenseFilePath || "").trim();
+      if (!licenseFilePath || !licenseFilePath.toLowerCase().endsWith(".bbmlic") || !fs.existsSync(licenseFilePath)) {
+        return {
+          ok: false,
+          error: "RESPONSE_LICENSE_FILE_NOT_FOUND",
+          message: "Antwortlizenz-Datei wurde nicht gefunden.",
+        };
+      }
+
+      const draft = await _createOutlookResponseLicenseDraft({
+        to: customerEmail,
+        subject: RESPONSE_LICENSE_MAIL_SUBJECT,
+        body: RESPONSE_LICENSE_MAIL_BODY,
+        attachmentPath: licenseFilePath,
+      });
+      if (!draft?.ok) {
+        return { ok: false, error: "OUTLOOK_OPEN_FAILED", message: "Outlook konnte nicht geöffnet werden." };
+      }
+      return { ok: true, message: "Outlook-Mail wurde vorbereitet." };
+    } catch (_err) {
+      return { ok: false, error: "OUTLOOK_OPEN_FAILED", message: "Outlook konnte nicht geöffnet werden." };
     }
   });
 }

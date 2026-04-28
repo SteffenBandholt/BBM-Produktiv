@@ -71,3 +71,8 @@ export async function createCustomerSetup(payload) {
   const create = requireApiMethod("licenseAdminCreateCustomerSetup");
   return create(payload || {});
 }
+
+export async function sendResponseLicenseMail(payload) {
+  const send = requireApiMethod("licenseAdminSendResponseLicenseMail");
+  return send(payload || {});
+}
