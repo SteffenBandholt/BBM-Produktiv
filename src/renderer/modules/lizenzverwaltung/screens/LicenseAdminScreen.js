@@ -152,6 +152,8 @@ export function buildLicenseEditorPayload({ license = {}, inputs = {}, customer 
   const customerId = assertCustomerContext(customer);
   const normalizedTrialDurationDays = normalizeTrialDurationDays(inputs.trial_duration_days, 30);
   const isTestLicense = String(inputs.license_edition || "").trim().toLowerCase() === "test";
+  const normalizedEdition = isTestLicense ? "test" : "full";
+  const normalizedBinding = isTestLicense ? "none" : "machine";
   const technicalValidFrom = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
     now.getDate()
   ).padStart(2, "0")}`;
@@ -164,8 +166,10 @@ export function buildLicenseEditorPayload({ license = {}, inputs = {}, customer 
     valid_from: isTestLicense ? validFromInput || technicalValidFrom : validFromInput,
     valid_until: isTestLicense ? "" : String(inputs.valid_until || "").trim(),
     trial_duration_days: isTestLicense ? String(normalizedTrialDurationDays) : "",
-    license_mode: String(inputs.license_mode || "").trim(),
-    machine_id: String(inputs.machine_id || "").trim(),
+    license_mode: normalizedBinding === "machine" ? "full" : "soft",
+    license_edition: normalizedEdition,
+    license_binding: normalizedBinding,
+    machine_id: normalizedBinding === "machine" ? String(inputs.machine_id || "").trim() : "",
     license_file_path: valueOf(license, "license_file_path", "licenseFilePath"),
     license_file_created_at: valueOf(license, "license_file_created_at", "licenseFileCreatedAt"),
     notes: String(inputs.notes || "").trim(),
@@ -1189,9 +1193,7 @@ export default class LicenseAdminScreen {
             product_scope_json: inputs.product_scope_json.value,
             valid_from: inputs.valid_from.value,
             valid_until: inputs.valid_until.value,
-            license_mode: inputs.license_binding.value === "machine" ? "full" : "soft",
             license_edition: inputs.license_edition.value,
-            license_binding: inputs.license_binding.value,
             trial_duration_days:
               String(inputs.license_edition.value || "").trim().toLowerCase() === "test"
                 ? String(

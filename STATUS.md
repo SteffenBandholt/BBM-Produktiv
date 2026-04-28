@@ -21,6 +21,9 @@ Sie ergänzt:
   - `valid_until` bleibt bei Testversion leer; `trial_duration_days` bleibt der fachliche Laufzeitwert.
   - Dadurch tritt beim Speichern/Erstellen der Testlizenz kein `valid_from required` mehr auf, obwohl `gueltig von/bis` in der Test-UI weiterhin nicht als Nutzerpflicht gezeigt wird.
   - Der bestehende Testlaufzeit-Start bei erster Installation / erstem Start bleibt unveraendert.
+- PR #46 Bugfix (Testversion ohne validUntil im gesamten Erzeugungsweg) ist umgesetzt:
+  - Save-Payload erzwingt fuer Testversion intern `license_edition=test`, `license_binding=none`, `license_mode=soft`, `machine_id=""` und laesst `valid_until` leer.
+  - Damit wird Testversion ohne `validUntil` durch Save -> Generator-Payload -> Main-IPC konsistent akzeptiert; Vollversion ohne `validUntil` bleibt weiterhin Fehlerfall.
 - Lizenzverwaltung Nachsteuerung fuer PR #46 ist umgesetzt:
   - Lizenzformular fuehrt jetzt zwei fachlich getrennte Wege ueber `Lizenztyp`: `Testversion` und `Vollversion`.
   - `Testversion` bleibt ohne Machine-ID, zeigt Testdauer, nutzt weiter `Lizenz erstellen` + `Kunden-Setup erstellen` mit eingebetteter fertiger `customer.bbmlic`.

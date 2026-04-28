@@ -182,6 +182,25 @@ async function runLicenseIpcCustomerSetupTests(run) {
     });
   });
 
+  await run('licenseIpc: Vollversion ohne validUntil wird weiterhin abgewiesen', () => {
+    withLicenseIpcModule({}, (mod) => {
+      assert.throws(
+        () =>
+          mod._validateGenerationPayload({
+            customerName: 'Vollkunde',
+            licenseId: 'LIC-F-1',
+            edition: 'full',
+            binding: 'machine',
+            validFrom: '2026-06-01',
+            maxDevices: 1,
+            features: ['app'],
+            machineId: 'MID-F-1',
+          }),
+        /VALID_UNTIL_REQUIRED/
+      );
+    });
+  });
+
   await run('licenseIpc: exitCode 0 aber outputDir fehlt -> CUSTOMER_SETUP_ARTIFACT_NOT_FOUND', async () => {
     await withTempRepo(
       () => {},
