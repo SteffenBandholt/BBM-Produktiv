@@ -1004,6 +1004,50 @@ export default class LicenseAdminScreen {
     const actions = document.createElement("div");
     actions.style.display = "flex";
     actions.style.gap = "8px";
+    const importRequestBtn = this._button("Lizenzanforderung importieren", async () => {
+      const api = window?.bbmDb || {};
+      if (typeof api.licenseAdminImportLicenseRequest !== "function") {
+        message.textContent = "Lizenzanforderung konnte nicht importiert werden.";
+        return;
+      }
+      const previousMachineId = String(inputs.machine_id?.value || "").trim();
+      try {
+        const res = await api.licenseAdminImportLicenseRequest();
+        if (!res?.ok) {
+          if (res?.canceled) return;
+          const errorCode = String(res?.error || "").trim().toUpperCase();
+          if (errorCode === "INVALID_PRODUCT") {
+            message.textContent = "Lizenzanforderung gehört nicht zu diesem Produkt.";
+            return;
+          }
+          if (errorCode === "MISSING_MACHINE_ID") {
+            message.textContent = "Lizenzanforderung enthält keine Machine-ID.";
+            return;
+          }
+          message.textContent = "Lizenzanforderung konnte nicht importiert werden.";
+          return;
+        }
+        const request = res?.request || {};
+        inputs.machine_id.value = String(request.machineId || "").trim();
+        inputs.license_binding.value = "machine";
+        inputs.license_edition.value = "full";
+        syncEditionUiState();
+        syncMachineIdState();
+        const infoLines = ["Lizenzanforderung importiert. Machine-ID wurde übernommen."];
+        if (previousMachineId && previousMachineId !== inputs.machine_id.value) {
+          infoLines.push("Vorhandene Machine-ID wurde durch die importierte Machine-ID ersetzt.");
+        }
+        if (String(request.customerName || "").trim()) {
+          infoLines.push(`Anfrage von: ${request.customerName}`);
+        }
+        if (String(request.licenseId || "").trim()) {
+          infoLines.push(`Anfrage zu Lizenz-ID: ${request.licenseId}`);
+        }
+        message.textContent = infoLines.join("\n");
+      } catch (_err) {
+        message.textContent = "Lizenzanforderung konnte nicht importiert werden.";
+      }
+    });
     const openOutputDirBtn = this._button("Ausgabeordner öffnen", async () => {
       const api = window?.bbmDb || {};
       const outputPath = String(openOutputDirBtn.dataset.outputPath || "").trim();
@@ -1190,7 +1234,7 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    actions.append(createBtn, createCustomerSetupBtn, backBtn, openOutputDirBtn);
+    actions.append(importRequestBtn, createBtn, createCustomerSetupBtn, backBtn, openOutputDirBtn);
     container.append(header, context, form, licenseIdHint, actions, message, generationOutput, setupOutput);
   }
 
