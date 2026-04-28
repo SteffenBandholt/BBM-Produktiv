@@ -254,6 +254,11 @@ function saveLicense(license = {}) {
   if (!record.license_edition) throw new Error("license_edition required");
   if (!record.license_binding) throw new Error("license_binding required");
 
+  const existingById = db.prepare(`SELECT id FROM license_records WHERE id = ?`).get(record.id);
+  const existingByBusinessKey = db
+    .prepare(`SELECT id FROM license_records WHERE customer_id = ? AND lower(license_id) = lower(?)`)
+    .get(record.customer_id, record.license_id);
+  if (!existingById && existingByBusinessKey?.id) record.id = existingByBusinessKey.id;
   const existing = db.prepare(`SELECT id FROM license_records WHERE id = ?`).get(record.id);
   const now = _nowIso();
 
@@ -357,6 +362,7 @@ function deleteLicenseRecord(id) {
   const db = _db();
   const existing = db.prepare(`SELECT * FROM license_records WHERE id = ?`).get(normalizedId);
   if (!existing) throw new Error("license_record_not_found");
+  db.prepare(`DELETE FROM license_history WHERE license_record_id = ?`).run(normalizedId);
   db.prepare(`DELETE FROM license_records WHERE id = ?`).run(normalizedId);
   return { ok: true, id: normalizedId };
 }
@@ -395,9 +401,26 @@ function addHistoryEntry(entry = {}) {
   return db.prepare(`SELECT * FROM license_history WHERE id = ?`).get(record.id);
 }
 
+
+function deleteCustomer(id) {
+  const normalizedId = _trimText(id);
+  if (!normalizedId) throw new Error("customer_id required");
+  const db = _db();
+  const existing = db.prepare(`SELECT * FROM license_customers WHERE id = ?`).get(normalizedId);
+  if (!existing) throw new Error("customer_not_found");
+  const records = db.prepare(`SELECT id FROM license_records WHERE customer_id = ?`).all(normalizedId);
+  for (const row of records) {
+    db.prepare(`DELETE FROM license_history WHERE license_record_id = ?`).run(row.id);
+  }
+  db.prepare(`DELETE FROM license_records WHERE customer_id = ?`).run(normalizedId);
+  db.prepare(`DELETE FROM license_customers WHERE id = ?`).run(normalizedId);
+  return { ok: true, id: normalizedId };
+}
+
 module.exports = {
   listCustomers,
   saveCustomer,
+  deleteCustomer,
   listLicenses,
   listLicensesByCustomer,
   saveLicense,

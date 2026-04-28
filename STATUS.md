@@ -821,3 +821,5 @@ Wichtig:
   - `siehe aktuellen Branch-Commit`
 - Hinweise:
   - Keine Lizenzdatei-Strukturreform, keine Modulfreischaltung und keine Sidebar-/Projektmodul-Aenderung
+
+- 2026-04-28: Lizenzverwaltung stabilisiert (lokale Lizenz entfernen, Kunden/Lizenzdatensatz löschen, Duplikatschutz, Diagnosefelder). Nächster Schritt: manuelle End-to-End-Prüfung laut Checkliste.

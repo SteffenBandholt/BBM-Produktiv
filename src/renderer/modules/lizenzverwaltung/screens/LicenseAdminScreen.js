@@ -1,5 +1,6 @@
 import {
   createCustomerSetup,
+  deleteCustomer,
   deleteLicense,
   listCustomers,
   listLicensesByCustomer,
@@ -664,7 +665,26 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    customerActions.append(saveBtn, backBtn);
+    const deleteCustomerBtn = this._button("Kunde löschen", async () => {
+      const customerId = String(this.currentCustomer?.id || "").trim();
+      if (!customerId) return;
+      const confirmText = "Kunde wirklich löschen?\nDabei werden auch die Lizenzdatensätze dieses Kunden gelöscht.\nErzeugte Lizenzdateien und Setups bleiben erhalten.";
+      const shouldDelete = globalThis?.window?.confirm ? window.confirm(confirmText) : true;
+      if (!shouldDelete) return;
+      try {
+        await deleteCustomer(this.currentCustomer);
+        this.currentCustomer = null;
+        this.currentLicense = null;
+        this.currentView = "customers";
+        this.flashMessage = "Kunde wurde gelöscht.";
+        await this._render();
+      } catch (err) {
+        message.textContent = `Fehler: ${err?.message || err}`;
+      }
+    });
+    deleteCustomerBtn.style.display = this.currentCustomer?.id ? "" : "none";
+
+    customerActions.append(saveBtn, deleteCustomerBtn, backBtn);
 
     const renderLicenses = async () => {
       licenseSection.replaceChildren();
@@ -740,6 +760,12 @@ export default class LicenseAdminScreen {
 
     const context = document.createElement("div");
     context.textContent = `Kundenkontext: ${customerLabel(customer || {})}`;
+    const diagnostics = document.createElement("pre");
+    diagnostics.style.fontSize = "12px";
+    diagnostics.style.background = "#f8fafc";
+    diagnostics.style.border = "1px solid #cbd5e1";
+    diagnostics.style.padding = "8px";
+    diagnostics.style.whiteSpace = "pre-wrap";
     const message = document.createElement("div");
     message.style.minHeight = "20px";
     message.style.fontSize = "13px";
@@ -757,6 +783,7 @@ export default class LicenseAdminScreen {
     machineBindingStatus.style.background = "#f8fafc";
 
     const license = this.currentLicense || {};
+    const activeLocalLicenseId = String(window?.bbmDb && (await window.bbmDb.licenseGetStatus?.())?.licenseId || "").trim();
     const parsedScope = parseProductScopeObject(valueOf(license, "product_scope_json", "productScope"));
 
     const fields = [
@@ -1450,12 +1477,12 @@ export default class LicenseAdminScreen {
     const createCustomerSetupBtn = this._button("Kunden-Setup erstellen", async () => runSetupBuild({ setupType: "test" }));
     const createMachineSetupBtn = this._button("Machine-Setup erstellen", async () => runSetupBuild({ setupType: "machine" }));
     createCustomerSetupBtn.disabled = !valueOf(license, "license_file_path", "licenseFilePath");
-    const deleteBtn = this._button("Lizenz löschen", async () => {
+    const deleteBtn = this._button("Lizenzdatensatz löschen", async () => {
       const activeLicense = this.currentLicense || license || {};
       const licenseId = String(valueOf(activeLicense, "id") || "").trim();
       if (!licenseId) return;
       const confirmText =
-        "Lizenz wirklich löschen?\nDieser Vorgang löscht nur den Lizenzdatensatz in der Lizenzverwaltung.\nBereits erzeugte Lizenzdateien und Setups bleiben erhalten.";
+        "Lizenzdatensatz wirklich löschen?\nDieser Vorgang löscht den Lizenzdatensatz inkl. Historie in der Lizenzverwaltung.\nBereits erzeugte Lizenzdateien und Setups bleiben erhalten.";
       const shouldDelete = globalThis?.window?.confirm ? window.confirm(confirmText) : true;
       if (!shouldDelete) return;
       try {
@@ -1609,9 +1636,20 @@ export default class LicenseAdminScreen {
       openOutputDirBtn,
       copyMailTextBtn
     );
+    diagnostics.textContent = [
+      `Lizenzdatensatz-ID: ${String(valueOf(license, "id") || "-")}`,
+      `Lizenz-ID: ${String(valueOf(license, "license_id", "licenseId") || "-")}`,
+      `Kunde: ${customerLabel(customer || {})}`,
+      `license_file_path: ${String(valueOf(license, "license_file_path", "licenseFilePath") || "-")}`,
+      `setup_file_path: ${String(valueOf(license, "setup_file_path", "setupFilePath") || "-")}`,
+      `setup_status: ${String(valueOf(license, "setup_status", "setupStatus") || "-")}`,
+      `aktive lokale Lizenz-ID: ${activeLocalLicenseId || "-"}`,
+    ].join("\n");
+
     container.append(
       header,
       context,
+      diagnostics,
       form,
       licenseIdHint,
       machineBindingHint,

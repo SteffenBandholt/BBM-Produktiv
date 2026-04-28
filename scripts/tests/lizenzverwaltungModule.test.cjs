@@ -844,9 +844,10 @@ async function runLizenzverwaltungModuleTests(run) {
   await run("LicenseAdminScreen enthaelt kundenbezogene Lizenzfunktionen", () => {
     assert.equal(screenSource.includes("Lizenzen dieses Kunden"), true);
     assert.equal(screenSource.includes("Kundendaten"), true);
+    assert.equal(screenSource.includes("Kunde löschen"), true);
     assert.equal(screenSource.includes("Neue Lizenz"), true);
-    assert.equal(screenSource.includes("Lizenz löschen"), true);
-    assert.equal(screenSource.includes("Lizenz wirklich löschen?"), true);
+    assert.equal(screenSource.includes("Lizenzdatensatz löschen"), true);
+    assert.equal(screenSource.includes("Lizenzdatensatz wirklich löschen?"), true);
     assert.equal(screenSource.includes("Lizenz wurde gelöscht."), true);
     assert.equal(screenSource.includes("Lizenz konnte nicht gelöscht werden."), true);
     assert.equal(screenSource.includes("Zurueck zur Kundenliste"), true);

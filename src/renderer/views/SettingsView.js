@@ -499,6 +499,11 @@ export default class SettingsView {
     btnImport.textContent = "Lizenz importieren";
     applyPopupButtonStyle(btnImport, { variant: "primary" });
 
+    const btnRemoveActive = document.createElement("button");
+    btnRemoveActive.type = "button";
+    btnRemoveActive.textContent = "Aktive Lizenz entfernen";
+    applyPopupButtonStyle(btnRemoveActive, { variant: "danger" });
+
     const btnReload = document.createElement("button");
     btnReload.type = "button";
     btnReload.textContent = "Status aktualisieren";
@@ -526,7 +531,7 @@ export default class SettingsView {
     responseLicenseHint.textContent =
       "Antwortlizenz erhalten?\nImportieren Sie hier die .bbmlic-Datei, die Sie vom Anbieter erhalten haben.";
 
-    buttonRow.append(btnImport, btnReload, btnCreateRequest);
+    buttonRow.append(btnImport, btnRemoveActive, btnReload, btnCreateRequest);
     statusCard.append(statusRow, messageEl, licenseBanner, infoGrid, requestTitle, requestHint, responseLicenseHint, buttonRow);
     wrap.append(statusCard, diagnosticsCard);
 
@@ -534,6 +539,7 @@ export default class SettingsView {
       const isBusy = !!busy;
       btnImport.disabled = isBusy;
       btnReload.disabled = isBusy;
+      btnRemoveActive.disabled = isBusy;
       btnCreateRequest.disabled = isBusy;
       btnCopyDiagnostics.disabled = isBusy;
     };
@@ -583,6 +589,7 @@ export default class SettingsView {
         ? `\u00A9 BBM 2026 - v${versionLabel} | Lizenziert fuer: ${customerLabel}`
         : `\u00A9 BBM 2026 - v${versionLabel} | Keine gueltige Lizenz`;
 
+      btnRemoveActive.style.display = valid ? "" : "none";
       if (!valid && reason === "NO_LICENSE") {
         setMessage("Es ist aktuell keine Lizenz installiert. Bitte eine .bbmlic-Datei importieren.", false);
       } else if (isExpired) {
@@ -661,6 +668,29 @@ export default class SettingsView {
         helper.remove();
       }
       return ok;
+    };
+
+
+    btnRemoveActive.onclick = async () => {
+      if (typeof api.licenseDelete !== "function") {
+        setMessage("Lizenzentfernung ist in dieser App-Version nicht verfuegbar.", true);
+        return;
+      }
+      const confirmText = "Aktive lokale Lizenz wirklich entfernen?\nDanach benötigt diese Installation wieder eine gültige Lizenz.";
+      const shouldDelete = globalThis?.window?.confirm ? window.confirm(confirmText) : true;
+      if (!shouldDelete) return;
+      setBusy(true);
+      try {
+        const res = await api.licenseDelete();
+        if (!res?.ok) {
+          setMessage(res?.error || "Aktive Lizenz konnte nicht entfernt werden.", true);
+          return;
+        }
+        await loadStatus();
+        await loadDiagnostics();
+      } finally {
+        setBusy(false);
+      }
     };
 
     btnImport.onclick = async () => {
