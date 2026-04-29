@@ -29,6 +29,9 @@ function createMemoryDb() {
   }
 
   return {
+    transaction(fn) {
+      return (...args) => fn(...args);
+    },
     prepare(sql) {
       const text = String(sql || "");
       return {
@@ -58,6 +61,9 @@ function createMemoryDb() {
           if (text.includes("SELECT id FROM license_records WHERE id = ?")) {
             const row = licenses.find((entry) => entry.id === arg);
             return row ? { id: row.id } : undefined;
+          }
+          if (text.includes("SELECT id FROM license_records WHERE customer_id = ?")) {
+            return licenses.filter((entry) => entry.customer_id === arg).map((entry) => ({ id: entry.id }));
           }
           if (text.includes("SELECT * FROM license_records WHERE id = ?")) {
             return licenses.find((entry) => entry.id === arg) || undefined;
@@ -168,6 +174,26 @@ function createMemoryDb() {
             });
             return;
           }
+          if (text.includes("DELETE FROM license_history WHERE license_record_id = ?")) {
+            const [license_record_id] = args;
+            for (let i = history.length - 1; i >= 0; i -= 1) {
+              if (history[i].license_record_id === license_record_id) history.splice(i, 1);
+            }
+            return;
+          }
+          if (text.includes("DELETE FROM license_records WHERE customer_id = ?")) {
+            const [customer_id] = args;
+            for (let i = licenses.length - 1; i >= 0; i -= 1) {
+              if (licenses[i].customer_id === customer_id) licenses.splice(i, 1);
+            }
+            return;
+          }
+          if (text.includes("DELETE FROM license_customers WHERE id = ?")) {
+            const [id] = args;
+            const index = customers.findIndex((entry) => entry.id === id);
+            if (index >= 0) customers.splice(index, 1);
+            return;
+          }
           if (text.includes("DELETE FROM license_records WHERE id = ?")) {
             const [id] = args;
             const index = licenses.findIndex((entry) => entry.id === id);
@@ -264,6 +290,55 @@ async function runLicenseAdminDataflowTests(run) {
     });
   });
 
+
+
+  await run("Lizenzverwaltung Main-Service: Kunde bearbeiten behaelt id und Lizenzen", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({ customer_number: "K-200", company_name: "Alt GmbH", email: "alt@example.org" });
+      const license = service.saveLicense({
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app"] },
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+      });
+      const updated = service.saveCustomer({ id: customer.id, customer_number: "K-200X", company_name: "Neu GmbH", email: "neu@example.org" });
+      assert.equal(updated.id, customer.id);
+      assert.equal(updated.customer_number, "K-200X");
+      assert.equal(updated.company_name, "Neu GmbH");
+      assert.equal(updated.email, "neu@example.org");
+      const licenses = service.listLicensesByCustomer(customer.id);
+      assert.equal(licenses.length, 1);
+      assert.equal(licenses[0].id, license.id);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: Kunde löschen entfernt Kunde, Lizenzen und Historie", () => {
+    withMockedDatabase((service) => {
+      const customerA = service.saveCustomer({ customer_number: "K-201", company_name: "A GmbH" });
+      const customerB = service.saveCustomer({ customer_number: "K-202", company_name: "B GmbH" });
+      const licenseA = service.saveLicense({
+        customer_id: customerA.id,
+        product_scope_json: { standardumfang: ["app"] },
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+      });
+      service.addHistoryEntry({ license_record_id: licenseA.id, generated_at: "2026-04-28T10:10:10.000Z" });
+      const deleted = service.deleteCustomer(customerA.id);
+      assert.equal(deleted.ok, true);
+      assert.equal(service.listCustomers().some((entry) => entry.id === customerA.id), false);
+      assert.equal(service.listCustomers().some((entry) => entry.id === customerB.id), true);
+      assert.equal(service.listLicensesByCustomer(customerA.id).length, 0);
+      assert.equal(service.listHistory().length, 0);
+      const editedB = service.saveCustomer({ id: customerB.id, customer_number: "K-202", company_name: "B Neu", email: "b@example.org" });
+      assert.equal(editedB.company_name, "B Neu");
+    });
+  });
   await run("Lizenzverwaltung Main-Service: deleteLicenseRecord loescht vorhandene Lizenz", () => {
     withMockedDatabase((service) => {
       const customer = service.saveCustomer({

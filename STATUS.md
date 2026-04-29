@@ -16,6 +16,14 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+- Lizenzverwaltung Kundenverwaltung wurde stabilisiert (Neuansatz statt PR #53-Fortsetzung):
+  - Kundenliste lädt weiterhin frisch über `listCustomers()`; nach Speichern/Löschen erfolgt vollständiges Re-Rendern mit neu geladener Liste.
+  - Kundendetail speichert immer aktuelle Formularwerte; bestehende Kunden behalten `id`, und neue Kunden bleiben nach dem Speichern geöffnet (`Kunde gespeichert.`).
+  - Neuer Button `Kunde löschen` (nur bei gespeichertem Kunden) mit Sicherheitsabfrage löscht Kunde inkl. zugehöriger Lizenzdatensätze und Historie; erzeugte Dateien/Setups bleiben unberührt.
+  - Main-Service `deleteCustomer(customerId)` führt die Löschung transaktional durch (`license_history` -> `license_records` -> `license_customers`).
+  - Neue IPC-/Preload-/Renderer-Service-Kette für Kundenlöschung: `license-admin:delete-customer` / `licenseAdminDeleteLicenseCustomer` / `deleteCustomer(...)`.
+  - Testabdeckung erweitert: Kundenbearbeitung mit stabiler `id` + erhaltenen Lizenzen, sowie Kundenlöschung inkl. Kaskadenverhalten und Weiterbearbeitung anderer Kunden.
+- Nächster offener Schritt: manuelle UI-Prüfung gemäß Ablauf (Kunde A bearbeiten/speichern/neu öffnen, Kunde B löschen, Kunde A erneut bearbeiten).
 - Admin-Lizenzverwaltung kann die erzeugte Antwortlizenz jetzt direkt als Outlook-Entwurf vorbereiten:
   - Neuer Button `Antwortlizenz per Outlook senden` im Lizenzeditor.
   - Sichtbarkeit nur fuer Vollversion + vorhandenen `license_file_path` mit `.bbmlic`.

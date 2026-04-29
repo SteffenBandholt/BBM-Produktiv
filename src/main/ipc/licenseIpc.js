@@ -1280,6 +1280,10 @@ function registerLicenseAdminDataIpc() {
     return licenseAdminService.saveCustomer(customer || {});
   });
 
+  ipcMain.handle("license-admin:delete-customer", async (_event, customerId) => {
+    return licenseAdminService.deleteCustomer(customerId);
+  });
+
   ipcMain.handle("license-admin:list-records", async () => {
     return licenseAdminService.listLicenses();
   });
