@@ -1020,9 +1020,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
 
     const shellNavigationRouteDefs = [
-      { key: "home", label: "Home", onClick: () => router.showHome() },
+      { key: "home", label: "Start", onClick: () => router.showHome() },
       { key: "projects", label: "Projekte", onClick: () => router.showProjects() },
-      { key: "firms", label: "Firmen (Stamm)", onClick: () => router.showFirms() },
+      { key: "firms", label: "Firmen", onClick: () => router.showFirms() },
       { key: "settings", label: "Einstellungen", onClick: () => router.showSettings() },
     ];
 
@@ -1176,7 +1176,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const btnStart = getButton(["home", "start"]);
     const btnProjects = getButton("projekte");
-    const btnFirmsBase = getButton(["firmen (stamm)", "firmenstamm"]);
+    const btnFirmsBase = getButton(["firmen", "firmen (stamm)", "firmenstamm", "firmen (extern)"]);
     const btnSettings = getButton("einstellungen");
     const btnHelp = getButton("hilfe");
     const btnQuit = getButton("beenden");
@@ -1185,7 +1185,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     btnStart.textContent = "Start";
     btnProjects.textContent = "Projekte";
-    btnFirmsBase.textContent = "Firmen (extern)";
+    btnFirmsBase.textContent = "Firmen";
     btnSettings.textContent = "Einstellungen";
     btnHelp.textContent = "Hilfe";
     btnQuit.textContent = "Beenden";
@@ -1198,11 +1198,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     topSection.replaceChildren(btnStart, btnProjects, btnFirmsBase, btnSettings, btnHelp);
     bottomSection.replaceChildren(btnQuit);
   };
-
-  if (await isMachineSetupWithoutLicense()) {
-    renderMachineSetupLicenseRequired();
-    return;
-  }
+  // Core startet immer. Lizenzstatus und Lizenzimport bleiben unter Einstellungen erreichbar.
 
   await ensureInitialPrintLayoutDefaults();
 
