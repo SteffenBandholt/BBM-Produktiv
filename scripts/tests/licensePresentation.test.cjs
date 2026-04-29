@@ -35,6 +35,13 @@ async function runLicensePresentationTests(run) {
     assert.equal(src.includes("licensedToText: buildLicensedToText(status)"), true);
   });
 
+
+  await run("Print-Daten verwenden normalisierte modules/features", () => {
+    const src = read("src/main/print/printData.js");
+    assert.equal(src.includes("normalizeLicensedModules(license.modules, license.features)"), true);
+    assert.equal(src.includes("normalizeLicensedFeatures(license.features)"), true);
+  });
+
   await run("Print-Template zeigt licensedToText einmal auf Seite 1", () => {
     const src = read("src/renderer/print/layout/PrintShell.js");
     assert.equal(src.includes("function _buildLicensedToNote"), true);
