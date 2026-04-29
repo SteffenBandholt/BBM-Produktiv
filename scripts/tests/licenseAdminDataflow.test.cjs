@@ -221,6 +221,28 @@ async function runLicenseAdminDataflowTests(run) {
     });
   });
 
+
+
+  await run("Lizenzverwaltung Main-Service: bestehender Kunde mit id wird aktualisiert statt neu angelegt", () => {
+    withMockedDatabase((service) => {
+      const created = service.saveCustomer({
+        customer_number: "K-100A",
+        company_name: "Alt GmbH",
+      });
+
+      const updated = service.saveCustomer({
+        id: created.id,
+        customer_number: "K-100A",
+        company_name: "Neu GmbH",
+      });
+
+      const listed = service.listCustomers();
+      assert.equal(updated.id, created.id);
+      assert.equal(listed.length, 1);
+      assert.equal(listed[0].company_name, "Neu GmbH");
+    });
+  });
+
   await run("Lizenzverwaltung Main-Service: Lizenz kundenbezogen mit Pflichtfeldern speichern und listen", () => {
     withMockedDatabase((service) => {
       const customer = service.saveCustomer({
@@ -261,6 +283,39 @@ async function runLicenseAdminDataflowTests(run) {
       assert.equal(listedByCustomer[0].license_file_created_at, "2026-04-27T10:00:00.000Z");
       assert.equal(listedByCustomer[0].licenseFileCreatedAt, "2026-04-27T10:00:00.000Z");
       assert.equal(typeof listedByCustomer[0].product_scope_json, "string");
+    });
+  });
+
+
+
+  await run("Lizenzverwaltung Main-Service: bestehende Lizenz mit id wird aktualisiert statt neu angelegt", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({
+        customer_number: "K-101A",
+        company_name: "Lizenz AG",
+      });
+      const created = service.saveLicense({
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app"] },
+        valid_from: "2026-01-01",
+        valid_until: "2026-06-30",
+        trial_duration_days: 30,
+      });
+
+      const updated = service.saveLicense({
+        id: created.id,
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app", "pdf"] },
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        trial_duration_days: 30,
+      });
+
+      const listed = service.listLicensesByCustomer(customer.id);
+      assert.equal(updated.id, created.id);
+      assert.equal(listed.length, 1);
+      assert.equal(listed[0].valid_until, "2026-12-31");
+      assert.equal(JSON.parse(listed[0].product_scope_json).standardumfang.length, 2);
     });
   });
 
@@ -338,6 +393,7 @@ async function runLicenseAdminDataflowTests(run) {
     );
 
     const snake = normalizeCustomerRecord({
+      id: "customer-existing-1",
       customer_number: "K-900",
       company_name: "Bau GmbH",
       contact_person: "Max Muster",
@@ -349,8 +405,10 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(snake.company_name, "Bau GmbH");
     assert.equal(snake.contact_person, "Max Muster");
     assert.equal(snake.customerNumber, "K-900");
+    assert.equal(snake.id, "customer-existing-1");
 
     const camel = normalizeCustomerRecord({
+      id: "customer-existing-2",
       customerNumber: "K-901",
       companyName: "Plan AG",
       contactPerson: "Erika Plan",
@@ -362,6 +420,7 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(camel.company_name, "Plan AG");
     assert.equal(camel.contact_person, "Erika Plan");
     assert.equal(camel.customerNumber, "K-901");
+    assert.equal(camel.id, "customer-existing-2");
   });
 
   await run("Lizenzverwaltung Renderer-Service: saveCustomer mit snake_case uebergibt vollstaendiges Payload", async () => {
@@ -380,6 +439,7 @@ async function runLicenseAdminDataflowTests(run) {
     };
 
     const saved = await saveCustomer({
+      id: "customer-1000",
       customer_number: "K-1000",
       company_name: "Musterbau",
       contact_person: "Anna",
@@ -392,6 +452,7 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(received.company_name, "Musterbau");
     assert.equal(received.contact_person, "Anna");
     assert.equal(received.email, "anna@example.org");
+    assert.equal(received.id, "customer-1000");
     assert.equal(saved.id, "customer-1");
   });
 
@@ -411,6 +472,7 @@ async function runLicenseAdminDataflowTests(run) {
     };
 
     await saveLicense({
+      id: "license-snake-1",
       license_id: "LIC-SNAKE-1",
       customer_id: "customer-snake",
       product_scope_json: "nur-text-produktscope",
@@ -426,6 +488,7 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(received.valid_until, "2026-12-31");
     assert.equal(received.license_mode, "full");
     assert.equal(received.product_scope_json, JSON.stringify({ raw: "nur-text-produktscope" }));
+    assert.equal(received.id, "license-snake-1");
   });
 
   await run("Lizenzverwaltung Renderer-Service: saveLicense mit camelCase funktioniert ebenfalls", async () => {
@@ -501,6 +564,7 @@ async function runLicenseAdminDataflowTests(run) {
     );
 
     const snake = normalizeLicenseRecord({
+      id: "license-existing-1",
       license_id: "LIC-1",
       customer_id: "c-1",
       product_scope_json: "freitext",
@@ -527,9 +591,11 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(snake.licenseFilePath, "C:\\tmp\\snake.bbmlic");
     assert.equal(snake.license_file_created_at, "2026-04-27T11:00:00.000Z");
     assert.equal(snake.licenseFileCreatedAt, "2026-04-27T11:00:00.000Z");
+    assert.equal(snake.id, "license-existing-1");
     assert.equal(snake.product_scope_json, JSON.stringify({ raw: "freitext" }));
 
     const camel = normalizeLicenseRecord({
+      id: "license-existing-2",
       licenseId: "LIC-2",
       customerId: "c-2",
       productScope: { zusatzfunktionen: ["mail"] },
@@ -554,6 +620,7 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(camel.licenseFilePath, "C:\\tmp\\camel.bbmlic");
     assert.equal(camel.license_file_created_at, "2026-04-27T12:00:00.000Z");
     assert.equal(camel.licenseFileCreatedAt, "2026-04-27T12:00:00.000Z");
+    assert.equal(camel.id, "license-existing-2");
   });
 
 

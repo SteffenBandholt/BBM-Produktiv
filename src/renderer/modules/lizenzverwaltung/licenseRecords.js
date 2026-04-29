@@ -37,6 +37,7 @@ export const LICENSE_HISTORY_FIELDS = Object.freeze([
 
 export function createDefaultCustomerRecord(overrides = {}) {
   return {
+    id: "",
     customerNumber: "",
     customer_number: "",
     companyName: "",
@@ -52,6 +53,7 @@ export function createDefaultCustomerRecord(overrides = {}) {
 
 export function createDefaultLicenseRecord(overrides = {}) {
   return {
+    id: "",
     licenseId: "",
     license_id: "",
     customerId: "",
@@ -109,6 +111,7 @@ export function createDefaultLicenseHistoryRecord(overrides = {}) {
 
 export function normalizeCustomerRecord(input = {}) {
   const base = createDefaultCustomerRecord();
+  const id = String(input.id ?? base.id).trim();
   const customerNumber = String(input.customerNumber ?? input.customer_number ?? base.customerNumber).trim();
   const companyName = String(input.companyName ?? input.company_name ?? base.companyName).trim();
   const contactPerson = String(input.contactPerson ?? input.contact_person ?? base.contactPerson).trim();
@@ -117,6 +120,7 @@ export function normalizeCustomerRecord(input = {}) {
   const notes = String(input.notes ?? base.notes).trim();
 
   return {
+    id,
     customerNumber,
     customer_number: customerNumber,
     companyName,
@@ -172,6 +176,7 @@ function normalizeProductScope(inputProductScope, inputProductScopeJson, basePro
 
 export function normalizeLicenseRecord(input = {}) {
   const base = createDefaultLicenseRecord();
+  const id = String(input.id ?? base.id).trim();
 
   const licenseId = String(input.licenseId ?? input.license_id ?? base.licenseId).trim();
   const customerId = String(input.customerId ?? input.customer_id ?? base.customerId).trim();
@@ -208,6 +213,7 @@ export function normalizeLicenseRecord(input = {}) {
   const productScope = normalizeProductScope(input.productScope, input.product_scope_json, base.productScope);
 
   return {
+    id,
     licenseId,
     license_id: licenseId,
     customerId,
