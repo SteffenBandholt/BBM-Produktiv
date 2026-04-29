@@ -19,6 +19,7 @@ const { runAudioModuleTests } = require("./tests/audioModule.test.cjs");
 const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cjs");
 const { runLicenseStorageBootstrapTests } = require("./tests/licenseStorageBootstrap.test.cjs");
 const { runLicenseTrialRuntimeTests } = require("./tests/licenseTrialRuntime.test.cjs");
+const { runLicenseRequestTests } = require("./tests/licenseRequest.test.cjs");
 const { runLicenseFeatureGuardTests } = require("./tests/licenseFeatureGuards.test.cjs");
 const { runLicenseStandardFeaturesTests } = require("./tests/licenseStandardFeatures.test.cjs");
 const { runFeatureGuardEnforcementTests } = require("./tests/featureGuardEnforcement.test.cjs");
@@ -87,6 +88,7 @@ async function main() {
   await runDistCustomerBuildTests(run);
   await runLicenseTrialRuntimeTests(run);
   await runLicenseStorageBootstrapTests(run);
+  await runLicenseRequestTests(run);
   await runLicenseFeatureGuardTests(run);
   await runLicenseStandardFeaturesTests(run);
   await runFeatureGuardEnforcementTests(run);
