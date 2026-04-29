@@ -102,6 +102,7 @@ function verifyLicense(licenseData) {
     "issuedAt",
     "maxDevices",
     "features",
+    "modules",
   ];
 
   for (const field of requiredFields) {
@@ -109,8 +110,7 @@ function verifyLicense(licenseData) {
     const missing =
       value === undefined ||
       value === null ||
-      value === "" ||
-      (Array.isArray(value) && value.length === 0);
+      value === "";
 
     if (missing) {
       return { valid: false, reason: "INVALID_FORMAT" };
@@ -118,6 +118,9 @@ function verifyLicense(licenseData) {
   }
 
   if (!Array.isArray(license.features)) {
+    return { valid: false, reason: "INVALID_FORMAT" };
+  }
+  if (!Array.isArray(license.modules)) {
     return { valid: false, reason: "INVALID_FORMAT" };
   }
 

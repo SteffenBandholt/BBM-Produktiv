@@ -56,7 +56,7 @@ async function runLicenseStandardFeaturesTests(run) {
     const svc = loadLicenseServiceWithStatus({
       valid: true,
       reason: "OK",
-      license: { features: ["protokoll"] },
+      license: { modules: ["protokoll"], features: [] },
     });
     assert.equal(svc.requireFeature("app"), true);
     assert.equal(svc.requireFeature("pdf"), true);
@@ -68,7 +68,7 @@ async function runLicenseStandardFeaturesTests(run) {
     const svc = loadLicenseServiceWithStatus({
       valid: true,
       reason: "OK",
-      license: { features: ["protokoll"] },
+      license: { modules: ["protokoll"], features: [] },
     });
     assert.throws(() => svc.requireFeature("audio"), /FEATURE_NOT_ALLOWED:diktat/);
   });
@@ -77,9 +77,27 @@ async function runLicenseStandardFeaturesTests(run) {
     const svc = loadLicenseServiceWithStatus({
       valid: true,
       reason: "OK",
-      license: { features: ["audio", "protokoll"] },
+      license: { modules: ["protokoll"], features: ["diktat"] },
     });
     assert.equal(svc.requireFeature("audio"), true);
+  });
+
+  await run("Lizenzmodell: diktat ohne Modul protokoll bleibt gesperrt", () => {
+    const svc = loadLicenseServiceWithStatus({
+      valid: true,
+      reason: "OK",
+      license: { modules: [], features: ["diktat"] },
+    });
+    assert.throws(() => svc.requireFeature("diktat"), /FEATURE_NOT_ALLOWED:diktat/);
+  });
+
+  await run("Lizenzmodell: leere Module/Funktionen sind gueltig, aber protokoll gesperrt", () => {
+    const svc = loadLicenseServiceWithStatus({
+      valid: true,
+      reason: "OK",
+      license: { modules: [], features: [] },
+    });
+    assert.throws(() => svc.requireFeature("protokoll"), /FEATURE_NOT_ALLOWED:protokoll/);
   });
 }
 
