@@ -828,3 +828,32 @@ Wichtig:
   - `siehe aktuellen Branch-Commit`
 - Hinweise:
   - Keine Lizenzdatei-Strukturreform, keine Modulfreischaltung und keine Sidebar-/Projektmodul-Aenderung
+
+#### Paket: Lizenzmodell-Korrektur BBM/Protokoll/Diktat
+- Status: erledigt
+- Beschreibung:
+  - Lizenzmodell auf Zielbegriffe ausgerichtet: Produkt `bbm`, Modul `protokoll`, Zusatzfunktion `diktat`.
+  - Runtime-Guards auf Modul/Funktion umgestellt: Protokoll erfordert `protokoll`, Diktat erfordert `protokoll` + `diktat`.
+  - Lizenzstatus/Diagnose trennt Module und Funktionen; Lizenzanforderung nutzt Produkt `bbm`.
+  - Rueckwaertskompatibilitaet bleibt aktiv (`bbm-protokoll`, `audio`/`dictate` als Alias).
+- Betroffene Dateien:
+  - `src/main/licensing/licenseFeatures.js`
+  - `src/main/licensing/licenseService.js`
+  - `src/main/licensing/featureGuard.js`
+  - `src/main/licensing/licenseVerifier.js`
+  - `src/main/ipc/licenseIpc.js`
+  - `src/main/ipc/projectsIpc.js`
+  - `src/main/ipc/printIpc.js`
+  - `src/main/ipc/audioIpc.js`
+  - `src/main/main.js`
+  - `scripts/tests/licenseRequest.test.cjs`
+  - `scripts/tests/licenseFeatureGuards.test.cjs`
+  - `scripts/tests/licenseStandardFeatures.test.cjs`
+  - `scripts/tests/featureGuardEnforcement.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - Renderer-Lizenzstatusanzeige optional feinjustieren (Labels Produkt/Module/Funktionen), ohne Admin/Gene­rator-Rueckbau.
+- Risiken/Hinweise:
+  - Legacy-Tests mit Alias-Begriffen bleiben teils bewusst erhalten fuer sanften Uebergang.

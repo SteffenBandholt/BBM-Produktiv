@@ -40,17 +40,26 @@ function loadLicenseVerifierWithStubs({ machineId = 'MID-TEST' } = {}) {
   }, () => require(modPath));
 }
 
-function createValidLicense({ edition = 'test', binding = 'none', validUntil = '2030-01-01T00:00:00.000Z', trialDurationDays = 30 } = {}) {
+function createValidLicense({
+  edition = 'test',
+  binding = 'none',
+  validUntil = '2030-01-01T00:00:00.000Z',
+  trialDurationDays = 30,
+  product = 'bbm-protokoll',
+  modules = ['protokoll'],
+  features = [],
+} = {}) {
   const license = {
     schemaVersion: 1,
-    product: 'bbm-protokoll',
+    product,
     licenseId: 'LIC-TRIAL-1',
     customerName: 'Muster GmbH',
     edition,
     issuedAt: '2026-01-01T00:00:00.000Z',
     validUntil,
     maxDevices: 1,
-    features: ['app'],
+    modules,
+    features,
     binding,
   };
   if (edition === 'test' && binding === 'none') {
@@ -130,6 +139,32 @@ async function runLicenseTrialRuntimeTests(run) {
     });
     assert.equal(full.valid, true);
     assert.equal(full.reason, null);
+  });
+
+  await run('Lizenzpruefung: bbm + modules [protokoll] + features [] ist gueltig', () => {
+    const { verifyLicense } = loadLicenseVerifierWithStubs({ machineId: 'MID-1' });
+    const result = verifyLicense(createValidLicense({ product: 'bbm', modules: ['protokoll'], features: [] }));
+    assert.equal(result.valid, true);
+  });
+
+  await run('Lizenzpruefung: bbm + modules [] + features [] ist gueltig', () => {
+    const { verifyLicense } = loadLicenseVerifierWithStubs({ machineId: 'MID-1' });
+    const result = verifyLicense(createValidLicense({ product: 'bbm', modules: [], features: [] }));
+    assert.equal(result.valid, true);
+  });
+
+  await run('Lizenzpruefung: legacy product bbm-protokoll bleibt kompatibel', () => {
+    const { verifyLicense } = loadLicenseVerifierWithStubs({ machineId: 'MID-1' });
+    const result = verifyLicense(createValidLicense({ product: 'bbm-protokoll', modules: ['protokoll'], features: [] }));
+    assert.equal(result.valid, true);
+  });
+
+  await run('Lizenzpruefung: Legacy-Lizenz ohne modules-Feld bleibt gueltig', () => {
+    const { verifyLicense } = loadLicenseVerifierWithStubs({ machineId: 'MID-1' });
+    const payload = createValidLicense({ product: 'bbm-protokoll', features: ['protokoll'] });
+    delete payload.license.modules;
+    const result = verifyLicense(payload);
+    assert.equal(result.valid, true);
   });
 
   await run('licenseStorage: setzt trialStartedAt beim ersten Speichern einer Testlizenz', () => {

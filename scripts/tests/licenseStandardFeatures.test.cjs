@@ -52,11 +52,11 @@ async function runLicenseStandardFeaturesTests(run) {
     assert.throws(() => svc.requireFeature("export"), /LICENSE_INVALID:NO_LICENSE/);
   });
 
-  await run("Lizenzmodell: APP/PDF/MAIL/EXPORT mit gueltiger Lizenz sind erlaubt", () => {
+  await run("Lizenzmodell: APP/PDF/MAIL/EXPORT bleiben als Alias auf Modul Protokoll erlaubt", () => {
     const svc = loadLicenseServiceWithStatus({
       valid: true,
       reason: "OK",
-      license: { features: [] },
+      license: { modules: ["protokoll"], features: [] },
     });
     assert.equal(svc.requireFeature("app"), true);
     assert.equal(svc.requireFeature("pdf"), true);
@@ -64,22 +64,49 @@ async function runLicenseStandardFeaturesTests(run) {
     assert.equal(svc.requireFeature("export"), true);
   });
 
-  await run("Lizenzmodell: AUDIO ohne audio-Feature wirft FEATURE_NOT_ALLOWED:audio", () => {
+  await run("Lizenzmodell: AUDIO ohne audio-Feature wirft FEATURE_NOT_ALLOWED:diktat", () => {
     const svc = loadLicenseServiceWithStatus({
       valid: true,
       reason: "OK",
-      license: { features: [] },
+      license: { modules: ["protokoll"], features: [] },
     });
-    assert.throws(() => svc.requireFeature("audio"), /FEATURE_NOT_ALLOWED:audio/);
+    assert.throws(() => svc.requireFeature("audio"), /FEATURE_NOT_ALLOWED:diktat/);
   });
 
   await run("Lizenzmodell: AUDIO mit audio-Feature ist erlaubt", () => {
     const svc = loadLicenseServiceWithStatus({
       valid: true,
       reason: "OK",
-      license: { features: ["audio"] },
+      license: { modules: ["protokoll"], features: ["diktat"] },
     });
     assert.equal(svc.requireFeature("audio"), true);
+  });
+
+  await run("Lizenzmodell: diktat ohne Modul protokoll bleibt gesperrt", () => {
+    const svc = loadLicenseServiceWithStatus({
+      valid: true,
+      reason: "OK",
+      license: { modules: [], features: ["diktat"] },
+    });
+    assert.throws(() => svc.requireFeature("diktat"), /FEATURE_NOT_ALLOWED:diktat/);
+  });
+
+  await run("Lizenzmodell: leere Module/Funktionen sind gueltig, aber protokoll gesperrt", () => {
+    const svc = loadLicenseServiceWithStatus({
+      valid: true,
+      reason: "OK",
+      license: { modules: [], features: [] },
+    });
+    assert.throws(() => svc.requireFeature("protokoll"), /FEATURE_NOT_ALLOWED:protokoll/);
+  });
+
+  await run("Lizenzmodell: Legacy ohne modules-Feld erkennt protokoll ueber features", () => {
+    const svc = loadLicenseServiceWithStatus({
+      valid: true,
+      reason: "OK",
+      license: { features: ["protokoll"] },
+    });
+    assert.equal(svc.requireFeature("protokoll"), true);
   });
 }
 

@@ -17,7 +17,6 @@ const path = require("path");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");
 const { getPrintData } = require("../print/printData");
 const {
-  LICENSE_FEATURES,
   enforceLicensedFeature,
   toLicenseErrorPayload,
 } = require("../licensing/featureGuard");
@@ -435,7 +434,7 @@ function registerPrintIpc() {
   // Stable technical service entry points for renderer callers.
   ipcMain.handle("print:getData", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature(LICENSE_FEATURES.PDF);
+      _enforceFeature("protokoll");
       const p = payload || {};
       const data = await getPrintData({
         mode: p.mode,
@@ -452,7 +451,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:toPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature(LICENSE_FEATURES.PDF);
+      _enforceFeature("protokoll");
       console.log(
         `[PRINT_ACTIVE] handler=print:toPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""
@@ -466,7 +465,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("protocol:findStoredPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature(LICENSE_FEATURES.PDF);
+      _enforceFeature("protokoll");
       const p = payload || {};
       return findStoredProtocolPdf({
         baseDir: p.baseDir,
@@ -479,7 +478,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("firms:listStoredPdfs", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature(LICENSE_FEATURES.PDF);
+      _enforceFeature("protokoll");
       const p = payload || {};
       return listStoredFirmsPdfs({
         baseDir: p.baseDir,
@@ -490,7 +489,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:listStoredProjectPdfs", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature(LICENSE_FEATURES.PDF);
+      _enforceFeature("protokoll");
       const p = payload || {};
       return listStoredProjectPdfs({
         baseDir: p.baseDir,
@@ -502,7 +501,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:htmlToPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature(LICENSE_FEATURES.PDF);
+      _enforceFeature("protokoll");
       console.log(
         `[PRINT_ACTIVE] handler=print:htmlToPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""

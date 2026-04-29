@@ -5,6 +5,10 @@ const { saveLicense, loadLicense, deleteLicense } = require("../licensing/licens
 const { getMachineId } = require("../licensing/deviceIdentity");
 const { verifyLicense } = require("../licensing/licenseVerifier");
 const { refreshStatus } = require("../licensing/licenseService");
+const {
+  normalizeLicensedModules,
+  normalizeLicensedFeatures,
+} = require("../licensing/licenseFeatures");
 
 const LICENSE_FILE_FILTER = [{ name: "BBM Lizenz", extensions: ["bbmlic", "json"] }];
 
@@ -23,6 +27,7 @@ function _getExpiryInfo(validUntil) {
 }
 
 function _buildDiagnosticsText(payload) {
+  const modules = Array.isArray(payload?.modules) ? payload.modules : [];
   const features = Array.isArray(payload?.features) ? payload.features : [];
   return [
     `Lizenzstatus: ${payload?.valid ? "gueltig" : "ungueltig"}`,
@@ -34,7 +39,8 @@ function _buildDiagnosticsText(payload) {
     `Gueltig bis: ${payload?.validUntil || "-"}`,
     `Machine-ID: ${payload?.machineId || "-"}`,
     `App-Version: ${payload?.appVersion || "-"}`,
-    `Features: ${features.length ? features.join(",") : "-"}`,
+    `Module: ${modules.length ? modules.join(",") : "-"}`,
+    `Funktionen: ${features.length ? features.join(",") : "-"}`,
   ].join("\n");
 }
 
@@ -48,7 +54,9 @@ function _toStatusPayload(status) {
     licenseId: String(license.licenseId || "").trim(),
     edition: String(license.edition || "").trim(),
     validUntil: String(license.validUntil || "").trim(),
-    features: Array.isArray(license.features) ? license.features : [],
+    product: String(license.product || "").trim(),
+    modules: normalizeLicensedModules(license.modules, license.features),
+    features: normalizeLicensedFeatures(license.features),
     binding: String(license.binding || status?.binding || "").trim().toLowerCase() || "none",
     machineId: String(status?.machineId || getMachineId() || "").trim(),
     appVersion: String(app?.getVersion?.() || "").trim(),
@@ -74,7 +82,7 @@ function _buildLicenseRequestPayload(raw = {}) {
   const payload = {
     schemaVersion: 1,
     requestType: "machine-license-request",
-    product: "bbm-protokoll",
+    product: "bbm",
     appName: "BBM",
     appVersion: String(raw?.appVersion || app?.getVersion?.() || "").trim(),
     createdAt: String(raw?.createdAt || new Date().toISOString()).trim(),

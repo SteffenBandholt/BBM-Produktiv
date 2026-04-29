@@ -84,7 +84,7 @@ async function runLicenseRequestTests(run) {
       });
       assert.equal(payload.schemaVersion, 1);
       assert.equal(payload.requestType, "machine-license-request");
-      assert.equal(payload.product, "bbm-protokoll");
+      assert.equal(payload.product, "bbm");
       assert.equal(payload.machineId, "MID-REQ-ABC");
       assert.equal(payload.appVersion, "1.2.3");
       assert.equal(typeof payload.createdAt, "string");
@@ -124,7 +124,7 @@ async function runLicenseRequestTests(run) {
       });
       const parsed = JSON.parse(fs.readFileSync(target, "utf8"));
       assert.equal(parsed.requestType, "machine-license-request");
-      assert.equal(parsed.product, "bbm-protokoll");
+      assert.equal(parsed.product, "bbm");
       assert.equal(parsed.machineId, "MID-SAVE-1");
       assert.equal(parsed.appVersion, "1.5.0");
       assert.equal(parsed.schemaVersion, 1);
@@ -226,9 +226,9 @@ async function runLicenseRequestTests(run) {
     });
   });
 
-  await run("Grenzen: EXPECTED_PRODUCT bleibt unveraendert", () => {
+  await run("Grenzen: EXPECTED_PRODUCT nutzt bbm mit Legacy-Kompatibilitaet", () => {
     const verifierSource = read("src/main/licensing/licenseVerifier.js");
-    assert.equal(verifierSource.includes('const EXPECTED_PRODUCT = "bbm-protokoll";'), true);
+    assert.equal(verifierSource.includes('const EXPECTED_PRODUCT = "bbm";'), true);
   });
 
   await run("Grenzen: keine Kunden-Setup-Builder-/private-key-Reste in BBM runtime", () => {
