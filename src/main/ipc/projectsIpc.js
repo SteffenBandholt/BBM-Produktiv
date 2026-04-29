@@ -6,13 +6,12 @@ const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const projectsRepo = require("../db/projectsRepo");
 const { buildStoragePreviewPaths } = require("./projectStoragePaths");
 const {
-  LICENSE_FEATURES,
   enforceLicensedFeature,
   toLicenseErrorPayload,
 } = require("../licensing/featureGuard");
 
 function _ensureAppLicensed() {
-  enforceLicensedFeature(LICENSE_FEATURES.APP);
+  enforceLicensedFeature("protokoll");
 }
 
 function _isLicenseError(err) {

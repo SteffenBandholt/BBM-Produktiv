@@ -53,18 +53,18 @@ async function runFeatureGuardEnforcementTests(run) {
     assert.throws(() => g.enforceLicensedFeature("export"), /LICENSE_INVALID:NO_LICENSE/);
   });
   await run("FeatureGuard: Standardfeatures mit gueltiger Lizenz erlaubt", () => {
-    const g = loadFeatureGuardWithStatus({ valid: true, reason: "OK", license: { features: [] } });
+    const g = loadFeatureGuardWithStatus({ valid: true, reason: "OK", license: { features: ["protokoll"] } });
     assert.equal(!!g.enforceLicensedFeature("app"), true);
     assert.equal(!!g.enforceLicensedFeature("pdf"), true);
     assert.equal(!!g.enforceLicensedFeature("mail"), true);
     assert.equal(!!g.enforceLicensedFeature("export"), true);
   });
   await run("FeatureGuard: audio ohne audio-Feature wirft FEATURE_NOT_ALLOWED:audio", () => {
-    const g = loadFeatureGuardWithStatus({ valid: true, reason: "OK", license: { features: [] } });
-    assert.throws(() => g.enforceLicensedFeature("audio"), /FEATURE_NOT_ALLOWED:audio/);
+    const g = loadFeatureGuardWithStatus({ valid: true, reason: "OK", license: { features: ["protokoll"] } });
+    assert.throws(() => g.enforceLicensedFeature("audio"), /FEATURE_NOT_ALLOWED:diktat/);
   });
   await run("FeatureGuard: audio mit audio-Feature ist erlaubt", () => {
-    const g = loadFeatureGuardWithStatus({ valid: true, reason: "OK", license: { features: ["audio"] } });
+    const g = loadFeatureGuardWithStatus({ valid: true, reason: "OK", license: { features: ["audio", "protokoll"] } });
     assert.equal(!!g.enforceLicensedFeature("audio"), true);
   });
 }

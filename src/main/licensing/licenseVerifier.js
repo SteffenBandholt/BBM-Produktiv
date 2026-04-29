@@ -3,9 +3,10 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { getMachineId } = require("./deviceIdentity");
+const { isLicensedProduct } = require("./licenseFeatures");
 
 const PUBLIC_KEY_PATH = path.join(__dirname, "public_key.pem");
-const EXPECTED_PRODUCT = "bbm-protokoll";
+const EXPECTED_PRODUCT = "bbm";
 
 function canonicalize(value) {
   if (Array.isArray(value)) {
@@ -141,7 +142,7 @@ function verifyLicense(licenseData) {
     return { valid: false, reason: "INVALID_FORMAT" };
   }
 
-  if (license.product !== EXPECTED_PRODUCT) {
+  if (!isLicensedProduct(license.product)) {
     return { valid: false, reason: "WRONG_PRODUCT", license };
   }
 

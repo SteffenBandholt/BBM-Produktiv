@@ -16,6 +16,13 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+
+- Meilenstein externe Lizenz-App-Vorbereitung ist umgesetzt:
+  - BBM registriert keine `license-admin:*`-IPCs mehr und startet keine Generator-/Customer-Setup-Registrierung aus `registerLicenseIpc`.
+  - Preload exportiert keine Generator-/license-admin-Methoden mehr; aktive Kundenfunktionen (Status/Import/Delete/Request) bleiben.
+  - Renderer zeigt keine Lizenzverwaltung/Kundenverwaltung mehr im Adminbereich; Entwicklerbereich bleibt unverändert erreichbar.
+  - Uebergangsbereich `tools/license-app/` wurde angelegt inkl. Zielarchitektur-README und Extrakten (`licenseAdminService`, `licenseRecords`, `licenseIpc.reference`).
+- Nächster offener Schritt: Extrakte in `tools/license-app/` später in eigenständige externe Lizenz-App überführen.
 - Admin-Lizenzverwaltung kann die erzeugte Antwortlizenz jetzt direkt als Outlook-Entwurf vorbereiten:
   - Neuer Button `Antwortlizenz per Outlook senden` im Lizenzeditor.
   - Sichtbarkeit nur fuer Vollversion + vorhandenen `license_file_path` mit `.bbmlic`.
@@ -821,3 +828,32 @@ Wichtig:
   - `siehe aktuellen Branch-Commit`
 - Hinweise:
   - Keine Lizenzdatei-Strukturreform, keine Modulfreischaltung und keine Sidebar-/Projektmodul-Aenderung
+
+#### Paket: Lizenzmodell-Korrektur BBM/Protokoll/Diktat
+- Status: erledigt
+- Beschreibung:
+  - Lizenzmodell auf Zielbegriffe ausgerichtet: Produkt `bbm`, Modul `protokoll`, Zusatzfunktion `diktat`.
+  - Runtime-Guards auf Modul/Funktion umgestellt: Protokoll erfordert `protokoll`, Diktat erfordert `protokoll` + `diktat`.
+  - Lizenzstatus/Diagnose trennt Module und Funktionen; Lizenzanforderung nutzt Produkt `bbm`.
+  - Rueckwaertskompatibilitaet bleibt aktiv (`bbm-protokoll`, `audio`/`dictate` als Alias).
+- Betroffene Dateien:
+  - `src/main/licensing/licenseFeatures.js`
+  - `src/main/licensing/licenseService.js`
+  - `src/main/licensing/featureGuard.js`
+  - `src/main/licensing/licenseVerifier.js`
+  - `src/main/ipc/licenseIpc.js`
+  - `src/main/ipc/projectsIpc.js`
+  - `src/main/ipc/printIpc.js`
+  - `src/main/ipc/audioIpc.js`
+  - `src/main/main.js`
+  - `scripts/tests/licenseRequest.test.cjs`
+  - `scripts/tests/licenseFeatureGuards.test.cjs`
+  - `scripts/tests/licenseStandardFeatures.test.cjs`
+  - `scripts/tests/featureGuardEnforcement.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - Renderer-Lizenzstatusanzeige optional feinjustieren (Labels Produkt/Module/Funktionen), ohne Admin/Gene­rator-Rueckbau.
+- Risiken/Hinweise:
+  - Legacy-Tests mit Alias-Begriffen bleiben teils bewusst erhalten fuer sanften Uebergang.

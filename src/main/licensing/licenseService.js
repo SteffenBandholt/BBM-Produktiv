@@ -1,9 +1,12 @@
 const { loadLicense } = require("./licenseStorage");
 const { verifyLicense } = require("./licenseVerifier");
 const {
+  LICENSE_MODULES,
+  LICENSE_FEATURES,
+  normalizeLicensedModules,
+  normalizeFeatureAlias,
   normalizeLicensedFeatures,
-  isStandardLicensedFeature,
-  isOptionalLicensedFeature,
+  isLicensedModule,
 } = require("./licenseFeatures");
 
 let cachedStatus = null;
@@ -47,28 +50,28 @@ function _normalizeRequestedFeature(feature) {
 // Zentrale Kernlogik:
 // Standard-Features gehoeren zur Grundlizenz, optionale Features werden explizit aus der Lizenz gelesen.
 function requireFeature(feature) {
-  const normalizedFeature = _normalizeRequestedFeature(feature);
+  const normalizedFeature = normalizeFeatureAlias(_normalizeRequestedFeature(feature));
   if (!normalizedFeature) {
     throw new Error("FEATURE_NOT_ALLOWED:");
   }
 
   const license = requireValidLicense({ fresh: true });
 
-  if (isStandardLicensedFeature(normalizedFeature)) {
+  const modules = normalizeLicensedModules(license?.modules, license?.features);
+  const features = normalizeLicensedFeatures(license?.features);
+  if (isLicensedModule(normalizedFeature)) {
+    if (!modules.includes(normalizedFeature)) throw new Error(`FEATURE_NOT_ALLOWED:${normalizedFeature}`);
     return true;
   }
-
-  if (!isOptionalLicensedFeature(normalizedFeature)) {
+  if (normalizedFeature === LICENSE_FEATURES.DIKTAT) {
+    if (!modules.includes(LICENSE_MODULES.PROTOKOLL) || !features.includes(LICENSE_FEATURES.DIKTAT)) {
+      throw new Error(`FEATURE_NOT_ALLOWED:${normalizedFeature}`);
+    }
+    return true;
+  }
+  if (normalizedFeature !== LICENSE_MODULES.PROTOKOLL) {
     throw new Error(`FEATURE_NOT_ALLOWED:${normalizedFeature}`);
   }
-
-  const features = normalizeLicensedFeatures(license?.features);
-
-  if (!features.includes(normalizedFeature)) {
-    throw new Error(`FEATURE_NOT_ALLOWED:${normalizedFeature}`);
-  }
-
-  return true;
 }
 
 module.exports = {

@@ -84,7 +84,7 @@ async function runLicenseRequestTests(run) {
       });
       assert.equal(payload.schemaVersion, 1);
       assert.equal(payload.requestType, "machine-license-request");
-      assert.equal(payload.product, "bbm-protokoll");
+      assert.equal(payload.product, "bbm");
       assert.equal(payload.machineId, "MID-REQ-ABC");
       assert.equal(payload.appVersion, "1.2.3");
       assert.equal(typeof payload.createdAt, "string");
@@ -124,7 +124,7 @@ async function runLicenseRequestTests(run) {
       });
       const parsed = JSON.parse(fs.readFileSync(target, "utf8"));
       assert.equal(parsed.requestType, "machine-license-request");
-      assert.equal(parsed.product, "bbm-protokoll");
+      assert.equal(parsed.product, "bbm");
       assert.equal(parsed.machineId, "MID-SAVE-1");
       assert.equal(parsed.appVersion, "1.5.0");
       assert.equal(parsed.schemaVersion, 1);
@@ -174,56 +174,24 @@ async function runLicenseRequestTests(run) {
     assert.equal(preloadSource.includes('ipcRenderer.invoke("app:get-customer-setup"'), true);
   });
 
-  await run("Preload: window.bbmDb.licenseAdminImportLicenseRequest ist vorhanden", () => {
+  await run("Preload: window.bbmDb.licenseAdminImportLicenseRequest ist entfernt", () => {
     const preloadSource = read("src/main/preload.js");
-    assert.equal(preloadSource.includes("licenseAdminImportLicenseRequest"), true);
-    assert.equal(preloadSource.includes('ipcRenderer.invoke("license-admin:import-license-request"'), true);
+    assert.equal(preloadSource.includes("licenseAdminImportLicenseRequest"), false);
+    assert.equal(preloadSource.includes('ipcRenderer.invoke("license-admin:import-license-request"'), false);
   });
 
-  await run("Preload: window.bbmDb.licenseAdminSendResponseLicenseMail ist vorhanden", () => {
+  await run("Preload: window.bbmDb.licenseAdminSendResponseLicenseMail ist entfernt", () => {
     const preloadSource = read("src/main/preload.js");
-    assert.equal(preloadSource.includes("licenseAdminSendResponseLicenseMail"), true);
-    assert.equal(preloadSource.includes('ipcRenderer.invoke("license-admin:send-response-license-mail"'), true);
+    assert.equal(preloadSource.includes("licenseAdminSendResponseLicenseMail"), false);
+    assert.equal(preloadSource.includes('ipcRenderer.invoke("license-admin:send-response-license-mail"'), false);
   });
 
   await run("Renderer/UI: Texte fuer Lizenzanforderung sind vorhanden", () => {
     const settingsSource = read("src/renderer/views/SettingsView.js");
     const mainSource = read("src/renderer/main.js");
-    const licenseAdminSource = read("src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js");
-    assert.equal(settingsSource.includes("Lizenzanforderung speichern"), true);
-    assert.equal(settingsSource.includes("Lizenz importieren"), true);
-    assert.equal(settingsSource.includes("Lizenzanforderung wurde gespeichert."), true);
-    assert.equal(settingsSource.includes("Lizenzanforderung konnte nicht gespeichert werden."), true);
-    assert.equal(settingsSource.includes("Antwortlizenz erhalten?"), true);
-    assert.equal(settingsSource.includes("Importieren Sie hier die .bbmlic-Datei"), true);
-    assert.equal(licenseAdminSource.includes("Lizenzanforderung importieren"), true);
-    assert.equal(licenseAdminSource.includes("Antwortlizenz per Outlook senden"), true);
-    assert.equal(licenseAdminSource.includes("Outlook-Mail wurde vorbereitet."), true);
-    assert.equal(licenseAdminSource.includes("Outlook konnte nicht geöffnet werden."), true);
-    assert.equal(licenseAdminSource.includes("Ausgabeordner öffnen"), true);
-    assert.equal(licenseAdminSource.includes("Mailtext kopieren"), true);
-    assert.equal(licenseAdminSource.includes("hasResponseLicenseFile"), true);
-    assert.equal(licenseAdminSource.includes("Gerätegebundene Vollversion:"), true);
-    assert.equal(licenseAdminSource.includes("Antwortlizenz wurde erstellt."), true);
-    assert.equal(licenseAdminSource.includes("Diese .bbmlic-Datei an den Kunden zurückgeben."), true);
-    assert.equal(licenseAdminSource.includes("Antwortlizenz erzeugen"), false);
-    assert.equal(licenseAdminSource.includes("Lizenz erstellen"), true);
-    assert.equal(
-      licenseAdminSource.includes("Lizenzanforderung importiert. Machine-ID wurde übernommen."),
-      true
-    );
-    assert.equal(
-      licenseAdminSource.includes("Lizenzanforderung konnte nicht importiert werden."),
-      true
-    );
-    assert.equal(
-      licenseAdminSource.includes("Lizenzanforderung gehört nicht zu diesem Produkt."),
-      true
-    );
-    assert.equal(
-      licenseAdminSource.includes("Lizenzanforderung enthält keine Machine-ID."),
-      true
-    );
+                    assert.equal(settingsSource.includes("license-tool"), false);
+    assert.equal(settingsSource.includes("generate-license.cjs"), false);
+    assert.equal(settingsSource.includes("private_key.pem"), false);
     assert.equal(mainSource.includes("Lizenz erforderlich"), true);
     assert.equal(mainSource.includes("Diese Installation ist für eine gerätegebundene Vollversion vorbereitet."), true);
     assert.equal(mainSource.includes("Lizenz per E-Mail anfordern"), true);
@@ -246,184 +214,26 @@ async function runLicenseRequestTests(run) {
     assert.equal(mainSource.includes("loadCustomerSetup"), true);
   });
 
-  await run("Main/IPC: license-admin:import-license-request wird registriert", () => {
+  await run("Main/IPC: keine license-admin/generator Handler registriert", () => {
     const { handlers, stubs } = createDefaultStubs({});
     return withPatchedLicenseIpc(stubs, (mod) => {
       mod.registerLicenseIpc();
-      assert.equal(handlers.has("license-admin:import-license-request"), true);
+      assert.equal(handlers.has("license-admin:import-license-request"), false);
+      assert.equal(handlers.has("license-admin:create-customer-setup"), false);
+      assert.equal(handlers.has("license:generate"), false);
+      assert.equal(handlers.has("license:load-request-for-generate"), false);
+      assert.equal(handlers.has("license:create-request"), true);
     });
   });
 
-  await run("Main/IPC: license-admin:send-response-license-mail wird registriert", () => {
-    const { handlers, stubs } = createDefaultStubs({});
-    return withPatchedLicenseIpc(stubs, (mod) => {
-      mod.registerLicenseIpc();
-      assert.equal(handlers.has("license-admin:send-response-license-mail"), true);
-    });
-  });
-
-  await run("Main/IPC: Outlook-Draft nutzt Display() und nicht Send()", () => {
-    const ipcSource = read("src/main/ipc/licenseIpc.js");
-    assert.equal(ipcSource.includes("Keine Kunden-E-Mail hinterlegt."), true);
-    assert.equal(ipcSource.includes("Antwortlizenz-Datei wurde nicht gefunden."), true);
-    assert.equal(ipcSource.includes("Outlook konnte nicht geöffnet werden."), true);
-    assert.equal(ipcSource.includes("$mail.Display()"), true);
-    assert.equal(ipcSource.includes("$mail.Send()"), false);
-  });
-
-  await run("Main/IPC: gueltige Lizenzanforderung wird importiert", async () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-import-request-ok-"));
-    try {
-      const requestPath = path.join(tmp, "bbm-license-request.json");
-      fs.writeFileSync(
-        requestPath,
-        JSON.stringify({
-          schemaVersion: 1,
-          requestType: "machine-license-request",
-          product: "bbm-protokoll",
-          appName: "BBM",
-          appVersion: "1.5.0",
-          createdAt: "2026-04-28T10:00:00.000Z",
-          machineId: "MID-IMPORT-1",
-          customerName: "Muster GmbH",
-          licenseId: "LIC-42",
-        }),
-        "utf8"
-      );
-      const { handlers, stubs } = createDefaultStubs({
-        openResult: { canceled: false, filePaths: [requestPath] },
-      });
-      await withPatchedLicenseIpc(stubs, async (mod) => {
-        mod.registerLicenseIpc();
-        const res = await handlers.get("license-admin:import-license-request")({ sender: {} });
-        assert.equal(res.ok, true);
-        assert.equal(res.request.machineId, "MID-IMPORT-1");
-        assert.equal(res.request.customerName, "Muster GmbH");
-        assert.equal(res.request.licenseId, "LIC-42");
-      });
-    } finally {
-      fs.rmSync(tmp, { recursive: true, force: true });
-    }
-  });
-
-  await run("Main/IPC: falsches requestType wird abgewiesen", async () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-import-request-type-"));
-    try {
-      const requestPath = path.join(tmp, "bbm-license-request.json");
-      fs.writeFileSync(
-        requestPath,
-        JSON.stringify({
-          schemaVersion: 1,
-          requestType: "other-request",
-          product: "bbm-protokoll",
-          appVersion: "1.5.0",
-          createdAt: "2026-04-28T10:00:00.000Z",
-          machineId: "MID-IMPORT-2",
-        }),
-        "utf8"
-      );
-      const { handlers, stubs } = createDefaultStubs({ openResult: { canceled: false, filePaths: [requestPath] } });
-      await withPatchedLicenseIpc(stubs, async (mod) => {
-        mod.registerLicenseIpc();
-        const res = await handlers.get("license-admin:import-license-request")({ sender: {} });
-        assert.equal(res.ok, false);
-        assert.equal(res.error, "INVALID_REQUEST_TYPE");
-      });
-    } finally {
-      fs.rmSync(tmp, { recursive: true, force: true });
-    }
-  });
-
-  await run("Main/IPC: falsches product wird abgewiesen", async () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-import-request-product-"));
-    try {
-      const requestPath = path.join(tmp, "bbm-license-request.json");
-      fs.writeFileSync(
-        requestPath,
-        JSON.stringify({
-          schemaVersion: 1,
-          requestType: "machine-license-request",
-          product: "other-product",
-          appVersion: "1.5.0",
-          createdAt: "2026-04-28T10:00:00.000Z",
-          machineId: "MID-IMPORT-3",
-        }),
-        "utf8"
-      );
-      const { handlers, stubs } = createDefaultStubs({ openResult: { canceled: false, filePaths: [requestPath] } });
-      await withPatchedLicenseIpc(stubs, async (mod) => {
-        mod.registerLicenseIpc();
-        const res = await handlers.get("license-admin:import-license-request")({ sender: {} });
-        assert.equal(res.ok, false);
-        assert.equal(res.error, "INVALID_PRODUCT");
-      });
-    } finally {
-      fs.rmSync(tmp, { recursive: true, force: true });
-    }
-  });
-
-  await run("Main/IPC: fehlende machineId wird abgewiesen", async () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-import-request-machine-"));
-    try {
-      const requestPath = path.join(tmp, "bbm-license-request.json");
-      fs.writeFileSync(
-        requestPath,
-        JSON.stringify({
-          schemaVersion: 1,
-          requestType: "machine-license-request",
-          product: "bbm-protokoll",
-          appVersion: "1.5.0",
-          createdAt: "2026-04-28T10:00:00.000Z",
-        }),
-        "utf8"
-      );
-      const { handlers, stubs } = createDefaultStubs({ openResult: { canceled: false, filePaths: [requestPath] } });
-      await withPatchedLicenseIpc(stubs, async (mod) => {
-        mod.registerLicenseIpc();
-        const res = await handlers.get("license-admin:import-license-request")({ sender: {} });
-        assert.equal(res.ok, false);
-        assert.equal(res.error, "MISSING_MACHINE_ID");
-      });
-    } finally {
-      fs.rmSync(tmp, { recursive: true, force: true });
-    }
-  });
-
-  await run("Main/IPC: ungueltiges JSON wird abgewiesen", async () => {
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-import-request-json-"));
-    try {
-      const requestPath = path.join(tmp, "bbm-license-request.json");
-      fs.writeFileSync(requestPath, "{ invalid", "utf8");
-      const { handlers, stubs } = createDefaultStubs({ openResult: { canceled: false, filePaths: [requestPath] } });
-      await withPatchedLicenseIpc(stubs, async (mod) => {
-        mod.registerLicenseIpc();
-        const res = await handlers.get("license-admin:import-license-request")({ sender: {} });
-        assert.equal(res.ok, false);
-        assert.equal(typeof res.error, "string");
-      });
-    } finally {
-      fs.rmSync(tmp, { recursive: true, force: true });
-    }
-  });
-
-  await run("Main/IPC: Abbruch im Open-Dialog liefert canceled true", async () => {
-    const { handlers, stubs } = createDefaultStubs({ openResult: { canceled: true, filePaths: [] } });
-    await withPatchedLicenseIpc(stubs, async (mod) => {
-      mod.registerLicenseIpc();
-      const res = await handlers.get("license-admin:import-license-request")({ sender: {} });
-      assert.equal(res.ok, false);
-      assert.equal(res.canceled, true);
-    });
-  });
-
-  await run("Grenzen: EXPECTED_PRODUCT bleibt unveraendert", () => {
+  await run("Grenzen: EXPECTED_PRODUCT nutzt bbm mit Legacy-Kompatibilitaet", () => {
     const verifierSource = read("src/main/licensing/licenseVerifier.js");
-    assert.equal(verifierSource.includes('const EXPECTED_PRODUCT = "bbm-protokoll";'), true);
+    assert.equal(verifierSource.includes('const EXPECTED_PRODUCT = "bbm";'), true);
   });
 
-  await run("Grenzen: Kunden-Setup-Builder bleibt unveraendert und keine privaten Schluessel/Request-Datei im Repo", () => {
+  await run("Grenzen: keine Kunden-Setup-Builder-/private-key-Reste in BBM runtime", () => {
     const ipcSource = read("src/main/ipc/licenseIpc.js");
-    assert.equal(ipcSource.includes("BBM_CUSTOMER_LICENSE_FILE"), true);
+    assert.equal(ipcSource.includes("BBM_CUSTOMER_LICENSE_FILE"), false);
     assert.equal(fs.existsSync(path.join(REPO_ROOT, "bbm-license-request.json")), false);
     assert.equal(fs.existsSync(path.join(REPO_ROOT, "private_key.pem")), false);
   });

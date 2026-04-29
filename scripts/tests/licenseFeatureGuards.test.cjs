@@ -12,20 +12,20 @@ async function runLicenseFeatureGuardTests(run) {
   const mainSource = read("src/main/main.js");
   const projectsIpc = read("src/main/ipc/projectsIpc.js");
 
-  await run("License-Guard: PDF-IPC prüft PDF-Feature", () => {
-    assert.equal(printIpc.includes("_enforceFeature(LICENSE_FEATURES.PDF);"), true);
+  await run("License-Guard: PDF-IPC prüft Protokoll-Modul", () => {
+    assert.equal(printIpc.includes('_enforceFeature("protokoll");'), true);
   });
 
-  await run("License-Guard: Audio-IPC prüft Audio-Feature", () => {
-    assert.equal(audioIpc.includes("enforceLicensedFeature(LICENSE_FEATURES.AUDIO);"), true);
+  await run("License-Guard: Audio-IPC prüft Diktat-Feature", () => {
+    assert.equal(audioIpc.includes("enforceLicensedFeature(LICENSE_FEATURES.DIKTAT);"), true);
   });
 
-  await run("License-Guard: Mail-IPC prüft Mail-Feature", () => {
-    assert.equal(mainSource.includes("enforceLicensedFeature(LICENSE_FEATURES.MAIL);"), true);
+  await run("License-Guard: Mail-IPC prüft Protokoll-Modul", () => {
+    assert.equal(mainSource.includes('enforceLicensedFeature("protokoll");'), true);
   });
 
-  await run("License-Guard: Projektzugriff prüft App-Feature", () => {
-    assert.equal(projectsIpc.includes("enforceLicensedFeature(LICENSE_FEATURES.APP);"), true);
+  await run("License-Guard: Projektzugriff prüft Protokoll-Modul", () => {
+    assert.equal(projectsIpc.includes('enforceLicensedFeature("protokoll");'), true);
   });
 
   await run("License-Guard: Projektzugriff mappt Lizenzfehler als Payload", () => {

@@ -47,7 +47,7 @@ function _buildApplyMessage(result) {
 }
 
 function _ensureAudioLicensed() {
-  enforceLicensedFeature(LICENSE_FEATURES.AUDIO);
+  enforceLicensedFeature(LICENSE_FEATURES.DIKTAT);
 }
 
 function _toAudioErrorPayload(err) {
