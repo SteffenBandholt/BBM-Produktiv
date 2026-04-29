@@ -3734,6 +3734,89 @@ export default class SettingsView {
     return wrap;
   }
 
+  async _createLegacySettingsContent() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(720px, calc(100vw - 80px))";
+
+    const info = document.createElement("div");
+    info.style.fontSize = "12px";
+    info.style.opacity = "0.85";
+    info.textContent = "Nutzerdaten und Druckeinstellungen (Bestandsbereich).";
+    wrap.append(info);
+
+    const settings = [
+      { title: "Nutzerdaten", keys: ["user_name", "user_company", "user_name1", "user_name2", "user_street", "user_zip", "user_city"] },
+      { title: "Seitenränder / Drucklayout", keys: ["print.v2.pagePadTopMm", "print.v2.pagePadLeftMm", "print.v2.pagePadRightMm", "print.v2.pagePadBottomMm", "print.v2.footerReserveMm"] },
+      { title: "Header / Fullheader / Miniheader", keys: ["print.v2.globalHeaderAdaptive"] },
+      { title: "Footer-/PDF-Einstellungen", keys: ["pdf.protocolTitle", "pdf.footerPlace", "pdf.footerDate", "pdf.footerName1", "pdf.footerName2", "pdf.footerRecorder", "pdf.footerStreet", "pdf.footerZip", "pdf.footerCity", "pdf.footerUseUserData"] },
+      { title: "Vorbemerkung", keys: ["pdf.preRemarks", "print.preRemarks.enabled"] },
+      { title: "Logos", keys: ["print.logo1.enabled", "print.logo2.enabled", "print.logo3.enabled"] },
+    ];
+
+    const inputs = new Map();
+    for (const section of settings) {
+      const card = document.createElement("div");
+      applyPopupCardStyle(card);
+      card.style.padding = "10px";
+      card.style.display = "grid";
+      card.style.gap = "8px";
+      const title = document.createElement("div");
+      title.textContent = section.title;
+      title.style.fontWeight = "800";
+      card.append(title);
+      for (const key of section.keys) {
+        const row = document.createElement("label");
+        row.style.display = "grid";
+        row.style.gap = "4px";
+        const lbl = document.createElement("span");
+        lbl.textContent = key;
+        lbl.style.fontSize = "12px";
+        const inp = key === "pdf.preRemarks" ? document.createElement("textarea") : document.createElement("input");
+        inp.style.width = "100%";
+        if (inp.tagName === "TEXTAREA") inp.rows = 4;
+        row.append(lbl, inp);
+        card.append(row);
+        inputs.set(key, inp);
+      }
+      wrap.append(card);
+    }
+
+    const preRemarksBtn = document.createElement("button");
+    preRemarksBtn.type = "button";
+    preRemarksBtn.textContent = "Vorbemerkung-Editor";
+    applyPopupButtonStyle(preRemarksBtn);
+    preRemarksBtn.onclick = async () => { await this._openPdfPreRemarksPopup(); };
+    wrap.append(preRemarksBtn);
+
+    if (typeof api.appSettingsGetMany === "function") {
+      const res = await api.appSettingsGetMany([...inputs.keys()]);
+      if (res?.ok) {
+        const data = res.data || {};
+        for (const [key, inp] of inputs.entries()) inp.value = String(data[key] ?? "");
+      }
+    }
+
+    this._openSettingsModal({
+      title: "Nutzereinstellungen / Druckeinstellungen",
+      content: [wrap],
+      saveFn: async () => {
+        if (typeof api.appSettingsSetMany !== "function") return false;
+        const payload = {};
+        for (const [key, inp] of inputs.entries()) {
+          payload[key] = String(inp.value ?? "");
+        }
+        const res = await api.appSettingsSetMany(payload);
+        if (!res?.ok) return false;
+        this._setMsg("Gespeichert");
+        return true;
+      },
+      closeOnly: false,
+    });
+  }
+
   async _openDevelopmentModal() {
     const api = window.bbmDb || {};
     const has = (name) => typeof api?.[name] === "function";
@@ -4248,6 +4331,13 @@ export default class SettingsView {
         });
       },
     });
+    const tileUser = mkTile({
+      titleText: "Nutzereinstellungen / Druckeinstellungen",
+      subText: "Nutzerdaten, Seitenränder, Logos, Header/Footer, Vorbemerkung, Drucklayout",
+      onClick: async () => {
+        await this._createLegacySettingsContent();
+      },
+    });
 
     const tileAdmin = mkTile({
       titleText: "Adminbereich",
@@ -4274,7 +4364,7 @@ export default class SettingsView {
       },
     });
 
-    tiles.append(tileArchive, tileLicense, tileAdmin, tileDev);
+    tiles.append(tileArchive, tileUser, tileLicense, tileAdmin, tileDev);
     root.append(head, tiles);
     this.root = root;
 
