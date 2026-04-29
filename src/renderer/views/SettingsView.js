@@ -13,7 +13,6 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
-import { LicenseAdminScreen } from "../modules/lizenzverwaltung/index.js";
 import { createLicenseEditorSection as createLegacyLicenseEditorSection } from "../modules/lizenzverwaltung/screens/createLicenseEditorSection.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
@@ -3915,38 +3914,14 @@ export default class SettingsView {
       },
     });
 
-    const openLicenseAdminPopup = () => {
-      const licenseAdminScreen = new LicenseAdminScreen({
-        onBackToAdminbereich: () => {
-          this._closeSettingsModal();
-          openAdminbereichPopup();
-        },
-      });
-      openSettingsModal({
-        title: "Lizenzverwaltung",
-        content: [licenseAdminScreen.render()],
-        closeOnly: true,
-      });
-    };
-
     const openAdminbereichPopup = () => {
-      const adminTiles = document.createElement("div");
-      adminTiles.style.display = "grid";
-      adminTiles.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
-      adminTiles.style.gap = "10px";
-      adminTiles.style.maxWidth = "720px";
-      adminTiles.append(
-        mkTile({
-          titleText: "Lizenzverwaltung",
-          subText: "Kunden, Lizenzen, Produktumfang, Historie",
-          onClick: async () => {
-            openLicenseAdminPopup();
-          },
-        })
-      );
+      const adminInfo = document.createElement("div");
+      adminInfo.style.maxWidth = "720px";
+      adminInfo.style.lineHeight = "1.45";
+      adminInfo.textContent = "Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert.";
       openSettingsModal({
         title: "Adminbereich",
-        content: [adminTiles],
+        content: [adminInfo],
         closeOnly: true,
       });
     };

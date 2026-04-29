@@ -16,13 +16,9 @@ const { runProtokollRouterFallbackTests } = require("./tests/protokollRouterFall
 const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungModule.test.cjs");
 const { runAusgabeModuleTests } = require("./tests/ausgabeModule.test.cjs");
 const { runAudioModuleTests } = require("./tests/audioModule.test.cjs");
-const { runLizenzverwaltungModuleTests } = require("./tests/lizenzverwaltungModule.test.cjs");
-const { runLicenseAdminDataflowTests } = require("./tests/licenseAdminDataflow.test.cjs");
 const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cjs");
 const { runLicenseStorageBootstrapTests } = require("./tests/licenseStorageBootstrap.test.cjs");
-const { runLicenseIpcCustomerSetupTests } = require("./tests/licenseIpcCustomerSetup.test.cjs");
 const { runLicenseTrialRuntimeTests } = require("./tests/licenseTrialRuntime.test.cjs");
-const { runLicenseRequestTests } = require("./tests/licenseRequest.test.cjs");
 const { runLicenseFeatureGuardTests } = require("./tests/licenseFeatureGuards.test.cjs");
 const { runLicenseStandardFeaturesTests } = require("./tests/licenseStandardFeatures.test.cjs");
 const { runFeatureGuardEnforcementTests } = require("./tests/featureGuardEnforcement.test.cjs");
@@ -88,13 +84,9 @@ async function main() {
   await runProjektverwaltungModuleTests(run);
   await runAusgabeModuleTests(run);
   await runAudioModuleTests(run);
-  await runLizenzverwaltungModuleTests(run);
-  await runLicenseAdminDataflowTests(run);
   await runDistCustomerBuildTests(run);
-  await runLicenseIpcCustomerSetupTests(run);
   await runLicenseTrialRuntimeTests(run);
   await runLicenseStorageBootstrapTests(run);
-  await runLicenseRequestTests(run);
   await runLicenseFeatureGuardTests(run);
   await runLicenseStandardFeaturesTests(run);
   await runFeatureGuardEnforcementTests(run);

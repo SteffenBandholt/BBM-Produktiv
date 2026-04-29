@@ -16,6 +16,13 @@ Sie ergänzt:
 ---
 
 ## Aktueller Gesamtstand
+
+- Meilenstein externe Lizenz-App-Vorbereitung ist umgesetzt:
+  - BBM registriert keine `license-admin:*`-IPCs mehr und startet keine Generator-/Customer-Setup-Registrierung aus `registerLicenseIpc`.
+  - Preload exportiert keine Generator-/license-admin-Methoden mehr; aktive Kundenfunktionen (Status/Import/Delete/Request) bleiben.
+  - Renderer zeigt keine Lizenzverwaltung/Kundenverwaltung mehr im Adminbereich; Entwicklerbereich bleibt unverändert erreichbar.
+  - Uebergangsbereich `tools/license-app/` wurde angelegt inkl. Zielarchitektur-README und Extrakten (`licenseAdminService`, `licenseRecords`, `licenseIpc.reference`).
+- Nächster offener Schritt: Extrakte in `tools/license-app/` später in eigenständige externe Lizenz-App überführen.
 - Admin-Lizenzverwaltung kann die erzeugte Antwortlizenz jetzt direkt als Outlook-Entwurf vorbereiten:
   - Neuer Button `Antwortlizenz per Outlook senden` im Lizenzeditor.
   - Sichtbarkeit nur fuer Vollversion + vorhandenen `license_file_path` mit `.bbmlic`.
