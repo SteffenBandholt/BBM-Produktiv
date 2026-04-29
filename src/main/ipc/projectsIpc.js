@@ -5,9 +5,15 @@ const { ipcMain, app } = require("electron");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const projectsRepo = require("../db/projectsRepo");
 const { buildStoragePreviewPaths } = require("./projectStoragePaths");
+const { LICENSE_FEATURES, enforceLicensedFeature } = require("../licensing/featureGuard");
+
+function _ensureAppLicensed() {
+  enforceLicensedFeature(LICENSE_FEATURES.APP);
+}
 
 function registerProjectsIpc() {
   ipcMain.handle("projects:list", () => {
+    _ensureAppLicensed();
     try {
       const list = projectsRepo.listAll();
       return { ok: true, list };
@@ -17,6 +23,7 @@ function registerProjectsIpc() {
   });
 
   ipcMain.handle("projects:listArchived", () => {
+    _ensureAppLicensed();
     try {
       const list = projectsRepo.listArchived();
       return { ok: true, list };
@@ -26,6 +33,7 @@ function registerProjectsIpc() {
   });
 
   ipcMain.handle("projects:archive", (_e, data) => {
+    _ensureAppLicensed();
     try {
       const d = data && typeof data === "object" ? data : {};
       const projectId = d.projectId ?? d.project_id ?? d.id ?? null;
@@ -38,6 +46,7 @@ function registerProjectsIpc() {
   });
 
   ipcMain.handle("projects:unarchive", (_e, data) => {
+    _ensureAppLicensed();
     try {
       const d = data && typeof data === "object" ? data : {};
       const projectId = d.projectId ?? d.project_id ?? d.id ?? null;
@@ -50,6 +59,7 @@ function registerProjectsIpc() {
   });
 
   ipcMain.handle("projects:deleteForever", (_e, data) => {
+    _ensureAppLicensed();
     try {
       const d = data && typeof data === "object" ? data : {};
       const projectId = d.projectId ?? d.project_id ?? d.id ?? null;
@@ -65,6 +75,7 @@ function registerProjectsIpc() {
   // - bisher: { name }
   // - neu:    inkl. project_number (Projektnummer)
   ipcMain.handle("projects:create", (_e, data) => {
+    _ensureAppLicensed();
     try {
       const d = data && typeof data === "object" ? data : {};
 
@@ -101,6 +112,7 @@ function registerProjectsIpc() {
   // Update:
   // { projectId|id, patch } oder { projectId|id, ...patchFields }
   ipcMain.handle("projects:update", (_e, data) => {
+    _ensureAppLicensed();
     try {
       const project = projectsRepo.updateProject(data || {});
       return { ok: true, project };
@@ -111,6 +123,7 @@ function registerProjectsIpc() {
 
   ipcMain.handle("projects:storagePreview", (_e, data) => {
     try {
+      _ensureAppLicensed();
       const d = data && typeof data === "object" ? data : {};
       const settings = appSettingsGetMany(["pdf.protocolsDir"]) || {};
       const baseDirRaw = String(settings["pdf.protocolsDir"] || "").trim();
