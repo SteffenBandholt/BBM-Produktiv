@@ -626,20 +626,28 @@ export default class LicenseAdminScreen {
     customerTitle.textContent = "Kundendaten";
 
     const saveBtn = this._button("Kunde speichern", async () => {
+      const existingCustomerId = String(this.currentCustomer?.id || "").trim();
       try {
-        const saved = await saveCustomer(
-          buildCustomerEditorPayload({
-            customer,
-            inputs: {
-              customer_number: inputs.customer_number.value,
-              company_name: inputs.company_name.value,
-              contact_person: inputs.contact_person.value,
-              email: inputs.email.value,
-              phone: inputs.phone.value,
-              notes: inputs.notes.value,
-            },
-          })
-        );
+        const payload = buildCustomerEditorPayload({
+          customer: existingCustomerId ? { id: existingCustomerId } : {},
+          inputs: {
+            customer_number: inputs.customer_number.value,
+            company_name: inputs.company_name.value,
+            contact_person: inputs.contact_person.value,
+            email: inputs.email.value,
+            phone: inputs.phone.value,
+            notes: inputs.notes.value,
+          },
+        });
+        if (existingCustomerId) {
+          payload.id = existingCustomerId;
+        }
+
+        const saved = await saveCustomer(payload);
+        if (existingCustomerId && String(saved?.id || "").trim() !== existingCustomerId) {
+          throw new Error("KUNDEN_ID_UNERWARTET_GEÄNDERT");
+        }
+
         this.currentCustomer = saved;
         newLicenseBtn.disabled = false;
         this.flashMessage = "Kunde gespeichert.";

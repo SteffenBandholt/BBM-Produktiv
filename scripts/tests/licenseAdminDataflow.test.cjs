@@ -439,6 +439,23 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(camel.customerNumber, "K-901");
   });
 
+
+  await run("Lizenzverwaltung normalizeCustomerRecord: vorhandene id bleibt erhalten", async () => {
+    const { normalizeCustomerRecord } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseRecords.js")
+    );
+
+    const normalized = normalizeCustomerRecord({
+      id: "customer-existing-1",
+      customer_number: "K-902",
+      company_name: "ID GmbH",
+      contact_person: "ID Kontakt",
+      email: "id@example.org",
+    });
+
+    assert.equal(normalized.id, "customer-existing-1");
+  });
+
   await run("Lizenzverwaltung Renderer-Service: saveCustomer mit snake_case uebergibt vollstaendiges Payload", async () => {
     const { saveCustomer } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
@@ -468,6 +485,77 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(received.contact_person, "Anna");
     assert.equal(received.email, "anna@example.org");
     assert.equal(saved.id, "customer-1");
+  });
+
+
+  await run("Lizenzverwaltung Renderer-Service: saveCustomer mit bestehender id erzeugt keinen zweiten Kunden", async () => {
+    const { saveCustomer } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
+    );
+
+    const savedCustomers = [];
+    global.window = {
+      bbmDb: {
+        licenseAdminSaveLicenseCustomer: async (payload) => {
+          const existingIndex = savedCustomers.findIndex((entry) => entry.id === payload.id);
+          if (existingIndex >= 0) {
+            savedCustomers[existingIndex] = { ...savedCustomers[existingIndex], ...payload };
+            return savedCustomers[existingIndex];
+          }
+          const created = { ...payload, id: payload.id || `customer-${savedCustomers.length + 1}` };
+          savedCustomers.push(created);
+          return created;
+        },
+      },
+    };
+
+    const created = await saveCustomer({
+      customer_number: "K-1001",
+      company_name: "One GmbH",
+      contact_person: "Alpha",
+      email: "one@example.org",
+    });
+    assert.equal(savedCustomers.length, 1);
+
+    const updated = await saveCustomer({
+      id: created.id,
+      customer_number: "K-1001A",
+      company_name: "One Update GmbH",
+      contact_person: "Alpha",
+      email: "one+update@example.org",
+    });
+
+    assert.equal(savedCustomers.length, 1);
+    assert.equal(updated.id, created.id);
+    assert.equal(updated.customer_number, "K-1001A");
+    assert.equal(updated.company_name, "One Update GmbH");
+    assert.equal(updated.email, "one+update@example.org");
+  });
+
+  await run("Lizenzverwaltung Renderer-Service: saveCustomer ohne id erzeugt neuen Kunden", async () => {
+    const { saveCustomer } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
+    );
+
+    let createCount = 0;
+    global.window = {
+      bbmDb: {
+        licenseAdminSaveLicenseCustomer: async (payload) => {
+          createCount += 1;
+          return { ...payload, id: payload.id || `customer-new-${createCount}` };
+        },
+      },
+    };
+
+    const saved = await saveCustomer({
+      customer_number: "K-1002",
+      company_name: "Neu GmbH",
+      contact_person: "Neu",
+      email: "neu@example.org",
+    });
+
+    assert.equal(createCount, 1);
+    assert.equal(saved.id, "customer-new-1");
   });
 
   await run("Lizenzverwaltung Renderer-Service: saveLicense mit snake_case uebergibt Pflichtfelder vollstaendig", async () => {
