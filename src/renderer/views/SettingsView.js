@@ -13,8 +13,6 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
-import { LicenseAdminScreen } from "../modules/lizenzverwaltung/index.js";
-import { createLicenseEditorSection as createLegacyLicenseEditorSection } from "../modules/lizenzverwaltung/screens/createLicenseEditorSection.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -320,4937 +318,6 @@ export default class SettingsView {
     const code = String(binding || "").trim().toLowerCase() || "none";
     if (code === "machine") return "Vollversion (rechnergebunden)";
     return "Soft-Lizenz";
-  }
-
-  _formatLicenseGenerationError(raw) {
-    const code = String(raw || "").trim().toUpperCase();
-    if (code === "LICENSE_GENERATION_NOT_ALLOWED") return "Lizenz-Erstellung ist nur im Entwicklungsbereich verfuegbar.";
-    if (code === "LICENSE_TOOL_NOT_FOUND") return "C:\\license-tool wurde nicht gefunden.";
-    if (code === "LICENSE_TOOL_SCRIPT_MISSING") return "generate-license.cjs wurde im license-tool nicht gefunden.";
-    if (code === "PRIVATE_KEY_MISSING") return "private_key.pem fehlt im license-tool.";
-    if (code === "INVALID_FORMAT") return "Die geladene Lizenzdatei ist beschaedigt oder hat kein gueltiges Format.";
-    if (code === "CUSTOMER_NAME_REQUIRED") return "Bitte Kunde / Firma angeben.";
-    if (code === "LICENSE_ID_REQUIRED") return "Bitte eine Lizenznummer angeben.";
-    if (code === "VALID_FROM_REQUIRED") return "Bitte ein gueltiges Startdatum setzen.";
-    if (code === "VALID_UNTIL_REQUIRED") return "Bitte ein gueltiges Enddatum setzen.";
-    if (code === "TRIAL_DURATION_DAYS_REQUIRED") return "Bitte eine gueltige Testdauer (1-365 Tage) setzen.";
-    if (code === "VALID_UNTIL_BEFORE_VALID_FROM") return "Das Enddatum darf nicht vor dem Startdatum liegen.";
-    if (code === "BINDING_INVALID") return "Bitte einen gueltigen Lizenzmodus auswaehlen.";
-    if (code === "MACHINE_ID_REQUIRED_FOR_BINDING") return "Fuer Vollversion ist eine gueltige Machine-ID erforderlich.";
-    if (code === "MAX_DEVICES_INVALID") return "Max. Geraete muss mindestens 1 sein.";
-    if (code === "FEATURES_REQUIRED") return "Bitte mindestens ein Feature auswaehlen.";
-    if (code === "OUTPUT_FILE_NOT_FOUND") return "Die erzeugte Lizenzdatei wurde im Ausgabeordner nicht gefunden.";
-    if (code === "GENERATOR_TIMEOUT") return "Lizenz-Generator hat zu lange gebraucht. Bitte Vorgang erneut starten.";
-    if (code === "GENERATOR_FAILED") return "Das externe license-tool hat einen Fehler gemeldet.";
-    return String(raw || "Lizenz konnte nicht erzeugt werden.");
-  }
-
-  _createLicenseSettingsContent() {
-    const api = window.bbmDb || {};
-
-    const wrap = document.createElement("div");
-    wrap.style.display = "grid";
-    wrap.style.gap = "10px";
-    wrap.style.minWidth = "min(580px, calc(100vw - 80px))";
-    wrap.style.maxWidth = "700px";
-
-    const statusCard = document.createElement("div");
-    applyPopupCardStyle(statusCard);
-    statusCard.style.padding = "6px 8px";
-    statusCard.style.display = "grid";
-    statusCard.style.gap = "6px";
-
-    const statusRow = document.createElement("div");
-    statusRow.style.display = "flex";
-    statusRow.style.alignItems = "center";
-    statusRow.style.justifyContent = "space-between";
-    statusRow.style.gap = "8px";
-    statusRow.style.flexWrap = "wrap";
-
-    const statusLabel = document.createElement("div");
-    statusLabel.style.fontWeight = "800";
-    statusLabel.style.fontSize = "12px";
-    statusLabel.textContent = "Lizenzstatus wird geladen ...";
-
-    const statusHint = document.createElement("div");
-    statusHint.style.fontSize = "10px";
-    statusHint.style.opacity = "0.8";
-    statusHint.textContent = "";
-
-    statusRow.append(statusLabel, statusHint);
-
-    const messageEl = document.createElement("div");
-    messageEl.style.fontSize = "11px";
-    messageEl.style.minHeight = "14px";
-    messageEl.style.color = "#475569";
-
-    const licenseBanner = document.createElement("div");
-    licenseBanner.style.padding = "6px 8px";
-    licenseBanner.style.borderRadius = "8px";
-    licenseBanner.style.background = "#f8fafc";
-    licenseBanner.style.border = "1px solid rgba(0,0,0,0.08)";
-    licenseBanner.style.fontSize = "11px";
-    licenseBanner.style.fontWeight = "700";
-    licenseBanner.style.color = "#0f172a";
-    licenseBanner.style.wordBreak = "break-word";
-    licenseBanner.textContent = "\u00A9 BBM 2026 - v- | Keine gueltige Lizenz";
-
-    const infoGrid = document.createElement("div");
-    infoGrid.style.display = "grid";
-    infoGrid.style.gridTemplateColumns = "minmax(130px, 180px) 1fr";
-    infoGrid.style.gap = "4px 8px";
-
-    const makeRow = (label, valueNode) => {
-      const labelEl = document.createElement("div");
-      labelEl.textContent = label;
-      labelEl.style.fontWeight = "700";
-      labelEl.style.fontSize = "11px";
-      labelEl.style.color = "#334155";
-
-      const valueEl =
-        valueNode instanceof HTMLElement ? valueNode : document.createElement("div");
-      if (!(valueNode instanceof HTMLElement)) {
-        valueEl.textContent = String(valueNode || "-");
-      }
-      valueEl.style.fontSize = "11px";
-      valueEl.style.minWidth = "0";
-      valueEl.style.wordBreak = "break-word";
-      return [labelEl, valueEl];
-    };
-
-    const valueStatus = document.createElement("div");
-    const valueCustomer = document.createElement("div");
-    const valueLicenseId = document.createElement("div");
-    const valueEdition = document.createElement("div");
-    const valueBinding = document.createElement("div");
-    const valueValidUntil = document.createElement("div");
-    const valueDaysRemaining = document.createElement("div");
-    const valueFeatures = document.createElement("div");
-    const valueMachineId = document.createElement("div");
-    const valueAppVersion = document.createElement("div");
-    const valueReason = document.createElement("div");
-    valueReason.style.fontSize = "11px";
-    valueReason.style.opacity = "0.8";
-
-    [
-      makeRow("Status", valueStatus),
-      makeRow("Kunde", valueCustomer),
-      makeRow("Lizenz-ID", valueLicenseId),
-      makeRow("Edition", valueEdition),
-      makeRow("Modus", valueBinding),
-      makeRow("Gueltig bis", valueValidUntil),
-      makeRow("Resttage", valueDaysRemaining),
-      makeRow("Machine-ID", valueMachineId),
-      makeRow("App-Version", valueAppVersion),
-      makeRow("Aktivierte Features", valueFeatures),
-      makeRow("Hinweis", valueReason),
-    ].forEach(([labelEl, valueEl]) => infoGrid.append(labelEl, valueEl));
-
-    const diagnosticsCard = document.createElement("div");
-    applyPopupCardStyle(diagnosticsCard);
-    diagnosticsCard.style.padding = "6px 8px";
-    diagnosticsCard.style.display = "grid";
-    diagnosticsCard.style.gap = "6px";
-
-    const diagnosticsHead = document.createElement("div");
-    diagnosticsHead.style.display = "flex";
-    diagnosticsHead.style.alignItems = "center";
-    diagnosticsHead.style.justifyContent = "space-between";
-    diagnosticsHead.style.gap = "8px";
-    diagnosticsHead.style.flexWrap = "wrap";
-
-    const diagnosticsTitle = document.createElement("div");
-    diagnosticsTitle.textContent = "Support-Diagnose";
-    diagnosticsTitle.style.fontWeight = "800";
-
-    const btnCopyDiagnostics = document.createElement("button");
-    btnCopyDiagnostics.type = "button";
-    btnCopyDiagnostics.textContent = "Diagnose kopieren";
-    applyPopupButtonStyle(btnCopyDiagnostics);
-
-    diagnosticsHead.append(diagnosticsTitle, btnCopyDiagnostics);
-
-    const diagnosticsHelp = document.createElement("div");
-    diagnosticsHelp.textContent = "Kompakter Textblock fuer Supportfaelle.";
-    diagnosticsHelp.style.fontSize = "11px";
-    diagnosticsHelp.style.opacity = "0.78";
-
-    const diagnosticsPre = document.createElement("pre");
-    diagnosticsPre.style.margin = "0";
-    diagnosticsPre.style.padding = "8px";
-    diagnosticsPre.style.borderRadius = "8px";
-    diagnosticsPre.style.background = "#f8fafc";
-    diagnosticsPre.style.border = "1px solid rgba(0,0,0,0.08)";
-    diagnosticsPre.style.fontSize = "10px";
-    diagnosticsPre.style.lineHeight = "1.35";
-    diagnosticsPre.style.whiteSpace = "pre-wrap";
-    diagnosticsPre.style.wordBreak = "break-word";
-    diagnosticsPre.textContent = "Diagnosedaten werden geladen ...";
-
-    diagnosticsCard.append(diagnosticsHead, diagnosticsHelp, diagnosticsPre);
-
-    const buttonRow = document.createElement("div");
-    buttonRow.style.display = "flex";
-    buttonRow.style.gap = "8px";
-    buttonRow.style.flexWrap = "wrap";
-
-    const btnImport = document.createElement("button");
-    btnImport.type = "button";
-    btnImport.textContent = "Lizenz importieren";
-    applyPopupButtonStyle(btnImport, { variant: "primary" });
-
-    const btnReload = document.createElement("button");
-    btnReload.type = "button";
-    btnReload.textContent = "Status aktualisieren";
-    applyPopupButtonStyle(btnReload);
-
-    const requestTitle = document.createElement("div");
-    requestTitle.style.fontSize = "12px";
-    requestTitle.style.fontWeight = "700";
-    requestTitle.textContent = "Lizenzanforderung";
-
-    const btnCreateRequest = document.createElement("button");
-    btnCreateRequest.type = "button";
-    btnCreateRequest.textContent = "Lizenzanforderung speichern";
-    applyPopupButtonStyle(btnCreateRequest);
-
-    const requestHint = document.createElement("div");
-    requestHint.style.fontSize = "11px";
-    requestHint.style.opacity = "0.8";
-    requestHint.textContent =
-      "Diese Datei enthält die Machine-ID dieses Geräts und kann zur Erstellung einer gerätegebundenen Lizenz verwendet werden.";
-    const responseLicenseHint = document.createElement("div");
-    responseLicenseHint.style.fontSize = "11px";
-    responseLicenseHint.style.opacity = "0.9";
-    responseLicenseHint.style.whiteSpace = "pre-line";
-    responseLicenseHint.textContent =
-      "Antwortlizenz erhalten?\nImportieren Sie hier die .bbmlic-Datei, die Sie vom Anbieter erhalten haben.";
-
-    buttonRow.append(btnImport, btnReload, btnCreateRequest);
-    statusCard.append(statusRow, messageEl, licenseBanner, infoGrid, requestTitle, requestHint, responseLicenseHint, buttonRow);
-    wrap.append(statusCard, diagnosticsCard);
-
-    const setBusy = (busy) => {
-      const isBusy = !!busy;
-      btnImport.disabled = isBusy;
-      btnReload.disabled = isBusy;
-      btnCreateRequest.disabled = isBusy;
-      btnCopyDiagnostics.disabled = isBusy;
-    };
-
-    const setMessage = (text, isError = false) => {
-      messageEl.textContent = String(text || "");
-      messageEl.style.color = isError ? "#b91c1c" : "#475569";
-    };
-
-    const renderStatus = (res, fallbackError = "") => {
-      const valid = !!res?.valid;
-      const reason = String(res?.reason || "").trim();
-      const features = Array.isArray(res?.features) ? res.features : [];
-      const reasonText = this._formatLicenseReason(reason, fallbackError);
-      const warningText = this._formatLicenseWarning(res, fallbackError);
-      const daysRemaining = Number(res?.daysRemaining);
-      const isExpired = !!res?.expired || reason === "LICENSE_EXPIRED";
-      const isExpiringSoon = !!res?.expiresSoon && !isExpired;
-      const accentColor = isExpired ? "#b91c1c" : isExpiringSoon ? "#b45309" : valid ? "#166534" : "#b91c1c";
-
-      statusLabel.textContent = valid ? "Lizenz gueltig" : "Lizenz ungueltig";
-      statusLabel.style.color = accentColor;
-      statusHint.textContent = valid
-        ? isExpiringSoon
-          ? warningText
-          : "Offline-Lizenz aktiv"
-        : warningText;
-      statusHint.style.color = accentColor;
-
-      valueStatus.textContent = valid ? (isExpiringSoon ? "gueltig, Warnung" : "gueltig") : "ungueltig";
-      valueStatus.style.color = accentColor;
-      valueStatus.style.fontWeight = "700";
-      valueCustomer.textContent = String(res?.customerName || "").trim() || "-";
-      valueLicenseId.textContent = String(res?.licenseId || "").trim() || "-";
-      valueEdition.textContent = String(res?.edition || "").trim() || "-";
-      valueBinding.textContent = this._formatLicenseBinding(res?.binding);
-      valueValidUntil.textContent = this._formatLicenseDate(res?.validUntil);
-      valueDaysRemaining.textContent = Number.isFinite(daysRemaining) ? String(daysRemaining) : "-";
-      valueMachineId.textContent = String(res?.machineId || "").trim() || "-";
-      valueAppVersion.textContent = String(res?.appVersion || "").trim() || "-";
-      valueFeatures.textContent = features.length ? features.join(", ") : "-";
-      valueReason.textContent = valid ? (isExpiringSoon ? warningText : "Keine Warnung") : reasonText;
-      diagnosticsPre.textContent = String(res?.diagnosticsText || "").trim() || "Keine Diagnosedaten verfuegbar.";
-      const versionLabel = String(res?.appVersion || "").trim() || "-";
-      const customerLabel = String(res?.customerName || "").trim();
-      licenseBanner.textContent = valid && customerLabel
-        ? `\u00A9 BBM 2026 - v${versionLabel} | Lizenziert fuer: ${customerLabel}`
-        : `\u00A9 BBM 2026 - v${versionLabel} | Keine gueltige Lizenz`;
-
-      if (!valid && reason === "NO_LICENSE") {
-        setMessage("Es ist aktuell keine Lizenz installiert. Bitte eine .bbmlic-Datei importieren.", false);
-      } else if (isExpired) {
-        setMessage("Lizenz ist abgelaufen.", true);
-      } else if (valid && isExpiringSoon) {
-        setMessage(warningText, true);
-      } else if (!valid) {
-        setMessage(reasonText, true);
-      } else {
-        setMessage("Lizenzstatus erfolgreich geladen.", false);
-      }
-    };
-
-    const loadStatus = async () => {
-      if (typeof api.licenseGetStatus !== "function") {
-        renderStatus({ valid: false, reason: "INVALID_FORMAT" }, "Lizenz-IPC ist nicht verfuegbar.");
-        setMessage("Lizenzstatus kann in dieser App-Version nicht geladen werden.", true);
-        return;
-      }
-
-      setBusy(true);
-      setMessage("Lizenzstatus wird geladen ...", false);
-      try {
-        const res = await api.licenseGetStatus();
-        if (!res?.ok) {
-          renderStatus(res || {}, res?.error || "Lizenzstatus konnte nicht geladen werden.");
-          return;
-        }
-        renderStatus(res);
-      } catch (err) {
-        renderStatus({}, err?.message || "Lizenzstatus konnte nicht geladen werden.");
-      } finally {
-        setBusy(false);
-      }
-    };
-
-    const loadDiagnostics = async () => {
-      if (typeof api.licenseGetDiagnostics !== "function") return;
-      try {
-        const res = await api.licenseGetDiagnostics();
-        diagnosticsPre.textContent =
-          String(res?.diagnosticsText || "").trim() || "Keine Diagnosedaten verfuegbar.";
-      } catch (_err) {
-        diagnosticsPre.textContent = "Diagnosedaten konnten nicht geladen werden.";
-      }
-    };
-
-    const copyText = async (text) => {
-      const value = String(text || "").trim();
-      if (!value) return false;
-
-      try {
-        if (navigator?.clipboard?.writeText) {
-          await navigator.clipboard.writeText(value);
-          return true;
-        }
-      } catch (_e) {
-        // fallback below
-      }
-
-      const helper = document.createElement("textarea");
-      helper.value = value;
-      helper.setAttribute("readonly", "readonly");
-      helper.style.position = "fixed";
-      helper.style.opacity = "0";
-      helper.style.pointerEvents = "none";
-      document.body.appendChild(helper);
-      helper.select();
-      helper.setSelectionRange(0, helper.value.length);
-      let ok = false;
-      try {
-        ok = document.execCommand("copy");
-      } catch (_e) {
-        ok = false;
-      } finally {
-        helper.remove();
-      }
-      return ok;
-    };
-
-    btnImport.onclick = async () => {
-      if (typeof api.licenseImport !== "function") {
-        setMessage("Lizenzimport ist in dieser App-Version nicht verfuegbar.", true);
-        return;
-      }
-
-      setBusy(true);
-      setMessage("Lizenzdatei wird importiert ...", false);
-      try {
-        const res = await api.licenseImport({});
-        if (res?.canceled) {
-          setMessage("Lizenzimport abgebrochen.", false);
-          return;
-        }
-        if (!res?.ok) {
-          renderStatus(res || {}, res?.error || "Lizenz konnte nicht importiert werden.");
-          await loadDiagnostics();
-          return;
-        }
-        renderStatus(res);
-        setMessage("Lizenz erfolgreich importiert.", false);
-        await loadStatus();
-        await loadDiagnostics();
-      } catch (err) {
-        renderStatus({}, err?.message || "Lizenz konnte nicht importiert werden.");
-        await loadDiagnostics();
-      } finally {
-        setBusy(false);
-      }
-    };
-
-    btnCreateRequest.onclick = async () => {
-      if (typeof api.licenseCreateRequest !== "function") {
-        setMessage("Lizenzanforderung ist in dieser App-Version nicht verfuegbar.", true);
-        return;
-      }
-      setBusy(true);
-      setMessage("Lizenzanforderung wird gespeichert ...", false);
-      try {
-        const customerName = String(valueCustomer.textContent || "").trim();
-        const licenseId = String(valueLicenseId.textContent || "").trim();
-        const res = await api.licenseCreateRequest({ customerName, licenseId });
-        if (res?.canceled) {
-          setMessage("Lizenzanforderung abgebrochen.", false);
-          return;
-        }
-        if (!res?.ok) {
-          setMessage("Lizenzanforderung konnte nicht gespeichert werden.", true);
-          return;
-        }
-        setMessage("Lizenzanforderung wurde gespeichert.", false);
-      } catch (err) {
-        console.error("[SettingsView] licenseCreateRequest failed", err);
-        setMessage("Lizenzanforderung konnte nicht gespeichert werden.", true);
-      } finally {
-        setBusy(false);
-      }
-    };
-
-    btnReload.onclick = async () => {
-      await loadStatus();
-      await loadDiagnostics();
-    };
-
-    btnCopyDiagnostics.onclick = async () => {
-      const text = diagnosticsPre.textContent || "";
-      const copied = await copyText(text);
-      setMessage(copied ? "Diagnose in die Zwischenablage kopiert." : "Diagnose konnte nicht kopiert werden.", !copied);
-    };
-
-    void Promise.all([loadStatus(), loadDiagnostics()]);
-    return wrap;
-  }
-
-  render() {
-    const root = document.createElement("div");
-    root.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== "Escape") return;
-
-      // Enter in Textarea soll einen Zeilenumbruch erzeugen (kein globales Save/Close)
-      const tag = (e.target?.tagName || "").toString().toUpperCase();
-      if (e.key === "Enter" && tag === "TEXTAREA") return;
-
-      const delOpen = this.deleteConfirmOverlayEl?.style?.display === "flex";
-      const renOpen = this.renameOverlayEl?.style?.display === "flex";
-      const settingsOpen = this._settingsModalOpen;
-      if (!delOpen && !renOpen && !settingsOpen) return;
-
-      if (delOpen) {
-        e.preventDefault();
-        this._resolveDeleteConfirm(e.key === "Enter");
-        return;
-      }
-      if (renOpen) {
-        e.preventDefault();
-        this._resolveRename(e.key === "Enter");
-        return;
-      }
-      if (e.key === "Escape" && settingsOpen) {
-        e.preventDefault();
-        this._closeSettingsModal();
-      }
-    });
-
-    const head = document.createElement("div");
-    head.style.display = "flex";
-    head.style.alignItems = "center";
-    head.style.gap = "10px";
-    head.style.marginBottom = "10px";
-
-    const title = document.createElement("h2");
-    title.textContent = "Einstellungen";
-    title.style.margin = "0";
-
-    const hasActiveProject = !!this.router?.currentProjectId;
-    let btnBackToProject = null;
-    if (hasActiveProject) {
-      btnBackToProject = document.createElement("button");
-      btnBackToProject.type = "button";
-      btnBackToProject.textContent = "Zurück zum Protokoll";
-      applyPopupButtonStyle(btnBackToProject, { variant: "neutral" });
-      btnBackToProject.onclick = async () => {
-        const projectId = this.router?.currentProjectId || null;
-        const meetingId = this.router?.currentMeetingId || null;
-        if (!projectId) return;
-        if (meetingId && typeof this.router?.showTops === "function") {
-          await this.router.showTops(meetingId, projectId);
-          return;
-        }
-        if (typeof this.router?.showMeetings === "function") {
-          await this.router.showMeetings(projectId);
-        }
-      };
-    }
-
-    const msg = document.createElement("div");
-    msg.style.marginLeft = "auto";
-    msg.style.fontSize = "12px";
-    msg.style.opacity = "0.85";
-
-    if (btnBackToProject) head.append(title, btnBackToProject, msg);
-    else head.append(title, msg);
-
-    const tiles = document.createElement("div");
-    tiles.style.display = "grid";
-    tiles.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
-    tiles.style.gap = "10px";
-    tiles.style.marginBottom = "12px";
-    tiles.style.maxWidth = "720px";
-
-    const mkTile = ({ titleText, subText, onClick }) => {
-      const t = document.createElement("div");
-      t.style.border = "1px solid #ddd";
-      t.style.borderRadius = "10px";
-      t.style.background = "#fff";
-      t.style.padding = "12px";
-      t.style.cursor = "pointer";
-      t.style.userSelect = "none";
-
-      const tt = document.createElement("div");
-      tt.textContent = titleText;
-      tt.style.fontWeight = "900";
-      tt.style.fontSize = "16px";
-      tt.style.marginBottom = "6px";
-
-      const st = document.createElement("div");
-      st.textContent = subText || "";
-      st.style.opacity = "0.8";
-      st.style.fontSize = "12px";
-
-      t.append(tt, st);
-
-      t.onmouseenter = () => {
-        if (this.saving) return;
-        t.style.borderColor = "#7aa7ff";
-      };
-      t.onmouseleave = () => {
-        t.style.borderColor = "#ddd";
-      };
-
-      t.addEventListener("click", async () => {
-        if (this.saving) return;
-        await onClick?.();
-      });
-
-      t.tabIndex = 0;
-      t.addEventListener("keydown", async (e) => {
-        if (e.key !== "Enter") return;
-        e.preventDefault();
-        if (this.saving) return;
-        await onClick?.();
-      });
-
-      return t;
-    };
-
-    const tileArchive = mkTile({
-      titleText: "Archiv",
-      subText: "Archivierte Projekte anzeigen",
-      onClick: async () => {
-        if (!this.router || typeof this.router.showArchive !== "function") {
-          alert("Router.showArchive ist nicht verfuegbar.");
-          return;
-        }
-        await this.router.showArchive();
-      },
-    });
-
-    tiles.append(tileArchive);
-
-    const creditLine = document.createElement("div");
-    creditLine.style.marginTop = "4px";
-    creditLine.style.fontSize = "12px";
-    creditLine.style.opacity = "0.75";
-    creditLine.style.maxWidth = "720px";
-    creditLine.style.textAlign = "left";
-    creditLine.style.justifySelf = "start";
-    creditLine.textContent = "Entwickelt von Steffen Bandholt - ";
-    const creditMail = document.createElement("a");
-    creditMail.href = "mailto:info@bandholt.de";
-    creditMail.textContent = "info@bandholt.de";
-    creditLine.appendChild(creditMail);
-
-
-    const mkRow = (labelContent, inputEl) => {
-      const row = document.createElement("div");
-      row.style.display = "grid";
-      row.style.gridTemplateColumns = "160px 1fr";
-      row.style.gap = "10px";
-      row.style.alignItems = "center";
-      row.style.marginBottom = "8px";
-
-      const lbl = document.createElement("div");
-      if (labelContent instanceof Node) {
-        lbl.appendChild(labelContent);
-      } else {
-        lbl.textContent = labelContent;
-      }
-
-      row.append(lbl, inputEl);
-      return row;
-    };
-
-    const mkSectionTile = (titleText) => {
-      const tile = document.createElement("div");
-      tile.style.border = "1px solid #ddd";
-      tile.style.borderRadius = "10px";
-      tile.style.background = "#fff";
-      tile.style.padding = "12px";
-
-      const titleEl = document.createElement("div");
-      titleEl.textContent = titleText;
-      titleEl.style.fontWeight = "900";
-      titleEl.style.fontSize = "16px";
-      titleEl.style.marginBottom = "10px";
-
-      const body = document.createElement("div");
-      body.style.display = "grid";
-      body.style.gap = "10px";
-
-      tile.append(titleEl, body);
-      return { tile, body };
-    };
-
-    const userBox = document.createElement("div");
-    applyPopupCardStyle(userBox);
-    userBox.style.padding = "10px";
-    userBox.style.maxWidth = "360px";
-    userBox.style.width = "100%";
-    userBox.style.marginTop = "0";
-    const userTitle = document.createElement("div");
-    userTitle.textContent = "Nutzerdaten";
-    userTitle.style.fontWeight = "bold";
-    userTitle.style.marginBottom = "6px";
-
-    const inpUserName1 = document.createElement("input");
-    inpUserName1.type = "text";
-    inpUserName1.placeholder = "Name 1";
-    inpUserName1.style.width = "100%";
-
-    const inpUserName2 = document.createElement("input");
-    inpUserName2.type = "text";
-    inpUserName2.placeholder = "Name 2";
-    inpUserName2.style.width = "100%";
-
-    const inpUserStreet = document.createElement("input");
-    inpUserStreet.type = "text";
-    inpUserStreet.placeholder = "Stra?e / Hsnr";
-    inpUserStreet.style.width = "100%";
-
-    const inpUserZip = document.createElement("input");
-    inpUserZip.type = "text";
-    inpUserZip.inputMode = "numeric";
-    inpUserZip.placeholder = "PLZ";
-    inpUserZip.maxLength = 5;
-    inpUserZip.style.width = "120px";
-    inpUserZip.style.maxWidth = "120px";
-    inpUserZip.style.justifySelf = "start";
-
-    const inpUserCity = document.createElement("input");
-    inpUserCity.type = "text";
-    inpUserCity.placeholder = "Ort";
-    inpUserCity.style.width = "100%";
-
-    const userRowName1 = mkRow("Name 1", inpUserName1);
-    userRowName1.style.gridTemplateColumns = "120px minmax(0, 1fr)";
-    userRowName1.style.gap = "8px";
-    const userRowName2 = mkRow("Name 2", inpUserName2);
-    userRowName2.style.gridTemplateColumns = "120px minmax(0, 1fr)";
-    userRowName2.style.gap = "8px";
-    const userRowStreet = mkRow("Stra?e / Hsnr", inpUserStreet);
-    userRowStreet.style.gridTemplateColumns = "120px minmax(0, 1fr)";
-    userRowStreet.style.gap = "8px";
-    const userRowZip = mkRow("PLZ", inpUserZip);
-    userRowZip.style.gridTemplateColumns = "120px minmax(0, 1fr)";
-    userRowZip.style.gap = "8px";
-    const userRowCity = mkRow("Ort", inpUserCity);
-    userRowCity.style.gridTemplateColumns = "120px minmax(0, 1fr)";
-    userRowCity.style.gap = "8px";
-
-    userBox.append(userTitle, userRowName1, userRowName2, userRowStreet, userRowZip, userRowCity);
-
-    const logoBox = document.createElement("div");    applyPopupCardStyle(logoBox);    logoBox.style.padding = "10px";    logoBox.style.maxWidth = "720px";    logoBox.style.marginTop = "10px";
-    const logoTitle = document.createElement("div");
-    logoTitle.textContent = "Header-Logo";
-    logoTitle.style.fontWeight = "bold";
-    logoTitle.style.marginBottom = "6px";
-
-    const inpLogoSize = document.createElement("input");
-    inpLogoSize.type = "number";
-    inpLogoSize.min = "12";
-    inpLogoSize.max = "48";
-    inpLogoSize.step = "1";
-    inpLogoSize.style.width = "100%";
-    inpLogoSize.addEventListener("input", () => this._scheduleLogoSave());
-
-    const inpLogoPadLeft = document.createElement("input");
-    inpLogoPadLeft.type = "number";
-    inpLogoPadLeft.min = "0";
-    inpLogoPadLeft.max = "40";
-    inpLogoPadLeft.step = "1";
-    inpLogoPadLeft.style.width = "100%";
-    inpLogoPadLeft.addEventListener("input", () => this._scheduleLogoSave());
-
-    const inpLogoPadTop = document.createElement("input");
-    inpLogoPadTop.type = "number";
-    inpLogoPadTop.min = "0";
-    inpLogoPadTop.max = "20";
-    inpLogoPadTop.step = "1";
-    inpLogoPadTop.style.width = "100%";
-    inpLogoPadTop.addEventListener("input", () => this._scheduleLogoSave());
-
-    const inpLogoPadRight = document.createElement("input");
-    inpLogoPadRight.type = "number";
-    inpLogoPadRight.min = "0";
-    inpLogoPadRight.max = "80";
-    inpLogoPadRight.step = "1";
-    inpLogoPadRight.style.width = "100%";
-    inpLogoPadRight.addEventListener("input", () => this._scheduleLogoSave());
-
-    const inpLogoPosition = document.createElement("select");
-    inpLogoPosition.style.width = "100%";
-    const optLogoPosLeft = document.createElement("option");
-    optLogoPosLeft.value = "left";
-    optLogoPosLeft.textContent = "Links";
-    const optLogoPosRight = document.createElement("option");
-    optLogoPosRight.value = "right";
-    optLogoPosRight.textContent = "Rechts";
-    inpLogoPosition.append(optLogoPosLeft, optLogoPosRight);
-    inpLogoPosition.addEventListener("change", () => this._scheduleLogoSave());
-
-    const inpLogoEnabled = document.createElement("input");
-    inpLogoEnabled.type = "checkbox";
-    inpLogoEnabled.addEventListener("change", () => this._scheduleLogoSave());
-    const logoEnabledWrap = document.createElement("div");
-    logoEnabledWrap.style.display = "flex";
-    logoEnabledWrap.style.alignItems = "center";
-    logoEnabledWrap.append(inpLogoEnabled);
-
-    logoBox.append(
-      logoTitle,
-      mkRow("Logo-Hoehe (px)", inpLogoSize),
-      mkRow("Abstand links (px)", inpLogoPadLeft),
-      mkRow("Abstand oben (px)", inpLogoPadTop),
-      mkRow("Abstand rechts (px)", inpLogoPadRight),
-      mkRow("Position", inpLogoPosition),
-      mkRow("Logo anzeigen", logoEnabledWrap)
-    );
-
-    const TOPS_TITLE_KEY = "tops.titleMax";
-    const TOPS_LONG_KEY = "tops.longMax";
-    const TOPS_FONT_LIST_KEY = "tops.fontscale.list";
-    const TOPS_FONT_EDIT_KEY = "tops.fontscale.editbox";
-    const PRINT_V2_PAD_LEFT_KEY = "print.v2.pagePadLeftMm";
-    const PRINT_V2_PAD_RIGHT_KEY = "print.v2.pagePadRightMm";
-    const PRINT_V2_PAD_TOP_KEY = "print.v2.pagePadTopMm";
-    const PRINT_V2_PAD_BOTTOM_KEY = "print.v2.pagePadBottomMm";
-    const PRINT_V2_FOOTER_RESERVE_KEY = "print.v2.footerReserveMm";
-
-    const topsLimitBox = document.createElement("div");
-    applyPopupCardStyle(topsLimitBox);
-    topsLimitBox.style.padding = "8px 10px";
-    topsLimitBox.style.maxWidth = "720px";
-    topsLimitBox.style.marginTop = "10px";
-    const topsLimitTitle = document.createElement("div");
-    topsLimitTitle.textContent = "Einstellung TOP-Liste";
-    topsLimitTitle.style.fontWeight = "bold";
-    topsLimitTitle.style.marginBottom = "6px";
-
-    const inpTopsTitleMax = document.createElement("input");
-    inpTopsTitleMax.type = "number";
-    inpTopsTitleMax.min = "1";
-    inpTopsTitleMax.step = "1";
-    inpTopsTitleMax.style.width = "100%";
-
-    const inpTopsLongMax = document.createElement("input");
-    inpTopsLongMax.type = "number";
-    inpTopsLongMax.min = "1";
-    inpTopsLongMax.step = "1";
-    inpTopsLongMax.style.width = "100%";
-
-
-    const topsLimitMsg = document.createElement("div");
-    topsLimitMsg.style.fontSize = "12px";
-    topsLimitMsg.style.opacity = "0.75";
-    topsLimitMsg.style.marginTop = "4px";
-
-    let topsLimitMsgTimer = null;
-    const setTopsLimitMsg = (txt) => {
-      topsLimitMsg.textContent = txt || "";
-      if (topsLimitMsgTimer) clearTimeout(topsLimitMsgTimer);
-      if (txt) {
-        topsLimitMsgTimer = setTimeout(() => {
-          topsLimitMsg.textContent = "";
-        }, 900);
-      }
-    };
-
-    const clampInt = (val, min, max, fallback) => {
-      const n = Math.floor(Number(val));
-      if (!Number.isFinite(n) || n <= 0) return fallback;
-      return Math.max(min, Math.min(max, n));
-    };
-
-    const isValidInt = (val) => {
-      const n = Math.floor(Number(val));
-      return Number.isFinite(n) && n > 0;
-    };
-
-    const loadTrialSettings = async () => {};
-
-    const loadTopLimitSettings = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsGetMany !== "function") {
-        topsLimitMsg.textContent = "Settings-API fehlt (IPC noch nicht aktiv).";
-        inpTopsTitleMax.value = "100";
-        inpTopsLongMax.value = "500";
-        return;
-      }
-      const res = await api.appSettingsGetMany([TOPS_TITLE_KEY, TOPS_LONG_KEY]);
-      if (!res?.ok) {
-        topsLimitMsg.textContent = res?.error || "Fehler beim Laden der TOP-Grenzen";
-        inpTopsTitleMax.value = "100";
-        inpTopsLongMax.value = "500";
-        return;
-      }
-      const data = res.data || {};
-      const titleMax = clampInt(data[TOPS_TITLE_KEY], 1, 5000, 100);
-      const longMax = clampInt(data[TOPS_LONG_KEY], 1, 20000, 500);
-      inpTopsTitleMax.value = String(titleMax);
-      inpTopsLongMax.value = String(longMax);
-      topsLimitMsg.textContent = "";
-    };
-
-    const saveTopLimitSettings = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsSetMany !== "function") {
-        topsLimitMsg.textContent = "Settings-API fehlt (IPC noch nicht aktiv).";
-        return false;
-      }
-      const titleValid = isValidInt(inpTopsTitleMax.value);
-      const longValid = isValidInt(inpTopsLongMax.value);
-      const titleMax = clampInt(inpTopsTitleMax.value, 1, 5000, 100);
-      const longMax = clampInt(inpTopsLongMax.value, 1, 20000, 500);
-      inpTopsTitleMax.value = String(titleMax);
-      inpTopsLongMax.value = String(longMax);
-
-      const res = await api.appSettingsSetMany({
-        [TOPS_TITLE_KEY]: String(titleMax),
-        [TOPS_LONG_KEY]: String(longMax),
-      });
-      if (!res?.ok) {
-        topsLimitMsg.textContent = res?.error || "Speichern fehlgeschlagen";
-        return false;
-      }
-      if (!titleValid || !longValid) {
-        setTopsLimitMsg("Ungültiger Wert  Standard wurde verwendet.");
-      } else {
-        setTopsLimitMsg("Gespeichert");
-      }
-      window.dispatchEvent(new Event("bbm:tops-limits-changed"));
-      return true;
-    };
-
-    inpTopsTitleMax.addEventListener("change", () => saveTopLimitSettings());
-    inpTopsLongMax.addEventListener("change", () => saveTopLimitSettings());
-
-    const topsRowShort = mkRow("Kurztext max", inpTopsTitleMax);
-    topsRowShort.style.marginBottom = "6px";
-    const topsRowLong = mkRow("Langtext max", inpTopsLongMax);
-    topsRowLong.style.marginBottom = "4px";
-    topsLimitBox.append(topsLimitTitle, topsRowShort, topsRowLong, topsLimitMsg);
-
-
-    const printV2LayoutBox = document.createElement("div");
-    applyPopupCardStyle(printV2LayoutBox);
-    printV2LayoutBox.style.padding = "8px 10px";
-    printV2LayoutBox.style.width = "320px";
-    printV2LayoutBox.style.maxWidth = "320px";
-    printV2LayoutBox.style.minWidth = "260px";
-    printV2LayoutBox.style.marginTop = "0";
-    printV2LayoutBox.style.boxSizing = "border-box";
-
-    const printV2LayoutHint = document.createElement("div");
-    printV2LayoutHint.textContent = "Seitenraender + Footer-Reserve in mm.";
-
-    const DEFAULT_PRINT_LAYOUT = { topMm: 3, leftMm: 19, rightMm: 15 };
-    const DEFAULT_PRINT_FOOTER_RESERVE = 12;
-    printV2LayoutHint.style.fontSize = "12px";
-    printV2LayoutHint.style.opacity = "0.75";
-    printV2LayoutHint.style.marginBottom = "6px";
-
-    const printV2LayoutDefaultsInfo = document.createElement("div");
-    printV2LayoutDefaultsInfo.textContent =
-      `Default: oben ${DEFAULT_PRINT_LAYOUT.topMm} mm, links ${DEFAULT_PRINT_LAYOUT.leftMm} mm, rechts ${DEFAULT_PRINT_LAYOUT.rightMm} mm, Footer-Reserve ${DEFAULT_PRINT_FOOTER_RESERVE} mm`;
-    printV2LayoutDefaultsInfo.style.fontSize = "12px";
-    printV2LayoutDefaultsInfo.style.opacity = "0.75";
-    printV2LayoutDefaultsInfo.style.marginBottom = "6px";
-
-    const mkLayoutInput = () => {
-      const input = document.createElement("input");
-      input.type = "number";
-      input.style.width = "2cm";
-      input.style.padding = "4px";
-      input.style.boxSizing = "border-box";
-      input.style.marginRight = "4px";
-      return input;
-    };
-
-    const inpPrintV2PadLeft = mkLayoutInput();
-    inpPrintV2PadLeft.min = "0";
-    inpPrintV2PadLeft.max = "30";
-    inpPrintV2PadLeft.step = "0.5";
-
-    const inpPrintV2PadRight = mkLayoutInput();
-    inpPrintV2PadRight.min = "0";
-    inpPrintV2PadRight.max = "30";
-    inpPrintV2PadRight.step = "0.5";
-
-    const inpPrintV2PadTop = mkLayoutInput();
-    inpPrintV2PadTop.min = "0";
-    inpPrintV2PadTop.max = "40";
-    inpPrintV2PadTop.step = "0.5";
-
-    const inpPrintV2PadBottom = mkLayoutInput();
-    inpPrintV2PadBottom.min = "0";
-    inpPrintV2PadBottom.max = "40";
-    inpPrintV2PadBottom.step = "0.5";
-
-    const inpPrintV2FooterReserve = mkLayoutInput();
-    inpPrintV2FooterReserve.min = "0";
-    inpPrintV2FooterReserve.max = "30";
-    inpPrintV2FooterReserve.step = "0.5";
-
-    const printV2LayoutMsg = document.createElement("div");
-    printV2LayoutMsg.style.fontSize = "12px";
-    printV2LayoutMsg.style.opacity = "0.75";
-    printV2LayoutMsg.style.marginTop = "4px";
-
-    const clampMm = (val, min, max, fallback) => {
-      const n = Number(val);
-      if (!Number.isFinite(n)) return fallback;
-      return Math.max(min, Math.min(max, Math.round(n * 10) / 10));
-    };
-
-    const loadPrintV2LayoutSettings = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsGetMany !== "function") {
-        printV2LayoutMsg.textContent = "Settings-API fehlt (IPC noch nicht aktiv).";
-        return;
-      }
-      const res = await api.appSettingsGetMany([
-        PRINT_V2_PAD_LEFT_KEY,
-        PRINT_V2_PAD_RIGHT_KEY,
-        PRINT_V2_PAD_TOP_KEY,
-        PRINT_V2_PAD_BOTTOM_KEY,
-        PRINT_V2_FOOTER_RESERVE_KEY,
-      ]);
-      if (!res?.ok) {
-        printV2LayoutMsg.textContent = res?.error || "Fehler beim Laden der Druck-Raender";
-        return;
-      }
-      const data = res.data || {};
-      inpPrintV2PadLeft.value = String(
-        clampMm(data[PRINT_V2_PAD_LEFT_KEY], 0, 30, DEFAULT_PRINT_LAYOUT.leftMm)
-      );
-      inpPrintV2PadRight.value = String(
-        clampMm(data[PRINT_V2_PAD_RIGHT_KEY], 0, 30, DEFAULT_PRINT_LAYOUT.rightMm)
-      );
-      inpPrintV2PadTop.value = String(
-        clampMm(data[PRINT_V2_PAD_TOP_KEY], 0, 40, DEFAULT_PRINT_LAYOUT.topMm)
-      );
-      inpPrintV2PadBottom.value = String(clampMm(data[PRINT_V2_PAD_BOTTOM_KEY], 0, 40, 18));
-      inpPrintV2FooterReserve.value = String(
-        clampMm(data[PRINT_V2_FOOTER_RESERVE_KEY], 0, 30, DEFAULT_PRINT_FOOTER_RESERVE)
-      );
-      printV2LayoutMsg.textContent = "";
-    };
-
-    const savePrintV2LayoutSettings = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsSetMany !== "function") {
-        printV2LayoutMsg.textContent = "Settings-API fehlt (IPC noch nicht aktiv).";
-        return false;
-      }
-      const padLeft = clampMm(inpPrintV2PadLeft.value, 0, 30, DEFAULT_PRINT_LAYOUT.leftMm);
-      const padRight = clampMm(inpPrintV2PadRight.value, 0, 30, DEFAULT_PRINT_LAYOUT.rightMm);
-      const padTop = clampMm(inpPrintV2PadTop.value, 0, 40, DEFAULT_PRINT_LAYOUT.topMm);
-      const padBottom = clampMm(inpPrintV2PadBottom.value, 0, 40, 18);
-      const footerReserve = clampMm(
-        inpPrintV2FooterReserve.value,
-        0,
-        30,
-        DEFAULT_PRINT_FOOTER_RESERVE
-      );
-      inpPrintV2PadLeft.value = String(padLeft);
-      inpPrintV2PadRight.value = String(padRight);
-      inpPrintV2PadTop.value = String(padTop);
-      inpPrintV2PadBottom.value = String(padBottom);
-      inpPrintV2FooterReserve.value = String(footerReserve);
-      const payload = {
-        [PRINT_V2_PAD_LEFT_KEY]: String(padLeft),
-        [PRINT_V2_PAD_RIGHT_KEY]: String(padRight),
-        [PRINT_V2_PAD_TOP_KEY]: String(padTop),
-        [PRINT_V2_PAD_BOTTOM_KEY]: String(padBottom),
-        [PRINT_V2_FOOTER_RESERVE_KEY]: String(footerReserve),
-        ...this._buildTouchedPayloadForKeys(PRINT_LAYOUT_TOUCHED_KEYS),
-      };
-      const res = await api.appSettingsSetMany(payload);
-      if (!res?.ok) {
-        printV2LayoutMsg.textContent = res?.error || "Speichern fehlgeschlagen";
-        return false;
-      }
-      printV2LayoutMsg.textContent = "Gespeichert";
-      return true;
-    };
-
-    inpPrintV2PadLeft.addEventListener("change", () => savePrintV2LayoutSettings());
-    inpPrintV2PadRight.addEventListener("change", () => savePrintV2LayoutSettings());
-    inpPrintV2PadTop.addEventListener("change", () => savePrintV2LayoutSettings());
-    inpPrintV2PadBottom.addEventListener("change", () => savePrintV2LayoutSettings());
-    inpPrintV2FooterReserve.addEventListener("change", () => savePrintV2LayoutSettings());
-
-    const btnDefaultLayout = document.createElement("button");
-    btnDefaultLayout.type = "button";
-    btnDefaultLayout.textContent = "default";
-    applyPopupButtonStyle(btnDefaultLayout);
-    btnDefaultLayout.style.marginTop = "4px";
-    btnDefaultLayout.onclick = async () => {
-      inpPrintV2PadLeft.value = String(DEFAULT_PRINT_LAYOUT.leftMm);
-      inpPrintV2PadRight.value = String(DEFAULT_PRINT_LAYOUT.rightMm);
-      inpPrintV2PadTop.value = String(DEFAULT_PRINT_LAYOUT.topMm);
-      inpPrintV2FooterReserve.value = String(DEFAULT_PRINT_FOOTER_RESERVE);
-      await savePrintV2LayoutSettings();
-    };
-
-    const actionsRow = document.createElement("div");
-    actionsRow.style.display = "flex";
-    actionsRow.style.justifyContent = "flex-end";
-    actionsRow.style.gap = "4px";
-    actionsRow.appendChild(btnDefaultLayout);
-
-    printV2LayoutBox.append(
-      printV2LayoutHint,
-      printV2LayoutDefaultsInfo,
-      mkRow("Rand links (mm)", inpPrintV2PadLeft),
-      mkRow("Rand rechts (mm)", inpPrintV2PadRight),
-      mkRow("Rand oben (mm)", inpPrintV2PadTop),
-      mkRow("Rand unten (mm)", inpPrintV2PadBottom),
-      mkRow("Footer-Reserve (mm)", inpPrintV2FooterReserve),
-      actionsRow,
-      printV2LayoutMsg
-    );
-
-    const fontScaleBox = document.createElement("div");
-    applyPopupCardStyle(fontScaleBox);
-    fontScaleBox.style.padding = "8px 10px";
-    fontScaleBox.style.maxWidth = "720px";
-    fontScaleBox.style.marginTop = "0";
-    fontScaleBox.style.width = "calc(100% - 1cm)";
-    fontScaleBox.style.justifySelf = "end";
-    fontScaleBox.style.marginLeft = "auto";
-
-    const fontScaleTitle = document.createElement("div");
-    fontScaleTitle.textContent = "Top-Liste (Schriftgrößen)";
-    fontScaleTitle.style.fontWeight = "bold";
-    fontScaleTitle.style.marginBottom = "6px";
-
-    const fontScaleMsg = document.createElement("div");
-    fontScaleMsg.style.fontSize = "12px";
-    fontScaleMsg.style.opacity = "0.75";
-    fontScaleMsg.style.marginTop = "4px";
-
-    let fontScaleMsgTimer = null;
-    const setFontScaleMsg = (txt) => {
-      fontScaleMsg.textContent = txt || "";
-      if (fontScaleMsgTimer) clearTimeout(fontScaleMsgTimer);
-      if (txt) {
-        fontScaleMsgTimer = setTimeout(() => {
-          fontScaleMsg.textContent = "";
-        }, 900);
-      }
-    };
-
-    let listScale = "medium";
-    let editScale = "small";
-
-    const mkScaleGroup = (labelText, buttons) => {
-      const wrap = document.createElement("div");
-      wrap.style.display = "grid";
-      wrap.style.gridTemplateColumns = "140px 1fr";
-      wrap.style.alignItems = "center";
-      wrap.style.gap = "8px";
-
-      const lab = document.createElement("div");
-      lab.textContent = labelText;
-      lab.style.fontWeight = "600";
-
-      const btnRow = document.createElement("div");
-      btnRow.style.display = "flex";
-      btnRow.style.gap = "8px";
-      for (const b of buttons) btnRow.append(b);
-
-      wrap.append(lab, btnRow);
-      return wrap;
-    };
-
-    const applyScaleBtnBase = (btn) => {
-      btn.type = "button";
-      btn.style.padding = "5px 8px";
-      btn.style.borderRadius = "8px";
-      btn.style.border = "1px solid rgba(0,0,0,0.18)";
-      btn.style.cursor = "pointer";
-      btn.style.minHeight = "24px";
-      btn.style.boxShadow = "none";
-      btn.style.transition = "background 120ms ease, box-shadow 120ms ease, border-color 120ms ease";
-    };
-
-    const setScaleBtnActive = (btn, active) => {
-      btn.style.background = active ? "#ef6c00" : "#f7f7f7";
-      btn.style.color = active ? "#fff" : "#1f1f1f";
-      btn.style.borderColor = active ? "rgba(239,108,0,0.7)" : "rgba(0,0,0,0.18)";
-      btn.style.boxShadow = active ? "0 1px 0 rgba(0,0,0,0.12)" : "none";
-    };
-
-    const btnListSmall = document.createElement("button");
-    btnListSmall.textContent = "klein";
-    applyScaleBtnBase(btnListSmall);
-    const btnListMedium = document.createElement("button");
-    btnListMedium.textContent = "mittel";
-    applyScaleBtnBase(btnListMedium);
-    const btnListLarge = document.createElement("button");
-    btnListLarge.textContent = "groß";
-    applyScaleBtnBase(btnListLarge);
-
-    const btnEditSmall = document.createElement("button");
-    btnEditSmall.textContent = "klein";
-    applyScaleBtnBase(btnEditSmall);
-    const btnEditLarge = document.createElement("button");
-    btnEditLarge.textContent = "groß";
-    applyScaleBtnBase(btnEditLarge);
-
-    const applyFontScaleUi = () => {
-      setScaleBtnActive(btnListSmall, listScale === "small");
-      setScaleBtnActive(btnListMedium, listScale === "medium");
-      setScaleBtnActive(btnListLarge, listScale === "large");
-      setScaleBtnActive(btnEditSmall, editScale === "small");
-      setScaleBtnActive(btnEditLarge, editScale === "large");
-    };
-
-    const loadFontScaleSettings = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsGetMany !== "function") {
-        fontScaleMsg.textContent = "Settings-API fehlt (IPC noch nicht aktiv).";
-        applyFontScaleUi();
-        return;
-      }
-      const res = await api.appSettingsGetMany([TOPS_FONT_LIST_KEY, TOPS_FONT_EDIT_KEY]);
-      if (!res?.ok) {
-        fontScaleMsg.textContent = res?.error || "Fehler beim Laden der Schriftgrößen";
-        applyFontScaleUi();
-        return;
-      }
-      const data = res.data || {};
-      const listRaw = String(data[TOPS_FONT_LIST_KEY] || "").trim().toLowerCase();
-      const editRaw = String(data[TOPS_FONT_EDIT_KEY] || "").trim().toLowerCase();
-      listScale = ["small", "medium", "large"].includes(listRaw) ? listRaw : "medium";
-      editScale = ["small", "large"].includes(editRaw) ? editRaw : "small";
-      fontScaleMsg.textContent = "";
-      applyFontScaleUi();
-    };
-
-    const saveFontScaleSettings = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsSetMany !== "function") {
-        fontScaleMsg.textContent = "Settings-API fehlt (IPC noch nicht aktiv).";
-        return false;
-      }
-      const res = await api.appSettingsSetMany({
-        [TOPS_FONT_LIST_KEY]: listScale,
-        [TOPS_FONT_EDIT_KEY]: editScale,
-      });
-      if (!res?.ok) {
-        fontScaleMsg.textContent = res?.error || "Speichern fehlgeschlagen";
-        return false;
-      }
-      setFontScaleMsg("Gespeichert");
-      window.dispatchEvent(new Event("bbm:tops-fontscale-changed"));
-      return true;
-    };
-
-    btnListSmall.onclick = async () => {
-      listScale = "small";
-      applyFontScaleUi();
-      await saveFontScaleSettings();
-    };
-    btnListMedium.onclick = async () => {
-      listScale = "medium";
-      applyFontScaleUi();
-      await saveFontScaleSettings();
-    };
-    btnListLarge.onclick = async () => {
-      listScale = "large";
-      applyFontScaleUi();
-      await saveFontScaleSettings();
-    };
-
-    btnEditSmall.onclick = async () => {
-      editScale = "small";
-      applyFontScaleUi();
-      await saveFontScaleSettings();
-    };
-    btnEditLarge.onclick = async () => {
-      editScale = "large";
-      applyFontScaleUi();
-      await saveFontScaleSettings();
-    };
-
-    const rowList = mkScaleGroup("Top-Liste", [btnListSmall, btnListMedium, btnListLarge]);
-    const rowEdit = mkScaleGroup("Editbox", [btnEditSmall, btnEditLarge]);
-    rowList.style.marginBottom = "8px";
-
-    fontScaleBox.append(fontScaleTitle, rowList, rowEdit, fontScaleMsg);
-
-
-    const devTopCardsRow = document.createElement("div");
-    devTopCardsRow.style.display = "grid";
-    devTopCardsRow.style.gridTemplateColumns = "minmax(0, 1fr) minmax(0, 1fr)";
-    devTopCardsRow.style.gap = "12px";
-    devTopCardsRow.style.alignItems = "start";
-    devTopCardsRow.style.width = "100%";
-    devTopCardsRow.style.maxWidth = "720px";
-    devTopCardsRow.style.marginTop = "10px";
-
-    topsLimitBox.style.maxWidth = "none";
-    topsLimitBox.style.width = "100%";
-    topsLimitBox.style.marginTop = "0";
-    topsLimitBox.style.boxSizing = "border-box";
-    topsLimitBox.style.alignSelf = "start";
-
-    const devRightCol = document.createElement("div");
-    devRightCol.style.display = "grid";
-    devRightCol.style.gridTemplateColumns = "1fr";
-    devRightCol.style.gap = "10px";
-    devRightCol.style.alignContent = "start";
-    const versionBox = document.createElement("div");
-    applyPopupCardStyle(versionBox);
-    versionBox.style.padding = "8px 10px";
-    versionBox.style.maxWidth = "720px";
-    versionBox.style.marginTop = "0";
-    versionBox.style.display = "none";
-
-    const versionTitle = document.createElement("div");
-    versionTitle.textContent = "Versionierung";
-    versionTitle.style.fontWeight = "bold";
-    versionTitle.style.marginBottom = "6px";
-
-    const versionHint = document.createElement("div");
-    versionHint.textContent = "SemVer fuer den naechsten Build aus package.json.";
-
-    // Build-Kanal (STABLE/DEV) fuer `npm run dist`
-    const buildChannelBox = document.createElement("div");
-    buildChannelBox.style.display = "grid";
-    buildChannelBox.style.gridTemplateColumns = "1fr";
-    buildChannelBox.style.gap = "6px";
-    buildChannelBox.style.padding = "8px 10px";
-    buildChannelBox.style.border = "1px solid var(--card-border)";
-    buildChannelBox.style.borderRadius = "8px";
-    buildChannelBox.style.background = "var(--card-bg)";
-
-    const buildChannelTitle = document.createElement("div");
-    buildChannelTitle.textContent = "Build-Kanal (npm run dist)";
-    buildChannelTitle.style.fontWeight = "700";
-
-    const buildChannelHint = document.createElement("div");
-    buildChannelHint.style.fontSize = "12px";
-    buildChannelHint.style.opacity = "0.8";
-    buildChannelHint.textContent = "Damit du es mit Augen siehst: DEV baut BBM-DEV-... und zeigt DEV-Badge in der App.";
-
-    const buildChannelRow = document.createElement("div");
-    buildChannelRow.style.display = "flex";
-    buildChannelRow.style.alignItems = "center";
-    buildChannelRow.style.gap = "12px";
-    buildChannelRow.style.flexWrap = "wrap";
-
-    const mkRadio = (label, value) => {
-      const wrap = document.createElement("label");
-      wrap.style.display = "inline-flex";
-      wrap.style.alignItems = "center";
-      wrap.style.gap = "6px";
-      wrap.style.cursor = "pointer";
-      wrap.style.userSelect = "none";
-      const inp = document.createElement("input");
-      inp.type = "radio";
-      inp.name = "bbmBuildChannel";
-      inp.value = value;
-      const txt = document.createElement("span");
-      txt.textContent = label;
-      txt.style.fontSize = "13px";
-      txt.style.fontWeight = "600";
-      wrap.append(inp, txt);
-      return { wrap, inp };
-    };
-
-    const radioStable = mkRadio("STABLE", "stable");
-    const radioDev = mkRadio("DEV", "dev");
-    buildChannelRow.append(radioStable.wrap, radioDev.wrap);
-
-    const buildChannelStatus = document.createElement("div");
-    buildChannelStatus.style.fontSize = "12px";
-    buildChannelStatus.style.opacity = "0.9";
-    buildChannelStatus.textContent = "Lade...";
-
-    buildChannelBox.append(buildChannelTitle, buildChannelHint, buildChannelRow, buildChannelStatus);
-
-    let buildChannelCurrent = "stable";
-
-    const setBuildChannelUi = (ch, repoVersionForPreview = "") => {
-      const next = String(ch || "stable").trim().toLowerCase() === "dev" ? "dev" : "stable";
-      buildChannelCurrent = next;
-      radioStable.inp.checked = next === "stable";
-      radioDev.inp.checked = next === "dev";
-      const v = String(repoVersionForPreview || versionRepoCurrent || "").trim();
-      const fileName = next === "dev"
-        ? `BBM-DEV-${v || "X.Y.Z"}-Setup.exe`
-        : `BBM-${v || "X.Y.Z"}-Setup.exe`;
-      buildChannelStatus.textContent = `npm run dist baut: ${next === "dev" ? "DEV" : "STABLE"}  ->  ${fileName}`;
-    };
-
-    const loadBuildChannel = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.devBuildChannelGet !== "function") {
-        // fallback: ENV/IPC app:getBuildChannel, aber hier im Dev-Popup lieber klar sagen
-        buildChannelStatus.textContent = "Build-Kanal: nicht verfuegbar (devBuildChannelGet fehlt).";
-        return false;
-      }
-      try {
-        const res = await api.devBuildChannelGet();
-        if (!res?.ok) {
-          buildChannelStatus.textContent = res?.error || "Build-Kanal konnte nicht geladen werden.";
-          return false;
-        }
-        setBuildChannelUi(res.channel, versionRepoCurrent);
-        return true;
-      } catch (_e) {
-        buildChannelStatus.textContent = "Build-Kanal konnte nicht geladen werden.";
-        return false;
-      }
-    };
-
-    const saveBuildChannel = async (next) => {
-      const api = window.bbmDb || {};
-      if (typeof api.devBuildChannelSet !== "function") {
-        alert("Build-Kanal speichern: nicht verfuegbar (devBuildChannelSet fehlt).");
-        return false;
-      }
-      try {
-        const res = await api.devBuildChannelSet({ channel: next });
-        if (!res?.ok) {
-          alert(res?.error || "Build-Kanal konnte nicht gespeichert werden.");
-          return false;
-        }
-        setBuildChannelUi(res.channel, versionRepoCurrent);
-        return true;
-      } catch (_e) {
-        alert("Build-Kanal konnte nicht gespeichert werden.");
-        return false;
-      }
-    };
-
-    radioStable.inp.onchange = async () => {
-      if (!radioStable.inp.checked) return;
-      await saveBuildChannel("stable");
-    };
-    radioDev.inp.onchange = async () => {
-      if (!radioDev.inp.checked) return;
-      await saveBuildChannel("dev");
-    };
-
-    versionHint.style.fontSize = "12px";
-    versionHint.style.opacity = "0.75";
-    versionHint.style.marginBottom = "8px";
-
-    const appVersionValue = document.createElement("div");
-    appVersionValue.style.fontWeight = "600";
-    appVersionValue.textContent = "-";
-
-    const repoVersionValue = document.createElement("div");
-    repoVersionValue.style.fontWeight = "600";
-    repoVersionValue.textContent = "-";
-
-    const badgesRow = document.createElement("div");
-    badgesRow.style.display = "flex";
-    badgesRow.style.flexWrap = "wrap";
-    badgesRow.style.gap = "6px";
-
-    const mkBadge = (label) => {
-      const badge = document.createElement("span");
-      badge.style.display = "inline-flex";
-      badge.style.alignItems = "center";
-      badge.style.gap = "4px";
-      badge.style.padding = "2px 8px";
-      badge.style.border = "1px solid #d6dbe3";
-      badge.style.borderRadius = "999px";
-      badge.style.fontSize = "12px";
-      badge.style.background = "#fff";
-      badge.textContent = label;
-      return badge;
-    };
-    const badgeMajor = mkBadge("Major: -");
-    const badgeMinor = mkBadge("Minor: -");
-    const badgePatch = mkBadge("Patch: -");
-    badgesRow.append(badgeMajor, badgeMinor, badgePatch);
-
-    const releaseTypeSelect = document.createElement("select");
-    releaseTypeSelect.style.width = "100%";
-    const releaseOptions = [
-      { value: "patch", label: "Fixes (Patch)" },
-      { value: "minor", label: "Feature (Minor)" },
-      { value: "major", label: "Breaking (Major)" },
-    ];
-    for (const opt of releaseOptions) {
-      const node = document.createElement("option");
-      node.value = opt.value;
-      node.textContent = opt.label;
-      releaseTypeSelect.appendChild(node);
-    }
-
-    const nextVersionValue = document.createElement("div");
-    nextVersionValue.style.fontWeight = "700";
-    nextVersionValue.textContent = "-";
-
-    const versionButtons = document.createElement("div");
-    versionButtons.style.display = "flex";
-    versionButtons.style.justifyContent = "space-between";
-    versionButtons.style.gap = "8px";
-    versionButtons.style.flexWrap = "wrap";
-
-    const btnVersionBump = document.createElement("button");
-    btnVersionBump.type = "button";
-    btnVersionBump.textContent = "Version hochschalten";
-    applyPopupButtonStyle(btnVersionBump, { variant: "primary" });
-
-    const btnVersionSet100 = document.createElement("button");
-    btnVersionSet100.type = "button";
-    btnVersionSet100.textContent = "Auf 1.0.0 setzen";
-    applyPopupButtonStyle(btnVersionSet100);
-    btnVersionSet100.style.display = "none";
-
-    versionButtons.append(btnVersionBump, btnVersionSet100);
-
-    const versionStatus = document.createElement("div");
-    versionStatus.style.fontSize = "12px";
-    versionStatus.style.minHeight = "16px";
-    versionStatus.style.marginTop = "4px";
-    versionStatus.style.color = "#4b5563";
-
-    const versionRestartHint = document.createElement("div");
-    versionRestartHint.style.fontSize = "12px";
-    versionRestartHint.style.opacity = "0.8";
-    versionRestartHint.style.marginTop = "2px";
-    versionRestartHint.textContent = "";
-
-    versionBox.append(
-      versionTitle,
-      versionHint,
-      buildChannelBox,
-      mkRow("Aktuelle App-Version (laufend)", appVersionValue),
-      mkRow("Repo-Version (package.json)", repoVersionValue),
-      mkRow("Major / Minor / Patch", badgesRow),
-      mkRow("Release-Typ", releaseTypeSelect),
-      mkRow("Naechste Version", nextVersionValue),
-      versionButtons,
-      versionStatus,
-      versionRestartHint
-    );
-
-    let versionStatusTimer = null;
-    let versionRepoCurrent = "";
-
-    const setVersionStatus = (text, isError = false) => {
-      if (versionStatusTimer) {
-        clearTimeout(versionStatusTimer);
-        versionStatusTimer = null;
-      }
-      versionStatus.textContent = String(text || "");
-      versionStatus.style.color = isError ? "#b91c1c" : "#166534";
-      if (text) {
-        versionStatusTimer = setTimeout(() => {
-          versionStatus.textContent = "";
-          versionStatus.style.color = "#4b5563";
-          versionStatusTimer = null;
-        }, 4500);
-      }
-    };
-
-    const parseSemverLocal = (value) => {
-      const m = /^(\d+)\.(\d+)\.(\d+)$/.exec(String(value || "").trim());
-      if (!m) return null;
-      return {
-        major: Number(m[1]),
-        minor: Number(m[2]),
-        patch: Number(m[3]),
-      };
-    };
-
-    const formatSemverLocal = (parts) => `${parts.major}.${parts.minor}.${parts.patch}`;
-
-    const bumpSemverLocal = (version, kind) => {
-      const parsed = parseSemverLocal(version);
-      if (!parsed) return "";
-      if (kind === "major") return formatSemverLocal({ major: parsed.major + 1, minor: 0, patch: 0 });
-      if (kind === "minor") return formatSemverLocal({ major: parsed.major, minor: parsed.minor + 1, patch: 0 });
-      return formatSemverLocal({ major: parsed.major, minor: parsed.minor, patch: parsed.patch + 1 });
-    };
-
-    const updateVersionBadges = (version) => {
-      const parsed = parseSemverLocal(version);
-      if (!parsed) {
-        badgeMajor.textContent = "Major: -";
-        badgeMinor.textContent = "Minor: -";
-        badgePatch.textContent = "Patch: -";
-        return;
-      }
-      badgeMajor.textContent = `Major: ${parsed.major}`;
-      badgeMinor.textContent = `Minor: ${parsed.minor}`;
-      badgePatch.textContent = `Patch: ${parsed.patch}`;
-    };
-
-    const updateNextVersionPreview = () => {
-      const next = bumpSemverLocal(versionRepoCurrent, releaseTypeSelect.value);
-      nextVersionValue.textContent = next || "-";
-      const parsed = parseSemverLocal(versionRepoCurrent);
-      btnVersionSet100.style.display = parsed && parsed.major < 1 ? "inline-flex" : "none";
-    };
-
-    const setVersionBusy = (busy) => {
-      const isBusy = !!busy;
-      releaseTypeSelect.disabled = isBusy;
-      btnVersionBump.disabled = isBusy;
-      btnVersionSet100.disabled = isBusy;
-    };
-
-    const loadVersioningData = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.devVersionGet !== "function") {
-        versionBox.style.display = "none";
-        return false;
-      }
-      setVersionBusy(true);
-      try {
-        const res = await api.devVersionGet();
-        if (!res?.ok) {
-          setVersionStatus(res?.error || "Versionen konnten nicht geladen werden.", true);
-          versionBox.style.display = "none";
-          return false;
-        }
-        versionRepoCurrent = String(res.repoVersion || "").trim();
-        await loadBuildChannel();
-        appVersionValue.textContent = String(res.appVersion || "-");
-        repoVersionValue.textContent = versionRepoCurrent || "-";
-        updateVersionBadges(versionRepoCurrent);
-        updateNextVersionPreview();
-        versionRestartHint.textContent = "Hinweis: Laufende App-Version aktualisiert sich nach Neustart.";
-        versionBox.style.display = "block";
-        return true;
-      } catch (err) {
-        setVersionStatus(err?.message || "Versionen konnten nicht geladen werden.", true);
-        versionBox.style.display = "none";
-        return false;
-      } finally {
-        setVersionBusy(false);
-      }
-    };
-
-    releaseTypeSelect.addEventListener("change", updateNextVersionPreview);
-
-    btnVersionBump.onclick = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.devVersionBump !== "function") {
-        setVersionStatus("Versionierung ist nicht verfuegbar.", true);
-        return;
-      }
-      setVersionBusy(true);
-      try {
-        const res = await api.devVersionBump({ kind: releaseTypeSelect.value });
-        if (!res?.ok) {
-          setVersionStatus(res?.error || "Version konnte nicht hochgeschaltet werden.", true);
-          return;
-        }
-        const reloadOk = await loadVersioningData();
-        if (reloadOk) {
-          setVersionStatus(`Repo-Version auf ${res.repoVersion} aktualisiert.`);
-        }
-      } catch (err) {
-        setVersionStatus(err?.message || "Version konnte nicht hochgeschaltet werden.", true);
-      } finally {
-        setVersionBusy(false);
-      }
-    };
-
-    btnVersionSet100.onclick = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.devVersionSet !== "function") {
-        setVersionStatus("Versionierung ist nicht verfuegbar.", true);
-        return;
-      }
-      setVersionBusy(true);
-      try {
-        const res = await api.devVersionSet({ version: "1.0.0" });
-        if (!res?.ok) {
-          setVersionStatus(res?.error || "Version 1.0.0 konnte nicht gesetzt werden.", true);
-          return;
-        }
-        const reloadOk = await loadVersioningData();
-        if (reloadOk) {
-          setVersionStatus("Repo-Version auf 1.0.0 gesetzt.");
-        }
-      } catch (err) {
-        setVersionStatus(err?.message || "Version 1.0.0 konnte nicht gesetzt werden.", true);
-      } finally {
-        setVersionBusy(false);
-      }
-    };
-
-    const licenseGenBox = createLegacyLicenseEditorSection({
-      mkRow,
-      applyPopupCardStyle,
-      applyPopupButtonStyle,
-      formatLicenseBinding: (binding) => this._formatLicenseBinding(binding),
-      formatLicenseGenerationError: (raw) => this._formatLicenseGenerationError(raw),
-    });
-
-    const devDefaultsBox = document.createElement("div");
-    applyPopupCardStyle(devDefaultsBox);
-    devDefaultsBox.style.padding = "8px 10px";
-    devDefaultsBox.style.maxWidth = "720px";
-    devDefaultsBox.style.marginTop = "0";
-    devDefaultsBox.style.boxSizing = "border-box";
-
-    const devDefaultsTitle = document.createElement("div");
-    devDefaultsTitle.textContent = "Druck-Vorgaben";
-    devDefaultsTitle.style.fontWeight = "bold";
-    devDefaultsTitle.style.marginBottom = "6px";
-
-    const devDefaultsHint = document.createElement("div");
-    devDefaultsHint.textContent = "Defaultwerte fuer den Druck pflegen + Speicherorte anzeigen.";
-    devDefaultsHint.style.fontSize = "12px";
-    devDefaultsHint.style.opacity = "0.75";
-    devDefaultsHint.style.marginBottom = "8px";
-
-    const devDefaultsActions = document.createElement("div");
-    devDefaultsActions.style.display = "flex";
-    devDefaultsActions.style.gap = "8px";
-    devDefaultsActions.style.flexWrap = "wrap";
-
-    const btnOpenPrintDefaults = document.createElement("button");
-    btnOpenPrintDefaults.type = "button";
-    btnOpenPrintDefaults.textContent = "Druck-Vorgaben";
-    applyPopupButtonStyle(btnOpenPrintDefaults);
-
-    const btnOpenStoragePreview = document.createElement("button");
-    btnOpenStoragePreview.type = "button";
-    btnOpenStoragePreview.textContent = "Speicherorte";
-    applyPopupButtonStyle(btnOpenStoragePreview);
-
-    const btnOpenThemeDefaults = document.createElement("button");
-    btnOpenThemeDefaults.type = "button";
-    btnOpenThemeDefaults.textContent = "Start-Defaults Farbschema";
-    applyPopupButtonStyle(btnOpenThemeDefaults);
-
-
-    const devDefaultsStatus = document.createElement("div");
-    devDefaultsStatus.style.fontSize = "12px";
-    devDefaultsStatus.style.minHeight = "16px";
-    devDefaultsStatus.style.marginTop = "6px";
-    devDefaultsStatus.style.color = "#4b5563";
-
-    let devDefaultsStatusTimer = null;
-    const setDevDefaultsStatus = (text, isError = false) => {
-      if (devDefaultsStatusTimer) {
-        clearTimeout(devDefaultsStatusTimer);
-        devDefaultsStatusTimer = null;
-      }
-      devDefaultsStatus.textContent = String(text || "");
-      devDefaultsStatus.style.color = isError ? "#b91c1c" : "#166534";
-      if (text) {
-        devDefaultsStatusTimer = setTimeout(() => {
-          devDefaultsStatus.textContent = "";
-          devDefaultsStatus.style.color = "#4b5563";
-          devDefaultsStatusTimer = null;
-        }, 4500);
-      }
-    };
-
-    const DEFAULT_PRINT_DEFAULTS = {
-      "pdf.preRemarks": DEFAULT_V2_PRE_REMARKS_TEXT,
-      "print.preRemarks.enabled": "true",
-      "print.v2.pagePadTopMm": "3",
-      "print.v2.pagePadLeftMm": "19",
-      "print.v2.pagePadRightMm": "15",
-      "print.v2.footerReserveMm": "12",
-    };
-
-    const allDefaultFields = PRINT_DEFAULTS_FIELD_GROUPS.flatMap((group) => group.fields || []);
-
-    const openPrintDefaultsModal = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appSettingsGetMany !== "function" || typeof api.appSettingsSetMany !== "function") {
-        setDevDefaultsStatus("Settings-API fehlt.", true);
-        return;
-      }
-
-      const root = document.createElement("div");
-      root.style.display = "grid";
-      root.style.gap = "10px";
-      root.style.maxWidth = "920px";
-
-      const valueRefs = {};
-      const defaultKeys = [];
-      for (const field of allDefaultFields) {
-        const key = String(field?.key || "").trim();
-        if (!key) continue;
-        defaultKeys.push(`defaults.${key}`);
-      }
-
-      for (const group of PRINT_DEFAULTS_FIELD_GROUPS) {
-        const groupBox = document.createElement("div");
-        applyPopupCardStyle(groupBox);
-        groupBox.style.padding = "8px 10px";
-        groupBox.style.marginTop = "0";
-        const groupTitle = document.createElement("div");
-        groupTitle.textContent = String(group?.title || "");
-        groupTitle.style.fontWeight = "700";
-        groupTitle.style.marginBottom = "6px";
-        groupBox.append(groupTitle);
-        for (const field of group.fields || []) {
-          const key = String(field?.key || "").trim();
-          if (!key) continue;
-          let input = null;
-          if (field.multiline) {
-            input = document.createElement("textarea");
-            input.rows = 3;
-            input.style.width = "100%";
-            input.style.resize = "vertical";
-            input.addEventListener("keydown", (e) => {
-              if (e.key !== "Enter") return;
-              // Enter im Defaults-Textarea immer als Zeilenumbruch behandeln.
-              e.preventDefault();
-              e.stopPropagation();
-              const start = Number(input.selectionStart || 0);
-              const end = Number(input.selectionEnd || start);
-              const before = input.value.slice(0, start);
-              const after = input.value.slice(end);
-              input.value = `${before}\n${after}`;
-              const nextPos = start + 1;
-              input.selectionStart = nextPos;
-              input.selectionEnd = nextPos;
-            });
-          } else {
-            input = document.createElement("input");
-            input.type = "text";
-            input.style.width = "100%";
-          }
-          valueRefs[key] = input;
-          groupBox.append(mkRow(field.label || key, input));
-        }
-        root.append(groupBox);
-      }
-
-      const footerRow = document.createElement("div");
-      footerRow.style.display = "flex";
-      footerRow.style.justifyContent = "space-between";
-      footerRow.style.alignItems = "center";
-      footerRow.style.gap = "8px";
-      footerRow.style.flexWrap = "wrap";
-
-      const localStatus = document.createElement("div");
-      localStatus.style.fontSize = "12px";
-      localStatus.style.minHeight = "16px";
-      localStatus.style.color = "#4b5563";
-
-      const btnResetDefaults = document.createElement("button");
-      btnResetDefaults.type = "button";
-      btnResetDefaults.textContent = "Defaults zuruecksetzen";
-      applyPopupButtonStyle(btnResetDefaults);
-
-      footerRow.append(localStatus, btnResetDefaults);
-      root.append(footerRow);
-
-      const setLocalStatus = (text, isError = false) => {
-        localStatus.textContent = String(text || "");
-        localStatus.style.color = isError ? "#b91c1c" : "#166534";
-      };
-
-      const loadDefaults = async () => {
-        const res = await api.appSettingsGetMany(defaultKeys);
-        if (!res?.ok) {
-          setLocalStatus(res?.error || "Defaults konnten nicht geladen werden.", true);
-          return;
-        }
-        const data = res.data || {};
-        for (const field of allDefaultFields) {
-          const key = String(field?.key || "").trim();
-          if (!key) continue;
-          const node = valueRefs[key];
-          if (!node) continue;
-          const raw = data[`defaults.${key}`];
-          node.value = raw == null ? "" : String(raw);
-        }
-        setLocalStatus("");
-      };
-
-      const collectPayload = () => {
-        const payload = {};
-        for (const field of allDefaultFields) {
-          const key = String(field?.key || "").trim();
-          if (!key) continue;
-          const node = valueRefs[key];
-          if (!node) continue;
-          payload[`defaults.${key}`] = String(node.value ?? "").trim();
-        }
-        return payload;
-      };
-
-      btnResetDefaults.onclick = async () => {
-        for (const field of allDefaultFields) {
-          const key = String(field?.key || "").trim();
-          if (!key) continue;
-          if (!valueRefs[key]) continue;
-          valueRefs[key].value = Object.prototype.hasOwnProperty.call(DEFAULT_PRINT_DEFAULTS, key)
-            ? String(DEFAULT_PRINT_DEFAULTS[key])
-            : "";
-        }
-        const payload = collectPayload();
-        const saveRes = await api.appSettingsSetMany(payload);
-        if (!saveRes?.ok) {
-          setLocalStatus(saveRes?.error || "Defaults konnten nicht gespeichert werden.", true);
-          return;
-        }
-        setLocalStatus("Defaults zurueckgesetzt.");
-      };
-
-      this._openSettingsModal({
-        title: "Druck-Vorgaben",
-        content: [root],
-        closeOnly: false,
-        saveFn: async () => {
-          const payload = collectPayload();
-          const res = await api.appSettingsSetMany(payload);
-          if (!res?.ok) {
-            setLocalStatus(res?.error || "Speichern fehlgeschlagen.", true);
-            return false;
-          }
-          setLocalStatus("Gespeichert.");
-          return true;
-        },
-      });
-
-      await loadDefaults();
-    };
-
-    const openStoragePreviewModal = async () => {
-      const api = window.bbmDb || {};
-      const previewApi =
-        typeof api.devGetStoragePreview === "function"
-          ? api.devGetStoragePreview
-          : typeof api.projectsStoragePreview === "function"
-            ? api.projectsStoragePreview
-            : null;
-      if (!previewApi) {
-        setDevDefaultsStatus("Speicherorte-API fehlt.", true);
-        return;
-      }
-
-      const box = document.createElement("div");
-      applyPopupCardStyle(box);
-      box.style.padding = "10px";
-      box.style.marginTop = "0";
-      box.style.display = "grid";
-      box.style.gap = "8px";
-
-      const hint = document.createElement("div");
-      hint.style.fontSize = "12px";
-      hint.style.opacity = "0.75";
-      hint.textContent = "Nur Anzeige, keine finale Speicherlogik-Entscheidung.";
-
-      const inpNumber = document.createElement("input");
-      inpNumber.type = "text";
-      inpNumber.style.width = "100%";
-      const inpShort = document.createElement("input");
-      inpShort.type = "text";
-      inpShort.style.width = "100%";
-      const inpName = document.createElement("input");
-      inpName.type = "text";
-      inpName.style.width = "100%";
-
-      const mkPathOutput = () => {
-        const output = document.createElement("input");
-        output.type = "text";
-        output.readOnly = true;
-        output.style.width = "100%";
-        return output;
-      };
-      const outProtocols = mkPathOutput();
-      const outPreview = mkPathOutput();
-      const outLists = mkPathOutput();
-      const status = document.createElement("div");
-      status.style.fontSize = "12px";
-      status.style.minHeight = "16px";
-      status.style.color = "#4b5563";
-
-      box.append(
-        hint,
-        mkRow("Projekt-Nr (Vorschau)", inpNumber),
-        mkRow("Kurzbez. (Vorschau)", inpShort),
-        mkRow("Projektname (Fallback)", inpName),
-        mkRow("Protokolle", outProtocols),
-        mkRow("Vorabzug", outPreview),
-        mkRow("Listen", outLists),
-        status
-      );
-
-      const refreshPreview = async () => {
-        const res = await previewApi({
-          project_number: String(inpNumber.value || "").trim(),
-          short: String(inpShort.value || "").trim(),
-          name: String(inpName.value || "").trim(),
-        });
-        if (!res?.ok) {
-          status.textContent = res?.error || "Speicherorte konnten nicht geladen werden.";
-          status.style.color = "#b91c1c";
-          return;
-        }
-        outProtocols.value = String(res.protocolsDir || "");
-        outPreview.value = String(res.previewDir || "");
-        outLists.value = String(res.listsDir || "");
-        status.textContent = "";
-        status.style.color = "#4b5563";
-      };
-
-      [inpNumber, inpShort, inpName].forEach((inp) => {
-        inp.addEventListener("input", () => {
-          refreshPreview();
-        });
-      });
-
-      this._openSettingsModal({
-        title: "Speicherorte",
-        content: [box],
-        closeOnly: true,
-      });
-
-      await refreshPreview();
-    };
-
-    btnOpenPrintDefaults.onclick = async () => {
-      this._closeSettingsModal();
-      await openPrintDefaultsModal();
-    };
-    btnOpenStoragePreview.onclick = async () => {
-      this._closeSettingsModal();
-      await openStoragePreviewModal();
-    };
-    btnOpenThemeDefaults.onclick = async () => {
-      this._closeSettingsModal();
-      await openThemeDefaultsPopup();
-    };
-    devDefaultsActions.append(
-      btnOpenPrintDefaults,
-      btnOpenStoragePreview,
-      btnOpenThemeDefaults
-    );
-    devDefaultsBox.append(devDefaultsTitle, devDefaultsHint, devDefaultsActions, devDefaultsStatus);
-
-
-    const printBox = document.createElement("div");
-    applyPopupCardStyle(printBox);
-    printBox.style.padding = "8px 10px";
-    printBox.style.maxWidth = "720px";
-    printBox.style.marginTop = "0";
-    printBox.style.display = "grid";
-    printBox.style.gap = "6px";
-
-    const printTitle = document.createElement("div");
-    printTitle.textContent = "Druckvorgaben";
-    printTitle.style.fontWeight = "700";
-
-    const printHint = document.createElement("div");
-    printHint.style.fontSize = "12px";
-    printHint.style.opacity = "0.8";
-    printHint.textContent = "PDF-Einstellungen & Kategorien";
-
-    const btnPrintOpen = document.createElement("button");
-    btnPrintOpen.type = "button";
-    btnPrintOpen.textContent = "Druckvorgaben ?ffnen";
-    applyPopupButtonStyle(btnPrintOpen);
-    btnPrintOpen.onclick = () => {
-      try {
-        if (typeof tilePrint?.click === "function") {
-          tilePrint.click();
-        }
-      } catch (_e) {}
-    };
-
-    printBox.append(printTitle, printHint, btnPrintOpen);
-
-    const licenseBox = document.createElement("div");
-    applyPopupCardStyle(licenseBox);
-    licenseBox.style.padding = "8px 10px";
-    licenseBox.style.maxWidth = "720px";
-    licenseBox.style.marginTop = "0";
-    licenseBox.style.display = "grid";
-    licenseBox.style.gap = "6px";
-
-    const licenseTitle = document.createElement("div");
-    licenseTitle.textContent = "Lizenz";
-    licenseTitle.style.fontWeight = "700";
-
-    const licenseHint = document.createElement("div");
-    licenseHint.style.fontSize = "12px";
-    licenseHint.style.opacity = "0.8";
-    licenseHint.textContent = "Lizenzstatus & Verwaltung";
-
-    const btnLicenseOpen = document.createElement("button");
-    btnLicenseOpen.type = "button";
-    btnLicenseOpen.textContent = "Lizenz ?ffnen";
-    applyPopupButtonStyle(btnLicenseOpen);
-    btnLicenseOpen.onclick = async () => {
-      const content = this._createLicenseSettingsContent();
-      this._openSettingsModal({
-        title: "Lizenz",
-        content: [content],
-        closeOnly: true,
-      });
-    };
-
-    licenseBox.append(licenseTitle, licenseHint, btnLicenseOpen);
-
-    devRightCol.append(devDefaultsBox, licenseBox, topsLimitBox);
-    devTopCardsRow.append(versionBox, devRightCol);
-
-    const themeBox = document.createElement("div");
-    applyPopupCardStyle(themeBox);
-    themeBox.style.padding = "10px";
-    themeBox.style.maxWidth = "920px";
-    themeBox.style.marginTop = "0";
-
-    const themeTitle = document.createElement("div");
-    themeTitle.textContent = "Farben einstellen";
-    themeTitle.style.fontWeight = "bold";
-    themeTitle.style.marginBottom = "6px";
-    const themeHint = document.createElement("div");
-    themeHint.style.fontSize = "12px";
-    themeHint.style.opacity = "0.8";
-    themeHint.style.marginBottom = "8px";
-    themeHint.textContent = "Header, Sidebar und Main jeweils mit Farbspektrum, Hue-Regler und RGB-Feldern.";
-
-    const mkThemeAreaControls = () => {
-      const outer = document.createElement("div");
-      outer.style.display = "grid";
-      outer.style.gridTemplateRows = "auto auto";
-      outer.style.gap = "8px";
-
-      const pickerRow = document.createElement("div");
-      pickerRow.style.display = "flex";
-      pickerRow.style.alignItems = "stretch";
-      pickerRow.style.gap = "12px";
-      pickerRow.style.flexWrap = "wrap";
-
-      const svWrap = document.createElement("div");
-      svWrap.style.position = "relative";
-      svWrap.style.width = "220px";
-      svWrap.style.height = "110px";
-      svWrap.style.border = "1px solid #cbd5e1";
-      svWrap.style.borderRadius = "6px";
-      svWrap.style.overflow = "hidden";
-      const svCanvas = document.createElement("canvas");
-      svCanvas.width = 220;
-      svCanvas.height = 110;
-      svCanvas.style.width = "220px";
-      svCanvas.style.height = "110px";
-      svCanvas.style.display = "block";
-      svCanvas.style.cursor = "crosshair";
-      const svCursor = document.createElement("div");
-      svCursor.style.position = "absolute";
-      svCursor.style.width = "10px";
-      svCursor.style.height = "10px";
-      svCursor.style.border = "2px solid #fff";
-      svCursor.style.borderRadius = "50%";
-      svCursor.style.boxShadow = "0 0 0 1px rgba(0,0,0,0.4)";
-      svCursor.style.pointerEvents = "none";
-      svCursor.style.transform = "translate(-5px, -5px)";
-      svWrap.append(svCanvas, svCursor);
-
-      const hueWrap = document.createElement("div");
-      hueWrap.style.position = "relative";
-      hueWrap.style.width = "22px";
-      hueWrap.style.height = "110px";
-      hueWrap.style.border = "1px solid #cbd5e1";
-      hueWrap.style.borderRadius = "6px";
-      hueWrap.style.overflow = "hidden";
-      const hueCanvas = document.createElement("canvas");
-      hueCanvas.width = 22;
-      hueCanvas.height = 110;
-      hueCanvas.style.width = "22px";
-      hueCanvas.style.height = "110px";
-      hueCanvas.style.display = "block";
-      hueCanvas.style.cursor = "ns-resize";
-      const hueCursor = document.createElement("div");
-      hueCursor.style.position = "absolute";
-      hueCursor.style.left = "0";
-      hueCursor.style.width = "100%";
-      hueCursor.style.height = "2px";
-      hueCursor.style.background = "#fff";
-      hueCursor.style.boxShadow = "0 0 0 1px rgba(0,0,0,0.55)";
-      hueCursor.style.pointerEvents = "none";
-      hueCursor.style.transform = "translateY(-1px)";
-      hueWrap.append(hueCanvas, hueCursor);
-
-      const controls = document.createElement("div");
-      controls.style.display = "grid";
-      controls.style.gridTemplateRows = "auto auto auto";
-      controls.style.gap = "8px";
-      controls.style.minWidth = "310px";
-
-      const topRow = document.createElement("div");
-      topRow.style.display = "flex";
-      topRow.style.alignItems = "center";
-      topRow.style.gap = "8px";
-      topRow.style.flexWrap = "wrap";
-
-      const modelSel = document.createElement("select");
-      modelSel.style.width = "90px";
-      const modelOptRgb = document.createElement("option");
-      modelOptRgb.value = "rgb";
-      modelOptRgb.textContent = "RGB";
-      modelSel.append(modelOptRgb);
-
-      const mkRgbInput = (label) => {
-        const wrap = document.createElement("label");
-        wrap.style.display = "inline-flex";
-        wrap.style.alignItems = "center";
-        wrap.style.gap = "4px";
-        wrap.style.fontSize = "12px";
-        wrap.style.opacity = "0.95";
-        const txt = document.createElement("span");
-        txt.textContent = label;
-        const inp = document.createElement("input");
-        inp.type = "number";
-        inp.min = "0";
-        inp.max = "255";
-        inp.step = "1";
-        inp.inputMode = "numeric";
-        inp.style.width = "64px";
-        wrap.append(txt, inp);
-        return { wrap, inp };
-      };
-      const rField = mkRgbInput("R");
-      const gField = mkRgbInput("G");
-      const bField = mkRgbInput("B");
-      topRow.append(modelSel, rField.wrap, gField.wrap, bField.wrap);
-
-      const hexRow = document.createElement("div");
-      hexRow.style.display = "flex";
-      hexRow.style.alignItems = "center";
-      hexRow.style.gap = "8px";
-      const hexLabel = document.createElement("span");
-      hexLabel.textContent = "Hex";
-      hexLabel.style.fontSize = "12px";
-      const hexInp = document.createElement("input");
-      hexInp.type = "text";
-      hexInp.placeholder = "#RRGGBB";
-      hexInp.maxLength = 7;
-      hexInp.style.width = "110px";
-
-      const colorValue = document.createElement("div");
-      colorValue.style.fontFamily = "Calibri, Arial, sans-serif";
-      colorValue.style.fontSize = "11px";
-      colorValue.style.opacity = "0.85";
-      colorValue.style.minWidth = "200px";
-      colorValue.textContent = "rgb(255, 255, 255)";
-      hexRow.append(hexLabel, hexInp, colorValue);
-
-      const previewRow = document.createElement("div");
-      previewRow.style.display = "flex";
-      previewRow.style.alignItems = "center";
-      previewRow.style.gap = "8px";
-      const previewLabel = document.createElement("span");
-      previewLabel.textContent = "Preview";
-      previewLabel.style.fontSize = "12px";
-      const preview = document.createElement("div");
-      preview.style.width = "88px";
-      preview.style.height = "28px";
-      preview.style.border = "1px solid #cbd5e1";
-      preview.style.borderRadius = "6px";
-      preview.style.backgroundColor = "rgb(255, 255, 255)";
-      previewRow.append(previewLabel, preview);
-
-      controls.append(topRow, hexRow, previewRow);
-      pickerRow.append(svWrap, hueWrap, controls);
-
-      const err = document.createElement("div");
-      err.style.fontSize = "12px";
-      err.style.color = "#b91c1c";
-      err.style.minHeight = "16px";
-
-      outer.append(pickerRow, err);
-      return {
-        outer,
-        modelSel,
-        preview,
-        colorValue,
-        hexInp,
-        rInp: rField.inp,
-        gInp: gField.inp,
-        bInp: bField.inp,
-        svCanvas,
-        hueCanvas,
-        svCursor,
-        hueCursor,
-        err,
-      };
-    };
-
-    const themeHeader = mkThemeAreaControls();
-    const themeSidebar = mkThemeAreaControls();
-    const themeMain = mkThemeAreaControls();
-
-    const onThemeInput = () => {
-      this._applyThemePreviewFromInputs();
-      this._scheduleThemeSave();
-    };
-
-    const wireThemeArea = (area, controls) => {
-      controls.modelSel.addEventListener("change", () => {
-        controls.modelSel.value = "rgb";
-      });
-      controls.rInp.addEventListener("input", () => this._handleThemeRgbInput(area, "r"));
-      controls.gInp.addEventListener("input", () => this._handleThemeRgbInput(area, "g"));
-      controls.bInp.addEventListener("input", () => this._handleThemeRgbInput(area, "b"));
-      controls.rInp.addEventListener("blur", () => this._normalizeThemeRgbInput(area, "r"));
-      controls.gInp.addEventListener("blur", () => this._normalizeThemeRgbInput(area, "g"));
-      controls.bInp.addEventListener("blur", () => this._normalizeThemeRgbInput(area, "b"));
-      controls.hexInp.addEventListener("input", () => this._handleThemeHexInput(area, false));
-      controls.hexInp.addEventListener("blur", () => this._handleThemeHexInput(area, true));
-      this._bindThemeCanvasDrag(controls.svCanvas, (e) => this._handleThemeSvCanvasInput(area, e));
-      this._bindThemeCanvasDrag(controls.hueCanvas, (e) => this._handleThemeHueCanvasInput(area, e));
-    };
-    wireThemeArea("header", themeHeader);
-    wireThemeArea("sidebar", themeSidebar);
-    wireThemeArea("main", themeMain);
-
-    const themeDefaultsResetWrap = document.createElement("div");
-    themeDefaultsResetWrap.style.display = "inline-flex";
-    themeDefaultsResetWrap.style.alignItems = "center";
-    themeDefaultsResetWrap.style.gap = "8px";
-    const btnThemeResetDefaults = document.createElement("button");
-    btnThemeResetDefaults.type = "button";
-    btnThemeResetDefaults.textContent = "Werkseinstellungen setzen";
-    applyPopupButtonStyle(btnThemeResetDefaults);
-    const themeDefaultsResetHint = document.createElement("span");
-    themeDefaultsResetHint.textContent = "setzt Header/Sidebar/Main auf Startwerte";
-    themeDefaultsResetHint.style.fontSize = "12px";
-    themeDefaultsResetHint.style.opacity = "0.8";
-    themeDefaultsResetWrap.append(btnThemeResetDefaults, themeDefaultsResetHint);
-    btnThemeResetDefaults.onclick = async () => {
-      await this._applyThemeStartDefaultsToUser();
-    };
-
-    themeBox.append(
-      themeTitle,
-      themeHint,
-      mkRow("Werkseinstellung", themeDefaultsResetWrap),
-      mkRow("Header", themeHeader.outer),
-      mkRow("Sidebar", themeSidebar.outer),
-      mkRow("Main", themeMain.outer)
-    );
-
-    const securityBox = document.createElement("div");
-    applyPopupCardStyle(securityBox);
-    securityBox.style.padding = "10px";
-    securityBox.style.maxWidth = "720px";
-    securityBox.style.marginTop = "10px";
-
-    const securityTitle = document.createElement("div");
-    securityTitle.textContent = "Sicherheit";
-    securityTitle.style.fontWeight = "bold";
-    securityTitle.style.marginBottom = "6px";
-
-    const securityHint = document.createElement("div");
-    securityHint.style.fontSize = "12px";
-    securityHint.style.opacity = "0.8";
-    securityHint.style.marginBottom = "8px";
-    securityHint.textContent = "Einstellungen mit 4-stelliger PIN (nur Zahlen) schuetzen.";
-
-    const inpSecurityPinEnabled = document.createElement("input");
-    inpSecurityPinEnabled.type = "checkbox";
-    inpSecurityPinEnabled.disabled = true;
-    const wrapSecurityPinEnabled = document.createElement("div");
-    wrapSecurityPinEnabled.style.display = "flex";
-    wrapSecurityPinEnabled.style.alignItems = "center";
-    wrapSecurityPinEnabled.append(inpSecurityPinEnabled);
-
-    const mkPinInput = (placeholder) => {
-      const inp = document.createElement("input");
-      inp.type = "password";
-      inp.inputMode = "numeric";
-      inp.maxLength = 4;
-      inp.placeholder = placeholder;
-      inp.style.width = "100%";
-      inp.addEventListener("input", () => {
-        inp.value = (inp.value || "").replace(/\D+/g, "").slice(0, 4);
-      });
-      return inp;
-    };
-
-    const inpSecurityCurrentPin = mkPinInput("Aktuelle PIN (4 Ziffern)");
-    const inpSecurityNewPin = mkPinInput("Neue PIN (4 Ziffern)");
-    const inpSecurityConfirmPin = mkPinInput("PIN wiederholen");
-
-    const securityActions = document.createElement("div");
-    securityActions.style.display = "flex";
-    securityActions.style.gap = "8px";
-    securityActions.style.justifyContent = "flex-end";
-
-    const btnSecurityPinDisable = document.createElement("button");
-    btnSecurityPinDisable.textContent = "PIN deaktivieren";
-    applyPopupButtonStyle(btnSecurityPinDisable);
-    btnSecurityPinDisable.onclick = async () => {
-      await this._disableSecurityPin();
-    };
-
-    const btnSecurityPinSave = document.createElement("button");
-    btnSecurityPinSave.textContent = "PIN speichern";
-    applyPopupButtonStyle(btnSecurityPinSave, { variant: "primary" });
-    btnSecurityPinSave.onclick = async () => {
-      await this._saveSecurityPin();
-    };
-
-    securityActions.append(btnSecurityPinDisable, btnSecurityPinSave);
-    securityBox.append(
-      securityTitle,
-      securityHint,
-      mkRow("PIN aktiv", wrapSecurityPinEnabled),
-      mkRow("Aktuelle PIN", inpSecurityCurrentPin),
-      mkRow("Neue PIN", inpSecurityNewPin),
-      mkRow("PIN wiederholen", inpSecurityConfirmPin),
-      securityActions
-    );
-
-    const dbDiagBox = document.createElement("div");
-    applyPopupCardStyle(dbDiagBox);
-    dbDiagBox.style.padding = "10px";
-    dbDiagBox.style.maxWidth = "720px";
-    dbDiagBox.style.marginTop = "10px";
-
-    const dbDiagTitle = document.createElement("div");
-    dbDiagTitle.textContent = "DB-Diagnose";
-    dbDiagTitle.style.fontWeight = "bold";
-    dbDiagTitle.style.marginBottom = "6px";
-
-    const dbDiagHint = document.createElement("div");
-    dbDiagHint.style.fontSize = "12px";
-    dbDiagHint.style.opacity = "0.8";
-    dbDiagHint.style.marginBottom = "8px";
-    dbDiagHint.textContent = "Aktiver DB-Pfad, Backup und Legacy-Dateien fuer Diagnose/Migration.";
-
-    const dbDiagText = document.createElement("pre");
-    dbDiagText.style.margin = "0";
-    dbDiagText.style.whiteSpace = "pre-wrap";
-    dbDiagText.style.fontSize = "12px";
-    dbDiagText.style.lineHeight = "1.35";
-    dbDiagText.style.fontFamily = "Calibri, Arial, sans-serif";
-    dbDiagText.textContent = "Lade DB-Status...";
-
-    const dbDiagActions = document.createElement("div");
-    dbDiagActions.style.display = "flex";
-    dbDiagActions.style.gap = "8px";
-    dbDiagActions.style.flexWrap = "wrap";
-    dbDiagActions.style.marginTop = "8px";
-
-    const btnDbLegacyImport = document.createElement("button");
-    btnDbLegacyImport.type = "button";
-    btnDbLegacyImport.textContent = "Legacy uebernehmen";
-    applyPopupButtonStyle(btnDbLegacyImport, { variant: "primary" });
-
-    const btnDbOpenActive = document.createElement("button");
-    btnDbOpenActive.type = "button";
-    btnDbOpenActive.textContent = "Aktive DB oeffnen";
-    applyPopupButtonStyle(btnDbOpenActive);
-
-    const btnDbOpenLegacy = document.createElement("button");
-    btnDbOpenLegacy.type = "button";
-    btnDbOpenLegacy.textContent = "Legacy-Import oeffnen";
-    applyPopupButtonStyle(btnDbOpenLegacy);
-
-    dbDiagActions.append(btnDbLegacyImport, btnDbOpenActive, btnDbOpenLegacy);
-    dbDiagBox.append(dbDiagTitle, dbDiagHint, dbDiagText, dbDiagActions);
-
-    let lastDbDiag = null;
-
-    const loadDbDiagnostics = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.dbDiagnosticsGet !== "function") {
-        dbDiagText.textContent = "DB-Diagnose-API fehlt.";
-        return;
-      }
-      const res = await api.dbDiagnosticsGet();
-      if (!res?.ok) {
-        dbDiagText.textContent = `Fehler: ${res?.error || "DB-Diagnose fehlgeschlagen"}`;
-        return;
-      }
-      const d = res.data || {};
-      lastDbDiag = d;
-      const fmt = (s = {}) => {
-        const exists = s.exists ? "ja" : "nein";
-        const size = Number.isFinite(Number(s.size)) ? Number(s.size) : 0;
-        return `${exists}, ${size} Bytes`;
-      };
-      dbDiagText.textContent = [
-        `[db] using ${d.dbPath || "-"}`,
-        `[db] backup ${d.backupPath || "-"} (${fmt(d.backup)})`,
-        `[db] legacy ${d.legacyDbPath || "-"} (${fmt(d.legacy)})`,
-        `[db] legacy-import ${d.legacyImportPath || "-"} (${fmt(d.legacyImport)})`,
-        `[db] legacy-available ${d.legacyAvailable ? "ja" : "nein"}`,
-        `[db] active-likely-empty ${d.activeLikelyEmpty ? "ja" : "nein"}`,
-      ].join("\n");
-    };
-
-    btnDbLegacyImport.onclick = async () => {
-      const api = window.bbmDb || {};
-      const ok = window.confirm(
-        "Legacy-Datenbank wirklich uebernehmen?\nDie aktive DB wird vorher gesichert."
-      );
-      if (!ok) return;
-      if (typeof api.dbLegacyImport !== "function") {
-        alert("Legacy-Import-API fehlt.");
-        return;
-      }
-      const res = await api.dbLegacyImport();
-      if (!res?.ok) {
-        alert(res?.error || "Legacy-Import fehlgeschlagen.");
-        return;
-      }
-      alert("Legacy-Datenbank wurde uebernommen. Einstellungen werden aktualisiert.");
-      if (this.router && typeof this.router.ensureAppSettingsLoaded === "function") {
-        await this.router.ensureAppSettingsLoaded({ force: true });
-      }
-      await this._reload();
-      window.dispatchEvent(new Event("bbm:header-refresh"));
-      await loadDbDiagnostics();
-    };
-
-    btnDbOpenActive.onclick = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.dbOpenFolder !== "function") {
-        alert("Pfad-API fehlt.");
-        return;
-      }
-      const res = await api.dbOpenFolder({ kind: "active" });
-      if (!res?.ok) alert(res?.error || "Aktiven DB-Pfad konnte nicht geoeffnet werden.");
-    };
-
-    btnDbOpenLegacy.onclick = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.dbOpenFolder !== "function") {
-        alert("Pfad-API fehlt.");
-        return;
-      }
-      const hasLegacy = !!(lastDbDiag?.legacyAvailable);
-      if (!hasLegacy) {
-        alert("Keine Legacy-Datei verfuegbar.");
-        return;
-      }
-      const res = await api.dbOpenFolder({ kind: "legacyImport" });
-      if (!res?.ok) alert(res?.error || "Legacy-Import-Pfad konnte nicht geoeffnet werden.");
-    };
-
-    const pdfLogoBox = document.createElement("div");    applyPopupCardStyle(pdfLogoBox);    pdfLogoBox.style.padding = "10px";    pdfLogoBox.style.maxWidth = "720px";    pdfLogoBox.style.marginTop = "10px";
-    const pdfLogoTitle = document.createElement("div");
-    pdfLogoTitle.textContent = "PDF-Logo";
-    pdfLogoTitle.style.fontWeight = "bold";
-    pdfLogoTitle.style.marginBottom = "6px";
-
-    const inpPdfLogoEnabled = document.createElement("input");
-    inpPdfLogoEnabled.type = "checkbox";
-    inpPdfLogoEnabled.addEventListener("change", () => this._schedulePdfLogoSave());
-
-    const pdfLogoEnabledWrap = document.createElement("div");
-    pdfLogoEnabledWrap.style.display = "flex";
-    pdfLogoEnabledWrap.style.alignItems = "center";
-    pdfLogoEnabledWrap.append(inpPdfLogoEnabled);
-
-    const inpPdfLogoFile = document.createElement("input");
-    inpPdfLogoFile.type = "file";
-    inpPdfLogoFile.accept = "image/png,image/jpeg,image/bmp";
-    inpPdfLogoFile.addEventListener("change", async () => {
-      await this._handlePdfLogoFileInput();
-    });
-
-    const pdfLogoPreviewWrap = document.createElement("div");
-    pdfLogoPreviewWrap.style.display = "flex";
-    pdfLogoPreviewWrap.style.alignItems = "center";
-    pdfLogoPreviewWrap.style.gap = "10px";
-
-    // --- Dummy-Platzhalter (wenn kein Logo gesetzt) ---
-    const pdfLogoDummy = document.createElement("div");
-    pdfLogoDummy.style.width = "180px";
-    pdfLogoDummy.style.height = "80px";
-    pdfLogoDummy.style.border = "1px solid #ddd";
-    pdfLogoDummy.style.borderRadius = "6px";
-    pdfLogoDummy.style.background = "#f0f0f0";
-    pdfLogoDummy.style.display = "flex";
-    pdfLogoDummy.style.alignItems = "center";
-    pdfLogoDummy.style.justifyContent = "center";
-    pdfLogoDummy.style.color = "#666";
-    pdfLogoDummy.style.fontSize = "12px";
-    pdfLogoDummy.style.fontWeight = "700";
-    pdfLogoDummy.style.textAlign = "center";
-    pdfLogoDummy.style.padding = "6px";
-    pdfLogoDummy.style.boxSizing = "border-box";
-    pdfLogoDummy.textContent = "Hier den Text anpassen";
-
-    const imgPdfLogoPreview = document.createElement("img");
-    imgPdfLogoPreview.style.maxWidth = "180px";
-    imgPdfLogoPreview.style.maxHeight = "80px";
-    imgPdfLogoPreview.style.border = "1px solid #ddd";
-    imgPdfLogoPreview.style.borderRadius = "6px";
-    imgPdfLogoPreview.style.background = "#fafafa";
-    imgPdfLogoPreview.style.display = "none";
-
-    const btnPdfLogoRemove = document.createElement("button");
-    btnPdfLogoRemove.textContent = "Logo entfernen";
-    btnPdfLogoRemove.onclick = () => {
-      this._setPdfLogoDataUrl("");
-      this._setPdfLogoFilePath("");
-    };
-
-    pdfLogoPreviewWrap.append(pdfLogoDummy, imgPdfLogoPreview, btnPdfLogoRemove);
-
-    const pdfLogoPath = document.createElement("input");
-    pdfLogoPath.type = "text";
-    pdfLogoPath.readOnly = true;
-    pdfLogoPath.placeholder = "Kein Logo gewaehlt";
-    pdfLogoPath.style.width = "100%";
-
-    const inpPdfLogoWidth = document.createElement("input");
-    inpPdfLogoWidth.type = "number";
-    inpPdfLogoWidth.min = "10";
-    inpPdfLogoWidth.max = "60";
-    inpPdfLogoWidth.step = "1";
-    inpPdfLogoWidth.style.width = "100%";
-    inpPdfLogoWidth.addEventListener("input", () => {
-      this._schedulePdfLogoSave();
-      this._updatePdfLogoQuality();
-    });
-
-    const inpPdfLogoTop = document.createElement("input");
-    inpPdfLogoTop.type = "number";
-    inpPdfLogoTop.min = "0";
-    inpPdfLogoTop.max = "30";
-    inpPdfLogoTop.step = "1";
-    inpPdfLogoTop.style.width = "100%";
-    inpPdfLogoTop.addEventListener("input", () => {
-      this._schedulePdfLogoSave();
-      this._updatePdfLogoQuality();
-    });
-
-    const inpPdfLogoRight = document.createElement("input");
-    inpPdfLogoRight.type = "number";
-    inpPdfLogoRight.min = "0";
-    inpPdfLogoRight.max = "30";
-    inpPdfLogoRight.step = "1";
-    inpPdfLogoRight.style.width = "100%";
-    inpPdfLogoRight.addEventListener("input", () => {
-      this._schedulePdfLogoSave();
-      this._updatePdfLogoQuality();
-    });
-
-    const pdfLogoQuality = document.createElement("div");
-    pdfLogoQuality.style.marginTop = "6px";
-    pdfLogoQuality.style.fontSize = "12px";
-    pdfLogoQuality.style.opacity = "0.85";
-
-    pdfLogoBox.append(
-      pdfLogoTitle,
-      mkRow("Logo im PDF anzeigen", pdfLogoEnabledWrap),
-      mkRow("Logo-Datei", inpPdfLogoFile),
-      mkRow("Dateipfad", pdfLogoPath),
-      mkRow("Vorschau", pdfLogoPreviewWrap),
-      mkRow("Logo-Breite (mm)", inpPdfLogoWidth),
-      mkRow("Abstand oben (mm)", inpPdfLogoTop),
-      mkRow("Abstand rechts (mm)", inpPdfLogoRight),
-      pdfLogoQuality
-    );
-
-    const pdfSettingsBox = document.createElement("div");    applyPopupCardStyle(pdfSettingsBox);    pdfSettingsBox.style.padding = "10px";    pdfSettingsBox.style.maxWidth = "720px";    pdfSettingsBox.style.marginTop = "10px";
-    const pdfSettingsTitle = document.createElement("div");
-    pdfSettingsTitle.textContent = "PDF-Einstellungen";
-    pdfSettingsTitle.style.fontWeight = "bold";
-    pdfSettingsTitle.style.marginBottom = "6px";
-
-    const pdfHeaderTitle = document.createElement("div");
-    pdfHeaderTitle.textContent = "Protokollkopf (PDF)";
-    pdfHeaderTitle.style.fontWeight = "bold";
-    pdfHeaderTitle.style.margin = "8px 0 6px";
-
-    const inpPdfProtocolTitle = document.createElement("input");
-    inpPdfProtocolTitle.type = "text";
-    inpPdfProtocolTitle.placeholder = "Baubesprechung";
-    inpPdfProtocolTitle.style.width = "100%";
-    inpPdfProtocolTitle.addEventListener("input", () => this._schedulePdfSettingsSave());
-
-    const inpPdfTrafficLightAll = document.createElement("input");
-    inpPdfTrafficLightAll.type = "checkbox";
-    inpPdfTrafficLightAll.addEventListener("change", () => this._schedulePdfSettingsSave());
-
-    const inpPdfProtocolsDir = document.createElement("input");
-    inpPdfProtocolsDir.type = "text";
-    inpPdfProtocolsDir.readOnly = true;
-    inpPdfProtocolsDir.placeholder = "Noch kein Speicherort ausgewaehlt";
-    inpPdfProtocolsDir.style.width = "100%";
-
-    const btnPdfProtocolsBrowse = document.createElement("button");
-    btnPdfProtocolsBrowse.textContent = "Durchsuchen...";
-    btnPdfProtocolsBrowse.onclick = async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.selectDirectory !== "function") {
-        alert("Dialog-API fehlt (IPC noch nicht aktiv).");
-        return;
-      }
-
-      const res = await api.selectDirectory({ title: "Speicherort Protokolle" });
-      if (!res?.ok) {
-        alert(res?.error || "Ordnerauswahl fehlgeschlagen");
-        return;
-      }
-      if (res.canceled) return;
-      const dir = Array.isArray(res.filePaths) ? res.filePaths[0] : "";
-      if (!dir) return;
-      inpPdfProtocolsDir.value = dir;
-      await this._savePdfSettings();
-    };
-
-    const protocolsRow = document.createElement("div");
-    protocolsRow.style.display = "flex";
-    protocolsRow.style.gap = "8px";
-    protocolsRow.style.alignItems = "center";
-    protocolsRow.append(inpPdfProtocolsDir, btnPdfProtocolsBrowse);
-
-    const pdfFooterTitle = document.createElement("div");
-    pdfFooterTitle.textContent = "Protokoll-Fuss (PDF)";
-    pdfFooterTitle.style.fontWeight = "bold";
-    pdfFooterTitle.style.margin = "10px 0 6px";
-
-    const pdfFooterCaption = document.createElement("div");
-    pdfFooterCaption.textContent = "Aufgestellt:";
-    pdfFooterCaption.style.fontWeight = "600";
-    pdfFooterCaption.style.marginBottom = "6px";
-
-    const btnPdfFooterUseUserData = document.createElement("button");
-    btnPdfFooterUseUserData.textContent = "Uebernehmen";
-    applyPopupButtonStyle(btnPdfFooterUseUserData);
-    btnPdfFooterUseUserData.onclick = async () => {
-      this.pdfFooterUseUserData = true;
-      this._applyPdfSettingsInputs({
-        protocolTitle: this.inpPdfProtocolTitle?.value || "",
-        trafficLightAllEnabled: this.inpPdfTrafficLightAll?.checked || false,
-        footerUseUserData: this.pdfFooterUseUserData,
-        footerPlace: "",
-        footerDate: "",
-        footerName1: "",
-        footerName2: "",
-        footerRecorder: "",
-        footerStreet: "",
-        footerZip: "",
-        footerCity: "",
-      });
-      this._applyPdfFooterUserDefaultsFromUser();
-      this._applyPdfFooterPlaceDateDefaults({
-        city: this.inpUserCity?.value ?? this.userCity ?? "",
-      });
-      this._schedulePdfSettingsSave();
-    };
-
-    const inpPdfFooterPlace = document.createElement("input");
-    inpPdfFooterPlace.type = "text";
-    inpPdfFooterPlace.placeholder = "Ort";
-    inpPdfFooterPlace.style.width = "100%";
-    inpPdfFooterPlace.addEventListener("input", () => this._schedulePdfSettingsSave());
-
-    const inpPdfFooterDate = document.createElement("input");
-    inpPdfFooterDate.type = "text";
-    inpPdfFooterDate.placeholder = "Datum";
-    inpPdfFooterDate.style.width = "100%";
-    inpPdfFooterDate.addEventListener("input", () => this._schedulePdfSettingsSave());
-
-    const inpPdfFooterName1 = document.createElement("input");
-    inpPdfFooterName1.type = "text";
-    inpPdfFooterName1.placeholder = "Name1";
-    inpPdfFooterName1.style.width = "100%";
-    inpPdfFooterName1.addEventListener("input", () => this._schedulePdfSettingsSave());
-
-    const inpPdfFooterName2 = document.createElement("input");
-    inpPdfFooterName2.type = "text";
-    inpPdfFooterName2.placeholder = "Name2";
-    inpPdfFooterName2.style.width = "100%";
-    inpPdfFooterName2.addEventListener("input", () => this._schedulePdfSettingsSave());
-
-    const inpPdfFooterRecorder = document.createElement("input");
-    inpPdfFooterRecorder.type = "text";
-    inpPdfFooterRecorder.placeholder = "Protokollfuehrer";
-    inpPdfFooterRecorder.style.width = "100%";
-    inpPdfFooterRecorder.addEventListener("input", () => this._schedulePdfSettingsSave());
-
-    const inpPdfFooterStreet = document.createElement("input");
-    inpPdfFooterStreet.type = "text";
-    inpPdfFooterStreet.placeholder = "Str./HsNr.";
-    inpPdfFooterStreet.style.width = "100%";
-    inpPdfFooterStreet.addEventListener("input", () => this._schedulePdfSettingsSave());
-
-    const inpPdfFooterZip = document.createElement("input");
-    inpPdfFooterZip.type = "text";
-    inpPdfFooterZip.inputMode = "numeric";
-    inpPdfFooterZip.placeholder = "PLZ";
-    inpPdfFooterZip.style.width = "100%";
-    inpPdfFooterZip.addEventListener("input", () => this._schedulePdfSettingsSave());
-
-    const inpPdfFooterCity = document.createElement("input");
-    inpPdfFooterCity.type = "text";
-    inpPdfFooterCity.placeholder = "Ort";
-    inpPdfFooterCity.style.width = "100%";
-    inpPdfFooterCity.addEventListener("input", () => this._schedulePdfSettingsSave());
-
-    pdfSettingsBox.append(
-      pdfSettingsTitle,
-      mkRow("Speicherort Protokolle", protocolsRow),
-      pdfHeaderTitle,
-      mkRow("Name des Protokolls", inpPdfProtocolTitle),
-      pdfFooterTitle,
-      pdfFooterCaption,
-      mkRow("Nutzerdaten uebernehmen", btnPdfFooterUseUserData),
-      mkRow("Ort (Ort, Datum)", inpPdfFooterPlace),
-      mkRow("Datum", inpPdfFooterDate),
-      mkRow("Name1", inpPdfFooterName1),
-      mkRow("Name2", inpPdfFooterName2),
-      mkRow("Protokollfuehrer", inpPdfFooterRecorder),
-      mkRow("Str./HsNr.", inpPdfFooterStreet),
-      mkRow("PLZ", inpPdfFooterZip),
-      mkRow("Ort (Adresse)", inpPdfFooterCity)
-    );
-
-    const logosBox = document.createElement("div");
-    applyPopupCardStyle(logosBox);
-    logosBox.style.padding = "10px";
-    logosBox.style.marginTop = "10px";
-    logosBox.style.display = "inline-block";
-    logosBox.style.width = "fit-content";
-    logosBox.style.maxWidth = "100%";
-
-    const logosHead = document.createElement("div");
-    logosHead.style.display = "flex";
-    logosHead.style.alignItems = "center";
-    logosHead.style.justifyContent = "space-between";
-    logosHead.style.gap = "10px";
-    logosHead.style.marginBottom = "6px";
-
-    const logosTitle = document.createElement("div");
-    logosTitle.textContent = "Logos";
-    logosTitle.style.fontWeight = "bold";
-
-    const headerAdaptiveWrap = document.createElement("label");
-    headerAdaptiveWrap.style.display = "inline-flex";
-    headerAdaptiveWrap.style.alignItems = "center";
-    headerAdaptiveWrap.style.gap = "6px";
-    headerAdaptiveWrap.style.fontSize = "12px";
-    const inpPrintHeaderAdaptive = document.createElement("input");
-    inpPrintHeaderAdaptive.type = "checkbox";
-    inpPrintHeaderAdaptive.checked = false;
-    inpPrintHeaderAdaptive.addEventListener("change", () => {
-      this._savePrintLogoSettings();
-    });
-    this.inpPrintHeaderAdaptive = inpPrintHeaderAdaptive;
-    const headerAdaptiveLabel = document.createElement("span");
-    headerAdaptiveLabel.textContent = "Kopfzeile anpassen";
-    headerAdaptiveWrap.append(inpPrintHeaderAdaptive, headerAdaptiveLabel);
-    logosHead.append(logosTitle, headerAdaptiveWrap);
-
-    const logosScroller = document.createElement("div");
-    logosScroller.style.width = "100%";
-    logosScroller.style.maxWidth = "100%";
-    logosScroller.style.overflowX = "auto";
-
-    const logosGrid = document.createElement("div");
-    logosGrid.style.display = "grid";
-    logosGrid.style.gridTemplateColumns = "repeat(3, minmax(280px, 1fr))";
-    logosGrid.style.gap = "12px";
-    logosGrid.style.alignItems = "start";
-    logosGrid.style.maxWidth = "100%";
-    logosGrid.style.minWidth = "860px";
-    logosGrid.style.overflow = "hidden";
-
-    const buildPrintLogoSlot = (slotIndex) => {
-      const idx = slotIndex + 1;
-      const slotWrap = document.createElement("div");
-      slotWrap.style.border = "1px solid #e2e8f0";
-      slotWrap.style.borderRadius = "8px";
-      slotWrap.style.padding = "10px";
-      slotWrap.style.display = "grid";
-      // Platz fuer Vorschau + vertikale Ausrichtung rechts daneben, damit nichts in die zweite Spalte ueberlappt.
-      slotWrap.style.gridTemplateColumns = "172px minmax(0, 1fr)";
-      slotWrap.style.gap = "10px";
-      slotWrap.style.alignItems = "start";
-      slotWrap.style.boxSizing = "border-box";
-      slotWrap.style.minWidth = "320px";
-
-      const previewCol = document.createElement("div");
-      previewCol.style.display = "grid";
-      previewCol.style.gap = "8px";
-
-      const slotTitle = document.createElement("div");
-      slotTitle.textContent = "Logo " + idx;
-      slotTitle.style.fontWeight = "600";
-
-      const previewFrame = document.createElement("div");
-      previewFrame.style.width = "132px";
-      previewFrame.style.height = "78px";
-      previewFrame.style.border = "1px solid #ddd";
-      previewFrame.style.borderRadius = "6px";
-      previewFrame.style.background = "#f5f5f5";
-      previewFrame.style.display = "flex";
-      previewFrame.style.alignItems = "flex-end";
-      previewFrame.style.justifyContent = "center";
-      previewFrame.style.overflow = "hidden";
-      previewFrame.style.cursor = "pointer";
-      this.printLogoPreviewFrames[slotIndex] = previewFrame;
-
-      const placeholder = document.createElement("div");
-      placeholder.style.width = "100%";
-      placeholder.style.height = "100%";
-      placeholder.style.display = "flex";
-      placeholder.style.alignItems = "center";
-      placeholder.style.justifyContent = "center";
-      placeholder.style.fontSize = "11px";
-      placeholder.style.color = "#666";
-      placeholder.style.textAlign = "center";
-      placeholder.style.padding = "4px";
-      placeholder.textContent = "Logo waehlen";
-      this.printLogoPlaceholderEls[slotIndex] = placeholder;
-
-      const img = document.createElement("img");
-      img.style.width = "auto";
-      img.style.height = "auto";
-      img.style.maxWidth = "100%";
-      img.style.objectFit = "contain";
-      img.style.display = "none";
-      this.printLogoPreviewImgs[slotIndex] = img;
-
-      previewFrame.append(placeholder, img);
-      const previewTopRow = document.createElement("div");
-      previewTopRow.style.display = "flex";
-      previewTopRow.style.alignItems = "center";
-      previewTopRow.style.gap = "8px";
-
-      const alignWrap = document.createElement("div");
-      alignWrap.style.display = "grid";
-      alignWrap.style.gap = "4px";
-      alignWrap.style.justifyItems = "center";
-
-      const alignTitle = document.createElement("div");
-      alignTitle.textContent = "Orientierung";
-      alignTitle.style.fontSize = "12px";
-      alignTitle.style.opacity = "0.85";
-
-      const alignChecks = document.createElement("div");
-      alignChecks.style.display = "flex";
-      alignChecks.style.gap = "10px";
-      alignChecks.style.alignItems = "center";
-      alignChecks.style.justifyContent = "center";
-
-      const mkAlignCheck = (alignValue) => {
-        const chk = document.createElement("input");
-        chk.type = "checkbox";
-        chk.checked = alignValue === "center";
-        chk.addEventListener("change", () => {
-          if (!chk.checked) {
-            chk.checked = true;
-            return;
-          }
-          this._applyPrintLogoAlign(slotIndex, alignValue);
-          this._savePrintLogoSettings();
-        });
-        return chk;
-      };
-
-      const alignLeft = mkAlignCheck("left");
-      const alignCenter = mkAlignCheck("center");
-      const alignRight = mkAlignCheck("right");
-      this.printLogoAlignChecks[slotIndex] = {
-        left: alignLeft,
-        center: alignCenter,
-        right: alignRight,
-      };
-      alignChecks.append(alignLeft, alignCenter, alignRight);
-      alignWrap.append(alignTitle, alignChecks);
-
-      const vAlignChecks = document.createElement("div");
-      vAlignChecks.style.display = "grid";
-      vAlignChecks.style.gap = "8px";
-      vAlignChecks.style.alignItems = "center";
-      vAlignChecks.style.justifyItems = "center";
-
-      const mkVAlignCheck = (alignValue) => {
-        const chk = document.createElement("input");
-        chk.type = "checkbox";
-        chk.checked = alignValue === "middle";
-        chk.addEventListener("change", () => {
-          if (!chk.checked) {
-            chk.checked = true;
-            return;
-          }
-          this._applyPrintLogoVAlign(slotIndex, alignValue);
-          this._savePrintLogoSettings();
-        });
-        return chk;
-      };
-      const vAlignTop = mkVAlignCheck("top");
-      const vAlignMiddle = mkVAlignCheck("middle");
-      const vAlignBottom = mkVAlignCheck("bottom");
-      this.printLogoVAlignChecks[slotIndex] = {
-        top: vAlignTop,
-        middle: vAlignMiddle,
-        bottom: vAlignBottom,
-      };
-      vAlignChecks.append(vAlignTop, vAlignMiddle, vAlignBottom);
-
-      previewTopRow.append(previewFrame, vAlignChecks);
-      previewCol.append(slotTitle, previewTopRow, alignWrap);
-
-      const controlsCol = document.createElement("div");
-      controlsCol.style.display = "grid";
-      controlsCol.style.gap = "8px";
-      controlsCol.style.minWidth = "0";
-
-      const mkControlRow = (labelText, controlEl) => {
-        const row = document.createElement("div");
-        row.style.display = "grid";
-        row.style.gridTemplateColumns = "72px minmax(0, 1fr)";
-        row.style.gap = "8px";
-        row.style.alignItems = "center";
-
-        const label = document.createElement("div");
-        label.textContent = labelText;
-        label.style.fontSize = "12px";
-        label.style.whiteSpace = "nowrap";
-
-        row.append(label, controlEl);
-        return row;
-      };
-
-      const inpEnabled = document.createElement("input");
-      inpEnabled.type = "checkbox";
-      this.printLogoEnabledInputs[slotIndex] = inpEnabled;
-
-      const sizeSelect = document.createElement("select");
-      sizeSelect.style.minWidth = "82px";
-      sizeSelect.style.width = "82px";
-      for (const opt of [
-        { value: "small", label: "Klein" },
-        { value: "medium", label: "Mittel" },
-        { value: "large", label: "Gross" },
-      ]) {
-        const option = document.createElement("option");
-        option.value = opt.value;
-        option.textContent = opt.label;
-        sizeSelect.appendChild(option);
-      }
-      sizeSelect.value = "medium";
-      sizeSelect.addEventListener("change", () => {
-        this._applyPrintLogoSize(slotIndex, sizeSelect.value);
-      });
-      this.printLogoSizeSelects[slotIndex] = sizeSelect;
-
-      const fileRow = document.createElement("div");
-      fileRow.style.display = "flex";
-      fileRow.style.flexWrap = "wrap";
-      fileRow.style.gap = "8px";
-      fileRow.style.alignItems = "center";
-
-      const inpFile = document.createElement("input");
-      inpFile.type = "file";
-      inpFile.accept = "image/png,image/jpeg,image/jpg";
-      inpFile.style.display = "none";
-      inpFile.addEventListener("change", async () => {
-        await this._handlePrintLogoFileInput(slotIndex);
-      });
-      this.printLogoFileInputs[slotIndex] = inpFile;
-      previewFrame.onclick = () => {
-        if (inpFile.disabled) return;
-        inpFile.click();
-      };
-
-      const btnRemove = document.createElement("button");
-      btnRemove.textContent = "Entfernen";
-      applyPopupButtonStyle(btnRemove);
-      btnRemove.style.fontSize = "11px";
-      btnRemove.style.padding = "3px 6px";
-      btnRemove.style.minHeight = "16px";
-      btnRemove.style.alignSelf = "flex-start";
-      btnRemove.onclick = () => {
-        this._setPrintLogoDataUrl(slotIndex, "");
-        if (this.printLogoEnabledInputs[slotIndex]) {
-          this.printLogoEnabledInputs[slotIndex].checked = false;
-        }
-      };
-      this.printLogoRemoveBtns[slotIndex] = btnRemove;
-      fileRow.append(inpFile);
-
-      const enabledRow = document.createElement("div");
-      enabledRow.style.display = "inline-flex";
-      enabledRow.style.alignItems = "center";
-      enabledRow.style.gap = "8px";
-      enabledRow.style.marginLeft = "10mm";
-      const enabledLabel = document.createElement("span");
-      enabledLabel.textContent = "Anzeigen";
-      enabledLabel.style.fontSize = "12px";
-      enabledRow.append(inpEnabled, enabledLabel);
-
-      const sizeGroup = document.createElement("div");
-      sizeGroup.style.display = "grid";
-      sizeGroup.style.gap = "6px";
-      sizeGroup.style.justifyItems = "start";
-      sizeGroup.style.alignSelf = "end";
-      sizeGroup.style.marginLeft = "10mm";
-      sizeGroup.append(sizeSelect, btnRemove);
-
-      controlsCol.append(
-        enabledRow,
-        fileRow,
-        sizeGroup
-      );
-
-      slotWrap.append(previewCol, controlsCol);
-      return slotWrap;
-    };
-
-    // Reihenfolge muss der PDF-Position entsprechen: links Logo 3, Mitte Logo 2, rechts Logo 1.
-    logosGrid.append(
-      buildPrintLogoSlot(2),
-      buildPrintLogoSlot(1),
-      buildPrintLogoSlot(0)
-    );
-    logosScroller.appendChild(logosGrid);
-    logosBox.append(logosHead, logosScroller);
-    const actions = document.createElement("div");
-    actions.style.display = "flex";
-    actions.style.gap = "8px";
-    actions.style.marginTop = "10px";
-
-    const btnSave = document.createElement("button");
-    btnSave.textContent = "Nutzerdaten speichern";
-    applyPopupButtonStyle(btnSave, { variant: "primary" });
-    btnSave.onclick = async () => {
-      await this._save();
-    };
-
-    actions.append(btnSave);
-
-
-    userBox.append(actions);
-
-    const rolesBox = document.createElement("div");    applyPopupCardStyle(rolesBox);    rolesBox.style.padding = "10px";    rolesBox.style.width = "600px";    rolesBox.style.maxWidth = "600px";    rolesBox.style.marginLeft = "0";    rolesBox.style.marginRight = "auto";    rolesBox.style.marginTop = "10px";    rolesBox.style.boxSizing = "border-box";
-    const rolesHead = document.createElement("div");
-    rolesHead.style.display = "flex";
-    rolesHead.style.alignItems = "center";
-    rolesHead.style.justifyContent = "space-between";
-    rolesHead.style.gap = "8px";
-    rolesHead.style.marginBottom = "6px";
-
-    const rolesTitleWrap = document.createElement("div");
-    rolesTitleWrap.style.display = "flex";
-    rolesTitleWrap.style.alignItems = "center";
-    rolesTitleWrap.style.gap = "8px";
-
-    const rolesTitle = document.createElement("div");
-    rolesTitle.textContent = "Firmenliste";
-    rolesTitle.style.fontWeight = "bold";
-
-    const roleMoveHint = document.createElement("div");
-    roleMoveHint.textContent = "neue Position mit Pfeiltasten wählen";
-    roleMoveHint.style.color = "#1e5fbf";
-    roleMoveHint.style.fontSize = "16px";
-    roleMoveHint.style.display = "none";
-    roleMoveHint.style.whiteSpace = "nowrap";
-    rolesTitleWrap.append(rolesTitle, roleMoveHint);
-
-    const rolesHeadActions = document.createElement("div");
-    rolesHeadActions.style.display = "flex";
-    rolesHeadActions.style.gap = "6px";
-
-    const btnRoleMove = document.createElement("button");
-    btnRoleMove.textContent = "Schieben";
-    applyPopupButtonStyle(btnRoleMove);
-    btnRoleMove.onclick = () => this._toggleRoleMoveMode();
-
-    const btnRoleDelete = document.createElement("button");
-    btnRoleDelete.textContent = "Loeschen";
-    applyPopupButtonStyle(btnRoleDelete, { variant: "danger" });
-    btnRoleDelete.onclick = async () => {
-      await this._deleteSelectedRole();
-    };
-
-    const btnRoleRename = document.createElement("button");
-    btnRoleRename.textContent = "Umbenennen";
-    applyPopupButtonStyle(btnRoleRename);
-    btnRoleRename.onclick = () => this._startRenameSelectedRole();
-
-    rolesHeadActions.append(btnRoleMove, btnRoleDelete, btnRoleRename);
-    rolesHead.append(rolesTitleWrap, rolesHeadActions);
-
-    const rolesHint = document.createElement("div");
-    rolesHint.textContent = "Zeile markieren, Schieben aktivieren, dann mit Pfeilen verschieben. Enter beendet.";
-    rolesHint.style.fontSize = "12px";
-    rolesHint.style.opacity = "0.75";
-    rolesHint.style.marginBottom = "8px";
-
-    const rolesActions = document.createElement("div");
-    rolesActions.style.display = "flex";
-    rolesActions.style.gap = "8px";
-    rolesActions.style.marginBottom = "8px";
-
-    const inpAddRole = document.createElement("input");
-    inpAddRole.type = "text";
-    inpAddRole.placeholder = "Neue Kategorie...";
-    inpAddRole.style.flex = "1";
-    inpAddRole.addEventListener("keydown", async (e) => {
-      if (e.key !== "Enter") return;
-      e.preventDefault();
-      await this._addRoleCategory();
-    });
-
-    const btnAddRole = document.createElement("button");
-    btnAddRole.textContent = "Kategorie hinzufuegen";
-    applyPopupButtonStyle(btnAddRole);
-    btnAddRole.onclick = async () => {
-      await this._addRoleCategory();
-    };
-
-    rolesActions.append(inpAddRole, btnAddRole);
-
-    const roleList = document.createElement("div");
-    roleList.tabIndex = 0;
-    roleList.style.outline = "none";
-    roleList.addEventListener("keydown", (e) => this._handleRoleKeyDown(e));
-    rolesBox.append(rolesHead, rolesHint, rolesActions, roleList);
-
-    const openThemePopup = () => {
-      this._themeSaveMode = "user";
-      this._openSettingsModal({
-        title: "Farben einstellen",
-        content: [themeBox],
-        closeOnly: false,
-        saveFn: async () => (await this._saveThemeSettings()) !== false,
-      });
-      this._applyThemePreviewFromInputs();
-    };
-
-    const openThemeDefaultsPopup = async () => {
-      this._themeSaveMode = "startDefaults";
-      await this._loadThemeStartDefaults();
-      this._openSettingsModal({
-        title: "Start-Defaults Farbschema",
-        content: [themeBox],
-        closeOnly: false,
-        saveFn: async () => (await this._saveThemeStartDefaults()) !== false,
-      });
-      this._applyThemePreviewFromInputs();
-    };
-
-    const btnOpenThemePopup = document.createElement("button");
-    btnOpenThemePopup.type = "button";
-    btnOpenThemePopup.textContent = "Farbschema öffnen";
-    btnOpenThemePopup.style.width = "100%";
-    applyPopupButtonStyle(btnOpenThemePopup, { variant: "primary" });
-    btnOpenThemePopup.onclick = () => openThemePopup();
-
-    const themeBtnWrap = document.createElement("div");
-    themeBtnWrap.style.width = "calc(100% - 1cm)";
-    themeBtnWrap.style.marginLeft = "auto";
-    themeBtnWrap.style.display = "flex";
-    themeBtnWrap.style.justifyContent = "center";
-    themeBtnWrap.append(btnOpenThemePopup);
-
-    const userRightCol = document.createElement("div");
-    userRightCol.style.display = "grid";
-    userRightCol.style.gridTemplateColumns = "1fr";
-    userRightCol.style.gap = "10px";
-    userRightCol.style.alignContent = "start";
-    userRightCol.append(fontScaleBox, themeBtnWrap);
-
-    const userTopRow = document.createElement("div");
-    userTopRow.style.display = "grid";
-    userTopRow.style.gridTemplateColumns = "minmax(0, 360px) minmax(0, 360px)";
-    userTopRow.style.gap = "14px";
-    userTopRow.style.alignItems = "start";
-    userTopRow.style.width = "100%";
-    userTopRow.style.maxWidth = "720px";
-    userTopRow.style.marginTop = "10px";
-    userTopRow.append(userBox, userRightCol);
-
-    const openSettingsModal = ({ title, content, saveFn, closeOnly = false }) => {
-      this._openSettingsModal({
-        title,
-        content: Array.isArray(content) ? content : [content],
-        saveFn,
-        closeOnly,
-      });
-    };
-
-    const tileUser = mkTile({
-      titleText: "Nutzereinstellungen",
-      subText: "Nutzerdaten",
-      onClick: async () => {
-        await loadFontScaleSettings();
-        openSettingsModal({
-          title: "Nutzereinstellungen",
-          content: [userTopRow],
-          closeOnly: false,
-          saveFn: async () => (await this._save()) !== false,
-        });
-        setTimeout(() => {
-          try {
-            const h = Math.round(userBox.getBoundingClientRect().height || 0);
-            if (h > 0) fontScaleBox.style.height = `${Math.max(1, Math.round(h * 0.5))}px`;
-          } catch (_e) {
-            // ignore
-          }
-        }, 0);
-      },
-    });
-
-    const tilePrint = mkTile({
-      titleText: "Druckeinstellungen",
-      subText: "PDF-Einstellungen & Kategorien",
-      onClick: async () => {
-        const tabWrap = document.createElement("div");
-
-        const tabHead = document.createElement("div");
-        tabHead.style.display = "flex";
-        tabHead.style.gap = "8px";
-        tabHead.style.flexWrap = "wrap";
-        tabHead.style.rowGap = "8px";
-        tabHead.style.marginBottom = "10px";
-
-        const tabBtnPdf = document.createElement("button");
-        tabBtnPdf.textContent = "PDF-Einstellungen";
-
-        const tabBtnLogos = document.createElement("button");
-        tabBtnLogos.textContent = "Logos";
-
-        const tabBtnRoles = document.createElement("button");
-        tabBtnRoles.textContent = "Firmenliste";
-
-        const tabBtnPreRemarks = document.createElement("button");
-        tabBtnPreRemarks.textContent = "Vorbemerkung";
-
-        const btnSeitenlayout = document.createElement("button");
-        btnSeitenlayout.type = "button";
-        btnSeitenlayout.textContent = "Seitenlayout";
-        applyPopupButtonStyle(btnSeitenlayout);
-
-        const btnEmails = document.createElement("button");
-        btnEmails.type = "button";
-        btnEmails.textContent = "E-Mails";
-        applyPopupButtonStyle(btnEmails);
-
-        const applyTabButtonBase = (btn) => {
-          btn.style.padding = "6px 10px";
-          btn.style.borderRadius = "8px";
-          btn.style.border = "1px solid rgba(0,0,0,0.18)";
-          btn.style.fontWeight = "600";
-          btn.style.cursor = "pointer";
-          btn.style.minHeight = "30px";
-          btn.style.boxShadow = "none";
-          btn.style.transition = "background 120ms ease, box-shadow 120ms ease, border-color 120ms ease";
-        };
-
-        const applyHover = (btn) => {
-          btn.onmouseenter = () => {
-            const activeBtn =
-              activeTab === "pdf" ? tabBtnPdf : activeTab === "logos" ? tabBtnLogos : tabBtnRoles;
-            if (btn === activeBtn) return;
-            btn.style.background = "#f7f9fc";
-            btn.style.boxShadow = "0 1px 0 rgba(0,0,0,0.08)";
-          };
-          btn.onmouseleave = () => {
-            applyTabStyles();
-          };
-        };
-
-        applyTabButtonBase(tabBtnPdf);
-        applyTabButtonBase(tabBtnLogos);
-        applyTabButtonBase(tabBtnRoles);
-        applyTabButtonBase(tabBtnPreRemarks);
-        applyTabButtonBase(btnSeitenlayout);
-        applyTabButtonBase(btnEmails);
-        applyHover(tabBtnPdf);
-        applyHover(tabBtnLogos);
-        applyHover(tabBtnRoles);
-        applyHover(btnSeitenlayout);
-        applyHover(btnEmails);
-        applyHover(tabBtnPreRemarks);
-
-        const tabBody = document.createElement("div");
-        tabBody.style.display = "grid";
-        tabBody.style.gap = "10px";
-
-        let activeTab = "pdf";
-        const syncPrintSettingsModalWidth = () => {
-          if (!this.settingsModalEl) return;
-          if (activeTab === "logos") {
-            this.settingsModalEl.style.width = "min(1280px, 95vw)";
-          } else {
-            this.settingsModalEl.style.width = "min(760px, calc(100vw - 24px))";
-          }
-        };
-
-        const applyTabStyles = () => {
-          const isPdf = activeTab === "pdf";
-          const isLogos = activeTab === "logos";
-          const isRoles = activeTab === "roles";
-
-          tabBtnPdf.style.background = isPdf ? "#1976d2" : "#fff";
-          tabBtnPdf.style.color = isPdf ? "white" : "#1565c0";
-          tabBtnPdf.style.borderColor = isPdf ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
-          tabBtnPdf.style.boxShadow = isPdf ? "0 1px 0 rgba(0,0,0,0.12)" : "none";
-
-          tabBtnLogos.style.background = isLogos ? "#1976d2" : "#fff";
-          tabBtnLogos.style.color = isLogos ? "white" : "#1565c0";
-          tabBtnLogos.style.borderColor = isLogos ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
-          tabBtnLogos.style.boxShadow = isLogos ? "0 1px 0 rgba(0,0,0,0.12)" : "none";
-
-          tabBtnRoles.style.background = isRoles ? "#1976d2" : "#fff";
-          tabBtnRoles.style.color = isRoles ? "white" : "#1565c0";
-          tabBtnRoles.style.borderColor = isRoles ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
-          tabBtnRoles.style.boxShadow = isRoles ? "0 1px 0 rgba(0,0,0,0.12)" : "none";
-
-          tabBtnPreRemarks.style.background = "#fff";
-          tabBtnPreRemarks.style.color = "#1565c0";
-          tabBtnPreRemarks.style.borderColor = "rgba(0,0,0,0.18)";
-          tabBtnPreRemarks.style.boxShadow = "none";
-        };
-
-        const openPrintLayoutModal = async () => {
-          await loadPrintV2LayoutSettings();
-          this._openSettingsModal({
-            title: "Druck-Layout",
-            content: [printV2LayoutBox],
-            closeOnly: true,
-          });
-        };
-
-
-        const openEmailsModal = async () => {
-          const api = window.bbmDb || {};
-
-          const SUBJECT_PLACEHOLDER =
-            "{projectNumber} - {projectShortName}  |  {protocolTitle} #{meetingIndex} - {meetingDate}";
-          const BODY_PLACEHOLDER =
-            "Sehr geehrte Damen und Herren,\n" +
-            "anbei erhalten Sie das neue Protokoll für das oben genannte Projekt mit der Bitte um Beachtung und Veranlassung.";
-
-          // Gespeicherte Werte laden (falls vorhanden)
-          let subjectValue = "";
-          let bodyValue = "";
-          if (typeof api.appSettingsGetMany === "function") {
-            try {
-              const res = await api.appSettingsGetMany(["email_subject", "email_body"]);
-              if (res?.ok) {
-                const data = res.data || {};
-                const s = String(data.email_subject ?? "");
-                const b = String(data.email_body ?? "");
-                if (s.trim()) subjectValue = s;
-                if (b.trim()) bodyValue = b;
-              }
-            } catch {
-              // ignore
-            }
-          }
-
-          const emailsBox = document.createElement("div");
-          emailsBox.style.display = "grid";
-          emailsBox.style.gap = "12px";
-          emailsBox.style.padding = "6px";
-          emailsBox.style.justifyItems = "start";
-          emailsBox.style.fontFamily = "Calibri, Arial, sans-serif";
-
-          // Betreff
-          const subjectWrap = document.createElement("div");
-          subjectWrap.style.display = "grid";
-          subjectWrap.style.gap = "6px";
-
-          const subjectLabel = document.createElement("div");
-          subjectLabel.textContent = "Betreff";
-          subjectLabel.style.fontWeight = "700";
-          subjectLabel.style.color = "#1f2937";
-
-          const inpSubject = document.createElement("input");
-          inpSubject.type = "text";
-          inpSubject.value = subjectValue; // leer, wenn nichts gespeichert -> Placeholder sichtbar
-          inpSubject.placeholder = SUBJECT_PLACEHOLDER;
-          inpSubject.style.width = "17cm";
-          inpSubject.style.maxWidth = "100%";
-          inpSubject.style.boxSizing = "border-box";
-          inpSubject.style.padding = "8px 10px";
-          inpSubject.style.borderRadius = "10px";
-          inpSubject.style.border = "1px solid rgba(0,0,0,0.18)";
-          inpSubject.style.outline = "none";
-          inpSubject.style.fontFamily = "Calibri, Arial, sans-serif";
-
-          // Controlled input: State nur lokal, keine Persistenz
-          let subjectState = inpSubject.value || "";
-          inpSubject.addEventListener("input", () => {
-            subjectState = inpSubject.value || "";
-          });
-
-          const subjectHint = document.createElement("div");
-          subjectHint.textContent =
-            "Platzhalter: {projectNumber}, {projectShortName}, {protocolTitle}, {meetingIndex}, {meetingDate}";
-          subjectHint.style.fontSize = "12px";
-          subjectHint.style.opacity = "0.8";
-          subjectHint.style.color = "#374151";
-
-          subjectWrap.append(subjectLabel, inpSubject, subjectHint);
-
-          // Body
-          const bodyWrap = document.createElement("div");
-          bodyWrap.style.display = "grid";
-          bodyWrap.style.gap = "6px";
-
-          const bodyLabelRow = document.createElement("div");
-          bodyLabelRow.style.display = "flex";
-          bodyLabelRow.style.alignItems = "center";
-          bodyLabelRow.style.justifyContent = "space-between";
-          bodyLabelRow.style.width = "17cm";
-          bodyLabelRow.style.maxWidth = "100%";
-
-          const bodyLabel = document.createElement("div");
-          bodyLabel.textContent = "E-Mail Text";
-          bodyLabel.style.fontWeight = "700";
-          bodyLabel.style.color = "#1f2937";
-
-          const remainingBadge = document.createElement("div");
-          remainingBadge.style.fontSize = "12px";
-          remainingBadge.style.opacity = "0.85";
-          remainingBadge.style.userSelect = "none";
-
-          const inpBody = document.createElement("textarea");
-          inpBody.value = bodyValue; // leer, wenn nichts gespeichert -> Placeholder sichtbar
-          inpBody.placeholder = BODY_PLACEHOLDER;
-          inpBody.style.width = "17cm";
-          inpBody.style.height = "6cm";
-          inpBody.style.maxWidth = "100%";
-          inpBody.style.boxSizing = "border-box";
-          inpBody.style.padding = "8px 10px";
-          inpBody.style.borderRadius = "10px";
-          inpBody.style.border = "1px solid rgba(0,0,0,0.18)";
-          inpBody.style.outline = "none";
-          inpBody.style.resize = "none";
-          inpBody.style.fontFamily = "Calibri, Arial, sans-serif";
-          inpBody.maxLength = 300;
-
-          let bodyState = inpBody.value || "";
-          const syncRemaining = () => {
-            const len = (inpBody.value || "").length;
-            const rest = Math.max(0, 300 - len);
-            remainingBadge.textContent = `${rest} Zeichen übrig`;
-          };
-          syncRemaining();
-
-          inpBody.addEventListener("input", () => {
-            // maxLength greift i. d. R. bereits, aber zur Sicherheit:
-            if ((inpBody.value || "").length > 300) {
-              inpBody.value = (inpBody.value || "").slice(0, 300);
-            }
-            bodyState = inpBody.value || "";
-            syncRemaining();
-          });
-
-          bodyLabelRow.append(bodyLabel, remainingBadge);
-          bodyWrap.append(bodyLabelRow, inpBody);
-
-          emailsBox.append(subjectWrap, bodyWrap);
-
-          this._openSettingsModal({
-            title: "E-Mails",
-            content: [emailsBox],
-            closeOnly: false,
-            saveFn: async () => {
-              // Werte direkt aus den Feldern lesen (garantiert der aktuell sichtbare Text)
-              const rawSubject = String(inpSubject?.value ?? "");
-              const rawBody = String(inpBody?.value ?? "");
-              const tSubject = rawSubject.trim();
-              const tBody = rawBody.trim();
-
-              // Wenn leer -> zurücksetzen auf "" (Placeholder erscheint wieder)
-              const payload = {
-                email_subject: tSubject ? rawSubject : "",
-                email_body: tBody ? rawBody : "",
-              };
-
-              const saveApi = window.bbmDb || {};
-              if (typeof saveApi.appSettingsSetMany !== "function") {
-                alert("Settings-API fehlt (appSettingsSetMany).");
-                return false;
-              }
-
-              const res = await saveApi.appSettingsSetMany(payload);
-              if (!res?.ok) {
-                alert(res?.error || "Speichern fehlgeschlagen.");
-                return false;
-              }
-
-              // State aktualisieren (rein lokal)
-              subjectState = rawSubject;
-              bodyState = rawBody;
-              return true;
-            },
-          });
-        };
-
-        const showTab = (next) => {
-          activeTab = next;
-          tabBody.innerHTML = "";
-          if (activeTab === "pdf") {
-            tabBody.append(pdfSettingsBox);
-            this._settingsModalCloseOnly = false;
-          } else if (activeTab === "logos") {
-            tabBody.append(logosBox);
-            this._settingsModalCloseOnly = false;
-          } else {
-            tabBody.append(rolesBox);
-            this._settingsModalCloseOnly = false;
-            if (this.roleListEl) {
-              setTimeout(() => {
-                try {
-                  this.roleListEl.focus();
-                } catch {
-                  // ignore
-                }
-              }, 0);
-            }
-          }
-          applyTabStyles();
-          syncPrintSettingsModalWidth();
-        };
-
-        tabBtnPdf.onclick = () => showTab("pdf");
-        tabBtnLogos.onclick = () => showTab("logos");
-        tabBtnRoles.onclick = () => showTab("roles");
-        tabBtnPreRemarks.onclick = async () => {
-          const ok = await this._openPdfPreRemarksPopup();
-          if (ok === true) this._setMsg("Vorbemerkung gespeichert");
-        };
-
-        tabHead.append(tabBtnPdf, tabBtnLogos, tabBtnRoles, tabBtnPreRemarks, btnSeitenlayout, btnEmails);
-        btnSeitenlayout.onclick = async () => {
-          this._closeSettingsModal();
-          await openPrintLayoutModal();
-        };
-
-        btnEmails.onclick = async () => {
-          this._closeSettingsModal();
-          await openEmailsModal();
-        };
-
-        tabWrap.append(tabHead, tabBody);
-
-        showTab("pdf");
-
-        this._openSettingsModal({
-          title: "Druckeinstellungen",
-          content: [tabWrap],
-          closeOnly: false,
-          saveFn: async () => {
-            if (activeTab === "roles") {
-              return (await this._saveRoleMeta()) !== false;
-            }
-            if (activeTab === "logos") {
-              return (await this._savePrintLogoSettings()) !== false;
-            }
-            return (await this._savePdfSettings()) !== false;
-          },
-        });
-        syncPrintSettingsModalWidth();
-      },
-    });
-
-    const tileLicense = mkTile({
-      titleText: "Lizenz",
-      subText: "Lizenzstatus & Verwaltung",
-      onClick: async () => {
-        const content = this._createLicenseSettingsContent();
-        openSettingsModal({
-          title: "Lizenz",
-          content: [content],
-          closeOnly: true,
-        });
-      },
-    });
-
-    const openLicenseAdminPopup = () => {
-      const licenseAdminScreen = new LicenseAdminScreen({
-        onBackToAdminbereich: () => {
-          this._closeSettingsModal();
-          openAdminbereichPopup();
-        },
-      });
-      openSettingsModal({
-        title: "Lizenzverwaltung",
-        content: [licenseAdminScreen.render()],
-        closeOnly: true,
-      });
-    };
-
-    const openAdminbereichPopup = () => {
-      const adminTiles = document.createElement("div");
-      adminTiles.style.display = "grid";
-      adminTiles.style.gridTemplateColumns = "repeat(auto-fill, minmax(220px, 1fr))";
-      adminTiles.style.gap = "10px";
-      adminTiles.style.maxWidth = "720px";
-      adminTiles.append(
-        mkTile({
-          titleText: "Lizenzverwaltung",
-          subText: "Kunden, Lizenzen, Produktumfang, Historie",
-          onClick: async () => {
-            openLicenseAdminPopup();
-          },
-        })
-      );
-      openSettingsModal({
-        title: "Adminbereich",
-        content: [adminTiles],
-        closeOnly: true,
-      });
-    };
-
-    const tileAdmin = mkTile({
-      titleText: "Adminbereich",
-      subText: "Adminmodule und Verwaltungswerkzeuge",
-      onClick: async () => {
-        openAdminbereichPopup();
-      },
-    });
-
-    const tileDev = mkTile({
-      titleText: "Entwicklung",
-      subText: "Versionierung, Farben einstellen, DB-Diagnose",
-      onClick: async () => {
-        const api = window.bbmDb || {};
-        if (typeof api.appIsPackaged === "function") {
-          const packagedRes = await api.appIsPackaged();
-          if (packagedRes?.ok && packagedRes.isPackaged) {
-            alert("Entwicklung ist nur in der Entwicklerversion verfuegbar.");
-            return;
-          }
-        }
-        this._devPopupOpen = true;
-        await loadDbDiagnostics();
-        await loadTopLimitSettings();
-        await loadTrialSettings();
-        await loadVersioningData();
-
-        if (versionBox) {
-          versionBox.style.display = "grid";
-        }
-
-        const devTabWrap = document.createElement("div");
-        devTabWrap.style.display = "grid";
-        devTabWrap.style.gap = "10px";
-        devTabWrap.style.minWidth = "min(640px, calc(100vw - 80px))";
-        devTabWrap.style.maxWidth = "920px";
-
-        const devTabHead = document.createElement("div");
-        devTabHead.style.display = "flex";
-        devTabHead.style.gap = "8px";
-        devTabHead.style.flexWrap = "wrap";
-        devTabHead.style.rowGap = "8px";
-        devTabHead.style.marginBottom = "8px";
-
-        const devTabBody = document.createElement("div");
-        devTabBody.style.display = "grid";
-        devTabBody.style.gap = "10px";
-
-        const tabVersion = document.createElement("div");
-        tabVersion.style.display = "grid";
-        tabVersion.style.gap = "10px";
-        tabVersion.append(versionBox, buildChannelBox, devDefaultsBox);
-
-        const tabDb = document.createElement("div");
-        tabDb.style.display = "grid";
-        tabDb.style.gap = "10px";
-        tabDb.append(dbDiagBox);
-
-        const dictationSection = createDictationDevSection({
-          applyPopupCardStyle,
-          mkScaleGroup,
-          applyScaleBtnBase,
-          setScaleBtnActive,
-          settingsApi: () => window.bbmDb || {},
-        });
-
-        const tabDictation = dictationSection.tab;
-
-        const tabTools = document.createElement("div");
-        tabTools.style.display = "grid";
-        tabTools.style.gap = "10px";
-        tabTools.append(printBox, topsLimitBox);
-
-        const devTabs = [
-          { key: "version", label: "Versionierung", el: tabVersion },
-          { key: "db", label: "DB-Diagnose", el: tabDb },
-          { key: "dictation", label: "Diktieren", el: tabDictation },
-          { key: "tools", label: "Druck / TOP-Liste", el: tabTools },
-        ];
-
-        const tabButtons = new Map();
-        let dictationLoaded = false;
-        const setDevTab = (key) => {
-          if (key === "dictation" && !dictationLoaded) {
-            dictationLoaded = true;
-            if (typeof dictationSection.load === "function") {
-              dictationSection.load();
-            }
-          }
-          devTabs.forEach((tab) => {
-            const isActive = tab.key === key;
-            tab.el.style.display = isActive ? "grid" : "none";
-            const btn = tabButtons.get(tab.key);
-            if (btn) {
-              btn.disabled = isActive;
-              btn.style.opacity = isActive ? "0.85" : "1";
-            }
-          });
-        };
-
-        const makeDevTabButton = (label, key) => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.textContent = label;
-          applyPopupButtonStyle(btn);
-          btn.onclick = () => setDevTab(key);
-          tabButtons.set(key, btn);
-          return btn;
-        };
-
-        devTabHead.append(
-          makeDevTabButton("Versionierung", "version"),
-          makeDevTabButton("DB-Diagnose", "db"),
-          makeDevTabButton("Diktieren", "dictation"),
-          makeDevTabButton("Druck / TOP-Liste", "tools")
-        );
-
-        devTabBody.append(tabVersion, tabDb, tabDictation, tabTools);
-        devTabWrap.append(devTabHead, devTabBody);
-        setDevTab("version");
-
-        this._openSettingsModal({
-          title: "Entwicklung",
-          content: [devTabWrap],
-          closeOnly: false,
-          saveFn: async () => {
-            const okTops = (await saveTopLimitSettings()) !== false;
-            const okTrial = (await saveTrialSettings()) !== false;
-            return okTops && okTrial;
-          },
-        });
-      },
-    });
-
-    tiles.append(tileUser, tilePrint, tileLicense, tileAdmin);
-    (async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appIsPackaged !== "function") {
-        return;
-      }
-      const packagedRes = await api.appIsPackaged();
-      if (packagedRes?.ok && packagedRes.isPackaged === false) {
-        tiles.append(tileDev);
-      }
-    })();
-
-    // Overlay im Body, damit kein Header-Stacking-Context stört
-    const settingsOverlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)" });
-    settingsOverlay.style.alignItems = "center";
-    settingsOverlay.style.justifyContent = "center";
-    const closeSettingsOverlay = () => {
-      if (this._settingsModalCloseOnly) {
-        this._closeSettingsModal();
-        return;
-      }
-      this._runSettingsModalSave({ closeOnSuccess: true });
-    };
-    registerPopupCloseHandlers(settingsOverlay, closeSettingsOverlay);
-
-    const settingsModal = document.createElement("div");
-    settingsModal.style.width = "min(980px, calc(100vw - 24px))";
-    settingsModal.style.maxHeight = "calc(100vh - 24px)";
-    settingsModal.style.display = "flex";
-    settingsModal.style.flexDirection = "column";
-    settingsModal.style.overflow = "hidden";
-    settingsModal.style.background = "#fff";
-    applyPopupCardStyle(settingsModal);
-    settingsModal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.25)";
-    settingsModal.style.padding = "0";
-    settingsModal.style.fontFamily =
-      'Calibri, Arial, sans-serif';
-    settingsModal.tabIndex = -1;
-
-    const settingsHead = document.createElement("div");
-    settingsHead.style.display = "flex";
-    settingsHead.style.alignItems = "center";
-    settingsHead.style.justifyContent = "space-between";
-    settingsHead.style.gap = "10px";
-    settingsHead.style.padding = "12px";
-    settingsHead.style.borderBottom = "1px solid #e2e8f0";
-
-    const settingsTitle = document.createElement("div");
-    settingsTitle.style.fontWeight = "bold";
-    settingsTitle.textContent = "";
-
-    const settingsClose = document.createElement("button");
-    settingsClose.textContent = "X";
-    applyPopupButtonStyle(settingsClose);
-    settingsClose.onclick = async () => {
-      if (this._settingsModalCloseOnly) {
-        this._closeSettingsModal();
-        return;
-      }
-      await this._runSettingsModalSave({ closeOnSuccess: true });
-    };
-
-    settingsHead.append(settingsTitle, settingsClose);
-
-    const settingsBody = document.createElement("div");
-    settingsBody.style.display = "grid";
-    settingsBody.style.gap = "10px";
-    settingsBody.style.flex = "1 1 auto";
-    settingsBody.style.minHeight = "0";
-    settingsBody.style.overflow = "auto";
-    settingsBody.style.padding = "12px";
-
-    const settingsFooter = document.createElement("div");
-    settingsFooter.style.borderTop = "1px solid #e2e8f0";
-    settingsFooter.style.padding = "10px 12px";
-
-    const settingsFooterInner = document.createElement("div");
-    settingsFooterInner.style.display = "flex";
-    settingsFooterInner.style.justifyContent = "flex-end";
-    settingsFooterInner.style.gap = "8px";
-    settingsFooterInner.style.width = "100%";
-    settingsFooterInner.style.maxWidth = "720px";
-
-    const settingsSave = document.createElement("button");
-    settingsSave.textContent = "Speichern";
-    applyPopupButtonStyle(settingsSave, { variant: "primary" });
-    settingsSave.onclick = async () => {
-      if (this._settingsModalCloseOnly) {
-        this._closeSettingsModal();
-        return;
-      }
-      await this._runSettingsModalSave({ closeOnSuccess: true });
-    };
-
-    settingsFooterInner.append(settingsSave);
-    settingsFooter.append(settingsFooterInner);
-
-    settingsModal.append(settingsHead, settingsBody, settingsFooter);
-    settingsOverlay.appendChild(settingsModal);
-
-    const delOverlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)" });
-    delOverlay.style.alignItems = "center";
-    delOverlay.style.justifyContent = "center";
-
-    const delBox = document.createElement("div");
-    delBox.style.width = "min(520px, calc(100vw - 24px))";
-    delBox.style.background = "#fff";
-    applyPopupCardStyle(delBox);    delBox.style.boxShadow = "0 10px 30px rgba(0,0,0,0.25)";    delBox.style.padding = "12px";
-
-    const delMsg = document.createElement("div");
-    delMsg.style.marginBottom = "12px";
-
-    const delActions = document.createElement("div");
-    delActions.style.display = "flex";
-    delActions.style.gap = "8px";
-    delActions.style.justifyContent = "flex-end";
-
-    const delCancel = document.createElement("button");
-    delCancel.textContent = "Abbrechen";
-    delCancel.onclick = () => {
-      this._resolveDeleteConfirm(false);
-    };
-
-    const delOk = document.createElement("button");
-    delOk.textContent = "Loeschen";
-    delOk.style.background = "#c62828";
-    delOk.style.color = "white";
-    delOk.style.border = "1px solid rgba(0,0,0,0.25)";
-    delOk.style.borderRadius = "6px";
-    delOk.style.padding = "6px 10px";
-    delOk.onclick = () => {
-      this._resolveDeleteConfirm(true);
-    };
-    delOverlay.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        this._resolveDeleteConfirm(true);
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        this._resolveDeleteConfirm(false);
-      }
-    });
-
-    delActions.append(delCancel, delOk);
-    delBox.append(delMsg, delActions);
-    delOverlay.append(delBox);
-
-    const renameOverlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)" });
-    renameOverlay.style.alignItems = "center";
-    renameOverlay.style.justifyContent = "center";
-    renameOverlay.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        this._resolveRename(true);
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        this._resolveRename(false);
-      }
-    });
-
-    const renameBox = document.createElement("div");
-    renameBox.style.width = "min(520px, calc(100vw - 24px))";
-    renameBox.style.background = "#fff";
-    applyPopupCardStyle(renameBox);    renameBox.style.boxShadow = "0 10px 30px rgba(0,0,0,0.25)";    renameBox.style.padding = "12px";
-
-    const renameTitle = document.createElement("div");
-    renameTitle.textContent = "Kategorie umbenennen";
-    renameTitle.style.fontWeight = "bold";
-    renameTitle.style.marginBottom = "8px";
-
-    const renameInput = document.createElement("input");
-    renameInput.type = "text";
-    renameInput.style.width = "100%";
-    renameInput.style.marginBottom = "12px";
-    renameInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        this._resolveRename(true);
-      } else if (e.key === "Escape") {
-        e.preventDefault();
-        this._resolveRename(false);
-      }
-    });
-
-    const renameActions = document.createElement("div");
-    renameActions.style.display = "flex";
-    renameActions.style.gap = "8px";
-    renameActions.style.justifyContent = "flex-end";
-
-    const renameCancel = document.createElement("button");
-    renameCancel.textContent = "Abbrechen";
-    renameCancel.onclick = () => {
-      this._resolveRename(false);
-    };
-
-    const renameOk = document.createElement("button");
-    renameOk.textContent = "Speichern";
-    renameOk.onclick = () => {
-      this._resolveRename(true);
-    };
-
-    renameActions.append(renameCancel, renameOk);
-    renameBox.append(renameTitle, renameInput, renameActions);
-    renameOverlay.append(renameBox);
-
-    root.append(
-      head,
-      tiles,
-      creditLine
-    );
-
-    document.body.append(settingsOverlay, delOverlay, renameOverlay);
-
-    this.root = root;
-    this.msgEl = msg;
-    this.inpUserName1 = inpUserName1;
-    this.inpUserName2 = inpUserName2;
-    this.inpUserStreet = inpUserStreet;
-    this.inpUserZip = inpUserZip;
-    this.inpUserCity = inpUserCity;
-    this.inpLogoSize = inpLogoSize;
-    this.inpLogoPadLeft = inpLogoPadLeft;
-    this.inpLogoPadTop = inpLogoPadTop;
-    this.inpLogoPadRight = inpLogoPadRight;
-    this.inpLogoPosition = inpLogoPosition;
-    this.inpLogoEnabled = inpLogoEnabled;
-    this.inpThemeHeaderTone = null;
-    this.inpThemeSidebarTone = null;
-    this.inpThemeMainTone = null;
-    this.inpThemeHeaderBaseColor = null;
-    this.inpThemeSidebarBaseColor = null;
-    this.inpThemeMainBaseColor = null;
-    this.inpThemeHeaderName = null;
-    this.inpThemeSidebarName = null;
-    this.inpThemeMainName = null;
-    this.inpThemeHeaderR = themeHeader.rInp;
-    this.inpThemeHeaderG = themeHeader.gInp;
-    this.inpThemeHeaderB = themeHeader.bInp;
-    this.inpThemeSidebarR = themeSidebar.rInp;
-    this.inpThemeSidebarG = themeSidebar.gInp;
-    this.inpThemeSidebarB = themeSidebar.bInp;
-    this.inpThemeMainR = themeMain.rInp;
-    this.inpThemeMainG = themeMain.gInp;
-    this.inpThemeMainB = themeMain.bInp;
-    this.inpThemeHeaderDefault = null;
-    this.inpThemeSidebarDefault = null;
-    this.inpThemeMainDefault = null;
-    this.inpThemeGlobalDefault = null;
-    this.lblThemeHeaderTone = null;
-    this.lblThemeSidebarTone = null;
-    this.lblThemeMainTone = null;
-    this.previewThemeHeaderColor = themeHeader.preview;
-    this.previewThemeSidebarColor = themeSidebar.preview;
-    this.previewThemeMainColor = themeMain.preview;
-    this.pickThemeHeaderColor = null;
-    this.pickThemeSidebarColor = null;
-    this.pickThemeMainColor = null;
-    this.lblThemeHeaderColorValue = themeHeader.colorValue;
-    this.lblThemeSidebarColorValue = themeSidebar.colorValue;
-    this.lblThemeMainColorValue = themeMain.colorValue;
-    this.inpThemeHeaderHex = themeHeader.hexInp;
-    this.inpThemeSidebarHex = themeSidebar.hexInp;
-    this.inpThemeMainHex = themeMain.hexInp;
-    this.selThemeHeaderModel = themeHeader.modelSel;
-    this.selThemeSidebarModel = themeSidebar.modelSel;
-    this.selThemeMainModel = themeMain.modelSel;
-    this.canvasThemeHeaderSv = themeHeader.svCanvas;
-    this.canvasThemeSidebarSv = themeSidebar.svCanvas;
-    this.canvasThemeMainSv = themeMain.svCanvas;
-    this.canvasThemeHeaderHue = themeHeader.hueCanvas;
-    this.canvasThemeSidebarHue = themeSidebar.hueCanvas;
-    this.canvasThemeMainHue = themeMain.hueCanvas;
-    this.cursorThemeHeaderSv = themeHeader.svCursor;
-    this.cursorThemeSidebarSv = themeSidebar.svCursor;
-    this.cursorThemeMainSv = themeMain.svCursor;
-    this.cursorThemeHeaderHue = themeHeader.hueCursor;
-    this.cursorThemeSidebarHue = themeSidebar.hueCursor;
-    this.cursorThemeMainHue = themeMain.hueCursor;
-    this.errThemeHeaderColor = themeHeader.err;
-    this.errThemeSidebarColor = themeSidebar.err;
-    this.errThemeMainColor = themeMain.err;
-    this.inpSecurityPinEnabled = inpSecurityPinEnabled;
-    this.inpSecurityCurrentPin = inpSecurityCurrentPin;
-    this.inpSecurityNewPin = inpSecurityNewPin;
-    this.inpSecurityConfirmPin = inpSecurityConfirmPin;
-    this.btnSecurityPinSave = btnSecurityPinSave;
-    this.btnSecurityPinDisable = btnSecurityPinDisable;
-
-    this.inpPdfLogoEnabled = inpPdfLogoEnabled;
-    this.inpPdfLogoFile = inpPdfLogoFile;
-    this.imgPdfLogoPreview = imgPdfLogoPreview;
-    this.pdfLogoDummyEl = pdfLogoDummy; // <-- merken
-    this.btnPdfLogoRemove = btnPdfLogoRemove;
-    this.pdfLogoPathEl = pdfLogoPath;
-    this.inpPdfLogoWidth = inpPdfLogoWidth;
-    this.inpPdfLogoTop = inpPdfLogoTop;
-    this.inpPdfLogoRight = inpPdfLogoRight;
-    this.pdfLogoQualityEl = pdfLogoQuality;
-    this.inpPdfProtocolTitle = inpPdfProtocolTitle;
-    this.inpPdfTrafficLightAll = inpPdfTrafficLightAll;
-    this.inpPdfProtocolsDir = inpPdfProtocolsDir;
-    this.inpPdfFooterPlace = inpPdfFooterPlace;
-    this.inpPdfFooterDate = inpPdfFooterDate;
-    this.inpPdfFooterName1 = inpPdfFooterName1;
-    this.inpPdfFooterName2 = inpPdfFooterName2;
-    this.inpPdfFooterRecorder = inpPdfFooterRecorder;
-    this.inpPdfFooterStreet = inpPdfFooterStreet;
-    this.inpPdfFooterZip = inpPdfFooterZip;
-    this.inpPdfFooterCity = inpPdfFooterCity;
-    this.inpPdfPreRemarks = null;
-    this.inpPdfFooterUseUserData = null;
-    this.btnPdfFooterUseUserData = btnPdfFooterUseUserData;
-    this.btnPdfProtocolsBrowse = btnPdfProtocolsBrowse;
-    this.btnPdfSettingsSave = null;
-
-    this.btnSave = btnSave;
-    this.roleListEl = roleList;
-    this.btnAddRole = btnAddRole;
-    this.inpAddRole = inpAddRole;
-    this.btnRoleMove = btnRoleMove;
-    this.btnRoleDelete = btnRoleDelete;
-    this.btnRoleRename = btnRoleRename;
-    this.roleMoveHintEl = roleMoveHint;
-    this.roleLabels = this._normalizeRoleLabels("");
-    this.roleOrder = this._normalizeRoleOrder("", this.roleLabels);
-
-    this.deleteConfirmOverlayEl = delOverlay;
-    this.deleteConfirmMsgEl = delMsg;
-    this.deleteConfirmOkBtn = delOk;
-    this.deleteConfirmCancelBtn = delCancel;
-    this.renameOverlayEl = renameOverlay;
-    this.renameInputEl = renameInput;
-    this.renameOkBtn = renameOk;
-    this.renameCancelBtn = renameCancel;
-    this.settingsModalOverlayEl = settingsOverlay;
-    this.settingsModalEl = settingsModal;
-    this.settingsModalTitleEl = settingsTitle;
-    this.settingsModalBodyEl = settingsBody;
-    this.settingsModalCloseBtn = settingsClose;
-    this.settingsModalFooterEl = settingsFooter;
-    this.settingsModalSaveBtn = settingsSave;
-    this._renderRoleOrderList();
-
-    return root;
-  }
-
-  async _openDictionaryPopup() {
-    const api = window.bbmDb || {};
-    if (typeof api.dictionaryListSuggestions !== "function") {
-      alert("Wörterbuch ist nicht verfügbar (IPC fehlt).");
-      return;
-    }
-
-    const wrap = document.createElement("div");
-    wrap.style.display = "grid";
-    wrap.style.gap = "10px";
-    wrap.style.minWidth = "min(680px, calc(100vw - 60px))";
-    wrap.style.maxWidth = "860px";
-
-    const mkCard = () => {
-      const card = document.createElement("div");
-      applyPopupCardStyle(card);
-      card.style.padding = "10px 12px";
-      card.style.display = "grid";
-      card.style.gap = "8px";
-      return card;
-    };
-
-    const sourceCard = mkCard();
-    const sourceTitle = document.createElement("div");
-    sourceTitle.textContent = "Quelle wählen";
-    sourceTitle.style.fontWeight = "800";
-
-    const sourceRow = document.createElement("div");
-    sourceRow.style.display = "flex";
-    sourceRow.style.alignItems = "center";
-    sourceRow.style.gap = "8px";
-    sourceRow.style.flexWrap = "wrap";
-
-    const btnPickFolder = document.createElement("button");
-    btnPickFolder.type = "button";
-    btnPickFolder.textContent = "Ordner auswählen";
-    applyPopupButtonStyle(btnPickFolder, { variant: "primary" });
-
-    const sourcePath = document.createElement("div");
-    sourcePath.style.fontSize = "12px";
-    sourcePath.style.padding = "6px 8px";
-    sourcePath.style.borderRadius = "8px";
-    sourcePath.style.background = "#f8fafc";
-    sourcePath.style.border = "1px solid rgba(0,0,0,0.1)";
-    sourcePath.style.flex = "1 1 auto";
-    sourcePath.style.minWidth = "220px";
-    sourcePath.textContent = "Kein Ordner ausgewählt";
-
-    sourceRow.append(btnPickFolder, sourcePath);
-    sourceCard.append(sourceTitle, sourceRow);
-
-    const scanCard = mkCard();
-    const scanTitle = document.createElement("div");
-    scanTitle.textContent = "Suche / Analyse";
-    scanTitle.style.fontWeight = "800";
-
-    const scanRow = document.createElement("div");
-    scanRow.style.display = "flex";
-    scanRow.style.alignItems = "center";
-    scanRow.style.gap = "8px";
-    scanRow.style.flexWrap = "wrap";
-
-    const btnScan = document.createElement("button");
-    btnScan.type = "button";
-    btnScan.textContent = "Suche starten";
-    applyPopupButtonStyle(btnScan);
-
-    const scanStatus = document.createElement("div");
-    scanStatus.style.fontSize = "12px";
-    scanStatus.style.opacity = "0.85";
-    scanStatus.textContent = "";
-
-    scanRow.append(btnScan, scanStatus);
-
-    const progressList = document.createElement("div");
-    progressList.style.display = "grid";
-    progressList.style.gap = "4px";
-    progressList.style.fontSize = "12px";
-
-    const progressFiles = document.createElement("div");
-    const progressCurrent = document.createElement("div");
-    const progressTerms = document.createElement("div");
-    const progressOk = document.createElement("div");
-    const progressFail = document.createElement("div");
-    progressFiles.textContent = "Dateien gefunden: -";
-    progressCurrent.textContent = "Aktuelle Datei: -";
-    progressTerms.textContent = "Vorschläge gesammelt: -";
-    progressOk.textContent = "Erfolgreich verarbeitet: -";
-    progressFail.textContent = "Fehlgeschlagen: -";
-    progressList.append(progressFiles, progressCurrent, progressTerms, progressOk, progressFail);
-
-    const errorList = document.createElement("div");
-    errorList.style.display = "grid";
-    errorList.style.gap = "4px";
-    errorList.style.fontSize = "11px";
-    errorList.style.color = "#b91c1c";
-
-    scanCard.append(scanTitle, scanRow, progressList, errorList);
-
-    const resultCard = mkCard();
-    const resultTitle = document.createElement("div");
-    resultTitle.textContent = "Ergebnisliste";
-    resultTitle.style.fontWeight = "800";
-
-    const resultHint = document.createElement("div");
-    resultHint.style.fontSize = "12px";
-    resultHint.style.opacity = "0.8";
-    resultHint.textContent = "Keine automatische Übernahme  bitte einzeln prüfen.";
-
-    const resultHead = document.createElement("div");
-    resultHead.style.display = "grid";
-    resultHead.style.gridTemplateColumns =
-      "26px minmax(160px, 1.2fr) minmax(160px, 1fr) 80px minmax(160px, 1fr)";
-    resultHead.style.gap = "6px";
-    resultHead.style.fontSize = "10px";
-    resultHead.style.fontWeight = "700";
-    resultHead.style.textTransform = "uppercase";
-    resultHead.style.color = "#475569";
-    resultHead.style.borderBottom = "1px solid rgba(0,0,0,0.08)";
-    resultHead.style.paddingBottom = "4px";
-    resultHead.append(
-      Object.assign(document.createElement("div"), { textContent: "" }),
-      Object.assign(document.createElement("div"), { textContent: "Begriff" }),
-      Object.assign(document.createElement("div"), { textContent: "Varianten" }),
-      Object.assign(document.createElement("div"), { textContent: "Häufigkeit" }),
-      Object.assign(document.createElement("div"), { textContent: "Quelle" })
-    );
-
-    const bulkActions = document.createElement("div");
-    bulkActions.style.display = "flex";
-    bulkActions.style.gap = "6px";
-    bulkActions.style.flexWrap = "wrap";
-    bulkActions.style.alignItems = "center";
-
-    const btnSelectAll = document.createElement("button");
-    btnSelectAll.type = "button";
-    btnSelectAll.textContent = "Alle auswählen";
-    applyPopupButtonStyle(btnSelectAll);
-    btnSelectAll.style.fontSize = "11px";
-    btnSelectAll.style.padding = "3px 8px";
-    btnSelectAll.style.minHeight = "22px";
-
-    const btnSelectNone = document.createElement("button");
-    btnSelectNone.type = "button";
-    btnSelectNone.textContent = "Alle abwählen";
-    applyPopupButtonStyle(btnSelectNone);
-    btnSelectNone.style.fontSize = "11px";
-    btnSelectNone.style.padding = "3px 8px";
-    btnSelectNone.style.minHeight = "22px";
-
-    const btnBulkAccept = document.createElement("button");
-    btnBulkAccept.type = "button";
-    btnBulkAccept.textContent = "Ausgewählte übernehmen";
-    applyPopupButtonStyle(btnBulkAccept, { variant: "primary" });
-    btnBulkAccept.style.fontSize = "11px";
-    btnBulkAccept.style.padding = "3px 8px";
-    btnBulkAccept.style.minHeight = "22px";
-
-    const btnBulkReject = document.createElement("button");
-    btnBulkReject.type = "button";
-    btnBulkReject.textContent = "Ausgewählte verwerfen";
-    applyPopupButtonStyle(btnBulkReject);
-    btnBulkReject.style.fontSize = "11px";
-    btnBulkReject.style.padding = "3px 8px";
-    btnBulkReject.style.minHeight = "22px";
-
-    bulkActions.append(btnSelectAll, btnSelectNone, btnBulkAccept, btnBulkReject);
-
-    const resultList = document.createElement("div");
-    resultList.style.display = "grid";
-    resultList.style.gap = "3px";
-
-    resultCard.append(resultTitle, resultHint, bulkActions, resultHead, resultList);
-
-    const acceptedCard = mkCard();
-    const acceptedTitle = document.createElement("div");
-    acceptedTitle.textContent = "Übernommene Wörter";
-    acceptedTitle.style.fontWeight = "800";
-
-    const acceptedList = document.createElement("div");
-    acceptedList.style.display = "grid";
-    acceptedList.style.gap = "6px";
-
-    acceptedCard.append(acceptedTitle, acceptedList);
-
-    wrap.append(sourceCard, scanCard, resultCard, acceptedCard);
-
-    let selectedDir = "";
-    let busy = false;
-    let lastScanFileCount = 0;
-    const selectedKeys = new Set();
-
-    const setBusy = (isBusy) => {
-      busy = !!isBusy;
-      btnPickFolder.disabled = busy;
-      btnScan.disabled = busy;
-      btnPickFolder.style.opacity = busy ? "0.6" : "1";
-      btnScan.style.opacity = busy ? "0.6" : "1";
-      updateBulkButtons();
-    };
-
-    const setSourcePath = (value) => {
-      selectedDir = String(value || "").trim();
-      sourcePath.textContent = selectedDir || "Kein Ordner ausgewählt";
-    };
-
-    const setProgress = ({ total = "-", current = "-", terms = "-", ok = "-", fail = "-" } = {}) => {
-      progressFiles.textContent = `Dateien gefunden: ${total}`;
-      progressCurrent.textContent = `Aktuelle Datei: ${current}`;
-      progressTerms.textContent = `Vorschläge gesammelt: ${terms}`;
-      progressOk.textContent = `Erfolgreich verarbeitet: ${ok}`;
-      progressFail.textContent = `Fehlgeschlagen: ${fail}`;
-    };
-
-    const parseVariants = (raw) => {
-      try {
-        const parsed = JSON.parse(raw || "[]");
-        return Array.isArray(parsed) ? parsed : [];
-      } catch {
-        return [];
-      }
-    };
-
-    const calcEditDistance = (a, b) => {
-      const s = String(a || "");
-      const t = String(b || "");
-      if (!s) return t.length;
-      if (!t) return s.length;
-      const dp = Array.from({ length: s.length + 1 }, () => new Array(t.length + 1).fill(0));
-      for (let i = 0; i <= s.length; i += 1) dp[i][0] = i;
-      for (let j = 0; j <= t.length; j += 1) dp[0][j] = j;
-      for (let i = 1; i <= s.length; i += 1) {
-        for (let j = 1; j <= t.length; j += 1) {
-          const cost = s[i - 1] === t[j - 1] ? 0 : 1;
-          dp[i][j] = Math.min(
-            dp[i - 1][j] + 1,
-            dp[i][j - 1] + 1,
-            dp[i - 1][j - 1] + cost
-          );
-        }
-      }
-      return dp[s.length][t.length];
-    };
-
-    const pickGroupTerm = (entries) => {
-      if (!entries.length) return "";
-      let best = entries[0];
-      for (const e of entries) {
-        const count = Number(e.count || 0);
-        const bestCount = Number(best.count || 0);
-        if (count > bestCount) {
-          best = e;
-          continue;
-        }
-        if (count === bestCount && String(e.term || "").length < String(best.term || "").length) {
-          best = e;
-        }
-      }
-      return String(best.term || best.normKey || "").trim();
-    };
-
-    const groupCollectedTerms = (entries) => {
-      const groups = [];
-      const sorted = [...entries].sort((a, b) => String(a.normKey || "").length - String(b.normKey || "").length);
-
-      const canJoinGroup = (entry, group) => {
-        const a = String(entry.normKey || "");
-        const b = String(group.baseNorm || "");
-        if (!a || !b) return false;
-        if (a === b) return true;
-        if (a.startsWith(b) && b.length >= 5) return true;
-        if (b.startsWith(a) && a.length >= 5) return true;
-        if (Math.abs(a.length - b.length) <= 2 && a.length <= 8) {
-          return calcEditDistance(a, b) <= 1;
-        }
-        if (Math.abs(a.length - b.length) <= 3 && a.length <= 10) {
-          return calcEditDistance(a, b) <= 2;
-        }
-        return false;
-      };
-
-      for (const entry of sorted) {
-        let target = null;
-        for (const group of groups) {
-          if (canJoinGroup(entry, group)) {
-            target = group;
-            break;
-          }
-        }
-        if (!target) {
-          target = {
-            baseNorm: entry.normKey,
-            entries: [],
-            variants: new Set(),
-            total: 0,
-            sourcePath: entry.sourcePath,
-            sourceExcerpt: entry.sourceExcerpt,
-          };
-          groups.push(target);
-        }
-        target.entries.push(entry);
-        target.total += Number(entry.count || 0);
-        for (const v of entry.variants || []) target.variants.add(v);
-        if (!target.sourcePath) target.sourcePath = entry.sourcePath;
-        if (!target.sourceExcerpt) target.sourceExcerpt = entry.sourceExcerpt;
-      }
-
-      return groups.map((group) => {
-        const term = pickGroupTerm(group.entries);
-        return {
-          normKey: String(group.baseNorm || "").trim(),
-          term: term || String(group.baseNorm || "").trim(),
-          variants: Array.from(group.variants),
-          frequency: group.total,
-          sourcePath: group.sourcePath,
-          sourceExcerpt: group.sourceExcerpt,
-        };
-      });
-    };
-
-    const updateBulkButtons = () => {
-      const hasSelection = selectedKeys.size > 0;
-      btnBulkAccept.disabled = busy || !hasSelection;
-      btnBulkReject.disabled = busy || !hasSelection;
-      btnSelectAll.disabled = busy;
-      btnSelectNone.disabled = busy;
-      btnBulkAccept.style.opacity = btnBulkAccept.disabled ? "0.6" : "1";
-      btnBulkReject.style.opacity = btnBulkReject.disabled ? "0.6" : "1";
-      btnSelectAll.style.opacity = btnSelectAll.disabled ? "0.6" : "1";
-      btnSelectNone.style.opacity = btnSelectNone.disabled ? "0.6" : "1";
-    };
-
-    const renderSuggestions = (rows) => {
-      resultList.innerHTML = "";
-      selectedKeys.clear();
-      const filtered = (rows || []).filter((r) => {
-        const status = String(r?.status || "").trim().toLowerCase();
-        return status === "pending" || status === "deferred";
-      });
-      if (!filtered.length) {
-        const empty = document.createElement("div");
-        empty.textContent = lastScanFileCount > 0
-          ? "Dateien erkannt, aber noch keine extrahierbaren Texttreffer (z.B. nur PDFs)."
-          : "Keine offenen Vorschläge.";
-        empty.style.fontSize = "12px";
-        empty.style.opacity = "0.75";
-        resultList.append(empty);
-        return;
-      }
-      for (const row of filtered) {
-        const status = String(row?.status || "").trim().toLowerCase();
-        const variants = parseVariants(row?.variants_json).slice(0, 6);
-        const variantText = variants.join(", ");
-        const frequency = Number(row?.frequency || 0);
-        const sourceText = String(row?.source_path || "").trim();
-        const excerptText = String(row?.source_excerpt || "").trim();
-
-        const rowEl = document.createElement("div");
-        rowEl.style.display = "grid";
-        rowEl.style.gridTemplateColumns =
-          "26px minmax(160px, 1.2fr) minmax(160px, 1fr) 70px minmax(160px, 1fr)";
-        rowEl.style.gap = "6px";
-        rowEl.style.alignItems = "center";
-        rowEl.style.padding = "4px 2px";
-        rowEl.style.borderBottom = "1px solid rgba(0,0,0,0.06)";
-
-        const checkWrap = document.createElement("div");
-        checkWrap.style.display = "flex";
-        checkWrap.style.alignItems = "center";
-        const check = document.createElement("input");
-        check.type = "checkbox";
-        check.dataset.key = String(row?.norm_key || "");
-        checkWrap.append(check);
-
-        const termEl = document.createElement("div");
-        termEl.style.fontWeight = "700";
-        termEl.style.fontSize = "12px";
-        termEl.textContent = String(row?.term || row?.norm_key || "").trim();
-
-        const variantsEl = document.createElement("div");
-        variantsEl.style.fontSize = "11px";
-        variantsEl.style.color = "#475569";
-        variantsEl.textContent = variantText || "-";
-
-        const freqEl = document.createElement("div");
-        freqEl.style.fontVariantNumeric = "tabular-nums";
-        freqEl.style.fontSize = "11px";
-        freqEl.textContent = Number.isFinite(frequency) ? String(frequency) : "0";
-
-        const sourceEl = document.createElement("div");
-        sourceEl.style.fontSize = "10px";
-        sourceEl.style.color = "#475569";
-        const sourceName = sourceText ? sourceText.split(/[\\/]/).pop() : "-";
-        sourceEl.textContent = sourceName || "-";
-        if (excerptText) {
-          const excerptEl = document.createElement("div");
-          excerptEl.style.fontSize = "9px";
-          excerptEl.style.opacity = "0.7";
-          excerptEl.textContent = excerptText;
-          sourceEl.append(excerptEl);
-        }
-
-        rowEl.append(checkWrap, termEl, variantsEl, freqEl, sourceEl);
-        resultList.append(rowEl);
-
-        check.onchange = () => {
-          if (check.checked) {
-            selectedKeys.add(String(row?.norm_key || ""));
-          } else {
-            selectedKeys.delete(String(row?.norm_key || ""));
-          }
-          updateBulkButtons();
-        };
-
-      }
-      updateBulkButtons();
-    };
-
-    const renderTerms = (rows) => {
-      acceptedList.innerHTML = "";
-      if (!rows || !rows.length) {
-        const empty = document.createElement("div");
-        empty.textContent = "Noch keine übernommenen Wörter.";
-        empty.style.fontSize = "12px";
-        empty.style.opacity = "0.75";
-        acceptedList.append(empty);
-        return;
-      }
-      for (const row of rows) {
-        const rowEl = document.createElement("div");
-        rowEl.style.display = "grid";
-        rowEl.style.gridTemplateColumns = "minmax(180px, 1fr) minmax(160px, 1fr) minmax(200px, 1fr)";
-        rowEl.style.gap = "8px";
-        rowEl.style.alignItems = "center";
-        rowEl.style.padding = "6px 4px";
-        rowEl.style.borderBottom = "1px solid rgba(0,0,0,0.06)";
-
-        const termEl = document.createElement("div");
-        termEl.style.fontWeight = "700";
-        termEl.textContent = String(row?.term || row?.norm_key || "").trim();
-
-        const variants = parseVariants(row?.variants_json).slice(0, 6);
-        const variantsEl = document.createElement("div");
-        variantsEl.style.fontSize = "12px";
-        variantsEl.style.color = "#475569";
-        variantsEl.textContent = variants.join(", ") || "-";
-
-        const actionsEl = document.createElement("div");
-        actionsEl.style.display = "flex";
-        actionsEl.style.gap = "6px";
-        actionsEl.style.flexWrap = "wrap";
-
-        const isActive = Number(row?.is_active || 0) === 1;
-        const btnToggle = document.createElement("button");
-        btnToggle.type = "button";
-        btnToggle.textContent = isActive ? "Deaktivieren" : "Aktivieren";
-        applyPopupButtonStyle(btnToggle);
-
-        const btnDelete = document.createElement("button");
-        btnDelete.type = "button";
-        btnDelete.textContent = "Löschen";
-        btnDelete.style.background = "#c62828";
-        btnDelete.style.color = "white";
-        btnDelete.style.border = "1px solid rgba(0,0,0,0.25)";
-        btnDelete.style.borderRadius = "6px";
-        btnDelete.style.padding = "6px 10px";
-
-        actionsEl.append(btnToggle, btnDelete);
-        rowEl.append(termEl, variantsEl, actionsEl);
-        acceptedList.append(rowEl);
-
-        btnToggle.onclick = async () => {
-          if (busy) return;
-          const res = await api.dictionarySetTermActive({
-            normKey: row?.norm_key,
-            isActive: !isActive,
-          });
-          if (!res?.ok) {
-            alert(res?.error || "Status konnte nicht geändert werden.");
-            return;
-          }
-          await loadAllLists();
-        };
-
-        btnDelete.onclick = async () => {
-          if (busy) return;
-          const ok = confirm("Wort wirklich löschen?");
-          if (!ok) return;
-          const res = await api.dictionaryDeleteTerm({ normKey: row?.norm_key });
-          if (!res?.ok) {
-            alert(res?.error || "Löschen fehlgeschlagen.");
-            return;
-          }
-          await loadAllLists();
-        };
-      }
-    };
-
-    const loadAllLists = async () => {
-      const resSuggestions = await api.dictionaryListSuggestions();
-      if (resSuggestions?.ok) {
-        renderSuggestions(resSuggestions.suggestions || []);
-      } else {
-        renderSuggestions([]);
-      }
-      const resTerms = await api.dictionaryListTerms();
-      if (resTerms?.ok) {
-        renderTerms(resTerms.terms || []);
-      } else {
-        renderTerms([]);
-      }
-    };
-
-    const runBulkUpdate = async (status) => {
-      if (busy || selectedKeys.size === 0) return;
-      setBusy(true);
-      const keys = Array.from(selectedKeys);
-      for (const normKey of keys) {
-        const res = await api.dictionaryUpdateSuggestionStatus({ normKey, status });
-        if (!res?.ok) {
-          alert(res?.error || "Sammelaktion fehlgeschlagen.");
-          break;
-        }
-      }
-      await loadAllLists();
-      setBusy(false);
-    };
-
-    btnSelectAll.onclick = () => {
-      if (busy) return;
-      const checks = resultList.querySelectorAll("input[type='checkbox']");
-      checks.forEach((inp) => {
-        inp.checked = true;
-      });
-      selectedKeys.clear();
-      checks.forEach((inp) => {
-        const key = String(inp.dataset.key || "").trim();
-        if (key) selectedKeys.add(key);
-      });
-      updateBulkButtons();
-    };
-
-    btnSelectNone.onclick = () => {
-      if (busy) return;
-      const checks = resultList.querySelectorAll("input[type='checkbox']");
-      checks.forEach((inp) => {
-        inp.checked = false;
-      });
-      selectedKeys.clear();
-      updateBulkButtons();
-    };
-
-    btnBulkAccept.onclick = async () => {
-      await runBulkUpdate("accepted");
-    };
-
-    btnBulkReject.onclick = async () => {
-      await runBulkUpdate("rejected");
-    };
-
-    btnPickFolder.onclick = async () => {
-      if (busy) return;
-      if (typeof api.selectDirectory !== "function") {
-        alert("Ordnerauswahl ist nicht verfügbar.");
-        return;
-      }
-      const res = await api.selectDirectory({ title: "Ordner für Wörterbuch wählen" });
-      if (!res?.ok) {
-        alert(res?.error || "Ordner konnte nicht geöffnet werden.");
-        return;
-      }
-      if (res.canceled) return;
-      const nextPath = Array.isArray(res.filePaths) ? res.filePaths[0] : "";
-      if (nextPath) setSourcePath(nextPath);
-    };
-
-    btnScan.onclick = async () => {
-      if (busy) return;
-      if (!selectedDir) {
-        alert("Bitte zuerst einen Ordner auswählen.");
-        return;
-      }
-      if (typeof api.dictionaryListFiles !== "function" || typeof api.dictionaryExtractTermsFromFile !== "function") {
-        alert("Wörterbuch-Scan ist nicht verfügbar.");
-        return;
-      }
-
-      setBusy(true);
-      scanStatus.textContent = "Suche läuft...";
-      setProgress({ total: "-", current: "-", terms: "0", ok: "0", fail: "0" });
-      errorList.innerHTML = "";
-
-      const fileRes = await api.dictionaryListFiles({ dirPath: selectedDir });
-      if (!fileRes?.ok) {
-        scanStatus.textContent = fileRes?.error || "Ordner konnte nicht gelesen werden.";
-        lastScanFileCount = 0;
-        setBusy(false);
-        return;
-      }
-
-      const files = Array.isArray(fileRes.files) ? fileRes.files : [];
-      if (!files.length) {
-        scanStatus.textContent = "Keine passenden Dateien gefunden.";
-        setProgress({ total: "0", current: "-", terms: "0", ok: "0", fail: "0" });
-        lastScanFileCount = 0;
-        setBusy(false);
-        return;
-      }
-
-      lastScanFileCount = files.length;
-      const collected = new Map();
-      let pdfNoTextCount = 0;
-      let noTermsCount = 0;
-      let errorCount = 0;
-      let okCount = 0;
-      setProgress({ total: files.length, current: "-", terms: "0", ok: "0", fail: "0" });
-
-      for (let i = 0; i < files.length; i += 1) {
-        const filePath = files[i];
-        const fileName = filePath.split(/[\\/]/).pop();
-        setProgress({
-          total: files.length,
-          current: fileName || filePath,
-          terms: collected.size,
-          ok: okCount,
-          fail: errorCount,
-        });
-        const res = await api.dictionaryExtractTermsFromFile({ filePath });
-        if (!res?.ok) {
-          errorCount += 1;
-          const msg = String(res?.error || "Unbekannter Fehler").trim();
-          const item = document.createElement("div");
-          item.textContent = `${fileName || filePath} ? ${msg}`;
-          errorList.append(item);
-        } else if (res?.note === "pdf_no_text") {
-          pdfNoTextCount += 1;
-          const item = document.createElement("div");
-          item.textContent = `${fileName || filePath} ? kein Text extrahierbar`;
-          errorList.append(item);
-        } else if (res?.note === "no_terms") {
-          noTermsCount += 1;
-          const item = document.createElement("div");
-          item.textContent = `${fileName || filePath} ? keine verwertbaren Begriffe`;
-          errorList.append(item);
-        } else {
-          okCount += 1;
-        }
-        if (res?.ok && Array.isArray(res.terms)) {
-          for (const term of res.terms) {
-            const normKey = String(term?.normKey || "").trim();
-            if (!normKey) continue;
-            let entry = collected.get(normKey);
-            if (!entry) {
-              entry = {
-                normKey,
-                term: Array.isArray(term?.variants) && term.variants[0] ? term.variants[0] : normKey,
-                count: 0,
-                variants: new Set(),
-                sourcePath: filePath,
-                sourceExcerpt: String(term?.excerpt || "").trim(),
-              };
-              collected.set(normKey, entry);
-            }
-            entry.count += Number(term?.count || 0);
-            const variants = Array.isArray(term?.variants) ? term.variants : [];
-            for (const v of variants) {
-              if (!v) continue;
-              entry.variants.add(v);
-            }
-          }
-        }
-        setProgress({
-          total: files.length,
-          current: fileName || filePath,
-          terms: collected.size,
-          ok: okCount,
-          fail: errorCount,
-        });
-      }
-
-      const rawEntries = Array.from(collected.values());
-      const payload = groupCollectedTerms(rawEntries);
-
-      if (payload.length && typeof api.dictionaryApplyScanResults === "function") {
-        const saveRes = await api.dictionaryApplyScanResults({ suggestions: payload });
-        if (!saveRes?.ok) {
-          scanStatus.textContent = saveRes?.error || "Speichern fehlgeschlagen.";
-          setBusy(false);
-          return;
-        }
-      }
-
-      const summaryParts = [];
-      if (pdfNoTextCount > 0) summaryParts.push(`PDFs ohne Text: ${pdfNoTextCount}`);
-      if (noTermsCount > 0) summaryParts.push(`Dateien ohne Treffer: ${noTermsCount}`);
-      if (errorCount > 0) summaryParts.push(`Fehler: ${errorCount}`);
-      const summary = summaryParts.length ? ` (${summaryParts.join(", ")})` : "";
-      scanStatus.textContent = `Suche abgeschlossen: ${payload.length} Vorschläge${summary}`;
-      await loadAllLists();
-      setBusy(false);
-    };
-
-    await loadAllLists();
-    this._openSettingsModal({
-      title: "Wörterbuch",
-      content: [wrap],
-      closeOnly: true,
-    });
-  }
-
-  async load() {
-    await this._reload();
-  }
-
-  _openSettingsModal({ title, content, saveFn, closeOnly = false } = {}) {
-    if (!this.settingsModalOverlayEl || !this.settingsModalBodyEl || !this.settingsModalTitleEl) return;
-    this.settingsModalTitleEl.textContent = (title || "").toString();
-    if (this.settingsModalEl) {
-      const titleNorm = String(title || "").trim().toLowerCase();
-      const isCompactPopup =
-        titleNorm === "nutzereinstellungen" ||
-        titleNorm === "entwicklung" ||
-        titleNorm === "woerterbuch" ||
-        titleNorm === "wörterbuch";
-      const isUserSettingsPopup = titleNorm === "nutzereinstellungen";
-      const isPrintSettingsPopup = titleNorm === "druckeinstellungen";
-      const isLayoutPopup = titleNorm === "druck-layout";
-      if (isPrintSettingsPopup) {
-        this.settingsModalEl.style.width = "min(760px, calc(100vw - 24px))";
-      } else if (isLayoutPopup) {
-        this.settingsModalEl.style.width = "min(344px, calc(100vw - 24px))";
-      } else if (isCompactPopup) {
-        this.settingsModalEl.style.width = "min(760px, calc(100vw - 24px))";
-      } else {
-        this.settingsModalEl.style.width = "min(980px, calc(100vw - 24px))";
-      }
-      const footerInner = this.settingsModalFooterEl?.firstElementChild;
-      if (footerInner) {
-        footerInner.style.maxWidth = isPrintSettingsPopup ? "600px" : "720px";
-      }
-    }
-    this.settingsModalBodyEl.innerHTML = "";
-    const nodes = Array.isArray(content) ? content : [content];
-    for (const node of nodes) {
-      if (node) this.settingsModalBodyEl.appendChild(node);
-    }
-    this._settingsModalSaveFn = typeof saveFn === "function" ? saveFn : null;
-    this._settingsModalCloseOnly = !!closeOnly;
-    if (this.settingsModalSaveBtn) {
-      this.settingsModalSaveBtn.textContent = this._settingsModalCloseOnly ? "Schliessen" : "Speichern";
-    }
-    this._settingsModalOpen = true;
-    this._lockBodyScroll();
-    this.settingsModalOverlayEl.style.display = "flex";
-    try {
-      if (this.settingsModalEl) {
-        this.settingsModalEl.focus();
-      } else {
-        this.settingsModalOverlayEl.focus();
-      }
-    } catch (_e) {
-      // ignore
-    }
-  }
-
-  async _runSettingsModalSave({ closeOnSuccess } = {}) {
-    if (this.roleRenameCode) {
-      const ok = this._commitRoleInlineRename({ commit: true });
-      if (!ok) return false;
-    }
-    if (!this._settingsModalSaveFn) {
-      if (closeOnSuccess) this._closeSettingsModal();
-      return true;
-    }
-
-    try {
-      const res = await this._settingsModalSaveFn();
-      if (res === false) return false;
-      if (closeOnSuccess) this._closeSettingsModal();
-      return true;
-    } catch (e) {
-      console.error("Settings-Modal Save fehlgeschlagen:", e);
-      return false;
-    }
-  }
-
-  _closeSettingsModal() {
-    if (!this.settingsModalOverlayEl || !this.settingsModalBodyEl) return;
-    if (this.roleMoveModeActive) {
-      this.roleMoveModeActive = false;
-      this._detachRoleMoveMouseDown();
-      this._detachRoleMoveKeyDown();
-    }
-    if (this._devPopupOpen) {
-      this.devUnlocked = false;
-      this._devPopupOpen = false;
-    }
-    this._settingsModalOpen = false;
-    this.settingsModalOverlayEl.style.display = "none";
-    this.settingsModalBodyEl.innerHTML = "";
-    this._settingsModalSaveFn = null;
-    this._settingsModalCloseOnly = false;
-    this._unlockBodyScroll();
-  }
-
-  _lockBodyScroll() {
-    if (this._bodyLockCount === 0) {
-      this._bodyOverflowBackup = document.body.style.overflow || "";
-      document.body.style.overflow = "hidden";
-    }
-    this._bodyLockCount += 1;
-  }
-
-  _unlockBodyScroll() {
-    if (this._bodyLockCount > 0) {
-      this._bodyLockCount -= 1;
-    }
-    if (this._bodyLockCount === 0) {
-      document.body.style.overflow = this._bodyOverflowBackup || "";
-      this._bodyOverflowBackup = null;
-    }
   }
 
   _setMsg(t) {
@@ -8564,4 +3631,837 @@ export default class SettingsView {
         this._applyState();
       }
     }
+
+  _appendSettingsModalContentItem(target, item) {
+    if (!target || item == null) return;
+    if (Array.isArray(item)) {
+      for (const child of item) {
+        this._appendSettingsModalContentItem(target, child);
+      }
+      return;
+    }
+    if (item instanceof Node) {
+      target.appendChild(item);
+      return;
+    }
+    if (typeof item === "string") {
+      target.appendChild(document.createTextNode(item));
+      return;
+    }
+    if (typeof item.render === "function") {
+      this._appendSettingsModalContentItem(target, item.render());
+      return;
+    }
+    target.appendChild(document.createTextNode(String(item)));
+  }
+
+  _createLicenseSettingsContent() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(560px, calc(100vw - 80px))";
+    wrap.style.maxWidth = "700px";
+
+    const card = document.createElement("div");
+    applyPopupCardStyle(card);
+    card.style.padding = "10px";
+    card.style.display = "grid";
+    card.style.gap = "8px";
+
+    const title = document.createElement("div");
+    title.textContent = "Lizenzstatus";
+    title.style.fontWeight = "800";
+    title.style.fontSize = "14px";
+
+    const note = document.createElement("div");
+    note.style.fontSize = "12px";
+    note.style.lineHeight = "1.45";
+    note.textContent =
+      "Lizenzstatus wird hier nur angezeigt. Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert.";
+
+    const status = document.createElement("div");
+    status.style.padding = "8px 10px";
+    status.style.border = "1px solid rgba(0,0,0,0.08)";
+    status.style.borderRadius = "8px";
+    status.style.background = "#f8fafc";
+    status.style.fontSize = "12px";
+    status.style.whiteSpace = "pre-line";
+    status.textContent = "Lizenzstatus wird geladen ...";
+
+    const btnReload = document.createElement("button");
+    btnReload.type = "button";
+    btnReload.textContent = "Status aktualisieren";
+    applyPopupButtonStyle(btnReload);
+
+    const renderStatus = (res, fallbackError = "") => {
+      const valid = !!res?.valid;
+      const reason = String(res?.reason || "").trim();
+      const licenseId = String(res?.licenseId || "").trim() || "-";
+      const customer = String(res?.customerName || "").trim() || "-";
+      const machineId = String(res?.machineId || "").trim() || "-";
+      const validUntil = this._formatLicenseDate(res?.validUntil);
+      const reasonText = this._formatLicenseReason(reason, fallbackError);
+      const warningText = this._formatLicenseWarning(res, fallbackError);
+
+      status.textContent = valid
+        ? `Gueltig fuer: ${customer}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}\nGueltig bis: ${validUntil}\nHinweis: ${warningText}`
+        : `Ungueltig\nGrund: ${reasonText}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}`;
+    };
+
+    const loadStatus = async () => {
+      if (typeof api.licenseGetStatus !== "function") {
+        renderStatus({ valid: false, reason: "INVALID_FORMAT" }, "Lizenz-IPC ist nicht verfuegbar.");
+        return;
+      }
+      try {
+        const res = await api.licenseGetStatus();
+        if (!res?.ok) {
+          renderStatus(res || {}, res?.error || "Lizenzstatus konnte nicht geladen werden.");
+          return;
+        }
+        renderStatus(res || {});
+      } catch (e) {
+        renderStatus({}, e?.message || "Lizenzstatus konnte nicht geladen werden.");
+      }
+    };
+
+    btnReload.addEventListener("click", loadStatus);
+    card.append(title, note, status, btnReload);
+    wrap.append(card);
+
+    void loadStatus();
+    return wrap;
+  }
+
+  async _openDevelopmentModal() {
+    const api = window.bbmDb || {};
+    const has = (name) => typeof api?.[name] === "function";
+    const clampInt = (val, min, max, fallback) => {
+      const n = Math.floor(Number(val));
+      if (!Number.isFinite(n) || n <= 0) return fallback;
+      return Math.max(min, Math.min(max, n));
+    };
+    const mkRow = (labelText, valueNode) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "160px 1fr";
+      row.style.gap = "8px";
+      row.style.alignItems = "center";
+
+      const label = document.createElement("div");
+      label.textContent = labelText;
+      label.style.fontWeight = "700";
+      label.style.fontSize = "12px";
+      label.style.color = "#334155";
+
+      const value =
+        valueNode instanceof HTMLElement ? valueNode : document.createElement("div");
+      if (!(valueNode instanceof HTMLElement)) {
+        value.textContent = String(valueNode ?? "-");
+      }
+      value.style.minWidth = "0";
+      value.style.fontSize = "12px";
+      value.style.wordBreak = "break-word";
+
+      row.append(label, value);
+      return row;
+    };
+    const mkCard = (titleText, hintText = "") => {
+      const box = document.createElement("div");
+      applyPopupCardStyle(box);
+      box.style.padding = "8px 10px";
+      box.style.marginTop = "0";
+      box.style.display = "grid";
+      box.style.gap = "8px";
+      const title = document.createElement("div");
+      title.textContent = titleText;
+      title.style.fontWeight = "800";
+      const hint = document.createElement("div");
+      hint.textContent = hintText;
+      hint.style.fontSize = "12px";
+      hint.style.opacity = "0.75";
+      box.append(title, hint);
+      return { box, title, hint };
+    };
+
+    const section = document.createElement("div");
+    section.style.display = "grid";
+    section.style.gap = "10px";
+    section.style.minWidth = "min(760px, calc(100vw - 80px))";
+    section.style.maxWidth = "920px";
+
+    const versionCard = mkCard("Versionierung", "SemVer und Build-Kanal verwalten.");
+    const dbCard = mkCard("DB-Diagnose", "Aktive DB, Legacy und Importpfade prüfen.");
+    const topsCard = mkCard("TOP-Limits", "Kurz- und Langtextgrenzen verwalten.");
+    const themeCard = mkCard("Farbschema", "Start-Defaults des Themes verwalten.");
+    const dictationCard = mkCard("Diktieren", "Audio-/Diktat-Entwicklung bleibt hier erreichbar.");
+
+    const btn = (label, primary = false) => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.textContent = label;
+      applyPopupButtonStyle(el, primary ? { variant: "primary" } : undefined);
+      return el;
+    };
+
+    const TOPS_TITLE_KEY = "tops.titleMax";
+    const TOPS_LONG_KEY = "tops.longMax";
+
+    let versionRepoCurrent = "";
+    const versionAppValue = document.createElement("div");
+    versionAppValue.textContent = "-";
+    versionAppValue.style.fontWeight = "700";
+    const versionRepoValue = document.createElement("div");
+    versionRepoValue.textContent = "-";
+    versionRepoValue.style.fontWeight = "700";
+    const buildChannelValue = document.createElement("div");
+    buildChannelValue.textContent = "-";
+    buildChannelValue.style.fontSize = "12px";
+    buildChannelValue.style.opacity = "0.85";
+    const releaseType = document.createElement("select");
+    for (const [v, l] of [["patch", "Patch"], ["minor", "Minor"], ["major", "Major"]]) {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = l;
+      releaseType.append(opt);
+    }
+    const nextVersionValue = document.createElement("div");
+    nextVersionValue.textContent = "-";
+    nextVersionValue.style.fontWeight = "700";
+    const versionStatus = document.createElement("div");
+    versionStatus.style.fontSize = "12px";
+    versionStatus.style.minHeight = "16px";
+    versionStatus.style.color = "#4b5563";
+
+    const parseSemver = (raw) => {
+      const m = String(raw || "").trim().match(/^(\d+)\.(\d+)\.(\d+)$/);
+      return m ? { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]) } : { major: 0, minor: 0, patch: 0 };
+    };
+    const updateVersionPreview = () => {
+      const cur = parseSemver(versionRepoCurrent || "0.0.0");
+      const next = { ...cur };
+      if (releaseType.value === "major") {
+        next.major += 1; next.minor = 0; next.patch = 0;
+      } else if (releaseType.value === "minor") {
+        next.minor += 1; next.patch = 0;
+      } else {
+        next.patch += 1;
+      }
+      nextVersionValue.textContent = `${next.major}.${next.minor}.${next.patch}`;
+    };
+    const loadBuildChannel = async () => {
+      if (!has("devBuildChannelGet")) return;
+      const res = await api.devBuildChannelGet();
+      if (res?.ok) {
+        buildChannelValue.textContent = `Build-Kanal: ${String(res.channel || "stable").toUpperCase()}`;
+      }
+    };
+    const loadVersioningData = async () => {
+      if (!has("devVersionGet")) {
+        versionStatus.textContent = "Versionierung ist nicht verfuegbar.";
+        return;
+      }
+      const res = await api.devVersionGet();
+      if (!res?.ok) {
+        versionStatus.textContent = res?.error || "Versionen konnten nicht geladen werden.";
+        return;
+      }
+      versionRepoCurrent = String(res.repoVersion || "").trim();
+      versionAppValue.textContent = String(res.appVersion || "-");
+      versionRepoValue.textContent = versionRepoCurrent || "-";
+      buildChannelValue.textContent = "";
+      await loadBuildChannel();
+      updateVersionPreview();
+      versionStatus.textContent = "";
+    };
+    const bumpBtn = btn("Version hochschalten", true);
+    bumpBtn.onclick = async () => {
+      if (!has("devVersionBump")) return;
+      const res = await api.devVersionBump({ kind: releaseType.value });
+      if (!res?.ok) {
+        versionStatus.textContent = res?.error || "Version konnte nicht hochgeschaltet werden.";
+        return;
+      }
+      await loadVersioningData();
+      versionStatus.textContent = `Repo-Version auf ${res.repoVersion} aktualisiert.`;
+    };
+    const set100Btn = btn("Auf 1.0.0 setzen");
+    set100Btn.style.display = "none";
+    set100Btn.onclick = async () => {
+      if (!has("devVersionSet")) return;
+      const res = await api.devVersionSet({ version: "1.0.0" });
+      if (!res?.ok) {
+        versionStatus.textContent = res?.error || "Version 1.0.0 konnte nicht gesetzt werden.";
+        return;
+      }
+      await loadVersioningData();
+      versionStatus.textContent = "Repo-Version auf 1.0.0 gesetzt.";
+    };
+    versionCard.box.append(
+      mkRow("Aktuelle App-Version", versionAppValue),
+      mkRow("Repo-Version", versionRepoValue),
+      mkRow("Build-Kanal", buildChannelValue),
+      mkRow("Release-Typ", releaseType),
+      mkRow("Naechste Version", nextVersionValue),
+      (() => { const row = document.createElement("div"); row.style.display = "flex"; row.style.gap = "8px"; row.append(bumpBtn, set100Btn); return row; })(),
+      versionStatus
+    );
+
+    const dbText = document.createElement("pre");
+    dbText.style.margin = "0";
+    dbText.style.padding = "8px";
+    dbText.style.borderRadius = "8px";
+    dbText.style.background = "#f8fafc";
+    dbText.style.border = "1px solid rgba(0,0,0,0.08)";
+    dbText.style.fontSize = "10px";
+    dbText.style.whiteSpace = "pre-wrap";
+    dbText.textContent = "Diagnosedaten werden geladen ...";
+    const dbActions = document.createElement("div");
+    dbActions.style.display = "flex";
+    dbActions.style.gap = "8px";
+    dbActions.style.flexWrap = "wrap";
+    const btnDbReload = btn("Diagnose aktualisieren");
+    const btnDbOpenActive = btn("Aktiven Pfad öffnen");
+    const btnDbOpenLegacy = btn("Legacy-Pfad öffnen");
+    const btnDbImport = btn("Legacy-Import");
+    const loadDbDiagnostics = async () => {
+      if (!has("dbDiagnosticsGet")) {
+        dbText.textContent = "DB-Diagnose-API fehlt.";
+        return;
+      }
+      const res = await api.dbDiagnosticsGet();
+      if (!res?.ok) {
+        dbText.textContent = res?.error || "DB-Diagnose fehlgeschlagen.";
+        return;
+      }
+      const d = res.data || {};
+      const fmt = (s = {}) => `${s.exists ? "ja" : "nein"}, ${Number(s.size || 0)} Bytes`;
+      dbText.textContent = [
+        `[db] using ${d.dbPath || "-"}`,
+        `[db] backup ${d.backupPath || "-"} (${fmt(d.backup)})`,
+        `[db] legacy ${d.legacyDbPath || "-"} (${fmt(d.legacy)})`,
+        `[db] legacy-import ${d.legacyImportPath || "-"} (${fmt(d.legacyImport)})`,
+        `[db] legacy-available ${d.legacyAvailable ? "ja" : "nein"}`,
+        `[db] active-likely-empty ${d.activeLikelyEmpty ? "ja" : "nein"}`,
+      ].join("\n");
+      return d;
+    };
+    let lastDbDiag = null;
+    btnDbReload.onclick = async () => { lastDbDiag = await loadDbDiagnostics(); };
+    btnDbOpenActive.onclick = async () => {
+      if (!has("dbOpenFolder")) return;
+      const res = await api.dbOpenFolder({ kind: "active" });
+      if (!res?.ok) alert(res?.error || "Aktiven DB-Pfad konnte nicht geoeffnet werden.");
+    };
+    btnDbOpenLegacy.onclick = async () => {
+      if (!has("dbOpenFolder")) return;
+      if (!lastDbDiag?.legacyAvailable) {
+        alert("Keine Legacy-Datei verfuegbar.");
+        return;
+      }
+      const res = await api.dbOpenFolder({ kind: "legacyImport" });
+      if (!res?.ok) alert(res?.error || "Legacy-Import-Pfad konnte nicht geoeffnet werden.");
+    };
+    btnDbImport.onclick = async () => {
+      if (!has("dbLegacyImport")) return;
+      if (!window.confirm("Legacy-Datenbank wirklich uebernehmen? Die aktive DB wird vorher gesichert.")) return;
+      const res = await api.dbLegacyImport();
+      if (!res?.ok) {
+        alert(res?.error || "Legacy-Import fehlgeschlagen.");
+        return;
+      }
+      if (this.router?.ensureAppSettingsLoaded) await this.router.ensureAppSettingsLoaded({ force: true });
+      await this._reload();
+      window.dispatchEvent(new Event("bbm:header-refresh"));
+      await loadDbDiagnostics();
+    };
+    dbActions.append(btnDbReload, btnDbOpenActive, btnDbOpenLegacy, btnDbImport);
+    dbCard.box.append(dbText, dbActions);
+
+    const topsTitle = document.createElement("input");
+    topsTitle.type = "number";
+    topsTitle.min = "1";
+    topsTitle.step = "1";
+    topsTitle.style.width = "100%";
+    const topsLong = document.createElement("input");
+    topsLong.type = "number";
+    topsLong.min = "1";
+    topsLong.step = "1";
+    topsLong.style.width = "100%";
+    const topsMsg = document.createElement("div");
+    topsMsg.style.fontSize = "12px";
+    topsMsg.style.opacity = "0.75";
+    let topsTimer = null;
+    const setTopsMsg = (txt) => {
+      topsMsg.textContent = txt || "";
+      if (topsTimer) clearTimeout(topsTimer);
+      if (txt) topsTimer = setTimeout(() => (topsMsg.textContent = ""), 900);
+    };
+    const loadTopLimitSettings = async () => {
+      if (!has("appSettingsGetMany")) return;
+      const res = await api.appSettingsGetMany([TOPS_TITLE_KEY, TOPS_LONG_KEY]);
+      if (!res?.ok) return;
+      const data = res.data || {};
+      topsTitle.value = String(clampInt(data[TOPS_TITLE_KEY], 1, 5000, 100));
+      topsLong.value = String(clampInt(data[TOPS_LONG_KEY], 1, 20000, 500));
+    };
+    const saveTopLimitSettings = async () => {
+      if (!has("appSettingsSetMany")) return false;
+      const res = await api.appSettingsSetMany({
+        [TOPS_TITLE_KEY]: String(clampInt(topsTitle.value, 1, 5000, 100)),
+        [TOPS_LONG_KEY]: String(clampInt(topsLong.value, 1, 20000, 500)),
+      });
+      if (!res?.ok) {
+        setTopsMsg(res?.error || "Speichern fehlgeschlagen");
+        return false;
+      }
+      setTopsMsg("Gespeichert");
+      window.dispatchEvent(new Event("bbm:tops-limits-changed"));
+      return true;
+    };
+    topsTitle.addEventListener("change", () => saveTopLimitSettings());
+    topsLong.addEventListener("change", () => saveTopLimitSettings());
+    topsCard.box.append(mkRow("Kurztext max", topsTitle), mkRow("Langtext max", topsLong), topsMsg);
+
+    const themeInfo = document.createElement("div");
+    themeInfo.style.fontSize = "12px";
+    themeInfo.style.opacity = "0.8";
+    themeInfo.textContent = "Start-Defaults fuer das Theme pflegen oder auf den User anwenden.";
+    const themeActions = document.createElement("div");
+    themeActions.style.display = "flex";
+    themeActions.style.gap = "8px";
+    themeActions.style.flexWrap = "wrap";
+    const btnThemeLoad = btn("Start-Defaults laden");
+    const btnThemeSave = btn("Start-Defaults speichern");
+    const btnThemeApply = btn("Auf User anwenden");
+    btnThemeLoad.onclick = async () => { await this._loadThemeStartDefaults(); };
+    btnThemeSave.onclick = async () => { await this._saveThemeStartDefaults(); };
+    btnThemeApply.onclick = async () => { await this._applyThemeStartDefaultsToUser(); };
+    themeActions.append(btnThemeLoad, btnThemeSave, btnThemeApply);
+    themeCard.box.append(themeInfo, themeActions);
+
+    const mkScaleGroup = (labelText, buttons) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gap = "6px";
+      const lbl = document.createElement("div");
+      lbl.textContent = labelText;
+      lbl.style.fontWeight = "700";
+      lbl.style.fontSize = "12px";
+      const btnWrap = document.createElement("div");
+      btnWrap.style.display = "flex";
+      btnWrap.style.gap = "6px";
+      btnWrap.style.flexWrap = "wrap";
+      btnWrap.append(...buttons);
+      row.append(lbl, btnWrap);
+      return row;
+    };
+    const applyScaleBtnBase = (el) => {
+      el.style.padding = "6px 10px";
+      el.style.borderRadius = "8px";
+      el.style.border = "1px solid rgba(0,0,0,0.18)";
+      el.style.fontWeight = "600";
+      el.style.cursor = "pointer";
+      el.style.minHeight = "30px";
+      el.style.boxShadow = "none";
+    };
+    const setScaleBtnActive = (el, active) => {
+      el.style.background = active ? "#1976d2" : "#fff";
+      el.style.color = active ? "white" : "#1565c0";
+      el.style.borderColor = active ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
+    };
+    const dictationSection = createDictationDevSection({
+      applyPopupCardStyle,
+      mkScaleGroup,
+      applyScaleBtnBase,
+      setScaleBtnActive,
+      settingsApi: () => window.bbmDb || {},
+    });
+    const tabs = [
+      { key: "version", label: "Versionierung", el: versionCard.box },
+      { key: "db", label: "DB-Diagnose", el: dbCard.box },
+      { key: "dictation", label: "Diktieren", el: dictationSection.tab },
+      { key: "tops", label: "TOP-Liste", el: topsCard.box },
+      { key: "theme", label: "Farbschema", el: themeCard.box },
+    ];
+    const tabHead = document.createElement("div");
+    tabHead.style.display = "flex";
+    tabHead.style.gap = "8px";
+    tabHead.style.flexWrap = "wrap";
+    tabHead.style.rowGap = "8px";
+    tabHead.style.marginBottom = "8px";
+    const tabBody = document.createElement("div");
+    tabBody.style.display = "grid";
+    tabBody.style.gap = "10px";
+    let dictationLoaded = false;
+    const tabButtons = new Map();
+    const setTab = (key) => {
+      if (key === "dictation" && !dictationLoaded) {
+        dictationLoaded = true;
+        if (typeof dictationSection.load === "function") dictationSection.load();
+      }
+      for (const tab of tabs) {
+        const active = tab.key === key;
+        tab.el.style.display = active ? "grid" : "none";
+        const b = tabButtons.get(tab.key);
+        if (b) {
+          b.disabled = active;
+          b.style.opacity = active ? "0.85" : "1";
+        }
+      }
+    };
+    const addTabBtn = (label, key) => {
+      const b = btn(label);
+      b.onclick = () => setTab(key);
+      tabButtons.set(key, b);
+      return b;
+    };
+    tabHead.append(
+      addTabBtn("Versionierung", "version"),
+      addTabBtn("DB-Diagnose", "db"),
+      addTabBtn("Diktieren", "dictation"),
+      addTabBtn("TOP-Liste", "tops"),
+      addTabBtn("Farbschema", "theme")
+    );
+    tabBody.append(...tabs.map((t) => t.el));
+    section.append(tabHead, tabBody);
+
+    await loadVersioningData();
+    await loadDbDiagnostics();
+    await loadTopLimitSettings();
+    setTab("version");
+
+    this._openSettingsModal({
+      title: "Entwicklung",
+      content: [section],
+      closeOnly: true,
+    });
+  }
+
+  async load() {
+    await this._reload();
+  }
+
+  dispose() {
+    if (this.settingsModalOverlayEl) {
+      try {
+        this.settingsModalOverlayEl.remove();
+      } catch {
+        // ignore
+      }
+    }
+    this._settingsModalOpen = false;
+    this._settingsModalSaveFn = null;
+    this._settingsModalCloseOnly = false;
+    this._unlockBodyScroll();
+  }
+
+  render() {
+    if (this.settingsModalOverlayEl) {
+      try {
+        this.settingsModalOverlayEl.remove();
+      } catch {
+        // ignore
+      }
+    }
+
+    const root = document.createElement("div");
+    root.style.display = "grid";
+    root.style.gap = "12px";
+    root.style.maxWidth = "980px";
+    root.style.width = "100%";
+
+    const head = document.createElement("div");
+    head.style.display = "flex";
+    head.style.alignItems = "center";
+    head.style.gap = "10px";
+    head.style.flexWrap = "wrap";
+
+    const title = document.createElement("h2");
+    title.textContent = "Einstellungen";
+    title.style.margin = "0";
+
+    const msg = document.createElement("div");
+    msg.style.marginLeft = "auto";
+    msg.style.fontSize = "12px";
+    msg.style.opacity = "0.85";
+    this.msgEl = msg;
+
+    head.append(title, msg);
+
+    const tiles = document.createElement("div");
+    tiles.style.display = "grid";
+    tiles.style.gridTemplateColumns = "repeat(auto-fit, minmax(220px, 1fr))";
+    tiles.style.gap = "10px";
+
+    const mkTile = ({ titleText, subText, onClick }) => {
+      const tile = document.createElement("button");
+      tile.type = "button";
+      tile.style.textAlign = "left";
+      tile.style.border = "1px solid #ddd";
+      tile.style.borderRadius = "10px";
+      tile.style.background = "#fff";
+      tile.style.padding = "12px";
+      tile.style.cursor = "pointer";
+      tile.style.userSelect = "none";
+
+      const t = document.createElement("div");
+      t.textContent = titleText;
+      t.style.fontWeight = "900";
+      t.style.fontSize = "16px";
+      t.style.marginBottom = "6px";
+
+      const s = document.createElement("div");
+      s.textContent = subText || "";
+      s.style.opacity = "0.8";
+      s.style.fontSize = "12px";
+
+      tile.append(t, s);
+      tile.addEventListener("click", async () => {
+        if (this.saving) return;
+        await onClick?.();
+      });
+      return tile;
+    };
+
+    const tileArchive = mkTile({
+      titleText: "Archiv",
+      subText: "Archivierte Projekte anzeigen",
+      onClick: async () => {
+        if (!this.router || typeof this.router.showArchive !== "function") {
+          alert("Router.showArchive ist nicht verfuegbar.");
+          return;
+        }
+        await this.router.showArchive();
+      },
+    });
+
+    const tileLicense = mkTile({
+      titleText: "Lizenz",
+      subText: "Lizenzstatus anzeigen",
+      onClick: async () => {
+        this._openSettingsModal({
+          title: "Lizenz",
+          content: [this._createLicenseSettingsContent()],
+          closeOnly: true,
+        });
+      },
+    });
+
+    const tileAdmin = mkTile({
+      titleText: "Adminbereich",
+      subText: "Externe Lizenz-App",
+      onClick: async () => {
+        const adminInfo = document.createElement("div");
+        adminInfo.style.maxWidth = "720px";
+        adminInfo.style.lineHeight = "1.45";
+        adminInfo.textContent =
+          "Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert.";
+        this._openSettingsModal({
+          title: "Adminbereich",
+          content: [adminInfo],
+          closeOnly: true,
+        });
+      },
+    });
+
+    const tileDev = mkTile({
+      titleText: "Entwicklung",
+      subText: "Versionierung, Farben, Diagnose",
+      onClick: async () => {
+        await this._openDevelopmentModal();
+      },
+    });
+
+    tiles.append(tileArchive, tileLicense, tileAdmin, tileDev);
+    root.append(head, tiles);
+    this.root = root;
+
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: OVERLAY_TOP });
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+
+    const modal = document.createElement("div");
+    applyPopupCardStyle(modal);
+    modal.style.width = "min(980px, calc(100vw - 24px))";
+    modal.style.maxHeight = "calc(100vh - 24px)";
+    modal.style.display = "flex";
+    modal.style.flexDirection = "column";
+    modal.style.overflow = "hidden";
+    modal.style.background = "#fff";
+    modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.25)";
+    modal.style.padding = "0";
+    modal.style.fontFamily = "Calibri, Arial, sans-serif";
+    modal.tabIndex = -1;
+
+    const modalHead = document.createElement("div");
+    modalHead.style.display = "flex";
+    modalHead.style.alignItems = "center";
+    modalHead.style.justifyContent = "space-between";
+    modalHead.style.gap = "10px";
+    modalHead.style.padding = "12px";
+    modalHead.style.borderBottom = "1px solid #e2e8f0";
+
+    const modalTitle = document.createElement("div");
+    modalTitle.style.fontWeight = "bold";
+    modalTitle.textContent = "";
+
+    const modalClose = document.createElement("button");
+    modalClose.type = "button";
+    modalClose.textContent = "X";
+    applyPopupButtonStyle(modalClose);
+
+    modalHead.append(modalTitle, modalClose);
+
+    const modalBody = document.createElement("div");
+    modalBody.style.display = "grid";
+    modalBody.style.gap = "10px";
+    modalBody.style.flex = "1 1 auto";
+    modalBody.style.minHeight = "0";
+    modalBody.style.overflow = "auto";
+    modalBody.style.padding = "12px";
+
+    const modalFooter = document.createElement("div");
+    modalFooter.style.borderTop = "1px solid #e2e8f0";
+    modalFooter.style.padding = "10px 12px";
+
+    const modalFooterInner = document.createElement("div");
+    modalFooterInner.style.display = "flex";
+    modalFooterInner.style.justifyContent = "flex-end";
+    modalFooterInner.style.gap = "8px";
+    modalFooterInner.style.width = "100%";
+    modalFooterInner.style.maxWidth = "720px";
+
+    const modalSave = document.createElement("button");
+    modalSave.type = "button";
+    modalSave.textContent = "Speichern";
+    applyPopupButtonStyle(modalSave, { variant: "primary" });
+    modalSave.addEventListener("click", async () => {
+      if (this._settingsModalCloseOnly) {
+        this._closeSettingsModal();
+        return;
+      }
+      await this._runSettingsModalSave({ closeOnSuccess: true });
+    });
+
+    modalFooterInner.append(modalSave);
+    modalFooter.append(modalFooterInner);
+    modal.append(modalHead, modalBody, modalFooter);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    this.settingsModalOverlayEl = overlay;
+    this.settingsModalEl = modal;
+    this.settingsModalTitleEl = modalTitle;
+    this.settingsModalBodyEl = modalBody;
+    this.settingsModalCloseBtn = modalClose;
+    this.settingsModalFooterEl = modalFooter;
+    this.settingsModalSaveBtn = modalSave;
+
+    const closeSettingsOverlay = () => {
+      if (this._settingsModalCloseOnly) {
+        this._closeSettingsModal();
+        return;
+      }
+      this._runSettingsModalSave({ closeOnSuccess: true });
+    };
+    registerPopupCloseHandlers(overlay, closeSettingsOverlay);
+
+    modalClose.addEventListener("click", closeSettingsOverlay);
+    this._settingsModalOpen = false;
+    return root;
+  }
+
+  _openSettingsModal({ title, content, saveFn, closeOnly = false } = {}) {
+    if (!this.settingsModalOverlayEl || !this.settingsModalBodyEl || !this.settingsModalTitleEl) return;
+    this.settingsModalTitleEl.textContent = (title || "").toString();
+    const titleNorm = String(title || "").trim().toLowerCase();
+    if (this.settingsModalEl) {
+      const isCompactPopup =
+        titleNorm === "lizenz" || titleNorm === "entwicklung" || titleNorm === "adminbereich";
+      const isPrintSettingsPopup = titleNorm === "druckeinstellungen";
+      const isLayoutPopup = titleNorm === "druck-layout";
+      if (isPrintSettingsPopup) {
+        this.settingsModalEl.style.width = "min(760px, calc(100vw - 24px))";
+      } else if (isLayoutPopup) {
+        this.settingsModalEl.style.width = "min(344px, calc(100vw - 24px))";
+      } else if (isCompactPopup) {
+        this.settingsModalEl.style.width = "min(760px, calc(100vw - 24px))";
+      } else {
+        this.settingsModalEl.style.width = "min(980px, calc(100vw - 24px))";
+      }
+      const footerInner = this.settingsModalFooterEl?.firstElementChild;
+      if (footerInner) {
+        footerInner.style.maxWidth = isPrintSettingsPopup ? "600px" : "720px";
+      }
+    }
+    this.settingsModalBodyEl.innerHTML = "";
+    const nodes = Array.isArray(content) ? content : [content];
+    for (const node of nodes) {
+      this._appendSettingsModalContentItem(this.settingsModalBodyEl, node);
+    }
+    this._settingsModalSaveFn = typeof saveFn === "function" ? saveFn : null;
+    this._settingsModalCloseOnly = !!closeOnly;
+    if (this.settingsModalSaveBtn) {
+      this.settingsModalSaveBtn.textContent = this._settingsModalCloseOnly ? "Schliessen" : "Speichern";
+    }
+    this._settingsModalOpen = true;
+    this._lockBodyScroll();
+    this.settingsModalOverlayEl.style.display = "flex";
+    try {
+      if (this.settingsModalEl) {
+        this.settingsModalEl.focus();
+      } else {
+        this.settingsModalOverlayEl.focus();
+      }
+    } catch (_e) {
+      // ignore
+    }
+  }
+
+  async _runSettingsModalSave({ closeOnSuccess } = {}) {
+    if (!this._settingsModalSaveFn) {
+      if (closeOnSuccess) this._closeSettingsModal();
+      return true;
+    }
+
+    try {
+      const res = await this._settingsModalSaveFn();
+      if (res === false) return false;
+      if (closeOnSuccess) this._closeSettingsModal();
+      return true;
+    } catch (e) {
+      console.error("Settings-Modal Save fehlgeschlagen:", e);
+      return false;
+    }
+  }
+
+  _closeSettingsModal() {
+    if (!this.settingsModalOverlayEl || !this.settingsModalBodyEl) return;
+    this._settingsModalOpen = false;
+    this.settingsModalOverlayEl.style.display = "none";
+    this.settingsModalBodyEl.innerHTML = "";
+    this._settingsModalSaveFn = null;
+    this._settingsModalCloseOnly = false;
+    this._unlockBodyScroll();
+  }
+
+  _lockBodyScroll() {
+    if (this._bodyLockCount === 0) {
+      this._bodyOverflowBackup = document.body.style.overflow || "";
+      document.body.style.overflow = "hidden";
+    }
+    this._bodyLockCount += 1;
+  }
+
+  _unlockBodyScroll() {
+    if (this._bodyLockCount > 0) {
+      this._bodyLockCount -= 1;
+    }
+    if (this._bodyLockCount === 0) {
+      document.body.style.overflow = this._bodyOverflowBackup || "";
+      this._bodyOverflowBackup = null;
+    }
+  }
 }

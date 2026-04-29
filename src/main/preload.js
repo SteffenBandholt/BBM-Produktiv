@@ -197,27 +197,6 @@ contextBridge.exposeInMainWorld("bbmDb", {
   licenseDelete: () => ipcRenderer.invoke("license:delete"),
   licenseGetInstalled: () => ipcRenderer.invoke("license:get-installed"),
   licenseCreateRequest: (data) => ipcRenderer.invoke("license:create-request", data),
-  // ============================================================
-  // Lizenzierung: Dev-/Werkzeugfluss fuer internen Generator
-  // ============================================================
-  licenseLoadRequestForGenerate: (data) => ipcRenderer.invoke("license:load-request-for-generate", data),
-  licenseLoadForEdit: (data) => ipcRenderer.invoke("license:load-for-edit", data),
-  licenseGenerate: (data) => ipcRenderer.invoke("license:generate", data),
-  licenseOpenOutputDir: (data) => ipcRenderer.invoke("license:open-output-dir", data),
-  licenseAdminListLicenseCustomers: () => ipcRenderer.invoke("license-admin:list-customers"),
-  licenseAdminSaveLicenseCustomer: (customer) => ipcRenderer.invoke("license-admin:save-customer", customer),
-  licenseAdminListLicenseRecords: () => ipcRenderer.invoke("license-admin:list-records"),
-  licenseAdminListLicenseRecordsByCustomer: (customerId) =>
-    ipcRenderer.invoke("license-admin:list-records-by-customer", customerId),
-  licenseAdminSaveLicenseRecord: (license) => ipcRenderer.invoke("license-admin:save-record", license),
-  licenseAdminDeleteLicenseRecord: (id) => ipcRenderer.invoke("license-admin:delete-license-record", id),
-  licenseAdminDeleteLicenseCustomer: (payload) => ipcRenderer.invoke("license-admin:delete-customer", payload),
-  licenseAdminListLicenseHistory: () => ipcRenderer.invoke("license-admin:list-history"),
-  licenseAdminAddLicenseHistoryEntry: (entry) => ipcRenderer.invoke("license-admin:add-history-entry", entry),
-  licenseAdminCreateCustomerSetup: (payload) => ipcRenderer.invoke("license-admin:create-customer-setup", payload),
-  licenseAdminImportLicenseRequest: () => ipcRenderer.invoke("license-admin:import-license-request"),
-  licenseAdminSendResponseLicenseMail: (payload) =>
-    ipcRenderer.invoke("license-admin:send-response-license-mail", payload),
 
   // DEV: Audio Override Status
   devAudioUnlockStatus: () => ipcRenderer.invoke("dev:audioUnlockStatus"),
