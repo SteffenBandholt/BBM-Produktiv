@@ -3,7 +3,6 @@ const { requireFeature, getStatus } = require("./licenseService");
 const {
   LICENSE_FEATURES,
   normalizeLicensedFeatures,
-  isStandardLicensedFeature,
 } = require("./licenseFeatures");
 
 // Zentrale Kernlogik fuer nutzende Stellen:
@@ -65,9 +64,6 @@ function isDevAudioSuggestionsEnabled() {
   return false;
 }
 
-function _isCoveredByBaseLicense(feature) {
-  return isStandardLicensedFeature(feature);
-}
 
 // Zentraler Guard fuer technische Dienste/Addons:
 // Views und Fachablaeufe fragen nicht direkt die Lizenzdatei ab, sondern laufen ueber diesen Einstieg.
@@ -76,10 +72,6 @@ function enforceLicensedFeature(feature) {
   if (normalizedFeature === LICENSE_FEATURES.AUDIO && isDevAudioOverrideEnabled()) {
     return _extractLicenseInfo(getStatus({ fresh: true }));
   }
-  if (_isCoveredByBaseLicense(normalizedFeature)) {
-    return _extractLicenseInfo(getStatus({ fresh: true }));
-  }
-
   try {
     requireFeature(normalizedFeature);
     return _extractLicenseInfo(getStatus({ fresh: true }));

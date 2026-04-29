@@ -25,6 +25,7 @@ const { runLicenseTrialRuntimeTests } = require("./tests/licenseTrialRuntime.tes
 const { runLicenseRequestTests } = require("./tests/licenseRequest.test.cjs");
 const { runLicenseFeatureGuardTests } = require("./tests/licenseFeatureGuards.test.cjs");
 const { runLicenseStandardFeaturesTests } = require("./tests/licenseStandardFeatures.test.cjs");
+const { runFeatureGuardEnforcementTests } = require("./tests/featureGuardEnforcement.test.cjs");
 
 let failed = false;
 
@@ -96,6 +97,7 @@ async function main() {
   await runLicenseRequestTests(run);
   await runLicenseFeatureGuardTests(run);
   await runLicenseStandardFeaturesTests(run);
+  await runFeatureGuardEnforcementTests(run);
 
   if (failed) {
     process.exitCode = 1;
