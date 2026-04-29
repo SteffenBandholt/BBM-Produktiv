@@ -1,5 +1,6 @@
 import {
   createCustomerSetup,
+  deleteCustomer,
   deleteLicense,
   listCustomers,
   listLicensesByCustomer,
@@ -541,7 +542,7 @@ export default class LicenseAdminScreen {
       const row = document.createElement("tr");
       row.style.cursor = "pointer";
       row.onclick = () => {
-        this.currentCustomer = customer;
+        this.currentCustomer = { ...customer };
         this.currentView = "customer-detail";
         this._render();
       };
@@ -625,24 +626,33 @@ export default class LicenseAdminScreen {
     customerTitle.textContent = "Kundendaten";
 
     const saveBtn = this._button("Kunde speichern", async () => {
+      const existingCustomerId = String(this.currentCustomer?.id || "").trim();
       try {
-        const saved = await saveCustomer(
-          buildCustomerEditorPayload({
-            customer,
-            inputs: {
-              customer_number: inputs.customer_number.value,
-              company_name: inputs.company_name.value,
-              contact_person: inputs.contact_person.value,
-              email: inputs.email.value,
-              phone: inputs.phone.value,
-              notes: inputs.notes.value,
-            },
-          })
-        );
+        const payload = buildCustomerEditorPayload({
+          customer: existingCustomerId ? { id: existingCustomerId } : {},
+          inputs: {
+            customer_number: inputs.customer_number.value,
+            company_name: inputs.company_name.value,
+            contact_person: inputs.contact_person.value,
+            email: inputs.email.value,
+            phone: inputs.phone.value,
+            notes: inputs.notes.value,
+          },
+        });
+        if (existingCustomerId) {
+          payload.id = existingCustomerId;
+        }
+
+        const saved = await saveCustomer(payload);
+        if (existingCustomerId && String(saved?.id || "").trim() !== existingCustomerId) {
+          throw new Error("KUNDEN_ID_UNERWARTET_GEÄNDERT");
+        }
+
         this.currentCustomer = saved;
         newLicenseBtn.disabled = false;
-        message.textContent = "Kunde gespeichert.";
-        await renderLicenses();
+        this.flashMessage = "Kunde gespeichert.";
+        this.currentView = "customer-detail";
+        this._render();
       } catch (err) {
         message.textContent = `Fehler: ${err?.message || err}`;
       }
@@ -659,12 +669,32 @@ export default class LicenseAdminScreen {
     });
     newLicenseBtn.disabled = !this.currentCustomer?.id;
 
+
+    const deleteBtn = this._button("Kunde löschen", async () => {
+      if (!this.currentCustomer?.id) return;
+      const confirmed = globalThis.window?.confirm(
+        "Kunde wirklich löschen?\nDabei werden auch die Lizenzdatensätze dieses Kunden gelöscht.\nErzeugte Lizenzdateien und Setups bleiben erhalten."
+      );
+      if (!confirmed) return;
+      try {
+        await deleteCustomer(this.currentCustomer);
+        this.currentCustomer = null;
+        this.currentLicense = null;
+        this.currentView = "customers";
+        this.flashMessage = "Kunde gelöscht.";
+        this._render();
+      } catch (err) {
+        message.textContent = `Fehler: ${err?.message || err}`;
+      }
+    });
+    deleteBtn.style.display = this.currentCustomer?.id ? "" : "none";
+
     const backBtn = this._button("Zurueck zur Kundenliste", () => {
       this.currentView = "customers";
       this._render();
     });
 
-    customerActions.append(saveBtn, backBtn);
+    customerActions.append(saveBtn, deleteBtn, backBtn);
 
     const renderLicenses = async () => {
       licenseSection.replaceChildren();

@@ -29,6 +29,9 @@ function createMemoryDb() {
   }
 
   return {
+    transaction(fn) {
+      return (...args) => fn(...args);
+    },
     prepare(sql) {
       const text = String(sql || "");
       return {
@@ -58,6 +61,9 @@ function createMemoryDb() {
           if (text.includes("SELECT id FROM license_records WHERE id = ?")) {
             const row = licenses.find((entry) => entry.id === arg);
             return row ? { id: row.id } : undefined;
+          }
+          if (text.includes("SELECT id FROM license_records WHERE customer_id = ?")) {
+            return licenses.filter((entry) => entry.customer_id === arg).map((entry) => ({ id: entry.id }));
           }
           if (text.includes("SELECT * FROM license_records WHERE id = ?")) {
             return licenses.find((entry) => entry.id === arg) || undefined;
@@ -168,6 +174,26 @@ function createMemoryDb() {
             });
             return;
           }
+          if (text.includes("DELETE FROM license_history WHERE license_record_id = ?")) {
+            const [license_record_id] = args;
+            for (let i = history.length - 1; i >= 0; i -= 1) {
+              if (history[i].license_record_id === license_record_id) history.splice(i, 1);
+            }
+            return;
+          }
+          if (text.includes("DELETE FROM license_records WHERE customer_id = ?")) {
+            const [customer_id] = args;
+            for (let i = licenses.length - 1; i >= 0; i -= 1) {
+              if (licenses[i].customer_id === customer_id) licenses.splice(i, 1);
+            }
+            return;
+          }
+          if (text.includes("DELETE FROM license_customers WHERE id = ?")) {
+            const [id] = args;
+            const index = customers.findIndex((entry) => entry.id === id);
+            if (index >= 0) customers.splice(index, 1);
+            return;
+          }
           if (text.includes("DELETE FROM license_records WHERE id = ?")) {
             const [id] = args;
             const index = licenses.findIndex((entry) => entry.id === id);
@@ -264,6 +290,55 @@ async function runLicenseAdminDataflowTests(run) {
     });
   });
 
+
+
+  await run("Lizenzverwaltung Main-Service: Kunde bearbeiten behaelt id und Lizenzen", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({ customer_number: "K-200", company_name: "Alt GmbH", email: "alt@example.org" });
+      const license = service.saveLicense({
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app"] },
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+      });
+      const updated = service.saveCustomer({ id: customer.id, customer_number: "K-200X", company_name: "Neu GmbH", email: "neu@example.org" });
+      assert.equal(updated.id, customer.id);
+      assert.equal(updated.customer_number, "K-200X");
+      assert.equal(updated.company_name, "Neu GmbH");
+      assert.equal(updated.email, "neu@example.org");
+      const licenses = service.listLicensesByCustomer(customer.id);
+      assert.equal(licenses.length, 1);
+      assert.equal(licenses[0].id, license.id);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: Kunde löschen entfernt Kunde, Lizenzen und Historie", () => {
+    withMockedDatabase((service) => {
+      const customerA = service.saveCustomer({ customer_number: "K-201", company_name: "A GmbH" });
+      const customerB = service.saveCustomer({ customer_number: "K-202", company_name: "B GmbH" });
+      const licenseA = service.saveLicense({
+        customer_id: customerA.id,
+        product_scope_json: { standardumfang: ["app"] },
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+      });
+      service.addHistoryEntry({ license_record_id: licenseA.id, generated_at: "2026-04-28T10:10:10.000Z" });
+      const deleted = service.deleteCustomer(customerA.id);
+      assert.equal(deleted.ok, true);
+      assert.equal(service.listCustomers().some((entry) => entry.id === customerA.id), false);
+      assert.equal(service.listCustomers().some((entry) => entry.id === customerB.id), true);
+      assert.equal(service.listLicensesByCustomer(customerA.id).length, 0);
+      assert.equal(service.listHistory().length, 0);
+      const editedB = service.saveCustomer({ id: customerB.id, customer_number: "K-202", company_name: "B Neu", email: "b@example.org" });
+      assert.equal(editedB.company_name, "B Neu");
+    });
+  });
   await run("Lizenzverwaltung Main-Service: deleteLicenseRecord loescht vorhandene Lizenz", () => {
     withMockedDatabase((service) => {
       const customer = service.saveCustomer({
@@ -364,6 +439,23 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(camel.customerNumber, "K-901");
   });
 
+
+  await run("Lizenzverwaltung normalizeCustomerRecord: vorhandene id bleibt erhalten", async () => {
+    const { normalizeCustomerRecord } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseRecords.js")
+    );
+
+    const normalized = normalizeCustomerRecord({
+      id: "customer-existing-1",
+      customer_number: "K-902",
+      company_name: "ID GmbH",
+      contact_person: "ID Kontakt",
+      email: "id@example.org",
+    });
+
+    assert.equal(normalized.id, "customer-existing-1");
+  });
+
   await run("Lizenzverwaltung Renderer-Service: saveCustomer mit snake_case uebergibt vollstaendiges Payload", async () => {
     const { saveCustomer } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
@@ -393,6 +485,77 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(received.contact_person, "Anna");
     assert.equal(received.email, "anna@example.org");
     assert.equal(saved.id, "customer-1");
+  });
+
+
+  await run("Lizenzverwaltung Renderer-Service: saveCustomer mit bestehender id erzeugt keinen zweiten Kunden", async () => {
+    const { saveCustomer } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
+    );
+
+    const savedCustomers = [];
+    global.window = {
+      bbmDb: {
+        licenseAdminSaveLicenseCustomer: async (payload) => {
+          const existingIndex = savedCustomers.findIndex((entry) => entry.id === payload.id);
+          if (existingIndex >= 0) {
+            savedCustomers[existingIndex] = { ...savedCustomers[existingIndex], ...payload };
+            return savedCustomers[existingIndex];
+          }
+          const created = { ...payload, id: payload.id || `customer-${savedCustomers.length + 1}` };
+          savedCustomers.push(created);
+          return created;
+        },
+      },
+    };
+
+    const created = await saveCustomer({
+      customer_number: "K-1001",
+      company_name: "One GmbH",
+      contact_person: "Alpha",
+      email: "one@example.org",
+    });
+    assert.equal(savedCustomers.length, 1);
+
+    const updated = await saveCustomer({
+      id: created.id,
+      customer_number: "K-1001A",
+      company_name: "One Update GmbH",
+      contact_person: "Alpha",
+      email: "one+update@example.org",
+    });
+
+    assert.equal(savedCustomers.length, 1);
+    assert.equal(updated.id, created.id);
+    assert.equal(updated.customer_number, "K-1001A");
+    assert.equal(updated.company_name, "One Update GmbH");
+    assert.equal(updated.email, "one+update@example.org");
+  });
+
+  await run("Lizenzverwaltung Renderer-Service: saveCustomer ohne id erzeugt neuen Kunden", async () => {
+    const { saveCustomer } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
+    );
+
+    let createCount = 0;
+    global.window = {
+      bbmDb: {
+        licenseAdminSaveLicenseCustomer: async (payload) => {
+          createCount += 1;
+          return { ...payload, id: payload.id || `customer-new-${createCount}` };
+        },
+      },
+    };
+
+    const saved = await saveCustomer({
+      customer_number: "K-1002",
+      company_name: "Neu GmbH",
+      contact_person: "Neu",
+      email: "neu@example.org",
+    });
+
+    assert.equal(createCount, 1);
+    assert.equal(saved.id, "customer-new-1");
   });
 
   await run("Lizenzverwaltung Renderer-Service: saveLicense mit snake_case uebergibt Pflichtfelder vollstaendig", async () => {

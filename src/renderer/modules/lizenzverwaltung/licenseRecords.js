@@ -116,7 +116,10 @@ export function normalizeCustomerRecord(input = {}) {
   const phone = String(input.phone ?? base.phone).trim();
   const notes = String(input.notes ?? base.notes).trim();
 
+  const id = String(input.id ?? "").trim();
+
   return {
+    ...(id ? { id } : {}),
     customerNumber,
     customer_number: customerNumber,
     companyName,
