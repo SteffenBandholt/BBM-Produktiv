@@ -23,6 +23,7 @@ const { runLicenseRequestTests } = require("./tests/licenseRequest.test.cjs");
 const { runLicenseFeatureGuardTests } = require("./tests/licenseFeatureGuards.test.cjs");
 const { runLicenseStandardFeaturesTests } = require("./tests/licenseStandardFeatures.test.cjs");
 const { runFeatureGuardEnforcementTests } = require("./tests/featureGuardEnforcement.test.cjs");
+const { runLicensePresentationTests } = require("./tests/licensePresentation.test.cjs");
 
 let failed = false;
 
@@ -92,6 +93,7 @@ async function main() {
   await runLicenseFeatureGuardTests(run);
   await runLicenseStandardFeaturesTests(run);
   await runFeatureGuardEnforcementTests(run);
+  await runLicensePresentationTests(run);
 
   if (failed) {
     process.exitCode = 1;

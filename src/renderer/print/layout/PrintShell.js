@@ -514,6 +514,7 @@ function _buildPreRemarks(page) {
   return wrap;
 }
 
+
 function _buildSpineNote(data = {}) {
   const wrap = _el("div", "pdfSpineNote");
   const icon = document.createElement("img");

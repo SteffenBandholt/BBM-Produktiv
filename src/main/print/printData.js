@@ -6,6 +6,9 @@ const projectSettingsRepo = require("../db/projectSettingsRepo");
 const meetingTopsRepo = require("../db/meetingTopsRepo");
 const projectFirmsRepo = require("../db/projectFirmsRepo");
 const { appSettingsGetManyWithDb } = require("../db/appSettingsRepo");
+const { getStatus } = require("../licensing/licenseService");
+const { buildLicensedToText } = require("../licensing/featureGuard");
+const { normalizeLicensedModules, normalizeLicensedFeatures } = require("../licensing/licenseFeatures");
 
 function _parseBool(v) {
   const s = String(v ?? "").trim().toLowerCase();
@@ -889,10 +892,21 @@ async function getPrintData({ mode, projectId, meetingId, settingsOverride } = {
     settings: runtimeContext.settings,
   });
 
+  const status = getStatus({ fresh: false });
+  const license = status?.license && typeof status.license === "object" ? status.license : {};
+
   return {
     mode,
     ...runtimeContext,
     ...documentContent,
+    license: {
+      licensedToText: buildLicensedToText(status),
+      customerName: String(license.customerName || "").trim(),
+      licenseId: String(license.licenseId || "").trim(),
+      product: String(license.product || "").trim(),
+      modules: normalizeLicensedModules(license.modules, license.features),
+      features: normalizeLicensedFeatures(license.features),
+    },
   };
 }
 

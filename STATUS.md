@@ -857,3 +857,28 @@ Wichtig:
   - Renderer-Lizenzstatusanzeige optional feinjustieren (Labels Produkt/Module/Funktionen), ohne Admin/Gene­rator-Rueckbau.
 - Risiken/Hinweise:
   - Legacy-Tests mit Alias-Begriffen bleiben teils bewusst erhalten fuer sanften Uebergang.
+
+#### Paket: Lizenztext zentral + UI/PDF-Ausgabe
+- Status: erledigt
+- Beschreibung:
+  - zentrale Funktion `buildLicensedToText(statusOrLicense)` eingefuehrt (customerName -> licenseId-Fallback -> Nicht lizenziert).
+  - Lizenzstatus-IPC (`license:get-status`, `license:get-diagnostics`) liefert jetzt zusaetzlich `licensedToText`.
+  - Lizenzstatus-Screen zeigt den Lizenztext prominent und behaelt die bestehenden Detailfelder.
+  - Print-Daten enthalten jetzt `license`-Kontext inklusive `licensedToText`; Print-Layout zeigt den Text dezent nur auf Seite 1.
+  - Testabdeckung fuer Lizenztext, IPC-Payload und Print-Integration ergaenzt.
+- Betroffene Dateien:
+  - `src/main/licensing/featureGuard.js`
+  - `src/main/ipc/licenseIpc.js`
+  - `src/main/print/printData.js`
+  - `src/renderer/views/SettingsView.js`
+  - `src/renderer/print/layout/PrintShell.js`
+  - `src/renderer/print/print.css`
+  - `scripts/tests/licensePresentation.test.cjs`
+  - `scripts/test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - visuelle Feinabnahme der Platzierung im PDF-Deck-/Kopfbereich mit Realdaten.
+- Risiken/Hinweise:
+  - `modules/features` im Print-Kontext werden direkt aus der Lizenz gespiegelt; falls Alias-Normalisierung gewuenscht ist, separater Minischritt noetig.
