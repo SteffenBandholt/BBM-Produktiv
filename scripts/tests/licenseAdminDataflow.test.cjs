@@ -59,6 +59,9 @@ function createMemoryDb() {
             const row = licenses.find((entry) => entry.id === arg);
             return row ? { id: row.id } : undefined;
           }
+          if (text.includes("SELECT id FROM license_records WHERE customer_id = ?")) {
+            return licenses.filter((entry) => entry.customer_id === arg).map((entry) => ({ id: entry.id }));
+          }
           if (text.includes("SELECT * FROM license_records WHERE id = ?")) {
             return licenses.find((entry) => entry.id === arg) || undefined;
           }
@@ -172,6 +175,19 @@ function createMemoryDb() {
             const [id] = args;
             const index = licenses.findIndex((entry) => entry.id === id);
             if (index >= 0) licenses.splice(index, 1);
+            return;
+          }
+          if (text.includes("DELETE FROM license_records WHERE customer_id = ?")) {
+            const [customerId] = args;
+            for (let i = licenses.length - 1; i >= 0; i -= 1) {
+              if (licenses[i].customer_id === customerId) licenses.splice(i, 1);
+            }
+            return;
+          }
+          if (text.includes("DELETE FROM license_customers WHERE id = ?")) {
+            const [id] = args;
+            const index = customers.findIndex((entry) => entry.id === id);
+            if (index >= 0) customers.splice(index, 1);
             return;
           }
           if (text.includes("INSERT INTO license_history")) {
@@ -348,6 +364,73 @@ async function runLicenseAdminDataflowTests(run) {
   await run("Lizenzverwaltung Main-Service: deleteLicenseRecord mit fehlender ID liefert klaren Fehler", () => {
     withMockedDatabase((service) => {
       assert.throws(() => service.deleteLicenseRecord(""), /license_record_id required/);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: deleteCustomer ohne id wirft Fehler", () => {
+    withMockedDatabase((service) => {
+      assert.throws(() => service.deleteCustomer(""), /customer_id required/);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: deleteCustomer mit unbekannter id wirft Fehler", () => {
+    withMockedDatabase((service) => {
+      assert.throws(() => service.deleteCustomer("missing-customer"), /customer_not_found/);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: deleteCustomer ohne Lizenzen loescht Kunden", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({ customer_number: "K-200", company_name: "Delete Customer GmbH" });
+      const result = service.deleteCustomer(customer.id);
+      assert.equal(result.ok, true);
+      assert.equal(result.deletedLicenses, 0);
+      assert.equal(service.listCustomers().length, 0);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: deleteCustomer mit Lizenzen ohne deleteLicenses wirft Fehler", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({ customer_number: "K-201", company_name: "Delete Protect GmbH" });
+      service.saveLicense({
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app"] },
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+      });
+      assert.throws(() => service.deleteCustomer(customer.id), /CUSTOMER_HAS_LICENSES/);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: deleteCustomer mit deleteLicenses loescht Kunde und Lizenzen, Historie bleibt", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({ customer_number: "K-202", company_name: "Delete Cascade GmbH" });
+      const license = service.saveLicense({
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app"] },
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+      });
+      service.addHistoryEntry({
+        license_record_id: license.id,
+        generated_at: "2026-04-28T10:10:10.000Z",
+        product_scope_json: { standardumfang: ["app"] },
+        output_path: "C:\license-tool\output\history-kept.bbmlic",
+      });
+
+      const result = service.deleteCustomer(customer.id, { deleteLicenses: true });
+      assert.equal(result.ok, true);
+      assert.equal(result.deletedLicenses, 1);
+      assert.equal(service.listCustomers().length, 0);
+      assert.equal(service.listLicensesByCustomer(customer.id).length, 0);
+      assert.equal(service.listHistory().length, 1);
+      assert.equal(service.listHistory()[0].license_record_id, license.id);
     });
   });
 
@@ -538,6 +621,29 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(received.license_file_created_at, "2026-04-27T12:30:00.000Z");
   });
 
+  await run("Lizenzverwaltung Renderer-Service: deleteCustomer nutzt Preload-API", async () => {
+    const { deleteCustomer } = await importEsmFromFile(
+      path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
+    );
+
+    let receivedPayload = null;
+    global.window = {
+      bbmDb: {
+        licenseAdminDeleteLicenseCustomer: async (payload) => {
+          receivedPayload = payload;
+          return { ok: true, ...payload };
+        },
+      },
+    };
+
+    await deleteCustomer({ id: "customer-delete-1" }, { deleteLicenses: true });
+    assert.equal(receivedPayload.id, "customer-delete-1");
+    assert.equal(receivedPayload.deleteLicenses, true);
+
+    await deleteCustomer(" id ");
+    assert.equal(receivedPayload.id, "id");
+  });
+
   await run("Lizenzverwaltung Renderer-Service: deleteLicense nutzt Preload-API", async () => {
     const { deleteLicense } = await importEsmFromFile(
       path.join(process.cwd(), "src/renderer/modules/lizenzverwaltung/licenseStorageService.js")
@@ -626,6 +732,14 @@ async function runLicenseAdminDataflowTests(run) {
     assert.equal(camel.id, "license-existing-2");
   });
 
+
+
+  await run("Lizenzverwaltung Registrierung: preload und ipc fuer delete-customer vorhanden", () => {
+    const preloadSource = require("node:fs").readFileSync(path.join(process.cwd(), "src/main/preload.js"), "utf8");
+    const ipcSource = require("node:fs").readFileSync(path.join(process.cwd(), "src/main/ipc/licenseIpc.js"), "utf8");
+    assert.equal(preloadSource.includes("licenseAdminDeleteLicenseCustomer"), true);
+    assert.equal(ipcSource.includes("license-admin:delete-customer"), true);
+  });
 
   await run("Lizenzverwaltung UI-Liste: Produktumfang aus product_scope_json raw wird lesbar", async () => {
     const { formatProductScopeForList } = await importEsmFromFile(

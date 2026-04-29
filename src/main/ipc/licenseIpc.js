@@ -1296,6 +1296,14 @@ function registerLicenseAdminDataIpc() {
     return licenseAdminService.deleteLicenseRecord(id);
   });
 
+  ipcMain.handle("license-admin:delete-customer", async (_event, payload) => {
+    try {
+      return await licenseAdminService.deleteCustomer(payload?.id, payload || {});
+    } catch (err) {
+      return { ok: false, error: String(err?.message || err || "delete_customer_failed") };
+    }
+  });
+
   ipcMain.handle("license-admin:list-history", async () => {
     return licenseAdminService.listHistory();
   });

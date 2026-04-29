@@ -1,5 +1,6 @@
 import {
   createCustomerSetup,
+  deleteCustomer,
   deleteLicense,
   listCustomers,
   listLicensesByCustomer,
@@ -664,7 +665,53 @@ export default class LicenseAdminScreen {
       this._render();
     });
 
-    customerActions.append(saveBtn, backBtn);
+    const deleteCustomerBtn = this._button("Kunde löschen", async () => {
+      if (!this.currentCustomer?.id) {
+        message.textContent = "Bitte zuerst den Kunden speichern.";
+        return;
+      }
+      try {
+        const records = await listLicensesByCustomer(this.currentCustomer.id);
+        const count = Array.isArray(records) ? records.length : 0;
+        const label = customerLabel(this.currentCustomer);
+        let shouldDelete = false;
+        let options = { deleteLicenses: false };
+        if (count > 0) {
+          const confirmText = `Kunde ${label} hat ${count} Lizenz(en). Kunde inklusive Lizenzdatensätzen löschen? Bereits erzeugte .bbmlic-Dateien und Lizenzhistorie bleiben erhalten.`;
+          shouldDelete = globalThis?.window?.confirm ? window.confirm(confirmText) : true;
+          options = { deleteLicenses: true };
+        } else {
+          shouldDelete = globalThis?.window?.confirm ? window.confirm(`Kunde ${label} wirklich löschen?`) : true;
+        }
+        if (!shouldDelete) return;
+
+        const result = await deleteCustomer(this.currentCustomer, options);
+        if (result?.ok === false) {
+          const errorCode = String(result?.error || "").trim();
+          if (errorCode === "CUSTOMER_HAS_LICENSES") {
+            message.textContent = "Kunde hat noch Lizenzen und kann nur inklusive Lizenzdatensätzen gelöscht werden.";
+            return;
+          }
+          message.textContent = `Fehler: ${errorCode || "Unbekannter Fehler"}`;
+          return;
+        }
+        this.currentCustomer = null;
+        this.currentLicense = null;
+        this.currentView = "customers";
+        this.flashMessage = "Kunde wurde gelöscht.";
+        this._render();
+      } catch (err) {
+        const errorCode = String(err?.message || err || "").trim();
+        if (errorCode === "CUSTOMER_HAS_LICENSES") {
+          message.textContent = "Kunde hat noch Lizenzen und kann nur inklusive Lizenzdatensätzen gelöscht werden.";
+          return;
+        }
+        message.textContent = `Fehler: ${errorCode || "Unbekannter Fehler"}`;
+      }
+    });
+    deleteCustomerBtn.disabled = !this.currentCustomer?.id;
+
+    customerActions.append(saveBtn, deleteCustomerBtn, backBtn);
 
     const renderLicenses = async () => {
       licenseSection.replaceChildren();
