@@ -22,7 +22,32 @@ function _extractLicenseInfo(status) {
     modules: normalizeLicensedModules(license.modules, license.features),
     features: normalizeLicensedFeatures(license.features),
     appVersion: String(app?.getVersion?.() || "").trim(),
+    licensedToText: buildLicensedToText(status),
   };
+}
+
+
+function buildLicensedToText(statusOrLicense) {
+  const source = statusOrLicense && typeof statusOrLicense === "object" ? statusOrLicense : {};
+  const isStatusShape = Object.prototype.hasOwnProperty.call(source, "valid") || Object.prototype.hasOwnProperty.call(source, "license");
+  const valid = isStatusShape ? !!source.valid : true;
+  const license = isStatusShape
+    ? source.license && typeof source.license === "object"
+      ? source.license
+      : {}
+    : source;
+
+  if (!valid) return "Nicht lizenziert";
+
+  const customerName = String(
+    license.customerName || license.customer || license.customer_name || license.customer_name_full || ""
+  ).trim();
+  if (customerName) return `Lizenziert für ${customerName}`;
+
+  const licenseId = String(license.licenseId || license.id || "").trim();
+  if (licenseId) return `Lizenziert für Lizenz ${licenseId}`;
+
+  return "Nicht lizenziert";
 }
 
 function createLicenseBadgeText(licenseInfo = {}) {
@@ -181,5 +206,6 @@ module.exports = {
   enforceLicensedFeature,
   isDevAudioOverrideEnabled,
   isDevAudioSuggestionsEnabled,
+  buildLicensedToText,
   toLicenseErrorPayload,
 };

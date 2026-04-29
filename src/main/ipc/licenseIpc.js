@@ -9,6 +9,7 @@ const {
   normalizeLicensedModules,
   normalizeLicensedFeatures,
 } = require("../licensing/licenseFeatures");
+const { buildLicensedToText } = require("../licensing/featureGuard");
 
 const LICENSE_FILE_FILTER = [{ name: "BBM Lizenz", extensions: ["bbmlic", "json"] }];
 
@@ -32,6 +33,7 @@ function _buildDiagnosticsText(payload) {
   return [
     `Lizenzstatus: ${payload?.valid ? "gueltig" : "ungueltig"}`,
     `Grund: ${payload?.reason || "-"}`,
+    `Lizenziert: ${payload?.licensedToText || "Nicht lizenziert"}`,
     `Kunde: ${payload?.customerName || "-"}`,
     `Lizenz-ID: ${payload?.licenseId || "-"}`,
     `Edition: ${payload?.edition || "-"}`,
@@ -51,6 +53,7 @@ function _toStatusPayload(status) {
     valid: !!status?.valid,
     reason: String(status?.reason || ""),
     customerName: String(license.customerName || "").trim(),
+    licensedToText: buildLicensedToText(status),
     licenseId: String(license.licenseId || "").trim(),
     edition: String(license.edition || "").trim(),
     validUntil: String(license.validUntil || "").trim(),

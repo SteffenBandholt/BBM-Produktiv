@@ -514,6 +514,13 @@ function _buildPreRemarks(page) {
   return wrap;
 }
 
+
+function _buildLicensedToNote(data = {}) {
+  const text = String(data?.license?.licensedToText || "").trim();
+  if (!text) return null;
+  return _el("div", "v2LicensedToNote", text);
+}
+
 function _buildSpineNote(data = {}) {
   const wrap = _el("div", "pdfSpineNote");
   const icon = document.createElement("img");
@@ -571,6 +578,8 @@ export function renderPrint({ pages, data } = {}) {
     const pageNo = Number(page?.header?.pageNo || 0);
     if (pageNo === 1) {
       pageEl.appendChild(_buildSpineNote(data));
+      const licensedToNote = _buildLicensedToNote(data);
+      if (licensedToNote) pageEl.appendChild(licensedToNote);
     }
     if (pageNo === 1) {
       pageEl.appendChild(renderV2GlobalHeader({ data }));

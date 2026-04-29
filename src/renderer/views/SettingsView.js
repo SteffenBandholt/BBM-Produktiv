@@ -3680,6 +3680,15 @@ export default class SettingsView {
     note.textContent =
       "Lizenzstatus wird hier nur angezeigt. Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert.";
 
+    const licensedTo = document.createElement("div");
+    licensedTo.style.padding = "8px 10px";
+    licensedTo.style.border = "1px solid rgba(0,0,0,0.08)";
+    licensedTo.style.borderRadius = "8px";
+    licensedTo.style.background = "#ffffff";
+    licensedTo.style.fontWeight = "700";
+    licensedTo.style.fontSize = "13px";
+    licensedTo.textContent = "Lizenzstatus wird geladen ...";
+
     const status = document.createElement("div");
     status.style.padding = "8px 10px";
     status.style.border = "1px solid rgba(0,0,0,0.08)";
@@ -3703,7 +3712,9 @@ export default class SettingsView {
       const validUntil = this._formatLicenseDate(res?.validUntil);
       const reasonText = this._formatLicenseReason(reason, fallbackError);
       const warningText = this._formatLicenseWarning(res, fallbackError);
+      const licensedToText = String(res?.licensedToText || (valid ? `Lizenziert für ${customer}` : "Nicht lizenziert")).trim();
 
+      licensedTo.textContent = licensedToText || "Nicht lizenziert";
       status.textContent = valid
         ? `Gueltig fuer: ${customer}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}\nGueltig bis: ${validUntil}\nHinweis: ${warningText}`
         : `Ungueltig\nGrund: ${reasonText}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}`;
@@ -3727,7 +3738,7 @@ export default class SettingsView {
     };
 
     btnReload.addEventListener("click", loadStatus);
-    card.append(title, note, status, btnReload);
+    card.append(title, note, licensedTo, status, btnReload);
     wrap.append(card);
 
     void loadStatus();
