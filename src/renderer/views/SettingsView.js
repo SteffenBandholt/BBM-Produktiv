@@ -3734,6 +3734,386 @@ export default class SettingsView {
     return wrap;
   }
 
+  async _openDevelopmentModal() {
+    const api = window.bbmDb || {};
+    const has = (name) => typeof api?.[name] === "function";
+    const clampInt = (val, min, max, fallback) => {
+      const n = Math.floor(Number(val));
+      if (!Number.isFinite(n) || n <= 0) return fallback;
+      return Math.max(min, Math.min(max, n));
+    };
+    const mkCard = (titleText, hintText = "") => {
+      const box = document.createElement("div");
+      applyPopupCardStyle(box);
+      box.style.padding = "8px 10px";
+      box.style.marginTop = "0";
+      box.style.display = "grid";
+      box.style.gap = "8px";
+      const title = document.createElement("div");
+      title.textContent = titleText;
+      title.style.fontWeight = "800";
+      const hint = document.createElement("div");
+      hint.textContent = hintText;
+      hint.style.fontSize = "12px";
+      hint.style.opacity = "0.75";
+      box.append(title, hint);
+      return { box, title, hint };
+    };
+
+    const section = document.createElement("div");
+    section.style.display = "grid";
+    section.style.gap = "10px";
+    section.style.minWidth = "min(760px, calc(100vw - 80px))";
+    section.style.maxWidth = "920px";
+
+    const versionCard = mkCard("Versionierung", "SemVer und Build-Kanal verwalten.");
+    const dbCard = mkCard("DB-Diagnose", "Aktive DB, Legacy und Importpfade prüfen.");
+    const topsCard = mkCard("TOP-Limits", "Kurz- und Langtextgrenzen verwalten.");
+    const themeCard = mkCard("Farbschema", "Start-Defaults des Themes verwalten.");
+    const dictationCard = mkCard("Diktieren", "Audio-/Diktat-Entwicklung bleibt hier erreichbar.");
+
+    const btn = (label, primary = false) => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.textContent = label;
+      applyPopupButtonStyle(el, primary ? { variant: "primary" } : undefined);
+      return el;
+    };
+
+    const TOPS_TITLE_KEY = "tops.titleMax";
+    const TOPS_LONG_KEY = "tops.longMax";
+
+    let versionRepoCurrent = "";
+    const versionAppValue = document.createElement("div");
+    versionAppValue.textContent = "-";
+    versionAppValue.style.fontWeight = "700";
+    const versionRepoValue = document.createElement("div");
+    versionRepoValue.textContent = "-";
+    versionRepoValue.style.fontWeight = "700";
+    const buildChannelValue = document.createElement("div");
+    buildChannelValue.textContent = "-";
+    buildChannelValue.style.fontSize = "12px";
+    buildChannelValue.style.opacity = "0.85";
+    const releaseType = document.createElement("select");
+    for (const [v, l] of [["patch", "Patch"], ["minor", "Minor"], ["major", "Major"]]) {
+      const opt = document.createElement("option");
+      opt.value = v;
+      opt.textContent = l;
+      releaseType.append(opt);
+    }
+    const nextVersionValue = document.createElement("div");
+    nextVersionValue.textContent = "-";
+    nextVersionValue.style.fontWeight = "700";
+    const versionStatus = document.createElement("div");
+    versionStatus.style.fontSize = "12px";
+    versionStatus.style.minHeight = "16px";
+    versionStatus.style.color = "#4b5563";
+
+    const parseSemver = (raw) => {
+      const m = String(raw || "").trim().match(/^(\d+)\.(\d+)\.(\d+)$/);
+      return m ? { major: Number(m[1]), minor: Number(m[2]), patch: Number(m[3]) } : { major: 0, minor: 0, patch: 0 };
+    };
+    const updateVersionPreview = () => {
+      const cur = parseSemver(versionRepoCurrent || "0.0.0");
+      const next = { ...cur };
+      if (releaseType.value === "major") {
+        next.major += 1; next.minor = 0; next.patch = 0;
+      } else if (releaseType.value === "minor") {
+        next.minor += 1; next.patch = 0;
+      } else {
+        next.patch += 1;
+      }
+      nextVersionValue.textContent = `${next.major}.${next.minor}.${next.patch}`;
+    };
+    const loadBuildChannel = async () => {
+      if (!has("devBuildChannelGet")) return;
+      const res = await api.devBuildChannelGet();
+      if (res?.ok) {
+        buildChannelValue.textContent = `Build-Kanal: ${String(res.channel || "stable").toUpperCase()}`;
+      }
+    };
+    const loadVersioningData = async () => {
+      if (!has("devVersionGet")) {
+        versionStatus.textContent = "Versionierung ist nicht verfuegbar.";
+        return;
+      }
+      const res = await api.devVersionGet();
+      if (!res?.ok) {
+        versionStatus.textContent = res?.error || "Versionen konnten nicht geladen werden.";
+        return;
+      }
+      versionRepoCurrent = String(res.repoVersion || "").trim();
+      versionAppValue.textContent = String(res.appVersion || "-");
+      versionRepoValue.textContent = versionRepoCurrent || "-";
+      buildChannelValue.textContent = "";
+      await loadBuildChannel();
+      updateVersionPreview();
+      versionStatus.textContent = "";
+    };
+    const bumpBtn = btn("Version hochschalten", true);
+    bumpBtn.onclick = async () => {
+      if (!has("devVersionBump")) return;
+      const res = await api.devVersionBump({ kind: releaseType.value });
+      if (!res?.ok) {
+        versionStatus.textContent = res?.error || "Version konnte nicht hochgeschaltet werden.";
+        return;
+      }
+      await loadVersioningData();
+      versionStatus.textContent = `Repo-Version auf ${res.repoVersion} aktualisiert.`;
+    };
+    const set100Btn = btn("Auf 1.0.0 setzen");
+    set100Btn.style.display = "none";
+    set100Btn.onclick = async () => {
+      if (!has("devVersionSet")) return;
+      const res = await api.devVersionSet({ version: "1.0.0" });
+      if (!res?.ok) {
+        versionStatus.textContent = res?.error || "Version 1.0.0 konnte nicht gesetzt werden.";
+        return;
+      }
+      await loadVersioningData();
+      versionStatus.textContent = "Repo-Version auf 1.0.0 gesetzt.";
+    };
+    versionCard.box.append(
+      mkRow("Aktuelle App-Version", versionAppValue),
+      mkRow("Repo-Version", versionRepoValue),
+      mkRow("Build-Kanal", buildChannelValue),
+      mkRow("Release-Typ", releaseType),
+      mkRow("Naechste Version", nextVersionValue),
+      (() => { const row = document.createElement("div"); row.style.display = "flex"; row.style.gap = "8px"; row.append(bumpBtn, set100Btn); return row; })(),
+      versionStatus
+    );
+
+    const dbText = document.createElement("pre");
+    dbText.style.margin = "0";
+    dbText.style.padding = "8px";
+    dbText.style.borderRadius = "8px";
+    dbText.style.background = "#f8fafc";
+    dbText.style.border = "1px solid rgba(0,0,0,0.08)";
+    dbText.style.fontSize = "10px";
+    dbText.style.whiteSpace = "pre-wrap";
+    dbText.textContent = "Diagnosedaten werden geladen ...";
+    const dbActions = document.createElement("div");
+    dbActions.style.display = "flex";
+    dbActions.style.gap = "8px";
+    dbActions.style.flexWrap = "wrap";
+    const btnDbReload = btn("Diagnose aktualisieren");
+    const btnDbOpenActive = btn("Aktiven Pfad öffnen");
+    const btnDbOpenLegacy = btn("Legacy-Pfad öffnen");
+    const btnDbImport = btn("Legacy-Import");
+    const loadDbDiagnostics = async () => {
+      if (!has("dbDiagnosticsGet")) {
+        dbText.textContent = "DB-Diagnose-API fehlt.";
+        return;
+      }
+      const res = await api.dbDiagnosticsGet();
+      if (!res?.ok) {
+        dbText.textContent = res?.error || "DB-Diagnose fehlgeschlagen.";
+        return;
+      }
+      const d = res.data || {};
+      const fmt = (s = {}) => `${s.exists ? "ja" : "nein"}, ${Number(s.size || 0)} Bytes`;
+      dbText.textContent = [
+        `[db] using ${d.dbPath || "-"}`,
+        `[db] backup ${d.backupPath || "-"} (${fmt(d.backup)})`,
+        `[db] legacy ${d.legacyDbPath || "-"} (${fmt(d.legacy)})`,
+        `[db] legacy-import ${d.legacyImportPath || "-"} (${fmt(d.legacyImport)})`,
+        `[db] legacy-available ${d.legacyAvailable ? "ja" : "nein"}`,
+        `[db] active-likely-empty ${d.activeLikelyEmpty ? "ja" : "nein"}`,
+      ].join("\n");
+      return d;
+    };
+    let lastDbDiag = null;
+    btnDbReload.onclick = async () => { lastDbDiag = await loadDbDiagnostics(); };
+    btnDbOpenActive.onclick = async () => {
+      if (!has("dbOpenFolder")) return;
+      const res = await api.dbOpenFolder({ kind: "active" });
+      if (!res?.ok) alert(res?.error || "Aktiven DB-Pfad konnte nicht geoeffnet werden.");
+    };
+    btnDbOpenLegacy.onclick = async () => {
+      if (!has("dbOpenFolder")) return;
+      if (!lastDbDiag?.legacyAvailable) {
+        alert("Keine Legacy-Datei verfuegbar.");
+        return;
+      }
+      const res = await api.dbOpenFolder({ kind: "legacyImport" });
+      if (!res?.ok) alert(res?.error || "Legacy-Import-Pfad konnte nicht geoeffnet werden.");
+    };
+    btnDbImport.onclick = async () => {
+      if (!has("dbLegacyImport")) return;
+      if (!window.confirm("Legacy-Datenbank wirklich uebernehmen? Die aktive DB wird vorher gesichert.")) return;
+      const res = await api.dbLegacyImport();
+      if (!res?.ok) {
+        alert(res?.error || "Legacy-Import fehlgeschlagen.");
+        return;
+      }
+      if (this.router?.ensureAppSettingsLoaded) await this.router.ensureAppSettingsLoaded({ force: true });
+      await this._reload();
+      window.dispatchEvent(new Event("bbm:header-refresh"));
+      await loadDbDiagnostics();
+    };
+    dbActions.append(btnDbReload, btnDbOpenActive, btnDbOpenLegacy, btnDbImport);
+    dbCard.box.append(dbText, dbActions);
+
+    const topsTitle = document.createElement("input");
+    topsTitle.type = "number";
+    topsTitle.min = "1";
+    topsTitle.step = "1";
+    topsTitle.style.width = "100%";
+    const topsLong = document.createElement("input");
+    topsLong.type = "number";
+    topsLong.min = "1";
+    topsLong.step = "1";
+    topsLong.style.width = "100%";
+    const topsMsg = document.createElement("div");
+    topsMsg.style.fontSize = "12px";
+    topsMsg.style.opacity = "0.75";
+    let topsTimer = null;
+    const setTopsMsg = (txt) => {
+      topsMsg.textContent = txt || "";
+      if (topsTimer) clearTimeout(topsTimer);
+      if (txt) topsTimer = setTimeout(() => (topsMsg.textContent = ""), 900);
+    };
+    const loadTopLimitSettings = async () => {
+      if (!has("appSettingsGetMany")) return;
+      const res = await api.appSettingsGetMany([TOPS_TITLE_KEY, TOPS_LONG_KEY]);
+      if (!res?.ok) return;
+      const data = res.data || {};
+      topsTitle.value = String(clampInt(data[TOPS_TITLE_KEY], 1, 5000, 100));
+      topsLong.value = String(clampInt(data[TOPS_LONG_KEY], 1, 20000, 500));
+    };
+    const saveTopLimitSettings = async () => {
+      if (!has("appSettingsSetMany")) return false;
+      const res = await api.appSettingsSetMany({
+        [TOPS_TITLE_KEY]: String(clampInt(topsTitle.value, 1, 5000, 100)),
+        [TOPS_LONG_KEY]: String(clampInt(topsLong.value, 1, 20000, 500)),
+      });
+      if (!res?.ok) {
+        setTopsMsg(res?.error || "Speichern fehlgeschlagen");
+        return false;
+      }
+      setTopsMsg("Gespeichert");
+      window.dispatchEvent(new Event("bbm:tops-limits-changed"));
+      return true;
+    };
+    topsTitle.addEventListener("change", () => saveTopLimitSettings());
+    topsLong.addEventListener("change", () => saveTopLimitSettings());
+    topsCard.box.append(mkRow("Kurztext max", topsTitle), mkRow("Langtext max", topsLong), topsMsg);
+
+    const themeInfo = document.createElement("div");
+    themeInfo.style.fontSize = "12px";
+    themeInfo.style.opacity = "0.8";
+    themeInfo.textContent = "Start-Defaults fuer das Theme pflegen oder auf den User anwenden.";
+    const themeActions = document.createElement("div");
+    themeActions.style.display = "flex";
+    themeActions.style.gap = "8px";
+    themeActions.style.flexWrap = "wrap";
+    const btnThemeLoad = btn("Start-Defaults laden");
+    const btnThemeSave = btn("Start-Defaults speichern");
+    const btnThemeApply = btn("Auf User anwenden");
+    btnThemeLoad.onclick = async () => { await this._loadThemeStartDefaults(); };
+    btnThemeSave.onclick = async () => { await this._saveThemeStartDefaults(); };
+    btnThemeApply.onclick = async () => { await this._applyThemeStartDefaultsToUser(); };
+    themeActions.append(btnThemeLoad, btnThemeSave, btnThemeApply);
+    themeCard.box.append(themeInfo, themeActions);
+
+    const mkScaleGroup = (labelText, buttons) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gap = "6px";
+      const lbl = document.createElement("div");
+      lbl.textContent = labelText;
+      lbl.style.fontWeight = "700";
+      lbl.style.fontSize = "12px";
+      const btnWrap = document.createElement("div");
+      btnWrap.style.display = "flex";
+      btnWrap.style.gap = "6px";
+      btnWrap.style.flexWrap = "wrap";
+      btnWrap.append(...buttons);
+      row.append(lbl, btnWrap);
+      return row;
+    };
+    const applyScaleBtnBase = (el) => {
+      el.style.padding = "6px 10px";
+      el.style.borderRadius = "8px";
+      el.style.border = "1px solid rgba(0,0,0,0.18)";
+      el.style.fontWeight = "600";
+      el.style.cursor = "pointer";
+      el.style.minHeight = "30px";
+      el.style.boxShadow = "none";
+    };
+    const setScaleBtnActive = (el, active) => {
+      el.style.background = active ? "#1976d2" : "#fff";
+      el.style.color = active ? "white" : "#1565c0";
+      el.style.borderColor = active ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
+    };
+    const dictationSection = createDictationDevSection({
+      applyPopupCardStyle,
+      mkScaleGroup,
+      applyScaleBtnBase,
+      setScaleBtnActive,
+      settingsApi: () => window.bbmDb || {},
+    });
+    const tabs = [
+      { key: "version", label: "Versionierung", el: versionCard.box },
+      { key: "db", label: "DB-Diagnose", el: dbCard.box },
+      { key: "dictation", label: "Diktieren", el: dictationSection.tab },
+      { key: "tops", label: "TOP-Liste", el: topsCard.box },
+      { key: "theme", label: "Farbschema", el: themeCard.box },
+    ];
+    const tabHead = document.createElement("div");
+    tabHead.style.display = "flex";
+    tabHead.style.gap = "8px";
+    tabHead.style.flexWrap = "wrap";
+    tabHead.style.rowGap = "8px";
+    tabHead.style.marginBottom = "8px";
+    const tabBody = document.createElement("div");
+    tabBody.style.display = "grid";
+    tabBody.style.gap = "10px";
+    let dictationLoaded = false;
+    const tabButtons = new Map();
+    const setTab = (key) => {
+      if (key === "dictation" && !dictationLoaded) {
+        dictationLoaded = true;
+        if (typeof dictationSection.load === "function") dictationSection.load();
+      }
+      for (const tab of tabs) {
+        const active = tab.key === key;
+        tab.el.style.display = active ? "grid" : "none";
+        const b = tabButtons.get(tab.key);
+        if (b) {
+          b.disabled = active;
+          b.style.opacity = active ? "0.85" : "1";
+        }
+      }
+    };
+    const addTabBtn = (label, key) => {
+      const b = btn(label);
+      b.onclick = () => setTab(key);
+      tabButtons.set(key, b);
+      return b;
+    };
+    tabHead.append(
+      addTabBtn("Versionierung", "version"),
+      addTabBtn("DB-Diagnose", "db"),
+      addTabBtn("Diktieren", "dictation"),
+      addTabBtn("TOP-Liste", "tops"),
+      addTabBtn("Farbschema", "theme")
+    );
+    tabBody.append(...tabs.map((t) => t.el));
+    section.append(tabHead, tabBody);
+
+    await loadVersioningData();
+    await loadDbDiagnostics();
+    await loadTopLimitSettings();
+    setTab("version");
+
+    this._openSettingsModal({
+      title: "Entwicklung",
+      content: [section],
+      closeOnly: true,
+    });
+  }
+
   async load() {
     await this._reload();
   }
@@ -3865,16 +4245,7 @@ export default class SettingsView {
       titleText: "Entwicklung",
       subText: "Versionierung, Farben, Diagnose",
       onClick: async () => {
-        const devInfo = document.createElement("div");
-        devInfo.style.maxWidth = "720px";
-        devInfo.style.lineHeight = "1.45";
-        devInfo.textContent =
-          "Der Entwicklerbereich bleibt erhalten. Versionierung, Farbsteuerung und DB-Diagnose werden hier weiterhin gebuendelt.";
-        this._openSettingsModal({
-          title: "Entwicklung",
-          content: [devInfo],
-          closeOnly: true,
-        });
+        await this._openDevelopmentModal();
       },
     });
 
