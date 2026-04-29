@@ -3742,6 +3742,31 @@ export default class SettingsView {
       if (!Number.isFinite(n) || n <= 0) return fallback;
       return Math.max(min, Math.min(max, n));
     };
+    const mkRow = (labelText, valueNode) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "160px 1fr";
+      row.style.gap = "8px";
+      row.style.alignItems = "center";
+
+      const label = document.createElement("div");
+      label.textContent = labelText;
+      label.style.fontWeight = "700";
+      label.style.fontSize = "12px";
+      label.style.color = "#334155";
+
+      const value =
+        valueNode instanceof HTMLElement ? valueNode : document.createElement("div");
+      if (!(valueNode instanceof HTMLElement)) {
+        value.textContent = String(valueNode ?? "-");
+      }
+      value.style.minWidth = "0";
+      value.style.fontSize = "12px";
+      value.style.wordBreak = "break-word";
+
+      row.append(label, value);
+      return row;
+    };
     const mkCard = (titleText, hintText = "") => {
       const box = document.createElement("div");
       applyPopupCardStyle(box);
