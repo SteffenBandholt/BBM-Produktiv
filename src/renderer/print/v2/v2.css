@@ -694,3 +694,18 @@
     print-color-adjust: exact;
   }
 }
+
+
+.printV2Root .v2LicensedToNote {
+  position: absolute;
+  left: calc(var(--v2-pad-left, var(--v2-pad-x, 12mm)) - 2mm);
+  bottom: calc(var(--v2-pad-bottom, 18mm) + 1.5mm);
+  font-size: 7pt;
+  font-weight: 400;
+  color: #666;
+  line-height: 1.1;
+  white-space: nowrap;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}

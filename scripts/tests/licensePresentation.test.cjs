@@ -42,6 +42,18 @@ async function runLicensePresentationTests(run) {
     assert.equal(src.includes("normalizeLicensedFeatures(license.features)"), true);
   });
 
+
+  await run("Print-Note ist ausserhalb des Flows positioniert", () => {
+    const css = read("src/renderer/print/v2/v2.css");
+    assert.equal(css.includes(".printV2Root .v2LicensedToNote"), true);
+    assert.equal(css.includes("position: absolute;"), true);
+  });
+
+  await run("Print-Note liest licensedToText aus data.license", () => {
+    const src = read("src/renderer/print/layout/PrintShell.js");
+    assert.equal(src.includes("data?.license?.licensedToText"), true);
+  });
+
   await run("Print-Template zeigt licensedToText einmal auf Seite 1", () => {
     const src = read("src/renderer/print/layout/PrintShell.js");
     assert.equal(src.includes("function _buildLicensedToNote"), true);
