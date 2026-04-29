@@ -544,16 +544,19 @@ async function runLicenseAdminDataflowTests(run) {
     );
 
     let receivedId = null;
+    let calls = 0;
     global.window = {
       bbmDb: {
         licenseAdminDeleteLicenseRecord: async (id) => {
+          calls += 1;
           receivedId = id;
           return { ok: true, id };
         },
       },
     };
 
-    const result = await deleteLicense({ id: "lic-delete-1" });
+    const result = await deleteLicense({ id: "  lic-delete-1  " });
+    assert.equal(calls, 1);
     assert.equal(receivedId, "lic-delete-1");
     assert.equal(result.ok, true);
   });
