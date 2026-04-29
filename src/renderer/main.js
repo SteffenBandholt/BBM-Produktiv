@@ -768,6 +768,11 @@ document.addEventListener("DOMContentLoaded", async () => {
       contentRoot: content,
       onSectionChange: (section) => setActive(section),
     });
+    try {
+      window.bbmOpenSettings = () => router.showSettings();
+    } catch (_e) {
+      // ignore
+    }
     router.featureFlags = {
       useNewCompanyWorkflow: readUseNewCompanyWorkflowFlag(),
     };

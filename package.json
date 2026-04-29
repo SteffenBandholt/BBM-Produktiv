@@ -76,6 +76,13 @@
       "icon": "build/bbm-icon.ico",
       "target": [
         "nsis"
+      ],
+      "fileAssociations": [
+        {
+          "ext": "bbmlic",
+          "name": "BBM Lizenzdatei",
+          "description": "BBM Lizenzdatei"
+        }
       ]
     },
     "nsis": {
