@@ -211,6 +211,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
     ipcRenderer.invoke("license-admin:list-records-by-customer", customerId),
   licenseAdminSaveLicenseRecord: (license) => ipcRenderer.invoke("license-admin:save-record", license),
   licenseAdminDeleteLicenseRecord: (id) => ipcRenderer.invoke("license-admin:delete-license-record", id),
+  licenseAdminDeleteLicenseCustomer: (payload) => ipcRenderer.invoke("license-admin:delete-customer", payload),
   licenseAdminListLicenseHistory: () => ipcRenderer.invoke("license-admin:list-history"),
   licenseAdminAddLicenseHistoryEntry: (entry) => ipcRenderer.invoke("license-admin:add-history-entry", entry),
   licenseAdminCreateCustomerSetup: (payload) => ipcRenderer.invoke("license-admin:create-customer-setup", payload),

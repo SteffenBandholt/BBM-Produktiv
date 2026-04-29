@@ -50,6 +50,14 @@ export async function saveLicense(license) {
   return save(record);
 }
 
+
+export async function deleteCustomer(customerOrId, options = {}) {
+  const rawId = typeof customerOrId === "string" ? customerOrId : customerOrId?.id;
+  const id = String(rawId || "").trim();
+  const del = requireApiMethod("licenseAdminDeleteLicenseCustomer");
+  return del({ id, ...options });
+}
+
 export async function deleteLicense(record) {
   const id = String(record?.id || "").trim();
   const del = requireApiMethod("licenseAdminDeleteLicenseRecord");

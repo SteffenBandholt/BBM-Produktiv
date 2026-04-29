@@ -357,8 +357,34 @@ function deleteLicenseRecord(id) {
   const db = _db();
   const existing = db.prepare(`SELECT * FROM license_records WHERE id = ?`).get(normalizedId);
   if (!existing) throw new Error("license_record_not_found");
+  const historyCount = db.prepare(`SELECT COUNT(*) AS c FROM license_history WHERE license_record_id = ?`).get(normalizedId);
+  if (Number(historyCount?.c || 0) > 0) throw new Error("LICENSE_RECORD_HAS_HISTORY");
   db.prepare(`DELETE FROM license_records WHERE id = ?`).run(normalizedId);
   return { ok: true, id: normalizedId };
+}
+
+
+function deleteCustomer(id, options = {}) {
+  const normalizedId = _trimText(id);
+  if (!normalizedId) throw new Error("customer_id required");
+  const db = _db();
+  const existing = db.prepare(`SELECT id FROM license_customers WHERE id = ?`).get(normalizedId);
+  if (!existing) throw new Error("customer_not_found");
+  const licenses = db.prepare(`SELECT id FROM license_records WHERE customer_id = ?`).all(normalizedId);
+  const deletedLicenses = Array.isArray(licenses) ? licenses.length : 0;
+  const shouldDeleteLicenses = options?.deleteLicenses === true;
+  if (deletedLicenses > 0 && !shouldDeleteLicenses) throw new Error("CUSTOMER_HAS_LICENSES");
+  if (shouldDeleteLicenses && deletedLicenses > 0) {
+    const historyCount = db
+      .prepare(
+        `SELECT COUNT(*) AS c FROM license_history WHERE license_record_id IN (SELECT id FROM license_records WHERE customer_id = ?)`
+      )
+      .get(normalizedId);
+    if (Number(historyCount?.c || 0) > 0) throw new Error("CUSTOMER_HAS_LICENSE_HISTORY");
+    db.prepare(`DELETE FROM license_records WHERE customer_id = ?`).run(normalizedId);
+  }
+  db.prepare(`DELETE FROM license_customers WHERE id = ?`).run(normalizedId);
+  return { ok: true, id: normalizedId, deletedLicenses };
 }
 
 function listHistory() {
@@ -402,6 +428,7 @@ module.exports = {
   listLicensesByCustomer,
   saveLicense,
   deleteLicenseRecord,
+  deleteCustomer,
   listHistory,
   addHistoryEntry,
 };
