@@ -720,7 +720,25 @@ export default class LicenseAdminScreen {
           this.currentLicense = record;
           this._render();
         });
-        actionCell.appendChild(openBtn);
+        const deleteBtn = this._button("Löschen", async (event) => {
+          event?.stopPropagation?.();
+          const licenseIdText = String(valueOf(record, "license_id", "licenseId") || valueOf(record, "id") || "").trim();
+          const confirmText =
+            `Lizenz ${licenseIdText || "(ohne ID)"} wirklich löschen? Diese Aktion entfernt nur den Lizenzdatensatz aus der Verwaltung, nicht bereits erzeugte .bbmlic-Dateien.`;
+          const shouldDelete = globalThis?.window?.confirm ? window.confirm(confirmText) : true;
+          if (!shouldDelete) return;
+          try {
+            await deleteLicense(record);
+            if (this.currentLicense?.id === record?.id) {
+              this.currentLicense = null;
+            }
+            message.textContent = "Lizenz wurde gelöscht.";
+            await renderLicenses();
+          } catch (err) {
+            message.textContent = `Fehler: ${err?.message || err}`;
+          }
+        });
+        actionCell.append(openBtn, deleteBtn);
         row.appendChild(actionCell);
         tbody.appendChild(row);
       }
