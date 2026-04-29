@@ -532,6 +532,15 @@ export default class LicenseAdminScreen {
       })
     );
 
+
+    const message = document.createElement("div");
+    message.style.minHeight = "20px";
+    message.style.fontSize = "13px";
+    if (this.flashMessage) {
+      message.textContent = this.flashMessage;
+      this.flashMessage = "";
+    }
+
     const customers = await listCustomers();
     if (!customers.length) {
       const empty = document.createElement("caption");
@@ -559,7 +568,7 @@ export default class LicenseAdminScreen {
       body.appendChild(row);
     }
 
-    container.append(title, header, actions, table);
+    container.append(title, header, actions, message, table);
   }
 
   async _renderCustomerDetail(container) {
