@@ -3631,4 +3631,441 @@ export default class SettingsView {
         this._applyState();
       }
     }
+
+  _appendSettingsModalContentItem(target, item) {
+    if (!target || item == null) return;
+    if (Array.isArray(item)) {
+      for (const child of item) {
+        this._appendSettingsModalContentItem(target, child);
+      }
+      return;
+    }
+    if (item instanceof Node) {
+      target.appendChild(item);
+      return;
+    }
+    if (typeof item === "string") {
+      target.appendChild(document.createTextNode(item));
+      return;
+    }
+    if (typeof item.render === "function") {
+      this._appendSettingsModalContentItem(target, item.render());
+      return;
+    }
+    target.appendChild(document.createTextNode(String(item)));
+  }
+
+  _createLicenseSettingsContent() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(560px, calc(100vw - 80px))";
+    wrap.style.maxWidth = "700px";
+
+    const card = document.createElement("div");
+    applyPopupCardStyle(card);
+    card.style.padding = "10px";
+    card.style.display = "grid";
+    card.style.gap = "8px";
+
+    const title = document.createElement("div");
+    title.textContent = "Lizenzstatus";
+    title.style.fontWeight = "800";
+    title.style.fontSize = "14px";
+
+    const note = document.createElement("div");
+    note.style.fontSize = "12px";
+    note.style.lineHeight = "1.45";
+    note.textContent =
+      "Lizenzstatus wird hier nur angezeigt. Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert.";
+
+    const status = document.createElement("div");
+    status.style.padding = "8px 10px";
+    status.style.border = "1px solid rgba(0,0,0,0.08)";
+    status.style.borderRadius = "8px";
+    status.style.background = "#f8fafc";
+    status.style.fontSize = "12px";
+    status.style.whiteSpace = "pre-line";
+    status.textContent = "Lizenzstatus wird geladen ...";
+
+    const btnReload = document.createElement("button");
+    btnReload.type = "button";
+    btnReload.textContent = "Status aktualisieren";
+    applyPopupButtonStyle(btnReload);
+
+    const renderStatus = (res, fallbackError = "") => {
+      const valid = !!res?.valid;
+      const reason = String(res?.reason || "").trim();
+      const licenseId = String(res?.licenseId || "").trim() || "-";
+      const customer = String(res?.customerName || "").trim() || "-";
+      const machineId = String(res?.machineId || "").trim() || "-";
+      const validUntil = this._formatLicenseDate(res?.validUntil);
+      const reasonText = this._formatLicenseReason(reason, fallbackError);
+      const warningText = this._formatLicenseWarning(res, fallbackError);
+
+      status.textContent = valid
+        ? `Gueltig fuer: ${customer}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}\nGueltig bis: ${validUntil}\nHinweis: ${warningText}`
+        : `Ungueltig\nGrund: ${reasonText}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}`;
+    };
+
+    const loadStatus = async () => {
+      if (typeof api.licenseGetStatus !== "function") {
+        renderStatus({ valid: false, reason: "INVALID_FORMAT" }, "Lizenz-IPC ist nicht verfuegbar.");
+        return;
+      }
+      try {
+        const res = await api.licenseGetStatus();
+        if (!res?.ok) {
+          renderStatus(res || {}, res?.error || "Lizenzstatus konnte nicht geladen werden.");
+          return;
+        }
+        renderStatus(res || {});
+      } catch (e) {
+        renderStatus({}, e?.message || "Lizenzstatus konnte nicht geladen werden.");
+      }
+    };
+
+    btnReload.addEventListener("click", loadStatus);
+    card.append(title, note, status, btnReload);
+    wrap.append(card);
+
+    void loadStatus();
+    return wrap;
+  }
+
+  async load() {
+    await this._reload();
+  }
+
+  dispose() {
+    if (this.settingsModalOverlayEl) {
+      try {
+        this.settingsModalOverlayEl.remove();
+      } catch {
+        // ignore
+      }
+    }
+    this._settingsModalOpen = false;
+    this._settingsModalSaveFn = null;
+    this._settingsModalCloseOnly = false;
+    this._unlockBodyScroll();
+  }
+
+  render() {
+    if (this.settingsModalOverlayEl) {
+      try {
+        this.settingsModalOverlayEl.remove();
+      } catch {
+        // ignore
+      }
+    }
+
+    const root = document.createElement("div");
+    root.style.display = "grid";
+    root.style.gap = "12px";
+    root.style.maxWidth = "980px";
+    root.style.width = "100%";
+
+    const head = document.createElement("div");
+    head.style.display = "flex";
+    head.style.alignItems = "center";
+    head.style.gap = "10px";
+    head.style.flexWrap = "wrap";
+
+    const title = document.createElement("h2");
+    title.textContent = "Einstellungen";
+    title.style.margin = "0";
+
+    const msg = document.createElement("div");
+    msg.style.marginLeft = "auto";
+    msg.style.fontSize = "12px";
+    msg.style.opacity = "0.85";
+    this.msgEl = msg;
+
+    head.append(title, msg);
+
+    const tiles = document.createElement("div");
+    tiles.style.display = "grid";
+    tiles.style.gridTemplateColumns = "repeat(auto-fit, minmax(220px, 1fr))";
+    tiles.style.gap = "10px";
+
+    const mkTile = ({ titleText, subText, onClick }) => {
+      const tile = document.createElement("button");
+      tile.type = "button";
+      tile.style.textAlign = "left";
+      tile.style.border = "1px solid #ddd";
+      tile.style.borderRadius = "10px";
+      tile.style.background = "#fff";
+      tile.style.padding = "12px";
+      tile.style.cursor = "pointer";
+      tile.style.userSelect = "none";
+
+      const t = document.createElement("div");
+      t.textContent = titleText;
+      t.style.fontWeight = "900";
+      t.style.fontSize = "16px";
+      t.style.marginBottom = "6px";
+
+      const s = document.createElement("div");
+      s.textContent = subText || "";
+      s.style.opacity = "0.8";
+      s.style.fontSize = "12px";
+
+      tile.append(t, s);
+      tile.addEventListener("click", async () => {
+        if (this.saving) return;
+        await onClick?.();
+      });
+      return tile;
+    };
+
+    const tileArchive = mkTile({
+      titleText: "Archiv",
+      subText: "Archivierte Projekte anzeigen",
+      onClick: async () => {
+        if (!this.router || typeof this.router.showArchive !== "function") {
+          alert("Router.showArchive ist nicht verfuegbar.");
+          return;
+        }
+        await this.router.showArchive();
+      },
+    });
+
+    const tileLicense = mkTile({
+      titleText: "Lizenz",
+      subText: "Lizenzstatus anzeigen",
+      onClick: async () => {
+        this._openSettingsModal({
+          title: "Lizenz",
+          content: [this._createLicenseSettingsContent()],
+          closeOnly: true,
+        });
+      },
+    });
+
+    const tileAdmin = mkTile({
+      titleText: "Adminbereich",
+      subText: "Externe Lizenz-App",
+      onClick: async () => {
+        const adminInfo = document.createElement("div");
+        adminInfo.style.maxWidth = "720px";
+        adminInfo.style.lineHeight = "1.45";
+        adminInfo.textContent =
+          "Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert.";
+        this._openSettingsModal({
+          title: "Adminbereich",
+          content: [adminInfo],
+          closeOnly: true,
+        });
+      },
+    });
+
+    const tileDev = mkTile({
+      titleText: "Entwicklung",
+      subText: "Versionierung, Farben, Diagnose",
+      onClick: async () => {
+        const devInfo = document.createElement("div");
+        devInfo.style.maxWidth = "720px";
+        devInfo.style.lineHeight = "1.45";
+        devInfo.textContent =
+          "Der Entwicklerbereich bleibt erhalten. Versionierung, Farbsteuerung und DB-Diagnose werden hier weiterhin gebuendelt.";
+        this._openSettingsModal({
+          title: "Entwicklung",
+          content: [devInfo],
+          closeOnly: true,
+        });
+      },
+    });
+
+    tiles.append(tileArchive, tileLicense, tileAdmin, tileDev);
+    root.append(head, tiles);
+    this.root = root;
+
+    const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: OVERLAY_TOP });
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+
+    const modal = document.createElement("div");
+    applyPopupCardStyle(modal);
+    modal.style.width = "min(980px, calc(100vw - 24px))";
+    modal.style.maxHeight = "calc(100vh - 24px)";
+    modal.style.display = "flex";
+    modal.style.flexDirection = "column";
+    modal.style.overflow = "hidden";
+    modal.style.background = "#fff";
+    modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.25)";
+    modal.style.padding = "0";
+    modal.style.fontFamily = "Calibri, Arial, sans-serif";
+    modal.tabIndex = -1;
+
+    const modalHead = document.createElement("div");
+    modalHead.style.display = "flex";
+    modalHead.style.alignItems = "center";
+    modalHead.style.justifyContent = "space-between";
+    modalHead.style.gap = "10px";
+    modalHead.style.padding = "12px";
+    modalHead.style.borderBottom = "1px solid #e2e8f0";
+
+    const modalTitle = document.createElement("div");
+    modalTitle.style.fontWeight = "bold";
+    modalTitle.textContent = "";
+
+    const modalClose = document.createElement("button");
+    modalClose.type = "button";
+    modalClose.textContent = "X";
+    applyPopupButtonStyle(modalClose);
+
+    modalHead.append(modalTitle, modalClose);
+
+    const modalBody = document.createElement("div");
+    modalBody.style.display = "grid";
+    modalBody.style.gap = "10px";
+    modalBody.style.flex = "1 1 auto";
+    modalBody.style.minHeight = "0";
+    modalBody.style.overflow = "auto";
+    modalBody.style.padding = "12px";
+
+    const modalFooter = document.createElement("div");
+    modalFooter.style.borderTop = "1px solid #e2e8f0";
+    modalFooter.style.padding = "10px 12px";
+
+    const modalFooterInner = document.createElement("div");
+    modalFooterInner.style.display = "flex";
+    modalFooterInner.style.justifyContent = "flex-end";
+    modalFooterInner.style.gap = "8px";
+    modalFooterInner.style.width = "100%";
+    modalFooterInner.style.maxWidth = "720px";
+
+    const modalSave = document.createElement("button");
+    modalSave.type = "button";
+    modalSave.textContent = "Speichern";
+    applyPopupButtonStyle(modalSave, { variant: "primary" });
+    modalSave.addEventListener("click", async () => {
+      if (this._settingsModalCloseOnly) {
+        this._closeSettingsModal();
+        return;
+      }
+      await this._runSettingsModalSave({ closeOnSuccess: true });
+    });
+
+    modalFooterInner.append(modalSave);
+    modalFooter.append(modalFooterInner);
+    modal.append(modalHead, modalBody, modalFooter);
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    this.settingsModalOverlayEl = overlay;
+    this.settingsModalEl = modal;
+    this.settingsModalTitleEl = modalTitle;
+    this.settingsModalBodyEl = modalBody;
+    this.settingsModalCloseBtn = modalClose;
+    this.settingsModalFooterEl = modalFooter;
+    this.settingsModalSaveBtn = modalSave;
+
+    const closeSettingsOverlay = () => {
+      if (this._settingsModalCloseOnly) {
+        this._closeSettingsModal();
+        return;
+      }
+      this._runSettingsModalSave({ closeOnSuccess: true });
+    };
+    registerPopupCloseHandlers(overlay, closeSettingsOverlay);
+
+    modalClose.addEventListener("click", closeSettingsOverlay);
+    this._settingsModalOpen = false;
+    return root;
+  }
+
+  _openSettingsModal({ title, content, saveFn, closeOnly = false } = {}) {
+    if (!this.settingsModalOverlayEl || !this.settingsModalBodyEl || !this.settingsModalTitleEl) return;
+    this.settingsModalTitleEl.textContent = (title || "").toString();
+    const titleNorm = String(title || "").trim().toLowerCase();
+    if (this.settingsModalEl) {
+      const isCompactPopup =
+        titleNorm === "lizenz" || titleNorm === "entwicklung" || titleNorm === "adminbereich";
+      const isPrintSettingsPopup = titleNorm === "druckeinstellungen";
+      const isLayoutPopup = titleNorm === "druck-layout";
+      if (isPrintSettingsPopup) {
+        this.settingsModalEl.style.width = "min(760px, calc(100vw - 24px))";
+      } else if (isLayoutPopup) {
+        this.settingsModalEl.style.width = "min(344px, calc(100vw - 24px))";
+      } else if (isCompactPopup) {
+        this.settingsModalEl.style.width = "min(760px, calc(100vw - 24px))";
+      } else {
+        this.settingsModalEl.style.width = "min(980px, calc(100vw - 24px))";
+      }
+      const footerInner = this.settingsModalFooterEl?.firstElementChild;
+      if (footerInner) {
+        footerInner.style.maxWidth = isPrintSettingsPopup ? "600px" : "720px";
+      }
+    }
+    this.settingsModalBodyEl.innerHTML = "";
+    const nodes = Array.isArray(content) ? content : [content];
+    for (const node of nodes) {
+      this._appendSettingsModalContentItem(this.settingsModalBodyEl, node);
+    }
+    this._settingsModalSaveFn = typeof saveFn === "function" ? saveFn : null;
+    this._settingsModalCloseOnly = !!closeOnly;
+    if (this.settingsModalSaveBtn) {
+      this.settingsModalSaveBtn.textContent = this._settingsModalCloseOnly ? "Schliessen" : "Speichern";
+    }
+    this._settingsModalOpen = true;
+    this._lockBodyScroll();
+    this.settingsModalOverlayEl.style.display = "flex";
+    try {
+      if (this.settingsModalEl) {
+        this.settingsModalEl.focus();
+      } else {
+        this.settingsModalOverlayEl.focus();
+      }
+    } catch (_e) {
+      // ignore
+    }
+  }
+
+  async _runSettingsModalSave({ closeOnSuccess } = {}) {
+    if (!this._settingsModalSaveFn) {
+      if (closeOnSuccess) this._closeSettingsModal();
+      return true;
+    }
+
+    try {
+      const res = await this._settingsModalSaveFn();
+      if (res === false) return false;
+      if (closeOnSuccess) this._closeSettingsModal();
+      return true;
+    } catch (e) {
+      console.error("Settings-Modal Save fehlgeschlagen:", e);
+      return false;
+    }
+  }
+
+  _closeSettingsModal() {
+    if (!this.settingsModalOverlayEl || !this.settingsModalBodyEl) return;
+    this._settingsModalOpen = false;
+    this.settingsModalOverlayEl.style.display = "none";
+    this.settingsModalBodyEl.innerHTML = "";
+    this._settingsModalSaveFn = null;
+    this._settingsModalCloseOnly = false;
+    this._unlockBodyScroll();
+  }
+
+  _lockBodyScroll() {
+    if (this._bodyLockCount === 0) {
+      this._bodyOverflowBackup = document.body.style.overflow || "";
+      document.body.style.overflow = "hidden";
+    }
+    this._bodyLockCount += 1;
+  }
+
+  _unlockBodyScroll() {
+    if (this._bodyLockCount > 0) {
+      this._bodyLockCount -= 1;
+    }
+    if (this._bodyLockCount === 0) {
+      document.body.style.overflow = this._bodyOverflowBackup || "";
+      this._bodyOverflowBackup = null;
+    }
+  }
 }
