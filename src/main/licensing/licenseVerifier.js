@@ -101,8 +101,6 @@ function verifyLicense(licenseData) {
     "edition",
     "issuedAt",
     "maxDevices",
-    "features",
-    "modules",
   ];
 
   for (const field of requiredFields) {
@@ -117,10 +115,10 @@ function verifyLicense(licenseData) {
     }
   }
 
-  if (!Array.isArray(license.features)) {
+  if (license.features !== undefined && !Array.isArray(license.features)) {
     return { valid: false, reason: "INVALID_FORMAT" };
   }
-  if (!Array.isArray(license.modules)) {
+  if (license.modules !== undefined && !Array.isArray(license.modules)) {
     return { valid: false, reason: "INVALID_FORMAT" };
   }
 

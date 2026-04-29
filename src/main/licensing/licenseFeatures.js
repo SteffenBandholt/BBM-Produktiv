@@ -66,7 +66,7 @@ function normalizeLicensedModules(modules, features) {
   });
   if (!seen.has(LICENSE_MODULES.PROTOKOLL)) {
     const fallback = Array.isArray(features)
-      ? features.some((value) => _normalizeFeatureValue(value) === LICENSE_MODULES.PROTOKOLL)
+      ? features.some((value) => normalizeFeatureAlias(value) === LICENSE_MODULES.PROTOKOLL)
       : false;
     if (fallback) normalized.push(LICENSE_MODULES.PROTOKOLL);
   }

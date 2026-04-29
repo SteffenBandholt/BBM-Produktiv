@@ -99,6 +99,15 @@ async function runLicenseStandardFeaturesTests(run) {
     });
     assert.throws(() => svc.requireFeature("protokoll"), /FEATURE_NOT_ALLOWED:protokoll/);
   });
+
+  await run("Lizenzmodell: Legacy ohne modules-Feld erkennt protokoll ueber features", () => {
+    const svc = loadLicenseServiceWithStatus({
+      valid: true,
+      reason: "OK",
+      license: { features: ["protokoll"] },
+    });
+    assert.equal(svc.requireFeature("protokoll"), true);
+  });
 }
 
 module.exports = { runLicenseStandardFeaturesTests };

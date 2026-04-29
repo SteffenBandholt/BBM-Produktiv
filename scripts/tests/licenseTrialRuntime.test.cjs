@@ -159,6 +159,14 @@ async function runLicenseTrialRuntimeTests(run) {
     assert.equal(result.valid, true);
   });
 
+  await run('Lizenzpruefung: Legacy-Lizenz ohne modules-Feld bleibt gueltig', () => {
+    const { verifyLicense } = loadLicenseVerifierWithStubs({ machineId: 'MID-1' });
+    const payload = createValidLicense({ product: 'bbm-protokoll', features: ['protokoll'] });
+    delete payload.license.modules;
+    const result = verifyLicense(payload);
+    assert.equal(result.valid, true);
+  });
+
   await run('licenseStorage: setzt trialStartedAt beim ersten Speichern einer Testlizenz', () => {
     withTempUserData((userDataPath) => {
       const storage = loadLicenseStorageWithStubs({ userDataPath, machineId: 'MID-A' });
