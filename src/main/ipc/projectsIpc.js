@@ -5,78 +5,83 @@ const { ipcMain, app } = require("electron");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const projectsRepo = require("../db/projectsRepo");
 const { buildStoragePreviewPaths } = require("./projectStoragePaths");
-const { LICENSE_FEATURES, enforceLicensedFeature } = require("../licensing/featureGuard");
+const {
+  LICENSE_FEATURES,
+  enforceLicensedFeature,
+  toLicenseErrorPayload,
+} = require("../licensing/featureGuard");
 
 function _ensureAppLicensed() {
   enforceLicensedFeature(LICENSE_FEATURES.APP);
 }
 
-function registerProjectsIpc() {
-  ipcMain.handle("projects:list", () => {
+function _isLicenseError(err) {
+  const message = String(err?.message || "");
+  return !!err?.licenseError || message.startsWith("LICENSE_") || message.startsWith("FEATURE_NOT_ALLOWED:");
+}
+
+function _runProjectTask(task) {
+  try {
     _ensureAppLicensed();
-    try {
+    return task();
+  } catch (err) {
+    if (_isLicenseError(err)) {
+      return toLicenseErrorPayload(err);
+    }
+    return { ok: false, error: err?.message || String(err) };
+  }
+}
+
+function registerProjectsIpc() {
+  ipcMain.handle("projects:list", () =>
+    _runProjectTask(() => {
       const list = projectsRepo.listAll();
       return { ok: true, list };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
-  ipcMain.handle("projects:listArchived", () => {
-    _ensureAppLicensed();
-    try {
+  ipcMain.handle("projects:listArchived", () =>
+    _runProjectTask(() => {
       const list = projectsRepo.listArchived();
       return { ok: true, list };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
-  ipcMain.handle("projects:archive", (_e, data) => {
-    _ensureAppLicensed();
-    try {
+  ipcMain.handle("projects:archive", (_e, data) =>
+    _runProjectTask(() => {
       const d = data && typeof data === "object" ? data : {};
       const projectId = d.projectId ?? d.project_id ?? d.id ?? null;
       if (!projectId) throw new Error("projectId required");
       const project = projectsRepo.archiveProject(projectId);
       return { ok: true, project };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
-  ipcMain.handle("projects:unarchive", (_e, data) => {
-    _ensureAppLicensed();
-    try {
+  ipcMain.handle("projects:unarchive", (_e, data) =>
+    _runProjectTask(() => {
       const d = data && typeof data === "object" ? data : {};
       const projectId = d.projectId ?? d.project_id ?? d.id ?? null;
       if (!projectId) throw new Error("projectId required");
       const project = projectsRepo.unarchiveProject(projectId);
       return { ok: true, project };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
-  ipcMain.handle("projects:deleteForever", (_e, data) => {
-    _ensureAppLicensed();
-    try {
+  ipcMain.handle("projects:deleteForever", (_e, data) =>
+    _runProjectTask(() => {
       const d = data && typeof data === "object" ? data : {};
       const projectId = d.projectId ?? d.project_id ?? d.id ?? null;
       if (!projectId) throw new Error("projectId required");
       projectsRepo.deleteForever(projectId);
       return { ok: true };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
   // Abwärtskompatibel:
   // - bisher: { name }
   // - neu:    inkl. project_number (Projektnummer)
-  ipcMain.handle("projects:create", (_e, data) => {
-    _ensureAppLicensed();
-    try {
+  ipcMain.handle("projects:create", (_e, data) =>
+    _runProjectTask(() => {
       const d = data && typeof data === "object" ? data : {};
 
       const name = (d.name ?? d.bezeichnung ?? "").toString().trim();
@@ -104,26 +109,20 @@ function registerProjectsIpc() {
 
       const project = projectsRepo.createProject(payload);
       return { ok: true, project };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
   // Update:
   // { projectId|id, patch } oder { projectId|id, ...patchFields }
-  ipcMain.handle("projects:update", (_e, data) => {
-    _ensureAppLicensed();
-    try {
+  ipcMain.handle("projects:update", (_e, data) =>
+    _runProjectTask(() => {
       const project = projectsRepo.updateProject(data || {});
       return { ok: true, project };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 
-  ipcMain.handle("projects:storagePreview", (_e, data) => {
-    try {
-      _ensureAppLicensed();
+  ipcMain.handle("projects:storagePreview", (_e, data) =>
+    _runProjectTask(() => {
       const d = data && typeof data === "object" ? data : {};
       const settings = appSettingsGetMany(["pdf.protocolsDir"]) || {};
       const baseDirRaw = String(settings["pdf.protocolsDir"] || "").trim();
@@ -137,10 +136,8 @@ function registerProjectsIpc() {
         },
       });
       return { ok: true, ...preview };
-    } catch (err) {
-      return { ok: false, error: err?.message || String(err) };
-    }
-  });
+    })
+  );
 }
 
 module.exports = { registerProjectsIpc };

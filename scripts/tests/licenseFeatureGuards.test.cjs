@@ -28,6 +28,12 @@ async function runLicenseFeatureGuardTests(run) {
     assert.equal(projectsIpc.includes("enforceLicensedFeature(LICENSE_FEATURES.APP);"), true);
   });
 
+  await run("License-Guard: Projektzugriff mappt Lizenzfehler als Payload", () => {
+    assert.equal(projectsIpc.includes("toLicenseErrorPayload"), true);
+    assert.equal(projectsIpc.includes("return toLicenseErrorPayload(err);"), true);
+    assert.equal(projectsIpc.includes("_runProjectTask"), true);
+  });
+
   await run("License-Guard: Lizenzfehler werden payload-freundlich gemappt", () => {
     assert.equal(printIpc.includes("return toLicenseErrorPayload(err);"), true);
     assert.equal(mainSource.includes("return toLicenseErrorPayload(err);"), true);
