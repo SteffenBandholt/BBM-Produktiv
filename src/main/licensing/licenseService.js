@@ -52,6 +52,8 @@ function requireFeature(feature) {
     throw new Error("FEATURE_NOT_ALLOWED:");
   }
 
+  const license = requireValidLicense({ fresh: true });
+
   if (isStandardLicensedFeature(normalizedFeature)) {
     return true;
   }
@@ -60,7 +62,6 @@ function requireFeature(feature) {
     throw new Error(`FEATURE_NOT_ALLOWED:${normalizedFeature}`);
   }
 
-  const license = requireValidLicense({ fresh: true });
   const features = normalizeLicensedFeatures(license?.features);
 
   if (!features.includes(normalizedFeature)) {

@@ -23,6 +23,9 @@ const { runLicenseStorageBootstrapTests } = require("./tests/licenseStorageBoots
 const { runLicenseIpcCustomerSetupTests } = require("./tests/licenseIpcCustomerSetup.test.cjs");
 const { runLicenseTrialRuntimeTests } = require("./tests/licenseTrialRuntime.test.cjs");
 const { runLicenseRequestTests } = require("./tests/licenseRequest.test.cjs");
+const { runLicenseFeatureGuardTests } = require("./tests/licenseFeatureGuards.test.cjs");
+const { runLicenseStandardFeaturesTests } = require("./tests/licenseStandardFeatures.test.cjs");
+const { runFeatureGuardEnforcementTests } = require("./tests/featureGuardEnforcement.test.cjs");
 
 let failed = false;
 
@@ -92,6 +95,9 @@ async function main() {
   await runLicenseTrialRuntimeTests(run);
   await runLicenseStorageBootstrapTests(run);
   await runLicenseRequestTests(run);
+  await runLicenseFeatureGuardTests(run);
+  await runLicenseStandardFeaturesTests(run);
+  await runFeatureGuardEnforcementTests(run);
 
   if (failed) {
     process.exitCode = 1;

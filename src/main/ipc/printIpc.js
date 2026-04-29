@@ -17,6 +17,11 @@ const path = require("path");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");
 const { getPrintData } = require("../print/printData");
 const {
+  LICENSE_FEATURES,
+  enforceLicensedFeature,
+  toLicenseErrorPayload,
+} = require("../licensing/featureGuard");
+const {
   sanitizeDirName,
   resolveProjectFolderName,
 } = require("./projectStoragePaths");
@@ -274,8 +279,15 @@ async function _runIpcTask(task) {
   try {
     return await task();
   } catch (err) {
+    if (err?.licenseError || String(err?.message || "").startsWith("LICENSE_")) {
+      return toLicenseErrorPayload(err);
+    }
     return { ok: false, error: err?.message || String(err) };
   }
+}
+
+function _enforceFeature(feature) {
+  enforceLicensedFeature(feature);
 }
 
 function attachPrintDebugPipes(win, jobId) {
@@ -423,6 +435,7 @@ function registerPrintIpc() {
   // Stable technical service entry points for renderer callers.
   ipcMain.handle("print:getData", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature(LICENSE_FEATURES.PDF);
       const p = payload || {};
       const data = await getPrintData({
         mode: p.mode,
@@ -439,6 +452,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:toPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature(LICENSE_FEATURES.PDF);
       console.log(
         `[PRINT_ACTIVE] handler=print:toPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""
@@ -452,6 +466,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("protocol:findStoredPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature(LICENSE_FEATURES.PDF);
       const p = payload || {};
       return findStoredProtocolPdf({
         baseDir: p.baseDir,
@@ -464,6 +479,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("firms:listStoredPdfs", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature(LICENSE_FEATURES.PDF);
       const p = payload || {};
       return listStoredFirmsPdfs({
         baseDir: p.baseDir,
@@ -474,6 +490,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:listStoredProjectPdfs", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature(LICENSE_FEATURES.PDF);
       const p = payload || {};
       return listStoredProjectPdfs({
         baseDir: p.baseDir,
@@ -485,6 +502,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:htmlToPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature(LICENSE_FEATURES.PDF);
       console.log(
         `[PRINT_ACTIVE] handler=print:htmlToPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""

@@ -27,6 +27,8 @@ const {
   toLicenseErrorPayload,
   isDevAudioOverrideEnabled,
   isDevAudioSuggestionsEnabled,
+  LICENSE_FEATURES,
+  enforceLicensedFeature,
 } = require("./licensing/featureGuard");
 const { appSettingsGetMany, appSettingsSetMany } = require("./db/appSettingsRepo");
 const { getDatabaseDiagnostics, importLegacyIntoActive } = require("./db/database");
@@ -526,6 +528,7 @@ app.whenReady().then(async () => {
   // Main kapselt nur die Outlook-/Windows-spezifische Transporttechnik.
   ipcMain.handle("mail:createOutlookDraft", async (_event, payload) => {
   try {
+    enforceLicensedFeature(LICENSE_FEATURES.MAIL);
     if (process.platform !== "win32") {
       return { ok: false, error: "Outlook-Entwurf ist nur unter Windows verfügbar." };
     }
@@ -604,6 +607,9 @@ app.whenReady().then(async () => {
 
     return result;
   } catch (err) {
+    if (err?.licenseError || String(err?.message || "").startsWith("LICENSE_")) {
+      return toLicenseErrorPayload(err);
+    }
     return { ok: false, error: err?.message || String(err) };
   }
   });
