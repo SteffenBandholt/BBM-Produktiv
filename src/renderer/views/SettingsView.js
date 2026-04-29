@@ -204,6 +204,7 @@ export default class SettingsView {
     this.inpPrintHeaderAdaptive = null;
     this._printLogoDataUrls = ["", "", ""];
     this._printLogoSaving = false;
+    this._printLogoSaveTimer = null;
 
     this.btnSave = null;
     this.btnArchive = null;
@@ -2267,6 +2268,10 @@ export default class SettingsView {
 
   async _savePrintLogoSettings() {
     if (this._printLogoSaving) return false;
+    if (this._printLogoSaveTimer) {
+      clearTimeout(this._printLogoSaveTimer);
+      this._printLogoSaveTimer = null;
+    }
     const api = window.bbmDb || {};
     if (typeof api.appSettingsSetMany !== "function") {
       alert("Settings-API fehlt (IPC noch nicht aktiv).");
@@ -2307,6 +2312,14 @@ export default class SettingsView {
     }
   }
 
+  _schedulePrintLogoSave() {
+    if (this._printLogoSaveTimer) clearTimeout(this._printLogoSaveTimer);
+    this._printLogoSaveTimer = setTimeout(async () => {
+      this._printLogoSaveTimer = null;
+      await this._savePrintLogoSettings();
+    }, 250);
+  }
+
   async _handlePrintLogoFileInput(slotIndex) {
     const idx = Number(slotIndex);
     if (!Number.isInteger(idx) || idx < 0 || idx > 2) return;
@@ -2322,6 +2335,7 @@ export default class SettingsView {
       if (this.printLogoEnabledInputs?.[idx]) {
         this.printLogoEnabledInputs[idx].checked = true;
       }
+      this._schedulePrintLogoSave();
     } catch (_e) {
       alert("Logo konnte nicht verarbeitet werden.");
     } finally {
@@ -3745,6 +3759,666 @@ export default class SettingsView {
     return wrap;
   }
 
+  async _createLegacySettingsContent() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(720px, calc(100vw - 80px))";
+
+    const info = document.createElement("div");
+    info.style.fontSize = "12px";
+    info.style.opacity = "0.85";
+    info.textContent = "Nutzerdaten und Druckeinstellungen (Bestandsbereich).";
+    wrap.append(info);
+
+    const inputs = new Map();
+    const renderField = (field) => {
+      const row = document.createElement("label");
+      row.style.display = "grid";
+      row.style.gap = "4px";
+
+      const lbl = document.createElement("span");
+      lbl.textContent = field.label || field.key;
+      lbl.style.fontSize = "12px";
+
+      let inp;
+      if (field.type === "checkbox") {
+        inp = document.createElement("input");
+        inp.type = "checkbox";
+        const box = document.createElement("span");
+        box.style.display = "inline-flex";
+        box.style.alignItems = "center";
+        box.style.gap = "8px";
+        box.append(inp, document.createTextNode(field.checkboxLabel || "Aktiv"));
+        row.append(lbl, box);
+      } else {
+        inp = field.multiline ? document.createElement("textarea") : document.createElement("input");
+        inp.style.width = "100%";
+        if (inp.tagName === "TEXTAREA") inp.rows = field.rows || 4;
+        row.append(lbl, inp);
+      }
+      inputs.set(field.key, inp);
+      return row;
+    };
+
+    for (const section of PRINT_DEFAULTS_FIELD_GROUPS) {
+      const card = document.createElement("div");
+      applyPopupCardStyle(card);
+      card.style.padding = "10px";
+      card.style.display = "grid";
+      card.style.gap = "8px";
+
+      const heading = document.createElement("div");
+      heading.textContent = section.title;
+      heading.style.fontWeight = "800";
+
+      card.append(heading);
+
+      for (const field of section.fields) {
+        card.append(
+          renderField({
+            ...field,
+            type:
+              field.key === "print.preRemarks.enabled" || field.key === "pdf.footerUseUserData"
+                ? "checkbox"
+                : field.multiline
+                  ? "textarea"
+                  : "text",
+            checkboxLabel: "Aktiv",
+          })
+        );
+      }
+      wrap.append(card);
+    }
+
+    const preRemarksBtn = document.createElement("button");
+    preRemarksBtn.type = "button";
+    preRemarksBtn.textContent = "Vorbemerkung-Editor";
+    applyPopupButtonStyle(preRemarksBtn);
+    preRemarksBtn.onclick = async () => {
+      await this._openPdfPreRemarksPopup();
+    };
+    wrap.append(preRemarksBtn);
+
+    const logoCard = document.createElement("div");
+    applyPopupCardStyle(logoCard);
+    logoCard.style.padding = "10px";
+    logoCard.style.display = "grid";
+    logoCard.style.gap = "8px";
+    const logoHeading = document.createElement("div");
+    logoHeading.textContent = "Logos";
+    logoHeading.style.fontWeight = "800";
+    const logoHint = document.createElement("div");
+    logoHint.style.fontSize = "12px";
+    logoHint.style.opacity = "0.82";
+    logoHint.textContent =
+      "Kopf-Logo, PDF-Logo und Drucklogos sind in den Detailmasken weiter bearbeitbar.";
+    const logoActions = document.createElement("div");
+    logoActions.style.display = "flex";
+    logoActions.style.gap = "8px";
+    logoActions.style.flexWrap = "wrap";
+    const btnLogos = document.createElement("button");
+    btnLogos.type = "button";
+    btnLogos.textContent = "Drucklogos konfigurieren";
+    applyPopupButtonStyle(btnLogos);
+    btnLogos.onclick = async () => {
+      await this._openPrintLogosPopup();
+    };
+    logoActions.append(btnLogos);
+    logoCard.append(logoHeading, logoHint, logoActions);
+    wrap.append(logoCard);
+
+    const headerLogoCard = document.createElement("div");
+    applyPopupCardStyle(headerLogoCard);
+    headerLogoCard.style.padding = "10px";
+    headerLogoCard.style.display = "grid";
+    headerLogoCard.style.gap = "8px";
+    const headerLogoTitle = document.createElement("div");
+    headerLogoTitle.textContent = "Kopf-Logo";
+    headerLogoTitle.style.fontWeight = "800";
+    headerLogoCard.append(headerLogoTitle);
+
+    const headerLogoGrid = document.createElement("div");
+    headerLogoGrid.style.display = "grid";
+    headerLogoGrid.style.gridTemplateColumns = "repeat(auto-fit, minmax(180px, 1fr))";
+    headerLogoGrid.style.gap = "8px";
+
+    const addHeaderLogoField = (key, label, el) => {
+      const row = document.createElement("label");
+      row.style.display = "grid";
+      row.style.gap = "4px";
+      const lbl = document.createElement("span");
+      lbl.textContent = label;
+      lbl.style.fontSize = "12px";
+      el.style.width = "100%";
+      row.append(lbl, el);
+      headerLogoGrid.append(row);
+      inputs.set(key, el);
+    };
+
+    const inpHeaderLogoEnabled = document.createElement("input");
+    inpHeaderLogoEnabled.type = "checkbox";
+    const headerLogoEnabledWrap = document.createElement("label");
+    headerLogoEnabledWrap.style.display = "inline-flex";
+    headerLogoEnabledWrap.style.alignItems = "center";
+    headerLogoEnabledWrap.style.gap = "8px";
+    headerLogoEnabledWrap.style.cursor = "pointer";
+    headerLogoEnabledWrap.append(inpHeaderLogoEnabled, document.createTextNode("Header-Logo aktiv"));
+    inputs.set("header.logoEnabled", inpHeaderLogoEnabled);
+
+    const inpHeaderLogoSize = document.createElement("input");
+    inpHeaderLogoSize.type = "number";
+    inpHeaderLogoSize.min = "12";
+    inpHeaderLogoSize.max = "48";
+    inpHeaderLogoSize.step = "1";
+    addHeaderLogoField("header.logoSizePx", "Logo-Größe", inpHeaderLogoSize);
+
+    const inpHeaderLogoPadLeft = document.createElement("input");
+    inpHeaderLogoPadLeft.type = "number";
+    inpHeaderLogoPadLeft.min = "0";
+    inpHeaderLogoPadLeft.max = "40";
+    inpHeaderLogoPadLeft.step = "1";
+    addHeaderLogoField("header.logoPadLeftPx", "Abstand links", inpHeaderLogoPadLeft);
+
+    const inpHeaderLogoPadTop = document.createElement("input");
+    inpHeaderLogoPadTop.type = "number";
+    inpHeaderLogoPadTop.min = "0";
+    inpHeaderLogoPadTop.max = "20";
+    inpHeaderLogoPadTop.step = "1";
+    addHeaderLogoField("header.logoPadTopPx", "Abstand oben", inpHeaderLogoPadTop);
+
+    const inpHeaderLogoPadRight = document.createElement("input");
+    inpHeaderLogoPadRight.type = "number";
+    inpHeaderLogoPadRight.min = "0";
+    inpHeaderLogoPadRight.max = "80";
+    inpHeaderLogoPadRight.step = "1";
+    addHeaderLogoField("header.logoPadRightPx", "Abstand rechts", inpHeaderLogoPadRight);
+
+    const inpHeaderLogoPosition = document.createElement("select");
+    for (const [value, label] of [["left", "Links"], ["right", "Rechts"]]) {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = label;
+      inpHeaderLogoPosition.append(opt);
+    }
+    addHeaderLogoField("header.logoPosition", "Position", inpHeaderLogoPosition);
+
+    headerLogoCard.append(headerLogoGrid, headerLogoEnabledWrap);
+    wrap.append(headerLogoCard);
+
+    const pdfLogoCard = document.createElement("div");
+    applyPopupCardStyle(pdfLogoCard);
+    pdfLogoCard.style.padding = "10px";
+    pdfLogoCard.style.display = "grid";
+    pdfLogoCard.style.gap = "8px";
+    const pdfLogoTitle = document.createElement("div");
+    pdfLogoTitle.textContent = "PDF-Logo";
+    pdfLogoTitle.style.fontWeight = "800";
+    const pdfLogoHint = document.createElement("div");
+    pdfLogoHint.style.fontSize = "12px";
+    pdfLogoHint.style.opacity = "0.82";
+    pdfLogoHint.textContent = "Logo-Datei, Position und Grösse für den PDF-Export.";
+    pdfLogoCard.append(pdfLogoTitle, pdfLogoHint);
+
+    const pdfLogoToggle = document.createElement("label");
+    pdfLogoToggle.style.display = "inline-flex";
+    pdfLogoToggle.style.alignItems = "center";
+    pdfLogoToggle.style.gap = "8px";
+    pdfLogoToggle.style.cursor = "pointer";
+    const inpPdfLogoEnabled = document.createElement("input");
+    inpPdfLogoEnabled.type = "checkbox";
+    pdfLogoToggle.append(inpPdfLogoEnabled, document.createTextNode("PDF-Logo aktiv"));
+
+    const pdfLogoGrid = document.createElement("div");
+    pdfLogoGrid.style.display = "grid";
+    pdfLogoGrid.style.gridTemplateColumns = "repeat(auto-fit, minmax(180px, 1fr))";
+    pdfLogoGrid.style.gap = "8px";
+
+    const addPdfLogoField = (key, label, el) => {
+      const row = document.createElement("label");
+      row.style.display = "grid";
+      row.style.gap = "4px";
+      const lbl = document.createElement("span");
+      lbl.textContent = label;
+      lbl.style.fontSize = "12px";
+      el.style.width = "100%";
+      row.append(lbl, el);
+      pdfLogoGrid.append(row);
+      inputs.set(key, el);
+    };
+
+    const inpPdfLogoWidth = document.createElement("input");
+    inpPdfLogoWidth.type = "number";
+    inpPdfLogoWidth.min = "10";
+    inpPdfLogoWidth.max = "60";
+    inpPdfLogoWidth.step = "1";
+    addPdfLogoField("pdf.userLogoWidthMm", "Breite (mm)", inpPdfLogoWidth);
+
+    const inpPdfLogoTop = document.createElement("input");
+    inpPdfLogoTop.type = "number";
+    inpPdfLogoTop.min = "0";
+    inpPdfLogoTop.max = "30";
+    inpPdfLogoTop.step = "1";
+    addPdfLogoField("pdf.userLogoTopMm", "Abstand oben (mm)", inpPdfLogoTop);
+
+    const inpPdfLogoRight = document.createElement("input");
+    inpPdfLogoRight.type = "number";
+    inpPdfLogoRight.min = "0";
+    inpPdfLogoRight.max = "30";
+    inpPdfLogoRight.step = "1";
+    addPdfLogoField("pdf.userLogoRightMm", "Abstand rechts (mm)", inpPdfLogoRight);
+
+    const pdfLogoFile = document.createElement("input");
+    pdfLogoFile.type = "file";
+    pdfLogoFile.accept = "image/*";
+    pdfLogoFile.style.width = "100%";
+    const pdfLogoPath = document.createElement("input");
+    pdfLogoPath.type = "text";
+    pdfLogoPath.placeholder = "Kein Logo gewaehlt";
+    pdfLogoPath.readOnly = true;
+    pdfLogoPath.style.background = "#f8fafc";
+    pdfLogoPath.style.width = "100%";
+    const pdfLogoPreview = document.createElement("div");
+    pdfLogoPreview.style.display = "grid";
+    pdfLogoPreview.style.gridTemplateColumns = "1fr";
+    pdfLogoPreview.style.gap = "8px";
+    pdfLogoPreview.style.alignItems = "center";
+    pdfLogoPreview.style.justifyItems = "center";
+    pdfLogoPreview.style.minHeight = "120px";
+    pdfLogoPreview.style.border = "1px dashed rgba(0,0,0,0.15)";
+    pdfLogoPreview.style.borderRadius = "8px";
+    pdfLogoPreview.style.background = "#f8fafc";
+    const pdfLogoDummy = document.createElement("div");
+    pdfLogoDummy.textContent = "Kein Logo gewählt";
+    pdfLogoDummy.style.opacity = "0.75";
+    const pdfLogoImg = document.createElement("img");
+    pdfLogoImg.alt = "PDF-Logo";
+    pdfLogoImg.style.display = "none";
+    pdfLogoImg.style.maxWidth = "100%";
+    pdfLogoImg.style.objectFit = "contain";
+    pdfLogoPreview.append(pdfLogoDummy, pdfLogoImg);
+    const pdfLogoQuality = document.createElement("div");
+    pdfLogoQuality.style.fontSize = "12px";
+    pdfLogoQuality.style.opacity = "0.85";
+    pdfLogoQuality.textContent = "Kein Logo gesetzt";
+    const pdfLogoRemove = document.createElement("button");
+    pdfLogoRemove.type = "button";
+    pdfLogoRemove.textContent = "Logo entfernen";
+    applyPopupButtonStyle(pdfLogoRemove);
+
+    inputs.set("pdf.userLogoEnabled", inpPdfLogoEnabled);
+    inputs.set("pdf.userLogoFilePath", pdfLogoPath);
+
+    this.inpLogoSize = inpHeaderLogoSize;
+    this.inpLogoPadLeft = inpHeaderLogoPadLeft;
+    this.inpLogoPadTop = inpHeaderLogoPadTop;
+    this.inpLogoPadRight = inpHeaderLogoPadRight;
+    this.inpLogoPosition = inpHeaderLogoPosition;
+    this.inpLogoEnabled = inpHeaderLogoEnabled;
+    this.inpPdfLogoEnabled = inpPdfLogoEnabled;
+    this.inpPdfLogoFile = pdfLogoFile;
+    this.imgPdfLogoPreview = pdfLogoImg;
+    this.pdfLogoDummyEl = pdfLogoDummy;
+    this.btnPdfLogoRemove = pdfLogoRemove;
+    this.pdfLogoPathEl = pdfLogoPath;
+    this.inpPdfLogoWidth = inpPdfLogoWidth;
+    this.inpPdfLogoTop = inpPdfLogoTop;
+    this.inpPdfLogoRight = inpPdfLogoRight;
+    this.pdfLogoQualityEl = pdfLogoQuality;
+
+    pdfLogoCard.append(
+      pdfLogoToggle,
+      pdfLogoFile,
+      pdfLogoPath,
+      pdfLogoGrid,
+      pdfLogoPreview,
+      pdfLogoQuality,
+      pdfLogoRemove
+    );
+    wrap.append(pdfLogoCard);
+
+    if (typeof api.appSettingsGetMany === "function") {
+      const keys = PRINT_DEFAULTS_FIELD_GROUPS.flatMap((group) => group.fields.map((field) => field.key));
+      keys.push(
+        "header.logoSizePx",
+        "header.logoPadLeftPx",
+        "header.logoPadTopPx",
+        "header.logoPadRightPx",
+        "header.logoPosition",
+        "header.logoEnabled",
+        "pdf.userLogoEnabled",
+        "pdf.userLogoWidthMm",
+        "pdf.userLogoTopMm",
+        "pdf.userLogoRightMm",
+        "pdf.userLogoFilePath",
+        "pdf.userLogoPngDataUrl"
+      );
+      const res = await api.appSettingsGetMany(keys);
+      if (res?.ok) {
+        const data = res.data || {};
+        for (const [key, inp] of inputs.entries()) {
+          const value = data[key];
+          if (!inp) continue;
+          if (inp.type === "checkbox") {
+            inp.checked = this._parseBool(value, false);
+          } else {
+            inp.value = String(value ?? "");
+          }
+        }
+        this._applyLogoInputs({
+          size: this._clampLogoNumber(data["header.logoSizePx"], 12, 48, this._logoDefaults().size),
+          padLeft: this._clampLogoNumber(data["header.logoPadLeftPx"], 0, 40, this._logoDefaults().padLeft),
+          padTop: this._clampLogoNumber(data["header.logoPadTopPx"], 0, 20, this._logoDefaults().padTop),
+          padRight: this._clampLogoNumber(data["header.logoPadRightPx"], 0, 80, this._logoDefaults().padRight),
+          position: this._normalizeLogoPosition(data["header.logoPosition"], this._logoDefaults().position),
+          enabled: this._parseBool(data["header.logoEnabled"], this._logoDefaults().enabled),
+        });
+        this._applyPdfLogoInputs({
+          enabled: this._parseBool(data["pdf.userLogoEnabled"], this._pdfLogoDefaults().enabled),
+          widthMm: this._clampPdfLogoNumber(data["pdf.userLogoWidthMm"], 10, 60, this._pdfLogoDefaults().widthMm),
+          topMm: this._clampPdfLogoNumber(data["pdf.userLogoTopMm"], 0, 30, this._pdfLogoDefaults().topMm),
+          rightMm: this._clampPdfLogoNumber(data["pdf.userLogoRightMm"], 0, 30, this._pdfLogoDefaults().rightMm),
+        });
+        this._setPdfLogoFilePath(String(data["pdf.userLogoFilePath"] ?? ""), { skipSave: true });
+        this._setPdfLogoDataUrl(String(data["pdf.userLogoPngDataUrl"] ?? ""), { skipSave: true });
+      }
+    }
+
+    const syncPdfLogoPreview = () => {
+      const hasLogo = !!String(pdfLogoPath.value || "").trim() || !!pdfLogoImg.src;
+      pdfLogoDummy.style.display = hasLogo ? "none" : "flex";
+      pdfLogoImg.style.display = hasLogo ? "block" : "none";
+      this._updatePdfLogoQuality();
+    };
+    pdfLogoRemove.onclick = () => {
+      pdfLogoFile.value = "";
+      pdfLogoPath.value = "";
+      pdfLogoImg.src = "";
+      pdfLogoImg.style.display = "none";
+      pdfLogoDummy.style.display = "flex";
+      inpPdfLogoEnabled.checked = false;
+      this._setPdfLogoDataUrl("", { skipSave: true });
+      this._setPdfLogoFilePath("", { skipSave: true });
+      this._schedulePdfLogoSave();
+    };
+    pdfLogoFile.addEventListener("change", async () => {
+      await this._handlePdfLogoFileInput();
+      syncPdfLogoPreview();
+    });
+    pdfLogoPath.addEventListener("click", () => pdfLogoFile.click());
+    inpPdfLogoEnabled.addEventListener("change", () => this._schedulePdfLogoSave());
+    inpPdfLogoWidth.addEventListener("change", () => this._schedulePdfLogoSave());
+    inpPdfLogoTop.addEventListener("change", () => this._schedulePdfLogoSave());
+    inpPdfLogoRight.addEventListener("change", () => this._schedulePdfLogoSave());
+    inpHeaderLogoEnabled.addEventListener("change", () => this._scheduleLogoSave());
+    inpHeaderLogoSize.addEventListener("change", () => this._scheduleLogoSave());
+    inpHeaderLogoPadLeft.addEventListener("change", () => this._scheduleLogoSave());
+    inpHeaderLogoPadTop.addEventListener("change", () => this._scheduleLogoSave());
+    inpHeaderLogoPadRight.addEventListener("change", () => this._scheduleLogoSave());
+    inpHeaderLogoPosition.addEventListener("change", () => this._scheduleLogoSave());
+
+    this._openSettingsModal({
+      title: "Nutzereinstellungen / Druckeinstellungen",
+      content: [wrap],
+      saveFn: async () => {
+        if (typeof api.appSettingsSetMany !== "function") return false;
+        const payload = {};
+        for (const [key, inp] of inputs.entries()) {
+          if (!inp) continue;
+          payload[key] = inp.type === "checkbox" ? (inp.checked ? "true" : "false") : String(inp.value ?? "");
+        }
+        const headerLogoValues = this._getLogoInputValues();
+        const pdfLogoValues = this._getPdfLogoInputValues();
+        payload["header.logoEnabled"] = headerLogoValues.enabled ? "true" : "false";
+        payload["header.logoSizePx"] = String(headerLogoValues.size);
+        payload["header.logoPadLeftPx"] = String(headerLogoValues.padLeft);
+        payload["header.logoPadTopPx"] = String(headerLogoValues.padTop);
+        payload["header.logoPadRightPx"] = String(headerLogoValues.padRight);
+        payload["header.logoPosition"] = String(headerLogoValues.position || "left");
+        payload["pdf.userLogoEnabled"] = pdfLogoValues.enabled ? "true" : "false";
+        payload["pdf.userLogoWidthMm"] = String(pdfLogoValues.widthMm);
+        payload["pdf.userLogoTopMm"] = String(pdfLogoValues.topMm);
+        payload["pdf.userLogoRightMm"] = String(pdfLogoValues.rightMm);
+        payload["pdf.userLogoFilePath"] = String(this._pdfLogoFilePath || pdfLogoPath.value || "");
+        payload["pdf.userLogoPngDataUrl"] = String(this._pdfLogoDataUrl || "");
+        const res = await api.appSettingsSetMany(payload);
+        if (!res?.ok) return false;
+        this._setMsg("Gespeichert");
+        return true;
+      },
+    });
+  }
+
+  async _openPrintLogosPopup() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(860px, calc(100vw - 80px))";
+    wrap.style.maxWidth = "1020px";
+
+    const mkRow = (labelText, valueNode) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "160px 1fr";
+      row.style.gap = "8px";
+      row.style.alignItems = "center";
+      const label = document.createElement("div");
+      label.textContent = labelText;
+      label.style.fontWeight = "700";
+      label.style.fontSize = "12px";
+      label.style.color = "#334155";
+      const value = valueNode instanceof HTMLElement ? valueNode : document.createElement("div");
+      if (!(valueNode instanceof HTMLElement)) value.textContent = String(valueNode ?? "-");
+      value.style.minWidth = "0";
+      value.style.fontSize = "12px";
+      value.style.wordBreak = "break-word";
+      row.append(label, value);
+      return row;
+    };
+
+    const headerCard = document.createElement("div");
+    applyPopupCardStyle(headerCard);
+    headerCard.style.padding = "10px";
+    headerCard.style.display = "grid";
+    headerCard.style.gap = "8px";
+    const headerTitle = document.createElement("div");
+    headerTitle.textContent = "Header";
+    headerTitle.style.fontWeight = "800";
+    const inpPrintHeaderAdaptive = document.createElement("input");
+    inpPrintHeaderAdaptive.type = "checkbox";
+    const headerRow = document.createElement("label");
+    headerRow.style.display = "inline-flex";
+    headerRow.style.alignItems = "center";
+    headerRow.style.gap = "8px";
+    headerRow.append(inpPrintHeaderAdaptive, document.createTextNode("Header-Adaptive aktiv"));
+    headerCard.append(headerTitle, headerRow);
+    wrap.append(headerCard);
+
+    const enabledInputs = [null, null, null];
+    const fileInputs = [null, null, null];
+    const previewImgs = [null, null, null];
+    const previewFrames = [null, null, null];
+    const placeholderEls = [null, null, null];
+    const removeBtns = [null, null, null];
+    const sizeSelects = [null, null, null];
+    const alignChecks = [null, null, null];
+    const vAlignChecks = [null, null, null];
+
+    const mkRadioGroup = (name, values, selected) => {
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.flexWrap = "wrap";
+      row.style.gap = "8px";
+      const refs = {};
+      for (const [value, label] of values) {
+        const lab = document.createElement("label");
+        lab.style.display = "inline-flex";
+        lab.style.alignItems = "center";
+        lab.style.gap = "4px";
+        lab.style.cursor = "pointer";
+        const inp = document.createElement("input");
+        inp.type = "radio";
+        inp.name = name;
+        inp.value = value;
+        inp.checked = value === selected;
+        const txt = document.createElement("span");
+        txt.textContent = label;
+        lab.append(inp, txt);
+        row.append(lab);
+        refs[value] = inp;
+      }
+      return { row, refs };
+    };
+
+    const mkSlotCard = (idx) => {
+      const card = document.createElement("div");
+      applyPopupCardStyle(card);
+      card.style.padding = "10px";
+      card.style.display = "grid";
+      card.style.gap = "8px";
+
+      const title = document.createElement("div");
+      title.textContent = `Logo ${idx + 1}`;
+      title.style.fontWeight = "800";
+
+      const enabled = document.createElement("input");
+      enabled.type = "checkbox";
+      enabledInputs[idx] = enabled;
+      const enabledRow = document.createElement("label");
+      enabledRow.style.display = "inline-flex";
+      enabledRow.style.alignItems = "center";
+      enabledRow.style.gap = "8px";
+      enabledRow.style.cursor = "pointer";
+      enabledRow.append(enabled, document.createTextNode("Logo aktiv"));
+
+      const file = document.createElement("input");
+      file.type = "file";
+      file.accept = "image/*";
+      fileInputs[idx] = file;
+
+      const frame = document.createElement("div");
+      frame.style.display = "flex";
+      frame.style.justifyContent = "center";
+      frame.style.alignItems = "center";
+      frame.style.minHeight = "110px";
+      frame.style.border = "1px dashed rgba(0,0,0,0.15)";
+      frame.style.borderRadius = "8px";
+      frame.style.background = "#f8fafc";
+      previewFrames[idx] = frame;
+
+      const placeholder = document.createElement("div");
+      placeholder.textContent = "Kein Logo gewählt";
+      placeholder.style.fontSize = "12px";
+      placeholder.style.opacity = "0.75";
+      placeholderEls[idx] = placeholder;
+
+      const img = document.createElement("img");
+      img.alt = `Logo ${idx + 1}`;
+      img.style.display = "none";
+      img.style.maxWidth = "100%";
+      img.style.objectFit = "contain";
+      previewImgs[idx] = img;
+      frame.append(placeholder, img);
+
+      const size = document.createElement("select");
+      for (const [value, label] of [["small", "Klein"], ["medium", "Mittel"], ["large", "Gross"]]) {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = label;
+        size.append(opt);
+      }
+      sizeSelects[idx] = size;
+
+      const align = mkRadioGroup(`printLogoAlign_${idx}`, [["left", "Links"], ["center", "Mitte"], ["right", "Rechts"]], "center");
+      alignChecks[idx] = align.refs;
+      const vAlign = mkRadioGroup(`printLogoVAlign_${idx}`, [["top", "Oben"], ["middle", "Mitte"], ["bottom", "Unten"]], "bottom");
+      vAlignChecks[idx] = vAlign.refs;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "Logo entfernen";
+      applyPopupButtonStyle(removeBtn);
+      removeBtns[idx] = removeBtn;
+      removeBtn.onclick = () => {
+        if (file) file.value = "";
+        if (img) {
+          img.src = "";
+          img.style.display = "none";
+        }
+        if (placeholder) placeholder.style.display = "flex";
+        if (enabled) enabled.checked = false;
+        this._schedulePrintLogoSave();
+      };
+
+      enabled.addEventListener("change", () => this._schedulePrintLogoSave());
+      file.addEventListener("change", async () => {
+        await this._handlePrintLogoFileInput(idx);
+      });
+      size.addEventListener("change", () => this._schedulePrintLogoSave());
+      align.row.querySelectorAll("input").forEach((inp) => inp.addEventListener("change", () => this._schedulePrintLogoSave()));
+      vAlign.row.querySelectorAll("input").forEach((inp) => inp.addEventListener("change", () => this._schedulePrintLogoSave()));
+
+      card.append(
+        title,
+        enabledRow,
+        file,
+        frame,
+        mkRow("Größe", size),
+        mkRow("Horizontal", align.row),
+        mkRow("Vertikal", vAlign.row),
+        removeBtn
+      );
+      return card;
+    };
+
+    for (let i = 0; i < 3; i++) {
+      wrap.append(mkSlotCard(i));
+    }
+
+    this.inpPrintHeaderAdaptive = inpPrintHeaderAdaptive;
+    this.printLogoEnabledInputs = enabledInputs;
+    this.printLogoFileInputs = fileInputs;
+    this.printLogoPreviewImgs = previewImgs;
+    this.printLogoPreviewFrames = previewFrames;
+    this.printLogoPlaceholderEls = placeholderEls;
+    this.printLogoRemoveBtns = removeBtns;
+    this.printLogoSizeSelects = sizeSelects;
+    this.printLogoAlignChecks = alignChecks;
+    this.printLogoVAlignChecks = vAlignChecks;
+
+    if (typeof api.appSettingsGetMany === "function") {
+      const res = await api.appSettingsGetMany([
+        "print.logo1.enabled",
+        "print.logo1.size",
+        "print.logo1.align",
+        "print.logo1.vAlign",
+        "print.logo1.pngDataUrl",
+        "print.logo2.enabled",
+        "print.logo2.size",
+        "print.logo2.align",
+        "print.logo2.vAlign",
+        "print.logo2.pngDataUrl",
+        "print.logo3.enabled",
+        "print.logo3.size",
+        "print.logo3.align",
+        "print.logo3.vAlign",
+        "print.logo3.pngDataUrl",
+        "print.logoSizePreset",
+        "print.v2.globalHeaderAdaptive",
+      ]);
+      if (res?.ok) this._applyPrintLogoInputsFromSettings(res.data || {});
+    }
+
+    this._openSettingsModal({
+      title: "Drucklogos",
+      content: [wrap],
+      saveFn: async () => (await this._savePrintLogoSettings()) !== false,
+      closeOnly: false,
+    });
+  }
+
   async _openDevelopmentModal() {
     const api = window.bbmDb || {};
     const has = (name) => typeof api?.[name] === "function";
@@ -4259,6 +4933,13 @@ export default class SettingsView {
         });
       },
     });
+    const tileUser = mkTile({
+      titleText: "Nutzereinstellungen / Druckeinstellungen",
+      subText: "Nutzerdaten, Seitenränder, Logos, Header/Footer, Vorbemerkung, Drucklayout",
+      onClick: async () => {
+        await this._createLegacySettingsContent();
+      },
+    });
 
     const tileAdmin = mkTile({
       titleText: "Adminbereich",
@@ -4285,7 +4966,7 @@ export default class SettingsView {
       },
     });
 
-    tiles.append(tileArchive, tileLicense, tileAdmin, tileDev);
+    tiles.append(tileArchive, tileUser, tileLicense, tileAdmin, tileDev);
     root.append(head, tiles);
     this.root = root;
 
