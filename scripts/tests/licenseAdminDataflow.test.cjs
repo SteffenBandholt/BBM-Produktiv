@@ -59,7 +59,7 @@ function createMemoryDb() {
             const row = licenses.find((entry) => entry.id === arg);
             return row ? { id: row.id } : undefined;
           }
-          if (text.includes("SELECT id FROM license_records WHERE customer_id = ?")) {
+          if (text.includes("SELECT id FROM license_records WHERE customer_id = ?") && !text.includes("COUNT(*)")) {
             return licenses.filter((entry) => entry.customer_id === arg).map((entry) => ({ id: entry.id }));
           }
           if (text.includes("SELECT * FROM license_records WHERE id = ?")) {
@@ -67,6 +67,13 @@ function createMemoryDb() {
           }
           if (text.includes("SELECT * FROM license_history WHERE id = ?")) {
             return history.find((entry) => entry.id === arg) || undefined;
+          }
+          if (text.includes("SELECT COUNT(*) AS c FROM license_history WHERE license_record_id = ?")) {
+            return { c: history.filter((entry) => entry.license_record_id === arg).length };
+          }
+          if (text.includes("FROM license_history WHERE license_record_id IN")) {
+            const licenseIds = new Set(licenses.filter((entry) => entry.customer_id === arg).map((entry) => entry.id));
+            return { c: history.filter((entry) => licenseIds.has(entry.license_record_id)).length };
           }
           return undefined;
         },
@@ -405,7 +412,7 @@ async function runLicenseAdminDataflowTests(run) {
     });
   });
 
-  await run("Lizenzverwaltung Main-Service: deleteCustomer mit deleteLicenses loescht Kunde und Lizenzen, Historie bleibt", () => {
+  await run("Lizenzverwaltung Main-Service: deleteCustomer mit deleteLicenses und Historie wird blockiert", () => {
     withMockedDatabase((service) => {
       const customer = service.saveCustomer({ customer_number: "K-202", company_name: "Delete Cascade GmbH" });
       const license = service.saveLicense({
@@ -424,17 +431,57 @@ async function runLicenseAdminDataflowTests(run) {
         output_path: "C:\license-tool\output\history-kept.bbmlic",
       });
 
+      assert.throws(() => service.deleteCustomer(customer.id, { deleteLicenses: true }), /CUSTOMER_HAS_LICENSE_HISTORY/);
+      assert.equal(service.listCustomers().length, 1);
+      assert.equal(service.listLicensesByCustomer(customer.id).length, 1);
+      assert.equal(service.listHistory().length, 1);
+    });
+  });
+
+  await run("Lizenzverwaltung Main-Service: deleteCustomer mit deleteLicenses loescht wenn keine Historie vorhanden", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({ customer_number: "K-203", company_name: "Delete Clean GmbH" });
+      service.saveLicense({
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app"] },
+        valid_from: "2026-01-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+      });
       const result = service.deleteCustomer(customer.id, { deleteLicenses: true });
       assert.equal(result.ok, true);
       assert.equal(result.deletedLicenses, 1);
       assert.equal(service.listCustomers().length, 0);
-      assert.equal(service.listLicensesByCustomer(customer.id).length, 0);
-      assert.equal(service.listHistory().length, 1);
-      assert.equal(service.listHistory()[0].license_record_id, license.id);
     });
   });
 
-  await run("Lizenzverwaltung Main-Service: deleteLicenseRecord laesst Kundendaten und Historie unberuehrt", () => {
+  await run("Lizenzverwaltung Main-Service: deleteLicenseRecord mit Historie wird blockiert", () => {
+    withMockedDatabase((service) => {
+      const customer = service.saveCustomer({ customer_number: "K-102H", company_name: "Delete Hist GmbH" });
+      const savedLicense = service.saveLicense({
+        customer_id: customer.id,
+        product_scope_json: { standardumfang: ["app"] },
+        valid_from: "2026-02-01",
+        valid_until: "2026-12-31",
+        license_mode: "full",
+        license_edition: "full",
+        license_binding: "machine",
+      });
+      service.addHistoryEntry({
+        license_record_id: savedLicense.id,
+        generated_at: "2026-04-28T10:10:10.000Z",
+        product_scope_json: { standardumfang: ["app"] },
+      });
+
+      assert.throws(() => service.deleteLicenseRecord(savedLicense.id), /LICENSE_RECORD_HAS_HISTORY/);
+      assert.equal(service.listLicensesByCustomer(customer.id).length, 1);
+      assert.equal(service.listHistory().length, 1);
+    });
+  });
+
+    await run("Lizenzverwaltung Main-Service: deleteLicenseRecord laesst Kundendaten unberuehrt", () => {
     withMockedDatabase((service) => {
       const customer = service.saveCustomer({
         customer_number: "K-103",
@@ -450,12 +497,6 @@ async function runLicenseAdminDataflowTests(run) {
         license_binding: "machine",
         machine_id: "MID-DELETE-2",
       });
-      const historyEntry = service.addHistoryEntry({
-        license_record_id: savedLicense.id,
-        generated_at: "2026-04-28T10:10:10.000Z",
-        product_scope_json: { standardumfang: ["app"] },
-        output_path: "C:\\license-tool\\output\\history.bbmlic",
-      });
 
       service.deleteLicenseRecord(savedLicense.id);
 
@@ -463,9 +504,7 @@ async function runLicenseAdminDataflowTests(run) {
       const history = service.listHistory();
       assert.equal(customers.length, 1);
       assert.equal(customers[0].id, customer.id);
-      assert.equal(history.length, 1);
-      assert.equal(history[0].id, historyEntry.id);
-      assert.equal(history[0].license_record_id, savedLicense.id);
+      assert.equal(history.length, 0);
     });
   });
 

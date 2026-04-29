@@ -701,6 +701,10 @@ export default class LicenseAdminScreen {
             message.textContent = "Kunde hat noch Lizenzen und kann nur inklusive Lizenzdatensätzen gelöscht werden.";
             return;
           }
+          if (errorCode === "CUSTOMER_HAS_LICENSE_HISTORY") {
+            message.textContent = "Kunde hat erzeugte Lizenzhistorie und kann nicht inklusive Lizenzdatensätzen gelöscht werden. Historie bleibt erhalten.";
+            return;
+          }
           message.textContent = `Fehler: ${errorCode || "Unbekannter Fehler"}`;
           return;
         }
@@ -713,6 +717,10 @@ export default class LicenseAdminScreen {
         const errorCode = String(err?.message || err || "").trim();
         if (errorCode === "CUSTOMER_HAS_LICENSES") {
           message.textContent = "Kunde hat noch Lizenzen und kann nur inklusive Lizenzdatensätzen gelöscht werden.";
+          return;
+        }
+        if (errorCode === "CUSTOMER_HAS_LICENSE_HISTORY") {
+          message.textContent = "Kunde hat erzeugte Lizenzhistorie und kann nicht inklusive Lizenzdatensätzen gelöscht werden. Historie bleibt erhalten.";
           return;
         }
         message.textContent = `Fehler: ${errorCode || "Unbekannter Fehler"}`;
