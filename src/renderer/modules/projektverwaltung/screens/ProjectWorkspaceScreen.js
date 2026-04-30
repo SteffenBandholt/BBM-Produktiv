@@ -1,12 +1,20 @@
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
+import {
+  getActiveProjectModuleNavigation,
+  PROTOKOLL_MODULE_ID,
+} from "../../../app/modules/index.js";
 
-const PROJECT_MODULES = Object.freeze([
-  Object.freeze({
-    moduleId: "protokoll",
-    label: "Protokoll öffnen",
-    description: "Das Protokoll im aktuellen Projektkontext öffnen.",
-  }),
-]);
+function getProjectModuleEntries() {
+  return getActiveProjectModuleNavigation().map((entry) =>
+    Object.freeze({
+      moduleId: String(entry?.moduleId || "").trim(),
+      label: String(entry?.label || "Arbeitsbereich öffnen").trim(),
+      description: String(
+        entry?.description || "Arbeitsbereich im aktuellen Projektkontext öffnen."
+      ).trim(),
+    })
+  );
+}
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -54,7 +62,7 @@ export default class ProjectWorkspaceScreen {
   }
 
   getAvailableProjectModules() {
-    return PROJECT_MODULES;
+    return getProjectModuleEntries();
   }
 
   getProjectDisplayText() {
@@ -106,7 +114,7 @@ export default class ProjectWorkspaceScreen {
 
   async openProjectModule(moduleId) {
     const normalizedModuleId = normalizeText(moduleId);
-    if (normalizedModuleId !== "protokoll") return false;
+    if (normalizedModuleId !== PROTOKOLL_MODULE_ID) return false;
 
     const projectId = this.projectId || this.router?.currentProjectId || null;
     if (!projectId || typeof this.router?.showTops !== "function") return false;
@@ -183,16 +191,30 @@ export default class ProjectWorkspaceScreen {
     info.style.marginBottom = "16px";
     this._renderProjectInfo(info);
 
+    const availableModules = this.getAvailableProjectModules();
+
     const sectionTitle = document.createElement("h3");
-    sectionTitle.textContent = "Verfügbare Projektmodule";
+    sectionTitle.textContent = "Arbeitsbereiche im Projekt";
     sectionTitle.style.margin = "0 0 10px";
 
     const grid = document.createElement("div");
     grid.style.display = "grid";
-    grid.style.gridTemplateColumns = "repeat(auto-fit, minmax(240px, 1fr))";
-    grid.style.gap = "12px";
+    grid.style.gridTemplateColumns = "1fr";
+    grid.style.gap = "8px";
 
-    this._renderModuleTiles(grid);
+    if (availableModules.length > 0) {
+      this._renderModuleTiles(grid);
+    } else {
+      const empty = document.createElement("div");
+      empty.textContent = "Für dieses Projekt sind keine Arbeitsmodule freigeschaltet.";
+      empty.style.border = "1px solid var(--card-border)";
+      empty.style.borderRadius = "8px";
+      empty.style.padding = "10px 12px";
+      empty.style.background = "var(--card-bg)";
+      empty.style.fontSize = "13px";
+      empty.style.opacity = "0.85";
+      grid.appendChild(empty);
+    }
 
     this.hostEl.append(info);
 

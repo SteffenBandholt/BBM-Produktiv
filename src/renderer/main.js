@@ -1027,20 +1027,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     ];
 
     const contextualNavigationRouteDefs = [
-      ...getActiveProjectModuleNavigation().map((entry) => createProjectModuleRouteDef(entry)),
-      {
-        key: "projectFirms",
-        label: "Projektfirmen",
-        onClick: ({ projectId }) => router.showProjectFirms(projectId),
-        getPayload: () => ({
-          projectId: router.currentProjectId || null,
-          missingContext: !router.currentProjectId,
-        }),
-        onMissingContext: async () => {
-          alert("Bitte zuerst ein Projekt auswählen.");
-          await router.showProjects();
-        },
-      },
+      // Projekt- und Modul-Arbeitsbereiche werden im Projekt-Arbeitsbereich angezeigt.
+      // Die Core-Sidebar bleibt frei von Fachmodulen.
     ];
 
     // Kernnavigation: allgemeine App-Einstiege ohne aktiven Projekt-/Protokollkontext.
@@ -1049,7 +1037,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     );
     const btnHelp = mkNavBtn("help", "Hilfe", () => router.openHelpModal());
 
-    // Fachlich/projektbezogene Navigation: kleine listenbasierte Ableitung.
+    // Fachlich/projektbezogene Navigation bleibt aus der Core-Sidebar heraus.
     const projectNavigationButtons = contextualNavigationRouteDefs.map((def) =>
       createScreenRouteButton(def)
     );
