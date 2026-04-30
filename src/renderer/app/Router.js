@@ -1,6 +1,7 @@
 // src/renderer/app/Router.js
 
 import {
+  getActiveProjectModuleNavigation,
   PROTOKOLL_MODULE_ID,
   hasActiveModule,
   resolveActiveModuleScreen,
@@ -493,6 +494,7 @@ export default class Router {
         router: this,
         projectId: effectiveProjectId,
         project: opts.project || null,
+        projectModules: this._getProjectWorkspaceModules(),
       }),
       {
         section: "projectWorkspace",
@@ -500,6 +502,27 @@ export default class Router {
         pageTitle: "Projekt-Arbeitsbereich",
       }
     );
+  }
+
+  _getProjectWorkspaceModules() {
+    const activeModules = getActiveProjectModuleNavigation().map((entry) =>
+      Object.freeze({
+        moduleId: String(entry?.moduleId || "").trim(),
+        label: String(entry?.label || "Arbeitsbereich öffnen").trim(),
+        description: String(
+          entry?.description || "Arbeitsbereich im aktuellen Projektkontext öffnen."
+        ).trim(),
+      })
+    );
+
+    return [
+      ...activeModules,
+      Object.freeze({
+        moduleId: "projectFirms",
+        label: "Projektfirmen",
+        description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
+      }),
+    ];
   }
 
   async showFirmsPool(projectId) {

@@ -63,7 +63,8 @@ async function runProjektverwaltungModuleTests(run) {
   await run("Projektverwaltung: Projekt-Arbeitsbereich ist exportiert und beschraenkt die Module", async () => {
     assert.equal(typeof ProjectWorkspaceScreen, "function");
     assert.equal(workspaceSource.includes("export default class ProjectWorkspaceScreen"), true);
-    assert.equal(workspaceSource.includes("getActiveProjectModuleNavigation"), true);
+    assert.equal(workspaceSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(workspaceSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(workspaceSource.includes("Zur Projektliste"), true);
     assert.equal(workspaceSource.includes("showProjectsList"), true);
     assert.equal(workspaceSource.includes("Projekt konnte nicht gefunden werden."), true);
@@ -82,6 +83,9 @@ async function runProjektverwaltungModuleTests(run) {
         async showTops(meetingId, projectId) {
           routerCalls.push({ meetingId, projectId });
         },
+        async showProjectFirms(projectId) {
+          routerCalls.push({ module: "projectFirms", projectId });
+        },
       },
       projectId: "9",
       project: {
@@ -90,22 +94,41 @@ async function runProjektverwaltungModuleTests(run) {
         short: "Rohbau",
         name: "Rohbau Nord",
       },
+      projectModules: [
+        {
+          moduleId: "protokoll",
+          label: "Protokoll",
+          description: "Protokoll im aktuellen Projekt öffnen.",
+        },
+        {
+          moduleId: "projectFirms",
+          label: "Projektfirmen",
+          description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
+        },
+      ],
     });
 
     const modules = screen.getAvailableProjectModules();
     assert.deepEqual(
       modules.map((item) => item.moduleId),
-      ["protokoll"]
+      ["protokoll", "projectFirms"]
     );
     assert.deepEqual(
       modules.map((item) => item.label),
-      ["Protokoll"]
+      ["Protokoll", "Projektfirmen"]
     );
     assert.equal(screen.getProjectDisplayText(), "P-12 - Rohbau");
 
     const opened = await screen.openProjectModule("protokoll");
     assert.equal(opened, true);
     assert.deepEqual(routerCalls, [{ meetingId: null, projectId: "9" }]);
+
+    const openedFirms = await screen.openProjectModule("projectFirms");
+    assert.equal(openedFirms, true);
+    assert.deepEqual(routerCalls, [
+      { meetingId: null, projectId: "9" },
+      { module: "projectFirms", projectId: "9" },
+    ]);
   });
 
   await run("Projektverwaltung: Projektanzeige ist robust und Projektliste-Button nutzt showProjects", async () => {
@@ -271,19 +294,24 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(mainSource.includes('{ key: "firms", label: "Firmen", onClick: () => router.showFirms() }'), true);
     assert.equal(mainSource.includes('{ key: "settings", label: "Einstellungen", onClick: () => router.showSettings() }'), true);
 
-    assert.equal(mainSource.includes("getActiveProjectModuleNavigation"), false);
-    assert.equal(mainSource.includes("createProjectModuleRouteDef"), false);
-    assert.equal(mainSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(mainSource.includes("renderMachineSetupLicenseRequired();"), false);
     assert.equal(mainSource.includes("if (await isMachineSetupWithoutLicense())"), false);
   });
 
   await run("Projektverwaltung: Projekt-Arbeitsbereich bleibt Modul-Andockpunkt", () => {
-    assert.equal(workspaceSource.includes("getActiveProjectModuleNavigation"), true);
-    assert.equal(workspaceSource.includes("PROTOKOLL_MODULE_ID"), true);
+    assert.equal(workspaceSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(workspaceSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(workspaceSource.includes("Arbeitsbereiche im Projekt"), true);
     assert.equal(workspaceSource.includes("keine Arbeitsmodule freigeschaltet"), true);
     assert.equal(workspaceSource.includes("const PROJECT_MODULES"), false);
+  });
+
+  await run("Projektverwaltung: Router stellt die Projekt-Arbeitsbereiche bereit", () => {
+    assert.equal(routerSource.includes("_getProjectWorkspaceModules"), true);
+    assert.equal(routerSource.includes("getActiveProjectModuleNavigation"), true);
+    assert.equal(routerSource.includes("projectModules: this._getProjectWorkspaceModules()"), true);
+    assert.equal(routerSource.includes('moduleId: "projectFirms"'), true);
+    assert.equal(routerSource.includes("Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen."), true);
   });
 
   await run("Projektverwaltung: bestehender Projekte-Einstieg bleibt der einzige Sidebar-Einstieg", () => {

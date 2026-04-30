@@ -1,20 +1,4 @@
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
-import {
-  getActiveProjectModuleNavigation,
-  PROTOKOLL_MODULE_ID,
-} from "../../../app/modules/index.js";
-
-function getProjectModuleEntries() {
-  return getActiveProjectModuleNavigation().map((entry) =>
-    Object.freeze({
-      moduleId: String(entry?.moduleId || "").trim(),
-      label: String(entry?.label || "Arbeitsbereich öffnen").trim(),
-      description: String(
-        entry?.description || "Arbeitsbereich im aktuellen Projektkontext öffnen."
-      ).trim(),
-    })
-  );
-}
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -48,10 +32,11 @@ function getProjectTitle(project, fallbackProjectId = null) {
 }
 
 export default class ProjectWorkspaceScreen {
-  constructor({ router, projectId, project } = {}) {
+  constructor({ router, projectId, project, projectModules } = {}) {
     this.router = router || null;
     this.projectId = projectId || null;
     this.project = project || null;
+    this.projectModules = Array.isArray(projectModules) ? projectModules : [];
 
     this.root = null;
     this.hostEl = null;
@@ -62,7 +47,7 @@ export default class ProjectWorkspaceScreen {
   }
 
   getAvailableProjectModules() {
-    return getProjectModuleEntries();
+    return this.projectModules;
   }
 
   getProjectDisplayText() {
@@ -114,13 +99,22 @@ export default class ProjectWorkspaceScreen {
 
   async openProjectModule(moduleId) {
     const normalizedModuleId = normalizeText(moduleId);
-    if (normalizedModuleId !== PROTOKOLL_MODULE_ID) return false;
-
     const projectId = this.projectId || this.router?.currentProjectId || null;
-    if (!projectId || typeof this.router?.showTops !== "function") return false;
+    if (!projectId) return false;
 
-    await this.router.showTops(null, projectId);
-    return true;
+    if (normalizedModuleId === "projectFirms") {
+      if (typeof this.router?.showProjectFirms !== "function") return false;
+      await this.router.showProjectFirms(projectId);
+      return true;
+    }
+
+    if (normalizedModuleId === "protokoll") {
+      if (typeof this.router?.showTops !== "function") return false;
+      await this.router.showTops(null, projectId);
+      return true;
+    }
+
+    return false;
   }
 
   _renderModuleTiles(container) {

@@ -748,6 +748,12 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 
 ## Zuletzt bearbeitet
 - Letztes Paket:
+  - Projekt-Arbeitsbereich von direktem Protokoll-Modulkatalog getrennt
+  - `ProjectWorkspaceScreen` importiert `getActiveProjectModuleNavigation` und `PROTOKOLL_MODULE_ID` nicht mehr direkt
+  - Router stellt die Arbeitsbereiche fuer den Projekt-Arbeitsbereich bereit und reicht sie an den Screen durch
+  - Projektfirmen werden dort zusaetzlich zu Protokoll angezeigt
+  - `npm test` ist gruen
+- Letztes Paket:
   - Machine-Binding Schritt 1: Lizenzanforderung speichern (`bbm-license-request.json`) inkl. Tests (Payload/IPC/Preload/UI/Grenzen)
 - Letzter sinnvoller bestätigter Stand:
   - Speichern-/Löschen-Vertrag im Tops-Bereich über zugehörigen Testvertrag stabilisiert
