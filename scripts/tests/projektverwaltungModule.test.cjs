@@ -63,7 +63,7 @@ async function runProjektverwaltungModuleTests(run) {
   await run("Projektverwaltung: Projekt-Arbeitsbereich ist exportiert und beschraenkt die Module", async () => {
     assert.equal(typeof ProjectWorkspaceScreen, "function");
     assert.equal(workspaceSource.includes("export default class ProjectWorkspaceScreen"), true);
-    assert.equal(workspaceSource.includes("Protokoll öffnen"), true);
+    assert.equal(workspaceSource.includes("getActiveProjectModuleNavigation"), true);
     assert.equal(workspaceSource.includes("Zur Projektliste"), true);
     assert.equal(workspaceSource.includes("showProjectsList"), true);
     assert.equal(workspaceSource.includes("Projekt konnte nicht gefunden werden."), true);
@@ -99,7 +99,7 @@ async function runProjektverwaltungModuleTests(run) {
     );
     assert.deepEqual(
       modules.map((item) => item.label),
-      ["Protokoll öffnen"]
+      ["Protokoll"]
     );
     assert.equal(screen.getProjectDisplayText(), "P-12 - Rohbau");
 
@@ -263,6 +263,27 @@ async function runProjektverwaltungModuleTests(run) {
       archiveViewSource.trim(),
       'export { default } from "../modules/projektverwaltung/screens/ArchiveScreen.js";'
     );
+  });
+
+  await run("Projektverwaltung: Core-Sidebar bleibt frei von Fachmodulen", () => {
+    assert.equal(mainSource.includes('{ key: "home", label: "Start", onClick: () => router.showHome() }'), true);
+    assert.equal(mainSource.includes('{ key: "projects", label: "Projekte", onClick: () => router.showProjects() }'), true);
+    assert.equal(mainSource.includes('{ key: "firms", label: "Firmen", onClick: () => router.showFirms() }'), true);
+    assert.equal(mainSource.includes('{ key: "settings", label: "Einstellungen", onClick: () => router.showSettings() }'), true);
+
+    assert.equal(mainSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(mainSource.includes("createProjectModuleRouteDef"), false);
+    assert.equal(mainSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(mainSource.includes("renderMachineSetupLicenseRequired();"), false);
+    assert.equal(mainSource.includes("if (await isMachineSetupWithoutLicense())"), false);
+  });
+
+  await run("Projektverwaltung: Projekt-Arbeitsbereich bleibt Modul-Andockpunkt", () => {
+    assert.equal(workspaceSource.includes("getActiveProjectModuleNavigation"), true);
+    assert.equal(workspaceSource.includes("PROTOKOLL_MODULE_ID"), true);
+    assert.equal(workspaceSource.includes("Arbeitsbereiche im Projekt"), true);
+    assert.equal(workspaceSource.includes("keine Arbeitsmodule freigeschaltet"), true);
+    assert.equal(workspaceSource.includes("const PROJECT_MODULES"), false);
   });
 
   await run("Projektverwaltung: bestehender Projekte-Einstieg bleibt der einzige Sidebar-Einstieg", () => {
