@@ -16,6 +16,7 @@ import {
   createCoreShellLayout,
 } from "./coreShellLayout.js";
 import { registerCoreShellHeaderBridge } from "./coreShellHeaderBridge.js";
+import { registerCoreShellKeyboardHandling } from "./coreShellKeyboard.js";
 
 export default class CoreShell {
   constructor({ router, version } = {}) {
@@ -34,51 +35,11 @@ export default class CoreShell {
     document.body.style.color = "var(--text-main)";
   }
 
-  _attachGlobalKeyHandling() {
-    document.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== "Escape") return;
-
-      const overlays = Array.from(document.querySelectorAll("div")).filter((el) => {
-        if (!el || !el.style) return false;
-        if (el.style.display === "none") return false;
-        if (el.style.position !== "fixed") return false;
-        const z = Number(el.style.zIndex || 0);
-        return Number.isFinite(z) && z >= 9999;
-      });
-
-      if (!overlays.length) return;
-      const top = overlays[overlays.length - 1];
-      const buttons = Array.from(top.querySelectorAll("button"));
-      if (!buttons.length) return;
-
-      const isEscape = e.key === "Escape";
-      const preferred = isEscape
-        ? ["abbrechen", "schließen", "close", "cancel", "×", "✕"]
-        : ["speichern", "löschen", "ok", "übernehmen", "zuordnen"];
-
-      const findBtn = () => {
-        for (const label of preferred) {
-          const btn = buttons.find((b) =>
-            (b.textContent || "").toLowerCase().includes(label)
-          );
-          if (btn) return btn;
-        }
-        return null;
-      };
-
-      const btn = findBtn();
-      if (!btn || btn.disabled) return;
-
-      e.preventDefault();
-      btn.click();
-    });
-  }
-
   _initShell() {
     injectCoreShellBaseStyles();
     this._prepareBody();
 
-    this._attachGlobalKeyHandling();
+    registerCoreShellKeyboardHandling();
 
     const router = this.router;
     const header = new MainHeader({
@@ -165,7 +126,7 @@ export default class CoreShell {
     btnQuit.onclick = async () => {
       try {
         if (!window.bbmDb || typeof window.bbmDb.appQuit !== "function") {
-          alert("appQuit ist nicht verfügbar (Preload/IPC fehlt).");
+          alert("appQuit ist nicht verfÃ¼gbar (Preload/IPC fehlt).");
           return;
         }
 
@@ -198,9 +159,9 @@ export default class CoreShell {
       const hasMeeting = !!router.currentMeetingId;
 
       if (!hasProject) {
-        setBtnEnabled(btnParticipants, false, "Bitte zuerst ein Projekt auswählen.");
+        setBtnEnabled(btnParticipants, false, "Bitte zuerst ein Projekt auswÃ¤hlen.");
       } else if (!hasMeeting) {
-        setBtnEnabled(btnParticipants, false, "Bitte zuerst eine Besprechung öffnen.");
+        setBtnEnabled(btnParticipants, false, "Bitte zuerst eine Besprechung Ã¶ffnen.");
       } else {
         setBtnEnabled(btnParticipants, true, "");
       }
@@ -214,6 +175,6 @@ export default class CoreShell {
     header.refresh();
     updateContextButtons();
     // Start-Popup "Initialisiere ..." deaktiviert
-    // Start-Popup "Was ist neu/geändert" ist deaktiviert.
+    // Start-Popup "Was ist neu/geÃ¤ndert" ist deaktiviert.
   }
 }

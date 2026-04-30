@@ -947,3 +947,21 @@ Wichtig:
   - kein offener Folge-Schritt fuer diese Extraktion
 - Risiken/Hinweise:
   - Nur die Header-/Router-Bridges verschoben; fachliche Navigation und Layout blieben bewusst unangetastet.
+
+#### Paket: CoreShell-Keyboard-Handling-Auslagerung
+- Status: erledigt
+- Beschreibung:
+  - Globales Enter/Escape-Keyboard-Handling aus `CoreShell.js` in `src/renderer/app/coreShellKeyboard.js` ausgelagert.
+  - Das Verhalten fuer Overlay-Buttons bleibt unveraendert.
+  - Header-Bridge, Layout, Navigation, Button-Helfer und fachliche Module blieben unangetastet.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellKeyboard.js`
+  - `src/renderer/app/CoreShell.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - kein offener Folge-Schritt fuer diese Extraktion
+- Risiken/Hinweise:
+  - Nur das globale Keyboard-Handling verschoben; UI- und Fachlogik bleiben unveraendert.

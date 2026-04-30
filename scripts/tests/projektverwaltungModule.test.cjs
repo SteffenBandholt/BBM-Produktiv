@@ -29,6 +29,7 @@ async function runProjektverwaltungModuleTests(run) {
   const coreShellButtonsSource = read("src/renderer/app/coreShellButtons.js");
   const coreShellLayoutSource = read("src/renderer/app/coreShellLayout.js");
   const coreShellHeaderBridgeSource = read("src/renderer/app/coreShellHeaderBridge.js");
+  const coreShellKeyboardSource = read("src/renderer/app/coreShellKeyboard.js");
   const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
@@ -319,6 +320,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("export default class CoreShell"), true);
     assert.equal(coreShellSource.includes("coreShellLayout.js"), true);
     assert.equal(coreShellSource.includes("coreShellHeaderBridge.js"), true);
+    assert.equal(coreShellSource.includes("coreShellKeyboard.js"), true);
     assert.equal(coreShellSource.includes("coreShellButtons.js"), true);
     assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
     assert.equal(coreShellSource.includes("injectCoreShellBaseStyles"), true);
@@ -328,6 +330,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("_initUiOld"), false);
     assert.equal(coreShellSource.includes("_initUiNew"), false);
     assert.equal(coreShellSource.includes("uiMode"), false);
+    assert.equal(coreShellSource.includes("_attachGlobalKeyHandling"), false);
     assert.equal(coreShellSource.includes("readUseNewCompanyWorkflowFlag"), false);
     assert.equal(coreShellSource.includes("writeUseNewCompanyWorkflowFlag"), false);
     assert.equal(coreShellSource.includes("_injectBaseStyles"), false);
@@ -350,6 +353,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("bbm:header-refresh"), false);
     assert.equal(coreShellSource.includes("bbm:theme-refresh"), false);
     assert.equal(coreShellSource.includes("bbm:sticky-notice"), false);
+    assert.equal(coreShellSource.includes('document.addEventListener("keydown"'), false);
     assert.equal(coreShellSource.includes("_getHost"), false);
     assert.equal(coreShellSource.includes("data-bbm-sidebar"), false);
     assert.equal(coreShellSource.includes("host.append(headerEl, bodyRow)"), false);
@@ -384,6 +388,19 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellHeaderBridgeSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(coreShellHeaderBridgeSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(coreShellHeaderBridgeSource.includes("projectFirms"), false);
+  });
+
+  await run("Projektverwaltung: coreShellKeyboard kapselt das globale Keyboard-Handling", () => {
+    assert.equal(
+      coreShellKeyboardSource.includes("export function registerCoreShellKeyboardHandling"),
+      true
+    );
+    assert.equal(coreShellKeyboardSource.includes('document.addEventListener("keydown"'), true);
+    assert.equal(coreShellKeyboardSource.includes("Enter"), true);
+    assert.equal(coreShellKeyboardSource.includes("Escape"), true);
+    assert.equal(coreShellKeyboardSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(coreShellKeyboardSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(coreShellKeyboardSource.includes("projectFirms"), false);
   });
 
   await run("Projektverwaltung: coreShellButtons exportiert die Button-Helfer", () => {
