@@ -66,22 +66,23 @@ Wichtig:
 - die endgültige Lizenz kann erst erzeugt werden, wenn die Machine-ID bekannt ist
 - der Ablauf läuft über Lizenzanforderung und Antwortlizenz
 
-### Geplanter Machine-Binding-Ablauf
-Der geplante Ablauf für Vollversionen mit Machine-ID ist verbindlich wie folgt beschrieben:
-1. Kunde installiert die App.
-2. Die App zeigt `Lizenz erforderlich`.
-3. Die App erzeugt eine Lizenzanforderung mit Machine-ID.
+### Machine-Binding-Ablauf
+Der Ablauf für Vollversionen mit Machine-ID läuft nicht mehr über eine Startblockade der Haupt-App:
+1. Kunde installiert und startet die App.
+2. Der Core startet normal.
+3. Die Lizenzanforderung wird im Lizenz-/Einstellungsbereich erzeugt.
 4. Der Admin importiert die Lizenzanforderung.
 5. Die Machine-ID wird in die Kundenlizenz übernommen.
 6. Der Admin erzeugt eine signierte `.bbmlic` mit `binding=machine` und `machineId`.
 7. Der Kunde importiert die Antwortlizenz.
 8. Die App prüft die Machine-ID.
 
-### Nicht Teil dieses Schrittes
-- keine Lizenzanforderungs-UI
-- kein Import
-- kein Mailversand
-- keine PDF-Anzeige
+### Abgrenzung
+- keine Startblockade der Haupt-App wegen fehlender Machine-Lizenz
+- keine Lizenzanforderungs-UI im App-Start
+- kein Mailversand aus dem App-Start
+- kein Rueckbau des bestehenden Lizenzimports im Lizenz-/Einstellungsbereich
+- keine Aenderung an PDF-Anzeige oder Protokollmodul
 - keine Header/Home-Lizenzinfo
 - keine Änderung an `licenseVerifier.js`
 - keine Änderung an Setup/Kunden-Setup

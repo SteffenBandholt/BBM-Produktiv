@@ -47,28 +47,11 @@ Sie ergänzt:
   - Wenn keine Machine-ID enthalten ist, erscheint `Keine Machine-ID im Mailtext gefunden.`.
   - Bestehender Ablauf bleibt unveraendert: Lizenz erstellen -> `.bbmlic` erzeugen -> Antwortlizenz zurueck an den Kunden.
 - Nächster offener Schritt: manuelle Sichtpruefung im Adminbereich mit echtem Mailtext-Paste aus einer Kundenanfrage.
-- Machine-Setup-Metadaten wurden fuer eindeutige Lizenzzuordnung erweitert:
-  - `customer-setup.json` enthaelt bei `setupType=machine` jetzt zusaetzlich `product=bbm-protokoll`, `expectedBinding=machine`, `customerName`, `customerNumber` und `licenseId`.
-  - Die Werte werden aus dem bestehenden Admin-/Build-Payload uebernommen (Kunde/Firma, Kundennummer, Lizenz-ID) und ueber Build-Env bis in die Setup-Metadatei durchgereicht.
-  - Der Mailtext in der Machine-Setup-Startansicht nutzt bei `Kundennummer` und `Lizenz-ID` jetzt vorrangig die Daten aus `customer-setup.json` (Fallback weiter auf `-`/Statuswerte).
-  - Fallback `Daten kopieren` bleibt identisch zum Mailtext und enthaelt damit ebenfalls Kundennummer + Lizenz-ID.
-  - Testabdeckung wurde fuer Metadatenfelder, Payload-Mapping und Setup-Read erweitert; `npm test` ist gruen.
-- Nächster offener Schritt: manuelle Endpruefung mit echtem Machine-Setup-Build (Mail-App-Inhalt mit Kunde/Kundennummer/Lizenz-ID/Machine-ID/App-Version).
-- Machine-Setup Lizenzfluss wurde kundentauglich auf E-Mail-Start umgestellt:
-  - Startansicht zeigt jetzt `Lizenz erforderlich` mit den Buttons `Lizenz per E-Mail anfordern` und `Antwortlizenz importieren`.
-  - Mailanforderung nutzt `mailto:info@bandholt.de` mit festem Betreff `BBM Lizenzanforderung` und vorbereitetem Mailtext inkl. `Kunde`, `Kundennummer`, `Lizenz-ID`, `Machine-ID`, `App-Version`.
-  - Der bisherige Antwortlizenz-Import bleibt derselbe technische Flow (`licenseImport`) und prueft nach dem Import den Lizenzstatus erneut.
-  - Bei fehlgeschlagenem automatischem E-Mail-Start wird ein Fallback mit Hinweistext und `Daten kopieren` angezeigt.
-  - Keine Aenderung an `licenseVerifier.js`; Testversion-Setup bleibt unveraendert.
-- Nächster offener Schritt: manuelle Sichtprüfung im echten Machine-Setup (mailto-Start mit Standard-Mail-App + Import einer gueltigen `.bbmlic`).
-- Machine-Setup Startverhalten ohne Lizenz ist umgesetzt:
-  - Dist-Flow legt fuer Machine-Setups jetzt zusaetzlich `resources/license/customer-setup.json` ab (kein Ersatz fuer `customer.bbmlic`).
-  - App liest beim Start `customer-setup.json`; wenn `setupType=machine` und keine gueltige Lizenz vorhanden ist, wird statt Mutter-App-Start eine klare Ansicht `Lizenz erforderlich` gezeigt.
-  - Die Startansicht enthaelt den Text zur geraetegebundenen Vollversion und den Button `Lizenzanforderung speichern`, der den bestehenden Request-Flow nutzt.
-  - Testversion-Setup mit eingebetteter `customer.bbmlic` bleibt unveraendert; `licenseVerifier.js` wurde nicht geaendert.
-  - Tests fuer Dist-Ressourcen, Setup-Read und Start-UI-Indikatoren wurden ergaenzt; `npm test` ist weiterhin Pflicht.
-- Nächster offener Schritt: manuelle Prüfung eines erzeugten Machine-Setups (Installieren + Starten + Sichtprüfung der Lizenz-erforderlich-Ansicht).
-- Commit: `67e354d` (Machine-Setup Lizenz-erforderlich-Startansicht).
+- Alter Machine-Setup-Lizenz-Startblock wurde entfernt:
+  - `src/renderer/main.js` enthaelt keine `isMachineSetupWithoutLicense`-, `renderMachineSetupLicenseRequired`-, `renderMachineSetupLicenseFallback`- oder `MACHINE_SETUP_LICENSE`-Logik mehr.
+  - Der Core startet wieder normal; Lizenzstatus, Lizenzanforderung und Lizenzimport gehoeren nicht mehr in den App-Start.
+  - Regressionen in `scripts/tests/licenseRequest.test.cjs` und `scripts/tests/projektverwaltungModule.test.cjs` sichern ab, dass der alte Startblock nicht zurueckkommt.
+  - `npm test` ist gruen.
 - Lizenzverwaltung Loeschfunktion fuer Lizenzdatensaetze ist umgesetzt:
   - Im Lizenzformular gibt es den Button `Lizenz löschen`, sichtbar nur bei bestehender gespeicherter Lizenz.
   - Vor dem Loeschen erscheint die Sicherheitsabfrage mit Klartext, dass nur der Lizenzdatensatz in der Lizenzverwaltung entfernt wird.
