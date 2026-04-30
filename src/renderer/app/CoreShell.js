@@ -18,6 +18,7 @@ import {
 import { registerCoreShellHeaderBridge } from "./coreShellHeaderBridge.js";
 import { registerCoreShellContextControls } from "./coreShellContextControls.js";
 import { registerCoreShellKeyboardHandling } from "./coreShellKeyboard.js";
+import { createCoreShellNavigationRuntime } from "./coreShellNavigationRuntime.js";
 
 export default class CoreShell {
   constructor({ router, version } = {}) {
@@ -53,24 +54,7 @@ export default class CoreShell {
 
     const { contentRoot: content, topBox, bottomBox } = createCoreShellLayout({ headerEl });
 
-    const buttonsByKey = new Map();
-
-    const setActive = (key) => {
-      for (const [k, btn] of buttonsByKey.entries()) {
-        const active = k === key;
-        btn.dataset.active = active ? "true" : "false";
-        btn.style.background = active ? "var(--sidebar-active-bg)" : "transparent";
-        btn.style.border = active
-          ? "1px solid var(--sidebar-active-bg)"
-          : "1px solid rgba(226, 232, 240, 0.28)";
-        btn.style.boxShadow = "none";
-        btn.style.color = "var(--sidebar-text)";
-        btn.style.fontWeight = active ? "700" : "400";
-      }
-    };
-
     router.contentRoot = content;
-    router.onSectionChange = (section) => setActive(section);
 
     const applyThemeFromRouterContext = () => {
       applyThemeForSettings(router?.context?.settings || {});
@@ -83,21 +67,13 @@ export default class CoreShell {
       applyThemeFromRouterContext,
     });
 
-    const runNavSafe = (fn) => {
-      return async () => {
-        try {
-          await fn();
-        } catch (e) {
-          console.error("[nav] failed:", e);
-          alert(e?.message || String(e) || "Navigation fehlgeschlagen");
-        } finally {
-          header.refresh();
-          if (typeof updateContextButtons === "function") {
-            updateContextButtons();
-          }
-        }
-      };
-    };
+    let updateContextButtons = null;
+    const { buttonsByKey, setActive, runNavSafe } = createCoreShellNavigationRuntime({
+      header,
+      getUpdateContextButtons: () => updateContextButtons,
+    });
+
+    router.onSectionChange = (section) => setActive(section);
 
     const shellNavigationRouteDefs = createCoreShellNavigationRouteDefs(router);
 
@@ -117,7 +93,7 @@ export default class CoreShell {
     const btnQuit = createQuitActionButton();
     appendButtonGroup(bottomBox, [btnQuit]);
 
-    const updateContextButtons = registerCoreShellContextControls({
+    updateContextButtons = registerCoreShellContextControls({
       router,
       btnParticipants,
       setBtnEnabled,

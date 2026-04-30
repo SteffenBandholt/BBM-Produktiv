@@ -1001,3 +1001,21 @@ Wichtig:
   - kein offener Folge-Schritt fuer diese Extraktion
 - Risiken/Hinweise:
   - Nur die Teilnehmer-Kontextsteuerung verschoben; restliche Shell-Komponenten bleiben unveraendert.
+
+#### Paket: CoreShell-Navigation-Runtime-Auslagerung
+- Status: erledigt
+- Beschreibung:
+  - Navigation-Runtime-Helfer `buttonsByKey`, `setActive` und `runNavSafe` aus `CoreShell.js` in `src/renderer/app/coreShellNavigationRuntime.js` ausgelagert.
+  - `router.onSectionChange` bleibt in `CoreShell.js`; das Verhalten der Navigation bleibt unveraendert.
+  - Restliche Shell-Komponenten wie Header-Bridge, Keyboard, Layout, ContextControls und Actions bleiben unangetastet.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellNavigationRuntime.js`
+  - `src/renderer/app/CoreShell.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - kein offener Folge-Schritt fuer diese Extraktion
+- Risiken/Hinweise:
+  - Nur die Navigation-Runtime-Helfer verschoben; die Navigation selbst bleibt bewusst in CoreShell verdrahtet.

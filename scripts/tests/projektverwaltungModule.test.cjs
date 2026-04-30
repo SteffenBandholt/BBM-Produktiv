@@ -31,6 +31,7 @@ async function runProjektverwaltungModuleTests(run) {
   const coreShellHeaderBridgeSource = read("src/renderer/app/coreShellHeaderBridge.js");
   const coreShellKeyboardSource = read("src/renderer/app/coreShellKeyboard.js");
   const coreShellContextControlsSource = read("src/renderer/app/coreShellContextControls.js");
+  const coreShellNavigationRuntimeSource = read("src/renderer/app/coreShellNavigationRuntime.js");
   const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
@@ -323,6 +324,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("coreShellHeaderBridge.js"), true);
     assert.equal(coreShellSource.includes("coreShellKeyboard.js"), true);
     assert.equal(coreShellSource.includes("coreShellContextControls.js"), true);
+    assert.equal(coreShellSource.includes("coreShellNavigationRuntime.js"), true);
     assert.equal(coreShellSource.includes("coreShellButtons.js"), true);
     assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
     assert.equal(coreShellSource.includes("createQuitActionButton"), true);
@@ -351,8 +353,9 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("Beta: Firmen/Mitarbeiter v2"), false);
     assert.equal(coreShellSource.includes('window.bbmDb.appQuit'), false);
     assert.equal(coreShellSource.includes('btnQuit.textContent = "Beenden"'), false);
-    assert.equal(coreShellSource.includes("buttonsByKey"), true);
-    assert.equal(coreShellSource.includes("setActive"), true);
+    assert.equal(coreShellSource.includes("const buttonsByKey = new Map"), false);
+    assert.equal(coreShellSource.includes("const setActive ="), false);
+    assert.equal(coreShellSource.includes("const runNavSafe ="), false);
     assert.equal(coreShellSource.includes("router.contentRoot"), true);
     assert.equal(coreShellSource.includes("router.onSectionChange"), true);
     assert.equal(coreShellSource.includes("registerCoreShellContextControls"), true);
@@ -432,6 +435,20 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellContextControlsSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(coreShellContextControlsSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(coreShellContextControlsSource.includes("projectFirms"), false);
+  });
+
+  await run("Projektverwaltung: coreShellNavigationRuntime kapselt die Navigation-Runtime-Helfer", () => {
+    assert.equal(
+      coreShellNavigationRuntimeSource.includes("export function createCoreShellNavigationRuntime"),
+      true
+    );
+    assert.equal(coreShellNavigationRuntimeSource.includes("buttonsByKey"), true);
+    assert.equal(coreShellNavigationRuntimeSource.includes("setActive"), true);
+    assert.equal(coreShellNavigationRuntimeSource.includes("runNavSafe"), true);
+    assert.equal(coreShellNavigationRuntimeSource.includes("Navigation fehlgeschlagen"), true);
+    assert.equal(coreShellNavigationRuntimeSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(coreShellNavigationRuntimeSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(coreShellNavigationRuntimeSource.includes("projectFirms"), false);
   });
 
   await run("Projektverwaltung: coreShellButtons exportiert die Button-Helfer", () => {
