@@ -731,6 +731,11 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 
 ## Zuletzt bearbeitet
 - Letztes Paket:
+  - reine Shell-Style-Injektion aus `CoreShell` in `src/renderer/app/coreShellStyles.js` ausgelagert
+  - `CoreShell` ruft die Style-Hilfe nur noch auf; Navigation und Router-Verdrahtung bleiben unveraendert
+  - keine optische oder fachliche Aenderung
+  - `npm test` ist gruen
+- Letztes Paket:
   - toter old/new-UI-Modus aus `CoreShell` entfernt
   - `CoreShell.start()` startet den bestehenden Shell-Aufbau direkt ueber `_initShell()`
   - `main.js` bleibt Bootstrap und uebergibt keinen UI-Modus mehr

@@ -25,6 +25,7 @@ async function runProjektverwaltungModuleTests(run) {
   const routerSource = read("src/renderer/app/Router.js");
   const mainSource = read("src/renderer/main.js");
   const coreShellSource = read("src/renderer/app/CoreShell.js");
+  const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
   const workspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const formSource = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
@@ -309,11 +310,13 @@ async function runProjektverwaltungModuleTests(run) {
 
   await run("Projektverwaltung: CoreShell enthaelt die Core-Navigation und keine Fachmodule", () => {
     assert.equal(coreShellSource.includes("export default class CoreShell"), true);
+    assert.equal(coreShellSource.includes("injectCoreShellBaseStyles"), true);
     assert.equal(coreShellSource.includes("start()"), true);
     assert.equal(coreShellSource.includes("_initShell()"), true);
     assert.equal(coreShellSource.includes("_initUiOld"), false);
     assert.equal(coreShellSource.includes("_initUiNew"), false);
     assert.equal(coreShellSource.includes("uiMode"), false);
+    assert.equal(coreShellSource.includes("_injectBaseStyles"), false);
     assert.equal(coreShellSource.includes('shellNavigationRouteDefs'), true);
     assert.equal(coreShellSource.includes('Start'), true);
     assert.equal(coreShellSource.includes('Projekte'), true);
@@ -329,6 +332,13 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("replaceChildren"), false);
     assert.equal(coreShellSource.includes("Firmen (Stamm)"), false);
     assert.equal(coreShellSource.includes("Firmen (extern)"), false);
+  });
+
+  await run("Projektverwaltung: coreShellStyles exportiert die Style-Injektion", () => {
+    assert.equal(coreShellStylesSource.includes("export function injectCoreShellBaseStyles()"), true);
+    assert.equal(coreShellStylesSource.includes('data-bbm-core-shell-styles="true"'), true);
+    assert.equal(coreShellStylesSource.includes("--sidebar-active-bg"), true);
+    assert.equal(coreShellStylesSource.includes("--btn-focus-ring"), true);
   });
 
   await run("Projektverwaltung: Projekt-Arbeitsbereich bleibt Modul-Andockpunkt", () => {
