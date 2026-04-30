@@ -14,6 +14,7 @@ import {
   CORE_SHELL_LAYOUT_PADDING,
   CORE_SHELL_LAYOUT_SIDEBAR_WIDTH,
   createCoreShellLayout,
+  prepareCoreShellBody,
 } from "./coreShellLayout.js";
 import { registerCoreShellHeaderBridge } from "./coreShellHeaderBridge.js";
 import { registerCoreShellContextControls } from "./coreShellContextControls.js";
@@ -30,16 +31,9 @@ export default class CoreShell {
     this._initShell();
   }
 
-  _prepareBody() {
-    document.body.style.margin = "0";
-    document.body.style.height = "100vh";
-    document.body.style.background = "var(--main-bg)";
-    document.body.style.color = "var(--text-main)";
-  }
-
   _initShell() {
     injectCoreShellBaseStyles();
-    this._prepareBody();
+    prepareCoreShellBody();
 
     registerCoreShellKeyboardHandling();
 

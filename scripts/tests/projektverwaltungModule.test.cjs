@@ -336,6 +336,9 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("_initUiNew"), false);
     assert.equal(coreShellSource.includes("uiMode"), false);
     assert.equal(coreShellSource.includes("_attachGlobalKeyHandling"), false);
+    assert.equal(coreShellSource.includes("prepareCoreShellBody"), true);
+    assert.equal(coreShellSource.includes("_prepareBody"), false);
+    assert.equal(coreShellSource.includes("document.body.style"), false);
     assert.equal(coreShellSource.includes("readUseNewCompanyWorkflowFlag"), false);
     assert.equal(coreShellSource.includes("writeUseNewCompanyWorkflowFlag"), false);
     assert.equal(coreShellSource.includes("_injectBaseStyles"), false);
@@ -377,6 +380,9 @@ async function runProjektverwaltungModuleTests(run) {
 
   await run("Projektverwaltung: coreShellLayout kapselt die reine Shell-Layout-Struktur", () => {
     assert.equal(coreShellLayoutSource.includes("export function createCoreShellLayout"), true);
+    assert.equal(coreShellLayoutSource.includes("export function prepareCoreShellBody"), true);
+    assert.equal(coreShellLayoutSource.includes("document.body.style.margin"), true);
+    assert.equal(coreShellLayoutSource.includes("document.body.style.height"), true);
     assert.equal(coreShellLayoutSource.includes('data-bbm-sidebar'), true);
     assert.equal(coreShellLayoutSource.includes("host.append(headerEl, bodyRow)"), true);
     assert.equal(coreShellLayoutSource.includes("getActiveProjectModuleNavigation"), false);

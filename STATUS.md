@@ -1019,3 +1019,21 @@ Wichtig:
   - kein offener Folge-Schritt fuer diese Extraktion
 - Risiken/Hinweise:
   - Nur die Navigation-Runtime-Helfer verschoben; die Navigation selbst bleibt bewusst in CoreShell verdrahtet.
+
+#### Paket: CoreShell-Body-Grundsetup-Auslagerung
+- Status: erledigt
+- Beschreibung:
+  - Body-Grundsetup aus `CoreShell.js` in `src/renderer/app/coreShellLayout.js` verschoben.
+  - `document.body.style.margin`, `height`, `background` und `color` werden nun ueber `prepareCoreShellBody()` gesetzt.
+  - Layout, Navigation und alle anderen Shell-Bausteine bleiben unveraendert.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellLayout.js`
+  - `src/renderer/app/CoreShell.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - kein offener Folge-Schritt fuer diese Extraktion
+- Risiken/Hinweise:
+  - Nur das Body-Setup verschoben; der restliche Layout-/Shell-Aufbau bleibt bewusst unangetastet.

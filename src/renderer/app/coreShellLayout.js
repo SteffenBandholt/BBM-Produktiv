@@ -1,6 +1,13 @@
 export const CORE_SHELL_LAYOUT_SIDEBAR_WIDTH = 190;
 export const CORE_SHELL_LAYOUT_PADDING = 12;
 
+export function prepareCoreShellBody() {
+  document.body.style.margin = "0";
+  document.body.style.height = "100vh";
+  document.body.style.background = "var(--main-bg)";
+  document.body.style.color = "var(--text-main)";
+}
+
 export function createCoreShellLayout({ headerEl } = {}) {
   const host = document.getElementById("content");
   if (!host) {
