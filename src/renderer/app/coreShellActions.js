@@ -1,7 +1,7 @@
-export function createParticipantsActionButton({ router, mkActionBtn } = {}) {
+export function createParticipantsActionButton({ router, mkActionBtn, runNavSafe } = {}) {
   if (typeof mkActionBtn !== "function") return null;
 
-  return mkActionBtn("Teilnehmer", async () => {
+  return mkActionBtn(runNavSafe, "Teilnehmer", async () => {
     if (!router?.currentProjectId) {
       alert("Bitte zuerst ein Projekt auswählen.");
       return;
