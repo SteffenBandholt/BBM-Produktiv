@@ -308,15 +308,21 @@ async function runProjektverwaltungModuleTests(run) {
 
   await run("Projektverwaltung: CoreShell enthaelt die Core-Navigation und keine Fachmodule", () => {
     assert.equal(coreShellSource.includes("export default class CoreShell"), true);
-    assert.equal(coreShellSource.includes('label: "Start"'), true);
-    assert.equal(coreShellSource.includes('label: "Projekte"'), true);
-    assert.equal(coreShellSource.includes('label: "Firmen"'), true);
-    assert.equal(coreShellSource.includes('label: "Einstellungen"'), true);
+    assert.equal(coreShellSource.includes('shellNavigationRouteDefs'), true);
+    assert.equal(coreShellSource.includes('Start'), true);
+    assert.equal(coreShellSource.includes('Projekte'), true);
+    assert.equal(coreShellSource.includes('Firmen'), true);
+    assert.equal(coreShellSource.includes('Einstellungen'), true);
     assert.equal(coreShellSource.includes('Hilfe'), true);
     assert.equal(coreShellSource.includes('Beenden'), true);
     assert.equal(coreShellSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(coreShellSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(coreShellSource.includes("createProjectModuleRouteDef"), false);
+    assert.equal(coreShellSource.includes("getButton("), false);
+    assert.equal(coreShellSource.includes("btnFirmsBase"), false);
+    assert.equal(coreShellSource.includes("replaceChildren"), false);
+    assert.equal(coreShellSource.includes("Firmen (Stamm)"), false);
+    assert.equal(coreShellSource.includes("Firmen (extern)"), false);
   });
 
   await run("Projektverwaltung: Projekt-Arbeitsbereich bleibt Modul-Andockpunkt", () => {
@@ -336,7 +342,6 @@ async function runProjektverwaltungModuleTests(run) {
   });
 
   await run("Projektverwaltung: bestehender Projekte-Einstieg bleibt der einzige Sidebar-Einstieg", () => {
-    assert.equal(coreShellSource.includes('btnProjects.textContent = "Projekte"'), true);
     assert.equal(coreShellSource.includes('onClick: () => router.showProjects()'), true);
     assert.equal(mainSource.includes('btnProjects.textContent = "Projekte"'), false);
     assert.equal(mainSource.includes("PROJEKTVERWALTUNG_MODULE_ID"), false);

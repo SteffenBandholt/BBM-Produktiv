@@ -587,41 +587,5 @@ export default class CoreShell {
 
   _initUiNew() {
     this._initUiOld();
-
-    const sidebar = document.querySelector('[data-bbm-sidebar="true"]');
-    if (!sidebar) return;
-
-    const normalize = (value) => String(value || "").trim().toLowerCase();
-    const getButton = (labels) => {
-      const targets = Array.isArray(labels) ? labels : [labels];
-      return Array.from(sidebar.querySelectorAll("button")).find((btn) => {
-        const t = normalize(btn.textContent);
-        return targets.some((label) => normalize(label) === t);
-      }) || null;
-    };
-
-    const btnStart = getButton(["home", "start"]);
-    const btnProjects = getButton("projekte");
-    const btnFirmsBase = getButton(["firmen", "firmen (stamm)", "firmenstamm", "firmen (extern)"]);
-    const btnSettings = getButton("einstellungen");
-    const btnHelp = getButton("hilfe");
-    const btnQuit = getButton("beenden");
-
-    if (!btnStart || !btnProjects || !btnFirmsBase || !btnSettings || !btnHelp || !btnQuit) return;
-
-    btnStart.textContent = "Start";
-    btnProjects.textContent = "Projekte";
-    btnFirmsBase.textContent = "Firmen";
-    btnSettings.textContent = "Einstellungen";
-    btnHelp.textContent = "Hilfe";
-    btnQuit.textContent = "Beenden";
-
-    const sidebarSections = Array.from(sidebar.children);
-    const topSection = sidebarSections[0] || null;
-    const bottomSection = sidebarSections[1] || null;
-    if (!topSection || !bottomSection) return;
-
-    topSection.replaceChildren(btnStart, btnProjects, btnFirmsBase, btnSettings, btnHelp);
-    bottomSection.replaceChildren(btnQuit);
   }
 }
