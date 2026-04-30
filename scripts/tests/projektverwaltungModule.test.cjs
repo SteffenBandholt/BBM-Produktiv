@@ -25,6 +25,7 @@ async function runProjektverwaltungModuleTests(run) {
   const routerSource = read("src/renderer/app/Router.js");
   const mainSource = read("src/renderer/main.js");
   const coreShellSource = read("src/renderer/app/CoreShell.js");
+  const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
   const workspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
@@ -311,6 +312,7 @@ async function runProjektverwaltungModuleTests(run) {
   await run("Projektverwaltung: CoreShell enthaelt die Core-Navigation und keine Fachmodule", () => {
     assert.equal(coreShellSource.includes("export default class CoreShell"), true);
     assert.equal(coreShellSource.includes("injectCoreShellBaseStyles"), true);
+    assert.equal(coreShellSource.includes("createCoreShellNavigationRouteDefs"), true);
     assert.equal(coreShellSource.includes("start()"), true);
     assert.equal(coreShellSource.includes("_initShell()"), true);
     assert.equal(coreShellSource.includes("_initUiOld"), false);
@@ -318,10 +320,6 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("uiMode"), false);
     assert.equal(coreShellSource.includes("_injectBaseStyles"), false);
     assert.equal(coreShellSource.includes('shellNavigationRouteDefs'), true);
-    assert.equal(coreShellSource.includes('Start'), true);
-    assert.equal(coreShellSource.includes('Projekte'), true);
-    assert.equal(coreShellSource.includes('Firmen'), true);
-    assert.equal(coreShellSource.includes('Einstellungen'), true);
     assert.equal(coreShellSource.includes('Hilfe'), true);
     assert.equal(coreShellSource.includes('Beenden'), true);
     assert.equal(coreShellSource.includes("getActiveProjectModuleNavigation"), false);
@@ -332,6 +330,20 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("replaceChildren"), false);
     assert.equal(coreShellSource.includes("Firmen (Stamm)"), false);
     assert.equal(coreShellSource.includes("Firmen (extern)"), false);
+  });
+
+  await run("Projektverwaltung: coreShellNavigation exportiert die Core-Route-Definitionen", () => {
+    assert.equal(
+      coreShellNavigationSource.includes("export function createCoreShellNavigationRouteDefs(router)"),
+      true
+    );
+    assert.equal(coreShellNavigationSource.includes('Start'), true);
+    assert.equal(coreShellNavigationSource.includes('Projekte'), true);
+    assert.equal(coreShellNavigationSource.includes('Firmen'), true);
+    assert.equal(coreShellNavigationSource.includes('Einstellungen'), true);
+    assert.equal(coreShellNavigationSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(coreShellNavigationSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(coreShellNavigationSource.includes("projectFirms"), false);
   });
 
   await run("Projektverwaltung: coreShellStyles exportiert die Style-Injektion", () => {
@@ -358,7 +370,7 @@ async function runProjektverwaltungModuleTests(run) {
   });
 
   await run("Projektverwaltung: bestehender Projekte-Einstieg bleibt der einzige Sidebar-Einstieg", () => {
-    assert.equal(coreShellSource.includes('onClick: () => router.showProjects()'), true);
+    assert.equal(coreShellNavigationSource.includes('onClick: () => router.showProjects()'), true);
     assert.equal(mainSource.includes('btnProjects.textContent = "Projekte"'), false);
     assert.equal(mainSource.includes("PROJEKTVERWALTUNG_MODULE_ID"), false);
     assert.equal(moduleCatalogSource.includes("PROJEKTVERWALTUNG_MODULE_ID"), false);

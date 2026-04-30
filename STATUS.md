@@ -731,6 +731,16 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 
 ## Zuletzt bearbeitet
 - Letztes Paket:
+  - Core-Navigationsdefinition aus `CoreShell` in `src/renderer/app/coreShellNavigation.js` ausgelagert
+  - `CoreShell` importiert die Route-Definitionen und baut daraus weiterhin die Buttons
+  - Labels, Router-Methoden und Core-Sidebar-Verhalten unveraendert
+  - `npm test` ist gruen
+- Letztes Paket:
+  - Core-Navigationsdefinition aus `CoreShell` in `src/renderer/app/coreShellNavigation.js` ausgelagert
+  - `CoreShell` erzeugt die Buttons weiter aus der ausgelagerten Route-Definition
+  - Labels und Navigation unveraendert, Core-Sidebar bleibt fachfrei
+  - `npm test` ist gruen
+- Letztes Paket:
   - reine Shell-Style-Injektion aus `CoreShell` in `src/renderer/app/coreShellStyles.js` ausgelagert
   - `CoreShell` ruft die Style-Hilfe nur noch auf; Navigation und Router-Verdrahtung bleiben unveraendert
   - keine optische oder fachliche Aenderung

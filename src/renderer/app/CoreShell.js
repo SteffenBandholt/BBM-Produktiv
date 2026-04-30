@@ -1,6 +1,7 @@
 import MainHeader from "../ui/MainHeader.js";
 import { applyThemeForSettings } from "../theme/themes.js";
 import { injectCoreShellBaseStyles } from "./coreShellStyles.js";
+import { createCoreShellNavigationRouteDefs } from "./coreShellNavigation.js";
 
 export default class CoreShell {
   constructor({
@@ -382,12 +383,7 @@ export default class CoreShell {
         }
       });
 
-    const shellNavigationRouteDefs = [
-      { key: "home", label: "Start", onClick: () => router.showHome() },
-      { key: "projects", label: "Projekte", onClick: () => router.showProjects() },
-      { key: "firms", label: "Firmen", onClick: () => router.showFirms() },
-      { key: "settings", label: "Einstellungen", onClick: () => router.showSettings() },
-    ];
+    const shellNavigationRouteDefs = createCoreShellNavigationRouteDefs(router);
 
     const contextualNavigationRouteDefs = [
       // Projekt- und Modul-Arbeitsbereiche werden im Projekt-Arbeitsbereich angezeigt.
