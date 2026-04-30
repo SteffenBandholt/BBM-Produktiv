@@ -911,3 +911,21 @@ Wichtig:
   - kein offener Folge-Schritt fuer diese Extraktion
 - Risiken/Hinweise:
   - Nur Layout/DOM-Struktur verschoben; fachliche Navigation und Router-Kanten bewusst unangetastet gelassen.
+
+#### Paket: Entfernen des toten Firmen/Mitarbeiter-Schalters
+- Status: erledigt
+- Beschreibung:
+  - Toten Schalter `Beta: Firmen/Mitarbeiter v2` und die zugehoerige `useNewCompanyWorkflow`-Verdrahtung aus `main.js` und `CoreShell.js` entfernt.
+  - Druck-v2-Keys und Druckeinstellungen bleiben unveraendert.
+  - Core-Navigation, Teilnehmer-Aktion, Router-Verdrahtung und allgemeiner Sticky-Notice-Listener bleiben bestehen.
+- Betroffene Dateien:
+  - `src/renderer/main.js`
+  - `src/renderer/app/CoreShell.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - kein offener Folge-Schritt fuer diese Bereinigung
+- Risiken/Hinweise:
+  - Nur der tote Schalter wurde entfernt; `print.v2.*` und sonstige Ausgabelogik sind bewusst unveraendert geblieben.

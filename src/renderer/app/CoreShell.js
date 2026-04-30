@@ -17,22 +17,9 @@ import {
 } from "./coreShellLayout.js";
 
 export default class CoreShell {
-  constructor({
-    router,
-    version,
-    readUseNewCompanyWorkflowFlag,
-    writeUseNewCompanyWorkflowFlag,
-  } = {}) {
+  constructor({ router, version } = {}) {
     this.router = router || null;
     this.version = version || "";
-    this.readUseNewCompanyWorkflowFlag =
-      typeof readUseNewCompanyWorkflowFlag === "function"
-        ? readUseNewCompanyWorkflowFlag
-        : () => false;
-    this.writeUseNewCompanyWorkflowFlag =
-      typeof writeUseNewCompanyWorkflowFlag === "function"
-        ? writeUseNewCompanyWorkflowFlag
-        : () => {};
   }
 
   start() {
@@ -131,65 +118,6 @@ export default class CoreShell {
     router.openClosedProtocolSelector = async ({ mode } = {}) => {
       await header._openClosedProtocolSelectorFlow(mode || "view");
     };
-
-    const featureToggleWrap = document.createElement("div");
-    featureToggleWrap.style.gridColumn = "3";
-    featureToggleWrap.style.gridRow = "3";
-    featureToggleWrap.style.justifySelf = "end";
-    featureToggleWrap.style.alignSelf = "end";
-    featureToggleWrap.style.display = "inline-flex";
-    featureToggleWrap.style.alignItems = "center";
-    featureToggleWrap.style.gap = "8px";
-
-    const featureToggleLabel = document.createElement("span");
-    featureToggleLabel.textContent = "Beta: Firmen/Mitarbeiter v2";
-    featureToggleLabel.style.fontSize = "12px";
-    featureToggleLabel.style.opacity = "0.85";
-    featureToggleLabel.style.userSelect = "none";
-
-    const featureToggleBtn = document.createElement("button");
-    featureToggleBtn.type = "button";
-    featureToggleBtn.style.padding = "4px 8px";
-    featureToggleBtn.style.minHeight = "24px";
-    featureToggleBtn.style.borderRadius = "999px";
-    featureToggleBtn.style.fontSize = "11px";
-    featureToggleBtn.style.fontWeight = "700";
-    featureToggleBtn.style.lineHeight = "1";
-    featureToggleBtn.style.cursor = "pointer";
-
-    const applyFeatureToggleUi = () => {
-      const on = !!router?.featureFlags?.useNewCompanyWorkflow;
-      featureToggleBtn.textContent = on ? "AN" : "AUS";
-      featureToggleBtn.style.border = on ? "1px solid #7aa7ff" : "1px solid #ddd";
-      featureToggleBtn.style.background = on ? "#eaf3ff" : "#fff";
-      featureToggleBtn.style.color = on ? "#0b4db4" : "#555";
-    };
-
-    featureToggleBtn.onclick = () => {
-      const next = !router?.featureFlags?.useNewCompanyWorkflow;
-      if (router?.featureFlags) {
-        router.featureFlags.useNewCompanyWorkflow = next;
-      }
-      this.writeUseNewCompanyWorkflowFlag(next);
-      applyFeatureToggleUi();
-      try {
-        window.dispatchEvent(
-          new CustomEvent("bbm:sticky-notice", {
-            detail: {
-              message: `Beta Firmen/Mitarbeiter v2: ${
-                next ? "AN" : "AUS"
-              } (wirksam ab naechstem Oeffnen der entsprechenden Ansicht)`,
-            },
-          })
-        );
-      } catch (_e) {
-        // ignore
-      }
-    };
-
-    applyFeatureToggleUi();
-    featureToggleWrap.append(featureToggleLabel, featureToggleBtn);
-    featureToggleWrap.style.display = "none";
 
     const applyThemeFromRouterContext = () => {
       applyThemeForSettings(router?.context?.settings || {});

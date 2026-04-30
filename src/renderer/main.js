@@ -9,7 +9,6 @@ import { applyPopupButtonStyle, applyPopupCardStyle } from "./ui/popupButtonStyl
 
 // App-Kern-Bootstrap: zentrale Startkonstanten und lokale Storage-/Settings-Keys.
 const APP_VERSION = "1.0";
-const FEATURE_FLAG_KEY = "bbm.useNewCompanyWorkflow";
 const PRINT_V2_PAD_LEFT_KEY = "print.v2.pagePadLeftMm";
 const PRINT_V2_PAD_RIGHT_KEY = "print.v2.pagePadRightMm";
 const PRINT_V2_PAD_TOP_KEY = "print.v2.pagePadTopMm";
@@ -68,26 +67,6 @@ const writeWhatsNewSeen = async (version) => {
 
   try {
     window.localStorage?.setItem?.(key, "1");
-  } catch (_e) {
-    // ignore
-  }
-};
-
-const readUseNewCompanyWorkflowFlag = () => {
-  try {
-    const raw = window.localStorage?.getItem?.(FEATURE_FLAG_KEY);
-    const s = String(raw == null ? "" : raw).trim().toLowerCase();
-    if (["1", "true", "yes", "on"].includes(s)) return true;
-    if (["0", "false", "no", "off"].includes(s)) return false;
-    return false;
-  } catch (_e) {
-    return false;
-  }
-};
-
-const writeUseNewCompanyWorkflowFlag = (value) => {
-  try {
-    window.localStorage?.setItem?.(FEATURE_FLAG_KEY, value ? "true" : "false");
   } catch (_e) {
     // ignore
   }
@@ -175,22 +154,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   await ensureInitialPrintLayoutDefaults();
 
   const router = new Router();
-  router.featureFlags = {
-    useNewCompanyWorkflow: readUseNewCompanyWorkflowFlag(),
-  };
-  try {
-    window.__bbmFlags = router.featureFlags;
-  } catch (_e) {
-    // ignore
-  }
 
   applyThemeForSettings(DEFAULT_THEME_SETTINGS);
 
   const coreShell = new CoreShell({
     router,
     version: APP_VERSION,
-    readUseNewCompanyWorkflowFlag,
-    writeUseNewCompanyWorkflowFlag,
   });
 
   coreShell.start();

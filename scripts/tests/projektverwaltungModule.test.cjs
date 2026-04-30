@@ -297,6 +297,8 @@ async function runProjektverwaltungModuleTests(run) {
   await run("Projektverwaltung: Core-Sidebar bleibt frei von Fachmodulen", () => {
     assert.equal(mainSource.includes("new CoreShell"), true);
     assert.equal(mainSource.includes("applyThemeForSettings(DEFAULT_THEME_SETTINGS)"), true);
+    assert.equal(mainSource.includes("bbm.useNewCompanyWorkflow"), false);
+    assert.equal(mainSource.includes("useNewCompanyWorkflow"), false);
     assert.equal(mainSource.includes("uiMode"), false);
     assert.equal(mainSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(mainSource.includes("PROTOKOLL_MODULE_ID"), false);
@@ -324,6 +326,8 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("_initUiOld"), false);
     assert.equal(coreShellSource.includes("_initUiNew"), false);
     assert.equal(coreShellSource.includes("uiMode"), false);
+    assert.equal(coreShellSource.includes("readUseNewCompanyWorkflowFlag"), false);
+    assert.equal(coreShellSource.includes("writeUseNewCompanyWorkflowFlag"), false);
     assert.equal(coreShellSource.includes("_injectBaseStyles"), false);
     assert.equal(coreShellSource.includes('shellNavigationRouteDefs'), true);
     assert.equal(coreShellSource.includes('contextualNavigationRouteDefs'), false);
@@ -336,6 +340,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("createProjectModuleRouteDef"), false);
     assert.equal(coreShellSource.includes("getButton("), false);
     assert.equal(coreShellSource.includes("btnFirmsBase"), false);
+    assert.equal(coreShellSource.includes("Beta: Firmen/Mitarbeiter v2"), false);
     assert.equal(coreShellSource.includes("buttonsByKey"), true);
     assert.equal(coreShellSource.includes("setActive"), true);
     assert.equal(coreShellSource.includes("router.contentRoot"), true);
@@ -404,6 +409,14 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellStylesSource.includes('data-bbm-core-shell-styles="true"'), true);
     assert.equal(coreShellStylesSource.includes("--sidebar-active-bg"), true);
     assert.equal(coreShellStylesSource.includes("--btn-focus-ring"), true);
+  });
+
+  await run("Projektverwaltung: Druck-v2-Keys bleiben unberuehrt", () => {
+    assert.equal(mainSource.includes("print.v2.pagePadLeftMm"), true);
+    assert.equal(mainSource.includes("print.v2.pagePadRightMm"), true);
+    assert.equal(mainSource.includes("print.v2.pagePadTopMm"), true);
+    assert.equal(mainSource.includes("print.v2.pagePadBottomMm"), true);
+    assert.equal(mainSource.includes("print.v2.footerReserveMm"), true);
   });
 
   await run("Projektverwaltung: Projekt-Arbeitsbereich bleibt Modul-Andockpunkt", () => {
