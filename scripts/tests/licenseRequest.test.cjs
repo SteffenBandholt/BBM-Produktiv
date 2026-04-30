@@ -186,26 +186,24 @@ async function runLicenseRequestTests(run) {
     assert.equal(preloadSource.includes('ipcRenderer.invoke("license-admin:send-response-license-mail"'), false);
   });
 
-  await run("Renderer/UI: Texte fuer Lizenzanforderung sind vorhanden", () => {
+  await run("Renderer/UI: alter Lizenz-Startblock ist aus main.js entfernt", () => {
     const settingsSource = read("src/renderer/views/SettingsView.js");
     const mainSource = read("src/renderer/main.js");
-                    assert.equal(settingsSource.includes("license-tool"), false);
+
+    assert.equal(settingsSource.includes("license-tool"), false);
     assert.equal(settingsSource.includes("generate-license.cjs"), false);
     assert.equal(settingsSource.includes("private_key.pem"), false);
-    assert.equal(mainSource.includes("Lizenz erforderlich"), true);
-    assert.equal(mainSource.includes("Diese Installation ist für eine gerätegebundene Vollversion vorbereitet."), true);
-    assert.equal(mainSource.includes("Lizenz per E-Mail anfordern"), true);
-    assert.equal(mainSource.includes("Antwortlizenz importieren"), true);
-    assert.equal(mainSource.includes("info@bandholt.de"), true);
-    assert.equal(mainSource.includes("BBM Lizenzanforderung"), true);
-    assert.equal(mainSource.includes("Machine-ID:"), true);
-    assert.equal(mainSource.includes("App-Version:"), true);
-    assert.equal(mainSource.includes("Kunde:"), true);
-    assert.equal(mainSource.includes("Kundennummer:"), true);
-    assert.equal(mainSource.includes("setup.customerNumber || setup.customer_number || \"\""), true);
-    assert.equal(mainSource.includes("setup.licenseId || setup.license_id || licenseStatus?.licenseId || \"\""), true);
-    assert.equal(mainSource.includes("Daten kopieren"), true);
-    assert.equal(mainSource.includes("E-Mail konnte nicht automatisch geöffnet werden."), true);
+
+    assert.equal(mainSource.includes("Lizenz erforderlich"), false);
+    assert.equal(mainSource.includes("Diese Installation ist für eine gerätegebundene Vollversion vorbereitet."), false);
+    assert.equal(mainSource.includes("Lizenz per E-Mail anfordern"), false);
+    assert.equal(mainSource.includes("Antwortlizenz importieren"), false);
+    assert.equal(mainSource.includes("MACHINE_SETUP_LICENSE"), false);
+    assert.equal(mainSource.includes("isMachineSetupWithoutLicense"), false);
+    assert.equal(mainSource.includes("renderMachineSetupLicenseRequired"), false);
+    assert.equal(mainSource.includes("renderMachineSetupLicenseFallback"), false);
+    assert.equal(mainSource.includes("buildMachineSetupLicenseMailBody"), false);
+    assert.equal(mainSource.includes("buildMachineSetupLicenseMailtoUri"), false);
   });
 
   await run("Main/IPC: app:get-customer-setup ist registriert", () => {

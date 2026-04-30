@@ -296,6 +296,12 @@ async function runProjektverwaltungModuleTests(run) {
 
     assert.equal(mainSource.includes("renderMachineSetupLicenseRequired();"), false);
     assert.equal(mainSource.includes("if (await isMachineSetupWithoutLicense())"), false);
+    assert.equal(mainSource.includes("isMachineSetupWithoutLicense"), false);
+    assert.equal(mainSource.includes("renderMachineSetupLicenseRequired"), false);
+    assert.equal(mainSource.includes("renderMachineSetupLicenseFallback"), false);
+    assert.equal(mainSource.includes("buildMachineSetupLicenseMailBody"), false);
+    assert.equal(mainSource.includes("buildMachineSetupLicenseMailtoUri"), false);
+    assert.equal(mainSource.includes("MACHINE_SETUP_LICENSE"), false);
   });
 
   await run("Projektverwaltung: Projekt-Arbeitsbereich bleibt Modul-Andockpunkt", () => {
