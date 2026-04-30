@@ -965,3 +965,21 @@ Wichtig:
   - kein offener Folge-Schritt fuer diese Extraktion
 - Risiken/Hinweise:
   - Nur das globale Keyboard-Handling verschoben; UI- und Fachlogik bleiben unveraendert.
+
+#### Paket: CoreShell-Quit-Button-Auslagerung
+- Status: erledigt
+- Beschreibung:
+  - Beenden-/Quit-Button aus `CoreShell.js` in `src/renderer/app/coreShellActions.js` ausgelagert.
+  - Styling, `appQuit()`-Aufruf, Fallback `window.close()` und Beenden-Hinweis bleiben funktional unveraendert.
+  - `CoreShell` haengt den Button nur noch in die Bottom-Box ein.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellActions.js`
+  - `src/renderer/app/CoreShell.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - kein offener Folge-Schritt fuer diese Extraktion
+- Risiken/Hinweise:
+  - Nur die Quit-Button-Erzeugung verschoben; Rest der Shell bleibt unveraendert.

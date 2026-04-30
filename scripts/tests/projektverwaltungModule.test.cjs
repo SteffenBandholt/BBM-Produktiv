@@ -323,6 +323,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("coreShellKeyboard.js"), true);
     assert.equal(coreShellSource.includes("coreShellButtons.js"), true);
     assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
+    assert.equal(coreShellSource.includes("createQuitActionButton"), true);
     assert.equal(coreShellSource.includes("injectCoreShellBaseStyles"), true);
     assert.equal(coreShellSource.includes("createCoreShellNavigationRouteDefs"), true);
     assert.equal(coreShellSource.includes("start()"), true);
@@ -339,13 +340,15 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes('projectNavigationButtons'), false);
     assert.equal(coreShellSource.includes('Projekt- und Modul-Arbeitsbereiche werden im Projekt-Arbeitsbereich angezeigt'), false);
     assert.equal(coreShellSource.includes('Hilfe'), true);
-    assert.equal(coreShellSource.includes('Beenden'), true);
+    assert.equal(coreShellSource.includes('Beenden'), false);
     assert.equal(coreShellSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(coreShellSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(coreShellSource.includes("createProjectModuleRouteDef"), false);
     assert.equal(coreShellSource.includes("getButton("), false);
     assert.equal(coreShellSource.includes("btnFirmsBase"), false);
     assert.equal(coreShellSource.includes("Beta: Firmen/Mitarbeiter v2"), false);
+    assert.equal(coreShellSource.includes('window.bbmDb.appQuit'), false);
+    assert.equal(coreShellSource.includes('btnQuit.textContent = "Beenden"'), false);
     assert.equal(coreShellSource.includes("buttonsByKey"), true);
     assert.equal(coreShellSource.includes("setActive"), true);
     assert.equal(coreShellSource.includes("router.contentRoot"), true);
@@ -438,6 +441,9 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellActionsSource.includes("Teilnehmer"), true);
     assert.equal(coreShellActionsSource.includes("openParticipantsModal"), true);
     assert.equal(coreShellActionsSource.includes("openParticipants"), true);
+    assert.equal(coreShellActionsSource.includes("export function createQuitActionButton"), true);
+    assert.equal(coreShellActionsSource.includes("appQuit"), true);
+    assert.equal(coreShellActionsSource.includes("Beenden"), true);
     assert.equal(coreShellActionsSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(coreShellActionsSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(coreShellActionsSource.includes("projectFirms"), false);

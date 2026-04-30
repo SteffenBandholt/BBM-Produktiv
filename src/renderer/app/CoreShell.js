@@ -1,6 +1,6 @@
 import MainHeader from "../ui/MainHeader.js";
 import { applyThemeForSettings } from "../theme/themes.js";
-import { createParticipantsActionButton } from "./coreShellActions.js";
+import { createParticipantsActionButton, createQuitActionButton } from "./coreShellActions.js";
 import {
   appendButtonGroup,
   createScreenRouteButton,
@@ -111,47 +111,7 @@ export default class CoreShell {
     appendButtonGroup(topBox, coreNavigationButtons);
     appendButtonGroup(topBox, actionButtons);
 
-    const btnQuit = document.createElement("button");
-    btnQuit.textContent = "Beenden";
-    btnQuit.dataset.variant = "danger";
-    btnQuit.style.width = "100%";
-    btnQuit.style.padding = "10px 10px";
-    btnQuit.style.borderRadius = "8px";
-    btnQuit.style.cursor = "pointer";
-    btnQuit.style.border = "1px solid #b71c1c";
-    btnQuit.style.background = "#c62828";
-    btnQuit.style.color = "white";
-    btnQuit.style.fontWeight = "700";
-
-    btnQuit.onclick = async () => {
-      try {
-        if (!window.bbmDb || typeof window.bbmDb.appQuit !== "function") {
-          alert("appQuit ist nicht verfÃ¼gbar (Preload/IPC fehlt).");
-          return;
-        }
-
-        if (typeof window.bbmDb.topsPurgeTrashedGlobal === "function") {
-          try {
-            const purgeRes = await Promise.race([
-              window.bbmDb.topsPurgeTrashedGlobal(),
-              new Promise((resolve) => setTimeout(() => resolve({ ok: false, timeout: true }), 1000)),
-            ]);
-            if (purgeRes?.timeout) {
-              console.warn("[app] topsPurgeTrashedGlobal timeout before quit");
-            } else if (purgeRes?.ok === false) {
-              console.warn("[app] topsPurgeTrashedGlobal failed before quit:", purgeRes.error);
-            }
-          } catch (err) {
-            console.warn("[app] topsPurgeTrashedGlobal error before quit:", err);
-          }
-        }
-
-        await window.bbmDb.appQuit();
-      } catch (e) {
-        alert(e?.message || "Beenden fehlgeschlagen");
-      }
-    };
-
+    const btnQuit = createQuitActionButton();
     appendButtonGroup(bottomBox, [btnQuit]);
 
     const updateContextButtons = () => {
@@ -159,9 +119,9 @@ export default class CoreShell {
       const hasMeeting = !!router.currentMeetingId;
 
       if (!hasProject) {
-        setBtnEnabled(btnParticipants, false, "Bitte zuerst ein Projekt auswÃ¤hlen.");
+        setBtnEnabled(btnParticipants, false, "Bitte zuerst ein Projekt auswählen.");
       } else if (!hasMeeting) {
-        setBtnEnabled(btnParticipants, false, "Bitte zuerst eine Besprechung Ã¶ffnen.");
+        setBtnEnabled(btnParticipants, false, "Bitte zuerst eine Besprechung öffnen.");
       } else {
         setBtnEnabled(btnParticipants, true, "");
       }
@@ -175,6 +135,6 @@ export default class CoreShell {
     header.refresh();
     updateContextButtons();
     // Start-Popup "Initialisiere ..." deaktiviert
-    // Start-Popup "Was ist neu/geÃ¤ndert" ist deaktiviert.
+    // Start-Popup "Was ist neu/geändert" ist deaktiviert.
   }
 }
