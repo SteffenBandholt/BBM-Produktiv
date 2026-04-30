@@ -26,6 +26,7 @@ async function runProjektverwaltungModuleTests(run) {
   const mainSource = read("src/renderer/main.js");
   const coreShellSource = read("src/renderer/app/CoreShell.js");
   const coreShellActionsSource = read("src/renderer/app/coreShellActions.js");
+  const coreShellButtonsSource = read("src/renderer/app/coreShellButtons.js");
   const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
@@ -312,6 +313,7 @@ async function runProjektverwaltungModuleTests(run) {
 
   await run("Projektverwaltung: CoreShell enthaelt die Core-Navigation und keine Fachmodule", () => {
     assert.equal(coreShellSource.includes("export default class CoreShell"), true);
+    assert.equal(coreShellSource.includes("coreShellButtons.js"), true);
     assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
     assert.equal(coreShellSource.includes("injectCoreShellBaseStyles"), true);
     assert.equal(coreShellSource.includes("createCoreShellNavigationRouteDefs"), true);
@@ -339,6 +341,17 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("Firmen (extern)"), false);
   });
 
+  await run("Projektverwaltung: coreShellButtons exportiert die Button-Helfer", () => {
+    assert.equal(coreShellButtonsSource.includes("export function mkNavBtn"), true);
+    assert.equal(coreShellButtonsSource.includes("export function mkActionBtn"), true);
+    assert.equal(coreShellButtonsSource.includes("export function setBtnEnabled"), true);
+    assert.equal(coreShellButtonsSource.includes("export function appendButtonGroup"), true);
+    assert.equal(coreShellButtonsSource.includes("export function createScreenRouteButton"), true);
+    assert.equal(coreShellButtonsSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(coreShellButtonsSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(coreShellButtonsSource.includes("projectFirms"), false);
+  });
+
   await run("Projektverwaltung: coreShellNavigation exportiert die Core-Route-Definitionen", () => {
     assert.equal(
       coreShellNavigationSource.includes("export function createCoreShellNavigationRouteDefs(router)"),
@@ -355,7 +368,9 @@ async function runProjektverwaltungModuleTests(run) {
 
   await run("Projektverwaltung: coreShellActions exportiert die Teilnehmer-Aktion", () => {
     assert.equal(
-      coreShellActionsSource.includes("export function createParticipantsActionButton({ router, mkActionBtn } = {})"),
+      coreShellActionsSource.includes(
+        "export function createParticipantsActionButton({ router, mkActionBtn, runNavSafe } = {})"
+      ),
       true
     );
     assert.equal(coreShellActionsSource.includes("Teilnehmer"), true);

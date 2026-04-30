@@ -1,6 +1,13 @@
 import MainHeader from "../ui/MainHeader.js";
 import { applyThemeForSettings } from "../theme/themes.js";
 import { createParticipantsActionButton } from "./coreShellActions.js";
+import {
+  appendButtonGroup,
+  createScreenRouteButton,
+  mkActionBtn,
+  mkNavBtn,
+  setBtnEnabled,
+} from "./coreShellButtons.js";
 import { injectCoreShellBaseStyles } from "./coreShellStyles.js";
 import { createCoreShellNavigationRouteDefs } from "./coreShellNavigation.js";
 
@@ -294,104 +301,14 @@ export default class CoreShell {
       };
     };
 
-    const mkNavBtn = (key, label, onClick) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.textContent = label;
-      b.style.display = "flex";
-      b.style.alignItems = "center";
-      b.style.width = "100%";
-      b.style.boxSizing = "border-box";
-      b.style.padding = "10px 10px";
-      b.style.borderRadius = "8px";
-      b.style.cursor = "pointer";
-      b.style.background = "transparent";
-      b.style.border = "1px solid rgba(226, 232, 240, 0.28)";
-      b.style.boxShadow = "none";
-      b.style.appearance = "none";
-      b.style.color = "var(--sidebar-text)";
-      b.style.textAlign = "left";
-      b.style.transition = "background 120ms ease, border-color 120ms ease";
-      b.onmouseenter = () => {
-        if (b.disabled || b.dataset.active === "true") return;
-        b.style.background = "var(--sidebar-hover-bg)";
-      };
-      b.onmouseleave = () => {
-        if (b.disabled || b.dataset.active === "true") return;
-        b.style.background = "transparent";
-      };
-      b.onclick = runNavSafe(onClick);
-
-      buttonsByKey.set(key, b);
-      return b;
-    };
-
-    const mkActionBtn = (label, onClick) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.textContent = label;
-      b.style.display = "flex";
-      b.style.alignItems = "center";
-      b.style.width = "100%";
-      b.style.boxSizing = "border-box";
-      b.style.padding = "10px 10px";
-      b.style.borderRadius = "8px";
-      b.style.cursor = "pointer";
-      b.style.background = "transparent";
-      b.style.border = "1px solid rgba(226, 232, 240, 0.28)";
-      b.style.boxShadow = "none";
-      b.style.appearance = "none";
-      b.style.color = "var(--sidebar-text)";
-      b.style.textAlign = "left";
-      b.style.transition = "background 120ms ease, border-color 120ms ease";
-      b.onmouseenter = () => {
-        if (b.disabled) return;
-        b.style.background = "var(--sidebar-hover-bg)";
-      };
-      b.onmouseleave = () => {
-        if (b.disabled) return;
-        b.style.background = "transparent";
-      };
-      b.onclick = runNavSafe(onClick);
-      return b;
-    };
-
-    const setBtnEnabled = (btn, enabled, titleWhenDisabled) => {
-      if (!btn) return;
-      const isEnabled = !!enabled;
-      btn.disabled = !isEnabled;
-      btn.style.opacity = isEnabled ? "1" : "0.55";
-      btn.style.cursor = isEnabled ? "pointer" : "not-allowed";
-      btn.title = isEnabled ? "" : (titleWhenDisabled || "");
-    };
-
-    const appendButtonGroup = (container, buttons) => {
-      if (!container || !Array.isArray(buttons) || buttons.length === 0) return;
-      container.append(...buttons.filter(Boolean));
-    };
-
-    const createScreenRouteButton = ({ key, label, onClick, getPayload, onMissingContext } = {}) =>
-      mkNavBtn(key, label, async () => {
-        const payload = typeof getPayload === "function" ? (getPayload() || {}) : {};
-        if (payload.missingContext) {
-          if (typeof onMissingContext === "function") {
-            await onMissingContext();
-          }
-          return;
-        }
-        if (typeof onClick === "function") {
-          await onClick(payload);
-        }
-      });
-
     const shellNavigationRouteDefs = createCoreShellNavigationRouteDefs(router);
 
     const [btnHome, btnProjects, btnFirms, btnSettings] = shellNavigationRouteDefs.map((def) =>
-      createScreenRouteButton(def)
+      createScreenRouteButton({ buttonsByKey, runNavSafe }, def)
     );
-    const btnHelp = mkNavBtn("help", "Hilfe", () => router.openHelpModal());
+    const btnHelp = mkNavBtn({ buttonsByKey, runNavSafe }, "help", "Hilfe", () => router.openHelpModal());
 
-    const btnParticipants = createParticipantsActionButton({ router, mkActionBtn });
+    const btnParticipants = createParticipantsActionButton({ router, mkActionBtn, runNavSafe });
 
     const coreNavigationButtons = [btnHome, btnProjects, btnFirms, btnSettings, btnHelp];
     const actionButtons = [btnParticipants];

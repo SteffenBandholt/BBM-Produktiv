@@ -731,6 +731,11 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 
 ## Zuletzt bearbeitet
 - Letztes Paket:
+  - reine Button-Helfer aus `CoreShell` in `src/renderer/app/coreShellButtons.js` ausgelagert
+  - `CoreShell` importiert `mkNavBtn`, `mkActionBtn`, `setBtnEnabled`, `appendButtonGroup` und `createScreenRouteButton`
+  - Core-Navigation, Style-Hilfe und Teilnehmer-Aktion bleiben separat gekapselt
+  - `npm test` ist gruen
+- Letztes Paket:
   - Teilnehmer-Shell-Aktion aus `CoreShell` in `src/renderer/app/coreShellActions.js` ausgelagert
   - `CoreShell` importiert die Factory weiterhin und haengt den Teilnehmer-Button unveraendert in die Sidebar
   - Kontextsteuerung fuer Projekt/Besprechung bleibt im Shell-Teil
