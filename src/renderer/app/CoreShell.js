@@ -1,5 +1,6 @@
 import MainHeader from "../ui/MainHeader.js";
 import { applyThemeForSettings } from "../theme/themes.js";
+import { createParticipantsActionButton } from "./coreShellActions.js";
 import { injectCoreShellBaseStyles } from "./coreShellStyles.js";
 import { createCoreShellNavigationRouteDefs } from "./coreShellNavigation.js";
 
@@ -390,20 +391,7 @@ export default class CoreShell {
     );
     const btnHelp = mkNavBtn("help", "Hilfe", () => router.openHelpModal());
 
-    const btnParticipants = mkActionBtn("Teilnehmer", async () => {
-      if (!router.currentProjectId) {
-        alert("Bitte zuerst ein Projekt auswählen.");
-        return;
-      }
-      if (!router.currentMeetingId) {
-        alert("Bitte zuerst eine Besprechung öffnen.");
-        return;
-      }
-      await router.openParticipantsModal({
-        projectId: router.currentProjectId,
-        meetingId: router.currentMeetingId,
-      });
-    });
+    const btnParticipants = createParticipantsActionButton({ router, mkActionBtn });
 
     const coreNavigationButtons = [btnHome, btnProjects, btnFirms, btnSettings, btnHelp];
     const actionButtons = [btnParticipants];

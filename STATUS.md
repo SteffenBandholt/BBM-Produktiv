@@ -731,6 +731,11 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 
 ## Zuletzt bearbeitet
 - Letztes Paket:
+  - Teilnehmer-Shell-Aktion aus `CoreShell` in `src/renderer/app/coreShellActions.js` ausgelagert
+  - `CoreShell` importiert die Factory weiterhin und haengt den Teilnehmer-Button unveraendert in die Sidebar
+  - Kontextsteuerung fuer Projekt/Besprechung bleibt im Shell-Teil
+  - `npm test` ist gruen
+- Letztes Paket:
   - leere Kontext-/Projekt-Navigationslogik aus `CoreShell` entfernt
   - `btnParticipants` und `updateContextButtons` bleiben als reine Kontextsteuerung erhalten
   - Core-Sidebar bleibt unveraendert und fachfrei

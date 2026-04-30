@@ -25,6 +25,7 @@ async function runProjektverwaltungModuleTests(run) {
   const routerSource = read("src/renderer/app/Router.js");
   const mainSource = read("src/renderer/main.js");
   const coreShellSource = read("src/renderer/app/CoreShell.js");
+  const coreShellActionsSource = read("src/renderer/app/coreShellActions.js");
   const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
@@ -311,6 +312,7 @@ async function runProjektverwaltungModuleTests(run) {
 
   await run("Projektverwaltung: CoreShell enthaelt die Core-Navigation und keine Fachmodule", () => {
     assert.equal(coreShellSource.includes("export default class CoreShell"), true);
+    assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
     assert.equal(coreShellSource.includes("injectCoreShellBaseStyles"), true);
     assert.equal(coreShellSource.includes("createCoreShellNavigationRouteDefs"), true);
     assert.equal(coreShellSource.includes("start()"), true);
@@ -351,6 +353,19 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellNavigationSource.includes("projectFirms"), false);
   });
 
+  await run("Projektverwaltung: coreShellActions exportiert die Teilnehmer-Aktion", () => {
+    assert.equal(
+      coreShellActionsSource.includes("export function createParticipantsActionButton({ router, mkActionBtn } = {})"),
+      true
+    );
+    assert.equal(coreShellActionsSource.includes("Teilnehmer"), true);
+    assert.equal(coreShellActionsSource.includes("openParticipantsModal"), true);
+    assert.equal(coreShellActionsSource.includes("openParticipants"), true);
+    assert.equal(coreShellActionsSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(coreShellActionsSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(coreShellActionsSource.includes("projectFirms"), false);
+  });
+
   await run("Projektverwaltung: coreShellStyles exportiert die Style-Injektion", () => {
     assert.equal(coreShellStylesSource.includes("export function injectCoreShellBaseStyles()"), true);
     assert.equal(coreShellStylesSource.includes('data-bbm-core-shell-styles="true"'), true);
@@ -388,6 +403,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("setBtnEnabled(btnParticipants, true"), true);
     assert.equal(coreShellSource.includes("hasProject"), true);
     assert.equal(coreShellSource.includes("hasMeeting"), true);
+    assert.equal(coreShellActionsSource.includes("openParticipantsModal"), true);
   });
 }
 
