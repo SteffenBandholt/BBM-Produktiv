@@ -731,6 +731,12 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 
 ## Zuletzt bearbeitet
 - Letztes Paket:
+  - Core-Shell-/Sidebar-Aufbau aus `main.js` in `src/renderer/app/CoreShell.js` ausgelagert
+  - `main.js` bleibt beim Bootstrapping: Router erzeugen, Theme/Settings vorbereiten, `CoreShell` starten
+  - Core-Navigation mit Start/Projekte/Firmen/Einstellungen/Hilfe/Beenden bleibt erhalten
+  - Fachmodule tauchen weder in `main.js` noch in `CoreShell` als Sidebar-Definition auf
+  - `npm test` ist gruen
+- Letztes Paket:
   - Projekt-Arbeitsbereich von direktem Protokoll-Modulkatalog getrennt
   - `ProjectWorkspaceScreen` importiert `getActiveProjectModuleNavigation` und `PROTOKOLL_MODULE_ID` nicht mehr direkt
   - Router stellt die Arbeitsbereiche fuer den Projekt-Arbeitsbereich bereit und reicht sie an den Screen durch

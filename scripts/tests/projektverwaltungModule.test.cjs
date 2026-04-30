@@ -24,6 +24,7 @@ async function runProjektverwaltungModuleTests(run) {
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
   const routerSource = read("src/renderer/app/Router.js");
   const mainSource = read("src/renderer/main.js");
+  const coreShellSource = read("src/renderer/app/CoreShell.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
   const workspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const formSource = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
@@ -289,11 +290,12 @@ async function runProjektverwaltungModuleTests(run) {
   });
 
   await run("Projektverwaltung: Core-Sidebar bleibt frei von Fachmodulen", () => {
-    assert.equal(mainSource.includes('{ key: "home", label: "Start", onClick: () => router.showHome() }'), true);
-    assert.equal(mainSource.includes('{ key: "projects", label: "Projekte", onClick: () => router.showProjects() }'), true);
-    assert.equal(mainSource.includes('{ key: "firms", label: "Firmen", onClick: () => router.showFirms() }'), true);
-    assert.equal(mainSource.includes('{ key: "settings", label: "Einstellungen", onClick: () => router.showSettings() }'), true);
-
+    assert.equal(mainSource.includes("new CoreShell"), true);
+    assert.equal(mainSource.includes("applyThemeForSettings(DEFAULT_THEME_SETTINGS)"), true);
+    assert.equal(mainSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(mainSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(mainSource.includes("createProjectModuleRouteDef"), false);
+    assert.equal(mainSource.includes("btnProjects.textContent"), false);
     assert.equal(mainSource.includes("renderMachineSetupLicenseRequired();"), false);
     assert.equal(mainSource.includes("if (await isMachineSetupWithoutLicense())"), false);
     assert.equal(mainSource.includes("isMachineSetupWithoutLicense"), false);
@@ -302,6 +304,19 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(mainSource.includes("buildMachineSetupLicenseMailBody"), false);
     assert.equal(mainSource.includes("buildMachineSetupLicenseMailtoUri"), false);
     assert.equal(mainSource.includes("MACHINE_SETUP_LICENSE"), false);
+  });
+
+  await run("Projektverwaltung: CoreShell enthaelt die Core-Navigation und keine Fachmodule", () => {
+    assert.equal(coreShellSource.includes("export default class CoreShell"), true);
+    assert.equal(coreShellSource.includes('label: "Start"'), true);
+    assert.equal(coreShellSource.includes('label: "Projekte"'), true);
+    assert.equal(coreShellSource.includes('label: "Firmen"'), true);
+    assert.equal(coreShellSource.includes('label: "Einstellungen"'), true);
+    assert.equal(coreShellSource.includes('Hilfe'), true);
+    assert.equal(coreShellSource.includes('Beenden'), true);
+    assert.equal(coreShellSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(coreShellSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(coreShellSource.includes("createProjectModuleRouteDef"), false);
   });
 
   await run("Projektverwaltung: Projekt-Arbeitsbereich bleibt Modul-Andockpunkt", () => {
@@ -321,8 +336,9 @@ async function runProjektverwaltungModuleTests(run) {
   });
 
   await run("Projektverwaltung: bestehender Projekte-Einstieg bleibt der einzige Sidebar-Einstieg", () => {
-    assert.equal(mainSource.includes('btnProjects.textContent = "Projekte"'), true);
-    assert.equal(mainSource.includes('onClick: () => router.showProjects()'), true);
+    assert.equal(coreShellSource.includes('btnProjects.textContent = "Projekte"'), true);
+    assert.equal(coreShellSource.includes('onClick: () => router.showProjects()'), true);
+    assert.equal(mainSource.includes('btnProjects.textContent = "Projekte"'), false);
     assert.equal(mainSource.includes("PROJEKTVERWALTUNG_MODULE_ID"), false);
     assert.equal(moduleCatalogSource.includes("PROJEKTVERWALTUNG_MODULE_ID"), false);
   });
