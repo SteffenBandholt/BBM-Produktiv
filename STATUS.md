@@ -983,3 +983,21 @@ Wichtig:
   - kein offener Folge-Schritt fuer diese Extraktion
 - Risiken/Hinweise:
   - Nur die Quit-Button-Erzeugung verschoben; Rest der Shell bleibt unveraendert.
+
+#### Paket: CoreShell-Kontextsteuerung-Auslagerung
+- Status: erledigt
+- Beschreibung:
+  - Kontextsteuerung fuer den Teilnehmer-Button aus `CoreShell.js` in `src/renderer/app/coreShellContextControls.js` ausgelagert.
+  - `bbm:router-context` und die Projekt-/Besprechungshinweise bleiben funktional unveraendert.
+  - `CoreShell` ruft die zurueckgegebene `updateContextButtons()`-Funktion weiterhin fuer Start und Navigation auf.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellContextControls.js`
+  - `src/renderer/app/CoreShell.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - kein offener Folge-Schritt fuer diese Extraktion
+- Risiken/Hinweise:
+  - Nur die Teilnehmer-Kontextsteuerung verschoben; restliche Shell-Komponenten bleiben unveraendert.

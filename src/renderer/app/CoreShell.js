@@ -16,6 +16,7 @@ import {
   createCoreShellLayout,
 } from "./coreShellLayout.js";
 import { registerCoreShellHeaderBridge } from "./coreShellHeaderBridge.js";
+import { registerCoreShellContextControls } from "./coreShellContextControls.js";
 import { registerCoreShellKeyboardHandling } from "./coreShellKeyboard.js";
 
 export default class CoreShell {
@@ -91,7 +92,9 @@ export default class CoreShell {
           alert(e?.message || String(e) || "Navigation fehlgeschlagen");
         } finally {
           header.refresh();
-          updateContextButtons();
+          if (typeof updateContextButtons === "function") {
+            updateContextButtons();
+          }
         }
       };
     };
@@ -114,26 +117,17 @@ export default class CoreShell {
     const btnQuit = createQuitActionButton();
     appendButtonGroup(bottomBox, [btnQuit]);
 
-    const updateContextButtons = () => {
-      const hasProject = !!router.currentProjectId;
-      const hasMeeting = !!router.currentMeetingId;
-
-      if (!hasProject) {
-        setBtnEnabled(btnParticipants, false, "Bitte zuerst ein Projekt auswählen.");
-      } else if (!hasMeeting) {
-        setBtnEnabled(btnParticipants, false, "Bitte zuerst eine Besprechung öffnen.");
-      } else {
-        setBtnEnabled(btnParticipants, true, "");
-      }
-    };
-
-    window.addEventListener("bbm:router-context", () => {
-      updateContextButtons();
+    const updateContextButtons = registerCoreShellContextControls({
+      router,
+      btnParticipants,
+      setBtnEnabled,
     });
 
     router.showHome();
     header.refresh();
-    updateContextButtons();
+    if (typeof updateContextButtons === "function") {
+      updateContextButtons();
+    }
     // Start-Popup "Initialisiere ..." deaktiviert
     // Start-Popup "Was ist neu/geändert" ist deaktiviert.
   }

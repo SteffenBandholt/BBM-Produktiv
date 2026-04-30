@@ -30,6 +30,7 @@ async function runProjektverwaltungModuleTests(run) {
   const coreShellLayoutSource = read("src/renderer/app/coreShellLayout.js");
   const coreShellHeaderBridgeSource = read("src/renderer/app/coreShellHeaderBridge.js");
   const coreShellKeyboardSource = read("src/renderer/app/coreShellKeyboard.js");
+  const coreShellContextControlsSource = read("src/renderer/app/coreShellContextControls.js");
   const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
@@ -321,6 +322,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("coreShellLayout.js"), true);
     assert.equal(coreShellSource.includes("coreShellHeaderBridge.js"), true);
     assert.equal(coreShellSource.includes("coreShellKeyboard.js"), true);
+    assert.equal(coreShellSource.includes("coreShellContextControls.js"), true);
     assert.equal(coreShellSource.includes("coreShellButtons.js"), true);
     assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
     assert.equal(coreShellSource.includes("createQuitActionButton"), true);
@@ -353,9 +355,12 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("setActive"), true);
     assert.equal(coreShellSource.includes("router.contentRoot"), true);
     assert.equal(coreShellSource.includes("router.onSectionChange"), true);
+    assert.equal(coreShellSource.includes("registerCoreShellContextControls"), true);
+    assert.equal(coreShellSource.includes("updateContextButtons"), true);
     assert.equal(coreShellSource.includes("bbm:header-refresh"), false);
     assert.equal(coreShellSource.includes("bbm:theme-refresh"), false);
     assert.equal(coreShellSource.includes("bbm:sticky-notice"), false);
+    assert.equal(coreShellSource.includes("bbm:router-context"), false);
     assert.equal(coreShellSource.includes('document.addEventListener("keydown"'), false);
     assert.equal(coreShellSource.includes("_getHost"), false);
     assert.equal(coreShellSource.includes("data-bbm-sidebar"), false);
@@ -404,6 +409,29 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellKeyboardSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(coreShellKeyboardSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(coreShellKeyboardSource.includes("projectFirms"), false);
+  });
+
+  await run("Projektverwaltung: coreShellContextControls kapselt die Teilnehmer-Kontextsteuerung", () => {
+    assert.equal(
+      coreShellContextControlsSource.includes("export function registerCoreShellContextControls"),
+      true
+    );
+    assert.equal(coreShellContextControlsSource.includes("bbm:router-context"), true);
+    assert.equal(
+      coreShellContextControlsSource.includes("Bitte zuerst ein Projekt auswählen."),
+      true
+    );
+    assert.equal(
+      coreShellContextControlsSource.includes("Bitte zuerst eine Besprechung öffnen."),
+      true
+    );
+    assert.equal(coreShellContextControlsSource.includes("setBtnEnabled(btnParticipants, false"), true);
+    assert.equal(coreShellContextControlsSource.includes("setBtnEnabled(btnParticipants, true"), true);
+    assert.equal(coreShellContextControlsSource.includes("hasProject"), true);
+    assert.equal(coreShellContextControlsSource.includes("hasMeeting"), true);
+    assert.equal(coreShellContextControlsSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(coreShellContextControlsSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(coreShellContextControlsSource.includes("projectFirms"), false);
   });
 
   await run("Projektverwaltung: coreShellButtons exportiert die Button-Helfer", () => {
@@ -487,13 +515,21 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(moduleCatalogSource.includes("PROJEKTVERWALTUNG_MODULE_ID"), false);
   });
 
+  await run("Projektverwaltung: CoreShell nutzt updateContextButtons weiterhin im Start- und Nav-Flow", () => {
+    assert.equal(coreShellSource.includes("registerCoreShellContextControls"), true);
+    assert.equal(coreShellSource.includes("if (typeof updateContextButtons === \"function\")"), true);
+    assert.equal(coreShellSource.includes("btnParticipants"), true);
+    assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
+    assert.equal(coreShellSource.includes("updateContextButtons();"), true);
+  });
+
   await run("Projektverwaltung: Kontextsteuerung bleibt nur fuer btnParticipants aktiv", () => {
     assert.equal(coreShellSource.includes("btnParticipants"), true);
     assert.equal(coreShellSource.includes("updateContextButtons"), true);
-    assert.equal(coreShellSource.includes("setBtnEnabled(btnParticipants, false"), true);
-    assert.equal(coreShellSource.includes("setBtnEnabled(btnParticipants, true"), true);
-    assert.equal(coreShellSource.includes("hasProject"), true);
-    assert.equal(coreShellSource.includes("hasMeeting"), true);
+    assert.equal(coreShellSource.includes("setBtnEnabled(btnParticipants, false"), false);
+    assert.equal(coreShellSource.includes("setBtnEnabled(btnParticipants, true"), false);
+    assert.equal(coreShellSource.includes("hasProject"), false);
+    assert.equal(coreShellSource.includes("hasMeeting"), false);
     assert.equal(coreShellActionsSource.includes("openParticipantsModal"), true);
   });
 }
