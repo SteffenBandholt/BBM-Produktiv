@@ -28,6 +28,7 @@ async function runProjektverwaltungModuleTests(run) {
   const coreShellActionsSource = read("src/renderer/app/coreShellActions.js");
   const coreShellButtonsSource = read("src/renderer/app/coreShellButtons.js");
   const coreShellLayoutSource = read("src/renderer/app/coreShellLayout.js");
+  const coreShellHeaderBridgeSource = read("src/renderer/app/coreShellHeaderBridge.js");
   const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
@@ -317,6 +318,7 @@ async function runProjektverwaltungModuleTests(run) {
   await run("Projektverwaltung: CoreShell enthaelt die Core-Navigation und keine Fachmodule", () => {
     assert.equal(coreShellSource.includes("export default class CoreShell"), true);
     assert.equal(coreShellSource.includes("coreShellLayout.js"), true);
+    assert.equal(coreShellSource.includes("coreShellHeaderBridge.js"), true);
     assert.equal(coreShellSource.includes("coreShellButtons.js"), true);
     assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
     assert.equal(coreShellSource.includes("injectCoreShellBaseStyles"), true);
@@ -345,6 +347,9 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("setActive"), true);
     assert.equal(coreShellSource.includes("router.contentRoot"), true);
     assert.equal(coreShellSource.includes("router.onSectionChange"), true);
+    assert.equal(coreShellSource.includes("bbm:header-refresh"), false);
+    assert.equal(coreShellSource.includes("bbm:theme-refresh"), false);
+    assert.equal(coreShellSource.includes("bbm:sticky-notice"), false);
     assert.equal(coreShellSource.includes("_getHost"), false);
     assert.equal(coreShellSource.includes("data-bbm-sidebar"), false);
     assert.equal(coreShellSource.includes("host.append(headerEl, bodyRow)"), false);
@@ -362,6 +367,23 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellLayoutSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(coreShellLayoutSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(coreShellLayoutSource.includes("projectFirms"), false);
+  });
+
+  await run("Projektverwaltung: coreShellHeaderBridge kapselt die Header-/Router-Bridges", () => {
+    assert.equal(
+      coreShellHeaderBridgeSource.includes("export function registerCoreShellHeaderBridge"),
+      true
+    );
+    assert.equal(coreShellHeaderBridgeSource.includes("router.openOutputMail"), true);
+    assert.equal(coreShellHeaderBridgeSource.includes("router.openOutputPrint"), true);
+    assert.equal(coreShellHeaderBridgeSource.includes("router.openClosedProtocolSelector"), true);
+    assert.equal(coreShellHeaderBridgeSource.includes("router.refreshHeader"), true);
+    assert.equal(coreShellHeaderBridgeSource.includes("bbm:header-refresh"), true);
+    assert.equal(coreShellHeaderBridgeSource.includes("bbm:theme-refresh"), true);
+    assert.equal(coreShellHeaderBridgeSource.includes("bbm:sticky-notice"), true);
+    assert.equal(coreShellHeaderBridgeSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(coreShellHeaderBridgeSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(coreShellHeaderBridgeSource.includes("projectFirms"), false);
   });
 
   await run("Projektverwaltung: coreShellButtons exportiert die Button-Helfer", () => {

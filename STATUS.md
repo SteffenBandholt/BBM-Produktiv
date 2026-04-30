@@ -929,3 +929,21 @@ Wichtig:
   - kein offener Folge-Schritt fuer diese Bereinigung
 - Risiken/Hinweise:
   - Nur der tote Schalter wurde entfernt; `print.v2.*` und sonstige Ausgabelogik sind bewusst unveraendert geblieben.
+
+#### Paket: CoreShell-Header-Bridge-Auslagerung
+- Status: erledigt
+- Beschreibung:
+  - Header-/Router-Bridges aus `CoreShell.js` in `src/renderer/app/coreShellHeaderBridge.js` ausgelagert.
+  - Router-Bridge fuer Output-Mail, Output-Print, Closed-Protocol-Selector und Header-/Theme-/Sticky-Notice-Events bleibt funktional unveraendert.
+  - CoreShell behält Layout, Navigation, Teilnehmer-Aktion und Router-Kanten ausserhalb der Header-Bridge.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellHeaderBridge.js`
+  - `src/renderer/app/CoreShell.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - kein offener Folge-Schritt fuer diese Extraktion
+- Risiken/Hinweise:
+  - Nur die Header-/Router-Bridges verschoben; fachliche Navigation und Layout blieben bewusst unangetastet.

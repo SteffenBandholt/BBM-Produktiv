@@ -15,6 +15,7 @@ import {
   CORE_SHELL_LAYOUT_SIDEBAR_WIDTH,
   createCoreShellLayout,
 } from "./coreShellLayout.js";
+import { registerCoreShellHeaderBridge } from "./coreShellHeaderBridge.js";
 
 export default class CoreShell {
   constructor({ router, version } = {}) {
@@ -109,41 +110,15 @@ export default class CoreShell {
     router.contentRoot = content;
     router.onSectionChange = (section) => setActive(section);
 
-    router.openOutputMail = async () => {
-      await header._openMailFileFlow();
-    };
-    router.openOutputPrint = async () => {
-      await header._openPrintFileFlow();
-    };
-    router.openClosedProtocolSelector = async ({ mode } = {}) => {
-      await header._openClosedProtocolSelectorFlow(mode || "view");
-    };
-
     const applyThemeFromRouterContext = () => {
       applyThemeForSettings(router?.context?.settings || {});
     };
 
-    router.refreshHeader = () => {
-      applyThemeFromRouterContext();
-      const isTopsView = !!router?.context?.ui?.isTopsView;
-      headerEl.style.display = isTopsView ? "none" : "";
-      header.refresh();
-    };
-    window.addEventListener("bbm:header-refresh", () => {
-      applyThemeFromRouterContext();
-      header.refresh();
-    });
-    window.addEventListener("bbm:theme-refresh", () => {
-      applyThemeFromRouterContext();
-      header.refresh();
-    });
-
-    window.addEventListener("bbm:sticky-notice", (e) => {
-      const msg = e?.detail?.message || "";
-      router.context = router.context || {};
-      router.context.ui = router.context.ui || {};
-      router.context.ui.stickyNotice = msg;
-      header.refresh();
+    registerCoreShellHeaderBridge({
+      router,
+      header,
+      headerEl,
+      applyThemeFromRouterContext,
     });
 
     const runNavSafe = (fn) => {
