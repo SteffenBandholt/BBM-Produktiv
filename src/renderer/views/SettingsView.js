@@ -4865,30 +4865,37 @@ export default class SettingsView {
 
     const tiles = document.createElement("div");
     tiles.style.display = "grid";
-    tiles.style.gridTemplateColumns = "repeat(auto-fit, minmax(220px, 1fr))";
-    tiles.style.gap = "10px";
+    tiles.style.gridTemplateColumns = "1fr";
+    tiles.style.gap = "8px";
+    tiles.style.maxWidth = "760px";
 
     const mkTile = ({ titleText, subText, onClick }) => {
       const tile = document.createElement("button");
       tile.type = "button";
       tile.style.textAlign = "left";
       tile.style.border = "1px solid #ddd";
-      tile.style.borderRadius = "10px";
+      tile.style.borderRadius = "8px";
       tile.style.background = "#fff";
-      tile.style.padding = "12px";
+      tile.style.padding = "10px 12px";
       tile.style.cursor = "pointer";
       tile.style.userSelect = "none";
+      tile.style.display = "grid";
+      tile.style.gridTemplateColumns = "minmax(180px, 260px) 1fr";
+      tile.style.alignItems = "center";
+      tile.style.gap = "12px";
+      tile.style.minHeight = "48px";
 
       const t = document.createElement("div");
       t.textContent = titleText;
       t.style.fontWeight = "900";
-      t.style.fontSize = "16px";
-      t.style.marginBottom = "6px";
+      t.style.fontSize = "15px";
+      t.style.marginBottom = "0";
 
       const s = document.createElement("div");
       s.textContent = subText || "";
       s.style.opacity = "0.8";
       s.style.fontSize = "12px";
+      s.style.lineHeight = "1.25";
 
       tile.append(t, s);
       tile.addEventListener("click", async () => {
@@ -4956,7 +4963,7 @@ export default class SettingsView {
       },
     });
 
-    tiles.append(tileArchive, tileCoreSettings, tileLicense, tileAdmin, tileDev);
+    tiles.append(tileCoreSettings, tileLicense, tileDev, tileAdmin, tileArchive);
     root.append(head, tiles);
     this.root = root;
 
