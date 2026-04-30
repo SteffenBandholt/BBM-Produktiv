@@ -47,8 +47,13 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(routerSource.includes("../views/ProjectsView.js"), false);
     assert.equal(routerSource.includes("../views/ProjectFormView.js"), false);
     assert.equal(routerSource.includes("../views/ArchiveView.js"), false);
+    assert.equal(routerSource.includes("../modules/protokoll/index.js"), true);
+    assert.equal(routerSource.includes("../views/TopsView.js"), false);
     assert.equal(routerSource.includes("showProjectWorkspace(projectId, options = {})"), true);
     assert.equal(routerSource.includes("ProjectWorkspaceScreen"), true);
+    assert.equal(routerSource.includes("showProjects()"), true);
+    assert.equal(routerSource.includes("showArchive()"), true);
+    assert.equal(routerSource.includes("showTops(meetingId, projectId"), true);
   });
 
   await run("Projektverwaltung: Modul ist im Resolver vorhanden, aber nicht im Katalog", () => {
@@ -376,6 +381,19 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("replaceChildren"), false);
     assert.equal(coreShellSource.includes("Firmen (Stamm)"), false);
     assert.equal(coreShellSource.includes("Firmen (extern)"), false);
+  });
+
+  await run("Projektverwaltung: Core-Navigation bleibt fachfrei", () => {
+    assert.equal(coreShellNavigationSource.includes("Start"), true);
+    assert.equal(coreShellNavigationSource.includes("Projekte"), true);
+    assert.equal(coreShellNavigationSource.includes("Firmen"), true);
+    assert.equal(coreShellNavigationSource.includes("Einstellungen"), true);
+    assert.equal(coreShellNavigationSource.includes("Hilfe"), false);
+    assert.equal(coreShellNavigationSource.includes("Beenden"), false);
+    assert.equal(coreShellNavigationSource.includes("Protokoll"), false);
+    assert.equal(coreShellNavigationSource.includes("Ausgabe"), false);
+    assert.equal(coreShellNavigationSource.includes("Audio"), false);
+    assert.equal(coreShellNavigationSource.includes("Lizenz"), false);
   });
 
   await run("Projektverwaltung: coreShellLayout kapselt die reine Shell-Layout-Struktur", () => {
