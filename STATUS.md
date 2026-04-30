@@ -893,3 +893,21 @@ Wichtig:
   - Renderer-Lizenzstatusanzeige optional feinjustieren (Labels Produkt/Module/Funktionen), ohne Admin/Gene­rator-Rueckbau.
 - Risiken/Hinweise:
   - Legacy-Tests mit Alias-Begriffen bleiben teils bewusst erhalten fuer sanften Uebergang.
+
+#### Paket: CoreShell-Layout-Auslagerung
+- Status: erledigt
+- Beschreibung:
+  - Reine Shell-Layout-/DOM-Struktur aus `CoreShell.js` in `src/renderer/app/coreShellLayout.js` ausgelagert.
+  - Host-Setup, Sidebar-Container, Content-Root, Top-/Bottom-Boxen und Host-Append bleiben funktional unveraendert.
+  - Router-Verdrahtung, Navigation, Aktionen und Kontextsteuerung verbleiben in `CoreShell.js`.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellLayout.js`
+  - `src/renderer/app/CoreShell.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - kein offener Folge-Schritt fuer diese Extraktion
+- Risiken/Hinweise:
+  - Nur Layout/DOM-Struktur verschoben; fachliche Navigation und Router-Kanten bewusst unangetastet gelassen.

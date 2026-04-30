@@ -27,6 +27,7 @@ async function runProjektverwaltungModuleTests(run) {
   const coreShellSource = read("src/renderer/app/CoreShell.js");
   const coreShellActionsSource = read("src/renderer/app/coreShellActions.js");
   const coreShellButtonsSource = read("src/renderer/app/coreShellButtons.js");
+  const coreShellLayoutSource = read("src/renderer/app/coreShellLayout.js");
   const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
@@ -313,6 +314,7 @@ async function runProjektverwaltungModuleTests(run) {
 
   await run("Projektverwaltung: CoreShell enthaelt die Core-Navigation und keine Fachmodule", () => {
     assert.equal(coreShellSource.includes("export default class CoreShell"), true);
+    assert.equal(coreShellSource.includes("coreShellLayout.js"), true);
     assert.equal(coreShellSource.includes("coreShellButtons.js"), true);
     assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
     assert.equal(coreShellSource.includes("injectCoreShellBaseStyles"), true);
@@ -334,11 +336,27 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("createProjectModuleRouteDef"), false);
     assert.equal(coreShellSource.includes("getButton("), false);
     assert.equal(coreShellSource.includes("btnFirmsBase"), false);
+    assert.equal(coreShellSource.includes("buttonsByKey"), true);
+    assert.equal(coreShellSource.includes("setActive"), true);
+    assert.equal(coreShellSource.includes("router.contentRoot"), true);
+    assert.equal(coreShellSource.includes("router.onSectionChange"), true);
+    assert.equal(coreShellSource.includes("_getHost"), false);
+    assert.equal(coreShellSource.includes("data-bbm-sidebar"), false);
+    assert.equal(coreShellSource.includes("host.append(headerEl, bodyRow)"), false);
     assert.equal(coreShellSource.includes("appendButtonGroup(topBox, projectNavigationButtons)"), false);
     assert.equal(coreShellSource.includes("for (const btn of projectNavigationButtons)"), false);
     assert.equal(coreShellSource.includes("replaceChildren"), false);
     assert.equal(coreShellSource.includes("Firmen (Stamm)"), false);
     assert.equal(coreShellSource.includes("Firmen (extern)"), false);
+  });
+
+  await run("Projektverwaltung: coreShellLayout kapselt die reine Shell-Layout-Struktur", () => {
+    assert.equal(coreShellLayoutSource.includes("export function createCoreShellLayout"), true);
+    assert.equal(coreShellLayoutSource.includes('data-bbm-sidebar'), true);
+    assert.equal(coreShellLayoutSource.includes("host.append(headerEl, bodyRow)"), true);
+    assert.equal(coreShellLayoutSource.includes("getActiveProjectModuleNavigation"), false);
+    assert.equal(coreShellLayoutSource.includes("PROTOKOLL_MODULE_ID"), false);
+    assert.equal(coreShellLayoutSource.includes("projectFirms"), false);
   });
 
   await run("Projektverwaltung: coreShellButtons exportiert die Button-Helfer", () => {

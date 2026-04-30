@@ -10,6 +10,11 @@ import {
 } from "./coreShellButtons.js";
 import { injectCoreShellBaseStyles } from "./coreShellStyles.js";
 import { createCoreShellNavigationRouteDefs } from "./coreShellNavigation.js";
+import {
+  CORE_SHELL_LAYOUT_PADDING,
+  CORE_SHELL_LAYOUT_SIDEBAR_WIDTH,
+  createCoreShellLayout,
+} from "./coreShellLayout.js";
 
 export default class CoreShell {
   constructor({
@@ -39,14 +44,6 @@ export default class CoreShell {
     document.body.style.height = "100vh";
     document.body.style.background = "var(--main-bg)";
     document.body.style.color = "var(--text-main)";
-  }
-
-  _getHost() {
-    const host = document.getElementById("content");
-    if (!host) {
-      throw new Error("Root-Container #content nicht gefunden");
-    }
-    return host;
   }
 
   _attachGlobalKeyHandling() {
@@ -93,76 +90,18 @@ export default class CoreShell {
     injectCoreShellBaseStyles();
     this._prepareBody();
 
-    const host = this._getHost();
     this._attachGlobalKeyHandling();
 
-    host.innerHTML = "";
-    host.style.height = "100vh";
-    host.style.display = "flex";
-    host.style.flexDirection = "column";
-    host.style.alignItems = "stretch";
-    host.style.boxSizing = "border-box";
-    host.style.fontFamily = "Calibri, Arial, sans-serif";
-    host.style.color = "var(--text-main)";
-    host.style.background = "var(--main-bg)";
+    const router = this.router;
+    const header = new MainHeader({
+      router,
+      version: this.version,
+      sidebarWidth: CORE_SHELL_LAYOUT_SIDEBAR_WIDTH,
+      padding: CORE_SHELL_LAYOUT_PADDING,
+    });
+    const headerEl = header.render();
 
-    const SIDEBAR_WIDTH = 190;
-    const PAD = 12;
-
-    const bodyRow = document.createElement("div");
-    bodyRow.style.flex = "1";
-    bodyRow.style.display = "flex";
-    bodyRow.style.alignItems = "stretch";
-    bodyRow.style.boxSizing = "border-box";
-    bodyRow.style.overflow = "hidden";
-
-    const sidebar = document.createElement("div");
-    sidebar.setAttribute("data-bbm-sidebar", "true");
-    sidebar.style.width = `${SIDEBAR_WIDTH}px`;
-    sidebar.style.minWidth = `${SIDEBAR_WIDTH}px`;
-    sidebar.style.maxWidth = `${SIDEBAR_WIDTH}px`;
-    sidebar.style.flex = `0 0 ${SIDEBAR_WIDTH}px`;
-    sidebar.style.borderRight = "1px solid #1e293b";
-    sidebar.style.padding = `${PAD}px`;
-    sidebar.style.boxSizing = "border-box";
-    sidebar.style.display = "flex";
-    sidebar.style.flexDirection = "column";
-    sidebar.style.overflowY = "auto";
-    sidebar.style.overflowX = "visible";
-    sidebar.style.background = "var(--sidebar-bg)";
-    sidebar.style.color = "var(--sidebar-text)";
-
-    const content = document.createElement("div");
-    content.style.flex = "1";
-    content.style.padding = `${PAD}px`;
-    content.style.boxSizing = "border-box";
-    content.style.overflow = "auto";
-    content.style.background = "var(--main-bg)";
-    content.style.color = "var(--text-main)";
-
-    router.contentRoot = content;
-    router.onSectionChange = (section) => setActive(section);
-
-    bodyRow.append(sidebar, content);
-
-    const topBox = document.createElement("div");
-    topBox.style.width = "100%";
-    topBox.style.boxSizing = "border-box";
-    topBox.style.padding = "0";
-    topBox.style.display = "flex";
-    topBox.style.flexDirection = "column";
-    topBox.style.gap = "8px";
-
-    const bottomBox = document.createElement("div");
-    bottomBox.style.width = "100%";
-    bottomBox.style.boxSizing = "border-box";
-    bottomBox.style.padding = "0";
-    bottomBox.style.marginTop = "auto";
-    bottomBox.style.display = "flex";
-    bottomBox.style.flexDirection = "column";
-    bottomBox.style.gap = "8px";
-
-    sidebar.append(topBox, bottomBox);
+    const { contentRoot: content, topBox, bottomBox } = createCoreShellLayout({ headerEl });
 
     const buttonsByKey = new Map();
 
@@ -180,14 +119,8 @@ export default class CoreShell {
       }
     };
 
-    const router = this.router;
-    const header = new MainHeader({
-      router,
-      version: this.version,
-      sidebarWidth: SIDEBAR_WIDTH,
-      padding: PAD,
-    });
-    const headerEl = header.render();
+    router.contentRoot = content;
+    router.onSectionChange = (section) => setActive(section);
 
     router.openOutputMail = async () => {
       await header._openMailFileFlow();
@@ -276,8 +209,6 @@ export default class CoreShell {
       applyThemeFromRouterContext();
       header.refresh();
     });
-
-    host.append(headerEl, bodyRow);
 
     window.addEventListener("bbm:sticky-notice", (e) => {
       const msg = e?.detail?.message || "";
