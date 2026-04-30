@@ -320,6 +320,9 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("uiMode"), false);
     assert.equal(coreShellSource.includes("_injectBaseStyles"), false);
     assert.equal(coreShellSource.includes('shellNavigationRouteDefs'), true);
+    assert.equal(coreShellSource.includes('contextualNavigationRouteDefs'), false);
+    assert.equal(coreShellSource.includes('projectNavigationButtons'), false);
+    assert.equal(coreShellSource.includes('Projekt- und Modul-Arbeitsbereiche werden im Projekt-Arbeitsbereich angezeigt'), false);
     assert.equal(coreShellSource.includes('Hilfe'), true);
     assert.equal(coreShellSource.includes('Beenden'), true);
     assert.equal(coreShellSource.includes("getActiveProjectModuleNavigation"), false);
@@ -327,6 +330,8 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("createProjectModuleRouteDef"), false);
     assert.equal(coreShellSource.includes("getButton("), false);
     assert.equal(coreShellSource.includes("btnFirmsBase"), false);
+    assert.equal(coreShellSource.includes("appendButtonGroup(topBox, projectNavigationButtons)"), false);
+    assert.equal(coreShellSource.includes("for (const btn of projectNavigationButtons)"), false);
     assert.equal(coreShellSource.includes("replaceChildren"), false);
     assert.equal(coreShellSource.includes("Firmen (Stamm)"), false);
     assert.equal(coreShellSource.includes("Firmen (extern)"), false);
@@ -374,6 +379,15 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(mainSource.includes('btnProjects.textContent = "Projekte"'), false);
     assert.equal(mainSource.includes("PROJEKTVERWALTUNG_MODULE_ID"), false);
     assert.equal(moduleCatalogSource.includes("PROJEKTVERWALTUNG_MODULE_ID"), false);
+  });
+
+  await run("Projektverwaltung: Kontextsteuerung bleibt nur fuer btnParticipants aktiv", () => {
+    assert.equal(coreShellSource.includes("btnParticipants"), true);
+    assert.equal(coreShellSource.includes("updateContextButtons"), true);
+    assert.equal(coreShellSource.includes("setBtnEnabled(btnParticipants, false"), true);
+    assert.equal(coreShellSource.includes("setBtnEnabled(btnParticipants, true"), true);
+    assert.equal(coreShellSource.includes("hasProject"), true);
+    assert.equal(coreShellSource.includes("hasMeeting"), true);
   });
 }
 

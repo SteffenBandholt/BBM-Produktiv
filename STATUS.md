@@ -731,6 +731,11 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 
 ## Zuletzt bearbeitet
 - Letztes Paket:
+  - leere Kontext-/Projekt-Navigationslogik aus `CoreShell` entfernt
+  - `btnParticipants` und `updateContextButtons` bleiben als reine Kontextsteuerung erhalten
+  - Core-Sidebar bleibt unveraendert und fachfrei
+  - `npm test` ist gruen
+- Letztes Paket:
   - Core-Navigationsdefinition aus `CoreShell` in `src/renderer/app/coreShellNavigation.js` ausgelagert
   - `CoreShell` importiert die Route-Definitionen und baut daraus weiterhin die Buttons
   - Labels, Router-Methoden und Core-Sidebar-Verhalten unveraendert

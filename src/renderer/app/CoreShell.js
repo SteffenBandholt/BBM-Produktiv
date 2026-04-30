@@ -385,19 +385,10 @@ export default class CoreShell {
 
     const shellNavigationRouteDefs = createCoreShellNavigationRouteDefs(router);
 
-    const contextualNavigationRouteDefs = [
-      // Projekt- und Modul-Arbeitsbereiche werden im Projekt-Arbeitsbereich angezeigt.
-      // Die Core-Sidebar bleibt frei von Fachmodulen.
-    ];
-
     const [btnHome, btnProjects, btnFirms, btnSettings] = shellNavigationRouteDefs.map((def) =>
       createScreenRouteButton(def)
     );
     const btnHelp = mkNavBtn("help", "Hilfe", () => router.openHelpModal());
-
-    const projectNavigationButtons = contextualNavigationRouteDefs.map((def) =>
-      createScreenRouteButton(def)
-    );
 
     const btnParticipants = mkActionBtn("Teilnehmer", async () => {
       if (!router.currentProjectId) {
@@ -418,7 +409,6 @@ export default class CoreShell {
     const actionButtons = [btnParticipants];
 
     appendButtonGroup(topBox, coreNavigationButtons);
-    appendButtonGroup(topBox, projectNavigationButtons);
     appendButtonGroup(topBox, actionButtons);
 
     const btnQuit = document.createElement("button");
@@ -467,10 +457,6 @@ export default class CoreShell {
     const updateContextButtons = () => {
       const hasProject = !!router.currentProjectId;
       const hasMeeting = !!router.currentMeetingId;
-
-      for (const btn of projectNavigationButtons) {
-        setBtnEnabled(btn, hasProject, "Bitte zuerst ein Projekt auswählen.");
-      }
 
       if (!hasProject) {
         setBtnEnabled(btnParticipants, false, "Bitte zuerst ein Projekt auswählen.");
