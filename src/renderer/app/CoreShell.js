@@ -20,13 +20,8 @@ export default class CoreShell {
         : () => {};
   }
 
-  start({ uiMode = "old" } = {}) {
-    if (uiMode === "new") {
-      this._initUiNew();
-      return;
-    }
-
-    this._initUiOld();
+  start() {
+    this._initShell();
   }
 
   _injectBaseStyles() {
@@ -169,7 +164,7 @@ export default class CoreShell {
     });
   }
 
-  _initUiOld() {
+  _initShell() {
     this._injectBaseStyles();
     this._prepareBody();
 
@@ -583,9 +578,5 @@ export default class CoreShell {
     updateContextButtons();
     // Start-Popup "Initialisiere ..." deaktiviert
     // Start-Popup "Was ist neu/geändert" ist deaktiviert.
-  }
-
-  _initUiNew() {
-    this._initUiOld();
   }
 }

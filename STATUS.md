@@ -731,6 +731,12 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 
 ## Zuletzt bearbeitet
 - Letztes Paket:
+  - toter old/new-UI-Modus aus `CoreShell` entfernt
+  - `CoreShell.start()` startet den bestehenden Shell-Aufbau direkt ueber `_initShell()`
+  - `main.js` bleibt Bootstrap und uebergibt keinen UI-Modus mehr
+  - Core-Sidebar-Verhalten unveraendert
+  - `npm test` ist gruen
+- Letztes Paket:
   - alte Sidebar-Nachsortierung in `CoreShell._initUiNew()` entfernt
   - `CoreShell` delegiert den neuen UI-Modus jetzt nur noch auf den bestehenden Core-Shell-Aufbau
   - Core-Navigation bleibt unveraendert, Fachmodule bleiben aus der Sidebar draussen

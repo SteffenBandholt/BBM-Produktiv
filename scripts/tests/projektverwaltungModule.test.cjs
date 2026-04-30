@@ -292,6 +292,7 @@ async function runProjektverwaltungModuleTests(run) {
   await run("Projektverwaltung: Core-Sidebar bleibt frei von Fachmodulen", () => {
     assert.equal(mainSource.includes("new CoreShell"), true);
     assert.equal(mainSource.includes("applyThemeForSettings(DEFAULT_THEME_SETTINGS)"), true);
+    assert.equal(mainSource.includes("uiMode"), false);
     assert.equal(mainSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(mainSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(mainSource.includes("createProjectModuleRouteDef"), false);
@@ -308,6 +309,11 @@ async function runProjektverwaltungModuleTests(run) {
 
   await run("Projektverwaltung: CoreShell enthaelt die Core-Navigation und keine Fachmodule", () => {
     assert.equal(coreShellSource.includes("export default class CoreShell"), true);
+    assert.equal(coreShellSource.includes("start()"), true);
+    assert.equal(coreShellSource.includes("_initShell()"), true);
+    assert.equal(coreShellSource.includes("_initUiOld"), false);
+    assert.equal(coreShellSource.includes("_initUiNew"), false);
+    assert.equal(coreShellSource.includes("uiMode"), false);
     assert.equal(coreShellSource.includes('shellNavigationRouteDefs'), true);
     assert.equal(coreShellSource.includes('Start'), true);
     assert.equal(coreShellSource.includes('Projekte'), true);
