@@ -263,12 +263,12 @@
   background-color: #fff2f2;
   background-image: repeating-linear-gradient(
     45deg,
-    rgba(220, 38, 38, 0.16) 0,
-    rgba(220, 38, 38, 0.16) 8px,
-    transparent 8px,
-    transparent 16px
+    rgba(220, 38, 38, 0.12) 0,
+    rgba(220, 38, 38, 0.12) 5px,
+    transparent 5px,
+    transparent 11px
   );
-  opacity: 0.88;
+  opacity: 0.92;
   cursor: not-allowed;
   pointer-events: none;
 }

@@ -28,6 +28,7 @@ Sie ergänzt:
   - Schiebling: orange Rand
   - erlaubtes Ziel: gruen nur beim aktiven Hover/Fokus
   - gesperrtes Ziel und direkte Nachkommen: rot schraffiert und nicht klickbar
+- Die rote Schraffur fuer gesperrte Move-Ziele wurde feiner und etwas dezenter gezogen, ohne den blocked-Zustand zu verlieren.
 - Nächster offener Schritt: fachliche Sichtpruefung der neuen Besprechungsuebersicht/Startview im Projektkontext.
 - Der Projekt-Arbeitsbereich oeffnet `Protokoll` jetzt wieder mit einem echten offenen Meeting-Kontext, wenn eines im Projekt vorhanden ist; andernfalls faellt der Einstieg in die Besprechungsuebersicht zurueck statt in einen leeren Tops-Start.
 - Meilenstein externe Lizenz-App-Vorbereitung ist umgesetzt:
