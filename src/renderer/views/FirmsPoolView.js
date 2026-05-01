@@ -302,28 +302,28 @@ export default class FirmsPoolView {
   async _goToTopsView() {
     const r = this.router || null;
     const pid = this.projectId || r?.currentProjectId || null;
-    if (!r || !pid || typeof r.showTops !== "function") {
+    if (!r || !pid) {
       if (r && typeof r.showProjects === "function") await r.showProjects();
       return;
     }
 
-    let meetingId = r.currentMeetingId || null;
-    if (typeof window?.bbmDb?.meetingsListByProject === "function") {
-      const res = await window.bbmDb.meetingsListByProject(pid);
-      const list = res?.ok && Array.isArray(res.list) ? res.list : [];
-      const openMeeting = list.find((m) => Number(m?.is_closed || 0) === 0) || null;
-      const currentMeeting = list.find((m) => String(m?.id || "") === String(meetingId || "")) || null;
-      if (!currentMeeting || Number(currentMeeting?.is_closed || 0) === 1) {
-        meetingId = openMeeting?.id || null;
-      }
-    }
-
-    if (!meetingId) {
-      await r.showTops(null, pid);
+    if (typeof r.openProjectProtocol === "function") {
+      await r.openProjectProtocol(pid);
       return;
     }
 
-    await r.showTops(meetingId, pid);
+    if (typeof r.showMeetings === "function") {
+      await r.showMeetings(pid, {
+        startMode: true,
+        startReason: "protocol-start-unavailable",
+        integrityError: false,
+      });
+      return;
+    }
+
+    if (typeof r.showProjects === "function") {
+      await r.showProjects();
+    }
   }
 
   render() {

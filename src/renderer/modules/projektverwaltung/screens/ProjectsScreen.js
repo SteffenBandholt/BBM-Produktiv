@@ -1130,15 +1130,27 @@ export default class ProjectsScreen {
   }
 
   // ------------------------------------------------------------
-  // Project click flow: Offene Besprechung öffnen, sonst anlegen
+  // Project click flow: Protokoll-Startpunkt fuer den Projektkontext
   // ------------------------------------------------------------
   async _openProjectInNewMode(projectId, projectObj) {
-    // Zuerst versuchen, ein offenes Protokoll wieder zu öffnen.
+    if (typeof this.router?.openProjectProtocol === "function") {
+      await this.router.openProjectProtocol(projectId, { project: projectObj || null });
+      return true;
+    }
+
     const openedExisting = await this._openExistingMeetingIfAvailable(projectId);
     if (openedExisting) return true;
 
-    // Falls keines offen ist, neues anlegen.
-    return await this._createMeetingAndOpenTops(projectId, projectObj);
+    if (typeof this.router?.showMeetings === "function") {
+      await this.router.showMeetings(projectId, {
+        startMode: true,
+        startReason: "protocol-start-unavailable",
+        integrityError: false,
+      });
+      return true;
+    }
+
+    return false;
   }
 
   async _openExistingMeetingIfAvailable(projectId) {
@@ -1155,9 +1167,11 @@ export default class ProjectsScreen {
       if (!res?.ok) return false;
       const list = Array.isArray(res.list) ? res.list : [];
       const openMeetings = list.filter((m) => Number(m?.is_closed) !== 1);
-      if (openMeetings.length === 0) return false;
+      if (openMeetings.length !== 1) {
+        return false;
+      }
 
-      const meeting = this._pickLatestOpenMeeting(openMeetings);
+      const meeting = openMeetings[0] || null;
       if (!meeting?.id) return false;
 
       this._setProjectRuntimeContext(projectId, meeting.id);
@@ -1186,8 +1200,13 @@ export default class ProjectsScreen {
       const api = window.bbmDb || {};
       if (typeof api.meetingsCreate !== "function") {
         this._flashMsg("meetingsCreate ist nicht verfügbar (Preload/IPC fehlt).", 9000);
-        // Fallback: trotzdem TopsView im Idle-State öffnen
-        await this.router.showTops(null, projectId);
+        if (typeof this.router?.showMeetings === "function") {
+          await this.router.showMeetings(projectId, {
+            startMode: true,
+            startReason: "meetings-create-unavailable",
+            integrityError: false,
+          });
+        }
         this._rememberLastProject(projectId);
         return true;
       }
@@ -1238,7 +1257,13 @@ export default class ProjectsScreen {
       // Wenn Anlage fehlgeschlagen: TopsView trotzdem im Idle-State öffnen
       if (!meetingId) {
         this._setMsg("Öffne Protokoll...");
-        await this.router.showTops(null, projectId);
+        if (typeof this.router?.showMeetings === "function") {
+          await this.router.showMeetings(projectId, {
+            startMode: true,
+            startReason: "meeting-create-failed",
+            integrityError: false,
+          });
+        }
         this._rememberLastProject(projectId);
         return false;
       }

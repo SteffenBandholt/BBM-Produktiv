@@ -6,6 +6,7 @@ import {
   hasActiveModule,
   resolveActiveModuleScreen,
 } from "./modules/index.js";
+import { resolveProjectProtocolEntry } from "./projectProtocolRouting.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -565,7 +566,17 @@ export default class Router {
   }
 
   // Fachlich/protokollzentrierte Pfade: Besprechungen und Tops bleiben noch direkt verdrahtet.
-  async showMeetings(projectId, { printSelectionMode = false, printKind = null } = {}) {
+  async showMeetings(
+    projectId,
+    {
+      printSelectionMode = false,
+      printKind = null,
+      startMode = false,
+      startReason = null,
+      integrityError = false,
+      projectProtocolContext = null,
+    } = {}
+  ) {
     const mod = await import("../views/MeetingsView.js");
     const V = mod.default;
 
@@ -576,12 +587,28 @@ export default class Router {
         projectId,
         printSelectionMode: !!printSelectionMode,
         printKind: printKind || null,
+        startMode: !!startMode,
+        startReason: startReason || null,
+        integrityError: !!integrityError,
+        projectProtocolContext: projectProtocolContext || null,
       }),
       { section: "meetings", isTopsView: false }
     );
   }
 
   async showTops(meetingId, projectId, options = {}) {
+    const effectiveMeetingId = meetingId || null;
+    if (!effectiveMeetingId) {
+      alert("Bitte zuerst eine Besprechung oeffnen.");
+      return false;
+    }
+
+    const effectiveProjectId = projectId || this.currentProjectId || null;
+    if (!effectiveProjectId) {
+      alert("Bitte zuerst ein Projekt auswaehlen.");
+      return false;
+    }
+
     // App-Kern / Screen-Host:
     // Tops laeuft nur, wenn das Protokoll-Modul im aktiven Modulumfang liegt.
     // Der Router umgeht diese Entscheidung an dieser Stelle nicht mehr stillschweigend.
@@ -599,17 +626,67 @@ export default class Router {
     const readOnly = !!opts.readOnly;
 
     this._setProjectRuntimeContext({
-      projectId: projectId || this.currentProjectId || null,
-      meetingId: meetingId || null,
+      projectId: effectiveProjectId,
+      meetingId: effectiveMeetingId,
     });
     this.lastTopsProjectId = this.currentProjectId || null;
     this.lastTopsMeetingId = this.currentMeetingId || null;
 
-    await this.show(new V({ router: this, meetingId, projectId, readOnly }), {
+    await this.show(new V({ router: this, meetingId: effectiveMeetingId, projectId: effectiveProjectId, readOnly }), {
       section: "meetings",
       isTopsView: true,
       pageTitle: "Protokoll",
     });
+  }
+
+  async openProjectProtocol(projectId, options = {}) {
+    const effectiveProjectId = this._resolveProjectId(projectId);
+    if (!effectiveProjectId) {
+      alert("Bitte zuerst ein Projekt auswaehlen.");
+      return {
+        ok: false,
+        reason: "missing-project",
+        target: "blocked",
+        projectId: null,
+        meetingId: null,
+      };
+    }
+
+    const api = window.bbmDb || {};
+    const meetingsRes =
+      typeof api.meetingsListByProject === "function"
+        ? await api.meetingsListByProject(effectiveProjectId)
+        : { ok: false, error: "meetingsListByProject unavailable", list: [] };
+    const meetings = meetingsRes?.ok ? meetingsRes.list || [] : [];
+    const decision = resolveProjectProtocolEntry({
+      projectId: effectiveProjectId,
+      meetings,
+    });
+
+    if (decision.target === "tops" && decision.meetingId) {
+      await this.showTops(decision.meetingId, effectiveProjectId, options);
+      return {
+        ...decision,
+        ok: true,
+      };
+    }
+
+    await this.showMeetings(effectiveProjectId, {
+      printSelectionMode: false,
+      printKind: null,
+      startMode: true,
+      startReason: decision.reason,
+      integrityError: decision.reason === "multiple-open-meetings",
+      projectProtocolContext: {
+        projectId: effectiveProjectId,
+        openMeetingCount: decision.openMeetingCount,
+      },
+    });
+
+    return {
+      ...decision,
+      ok: !!decision.ok,
+    };
   }
 
   async showFirms() {

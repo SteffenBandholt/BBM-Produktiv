@@ -17,6 +17,12 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Projektbasierte Protokoll-Einstiege werden jetzt nicht mehr stillschweigend mit `showTops(null, ...)` aufgelöst:
+  - genau eine offene Besprechung oeffnet den TopsScreen
+  - keine offene Besprechung oeffnet die Besprechungsuebersicht als Startview mit Neuanlage-Einstieg
+  - mehrere offene Besprechungen gehen als Datenintegritaetsfehler in die Besprechungsuebersicht
+  - `TopsScreen` wird nur noch mit echter `meetingId` geladen
+- Nächster offener Schritt: fachliche Sichtpruefung der neuen Besprechungsuebersicht/Startview im Projektkontext.
 - Der Projekt-Arbeitsbereich oeffnet `Protokoll` jetzt wieder mit einem echten offenen Meeting-Kontext, wenn eines im Projekt vorhanden ist; andernfalls faellt der Einstieg in die Besprechungsuebersicht zurueck statt in einen leeren Tops-Start.
 - Meilenstein externe Lizenz-App-Vorbereitung ist umgesetzt:
   - BBM registriert keine `license-admin:*`-IPCs mehr und startet keine Generator-/Customer-Setup-Registrierung aus `registerLicenseIpc`.

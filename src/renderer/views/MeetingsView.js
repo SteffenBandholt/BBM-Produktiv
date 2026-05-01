@@ -1,17 +1,32 @@
 // src/renderer/views/MeetingsView.js
 
 export default class MeetingsView {
-  constructor({ router, projectId, printSelectionMode = false, printKind = null }) {
+  constructor({
+    router,
+    projectId,
+    printSelectionMode = false,
+    printKind = null,
+    startMode = false,
+    startReason = null,
+    integrityError = false,
+    projectProtocolContext = null,
+  }) {
     this.router = router;
     this.projectId = projectId;
     this.printSelectionMode = !!printSelectionMode;
     this.printKind = printKind === "todo" ? "todo" : (printKind === "firms" ? "firms" : null);
+    this.startMode = !!startMode;
+    this.startReason = String(startReason || "").trim();
+    this.integrityError = !!integrityError;
+    this.projectProtocolContext = projectProtocolContext || null;
 
     this.root = null;
     this.listEl = null;
     this.projectTitleEl = null;
     this.btnBackToTops = null;
+    this.btnCreateProtocol = null;
     this.selectionHintEl = null;
+    this.startNoticeEl = null;
     this.searchInput = null;
     this.btnSearch = null;
     this.btnFilterToggle = null;
@@ -28,6 +43,65 @@ export default class MeetingsView {
     this._lastClickAt = 0;
     this._lastClickId = null;
     this._printBusy = false;
+  }
+
+  _todayISO() {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  _isoToDDMMYYYY(iso) {
+    const raw = String(iso || "").trim();
+    const m = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return "";
+    return `${m[3]}.${m[2]}.${m[1]}`;
+  }
+
+  async _createProtocolFromStartView() {
+    if (!this.startMode || this.printSelectionMode) return false;
+    const api = window.bbmDb || {};
+    if (typeof api.meetingsCreate !== "function") {
+      alert("meetingsCreate ist nicht verfuegbar (Preload/IPC fehlt).");
+      return false;
+    }
+
+    const pid = this.projectId || this.router?.currentProjectId || null;
+    if (!pid) {
+      alert("Bitte zuerst ein Projekt auswaehlen.");
+      return false;
+    }
+
+    let nextIndex = 1;
+    if (typeof api.meetingsListByProject === "function") {
+      try {
+        const res = await api.meetingsListByProject(pid);
+        if (res?.ok) {
+          const list = Array.isArray(res.list) ? res.list : [];
+          const maxIdx = list.reduce((mx, x) => Math.max(mx, Number(x?.meeting_index || 0)), 0);
+          nextIndex = (maxIdx || 0) + 1;
+        }
+      } catch (_err) {
+        // fallback bleibt aktiv
+      }
+    }
+
+    const dateISO = this._todayISO();
+    const title = `#${nextIndex} ${this._isoToDDMMYYYY(dateISO) || dateISO}`;
+    const createRes = await api.meetingsCreate({ projectId: pid, title });
+    if (!createRes?.ok || !createRes?.meeting?.id) {
+      alert(createRes?.error || "Besprechung konnte nicht angelegt werden.");
+      return false;
+    }
+
+    if (typeof this.router?.showTops === "function") {
+      await this.router.showTops(createRes.meeting.id, pid);
+      return true;
+    }
+
+    return false;
   }
 
   _updateBackButtonState() {
@@ -222,28 +296,49 @@ export default class MeetingsView {
     head.style.marginBottom = "10px";
 
     const btnBackToTops = document.createElement("button");
-    btnBackToTops.textContent = this.printSelectionMode ? "Abbrechen" : "zum Protokoll:";
-    btnBackToTops.onclick = () => {
+    btnBackToTops.textContent = this.printSelectionMode
+      ? "Abbrechen"
+      : this.startMode
+        ? "Zurueck"
+        : "zum Protokoll:";
+    btnBackToTops.onclick = async () => {
       if (this.printSelectionMode) {
         if (typeof this.router?.cancelPrintSelection === "function") {
-          this.router.cancelPrintSelection({ restore: true });
+          await this.router.cancelPrintSelection({ restore: true });
           return;
         }
-        this.router.showMeetings(this.projectId);
+        await this.router.showMeetings(this.projectId);
+        return;
+      }
+      if (this.startMode) {
+        if (typeof this.router?.showProjectWorkspace === "function") {
+          await this.router.showProjectWorkspace(this.projectId);
+          return;
+        }
+        await this.router.showProjects();
         return;
       }
       if (this.openMeetingId) {
-        this.router.showTops(this.openMeetingId, this.projectId);
+        await this.router.showTops(this.openMeetingId, this.projectId);
         return;
       }
-      this.router.showProjects();
+      await this.router.showProjects();
+    };
+
+    const btnCreateProtocol = document.createElement("button");
+    btnCreateProtocol.type = "button";
+    btnCreateProtocol.textContent = "Neues Protokoll";
+    btnCreateProtocol.style.display = this.startMode && !this.printSelectionMode ? "" : "none";
+    btnCreateProtocol.onclick = async () => {
+      if (this._printBusy) return;
+      await this._createProtocolFromStartView();
     };
 
     const h = document.createElement("h2");
     h.textContent = `#${this.projectId}`;
     h.style.margin = "0";
 
-    head.append(btnBackToTops, h);
+    head.append(btnBackToTops, btnCreateProtocol, h);
 
     // ===== Suche/Filter =====
     const searchRow = document.createElement("div");
@@ -323,13 +418,28 @@ export default class MeetingsView {
       ? `Geschlossene Besprechung ausw\u00e4hlen (${this._printKindLabel()})`
       : "";
 
-    root.append(head, selectionHint, searchRow, list);
+    const startNotice = document.createElement("div");
+    startNotice.style.display = this.startMode && !this.printSelectionMode ? "block" : "none";
+    startNotice.style.margin = "0 0 10px 0";
+    startNotice.style.padding = "10px 12px";
+    startNotice.style.border = "1px solid #d7d7d7";
+    startNotice.style.borderRadius = "8px";
+    startNotice.style.background = this.integrityError ? "#fff6e6" : "#f7f7f7";
+    startNotice.style.color = this.integrityError ? "#8a4b00" : "#333";
+    startNotice.style.fontSize = "13px";
+    startNotice.textContent = this.integrityError
+      ? "Datenintegritaetsfehler: Mehrere offene Besprechungen gefunden. Bitte Besprechungen pruefen."
+      : "Kein offenes Protokoll vorhanden. Hier kann ein neues Protokoll angelegt werden.";
+
+    root.append(head, startNotice, selectionHint, searchRow, list);
 
     this.root = root;
     this.listEl = list;
     this.projectTitleEl = h;
     this.btnBackToTops = btnBackToTops;
+    this.btnCreateProtocol = btnCreateProtocol;
     this.selectionHintEl = selectionHint;
+    this.startNoticeEl = startNotice;
     this.searchInput = searchInput;
     this.btnSearch = btnSearch;
     this.btnFilterToggle = btnFilterToggle;

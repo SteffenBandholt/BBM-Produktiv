@@ -95,11 +95,9 @@ async function runProjektverwaltungModuleTests(run) {
     const screen = new ProjectWorkspaceScreen({
       router: {
         currentProjectId: "9",
-        async showMeetings(projectId) {
-          routerCalls.push({ module: "meetings", projectId });
-        },
-        async showTops(meetingId, projectId) {
-          routerCalls.push({ meetingId, projectId });
+        async openProjectProtocol(projectId) {
+          routerCalls.push({ module: "protocol", projectId });
+          return { ok: true, target: "tops", meetingId: "22" };
         },
         async showProjectFirms(projectId) {
           routerCalls.push({ module: "projectFirms", projectId });
@@ -156,12 +154,12 @@ async function runProjektverwaltungModuleTests(run) {
 
       const opened = await screen.openProjectModule("protokoll");
       assert.equal(opened, true);
-      assert.deepEqual(routerCalls, [{ meetingId: "22", projectId: "9" }]);
+      assert.deepEqual(routerCalls, [{ module: "protocol", projectId: "9" }]);
 
       const openedFirms = await screen.openProjectModule("projectFirms");
       assert.equal(openedFirms, true);
       assert.deepEqual(routerCalls, [
-        { meetingId: "22", projectId: "9" },
+        { module: "protocol", projectId: "9" },
         { module: "projectFirms", projectId: "9" },
       ]);
     } finally {

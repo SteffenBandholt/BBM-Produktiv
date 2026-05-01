@@ -249,25 +249,28 @@ export default class ProjectFirmsView {
     btnToProject.onclick = async () => {
       const r = this.router || null;
       const pid = this.projectId || r?.currentProjectId || null;
-      if (!r || !pid || typeof r.showTops !== "function") {
+      if (!r || !pid) {
         if (r && typeof r.showProjects === "function") await r.showProjects();
         return;
       }
 
-      let meetingId = r.currentMeetingId || null;
-      if (!meetingId && typeof window?.bbmDb?.meetingsListByProject === "function") {
-        const res = await window.bbmDb.meetingsListByProject(pid);
-        if (res?.ok && Array.isArray(res.list) && res.list.length) {
-          meetingId = res.list[0]?.id || null;
-        }
-      }
-
-      if (!meetingId) {
-        alert("Keine Besprechung vorhanden. Bitte zuerst ein Protokoll anlegen.");
+      if (typeof r.openProjectProtocol === "function") {
+        await r.openProjectProtocol(pid);
         return;
       }
 
-      await r.showTops(meetingId, pid);
+      if (typeof r.showMeetings === "function") {
+        await r.showMeetings(pid, {
+          startMode: true,
+          startReason: "protocol-start-unavailable",
+          integrityError: false,
+        });
+        return;
+      }
+
+      if (typeof r.showProjects === "function") {
+        await r.showProjects();
+      }
     };
 
     const msg = document.createElement("div");

@@ -117,27 +117,17 @@ export default class ProjectWorkspaceScreen {
   async _openProtocolModule(projectId) {
     const effectiveProjectId = projectId || this.projectId || this.router?.currentProjectId || null;
     if (!effectiveProjectId) return false;
-    if (typeof this.router?.showTops !== "function") return false;
-
-    const api = window.bbmDb || {};
-    if (typeof api.meetingsListByProject === "function") {
-      try {
-        const res = await api.meetingsListByProject(effectiveProjectId);
-        if (res?.ok) {
-          const openMeetings = (res.list || []).filter((m) => Number(m?.is_closed) !== 1);
-          const meeting = this._pickLatestOpenMeeting(openMeetings);
-          if (meeting?.id) {
-            await this.router.showTops(meeting.id, effectiveProjectId);
-            return true;
-          }
-        }
-      } catch (_err) {
-        // Fallback unten bleibt aktiv.
-      }
+    if (typeof this.router?.openProjectProtocol === "function") {
+      await this.router.openProjectProtocol(effectiveProjectId);
+      return true;
     }
 
     if (typeof this.router?.showMeetings === "function") {
-      await this.router.showMeetings(effectiveProjectId);
+      await this.router.showMeetings(effectiveProjectId, {
+        startMode: true,
+        startReason: "protocol-start-unavailable",
+        integrityError: false,
+      });
       return true;
     }
 
