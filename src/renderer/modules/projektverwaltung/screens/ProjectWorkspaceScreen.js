@@ -97,6 +97,53 @@ export default class ProjectWorkspaceScreen {
     return true;
   }
 
+  _pickLatestOpenMeeting(openMeetings) {
+    const list = Array.isArray(openMeetings) ? openMeetings : [];
+    if (!list.length) return null;
+
+    return list.reduce((best, cur) => {
+      const bestIdx = Number(best?.meeting_index ?? best?.meetingIndex ?? 0);
+      const curIdx = Number(cur?.meeting_index ?? cur?.meetingIndex ?? 0);
+      if (curIdx > bestIdx) return cur;
+      if (curIdx === bestIdx) {
+        const bestId = Number(best?.id ?? 0);
+        const curId = Number(cur?.id ?? 0);
+        return curId > bestId ? cur : best;
+      }
+      return best;
+    }, list[0]);
+  }
+
+  async _openProtocolModule(projectId) {
+    const effectiveProjectId = projectId || this.projectId || this.router?.currentProjectId || null;
+    if (!effectiveProjectId) return false;
+    if (typeof this.router?.showTops !== "function") return false;
+
+    const api = window.bbmDb || {};
+    if (typeof api.meetingsListByProject === "function") {
+      try {
+        const res = await api.meetingsListByProject(effectiveProjectId);
+        if (res?.ok) {
+          const openMeetings = (res.list || []).filter((m) => Number(m?.is_closed) !== 1);
+          const meeting = this._pickLatestOpenMeeting(openMeetings);
+          if (meeting?.id) {
+            await this.router.showTops(meeting.id, effectiveProjectId);
+            return true;
+          }
+        }
+      } catch (_err) {
+        // Fallback unten bleibt aktiv.
+      }
+    }
+
+    if (typeof this.router?.showMeetings === "function") {
+      await this.router.showMeetings(effectiveProjectId);
+      return true;
+    }
+
+    return false;
+  }
+
   async openProjectModule(moduleId) {
     const normalizedModuleId = normalizeText(moduleId);
     const projectId = this.projectId || this.router?.currentProjectId || null;
@@ -109,9 +156,7 @@ export default class ProjectWorkspaceScreen {
     }
 
     if (normalizedModuleId === "protokoll") {
-      if (typeof this.router?.showTops !== "function") return false;
-      await this.router.showTops(null, projectId);
-      return true;
+      return await this._openProtocolModule(projectId);
     }
 
     return false;

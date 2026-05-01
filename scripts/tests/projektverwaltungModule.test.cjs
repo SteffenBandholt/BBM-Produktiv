@@ -95,6 +95,9 @@ async function runProjektverwaltungModuleTests(run) {
     const screen = new ProjectWorkspaceScreen({
       router: {
         currentProjectId: "9",
+        async showMeetings(projectId) {
+          routerCalls.push({ module: "meetings", projectId });
+        },
         async showTops(meetingId, projectId) {
           routerCalls.push({ meetingId, projectId });
         },
@@ -123,27 +126,47 @@ async function runProjektverwaltungModuleTests(run) {
       ],
     });
 
-    const modules = screen.getAvailableProjectModules();
-    assert.deepEqual(
-      modules.map((item) => item.moduleId),
-      ["protokoll", "projectFirms"]
-    );
-    assert.deepEqual(
-      modules.map((item) => item.label),
-      ["Protokoll", "Projektfirmen"]
-    );
-    assert.equal(screen.getProjectDisplayText(), "P-12 - Rohbau");
+    const previousWindow = global.window;
+    global.window = {
+      bbmDb: {
+        async meetingsListByProject(projectId) {
+          assert.equal(projectId, "9");
+          return {
+            ok: true,
+            list: [
+              { id: "21", meeting_index: 1, is_closed: 1 },
+              { id: "22", meeting_index: 2, is_closed: 0 },
+            ],
+          };
+        },
+      },
+    };
 
-    const opened = await screen.openProjectModule("protokoll");
-    assert.equal(opened, true);
-    assert.deepEqual(routerCalls, [{ meetingId: null, projectId: "9" }]);
+    try {
+      const modules = screen.getAvailableProjectModules();
+      assert.deepEqual(
+        modules.map((item) => item.moduleId),
+        ["protokoll", "projectFirms"]
+      );
+      assert.deepEqual(
+        modules.map((item) => item.label),
+        ["Protokoll", "Projektfirmen"]
+      );
+      assert.equal(screen.getProjectDisplayText(), "P-12 - Rohbau");
 
-    const openedFirms = await screen.openProjectModule("projectFirms");
-    assert.equal(openedFirms, true);
-    assert.deepEqual(routerCalls, [
-      { meetingId: null, projectId: "9" },
-      { module: "projectFirms", projectId: "9" },
-    ]);
+      const opened = await screen.openProjectModule("protokoll");
+      assert.equal(opened, true);
+      assert.deepEqual(routerCalls, [{ meetingId: "22", projectId: "9" }]);
+
+      const openedFirms = await screen.openProjectModule("projectFirms");
+      assert.equal(openedFirms, true);
+      assert.deepEqual(routerCalls, [
+        { meetingId: "22", projectId: "9" },
+        { module: "projectFirms", projectId: "9" },
+      ]);
+    } finally {
+      global.window = previousWindow;
+    }
   });
 
   await run("Projektverwaltung: Projektanzeige ist robust und Projektliste-Button nutzt showProjects", async () => {
