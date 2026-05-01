@@ -139,6 +139,30 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes("await this.router.showProjectWorkspace(projectId, projectOptions);"), true);
   });
 
+  await run("Protokoll Blur-Save: TopsScreen verdrahtet Kurztext/Langtext-Blur zum Speichern", () => {
+    const sharedEditboxFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/SharedEditboxCore.js"
+    );
+    const workbenchFile = path.join(__dirname, "../../src/renderer/tops/components/TopsWorkbench.js");
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const sharedEditboxSource = fs.readFileSync(sharedEditboxFile, "utf8");
+    const workbenchSource = fs.readFileSync(workbenchFile, "utf8");
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+
+    assert.equal(sharedEditboxSource.includes('onTextBlur'), true);
+    assert.equal(sharedEditboxSource.includes('addEventListener("blur"'), true);
+    assert.equal(workbenchSource.includes("onTextBlur"), true);
+    assert.equal(screenSource.includes("_handleWorkbenchTextBlur"), true);
+    assert.equal(screenSource.includes("_saveActiveDraft({ resetMoveMode: false })"), true);
+    assert.equal(screenSource.includes("this.store.setState({ isWriting: false });"), true);
+    assert.equal(screenSource.includes("finally {"), true);
+    assert.equal(screenSource.includes("this._syncScreenState();"), true);
+  });
+
   await run("Protokoll Move-Mode: TopsList und Styles unterscheiden Schiebling, Ziel und Blockade", () => {
     const listFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsList.js");
     const styleFile = path.join(

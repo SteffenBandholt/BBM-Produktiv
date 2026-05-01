@@ -24,6 +24,7 @@ function buildProtocolActionButtonSpecs() {
 export class TopsWorkbench {
   constructor({
     onDraftChange,
+    onTextBlur,
     onSave,
     onDelete,
     onToggleMove,
@@ -33,6 +34,7 @@ export class TopsWorkbench {
     loadEmployeesByCompany,
   } = {}) {
     this.onDraftChange = typeof onDraftChange === "function" ? onDraftChange : null;
+    this.onTextBlur = typeof onTextBlur === "function" ? onTextBlur : null;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.onDelete = typeof onDelete === "function" ? onDelete : null;
     this.onToggleMove = typeof onToggleMove === "function" ? onToggleMove : null;
@@ -100,6 +102,7 @@ export class TopsWorkbench {
   _buildSharedEditboxCore() {
     this.sharedEditboxCore = new SharedEditboxCore({
       onDraftChange: () => this._emitDraftChange(),
+      onTextBlur: (payload) => this._emitTextBlur(payload),
     });
   }
 
@@ -140,6 +143,10 @@ export class TopsWorkbench {
 
   _emitDraftChange() {
     if (this.onDraftChange) this.onDraftChange(this.getDraft());
+  }
+
+  _emitTextBlur(payload) {
+    if (this.onTextBlur) this.onTextBlur(payload || {});
   }
 
   getDraft() {

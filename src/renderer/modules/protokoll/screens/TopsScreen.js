@@ -208,6 +208,7 @@ export default class TopsScreen {
   _createProtocolWorkbenchActionBridge() {
     return {
       onDraftChange: (draft) => this._handleWorkbenchDraftChange(draft),
+      onTextBlur: async (payload) => this._handleWorkbenchTextBlur(payload),
       onSave: async () => this._handleWorkbenchSave(),
       onDelete: async () => this._handleWorkbenchDelete(),
       onToggleMove: async () => this._handleWorkbenchToggleMove(),
@@ -473,6 +474,14 @@ export default class TopsScreen {
   }
 
   async _handleWorkbenchSave() {
+    await this._saveActiveDraft({ resetMoveMode: true });
+  }
+
+  async _handleWorkbenchTextBlur(_payload = {}) {
+    await this._saveActiveDraft({ resetMoveMode: false });
+  }
+
+  async _saveActiveDraft({ resetMoveMode = false } = {}) {
     const state = this.store.getState();
     if (state.isWriting) return;
     const selectedTop = getSelectedTop(state);
@@ -487,10 +496,12 @@ export default class TopsScreen {
       const res = await this.commands.saveDraft(patch);
       if (!res?.ok) return;
       this.commands.updateDraft(editorFromTop(getSelectedTop(this.store.getState())));
-      this.commands.toggleMoveMode(false);
-      this._syncScreenState();
+      if (resetMoveMode) {
+        this.commands.toggleMoveMode(false);
+      }
     } finally {
       this.store.setState({ isWriting: false });
+      this._syncScreenState();
     }
   }
 

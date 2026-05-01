@@ -33,8 +33,9 @@ function buildEditboxFlagsFromEditorValue(editorValue = {}) {
 }
 
 export class SharedEditboxCore {
-  constructor({ onDraftChange } = {}) {
+  constructor({ onDraftChange, onTextBlur } = {}) {
     this.onDraftChange = typeof onDraftChange === "function" ? onDraftChange : null;
+    this.onTextBlur = typeof onTextBlur === "function" ? onTextBlur : null;
 
     this.editbox = new EditboxShell();
     this.editbox.setLimits({ shortText: 70 });
@@ -67,10 +68,20 @@ export class SharedEditboxCore {
     this.root.addEventListener("change", () => this._emitDraftChange());
     this.editbox.flagsWrap.addEventListener("input", () => this._emitDraftChange());
     this.editbox.flagsWrap.addEventListener("change", () => this._emitDraftChange());
+    this.editbox.shortInput.addEventListener("blur", () => this._emitTextBlur("shortText"));
+    this.editbox.longInput.addEventListener("blur", () => this._emitTextBlur("longText"));
   }
 
   _emitDraftChange() {
     if (this.onDraftChange) this.onDraftChange(this.getDraft());
+  }
+
+  _emitTextBlur(field) {
+    if (!this.onTextBlur) return;
+    this.onTextBlur({
+      field,
+      draft: this.getDraft(),
+    });
   }
 
   _attachCounterToLabel(labelEl, counterEl) {

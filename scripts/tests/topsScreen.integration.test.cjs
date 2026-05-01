@@ -3,13 +3,21 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runTopsScreenIntegrationTests(run) {
-  const [{ createTopsStore }, { TopsCommands }, vm] = await Promise.all([
+  const [{ createTopsStore }, { TopsCommands }, vm, workbenchVmMod] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/state/TopsStore.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/domain/TopsCommands.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsWorkbenchViewModel.js")),
   ]);
 
-  const { buildWorkbenchState, shouldShowWorkbench, buildListItemsFromState, editorFromTop, buildPatchFromDraft } = vm;
+  const {
+    buildWorkbenchState,
+    shouldShowWorkbench,
+    buildListItemsFromState,
+    editorFromTop,
+    buildPatchFromDraft,
+  } = vm;
+  const { buildWorkbenchVm } = workbenchVmMod;
 
   await run("Tops v2 Integration: Auswahl -> Workbench-State + ReadOnly-Sichtbarkeit", async () => {
     const list = [
@@ -37,10 +45,13 @@ async function runTopsScreenIntegrationTests(run) {
     commands.updateDraft(editorFromTop(selected));
 
     const wbWithSelection = buildWorkbenchState(store.getState());
+    const workbenchVm = buildWorkbenchVm(store.getState(), selected);
     assert.equal(wbWithSelection.hasSelection, true);
     assert.equal(wbWithSelection.canSave, true);
     assert.equal(wbWithSelection.canMove, true);
     assert.equal(wbWithSelection.canDelete, true);
+    assert.equal(workbenchVm.editor.access.shortTextReadOnly, false);
+    assert.equal(workbenchVm.editor.access.longTextReadOnly, false);
     assert.equal(shouldShowWorkbench(store.getState()), true);
 
     store.setState({ isReadOnly: true });
