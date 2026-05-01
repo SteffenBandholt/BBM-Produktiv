@@ -10,11 +10,29 @@ export function isBlue(top) {
   return Number(top?.is_carried_over) !== 1;
 }
 
-export function isAllowedMoveTarget(target, movingTop) {
+function isDescendantOf(topId, ancestorId, tops) {
+  const list = Array.isArray(tops) ? tops : [];
+  const byId = new Map(list.map((top) => [String(top?.id ?? ""), top]));
+  let current = byId.get(String(topId ?? "")) || null;
+  let guard = 0;
+
+  while (current && guard < 100) {
+    const parentId = current?.parent_top_id ?? null;
+    if (parentId === null || parentId === undefined || parentId === "") return false;
+    if (String(parentId) === String(ancestorId ?? "")) return true;
+    current = byId.get(String(parentId)) || null;
+    guard += 1;
+  }
+
+  return false;
+}
+
+export function isAllowedMoveTarget(target, movingTop, tops = []) {
   if (!movingTop || !target) return false;
   if (String(target.id) === String(movingTop.id)) return false;
   const level = Number(target.level);
   if (!Number.isFinite(level)) return false;
+  if (isDescendantOf(target.id, movingTop.id, tops)) return false;
   return level >= 1 && level <= 3;
 }
 

@@ -179,7 +179,7 @@ export function buildListItemsFromState(state) {
 
     let isMoveTarget = null;
     if (state?.isMoveMode && movingTop) {
-      isMoveTarget = isAllowedMoveTarget(top, movingTop);
+      isMoveTarget = isAllowedMoveTarget(top, movingTop, tops);
     }
 
     rows.push({

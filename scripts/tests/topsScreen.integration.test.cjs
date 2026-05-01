@@ -56,19 +56,19 @@ async function runTopsScreenIntegrationTests(run) {
     const state = {
       meetingId: 7,
       isMoveMode: true,
-      selectedTopId: 100,
+      selectedTopId: 101,
       tops: [
-        { id: 100, level: 2, title: "Self", displayNumber: 2 },
-        { id: 101, level: 3, title: "Valid", displayNumber: 3 },
-        { id: 102, level: 4, title: "Invalid", displayNumber: 4 },
+        { id: 100, level: 2, title: "Valid", displayNumber: 2, parent_top_id: null },
+        { id: 101, level: 3, title: "Self", displayNumber: 3, parent_top_id: null },
+        { id: 102, level: 4, title: "Invalid", displayNumber: 4, parent_top_id: 101 },
       ],
     };
 
     const rows = buildListItemsFromState(state);
     const byId = new Map(rows.map((r) => [String(r.id), r]));
 
-    assert.equal(byId.get("100").isMoveTarget, false);
-    assert.equal(byId.get("101").isMoveTarget, true);
+    assert.equal(byId.get("100").isMoveTarget, true);
+    assert.equal(byId.get("101").isMoveTarget, false);
     assert.equal(byId.get("102").isMoveTarget, false);
   });
 
