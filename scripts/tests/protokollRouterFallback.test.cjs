@@ -139,6 +139,23 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes("await this.router.showProjectWorkspace(projectId, projectOptions);"), true);
   });
 
+  await run("Protokoll Move-Mode: TopsList und Styles unterscheiden Schiebling, Ziel und Blockade", () => {
+    const listFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsList.js");
+    const styleFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/styles/tops.css"
+    );
+    const listSource = fs.readFileSync(listFile, "utf8");
+    const styleSource = fs.readFileSync(styleFile, "utf8");
+
+    assert.equal(listSource.includes("dataset.moveState"), true);
+    assert.equal(listSource.includes('moveState === "current" || moveState === "blocked"'), true);
+    assert.equal(styleSource.includes('[data-move-state="current"]'), true);
+    assert.equal(styleSource.includes('[data-move-state="blocked"]'), true);
+    assert.equal(styleSource.includes('[data-move-state="target"]:hover'), true);
+    assert.equal(styleSource.includes("repeating-linear-gradient"), true);
+  });
+
   await run("Protokoll Repository-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
     const screenFile = path.join(
       __dirname,

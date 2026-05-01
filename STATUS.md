@@ -24,6 +24,10 @@ Sie ergänzt:
   - `TopsScreen` wird nur noch mit echter `meetingId` geladen
 - Schliessen/Zurueck im TopsScreen fuehrt bei vorhandenem Projektkontext jetzt in den Projekt-Arbeitsbereich zurueck; ohne Kontext bleibt der sichere Fallback auf `showProjects()`.
 - Der Move-Mode markiert im Protokoll jetzt keine direkten Nachkommen des verschobenen TOPs mehr als Ziel; der bekannte Zyklus-Fehler aus dem Domain-Check wird damit schon in der UI vermieden.
+- Die Move-Mode-Darstellung unterscheidet jetzt Schiebling, erlaubte Ziele und gesperrte Ziele visuell klar:
+  - Schiebling: orange Rand
+  - erlaubtes Ziel: gruen nur beim aktiven Hover/Fokus
+  - gesperrtes Ziel und direkte Nachkommen: rot schraffiert und nicht klickbar
 - Nächster offener Schritt: fachliche Sichtpruefung der neuen Besprechungsuebersicht/Startview im Projektkontext.
 - Der Projekt-Arbeitsbereich oeffnet `Protokoll` jetzt wieder mit einem echten offenen Meeting-Kontext, wenn eines im Projekt vorhanden ist; andernfalls faellt der Einstieg in die Besprechungsuebersicht zurueck statt in einen leeren Tops-Start.
 - Meilenstein externe Lizenz-App-Vorbereitung ist umgesetzt:

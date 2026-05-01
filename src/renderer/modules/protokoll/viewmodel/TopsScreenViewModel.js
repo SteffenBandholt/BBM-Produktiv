@@ -178,8 +178,18 @@ export function buildListItemsFromState(state) {
     if (responsible) meta.push(responsible);
 
     let isMoveTarget = null;
+    let moveState = "normal";
     if (state?.isMoveMode && movingTop) {
-      isMoveTarget = isAllowedMoveTarget(top, movingTop, tops);
+      if (String(top?.id ?? "") === String(movingTop?.id ?? "")) {
+        moveState = "current";
+        isMoveTarget = false;
+      } else if (isAllowedMoveTarget(top, movingTop, tops)) {
+        moveState = "target";
+        isMoveTarget = true;
+      } else {
+        moveState = "blocked";
+        isMoveTarget = false;
+      }
     }
 
     rows.push({
@@ -192,6 +202,7 @@ export function buildListItemsFromState(state) {
       isSelected: String(top?.id) === String(selectedId ?? ""),
       isMoveMode: !!state?.isMoveMode,
       isMoveTarget,
+      moveState,
       visualState: visual.visualState,
       showStar: visual.showStar,
       showChangedMarker: visual.showChangedMarker,

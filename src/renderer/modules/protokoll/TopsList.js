@@ -21,10 +21,14 @@ export class TopsList {
   _renderRow(item = {}) {
     const rowEl = document.createElement("li");
     rowEl.className = "bbm-tops-list-row";
+    const moveState =
+      String(item.moveState || "").trim() ||
+      (item.isMoveMode ? (item.isMoveTarget ? "target" : "blocked") : "normal");
     rowEl.dataset.topId = String(item.id || "");
     rowEl.dataset.topLevel = String(item.level || 1);
     rowEl.dataset.isSelected = item.isSelected ? "true" : "false";
     rowEl.dataset.isMoveMode = item.isMoveMode ? "true" : "false";
+    rowEl.dataset.moveState = moveState;
     rowEl.dataset.visualState = String(item.visualState || "carried");
     rowEl.dataset.titleTone = String(item.titleTone || "black");
     rowEl.dataset.isMoveTarget =
@@ -95,6 +99,7 @@ export class TopsList {
     rowEl.appendChild(row);
 
     rowEl.onclick = async () => {
+      if (moveState === "current" || moveState === "blocked") return;
       if (this.onRowClick) await this.onRowClick(item);
     };
 

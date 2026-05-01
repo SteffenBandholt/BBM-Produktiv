@@ -70,6 +70,9 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(byId.get("100").isMoveTarget, true);
     assert.equal(byId.get("101").isMoveTarget, false);
     assert.equal(byId.get("102").isMoveTarget, false);
+    assert.equal(byId.get("100").moveState, "target");
+    assert.equal(byId.get("101").moveState, "current");
+    assert.equal(byId.get("102").moveState, "blocked");
   });
 
   await run("Tops v2 Integration: Save/Delete + Reload haelt Zustand konsistent", async () => {
