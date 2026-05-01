@@ -22,6 +22,7 @@ Sie ergänzt:
   - keine offene Besprechung oeffnet die Besprechungsuebersicht als Startview mit Neuanlage-Einstieg
   - mehrere offene Besprechungen gehen als Datenintegritaetsfehler in die Besprechungsuebersicht
   - `TopsScreen` wird nur noch mit echter `meetingId` geladen
+- Schliessen/Zurueck im TopsScreen fuehrt bei vorhandenem Projektkontext jetzt in den Projekt-Arbeitsbereich zurueck; ohne Kontext bleibt der sichere Fallback auf `showProjects()`.
 - Nächster offener Schritt: fachliche Sichtpruefung der neuen Besprechungsuebersicht/Startview im Projektkontext.
 - Der Projekt-Arbeitsbereich oeffnet `Protokoll` jetzt wieder mit einem echten offenen Meeting-Kontext, wenn eines im Projekt vorhanden ist; andernfalls faellt der Einstieg in die Besprechungsuebersicht zurueck statt in einen leeren Tops-Start.
 - Meilenstein externe Lizenz-App-Vorbereitung ist umgesetzt:

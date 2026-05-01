@@ -42,6 +42,7 @@ export default class TopsScreen {
     this.router = options.router || null;
     this.projectId = options.projectId || null;
     this.meetingId = options.meetingId || null;
+    this.returnContext = options.returnContext || null;
 
     this.root = null;
     this.header = null;
@@ -149,9 +150,7 @@ export default class TopsScreen {
   _buildHeader() {
     this.header = new TopsHeader({
       onClose: async () => {
-        if (typeof this.router?.showProjects === "function") {
-          await this.router.showProjects();
-        }
+        await this._returnAfterClose();
       },
       onEndMeeting: async () => {
         if (this.store.getState().isWriting) return;
@@ -440,6 +439,32 @@ export default class TopsScreen {
       meetingMeta: state.meetingMeta || null,
       isReadOnly: !!state.isReadOnly,
     });
+  }
+
+  async _returnAfterClose() {
+    const projectId =
+      this.projectId ||
+      this.returnContext?.projectId ||
+      this.store?.getState?.()?.projectId ||
+      this.router?.currentProjectId ||
+      null;
+
+    const projectOptions =
+      this.returnContext?.project && typeof this.returnContext.project === "object"
+        ? { project: this.returnContext.project }
+        : {};
+
+    if (projectId && typeof this.router?.showProjectWorkspace === "function") {
+      await this.router.showProjectWorkspace(projectId, projectOptions);
+      return true;
+    }
+
+    if (typeof this.router?.showProjects === "function") {
+      await this.router.showProjects();
+      return true;
+    }
+
+    return false;
   }
 
   _handleWorkbenchDraftChange(draft) {

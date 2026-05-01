@@ -624,6 +624,7 @@ export default class Router {
 
     const opts = options && typeof options === "object" ? options : {};
     const readOnly = !!opts.readOnly;
+    const returnContext = opts.returnContext || null;
 
     this._setProjectRuntimeContext({
       projectId: effectiveProjectId,
@@ -632,11 +633,20 @@ export default class Router {
     this.lastTopsProjectId = this.currentProjectId || null;
     this.lastTopsMeetingId = this.currentMeetingId || null;
 
-    await this.show(new V({ router: this, meetingId: effectiveMeetingId, projectId: effectiveProjectId, readOnly }), {
-      section: "meetings",
-      isTopsView: true,
-      pageTitle: "Protokoll",
-    });
+    await this.show(
+      new V({
+        router: this,
+        meetingId: effectiveMeetingId,
+        projectId: effectiveProjectId,
+        readOnly,
+        returnContext,
+      }),
+      {
+        section: "meetings",
+        isTopsView: true,
+        pageTitle: "Protokoll",
+      }
+    );
   }
 
   async openProjectProtocol(projectId, options = {}) {
@@ -664,7 +674,17 @@ export default class Router {
     });
 
     if (decision.target === "tops" && decision.meetingId) {
-      await this.showTops(decision.meetingId, effectiveProjectId, options);
+      const returnContext =
+        options?.returnContext ||
+        {
+          section: "projectWorkspace",
+          projectId: effectiveProjectId,
+          project: options?.project || null,
+        };
+      await this.showTops(decision.meetingId, effectiveProjectId, {
+        ...options,
+        returnContext,
+      });
       return {
         ...decision,
         ok: true,

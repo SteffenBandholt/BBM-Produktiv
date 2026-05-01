@@ -127,6 +127,18 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(closeFlowSource.includes("tops/domain/TopsCloseFlow.js"), true);
   });
 
+  await run("Protokoll Close-Handler: TopsScreen nutzt den Projektkontext-Ruecksprung", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+
+    assert.equal(screenSource.includes("_returnAfterClose()"), true);
+    assert.equal(screenSource.includes("await this.router.showProjects();"), true);
+    assert.equal(screenSource.includes("await this.router.showProjectWorkspace(projectId, projectOptions);"), true);
+  });
+
   await run("Protokoll Repository-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
     const screenFile = path.join(
       __dirname,
