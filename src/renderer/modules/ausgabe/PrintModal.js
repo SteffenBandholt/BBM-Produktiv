@@ -35,6 +35,7 @@ import { applyPopupButtonStyle } from "../../ui/popupButtonStyles.js";
 import { createPopupOverlay, stylePopupCard, registerPopupCloseHandlers } from "../../ui/popupCommon.js";
 import { OVERLAY_TOP } from "../../ui/zIndex.js";
 import { buildProtocolPdfFileName } from "../../utils/protocolPdfNaming.js";
+import { resolvePrintUserData } from "../../../shared/print/userDataResolver.mjs";
 
 export default class PrintModal {
   constructor({ router } = {}) {
@@ -433,6 +434,27 @@ export default class PrintModal {
     }
 
     return { dir, settings: resolvedSettings };
+  }
+
+  async _resolvePrintUserData({ settings = null, api = null } = {}) {
+    const dbApi = api || window.bbmDb || {};
+    let userProfile = null;
+
+    if (typeof dbApi.userProfileGet === "function") {
+      try {
+        const profileRes = await dbApi.userProfileGet();
+        if (profileRes?.ok) {
+          userProfile = profileRes.profile || profileRes.data || null;
+        }
+      } catch (_err) {
+        // ignore and keep legacy fallback
+      }
+    }
+
+    return resolvePrintUserData({
+      settings: settings || this.router?.context?.settings || {},
+      userProfile,
+    });
   }
 
   async _refreshProtocolsDirLabel() {
@@ -1304,6 +1326,8 @@ export default class PrintModal {
         settings = { ...settings, ...this._nextMeetingOverride };
         this._nextMeetingOverride = null;
       }
+      const resolvedUserData = await this._resolvePrintUserData({ settings, api });
+      settings = resolvedUserData.settings || settings;
       let roleMeta = this._getRoleMetaFromSettings(settings);
       if (typeof api.appSettingsGetMany === "function") {
         const resRole = await api.appSettingsGetMany(["firm_role_order", "firm_role_labels"]);
@@ -1857,6 +1881,8 @@ export default class PrintModal {
           settings = { ...settings, ...(resNext.data || {}) };
         }
       }
+      const resolvedUserData = await this._resolvePrintUserData({ settings, api });
+      settings = resolvedUserData.settings || settings;
 
       const res = await api.topsListByMeeting(mid);
       if (!res?.ok) {
@@ -2003,6 +2029,8 @@ export default class PrintModal {
       const dirResolved = await this._resolveProtocolsDir({ settings, api, persistIfMissing: true });
       settings = dirResolved.settings || settings;
       const protocolsDir = String(dirResolved.dir || "").trim();
+      const resolvedUserData = await this._resolvePrintUserData({ settings, api });
+      settings = resolvedUserData.settings || settings;
 
       let meeting = null;
       if (mid) {
@@ -4718,6 +4746,8 @@ export default class PrintModal {
           // ignore and keep global fallback
         }
       }
+      const resolvedUserData = await this._resolvePrintUserData({ settings, api });
+      settings = resolvedUserData.settings || settings;
       const projectLabel = await this._getProjectLabelWithNumber(pid);
       const meetingLabel = this._buildMeetingLabel(meeting);
       const projectInfo = await this._getProjectInfo(pid);

@@ -6,6 +6,7 @@ const projectSettingsRepo = require("../db/projectSettingsRepo");
 const meetingTopsRepo = require("../db/meetingTopsRepo");
 const projectFirmsRepo = require("../db/projectFirmsRepo");
 const { appSettingsGetManyWithDb } = require("../db/appSettingsRepo");
+const { getUserProfile } = require("../db/userProfileRepo");
 
 function _parseBool(v) {
   const s = String(v ?? "").trim().toLowerCase();
@@ -748,23 +749,6 @@ function _buildLogos(settings) {
   ];
 }
 
-function _buildUserData(settings) {
-  const name1 = String(settings?.["pdf.footerName1"] || "").trim();
-  const name2 = String(settings?.["pdf.footerName2"] || "").trim();
-  const street = String(settings?.["pdf.footerStreet"] || "").trim();
-  const zip = String(settings?.["pdf.footerZip"] || "").trim();
-  const city = String(settings?.["pdf.footerCity"] || "").trim();
-  const hasAnyField = !!(name1 || name2 || street || zip || city);
-  return {
-    enabled: _parseBool(settings?.["pdf.footerUseUserData"]) || hasAnyField,
-    name1,
-    name2,
-    street,
-    zip,
-    city,
-  };
-}
-
 function _resolveNextMeetingForPrint({ mode, meeting, settings } = {}) {
   const normalizedMode = String(mode || "").trim().toLowerCase();
   const meetingNextMeeting = {
@@ -801,17 +785,25 @@ function _resolveNextMeetingForPrint({ mode, meeting, settings } = {}) {
 
 // Gemeinsamer technischer Laufzeitkontext fuer den Druckdienst:
 // Projekt/Meeting, effektive Einstellungen, Profil und Layout werden hier vorbereitet.
-function _buildPrintRuntimeContext({ db, mode, projectId, meetingId, settingsOverride } = {}) {
+async function _buildPrintRuntimeContext({ db, mode, projectId, meetingId, settingsOverride } = {}) {
   const project = projectId ? projectsRepo.getById(projectId) : null;
   const meeting = meetingId ? meetingsRepo.getMeetingById(meetingId) : null;
   const settingsBase = _loadSettings(db);
   const projectSettings = projectId
     ? projectSettingsRepo.getMany(projectId, PROJECT_PRINT_SETTINGS_KEYS)
     : {};
-  const settings = { ...(settingsBase || {}), ...(projectSettings || {}), ...(settingsOverride || {}) };
+  const settingsRaw = {
+    ...(settingsBase || {}),
+    ...(projectSettings || {}),
+    ...(settingsOverride || {}),
+  };
+  const userProfile = getUserProfile();
+  const { resolvePrintUserData } = await import("../../shared/print/userDataResolver.mjs");
+  const resolvedUserData = resolvePrintUserData({ settings: settingsRaw, userProfile });
+  const settings = resolvedUserData.settings;
   const protocolTitle = String(settings?.["pdf.protocolTitle"] || "").trim();
   const printProfile = _resolvePrintProfile(mode);
-  const userData = _buildUserData(settings);
+  const userData = resolvedUserData.footer;
   const logos = _buildLogos(settings);
   const v2Layout = _buildV2Layout(settings, logos);
   const interludeText = String(settings?.["print.interludeText"] || "").trim();
@@ -873,7 +865,7 @@ function _loadPrintDocumentContent({ db, mode, projectId, meetingId, meeting, se
 
 async function getPrintData({ mode, projectId, meetingId, settingsOverride } = {}) {
   const db = initDatabase();
-  const runtimeContext = _buildPrintRuntimeContext({
+  const runtimeContext = await _buildPrintRuntimeContext({
     db,
     mode,
     projectId,
