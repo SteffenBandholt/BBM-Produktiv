@@ -805,9 +805,15 @@ async function runLizenzverwaltungModuleTests(run) {
 
   await run("Lizenzverwaltung: Einstellungen enthaelt den Einstieg Adminbereich auf oberster Ebene", () => {
     assert.equal(settingsViewSource.includes("../modules/lizenzverwaltung/index.js"), true);
-    assert.equal(settingsViewSource.includes("tiles.append(tileUser, tilePrint, tileLicense, tileAdmin);"), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Profil & Druck\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Profil, Adresse, Drucktexte, Logos und Layout\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Lizenzstatus\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Technik\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Versionierung, Farben, DB-Diagnose und Tops\""), true);
+    assert.equal(settingsViewSource.includes("tiles.append(tileProfilePrint, tileLicense, tileAdmin, tileArchive, tileDev);"), true);
     assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), true);
-    assert.equal(settingsViewSource.includes("subText: \"Adminmodule und Verwaltungswerkzeuge\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
   });
 
   await run("Lizenzverwaltung: Entwicklung enthaelt keinen sichtbaren Tab Lizenz / bearbeiten", () => {

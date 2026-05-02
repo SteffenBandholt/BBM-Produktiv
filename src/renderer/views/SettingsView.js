@@ -5020,29 +5020,16 @@ export default class SettingsView {
       return tile;
     };
 
-    const tileArchive = mkTile({
-      titleText: "Archiv",
-      subText: "Archivierte Projekte anzeigen",
-      onClick: async () => {
-        if (!this.router || typeof this.router.showArchive !== "function") {
-          alert("Router.showArchive ist nicht verfuegbar.");
-          return;
-        }
-        await this.router.showArchive();
-      },
-    });
-
-
-    const tileCoreSettings = mkTile({
-      titleText: "Nutzereinstellungen / Druckeinstellungen",
-      subText: "Nutzerdaten, Seitenränder, Logos, Header/Footer, Vorbemerkung, Drucklayout",
+    const tileProfilePrint = mkTile({
+      titleText: "Profil & Druck",
+      subText: "Profil, Adresse, Drucktexte, Logos und Layout",
       onClick: async () => {
         await this._createLegacySettingsContent();
       },
     });
 
     const tileLicense = mkTile({
-      titleText: "Lizenz",
+      titleText: "Lizenzstatus",
       subText: "Lizenzstatus anzeigen",
       onClick: async () => {
         this._openSettingsModal({
@@ -5055,7 +5042,7 @@ export default class SettingsView {
 
     const tileAdmin = mkTile({
       titleText: "Adminbereich",
-      subText: "Externe Lizenz-App",
+      subText: "Externe Lizenzverwaltung",
       onClick: async () => {
         const adminInfo = document.createElement("div");
         adminInfo.style.maxWidth = "720px";
@@ -5070,15 +5057,27 @@ export default class SettingsView {
       },
     });
 
+    const tileArchive = mkTile({
+      titleText: "Archiv",
+      subText: "Archivierte Projekte",
+      onClick: async () => {
+        if (!this.router || typeof this.router.showArchive !== "function") {
+          alert("Router.showArchive ist nicht verfuegbar.");
+          return;
+        }
+        await this.router.showArchive();
+      },
+    });
+
     const tileDev = mkTile({
-      titleText: "Entwicklung",
-      subText: "Versionierung, Farben, Diagnose",
+      titleText: "Technik",
+      subText: "Versionierung, Farben, DB-Diagnose und Tops",
       onClick: async () => {
         await this._openDevelopmentModal();
       },
     });
 
-    tiles.append(tileCoreSettings, tileLicense, tileDev, tileAdmin, tileArchive);
+    tiles.append(tileProfilePrint, tileLicense, tileAdmin, tileArchive, tileDev);
     root.append(head, tiles);
     this.root = root;
 
