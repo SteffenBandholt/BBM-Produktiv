@@ -1,6 +1,7 @@
 // src/renderer/views/SettingsView.js
 //
-// Nutzerdaten werden in DB + appSettings gepflegt (DB ist Quelle beim Laden).
+// Nutzerdaten werden primär aus user_profile geladen und dort gespeichert.
+// Legacy-Werte aus app_settings bleiben nur als Fallback/Migrationsquelle.
 // Persistenz: ueber window.bbmDb.userProfileGet/userProfileUpsert + appSettingsGetMany/appSettingsSetMany.
 
 import { applyPopupButtonStyle, applyPopupCardStyle } from "../ui/popupButtonStyles.js";
@@ -692,6 +693,64 @@ export default class SettingsView {
     if (!v) return "";
     const lim = Math.max(1, Number(maxLen) || 10);
     return v.length > lim ? v.slice(0, lim) : v;
+  }
+
+  _normalizeUserProfileRecord(profile) {
+    if (!profile || typeof profile !== "object") return null;
+    return {
+      name1: this._normalizeUserText(profile.name1, 80),
+      name2: this._normalizeUserText(profile.name2, 80),
+      street: this._normalizeUserText(profile.street, 80),
+      zip: this._normalizeUserZip(profile.zip, 5),
+      city: this._normalizeUserText(profile.city, 80),
+    };
+  }
+
+  _resolveUserSettingsState({ data = {}, profile = null } = {}) {
+    const legacy = {
+      userName: this._normalizeUserText(data.user_name, 80),
+      userCompany: this._normalizeUserText(data.user_company, 80),
+      name1: this._normalizeUserText(data.user_name1, 80),
+      name2: this._normalizeUserText(data.user_name2, 80),
+      street: this._normalizeUserText(data.user_street, 80),
+      zip: this._normalizeUserZip(data.user_zip, 5),
+      city: this._normalizeUserText(data.user_city, 80),
+    };
+    const profileRecord = this._normalizeUserProfileRecord(profile);
+    const profileHasAny = !!profileRecord && Object.values(profileRecord).some((value) => !!String(value || "").trim());
+    const legacyProfileHasAny = Object.values({
+      name1: legacy.name1,
+      name2: legacy.name2,
+      street: legacy.street,
+      zip: legacy.zip,
+      city: legacy.city,
+    }).some((value) => !!String(value || "").trim());
+
+    const resolvedProfile = {
+      name1: profileHasAny && profileRecord.name1 ? profileRecord.name1 : legacy.name1,
+      name2: profileHasAny && profileRecord.name2 ? profileRecord.name2 : legacy.name2,
+      street: profileHasAny && profileRecord.street ? profileRecord.street : legacy.street,
+      zip: profileHasAny && profileRecord.zip ? profileRecord.zip : legacy.zip,
+      city: profileHasAny && profileRecord.city ? profileRecord.city : legacy.city,
+    };
+    const profileFallbackUsed =
+      (!profileHasAny && legacyProfileHasAny) ||
+      (profileHasAny &&
+        Object.entries(resolvedProfile).some(([key, value]) => value !== (profileRecord?.[key] || "")));
+
+    return {
+      userName: legacy.userName,
+      userCompany: legacy.userCompany,
+      userName1: resolvedProfile.name1,
+      userName2: resolvedProfile.name2,
+      userStreet: resolvedProfile.street,
+      userZip: resolvedProfile.zip,
+      userCity: resolvedProfile.city,
+      profileRecord: resolvedProfile,
+      profileHasAny,
+      legacyProfileHasAny,
+      profileFallbackUsed,
+    };
   }
 
   _isPrintLayoutMmKey(key) {
@@ -3112,6 +3171,16 @@ export default class SettingsView {
       return;
     }
 
+    let profile = null;
+    if (typeof api.userProfileGet === "function") {
+      const resProfile = await api.userProfileGet();
+      if (!resProfile?.ok) {
+        this._setMsg(resProfile?.error || "Fehler beim Laden der Nutzerdaten");
+      } else {
+        profile = resProfile.profile || null;
+      }
+    }
+
     const res = await api.appSettingsGetMany([
       "user_name",
       "user_company",
@@ -3207,53 +3276,20 @@ export default class SettingsView {
     }
 
     const data = res.data || {};
-    this.userName = (data.user_name ?? "").toString();
-    this.userCompany = (data.user_company ?? "").toString();
+    const userState = this._resolveUserSettingsState({ data, profile });
+    this.userName = userState.userName;
+    this.userCompany = userState.userCompany;
 
-    let profile = null;
-    if (typeof api.userProfileGet === "function") {
-      const resProfile = await api.userProfileGet();
+    const userName1 = userState.userName1;
+    const userName2 = userState.userName2;
+    const userStreet = userState.userStreet;
+    const userZip = userState.userZip;
+    const userCity = userState.userCity;
+
+    if (userState.profileFallbackUsed && typeof api.userProfileUpsert === "function") {
+      const resProfile = await api.userProfileUpsert(userState.profileRecord);
       if (!resProfile?.ok) {
-        this._setMsg(resProfile?.error || "Fehler beim Laden der Nutzerdaten");
-      } else {
-        profile = resProfile.profile || null;
-      }
-    }
-
-    const profileHasAny = !!profile && [
-      profile.name1,
-      profile.name2,
-      profile.street,
-      profile.zip,
-      profile.city,
-    ].some((v) => String(v || "").trim());
-    if (profile && !profileHasAny) profile = null;
-
-    let userName1 = (data.user_name1 ?? "").toString();
-    let userName2 = (data.user_name2 ?? "").toString();
-    let userStreet = (data.user_street ?? "").toString();
-    let userZip = this._normalizeUserZip((data.user_zip ?? "").toString(), 5);
-    let userCity = (data.user_city ?? "").toString();
-
-    if (profile) {
-      userName1 = (profile.name1 ?? "").toString();
-      userName2 = (profile.name2 ?? "").toString();
-      userStreet = (profile.street ?? "").toString();
-      userZip = this._normalizeUserZip((profile.zip ?? "").toString(), 5);
-      userCity = (profile.city ?? "").toString();
-    } else if (typeof api.userProfileUpsert === "function") {
-      const hasAny = [userName1, userName2, userStreet, userZip, userCity].some((v) => String(v || "").trim());
-      if (hasAny) {
-        const resProfile = await api.userProfileUpsert({
-          name1: userName1,
-          name2: userName2,
-          street: userStreet,
-          zip: userZip,
-          city: userCity,
-        });
-        if (!resProfile?.ok) {
-          this._setMsg(resProfile?.error || "Fehler beim Speichern der Nutzerdaten");
-        }
+        this._setMsg(resProfile?.error || "Fehler beim Speichern der Nutzerdaten");
       }
     }
 
@@ -3578,9 +3614,9 @@ export default class SettingsView {
         }
       }
 
-      const payload = {
-        user_name,
-        user_company,
+    const payload = {
+      user_name,
+      user_company,
         user_name1,
         user_name2,
         user_street,
@@ -4098,6 +4134,14 @@ export default class SettingsView {
     );
     wrap.append(pdfLogoCard);
 
+    let profile = null;
+    if (typeof api.userProfileGet === "function") {
+      const resProfile = await api.userProfileGet();
+      if (resProfile?.ok) {
+        profile = resProfile.profile || null;
+      }
+    }
+
     if (typeof api.appSettingsGetMany === "function") {
       const keys = PRINT_DEFAULTS_FIELD_GROUPS.flatMap((group) => group.fields.map((field) => field.key));
       keys.push(
@@ -4117,8 +4161,20 @@ export default class SettingsView {
       const res = await api.appSettingsGetMany(keys);
       if (res?.ok) {
         const data = res.data || {};
+        const userState = this._resolveUserSettingsState({ data, profile });
         for (const [key, inp] of inputs.entries()) {
-          const value = data[key];
+          const value =
+            key === "user_name1"
+              ? userState.userName1
+              : key === "user_name2"
+                ? userState.userName2
+                : key === "user_street"
+                  ? userState.userStreet
+                  : key === "user_zip"
+                    ? userState.userZip
+                    : key === "user_city"
+                      ? userState.userCity
+                      : data[key];
           if (!inp) continue;
           if (inp.type === "checkbox") {
             inp.checked = this._parseBool(value, false);
@@ -4144,6 +4200,9 @@ export default class SettingsView {
         });
         this._setPdfLogoFilePath(String(data["pdf.userLogoFilePath"] ?? ""), { skipSave: true });
         this._setPdfLogoDataUrl(String(data["pdf.userLogoPngDataUrl"] ?? ""), { skipSave: true });
+        if (userState.profileFallbackUsed && typeof api.userProfileUpsert === "function") {
+          await api.userProfileUpsert(userState.profileRecord);
+        }
       }
     }
 
@@ -4185,17 +4244,24 @@ export default class SettingsView {
       content: [wrap],
       saveFn: async () => {
         if (typeof api.appSettingsSetMany !== "function") return false;
-      const payload = {};
-      for (const [key, inp] of inputs.entries()) {
-        if (!inp) continue;
-        if (inp.type === "checkbox") {
-          payload[key] = inp.checked ? "true" : "false";
-        } else if (this._isPrintLayoutMmKey(key)) {
-          payload[key] = this._normalizePrintLayoutMmValue(inp.value, key);
-        } else {
-          payload[key] = String(inp.value ?? "");
+        const payload = {};
+        const profilePayload = {
+          name1: this._normalizeUserText(inputs.get("user_name1")?.value, 80),
+          name2: this._normalizeUserText(inputs.get("user_name2")?.value, 80),
+          street: this._normalizeUserText(inputs.get("user_street")?.value, 80),
+          zip: this._normalizeUserZip(inputs.get("user_zip")?.value, 5),
+          city: this._normalizeUserText(inputs.get("user_city")?.value, 80),
+        };
+        for (const [key, inp] of inputs.entries()) {
+          if (!inp) continue;
+          if (inp.type === "checkbox") {
+            payload[key] = inp.checked ? "true" : "false";
+          } else if (this._isPrintLayoutMmKey(key)) {
+            payload[key] = this._normalizePrintLayoutMmValue(inp.value, key);
+          } else {
+            payload[key] = String(inp.value ?? "");
+          }
         }
-      }
         const headerLogoValues = this._getLogoInputValues();
         const pdfLogoValues = this._getPdfLogoInputValues();
         payload["header.logoEnabled"] = headerLogoValues.enabled ? "true" : "false";
@@ -4210,6 +4276,13 @@ export default class SettingsView {
         payload["pdf.userLogoRightMm"] = String(pdfLogoValues.rightMm);
         payload["pdf.userLogoFilePath"] = String(this._pdfLogoFilePath || pdfLogoPath.value || "");
         payload["pdf.userLogoPngDataUrl"] = String(this._pdfLogoDataUrl || "");
+        if (typeof api.userProfileUpsert === "function") {
+          const resProfile = await api.userProfileUpsert(profilePayload);
+          if (!resProfile?.ok) {
+            alert(resProfile?.error || "Speichern der Nutzerdaten fehlgeschlagen");
+            return false;
+          }
+        }
         const res = await api.appSettingsSetMany(payload);
         if (!res?.ok) return false;
         this._setMsg("Gespeichert");
