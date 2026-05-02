@@ -20,10 +20,17 @@ const DEFAULT_V2_PRE_REMARKS_TEXT =
 const DEFAULT_V2_PRE_REMARKS_ENABLED = true;
 const PRINT_DEFAULTS_FIELD_GROUPS = [
   {
-    title: "Nutzerdaten",
+    title: "Profil",
+    hint: "Name, Firma und Anzeigedaten",
     fields: [
       { key: "user_name", label: "Nutzername" },
       { key: "user_company", label: "Firma" },
+    ],
+  },
+  {
+    title: "Adresse",
+    hint: "Straße, PLZ und Ort",
+    fields: [
       { key: "user_name1", label: "Name 1" },
       { key: "user_name2", label: "Name 2" },
       { key: "user_street", label: "Strasse" },
@@ -32,11 +39,18 @@ const PRINT_DEFAULTS_FIELD_GROUPS = [
     ],
   },
   {
-    title: "Druckeinstellungen",
+    title: "Druckinhalt",
+    hint: "Protokolltitel, Vorbemerkung und Drucktexte",
     fields: [
       { key: "pdf.protocolTitle", label: "Protokolltitel" },
       { key: "pdf.preRemarks", label: "Vorbemerkung", multiline: true },
       { key: "print.preRemarks.enabled", label: "Vorbemerkung drucken (true/false)" },
+    ],
+  },
+  {
+    title: "Footer",
+    hint: "Fusszeilentexte und Nutzer-/Adressbezug",
+    fields: [
       { key: "pdf.footerPlace", label: "Footer Ort" },
       { key: "pdf.footerDate", label: "Footer Datum" },
       { key: "pdf.footerName1", label: "Footer Name 1" },
@@ -46,6 +60,17 @@ const PRINT_DEFAULTS_FIELD_GROUPS = [
       { key: "pdf.footerZip", label: "Footer PLZ" },
       { key: "pdf.footerCity", label: "Footer Ort" },
       { key: "pdf.footerUseUserData", label: "Footer nutzt Nutzerdaten (true/false)" },
+    ],
+  },
+  {
+    title: "Logos",
+    hint: "Drucklogos und Logo-Dialog-Einstieg",
+    fields: [],
+  },
+  {
+    title: "Drucklayout",
+    hint: "Seitenränder und Footer-Abstand",
+    fields: [
       { key: "print.v2.pagePadTopMm", label: "Rand oben (mm)" },
       { key: "print.v2.pagePadLeftMm", label: "Rand links (mm)" },
       { key: "print.v2.pagePadRightMm", label: "Rand rechts (mm)" },
@@ -3813,7 +3838,7 @@ export default class SettingsView {
     const info = document.createElement("div");
     info.style.fontSize = "12px";
     info.style.opacity = "0.85";
-    info.textContent = "Nutzerdaten und Druckeinstellungen (Bestandsbereich).";
+    info.textContent = "Profil, Adresse, Drucktexte, Footer, Logos und Layout (Bestandsbereich).";
     wrap.append(info);
 
     const inputs = new Map();
@@ -3866,8 +3891,30 @@ export default class SettingsView {
       const heading = document.createElement("div");
       heading.textContent = section.title;
       heading.style.fontWeight = "800";
-
       card.append(heading);
+      if (section.hint) {
+        const hint = document.createElement("div");
+        hint.textContent = section.hint;
+        hint.style.fontSize = "12px";
+        hint.style.opacity = "0.78";
+        card.append(hint);
+      }
+
+      if (section.title === "Logos") {
+        const logoActions = document.createElement("div");
+        logoActions.style.display = "flex";
+        logoActions.style.gap = "8px";
+        logoActions.style.flexWrap = "wrap";
+        const btnLogos = document.createElement("button");
+        btnLogos.type = "button";
+        btnLogos.textContent = "Drucklogos konfigurieren";
+        applyPopupButtonStyle(btnLogos);
+        btnLogos.onclick = async () => {
+          await this._openPrintLogosPopup();
+        };
+        logoActions.append(btnLogos);
+        card.append(logoActions);
+      }
 
       for (const field of section.fields) {
         card.append(
@@ -3896,34 +3943,6 @@ export default class SettingsView {
       await this._openPdfPreRemarksPopup();
     };
     wrap.append(preRemarksBtn);
-
-    const logoCard = document.createElement("div");
-    applyPopupCardStyle(logoCard);
-    logoCard.style.padding = "10px";
-    logoCard.style.display = "grid";
-    logoCard.style.gap = "8px";
-    const logoHeading = document.createElement("div");
-    logoHeading.textContent = "Logos";
-    logoHeading.style.fontWeight = "800";
-    const logoHint = document.createElement("div");
-    logoHint.style.fontSize = "12px";
-    logoHint.style.opacity = "0.82";
-    logoHint.textContent =
-      "Kopf-Logo, PDF-Logo und Drucklogos sind in den Detailmasken weiter bearbeitbar.";
-    const logoActions = document.createElement("div");
-    logoActions.style.display = "flex";
-    logoActions.style.gap = "8px";
-    logoActions.style.flexWrap = "wrap";
-    const btnLogos = document.createElement("button");
-    btnLogos.type = "button";
-    btnLogos.textContent = "Drucklogos konfigurieren";
-    applyPopupButtonStyle(btnLogos);
-    btnLogos.onclick = async () => {
-      await this._openPrintLogosPopup();
-    };
-    logoActions.append(btnLogos);
-    logoCard.append(logoHeading, logoHint, logoActions);
-    wrap.append(logoCard);
 
     const headerLogoCard = document.createElement("div");
     applyPopupCardStyle(headerLogoCard);
