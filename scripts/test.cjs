@@ -15,6 +15,7 @@ const { runTopsCloseFlowTests } = require("./tests/topsCloseFlow.test.cjs");
 const { runProtokollRouterFallbackTests } = require("./tests/protokollRouterFallback.test.cjs");
 const { runProtokollProjectEntryRoutingTests } = require("./tests/protokollProjectEntryRouting.test.cjs");
 const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungModule.test.cjs");
+const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.cjs");
 const { runAusgabeModuleTests } = require("./tests/ausgabeModule.test.cjs");
 const { runAudioModuleTests } = require("./tests/audioModule.test.cjs");
 const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cjs");
@@ -85,6 +86,7 @@ async function main() {
   await runProtokollRouterFallbackTests(run);
   await runProtokollProjectEntryRoutingTests(run);
   await runProjektverwaltungModuleTests(run);
+  await runProjectSettingsIpcTests(run);
   await runAusgabeModuleTests(run);
   await runAudioModuleTests(run);
   await runDistCustomerBuildTests(run);

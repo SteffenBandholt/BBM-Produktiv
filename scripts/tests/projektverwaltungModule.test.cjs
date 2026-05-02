@@ -305,6 +305,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(projectsSource.includes("../../../ui/popupButtonStyles.js"), true);
     assert.equal(formSource.includes("export default class ProjectFormScreen"), true);
     assert.equal(formSource.includes("../../../ui/popupButtonStyles.js"), true);
+    assert.equal(formSource.includes("pdf.footerUseUserData"), false);
     assert.equal(archiveSource.includes("export default class ArchiveScreen"), true);
     assert.equal(archiveSource.includes("../../../ui/popupButtonStyles.js"), true);
   });

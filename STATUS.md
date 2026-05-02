@@ -17,6 +17,11 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Projekt-Einstellungen behandeln `pdf.footerUseUserData` nicht mehr als steuerbare Projektoption:
+  - der Projektsettings-Dialog speichert dieses Feld nicht mehr
+  - der Projektsettings-IPC filtert es aus Whitelist und Patch
+  - Altwerte im Projektsettings-Speicher bleiben technisch unkritisch, werden aber nicht mehr als Projektoption verwendet
+  - neue Tests sichern den Filter im Projektsettings-IPC und den bereinigten Projektformular-Flow ab
 - Projektbasierte Protokoll-Einstiege werden jetzt nicht mehr stillschweigend mit `showTops(null, ...)` aufgelöst:
   - genau eine offene Besprechung oeffnet den TopsScreen
   - keine offene Besprechung oeffnet die Besprechungsuebersicht als Startview mit Neuanlage-Einstieg

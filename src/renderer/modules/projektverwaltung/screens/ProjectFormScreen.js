@@ -787,7 +787,6 @@ export default class ProjectFormScreen {
       "pdf.footerStreet",
       "pdf.footerZip",
       "pdf.footerCity",
-      "pdf.footerUseUserData",
     ];
   }
 
@@ -1021,7 +1020,6 @@ export default class ProjectFormScreen {
         "pdf.footerStreet": String(inpFooterStreet.value || "").trim(),
         "pdf.footerZip": String(inpFooterZip.value || "").trim(),
         "pdf.footerCity": String(inpFooterCity.value || "").trim(),
-        "pdf.footerUseUserData": "false",
       };
       const res = await api.projectSettingsSetMany({ projectId: this.projectId, patch });
       if (!res?.ok) {
