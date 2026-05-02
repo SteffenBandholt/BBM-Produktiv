@@ -19,6 +19,7 @@ const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.
 const { runSettingsUserProfileSourceTests } = require("./tests/settingsUserProfileSource.test.cjs");
 const { runSettingsPrintLayoutTests } = require("./tests/settingsPrintLayout.test.cjs");
 const { runPrintUserDataResolverTests } = require("./tests/printUserDataResolver.test.cjs");
+const { runSendMailPayloadTests } = require("./tests/sendMailPayload.test.cjs");
 const { runAusgabeModuleTests } = require("./tests/ausgabeModule.test.cjs");
 const { runAudioModuleTests } = require("./tests/audioModule.test.cjs");
 const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cjs");
@@ -93,6 +94,7 @@ async function main() {
   await runSettingsUserProfileSourceTests(run);
   await runSettingsPrintLayoutTests(run);
   await runPrintUserDataResolverTests(run);
+  await runSendMailPayloadTests(run);
   await runAusgabeModuleTests(run);
   await runAudioModuleTests(run);
   await runDistCustomerBuildTests(run);
