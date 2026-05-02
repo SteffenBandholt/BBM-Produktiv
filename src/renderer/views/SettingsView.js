@@ -53,13 +53,13 @@ const PRINT_DEFAULTS_FIELD_GROUPS = [
     ],
   },
 ];
-const PRINT_LAYOUT_TOUCHED_KEYS = [
-  "print.v2.pagePadLeftMm",
-  "print.v2.pagePadRightMm",
-  "print.v2.pagePadTopMm",
-  "print.v2.pagePadBottomMm",
-  "print.v2.footerReserveMm",
-];
+const PRINT_LAYOUT_MM_LIMITS = {
+  "print.v2.pagePadTopMm": { min: 0, max: 40, step: 1, fallback: 2 },
+  "print.v2.pagePadLeftMm": { min: 0, max: 30, step: 1, fallback: 12 },
+  "print.v2.pagePadRightMm": { min: 0, max: 30, step: 1, fallback: 12 },
+  "print.v2.pagePadBottomMm": { min: 0, max: 30, step: 1, fallback: 0 },
+  "print.v2.footerReserveMm": { min: 0, max: 30, step: 1, fallback: 12 },
+};
 const THEME_DEFAULT_KEYS = [
   "defaults.ui.themeHeaderBaseColor",
   "defaults.ui.themeSidebarBaseColor",
@@ -692,6 +692,28 @@ export default class SettingsView {
     if (!v) return "";
     const lim = Math.max(1, Number(maxLen) || 10);
     return v.length > lim ? v.slice(0, lim) : v;
+  }
+
+  _isPrintLayoutMmKey(key) {
+    return Object.prototype.hasOwnProperty.call(PRINT_LAYOUT_MM_LIMITS, String(key || "").trim());
+  }
+
+  _normalizePrintLayoutMmValue(value, key) {
+    const limits = PRINT_LAYOUT_MM_LIMITS[String(key || "").trim()];
+    if (!limits) return String(value ?? "");
+    const fallback = Number.isFinite(Number(limits.fallback)) ? Number(limits.fallback) : 0;
+    const raw = String(value ?? "").trim();
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return String(fallback);
+    const rounded = Math.round(n);
+    const min = Number.isFinite(Number(limits.min)) ? Number(limits.min) : 0;
+    const max = Number.isFinite(Number(limits.max)) ? Number(limits.max) : rounded;
+    const clamped = Math.max(min, Math.min(max, rounded));
+    return String(clamped);
+  }
+
+  _normalizePrintLayoutMmLimits(key) {
+    return PRINT_LAYOUT_MM_LIMITS[String(key || "").trim()] || null;
   }
 
   _clampLogoNumber(value, min, max, fallback) {
@@ -3781,6 +3803,16 @@ export default class SettingsView {
       } else {
         inp = field.multiline ? document.createElement("textarea") : document.createElement("input");
         inp.style.width = "100%";
+        if (field.type === "number") {
+          const limits = this._normalizePrintLayoutMmLimits(field.key);
+          if (limits) {
+            inp.type = "number";
+            inp.min = String(limits.min);
+            inp.max = String(limits.max);
+            inp.step = String(limits.step);
+            inp.inputMode = "numeric";
+          }
+        }
         if (inp.tagName === "TEXTAREA") inp.rows = field.rows || 4;
         row.append(lbl, inp);
       }
@@ -3808,6 +3840,8 @@ export default class SettingsView {
             type:
               field.key === "print.preRemarks.enabled" || field.key === "pdf.footerUseUserData"
                 ? "checkbox"
+                : this._isPrintLayoutMmKey(field.key)
+                  ? "number"
                 : field.multiline
                   ? "textarea"
                   : "text",
@@ -4088,6 +4122,8 @@ export default class SettingsView {
           if (!inp) continue;
           if (inp.type === "checkbox") {
             inp.checked = this._parseBool(value, false);
+          } else if (this._isPrintLayoutMmKey(key)) {
+            inp.value = this._normalizePrintLayoutMmValue(value, key);
           } else {
             inp.value = String(value ?? "");
           }
@@ -4149,11 +4185,17 @@ export default class SettingsView {
       content: [wrap],
       saveFn: async () => {
         if (typeof api.appSettingsSetMany !== "function") return false;
-        const payload = {};
-        for (const [key, inp] of inputs.entries()) {
-          if (!inp) continue;
-          payload[key] = inp.type === "checkbox" ? (inp.checked ? "true" : "false") : String(inp.value ?? "");
+      const payload = {};
+      for (const [key, inp] of inputs.entries()) {
+        if (!inp) continue;
+        if (inp.type === "checkbox") {
+          payload[key] = inp.checked ? "true" : "false";
+        } else if (this._isPrintLayoutMmKey(key)) {
+          payload[key] = this._normalizePrintLayoutMmValue(inp.value, key);
+        } else {
+          payload[key] = String(inp.value ?? "");
         }
+      }
         const headerLogoValues = this._getLogoInputValues();
         const pdfLogoValues = this._getPdfLogoInputValues();
         payload["header.logoEnabled"] = headerLogoValues.enabled ? "true" : "false";
