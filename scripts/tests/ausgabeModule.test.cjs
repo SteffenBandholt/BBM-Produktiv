@@ -54,6 +54,20 @@ async function runAusgabeModuleTests(run) {
     assert.equal(moduleReadmeSource.includes("Main-Prozess"), true);
     assert.equal(moduleReadmeSource.includes("kein Sidebar-Modul"), true);
   });
+
+  await run("Ausgabe: Print-Dialog nutzt klare Nutzertexte", () => {
+    assert.equal(printModalSource.includes("Protokoll drucken"), true);
+    assert.equal(printModalSource.includes("PDF-Vorschau öffnen"), true);
+    assert.equal(
+      printModalSource.includes("Nur abgeschlossene Besprechungen lassen sich hier drucken"),
+      true
+    );
+    assert.equal(printModalSource.includes("PDF-Ablageordner:"), true);
+    assert.equal(
+      printModalSource.includes("Für dieses Projekt gibt es noch keine abgeschlossene Besprechung."),
+      true
+    );
+  });
 }
 
 module.exports = { runAusgabeModuleTests };

@@ -112,7 +112,7 @@ export default class PrintModal {
     head.style.borderBottom = "1px solid #e2e8f0";
 
     const title = document.createElement("div");
-    title.textContent = "Druck (geschlossene Besprechung)";
+    title.textContent = "Protokoll drucken";
     title.style.fontWeight = "800";
     title.style.fontSize = "16px";
 
@@ -144,7 +144,7 @@ export default class PrintModal {
     };
 
     const btnPrint = document.createElement("button");
-    btnPrint.textContent = "PDF erzeugen";
+    btnPrint.textContent = "PDF-Vorschau öffnen";
     applyPopupButtonStyle(btnPrint, { variant: "primary" });
     btnPrint.onclick = async () => {
       await this._printSelected();
@@ -161,7 +161,8 @@ export default class PrintModal {
     hint.style.marginTop = "8px";
     hint.style.fontSize = "12px";
     hint.style.opacity = "0.8";
-    hint.textContent = "Hinweis: Es werden nur geschlossene Besprechungen angezeigt.";
+    hint.textContent =
+      "Hinweis: Nur abgeschlossene Besprechungen lassen sich hier drucken, weil der PDF-Stand aus dem geschlossenen Protokoll erzeugt wird.";
 
     const protocolsInfo = document.createElement("div");
     protocolsInfo.style.marginTop = "8px";
@@ -173,7 +174,7 @@ export default class PrintModal {
 
     const protocolsLabel = document.createElement("span");
     protocolsLabel.style.opacity = "0.8";
-    protocolsLabel.textContent = "Speicherort Protokolle:";
+    protocolsLabel.textContent = "PDF-Ablageordner:";
 
     const protocolsValue = document.createElement("span");
     protocolsValue.style.fontWeight = "600";
@@ -384,15 +385,15 @@ export default class PrintModal {
     if (this.titleEl) {
       this.titleEl.textContent =
         this.mode === "vorabzug"
-          ? "PDF-Vorabzug (offene Besprechung)"
-          : "Druck (geschlossene Besprechung)";
+          ? "PDF-Vorabzug für offene Besprechungen"
+          : "Protokoll drucken";
     }
 
     if (this.hintEl) {
       this.hintEl.textContent =
         this.mode === "vorabzug"
-          ? "Hinweis: Vorabzug ist für offene Besprechungen gedacht."
-          : "Hinweis: Es werden nur geschlossene Besprechungen angezeigt.";
+          ? "Hinweis: Der Vorabzug ist für offene Besprechungen gedacht."
+          : "Hinweis: Nur abgeschlossene Besprechungen sind hier druckbar.";
     }
   }
 
@@ -2178,7 +2179,7 @@ export default class PrintModal {
     if (this.loading) return;
 
     this.loading = true;
-    this._setMsg("Lade?");
+    this._setMsg("Abgeschlossene Besprechungen werden geladen...");
     this._applyState();
 
     try {
@@ -2210,7 +2211,7 @@ export default class PrintModal {
       this._renderMeetingOptions();
 
       if (!this.selectedMeetingId) {
-        this._setMsg("Keine geschlossenen Besprechungen vorhanden.");
+        this._setMsg("Für dieses Projekt gibt es noch keine abgeschlossene Besprechung.");
       } else {
         this._setMsg("");
       }
@@ -2220,7 +2221,7 @@ export default class PrintModal {
         message: err?.message || String(err),
         stack: err?.stack || null,
       });
-      this._setMsg("Fehler beim Laden der Besprechungen.");
+      this._setMsg("Die abgeschlossenen Besprechungen konnten nicht geladen werden.");
     } finally {
       this.loading = false;
       this._applyState();
