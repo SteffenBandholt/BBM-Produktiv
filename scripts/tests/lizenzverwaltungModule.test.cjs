@@ -810,7 +810,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("titleText: \"Lizenzstatus\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
     assert.equal(settingsViewSource.includes("titleText: \"Technik\""), true);
-    assert.equal(settingsViewSource.includes("subText: \"Versionierung, Farben, DB-Diagnose und Tops\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Versionierung, Protokoll-Textgrenzen, DB-Diagnose und Diktat / Audio\""), true);
     assert.equal(settingsViewSource.includes("tiles.append(tileProfilePrint, tileLicense, tileAdmin, tileArchive, tileDev);"), true);
     assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
@@ -825,11 +825,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('title: "Logos"'), true);
     assert.equal(settingsViewSource.includes('title: "Drucklayout"'), true);
     assert.equal(settingsViewSource.includes('hint: "Name, Firma und Anzeigedaten"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Straße, PLZ und Ort"') || settingsViewSource.includes('hint: "StraÃŸe, PLZ und Ort"'), true);
+    assert.equal(settingsViewSource.includes('hint: "Strasse, PLZ und Ort"'), true);
     assert.equal(settingsViewSource.includes('hint: "Protokolltitel, Vorbemerkung und Drucktexte"'), true);
     assert.equal(settingsViewSource.includes('hint: "Fusszeilentexte und Nutzer-/Adressbezug"'), true);
     assert.equal(settingsViewSource.includes('hint: "Drucklogos und Logo-Dialog-Einstieg"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Seitenränder und Footer-Abstand"') || settingsViewSource.includes('hint: "SeitenrÃ¤nder und Footer-Abstand"'), true);
+    assert.equal(settingsViewSource.includes('hint: "Seitenraender und Footer-Abstand"'), true);
     assert.equal(settingsViewSource.includes("Drucklogos konfigurieren"), true);
     assert.equal(idx('title: "Profil"') < idx('title: "Adresse"'), true);
     assert.equal(idx('title: "Adresse"') < idx('title: "Druckinhalt"'), true);

@@ -29,7 +29,7 @@ const PRINT_DEFAULTS_FIELD_GROUPS = [
   },
   {
     title: "Adresse",
-    hint: "Straße, PLZ und Ort",
+    hint: "Strasse, PLZ und Ort",
     fields: [
       { key: "user_name1", label: "Name 1" },
       { key: "user_name2", label: "Name 2" },
@@ -69,7 +69,7 @@ const PRINT_DEFAULTS_FIELD_GROUPS = [
   },
   {
     title: "Drucklayout",
-    hint: "Seitenränder und Footer-Abstand",
+    hint: "Seitenraender und Footer-Abstand",
     fields: [
       { key: "print.v2.pagePadTopMm", label: "Rand oben (mm)" },
       { key: "print.v2.pagePadLeftMm", label: "Rand links (mm)" },
@@ -4600,9 +4600,9 @@ export default class SettingsView {
 
     const versionCard = mkCard("Versionierung", "SemVer und Build-Kanal verwalten.");
     const dbCard = mkCard("DB-Diagnose", "Aktive DB, Legacy und Importpfade prüfen.");
-    const topsCard = mkCard("TOP-Limits", "Kurz- und Langtextgrenzen verwalten.");
+    const topsCard = mkCard("Protokoll-Textgrenzen", "Kurztext und Langtext in TOPs begrenzen.");
     const themeCard = mkCard("Farbschema", "Start-Defaults des Themes verwalten.");
-    const dictationCard = mkCard("Diktieren", "Audio-/Diktat-Entwicklung bleibt hier erreichbar.");
+    const dictationCard = mkCard("Diktat / Audio", "Technische Einstellungen fuer die Diktierfunktion.");
 
     const btn = (label, primary = false) => {
       const el = document.createElement("button");
@@ -4888,8 +4888,8 @@ export default class SettingsView {
     const tabs = [
       { key: "version", label: "Versionierung", el: versionCard.box },
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
-      { key: "dictation", label: "Diktieren", el: dictationSection.tab },
-      { key: "tops", label: "TOP-Liste", el: topsCard.box },
+      { key: "dictation", label: "Diktat / Audio", el: dictationSection.tab },
+      { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
     ];
     const tabHead = document.createElement("div");
@@ -4927,8 +4927,8 @@ export default class SettingsView {
     tabHead.append(
       addTabBtn("Versionierung", "version"),
       addTabBtn("DB-Diagnose", "db"),
-      addTabBtn("Diktieren", "dictation"),
-      addTabBtn("TOP-Liste", "tops"),
+      addTabBtn("Diktat / Audio", "dictation"),
+      addTabBtn("Protokoll-Textgrenzen", "tops"),
       addTabBtn("Farbschema", "theme")
     );
     tabBody.append(...tabs.map((t) => t.el));
@@ -5090,7 +5090,7 @@ export default class SettingsView {
 
     const tileDev = mkTile({
       titleText: "Technik",
-      subText: "Versionierung, Farben, DB-Diagnose und Tops",
+      subText: "Versionierung, Protokoll-Textgrenzen, DB-Diagnose und Diktat / Audio",
       onClick: async () => {
         await this._openDevelopmentModal();
       },
