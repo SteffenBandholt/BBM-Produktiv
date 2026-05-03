@@ -354,7 +354,6 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("coreShellContextControls.js"), true);
     assert.equal(coreShellSource.includes("coreShellNavigationRuntime.js"), true);
     assert.equal(coreShellSource.includes("coreShellButtons.js"), true);
-    assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
     assert.equal(coreShellSource.includes("createQuitActionButton"), true);
     assert.equal(coreShellSource.includes("injectCoreShellBaseStyles"), true);
     assert.equal(coreShellSource.includes("createCoreShellNavigationRouteDefs"), true);
@@ -391,6 +390,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellSource.includes("router.onSectionChange"), true);
     assert.equal(coreShellSource.includes("registerCoreShellContextControls"), true);
     assert.equal(coreShellSource.includes("updateContextButtons"), true);
+    assert.equal(coreShellSource.includes("btnParticipants"), false);
     assert.equal(coreShellSource.includes("bbm:header-refresh"), false);
     assert.equal(coreShellSource.includes("bbm:theme-refresh"), false);
     assert.equal(coreShellSource.includes("bbm:sticky-notice"), false);
@@ -598,19 +598,16 @@ async function runProjektverwaltungModuleTests(run) {
   await run("Projektverwaltung: CoreShell nutzt updateContextButtons weiterhin im Start- und Nav-Flow", () => {
     assert.equal(coreShellSource.includes("registerCoreShellContextControls"), true);
     assert.equal(coreShellSource.includes("if (typeof updateContextButtons === \"function\")"), true);
-    assert.equal(coreShellSource.includes("btnParticipants"), true);
-    assert.equal(coreShellSource.includes("createParticipantsActionButton"), true);
     assert.equal(coreShellSource.includes("updateContextButtons();"), true);
   });
 
-  await run("Projektverwaltung: Kontextsteuerung bleibt nur fuer btnParticipants aktiv", () => {
-    assert.equal(coreShellSource.includes("btnParticipants"), true);
+  await run("Projektverwaltung: Kontextsteuerung bleibt erhalten, auch ohne sichtbaren Teilnehmer-Button", () => {
+    assert.equal(coreShellSource.includes("btnParticipants"), false);
     assert.equal(coreShellSource.includes("updateContextButtons"), true);
-    assert.equal(coreShellSource.includes("setBtnEnabled(btnParticipants, false"), false);
-    assert.equal(coreShellSource.includes("setBtnEnabled(btnParticipants, true"), false);
-    assert.equal(coreShellSource.includes("hasProject"), false);
-    assert.equal(coreShellSource.includes("hasMeeting"), false);
     assert.equal(coreShellActionsSource.includes("openParticipantsModal"), true);
+    assert.equal(coreShellContextControlsSource.includes("registerCoreShellContextControls"), true);
+    assert.equal(coreShellContextControlsSource.includes("setBtnEnabled(btnParticipants, false"), true);
+    assert.equal(coreShellContextControlsSource.includes("setBtnEnabled(btnParticipants, true"), true);
   });
 }
 

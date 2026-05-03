@@ -1,6 +1,6 @@
 import MainHeader from "../ui/MainHeader.js";
 import { applyThemeForSettings } from "../theme/themes.js";
-import { createParticipantsActionButton, createQuitActionButton } from "./coreShellActions.js";
+import { createQuitActionButton } from "./coreShellActions.js";
 import {
   appendButtonGroup,
   createScreenRouteButton,
@@ -76,20 +76,15 @@ export default class CoreShell {
     );
     const btnHelp = mkNavBtn({ buttonsByKey, runNavSafe }, "help", "Hilfe", () => router.openHelpModal());
 
-    const btnParticipants = createParticipantsActionButton({ router, mkActionBtn, runNavSafe });
-
     const coreNavigationButtons = [btnHome, btnProjects, btnFirms, btnSettings, btnHelp];
-    const actionButtons = [btnParticipants];
 
     appendButtonGroup(topBox, coreNavigationButtons);
-    appendButtonGroup(topBox, actionButtons);
 
     const btnQuit = createQuitActionButton();
     appendButtonGroup(bottomBox, [btnQuit]);
 
     updateContextButtons = registerCoreShellContextControls({
       router,
-      btnParticipants,
       setBtnEnabled,
     });
 
