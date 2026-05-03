@@ -2878,7 +2878,7 @@ export default class PrintModal {
 
         const createdAtRaw =
           t.created_at ?? t.createdAt ?? t.top_created_at ?? t.topCreatedAt ?? null;
-        const createdDate = this._fmtDateYYYYMMDD(createdAtRaw);
+        const createdDate = isLevel1 ? "" : this._fmtDateYYYYMMDD(createdAtRaw);
 
         const shortText = this._truncate(t.title || "(ohne Bezeichnung)", 50);
         let longTextRaw = t.longtext != null ? String(t.longtext) : "";
@@ -3731,7 +3731,7 @@ export default class PrintModal {
 
         const createdAtRaw =
           t.created_at ?? t.createdAt ?? t.top_created_at ?? t.topCreatedAt ?? null;
-        const createdDate = this._fmtDateYYYYMMDD(createdAtRaw);
+        const createdDate = isLevel1 ? "" : this._fmtDateYYYYMMDD(createdAtRaw);
 
         const shortText = this._truncate(t.title || "(ohne Bezeichnung)", 50);
         const longTextRaw = t.longtext != null ? String(t.longtext) : "";

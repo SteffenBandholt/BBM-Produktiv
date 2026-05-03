@@ -3,11 +3,12 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runTopsScreenIntegrationTests(run) {
-  const [{ createTopsStore }, { TopsCommands }, vm, workbenchVmMod] = await Promise.all([
+  const [{ createTopsStore }, { TopsCommands }, vm, workbenchVmMod, topsListMod] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/state/TopsStore.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/tops/domain/TopsCommands.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsWorkbenchViewModel.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/TopsList.js")),
   ]);
   const { EditboxShell } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/core/editbox/EditboxShell.js")
@@ -24,6 +25,46 @@ async function runTopsScreenIntegrationTests(run) {
     buildPatchFromDraft,
   } = vm;
   const { buildWorkbenchVm } = workbenchVmMod;
+  const { TopsList } = topsListMod;
+
+  function createFakeDocument() {
+    const doc = {
+      activeElement: null,
+      createElement(tag) {
+        const el = {
+          tagName: String(tag || "").toUpperCase(),
+          ownerDocument: doc,
+          children: [],
+          style: {},
+          dataset: {},
+          className: "",
+          textContent: "",
+          disabled: false,
+          readOnly: false,
+          value: "",
+          rows: 0,
+          maxLength: 0,
+          append(...nodes) {
+            this.children.push(...nodes);
+          },
+          appendChild(node) {
+            this.children.push(node);
+            return node;
+          },
+          setAttribute(name, value) {
+            this[String(name)] = String(value);
+          },
+          addEventListener() {},
+          classList: {
+            add() {},
+            toggle() {},
+          },
+        };
+        return el;
+      },
+    };
+    return doc;
+  }
 
   await run("Tops v2 Integration: Auswahl -> Workbench-State + ReadOnly-Sichtbarkeit", async () => {
     const list = [
@@ -90,6 +131,100 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(byId.get("100").moveState, "target");
     assert.equal(byId.get("101").moveState, "current");
     assert.equal(byId.get("102").moveState, "blocked");
+  });
+
+  await run("Tops v2 Integration: Listeneintrag uebernimmt und rendert TOP-Anlagedatum", () => {
+    const rows = buildListItemsFromState({
+      tops: [
+        {
+          id: 301,
+          level: 2,
+          title: "Datum",
+          longtext: "",
+          displayNumber: 7,
+          created_at: "2026-04-27T10:11:12.000Z",
+        },
+      ],
+    });
+
+    assert.equal(rows[0].isTitle, false);
+    assert.equal(rows[0].createdAt, "27.04.2026");
+
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const list = new TopsList();
+      list.setItems(rows);
+
+      const row = list.root.children[0];
+      const grid = row.children[0];
+      const numberCell = grid.children[0];
+      assert.equal(numberCell.children.length, 2);
+      assert.equal(numberCell.children[0].textContent, "7.");
+      assert.equal(numberCell.children[1].textContent, "27.04.2026");
+      assert.equal(numberCell.children[1].className, "bbm-tops-list-row-number-date");
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Tops v2 Integration: Ohne TOP-Anlagedatum bleibt die Nummernspalte einzeilig", () => {
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const list = new TopsList();
+      list.setItems([
+        {
+          id: 302,
+          level: 2,
+          title: "Ohne Datum",
+          longtext: "",
+          number: "8.",
+          createdAt: "",
+        },
+      ]);
+
+      const row = list.root.children[0];
+      const grid = row.children[0];
+      const numberCell = grid.children[0];
+      assert.equal(numberCell.children.length, 1);
+      assert.equal(numberCell.children[0].textContent, "8.");
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Tops v2 Integration: Titel mit created_at zeigt keine Datumslinie", () => {
+    const rows = buildListItemsFromState({
+      tops: [
+        {
+          id: 303,
+          level: 1,
+          title: "Titel",
+          longtext: "",
+          displayNumber: 1,
+          created_at: "2026-04-27T10:11:12.000Z",
+        },
+      ],
+    });
+
+    assert.equal(rows[0].isTitle, true);
+    assert.equal(rows[0].createdAt, "");
+
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const list = new TopsList();
+      list.setItems(rows);
+
+      const row = list.root.children[0];
+      const grid = row.children[0];
+      const numberCell = grid.children[0];
+      assert.equal(numberCell.children.length, 1);
+      assert.equal(numberCell.children[0].textContent, "1.");
+    } finally {
+      globalThis.document = prevDocument;
+    }
   });
 
   await run("Tops v2 Integration: Save/Delete + Reload haelt Zustand konsistent", async () => {

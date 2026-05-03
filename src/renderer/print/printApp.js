@@ -65,9 +65,9 @@ function _buildTopRowData(top, longtextOverride, ampelColor) {
     "";
   const numText = String(rawNum ?? "").trim();
   const level = Number(top.level ?? top.top_level ?? top.topLevel ?? 1) || 1;
-  const createdDate = _formatDateIso(
-    top.top_created_at ?? top.topCreatedAt ?? top.created_at ?? top.createdAt ?? ""
-  );
+  const createdDate = level === 1
+    ? ""
+    : _formatDateIso(top.top_created_at ?? top.topCreatedAt ?? top.created_at ?? top.createdAt ?? "");
   const changedDate = _formatDateIso(
     top.updated_at ??
       top.updatedAt ??

@@ -160,7 +160,12 @@ export function buildListItemsFromState(state) {
 
   for (const top of tops) {
     const visual = getTopVisualState(top);
+    const level = Number(top?.level) || 1;
+    const isTitle = level <= 1;
     const due = (top?.due_date || top?.dueDate || "").toString().trim();
+    const createdAtRaw =
+      top?.created_at ?? top?.createdAt ?? top?.top_created_at ?? top?.topCreatedAt ?? "";
+    const createdAt = !isTitle ? formatDateToDdMmYyyy(createdAtRaw) : "";
     const status = (top?.status || "").toString().trim();
     const ampelColor =
       computeAmpelColorForTop({
@@ -194,10 +199,12 @@ export function buildListItemsFromState(state) {
 
     rows.push({
       id: top?.id,
-      level: Number(top?.level) || 1,
+      level,
+      isTitle,
       title: normalizeTopShortText(top?.title),
       number: `${top?.displayNumber ?? top?.number ?? ""}.`,
       preview: normalizeTopLongText(top?.longtext),
+      createdAt,
       meta,
       isSelected: String(top?.id) === String(selectedId ?? ""),
       isMoveMode: !!state?.isMoveMode,

@@ -43,12 +43,23 @@ export class TopsList {
 
     const num = document.createElement("div");
     num.className = "bbm-tops-list-row-number";
-    num.textContent = `${item.number || ""}`;
+    const numLine = document.createElement("div");
+    numLine.className = "bbm-tops-list-row-number-line";
+    numLine.textContent = `${item.number || ""}`;
+    num.appendChild(numLine);
     if (item.showStar) {
       const star = document.createElement("span");
       star.className = "bbm-tops-list-row-star";
       star.textContent = "*";
-      num.append(" ", star);
+      numLine.append(" ", star);
+    }
+
+    const createdAt = String(item.createdAt || "").trim();
+    if (createdAt && !item.isTitle) {
+      const createdAtLine = document.createElement("div");
+      createdAtLine.className = "bbm-tops-list-row-number-date";
+      createdAtLine.textContent = createdAt;
+      num.appendChild(createdAtLine);
     }
 
     const text = document.createElement("div");

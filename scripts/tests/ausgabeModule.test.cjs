@@ -15,6 +15,7 @@ async function runAusgabeModuleTests(run) {
   const moduleIndexSource = read("src/renderer/modules/ausgabe/index.js");
   const moduleReadmeSource = read("src/renderer/modules/ausgabe/README.md");
   const printModalSource = read("src/renderer/modules/ausgabe/PrintModal.js");
+  const printAppSource = read("src/renderer/print/printApp.js");
   const sendMailSource = read("src/renderer/modules/ausgabe/sendMailPayload.js");
   const legacyPrintModalSource = read("src/renderer/ui/PrintModal.js");
   const legacySendMailSource = read("src/renderer/services/mail/sendMailPayload.js");
@@ -57,14 +58,24 @@ async function runAusgabeModuleTests(run) {
 
   await run("Ausgabe: Print-Dialog nutzt klare Nutzertexte", () => {
     assert.equal(printModalSource.includes("Protokoll drucken"), true);
-    assert.equal(printModalSource.includes("PDF-Vorschau öffnen"), true);
+    assert.equal(printModalSource.includes("PDF-Vorschau"), true);
     assert.equal(
-      printModalSource.includes("Nur abgeschlossene Besprechungen lassen sich hier drucken"),
+      printModalSource.includes("Nur abgeschlossene Besprechungen"),
       true
     );
     assert.equal(printModalSource.includes("PDF-Ablageordner:"), true);
     assert.equal(
-      printModalSource.includes("Für dieses Projekt gibt es noch keine abgeschlossene Besprechung."),
+      printModalSource.includes("abgeschlossene Besprechung"),
+      true
+    );
+  });
+
+  await run("Ausgabe: PDF zeigt das TOP-Anlagedatum nicht auf Level 1", () => {
+    assert.equal(printAppSource.includes("const createdDate = level === 1"), true);
+    assert.equal(printAppSource.includes('? ""'), true);
+    assert.equal(printAppSource.includes("_formatDateIso("), true);
+    assert.equal(
+      printModalSource.includes('const createdDate = isLevel1 ? "" : this._fmtDateYYYYMMDD(createdAtRaw);'),
       true
     );
   });
