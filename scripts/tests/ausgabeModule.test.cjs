@@ -79,6 +79,10 @@ async function runAusgabeModuleTests(run) {
       true
     );
   });
+
+  await run("Ausgabe: Legacy-PDF-Logo-Pfad ist nicht mehr aktiv", () => {
+    assert.equal(printModalSource.includes("pdf.userLogo"), false);
+  });
 }
 
 module.exports = { runAusgabeModuleTests };

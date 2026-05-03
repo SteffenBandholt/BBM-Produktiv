@@ -4056,6 +4056,7 @@ export default class SettingsView {
     headerLogoCard.append(headerLogoGrid, headerLogoEnabledWrap);
     wrap.append(headerLogoCard);
 
+    if (false) {
     const pdfLogoCard = document.createElement("div");
     applyPopupCardStyle(pdfLogoCard);
     pdfLogoCard.style.padding = "10px";
@@ -4186,6 +4187,7 @@ export default class SettingsView {
       pdfLogoRemove
     );
     wrap.append(pdfLogoCard);
+    }
 
     let profile = null;
     if (typeof api.userProfileGet === "function") {
@@ -4203,13 +4205,7 @@ export default class SettingsView {
         "header.logoPadTopPx",
         "header.logoPadRightPx",
         "header.logoPosition",
-        "header.logoEnabled",
-        "pdf.userLogoEnabled",
-        "pdf.userLogoWidthMm",
-        "pdf.userLogoTopMm",
-        "pdf.userLogoRightMm",
-        "pdf.userLogoFilePath",
-        "pdf.userLogoPngDataUrl"
+        "header.logoEnabled"
       );
       const res = await api.appSettingsGetMany(keys);
       if (res?.ok) {
@@ -4245,46 +4241,11 @@ export default class SettingsView {
           position: this._normalizeLogoPosition(data["header.logoPosition"], this._logoDefaults().position),
           enabled: this._parseBool(data["header.logoEnabled"], this._logoDefaults().enabled),
         });
-        this._applyPdfLogoInputs({
-          enabled: this._parseBool(data["pdf.userLogoEnabled"], this._pdfLogoDefaults().enabled),
-          widthMm: this._clampPdfLogoNumber(data["pdf.userLogoWidthMm"], 10, 60, this._pdfLogoDefaults().widthMm),
-          topMm: this._clampPdfLogoNumber(data["pdf.userLogoTopMm"], 0, 30, this._pdfLogoDefaults().topMm),
-          rightMm: this._clampPdfLogoNumber(data["pdf.userLogoRightMm"], 0, 30, this._pdfLogoDefaults().rightMm),
-        });
-        this._setPdfLogoFilePath(String(data["pdf.userLogoFilePath"] ?? ""), { skipSave: true });
-        this._setPdfLogoDataUrl(String(data["pdf.userLogoPngDataUrl"] ?? ""), { skipSave: true });
         if (userState.profileFallbackUsed && typeof api.userProfileUpsert === "function") {
           await api.userProfileUpsert(userState.profileRecord);
         }
       }
     }
-
-    const syncPdfLogoPreview = () => {
-      const hasLogo = !!String(pdfLogoPath.value || "").trim() || !!pdfLogoImg.src;
-      pdfLogoDummy.style.display = hasLogo ? "none" : "flex";
-      pdfLogoImg.style.display = hasLogo ? "block" : "none";
-      this._updatePdfLogoQuality();
-    };
-    pdfLogoRemove.onclick = () => {
-      pdfLogoFile.value = "";
-      pdfLogoPath.value = "";
-      pdfLogoImg.src = "";
-      pdfLogoImg.style.display = "none";
-      pdfLogoDummy.style.display = "flex";
-      inpPdfLogoEnabled.checked = false;
-      this._setPdfLogoDataUrl("", { skipSave: true });
-      this._setPdfLogoFilePath("", { skipSave: true });
-      this._schedulePdfLogoSave();
-    };
-    pdfLogoFile.addEventListener("change", async () => {
-      await this._handlePdfLogoFileInput();
-      syncPdfLogoPreview();
-    });
-    pdfLogoPath.addEventListener("click", () => pdfLogoFile.click());
-    inpPdfLogoEnabled.addEventListener("change", () => this._schedulePdfLogoSave());
-    inpPdfLogoWidth.addEventListener("change", () => this._schedulePdfLogoSave());
-    inpPdfLogoTop.addEventListener("change", () => this._schedulePdfLogoSave());
-    inpPdfLogoRight.addEventListener("change", () => this._schedulePdfLogoSave());
     inpHeaderLogoEnabled.addEventListener("change", () => this._scheduleLogoSave());
     inpHeaderLogoSize.addEventListener("change", () => this._scheduleLogoSave());
     inpHeaderLogoPadLeft.addEventListener("change", () => this._scheduleLogoSave());
@@ -4316,19 +4277,12 @@ export default class SettingsView {
           }
         }
         const headerLogoValues = this._getLogoInputValues();
-        const pdfLogoValues = this._getPdfLogoInputValues();
         payload["header.logoEnabled"] = headerLogoValues.enabled ? "true" : "false";
         payload["header.logoSizePx"] = String(headerLogoValues.size);
         payload["header.logoPadLeftPx"] = String(headerLogoValues.padLeft);
         payload["header.logoPadTopPx"] = String(headerLogoValues.padTop);
         payload["header.logoPadRightPx"] = String(headerLogoValues.padRight);
         payload["header.logoPosition"] = String(headerLogoValues.position || "left");
-        payload["pdf.userLogoEnabled"] = pdfLogoValues.enabled ? "true" : "false";
-        payload["pdf.userLogoWidthMm"] = String(pdfLogoValues.widthMm);
-        payload["pdf.userLogoTopMm"] = String(pdfLogoValues.topMm);
-        payload["pdf.userLogoRightMm"] = String(pdfLogoValues.rightMm);
-        payload["pdf.userLogoFilePath"] = String(this._pdfLogoFilePath || pdfLogoPath.value || "");
-        payload["pdf.userLogoPngDataUrl"] = String(this._pdfLogoDataUrl || "");
         if (typeof api.userProfileUpsert === "function") {
           const resProfile = await api.userProfileUpsert(profilePayload);
           if (!resProfile?.ok) {

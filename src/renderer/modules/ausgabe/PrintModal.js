@@ -1942,27 +1942,7 @@ export default class PrintModal {
         meetingDate: meetingDateRaw || new Date(),
       });
 
-      const pdfLogoDefaults = {
-        enabled: true,
-        widthMm: 35,
-        topMm: 8,
-        rightMm: 8,
-      };
-      const pdfLogoEnabled = this._parseBool(settings?.["pdf.userLogoEnabled"], pdfLogoDefaults.enabled);
-      const pdfLogoWidthMm = this._clampNumber(
-        settings?.["pdf.userLogoWidthMm"],
-        10,
-        60,
-        pdfLogoDefaults.widthMm
-      );
-      const pdfLogoDataUrl = String(settings?.["pdf.userLogoPngDataUrl"] || "").trim();
-      const pdfLogoDummyHeightMm = Math.max(12, Math.round(pdfLogoWidthMm * 0.5));
-      const logoHeightMm = await this._calcLogoHeightMm({
-        enabled: pdfLogoEnabled,
-        dataUrl: pdfLogoDataUrl,
-        widthMm: pdfLogoWidthMm,
-        dummyHeightMm: pdfLogoDummyHeightMm,
-      });
+      const logoHeightMm = 0;
 
       const out = await window.bbmPrint.printPdf({
         bbmVersion: "1.0",
@@ -2085,30 +2065,7 @@ export default class PrintModal {
         meetingDate: meetingDateRaw || new Date(),
       });
 
-      const pdfLogoDefaults = {
-        enabled: true,
-        widthMm: 35,
-        topMm: 8,
-        rightMm: 8,
-      };
-      const pdfLogoEnabled = this._parseBool(
-        settings?.["pdf.userLogoEnabled"],
-        pdfLogoDefaults.enabled
-      );
-      const pdfLogoWidthMm = this._clampNumber(
-        settings?.["pdf.userLogoWidthMm"],
-        10,
-        60,
-        pdfLogoDefaults.widthMm
-      );
-      const pdfLogoDataUrl = String(settings?.["pdf.userLogoPngDataUrl"] || "").trim();
-      const pdfLogoDummyHeightMm = Math.max(12, Math.round(pdfLogoWidthMm * 0.5));
-      const logoHeightMm = await this._calcLogoHeightMm({
-        enabled: pdfLogoEnabled,
-        dataUrl: pdfLogoDataUrl,
-        widthMm: pdfLogoWidthMm,
-        dummyHeightMm: pdfLogoDummyHeightMm,
-      });
+      const logoHeightMm = 0;
 
       const tops = resAll.list || [];
       const html = this._buildTopListAllHtml({
@@ -2680,56 +2637,10 @@ export default class PrintModal {
     })();
     const projectLine = projectName ? `${projectNumber} - ${projectName}` : projectNumber;
 
-    const pdfLogoDefaults = {
-      enabled: true,
-      widthMm: 35,
-      topMm: 8,
-      rightMm: 8,
-    };
-    const pdfLogoEnabled = this._parseBool(
-      settings?.["pdf.userLogoEnabled"],
-      pdfLogoDefaults.enabled
-    );
-    const pdfLogoWidthMm = this._clampNumber(
-      settings?.["pdf.userLogoWidthMm"],
-      10,
-      60,
-      pdfLogoDefaults.widthMm
-    );
-    let pdfLogoTopMm = this._clampNumber(
-      settings?.["pdf.userLogoTopMm"],
-      0,
-      30,
-      pdfLogoDefaults.topMm
-    );
-    if (Number.isFinite(maxLogoTopMm)) {
-      pdfLogoTopMm = Math.min(pdfLogoTopMm, Math.max(0, Number(maxLogoTopMm)));
-    }
-    const pdfLogoRightMm = this._clampNumber(
-      settings?.["pdf.userLogoRightMm"],
-      0,
-      30,
-      pdfLogoDefaults.rightMm
-    );
-    const pdfLogoDataUrl = String(settings?.["pdf.userLogoPngDataUrl"] || "").trim();
-    const pdfLogoDummyHeightMm = Math.max(12, Math.round(pdfLogoWidthMm * 0.5));
-    const hasLogo = pdfLogoEnabled && !!pdfLogoDataUrl;
-    const showDummy = pdfLogoEnabled && !pdfLogoDataUrl;
-    const effectiveLogoHeightMm = hasLogo
-      ? Number(logoHeightMm) > 0
-        ? Number(logoHeightMm)
-        : pdfLogoDummyHeightMm
-      : showDummy
-        ? pdfLogoDummyHeightMm
-        : 0;
-    const headerHeightMm = Math.max(18, pdfLogoTopMm + effectiveLogoHeightMm + 5);
-    const pdfLogoPos = `margin-top:${pdfLogoTopMm}mm; margin-right:${pdfLogoRightMm}mm; width:${pdfLogoWidthMm}mm;`;
-
-    const pdfLogoHtml = !pdfLogoEnabled
-      ? ""
-      : pdfLogoDataUrl
-        ? `<img class="pdfLogo" src="${pdfLogoDataUrl}" style="${pdfLogoPos} height:auto;" />`
-        : `<div class="pdfLogo pdfLogoDummy" style="${pdfLogoPos} height:${pdfLogoDummyHeightMm}mm;"></div>`;
+    const pdfLogoHtml = "";
+    const pdfLogoTopMm = 0;
+    const effectiveLogoHeightMm = 0;
+    const headerHeightMm = 18;
 
     return {
       projectLine,
@@ -4273,37 +4184,7 @@ export default class PrintModal {
     const userName = String(settings?.user_name || "").trim();
     const userCompany = String(settings?.user_company || "").trim();
 
-    const pdfLogoDefaults = {
-      enabled: true,
-      widthMm: 35,
-      topMm: 8,
-      rightMm: 8,
-    };
-
-    const pdfLogoEnabled = this._parseBool(settings?.["pdf.userLogoEnabled"], pdfLogoDefaults.enabled);
-    const pdfLogoWidthMm = this._clampNumber(
-      settings?.["pdf.userLogoWidthMm"],
-      10,
-      60,
-      pdfLogoDefaults.widthMm
-    );
-    const pdfLogoTopMm = this._clampNumber(settings?.["pdf.userLogoTopMm"], 0, 30, pdfLogoDefaults.topMm);
-    const pdfLogoRightMm = this._clampNumber(
-      settings?.["pdf.userLogoRightMm"],
-      0,
-      30,
-      pdfLogoDefaults.rightMm
-    );
-    const pdfLogoDataUrl = String(settings?.["pdf.userLogoPngDataUrl"] || "").trim();
-
-    const pdfLogoPos = `top:${pdfLogoTopMm}mm; right:${pdfLogoRightMm}mm; width:${pdfLogoWidthMm}mm;`;
-    const pdfLogoDummyHeightMm = Math.max(12, Math.round(pdfLogoWidthMm * 0.5));
-
-    const pdfLogoHtml = !pdfLogoEnabled
-      ? ""
-      : pdfLogoDataUrl
-        ? `<img class="pdfLogo" src="${pdfLogoDataUrl}" style="${pdfLogoPos} height:auto;" />`
-        : `<div class="pdfLogo pdfLogoDummy" style="${pdfLogoPos} height:${pdfLogoDummyHeightMm}mm;"></div>`;
+    const pdfLogoHtml = "";
 
     const rightLine1 = this._escapeHtml(userName || "?");
     const rightLine2 = this._escapeHtml(userCompany || "?");
@@ -4781,27 +4662,7 @@ export default class PrintModal {
       }
       const participants = resP.list || resP.items || [];
 
-      const pdfLogoDefaults = {
-        enabled: true,
-        widthMm: 35,
-        topMm: 8,
-        rightMm: 8,
-      };
-      const pdfLogoEnabled = this._parseBool(settings?.["pdf.userLogoEnabled"], pdfLogoDefaults.enabled);
-      const pdfLogoWidthMm = this._clampNumber(
-        settings?.["pdf.userLogoWidthMm"],
-        10,
-        60,
-        pdfLogoDefaults.widthMm
-      );
-      const pdfLogoDataUrl = String(settings?.["pdf.userLogoPngDataUrl"] || "").trim();
-      const pdfLogoDummyHeightMm = Math.max(12, Math.round(pdfLogoWidthMm * 0.5));
-      const logoHeightMm = await this._calcLogoHeightMm({
-        enabled: pdfLogoEnabled,
-        dataUrl: pdfLogoDataUrl,
-        widthMm: pdfLogoWidthMm,
-        dummyHeightMm: pdfLogoDummyHeightMm,
-      });
+      const logoHeightMm = 0;
 
       const tops = res.list || [];
       const html = this._buildPrintHtml({

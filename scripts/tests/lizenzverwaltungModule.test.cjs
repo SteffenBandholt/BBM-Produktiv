@@ -7,11 +7,114 @@ function read(relPath) {
   return fs.readFileSync(path.join(process.cwd(), relPath), "utf8");
 }
 
+function createFakeNode(tag) {
+  const style = {
+    setProperty(name, value) {
+      this[name] = value;
+    },
+    removeProperty(name) {
+      delete this[name];
+    },
+  };
+  const node = {
+    tagName: String(tag || "").toUpperCase(),
+    children: [],
+    style,
+    dataset: {},
+    classList: {
+      add() {},
+      remove() {},
+      toggle() {},
+      contains() {
+        return false;
+      },
+    },
+    append(...items) {
+      for (const item of items) {
+        if (item == null) continue;
+        this.children.push(item);
+      }
+    },
+    appendChild(item) {
+      if (item != null) this.children.push(item);
+      return item;
+    },
+    addEventListener() {},
+    removeEventListener() {},
+    focus() {},
+    click() {},
+    setAttribute() {},
+    removeAttribute() {},
+    contains() {
+      return false;
+    },
+  };
+  Object.defineProperty(node, "innerHTML", {
+    configurable: true,
+    enumerable: true,
+    get() {
+      return this._innerHTML || "";
+    },
+    set(value) {
+      this._innerHTML = String(value || "");
+      this.children = [];
+    },
+  });
+  return node;
+}
+
+function createFakeDocument() {
+  const doc = {
+    activeElement: null,
+    createElement(tag) {
+      return createFakeNode(tag);
+    },
+    createElementNS(_ns, tag) {
+      return createFakeNode(tag);
+    },
+    createTextNode(text) {
+      return {
+        nodeType: 3,
+        textContent: String(text ?? ""),
+        children: [],
+      };
+    },
+    addEventListener() {},
+    removeEventListener() {},
+  };
+  doc.body = createFakeNode("body");
+  return doc;
+}
+
+function collectFakeText(node) {
+  if (node == null) return "";
+  if (Array.isArray(node)) {
+    return node.map(collectFakeText).join(" ");
+  }
+  if (typeof node === "string") return node;
+  if (typeof node.textContent === "string") {
+    let own = node.textContent;
+    if (Array.isArray(node.children) && node.children.length) {
+      own += node.children.map(collectFakeText).join(" ");
+    }
+    return own;
+  }
+  if (Array.isArray(node.children)) {
+    return node.children.map(collectFakeText).join(" ");
+  }
+  return "";
+}
+
 async function runLizenzverwaltungModuleTests(run) {
   const originalWindow = global.window;
+  const originalDocument = global.document;
   const restoreWindow = () => {
     if (typeof originalWindow === "undefined") delete global.window;
     else global.window = originalWindow;
+  };
+  const restoreDocument = () => {
+    if (typeof originalDocument === "undefined") delete global.document;
+    else global.document = originalDocument;
   };
   const [
     {
@@ -859,6 +962,42 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('label: "Ort (Adresse)"'), true);
     assert.equal(settingsViewSource.includes('label: "Profil-/Adressdaten im Footer verwenden"'), true);
     assert.equal(settingsViewSource.includes('label: "Footer nutzt Nutzerdaten (true/false)"'), false);
+  });
+
+  await run("SettingsView: Profil & Druck oeffnet die Sammelmaske ohne PDF-Logo-Restpfad", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        userProfileGet: async () => ({ ok: true, profile: null }),
+        appSettingsGetMany: async () => ({ ok: true, data: {} }),
+        userProfileUpsert: async () => ({ ok: true }),
+        appSettingsSetMany: async () => ({ ok: true }),
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._createLegacySettingsContent();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Nutzereinstellungen / Druckeinstellungen");
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(contentText.includes("Drucklogos konfigurieren"), true);
+      assert.equal(contentText.includes("PDF-Logo aktiv"), false);
+      assert.equal(contentText.includes("Logo-Datei, Position und Gr"), false);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
   });
 
   await run("Lizenzverwaltung: Entwicklung enthaelt keinen sichtbaren Tab Lizenz / bearbeiten", () => {

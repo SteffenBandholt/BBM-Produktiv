@@ -32,6 +32,14 @@ Sie ergänzt:
   - der Hinweis nennt jetzt Protokoll und PDF-Ausgabe
   - die Textgrenzen heissen jetzt `Textgrenzen für TOPs`
   - Kurztext-/Langtext-Grenzen werden als Eingabelaengen fuer TOPs beschrieben
+- Der Legacy-Pfad `PDF-Logo` ist im UI deaktiviert:
+  - die sichtbare PDF-Logo-Bearbeitung erscheint nicht mehr in `Profil & Druck`
+  - `pdf.userLogo*` wird in der Ausgabe nicht mehr gerendert
+  - der aktive Drucklogos-Pfad bleibt unveraendert
+- Die Kachel `Profil & Druck` oeffnet wieder die Sammelmaske:
+  - die alte PDF-Logo-Restverkabelung im aktiven Aufbau wurde entfernt
+  - Drucklogos bleiben erreichbar
+  - die Maske laedt jetzt wieder ohne den ehemaligen PDF-Logo-Restpfad
 - Projekt-Einstellungen behandeln `pdf.footerUseUserData` nicht mehr als steuerbare Projektoption:
   - der Projektsettings-Dialog speichert dieses Feld nicht mehr
   - der Projektsettings-IPC filtert es aus Whitelist und Patch
