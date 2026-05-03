@@ -1076,3 +1076,38 @@ Wichtig:
   - kein offener Folge-Schritt fuer diese Extraktion
 - Risiken/Hinweise:
   - Nur das Body-Setup verschoben; der restliche Layout-/Shell-Aufbau bleibt bewusst unangetastet.
+
+#### Paket: Firmenbegriffe und Labels klaeren
+- Status: erledigt
+- Beschreibung:
+  - Sichtbare Begriffe rund um Firmen/Firmen im Projekt/Firmen hinzufuegen in `ProjectFirmsView.js`, `FirmsPoolView.js` und den zugehoerigen Router-/Test-Erwartungen geschaerft.
+  - Projektbezogene Bezeichnung `Projektfirmen` durch `Firmen im Projekt` ersetzt, die Fachlogik und Sortierreihenfolge blieben unveraendert.
+  - Projektpool-CTA auf `Firmen hinzufuegen` / `Aus Firmenstamm hinzufuegen` vereinheitlicht.
+- Betroffene Dateien:
+  - `src/renderer/views/ProjectFirmsView.js`
+  - `src/renderer/views/FirmsPoolView.js`
+  - `src/renderer/app/Router.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - keine direkte Anschlussaufgabe aus diesem Mini-Paket
+- Risiken/Hinweise:
+  - Nur sichtbare Texte/Labels angepasst; Sortierlogik, DB-/IPC-Namen und Projektfirmen-Funktionen bleiben unveraendert.
+
+#### Paket: Doppelten Projekttitel in Firmen im Projekt entfernen
+- Status: erledigt
+- Beschreibung:
+  - Im Header von `ProjectFirmsView` die doppelte Projektbezeichnung neben `Firmen im Projekt` entfernt.
+  - Der Button `Zum Projekt` und der restliche Inhalt bleiben unveraendert.
+- Betroffene Dateien:
+  - `src/renderer/views/ProjectFirmsView.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - keine direkte Anschlussaufgabe aus diesem Mini-Paket
+- Risiken/Hinweise:
+  - Nur die sichtbare Doppelanzeige entfernt; Routing, Projektlogik und Firmenlogik bleiben unveraendert.

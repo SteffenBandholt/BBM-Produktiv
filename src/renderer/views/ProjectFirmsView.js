@@ -221,26 +221,14 @@ export default class ProjectFirmsView {
     head.style.marginBottom = "10px";
 
     const title = document.createElement("h2");
-    title.textContent = "Firmen";
+    title.textContent = "Firmen im Projekt";
     title.style.margin = "0";
-
-    const viewLabel = document.createElement("div");
-    viewLabel.textContent = "";
-    viewLabel.style.fontSize = "16px";
-    viewLabel.style.fontWeight = "600";
-    viewLabel.style.opacity = "0.9";
-
-    const viewScope = document.createElement("div");
-    viewScope.textContent = this._projectScopeText();
-    viewScope.style.fontSize = "16px";
-    viewScope.style.fontWeight = "600";
-    viewScope.style.opacity = "0.9";
 
     const titleWrap = document.createElement("div");
     titleWrap.style.display = "inline-flex";
     titleWrap.style.alignItems = "baseline";
     titleWrap.style.gap = "10px";
-    titleWrap.append(title, viewLabel, viewScope);
+    titleWrap.append(title);
 
     const btnToProject = document.createElement("button");
     btnToProject.type = "button";
@@ -343,7 +331,7 @@ export default class ProjectFirmsView {
     listActions.style.gap = "6px";
 
     const btnGlobalAssign = document.createElement("button");
-    btnGlobalAssign.textContent = "Aus globaler Liste hinzufuegen";
+    btnGlobalAssign.textContent = "Aus Firmenstamm hinzufügen";
     applyPopupButtonStyle(btnGlobalAssign);
     btnGlobalAssign.onclick = async () => {
       if (this._isReadOnly()) return;
@@ -752,7 +740,7 @@ const taFirmNotes = document.createElement("textarea");
     modalHead.style.borderBottom = "1px solid #e2e8f0";
 
     const modalTitle = document.createElement("div");
-    modalTitle.textContent = "Aus globaler Liste hinzufuegen";
+    modalTitle.textContent = "Aus Firmenstamm hinzufügen";
     modalTitle.style.fontWeight = "bold";
 
     const btnClose = document.createElement("button");
@@ -801,7 +789,7 @@ const taFirmNotes = document.createElement("textarea");
       return { col, list };
     };
 
-    const leftCol = mkListCol("Globale Firmen");
+    const leftCol = mkListCol("Firmen hinzufügen");
     const rightCol = mkListCol("Firmen im Projekt");
 
     modalGrid.append(leftCol.col, rightCol.col);
@@ -1991,7 +1979,7 @@ const taFirmNotes = document.createElement("textarea");
 
     const res = await window.bbmDb.projectFirmsListByProject(this.projectId);
     if (!res?.ok) {
-      this._setMsg(res?.error || "Fehler beim Laden der Projektfirmen");
+      this._setMsg(res?.error || "Fehler beim Laden der Firmen im Projekt");
 
       this.firms = [];
       this._closeFirmEditor();

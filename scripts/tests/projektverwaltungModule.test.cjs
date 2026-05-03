@@ -189,6 +189,8 @@ async function runProjektverwaltungModuleTests(run) {
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
   const mainHeaderSource = read("src/renderer/ui/MainHeader.js");
   const projectContextQuicklaneSource = read("src/renderer/ui/ProjectContextQuicklane.js");
+  const projectFirmsViewSource = read("src/renderer/views/ProjectFirmsView.js");
+  const firmsPoolViewSource = read("src/renderer/views/FirmsPoolView.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
   const workspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const formSource = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
@@ -272,7 +274,7 @@ async function runProjektverwaltungModuleTests(run) {
         },
         {
           moduleId: "projectFirms",
-          label: "Projektfirmen",
+          label: "Firmen im Projekt",
           description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
         },
       ],
@@ -302,7 +304,7 @@ async function runProjektverwaltungModuleTests(run) {
       );
       assert.deepEqual(
         modules.map((item) => item.label),
-        ["Protokoll", "Projektfirmen"]
+        ["Protokoll", "Firmen im Projekt"]
       );
       assert.equal(screen.getProjectDisplayText(), "P-12 - Rohbau");
 
@@ -343,6 +345,19 @@ async function runProjektverwaltungModuleTests(run) {
     const opened = await screen.showProjectsList();
     assert.equal(opened, true);
     assert.deepEqual(calls, ["showProjects"]);
+  });
+
+  await run("Projektverwaltung: sichtbare Firmenbegriffe sind klarer benannt", () => {
+    assert.equal(projectFirmsViewSource.includes("Firmen im Projekt"), true);
+    assert.equal(projectFirmsViewSource.includes("Aus Firmenstamm hinzufügen"), true);
+    assert.equal(projectFirmsViewSource.includes("Firmen hinzufügen"), true);
+    assert.equal(projectFirmsViewSource.includes("Fehler beim Laden der Firmen im Projekt"), true);
+    assert.equal(projectFirmsViewSource.includes("viewScope.textContent = this._projectScopeText();"), false);
+    assert.equal(projectFirmsViewSource.includes("titleWrap.append(title, viewLabel, viewScope);"), false);
+    assert.equal(firmsPoolViewSource.includes("Firmen hinzufügen"), true);
+    assert.equal(firmsPoolViewSource.includes("Aus Firmenstamm hinzufügen"), true);
+    assert.equal(firmsPoolViewSource.includes("Kategorie: Firmen im Projekt"), true);
+    assert.equal(firmsPoolViewSource.includes("Firmenpool"), false);
   });
 
   await run("Projektverwaltung: Projektdaten werden bei fehlendem Projekt weiter ueber projectsList geladen", async () => {
@@ -934,6 +949,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(routerSource.includes("projectModules: this._getProjectWorkspaceModules()"), true);
     assert.equal(routerSource.includes("activeModuleLabel:"), true);
     assert.equal(routerSource.includes('moduleId: "projectFirms"'), true);
+    assert.equal(routerSource.includes('label: "Firmen im Projekt"'), true);
     assert.equal(routerSource.includes("Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen."), true);
   });
 
