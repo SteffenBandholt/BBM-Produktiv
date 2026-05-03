@@ -7,6 +7,155 @@ function read(relPath) {
   return fs.readFileSync(path.join(process.cwd(), relPath), "utf8");
 }
 
+function createFakeDocumentWithBubbling() {
+  const createNode = (tag, doc) => {
+    const listeners = {};
+    const node = {
+      tagName: String(tag || "").toUpperCase(),
+      ownerDocument: doc,
+      children: [],
+      parentNode: null,
+      style: {},
+      dataset: {},
+      className: "",
+      textContent: "",
+      disabled: false,
+      readOnly: false,
+      value: "",
+      checked: false,
+      tabIndex: 0,
+      append(...nodes) {
+        for (const child of nodes) {
+          if (!child) continue;
+          child.parentNode = this;
+          this.children.push(child);
+        }
+      },
+      appendChild(nodeChild) {
+        if (nodeChild) {
+          nodeChild.parentNode = this;
+          this.children.push(nodeChild);
+        }
+        return nodeChild;
+      },
+      replaceChildren(...nodes) {
+        this.children = [];
+        this.append(...nodes);
+      },
+      setAttribute(name, value) {
+        this[String(name)] = String(value);
+      },
+      getAttribute(name) {
+        const v = this[String(name)];
+        return v === undefined ? null : v;
+      },
+      addEventListener(type, handler) {
+        if (!listeners[type]) listeners[type] = [];
+        listeners[type].push(handler);
+      },
+      async dispatchEvent(eventInput) {
+        const event = typeof eventInput === "string" ? { type: eventInput } : (eventInput || {});
+        if (!event.type) event.type = "click";
+        if (event.target == null) event.target = this;
+        event.currentTarget = this;
+        event.defaultPrevented = !!event.defaultPrevented;
+        event._stopped = !!event._stopped;
+        event._immediateStopped = !!event._immediateStopped;
+        event.preventDefault = () => {
+          event.defaultPrevented = true;
+        };
+        event.stopPropagation = () => {
+          event._stopped = true;
+        };
+        event.stopImmediatePropagation = () => {
+          event._stopped = true;
+          event._immediateStopped = true;
+        };
+
+        for (const handler of listeners[event.type] || []) {
+          await handler.call(this, event);
+          if (event._immediateStopped) break;
+        }
+
+        if (!event._stopped && this.parentNode) {
+          return await this.parentNode.dispatchEvent(event);
+        }
+
+        return event;
+      },
+      async click() {
+        return await this.dispatchEvent({ type: "click" });
+      },
+      focus() {
+        doc.activeElement = this;
+      },
+      contains(target) {
+        if (target === this) return true;
+        for (const child of this.children || []) {
+          if (child === target) return true;
+          if (child && typeof child.contains === "function" && child.contains(target)) return true;
+        }
+        return false;
+      },
+      querySelectorAll(selector) {
+        const result = [];
+        const wantProjectAction = String(selector || "").includes("data-project-action");
+        const wantProjectCard = String(selector || "").includes("data-project-card");
+        const wantRail = String(selector || "").includes("data-project-action-rail");
+        const walk = (nodeToWalk) => {
+          if (!nodeToWalk) return;
+          if (wantProjectAction && nodeToWalk.dataset?.projectAction) result.push(nodeToWalk);
+          if (wantProjectCard && nodeToWalk.dataset?.projectCard) result.push(nodeToWalk);
+          if (wantRail && nodeToWalk.dataset?.projectActionRail) result.push(nodeToWalk);
+          for (const child of nodeToWalk.children || []) walk(child);
+        };
+        walk(this);
+        return result;
+      },
+    };
+
+    Object.defineProperty(node, "innerHTML", {
+      configurable: true,
+      enumerable: true,
+      get() {
+        return this._innerHTML || "";
+      },
+      set(value) {
+        this._innerHTML = String(value || "");
+        this.children = [];
+      },
+    });
+
+    return node;
+  };
+
+  const doc = {
+    activeElement: null,
+    createElement(tag) {
+      return createNode(tag, doc);
+    },
+    createElementNS(_ns, tag) {
+      return createNode(tag, doc);
+    },
+    addEventListener() {},
+    removeEventListener() {},
+  };
+  doc.body = createNode("body", doc);
+  return doc;
+}
+
+function findNode(root, predicate) {
+  const stack = [root];
+  while (stack.length) {
+    const node = stack.shift();
+    if (predicate(node)) return node;
+    for (const child of node?.children || []) {
+      stack.push(child);
+    }
+  }
+  return null;
+}
+
 async function runProjektverwaltungModuleTests(run) {
   const [
     {
@@ -300,10 +449,135 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
+  await run("Projektverwaltung: Projektkarte rendert rechte Modul-Aktionsleiste und stoppt Bubble", async () => {
+    const previousDocument = global.document;
+    const fakeDocument = createFakeDocumentWithBubbling();
+    global.document = fakeDocument;
+
+    const calls = [];
+    const screen = new ProjectsScreen({
+      router: {
+        currentProjectId: null,
+        currentMeetingId: null,
+        _getProjectWorkspaceModules() {
+          return [
+            {
+              moduleId: "protokoll",
+              label: "Protokoll",
+              description: "Protokoll im aktuellen Projekt öffnen.",
+            },
+            {
+              moduleId: "projectFirms",
+              label: "Projektfirmen",
+              description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
+            },
+          ];
+        },
+        async openProjectProtocol(projectId, options) {
+          calls.push({ type: "protocol", projectId, options });
+        },
+        async showProjectWorkspace(projectId, options) {
+          calls.push({ type: "workspace", projectId, options });
+        },
+      },
+    });
+
+    screen.projects = [
+      {
+        id: "17",
+        short: "Projekt A",
+        name: "Projekt A",
+        project_number: "17",
+      },
+    ];
+    screen.openProjectById = async (projectId) => {
+      calls.push({ type: "main", projectId });
+      return true;
+    };
+    screen._openProjectFormModal = async ({ projectId } = {}) => {
+      calls.push({ type: "edit", projectId });
+    };
+
+    try {
+      const root = screen.render();
+      assert.equal(!!root, true);
+
+      const projectCard = findNode(root, (node) => node?.dataset?.projectCard === "true");
+      const actionRail = findNode(root, (node) => node?.dataset?.projectActionRail === "true");
+      const moduleButton = findNode(
+        root,
+        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "protokoll"
+      );
+      const editButton = findNode(root, (node) => node?.dataset?.projectAction === "edit");
+
+      assert.equal(!!projectCard, true);
+      assert.equal(!!actionRail, true);
+      assert.equal(!!moduleButton, true);
+      assert.equal(!!editButton, true);
+      assert.equal(actionRail.children.length >= 1, true);
+
+      await moduleButton.click();
+      assert.deepEqual(calls, [
+        {
+          type: "protocol",
+          projectId: "17",
+          options: {
+            project: {
+              id: "17",
+              short: "Projekt A",
+              name: "Projekt A",
+              project_number: "17",
+            },
+          },
+        },
+      ]);
+
+      await editButton.click();
+      assert.deepEqual(calls, [
+        {
+          type: "protocol",
+          projectId: "17",
+          options: {
+            project: {
+              id: "17",
+              short: "Projekt A",
+              name: "Projekt A",
+              project_number: "17",
+            },
+          },
+        },
+        { type: "edit", projectId: "17" },
+      ]);
+
+      await projectCard.click();
+      assert.deepEqual(calls, [
+        {
+          type: "protocol",
+          projectId: "17",
+          options: {
+            project: {
+              id: "17",
+              short: "Projekt A",
+              name: "Projekt A",
+              project_number: "17",
+            },
+          },
+        },
+        { type: "edit", projectId: "17" },
+        { type: "main", projectId: "17" },
+      ]);
+    } finally {
+      global.document = previousDocument;
+    }
+  });
+
   await run("Projektverwaltung: neue Screen-Dateien enthalten die Implementierung", () => {
     assert.equal(projectsSource.includes("export default class ProjectsScreen"), true);
     assert.equal(workspaceSource.includes("export default class ProjectWorkspaceScreen"), true);
-    assert.equal(projectsSource.includes("../../../ui/popupButtonStyles.js"), true);
+    assert.equal(projectsSource.includes("_getProjectWorkspaceModules"), true);
+    assert.equal(projectsSource.includes('"protokoll"'), true);
+    assert.equal(projectsSource.includes("projectActionRail"), true);
+    assert.equal(projectsSource.includes("dataset.projectAction = actionType"), true);
     assert.equal(formSource.includes("export default class ProjectFormScreen"), true);
     assert.equal(formSource.includes("../../../ui/popupButtonStyles.js"), true);
     assert.equal(formSource.includes("pdf.footerUseUserData"), false);
