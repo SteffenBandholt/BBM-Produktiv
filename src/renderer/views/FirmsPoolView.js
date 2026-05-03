@@ -129,7 +129,7 @@ export default class FirmsPoolView {
   _selectedFirmMeta() {
     if (!this.selectedFirm) return "Bitte links eine Firma ausw\u00e4hlen.";
     const isGlobal = this.selectedFirm.kind === "global_firm";
-    return isGlobal ? "Kategorie: Firmenstamm" : "Kategorie: Projektfirma";
+    return isGlobal ? "Kategorie: Firmenstamm" : "Kategorie: Firmen im Projekt";
   }
 
   _personName(p) {
@@ -193,11 +193,11 @@ export default class FirmsPoolView {
 
     const selected = this.selectedFirm;
     if (!selected) {
-      btn.title = "Bitte zuerst eine Projektfirma ausw\u00e4hlen.";
+      btn.title = "Bitte zuerst eine Firma im Projekt auswählen.";
       return;
     }
     if (selected.kind !== "project_firm") {
-      btn.title = "Nur Projektfirmen können gelöscht werden.";
+      btn.title = "Nur Firmen im Projekt können gelöscht werden.";
       return;
     }
     if (this.loadingPersons) {
@@ -221,16 +221,16 @@ export default class FirmsPoolView {
   async _deleteSelectedFirm() {
     const selected = this.selectedFirm;
     if (!selected) {
-      alert("Bitte zuerst eine Projektfirma ausw\u00e4hlen.");
+      alert("Bitte zuerst eine Firma im Projekt auswählen.");
       return;
     }
     if (selected.kind !== "project_firm") {
-      alert("Nur Projektfirmen können gelöscht werden.");
+      alert("Nur Firmen im Projekt können gelöscht werden.");
       return;
     }
     if (this.loadingPersons) return;
     if (Array.isArray(this.persons) && this.persons.length > 0) {
-      alert("Löschen nicht möglich: Projektfirma hat noch aktive Mitarbeiter.");
+      alert("Löschen nicht möglich: Firma im Projekt hat noch aktive Mitarbeiter.");
       return;
     }
 
@@ -340,7 +340,7 @@ export default class FirmsPoolView {
     head.style.columnGap = "12px";
 
     const title = document.createElement("h2");
-    title.textContent = "Firmenpool";
+    title.textContent = "Firmen hinzufügen";
     title.style.margin = "0";
 
     const headLeft = document.createElement("div");
@@ -395,7 +395,7 @@ export default class FirmsPoolView {
     leftTitle.style.fontWeight = "700";
 
     const leftSubtitle = document.createElement("div");
-    leftSubtitle.textContent = `Firmen sind nur in ${this._projectLabelText()}`;
+    leftSubtitle.textContent = "Firmen werden dem Projekt zugeordnet.";
     leftSubtitle.style.fontSize = "12px";
     leftSubtitle.style.fontWeight = "400";
     leftSubtitle.style.opacity = "0.8";
@@ -406,7 +406,7 @@ export default class FirmsPoolView {
     leftActions.style.gap = "8px";
 
     const btnAssignGlobal = document.createElement("button");
-    btnAssignGlobal.textContent = "Firma (extern) zuordnen";
+    btnAssignGlobal.textContent = "Aus Firmenstamm hinzufügen";
     applyPopupButtonStyle(btnAssignGlobal);
     btnAssignGlobal.onclick = async () => {
       this._ensureProjectId();
@@ -415,7 +415,7 @@ export default class FirmsPoolView {
         return;
       }
       if (typeof this.router?.showProjectFirms !== "function") {
-        alert("Projektfirmen sind nicht verf\u00fcgbar.");
+        alert("Firmen im Projekt sind nicht verfügbar.");
         return;
       }
       try {
@@ -683,7 +683,9 @@ export default class FirmsPoolView {
     }
 
     const modal = new xEmployeeEditModal({
-      title: isGlobal ? "Mitarbeiter bearbeiten (Firmenstamm)" : "Mitarbeiter bearbeiten (Projektfirma)",
+      title: isGlobal
+        ? "Mitarbeiter bearbeiten (Firmenstamm)"
+        : "Mitarbeiter bearbeiten (Firmen im Projekt)",
       initial: {
         firstName: this._personFirstName(person),
         lastName: this._personLastName(person),

@@ -353,7 +353,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(projectFirmsViewSource.includes("Firmen hinzufügen"), true);
     assert.equal(projectFirmsViewSource.includes("Fehler beim Laden der Firmen im Projekt"), true);
     assert.equal(projectFirmsViewSource.includes("viewScope.textContent = this._projectScopeText();"), false);
-    assert.equal(projectFirmsViewSource.includes("titleWrap.append(title, viewLabel, viewScope);"), false);
+    assert.equal(projectFirmsViewSource.includes("titleWrap.append(title);"), true);
     assert.equal(firmsPoolViewSource.includes("Firmen hinzufügen"), true);
     assert.equal(firmsPoolViewSource.includes("Aus Firmenstamm hinzufügen"), true);
     assert.equal(firmsPoolViewSource.includes("Kategorie: Firmen im Projekt"), true);

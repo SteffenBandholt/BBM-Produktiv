@@ -1111,3 +1111,19 @@ Wichtig:
   - keine direkte Anschlussaufgabe aus diesem Mini-Paket
 - Risiken/Hinweise:
   - Nur die sichtbare Doppelanzeige entfernt; Routing, Projektlogik und Firmenlogik bleiben unveraendert.
+
+#### Paket: Projektbezeichnung im Firmen-im-Projekt-Header entfernen
+- Status: erledigt
+- Beschreibung:
+  - Im Kopf von `ProjectFirmsView` die doppelte Projektbezeichnung neben `Firmen im Projekt` entfernt.
+  - Der Button `Zum Projekt` und die restliche Ansicht bleiben unveraendert.
+- Betroffene Dateien:
+  - `src/renderer/views/ProjectFirmsView.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - keine direkte Anschlussaufgabe aus diesem Mini-Paket
+- Risiken/Hinweise:
+  - Nur die sichtbare Kopfzeile reduziert; globale Header-Anzeige und Projektlogik bleiben unveraendert.

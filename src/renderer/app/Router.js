@@ -526,7 +526,7 @@ export default class Router {
       ...activeModules,
       Object.freeze({
         moduleId: "projectFirms",
-        label: "Projektfirmen",
+        label: "Firmen im Projekt",
         description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
       }),
     ];
