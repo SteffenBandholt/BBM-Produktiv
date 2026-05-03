@@ -27,6 +27,7 @@ function buildInitialProtocolScreenState({ projectId = null, meetingId = null } 
     meetingId,
     tops: [],
     selectedTopId: null,
+    createParentTopId: null,
     editor: {},
     isReadOnly: false,
     isMoveMode: false,
@@ -242,6 +243,21 @@ export default class TopsScreen {
 
   getTopFilter() {
     return normalizeTopFilterMode(this.store.getState().topFilter);
+  }
+
+  _setCreateParentTopId(topId) {
+    this.store.setState({ createParentTopId: topId ?? null });
+  }
+
+  _resolveCreateParentTop(state = this.store.getState()) {
+    const tops = Array.isArray(state?.tops) ? state.tops : [];
+    const storedCreateParentTopId = state?.createParentTopId ?? null;
+    if (storedCreateParentTopId !== null && storedCreateParentTopId !== undefined) {
+      const storedTop =
+        tops.find((top) => String(top?.id) === String(storedCreateParentTopId)) || null;
+      if (storedTop) return storedTop;
+    }
+    return getSelectedTop(state) || null;
   }
 
   _saveUiSetting(key, value) {
@@ -460,6 +476,7 @@ export default class TopsScreen {
     if (state.isWriting) return;
     this.commands.selectTop(top.id);
     this.commands.updateDraft(editorFromTop(top));
+    this._setCreateParentTopId(top?.id ?? null);
     this._syncScreenState();
   }
 
@@ -601,6 +618,9 @@ export default class TopsScreen {
         .tops.find((t) => String(t?.id) === String(nextSelectionId ?? "")) || null;
       this.commands.selectTop(nextTop?.id ?? null);
       this.commands.updateDraft(editorFromTop(nextTop));
+      this._setCreateParentTopId(
+        nextTop?.level <= 1 ? nextTop?.id ?? null : nextTop?.parent_top_id ?? nextTop?.id ?? null
+      );
       this.commands.toggleMoveMode(false);
       this._syncScreenState();
     } finally {
@@ -627,8 +647,11 @@ export default class TopsScreen {
     let createdId = null;
     let shouldFocusCreatedTop = false;
     this.store.setState({ error: null });
-    const saved = await this._saveActiveDraft({ resetMoveMode: false });
-    if (saved === false) return;
+    const selectedTop = getSelectedTop(state);
+    if (selectedTop) {
+      const saved = await this._saveActiveDraft({ resetMoveMode: false });
+      if (saved === false) return;
+    }
     this.store.setState({ isWriting: true });
     try {
       let res;
@@ -651,6 +674,7 @@ export default class TopsScreen {
       }
       createdId = res?.top?.id || null;
       shouldFocusCreatedTop = !!createdId;
+      this._setCreateParentTopId(createdId);
       await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
       this._syncScreenState();
     } finally {
@@ -672,7 +696,7 @@ export default class TopsScreen {
   async _handleWorkbenchCreateChild() {
     const state = this.store.getState();
     if (state.isWriting) return;
-    const selectedTop = getSelectedTop(state);
+    const selectedTop = this._resolveCreateParentTop(state);
     if (!canCreateChildFromState(state, selectedTop)) return;
 
     const level = Number(selectedTop.level) + 1;
@@ -705,6 +729,7 @@ export default class TopsScreen {
       }
       createdId = res?.top?.id || null;
       shouldFocusCreatedTop = !!createdId;
+      this._setCreateParentTopId(selectedTop.id ?? null);
       await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
       this._syncScreenState();
     } finally {

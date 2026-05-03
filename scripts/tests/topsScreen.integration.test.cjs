@@ -189,8 +189,11 @@ async function runTopsScreenIntegrationTests(run) {
     await commands.loadTops({ meetingId: 7, projectId: 3 });
 
     const wbNoSelection = buildWorkbenchState(store.getState());
+    const workbenchVmNoSelection = buildWorkbenchVm(store.getState(), null);
     assert.equal(wbNoSelection.hasSelection, false);
     assert.equal(wbNoSelection.canSave, false);
+    assert.equal(workbenchVmNoSelection.actions.canCreateLevel1, true);
+    assert.equal(workbenchVmNoSelection.actions.canCreateChild, false);
     assert.equal(shouldShowWorkbench(store.getState()), true);
 
     commands.selectTop(11);

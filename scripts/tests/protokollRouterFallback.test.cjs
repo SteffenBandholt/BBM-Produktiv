@@ -185,6 +185,32 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes("this.commands.updateDraft(editorFromTop(nextTop));"), true);
   });
 
+  await run("Protokoll Create-Handler: TopsScreen erlaubt +Titel ohne Auswahl und merkt Create-Kontext", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const createLevel1Start = screenSource.indexOf("async _handleWorkbenchCreateLevel1()");
+    const createChildStart = screenSource.indexOf("async _handleWorkbenchCreateChild()");
+    const createLevel1Source = screenSource.slice(createLevel1Start, createChildStart);
+    const createChildSource = screenSource.slice(createChildStart);
+
+    assert.equal(screenSource.includes("createParentTopId: null"), true);
+    assert.equal(screenSource.includes("_setCreateParentTopId(top?.id ?? null);"), true);
+    assert.equal(screenSource.includes("_setCreateParentTopId(createdId);"), true);
+    assert.equal(screenSource.includes("_resolveCreateParentTop("), true);
+    assert.equal(createLevel1Source.includes("const selectedTop = getSelectedTop(state);"), true);
+    assert.equal(createLevel1Source.includes("if (selectedTop) {"), true);
+    assert.equal(
+      createLevel1Source.includes("const saved = await this._saveActiveDraft({ resetMoveMode: false });"),
+      true
+    );
+    assert.equal(createLevel1Source.includes("if (saved === false) return;"), true);
+    assert.equal(createChildSource.includes("const selectedTop = this._resolveCreateParentTop(state);"), true);
+    assert.equal(createChildSource.includes("_setCreateParentTopId(selectedTop.id ?? null);"), true);
+  });
+
   await run("Protokoll Blur-Save: TopsScreen verdrahtet Kurztext/Langtext-Blur zum Speichern", () => {
     const sharedEditboxFile = path.join(
       __dirname,

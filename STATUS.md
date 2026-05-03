@@ -1181,3 +1181,20 @@ Wichtig:
   - kein direkter Anschluss aus diesem Paket
 - Risiken/Hinweise:
   - Die bestehende Reparatur-Logik wird wiederverwendet; falls die Delete-Reparatur fehlschlaegt, bleibt der Close-Fallback als zweite Sicherung bestehen.
+
+#### Paket: +Titel/Create-Kontext nach Renumber wiederherstellen
+- Status: erledigt
+- Beschreibung:
+  - `+Titel` kann wieder ohne aktive Auswahl angelegt werden.
+  - Der neu erzeugte Titel wird automatisch ausgewahlt und als Create-Kontext fuer den naechsten `+TOP` gemerkt.
+  - Der bestehende Delete-/Renumber-Flow bleibt erhalten; die Nummernreparatur nach Delete laeuft weiter sofort.
+- Betroffene Dateien:
+  - `src/renderer/modules/protokoll/screens/TopsScreen.js`
+  - `scripts/tests/protokollRouterFallback.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Der Create-Kontext wird im Screen gehalten; bei weiteren Create-Regeln muss spaeter nur dieser Pfad erweitert werden.
