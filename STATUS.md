@@ -17,6 +17,10 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Im Protokoll-Kontext ist die fachlich falsche Header-Belegung bereinigt:
+  - die sichtbare Protokoll-Quicklane zeigt jetzt einen TOP-Filter statt der alten falsch belegten Header-Aktionen
+  - der Filter schaltet zwischen `Alle`, `ToDo` und `Beschluss`
+  - Sidebar, Druck-v2/Druckflow, Mail, PDF und Lizenzlogik blieben dabei unangetastet
 - Projekt-Einstellungen behandeln `pdf.footerUseUserData` nicht mehr als steuerbare Projektoption:
   - der Projektsettings-Dialog speichert dieses Feld nicht mehr
   - der Projektsettings-IPC filtert es aus Whitelist und Patch
@@ -750,6 +754,12 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
 ---
 
 ## Zuletzt bearbeitet
+- Letztes Paket:
+  - Protokoll-Quicklane im TopsScreen auf einen TOP-Filter umgestellt
+  - die Quicklane zeigt jetzt einen Filter-Button mit den Modi `Alle`, `ToDo` und `Beschluss`
+  - `TopsScreenViewModel` filtert die sichtbare Liste nach dem gewaehlten Modus
+  - Header-Buttons `Ausgabe`, `Firmen` und `Projekt` werden im Protokoll-Kontext nicht mehr als Quicklane-Aktionen gezeigt
+  - `npm test` ist gruen
 - Letztes Paket:
   - reine Button-Helfer aus `CoreShell` in `src/renderer/app/coreShellButtons.js` ausgelagert
   - `CoreShell` importiert `mkNavBtn`, `mkActionBtn`, `setBtnEnabled`, `appendButtonGroup` und `createScreenRouteButton`

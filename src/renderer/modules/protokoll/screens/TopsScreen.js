@@ -20,6 +20,7 @@ import { canMoveFromState } from "../canMoveFromState.js";
 import { shouldShowWorkbench } from "../shouldShowWorkbench.js";
 import { buildWorkbenchVm } from "../buildWorkbenchVm.js";
 import { focusCreatedTopAfterReload } from "../topCreateFocus.js";
+import { normalizeTopFilterMode } from "../topFilterMode.js";
 
 function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
   return {
@@ -32,6 +33,7 @@ function buildInitialProtocolScreenState({ projectId = null, meetingId = null } 
     isMoveMode: false,
     isLoading: false,
     isWriting: false,
+    topFilter: "all",
     error: null,
     meetingMeta: null,
   };
@@ -170,20 +172,9 @@ export default class TopsScreen {
       projectId: this._getQuicklaneProjectId(),
       isReadOnly: !!this.store.getState().isReadOnly,
       isWriting: !!this.store.getState().isWriting,
-      onOpenProject: async (projectId) => {
-        if (typeof this.router?.openProjectFormModal === "function") {
-          await this.router.openProjectFormModal({ projectId });
-        }
-      },
-      onOpenFirms: async (projectId) => {
-        if (typeof this.router?.showProjectFirms === "function") {
-          await this.router.showProjectFirms(projectId);
-        }
-      },
-      onOpenOutput: async (projectId) => {
-        if (typeof this.router?.openPrintModal === "function") {
-          await this.router.openPrintModal({ projectId });
-        }
+      topFilter: this.store.getState().topFilter || "all",
+      onFilterChange: async (filterMode) => {
+        this._setTopFilter(filterMode);
       },
     });
     this._mountQuicklaneIntoHeader();
@@ -247,6 +238,16 @@ export default class TopsScreen {
     this.quicklane.mountInto(host);
   }
 
+  _setTopFilter(filterMode) {
+    const topFilter = normalizeTopFilterMode(filterMode);
+    const current = normalizeTopFilterMode(this.store.getState().topFilter);
+    if (topFilter === current) {
+      return;
+    }
+    this.store.setState({ topFilter });
+    this._syncScreenState();
+  }
+
   // ---------------------------------------------------------------------------
   // Host-/Kontextintegration: Router-, Sidebar- und gemeinsame Domaenenzugriffe
   // ---------------------------------------------------------------------------
@@ -291,6 +292,7 @@ export default class TopsScreen {
       projectId: projectContext.projectId,
       isReadOnly: !!state.isReadOnly,
       isWriting: !!state.isWriting,
+      topFilter: state.topFilter || "all",
     });
     this._mountQuicklaneIntoHeader();
   }

@@ -10,6 +10,7 @@ import {
   normalizeTopShortText,
 } from "../topTextPresentation.js";
 import { computeAmpelColorForTop } from "../computeAmpelColorForTop.js";
+import { normalizeTopFilterMode, topMatchesFilter } from "../topFilterMode.js";
 
 export { isAllowedMoveTarget, canCreateChildFromState, canDeleteFromState, canMoveFromState };
 
@@ -157,8 +158,10 @@ export function buildListItemsFromState(state) {
   const selectedTop = getSelectedTop(state);
   const movingTop = state?.isMoveMode ? selectedTop : null;
   const rows = [];
+  const filterMode = normalizeTopFilterMode(state?.topFilter);
 
   for (const top of tops) {
+    if (!topMatchesFilter(top, filterMode)) continue;
     const visual = getTopVisualState(top);
     const level = Number(top?.level) || 1;
     const isTitle = level <= 1;

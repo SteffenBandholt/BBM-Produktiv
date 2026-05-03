@@ -93,6 +93,28 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(quicklaneSource.includes("tops/components/TopsQuicklane.js"), true);
   });
 
+  await run("Protokoll Quicklane-Filter ersetzt Projekt/Firmen/Ausgabe", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const quicklaneFile = path.join(
+      __dirname,
+      "../../src/renderer/tops/components/TopsQuicklane.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+    const quicklaneSource = fs.readFileSync(quicklaneFile, "utf8");
+
+    assert.equal(screenSource.includes("onFilterChange"), true);
+    assert.equal(screenSource.includes("topFilter"), true);
+    assert.match(quicklaneSource, /quicklaneAction\s*=\s*["']top-filter["']/);
+    assert.equal(quicklaneSource.includes("ToDo"), true);
+    assert.equal(quicklaneSource.includes("Beschluss"), true);
+    assert.equal(quicklaneSource.includes("Projekt"), false);
+    assert.equal(quicklaneSource.includes("Firmen"), false);
+    assert.equal(quicklaneSource.includes("Ausgabe"), false);
+  });
+
   await run("Protokoll Commands-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
     const screenFile = path.join(
       __dirname,

@@ -227,6 +227,48 @@ async function runTopsScreenIntegrationTests(run) {
     }
   });
 
+  await run("Tops v2 Integration: Filter Alle zeigt alle TOPs", () => {
+    const rows = buildListItemsFromState({
+      topFilter: "all",
+      tops: [
+        { id: 401, level: 2, title: "A", is_task: 1 },
+        { id: 402, level: 2, title: "B", is_decision: 1 },
+      ],
+    });
+
+    assert.equal(rows.length, 2);
+    assert.deepEqual(
+      rows.map((row) => row.id),
+      [401, 402]
+    );
+  });
+
+  await run("Tops v2 Integration: Filter ToDo zeigt nur ToDo-TOPs", () => {
+    const rows = buildListItemsFromState({
+      topFilter: "todo",
+      tops: [
+        { id: 411, level: 2, title: "ToDo", is_task: 1 },
+        { id: 412, level: 2, title: "Beschluss", is_decision: 1 },
+      ],
+    });
+
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].id, 411);
+  });
+
+  await run("Tops v2 Integration: Filter Beschluss zeigt nur Beschluss-TOPs", () => {
+    const rows = buildListItemsFromState({
+      topFilter: "decision",
+      tops: [
+        { id: 421, level: 2, title: "ToDo", is_task: 1 },
+        { id: 422, level: 2, title: "Beschluss", is_decision: 1 },
+      ],
+    });
+
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].id, 422);
+  });
+
   await run("Tops v2 Integration: Save/Delete + Reload haelt Zustand konsistent", async () => {
     const db = {
       tops: [
