@@ -505,7 +505,8 @@ export default class Router {
       {
         section: "projectWorkspace",
         isTopsView: false,
-        pageTitle: "Projekt-Arbeitsbereich",
+        pageTitle: null,
+        activeModuleLabel: this._getProjectWorkspaceModules()?.[0]?.label || "Protokoll",
       }
     );
   }

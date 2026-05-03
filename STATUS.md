@@ -21,6 +21,9 @@ Sie ergänzt:
   - die sichtbare Protokoll-Quicklane zeigt jetzt einen TOP-Filter statt der alten falsch belegten Header-Aktionen
   - der Filter schaltet zwischen `Alle`, `ToDo` und `Beschluss`
   - Sidebar, Druck-v2/Druckflow, Mail, PDF und Lizenzlogik blieben dabei unangetastet
+- Der globale Header zeigt jetzt links `BBM <Version>` und darunter den aktiven Kontext als `aktiv: <Modul> | <Projektnummer> - <Kurzbezeichnung>`.
+  Rechts steht ein ruhiger Kunden-/Lizenztext aus den vorhandenen App-Settings; der alte `bereit:`-Statusblock ist aus der sichtbaren Anzeige entfernt.
+  Im Projektkontext steht dort jetzt nicht mehr `Projekt-Arbeitsbereich`, sondern das aktive Modul `Protokoll`.
 - Projekt-Einstellungen behandeln `pdf.footerUseUserData` nicht mehr als steuerbare Projektoption:
   - der Projektsettings-Dialog speichert dieses Feld nicht mehr
   - der Projektsettings-IPC filtert es aus Whitelist und Patch
@@ -765,6 +768,12 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
   - `CoreShell` importiert `mkNavBtn`, `mkActionBtn`, `setBtnEnabled`, `appendButtonGroup` und `createScreenRouteButton`
   - Core-Navigation, Style-Hilfe und Teilnehmer-Aktion bleiben separat gekapselt
   - `npm test` ist gruen
+- Letztes Paket:
+  - globaler Header im Shell-Kontext textbasiert neu aufgebaut
+  - links steht jetzt `BBM <Version>` plus `aktiv: <Modul> | <Projektnummer> - <Kurzbezeichnung>`
+  - rechts steht der ruhige Kunden-/Lizenztext aus den vorhandenen Settings
+  - der alte `bereit:`-Statusblock und das sichtbare Statuspunktfeld sind entfernt
+  - `npm test` ist nach dem Umbau erneut zu pruefen
 - Letztes Paket:
   - Teilnehmer-Shell-Aktion aus `CoreShell` in `src/renderer/app/coreShellActions.js` ausgelagert
   - `CoreShell` importiert die Factory weiterhin und haengt den Teilnehmer-Button unveraendert in die Sidebar

@@ -19,11 +19,13 @@ export default class MainHeader {
     this._uiMode = this._readUiMode();
     this._isNewUi = this._uiMode === "new";
 
-    // logo group text under logo
+    // header identity
     this.elVersion = null;
 
     // bottom left active
     this.elActive = null;
+
+    this.elHeaderIdentity = null;
 
     // centered title (TopsView only)
     this.elCenterTitle = null;
@@ -173,58 +175,72 @@ export default class MainHeader {
     elCenterTitle.style.lineHeight = "40px";
     elCenterTitle.style.fontWeight = "600";
     elCenterTitle.style.userSelect = "none";
+    elCenterTitle.style.display = "none";
 
-    // Active label (row 2, col 1) bottom-left
+    const leftIdentity = document.createElement("div");
+    leftIdentity.style.gridColumn = "1";
+    leftIdentity.style.gridRow = "1";
+    leftIdentity.style.alignSelf = "start";
+    leftIdentity.style.justifySelf = "start";
+    leftIdentity.style.display = "flex";
+    leftIdentity.style.flexDirection = "column";
+    leftIdentity.style.alignItems = "flex-start";
+    leftIdentity.style.justifyContent = "flex-start";
+    leftIdentity.style.gap = "2px";
+    leftIdentity.style.minWidth = "0";
+    leftIdentity.style.maxWidth = "100%";
+
+    const elVersion = document.createElement("div");
+    elVersion.style.fontSize = "15px";
+    elVersion.style.lineHeight = "18px";
+    elVersion.style.fontWeight = "800";
+    elVersion.style.whiteSpace = "nowrap";
+    elVersion.style.overflow = "hidden";
+    elVersion.style.textOverflow = "ellipsis";
+    elVersion.style.maxWidth = "100%";
+    elVersion.style.userSelect = "none";
+
     const elActive = document.createElement("div");
-    elActive.style.gridColumn = "1";
-    elActive.style.gridRow = "2";
-    elActive.style.alignSelf = "end";
-    elActive.style.justifySelf = "start";
-    elActive.style.display = "inline-flex";
-    elActive.style.alignItems = "baseline";
+    elActive.style.display = "block";
+    elActive.style.fontSize = "13px";
+    elActive.style.lineHeight = "16px";
+    elActive.style.fontWeight = "600";
     elActive.style.whiteSpace = "nowrap";
     elActive.style.overflow = "hidden";
     elActive.style.textOverflow = "ellipsis";
     elActive.style.maxWidth = "100%";
+    elActive.style.userSelect = "none";
 
-    // Right info (row 2, col 3) bottom-right
+    leftIdentity.append(elVersion, elActive);
+
+    // Right info (license/customer line) bottom-right
     const rightInfo = document.createElement("div");
-    rightInfo.style.gridColumn = "3";
-    rightInfo.style.gridRow = "2";
-    rightInfo.style.alignSelf = "end";
-    rightInfo.style.justifySelf = "end";
-    rightInfo.style.display = "flex";
-    rightInfo.style.flexDirection = "column";
-    rightInfo.style.alignItems = "flex-end";
-    rightInfo.style.justifyContent = "flex-end";
-    rightInfo.style.gap = "2px";
+    rightInfo.style.position = "absolute";
+    rightInfo.style.top = `${this.padding}px`;
+    rightInfo.style.right = `${this.padding}px`;
+    rightInfo.style.display = "block";
     rightInfo.style.minWidth = "160px";
-
-    const elUserName = document.createElement("div");
-    elUserName.style.fontSize = "12px";
-    elUserName.style.opacity = "0.9";
-    elUserName.style.fontWeight = "600";
-    elUserName.style.userSelect = "none";
-
-    const elUserCompany = document.createElement("div");
-    elUserCompany.style.fontSize = "11px";
-    elUserCompany.style.opacity = "0.7";
-    elUserCompany.style.fontWeight = "400";
-    elUserCompany.style.userSelect = "none";
-
-    rightInfo.append(elUserName, elUserCompany);
+    rightInfo.style.maxWidth = "100%";
+    rightInfo.style.textAlign = "right";
+    rightInfo.style.fontSize = "12px";
+    rightInfo.style.lineHeight = "16px";
+    rightInfo.style.fontWeight = "600";
+    rightInfo.style.whiteSpace = "nowrap";
+    rightInfo.style.overflow = "hidden";
+    rightInfo.style.textOverflow = "ellipsis";
+    rightInfo.style.userSelect = "none";
 
     logoGroup.append(logoWrap);
 
     const actionWrap = document.createElement("div");
-    actionWrap.style.gridColumn = "3";
-    actionWrap.style.gridRow = "1";
-    actionWrap.style.justifySelf = "end";
-    actionWrap.style.alignSelf = "start";
+    actionWrap.style.gridColumn = "1 / span 3";
+    actionWrap.style.gridRow = "2";
+    actionWrap.style.justifySelf = "center";
+    actionWrap.style.alignSelf = "end";
     actionWrap.style.display = "inline-flex";
     actionWrap.style.alignItems = "center";
     actionWrap.style.gap = "8px";
-    actionWrap.style.paddingRight = this._isNewUi ? "clamp(8px, 1.6vw, 18px)" : "0px";
+    actionWrap.style.paddingRight = "0px";
 
     // Trial Info (Header) – existiert, aber wird NICHT angezeigt (Fenster-Titel bleibt aktiv)
     const trialInfo = document.createElement("div");
@@ -738,11 +754,11 @@ export default class MainHeader {
       elCenterTitle.style.fontWeight = "700";
       elCenterTitle.style.textAlign = "left";
 
-      elActive.style.gridColumn = "1 / span 2";
-      elActive.style.gridRow = "2";
-      elActive.style.alignSelf = "start";
-      elActive.style.justifySelf = "start";
-      elActive.style.maxWidth = "100%";
+      leftIdentity.style.gridColumn = "1 / span 2";
+      leftIdentity.style.gridRow = "1";
+      leftIdentity.style.alignSelf = "start";
+      leftIdentity.style.justifySelf = "start";
+      leftIdentity.style.maxWidth = "100%";
 
       actionWrap.style.gridColumn = "1 / span 3";
       actionWrap.style.gridRow = "2";
@@ -756,22 +772,22 @@ export default class MainHeader {
       actionWrap.style.justifyContent = "center";
       actionWrap.style.rowGap = "6px";
 
-      rightInfo.style.display = "none";
       trialInfo.style.gridRow = "1";
       trialInfo.style.marginBottom = "0";
       stickyNotice.style.gridRow = "3";
     }
 
-    root.append(logoGroup, trialInfo, elCenterTitle, elActive, rightInfo, actionWrap, devBadge, stickyNotice);
+    root.append(logoGroup, trialInfo, elCenterTitle, leftIdentity, rightInfo, actionWrap, stickyNotice);
 
     this.root = root;
 
     this.elCenterTitle = elCenterTitle;
-    this.elVersion = null;
+    this.elVersion = elVersion;
     this.elActive = elActive;
+    this.elHeaderIdentity = leftIdentity;
 
-    this.elUserName = elUserName;
-    this.elUserCompany = elUserCompany;
+    this.elUserName = rightInfo;
+    this.elUserCompany = null;
     this.elRightInfo = rightInfo;
     this.elTrialInfo = trialInfo;
     this.elDevBadge = devBadge;
@@ -925,107 +941,110 @@ export default class MainHeader {
     this.elLogoImg.style.display = "block";
   }
 
+  _cleanHeaderText(value) {
+    return String(value ?? "").trim();
+  }
+
+  _getHeaderVersionText() {
+    const version = this._cleanHeaderText(this.version);
+    return version ? `BBM ${version}` : "BBM";
+  }
+
+  _getHeaderModuleText() {
+    const ui = this.router?.context?.ui || {};
+    const activeModule = this._cleanHeaderText(ui.activeModuleLabel);
+    if (activeModule) return activeModule;
+    const pageTitle = this._cleanHeaderText(ui.pageTitle);
+    if (pageTitle && pageTitle !== "Projekt-Arbeitsbereich") return pageTitle;
+
+    const section = this._cleanHeaderText(this.router?.activeSection || "");
+    const sectionFallbacks = {
+      home: "Start",
+      projects: "Projekte",
+      firms: "Firmen",
+      settings: "Einstellungen",
+      archive: "Archiv",
+      projectWorkspace: "Protokoll",
+      meetings: "Protokoll",
+      firmsPool: "Firmen",
+      projectFirms: "Protokoll",
+    };
+    return sectionFallbacks[section] || "Start";
+  }
+
+  _splitProjectLabel(value = "") {
+    const raw = this._cleanHeaderText(value);
+    if (!raw || raw.startsWith("#")) return { projectNumber: "", projectShort: "" };
+
+    const separators = [" - ", " – ", " — "];
+    for (const separator of separators) {
+      if (!raw.includes(separator)) continue;
+      const parts = raw.split(separator);
+      const left = this._cleanHeaderText(parts.shift());
+      const right = this._cleanHeaderText(parts.join(separator));
+      if (left && right) return { projectNumber: left, projectShort: right };
+      if (left) return { projectNumber: left, projectShort: "" };
+      if (right) return { projectNumber: "", projectShort: right };
+    }
+
+    return { projectNumber: "", projectShort: raw };
+  }
+
+  _getHeaderProjectText() {
+    const projectId = this.router?.currentProjectId || null;
+    if (!projectId) return "";
+
+    const raw =
+      this._cleanHeaderText(
+        (this._activeLabelForProjectId === projectId && this._activeLabel) ||
+          this.router?.context?.projectLabel ||
+          ""
+      ) || `#${projectId}`;
+    const { projectNumber, projectShort } = this._splitProjectLabel(raw);
+    if (projectNumber && projectShort) return `${projectNumber} - ${projectShort}`;
+    if (projectNumber) return projectNumber;
+    if (projectShort) return projectShort;
+    return raw;
+  }
+
+  _getHeaderCustomerText(settings = {}) {
+    const company = this._cleanHeaderText(settings.user_company);
+    const name = this._cleanHeaderText(settings.user_name);
+    const street = this._cleanHeaderText(settings.user_street);
+    const zip = this._cleanHeaderText(settings.user_zip);
+    const city = this._cleanHeaderText(settings.user_city);
+    const primary = company || name;
+    const locationParts = [street, [zip, city].filter(Boolean).join(" ")].filter(Boolean);
+    const secondary = locationParts.join(", ");
+    if (primary && secondary) return `${primary}, ${secondary}`;
+    return primary || secondary || "";
+  }
+
+  _syncHeaderIdentity({ projectText = null } = {}) {
+    if (this.elVersion) {
+      this.elVersion.textContent = this._getHeaderVersionText();
+    }
+
+    if (this.elActive) {
+      const moduleText = this._getHeaderModuleText();
+      const projectPart =
+        projectText === null ? this._getHeaderProjectText() : this._cleanHeaderText(projectText);
+      this.elActive.textContent = projectPart ? `aktiv: ${moduleText} | ${projectPart}` : `aktiv: ${moduleText}`;
+    }
+
+    if (this.elRightInfo) {
+      const customerText = this._getHeaderCustomerText(this.router?.context?.settings || {});
+      this.elRightInfo.textContent = customerText;
+      this.elRightInfo.title = customerText;
+    }
+  }
+
   _setActiveText(val) {
-    if (!this.elActive) return;
-
-    const value = (val ?? "").toString().trim();
-    const shown = value || "-";
-
-    this.elActive.textContent = "";
-
-    const sLabel = document.createElement("span");
-    sLabel.textContent = "aktiv:";
-    sLabel.style.fontSize = "14px";
-    sLabel.style.lineHeight = "16px";
-    sLabel.style.opacity = "0.8";
-    sLabel.style.fontWeight = "400";
-    sLabel.style.flex = "0 0 auto";
-
-    const sValue = document.createElement("span");
-    sValue.textContent = shown;
-    sValue.style.marginLeft = "0.75cm";
-    sValue.style.fontSize = "12px";
-    sValue.style.lineHeight = "14px";
-    sValue.style.fontWeight = "600";
-    sValue.style.flex = "1 1 auto";
-    sValue.style.minWidth = "0";
-    sValue.style.overflow = "hidden";
-    sValue.style.textOverflow = "ellipsis";
-    sValue.style.whiteSpace = "nowrap";
-
-    this.elActive.append(sLabel, sValue);
+    this._syncHeaderIdentity({ projectText: val });
   }
 
   _setActiveProjectBlock(val) {
-    if (!this.elActive) return;
-
-    const hasProject = !!this.router?.currentProjectId;
-    const activeValue = (val ?? "").toString().trim();
-
-    this.elActive.textContent = "";
-    this.elActive.style.display = hasProject ? "grid" : "none";
-    if (!hasProject) return;
-
-    this.elActive.style.gridTemplateColumns = "auto minmax(0, 1fr)";
-    this.elActive.style.columnGap = "10px";
-    this.elActive.style.rowGap = "2px";
-    this.elActive.style.alignItems = "center";
-
-    const activeLabel = document.createElement("span");
-    activeLabel.textContent = "aktiv:";
-    activeLabel.style.fontSize = "13px";
-    activeLabel.style.lineHeight = "16px";
-    activeLabel.style.opacity = "0.8";
-    activeLabel.style.fontWeight = "600";
-    activeLabel.style.textAlign = "left";
-
-    const activeValEl = document.createElement("span");
-    activeValEl.textContent = activeValue;
-    activeValEl.style.fontSize = "13px";
-    activeValEl.style.lineHeight = "16px";
-    activeValEl.style.fontWeight = "700";
-    activeValEl.style.minWidth = "0";
-    activeValEl.style.overflow = "hidden";
-    activeValEl.style.textOverflow = "ellipsis";
-    activeValEl.style.whiteSpace = "nowrap";
-    activeValEl.style.textAlign = "left";
-
-    const readyLabel = document.createElement("span");
-    readyLabel.textContent = "bereit:";
-    readyLabel.style.fontSize = "13px";
-    readyLabel.style.lineHeight = "16px";
-    readyLabel.style.opacity = "0.8";
-    readyLabel.style.fontWeight = "600";
-    readyLabel.style.textAlign = "left";
-
-    const setupStatus =
-      this._setupStatusForProjectId === this.router?.currentProjectId ? this._setupStatus : null;
-    const readyLight = String(setupStatus?.worstLight || "").trim().toLowerCase();
-    const readyValEl = document.createElement("span");
-    readyValEl.textContent = "";
-    readyValEl.style.fontSize = "13px";
-    readyValEl.style.lineHeight = "16px";
-    readyValEl.style.fontWeight = "600";
-    readyValEl.style.minHeight = "16px";
-    readyValEl.style.textAlign = "left";
-    readyValEl.style.display = "inline-flex";
-    readyValEl.style.alignItems = "center";
-    readyValEl.style.gap = "6px";
-    if (readyLight) {
-      const dot = document.createElement("span");
-      dot.style.display = "inline-block";
-      dot.style.width = "10px";
-      dot.style.height = "10px";
-      dot.style.borderRadius = "999px";
-      dot.style.background = this._lightColor(readyLight);
-      dot.style.border = "1px solid rgba(0,0,0,0.2)";
-      readyValEl.appendChild(dot);
-      readyValEl.title = setupStatus
-        ? `Zuordnung: ${setupStatus.firmsAssignedCount}, Firmen im Projekt: ${setupStatus.firmsActiveCount}, aktive Mitarbeiter im Projekt: ${setupStatus.peopleActiveCount}`
-        : "";
-    }
-
-    this.elActive.append(activeLabel, activeValEl, readyLabel, readyValEl);
+    this._syncHeaderIdentity({ projectText: val });
   }
 
   _ensureActiveLabel() {
@@ -1071,11 +1090,7 @@ export default class MainHeader {
         this._activeLabelForProjectId = projectId;
         this._activeLabel = label;
 
-        if (this._isNewUi) {
-          this._setActiveProjectBlock(label);
-        } else {
-          this._setActiveText(label);
-        }
+        this._syncHeaderIdentity({ projectText: label });
       })
       .catch(() => {})
       .finally(() => {
@@ -1495,12 +1510,11 @@ export default class MainHeader {
         this._setupStatusForProjectId = projectId;
         this._setupStatus = status || null;
         this._setupStatusLoadedAt = Date.now();
-        if (!this._isNewUi) return;
         if ((this.router?.currentProjectId || null) !== projectId) return;
         const fallback =
           (this._activeLabelForProjectId === projectId && this._activeLabel) ||
           (this.router?.context?.projectLabel || "");
-        this._setActiveProjectBlock(fallback);
+        this._syncHeaderIdentity({ projectText: fallback });
       })
       .catch(() => {})
       .finally(() => {
@@ -1621,35 +1635,16 @@ export default class MainHeader {
   }
 
   refresh() {
-    const ui = this.router?.context?.ui || {};
-    const isTopsView = !!ui.isTopsView;
-    const pageTitle = (ui.pageTitle || "Protokoll").toString().trim();
-
     if (this.elCenterTitle) {
-      if (this._isNewUi) {
-        this.elCenterTitle.textContent = "";
-        this.elCenterTitle.style.display = "none";
-      } else {
-        this.elCenterTitle.textContent = pageTitle || "Protokoll";
-        this.elCenterTitle.style.display = isTopsView ? "block" : "none";
-      }
+      this.elCenterTitle.textContent = "";
+      this.elCenterTitle.style.display = "none";
     }
 
     const settings = this.router?.context?.settings || {};
-    const uName = (settings.user_name ?? "").toString().trim();
-    const uComp = (settings.user_company ?? "").toString().trim();
-
-    if (this.elUserName) this.elUserName.textContent = uName || "";
-    if (this.elUserCompany) this.elUserCompany.textContent = uComp || "";
-    if (this.elRightInfo && this._isNewUi) {
-      this.elRightInfo.style.display = "none";
-    }
+    this._syncHeaderIdentity();
 
     // ✅ Fenster-Titel Trial AN (Header AUS)
     this._refreshTrialInfo();
-
-    // ✅ DEV Badge
-    this._refreshBuildChannelBadge();
 
     const logoSize = this._clampLogoNumber(settings["header.logoSizePx"], 12, 48, 20);
     const logoPadLeft = this._clampLogoNumber(settings["header.logoPadLeftPx"], 0, 40, 0);
@@ -1687,12 +1682,7 @@ export default class MainHeader {
       (this._activeLabelForProjectId === pid && this._activeLabel) ||
       this.router?.context?.projectLabel ||
       "";
-
-    if (this._isNewUi) {
-      this._setActiveProjectBlock(fallback);
-    } else {
-      this._setActiveText(fallback);
-    }
+    this._syncHeaderIdentity({ projectText: fallback });
     this._ensureActiveLabel();
     if (this._isNewUi) {
       this._ensureSetupStatus({ force: true });

@@ -15,7 +15,11 @@ function createFakeDocumentWithBubbling() {
       ownerDocument: doc,
       children: [],
       parentNode: null,
-      style: {},
+      style: {
+        setProperty(name, value) {
+          this[String(name)] = String(value);
+        },
+      },
       dataset: {},
       className: "",
       textContent: "",
@@ -183,6 +187,7 @@ async function runProjektverwaltungModuleTests(run) {
   const coreShellNavigationRuntimeSource = read("src/renderer/app/coreShellNavigationRuntime.js");
   const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
+  const mainHeaderSource = read("src/renderer/ui/MainHeader.js");
   const projectContextQuicklaneSource = read("src/renderer/ui/ProjectContextQuicklane.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
   const workspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
@@ -722,6 +727,95 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(coreShellHeaderBridgeSource.includes("projectFirms"), false);
   });
 
+  await run("Projektverwaltung: MainHeader source nutzt den textbasierten Kopfbereich", () => {
+    assert.equal(mainHeaderSource.includes("BBM"), true);
+    assert.equal(mainHeaderSource.includes("aktiv:"), true);
+    assert.equal(mainHeaderSource.includes("bereit:"), false);
+    assert.equal(mainHeaderSource.includes("readyLight"), false);
+    assert.equal(mainHeaderSource.includes("readyValEl"), false);
+    assert.equal(mainHeaderSource.includes("readyLabel"), false);
+    assert.equal(mainHeaderSource.includes("setupStatus?.worstLight"), false);
+    assert.equal(mainHeaderSource.includes("dot.style.width = \"10px\""), false);
+    assert.equal(mainHeaderSource.includes("user_street"), true);
+    assert.equal(mainHeaderSource.includes("user_zip"), true);
+    assert.equal(mainHeaderSource.includes("user_city"), true);
+    assert.equal(mainHeaderSource.includes("user_company"), true);
+    assert.equal(mainHeaderSource.includes("rightInfo.style.position = \"absolute\""), true);
+    assert.equal(mainHeaderSource.includes("activeModuleLabel"), true);
+    assert.equal(mainHeaderSource.includes("_syncHeaderIdentity"), true);
+    assert.equal(mainHeaderSource.includes("_getHeaderModuleText"), true);
+    assert.equal(mainHeaderSource.includes("_getHeaderProjectText"), true);
+  });
+
+  await run("Projektverwaltung: MainHeader rendert Version, Aktiv-Kontext und Kundentext", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const fakeDocument = createFakeDocumentWithBubbling();
+    global.document = fakeDocument;
+    global.window = {
+      localStorage: {
+        getItem(key) {
+          return key === "bbm.uiMode" ? "new" : null;
+        },
+        setItem() {},
+        removeItem() {},
+      },
+      addEventListener() {},
+      removeEventListener() {},
+      requestAnimationFrame(fn) {
+        if (typeof fn === "function") fn();
+      },
+      bbmDb: {},
+    };
+
+    const { default: MainHeader } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/ui/MainHeader.js")
+    );
+
+    try {
+      const router = {
+        currentProjectId: "17",
+        activeSection: "projectWorkspace",
+        context: {
+          ui: { pageTitle: "", activeModuleLabel: "Protokoll", isTopsView: false },
+          settings: {
+            user_company: "Planungsbüro Steffen Bandholt",
+            user_zip: "22880",
+            user_city: "Wedel",
+          },
+          projectLabel: "04-2026 - UI-Polish für BBM",
+        },
+      };
+
+      const header = new MainHeader({ router, version: "1.5.0" });
+      header.render();
+      header.refresh();
+
+      assert.equal(header.elVersion.textContent, "BBM 1.5.0");
+      assert.equal(header.elActive.textContent, "aktiv: Protokoll | 04-2026 - UI-Polish für BBM");
+      assert.equal(header.elRightInfo.textContent, "Planungsbüro Steffen Bandholt, 22880 Wedel");
+      assert.equal(header.elRightInfo.style.position, "absolute");
+      assert.equal(header.elRightInfo.style.top, "12px");
+      assert.equal(!!findNode(header.root, (node) => node?.textContent === "DEV"), false);
+      assert.equal(header.elActive.textContent.includes("bereit:"), false);
+      assert.equal(header.elActive.textContent.includes("| -"), false);
+      assert.equal(header.elActive.textContent.includes("|  -"), false);
+
+      router.currentProjectId = null;
+      router.context.projectLabel = null;
+      router.context.ui.pageTitle = "";
+      router.context.ui.activeModuleLabel = "";
+      router.activeSection = "home";
+      header.refresh();
+
+      assert.equal(header.elActive.textContent, "aktiv: Start");
+      assert.equal(header.elActive.textContent.includes("|"), false);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
   await run("Projektverwaltung: coreShellKeyboard kapselt das globale Keyboard-Handling", () => {
     assert.equal(
       coreShellKeyboardSource.includes("export function registerCoreShellKeyboardHandling"),
@@ -842,6 +936,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(routerSource.includes("_getProjectWorkspaceModules"), true);
     assert.equal(routerSource.includes("getActiveProjectModuleNavigation"), true);
     assert.equal(routerSource.includes("projectModules: this._getProjectWorkspaceModules()"), true);
+    assert.equal(routerSource.includes("activeModuleLabel:"), true);
     assert.equal(routerSource.includes('moduleId: "projectFirms"'), true);
     assert.equal(routerSource.includes("Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen."), true);
   });
