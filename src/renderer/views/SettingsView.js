@@ -86,6 +86,13 @@ const PRINT_LAYOUT_MM_LIMITS = {
   "print.v2.pagePadBottomMm": { min: 0, max: 30, step: 1, fallback: 0 },
   "print.v2.footerReserveMm": { min: 0, max: 30, step: 1, fallback: 12 },
 };
+const PRINT_LAYOUT_DEFAULT_VALUES = {
+  "print.v2.pagePadTopMm": "2",
+  "print.v2.pagePadLeftMm": "12",
+  "print.v2.pagePadRightMm": "12",
+  "print.v2.pagePadBottomMm": "0",
+  "print.v2.footerReserveMm": "12",
+};
 const THEME_DEFAULT_KEYS = [
   "defaults.ui.themeHeaderBaseColor",
   "defaults.ui.themeSidebarBaseColor",
@@ -291,6 +298,7 @@ export default class SettingsView {
     this._settingsModalSaveFn = null;
     this._settingsModalCloseOnly = false;
     this._settingsModalOpen = false;
+    this._settingsInputs = null;
     this._bodyLockCount = 0;
     this._bodyOverflowBackup = null;
     this.devUnlocked = false;
@@ -798,6 +806,15 @@ export default class SettingsView {
 
   _normalizePrintLayoutMmLimits(key) {
     return PRINT_LAYOUT_MM_LIMITS[String(key || "").trim()] || null;
+  }
+
+  _resetPrintLayoutFields() {
+    const keys = Object.keys(PRINT_LAYOUT_DEFAULT_VALUES);
+    for (const key of keys) {
+      const inp = this._settingsInputs?.get?.(key);
+      if (!inp) continue;
+      inp.value = PRINT_LAYOUT_DEFAULT_VALUES[key];
+    }
   }
 
   _clampLogoNumber(value, min, max, fallback) {
@@ -3842,6 +3859,7 @@ export default class SettingsView {
     wrap.append(info);
 
     const inputs = new Map();
+    this._settingsInputs = inputs;
     const renderField = (field) => {
       const row = document.createElement("label");
       row.style.display = "grid";
@@ -3914,6 +3932,22 @@ export default class SettingsView {
         };
         logoActions.append(btnLogos);
         card.append(logoActions);
+      }
+
+      if (section.title === "Drucklayout") {
+        const layoutActions = document.createElement("div");
+        layoutActions.style.display = "flex";
+        layoutActions.style.gap = "8px";
+        layoutActions.style.flexWrap = "wrap";
+        const btnResetLayout = document.createElement("button");
+        btnResetLayout.type = "button";
+        btnResetLayout.textContent = "Standardwerte wiederherstellen";
+        applyPopupButtonStyle(btnResetLayout);
+        btnResetLayout.onclick = () => {
+          this._resetPrintLayoutFields();
+        };
+        layoutActions.append(btnResetLayout);
+        card.append(layoutActions);
       }
 
       for (const field of section.fields) {

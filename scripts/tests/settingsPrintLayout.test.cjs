@@ -27,6 +27,11 @@ async function runSettingsPrintLayoutTests(run) {
     assert.equal(settingsSource.includes("print.v2.footerReserveMm"), true);
   });
 
+  await run("SettingsView: Drucklayout zeigt einen sichtbaren Standardwerte-Reset", () => {
+    assert.equal(settingsSource.includes("Standardwerte wiederherstellen"), true);
+    assert.equal(settingsSource.includes("_resetPrintLayoutFields"), true);
+  });
+
   await run("SettingsView: Print-Layout-Werte werden auf gueltige mm-Werte normalisiert", () => {
     const view = new SettingsView({});
     assert.equal(view._normalizePrintLayoutMmValue("3.7", "print.v2.pagePadTopMm"), "4");
@@ -36,6 +41,40 @@ async function runSettingsPrintLayoutTests(run) {
     assert.equal(view._normalizePrintLayoutMmValue("17", "print.v2.footerReserveMm"), "17");
     assert.equal(view._isPrintLayoutMmKey("print.v2.pagePadRightMm"), true);
     assert.equal(view._isPrintLayoutMmKey("pdf.protocolTitle"), false);
+  });
+
+  await run("SettingsView: Standardwerte setzen nur die Drucklayout-Felder", () => {
+    const view = new SettingsView({});
+    const inputs = new Map([
+      ["print.v2.pagePadTopMm", { value: "9" }],
+      ["print.v2.pagePadLeftMm", { value: "8" }],
+      ["print.v2.pagePadRightMm", { value: "7" }],
+      ["print.v2.pagePadBottomMm", { value: "6" }],
+      ["print.v2.footerReserveMm", { value: "5" }],
+      ["pdf.protocolTitle", { value: "Bleibt unveraendert" }],
+    ]);
+    view._settingsInputs = inputs;
+
+    view._resetPrintLayoutFields();
+
+    assert.deepEqual(
+      {
+        top: inputs.get("print.v2.pagePadTopMm").value,
+        left: inputs.get("print.v2.pagePadLeftMm").value,
+        right: inputs.get("print.v2.pagePadRightMm").value,
+        bottom: inputs.get("print.v2.pagePadBottomMm").value,
+        reserve: inputs.get("print.v2.footerReserveMm").value,
+        title: inputs.get("pdf.protocolTitle").value,
+      },
+      {
+        top: "2",
+        left: "12",
+        right: "12",
+        bottom: "0",
+        reserve: "12",
+        title: "Bleibt unveraendert",
+      }
+    );
   });
 }
 
