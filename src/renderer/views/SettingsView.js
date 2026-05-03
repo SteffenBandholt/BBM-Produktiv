@@ -40,11 +40,11 @@ const PRINT_DEFAULTS_FIELD_GROUPS = [
   },
   {
     title: "Druckinhalt",
-    hint: "Protokolltitel, Vorbemerkung und Drucktexte",
+    hint: "Texte fuer Protokoll und PDF-Ausgabe",
     fields: [
       { key: "pdf.protocolTitle", label: "Protokolltitel" },
       { key: "pdf.preRemarks", label: "Vorbemerkung", multiline: true },
-      { key: "print.preRemarks.enabled", label: "Vorbemerkung drucken (true/false)" },
+      { key: "print.preRemarks.enabled", label: "Vorbemerkung in der Ausgabe drucken" },
     ],
   },
   {
@@ -4634,7 +4634,7 @@ export default class SettingsView {
 
     const versionCard = mkCard("Versionierung", "SemVer und Build-Kanal verwalten.");
     const dbCard = mkCard("DB-Diagnose", "Aktive DB, Legacy und Importpfade prüfen.");
-    const topsCard = mkCard("Protokoll-Textgrenzen", "Kurztext und Langtext in TOPs begrenzen.");
+    const topsCard = mkCard("Textgrenzen für TOPs", "Maximale Länge für Kurztext und Langtext in TOPs.");
     const themeCard = mkCard("Farbschema", "Start-Defaults des Themes verwalten.");
     const dictationCard = mkCard("Diktat / Audio", "Technische Einstellungen fuer die Diktierfunktion.");
 
@@ -5075,7 +5075,7 @@ export default class SettingsView {
 
     const tileProfilePrint = mkTile({
       titleText: "Profil & Druck",
-      subText: "Profil, Adresse, Drucktexte, Logos und Layout",
+      subText: "Profil, Adresse, Protokolltexte, Logos und Layout",
       onClick: async () => {
         await this._createLegacySettingsContent();
       },
@@ -5124,7 +5124,7 @@ export default class SettingsView {
 
     const tileDev = mkTile({
       titleText: "Technik",
-      subText: "Versionierung, Protokoll-Textgrenzen, DB-Diagnose und Diktat / Audio",
+      subText: "Versionierung, Textgrenzen, DB-Diagnose und Diktat / Audio",
       onClick: async () => {
         await this._openDevelopmentModal();
       },

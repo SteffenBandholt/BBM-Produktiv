@@ -28,6 +28,10 @@ Sie ergänzt:
   - `Footer Ort`/`Footer Datum`/`Footer Name 1/2` wurden zu kurzen, klaren Labels
   - der Toggle heisst jetzt `Profil-/Adressdaten im Footer verwenden`
   - die Settings-Schluessel und die Speicherlogik bleiben unveraendert
+- Die sichtbaren Texte im Bereich `Druckinhalt` sind sprachlich geschaerft:
+  - der Hinweis nennt jetzt Protokoll und PDF-Ausgabe
+  - die Textgrenzen heissen jetzt `Textgrenzen für TOPs`
+  - Kurztext-/Langtext-Grenzen werden als Eingabelaengen fuer TOPs beschrieben
 - Projekt-Einstellungen behandeln `pdf.footerUseUserData` nicht mehr als steuerbare Projektoption:
   - der Projektsettings-Dialog speichert dieses Feld nicht mehr
   - der Projektsettings-IPC filtert es aus Whitelist und Patch

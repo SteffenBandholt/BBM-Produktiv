@@ -806,11 +806,11 @@ async function runLizenzverwaltungModuleTests(run) {
   await run("Lizenzverwaltung: Einstellungen enthaelt den Einstieg Adminbereich auf oberster Ebene", () => {
     assert.equal(settingsViewSource.includes("../modules/lizenzverwaltung/index.js"), true);
     assert.equal(settingsViewSource.includes("titleText: \"Profil & Druck\""), true);
-    assert.equal(settingsViewSource.includes("subText: \"Profil, Adresse, Drucktexte, Logos und Layout\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Profil, Adresse, Protokolltexte, Logos und Layout\""), true);
     assert.equal(settingsViewSource.includes("titleText: \"Lizenzstatus\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
     assert.equal(settingsViewSource.includes("titleText: \"Technik\""), true);
-    assert.equal(settingsViewSource.includes("subText: \"Versionierung, Protokoll-Textgrenzen, DB-Diagnose und Diktat / Audio\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Versionierung, Textgrenzen, DB-Diagnose und Diktat / Audio\""), true);
     assert.equal(settingsViewSource.includes("tiles.append(tileProfilePrint, tileLicense, tileAdmin, tileArchive, tileDev);"), true);
     assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
@@ -826,7 +826,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('title: "Drucklayout"'), true);
     assert.equal(settingsViewSource.includes('hint: "Name, Firma und Anzeigedaten"'), true);
     assert.equal(settingsViewSource.includes('hint: "Strasse, PLZ und Ort"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Protokolltitel, Vorbemerkung und Drucktexte"'), true);
+    assert.equal(settingsViewSource.includes('hint: "Texte fuer Protokoll und PDF-Ausgabe"'), true);
     assert.equal(settingsViewSource.includes('hint: "Fusszeilenangaben und Profil-/Adressbezug"'), true);
     assert.equal(settingsViewSource.includes('hint: "Drucklogos und Logo-Dialog-Einstieg"'), true);
     assert.equal(settingsViewSource.includes('hint: "Seitenraender und Footer-Abstand"'), true);
@@ -836,6 +836,16 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(idx('title: "Druckinhalt"') < idx('title: "Footer"'), true);
     assert.equal(idx('title: "Footer"') < idx('title: "Logos"'), true);
     assert.equal(idx('title: "Logos"') < idx('title: "Drucklayout"'), true);
+  });
+
+  await run("SettingsView: sichtbare Druckinhalt-Texte sind sprachlich geschaerft", () => {
+    assert.equal(settingsViewSource.includes('label: "Protokolltitel"'), true);
+    assert.equal(settingsViewSource.includes('label: "Vorbemerkung"'), true);
+    assert.equal(settingsViewSource.includes('label: "Vorbemerkung in der Ausgabe drucken"'), true);
+    assert.equal(settingsViewSource.includes('title: "Textgrenzen für TOPs"'), true);
+    assert.equal(settingsViewSource.includes('hint: "Maximale Länge für Kurztext und Langtext in TOPs."'), true);
+    assert.equal(settingsViewSource.includes('label: "Vorbemerkung drucken (true/false)"'), false);
+    assert.equal(settingsViewSource.includes('title: "Protokoll-Textgrenzen"'), false);
   });
 
   await run("SettingsView: sichtbare Footer-Labels sind sprachlich vereinfacht", () => {
