@@ -1,7 +1,6 @@
 import { TopsHeader } from "../TopsHeader.js";
 import { TopsList } from "../TopsList.js";
 import { TopsWorkbench } from "../TopsWorkbench.js";
-import { TopsQuicklane } from "../TopsQuicklane.js";
 import { TopsCommands } from "../TopsCommands.js";
 import { TopsCloseFlow } from "../TopsCloseFlow.js";
 import { TopsRepository } from "../TopsRepository.js";
@@ -58,7 +57,6 @@ export default class TopsScreen {
     this._sidebarEl = null;
     this._sidebarDisplay = "";
     this._suppressNextWorkbenchTextBlur = false;
-    this.quicklane = null;
     this.workbench = null;
     this.topsList = null;
     this.closeFlow = null;
@@ -146,7 +144,6 @@ export default class TopsScreen {
 
   _buildProtocolScreenRegions() {
     this._buildHeader();
-    this._buildQuicklane();
     this._buildList();
     this._buildProtocolWorkbenchHost();
   }
@@ -165,19 +162,6 @@ export default class TopsScreen {
       onKeywordClick: async () => this._openKeywordDialog(),
     });
     this.dialogs = new TopsViewDialogs({ view: this._dialogViewAdapter });
-  }
-
-  _buildQuicklane() {
-    this.quicklane = new TopsQuicklane({
-      projectId: this._getQuicklaneProjectId(),
-      isReadOnly: !!this.store.getState().isReadOnly,
-      isWriting: !!this.store.getState().isWriting,
-      topFilter: this.store.getState().topFilter || "all",
-      onFilterChange: async (filterMode) => {
-        this._setTopFilter(filterMode);
-      },
-    });
-    this._mountQuicklaneIntoHeader();
   }
 
   _buildList() {
@@ -231,21 +215,23 @@ export default class TopsScreen {
     };
   }
 
-  _mountQuicklaneIntoHeader() {
-    const host = this.header?.getActionsHost?.();
-    if (!(host instanceof HTMLElement)) return;
-    if (!(this.quicklane instanceof TopsQuicklane)) return;
-    this.quicklane.mountInto(host);
-  }
-
   _setTopFilter(filterMode) {
     const topFilter = normalizeTopFilterMode(filterMode);
     const current = normalizeTopFilterMode(this.store.getState().topFilter);
     if (topFilter === current) {
-      return;
+      return false;
     }
     this.store.setState({ topFilter });
     this._syncScreenState();
+    return true;
+  }
+
+  setTopFilter(filterMode) {
+    return this._setTopFilter(filterMode);
+  }
+
+  getTopFilter() {
+    return normalizeTopFilterMode(this.store.getState().topFilter);
   }
 
   // ---------------------------------------------------------------------------
@@ -282,19 +268,6 @@ export default class TopsScreen {
       projectId: state.projectId || this.router?.currentProjectId || null,
       projectLabel: String(this.router?.context?.projectLabel || "").trim(),
     };
-  }
-
-  _syncQuicklaneState() {
-    const state = this.store.getState();
-    if (!(this.quicklane instanceof TopsQuicklane)) return;
-    const projectContext = this._getProjectScreenContext();
-    this.quicklane.update({
-      projectId: projectContext.projectId,
-      isReadOnly: !!state.isReadOnly,
-      isWriting: !!state.isWriting,
-      topFilter: state.topFilter || "all",
-    });
-    this._mountQuicklaneIntoHeader();
   }
 
   _syncHeaderState() {
@@ -426,9 +399,12 @@ export default class TopsScreen {
     const state = this.store.getState();
     this._syncCloseFlowContext();
     this._syncHeaderState();
-    this._syncQuicklaneState();
     this._syncListState();
     this._syncProtocolWorkbenchHostState();
+    if (this.router?.context?.ui) {
+      this.router.context.ui.topFilter = normalizeTopFilterMode(state.topFilter || "all");
+      this.router.context.ui.onTopFilterChange = (mode) => this.setTopFilter(mode);
+    }
 
     if (this.editArea) {
       this.editArea.dataset.bbmWorkbenchVisible = shouldShowWorkbench(state) ? "true" : "false";

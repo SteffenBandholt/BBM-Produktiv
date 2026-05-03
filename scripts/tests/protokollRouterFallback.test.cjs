@@ -76,43 +76,49 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(workbenchSource.includes("tops/components/TopsWorkbench.js"), true);
   });
 
-  await run("Protokoll Quicklane-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {
+  await run("Protokoll Quicklane-Einstieg: TopsScreen nutzt keinen Quicklane-Re-Export mehr", () => {
     const screenFile = path.join(
       __dirname,
       "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
     );
-    const quicklaneFile = path.join(
-      __dirname,
-      "../../src/renderer/modules/protokoll/TopsQuicklane.js"
-    );
     const screenSource = fs.readFileSync(screenFile, "utf8");
-    const quicklaneSource = fs.readFileSync(quicklaneFile, "utf8");
 
     assert.equal(screenSource.includes("tops/components/TopsQuicklane.js"), false);
-    assert.equal(screenSource.includes('from "../TopsQuicklane.js"'), true);
-    assert.equal(quicklaneSource.includes("tops/components/TopsQuicklane.js"), true);
+    assert.equal(screenSource.includes("_mountQuicklaneIntoWorkbenchGutter"), false);
+    assert.equal(screenSource.includes("setTopFilter("), true);
+    assert.equal(screenSource.includes("getTopFilter("), true);
   });
 
-  await run("Protokoll Quicklane-Filter ersetzt Projekt/Firmen/Ausgabe", () => {
+  await run("Protokoll Quicklane-Filter sitzt in der rechten Toolbox", () => {
     const screenFile = path.join(
       __dirname,
       "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
     );
+    const routerFile = path.join(__dirname, "../../src/renderer/app/Router.js");
     const quicklaneFile = path.join(
       __dirname,
-      "../../src/renderer/tops/components/TopsQuicklane.js"
+      "../../src/renderer/ui/ProjectContextQuicklane.js"
     );
     const screenSource = fs.readFileSync(screenFile, "utf8");
+    const routerSource = fs.readFileSync(routerFile, "utf8");
     const quicklaneSource = fs.readFileSync(quicklaneFile, "utf8");
 
-    assert.equal(screenSource.includes("onFilterChange"), true);
     assert.equal(screenSource.includes("topFilter"), true);
-    assert.match(quicklaneSource, /quicklaneAction\s*=\s*["']top-filter["']/);
+    assert.equal(screenSource.includes("this.router.context.ui.topFilter"), true);
+    assert.equal(screenSource.includes("onTopFilterChange"), true);
+    assert.equal(routerSource.includes("onTopFilterChange = null"), true);
+    assert.equal(screenSource.includes("_mountQuicklaneIntoWorkbenchGutter"), false);
+    assert.equal(screenSource.includes("workbench?.gutter"), false);
+    assert.equal(quicklaneSource.includes("TOP-Filter"), true);
+    assert.equal(quicklaneSource.includes("top-filter"), true);
+    assert.equal(quicklaneSource.includes("onTopFilterChange"), true);
     assert.equal(quicklaneSource.includes("ToDo"), true);
     assert.equal(quicklaneSource.includes("Beschluss"), true);
-    assert.equal(quicklaneSource.includes("Projekt"), false);
-    assert.equal(quicklaneSource.includes("Firmen"), false);
-    assert.equal(quicklaneSource.includes("Ausgabe"), false);
+    assert.equal(quicklaneSource.includes("Projektnummer"), false);
+    assert.equal(quicklaneSource.includes("Kurzbezeichnung"), false);
+    assert.equal(quicklaneSource.includes("Projekt-ID"), false);
+    assert.equal(quicklaneSource.includes("Meeting-ID"), false);
+    assert.equal(quicklaneSource.includes("contextMeta"), false);
   });
 
   await run("Protokoll Commands-Einstieg: TopsScreen nutzt einen modulnahen Re-Export", () => {

@@ -1,4 +1,15 @@
 // src/renderer/ui/ProjectContextQuicklane.js
+import {
+  getTopFilterBadge,
+  getTopFilterLabel,
+  normalizeTopFilterMode,
+} from "../modules/protokoll/topFilterMode.js";
+
+const TOP_FILTER_OPTIONS = Object.freeze([
+  { mode: "all", label: "Alle" },
+  { mode: "todo", label: "ToDo" },
+  { mode: "decision", label: "Beschluss" },
+]);
 
 export default class ProjectContextQuicklane {
   constructor({ router } = {}) {
@@ -8,7 +19,6 @@ export default class ProjectContextQuicklane {
     this.closeBtn = null;
     this.pinBtn = null;
     this.bodyEl = null;
-    this.contextMetaEl = null;
     this.projectSectionEl = null;
     this.firmsSectionEl = null;
     this.employeesSectionEl = null;
@@ -17,10 +27,10 @@ export default class ProjectContextQuicklane {
     this.longtextSectionEl = null;
     this.outputSectionEl = null;
     this.outputPopupEl = null;
-    this.projectNumberValueEl = null;
-    this.projectShortValueEl = null;
-    this.projectIdValueEl = null;
-    this.meetingIdValueEl = null;
+    this.filterSectionEl = null;
+    this.filterPopupEl = null;
+    this._topFilterMode = "all";
+    this._isTopFilterOpen = false;
     this._isOpen = false;
     this._isPinned = false;
     this._enabled = false;
@@ -41,6 +51,10 @@ export default class ProjectContextQuicklane {
     };
     this._escHandler = (e) => {
       if (e.key !== "Escape") return;
+      if (this._isTopFilterOpen) {
+        this._setTopFilterMenuOpen(false);
+        return;
+      }
       if (this._isOutputOpen) {
         this._setOutputOpen(false);
         return;
@@ -290,6 +304,51 @@ export default class ProjectContextQuicklane {
     }
     longtextSection.replaceChildren(longtextWrap);
 
+    const filterSection = createToolItem({
+      icon: "",
+      title: "TOP-Filter",
+      actionHandler: () => {
+        if (!this._lastOpts?.projectId) return;
+        this._setTopFilterMenuOpen(!this._isTopFilterOpen);
+      },
+    });
+    filterSection.dataset.quicklaneAction = "top-filter";
+    const filterWrap = document.createElement("span");
+    filterWrap.style.position = "relative";
+    filterWrap.style.display = "inline-flex";
+    filterWrap.style.alignItems = "center";
+    filterWrap.style.justifyContent = "center";
+    filterWrap.style.width = "18px";
+    filterWrap.style.height = "18px";
+    const filterSvg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    filterSvg.setAttribute("viewBox", "0 0 24 24");
+    filterSvg.setAttribute("aria-hidden", "true");
+    filterSvg.style.width = "16px";
+    filterSvg.style.height = "16px";
+    filterSvg.style.display = "block";
+    const filterPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    filterPath.setAttribute("d", "M3 5h18l-7 8v5l-4 2v-7L3 5z");
+    filterPath.setAttribute("fill", "currentColor");
+    const filterBadge = document.createElement("span");
+    filterBadge.style.position = "absolute";
+    filterBadge.style.right = "-3px";
+    filterBadge.style.bottom = "-3px";
+    filterBadge.style.width = "10px";
+    filterBadge.style.height = "10px";
+    filterBadge.style.borderRadius = "999px";
+    filterBadge.style.display = "inline-flex";
+    filterBadge.style.alignItems = "center";
+    filterBadge.style.justifyContent = "center";
+    filterBadge.style.fontSize = "7px";
+    filterBadge.style.lineHeight = "1";
+    filterBadge.style.fontWeight = "800";
+    filterBadge.style.background = "#ffffff";
+    filterBadge.style.color = "#1d4ed8";
+    filterBadge.style.border = "1px solid currentColor";
+    filterSvg.appendChild(filterPath);
+    filterWrap.append(filterSvg, filterBadge);
+    filterSection.replaceChildren(filterWrap);
+
     const outputSection = createToolItem({
       icon: "🖨",
       title: "Ausgabe",
@@ -346,6 +405,44 @@ export default class ProjectContextQuicklane {
     outputPopup.style.gap = "6px";
     outputPopup.style.zIndex = "40";
 
+    const filterPopup = document.createElement("div");
+    filterPopup.style.position = "fixed";
+    filterPopup.style.display = "none";
+    filterPopup.style.minWidth = "180px";
+    filterPopup.style.maxWidth = "220px";
+    filterPopup.style.boxSizing = "border-box";
+    filterPopup.style.padding = "8px";
+    filterPopup.style.border = "1px solid #d8d8d8";
+    filterPopup.style.borderRadius = "12px";
+    filterPopup.style.background = "#ffffff";
+    filterPopup.style.boxShadow = "-8px 8px 24px rgba(0,0,0,0.16)";
+    filterPopup.style.flexDirection = "column";
+    filterPopup.style.gap = "6px";
+    filterPopup.style.zIndex = "40";
+
+    const filterActions = TOP_FILTER_OPTIONS.map((option) => {
+      const item = createOutputAction(option.label, async () => {
+        if (!this._lastOpts?.projectId) return;
+        this._setTopFilterMode(option.mode);
+        this._setTopFilterMenuOpen(false);
+        const onTopFilterChange =
+          this.router?.context?.ui?.onTopFilterChange ||
+          this._lastOpts?.onTopFilterChange ||
+          null;
+        if (typeof onTopFilterChange === "function") {
+          await onTopFilterChange(option.mode);
+          return;
+        }
+        const activeView = this.router?.activeView || null;
+        if (typeof activeView?.setTopFilter === "function") {
+          await activeView.setTopFilter(option.mode);
+        }
+      });
+      item.dataset.filterMode = option.mode;
+      return item;
+    });
+    filterPopup.append(...filterActions);
+
     const outputProtocols = createOutputAction("Protokolle", async () => {
       if (!this._lastOpts?.projectId) return;
       await this.router?.openClosedProtocolSelector?.({ mode: "view" });
@@ -363,51 +460,19 @@ export default class ProjectContextQuicklane {
     });
     outputPopup.append(outputProtocols, outputPrint, outputMail);
 
-    const contextMeta = document.createElement("div");
-    contextMeta.style.display = "none";
-    contextMeta.style.width = "100%";
-    contextMeta.style.boxSizing = "border-box";
-    contextMeta.style.padding = "10px 8px 12px";
-    contextMeta.style.borderTop = "1px solid #e4e4e4";
-    contextMeta.style.background = "#fafafa";
-    contextMeta.style.flexDirection = "column";
-    contextMeta.style.gap = "6px";
-
-    const createMetaRow = (labelText, valueEl) => {
-      const row = document.createElement("div");
-      row.style.display = "flex";
-      row.style.flexDirection = "column";
-      row.style.gap = "1px";
-
-      const label = document.createElement("div");
-      label.textContent = labelText;
-      label.style.fontSize = "10px";
-      label.style.color = "#666";
-
-      valueEl.textContent = "—";
-      valueEl.style.fontSize = "11px";
-      valueEl.style.fontWeight = "600";
-      valueEl.style.color = "#222";
-
-      row.append(label, valueEl);
-      return row;
-    };
-
-    const projectNumberValue = document.createElement("div");
-    const projectShortValue = document.createElement("div");
-    const projectIdValue = document.createElement("div");
-    const meetingIdValue = document.createElement("div");
-
-    contextMeta.append(
-      createMetaRow("Projektnummer", projectNumberValue),
-      createMetaRow("Kurzbezeichnung", projectShortValue),
-      createMetaRow("Projekt-ID", projectIdValue),
-      createMetaRow("Meeting-ID", meetingIdValue)
+    body.append(
+      projectSection,
+      firmsSection,
+      employeesSection,
+      previewSection,
+      ampelSection,
+      longtextSection,
+      filterSection,
+      outputSection
     );
-
-    body.append(projectSection, firmsSection, employeesSection, previewSection, ampelSection, longtextSection, outputSection, contextMeta);
     wrap.append(tab, header, body);
     document.body.appendChild(outputPopup);
+    document.body.appendChild(filterPopup);
 
     tab.addEventListener("mouseenter", () => {
       if (!this._enabled) return;
@@ -441,10 +506,16 @@ export default class ProjectContextQuicklane {
     document.addEventListener(
       "mousedown",
       (e) => {
-        if (!this._isOutputOpen) return;
-        if (outputSection.contains(e.target)) return;
-        if (outputPopup.contains(e.target)) return;
-        this._setOutputOpen(false);
+        if (this._isOutputOpen) {
+          if (!outputSection.contains(e.target) && !outputPopup.contains(e.target)) {
+            this._setOutputOpen(false);
+          }
+        }
+        if (this._isTopFilterOpen) {
+          if (!filterSection.contains(e.target) && !filterPopup.contains(e.target)) {
+            this._setTopFilterMenuOpen(false);
+          }
+        }
       },
       true
     );
@@ -457,7 +528,6 @@ export default class ProjectContextQuicklane {
     this.closeBtn = closeBtn;
     this.pinBtn = pinBtn;
     this.bodyEl = body;
-    this.contextMetaEl = contextMeta;
     this.projectSectionEl = projectSection;
     this.firmsSectionEl = firmsSection;
     this.employeesSectionEl = employeesSection;
@@ -466,13 +536,47 @@ export default class ProjectContextQuicklane {
     this.longtextSectionEl = longtextSection;
     this.outputSectionEl = outputSection;
     this.outputPopupEl = outputPopup;
-    this.projectNumberValueEl = projectNumberValue;
-    this.projectShortValueEl = projectShortValue;
-    this.projectIdValueEl = projectIdValue;
-    this.meetingIdValueEl = meetingIdValue;
+    this.filterSectionEl = filterSection;
+    this.filterPopupEl = filterPopup;
+    this.filterBadgeEl = filterBadge;
 
     this._applyState();
     return wrap;
+  }
+
+  _getTopFilterMode() {
+    const ctxMode = this.router?.context?.ui?.topFilter;
+    return normalizeTopFilterMode(ctxMode || this._topFilterMode || "all");
+  }
+
+  _setTopFilterMode(mode) {
+    this._topFilterMode = normalizeTopFilterMode(mode);
+    this._renderTopFilterButton();
+    this._syncTopFilterMenuState();
+  }
+
+  _setTopFilterMenuOpen(nextOpen) {
+    this._isTopFilterOpen = !!nextOpen;
+    this._renderContext();
+  }
+
+  _renderTopFilterButton() {
+    if (!this.filterSectionEl || !this.filterBadgeEl) return;
+    this.filterBadgeEl.textContent = getTopFilterBadge(this._getTopFilterMode());
+    this.filterSectionEl.title = `TOP-Filter: ${getTopFilterLabel(this._getTopFilterMode())}`;
+    this.filterSectionEl.setAttribute("aria-label", `TOP-Filter: ${getTopFilterLabel(this._getTopFilterMode())}`);
+  }
+
+  _syncTopFilterMenuState() {
+    if (!this.filterPopupEl) return;
+    const items = Array.from(this.filterPopupEl.querySelectorAll("button[data-filter-mode]"));
+    const currentMode = this._getTopFilterMode();
+    for (const item of items) {
+      const active = String(item.dataset.filterMode || "") === currentMode;
+      item.dataset.active = active ? "true" : "false";
+      item.style.fontWeight = active ? "700" : "600";
+      item.style.background = active ? "rgba(30, 64, 175, 0.08)" : "transparent";
+    }
   }
 
   _getNormalizedProjectMeta() {
@@ -509,24 +613,6 @@ export default class ProjectContextQuicklane {
   // nur fuer Anzeige und Aktionen auf.
   _renderContext() {
     const meta = this._getNormalizedProjectMeta();
-    const projectNumber = meta.projectNumber;
-    const projectShort = meta.projectShort;
-
-    if (this.projectNumberValueEl) this.projectNumberValueEl.textContent = projectNumber || "—";
-    if (this.projectShortValueEl) this.projectShortValueEl.textContent = projectShort || "—";
-    if (this.projectIdValueEl) {
-      this.projectIdValueEl.textContent =
-        this._lastOpts?.projectId === undefined || this._lastOpts?.projectId === null
-          ? "—"
-          : String(this._lastOpts.projectId);
-    }
-    if (this.meetingIdValueEl) {
-      this.meetingIdValueEl.textContent =
-        this._lastOpts?.meetingId === undefined || this._lastOpts?.meetingId === null
-          ? "—"
-          : String(this._lastOpts.meetingId);
-    }
-
     const hasProject = meta.hasProject;
     const hasParticipants = meta.hasProject && meta.hasMeeting;
     const hasPreview = meta.hasProject && meta.hasMeeting;
@@ -540,6 +626,7 @@ export default class ProjectContextQuicklane {
         ? this._longtextEnabled
         : !!this.router?.activeView?.showLongtextInList;
     const hasLongtext = !!this.router?.activeView?.btnLongToggle;
+    const hasTopFilter = !!this.router?.context?.ui?.isTopsView;
     const hasOutput = hasProject;
     this._applyToolItemState(this.projectSectionEl, hasProject);
     this._applyToolItemState(this.firmsSectionEl, hasProject);
@@ -547,7 +634,10 @@ export default class ProjectContextQuicklane {
     this._applyToolItemState(this.previewSectionEl, hasPreview);
     this._applyToolItemState(this.ampelSectionEl, hasAmpel);
     this._applyToolItemState(this.longtextSectionEl, hasLongtext);
+    this._applyToolItemState(this.filterSectionEl, hasTopFilter);
     this._applyToolItemState(this.outputSectionEl, hasOutput);
+    this._renderTopFilterButton();
+    this._syncTopFilterMenuState();
     if (this.ampelSectionEl?.firstChild) {
       const lamps = this.ampelSectionEl.firstChild.children || [];
       const red = lamps[0];
@@ -583,6 +673,7 @@ export default class ProjectContextQuicklane {
       }
     }
     if (!hasOutput) this._isOutputOpen = false;
+    if (!hasTopFilter) this._setTopFilterMenuOpen(false);
     if (this.outputPopupEl && this.outputSectionEl) {
       if (this._isOutputOpen && hasOutput) {
         const rect = this.outputSectionEl.getBoundingClientRect();
@@ -591,6 +682,16 @@ export default class ProjectContextQuicklane {
         this.outputPopupEl.style.display = "flex";
       } else {
         this.outputPopupEl.style.display = "none";
+      }
+    }
+    if (this.filterPopupEl && this.filterSectionEl) {
+      if (this._isTopFilterOpen && hasTopFilter) {
+        const rect = this.filterSectionEl.getBoundingClientRect();
+        this.filterPopupEl.style.top = `${Math.max(12, rect.top)}px`;
+        this.filterPopupEl.style.left = `${Math.max(12, rect.left - 196)}px`;
+        this.filterPopupEl.style.display = "flex";
+      } else {
+        this.filterPopupEl.style.display = "none";
       }
     }
   }
@@ -700,7 +801,6 @@ export default class ProjectContextQuicklane {
       this._isOpen || this._isPinned ? "translateX(0)" : "translateX(calc(100% - 22px))";
 
     if (this.closeBtn) this.closeBtn.style.display = this._isPinned ? "inline-flex" : "none";
-    if (this.contextMetaEl) this.contextMetaEl.style.display = this._isPinned ? "flex" : "none";
 
     if (this.pinBtn) {
       this.pinBtn.textContent = this._isPinned ? "U" : "P";

@@ -10,6 +10,9 @@ async function runTopsScreenIntegrationTests(run) {
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsWorkbenchViewModel.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/TopsList.js")),
   ]);
+  const ProjectContextQuicklane = (await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/ui/ProjectContextQuicklane.js")
+  )).default;
   const { EditboxShell } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/core/editbox/EditboxShell.js")
   );
@@ -28,41 +31,79 @@ async function runTopsScreenIntegrationTests(run) {
   const { TopsList } = topsListMod;
 
   function createFakeDocument() {
+    const createNode = (tag, doc) => {
+      const node = {
+        tagName: String(tag || "").toUpperCase(),
+        ownerDocument: doc,
+        children: [],
+        style: {},
+        dataset: {},
+        className: "",
+        textContent: "",
+        disabled: false,
+        readOnly: false,
+        value: "",
+        rows: 0,
+        maxLength: 0,
+        append(...nodes) {
+          this.children.push(...nodes);
+        },
+        appendChild(nodeChild) {
+          this.children.push(nodeChild);
+          return nodeChild;
+        },
+        replaceChildren(...nodes) {
+          this.children = [...nodes];
+        },
+        setAttribute(name, value) {
+          this[String(name)] = String(value);
+        },
+        addEventListener() {},
+        contains(target) {
+          if (target === this) return true;
+          for (const child of this.children || []) {
+            if (child === target) return true;
+            if (child && typeof child.contains === "function" && child.contains(target)) return true;
+          }
+          return false;
+        },
+        querySelectorAll(selector) {
+          const result = [];
+          const wantFilterButtons = String(selector || "").includes("data-filter-mode");
+          const walk = (nodeToWalk) => {
+            if (!nodeToWalk) return;
+            if (wantFilterButtons && nodeToWalk.dataset?.filterMode) {
+              result.push(nodeToWalk);
+            }
+            for (const child of nodeToWalk.children || []) walk(child);
+          };
+          walk(this);
+          return result;
+        },
+        getBoundingClientRect() {
+          return { top: 0, left: 0, width: 40, height: 40 };
+        },
+        classList: {
+          add() {},
+          toggle() {},
+        },
+      };
+      return node;
+    };
+
     const doc = {
       activeElement: null,
       createElement(tag) {
-        const el = {
-          tagName: String(tag || "").toUpperCase(),
-          ownerDocument: doc,
-          children: [],
-          style: {},
-          dataset: {},
-          className: "",
-          textContent: "",
-          disabled: false,
-          readOnly: false,
-          value: "",
-          rows: 0,
-          maxLength: 0,
-          append(...nodes) {
-            this.children.push(...nodes);
-          },
-          appendChild(node) {
-            this.children.push(node);
-            return node;
-          },
-          setAttribute(name, value) {
-            this[String(name)] = String(value);
-          },
-          addEventListener() {},
-          classList: {
-            add() {},
-            toggle() {},
-          },
-        };
-        return el;
+        return createNode(tag, doc);
       },
+      createElementNS(_ns, tag) {
+        return createNode(tag, doc);
+      },
+      body: null,
+      addEventListener() {},
+      removeEventListener() {},
     };
+    doc.body = createNode("body", doc);
     return doc;
   }
 
@@ -267,6 +308,55 @@ async function runTopsScreenIntegrationTests(run) {
 
     assert.equal(rows.length, 1);
     assert.equal(rows[0].id, 422);
+  });
+
+  await run("Tops v2 Integration: Quicklane-Filter ruft den durchgereichten Callback auf", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const calls = [];
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      addEventListener() {},
+      removeEventListener() {},
+      innerWidth: 1280,
+      innerHeight: 720,
+    };
+    try {
+      const lane = new ProjectContextQuicklane({
+        router: {
+          context: {
+            ui: {
+              isTopsView: true,
+              onTopFilterChange: async (mode) => {
+                calls.push(mode);
+              },
+            },
+          },
+          activeView: {
+            setTopFilter: async (mode) => {
+              calls.push(`fallback:${mode}`);
+            },
+          },
+        },
+      });
+      lane.setEnabled(true);
+      lane.setContext({ projectId: 17, meetingId: 21 });
+
+      await lane.filterSectionEl.onclick?.();
+      assert.equal(lane.filterPopupEl.style.display, "flex");
+      assert.ok(Number.parseInt(lane.filterPopupEl.style.left, 10) >= 12);
+      await lane.filterPopupEl.children[1].onclick?.({
+        preventDefault() {},
+        stopPropagation() {},
+      });
+
+      assert.deepEqual(calls, ["todo"]);
+      assert.equal(lane.filterBadgeEl.textContent, "T");
+      assert.equal(lane.filterPopupEl.children[1].dataset.active, "true");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
   });
 
   await run("Tops v2 Integration: Save/Delete + Reload haelt Zustand konsistent", async () => {
