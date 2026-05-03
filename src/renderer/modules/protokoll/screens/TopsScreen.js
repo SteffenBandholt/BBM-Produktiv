@@ -524,16 +524,6 @@ export default class TopsScreen {
       this.router?.currentProjectId ||
       null;
 
-    const projectOptions =
-      this.returnContext?.project && typeof this.returnContext.project === "object"
-        ? { project: this.returnContext.project }
-        : {};
-
-    if (projectId && typeof this.router?.showProjectWorkspace === "function") {
-      await this.router.showProjectWorkspace(projectId, projectOptions);
-      return true;
-    }
-
     if (typeof this.router?.showProjects === "function") {
       await this.router.showProjects();
       return true;

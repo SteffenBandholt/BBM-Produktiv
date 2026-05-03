@@ -166,7 +166,7 @@ async function runProtokollRouterFallbackTests(run) {
 
     assert.equal(screenSource.includes("_returnAfterClose()"), true);
     assert.equal(screenSource.includes("await this.router.showProjects();"), true);
-    assert.equal(screenSource.includes("await this.router.showProjectWorkspace(projectId, projectOptions);"), true);
+    assert.equal(screenSource.includes("await this.router.showProjectWorkspace(projectId, projectOptions);"), false);
   });
 
   await run("Protokoll Blur-Save: TopsScreen verdrahtet Kurztext/Langtext-Blur zum Speichern", () => {

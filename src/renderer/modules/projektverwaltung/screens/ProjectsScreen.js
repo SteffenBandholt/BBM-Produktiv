@@ -164,26 +164,18 @@ export default class ProjectsScreen {
         await this.router.openProjectProtocol(effectiveProjectId, { project: project || null });
         return true;
       }
-      if (typeof this.router?.showProjectWorkspace === "function") {
-        await this.router.showProjectWorkspace(effectiveProjectId, { project: project || null });
+      return false;
+    }
+
+    if (normalizedModuleId === "projectFirms") {
+      if (typeof this.router?.showProjectFirms === "function") {
+        await this.router.showProjectFirms(effectiveProjectId);
         return true;
       }
       return false;
     }
 
-    if (typeof this.router?.showProjectWorkspace !== "function") {
-      return false;
-    }
-
-    await this.router.showProjectWorkspace(effectiveProjectId, { project: project || null });
-
-    const view = this.router?.currentView || null;
-    if (view && typeof view.openProjectModule === "function") {
-      await view.openProjectModule(normalizedModuleId);
-      return true;
-    }
-
-    return true;
+    return false;
   }
 
   _readUiMode() {
@@ -908,14 +900,22 @@ export default class ProjectsScreen {
     this._setProjectRuntimeContext(project.id, null);
     this._rememberLastProject(project.id);
 
-    if (typeof this.router?.showProjectWorkspace === "function") {
-      await this.router.showProjectWorkspace(project.id, { project });
+    if (typeof this.router?.openProjectProtocol === "function") {
+      await this.router.openProjectProtocol(project.id, { project });
       return true;
     }
 
-    this._flashMsg("Projekt-Arbeitsbereich ist nicht verfuegbar.", 9000);
-    return false;
+    if (typeof this.router?.showMeetings === "function") {
+      await this.router.showMeetings(project.id, {
+        startMode: true,
+        startReason: "protocol-start-unavailable",
+        integrityError: false,
+      });
+      return true;
+    }
 
+    this._flashMsg("Protokollstart ist nicht verfuegbar.", 9000);
+    return false;
   }
 
   _rememberLastProject(projectId) {

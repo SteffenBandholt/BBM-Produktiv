@@ -204,8 +204,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(routerSource.includes("../views/ArchiveView.js"), false);
     assert.equal(routerSource.includes("../modules/protokoll/index.js"), true);
     assert.equal(routerSource.includes("../views/TopsView.js"), false);
-    assert.equal(routerSource.includes("showProjectWorkspace(projectId, options = {})"), true);
-    assert.equal(routerSource.includes("ProjectWorkspaceScreen"), true);
+    assert.equal(routerSource.includes("openProjectProtocol(projectId, options = {})"), true);
     assert.equal(routerSource.includes("showProjects()"), true);
     assert.equal(routerSource.includes("showArchive()"), true);
     assert.equal(routerSource.includes("showTops(meetingId, projectId"), true);
@@ -230,7 +229,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(typeof resolveModuleScreenFromEntry(entry, "projects"), "function");
   });
 
-  await run("Projektverwaltung: Projekt-Arbeitsbereich ist exportiert und beschraenkt die Module", async () => {
+  await run("Projektverwaltung: Legacy-Projekt-Arbeitsbereich bleibt isoliert", async () => {
     assert.equal(typeof ProjectWorkspaceScreen, "function");
     assert.equal(workspaceSource.includes("export default class ProjectWorkspaceScreen"), true);
     assert.equal(workspaceSource.includes("getActiveProjectModuleNavigation"), false);
@@ -404,7 +403,7 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
-  await run("Projektverwaltung: Projektklick öffnet den Arbeitsbereich statt direkt Tops", async () => {
+  await run("Projektverwaltung: Projektklick startet direkt den Protokollpfad", async () => {
     const calls = [];
     const previousWindow = global.window;
     global.window = {
@@ -418,7 +417,7 @@ async function runProjektverwaltungModuleTests(run) {
         router: {
           currentProjectId: null,
           currentMeetingId: null,
-          async showProjectWorkspace(projectId, options) {
+          async openProjectProtocol(projectId, options) {
             calls.push({ projectId, options });
           },
         },
@@ -448,7 +447,7 @@ async function runProjektverwaltungModuleTests(run) {
           },
         },
       ]);
-      assert.equal(projectsSource.includes("showProjectWorkspace(project.id, { project })"), true);
+      assert.equal(projectsSource.includes("openProjectProtocol(project.id, { project })"), true);
     } finally {
       global.window = previousWindow;
     }
@@ -471,18 +470,10 @@ async function runProjektverwaltungModuleTests(run) {
               label: "Protokoll",
               description: "Protokoll im aktuellen Projekt öffnen.",
             },
-            {
-              moduleId: "projectFirms",
-              label: "Projektfirmen",
-              description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
-            },
           ];
         },
         async openProjectProtocol(projectId, options) {
           calls.push({ type: "protocol", projectId, options });
-        },
-        async showProjectWorkspace(projectId, options) {
-          calls.push({ type: "workspace", projectId, options });
         },
       },
     });
@@ -513,11 +504,16 @@ async function runProjektverwaltungModuleTests(run) {
         root,
         (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "protokoll"
       );
+      const projectFirmsButton = findNode(
+        root,
+        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "projectFirms"
+      );
       const editButton = findNode(root, (node) => node?.dataset?.projectAction === "edit");
 
       assert.equal(!!projectCard, true);
       assert.equal(!!actionRail, true);
       assert.equal(!!moduleButton, true);
+      assert.equal(!!projectFirmsButton, false);
       assert.equal(!!editButton, true);
       assert.equal(actionRail.children.length >= 1, true);
 
@@ -924,7 +920,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(mainSource.includes("print.v2.footerReserveMm"), true);
   });
 
-  await run("Projektverwaltung: Projekt-Arbeitsbereich bleibt Modul-Andockpunkt", () => {
+  await run("Projektverwaltung: Legacy-Projekt-Arbeitsbereich bleibt isoliert", () => {
     assert.equal(workspaceSource.includes("getActiveProjectModuleNavigation"), false);
     assert.equal(workspaceSource.includes("PROTOKOLL_MODULE_ID"), false);
     assert.equal(workspaceSource.includes("Arbeitsbereiche im Projekt"), true);
@@ -932,7 +928,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(workspaceSource.includes("const PROJECT_MODULES"), false);
   });
 
-  await run("Projektverwaltung: Router stellt die Projekt-Arbeitsbereiche bereit", () => {
+  await run("Projektverwaltung: Router haelt den Legacy-Projekt-Arbeitsbereich getrennt", () => {
     assert.equal(routerSource.includes("_getProjectWorkspaceModules"), true);
     assert.equal(routerSource.includes("getActiveProjectModuleNavigation"), true);
     assert.equal(routerSource.includes("projectModules: this._getProjectWorkspaceModules()"), true);

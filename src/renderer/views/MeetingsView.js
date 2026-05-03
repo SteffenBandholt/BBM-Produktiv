@@ -311,10 +311,6 @@ export default class MeetingsView {
         return;
       }
       if (this.startMode) {
-        if (typeof this.router?.showProjectWorkspace === "function") {
-          await this.router.showProjectWorkspace(this.projectId);
-          return;
-        }
         await this.router.showProjects();
         return;
       }

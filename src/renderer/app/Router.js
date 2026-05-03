@@ -683,7 +683,7 @@ export default class Router {
       const returnContext =
         options?.returnContext ||
         {
-          section: "projectWorkspace",
+          section: "projects",
           projectId: effectiveProjectId,
           project: options?.project || null,
         };
