@@ -265,8 +265,11 @@ export default class SettingsView {
     this.btnAddRole = null;
     this.inpAddRole = null;
     this.btnRoleMove = null;
+    this.btnRoleMoveUp = null;
+    this.btnRoleMoveDown = null;
     this.btnRoleDelete = null;
     this.btnRoleRename = null;
+    this.roleActionBarEl = null;
     this.roleMoveHintEl = null;
     this.roleSelectedCode = null;
     this.roleMoveModeActive = false;
@@ -2801,7 +2804,7 @@ export default class SettingsView {
 
     return order.map((code) => ({
       code,
-      label: labels[code] || `Kategorie ${code}`,
+      label: labels[code] || `Rolle ${code}`,
     }));
   }
 
@@ -2817,55 +2820,40 @@ export default class SettingsView {
     const list = Array.isArray(this.roleOrder) ? this.roleOrder : [];
     const visible = list.filter((code) => labelByCode.has(code));
 
-    visible.forEach((code) => {
-      const row = document.createElement("div");
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.padding = "6px 8px";
-      row.style.borderBottom = "1px solid #eee";
-      row.style.borderRadius = "6px";
-      row.style.cursor = "pointer";
+    if (!visible.length) {
+      const emptyRow = document.createElement("tr");
+      const emptyCell = document.createElement("td");
+      emptyCell.colSpan = 2;
+      emptyCell.textContent = "Keine Rollen vorhanden";
+      emptyCell.style.padding = "12px";
+      emptyCell.style.opacity = "0.75";
+      emptyRow.append(emptyCell);
+      this.roleListEl.appendChild(emptyRow);
+      this._updateRoleActionsState();
+      return;
+    }
 
-      const isSelected = String(this.roleSelectedCode || "") === String(code);
-      row.style.background = isSelected ? "#dff0ff" : "transparent";
-      row.style.border = isSelected ? "1px solid #7aa7ff" : "1px solid transparent";
-      row.style.fontWeight = isSelected ? "700" : "400";
+    visible.forEach((code, index) => {
+      const row = document.createElement("tr");
+      row.style.borderBottom = "1px solid #eef2f7";
+      row.style.cursor = "pointer";
+      row.style.background = String(this.roleSelectedCode || "") === String(code) ? "#dff0ff" : "transparent";
 
       row.onclick = () => {
         if (busy) return;
         this._selectRole(code);
-        if (this.roleListEl) this.roleListEl.focus();
       };
 
-      const labelWrap = document.createElement("div");
-      labelWrap.style.flex = "1 1 auto";
-      labelWrap.style.minWidth = "0";
+      const orderCell = document.createElement("td");
+      orderCell.style.padding = "10px 12px";
+      orderCell.style.whiteSpace = "nowrap";
+      orderCell.textContent = String(index + 1);
 
-      if (String(this.roleRenameCode || "") === String(code)) {
-        const inp = document.createElement("input");
-        inp.type = "text";
-        inp.value = labelByCode.get(code) || String(code);
-        inp.style.width = "100%";
-        inp.onkeydown = (e) => this._handleRoleRenameKey(e);
-        inp.onblur = () => this._commitRoleInlineRename({ commit: true });
-        this.roleRenameInputEl = inp;
-        labelWrap.append(inp);
-        setTimeout(() => {
-          try {
-            inp.focus();
-            inp.select();
-          } catch {
-            // ignore
-          }
-        }, 0);
-      } else {
-        const label = document.createElement("div");
-        label.textContent = labelByCode.get(code) || String(code);
-        label.title = `Code ${code}`;
-        labelWrap.append(label);
-      }
+      const labelCell = document.createElement("td");
+      labelCell.style.padding = "10px 12px";
+      labelCell.textContent = labelByCode.get(code) || `Rolle ${code}`;
 
-      row.append(labelWrap);
+      row.append(orderCell, labelCell);
       this.roleListEl.appendChild(row);
     });
 
@@ -2884,9 +2872,33 @@ export default class SettingsView {
       this.btnRoleMove.style.border = this.roleMoveModeActive
         ? "1px solid #7aa7ff"
         : "1px solid #ddd";
+      this.btnRoleMove.textContent = "Schieben";
+      this.btnRoleMove.title = this.roleMoveModeActive
+        ? "Markierte Rolle mit den Pfeilen verschieben"
+        : "Schieben aktivieren";
+      this.btnRoleMove.setAttribute("aria-pressed", this.roleMoveModeActive ? "true" : "false");
+    }
+    const selectedIndex = Array.isArray(this.roleOrder)
+      ? this.roleOrder.findIndex((c) => String(c) === String(this.roleSelectedCode))
+      : -1;
+    const canMoveUp = hasSelection && selectedIndex > 0;
+    const canMoveDown =
+      hasSelection && Array.isArray(this.roleOrder) && selectedIndex >= 0 && selectedIndex < this.roleOrder.length - 1;
+    if (this.btnRoleMoveUp) {
+      this.btnRoleMoveUp.disabled = busy || !this.roleMoveModeActive || !canMoveUp;
+      this.btnRoleMoveUp.style.opacity = this.btnRoleMoveUp.disabled ? "0.55" : "1";
+      this.btnRoleMoveUp.style.display = this.roleMoveModeActive ? "" : "none";
+    }
+    if (this.btnRoleMoveDown) {
+      this.btnRoleMoveDown.disabled = busy || !this.roleMoveModeActive || !canMoveDown;
+      this.btnRoleMoveDown.style.opacity = this.btnRoleMoveDown.disabled ? "0.55" : "1";
+      this.btnRoleMoveDown.style.display = this.roleMoveModeActive ? "" : "none";
     }
     if (this.roleMoveHintEl) {
       this.roleMoveHintEl.style.display = this.roleMoveModeActive ? "" : "none";
+      this.roleMoveHintEl.textContent = this.roleMoveModeActive
+        ? "Markierte Rolle mit den Pfeilen verschieben."
+        : "";
     }
     if (this.btnRoleDelete) {
       this.btnRoleDelete.disabled = busy || !canDelete;
@@ -3079,7 +3091,7 @@ export default class SettingsView {
 
   async _renameRoleCategory(code) {
     if (this.saving) return;
-    const current = (this.roleLabels && this.roleLabels[code]) || `Kategorie ${code}`;
+    const current = (this.roleLabels && this.roleLabels[code]) || `Rolle ${code}`;
     const ok = await this._promptRenameCategory(current);
     if (!ok) return;
     const next = this.renameInputEl?.value ?? "";
@@ -3121,11 +3133,11 @@ export default class SettingsView {
 
     const labels = this.roleLabels || this._defaultRoleLabels();
     const fallbackCode = this._fallbackRoleCode();
-    const label = labels[code] || `Kategorie ${code}`;
+    const label = labels[code] || `Rolle ${code}`;
     const fallbackLabel = labels[fallbackCode] || this._defaultRoleLabels()[fallbackCode];
 
     const ok = await this._confirmDeleteCategory(
-      `Kategorie "${label}" wird geloescht. Firmen werden auf "${fallbackLabel}" umgestellt. Fortfahren?`
+      `Rolle/Kategorie "${label}" wird geloescht. Firmen werden auf "${fallbackLabel}" umgestellt. Fortfahren?`
     );
     if (!ok) return;
 
@@ -3200,6 +3212,190 @@ export default class SettingsView {
       this.saving = false;
       this._applyState();
     }
+  }
+
+  _createFirmRoleOrderPopupContent() {
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "12px";
+    wrap.style.minWidth = "min(920px, calc(100vw - 80px))";
+    wrap.style.maxWidth = "1040px";
+
+    const intro = document.createElement("div");
+    intro.style.display = "grid";
+    intro.style.gap = "4px";
+
+    const introHint = document.createElement("div");
+    introHint.textContent =
+      "Legt fest, in welcher Reihenfolge Firmenrollen in Listen und im Druck erscheinen.";
+    introHint.style.fontSize = "12px";
+    introHint.style.opacity = "0.8";
+    intro.append(introHint);
+
+    const actionBar = document.createElement("div");
+    actionBar.style.display = "flex";
+    actionBar.style.gap = "8px";
+    actionBar.style.flexWrap = "wrap";
+    actionBar.style.alignItems = "center";
+    this.roleActionBarEl = actionBar;
+
+    const moveBtn = document.createElement("button");
+    moveBtn.type = "button";
+    moveBtn.textContent = "Schieben";
+    applyPopupButtonStyle(moveBtn);
+    moveBtn.onclick = () => {
+      this._toggleRoleMoveMode();
+    };
+    this.btnRoleMove = moveBtn;
+
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.textContent = "Edit";
+    applyPopupButtonStyle(editBtn);
+    editBtn.onclick = async () => {
+      if (!this.roleSelectedCode) return;
+      await this._renameRoleCategory(this.roleSelectedCode);
+    };
+    this.btnRoleRename = editBtn;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "Löschen";
+    applyPopupButtonStyle(deleteBtn);
+    deleteBtn.onclick = async () => {
+      if (!this.roleSelectedCode) return;
+      await this._deleteSelectedRole();
+    };
+    this.btnRoleDelete = deleteBtn;
+
+    const moveControls = document.createElement("div");
+    moveControls.style.display = "flex";
+    moveControls.style.gap = "8px";
+    moveControls.style.flexWrap = "wrap";
+    moveControls.style.alignItems = "center";
+
+    const btnUp = document.createElement("button");
+    btnUp.type = "button";
+    btnUp.textContent = "▲ Hoch";
+    applyPopupButtonStyle(btnUp);
+    btnUp.onclick = async () => {
+      await this._moveSelectedRole(-1);
+    };
+    this.btnRoleMoveUp = btnUp;
+
+    const btnDown = document.createElement("button");
+    btnDown.type = "button";
+    btnDown.textContent = "▼ Runter";
+    applyPopupButtonStyle(btnDown);
+    btnDown.onclick = async () => {
+      await this._moveSelectedRole(1);
+    };
+    this.btnRoleMoveDown = btnDown;
+
+    this.roleMoveHintEl = document.createElement("div");
+    this.roleMoveHintEl.style.fontSize = "12px";
+    this.roleMoveHintEl.style.opacity = "0.8";
+    this.roleMoveHintEl.style.display = "none";
+
+    moveControls.append(btnUp, btnDown, this.roleMoveHintEl);
+    actionBar.append(moveBtn, editBtn, deleteBtn, moveControls);
+
+    const addBar = document.createElement("div");
+    addBar.style.display = "flex";
+    addBar.style.gap = "8px";
+    addBar.style.flexWrap = "wrap";
+    addBar.style.alignItems = "end";
+
+    const addLabel = document.createElement("label");
+    addLabel.style.display = "grid";
+    addLabel.style.gap = "4px";
+    addLabel.style.minWidth = "260px";
+
+    const addLabelText = document.createElement("span");
+    addLabelText.textContent = "Neue Rolle";
+    addLabelText.style.fontSize = "12px";
+    addLabelText.style.fontWeight = "700";
+
+    const addInput = document.createElement("input");
+    addInput.type = "text";
+    addInput.placeholder = "z. B. Gutachter";
+    addInput.style.width = "100%";
+    addInput.style.minWidth = "240px";
+    this.inpAddRole = addInput;
+
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.textContent = "Rolle hinzufügen";
+    applyPopupButtonStyle(addBtn, { variant: "primary" });
+    addBtn.onclick = async () => {
+      await this._addRoleCategory();
+    };
+    this.btnAddRole = addBtn;
+
+    addInput.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      addBtn.click();
+    });
+    addInput.addEventListener("input", () => {
+      addBtn.disabled = !String(addInput.value || "").trim();
+    });
+    addBtn.disabled = !String(addInput.value || "").trim();
+
+    addLabel.append(addLabelText, addInput);
+    addBar.append(addLabel, addBtn);
+
+    const tableWrap = document.createElement("div");
+    tableWrap.style.border = "1px solid #dbe3ea";
+    tableWrap.style.borderRadius = "8px";
+    tableWrap.style.overflow = "auto";
+    tableWrap.style.background = "#fff";
+
+    const table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+    table.style.fontSize = "13px";
+
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    for (const text of ["Nr.", "Rolle/Kategorie"]) {
+      const th = document.createElement("th");
+      th.textContent = text;
+      th.style.textAlign = "left";
+      th.style.padding = "10px 12px";
+      th.style.borderBottom = "1px solid #dbe3ea";
+      th.style.background = "#f8fafc";
+      th.style.position = "sticky";
+      th.style.top = "0";
+      th.style.zIndex = "1";
+      headRow.append(th);
+    }
+    thead.append(headRow);
+
+    const tbody = document.createElement("tbody");
+    this.roleListEl = tbody;
+    this.roleRenameInputEl = null;
+
+    table.append(thead, tbody);
+    tableWrap.append(table);
+    wrap.append(intro, actionBar, addBar, tableWrap);
+
+    if (!this.roleSelectedCode && Array.isArray(this.roleOrder) && this.roleOrder.length) {
+      this.roleSelectedCode = this.roleOrder[0];
+    }
+    this._renderRoleOrderList();
+
+    return wrap;
+  }
+
+  async _openFirmRoleOrderPopup() {
+    const content = this._createFirmRoleOrderPopupContent();
+    this._openSettingsModal({
+      title: "Rollenreihenfolge für Firmen",
+      content: [content],
+      saveFn: async () => (await this._saveRoleMeta()) !== false,
+      closeOnly: false,
+    });
   }
 
   async _reload() {
@@ -5035,6 +5231,14 @@ export default class SettingsView {
       },
     });
 
+    const tileFirmRoles = mkTile({
+      titleText: "Firmenrollen",
+      subText: "Reihenfolge und Bezeichnungen für Firmenlisten und Druck",
+      onClick: async () => {
+        await this._openFirmRoleOrderPopup();
+      },
+    });
+
     const tileLicense = mkTile({
       titleText: "Lizenzstatus",
       subText: "Lizenzstatus anzeigen",
@@ -5084,7 +5288,7 @@ export default class SettingsView {
       },
     });
 
-    tiles.append(tileProfilePrint, tileLicense, tileAdmin, tileArchive, tileDev);
+    tiles.append(tileProfilePrint, tileFirmRoles, tileLicense, tileAdmin, tileArchive, tileDev);
     root.append(head, tiles);
     this.root = root;
 

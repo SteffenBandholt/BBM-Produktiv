@@ -910,13 +910,123 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("../modules/lizenzverwaltung/index.js"), true);
     assert.equal(settingsViewSource.includes("titleText: \"Profil & Druck\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Profil, Adresse, Protokolltexte, Logos und Layout\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Firmenrollen\""), true);
+    assert.equal(
+      settingsViewSource.includes("subText: \"Reihenfolge und Bezeichnungen für Firmenlisten und Druck\""),
+      true
+    );
+    assert.equal(settingsViewSource.includes("await this._openFirmRoleOrderPopup();"), true);
+    assert.equal(settingsViewSource.includes('title: "Rollenreihenfolge für Firmen"'), true);
+    assert.equal(settingsViewSource.includes('textContent = "Schieben";'), true);
+    assert.equal(settingsViewSource.includes('textContent = "Edit";'), true);
+    assert.equal(settingsViewSource.includes('textContent = "Löschen";'), true);
+    assert.equal(settingsViewSource.includes('textContent = "Rolle hinzufügen";'), true);
+    assert.equal(settingsViewSource.includes('textContent = "▲ Hoch";'), true);
+    assert.equal(settingsViewSource.includes('textContent = "▼ Runter";'), true);
+    assert.equal(settingsViewSource.includes('for (const text of ["Nr.", "Rolle/Kategorie"])'), true);
     assert.equal(settingsViewSource.includes("titleText: \"Lizenzstatus\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
     assert.equal(settingsViewSource.includes("titleText: \"Technik\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Versionierung, Textgrenzen, DB-Diagnose und Diktat / Audio\""), true);
-    assert.equal(settingsViewSource.includes("tiles.append(tileProfilePrint, tileLicense, tileAdmin, tileArchive, tileDev);"), true);
+    assert.equal(
+      settingsViewSource.includes("tiles.append(tileProfilePrint, tileFirmRoles, tileLicense, tileAdmin, tileArchive, tileDev);"),
+      true
+    );
     assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
+  });
+
+  await run("SettingsView: Firmenrollen oeffnet Dialog mit Rollenliste", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsSetMany: async () => ({ ok: true }),
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view.roleOrder = [10, 20];
+      view.roleLabels = { 10: "Bauherr", 20: "Planer" };
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._openFirmRoleOrderPopup();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Rollenreihenfolge für Firmen");
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(
+        contentText.includes("Legt fest, in welcher Reihenfolge Firmenrollen in Listen und im Druck erscheinen."),
+        true
+      );
+      assert.equal(contentText.includes("Nr."), true);
+      assert.equal(contentText.includes("Rolle/Kategorie"), true);
+      assert.equal(contentText.includes("Schieben"), true);
+      assert.equal(contentText.includes("Edit"), true);
+      assert.equal(contentText.includes("Löschen"), true);
+      assert.equal(contentText.includes("Rolle hinzufügen"), true);
+      assert.equal(contentText.includes("Hoch"), true);
+      assert.equal(contentText.includes("Runter"), true);
+      assert.equal(contentText.includes("Bauherr"), true);
+      assert.equal(contentText.includes("Planer"), true);
+      assert.equal(contentText.includes("Aktionen"), false);
+
+      assert.equal(view.roleSelectedCode, 10);
+      assert.equal(view.roleListEl.children.length >= 2, true);
+      view.roleListEl.children[1].onclick();
+      assert.equal(view.roleSelectedCode, 20);
+
+      const saved = [];
+      global.window.bbmDb.appSettingsSetMany = async (payload) => {
+        saved.push(payload);
+        return { ok: true };
+      };
+      view.roleOrder = [10, 20];
+      view.roleSelectedCode = 10;
+      await view._moveSelectedRole(1);
+      assert.deepEqual(view.roleOrder, [20, 10]);
+      assert.equal(saved.length >= 1, true);
+
+      view.roleLabels = { 10: "Bauherr", 20: "Planer" };
+      view.roleSelectedCode = 20;
+      view._promptRenameCategory = async () => {
+        view.renameInputEl = {
+          value: "Planung",
+          focus() {},
+          select() {},
+        };
+        return true;
+      };
+      await view._renameRoleCategory(20);
+      assert.equal(view.roleLabels[20], "Planung");
+
+      let deleteArgs = null;
+      global.window.bbmDb.settingsCategoriesDelete = async (payload) => {
+        deleteArgs = payload;
+        return { ok: true, reassignedCounts: { firms: 1, projectFirms: 2 } };
+      };
+      view._confirmDeleteCategory = async () => true;
+      view._reload = async () => {
+        view.roleOrder = [10];
+        view.roleLabels = { 10: "Bauherr" };
+      };
+      view.roleOrder = [10, 20];
+      view.roleLabels = { 10: "Bauherr", 20: "Planung" };
+      view.roleSelectedCode = 20;
+      await view._deleteSelectedRole();
+      assert.equal(deleteArgs.code, 20);
+      assert.deepEqual(view.roleOrder, [10]);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
   });
 
   await run("SettingsView: Sammelmaske ist in sechs sichtbare Abschnitte gegliedert", () => {

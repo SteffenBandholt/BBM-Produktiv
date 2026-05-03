@@ -1147,3 +1147,20 @@ Wichtig:
   - keine direkte Anschlussaufgabe aus diesem Mini-Paket
 - Risiken/Hinweise:
   - Nur die sichtbare Kopfzeile reduziert; globale Header-Anzeige und Projektlogik bleiben unveraendert.
+
+#### Paket: Firmenrollen-Kachel und Rollenreihenfolge-Dialog wiederherstellen
+- Status: erledigt
+- Beschreibung:
+  - In den Einstellungen eine sichtbare Kachel `Firmenrollen` ergaenzt.
+  - Die Kachel oeffnet den Dialog `Rollenreihenfolge für Firmen` mit Zwei-Spalten-Liste, Hinweis, Hinzufuegen sowie Schieben/Edit/Loeschen fuer die markierte Rolle.
+  - Die bestehenden Settings-Schluessel `firm_role_order` und `firm_role_labels` werden weiterhin fuer Laden und Speichern verwendet.
+- Betroffene Dateien:
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `siehe aktuellen Branch-Commit`
+- Naechster offener Schritt:
+  - keine direkte Anschlussaufgabe aus diesem Mini-Paket
+- Risiken/Hinweise:
+  - Die bestehende Rollen-/Kategorie-Settings-Struktur bleibt unveraendert; die sichtbare UI wurde nur wieder eingeblendet, vereinfacht und sprachlich geschaerft.
