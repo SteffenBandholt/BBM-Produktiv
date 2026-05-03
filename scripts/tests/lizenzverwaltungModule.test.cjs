@@ -827,7 +827,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('hint: "Name, Firma und Anzeigedaten"'), true);
     assert.equal(settingsViewSource.includes('hint: "Strasse, PLZ und Ort"'), true);
     assert.equal(settingsViewSource.includes('hint: "Protokolltitel, Vorbemerkung und Drucktexte"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Fusszeilentexte und Nutzer-/Adressbezug"'), true);
+    assert.equal(settingsViewSource.includes('hint: "Fusszeilenangaben und Profil-/Adressbezug"'), true);
     assert.equal(settingsViewSource.includes('hint: "Drucklogos und Logo-Dialog-Einstieg"'), true);
     assert.equal(settingsViewSource.includes('hint: "Seitenraender und Footer-Abstand"'), true);
     assert.equal(settingsViewSource.includes("Drucklogos konfigurieren"), true);
@@ -836,6 +836,19 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(idx('title: "Druckinhalt"') < idx('title: "Footer"'), true);
     assert.equal(idx('title: "Footer"') < idx('title: "Logos"'), true);
     assert.equal(idx('title: "Logos"') < idx('title: "Drucklayout"'), true);
+  });
+
+  await run("SettingsView: sichtbare Footer-Labels sind sprachlich vereinfacht", () => {
+    assert.equal(settingsViewSource.includes('label: "Ort"'), true);
+    assert.equal(settingsViewSource.includes('label: "Datum"'), true);
+    assert.equal(settingsViewSource.includes('label: "Name 1"'), true);
+    assert.equal(settingsViewSource.includes('label: "Name 2"'), true);
+    assert.equal(settingsViewSource.includes('label: "Protokollfuehrer"'), true);
+    assert.equal(settingsViewSource.includes('label: "Strasse"'), true);
+    assert.equal(settingsViewSource.includes('label: "PLZ"'), true);
+    assert.equal(settingsViewSource.includes('label: "Ort (Adresse)"'), true);
+    assert.equal(settingsViewSource.includes('label: "Profil-/Adressdaten im Footer verwenden"'), true);
+    assert.equal(settingsViewSource.includes('label: "Footer nutzt Nutzerdaten (true/false)"'), false);
   });
 
   await run("Lizenzverwaltung: Entwicklung enthaelt keinen sichtbaren Tab Lizenz / bearbeiten", () => {

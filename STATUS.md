@@ -24,6 +24,10 @@ Sie ergänzt:
 - Der globale Header zeigt jetzt links `BBM <Version>` und darunter den aktiven Kontext als `aktiv: <Modul> | <Projektnummer> - <Kurzbezeichnung>`.
   Rechts steht ein ruhiger Kunden-/Lizenztext aus den vorhandenen App-Settings; der alte `bereit:`-Statusblock ist aus der sichtbaren Anzeige entfernt.
   Im Projektkontext steht dort jetzt nicht mehr `Projekt-Arbeitsbereich`, sondern das aktive Modul `Protokoll`.
+- Die sichtbaren Footer-Texte im Bereich `Profil & Druck` sind sprachlich vereinfacht:
+  - `Footer Ort`/`Footer Datum`/`Footer Name 1/2` wurden zu kurzen, klaren Labels
+  - der Toggle heisst jetzt `Profil-/Adressdaten im Footer verwenden`
+  - die Settings-Schluessel und die Speicherlogik bleiben unveraendert
 - Projekt-Einstellungen behandeln `pdf.footerUseUserData` nicht mehr als steuerbare Projektoption:
   - der Projektsettings-Dialog speichert dieses Feld nicht mehr
   - der Projektsettings-IPC filtert es aus Whitelist und Patch
