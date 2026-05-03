@@ -55,6 +55,7 @@ export default class TopsScreen {
 
     this._sidebarEl = null;
     this._sidebarDisplay = "";
+    this._suppressNextWorkbenchTextBlur = false;
     this.quicklane = null;
     this.workbench = null;
     this.topsList = null;
@@ -209,6 +210,7 @@ export default class TopsScreen {
   _createProtocolWorkbenchActionBridge() {
     return {
       onDraftChange: (draft) => this._handleWorkbenchDraftChange(draft),
+      onButtonPointerDown: () => this._markWorkbenchButtonPointerDown(),
       onTextBlur: async (payload) => this._handleWorkbenchTextBlur(payload),
       onSave: async () => this._handleWorkbenchSave(),
       onDelete: async () => this._handleWorkbenchDelete(),
@@ -474,32 +476,41 @@ export default class TopsScreen {
     this._syncProtocolWorkbenchHostState();
   }
 
+  _markWorkbenchButtonPointerDown() {
+    this._suppressNextWorkbenchTextBlur = true;
+  }
+
   async _handleWorkbenchSave() {
     await this._saveActiveDraft({ resetMoveMode: true });
   }
 
   async _handleWorkbenchTextBlur(_payload = {}) {
+    if (this._suppressNextWorkbenchTextBlur) {
+      this._suppressNextWorkbenchTextBlur = false;
+      return;
+    }
     await this._saveActiveDraft({ resetMoveMode: false });
   }
 
   async _saveActiveDraft({ resetMoveMode = false } = {}) {
     const state = this.store.getState();
-    if (state.isWriting) return;
+    if (state.isWriting) return false;
     const selectedTop = getSelectedTop(state);
-    if (!selectedTop) return;
+    if (!selectedTop) return false;
 
     const patch = buildPatchFromDraft(selectedTop, state.editor || {});
-    if (!Object.keys(patch).length) return;
+    if (!Object.keys(patch).length) return true;
 
     this.store.setState({ isWriting: true });
     try {
       this.store.setState({ error: null });
       const res = await this.commands.saveDraft(patch);
-      if (!res?.ok) return;
+      if (!res?.ok) return false;
       this.commands.updateDraft(editorFromTop(getSelectedTop(this.store.getState())));
       if (resetMoveMode) {
         this.commands.toggleMoveMode(false);
       }
+      return true;
     } finally {
       this.store.setState({ isWriting: false });
       this._syncScreenState();
@@ -515,7 +526,10 @@ export default class TopsScreen {
     this.store.setState({ isWriting: true });
     try {
       this.store.setState({ error: null });
-      const saveRes = await this.commands.saveDraft({ is_hidden: 1 });
+      const saveRes = await this.commands.saveDraft({
+        ...(buildPatchFromDraft(selectedTop, state.editor || {}) || {}),
+        is_hidden: 1,
+      });
       if (!saveRes?.ok) return;
       const res = await this.commands.deleteSelectedTop();
       if (!res?.ok) return;
@@ -532,6 +546,8 @@ export default class TopsScreen {
     if (state.isWriting) return;
     const selectedTop = getSelectedTop(state);
     if (!state.isMoveMode && !canMoveFromState(state, selectedTop)) return;
+    const saved = await this._saveActiveDraft({ resetMoveMode: false });
+    if (saved === false) return;
     this.commands.toggleMoveMode();
     this._syncScreenState();
   }
@@ -543,9 +559,11 @@ export default class TopsScreen {
 
     let createdId = null;
     let shouldFocusCreatedTop = false;
+    this.store.setState({ error: null });
+    const saved = await this._saveActiveDraft({ resetMoveMode: false });
+    if (saved === false) return;
     this.store.setState({ isWriting: true });
     try {
-      this.store.setState({ error: null });
       let res;
       try {
         res = await this.topsRepository.createTop({
@@ -595,9 +613,11 @@ export default class TopsScreen {
 
     let createdId = null;
     let shouldFocusCreatedTop = false;
+    this.store.setState({ error: null });
+    const saved = await this._saveActiveDraft({ resetMoveMode: false });
+    if (saved === false) return;
     this.store.setState({ isWriting: true });
     try {
-      this.store.setState({ error: null });
       let res;
       try {
         res = await this.topsRepository.createTop({

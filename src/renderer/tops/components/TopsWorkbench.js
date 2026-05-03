@@ -25,6 +25,7 @@ export class TopsWorkbench {
   constructor({
     onDraftChange,
     onTextBlur,
+    onButtonPointerDown,
     onSave,
     onDelete,
     onToggleMove,
@@ -35,6 +36,7 @@ export class TopsWorkbench {
   } = {}) {
     this.onDraftChange = typeof onDraftChange === "function" ? onDraftChange : null;
     this.onTextBlur = typeof onTextBlur === "function" ? onTextBlur : null;
+    this.onButtonPointerDown = typeof onButtonPointerDown === "function" ? onButtonPointerDown : null;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.onDelete = typeof onDelete === "function" ? onDelete : null;
     this.onToggleMove = typeof onToggleMove === "function" ? onToggleMove : null;
@@ -135,6 +137,11 @@ export class TopsWorkbench {
     btn.type = "button";
     btn.textContent = String(spec?.label || "");
     btn.className = `bbm-tops-btn bbm-tops-workbench-btn bbm-tops-workbench-btn-${spec?.tone || "neutral"}`;
+    const notifyPointerDown = () => {
+      if (this.onButtonPointerDown) this.onButtonPointerDown(spec || {});
+    };
+    btn.addEventListener("pointerdown", notifyPointerDown);
+    btn.addEventListener("mousedown", notifyPointerDown);
     btn.onclick = async () => {
       if (typeof onClick === "function") await onClick();
     };

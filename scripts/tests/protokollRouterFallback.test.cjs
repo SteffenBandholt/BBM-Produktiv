@@ -163,6 +163,36 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes("this._syncScreenState();"), true);
   });
 
+  await run("Protokoll Button-Kaskade: TopsScreen unterdrueckt Blur bei Workbench-Buttons", () => {
+    const workbenchFile = path.join(__dirname, "../../src/renderer/tops/components/TopsWorkbench.js");
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const workbenchSource = fs.readFileSync(workbenchFile, "utf8");
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+
+    assert.equal(workbenchSource.includes('addEventListener("pointerdown"'), true);
+    assert.equal(workbenchSource.includes('addEventListener("mousedown"'), true);
+    assert.equal(screenSource.includes("onButtonPointerDown: () => this._markWorkbenchButtonPointerDown()"), true);
+    assert.equal(screenSource.includes("this._suppressNextWorkbenchTextBlur = true;"), true);
+    assert.equal(screenSource.includes("if (this._suppressNextWorkbenchTextBlur)"), true);
+    assert.equal(screenSource.includes("buildPatchFromDraft(selectedTop, state.editor || {})"), true);
+    const createLevel1Start = screenSource.indexOf("async _handleWorkbenchCreateLevel1()");
+    const createChildStart = screenSource.indexOf("async _handleWorkbenchCreateChild()");
+    const createLevel1Source = screenSource.slice(createLevel1Start, createChildStart);
+    assert.equal(
+      createLevel1Source.indexOf("const saved = await this._saveActiveDraft({ resetMoveMode: false });") <
+        createLevel1Source.indexOf("this.store.setState({ isWriting: true });"),
+      true
+    );
+    assert.equal(
+      createLevel1Source.indexOf("this.store.setState({ isWriting: true });") <
+        createLevel1Source.indexOf("this.topsRepository.createTop({"),
+      true
+    );
+  });
+
   await run("Protokoll Move-Mode: TopsList und Styles unterscheiden Schiebling, Ziel und Blockade", () => {
     const listFile = path.join(__dirname, "../../src/renderer/modules/protokoll/TopsList.js");
     const styleFile = path.join(
