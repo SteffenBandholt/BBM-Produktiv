@@ -1164,3 +1164,20 @@ Wichtig:
   - keine direkte Anschlussaufgabe aus diesem Mini-Paket
 - Risiken/Hinweise:
   - Die bestehende Rollen-/Kategorie-Settings-Struktur bleibt unveraendert; die sichtbare UI wurde nur wieder eingeblendet, vereinfacht und sprachlich geschaerft.
+
+#### Paket: Nummernluecken direkt nach Delete schliessen
+- Status: erledigt
+- Beschreibung:
+  - Nach erfolgreichem Loeschen eines TOPs oder Titels wird im Protokoll die bestehende `meetingTopsFixNumberGap`-Reparatur direkt angestossen.
+  - Der alte Fallback beim Schliessen des Protokolls bleibt unveraendert erhalten.
+- Betroffene Dateien:
+  - `src/renderer/modules/protokoll/screens/TopsScreen.js`
+  - `scripts/tests/protokollRouterFallback.test.cjs`
+  - `scripts/tests/topsScreen.integration.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Die bestehende Reparatur-Logik wird wiederverwendet; falls die Delete-Reparatur fehlschlaegt, bleibt der Close-Fallback als zweite Sicherung bestehen.

@@ -169,6 +169,22 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes("await this.router.showProjectWorkspace(projectId, projectOptions);"), false);
   });
 
+  await run("Protokoll Delete-Handler: TopsScreen repariert Nummernluecken nach Delete", () => {
+    const screenFile = path.join(
+      __dirname,
+      "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
+    );
+    const screenSource = fs.readFileSync(screenFile, "utf8");
+
+    assert.equal(screenSource.includes("_getDeleteSelectionCandidateId("), true);
+    assert.equal(screenSource.includes("_firstNumberGapFromItems("), true);
+    assert.equal(screenSource.includes("_autoFixNumberGapsAfterDelete("), true);
+    assert.equal(screenSource.includes("meetingTopsFixNumberGap"), true);
+    assert.equal(screenSource.includes("this.commands.deleteSelectedTop();"), true);
+    assert.equal(screenSource.includes("this.commands.selectTop(nextTop?.id ?? null);"), true);
+    assert.equal(screenSource.includes("this.commands.updateDraft(editorFromTop(nextTop));"), true);
+  });
+
   await run("Protokoll Blur-Save: TopsScreen verdrahtet Kurztext/Langtext-Blur zum Speichern", () => {
     const sharedEditboxFile = path.join(
       __dirname,

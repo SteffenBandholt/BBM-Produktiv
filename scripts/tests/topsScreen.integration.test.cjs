@@ -19,7 +19,9 @@ async function runTopsScreenIntegrationTests(run) {
   const focusHelper = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/modules/protokoll/topCreateFocus.js")
   );
-
+  const { TopGapFlow } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/features/tops/TopGapFlow.js")
+  );
   const {
     buildWorkbenchState,
     shouldShowWorkbench,
@@ -105,6 +107,69 @@ async function runTopsScreenIntegrationTests(run) {
     };
     doc.body = createNode("body", doc);
     return doc;
+  }
+
+  function firstNumberGapFromItems(items = []) {
+    const rows = Array.isArray(items) ? items : [];
+    const groups = new Map();
+
+    for (const row of rows) {
+      const id = row?.id;
+      const level = Math.floor(Number(row?.level));
+      const number = Math.floor(Number(row?.number));
+      if (!id || !Number.isFinite(level) || level < 1 || level > 4) continue;
+      if (!Number.isFinite(number) || number < 1) continue;
+
+      const parentTopId = row?.parent_top_id ?? null;
+      const key = `${level}::${parentTopId ?? "root"}`;
+      if (!groups.has(key)) groups.set(key, { level, parentTopId, items: [] });
+      groups.get(key).items.push({ id, number });
+    }
+
+    const gaps = [];
+    for (const group of groups.values()) {
+      if (!group.items.length) continue;
+      const numbers = new Set();
+      let maxNumber = 0;
+      for (const item of group.items) {
+        numbers.add(item.number);
+        if (item.number > maxNumber) maxNumber = item.number;
+      }
+      if (maxNumber < 1) continue;
+
+      let missingNumber = null;
+      for (let i = 1; i <= maxNumber; i += 1) {
+        if (!numbers.has(i)) {
+          missingNumber = i;
+          break;
+        }
+      }
+      if (missingNumber === null) continue;
+
+      let lastTopId = null;
+      for (const item of group.items) {
+        if (item.number !== maxNumber) continue;
+        if (lastTopId === null || String(item.id) > String(lastTopId)) lastTopId = item.id;
+      }
+      if (!lastTopId) continue;
+
+      gaps.push({
+        level: group.level,
+        parentTopId: group.parentTopId,
+        missingNumber,
+        lastTopId,
+      });
+    }
+
+    gaps.sort((a, b) => {
+      if (a.level !== b.level) return a.level - b.level;
+      const ap = a.parentTopId ?? "";
+      const bp = b.parentTopId ?? "";
+      if (ap !== bp) return String(ap) < String(bp) ? -1 : 1;
+      return a.missingNumber - b.missingNumber;
+    });
+
+    return gaps[0] || null;
   }
 
   await run("Tops v2 Integration: Auswahl -> Workbench-State + ReadOnly-Sichtbarkeit", async () => {
@@ -511,6 +576,61 @@ async function runTopsScreenIntegrationTests(run) {
 
     assert.equal(store.getState().tops.length, 0);
     assert.equal(store.getState().selectedTopId, null);
+  });
+
+  await run("Tops v2 Integration: TopGapFlow repariert 1.1/1.2/1.3 zu 1.1/1.2", async () => {
+    const state = {
+      meetingId: 12,
+      isReadOnly: false,
+      tops: [
+        { id: 11, level: 2, number: 1, parent_top_id: null },
+        { id: 13, level: 2, number: 3, parent_top_id: null },
+      ],
+    };
+    const calls = [];
+    const view = {
+      meetingId: 12,
+      isReadOnly: false,
+      store: {
+        getState() {
+          return state;
+        },
+      },
+      _firstNumberGapFromItems: () => firstNumberGapFromItems(state.tops),
+      async reloadList() {},
+    };
+
+    const prevWindow = globalThis.window;
+    globalThis.window = {
+      bbmDb: {
+        async meetingTopsFixNumberGap(payload) {
+          calls.push(payload);
+          const top = state.tops.find((item) => String(item.id) === String(payload.fromTopId));
+          if (!top) return { ok: false, error: "not found" };
+          top.number = payload.toNumber;
+          return { ok: true };
+        },
+      },
+    };
+
+    try {
+      const flow = new TopGapFlow({ view });
+      await flow.autoFixAfterDelete();
+      assert.equal(calls.length, 1);
+      assert.deepEqual(calls[0], {
+        meetingId: 12,
+        level: 2,
+        parentTopId: null,
+        fromTopId: 13,
+        toNumber: 2,
+      });
+      assert.deepEqual(
+        state.tops.map((t) => t.number),
+        [1, 2]
+      );
+    } finally {
+      globalThis.window = prevWindow;
+    }
   });
 
   await run("Tops v2 Integration: Neuer Eintrag scrollt und fokussiert den Kurztext", async () => {
