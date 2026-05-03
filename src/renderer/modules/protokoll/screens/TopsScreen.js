@@ -33,9 +33,19 @@ function buildInitialProtocolScreenState({ projectId = null, meetingId = null } 
     isLoading: false,
     isWriting: false,
     topFilter: "all",
+    showAmpelInList: true,
+    showLongtextInList: false,
     error: null,
     meetingMeta: null,
   };
+}
+
+function parseUiBool(value, fallback) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return !!fallback;
+  if (["1", "true", "yes", "on"].includes(raw)) return true;
+  if (["0", "false", "no", "off"].includes(raw)) return false;
+  return !!fallback;
 }
 
 // TOPS-V2: eigenstaendiger Screen inkl. nativer Close-/Output-Flow.
@@ -234,6 +244,82 @@ export default class TopsScreen {
     return normalizeTopFilterMode(this.store.getState().topFilter);
   }
 
+  _saveUiSetting(key, value) {
+    const api = window.bbmDb || {};
+    if (typeof api.appSettingsSetMany === "function") {
+      return api.appSettingsSetMany({ [key]: value ? "1" : "0" });
+    }
+    try {
+      window.localStorage?.setItem?.(key, value ? "1" : "0");
+    } catch (_e) {
+      // ignore
+    }
+    return Promise.resolve({ ok: true });
+  }
+
+  async _loadDisplaySetting({ key, fallback }) {
+    const api = window.bbmDb || {};
+    if (typeof api.appSettingsGetMany === "function") {
+      const res = await api.appSettingsGetMany([key]);
+      if (res?.ok) {
+        return parseUiBool(res?.data?.[key], fallback);
+      }
+    } else {
+      try {
+        const raw = window.localStorage?.getItem?.(key);
+        if (raw != null) {
+          return parseUiBool(raw, fallback);
+        }
+      } catch (_e) {
+        // ignore
+      }
+    }
+    return !!fallback;
+  }
+
+  _applyAmpelVisibility() {
+    if (this.workbench?.metaColumn?.statusAmpelBridge?.root) {
+      this.workbench.metaColumn.statusAmpelBridge.root.style.display = this.showAmpelInList ? "" : "none";
+    }
+  }
+
+  _emitAmpelStateChanged() {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("bbm:ampel-state", {
+          detail: { enabled: !!this.showAmpelInList },
+        })
+      );
+    } catch (_e) {}
+  }
+
+  _emitLongtextStateChanged() {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("bbm:longtext-state", {
+          detail: { enabled: !!this.showLongtextInList },
+        })
+      );
+    } catch (_e) {}
+  }
+
+  async toggleAmpelDisplay() {
+    this.store.setState({ showAmpelInList: !this.showAmpelInList });
+    this._syncScreenState();
+    this._applyAmpelVisibility();
+    this._emitAmpelStateChanged();
+    await this._saveUiSetting("tops.ampelEnabled", this.showAmpelInList);
+    return this.showAmpelInList;
+  }
+
+  async toggleLongtextDisplay() {
+    this.store.setState({ showLongtextInList: !this.showLongtextInList });
+    this._syncScreenState();
+    this._emitLongtextStateChanged();
+    await this._saveUiSetting("tops.showLongtextInList", this.showLongtextInList);
+    return this.showLongtextInList;
+  }
+
   // ---------------------------------------------------------------------------
   // Host-/Kontextintegration: Router-, Sidebar- und gemeinsame Domaenenzugriffe
   // ---------------------------------------------------------------------------
@@ -393,10 +479,13 @@ export default class TopsScreen {
     const vm = this._buildProtocolWorkbenchScreenVm(state, selectedTop);
 
     this.workbench.setState(vm);
+    this._applyAmpelVisibility();
   }
 
   _syncScreenState() {
     const state = this.store.getState();
+    this.showAmpelInList = state.showAmpelInList !== undefined ? !!state.showAmpelInList : true;
+    this.showLongtextInList = state.showLongtextInList !== undefined ? !!state.showLongtextInList : false;
     this._syncCloseFlowContext();
     this._syncHeaderState();
     this._syncListState();
@@ -404,6 +493,10 @@ export default class TopsScreen {
     if (this.router?.context?.ui) {
       this.router.context.ui.topFilter = normalizeTopFilterMode(state.topFilter || "all");
       this.router.context.ui.onTopFilterChange = (mode) => this.setTopFilter(mode);
+      this.router.context.ui.showAmpelInList = this.showAmpelInList;
+      this.router.context.ui.showLongtextInList = this.showLongtextInList;
+      this.router.context.ui.onAmpelToggle = () => this.toggleAmpelDisplay();
+      this.router.context.ui.onLongtextToggle = () => this.toggleLongtextDisplay();
     }
 
     if (this.editArea) {
@@ -680,6 +773,18 @@ export default class TopsScreen {
   }
 
   async load() {
+    const showAmpelInList = await this._loadDisplaySetting({
+      key: "tops.ampelEnabled",
+      fallback: true,
+    });
+    const showLongtextInList = await this._loadDisplaySetting({
+      key: "tops.showLongtextInList",
+      fallback: false,
+    });
+    this.store.setState({
+      showAmpelInList,
+      showLongtextInList,
+    });
     await this._reloadTops({ keepSelection: true });
     this._syncScreenState();
   }

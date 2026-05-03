@@ -446,6 +446,11 @@ export default class Router {
     this.context.ui = this.context.ui || {};
     this.context.ui.isTopsView = !!isTopsView;
     this.context.ui.pageTitle = pageTitle;
+    if (!isTopsView) {
+      this.context.ui.onTopFilterChange = null;
+      this.context.ui.onAmpelToggle = null;
+      this.context.ui.onLongtextToggle = null;
+    }
 
     try {
       const lane = await this._ensureProjectContextQuicklane();

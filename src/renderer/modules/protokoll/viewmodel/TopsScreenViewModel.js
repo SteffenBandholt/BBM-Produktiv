@@ -159,6 +159,8 @@ export function buildListItemsFromState(state) {
   const movingTop = state?.isMoveMode ? selectedTop : null;
   const rows = [];
   const filterMode = normalizeTopFilterMode(state?.topFilter);
+  const showAmpelInList = state?.showAmpelInList !== false;
+  const showLongtextInList = state?.showLongtextInList === true;
 
   for (const top of tops) {
     if (!topMatchesFilter(top, filterMode)) continue;
@@ -206,7 +208,7 @@ export function buildListItemsFromState(state) {
       isTitle,
       title: normalizeTopShortText(top?.title),
       number: `${top?.displayNumber ?? top?.number ?? ""}.`,
-      preview: normalizeTopLongText(top?.longtext),
+      preview: showLongtextInList ? normalizeTopLongText(top?.longtext) : "",
       createdAt,
       meta,
       isSelected: String(top?.id) === String(selectedId ?? ""),
@@ -218,7 +220,9 @@ export function buildListItemsFromState(state) {
       showChangedMarker: visual.showChangedMarker,
       changedMarkerText: visual.changedMarkerText,
       titleTone: visual.titleTone,
-      ampelColor,
+      ampelColor: showAmpelInList ? ampelColor : null,
+      showAmpelInList,
+      showLongtextInList,
       raw: top,
     });
   }

@@ -584,6 +584,11 @@
 
 .bbm-tops-workbench-gutter {
   min-width: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 2px;
+  overflow: visible;
 }
 
 .bbm-tops-workbench-field {

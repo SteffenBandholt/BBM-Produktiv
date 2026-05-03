@@ -248,9 +248,16 @@ export default class ProjectContextQuicklane {
     const ampelSection = createToolItem({
       icon: "",
       title: "Ampel an/aus",
-      actionHandler: () => {
+      actionHandler: async () => {
         const activeView = this.router?.activeView || null;
-        activeView?.btnAmpelToggle?.click?.();
+        if (typeof activeView?.toggleAmpelDisplay === "function") {
+          await activeView.toggleAmpelDisplay();
+          return;
+        }
+        const onToggle = this.router?.context?.ui?.onAmpelToggle || null;
+        if (typeof onToggle === "function") {
+          await onToggle();
+        }
       },
     });
     const ampelWrap = document.createElement("div");
@@ -280,9 +287,16 @@ export default class ProjectContextQuicklane {
     const longtextSection = createToolItem({
       icon: "",
       title: "Langtext an/aus",
-      actionHandler: () => {
+      actionHandler: async () => {
         const activeView = this.router?.activeView || null;
-        activeView?.btnLongToggle?.click?.();
+        if (typeof activeView?.toggleLongtextDisplay === "function") {
+          await activeView.toggleLongtextDisplay();
+          return;
+        }
+        const onToggle = this.router?.context?.ui?.onLongtextToggle || null;
+        if (typeof onToggle === "function") {
+          await onToggle();
+        }
       },
     });
     const longtextWrap = document.createElement("div");
@@ -616,16 +630,28 @@ export default class ProjectContextQuicklane {
     const hasProject = meta.hasProject;
     const hasParticipants = meta.hasProject && meta.hasMeeting;
     const hasPreview = meta.hasProject && meta.hasMeeting;
+    const ampelSource = this.router?.activeView || null;
     const ampelOn =
       typeof this._ampelEnabled === "boolean"
         ? this._ampelEnabled
-        : !!this.router?.activeView?.showAmpelInList;
-    const hasAmpel = !!this.router?.activeView?.btnAmpelToggle;
+        : typeof ampelSource?.showAmpelInList === "boolean"
+          ? !!ampelSource.showAmpelInList
+          : !!this.router?.context?.ui?.showAmpelInList;
+    const hasAmpel =
+      typeof ampelSource?.toggleAmpelDisplay === "function" ||
+      typeof this.router?.context?.ui?.onAmpelToggle === "function" ||
+      typeof ampelSource?.showAmpelInList === "boolean";
+    const longtextSource = this.router?.activeView || null;
     const longtextOn =
       typeof this._longtextEnabled === "boolean"
         ? this._longtextEnabled
-        : !!this.router?.activeView?.showLongtextInList;
-    const hasLongtext = !!this.router?.activeView?.btnLongToggle;
+        : typeof longtextSource?.showLongtextInList === "boolean"
+          ? !!longtextSource.showLongtextInList
+          : !!this.router?.context?.ui?.showLongtextInList;
+    const hasLongtext =
+      typeof longtextSource?.toggleLongtextDisplay === "function" ||
+      typeof this.router?.context?.ui?.onLongtextToggle === "function" ||
+      typeof longtextSource?.showLongtextInList === "boolean";
     const hasTopFilter = !!this.router?.context?.ui?.isTopsView;
     const hasOutput = hasProject;
     this._applyToolItemState(this.projectSectionEl, hasProject);
@@ -636,6 +662,18 @@ export default class ProjectContextQuicklane {
     this._applyToolItemState(this.longtextSectionEl, hasLongtext);
     this._applyToolItemState(this.filterSectionEl, hasTopFilter);
     this._applyToolItemState(this.outputSectionEl, hasOutput);
+    if (this.ampelSectionEl) {
+      this.ampelSectionEl.dataset.active = ampelOn ? "true" : "false";
+      this.ampelSectionEl.style.background = ampelOn ? "#eef7ff" : hasAmpel ? "#ffffff" : "#f3f3f3";
+      this.ampelSectionEl.style.borderColor = ampelOn ? "#b6d4ff" : hasAmpel ? "#d8d8d8" : "#e3e3e3";
+      this.ampelSectionEl.style.color = ampelOn ? "#0b4db4" : "";
+    }
+    if (this.longtextSectionEl) {
+      this.longtextSectionEl.dataset.active = longtextOn ? "true" : "false";
+      this.longtextSectionEl.style.background = longtextOn ? "#eef7ff" : hasLongtext ? "#ffffff" : "#f3f3f3";
+      this.longtextSectionEl.style.borderColor = longtextOn ? "#b6d4ff" : hasLongtext ? "#d8d8d8" : "#e3e3e3";
+      this.longtextSectionEl.style.color = longtextOn ? "#0b4db4" : "";
+    }
     this._renderTopFilterButton();
     this._syncTopFilterMenuState();
     if (this.ampelSectionEl?.firstChild) {

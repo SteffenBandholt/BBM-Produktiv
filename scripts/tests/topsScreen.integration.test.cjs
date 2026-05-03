@@ -310,6 +310,61 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(rows[0].id, 422);
   });
 
+  await run("Tops v2 Integration: Langtext-Ausblendung nimmt die Preview aus der Liste", () => {
+    const rows = buildListItemsFromState({
+      showLongtextInList: false,
+      tops: [
+        { id: 431, level: 2, title: "Preview", longtext: "Langtext sichtbar", is_task: 0 },
+      ],
+    });
+
+    assert.equal(rows[0].showLongtextInList, false);
+    assert.equal(rows[0].preview, "");
+
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const list = new TopsList();
+      list.setItems(rows);
+      const row = list.root.children[0];
+      const grid = row.children[0];
+      const textCell = grid.children[1];
+      assert.equal(textCell.children.length, 1);
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Tops v2 Integration: Ampel-Ausblendung nimmt die Ampel aus der Liste", () => {
+    const rows = buildListItemsFromState({
+      showAmpelInList: false,
+      tops: [
+        { id: 432, level: 2, title: "Ampel", status: "offen", due_date: null },
+      ],
+    });
+
+    assert.equal(rows[0].showAmpelInList, false);
+    assert.equal(rows[0].ampelColor, null);
+
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const list = new TopsList();
+      list.setItems(rows);
+      const row = list.root.children[0];
+      const grid = row.children[0];
+      const metaCell = grid.children[2];
+      const hasAmpelDot = (node) => {
+        if (!node) return false;
+        if (String(node.className || "") === "bbm-tops-list-row-ampel") return true;
+        return Array.isArray(node.children) && node.children.some((child) => hasAmpelDot(child));
+      };
+      assert.equal(hasAmpelDot(metaCell), false);
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
   await run("Tops v2 Integration: Quicklane-Filter ruft den durchgereichten Callback auf", async () => {
     const prevDocument = globalThis.document;
     const prevWindow = globalThis.window;
@@ -353,6 +408,48 @@ async function runTopsScreenIntegrationTests(run) {
       assert.deepEqual(calls, ["todo"]);
       assert.equal(lane.filterBadgeEl.textContent, "T");
       assert.equal(lane.filterPopupEl.children[1].dataset.active, "true");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Ampel- und Langtext-Quicklane rufen die TopsScreen-Toggles auf", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const calls = [];
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      addEventListener() {},
+      removeEventListener() {},
+      innerWidth: 1280,
+      innerHeight: 720,
+    };
+    try {
+      const lane = new ProjectContextQuicklane({
+        router: {
+          context: {
+            ui: {
+              isTopsView: true,
+              showAmpelInList: true,
+              showLongtextInList: false,
+            },
+          },
+          activeView: {
+            showAmpelInList: true,
+            showLongtextInList: false,
+            toggleAmpelDisplay: async () => calls.push("ampel"),
+            toggleLongtextDisplay: async () => calls.push("longtext"),
+          },
+        },
+      });
+      lane.setEnabled(true);
+      lane.setContext({ projectId: 17, meetingId: 21 });
+
+      await lane.ampelSectionEl.onclick?.();
+      await lane.longtextSectionEl.onclick?.();
+
+      assert.deepEqual(calls, ["ampel", "longtext"]);
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;

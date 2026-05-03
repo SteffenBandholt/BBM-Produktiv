@@ -76,7 +76,10 @@ export class TopsList {
     preview.textContent = previewText;
     preview.dataset.hasPreview = previewText ? "true" : "false";
 
-    text.append(title, preview);
+    text.append(title);
+    if (item.showLongtextInList !== false && previewText) {
+      text.append(preview);
+    }
 
     const meta = document.createElement("div");
     meta.className = "bbm-tops-list-row-meta";
@@ -96,7 +99,7 @@ export class TopsList {
         el.classList.add("bbm-tops-list-row-meta-line-responsible");
       }
       el.textContent = line;
-      if (index === 1 && item.ampelColor) {
+      if (index === 1 && item.showAmpelInList !== false && item.ampelColor) {
         const dot = document.createElement("span");
         dot.className = "bbm-tops-list-row-ampel";
         dot.dataset.color = String(item.ampelColor || "");

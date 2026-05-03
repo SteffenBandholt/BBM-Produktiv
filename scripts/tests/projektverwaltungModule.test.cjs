@@ -34,6 +34,7 @@ async function runProjektverwaltungModuleTests(run) {
   const coreShellNavigationRuntimeSource = read("src/renderer/app/coreShellNavigationRuntime.js");
   const coreShellNavigationSource = read("src/renderer/app/coreShellNavigation.js");
   const coreShellStylesSource = read("src/renderer/app/coreShellStyles.js");
+  const projectContextQuicklaneSource = read("src/renderer/ui/ProjectContextQuicklane.js");
   const projectsSource = read("src/renderer/modules/projektverwaltung/screens/ProjectsScreen.js");
   const workspaceSource = read("src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const formSource = read("src/renderer/modules/projektverwaltung/screens/ProjectFormScreen.js");
@@ -576,6 +577,22 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(mainSource.includes('btnProjects.textContent = "Projekte"'), false);
     assert.equal(mainSource.includes("PROJEKTVERWALTUNG_MODULE_ID"), false);
     assert.equal(moduleCatalogSource.includes("PROJEKTVERWALTUNG_MODULE_ID"), false);
+  });
+
+  await run("Projektverwaltung: ProjectContextQuicklane zeigt keinen Projektdaten-Textblock mehr", () => {
+    assert.equal(projectContextQuicklaneSource.includes("Projektnummer"), false);
+    assert.equal(projectContextQuicklaneSource.includes("Kurzbezeichnung"), false);
+    assert.equal(projectContextQuicklaneSource.includes("Projekt-ID"), false);
+    assert.equal(projectContextQuicklaneSource.includes("Meeting-ID"), false);
+    assert.equal(projectContextQuicklaneSource.includes("contextMeta"), false);
+  });
+
+  await run("Projektverwaltung: ProjectContextQuicklane rendert den Protokoll-Filter in der Icon-Spalte", () => {
+    assert.equal(projectContextQuicklaneSource.includes("TOP-Filter"), true);
+    assert.equal(projectContextQuicklaneSource.includes("top-filter"), true);
+    assert.equal(projectContextQuicklaneSource.includes("ToDo"), true);
+    assert.equal(projectContextQuicklaneSource.includes("Beschluss"), true);
+    assert.equal(projectContextQuicklaneSource.includes("filterSection"), true);
   });
 
   await run("Projektverwaltung: CoreShell nutzt updateContextButtons weiterhin im Start- und Nav-Flow", () => {

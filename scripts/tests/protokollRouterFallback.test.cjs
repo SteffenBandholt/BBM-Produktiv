@@ -112,6 +112,8 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(quicklaneSource.includes("TOP-Filter"), true);
     assert.equal(quicklaneSource.includes("top-filter"), true);
     assert.equal(quicklaneSource.includes("onTopFilterChange"), true);
+    assert.equal(quicklaneSource.includes("toggleAmpelDisplay"), true);
+    assert.equal(quicklaneSource.includes("toggleLongtextDisplay"), true);
     assert.equal(quicklaneSource.includes("ToDo"), true);
     assert.equal(quicklaneSource.includes("Beschluss"), true);
     assert.equal(quicklaneSource.includes("Projektnummer"), false);
