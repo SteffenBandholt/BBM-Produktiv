@@ -176,4 +176,8 @@ export class SharedEditboxCore {
       is_decision: textValue.flags?.decision ? 1 : 0,
     };
   }
+
+  focusShortText(options = {}) {
+    return this.editbox.focusShortText(options);
+  }
 }

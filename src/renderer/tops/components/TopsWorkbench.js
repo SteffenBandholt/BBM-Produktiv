@@ -153,6 +153,10 @@ export class TopsWorkbench {
     return this.actionDraftState.getDraft();
   }
 
+  focusShortText(options = {}) {
+    return this.sharedEditboxCore?.focusShortText?.(options) || false;
+  }
+
   // ---------------------------------------------------------------------------
   // Workbench-Zustand: gemeinsames Muster vs. Protokoll-Workbench-Huelle
   // ---------------------------------------------------------------------------

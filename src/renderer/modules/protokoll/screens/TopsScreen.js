@@ -19,6 +19,7 @@ import { canDeleteFromState } from "../canDeleteFromState.js";
 import { canMoveFromState } from "../canMoveFromState.js";
 import { shouldShowWorkbench } from "../shouldShowWorkbench.js";
 import { buildWorkbenchVm } from "../buildWorkbenchVm.js";
+import { focusCreatedTopAfterReload } from "../topCreateFocus.js";
 
 function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
   return {
@@ -540,6 +541,8 @@ export default class TopsScreen {
     if (state.isWriting) return;
     if (state.isReadOnly || !state.meetingId || !state.projectId) return;
 
+    let createdId = null;
+    let shouldFocusCreatedTop = false;
     this.store.setState({ isWriting: true });
     try {
       this.store.setState({ error: null });
@@ -561,11 +564,23 @@ export default class TopsScreen {
         this.store.setState({ error: res?.error || "create failed" });
         return;
       }
-      const createdId = res?.top?.id || null;
+      createdId = res?.top?.id || null;
+      shouldFocusCreatedTop = !!createdId;
       await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
       this._syncScreenState();
     } finally {
       this.store.setState({ isWriting: false });
+    }
+
+    if (shouldFocusCreatedTop) {
+      this._syncScreenState();
+      await focusCreatedTopAfterReload({
+        createdTopId: createdId,
+        selectedTopId: this.store.getState().selectedTopId,
+        topsListRoot: this.topsList?.root,
+        workbench: this.workbench,
+        awaitNextPaint: () => this._awaitNextPaint(),
+      });
     }
   }
 
@@ -578,6 +593,8 @@ export default class TopsScreen {
     const level = Number(selectedTop.level) + 1;
     if (!Number.isFinite(level) || level > 4) return;
 
+    let createdId = null;
+    let shouldFocusCreatedTop = false;
     this.store.setState({ isWriting: true });
     try {
       this.store.setState({ error: null });
@@ -599,11 +616,23 @@ export default class TopsScreen {
         this.store.setState({ error: res?.error || "create failed" });
         return;
       }
-      const createdId = res?.top?.id || null;
+      createdId = res?.top?.id || null;
+      shouldFocusCreatedTop = !!createdId;
       await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
       this._syncScreenState();
     } finally {
       this.store.setState({ isWriting: false });
+    }
+
+    if (shouldFocusCreatedTop) {
+      this._syncScreenState();
+      await focusCreatedTopAfterReload({
+        createdTopId: createdId,
+        selectedTopId: this.store.getState().selectedTopId,
+        topsListRoot: this.topsList?.root,
+        workbench: this.workbench,
+        awaitNextPaint: () => this._awaitNextPaint(),
+      });
     }
   }
 
@@ -631,6 +660,24 @@ export default class TopsScreen {
     this.commands.toggleMoveMode(false);
     this.store.setState({
       meetingMeta: res?.meeting || null,
+    });
+  }
+
+  _awaitNextPaint() {
+    return new Promise((resolve) => {
+      const raf =
+        typeof window !== "undefined" && typeof window.requestAnimationFrame === "function"
+          ? window.requestAnimationFrame.bind(window)
+          : typeof requestAnimationFrame === "function"
+            ? requestAnimationFrame
+            : null;
+
+      if (raf) {
+        raf(() => resolve());
+        return;
+      }
+
+      setTimeout(resolve, 0);
     });
   }
 

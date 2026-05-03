@@ -9,6 +9,12 @@ async function runTopsScreenIntegrationTests(run) {
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsScreenViewModel.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsWorkbenchViewModel.js")),
   ]);
+  const { EditboxShell } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/core/editbox/EditboxShell.js")
+  );
+  const focusHelper = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/modules/protokoll/topCreateFocus.js")
+  );
 
   const {
     buildWorkbenchState,
@@ -141,6 +147,115 @@ async function runTopsScreenIntegrationTests(run) {
 
     assert.equal(store.getState().tops.length, 0);
     assert.equal(store.getState().selectedTopId, null);
+  });
+
+  await run("Tops v2 Integration: Neuer Eintrag scrollt und fokussiert den Kurztext", async () => {
+    const events = [];
+    const row = {
+      scrollIntoView(options) {
+        events.push(["scroll", options]);
+      },
+    };
+
+    const result = await focusHelper.focusCreatedTopAfterReload({
+      createdTopId: 42,
+      selectedTopId: 42,
+      topsListRoot: {
+        querySelector(selector) {
+          events.push(["query", selector]);
+          return row;
+        },
+      },
+      workbench: {
+        focusShortText(options) {
+          events.push(["focus", options]);
+          return true;
+        },
+      },
+      awaitNextPaint: async () => {},
+    });
+
+    assert.equal(result, true);
+    assert.deepEqual(events, [
+      ["query", '[data-top-id="42"]'],
+      ["scroll", { block: "nearest", inline: "nearest" }],
+      ["focus", { select: true }],
+    ]);
+  });
+
+  await run("EditboxShell: focusShortText aktiviert das Kurztextfeld", () => {
+    const makeClassList = () => {
+      const tokens = new Set();
+      return {
+        add(...names) {
+          for (const name of names) tokens.add(String(name));
+        },
+        toggle(name, force) {
+          const key = String(name);
+          if (force === undefined) {
+            if (tokens.has(key)) tokens.delete(key);
+            else tokens.add(key);
+            return tokens.has(key);
+          }
+          if (force) tokens.add(key);
+          else tokens.delete(key);
+          return tokens.has(key);
+        },
+      };
+    };
+
+    const doc = {
+      activeElement: null,
+      createElement(tag) {
+        const el = {
+          tagName: String(tag || "").toUpperCase(),
+          ownerDocument: doc,
+          children: [],
+          style: {},
+          dataset: {},
+          className: "",
+          textContent: "",
+          disabled: false,
+          readOnly: false,
+          value: "",
+          rows: 0,
+          maxLength: 0,
+          append(...nodes) {
+            this.children.push(...nodes);
+          },
+          appendChild(node) {
+            this.children.push(node);
+            return node;
+          },
+          setAttribute() {},
+          addEventListener() {},
+          focus() {
+            doc.activeElement = this;
+            this.wasFocused = true;
+          },
+          select() {
+            this.wasSelected = true;
+          },
+          classList: makeClassList(),
+        };
+        return el;
+      },
+    };
+
+    const shell = new EditboxShell({ documentRef: doc });
+    shell.setState("normal");
+    shell.setFieldAccess({
+      shortTextReadOnly: false,
+      longTextReadOnly: false,
+      flagsDisabled: false,
+    });
+
+    const result = shell.focusShortText();
+
+    assert.equal(result, true);
+    assert.equal(doc.activeElement, shell.shortInput);
+    assert.equal(shell.shortInput.wasFocused, true);
+    assert.equal(shell.shortInput.wasSelected, true);
   });
 }
 

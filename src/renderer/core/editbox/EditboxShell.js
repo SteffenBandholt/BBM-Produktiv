@@ -270,6 +270,13 @@ export class EditboxShell {
     };
   }
 
+  focusShortText({ select = true } = {}) {
+    if (this.shortInput.disabled || this.shortInput.readOnly) return false;
+    if (typeof this.shortInput.focus === "function") this.shortInput.focus();
+    if (select && typeof this.shortInput.select === "function") this.shortInput.select();
+    return true;
+  }
+
   setVisibleFlags(flagKeys) {
     const visible = new Set(Array.isArray(flagKeys) ? flagKeys.map((key) => String(key || "").trim()) : FLAG_KEYS);
     Object.entries(this.flagItems).forEach(([key, item]) => {
