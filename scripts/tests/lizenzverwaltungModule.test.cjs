@@ -931,9 +931,9 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('hint: "Strasse, PLZ und Ort"'), true);
     assert.equal(settingsViewSource.includes('hint: "Texte fuer Protokoll und PDF-Ausgabe"'), true);
     assert.equal(settingsViewSource.includes('hint: "Fusszeilenangaben und Profil-/Adressbezug"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Drucklogos und Logo-Dialog-Einstieg"'), true);
+    assert.equal(settingsViewSource.includes('hint: "Drucklogos fuer die Ausgabe verwalten"'), true);
     assert.equal(settingsViewSource.includes('hint: "Seitenraender und Footer-Abstand"'), true);
-    assert.equal(settingsViewSource.includes("Drucklogos konfigurieren"), true);
+    assert.equal(settingsViewSource.includes("Drucklogos verwalten"), true);
     assert.equal(idx('title: "Profil"') < idx('title: "Adresse"'), true);
     assert.equal(idx('title: "Adresse"') < idx('title: "Druckinhalt"'), true);
     assert.equal(idx('title: "Druckinhalt"') < idx('title: "Footer"'), true);
@@ -991,8 +991,9 @@ async function runLizenzverwaltungModuleTests(run) {
       assert.equal(opened.length, 1);
       assert.equal(opened[0].title, "Nutzereinstellungen / Druckeinstellungen");
       const contentText = collectFakeText(opened[0].content);
-      assert.equal(contentText.includes("Drucklogos konfigurieren"), true);
-      assert.equal(contentText.includes("PDF-Logo aktiv"), false);
+      assert.equal(contentText.includes("Drucklogo 1"), true);
+      assert.equal(contentText.includes("Logo verwenden"), true);
+      assert.equal(contentText.includes("Position horizontal"), true);
       assert.equal(contentText.includes("Logo-Datei, Position und Gr"), false);
     } finally {
       global.document = previousDocument;

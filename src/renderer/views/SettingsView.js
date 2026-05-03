@@ -64,7 +64,7 @@ const PRINT_DEFAULTS_FIELD_GROUPS = [
   },
   {
     title: "Logos",
-    hint: "Drucklogos und Logo-Dialog-Einstieg",
+        hint: "Drucklogos fuer die Ausgabe verwalten",
     fields: [],
   },
   {
@@ -3925,7 +3925,7 @@ export default class SettingsView {
         logoActions.style.flexWrap = "wrap";
         const btnLogos = document.createElement("button");
         btnLogos.type = "button";
-        btnLogos.textContent = "Drucklogos konfigurieren";
+    btnLogos.textContent = "Drucklogos verwalten";
         applyPopupButtonStyle(btnLogos);
         btnLogos.onclick = async () => {
           await this._openPrintLogosPopup();
@@ -4389,7 +4389,7 @@ export default class SettingsView {
       card.style.gap = "8px";
 
       const title = document.createElement("div");
-      title.textContent = `Logo ${idx + 1}`;
+      title.textContent = `Drucklogo ${idx + 1}`;
       title.style.fontWeight = "800";
 
       const enabled = document.createElement("input");
@@ -4400,7 +4400,7 @@ export default class SettingsView {
       enabledRow.style.alignItems = "center";
       enabledRow.style.gap = "8px";
       enabledRow.style.cursor = "pointer";
-      enabledRow.append(enabled, document.createTextNode("Logo aktiv"));
+      enabledRow.append(enabled, document.createTextNode("Logo verwenden"));
 
       const file = document.createElement("input");
       file.type = "file";
@@ -4474,9 +4474,9 @@ export default class SettingsView {
         enabledRow,
         file,
         frame,
-        mkRow("Größe", size),
-        mkRow("Horizontal", align.row),
-        mkRow("Vertikal", vAlign.row),
+        mkRow("Größe in mm", size),
+        mkRow("Position horizontal", align.row),
+        mkRow("Position vertikal", vAlign.row),
         removeBtn
       );
       return card;
@@ -4521,7 +4521,7 @@ export default class SettingsView {
     }
 
     this._openSettingsModal({
-      title: "Drucklogos",
+      title: "Drucklogos verwalten",
       content: [wrap],
       saveFn: async () => (await this._savePrintLogoSettings()) !== false,
       closeOnly: false,

@@ -36,6 +36,10 @@ Sie ergänzt:
   - die sichtbare PDF-Logo-Bearbeitung erscheint nicht mehr in `Profil & Druck`
   - `pdf.userLogo*` wird in der Ausgabe nicht mehr gerendert
   - der aktive Drucklogos-Pfad bleibt unveraendert
+- Der aktive Drucklogos-Dialog ist sprachlich geschaerft:
+  - der Einstieg heisst jetzt `Drucklogos verwalten`
+  - die Slot-Karten sprechen von `Drucklogo 1/2/3`
+  - die Bedienung nennt `Logo verwenden`, `Position horizontal` und `Position vertikal`
 - Die Kachel `Profil & Druck` oeffnet wieder die Sammelmaske:
   - die alte PDF-Logo-Restverkabelung im aktiven Aufbau wurde entfernt
   - Drucklogos bleiben erreichbar
