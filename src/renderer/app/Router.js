@@ -3,9 +3,12 @@
 import {
   getActiveProjectModuleNavigation,
   PROTOKOLL_MODULE_ID,
-  hasActiveModule,
   resolveActiveModuleScreen,
 } from "./modules/index.js";
+import {
+  isModuleActive,
+  refreshCachedActiveModuleAccess,
+} from "./modules/moduleAccessState.js";
 import { resolveProjectProtocolEntry } from "./projectProtocolRouting.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
@@ -385,6 +388,14 @@ export default class Router {
     }
   }
 
+  async ensureActiveModuleAccess({ force = false } = {}) {
+    return await refreshCachedActiveModuleAccess({ force });
+  }
+
+  _isModuleActive(moduleId) {
+    return isModuleActive(moduleId);
+  }
+
   async _syncProjectContextUi() {
     await this.ensureCurrentProjectLabelLoaded({ force: false });
 
@@ -477,6 +488,7 @@ export default class Router {
 
   // Kern-Routing / UI-Rahmenlogik: allgemeine Screen-Wechsel bleiben im Router gebuendelt.
   async showProjects() {
+    await this.ensureActiveModuleAccess({ force: true });
     const mod = await import("../modules/projektverwaltung/index.js");
     const V = mod.ProjectsScreen;
     this.currentMeetingId = null;
@@ -484,6 +496,7 @@ export default class Router {
   }
 
   async showProjectWorkspace(projectId, options = {}) {
+    await this.ensureActiveModuleAccess({ force: true });
     const mod = await import("../modules/projektverwaltung/index.js");
     const V = mod.ProjectWorkspaceScreen;
     const opts = options && typeof options === "object" ? options : {};
@@ -512,6 +525,7 @@ export default class Router {
   }
 
   async openProjectModule(projectId, moduleId, options = {}) {
+    await this.ensureActiveModuleAccess({ force: true });
     const effectiveProjectId = this._resolveProjectId(projectId);
     const normalizedModuleId = String(moduleId || "").trim();
     if (!effectiveProjectId || !normalizedModuleId) return false;
@@ -555,15 +569,17 @@ export default class Router {
   }
 
   _getProjectWorkspaceModules() {
-    const activeModules = getActiveProjectModuleNavigation().map((entry) =>
-      Object.freeze({
-        moduleId: String(entry?.moduleId || "").trim(),
-        label: String(entry?.label || "Arbeitsbereich öffnen").trim(),
-        description: String(
-          entry?.description || "Arbeitsbereich im aktuellen Projektkontext öffnen."
-        ).trim(),
-      })
-    );
+    const activeModules = getActiveProjectModuleNavigation()
+      .filter((entry) => this._isModuleActive(entry?.moduleId))
+      .map((entry) =>
+        Object.freeze({
+          moduleId: String(entry?.moduleId || "").trim(),
+          label: String(entry?.label || "Arbeitsbereich öffnen").trim(),
+          description: String(
+            entry?.description || "Arbeitsbereich im aktuellen Projektkontext öffnen."
+          ).trim(),
+        })
+      );
 
     return [
       ...activeModules,
@@ -590,6 +606,7 @@ export default class Router {
 
   // Kern-Routing / Screen-Host-Grundpfad: Start ohne Projekt- oder Protokollkontext.
   async showHome() {
+    await this.ensureActiveModuleAccess({ force: true });
     const mod = await import("../views/HomeView.js");
     const V = mod.default;
     this._setProjectRuntimeContext({ projectId: null, meetingId: null });
@@ -646,6 +663,7 @@ export default class Router {
   }
 
   async showTops(meetingId, projectId, options = {}) {
+    await this.ensureActiveModuleAccess({ force: true });
     const effectiveMeetingId = meetingId || null;
     if (!effectiveMeetingId) {
       alert("Bitte zuerst eine Besprechung oeffnen.");
@@ -661,9 +679,9 @@ export default class Router {
     // App-Kern / Screen-Host:
     // Tops laeuft nur, wenn das Protokoll-Modul im aktiven Modulumfang liegt.
     // Der Router umgeht diese Entscheidung an dieser Stelle nicht mehr stillschweigend.
-    if (!hasActiveModule(PROTOKOLL_MODULE_ID)) {
+    if (!this._isModuleActive(PROTOKOLL_MODULE_ID)) {
       alert("Das Protokoll-Modul ist im aktiven Modulumfang nicht freigegeben.");
-      return;
+      return false;
     }
 
     // Modulinterner Unterbau und Workbench-Anbindung bleiben ausdruecklich im Fachmodul.
@@ -699,6 +717,7 @@ export default class Router {
   }
 
   async openProjectProtocol(projectId, options = {}) {
+    await this.ensureActiveModuleAccess({ force: true });
     const effectiveProjectId = this._resolveProjectId(projectId);
     if (!effectiveProjectId) {
       alert("Bitte zuerst ein Projekt auswaehlen.");
@@ -708,6 +727,18 @@ export default class Router {
         target: "blocked",
         projectId: null,
         meetingId: null,
+      };
+    }
+
+    if (!this._isModuleActive(PROTOKOLL_MODULE_ID)) {
+      alert("Das Protokoll-Modul ist im aktiven Modulumfang nicht freigegeben.");
+      return {
+        ok: false,
+        reason: "module-disabled",
+        target: "blocked",
+        projectId: effectiveProjectId,
+        meetingId: null,
+        moduleId: PROTOKOLL_MODULE_ID,
       };
     }
 
@@ -730,10 +761,20 @@ export default class Router {
           projectId: effectiveProjectId,
           project: options?.project || null,
         };
-      await this.showTops(decision.meetingId, effectiveProjectId, {
+      const opened = await this.showTops(decision.meetingId, effectiveProjectId, {
         ...options,
         returnContext,
       });
+      if (!opened) {
+        return {
+          ok: false,
+          reason: "module-disabled",
+          target: "blocked",
+          projectId: effectiveProjectId,
+          meetingId: decision.meetingId || null,
+          moduleId: PROTOKOLL_MODULE_ID,
+        };
+      }
       return {
         ...decision,
         ok: true,

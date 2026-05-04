@@ -119,6 +119,7 @@ export default class HomeView {
   async _openLastProject() {
     if (!this.lastProjectId) return;
 
+    await this.router?.ensureActiveModuleAccess?.({ force: true });
     await this.router?.showProjects?.();
     const view = this.router?.currentView || null;
     if (!view || typeof view.openProjectById !== "function") return;

@@ -117,9 +117,18 @@ export default class ProjectWorkspaceScreen {
   async _openProtocolModule(projectId) {
     const effectiveProjectId = projectId || this.projectId || this.router?.currentProjectId || null;
     if (!effectiveProjectId) return false;
+    if (typeof this.router?.openProjectModule === "function") {
+      const result = await this.router.openProjectModule(effectiveProjectId, "protokoll", {
+        project: this.project || null,
+      });
+      return typeof result === "object" ? !!result?.ok : result !== false;
+    }
+
     if (typeof this.router?.openProjectProtocol === "function") {
-      await this.router.openProjectProtocol(effectiveProjectId);
-      return true;
+      const result = await this.router.openProjectProtocol(effectiveProjectId, {
+        project: this.project || null,
+      });
+      return typeof result === "object" ? !!result?.ok : result !== false;
     }
 
     if (typeof this.router?.showMeetings === "function") {

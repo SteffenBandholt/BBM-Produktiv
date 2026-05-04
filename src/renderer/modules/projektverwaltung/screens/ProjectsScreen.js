@@ -160,9 +160,30 @@ export default class ProjectsScreen {
     if (!normalizedModuleId || !effectiveProjectId) return false;
 
     if (normalizedModuleId === "protokoll") {
+      if (typeof this.router?.openProjectModule === "function") {
+        const result = await this.router.openProjectModule(effectiveProjectId, normalizedModuleId, {
+          project: project || null,
+        });
+        if (typeof result === "object") {
+          if (!result?.ok && result?.reason === "module-disabled") {
+            this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
+          }
+          return !!result?.ok;
+        }
+        return result !== false;
+      }
+
       if (typeof this.router?.openProjectProtocol === "function") {
-        await this.router.openProjectProtocol(effectiveProjectId, { project: project || null });
-        return true;
+        const result = await this.router.openProjectProtocol(effectiveProjectId, {
+          project: project || null,
+        });
+        if (typeof result === "object") {
+          if (!result?.ok && result?.reason === "module-disabled") {
+            this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
+          }
+          return !!result?.ok;
+        }
+        return result !== false;
       }
       return false;
     }
@@ -900,18 +921,34 @@ export default class ProjectsScreen {
     this._setProjectRuntimeContext(project.id, null);
     this._rememberLastProject(project.id);
 
-    if (typeof this.router?.openProjectProtocol === "function") {
-      await this.router.openProjectProtocol(project.id, { project });
-      return true;
+    if (typeof this.router?.openProjectModule === "function") {
+      const result = await this.router.openProjectModule(project.id, "protokoll", {
+        project,
+      });
+      if (typeof result === "object") {
+        if (result?.ok) return true;
+        if (result?.reason === "module-disabled") {
+          this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
+        }
+        return false;
+      }
+      if (result !== false) {
+        return true;
+      }
     }
 
-    if (typeof this.router?.showMeetings === "function") {
-      await this.router.showMeetings(project.id, {
-        startMode: true,
-        startReason: "protocol-start-unavailable",
-        integrityError: false,
-      });
-      return true;
+    if (typeof this.router?.openProjectProtocol === "function") {
+      const result = await this.router.openProjectProtocol(project.id, { project });
+      if (typeof result === "object") {
+        if (result?.ok) return true;
+        if (result?.reason === "module-disabled") {
+          this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
+        }
+        return false;
+      }
+      if (result !== false) {
+        return true;
+      }
     }
 
     this._flashMsg("Protokollstart ist nicht verfuegbar.", 9000);
@@ -1263,9 +1300,18 @@ export default class ProjectsScreen {
   // Project click flow: Protokoll-Startpunkt fuer den Projektkontext
   // ------------------------------------------------------------
   async _openProjectInNewMode(projectId, projectObj) {
+    if (typeof this.router?.openProjectModule === "function") {
+      const result = await this.router.openProjectModule(projectId, "protokoll", {
+        project: projectObj || null,
+      });
+      return typeof result === "object" ? !!result?.ok : result !== false;
+    }
+
     if (typeof this.router?.openProjectProtocol === "function") {
-      await this.router.openProjectProtocol(projectId, { project: projectObj || null });
-      return true;
+      const result = await this.router.openProjectProtocol(projectId, {
+        project: projectObj || null,
+      });
+      return typeof result === "object" ? !!result?.ok : result !== false;
     }
 
     const openedExisting = await this._openExistingMeetingIfAvailable(projectId);
@@ -1305,7 +1351,8 @@ export default class ProjectsScreen {
       if (!meeting?.id) return false;
 
       this._setProjectRuntimeContext(projectId, meeting.id);
-      await this.router.showTops(meeting.id, projectId);
+      const opened = await this.router.showTops(meeting.id, projectId);
+      if (!opened) return false;
       this._rememberLastProject(projectId);
       return true;
     } catch (err) {
@@ -1402,7 +1449,10 @@ export default class ProjectsScreen {
 
       this._setMsg("Öffne Protokoll...");
 
-      await this.router.showTops(meetingId, projectId);
+      const opened = await this.router.showTops(meetingId, projectId);
+      if (!opened) {
+        return false;
+      }
 
       this._rememberLastProject(projectId);
       result = true;

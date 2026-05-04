@@ -210,6 +210,7 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(routerSource.includes("showProjects()"), true);
     assert.equal(routerSource.includes("showArchive()"), true);
     assert.equal(routerSource.includes("showTops(meetingId, projectId"), true);
+    assert.equal(routerSource.includes(".filter((entry) => this._isModuleActive(entry?.moduleId))"), true);
   });
 
   await run("Projektverwaltung: Modul ist im Resolver vorhanden, aber nicht im Katalog", () => {
@@ -462,7 +463,75 @@ async function runProjektverwaltungModuleTests(run) {
           },
         },
       ]);
-      assert.equal(projectsSource.includes("openProjectProtocol(project.id, { project })"), true);
+      assert.equal(projectsSource.includes('openProjectModule(project.id, "protokoll", {'), true);
+    } finally {
+      global.window = previousWindow;
+    }
+  });
+
+  await run("Projektverwaltung: blockiertes Protokoll wird beim Hauptklick nicht als Erfolg behandelt", async () => {
+    const calls = [];
+    const previousWindow = global.window;
+    global.window = {
+      localStorage: {
+        setItem() {},
+      },
+    };
+
+    try {
+      const screen = new ProjectsScreen({
+        router: {
+          currentProjectId: null,
+          currentMeetingId: null,
+          async openProjectModule(projectId, moduleId, options) {
+            calls.push({ type: "module", projectId, moduleId, options });
+            return {
+              ok: false,
+              reason: "module-disabled",
+              target: "blocked",
+              projectId,
+              meetingId: null,
+              moduleId,
+            };
+          },
+          async openProjectProtocol(projectId, options) {
+            calls.push({ type: "protocol", projectId, options });
+          },
+        },
+      });
+
+      screen.projects = [
+        {
+          id: "17",
+          short: "Projekt A",
+          name: "Projekt A",
+          project_number: "17",
+        },
+      ];
+      screen._flashMsg = (text) => {
+        calls.push({ type: "flash", text });
+      };
+
+      const result = await screen.openProjectById("17");
+      assert.equal(result, false);
+      assert.deepEqual(calls[0], {
+        type: "module",
+        projectId: "17",
+        moduleId: "protokoll",
+        options: {
+          project: {
+            id: "17",
+            short: "Projekt A",
+            name: "Projekt A",
+            project_number: "17",
+          },
+        },
+      });
+      assert.equal(calls.some((item) => item.type === "protocol"), false);
+      assert.equal(
+        calls.some((item) => item.type === "flash" && String(item.text || "").includes("nicht freigeschaltet")),
+        true
+      );
     } finally {
       global.window = previousWindow;
     }
