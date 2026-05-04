@@ -916,6 +916,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("await this._createOutputPrintContent();"), true);
     assert.equal(settingsViewSource.includes("_createProtocolContent"), true);
     assert.equal(settingsViewSource.includes("await this._createProtocolContent();"), true);
+    assert.equal(settingsViewSource.includes("_createLegacySettingsContent"), false);
     assert.equal(settingsViewSource.includes('focusSection: "Footer"'), false);
     assert.equal(settingsViewSource.includes('focusSection: "Druckinhalt"'), false);
     assert.equal(settingsViewSource.includes("subText: \"Nutzerprofil, Adresse und globale Stammdaten\""), true);

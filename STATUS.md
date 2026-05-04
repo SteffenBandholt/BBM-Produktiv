@@ -27,9 +27,9 @@ Sie ergänzt:
 - Die Settings-Startseite ist jetzt sichtbar in Hauptgruppen gegliedert:
   - Allgemein, Eingabe & Erfassung, Ausgabe & Kommunikation, Module und Entwicklung stehen als eigene Ueberschriften auf der Startseite
   - die vorhandenen Kacheln bleiben erreichbar und werden nur in diese grobe Struktur einsortiert
-- Die Legacy-Kachel `Profil & Druck` ist auf der Startseite weiter aufgebrochen worden:
+- Die Legacy-Kachel `Profil & Druck` ist auf der Startseite aufgeteilt:
   - sichtbare Einstiege sind jetzt `Profil / Adresse`, `Ausgabe & Druck` und `Protokoll`
-  - die neuen Einstiege nutzen weiter den bestehenden Legacy-Dialog als kleinsten sicheren Schritt
+  - die drei Einstiege nutzen jeweils eigene schlanke Dialoge
 - Der Einstieg `Profil / Adresse` hat jetzt einen eigenen schlanken Dialog:
   - er enthaelt nur Profil- und Adressfelder
   - Ausgabe-/Protokollfelder bleiben im bestehenden Legacy-Pfad fuer die anderen Einstiege
@@ -40,6 +40,10 @@ Sie ergänzt:
 - Der Einstieg `Protokoll` hat jetzt ebenfalls einen eigenen Dialog:
   - er enthaelt nur Protokollbezeichnung, Vorbemerkung und den Schalter fuer die Ausgabe
   - der sichtbare Startseiten-Einstieg nutzt nicht mehr den grossen Legacy-Dialog
+- Der alte Sammeldialog aus `SettingsView.js` ist entfernt:
+  - `_createLegacySettingsContent(...)` wurde geloescht
+  - die sichtbaren Startseiten-Einstiege laufen nur noch ueber die drei schlanken Dialoge
+- Der alte sichtbare Sammelbegriff `Profil & Druck` wird im Startseitenfluss nicht mehr verwendet.
 - Der globale Header zeigt jetzt links `BBM <Version>` und darunter den aktiven Kontext als `aktiv: <Modul> | <Projektnummer> - <Kurzbezeichnung>`.
   Rechts steht ein ruhiger Kunden-/Lizenztext aus den vorhandenen App-Settings; der alte `bereit:`-Statusblock ist aus der sichtbaren Anzeige entfernt.
   Im Projektkontext steht dort jetzt nicht mehr `Projekt-Arbeitsbereich`, sondern das aktive Modul `Protokoll`.
@@ -59,10 +63,9 @@ Sie ergänzt:
   - der Einstieg heisst jetzt `Drucklogos verwalten`
   - die Slot-Karten sprechen von `Drucklogo 1/2/3`
   - die Bedienung nennt `Logo verwenden`, `Position horizontal` und `Position vertikal`
-- Die Kachel `Profil & Druck` oeffnet wieder die Sammelmaske:
-  - die alte PDF-Logo-Restverkabelung im aktiven Aufbau wurde entfernt
-  - Drucklogos bleiben erreichbar
-  - die Maske laedt jetzt wieder ohne den ehemaligen PDF-Logo-Restpfad
+- Die alte Sammelmaske aus `SettingsView.js` ist entfernt:
+  - die sichtbaren Startseiten-Einstiege laufen nur noch ueber die drei schlanken Dialoge
+  - Drucklogos bleiben ueber den bestehenden Unterdialog erreichbar
 - Projekt-Einstellungen behandeln `pdf.footerUseUserData` nicht mehr als steuerbare Projektoption:
   - der Projektsettings-Dialog speichert dieses Feld nicht mehr
   - der Projektsettings-IPC filtert es aus Whitelist und Patch
