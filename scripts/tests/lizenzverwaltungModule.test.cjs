@@ -8,6 +8,7 @@ function read(relPath) {
 }
 
 function createFakeNode(tag) {
+  const listeners = new Map();
   const style = {
     setProperty(name, value) {
       this[name] = value;
@@ -40,7 +41,12 @@ function createFakeNode(tag) {
       return item;
     },
     addEventListener() {},
-    removeEventListener() {},
+    removeEventListener(type, handler) {
+      const list = listeners.get(type);
+      if (!list) return;
+      const idx = list.indexOf(handler);
+      if (idx >= 0) list.splice(idx, 1);
+    },
     focus() {},
     click() {},
     setAttribute() {},
@@ -48,6 +54,25 @@ function createFakeNode(tag) {
     contains() {
       return false;
     },
+    replaceChildren(...items) {
+      this.children = [];
+      for (const item of items) {
+        if (item != null) this.children.push(item);
+      }
+    },
+    dispatchEvent(evt) {
+      const type = String(evt?.type || "");
+      const list = listeners.get(type) || [];
+      for (const handler of list.slice()) {
+        handler.call(this, evt);
+      }
+      return true;
+    },
+  };
+  node.addEventListener = (type, handler) => {
+    const list = listeners.get(type) || [];
+    list.push(handler);
+    listeners.set(type, list);
   };
   Object.defineProperty(node, "innerHTML", {
     configurable: true,
@@ -922,6 +947,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("subText: \"Nutzerprofil, Adresse und globale Stammdaten\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Footer, Druckränder, Drucklogos, Ausgabeordner und Versand\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Protokollbezeichnung und Vorbemerkung\""), true);
+    assert.equal(settingsViewSource.includes('titleText: "Diktat-Testfreigabe"'), true);
     assert.equal(settingsViewSource.includes("titleText: \"Firmenrollen\""), true);
     assert.equal(
       settingsViewSource.includes("subText: \"Reihenfolge und Bezeichnungen für Firmenlisten und Druck\""),
@@ -941,6 +967,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("titleText: \"Technik\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Versionierung, Textgrenzen, DB-Diagnose und Diktat / Audio\""), false);
     assert.equal(settingsViewSource.includes("subText: \"Diagnose und technische Grenzen\""), true);
+    assert.equal(settingsViewSource.includes('titleText: "Diktat-Testfreigabe"'), true);
     assert.equal(settingsViewSource.includes("tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);"), true);
     assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), false);
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), false);
@@ -1290,6 +1317,141 @@ async function runLizenzverwaltungModuleTests(run) {
       assert.equal(contentText.includes("DB-Diagnose"), false);
       assert.equal(contentText.includes("Protokoll-Textgrenzen"), false);
       assert.equal(contentText.includes("Farbschema"), false);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: Entwicklung zeigt Diktat-Testfreigabe", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            "dev.audioDictationUnlock": "1",
+            "tops.titleMax": "100",
+            "tops.longMax": "500",
+          },
+        }),
+        appSettingsSetMany: async () => ({ ok: true }),
+        devVersionGet: async () => ({ ok: true, appVersion: "1.0.0", repoVersion: "1.0.0" }),
+        devBuildChannelGet: async () => ({ ok: true, channel: "DEV" }),
+        dbDiagnosticsGet: async () => ({
+          ok: true,
+          data: {
+            dbPath: "db.sqlite",
+            backupPath: "db.backup",
+            legacyDbPath: "legacy.sqlite",
+            legacyImportPath: "legacy-import.sqlite",
+            legacyAvailable: false,
+            activeLikelyEmpty: true,
+            backup: { exists: false, size: 0 },
+            legacy: { exists: false, size: 0 },
+            legacyImport: { exists: false, size: 0 },
+          },
+        }),
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._openDevelopmentModal();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Entwicklung");
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(contentText.includes("Diktat-Testfreigabe"), true);
+      assert.equal(contentText.includes("Aktiviert Diktat unabhängig von der Lizenz"), true);
+      assert.equal(contentText.includes("Versionierung"), true);
+      assert.equal(contentText.includes("DB-Diagnose"), true);
+      assert.equal(contentText.includes("Protokoll-Textgrenzen"), true);
+      assert.equal(contentText.includes("Farbschema"), true);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: Entwicklungsschalter speichert Diktat-Testfreigabe", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+    const calls = [];
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            "dev.audioDictationUnlock": "0",
+            "tops.titleMax": "100",
+            "tops.longMax": "500",
+          },
+        }),
+        appSettingsSetMany: async (payload) => {
+          calls.push(payload);
+          return { ok: true };
+        },
+        devVersionGet: async () => ({ ok: true, appVersion: "1.0.0", repoVersion: "1.0.0" }),
+        devBuildChannelGet: async () => ({ ok: true, channel: "DEV" }),
+        dbDiagnosticsGet: async () => ({
+          ok: true,
+          data: {
+            dbPath: "db.sqlite",
+            backupPath: "db.backup",
+            legacyDbPath: "legacy.sqlite",
+            legacyImportPath: "legacy-import.sqlite",
+            legacyAvailable: false,
+            activeLikelyEmpty: true,
+            backup: { exists: false, size: 0 },
+            legacy: { exists: false, size: 0 },
+            legacyImport: { exists: false, size: 0 },
+          },
+        }),
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._openDevelopmentModal();
+
+      const content = opened[0]?.content?.[0];
+      const findNode = (node, predicate) => {
+        if (!node) return null;
+        if (predicate(node)) return node;
+        for (const child of node.children || []) {
+          const found = findNode(child, predicate);
+          if (found) return found;
+        }
+        return null;
+      };
+      const checkbox = findNode(content, (node) =>
+        String(node?.textContent || "").includes("Diktat-Testfreigabe aktiv")
+      );
+      assert.ok(checkbox, "checkbox row not found");
+      const input = findNode(content, (node) => node?.tagName === "INPUT" && node.type === "checkbox");
+      assert.ok(input, "checkbox input not found");
+      input.checked = true;
+      input.dispatchEvent?.({ type: "change" });
+      assert.equal(calls.length > 0, true);
+      assert.equal(calls[calls.length - 1]?.["dev.audioDictationUnlock"], "1");
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

@@ -2432,6 +2432,7 @@ _isoToDDMMYYYY(iso) {
     this.boxTitleEl = boxTitle;
 
     this._applyEditFontSizes();
+    this._updateDictationButtons({ readOnly: this.isReadOnly, busy: this._busy, meetingId: this.meetingId });
 
     this.btnSaveTop = btnSaveTop;
     this.btnTrashTop = btnTrashTop;
@@ -3961,6 +3962,7 @@ async _closeViewOnly() {
   async destroy() {
     await this._destroyAudioSuggestions();
     this._destroyDictationController();
+    this._destroyAudioFeature?.();
 
     if (this._viewMenuDocMouseDown) {
       document.removeEventListener("mousedown", this._viewMenuDocMouseDown, true);

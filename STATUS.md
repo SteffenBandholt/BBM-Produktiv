@@ -17,6 +17,10 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Der TopsScreen-Diktatpfad ist wieder stabil:
+  - `SharedEditboxCore` baut die Mikrofon-Buttons jetzt defensiv ein und faengt fehlende Label-Hosts ab
+  - der TopsScreen crasht beim Rendern der Editbox nicht mehr
+  - der kaputte `notoSans.css`-Importpfad in den Tops-Styles wurde korrigiert
 - Im Protokoll-Kontext ist die fachlich falsche Header-Belegung bereinigt:
   - die sichtbare Protokoll-Quicklane zeigt jetzt einen TOP-Filter statt der alten falsch belegten Header-Aktionen
   - der Filter schaltet zwischen `Alle`, `ToDo` und `Beschluss`
@@ -1412,3 +1416,29 @@ Wichtig:
   - kein direkter Anschluss aus diesem Paket
 - Risiken/Hinweise:
   - Es wurden nur Tests ergaenzt; App-Logik blieb unveraendert.
+
+#### Paket: Diktat/Audio-Freischaltung und Mikrofon-Buttons
+- Status: erledigt
+- Beschreibung:
+  - Diktat/Audio wird jetzt ueber das Lizenzfeature `audio`/`diktat` oder den internen Entwicklungsschalter `Diktat-Testfreigabe` freigeschaltet.
+  - Die Mikrofon-Buttons im TopsScreen erscheinen nur bei aktiver Freischaltung und zeigen waehrend der Aufnahme einen roten Punkt.
+  - Der Entwicklungsschalter sitzt im Entwicklungsdialog und bleibt als Test-/Prueffunktion von normalen Kundenfunktionen getrennt.
+  - Die Lizenz- und Settings-Gates wurden so erweitert, dass der neue Schalter im Main-/Renderer-Pfad sauber erkannt wird.
+- Betroffene Dateien:
+  - `src/main/ipc/audioIpc.js`
+  - `src/main/ipc/settingsIpc.js`
+  - `src/renderer/features/audio/AudioFeature.js`
+  - `src/renderer/features/audio-dictation/DictationController.js`
+  - `src/renderer/views/SettingsView.js`
+  - `src/renderer/views/TopsView.js`
+  - `scripts/tests/licenseFeatureGuards.test.cjs`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `scripts/tests/topsScreen.integration.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Es wurde bewusst keine externe Lizenz-App und keine Generator-/Admin-UI in die normale App zurueckgebracht.
+  - Die Stop-Logik fuer das Diktat bleibt bei der vorhandenen Audio-Funktionalitaet; der neue Zustand steuert vor allem Sichtbarkeit und Anzeige.

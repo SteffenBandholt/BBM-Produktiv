@@ -25,6 +25,7 @@ export class TopsWorkbench {
   constructor({
     onDraftChange,
     onTextBlur,
+    onStartDictation,
     onButtonPointerDown,
     onSave,
     onDelete,
@@ -36,6 +37,7 @@ export class TopsWorkbench {
   } = {}) {
     this.onDraftChange = typeof onDraftChange === "function" ? onDraftChange : null;
     this.onTextBlur = typeof onTextBlur === "function" ? onTextBlur : null;
+    this.onStartDictation = typeof onStartDictation === "function" ? onStartDictation : null;
     this.onButtonPointerDown = typeof onButtonPointerDown === "function" ? onButtonPointerDown : null;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.onDelete = typeof onDelete === "function" ? onDelete : null;
@@ -105,6 +107,7 @@ export class TopsWorkbench {
     this.sharedEditboxCore = new SharedEditboxCore({
       onDraftChange: () => this._emitDraftChange(),
       onTextBlur: (payload) => this._emitTextBlur(payload),
+      onStartDictation: (target) => this._emitStartDictation(target),
     });
   }
 
@@ -154,6 +157,10 @@ export class TopsWorkbench {
 
   _emitTextBlur(payload) {
     if (this.onTextBlur) this.onTextBlur(payload || {});
+  }
+
+  _emitStartDictation(target) {
+    if (this.onStartDictation) this.onStartDictation(target);
   }
 
   getDraft() {

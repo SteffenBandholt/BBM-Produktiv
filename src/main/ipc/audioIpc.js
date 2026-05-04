@@ -1,4 +1,4 @@
-const { BrowserWindow, dialog, ipcMain } = require("electron");
+const { BrowserWindow, dialog, ipcMain, app } = require("electron");
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
@@ -20,10 +20,12 @@ const { createSuggestionApplyService } = require("../services/audio/SuggestionAp
 const { createWhisperCppEngine } = require("../services/audio/engines/WhisperCppEngine");
 const {
   LICENSE_FEATURES,
-  enforceLicensedFeature,
   toLicenseErrorPayload,
 } = require("../licensing/featureGuard");
+const { requireFeature } = require("../licensing/licenseService");
 const { isDevAudioSuggestionsEnabled } = require("../licensing/featureGuard");
+
+const DEV_AUDIO_DICTATION_UNLOCK_KEY = "dev.audioDictationUnlock";
 
 const AUDIO_FILE_FILTER = [
   {
@@ -47,7 +49,26 @@ function _buildApplyMessage(result) {
 }
 
 function _ensureAudioLicensed() {
-  enforceLicensedFeature(LICENSE_FEATURES.DIKTAT);
+  if (app.isPackaged) {
+    requireFeature(LICENSE_FEATURES.DIKTAT);
+    return;
+  }
+
+  const explicit = String(process.env.BBM_DEV_UNLOCK_AUDIO || "").trim().toLowerCase();
+  if (["1", "true", "yes", "on"].includes(explicit)) {
+    return;
+  }
+
+  try {
+    const settings = appSettingsRepo.appSettingsGetMany([DEV_AUDIO_DICTATION_UNLOCK_KEY]) || {};
+    if (String(settings[DEV_AUDIO_DICTATION_UNLOCK_KEY] || "").trim() === "1") {
+      return;
+    }
+  } catch (_err) {
+    // ignore and fall through to license check
+  }
+
+  requireFeature(LICENSE_FEATURES.DIKTAT);
 }
 
 function _toAudioErrorPayload(err) {

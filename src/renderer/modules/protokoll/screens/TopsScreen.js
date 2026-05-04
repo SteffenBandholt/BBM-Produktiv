@@ -20,6 +20,8 @@ import { shouldShowWorkbench } from "../shouldShowWorkbench.js";
 import { buildWorkbenchVm } from "../buildWorkbenchVm.js";
 import { focusCreatedTopAfterReload } from "../topCreateFocus.js";
 import { normalizeTopFilterMode } from "../topFilterMode.js";
+import { attachAudioFeature } from "../../../features/audio/AudioFeature.js";
+import { DictationController } from "../../../features/audio-dictation/DictationController.js";
 
 function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
   return {
@@ -64,6 +66,8 @@ export default class TopsScreen {
     this.sheetPaper = null;
     this.editArea = null;
     this.editCanvas = null;
+    this.btnTitleDictate = null;
+    this.btnLongDictate = null;
 
     this._sidebarEl = null;
     this._sidebarDisplay = "";
@@ -86,6 +90,11 @@ export default class TopsScreen {
   _buildProtocolModuleRuntime(options = {}) {
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.assigneeDataSource = options.assigneeDataSource || new TopsAssigneeDataSource();
+    attachAudioFeature(this);
+    this.dictationController = new DictationController({
+      view: this,
+      ensureAudioAvailable: (opts) => this._ensureAudioAvailable?.(opts),
+    });
     this.store = createTopsStore(
       buildInitialProtocolScreenState({
         projectId: this.projectId,
@@ -189,8 +198,12 @@ export default class TopsScreen {
   // UI-/View-nahe Host-Logik im Modul `Protokoll`:
   // Der Screen bleibt Verdrahtungsschicht; gemeinsamer Bearbeitungskern liegt weiterhin ausserhalb.
   _buildProtocolWorkbenchHost() {
-    this.workbench = new TopsWorkbench(this._createProtocolWorkbenchUiAdapter());
+    this.workbench = new TopsWorkbench({
+      ...this._createProtocolWorkbenchUiAdapter(),
+      onStartDictation: (target) => this._startDictation({ target }),
+    });
     this.editCanvas.appendChild(this.workbench.root);
+    this._syncDictationButtonRefs();
   }
 
   _createProtocolWorkbenchActionBridge() {
@@ -497,6 +510,72 @@ export default class TopsScreen {
 
     this.workbench.setState(vm);
     this._applyAmpelVisibility();
+    this._syncDictationButtonRefs();
+    this._updateDictationButtons({
+      readOnly: !!state.isReadOnly,
+      busy: !!(state.isWriting || state.isLoading),
+      meetingId: state.meetingId || this.meetingId || null,
+    });
+  }
+
+  _syncDictationButtonRefs() {
+    const core = this.workbench?.sharedEditboxCore || null;
+    this.btnTitleDictate = core?.shortDictateButton || null;
+    this.btnLongDictate = core?.longDictateButton || null;
+  }
+
+  get selectedTopId() {
+    return this.store?.getState?.()?.selectedTopId ?? null;
+  }
+
+  get selectedTop() {
+    return getSelectedTop(this.store?.getState?.() || null);
+  }
+
+  get inpTitle() {
+    return this.workbench?.sharedEditboxCore?.editbox?.shortInput || null;
+  }
+
+  get taLongtext() {
+    return this.workbench?.sharedEditboxCore?.editbox?.longInput || null;
+  }
+
+  get titleCountEl() {
+    return this.workbench?.sharedEditboxCore?.editbox?.shortCounter || null;
+  }
+
+  get longCountEl() {
+    return this.workbench?.sharedEditboxCore?.editbox?.longCounter || null;
+  }
+
+  _titleMax() {
+    return Number(this.inpTitle?.maxLength || 100) || 100;
+  }
+
+  _longMax() {
+    const current = Number(this.taLongtext?.maxLength || 500);
+    return Number.isFinite(current) && current > 0 ? current : 500;
+  }
+
+  _clampStr(value, maxLen = 0) {
+    const text = String(value ?? "");
+    const limit = Number(maxLen);
+    if (!Number.isFinite(limit) || limit <= 0) return text;
+    return text.slice(0, limit);
+  }
+
+  _normTitle(value) {
+    return String(value ?? "").trim().replace(/\s+/g, " ");
+  }
+
+  _normLong(value) {
+    return String(value ?? "").replace(/\r\n/g, "\n").trimEnd();
+  }
+
+  _updateCharCounters() {
+    const core = this.workbench?.sharedEditboxCore?.editbox || null;
+    if (!core || typeof core._updateCounters !== "function") return;
+    core._updateCounters();
   }
 
   _syncScreenState() {
@@ -551,6 +630,27 @@ export default class TopsScreen {
 
   _handleWorkbenchDraftChange(draft) {
     this.commands.updateDraft(draft || {});
+    this._syncProtocolWorkbenchHostState();
+  }
+
+  _startDictation(options = {}) {
+    const state = this.store?.getState?.() || {};
+    return this.dictationController?.start({
+      ...options,
+      meetingId: options?.meetingId ?? state.meetingId ?? this.meetingId ?? null,
+      projectId: options?.projectId ?? state.projectId ?? this.projectId ?? null,
+    });
+  }
+
+  _updateDictationButtons(options = {}) {
+    return this.dictationController?.updateButtons(options);
+  }
+
+  _destroyDictationController() {
+    return this.dictationController?.destroy?.();
+  }
+
+  applyEditBoxState() {
     this._syncProtocolWorkbenchHostState();
   }
 
@@ -911,6 +1011,7 @@ export default class TopsScreen {
       showLongtextInList,
     });
     await this._reloadTops({ keepSelection: true });
+    await this._loadAudioLicenseState(true);
     this._syncScreenState();
   }
 
@@ -920,6 +1021,8 @@ export default class TopsScreen {
 
   async destroy() {
     await this.closeFlow?.destroy?.();
+    this._destroyAudioFeature?.();
+    this._destroyDictationController?.();
     this._showSidebar();
   }
 }

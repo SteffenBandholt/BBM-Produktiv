@@ -13,6 +13,12 @@ async function runTopsScreenIntegrationTests(run) {
   const ProjectContextQuicklane = (await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/ui/ProjectContextQuicklane.js")
   )).default;
+  const { DictationController } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/features/audio-dictation/DictationController.js")
+  );
+  const { attachAudioFeature } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/features/audio/AudioFeature.js")
+  );
   const { EditboxShell } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/core/editbox/EditboxShell.js")
   );
@@ -522,6 +528,220 @@ async function runTopsScreenIntegrationTests(run) {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
     }
+  });
+
+  await run("Tops v2 Integration: Diktat-Buttons bleiben ohne Freischaltung verborgen", () => {
+    const doc = createFakeDocument();
+    const view = {
+      btnTitleDictate: doc.createElement("button"),
+      btnLongDictate: doc.createElement("button"),
+      _audioLicensed: false,
+      _audioDevOverride: false,
+      isReadOnly: false,
+      _busy: false,
+      meetingId: "21",
+      selectedTop: { id: 1 },
+      _audioLicenseMessage: "Audio-Funktion ist fuer diese Lizenz nicht freigeschaltet.",
+    };
+    const controller = new DictationController({ view, ensureAudioAvailable: async () => true });
+
+    controller.updateButtons({ meetingId: "21" });
+
+    assert.equal(view.btnTitleDictate.style.display, "none");
+    assert.equal(view.btnLongDictate.style.display, "none");
+  });
+
+  await run("Tops v2 Integration: Diktat schreibt in Kurz- und Langtextfeld", async () => {
+    const doc = createFakeDocument();
+    const shortInput = doc.createElement("input");
+    const longInput = doc.createElement("textarea");
+    const view = {
+      inpTitle: shortInput,
+      taLongtext: longInput,
+      _audioLicensed: true,
+      _audioDevOverride: false,
+      isReadOnly: false,
+      _busy: false,
+      meetingId: "21",
+      selectedTop: { id: 1 },
+      _audioLicenseMessage: "",
+      _updateCharCountersCalled: 0,
+      _updateCharCounters() {
+        this._updateCharCountersCalled += 1;
+      },
+    };
+    const controller = new DictationController({ view, ensureAudioAvailable: async () => true });
+
+    await controller._applyDictationTextToField("Hallo Welt", "shortText");
+    assert.equal(shortInput.value, "Hallo Welt");
+    assert.equal(view._updateCharCountersCalled > 0, true);
+
+    longInput.value = "Alt";
+    await controller._applyDictationTextToField("Neuer Satz", "longText");
+    assert.equal(String(longInput.value || "").includes("Neuer Satz"), true);
+    assert.equal(view._updateCharCountersCalled > 1, true);
+  });
+
+  await run("AudioFeature: Diktat-Testfreigabe aktiviert die Diktat-Buttons ohne Lizenzfeature", async () => {
+    const doc = createFakeDocument();
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const view = {
+      btnTitleDictate: doc.createElement("button"),
+      btnLongDictate: doc.createElement("button"),
+      _busy: false,
+      isReadOnly: false,
+      meetingId: "21",
+      selectedTop: { id: 1 },
+      audioSuggestionsFlow: { applyReadOnlyState() {} },
+    };
+    globalThis.document = doc;
+    globalThis.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: { "dev.audioDictationUnlock": "1" },
+        }),
+        licenseGetStatus: async () => ({ ok: true, valid: true, features: [] }),
+      },
+    };
+
+    try {
+      attachAudioFeature(view);
+      view.dictationController = new DictationController({
+        view,
+        ensureAudioAvailable: async () => true,
+      });
+
+      const licensed = await view._loadAudioLicenseState(true);
+      assert.equal(licensed, true);
+      assert.equal(view._audioLicensed, true);
+      assert.equal(view._audioDevOverride, true);
+      assert.equal(view.btnTitleDictate.style.display, "inline-flex");
+      assert.equal(view.btnLongDictate.style.display, "inline-flex");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("AudioFeature: Lizenzfeature audio aktiviert die Diktat-Buttons", async () => {
+    const doc = createFakeDocument();
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const view = {
+      btnTitleDictate: doc.createElement("button"),
+      btnLongDictate: doc.createElement("button"),
+      _busy: false,
+      isReadOnly: false,
+      meetingId: "21",
+      selectedTop: { id: 1 },
+      audioSuggestionsFlow: { applyReadOnlyState() {} },
+    };
+    globalThis.document = doc;
+    globalThis.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: { "dev.audioDictationUnlock": "0" },
+        }),
+        licenseGetStatus: async () => ({ ok: true, valid: true, features: ["audio"] }),
+      },
+    };
+
+    try {
+      attachAudioFeature(view);
+      view.dictationController = new DictationController({
+        view,
+        ensureAudioAvailable: async () => true,
+      });
+
+      const licensed = await view._loadAudioLicenseState(true);
+      assert.equal(licensed, true);
+      assert.equal(view._audioLicensed, true);
+      assert.equal(view._audioDevOverride, false);
+      assert.equal(view.btnTitleDictate.style.display, "inline-flex");
+      assert.equal(view.btnLongDictate.style.display, "inline-flex");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("AudioFeature: Lizenzfeature diktat aktiviert die Diktat-Buttons", async () => {
+    const doc = createFakeDocument();
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const view = {
+      btnTitleDictate: doc.createElement("button"),
+      btnLongDictate: doc.createElement("button"),
+      _busy: false,
+      isReadOnly: false,
+      meetingId: "21",
+      selectedTop: { id: 1 },
+      audioSuggestionsFlow: { applyReadOnlyState() {} },
+    };
+    globalThis.document = doc;
+    globalThis.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: { "dev.audioDictationUnlock": "0" },
+        }),
+        licenseGetStatus: async () => ({ ok: true, valid: true, features: ["diktat"] }),
+      },
+    };
+
+    try {
+      attachAudioFeature(view);
+      view.dictationController = new DictationController({
+        view,
+        ensureAudioAvailable: async () => true,
+      });
+
+      const licensed = await view._loadAudioLicenseState(true);
+      assert.equal(licensed, true);
+      assert.equal(view._audioLicensed, true);
+      assert.equal(view._audioDevOverride, false);
+      assert.equal(view.btnTitleDictate.style.display, "inline-flex");
+      assert.equal(view.btnLongDictate.style.display, "inline-flex");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Diktat-Buttons erscheinen mit Lizenz oder Dev-Freigabe", () => {
+    const doc = createFakeDocument();
+    const view = {
+      btnTitleDictate: doc.createElement("button"),
+      btnLongDictate: doc.createElement("button"),
+      _audioLicensed: false,
+      _audioDevOverride: true,
+      isReadOnly: false,
+      _busy: false,
+      meetingId: "21",
+      selectedTop: { id: 1 },
+      _audioLicenseMessage: "",
+    };
+    const controller = new DictationController({ view, ensureAudioAvailable: async () => true });
+
+    controller.updateButtons({ meetingId: "21" });
+
+    assert.equal(view.btnTitleDictate.style.display, "inline-flex");
+    assert.equal(view.btnLongDictate.style.display, "inline-flex");
+    assert.equal(view.btnTitleDictate.children.length, 1);
+    assert.equal(view.btnTitleDictate.children[0].tagName, "SVG");
+    assert.equal(view.btnTitleDictate.children[0].children.length >= 4, true);
+
+    controller._audioDictationActive = true;
+    controller._audioDictationTarget = "shortText";
+    controller.updateButtons({ meetingId: "21" });
+
+    assert.equal(view.btnTitleDictate.children.length, 2);
+    assert.equal(view.btnTitleDictate.children[1].style.color, "#dc2626");
+    assert.equal(String(view.btnTitleDictate.title || "").includes("Aufnahme"), true);
+    assert.equal(view.btnLongDictate.disabled, true);
   });
 
   await run("Tops v2 Integration: Save/Delete + Reload haelt Zustand konsistent", async () => {

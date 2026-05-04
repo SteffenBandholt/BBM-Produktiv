@@ -5002,6 +5002,7 @@ export default class SettingsView {
   async _openDevelopmentModal() {
     const api = window.bbmDb || {};
     const has = (name) => typeof api?.[name] === "function";
+    const DEV_AUDIO_DICTATION_UNLOCK_KEY = "dev.audioDictationUnlock";
     const clampInt = (val, min, max, fallback) => {
       const n = Math.floor(Number(val));
       if (!Number.isFinite(n) || n <= 0) return fallback;
@@ -5060,6 +5061,10 @@ export default class SettingsView {
     const dbCard = mkCard("DB-Diagnose", "Aktive DB, Legacy und Importpfade prüfen.");
     const topsCard = mkCard("Textgrenzen für TOPs", "Maximale Länge für Kurztext und Langtext in TOPs.");
     const themeCard = mkCard("Farbschema", "Start-Defaults des Themes verwalten.");
+    const dictationDevCard = mkCard(
+      "Diktat-Testfreigabe",
+      "Aktiviert Diktat unabhängig von der Lizenz für Entwicklung und Prüfung."
+    );
 
     const btn = (label, primary = false) => {
       const el = document.createElement("button");
@@ -5305,6 +5310,59 @@ export default class SettingsView {
     themeActions.append(btnThemeLoad, btnThemeSave, btnThemeApply);
     themeCard.box.append(themeInfo, themeActions);
 
+    const dictationDevRow = document.createElement("label");
+    dictationDevRow.style.display = "flex";
+    dictationDevRow.style.alignItems = "center";
+    dictationDevRow.style.gap = "8px";
+    dictationDevRow.style.fontSize = "12px";
+    dictationDevRow.style.cursor = "pointer";
+    const dictationDevEnabled = document.createElement("input");
+    dictationDevEnabled.type = "checkbox";
+    const dictationDevLabel = document.createElement("span");
+    dictationDevLabel.textContent = "Diktat-Testfreigabe aktiv";
+    const dictationDevMsg = document.createElement("div");
+    dictationDevMsg.style.fontSize = "12px";
+    dictationDevMsg.style.opacity = "0.78";
+    const loadDictationDevSetting = async () => {
+      if (!has("appSettingsGetMany")) {
+        dictationDevEnabled.disabled = true;
+        dictationDevMsg.textContent = "Settings-API fehlt.";
+        return;
+      }
+      const res = await api.appSettingsGetMany([DEV_AUDIO_DICTATION_UNLOCK_KEY]);
+      if (!res?.ok) {
+        dictationDevMsg.textContent = res?.error || "Diktat-Testfreigabe konnte nicht geladen werden.";
+        return;
+      }
+      dictationDevEnabled.checked = String(res.data?.[DEV_AUDIO_DICTATION_UNLOCK_KEY] || "").trim() === "1";
+      dictationDevMsg.textContent = dictationDevEnabled.checked
+        ? "Diktat ist testweise freigeschaltet."
+        : "Diktat ist nur per Lizenz oder Testfreigabe aktiv.";
+    };
+    const saveDictationDevSetting = async () => {
+      if (!has("appSettingsSetMany")) {
+        dictationDevMsg.textContent = "Settings-API fehlt.";
+        return false;
+      }
+      const res = await api.appSettingsSetMany({
+        [DEV_AUDIO_DICTATION_UNLOCK_KEY]: dictationDevEnabled.checked ? "1" : "0",
+      });
+      if (!res?.ok) {
+        dictationDevMsg.textContent = res?.error || "Diktat-Testfreigabe konnte nicht gespeichert werden.";
+        return false;
+      }
+      dictationDevMsg.textContent = dictationDevEnabled.checked
+        ? "Diktat-Testfreigabe aktiviert."
+        : "Diktat-Testfreigabe deaktiviert.";
+      window.dispatchEvent(new Event("bbm:audio-dev-unlock-changed"));
+      return true;
+    };
+    dictationDevEnabled.addEventListener("change", () => {
+      void saveDictationDevSetting();
+    });
+    dictationDevRow.append(dictationDevEnabled, dictationDevLabel);
+    dictationDevCard.box.append(dictationDevRow, dictationDevMsg);
+
     const mkScaleGroup = (labelText, buttons) => {
       const row = document.createElement("div");
       row.style.display = "grid";
@@ -5339,6 +5397,7 @@ export default class SettingsView {
       { key: "version", label: "Versionierung", el: versionCard.box },
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
       { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
+      { key: "dictation", label: "Diktat-Testfreigabe", el: dictationDevCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
     ];
     const tabHead = document.createElement("div");
@@ -5372,6 +5431,7 @@ export default class SettingsView {
       addTabBtn("Versionierung", "version"),
       addTabBtn("DB-Diagnose", "db"),
       addTabBtn("Protokoll-Textgrenzen", "tops"),
+      addTabBtn("Diktat-Testfreigabe", "dictation"),
       addTabBtn("Farbschema", "theme")
     );
     tabBody.append(...tabs.map((t) => t.el));
@@ -5380,6 +5440,7 @@ export default class SettingsView {
     await loadVersioningData();
     await loadDbDiagnostics();
     await loadTopLimitSettings();
+    await loadDictationDevSetting();
     setTab("version");
 
     this._openSettingsModal({

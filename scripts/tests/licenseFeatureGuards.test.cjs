@@ -34,13 +34,24 @@ async function runLicenseFeatureGuardTests(run) {
   const audioIpc = read("src/main/ipc/audioIpc.js");
   const mainSource = read("src/main/main.js");
   const projectsIpc = read("src/main/ipc/projectsIpc.js");
+  const topsScreenSource = read("src/renderer/modules/protokoll/screens/TopsScreen.js");
 
   await run("License-Guard: PDF-IPC prüft Protokoll-Modul", () => {
     assert.equal(printIpc.includes('_enforceFeature("protokoll");'), true);
   });
 
   await run("License-Guard: Audio-IPC prüft Diktat-Feature", () => {
-    assert.equal(audioIpc.includes("enforceLicensedFeature(LICENSE_FEATURES.DIKTAT);"), true);
+    assert.equal(audioIpc.includes("requireFeature(LICENSE_FEATURES.DIKTAT);"), true);
+    assert.equal(audioIpc.includes("dev.audioDictationUnlock"), true);
+  });
+
+  await run("License-Guard: TopsScreen verdrahtet Diktat statt TopsView", () => {
+    assert.equal(topsScreenSource.includes("attachAudioFeature(this);"), true);
+    assert.equal(topsScreenSource.includes("new DictationController({"), true);
+    assert.equal(topsScreenSource.includes("onStartDictation"), true);
+    assert.equal(topsScreenSource.includes("_syncDictationButtonRefs"), true);
+    assert.equal(topsScreenSource.includes("_updateDictationButtons"), true);
+    assert.equal(topsScreenSource.includes("applyEditBoxState()"), true);
   });
 
   await run("License-Guard: Mail-IPC prüft Protokoll-Modul", () => {

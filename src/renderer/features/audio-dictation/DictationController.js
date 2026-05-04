@@ -21,6 +21,65 @@ export class DictationController {
     this.transcriptionService = new TranscriptionService();
   }
 
+  _createMicrophoneIcon(doc) {
+    const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    svg.setAttribute("width", "14");
+    svg.setAttribute("height", "14");
+    svg.style.display = "block";
+    svg.style.flex = "0 0 auto";
+    svg.style.stroke = "currentColor";
+    svg.style.fill = "none";
+    svg.style.strokeWidth = "1.8";
+    svg.style.strokeLinecap = "round";
+    svg.style.strokeLinejoin = "round";
+
+    const body = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    body.setAttribute("d", "M12 14a3 3 0 0 0 3-3V7a3 3 0 1 0-6 0v4a3 3 0 0 0 3 3Z");
+    const stem = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    stem.setAttribute("d", "M8 11a4 4 0 0 0 8 0");
+    const base = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    base.setAttribute("d", "M12 14v4");
+    const stand = doc.createElementNS("http://www.w3.org/2000/svg", "path");
+    stand.setAttribute("d", "M9 18h6");
+
+    svg.append(body, stem, base, stand);
+    return svg;
+  }
+
+  _renderButtonContent(btn, { active = false } = {}) {
+    if (!btn) return;
+    const doc = btn.ownerDocument || (typeof document !== "undefined" ? document : null);
+    if (!doc?.createElement) return;
+    btn.replaceChildren();
+    btn.style.display = "inline-flex";
+    btn.style.alignItems = "center";
+    btn.style.justifyContent = "center";
+    btn.style.gap = "4px";
+    btn.style.minWidth = "32px";
+
+    const mic = this._createMicrophoneIcon(doc);
+
+    btn.append(mic);
+
+    if (active) {
+      const dot = doc.createElement("span");
+      dot.textContent = "●";
+      dot.setAttribute("aria-hidden", "true");
+      dot.style.color = "#dc2626";
+      dot.style.fontSize = "10px";
+      dot.style.lineHeight = "1";
+      btn.append(dot);
+      btn.title = "Aufnahme läuft – klicken zum Stoppen";
+      btn.setAttribute("aria-label", "Aufnahme läuft – klicken zum Stoppen");
+    } else {
+      btn.title = "Diktat starten";
+      btn.setAttribute("aria-label", "Diktat starten");
+    }
+  }
+
   // UI-nahe Nutzung des Audio-Addons:
   // Der Controller steuert Feld-Diktat und Term-Hinweise,
   // die technische Transkriptionslogik bleibt im Audio-Dienst.
@@ -41,14 +100,21 @@ export class DictationController {
 
     const applyBtnState = (btn, isTarget) => {
       if (!btn) return;
+      if (audioLocked) {
+        btn.style.display = "none";
+        btn.replaceChildren();
+        btn.title = view._audioLicenseMessage || "Audio-Funktion ist fuer diese Lizenz nicht freigeschaltet.";
+        btn.setAttribute("aria-label", btn.title);
+        btn.disabled = true;
+        btn.style.opacity = "0.65";
+        return;
+      }
+      btn.style.display = "inline-flex";
       const active = this._audioDictationActive && isTarget;
       const disallowBecauseOtherTarget = this._audioDictationActive && !isTarget;
       btn.disabled = disabledBase || this._audioDictationBusy || disallowBecauseOtherTarget;
-      btn.textContent = active ? "Stopp" : "Diktat";
       btn.style.opacity = btn.disabled ? "0.65" : "1";
-      if (audioLocked && view._audioLicenseMessage) {
-        btn.title = view._audioLicenseMessage;
-      }
+      this._renderButtonContent(btn, { active });
     };
 
     applyBtnState(btnShort, this._audioDictationTarget === "shortText");

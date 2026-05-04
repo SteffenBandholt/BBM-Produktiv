@@ -1,4 +1,5 @@
 import { EditboxShell } from "../../core/editbox/index.js";
+import { applyPopupButtonStyle } from "../../ui/popupButtonStyles.js";
 import {
   normalizeTopLongText,
   normalizeTopShortText,
@@ -33,9 +34,11 @@ function buildEditboxFlagsFromEditorValue(editorValue = {}) {
 }
 
 export class SharedEditboxCore {
-  constructor({ onDraftChange, onTextBlur } = {}) {
+  constructor({ onDraftChange, onTextBlur, onStartDictation } = {}) {
     this.onDraftChange = typeof onDraftChange === "function" ? onDraftChange : null;
     this.onTextBlur = typeof onTextBlur === "function" ? onTextBlur : null;
+    this.onStartDictation =
+      typeof onStartDictation === "function" ? onStartDictation : null;
 
     this.editbox = new EditboxShell();
     this.editbox.setLimits({ shortText: 70 });
@@ -46,6 +49,7 @@ export class SharedEditboxCore {
     this.editbox.setCounterFormatter((evaluation) => String(evaluation?.remaining ?? ""));
 
     this._configurePresentation();
+    this._buildDictationButtons();
     this._bindDraftChangeSources();
   }
 
@@ -70,6 +74,38 @@ export class SharedEditboxCore {
     this.editbox.flagsWrap.addEventListener("change", () => this._emitDraftChange());
     this.editbox.shortInput.addEventListener("blur", () => this._emitTextBlur("shortText"));
     this.editbox.longInput.addEventListener("blur", () => this._emitTextBlur("longText"));
+  }
+
+  _buildDictationButtons() {
+    const createButton = (target, title) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bbm-tops-workbench-btn bbm-tops-workbench-btn-neutral bbm-tops-dictation-btn";
+      btn.setAttribute("aria-label", title);
+      btn.title = title;
+      btn.style.display = "none";
+      btn.onclick = () => {
+        if (this.onStartDictation) this.onStartDictation(target);
+      };
+      applyPopupButtonStyle(btn, { variant: "ghost" });
+      return btn;
+    };
+
+    const appendToHost = (host, button, fallbackHost) => {
+      const targetHost =
+        host && typeof host.append === "function"
+          ? host
+          : fallbackHost && typeof fallbackHost.append === "function"
+            ? fallbackHost
+            : null;
+      if (!targetHost) return;
+      targetHost.append(button);
+    };
+
+    this.shortDictateButton = createButton("shortText", "Diktat starten");
+    this.longDictateButton = createButton("longText", "Diktat starten");
+    appendToHost(this.shortLabel, this.shortDictateButton, this.editbox.shortWrap);
+    appendToHost(this.longLabel, this.longDictateButton, this.editbox.longWrap);
   }
 
   _emitDraftChange() {
