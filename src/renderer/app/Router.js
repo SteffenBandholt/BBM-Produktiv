@@ -396,6 +396,18 @@ export default class Router {
     return isModuleActive(moduleId);
   }
 
+  _buildModuleDisabledPayload(projectId, meetingId = null) {
+    return {
+      ok: false,
+      blocked: true,
+      reason: "MODULE_DISABLED",
+      moduleId: PROTOKOLL_MODULE_ID,
+      projectId: projectId || null,
+      meetingId: meetingId || null,
+      target: "blocked",
+    };
+  }
+
   async _syncProjectContextUi() {
     await this.ensureCurrentProjectLabelLoaded({ force: false });
 
@@ -681,7 +693,7 @@ export default class Router {
     // Der Router umgeht diese Entscheidung an dieser Stelle nicht mehr stillschweigend.
     if (!this._isModuleActive(PROTOKOLL_MODULE_ID)) {
       alert("Das Protokoll-Modul ist im aktiven Modulumfang nicht freigegeben.");
-      return false;
+      return this._buildModuleDisabledPayload(effectiveProjectId, effectiveMeetingId);
     }
 
     // Modulinterner Unterbau und Workbench-Anbindung bleiben ausdruecklich im Fachmodul.
@@ -714,6 +726,8 @@ export default class Router {
         pageTitle: "Protokoll",
       }
     );
+
+    return true;
   }
 
   async openProjectProtocol(projectId, options = {}) {
@@ -732,14 +746,7 @@ export default class Router {
 
     if (!this._isModuleActive(PROTOKOLL_MODULE_ID)) {
       alert("Das Protokoll-Modul ist im aktiven Modulumfang nicht freigegeben.");
-      return {
-        ok: false,
-        reason: "module-disabled",
-        target: "blocked",
-        projectId: effectiveProjectId,
-        meetingId: null,
-        moduleId: PROTOKOLL_MODULE_ID,
-      };
+      return this._buildModuleDisabledPayload(effectiveProjectId, null);
     }
 
     const api = window.bbmDb || {};
@@ -765,15 +772,8 @@ export default class Router {
         ...options,
         returnContext,
       });
-      if (!opened) {
-        return {
-          ok: false,
-          reason: "module-disabled",
-          target: "blocked",
-          projectId: effectiveProjectId,
-          meetingId: decision.meetingId || null,
-          moduleId: PROTOKOLL_MODULE_ID,
-        };
+      if (opened === false || opened?.blocked) {
+        return this._buildModuleDisabledPayload(effectiveProjectId, decision.meetingId || null);
       }
       return {
         ...decision,

@@ -165,7 +165,7 @@ export default class ProjectsScreen {
           project: project || null,
         });
         if (typeof result === "object") {
-          if (!result?.ok && result?.reason === "module-disabled") {
+          if (result?.blocked) {
             this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
           }
           return !!result?.ok;
@@ -178,7 +178,7 @@ export default class ProjectsScreen {
           project: project || null,
         });
         if (typeof result === "object") {
-          if (!result?.ok && result?.reason === "module-disabled") {
+          if (result?.blocked) {
             this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
           }
           return !!result?.ok;
@@ -927,7 +927,7 @@ export default class ProjectsScreen {
       });
       if (typeof result === "object") {
         if (result?.ok) return true;
-        if (result?.reason === "module-disabled") {
+        if (result?.blocked) {
           this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
         }
         return false;
@@ -941,7 +941,7 @@ export default class ProjectsScreen {
       const result = await this.router.openProjectProtocol(project.id, { project });
       if (typeof result === "object") {
         if (result?.ok) return true;
-        if (result?.reason === "module-disabled") {
+        if (result?.blocked) {
           this._flashMsg("Protokoll ist fuer diese Lizenz nicht freigeschaltet.", 9000);
         }
         return false;
@@ -1352,7 +1352,7 @@ export default class ProjectsScreen {
 
       this._setProjectRuntimeContext(projectId, meeting.id);
       const opened = await this.router.showTops(meeting.id, projectId);
-      if (!opened) return false;
+      if (opened === false || opened?.blocked) return false;
       this._rememberLastProject(projectId);
       return true;
     } catch (err) {
@@ -1450,7 +1450,7 @@ export default class ProjectsScreen {
       this._setMsg("Öffne Protokoll...");
 
       const opened = await this.router.showTops(meetingId, projectId);
-      if (!opened) {
+      if (opened === false || opened?.blocked) {
         return false;
       }
 

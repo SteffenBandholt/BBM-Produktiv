@@ -487,7 +487,8 @@ async function runProjektverwaltungModuleTests(run) {
             calls.push({ type: "module", projectId, moduleId, options });
             return {
               ok: false,
-              reason: "module-disabled",
+              blocked: true,
+              reason: "MODULE_DISABLED",
               target: "blocked",
               projectId,
               meetingId: null,
@@ -528,6 +529,10 @@ async function runProjektverwaltungModuleTests(run) {
         },
       });
       assert.equal(calls.some((item) => item.type === "protocol"), false);
+      assert.equal(
+        calls.some((item) => item.type === "module" && item.moduleId === "protokoll"),
+        true
+      );
       assert.equal(
         calls.some((item) => item.type === "flash" && String(item.text || "").includes("nicht freigeschaltet")),
         true

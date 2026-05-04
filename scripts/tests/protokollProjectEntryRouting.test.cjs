@@ -112,6 +112,131 @@ async function runProtokollProjectEntryRoutingTests(run) {
     assert.equal(projectFirmsSource.includes("showTops(meetingId, pid)"), false);
     assert.equal(firmsPoolSource.includes("showTops(null, pid)"), false);
   });
+
+  await run("Protokoll-Projektpfad: openProjectProtocol liefert blocked-Payload bei deaktiviertem Modul", async () => {
+    const previousURL = global.URL;
+    const previousWindow = global.window;
+    const previousAlert = global.alert;
+    class URLShim extends previousURL {
+      constructor(spec, base) {
+        if (String(base || "").startsWith("data:") && String(spec || "").includes("tops.css")) {
+          super("file:///c:/_codex_stub/tops.css");
+          return;
+        }
+        super(spec, base);
+      }
+    }
+
+    global.URL = URLShim;
+    global.alert = () => {};
+    try {
+      const { default: Router } = await importEsmFromFile(
+        path.join(__dirname, "../../src/renderer/app/Router.js")
+      );
+
+      const calls = [];
+      global.window = {
+        bbmDb: {
+          async licenseGetStatus() {
+            return { ok: true, valid: true, modules: [] };
+          },
+          async meetingsListByProject(projectId) {
+            calls.push({ type: "meetingsListByProject", projectId });
+            return { ok: true, list: [] };
+          },
+        },
+      };
+
+      const router = new Router({
+        contentRoot: {
+          innerHTML: "",
+          appendChild() {},
+        },
+      });
+      router.showTops = async () => {
+        calls.push({ type: "showTops" });
+        return true;
+      };
+      router.showMeetings = async () => {
+        calls.push({ type: "showMeetings" });
+        return true;
+      };
+
+      const res = await router.openProjectProtocol("17", { project: { id: "17" } });
+      assert.deepEqual(res, {
+        ok: false,
+        blocked: true,
+        reason: "MODULE_DISABLED",
+        moduleId: "protokoll",
+        projectId: "17",
+        meetingId: null,
+        target: "blocked",
+      });
+      assert.equal(calls.some((item) => item.type === "meetingsListByProject"), false);
+      assert.equal(calls.some((item) => item.type === "showTops"), false);
+      assert.equal(calls.some((item) => item.type === "showMeetings"), false);
+    } finally {
+      global.window = previousWindow;
+      global.alert = previousAlert;
+      global.URL = previousURL;
+    }
+  });
+
+  await run("Protokoll-Projektpfad: openProjectModule reicht blocked-Payload durch", async () => {
+    const previousURL = global.URL;
+    const previousWindow = global.window;
+    const previousAlert = global.alert;
+    class URLShim extends previousURL {
+      constructor(spec, base) {
+        if (String(base || "").startsWith("data:") && String(spec || "").includes("tops.css")) {
+          super("file:///c:/_codex_stub/tops.css");
+          return;
+        }
+        super(spec, base);
+      }
+    }
+
+    global.URL = URLShim;
+    global.alert = () => {};
+    try {
+      const { default: Router } = await importEsmFromFile(
+        path.join(__dirname, "../../src/renderer/app/Router.js")
+      );
+
+      global.window = {
+        bbmDb: {
+          async licenseGetStatus() {
+            return { ok: true, valid: true, modules: [] };
+          },
+        },
+      };
+
+      const router = new Router({
+        contentRoot: {
+          innerHTML: "",
+          appendChild() {},
+        },
+      });
+
+      const res = await router.openProjectModule("17", "protokoll", {
+        project: { id: "17" },
+      });
+
+      assert.deepEqual(res, {
+        ok: false,
+        blocked: true,
+        reason: "MODULE_DISABLED",
+        moduleId: "protokoll",
+        projectId: "17",
+        meetingId: null,
+        target: "blocked",
+      });
+    } finally {
+      global.window = previousWindow;
+      global.alert = previousAlert;
+      global.URL = previousURL;
+    }
+  });
 }
 
 module.exports = { runProtokollProjectEntryRoutingTests };
