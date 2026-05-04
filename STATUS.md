@@ -1297,3 +1297,20 @@ Wichtig:
   - kein direkter Anschluss aus diesem Paket
 - Risiken/Hinweise:
   - Die Tops-Textschrift bleibt als separate Modul-/Top-Regel bestehen; Print bleibt bewusst unberuehrt.
+
+#### Paket: Settings-Übersicht als Accordion poliert
+- Status: erledigt
+- Beschreibung:
+  - Die Settings-Gruppen sind jetzt als einklappbare Accordions umgesetzt.
+  - `Allgemein` ist initial offen, die anderen Gruppen starten geschlossen.
+  - Kachel- und Gruppentexte sind ruhiger, dunkler und kompakter gestaltet.
+- Betroffene Dateien:
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Die Accordion-Logik speichert keinen Zustand; nach Reload startet die Übersicht wieder mit `Allgemein` offen.

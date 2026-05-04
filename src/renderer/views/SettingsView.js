@@ -5450,11 +5450,11 @@ export default class SettingsView {
       const tile = document.createElement("button");
       tile.type = "button";
       tile.style.textAlign = "left";
-      tile.style.border = "1px solid #d8dee6";
+      tile.style.border = "1px solid #d7dee8";
       tile.style.borderRadius = "14px";
       tile.style.background = "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)";
       tile.style.boxShadow = "0 1px 1px rgba(15, 23, 42, 0.03)";
-      tile.style.padding = "12px 14px";
+      tile.style.padding = "10px 12px";
       tile.style.cursor = "pointer";
       tile.style.userSelect = "none";
       tile.style.display = "flex";
@@ -5463,29 +5463,31 @@ export default class SettingsView {
       tile.style.gap = "4px";
       tile.style.minHeight = "0";
       tile.style.transition = "box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease";
+      tile.style.color = "#111827";
 
       const t = document.createElement("div");
       t.textContent = titleText;
-      t.style.fontWeight = "800";
+      t.style.fontWeight = "700";
       t.style.fontSize = "14px";
       t.style.letterSpacing = "0.01em";
       t.style.marginBottom = "0";
+      t.style.color = "#0f172a";
 
       const s = document.createElement("div");
       s.textContent = subText || "";
-      s.style.opacity = "0.75";
+      s.style.color = "#64748b";
       s.style.fontSize = "12px";
       s.style.lineHeight = "1.35";
       s.style.maxWidth = "62ch";
 
       tile.append(t, s);
       tile.addEventListener("mouseenter", () => {
-        tile.style.borderColor = "#c7d2e5";
+        tile.style.borderColor = "#93c5fd";
         tile.style.boxShadow = "0 6px 18px rgba(15, 23, 42, 0.06)";
         tile.style.transform = "translateY(-1px)";
       });
       tile.addEventListener("mouseleave", () => {
-        tile.style.borderColor = "#d8dee6";
+        tile.style.borderColor = "#d7dee8";
         tile.style.boxShadow = "0 1px 1px rgba(15, 23, 42, 0.03)";
         tile.style.transform = "translateY(0)";
       });
@@ -5496,39 +5498,76 @@ export default class SettingsView {
       return tile;
     };
 
-    const mkGroup = ({ titleText, subText, tiles = [], emptyText = "", variant = "default" }) => {
+    const mkGroup = ({
+      key,
+      titleText,
+      subText,
+      tiles = [],
+      emptyText = "",
+      variant = "default",
+      defaultOpen = false,
+    }) => {
       const group = document.createElement("section");
       group.style.display = "grid";
       group.style.gap = "10px";
-      group.style.padding = "14px";
+      group.style.padding = "12px 12px 10px";
       group.style.border = "1px solid #e5e7eb";
       group.style.borderRadius = "16px";
       group.style.background = variant === "dev" ? "linear-gradient(180deg, #f8fbff 0%, #ffffff 100%)" : "#fff";
       group.style.borderColor = variant === "dev" ? "#dbe7f5" : "#e5e7eb";
       group.style.boxShadow = "0 1px 0 rgba(15, 23, 42, 0.02)";
+      group.style.transition = "border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease";
+      group.dataset.settingsGroup = key || titleText;
 
-      const head = document.createElement("div");
+      const head = document.createElement("button");
+      head.type = "button";
       head.style.display = "grid";
-      head.style.gap = "4px";
+      head.style.gridTemplateColumns = "1fr auto";
+      head.style.alignItems = "start";
+      head.style.gap = "10px";
+      head.style.width = "100%";
+      head.style.border = "0";
+      head.style.background = "transparent";
+      head.style.padding = "0";
+      head.style.textAlign = "left";
+      head.style.cursor = "pointer";
+      head.style.color = "#111827";
+      head.setAttribute("aria-controls", `settings-group-body-${key || titleText}`);
+
+      const headText = document.createElement("div");
+      headText.style.display = "grid";
+      headText.style.gap = "3px";
 
       const groupTitle = document.createElement("div");
       groupTitle.textContent = titleText;
-      groupTitle.style.fontWeight = "800";
+      groupTitle.style.fontWeight = "700";
       groupTitle.style.fontSize = "13px";
-      groupTitle.style.textTransform = "uppercase";
-      groupTitle.style.letterSpacing = "0.04em";
+      groupTitle.style.letterSpacing = "0.01em";
       groupTitle.style.color = "#0f172a";
 
       const groupText = document.createElement("div");
       groupText.textContent = subText || "";
       groupText.style.fontSize = "12px";
-      groupText.style.opacity = "0.72";
+      groupText.style.color = "#64748b";
       groupText.style.lineHeight = "1.35";
       groupText.style.maxWidth = "68ch";
+
+      const chevron = document.createElement("div");
+      chevron.textContent = "▸";
+      chevron.style.fontSize = "16px";
+      chevron.style.lineHeight = "1";
+      chevron.style.color = "#2563eb";
+      chevron.style.paddingTop = "1px";
+      chevron.style.flex = "0 0 auto";
+
+      headText.append(groupTitle, groupText);
+      head.append(headText, chevron);
 
       const body = document.createElement("div");
       body.style.display = "grid";
       body.style.gap = "10px";
+      body.id = `settings-group-body-${key || titleText}`;
+      body.style.paddingTop = "2px";
 
       if (tiles.length) {
         body.append(...tiles);
@@ -5536,7 +5575,7 @@ export default class SettingsView {
         const note = document.createElement("div");
         note.textContent = emptyText;
         note.style.fontSize = "12px";
-        note.style.opacity = "0.72";
+        note.style.color = "#64748b";
         note.style.lineHeight = "1.35";
         note.style.padding = "10px 12px";
         note.style.border = "1px dashed #dbe3ee";
@@ -5545,8 +5584,20 @@ export default class SettingsView {
         body.append(note);
       }
 
-      head.append(groupTitle, groupText);
       group.append(head, body);
+      const applyOpenState = (open) => {
+        group.dataset.open = open ? "true" : "false";
+        body.style.display = open ? "grid" : "none";
+        chevron.textContent = open ? "▾" : "▸";
+        head.setAttribute("aria-expanded", open ? "true" : "false");
+        group.style.borderColor = open ? "#c7ddfa" : variant === "dev" ? "#dbe7f5" : "#e5e7eb";
+        group.style.boxShadow = open ? "0 6px 18px rgba(37, 99, 235, 0.06)" : "0 1px 0 rgba(15, 23, 42, 0.02)";
+        group.style.background = variant === "dev"
+          ? (open ? "linear-gradient(180deg, #f7fbff 0%, #ffffff 100%)" : "linear-gradient(180deg, #f8fbff 0%, #ffffff 100%)")
+          : "#fff";
+      };
+      head.onclick = () => applyOpenState(group.dataset.open !== "true");
+      applyOpenState(!!defaultOpen);
       return group;
     };
 
@@ -5623,30 +5674,36 @@ export default class SettingsView {
     });
 
     const groupGeneral = mkGroup({
+      key: "general",
       titleText: "Allgemein",
       subText: "Persoenliche Daten und Freischaltung.",
       tiles: [tileProfileAddress, tileLicense],
+      defaultOpen: true,
     });
 
     const groupInput = mkGroup({
+      key: "input",
       titleText: "Eingabe & Erfassung",
       subText: "Hilfsfunktionen fuer Erfassung und Sprache.",
       tiles: [tileDictationAudio],
     });
 
     const groupOutput = mkGroup({
+      key: "output",
       titleText: "Ausgabe & Kommunikation",
       subText: "Druck, Versand, Archiv und Speicherorte.",
       tiles: [tileOutputPrint, tileFirmRoles, tileArchive],
     });
 
     const groupModule = mkGroup({
+      key: "module",
       titleText: "Module",
       subText: "Fachmodule und Erweiterungen.",
       tiles: [tileProtocol],
     });
 
     const groupDev = mkGroup({
+      key: "dev",
       titleText: "Entwicklung",
       subText: "Technische Werkzeuge und Grenzen.",
       tiles: [tileDev],

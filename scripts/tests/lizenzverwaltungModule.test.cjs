@@ -1092,6 +1092,47 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(idx('titleText: "Module"') < idx('titleText: "Entwicklung"'), true);
     assert.equal(settingsViewSource.includes('addTabBtn("Diktat / Audio", "dictation")'), false);
     assert.equal(settingsViewSource.includes('{ key: "dictation", label: "Diktat / Audio", el: dictationSection.tab }'), false);
+    assert.equal(settingsViewSource.includes('group.dataset.settingsGroup = key || titleText;'), true);
+    assert.equal(settingsViewSource.includes('head.onclick = () => applyOpenState(group.dataset.open !== "true");'), true);
+    assert.equal(settingsViewSource.includes('chevron.textContent = open ? "▾" : "▸";'), true);
+    assert.equal(settingsViewSource.includes('tile.style.color = "#111827";'), true);
+    assert.equal(settingsViewSource.includes('t.style.color = "#0f172a";'), true);
+    assert.equal(settingsViewSource.includes('s.style.color = "#64748b";'), true);
+  });
+
+  await run("SettingsView: Accordion startet mit Allgemein offen und Rest zu", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+
+    global.document = createFakeDocument();
+    global.window = { bbmDb: {} };
+
+    try {
+      const view = new SettingsView({});
+      const root = view.render();
+      const groups = root.children[1].children;
+      const groupByName = Object.fromEntries(
+        groups.map((group) => [group.dataset.settingsGroup, group])
+      );
+
+      assert.equal(groupByName.general.dataset.open, "true");
+      assert.equal(groupByName.input.dataset.open, "false");
+      assert.equal(groupByName.output.dataset.open, "false");
+      assert.equal(groupByName.module.dataset.open, "false");
+      assert.equal(groupByName.dev.dataset.open, "false");
+      assert.equal(groupByName.general.children[1].style.display, "grid");
+      assert.equal(groupByName.input.children[1].style.display, "none");
+
+      groupByName.input.children[0].onclick();
+      assert.equal(groupByName.input.dataset.open, "true");
+      assert.equal(groupByName.input.children[1].style.display, "grid");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
   });
 
   await run("SettingsView: sichtbare Druckinhalt-Texte sind sprachlich geschaerft", () => {
@@ -1420,7 +1461,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("tabLicense.append(licenseBox, licenseGenBox);"), false);
   });
 
-  await run("SettingsView: neuer Adminbereich nutzt keine alten Popup-Callbacks", () => {
+  await run("SettingsView: keine alten Popup-Callbacks im sichtbaren Settings-Startfluss", () => {
     assert.equal(settingsViewSource.includes("onOpenLicenseEditor:"), false);
     assert.equal(settingsViewSource.includes("onOpenCustomerEditor:"), false);
     assert.equal(settingsViewSource.includes("onOpenProductScopeEditor:"), false);
