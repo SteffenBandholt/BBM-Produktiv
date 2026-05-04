@@ -912,6 +912,9 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("titleText: \"Ausgabe & Druck\""), true);
     assert.equal(settingsViewSource.includes("titleText: \"Protokoll\""), true);
     assert.equal(settingsViewSource.includes("titleText: \"Profil & Druck\""), false);
+    assert.equal(settingsViewSource.includes("_createOutputPrintContent"), true);
+    assert.equal(settingsViewSource.includes("await this._createOutputPrintContent();"), true);
+    assert.equal(settingsViewSource.includes('focusSection: "Footer"'), false);
     assert.equal(settingsViewSource.includes("subText: \"Nutzerprofil, Adresse und globale Stammdaten\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Footer, Druckränder, Drucklogos, Ausgabeordner und Versand\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Protokollbezeichnung und Vorbemerkung\""), true);
@@ -1191,21 +1194,52 @@ async function runLizenzverwaltungModuleTests(run) {
     }
   });
 
-  await run("SettingsView: Ausgabe & Druck oeffnet die Sammelmaske ohne PDF-Logo-Restpfad", async () => {
+  await run("SettingsView: Ausgabe & Druck oeffnet einen eigenen Dialogpfad", async () => {
     const { default: SettingsView } = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/views/SettingsView.js")
     );
     const previousDocument = global.document;
     const previousWindow = global.window;
     const opened = [];
+    const calls = { settings: [] };
 
     global.document = createFakeDocument();
     global.window = {
       bbmDb: {
-        userProfileGet: async () => ({ ok: true, profile: null }),
-        appSettingsGetMany: async () => ({ ok: true, data: {} }),
-        userProfileUpsert: async () => ({ ok: true }),
-        appSettingsSetMany: async () => ({ ok: true }),
+        userProfileGet: async () => ({
+          ok: true,
+          profile: {
+            name1: "Profilname 1",
+            name2: "Profilname 2",
+            street: "Profilstrasse 7",
+            zip: "12345",
+            city: "Profilstadt",
+          },
+        }),
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            "pdf.footerPlace": "Berlin",
+            "pdf.footerDate": "04.05.2026",
+            "pdf.footerName1": "",
+            "pdf.footerName2": "",
+            "pdf.footerRecorder": "Protokollant",
+            "pdf.footerStreet": "",
+            "pdf.footerZip": "",
+            "pdf.footerCity": "",
+            "pdf.footerUseUserData": "true",
+            "pdf.protocolsDir": "C:\\Temp\\Protokolle",
+            "print.v2.pagePadTopMm": "3",
+            "print.v2.pagePadLeftMm": "11",
+            "print.v2.pagePadRightMm": "11",
+            "print.v2.pagePadBottomMm": "1",
+            "print.v2.footerReserveMm": "10",
+          },
+        }),
+        appSettingsSetMany: async (payload) => {
+          calls.settings.push(payload);
+          return { ok: true };
+        },
       },
     };
 
@@ -1213,15 +1247,40 @@ async function runLizenzverwaltungModuleTests(run) {
       const view = new SettingsView({});
       view._openSettingsModal = (payload) => opened.push(payload);
 
-      await view._createLegacySettingsContent({ title: "Ausgabe & Druck", focusSection: "Footer" });
+      await view._createOutputPrintContent();
 
       assert.equal(opened.length, 1);
       assert.equal(opened[0].title, "Ausgabe & Druck");
       const contentText = collectFakeText(opened[0].content);
-      assert.equal(contentText.includes("Drucklogo 1"), true);
-      assert.equal(contentText.includes("Logo verwenden"), true);
-      assert.equal(contentText.includes("Position horizontal"), true);
-      assert.equal(contentText.includes("Logo-Datei, Position und Gr"), false);
+      assert.equal(contentText.includes("Footer / Drucksignatur"), true);
+      assert.equal(contentText.includes("Drucklayout"), true);
+      assert.equal(contentText.includes("Drucklogos verwalten"), true);
+      assert.equal(contentText.includes("Ausgabeordner / Speicherort"), true);
+      assert.equal(contentText.includes("Nutzername"), false);
+      assert.equal(contentText.includes("Firma"), false);
+      assert.equal(contentText.includes("Protokolltitel"), false);
+      assert.equal(contentText.includes("Vorbemerkung-Editor"), false);
+      assert.equal(contentText.includes("Profil / Adresse"), false);
+
+      const footerCard = opened[0].content[0].children[1];
+      const storageCard = opened[0].content[0].children[2];
+      const layoutCard = opened[0].content[0].children[3];
+      footerCard.children[2].children[1].value = "Stuttgart";
+      storageCard.children[2].children[1].value = "C:\\Daten\\Protokolle";
+      layoutCard.children[1].children[1].value = "4";
+      layoutCard.children[2].children[1].value = "12";
+      layoutCard.children[3].children[1].value = "12";
+      layoutCard.children[4].children[1].value = "2";
+      layoutCard.children[5].children[1].value = "8";
+
+      const saved = await opened[0].saveFn();
+      assert.equal(saved, true);
+      assert.equal(calls.settings.length >= 1, true);
+      assert.equal(calls.settings[0]["pdf.footerPlace"], "Stuttgart");
+      assert.equal(calls.settings[0]["pdf.protocolsDir"], "C:\\Daten\\Protokolle");
+      assert.equal(calls.settings[0]["print.v2.pagePadTopMm"], "4");
+      assert.equal(calls.settings[0]["print.v2.footerReserveMm"], "8");
+      assert.equal(calls.settings[0]["pdf.footerUseUserData"], "true");
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

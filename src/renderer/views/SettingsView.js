@@ -3962,6 +3962,26 @@ export default class SettingsView {
     target.appendChild(document.createTextNode(String(item)));
   }
 
+  _applyPdfFooterUserDefaultsToInputs(targets = {}, values, { overwriteExisting = false } = {}) {
+    const data = values || this._getNormalizedUserFooterDefaults();
+    const pairs = [
+      [targets.name1, data.name1],
+      [targets.name2, data.name2],
+      [targets.street, data.street],
+      [targets.zip, data.zip],
+      [targets.city, data.city],
+    ];
+
+    for (const [input, value] of pairs) {
+      if (!input) continue;
+      const current = String(input.value || "").trim();
+      if (current && !overwriteExisting) continue;
+      const next = String(value || "").trim();
+      if (!next) continue;
+      input.value = next;
+    }
+  }
+
   async _createProfileAddressContent() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
@@ -4040,6 +4060,9 @@ export default class SettingsView {
         profile = resProfile.profile || null;
       }
     }
+    const footerDefaults = profile
+      ? this._normalizeUserProfileRecord(profile)
+      : this._getNormalizedUserFooterDefaults();
 
     if (typeof api.appSettingsGetMany === "function") {
       const res = await api.appSettingsGetMany([
@@ -4147,6 +4170,350 @@ export default class SettingsView {
         }
         if (typeof window.dispatchEvent === "function") {
           window.dispatchEvent(new Event("bbm:header-refresh"));
+        }
+        this._setMsg("Gespeichert");
+        return true;
+      },
+      closeOnly: false,
+    });
+  }
+
+  async _createOutputPrintContent() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(720px, calc(100vw - 80px))";
+
+    const info = document.createElement("div");
+    info.style.fontSize = "12px";
+    info.style.opacity = "0.85";
+    info.textContent = "Footer, Druckränder, Drucklogos und Ausgabeordner.";
+    wrap.append(info);
+
+    const inputs = new Map();
+    this._settingsInputs = inputs;
+
+    const renderField = (field) => {
+      const row = document.createElement("label");
+      row.style.display = "grid";
+      row.style.gap = "4px";
+
+      const lbl = document.createElement("span");
+      lbl.textContent = field.label || field.key;
+      lbl.style.fontSize = "12px";
+
+      let inp;
+      if (field.type === "checkbox") {
+        inp = document.createElement("input");
+        inp.type = "checkbox";
+        const box = document.createElement("span");
+        box.style.display = "inline-flex";
+        box.style.alignItems = "center";
+        box.style.gap = "8px";
+        box.append(inp, document.createTextNode(field.checkboxLabel || "Aktiv"));
+        row.append(lbl, box);
+      } else {
+        inp = field.multiline ? document.createElement("textarea") : document.createElement("input");
+        inp.style.width = "100%";
+        if (field.type === "number") {
+          const limits = this._normalizePrintLayoutMmLimits(field.key);
+          if (limits) {
+            inp.type = "number";
+            inp.min = String(limits.min);
+            inp.max = String(limits.max);
+            inp.step = String(limits.step);
+            inp.inputMode = "numeric";
+          }
+        }
+        if (inp.tagName === "TEXTAREA") inp.rows = field.rows || 4;
+        row.append(lbl, inp);
+      }
+      inputs.set(field.key, inp);
+      return row;
+    };
+
+    const footerCard = document.createElement("div");
+    applyPopupCardStyle(footerCard);
+    footerCard.style.padding = "10px";
+    footerCard.style.display = "grid";
+    footerCard.style.gap = "8px";
+    const footerTitle = document.createElement("div");
+    footerTitle.textContent = "Footer / Drucksignatur";
+    footerTitle.style.fontWeight = "800";
+    footerCard.append(footerTitle);
+    const footerHint = document.createElement("div");
+    footerHint.textContent = "Fusszeilenangaben und Profil-/Adressbezug.";
+    footerHint.style.fontSize = "12px";
+    footerHint.style.opacity = "0.78";
+    footerCard.append(footerHint);
+
+    const footerFields = [
+      { key: "pdf.footerPlace", label: "Ort" },
+      { key: "pdf.footerDate", label: "Datum" },
+      { key: "pdf.footerName1", label: "Name 1" },
+      { key: "pdf.footerName2", label: "Name 2" },
+      { key: "pdf.footerRecorder", label: "Protokollfuehrer" },
+      { key: "pdf.footerStreet", label: "Strasse" },
+      { key: "pdf.footerZip", label: "PLZ" },
+      { key: "pdf.footerCity", label: "Ort (Adresse)" },
+      { key: "pdf.footerUseUserData", label: "Profil-/Adressdaten im Footer verwenden", type: "checkbox" },
+    ];
+    for (const field of footerFields) {
+      footerCard.append(
+        renderField({
+          ...field,
+          type: field.type || "text",
+          checkboxLabel: "Aktiv",
+        })
+      );
+    }
+
+    const storageCard = document.createElement("div");
+    applyPopupCardStyle(storageCard);
+    storageCard.style.padding = "10px";
+    storageCard.style.display = "grid";
+    storageCard.style.gap = "8px";
+    const storageTitle = document.createElement("div");
+    storageTitle.textContent = "Ausgabeordner / Speicherort";
+    storageTitle.style.fontWeight = "800";
+    storageCard.append(storageTitle);
+    const storageHint = document.createElement("div");
+    storageHint.textContent = "Ablageordner fuer Protokoll-PDFs und Ausgabe.";
+    storageHint.style.fontSize = "12px";
+    storageHint.style.opacity = "0.78";
+    storageCard.append(storageHint);
+    const protocolsDirRow = document.createElement("label");
+    protocolsDirRow.style.display = "grid";
+    protocolsDirRow.style.gap = "4px";
+    const protocolsDirLabel = document.createElement("span");
+    protocolsDirLabel.textContent = "Ausgabeordner";
+    protocolsDirLabel.style.fontSize = "12px";
+    const inpProtocolsDir = document.createElement("input");
+    inpProtocolsDir.type = "text";
+    inpProtocolsDir.style.width = "100%";
+    protocolsDirRow.append(protocolsDirLabel, inpProtocolsDir);
+    storageCard.append(protocolsDirRow);
+    inputs.set("pdf.protocolsDir", inpProtocolsDir);
+
+    const logosCard = document.createElement("div");
+    applyPopupCardStyle(logosCard);
+    logosCard.style.padding = "10px";
+    logosCard.style.display = "grid";
+    logosCard.style.gap = "8px";
+    const logosTitle = document.createElement("div");
+    logosTitle.textContent = "Drucklogos";
+    logosTitle.style.fontWeight = "800";
+    logosCard.append(logosTitle);
+    const logosHint = document.createElement("div");
+    logosHint.textContent = "Drucklogos weiterhin ueber den bestehenden Dialog verwalten.";
+    logosHint.style.fontSize = "12px";
+    logosHint.style.opacity = "0.78";
+    logosCard.append(logosHint);
+    const btnLogos = document.createElement("button");
+    btnLogos.type = "button";
+    btnLogos.textContent = "Drucklogos verwalten";
+    applyPopupButtonStyle(btnLogos);
+    btnLogos.onclick = async () => {
+      await this._openPrintLogosPopup();
+    };
+    logosCard.append(btnLogos);
+
+    const layoutCard = document.createElement("div");
+    applyPopupCardStyle(layoutCard);
+    layoutCard.style.padding = "10px";
+    layoutCard.style.display = "grid";
+    layoutCard.style.gap = "8px";
+    const layoutTitle = document.createElement("div");
+    layoutTitle.textContent = "Drucklayout";
+    layoutTitle.style.fontWeight = "800";
+    layoutCard.append(layoutTitle);
+    const layoutHint = document.createElement("div");
+    layoutHint.textContent = "Seitenraender und Footer-Abstand.";
+    layoutHint.style.fontSize = "12px";
+    layoutHint.style.opacity = "0.78";
+    layoutCard.append(layoutHint);
+    const layoutFields = [
+      { key: "print.v2.pagePadTopMm", label: "Rand oben (mm)", type: "number" },
+      { key: "print.v2.pagePadLeftMm", label: "Rand links (mm)", type: "number" },
+      { key: "print.v2.pagePadRightMm", label: "Rand rechts (mm)", type: "number" },
+      { key: "print.v2.pagePadBottomMm", label: "Rand unten (mm)", type: "number" },
+      { key: "print.v2.footerReserveMm", label: "Footer-Reserve (mm)", type: "number" },
+    ];
+    for (const field of layoutFields) {
+      layoutCard.append(
+        renderField({
+          ...field,
+          type: "number",
+        })
+      );
+    }
+    const layoutActions = document.createElement("div");
+    layoutActions.style.display = "flex";
+    layoutActions.style.gap = "8px";
+    layoutActions.style.flexWrap = "wrap";
+    const btnResetLayout = document.createElement("button");
+    btnResetLayout.type = "button";
+    btnResetLayout.textContent = "Standardwerte wiederherstellen";
+    applyPopupButtonStyle(btnResetLayout);
+    btnResetLayout.onclick = () => {
+      this._resetPrintLayoutFields();
+    };
+    layoutActions.append(btnResetLayout);
+    layoutCard.append(layoutActions);
+
+    wrap.append(footerCard, storageCard, logosCard, layoutCard);
+
+    let profile = null;
+    if (typeof api.userProfileGet === "function") {
+      const resProfile = await api.userProfileGet();
+      if (resProfile?.ok) {
+        profile = resProfile.profile || null;
+      }
+    }
+
+    if (typeof api.appSettingsGetMany === "function") {
+      const res = await api.appSettingsGetMany([
+        "pdf.footerPlace",
+        "pdf.footerDate",
+        "pdf.footerName1",
+        "pdf.footerName2",
+        "pdf.footerRecorder",
+        "pdf.footerStreet",
+        "pdf.footerZip",
+        "pdf.footerCity",
+        "pdf.footerUseUserData",
+        "pdf.protocolsDir",
+        "print.v2.pagePadTopMm",
+        "print.v2.pagePadLeftMm",
+        "print.v2.pagePadRightMm",
+        "print.v2.pagePadBottomMm",
+        "print.v2.footerReserveMm",
+      ]);
+      if (res?.ok) {
+        const data = res.data || {};
+        const footerUseUserData = this._parseBool(data["pdf.footerUseUserData"], false);
+        for (const [key, inp] of inputs.entries()) {
+          if (!inp) continue;
+          const value = data[key];
+          if (inp.type === "checkbox") {
+            inp.checked = this._parseBool(value, false);
+          } else if (this._isPrintLayoutMmKey(key)) {
+            inp.value = this._normalizePrintLayoutMmValue(value, key);
+          } else {
+            inp.value = String(value ?? "");
+          }
+        }
+        if (footerUseUserData) {
+          this._applyPdfFooterUserDefaultsToInputs(
+            {
+              name1: inputs.get("pdf.footerName1"),
+              name2: inputs.get("pdf.footerName2"),
+              street: inputs.get("pdf.footerStreet"),
+              zip: inputs.get("pdf.footerZip"),
+              city: inputs.get("pdf.footerCity"),
+            },
+            footerDefaults,
+            { overwriteExisting: false }
+          );
+        }
+        if (!String(data["pdf.protocolsDir"] || "").trim()) {
+          inputs.get("pdf.protocolsDir").value = this._pdfSettingsDefaults().protocolsDir;
+        }
+      }
+    }
+
+    this.inpPdfFooterPlace = inputs.get("pdf.footerPlace") || null;
+    this.inpPdfFooterDate = inputs.get("pdf.footerDate") || null;
+    this.inpPdfFooterName1 = inputs.get("pdf.footerName1") || null;
+    this.inpPdfFooterName2 = inputs.get("pdf.footerName2") || null;
+    this.inpPdfFooterRecorder = inputs.get("pdf.footerRecorder") || null;
+    this.inpPdfFooterStreet = inputs.get("pdf.footerStreet") || null;
+    this.inpPdfFooterZip = inputs.get("pdf.footerZip") || null;
+    this.inpPdfFooterCity = inputs.get("pdf.footerCity") || null;
+    this.inpPdfFooterUseUserData = inputs.get("pdf.footerUseUserData") || null;
+    this.inpPdfProtocolsDir = inputs.get("pdf.protocolsDir") || null;
+    this.btnPdfFooterUseUserData = null;
+    this.btnPdfProtocolsBrowse = null;
+    this.btnPdfSettingsSave = null;
+    this.inpPdfProtocolTitle = null;
+    this.inpPdfTrafficLightAll = null;
+
+    this._openSettingsModal({
+      title: "Ausgabe & Druck",
+      content: [wrap],
+      saveFn: async () => {
+        if (typeof api.appSettingsSetMany !== "function") return false;
+
+        const footerPlace = this._normalizeUserText(inputs.get("pdf.footerPlace")?.value, 80);
+        const footerDate = this._normalizeUserText(inputs.get("pdf.footerDate")?.value, 40);
+        const footerName1 = this._normalizeUserText(inputs.get("pdf.footerName1")?.value, 80);
+        const footerName2 = this._normalizeUserText(inputs.get("pdf.footerName2")?.value, 80);
+        const footerRecorder = this._normalizeUserText(inputs.get("pdf.footerRecorder")?.value, 80);
+        const footerStreet = this._normalizeUserText(inputs.get("pdf.footerStreet")?.value, 80);
+        const footerZip = this._normalizeUserZip(inputs.get("pdf.footerZip")?.value);
+        const footerCity = this._normalizeUserText(inputs.get("pdf.footerCity")?.value, 80);
+        const footerUseUserData = this._parseBool(inputs.get("pdf.footerUseUserData")?.checked, false);
+        if (footerUseUserData) {
+          this._applyPdfFooterUserDefaultsToInputs(
+            {
+              name1: inputs.get("pdf.footerName1"),
+              name2: inputs.get("pdf.footerName2"),
+              street: inputs.get("pdf.footerStreet"),
+              zip: inputs.get("pdf.footerZip"),
+              city: inputs.get("pdf.footerCity"),
+            },
+            footerDefaults,
+            { overwriteExisting: false }
+          );
+        }
+        const protocolsDir = String(inputs.get("pdf.protocolsDir")?.value || "").trim() || this._pdfSettingsDefaults().protocolsDir;
+        const layoutValues = {
+          "print.v2.pagePadTopMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadTopMm")?.value, "print.v2.pagePadTopMm"),
+          "print.v2.pagePadLeftMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadLeftMm")?.value, "print.v2.pagePadLeftMm"),
+          "print.v2.pagePadRightMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadRightMm")?.value, "print.v2.pagePadRightMm"),
+          "print.v2.pagePadBottomMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadBottomMm")?.value, "print.v2.pagePadBottomMm"),
+          "print.v2.footerReserveMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.footerReserveMm")?.value, "print.v2.footerReserveMm"),
+        };
+
+        const payload = {
+          "pdf.footerPlace": footerPlace,
+          "pdf.footerDate": footerDate,
+          "pdf.footerName1": footerName1,
+          "pdf.footerName2": footerName2,
+          "pdf.footerRecorder": footerRecorder,
+          "pdf.footerStreet": footerStreet,
+          "pdf.footerZip": footerZip,
+          "pdf.footerCity": footerCity,
+          "pdf.footerUseUserData": footerUseUserData ? "true" : "false",
+          "pdf.protocolsDir": protocolsDir,
+          ...layoutValues,
+          ...this._buildTouchedPayloadFromValues({
+            "pdf.footerPlace": footerPlace,
+            "pdf.footerDate": footerDate,
+            "pdf.footerName1": footerName1,
+            "pdf.footerName2": footerName2,
+            "pdf.footerRecorder": footerRecorder,
+            "pdf.footerStreet": footerStreet,
+            "pdf.footerZip": footerZip,
+            "pdf.footerCity": footerCity,
+            "pdf.protocolsDir": protocolsDir,
+            ...layoutValues,
+          }),
+          ...this._buildTouchedPayloadForKeys(["pdf.footerUseUserData"]),
+        };
+
+        const res = await api.appSettingsSetMany(payload);
+        if (!res?.ok) {
+          alert(res?.error || "Speichern fehlgeschlagen");
+          return false;
+        }
+
+        if (this.router?.context) {
+          this.router.context.settings = {
+            ...(this.router.context.settings || {}),
+            ...payload,
+          };
         }
         this._setMsg("Gespeichert");
         return true;
@@ -5485,10 +5852,7 @@ export default class SettingsView {
       titleText: "Ausgabe & Druck",
       subText: "Footer, Druckränder, Drucklogos, Ausgabeordner und Versand",
       onClick: async () => {
-        await this._createLegacySettingsContent({
-          title: "Ausgabe & Druck",
-          focusSection: "Footer",
-        });
+        await this._createOutputPrintContent();
       },
     });
 

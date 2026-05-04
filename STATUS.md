@@ -33,6 +33,10 @@ Sie ergänzt:
 - Der Einstieg `Profil / Adresse` hat jetzt einen eigenen schlanken Dialog:
   - er enthaelt nur Profil- und Adressfelder
   - Ausgabe-/Protokollfelder bleiben im bestehenden Legacy-Pfad fuer die anderen Einstiege
+- Der Einstieg `Ausgabe & Druck` hat jetzt ebenfalls einen eigenen Dialog:
+  - er enthaelt Footer, Ausgabeordner, Drucklayout und den Einstieg zu den Drucklogos
+  - Protokoll- und Profilfelder bleiben ausserhalb dieses Dialogs
+  - der sichtbare Startseiten-Einstieg laeuft nicht mehr ueber den grossen Legacy-Dialog
 - Der globale Header zeigt jetzt links `BBM <Version>` und darunter den aktiven Kontext als `aktiv: <Modul> | <Projektnummer> - <Kurzbezeichnung>`.
   Rechts steht ein ruhiger Kunden-/Lizenztext aus den vorhandenen App-Settings; der alte `bereit:`-Statusblock ist aus der sichtbaren Anzeige entfernt.
   Im Projektkontext steht dort jetzt nicht mehr `Projekt-Arbeitsbereich`, sondern das aktive Modul `Protokoll`.
