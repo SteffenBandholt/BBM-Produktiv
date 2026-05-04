@@ -914,7 +914,10 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("titleText: \"Profil & Druck\""), false);
     assert.equal(settingsViewSource.includes("_createOutputPrintContent"), true);
     assert.equal(settingsViewSource.includes("await this._createOutputPrintContent();"), true);
+    assert.equal(settingsViewSource.includes("_createProtocolContent"), true);
+    assert.equal(settingsViewSource.includes("await this._createProtocolContent();"), true);
     assert.equal(settingsViewSource.includes('focusSection: "Footer"'), false);
+    assert.equal(settingsViewSource.includes('focusSection: "Druckinhalt"'), false);
     assert.equal(settingsViewSource.includes("subText: \"Nutzerprofil, Adresse und globale Stammdaten\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Footer, Druckränder, Drucklogos, Ausgabeordner und Versand\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Protokollbezeichnung und Vorbemerkung\""), true);
@@ -1281,6 +1284,72 @@ async function runLizenzverwaltungModuleTests(run) {
       assert.equal(calls.settings[0]["print.v2.pagePadTopMm"], "4");
       assert.equal(calls.settings[0]["print.v2.footerReserveMm"], "8");
       assert.equal(calls.settings[0]["pdf.footerUseUserData"], "true");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: Protokoll oeffnet einen eigenen Dialogpfad", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+    const calls = { settings: [] };
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            "pdf.protocolTitle": "Baubesprechung",
+            "pdf.preRemarks": "Erste Zeile\nZweite Zeile",
+            "print.preRemarks.enabled": "true",
+          },
+        }),
+        appSettingsSetMany: async (payload) => {
+          calls.settings.push(payload);
+          return { ok: true };
+        },
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._createProtocolContent();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Protokoll");
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(contentText.includes("Protokollbezeichnung"), true);
+      assert.equal(contentText.includes("Protokolltitel"), true);
+      assert.equal(contentText.includes("Vorbemerkung"), true);
+      assert.equal(contentText.includes("Vorbemerkung in der Ausgabe drucken"), true);
+      assert.equal(contentText.includes("Profil"), false);
+      assert.equal(contentText.includes("Adresse"), false);
+      assert.equal(contentText.includes("Footer"), false);
+      assert.equal(contentText.includes("Drucklayout"), false);
+      assert.equal(contentText.includes("Drucklogos verwalten"), false);
+      assert.equal(contentText.includes("Ausgabeordner / Speicherort"), false);
+      assert.equal(contentText.includes("Textgrenzen"), false);
+
+      const titleCard = opened[0].content[0].children[1];
+      const remarksCard = opened[0].content[0].children[2];
+      titleCard.children[2].children[1].value = "Neuer Protokolltitel";
+      remarksCard.children[2].children[1].value = "Zeile 1\nZeile 2";
+      remarksCard.children[3].children[1].checked = false;
+
+      const saved = await opened[0].saveFn();
+      assert.equal(saved, true);
+      assert.equal(calls.settings.length >= 1, true);
+      assert.equal(calls.settings[0]["pdf.protocolTitle"], "Neuer Protokolltitel");
+      assert.equal(calls.settings[0]["pdf.preRemarks"], "Zeile 1\nZeile 2");
+      assert.equal(calls.settings[0]["print.preRemarks.enabled"], "false");
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
