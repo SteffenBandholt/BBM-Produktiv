@@ -37,6 +37,26 @@ import { OVERLAY_TOP } from "../../ui/zIndex.js";
 import { buildProtocolPdfFileName } from "../../utils/protocolPdfNaming.js";
 import { resolvePrintUserData } from "../../../shared/print/userDataResolver.mjs";
 
+const BLOCKED_OUTPUT_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
+
+function isBlockedOutputResult(result = null) {
+  const code = String(result?.code || "").trim().toUpperCase();
+  const reason = String(result?.reason || "").trim().toUpperCase();
+  return !!result && (
+    result.blocked === true ||
+    result.licenseError === true ||
+    code === "LICENSE_ERROR" ||
+    code === "LICENSE_INVALID" ||
+    code === "FEATURE_NOT_ALLOWED" ||
+    reason === "MODULE_DISABLED" ||
+    reason === "PROTOKOLL"
+  );
+}
+
+function getBlockedOutputMessage(result = null) {
+  return String(result?.error || result?.message || BLOCKED_OUTPUT_MESSAGE).trim() || BLOCKED_OUTPUT_MESSAGE;
+}
+
 export default class PrintModal {
   constructor({ router } = {}) {
     this.router = router;
@@ -1484,8 +1504,12 @@ export default class PrintModal {
         })
       );
       if (!out?.ok) {
+        if (isBlockedOutputResult(out)) {
+          alert(getBlockedOutputMessage(out));
+          return out;
+        }
         alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
-        return;
+        return out;
       }
       if (!out?.filePath) {
         alert("PDF konnte nicht geoeffnet werden (Dateipfad fehlt).");
@@ -1957,8 +1981,12 @@ export default class PrintModal {
         }),
       });
       if (!out?.ok) {
+        if (isBlockedOutputResult(out)) {
+          alert(getBlockedOutputMessage(out));
+          return out;
+        }
         alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
-        return;
+        return out;
       }
       if (!out?.filePath) {
         alert("PDF konnte nicht geoeffnet werden (Dateipfad fehlt).");
@@ -2089,8 +2117,12 @@ export default class PrintModal {
         }),
       });
       if (!out?.ok) {
+        if (isBlockedOutputResult(out)) {
+          alert(getBlockedOutputMessage(out));
+          return out;
+        }
         alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
-        return;
+        return out;
       }
 
       if (preview) {
@@ -4720,8 +4752,12 @@ export default class PrintModal {
             }),
       });
       if (!out?.ok) {
+        if (isBlockedOutputResult(out)) {
+          alert(getBlockedOutputMessage(out));
+          return out;
+        }
         alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
-        return;
+        return out;
       }
 
       if (doPreview) {

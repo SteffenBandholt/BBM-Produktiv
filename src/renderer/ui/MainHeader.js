@@ -7,6 +7,28 @@ import { HEADER, POPOVER_MENU } from "./zIndex.js";
 import { sendMailPayload } from "../services/mail/sendMailPayload.js";
 import { openClosedProtocolSelector } from "./react/ClosedProtocolSelector.js";
 import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
+import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
+import { isModuleActive, refreshCachedActiveModuleAccess } from "../app/modules/moduleAccessState.js";
+
+const PROTOCOL_DISABLED_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
+
+function isBlockedTransportPayload(payload = null) {
+  const code = String(payload?.code || "").trim().toUpperCase();
+  const reason = String(payload?.reason || "").trim().toUpperCase();
+  return !!payload && (
+    payload.blocked === true ||
+    payload.licenseError === true ||
+    code === "LICENSE_ERROR" ||
+    code === "LICENSE_INVALID" ||
+    code === "FEATURE_NOT_ALLOWED" ||
+    reason === "MODULE_DISABLED" ||
+    reason === String(PROTOKOLL_MODULE_ID || "protokoll").toUpperCase()
+  );
+}
+
+function getBlockedTransportMessage(payload = null) {
+  return String(payload?.error || payload?.message || PROTOCOL_DISABLED_MESSAGE).trim() || PROTOCOL_DISABLED_MESSAGE;
+}
 
 export default class MainHeader {
   constructor({ router, version = "1.0", sidebarWidth = 220, padding = 12 } = {}) {
@@ -525,6 +547,7 @@ export default class MainHeader {
     };
 
     const itemPreview = mkPrintItem("Vorschau (Protokoll)", async (state) => {
+      if (!(await this._ensureProtocolOutputEnabled())) return;
       if (typeof this.router?.openPrintVorabzug !== "function") return;
       await this.router.openPrintVorabzug({
         projectId: state.projectId,
@@ -533,18 +556,22 @@ export default class MainHeader {
     });
 
     const itemFirms = mkPrintItem("Firmenliste", async (state) => {
+      if (!(await this._ensureProtocolOutputEnabled())) return;
       await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "firms" });
     });
 
     const itemTodo = mkPrintItem("ToDo-Liste", async (state) => {
+      if (!(await this._ensureProtocolOutputEnabled())) return;
       await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "todo" });
     });
 
     const itemTopList = mkPrintItem("Top-Liste", async (state) => {
+      if (!(await this._ensureProtocolOutputEnabled())) return;
       await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "topsall" });
     });
 
     const itemMeetingsClosed = mkPrintItem("Protokolle", async (state) => {
+      if (!(await this._ensureProtocolOutputEnabled())) return;
       await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "protocol" });
     });
 
@@ -1983,7 +2010,9 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
   }
 
   async _tryOpenOutlookDraft(payload = {}) {
-    if (!payload.attachments?.length || !window.bbmMail?.createOutlookDraft) return false;
+    if (!payload.attachments?.length || !window.bbmMail?.createOutlookDraft) {
+      return { ok: false, skipped: true };
+    }
     try {
       const draftRes = await window.bbmMail.createOutlookDraft({
         to: payload.recipients,
@@ -1992,25 +2021,37 @@ _buildFallbackEmailSubject({ projectNumber, projectShortName, mailType } = {}) {
         attachments: payload.attachments,
         attachmentPath: payload.attachments[0] || "",
       });
-      if (draftRes?.ok) return true;
+      if (draftRes?.ok) return { ok: true, result: draftRes };
+      if (isBlockedTransportPayload(draftRes)) {
+        return { ok: false, blocked: true, result: draftRes };
+      }
       console.warn("[header] Outlook draft failed, fallback to mailto:", draftRes?.error || draftRes);
     } catch (err) {
+      if (isBlockedTransportPayload(err)) {
+        return { ok: false, blocked: true, result: err };
+      }
       console.warn("[header] Outlook draft failed, fallback to mailto:", err);
     }
-    return false;
+    return { ok: false, skipped: false };
   }
 
   async _dispatchMailTransport(payload = {}) {
     const mailPayload = this._normalizeMailTransportPayload(payload);
     if (!mailPayload.forceMailto) {
       const opened = await this._tryOpenOutlookDraft(mailPayload);
-      if (opened) return;
+      if (opened?.ok) return opened;
+      if (opened?.blocked) {
+        alert(getBlockedTransportMessage(opened.result || opened));
+        return opened;
+      }
     }
     try {
       this._sendMailtoFallback(mailPayload);
+      return { ok: true, transport: "mailto" };
     } catch (err) {
       console.error("[header] mailto fallback failed:", err);
       alert("E-Mail konnte nicht geöffnet werden.");
+      return { ok: false, error: err?.message || String(err) };
     }
   }
 
@@ -2196,10 +2237,28 @@ async _buildProtocolPdfLookupPayload(selectedMeeting, projectId) {
     console.warn("[header] protocol pdf lookup payload failed:", err);
     return null;
   }
-}
+  }
 
+
+  async _ensureProtocolOutputEnabled() {
+    try {
+      await refreshCachedActiveModuleAccess({ force: true });
+    } catch (_err) {
+      // ignore and fall back to cached status below
+    }
+
+    if (isModuleActive(PROTOKOLL_MODULE_ID)) {
+      return true;
+    }
+
+    alert(PROTOCOL_DISABLED_MESSAGE);
+    return false;
+  }
 
 async _openMailClient(mailType = "", options = {}) {
+  if (!(await this._ensureProtocolOutputEnabled())) {
+    return { ok: false, blocked: true, reason: "MODULE_DISABLED", moduleId: PROTOKOLL_MODULE_ID };
+  }
   const opts = options && typeof options === "object" ? options : {};
   const providedRecipients = Array.isArray(opts.recipients) ? opts.recipients.filter(Boolean) : null;
   const providedAttachments = Array.isArray(opts.attachments) ? opts.attachments.filter(Boolean) : [];
@@ -2252,6 +2311,9 @@ async _openMailClient(mailType = "", options = {}) {
   }
 
   async _openClosedProtocolSelectorFlow(mode = "view") {
+    if (!(await this._ensureProtocolOutputEnabled())) {
+      return;
+    }
     this._setPrintOpen(false);
     this._setMailOpen(false);
     const projectId = this.router?.currentProjectId || null;
@@ -2692,10 +2754,14 @@ async _openMailClient(mailType = "", options = {}) {
   }
 
   async _generateEmailAttachmentsForMeeting({ projectId, meetingId }) {
-    const results = { protocol: "", firms: "", todo: "", tops: "" };
+    const results = { protocol: "", firms: "", todo: "", tops: "", blocked: null };
     try {
       if (typeof this.router?.printClosedMeetingDirect === "function") {
         const r = await this.router.printClosedMeetingDirect({ projectId, meetingId });
+        if (r?.blocked) {
+          results.blocked = r;
+          return results;
+        }
         if (r?.filePath) results.protocol = r.filePath;
       }
     } catch (err) {
@@ -2704,6 +2770,10 @@ async _openMailClient(mailType = "", options = {}) {
     try {
       if (typeof this.router?.printFirmsDirect === "function") {
         const r = await this.router.printFirmsDirect({ projectId, meetingId });
+        if (r?.blocked) {
+          results.blocked = r;
+          return results;
+        }
         if (r?.filePath) results.firms = r.filePath;
       }
     } catch (err) {
@@ -2712,6 +2782,10 @@ async _openMailClient(mailType = "", options = {}) {
     try {
       if (typeof this.router?.printTodoDirect === "function") {
         const r = await this.router.printTodoDirect({ projectId, meetingId });
+        if (r?.blocked) {
+          results.blocked = r;
+          return results;
+        }
         if (r?.filePath) results.todo = r.filePath;
       }
     } catch (err) {
@@ -2720,6 +2794,10 @@ async _openMailClient(mailType = "", options = {}) {
     try {
       if (typeof this.router?.printTopListAllDirect === "function") {
         const r = await this.router.printTopListAllDirect({ projectId, meetingId });
+        if (r?.blocked) {
+          results.blocked = r;
+          return results;
+        }
         if (r?.filePath) results.tops = r.filePath;
       }
     } catch (err) {
@@ -2729,6 +2807,7 @@ async _openMailClient(mailType = "", options = {}) {
   }
 
   async _openMailSendModal({ projectId, meeting }) {
+    if (!(await this._ensureProtocolOutputEnabled())) return;
     const meetingId = meeting?.id || meeting?.meeting_id || null;
     if (!meetingId) return;
 
@@ -2737,6 +2816,10 @@ async _openMailClient(mailType = "", options = {}) {
     let selectedRecipients = this._buildInitialRecipientSelection(recOptions);
 
     const attachmentsFound = await this._generateEmailAttachmentsForMeeting({ projectId, meetingId });
+    if (attachmentsFound?.blocked) {
+      alert(getBlockedTransportMessage(attachmentsFound.blocked));
+      return;
+    }
     const attachments = this._buildMailAttachmentEntries(attachmentsFound);
     const draft = await this._buildMeetingMailDraft({
       projectId,
