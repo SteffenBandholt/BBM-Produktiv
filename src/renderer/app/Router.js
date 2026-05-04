@@ -511,6 +511,49 @@ export default class Router {
     );
   }
 
+  async openProjectModule(projectId, moduleId, options = {}) {
+    const effectiveProjectId = this._resolveProjectId(projectId);
+    const normalizedModuleId = String(moduleId || "").trim();
+    if (!effectiveProjectId || !normalizedModuleId) return false;
+
+    if (normalizedModuleId === PROTOKOLL_MODULE_ID) {
+      return await this.openProjectProtocol(effectiveProjectId, options || {});
+    }
+
+    const navEntry =
+      getActiveProjectModuleNavigation().find(
+        (entry) => String(entry?.moduleId || "").trim() === normalizedModuleId
+      ) || null;
+    if (!navEntry) return false;
+
+    const moduleScreen =
+      resolveActiveModuleScreen(normalizedModuleId, navEntry.workScreenId) || null;
+    if (typeof moduleScreen !== "function") return false;
+
+    const project = options && typeof options === "object" ? options.project || null : null;
+    const pageTitle = String(options?.pageTitle || navEntry?.label || "").trim() || null;
+    const activeModuleLabel =
+      String(options?.activeModuleLabel || navEntry?.label || "").trim() || null;
+
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
+    await this.show(
+      new moduleScreen({
+        router: this,
+        projectId: effectiveProjectId,
+        project,
+        moduleId: normalizedModuleId,
+      }),
+      {
+        section: navEntry.section || normalizedModuleId,
+        isTopsView: false,
+        pageTitle,
+        activeModuleLabel,
+      }
+    );
+
+    return true;
+  }
+
   _getProjectWorkspaceModules() {
     const activeModules = getActiveProjectModuleNavigation().map((entry) =>
       Object.freeze({
