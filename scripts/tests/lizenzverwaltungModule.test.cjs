@@ -906,10 +906,15 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(projektEntry.moduleLabel, "Projektverwaltung");
   });
 
-  await run("Lizenzverwaltung: Einstellungen enthaelt den Einstieg Adminbereich auf oberster Ebene", () => {
+  await run("Lizenzverwaltung: Einstellungen enthaelt getrennte Einstiege fuer Profil / Adresse, Ausgabe & Druck und Protokoll", () => {
     assert.equal(settingsViewSource.includes("../modules/lizenzverwaltung/index.js"), true);
-    assert.equal(settingsViewSource.includes("titleText: \"Profil & Druck\""), true);
-    assert.equal(settingsViewSource.includes("subText: \"Profil, Adresse, Protokolltexte, Logos und Layout\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Profil / Adresse\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Ausgabe & Druck\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Protokoll\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Profil & Druck\""), false);
+    assert.equal(settingsViewSource.includes("subText: \"Nutzerprofil, Adresse und globale Stammdaten\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Footer, Druckränder, Drucklogos, Ausgabeordner und Versand\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Protokollbezeichnung und Vorbemerkung\""), true);
     assert.equal(settingsViewSource.includes("titleText: \"Firmenrollen\""), true);
     assert.equal(
       settingsViewSource.includes("subText: \"Reihenfolge und Bezeichnungen für Firmenlisten und Druck\""),
@@ -928,10 +933,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
     assert.equal(settingsViewSource.includes("titleText: \"Technik\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Versionierung, Textgrenzen, DB-Diagnose und Diktat / Audio\""), true);
-    assert.equal(
-      settingsViewSource.includes("tiles.append(tileProfilePrint, tileFirmRoles, tileLicense, tileAdmin, tileArchive, tileDev);"),
-      true
-    );
+    assert.equal(settingsViewSource.includes("tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);"), true);
     assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
   });
@@ -1059,7 +1061,10 @@ async function runLizenzverwaltungModuleTests(run) {
       settingsViewSource.includes("tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);"),
       true
     );
-    assert.equal(settingsViewSource.includes('titleText: "Profil & Druck"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Profil / Adresse"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Ausgabe & Druck"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Protokoll"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Profil & Druck"'), false);
     assert.equal(settingsViewSource.includes('titleText: "Lizenzstatus"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Firmenrollen"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Adminbereich"'), true);
@@ -1100,7 +1105,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('label: "Footer nutzt Nutzerdaten (true/false)"'), false);
   });
 
-  await run("SettingsView: Profil & Druck oeffnet die Sammelmaske ohne PDF-Logo-Restpfad", async () => {
+  await run("SettingsView: Ausgabe & Druck oeffnet die Sammelmaske ohne PDF-Logo-Restpfad", async () => {
     const { default: SettingsView } = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/views/SettingsView.js")
     );
@@ -1122,10 +1127,10 @@ async function runLizenzverwaltungModuleTests(run) {
       const view = new SettingsView({});
       view._openSettingsModal = (payload) => opened.push(payload);
 
-      await view._createLegacySettingsContent();
+      await view._createLegacySettingsContent({ title: "Ausgabe & Druck", focusSection: "Footer" });
 
       assert.equal(opened.length, 1);
-      assert.equal(opened[0].title, "Nutzereinstellungen / Druckeinstellungen");
+      assert.equal(opened[0].title, "Ausgabe & Druck");
       const contentText = collectFakeText(opened[0].content);
       assert.equal(contentText.includes("Drucklogo 1"), true);
       assert.equal(contentText.includes("Logo verwenden"), true);

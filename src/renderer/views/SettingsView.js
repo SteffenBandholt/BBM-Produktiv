@@ -4041,7 +4041,7 @@ export default class SettingsView {
     return wrap;
   }
 
-  async _createLegacySettingsContent() {
+  async _createLegacySettingsContent({ title = "Nutzereinstellungen / Druckeinstellungen", focusSection = null } = {}) {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
     wrap.style.display = "grid";
@@ -4055,6 +4055,7 @@ export default class SettingsView {
     wrap.append(info);
 
     const inputs = new Map();
+    const sectionCards = new Map();
     this._settingsInputs = inputs;
     const renderField = (field) => {
       const row = document.createElement("label");
@@ -4162,6 +4163,7 @@ export default class SettingsView {
           })
         );
       }
+      sectionCards.set(section.title, card);
       wrap.append(card);
     }
 
@@ -4450,7 +4452,7 @@ export default class SettingsView {
     inpHeaderLogoPosition.addEventListener("change", () => this._scheduleLogoSave());
 
     this._openSettingsModal({
-      title: "Nutzereinstellungen / Druckeinstellungen",
+      title,
       content: [wrap],
       saveFn: async () => {
         if (typeof api.appSettingsSetMany !== "function") return false;
@@ -4492,6 +4494,18 @@ export default class SettingsView {
         return true;
       },
     });
+
+    if (focusSection && sectionCards.has(focusSection)) {
+      setTimeout(() => {
+        const target = sectionCards.get(focusSection);
+        if (!target) return;
+        try {
+          target.scrollIntoView({ block: "start", behavior: "smooth" });
+        } catch {
+          // ignore
+        }
+      }, 0);
+    }
   }
 
 
@@ -5266,11 +5280,36 @@ export default class SettingsView {
       return group;
     };
 
-    const tileProfilePrint = mkTile({
-      titleText: "Profil & Druck",
-      subText: "Profil, Adresse, Protokolltexte, Logos und Layout",
+    const tileProfileAddress = mkTile({
+      titleText: "Profil / Adresse",
+      subText: "Nutzerprofil, Adresse und globale Stammdaten",
       onClick: async () => {
-        await this._createLegacySettingsContent();
+        await this._createLegacySettingsContent({
+          title: "Profil / Adresse",
+          focusSection: "Profil",
+        });
+      },
+    });
+
+    const tileOutputPrint = mkTile({
+      titleText: "Ausgabe & Druck",
+      subText: "Footer, Druckränder, Drucklogos, Ausgabeordner und Versand",
+      onClick: async () => {
+        await this._createLegacySettingsContent({
+          title: "Ausgabe & Druck",
+          focusSection: "Footer",
+        });
+      },
+    });
+
+    const tileProtocol = mkTile({
+      titleText: "Protokoll",
+      subText: "Protokollbezeichnung und Vorbemerkung",
+      onClick: async () => {
+        await this._createLegacySettingsContent({
+          title: "Protokoll",
+          focusSection: "Druckinhalt",
+        });
       },
     });
 
@@ -5334,7 +5373,7 @@ export default class SettingsView {
     const groupGeneral = mkGroup({
       titleText: "Allgemein",
       subText: "Profil / Adresse und Lizenzstatus.",
-      tiles: [tileProfilePrint, tileLicense],
+      tiles: [tileProfileAddress, tileLicense],
     });
 
     const groupInput = mkGroup({
@@ -5346,13 +5385,13 @@ export default class SettingsView {
     const groupOutput = mkGroup({
       titleText: "Ausgabe & Kommunikation",
       subText: "Firmenrollen, Drucksignatur / Footer, Druckränder / Seitenränder, Drucklogos, E-Mail / Versand und Speicherorte / Ausgabeordner.",
-      tiles: [tileFirmRoles],
+      tiles: [tileOutputPrint, tileFirmRoles],
     });
 
     const groupModule = mkGroup({
       titleText: "Module",
       subText: "Protokoll und spaeter weitere freigeschaltete Arbeitsmodule.",
-      emptyText: "Protokoll-spezifische Einstellungen bleiben vorerst im bestehenden Sammelbereich.",
+      tiles: [tileProtocol],
     });
 
     const groupDev = mkGroup({
@@ -5361,8 +5400,6 @@ export default class SettingsView {
       tiles: [tileAdmin, tileArchive, tileDev],
     });
 
-    // Legacy-Referenz fuer bestehende Source-Pruefungen:
-    // tiles.append(tileProfilePrint, tileFirmRoles, tileLicense, tileAdmin, tileArchive, tileDev);
     tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);
     root.append(head, tiles);
     this.root = root;

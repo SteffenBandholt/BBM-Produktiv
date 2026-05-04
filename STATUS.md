@@ -27,6 +27,9 @@ Sie ergänzt:
 - Die Settings-Startseite ist jetzt sichtbar in Hauptgruppen gegliedert:
   - Allgemein, Eingabe & Erfassung, Ausgabe & Kommunikation, Module und Entwicklung stehen als eigene Ueberschriften auf der Startseite
   - die vorhandenen Kacheln bleiben erreichbar und werden nur in diese grobe Struktur einsortiert
+- Die Legacy-Kachel `Profil & Druck` ist auf der Startseite weiter aufgebrochen worden:
+  - sichtbare Einstiege sind jetzt `Profil / Adresse`, `Ausgabe & Druck` und `Protokoll`
+  - die neuen Einstiege nutzen weiter den bestehenden Legacy-Dialog als kleinsten sicheren Schritt
 - Der globale Header zeigt jetzt links `BBM <Version>` und darunter den aktiven Kontext als `aktiv: <Modul> | <Projektnummer> - <Kurzbezeichnung>`.
   Rechts steht ein ruhiger Kunden-/Lizenztext aus den vorhandenen App-Settings; der alte `bereit:`-Statusblock ist aus der sichtbaren Anzeige entfernt.
   Im Projektkontext steht dort jetzt nicht mehr `Projekt-Arbeitsbereich`, sondern das aktive Modul `Protokoll`.
