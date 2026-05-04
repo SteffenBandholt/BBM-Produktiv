@@ -5611,8 +5611,8 @@ export default class SettingsView {
 
     const groupOutput = mkGroup({
       titleText: "Ausgabe & Kommunikation",
-      subText: "Druck, Versand und Speicherorte.",
-      tiles: [tileOutputPrint, tileFirmRoles],
+      subText: "Druck, Versand, Archiv und Speicherorte.",
+      tiles: [tileOutputPrint, tileFirmRoles, tileArchive],
     });
 
     const groupModule = mkGroup({
@@ -5624,7 +5624,7 @@ export default class SettingsView {
     const groupDev = mkGroup({
       titleText: "Entwicklung",
       subText: "Technische Werkzeuge und Grenzen.",
-      tiles: [tileAdmin, tileArchive, tileDev],
+      tiles: [tileAdmin, tileDev],
       variant: "dev",
     });
 

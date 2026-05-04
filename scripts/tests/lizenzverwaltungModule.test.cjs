@@ -1050,7 +1050,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('emptyText: "Noch keine eigenen Einstellungen."'), true);
     assert.equal(
       settingsViewSource.includes(
-        'subText: "Druck, Versand und Speicherorte."'
+        'subText: "Druck, Versand, Archiv und Speicherorte."'
       ),
       true
     );
@@ -1075,6 +1075,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('titleText: "Adminbereich"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Archiv"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Technik"'), true);
+    assert.equal(settingsViewSource.includes('tiles: [tileOutputPrint, tileFirmRoles, tileArchive]'), true);
+    assert.equal(settingsViewSource.includes('tiles: [tileAdmin, tileDev]'), true);
     assert.equal(
       idx('titleText: "Allgemein"') < idx('titleText: "Eingabe & Erfassung"'),
       true

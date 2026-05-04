@@ -48,6 +48,7 @@ Sie ergänzt:
   - Gruppen sind als klar getrennte Bereiche mit kurzen Untertiteln dargestellt
   - leere bzw. noch nicht belegte Bereiche sind kompakter formuliert
   - die Kacheln sind ruhiger und weniger tabellenartig gestaltet
+- Der sichtbare Einstieg `Archiv` steht jetzt in `Ausgabe & Kommunikation` statt in `Entwicklung`.
 - Der globale Header zeigt jetzt links `BBM <Version>` und darunter den aktiven Kontext als `aktiv: <Modul> | <Projektnummer> - <Kurzbezeichnung>`.
   Rechts steht ein ruhiger Kunden-/Lizenztext aus den vorhandenen App-Settings; der alte `bereit:`-Statusblock ist aus der sichtbaren Anzeige entfernt.
   Im Projektkontext steht dort jetzt nicht mehr `Projekt-Arbeitsbereich`, sondern das aktive Modul `Protokoll`.
