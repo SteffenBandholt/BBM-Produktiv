@@ -1356,3 +1356,22 @@ Wichtig:
 - Risiken/Hinweise:
   - Fachspezifische Button-Layouts mit eigenen Min-Hoehen bleiben bewusst unangetastet.
   - Druck-/PDF-Buttons wurden nicht umgebaut.
+
+#### Paket: Button-Groesse weiter reduziert
+- Status: erledigt
+- Beschreibung:
+  - Die zentrale Buttonbasis ist jetzt deutlich kompakter.
+  - Standardbuttons nutzen eine kleinere Hoehe, weniger Innenabstand und eine feinere Schriftgroesse.
+  - Die bestehenden Varianten `primary`, `secondary`, `danger` und `ghost` bleiben erhalten, wirken aber leichter.
+  - Der kleinere Rasterstand wurde zentral umgesetzt, ohne Klicklogik oder Dialogflows zu aendern.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellStyles.js`
+  - `src/renderer/ui/popupButtonStyles.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Einige Fach-Buttons behalten bewusst lokale Minimalhoehen, damit spezialisierte Layouts stabil bleiben.
+  - Print-/PDF-Buttons und Drucklogik wurden nicht angefasst.

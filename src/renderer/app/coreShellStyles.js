@@ -18,7 +18,7 @@ export function injectCoreShellBaseStyles() {
       --card-bg: #FFFFFF;
       --card-border: #E2E8F0;
       --text-main: #0F172A;
-      --btn-radius: 9px;
+      --btn-radius: 8px;
       --btn-secondary-bg: #ffffff;
       --btn-secondary-border: #d4dbe6;
       --btn-secondary-text: #0f172a;
@@ -57,13 +57,15 @@ export function injectCoreShellBaseStyles() {
       font-family: inherit;
     }
     button {
-      padding: 5px 9px;
+      padding: 4px 8px;
       border-radius: var(--btn-radius);
       border: 1px solid var(--btn-secondary-border);
       background: var(--btn-secondary-bg);
       color: var(--btn-secondary-text);
+      font-size: 12.5px;
       font-weight: 500;
-      min-height: 32px;
+      min-height: 28px;
+      line-height: 1.15;
       cursor: pointer;
       transition: background 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
     }
