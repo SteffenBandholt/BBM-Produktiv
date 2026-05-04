@@ -5526,12 +5526,17 @@ export default class SettingsView {
       head.style.alignItems = "start";
       head.style.gap = "10px";
       head.style.width = "100%";
+      head.style.padding = "0";
+      head.style.minHeight = "0";
       head.style.border = "0";
       head.style.background = "transparent";
+      head.style.borderRadius = "0";
+      head.style.boxShadow = "";
       head.style.padding = "0";
       head.style.textAlign = "left";
       head.style.cursor = "pointer";
       head.style.color = "#111827";
+      head.style.fontFamily = "var(--bbm-font-ui)";
       head.setAttribute("aria-controls", `settings-group-body-${key || titleText}`);
 
       const headText = document.createElement("div");

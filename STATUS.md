@@ -1314,3 +1314,45 @@ Wichtig:
   - kein direkter Anschluss aus diesem Paket
 - Risiken/Hinweise:
   - Die Accordion-Logik speichert keinen Zustand; nach Reload startet die Übersicht wieder mit `Allgemein` offen.
+#### Paket: Appweite Button-Styles vereinheitlicht
+- Status: erledigt
+- Beschreibung:
+  - Die App nutzt jetzt einen konsolidierten UI-Button-Stil ueber zentrale Varianten.
+  - Buttons wirken ruhiger und konsistenter; Standardaktionen sind dezenter, gefaehrliche Aktionen sind klar als `danger` markiert.
+  - Settings, Tops, Projektverwaltung und die allgemeinen Shell-/Modal-Buttons nutzen die gemeinsamen Basisregeln.
+  - Print-/PDF-Buttonoptik und Drucklogik blieben bewusst unveraendert.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellStyles.js`
+  - `src/renderer/app/coreShellLayout.js`
+  - `src/renderer/ui/popupButtonStyles.js`
+  - `src/renderer/ui/HelpModal.js`
+  - `src/renderer/ui/ParticipantsModals.js`
+  - `src/renderer/views/SettingsView.js`
+  - `src/renderer/views/TopsView.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Spezielle Fachbuttons behalten ihre jeweiligen Varianten, damit keine Layouts oder Fachaktionen verrutschen.
+  - Print/PDF-CSS und Druckausgabe wurden bewusst nicht angefasst.
+
+#### Paket: Button-Styles visuell feiner abgestimmt
+- Status: erledigt
+- Beschreibung:
+  - Die zentrale Buttonbasis wurde optisch feiner und leichter gemacht.
+  - Hoehe, Padding, Radius, Schriftgewicht und Hover-Verhalten wurden dezent reduziert.
+  - Primary, Secondary, Danger und Ghost bleiben als Varianten erhalten, wirken aber ruhiger.
+  - Dialog- und Shell-Buttons nutzen die feinere Basis ohne Funktionsaenderung.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellStyles.js`
+  - `src/renderer/ui/popupButtonStyles.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Fachspezifische Button-Layouts mit eigenen Min-Hoehen bleiben bewusst unangetastet.
+  - Druck-/PDF-Buttons wurden nicht umgebaut.
