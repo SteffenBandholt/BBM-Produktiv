@@ -213,6 +213,12 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(routerSource.includes(".filter((entry) => this._isModuleActive(entry?.moduleId))"), true);
   });
 
+  await run("Projektverwaltung: TopsView ist nicht mehr als aktive Screen-Datei vorhanden", () => {
+    const topsViewPath = path.join(process.cwd(), "src/renderer/views/TopsView.js");
+    assert.equal(fs.existsSync(topsViewPath), false);
+    assert.equal(fs.existsSync(path.join(process.cwd(), "src/renderer/views/TopsScreen.js")), true);
+  });
+
   await run("Projektverwaltung: Modul ist im Resolver vorhanden, aber nicht im Katalog", () => {
     const entry = getProjektverwaltungModuleEntry();
     const resolved = resolveModuleScreenFromEntry(entry, entry.workScreenId);

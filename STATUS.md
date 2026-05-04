@@ -17,6 +17,7 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Der alte Legacy-Protokollscreen `src/renderer/views/TopsView.js` ist entfernt; aktive Protokoll-Verdrahtung laeuft nur noch ueber `src/renderer/modules/protokoll/screens/TopsScreen.js`.
 - Der TopsScreen-Diktatpfad ist wieder stabil:
   - `SharedEditboxCore` baut die Mikrofon-Buttons jetzt defensiv ein und faengt fehlende Label-Hosts ab
   - der TopsScreen crasht beim Rendern der Editbox nicht mehr
