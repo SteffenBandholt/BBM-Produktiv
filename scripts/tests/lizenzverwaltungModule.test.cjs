@@ -1029,26 +1029,52 @@ async function runLizenzverwaltungModuleTests(run) {
     }
   });
 
-  await run("SettingsView: Sammelmaske ist in sechs sichtbare Abschnitte gegliedert", () => {
+  await run("SettingsView: Startseite ist in fuenf Hauptgruppen gegliedert", () => {
     const idx = (needle) => settingsViewSource.indexOf(needle);
-    assert.equal(settingsViewSource.includes('title: "Profil"'), true);
-    assert.equal(settingsViewSource.includes('title: "Adresse"'), true);
-    assert.equal(settingsViewSource.includes('title: "Druckinhalt"'), true);
-    assert.equal(settingsViewSource.includes('title: "Footer"'), true);
-    assert.equal(settingsViewSource.includes('title: "Logos"'), true);
-    assert.equal(settingsViewSource.includes('title: "Drucklayout"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Name, Firma und Anzeigedaten"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Strasse, PLZ und Ort"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Texte fuer Protokoll und PDF-Ausgabe"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Fusszeilenangaben und Profil-/Adressbezug"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Drucklogos fuer die Ausgabe verwalten"'), true);
-    assert.equal(settingsViewSource.includes('hint: "Seitenraender und Footer-Abstand"'), true);
-    assert.equal(settingsViewSource.includes("Drucklogos verwalten"), true);
-    assert.equal(idx('title: "Profil"') < idx('title: "Adresse"'), true);
-    assert.equal(idx('title: "Adresse"') < idx('title: "Druckinhalt"'), true);
-    assert.equal(idx('title: "Druckinhalt"') < idx('title: "Footer"'), true);
-    assert.equal(idx('title: "Footer"') < idx('title: "Logos"'), true);
-    assert.equal(idx('title: "Logos"') < idx('title: "Drucklayout"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Allgemein"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Eingabe & Erfassung"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Ausgabe & Kommunikation"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Module"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Entwicklung"'), true);
+    assert.equal(settingsViewSource.includes('subText: "Profil / Adresse und Lizenzstatus."'), true);
+    assert.equal(
+      settingsViewSource.includes('subText: "Diktat / Audio, Transkription und Audio-Optionen."'),
+      true
+    );
+    assert.equal(
+      settingsViewSource.includes(
+        'subText: "Firmenrollen, Drucksignatur / Footer, Druckränder / Seitenränder, Drucklogos, E-Mail / Versand und Speicherorte / Ausgabeordner."'
+      ),
+      true
+    );
+    assert.equal(
+      settingsViewSource.includes('subText: "Protokoll und spaeter weitere freigeschaltete Arbeitsmodule."'),
+      true
+    );
+    assert.equal(
+      settingsViewSource.includes('subText: "Technik / Diagnose und technische Schutzplanken."'),
+      true
+    );
+    assert.equal(
+      settingsViewSource.includes("tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);"),
+      true
+    );
+    assert.equal(settingsViewSource.includes('titleText: "Profil & Druck"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Lizenzstatus"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Firmenrollen"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Adminbereich"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Archiv"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Technik"'), true);
+    assert.equal(
+      idx('titleText: "Allgemein"') < idx('titleText: "Eingabe & Erfassung"'),
+      true
+    );
+    assert.equal(
+      idx('titleText: "Eingabe & Erfassung"') < idx('titleText: "Ausgabe & Kommunikation"'),
+      true
+    );
+    assert.equal(idx('titleText: "Ausgabe & Kommunikation"') < idx('titleText: "Module"'), true);
+    assert.equal(idx('titleText: "Module"') < idx('titleText: "Entwicklung"'), true);
   });
 
   await run("SettingsView: sichtbare Druckinhalt-Texte sind sprachlich geschaerft", () => {

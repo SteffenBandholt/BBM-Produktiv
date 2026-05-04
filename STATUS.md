@@ -24,6 +24,9 @@ Sie ergänzt:
 - Das Settings-Zielkonzept ist jetzt als eigene Doku festgehalten:
   - [docs/settings-structure.md](docs/settings-structure.md) beschreibt die Zielstruktur fuer Allgemein, Eingabe & Erfassung, Ausgabe & Kommunikation, Module und Entwicklung
   - die Seite dient als fachliche Leitplanke fuer spaetere kleine Settings-Pakete
+- Die Settings-Startseite ist jetzt sichtbar in Hauptgruppen gegliedert:
+  - Allgemein, Eingabe & Erfassung, Ausgabe & Kommunikation, Module und Entwicklung stehen als eigene Ueberschriften auf der Startseite
+  - die vorhandenen Kacheln bleiben erreichbar und werden nur in diese grobe Struktur einsortiert
 - Der globale Header zeigt jetzt links `BBM <Version>` und darunter den aktiven Kontext als `aktiv: <Modul> | <Projektnummer> - <Kurzbezeichnung>`.
   Rechts steht ein ruhiger Kunden-/Lizenztext aus den vorhandenen App-Settings; der alte `bereit:`-Statusblock ist aus der sichtbaren Anzeige entfernt.
   Im Projektkontext steht dort jetzt nicht mehr `Projekt-Arbeitsbereich`, sondern das aktive Modul `Protokoll`.

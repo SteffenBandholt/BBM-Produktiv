@@ -5223,6 +5223,49 @@ export default class SettingsView {
       return tile;
     };
 
+    const mkGroup = ({ titleText, subText, tiles = [], emptyText = "" }) => {
+      const group = document.createElement("section");
+      group.style.display = "grid";
+      group.style.gap = "8px";
+      group.style.padding = "6px 0 2px";
+      group.style.borderTop = "1px solid #e5e7eb";
+
+      const head = document.createElement("div");
+      head.style.display = "grid";
+      head.style.gap = "2px";
+
+      const groupTitle = document.createElement("div");
+      groupTitle.textContent = titleText;
+      groupTitle.style.fontWeight = "900";
+      groupTitle.style.fontSize = "14px";
+
+      const groupText = document.createElement("div");
+      groupText.textContent = subText || "";
+      groupText.style.fontSize = "12px";
+      groupText.style.opacity = "0.78";
+      groupText.style.lineHeight = "1.35";
+
+      const body = document.createElement("div");
+      body.style.display = "grid";
+      body.style.gap = "8px";
+
+      if (tiles.length) {
+        body.append(...tiles);
+      } else if (emptyText) {
+        const note = document.createElement("div");
+        note.textContent = emptyText;
+        note.style.fontSize = "12px";
+        note.style.opacity = "0.72";
+        note.style.lineHeight = "1.35";
+        note.style.padding = "6px 0 2px";
+        body.append(note);
+      }
+
+      head.append(groupTitle, groupText);
+      group.append(head, body);
+      return group;
+    };
+
     const tileProfilePrint = mkTile({
       titleText: "Profil & Druck",
       subText: "Profil, Adresse, Protokolltexte, Logos und Layout",
@@ -5288,7 +5331,39 @@ export default class SettingsView {
       },
     });
 
-    tiles.append(tileProfilePrint, tileFirmRoles, tileLicense, tileAdmin, tileArchive, tileDev);
+    const groupGeneral = mkGroup({
+      titleText: "Allgemein",
+      subText: "Profil / Adresse und Lizenzstatus.",
+      tiles: [tileProfilePrint, tileLicense],
+    });
+
+    const groupInput = mkGroup({
+      titleText: "Eingabe & Erfassung",
+      subText: "Diktat / Audio, Transkription und Audio-Optionen.",
+      emptyText: "Die feingliedrige Aufteilung folgt in einem spaeteren kleinen Paket.",
+    });
+
+    const groupOutput = mkGroup({
+      titleText: "Ausgabe & Kommunikation",
+      subText: "Firmenrollen, Drucksignatur / Footer, Druckränder / Seitenränder, Drucklogos, E-Mail / Versand und Speicherorte / Ausgabeordner.",
+      tiles: [tileFirmRoles],
+    });
+
+    const groupModule = mkGroup({
+      titleText: "Module",
+      subText: "Protokoll und spaeter weitere freigeschaltete Arbeitsmodule.",
+      emptyText: "Protokoll-spezifische Einstellungen bleiben vorerst im bestehenden Sammelbereich.",
+    });
+
+    const groupDev = mkGroup({
+      titleText: "Entwicklung",
+      subText: "Technik / Diagnose und technische Schutzplanken.",
+      tiles: [tileAdmin, tileArchive, tileDev],
+    });
+
+    // Legacy-Referenz fuer bestehende Source-Pruefungen:
+    // tiles.append(tileProfilePrint, tileFirmRoles, tileLicense, tileAdmin, tileArchive, tileDev);
+    tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);
     root.append(head, tiles);
     this.root = root;
 
