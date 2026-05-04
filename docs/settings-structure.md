@@ -107,6 +107,49 @@ Als Zielbild soll eine `moduleSettingsRegistry` entstehen, die Settings fachlich
 
 Die Registry soll nur die Zuordnung und Sichtbarkeit beschreiben. Sie soll keine Fachlogik duplizieren und keine neue Plattform- oder Discovery-Architektur werden.
 
+## Modul-, Feature- und Lizenzregel
+
+### Fachmodule
+
+- Fachmodule sind eigenstaendige Arbeitsbereiche der App.
+- Aktuell ist `Protokoll` das fachliche Beispiel fuer ein Modul.
+- Fachmodule muessen sauber an- und abschaltbar sein.
+- Ist ein Fachmodul deaktiviert, darf es nicht mehr als sichtbare Projektkachel-Aktion erscheinen.
+- Ein Projektklick oder Start aus `HomeView` darf dann nicht blind in das Modul fuehren.
+- Statt eines kaputten Screens muss ein strukturierter `blocked`-Payload zurueckkommen.
+- Abhaengige Ausgabe-, Mail- und PDF-Wege muessen in diesem Fall sauber blockieren.
+
+### Hilfsfunktionen / Features
+
+- Hilfsfunktionen sind keine eigenstaendigen Arbeitsmodule.
+- `Diktat / Audio` ist das aktuelle Beispiel fuer eine Hilfsfunktion.
+- Eine App nur mit Diktat ergibt fachlich keinen eigenstaendigen Arbeitsbereich.
+- Hilfsfunktionen unterstuetzen aktive Fachmodule.
+- Hilfsfunktionen koennen separat freigeschaltet oder gesperrt werden.
+- `Diktat / Audio` gehoert in den Settings-Bereich `Eingabe & Erfassung`.
+
+### Ausgabe & Kommunikation
+
+- `Ausgabe & Kommunikation` ist moduluebergreifende Infrastruktur.
+- Dazu gehoeren Druck, PDF, E-Mail / Versand, Archiv, Firmenrollen, Drucklogos, Footer / Drucksignatur, Drucklayout / Seitenraender und Speicherorte / Ausgabeordner.
+- Diese Dinge gehoeren nicht exklusiv zum Modul `Protokoll`.
+- Sie duerfen von mehreren Bereichen genutzt werden, solange die Fachabgrenzung sauber bleibt.
+
+### Lizenzbau
+
+- Lizenzen werden extern gebaut.
+- Die normale App enthaelt keinen sichtbaren Lizenzgenerator und keine externe Lizenzverwaltung.
+- In der App bleiben nur Lizenzstatus, Freischaltungsanzeige und saubere Reaktionen auf gesperrte Module oder Features.
+- Admin- und Generatorfunktionen gehoeren nicht in die normale Settings-uebersicht.
+
+### Kurzregel
+
+- Module steuern Arbeitsbereiche.
+- Features steuern Zusatzfaehigkeiten.
+- Ausgabe & Kommunikation ist gemeinsame Infrastruktur.
+- Lizenzen werden extern erzeugt.
+- Die App zeigt nur den Status und reagiert sauber auf Freischaltung.
+
 ## Umsetzungsreihenfolge in kleinen Paketen
 
 1. Zielstruktur dokumentieren und Bezeichnungen vereinheitlichen.

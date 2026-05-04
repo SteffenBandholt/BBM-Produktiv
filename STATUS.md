@@ -1259,3 +1259,18 @@ Wichtig:
   - kein direkter Anschluss aus diesem Paket
 - Risiken/Hinweise:
   - Der interne Lizenz-Admin-Code bleibt bewusst stehen; nur der sichtbare Settings-Einstieg ist entfernt.
+
+#### Paket: Modul-/Feature-/Lizenzregel dokumentiert
+- Status: erledigt
+- Beschreibung:
+  - Die Doku beschreibt jetzt die Regel fuer Fachmodule, Hilfsfunktionen, Ausgabe-Infrastruktur und externen Lizenzbau.
+  - Die Kurzregel macht die fachliche Trennung in einem Blick lesbar.
+- Betroffene Dateien:
+  - `docs/settings-structure.md`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Nur Dokumentation wurde ergaenzt; App-Logik blieb unveraendert.
