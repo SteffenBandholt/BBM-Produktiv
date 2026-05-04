@@ -4117,6 +4117,55 @@ export default class SettingsView {
     });
   }
 
+  async _createDictationAudioContent() {
+    const mkScaleGroup = (labelText, buttons) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gap = "6px";
+      const lbl = document.createElement("div");
+      lbl.textContent = labelText;
+      lbl.style.fontWeight = "700";
+      lbl.style.fontSize = "12px";
+      const btnWrap = document.createElement("div");
+      btnWrap.style.display = "flex";
+      btnWrap.style.gap = "6px";
+      btnWrap.style.flexWrap = "wrap";
+      btnWrap.append(...buttons);
+      row.append(lbl, btnWrap);
+      return row;
+    };
+    const applyScaleBtnBase = (el) => {
+      el.style.padding = "6px 10px";
+      el.style.borderRadius = "8px";
+      el.style.border = "1px solid rgba(0,0,0,0.18)";
+      el.style.fontWeight = "600";
+      el.style.cursor = "pointer";
+      el.style.minHeight = "30px";
+      el.style.boxShadow = "none";
+    };
+    const setScaleBtnActive = (el, active) => {
+      el.style.background = active ? "#1976d2" : "#fff";
+      el.style.color = active ? "white" : "#1565c0";
+      el.style.borderColor = active ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
+    };
+    const dictationSection = createDictationDevSection({
+      applyPopupCardStyle,
+      mkScaleGroup,
+      applyScaleBtnBase,
+      setScaleBtnActive,
+      settingsApi: () => window.bbmDb || {},
+    });
+    if (typeof dictationSection.load === "function") {
+      await dictationSection.load();
+    }
+
+    this._openSettingsModal({
+      title: "Diktat / Audio",
+      content: [dictationSection.tab],
+      closeOnly: true,
+    });
+  }
+
   async _createOutputPrintContent() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
@@ -5011,7 +5060,6 @@ export default class SettingsView {
     const dbCard = mkCard("DB-Diagnose", "Aktive DB, Legacy und Importpfade prüfen.");
     const topsCard = mkCard("Textgrenzen für TOPs", "Maximale Länge für Kurztext und Langtext in TOPs.");
     const themeCard = mkCard("Farbschema", "Start-Defaults des Themes verwalten.");
-    const dictationCard = mkCard("Diktat / Audio", "Technische Einstellungen fuer die Diktierfunktion.");
 
     const btn = (label, primary = false) => {
       const el = document.createElement("button");
@@ -5287,17 +5335,9 @@ export default class SettingsView {
       el.style.color = active ? "white" : "#1565c0";
       el.style.borderColor = active ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
     };
-    const dictationSection = createDictationDevSection({
-      applyPopupCardStyle,
-      mkScaleGroup,
-      applyScaleBtnBase,
-      setScaleBtnActive,
-      settingsApi: () => window.bbmDb || {},
-    });
     const tabs = [
       { key: "version", label: "Versionierung", el: versionCard.box },
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
-      { key: "dictation", label: "Diktat / Audio", el: dictationSection.tab },
       { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
     ];
@@ -5310,13 +5350,8 @@ export default class SettingsView {
     const tabBody = document.createElement("div");
     tabBody.style.display = "grid";
     tabBody.style.gap = "10px";
-    let dictationLoaded = false;
     const tabButtons = new Map();
     const setTab = (key) => {
-      if (key === "dictation" && !dictationLoaded) {
-        dictationLoaded = true;
-        if (typeof dictationSection.load === "function") dictationSection.load();
-      }
       for (const tab of tabs) {
         const active = tab.key === key;
         tab.el.style.display = active ? "grid" : "none";
@@ -5336,7 +5371,6 @@ export default class SettingsView {
     tabHead.append(
       addTabBtn("Versionierung", "version"),
       addTabBtn("DB-Diagnose", "db"),
-      addTabBtn("Diktat / Audio", "dictation"),
       addTabBtn("Protokoll-Textgrenzen", "tops"),
       addTabBtn("Farbschema", "theme")
     );
@@ -5532,6 +5566,14 @@ export default class SettingsView {
       },
     });
 
+    const tileDictationAudio = mkTile({
+      titleText: "Diktat / Audio",
+      subText: "Diktieren, Transkription und Audio-Optionen",
+      onClick: async () => {
+        await this._createDictationAudioContent();
+      },
+    });
+
     const tileProtocol = mkTile({
       titleText: "Protokoll",
       subText: "Bezeichnung und Vorbemerkung",
@@ -5606,7 +5648,7 @@ export default class SettingsView {
     const groupInput = mkGroup({
       titleText: "Eingabe & Erfassung",
       subText: "Hilfsfunktionen fuer Erfassung und Sprache.",
-      emptyText: "Noch keine eigenen Einstellungen.",
+      tiles: [tileDictationAudio],
     });
 
     const groupOutput = mkGroup({

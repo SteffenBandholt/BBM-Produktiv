@@ -939,7 +939,8 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("titleText: \"Lizenzstatus\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
     assert.equal(settingsViewSource.includes("titleText: \"Technik\""), true);
-    assert.equal(settingsViewSource.includes("subText: \"Versionierung, Textgrenzen, DB-Diagnose und Diktat / Audio\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Versionierung, Textgrenzen, DB-Diagnose und Diktat / Audio\""), false);
+    assert.equal(settingsViewSource.includes("subText: \"Diagnose und technische Grenzen\""), true);
     assert.equal(settingsViewSource.includes("tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);"), true);
     assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
@@ -1047,7 +1048,7 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('titleText: "Entwicklung"'), true);
     assert.equal(settingsViewSource.includes('subText: "Persoenliche Daten und Freischaltung."'), true);
     assert.equal(settingsViewSource.includes('subText: "Hilfsfunktionen fuer Erfassung und Sprache."'), true);
-    assert.equal(settingsViewSource.includes('emptyText: "Noch keine eigenen Einstellungen."'), true);
+    assert.equal(settingsViewSource.includes('emptyText: "Noch keine eigenen Einstellungen."'), false);
     assert.equal(
       settingsViewSource.includes(
         'subText: "Druck, Versand, Archiv und Speicherorte."'
@@ -1067,6 +1068,7 @@ async function runLizenzverwaltungModuleTests(run) {
       true
     );
     assert.equal(settingsViewSource.includes('titleText: "Profil / Adresse"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Diktat / Audio"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Ausgabe & Druck"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Protokoll"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Profil & Druck"'), false);
@@ -1075,7 +1077,9 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('titleText: "Adminbereich"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Archiv"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Technik"'), true);
+    assert.equal(settingsViewSource.includes('subText: "Diktieren, Transkription und Audio-Optionen"'), true);
     assert.equal(settingsViewSource.includes('tiles: [tileOutputPrint, tileFirmRoles, tileArchive]'), true);
+    assert.equal(settingsViewSource.includes('tiles: [tileDictationAudio]'), true);
     assert.equal(settingsViewSource.includes('tiles: [tileAdmin, tileDev]'), true);
     assert.equal(
       idx('titleText: "Allgemein"') < idx('titleText: "Eingabe & Erfassung"'),
@@ -1087,6 +1091,8 @@ async function runLizenzverwaltungModuleTests(run) {
     );
     assert.equal(idx('titleText: "Ausgabe & Kommunikation"') < idx('titleText: "Module"'), true);
     assert.equal(idx('titleText: "Module"') < idx('titleText: "Entwicklung"'), true);
+    assert.equal(settingsViewSource.includes('addTabBtn("Diktat / Audio", "dictation")'), false);
+    assert.equal(settingsViewSource.includes('{ key: "dictation", label: "Diktat / Audio", el: dictationSection.tab }'), false);
   });
 
   await run("SettingsView: sichtbare Druckinhalt-Texte sind sprachlich geschaerft", () => {
@@ -1192,6 +1198,58 @@ async function runLizenzverwaltungModuleTests(run) {
       assert.equal(calls.settings[0].user_name1, "Name A");
       assert.equal(calls.settings[0].user_city, "Musterstadt");
       assert.equal(view.router.context.settings.user_name, "Geaenderter Nutzer");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: Diktat / Audio oeffnet einen eigenen Dialog", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            "audio.whisper.quality": "balanced",
+          },
+        }),
+        audioWhisperModelsStatus: async () => ({
+          ok: true,
+          models: {
+            fast: { available: true },
+            balanced: { available: true },
+            best: { available: true },
+            large: { available: true },
+          },
+        }),
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._createDictationAudioContent();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Diktat / Audio");
+      assert.equal(opened[0].closeOnly, true);
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(contentText.includes("Diktierprodukt"), true);
+      assert.equal(contentText.includes("Whisper-Modelle"), true);
+      assert.equal(contentText.includes("Woerterbuch"), true);
+      assert.equal(contentText.includes("Versionierung"), false);
+      assert.equal(contentText.includes("DB-Diagnose"), false);
+      assert.equal(contentText.includes("Protokoll-Textgrenzen"), false);
+      assert.equal(contentText.includes("Farbschema"), false);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

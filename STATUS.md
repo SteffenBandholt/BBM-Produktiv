@@ -1225,3 +1225,20 @@ Wichtig:
   - kein direkter Anschluss aus diesem Paket
 - Risiken/Hinweise:
   - Der Create-Kontext wird im Screen gehalten; bei weiteren Create-Regeln muss spaeter nur dieser Pfad erweitert werden.
+
+#### Paket: Diktat/Audio von Entwicklung nach Eingabe & Erfassung verschieben
+- Status: erledigt
+- Beschreibung:
+  - `Diktat / Audio` erscheint jetzt als eigene Kachel unter `Eingabe & Erfassung`.
+  - Der Technik-Dialog enthaelt diesen Tab nicht mehr.
+  - Die bestehenden Audio-Einstellungen bleiben ueber den neuen Einstieg erreichbar.
+- Betroffene Dateien:
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/lizenzverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Der Audio-Baustein bleibt intern derselbe; nur der sichtbare Einstieg wurde umgehaengt.
