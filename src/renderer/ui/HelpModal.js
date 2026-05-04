@@ -89,7 +89,7 @@ export default class HelpModal {
     btnQuickAssist.style.display = "inline-flex";
     btnQuickAssist.style.alignItems = "center";
     btnQuickAssist.style.gap = "7px";
-    applyPopupButtonStyle(btnQuickAssist);
+    applyPopupButtonStyle(btnQuickAssist, { variant: "ghost" });
 
     const quickAssistIcon = document.createElement("img");
     quickAssistIcon.src = QUICK_ASSIST_ICON_URL;
@@ -114,7 +114,7 @@ export default class HelpModal {
     const btnInfo = document.createElement("button");
     btnInfo.type = "button";
     btnInfo.textContent = "Info";
-    applyPopupButtonStyle(btnInfo);
+    applyPopupButtonStyle(btnInfo, { variant: "ghost" });
     btnInfo.onclick = () => this._openInfoPopup();
 
     helpActions.append(btnQuickAssist, quickAssistHint, btnInfo);

@@ -1375,3 +1375,22 @@ Wichtig:
 - Risiken/Hinweise:
   - Einige Fach-Buttons behalten bewusst lokale Minimalhoehen, damit spezialisierte Layouts stabil bleiben.
   - Print-/PDF-Buttons und Drucklogik wurden nicht angefasst.
+
+#### Paket: Zentrale Button-Tokens eingefuehrt
+- Status: erledigt
+- Beschreibung:
+  - Appweite Button-Tokens wurden zentral in den globalen UI-Styles definiert.
+  - Die vorhandenen Standardbuttons haengen jetzt an diesen Tokens fuer Hoehe, Padding, Radius, Schrift, Border, Hover, Focus und Disabled.
+  - Varianten `primary`, `secondary`, `danger` und `ghost` bleiben erhalten und sind an den zentralen Token-Satz gebunden.
+  - Die Button-Optik bleibt kompakt und dezent, ohne Fachlogik oder Druckpfade zu aendern.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellStyles.js`
+  - `src/renderer/ui/popupButtonStyles.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Fachspezifische Einzelformen bleiben dort bestehen, wo sie fuer Layout oder Bedienung notwendig sind.
+  - Print-/PDF-Stile wurden bewusst nicht mit den Button-Tokens gekoppelt.

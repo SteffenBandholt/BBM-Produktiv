@@ -1572,9 +1572,7 @@ _isoToDDMMYYYY(iso) {
     // "Protokoll beenden"
     const btnEndMeeting = document.createElement("button");
     btnEndMeeting.textContent = "Protokoll beenden";
-    btnEndMeeting.style.background = "#ef6c00";
-    btnEndMeeting.style.color = "white";
-    btnEndMeeting.style.border = "1px solid rgba(0,0,0,0.25)";
+    applyPopupButtonStyle(btnEndMeeting, { variant: "danger" });
     styleBtnBase(btnEndMeeting);
     btnEndMeeting.onclick = async () => {
       if (this._busy) return;
@@ -1584,10 +1582,8 @@ _isoToDDMMYYYY(iso) {
 
     const btnAudioAnalyze = document.createElement("button");
     btnAudioAnalyze.textContent = "Audio";
-    btnAudioAnalyze.style.background = "#1565c0";
-    btnAudioAnalyze.style.color = "white";
-    btnAudioAnalyze.style.border = "1px solid rgba(0,0,0,0.25)";
     btnAudioAnalyze.style.display = "none";
+    applyPopupButtonStyle(btnAudioAnalyze, { variant: "secondary" });
     styleBtnBase(btnAudioAnalyze);
     btnAudioAnalyze.onclick = async () => {
       if (this._busy || this.isReadOnly || !this.meetingId) return;
@@ -1596,9 +1592,7 @@ _isoToDDMMYYYY(iso) {
 
     const btnCloseMeeting = document.createElement("button");
     btnCloseMeeting.textContent = "Schließen";
-    btnCloseMeeting.style.background = "#fff";
-    btnCloseMeeting.style.color = "#222";
-    btnCloseMeeting.style.border = "1px solid rgba(0,0,0,0.25)";
+    applyPopupButtonStyle(btnCloseMeeting, { variant: "secondary" });
     styleBtnBase(btnCloseMeeting);
     btnCloseMeeting.onclick = async () => {
       if (this._busy) return;
@@ -1608,16 +1602,14 @@ _isoToDDMMYYYY(iso) {
     // + Titel
     const btnL1 = document.createElement("button");
     btnL1.textContent = "+ Titel";
-    btnL1.style.border = "1px solid #ddd";
-    btnL1.style.background = "#f3f3f3";
+    applyPopupButtonStyle(btnL1, { variant: "secondary" });
     styleBtnBase(btnL1);
     btnL1.onclick = () => this.createTop(1, null);
 
     // + TOP
     const btnChild = document.createElement("button");
     btnChild.textContent = "+ TOP";
-    btnChild.style.border = "1px solid #ddd";
-    btnChild.style.background = "#f3f3f3";
+    applyPopupButtonStyle(btnChild, { variant: "secondary" });
     styleBtnBase(btnChild);
     btnChild.onclick = () => {
       const activeTop = this.selectedTop || this._findTopById(this.selectedTopId);
@@ -2194,9 +2186,7 @@ _isoToDDMMYYYY(iso) {
     btnTitleDictate.type = "button";
     btnTitleDictate.textContent = "Diktat";
     btnTitleDictate.title = "Spracheingabe fuer Kurztext";
-    btnTitleDictate.style.border = "1px solid #cfd8dc";
-    btnTitleDictate.style.background = "#f7f9fb";
-    btnTitleDictate.style.color = "#0b4db4";
+    applyPopupButtonStyle(btnTitleDictate, { variant: "ghost" });
     styleBtnBase(btnTitleDictate);
     btnTitleDictate.onclick = async () => {
       await this._startDictation({ target: "shortText", meetingId: this.meetingId, projectId: this.projectId || null });
@@ -2239,9 +2229,7 @@ _isoToDDMMYYYY(iso) {
     btnLongDictate.type = "button";
     btnLongDictate.textContent = "Diktat";
     btnLongDictate.title = "Spracheingabe fuer Langtext";
-    btnLongDictate.style.border = "1px solid #cfd8dc";
-    btnLongDictate.style.background = "#f7f9fb";
-    btnLongDictate.style.color = "#0b4db4";
+    applyPopupButtonStyle(btnLongDictate, { variant: "ghost" });
     styleBtnBase(btnLongDictate);
     btnLongDictate.onclick = async () => {
       await this._startDictation({ target: "longText", meetingId: this.meetingId, projectId: this.projectId || null });

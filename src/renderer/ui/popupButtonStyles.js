@@ -2,15 +2,19 @@
 
 export function applyPopupButtonStyle(btn, { variant = "neutral" } = {}) {
   if (!btn || !btn.style) return;
-  btn.style.padding = "6px 10px";
-  btn.style.borderRadius = "8px";
-  btn.style.fontWeight = "600";
-  btn.style.minHeight = "30px";
+  btn.style.padding = "var(--bbm-button-padding-y) var(--bbm-button-padding-x)";
+  btn.style.borderRadius = "var(--bbm-button-radius)";
+  btn.style.fontFamily = "var(--bbm-font-ui)";
+  btn.style.fontSize = "var(--bbm-button-font-size)";
+  btn.style.fontWeight = "var(--bbm-button-font-weight)";
+  btn.style.minHeight = "var(--bbm-button-height)";
+  btn.style.lineHeight = "var(--bbm-button-line-height)";
   btn.style.cursor = "pointer";
-  btn.style.transition = "background 120ms ease, box-shadow 120ms ease, border-color 120ms ease";
+  btn.style.transition = "background 120ms ease, box-shadow 120ms ease, border-color 120ms ease, color 120ms ease";
 
-  if (variant === "primary" || variant === "danger" || variant === "warn") {
-    btn.dataset.variant = variant;
+  const mappedVariant = variant === "neutral" ? "secondary" : variant;
+  if (["primary", "secondary", "danger", "warn", "ghost"].includes(mappedVariant)) {
+    btn.dataset.variant = mappedVariant;
   } else {
     delete btn.dataset.variant;
   }
