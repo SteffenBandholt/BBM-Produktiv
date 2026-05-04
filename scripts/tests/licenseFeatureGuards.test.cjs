@@ -35,6 +35,7 @@ async function runLicenseFeatureGuardTests(run) {
   const mainSource = read("src/main/main.js");
   const projectsIpc = read("src/main/ipc/projectsIpc.js");
   const topsScreenSource = read("src/renderer/modules/protokoll/screens/TopsScreen.js");
+  const dictationControllerSource = read("src/renderer/features/audio-dictation/DictationController.js");
 
   await run("License-Guard: PDF-IPC prüft Protokoll-Modul", () => {
     assert.equal(printIpc.includes('_enforceFeature("protokoll");'), true);
@@ -52,6 +53,9 @@ async function runLicenseFeatureGuardTests(run) {
     assert.equal(topsScreenSource.includes("_syncDictationButtonRefs"), true);
     assert.equal(topsScreenSource.includes("_updateDictationButtons"), true);
     assert.equal(topsScreenSource.includes("applyEditBoxState()"), true);
+    assert.equal(topsScreenSource.includes("TopsView.js"), false);
+    assert.equal(dictationControllerSource.includes("dictation-start.svg"), true);
+    assert.equal(dictationControllerSource.includes("dictation-stop.svg"), true);
   });
 
   await run("License-Guard: Mail-IPC prüft Protokoll-Modul", () => {

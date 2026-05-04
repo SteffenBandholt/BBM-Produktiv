@@ -22,6 +22,9 @@ Sie ergänzt:
   - `SharedEditboxCore` baut die Mikrofon-Buttons jetzt defensiv ein und faengt fehlende Label-Hosts ab
   - der TopsScreen crasht beim Rendern der Editbox nicht mehr
   - der kaputte `notoSans.css`-Importpfad in den Tops-Styles wurde korrigiert
+  - die Diktat-Buttons nutzen jetzt die vorhandenen SVG-Assets `dictation-start.svg` und `dictation-stop.svg`
+  - die Buttons sitzen direkt in der Zeile von Kurztext/Langtext neben der Restzeichenanzeige
+  - bei fehlender Freischaltung werden sie gar nicht angezeigt
 - Im Protokoll-Kontext ist die fachlich falsche Header-Belegung bereinigt:
   - die sichtbare Protokoll-Quicklane zeigt jetzt einen TOP-Filter statt der alten falsch belegten Header-Aktionen
   - der Filter schaltet zwischen `Alle`, `ToDo` und `Beschluss`

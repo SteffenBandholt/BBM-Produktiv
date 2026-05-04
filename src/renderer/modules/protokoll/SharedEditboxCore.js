@@ -1,5 +1,4 @@
 import { EditboxShell } from "../../core/editbox/index.js";
-import { applyPopupButtonStyle } from "../../ui/popupButtonStyles.js";
 import {
   normalizeTopLongText,
   normalizeTopShortText,
@@ -44,6 +43,8 @@ export class SharedEditboxCore {
     this.editbox.setLimits({ shortText: 70 });
     this.root = this.editbox.getElement();
     this.flagsWrap = this.editbox.flagsWrap;
+    this.shortLabel = this.editbox.shortLabel;
+    this.longLabel = this.editbox.longLabel;
     this.root.classList.add("bbm-tops-workbench-editbox");
     this.editbox.setVisibleFlags(["important", "task", "decision"]);
     this.editbox.setCounterFormatter((evaluation) => String(evaluation?.remaining ?? ""));
@@ -80,14 +81,14 @@ export class SharedEditboxCore {
     const createButton = (target, title) => {
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "bbm-tops-workbench-btn bbm-tops-workbench-btn-neutral bbm-tops-dictation-btn";
+      btn.className = "bbm-tops-workbench-btn bbm-tops-workbench-btn-neutral bbm-tops-dictation-icon-button";
       btn.setAttribute("aria-label", title);
       btn.title = title;
       btn.style.display = "none";
+      btn.dataset.dictationTarget = target;
       btn.onclick = () => {
         if (this.onStartDictation) this.onStartDictation(target);
       };
-      applyPopupButtonStyle(btn, { variant: "ghost" });
       return btn;
     };
 

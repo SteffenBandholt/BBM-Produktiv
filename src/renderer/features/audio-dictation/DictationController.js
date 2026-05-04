@@ -1,5 +1,8 @@
 import { TranscriptionService } from "../../services/audio/TranscriptionService.js";
 
+const DICTATION_START_ICON_URL = "./assets/icons/dictation-start.svg";
+const DICTATION_STOP_ICON_URL = "./assets/icons/dictation-stop.svg";
+
 export class DictationController {
   constructor({ view, ensureAudioAvailable }) {
     this.view = view;
@@ -22,56 +25,37 @@ export class DictationController {
   }
 
   _createMicrophoneIcon(doc) {
-    const svg = doc.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", "0 0 24 24");
-    svg.setAttribute("aria-hidden", "true");
-    svg.setAttribute("focusable", "false");
-    svg.setAttribute("width", "14");
-    svg.setAttribute("height", "14");
-    svg.style.display = "block";
-    svg.style.flex = "0 0 auto";
-    svg.style.stroke = "currentColor";
-    svg.style.fill = "none";
-    svg.style.strokeWidth = "1.8";
-    svg.style.strokeLinecap = "round";
-    svg.style.strokeLinejoin = "round";
-
-    const body = doc.createElementNS("http://www.w3.org/2000/svg", "path");
-    body.setAttribute("d", "M12 14a3 3 0 0 0 3-3V7a3 3 0 1 0-6 0v4a3 3 0 0 0 3 3Z");
-    const stem = doc.createElementNS("http://www.w3.org/2000/svg", "path");
-    stem.setAttribute("d", "M8 11a4 4 0 0 0 8 0");
-    const base = doc.createElementNS("http://www.w3.org/2000/svg", "path");
-    base.setAttribute("d", "M12 14v4");
-    const stand = doc.createElementNS("http://www.w3.org/2000/svg", "path");
-    stand.setAttribute("d", "M9 18h6");
-
-    svg.append(body, stem, base, stand);
-    return svg;
+    const img = doc.createElement("img");
+    img.alt = "";
+    img.setAttribute("aria-hidden", "true");
+    img.setAttribute("draggable", "false");
+    img.className = "bbm-tops-dictation-icon";
+    img.src = DICTATION_START_ICON_URL;
+    return img;
   }
 
   _renderButtonContent(btn, { active = false } = {}) {
     if (!btn) return;
     const doc = btn.ownerDocument || (typeof document !== "undefined" ? document : null);
     if (!doc?.createElement) return;
-    btn.replaceChildren();
+    if (!btn._bbmDictationIcon) {
+      btn._bbmDictationIcon = this._createMicrophoneIcon(doc);
+      btn.append(btn._bbmDictationIcon);
+    }
     btn.style.display = "inline-flex";
     btn.style.alignItems = "center";
     btn.style.justifyContent = "center";
-    btn.style.gap = "4px";
-    btn.style.minWidth = "32px";
-
-    const mic = this._createMicrophoneIcon(doc);
-
-    btn.append(mic);
+    btn.style.padding = "0";
+    btn.style.minWidth = "24px";
+    btn.style.width = "24px";
+    btn.style.height = "24px";
+    btn.style.minHeight = "24px";
+    btn.style.lineHeight = "0";
+    btn.dataset.size = "sm";
+    btn.dataset.variant = "secondary";
+    btn._bbmDictationIcon.src = active ? DICTATION_STOP_ICON_URL : DICTATION_START_ICON_URL;
 
     if (active) {
-      const dot = doc.createElement("span");
-      dot.textContent = "●";
-      dot.setAttribute("aria-hidden", "true");
-      dot.style.color = "#dc2626";
-      dot.style.fontSize = "10px";
-      dot.style.lineHeight = "1";
-      btn.append(dot);
       btn.title = "Aufnahme läuft – klicken zum Stoppen";
       btn.setAttribute("aria-label", "Aufnahme läuft – klicken zum Stoppen");
     } else {
@@ -102,7 +86,7 @@ export class DictationController {
       if (!btn) return;
       if (audioLocked) {
         btn.style.display = "none";
-        btn.replaceChildren();
+        btn.hidden = true;
         btn.title = view._audioLicenseMessage || "Audio-Funktion ist fuer diese Lizenz nicht freigeschaltet.";
         btn.setAttribute("aria-label", btn.title);
         btn.disabled = true;
@@ -110,6 +94,7 @@ export class DictationController {
         return;
       }
       btn.style.display = "inline-flex";
+      btn.hidden = false;
       const active = this._audioDictationActive && isTarget;
       const disallowBecauseOtherTarget = this._audioDictationActive && !isTarget;
       btn.disabled = disabledBase || this._audioDictationBusy || disallowBecauseOtherTarget;

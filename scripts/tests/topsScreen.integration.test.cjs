@@ -10,6 +10,9 @@ async function runTopsScreenIntegrationTests(run) {
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsWorkbenchViewModel.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/TopsList.js")),
   ]);
+  const { SharedEditboxCore } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/modules/protokoll/SharedEditboxCore.js")
+  );
   const ProjectContextQuicklane = (await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/ui/ProjectContextQuicklane.js")
   )).default;
@@ -551,6 +554,32 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(view.btnLongDictate.style.display, "none");
   });
 
+  await run("Tops v2 Integration: Diktat-Buttons sitzen direkt in der Editbox-Zeile", () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { document: doc };
+
+    try {
+      const core = new SharedEditboxCore({
+        onStartDictation() {},
+      });
+
+      const shortLabel = core.editbox.shortLabel;
+      const longLabel = core.editbox.longLabel;
+
+      assert.equal(shortLabel.contains(core.shortDictateButton), true);
+      assert.equal(shortLabel.contains(core.editbox.shortCounter), true);
+      assert.equal(longLabel.contains(core.longDictateButton), true);
+      assert.ok(shortLabel.children.indexOf(core.shortDictateButton) > shortLabel.children.indexOf(core.editbox.shortCounter));
+      assert.ok(longLabel.children.indexOf(core.longDictateButton) > longLabel.children.indexOf(core.editbox.longCounter));
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
   await run("Tops v2 Integration: Diktat schreibt in Kurz- und Langtextfeld", async () => {
     const doc = createFakeDocument();
     const shortInput = doc.createElement("input");
@@ -731,15 +760,16 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(view.btnTitleDictate.style.display, "inline-flex");
     assert.equal(view.btnLongDictate.style.display, "inline-flex");
     assert.equal(view.btnTitleDictate.children.length, 1);
-    assert.equal(view.btnTitleDictate.children[0].tagName, "SVG");
-    assert.equal(view.btnTitleDictate.children[0].children.length >= 4, true);
+    assert.equal(view.btnTitleDictate.children[0].tagName, "IMG");
+    assert.equal(String(view.btnTitleDictate.children[0].src || "").endsWith("dictation-start.svg"), true);
 
     controller._audioDictationActive = true;
     controller._audioDictationTarget = "shortText";
     controller.updateButtons({ meetingId: "21" });
 
-    assert.equal(view.btnTitleDictate.children.length, 2);
-    assert.equal(view.btnTitleDictate.children[1].style.color, "#dc2626");
+    assert.equal(view.btnTitleDictate.children.length, 1);
+    assert.equal(view.btnTitleDictate.children[0].tagName, "IMG");
+    assert.equal(String(view.btnTitleDictate.children[0].src || "").endsWith("dictation-stop.svg"), true);
     assert.equal(String(view.btnTitleDictate.title || "").includes("Aufnahme"), true);
     assert.equal(view.btnLongDictate.disabled, true);
   });
