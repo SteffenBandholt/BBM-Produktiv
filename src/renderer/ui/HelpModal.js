@@ -125,7 +125,7 @@ export default class HelpModal {
     body.style.flex = "1 1 auto";
     body.style.minHeight = "0";
     body.style.lineHeight = "1.45";
-    body.style.fontFamily = "Calibri, Arial, sans-serif";
+    body.style.fontFamily = "var(--bbm-font-ui)";
 
     const footer = document.createElement("div");
     footer.style.display = "flex";

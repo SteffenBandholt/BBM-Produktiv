@@ -23,7 +23,7 @@ export function createCoreShellLayout({ headerEl } = {}) {
   host.style.flexDirection = "column";
   host.style.alignItems = "stretch";
   host.style.boxSizing = "border-box";
-  host.style.fontFamily = "Calibri, Arial, sans-serif";
+  host.style.fontFamily = "var(--bbm-font-ui)";
   host.style.color = "var(--text-main)";
   host.style.background = "var(--main-bg)";
 

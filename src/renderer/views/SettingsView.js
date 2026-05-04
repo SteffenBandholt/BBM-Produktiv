@@ -537,7 +537,7 @@ export default class SettingsView {
     ta.maxLength = 300;
     ta.style.width = "100%";
     ta.style.resize = "vertical";
-    ta.style.fontFamily = "Calibri, Arial, sans-serif";
+    ta.style.fontFamily = "var(--bbm-font-ui)";
     ta.style.fontSize = "11pt";
     ta.style.lineHeight = "1.35";
     ta.value = String(this.pdfPreRemarks || "");
@@ -5671,7 +5671,7 @@ export default class SettingsView {
     modal.style.background = "#fff";
     modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.25)";
     modal.style.padding = "0";
-    modal.style.fontFamily = "Calibri, Arial, sans-serif";
+    modal.style.fontFamily = "var(--bbm-font-ui)";
     modal.tabIndex = -1;
 
     const modalHead = document.createElement("div");

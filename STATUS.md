@@ -1274,3 +1274,26 @@ Wichtig:
   - kein direkter Anschluss aus diesem Paket
 - Risiken/Hinweise:
   - Nur Dokumentation wurde ergaenzt; App-Logik blieb unveraendert.
+
+#### Paket: Globale UI-Schrift auf Noto Sans umgestellt
+- Status: erledigt
+- Beschreibung:
+  - Die normale App-Oberflaeche nutzt jetzt zentral `Noto Sans` als UI-Schrift.
+  - Die Print-/PDF-Schriften bleiben unveraendert.
+  - TopsScreen, Settings, Projektverwaltung und globale Shell nutzen die gemeinsame UI-Variable.
+- Betroffene Dateien:
+  - `src/renderer/app/coreShellStyles.js`
+  - `src/renderer/app/coreShellLayout.js`
+  - `src/renderer/index.html`
+  - `src/renderer/editor.html`
+  - `src/renderer/views/SettingsView.js`
+  - `src/renderer/views/TopsView.js`
+  - `src/renderer/ui/HelpModal.js`
+  - `src/renderer/ui/ParticipantsModals.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Die Tops-Textschrift bleibt als separate Modul-/Top-Regel bestehen; Print bleibt bewusst unberuehrt.

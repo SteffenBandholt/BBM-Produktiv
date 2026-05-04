@@ -310,7 +310,7 @@ export default class ParticipantsModals {
     const modal = document.createElement("div");
     stylePopupCard(modal, { width: "min(980px, calc(100vw - 24px))" });
     modal.style.padding = "0";
-    modal.style.fontFamily = 'Calibri, Arial, sans-serif';
+    modal.style.fontFamily = "var(--bbm-font-ui)";
 
     const head = document.createElement("div");
     head.style.display = "flex";

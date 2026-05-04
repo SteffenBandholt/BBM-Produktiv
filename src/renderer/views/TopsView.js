@@ -2146,7 +2146,7 @@ _isoToDDMMYYYY(iso) {
     inpTitle.type = "text";
     inpTitle.placeholder = "Kurztext…";
     inpTitle.style.width = "100%";
-    inpTitle.style.fontFamily = "Calibri, Arial, sans-serif";
+    inpTitle.style.fontFamily = "var(--bbm-font-ui)";
     inpTitle.maxLength = this._titleMax();
     inpTitle.addEventListener("keydown", (e) => {
       if (e.key !== "Enter") return;
@@ -2255,7 +2255,7 @@ _isoToDDMMYYYY(iso) {
     taLong.rows = 4;
     taLong.placeholder = "Langtext…";
     taLong.style.width = "100%";
-    taLong.style.fontFamily = "Calibri, Arial, sans-serif";
+    taLong.style.fontFamily = "var(--bbm-font-ui)";
     taLong.maxLength = this._longMax();
     // Hinweis: Enter = neue Zeile, Ctrl/Cmd+Enter = Speichern
     taLong.title = "Enter: neue Zeile · Ctrl/Cmd+Enter: speichern";

@@ -6,6 +6,7 @@ export function injectCoreShellBaseStyles() {
   themeStyle.setAttribute("data-bbm-core-shell-styles", "true");
   themeStyle.textContent = `
     :root {
+      --bbm-font-ui: "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       --header-bg: #D6ECFF;
       --header-text: #0F172A;
       --sidebar-bg: #0F172A;
@@ -28,6 +29,18 @@ export function injectCoreShellBaseStyles() {
       --btn-warn-bg: #f59e0b;
       --btn-warn-text: #ffffff;
       --btn-focus-ring: rgba(25, 118, 210, 0.35);
+    }
+    html,
+    body,
+    #content {
+      font-family: var(--bbm-font-ui);
+    }
+    button,
+    input,
+    textarea,
+    select,
+    optgroup {
+      font-family: inherit;
     }
     button {
       padding: 6px 10px;
