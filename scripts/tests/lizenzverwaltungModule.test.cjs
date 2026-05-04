@@ -937,13 +937,13 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('textContent = "▼ Runter";'), true);
     assert.equal(settingsViewSource.includes('for (const text of ["Nr.", "Rolle/Kategorie"])'), true);
     assert.equal(settingsViewSource.includes("titleText: \"Lizenzstatus\""), true);
-    assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), false);
     assert.equal(settingsViewSource.includes("titleText: \"Technik\""), true);
     assert.equal(settingsViewSource.includes("subText: \"Versionierung, Textgrenzen, DB-Diagnose und Diktat / Audio\""), false);
     assert.equal(settingsViewSource.includes("subText: \"Diagnose und technische Grenzen\""), true);
     assert.equal(settingsViewSource.includes("tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);"), true);
-    assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), true);
-    assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), false);
+    assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), false);
   });
 
   await run("SettingsView: Firmenrollen oeffnet Dialog mit Rollenliste", async () => {
@@ -1074,13 +1074,12 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('titleText: "Profil & Druck"'), false);
     assert.equal(settingsViewSource.includes('titleText: "Lizenzstatus"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Firmenrollen"'), true);
-    assert.equal(settingsViewSource.includes('titleText: "Adminbereich"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Archiv"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Technik"'), true);
     assert.equal(settingsViewSource.includes('subText: "Diktieren, Transkription und Audio-Optionen"'), true);
     assert.equal(settingsViewSource.includes('tiles: [tileOutputPrint, tileFirmRoles, tileArchive]'), true);
     assert.equal(settingsViewSource.includes('tiles: [tileDictationAudio]'), true);
-    assert.equal(settingsViewSource.includes('tiles: [tileAdmin, tileDev]'), true);
+    assert.equal(settingsViewSource.includes('tiles: [tileDev]'), true);
     assert.equal(
       idx('titleText: "Allgemein"') < idx('titleText: "Eingabe & Erfassung"'),
       true
@@ -1421,24 +1420,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("tabLicense.append(licenseBox, licenseGenBox);"), false);
   });
 
-  await run("Lizenzverwaltung: Adminbereich-Popup enthaelt Kachel Lizenzverwaltung", () => {
-    assert.equal(settingsViewSource.includes("title: \"Adminbereich\""), true);
-    assert.equal(settingsViewSource.includes("titleText: \"Lizenzverwaltung\""), true);
-    assert.equal(settingsViewSource.includes("openLicenseAdminPopup"), true);
-  });
-
-
   await run("SettingsView: neuer Adminbereich nutzt keine alten Popup-Callbacks", () => {
     assert.equal(settingsViewSource.includes("onOpenLicenseEditor:"), false);
     assert.equal(settingsViewSource.includes("onOpenCustomerEditor:"), false);
     assert.equal(settingsViewSource.includes("onOpenProductScopeEditor:"), false);
     assert.equal(settingsViewSource.includes("onOpenLicenseHistory:"), false);
-  });
-
-  await run("LicenseAdminScreen wird direkt aus SettingsView geoeffnet", () => {
-    assert.equal(settingsViewSource.includes("new LicenseAdminScreen({"), true);
-    assert.equal(settingsViewSource.includes("onBackToAdminbereich"), true);
-    assert.equal(settingsViewSource.includes("onOpenLicenseEditor"), false);
   });
 
 

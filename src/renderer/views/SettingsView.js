@@ -5602,23 +5602,6 @@ export default class SettingsView {
       },
     });
 
-    const tileAdmin = mkTile({
-      titleText: "Adminbereich",
-      subText: "Externe Lizenz-App",
-      onClick: async () => {
-        const adminInfo = document.createElement("div");
-        adminInfo.style.maxWidth = "720px";
-        adminInfo.style.lineHeight = "1.45";
-        adminInfo.textContent =
-          "Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert.";
-        this._openSettingsModal({
-          title: "Adminbereich",
-          content: [adminInfo],
-          closeOnly: true,
-        });
-      },
-    });
-
     const tileArchive = mkTile({
       titleText: "Archiv",
       subText: "Archivierte Projekte",
@@ -5666,7 +5649,7 @@ export default class SettingsView {
     const groupDev = mkGroup({
       titleText: "Entwicklung",
       subText: "Technische Werkzeuge und Grenzen.",
-      tiles: [tileAdmin, tileDev],
+      tiles: [tileDev],
       variant: "dev",
     });
 
