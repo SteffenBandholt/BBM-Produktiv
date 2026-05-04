@@ -44,6 +44,10 @@ Sie ergänzt:
   - `_createLegacySettingsContent(...)` wurde geloescht
   - die sichtbaren Startseiten-Einstiege laufen nur noch ueber die drei schlanken Dialoge
 - Der alte sichtbare Sammelbegriff `Profil & Druck` wird im Startseitenfluss nicht mehr verwendet.
+- Die Settings-Startseite wurde optisch beruhigt:
+  - Gruppen sind als klar getrennte Bereiche mit kurzen Untertiteln dargestellt
+  - leere bzw. noch nicht belegte Bereiche sind kompakter formuliert
+  - die Kacheln sind ruhiger und weniger tabellenartig gestaltet
 - Der globale Header zeigt jetzt links `BBM <Version>` und darunter den aktiven Kontext als `aktiv: <Modul> | <Projektnummer> - <Kurzbezeichnung>`.
   Rechts steht ein ruhiger Kunden-/Lizenztext aus den vorhandenen App-Settings; der alte `bereit:`-Statusblock ist aus der sichtbaren Anzeige entfernt.
   Im Projektkontext steht dort jetzt nicht mehr `Projekt-Arbeitsbereich`, sondern das aktive Modul `Protokoll`.

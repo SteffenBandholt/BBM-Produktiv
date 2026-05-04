@@ -1045,23 +1045,21 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('titleText: "Ausgabe & Kommunikation"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Module"'), true);
     assert.equal(settingsViewSource.includes('titleText: "Entwicklung"'), true);
-    assert.equal(settingsViewSource.includes('subText: "Profil / Adresse und Lizenzstatus."'), true);
-    assert.equal(
-      settingsViewSource.includes('subText: "Diktat / Audio, Transkription und Audio-Optionen."'),
-      true
-    );
+    assert.equal(settingsViewSource.includes('subText: "Persoenliche Daten und Freischaltung."'), true);
+    assert.equal(settingsViewSource.includes('subText: "Hilfsfunktionen fuer Erfassung und Sprache."'), true);
+    assert.equal(settingsViewSource.includes('emptyText: "Noch keine eigenen Einstellungen."'), true);
     assert.equal(
       settingsViewSource.includes(
-        'subText: "Firmenrollen, Drucksignatur / Footer, Druckränder / Seitenränder, Drucklogos, E-Mail / Versand und Speicherorte / Ausgabeordner."'
+        'subText: "Druck, Versand und Speicherorte."'
       ),
       true
     );
     assert.equal(
-      settingsViewSource.includes('subText: "Protokoll und spaeter weitere freigeschaltete Arbeitsmodule."'),
+      settingsViewSource.includes('subText: "Fachmodule und Erweiterungen."'),
       true
     );
     assert.equal(
-      settingsViewSource.includes('subText: "Technik / Diagnose und technische Schutzplanken."'),
+      settingsViewSource.includes('subText: "Technische Werkzeuge und Grenzen."'),
       true
     );
     assert.equal(

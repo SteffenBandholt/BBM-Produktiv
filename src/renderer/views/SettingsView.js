@@ -5409,38 +5409,52 @@ export default class SettingsView {
     const tiles = document.createElement("div");
     tiles.style.display = "grid";
     tiles.style.gridTemplateColumns = "1fr";
-    tiles.style.gap = "8px";
-    tiles.style.maxWidth = "760px";
+    tiles.style.gap = "12px";
+    tiles.style.maxWidth = "820px";
 
     const mkTile = ({ titleText, subText, onClick }) => {
       const tile = document.createElement("button");
       tile.type = "button";
       tile.style.textAlign = "left";
-      tile.style.border = "1px solid #ddd";
-      tile.style.borderRadius = "8px";
-      tile.style.background = "#fff";
-      tile.style.padding = "10px 12px";
+      tile.style.border = "1px solid #d8dee6";
+      tile.style.borderRadius = "14px";
+      tile.style.background = "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)";
+      tile.style.boxShadow = "0 1px 1px rgba(15, 23, 42, 0.03)";
+      tile.style.padding = "12px 14px";
       tile.style.cursor = "pointer";
       tile.style.userSelect = "none";
-      tile.style.display = "grid";
-      tile.style.gridTemplateColumns = "minmax(180px, 260px) 1fr";
-      tile.style.alignItems = "center";
-      tile.style.gap = "12px";
-      tile.style.minHeight = "48px";
+      tile.style.display = "flex";
+      tile.style.flexDirection = "column";
+      tile.style.alignItems = "flex-start";
+      tile.style.gap = "4px";
+      tile.style.minHeight = "0";
+      tile.style.transition = "box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease";
 
       const t = document.createElement("div");
       t.textContent = titleText;
-      t.style.fontWeight = "900";
-      t.style.fontSize = "15px";
+      t.style.fontWeight = "800";
+      t.style.fontSize = "14px";
+      t.style.letterSpacing = "0.01em";
       t.style.marginBottom = "0";
 
       const s = document.createElement("div");
       s.textContent = subText || "";
-      s.style.opacity = "0.8";
+      s.style.opacity = "0.75";
       s.style.fontSize = "12px";
-      s.style.lineHeight = "1.25";
+      s.style.lineHeight = "1.35";
+      s.style.maxWidth = "62ch";
 
       tile.append(t, s);
+      tile.addEventListener("mouseenter", () => {
+        tile.style.borderColor = "#c7d2e5";
+        tile.style.boxShadow = "0 6px 18px rgba(15, 23, 42, 0.06)";
+        tile.style.transform = "translateY(-1px)";
+      });
+      tile.addEventListener("mouseleave", () => {
+        tile.style.borderColor = "#d8dee6";
+        tile.style.boxShadow = "0 1px 1px rgba(15, 23, 42, 0.03)";
+        tile.style.transform = "translateY(0)";
+      });
       tile.addEventListener("click", async () => {
         if (this.saving) return;
         await onClick?.();
@@ -5448,31 +5462,39 @@ export default class SettingsView {
       return tile;
     };
 
-    const mkGroup = ({ titleText, subText, tiles = [], emptyText = "" }) => {
+    const mkGroup = ({ titleText, subText, tiles = [], emptyText = "", variant = "default" }) => {
       const group = document.createElement("section");
       group.style.display = "grid";
-      group.style.gap = "8px";
-      group.style.padding = "6px 0 2px";
-      group.style.borderTop = "1px solid #e5e7eb";
+      group.style.gap = "10px";
+      group.style.padding = "14px";
+      group.style.border = "1px solid #e5e7eb";
+      group.style.borderRadius = "16px";
+      group.style.background = variant === "dev" ? "linear-gradient(180deg, #f8fbff 0%, #ffffff 100%)" : "#fff";
+      group.style.borderColor = variant === "dev" ? "#dbe7f5" : "#e5e7eb";
+      group.style.boxShadow = "0 1px 0 rgba(15, 23, 42, 0.02)";
 
       const head = document.createElement("div");
       head.style.display = "grid";
-      head.style.gap = "2px";
+      head.style.gap = "4px";
 
       const groupTitle = document.createElement("div");
       groupTitle.textContent = titleText;
-      groupTitle.style.fontWeight = "900";
-      groupTitle.style.fontSize = "14px";
+      groupTitle.style.fontWeight = "800";
+      groupTitle.style.fontSize = "13px";
+      groupTitle.style.textTransform = "uppercase";
+      groupTitle.style.letterSpacing = "0.04em";
+      groupTitle.style.color = "#0f172a";
 
       const groupText = document.createElement("div");
       groupText.textContent = subText || "";
       groupText.style.fontSize = "12px";
-      groupText.style.opacity = "0.78";
+      groupText.style.opacity = "0.72";
       groupText.style.lineHeight = "1.35";
+      groupText.style.maxWidth = "68ch";
 
       const body = document.createElement("div");
       body.style.display = "grid";
-      body.style.gap = "8px";
+      body.style.gap = "10px";
 
       if (tiles.length) {
         body.append(...tiles);
@@ -5482,7 +5504,10 @@ export default class SettingsView {
         note.style.fontSize = "12px";
         note.style.opacity = "0.72";
         note.style.lineHeight = "1.35";
-        note.style.padding = "6px 0 2px";
+        note.style.padding = "10px 12px";
+        note.style.border = "1px dashed #dbe3ee";
+        note.style.borderRadius = "10px";
+        note.style.background = "#f8fafc";
         body.append(note);
       }
 
@@ -5493,7 +5518,7 @@ export default class SettingsView {
 
     const tileProfileAddress = mkTile({
       titleText: "Profil / Adresse",
-      subText: "Nutzerprofil, Adresse und globale Stammdaten",
+      subText: "Stammdaten und Adresse",
       onClick: async () => {
         await this._createProfileAddressContent();
       },
@@ -5501,7 +5526,7 @@ export default class SettingsView {
 
     const tileOutputPrint = mkTile({
       titleText: "Ausgabe & Druck",
-      subText: "Footer, Druckränder, Drucklogos, Ausgabeordner und Versand",
+      subText: "Footer, Layout, Logos und Speicherorte",
       onClick: async () => {
         await this._createOutputPrintContent();
       },
@@ -5509,7 +5534,7 @@ export default class SettingsView {
 
     const tileProtocol = mkTile({
       titleText: "Protokoll",
-      subText: "Protokollbezeichnung und Vorbemerkung",
+      subText: "Bezeichnung und Vorbemerkung",
       onClick: async () => {
         await this._createProtocolContent();
       },
@@ -5517,7 +5542,7 @@ export default class SettingsView {
 
     const tileFirmRoles = mkTile({
       titleText: "Firmenrollen",
-      subText: "Reihenfolge und Bezeichnungen für Firmenlisten und Druck",
+      subText: "Reihenfolge für Listen und Ausgaben",
       onClick: async () => {
         await this._openFirmRoleOrderPopup();
       },
@@ -5525,7 +5550,7 @@ export default class SettingsView {
 
     const tileLicense = mkTile({
       titleText: "Lizenzstatus",
-      subText: "Lizenzstatus anzeigen",
+      subText: "Lizenz und Freischaltung",
       onClick: async () => {
         this._openSettingsModal({
           title: "Lizenz",
@@ -5537,7 +5562,7 @@ export default class SettingsView {
 
     const tileAdmin = mkTile({
       titleText: "Adminbereich",
-      subText: "Externe Lizenzverwaltung",
+      subText: "Externe Lizenz-App",
       onClick: async () => {
         const adminInfo = document.createElement("div");
         adminInfo.style.maxWidth = "720px";
@@ -5566,7 +5591,7 @@ export default class SettingsView {
 
     const tileDev = mkTile({
       titleText: "Technik",
-      subText: "Versionierung, Textgrenzen, DB-Diagnose und Diktat / Audio",
+      subText: "Diagnose und technische Grenzen",
       onClick: async () => {
         await this._openDevelopmentModal();
       },
@@ -5574,32 +5599,33 @@ export default class SettingsView {
 
     const groupGeneral = mkGroup({
       titleText: "Allgemein",
-      subText: "Profil / Adresse und Lizenzstatus.",
+      subText: "Persoenliche Daten und Freischaltung.",
       tiles: [tileProfileAddress, tileLicense],
     });
 
     const groupInput = mkGroup({
       titleText: "Eingabe & Erfassung",
-      subText: "Diktat / Audio, Transkription und Audio-Optionen.",
-      emptyText: "Die feingliedrige Aufteilung folgt in einem spaeteren kleinen Paket.",
+      subText: "Hilfsfunktionen fuer Erfassung und Sprache.",
+      emptyText: "Noch keine eigenen Einstellungen.",
     });
 
     const groupOutput = mkGroup({
       titleText: "Ausgabe & Kommunikation",
-      subText: "Firmenrollen, Drucksignatur / Footer, Druckränder / Seitenränder, Drucklogos, E-Mail / Versand und Speicherorte / Ausgabeordner.",
+      subText: "Druck, Versand und Speicherorte.",
       tiles: [tileOutputPrint, tileFirmRoles],
     });
 
     const groupModule = mkGroup({
       titleText: "Module",
-      subText: "Protokoll und spaeter weitere freigeschaltete Arbeitsmodule.",
+      subText: "Fachmodule und Erweiterungen.",
       tiles: [tileProtocol],
     });
 
     const groupDev = mkGroup({
       titleText: "Entwicklung",
-      subText: "Technik / Diagnose und technische Schutzplanken.",
+      subText: "Technische Werkzeuge und Grenzen.",
       tiles: [tileAdmin, tileArchive, tileDev],
+      variant: "dev",
     });
 
     tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);
