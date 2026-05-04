@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const Module = require("node:module");
+const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 function read(relPath) {
   return fs.readFileSync(path.join(process.cwd(), relPath), "utf8");
@@ -130,6 +131,35 @@ async function runLicenseFeatureGuardTests(run) {
         assert.equal(calls.some((item) => item.type === "listAll"), true);
       }
     );
+  });
+
+  await run("License-Guard: moduleAccessState spiegelt freigeschaltete Module aus der Lizenz", async () => {
+    const previousWindow = global.window;
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/app/modules/moduleAccessState.js")
+    );
+
+    global.window = {
+      bbmDb: {
+        async licenseGetStatus() {
+          return { ok: true, valid: true, modules: ["protokoll"] };
+        },
+      },
+    };
+
+    try {
+      const activeIds = await mod.refreshCachedActiveModuleAccess({ force: true });
+      assert.equal(Array.isArray(activeIds), true);
+      assert.equal(mod.isModuleActive("protokoll"), true);
+      assert.equal(mod.isModuleActive("audio"), false);
+
+      global.window.bbmDb.licenseGetStatus = async () => ({ ok: true, valid: true, modules: [] });
+      const inactiveIds = await mod.refreshCachedActiveModuleAccess({ force: true });
+      assert.equal(Array.isArray(inactiveIds), true);
+      assert.equal(mod.isModuleActive("protokoll"), false);
+    } finally {
+      global.window = previousWindow;
+    }
   });
 
   await run("License-Guard: Lizenzfehler werden payload-freundlich gemappt", () => {

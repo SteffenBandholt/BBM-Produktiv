@@ -237,6 +237,70 @@ async function runProtokollProjectEntryRoutingTests(run) {
       global.URL = previousURL;
     }
   });
+
+  await run("Protokoll-Projektpfad: openProjectProtocol ist bei aktivem Modul nicht geblockt", async () => {
+    const previousURL = global.URL;
+    const previousWindow = global.window;
+    const previousAlert = global.alert;
+    class URLShim extends previousURL {
+      constructor(spec, base) {
+        if (String(base || "").startsWith("data:") && String(spec || "").includes("tops.css")) {
+          super("file:///c:/_codex_stub/tops.css");
+          return;
+        }
+        super(spec, base);
+      }
+    }
+
+    global.URL = URLShim;
+    global.alert = () => {};
+    try {
+      const { default: Router } = await importEsmFromFile(
+        path.join(__dirname, "../../src/renderer/app/Router.js")
+      );
+
+      const calls = [];
+      global.window = {
+        bbmDb: {
+          async licenseGetStatus() {
+            return { ok: true, valid: true, modules: ["protokoll"] };
+          },
+          async meetingsListByProject(projectId) {
+            calls.push({ type: "meetingsListByProject", projectId });
+            return { ok: true, list: [{ id: "22", is_closed: 0 }] };
+          },
+        },
+      };
+
+      const router = new Router({
+        contentRoot: {
+          innerHTML: "",
+          appendChild() {},
+        },
+      });
+      router.showTops = async (meetingId, projectId, options) => {
+        calls.push({ type: "showTops", meetingId, projectId, options });
+        return true;
+      };
+      router.showMeetings = async () => {
+        calls.push({ type: "showMeetings" });
+        return true;
+      };
+
+      const res = await router.openProjectProtocol("17", { project: { id: "17" } });
+      assert.equal(res.ok, true);
+      assert.equal(res.target, "tops");
+      assert.equal(res.reason, "single-open-meeting");
+      assert.equal(res.meetingId, "22");
+      assert.equal(calls.some((item) => item.type === "meetingsListByProject"), true);
+      assert.equal(calls.some((item) => item.type === "showTops"), true);
+      assert.equal(calls.some((item) => item.type === "showMeetings"), false);
+    } finally {
+      global.window = previousWindow;
+      global.alert = previousAlert;
+      global.URL = previousURL;
+    }
+  });
 }
 
 module.exports = { runProtokollProjectEntryRoutingTests };

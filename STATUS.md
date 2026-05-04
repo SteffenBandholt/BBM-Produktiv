@@ -1394,3 +1394,21 @@ Wichtig:
 - Risiken/Hinweise:
   - Fachspezifische Einzelformen bleiben dort bestehen, wo sie fuer Layout oder Bedienung notwendig sind.
   - Print-/PDF-Stile wurden bewusst nicht mit den Button-Tokens gekoppelt.
+
+#### Paket: Modul-/Feature-/Lizenzmatrix testseitig abgesichert
+- Status: erledigt
+- Beschreibung:
+  - Die Matrix zwischen Fachmodul `Protokoll`, Hilfsfunktion `Diktat / Audio` und Lizenzstatus ist jetzt mit zusaetzlichen Regressionstests abgesichert.
+  - Der positive Protokollpfad ist ebenso abgedeckt wie der geblockte Fall mit strukturiertem Payload.
+  - Der cached Modulstatus in `moduleAccessState` ist direkt mit Lizenzdaten abgesichert.
+  - Projektverwaltung, Settings und Ausgabe-/Mail-/PDF-Guards bleiben weiterhin testseitig getrennt pruefbar.
+- Betroffene Dateien:
+  - `scripts/tests/protokollProjectEntryRouting.test.cjs`
+  - `scripts/tests/licenseFeatureGuards.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - kein direkter Anschluss aus diesem Paket
+- Risiken/Hinweise:
+  - Es wurden nur Tests ergaenzt; App-Logik blieb unveraendert.
