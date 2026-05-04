@@ -3962,6 +3962,199 @@ export default class SettingsView {
     target.appendChild(document.createTextNode(String(item)));
   }
 
+  async _createProfileAddressContent() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(560px, calc(100vw - 80px))";
+
+    const info = document.createElement("div");
+    info.style.fontSize = "12px";
+    info.style.opacity = "0.85";
+    info.textContent = "Nutzerprofil, Adresse und globale Stammdaten.";
+    wrap.append(info);
+
+    const inputs = new Map();
+    this._settingsInputs = inputs;
+
+    const renderField = (field) => {
+      const row = document.createElement("label");
+      row.style.display = "grid";
+      row.style.gap = "4px";
+
+      const lbl = document.createElement("span");
+      lbl.textContent = field.label || field.key;
+      lbl.style.fontSize = "12px";
+
+      const inp = document.createElement("input");
+      inp.type = "text";
+      inp.style.width = "100%";
+      row.append(lbl, inp);
+      inputs.set(field.key, inp);
+      return row;
+    };
+
+    const makeCard = (titleText, hintText, fields) => {
+      const card = document.createElement("div");
+      applyPopupCardStyle(card);
+      card.style.padding = "10px";
+      card.style.display = "grid";
+      card.style.gap = "8px";
+
+      const heading = document.createElement("div");
+      heading.textContent = titleText;
+      heading.style.fontWeight = "800";
+      card.append(heading);
+
+      const hint = document.createElement("div");
+      hint.textContent = hintText;
+      hint.style.fontSize = "12px";
+      hint.style.opacity = "0.78";
+      card.append(hint);
+
+      for (const field of fields) {
+        card.append(renderField(field));
+      }
+      return card;
+    };
+
+    const profileCard = makeCard("Profil", "Name, Firma und Anzeigedaten", [
+      { key: "user_name", label: "Nutzername" },
+      { key: "user_company", label: "Firma" },
+    ]);
+    const addressCard = makeCard("Adresse", "Strasse, PLZ und Ort", [
+      { key: "user_name1", label: "Name 1" },
+      { key: "user_name2", label: "Name 2" },
+      { key: "user_street", label: "Strasse" },
+      { key: "user_zip", label: "PLZ" },
+      { key: "user_city", label: "Ort" },
+    ]);
+
+    wrap.append(profileCard, addressCard);
+
+    let profile = null;
+    if (typeof api.userProfileGet === "function") {
+      const resProfile = await api.userProfileGet();
+      if (resProfile?.ok) {
+        profile = resProfile.profile || null;
+      }
+    }
+
+    if (typeof api.appSettingsGetMany === "function") {
+      const res = await api.appSettingsGetMany([
+        "user_name",
+        "user_company",
+        "user_name1",
+        "user_name2",
+        "user_street",
+        "user_zip",
+        "user_city",
+      ]);
+      if (res?.ok) {
+        const data = res.data || {};
+        const userState = this._resolveUserSettingsState({ data, profile });
+        const values = {
+          user_name: userState.userName,
+          user_company: userState.userCompany,
+          user_name1: userState.userName1,
+          user_name2: userState.userName2,
+          user_street: userState.userStreet,
+          user_zip: userState.userZip,
+          user_city: userState.userCity,
+        };
+        for (const [key, inp] of inputs.entries()) {
+          if (inp) inp.value = String(values[key] ?? "");
+        }
+      }
+    }
+
+    this.inpName = inputs.get("user_name") || null;
+    this.inpCompany = inputs.get("user_company") || null;
+    this.inpUserName1 = inputs.get("user_name1") || null;
+    this.inpUserName2 = inputs.get("user_name2") || null;
+    this.inpUserStreet = inputs.get("user_street") || null;
+    this.inpUserZip = inputs.get("user_zip") || null;
+    this.inpUserCity = inputs.get("user_city") || null;
+
+    this._openSettingsModal({
+      title: "Profil / Adresse",
+      content: [wrap],
+      saveFn: async () => {
+        if (typeof api.userProfileUpsert !== "function" || typeof api.appSettingsSetMany !== "function") {
+          alert("Settings-API fehlt (IPC noch nicht aktiv).");
+          return false;
+        }
+
+        const user_name = this._normalizeUserText(inputs.get("user_name")?.value, 80);
+        const user_company = this._normalizeUserText(inputs.get("user_company")?.value, 80);
+        const user_name1 = this._normalizeUserText(inputs.get("user_name1")?.value, 80);
+        const user_name2 = this._normalizeUserText(inputs.get("user_name2")?.value, 80);
+        const user_street = this._normalizeUserText(inputs.get("user_street")?.value, 80);
+        const user_zip = this._normalizeUserZip(inputs.get("user_zip")?.value, 5);
+        const user_city = this._normalizeUserText(inputs.get("user_city")?.value, 80);
+
+        const resProfile = await api.userProfileUpsert({
+          name1: user_name1,
+          name2: user_name2,
+          street: user_street,
+          zip: user_zip,
+          city: user_city,
+        });
+        if (!resProfile?.ok) {
+          alert(resProfile?.error || "Speichern der Nutzerdaten fehlgeschlagen");
+          return false;
+        }
+
+        const payload = {
+          user_name,
+          user_company,
+          user_name1,
+          user_name2,
+          user_street,
+          user_zip,
+          user_city,
+          ...this._buildTouchedPayloadFromValues({
+            user_name,
+            user_company,
+            user_name1,
+            user_name2,
+            user_street,
+            user_zip,
+            user_city,
+          }),
+        };
+
+        const res = await api.appSettingsSetMany(payload);
+        if (!res?.ok) {
+          alert(res?.error || "Speichern fehlgeschlagen");
+          return false;
+        }
+
+        this.userName = user_name;
+        this.userCompany = user_company;
+        if (this.router?.context) {
+          this.router.context.settings = {
+            ...(this.router.context.settings || {}),
+            user_name,
+            user_company,
+            user_name1,
+            user_name2,
+            user_street,
+            user_zip,
+            user_city,
+          };
+        }
+        if (typeof window.dispatchEvent === "function") {
+          window.dispatchEvent(new Event("bbm:header-refresh"));
+        }
+        this._setMsg("Gespeichert");
+        return true;
+      },
+      closeOnly: false,
+    });
+  }
+
   _createLicenseSettingsContent() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
@@ -5284,10 +5477,7 @@ export default class SettingsView {
       titleText: "Profil / Adresse",
       subText: "Nutzerprofil, Adresse und globale Stammdaten",
       onClick: async () => {
-        await this._createLegacySettingsContent({
-          title: "Profil / Adresse",
-          focusSection: "Profil",
-        });
+        await this._createProfileAddressContent();
       },
     });
 

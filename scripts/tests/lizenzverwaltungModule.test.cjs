@@ -1105,6 +1105,92 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes('label: "Footer nutzt Nutzerdaten (true/false)"'), false);
   });
 
+  await run("SettingsView: Profil / Adresse oeffnet einen eigenen schlanken Dialog", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+    const calls = { profile: [], settings: [] };
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        userProfileGet: async () => ({
+          ok: true,
+          profile: {
+            name1: "Profilname 1",
+            name2: "Profilname 2",
+            street: "Profilstrasse 7",
+            zip: "12345",
+            city: "Profilstadt",
+          },
+        }),
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            user_name: "Profil Nutzer",
+            user_company: "Profil Firma",
+          },
+        }),
+        userProfileUpsert: async (payload) => {
+          calls.profile.push(payload);
+          return { ok: true };
+        },
+        appSettingsSetMany: async (payload) => {
+          calls.settings.push(payload);
+          return { ok: true };
+        },
+      },
+    };
+
+    try {
+      const view = new SettingsView({ router: { context: { settings: {} } } });
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._createProfileAddressContent();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Profil / Adresse");
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(contentText.includes("Profil"), true);
+      assert.equal(contentText.includes("Adresse"), true);
+      assert.equal(contentText.includes("Drucklogos verwalten"), false);
+      assert.equal(contentText.includes("Vorbemerkung-Editor"), false);
+      assert.equal(contentText.includes("Protokolltitel"), false);
+      assert.equal(contentText.includes("Footer"), false);
+
+      const profileCard = opened[0].content[0].children[1];
+      const addressCard = opened[0].content[0].children[2];
+      profileCard.children[2].children[1].value = "Geaenderter Nutzer";
+      profileCard.children[3].children[1].value = "Geaenderte Firma";
+      addressCard.children[1].children[1].value = "Name A";
+      addressCard.children[2].children[1].value = "Name B";
+      addressCard.children[3].children[1].value = "Musterweg 3";
+      addressCard.children[4].children[1].value = "54321";
+      addressCard.children[5].children[1].value = "Musterstadt";
+
+      const saved = await opened[0].saveFn();
+      assert.equal(saved, true);
+      assert.deepEqual(calls.profile[0], {
+        name1: "Name A",
+        name2: "Name B",
+        street: "Musterweg 3",
+        zip: "54321",
+        city: "Musterstadt",
+      });
+      assert.deepEqual(calls.settings[0].user_name, "Geaenderter Nutzer");
+      assert.deepEqual(calls.settings[0].user_company, "Geaenderte Firma");
+      assert.equal(calls.settings[0].user_name1, "Name A");
+      assert.equal(calls.settings[0].user_city, "Musterstadt");
+      assert.equal(view.router.context.settings.user_name, "Geaenderter Nutzer");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
   await run("SettingsView: Ausgabe & Druck oeffnet die Sammelmaske ohne PDF-Logo-Restpfad", async () => {
     const { default: SettingsView } = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/views/SettingsView.js")
