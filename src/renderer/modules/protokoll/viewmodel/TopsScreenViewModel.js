@@ -168,6 +168,7 @@ export function buildListItemsFromState(state) {
     const level = Number(top?.level) || 1;
     const isTitle = level <= 1;
     const due = (top?.due_date || top?.dueDate || "").toString().trim();
+    const dueDisplay = formatDateToDdMmYyyy(due);
     const createdAtRaw =
       top?.created_at ?? top?.createdAt ?? top?.top_created_at ?? top?.topCreatedAt ?? "";
     const createdAt = !isTitle ? formatDateToDdMmYyyy(createdAtRaw) : "";
@@ -183,7 +184,8 @@ export function buildListItemsFromState(state) {
       }) || null;
     const responsible = (top?.responsible_label || top?.responsibleLabel || "").toString().trim();
     const meta = [];
-    if (due) meta.push(due);
+    if (dueDisplay) meta.push(dueDisplay);
+    else if (due) meta.push(due);
     if (status) meta.push(status);
     if (responsible) meta.push(responsible);
 

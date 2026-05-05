@@ -267,6 +267,22 @@ async function runTopsScreenIntegrationTests(run) {
 
     assert.equal(rows[0].isTitle, false);
     assert.equal(rows[0].createdAt, "27.04.2026");
+    assert.equal(rows[0].meta[0], undefined);
+
+    const datedRows = buildListItemsFromState({
+      tops: [
+        {
+          id: 305,
+          level: 2,
+          title: "Faelligkeit",
+          longtext: "",
+          displayNumber: 8,
+          due_date: "2026-04-27",
+        },
+      ],
+    });
+
+    assert.equal(datedRows[0].meta[0], "27.04.2026");
 
     const prevDocument = globalThis.document;
     globalThis.document = createFakeDocument();
@@ -281,6 +297,12 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(numberCell.children[0].textContent, "7.");
       assert.equal(numberCell.children[1].textContent, "27.04.2026");
       assert.equal(numberCell.children[1].className, "bbm-tops-list-row-number-date");
+
+      list.setItems(datedRows);
+      const datedRow = list.root.children[list.root.children.length - 1];
+      const datedGrid = datedRow.children[0];
+      const metaCell = datedGrid.children[2];
+      assert.equal(metaCell.children[0].textContent, "27.04.2026");
     } finally {
       globalThis.document = prevDocument;
     }

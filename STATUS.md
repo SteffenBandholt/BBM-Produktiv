@@ -17,6 +17,12 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Die TOP-Liste im Protokollscreen ist optisch lesbarer geworden:
+  - TOP-Nummern und Kurztext wirken jetzt gleich gross
+  - Liste, normale TOPs und Level-1-Titel sind farblich/helligkeitstechnisch besser getrennt
+  - die Metaspalte ist breiter und Datumswerte erscheinen im Format `tt.mm.jjjj`
+  - geprueft mit `npm test`
+- Naechster offener Schritt: manuelle Sichtpruefung der TOP-Liste im Protokollscreen auf dem Zielsystem.
 - Der alte Legacy-Protokollscreen `src/renderer/views/TopsView.js` ist entfernt; aktive Protokoll-Verdrahtung laeuft nur noch ueber `src/renderer/modules/protokoll/screens/TopsScreen.js`.
 - Der TopsScreen-Diktatpfad ist wieder stabil:
   - `SharedEditboxCore` baut die Mikrofon-Buttons jetzt defensiv ein und faengt fehlende Label-Hosts ab
