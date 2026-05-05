@@ -113,7 +113,7 @@ export class TopsList {
     const meta = document.createElement("div");
     meta.className = "bbm-tops-list-row-meta";
     const statusTokens = new Set(["-", "offen", "in arbeit", "erledigt", "blockiert", "verzug"]);
-    for (const [index, line] of (item.meta || []).entries()) {
+    for (const line of item.meta || []) {
       const el = document.createElement("div");
       el.className = "bbm-tops-list-row-meta-line";
       const value = String(line || "").trim();
@@ -124,16 +124,22 @@ export class TopsList {
         el.classList.add("bbm-tops-list-row-meta-line-status");
       } else if (!isIsoDate && !isDeDate) {
         el.classList.add("bbm-tops-list-row-meta-line-responsible");
-      } else if (index === 2) {
-        el.classList.add("bbm-tops-list-row-meta-line-responsible");
       }
-      el.textContent = line;
-      if (index === 1 && item.showAmpelInList !== false && item.ampelColor) {
-        const dot = document.createElement("span");
-        dot.className = "bbm-tops-list-row-ampel";
-        dot.dataset.color = String(item.ampelColor || "");
-        dot.setAttribute("aria-label", `Ampel ${item.ampelColor}`);
-        el.append(" ", dot);
+      const text = document.createElement("span");
+      text.className = "bbm-tops-list-row-meta-text";
+      text.textContent = line;
+      el.appendChild(text);
+      if (statusTokens.has(normalized)) {
+        const ampelSlot = document.createElement("span");
+        ampelSlot.className = "bbm-tops-list-row-meta-ampel-slot";
+        if (item.showAmpelInList !== false && item.ampelColor) {
+          const dot = document.createElement("span");
+          dot.className = "bbm-tops-list-row-ampel";
+          dot.dataset.color = String(item.ampelColor || "");
+          dot.setAttribute("aria-label", `Ampel ${item.ampelColor}`);
+          ampelSlot.appendChild(dot);
+        }
+        el.appendChild(ampelSlot);
       }
       meta.appendChild(el);
     }

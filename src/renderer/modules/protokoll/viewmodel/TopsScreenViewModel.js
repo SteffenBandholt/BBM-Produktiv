@@ -254,10 +254,12 @@ export function buildListItemsFromState(state, options = {}) {
       }) || null;
     const responsible = (top?.responsible_label || top?.responsibleLabel || "").toString().trim();
     const meta = [];
-    if (dueDisplay) meta.push(dueDisplay);
-    else if (due) meta.push(due);
-    if (status) meta.push(status);
-    if (responsible) meta.push(responsible);
+    if (!isTitle) {
+      if (dueDisplay) meta.push(dueDisplay);
+      else if (due) meta.push(due);
+      if (status) meta.push(status);
+      if (responsible) meta.push(responsible);
+    }
 
     let isMoveTarget = null;
     let moveState = "normal";
@@ -295,7 +297,7 @@ export function buildListItemsFromState(state, options = {}) {
       showChangedMarker: visual.showChangedMarker,
       changedMarkerText: visual.changedMarkerText,
       titleTone: visual.titleTone,
-      ampelColor: showAmpelInList ? ampelColor : null,
+      ampelColor: !isTitle && showAmpelInList ? ampelColor : null,
       showAmpelInList,
       showLongtextInList,
       raw: top,

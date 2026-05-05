@@ -270,6 +270,25 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(rows[0].createdAt, "27.04.2026");
     assert.equal(rows[0].meta[0], undefined);
 
+    const level1Rows = buildListItemsFromState({
+      tops: [
+        {
+          id: 302,
+          level: 1,
+          title: "Titel",
+          longtext: "",
+          displayNumber: 1,
+          due_date: "2026-04-27",
+          status: "blockiert",
+          responsible_label: "WTB",
+        },
+      ],
+    });
+
+    assert.equal(level1Rows[0].isTitle, true);
+    assert.equal(level1Rows[0].meta.length, 0);
+    assert.equal(level1Rows[0].ampelColor, null);
+
     const datedRows = buildListItemsFromState({
       tops: [
         {
@@ -284,6 +303,24 @@ async function runTopsScreenIntegrationTests(run) {
     });
 
     assert.equal(datedRows[0].meta[0], "27.04.2026");
+
+    const ampelRows = buildListItemsFromState({
+      tops: [
+        {
+          id: 306,
+          level: 2,
+          title: "Ampel",
+          longtext: "",
+          displayNumber: 9,
+          due_date: "2026-04-27",
+          status: "blockiert",
+        },
+      ],
+    });
+
+    assert.equal(ampelRows[0].meta[0], "27.04.2026");
+    assert.equal(ampelRows[0].meta[1], "blockiert");
+    assert.equal(ampelRows[0].ampelColor, "blue");
 
     const prevDocument = globalThis.document;
     globalThis.document = createFakeDocument();
@@ -303,7 +340,19 @@ async function runTopsScreenIntegrationTests(run) {
       const datedRow = list.root.children[list.root.children.length - 1];
       const datedGrid = datedRow.children[0];
       const metaCell = datedGrid.children[2];
-      assert.equal(metaCell.children[0].textContent, "27.04.2026");
+      assert.equal(metaCell.children[0].children[0].textContent, "27.04.2026");
+
+      list.setItems(ampelRows);
+      const ampelRow = list.root.children[list.root.children.length - 1];
+      const ampelGrid = ampelRow.children[0];
+      const ampelMetaCell = ampelGrid.children[2];
+      const statusLine = ampelMetaCell.children[1];
+      assert.equal(statusLine.children.length, 2);
+      assert.equal(statusLine.children[0].className, "bbm-tops-list-row-meta-text");
+      assert.equal(statusLine.children[0].textContent, "blockiert");
+      assert.equal(statusLine.children[1].className, "bbm-tops-list-row-meta-ampel-slot");
+      assert.equal(statusLine.children[1].children[0].className, "bbm-tops-list-row-ampel");
+      assert.equal(statusLine.children[1].children[0].dataset.color, "blue");
     } finally {
       globalThis.document = prevDocument;
     }
@@ -351,6 +400,8 @@ async function runTopsScreenIntegrationTests(run) {
 
     assert.equal(rows[0].isTitle, true);
     assert.equal(rows[0].createdAt, "");
+    assert.equal(rows[0].meta.length, 0);
+    assert.equal(rows[0].ampelColor, null);
 
     const prevDocument = globalThis.document;
     globalThis.document = createFakeDocument();
