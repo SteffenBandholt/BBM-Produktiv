@@ -13,6 +13,15 @@ async function runTopsScreenIntegrationTests(run) {
   const { SharedEditboxCore } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/modules/protokoll/SharedEditboxCore.js")
   );
+  const { TopsMetaPanel } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/tops/components/TopsMetaPanel.js")
+  );
+  const { TopsResponsibleBridge } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/tops/components/TopsResponsibleBridge.js")
+  );
+  const { TopsAssigneeDataSource } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/tops/data/TopsAssigneeDataSource.js")
+  );
   const ProjectContextQuicklane = (await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/ui/ProjectContextQuicklane.js")
   )).default;
@@ -438,6 +447,61 @@ async function runTopsScreenIntegrationTests(run) {
         { hasSelection: true, isReadOnly: false }
       );
       assert.equal(editbox.root.dataset.important, "true");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Projektfirmenquelle bleibt aktiv, eindeutig und ohne Auto-Default", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { document: doc };
+
+    try {
+      const dataSource = new TopsAssigneeDataSource({
+        api: {
+          async projectFirmsListFirmCandidatesByProject() {
+            return {
+              ok: true,
+              list: [
+                { kind: "project_firm", id: "p1", short: "WTB", name: "WTB", is_active: 1 },
+                { kind: "global_firm", id: "g1", short: "WTB", name: "WTB", is_active: 1 },
+                { kind: "project_firm", id: "p2", short: "chatgpt", name: "chatgpt", is_active: 1 },
+                { kind: "project_firm", id: "p3", short: "Steffen", name: "Steffen", is_active: 0 },
+              ],
+            };
+          },
+          async projectParticipantsPool() {
+            return { ok: true, items: [] };
+          },
+        },
+      });
+
+      const companies = await dataSource.loadCompaniesByProject("project-1");
+      assert.equal(companies.length, 2);
+      assert.equal(companies.some((item) => String(item.short || item.name1 || "").includes("Steffen")), false);
+
+      const metaPanel = new TopsMetaPanel();
+      const bridge = new TopsResponsibleBridge({
+        metaPanel,
+        loadCompanies: async () => companies,
+      });
+      bridge.mount();
+      await bridge.initialize();
+
+      assert.equal(bridge.field.getValue(), "");
+      assert.equal(Array.isArray(companies), true);
+
+      bridge.applyDraftValue("WTB");
+      assert.equal(bridge.field.getValue(), "company:p1");
+      assert.equal(metaPanel.getValue().responsible_label, "WTB");
+
+      bridge.applyDraftValue("");
+      assert.equal(bridge.field.getValue(), "");
+      assert.equal(metaPanel.getValue().responsible_label, "");
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
