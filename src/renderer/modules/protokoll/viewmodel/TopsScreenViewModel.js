@@ -43,6 +43,65 @@ function formatDateToDdMmYyyy(rawValue) {
   return `${dd}.${mm}.${yyyy}`;
 }
 
+function toIdKey(value) {
+  return String(value ?? "").trim();
+}
+
+function toIdSet(value) {
+  if (value instanceof Set) {
+    return new Set(Array.from(value, (entry) => toIdKey(entry)).filter(Boolean));
+  }
+
+  if (Array.isArray(value)) {
+    return new Set(value.map((entry) => toIdKey(entry)).filter(Boolean));
+  }
+
+  return new Set();
+}
+
+export function buildTopHierarchyIndex(tops = []) {
+  const rows = Array.isArray(tops) ? tops : [];
+  const index = new Map();
+  let currentLevel1Id = null;
+
+  for (const top of rows) {
+    const topId = toIdKey(top?.id);
+    if (!topId) continue;
+
+    const level = Number(top?.level) || 1;
+    const isLevel1 = level <= 1;
+    if (isLevel1) {
+      currentLevel1Id = topId;
+    }
+
+    index.set(topId, {
+      id: topId,
+      level,
+      isLevel1,
+      level1TopId: isLevel1 ? topId : currentLevel1Id,
+    });
+  }
+
+  return index;
+}
+
+export function resolveVisibleSelectionForCollapsedFamilies(state = {}, collapsedLevel1Ids = null) {
+  const selectedId = toIdKey(state?.selectedTopId);
+  if (!selectedId) return null;
+
+  const collapsed = toIdSet(collapsedLevel1Ids ?? state?.collapsedLevel1Ids);
+  if (!collapsed.size) return null;
+
+  const hierarchy = buildTopHierarchyIndex(state?.tops || []);
+  const selectedInfo = hierarchy.get(selectedId) || null;
+  if (!selectedInfo || selectedInfo.isLevel1) return null;
+
+  const familyId = toIdKey(selectedInfo.level1TopId);
+  if (!familyId || !collapsed.has(familyId)) return null;
+
+  return familyId;
+}
+
 function parseMeetingTitle(titleValue) {
   const title = cleanString(titleValue);
   if (!title) return { meetingNo: "", meetingDate: "", keyword: "" };
@@ -152,7 +211,7 @@ export function getTopVisualState(top) {
   };
 }
 
-export function buildListItemsFromState(state) {
+export function buildListItemsFromState(state, options = {}) {
   const tops = Array.isArray(state?.tops) ? state.tops : [];
   const selectedId = state?.selectedTopId;
   const selectedTop = getSelectedTop(state);
@@ -161,12 +220,23 @@ export function buildListItemsFromState(state) {
   const filterMode = normalizeTopFilterMode(state?.topFilter);
   const showAmpelInList = state?.showAmpelInList !== false;
   const showLongtextInList = state?.showLongtextInList === true;
+  const collapsedLevel1Ids = toIdSet(options?.collapsedLevel1Ids ?? state?.collapsedLevel1Ids);
+  const hierarchy = buildTopHierarchyIndex(tops);
 
   for (const top of tops) {
     if (!topMatchesFilter(top, filterMode)) continue;
     const visual = getTopVisualState(top);
     const level = Number(top?.level) || 1;
     const isTitle = level <= 1;
+    const topId = toIdKey(top?.id);
+    const hierarchyInfo = hierarchy.get(topId) || {
+      id: topId,
+      level,
+      isLevel1: isTitle,
+      level1TopId: isTitle ? topId : null,
+    };
+    const level1TopId = toIdKey(hierarchyInfo.level1TopId);
+    if (!isTitle && level1TopId && collapsedLevel1Ids.has(level1TopId)) continue;
     const due = (top?.due_date || top?.dueDate || "").toString().trim();
     const dueDisplay = formatDateToDdMmYyyy(due);
     const createdAtRaw =
@@ -208,6 +278,9 @@ export function buildListItemsFromState(state) {
       id: top?.id,
       level,
       isTitle,
+      level1TopId: level1TopId || null,
+      isLevel1Collapsed: isTitle ? collapsedLevel1Ids.has(topId) : false,
+      canToggleLevel1: isTitle && !state?.isMoveMode,
       title: normalizeTopShortText(top?.title),
       number: `${top?.displayNumber ?? top?.number ?? ""}.`,
       preview: showLongtextInList ? normalizeTopLongText(top?.longtext) : "",

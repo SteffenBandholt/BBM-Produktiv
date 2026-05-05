@@ -248,6 +248,10 @@
   box-shadow: inset 3px 0 0 #6f9b99, 0 1px 0 rgba(15, 23, 42, 0.03);
 }
 
+.bbm-tops-list-row[data-level1-collapsed="true"] {
+  background: linear-gradient(180deg, #e0ebea 0%, #d6e4e3 100%);
+}
+
 .bbm-tops-list-row[data-top-level="1"] .bbm-tops-list-row-title {
   font-weight: 700;
   color: #203728;
@@ -330,6 +334,42 @@
   white-space: nowrap;
   font-size: inherit;
   line-height: inherit;
+}
+
+.bbm-tops-list-row-number-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+}
+
+.bbm-tops-list-row-collapse-toggle {
+  width: 18px;
+  height: 18px;
+  margin-right: 2px;
+  padding: 0;
+  border: 1px solid rgba(58, 90, 92, 0.16);
+  border-radius: 999px;
+  background: rgba(58, 90, 92, 0.08);
+  color: #335556;
+  font-size: 8pt;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
+.bbm-tops-list-row-collapse-toggle:hover {
+  background: rgba(58, 90, 92, 0.15);
+}
+
+.bbm-tops-list-row-collapse-toggle:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.bbm-tops-list-row[data-level1-collapsed="true"] .bbm-tops-list-row-collapse-toggle {
+  background: rgba(58, 90, 92, 0.14);
+  color: #274647;
 }
 
 .bbm-tops-list-row-number-date {

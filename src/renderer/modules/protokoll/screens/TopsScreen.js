@@ -10,7 +10,10 @@ import { getSelectedTop, hasSelection } from "../TopsSelectors.js";
 import { TopsViewDialogs } from "../TopsViewDialogs.js";
 import { buildHeaderState } from "../buildHeaderState.js";
 import { ensureProtokollModuleStyles } from "../styles.js";
-import { buildListItemsFromState } from "../buildListItemsFromState.js";
+import {
+  buildListItemsFromState,
+  resolveVisibleSelectionForCollapsedFamilies,
+} from "../buildListItemsFromState.js";
 import { editorFromTop } from "../editorFromTop.js";
 import { buildPatchFromDraft } from "../buildPatchFromDraft.js";
 import { canCreateChildFromState } from "../canCreateChildFromState.js";
@@ -36,6 +39,7 @@ function buildInitialProtocolScreenState({ projectId = null, meetingId = null } 
     isLoading: false,
     isWriting: false,
     topFilter: "all",
+    collapsedLevel1Ids: [],
     showAmpelInList: true,
     showLongtextInList: false,
     error: null,
@@ -187,6 +191,7 @@ export default class TopsScreen {
   _buildList() {
     this.topsList = new TopsList({
       onRowClick: async (item) => this._handleListRowClick(item),
+      onLevel1Toggle: async (item) => this._toggleLevel1Collapsed(item?.id),
     });
     this.sheetPaper.appendChild(this.topsList.root);
   }
@@ -260,6 +265,53 @@ export default class TopsScreen {
 
   _setCreateParentTopId(topId) {
     this.store.setState({ createParentTopId: topId ?? null });
+  }
+
+  _getCollapsedLevel1Ids() {
+    const current = this.store.getState().collapsedLevel1Ids;
+    return Array.isArray(current) ? current.filter((id) => String(id || "").trim()) : [];
+  }
+
+  _setCollapsedLevel1Ids(nextIds) {
+    this.store.setState({
+      collapsedLevel1Ids: Array.isArray(nextIds)
+        ? nextIds.map((id) => String(id || "").trim()).filter(Boolean)
+        : [],
+    });
+  }
+
+  _normalizeSelectionAfterCollapseChange() {
+    const state = this.store.getState();
+    const fallbackTopId = resolveVisibleSelectionForCollapsedFamilies(
+      state,
+      this._getCollapsedLevel1Ids()
+    );
+    if (fallbackTopId === null) return false;
+
+    const currentSelectedId = String(state.selectedTopId ?? "");
+    if (!fallbackTopId || String(fallbackTopId) === currentSelectedId) return false;
+
+    const fallbackTop =
+      state.tops.find((top) => String(top?.id ?? "") === String(fallbackTopId)) || null;
+    this.commands.selectTop(fallbackTop?.id ?? null);
+    this.commands.updateDraft(editorFromTop(fallbackTop));
+    this._setCreateParentTopId(fallbackTop?.id ?? null);
+    return true;
+  }
+
+  _toggleLevel1Collapsed(topId) {
+    if (this.store.getState().isMoveMode) return false;
+    const key = String(topId || "").trim();
+    if (!key) return false;
+
+    const current = new Set(this._getCollapsedLevel1Ids());
+    if (current.has(key)) current.delete(key);
+    else current.add(key);
+
+    this._setCollapsedLevel1Ids(Array.from(current));
+    this._normalizeSelectionAfterCollapseChange();
+    this._syncScreenState();
+    return true;
   }
 
   _resolveCreateParentTop(state = this.store.getState()) {
@@ -451,7 +503,11 @@ export default class TopsScreen {
 
   _syncListState() {
     if (!(this.topsList instanceof TopsList)) return;
-    this.topsList.setItems(buildListItemsFromState(this.store.getState()));
+    this.topsList.setItems(
+      buildListItemsFromState(this.store.getState(), {
+        collapsedLevel1Ids: this._getCollapsedLevel1Ids(),
+      })
+    );
   }
 
   async _handleListRowClick(item) {
@@ -579,6 +635,7 @@ export default class TopsScreen {
   }
 
   _syncScreenState() {
+    this._normalizeSelectionAfterCollapseChange();
     const state = this.store.getState();
     this.showAmpelInList = state.showAmpelInList !== undefined ? !!state.showAmpelInList : true;
     this.showLongtextInList = state.showLongtextInList !== undefined ? !!state.showLongtextInList : false;

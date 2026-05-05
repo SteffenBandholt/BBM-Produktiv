@@ -404,8 +404,9 @@ async function runProtokollRouterFallbackTests(run) {
       const screenSource = fs.readFileSync(screenFile, "utf8");
       const listItemsSource = fs.readFileSync(listItemsFile, "utf8");
 
-      assert.equal(screenSource.includes("buildListItemsFromState,\n"), false);
+      assert.equal(screenSource.includes("viewmodel/TopsScreenViewModel.js"), false);
       assert.equal(screenSource.includes('from "../buildListItemsFromState.js"'), true);
+      assert.equal(screenSource.includes("resolveVisibleSelectionForCollapsedFamilies"), true);
       assert.equal(listItemsSource.includes("viewmodel/TopsScreenViewModel.js"), true);
     }
   );

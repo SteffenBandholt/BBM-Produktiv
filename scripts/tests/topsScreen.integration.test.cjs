@@ -35,6 +35,7 @@ async function runTopsScreenIntegrationTests(run) {
     buildWorkbenchState,
     shouldShowWorkbench,
     buildListItemsFromState,
+    resolveVisibleSelectionForCollapsedFamilies,
     editorFromTop,
     buildPatchFromDraft,
   } = vm;
@@ -294,7 +295,7 @@ async function runTopsScreenIntegrationTests(run) {
       const grid = row.children[0];
       const numberCell = grid.children[0];
       assert.equal(numberCell.children.length, 2);
-      assert.equal(numberCell.children[0].textContent, "7.");
+      assert.equal(numberCell.children[0].children[0].textContent, "7.");
       assert.equal(numberCell.children[1].textContent, "27.04.2026");
       assert.equal(numberCell.children[1].className, "bbm-tops-list-row-number-date");
 
@@ -328,7 +329,7 @@ async function runTopsScreenIntegrationTests(run) {
       const grid = row.children[0];
       const numberCell = grid.children[0];
       assert.equal(numberCell.children.length, 1);
-      assert.equal(numberCell.children[0].textContent, "8.");
+      assert.equal(numberCell.children[0].children[0].textContent, "8.");
     } finally {
       globalThis.document = prevDocument;
     }
@@ -361,7 +362,94 @@ async function runTopsScreenIntegrationTests(run) {
       const grid = row.children[0];
       const numberCell = grid.children[0];
       assert.equal(numberCell.children.length, 1);
-      assert.equal(numberCell.children[0].textContent, "1.");
+      assert.equal(numberCell.children[0].children[0].textContent, "1.");
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Tops v2 Integration: Level-1-Titel blendet seine Familienkinder ein und aus", () => {
+    const tops = [
+      { id: 1, level: 1, title: "Titel A", displayNumber: 1 },
+      { id: 11, level: 2, title: "A1", displayNumber: 11 },
+      { id: 12, level: 3, title: "A2", displayNumber: 12 },
+      { id: 2, level: 1, title: "Titel B", displayNumber: 2 },
+      { id: 21, level: 2, title: "B1", displayNumber: 21 },
+    ];
+
+    const collapsedRows = buildListItemsFromState({
+      collapsedLevel1Ids: [1],
+      tops,
+    });
+    assert.deepEqual(
+      collapsedRows.map((row) => row.id),
+      [1, 2, 21]
+    );
+    assert.equal(collapsedRows[0].isLevel1Collapsed, true);
+    assert.equal(collapsedRows[0].level1TopId, "1");
+    assert.equal(collapsedRows[1].level1TopId, "2");
+
+    const expandedRows = buildListItemsFromState({
+      collapsedLevel1Ids: [],
+      tops,
+    });
+    assert.deepEqual(
+      expandedRows.map((row) => row.id),
+      [1, 11, 12, 2, 21]
+    );
+  });
+
+  await run("Tops v2 Integration: Ein eingeklappter Kind-TOP faellt auf den Level-1-Titel zurueck", () => {
+    const fallbackId = resolveVisibleSelectionForCollapsedFamilies({
+      selectedTopId: 11,
+      collapsedLevel1Ids: [1],
+      tops: [
+        { id: 1, level: 1, title: "Titel A" },
+        { id: 11, level: 2, title: "A1" },
+        { id: 12, level: 3, title: "A2" },
+      ],
+    });
+
+    assert.equal(fallbackId, "1");
+    assert.equal(
+      resolveVisibleSelectionForCollapsedFamilies({
+        selectedTopId: 1,
+        collapsedLevel1Ids: [1],
+        tops: [
+          { id: 1, level: 1, title: "Titel A" },
+          { id: 11, level: 2, title: "A1" },
+        ],
+      }),
+      null
+    );
+  });
+
+  await run("Tops v2 Integration: Level-1-Titel zeigt den Ein-/Ausklapp-Button", () => {
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const list = new TopsList({
+        onLevel1Toggle() {},
+      });
+      list.setItems([
+        {
+          id: 1,
+          level: 1,
+          title: "Titel A",
+          displayNumber: 1,
+          isTitle: true,
+          isLevel1Collapsed: false,
+          canToggleLevel1: true,
+        },
+      ]);
+
+      const row = list.root.children[0];
+      const grid = row.children[0];
+      const numberCell = grid.children[0];
+      const numberLine = numberCell.children[0];
+      assert.equal(numberLine.children[0].tagName, "BUTTON");
+      assert.equal(numberLine.children[0].textContent, "▾");
+      assert.equal(numberLine.children[0].dataset.collapsed, "false");
     } finally {
       globalThis.document = prevDocument;
     }

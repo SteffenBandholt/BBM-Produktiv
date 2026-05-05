@@ -4,8 +4,9 @@ import {
 } from "../../shared/text/topTextPresentation.js";
 
 export class TopsList {
-  constructor({ onRowClick } = {}) {
+  constructor({ onRowClick, onLevel1Toggle } = {}) {
     this.onRowClick = typeof onRowClick === "function" ? onRowClick : null;
+    this.onLevel1Toggle = typeof onLevel1Toggle === "function" ? onLevel1Toggle : null;
     this.root = document.createElement("ul");
     this.root.setAttribute("data-bbm-tops-list-v2", "true");
   }
@@ -31,6 +32,9 @@ export class TopsList {
     rowEl.dataset.moveState = moveState;
     rowEl.dataset.visualState = String(item.visualState || "carried");
     rowEl.dataset.titleTone = String(item.titleTone || "black");
+    rowEl.dataset.isLevel1 = item.isTitle ? "true" : "false";
+    rowEl.dataset.level1Collapsed = item.isTitle && item.isLevel1Collapsed ? "true" : "false";
+    rowEl.dataset.level1TopId = String(item.level1TopId || "");
     rowEl.dataset.isMoveTarget =
       item.isMoveTarget === null || item.isMoveTarget === undefined
         ? "none"
@@ -43,15 +47,40 @@ export class TopsList {
 
     const num = document.createElement("div");
     num.className = "bbm-tops-list-row-number";
+
     const numLine = document.createElement("div");
     numLine.className = "bbm-tops-list-row-number-line";
-    numLine.textContent = `${item.number || ""}`;
+
+    if (item.isTitle && this.onLevel1Toggle) {
+      const collapseButton = document.createElement("button");
+      collapseButton.type = "button";
+      collapseButton.className = "bbm-tops-list-row-collapse-toggle";
+      collapseButton.dataset.collapsed = item.isLevel1Collapsed ? "true" : "false";
+      collapseButton.textContent = item.isLevel1Collapsed ? "\u25B8" : "\u25BE";
+      collapseButton.disabled = !!item.isMoveMode || !item.canToggleLevel1;
+      collapseButton.title = item.isLevel1Collapsed ? "Aufklappen" : "Einklappen";
+      collapseButton.setAttribute("aria-label", item.isLevel1Collapsed ? "Aufklappen" : "Einklappen");
+      collapseButton.setAttribute("aria-expanded", item.isLevel1Collapsed ? "false" : "true");
+      collapseButton.onclick = (event) => {
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+        if (collapseButton.disabled) return;
+        if (this.onLevel1Toggle) this.onLevel1Toggle(item);
+      };
+      numLine.appendChild(collapseButton);
+    }
+
+    const numLabel = document.createElement("span");
+    numLabel.className = "bbm-tops-list-row-number-value";
+    numLabel.textContent = `${item.number || ""}`;
+    numLine.appendChild(numLabel);
     num.appendChild(numLine);
+
     if (item.showStar) {
       const star = document.createElement("span");
       star.className = "bbm-tops-list-row-star";
       star.textContent = "*";
-      numLine.append(" ", star);
+      numLabel.append(" ", star);
     }
 
     const createdAt = String(item.createdAt || "").trim();
