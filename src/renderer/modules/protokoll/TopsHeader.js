@@ -59,6 +59,7 @@ export class TopsHeader {
     this.btnEndMeeting.type = "button";
     this.btnEndMeeting.textContent = "Protokoll beenden";
     this.btnEndMeeting.className = "bbm-tops-btn bbm-tops-btn-end-meeting";
+    this.btnEndMeeting.dataset.action = "end-meeting";
     this.btnEndMeeting.onclick = async () => {
       if (this.btnEndMeeting.disabled) return;
       if (this.onEndMeeting) await this.onEndMeeting();

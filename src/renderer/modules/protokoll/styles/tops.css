@@ -76,8 +76,8 @@
   align-items: flex-start;
   gap: 10px;
   padding: 4px 10px;
-  border-bottom: 1px solid #d9e2ec;
-  background: #fff;
+  border-bottom: 1px solid #bfd2d2;
+  background: linear-gradient(180deg, #eaf3f2 0%, #dfeaea 100%);
   width: 100%;
   max-width: var(--bbm-tops-doc-width);
   box-sizing: border-box;
@@ -89,18 +89,21 @@
   gap: 1px;
   min-width: max-content;
   flex: 0 0 auto;
+  padding: 1px 3px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.32);
 }
 
 .bbm-tops-header-line1 {
   font-size: 9pt;
   font-weight: 700;
-  color: var(--bbm-tops-accent-green);
+  color: #25624f;
 }
 
 .bbm-tops-header-line2 {
   font-size: 8.5pt;
   font-weight: 700;
-  color: var(--bbm-tops-accent-green);
+  color: #25624f;
   white-space: nowrap;
   min-height: 1.2em;
   min-width: 12ch;
@@ -111,7 +114,7 @@
 .bbm-tops-header-line3 {
   font-size: 7.5pt;
   font-weight: 500;
-  color: var(--bbm-tops-accent-green);
+  color: #2b6655;
   opacity: 0.76;
   line-height: 1.2;
   white-space: nowrap;
@@ -201,10 +204,20 @@
   cursor: default;
 }
 
-.bbm-tops-btn-end-meeting {
-  border: 1px solid rgba(0, 0, 0, 0.25);
-  background: #ef6c00;
+button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"] {
+  border: 1px solid #b85b00;
+  background: linear-gradient(180deg, #ff8a1f 0%, #ef6c00 100%);
   color: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.22) inset, 0 1px 2px rgba(149, 74, 0, 0.18);
+}
+
+button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:hover:not(:disabled) {
+  background: linear-gradient(180deg, #ff9a3a 0%, #f07a12 100%);
+}
+
+button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-visible {
+  outline: 2px solid rgba(239, 108, 0, 0.35);
+  outline-offset: 1px;
 }
 
 .bbm-tops-btn-close {
@@ -485,10 +498,10 @@
 .bbm-tops-workbench {
   display: grid;
   gap: 6px;
-  background: #fff;
-  border: 1px solid #d5e1ee;
+  background: linear-gradient(180deg, #e9f2f1 0%, #dde8e7 100%);
+  border: 1px solid #c7d8d7;
   border-radius: 10px;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.07);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
   padding: 4px 6px 6px;
 }
 
@@ -498,7 +511,9 @@
   align-items: center;
   gap: 4px;
   padding-bottom: 4px;
-  border-bottom: 1px solid #e4ebf4;
+  border-bottom: 1px solid #cddddd;
+  background: rgba(255, 255, 255, 0.26);
+  border-radius: 8px 8px 0 0;
 }
 
 .bbm-tops-workbench-add-wrap,
@@ -509,7 +524,7 @@
 }
 
 .bbm-tops-workbench-left-title {
-  color: var(--bbm-tops-accent-green);
+  color: #25624f;
   font-size: 9pt;
   font-weight: 700;
   line-height: 1.1;
@@ -542,6 +557,9 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 4px;
+  padding: 5px 6px 6px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.56) 0%, rgba(244, 248, 248, 0.78) 100%);
 }
 
 .bbm-tops-workbench-editbox .editbox-main {
@@ -561,7 +579,7 @@
   flex-wrap: nowrap;
   font-size: 8.5pt;
   font-weight: 400;
-  color: #1f344a;
+  color: #27485a;
   line-height: 1.1;
   white-space: nowrap;
 }
@@ -571,7 +589,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 2px var(--bbm-top-text-pad-x);
-  border: 1px solid #cad8e6;
+  border: 1px solid #bfd2d2;
   border-radius: 7px;
   background: #fff;
   font-size: var(--bbm-top-short-font-size);
@@ -590,7 +608,7 @@
 
 .bbm-tops-workbench-editbox .editbox-counter {
   font-size: 8pt;
-  color: #5f6877;
+  color: #5a6870;
   white-space: nowrap;
   margin-left: 6px;
 }
@@ -635,7 +653,7 @@
   align-items: center;
   gap: 4px;
   font-size: 8pt;
-  color: #2f3744;
+  color: #304b4e;
   line-height: 1;
 }
 
@@ -689,7 +707,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 3px 5px;
-  border: 1px solid #cad8e6;
+  border: 1px solid #bfd2d2;
   border-radius: 7px;
   background: #fff;
   font-size: 8.5pt;
@@ -730,9 +748,9 @@
   display: grid;
   gap: 8px;
   padding: 8px 10px;
-  border: 1px solid #dce7f2;
+  border: 1px solid #c7d8d7;
   border-radius: 10px;
-  background: #f8fbff;
+  background: linear-gradient(180deg, rgba(245, 249, 249, 0.92) 0%, rgba(232, 240, 239, 0.96) 100%);
   align-content: start;
 }
 
@@ -742,7 +760,7 @@
   gap: 8px 10px;
   align-items: center;
   padding-bottom: 4px;
-  border-bottom: 1px solid #dce7f2;
+  border-bottom: 1px solid #c7d8d7;
 }
 
 .bbm-tops-meta-flags .editbox-flags {
@@ -759,7 +777,7 @@
   align-items: center;
   gap: 4px;
   font-size: 7.7pt;
-  color: #34485d;
+  color: #34595d;
   line-height: 1;
 }
 
@@ -777,7 +795,7 @@
 .bbm-tops-meta-field > span {
   font-size: 7.6pt;
   font-weight: 500;
-  color: #4b5e73;
+  color: #44636a;
   letter-spacing: 0.01em;
 }
 
@@ -787,7 +805,7 @@
   box-sizing: border-box;
   min-height: 24px;
   padding: 3px 6px;
-  border: 1px solid #cad8e6;
+  border: 1px solid #bfd2d2;
   border-radius: 7px;
   background: #fff;
   font-size: 8pt;
@@ -842,7 +860,7 @@
 .bbm-tops-status-ampel-slot .status-ampel-label {
   font-size: 7.6pt;
   font-weight: 400;
-  color: #4b5e73;
+  color: #44636a;
 }
 
 .bbm-tops-status-ampel-slot .status-ampel-traffic {
@@ -902,7 +920,7 @@
   gap: 4px;
   font-size: 8pt;
   font-weight: 400;
-  color: inherit;
+  color: #324e54;
 }
 
 .bbm-tops-responsible-slot .responsible-field-label-text {
