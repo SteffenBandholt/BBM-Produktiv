@@ -16,7 +16,7 @@ export class WorkbenchMetaColumn {
     this.onChange = typeof onChange === "function" ? onChange : null;
 
     this.metaPanel = new TopsMetaPanel({
-      onChange: () => this._emitChange(),
+      onChange: () => this._emitChange("meta"),
     });
 
     this.flagsMetaRow = document.createElement("div");
@@ -26,7 +26,7 @@ export class WorkbenchMetaColumn {
 
     this.statusAmpelBridge = new TopsStatusAmpelBridge({
       metaPanel: this.metaPanel,
-      onChange: () => this._emitChange(),
+      onChange: () => this._emitChange("meta"),
     });
     this.statusAmpelBridge.mount();
 
@@ -34,15 +34,15 @@ export class WorkbenchMetaColumn {
       metaPanel: this.metaPanel,
       loadCompanies: this.loadCompanies,
       loadEmployeesByCompany: this.loadEmployeesByCompany,
-      onChange: () => this._emitChange(),
+      onChange: () => this._emitChange("meta"),
     });
     this.responsibleBridge.mount();
 
     this.root = this.metaPanel.root;
   }
 
-  _emitChange() {
-    if (this.onChange) this.onChange(this.getDraft());
+  _emitChange(source = "meta") {
+    if (this.onChange) this.onChange({ draft: this.getDraft(), source });
   }
 
   async initialize() {

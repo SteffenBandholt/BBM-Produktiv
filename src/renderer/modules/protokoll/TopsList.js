@@ -55,7 +55,11 @@ export class TopsList {
   }
 
   setItems(items = []) {
-    this.root.innerHTML = "";
+    if (typeof this.root.replaceChildren === "function") {
+      this.root.replaceChildren();
+    } else {
+      this.root.innerHTML = "";
+    }
     const rows = Array.isArray(items) ? items : [];
     for (const item of rows) {
       this.root.appendChild(this._renderRow(item));

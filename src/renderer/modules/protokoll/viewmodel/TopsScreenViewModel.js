@@ -295,7 +295,7 @@ export function buildListItemsFromState(state, options = {}) {
       level1TopId: level1TopId || null,
       isLevel1Collapsed: isTitle ? collapsedLevel1Ids.has(topId) : false,
       canToggleLevel1: isTitle && !state?.isMoveMode,
-      title: normalizeTopShortText(top?.title),
+      title: normalizeTopShortText(top?.previewTitle ?? top?.title),
       number: `${top?.displayNumber ?? top?.number ?? ""}.`,
       preview: showLongtextInList ? normalizeTopLongText(top?.longtext) : "",
       createdAt,

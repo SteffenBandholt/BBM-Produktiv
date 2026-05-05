@@ -17,6 +17,12 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Die Protokoll-Editbox speichert jetzt automatisch:
+  - Kurztext, Langtext, Haken und Meta-Felder laufen ueber den bestehenden Save-Pfad
+  - der sichtbare `Speichern`-Button ist aus der Workbench ausgeblendet
+  - Debounce und Blur-Flush sind durch Tests abgesichert
+  - geprueft mit `npm test`
+- Naechster offener Schritt: manuelle Sichtpruefung der Auto-Save-UX im Protokollscreen auf dem Zielsystem.
 - Die TOP-Liste im Protokollscreen ist optisch lesbarer geworden:
   - TOP-Nummern und Kurztext wirken jetzt gleich gross
   - Liste, normale TOPs und Level-1-Titel sind farblich/helligkeitstechnisch besser getrennt

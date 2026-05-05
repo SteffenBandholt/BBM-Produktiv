@@ -79,7 +79,8 @@ export class TopsWorkbench {
     this._buildProtocolWorkbenchActionButtons();
 
     this.headerAddActions.append(this.btnL1, this.btnChild);
-    this.headerPrimaryActions.append(this.btnMove, this.btnSave, this.btnDelete);
+    this.headerPrimaryActions.append(this.btnMove, this.btnDelete);
+    this.btnSave.style.display = "none";
   }
 
   _buildProtocolWorkbenchActionButtons() {
@@ -105,7 +106,7 @@ export class TopsWorkbench {
   // wiederverwendbarer Editbox-Baustein ohne TOP-spezifische Meta-/Ablauflogik.
   _buildSharedEditboxCore() {
     this.sharedEditboxCore = new SharedEditboxCore({
-      onDraftChange: () => this._emitDraftChange(),
+      onDraftChange: (payload) => this._emitDraftChange(payload),
       onTextBlur: (payload) => this._emitTextBlur(payload),
       onStartDictation: (target) => this._emitStartDictation(target),
     });
@@ -116,7 +117,7 @@ export class TopsWorkbench {
       flagsWrap: this.sharedEditboxCore.flagsWrap,
       loadCompanies: this.loadCompanies,
       loadEmployeesByCompany: this.loadEmployeesByCompany,
-      onChange: () => this._emitDraftChange(),
+      onChange: (payload) => this._emitDraftChange(payload),
     });
   }
 
@@ -151,8 +152,8 @@ export class TopsWorkbench {
     return btn;
   }
 
-  _emitDraftChange() {
-    if (this.onDraftChange) this.onDraftChange(this.getDraft());
+  _emitDraftChange(payload) {
+    if (this.onDraftChange) this.onDraftChange(payload || { draft: this.getDraft(), source: "text" });
   }
 
   _emitTextBlur(payload) {

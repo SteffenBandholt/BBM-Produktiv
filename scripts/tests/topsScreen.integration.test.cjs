@@ -10,6 +10,9 @@ async function runTopsScreenIntegrationTests(run) {
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/viewmodel/TopsWorkbenchViewModel.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/TopsList.js")),
   ]);
+  const TopsScreen = (await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/modules/protokoll/screens/TopsScreen.js")
+  )).default;
   const { SharedEditboxCore } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/modules/protokoll/SharedEditboxCore.js")
   );
@@ -21,6 +24,9 @@ async function runTopsScreenIntegrationTests(run) {
   );
   const { TopsAssigneeDataSource } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/tops/data/TopsAssigneeDataSource.js")
+  );
+  const { TopsWorkbench } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/tops/components/TopsWorkbench.js")
   );
   const ProjectContextQuicklane = (await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/ui/ProjectContextQuicklane.js")
@@ -121,11 +127,20 @@ async function runTopsScreenIntegrationTests(run) {
         return createNode(tag, doc);
       },
       body: null,
+      head: null,
+      querySelector() {
+        return null;
+      },
       addEventListener() {},
       removeEventListener() {},
     };
     doc.body = createNode("body", doc);
+    doc.head = createNode("head", doc);
     return doc;
+  }
+
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   function firstNumberGapFromItems(items = []) {
@@ -1140,6 +1155,292 @@ async function runTopsScreenIntegrationTests(run) {
 
     assert.equal(store.getState().tops.length, 0);
     assert.equal(store.getState().selectedTopId, null);
+  });
+
+  await run("Tops v2 Integration: Auto-Save speichert Text per Debounce und Blur", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { bbmDb: {}, document: doc };
+    try {
+      const db = {
+        tops: [
+          {
+            id: 501,
+            level: 2,
+            title: "Alpha",
+            longtext: "Lang",
+            status: "-",
+            is_carried_over: 0,
+            parent_top_id: null,
+          },
+        ],
+      };
+      const saveCalls = [];
+      const repository = {
+        async loadByMeeting() {
+          return { ok: true, meeting: { id: 22, is_closed: 0 }, list: db.tops.map((t) => ({ ...t })) };
+        },
+        async saveTop({ topId, patch }) {
+          saveCalls.push({ topId, patch: { ...(patch || {}) } });
+          const top = db.tops.find((t) => String(t.id) === String(topId));
+          if (!top) return { ok: false, error: "not found" };
+          Object.assign(top, patch || {});
+          return { ok: true };
+        },
+      };
+
+      const screen = new TopsScreen({
+        topsRepository: repository,
+        router: { context: { projectLabel: "Projekt X" } },
+        projectId: 99,
+        meetingId: 22,
+      });
+      screen.render();
+
+      await screen.commands.loadTops({ meetingId: 22, projectId: 99 });
+      screen.commands.selectTop(501);
+      const selected = screen.store.getState().tops.find((t) => String(t.id) === "501");
+      screen.commands.updateDraft(editorFromTop(selected));
+
+      screen._handleWorkbenchDraftChange({ draft: { title: "Alpha 1" }, source: "text" });
+      assert.equal(screen.store.getState().editor.title, "Alpha 1");
+      assert.equal(screen.store.getState().tops[0].title, "Alpha");
+      assert.equal(screen.store.getState().tops[0].previewTitle, "Alpha 1");
+      assert.equal(
+        screen.topsList.root.children[0].children[0].children[1].children[0].textContent,
+        "Alpha 1"
+      );
+      await sleep(120);
+      screen._handleWorkbenchDraftChange({ draft: { title: "Alpha 2" }, source: "text" });
+      assert.equal(screen.store.getState().editor.title, "Alpha 2");
+      assert.equal(screen.store.getState().tops[0].title, "Alpha");
+      assert.equal(screen.store.getState().tops[0].previewTitle, "Alpha 2");
+      assert.equal(
+        screen.topsList.root.children[0].children[0].children[1].children[0].textContent,
+        "Alpha 2"
+      );
+      assert.equal(saveCalls.length, 0);
+      await sleep(520);
+
+      assert.equal(saveCalls.length, 1);
+      assert.equal(saveCalls[0].patch.title, "Alpha 2");
+      assert.equal(db.tops[0].title, "Alpha 2");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Auto-Save flush tatsaechlich beim Blur", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { bbmDb: {}, document: doc };
+    try {
+      const db = {
+        tops: [
+          {
+            id: 502,
+            level: 2,
+            title: "Beta",
+            longtext: "Lang",
+            status: "-",
+            is_carried_over: 0,
+            parent_top_id: null,
+          },
+        ],
+      };
+      const saveCalls = [];
+      const repository = {
+        async loadByMeeting() {
+          return { ok: true, meeting: { id: 23, is_closed: 0 }, list: db.tops.map((t) => ({ ...t })) };
+        },
+        async saveTop({ topId, patch }) {
+          saveCalls.push({ topId, patch: { ...(patch || {}) } });
+          const top = db.tops.find((t) => String(t.id) === String(topId));
+          if (!top) return { ok: false, error: "not found" };
+          Object.assign(top, patch || {});
+          return { ok: true };
+        },
+      };
+
+      const screen = new TopsScreen({
+        topsRepository: repository,
+        router: { context: { projectLabel: "Projekt X" } },
+        projectId: 99,
+        meetingId: 23,
+      });
+
+      await screen.commands.loadTops({ meetingId: 23, projectId: 99 });
+      screen.commands.selectTop(502);
+      const selected = screen.store.getState().tops.find((t) => String(t.id) === "502");
+      screen.commands.updateDraft(editorFromTop(selected));
+
+      screen._handleWorkbenchDraftChange({ draft: { title: "Beta old" }, source: "text" });
+      screen.workbench = {
+        getDraft() {
+          return { ...screen.store.getState().editor, title: "Beta X" };
+        },
+      };
+      await screen._handleWorkbenchTextBlur({ field: "shortText", draft: { title: "Beta old" } });
+
+      assert.equal(saveCalls.length, 1);
+      assert.equal(saveCalls[0].patch.title, "Beta X");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Haken und Meta-Felder speichern sofort", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { bbmDb: {}, document: doc };
+
+    const db = {
+      tops: [
+        {
+          id: 503,
+          level: 2,
+          title: "Gamma",
+          longtext: "Lang",
+          status: "-",
+          is_carried_over: 0,
+          parent_top_id: null,
+        },
+      ],
+    };
+    const saveCalls = [];
+    const repository = {
+      async loadByMeeting() {
+        return { ok: true, meeting: { id: 24, is_closed: 0 }, list: db.tops.map((t) => ({ ...t })) };
+      },
+      async saveTop({ topId, patch }) {
+        saveCalls.push({ topId, patch: { ...(patch || {}) } });
+        const top = db.tops.find((t) => String(t.id) === String(topId));
+        if (!top) return { ok: false, error: "not found" };
+        Object.assign(top, patch || {});
+        return { ok: true };
+      },
+    };
+
+    const screen = new TopsScreen({
+      topsRepository: repository,
+      router: { context: { projectLabel: "Projekt X" } },
+      projectId: 99,
+      meetingId: 24,
+    });
+
+    await screen.commands.loadTops({ meetingId: 24, projectId: 99 });
+    screen.commands.selectTop(503);
+    const selected = screen.store.getState().tops.find((t) => String(t.id) === "503");
+    screen.commands.updateDraft(editorFromTop(selected));
+
+    screen._handleWorkbenchDraftChange({
+      draft: {
+        ...editorFromTop(selected),
+        is_important: 1,
+        is_hidden: 1,
+        is_task: 1,
+        is_decision: 1,
+        due_date: "2026-04-27",
+        status: "offen",
+        responsible_label: "WTB",
+      },
+      source: "flags",
+    });
+    await sleep(50);
+
+    assert.equal(saveCalls.length, 1);
+    assert.equal(saveCalls[0].patch.is_important, 1);
+    assert.equal(saveCalls[0].patch.is_hidden, 1);
+    assert.equal(saveCalls[0].patch.is_task, 1);
+    assert.equal(saveCalls[0].patch.is_decision, 1);
+    assert.equal(saveCalls[0].patch.due_date, "2026-04-27");
+    assert.equal(saveCalls[0].patch.status, "offen");
+    assert.equal(saveCalls[0].patch.responsible_label, "WTB");
+    globalThis.document = prevDocument;
+    globalThis.window = prevWindow;
+  });
+
+  await run("Tops v2 Integration: Kein Save ohne Auswahl und kein Save im ReadOnly", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { bbmDb: {}, document: doc };
+
+    const db = {
+      tops: [
+        {
+          id: 504,
+          level: 2,
+          title: "Delta",
+          longtext: "Lang",
+          status: "-",
+          is_carried_over: 0,
+          parent_top_id: null,
+        },
+      ],
+    };
+    const saveCalls = [];
+    const repository = {
+      async loadByMeeting() {
+        return { ok: true, meeting: { id: 25, is_closed: 0 }, list: db.tops.map((t) => ({ ...t })) };
+      },
+      async saveTop({ topId, patch }) {
+        saveCalls.push({ topId, patch: { ...(patch || {}) } });
+        const top = db.tops.find((t) => String(t.id) === String(topId));
+        if (!top) return { ok: false, error: "not found" };
+        Object.assign(top, patch || {});
+        return { ok: true };
+      },
+    };
+
+    const screen = new TopsScreen({
+      topsRepository: repository,
+      router: { context: { projectLabel: "Projekt X" } },
+      projectId: 99,
+      meetingId: 25,
+    });
+
+    await screen.commands.loadTops({ meetingId: 25, projectId: 99 });
+    screen._handleWorkbenchDraftChange({ draft: { title: "Ohne Auswahl" }, source: "text" });
+    await sleep(450);
+    assert.equal(saveCalls.length, 0);
+
+    screen.commands.selectTop(504);
+    const selected = screen.store.getState().tops.find((t) => String(t.id) === "504");
+    screen.commands.updateDraft(editorFromTop(selected));
+    screen.store.setState({ isReadOnly: true });
+
+    screen._handleWorkbenchDraftChange({ draft: { title: "Readonly" }, source: "text" });
+    await sleep(450);
+    assert.equal(saveCalls.length, 0);
+    globalThis.document = prevDocument;
+    globalThis.window = prevWindow;
+  });
+
+  await run("Tops v2 Integration: Speichern-Button bleibt aus der Workbench aus", () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { document: doc };
+
+    try {
+      const workbench = new TopsWorkbench({});
+      assert.equal(workbench.headerPrimaryActions.children.includes(workbench.btnSave), false);
+      assert.equal(workbench.btnSave.style.display, "none");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
   });
 
   await run("Tops v2 Integration: TopGapFlow repariert 1.1/1.2/1.3 zu 1.1/1.2", async () => {

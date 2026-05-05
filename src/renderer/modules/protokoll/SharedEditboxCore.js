@@ -69,10 +69,16 @@ export class SharedEditboxCore {
   }
 
   _bindDraftChangeSources() {
-    this.root.addEventListener("input", () => this._emitDraftChange());
-    this.root.addEventListener("change", () => this._emitDraftChange());
-    this.editbox.flagsWrap.addEventListener("input", () => this._emitDraftChange());
-    this.editbox.flagsWrap.addEventListener("change", () => this._emitDraftChange());
+    this.editbox.shortInput.addEventListener("input", () => {
+      this._enforceShortTextLimit();
+      this._updateCounters();
+      this._emitDraftChange("text");
+    });
+    this.editbox.longInput.addEventListener("input", () => {
+      this._updateCounters();
+      this._emitDraftChange("text");
+    });
+    this.editbox.flagsWrap.addEventListener("change", () => this._emitDraftChange("flags"));
     this.editbox.shortInput.addEventListener("blur", () => this._emitTextBlur("shortText"));
     this.editbox.longInput.addEventListener("blur", () => this._emitTextBlur("longText"));
   }
@@ -109,9 +115,9 @@ export class SharedEditboxCore {
     appendToHost(this.longLabel, this.longDictateButton, this.editbox.longWrap);
   }
 
-  _emitDraftChange() {
+  _emitDraftChange(source = "text") {
     this._syncImportantState();
-    if (this.onDraftChange) this.onDraftChange(this.getDraft());
+    if (this.onDraftChange) this.onDraftChange({ draft: this.getDraft(), source });
   }
 
   _syncImportantState() {

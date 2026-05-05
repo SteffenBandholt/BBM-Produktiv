@@ -76,6 +76,12 @@ export default class TopsScreen {
     this._sidebarEl = null;
     this._sidebarDisplay = "";
     this._suppressNextWorkbenchTextBlur = false;
+    this._autoSaveTimer = null;
+    this._autoSaveQueued = false;
+    this._autoSaveInFlight = false;
+    this._autoSaveRevision = 0;
+    this._autoSaveLatestDraft = null;
+    this._autoSaveDelayMs = 400;
     this.workbench = null;
     this.topsList = null;
     this.closeFlow = null;
@@ -686,8 +692,14 @@ export default class TopsScreen {
   }
 
   _handleWorkbenchDraftChange(draft) {
-    this.commands.updateDraft(draft || {});
-    this._syncProtocolWorkbenchHostState();
+    const payload = draft && typeof draft === "object" && "draft" in draft ? draft : { draft, source: "text" };
+    const nextDraft = payload?.draft || {};
+    this.commands.updateDraft(nextDraft);
+    this._applyLiveShortTextPreview(nextDraft);
+    this._markAutoSaveDraft();
+    this._requestAutoSave(String(payload?.source || "text"));
+    this._syncScreenState();
+    return true;
   }
 
   _startDictation(options = {}) {
@@ -724,11 +736,111 @@ export default class TopsScreen {
       this._suppressNextWorkbenchTextBlur = false;
       return;
     }
-    await this._saveActiveDraft({ resetMoveMode: false });
+    const payload = _payload && typeof _payload === "object" ? _payload : {};
+    const latestDraft =
+      (typeof this.workbench?.getDraft === "function" ? this.workbench.getDraft() : null) ||
+      payload?.draft ||
+      {};
+
+    if (latestDraft && typeof latestDraft === "object") {
+      this.commands.updateDraft(latestDraft);
+      this._markAutoSaveDraft();
+    }
+    await this._requestAutoSave("blur", { forceImmediate: true });
   }
 
-  async _saveActiveDraft({ resetMoveMode = false } = {}) {
+  _markAutoSaveDraft() {
+    this._autoSaveRevision += 1;
+    const currentEditor = this.store.getState()?.editor || {};
+    this._autoSaveLatestDraft = { ...currentEditor };
+  }
+
+  _applyLiveShortTextPreview(draft = {}) {
     const state = this.store.getState();
+    const selectedTopId = String(state?.selectedTopId ?? "");
+    const nextTitle = this._normTitle(draft?.title);
+    if (!selectedTopId) return false;
+
+    const tops = Array.isArray(state?.tops) ? state.tops : [];
+    let changed = false;
+    const nextTops = tops.map((top) => {
+      if (String(top?.id ?? "") !== selectedTopId) return top;
+      const currentTitle = this._normTitle(top?.title);
+      if (currentTitle === nextTitle) return top;
+      changed = true;
+      return {
+        ...top,
+        previewTitle: nextTitle,
+      };
+    });
+
+    if (!changed) return false;
+    this.store.setState({ tops: nextTops });
+    return true;
+  }
+
+  _clearAutoSaveTimer() {
+    if (this._autoSaveTimer) {
+      clearTimeout(this._autoSaveTimer);
+      this._autoSaveTimer = null;
+    }
+  }
+
+  _canAutoSaveNow() {
+    const state = this.store.getState();
+    if (!state || state.isReadOnly) return false;
+    return !!getSelectedTop(state);
+  }
+
+  async _requestAutoSave(source = "text", { forceImmediate = false } = {}) {
+    if (!this._canAutoSaveNow()) return false;
+
+    if (this.store.getState().isWriting || this._autoSaveInFlight) {
+      this._autoSaveQueued = true;
+      return false;
+    }
+
+    const isDebouncedText = !forceImmediate && String(source || "text") === "text";
+    if (isDebouncedText) {
+      this._clearAutoSaveTimer();
+      this._autoSaveTimer = setTimeout(() => {
+        this._autoSaveTimer = null;
+        void this._runAutoSave("text");
+      }, this._autoSaveDelayMs);
+      return true;
+    }
+
+    this._clearAutoSaveTimer();
+    return this._runAutoSave(source);
+  }
+
+  async _runAutoSave(source = "text") {
+    if (!this._canAutoSaveNow()) return false;
+    if (this.store.getState().isWriting || this._autoSaveInFlight) {
+      this._autoSaveQueued = true;
+      return false;
+    }
+
+    this._autoSaveInFlight = true;
+    let needsRepeat = false;
+    try {
+      const saveRevision = this._autoSaveRevision;
+      const saved = await this._saveActiveDraft({ resetMoveMode: false, saveRevision, source });
+      if (saved === false) return false;
+      needsRepeat = this._autoSaveQueued;
+      this._autoSaveQueued = false;
+      return true;
+    } finally {
+      this._autoSaveInFlight = false;
+      if (needsRepeat) {
+        void this._runAutoSave("queued");
+      }
+    }
+  }
+
+  async _saveActiveDraft({ resetMoveMode = false, saveRevision = this._autoSaveRevision, source = "manual" } = {}) {
+    const state = this.store.getState();
+    this._clearAutoSaveTimer();
     if (state.isWriting) return false;
     const selectedTop = getSelectedTop(state);
     if (!selectedTop) return false;
@@ -741,7 +853,13 @@ export default class TopsScreen {
       this.store.setState({ error: null });
       const res = await this.commands.saveDraft(patch);
       if (!res?.ok) return false;
-      this.commands.updateDraft(editorFromTop(getSelectedTop(this.store.getState())));
+      const currentSelectedTop = getSelectedTop(this.store.getState());
+      if (this._autoSaveRevision === saveRevision) {
+        this.commands.updateDraft(editorFromTop(currentSelectedTop));
+      } else if (this._autoSaveLatestDraft) {
+        this.commands.updateDraft(this._autoSaveLatestDraft);
+        this._autoSaveQueued = true;
+      }
       if (resetMoveMode) {
         this.commands.toggleMoveMode(false);
       }
@@ -749,6 +867,13 @@ export default class TopsScreen {
     } finally {
       this.store.setState({ isWriting: false });
       this._syncScreenState();
+      if (!this._autoSaveInFlight && this._autoSaveQueued) {
+        const queued = this._autoSaveQueued;
+        this._autoSaveQueued = false;
+        if (queued) {
+          void this._runAutoSave("queued");
+        }
+      }
     }
   }
 

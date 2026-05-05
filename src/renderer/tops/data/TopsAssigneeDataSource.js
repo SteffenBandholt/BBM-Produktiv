@@ -1,6 +1,7 @@
 export class TopsAssigneeDataSource {
   constructor({ api } = {}) {
-    this.api = api || window.bbmDb || {};
+    const browserApi = typeof window !== "undefined" ? window?.bbmDb : globalThis?.window?.bbmDb;
+    this.api = api || browserApi || {};
     this._lastProjectId = "";
     this._employeesByProjectCompany = new Map();
   }
