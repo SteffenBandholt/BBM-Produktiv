@@ -3,6 +3,49 @@ import {
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
 
+function getAssetBaseUrl() {
+  if (typeof window !== "undefined" && window?.location?.href) return window.location.href;
+  if (typeof process !== "undefined" && typeof process.cwd === "function") {
+    const cwdUrl = `file:///${process.cwd().replace(/\\/g, "/").replace(/^\/+/, "")}/`;
+    return new URL("./", cwdUrl).href;
+  }
+  return "file:///";
+}
+
+function resolveModuleAsset(relativePath) {
+  const spec = String(relativePath || "");
+  if (!spec) return "";
+
+  try {
+    return new URL(spec, import.meta.url).href;
+  } catch {
+    if (typeof process !== "undefined" && typeof process.cwd === "function") {
+      const cwd = String(process.cwd()).replace(/\\/g, "/").replace(/\/+$/, "");
+      const baseParts = ["src", "renderer", "modules", "protokoll"];
+      const parts = String(spec)
+        .replace(/\\/g, "/")
+        .split("/")
+        .filter((part) => part.length > 0);
+
+      for (const part of parts) {
+        if (part === ".") continue;
+        if (part === "..") {
+          if (baseParts.length) baseParts.pop();
+          continue;
+        }
+        baseParts.push(part);
+      }
+
+      return `file:///${cwd}/${baseParts.join("/")}`;
+    }
+    return spec;
+  }
+}
+
+const ASSET_BASE_URL = getAssetBaseUrl();
+const TODO_PNG = new URL("../../assets/todo.png", ASSET_BASE_URL).href;
+const RED_FLAG_PNG = resolveModuleAsset("../../assets/icons/redFlag.png");
+
 export class TopsList {
   constructor({ onRowClick, onLevel1Toggle } = {}) {
     this.onRowClick = typeof onRowClick === "function" ? onRowClick : null;
@@ -32,6 +75,7 @@ export class TopsList {
     rowEl.dataset.moveState = moveState;
     rowEl.dataset.visualState = String(item.visualState || "carried");
     rowEl.dataset.titleTone = String(item.titleTone || "black");
+    rowEl.dataset.isImportant = item.isImportant ? "true" : "false";
     rowEl.dataset.isLevel1 = item.isTitle ? "true" : "false";
     rowEl.dataset.level1Collapsed = item.isTitle && item.isLevel1Collapsed ? "true" : "false";
     rowEl.dataset.level1TopId = String(item.level1TopId || "");
@@ -97,6 +141,7 @@ export class TopsList {
     const title = document.createElement("div");
     title.className = "bbm-tops-list-row-title";
     title.dataset.tone = String(item.titleTone || "black");
+    title.dataset.important = item.isImportant ? "true" : "false";
     title.textContent = normalizeTopShortText(item.title);
 
     const preview = document.createElement("div");
@@ -132,7 +177,24 @@ export class TopsList {
       if (statusTokens.has(normalized)) {
         const ampelSlot = document.createElement("span");
         ampelSlot.className = "bbm-tops-list-row-meta-ampel-slot";
-        if (item.showAmpelInList !== false && item.ampelColor) {
+        const symbolType = String(item.metaSymbolType || "");
+        if (symbolType === "decision") {
+          const img = document.createElement("img");
+          img.className = "bbm-tops-list-row-meta-symbol";
+          img.src = RED_FLAG_PNG;
+          img.alt = "Beschluss";
+          img.title = "Beschluss";
+          img.dataset.symbol = "decision";
+          ampelSlot.appendChild(img);
+        } else if (symbolType === "task") {
+          const img = document.createElement("img");
+          img.className = "bbm-tops-list-row-meta-symbol";
+          img.src = TODO_PNG;
+          img.alt = "ToDo";
+          img.title = "ToDo";
+          img.dataset.symbol = "task";
+          ampelSlot.appendChild(img);
+        } else if (item.showAmpelInList !== false && item.ampelColor) {
           const dot = document.createElement("span");
           dot.className = "bbm-tops-list-row-ampel";
           dot.dataset.color = String(item.ampelColor || "");

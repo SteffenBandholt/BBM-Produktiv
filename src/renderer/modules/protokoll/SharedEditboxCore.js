@@ -110,7 +110,13 @@ export class SharedEditboxCore {
   }
 
   _emitDraftChange() {
+    this._syncImportantState();
     if (this.onDraftChange) this.onDraftChange(this.getDraft());
+  }
+
+  _syncImportantState() {
+    const important = Boolean(this.editbox.getValue()?.flags?.important);
+    this.root.dataset.important = important ? "true" : "false";
   }
 
   _emitTextBlur(field) {
@@ -155,10 +161,12 @@ export class SharedEditboxCore {
     if (Object.keys(nextEditboxValue).length) {
       this.editbox.setValue(nextEditboxValue);
     }
+    this._syncImportantState();
   }
 
   _applyUnavailableState() {
     this.editbox.setValue(createEmptyWorkbenchEditboxValue());
+    this._syncImportantState();
     this.editbox.setState("disabled");
     this.editbox.setFieldAccess({
       shortTextReadOnly: false,
@@ -169,6 +177,7 @@ export class SharedEditboxCore {
 
   _applyReadOnlyState() {
     this.editbox.setState("read-only");
+    this._syncImportantState();
     this.editbox.setFieldAccess({
       shortTextReadOnly: true,
       longTextReadOnly: true,
@@ -195,6 +204,7 @@ export class SharedEditboxCore {
     }
 
     this.editbox.setState("normal");
+    this._syncImportantState();
     this.editbox.setFieldAccess({
       shortTextReadOnly: !!editorAccess?.shortTextReadOnly,
       longTextReadOnly: !!editorAccess?.longTextReadOnly,

@@ -414,6 +414,11 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   color: #111;
 }
 
+.bbm-tops-list-row[data-is-important="true"] .bbm-tops-list-row-title,
+.bbm-tops-list-row[data-is-important="true"] .bbm-tops-list-row-number {
+  color: #b71c1c;
+}
+
 .bbm-tops-list-row-star {
   color: #1d4ed8;
   font-weight: 700;
@@ -483,6 +488,14 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   width: 12px;
   min-width: 12px;
   height: 12px;
+}
+
+.bbm-tops-list-row-meta-symbol {
+  display: block;
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex: 0 0 14px;
 }
 
 .bbm-tops-list-row-ampel {
@@ -670,6 +683,17 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   font-size: 8pt;
   color: #304b4e;
   line-height: 1;
+}
+
+.bbm-tops-workbench-editbox[data-important="true"] .editbox-flag input[data-flag="important"] + span,
+.bbm-tops-workbench-editbox .editbox-flag input[data-flag="important"]:checked + span {
+  color: #b71c1c;
+  font-weight: 700;
+}
+
+.bbm-tops-workbench-editbox[data-important="true"] .editbox-flag input[data-flag="important"],
+.bbm-tops-workbench-editbox .editbox-flag input[data-flag="important"]:checked {
+  accent-color: #b71c1c;
 }
 
 .bbm-tops-workbench-editbox .editbox-flag input {

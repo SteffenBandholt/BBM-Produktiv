@@ -288,6 +288,7 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(level1Rows[0].isTitle, true);
     assert.equal(level1Rows[0].meta.length, 0);
     assert.equal(level1Rows[0].ampelColor, null);
+    assert.equal(level1Rows[0].metaSymbolType, null);
 
     const datedRows = buildListItemsFromState({
       tops: [
@@ -322,8 +323,51 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(ampelRows[0].meta[1], "blockiert");
     assert.equal(ampelRows[0].ampelColor, "blue");
 
+    const todoRows = buildListItemsFromState({
+      tops: [
+        {
+          id: 307,
+          level: 2,
+          title: "ToDo",
+          longtext: "",
+          status: "offen",
+          is_task: 1,
+        },
+      ],
+    });
+    const decisionRows = buildListItemsFromState({
+      tops: [
+        {
+          id: 308,
+          level: 2,
+          title: "Beschluss",
+          longtext: "",
+          status: "blockiert",
+          is_decision: 1,
+        },
+      ],
+    });
+    const importantRows = buildListItemsFromState({
+      tops: [
+        {
+          id: 309,
+          level: 2,
+          title: "Wichtig",
+          longtext: "",
+          status: "offen",
+          is_important: 1,
+        },
+      ],
+    });
+
+    assert.equal(todoRows[0].metaSymbolType, "task");
+    assert.equal(decisionRows[0].metaSymbolType, "decision");
+    assert.equal(importantRows[0].isImportant, true);
+
     const prevDocument = globalThis.document;
     globalThis.document = createFakeDocument();
+    const prevWindow = globalThis.window;
+    globalThis.window = { document: globalThis.document };
     try {
       const list = new TopsList();
       list.setItems(rows);
@@ -353,8 +397,50 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(statusLine.children[1].className, "bbm-tops-list-row-meta-ampel-slot");
       assert.equal(statusLine.children[1].children[0].className, "bbm-tops-list-row-ampel");
       assert.equal(statusLine.children[1].children[0].dataset.color, "blue");
+
+      list.setItems(todoRows);
+      const todoRow = list.root.children[list.root.children.length - 1];
+      const todoGrid = todoRow.children[0];
+      const todoStatusLine = todoGrid.children[2].children[0];
+      assert.equal(todoStatusLine.children[0].textContent, "offen");
+      assert.equal(todoStatusLine.children[1].children[0].src.includes("todo.png"), true);
+
+      list.setItems(decisionRows);
+      const decisionRow = list.root.children[list.root.children.length - 1];
+      const decisionGrid = decisionRow.children[0];
+      const decisionStatusLine = decisionGrid.children[2].children[0];
+      assert.equal(decisionStatusLine.children[0].textContent, "blockiert");
+      assert.equal(
+        decisionStatusLine.children[1].children[0].src.includes("assets/icons/redFlag.png"),
+        true
+      );
+
+      list.setItems(importantRows);
+      const importantRow = list.root.children[list.root.children.length - 1];
+      const importantGrid = importantRow.children[0];
+      const importantTitle = importantGrid.children[1].children[0];
+      assert.equal(importantRow.dataset.isImportant, "true");
+      assert.equal(importantTitle.dataset.important, "true");
+
+      const editbox = new SharedEditboxCore({});
+      editbox.applyEditorState(
+        {
+          value: {
+            title: "Wichtig",
+            longtext: "",
+            is_important: 1,
+            is_hidden: 0,
+            is_task: 0,
+            is_decision: 0,
+          },
+          access: {},
+        },
+        { hasSelection: true, isReadOnly: false }
+      );
+      assert.equal(editbox.root.dataset.important, "true");
     } finally {
       globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
     }
   });
 
