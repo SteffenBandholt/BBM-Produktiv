@@ -268,12 +268,36 @@ class TopService {
       throw new Error("Besprechung ist geschlossen – TOP darf nicht angelegt werden");
     }
 
-    const number = this.topsRepo.getNextNumber(projectId, parentTopId || null);
+    const hasParentTopId = parentTopId !== undefined && parentTopId !== null && String(parentTopId).trim() !== "";
+    let resolvedParentTopId = null;
+    let resolvedLevel = Math.floor(Number(level));
+
+    if (hasParentTopId) {
+      const parent = this.topsRepo.getTopById(parentTopId);
+      if (!parent) throw new Error("Parent-TOP nicht gefunden");
+
+      const parentLevel = Number(parent.level);
+      if (!Number.isFinite(parentLevel) || parentLevel < 1 || parentLevel > 3) {
+        throw new Error("Parent-TOP hat ein ungültiges Level");
+      }
+
+      resolvedParentTopId = parent.id;
+      resolvedLevel = parentLevel + 1;
+    } else {
+      resolvedParentTopId = null;
+      resolvedLevel = 1;
+    }
+
+    if (!Number.isFinite(resolvedLevel) || resolvedLevel < 1 || resolvedLevel > 4) {
+      throw new Error("Ungültiges TOP-Level");
+    }
+
+    const number = this.topsRepo.getNextNumber(projectId, resolvedParentTopId);
 
     const created = this.topsRepo.createTop({
       projectId,
-      parentTopId: parentTopId || null,
-      level,
+      parentTopId: resolvedParentTopId,
+      level: resolvedLevel,
       number,
       title,
     });

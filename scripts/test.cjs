@@ -13,6 +13,7 @@ const { runTopsScreenIntegrationTests } = require("./tests/topsScreen.integratio
 const { runProjectFirmsActiveFlowTests } = require("./tests/projectFirmsActiveFlow.test.cjs");
 const { runTopsDtosTests } = require("./tests/topsDtos.test.cjs");
 const { runTopsCloseFlowTests } = require("./tests/topsCloseFlow.test.cjs");
+const { runTopServiceHierarchyTests } = require("./tests/topServiceHierarchy.test.cjs");
 const { runProtokollRouterFallbackTests } = require("./tests/protokollRouterFallback.test.cjs");
 const { runProtokollProjectEntryRoutingTests } = require("./tests/protokollProjectEntryRouting.test.cjs");
 const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungModule.test.cjs");
@@ -87,6 +88,7 @@ async function main() {
   await runTopsDtosTests(run);
   await runTopsCommandsTests(run);
   await runTopsCloseFlowTests(run);
+  await runTopServiceHierarchyTests(run);
   await runTopsActionPolicyTests(run);
   await runTopsScreenIntegrationTests(run);
   await runProjectFirmsActiveFlowTests(run);
