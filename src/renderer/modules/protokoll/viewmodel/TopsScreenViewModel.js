@@ -59,6 +59,10 @@ function toIdSet(value) {
   return new Set();
 }
 
+function isCompletedStatus(value) {
+  return String(value ?? "").trim().toLowerCase() === "erledigt";
+}
+
 export function buildTopHierarchyIndex(tops = []) {
   const rows = Array.isArray(tops) ? tops : [];
   const index = new Map();
@@ -243,6 +247,9 @@ export function buildListItemsFromState(state, options = {}) {
       top?.created_at ?? top?.createdAt ?? top?.top_created_at ?? top?.topCreatedAt ?? "";
     const createdAt = !isTitle ? formatDateToDdMmYyyy(createdAtRaw) : "";
     const status = (top?.status || "").toString().trim();
+    const isCompleted = !isTitle && isCompletedStatus(status);
+    const isCarriedOver = Number(top?.is_carried_over ?? top?.isCarriedOver) === 1;
+    if (isCompleted && isCarriedOver) continue;
     const ampelColor =
       computeAmpelColorForTop({
         top: {
@@ -252,7 +259,7 @@ export function buildListItemsFromState(state, options = {}) {
         childrenColors: [],
         now: new Date(),
       }) || null;
-    const isImportant = Number(top?.is_important ?? top?.isImportant) === 1;
+    const isImportant = !isTitle && Number(top?.is_important ?? top?.isImportant) === 1;
     const isTask = Number(top?.is_task ?? top?.isTask) === 1;
     const isDecision = Number(top?.is_decision ?? top?.isDecision) === 1;
     const responsible = (top?.responsible_label || top?.responsibleLabel || "").toString().trim();
@@ -304,7 +311,8 @@ export function buildListItemsFromState(state, options = {}) {
       isMoveMode: !!state?.isMoveMode,
       isMoveTarget,
       moveState,
-      isImportant: !isTitle && isImportant,
+      isImportant,
+      isCompleted,
       isTask: !isTitle && isTask,
       isDecision: !isTitle && isDecision,
       metaSymbolType,

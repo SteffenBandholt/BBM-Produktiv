@@ -384,12 +384,13 @@ async function runTopsScreenIntegrationTests(run) {
       ],
     });
     const importantRows = buildListItemsFromState({
+      showLongtextInList: true,
       tops: [
         {
           id: 309,
           level: 2,
           title: "Wichtig",
-          longtext: "",
+          longtext: "Lang",
           status: "offen",
           is_important: 1,
         },
@@ -399,6 +400,51 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(todoRows[0].metaSymbolType, "task");
     assert.equal(decisionRows[0].metaSymbolType, "decision");
     assert.equal(importantRows[0].isImportant, true);
+    assert.equal(importantRows[0].isCompleted, false);
+
+    const completedRows = buildListItemsFromState({
+      showLongtextInList: true,
+      tops: [
+        {
+          id: 310,
+          level: 2,
+          title: "Erledigt",
+          longtext: "Lang",
+          status: "erledigt",
+          is_important: 1,
+          is_carried_over: 0,
+        },
+      ],
+    });
+    assert.equal(completedRows[0].isCompleted, true);
+    assert.equal(completedRows[0].isImportant, true);
+
+    const carriedCompletedState = {
+      tops: [
+        {
+          id: 311,
+          level: 2,
+          title: "Altes erledigt",
+          longtext: "Lang",
+          status: "erledigt",
+          is_carried_over: 1,
+        },
+        {
+          id: 312,
+          level: 2,
+          title: "Sichtbar",
+          longtext: "Lang",
+          status: "-",
+          is_carried_over: 0,
+        },
+      ],
+    };
+    const carriedCompletedRows = buildListItemsFromState(carriedCompletedState);
+    assert.deepEqual(
+      carriedCompletedRows.map((row) => row.id),
+      [312]
+    );
+    assert.equal(carriedCompletedState.tops.length, 2);
 
     const prevDocument = globalThis.document;
     globalThis.document = createFakeDocument();
@@ -455,25 +501,59 @@ async function runTopsScreenIntegrationTests(run) {
       const importantRow = list.root.children[list.root.children.length - 1];
       const importantGrid = importantRow.children[0];
       const importantTitle = importantGrid.children[1].children[0];
+      const importantPreview = importantGrid.children[1].children[1];
       assert.equal(importantRow.dataset.isImportant, "true");
       assert.equal(importantTitle.dataset.important, "true");
+      assert.equal(importantTitle.dataset.completed, "false");
+      assert.equal(importantPreview.dataset.important, "true");
+      assert.equal(importantPreview.dataset.completed, "false");
+
+      list.setItems(completedRows);
+      const completedRow = list.root.children[list.root.children.length - 1];
+      const completedGrid = completedRow.children[0];
+      const completedTitle = completedGrid.children[1].children[0];
+      const completedPreview = completedGrid.children[1].children[1];
+      assert.equal(completedRow.dataset.isCompleted, "true");
+      assert.equal(completedRow.dataset.isImportant, "true");
+      assert.equal(completedTitle.dataset.completed, "true");
+      assert.equal(completedPreview.dataset.completed, "true");
 
       const editbox = new SharedEditboxCore({});
       editbox.applyEditorState(
         {
           value: {
             title: "Wichtig",
-            longtext: "",
+            longtext: "Lang",
             is_important: 1,
             is_hidden: 0,
             is_task: 0,
             is_decision: 0,
+            status: "-",
           },
           access: {},
         },
         { hasSelection: true, isReadOnly: false }
       );
       assert.equal(editbox.root.dataset.important, "true");
+      assert.equal(editbox.root.dataset.completed, "false");
+
+      editbox.applyEditorState(
+        {
+          value: {
+            title: "Erledigt",
+            longtext: "Lang",
+            is_important: 1,
+            is_hidden: 0,
+            is_task: 0,
+            is_decision: 0,
+            status: "erledigt",
+          },
+          access: {},
+        },
+        { hasSelection: true, isReadOnly: false }
+      );
+      assert.equal(editbox.root.dataset.important, "true");
+      assert.equal(editbox.root.dataset.completed, "true");
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;

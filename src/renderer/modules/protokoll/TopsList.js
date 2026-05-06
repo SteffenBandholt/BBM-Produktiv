@@ -80,6 +80,7 @@ export class TopsList {
     rowEl.dataset.visualState = String(item.visualState || "carried");
     rowEl.dataset.titleTone = String(item.titleTone || "black");
     rowEl.dataset.isImportant = item.isImportant ? "true" : "false";
+    rowEl.dataset.isCompleted = item.isCompleted ? "true" : "false";
     rowEl.dataset.isLevel1 = item.isTitle ? "true" : "false";
     rowEl.dataset.level1Collapsed = item.isTitle && item.isLevel1Collapsed ? "true" : "false";
     rowEl.dataset.level1TopId = String(item.level1TopId || "");
@@ -146,6 +147,7 @@ export class TopsList {
     title.className = "bbm-tops-list-row-title";
     title.dataset.tone = String(item.titleTone || "black");
     title.dataset.important = item.isImportant ? "true" : "false";
+    title.dataset.completed = item.isCompleted ? "true" : "false";
     title.textContent = normalizeTopShortText(item.title);
 
     const preview = document.createElement("div");
@@ -153,6 +155,8 @@ export class TopsList {
     const previewText = normalizeTopLongText(item.preview);
     preview.textContent = previewText;
     preview.dataset.hasPreview = previewText ? "true" : "false";
+    preview.dataset.important = item.isImportant ? "true" : "false";
+    preview.dataset.completed = item.isCompleted ? "true" : "false";
 
     text.append(title);
     if (item.showLongtextInList !== false && previewText) {

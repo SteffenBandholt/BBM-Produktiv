@@ -32,6 +32,10 @@ function buildEditboxFlagsFromEditorValue(editorValue = {}) {
   };
 }
 
+function isCompletedStatus(value) {
+  return String(value ?? "").trim().toLowerCase() === "erledigt";
+}
+
 export class SharedEditboxCore {
   constructor({ onDraftChange, onTextBlur, onStartDictation } = {}) {
     this.onDraftChange = typeof onDraftChange === "function" ? onDraftChange : null;
@@ -46,6 +50,7 @@ export class SharedEditboxCore {
     this.shortLabel = this.editbox.shortLabel;
     this.longLabel = this.editbox.longLabel;
     this.root.classList.add("bbm-tops-workbench-editbox");
+    this._currentEditorValue = {};
     this.editbox.setVisibleFlags(["important", "task", "decision"]);
     this.editbox.setCounterFormatter((evaluation) => String(evaluation?.remaining ?? ""));
 
@@ -136,9 +141,17 @@ export class SharedEditboxCore {
     if (this.onDraftChange) this.onDraftChange({ draft: this.getDraft(), source });
   }
 
-  _syncImportantState() {
+  _syncImportantState(editorValue = null) {
+    const currentEditorValue =
+      editorValue && typeof editorValue === "object"
+        ? editorValue
+        : this._currentEditorValue && typeof this._currentEditorValue === "object"
+          ? this._currentEditorValue
+          : {};
     const important = Boolean(this.editbox.getValue()?.flags?.important);
+    const completed = isCompletedStatus(currentEditorValue?.status);
     this.root.dataset.important = important ? "true" : "false";
+    this.root.dataset.completed = completed ? "true" : "false";
   }
 
   _emitTextBlur(field) {
@@ -190,12 +203,14 @@ export class SharedEditboxCore {
     if (Object.keys(nextEditboxValue).length) {
       this.editbox.setValue(nextEditboxValue);
     }
-    this._syncImportantState();
+    this._currentEditorValue = { ...(editorValue || {}) };
+    this._syncImportantState(editorValue);
   }
 
   _applyUnavailableState() {
+    this._currentEditorValue = {};
     this.editbox.setValue(createEmptyWorkbenchEditboxValue());
-    this._syncImportantState();
+    this._syncImportantState({});
     this.editbox.setState("disabled");
     this.editbox.setFieldAccess({
       shortTextReadOnly: false,
@@ -233,7 +248,7 @@ export class SharedEditboxCore {
     }
 
     this.editbox.setState("normal");
-    this._syncImportantState();
+    this._syncImportantState(editorValue);
     this.editbox.setFieldAccess({
       shortTextReadOnly: !!editorAccess?.shortTextReadOnly,
       longTextReadOnly: !!editorAccess?.longTextReadOnly,

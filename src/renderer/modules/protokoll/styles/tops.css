@@ -414,9 +414,20 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   color: #111;
 }
 
-.bbm-tops-list-row[data-is-important="true"] .bbm-tops-list-row-title,
-.bbm-tops-list-row[data-is-important="true"] .bbm-tops-list-row-number {
+.bbm-tops-list-row[data-is-important="true"]:not([data-is-completed="true"]) .bbm-tops-list-row-title,
+.bbm-tops-list-row[data-is-important="true"]:not([data-is-completed="true"]) .bbm-tops-list-row-number,
+.bbm-tops-list-row[data-is-important="true"]:not([data-is-completed="true"]) .bbm-tops-list-row-preview {
   color: #b71c1c;
+}
+
+.bbm-tops-list-row[data-is-completed="true"] .bbm-tops-list-row-title,
+.bbm-tops-list-row[data-is-completed="true"] .bbm-tops-list-row-number,
+.bbm-tops-list-row[data-is-completed="true"] .bbm-tops-list-row-preview {
+  color: #6a737d;
+}
+
+.bbm-tops-list-row[data-is-completed="true"] .bbm-tops-list-row-preview {
+  opacity: 1;
 }
 
 .bbm-tops-list-row-star {
@@ -438,6 +449,10 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   overflow-wrap: anywhere;
   word-break: break-word;
   white-space: pre-wrap;
+}
+
+.bbm-tops-list-row[data-is-important="true"]:not([data-is-completed="true"]) .bbm-tops-list-row-preview {
+  opacity: 1;
 }
 
 .bbm-tops-list-row-text {
@@ -627,6 +642,16 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   word-break: break-word;
 }
 
+.bbm-tops-workbench-editbox[data-important="true"]:not([data-completed="true"]) .editbox-input,
+.bbm-tops-workbench-editbox[data-important="true"]:not([data-completed="true"]) .editbox-textarea {
+  color: #b71c1c;
+}
+
+.bbm-tops-workbench-editbox[data-completed="true"] .editbox-input,
+.bbm-tops-workbench-editbox[data-completed="true"] .editbox-textarea {
+  color: #6a737d;
+}
+
 .bbm-tops-workbench-editbox .editbox-textarea {
   min-height: 60px;
   resize: vertical;
@@ -694,6 +719,17 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 .bbm-tops-workbench-editbox[data-important="true"] .editbox-flag input[data-flag="important"],
 .bbm-tops-workbench-editbox .editbox-flag input[data-flag="important"]:checked {
   accent-color: #b71c1c;
+}
+
+.bbm-tops-workbench-editbox[data-completed="true"] .editbox-flag input[data-flag="important"] + span,
+.bbm-tops-workbench-editbox[data-completed="true"] .editbox-flag input[data-flag="important"]:checked + span {
+  color: #6a737d;
+  font-weight: 700;
+}
+
+.bbm-tops-workbench-editbox[data-completed="true"] .editbox-flag input[data-flag="important"],
+.bbm-tops-workbench-editbox[data-completed="true"] .editbox-flag input[data-flag="important"]:checked {
+  accent-color: #6a737d;
 }
 
 .bbm-tops-workbench-editbox .editbox-flag input {
