@@ -85,7 +85,19 @@ async function runTopsScreenIntegrationTests(run) {
         setAttribute(name, value) {
           this[String(name)] = String(value);
         },
-        addEventListener() {},
+        addEventListener(type, handler) {
+          if (!this._listeners) this._listeners = {};
+          if (!this._listeners[type]) this._listeners[type] = [];
+          this._listeners[type].push(handler);
+        },
+        dispatchEvent(event) {
+          const evt = event || {};
+          const type = String(evt.type || "");
+          for (const handler of this._listeners?.[type] || []) {
+            handler.call(this, evt);
+          }
+          return true;
+        },
         contains(target) {
           if (target === this) return true;
           for (const child of this.children || []) {
@@ -1289,6 +1301,166 @@ async function runTopsScreenIntegrationTests(run) {
 
       assert.equal(saveCalls.length, 1);
       assert.equal(saveCalls[0].patch.title, "Beta X");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Neuer Level-1-Titel bleibt editierbar und speichert", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { bbmDb: {}, document: doc };
+    try {
+      let nextId = 601;
+      const db = {
+        tops: [],
+      };
+      const saveCalls = [];
+      const repository = {
+        async loadByMeeting() {
+          return { ok: true, meeting: { id: 26, is_closed: 0 }, list: db.tops.map((t) => ({ ...t })) };
+        },
+        async createTop({ projectId, meetingId, level, parentTopId, title }) {
+          const top = {
+            id: nextId++,
+            project_id: projectId,
+            meeting_id: meetingId,
+            level,
+            number: db.tops.length + 1,
+            title: title || "(ohne Bezeichnung)",
+            longtext: "",
+            status: "-",
+            is_carried_over: 0,
+            parent_top_id: parentTopId ?? null,
+          };
+          db.tops.push(top);
+          return { ok: true, top: { ...top } };
+        },
+        async saveTop({ topId, patch }) {
+          saveCalls.push({ topId, patch: { ...(patch || {}) } });
+          const top = db.tops.find((t) => String(t.id) === String(topId));
+          if (!top) return { ok: false, error: "not found" };
+          Object.assign(top, patch || {});
+          return { ok: true };
+        },
+      };
+
+      const screen = new TopsScreen({
+        topsRepository: repository,
+        router: { context: { projectLabel: "Projekt X" } },
+        projectId: 99,
+        meetingId: 26,
+      });
+
+      screen.render();
+      await screen.commands.loadTops({ meetingId: 26, projectId: 99 });
+      await screen._handleWorkbenchCreateLevel1();
+
+      const createdId = screen.store.getState().selectedTopId;
+      assert.ok(createdId);
+      assert.equal(screen.workbench.sharedEditboxCore.editbox.shortInput.readOnly, false);
+      assert.equal(screen.store.getState().tops.length, 1);
+      assert.equal(screen.store.getState().tops[0].is_carried_over, 0);
+
+      const shortInput = screen.workbench.sharedEditboxCore.editbox.shortInput;
+      shortInput.value = "Kapitel 1";
+      shortInput.dispatchEvent({ type: "input" });
+      assert.equal(screen.store.getState().editor.title, "Kapitel 1");
+      assert.equal(screen.store.getState().tops[0].previewTitle, "Kapitel 1");
+      assert.equal(
+        screen.topsList.root.children[0].children[0].children[1].children[0].textContent,
+        "Kapitel 1"
+      );
+
+      shortInput.value = "Kapitel 1 final";
+      shortInput.dispatchEvent({ type: "input" });
+      assert.equal(screen.store.getState().editor.title, "Kapitel 1 final");
+      assert.equal(screen.store.getState().tops[0].previewTitle, "Kapitel 1 final");
+      assert.equal(
+        screen.topsList.root.children[0].children[0].children[1].children[0].textContent,
+        "Kapitel 1 final"
+      );
+
+      shortInput.dispatchEvent({
+        type: "blur",
+      });
+      await sleep(50);
+
+      assert.equal(saveCalls.length, 1);
+      assert.equal(saveCalls[0].patch.title, "Kapitel 1 final");
+      assert.equal(screen.store.getState().tops[0].title, "Kapitel 1 final");
+      assert.equal(screen.store.getState().tops[0].previewTitle, undefined);
+      assert.equal(screen.store.getState().editor.title, "Kapitel 1 final");
+
+      await screen._reloadTops({ keepSelection: true, selectTopId: createdId });
+      assert.equal(screen.store.getState().selectedTopId, createdId);
+      assert.equal(screen.store.getState().tops[0].title, "Kapitel 1 final");
+      assert.equal(
+        screen.topsList.root.children[0].children[0].children[1].children[0].textContent,
+        "Kapitel 1 final"
+      );
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Uebernommener Level-1-Titel bleibt read-only", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { bbmDb: {}, document: doc };
+    try {
+      const db = {
+        tops: [
+          {
+            id: 701,
+            level: 1,
+            title: "Alt-Titel",
+            longtext: "",
+            status: "-",
+            is_carried_over: 1,
+            parent_top_id: null,
+          },
+        ],
+      };
+      const saveCalls = [];
+      const repository = {
+        async loadByMeeting() {
+          return { ok: true, meeting: { id: 27, is_closed: 0 }, list: db.tops.map((t) => ({ ...t })) };
+        },
+        async saveTop({ topId, patch }) {
+          saveCalls.push({ topId, patch: { ...(patch || {}) } });
+          const top = db.tops.find((t) => String(t.id) === String(topId));
+          if (!top) return { ok: false, error: "not found" };
+          Object.assign(top, patch || {});
+          return { ok: true };
+        },
+      };
+
+      const screen = new TopsScreen({
+        topsRepository: repository,
+        router: { context: { projectLabel: "Projekt X" } },
+        projectId: 99,
+        meetingId: 27,
+      });
+
+      screen.render();
+      await screen.commands.loadTops({ meetingId: 27, projectId: 99 });
+      screen.commands.selectTop(701);
+      const selected = screen.store.getState().tops.find((t) => String(t.id) === "701");
+      screen.commands.updateDraft(editorFromTop(selected));
+      screen._syncScreenState();
+
+      assert.equal(screen.workbench.sharedEditboxCore.editbox.shortInput.readOnly, true);
+      assert.equal(screen.workbench.focusShortText(), false);
+      const patch = buildPatchFromDraft(selected, screen.store.getState().editor);
+      assert.equal(patch.title, undefined);
+      assert.equal(saveCalls.length, 0);
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;

@@ -83,6 +83,22 @@ export class SharedEditboxCore {
     this.editbox.longInput.addEventListener("blur", () => this._emitTextBlur("longText"));
   }
 
+  _enforceShortTextLimit() {
+    if (typeof this.editbox?._enforceShortTextLimit === "function") {
+      this.editbox._enforceShortTextLimit();
+      return;
+    }
+    const limit = Number(this.editbox?.shortInput?.maxLength || 70);
+    const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 70;
+    this.editbox.shortInput.value = String(this.editbox.shortInput.value || "").slice(0, safeLimit);
+  }
+
+  _updateCounters() {
+    if (typeof this.editbox?._updateCounters === "function") {
+      this.editbox._updateCounters();
+    }
+  }
+
   _buildDictationButtons() {
     const createButton = (target, title) => {
       const btn = document.createElement("button");
@@ -127,8 +143,15 @@ export class SharedEditboxCore {
 
   _emitTextBlur(field) {
     if (!this.onTextBlur) return;
+    const value =
+      field === "shortText"
+        ? this.editbox.shortInput.value
+        : field === "longText"
+          ? this.editbox.longInput.value
+          : "";
     this.onTextBlur({
       field,
+      value,
       draft: this.getDraft(),
     });
   }

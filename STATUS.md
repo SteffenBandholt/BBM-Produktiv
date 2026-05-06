@@ -17,6 +17,17 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Der Kurztext von neu angelegten Level-1-Titeln wird jetzt nicht mehr beim Blur verworfen:
+  - die SharedEditbox-Kette delegiert die Kurztext-Limitierung und Counter-Aktualisierung wieder korrekt an die Editbox
+  - Kurztext-Input landet sofort im Draft und in der Live-Liste
+  - Blur speichert den aktuellen Titel und laesst ihn im Editor stehen
+  - uebernommene Level-1-Titel bleiben read-only und ohne operative Meta
+- Geprueft mit `npm test`.
+- Der Level-1-Titel wird jetzt wieder sauber gespeichert:
+  - Kurztext-Blur ueberschreibt den echten Titel nicht mehr mit einem alten Draft
+  - nach erfolgreichem Save wird der geaenderte Titel direkt im Store und in der Liste gespiegelt
+  - uebernommene Level-1-Titel bleiben read-only und ohne operative Meta
+- Geprueft mit `npm test`.
 - Die Protokoll-Editbox speichert jetzt automatisch:
   - Kurztext, Langtext, Haken und Meta-Felder laufen ueber den bestehenden Save-Pfad
   - der sichtbare `Speichern`-Button ist aus der Workbench ausgeblendet

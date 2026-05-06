@@ -743,6 +743,11 @@ export default class TopsScreen {
       {};
 
     if (latestDraft && typeof latestDraft === "object") {
+      if (String(payload?.field || "") === "shortText") {
+        latestDraft.title = this._normTitle(payload?.value ?? latestDraft.title ?? "");
+      } else if (String(payload?.field || "") === "longText") {
+        latestDraft.longtext = this._normLong(payload?.value ?? latestDraft.longtext ?? "");
+      }
       this.commands.updateDraft(latestDraft);
       this._markAutoSaveDraft();
     }
@@ -772,6 +777,33 @@ export default class TopsScreen {
         ...top,
         previewTitle: nextTitle,
       };
+    });
+
+    if (!changed) return false;
+    this.store.setState({ tops: nextTops });
+    return true;
+  }
+
+  _mergeSavedPatchIntoSelectedTop(patch = {}, selectedTopId = null) {
+    const topId = String(selectedTopId ?? "").trim();
+    if (!topId) return false;
+    const nextPatch = patch && typeof patch === "object" ? patch : {};
+    if (!Object.keys(nextPatch).length) return false;
+
+    const state = this.store.getState();
+    const tops = Array.isArray(state?.tops) ? state.tops : [];
+    let changed = false;
+    const nextTops = tops.map((top) => {
+      if (String(top?.id ?? "") !== topId) return top;
+      changed = true;
+      const nextTop = {
+        ...top,
+        ...nextPatch,
+      };
+      if (Object.prototype.hasOwnProperty.call(nextPatch, "title")) {
+        delete nextTop.previewTitle;
+      }
+      return nextTop;
     });
 
     if (!changed) return false;
@@ -853,6 +885,8 @@ export default class TopsScreen {
       this.store.setState({ error: null });
       const res = await this.commands.saveDraft(patch);
       if (!res?.ok) return false;
+      const currentSelectedTopId = getSelectedTop(this.store.getState())?.id ?? null;
+      this._mergeSavedPatchIntoSelectedTop(patch, currentSelectedTopId);
       const currentSelectedTop = getSelectedTop(this.store.getState());
       if (this._autoSaveRevision === saveRevision) {
         this.commands.updateDraft(editorFromTop(currentSelectedTop));
@@ -944,6 +978,7 @@ export default class TopsScreen {
           level: 1,
           parentTopId: null,
           title: "(ohne Bezeichnung)",
+          isCarriedOver: false,
         });
       } catch (err) {
         const error = err?.message ? String(err.message) : String(err || "create failed");
