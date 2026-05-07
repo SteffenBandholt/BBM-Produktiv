@@ -16,6 +16,9 @@ async function runTopsScreenIntegrationTests(run) {
   const { SharedEditboxCore } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/modules/protokoll/SharedEditboxCore.js")
   );
+  const { WorkbenchMetaColumn } = await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/modules/protokoll/WorkbenchMetaColumn.js")
+  );
   const { TopsMetaPanel } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/tops/components/TopsMetaPanel.js")
   );
@@ -1015,6 +1018,65 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(longLabelRow.children.indexOf(core.longDictateButton), 1);
       assert.equal(shortLabel.children.indexOf(core.editbox.shortCounter), 1);
       assert.equal(longLabel.children.indexOf(core.editbox.longCounter), 1);
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: ToDo- und Beschluss-Symbole folgen dem Draft in der Metazeile", () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { document: doc };
+
+    try {
+      const shared = new SharedEditboxCore({});
+      const meta = new WorkbenchMetaColumn({
+        flagsWrap: shared.flagsWrap,
+      });
+
+      const taskInput = shared.editbox.flagInputs.task;
+      const decisionInput = shared.editbox.flagInputs.decision;
+
+      const readSymbols = () => Array.isArray(meta.metaSymbolSlot.children) ? meta.metaSymbolSlot.children : [];
+
+      taskInput.checked = true;
+      decisionInput.checked = false;
+      shared.flagsWrap.dispatchEvent({ type: "change" });
+
+      let symbols = readSymbols();
+      assert.equal(symbols.length, 1);
+      assert.equal(symbols[0].dataset.symbol, "task");
+      assert.equal(symbols[0].title, "ToDo");
+
+      taskInput.checked = false;
+      decisionInput.checked = true;
+      shared.flagsWrap.dispatchEvent({ type: "change" });
+
+      symbols = readSymbols();
+      assert.equal(symbols.length, 1);
+      assert.equal(symbols[0].dataset.symbol, "decision");
+      assert.equal(symbols[0].title, "Beschluss");
+
+      taskInput.checked = true;
+      decisionInput.checked = true;
+      shared.flagsWrap.dispatchEvent({ type: "change" });
+
+      symbols = readSymbols();
+      assert.equal(symbols.length, 2);
+      assert.deepEqual(
+        symbols.map((node) => node.dataset.symbol),
+        ["task", "decision"]
+      );
+
+      taskInput.checked = false;
+      decisionInput.checked = false;
+      shared.flagsWrap.dispatchEvent({ type: "change" });
+
+      assert.equal(readSymbols().length, 0);
+      assert.equal(meta.metaSymbolSlot.style.display, "none");
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;

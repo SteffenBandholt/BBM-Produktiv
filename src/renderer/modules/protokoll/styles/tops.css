@@ -928,7 +928,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 .bbm-tops-meta-due-with-ampel.status-ampel-field {
   display: flex;
   align-items: flex-end;
-  gap: 8px;
+  gap: 6px;
   width: fit-content;
   flex: 0 0 auto;
 }
@@ -974,6 +974,31 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   min-width: 20px;
 }
 
+.bbm-tops-meta-due-with-ampel .status-ampel-traffic .bbm-tops-meta-symbol-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.bbm-tops-meta-due-with-ampel .status-ampel-traffic .bbm-tops-meta-symbol-slot {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  min-width: 0;
+  padding-bottom: 1px;
+}
+
+.bbm-tops-meta-due-with-ampel .status-ampel-traffic .bbm-tops-meta-symbol {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 14px;
+  object-fit: contain;
+  display: block;
+}
+
 .bbm-tops-meta-due-with-ampel .status-ampel-dot {
   width: 15px;
   height: 15px;
@@ -1003,6 +1028,10 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 .bbm-tops-meta-due-with-ampel .status-ampel-traffic .status-ampel-label,
 .bbm-tops-meta-due-with-ampel .status-ampel-traffic .status-ampel-value {
   display: none;
+}
+
+.bbm-tops-meta-due-with-ampel .status-ampel-traffic .bbm-tops-meta-symbol[data-symbol="task"] {
+  margin-left: 5mm;
 }
 
 .bbm-tops-meta-status-cell .status-ampel-group {
