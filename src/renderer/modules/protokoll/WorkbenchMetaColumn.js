@@ -24,11 +24,26 @@ export class WorkbenchMetaColumn {
     if (this.flagsWrap) this.flagsMetaRow.appendChild(this.flagsWrap);
     this.metaPanel.root.appendChild(this.flagsMetaRow);
 
+    this.metaFields = document.createElement("div");
+    this.metaFields.className = "bbm-tops-meta-fields";
+    this.metaPanel.root.appendChild(this.metaFields);
+
     this.statusAmpelBridge = new TopsStatusAmpelBridge({
       metaPanel: this.metaPanel,
       onChange: () => this._emitChange("meta"),
     });
-    this.statusAmpelBridge.mount();
+
+    this.statusRow = document.createElement("div");
+    this.statusRow.className = "bbm-tops-meta-row bbm-tops-meta-row-status";
+    this.metaFields.appendChild(this.statusRow);
+
+    this.statusCell = document.createElement("div");
+    this.statusCell.className = "bbm-tops-meta-cell bbm-tops-meta-status-cell";
+    this.statusCell.appendChild(this.statusAmpelBridge.field.statusWrap);
+    this.statusRow.appendChild(this.statusCell);
+
+    this.responsibleCell = document.createElement("div");
+    this.responsibleCell.className = "bbm-tops-meta-cell bbm-tops-meta-responsible-cell";
 
     this.responsibleBridge = new TopsResponsibleBridge({
       metaPanel: this.metaPanel,
@@ -36,7 +51,17 @@ export class WorkbenchMetaColumn {
       loadEmployeesByCompany: this.loadEmployeesByCompany,
       onChange: () => this._emitChange("meta"),
     });
-    this.responsibleBridge.mount();
+    this.responsibleCell.appendChild(this.responsibleBridge.field.getElement());
+    this.statusRow.appendChild(this.responsibleCell);
+
+    this.dueRow = document.createElement("div");
+    this.dueRow.className = "bbm-tops-meta-row bbm-tops-meta-row-due";
+    this.metaFields.appendChild(this.dueRow);
+
+    this.dueAmpelCell = document.createElement("div");
+    this.dueAmpelCell.className = "bbm-tops-meta-cell bbm-tops-meta-due-with-ampel";
+    this.dueAmpelCell.appendChild(this.statusAmpelBridge.root);
+    this.dueRow.appendChild(this.dueAmpelCell);
 
     this.root = this.metaPanel.root;
   }

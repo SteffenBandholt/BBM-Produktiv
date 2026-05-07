@@ -585,13 +585,18 @@ class TopService {
       dueDate = new Date().toISOString().slice(0, 10);
     }
 
+    let completedInResolved = completedIn;
+    if (patch.status !== undefined) {
+      completedInResolved = statusNorm === "erledigt" ? meetingId : null;
+    }
+
     return this.meetingTopsRepo.updateMeetingTop({
       meetingId,
       topId,
       status,
       dueDate,
       longtext,
-      completed_in_meeting_id: completedIn,
+      completed_in_meeting_id: completedInResolved,
 
       is_important: imp,
       is_task: isTask,

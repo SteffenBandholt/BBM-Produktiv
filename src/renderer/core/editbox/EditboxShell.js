@@ -110,7 +110,7 @@ export class EditboxShell {
     this.longWrap = mkEl(doc, "div", "editbox-field");
     this.longLabel = mkEl(doc, "label", "editbox-label", "Langtext");
     this.longInput = mkEl(doc, "textarea", "editbox-textarea");
-    this.longInput.rows = 6;
+    this.longInput.rows = 1;
     this.longCounter = mkEl(doc, "div", "editbox-counter", "0");
     this.longWrap.append(this.longLabel, this.longInput, this.longCounter);
 

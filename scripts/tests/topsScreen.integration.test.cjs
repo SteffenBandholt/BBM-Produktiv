@@ -403,6 +403,7 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(importantRows[0].isCompleted, false);
 
     const completedRows = buildListItemsFromState({
+      meetingId: 42,
       showLongtextInList: true,
       tops: [
         {
@@ -413,6 +414,7 @@ async function runTopsScreenIntegrationTests(run) {
           status: "erledigt",
           is_important: 1,
           is_carried_over: 0,
+          completed_in_meeting_id: 42,
         },
       ],
     });
@@ -420,6 +422,7 @@ async function runTopsScreenIntegrationTests(run) {
     assert.equal(completedRows[0].isImportant, true);
 
     const carriedCompletedState = {
+      meetingId: 43,
       tops: [
         {
           id: 311,
@@ -428,11 +431,30 @@ async function runTopsScreenIntegrationTests(run) {
           longtext: "Lang",
           status: "erledigt",
           is_carried_over: 1,
+          completed_in_meeting_id: 41,
         },
         {
           id: 312,
           level: 2,
-          title: "Sichtbar",
+          title: "Direkt vorher",
+          longtext: "Lang",
+          status: "erledigt",
+          is_carried_over: 1,
+          completed_in_meeting_id: 42,
+        },
+        {
+          id: 313,
+          level: 2,
+          title: "Frisch erledigt",
+          longtext: "Lang",
+          status: "erledigt",
+          is_carried_over: 1,
+          completed_in_meeting_id: 43,
+        },
+        {
+          id: 314,
+          level: 2,
+          title: "Offen",
           longtext: "Lang",
           status: "-",
           is_carried_over: 0,
@@ -442,9 +464,9 @@ async function runTopsScreenIntegrationTests(run) {
     const carriedCompletedRows = buildListItemsFromState(carriedCompletedState);
     assert.deepEqual(
       carriedCompletedRows.map((row) => row.id),
-      [312]
+      [311, 312, 313, 314]
     );
-    assert.equal(carriedCompletedState.tops.length, 2);
+    assert.equal(carriedCompletedState.tops.length, 4);
 
     const prevDocument = globalThis.document;
     globalThis.document = createFakeDocument();
@@ -1248,6 +1270,41 @@ async function runTopsScreenIntegrationTests(run) {
 
     assert.equal(store.getState().tops.length, 0);
     assert.equal(store.getState().selectedTopId, null);
+  });
+
+  await run("Tops v2 Integration: erledigt setzt completed_in_meeting_id und loescht es beim Rueckwechsel", () => {
+    const selectedTop = {
+      id: 801,
+      meeting_id: 55,
+      title: "Status",
+      longtext: "Lang",
+      due_date: null,
+      status: "offen",
+      completed_in_meeting_id: null,
+    };
+
+    const donePatch = buildPatchFromDraft(selectedTop, {
+      ...editorFromTop(selectedTop),
+      status: "erledigt",
+    });
+    assert.deepEqual(donePatch, {
+      status: "erledigt",
+      completed_in_meeting_id: 55,
+    });
+
+    const completedTop = {
+      ...selectedTop,
+      status: "erledigt",
+      completed_in_meeting_id: 55,
+    };
+    const reopenedPatch = buildPatchFromDraft(completedTop, {
+      ...editorFromTop(completedTop),
+      status: "in arbeit",
+    });
+    assert.deepEqual(reopenedPatch, {
+      status: "in arbeit",
+      completed_in_meeting_id: null,
+    });
   });
 
   await run("Tops v2 Integration: Auto-Save speichert Text per Debounce und Blur", async () => {

@@ -29,28 +29,17 @@ export class TopsStatusAmpelBridge {
       },
     });
 
-    this.root = this._buildRow();
+    this.root = this.field.getElement();
+    this.root.classList.add("bbm-tops-meta-due-with-ampel");
     this._bindEvents();
     this._syncStatusOptionsFromMetaPanel();
   }
 
-  _buildRow() {
-    const row = document.createElement("div");
-    row.className = "bbm-tops-meta-field";
-    row.classList.add("bbm-tops-meta-field-status-ampel-bridge");
-
-    const slot = document.createElement("div");
-    slot.className = "bbm-tops-status-ampel-slot";
-    slot.appendChild(this.field.getElement());
-
-    row.appendChild(slot);
-    return row;
-  }
-
   _bindEvents() {
-    const el = this.field.getElement();
-    el.addEventListener("change", () => this._syncToMetaPanel());
-    el.addEventListener("input", () => this._syncToMetaPanel());
+    this.field.statusSelect.addEventListener("change", () => this._syncToMetaPanel());
+    this.field.statusSelect.addEventListener("input", () => this._syncToMetaPanel());
+    this.field.dueInput.addEventListener("change", () => this._syncToMetaPanel());
+    this.field.dueInput.addEventListener("input", () => this._syncToMetaPanel());
   }
 
   // Wiederverwendbares Kernfeld:
@@ -72,7 +61,11 @@ export class TopsStatusAmpelBridge {
     this.field.setStatusOptions(options);
   }
 
-  mount() {
+  mount(container = null) {
+    if (container) {
+      container.appendChild(this.root);
+      return;
+    }
     if (!this.metaPanel?.root) return;
     this.metaPanel.root.appendChild(this.root);
   }

@@ -248,8 +248,6 @@ export function buildListItemsFromState(state, options = {}) {
     const createdAt = !isTitle ? formatDateToDdMmYyyy(createdAtRaw) : "";
     const status = (top?.status || "").toString().trim();
     const isCompleted = !isTitle && isCompletedStatus(status);
-    const isCarriedOver = Number(top?.is_carried_over ?? top?.isCarriedOver) === 1;
-    if (isCompleted && isCarriedOver) continue;
     const ampelColor =
       computeAmpelColorForTop({
         top: {
@@ -375,6 +373,15 @@ export function buildPatchFromDraft(selectedTop, draft) {
 
   const status = String(draft.status || "-");
   if (status !== String(selectedTop.status || "-")) patch.status = status;
+
+  const currentCompletedInMeetingId =
+    selectedTop?.completed_in_meeting_id ?? selectedTop?.completedInMeetingId ?? null;
+  const nextCompletedInMeetingId = isCompletedStatus(status)
+    ? selectedTop?.meeting_id ?? selectedTop?.meetingId ?? selectedTop?.meeting?.id ?? null
+    : null;
+  if (String(nextCompletedInMeetingId ?? "") !== String(currentCompletedInMeetingId ?? "")) {
+    patch.completed_in_meeting_id = nextCompletedInMeetingId;
+  }
 
   const responsibleLabel = String(draft.responsible_label || "");
   if (responsibleLabel !== String(selectedTop.responsible_label || selectedTop.responsibleLabel || "")) {
