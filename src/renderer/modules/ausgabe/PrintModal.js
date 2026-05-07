@@ -3191,18 +3191,18 @@ export default class PrintModal {
     }
     .hdrTop .hdrTops {
       font-weight: 400;
-      font-size: 8.6pt;
+      font-size: 8pt;
       line-height: 1.1;
       font-style: normal;
     }
 
     .hdr th.metaHdr {
       font-weight: 400;
-      font-size: 9pt;
+      font-size: 8pt;
     }
     .hdr th.metaHdr div {
       font-weight: 400;
-      font-size: 8.6pt;
+      font-size: 8pt;
       line-height: 1.1;
     }
 
@@ -3238,7 +3238,7 @@ export default class PrintModal {
 
     .colNr .nr {
       font-weight: 400;
-      font-size: 9.2pt;
+      font-size: 8.5pt;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
@@ -3308,15 +3308,19 @@ export default class PrintModal {
     }
 
     .short {
-      font-weight: 400;
-      font-size: 11.4pt;
+      font-weight: 500;
+      font-size: 8.5pt;
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
     }
+    tr:not(.lvl1) .short {
+      font-size: 9pt;
+    }
     .long {
       margin-top: 1.2mm;
-      font-size: 10.6pt;
+      font-weight: 500;
+      font-size: 8.5pt;
       line-height: 1.25;
       white-space: pre-wrap;
       word-break: break-word;
@@ -3324,8 +3328,11 @@ export default class PrintModal {
       color: #111;
       opacity: 0.95;
     }
+    tr:not(.lvl1) .long {
+      font-size: 9pt;
+    }
 
-    .colMeta { font-size: 9.2pt; color: #222; }
+    .colMeta { font-size: 6.5pt; color: #222; }
     .metaLine1 {
       display: flex;
       align-items: center;
@@ -3360,10 +3367,11 @@ export default class PrintModal {
 
     .footerBlock {
       margin-top: 10mm;
-      font-size: 10.5pt;
+      font-size: 10pt;
+      font-weight: 500;
     }
     .footerTitle {
-      font-weight: 700;
+      font-weight: 500;
       margin-bottom: 2mm;
     }
     .footerLine {
@@ -3372,7 +3380,8 @@ export default class PrintModal {
     }
     .bbm-next-meeting-inline {
       margin-top: 15mm;
-      font-size: 12pt;
+      font-size: 10pt;
+      font-weight: 500;
     }
     ${this._pdfCopyrightStyle()}
   </style>
@@ -3875,18 +3884,18 @@ export default class PrintModal {
     }
     .hdrTop .hdrTops {
       font-weight: 400;
-      font-size: 8.6pt;
+      font-size: 8pt;
       line-height: 1.1;
       font-style: normal;
     }
 
     .hdr th.metaHdr {
       font-weight: 400;
-      font-size: 9pt;
+      font-size: 8pt;
     }
     .hdr th.metaHdr div {
       font-weight: 400;
-      font-size: 8.6pt;
+      font-size: 8pt;
       line-height: 1.1;
     }
 
@@ -3922,7 +3931,7 @@ export default class PrintModal {
 
     .colNr .nr {
       font-weight: 400;
-      font-size: 9.2pt;
+      font-size: 8.5pt;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
@@ -3963,15 +3972,19 @@ export default class PrintModal {
     }
 
     .short {
-      font-weight: 400;
-      font-size: 11.4pt;
+      font-weight: 500;
+      font-size: 8.5pt;
       white-space: nowrap;
       text-overflow: ellipsis;
       overflow: hidden;
     }
+    tr:not(.lvl1) .short {
+      font-size: 9pt;
+    }
     .long {
       margin-top: 1.2mm;
-      font-size: 10.6pt;
+      font-weight: 500;
+      font-size: 8.5pt;
       line-height: 1.25;
       white-space: pre-wrap;
       word-break: break-word;
@@ -3979,8 +3992,11 @@ export default class PrintModal {
       color: #111;
       opacity: 0.95;
     }
+    tr:not(.lvl1) .long {
+      font-size: 9pt;
+    }
 
-    .colMeta { font-size: 9.2pt; color: #222; }
+    .colMeta { font-size: 6.5pt; color: #222; }
     .metaLine1 {
       display: flex;
       align-items: center;

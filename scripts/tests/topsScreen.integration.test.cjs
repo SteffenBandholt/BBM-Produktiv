@@ -1,4 +1,5 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
 const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
@@ -76,14 +77,29 @@ async function runTopsScreenIntegrationTests(run) {
         rows: 0,
         maxLength: 0,
         append(...nodes) {
-          this.children.push(...nodes);
+          for (const child of nodes) {
+            if (child && typeof child === "object") child.parentElement = this;
+            this.children.push(child);
+          }
         },
         appendChild(nodeChild) {
+          if (nodeChild && typeof nodeChild === "object") nodeChild.parentElement = this;
           this.children.push(nodeChild);
           return nodeChild;
         },
         replaceChildren(...nodes) {
           this.children = [...nodes];
+          for (const child of this.children) {
+            if (child && typeof child === "object") child.parentElement = this;
+          }
+        },
+        removeChild(nodeChild) {
+          const idx = this.children.indexOf(nodeChild);
+          if (idx >= 0) {
+            this.children.splice(idx, 1);
+            if (nodeChild && typeof nodeChild === "object") nodeChild.parentElement = null;
+          }
+          return nodeChild;
         },
         setAttribute(name, value) {
           this[String(name)] = String(value);
@@ -108,6 +124,25 @@ async function runTopsScreenIntegrationTests(run) {
             if (child && typeof child.contains === "function" && child.contains(target)) return true;
           }
           return false;
+        },
+        querySelector(selector) {
+          const wanted = String(selector || "").trim().toLowerCase();
+          let found = null;
+          const walk = (nodeToWalk) => {
+            if (!nodeToWalk || found) return;
+            for (const child of nodeToWalk.children || []) {
+              if (!child || found) continue;
+              const tag = String(child.tagName || "").toLowerCase();
+              const cls = String(child.className || "").toLowerCase();
+              if (wanted === tag || (wanted.startsWith(".") && cls.split(/\s+/).includes(wanted.slice(1)))) {
+                found = child;
+                return;
+              }
+              walk(child);
+            }
+          };
+          walk(this);
+          return found;
         },
         querySelectorAll(selector) {
           const result = [];
@@ -148,10 +183,24 @@ async function runTopsScreenIntegrationTests(run) {
       },
       addEventListener() {},
       removeEventListener() {},
-    };
+      };
     doc.body = createNode("body", doc);
     doc.head = createNode("head", doc);
     return doc;
+  }
+
+  function collectText(node) {
+    if (!node) return "";
+    const parts = [];
+    const walk = (current) => {
+      if (!current) return;
+      if (typeof current.textContent === "string" && current.textContent.trim()) {
+        parts.push(current.textContent.trim());
+      }
+      for (const child of current.children || []) walk(child);
+    };
+    walk(node);
+    return parts.join(" ");
   }
 
   function sleep(ms) {
@@ -1081,6 +1130,49 @@ async function runTopsScreenIntegrationTests(run) {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
     }
+  });
+
+  await run("Tops v2 Integration: TOP-Regeln Button oeffnet den Regel-Dialog", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { document: doc };
+
+    try {
+      const screen = new TopsScreen({
+        router: { context: { ui: {} } },
+        projectId: 1,
+        meetingId: 1,
+      });
+
+      screen.render();
+      assert.equal(screen.header.btnRules.textContent, "TOP-Regeln");
+
+      await screen.header.btnRules.onclick();
+
+      assert.equal(doc.body.children.length > 0, true);
+      const overlay = doc.body.children[0];
+      const dialogText = collectText(overlay);
+
+      assert.equal(dialogText.includes("TOP-Regeln"), true);
+      assert.equal(dialogText.includes("Erledigte TOPs werden grau dargestellt"), true);
+      assert.equal(dialogText.includes("genau einmal in das nächste Protokoll übernommen"), true);
+      assert.equal(dialogText.includes("nichts gelöscht und nichts renummeriert"), true);
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("TOP-Regeln: Doku-Datei existiert und enthaelt die Kernregeln", () => {
+    const rulesPath = path.join(__dirname, "../../docs/TOP_REGELN.md");
+    assert.equal(fs.existsSync(rulesPath), true);
+    const text = fs.readFileSync(rulesPath, "utf8");
+    assert.equal(text.includes("completed_in_meeting_id"), true);
+    assert.equal(text.includes("genau noch einmal in das direkt folgende Protokoll"), true);
+    assert.equal(text.includes("kein DELETE"), true);
+    assert.equal(text.includes("keine Renummerierung"), true);
   });
 
   await run("Tops v2 Integration: Diktat schreibt in Kurz- und Langtextfeld", async () => {

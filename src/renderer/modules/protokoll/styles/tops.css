@@ -226,6 +226,12 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   color: #222;
 }
 
+.bbm-tops-btn-rules {
+  border: 1px solid #9db4b0;
+  background: linear-gradient(180deg, #fbfcf8 0%, #f0f4ed 100%);
+  color: #244342;
+}
+
 [data-bbm-tops-header-v2="true"][data-is-read-only="true"] .bbm-tops-btn-end-meeting,
 [data-bbm-tops-header-v2="true"][data-is-readonly="true"] .bbm-tops-btn-end-meeting {
   display: none;

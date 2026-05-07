@@ -316,6 +316,7 @@
   width: 100%;
   white-space: nowrap;
   align-items: flex-start;
+  font-size: 10pt;
 }
 
 .printV2Root .v2MiniLeft,
@@ -328,6 +329,12 @@
   hyphens: none;
 }
 
+.printV2Root .v2MiniRight {
+  font-size: 8pt;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
 .printV2Root .v2MiniTextBlock {
   display: flex;
   flex-direction: column;
@@ -337,10 +344,11 @@
 
 .printV2Root .v2MiniProject {
   font-weight: 700;
+  font-size: 9pt;
 }
 
 .printV2Root .v2MiniProtocolTitle {
-  font-size: 10pt;
+  font-size: 9pt;
   margin-top: 2mm;
   position: relative;
 }
@@ -356,7 +364,7 @@
   left: 85mm;
   top: 0;
   color: #b91c1c;
-  font-size: 12pt;
+  font-size: 10pt;
   font-weight: 700;
   line-height: 1.1;
   white-space: nowrap;
@@ -480,8 +488,8 @@
   align-items: center;
   justify-content: center;
   gap: 8mm;
-  font-size: 12pt;
-  font-weight: 600;
+  font-size: 10pt;
+  font-weight: 500;
   text-align: center;
 }
 
@@ -506,7 +514,8 @@
   margin-top: 10mm;
   text-align: left;
   max-width: 175mm;
-  font-size: 12pt;
+  font-size: 10pt;
+  font-weight: 500;
   line-height: 1.35;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -517,12 +526,13 @@
 .printV2Root .v2ProtocolFooter {
   margin-top: 10mm;
   text-align: left;
-  font-size: 12pt;
+  font-size: 10pt;
+  font-weight: 500;
   line-height: 1.35;
 }
 
 .printV2Root .v2ProtocolFooterTitle {
-  font-weight: 700;
+  font-weight: 500;
   margin: 0 0 1mm 0;
 }
 

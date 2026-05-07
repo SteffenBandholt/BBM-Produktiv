@@ -25,6 +25,14 @@ import { focusCreatedTopAfterReload } from "../topCreateFocus.js";
 import { normalizeTopFilterMode } from "../topFilterMode.js";
 import { attachAudioFeature } from "../../../features/audio/AudioFeature.js";
 import { DictationController } from "../../../features/audio-dictation/DictationController.js";
+import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
+import {
+  createPopupOverlay,
+  stylePopupCard,
+  registerPopupCloseHandlers,
+  cleanupPopupHandlers,
+} from "../../../ui/popupCommon.js";
+import { OVERLAY_TOP } from "../../../ui/zIndex.js";
 
 function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
   return {
@@ -87,6 +95,7 @@ export default class TopsScreen {
     this.closeFlow = null;
     this.dialogs = null;
     this._dialogViewAdapter = this._createDialogViewAdapter();
+    this._topRulesOverlay = null;
 
     this._buildProtocolModuleRuntime(options);
   }
@@ -190,6 +199,7 @@ export default class TopsScreen {
         this._syncScreenState();
       },
       onKeywordClick: async () => this._openKeywordDialog(),
+      onRulesClick: async () => this._openTopRulesDialog(),
     });
     this.dialogs = new TopsViewDialogs({ view: this._dialogViewAdapter });
   }
@@ -505,6 +515,122 @@ export default class TopsScreen {
     if (!state.meetingId) return;
     if (!(this.dialogs instanceof TopsViewDialogs)) return;
     await this.dialogs.handleOpenMeetingKeyword();
+  }
+
+  _openTopRulesDialog() {
+    if (this._topRulesOverlay) {
+      this._topRulesOverlay.style.display = "flex";
+      return;
+    }
+
+    const overlay = createPopupOverlay();
+    overlay.style.zIndex = String(OVERLAY_TOP + 1);
+    registerPopupCloseHandlers(overlay, () => this._closeTopRulesDialog());
+
+    const card = document.createElement("div");
+    stylePopupCard(card, { width: "min(640px, calc(100vw - 24px))" });
+
+    const head = document.createElement("div");
+    head.style.display = "flex";
+    head.style.alignItems = "center";
+    head.style.gap = "10px";
+    head.style.padding = "12px";
+    head.style.borderBottom = "1px solid #e2e8f0";
+
+    const title = document.createElement("div");
+    title.textContent = "TOP-Regeln";
+    title.style.fontWeight = "800";
+    title.style.fontSize = "16px";
+
+    const btnClose = document.createElement("button");
+    btnClose.type = "button";
+    btnClose.textContent = "X";
+    applyPopupButtonStyle(btnClose);
+    btnClose.style.marginLeft = "auto";
+    btnClose.onclick = () => this._closeTopRulesDialog();
+
+    head.append(title, btnClose);
+
+    const body = document.createElement("div");
+    body.style.padding = "12px";
+    body.style.display = "grid";
+    body.style.gap = "10px";
+    body.style.lineHeight = "1.45";
+
+    const sections = [
+      {
+        title: "Ampelfarben",
+        lines: [
+          "Blockiert: blau",
+          "Verzug: rot",
+          "Erledigt: grün",
+          "Offen/In Arbeit mit Fälligkeit: rot, orange oder grün nach Restzeit",
+        ],
+      },
+      {
+        title: "Erledigte TOPs",
+        lines: [
+          "Erledigte TOPs werden grau dargestellt und bleiben im aktuellen Protokoll sichtbar.",
+        ],
+      },
+      {
+        title: "Übernahme",
+        lines: [
+          "Ein erledigter TOP wird noch genau einmal in das nächste Protokoll übernommen.",
+          "Wenn er dort weiterhin erledigt bleibt, erscheint er ab dem darauffolgenden Protokoll nicht mehr in der normalen Arbeitsliste.",
+          "Dabei wird nichts gelöscht und nichts renummeriert. Die Historie bleibt erhalten.",
+        ],
+      },
+    ];
+
+    for (const section of sections) {
+      const box = document.createElement("div");
+      box.style.display = "grid";
+      box.style.gap = "4px";
+
+      const h = document.createElement("div");
+      h.textContent = section.title;
+      h.style.fontWeight = "700";
+      h.style.color = "#264a4a";
+
+      box.appendChild(h);
+      for (const line of section.lines) {
+        const row = document.createElement("div");
+        row.textContent = line;
+        box.appendChild(row);
+      }
+      body.appendChild(box);
+    }
+
+    const footer = document.createElement("div");
+    footer.style.display = "flex";
+    footer.style.justifyContent = "flex-end";
+    footer.style.gap = "8px";
+    footer.style.padding = "10px 12px";
+    footer.style.borderTop = "1px solid #e2e8f0";
+
+    const btnOk = document.createElement("button");
+    btnOk.type = "button";
+    btnOk.textContent = "Schliessen";
+    applyPopupButtonStyle(btnOk, { variant: "neutral" });
+    btnOk.onclick = () => this._closeTopRulesDialog();
+    footer.appendChild(btnOk);
+
+    card.append(head, body, footer);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    this._topRulesOverlay = overlay;
+  }
+
+  _closeTopRulesDialog() {
+    if (!this._topRulesOverlay) return;
+    cleanupPopupHandlers(this._topRulesOverlay);
+    if (this._topRulesOverlay.parentElement && typeof this._topRulesOverlay.parentElement.removeChild === "function") {
+      this._topRulesOverlay.parentElement.removeChild(this._topRulesOverlay);
+    } else {
+      this._topRulesOverlay.style.display = "none";
+    }
+    this._topRulesOverlay = null;
   }
 
   _syncListState() {
