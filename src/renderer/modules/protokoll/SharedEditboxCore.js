@@ -60,10 +60,12 @@ export class SharedEditboxCore {
   }
 
   _configurePresentation() {
-    this._attachCounterToLabel(this.editbox.shortLabel, this.editbox.shortCounter);
-    this._attachCounterToLabel(this.editbox.longLabel, this.editbox.longCounter);
-    this.editbox.shortWrap.classList.add("bbm-tops-editbox-short-wrap");
-    this.editbox.longWrap.classList.add("bbm-tops-editbox-long-wrap");
+    const shortLabelParts = this._attachCounterToLabel(this.editbox.shortLabel, this.editbox.shortCounter);
+    const longLabelParts = this._attachCounterToLabel(this.editbox.longLabel, this.editbox.longCounter);
+    this.shortLabelRow = this._buildLabelRow(this.editbox.shortLabel, shortLabelParts);
+    this.longLabelRow = this._buildLabelRow(this.editbox.longLabel, longLabelParts);
+    this.editbox.shortWrap.classList.add("bbm-tops-editbox-row", "bbm-tops-editbox-short-wrap");
+    this.editbox.longWrap.classList.add("bbm-tops-editbox-row", "bbm-tops-editbox-long-wrap");
     this.editbox.flagsWrap.classList.add("bbm-tops-editbox-flags-in-meta");
 
     Object.entries(TOPS_WORKBENCH_FLAG_LABELS).forEach(([key, label]) => {
@@ -71,6 +73,23 @@ export class SharedEditboxCore {
       const textEl = input?.parentElement?.querySelector("span");
       if (textEl) textEl.textContent = label;
     });
+  }
+
+  _buildLabelRow(labelEl, { textEl, counterEl } = {}) {
+    const row = document.createElement("span");
+    row.className = "bbm-tops-editbox-label-row";
+
+    if (textEl) row.appendChild(textEl);
+    const nextChildren = [];
+    nextChildren.push(row);
+    if (counterEl) nextChildren.push(counterEl);
+    if (typeof labelEl.replaceChildren === "function") {
+      labelEl.replaceChildren(...nextChildren);
+    } else {
+      labelEl.appendChild(row);
+      if (counterEl) labelEl.appendChild(counterEl);
+    }
+    return row;
   }
 
   _bindDraftChangeSources() {
@@ -132,8 +151,8 @@ export class SharedEditboxCore {
 
     this.shortDictateButton = createButton("shortText", "Diktat starten");
     this.longDictateButton = createButton("longText", "Diktat starten");
-    appendToHost(this.shortLabel, this.shortDictateButton, this.editbox.shortWrap);
-    appendToHost(this.longLabel, this.longDictateButton, this.editbox.longWrap);
+    appendToHost(this.shortLabelRow, this.shortDictateButton, this.shortLabel);
+    appendToHost(this.longLabelRow, this.longDictateButton, this.longLabel);
   }
 
   _emitDraftChange(source = "text") {
@@ -170,7 +189,9 @@ export class SharedEditboxCore {
   }
 
   _attachCounterToLabel(labelEl, counterEl) {
-    if (!labelEl || !counterEl || labelEl.contains(counterEl)) return;
+    if (!labelEl || !counterEl || labelEl.contains(counterEl)) {
+      return { textEl: null, counterEl: counterEl || null };
+    }
 
     const currentText = String(labelEl.textContent || "").trim();
     labelEl.textContent = "";
@@ -181,6 +202,7 @@ export class SharedEditboxCore {
 
     counterEl.classList.add("bbm-tops-editbox-remaining");
     labelEl.append(text, counterEl);
+    return { textEl: text, counterEl };
   }
 
   _isFlagFocused() {

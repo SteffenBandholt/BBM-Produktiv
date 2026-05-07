@@ -986,12 +986,13 @@ async function runTopsScreenIntegrationTests(run) {
 
       const shortLabel = core.editbox.shortLabel;
       const longLabel = core.editbox.longLabel;
+      const shortLabelRow = shortLabel.children[0];
+      const longLabelRow = longLabel.children[0];
 
-      assert.equal(shortLabel.contains(core.shortDictateButton), true);
-      assert.equal(shortLabel.contains(core.editbox.shortCounter), true);
-      assert.equal(longLabel.contains(core.longDictateButton), true);
-      assert.ok(shortLabel.children.indexOf(core.shortDictateButton) > shortLabel.children.indexOf(core.editbox.shortCounter));
-      assert.ok(longLabel.children.indexOf(core.longDictateButton) > longLabel.children.indexOf(core.editbox.longCounter));
+      assert.equal(shortLabelRow.children.indexOf(core.shortDictateButton), 1);
+      assert.equal(longLabelRow.children.indexOf(core.longDictateButton), 1);
+      assert.equal(shortLabel.children.indexOf(core.editbox.shortCounter), 1);
+      assert.equal(longLabel.children.indexOf(core.editbox.longCounter), 1);
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
