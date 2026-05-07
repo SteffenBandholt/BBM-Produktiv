@@ -1,9 +1,8 @@
 export class TopsHeader {
-  constructor({ onClose, onEndMeeting, onKeywordClick, onRulesClick } = {}) {
+  constructor({ onClose, onEndMeeting, onKeywordClick } = {}) {
     this.onClose = typeof onClose === "function" ? onClose : null;
     this.onEndMeeting = typeof onEndMeeting === "function" ? onEndMeeting : null;
     this.onKeywordClick = typeof onKeywordClick === "function" ? onKeywordClick : null;
-    this.onRulesClick = typeof onRulesClick === "function" ? onRulesClick : null;
 
     this.root = document.createElement("header");
     this.root.setAttribute("data-bbm-tops-header-v2", "true");
@@ -75,16 +74,7 @@ export class TopsHeader {
       if (this.onClose) await this.onClose();
     };
 
-    this.btnRules = document.createElement("button");
-    this.btnRules.type = "button";
-    this.btnRules.textContent = "TOP-Regeln";
-    this.btnRules.className = "bbm-tops-btn bbm-tops-btn-rules";
-    this.btnRules.onclick = async () => {
-      if (this.btnRules.disabled) return;
-      if (this.onRulesClick) await this.onRulesClick();
-    };
-
-    this.actionsWrap.append(this.btnEndMeeting, this.btnRules, this.btnClose);
+    this.actionsWrap.append(this.btnEndMeeting, this.btnClose);
     this.root.append(this.titleWrap, this.spacer, this.actionsWrap, this.metaLegend);
   }
 

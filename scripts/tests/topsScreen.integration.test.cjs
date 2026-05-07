@@ -1132,7 +1132,7 @@ async function runTopsScreenIntegrationTests(run) {
     }
   });
 
-  await run("Tops v2 Integration: TOP-Regeln Button oeffnet den Regel-Dialog", async () => {
+  await run("Tops v2 Integration: TOP-Regeln Button ist nicht mehr im Header", async () => {
     const prevDocument = globalThis.document;
     const prevWindow = globalThis.window;
     const doc = createFakeDocument();
@@ -1147,18 +1147,7 @@ async function runTopsScreenIntegrationTests(run) {
       });
 
       screen.render();
-      assert.equal(screen.header.btnRules.textContent, "TOP-Regeln");
-
-      await screen.header.btnRules.onclick();
-
-      assert.equal(doc.body.children.length > 0, true);
-      const overlay = doc.body.children[0];
-      const dialogText = collectText(overlay);
-
-      assert.equal(dialogText.includes("TOP-Regeln"), true);
-      assert.equal(dialogText.includes("Erledigte TOPs werden grau dargestellt"), true);
-      assert.equal(dialogText.includes("genau einmal in das nächste Protokoll übernommen"), true);
-      assert.equal(dialogText.includes("nichts gelöscht und nichts renummeriert"), true);
+      assert.equal(screen.header.btnRules, undefined);
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
@@ -2073,3 +2062,4 @@ async function runTopsScreenIntegrationTests(run) {
 }
 
 module.exports = { runTopsScreenIntegrationTests };
+

@@ -199,7 +199,6 @@ export default class TopsScreen {
         this._syncScreenState();
       },
       onKeywordClick: async () => this._openKeywordDialog(),
-      onRulesClick: async () => this._openTopRulesDialog(),
     });
     this.dialogs = new TopsViewDialogs({ view: this._dialogViewAdapter });
   }
