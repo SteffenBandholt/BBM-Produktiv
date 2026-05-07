@@ -22,7 +22,7 @@
   flex-direction: column;
   height: 100%;
   min-height: 0;
-  background: linear-gradient(180deg, #eef6f5 0%, #e2eded 100%);
+  background: linear-gradient(180deg, #faf7ef 0%, #f3eee3 100%);
 }
 
 [data-bbm-tops-screen-area="sheet"] {
@@ -30,7 +30,7 @@
   min-height: 0;
   overflow: auto;
   padding: 12px 22px 14px;
-  background: linear-gradient(180deg, rgba(227, 238, 237, 0.82) 0%, rgba(213, 229, 228, 0.92) 100%);
+  background: linear-gradient(180deg, rgba(250, 247, 239, 0.96) 0%, rgba(243, 238, 227, 0.98) 100%);
 }
 
 [data-bbm-tops-screen-sheet-canvas="true"] {
@@ -56,7 +56,7 @@
 [data-bbm-tops-screen-area="edit"] {
   flex: 0 0 auto;
   border-top: 1px solid #d9e2ec;
-  background: linear-gradient(180deg, #e7f0ef 0%, #dce9e8 100%);
+  background: linear-gradient(180deg, #f8f4ec 0%, #f1ebdf 100%);
   padding: 6px 10px 8px;
   display: none;
 }
