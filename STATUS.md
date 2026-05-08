@@ -17,6 +17,12 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Review-Nacharbeit fuer internes Dev-Modul `Drucklayout` (PR #63) ist umgesetzt:
+  - `Codewerte anzeigen` uebernimmt jetzt vor der Ausgabe immer die aktuellen Matrixeingaben (auch ohne vorherigen Vorschau-Klick)
+  - die Reset-Logik der Matrix ist konsolidiert und bleibt auf den Dev-Bereich `Einstellungen -> Entwicklung -> Drucklayout` begrenzt
+  - produktiver Druckweg blieb unveraendert (keine Aenderungen an PrintModal/printApp/PrintShell oder produktiven Druckrouten)
+  - geprueft mit `npm test`
+- Naechster offener Schritt: manuelle Sichtpruefung der Drucklayout-Kalibrieransicht im Entwicklungsbereich (A4-Vorschau, Matrix, Codeausgabe).
 - Der Kurztext von neu angelegten Level-1-Titeln wird jetzt nicht mehr beim Blur verworfen:
   - die SharedEditbox-Kette delegiert die Kurztext-Limitierung und Counter-Aktualisierung wieder korrekt an die Editbox
   - Kurztext-Input landet sofort im Draft und in der Live-Liste
