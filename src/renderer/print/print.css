@@ -34,6 +34,22 @@ body {
   --footer-h: 0mm;
 }
 
+body[data-orientation="landscape"] .printRoot,
+body[data-orientation="landscape"] .measureRoot,
+.printRoot[data-orientation="landscape"],
+.measureRoot[data-orientation="landscape"] {
+  --page-w: 297mm;
+  --page-h: 210mm;
+}
+
+body[data-orientation="portrait"] .printRoot,
+body[data-orientation="portrait"] .measureRoot,
+.printRoot[data-orientation="portrait"],
+.measureRoot[data-orientation="portrait"] {
+  --page-w: 210mm;
+  --page-h: 297mm;
+}
+
 .printRoot {
   width: 100%;
   margin: 0;

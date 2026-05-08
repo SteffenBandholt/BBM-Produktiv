@@ -14,6 +14,11 @@ import {
 const APP_ICON_URL = new URL("../assets/bbm-icon.png", window.location.href).toString();
 const PROTOKOLL_TOPS_LAYOUT = getProtokollTopsLayout();
 
+function _normalizeOrientation(value) {
+  const s = String(value || "").trim().toLowerCase();
+  return s === "landscape" ? "landscape" : "portrait";
+}
+
 function _el(tag, className, text) {
   const el = document.createElement(tag);
   if (className) el.className = className;
@@ -550,6 +555,7 @@ function _buildSpineNote(data = {}) {
 
 export function renderPrint({ pages, data } = {}) {
   const root = _el("div", "printRoot printV2Root");
+  root.dataset.orientation = _normalizeOrientation(data?.orientation);
 
   // Force colors into PDF output (Chromium/Electron)
   root.style.webkitPrintColorAdjust = "exact";

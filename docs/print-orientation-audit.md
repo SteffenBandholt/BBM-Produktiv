@@ -368,7 +368,9 @@ Aktueller Stand der technischen Vorbereitung:
 - Fehlt `orientation`, wird intern `portrait` verwendet.
 - `src/main/ipc/printIpc.js` leitet die Orientation in `print:init`, `print:getData` und `printToPDF` weiter.
 - `src/main/print/printData.js` nimmt die Orientation in den Print-Kontext auf.
-- `src/renderer/print/printApp.js` kennt die Orientation im geladenen `data`-Objekt.
+- `src/renderer/print/printApp.js` kennt die Orientation im geladenen `data`-Objekt und setzt sie vor dem Rendern als `body[data-orientation]`.
+- `src/renderer/print/layout/PrintShell.js` setzt `data-orientation` auch am Print-Root.
+- `src/renderer/print/print.css` schaltet die internen Seitenmaße per `data-orientation` zwischen `210mm x 297mm` und `297mm x 210mm` um.
 - `printToPDF` bekommt `landscape: true` nur bei `orientation === "landscape"`.
 
 Nicht umgesetzt:
@@ -377,6 +379,7 @@ Nicht umgesetzt:
 - keine Header-/Footer-Anpassung
 - keine zweite PDF-Logik
 - keine Änderung an den bestehenden Hochformatwerten
+- keine Header-Inhalte geändert
 
 Intern/testweise kann ein Landscape-Smoke-Test so ausgelöst werden:
 

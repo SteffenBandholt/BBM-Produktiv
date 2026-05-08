@@ -1246,6 +1246,13 @@ async function handleInit(payload) {
       } catch (_e) {}
     }
 
+    const orientation = String(data.orientation || "portrait").trim().toLowerCase() === "landscape"
+      ? "landscape"
+      : "portrait";
+    if (document.body?.dataset) {
+      document.body.dataset.orientation = orientation;
+    }
+
     if (data.mode === "headerTest") {
       const root = renderHeaderTestPages({ data, debug: !!payload?.debug });
       if (root?.dataset) root.dataset.orientation = String(data.orientation || "portrait");
