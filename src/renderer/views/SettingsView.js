@@ -14,6 +14,7 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
+import { createDrucklayoutDevScreen } from "../modules/drucklayout/index.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -5065,6 +5066,7 @@ export default class SettingsView {
       "Diktat-Testfreigabe",
       "Aktiviert Diktat unabhängig von der Lizenz für Entwicklung und Prüfung."
     );
+    const drucklayoutCard = mkCard("Drucklayout", "Interne Kalibrieransicht für Tabellenlayout (ohne Produktivumschaltung).");
 
     const btn = (label, primary = false) => {
       const el = document.createElement("button");
@@ -5363,6 +5365,9 @@ export default class SettingsView {
     dictationDevRow.append(dictationDevEnabled, dictationDevLabel);
     dictationDevCard.box.append(dictationDevRow, dictationDevMsg);
 
+    const drucklayoutScreen = createDrucklayoutDevScreen();
+    drucklayoutCard.box.append(drucklayoutScreen.render());
+
     const mkScaleGroup = (labelText, buttons) => {
       const row = document.createElement("div");
       row.style.display = "grid";
@@ -5398,6 +5403,7 @@ export default class SettingsView {
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
       { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
       { key: "dictation", label: "Diktat-Testfreigabe", el: dictationDevCard.box },
+      { key: "drucklayout", label: "Drucklayout", el: drucklayoutCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
     ];
     const tabHead = document.createElement("div");
@@ -5432,6 +5438,7 @@ export default class SettingsView {
       addTabBtn("DB-Diagnose", "db"),
       addTabBtn("Protokoll-Textgrenzen", "tops"),
       addTabBtn("Diktat-Testfreigabe", "dictation"),
+      addTabBtn("Drucklayout", "drucklayout"),
       addTabBtn("Farbschema", "theme")
     );
     tabBody.append(...tabs.map((t) => t.el));
