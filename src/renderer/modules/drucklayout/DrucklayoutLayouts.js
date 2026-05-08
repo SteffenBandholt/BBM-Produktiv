@@ -8,6 +8,8 @@ export function getInitialLayoutState() {
       text: { ...topsLayout.columns.text },
       meta: { ...topsLayout.columns.meta },
     },
+    textStyles: { ...topsLayout.textStyles },
+    page: { ...topsLayout.page },
   };
 }
 

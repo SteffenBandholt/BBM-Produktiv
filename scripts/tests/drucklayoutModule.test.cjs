@@ -19,7 +19,7 @@ async function runDrucklayoutModuleTests(run) {
     assert.equal(!!topsLayout.columns.meta, true);
   });
 
-  await run("Drucklayout: Tabelle rendert colgroup mit festen nr/meta-Spalten", () => {
+  await run("Drucklayout: Tabelle rendert colgroup und thead", () => {
     global.document = {
       createElement(tag) {
         return {
@@ -32,11 +32,12 @@ async function runDrucklayoutModuleTests(run) {
         };
       },
     };
-    const { colgroup } = renderDrucklayoutTable({ layout: topsLayout, rows: [] });
+    const { colgroup, thead } = renderDrucklayoutTable({ layout: topsLayout, rows: [] });
     assert.equal(colgroup.children[0].className, "dl-col-nr");
     assert.equal(colgroup.children[2].className, "dl-col-meta");
     assert.equal(colgroup.children[0].style.width, "19mm");
     assert.equal(colgroup.children[2].style.width, "40mm");
+    assert.equal(thead.tagName, "thead");
   });
 
   await run("Drucklayout: nur in Entwicklung eingebunden, nicht im Modulkatalog", () => {
@@ -47,10 +48,20 @@ async function runDrucklayoutModuleTests(run) {
     assert.equal(moduleCatalogSource.includes("drucklayout"), false);
   });
 
-  await run("Drucklayout: Screen rendert TOP-Beispieltabelle und Codewerte", () => {
+  await run("Drucklayout: Screen enthaelt Matrixfelder, Vorschau und Reset", () => {
     const screenSource = read("src/renderer/modules/drucklayout/DrucklayoutScreen.js");
-    assert.equal(screenSource.includes("TOP-Liste / Protokoll") || screenSource.includes("createTopsSampleRows"), true);
+    assert.equal(screenSource.includes("TOP-Nr Breite (mm)"), true);
+    assert.equal(screenSource.includes("Meta Breite (mm)"), true);
+    assert.equal(screenSource.includes("formatRestWidthLabel"), true);
+    assert.equal(screenSource.includes("Vorschau"), true);
+    assert.equal(screenSource.includes("Standardwerte"), true);
     assert.equal(screenSource.includes("Codewerte anzeigen"), true);
+    assert.equal(screenSource.includes("applyMatrixValuesToState"), true);
+  });
+
+  await run("Drucklayout: Renderer nutzt A4 box-sizing border-box", () => {
+    const rendererSource = read("src/renderer/modules/drucklayout/DrucklayoutRenderer.js");
+    assert.equal(rendererSource.includes('page.style.boxSizing = "border-box";'), true);
   });
 
   await run("Drucklayout: keine verstreuten fachlichen Spaltenbreiten in CSS", () => {

@@ -12,6 +12,19 @@ export function renderDrucklayoutTable({ layout, rows }) {
   const colMeta = document.createElement("col"); colMeta.className = "dl-col-meta"; colMeta.style.width = mm(layout.columns.meta.widthMm);
   colgroup.append(colNr, colText, colMeta);
 
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  for (const title of ["TOP-Nr", "Gegenstand", "Meta"]) {
+    const th = document.createElement("th");
+    th.textContent = title;
+    th.style.textAlign = "left";
+    th.style.fontSize = "8pt";
+    th.style.borderBottom = "0.2mm solid #111827";
+    th.style.paddingBottom = "1.2mm";
+    headRow.append(th);
+  }
+  thead.append(headRow);
+
   const tbody = document.createElement("tbody");
   for (const row of rows) {
     const tr = document.createElement("tr");
@@ -36,6 +49,6 @@ export function renderDrucklayoutTable({ layout, rows }) {
     tbody.append(tr);
   }
 
-  table.append(colgroup, tbody);
-  return { table, colgroup };
+  table.append(colgroup, thead, tbody);
+  return { table, colgroup, thead };
 }
