@@ -7,6 +7,7 @@ const meetingTopsRepo = require("../db/meetingTopsRepo");
 const projectFirmsRepo = require("../db/projectFirmsRepo");
 const { appSettingsGetManyWithDb } = require("../db/appSettingsRepo");
 const { getUserProfile } = require("../db/userProfileRepo");
+const { normalizePrintOrientation } = require("./printOrientation");
 
 function _parseBool(v) {
   const s = String(v ?? "").trim().toLowerCase();
@@ -785,7 +786,14 @@ function _resolveNextMeetingForPrint({ mode, meeting, settings } = {}) {
 
 // Gemeinsamer technischer Laufzeitkontext fuer den Druckdienst:
 // Projekt/Meeting, effektive Einstellungen, Profil und Layout werden hier vorbereitet.
-async function _buildPrintRuntimeContext({ db, mode, projectId, meetingId, settingsOverride } = {}) {
+async function _buildPrintRuntimeContext({
+  db,
+  mode,
+  projectId,
+  meetingId,
+  settingsOverride,
+  orientation,
+} = {}) {
   const project = projectId ? projectsRepo.getById(projectId) : null;
   const meeting = meetingId ? meetingsRepo.getMeetingById(meetingId) : null;
   const settingsBase = _loadSettings(db);
@@ -808,6 +816,7 @@ async function _buildPrintRuntimeContext({ db, mode, projectId, meetingId, setti
   const v2Layout = _buildV2Layout(settings, logos);
   const interludeText = String(settings?.["print.interludeText"] || "").trim();
   const nextMeeting = _resolveNextMeetingForPrint({ mode, meeting, settings });
+  const printOrientation = normalizePrintOrientation(orientation);
 
   return {
     project,
@@ -820,6 +829,7 @@ async function _buildPrintRuntimeContext({ db, mode, projectId, meetingId, setti
     logos,
     interludeText,
     nextMeeting,
+    orientation: printOrientation,
   };
 }
 
@@ -863,7 +873,7 @@ function _loadPrintDocumentContent({ db, mode, projectId, meetingId, meeting, se
   };
 }
 
-async function getPrintData({ mode, projectId, meetingId, settingsOverride } = {}) {
+async function getPrintData({ mode, projectId, meetingId, settingsOverride, orientation } = {}) {
   const db = initDatabase();
   const runtimeContext = await _buildPrintRuntimeContext({
     db,
@@ -871,6 +881,7 @@ async function getPrintData({ mode, projectId, meetingId, settingsOverride } = {
     projectId,
     meetingId,
     settingsOverride,
+    orientation,
   });
   const documentContent = _loadPrintDocumentContent({
     db,

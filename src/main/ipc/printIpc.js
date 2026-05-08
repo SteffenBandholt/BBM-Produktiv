@@ -17,6 +17,10 @@ const path = require("path");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");
 const { getPrintData } = require("../print/printData");
 const {
+  createPrintToPdfOptions,
+  normalizePrintOrientation,
+} = require("../print/printOrientation");
+const {
   enforceLicensedFeature,
   toLicenseErrorPayload,
 } = require("../licensing/featureGuard");
@@ -54,19 +58,8 @@ function uniquePath(dir, fileName) {
   return path.join(dir, `${stem} (${Date.now()})${ext}`);
 }
 
-function buildPrintToPdfOptions() {
-  return {
-    printBackground: true,
-    landscape: false,
-    pageSize: "A4",
-    displayHeaderFooter: false,
-    margin: {
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-    },
-  };
+function buildPrintToPdfOptions({ orientation } = {}) {
+  return createPrintToPdfOptions({ orientation });
 }
 
 // Shared technical output infrastructure:
@@ -310,14 +303,18 @@ async function printToPdf(payload = {}) {
   const mode = String(payload.mode || "").trim() || "protocol";
   const projectId = payload.projectId || null;
   const meetingId = payload.meetingId || null;
+  const orientation = normalizePrintOrientation(payload.orientation);
 
-  console.log(`[print:${jobId}] start mode=${mode} projectId=${projectId} meetingId=${meetingId}`);
+  console.log(
+    `[print:${jobId}] start mode=${mode} projectId=${projectId} meetingId=${meetingId} orientation=${orientation}`
+  );
 
   const data = await getPrintData({
     mode,
     projectId,
     meetingId,
     settingsOverride: payload.settingsOverride || null,
+    orientation,
   });
   const projectNumber = data?.project?.project_number || data?.project?.projectNumber || null;
 
@@ -380,7 +377,7 @@ async function printToPdf(payload = {}) {
       console.log(`[print:${jobId}] print:ready received`);
 
       try {
-        const options = buildPrintToPdfOptions();
+        const options = buildPrintToPdfOptions({ orientation });
         console.log(
           `[PRINT_ACTIVE] printToPDF options: ${JSON.stringify(
             {
@@ -416,6 +413,7 @@ async function printToPdf(payload = {}) {
         projectId,
         meetingId,
         settingsOverride: payload.settingsOverride || null,
+        orientation,
         debug,
       });
     });
@@ -436,11 +434,13 @@ function registerPrintIpc() {
     _runIpcTask(async () => {
       _enforceFeature("protokoll");
       const p = payload || {};
+      const orientation = normalizePrintOrientation(p.orientation);
       const data = await getPrintData({
         mode: p.mode,
         projectId: p.projectId,
         meetingId: p.meetingId,
         settingsOverride: p.settingsOverride || null,
+        orientation,
       });
       // Version/Channel für PDF-Footer mitgeben
       data.appVersion = app.getVersion ? app.getVersion() : "";

@@ -31,11 +31,11 @@ Die aktuelle Kette:
 
 Wichtige Beobachtung:
 
-- `printIpc.js` setzt `landscape: false` und `pageSize: "A4"` fest.
+- `printIpc.js` setzt weiterhin `pageSize: "A4"` fest und kann `landscape` jetzt aus `orientation` ableiten.
 - `print.css` setzt die Hauptseite auf `--page-w: 210mm` und `--page-h: 297mm`.
 - `printWindow.js` öffnet ein festes BrowserWindow mit `width: 1100` und `height: 900`, aber ohne Formatumschaltung.
-- `printData.js` liefert bisher `printProfile` und `v2Layout`, aber keinen expliziten Orientierungsschalter.
-- `printApp.js` und `PrintShell.js` nutzen die vorhandenen Millimeterwerte, aber keine variable Seitenorientierung.
+- `printData.js` liefert `printProfile`, `v2Layout` und inzwischen auch `orientation` im Print-Kontext.
+- `printApp.js` und `PrintShell.js` nutzen die vorhandenen Millimeterwerte; eine sichtbare Querformat-Umschaltung ist dort noch nicht aktiv.
 - `v2.css` und `v2LayoutConfig.js` enthalten Header- und Abstandsparameter, aber keine Querformat-Variante.
 
 ---
@@ -45,7 +45,7 @@ Wichtige Beobachtung:
 ### 2.1 A4 / Hochformat ist aktuell festgelegt
 
 - `src/main/ipc/printIpc.js`
-  - `buildPrintToPdfOptions()` setzt `landscape: false`
+  - `buildPrintToPdfOptions()` leitet `landscape` aus `orientation` ab
   - `pageSize: "A4"`
 - `src/renderer/print/print.css`
   - `@page { size: A4; }`
@@ -77,7 +77,7 @@ Ein späterer Orientierungsschalter sollte dort als Teil des Print-Kontexts ents
 
 Aktuell gehört das in `src/main/ipc/printIpc.js`, konkret in `buildPrintToPdfOptions()`.
 
-Derzeit wird dort fest `landscape: false` geliefert.
+Derzeit wird dort `landscape` aus `orientation` abgeleitet.
 
 Für eine spätere Umschaltung müsste dieser Wert aus dem Print-Kontext oder aus den Druckoptionen gespeist werden.
 
@@ -252,7 +252,7 @@ Querformat-Auswirkung:
 
 Aktuell an mehreren festen Stellen:
 
-- `src/main/ipc/printIpc.js` mit `landscape: false` und `pageSize: "A4"`
+- `src/main/ipc/printIpc.js` mit `pageSize: "A4"` und `landscape`-Ableitung aus `orientation`
 - `src/renderer/print/print.css` mit `@page { size: A4; }`
 - `src/renderer/print/print.css` mit `--page-w: 210mm` und `--page-h: 297mm`
 - `src/shared/tableLayouts/protokollTopsLayout.js` mit `variant: "portrait"`
@@ -359,7 +359,28 @@ Grund:
 
 ---
 
-## 7. Bewertung
+## 7. Aktueller Umsetzungsstand
+
+Der Druckauftrag kann inzwischen optional `orientation: "portrait"` oder `orientation: "landscape"` transportieren.
+
+Aktueller Stand der technischen Vorbereitung:
+
+- Fehlt `orientation`, wird intern `portrait` verwendet.
+- `src/main/ipc/printIpc.js` leitet die Orientation in `print:init`, `print:getData` und `printToPDF` weiter.
+- `src/main/print/printData.js` nimmt die Orientation in den Print-Kontext auf.
+- `src/renderer/print/printApp.js` kennt die Orientation im geladenen `data`-Objekt.
+- `printToPDF` bekommt `landscape: true` nur bei `orientation === "landscape"`.
+
+Nicht umgesetzt:
+
+- keine sichtbare Querformat-Umschaltung in der normalen App
+- keine Header-/Footer-Anpassung
+- keine zweite PDF-Logik
+- keine Änderung an den bestehenden Hochformatwerten
+
+---
+
+## 8. Bewertung
 
 Der Ist-Zustand ist klar:
 

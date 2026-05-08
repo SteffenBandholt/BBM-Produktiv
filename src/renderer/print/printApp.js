@@ -1248,6 +1248,7 @@ async function handleInit(payload) {
 
     if (data.mode === "headerTest") {
       const root = renderHeaderTestPages({ data, debug: !!payload?.debug });
+      if (root?.dataset) root.dataset.orientation = String(data.orientation || "portrait");
       app.innerHTML = "";
       app.appendChild(root);
       window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true });
@@ -1256,6 +1257,7 @@ async function handleInit(payload) {
 
     const pages = _buildPages(data);
     const root = renderPrint({ pages, data });
+    if (root?.dataset) root.dataset.orientation = String(data.orientation || "portrait");
     app.innerHTML = "";
     app.appendChild(root);
     window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true });
