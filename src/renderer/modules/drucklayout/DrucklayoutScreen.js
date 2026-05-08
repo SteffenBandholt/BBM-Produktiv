@@ -88,7 +88,11 @@ export default class DrucklayoutScreen {
     controls.append(
       mkBtn("Vorschau", () => rerender()),
       mkBtn("Standardwerte", () => reset()),
-      mkBtn("Codewerte anzeigen", () => { code.textContent = buildCodeValues(state); })
+      mkBtn("Codewerte anzeigen", () => {
+        const merged = applyMatrixValuesToState(state, inputs);
+        Object.assign(state, merged);
+        code.textContent = buildCodeValues(state);
+      })
     );
 
     root.append(title, matrix, controls, previewHost, code);

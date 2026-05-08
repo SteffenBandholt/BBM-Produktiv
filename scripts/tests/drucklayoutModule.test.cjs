@@ -84,6 +84,8 @@ async function runDrucklayoutModuleTests(run) {
     assert.equal(screenSource.includes("Standardwerte"), true);
     assert.equal(screenSource.includes("Codewerte anzeigen"), true);
     assert.equal(screenSource.includes("applyMatrixValuesToState"), true);
+    assert.equal(screenSource.includes("Codewerte anzeigen"), true);
+    assert.equal(screenSource.includes("code.textContent = buildCodeValues(state)"), true);
   });
 
   await run("Drucklayout: Renderer nutzt A4 box-sizing border-box", () => {
