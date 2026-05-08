@@ -1073,6 +1073,86 @@ async function runTopsScreenIntegrationTests(run) {
     }
   });
 
+  await run("Tops v2 Integration: Editbox bekommt den TOP-Level aus dem Workbench-VM", () => {
+    const vmLevel3 = buildWorkbenchVm(
+      {
+        editor: {},
+        isReadOnly: false,
+        isWriting: false,
+        isMoveMode: false,
+      },
+      { level: 3 }
+    );
+    assert.equal(vmLevel3.editor.level, 3);
+  });
+
+  await run("Tops v2 Integration: Editbox markiert den TOP-Level als data-Attribut", () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = { document: doc };
+
+    try {
+      const core = new SharedEditboxCore({});
+      core.applyEditorState(
+        {
+          level: 3,
+          value: { shortText: "Kurz", longText: "Lang", flags: {} },
+          access: {},
+        },
+        { hasSelection: true, isReadOnly: false }
+      );
+
+      assert.equal(core.root.dataset.topLevel, "3");
+      core.applyEditorState(
+        {
+          level: 1,
+          value: { shortText: "Titel", longText: "", flags: {} },
+          access: {},
+        },
+        { hasSelection: true, isReadOnly: false }
+      );
+      assert.equal(core.root.dataset.topLevel, "1");
+      assert.equal(core.editbox.shortInput.maxLength, 82);
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Kurztext-Laenge ist fuer Level 2-4 in der UI auf 82ch gesetzt", () => {
+    const topsCss = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/protokoll/styles/tops.css"),
+      "utf8"
+    );
+    assert.equal(
+      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-title"),
+      true
+    );
+    assert.equal(
+      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-text"),
+      true
+    );
+    assert.equal(
+      topsCss.includes(".bbm-tops-workbench-editbox:not([data-top-level=\"1\"]) .editbox-input"),
+      true
+    );
+    assert.equal(
+      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-preview"),
+      true
+    );
+    assert.equal(
+      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-preview {\n  font-size: var(--bbm-top-short-font-size);\n  max-inline-size: 82ch;"),
+      true
+    );
+    assert.equal(
+      topsCss.includes(".bbm-tops-workbench-editbox:not([data-top-level=\"1\"]) .editbox-textarea"),
+      true
+    );
+    assert.equal(topsCss.includes("82ch"), true);
+  });
+
   await run("Tops v2 Integration: ToDo- und Beschluss-Symbole folgen dem Draft in der Metazeile", () => {
     const prevDocument = globalThis.document;
     const prevWindow = globalThis.window;

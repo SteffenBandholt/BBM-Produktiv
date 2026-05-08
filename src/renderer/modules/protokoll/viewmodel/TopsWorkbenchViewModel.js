@@ -52,6 +52,7 @@ function buildSharedEditorAccessVm(state, selectedTop) {
 function buildSharedEditorVm(state, selectedTop) {
   const editorValue = state?.editor || editorFromTop(selectedTop);
   return {
+    level: Number(selectedTop?.level || 1) || 1,
     value: editorValue,
     access: buildSharedEditorAccessVm(state, selectedTop),
   };

@@ -44,7 +44,7 @@ export class SharedEditboxCore {
       typeof onStartDictation === "function" ? onStartDictation : null;
 
     this.editbox = new EditboxShell();
-    this.editbox.setLimits({ shortText: 70 });
+    this.editbox.setLimits({ shortText: 82 });
     this.root = this.editbox.getElement();
     this.flagsWrap = this.editbox.flagsWrap;
     this.shortLabel = this.editbox.shortLabel;
@@ -256,7 +256,9 @@ export class SharedEditboxCore {
     const editorAccess = editorVm?.access || {};
     const hasSelection = !!actionsVm?.hasSelection;
     const isReadOnly = !!actionsVm?.isReadOnly;
+    const topLevel = Math.floor(Number(editorVm?.level) || 1);
 
+    this.root.dataset.topLevel = Number.isFinite(topLevel) && topLevel > 0 ? String(topLevel) : "1";
     this._syncValue(editorValue);
 
     if (!hasSelection) {
