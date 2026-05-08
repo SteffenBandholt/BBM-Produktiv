@@ -2,6 +2,7 @@ import {
   normalizeTopLongText,
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
+import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protokollTopsLayout.js";
 
 function getAssetBaseUrl() {
   if (typeof window !== "undefined" && window?.location?.href) return window.location.href;
@@ -52,6 +53,7 @@ export class TopsList {
     this.onLevel1Toggle = typeof onLevel1Toggle === "function" ? onLevel1Toggle : null;
     this.root = document.createElement("ul");
     this.root.setAttribute("data-bbm-tops-list-v2", "true");
+    applyProtokollTopsUiLayout(this.root);
   }
 
   setItems(items = []) {

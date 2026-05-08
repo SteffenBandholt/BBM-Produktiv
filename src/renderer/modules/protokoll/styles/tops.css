@@ -2,6 +2,7 @@
 
 :root {
   --bbm-tops-doc-width: 940px;
+  --bbm-tops-list-number-col: 64px;
   --bbm-tops-meta-col-min: 70px;
   --bbm-tops-meta-col-max: 90px;
   --bbm-tops-list-meta-col: 74px;
@@ -328,7 +329,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row-grid {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) minmax(50px, var(--bbm-tops-list-meta-col));
+  grid-template-columns: var(--bbm-tops-list-number-col, 64px) minmax(0, 1fr) minmax(50px, var(--bbm-tops-list-meta-col, 74px));
   gap: 8px;
   align-items: start;
 }

@@ -9,8 +9,10 @@ import {
   normalizeTopLongText,
   normalizeTopShortText,
 } from "../shared/text/topTextPresentation.js";
+import { getProtokollTopsLayout } from "../../shared/tableLayouts/protokollTopsLayout.js";
 
 const app = document.getElementById("app");
+const PROTOKOLL_TOPS_LAYOUT = getProtokollTopsLayout();
 
 function setError(text) {
   if (!app) return;
@@ -394,13 +396,13 @@ function _buildTableHeadForMeasure(type) {
   const tr = document.createElement("tr");
   if (type === "tops") {
     tr.innerHTML = `
-      <th class="colNr">TOP</th>
-      <th class="colText">Gegenstand</th>
+      <th class="colNr">${PROTOKOLL_TOPS_LAYOUT.labels.top}</th>
+      <th class="colText">${PROTOKOLL_TOPS_LAYOUT.labels.text}</th>
       <th class="colMeta">
         <div class="metaHead">
-          <div>Status</div>
-          <div>Fertig bis</div>
-          <div>verantw</div>
+          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[0]}</div>
+          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[1]}</div>
+          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[2]}</div>
         </div>
       </th>
     `;
@@ -416,10 +418,11 @@ function _buildTableHeadForMeasure(type) {
 function _buildColGroup(type) {
   if (type !== "tops") return null;
   const colgroup = document.createElement("colgroup");
+  const { number, text, meta } = PROTOKOLL_TOPS_LAYOUT.pdf.columns;
   colgroup.innerHTML = `
-    <col class="colNr" />
-    <col class="colText" />
-    <col class="colMeta" />
+    <col class="${number.className}" style="width:${number.width};" />
+    <col class="${text.className}" style="width:${text.width};" />
+    <col class="${meta.className}" style="width:${meta.width};" />
   `;
   return colgroup;
 }

@@ -311,7 +311,9 @@ body {
 
 .topsTable .colNr {
   width: 23mm;
+  width: var(--bbm-top-col-nr-width, 23mm);
   min-width: 23mm;
+  min-width: var(--bbm-top-col-nr-width, 23mm);
   white-space: nowrap;
   padding-right: 0;
 }
@@ -319,21 +321,30 @@ body {
 .topsTable .colText {
   width: auto;
   padding-right: 1.5mm;
+  padding-right: var(--bbm-top-col-text-padding-right, 1.5mm);
   padding-left: 0;
+  padding-left: var(--bbm-top-col-text-padding-left, 0);
 }
 
 .topsTable .colMeta {
   width: 15ch;
+  width: var(--bbm-top-col-meta-width, 15ch);
   min-width: 15ch;
+  min-width: var(--bbm-top-col-meta-width, 15ch);
   max-width: 15ch;
+  max-width: var(--bbm-top-col-meta-width, 15ch);
   padding-left: 5mm;
+  padding-left: var(--bbm-top-col-meta-padding-left, 5mm);
   text-align: left;
   font-size: 6.5pt;
+  font-size: var(--bbm-top-col-meta-font-size, 6.5pt);
   color: #444;
 }
 
 .topsTable thead .colMeta {
   color: #111;
+  font-size: 8pt;
+  font-size: var(--bbm-top-col-meta-head-font-size, 8pt);
 }
 
 .metaHead {

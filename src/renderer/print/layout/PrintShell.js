@@ -6,8 +6,13 @@ import {
   normalizeTopLongText,
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
+import {
+  applyProtokollTopsPdfLayout,
+  getProtokollTopsLayout,
+} from "../../../shared/tableLayouts/protokollTopsLayout.js";
 
 const APP_ICON_URL = new URL("../assets/bbm-icon.png", window.location.href).toString();
+const PROTOKOLL_TOPS_LAYOUT = getProtokollTopsLayout();
 
 function _el(tag, className, text) {
   const el = document.createElement(tag);
@@ -61,13 +66,13 @@ function _buildTableHead(type) {
 
   if (type === "tops") {
     tr.innerHTML = `
-      <th class="colNr">TOP</th>
-      <th class="colText">Gegenstand</th>
+      <th class="colNr">${PROTOKOLL_TOPS_LAYOUT.labels.top}</th>
+      <th class="colText">${PROTOKOLL_TOPS_LAYOUT.labels.text}</th>
       <th class="colMeta">
         <div class="metaHead">
-          <div>Status</div>
-          <div>Fertig bis</div>
-          <div>verantw</div>
+          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[0]}</div>
+          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[1]}</div>
+          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[2]}</div>
         </div>
       </th>
     `;
@@ -288,12 +293,18 @@ function _buildGenericRow(row) {
 function _buildColGroup(type) {
   if (type !== "tops") return null;
   const colgroup = document.createElement("colgroup");
+  const { number, text, meta } = PROTOKOLL_TOPS_LAYOUT.pdf.columns;
   colgroup.innerHTML = `
-    <col class="colNr" />
-    <col class="colText" />
-    <col class="colMeta" />
+    <col class="${number.className}" style="width:${number.width};" />
+    <col class="${text.className}" style="width:${text.width};" />
+    <col class="${meta.className}" style="width:${meta.width};" />
   `;
   return colgroup;
+}
+
+function _applyTopsTableLayout(table) {
+  if (!table || String(table.className || "") !== "topsTable") return;
+  applyProtokollTopsPdfLayout(table);
 }
 
 function _applyV2Vars(root, data) {
@@ -350,6 +361,7 @@ function _buildTable(page) {
   else if (type === "firms") table.className = "firmsTable";
   else if (type === "firmsCards") table.className = "firmsCardsTable";
   else if (type === "todo") table.className = "todoTable";
+  _applyTopsTableLayout(table);
 
   const colgroup = _buildColGroup(type);
   if (colgroup) table.appendChild(colgroup);
