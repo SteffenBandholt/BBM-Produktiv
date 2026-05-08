@@ -19,6 +19,7 @@ const { getPrintData } = require("../print/printData");
 const {
   createPrintToPdfOptions,
   normalizePrintOrientation,
+  resolvePrintRequestedOrientation,
 } = require("../print/printOrientation");
 const {
   enforceLicensedFeature,
@@ -60,6 +61,14 @@ function uniquePath(dir, fileName) {
 
 function buildPrintToPdfOptions({ orientation } = {}) {
   return createPrintToPdfOptions({ orientation });
+}
+
+function _resolveRequestedOrientation(payload = {}) {
+  return resolvePrintRequestedOrientation({
+    orientation: payload.orientation,
+    testOrientation: payload.testOrientation,
+    smokeOrientation: process.env.BBM_PRINT_SMOKE_ORIENTATION,
+  });
 }
 
 // Shared technical output infrastructure:
@@ -303,7 +312,7 @@ async function printToPdf(payload = {}) {
   const mode = String(payload.mode || "").trim() || "protocol";
   const projectId = payload.projectId || null;
   const meetingId = payload.meetingId || null;
-  const orientation = normalizePrintOrientation(payload.orientation);
+  const orientation = _resolveRequestedOrientation(payload);
 
   console.log(
     `[print:${jobId}] start mode=${mode} projectId=${projectId} meetingId=${meetingId} orientation=${orientation}`
@@ -414,6 +423,7 @@ async function printToPdf(payload = {}) {
         meetingId,
         settingsOverride: payload.settingsOverride || null,
         orientation,
+        testOrientation: payload.testOrientation || null,
         debug,
       });
     });
@@ -434,7 +444,7 @@ function registerPrintIpc() {
     _runIpcTask(async () => {
       _enforceFeature("protokoll");
       const p = payload || {};
-      const orientation = normalizePrintOrientation(p.orientation);
+      const orientation = _resolveRequestedOrientation(p);
       const data = await getPrintData({
         mode: p.mode,
         projectId: p.projectId,

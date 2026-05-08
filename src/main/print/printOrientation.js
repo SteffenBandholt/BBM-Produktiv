@@ -23,8 +23,23 @@ function createPrintToPdfOptions({ orientation } = {}) {
   };
 }
 
+function resolvePrintRequestedOrientation({
+  orientation,
+  testOrientation,
+  smokeOrientation,
+} = {}) {
+  const requestedSmokeOrientation = normalizePrintOrientation(
+    testOrientation || smokeOrientation
+  );
+  if (testOrientation || smokeOrientation) {
+    return requestedSmokeOrientation;
+  }
+  return normalizePrintOrientation(orientation);
+}
+
 module.exports = {
   normalizePrintOrientation,
   isLandscapeOrientation,
   createPrintToPdfOptions,
+  resolvePrintRequestedOrientation,
 };

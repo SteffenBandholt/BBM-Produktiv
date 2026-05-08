@@ -378,6 +378,13 @@ Nicht umgesetzt:
 - keine zweite PDF-Logik
 - keine Änderung an den bestehenden Hochformatwerten
 
+Intern/testweise kann ein Landscape-Smoke-Test so ausgelöst werden:
+
+- per IPC-Payload: `orientation: "landscape"` oder `testOrientation: "landscape"`
+- oder per Startumgebung: `BBM_PRINT_SMOKE_ORIENTATION=landscape`
+
+Der `testOrientation`-/Env-Pfad ist nur für interne Prüfungen gedacht und ändert die normale Bedienung nicht. Ohne diesen Override bleibt Hochformat der Default.
+
 ---
 
 ## 8. Bewertung
