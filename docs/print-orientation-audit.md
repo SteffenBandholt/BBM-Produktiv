@@ -388,6 +388,13 @@ Intern/testweise kann ein Landscape-Smoke-Test so ausgelöst werden:
 
 Der `testOrientation`-/Env-Pfad ist nur für interne Prüfungen gedacht und ändert die normale Bedienung nicht. Ohne diesen Override bleibt Hochformat der Default.
 
+Erster Smoke-Test-Befund:
+
+- der Inhalt wurde bereits quer berechnet
+- die PDF-Seite blieb trotzdem hochkant
+- Ursache: die feste `@page`-Regel in `print.css` musste zur Laufzeit durch eine dynamische `@page { size: A4 portrait|landscape; margin: 0; }`-Regel im Renderer überschrieben werden
+- Behebung: die Renderer-Seite setzt die `@page`-Regel jetzt abhängig von `data.orientation`
+
 ---
 
 ## 8. Bewertung

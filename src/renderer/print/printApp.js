@@ -55,6 +55,28 @@ function _formatDateIso(value) {
   return `${d}.${m}.${y}`;
 }
 
+function _normalizeOrientation(value) {
+  return String(value || "").trim().toLowerCase() === "landscape" ? "landscape" : "portrait";
+}
+
+function _applyPageOrientationStyle(orientation) {
+  const normalized = _normalizeOrientation(orientation);
+  let styleEl = document.getElementById("bbm-print-page-orientation");
+  if (!styleEl) {
+    styleEl = document.createElement("style");
+    styleEl.id = "bbm-print-page-orientation";
+    document.head.appendChild(styleEl);
+  }
+  styleEl.textContent = `@page { size: A4 ${normalized}; margin: 0; }`;
+  if (document.documentElement?.dataset) {
+    document.documentElement.dataset.orientation = normalized;
+  }
+  if (document.body?.dataset) {
+    document.body.dataset.orientation = normalized;
+  }
+  return normalized;
+}
+
 function _buildTopRowData(top, longtextOverride, ampelColor) {
   const rawNum =
     top.topNumberText ??
@@ -1246,16 +1268,11 @@ async function handleInit(payload) {
       } catch (_e) {}
     }
 
-    const orientation = String(data.orientation || "portrait").trim().toLowerCase() === "landscape"
-      ? "landscape"
-      : "portrait";
-    if (document.body?.dataset) {
-      document.body.dataset.orientation = orientation;
-    }
+    const orientation = _applyPageOrientationStyle(data.orientation);
 
     if (data.mode === "headerTest") {
       const root = renderHeaderTestPages({ data, debug: !!payload?.debug });
-      if (root?.dataset) root.dataset.orientation = String(data.orientation || "portrait");
+      if (root?.dataset) root.dataset.orientation = orientation;
       app.innerHTML = "";
       app.appendChild(root);
       window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true });
@@ -1264,7 +1281,7 @@ async function handleInit(payload) {
 
     const pages = _buildPages(data);
     const root = renderPrint({ pages, data });
-    if (root?.dataset) root.dataset.orientation = String(data.orientation || "portrait");
+    if (root?.dataset) root.dataset.orientation = orientation;
     app.innerHTML = "";
     app.appendChild(root);
     window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true });

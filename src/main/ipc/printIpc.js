@@ -390,9 +390,11 @@ async function printToPdf(payload = {}) {
         console.log(
           `[PRINT_ACTIVE] printToPDF options: ${JSON.stringify(
             {
+              orientation,
+              landscape: options.landscape,
+              pageSize: options.pageSize,
               displayHeaderFooter: options.displayHeaderFooter,
               margin: options.margin,
-              pageSize: options.pageSize,
             },
             null,
             0
