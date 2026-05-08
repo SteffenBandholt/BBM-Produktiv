@@ -8,9 +8,11 @@ function read(relPath) {
 }
 
 async function runDrucklayoutModuleTests(run) {
-  const [{ topsLayout }, { renderDrucklayoutTable }] = await Promise.all([
+  const [{ topsLayout }, { renderDrucklayoutTable }, serviceModule, { getInitialLayoutState }] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/drucklayout/layouts/topsLayout.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/drucklayout/DrucklayoutTable.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/drucklayout/DrucklayoutService.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/drucklayout/DrucklayoutLayouts.js")),
   ]);
 
   await run("Drucklayout: topsLayout enthaelt nr/text/meta", () => {
@@ -48,6 +50,31 @@ async function runDrucklayoutModuleTests(run) {
     assert.equal(moduleCatalogSource.includes("drucklayout"), false);
   });
 
+
+  await run("Drucklayout: Service uebernimmt Matrixwerte und baut Code aus aktuellem Zustand", () => {
+    const state = getInitialLayoutState();
+    const matrixInputs = {
+      nrWidthMm: { value: "22" },
+      metaWidthMm: { value: "44" },
+      nrPadLeftMm: { value: "1" },
+      nrPadRightMm: { value: "2" },
+      textPadLeftMm: { value: "0.5" },
+      textPadRightMm: { value: "1.5" },
+      metaPadLeftMm: { value: "3" },
+      metaPadRightMm: { value: "1" },
+      level1NrPt: { value: "10" },
+      level2To4NrPt: { value: "8.5" },
+      shortPt: { value: "8.5" },
+      longPt: { value: "7.5" },
+      metaPt: { value: "6.5" },
+    };
+    const next = serviceModule.applyMatrixValuesToState(state, matrixInputs);
+    assert.equal(next.columns.nr.widthMm, 22);
+    assert.equal(next.columns.meta.widthMm, 44);
+    const code = serviceModule.buildCodeValues(next);
+    assert.equal(code.includes("widthMm: 22"), true);
+    assert.equal(code.includes("widthMm: 44"), true);
+  });
   await run("Drucklayout: Screen enthaelt Matrixfelder, Vorschau und Reset", () => {
     const screenSource = read("src/renderer/modules/drucklayout/DrucklayoutScreen.js");
     assert.equal(screenSource.includes("TOP-Nr Breite (mm)"), true);

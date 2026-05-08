@@ -26,9 +26,7 @@ export default class DrucklayoutScreen {
       return { wrap, input: i };
     };
 
-    const inputs = {
-      ...Object.fromEntries([]),
-    };
+    const inputs = {};
     const defs = [
       ["TOP-Nr Breite (mm)", state.columns.nr.widthMm, "nrWidthMm"],
       ["Meta Breite (mm)", state.columns.meta.widthMm, "metaWidthMm"],
@@ -65,20 +63,24 @@ export default class DrucklayoutScreen {
     const reset = () => {
       const defaults = getInitialLayoutState();
       Object.assign(state, defaults);
-      for (const [, , key] of defs) inputs[key].value = String(defaults.columns.nr[key] ?? defaults.columns.meta[key] ?? defaults.columns.text[key] ?? defaults.textStyles[key]);
-      inputs.nrWidthMm.value = String(defaults.columns.nr.widthMm);
-      inputs.metaWidthMm.value = String(defaults.columns.meta.widthMm);
-      inputs.nrPadLeftMm.value = String(defaults.columns.nr.padLeftMm);
-      inputs.nrPadRightMm.value = String(defaults.columns.nr.padRightMm);
-      inputs.textPadLeftMm.value = String(defaults.columns.text.padLeftMm);
-      inputs.textPadRightMm.value = String(defaults.columns.text.padRightMm);
-      inputs.metaPadLeftMm.value = String(defaults.columns.meta.padLeftMm);
-      inputs.metaPadRightMm.value = String(defaults.columns.meta.padRightMm);
-      inputs.level1NrPt.value = String(defaults.textStyles.level1NrPt);
-      inputs.level2To4NrPt.value = String(defaults.textStyles.level2To4NrPt);
-      inputs.shortPt.value = String(defaults.textStyles.shortPt);
-      inputs.longPt.value = String(defaults.textStyles.longPt);
-      inputs.metaPt.value = String(defaults.textStyles.metaPt);
+      const resetMap = {
+        nrWidthMm: defaults.columns.nr.widthMm,
+        metaWidthMm: defaults.columns.meta.widthMm,
+        nrPadLeftMm: defaults.columns.nr.padLeftMm,
+        nrPadRightMm: defaults.columns.nr.padRightMm,
+        textPadLeftMm: defaults.columns.text.padLeftMm,
+        textPadRightMm: defaults.columns.text.padRightMm,
+        metaPadLeftMm: defaults.columns.meta.padLeftMm,
+        metaPadRightMm: defaults.columns.meta.padRightMm,
+        level1NrPt: defaults.textStyles.level1NrPt,
+        level2To4NrPt: defaults.textStyles.level2To4NrPt,
+        shortPt: defaults.textStyles.shortPt,
+        longPt: defaults.textStyles.longPt,
+        metaPt: defaults.textStyles.metaPt,
+      };
+      for (const [key, value] of Object.entries(resetMap)) {
+        inputs[key].value = String(value);
+      }
       rerender();
     };
 
