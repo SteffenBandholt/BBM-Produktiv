@@ -17,6 +17,13 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Der Table-Layout-Resolver fuer `protokoll_tops` ist jetzt als technische Grundlage vorhanden:
+  - die zentrale Registry kennt den Pilot `protokoll_tops`
+  - `getResolvedTableLayout(...)` liefert Standardlayout, gespeichertes Layout oder einen sicheren Fehler fuer unbekannte Tabellen
+  - kaputtes JSON faellt auf das Standardlayout zurueck
+  - portrait und landscape werden getrennt behandelt
+  - geprueft mit `npm test`
+- Naechster offener Schritt: den Resolver spaeter nur dort anschliessen, wo er fachlich wirklich gebraucht wird, ohne UI oder Druckoptik vorwegzunehmen.
 - Der Kurztext von neu angelegten Level-1-Titeln wird jetzt nicht mehr beim Blur verworfen:
   - die SharedEditbox-Kette delegiert die Kurztext-Limitierung und Counter-Aktualisierung wieder korrekt an die Editbox
   - Kurztext-Input landet sofort im Draft und in der Live-Liste

@@ -23,6 +23,7 @@ const { runSettingsUserProfileSourceTests } = require("./tests/settingsUserProfi
 const { runSettingsPrintLayoutTests } = require("./tests/settingsPrintLayout.test.cjs");
 const { runPrintUserDataResolverTests } = require("./tests/printUserDataResolver.test.cjs");
 const { runPrintOrientationTests } = require("./tests/printOrientation.test.cjs");
+const { runTableLayoutsResolverTests } = require("./tests/tableLayoutsResolver.test.cjs");
 const { runTableLayoutsRepoTests } = require("./tests/tableLayoutsRepo.test.cjs");
 const { runTableLayoutsIpcTests } = require("./tests/tableLayoutsIpc.test.cjs");
 const { runSendMailPayloadTests } = require("./tests/sendMailPayload.test.cjs");
@@ -104,6 +105,7 @@ async function main() {
   await runSettingsPrintLayoutTests(run);
   await runPrintUserDataResolverTests(run);
   await runPrintOrientationTests(run);
+  await runTableLayoutsResolverTests(run);
   await runTableLayoutsRepoTests(run);
   await runTableLayoutsIpcTests(run);
   await runSendMailPayloadTests(run);

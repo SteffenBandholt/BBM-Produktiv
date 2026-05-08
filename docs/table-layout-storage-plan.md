@@ -342,6 +342,8 @@ Die erste technische Grundlage ist bereits im Repo angelegt:
 
 - `table_layouts` wird beim DB-Start mit angelegt bzw. nachgezogen
 - ein internes Repository liest, speichert und loescht Layouts
+- ein kleiner Resolver liefert fuer bekannte Tabellen ein sicheres Standard-/Override-Layout
+- die zentrale Registry kennt den Pilot `protokoll_tops`
 - IPC-Endpunkte fuer Laden/Speichern/Reset sind vorbereitet
 - `protokoll_tops` nutzt den zentralen Standard als Fallback-Basis
 - `portrait` und `landscape` werden getrennt identifiziert

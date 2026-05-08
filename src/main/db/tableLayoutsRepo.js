@@ -1,13 +1,13 @@
-const fs = require("node:fs");
-const path = require("node:path");
 const { initDatabase } = require("./database");
 const { normalizePrintOrientation } = require("../print/printOrientation");
+const {
+  getTableLayoutDefinition,
+  loadStandardTableLayout,
+} = require("../../shared/tableLayouts/tableLayoutRegistry");
 
 const DEFAULT_SCOPE_TYPE = "global";
 const ALLOWED_SCOPE_TYPES = new Set(["global", "project"]);
 const DEFAULT_SCHEMA_VERSION = 1;
-
-let _pilotDefaultLayoutPromise = null;
 
 function _db() {
   return initDatabase();
@@ -219,34 +219,25 @@ function getStoredTableLayout(identity = {}) {
   return _rowToLayoutRecord(row);
 }
 
-async function _loadPilotDefaultLayout(identity = {}) {
+async function getResolvedTableLayout(identity = {}) {
   const norm = _normalizeIdentity(identity);
-  if (norm.tableKey !== "protokoll_tops" || norm.moduleId !== "protokoll") {
-    return null;
+  const definition = getTableLayoutDefinition(norm);
+  if (!definition) {
+    return {
+      ...norm,
+      ok: false,
+      schemaVersion: DEFAULT_SCHEMA_VERSION,
+      storedLayout: null,
+      defaultLayout: null,
+      effectiveLayout: null,
+      source: "unknown",
+      error: `Unknown table layout: ${norm.tableKey || "?"}/${norm.moduleId || "?"}`,
+      parseError: "",
+    };
   }
 
-  if (!_pilotDefaultLayoutPromise) {
-    const layoutPath = path.join(__dirname, "../../shared/tableLayouts/protokollTopsLayout.js");
-    const source = fs.readFileSync(layoutPath, "utf8");
-    const encodedSource = Buffer.from(source, "utf8").toString("base64");
-    const dataUrl = `data:text/javascript;base64,${encodedSource}`;
-
-    _pilotDefaultLayoutPromise = import(dataUrl).then((mod) => {
-        if (typeof mod?.getProtokollTopsLayout === "function") {
-          return mod.getProtokollTopsLayout();
-        }
-        return null;
-      }).catch(() => null);
-  }
-
-  const layout = await _pilotDefaultLayoutPromise;
-  return _cloneJson(layout);
-}
-
-async function getEffectiveTableLayout(identity = {}) {
-  const norm = _normalizeIdentity(identity);
   const exact = getStoredTableLayout(norm);
-  const defaultBase = await _loadPilotDefaultLayout(norm);
+  const defaultBase = await loadStandardTableLayout(norm);
   const portraitFallback =
     norm.orientation === "landscape"
       ? getStoredTableLayout({ ...norm, orientation: "portrait" })
@@ -257,6 +248,7 @@ async function getEffectiveTableLayout(identity = {}) {
 
   return {
     ...norm,
+    ok: true,
     schemaVersion: fallbackRecord?.schemaVersion || DEFAULT_SCHEMA_VERSION,
     storedLayout,
     defaultLayout: defaultBase,
@@ -269,6 +261,9 @@ async function getEffectiveTableLayout(identity = {}) {
 async function saveTableLayout(input = {}) {
   const db = _db();
   const norm = _normalizeIdentity(input);
+  if (!getTableLayoutDefinition(norm)) {
+    throw new Error(`Unknown table layout: ${norm.tableKey || "?"}/${norm.moduleId || "?"}`);
+  }
   const layout = _normalizeLayoutPayload(input.layout ?? input.layoutPatch ?? input.effectiveLayout);
   const now = new Date().toISOString();
   const stmt = db.prepare(`
@@ -303,7 +298,7 @@ async function saveTableLayout(input = {}) {
     now
   );
 
-  return getEffectiveTableLayout(norm);
+  return getResolvedTableLayout(norm);
 }
 
 function resetTableLayout(input = {}) {
@@ -327,7 +322,8 @@ function resetTableLayout(input = {}) {
 module.exports = {
   listTableLayouts,
   getStoredTableLayout,
-  getEffectiveTableLayout,
+  getResolvedTableLayout,
+  getEffectiveTableLayout: getResolvedTableLayout,
   saveTableLayout,
   resetTableLayout,
   normalizeTableLayoutIdentity: _normalizeIdentity,
