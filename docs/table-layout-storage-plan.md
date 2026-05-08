@@ -334,3 +334,20 @@ Fuer den ersten technisch sauberen Schritt gilt:
 - Fallback immer auf Repo-Standard
 - normale Nutzer nicht einbeziehen
 
+---
+
+## 16. Aktueller technischer Stand
+
+Die erste technische Grundlage ist bereits im Repo angelegt:
+
+- `table_layouts` wird beim DB-Start mit angelegt bzw. nachgezogen
+- ein internes Repository liest, speichert und loescht Layouts
+- IPC-Endpunkte fuer Laden/Speichern/Reset sind vorbereitet
+- `protokoll_tops` nutzt den zentralen Standard als Fallback-Basis
+- `portrait` und `landscape` werden getrennt identifiziert
+
+Wichtig:
+
+- das ist noch keine Editor-UI
+- es ist noch keine normale Nutzerfunktion
+- bestehende Druck- und Tabellenlayouts bleiben optisch unveraendert

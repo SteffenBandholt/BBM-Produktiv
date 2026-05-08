@@ -128,6 +128,14 @@ contextBridge.exposeInMainWorld("bbmDb", {
   printPdf: (data) => ipcRenderer.invoke("print:toPdf", data),
 
   // ============================================================
+  // Tabellenlayouts (intern)
+  // ============================================================
+  tableLayoutsGetMany: (data) => ipcRenderer.invoke("tableLayouts:getMany", data),
+  tableLayoutsGetOne: (data) => ipcRenderer.invoke("tableLayouts:getOne", data),
+  tableLayoutsSave: (data) => ipcRenderer.invoke("tableLayouts:save", data),
+  tableLayoutsReset: (data) => ipcRenderer.invoke("tableLayouts:reset", data),
+
+  // ============================================================
   // App
   // ============================================================
   appQuit: () => ipcRenderer.invoke("app:quit"),
