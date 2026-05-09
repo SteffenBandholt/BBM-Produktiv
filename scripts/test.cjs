@@ -11,6 +11,7 @@ const { runTopsCommandsTests } = require("./tests/topsCommands.test.cjs");
 const { runTopsActionPolicyTests } = require("./tests/topsActionPolicy.test.cjs");
 const { runTopsScreenIntegrationTests } = require("./tests/topsScreen.integration.test.cjs");
 const { runProjectFirmsActiveFlowTests } = require("./tests/projectFirmsActiveFlow.test.cjs");
+const { runProjectFirmsLayoutTests } = require("./tests/projectFirmsLayout.test.cjs");
 const { runTopsDtosTests } = require("./tests/topsDtos.test.cjs");
 const { runTopsCloseFlowTests } = require("./tests/topsCloseFlow.test.cjs");
 const { runTopServiceHierarchyTests } = require("./tests/topServiceHierarchy.test.cjs");
@@ -24,6 +25,7 @@ const { runSettingsPrintLayoutTests } = require("./tests/settingsPrintLayout.tes
 const { runTableLayoutEditorPrototypeTests } = require("./tests/tableLayoutEditorPrototype.test.cjs");
 const { runPrintUserDataResolverTests } = require("./tests/printUserDataResolver.test.cjs");
 const { runPrintOrientationTests } = require("./tests/printOrientation.test.cjs");
+const { runPrintModesTests } = require("./tests/printModes.test.cjs");
 const { runPrintTableLayoutsTests } = require("./tests/printTableLayouts.test.cjs");
 const { runTableLayoutsResolverTests } = require("./tests/tableLayoutsResolver.test.cjs");
 const { runTableLayoutsRepoTests } = require("./tests/tableLayoutsRepo.test.cjs");
@@ -99,6 +101,7 @@ async function main() {
   await runTopsActionPolicyTests(run);
   await runTopsScreenIntegrationTests(run);
   await runProjectFirmsActiveFlowTests(run);
+  await runProjectFirmsLayoutTests(run);
   await runProtokollRouterFallbackTests(run);
   await runProtokollProjectEntryRoutingTests(run);
   await runProjektverwaltungModuleTests(run);
@@ -109,6 +112,7 @@ async function main() {
   await runTableLayoutEditorPrototypeTests(run);
   await runPrintUserDataResolverTests(run);
   await runPrintOrientationTests(run);
+  await runPrintModesTests(run);
   await runPrintTableLayoutsTests(run);
   await runTableLayoutsResolverTests(run);
   await runTableLayoutsRepoTests(run);

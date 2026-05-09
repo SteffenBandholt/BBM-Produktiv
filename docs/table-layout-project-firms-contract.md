@@ -4,6 +4,7 @@
 
 Der Tabellenlayout-Pilot `protokoll_tops` ist bereits technisch und fachlich umgesetzt.
 Der naechste Firmen-/Personen-Kandidat ist laut Scope-Doku die Projekt-Firmenliste in `ProjectFirmsView.js`.
+Der UI-Anschluss fuer `project_firms` ist inzwischen umgesetzt; dieser Contract bleibt als fachliche Referenz fuer die generische Spaltenstruktur und den offenen PDF-Schritt bestehen.
 
 Diese Doku legt den fachlichen und technischen Contract fest, bevor fuer `project_firms` Code gebaut wird.
 
@@ -122,6 +123,11 @@ Empfohlene Entscheidung fuer jetzt:
 
 - PDF vorerst **deaktiviert / nicht angeschlossen**
 - der Contract kann die PDF-Felder aber bereits vorsehen
+
+Aktueller Stand:
+
+- die UI der Projekt-Firmenliste nutzt bereits gespeicherte UI-Spaltenbreiten ueber den Tabellenlayout-Resolver
+- der PDF-Pfad fuer `project_firms` bleibt bewusst noch getrennt und unverdrahtet
 
 ## 9. Preview-Testdaten
 

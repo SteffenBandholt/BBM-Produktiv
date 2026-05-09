@@ -10,6 +10,7 @@ import {
   normalizeTopShortText,
 } from "../shared/text/topTextPresentation.js";
 import { getProtokollTopsLayout } from "../../shared/tableLayouts/protokollTopsLayout.js";
+import { normalizePrintMode } from "../../shared/print/printModes.mjs";
 
 const app = document.getElementById("app");
 const PROTOKOLL_TOPS_LAYOUT = getProtokollTopsLayout();
@@ -35,12 +36,13 @@ function _projectLabel(project) {
 }
 
 function _docLabel(mode) {
-  if (mode === "preview" || mode === "vorabzug") return "Vorabzug";
-  if (mode === "protocol") return "Protokoll";
-  if (mode === "topsAll") return "Top-Liste (alle)";
-  if (mode === "firms") return "Firmenliste";
-  if (mode === "todo") return "ToDo";
-  if (mode === "headerTest") return "Kopf-Test";
+  const normalizedMode = normalizePrintMode(mode);
+  if (normalizedMode === "preview" || normalizedMode === "vorabzug") return "Vorabzug";
+  if (normalizedMode === "protocol") return "Protokoll";
+  if (normalizedMode === "topsAll") return "Top-Liste (alle)";
+  if (normalizedMode === "firms") return "Firmenliste";
+  if (normalizedMode === "todo") return "ToDo";
+  if (normalizedMode === "headerTest") return "Kopf-Test";
   return "Dokument";
 }
 
@@ -1191,7 +1193,10 @@ function _paginateGeneric({ rows, type, projectLabel, docLabel, data }) {
 }
 
 function _buildPages(data) {
-  const mode = data.mode || "protocol";
+  const mode = normalizePrintMode(data.mode || "protocol");
+  if (!mode) {
+    throw new Error(`Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`);
+  }
   const projectLabel = _projectLabel(data.project);
   const docLabel = _docLabel(mode);
 
@@ -1273,6 +1278,14 @@ async function handleInit(payload) {
         await document.fonts.ready;
       } catch (_e) {}
     }
+
+    const normalizedMode = normalizePrintMode(data.mode || "protocol");
+    if (!normalizedMode) {
+      setError(`Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`);
+      window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: false });
+      return;
+    }
+    data.mode = normalizedMode;
 
     const orientation = _applyPageOrientationStyle(data.orientation);
 

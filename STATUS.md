@@ -17,6 +17,14 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Der Ausgabe-Dialog zeigt wieder die vorhandenen Ausgabearten fuer Protokoll und Listen:
+  - Protokoll drucken
+  - PDF-Vorschau öffnen
+  - Firmenliste
+  - ToDo-Liste
+  - Top-Liste (alle)
+  - gespeicherte Firmenlisten
+  - unbekannte Druckmodi werden nicht mehr still auf Protokoll zurückgeführt
 - Der Protokoll-Pilot `protokoll_tops` ist jetzt kontrolliert an den Table-Layout-Resolver angebunden:
   - `printData.js` liefert den resolved Payload fuer den Druckweg mit
   - `printApp.js` und `PrintShell.js` lesen Layoutdaten nur, wenn sie im Payload enthalten sind
@@ -29,6 +37,9 @@ Sie ergänzt:
   - der Editor erzeugt die Felder aus der Spaltendefinition
   - `projektverwaltung / project_firms` ist als registrierter naechster Pilot vorhanden
   - `protokoll_tops` bleibt rueckwaertskompatibel
+- Die Projekt-Firmenliste nutzt ihre gespeicherten UI-Spaltenbreiten jetzt ueber den Tabellenlayout-Resolver:
+  - `ProjectFirmsView.js` laedt `moduleId=projektverwaltung`, `tableKey=project_firms`, `orientation=portrait` ueber `tableLayoutsGetOne`
+  - der PDF-Anschluss fuer `project_firms` bleibt bewusst getrennt
 - Audit fuer den naechsten Tabellenlayout-Kandidaten erstellt; keine Codeaenderung.
 - Scope-Doku fuer den Firmenlisten-Pilot erstellt; keine Codeaenderung.
 - Contract-Doku fuer `project_firms` Tabellenlayout erstellt; keine Codeaenderung.
@@ -1510,3 +1521,7 @@ Wichtig:
 - Risiken/Hinweise:
   - Es wurde bewusst keine externe Lizenz-App und keine Generator-/Admin-UI in die normale App zurueckgebracht.
   - Die Stop-Logik fuer das Diktat bleibt bei der vorhandenen Audio-Funktionalitaet; der neue Zustand steuert vor allem Sichtbarkeit und Anzeige.
+- Der Einstieg `Drucken` oeffnet jetzt zuerst eine Druckart-Auswahl:
+  - `Protokoll drucken` fuehrt danach zur gewohnten Auswahl geschlossener Protokolle
+  - vorhandene weitere Ausgaben bleiben ueber den ersten Schritt erreichbar, deaktivierte Optionen werden nicht als funktionierend vorgetaeuscht
+  - Protokoll-PDF-Vorschau, Firmenliste, ToDo-Liste, Top-Liste (alle) und gespeicherte Firmenlisten bleiben dabei erreichbar

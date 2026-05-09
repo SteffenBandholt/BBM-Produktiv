@@ -17,8 +17,10 @@ async function runAusgabeModuleTests(run) {
   const moduleReadmeSource = read("src/renderer/modules/ausgabe/README.md");
   const printModalSource = read("src/renderer/modules/ausgabe/PrintModal.js");
   const printAppSource = read("src/renderer/print/printApp.js");
+  const printIpcSource = read("src/main/ipc/printIpc.js");
   const printCssSource = read("src/renderer/print/print.css");
   const printV2CssSource = read("src/renderer/print/v2/v2.css");
+  const closedProtocolSelectorSource = read("src/renderer/ui/react/ClosedProtocolSelector.js");
   const sendMailSource = read("src/renderer/modules/ausgabe/sendMailPayload.js");
   const legacyPrintModalSource = read("src/renderer/ui/PrintModal.js");
   const legacySendMailSource = read("src/renderer/services/mail/sendMailPayload.js");
@@ -63,6 +65,11 @@ async function runAusgabeModuleTests(run) {
   await run("Ausgabe: Print-Dialog nutzt klare Nutzertexte", () => {
     assert.equal(printModalSource.includes("Protokoll drucken"), true);
     assert.equal(printModalSource.includes("PDF-Vorschau"), true);
+    assert.equal(printModalSource.includes("Firmenliste"), true);
+    assert.equal(printModalSource.includes("ToDo-Liste"), true);
+    assert.equal(printModalSource.includes("Top-Liste (alle)"), true);
+    assert.equal(printModalSource.includes("Gespeicherte Firmenlisten"), true);
+    assert.equal(printModalSource.includes("Weitere Ausgaben"), true);
     assert.equal(
       printModalSource.includes("Nur abgeschlossene Besprechungen"),
       true
@@ -72,6 +79,98 @@ async function runAusgabeModuleTests(run) {
       printModalSource.includes("abgeschlossene Besprechung"),
       true
     );
+    assert.equal(printModalSource.includes("printClosedMeetingDirect"), true);
+    assert.equal(printModalSource.includes("openTodoPrintPreview"), true);
+    assert.equal(printModalSource.includes("openTopListAllPreview"), true);
+    assert.equal(printModalSource.includes("openFirmsPrintPreview"), true);
+    assert.equal(printModalSource.includes("openStoredFirmsPdfSelection"), true);
+    assert.equal(printAppSource.includes("Unbekannter Druckmodus"), true);
+    assert.equal(printIpcSource.includes("Unbekannter Druckmodus"), true);
+  });
+
+  await run("Ausgabe: Drucken startet mit Druckart-Auswahl", async () => {
+    const header = new MainHeader({ router: { currentProjectId: "17", currentMeetingId: "m1" } });
+    const calls = [];
+    header._ensureProtocolOutputEnabled = async () => true;
+    header._setPrintOpen = () => {};
+    header._setMailOpen = () => {};
+    header._openPrintTypeSelectorFlow = async () => {
+      calls.push("chooser");
+    };
+
+    await header._openPrintFileFlow();
+
+    assert.deepEqual(calls, ["chooser"]);
+  });
+
+  await run("Ausgabe: Druckart-Auswahl reicht an vorhandene Wege weiter", async () => {
+    const calls = [];
+    const header = new MainHeader({
+      router: {
+        currentProjectId: "17",
+        currentMeetingId: "m1",
+        openMeetingPrintPreview: async (args) => {
+          calls.push(["preview", args]);
+        },
+        openFirmsPrintPreview: async (args) => {
+          calls.push(["firms", args]);
+        },
+        openTodoPrintPreview: async (args) => {
+          calls.push(["todo", args]);
+        },
+        openTopListAllPreview: async (args) => {
+          calls.push(["tops", args]);
+        },
+        openStoredFirmsPdfSelection: async (args) => {
+          calls.push(["stored", args]);
+        },
+      },
+    });
+    header._openClosedProtocolSelectorFlow = async (mode) => {
+      calls.push(["protocol-flow", mode]);
+    };
+
+    await header._handlePrintTypeSelection({ id: "protocol-print" }, { projectId: "17" });
+    await header._handlePrintTypeSelection({ id: "protocol-preview" }, { projectId: "17", meetingId: "m1" });
+    await header._handlePrintTypeSelection({ id: "firms-preview" }, { projectId: "17" });
+    await header._handlePrintTypeSelection({ id: "todo-preview" }, { projectId: "17", meetingId: "m1" });
+    await header._handlePrintTypeSelection({ id: "topsAll-preview" }, { projectId: "17", meetingId: "m1" });
+    await header._handlePrintTypeSelection({ id: "stored-firms" }, { projectId: "17" });
+
+    assert.deepEqual(calls, [
+      ["protocol-flow", "print"],
+      ["preview", { projectId: "17", meetingId: "m1", mode: "closed" }],
+      ["firms", { projectId: "17", meetingId: null }],
+      ["todo", { projectId: "17", meetingId: "m1" }],
+      ["tops", { projectId: "17", meetingId: "m1" }],
+      ["stored", { projectId: "17" }],
+    ]);
+  });
+
+  await run("Ausgabe: Druckart-Auswahl blockiert fehlende Meeting-Optionen", () => {
+    const header = new MainHeader({
+      router: {
+        currentProjectId: "17",
+        currentMeetingId: null,
+        openMeetingPrintPreview: async () => {},
+        openFirmsPrintPreview: async () => {},
+        openTodoPrintPreview: async () => {},
+        openTopListAllPreview: async () => {},
+        openStoredFirmsPdfSelection: async () => {},
+      },
+    });
+    header._setPrintOpen = () => {};
+    header._setMailOpen = () => {};
+
+    const items = header._buildPrintTypeSelectionItems({ projectId: "17", meetingId: null });
+    const byId = Object.fromEntries(items.map((item) => [item.id, item]));
+
+    assert.equal(byId["protocol-print"]?.disabled, false);
+    assert.equal(byId["protocol-preview"]?.disabled, true);
+    assert.equal(byId["todo-preview"]?.disabled, true);
+    assert.equal(byId["topsAll-preview"]?.disabled, true);
+    assert.equal(byId["firms-preview"]?.disabled, false);
+    assert.equal(byId["stored-firms"]?.disabled, false);
   });
 
   await run("Ausgabe: PDF zeigt das TOP-Anlagedatum nicht auf Level 1", () => {
@@ -364,6 +463,11 @@ async function runAusgabeModuleTests(run) {
     assert.equal(mainHeaderSource.includes("_ensureProtocolOutputEnabled"), true);
     assert.equal(mainHeaderSource.includes("blocked: true"), true);
     assert.equal(mainHeaderSource.includes("getBlockedTransportMessage"), true);
+    assert.equal(mainHeaderSource.includes("_openPrintTypeSelectorFlow"), true);
+    assert.equal(mainHeaderSource.includes('mode: "output"'), true);
+    assert.equal(mainHeaderSource.includes("getVisiblePrintDialogActions"), true);
+    assert.equal(closedProtocolSelectorSource.includes("Druckart waehlen"), true);
+    assert.equal(closedProtocolSelectorSource.includes("Weiter"), true);
   });
 }
 

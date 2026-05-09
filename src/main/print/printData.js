@@ -10,6 +10,15 @@ const { getResolvedTableLayout } = require("../db/tableLayoutsRepo");
 const { getUserProfile } = require("../db/userProfileRepo");
 const { normalizePrintOrientation } = require("./printOrientation");
 
+let _printModesModulePromise = null;
+
+async function _loadPrintModesModule() {
+  if (!_printModesModulePromise) {
+    _printModesModulePromise = import("../../shared/print/printModes.mjs");
+  }
+  return await _printModesModulePromise;
+}
+
 function _parseBool(v) {
   const s = String(v ?? "").trim().toLowerCase();
   if (!s) return false;
@@ -896,22 +905,28 @@ function _loadPrintDocumentContent({ db, mode, projectId, meetingId, meeting, se
 }
 
 async function getPrintData({ mode, projectId, meetingId, settingsOverride, orientation } = {}) {
+  const { resolvePrintMode } = await _loadPrintModesModule();
+  const normalizedMode = resolvePrintMode(mode, { fallback: "protocol" });
+  if (!normalizedMode) {
+    throw new Error(`Unbekannter Druckmodus: ${String(mode || "").trim() || "-"}`);
+  }
+
   const db = initDatabase();
   const runtimeContext = await _buildPrintRuntimeContext({
     db,
-    mode,
+    mode: normalizedMode,
     projectId,
     meetingId,
     settingsOverride,
     orientation,
   });
   const tableLayouts = await _loadPrintTableLayouts({
-    mode,
+    mode: normalizedMode,
     orientation: runtimeContext.orientation,
   });
   const documentContent = _loadPrintDocumentContent({
     db,
-    mode,
+    mode: normalizedMode,
     projectId,
     meetingId,
     meeting: runtimeContext.meeting,
@@ -919,7 +934,7 @@ async function getPrintData({ mode, projectId, meetingId, settingsOverride, orie
   });
 
   return {
-    mode,
+    mode: normalizedMode,
     ...runtimeContext,
     ...documentContent,
     tableLayouts,

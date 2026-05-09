@@ -10,6 +10,7 @@ import {
   applyProtokollTopsPdfLayout,
   getProtokollTopsLayout,
 } from "../../../shared/tableLayouts/protokollTopsLayout.js";
+import { normalizePrintMode } from "../../../shared/print/printModes.mjs";
 
 const APP_ICON_URL = new URL("../assets/bbm-icon.png", window.location.href).toString();
 const PROTOKOLL_TOPS_LAYOUT = getProtokollTopsLayout();
@@ -559,26 +560,31 @@ function _buildSpineNote(data = {}) {
 }
 
 export function renderPrint({ pages, data } = {}) {
+  const normalizedMode = normalizePrintMode(data?.mode || "protocol");
+  if (!normalizedMode) {
+    throw new Error(`Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`);
+  }
+  const runtimeData = { ...(data || {}), mode: normalizedMode };
   const root = _el("div", "printRoot printV2Root");
-  root.dataset.orientation = _normalizeOrientation(data?.orientation);
-  root.dataset.tableLayout = _getTopLayout(data).tableKey || "protokoll_tops";
+  root.dataset.orientation = _normalizeOrientation(runtimeData?.orientation);
+  root.dataset.tableLayout = _getTopLayout(runtimeData).tableKey || "protokoll_tops";
 
   // Force colors into PDF output (Chromium/Electron)
   root.style.webkitPrintColorAdjust = "exact";
   root.style.printColorAdjust = "exact";
 
   const showVorabzugWatermark =
-    ["vorabzug", "preview"].includes(String(data?.mode || "").trim().toLowerCase());
+    ["vorabzug", "preview"].includes(String(runtimeData?.mode || "").trim().toLowerCase());
   if (showVorabzugWatermark) {
     const watermark = _el("div", "v2VorabzugWatermark", "Vorabzug");
     watermark.setAttribute("aria-hidden", "true");
     root.appendChild(watermark);
   }
-  const profileKey = String(data?.printProfile?.key || "").trim();
+  const profileKey = String(runtimeData?.printProfile?.key || "").trim();
   if (profileKey) root.classList.add("v2Profile" + profileKey.charAt(0).toUpperCase() + profileKey.slice(1));
-  _applyV2Vars(root, data);
+  _applyV2Vars(root, runtimeData);
   const totalPages = Array.isArray(pages) ? pages.length : 0;
-  const modeLabel = String(data?.printProfile?.documentLabel || "").trim() || "Dokument";
+  const modeLabel = String(runtimeData?.printProfile?.documentLabel || "").trim() || "Dokument";
   const lastTopsPageIdx = (pages || []).reduce((last, p, idx) => {
     const isTops = String(p?.table?.type || "") === "tops";
     return isTops ? idx : last;
@@ -594,14 +600,14 @@ export function renderPrint({ pages, data } = {}) {
     const pageEl = _el("div", "page");
     const pageNo = Number(page?.header?.pageNo || 0);
     if (pageNo === 1) {
-      pageEl.appendChild(_buildSpineNote(data));
+      pageEl.appendChild(_buildSpineNote(runtimeData));
     }
     if (pageNo === 1) {
-      pageEl.appendChild(renderV2GlobalHeader({ data }));
-      pageEl.appendChild(renderV2FullHeader({ data, pageNo, totalPages, modeLabel }));
+      pageEl.appendChild(renderV2GlobalHeader({ data: runtimeData }));
+      pageEl.appendChild(renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel }));
       pageEl.appendChild(_el("div", "v2FullGapLineBody"));
     } else {
-      pageEl.appendChild(renderV2MiniHeader({ data, pageNo, totalPages, modeLabel }));
+      pageEl.appendChild(renderV2MiniHeader({ data: runtimeData, pageNo, totalPages, modeLabel }));
     }
     const intro = _buildIntro(page);
     if (intro) pageEl.appendChild(intro);
@@ -612,10 +618,10 @@ export function renderPrint({ pages, data } = {}) {
     // Tops-Tabelle ohne Zeilen nicht rendern (sonst Tabellenkopf allein).
     const renderTable = !(isTops && !hasRows);
     if (renderTable) {
-      pageEl.appendChild(_buildTable(page, data));
+      pageEl.appendChild(_buildTable(page, runtimeData));
     }
     if (isTops && idx === tailPageIdx) {
-      const tail = _buildTopsTail(page, data);
+      const tail = _buildTopsTail(page, runtimeData);
       if (tail) pageEl.appendChild(tail);
     }
     pageEl.appendChild(_el("div", "v2FooterReserveSpacer"));

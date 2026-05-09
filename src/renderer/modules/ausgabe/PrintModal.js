@@ -36,6 +36,7 @@ import { createPopupOverlay, stylePopupCard, registerPopupCloseHandlers } from "
 import { OVERLAY_TOP } from "../../ui/zIndex.js";
 import { buildProtocolPdfFileName } from "../../utils/protocolPdfNaming.js";
 import { resolvePrintUserData } from "../../../shared/print/userDataResolver.mjs";
+import { getPrintDialogActions } from "../../../shared/print/printModes.mjs";
 
 const BLOCKED_OUTPUT_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
 
@@ -88,8 +89,10 @@ export default class PrintModal {
     this._nextMeetingCache = null;
 
     this.selMeeting = null;
+    this.btnProtocolPrint = null;
     this.btnPrint = null;
     this.btnClose = null;
+    this.outputActionButtons = [];
 
     this.meetings = [];
     this.selectedMeetingId = null;
@@ -170,12 +173,33 @@ export default class PrintModal {
       await this._printSelected();
     };
 
+    const btnProtocolPrint = document.createElement("button");
+    btnProtocolPrint.textContent = "Protokoll drucken";
+    applyPopupButtonStyle(btnProtocolPrint, { variant: "primary" });
+    btnProtocolPrint.onclick = async () => {
+      const projectId = this.projectId || this.router?.currentProjectId || null;
+      const meetingId = this.selectedMeetingId || null;
+      if (!projectId) {
+        alert("Bitte zuerst ein Projekt auswählen.");
+        return;
+      }
+      if (!meetingId) {
+        alert("Bitte zuerst eine Besprechung auswählen.");
+        return;
+      }
+      if (typeof this.router?.printClosedMeetingDirect !== "function") {
+        alert("Protokoll-Direktdruck ist nicht verfügbar.");
+        return;
+      }
+      await this.router.printClosedMeetingDirect({ projectId, meetingId });
+    };
+
     const btnClose = document.createElement("button");
     btnClose.textContent = "Schließen";
     applyPopupButtonStyle(btnClose);
     btnClose.onclick = () => this.close();
 
-    row.append(sel, btnPrint);
+    row.append(sel, btnProtocolPrint, btnPrint);
 
     const hint = document.createElement("div");
     hint.style.marginTop = "8px";
@@ -202,6 +226,66 @@ export default class PrintModal {
 
     protocolsInfo.append(protocolsLabel, protocolsValue);
     box.append(row, hint, protocolsInfo);
+
+    const outputBox = document.createElement("div");
+    outputBox.style.border = "1px solid #ddd";
+    outputBox.style.borderRadius = "10px";
+    outputBox.style.background = "#fafafa";
+    outputBox.style.padding = "12px";
+    outputBox.style.marginTop = "12px";
+
+    const outputTitle = document.createElement("div");
+    outputTitle.textContent = "Weitere Ausgaben";
+    outputTitle.style.fontWeight = "700";
+    outputTitle.style.marginBottom = "8px";
+
+    const outputGrid = document.createElement("div");
+    outputGrid.style.display = "grid";
+    outputGrid.style.gridTemplateColumns = "repeat(auto-fit, minmax(180px, 1fr))";
+    outputGrid.style.gap = "8px";
+    outputGrid.style.alignItems = "stretch";
+
+    this.outputActionButtons = [];
+    const outputActionDefs = getPrintDialogActions();
+    const makeOutputButton = (action) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = action.label;
+      applyPopupButtonStyle(btn, { variant: action.variant === "primary" ? "primary" : "secondary" });
+      btn.dataset.printAction = action.key;
+      btn.dataset.printMode = action.mode || "";
+      btn.dataset.requiresMeeting = action.requiresMeeting ? "1" : "0";
+      btn.onclick = async () => {
+        const projectId = this.projectId || this.router?.currentProjectId || null;
+        const meetingId = this.selectedMeetingId || null;
+        if (!projectId) {
+          alert("Bitte zuerst ein Projekt auswählen.");
+          return;
+        }
+        if (action.requiresMeeting && !meetingId) {
+          alert("Bitte zuerst eine Besprechung auswählen.");
+          return;
+        }
+        if (typeof this.router?.[action.method] !== "function") {
+          alert(`${action.label} ist nicht verfügbar.`);
+          return;
+        }
+        const args = action.requiresMeeting
+          ? { projectId, meetingId }
+          : { projectId };
+        await this.router[action.method](args);
+      };
+      return btn;
+    };
+
+    for (const action of outputActionDefs) {
+      if (!action || !action.key) continue;
+      const btn = makeOutputButton(action);
+      this.outputActionButtons.push(btn);
+      outputGrid.appendChild(btn);
+    }
+
+    outputBox.append(outputTitle, outputGrid);
 
     const nextMeetBox = document.createElement("div");
     nextMeetBox.style.border = "1px solid #ddd";
@@ -280,7 +364,7 @@ export default class PrintModal {
     content.style.minHeight = "0";
     content.style.overflow = "auto";
     content.style.padding = "14px";
-    content.append(box, nextMeetBox);
+    content.append(box, outputBox, nextMeetBox);
 
     const footer = document.createElement("div");
     footer.style.display = "flex";
@@ -302,6 +386,7 @@ export default class PrintModal {
     this.protocolsDirEl = protocolsValue;
 
     this.selMeeting = sel;
+    this.btnProtocolPrint = btnProtocolPrint;
     this.btnPrint = btnPrint;
     this.btnClose = btnClose;
 
@@ -507,6 +592,27 @@ export default class PrintModal {
         this.meetings.some((m) => m.id === this.selectedMeetingId);
       this.btnPrint.disabled = !can;
       this.btnPrint.style.opacity = can ? "1" : "0.55";
+    }
+
+    if (this.btnProtocolPrint) {
+      const can =
+        isClosedMode &&
+        !busy &&
+        !!this.selectedMeetingId &&
+        this.meetings.some((m) => m.id === this.selectedMeetingId);
+      this.btnProtocolPrint.disabled = !can;
+      this.btnProtocolPrint.style.opacity = can ? "1" : "0.55";
+    }
+
+    for (const btn of this.outputActionButtons || []) {
+      if (!btn) continue;
+      const requiresMeeting = String(btn?.dataset?.requiresMeeting || "") === "1";
+      const can =
+        !busy &&
+        !!(this.projectId || this.router?.currentProjectId) &&
+        (!requiresMeeting || (!!this.selectedMeetingId && this.meetings.some((m) => m.id === this.selectedMeetingId)));
+      btn.disabled = !can;
+      btn.style.opacity = can ? "1" : "0.55";
     }
 
     if (this.btnClose) {
@@ -937,8 +1043,10 @@ export default class PrintModal {
     this.nextMeetingMsg = null;
 
     this.selMeeting = null;
+    this.btnProtocolPrint = null;
     this.btnPrint = null;
     this.btnClose = null;
+    this.outputActionButtons = [];
   }
 
   // ============================================================

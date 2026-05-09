@@ -30,6 +30,15 @@ const {
   resolveProjectFolderName,
 } = require("./projectStoragePaths");
 
+let _printModesModulePromise = null;
+
+async function _loadPrintModesModule() {
+  if (!_printModesModulePromise) {
+    _printModesModulePromise = import("../../shared/print/printModes.mjs");
+  }
+  return await _printModesModulePromise;
+}
+
 function _randId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
@@ -309,7 +318,11 @@ function attachPrintDebugPipes(win, jobId) {
 
 async function printToPdf(payload = {}) {
   const jobId = _randId();
-  const mode = String(payload.mode || "").trim() || "protocol";
+  const { resolvePrintMode } = await _loadPrintModesModule();
+  const mode = resolvePrintMode(payload.mode, { fallback: "protocol" });
+  if (!mode) {
+    throw new Error(`Unbekannter Druckmodus: ${String(payload.mode || "").trim() || "-"}`);
+  }
   const projectId = payload.projectId || null;
   const meetingId = payload.meetingId || null;
   const orientation = _resolveRequestedOrientation(payload);
