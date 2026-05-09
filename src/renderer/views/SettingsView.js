@@ -5066,7 +5066,7 @@ export default class SettingsView {
       "Diktat-Testfreigabe",
       "Aktiviert Diktat unabhängig von der Lizenz für Entwicklung und Prüfung."
     );
-    const tableLayoutEditor = createTableLayoutPrototypeEditor({ api });
+    const tableLayoutEditor = createTableLayoutPrototypeEditor({ api, router: this.router });
 
     const btn = (label, primary = false) => {
       const el = document.createElement("button");

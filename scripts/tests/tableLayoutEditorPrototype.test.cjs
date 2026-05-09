@@ -121,6 +121,30 @@ function collectText(node) {
   return [own, childText].filter(Boolean).join(" ");
 }
 
+function findNodeByText(node, text) {
+  if (!node) return null;
+  if (Array.isArray(node)) {
+    for (const item of node) {
+      const found = findNodeByText(item, text);
+      if (found) return found;
+    }
+    return null;
+  }
+  if (typeof node !== "object") return null;
+  if (String(node.textContent || "") === text) return node;
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) {
+      const found = findNodeByText(child, text);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+function flushMicrotasks() {
+  return new Promise((resolve) => setImmediate(resolve));
+}
+
 async function runTableLayoutEditorPrototypeTests(run) {
   const editorMod = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/views/TableLayoutPrototypeEditor.js")
@@ -258,6 +282,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
       const root = view.render();
       const text = collectText(root);
       assert.equal(text.includes("Tabellenlayouts"), false);
+      assert.equal(text.includes("Gespeichertes Layout im PDF testen"), false);
       assert.equal(text.includes("Entwicklung"), true);
     } finally {
       global.document = previousDocument;
@@ -390,6 +415,141 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(text.includes("global"), false);
     } finally {
       global.document = previousDocument;
+    }
+  });
+
+  await run("TableLayoutEditor: PDF-Testdruck ist ohne Projekt/Besprechung deaktiviert", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        tableLayoutsGetOne: async () => ({
+          ok: true,
+          data: {
+            source: "default",
+            schemaVersion: 1,
+            effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay({}, "portrait"),
+          },
+        }),
+      },
+    };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb, router: {} });
+      await editor.load();
+      const button = findNodeByText(editor.root, "Gespeichertes Layout im PDF testen");
+      const info = findNodeByText(editor.root, "PDF-Test benötigt ein geöffnetes Projekt mit Besprechung.");
+      assert.ok(button, "test button missing");
+      assert.equal(button.disabled, true);
+      assert.ok(info, "context hint missing");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("TableLayoutEditor: ungespeicherte Änderungen blockieren den PDF-Test", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const printCalls = [];
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        tableLayoutsGetOne: async () => ({
+          ok: true,
+          data: {
+            source: "stored",
+            schemaVersion: 1,
+            effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay({}, "portrait"),
+          },
+        }),
+      },
+      bbmPrint: {
+        printPdf: async (payload) => {
+          printCalls.push(payload);
+          return { ok: true, filePath: "C:/temp/table-layout-test.pdf" };
+        },
+      },
+    };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({
+        api: global.window.bbmDb,
+        router: { currentProjectId: "P-1", currentMeetingId: "M-1" },
+      });
+      await editor.load();
+      editor.applyValues({ pdfMetaWidth: "18ch" });
+      const button = findNodeByText(editor.root, "Gespeichertes Layout im PDF testen");
+      const info = findNodeByText(editor.root, "Bitte erst speichern, dann PDF-Test ausführen.");
+      assert.ok(button, "test button missing");
+      assert.equal(button.disabled, true);
+      assert.ok(info, "dirty hint missing");
+      button.click();
+      await flushMicrotasks();
+      assert.equal(printCalls.length, 0);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("TableLayoutEditor: PDF-Testdruck nutzt die aktuelle Orientierung und den bestehenden Druckweg", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const printCalls = [];
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        tableLayoutsGetOne: async (payload) => ({
+          ok: true,
+          data: {
+            source: "default",
+            schemaVersion: 1,
+            effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay(
+              {
+                uiNumberWidth: payload.orientation === "landscape" ? "72px" : "64px",
+              },
+              payload.orientation
+            ),
+          },
+        }),
+      },
+      bbmPrint: {
+        printPdf: async (payload) => {
+          printCalls.push(payload);
+          return { ok: true, filePath: "C:/temp/table-layout-test.pdf" };
+        },
+      },
+    };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({
+        api: global.window.bbmDb,
+        router: { currentProjectId: "P-1", currentMeetingId: "M-1" },
+      });
+      await editor.load();
+      editor.applyValues({ orientation: "landscape" });
+      await editor.load();
+      const button = findNodeByText(editor.root, "Gespeichertes Layout im PDF testen");
+      assert.ok(button, "test button missing");
+      assert.equal(button.disabled, false);
+      button.click();
+      await flushMicrotasks();
+      await flushMicrotasks();
+      assert.equal(printCalls.length, 1);
+      assert.deepEqual(printCalls[0], {
+        mode: "topsAll",
+        projectId: "P-1",
+        meetingId: "M-1",
+        orientation: "landscape",
+        silent: true,
+        targetDir: "temp",
+        overwrite: true,
+      });
+      assert.equal(editor.root.dataset.orientation, "landscape");
+      assert.equal(editor.root.dataset.tableKey, "protokoll_tops");
+      assert.equal(editor.root.dataset.moduleId, "protokoll");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
     }
   });
 }

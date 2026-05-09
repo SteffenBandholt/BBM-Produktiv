@@ -41,6 +41,10 @@ function _cloneJson(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function _sameJson(a, b) {
+  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+}
+
 export function extractProtokollTopsEditorValues(layout = {}) {
   const uiRootVars = layout?.ui?.rootVars || {};
   const pdfColumns = layout?.pdf?.columns || {};
@@ -199,8 +203,9 @@ function _syncFields(fields, values) {
   }
 }
 
-export function createTableLayoutPrototypeEditor({ api } = {}) {
+export function createTableLayoutPrototypeEditor({ api, router } = {}) {
   const resolvedApi = api || (typeof window !== "undefined" && window.bbmDb) || {};
+  const resolvedRouter = router || null;
   const root = document.createElement("section");
   root.dataset.tableLayoutEditor = "protokoll_tops";
   root.dataset.tableKey = TARGET_LAYOUT.tableKey;
@@ -221,6 +226,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     editValues: extractProtokollTopsEditorValues({ variant: "portrait" }),
     busy: false,
     error: "",
+    testResult: "",
   };
 
   const formatSourceLabel = () => {
@@ -263,6 +269,16 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   targetInfo.append(targetInfoModule, targetInfoTable, targetInfoKey, targetInfoOrientation, targetInfoSource);
 
   head.append(title, hint, targetInfo);
+
+  const resolvePrintContext = () => {
+    const projectId = String(resolvedRouter?.currentProjectId || "").trim();
+    const meetingId = String(resolvedRouter?.currentMeetingId || "").trim();
+    return {
+      projectId: projectId || null,
+      meetingId: meetingId || null,
+      ok: !!projectId && !!meetingId,
+    };
+  };
 
   const toolbar = document.createElement("div");
   toolbar.style.display = "flex";
@@ -309,6 +325,41 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   status.style.color = "#475569";
 
   toolbar.append(orientationWrap, btnReload, btnSave, btnReset, status);
+
+  const testCard = document.createElement("div");
+  applyPopupCardStyle(testCard);
+  testCard.style.padding = "10px";
+  testCard.style.display = "grid";
+  testCard.style.gap = "8px";
+
+  const testTitle = document.createElement("div");
+  testTitle.textContent = "PDF-Testdruck";
+  testTitle.style.fontWeight = "800";
+
+  const testHint = document.createElement("div");
+  testHint.textContent =
+    "Der Test nutzt nur gespeicherte Layoutwerte aus der DB. Ungespeicherte Aenderungen muessen vorher gespeichert werden.";
+  testHint.style.fontSize = "12px";
+  testHint.style.opacity = "0.78";
+
+  const testActions = document.createElement("div");
+  testActions.style.display = "flex";
+  testActions.style.flexWrap = "wrap";
+  testActions.style.gap = "8px";
+  testActions.style.alignItems = "center";
+
+  const btnTestPdf = document.createElement("button");
+  btnTestPdf.type = "button";
+  btnTestPdf.textContent = "Gespeichertes Layout im PDF testen";
+  applyPopupButtonStyle(btnTestPdf, { variant: "primary" });
+
+  const testInfo = document.createElement("div");
+  testInfo.style.fontSize = "12px";
+  testInfo.style.color = "#475569";
+  testInfo.style.minHeight = "16px";
+
+  testActions.append(btnTestPdf, testInfo);
+  testCard.append(testTitle, testHint, testActions);
 
   const formCard = document.createElement("div");
   applyPopupCardStyle(formCard);
@@ -418,7 +469,24 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   layoutSection.append(layoutGrid);
   labelSection.append(labelGrid);
 
-  root.append(head, toolbar, fieldsCard, previewCard);
+  root.append(head, toolbar, fieldsCard, testCard, previewCard);
+
+  const updateTestPdfState = () => {
+    const ctx = resolvePrintContext();
+    const hasDirtyValues = !_sameJson(state.editValues, state.loadedValues);
+    const busyText = state.busy ? "Bitte warten, der Editor verarbeitet gerade Daten." : "";
+    const message = state.testResult
+      || busyText
+      || (!ctx.ok
+        ? "PDF-Test benötigt ein geöffnetes Projekt mit Besprechung."
+        : hasDirtyValues
+          ? "Bitte erst speichern, dann PDF-Test ausführen."
+          : `PDF-Test nutzt das gespeicherte Layout in ${state.orientation}.`);
+    testInfo.textContent = message;
+    testInfo.style.color = busyText || !ctx.ok || hasDirtyValues ? "#b91c1c" : "#475569";
+    btnTestPdf.disabled = state.busy || !ctx.ok || hasDirtyValues;
+    btnTestPdf.style.opacity = btnTestPdf.disabled ? "0.65" : "1";
+  };
 
   const setBusy = (busy) => {
     state.busy = !!busy;
@@ -433,6 +501,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     btnReload.style.opacity = btnReload.disabled ? "0.65" : "1";
     btnSave.style.opacity = btnSave.disabled ? "0.65" : "1";
     btnReset.style.opacity = btnReset.disabled ? "0.65" : "1";
+    updateTestPdfState();
   };
 
   const refreshPreview = () => {
@@ -450,6 +519,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
         status.textContent = state.error;
       }
     }
+    updateTestPdfState();
   };
 
   const syncLoadedValues = (layout, meta = {}) => {
@@ -461,6 +531,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     state.parseError = String(meta.parseError || layout?.parseError || "").trim();
     state.loadedValues = values;
     state.editValues = _cloneJson(values);
+    state.testResult = "";
     orientationSelect.value = values.orientation;
     _syncFields(fields, values);
     refreshPreview();
@@ -514,6 +585,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       const values = _readFormValues(fields);
       values.orientation = _normalizeOrientation(orientationSelect.value || values.orientation);
       state.editValues = values;
+      state.testResult = "";
       const res = await resolvedApi.tableLayoutsSave({
         tableKey: TARGET_LAYOUT.tableKey,
         moduleId: TARGET_LAYOUT.moduleId,
@@ -560,6 +632,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
         return res;
       }
       state.error = "";
+      state.testResult = "";
       await load();
       return res;
     } catch (err) {
@@ -579,6 +652,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     };
     state.orientation = next.orientation;
     state.editValues = next;
+    state.testResult = "";
     orientationSelect.value = next.orientation;
     _syncFields(fields, next);
     refreshPreview();
@@ -587,11 +661,53 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   orientationSelect.addEventListener("change", async () => {
     state.orientation = _normalizeOrientation(orientationSelect.value);
     state.editValues.orientation = state.orientation;
+    state.testResult = "";
     await load();
   });
   btnReload.addEventListener("click", () => load());
   btnSave.addEventListener("click", () => save());
   btnReset.addEventListener("click", () => reset());
+  btnTestPdf.addEventListener("click", async () => {
+    const ctx = resolvePrintContext();
+    const hasDirtyValues = !_sameJson(state.editValues, state.loadedValues);
+    if (state.busy || !ctx.ok || hasDirtyValues) {
+      refreshPreview();
+      return;
+    }
+    if (typeof window?.bbmPrint?.printPdf !== "function") {
+      state.error = "printPdf ist nicht verfuegbar.";
+      refreshPreview();
+      return;
+    }
+    setBusy(true);
+    state.error = "";
+    state.testResult = "";
+    try {
+      const res = await window.bbmPrint.printPdf({
+        mode: "topsAll",
+        projectId: ctx.projectId,
+        meetingId: ctx.meetingId,
+        orientation: state.orientation,
+        silent: true,
+        targetDir: "temp",
+        overwrite: true,
+      });
+      if (!res?.ok) {
+        state.error = res?.error || "PDF-Test konnte nicht erzeugt werden.";
+        refreshPreview();
+        return res;
+      }
+      state.testResult = `PDF-Test erstellt: ${String(res.filePath || "").trim() || "ok"}`;
+      refreshPreview();
+      return res;
+    } catch (err) {
+      state.error = err?.message || String(err);
+      refreshPreview();
+      return { ok: false, error: state.error };
+    } finally {
+      setBusy(false);
+    }
+  });
   for (const input of fields.values()) {
     if (!input) continue;
     input.addEventListener("input", () => {
@@ -600,6 +716,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
         ..._readFormValues(fields),
         orientation: _normalizeOrientation(orientationSelect.value),
       };
+      state.testResult = "";
       refreshPreview();
     });
   }

@@ -28,6 +28,8 @@ Sie ergänzt:
   - Zugang nur ueber `Einstellungen > Entwicklung > Technik > Tabellenlayouts`
   - Laden, Aendern, Speichern und Zuruecksetzen laufen fuer `moduleId=protokoll`, `tableKey=protokoll_tops` und die jeweilige Orientierung ueber die vorhandenen `tableLayouts`-IPC-Endpunkte
   - die Quelle wird im Editor als Standardlayout, gespeichertes Layout oder Fallback angezeigt
+  - ein interner Button `Gespeichertes Layout im PDF testen` nutzt den bestehenden Druckweg nur mit gespeicherten Layoutwerten und der aktuell gewaehlten Orientierung
+  - ungespeicherte Aenderungen blockieren den Testdruck mit einem klaren Hinweis
   - normale Navigation und sichtbare Protokoll-UI bleiben unveraendert
   - geprueft mit `npm test`
 - Naechster offener Schritt: spaeter manuell pruefen, ob der interne Editor auf dem Zielsystem sauber bedienbar ist.

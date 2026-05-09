@@ -39,8 +39,13 @@ Der Editor ist absichtlich nicht Teil der normalen Navigation.
 - ueber vorhandene `tableLayouts`-IPC speichern
 - auf Standard zuruecksetzen
 - Quelle wird sichtbar als `Standardlayout protokoll_tops`, `gespeichertes Layout` oder `Fallback`
+- PDF-Testdruck fuer das gespeicherte Layout starten
+- der Testdruck nutzt nur gespeicherte Layoutwerte aus der DB und die aktuelle Orientierung
+- ungespeicherte Aenderungen muessen vorher gespeichert werden
+- normale Nutzer sehen diese Funktion nicht
 
 Die Orientierung bearbeitet hier nur die Layoutvariante. Sie schaltet den normalen Druck noch nicht automatisch um.
+Der PDF-Testdruck ist kein Live-Viewer und kein direkter Renderer-Preview im Editor.
 
 ---
 
@@ -52,6 +57,7 @@ Die Orientierung bearbeitet hier nur die Layoutvariante. Sie schaltet den normal
 - keine Header-/Footer-Aenderung
 - keine zweite Drucklogik
 - keine weiteren Tabellen
+- keine ungespeicherten Layoutwerte im Testdruck
 
 ---
 
