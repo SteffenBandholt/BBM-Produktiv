@@ -114,6 +114,72 @@ async function runTableLayoutsResolverTests(run) {
     });
   });
 
+  await run("TableLayoutsResolver: kaputte gespeicherte Layoutwerte fallen auf Standard des konkreten Tables zurueck", () => {
+    return withTempTableLayoutsRepo(async ({ db, repo }) => {
+      const conn = db.initDatabase();
+      conn
+        .prepare(
+          `
+          INSERT INTO table_layouts (
+            table_key,
+            module_id,
+            orientation,
+            scope_type,
+            scope_id,
+            schema_version,
+            layout_json,
+            created_at,
+            updated_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `
+        )
+        .run(
+          "protokoll_tops",
+          "protokoll",
+          "portrait",
+          "global",
+          "",
+          1,
+          JSON.stringify({
+            variant: "portrait",
+            labels: {
+              top: "",
+              text: "Gegenstand",
+              meta: ["Status", "Fertig bis", "verantw"],
+            },
+            ui: {
+              rootVars: {
+                "--bbm-tops-list-number-col": "url(javascript:alert(1))",
+                "--bbm-tops-list-text-col": "calc(1fr)",
+                "--bbm-tops-list-meta-col": "",
+              },
+            },
+            pdf: {
+              columns: {
+                number: { width: "23mm" },
+                text: { width: "auto" },
+                meta: { width: "15ch" },
+              },
+            },
+          }),
+          new Date().toISOString(),
+          new Date().toISOString()
+        );
+
+      const resolved = await repo.getResolvedTableLayout({
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: "portrait",
+      });
+
+      assert.equal(resolved.ok, true);
+      assert.equal(resolved.source, "default");
+      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "64px");
+      assert.equal(resolved.effectiveLayout.labels.top, "TOP");
+    });
+  });
+
   await run("TableLayoutsResolver: kaputtes JSON faellt auf Standard zurueck", () => {
     return withTempTableLayoutsRepo(async ({ db, repo }) => {
       const conn = db.initDatabase();

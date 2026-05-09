@@ -29,6 +29,12 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(definitions[0].supportedOrientations.includes("portrait"), true);
     assert.equal(definitions[0].supportedOrientations.includes("landscape"), true);
     assert.equal(Array.isArray(definitions[0].editFields), true);
+    assert.equal(definitions[0].editFields[0].type, "gridTrack");
+    assert.equal(definitions[0].editFields[0].required, true);
+    assert.equal(definitions[0].editFields[0].path, "ui.rootVars.--bbm-tops-list-number-col");
+    assert.equal(definitions[0].editFields[6].type, "headingText");
+    assert.equal(definitions[0].editFields[6].required, true);
+    assert.equal(definitions[0].editFields[6].path, "labels.top");
     assert.equal(Array.isArray(definitions[0].previewData), true);
     assert.equal(definitions[0].previewData.length >= 3, true);
     assert.equal(definitions[0].previewData[0].topNumber, "1");

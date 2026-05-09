@@ -1,4 +1,5 @@
-import { applyPopupButtonStyle, applyPopupCardStyle } from "../ui/popupButtonStyles.js";
+﻿import { applyPopupButtonStyle, applyPopupCardStyle } from "../ui/popupButtonStyles.js";
+import { validateProtokollTopsEditorValues } from '../../shared/tableLayouts/protokollTopsLayout.js';
 
 const DEFAULT_VALUES = Object.freeze({
   orientation: "portrait",
@@ -396,6 +397,10 @@ function _readFormValues(fields) {
   };
 }
 
+function _validateEditorValues(values, orientation) {
+  return validateProtokollTopsEditorValues(values, orientation);
+}
+
 function _renderValuesSummary(target, state, definition) {
   if (!target) return;
   const activeValues = _getPreviewValue(state);
@@ -456,6 +461,9 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     tableDefinitions: [],
     contextLoading: false,
     contextError: "",
+    validationErrors: {},
+    validationMessage: "",
+    hasValidationErrors: false,
   };
   let fullscreenHost = null;
 
@@ -888,10 +896,37 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     return tableInfo.textContent;
   };
 
-  const _updateTestPdfState = () => {
+  const _updateTestPdfState = (validation = { errors: {} }, tableDef = null) => {
+    const errors = validation?.errors || {};
+    const fieldLabelMap = new Map((tableDef?.editFields || []).map((field) => [field.key, field.label]));
+    const messages = Object.entries(errors).map(([fieldKey, message]) => {
+      const label = fieldLabelMap.get(fieldKey) || fieldKey;
+      return `${message}: ${label}`;
+    });
+
+    state.validationErrors = errors;
+    state.validationMessage = messages.join(" | ");
+    state.hasValidationErrors = messages.length > 0;
+
+    for (const [key, input] of fields.entries()) {
+      if (!input || key === "orientation") continue;
+      const error = errors[key] || "";
+      input.dataset.validationError = error ? "1" : "0";
+      input.title = error ? error : "";
+      input.style.borderColor = error ? "#dc2626" : "";
+      input.style.outline = error ? "2px solid rgba(220,38,38,0.35)" : "";
+    }
+
+    btnSave.disabled = state.busy || state.hasValidationErrors;
+    btnSave.style.opacity = btnSave.disabled ? "0.65" : "1";
+
     const hasDirty = _hasDirtyValuesState(state);
-    status.textContent = hasDirty ? "Bitte erst speichern, dann Layout erneut prüfen." : "";
-    status.style.color = hasDirty ? "#b91c1c" : "#475569";
+    const parts = [`Quelle: ${formatSourceLabel()}`];
+    if (hasDirty) parts.push("Layoutwerte wurden geaendert.");
+    if (state.error && !state.hasValidationErrors) parts.push(state.error);
+    if (state.validationMessage) parts.push(state.validationMessage);
+    status.textContent = parts.join(" | ");
+    status.style.color = state.error || state.hasValidationErrors || hasDirty ? "#b91c1c" : "#475569";
   };
 
   const loadTableDefinitions = async () => {
@@ -951,6 +986,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const refreshPreview = () => {
     const tableDef = _getSelectedTableDefinition();
     const activeValues = _getPreviewValue(state);
+    const validation = _validateEditorValues(activeValues, state.orientation);
     root.dataset.orientation = state.orientation;
     root.dataset.source = state.source;
     root.dataset.moduleId = state.selectedModuleId || "";
@@ -959,15 +995,15 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     targetInfoSource.textContent = `Quelle: ${formatSourceLabel()}`;
     _updateContextStatus();
     _setPreviewMode(state.previewMode);
-    _renderPreviewPanel(previewPane, tableDef, { ...activeValues, source: state.source }, state.previewMode);
+    _renderPreviewPanel(previewPane, tableDef, { ...validation.values, source: state.source }, state.previewMode);
     if (status) {
       const sourceText = formatSourceLabel();
       const parseText = state.parseError ? ` | Parse: ${state.parseError}` : "";
-      status.textContent = `Quelle: ${sourceText}${parseText}`;
-      status.style.color = state.error ? "#b91c1c" : "#475569";
-      if (state.error) status.textContent = state.error;
+      const errorText = state.error && !validation.isValid ? ` | ${state.error}` : state.error ? ` | ${state.error}` : "";
+      status.textContent = `Quelle: ${sourceText}${parseText}${errorText}`;
+      status.style.color = state.error || !validation.isValid ? "#b91c1c" : "#475569";
     }
-    _updateTestPdfState();
+    _updateTestPdfState(validation, tableDef);
   };
 
   const syncLoadedValues = (layout, meta = {}) => {
@@ -1050,6 +1086,15 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
         state.error = state.contextError || "Keine Tabellen-Definition verfuegbar.";
         refreshPreview();
         return { ok: false, error: state.error };
+      }
+      const validation = _validateEditorValues(values, values.orientation);
+      if (!validation.isValid) {
+        state.error = validation.errors?.uiNumberWidth || validation.errors?.uiTextTrack || validation.errors?.uiMetaWidth ||
+          validation.errors?.pdfNumberWidth || validation.errors?.pdfTextWidth || validation.errors?.pdfMetaWidth ||
+          validation.errors?.labelTop || validation.errors?.labelText || validation.errors?.labelMeta1 ||
+          validation.errors?.labelMeta2 || validation.errors?.labelMeta3 || "Ungültiger Spaltenwert";
+        refreshPreview();
+        return { ok: false, error: state.error, validationErrors: validation.errors };
       }
       const res = await resolvedApi.tableLayoutsSave({
         tableKey: tableDef.tableKey,
@@ -1178,6 +1223,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
         orientation: _normalizeOrientation(orientationSelect.value),
       };
       state.testResult = "";
+      state.error = "";
       refreshPreview();
     });
   }
@@ -1202,3 +1248,4 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     },
   };
 }
+

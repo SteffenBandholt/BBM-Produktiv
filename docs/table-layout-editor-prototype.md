@@ -51,6 +51,9 @@ Er nutzt jetzt ein groesstenteils vollflächiges internes Arbeitsflächen-Overla
 - keine Projekt- oder Besprechungsdaten in der Vorschau
 - keine gleichzeitige Anzeige von UI- und PDF-Vorschau
 - PDF-Werte sind im Editor nur eine technische Naeherung, kein echter PDF-Renderer
+- Layoutwerte werden vor dem Speichern validiert und defensiv normalisiert
+- Ungueltige technische Werte werden nicht gespeichert
+- kaputte gespeicherte Layouts fallen auf das Standardlayout der konkreten Tabelle zurueck
 - ungespeicherte Aenderungen muessen vorher gespeichert werden
 - normale Nutzer sehen diese Funktion nicht
 

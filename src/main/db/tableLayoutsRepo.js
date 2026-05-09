@@ -1,3 +1,5 @@
+const fs = require("node:fs");
+const path = require("node:path");
 const { initDatabase } = require("./database");
 const { normalizePrintOrientation } = require("../print/printOrientation");
 const {
@@ -8,6 +10,7 @@ const {
 const DEFAULT_SCOPE_TYPE = "global";
 const ALLOWED_SCOPE_TYPES = new Set(["global", "project"]);
 const DEFAULT_SCHEMA_VERSION = 1;
+let _protokollTopsLayoutModulePromise = null;
 
 function _db() {
   return initDatabase();
@@ -108,6 +111,33 @@ function _mergeLayouts(base, overlay) {
     out[key] = value;
   }
   return out;
+}
+
+async function _loadProtokollTopsLayoutModule() {
+  if (!_protokollTopsLayoutModulePromise) {
+    const layoutPath = path.join(__dirname, "../../shared/tableLayouts/protokollTopsLayout.js");
+    const source = fs.readFileSync(layoutPath, "utf8");
+    const encodedSource = Buffer.from(source, "utf8").toString("base64");
+    const dataUrl = `data:text/javascript;base64,${encodedSource}`;
+    _protokollTopsLayoutModulePromise = import(dataUrl).catch(() => null);
+  }
+  return _protokollTopsLayoutModulePromise;
+}
+
+async function _validateProtokollTopsLayout(layout, orientation) {
+  const mod = await _loadProtokollTopsLayoutModule();
+  if (!mod || typeof mod.validateProtokollTopsEditorValues !== "function") {
+    return { values: null, errors: {}, isValid: false };
+  }
+  return mod.validateProtokollTopsEditorValues(mod.extractProtokollTopsEditorValues(layout || {}), orientation);
+}
+
+async function _sanitizeProtokollTopsLayout(layout, orientation) {
+  const mod = await _loadProtokollTopsLayoutModule();
+  if (!mod || typeof mod.sanitizeProtokollTopsLayout !== "function") {
+    return _cloneJson(layout);
+  }
+  return mod.sanitizeProtokollTopsLayout(layout || {}, orientation);
 }
 
 function _rowToLayoutRecord(row) {
@@ -242,8 +272,17 @@ async function getResolvedTableLayout(identity = {}) {
     norm.orientation === "landscape"
       ? getStoredTableLayout({ ...norm, orientation: "portrait" })
       : null;
-  const fallbackRecord = exact?.layout ? exact : portraitFallback?.layout ? portraitFallback : null;
-  const storedLayout = fallbackRecord?.layout ? _cloneJson(fallbackRecord.layout) : null;
+  const exactValidation = exact?.layout ? await _validateProtokollTopsLayout(exact.layout, norm.orientation) : null;
+  const portraitFallbackValidation =
+    portraitFallback?.layout ? await _validateProtokollTopsLayout(portraitFallback.layout, "portrait") : null;
+  const exactLayout =
+    exact?.layout && exactValidation?.isValid ? await _sanitizeProtokollTopsLayout(exact.layout, norm.orientation) : null;
+  const portraitFallbackLayout =
+    portraitFallback?.layout && portraitFallbackValidation?.isValid
+      ? await _sanitizeProtokollTopsLayout(portraitFallback.layout, "portrait")
+      : null;
+  const fallbackRecord = exactLayout ? exact : portraitFallbackLayout ? portraitFallback : null;
+  const storedLayout = exactLayout || portraitFallbackLayout || null;
   const effectiveLayout = _mergeLayouts(defaultBase, storedLayout);
 
   return {
@@ -253,7 +292,7 @@ async function getResolvedTableLayout(identity = {}) {
     storedLayout,
     defaultLayout: defaultBase,
     effectiveLayout,
-    source: exact?.layout ? "stored" : portraitFallback?.layout ? "stored-portrait-fallback" : "default",
+    source: exactLayout ? "stored" : portraitFallbackLayout ? "stored-portrait-fallback" : "default",
     parseError: exact?.parseError || portraitFallback?.parseError || "",
   };
 }
@@ -265,6 +304,12 @@ async function saveTableLayout(input = {}) {
     throw new Error(`Unknown table layout: ${norm.tableKey || "?"}/${norm.moduleId || "?"}`);
   }
   const layout = _normalizeLayoutPayload(input.layout ?? input.layoutPatch ?? input.effectiveLayout);
+  const validation = await _validateProtokollTopsLayout(layout, norm.orientation);
+  if (!validation?.isValid) {
+    const firstError = Object.values(validation?.errors || {})[0] || "Ungültiger Spaltenwert";
+    throw new Error(firstError);
+  }
+  const safeLayout = await _sanitizeProtokollTopsLayout(layout, norm.orientation);
   const now = new Date().toISOString();
   const stmt = db.prepare(`
     INSERT INTO table_layouts (
@@ -293,7 +338,7 @@ async function saveTableLayout(input = {}) {
     norm.scopeType,
     norm.scopeId,
     _normalizeSchemaVersion(input.schemaVersion),
-    JSON.stringify(layout),
+    JSON.stringify(safeLayout),
     now,
     now
   );

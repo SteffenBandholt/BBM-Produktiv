@@ -35,6 +35,9 @@ Sie ergänzt:
   - der frühere Projekt-/Besprechungsansatz im Editor wurde wieder entfernt
   - die Vorschau ist in umschaltbare UI- und PDF-Modi mit registrierten Testdaten aufgeteilt
   - der Editor nutzt jetzt ein nahezu vollflächiges internes Arbeitsflächen-Overlay
+  - Layoutwerte werden vor dem Speichern validiert und defensiv normalisiert
+  - ungueltige technische Werte werden nicht gespeichert
+  - kaputte gespeicherte Layouts fallen auf das Standardlayout der konkreten Tabelle zurueck
   - normale Navigation und sichtbare Protokoll-UI bleiben unveraendert
   - geprueft mit `npm test`
   - die Editor-Vorschau zeigt registrierte Testdaten statt echter Projekt- oder Besprechungsdaten

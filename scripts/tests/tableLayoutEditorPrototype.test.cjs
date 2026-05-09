@@ -580,6 +580,48 @@ async function runTableLayoutEditorPrototypeTests(run) {
     }
   });
 
+  await run("TableLayoutEditor: ungultige Layoutwerte blockieren Speichern und Reset bleibt moeglich", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+    const { api, calls } = makeEditorApi();
+    global.window = { bbmDb: api };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
+      await editor.load();
+      editor.applyValues({
+        uiNumberWidth: "url(javascript:alert(1))",
+        uiTextTrack: "calc(1fr)",
+        uiMetaWidth: "74px",
+        pdfNumberWidth: "23mm",
+        pdfTextWidth: "auto",
+        pdfMetaWidth: "15ch",
+        labelTop: "",
+        labelText: "Gegenstand",
+        labelMeta1: "Status",
+        labelMeta2: "Fertig bis",
+        labelMeta3: "verantw",
+      });
+      const draftText = collectText(editor.root);
+      assert.equal(draftText.includes("Ungültiger Spaltenwert"), true);
+      assert.equal(draftText.includes("Überschrift darf nicht leer sein"), true);
+      const saveRes = await editor.save();
+      assert.equal(saveRes.ok, false);
+      assert.equal(calls.filter((item) => item.type === "save").length, 0);
+
+      const resetRes = await editor.reset();
+      assert.equal(resetRes.ok, true);
+      assert.equal(calls.filter((item) => item.type === "reset").length, 1);
+      const afterResetText = collectText(editor.root);
+      assert.equal(afterResetText.includes("Ungültiger Spaltenwert"), false);
+      assert.equal(afterResetText.includes("Überschrift darf nicht leer sein"), false);
+      assert.equal(afterResetText.includes("Spaltenbreite UI: 64px | minmax(0, 1fr) | 74px"), true);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
   await run("TableLayoutEditor: kein globales Standardlayout als Ziel", () => {
     const previousDocument = global.document;
     global.document = createFakeDocument();

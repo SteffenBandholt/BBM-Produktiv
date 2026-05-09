@@ -72,7 +72,15 @@ function createDefaultStubs() {
               tableLabel: "TOP-Liste",
               description: "Pilotlayout",
               supportedOrientations: ["portrait", "landscape"],
-              editFields: [{ key: "uiNumberWidth", label: "UI TOP-Spalte" }],
+              editFields: [
+                {
+                  key: "uiNumberWidth",
+                  label: "UI TOP-Spalte",
+                  path: "ui.rootVars.--bbm-tops-list-number-col",
+                  type: "gridTrack",
+                  required: true,
+                },
+              ],
               previewData: [{ topNumber: "1", shortText: "Beispielthema", status: "offen" }],
               defaultLayout: { tableKey: "protokoll_tops", variant: "portrait" },
             },
@@ -147,6 +155,9 @@ async function runTableLayoutsIpcTests(run) {
       assert.equal(Array.isArray(defsRes.data[0].previewData), true);
       assert.equal(defsRes.data[0].previewData[0].topNumber, "1");
       assert.equal(defsRes.data[0].defaultLayout.variant, "portrait");
+      assert.equal(defsRes.data[0].editFields[0].type, "gridTrack");
+      assert.equal(defsRes.data[0].editFields[0].required, true);
+      assert.equal(defsRes.data[0].editFields[0].path, "ui.rootVars.--bbm-tops-list-number-col");
       assert.deepEqual(repoCalls.listTableLayouts, [{ tableKey: "protokoll_tops" }]);
       assert.deepEqual(repoCalls.getEffectiveTableLayout, [
         {
