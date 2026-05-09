@@ -28,6 +28,7 @@ const { runPrintTableLayoutsTests } = require("./tests/printTableLayouts.test.cj
 const { runTableLayoutsResolverTests } = require("./tests/tableLayoutsResolver.test.cjs");
 const { runTableLayoutsRepoTests } = require("./tests/tableLayoutsRepo.test.cjs");
 const { runTableLayoutsIpcTests } = require("./tests/tableLayoutsIpc.test.cjs");
+const { runTableLayoutRegistryTests } = require("./tests/tableLayoutRegistry.test.cjs");
 const { runSendMailPayloadTests } = require("./tests/sendMailPayload.test.cjs");
 const { runAusgabeModuleTests } = require("./tests/ausgabeModule.test.cjs");
 const { runAudioModuleTests } = require("./tests/audioModule.test.cjs");
@@ -112,6 +113,7 @@ async function main() {
   await runTableLayoutsResolverTests(run);
   await runTableLayoutsRepoTests(run);
   await runTableLayoutsIpcTests(run);
+  await runTableLayoutRegistryTests(run);
   await runSendMailPayloadTests(run);
   await runAusgabeModuleTests(run);
   await runAudioModuleTests(run);

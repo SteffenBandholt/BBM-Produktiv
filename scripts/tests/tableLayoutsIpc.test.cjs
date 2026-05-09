@@ -63,8 +63,19 @@ function createDefaultStubs() {
         },
       },
       tableLayoutRegistry: {
-        listTableLayoutDefinitions() {
-          return [{ tableKey: "protokoll_tops", moduleId: "protokoll", label: "Protokoll TOP-Liste" }];
+        async listTableLayoutDefinitions() {
+          return [
+            {
+              moduleId: "protokoll",
+              moduleLabel: "Protokoll",
+              tableKey: "protokoll_tops",
+              tableLabel: "TOP-Liste",
+              description: "Pilotlayout",
+              supportedOrientations: ["portrait", "landscape"],
+              editFields: [{ key: "uiNumberWidth", label: "UI TOP-Spalte" }],
+              defaultLayout: { tableKey: "protokoll_tops", variant: "portrait" },
+            },
+          ];
         },
       },
     },
@@ -128,9 +139,11 @@ async function runTableLayoutsIpcTests(run) {
       assert.equal(oneRes.ok, true);
       assert.equal(saveRes.ok, true);
       assert.equal(resetRes.ok, true);
-      assert.deepEqual(defsRes.data, [
-        { tableKey: "protokoll_tops", moduleId: "protokoll", label: "Protokoll TOP-Liste" },
-      ]);
+      assert.equal(defsRes.data[0].moduleId, "protokoll");
+      assert.equal(defsRes.data[0].moduleLabel, "Protokoll");
+      assert.equal(defsRes.data[0].tableKey, "protokoll_tops");
+      assert.equal(defsRes.data[0].tableLabel, "TOP-Liste");
+      assert.equal(defsRes.data[0].defaultLayout.variant, "portrait");
       assert.deepEqual(repoCalls.listTableLayouts, [{ tableKey: "protokoll_tops" }]);
       assert.deepEqual(repoCalls.getEffectiveTableLayout, [
         {

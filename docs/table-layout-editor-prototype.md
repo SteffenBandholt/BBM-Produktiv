@@ -26,7 +26,9 @@ Der Editor ist absichtlich nicht Teil der normalen Navigation.
 
 - Layout fuer `protokoll_tops` laden
 - Modul und Tabelle bewusst auswaehlen
-- Tabellen-Auswahl ist aktuell auf `Protokoll / TOP-Liste / protokoll_tops` begrenzt
+- Modul- und Tabellenliste kommen aus der zentralen Tabellenregistry
+- aktuell ist nur `Protokoll / TOP-Liste / protokoll_tops` angemeldet
+- spaetere Module melden ihre Tabellen ebenfalls in dieser Registry an
 - Orientierung waehlen: `portrait` / `landscape`
 - der Editor merkt sich die zuletzt gewaehlte Orientierung intern
 - aktuelle Werte anzeigen

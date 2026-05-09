@@ -13,7 +13,7 @@ function registerTableLayoutsIpc() {
 
   ipcMain.handle("tableLayouts:listDefinitions", async () => {
     try {
-      return { ok: true, data: listTableLayoutDefinitions() };
+      return { ok: true, data: await listTableLayoutDefinitions() };
     } catch (err) {
       return { ok: false, error: err?.message || String(err) };
     }

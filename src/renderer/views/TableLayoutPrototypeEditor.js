@@ -1,12 +1,5 @@
 import { applyPopupButtonStyle, applyPopupCardStyle } from "../ui/popupButtonStyles.js";
 
-const TARGET_LAYOUT = Object.freeze({
-  tableKey: "protokoll_tops",
-  moduleId: "protokoll",
-  moduleLabel: "Protokoll",
-  tableLabel: "TOP-Liste",
-});
-
 const DEFAULT_VALUES = Object.freeze({
   orientation: "portrait",
   uiNumberWidth: "64px",
@@ -21,6 +14,8 @@ const DEFAULT_VALUES = Object.freeze({
   labelMeta2: "Fertig bis",
   labelMeta3: "verantw",
 });
+
+const DEFAULT_ORIENTATION = "portrait";
 
 function _normalizeOrientation(value) {
   return String(value || "").trim().toLowerCase() === "landscape" ? "landscape" : "portrait";
@@ -54,6 +49,59 @@ function _normalizeId(value) {
 function _formatText(value, fallback) {
   const text = _normalizeId(value);
   return text || fallback;
+}
+
+function _normalizeDefinitionsList(definitions = []) {
+  return Array.isArray(definitions)
+    ? definitions
+        .filter((item) => item && typeof item === "object")
+        .map((item) => ({
+          moduleId: _normalizeId(item.moduleId),
+          moduleLabel: _formatText(item.moduleLabel, "Protokoll"),
+          moduleDescription: _formatText(item.moduleDescription, ""),
+          moduleSupportedOrientations: Array.isArray(item.moduleSupportedOrientations)
+            ? item.moduleSupportedOrientations.map((entry) => _normalizeOrientation(entry))
+            : ["portrait"],
+          tableKey: _normalizeId(item.tableKey),
+          tableLabel: _formatText(item.tableLabel, "TOP-Liste"),
+          description: _formatText(item.description, ""),
+          supportedOrientations: Array.isArray(item.supportedOrientations)
+            ? item.supportedOrientations.map((entry) => _normalizeOrientation(entry))
+            : ["portrait"],
+          editFields: Array.isArray(item.editFields) ? item.editFields.map((field) => ({ ...field })) : [],
+          defaultLayout: item.defaultLayout ? _cloneJson(item.defaultLayout) : null,
+        }))
+        .filter((item) => item.moduleId && item.tableKey)
+    : [];
+}
+
+function _groupModuleDefinitions(definitions = []) {
+  const modules = [];
+  const byModule = new Map();
+  for (const def of definitions) {
+    if (!def?.moduleId) continue;
+    let moduleDef = byModule.get(def.moduleId);
+    if (!moduleDef) {
+      moduleDef = {
+        moduleId: def.moduleId,
+        moduleLabel: def.moduleLabel || def.moduleId,
+        moduleDescription: def.moduleDescription || "",
+        moduleSupportedOrientations: Array.isArray(def.moduleSupportedOrientations)
+          ? [...def.moduleSupportedOrientations]
+          : ["portrait"],
+        tables: [],
+      };
+      byModule.set(def.moduleId, moduleDef);
+      modules.push(moduleDef);
+    }
+    moduleDef.tables.push(def);
+  }
+  return modules;
+}
+
+function _getFirstSupportedTable(moduleDef) {
+  if (!moduleDef || !Array.isArray(moduleDef.tables) || !moduleDef.tables.length) return null;
+  return moduleDef.tables[0] || null;
 }
 
 export function extractProtokollTopsEditorValues(layout = {}) {
@@ -185,10 +233,10 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const resolvedApi = api || (typeof window !== "undefined" && window.bbmDb) || {};
 
   const root = document.createElement("section");
-  root.dataset.tableLayoutEditor = "protokoll_tops";
-  root.dataset.tableKey = TARGET_LAYOUT.tableKey;
-  root.dataset.moduleId = TARGET_LAYOUT.moduleId;
-  root.dataset.orientation = "portrait";
+  root.dataset.tableLayoutEditor = "registry-driven";
+  root.dataset.tableKey = "";
+  root.dataset.moduleId = "";
+  root.dataset.orientation = DEFAULT_ORIENTATION;
   root.style.display = "grid";
   root.style.gap = "10px";
   root.style.minWidth = "min(820px, calc(100vw - 120px))";
@@ -196,7 +244,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   const fields = new Map();
   const state = {
-    orientation: "portrait",
+    orientation: DEFAULT_ORIENTATION,
     schemaVersion: 1,
     source: "default",
     parseError: "",
@@ -205,12 +253,10 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     busy: false,
     error: "",
     testResult: "",
-    selectedModuleId: TARGET_LAYOUT.moduleId,
-    selectedTableKey: TARGET_LAYOUT.tableKey,
-    moduleDefinitions: [{ moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.moduleLabel }],
-    tableDefinitions: [
-      { tableKey: TARGET_LAYOUT.tableKey, moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.tableLabel },
-    ],
+    selectedModuleId: "",
+    selectedTableKey: "",
+    moduleDefinitions: [],
+    tableDefinitions: [],
     contextLoading: false,
     contextError: "",
   };
@@ -218,7 +264,9 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const formatSourceLabel = () => {
     if (state.source === "stored") return "gespeichertes Layout";
     if (state.source === "stored-portrait-fallback") return "Fallback (portrait gespeicherte Variante)";
-    return "Standardlayout protokoll_tops";
+    const tableDef = _getSelectedTableDefinition();
+    if (tableDef?.tableKey) return `Standardlayout ${tableDef.tableKey}`;
+    return "Standardlayout";
   };
 
   const head = document.createElement("div");
@@ -228,7 +276,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   head.style.gap = "6px";
 
   const title = document.createElement("div");
-  title.textContent = "Tabellenlayouts / protokoll_tops";
+  title.textContent = "Tabellenlayouts";
   title.style.fontWeight = "800";
 
   const hint = document.createElement("div");
@@ -242,15 +290,15 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   targetInfo.style.display = "grid";
   targetInfo.style.gap = "2px";
   const targetInfoModule = document.createElement("div");
-  targetInfoModule.textContent = "Modul: Protokoll";
+  targetInfoModule.textContent = "Modul: -";
   const targetInfoTable = document.createElement("div");
-  targetInfoTable.textContent = "Tabelle: TOP-Liste";
+  targetInfoTable.textContent = "Tabelle: -";
   const targetInfoKey = document.createElement("div");
-  targetInfoKey.textContent = "tableKey: protokoll_tops";
+  targetInfoKey.textContent = "tableKey: -";
   const targetInfoOrientation = document.createElement("div");
-  targetInfoOrientation.textContent = "Orientierung: portrait";
+  targetInfoOrientation.textContent = `Orientierung: ${DEFAULT_ORIENTATION}`;
   const targetInfoSource = document.createElement("div");
-  targetInfoSource.textContent = "Quelle: Standardlayout protokoll_tops";
+  targetInfoSource.textContent = "Quelle: Standardlayout";
   targetInfo.append(targetInfoModule, targetInfoTable, targetInfoKey, targetInfoOrientation, targetInfoSource);
 
   head.append(title, hint, targetInfo);
@@ -266,7 +314,8 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   contextTitle.style.fontWeight = "800";
 
   const contextHint = document.createElement("div");
-  contextHint.textContent = "Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.";
+  contextHint.textContent =
+    "Modul- und Tabellenliste kommen aus der zentralen Registry. Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.";
   contextHint.style.fontSize = "12px";
   contextHint.style.opacity = "0.78";
 
@@ -462,55 +511,97 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   root.append(head, contextCard, toolbar, fieldsCard, testCard, previewCard);
 
-  const _getSelectedTableDefinition = () => {
-    const tableKey = _normalizeId(state.selectedTableKey) || TARGET_LAYOUT.tableKey;
-    const moduleId = _normalizeId(state.selectedModuleId) || TARGET_LAYOUT.moduleId;
-    return state.tableDefinitions.find((item) => _normalizeId(item?.tableKey) === tableKey && _normalizeId(item?.moduleId) === moduleId) || null;
-  };
+  const _getSelectedModuleDefinition = () =>
+    state.moduleDefinitions.find((item) => _normalizeId(item?.moduleId) === _normalizeId(state.selectedModuleId)) || null;
+
+  const _getSelectedTableDefinition = () =>
+    state.tableDefinitions.find(
+      (item) =>
+        _normalizeId(item?.moduleId) === _normalizeId(state.selectedModuleId) &&
+        _normalizeId(item?.tableKey) === _normalizeId(state.selectedTableKey)
+    ) || null;
 
   const _renderModuleOptions = () => {
-    const defs = state.moduleDefinitions.length ? state.moduleDefinitions : [{ moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.moduleLabel }];
-    const current = _normalizeId(moduleSelect.value || state.selectedModuleId) || _normalizeId(defs[0]?.moduleId) || TARGET_LAYOUT.moduleId;
+    const defs = Array.isArray(state.moduleDefinitions) ? state.moduleDefinitions : [];
+    const current = _normalizeId(state.selectedModuleId) || _normalizeId(defs[0]?.moduleId);
     moduleSelect.innerHTML = "";
     for (const def of defs) {
       const option = document.createElement("option");
       option.value = _normalizeId(def.moduleId);
-      option.textContent = _formatText(def.label || def.moduleLabel, TARGET_LAYOUT.moduleLabel);
+      option.textContent = _formatText(def.moduleLabel, def.moduleId || "Protokoll");
       moduleSelect.appendChild(option);
     }
-    moduleSelect.value = defs.some((def) => _normalizeId(def.moduleId) === current) ? current : _normalizeId(defs[0]?.moduleId) || TARGET_LAYOUT.moduleId;
-    state.selectedModuleId = _normalizeId(moduleSelect.value) || TARGET_LAYOUT.moduleId;
+    const next = defs.some((def) => _normalizeId(def.moduleId) === current) ? current : _normalizeId(defs[0]?.moduleId);
+    moduleSelect.value = next || "";
+    state.selectedModuleId = _normalizeId(moduleSelect.value);
+    moduleSelect.disabled = !defs.length;
   };
 
   const _renderTableOptions = () => {
-    const moduleId = _normalizeId(state.selectedModuleId) || TARGET_LAYOUT.moduleId;
+    const moduleId = _normalizeId(state.selectedModuleId);
     const defs = state.tableDefinitions.filter((item) => _normalizeId(item?.moduleId) === moduleId);
-    const tableDefs = defs.length ? defs : [TARGET_LAYOUT];
-    const current = _normalizeId(tableSelect.value || state.selectedTableKey) || _normalizeId(tableDefs[0]?.tableKey) || TARGET_LAYOUT.tableKey;
+    const current = _normalizeId(state.selectedTableKey) || _normalizeId(defs[0]?.tableKey);
     tableSelect.innerHTML = "";
-    for (const def of tableDefs) {
+    for (const def of defs) {
       const option = document.createElement("option");
       option.value = _normalizeId(def.tableKey);
-      option.textContent = _formatText(def.label || def.tableLabel, TARGET_LAYOUT.tableLabel);
+      option.textContent = _formatText(def.tableLabel, def.tableKey || "TOP-Liste");
       tableSelect.appendChild(option);
     }
-    tableSelect.value = tableDefs.some((def) => _normalizeId(def.tableKey) === current) ? current : _normalizeId(tableDefs[0]?.tableKey) || TARGET_LAYOUT.tableKey;
-    state.selectedTableKey = _normalizeId(tableSelect.value) || TARGET_LAYOUT.tableKey;
-    const def = _getSelectedTableDefinition() || TARGET_LAYOUT;
-    tableInfo.textContent = `Aktive Tabelle: ${def.label || TARGET_LAYOUT.tableLabel} | tableKey: ${state.selectedTableKey || TARGET_LAYOUT.tableKey}`;
+    const next = defs.some((def) => _normalizeId(def.tableKey) === current) ? current : _normalizeId(defs[0]?.tableKey);
+    tableSelect.value = next || "";
+    state.selectedTableKey = _normalizeId(tableSelect.value);
+    tableSelect.disabled = !defs.length;
+    const def = _getSelectedTableDefinition();
+    tableInfo.textContent = def
+      ? `Aktive Tabelle: ${def.tableLabel || "TOP-Liste"} | tableKey: ${def.tableKey}`
+      : "Aktive Tabelle: - | tableKey: -";
+  };
+
+  const _syncSelectionFromDefinitions = () => {
+    const moduleDefs = Array.isArray(state.moduleDefinitions) ? state.moduleDefinitions : [];
+    if (!moduleDefs.length) {
+      state.selectedModuleId = "";
+      state.selectedTableKey = "";
+      return;
+    }
+    if (!moduleDefs.some((item) => _normalizeId(item.moduleId) === _normalizeId(state.selectedModuleId))) {
+      state.selectedModuleId = _normalizeId(moduleDefs[0]?.moduleId);
+    }
+    const moduleDef = _getSelectedModuleDefinition();
+    const tableDefs = Array.isArray(moduleDef?.tables) ? moduleDef.tables : [];
+    if (!tableDefs.length) {
+      state.selectedTableKey = "";
+      return;
+    }
+    if (!tableDefs.some((item) => _normalizeId(item.tableKey) === _normalizeId(state.selectedTableKey))) {
+      state.selectedTableKey = _normalizeId(tableDefs[0]?.tableKey);
+    }
   };
 
   const _updateContextStatus = () => {
-    contextCard.dataset.moduleId = state.selectedModuleId || TARGET_LAYOUT.moduleId;
-    contextCard.dataset.tableKey = state.selectedTableKey || TARGET_LAYOUT.tableKey;
+    const moduleDef = _getSelectedModuleDefinition();
+    const tableDef = _getSelectedTableDefinition();
+    contextCard.dataset.moduleId = state.selectedModuleId || "";
+    contextCard.dataset.tableKey = state.selectedTableKey || "";
     contextCard.dataset.orientation = state.orientation;
-    contextHint.textContent = "Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.";
+    const moduleLabel = moduleDef?.moduleLabel || "-";
+    const tableLabel = tableDef?.tableLabel || "-";
+    const tableKey = tableDef?.tableKey || "-";
+    const sourceLabel = formatSourceLabel();
+    targetInfoModule.textContent = `Modul: ${moduleLabel}`;
+    targetInfoTable.textContent = `Tabelle: ${tableLabel}`;
+    targetInfoKey.textContent = `tableKey: ${tableKey}`;
+    targetInfoOrientation.textContent = `Orientierung: ${state.orientation}`;
+    targetInfoSource.textContent = `Quelle: ${sourceLabel}`;
+    contextHint.textContent =
+      "Modul- und Tabellenliste kommen aus der zentralen Registry. Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.";
     tableInfo.textContent = [
-      `Modul: ${TARGET_LAYOUT.moduleLabel}`,
-      `Tabelle: ${TARGET_LAYOUT.tableLabel}`,
-      `tableKey: ${state.selectedTableKey || TARGET_LAYOUT.tableKey}`,
+      `Modul: ${moduleLabel}`,
+      `Tabelle: ${tableLabel}`,
+      `tableKey: ${tableKey}`,
       `Orientierung: ${state.orientation}`,
-      `Quelle: ${formatSourceLabel()}`,
+      `Quelle: ${sourceLabel}`,
     ].join(" | ");
     return tableInfo.textContent;
   };
@@ -526,36 +617,30 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   const loadTableDefinitions = async () => {
     if (typeof resolvedApi?.tableLayoutsListDefinitions !== "function") {
-      state.contextError = "Tabellenliste nicht verfügbar.";
-      state.tableDefinitions = [TARGET_LAYOUT];
-      state.moduleDefinitions = [{ moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.moduleLabel }];
+      state.contextError = "Tabellenregistry nicht verfuegbar.";
+      state.moduleDefinitions = [];
+      state.tableDefinitions = [];
       _renderModuleOptions();
       _renderTableOptions();
       _updateContextStatus();
       _updateTestPdfState();
-      return { ok: true, data: state.tableDefinitions };
+      return { ok: false, error: state.contextError };
     }
     const res = await resolvedApi.tableLayoutsListDefinitions();
     if (!res?.ok) {
-      state.contextError = res?.error || "Tabellenliste konnte nicht geladen werden.";
-      state.tableDefinitions = [TARGET_LAYOUT];
-      state.moduleDefinitions = [{ moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.moduleLabel }];
+      state.contextError = res?.error || "Tabellenregistry konnte nicht geladen werden.";
+      state.moduleDefinitions = [];
+      state.tableDefinitions = [];
       _renderModuleOptions();
       _renderTableOptions();
       _updateContextStatus();
       _updateTestPdfState();
       return res;
     }
-    const list = Array.isArray(res.data) ? res.data : [];
-    const matching = list.filter(
-      (item) =>
-        item &&
-        typeof item === "object" &&
-        _normalizeId(item?.moduleId) === TARGET_LAYOUT.moduleId &&
-        _normalizeId(item?.tableKey) === TARGET_LAYOUT.tableKey
-    );
-    state.tableDefinitions = matching.length ? matching : [TARGET_LAYOUT];
-    state.moduleDefinitions = [{ moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.moduleLabel }];
+    const list = _normalizeDefinitionsList(Array.isArray(res.data) ? res.data : []);
+    state.tableDefinitions = list;
+    state.moduleDefinitions = _groupModuleDefinitions(list);
+    _syncSelectionFromDefinitions();
     state.contextError = "";
     _renderModuleOptions();
     _renderTableOptions();
@@ -587,8 +672,8 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const refreshPreview = () => {
     root.dataset.orientation = state.orientation;
     root.dataset.source = state.source;
-    root.dataset.moduleId = state.selectedModuleId || TARGET_LAYOUT.moduleId;
-    root.dataset.tableKey = state.selectedTableKey || TARGET_LAYOUT.tableKey;
+    root.dataset.moduleId = state.selectedModuleId || "";
+    root.dataset.tableKey = state.selectedTableKey || "";
     targetInfoOrientation.textContent = `Orientierung: ${state.orientation}`;
     targetInfoSource.textContent = `Quelle: ${formatSourceLabel()}`;
     _updateContextStatus();
@@ -633,7 +718,12 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       _renderTableOptions();
       const requestedOrientation = _normalizeOrientation(orientationSelect.value || state.orientation);
       state.orientation = requestedOrientation;
-      const tableDef = _getSelectedTableDefinition() || TARGET_LAYOUT;
+      const tableDef = _getSelectedTableDefinition();
+      if (!tableDef) {
+        state.error = state.contextError || "Keine Tabellen-Definition verfuegbar.";
+        refreshPreview();
+        return { ok: false, error: state.error };
+      }
       const res = await resolvedApi.tableLayoutsGetOne({
         tableKey: tableDef.tableKey,
         moduleId: tableDef.moduleId,
@@ -673,7 +763,12 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       values.orientation = _normalizeOrientation(orientationSelect.value || values.orientation);
       state.editValues = values;
       state.testResult = "";
-      const tableDef = _getSelectedTableDefinition() || TARGET_LAYOUT;
+      const tableDef = _getSelectedTableDefinition();
+      if (!tableDef) {
+        state.error = state.contextError || "Keine Tabellen-Definition verfuegbar.";
+        refreshPreview();
+        return { ok: false, error: state.error };
+      }
       const res = await resolvedApi.tableLayoutsSave({
         tableKey: tableDef.tableKey,
         moduleId: tableDef.moduleId,
@@ -709,7 +804,12 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     setBusy(true);
     state.error = "";
     try {
-      const tableDef = _getSelectedTableDefinition() || TARGET_LAYOUT;
+      const tableDef = _getSelectedTableDefinition();
+      if (!tableDef) {
+        state.error = state.contextError || "Keine Tabellen-Definition verfuegbar.";
+        refreshPreview();
+        return { ok: false, error: state.error };
+      }
       const res = await resolvedApi.tableLayoutsReset({
         tableKey: tableDef.tableKey,
         moduleId: tableDef.moduleId,
@@ -754,15 +854,16 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     await load();
   });
   moduleSelect.addEventListener("change", async () => {
-    state.selectedModuleId = _normalizeId(moduleSelect.value) || TARGET_LAYOUT.moduleId;
-    state.selectedTableKey = TARGET_LAYOUT.tableKey;
+    state.selectedModuleId = _normalizeId(moduleSelect.value);
+    const moduleDef = _getSelectedModuleDefinition();
+    state.selectedTableKey = _normalizeId(_getFirstSupportedTable(moduleDef)?.tableKey);
     state.testResult = "";
     _renderTableOptions();
     refreshPreview();
     await load();
   });
   tableSelect.addEventListener("change", async () => {
-    state.selectedTableKey = _normalizeId(tableSelect.value) || TARGET_LAYOUT.tableKey;
+    state.selectedTableKey = _normalizeId(tableSelect.value);
     state.testResult = "";
     _renderTableOptions();
     refreshPreview();

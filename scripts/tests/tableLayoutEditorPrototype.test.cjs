@@ -169,7 +169,43 @@ async function runTableLayoutEditorPrototypeTests(run) {
   );
 
   const makeEditorApi = ({
-    tableDefinitions = [{ tableKey: "protokoll_tops", moduleId: "protokoll", label: "Protokoll TOP-Liste" }],
+    tableDefinitions = [
+      {
+        moduleId: "protokoll",
+        moduleLabel: "Protokoll",
+        tableKey: "protokoll_tops",
+        tableLabel: "TOP-Liste",
+        description: "Pilotlayout",
+        supportedOrientations: ["portrait", "landscape"],
+        editFields: [
+          { key: "uiNumberWidth", label: "UI TOP-Spalte" },
+          { key: "uiTextTrack", label: "UI Text-Spalte" },
+        ],
+        defaultLayout: {
+          tableKey: "protokoll_tops",
+          variant: "portrait",
+          labels: {
+            top: "TOP",
+            text: "Gegenstand",
+            meta: ["Status", "Fertig bis", "verantw"],
+          },
+          ui: {
+            rootVars: {
+              "--bbm-tops-list-number-col": "64px",
+              "--bbm-tops-list-text-col": "minmax(0, 1fr)",
+              "--bbm-tops-list-meta-col": "74px",
+            },
+          },
+          pdf: {
+            columns: {
+              number: { width: "23mm" },
+              text: { width: "auto" },
+              meta: { width: "15ch" },
+            },
+          },
+        },
+      },
+    ],
     getOne = async (payload) => ({
       ok: true,
       data: {
@@ -257,6 +293,12 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(selects[0]?.value, "protokoll");
       assert.equal(selects[1]?.value, "protokoll_tops");
       assert.equal(selects[2]?.value, "portrait");
+      assert.equal(selects[0]?.children?.length, 1);
+      assert.equal(selects[0]?.children?.[0]?.value, "protokoll");
+      assert.equal(selects[0]?.children?.[0]?.textContent, "Protokoll");
+      assert.equal(selects[1]?.children?.length, 1);
+      assert.equal(selects[1]?.children?.[0]?.value, "protokoll_tops");
+      assert.equal(selects[1]?.children?.[0]?.textContent, "TOP-Liste");
       assert.equal(text.includes("Modul: Protokoll"), true);
       assert.equal(text.includes("Tabelle: TOP-Liste"), true);
       assert.equal(text.includes("tableKey: protokoll_tops"), true);
@@ -316,6 +358,8 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(selects[0].value, "protokoll");
       assert.equal(selects[1].value, "protokoll_tops");
       assert.equal(selects[2].value, "landscape");
+      assert.equal(selects[0].children[0].textContent, "Protokoll");
+      assert.equal(selects[1].children[0].textContent, "TOP-Liste");
       assert.equal(text.includes("Orientierung: landscape"), true);
       assert.equal(text.includes("Quelle: Fallback"), false);
     } finally {
@@ -451,11 +495,11 @@ async function runTableLayoutEditorPrototypeTests(run) {
     try {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: {} });
       const text = collectText(editor.root);
-      assert.equal(editor.root.dataset.tableKey, "protokoll_tops");
-      assert.equal(editor.root.dataset.moduleId, "protokoll");
+      assert.equal(editor.root.dataset.tableKey, "");
+      assert.equal(editor.root.dataset.moduleId, "");
       assert.equal(editor.root.dataset.orientation, "portrait");
-      assert.equal(text.includes("tableKey: protokoll_tops"), true);
-      assert.equal(text.includes("Modul: Protokoll"), true);
+      assert.equal(text.includes("tableKey: -"), true);
+      assert.equal(text.includes("Modul: -"), true);
       assert.equal(text.includes("global"), false);
     } finally {
       global.document = previousDocument;
@@ -484,4 +528,3 @@ async function runTableLayoutEditorPrototypeTests(run) {
 }
 
 module.exports = { runTableLayoutEditorPrototypeTests };
-

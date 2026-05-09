@@ -29,7 +29,8 @@ Sie ergänzt:
   - Laden, Aendern, Speichern und Zuruecksetzen laufen fuer `moduleId=protokoll`, `tableKey=protokoll_tops` und die jeweilige Orientierung ueber die vorhandenen `tableLayouts`-IPC-Endpunkte
   - die Quelle wird im Editor als Standardlayout, gespeichertes Layout oder Fallback angezeigt
   - die Layoutauswahl ist wieder fachlich korrekt modul- und tabellenbezogen, nicht projektbezogen
-  - aktuell ist nur `Protokoll / TOP-Liste / protokoll_tops` auswählbar, und das kommt aus der bekannten Registry/Definition
+  - Modul- und Tabellenlisten kommen aus der bekannten Registry/Definition
+  - aktuell ist dort nur `Protokoll / TOP-Liste / protokoll_tops` angemeldet
   - der frühere Projekt-/Besprechungsansatz im Editor wurde wieder entfernt
   - der PDF-Test mit Testdaten ist vorerst bewusst deaktiviert; im Editor steht dafür nur der Hinweis, dass er später separat ergänzt wird
   - normale Navigation und sichtbare Protokoll-UI bleiben unveraendert
