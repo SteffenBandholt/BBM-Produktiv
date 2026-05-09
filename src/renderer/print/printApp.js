@@ -59,6 +59,10 @@ function _normalizeOrientation(value) {
   return String(value || "").trim().toLowerCase() === "landscape" ? "landscape" : "portrait";
 }
 
+function _getTopLayout(data) {
+  return data?.tableLayouts?.protokoll_tops?.effectiveLayout || PROTOKOLL_TOPS_LAYOUT;
+}
+
 function _applyPageOrientationStyle(orientation) {
   const normalized = _normalizeOrientation(orientation);
   let styleEl = document.getElementById("bbm-print-page-orientation");
@@ -412,19 +416,19 @@ function _buildPageHeaderForMeasure(projectLabel, docLabel) {
   return header;
 }
 
-function _buildTableHeadForMeasure(type) {
+function _buildTableHeadForMeasure(type, topsLayout) {
   if (type === "firmsCards") return null;
   const thead = document.createElement("thead");
   const tr = document.createElement("tr");
   if (type === "tops") {
     tr.innerHTML = `
-      <th class="colNr">${PROTOKOLL_TOPS_LAYOUT.labels.top}</th>
-      <th class="colText">${PROTOKOLL_TOPS_LAYOUT.labels.text}</th>
+      <th class="colNr">${topsLayout.labels.top}</th>
+      <th class="colText">${topsLayout.labels.text}</th>
       <th class="colMeta">
         <div class="metaHead">
-          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[0]}</div>
-          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[1]}</div>
-          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[2]}</div>
+          <div>${topsLayout.labels.meta[0]}</div>
+          <div>${topsLayout.labels.meta[1]}</div>
+          <div>${topsLayout.labels.meta[2]}</div>
         </div>
       </th>
     `;
@@ -437,10 +441,10 @@ function _buildTableHeadForMeasure(type) {
   return thead;
 }
 
-function _buildColGroup(type) {
+function _buildColGroup(type, topsLayout) {
   if (type !== "tops") return null;
   const colgroup = document.createElement("colgroup");
-  const { number, text, meta } = PROTOKOLL_TOPS_LAYOUT.pdf.columns;
+  const { number, text, meta } = topsLayout.pdf.columns;
   colgroup.innerHTML = `
     <col class="${number.className}" style="width:${number.width};" />
     <col class="${text.className}" style="width:${text.width};" />
@@ -737,6 +741,7 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
   _applyV2VarsForMeasure(root, data);
   const page = _el("div", "page");
   root.appendChild(page);
+  const topsLayout = _getTopLayout(data);
 
   if (headerKind === "full") {
     const modeLabel = String(data?.printProfile?.documentLabel || "").trim() || docLabel || "Dokument";
@@ -760,9 +765,9 @@ function _createMeasureContext({ type, projectLabel, docLabel, data, headerKind 
       : type === "firmsCards"
       ? "firmsCardsTable"
       : "todoTable";
-  const colgroup = _buildColGroup(type);
+  const colgroup = _buildColGroup(type, topsLayout);
   if (colgroup) table.appendChild(colgroup);
-  const head = _buildTableHeadForMeasure(type);
+  const head = _buildTableHeadForMeasure(type, topsLayout);
   if (head) table.appendChild(head);
 
   const tbody = document.createElement("tbody");
@@ -1249,6 +1254,7 @@ async function handleInit(payload) {
     }
 
     const data = res.data || {};
+    const topsLayout = _getTopLayout(data);
     // Version/Channel für PDF-Fußnote bereitstellen (falls nicht im Payload enthalten)
     if (!data.appVersion && window.bbmDb?.appGetVersion) {
       try {
@@ -1281,6 +1287,7 @@ async function handleInit(payload) {
 
     const pages = _buildPages(data);
     const root = renderPrint({ pages, data });
+    if (root?.dataset) root.dataset.tableLayout = topsLayout.tableKey || "protokoll_tops";
     if (root?.dataset) root.dataset.orientation = orientation;
     app.innerHTML = "";
     app.appendChild(root);

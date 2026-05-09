@@ -6,6 +6,7 @@ const projectSettingsRepo = require("../db/projectSettingsRepo");
 const meetingTopsRepo = require("../db/meetingTopsRepo");
 const projectFirmsRepo = require("../db/projectFirmsRepo");
 const { appSettingsGetManyWithDb } = require("../db/appSettingsRepo");
+const { getResolvedTableLayout } = require("../db/tableLayoutsRepo");
 const { getUserProfile } = require("../db/userProfileRepo");
 const { normalizePrintOrientation } = require("./printOrientation");
 
@@ -784,6 +785,27 @@ function _resolveNextMeetingForPrint({ mode, meeting, settings } = {}) {
   return hasMeetingNextMeeting ? meetingNextMeeting : settingsNextMeeting;
 }
 
+function _needsTopsTableLayout(mode) {
+  const normalizedMode = String(mode || "").trim().toLowerCase();
+  return ["preview", "protocol", "headertest", "topsall"].includes(normalizedMode);
+}
+
+async function _loadPrintTableLayouts({ mode, orientation } = {}) {
+  if (!_needsTopsTableLayout(mode)) {
+    return {};
+  }
+
+  const resolved = await getResolvedTableLayout({
+    tableKey: "protokoll_tops",
+    moduleId: "protokoll",
+    orientation,
+  });
+
+  return {
+    protokoll_tops: resolved,
+  };
+}
+
 // Gemeinsamer technischer Laufzeitkontext fuer den Druckdienst:
 // Projekt/Meeting, effektive Einstellungen, Profil und Layout werden hier vorbereitet.
 async function _buildPrintRuntimeContext({
@@ -883,6 +905,10 @@ async function getPrintData({ mode, projectId, meetingId, settingsOverride, orie
     settingsOverride,
     orientation,
   });
+  const tableLayouts = await _loadPrintTableLayouts({
+    mode,
+    orientation: runtimeContext.orientation,
+  });
   const documentContent = _loadPrintDocumentContent({
     db,
     mode,
@@ -896,6 +922,7 @@ async function getPrintData({ mode, projectId, meetingId, settingsOverride, orie
     mode,
     ...runtimeContext,
     ...documentContent,
+    tableLayouts,
   };
 }
 

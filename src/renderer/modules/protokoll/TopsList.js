@@ -48,12 +48,13 @@ const TODO_PNG = new URL("../../assets/todo.png", ASSET_BASE_URL).href;
 const RED_FLAG_PNG = resolveModuleAsset("../../assets/icons/redFlag.png");
 
 export class TopsList {
-  constructor({ onRowClick, onLevel1Toggle } = {}) {
+  constructor({ onRowClick, onLevel1Toggle, tableLayout } = {}) {
     this.onRowClick = typeof onRowClick === "function" ? onRowClick : null;
     this.onLevel1Toggle = typeof onLevel1Toggle === "function" ? onLevel1Toggle : null;
+    this.tableLayout = tableLayout && typeof tableLayout === "object" ? tableLayout : null;
     this.root = document.createElement("ul");
     this.root.setAttribute("data-bbm-tops-list-v2", "true");
-    applyProtokollTopsUiLayout(this.root);
+    applyProtokollTopsUiLayout(this.root, this.tableLayout);
   }
 
   setItems(items = []) {

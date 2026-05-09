@@ -17,6 +17,13 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
+- Der Protokoll-Pilot `protokoll_tops` ist jetzt kontrolliert an den Table-Layout-Resolver angebunden:
+  - `printData.js` liefert den resolved Payload fuer den Druckweg mit
+  - `printApp.js` und `PrintShell.js` lesen Layoutdaten nur, wenn sie im Payload enthalten sind
+  - ohne gespeichertes Layout bleibt die Anzeige exakt beim bisherigen Standard
+  - `TopsList` hat einen optionalen Layout-Hook vorbereitet, bleibt aber im sichtbaren Standardpfad
+  - geprueft mit `npm test`
+- Naechster offener Schritt: erst spaeter entscheiden, ob auch die UI denselben resolved Payload bekommen soll.
 - Der Table-Layout-Resolver fuer `protokoll_tops` ist jetzt als technische Grundlage vorhanden:
   - die zentrale Registry kennt den Pilot `protokoll_tops`
   - `getResolvedTableLayout(...)` liefert Standardlayout, gespeichertes Layout oder einen sicheren Fehler fuer unbekannte Tabellen

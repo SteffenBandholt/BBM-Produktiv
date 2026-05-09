@@ -19,6 +19,10 @@ function _normalizeOrientation(value) {
   return s === "landscape" ? "landscape" : "portrait";
 }
 
+function _getTopLayout(data) {
+  return data?.tableLayouts?.protokoll_tops?.effectiveLayout || PROTOKOLL_TOPS_LAYOUT;
+}
+
 function _el(tag, className, text) {
   const el = document.createElement(tag);
   if (className) el.className = className;
@@ -63,7 +67,7 @@ function _buildPageHeader({ projectLabel, docLabel, pageNo, totalPages }) {
   return header;
 }
 
-function _buildTableHead(type) {
+function _buildTableHead(type, topsLayout) {
   if (type === "firmsCards") return null;
   const thead = document.createElement("thead");
   const tr = document.createElement("tr");
@@ -71,13 +75,13 @@ function _buildTableHead(type) {
 
   if (type === "tops") {
     tr.innerHTML = `
-      <th class="colNr">${PROTOKOLL_TOPS_LAYOUT.labels.top}</th>
-      <th class="colText">${PROTOKOLL_TOPS_LAYOUT.labels.text}</th>
+      <th class="colNr">${topsLayout.labels.top}</th>
+      <th class="colText">${topsLayout.labels.text}</th>
       <th class="colMeta">
         <div class="metaHead">
-          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[0]}</div>
-          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[1]}</div>
-          <div>${PROTOKOLL_TOPS_LAYOUT.labels.meta[2]}</div>
+          <div>${topsLayout.labels.meta[0]}</div>
+          <div>${topsLayout.labels.meta[1]}</div>
+          <div>${topsLayout.labels.meta[2]}</div>
         </div>
       </th>
     `;
@@ -295,10 +299,10 @@ function _buildGenericRow(row) {
   return tr;
 }
 
-function _buildColGroup(type) {
+function _buildColGroup(type, topsLayout) {
   if (type !== "tops") return null;
   const colgroup = document.createElement("colgroup");
-  const { number, text, meta } = PROTOKOLL_TOPS_LAYOUT.pdf.columns;
+  const { number, text, meta } = topsLayout.pdf.columns;
   colgroup.innerHTML = `
     <col class="${number.className}" style="width:${number.width};" />
     <col class="${text.className}" style="width:${text.width};" />
@@ -307,9 +311,9 @@ function _buildColGroup(type) {
   return colgroup;
 }
 
-function _applyTopsTableLayout(table) {
+function _applyTopsTableLayout(table, topsLayout) {
   if (!table || String(table.className || "") !== "topsTable") return;
-  applyProtokollTopsPdfLayout(table);
+  applyProtokollTopsPdfLayout(table, topsLayout);
 }
 
 function _applyV2Vars(root, data) {
@@ -358,20 +362,21 @@ function _applyV2Vars(root, data) {
   root.style.setProperty("--v2-line-thickness", String(V2_LAYOUT.global.lineThicknessPx) + "px");
 }
 
-function _buildTable(page) {
+function _buildTable(page, data) {
   const table = document.createElement("table");
   const type = page.table?.type || "tops";
+  const topsLayout = _getTopLayout(data);
 
   if (type === "tops") table.className = "topsTable";
   else if (type === "firms") table.className = "firmsTable";
   else if (type === "firmsCards") table.className = "firmsCardsTable";
   else if (type === "todo") table.className = "todoTable";
-  _applyTopsTableLayout(table);
+  _applyTopsTableLayout(table, topsLayout);
 
-  const colgroup = _buildColGroup(type);
+  const colgroup = _buildColGroup(type, topsLayout);
   if (colgroup) table.appendChild(colgroup);
 
-  const head = _buildTableHead(type);
+  const head = _buildTableHead(type, topsLayout);
   if (head) table.appendChild(head);
 
   const tbody = document.createElement("tbody");
@@ -556,6 +561,7 @@ function _buildSpineNote(data = {}) {
 export function renderPrint({ pages, data } = {}) {
   const root = _el("div", "printRoot printV2Root");
   root.dataset.orientation = _normalizeOrientation(data?.orientation);
+  root.dataset.tableLayout = _getTopLayout(data).tableKey || "protokoll_tops";
 
   // Force colors into PDF output (Chromium/Electron)
   root.style.webkitPrintColorAdjust = "exact";
@@ -606,7 +612,7 @@ export function renderPrint({ pages, data } = {}) {
     // Tops-Tabelle ohne Zeilen nicht rendern (sonst Tabellenkopf allein).
     const renderTable = !(isTops && !hasRows);
     if (renderTable) {
-      pageEl.appendChild(_buildTable(page));
+      pageEl.appendChild(_buildTable(page, data));
     }
     if (isTops && idx === tailPageIdx) {
       const tail = _buildTopsTail(page, data);

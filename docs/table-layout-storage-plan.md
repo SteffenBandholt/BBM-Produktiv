@@ -345,6 +345,8 @@ Die erste technische Grundlage ist bereits im Repo angelegt:
 - ein kleiner Resolver liefert fuer bekannte Tabellen ein sicheres Standard-/Override-Layout
 - die zentrale Registry kennt den Pilot `protokoll_tops`
 - IPC-Endpunkte fuer Laden/Speichern/Reset sind vorbereitet
+- der Druckweg bekommt den resolved `protokoll_tops`-Payload aus `printData.js`
+- die Renderer-PDF-Seite nutzt den Payload nur als Fallback/Override, nicht als neue Layoutquelle
 - `protokoll_tops` nutzt den zentralen Standard als Fallback-Basis
 - `portrait` und `landscape` werden getrennt identifiziert
 

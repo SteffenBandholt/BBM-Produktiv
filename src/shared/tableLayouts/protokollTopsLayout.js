@@ -111,26 +111,43 @@ const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
   }),
 });
 
+function _resolveLayout(layoutOverride) {
+  if (!layoutOverride || typeof layoutOverride !== "object") {
+    return PROTOKOLL_TOPS_LAYOUT;
+  }
+  return {
+    ...PROTOKOLL_TOPS_LAYOUT,
+    ...layoutOverride,
+    labels: layoutOverride.labels || PROTOKOLL_TOPS_LAYOUT.labels,
+    logicalFields: layoutOverride.logicalFields || PROTOKOLL_TOPS_LAYOUT.logicalFields,
+    notes: layoutOverride.notes || PROTOKOLL_TOPS_LAYOUT.notes,
+    ui: layoutOverride.ui || PROTOKOLL_TOPS_LAYOUT.ui,
+    pdf: layoutOverride.pdf || PROTOKOLL_TOPS_LAYOUT.pdf,
+  };
+}
+
 export function getProtokollTopsLayout() {
   return PROTOKOLL_TOPS_LAYOUT;
 }
 
-export function applyProtokollTopsUiLayout(target) {
+export function applyProtokollTopsUiLayout(target, layoutOverride) {
   if (!target?.style?.setProperty) return;
-  const layout = PROTOKOLL_TOPS_LAYOUT.ui;
-  target.dataset.tableKey = PROTOKOLL_TOPS_LAYOUT.tableKey;
-  target.dataset.layoutVariant = PROTOKOLL_TOPS_LAYOUT.variant;
-  for (const [key, value] of Object.entries(layout.rootVars || {})) {
+  const layout = _resolveLayout(layoutOverride);
+  target.dataset.tableKey = layout.tableKey;
+  target.dataset.layoutVariant = layout.variant;
+  const uiLayout = layout.ui || PROTOKOLL_TOPS_LAYOUT.ui;
+  for (const [key, value] of Object.entries(uiLayout.rootVars || {})) {
     target.style.setProperty(key, value);
   }
 }
 
-export function applyProtokollTopsPdfLayout(target) {
+export function applyProtokollTopsPdfLayout(target, layoutOverride) {
   if (!target?.style?.setProperty) return;
-  const layout = PROTOKOLL_TOPS_LAYOUT.pdf;
-  target.dataset.tableKey = PROTOKOLL_TOPS_LAYOUT.tableKey;
-  target.dataset.layoutVariant = PROTOKOLL_TOPS_LAYOUT.variant;
-  for (const [key, value] of Object.entries(layout.rootVars || {})) {
+  const layout = _resolveLayout(layoutOverride);
+  target.dataset.tableKey = layout.tableKey;
+  target.dataset.layoutVariant = layout.variant;
+  const pdfLayout = layout.pdf || PROTOKOLL_TOPS_LAYOUT.pdf;
+  for (const [key, value] of Object.entries(pdfLayout.rootVars || {})) {
     target.style.setProperty(key, value);
   }
 }
