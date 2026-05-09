@@ -36,5 +36,6 @@ Status: Pilotlayout, intern
 ## Hinweise
 
 - Langtext bleibt im Textbereich und ist keine eigene Spalte.
+- Die echte Protokoll-TOP-Liste kann gespeicherte UI-Layoutwerte fuer `protokoll_tops` verwenden; ohne gespeichertes Layout bleibt die Standarddarstellung erhalten.
 - Keine Editor-UI, keine Datenbank, keine Header/Footer-Aenderung.
 - Die Layoutwerte sind bewusst auf den heutigen Stand abgebildet.

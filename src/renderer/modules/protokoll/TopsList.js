@@ -57,6 +57,11 @@ export class TopsList {
     applyProtokollTopsUiLayout(this.root, this.tableLayout);
   }
 
+  setTableLayout(tableLayout) {
+    this.tableLayout = tableLayout && typeof tableLayout === "object" ? tableLayout : null;
+    applyProtokollTopsUiLayout(this.root, this.tableLayout);
+  }
+
   setItems(items = []) {
     if (typeof this.root.replaceChildren === "function") {
       this.root.replaceChildren();

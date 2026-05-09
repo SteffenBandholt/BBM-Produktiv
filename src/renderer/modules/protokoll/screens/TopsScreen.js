@@ -92,6 +92,8 @@ export default class TopsScreen {
     this._autoSaveDelayMs = 400;
     this.workbench = null;
     this.topsList = null;
+    this._topListLayout = null;
+    this._topListLayoutLoadPromise = null;
     this.closeFlow = null;
     this.dialogs = null;
     this._dialogViewAdapter = this._createDialogViewAdapter();
@@ -209,6 +211,7 @@ export default class TopsScreen {
       onLevel1Toggle: async (item) => this._toggleLevel1Collapsed(item?.id),
     });
     this.sheetPaper.appendChild(this.topsList.root);
+    void this._loadTopListLayout();
   }
 
   // ---------------------------------------------------------------------------
@@ -639,6 +642,44 @@ export default class TopsScreen {
         collapsedLevel1Ids: this._getCollapsedLevel1Ids(),
       })
     );
+  }
+
+  _getTopListLayoutApi() {
+    return globalThis.window?.bbmDb || null;
+  }
+
+  _applyTopListLayout(layout) {
+    this._topListLayout = layout && typeof layout === "object" ? layout : null;
+    if (this.topsList instanceof TopsList) {
+      this.topsList.setTableLayout(this._topListLayout);
+    }
+  }
+
+  async _loadTopListLayout() {
+    if (this._topListLayoutLoadPromise) return this._topListLayoutLoadPromise;
+    this._topListLayoutLoadPromise = (async () => {
+      const api = this._getTopListLayoutApi();
+      if (typeof api?.tableLayoutsGetOne !== "function") {
+        this._applyTopListLayout(null);
+        return null;
+      }
+      try {
+        const res = await api.tableLayoutsGetOne({
+          moduleId: "protokoll",
+          tableKey: "protokoll_tops",
+          orientation: "portrait",
+        });
+        const layout = res?.ok ? res?.data?.effectiveLayout || res?.data?.defaultLayout || null : null;
+        this._applyTopListLayout(layout);
+        return layout;
+      } catch (_err) {
+        this._applyTopListLayout(null);
+        return null;
+      } finally {
+        this._topListLayoutLoadPromise = null;
+      }
+    })();
+    return this._topListLayoutLoadPromise;
   }
 
   async _handleListRowClick(item) {

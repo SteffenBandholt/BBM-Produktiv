@@ -20,6 +20,7 @@ Sie ergänzt:
 - Der Protokoll-Pilot `protokoll_tops` ist jetzt kontrolliert an den Table-Layout-Resolver angebunden:
   - `printData.js` liefert den resolved Payload fuer den Druckweg mit
   - `printApp.js` und `PrintShell.js` lesen Layoutdaten nur, wenn sie im Payload enthalten sind
+  - die echte Protokoll-TOP-Liste liest gespeicherte UI-Layoutwerte jetzt ebenfalls ueber den bestehenden IPC-/Resolver-Pfad
   - ohne gespeichertes Layout bleibt die Anzeige exakt beim bisherigen Standard
   - `TopsList` hat einen optionalen Layout-Hook vorbereitet, bleibt aber im sichtbaren Standardpfad
   - geprueft mit `npm test`

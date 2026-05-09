@@ -54,6 +54,7 @@ Er nutzt jetzt ein groesstenteils vollflächiges internes Arbeitsflächen-Overla
 - Layoutwerte werden vor dem Speichern validiert und defensiv normalisiert
 - Ungueltige technische Werte werden nicht gespeichert
 - kaputte gespeicherte Layouts fallen auf das Standardlayout der konkreten Tabelle zurueck
+- gespeicherte UI-Werte wirken jetzt auch in der echten Protokoll-TOP-Liste
 - ungespeicherte Aenderungen muessen vorher gespeichert werden
 - normale Nutzer sehen diese Funktion nicht
 
