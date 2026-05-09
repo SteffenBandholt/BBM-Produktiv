@@ -25,6 +25,7 @@ Sie ergänzt:
   - ohne gespeichertes Layout bleibt die Anzeige exakt beim bisherigen Standard
   - `TopsList` hat einen optionalen Layout-Hook vorbereitet, bleibt aber im sichtbaren Standardpfad
   - geprueft mit `npm test`
+- Audit fuer den naechsten Tabellenlayout-Kandidaten erstellt; keine Codeaenderung.
 - Naechster offener Schritt: weitere Tabellen nur dann anschliessen, wenn ihre Registry-, Editor- und Preview-Daten sauber bereitstehen.
 - Der interne Tabellenlayout-Editor startet jetzt standardmäßig im Vollbildmodus und hat oben rechts einen Vollbild-Schalter fuer mehr Arbeitsfläche.
 - Der erste interne Tabellenlayout-Editor fuer `protokoll_tops` ist jetzt im Technik-Dialog angehaengt:
