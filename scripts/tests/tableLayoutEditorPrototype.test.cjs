@@ -157,6 +157,97 @@ async function runTableLayoutEditorPrototypeTests(run) {
     assert.equal(overlay.labels.meta[2], "Verantwortlich");
   });
 
+  await run("TableLayoutEditor: protokoll_tops portrait zeigt Modul, Tabelle und Standardquelle", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+    const calls = [];
+    global.window = {
+      bbmDb: {
+        tableLayoutsGetOne: async (payload) => {
+          calls.push(payload);
+          return {
+            ok: true,
+            data: {
+              source: "default",
+              schemaVersion: 1,
+              effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay({}, "portrait"),
+            },
+          };
+        },
+      },
+    };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
+      await editor.load();
+      const text = collectText(editor.root);
+      assert.equal(calls.length, 1);
+      assert.deepEqual(calls[0], {
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: "portrait",
+      });
+      assert.equal(text.includes("Modul: Protokoll"), true);
+      assert.equal(text.includes("Tabelle: TOP-Liste"), true);
+      assert.equal(text.includes("tableKey: protokoll_tops"), true);
+      assert.equal(text.includes("Orientierung: portrait"), true);
+      assert.equal(text.includes("Quelle: Standardlayout protokoll_tops"), true);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("TableLayoutEditor: protokoll_tops landscape bleibt getrennte Layoutvariante", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+    const calls = [];
+    global.window = {
+      bbmDb: {
+        tableLayoutsGetOne: async (payload) => {
+          calls.push(payload);
+          return {
+            ok: true,
+            data: {
+              source: payload.orientation === "landscape" ? "stored" : "default",
+              schemaVersion: 1,
+              effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay(
+                {
+                  uiNumberWidth: payload.orientation === "landscape" ? "72px" : "64px",
+                },
+                payload.orientation
+              ),
+            },
+          };
+        },
+      },
+    };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
+      await editor.load();
+      editor.applyValues({ orientation: "landscape" });
+      await editor.load();
+      const text = collectText(editor.root);
+      assert.equal(calls.length, 2);
+      assert.deepEqual(calls[0], {
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: "portrait",
+      });
+      assert.deepEqual(calls[1], {
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: "landscape",
+      });
+      assert.equal(text.includes("Orientierung: landscape"), true);
+      assert.equal(text.includes("Quelle: Fallback"), false);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
   await run("SettingsView: Tabellenlayout-Editor bleibt aus der normalen Startansicht heraus", () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
@@ -265,6 +356,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-tops-list-text-col"], "minmax(0, 1.25fr)");
       assert.equal(saveCall.payload.layout.pdf.columns.meta.width, "18ch");
       assert.equal(saveCall.payload.layout.labels.text, "Gegenstand / Kurztext");
+      assert.equal(saveCall.payload.layout.variant, "landscape");
 
       const resetRes = await editor.reset();
       assert.equal(resetRes.ok, true);
@@ -275,12 +367,31 @@ async function runTableLayoutEditorPrototypeTests(run) {
         moduleId: "protokoll",
         orientation: "landscape",
       });
+      assert.equal(editor.root.dataset.tableKey, "protokoll_tops");
+      assert.equal(editor.root.dataset.moduleId, "protokoll");
+      assert.equal(editor.root.dataset.orientation, "landscape");
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
     }
   });
+
+  await run("TableLayoutEditor: kein globales Standardlayout als Ziel", () => {
+    const previousDocument = global.document;
+    global.document = createFakeDocument();
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: {} });
+      const text = collectText(editor.root);
+      assert.equal(editor.root.dataset.tableKey, "protokoll_tops");
+      assert.equal(editor.root.dataset.moduleId, "protokoll");
+      assert.equal(editor.root.dataset.orientation, "portrait");
+      assert.equal(text.includes("tableKey: protokoll_tops"), true);
+      assert.equal(text.includes("Modul: Protokoll"), true);
+      assert.equal(text.includes("global"), false);
+    } finally {
+      global.document = previousDocument;
+    }
+  });
 }
 
 module.exports = { runTableLayoutEditorPrototypeTests };
-

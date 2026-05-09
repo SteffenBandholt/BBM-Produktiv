@@ -203,6 +203,9 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const resolvedApi = api || (typeof window !== "undefined" && window.bbmDb) || {};
   const root = document.createElement("section");
   root.dataset.tableLayoutEditor = "protokoll_tops";
+  root.dataset.tableKey = TARGET_LAYOUT.tableKey;
+  root.dataset.moduleId = TARGET_LAYOUT.moduleId;
+  root.dataset.orientation = "portrait";
   root.style.display = "grid";
   root.style.gap = "10px";
   root.style.minWidth = "min(820px, calc(100vw - 120px))";
@@ -220,6 +223,12 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     error: "",
   };
 
+  const formatSourceLabel = () => {
+    if (state.source === "stored") return "gespeichertes Layout";
+    if (state.source === "stored-portrait-fallback") return "Fallback (portrait gespeicherte Variante)";
+    return "Standardlayout protokoll_tops";
+  };
+
   const head = document.createElement("div");
   applyPopupCardStyle(head);
   head.style.padding = "10px";
@@ -231,14 +240,27 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   title.style.fontWeight = "800";
 
   const hint = document.createElement("div");
-  hint.textContent = "Interner Prototyp. Keine normale Nutzerfunktion. PDF-Vorschau kommt spaeter.";
+  hint.textContent =
+    "Interner Prototyp. Die Orientierung bearbeitet die Layoutvariante und ändert den normalen Druck noch nicht automatisch.";
   hint.style.fontSize = "12px";
   hint.style.opacity = "0.8";
 
   const targetInfo = document.createElement("div");
   targetInfo.style.fontSize = "12px";
   targetInfo.style.color = "#475569";
-  targetInfo.textContent = "protokoll_tops | moduleId=protokoll";
+  targetInfo.style.display = "grid";
+  targetInfo.style.gap = "2px";
+  const targetInfoModule = document.createElement("div");
+  targetInfoModule.textContent = "Modul: Protokoll";
+  const targetInfoTable = document.createElement("div");
+  targetInfoTable.textContent = "Tabelle: TOP-Liste";
+  const targetInfoKey = document.createElement("div");
+  targetInfoKey.textContent = "tableKey: protokoll_tops";
+  const targetInfoOrientation = document.createElement("div");
+  targetInfoOrientation.textContent = "Orientierung: portrait";
+  const targetInfoSource = document.createElement("div");
+  targetInfoSource.textContent = "Quelle: Standardlayout protokoll_tops";
+  targetInfo.append(targetInfoModule, targetInfoTable, targetInfoKey, targetInfoOrientation, targetInfoSource);
 
   head.append(title, hint, targetInfo);
 
@@ -414,16 +436,13 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   };
 
   const refreshPreview = () => {
+    root.dataset.orientation = state.orientation;
+    root.dataset.source = state.source;
+    targetInfoOrientation.textContent = `Orientierung: ${state.orientation}`;
+    targetInfoSource.textContent = `Quelle: ${formatSourceLabel()}`;
     _renderValuesSummary(preview, state);
     if (status) {
-      const sourceText =
-        state.source === "stored"
-          ? "gespeichert"
-          : state.source === "stored-portrait-fallback"
-            ? "portrait-Fallback"
-            : state.source === "default"
-              ? "Standard"
-              : state.source || "unbekannt";
+      const sourceText = formatSourceLabel();
       const parseText = state.parseError ? ` | Parse: ${state.parseError}` : "";
       status.textContent = `Quelle: ${sourceText}${parseText}`;
       status.style.color = state.error ? "#b91c1c" : "#475569";

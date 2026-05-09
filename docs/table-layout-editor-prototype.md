@@ -26,6 +26,7 @@ Der Editor ist absichtlich nicht Teil der normalen Navigation.
 
 - Layout fuer `protokoll_tops` laden
 - Orientierung waehlen: `portrait` / `landscape`
+- der Editor merkt sich die zuletzt gewaehlte Orientierung intern
 - aktuelle Werte anzeigen
 - Kernwerte editieren:
   - UI Breite TOP-Spalte
@@ -37,6 +38,9 @@ Der Editor ist absichtlich nicht Teil der normalen Navigation.
   - Spaltenueberschriften
 - ueber vorhandene `tableLayouts`-IPC speichern
 - auf Standard zuruecksetzen
+- Quelle wird sichtbar als `Standardlayout protokoll_tops`, `gespeichertes Layout` oder `Fallback`
+
+Die Orientierung bearbeitet hier nur die Layoutvariante. Sie schaltet den normalen Druck noch nicht automatisch um.
 
 ---
 
@@ -55,4 +59,3 @@ Der Editor ist absichtlich nicht Teil der normalen Navigation.
 
 Spaeter kann der Editor um eine echte Layout-Vorschau und feinere Feldvalidierung erweitert werden.
 Die bestehende Protokoll-UI bleibt bis dahin unveraendert.
-

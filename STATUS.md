@@ -26,7 +26,8 @@ Sie ergänzt:
 - Naechster offener Schritt: erst spaeter entscheiden, ob auch die UI denselben resolved Payload bekommen soll.
 - Der erste interne Tabellenlayout-Editor fuer `protokoll_tops` ist jetzt im Technik-Dialog angehaengt:
   - Zugang nur ueber `Einstellungen > Entwicklung > Technik > Tabellenlayouts`
-  - Laden, Aendern, Speichern und Zuruecksetzen laufen ueber die vorhandenen `tableLayouts`-IPC-Endpunkte
+  - Laden, Aendern, Speichern und Zuruecksetzen laufen fuer `moduleId=protokoll`, `tableKey=protokoll_tops` und die jeweilige Orientierung ueber die vorhandenen `tableLayouts`-IPC-Endpunkte
+  - die Quelle wird im Editor als Standardlayout, gespeichertes Layout oder Fallback angezeigt
   - normale Navigation und sichtbare Protokoll-UI bleiben unveraendert
   - geprueft mit `npm test`
 - Naechster offener Schritt: spaeter manuell pruefen, ob der interne Editor auf dem Zielsystem sauber bedienbar ist.
