@@ -28,11 +28,13 @@ Sie ergänzt:
   - Zugang nur ueber `Einstellungen > Entwicklung > Technik > Tabellenlayouts`
   - Laden, Aendern, Speichern und Zuruecksetzen laufen fuer `moduleId=protokoll`, `tableKey=protokoll_tops` und die jeweilige Orientierung ueber die vorhandenen `tableLayouts`-IPC-Endpunkte
   - die Quelle wird im Editor als Standardlayout, gespeichertes Layout oder Fallback angezeigt
-  - ein interner Button `Gespeichertes Layout im PDF testen` nutzt den bestehenden Druckweg nur mit gespeicherten Layoutwerten und der aktuell gewaehlten Orientierung
-  - ungespeicherte Aenderungen blockieren den Testdruck mit einem klaren Hinweis
+  - die Layoutauswahl ist wieder fachlich korrekt modul- und tabellenbezogen, nicht projektbezogen
+  - aktuell ist nur `Protokoll / TOP-Liste / protokoll_tops` auswählbar, und das kommt aus der bekannten Registry/Definition
+  - der frühere Projekt-/Besprechungsansatz im Editor wurde wieder entfernt
+  - der PDF-Test mit Testdaten ist vorerst bewusst deaktiviert; im Editor steht dafür nur der Hinweis, dass er später separat ergänzt wird
   - normale Navigation und sichtbare Protokoll-UI bleiben unveraendert
   - geprueft mit `npm test`
-- Naechster offener Schritt: spaeter manuell pruefen, ob der interne Editor auf dem Zielsystem sauber bedienbar ist.
+- Naechster offener Schritt: spaeter entscheiden, ob ein separater Testdaten-Bereich fuer den PDF-Test sinnvoll ist.
 - Der Table-Layout-Resolver fuer `protokoll_tops` ist jetzt als technische Grundlage vorhanden:
   - die zentrale Registry kennt den Pilot `protokoll_tops`
   - `getResolvedTableLayout(...)` liefert Standardlayout, gespeichertes Layout oder einen sicheren Fehler fuer unbekannte Tabellen

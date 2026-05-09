@@ -10,6 +10,9 @@ function withPatchedTableLayoutsIpc(stubs, fn) {
     );
     if (fromTableLayoutsIpc && request === "electron") return stubs.electron;
     if (fromTableLayoutsIpc && request === "../db/tableLayoutsRepo") return stubs.tableLayoutsRepo;
+    if (fromTableLayoutsIpc && request === "../../shared/tableLayouts/tableLayoutRegistry") {
+      return stubs.tableLayoutRegistry;
+    }
     return originalLoad.apply(this, arguments);
   };
 
@@ -59,6 +62,11 @@ function createDefaultStubs() {
           return { removed: 1, payload };
         },
       },
+      tableLayoutRegistry: {
+        listTableLayoutDefinitions() {
+          return [{ tableKey: "protokoll_tops", moduleId: "protokoll", label: "Protokoll TOP-Liste" }];
+        },
+      },
     },
   };
 }
@@ -69,6 +77,7 @@ async function runTableLayoutsIpcTests(run) {
     return withPatchedTableLayoutsIpc(stubs, (mod) => {
       mod.registerTableLayoutsIpc();
       assert.equal(typeof handlers.get("tableLayouts:getMany"), "function");
+      assert.equal(typeof handlers.get("tableLayouts:listDefinitions"), "function");
       assert.equal(typeof handlers.get("tableLayouts:getOne"), "function");
       assert.equal(typeof handlers.get("tableLayouts:save"), "function");
       assert.equal(typeof handlers.get("tableLayouts:reset"), "function");
@@ -81,11 +90,13 @@ async function runTableLayoutsIpcTests(run) {
       mod.registerTableLayoutsIpc();
 
       const getMany = handlers.get("tableLayouts:getMany");
+      const listDefinitions = handlers.get("tableLayouts:listDefinitions");
       const getOne = handlers.get("tableLayouts:getOne");
       const save = handlers.get("tableLayouts:save");
       const reset = handlers.get("tableLayouts:reset");
 
       const manyRes = await getMany({}, { tableKey: "protokoll_tops" });
+      const defsRes = await listDefinitions({}, {});
       const oneRes = await getOne(
         {},
         {
@@ -113,9 +124,13 @@ async function runTableLayoutsIpcTests(run) {
       );
 
       assert.equal(manyRes.ok, true);
+      assert.equal(defsRes.ok, true);
       assert.equal(oneRes.ok, true);
       assert.equal(saveRes.ok, true);
       assert.equal(resetRes.ok, true);
+      assert.deepEqual(defsRes.data, [
+        { tableKey: "protokoll_tops", moduleId: "protokoll", label: "Protokoll TOP-Liste" },
+      ]);
       assert.deepEqual(repoCalls.listTableLayouts, [{ tableKey: "protokoll_tops" }]);
       assert.deepEqual(repoCalls.getEffectiveTableLayout, [
         {

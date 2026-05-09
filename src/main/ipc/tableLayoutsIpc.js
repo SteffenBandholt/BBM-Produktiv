@@ -1,10 +1,19 @@
 const { ipcMain } = require("electron");
 const tableLayoutsRepo = require("../db/tableLayoutsRepo");
+const { listTableLayoutDefinitions } = require("../../shared/tableLayouts/tableLayoutRegistry");
 
 function registerTableLayoutsIpc() {
   ipcMain.handle("tableLayouts:getMany", async (_evt, payload) => {
     try {
       return { ok: true, data: tableLayoutsRepo.listTableLayouts(payload || {}) };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
+  ipcMain.handle("tableLayouts:listDefinitions", async () => {
+    try {
+      return { ok: true, data: listTableLayoutDefinitions() };
     } catch (err) {
       return { ok: false, error: err?.message || String(err) };
     }

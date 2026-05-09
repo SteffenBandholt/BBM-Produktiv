@@ -1,4 +1,4 @@
-const assert = require("node:assert/strict");
+﻿const assert = require("node:assert/strict");
 const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
@@ -141,6 +141,21 @@ function findNodeByText(node, text) {
   return null;
 }
 
+function findNodesByTag(node, tagName, out = []) {
+  const target = String(tagName || "").toUpperCase();
+  if (!node) return out;
+  if (Array.isArray(node)) {
+    for (const item of node) findNodesByTag(item, target, out);
+    return out;
+  }
+  if (typeof node !== "object") return out;
+  if (String(node.tagName || "").toUpperCase() === target) out.push(node);
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) findNodesByTag(child, target, out);
+  }
+  return out;
+}
+
 function flushMicrotasks() {
   return new Promise((resolve) => setImmediate(resolve));
 }
@@ -152,6 +167,47 @@ async function runTableLayoutEditorPrototypeTests(run) {
   const { default: SettingsView } = await importEsmFromFile(
     path.join(__dirname, "../../src/renderer/views/SettingsView.js")
   );
+
+  const makeEditorApi = ({
+    tableDefinitions = [{ tableKey: "protokoll_tops", moduleId: "protokoll", label: "Protokoll TOP-Liste" }],
+    getOne = async (payload) => ({
+      ok: true,
+      data: {
+        source: "default",
+        schemaVersion: 1,
+        effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay({}, payload.orientation),
+      },
+    }),
+    save = async (payload) => ({
+      ok: true,
+      data: {
+        source: "stored",
+        schemaVersion: payload.schemaVersion || 1,
+        effectiveLayout: payload.layout,
+      },
+    }),
+    reset = async () => ({ ok: true, data: { removed: 1 } }),
+    } = {}) => {
+    const calls = [];
+    return {
+      calls,
+      api: {
+        tableLayoutsListDefinitions: async () => ({ ok: true, data: tableDefinitions }),
+        tableLayoutsGetOne: async (payload) => {
+          calls.push({ type: "getOne", payload });
+          return getOne(payload, calls);
+        },
+        tableLayoutsSave: async (payload) => {
+          calls.push({ type: "save", payload });
+          return save(payload, calls);
+        },
+        tableLayoutsReset: async (payload) => {
+          calls.push({ type: "reset", payload });
+          return reset(payload, calls);
+        },
+      },
+    };
+  };
 
   await run("TableLayoutEditor: Kernwerte werden defensiv normalisiert", () => {
     const overlay = editorMod.buildProtokollTopsLayoutOverlay(
@@ -185,32 +241,22 @@ async function runTableLayoutEditorPrototypeTests(run) {
     const previousDocument = global.document;
     const previousWindow = global.window;
     global.document = createFakeDocument();
-    const calls = [];
-    global.window = {
-      bbmDb: {
-        tableLayoutsGetOne: async (payload) => {
-          calls.push(payload);
-          return {
-            ok: true,
-            data: {
-              source: "default",
-              schemaVersion: 1,
-              effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay({}, "portrait"),
-            },
-          };
-        },
-      },
-    };
+    const { api, calls } = makeEditorApi();
+    global.window = { bbmDb: api };
     try {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
       const text = collectText(editor.root);
-      assert.equal(calls.length, 1);
-      assert.deepEqual(calls[0], {
+      const selects = findNodesByTag(editor.root, "SELECT");
+      assert.equal(calls.filter((item) => item.type === "getOne").length, 1);
+      assert.deepEqual(calls.find((item) => item.type === "getOne")?.payload, {
         tableKey: "protokoll_tops",
         moduleId: "protokoll",
         orientation: "portrait",
       });
+      assert.equal(selects[0]?.value, "protokoll");
+      assert.equal(selects[1]?.value, "protokoll_tops");
+      assert.equal(selects[2]?.value, "portrait");
       assert.equal(text.includes("Modul: Protokoll"), true);
       assert.equal(text.includes("Tabelle: TOP-Liste"), true);
       assert.equal(text.includes("tableKey: protokoll_tops"), true);
@@ -226,44 +272,50 @@ async function runTableLayoutEditorPrototypeTests(run) {
     const previousDocument = global.document;
     const previousWindow = global.window;
     global.document = createFakeDocument();
-    const calls = [];
-    global.window = {
-      bbmDb: {
-        tableLayoutsGetOne: async (payload) => {
-          calls.push(payload);
-          return {
-            ok: true,
-            data: {
-              source: payload.orientation === "landscape" ? "stored" : "default",
-              schemaVersion: 1,
-              effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay(
-                {
-                  uiNumberWidth: payload.orientation === "landscape" ? "72px" : "64px",
-                },
-                payload.orientation
-              ),
+    const { api, calls } = makeEditorApi({
+      getOne: async (payload) => ({
+        ok: true,
+        data: {
+          source: payload.orientation === "landscape" ? "stored" : "default",
+          schemaVersion: 1,
+          effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay(
+            {
+              uiNumberWidth: payload.orientation === "landscape" ? "72px" : "64px",
             },
-          };
+            payload.orientation
+          ),
         },
-      },
-    };
+      }),
+    });
+    global.window = { bbmDb: api };
     try {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
-      editor.applyValues({ orientation: "landscape" });
+      const selects = findNodesByTag(editor.root, "SELECT");
+      selects[2].value = "landscape";
+      selects[2].dispatchEvent({ type: "change" });
       await editor.load();
       const text = collectText(editor.root);
-      assert.equal(calls.length, 2);
-      assert.deepEqual(calls[0], {
+      const getOneCalls = calls.filter((item) => item.type === "getOne");
+      assert.equal(getOneCalls.length, 3);
+      assert.deepEqual(getOneCalls[0].payload, {
         tableKey: "protokoll_tops",
         moduleId: "protokoll",
         orientation: "portrait",
       });
-      assert.deepEqual(calls[1], {
+      assert.deepEqual(getOneCalls[1].payload, {
         tableKey: "protokoll_tops",
         moduleId: "protokoll",
         orientation: "landscape",
       });
+      assert.deepEqual(getOneCalls[2].payload, {
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: "landscape",
+      });
+      assert.equal(selects[0].value, "protokoll");
+      assert.equal(selects[1].value, "protokoll_tops");
+      assert.equal(selects[2].value, "landscape");
       assert.equal(text.includes("Orientierung: landscape"), true);
       assert.equal(text.includes("Quelle: Fallback"), false);
     } finally {
@@ -293,68 +345,60 @@ async function runTableLayoutEditorPrototypeTests(run) {
   await run("TableLayoutEditor: load/save/reset nutzt vorhandene IPC-Endpunkte", async () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
-    const calls = [];
     global.document = createFakeDocument();
-    global.window = {
-      bbmDb: {
-        tableLayoutsGetOne: async (payload) => {
-          calls.push({ type: "getOne", payload });
-          return {
-            ok: true,
-            data: {
-              source: "stored",
-              schemaVersion: 3,
-              effectiveLayout: {
-                variant: "portrait",
-                labels: {
-                  top: "TOP",
-                  text: "Gegenstand",
-                  meta: ["Status", "Fertig bis", "verantw"],
-                },
-                ui: {
-                  rootVars: {
-                    "--bbm-tops-list-number-col": "70px",
-                    "--bbm-tops-list-text-col": "minmax(0, 1.1fr)",
-                    "--bbm-tops-list-meta-col": "78px",
-                  },
-                },
-                pdf: {
-                  columns: {
-                    number: { width: "24mm" },
-                    text: { width: "auto" },
-                    meta: { width: "16ch" },
-                  },
-                },
+    const { api, calls } = makeEditorApi({
+      getOne: async (payload) => ({
+        ok: true,
+        data: {
+          source: "stored",
+          schemaVersion: 3,
+          effectiveLayout: {
+            variant: payload.orientation,
+            labels: {
+              top: "TOP",
+              text: "Gegenstand",
+              meta: ["Status", "Fertig bis", "verantw"],
+            },
+            ui: {
+              rootVars: {
+                "--bbm-tops-list-number-col": "70px",
+                "--bbm-tops-list-text-col": "minmax(0, 1.1fr)",
+                "--bbm-tops-list-meta-col": "78px",
               },
             },
-          };
-        },
-        tableLayoutsSave: async (payload) => {
-          calls.push({ type: "save", payload });
-          return {
-            ok: true,
-            data: {
-              source: "stored",
-              effectiveLayout: {
-                variant: payload.layout.variant,
-                labels: payload.layout.labels,
-                ui: payload.layout.ui,
-                pdf: payload.layout.pdf,
+            pdf: {
+              columns: {
+                number: { width: "24mm" },
+                text: { width: "auto" },
+                meta: { width: "16ch" },
               },
             },
-          };
+          },
         },
-        tableLayoutsReset: async (payload) => {
-          calls.push({ type: "reset", payload });
-          return { ok: true, data: { removed: 1 } };
+      }),
+      save: async (payload) => ({
+        ok: true,
+        data: {
+          source: "stored",
+          effectiveLayout: {
+            variant: payload.layout.variant,
+            labels: payload.layout.labels,
+            ui: payload.layout.ui,
+            pdf: payload.layout.pdf,
+          },
         },
-      },
-    };
+      }),
+      reset: async () => ({ ok: true, data: { removed: 1 } }),
+    });
+    global.window = { bbmDb: api };
     try {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
+      const selects = findNodesByTag(editor.root, "SELECT");
+      selects[2].value = "landscape";
+      selects[2].dispatchEvent({ type: "change" });
+      await flushMicrotasks();
       editor.applyValues({
-        orientation: "landscape",
         uiNumberWidth: "76px",
         uiTextTrack: "minmax(0, 1.25fr)",
         uiMetaWidth: "84px",
@@ -365,8 +409,8 @@ async function runTableLayoutEditorPrototypeTests(run) {
       });
       const saveRes = await editor.save();
       assert.equal(saveRes.ok, true);
-      assert.equal(calls[0].type, "getOne");
-      assert.deepEqual(calls[0].payload, {
+      assert.equal(calls.filter((item) => item.type === "getOne").length >= 1, true);
+      assert.deepEqual(calls.find((item) => item.type === "getOne")?.payload, {
         tableKey: "protokoll_tops",
         moduleId: "protokoll",
         orientation: "portrait",
@@ -418,135 +462,20 @@ async function runTableLayoutEditorPrototypeTests(run) {
     }
   });
 
-  await run("TableLayoutEditor: PDF-Testdruck ist ohne Projekt/Besprechung deaktiviert", async () => {
+  await run("TableLayoutEditor: PDF-Test mit Testdaten ist später separat", async () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
     global.document = createFakeDocument();
-    global.window = {
-      bbmDb: {
-        tableLayoutsGetOne: async () => ({
-          ok: true,
-          data: {
-            source: "default",
-            schemaVersion: 1,
-            effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay({}, "portrait"),
-          },
-        }),
-      },
-    };
+    const { api } = makeEditorApi();
+    global.window = { bbmDb: api };
     try {
-      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb, router: {} });
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
-      const button = findNodeByText(editor.root, "Gespeichertes Layout im PDF testen");
-      const info = findNodeByText(editor.root, "PDF-Test benötigt ein geöffnetes Projekt mit Besprechung.");
-      assert.ok(button, "test button missing");
-      assert.equal(button.disabled, true);
-      assert.ok(info, "context hint missing");
-    } finally {
-      global.document = previousDocument;
-      global.window = previousWindow;
-    }
-  });
-
-  await run("TableLayoutEditor: ungespeicherte Änderungen blockieren den PDF-Test", async () => {
-    const previousDocument = global.document;
-    const previousWindow = global.window;
-    const printCalls = [];
-    global.document = createFakeDocument();
-    global.window = {
-      bbmDb: {
-        tableLayoutsGetOne: async () => ({
-          ok: true,
-          data: {
-            source: "stored",
-            schemaVersion: 1,
-            effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay({}, "portrait"),
-          },
-        }),
-      },
-      bbmPrint: {
-        printPdf: async (payload) => {
-          printCalls.push(payload);
-          return { ok: true, filePath: "C:/temp/table-layout-test.pdf" };
-        },
-      },
-    };
-    try {
-      const editor = editorMod.createTableLayoutPrototypeEditor({
-        api: global.window.bbmDb,
-        router: { currentProjectId: "P-1", currentMeetingId: "M-1" },
-      });
-      await editor.load();
-      editor.applyValues({ pdfMetaWidth: "18ch" });
-      const button = findNodeByText(editor.root, "Gespeichertes Layout im PDF testen");
-      const info = findNodeByText(editor.root, "Bitte erst speichern, dann PDF-Test ausführen.");
-      assert.ok(button, "test button missing");
-      assert.equal(button.disabled, true);
-      assert.ok(info, "dirty hint missing");
-      button.click();
-      await flushMicrotasks();
-      assert.equal(printCalls.length, 0);
-    } finally {
-      global.document = previousDocument;
-      global.window = previousWindow;
-    }
-  });
-
-  await run("TableLayoutEditor: PDF-Testdruck nutzt die aktuelle Orientierung und den bestehenden Druckweg", async () => {
-    const previousDocument = global.document;
-    const previousWindow = global.window;
-    const printCalls = [];
-    global.document = createFakeDocument();
-    global.window = {
-      bbmDb: {
-        tableLayoutsGetOne: async (payload) => ({
-          ok: true,
-          data: {
-            source: "default",
-            schemaVersion: 1,
-            effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay(
-              {
-                uiNumberWidth: payload.orientation === "landscape" ? "72px" : "64px",
-              },
-              payload.orientation
-            ),
-          },
-        }),
-      },
-      bbmPrint: {
-        printPdf: async (payload) => {
-          printCalls.push(payload);
-          return { ok: true, filePath: "C:/temp/table-layout-test.pdf" };
-        },
-      },
-    };
-    try {
-      const editor = editorMod.createTableLayoutPrototypeEditor({
-        api: global.window.bbmDb,
-        router: { currentProjectId: "P-1", currentMeetingId: "M-1" },
-      });
-      await editor.load();
-      editor.applyValues({ orientation: "landscape" });
-      await editor.load();
-      const button = findNodeByText(editor.root, "Gespeichertes Layout im PDF testen");
-      assert.ok(button, "test button missing");
-      assert.equal(button.disabled, false);
-      button.click();
-      await flushMicrotasks();
-      await flushMicrotasks();
-      assert.equal(printCalls.length, 1);
-      assert.deepEqual(printCalls[0], {
-        mode: "topsAll",
-        projectId: "P-1",
-        meetingId: "M-1",
-        orientation: "landscape",
-        silent: true,
-        targetDir: "temp",
-        overwrite: true,
-      });
-      assert.equal(editor.root.dataset.orientation, "landscape");
-      assert.equal(editor.root.dataset.tableKey, "protokoll_tops");
-      assert.equal(editor.root.dataset.moduleId, "protokoll");
+      const text = collectText(editor.root);
+      assert.equal(text.includes("PDF-Test mit Testdaten wird später separat ergänzt."), true);
+      assert.equal(text.includes("Projekt"), false);
+      assert.equal(text.includes("Besprechung"), false);
+      assert.equal(findNodeByText(editor.root, "Gespeichertes Layout im PDF testen"), null);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
@@ -555,3 +484,4 @@ async function runTableLayoutEditorPrototypeTests(run) {
 }
 
 module.exports = { runTableLayoutEditorPrototypeTests };
+

@@ -172,6 +172,8 @@ async function runLicenseRequestTests(run) {
     assert.equal(preloadSource.includes("licenseCreateRequest"), true);
     assert.equal(preloadSource.includes('ipcRenderer.invoke("license:create-request"'), true);
     assert.equal(preloadSource.includes('ipcRenderer.invoke("app:get-customer-setup"'), true);
+    assert.equal(preloadSource.includes("tableLayoutsListDefinitions"), true);
+    assert.equal(preloadSource.includes('ipcRenderer.invoke("tableLayouts:listDefinitions"'), true);
   });
 
   await run("Preload: window.bbmDb.licenseAdminImportLicenseRequest ist entfernt", () => {

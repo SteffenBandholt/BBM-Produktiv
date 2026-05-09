@@ -3,6 +3,8 @@ import { applyPopupButtonStyle, applyPopupCardStyle } from "../ui/popupButtonSty
 const TARGET_LAYOUT = Object.freeze({
   tableKey: "protokoll_tops",
   moduleId: "protokoll",
+  moduleLabel: "Protokoll",
+  tableLabel: "TOP-Liste",
 });
 
 const DEFAULT_VALUES = Object.freeze({
@@ -45,6 +47,15 @@ function _sameJson(a, b) {
   return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
 }
 
+function _normalizeId(value) {
+  return String(value == null ? "" : value).trim();
+}
+
+function _formatText(value, fallback) {
+  const text = _normalizeId(value);
+  return text || fallback;
+}
+
 export function extractProtokollTopsEditorValues(layout = {}) {
   const uiRootVars = layout?.ui?.rootVars || {};
   const pdfColumns = layout?.pdf?.columns || {};
@@ -52,20 +63,9 @@ export function extractProtokollTopsEditorValues(layout = {}) {
   const metaLabels = Array.isArray(labels.meta) ? labels.meta : [];
   return {
     orientation: _normalizeOrientation(layout?.variant || layout?.orientation || DEFAULT_VALUES.orientation),
-    uiNumberWidth: _normalizeText(
-      uiRootVars["--bbm-tops-list-number-col"],
-      DEFAULT_VALUES.uiNumberWidth,
-      32
-    ),
-    uiTextTrack: _normalizeTrack(
-      uiRootVars["--bbm-tops-list-text-col"],
-      DEFAULT_VALUES.uiTextTrack
-    ),
-    uiMetaWidth: _normalizeText(
-      uiRootVars["--bbm-tops-list-meta-col"],
-      DEFAULT_VALUES.uiMetaWidth,
-      32
-    ),
+    uiNumberWidth: _normalizeText(uiRootVars["--bbm-tops-list-number-col"], DEFAULT_VALUES.uiNumberWidth, 32),
+    uiTextTrack: _normalizeTrack(uiRootVars["--bbm-tops-list-text-col"], DEFAULT_VALUES.uiTextTrack),
+    uiMetaWidth: _normalizeText(uiRootVars["--bbm-tops-list-meta-col"], DEFAULT_VALUES.uiMetaWidth, 32),
     pdfNumberWidth: _normalizeText(pdfColumns.number?.width, DEFAULT_VALUES.pdfNumberWidth, 32),
     pdfTextWidth: _normalizeText(pdfColumns.text?.width, DEFAULT_VALUES.pdfTextWidth, 32),
     pdfMetaWidth: _normalizeText(pdfColumns.meta?.width, DEFAULT_VALUES.pdfMetaWidth, 32),
@@ -92,48 +92,22 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
       _normalizeText(normalized.labelMeta3, DEFAULT_VALUES.labelMeta3, 48),
     ],
   };
-  const uiRootVars = {
-    "--bbm-tops-list-number-col": _normalizeText(
-      normalized.uiNumberWidth,
-      DEFAULT_VALUES.uiNumberWidth,
-      32
-    ),
-    "--bbm-tops-list-text-col": _normalizeTrack(
-      normalized.uiTextTrack,
-      DEFAULT_VALUES.uiTextTrack
-    ),
-    "--bbm-tops-list-meta-col": _normalizeText(
-      normalized.uiMetaWidth,
-      DEFAULT_VALUES.uiMetaWidth,
-      32
-    ),
-  };
-  const pdfColumns = {
-    number: {
-      key: "top",
-      className: "colNr",
-      width: _normalizeText(normalized.pdfNumberWidth, DEFAULT_VALUES.pdfNumberWidth, 32),
-    },
-    text: {
-      key: "text",
-      className: "colText",
-      width: _normalizeText(normalized.pdfTextWidth, DEFAULT_VALUES.pdfTextWidth, 32),
-    },
-    meta: {
-      key: "meta",
-      className: "colMeta",
-      width: _normalizeText(normalized.pdfMetaWidth, DEFAULT_VALUES.pdfMetaWidth, 32),
-    },
-  };
-
   return {
     variant: normalized.orientation,
     labels,
     ui: {
-      rootVars: uiRootVars,
+      rootVars: {
+        "--bbm-tops-list-number-col": _normalizeText(normalized.uiNumberWidth, DEFAULT_VALUES.uiNumberWidth, 32),
+        "--bbm-tops-list-text-col": _normalizeTrack(normalized.uiTextTrack, DEFAULT_VALUES.uiTextTrack),
+        "--bbm-tops-list-meta-col": _normalizeText(normalized.uiMetaWidth, DEFAULT_VALUES.uiMetaWidth, 32),
+      },
     },
     pdf: {
-      columns: pdfColumns,
+      columns: {
+        number: { key: "top", className: "colNr", width: _normalizeText(normalized.pdfNumberWidth, DEFAULT_VALUES.pdfNumberWidth, 32) },
+        text: { key: "text", className: "colText", width: _normalizeText(normalized.pdfTextWidth, DEFAULT_VALUES.pdfTextWidth, 32) },
+        meta: { key: "meta", className: "colMeta", width: _normalizeText(normalized.pdfMetaWidth, DEFAULT_VALUES.pdfMetaWidth, 32) },
+      },
     },
   };
 }
@@ -180,16 +154,20 @@ function _readFormValues(fields) {
 
 function _renderValuesSummary(target, state) {
   if (!target) return;
-  const summary = {
-    target: TARGET_LAYOUT,
-    orientation: state.orientation,
-    source: state.source || "default",
-    schemaVersion: state.schemaVersion || 1,
-    parseError: state.parseError || "",
-    loaded: state.loadedValues ? _cloneJson(state.loadedValues) : null,
-    editValues: state.editValues ? _cloneJson(state.editValues) : null,
-  };
-  target.textContent = JSON.stringify(summary, null, 2);
+  target.textContent = JSON.stringify(
+    {
+      moduleId: state.selectedModuleId,
+      tableKey: state.selectedTableKey,
+      orientation: state.orientation,
+      source: state.source,
+      schemaVersion: state.schemaVersion,
+      parseError: state.parseError,
+      loaded: state.loadedValues ? _cloneJson(state.loadedValues) : null,
+      editValues: state.editValues ? _cloneJson(state.editValues) : null,
+    },
+    null,
+    2
+  );
 }
 
 function _syncFields(fields, values) {
@@ -203,9 +181,9 @@ function _syncFields(fields, values) {
   }
 }
 
-export function createTableLayoutPrototypeEditor({ api, router } = {}) {
+export function createTableLayoutPrototypeEditor({ api } = {}) {
   const resolvedApi = api || (typeof window !== "undefined" && window.bbmDb) || {};
-  const resolvedRouter = router || null;
+
   const root = document.createElement("section");
   root.dataset.tableLayoutEditor = "protokoll_tops";
   root.dataset.tableKey = TARGET_LAYOUT.tableKey;
@@ -227,6 +205,14 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
     busy: false,
     error: "",
     testResult: "",
+    selectedModuleId: TARGET_LAYOUT.moduleId,
+    selectedTableKey: TARGET_LAYOUT.tableKey,
+    moduleDefinitions: [{ moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.moduleLabel }],
+    tableDefinitions: [
+      { tableKey: TARGET_LAYOUT.tableKey, moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.tableLabel },
+    ],
+    contextLoading: false,
+    contextError: "",
   };
 
   const formatSourceLabel = () => {
@@ -246,8 +232,7 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
   title.style.fontWeight = "800";
 
   const hint = document.createElement("div");
-  hint.textContent =
-    "Interner Prototyp. Die Orientierung bearbeitet die Layoutvariante und ändert den normalen Druck noch nicht automatisch.";
+  hint.textContent = "Interner Prototyp. Die Orientierung bearbeitet die Layoutvariante und ändert den normalen Druck noch nicht automatisch.";
   hint.style.fontSize = "12px";
   hint.style.opacity = "0.8";
 
@@ -270,15 +255,58 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
 
   head.append(title, hint, targetInfo);
 
-  const resolvePrintContext = () => {
-    const projectId = String(resolvedRouter?.currentProjectId || "").trim();
-    const meetingId = String(resolvedRouter?.currentMeetingId || "").trim();
-    return {
-      projectId: projectId || null,
-      meetingId: meetingId || null,
-      ok: !!projectId && !!meetingId,
-    };
-  };
+  const contextCard = document.createElement("div");
+  applyPopupCardStyle(contextCard);
+  contextCard.style.padding = "10px";
+  contextCard.style.display = "grid";
+  contextCard.style.gap = "8px";
+
+  const contextTitle = document.createElement("div");
+  contextTitle.textContent = "Layout-Auswahl";
+  contextTitle.style.fontWeight = "800";
+
+  const contextHint = document.createElement("div");
+  contextHint.textContent = "Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.";
+  contextHint.style.fontSize = "12px";
+  contextHint.style.opacity = "0.78";
+
+  const contextGrid = document.createElement("div");
+  contextGrid.style.display = "grid";
+  contextGrid.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+  contextGrid.style.gap = "8px";
+
+  const moduleWrap = document.createElement("label");
+  moduleWrap.style.display = "grid";
+  moduleWrap.style.gap = "4px";
+  const moduleLabel = document.createElement("span");
+  moduleLabel.textContent = "Modul";
+  moduleLabel.style.fontSize = "12px";
+  moduleLabel.style.fontWeight = "700";
+  moduleLabel.style.color = "#334155";
+  const moduleSelect = document.createElement("select");
+  moduleSelect.style.width = "100%";
+  moduleSelect.style.boxSizing = "border-box";
+  moduleWrap.append(moduleLabel, moduleSelect);
+
+  const tableWrap = document.createElement("label");
+  tableWrap.style.display = "grid";
+  tableWrap.style.gap = "4px";
+  const tableLabel = document.createElement("span");
+  tableLabel.textContent = "Tabelle";
+  tableLabel.style.fontSize = "12px";
+  tableLabel.style.fontWeight = "700";
+  tableLabel.style.color = "#334155";
+  const tableSelect = document.createElement("select");
+  tableSelect.style.width = "100%";
+  tableSelect.style.boxSizing = "border-box";
+  tableWrap.append(tableLabel, tableSelect);
+
+  const tableInfo = document.createElement("div");
+  tableInfo.style.fontSize = "12px";
+  tableInfo.style.color = "#475569";
+
+  contextGrid.append(moduleWrap, tableWrap);
+  contextCard.append(contextTitle, contextHint, contextGrid, tableInfo);
 
   const toolbar = document.createElement("div");
   toolbar.style.display = "flex";
@@ -337,29 +365,10 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
   testTitle.style.fontWeight = "800";
 
   const testHint = document.createElement("div");
-  testHint.textContent =
-    "Der Test nutzt nur gespeicherte Layoutwerte aus der DB. Ungespeicherte Aenderungen muessen vorher gespeichert werden.";
+  testHint.textContent = "PDF-Test mit Testdaten wird später separat ergänzt.";
   testHint.style.fontSize = "12px";
   testHint.style.opacity = "0.78";
-
-  const testActions = document.createElement("div");
-  testActions.style.display = "flex";
-  testActions.style.flexWrap = "wrap";
-  testActions.style.gap = "8px";
-  testActions.style.alignItems = "center";
-
-  const btnTestPdf = document.createElement("button");
-  btnTestPdf.type = "button";
-  btnTestPdf.textContent = "Gespeichertes Layout im PDF testen";
-  applyPopupButtonStyle(btnTestPdf, { variant: "primary" });
-
-  const testInfo = document.createElement("div");
-  testInfo.style.fontSize = "12px";
-  testInfo.style.color = "#475569";
-  testInfo.style.minHeight = "16px";
-
-  testActions.append(btnTestPdf, testInfo);
-  testCard.append(testTitle, testHint, testActions);
+  testCard.append(testTitle, testHint);
 
   const formCard = document.createElement("div");
   applyPopupCardStyle(formCard);
@@ -382,10 +391,7 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
     return box;
   };
 
-  const layoutSection = makeSection(
-    "Spaltenwerte",
-    "Breiten koennen als CSS-Trackwerte gepflegt werden; Texte bleiben defensiv normalisiert."
-  );
+  const layoutSection = makeSection("Spaltenwerte", "Breiten koennen als CSS-Trackwerte gepflegt werden; Texte bleiben defensiv normalisiert.");
   layoutSection.style.borderBottom = "1px solid rgba(0,0,0,0.08)";
   layoutSection.style.paddingBottom = "8px";
   const layoutGrid = document.createElement("div");
@@ -403,21 +409,6 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
     const field = _createField(labelText, initialValue);
     fields.set(key, field.input);
     return field.row;
-  };
-
-  const makeRow = (titleText, hintText, children) => {
-    const box = document.createElement("div");
-    box.style.display = "grid";
-    box.style.gap = "8px";
-    const headRow = document.createElement("div");
-    headRow.textContent = titleText;
-    headRow.style.fontWeight = "800";
-    const hintRow = document.createElement("div");
-    hintRow.textContent = hintText;
-    hintRow.style.fontSize = "12px";
-    hintRow.style.opacity = "0.78";
-    box.append(headRow, hintRow, children);
-    return box;
   };
 
   layoutGrid.append(
@@ -469,23 +460,108 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
   layoutSection.append(layoutGrid);
   labelSection.append(labelGrid);
 
-  root.append(head, toolbar, fieldsCard, testCard, previewCard);
+  root.append(head, contextCard, toolbar, fieldsCard, testCard, previewCard);
 
-  const updateTestPdfState = () => {
-    const ctx = resolvePrintContext();
-    const hasDirtyValues = !_sameJson(state.editValues, state.loadedValues);
-    const busyText = state.busy ? "Bitte warten, der Editor verarbeitet gerade Daten." : "";
-    const message = state.testResult
-      || busyText
-      || (!ctx.ok
-        ? "PDF-Test benötigt ein geöffnetes Projekt mit Besprechung."
-        : hasDirtyValues
-          ? "Bitte erst speichern, dann PDF-Test ausführen."
-          : `PDF-Test nutzt das gespeicherte Layout in ${state.orientation}.`);
-    testInfo.textContent = message;
-    testInfo.style.color = busyText || !ctx.ok || hasDirtyValues ? "#b91c1c" : "#475569";
-    btnTestPdf.disabled = state.busy || !ctx.ok || hasDirtyValues;
-    btnTestPdf.style.opacity = btnTestPdf.disabled ? "0.65" : "1";
+  const _getSelectedTableDefinition = () => {
+    const tableKey = _normalizeId(state.selectedTableKey) || TARGET_LAYOUT.tableKey;
+    const moduleId = _normalizeId(state.selectedModuleId) || TARGET_LAYOUT.moduleId;
+    return state.tableDefinitions.find((item) => _normalizeId(item?.tableKey) === tableKey && _normalizeId(item?.moduleId) === moduleId) || null;
+  };
+
+  const _renderModuleOptions = () => {
+    const defs = state.moduleDefinitions.length ? state.moduleDefinitions : [{ moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.moduleLabel }];
+    const current = _normalizeId(moduleSelect.value || state.selectedModuleId) || _normalizeId(defs[0]?.moduleId) || TARGET_LAYOUT.moduleId;
+    moduleSelect.innerHTML = "";
+    for (const def of defs) {
+      const option = document.createElement("option");
+      option.value = _normalizeId(def.moduleId);
+      option.textContent = _formatText(def.label || def.moduleLabel, TARGET_LAYOUT.moduleLabel);
+      moduleSelect.appendChild(option);
+    }
+    moduleSelect.value = defs.some((def) => _normalizeId(def.moduleId) === current) ? current : _normalizeId(defs[0]?.moduleId) || TARGET_LAYOUT.moduleId;
+    state.selectedModuleId = _normalizeId(moduleSelect.value) || TARGET_LAYOUT.moduleId;
+  };
+
+  const _renderTableOptions = () => {
+    const moduleId = _normalizeId(state.selectedModuleId) || TARGET_LAYOUT.moduleId;
+    const defs = state.tableDefinitions.filter((item) => _normalizeId(item?.moduleId) === moduleId);
+    const tableDefs = defs.length ? defs : [TARGET_LAYOUT];
+    const current = _normalizeId(tableSelect.value || state.selectedTableKey) || _normalizeId(tableDefs[0]?.tableKey) || TARGET_LAYOUT.tableKey;
+    tableSelect.innerHTML = "";
+    for (const def of tableDefs) {
+      const option = document.createElement("option");
+      option.value = _normalizeId(def.tableKey);
+      option.textContent = _formatText(def.label || def.tableLabel, TARGET_LAYOUT.tableLabel);
+      tableSelect.appendChild(option);
+    }
+    tableSelect.value = tableDefs.some((def) => _normalizeId(def.tableKey) === current) ? current : _normalizeId(tableDefs[0]?.tableKey) || TARGET_LAYOUT.tableKey;
+    state.selectedTableKey = _normalizeId(tableSelect.value) || TARGET_LAYOUT.tableKey;
+    const def = _getSelectedTableDefinition() || TARGET_LAYOUT;
+    tableInfo.textContent = `Aktive Tabelle: ${def.label || TARGET_LAYOUT.tableLabel} | tableKey: ${state.selectedTableKey || TARGET_LAYOUT.tableKey}`;
+  };
+
+  const _updateContextStatus = () => {
+    contextCard.dataset.moduleId = state.selectedModuleId || TARGET_LAYOUT.moduleId;
+    contextCard.dataset.tableKey = state.selectedTableKey || TARGET_LAYOUT.tableKey;
+    contextCard.dataset.orientation = state.orientation;
+    contextHint.textContent = "Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.";
+    tableInfo.textContent = [
+      `Modul: ${TARGET_LAYOUT.moduleLabel}`,
+      `Tabelle: ${TARGET_LAYOUT.tableLabel}`,
+      `tableKey: ${state.selectedTableKey || TARGET_LAYOUT.tableKey}`,
+      `Orientierung: ${state.orientation}`,
+      `Quelle: ${formatSourceLabel()}`,
+    ].join(" | ");
+    return tableInfo.textContent;
+  };
+
+  const _hasDirtyValues = () => !_sameJson(state.editValues, state.loadedValues);
+
+  const _updateTestPdfState = () => {
+    const hasDirty = _hasDirtyValues();
+    testHint.textContent = "PDF-Test mit Testdaten wird später separat ergänzt.";
+    status.textContent = hasDirty ? "Bitte erst speichern, dann Layout erneut prüfen." : "";
+    status.style.color = hasDirty ? "#b91c1c" : "#475569";
+  };
+
+  const loadTableDefinitions = async () => {
+    if (typeof resolvedApi?.tableLayoutsListDefinitions !== "function") {
+      state.contextError = "Tabellenliste nicht verfügbar.";
+      state.tableDefinitions = [TARGET_LAYOUT];
+      state.moduleDefinitions = [{ moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.moduleLabel }];
+      _renderModuleOptions();
+      _renderTableOptions();
+      _updateContextStatus();
+      _updateTestPdfState();
+      return { ok: true, data: state.tableDefinitions };
+    }
+    const res = await resolvedApi.tableLayoutsListDefinitions();
+    if (!res?.ok) {
+      state.contextError = res?.error || "Tabellenliste konnte nicht geladen werden.";
+      state.tableDefinitions = [TARGET_LAYOUT];
+      state.moduleDefinitions = [{ moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.moduleLabel }];
+      _renderModuleOptions();
+      _renderTableOptions();
+      _updateContextStatus();
+      _updateTestPdfState();
+      return res;
+    }
+    const list = Array.isArray(res.data) ? res.data : [];
+    const matching = list.filter(
+      (item) =>
+        item &&
+        typeof item === "object" &&
+        _normalizeId(item?.moduleId) === TARGET_LAYOUT.moduleId &&
+        _normalizeId(item?.tableKey) === TARGET_LAYOUT.tableKey
+    );
+    state.tableDefinitions = matching.length ? matching : [TARGET_LAYOUT];
+    state.moduleDefinitions = [{ moduleId: TARGET_LAYOUT.moduleId, label: TARGET_LAYOUT.moduleLabel }];
+    state.contextError = "";
+    _renderModuleOptions();
+    _renderTableOptions();
+    _updateContextStatus();
+    _updateTestPdfState();
+    return res;
   };
 
   const setBusy = (busy) => {
@@ -494,6 +570,8 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
     btnReload.disabled = state.busy;
     btnSave.disabled = state.busy;
     btnReset.disabled = state.busy;
+    moduleSelect.disabled = state.busy;
+    tableSelect.disabled = state.busy;
     for (const input of fields.values()) {
       if (!input) continue;
       input.disabled = state.busy;
@@ -501,25 +579,28 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
     btnReload.style.opacity = btnReload.disabled ? "0.65" : "1";
     btnSave.style.opacity = btnSave.disabled ? "0.65" : "1";
     btnReset.style.opacity = btnReset.disabled ? "0.65" : "1";
-    updateTestPdfState();
+    moduleSelect.style.opacity = moduleSelect.disabled ? "0.65" : "1";
+    tableSelect.style.opacity = tableSelect.disabled ? "0.65" : "1";
+    _updateTestPdfState();
   };
 
   const refreshPreview = () => {
     root.dataset.orientation = state.orientation;
     root.dataset.source = state.source;
+    root.dataset.moduleId = state.selectedModuleId || TARGET_LAYOUT.moduleId;
+    root.dataset.tableKey = state.selectedTableKey || TARGET_LAYOUT.tableKey;
     targetInfoOrientation.textContent = `Orientierung: ${state.orientation}`;
     targetInfoSource.textContent = `Quelle: ${formatSourceLabel()}`;
+    _updateContextStatus();
     _renderValuesSummary(preview, state);
     if (status) {
       const sourceText = formatSourceLabel();
       const parseText = state.parseError ? ` | Parse: ${state.parseError}` : "";
       status.textContent = `Quelle: ${sourceText}${parseText}`;
       status.style.color = state.error ? "#b91c1c" : "#475569";
-      if (state.error) {
-        status.textContent = state.error;
-      }
+      if (state.error) status.textContent = state.error;
     }
-    updateTestPdfState();
+    _updateTestPdfState();
   };
 
   const syncLoadedValues = (layout, meta = {}) => {
@@ -539,18 +620,23 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
 
   const load = async () => {
     if (typeof resolvedApi?.tableLayoutsGetOne !== "function") {
-      state.error = "Table-Layout-IPC nicht verfuegbar.";
+      state.error = "Table-Layout-IPC nicht verfügbar.";
       refreshPreview();
       return { ok: false, error: state.error };
     }
     setBusy(true);
     state.error = "";
+    state.contextLoading = true;
     try {
+      await loadTableDefinitions();
+      _renderModuleOptions();
+      _renderTableOptions();
       const requestedOrientation = _normalizeOrientation(orientationSelect.value || state.orientation);
       state.orientation = requestedOrientation;
+      const tableDef = _getSelectedTableDefinition() || TARGET_LAYOUT;
       const res = await resolvedApi.tableLayoutsGetOne({
-        tableKey: TARGET_LAYOUT.tableKey,
-        moduleId: TARGET_LAYOUT.moduleId,
+        tableKey: tableDef.tableKey,
+        moduleId: tableDef.moduleId,
         orientation: requestedOrientation,
       });
       if (!res?.ok) {
@@ -569,13 +655,14 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
       refreshPreview();
       return { ok: false, error: state.error };
     } finally {
+      state.contextLoading = false;
       setBusy(false);
     }
   };
 
   const save = async () => {
     if (typeof resolvedApi?.tableLayoutsSave !== "function") {
-      state.error = "Table-Layout-Save-IPC nicht verfuegbar.";
+      state.error = "Table-Layout-Save-IPC nicht verfügbar.";
       refreshPreview();
       return { ok: false, error: state.error };
     }
@@ -586,9 +673,10 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
       values.orientation = _normalizeOrientation(orientationSelect.value || values.orientation);
       state.editValues = values;
       state.testResult = "";
+      const tableDef = _getSelectedTableDefinition() || TARGET_LAYOUT;
       const res = await resolvedApi.tableLayoutsSave({
-        tableKey: TARGET_LAYOUT.tableKey,
-        moduleId: TARGET_LAYOUT.moduleId,
+        tableKey: tableDef.tableKey,
+        moduleId: tableDef.moduleId,
         orientation: values.orientation,
         schemaVersion: state.schemaVersion,
         layout: buildProtokollTopsLayoutOverlay(values, values.orientation),
@@ -614,20 +702,21 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
 
   const reset = async () => {
     if (typeof resolvedApi?.tableLayoutsReset !== "function") {
-      state.error = "Table-Layout-Reset-IPC nicht verfuegbar.";
+      state.error = "Table-Layout-Reset-IPC nicht verfügbar.";
       refreshPreview();
       return { ok: false, error: state.error };
     }
     setBusy(true);
     state.error = "";
     try {
+      const tableDef = _getSelectedTableDefinition() || TARGET_LAYOUT;
       const res = await resolvedApi.tableLayoutsReset({
-        tableKey: TARGET_LAYOUT.tableKey,
-        moduleId: TARGET_LAYOUT.moduleId,
+        tableKey: tableDef.tableKey,
+        moduleId: tableDef.moduleId,
         orientation: _normalizeOrientation(orientationSelect.value),
       });
       if (!res?.ok) {
-        state.error = res?.error || "Layout konnte nicht zurueckgesetzt werden.";
+        state.error = res?.error || "Layout konnte nicht zurückgesetzt werden.";
         refreshPreview();
         return res;
       }
@@ -664,50 +753,24 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
     state.testResult = "";
     await load();
   });
+  moduleSelect.addEventListener("change", async () => {
+    state.selectedModuleId = _normalizeId(moduleSelect.value) || TARGET_LAYOUT.moduleId;
+    state.selectedTableKey = TARGET_LAYOUT.tableKey;
+    state.testResult = "";
+    _renderTableOptions();
+    refreshPreview();
+    await load();
+  });
+  tableSelect.addEventListener("change", async () => {
+    state.selectedTableKey = _normalizeId(tableSelect.value) || TARGET_LAYOUT.tableKey;
+    state.testResult = "";
+    _renderTableOptions();
+    refreshPreview();
+    await load();
+  });
   btnReload.addEventListener("click", () => load());
   btnSave.addEventListener("click", () => save());
   btnReset.addEventListener("click", () => reset());
-  btnTestPdf.addEventListener("click", async () => {
-    const ctx = resolvePrintContext();
-    const hasDirtyValues = !_sameJson(state.editValues, state.loadedValues);
-    if (state.busy || !ctx.ok || hasDirtyValues) {
-      refreshPreview();
-      return;
-    }
-    if (typeof window?.bbmPrint?.printPdf !== "function") {
-      state.error = "printPdf ist nicht verfuegbar.";
-      refreshPreview();
-      return;
-    }
-    setBusy(true);
-    state.error = "";
-    state.testResult = "";
-    try {
-      const res = await window.bbmPrint.printPdf({
-        mode: "topsAll",
-        projectId: ctx.projectId,
-        meetingId: ctx.meetingId,
-        orientation: state.orientation,
-        silent: true,
-        targetDir: "temp",
-        overwrite: true,
-      });
-      if (!res?.ok) {
-        state.error = res?.error || "PDF-Test konnte nicht erzeugt werden.";
-        refreshPreview();
-        return res;
-      }
-      state.testResult = `PDF-Test erstellt: ${String(res.filePath || "").trim() || "ok"}`;
-      refreshPreview();
-      return res;
-    } catch (err) {
-      state.error = err?.message || String(err);
-      refreshPreview();
-      return { ok: false, error: state.error };
-    } finally {
-      setBusy(false);
-    }
-  });
   for (const input of fields.values()) {
     if (!input) continue;
     input.addEventListener("input", () => {
@@ -721,6 +784,10 @@ export function createTableLayoutPrototypeEditor({ api, router } = {}) {
     });
   }
 
+  _renderModuleOptions();
+  _renderTableOptions();
+  _updateContextStatus();
+  _updateTestPdfState();
   refreshPreview();
 
   return {

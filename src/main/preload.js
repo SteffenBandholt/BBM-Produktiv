@@ -134,6 +134,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   tableLayoutsGetOne: (data) => ipcRenderer.invoke("tableLayouts:getOne", data),
   tableLayoutsSave: (data) => ipcRenderer.invoke("tableLayouts:save", data),
   tableLayoutsReset: (data) => ipcRenderer.invoke("tableLayouts:reset", data),
+  tableLayoutsListDefinitions: () => ipcRenderer.invoke("tableLayouts:listDefinitions"),
 
   // ============================================================
   // App
