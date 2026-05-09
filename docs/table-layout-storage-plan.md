@@ -1,6 +1,6 @@
 # Tabellenlayout-Speicherplan
 
-Status: Planungsdokument, keine Umsetzung
+Status: Planungsdokument mit umgesetztem Pilot `protokoll_tops`
 Stand: 2026-05-08
 Bezug:
 - `docs/UI-TECH-CONTRACT.md`
@@ -33,8 +33,8 @@ Wichtig:
 Noch nicht vorgesehen:
 
 - keine Datenbank-Migration jetzt
-- keine Editor-UI jetzt
-- kein Tabelleneditor jetzt
+- kein weiterer Tabelleneditor fuer normale Nutzer
+- keine neue Editor-UI fuer normale Nutzer
 - keine Header-/Footer-Aenderung
 - keine normale Querformat-UI
 - keine zweite PDF-Logik
@@ -304,7 +304,7 @@ Die kleinste sinnvolle naechste Phase ist:
 4. nur portrait als ersten Persistenzfall zulassen
 5. erst danach landscape als gespeicherte Variante aktivieren
 
-Diese Phase bleibt noch ohne Editor-UI.
+Diese Phase gilt fuer weitere Tabellen und bleibt ohne zusaetzliche Editor-UI fuer normale Nutzer.
 
 ---
 
@@ -338,7 +338,7 @@ Fuer den ersten technisch sauberen Schritt gilt:
 
 ## 16. Aktueller technischer Stand
 
-Die erste technische Grundlage ist bereits im Repo angelegt:
+Die erste technische Grundlage ist bereits im Repo angelegt und der Pilot `protokoll_tops` ist angeschlossen:
 
 - `table_layouts` wird beim DB-Start mit angelegt bzw. nachgezogen
 - ein internes Repository liest, speichert und loescht Layouts
@@ -346,12 +346,12 @@ Die erste technische Grundlage ist bereits im Repo angelegt:
 - die zentrale Registry kennt den Pilot `protokoll_tops`
 - IPC-Endpunkte fuer Laden/Speichern/Reset sind vorbereitet
 - der Druckweg bekommt den resolved `protokoll_tops`-Payload aus `printData.js`
-- die Renderer-PDF-Seite nutzt den Payload nur als Fallback/Override, nicht als neue Layoutquelle
+- die Protokoll-TOP-Liste nutzt gespeicherte UI-Werte ueber den bestehenden IPC-/Resolver-Pfad
+- der PDF-Druckweg nutzt gespeicherte PDF-Werte getrennt von der UI-Liste
 - `protokoll_tops` nutzt den zentralen Standard als Fallback-Basis
 - `portrait` und `landscape` werden getrennt identifiziert
 
 Wichtig:
 
-- das ist noch keine Editor-UI
-- es ist noch keine normale Nutzerfunktion
+- das ist eine interne Editor-UI, aber keine normale Nutzerfunktion
 - bestehende Druck- und Tabellenlayouts bleiben optisch unveraendert

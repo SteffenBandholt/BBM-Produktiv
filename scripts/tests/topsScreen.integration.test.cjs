@@ -67,7 +67,14 @@ async function runTopsScreenIntegrationTests(run) {
         tagName: String(tag || "").toUpperCase(),
         ownerDocument: doc,
         children: [],
-        style: {},
+        style: {
+          setProperty(name, value) {
+            this[String(name)] = String(value);
+          },
+          removeProperty(name) {
+            delete this[String(name)];
+          },
+        },
         dataset: {},
         className: "",
         textContent: "",
@@ -712,6 +719,116 @@ async function runTopsScreenIntegrationTests(run) {
       assert.equal(numberCell.children[0].children[0].textContent, "8.");
     } finally {
       globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Tops v2 Integration: gespeichertes UI-Layout wird per IPC in die TOP-Liste geladen", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    const calls = [];
+    globalThis.document = doc;
+    globalThis.window = {
+      document: doc,
+      bbmDb: {
+        async tableLayoutsGetOne(payload) {
+          calls.push(payload);
+          return {
+            ok: true,
+            data: {
+              source: "stored",
+              effectiveLayout: {
+                variant: "portrait",
+                ui: {
+                  rootVars: {
+                    "--bbm-tops-list-number-col": "72px",
+                    "--bbm-tops-list-text-col": "minmax(0, 1.2fr)",
+                    "--bbm-tops-list-meta-col": "84px",
+                  },
+                  gridTemplateColumns: "72px minmax(0, 1.2fr) 84px",
+                },
+                pdf: {
+                  rootVars: {
+                    "--bbm-top-col-nr-width": "23mm",
+                  },
+                },
+              },
+            },
+          };
+        },
+      },
+    };
+
+    try {
+      const screen = new TopsScreen({
+        router: { context: { ui: {} } },
+        projectId: 1,
+        meetingId: 1,
+      });
+
+      screen.render();
+      await sleep(0);
+
+      assert.deepEqual(calls, [
+        {
+          moduleId: "protokoll",
+          tableKey: "protokoll_tops",
+          orientation: "portrait",
+        },
+      ]);
+      assert.equal(screen.topsList.root.dataset.tableKey, "protokoll_tops");
+      assert.equal(screen.topsList.root.dataset.layoutVariant, "portrait");
+      assert.equal(screen.topsList.root.style["--bbm-tops-list-number-col"], "72px");
+      assert.equal(screen.topsList.root.style["--bbm-tops-list-text-col"], "minmax(0, 1.2fr)");
+      assert.equal(screen.topsList.root.style["--bbm-tops-list-meta-col"], "84px");
+      assert.equal(screen.topsList.root.style["--bbm-top-col-nr-width"], undefined);
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: fehlender Layout-Payload faellt auf Standard zurueck", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    const calls = [];
+    globalThis.document = doc;
+    globalThis.window = {
+      document: doc,
+      bbmDb: {
+        async tableLayoutsGetOne(payload) {
+          calls.push(payload);
+          return { ok: false, error: "not found" };
+        },
+      },
+    };
+
+    try {
+      const screen = new TopsScreen({
+        router: { context: { ui: {} } },
+        projectId: 1,
+        meetingId: 1,
+      });
+
+      screen.render();
+      await sleep(0);
+
+      assert.deepEqual(calls, [
+        {
+          moduleId: "protokoll",
+          tableKey: "protokoll_tops",
+          orientation: "portrait",
+        },
+      ]);
+      assert.equal(screen.topsList.root.dataset.tableKey, "protokoll_tops");
+      assert.equal(screen.topsList.root.dataset.layoutVariant, "portrait");
+      assert.equal(screen.topsList.root.style["--bbm-tops-list-number-col"], "64px");
+      assert.equal(screen.topsList.root.style["--bbm-tops-list-text-col"], "minmax(0, 1fr)");
+      assert.equal(screen.topsList.root.style["--bbm-tops-list-meta-col"], "74px");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
     }
   });
 

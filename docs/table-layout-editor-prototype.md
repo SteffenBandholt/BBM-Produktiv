@@ -73,7 +73,7 @@ Spaetere Tabellen liefern ihre eigenen Preview-Daten ueber die Registry.
 
 - keine normale Nutzerfunktion
 - keine neue Hauptnavigation
-- keine PDF-Vorschau im Editor
+- keine echte PDF-Erzeugung im Editor
 - keine Header-/Footer-Aenderung
 - keine zweite Drucklogik
 - keine weiteren Tabellen
