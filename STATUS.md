@@ -33,7 +33,7 @@ Sie ergänzt:
   - Modul- und Tabellenlisten kommen aus der bekannten Registry/Definition
   - aktuell ist dort nur `Protokoll / TOP-Liste / protokoll_tops` angemeldet
   - der frühere Projekt-/Besprechungsansatz im Editor wurde wieder entfernt
-  - die Vorschau ist eine einfache HTML-Tabellenvorschau mit registrierten Testdaten
+  - die Vorschau ist in umschaltbare UI- und PDF-Modi mit registrierten Testdaten aufgeteilt
   - der Editor nutzt jetzt ein nahezu vollflächiges internes Arbeitsflächen-Overlay
   - normale Navigation und sichtbare Protokoll-UI bleiben unveraendert
   - geprueft mit `npm test`

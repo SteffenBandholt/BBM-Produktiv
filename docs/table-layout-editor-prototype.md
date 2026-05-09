@@ -47,14 +47,19 @@ Er nutzt jetzt ein groesstenteils vollflächiges internes Arbeitsflächen-Overla
 - auf Standard zuruecksetzen
 - Quelle wird sichtbar als `Standardlayout protokoll_tops`, `gespeichertes Layout` oder `Fallback`
 - Editor-Vorschau mit Testdaten aus der Registry
+- UI- und PDF-Vorschau als getrennte umschaltbare Vorschau-Modi mit Testdaten aus der Registry
 - keine Projekt- oder Besprechungsdaten in der Vorschau
-- keine PDF-Vorschau
+- keine gleichzeitige Anzeige von UI- und PDF-Vorschau
+- PDF-Werte sind im Editor nur eine technische Naeherung, kein echter PDF-Renderer
 - ungespeicherte Aenderungen muessen vorher gespeichert werden
 - normale Nutzer sehen diese Funktion nicht
 
 Die Orientierung bearbeitet hier nur die Layoutvariante. Sie schaltet den normalen Druck noch nicht automatisch um.
 Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.
 Die Vorschau nutzt registrierte Testdaten.
+UI- und PDF-Vorschau sind als getrennte Modi umschaltbar und verwenden dieselben registrierten Beispielzeilen.
+Es wird immer nur ein Vorschau-Modus angezeigt.
+Die PDF-Vorschau ist im Editor nur eine technische Naeherung und ersetzt keinen echten PDF-Renderer.
 Spaetere Tabellen liefern ihre eigenen Preview-Daten ueber die Registry.
 
 ---

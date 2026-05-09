@@ -121,126 +121,183 @@ function _renderPreviewRowCell(node, value) {
   node.textContent = String(value == null ? "" : value);
 }
 
-function _renderPreviewTable(target, definition, values) {
-  if (!target) return;
-  target.innerHTML = "";
+function _getPreviewModeConfig(values, mode) {
+  const isPdf = mode === "pdf";
+  const numberWidth = isPdf ? values.pdfNumberWidth : values.uiNumberWidth;
+  const textWidth = isPdf ? values.pdfTextWidth : values.uiTextTrack;
+  const metaWidth = isPdf ? values.pdfMetaWidth : values.uiMetaWidth;
+  const labelPrefix = isPdf ? "PDF" : "UI";
+  return {
+    mode,
+    isPdf,
+    title: `${labelPrefix}-Vorschau mit Testdaten`,
+    hint: isPdf
+      ? "Registrierte Beispielzeilen aus der Tabellenregistry. PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."
+      : "Registrierte Beispielzeilen aus der Tabellenregistry. Keine Projekt- oder Besprechungsdaten.",
+    note: isPdf
+      ? "Diese Vorschau erzeugt kein PDF. Der echte PDF-Test mit Testdaten wird später separat ergänzt."
+      : "Diese Vorschau zeigt die UI-Layoutwerte des Editors.",
+    numberWidth: String(numberWidth || (isPdf ? DEFAULT_VALUES.pdfNumberWidth : DEFAULT_VALUES.uiNumberWidth)),
+    textWidth: String(textWidth || (isPdf ? DEFAULT_VALUES.pdfTextWidth : DEFAULT_VALUES.uiTextTrack)),
+    metaWidth: String(metaWidth || (isPdf ? DEFAULT_VALUES.pdfMetaWidth : DEFAULT_VALUES.uiMetaWidth)),
+    labelTop: String(values.labelTop || DEFAULT_VALUES.labelTop),
+    labelText: String(values.labelText || DEFAULT_VALUES.labelText),
+    labelMeta1: String(values.labelMeta1 || DEFAULT_VALUES.labelMeta1),
+    labelMeta2: String(values.labelMeta2 || DEFAULT_VALUES.labelMeta2),
+    labelMeta3: String(values.labelMeta3 || DEFAULT_VALUES.labelMeta3),
+  };
+}
 
-  const rows = _getPreviewRows(definition);
-  const table = document.createElement("table");
-  table.style.width = "100%";
-  table.style.borderCollapse = "collapse";
-  table.style.tableLayout = "fixed";
-  table.style.fontSize = "12px";
-  table.style.background = "#fff";
-  table.style.border = "1px solid rgba(15,23,42,0.12)";
+function _buildPreviewGridTemplate(cfg) {
+  return `${cfg.numberWidth} ${cfg.textWidth} ${cfg.metaWidth}`;
+}
 
-  const colgroup = document.createElement("colgroup");
-  const colNr = document.createElement("col");
-  colNr.style.width = String(values.uiNumberWidth || DEFAULT_VALUES.uiNumberWidth);
-  const colText = document.createElement("col");
-  const colMeta = document.createElement("col");
-  colMeta.style.width = String(values.uiMetaWidth || DEFAULT_VALUES.uiMetaWidth);
-  colgroup.append(colNr, colText, colMeta);
-  table.appendChild(colgroup);
+function _renderPreviewGridRow(target, rowData, cfg, { header = false } = {}) {
+  const row = document.createElement("div");
+  row.style.display = "grid";
+  row.style.gridTemplateColumns = _buildPreviewGridTemplate(cfg);
+  row.style.alignItems = "start";
+  row.style.minWidth = "0";
+  row.style.borderBottom = header ? "1px solid rgba(15,23,42,0.12)" : "1px solid rgba(15,23,42,0.08)";
+  row.style.background = header ? "#eef2ff" : "#ffffff";
+  row.style.color = "#0f172a";
+  row.style.overflow = "hidden";
 
-  const thead = document.createElement("thead");
-  const headRow = document.createElement("tr");
-  const thStyles = {
+  const baseCellStyles = {
     padding: "8px 10px",
-    borderBottom: "1px solid rgba(15,23,42,0.12)",
-    background: "#eef2ff",
-    color: "#1e293b",
-    textAlign: "left",
+    minWidth: "0",
+    wordBreak: "break-word",
     verticalAlign: "top",
   };
 
-  const thTop = document.createElement("th");
-  Object.assign(thTop.style, thStyles);
-  thTop.textContent = String(values.labelTop || DEFAULT_VALUES.labelTop);
+  const makeCell = () => {
+    const cell = document.createElement("div");
+    Object.assign(cell.style, baseCellStyles);
+    return cell;
+  };
 
-  const thText = document.createElement("th");
-  Object.assign(thText.style, thStyles);
-  thText.textContent = String(values.labelText || DEFAULT_VALUES.labelText);
+  if (header) {
+    const thTop = makeCell();
+    thTop.style.fontWeight = "700";
+    thTop.textContent = cfg.labelTop;
 
-  const thMeta = document.createElement("th");
-  Object.assign(thMeta.style, thStyles);
-  const thMetaInner = document.createElement("div");
-  thMetaInner.style.display = "grid";
-  thMetaInner.style.gap = "2px";
-  const thMetaLines = [
-    values.labelMeta1 || DEFAULT_VALUES.labelMeta1,
-    values.labelMeta2 || DEFAULT_VALUES.labelMeta2,
-    values.labelMeta3 || DEFAULT_VALUES.labelMeta3,
+    const thText = makeCell();
+    thText.style.fontWeight = "700";
+    thText.textContent = cfg.labelText;
+
+    const thMeta = makeCell();
+    thMeta.style.fontWeight = "700";
+    thMeta.style.display = "grid";
+    thMeta.style.gap = "2px";
+    for (const line of [cfg.labelMeta1, cfg.labelMeta2, cfg.labelMeta3]) {
+      const span = document.createElement("div");
+      span.textContent = line;
+      thMeta.appendChild(span);
+    }
+    row.append(thTop, thText, thMeta);
+    return row;
+  }
+
+  const tdTop = makeCell();
+  tdTop.textContent = String(rowData.topNumber || "");
+
+  const tdText = makeCell();
+  const shortText = document.createElement("div");
+  shortText.style.fontWeight = "700";
+  shortText.textContent = String(rowData.shortText || "");
+  tdText.appendChild(shortText);
+  if (rowData.longText) {
+    const longText = document.createElement("div");
+    longText.style.marginTop = "4px";
+    longText.style.color = "#475569";
+    longText.textContent = String(rowData.longText);
+    tdText.appendChild(longText);
+  }
+
+  const tdMeta = makeCell();
+  tdMeta.style.display = "grid";
+  tdMeta.style.gap = "2px";
+  for (const line of [rowData.status, rowData.dueDate || " ", rowData.responsible || " "]) {
+    const metaLine = document.createElement("div");
+    metaLine.textContent = String(line || "");
+    tdMeta.appendChild(metaLine);
+  }
+  if (rowData.ampelSymbol) {
+    const symbol = document.createElement("div");
+    symbol.textContent = `Ampel: ${String(rowData.ampelSymbol)}`;
+    symbol.style.fontSize = "11px";
+    symbol.style.color = "#64748b";
+    tdMeta.appendChild(symbol);
+  }
+
+  row.append(tdTop, tdText, tdMeta);
+  return row;
+}
+
+function _renderPreviewPanel(target, definition, values, mode) {
+  if (!target) return;
+  target.innerHTML = "";
+
+  const cfg = _getPreviewModeConfig(values, mode);
+  const rows = _getPreviewRows(definition);
+
+  target.dataset.previewMode = cfg.mode;
+  target.style.display = "grid";
+  target.style.gap = "8px";
+  target.style.minWidth = "0";
+  target.style.padding = "10px";
+  target.style.border = "1px solid rgba(15,23,42,0.12)";
+  target.style.borderRadius = "12px";
+  target.style.background = "#fff";
+
+  const panelTitle = document.createElement("div");
+  panelTitle.textContent = cfg.title;
+  panelTitle.style.fontWeight = "800";
+
+  const panelHint = document.createElement("div");
+  panelHint.textContent = cfg.hint;
+  panelHint.style.fontSize = "12px";
+  panelHint.style.opacity = "0.78";
+
+  const panelSummary = document.createElement("div");
+  panelSummary.style.fontSize = "12px";
+  panelSummary.style.color = "#475569";
+  const activeValues = _getPreviewValue({
+    ...values,
+    editValues: values,
+    loadedValues: values,
+  });
+  const summaryParts = [
+    `Quelle: ${String(values.source || "default")}`,
+    `Testdaten: ${rows.length} Zeilen`,
+    `Orientierung: ${String(activeValues.orientation || values.orientation || DEFAULT_VALUES.orientation)}`,
+    `Spaltenbreite ${mode === "pdf" ? "PDF" : "UI"}: ${cfg.numberWidth} | ${cfg.textWidth} | ${cfg.metaWidth}`,
   ];
-  for (const line of thMetaLines) {
-    const span = document.createElement("div");
-    span.textContent = String(line);
-    thMetaInner.appendChild(span);
-  }
-  thMeta.appendChild(thMetaInner);
+  panelSummary.textContent = summaryParts.join(" | ");
 
-  headRow.append(thTop, thText, thMeta);
-  thead.appendChild(headRow);
-  table.appendChild(thead);
+  const panelNote = document.createElement("div");
+  panelNote.textContent = cfg.note;
+  panelNote.style.fontSize = "12px";
+  panelNote.style.color = mode === "pdf" ? "#7c2d12" : "#334155";
+  panelNote.style.opacity = mode === "pdf" ? "0.92" : "0.8";
 
-  const tbody = document.createElement("tbody");
+  const surface = document.createElement("div");
+  surface.style.minHeight = "0";
+  surface.style.overflow = "auto";
+  surface.style.border = "1px solid rgba(15,23,42,0.12)";
+  surface.style.borderRadius = "10px";
+  surface.style.background = "#fff";
+  surface.style.display = "grid";
+  surface.style.gap = "0";
+  surface.style.minWidth = "0";
+  surface.dataset.previewGridColumns = _buildPreviewGridTemplate(cfg);
+
+  surface.append(_renderPreviewGridRow(null, null, cfg, { header: true }));
   for (const rowData of rows) {
-    const tr = document.createElement("tr");
-    const cellStyles = {
-      padding: "8px 10px",
-      borderBottom: "1px solid rgba(15,23,42,0.08)",
-      verticalAlign: "top",
-      color: "#0f172a",
-      background: "#ffffff",
-      wordBreak: "break-word",
-    };
-
-    const tdTop = document.createElement("td");
-    Object.assign(tdTop.style, cellStyles);
-    _renderPreviewRowCell(tdTop, rowData.topNumber);
-
-    const tdText = document.createElement("td");
-    Object.assign(tdText.style, cellStyles);
-    tdText.style.minWidth = "0";
-    const shortText = document.createElement("div");
-    shortText.style.fontWeight = "700";
-    shortText.textContent = String(rowData.shortText || "");
-    tdText.appendChild(shortText);
-    if (rowData.longText) {
-      const longText = document.createElement("div");
-      longText.style.marginTop = "4px";
-      longText.style.color = "#475569";
-      longText.textContent = String(rowData.longText);
-      tdText.appendChild(longText);
-    }
-
-    const tdMeta = document.createElement("td");
-    Object.assign(tdMeta.style, cellStyles);
-    tdMeta.style.display = "grid";
-    tdMeta.style.gap = "2px";
-    const metaLines = [
-      rowData.status,
-      rowData.dueDate || " ",
-      rowData.responsible || " ",
-    ];
-    for (const line of metaLines) {
-      const metaLine = document.createElement("div");
-      metaLine.textContent = String(line || "");
-      tdMeta.appendChild(metaLine);
-    }
-    if (rowData.ampelSymbol) {
-      const symbol = document.createElement("div");
-      symbol.textContent = `Ampel: ${String(rowData.ampelSymbol)}`;
-      symbol.style.fontSize = "11px";
-      symbol.style.color = "#64748b";
-      tdMeta.appendChild(symbol);
-    }
-
-    tr.append(tdTop, tdText, tdMeta);
-    tbody.appendChild(tr);
+    surface.append(_renderPreviewGridRow(null, rowData, cfg, { header: false }));
   }
-  table.appendChild(tbody);
-  target.appendChild(table);
+
+  target.append(panelTitle, panelHint, panelSummary, panelNote, surface);
 }
 
 export function extractProtokollTopsEditorValues(layout = {}) {
@@ -383,6 +440,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const fields = new Map();
   const state = {
     isFullscreen: true,
+    previewMode: "ui",
     orientation: DEFAULT_ORIENTATION,
     schemaVersion: 1,
     source: "default",
@@ -631,17 +689,40 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   previewTitle.style.fontWeight = "800";
   const previewHint = document.createElement("div");
   previewHint.textContent =
-    "Registrierte Beispielzeilen aus der Tabellenregistry. Keine Projekt- oder Besprechungsdaten, keine PDF-Vorschau.";
+    "Registrierte Beispielzeilen aus der Tabellenregistry. Keine Projekt- oder Besprechungsdaten.";
   previewHint.style.fontSize = "12px";
   previewHint.style.opacity = "0.78";
-  const previewMeta = document.createElement("div");
-  previewMeta.style.fontSize = "12px";
-  previewMeta.style.color = "#475569";
-  const preview = document.createElement("div");
-  preview.style.minHeight = "220px";
-  preview.style.display = "grid";
-  preview.style.gap = "8px";
-  previewCard.append(previewTitle, previewHint, previewMeta, preview);
+  const previewNote = document.createElement("div");
+  previewNote.textContent =
+    "Diese Vorschau erzeugt kein PDF. Der echte PDF-Test mit Testdaten wird später separat ergänzt.";
+  previewNote.style.fontSize = "12px";
+  previewNote.style.color = "#7c2d12";
+  previewNote.style.opacity = "0.9";
+  const previewSwitchRow = document.createElement("div");
+  previewSwitchRow.style.display = "inline-flex";
+  previewSwitchRow.style.flexWrap = "wrap";
+  previewSwitchRow.style.gap = "6px";
+  previewSwitchRow.style.alignItems = "center";
+
+  const previewUiButton = document.createElement("button");
+  previewUiButton.type = "button";
+  previewUiButton.textContent = "UI-Vorschau";
+  applyPopupButtonStyle(previewUiButton);
+
+  const previewPdfButton = document.createElement("button");
+  previewPdfButton.type = "button";
+  previewPdfButton.textContent = "PDF-Vorschau";
+  applyPopupButtonStyle(previewPdfButton);
+
+  const previewPane = document.createElement("div");
+  previewPane.style.minWidth = "0";
+  previewPane.style.minHeight = "0";
+  previewPane.style.overflow = "auto";
+  previewPane.style.display = "grid";
+  previewPane.style.gap = "8px";
+
+  previewSwitchRow.append(previewUiButton, previewPdfButton);
+  previewCard.append(previewTitle, previewHint, previewNote, previewSwitchRow, previewPane);
 
   const fieldsCard = document.createElement("div");
   applyPopupCardStyle(fieldsCard);
@@ -698,6 +779,18 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const _setFullscreen = (next) => {
     state.isFullscreen = !!next;
     _applyHostFullscreenState();
+  };
+
+  const _setPreviewMode = (mode) => {
+    state.previewMode = mode === "pdf" ? "pdf" : "ui";
+    previewUiButton.dataset.active = state.previewMode === "ui" ? "1" : "0";
+    previewPdfButton.dataset.active = state.previewMode === "pdf" ? "1" : "0";
+    previewUiButton.setAttribute("aria-pressed", state.previewMode === "ui" ? "true" : "false");
+    previewPdfButton.setAttribute("aria-pressed", state.previewMode === "pdf" ? "true" : "false");
+    previewUiButton.style.opacity = state.previewMode === "ui" ? "1" : "0.75";
+    previewPdfButton.style.opacity = state.previewMode === "pdf" ? "1" : "0.75";
+    previewUiButton.style.outline = state.previewMode === "ui" ? "2px solid #2563eb" : "";
+    previewPdfButton.style.outline = state.previewMode === "pdf" ? "2px solid #2563eb" : "";
   };
 
   const _getSelectedModuleDefinition = () =>
@@ -865,8 +958,8 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     targetInfoOrientation.textContent = `Orientierung: ${state.orientation}`;
     targetInfoSource.textContent = `Quelle: ${formatSourceLabel()}`;
     _updateContextStatus();
-    _renderPreviewTable(preview, tableDef, activeValues);
-    _renderValuesSummary(previewMeta, state, tableDef);
+    _setPreviewMode(state.previewMode);
+    _renderPreviewPanel(previewPane, tableDef, { ...activeValues, source: state.source }, state.previewMode);
     if (status) {
       const sourceText = formatSourceLabel();
       const parseText = state.parseError ? ` | Parse: ${state.parseError}` : "";
@@ -1040,6 +1133,17 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     _setFullscreen(!state.isFullscreen);
   });
 
+  previewUiButton.addEventListener("click", () => {
+    if (state.previewMode === "ui") return;
+    state.previewMode = "ui";
+    refreshPreview();
+  });
+  previewPdfButton.addEventListener("click", () => {
+    if (state.previewMode === "pdf") return;
+    state.previewMode = "pdf";
+    refreshPreview();
+  });
+
   orientationSelect.addEventListener("change", async () => {
     state.orientation = _normalizeOrientation(orientationSelect.value);
     state.editValues.orientation = state.orientation;
@@ -1082,6 +1186,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   _renderTableOptions();
   _updateContextStatus();
   _updateTestPdfState();
+  _setPreviewMode(state.previewMode);
   _applyHostFullscreenState();
   refreshPreview();
 

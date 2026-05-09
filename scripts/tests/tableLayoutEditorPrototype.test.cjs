@@ -312,12 +312,18 @@ async function runTableLayoutEditorPrototypeTests(run) {
       await editor.load();
       const text = collectText(editor.root);
       const selects = findNodesByTag(editor.root, "SELECT");
-      const tables = findNodesByTag(editor.root, "TABLE");
+      const previewPanels = findNodesByTag(editor.root, "DIV").filter(
+        (node) => node?.dataset?.previewMode === "ui" || node?.dataset?.previewMode === "pdf"
+      );
+      const previewUiToggle = findNodeByText(editor.root, "UI-Vorschau");
+      const previewPdfToggle = findNodeByText(editor.root, "PDF-Vorschau");
       const host = createFakeNode("div");
       host.dataset.tableLayoutShell = "1";
       editor.attachFullscreenHost(host);
       const fullscreenToggle = findNodeByText(editor.root, "Normalgröße");
       assert.ok(fullscreenToggle, "fullscreen toggle missing");
+      assert.ok(previewUiToggle, "UI preview toggle missing");
+      assert.ok(previewPdfToggle, "PDF preview toggle missing");
       assert.equal(editor.root.dataset.layoutMode, "fullscreen");
       assert.equal(host.dataset.layoutMode, "fullscreen");
       assert.equal(host.style.position, "fixed");
@@ -342,14 +348,30 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(text.includes("tableKey: protokoll_tops"), true);
       assert.equal(text.includes("Orientierung: portrait"), true);
       assert.equal(text.includes("Quelle: Standardlayout protokoll_tops"), true);
-      assert.equal(text.includes("Editor-Vorschau mit Testdaten"), true);
+      assert.equal(text.includes("UI-Vorschau mit Testdaten"), true);
+      assert.equal(text.includes("PDF-Vorschau mit Testdaten"), false);
       assert.equal(text.includes("Registrierte Beispielzeilen aus der Tabellenregistry"), true);
       assert.equal(text.includes("Beispielthema fuer die Vorschau"), true);
       assert.equal(text.includes("Langtext mit laengerer Beschreibung in einer Unterzeile"), true);
       assert.equal(text.includes("Kurzer Eintrag mit knapper Anzeige"), true);
-      assert.equal(text.includes("Keine Projekt- oder Besprechungsdaten"), true);
-      assert.equal(text.includes("keine PDF-Vorschau"), true);
-      assert.equal(tables.length >= 1, true);
+      assert.equal(text.includes("Keine Projekt- oder Besprechungsdaten."), true);
+      assert.equal(text.includes("Diese Vorschau erzeugt kein PDF. Der echte PDF-Test mit Testdaten wird später separat ergänzt."), true);
+      assert.equal(text.includes("PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."), false);
+      assert.equal(text.includes("Spaltenbreite UI: 64px | minmax(0, 1fr) | 74px"), true);
+      assert.equal(text.includes("Spaltenbreite PDF: 23mm | auto | 15ch"), false);
+      assert.equal(previewPanels.length, 1);
+      assert.equal(previewPanels[0]?.dataset?.previewMode, "ui");
+      previewPdfToggle.click();
+      await flushMicrotasks();
+      const previewPanelsAfterSwitch = findNodesByTag(editor.root, "DIV").filter(
+        (node) => node?.dataset?.previewMode === "ui" || node?.dataset?.previewMode === "pdf"
+      );
+      const switchedText = collectText(editor.root);
+      assert.equal(previewPanelsAfterSwitch.length, 1);
+      assert.equal(previewPanelsAfterSwitch[0]?.dataset?.previewMode, "pdf");
+      assert.equal(switchedText.includes("UI-Vorschau mit Testdaten"), false);
+      assert.equal(switchedText.includes("PDF-Vorschau mit Testdaten"), true);
+      assert.equal(switchedText.includes("PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."), true);
       fullscreenToggle.click();
       await flushMicrotasks();
       assert.equal(editor.root.dataset.layoutMode, "normal");
@@ -374,7 +396,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
     const previousDocument = global.document;
     const previousWindow = global.window;
     global.document = createFakeDocument();
-    const { api, calls } = makeEditorApi({
+      const { api, calls } = makeEditorApi({
       getOne: async (payload) => ({
         ok: true,
         data: {
@@ -496,13 +518,16 @@ async function runTableLayoutEditorPrototypeTests(run) {
       }),
       reset: async () => ({ ok: true, data: { removed: 1 } }),
     });
-    global.window = { bbmDb: api };
+      global.window = { bbmDb: api };
     try {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
       const selects = findNodesByTag(editor.root, "SELECT");
+      const previewPdfToggle = findNodeByText(editor.root, "PDF-Vorschau");
       selects[2].value = "landscape";
       selects[2].dispatchEvent({ type: "change" });
+      await flushMicrotasks();
+      previewPdfToggle.click();
       await flushMicrotasks();
       editor.applyValues({
         uiNumberWidth: "76px",
@@ -513,6 +538,10 @@ async function runTableLayoutEditorPrototypeTests(run) {
         pdfMetaWidth: "18ch",
         labelText: "Gegenstand / Kurztext",
       });
+      const draftText = collectText(editor.root);
+      assert.equal(draftText.includes("Spaltenbreite UI: 76px | minmax(0, 1.25fr) | 84px"), false);
+      assert.equal(draftText.includes("Spaltenbreite PDF: 25mm | auto | 18ch"), true);
+      assert.equal(draftText.includes("Gegenstand / Kurztext"), true);
       const saveRes = await editor.save();
       assert.equal(saveRes.ok, true);
       assert.equal(calls.filter((item) => item.type === "getOne").length >= 1, true);
@@ -578,14 +607,18 @@ async function runTableLayoutEditorPrototypeTests(run) {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
       const text = collectText(editor.root);
-      const tables = findNodesByTag(editor.root, "TABLE");
+      const previewPanels = findNodesByTag(editor.root, "DIV").filter(
+        (node) => node?.dataset?.previewMode === "ui" || node?.dataset?.previewMode === "pdf"
+      );
       assert.equal(editor.root.dataset.layoutMode, "fullscreen");
-      assert.equal(text.includes("Editor-Vorschau mit Testdaten"), true);
+      assert.equal(text.includes("UI-Vorschau mit Testdaten"), true);
+      assert.equal(text.includes("PDF-Vorschau mit Testdaten"), false);
       assert.equal(findNodeByText(editor.root, "Projekt"), null);
       assert.equal(findNodeByText(editor.root, "Besprechung"), null);
       assert.equal(text.includes("Beispielthema fuer die Vorschau"), true);
       assert.equal(text.includes("Kurzer Eintrag mit knapper Anzeige"), true);
-      assert.equal(tables.length >= 1, true);
+      assert.equal(previewPanels.length, 1);
+      assert.equal(previewPanels[0]?.dataset?.previewMode, "ui");
       assert.equal(findNodeByText(editor.root, "Normalgröße") != null, true);
     } finally {
       global.document = previousDocument;
