@@ -136,20 +136,39 @@ Beispiel fuer `layout_json`:
 
 ```json
 {
-  "columns": {
-    "number": {
-      "width": "64px"
+  "variant": "portrait",
+  "columns": [
+    {
+      "key": "shortName",
+      "label": "Kurzbez.",
+      "uiWidth": "160px",
+      "pdfWidth": "23mm",
+      "weight": 2,
+      "required": true,
+      "previewValue": "AB",
+      "headerLines": ["Kurzbez."]
     },
-    "text": {
-      "width": "1fr"
+    {
+      "key": "role",
+      "label": "Funktion/Gewerk",
+      "uiWidth": "1fr",
+      "pdfWidth": "auto",
+      "weight": 6,
+      "required": true,
+      "previewValue": "Rohbau",
+      "headerLines": ["Funktion/Gewerk"]
     },
-    "meta": {
-      "width": "minmax(50px, 74px)"
+    {
+      "key": "active",
+      "label": "Aktiv",
+      "uiWidth": "70px",
+      "pdfWidth": "15mm",
+      "weight": 1,
+      "required": true,
+      "previewValue": "ja",
+      "headerLines": ["Aktiv"]
     }
-  },
-  "labels": {
-    "text": "Gegenstand"
-  }
+  ]
 }
 ```
 

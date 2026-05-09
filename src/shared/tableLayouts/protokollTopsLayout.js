@@ -27,10 +27,47 @@ export const PROTOKOLL_TOPS_EDIT_FIELDS = Object.freeze([
   Object.freeze({ key: "labelMeta3", label: "Überschrift Meta 3", path: "labels.meta[2]", type: "headingText", required: true }),
 ]);
 
+export const PROTOKOLL_TOPS_COLUMNS = Object.freeze([
+  Object.freeze({
+    key: "topNumber",
+    label: "TOP",
+    uiWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
+    pdfWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth,
+    weight: 2,
+    required: true,
+    previewValue: "1",
+    previewField: "topNumber",
+    headerLines: Object.freeze(["TOP"]),
+  }),
+  Object.freeze({
+    key: "shortText",
+    label: "Gegenstand",
+    uiWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
+    pdfWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth,
+    weight: 6,
+    required: true,
+    previewValue: "Beispielthema fuer die Vorschau",
+    previewField: "shortText",
+    headerLines: Object.freeze(["Gegenstand"]),
+  }),
+  Object.freeze({
+    key: "meta",
+    label: "Status",
+    uiWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
+    pdfWidth: PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth,
+    weight: 1,
+    required: true,
+    previewValue: "offen",
+    previewField: "meta",
+    headerLines: Object.freeze(["Status", "Fertig bis", "verantw"]),
+  }),
+]);
+
 const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
   tableKey: "protokoll_tops",
   moduleId: "protokoll",
   variant: "portrait",
+  columns: PROTOKOLL_TOPS_COLUMNS,
   labels: Object.freeze({
     top: "TOP",
     text: "Gegenstand",
@@ -171,24 +208,175 @@ function _isAllowedHeadingText(text) {
   return text.length <= 64;
 }
 
-function _extractValues(layout = {}) {
+function _normalizeWeight(value, fallback = 1) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return Number(fallback) > 0 ? Number(fallback) : 1;
+  return Math.max(1, Math.floor(n));
+}
+
+function _normalizeColumnLines(value, fallback = []) {
+  if (Array.isArray(value)) {
+    const lines = value.map((entry) => _normalizeText(entry));
+    return lines.length ? lines : [""];
+  }
+  if (typeof value === "string") {
+    const lines = value
+      .replace(/\r/g, "")
+      .split("\n")
+      .map((entry) => _normalizeText(entry));
+    return lines.length ? lines : [""];
+  }
+  if (Array.isArray(fallback)) {
+    return fallback.map((entry) => _normalizeText(entry));
+  }
+  return [""];
+}
+
+export function normalizeTableLayoutColumns(columns = [], fallbackColumns = []) {
+  const input = Array.isArray(columns) ? columns : [];
+  const fallback = Array.isArray(fallbackColumns) ? fallbackColumns : [];
+  const byKey = new Map(input.filter((item) => item && typeof item === "object" && item.key).map((item) => [String(item.key), item]));
+  const normalized = [];
+  const seen = new Set();
+
+  const addColumn = (src, fb, key) => {
+    const from = src && typeof src === "object" ? src : {};
+    const fallbackColumn = fb && typeof fb === "object" ? fb : {};
+    const normalizedKey = _normalizeText(from.key || fallbackColumn.key || key);
+    if (!normalizedKey || seen.has(normalizedKey)) return;
+    seen.add(normalizedKey);
+    const label = _normalizeText(from.label ?? fallbackColumn.label ?? normalizedKey);
+    const uiWidth = _normalizeText(from.uiWidth ?? fallbackColumn.uiWidth ?? "1fr");
+    const pdfWidth = _normalizeText(from.pdfWidth ?? fallbackColumn.pdfWidth ?? "auto");
+    const headerLines = _normalizeColumnLines(from.headerLines, fallbackColumn.headerLines || [label]);
+    normalized.push(
+      Object.freeze({
+        key: normalizedKey,
+        label,
+        uiWidth,
+        pdfWidth,
+        weight: _normalizeWeight(from.weight ?? fallbackColumn.weight ?? 1, 1),
+        required: from.required != null ? !!from.required : !!fallbackColumn.required,
+        previewValue: _normalizeText(from.previewValue ?? fallbackColumn.previewValue ?? ""),
+        previewField: _normalizeText(from.previewField || fallbackColumn.previewField || normalizedKey),
+        headerLines: Object.freeze(headerLines),
+      })
+    );
+  };
+
+  for (let i = 0; i < fallback.length; i += 1) {
+    const fb = fallback[i];
+    if (!fb || typeof fb !== "object") continue;
+    addColumn(byKey.get(String(fb.key || "")) || input[i], fb, fb.key || `col_${i}`);
+  }
+
+  for (const item of input) {
+    if (!item || typeof item !== "object") continue;
+    const key = _normalizeText(item.key);
+    if (!key || seen.has(key)) continue;
+    addColumn(item, {}, key);
+  }
+
+  return normalized;
+}
+
+export function validateTableLayoutColumns(columns = [], fallbackColumns = []) {
+  const normalized = normalizeTableLayoutColumns(columns, fallbackColumns);
+  const errors = {};
+  const values = normalized.map((column) => ({ ...column, headerLines: [...(column.headerLines || [])] }));
+  for (const column of values) {
+    if (!_isAllowedGridTrack(String(column.uiWidth || "").trim())) {
+      errors[`${column.key}.uiWidth`] = "Ungültiger Spaltenwert";
+    }
+    if (!_isAllowedGridTrack(String(column.pdfWidth || "").trim())) {
+      errors[`${column.key}.pdfWidth`] = "Ungültiger Spaltenwert";
+    }
+    if (!_isAllowedHeadingText(String(column.label || "").trim())) {
+      errors[`${column.key}.label`] = String(column.label || "").trim() ? "Ungültige Überschrift" : "Überschrift darf nicht leer sein";
+    }
+    const lines = Array.isArray(column.headerLines) ? column.headerLines : [];
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = String(lines[i] || "").trim();
+      if (!line) {
+        errors[`${column.key}.headerLines.${i}`] = "Überschrift darf nicht leer sein";
+      } else if (!_isAllowedHeadingText(line)) {
+        errors[`${column.key}.headerLines.${i}`] = "Ungültige Überschrift";
+      }
+    }
+  }
+  return { columns: values, errors, isValid: Object.keys(errors).length === 0 };
+}
+
+export function buildTableLayoutOverlayFromColumns(columns = [], orientation = "portrait", extras = {}) {
+  const normalizedColumns = normalizeTableLayoutColumns(columns, extras.fallbackColumns || []);
+  return {
+    variant: _normalizeOrientation(orientation),
+    columns: normalizedColumns,
+    ...(extras.layoutExtras ? JSON.parse(JSON.stringify(extras.layoutExtras)) : {}),
+  };
+}
+
+function _legacyToProtokollColumns(layout = {}) {
   const uiRootVars = layout?.ui?.rootVars || {};
   const pdfColumns = layout?.pdf?.columns || {};
   const labels = layout?.labels || {};
   const metaLabels = Array.isArray(labels.meta) ? labels.meta : [];
+  return normalizeTableLayoutColumns(
+    [
+      {
+        ...PROTOKOLL_TOPS_COLUMNS[0],
+        uiWidth: uiRootVars["--bbm-tops-list-number-col"] || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
+        pdfWidth: pdfColumns.number?.width || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth,
+        label: labels.top || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelTop,
+        headerLines: [labels.top || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelTop],
+      },
+      {
+        ...PROTOKOLL_TOPS_COLUMNS[1],
+        uiWidth: uiRootVars["--bbm-tops-list-text-col"] || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
+        pdfWidth: pdfColumns.text?.width || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth,
+        label: labels.text || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelText,
+        headerLines: [labels.text || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelText],
+      },
+      {
+        ...PROTOKOLL_TOPS_COLUMNS[2],
+        uiWidth: uiRootVars["--bbm-tops-list-meta-col"] || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
+        pdfWidth: pdfColumns.meta?.width || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth,
+        label: metaLabels[0] || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta1,
+        headerLines: [
+          metaLabels[0] || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta1,
+          metaLabels[1] || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta2,
+          metaLabels[2] || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta3,
+        ],
+      },
+    ],
+    PROTOKOLL_TOPS_COLUMNS
+  );
+}
+
+export function buildProtokollTopsColumnsFromLegacy(layout = {}) {
+  return _legacyToProtokollColumns(layout);
+}
+
+function _extractValues(layout = {}) {
+  const columns = Array.isArray(layout?.columns) && layout.columns.length ? layout.columns : _legacyToProtokollColumns(layout);
+  const topCol = columns[0] || PROTOKOLL_TOPS_COLUMNS[0];
+  const textCol = columns[1] || PROTOKOLL_TOPS_COLUMNS[1];
+  const metaCol = columns[2] || PROTOKOLL_TOPS_COLUMNS[2];
+  const metaLabels = Array.isArray(metaCol.headerLines) ? metaCol.headerLines : [metaCol.label];
   return {
     orientation: _normalizeOrientation(layout?.variant || layout?.orientation || PROTOKOLL_TOPS_EDITOR_DEFAULTS.orientation),
-    uiNumberWidth: _normalizeText(uiRootVars["--bbm-tops-list-number-col"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
-    uiTextTrack: _normalizeText(uiRootVars["--bbm-tops-list-text-col"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
-    uiMetaWidth: _normalizeText(uiRootVars["--bbm-tops-list-meta-col"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
-    pdfNumberWidth: _normalizeText(pdfColumns.number?.width) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth,
-    pdfTextWidth: _normalizeText(pdfColumns.text?.width) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth,
-    pdfMetaWidth: _normalizeText(pdfColumns.meta?.width) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth,
-    labelTop: _normalizeText(labels.top) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelTop,
-    labelText: _normalizeText(labels.text) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelText,
+    uiNumberWidth: _normalizeText(topCol.uiWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
+    uiTextTrack: _normalizeText(textCol.uiWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
+    uiMetaWidth: _normalizeText(metaCol.uiWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
+    pdfNumberWidth: _normalizeText(topCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth,
+    pdfTextWidth: _normalizeText(textCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth,
+    pdfMetaWidth: _normalizeText(metaCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth,
+    labelTop: _normalizeText(topCol.label) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelTop,
+    labelText: _normalizeText(textCol.label) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelText,
     labelMeta1: _normalizeText(metaLabels[0]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta1,
     labelMeta2: _normalizeText(metaLabels[1]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta2,
     labelMeta3: _normalizeText(metaLabels[2]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta3,
+    columns,
   };
 }
 
@@ -197,49 +385,54 @@ export function extractProtokollTopsEditorValues(layout = {}) {
 }
 
 export function validateProtokollTopsEditorValues(values = {}, orientation = "portrait") {
-  const input = {
-    ...PROTOKOLL_TOPS_EDITOR_DEFAULTS,
-    ...values,
-    orientation: _normalizeOrientation(values.orientation || orientation),
+  const columns = Array.isArray(values?.columns) && values.columns.length
+    ? values.columns
+    : _legacyToProtokollColumns({
+        variant: values?.orientation || orientation,
+        ui: {
+          rootVars: {
+            "--bbm-tops-list-number-col": values?.uiNumberWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
+            "--bbm-tops-list-text-col": values?.uiTextTrack || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
+            "--bbm-tops-list-meta-col": values?.uiMetaWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
+          },
+        },
+        pdf: {
+          columns: {
+            number: { width: values?.pdfNumberWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth },
+            text: { width: values?.pdfTextWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth },
+            meta: { width: values?.pdfMetaWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth },
+          },
+        },
+        labels: {
+          top: values?.labelTop || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelTop,
+          text: values?.labelText || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelText,
+          meta: [values?.labelMeta1 || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta1, values?.labelMeta2 || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta2, values?.labelMeta3 || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta3],
+        },
+      });
+  const validation = validateTableLayoutColumns(columns, PROTOKOLL_TOPS_COLUMNS);
+  const normalizedColumns = validation.columns;
+  const topCol = normalizedColumns[0] || PROTOKOLL_TOPS_COLUMNS[0];
+  const textCol = normalizedColumns[1] || PROTOKOLL_TOPS_COLUMNS[1];
+  const metaCol = normalizedColumns[2] || PROTOKOLL_TOPS_COLUMNS[2];
+  return {
+    values: {
+      orientation: _normalizeOrientation(values.orientation || orientation),
+      uiNumberWidth: topCol.uiWidth,
+      uiTextTrack: textCol.uiWidth,
+      uiMetaWidth: metaCol.uiWidth,
+      pdfNumberWidth: topCol.pdfWidth,
+      pdfTextWidth: textCol.pdfWidth,
+      pdfMetaWidth: metaCol.pdfWidth,
+      labelTop: topCol.label,
+      labelText: textCol.label,
+      labelMeta1: metaCol.headerLines[0] || metaCol.label,
+      labelMeta2: metaCol.headerLines[1] || "",
+      labelMeta3: metaCol.headerLines[2] || "",
+      columns: normalizedColumns,
+    },
+    errors: validation.errors,
+    isValid: validation.isValid,
   };
-  const out = { ...input };
-  const errors = {};
-
-  const trackFields = [
-    "uiNumberWidth",
-    "uiTextTrack",
-    "uiMetaWidth",
-    "pdfNumberWidth",
-    "pdfTextWidth",
-    "pdfMetaWidth",
-  ];
-  for (const key of trackFields) {
-    const text = _normalizeText(input[key]);
-    if (!_isAllowedGridTrack(text)) {
-      out[key] = PROTOKOLL_TOPS_EDITOR_DEFAULTS[key];
-      errors[key] = "Ungültiger Spaltenwert";
-    } else {
-      out[key] = text;
-    }
-  }
-
-  const headingFields = ["labelTop", "labelText", "labelMeta1", "labelMeta2", "labelMeta3"];
-  for (const key of headingFields) {
-    const text = _normalizeText(input[key]);
-    if (!text) {
-      out[key] = PROTOKOLL_TOPS_EDITOR_DEFAULTS[key];
-      errors[key] = "Überschrift darf nicht leer sein";
-      continue;
-    }
-    if (!_isAllowedHeadingText(text)) {
-      out[key] = PROTOKOLL_TOPS_EDITOR_DEFAULTS[key];
-      errors[key] = "Ungültige Überschrift";
-      continue;
-    }
-    out[key] = text;
-  }
-
-  return { values: out, errors, isValid: Object.keys(errors).length === 0 };
 }
 
 export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "portrait") {
@@ -247,6 +440,7 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
   const normalized = validated.values;
   return {
     variant: normalized.orientation,
+    columns: normalized.columns,
     labels: {
       top: normalized.labelTop,
       text: normalized.labelText,

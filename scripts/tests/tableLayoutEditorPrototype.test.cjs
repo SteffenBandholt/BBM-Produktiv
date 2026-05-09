@@ -177,40 +177,80 @@ async function runTableLayoutEditorPrototypeTests(run) {
         tableLabel: "TOP-Liste",
         description: "Pilotlayout",
         supportedOrientations: ["portrait", "landscape"],
-        editFields: [
-          { key: "uiNumberWidth", label: "UI TOP-Spalte" },
-          { key: "uiTextTrack", label: "UI Text-Spalte" },
+        columns: [
+          {
+            key: "topNumber",
+            label: "TOP",
+            uiWidth: "64px",
+            pdfWidth: "23mm",
+            weight: 2,
+            required: true,
+            previewValue: "1",
+            headerLines: ["TOP"],
+          },
+          {
+            key: "shortText",
+            label: "Gegenstand",
+            uiWidth: "minmax(0, 1fr)",
+            pdfWidth: "auto",
+            weight: 6,
+            required: true,
+            previewValue: "Beispielthema fuer die Vorschau",
+            headerLines: ["Gegenstand"],
+          },
+          {
+            key: "meta",
+            label: "Status",
+            uiWidth: "74px",
+            pdfWidth: "15ch",
+            weight: 1,
+            required: true,
+            previewValue: "offen",
+            headerLines: ["Status", "Fertig bis", "verantw"],
+          },
         ],
         defaultLayout: {
           tableKey: "protokoll_tops",
+          moduleId: "protokoll",
           variant: "portrait",
-          labels: {
-            top: "TOP",
-            text: "Gegenstand",
-            meta: ["Status", "Fertig bis", "verantw"],
-          },
-          ui: {
-            rootVars: {
-              "--bbm-tops-list-number-col": "64px",
-              "--bbm-tops-list-text-col": "minmax(0, 1fr)",
-              "--bbm-tops-list-meta-col": "74px",
+          columns: [
+            {
+              key: "topNumber",
+              label: "TOP",
+              uiWidth: "64px",
+              pdfWidth: "23mm",
+              weight: 2,
+              required: true,
+              previewValue: "1",
+              headerLines: ["TOP"],
             },
-          },
-          pdf: {
-            columns: {
-              number: { width: "23mm" },
-              text: { width: "auto" },
-              meta: { width: "15ch" },
+            {
+              key: "shortText",
+              label: "Gegenstand",
+              uiWidth: "minmax(0, 1fr)",
+              pdfWidth: "auto",
+              weight: 6,
+              required: true,
+              previewValue: "Beispielthema fuer die Vorschau",
+              headerLines: ["Gegenstand"],
             },
-          },
+            {
+              key: "meta",
+              label: "Status",
+              uiWidth: "74px",
+              pdfWidth: "15ch",
+              weight: 1,
+              required: true,
+              previewValue: "offen",
+              headerLines: ["Status", "Fertig bis", "verantw"],
+            },
+          ],
         },
         previewData: [
           {
             topNumber: "1",
             shortText: "Beispielthema fuer die Vorschau",
-            status: "offen",
-            dueDate: "12.04.2026",
-            responsible: "M. Muster",
+            meta: ["offen", "12.04.2026", "M. Muster"],
             ampelSymbol: "gelb",
           },
           {
@@ -218,19 +258,97 @@ async function runTableLayoutEditorPrototypeTests(run) {
             shortText: "Langtext mit laengerer Beschreibung in einer Unterzeile",
             longText:
               "Dies ist ein laengerer Beispieltext, damit die Editor-Vorschau den Zeilenumbruch und die Innenanzeige testen kann.",
-            status: "in Bearbeitung",
-            dueDate: "",
-            responsible: "S. Beispiel",
+            meta: ["in Bearbeitung", "", "S. Beispiel"],
             ampelSymbol: "gruen",
           },
           {
             topNumber: "2",
             shortText: "Kurzer Eintrag mit knapper Anzeige",
-            status: "erledigt",
-            dueDate: "18.04.2026",
-            responsible: "",
+            meta: ["erledigt", "18.04.2026", ""],
             ampelSymbol: "rot",
           },
+        ],
+      },
+      {
+        moduleId: "projektverwaltung",
+        moduleLabel: "Projektverwaltung",
+        tableKey: "project_firms",
+        tableLabel: "Projekt-Firmenliste",
+        description: "Projektbezogene Firmenliste",
+        supportedOrientations: ["portrait", "landscape"],
+        columns: [
+          {
+            key: "shortName",
+            label: "Kurzbez.",
+            uiWidth: "160px",
+            pdfWidth: "23mm",
+            weight: 2,
+            required: true,
+            previewValue: "AB",
+            headerLines: ["Kurzbez."],
+          },
+          {
+            key: "role",
+            label: "Funktion/Gewerk",
+            uiWidth: "1fr",
+            pdfWidth: "auto",
+            weight: 6,
+            required: true,
+            previewValue: "Rohbau",
+            headerLines: ["Funktion/Gewerk"],
+          },
+          {
+            key: "active",
+            label: "Aktiv",
+            uiWidth: "70px",
+            pdfWidth: "15mm",
+            weight: 1,
+            required: true,
+            previewValue: "ja",
+            headerLines: ["Aktiv"],
+          },
+        ],
+        defaultLayout: {
+          tableKey: "project_firms",
+          moduleId: "projektverwaltung",
+          variant: "portrait",
+          columns: [
+            {
+              key: "shortName",
+              label: "Kurzbez.",
+              uiWidth: "160px",
+              pdfWidth: "23mm",
+              weight: 2,
+              required: true,
+              previewValue: "AB",
+              headerLines: ["Kurzbez."],
+            },
+            {
+              key: "role",
+              label: "Funktion/Gewerk",
+              uiWidth: "1fr",
+              pdfWidth: "auto",
+              weight: 6,
+              required: true,
+              previewValue: "Rohbau",
+              headerLines: ["Funktion/Gewerk"],
+            },
+            {
+              key: "active",
+              label: "Aktiv",
+              uiWidth: "70px",
+              pdfWidth: "15mm",
+              weight: 1,
+              required: true,
+              previewValue: "ja",
+              headerLines: ["Aktiv"],
+            },
+          ],
+        },
+        previewData: [
+          { shortName: "AB", role: "Rohbau", active: "ja" },
+          { shortName: "ME", role: "Elektro mit langem Gewerktext", active: "nein" },
+          { shortName: "HK", role: "HLS", active: "ja" },
         ],
       },
     ],
@@ -337,13 +455,16 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(selects[0]?.value, "protokoll");
       assert.equal(selects[1]?.value, "protokoll_tops");
       assert.equal(selects[2]?.value, "portrait");
-      assert.equal(selects[0]?.children?.length, 1);
+      assert.equal(selects[0]?.children?.length, 2);
       assert.equal(selects[0]?.children?.[0]?.value, "protokoll");
       assert.equal(selects[0]?.children?.[0]?.textContent, "Protokoll");
+      assert.equal(selects[0]?.children?.[1]?.value, "projektverwaltung");
+      assert.equal(selects[0]?.children?.[1]?.textContent, "Projektverwaltung");
       assert.equal(selects[1]?.children?.length, 1);
       assert.equal(selects[1]?.children?.[0]?.value, "protokoll_tops");
       assert.equal(selects[1]?.children?.[0]?.textContent, "TOP-Liste");
       assert.equal(text.includes("Modul: Protokoll"), true);
+      assert.equal(text.includes("Projektverwaltung"), true);
       assert.equal(text.includes("Tabelle: TOP-Liste"), true);
       assert.equal(text.includes("tableKey: protokoll_tops"), true);
       assert.equal(text.includes("Orientierung: portrait"), true);
@@ -357,8 +478,8 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(text.includes("Keine Projekt- oder Besprechungsdaten."), true);
       assert.equal(text.includes("Diese Vorschau erzeugt kein PDF. Der echte PDF-Test mit Testdaten wird später separat ergänzt."), true);
       assert.equal(text.includes("PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."), false);
-      assert.equal(text.includes("Spaltenbreite UI: 64px | minmax(0, 1fr) | 74px"), true);
-      assert.equal(text.includes("Spaltenbreite PDF: 23mm | auto | 15ch"), false);
+      assert.equal(text.includes("Spalten: 3"), true);
+      assert.equal(text.includes("Layout: UI"), true);
       assert.equal(previewPanels.length, 1);
       assert.equal(previewPanels[0]?.dataset?.previewMode, "ui");
       previewPdfToggle.click();
@@ -372,6 +493,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(switchedText.includes("UI-Vorschau mit Testdaten"), false);
       assert.equal(switchedText.includes("PDF-Vorschau mit Testdaten"), true);
       assert.equal(switchedText.includes("PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."), true);
+      assert.equal(switchedText.includes("Layout: PDF"), true);
       fullscreenToggle.click();
       await flushMicrotasks();
       assert.equal(editor.root.dataset.layoutMode, "normal");
@@ -539,8 +661,8 @@ async function runTableLayoutEditorPrototypeTests(run) {
         labelText: "Gegenstand / Kurztext",
       });
       const draftText = collectText(editor.root);
-      assert.equal(draftText.includes("Spaltenbreite UI: 76px | minmax(0, 1.25fr) | 84px"), false);
-      assert.equal(draftText.includes("Spaltenbreite PDF: 25mm | auto | 18ch"), true);
+      assert.equal(draftText.includes("Layout: PDF"), true);
+      assert.equal(draftText.includes("Spalten: 3"), true);
       assert.equal(draftText.includes("Gegenstand / Kurztext"), true);
       const saveRes = await editor.save();
       assert.equal(saveRes.ok, true);
@@ -615,7 +737,8 @@ async function runTableLayoutEditorPrototypeTests(run) {
       const afterResetText = collectText(editor.root);
       assert.equal(afterResetText.includes("Ungültiger Spaltenwert"), false);
       assert.equal(afterResetText.includes("Überschrift darf nicht leer sein"), false);
-      assert.equal(afterResetText.includes("Spaltenbreite UI: 64px | minmax(0, 1fr) | 74px"), true);
+      assert.equal(afterResetText.includes("Layout: UI"), true);
+      assert.equal(afterResetText.includes("Spalten: 3"), true);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

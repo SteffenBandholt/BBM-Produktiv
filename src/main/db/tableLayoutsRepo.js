@@ -124,20 +124,37 @@ async function _loadProtokollTopsLayoutModule() {
   return _protokollTopsLayoutModulePromise;
 }
 
-async function _validateProtokollTopsLayout(layout, orientation) {
+async function _validateTableLayout(layout, orientation, definition) {
   const mod = await _loadProtokollTopsLayoutModule();
-  if (!mod || typeof mod.validateProtokollTopsEditorValues !== "function") {
+  if (!definition) {
     return { values: null, errors: {}, isValid: false };
   }
-  return mod.validateProtokollTopsEditorValues(mod.extractProtokollTopsEditorValues(layout || {}), orientation);
+  if (definition.tableKey === "protokoll_tops" && mod && typeof mod.validateProtokollTopsEditorValues === "function") {
+    return mod.validateProtokollTopsEditorValues(mod.extractProtokollTopsEditorValues(layout || {}), orientation);
+  }
+  if (mod && typeof mod.validateTableLayoutColumns === "function") {
+    const columns = Array.isArray(layout?.columns) && layout.columns.length ? layout.columns : Array.isArray(definition.columns) ? definition.columns : [];
+    return mod.validateTableLayoutColumns(columns, definition.columns || []);
+  }
+  return { values: null, errors: {}, isValid: false };
 }
 
-async function _sanitizeProtokollTopsLayout(layout, orientation) {
+async function _sanitizeTableLayout(layout, orientation, definition) {
   const mod = await _loadProtokollTopsLayoutModule();
-  if (!mod || typeof mod.sanitizeProtokollTopsLayout !== "function") {
+  if (!definition) {
     return _cloneJson(layout);
   }
-  return mod.sanitizeProtokollTopsLayout(layout || {}, orientation);
+  if (definition.tableKey === "protokoll_tops" && mod && typeof mod.sanitizeProtokollTopsLayout !== "function") {
+    return _cloneJson(layout);
+  }
+  if (definition.tableKey === "protokoll_tops" && mod && typeof mod.sanitizeProtokollTopsLayout === "function") {
+    return mod.sanitizeProtokollTopsLayout(layout || {}, orientation);
+  }
+  if (mod && typeof mod.buildTableLayoutOverlayFromColumns === "function") {
+    const columns = Array.isArray(layout?.columns) && layout.columns.length ? layout.columns : Array.isArray(definition.columns) ? definition.columns : [];
+    return mod.buildTableLayoutOverlayFromColumns(columns, orientation, { fallbackColumns: definition.columns || [] });
+  }
+  return _cloneJson(layout);
 }
 
 function _rowToLayoutRecord(row) {
@@ -272,14 +289,14 @@ async function getResolvedTableLayout(identity = {}) {
     norm.orientation === "landscape"
       ? getStoredTableLayout({ ...norm, orientation: "portrait" })
       : null;
-  const exactValidation = exact?.layout ? await _validateProtokollTopsLayout(exact.layout, norm.orientation) : null;
+  const exactValidation = exact?.layout ? await _validateTableLayout(exact.layout, norm.orientation, definition) : null;
   const portraitFallbackValidation =
-    portraitFallback?.layout ? await _validateProtokollTopsLayout(portraitFallback.layout, "portrait") : null;
+    portraitFallback?.layout ? await _validateTableLayout(portraitFallback.layout, "portrait", definition) : null;
   const exactLayout =
-    exact?.layout && exactValidation?.isValid ? await _sanitizeProtokollTopsLayout(exact.layout, norm.orientation) : null;
+    exact?.layout && exactValidation?.isValid ? await _sanitizeTableLayout(exact.layout, norm.orientation, definition) : null;
   const portraitFallbackLayout =
     portraitFallback?.layout && portraitFallbackValidation?.isValid
-      ? await _sanitizeProtokollTopsLayout(portraitFallback.layout, "portrait")
+      ? await _sanitizeTableLayout(portraitFallback.layout, "portrait", definition)
       : null;
   const fallbackRecord = exactLayout ? exact : portraitFallbackLayout ? portraitFallback : null;
   const storedLayout = exactLayout || portraitFallbackLayout || null;
@@ -300,16 +317,17 @@ async function getResolvedTableLayout(identity = {}) {
 async function saveTableLayout(input = {}) {
   const db = _db();
   const norm = _normalizeIdentity(input);
-  if (!getTableLayoutDefinition(norm)) {
+  const definition = getTableLayoutDefinition(norm);
+  if (!definition) {
     throw new Error(`Unknown table layout: ${norm.tableKey || "?"}/${norm.moduleId || "?"}`);
   }
   const layout = _normalizeLayoutPayload(input.layout ?? input.layoutPatch ?? input.effectiveLayout);
-  const validation = await _validateProtokollTopsLayout(layout, norm.orientation);
+  const validation = await _validateTableLayout(layout, norm.orientation, definition);
   if (!validation?.isValid) {
     const firstError = Object.values(validation?.errors || {})[0] || "Ungültiger Spaltenwert";
     throw new Error(firstError);
   }
-  const safeLayout = await _sanitizeProtokollTopsLayout(layout, norm.orientation);
+  const safeLayout = await _sanitizeTableLayout(layout, norm.orientation, definition);
   const now = new Date().toISOString();
   const stmt = db.prepare(`
     INSERT INTO table_layouts (

@@ -91,12 +91,10 @@ Funktionen:
 
 - Modul auswaehlen
 - Tabelle auswaehlen
-- Spalten anzeigen
-- Spaltennamen bearbeiten, soweit erlaubt
-- Spaltenbreiten einstellen
-- Schriftgroessen einstellen
-- Zeilenhoehen einstellen
-- Gitternetzlinien ein/aus
+- Spaltendefinitionen aus der Registry anzeigen
+- Spaltennamen, Breiten und Preview-Werte bearbeiten, soweit erlaubt
+- UI- und PDF-Breiten getrennt pflegen
+- Gewichtungen und weitere einfache Spaltenmetadaten mitfuehren
 - Hochformat/Querformat pruefen
 - UI-Vorschau anzeigen
 - PDF-Vorschau ueber vorhandenen Vorschau-Druck starten
@@ -117,6 +115,25 @@ Der PDF-Druck nutzt denselben Layout-Bauplan wie die UI, soweit technisch sinnvo
 Ziel ist eine moeglichst gleiche Darstellung zwischen UI und PDF.
 
 UI und PDF koennen technisch nie garantiert zu 100 Prozent identisch sein, sollen aber aus derselben Layoutquelle gespeist werden.
+
+### 5.5 Generisches Spaltenmodell
+
+Das Layoutsystem ist spaltenbasiert.
+
+Eine Tabelle beschreibt ihre Layoutstruktur ueber eine `columns`-Liste, nicht ueber einzelne Zellinhalte.
+
+Jede Spalte kann dabei unter anderem enthalten:
+
+- technischen `key`
+- sichtbares `label`
+- `uiWidth`
+- `pdfWidth`
+- optionale `weight`
+- `previewValue`
+- optionale Header-Zeilen
+
+Der Tabelleneditor erzeugt seine Eingabefelder und Vorschauen aus dieser Spaltendefinition.
+Die fachlichen Zellinhalte bleiben davon getrennt.
 
 ---
 

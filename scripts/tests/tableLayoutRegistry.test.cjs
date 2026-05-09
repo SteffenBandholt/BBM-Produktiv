@@ -12,15 +12,20 @@ async function runTableLayoutRegistryTests(run) {
     const definitions = await listTableLayoutDefinitions();
 
     assert.equal(Array.isArray(modules), true);
-    assert.equal(modules.length >= 1, true);
+    assert.equal(modules.length >= 2, true);
     assert.equal(modules[0].moduleId, "protokoll");
     assert.equal(modules[0].moduleLabel, "Protokoll");
     assert.equal(Array.isArray(modules[0].tables), true);
     assert.equal(modules[0].tables[0].tableKey, "protokoll_tops");
     assert.equal(modules[0].tables[0].tableLabel, "TOP-Liste");
+    const projectModule = modules.find((moduleDef) => moduleDef.moduleId === "projektverwaltung");
+    assert.ok(projectModule, "projektverwaltung module missing");
+    assert.equal(projectModule.moduleLabel, "Projektverwaltung");
+    assert.equal(projectModule.tables[0].tableKey, "project_firms");
+    assert.equal(projectModule.tables[0].tableLabel, "Projekt-Firmenliste");
 
     assert.equal(Array.isArray(definitions), true);
-    assert.equal(definitions.length >= 1, true);
+    assert.equal(definitions.length >= 2, true);
     assert.equal(definitions[0].moduleId, "protokoll");
     assert.equal(definitions[0].moduleLabel, "Protokoll");
     assert.equal(definitions[0].tableKey, "protokoll_tops");
@@ -41,6 +46,17 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(definitions[0].previewData[1].topNumber, "1.1");
     assert.equal(definitions[0].defaultLayout?.tableKey, "protokoll_tops");
     assert.equal(definitions[0].defaultLayout?.variant, "portrait");
+    assert.equal(Array.isArray(definitions[0].columns), true);
+    assert.equal(definitions[0].columns[0].key, "topNumber");
+    assert.equal(definitions[0].columns[1].label, "Gegenstand");
+    const projectFirmsDef = definitions.find((def) => def.tableKey === "project_firms");
+    assert.ok(projectFirmsDef, "project_firms definition missing");
+    assert.equal(projectFirmsDef.moduleId, "projektverwaltung");
+    assert.equal(projectFirmsDef.tableLabel, "Projekt-Firmenliste");
+    assert.equal(Array.isArray(projectFirmsDef.columns), true);
+    assert.equal(projectFirmsDef.columns.length, 3);
+    assert.equal(projectFirmsDef.columns[0].label, "Kurzbez.");
+    assert.equal(projectFirmsDef.previewData[0].shortName, "AB");
   });
 
   await run("TableLayoutRegistry: getTableLayoutDefinition findet den Pilot", () => {

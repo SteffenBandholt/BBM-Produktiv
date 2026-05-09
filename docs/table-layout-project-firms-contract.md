@@ -74,6 +74,8 @@ Bezug zur aktuellen UI:
 
 - die Tabelle in `ProjectFirmsView.js` hat exakt diese dreispaltige Struktur
 - das macht sie fuer den ersten layoutbaren Firmenkandidat gut geeignet
+- das Layout wird im Registry-/Editor-Modell als `columns`-Liste gepflegt
+- jede Spalte traegt Label, UI-Breite, PDF-Breite, Gewichtung und Preview-Wert
 
 ## 7. UI-Layoutwerte
 

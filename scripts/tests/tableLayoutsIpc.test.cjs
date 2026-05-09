@@ -72,6 +72,18 @@ function createDefaultStubs() {
               tableLabel: "TOP-Liste",
               description: "Pilotlayout",
               supportedOrientations: ["portrait", "landscape"],
+              columns: [
+                {
+                  key: "topNumber",
+                  label: "TOP",
+                  uiWidth: "64px",
+                  pdfWidth: "23mm",
+                  weight: 2,
+                  required: true,
+                  previewValue: "1",
+                  headerLines: ["TOP"],
+                },
+              ],
               editFields: [
                 {
                   key: "uiNumberWidth",
@@ -154,6 +166,8 @@ async function runTableLayoutsIpcTests(run) {
       assert.equal(defsRes.data[0].tableLabel, "TOP-Liste");
       assert.equal(Array.isArray(defsRes.data[0].previewData), true);
       assert.equal(defsRes.data[0].previewData[0].topNumber, "1");
+      assert.equal(Array.isArray(defsRes.data[0].columns), true);
+      assert.equal(defsRes.data[0].columns[0].label, "TOP");
       assert.equal(defsRes.data[0].defaultLayout.variant, "portrait");
       assert.equal(defsRes.data[0].editFields[0].type, "gridTrack");
       assert.equal(defsRes.data[0].editFields[0].required, true);

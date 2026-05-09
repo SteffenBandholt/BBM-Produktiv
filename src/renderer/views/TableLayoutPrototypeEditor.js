@@ -69,6 +69,7 @@ function _normalizeDefinitionsList(definitions = []) {
           supportedOrientations: Array.isArray(item.supportedOrientations)
             ? item.supportedOrientations.map((entry) => _normalizeOrientation(entry))
             : ["portrait"],
+          columns: Array.isArray(item.columns) ? item.columns.map((column) => _cloneJson(column)) : [],
           editFields: Array.isArray(item.editFields) ? item.editFields.map((field) => ({ ...field })) : [],
           previewData: Array.isArray(item.previewData) ? item.previewData.map((row) => _cloneJson(row)) : [],
           defaultLayout: item.defaultLayout ? _cloneJson(item.defaultLayout) : null,
@@ -122,41 +123,288 @@ function _renderPreviewRowCell(node, value) {
   node.textContent = String(value == null ? "" : value);
 }
 
-function _getPreviewModeConfig(values, mode) {
+function _cloneColumn(column = {}) {
+  return {
+    ...column,
+    headerLines: Array.isArray(column.headerLines) ? [...column.headerLines] : [],
+  };
+}
+
+function _cloneColumns(columns = []) {
+  return Array.isArray(columns) ? columns.map((column) => _cloneColumn(column)) : [];
+}
+
+function _columnFieldKey(columnKey, field) {
+  return `${String(columnKey || "").trim()}.${String(field || "").trim()}`;
+}
+
+function _normalizeHeaderLinesInput(value, fallbackLines = []) {
+  const raw = String(value == null ? "" : value).replace(/\r/g, "");
+  if (!raw.length) {
+    return [""];
+  }
+  return raw.split("\n").map((line) => line.trim());
+}
+
+function _isDangerousLayoutText(text) {
+  const value = String(text == null ? "" : text).trim();
+  if (!value) return false;
+  if (/[{};]/.test(value)) return true;
+  if (/url\s*\(/i.test(value)) return true;
+  if (/expression\s*\(/i.test(value)) return true;
+  if (/var\s*\(/i.test(value)) return true;
+  if (/calc\s*\(/i.test(value)) return true;
+  if (/\bjavascript\s*:/i.test(value)) return true;
+  return false;
+}
+
+function _isAllowedGridTrack(text) {
+  const value = String(text == null ? "" : text).trim();
+  if (!value || _isDangerousLayoutText(value)) return false;
+  if (value === "auto") return true;
+  if (/^\d+(?:\.\d+)?(px|mm|ch|fr)$/.test(value)) return true;
+  if (/^minmax\(\s*0\s*,\s*\d+(?:\.\d+)?fr\s*\)$/.test(value)) return true;
+  if (/^minmax\(\s*\d+(?:\.\d+)?(?:px|mm|ch)\s*,\s*\d+(?:\.\d+)?(?:px|mm|ch|fr)\s*\)$/.test(value)) return true;
+  return false;
+}
+
+function _isAllowedHeadingText(text) {
+  const value = String(text == null ? "" : text).trim();
+  if (!value || _isDangerousLayoutText(value)) return false;
+  return value.length <= 64;
+}
+
+function _normalizeWeight(value, fallback = 1) {
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) return Number(fallback) > 0 ? Number(fallback) : 1;
+  return Math.max(1, Math.floor(n));
+}
+
+function _normalizeColumnLines(value, fallback = []) {
+  if (Array.isArray(value)) {
+    const lines = value.map((entry) => String(entry == null ? "" : entry).trim());
+    return lines.length ? lines : [""];
+  }
+  if (typeof value === "string") {
+    const lines = value
+      .replace(/\r/g, "")
+      .split("\n")
+      .map((entry) => String(entry == null ? "" : entry).trim());
+    return lines.length ? lines : [""];
+  }
+  if (Array.isArray(fallback)) {
+    return fallback.map((entry) => String(entry == null ? "" : entry).trim());
+  }
+  return [""];
+}
+
+function _normalizeTableLayoutColumns(columns = [], fallbackColumns = []) {
+  const input = Array.isArray(columns) ? columns : [];
+  const fallback = Array.isArray(fallbackColumns) ? fallbackColumns : [];
+  const byKey = new Map(input.filter((item) => item && typeof item === "object" && item.key).map((item) => [String(item.key), item]));
+  const normalized = [];
+  const seen = new Set();
+
+  const addColumn = (src, fb, key) => {
+    const from = src && typeof src === "object" ? src : {};
+    const fallbackColumn = fb && typeof fb === "object" ? fb : {};
+    const normalizedKey = String(from.key || fallbackColumn.key || key || "").trim();
+    if (!normalizedKey || seen.has(normalizedKey)) return;
+    seen.add(normalizedKey);
+    const label = String(from.label ?? fallbackColumn.label ?? normalizedKey).trim();
+    const uiWidth = String(from.uiWidth ?? fallbackColumn.uiWidth ?? "1fr").trim();
+    const pdfWidth = String(from.pdfWidth ?? fallbackColumn.pdfWidth ?? "auto").trim();
+    const headerLines = _normalizeColumnLines(from.headerLines, fallbackColumn.headerLines || [label]);
+    normalized.push({
+      key: normalizedKey,
+      label,
+      uiWidth,
+      pdfWidth,
+      weight: _normalizeWeight(from.weight ?? fallbackColumn.weight ?? 1, 1),
+      required: from.required != null ? !!from.required : !!fallbackColumn.required,
+      previewValue: String(from.previewValue ?? fallbackColumn.previewValue ?? "").trim(),
+      previewField: String(from.previewField || fallbackColumn.previewField || normalizedKey).trim(),
+      headerLines,
+    });
+  };
+
+  for (let i = 0; i < fallback.length; i += 1) {
+    const fb = fallback[i];
+    if (!fb || typeof fb !== "object") continue;
+    addColumn(byKey.get(String(fb.key || "")) || input[i], fb, fb.key || `col_${i}`);
+  }
+
+  for (const item of input) {
+    if (!item || typeof item !== "object") continue;
+    const key = String(item.key || "").trim();
+    if (!key || seen.has(key)) continue;
+    addColumn(item, {}, key);
+  }
+
+  return normalized;
+}
+
+function _validateTableLayoutColumns(columns = [], fallbackColumns = []) {
+  const normalized = _normalizeTableLayoutColumns(columns, fallbackColumns);
+  const errors = {};
+  const values = normalized.map((column) => ({ ...column, headerLines: [...(column.headerLines || [])] }));
+  for (const column of values) {
+    if (!_isAllowedGridTrack(String(column.uiWidth || "").trim())) {
+      errors[`${column.key}.uiWidth`] = "Ungültiger Spaltenwert";
+    }
+    if (!_isAllowedGridTrack(String(column.pdfWidth || "").trim())) {
+      errors[`${column.key}.pdfWidth`] = "Ungültiger Spaltenwert";
+    }
+    if (!_isAllowedHeadingText(String(column.label || "").trim())) {
+      errors[`${column.key}.label`] = String(column.label || "").trim() ? "Ungültige Überschrift" : "Überschrift darf nicht leer sein";
+    }
+    const lines = Array.isArray(column.headerLines) ? column.headerLines : [];
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = String(lines[i] || "").trim();
+      if (!line) {
+        errors[`${column.key}.headerLines.${i}`] = "Überschrift darf nicht leer sein";
+      } else if (!_isAllowedHeadingText(line)) {
+        errors[`${column.key}.headerLines.${i}`] = "Ungültige Überschrift";
+      }
+    }
+  }
+  return { columns: values, errors, isValid: Object.keys(errors).length === 0 };
+}
+
+function _buildTableLayoutOverlayFromColumns(columns = [], orientation = "portrait", extras = {}) {
+  const normalizedColumns = _normalizeTableLayoutColumns(columns, extras.fallbackColumns || []);
+  return {
+    variant: String(orientation || "portrait").trim().toLowerCase() === "landscape" ? "landscape" : "portrait",
+    columns: normalizedColumns,
+    ...(extras.layoutExtras ? JSON.parse(JSON.stringify(extras.layoutExtras)) : {}),
+  };
+}
+
+function _buildProtokollTopsColumnsFromLegacy(layout = {}) {
+  const uiRootVars = layout?.ui?.rootVars || {};
+  const pdfColumns = layout?.pdf?.columns || {};
+  const labels = layout?.labels || {};
+  const metaLabels = Array.isArray(labels.meta) ? labels.meta : [];
+  return _normalizeTableLayoutColumns(
+    [
+      {
+        key: "topNumber",
+        label: labels.top || "TOP",
+        uiWidth: uiRootVars["--bbm-tops-list-number-col"] || "64px",
+        pdfWidth: pdfColumns.number?.width || "23mm",
+        weight: 2,
+        required: true,
+        previewValue: "1",
+        headerLines: [labels.top || "TOP"],
+      },
+      {
+        key: "shortText",
+        label: labels.text || "Gegenstand",
+        uiWidth: uiRootVars["--bbm-tops-list-text-col"] || "minmax(0, 1fr)",
+        pdfWidth: pdfColumns.text?.width || "auto",
+        weight: 6,
+        required: true,
+        previewValue: "Beispielthema fuer die Vorschau",
+        headerLines: [labels.text || "Gegenstand"],
+      },
+      {
+        key: "meta",
+        label: metaLabels[0] || "Status",
+        uiWidth: uiRootVars["--bbm-tops-list-meta-col"] || "74px",
+        pdfWidth: pdfColumns.meta?.width || "15ch",
+        weight: 1,
+        required: true,
+        previewValue: "offen",
+        headerLines: [
+          metaLabels[0] || "Status",
+          metaLabels[1] || "Fertig bis",
+          metaLabels[2] || "verantw",
+        ],
+      },
+    ],
+    [
+      {
+        key: "topNumber",
+        label: "TOP",
+        uiWidth: "64px",
+        pdfWidth: "23mm",
+        weight: 2,
+        required: true,
+        previewValue: "1",
+        headerLines: ["TOP"],
+      },
+      {
+        key: "shortText",
+        label: "Gegenstand",
+        uiWidth: "minmax(0, 1fr)",
+        pdfWidth: "auto",
+        weight: 6,
+        required: true,
+        previewValue: "Beispielthema fuer die Vorschau",
+        headerLines: ["Gegenstand"],
+      },
+      {
+        key: "meta",
+        label: "Status",
+        uiWidth: "74px",
+        pdfWidth: "15ch",
+        weight: 1,
+        required: true,
+        previewValue: "offen",
+        headerLines: ["Status", "Fertig bis", "verantw"],
+      },
+    ]
+  );
+}
+
+function _buildColumnDraft(column = {}, fallback = {}) {
+  const fallbackHeaderLines = Array.isArray(fallback.headerLines) ? fallback.headerLines : [];
+  const headerLines = _normalizeHeaderLinesInput(column.headerLines?.join?.("\n") ?? "", fallbackHeaderLines);
+  const label = String(column.label == null ? "" : column.label).trim();
+  return {
+    key: String(column.key || fallback.key || "").trim(),
+    label,
+    uiWidth: String(column.uiWidth == null ? fallback.uiWidth || "" : column.uiWidth).trim(),
+    pdfWidth: String(column.pdfWidth == null ? fallback.pdfWidth || "" : column.pdfWidth).trim(),
+    weight: String(column.weight == null ? fallback.weight ?? "" : column.weight).trim(),
+    required: column.required != null ? !!column.required : !!fallback.required,
+    previewValue: String(column.previewValue == null ? fallback.previewValue || "" : column.previewValue).trim(),
+    headerLines,
+  };
+}
+
+function _normalizePreviewRows(definition) {
+  return Array.isArray(definition?.previewData) ? definition.previewData.map((row) => ({ ...row })) : [];
+}
+
+function _getPreviewModeConfig(mode) {
   const isPdf = mode === "pdf";
-  const numberWidth = isPdf ? values.pdfNumberWidth : values.uiNumberWidth;
-  const textWidth = isPdf ? values.pdfTextWidth : values.uiTextTrack;
-  const metaWidth = isPdf ? values.pdfMetaWidth : values.uiMetaWidth;
-  const labelPrefix = isPdf ? "PDF" : "UI";
   return {
     mode,
     isPdf,
-    title: `${labelPrefix}-Vorschau mit Testdaten`,
+    title: isPdf ? "PDF-Vorschau mit Testdaten" : "UI-Vorschau mit Testdaten",
     hint: isPdf
       ? "Registrierte Beispielzeilen aus der Tabellenregistry. PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."
       : "Registrierte Beispielzeilen aus der Tabellenregistry. Keine Projekt- oder Besprechungsdaten.",
     note: isPdf
       ? "Diese Vorschau erzeugt kein PDF. Der echte PDF-Test mit Testdaten wird später separat ergänzt."
       : "Diese Vorschau zeigt die UI-Layoutwerte des Editors.",
-    numberWidth: String(numberWidth || (isPdf ? DEFAULT_VALUES.pdfNumberWidth : DEFAULT_VALUES.uiNumberWidth)),
-    textWidth: String(textWidth || (isPdf ? DEFAULT_VALUES.pdfTextWidth : DEFAULT_VALUES.uiTextTrack)),
-    metaWidth: String(metaWidth || (isPdf ? DEFAULT_VALUES.pdfMetaWidth : DEFAULT_VALUES.uiMetaWidth)),
-    labelTop: String(values.labelTop || DEFAULT_VALUES.labelTop),
-    labelText: String(values.labelText || DEFAULT_VALUES.labelText),
-    labelMeta1: String(values.labelMeta1 || DEFAULT_VALUES.labelMeta1),
-    labelMeta2: String(values.labelMeta2 || DEFAULT_VALUES.labelMeta2),
-    labelMeta3: String(values.labelMeta3 || DEFAULT_VALUES.labelMeta3),
   };
 }
 
-function _buildPreviewGridTemplate(cfg) {
-  return `${cfg.numberWidth} ${cfg.textWidth} ${cfg.metaWidth}`;
+function _buildPreviewGridTemplate(columns = [], mode = "ui") {
+  return _cloneColumns(columns)
+    .map((column) => {
+      const width = mode === "pdf" ? column.pdfWidth : column.uiWidth;
+      return String(width || (mode === "pdf" ? "auto" : "1fr")).trim() || (mode === "pdf" ? "auto" : "1fr");
+    })
+    .join(" ");
 }
 
-function _renderPreviewGridRow(target, rowData, cfg, { header = false } = {}) {
+function _renderPreviewGridRow(rowData, columns, mode, { header = false } = {}) {
   const row = document.createElement("div");
   row.style.display = "grid";
-  row.style.gridTemplateColumns = _buildPreviewGridTemplate(cfg);
+  row.style.gridTemplateColumns = _buildPreviewGridTemplate(columns, mode);
   row.style.alignItems = "start";
   row.style.minWidth = "0";
   row.style.borderBottom = header ? "1px solid rgba(15,23,42,0.12)" : "1px solid rgba(15,23,42,0.08)";
@@ -177,61 +425,63 @@ function _renderPreviewGridRow(target, rowData, cfg, { header = false } = {}) {
     return cell;
   };
 
-  if (header) {
-    const thTop = makeCell();
-    thTop.style.fontWeight = "700";
-    thTop.textContent = cfg.labelTop;
-
-    const thText = makeCell();
-    thText.style.fontWeight = "700";
-    thText.textContent = cfg.labelText;
-
-    const thMeta = makeCell();
-    thMeta.style.fontWeight = "700";
-    thMeta.style.display = "grid";
-    thMeta.style.gap = "2px";
-    for (const line of [cfg.labelMeta1, cfg.labelMeta2, cfg.labelMeta3]) {
-      const span = document.createElement("div");
-      span.textContent = line;
-      thMeta.appendChild(span);
+  const renderValue = (cell, value, column) => {
+    const normalized = Array.isArray(value) ? value : value == null ? "" : value;
+    if (header) {
+      cell.style.fontWeight = "700";
+      cell.style.display = "grid";
+      cell.style.gap = "2px";
+      const headerLines = Array.isArray(column?.headerLines) && column.headerLines.length ? column.headerLines : [column?.label || ""];
+      for (const line of headerLines) {
+        const span = document.createElement("div");
+        span.textContent = String(line || "");
+        cell.appendChild(span);
+      }
+      return;
     }
-    row.append(thTop, thText, thMeta);
+
+    if (Array.isArray(normalized)) {
+      cell.style.display = "grid";
+      cell.style.gap = "2px";
+      for (const line of normalized) {
+        const span = document.createElement("div");
+        span.textContent = String(line || "");
+        cell.appendChild(span);
+      }
+      return;
+    }
+
+    if (typeof normalized === "object" && normalized != null) {
+      cell.textContent = JSON.stringify(normalized);
+      return;
+    }
+
+    cell.textContent = String(normalized || column?.previewValue || "");
+  };
+
+  const sourceRows = header ? columns : rowData;
+  if (header) {
+    for (const column of columns) {
+      const cell = makeCell();
+      renderValue(cell, column?.headerLines, column);
+      row.appendChild(cell);
+    }
     return row;
   }
 
-  const tdTop = makeCell();
-  tdTop.textContent = String(rowData.topNumber || "");
-
-  const tdText = makeCell();
-  const shortText = document.createElement("div");
-  shortText.style.fontWeight = "700";
-  shortText.textContent = String(rowData.shortText || "");
-  tdText.appendChild(shortText);
-  if (rowData.longText) {
-    const longText = document.createElement("div");
-    longText.style.marginTop = "4px";
-    longText.style.color = "#475569";
-    longText.textContent = String(rowData.longText);
-    tdText.appendChild(longText);
+  for (const column of columns) {
+    const cell = makeCell();
+    renderValue(cell, rowData?.[column.key] ?? column?.previewValue ?? "", column);
+    if (!header && column?.key === "shortText" && rowData?.longText) {
+      const longText = document.createElement("div");
+      longText.style.marginTop = "4px";
+      longText.style.color = "#475569";
+      longText.textContent = String(rowData.longText);
+      cell.appendChild(longText);
+    }
+    row.appendChild(cell);
   }
 
-  const tdMeta = makeCell();
-  tdMeta.style.display = "grid";
-  tdMeta.style.gap = "2px";
-  for (const line of [rowData.status, rowData.dueDate || " ", rowData.responsible || " "]) {
-    const metaLine = document.createElement("div");
-    metaLine.textContent = String(line || "");
-    tdMeta.appendChild(metaLine);
-  }
-  if (rowData.ampelSymbol) {
-    const symbol = document.createElement("div");
-    symbol.textContent = `Ampel: ${String(rowData.ampelSymbol)}`;
-    symbol.style.fontSize = "11px";
-    symbol.style.color = "#64748b";
-    tdMeta.appendChild(symbol);
-  }
-
-  row.append(tdTop, tdText, tdMeta);
   return row;
 }
 
@@ -239,8 +489,9 @@ function _renderPreviewPanel(target, definition, values, mode) {
   if (!target) return;
   target.innerHTML = "";
 
-  const cfg = _getPreviewModeConfig(values, mode);
-  const rows = _getPreviewRows(definition);
+  const cfg = _getPreviewModeConfig(mode);
+  const columns = Array.isArray(values?.columns) && values.columns.length ? values.columns : _cloneColumns(definition?.columns || []);
+  const rows = _normalizePreviewRows(definition);
 
   target.dataset.previewMode = cfg.mode;
   target.style.display = "grid";
@@ -263,16 +514,12 @@ function _renderPreviewPanel(target, definition, values, mode) {
   const panelSummary = document.createElement("div");
   panelSummary.style.fontSize = "12px";
   panelSummary.style.color = "#475569";
-  const activeValues = _getPreviewValue({
-    ...values,
-    editValues: values,
-    loadedValues: values,
-  });
   const summaryParts = [
     `Quelle: ${String(values.source || "default")}`,
     `Testdaten: ${rows.length} Zeilen`,
-    `Orientierung: ${String(activeValues.orientation || values.orientation || DEFAULT_VALUES.orientation)}`,
-    `Spaltenbreite ${mode === "pdf" ? "PDF" : "UI"}: ${cfg.numberWidth} | ${cfg.textWidth} | ${cfg.metaWidth}`,
+    `Orientierung: ${String(values.orientation || DEFAULT_ORIENTATION)}`,
+    `Spalten: ${columns.length}`,
+    `Layout: ${mode === "pdf" ? "PDF" : "UI"}`,
   ];
   panelSummary.textContent = summaryParts.join(" | ");
 
@@ -291,11 +538,11 @@ function _renderPreviewPanel(target, definition, values, mode) {
   surface.style.display = "grid";
   surface.style.gap = "0";
   surface.style.minWidth = "0";
-  surface.dataset.previewGridColumns = _buildPreviewGridTemplate(cfg);
+  surface.dataset.previewGridColumns = _buildPreviewGridTemplate(columns, mode);
 
-  surface.append(_renderPreviewGridRow(null, null, cfg, { header: true }));
+  surface.append(_renderPreviewGridRow(null, columns, mode, { header: true }));
   for (const rowData of rows) {
-    surface.append(_renderPreviewGridRow(null, rowData, cfg, { header: false }));
+    surface.append(_renderPreviewGridRow(rowData, columns, mode, { header: false }));
   }
 
   target.append(panelTitle, panelHint, panelSummary, panelNote, surface);
@@ -306,6 +553,40 @@ export function extractProtokollTopsEditorValues(layout = {}) {
   const pdfColumns = layout?.pdf?.columns || {};
   const labels = layout?.labels || {};
   const metaLabels = Array.isArray(labels.meta) ? labels.meta : [];
+  const columns = Array.isArray(layout?.columns) && layout.columns.length
+    ? _normalizeTableLayoutColumns(layout.columns, [
+        {
+          key: "topNumber",
+          label: DEFAULT_VALUES.labelTop,
+          uiWidth: DEFAULT_VALUES.uiNumberWidth,
+          pdfWidth: DEFAULT_VALUES.pdfNumberWidth,
+          weight: 2,
+          required: true,
+          previewValue: "1",
+          headerLines: [DEFAULT_VALUES.labelTop],
+        },
+        {
+          key: "shortText",
+          label: DEFAULT_VALUES.labelText,
+          uiWidth: DEFAULT_VALUES.uiTextTrack,
+          pdfWidth: DEFAULT_VALUES.pdfTextWidth,
+          weight: 6,
+          required: true,
+          previewValue: "Beispielthema fuer die Vorschau",
+          headerLines: [DEFAULT_VALUES.labelText],
+        },
+        {
+          key: "meta",
+          label: DEFAULT_VALUES.labelMeta1,
+          uiWidth: DEFAULT_VALUES.uiMetaWidth,
+          pdfWidth: DEFAULT_VALUES.pdfMetaWidth,
+          weight: 1,
+          required: true,
+          previewValue: "offen",
+          headerLines: [DEFAULT_VALUES.labelMeta1, DEFAULT_VALUES.labelMeta2, DEFAULT_VALUES.labelMeta3],
+        },
+      ])
+    : _buildProtokollTopsColumnsFromLegacy(layout);
   return {
     orientation: _normalizeOrientation(layout?.variant || layout?.orientation || DEFAULT_VALUES.orientation),
     uiNumberWidth: _normalizeText(uiRootVars["--bbm-tops-list-number-col"], DEFAULT_VALUES.uiNumberWidth, 32),
@@ -319,15 +600,13 @@ export function extractProtokollTopsEditorValues(layout = {}) {
     labelMeta1: _normalizeText(metaLabels[0], DEFAULT_VALUES.labelMeta1, 48),
     labelMeta2: _normalizeText(metaLabels[1], DEFAULT_VALUES.labelMeta2, 48),
     labelMeta3: _normalizeText(metaLabels[2], DEFAULT_VALUES.labelMeta3, 48),
+    columns,
   };
 }
 
 export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "portrait") {
-  const normalized = {
-    ...DEFAULT_VALUES,
-    ...values,
-    orientation: _normalizeOrientation(values.orientation || orientation),
-  };
+  const validated = validateProtokollTopsEditorValues(values, orientation);
+  const normalized = validated.values;
   const labels = {
     top: _normalizeText(normalized.labelTop, DEFAULT_VALUES.labelTop, 48),
     text: _normalizeText(normalized.labelText, DEFAULT_VALUES.labelText, 64),
@@ -339,6 +618,7 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
   };
   return {
     variant: normalized.orientation,
+    columns: normalized.columns,
     labels,
     ui: {
       rootVars: {
@@ -357,7 +637,7 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
   };
 }
 
-function _createField(labelText, initialValue = "") {
+function _createField(labelText, initialValue = "", options = {}) {
   const row = document.createElement("label");
   row.style.display = "grid";
   row.style.gap = "4px";
@@ -369,11 +649,17 @@ function _createField(labelText, initialValue = "") {
   label.style.fontWeight = "700";
   label.style.color = "#334155";
 
-  const input = document.createElement("input");
-  input.type = "text";
+  const input = options.multiline ? document.createElement("textarea") : document.createElement("input");
+  if (!options.multiline) {
+    input.type = options.type || "text";
+  }
   input.value = String(initialValue ?? "");
   input.style.width = "100%";
   input.style.boxSizing = "border-box";
+  if (options.multiline) {
+    input.rows = Number.isFinite(options.rows) && options.rows > 0 ? options.rows : 3;
+    input.style.resize = "vertical";
+  }
 
   row.append(label, input);
   return { row, input };
@@ -450,8 +736,14 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     schemaVersion: 1,
     source: "default",
     parseError: "",
-    loadedValues: extractProtokollTopsEditorValues({ variant: "portrait" }),
-    editValues: extractProtokollTopsEditorValues({ variant: "portrait" }),
+    loadedValues: {
+      orientation: DEFAULT_ORIENTATION,
+      columns: [],
+    },
+    editValues: {
+      orientation: DEFAULT_ORIENTATION,
+      columns: [],
+    },
     busy: false,
     error: "",
     testResult: "",
@@ -650,41 +942,178 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     return box;
   };
 
-  const layoutSection = makeSection("Spaltenwerte", "Breiten koennen als CSS-Trackwerte gepflegt werden; Texte bleiben defensiv normalisiert.");
-  layoutSection.style.borderBottom = "1px solid rgba(0,0,0,0.08)";
-  layoutSection.style.paddingBottom = "8px";
-  const layoutGrid = document.createElement("div");
-  layoutGrid.style.display = "grid";
-  layoutGrid.style.gridTemplateColumns = "repeat(3, minmax(0, 1fr))";
-  layoutGrid.style.gap = "8px";
+  const columnsSection = makeSection(
+    "Spalten",
+    "Der Editor erzeugt die Eingabefelder aus der registrierten Spaltendefinition. Überschriften, Breiten und Vorschauwerte sind spaltenbezogen."
+  );
+  columnsSection.style.borderBottom = "1px solid rgba(0,0,0,0.08)";
+  columnsSection.style.paddingBottom = "8px";
+  const columnsGrid = document.createElement("div");
+  columnsGrid.style.display = "grid";
+  columnsGrid.style.gridTemplateColumns = "repeat(auto-fit, minmax(260px, 1fr))";
+  columnsGrid.style.gap = "8px";
+  columnsSection.append(columnsGrid);
 
-  const labelSection = makeSection("Spaltenüberschriften", "TOP, Kurztext und Meta-Zeilen für die Anzeige.");
-  const labelGrid = document.createElement("div");
-  labelGrid.style.display = "grid";
-  labelGrid.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
-  labelGrid.style.gap = "8px";
-
-  const makeAndRegisterField = (key, labelText, initialValue) => {
-    const field = _createField(labelText, initialValue);
-    fields.set(key, field.input);
-    return field.row;
+  const _setFieldValue = (input, value) => {
+    if (!input) return;
+    input.value = String(value == null ? "" : value);
   };
 
-  layoutGrid.append(
-    makeAndRegisterField("uiNumberWidth", "UI TOP-Spalte", DEFAULT_VALUES.uiNumberWidth),
-    makeAndRegisterField("uiTextTrack", "UI Text-Spalte", DEFAULT_VALUES.uiTextTrack),
-    makeAndRegisterField("uiMetaWidth", "UI Meta-Spalte", DEFAULT_VALUES.uiMetaWidth),
-    makeAndRegisterField("pdfNumberWidth", "PDF TOP-Spalte", DEFAULT_VALUES.pdfNumberWidth),
-    makeAndRegisterField("pdfTextWidth", "PDF Text-Spalte", DEFAULT_VALUES.pdfTextWidth),
-    makeAndRegisterField("pdfMetaWidth", "PDF Meta-Spalte", DEFAULT_VALUES.pdfMetaWidth)
-  );
-  labelGrid.append(
-    makeAndRegisterField("labelTop", "Überschrift TOP", DEFAULT_VALUES.labelTop),
-    makeAndRegisterField("labelText", "Überschrift Text", DEFAULT_VALUES.labelText),
-    makeAndRegisterField("labelMeta1", "Überschrift Meta 1", DEFAULT_VALUES.labelMeta1),
-    makeAndRegisterField("labelMeta2", "Überschrift Meta 2", DEFAULT_VALUES.labelMeta2),
-    makeAndRegisterField("labelMeta3", "Überschrift Meta 3", DEFAULT_VALUES.labelMeta3)
-  );
+  const _buildTableColumnsFromFields = (definition) => {
+    const fallbackColumns = _cloneColumns(definition?.columns || []);
+    const columns = [];
+    for (const fallback of fallbackColumns) {
+      const baseKey = _normalizeId(fallback.key);
+      const headerInput = fields.get(_columnFieldKey(baseKey, "headerLines"));
+      const uiWidthInput = fields.get(_columnFieldKey(baseKey, "uiWidth"));
+      const pdfWidthInput = fields.get(_columnFieldKey(baseKey, "pdfWidth"));
+      const weightInput = fields.get(_columnFieldKey(baseKey, "weight"));
+      const previewValueInput = fields.get(_columnFieldKey(baseKey, "previewValue"));
+      const headerLines = _normalizeHeaderLinesInput(headerInput?.value, fallback.headerLines);
+      const label = String(headerLines[0] ?? "").trim();
+      columns.push({
+        key: baseKey,
+        label,
+        uiWidth: String(uiWidthInput?.value ?? "").trim(),
+        pdfWidth: String(pdfWidthInput?.value ?? "").trim(),
+        weight: String(weightInput?.value ?? "").trim(),
+        required: !!fallback.required,
+        previewValue: String(previewValueInput?.value ?? "").trim(),
+        headerLines,
+      });
+    }
+    return columns;
+  };
+
+  const _syncColumnFields = (definition, values = {}) => {
+    const valueColumns = Array.isArray(values.columns) ? values.columns : [];
+    const byKey = new Map(valueColumns.filter((column) => column && column.key).map((column) => [String(column.key), column]));
+    for (const fallback of _cloneColumns(definition?.columns || [])) {
+      const baseKey = _normalizeId(fallback.key);
+      const column = byKey.get(baseKey) || fallback;
+      const headerInput = fields.get(_columnFieldKey(baseKey, "headerLines"));
+      const uiWidthInput = fields.get(_columnFieldKey(baseKey, "uiWidth"));
+      const pdfWidthInput = fields.get(_columnFieldKey(baseKey, "pdfWidth"));
+      const weightInput = fields.get(_columnFieldKey(baseKey, "weight"));
+      const previewValueInput = fields.get(_columnFieldKey(baseKey, "previewValue"));
+      _setFieldValue(headerInput, Array.isArray(column.headerLines) ? column.headerLines.join("\n") : column.label || fallback.label || "");
+      _setFieldValue(uiWidthInput, column.uiWidth || fallback.uiWidth || "");
+      _setFieldValue(pdfWidthInput, column.pdfWidth || fallback.pdfWidth || "");
+      _setFieldValue(weightInput, column.weight ?? fallback.weight ?? 1);
+      _setFieldValue(previewValueInput, column.previewValue || fallback.previewValue || "");
+    }
+  };
+
+  const _renderColumnEditors = (definition, values = {}) => {
+    fields.clear();
+    fields.set("orientation", orientationSelect);
+    columnsGrid.innerHTML = "";
+    const columns = _cloneColumns(definition?.columns || []);
+    if (!columns.length) {
+      const empty = document.createElement("div");
+      empty.style.fontSize = "12px";
+      empty.style.color = "#64748b";
+      empty.textContent = "Für diese Tabelle sind keine Spalten registriert.";
+      columnsGrid.appendChild(empty);
+      return;
+    }
+
+    for (const column of columns) {
+      const card = document.createElement("div");
+      card.style.display = "grid";
+      card.style.gap = "8px";
+      card.style.padding = "10px";
+      card.style.border = "1px solid rgba(15,23,42,0.12)";
+      card.style.borderRadius = "10px";
+      card.style.background = "#fff";
+      card.style.minWidth = "0";
+
+      const cardHead = document.createElement("div");
+      cardHead.style.display = "flex";
+      cardHead.style.justifyContent = "space-between";
+      cardHead.style.alignItems = "center";
+      cardHead.style.gap = "8px";
+      const cardTitle = document.createElement("div");
+      cardTitle.style.fontWeight = "800";
+      cardTitle.textContent = column.label || column.key || "Spalte";
+      const cardMeta = document.createElement("div");
+      cardMeta.style.fontSize = "12px";
+      cardMeta.style.color = "#64748b";
+      cardMeta.textContent = `${column.key}${column.required ? " · Pflicht" : ""}${Number(column.weight) > 0 ? ` · Gewicht ${column.weight}` : ""}`;
+      cardHead.append(cardTitle, cardMeta);
+
+      const formGrid = document.createElement("div");
+      formGrid.style.display = "grid";
+      formGrid.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+      formGrid.style.gap = "8px";
+
+      const headerField = _createField(
+        "Überschrift",
+        Array.isArray(column.headerLines) ? column.headerLines.join("\n") : column.label || "",
+        { multiline: true, rows: Math.max(2, Array.isArray(column.headerLines) ? column.headerLines.length : 2) }
+      );
+      headerField.input.dataset.columnKey = column.key;
+      headerField.input.dataset.fieldKey = "headerLines";
+      headerField.input.style.minHeight = "72px";
+      headerField.input.disabled = !!state.busy;
+      fields.set(_columnFieldKey(column.key, "headerLines"), headerField.input);
+
+      const uiWidthField = _createField("UI-Breite", column.uiWidth || "");
+      uiWidthField.input.dataset.columnKey = column.key;
+      uiWidthField.input.dataset.fieldKey = "uiWidth";
+      uiWidthField.input.disabled = !!state.busy;
+      fields.set(_columnFieldKey(column.key, "uiWidth"), uiWidthField.input);
+
+      const pdfWidthField = _createField("PDF-Breite", column.pdfWidth || "");
+      pdfWidthField.input.dataset.columnKey = column.key;
+      pdfWidthField.input.dataset.fieldKey = "pdfWidth";
+      pdfWidthField.input.disabled = !!state.busy;
+      fields.set(_columnFieldKey(column.key, "pdfWidth"), pdfWidthField.input);
+
+      const weightField = _createField("Gewichtung", column.weight ?? 1);
+      weightField.input.type = "number";
+      weightField.input.min = "1";
+      weightField.input.step = "1";
+      weightField.input.dataset.columnKey = column.key;
+      weightField.input.dataset.fieldKey = "weight";
+      weightField.input.disabled = !!state.busy;
+      fields.set(_columnFieldKey(column.key, "weight"), weightField.input);
+
+      const previewField = _createField("Preview-Wert", column.previewValue || "");
+      previewField.input.dataset.columnKey = column.key;
+      previewField.input.dataset.fieldKey = "previewValue";
+      previewField.input.disabled = !!state.busy;
+      fields.set(_columnFieldKey(column.key, "previewValue"), previewField.input);
+
+      const handleColumnInput = () => {
+        const currentTableDef = _getSelectedTableDefinition();
+        state.editValues = {
+          orientation: _normalizeOrientation(orientationSelect.value || state.orientation),
+          columns: currentTableDef ? _buildTableColumnsFromFields(currentTableDef) : [],
+        };
+        state.testResult = "";
+        state.error = "";
+        refreshPreview();
+      };
+      headerField.input.addEventListener("input", handleColumnInput);
+      uiWidthField.input.addEventListener("input", handleColumnInput);
+      pdfWidthField.input.addEventListener("input", handleColumnInput);
+      weightField.input.addEventListener("input", handleColumnInput);
+      previewField.input.addEventListener("input", handleColumnInput);
+
+      formGrid.append(
+        headerField.row,
+        uiWidthField.row,
+        pdfWidthField.row,
+        weightField.row,
+        previewField.row
+      );
+      card.append(cardHead, formGrid);
+      columnsGrid.appendChild(card);
+    }
+
+    _syncColumnFields(definition, values);
+  };
 
   const previewCard = document.createElement("div");
   applyPopupCardStyle(previewCard);
@@ -737,9 +1166,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   fieldsCard.style.padding = "10px";
   fieldsCard.style.display = "grid";
   fieldsCard.style.gap = "10px";
-  fieldsCard.append(layoutSection, labelSection);
-  layoutSection.append(layoutGrid);
-  labelSection.append(labelGrid);
+  fieldsCard.append(columnsSection);
 
   root.append(head, contextCard, toolbar, fieldsCard, previewCard);
   const attachFullscreenHost = (host) => {
@@ -898,9 +1325,22 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   const _updateTestPdfState = (validation = { errors: {} }, tableDef = null) => {
     const errors = validation?.errors || {};
-    const fieldLabelMap = new Map((tableDef?.editFields || []).map((field) => [field.key, field.label]));
+    const columns = Array.isArray(tableDef?.columns) ? tableDef.columns : [];
+    const fieldLabelMap = new Map();
+    for (const column of columns) {
+      const columnLabel = String(column?.label || column?.key || "").trim();
+      fieldLabelMap.set(_columnFieldKey(column.key, "headerLines"), `${columnLabel} Überschrift`);
+      fieldLabelMap.set(_columnFieldKey(column.key, "uiWidth"), `${columnLabel} UI-Breite`);
+      fieldLabelMap.set(_columnFieldKey(column.key, "pdfWidth"), `${columnLabel} PDF-Breite`);
+      fieldLabelMap.set(_columnFieldKey(column.key, "weight"), `${columnLabel} Gewichtung`);
+      fieldLabelMap.set(_columnFieldKey(column.key, "previewValue"), `${columnLabel} Preview-Wert`);
+      fieldLabelMap.set(_columnFieldKey(column.key, "label"), `${columnLabel} Überschrift`);
+    }
     const messages = Object.entries(errors).map(([fieldKey, message]) => {
-      const label = fieldLabelMap.get(fieldKey) || fieldKey;
+      const label =
+        fieldLabelMap.get(fieldKey) ||
+        fieldLabelMap.get(fieldKey.replace(/\.headerLines\.\d+$/, ".headerLines")) ||
+        fieldKey;
       return `${message}: ${label}`;
     });
 
@@ -910,7 +1350,11 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
     for (const [key, input] of fields.entries()) {
       if (!input || key === "orientation") continue;
-      const error = errors[key] || "";
+      const error =
+        errors[key] ||
+        errors[key.replace(/\.headerLines$/, ".label")] ||
+        Object.entries(errors).find(([errorKey]) => errorKey.startsWith(`${key}.headerLines`))?.[1] ||
+        "";
       input.dataset.validationError = error ? "1" : "0";
       input.title = error ? error : "";
       input.style.borderColor = error ? "#dc2626" : "";
@@ -936,6 +1380,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       state.tableDefinitions = [];
       _renderModuleOptions();
       _renderTableOptions();
+      _renderColumnEditors({ columns: [] }, { columns: [] });
       _updateContextStatus();
       _updateTestPdfState();
       return { ok: false, error: state.contextError };
@@ -947,6 +1392,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       state.tableDefinitions = [];
       _renderModuleOptions();
       _renderTableOptions();
+      _renderColumnEditors({ columns: [] }, { columns: [] });
       _updateContextStatus();
       _updateTestPdfState();
       return res;
@@ -958,6 +1404,8 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     state.contextError = "";
     _renderModuleOptions();
     _renderTableOptions();
+    const tableDef = _getSelectedTableDefinition();
+    _renderColumnEditors(tableDef, tableDef?.defaultLayout || { columns: tableDef?.columns || [] });
     _updateContextStatus();
     _updateTestPdfState();
     return res;
@@ -986,7 +1434,12 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const refreshPreview = () => {
     const tableDef = _getSelectedTableDefinition();
     const activeValues = _getPreviewValue(state);
-    const validation = _validateEditorValues(activeValues, state.orientation);
+    const validation = _validateTableLayoutColumns(activeValues?.columns || [], tableDef?.columns || []);
+    const previewValues = {
+      orientation: _normalizeOrientation(activeValues?.orientation || state.orientation),
+      columns: validation.columns,
+      source: state.source,
+    };
     root.dataset.orientation = state.orientation;
     root.dataset.source = state.source;
     root.dataset.moduleId = state.selectedModuleId || "";
@@ -995,7 +1448,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     targetInfoSource.textContent = `Quelle: ${formatSourceLabel()}`;
     _updateContextStatus();
     _setPreviewMode(state.previewMode);
-    _renderPreviewPanel(previewPane, tableDef, { ...validation.values, source: state.source }, state.previewMode);
+    _renderPreviewPanel(previewPane, tableDef, previewValues, state.previewMode);
     if (status) {
       const sourceText = formatSourceLabel();
       const parseText = state.parseError ? ` | Parse: ${state.parseError}` : "";
@@ -1006,10 +1459,20 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     _updateTestPdfState(validation, tableDef);
   };
 
-  const syncLoadedValues = (layout, meta = {}) => {
-    const values = extractProtokollTopsEditorValues(layout || {});
-    state.orientation = _normalizeOrientation(meta.requestedOrientation || values.orientation);
-    values.orientation = state.orientation;
+  const syncLoadedValues = (layout, meta = {}, tableDef = null) => {
+    const definitionColumns = _cloneColumns(tableDef?.columns || []);
+    const layoutColumns =
+      Array.isArray(layout?.columns) && layout.columns.length
+        ? _normalizeTableLayoutColumns(layout.columns, definitionColumns)
+        : _normalizeTableLayoutColumns(
+            tableDef?.tableKey === "protokoll_tops" ? _buildProtokollTopsColumnsFromLegacy(layout || {}) : [],
+            definitionColumns
+          );
+    const values = {
+      orientation: _normalizeOrientation(meta.requestedOrientation || layout?.variant || layout?.orientation || DEFAULT_ORIENTATION),
+      columns: layoutColumns.length ? layoutColumns : definitionColumns,
+    };
+    state.orientation = values.orientation;
     state.schemaVersion = Number(meta.schemaVersion || layout?.schemaVersion || 1) || 1;
     state.source = String(meta.source || "default").trim() || "default";
     state.parseError = String(meta.parseError || layout?.parseError || "").trim();
@@ -1017,7 +1480,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     state.editValues = _cloneJson(values);
     state.testResult = "";
     orientationSelect.value = values.orientation;
-    _syncFields(fields, values);
+    _renderColumnEditors(tableDef, values);
     refreshPreview();
   };
 
@@ -1039,9 +1502,11 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       const tableDef = _getSelectedTableDefinition();
       if (!tableDef) {
         state.error = state.contextError || "Keine Tabellen-Definition verfuegbar.";
+        _renderColumnEditors({ columns: [] }, { columns: [] });
         refreshPreview();
         return { ok: false, error: state.error };
       }
+      _renderColumnEditors(tableDef, tableDef.defaultLayout || { columns: tableDef.columns || [] });
       const res = await resolvedApi.tableLayoutsGetOne({
         tableKey: tableDef.tableKey,
         moduleId: tableDef.moduleId,
@@ -1049,17 +1514,28 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       });
       if (!res?.ok) {
         state.error = res?.error || "Layout konnte nicht geladen werden.";
+        syncLoadedValues(tableDef.defaultLayout || { columns: tableDef.columns || [] }, {
+          source: "default",
+          requestedOrientation,
+        }, tableDef);
         refreshPreview();
         return res;
       }
       const data = res.data || {};
-      syncLoadedValues(data.effectiveLayout || data.defaultLayout || {}, {
+      syncLoadedValues(data.effectiveLayout || data.defaultLayout || tableDef.defaultLayout || { columns: tableDef.columns || [] }, {
         ...data,
         requestedOrientation,
-      });
+      }, tableDef);
       return res;
     } catch (err) {
       state.error = err?.message || String(err);
+      const tableDef = _getSelectedTableDefinition();
+      if (tableDef) {
+        syncLoadedValues(tableDef.defaultLayout || { columns: tableDef.columns || [] }, {
+          source: "default",
+          requestedOrientation: _normalizeOrientation(orientationSelect.value || state.orientation),
+        }, tableDef);
+      }
       refreshPreview();
       return { ok: false, error: state.error };
     } finally {
@@ -1077,31 +1553,41 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     setBusy(true);
     state.error = "";
     try {
-      const values = _readFormValues(fields);
-      values.orientation = _normalizeOrientation(orientationSelect.value || values.orientation);
-      state.editValues = values;
-      state.testResult = "";
       const tableDef = _getSelectedTableDefinition();
       if (!tableDef) {
         state.error = state.contextError || "Keine Tabellen-Definition verfuegbar.";
         refreshPreview();
         return { ok: false, error: state.error };
       }
-      const validation = _validateEditorValues(values, values.orientation);
+      const values = {
+        orientation: _normalizeOrientation(orientationSelect.value || state.orientation),
+        columns: _buildTableColumnsFromFields(tableDef),
+      };
+      values.orientation = _normalizeOrientation(orientationSelect.value || values.orientation);
+      state.editValues = values;
+      state.testResult = "";
+      const validation = _validateTableLayoutColumns(values.columns || [], tableDef.columns || []);
       if (!validation.isValid) {
-        state.error = validation.errors?.uiNumberWidth || validation.errors?.uiTextTrack || validation.errors?.uiMetaWidth ||
-          validation.errors?.pdfNumberWidth || validation.errors?.pdfTextWidth || validation.errors?.pdfMetaWidth ||
-          validation.errors?.labelTop || validation.errors?.labelText || validation.errors?.labelMeta1 ||
-          validation.errors?.labelMeta2 || validation.errors?.labelMeta3 || "Ungültiger Spaltenwert";
+        state.error =
+          validation.errors?.[`${validation.columns?.[0]?.key || ""}.uiWidth`] ||
+          validation.errors?.[`${validation.columns?.[0]?.key || ""}.pdfWidth`] ||
+          validation.errors?.[`${validation.columns?.[0]?.key || ""}.label`] ||
+          validation.errors?.[`${validation.columns?.[0]?.key || ""}.headerLines.0`] ||
+          Object.values(validation.errors || {})[0] ||
+          "Ungültiger Spaltenwert";
         refreshPreview();
         return { ok: false, error: state.error, validationErrors: validation.errors };
       }
+      const layout =
+        tableDef.tableKey === "protokoll_tops"
+          ? buildProtokollTopsLayoutOverlay({ columns: validation.columns }, values.orientation)
+          : _buildTableLayoutOverlayFromColumns(validation.columns, values.orientation);
       const res = await resolvedApi.tableLayoutsSave({
         tableKey: tableDef.tableKey,
         moduleId: tableDef.moduleId,
         orientation: values.orientation,
         schemaVersion: state.schemaVersion,
-        layout: buildProtokollTopsLayoutOverlay(values, values.orientation),
+        layout,
       });
       if (!res?.ok) {
         state.error = res?.error || "Layout konnte nicht gespeichert werden.";
@@ -1109,7 +1595,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
         return res;
       }
       const data = res.data || {};
-      syncLoadedValues(data.effectiveLayout || data.defaultLayout || {}, data);
+      syncLoadedValues(data.effectiveLayout || data.defaultLayout || {}, data, tableDef);
       state.error = "";
       refreshPreview();
       return res;
@@ -1161,16 +1647,69 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   };
 
   const applyValues = (values = {}) => {
-    const next = {
-      ...state.editValues,
-      ...values,
-      orientation: _normalizeOrientation(values.orientation || orientationSelect.value || state.orientation),
+    const tableDef = _getSelectedTableDefinition();
+    const orientation = _normalizeOrientation(values.orientation || orientationSelect.value || state.orientation);
+    const currentColumns = Array.isArray(state.editValues.columns) && state.editValues.columns.length
+      ? _cloneColumns(state.editValues.columns)
+      : _cloneColumns(tableDef?.columns || []);
+    let next = {
+      orientation,
+      columns: Array.isArray(values.columns) ? _cloneColumns(values.columns) : _cloneColumns(state.editValues.columns || []),
     };
+    if (!Array.isArray(values.columns) && tableDef?.tableKey === "protokoll_tops") {
+      const topCol = currentColumns[0] || {};
+      const textCol = currentColumns[1] || {};
+      const metaCol = currentColumns[2] || {};
+      next = {
+        orientation,
+        columns: [
+          {
+            key: "topNumber",
+            label: String(values.labelTop ?? topCol.label ?? DEFAULT_VALUES.labelTop),
+            uiWidth: String(values.uiNumberWidth ?? topCol.uiWidth ?? ""),
+            pdfWidth: String(values.pdfNumberWidth ?? topCol.pdfWidth ?? ""),
+            weight: 2,
+            required: true,
+            previewValue: "1",
+            headerLines: [String(values.labelTop ?? topCol.headerLines?.[0] ?? topCol.label ?? DEFAULT_VALUES.labelTop)],
+          },
+          {
+            key: "shortText",
+            label: String(values.labelText ?? textCol.label ?? DEFAULT_VALUES.labelText),
+            uiWidth: String(values.uiTextTrack ?? textCol.uiWidth ?? ""),
+            pdfWidth: String(values.pdfTextWidth ?? textCol.pdfWidth ?? ""),
+            weight: 6,
+            required: true,
+            previewValue: "Beispielthema fuer die Vorschau",
+            headerLines: [String(values.labelText ?? textCol.headerLines?.[0] ?? textCol.label ?? DEFAULT_VALUES.labelText)],
+          },
+          {
+            key: "meta",
+            label: String(values.labelMeta1 ?? metaCol.label ?? DEFAULT_VALUES.labelMeta1),
+            uiWidth: String(values.uiMetaWidth ?? metaCol.uiWidth ?? ""),
+            pdfWidth: String(values.pdfMetaWidth ?? metaCol.pdfWidth ?? ""),
+            weight: 1,
+            required: true,
+            previewValue: "offen",
+            headerLines: [
+              String(values.labelMeta1 ?? metaCol.headerLines?.[0] ?? metaCol.label ?? DEFAULT_VALUES.labelMeta1),
+              String(values.labelMeta2 ?? metaCol.headerLines?.[1] ?? DEFAULT_VALUES.labelMeta2),
+              String(values.labelMeta3 ?? metaCol.headerLines?.[2] ?? DEFAULT_VALUES.labelMeta3),
+            ],
+          },
+        ],
+      };
+    } else if (!Array.isArray(values.columns) && tableDef?.columns) {
+      next = {
+        orientation,
+        columns: _cloneColumns(tableDef.columns),
+      };
+    }
     state.orientation = next.orientation;
     state.editValues = next;
     state.testResult = "";
     orientationSelect.value = next.orientation;
-    _syncFields(fields, next);
+    _syncColumnFields(tableDef, next);
     refreshPreview();
   };
 
@@ -1217,10 +1756,10 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   for (const input of fields.values()) {
     if (!input) continue;
     input.addEventListener("input", () => {
+      const tableDef = _getSelectedTableDefinition();
       state.editValues = {
-        ...state.editValues,
-        ..._readFormValues(fields),
         orientation: _normalizeOrientation(orientationSelect.value),
+        columns: tableDef ? _buildTableColumnsFromFields(tableDef) : [],
       };
       state.testResult = "";
       state.error = "";
@@ -1248,4 +1787,3 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     },
   };
 }
-

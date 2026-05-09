@@ -129,6 +129,69 @@ async function runTableLayoutsRepoTests(run) {
     });
   });
 
+  await run("TableLayoutsRepo: project_firms speichert und laedt Spaltenlayouts generisch", async () => {
+    return withTempTableLayoutsRepo(async ({ db, repo }) => {
+      db.initDatabase();
+
+      const saveRes = await repo.saveTableLayout({
+        tableKey: "project_firms",
+        moduleId: "projektverwaltung",
+        orientation: "portrait",
+        layout: {
+          columns: [
+            {
+              key: "shortName",
+              label: "Kurzbez.",
+              uiWidth: "168px",
+              pdfWidth: "24mm",
+              weight: 2,
+              required: true,
+              previewValue: "AB",
+              headerLines: ["Kurzbez."],
+            },
+            {
+              key: "role",
+              label: "Funktion/Gewerk",
+              uiWidth: "1fr",
+              pdfWidth: "auto",
+              weight: 6,
+              required: true,
+              previewValue: "Rohbau",
+              headerLines: ["Funktion/Gewerk"],
+            },
+            {
+              key: "active",
+              label: "Aktiv",
+              uiWidth: "72px",
+              pdfWidth: "15mm",
+              weight: 1,
+              required: true,
+              previewValue: "ja",
+              headerLines: ["Aktiv"],
+            },
+          ],
+        },
+      });
+
+      assert.equal(saveRes.source, "stored");
+      assert.equal(saveRes.effectiveLayout.columns[0].uiWidth, "168px");
+      assert.equal(saveRes.effectiveLayout.columns[1].pdfWidth, "auto");
+      assert.equal(saveRes.effectiveLayout.columns[2].label, "Aktiv");
+
+      const resolved = await repo.getResolvedTableLayout({
+        tableKey: "project_firms",
+        moduleId: "projektverwaltung",
+        orientation: "portrait",
+      });
+
+      assert.equal(resolved.ok, true);
+      assert.equal(resolved.source, "stored");
+      assert.equal(resolved.effectiveLayout.columns[0].uiWidth, "168px");
+      assert.equal(resolved.effectiveLayout.columns[1].label, "Funktion/Gewerk");
+      assert.equal(resolved.effectiveLayout.columns[2].previewValue, "ja");
+    });
+  });
+
   await run("TableLayoutsRepo: kaputte gespeicherte Layoutwerte fallen auf Standard des konkreten Tables zurueck", async () => {
     return withTempTableLayoutsRepo(async ({ db, repo }) => {
       const conn = db.initDatabase();

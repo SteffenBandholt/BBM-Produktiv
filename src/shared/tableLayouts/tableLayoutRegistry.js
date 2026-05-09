@@ -43,9 +43,7 @@ const PROTOKOLL_TOPS_PREVIEW_DATA = Object.freeze([
   Object.freeze({
     topNumber: "1",
     shortText: "Beispielthema fuer die Vorschau",
-    status: "offen",
-    dueDate: "12.04.2026",
-    responsible: "M. Muster",
+    meta: Object.freeze(["offen", "12.04.2026", "M. Muster"]),
     ampelSymbol: "gelb",
   }),
   Object.freeze({
@@ -53,20 +51,117 @@ const PROTOKOLL_TOPS_PREVIEW_DATA = Object.freeze([
     shortText: "Langtext mit laengerer Beschreibung in einer Unterzeile",
     longText:
       "Dies ist ein laengerer Beispieltext, damit die Editor-Vorschau den Zeilenumbruch und die Innenanzeige testen kann.",
-    status: "in Bearbeitung",
-    dueDate: "",
-    responsible: "S. Beispiel",
+    meta: Object.freeze(["in Bearbeitung", "", "S. Beispiel"]),
     ampelSymbol: "gruen",
   }),
   Object.freeze({
     topNumber: "2",
     shortText: "Kurzer Eintrag mit knapper Anzeige",
-    status: "erledigt",
-    dueDate: "18.04.2026",
-    responsible: "",
+    meta: Object.freeze(["erledigt", "18.04.2026", ""]),
     ampelSymbol: "rot",
   }),
 ]);
+
+const PROTOKOLL_TOPS_COLUMNS = Object.freeze([
+  Object.freeze({
+    key: "topNumber",
+    label: "TOP",
+    uiWidth: "64px",
+    pdfWidth: "23mm",
+    weight: 2,
+    required: true,
+    previewValue: "1",
+    previewField: "topNumber",
+    headerLines: Object.freeze(["TOP"]),
+  }),
+  Object.freeze({
+    key: "shortText",
+    label: "Gegenstand",
+    uiWidth: "minmax(0, 1fr)",
+    pdfWidth: "auto",
+    weight: 6,
+    required: true,
+    previewValue: "Beispielthema fuer die Vorschau",
+    previewField: "shortText",
+    headerLines: Object.freeze(["Gegenstand"]),
+  }),
+  Object.freeze({
+    key: "meta",
+    label: "Status",
+    uiWidth: "74px",
+    pdfWidth: "15ch",
+    weight: 1,
+    required: true,
+    previewValue: "offen",
+    previewField: "meta",
+    headerLines: Object.freeze(["Status", "Fertig bis", "verantw"]),
+  }),
+]);
+
+const PROJECT_FIRMS_PREVIEW_DATA = Object.freeze([
+  Object.freeze({
+    shortName: "AB",
+    role: "Rohbau",
+    active: "ja",
+  }),
+  Object.freeze({
+    shortName: "ME",
+    role: "Elektro mit langem Gewerktext",
+    active: "nein",
+  }),
+  Object.freeze({
+    shortName: "HK",
+    role: "HLS",
+    active: "ja",
+  }),
+]);
+
+const PROJECT_FIRMS_COLUMNS = Object.freeze([
+  Object.freeze({
+    key: "shortName",
+    label: "Kurzbez.",
+    uiWidth: "160px",
+    pdfWidth: "23mm",
+    weight: 2,
+    required: true,
+    previewValue: "AB",
+    previewField: "shortName",
+    headerLines: Object.freeze(["Kurzbez."]),
+  }),
+  Object.freeze({
+    key: "role",
+    label: "Funktion/Gewerk",
+    uiWidth: "1fr",
+    pdfWidth: "auto",
+    weight: 6,
+    required: true,
+    previewValue: "Rohbau",
+    previewField: "role",
+    headerLines: Object.freeze(["Funktion/Gewerk"]),
+  }),
+  Object.freeze({
+    key: "active",
+    label: "Aktiv",
+    uiWidth: "70px",
+    pdfWidth: "15mm",
+    weight: 1,
+    required: true,
+    previewValue: "ja",
+    previewField: "active",
+    headerLines: Object.freeze(["Aktiv"]),
+  }),
+]);
+
+const PROJECT_FIRMS_DEFAULT_LAYOUT = Object.freeze({
+  tableKey: "project_firms",
+  moduleId: "projektverwaltung",
+  variant: "portrait",
+  columns: PROJECT_FIRMS_COLUMNS,
+});
+
+async function _loadProjectFirmsLayout() {
+  return _cloneJson(PROJECT_FIRMS_DEFAULT_LAYOUT);
+}
 
 const TABLE_LAYOUT_MODULES = Object.freeze([
   Object.freeze({
@@ -80,6 +175,7 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
         tableLabel: "TOP-Liste",
         description: "Pilotlayout fuer die Protokoll-TOP-Liste.",
         supportedOrientations: Object.freeze(["portrait", "landscape"]),
+        columns: PROTOKOLL_TOPS_COLUMNS,
         editFields: Object.freeze([
           Object.freeze({
             key: "uiNumberWidth",
@@ -164,6 +260,23 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
       }),
     ]),
   }),
+  Object.freeze({
+    moduleId: "projektverwaltung",
+    moduleLabel: "Projektverwaltung",
+    description: "Projektbezogene Verwaltungs-Layouts fuer den Tabellenlayout-Editor.",
+    supportedOrientations: Object.freeze(["portrait", "landscape"]),
+    tables: Object.freeze([
+      Object.freeze({
+        tableKey: "project_firms",
+        tableLabel: "Projekt-Firmenliste",
+        description: "Projektbezogene Firmenliste fuer den naechsten Firmenlayout-Pilot.",
+        supportedOrientations: Object.freeze(["portrait", "landscape"]),
+        columns: PROJECT_FIRMS_COLUMNS,
+        previewData: PROJECT_FIRMS_PREVIEW_DATA,
+        defaultLayoutLoader: _loadProjectFirmsLayout,
+      }),
+    ]),
+  }),
 ]);
 
 function _cloneModuleTableDefinition(moduleDef, tableDef, defaultLayout = null) {
@@ -180,6 +293,12 @@ function _cloneModuleTableDefinition(moduleDef, tableDef, defaultLayout = null) 
     supportedOrientations: Array.isArray(tableDef.supportedOrientations)
       ? [...tableDef.supportedOrientations]
       : ["portrait"],
+    columns: Array.isArray(tableDef.columns)
+      ? tableDef.columns.map((column) => ({
+          ...column,
+          headerLines: Array.isArray(column.headerLines) ? [...column.headerLines] : [],
+        }))
+      : [],
     editFields: Array.isArray(tableDef.editFields)
       ? tableDef.editFields.map((field) => ({ ...field }))
       : [],
@@ -221,6 +340,12 @@ function getTableLayoutModuleDefinition(moduleId) {
       supportedOrientations: Array.isArray(tableDef.supportedOrientations)
         ? [...tableDef.supportedOrientations]
         : ["portrait"],
+      columns: Array.isArray(tableDef.columns)
+        ? tableDef.columns.map((column) => ({
+            ...column,
+            headerLines: Array.isArray(column.headerLines) ? [...column.headerLines] : [],
+          }))
+        : [],
       editFields: Array.isArray(tableDef.editFields)
         ? tableDef.editFields.map((field) => ({ ...field }))
         : [],
@@ -250,6 +375,12 @@ function getTableLayoutDefinition(identity = {}) {
     supportedOrientations: Array.isArray(tableDef.supportedOrientations)
       ? [...tableDef.supportedOrientations]
       : ["portrait"],
+    columns: Array.isArray(tableDef.columns)
+      ? tableDef.columns.map((column) => ({
+          ...column,
+          headerLines: Array.isArray(column.headerLines) ? [...column.headerLines] : [],
+        }))
+      : [],
     editFields: Array.isArray(tableDef.editFields)
       ? tableDef.editFields.map((field) => ({ ...field }))
       : [],

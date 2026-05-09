@@ -58,6 +58,23 @@ async function runTableLayoutsResolverTests(run) {
     });
   });
 
+  await run("TableLayoutsResolver: project_firms Standardlayout wird geliefert", () => {
+    return withTempTableLayoutsRepo(async ({ db, repo }) => {
+      db.initDatabase();
+      const resolved = await repo.getResolvedTableLayout({
+        tableKey: "project_firms",
+        moduleId: "projektverwaltung",
+        orientation: "portrait",
+      });
+
+      assert.equal(resolved.ok, true);
+      assert.equal(resolved.source, "default");
+      assert.equal(Array.isArray(resolved.effectiveLayout.columns), true);
+      assert.equal(resolved.effectiveLayout.columns[0].label, "Kurzbez.");
+      assert.equal(resolved.effectiveLayout.columns[1].label, "Funktion/Gewerk");
+    });
+  });
+
   await run("TableLayoutsResolver: gespeicherte Layouts ueberschreiben Standard und bleiben je Orientierung getrennt", () => {
     return withTempTableLayoutsRepo(async ({ db, repo }) => {
       db.initDatabase();

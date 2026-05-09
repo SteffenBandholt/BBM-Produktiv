@@ -25,6 +25,10 @@ Sie ergänzt:
   - ohne gespeichertes Layout bleibt die Anzeige exakt beim bisherigen Standard
   - `TopsList` hat einen optionalen Layout-Hook vorbereitet, bleibt aber im sichtbaren Standardpfad
   - geprueft mit `npm test`
+- Das Tabellenlayout-System arbeitet jetzt generisch ueber `columns`:
+  - der Editor erzeugt die Felder aus der Spaltendefinition
+  - `projektverwaltung / project_firms` ist als registrierter naechster Pilot vorhanden
+  - `protokoll_tops` bleibt rueckwaertskompatibel
 - Audit fuer den naechsten Tabellenlayout-Kandidaten erstellt; keine Codeaenderung.
 - Scope-Doku fuer den Firmenlisten-Pilot erstellt; keine Codeaenderung.
 - Contract-Doku fuer `project_firms` Tabellenlayout erstellt; keine Codeaenderung.

@@ -28,21 +28,14 @@ Er nutzt jetzt ein groesstenteils vollflächiges internes Arbeitsflächen-Overla
 ## Kann bereits
 
 - Layout fuer `protokoll_tops` laden
-- Modul und Tabelle bewusst auswaehlen
-- Modul- und Tabellenliste kommen aus der zentralen Tabellenregistry
-- aktuell ist nur `Protokoll / TOP-Liste / protokoll_tops` angemeldet
-- spaetere Module melden ihre Tabellen ebenfalls in dieser Registry an
+- registrierte Module und Tabellen aus der zentralen Tabellenregistry anzeigen
+- die Eingabefelder werden aus den Spaltendefinitionen der Tabelle erzeugt
+- aktuell sind `Protokoll / TOP-Liste / protokoll_tops` und `Projektverwaltung / Projekt-Firmenliste / project_firms` registriert
+- nur `protokoll_tops` ist produktiv an UI und PDF angeschlossen
 - Orientierung waehlen: `portrait` / `landscape`
 - der Editor merkt sich die zuletzt gewaehlte Orientierung intern
 - aktuelle Werte anzeigen
-- Kernwerte editieren:
-  - UI Breite TOP-Spalte
-  - UI Breite Text-Spalte
-  - UI Breite Meta-Spalte
-  - PDF Breite TOP-Spalte
-  - PDF Breite Text-Spalte
-  - PDF Breite Meta-Spalte
-  - Spaltenueberschriften
+- Spaltenbreiten, Spaltenueberschriften und Preview-Werte pro Spalte editieren
 - ueber vorhandene `tableLayouts`-IPC speichern
 - auf Standard zuruecksetzen
 - Quelle wird sichtbar als `Standardlayout protokoll_tops`, `gespeichertes Layout` oder `Fallback`
@@ -56,6 +49,8 @@ Er nutzt jetzt ein groesstenteils vollflächiges internes Arbeitsflächen-Overla
 - kaputte gespeicherte Layouts fallen auf das Standardlayout der konkreten Tabelle zurueck
 - gespeicherte UI-Werte wirken jetzt auch in der echten Protokoll-TOP-Liste
 - gespeicherte PDF-Werte wirken im echten PDF-Druck, nicht in der normalen UI-Liste
+- gespeicherte Spaltenwerte werden generisch aus `columns` aufgebaut
+- spaetere Tabellen koennen ihre Spalten direkt in der Registry definieren
 - ungespeicherte Aenderungen muessen vorher gespeichert werden
 - normale Nutzer sehen diese Funktion nicht
 
