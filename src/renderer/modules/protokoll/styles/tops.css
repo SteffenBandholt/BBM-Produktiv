@@ -329,7 +329,11 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row-grid {
   display: grid;
-  grid-template-columns: var(--bbm-tops-list-number-col, 64px) minmax(0, 1fr) minmax(50px, var(--bbm-tops-list-meta-col, 74px));
+  grid-template-columns: var(
+    --bbm-tops-list-grid-columns,
+    var(--bbm-tops-list-number-col, 64px) var(--bbm-tops-list-text-col, minmax(0, 1fr))
+      minmax(50px, var(--bbm-tops-list-meta-col, 74px))
+  );
   gap: 8px;
   align-items: start;
 }

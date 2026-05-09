@@ -14,6 +14,7 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
+import { createTableLayoutPrototypeEditor } from "./TableLayoutPrototypeEditor.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -5065,6 +5066,7 @@ export default class SettingsView {
       "Diktat-Testfreigabe",
       "Aktiviert Diktat unabhängig von der Lizenz für Entwicklung und Prüfung."
     );
+    const tableLayoutEditor = createTableLayoutPrototypeEditor({ api });
 
     const btn = (label, primary = false) => {
       const el = document.createElement("button");
@@ -5397,6 +5399,7 @@ export default class SettingsView {
       { key: "version", label: "Versionierung", el: versionCard.box },
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
       { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
+      { key: "tableLayouts", label: "Tabellenlayouts", el: tableLayoutEditor.root },
       { key: "dictation", label: "Diktat-Testfreigabe", el: dictationDevCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
     ];
@@ -5431,6 +5434,7 @@ export default class SettingsView {
       addTabBtn("Versionierung", "version"),
       addTabBtn("DB-Diagnose", "db"),
       addTabBtn("Protokoll-Textgrenzen", "tops"),
+      addTabBtn("Tabellenlayouts", "tableLayouts"),
       addTabBtn("Diktat-Testfreigabe", "dictation"),
       addTabBtn("Farbschema", "theme")
     );
@@ -5440,6 +5444,7 @@ export default class SettingsView {
     await loadVersioningData();
     await loadDbDiagnostics();
     await loadTopLimitSettings();
+    await tableLayoutEditor.load();
     await loadDictationDevSetting();
     setTab("version");
 

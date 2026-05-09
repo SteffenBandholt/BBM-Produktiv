@@ -74,9 +74,11 @@ const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
   ui: Object.freeze({
     rootVars: Object.freeze({
       "--bbm-tops-list-number-col": "64px",
+      "--bbm-tops-list-text-col": "minmax(0, 1fr)",
       "--bbm-tops-list-meta-col": "74px",
     }),
-    gridTemplateColumns: "64px minmax(0, 1fr) minmax(50px, var(--bbm-tops-list-meta-col, 74px))",
+    gridTemplateColumns:
+      "var(--bbm-tops-list-number-col, 64px) var(--bbm-tops-list-text-col, minmax(0, 1fr)) minmax(50px, var(--bbm-tops-list-meta-col, 74px))",
   }),
   pdf: Object.freeze({
     rootVars: Object.freeze({
@@ -138,6 +140,11 @@ export function applyProtokollTopsUiLayout(target, layoutOverride) {
   const uiLayout = layout.ui || PROTOKOLL_TOPS_LAYOUT.ui;
   for (const [key, value] of Object.entries(uiLayout.rootVars || {})) {
     target.style.setProperty(key, value);
+  }
+  if (typeof uiLayout.gridTemplateColumns === "string" && uiLayout.gridTemplateColumns.trim()) {
+    target.style.setProperty("--bbm-tops-list-grid-columns", uiLayout.gridTemplateColumns.trim());
+  } else {
+    target.style.removeProperty?.("--bbm-tops-list-grid-columns");
   }
 }
 

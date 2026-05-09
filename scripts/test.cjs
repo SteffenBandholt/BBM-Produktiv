@@ -21,6 +21,7 @@ const { runHomeViewTests } = require("./tests/homeView.test.cjs");
 const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.cjs");
 const { runSettingsUserProfileSourceTests } = require("./tests/settingsUserProfileSource.test.cjs");
 const { runSettingsPrintLayoutTests } = require("./tests/settingsPrintLayout.test.cjs");
+const { runTableLayoutEditorPrototypeTests } = require("./tests/tableLayoutEditorPrototype.test.cjs");
 const { runPrintUserDataResolverTests } = require("./tests/printUserDataResolver.test.cjs");
 const { runPrintOrientationTests } = require("./tests/printOrientation.test.cjs");
 const { runPrintTableLayoutsTests } = require("./tests/printTableLayouts.test.cjs");
@@ -104,6 +105,7 @@ async function main() {
   await runProjectSettingsIpcTests(run);
   await runSettingsUserProfileSourceTests(run);
   await runSettingsPrintLayoutTests(run);
+  await runTableLayoutEditorPrototypeTests(run);
   await runPrintUserDataResolverTests(run);
   await runPrintOrientationTests(run);
   await runPrintTableLayoutsTests(run);

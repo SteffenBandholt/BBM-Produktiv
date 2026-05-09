@@ -24,6 +24,12 @@ Sie ergänzt:
   - `TopsList` hat einen optionalen Layout-Hook vorbereitet, bleibt aber im sichtbaren Standardpfad
   - geprueft mit `npm test`
 - Naechster offener Schritt: erst spaeter entscheiden, ob auch die UI denselben resolved Payload bekommen soll.
+- Der erste interne Tabellenlayout-Editor fuer `protokoll_tops` ist jetzt im Technik-Dialog angehaengt:
+  - Zugang nur ueber `Einstellungen > Entwicklung > Technik > Tabellenlayouts`
+  - Laden, Aendern, Speichern und Zuruecksetzen laufen ueber die vorhandenen `tableLayouts`-IPC-Endpunkte
+  - normale Navigation und sichtbare Protokoll-UI bleiben unveraendert
+  - geprueft mit `npm test`
+- Naechster offener Schritt: spaeter manuell pruefen, ob der interne Editor auf dem Zielsystem sauber bedienbar ist.
 - Der Table-Layout-Resolver fuer `protokoll_tops` ist jetzt als technische Grundlage vorhanden:
   - die zentrale Registry kennt den Pilot `protokoll_tops`
   - `getResolvedTableLayout(...)` liefert Standardlayout, gespeichertes Layout oder einen sicheren Fehler fuer unbekannte Tabellen
