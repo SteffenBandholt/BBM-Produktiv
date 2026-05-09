@@ -29,6 +29,10 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(definitions[0].supportedOrientations.includes("portrait"), true);
     assert.equal(definitions[0].supportedOrientations.includes("landscape"), true);
     assert.equal(Array.isArray(definitions[0].editFields), true);
+    assert.equal(Array.isArray(definitions[0].previewData), true);
+    assert.equal(definitions[0].previewData.length >= 3, true);
+    assert.equal(definitions[0].previewData[0].topNumber, "1");
+    assert.equal(definitions[0].previewData[1].topNumber, "1.1");
     assert.equal(definitions[0].defaultLayout?.tableKey, "protokoll_tops");
     assert.equal(definitions[0].defaultLayout?.variant, "portrait");
   });

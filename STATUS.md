@@ -24,6 +24,7 @@ Sie ergänzt:
   - `TopsList` hat einen optionalen Layout-Hook vorbereitet, bleibt aber im sichtbaren Standardpfad
   - geprueft mit `npm test`
 - Naechster offener Schritt: erst spaeter entscheiden, ob auch die UI denselben resolved Payload bekommen soll.
+- Der interne Tabellenlayout-Editor startet jetzt standardmäßig im Vollbildmodus und hat oben rechts einen Vollbild-Schalter fuer mehr Arbeitsfläche.
 - Der erste interne Tabellenlayout-Editor fuer `protokoll_tops` ist jetzt im Technik-Dialog angehaengt:
   - Zugang nur ueber `Einstellungen > Entwicklung > Technik > Tabellenlayouts`
   - Laden, Aendern, Speichern und Zuruecksetzen laufen fuer `moduleId=protokoll`, `tableKey=protokoll_tops` und die jeweilige Orientierung ueber die vorhandenen `tableLayouts`-IPC-Endpunkte
@@ -32,10 +33,12 @@ Sie ergänzt:
   - Modul- und Tabellenlisten kommen aus der bekannten Registry/Definition
   - aktuell ist dort nur `Protokoll / TOP-Liste / protokoll_tops` angemeldet
   - der frühere Projekt-/Besprechungsansatz im Editor wurde wieder entfernt
-  - der PDF-Test mit Testdaten ist vorerst bewusst deaktiviert; im Editor steht dafür nur der Hinweis, dass er später separat ergänzt wird
+  - die Vorschau ist eine einfache HTML-Tabellenvorschau mit registrierten Testdaten
+  - der Editor nutzt jetzt ein nahezu vollflächiges internes Arbeitsflächen-Overlay
   - normale Navigation und sichtbare Protokoll-UI bleiben unveraendert
   - geprueft mit `npm test`
-- Naechster offener Schritt: spaeter entscheiden, ob ein separater Testdaten-Bereich fuer den PDF-Test sinnvoll ist.
+  - die Editor-Vorschau zeigt registrierte Testdaten statt echter Projekt- oder Besprechungsdaten
+- Naechster offener Schritt: spaeter entscheiden, ob weitere Tabellen eigene Preview-Daten in der Registry bekommen.
 - Der Table-Layout-Resolver fuer `protokoll_tops` ist jetzt als technische Grundlage vorhanden:
   - die zentrale Registry kennt den Pilot `protokoll_tops`
   - `getResolvedTableLayout(...)` liefert Standardlayout, gespeichertes Layout oder einen sicheren Fehler fuer unbekannte Tabellen

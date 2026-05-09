@@ -204,6 +204,34 @@ async function runTableLayoutEditorPrototypeTests(run) {
             },
           },
         },
+        previewData: [
+          {
+            topNumber: "1",
+            shortText: "Beispielthema fuer die Vorschau",
+            status: "offen",
+            dueDate: "12.04.2026",
+            responsible: "M. Muster",
+            ampelSymbol: "gelb",
+          },
+          {
+            topNumber: "1.1",
+            shortText: "Langtext mit laengerer Beschreibung in einer Unterzeile",
+            longText:
+              "Dies ist ein laengerer Beispieltext, damit die Editor-Vorschau den Zeilenumbruch und die Innenanzeige testen kann.",
+            status: "in Bearbeitung",
+            dueDate: "",
+            responsible: "S. Beispiel",
+            ampelSymbol: "gruen",
+          },
+          {
+            topNumber: "2",
+            shortText: "Kurzer Eintrag mit knapper Anzeige",
+            status: "erledigt",
+            dueDate: "18.04.2026",
+            responsible: "",
+            ampelSymbol: "rot",
+          },
+        ],
       },
     ],
     getOne = async (payload) => ({
@@ -284,6 +312,16 @@ async function runTableLayoutEditorPrototypeTests(run) {
       await editor.load();
       const text = collectText(editor.root);
       const selects = findNodesByTag(editor.root, "SELECT");
+      const tables = findNodesByTag(editor.root, "TABLE");
+      const host = createFakeNode("div");
+      host.dataset.tableLayoutShell = "1";
+      editor.attachFullscreenHost(host);
+      const fullscreenToggle = findNodeByText(editor.root, "Normalgröße");
+      assert.ok(fullscreenToggle, "fullscreen toggle missing");
+      assert.equal(editor.root.dataset.layoutMode, "fullscreen");
+      assert.equal(host.dataset.layoutMode, "fullscreen");
+      assert.equal(host.style.position, "fixed");
+      assert.equal(host.style.inset, "8px");
       assert.equal(calls.filter((item) => item.type === "getOne").length, 1);
       assert.deepEqual(calls.find((item) => item.type === "getOne")?.payload, {
         tableKey: "protokoll_tops",
@@ -304,6 +342,28 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(text.includes("tableKey: protokoll_tops"), true);
       assert.equal(text.includes("Orientierung: portrait"), true);
       assert.equal(text.includes("Quelle: Standardlayout protokoll_tops"), true);
+      assert.equal(text.includes("Editor-Vorschau mit Testdaten"), true);
+      assert.equal(text.includes("Registrierte Beispielzeilen aus der Tabellenregistry"), true);
+      assert.equal(text.includes("Beispielthema fuer die Vorschau"), true);
+      assert.equal(text.includes("Langtext mit laengerer Beschreibung in einer Unterzeile"), true);
+      assert.equal(text.includes("Kurzer Eintrag mit knapper Anzeige"), true);
+      assert.equal(text.includes("Keine Projekt- oder Besprechungsdaten"), true);
+      assert.equal(text.includes("keine PDF-Vorschau"), true);
+      assert.equal(tables.length >= 1, true);
+      fullscreenToggle.click();
+      await flushMicrotasks();
+      assert.equal(editor.root.dataset.layoutMode, "normal");
+      assert.equal(host.dataset.layoutMode, "normal");
+      assert.equal(host.style.position, "");
+      assert.equal(findNodeByText(editor.root, "Vollbild") != null, true);
+      fullscreenToggle.click();
+      await flushMicrotasks();
+      assert.equal(editor.root.dataset.layoutMode, "fullscreen");
+      assert.equal(host.dataset.layoutMode, "fullscreen");
+      assert.equal(host.style.position, "fixed");
+      assert.equal(host.style.inset, "8px");
+      assert.equal(host.style.maxWidth, "none");
+      assert.equal(findNodeByText(editor.root, "Normalgröße") != null, true);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
@@ -334,6 +394,8 @@ async function runTableLayoutEditorPrototypeTests(run) {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
       const selects = findNodesByTag(editor.root, "SELECT");
+      assert.equal(editor.root.dataset.layoutMode, "fullscreen");
+      assert.equal(findNodeByText(editor.root, "Normalgröße") != null, true);
       selects[2].value = "landscape";
       selects[2].dispatchEvent({ type: "change" });
       await editor.load();
@@ -506,7 +568,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
     }
   });
 
-  await run("TableLayoutEditor: PDF-Test mit Testdaten ist später separat", async () => {
+  await run("TableLayoutEditor: Editor-Vorschau nutzt registrierte Testdaten", async () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
     global.document = createFakeDocument();
@@ -516,10 +578,15 @@ async function runTableLayoutEditorPrototypeTests(run) {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
       const text = collectText(editor.root);
-      assert.equal(text.includes("PDF-Test mit Testdaten wird später separat ergänzt."), true);
-      assert.equal(text.includes("Projekt"), false);
-      assert.equal(text.includes("Besprechung"), false);
-      assert.equal(findNodeByText(editor.root, "Gespeichertes Layout im PDF testen"), null);
+      const tables = findNodesByTag(editor.root, "TABLE");
+      assert.equal(editor.root.dataset.layoutMode, "fullscreen");
+      assert.equal(text.includes("Editor-Vorschau mit Testdaten"), true);
+      assert.equal(findNodeByText(editor.root, "Projekt"), null);
+      assert.equal(findNodeByText(editor.root, "Besprechung"), null);
+      assert.equal(text.includes("Beispielthema fuer die Vorschau"), true);
+      assert.equal(text.includes("Kurzer Eintrag mit knapper Anzeige"), true);
+      assert.equal(tables.length >= 1, true);
+      assert.equal(findNodeByText(editor.root, "Normalgröße") != null, true);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

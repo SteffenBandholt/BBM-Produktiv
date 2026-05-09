@@ -5453,6 +5453,9 @@ export default class SettingsView {
       content: [section],
       closeOnly: true,
     });
+    if (typeof tableLayoutEditor.attachFullscreenHost === "function") {
+      tableLayoutEditor.attachFullscreenHost(this.settingsModalEl);
+    }
   }
 
   async load() {
@@ -5889,7 +5892,19 @@ export default class SettingsView {
         titleNorm === "lizenz" || titleNorm === "entwicklung" || titleNorm === "adminbereich";
       const isPrintSettingsPopup = titleNorm === "druckeinstellungen";
       const isLayoutPopup = titleNorm === "druck-layout";
-      if (isPrintSettingsPopup) {
+      const isTableLayoutPopup = titleNorm === "tabellenlayouts";
+      if (isTableLayoutPopup) {
+        this.settingsModalEl.dataset.tableLayoutShell = "1";
+      } else {
+        delete this.settingsModalEl.dataset.tableLayoutShell;
+      }
+      if (isTableLayoutPopup) {
+        this.settingsModalEl.style.width = "min(980px, calc(100vw - 24px))";
+        this.settingsModalEl.style.height = "";
+        this.settingsModalEl.style.maxHeight = "calc(100vh - 24px)";
+        this.settingsModalEl.style.maxWidth = "";
+        this.settingsModalEl.dataset.layoutMode = "normal";
+      } else if (isPrintSettingsPopup) {
         this.settingsModalEl.style.width = "min(760px, calc(100vw - 24px))";
       } else if (isLayoutPopup) {
         this.settingsModalEl.style.width = "min(344px, calc(100vw - 24px))";
@@ -5901,6 +5916,11 @@ export default class SettingsView {
       const footerInner = this.settingsModalFooterEl?.firstElementChild;
       if (footerInner) {
         footerInner.style.maxWidth = isPrintSettingsPopup ? "600px" : "720px";
+      }
+      if (!isTableLayoutPopup) {
+        this.settingsModalEl.style.height = "";
+        this.settingsModalEl.style.maxHeight = "calc(100vh - 24px)";
+        delete this.settingsModalEl.dataset.layoutMode;
       }
     }
     this.settingsModalBodyEl.innerHTML = "";

@@ -39,6 +39,35 @@ async function _loadProtokollTopsLayout() {
   return _cloneJson(layout);
 }
 
+const PROTOKOLL_TOPS_PREVIEW_DATA = Object.freeze([
+  Object.freeze({
+    topNumber: "1",
+    shortText: "Beispielthema fuer die Vorschau",
+    status: "offen",
+    dueDate: "12.04.2026",
+    responsible: "M. Muster",
+    ampelSymbol: "gelb",
+  }),
+  Object.freeze({
+    topNumber: "1.1",
+    shortText: "Langtext mit laengerer Beschreibung in einer Unterzeile",
+    longText:
+      "Dies ist ein laengerer Beispieltext, damit die Editor-Vorschau den Zeilenumbruch und die Innenanzeige testen kann.",
+    status: "in Bearbeitung",
+    dueDate: "",
+    responsible: "S. Beispiel",
+    ampelSymbol: "gruen",
+  }),
+  Object.freeze({
+    topNumber: "2",
+    shortText: "Kurzer Eintrag mit knapper Anzeige",
+    status: "erledigt",
+    dueDate: "18.04.2026",
+    responsible: "",
+    ampelSymbol: "rot",
+  }),
+]);
+
 const TABLE_LAYOUT_MODULES = Object.freeze([
   Object.freeze({
     moduleId: "protokoll",
@@ -64,6 +93,7 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
           Object.freeze({ key: "labelMeta2", label: "Ueberschrift Meta 2" }),
           Object.freeze({ key: "labelMeta3", label: "Ueberschrift Meta 3" }),
         ]),
+        previewData: PROTOKOLL_TOPS_PREVIEW_DATA,
         defaultLayoutLoader: _loadProtokollTopsLayout,
       }),
     ]),
@@ -86,6 +116,9 @@ function _cloneModuleTableDefinition(moduleDef, tableDef, defaultLayout = null) 
       : ["portrait"],
     editFields: Array.isArray(tableDef.editFields)
       ? tableDef.editFields.map((field) => ({ ...field }))
+      : [],
+    previewData: Array.isArray(tableDef.previewData)
+      ? tableDef.previewData.map((row) => _cloneJson(row))
       : [],
     defaultLayout: _cloneJson(defaultLayout),
   };
@@ -125,6 +158,9 @@ function getTableLayoutModuleDefinition(moduleId) {
       editFields: Array.isArray(tableDef.editFields)
         ? tableDef.editFields.map((field) => ({ ...field }))
         : [],
+      previewData: Array.isArray(tableDef.previewData)
+        ? tableDef.previewData.map((row) => _cloneJson(row))
+        : [],
     })),
   };
 }
@@ -150,6 +186,9 @@ function getTableLayoutDefinition(identity = {}) {
       : ["portrait"],
     editFields: Array.isArray(tableDef.editFields)
       ? tableDef.editFields.map((field) => ({ ...field }))
+      : [],
+    previewData: Array.isArray(tableDef.previewData)
+      ? tableDef.previewData.map((row) => _cloneJson(row))
       : [],
     loadStandardLayout: tableDef.defaultLayoutLoader || null,
   };

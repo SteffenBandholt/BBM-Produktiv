@@ -73,6 +73,7 @@ function createDefaultStubs() {
               description: "Pilotlayout",
               supportedOrientations: ["portrait", "landscape"],
               editFields: [{ key: "uiNumberWidth", label: "UI TOP-Spalte" }],
+              previewData: [{ topNumber: "1", shortText: "Beispielthema", status: "offen" }],
               defaultLayout: { tableKey: "protokoll_tops", variant: "portrait" },
             },
           ];
@@ -143,6 +144,8 @@ async function runTableLayoutsIpcTests(run) {
       assert.equal(defsRes.data[0].moduleLabel, "Protokoll");
       assert.equal(defsRes.data[0].tableKey, "protokoll_tops");
       assert.equal(defsRes.data[0].tableLabel, "TOP-Liste");
+      assert.equal(Array.isArray(defsRes.data[0].previewData), true);
+      assert.equal(defsRes.data[0].previewData[0].topNumber, "1");
       assert.equal(defsRes.data[0].defaultLayout.variant, "portrait");
       assert.deepEqual(repoCalls.listTableLayouts, [{ tableKey: "protokoll_tops" }]);
       assert.deepEqual(repoCalls.getEffectiveTableLayout, [

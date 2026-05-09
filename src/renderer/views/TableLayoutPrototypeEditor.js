@@ -69,6 +69,7 @@ function _normalizeDefinitionsList(definitions = []) {
             ? item.supportedOrientations.map((entry) => _normalizeOrientation(entry))
             : ["portrait"],
           editFields: Array.isArray(item.editFields) ? item.editFields.map((field) => ({ ...field })) : [],
+          previewData: Array.isArray(item.previewData) ? item.previewData.map((row) => _cloneJson(row)) : [],
           defaultLayout: item.defaultLayout ? _cloneJson(item.defaultLayout) : null,
         }))
         .filter((item) => item.moduleId && item.tableKey)
@@ -102,6 +103,144 @@ function _groupModuleDefinitions(definitions = []) {
 function _getFirstSupportedTable(moduleDef) {
   if (!moduleDef || !Array.isArray(moduleDef.tables) || !moduleDef.tables.length) return null;
   return moduleDef.tables[0] || null;
+}
+
+function _getPreviewValue(state) {
+  return _hasDirtyValuesState(state) ? state.editValues : state.loadedValues;
+}
+
+function _hasDirtyValuesState(state) {
+  return !_sameJson(state.editValues, state.loadedValues);
+}
+
+function _getPreviewRows(definition) {
+  return Array.isArray(definition?.previewData) ? definition.previewData : [];
+}
+
+function _renderPreviewRowCell(node, value) {
+  node.textContent = String(value == null ? "" : value);
+}
+
+function _renderPreviewTable(target, definition, values) {
+  if (!target) return;
+  target.innerHTML = "";
+
+  const rows = _getPreviewRows(definition);
+  const table = document.createElement("table");
+  table.style.width = "100%";
+  table.style.borderCollapse = "collapse";
+  table.style.tableLayout = "fixed";
+  table.style.fontSize = "12px";
+  table.style.background = "#fff";
+  table.style.border = "1px solid rgba(15,23,42,0.12)";
+
+  const colgroup = document.createElement("colgroup");
+  const colNr = document.createElement("col");
+  colNr.style.width = String(values.uiNumberWidth || DEFAULT_VALUES.uiNumberWidth);
+  const colText = document.createElement("col");
+  const colMeta = document.createElement("col");
+  colMeta.style.width = String(values.uiMetaWidth || DEFAULT_VALUES.uiMetaWidth);
+  colgroup.append(colNr, colText, colMeta);
+  table.appendChild(colgroup);
+
+  const thead = document.createElement("thead");
+  const headRow = document.createElement("tr");
+  const thStyles = {
+    padding: "8px 10px",
+    borderBottom: "1px solid rgba(15,23,42,0.12)",
+    background: "#eef2ff",
+    color: "#1e293b",
+    textAlign: "left",
+    verticalAlign: "top",
+  };
+
+  const thTop = document.createElement("th");
+  Object.assign(thTop.style, thStyles);
+  thTop.textContent = String(values.labelTop || DEFAULT_VALUES.labelTop);
+
+  const thText = document.createElement("th");
+  Object.assign(thText.style, thStyles);
+  thText.textContent = String(values.labelText || DEFAULT_VALUES.labelText);
+
+  const thMeta = document.createElement("th");
+  Object.assign(thMeta.style, thStyles);
+  const thMetaInner = document.createElement("div");
+  thMetaInner.style.display = "grid";
+  thMetaInner.style.gap = "2px";
+  const thMetaLines = [
+    values.labelMeta1 || DEFAULT_VALUES.labelMeta1,
+    values.labelMeta2 || DEFAULT_VALUES.labelMeta2,
+    values.labelMeta3 || DEFAULT_VALUES.labelMeta3,
+  ];
+  for (const line of thMetaLines) {
+    const span = document.createElement("div");
+    span.textContent = String(line);
+    thMetaInner.appendChild(span);
+  }
+  thMeta.appendChild(thMetaInner);
+
+  headRow.append(thTop, thText, thMeta);
+  thead.appendChild(headRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+  for (const rowData of rows) {
+    const tr = document.createElement("tr");
+    const cellStyles = {
+      padding: "8px 10px",
+      borderBottom: "1px solid rgba(15,23,42,0.08)",
+      verticalAlign: "top",
+      color: "#0f172a",
+      background: "#ffffff",
+      wordBreak: "break-word",
+    };
+
+    const tdTop = document.createElement("td");
+    Object.assign(tdTop.style, cellStyles);
+    _renderPreviewRowCell(tdTop, rowData.topNumber);
+
+    const tdText = document.createElement("td");
+    Object.assign(tdText.style, cellStyles);
+    tdText.style.minWidth = "0";
+    const shortText = document.createElement("div");
+    shortText.style.fontWeight = "700";
+    shortText.textContent = String(rowData.shortText || "");
+    tdText.appendChild(shortText);
+    if (rowData.longText) {
+      const longText = document.createElement("div");
+      longText.style.marginTop = "4px";
+      longText.style.color = "#475569";
+      longText.textContent = String(rowData.longText);
+      tdText.appendChild(longText);
+    }
+
+    const tdMeta = document.createElement("td");
+    Object.assign(tdMeta.style, cellStyles);
+    tdMeta.style.display = "grid";
+    tdMeta.style.gap = "2px";
+    const metaLines = [
+      rowData.status,
+      rowData.dueDate || " ",
+      rowData.responsible || " ",
+    ];
+    for (const line of metaLines) {
+      const metaLine = document.createElement("div");
+      metaLine.textContent = String(line || "");
+      tdMeta.appendChild(metaLine);
+    }
+    if (rowData.ampelSymbol) {
+      const symbol = document.createElement("div");
+      symbol.textContent = `Ampel: ${String(rowData.ampelSymbol)}`;
+      symbol.style.fontSize = "11px";
+      symbol.style.color = "#64748b";
+      tdMeta.appendChild(symbol);
+    }
+
+    tr.append(tdTop, tdText, tdMeta);
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+  target.appendChild(table);
 }
 
 export function extractProtokollTopsEditorValues(layout = {}) {
@@ -200,22 +339,18 @@ function _readFormValues(fields) {
   };
 }
 
-function _renderValuesSummary(target, state) {
+function _renderValuesSummary(target, state, definition) {
   if (!target) return;
-  target.textContent = JSON.stringify(
-    {
-      moduleId: state.selectedModuleId,
-      tableKey: state.selectedTableKey,
-      orientation: state.orientation,
-      source: state.source,
-      schemaVersion: state.schemaVersion,
-      parseError: state.parseError,
-      loaded: state.loadedValues ? _cloneJson(state.loadedValues) : null,
-      editValues: state.editValues ? _cloneJson(state.editValues) : null,
-    },
-    null,
-    2
-  );
+  const activeValues = _getPreviewValue(state);
+  const previewCount = Array.isArray(definition?.previewData) ? definition.previewData.length : 0;
+  const dirty = _hasDirtyValuesState(state);
+  target.textContent = [
+    `Quelle: ${state.source || "default"}`,
+    `Layoutwerte: ${dirty ? "ungespeicherte Eingaben" : "gespeicherte Werte"}`,
+    `Testdaten: ${previewCount} Zeilen`,
+    `Orientierung: ${activeValues.orientation || state.orientation}`,
+    `Spaltenbreite UI: ${activeValues.uiNumberWidth} | ${activeValues.uiTextTrack} | ${activeValues.uiMetaWidth}`,
+  ].join(" | ");
 }
 
 function _syncFields(fields, values) {
@@ -234,16 +369,20 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   const root = document.createElement("section");
   root.dataset.tableLayoutEditor = "registry-driven";
+  root.dataset.layoutMode = "fullscreen";
   root.dataset.tableKey = "";
   root.dataset.moduleId = "";
   root.dataset.orientation = DEFAULT_ORIENTATION;
   root.style.display = "grid";
   root.style.gap = "10px";
-  root.style.minWidth = "min(820px, calc(100vw - 120px))";
-  root.style.maxWidth = "980px";
+  root.style.width = "100%";
+  root.style.maxWidth = "none";
+  root.style.minWidth = "0";
+  root.style.alignSelf = "stretch";
 
   const fields = new Map();
   const state = {
+    isFullscreen: true,
     orientation: DEFAULT_ORIENTATION,
     schemaVersion: 1,
     source: "default",
@@ -260,6 +399,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     contextLoading: false,
     contextError: "",
   };
+  let fullscreenHost = null;
 
   const formatSourceLabel = () => {
     if (state.source === "stored") return "gespeichertes Layout";
@@ -275,9 +415,28 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   head.style.display = "grid";
   head.style.gap = "6px";
 
+  const headTop = document.createElement("div");
+  headTop.style.display = "flex";
+  headTop.style.alignItems = "flex-start";
+  headTop.style.justifyContent = "space-between";
+  headTop.style.gap = "10px";
+
   const title = document.createElement("div");
   title.textContent = "Tabellenlayouts";
   title.style.fontWeight = "800";
+
+  const titleWrap = document.createElement("div");
+  titleWrap.style.display = "grid";
+  titleWrap.style.gap = "2px";
+  titleWrap.style.minWidth = "0";
+  titleWrap.append(title);
+
+  const fullscreenButton = document.createElement("button");
+  fullscreenButton.type = "button";
+  fullscreenButton.textContent = "Vollbild";
+  applyPopupButtonStyle(fullscreenButton);
+  fullscreenButton.style.marginLeft = "auto";
+  fullscreenButton.style.whiteSpace = "nowrap";
 
   const hint = document.createElement("div");
   hint.textContent = "Interner Prototyp. Die Orientierung bearbeitet die Layoutvariante und ändert den normalen Druck noch nicht automatisch.";
@@ -301,7 +460,8 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   targetInfoSource.textContent = "Quelle: Standardlayout";
   targetInfo.append(targetInfoModule, targetInfoTable, targetInfoKey, targetInfoOrientation, targetInfoSource);
 
-  head.append(title, hint, targetInfo);
+  headTop.append(titleWrap, fullscreenButton);
+  head.append(headTop, hint, targetInfo);
 
   const contextCard = document.createElement("div");
   applyPopupCardStyle(contextCard);
@@ -403,22 +563,6 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   toolbar.append(orientationWrap, btnReload, btnSave, btnReset, status);
 
-  const testCard = document.createElement("div");
-  applyPopupCardStyle(testCard);
-  testCard.style.padding = "10px";
-  testCard.style.display = "grid";
-  testCard.style.gap = "8px";
-
-  const testTitle = document.createElement("div");
-  testTitle.textContent = "PDF-Testdruck";
-  testTitle.style.fontWeight = "800";
-
-  const testHint = document.createElement("div");
-  testHint.textContent = "PDF-Test mit Testdaten wird später separat ergänzt.";
-  testHint.style.fontSize = "12px";
-  testHint.style.opacity = "0.78";
-  testCard.append(testTitle, testHint);
-
   const formCard = document.createElement("div");
   applyPopupCardStyle(formCard);
   formCard.style.padding = "10px";
@@ -481,24 +625,23 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   previewCard.style.padding = "10px";
   previewCard.style.display = "grid";
   previewCard.style.gap = "8px";
+  previewCard.style.minHeight = "280px";
   const previewTitle = document.createElement("div");
-  previewTitle.textContent = "Werte-Vorschau";
+  previewTitle.textContent = "Editor-Vorschau mit Testdaten";
   previewTitle.style.fontWeight = "800";
   const previewHint = document.createElement("div");
-  previewHint.textContent = "Keine PDF-Vorschau in diesem Prototyp; nur die gespeicherten Layoutwerte.";
+  previewHint.textContent =
+    "Registrierte Beispielzeilen aus der Tabellenregistry. Keine Projekt- oder Besprechungsdaten, keine PDF-Vorschau.";
   previewHint.style.fontSize = "12px";
   previewHint.style.opacity = "0.78";
-  const preview = document.createElement("pre");
-  preview.style.margin = "0";
-  preview.style.padding = "8px";
-  preview.style.borderRadius = "8px";
-  preview.style.border = "1px solid rgba(0,0,0,0.08)";
-  preview.style.background = "#f8fafc";
-  preview.style.fontSize = "11px";
-  preview.style.whiteSpace = "pre-wrap";
-  preview.style.wordBreak = "break-word";
+  const previewMeta = document.createElement("div");
+  previewMeta.style.fontSize = "12px";
+  previewMeta.style.color = "#475569";
+  const preview = document.createElement("div");
   preview.style.minHeight = "220px";
-  previewCard.append(previewTitle, previewHint, preview);
+  preview.style.display = "grid";
+  preview.style.gap = "8px";
+  previewCard.append(previewTitle, previewHint, previewMeta, preview);
 
   const fieldsCard = document.createElement("div");
   applyPopupCardStyle(fieldsCard);
@@ -509,7 +652,53 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   layoutSection.append(layoutGrid);
   labelSection.append(labelGrid);
 
-  root.append(head, contextCard, toolbar, fieldsCard, testCard, previewCard);
+  root.append(head, contextCard, toolbar, fieldsCard, previewCard);
+  const attachFullscreenHost = (host) => {
+    fullscreenHost = host || null;
+    _applyHostFullscreenState();
+  };
+
+  const _getHostModal = () => fullscreenHost || root?.closest?.('[data-table-layout-shell="1"]') || null;
+
+  const _applyHostFullscreenState = () => {
+    const host = _getHostModal();
+    const fullscreen = !!state.isFullscreen;
+    root.dataset.layoutMode = fullscreen ? "fullscreen" : "normal";
+    fullscreenButton.textContent = fullscreen ? "Normalgröße" : "Vollbild";
+    if (!host) return;
+    host.dataset.layoutMode = fullscreen ? "fullscreen" : "normal";
+    if (fullscreen) {
+      host.style.width = "min(98vw, 1920px)";
+      host.style.height = "94vh";
+      host.style.maxHeight = "94vh";
+      host.style.maxWidth = "none";
+    } else {
+      host.style.width = "min(980px, calc(100vw - 24px))";
+      host.style.height = "";
+      host.style.maxHeight = "calc(100vh - 24px)";
+      host.style.maxWidth = "";
+    }
+    if (fullscreen) {
+      host.style.position = "fixed";
+      host.style.inset = "8px";
+      host.style.margin = "0";
+      host.style.width = "auto";
+      host.style.height = "auto";
+      host.style.maxHeight = "none";
+      host.style.maxWidth = "none";
+      host.style.transform = "none";
+    } else {
+      host.style.position = "";
+      host.style.inset = "";
+      host.style.margin = "";
+      host.style.transform = "";
+    }
+  };
+
+  const _setFullscreen = (next) => {
+    state.isFullscreen = !!next;
+    _applyHostFullscreenState();
+  };
 
   const _getSelectedModuleDefinition = () =>
     state.moduleDefinitions.find((item) => _normalizeId(item?.moduleId) === _normalizeId(state.selectedModuleId)) || null;
@@ -606,11 +795,8 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     return tableInfo.textContent;
   };
 
-  const _hasDirtyValues = () => !_sameJson(state.editValues, state.loadedValues);
-
   const _updateTestPdfState = () => {
-    const hasDirty = _hasDirtyValues();
-    testHint.textContent = "PDF-Test mit Testdaten wird später separat ergänzt.";
+    const hasDirty = _hasDirtyValuesState(state);
     status.textContent = hasDirty ? "Bitte erst speichern, dann Layout erneut prüfen." : "";
     status.style.color = hasDirty ? "#b91c1c" : "#475569";
   };
@@ -670,6 +856,8 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   };
 
   const refreshPreview = () => {
+    const tableDef = _getSelectedTableDefinition();
+    const activeValues = _getPreviewValue(state);
     root.dataset.orientation = state.orientation;
     root.dataset.source = state.source;
     root.dataset.moduleId = state.selectedModuleId || "";
@@ -677,7 +865,8 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     targetInfoOrientation.textContent = `Orientierung: ${state.orientation}`;
     targetInfoSource.textContent = `Quelle: ${formatSourceLabel()}`;
     _updateContextStatus();
-    _renderValuesSummary(preview, state);
+    _renderPreviewTable(preview, tableDef, activeValues);
+    _renderValuesSummary(previewMeta, state, tableDef);
     if (status) {
       const sourceText = formatSourceLabel();
       const parseText = state.parseError ? ` | Parse: ${state.parseError}` : "";
@@ -847,6 +1036,10 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     refreshPreview();
   };
 
+  fullscreenButton.addEventListener("click", () => {
+    _setFullscreen(!state.isFullscreen);
+  });
+
   orientationSelect.addEventListener("change", async () => {
     state.orientation = _normalizeOrientation(orientationSelect.value);
     state.editValues.orientation = state.orientation;
@@ -889,6 +1082,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   _renderTableOptions();
   _updateContextStatus();
   _updateTestPdfState();
+  _applyHostFullscreenState();
   refreshPreview();
 
   return {
@@ -897,6 +1091,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     save,
     reset,
     applyValues,
+    attachFullscreenHost,
     getValues() {
       return _cloneJson(state.editValues);
     },

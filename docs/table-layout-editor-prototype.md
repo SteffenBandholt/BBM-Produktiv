@@ -19,6 +19,9 @@ Zugang:
 - Tab `Tabellenlayouts`
 
 Der Editor ist absichtlich nicht Teil der normalen Navigation.
+Zusätzlich gibt es oben rechts einen internen Vollbild-Schalter für mehr Arbeitsfläche.
+Der Editor startet dabei standardmäßig direkt im Vollbildmodus.
+Er nutzt jetzt ein groesstenteils vollflächiges internes Arbeitsflächen-Overlay.
 
 ---
 
@@ -43,13 +46,16 @@ Der Editor ist absichtlich nicht Teil der normalen Navigation.
 - ueber vorhandene `tableLayouts`-IPC speichern
 - auf Standard zuruecksetzen
 - Quelle wird sichtbar als `Standardlayout protokoll_tops`, `gespeichertes Layout` oder `Fallback`
-- PDF-Test mit Testdaten ist im Editor absichtlich noch nicht umgesetzt
+- Editor-Vorschau mit Testdaten aus der Registry
+- keine Projekt- oder Besprechungsdaten in der Vorschau
+- keine PDF-Vorschau
 - ungespeicherte Aenderungen muessen vorher gespeichert werden
 - normale Nutzer sehen diese Funktion nicht
 
 Die Orientierung bearbeitet hier nur die Layoutvariante. Sie schaltet den normalen Druck noch nicht automatisch um.
 Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.
-PDF-Test/Testdaten werden spaeter separat geloest.
+Die Vorschau nutzt registrierte Testdaten.
+Spaetere Tabellen liefern ihre eigenen Preview-Daten ueber die Registry.
 
 ---
 
