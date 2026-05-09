@@ -55,6 +55,7 @@ Er nutzt jetzt ein groesstenteils vollflächiges internes Arbeitsflächen-Overla
 - Ungueltige technische Werte werden nicht gespeichert
 - kaputte gespeicherte Layouts fallen auf das Standardlayout der konkreten Tabelle zurueck
 - gespeicherte UI-Werte wirken jetzt auch in der echten Protokoll-TOP-Liste
+- gespeicherte PDF-Werte wirken im echten PDF-Druck, nicht in der normalen UI-Liste
 - ungespeicherte Aenderungen muessen vorher gespeichert werden
 - normale Nutzer sehen diese Funktion nicht
 

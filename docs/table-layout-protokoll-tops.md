@@ -37,5 +37,7 @@ Status: Pilotlayout, intern
 
 - Langtext bleibt im Textbereich und ist keine eigene Spalte.
 - Die echte Protokoll-TOP-Liste kann gespeicherte UI-Layoutwerte fuer `protokoll_tops` verwenden; ohne gespeichertes Layout bleibt die Standarddarstellung erhalten.
+- Die echte Protokoll-TOP-Liste verwendet nur die UI-Werte; die PDF-Werte wirken ausschliesslich im echten PDF-Druckpfad.
+- UI- und PDF-Werte bleiben getrennt, der Fallback geht immer auf das Standardlayout der konkreten Tabelle.
 - Keine Editor-UI, keine Datenbank, keine Header/Footer-Aenderung.
 - Die Layoutwerte sind bewusst auf den heutigen Stand abgebildet.

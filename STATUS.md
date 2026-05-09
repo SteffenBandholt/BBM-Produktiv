@@ -21,6 +21,7 @@ Sie ergänzt:
   - `printData.js` liefert den resolved Payload fuer den Druckweg mit
   - `printApp.js` und `PrintShell.js` lesen Layoutdaten nur, wenn sie im Payload enthalten sind
   - die echte Protokoll-TOP-Liste liest gespeicherte UI-Layoutwerte jetzt ebenfalls ueber den bestehenden IPC-/Resolver-Pfad
+  - der PDF-Druckweg nutzt jetzt die gespeicherten PDF-Werte getrennt von der UI-Liste
   - ohne gespeichertes Layout bleibt die Anzeige exakt beim bisherigen Standard
   - `TopsList` hat einen optionalen Layout-Hook vorbereitet, bleibt aber im sichtbaren Standardpfad
   - geprueft mit `npm test`
