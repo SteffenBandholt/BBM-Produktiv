@@ -1,7 +1,11 @@
 ﻿const PROTOKOLL_TOPS_EDITOR_DEFAULTS = Object.freeze({
   orientation: "portrait",
   uiNumberWidth: "64px",
+  uiNumberInset: "5px",
+  uiNumberFontSize: "11px",
   uiTextTrack: "minmax(0, 1fr)",
+  uiTextInset: "5px",
+  uiTextFontSize: "11px",
   uiMetaWidth: "74px",
   uiMetaInset: "4px",
   uiMetaFontSize: "11px",
@@ -17,7 +21,11 @@
 
 export const PROTOKOLL_TOPS_EDIT_FIELDS = Object.freeze([
   Object.freeze({ key: "uiNumberWidth", label: "UI TOP-Spalte", path: "ui.rootVars.--bbm-tops-list-number-col", type: "gridTrack", required: true }),
+  Object.freeze({ key: "uiNumberInset", label: "UI TOP-Innenabstand", path: "ui.rootVars.--bbm-tops-list-number-padding-inline", type: "gridTrack", required: true }),
+  Object.freeze({ key: "uiNumberFontSize", label: "UI TOP-Schrift", path: "ui.rootVars.--bbm-tops-list-number-font-size", type: "gridTrack", required: true }),
   Object.freeze({ key: "uiTextTrack", label: "UI Text-Spalte", path: "ui.rootVars.--bbm-tops-list-text-col", type: "gridTrack", required: true }),
+  Object.freeze({ key: "uiTextInset", label: "UI Text-Innenabstand", path: "ui.rootVars.--bbm-tops-list-text-padding-inline", type: "gridTrack", required: true }),
+  Object.freeze({ key: "uiTextFontSize", label: "UI Text-Schrift", path: "ui.rootVars.--bbm-tops-list-text-font-size", type: "gridTrack", required: true }),
   Object.freeze({ key: "uiMetaWidth", label: "UI Meta-Spalte", path: "ui.rootVars.--bbm-tops-list-meta-col", type: "gridTrack", required: true }),
   Object.freeze({ key: "uiMetaInset", label: "UI Meta-Innenabstand", path: "ui.rootVars.--bbm-tops-list-meta-padding-inline", type: "gridTrack", required: true }),
   Object.freeze({ key: "uiMetaFontSize", label: "UI Meta-Schrift", path: "ui.rootVars.--bbm-tops-list-meta-font-size", type: "gridTrack", required: true }),
@@ -144,7 +152,11 @@ const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
   ui: Object.freeze({
     rootVars: Object.freeze({
       "--bbm-tops-list-number-col": "64px",
+      "--bbm-tops-list-number-padding-inline": "5px",
+      "--bbm-tops-list-number-font-size": "11px",
       "--bbm-tops-list-text-col": "minmax(0, 1fr)",
+      "--bbm-tops-list-text-padding-inline": "5px",
+      "--bbm-tops-list-text-font-size": "11px",
       "--bbm-tops-list-meta-col": "74px",
       "--bbm-tops-list-meta-padding-inline": "4px",
       "--bbm-tops-list-meta-font-size": "11px",
@@ -372,7 +384,11 @@ function _extractValues(layout = {}) {
   return {
     orientation: _normalizeOrientation(layout?.variant || layout?.orientation || PROTOKOLL_TOPS_EDITOR_DEFAULTS.orientation),
     uiNumberWidth: _normalizeText(topCol.uiWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
+    uiNumberInset: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-number-padding-inline"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberInset,
+    uiNumberFontSize: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-number-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberFontSize,
     uiTextTrack: _normalizeText(textCol.uiWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
+    uiTextInset: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-text-padding-inline"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextInset,
+    uiTextFontSize: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-text-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextFontSize,
     uiMetaWidth: _normalizeText(metaCol.uiWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
     uiMetaInset: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-meta-padding-inline"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaInset,
     uiMetaFontSize: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-meta-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaFontSize,
@@ -400,7 +416,11 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
         ui: {
           rootVars: {
             "--bbm-tops-list-number-col": values?.uiNumberWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
+            "--bbm-tops-list-number-padding-inline": values?.uiNumberInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberInset,
+            "--bbm-tops-list-number-font-size": values?.uiNumberFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberFontSize,
             "--bbm-tops-list-text-col": values?.uiTextTrack || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
+            "--bbm-tops-list-text-padding-inline": values?.uiTextInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextInset,
+            "--bbm-tops-list-text-font-size": values?.uiTextFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextFontSize,
             "--bbm-tops-list-meta-col": values?.uiMetaWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
             "--bbm-tops-list-meta-padding-inline": values?.uiMetaInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaInset,
             "--bbm-tops-list-meta-font-size": values?.uiMetaFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaFontSize,
@@ -428,7 +448,11 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
     values: {
       orientation: _normalizeOrientation(values.orientation || orientation),
       uiNumberWidth: topCol.uiWidth,
+      uiNumberInset: _normalizeText(values.uiNumberInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberInset,
+      uiNumberFontSize: _normalizeText(values.uiNumberFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberFontSize,
       uiTextTrack: textCol.uiWidth,
+      uiTextInset: _normalizeText(values.uiTextInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextInset,
+      uiTextFontSize: _normalizeText(values.uiTextFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextFontSize,
       uiMetaWidth: metaCol.uiWidth,
       uiMetaInset: _normalizeText(values.uiMetaInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaInset,
       uiMetaFontSize: _normalizeText(values.uiMetaFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaFontSize,
@@ -461,7 +485,11 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
     ui: {
       rootVars: {
         "--bbm-tops-list-number-col": normalized.uiNumberWidth,
+        "--bbm-tops-list-number-padding-inline": normalized.uiNumberInset,
+        "--bbm-tops-list-number-font-size": normalized.uiNumberFontSize,
         "--bbm-tops-list-text-col": normalized.uiTextTrack,
+        "--bbm-tops-list-text-padding-inline": normalized.uiTextInset,
+        "--bbm-tops-list-text-font-size": normalized.uiTextFontSize,
         "--bbm-tops-list-meta-col": normalized.uiMetaWidth,
         "--bbm-tops-list-meta-padding-inline": normalized.uiMetaInset,
         "--bbm-tops-list-meta-font-size": normalized.uiMetaFontSize,

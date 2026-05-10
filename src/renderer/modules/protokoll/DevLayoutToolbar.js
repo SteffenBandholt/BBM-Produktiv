@@ -15,8 +15,8 @@ export class DevLayoutToolbar {
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.onReset = typeof onReset === "function" ? onReset : null;
     this.previewStateByZone = {
-      number: { width: 0, inset: 0, font: 0 },
-      text: { width: 0, inset: 0, font: 0 },
+      number: { width: 64, inset: 5, font: 11 },
+      text: { width: 0, inset: 5, font: 11 },
       meta: { width: 74, inset: 4, font: 11 },
     };
     this.activeZone = null;
@@ -141,9 +141,13 @@ export class DevLayoutToolbar {
     for (const [key, control] of Object.entries(this.controls)) {
       const value = Number(preview?.[key] || 0);
       control.valueEl.textContent = key === "width" || key === "inset" || key === "font" ? `${value} px` : String(value);
-      const isMetaControl = zoneKey === "meta" && (key === "width" || key === "inset" || key === "font");
-      control.minusEl.disabled = !isMetaControl;
-      control.plusEl.disabled = !isMetaControl;
+      const canControlZone = zoneKey === "meta" || zoneKey === "number" || zoneKey === "text";
+      const isWidthAllowed = zoneKey === "meta" || zoneKey === "number";
+      const isActiveControl =
+        canControlZone &&
+        (key === "inset" || key === "font" || (key === "width" && isWidthAllowed));
+      control.minusEl.disabled = !isActiveControl;
+      control.plusEl.disabled = !isActiveControl;
       control.root.dataset.active = zoneKey ? "true" : "false";
     }
     this._emitPreviewChange(zoneKey, preview);
@@ -152,7 +156,8 @@ export class DevLayoutToolbar {
   _nudgeControl(controlKey, delta) {
     const zoneKey = this.activeZone;
     if (!zoneKey) return;
-    if (zoneKey !== "meta" || !["width", "inset", "font"].includes(controlKey)) return;
+    if (!["meta", "number", "text"].includes(zoneKey) || !["width", "inset", "font"].includes(controlKey)) return;
+    if (zoneKey === "text" && controlKey === "width") return;
     const preview = this.previewStateByZone[zoneKey] || { width: 0, inset: 0, font: 0 };
     const step = controlKey === "inset" ? 2 : controlKey === "font" ? 1 : 5;
     const min = controlKey === "inset" ? 0 : controlKey === "font" ? 9 : 50;
@@ -246,6 +251,70 @@ export class DevLayoutToolbar {
       width: this.getMetaWidth(),
       inset: this.getMetaInset(),
       font: this.getMetaFont(),
+    };
+  }
+
+  setNumberValues({ width, inset, font } = {}) {
+    const next = {
+      ...this.previewStateByZone.number,
+    };
+    if (width !== undefined) {
+      const value = Number(width);
+      next.width = Number.isFinite(value) ? Math.max(50, Math.min(160, Math.floor(value))) : 64;
+    }
+    if (inset !== undefined) {
+      const value = Number(inset);
+      next.inset = Number.isFinite(value) ? Math.max(0, Math.min(24, Math.floor(value))) : 5;
+    }
+    if (font !== undefined) {
+      const value = Number(font);
+      next.font = Number.isFinite(value) ? Math.max(9, Math.min(16, Math.floor(value))) : 11;
+    }
+    this.previewStateByZone.number = next;
+    if (this.activeZone === "number") {
+      this.update({ enabled: true, activeZone: "number" });
+    }
+    return this.getNumberValues();
+  }
+
+  getNumberValues() {
+    const preview = this.previewStateByZone?.number || { width: 64, inset: 5, font: 11 };
+    const width = Number(preview.width);
+    const inset = Number(preview.inset);
+    const font = Number(preview.font);
+    return {
+      width: Number.isFinite(width) ? width : 64,
+      inset: Number.isFinite(inset) ? inset : 5,
+      font: Number.isFinite(font) ? font : 11,
+    };
+  }
+
+  setTextValues({ inset, font } = {}) {
+    const next = {
+      ...this.previewStateByZone.text,
+    };
+    if (inset !== undefined) {
+      const value = Number(inset);
+      next.inset = Number.isFinite(value) ? Math.max(0, Math.min(24, Math.floor(value))) : 5;
+    }
+    if (font !== undefined) {
+      const value = Number(font);
+      next.font = Number.isFinite(value) ? Math.max(9, Math.min(16, Math.floor(value))) : 11;
+    }
+    this.previewStateByZone.text = next;
+    if (this.activeZone === "text") {
+      this.update({ enabled: true, activeZone: "text" });
+    }
+    return this.getTextValues();
+  }
+
+  getTextValues() {
+    const preview = this.previewStateByZone?.text || { inset: 5, font: 11 };
+    const inset = Number(preview.inset);
+    const font = Number(preview.font);
+    return {
+      inset: Number.isFinite(inset) ? inset : 5,
+      font: Number.isFinite(font) ? font : 11,
     };
   }
 

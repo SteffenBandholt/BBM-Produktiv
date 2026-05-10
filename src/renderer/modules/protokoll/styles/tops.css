@@ -3,6 +3,10 @@
 :root {
   --bbm-tops-doc-width: 940px;
   --bbm-tops-list-number-col: 64px;
+  --bbm-tops-list-number-padding-inline: 5px;
+  --bbm-tops-list-number-font-size: 11px;
+  --bbm-tops-list-text-padding-inline: 5px;
+  --bbm-tops-list-text-font-size: 11px;
   --bbm-tops-meta-col-min: 70px;
   --bbm-tops-meta-col-max: 90px;
   --bbm-tops-list-meta-col: 74px;
@@ -508,8 +512,9 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   gap: 1px;
   white-space: nowrap;
   font-family: var(--bbm-top-text-font-family);
-  font-size: var(--bbm-top-short-font-size);
+  font-size: var(--bbm-tops-list-number-font-size, 11px);
   line-height: var(--bbm-top-text-line-height);
+  padding-inline: var(--bbm-tops-list-number-padding-inline, 5px);
 }
 
 .bbm-tops-list-row-number-line {
@@ -639,8 +644,9 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 .bbm-tops-list-row-text {
   width: 100%;
   max-inline-size: min(100%, var(--bbm-top-long-measure));
-  padding-left: var(--bbm-top-text-pad-x);
-  padding-right: var(--bbm-top-text-pad-x);
+  padding-left: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
+  padding-right: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-text {

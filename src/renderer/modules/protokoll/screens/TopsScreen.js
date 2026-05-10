@@ -746,14 +746,34 @@ export default class TopsScreen {
     const inset = Number(preview?.inset || 0);
     const font = Number(preview?.font || 0);
     this.root.dataset.devLayoutActiveZone = zoneKey;
-    if (zoneKey !== "meta") return;
     if (!this.topsList?.root?.style) return;
-    const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 74));
-    const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 4));
-    const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
-    this.topsList.root.style.setProperty("--bbm-tops-list-meta-col", `${clampedWidth}px`);
-    this.topsList.root.style.setProperty("--bbm-tops-list-meta-padding-inline", `${clampedInset}px`);
-    this.topsList.root.style.setProperty("--bbm-tops-list-meta-font-size", `${clampedFont}px`);
+
+    if (zoneKey === "meta") {
+      const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 74));
+      const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 4));
+      const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
+      this.topsList.root.style.setProperty("--bbm-tops-list-meta-col", `${clampedWidth}px`);
+      this.topsList.root.style.setProperty("--bbm-tops-list-meta-padding-inline", `${clampedInset}px`);
+      this.topsList.root.style.setProperty("--bbm-tops-list-meta-font-size", `${clampedFont}px`);
+      return;
+    }
+
+    if (zoneKey === "number") {
+      const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 64));
+      const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 5));
+      const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
+      this.topsList.root.style.setProperty("--bbm-tops-list-number-col", `${clampedWidth}px`);
+      this.topsList.root.style.setProperty("--bbm-tops-list-number-padding-inline", `${clampedInset}px`);
+      this.topsList.root.style.setProperty("--bbm-tops-list-number-font-size", `${clampedFont}px`);
+      return;
+    }
+
+    if (zoneKey === "text") {
+      const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 5));
+      const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
+      this.topsList.root.style.setProperty("--bbm-tops-list-text-padding-inline", `${clampedInset}px`);
+      this.topsList.root.style.setProperty("--bbm-tops-list-text-font-size", `${clampedFont}px`);
+    }
   }
 
   _getDevLayoutMetaWidthFromLayout(layout = null) {
@@ -775,6 +795,46 @@ export default class TopsScreen {
   _getDevLayoutMetaFontFromLayout(layout = null) {
     const extracted = extractProtokollTopsEditorValues(layout || {});
     const raw = String(extracted?.uiMetaFontSize || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 11;
+    return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutNumberWidthFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiNumberWidth || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 64;
+    return Math.max(50, Math.min(160, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutNumberInsetFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiNumberInset || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 5;
+    return Math.max(0, Math.min(24, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutNumberFontFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiNumberFontSize || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 11;
+    return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutTextInsetFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiTextInset || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 5;
+    return Math.max(0, Math.min(24, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutTextFontFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiTextFontSize || "").trim();
     const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
     if (!match) return 11;
     return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
@@ -803,6 +863,35 @@ export default class TopsScreen {
         preview: { width, inset, font },
       });
     }
+
+    const numberWidth = this._getDevLayoutNumberWidthFromLayout(layout);
+    const numberInset = this._getDevLayoutNumberInsetFromLayout(layout);
+    const numberFont = this._getDevLayoutNumberFontFromLayout(layout);
+    if (this.header?.devLayoutToolbar?.setNumberValues) {
+      this.header.devLayoutToolbar.setNumberValues({
+        width: numberWidth,
+        inset: numberInset,
+        font: numberFont,
+      });
+    }
+    if (this._devLayoutMode?.enabled && this._devLayoutMode.activeZone === "number") {
+      this._applyDevLayoutPreview({
+        activeZone: "number",
+        preview: { width: numberWidth, inset: numberInset, font: numberFont },
+      });
+    }
+
+    const textInset = this._getDevLayoutTextInsetFromLayout(layout);
+    const textFont = this._getDevLayoutTextFontFromLayout(layout);
+    if (this.header?.devLayoutToolbar?.setTextValues) {
+      this.header.devLayoutToolbar.setTextValues({ inset: textInset, font: textFont });
+    }
+    if (this._devLayoutMode?.enabled && this._devLayoutMode.activeZone === "text") {
+      this._applyDevLayoutPreview({
+        activeZone: "text",
+        preview: { width: 0, inset: textInset, font: textFont },
+      });
+    }
   }
 
   async _saveDevLayoutMetaWidth() {
@@ -823,6 +912,19 @@ export default class TopsScreen {
       const nextFont = this.header?.devLayoutToolbar?.getMetaFont
         ? this.header.devLayoutToolbar.getMetaFont()
         : this._getDevLayoutMetaFontFromLayout(currentLayout);
+      const nextNumber = this.header?.devLayoutToolbar?.getNumberValues
+        ? this.header.devLayoutToolbar.getNumberValues()
+        : {
+            width: this._getDevLayoutNumberWidthFromLayout(currentLayout),
+            inset: this._getDevLayoutNumberInsetFromLayout(currentLayout),
+            font: this._getDevLayoutNumberFontFromLayout(currentLayout),
+          };
+      const nextText = this.header?.devLayoutToolbar?.getTextValues
+        ? this.header.devLayoutToolbar.getTextValues()
+        : {
+            inset: this._getDevLayoutTextInsetFromLayout(currentLayout),
+            font: this._getDevLayoutTextFontFromLayout(currentLayout),
+          };
       const normalizedWidth = Math.max(50, Math.min(160, Math.floor(Number(nextWidth) || 74)));
       const normalizedInset = Number.isFinite(Number(nextInset))
         ? Math.max(0, Math.min(24, Math.floor(Number(nextInset))))
@@ -830,11 +932,28 @@ export default class TopsScreen {
       const normalizedFont = Number.isFinite(Number(nextFont))
         ? Math.max(9, Math.min(16, Math.floor(Number(nextFont))))
         : 11;
+      const normalizedNumberWidth = Math.max(50, Math.min(160, Math.floor(Number(nextNumber?.width) || 64)));
+      const normalizedNumberInset = Number.isFinite(Number(nextNumber?.inset))
+        ? Math.max(0, Math.min(24, Math.floor(Number(nextNumber.inset))))
+        : 5;
+      const normalizedNumberFont = Number.isFinite(Number(nextNumber?.font))
+        ? Math.max(9, Math.min(16, Math.floor(Number(nextNumber.font))))
+        : 11;
+      const normalizedTextInset = Number.isFinite(Number(nextText?.inset))
+        ? Math.max(0, Math.min(24, Math.floor(Number(nextText.inset))))
+        : 5;
+      const normalizedTextFont = Number.isFinite(Number(nextText?.font))
+        ? Math.max(9, Math.min(16, Math.floor(Number(nextText.font))))
+        : 11;
       const overlay = buildProtokollTopsLayoutOverlay(
         {
           orientation: extracted?.orientation || currentLayout?.variant || "portrait",
-          uiNumberWidth: extracted?.uiNumberWidth,
+          uiNumberWidth: `${normalizedNumberWidth}px`,
+          uiNumberInset: `${normalizedNumberInset}px`,
+          uiNumberFontSize: `${normalizedNumberFont}px`,
           uiTextTrack: extracted?.uiTextTrack,
+          uiTextInset: `${normalizedTextInset}px`,
+          uiTextFontSize: `${normalizedTextFont}px`,
           uiMetaWidth: `${normalizedWidth}px`,
           uiMetaInset: `${normalizedInset}px`,
           uiMetaFontSize: `${normalizedFont}px`,

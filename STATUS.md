@@ -36,6 +36,12 @@ Sie ergÃ¤nzt:
   - `Innen` wirkt nur fuer die aktive Zone `Metablock`
   - Breite, Innenabstand und Schriftgroesse werden gemeinsam ueber `tableLayouts` gespeichert
   - `Reset` stellt alle drei Werte auf den Standard zurueck
+- Der Nummernblock kann jetzt im DEV-Modus ebenfalls live, per Speicher und per Reset gesteuert werden:
+  - `Breite`, `Innen` und `Schrift` wirken fuer die aktive Zone `Nummernblock`
+  - Speicherung und Reset laufen ueber denselben `tableLayouts`-Weg wie beim Metablock
+- Der Textblock kann jetzt im DEV-Modus ebenfalls live, per Speicher und per Reset gesteuert werden:
+  - `Breite` bleibt bewusst ein Restbereich und ist im DEV-Toolbar-Regler deaktiviert
+  - `Innen` und `Schrift` wirken fuer die aktive Zone `Textblock`
 - Naechster offener Schritt: die DEV-only Markierung und die neuen Live-Werte einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.
