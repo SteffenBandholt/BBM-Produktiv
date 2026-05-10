@@ -211,6 +211,31 @@ function _normalizeColumnLines(value, fallback = []) {
 function _normalizeTableLayoutColumns(columns = [], fallbackColumns = []) {
   const input = Array.isArray(columns) ? columns : [];
   const fallback = Array.isArray(fallbackColumns) ? fallbackColumns : [];
+  if (fallback.length) {
+    const byKey = new Map(input.filter((item) => item && typeof item === "object" && item.key).map((item) => [String(item.key), item]));
+    const normalized = [];
+
+    for (const fb of fallback) {
+      if (!fb || typeof fb !== "object") continue;
+      const key = String(fb.key || "").trim();
+      if (!key) continue;
+      const stored = byKey.get(key);
+      normalized.push({
+        key,
+        label: String(fb.label ?? key).trim(),
+        uiWidth: String(stored?.uiWidth ?? fb.uiWidth ?? "1fr").trim(),
+        pdfWidth: String(stored?.pdfWidth ?? fb.pdfWidth ?? "auto").trim(),
+        weight: _normalizeWeight(fb.weight ?? 1, 1),
+        required: !!fb.required,
+        previewValue: String(fb.previewValue ?? "").trim(),
+        previewField: String(fb.previewField || key).trim(),
+        headerLines: _normalizeColumnLines(fb.headerLines, [String(fb.label ?? key).trim() || key]),
+      });
+    }
+
+    return normalized;
+  }
+
   const byKey = new Map(input.filter((item) => item && typeof item === "object" && item.key).map((item) => [String(item.key), item]));
   const normalized = [];
   const seen = new Set();
@@ -387,21 +412,6 @@ function _normalizePreviewRows(definition) {
   return Array.isArray(definition?.previewData) ? definition.previewData.map((row) => ({ ...row })) : [];
 }
 
-function _getPreviewModeConfig(mode) {
-  const isPdf = mode === "pdf";
-  return {
-    mode,
-    isPdf,
-    title: isPdf ? "PDF-Vorschau mit Testdaten" : "UI-Vorschau mit Testdaten",
-    hint: isPdf
-      ? "Registrierte Beispielzeilen aus der Tabellenregistry. PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."
-      : "Registrierte Beispielzeilen aus der Tabellenregistry. Keine Projekt- oder Besprechungsdaten.",
-    note: isPdf
-      ? "Diese Vorschau erzeugt kein PDF. Der echte PDF-Test mit Testdaten wird später separat ergänzt."
-      : "Diese Vorschau zeigt die UI-Layoutwerte des Editors.",
-  };
-}
-
 function _getTableLayoutEditorHints(tableDef = {}) {
   const moduleId = _normalizeId(tableDef?.moduleId);
   const tableKey = _normalizeId(tableDef?.tableKey);
@@ -543,15 +553,20 @@ function _renderPreviewGridRow(rowData, columns, mode, { header = false } = {}) 
   return row;
 }
 
-function _renderPreviewPanel(target, definition, values, mode) {
+function _renderMirrorPreviewPanel(target, definition, values, mode, { available = true, productive = false } = {}) {
   if (!target) return;
   target.innerHTML = "";
 
-  const cfg = _getPreviewModeConfig(mode);
-  const columns = Array.isArray(values?.columns) && values.columns.length ? values.columns : _cloneColumns(definition?.columns || []);
+  const isPdf = mode === "pdf";
+  const columns = Array.isArray(values?.columns) && values.columns.length
+    ? _cloneColumns(values.columns)
+    : _cloneColumns(definition?.columns || []);
   const rows = _normalizePreviewRows(definition);
+  const modeLabel = isPdf ? "PDF" : "UI";
+  const availabilityLabel = available ? (productive ? "Produktiv" : "Vorschau") : "Nicht verfügbar";
 
-  target.dataset.previewMode = cfg.mode;
+  target.dataset.previewArea = mode;
+  target.dataset.previewMode = mode;
   target.style.display = "grid";
   target.style.gap = "8px";
   target.style.minWidth = "0";
@@ -561,11 +576,13 @@ function _renderPreviewPanel(target, definition, values, mode) {
   target.style.background = "#fff";
 
   const panelTitle = document.createElement("div");
-  panelTitle.textContent = cfg.title;
+  panelTitle.textContent = isPdf ? "PDF-Ansicht" : "UI-Ansicht";
   panelTitle.style.fontWeight = "800";
 
   const panelHint = document.createElement("div");
-  panelHint.textContent = cfg.hint;
+  panelHint.textContent = isPdf
+    ? "Die PDF-Spiegelansicht nutzt die aktuellen Spalten aus der Registry. A4-artig gerahmt, aber kein echter PDF-Renderer."
+    : "Die UI-Spiegelansicht nutzt die aktuellen sichtbaren Spalten aus der Registry. Gespeicherte Zusatzspalten werden nicht übernommen.";
   panelHint.style.fontSize = "12px";
   panelHint.style.opacity = "0.78";
 
@@ -573,19 +590,39 @@ function _renderPreviewPanel(target, definition, values, mode) {
   panelSummary.style.fontSize = "12px";
   panelSummary.style.color = "#475569";
   const summaryParts = [
+    `Bereich: ${modeLabel}`,
     `Quelle: ${String(values.source || "default")}`,
+    `Status: ${availabilityLabel}`,
     `Testdaten: ${rows.length} Zeilen`,
     `Orientierung: ${String(values.orientation || DEFAULT_ORIENTATION)}`,
     `Spalten: ${columns.length}`,
-    `Layout: ${mode === "pdf" ? "PDF" : "UI"}`,
   ];
   panelSummary.textContent = summaryParts.join(" | ");
 
   const panelNote = document.createElement("div");
-  panelNote.textContent = cfg.note;
+  panelNote.textContent = available
+    ? isPdf
+      ? "Die PDF-Fläche ist eine interne A4-Nähe für die Registry-Spiegelung."
+      : "Die UI-Fläche spiegelt die registrierte Tabellenansicht ohne Zusatzspalten."
+    : isPdf
+      ? "Für diese Tabelle gibt es keine PDF-Ansicht."
+      : "Für diese Tabelle gibt es keine UI-Ansicht.";
   panelNote.style.fontSize = "12px";
-  panelNote.style.color = mode === "pdf" ? "#7c2d12" : "#334155";
-  panelNote.style.opacity = mode === "pdf" ? "0.92" : "0.8";
+  panelNote.style.color = isPdf ? "#7c2d12" : "#334155";
+  panelNote.style.opacity = isPdf ? "0.92" : "0.8";
+
+  if (!available) {
+    const message = document.createElement("div");
+    message.style.padding = "12px";
+    message.style.border = "1px solid rgba(15,23,42,0.12)";
+    message.style.borderRadius = "10px";
+    message.style.background = "#f8fafc";
+    message.style.fontSize = "13px";
+    message.style.color = "#0f172a";
+    message.textContent = isPdf ? "Für diese Tabelle gibt es keine PDF-Ansicht." : "Für diese Tabelle gibt es keine UI-Ansicht.";
+    target.append(panelTitle, panelHint, panelSummary, panelNote, message);
+    return;
+  }
 
   const surface = document.createElement("div");
   surface.style.minHeight = "0";
@@ -596,6 +633,10 @@ function _renderPreviewPanel(target, definition, values, mode) {
   surface.style.display = "grid";
   surface.style.gap = "0";
   surface.style.minWidth = "0";
+  surface.style.maxWidth = isPdf ? "210mm" : "none";
+  surface.style.width = "100%";
+  surface.style.aspectRatio = isPdf ? "210 / 297" : "";
+  surface.style.boxShadow = isPdf ? "0 8px 24px rgba(15,23,42,0.08)" : "";
   surface.dataset.previewGridColumns = _buildPreviewGridTemplate(columns, mode);
 
   surface.append(_renderPreviewGridRow(null, columns, mode, { header: true }));
@@ -789,7 +830,6 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const fields = new Map();
   const state = {
     isFullscreen: true,
-    previewMode: "ui",
     orientation: DEFAULT_ORIENTATION,
     schemaVersion: 1,
     source: "default",
@@ -1186,47 +1226,26 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   applyPopupCardStyle(previewCard);
   previewCard.style.padding = "10px";
   previewCard.style.display = "grid";
-  previewCard.style.gap = "8px";
+  previewCard.style.gap = "10px";
   previewCard.style.minHeight = "280px";
   const previewTitle = document.createElement("div");
-  previewTitle.textContent = "Editor-Vorschau mit Testdaten";
+  previewTitle.textContent = "Spiegelansicht";
   previewTitle.style.fontWeight = "800";
   const previewHint = document.createElement("div");
   previewHint.textContent =
-    "Registrierte Beispielzeilen aus der Tabellenregistry. Keine Projekt- oder Besprechungsdaten.";
+    "Die Vorschau zeigt links bzw. oben die UI-Ansicht und daneben bzw. darunter die PDF-Ansicht. Beide Bereiche lesen ihre Spalten ausschließlich aus der Registry.";
   previewHint.style.fontSize = "12px";
   previewHint.style.opacity = "0.78";
-  const previewNote = document.createElement("div");
-  previewNote.textContent =
-    "Diese Vorschau erzeugt kein PDF. Der echte PDF-Test mit Testdaten wird später separat ergänzt.";
-  previewNote.style.fontSize = "12px";
-  previewNote.style.color = "#7c2d12";
-  previewNote.style.opacity = "0.9";
-  const previewSwitchRow = document.createElement("div");
-  previewSwitchRow.style.display = "inline-flex";
-  previewSwitchRow.style.flexWrap = "wrap";
-  previewSwitchRow.style.gap = "6px";
-  previewSwitchRow.style.alignItems = "center";
+  const previewGrid = document.createElement("div");
+  previewGrid.style.display = "grid";
+  previewGrid.style.gridTemplateColumns = "repeat(2, minmax(0, 1fr))";
+  previewGrid.style.gap = "10px";
+  previewGrid.style.alignItems = "start";
 
-  const previewUiButton = document.createElement("button");
-  previewUiButton.type = "button";
-  previewUiButton.textContent = "UI-Vorschau";
-  applyPopupButtonStyle(previewUiButton);
-
-  const previewPdfButton = document.createElement("button");
-  previewPdfButton.type = "button";
-  previewPdfButton.textContent = "PDF-Vorschau";
-  applyPopupButtonStyle(previewPdfButton);
-
-  const previewPane = document.createElement("div");
-  previewPane.style.minWidth = "0";
-  previewPane.style.minHeight = "0";
-  previewPane.style.overflow = "auto";
-  previewPane.style.display = "grid";
-  previewPane.style.gap = "8px";
-
-  previewSwitchRow.append(previewUiButton, previewPdfButton);
-  previewCard.append(previewTitle, previewHint, previewNote, previewSwitchRow, previewPane);
+  const uiPreviewPane = document.createElement("div");
+  const pdfPreviewPane = document.createElement("div");
+  previewGrid.append(uiPreviewPane, pdfPreviewPane);
+  previewCard.append(previewTitle, previewHint, previewGrid);
 
   const fieldsCard = document.createElement("div");
   applyPopupCardStyle(fieldsCard);
@@ -1281,18 +1300,6 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const _setFullscreen = (next) => {
     state.isFullscreen = !!next;
     _applyHostFullscreenState();
-  };
-
-  const _setPreviewMode = (mode) => {
-    state.previewMode = mode === "pdf" ? "pdf" : "ui";
-    previewUiButton.dataset.active = state.previewMode === "ui" ? "1" : "0";
-    previewPdfButton.dataset.active = state.previewMode === "pdf" ? "1" : "0";
-    previewUiButton.setAttribute("aria-pressed", state.previewMode === "ui" ? "true" : "false");
-    previewPdfButton.setAttribute("aria-pressed", state.previewMode === "pdf" ? "true" : "false");
-    previewUiButton.style.opacity = state.previewMode === "ui" ? "1" : "0.75";
-    previewPdfButton.style.opacity = state.previewMode === "pdf" ? "1" : "0.75";
-    previewUiButton.style.outline = state.previewMode === "ui" ? "2px solid #2563eb" : "";
-    previewPdfButton.style.outline = state.previewMode === "pdf" ? "2px solid #2563eb" : "";
   };
 
   const _getSelectedModuleDefinition = () =>
@@ -1523,8 +1530,6 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     targetInfoOrientation.textContent = `Orientierung: ${state.orientation}`;
     targetInfoSource.textContent = `Quelle: ${formatSourceLabel()}`;
     _updateContextStatus();
-    _setPreviewMode(state.previewMode);
-    _renderPreviewPanel(previewPane, tableDef, previewValues, state.previewMode);
     if (status) {
       const sourceText = formatSourceLabel();
       const parseText = state.parseError ? ` | Parse: ${state.parseError}` : "";
@@ -1532,6 +1537,14 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       status.textContent = `Quelle: ${sourceText}${parseText}${errorText}`;
       status.style.color = state.error || !validation.isValid ? "#b91c1c" : "#475569";
     }
+    _renderMirrorPreviewPanel(uiPreviewPane, tableDef, previewValues, "ui", {
+      available: !!tableDef?.uiAvailable,
+      productive: !!tableDef?.uiProductive,
+    });
+    _renderMirrorPreviewPanel(pdfPreviewPane, tableDef, previewValues, "pdf", {
+      available: !!tableDef?.pdfAvailable,
+      productive: !!tableDef?.pdfProductive,
+    });
     _updateTestPdfState(validation, tableDef);
   };
 
@@ -1793,17 +1806,6 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     _setFullscreen(!state.isFullscreen);
   });
 
-  previewUiButton.addEventListener("click", () => {
-    if (state.previewMode === "ui") return;
-    state.previewMode = "ui";
-    refreshPreview();
-  });
-  previewPdfButton.addEventListener("click", () => {
-    if (state.previewMode === "pdf") return;
-    state.previewMode = "pdf";
-    refreshPreview();
-  });
-
   orientationSelect.addEventListener("change", async () => {
     state.orientation = _normalizeOrientation(orientationSelect.value);
     state.editValues.orientation = state.orientation;
@@ -1847,7 +1849,6 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   _renderTableOptions();
   _updateContextStatus();
   _updateTestPdfState();
-  _setPreviewMode(state.previewMode);
   _applyHostFullscreenState();
   refreshPreview();
 

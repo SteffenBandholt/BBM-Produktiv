@@ -45,9 +45,10 @@ Er nutzt jetzt ein groesstenteils vollflÃ¤chiges internes ArbeitsflÃ¤chen-Ov
 - auf Standard zuruecksetzen
 - Quelle wird sichtbar als `Standardlayout protokoll_tops`, `gespeichertes Layout` oder `Fallback`
 - Editor-Vorschau mit Testdaten aus der Registry
-- UI- und PDF-Vorschau als getrennte umschaltbare Vorschau-Modi mit Testdaten aus der Registry
+- Spiegelansicht mit zwei festen Bereichen: UI-Ansicht und PDF-Ansicht
+- die beiden Bereiche lesen ihre Spalten ausschliesslich aus der Registry
 - keine Projekt- oder Besprechungsdaten in der Vorschau
-- keine gleichzeitige Anzeige von UI- und PDF-Vorschau
+- Hinweise erscheinen, wenn eine Tabelle keine UI- oder PDF-Ansicht hat
 - PDF-Werte sind im Editor nur eine technische Naeherung, kein echter PDF-Renderer
 - UI-Werte steuern die Spaltenbreiten in der App, wenn die Tabelle produktiv angeschlossen ist
 - PDF-Werte steuern nur PDF-Spaltenbreiten, wenn ein PDF-Druckpfad fuer die Tabelle angeschlossen ist
@@ -69,8 +70,7 @@ Er nutzt jetzt ein groesstenteils vollflÃ¤chiges internes ArbeitsflÃ¤chen-Ov
 Die Orientierung bearbeitet hier nur die Layoutvariante. Sie schaltet den normalen Druck noch nicht automatisch um.
 Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.
 Die Vorschau nutzt registrierte Testdaten.
-UI- und PDF-Vorschau sind als getrennte Modi umschaltbar und verwenden dieselben registrierten Beispielzeilen.
-Es wird immer nur ein Vorschau-Modus angezeigt.
+UI- und PDF-Ansicht werden parallel als Spiegelansicht angezeigt und verwenden dieselben registrierten Beispielzeilen.
 Die PDF-Vorschau ist im Editor nur eine technische Naeherung und ersetzt keinen echten PDF-Renderer.
 Spaetere Tabellen liefern ihre eigenen Preview-Daten ueber die Registry.
 

@@ -12,7 +12,7 @@ async function runTableLayoutRegistryTests(run) {
     const definitions = await listTableLayoutDefinitions();
 
     assert.equal(Array.isArray(modules), true);
-    assert.equal(modules.length >= 2, true);
+    assert.equal(modules.length, 2);
     assert.equal(modules[0].moduleId, "protokoll");
     assert.equal(modules[0].moduleLabel, "Protokoll");
     assert.equal(Array.isArray(modules[0].tables), true);
@@ -33,7 +33,11 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(projectModule.tables[0].editorEnabled, true);
 
     assert.equal(Array.isArray(definitions), true);
-    assert.equal(definitions.length >= 3, true);
+    assert.equal(definitions.length, 3);
+    assert.deepEqual(
+      definitions.map((def) => def.tableKey),
+      ["protokoll_tops", "protokoll_participants", "project_firms"]
+    );
     assert.equal(definitions[0].moduleId, "protokoll");
     assert.equal(definitions[0].moduleLabel, "Protokoll");
     assert.equal(definitions[0].tableKey, "protokoll_tops");

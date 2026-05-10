@@ -22,6 +22,7 @@ Sie ergÃ¤nzt:
 - Tabellenlayout-Registry mit technischer Tabellenklassifizierung erweitert.
 - Entstehungsprozess neuer Tabellen fuer das Tabellenlayout dokumentiert.
 - `protokoll_participants` ist im technischen Verzeichnis und im Tabellenlayout-Editor registriert; UI/PDF bleiben vorerst Vorschau.
+- Der interne Tabellenlayout-Editor zeigt die Registry jetzt als feste Spiegelansicht mit getrennten UI- und PDF-Bereichen; gespeicherte Zusatzspalten werden dort nicht in die Spaltenstruktur hineingezogen.
 
 - Der Ausgabe-Dialog trennt die Druckarten jetzt fachlich korrekter:
   - Protokoll drucken
@@ -66,7 +67,7 @@ Sie ergÃ¤nzt:
   - Modul- und Tabellenlisten kommen aus der bekannten Registry/Definition
   - aktuell sind dort `Protokoll / TOP-Liste / protokoll_tops`, `Protokoll / Teilnehmerliste / protokoll_participants` und `Projektverwaltung / Projekt-Firmenliste / project_firms` angemeldet
   - der frÃ¼here Projekt-/Besprechungsansatz im Editor wurde wieder entfernt
-  - die Vorschau ist in umschaltbare UI- und PDF-Modi mit registrierten Testdaten aufgeteilt
+  - die Vorschau ist jetzt als feste Spiegelansicht mit getrennten UI- und PDF-Bereichen umgesetzt
   - der Editor nutzt jetzt ein nahezu vollflÃ¤chiges internes ArbeitsflÃ¤chen-Overlay
   - Layoutwerte werden vor dem Speichern validiert und defensiv normalisiert
   - UI-/PDF-Hinweise im Editor wurden klarer formuliert; `project_firms` und `protokoll_participants` sind PDF-seitig nur Vorschau, `protokoll_tops` ist produktiv angeschlossen

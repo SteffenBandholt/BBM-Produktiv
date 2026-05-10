@@ -156,6 +156,12 @@ function findNodesByTag(node, tagName, out = []) {
   return out;
 }
 
+function findPreviewPanels(root) {
+  return findNodesByTag(root, "DIV").filter(
+    (node) => node?.dataset?.previewArea === "ui" || node?.dataset?.previewArea === "pdf"
+  );
+}
+
 function flushMicrotasks() {
   return new Promise((resolve) => setImmediate(resolve));
 }
@@ -602,33 +608,119 @@ async function runTableLayoutEditorPrototypeTests(run) {
     assert.equal(overlay.labels.meta[2], "Verantwortlich");
   });
 
-  await run("TableLayoutEditor: protokoll_tops portrait zeigt Modul, Tabelle und Standardquelle", async () => {
+  await run("TableLayoutEditor: gespeicherte Layoutdaten koennen die Registry-Struktur nicht uebersteuern", async () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
     global.document = createFakeDocument();
-    const { api, calls } = makeEditorApi();
+    const { api } = makeEditorApi({
+      getOne: async (payload) => ({
+        ok: true,
+        data: {
+          source: "stored",
+          schemaVersion: 1,
+          effectiveLayout: {
+            variant: payload.orientation,
+            columns: [
+              {
+                key: "topNumber",
+                label: "GESPEICHERTES TOP",
+                uiWidth: "91px",
+                pdfWidth: "33mm",
+                weight: 999,
+                required: false,
+                previewValue: "gespeichert",
+                previewField: "storedTop",
+                headerLines: ["GESPEICHERTES HEADER"],
+              },
+              {
+                key: "shortText",
+                label: "GESPEICHERTER TEXT",
+                uiWidth: "minmax(0, 2fr)",
+                pdfWidth: "44mm",
+                weight: 888,
+                required: false,
+                previewValue: "gespeichert",
+                previewField: "storedText",
+                headerLines: ["GESPEICHERTER TEXTKOPF"],
+              },
+              {
+                key: "meta",
+                label: "GESPEICHERTE META",
+                uiWidth: "88px",
+                pdfWidth: "22mm",
+                weight: 777,
+                required: false,
+                previewValue: "gespeichert",
+                previewField: "storedMeta",
+                headerLines: ["GESPEICHERTE META"],
+              },
+              {
+                key: "legacy_extra",
+                label: "ALTE ZUSATZSPALTE",
+                uiWidth: "123px",
+                pdfWidth: "45mm",
+                weight: 1,
+                required: false,
+                previewValue: "alt",
+                previewField: "legacy_extra",
+                headerLines: ["ALTE ZUSATZSPALTE"],
+              },
+            ],
+          },
+        },
+      }),
+    });
     global.window = { bbmDb: api };
     try {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
       const text = collectText(editor.root);
-      const selects = findNodesByTag(editor.root, "SELECT");
-      const previewPanels = findNodesByTag(editor.root, "DIV").filter(
-        (node) => node?.dataset?.previewMode === "ui" || node?.dataset?.previewMode === "pdf"
-      );
-      const previewUiToggle = findNodeByText(editor.root, "UI-Vorschau");
-      const previewPdfToggle = findNodeByText(editor.root, "PDF-Vorschau");
-      const host = createFakeNode("div");
-      host.dataset.tableLayoutShell = "1";
-      editor.attachFullscreenHost(host);
-      const fullscreenToggle = findNodeByText(editor.root, "Normalgröße");
-      assert.ok(fullscreenToggle, "fullscreen toggle missing");
-      assert.ok(previewUiToggle, "UI preview toggle missing");
-      assert.ok(previewPdfToggle, "PDF preview toggle missing");
-      assert.equal(editor.root.dataset.layoutMode, "fullscreen");
-      assert.equal(host.dataset.layoutMode, "fullscreen");
-      assert.equal(host.style.position, "fixed");
-      assert.equal(host.style.inset, "8px");
+      const previewPanels = findPreviewPanels(editor.root);
+      const uiPanel = previewPanels.find((node) => node?.dataset?.previewArea === "ui");
+      const pdfPanel = previewPanels.find((node) => node?.dataset?.previewArea === "pdf");
+      const uiSurface = uiPanel?.children?.[4];
+      const pdfSurface = pdfPanel?.children?.[4];
+      assert.equal(previewPanels.length, 2);
+      assert.equal(text.includes("GESPEICHERTES TOP"), false);
+      assert.equal(text.includes("GESPEICHERTES TEXT"), false);
+      assert.equal(text.includes("GESPEICHERTE META"), false);
+      assert.equal(text.includes("ALTE ZUSATZSPALTE"), false);
+      assert.equal(text.includes("TOP"), true);
+      assert.equal(text.includes("Gegenstand"), true);
+      assert.equal(text.includes("Status"), true);
+      assert.equal(uiSurface?.dataset?.previewGridColumns, "91px minmax(0, 2fr) 88px");
+      assert.equal(pdfSurface?.dataset?.previewGridColumns, "33mm 44mm 22mm");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("TableLayoutEditor: protokoll_tops portrait zeigt Modul, Tabelle und Standardquelle", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+      const { api, calls } = makeEditorApi();
+      global.window = { bbmDb: api };
+      try {
+        const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
+        await editor.load();
+        const text = collectText(editor.root);
+        const selects = findNodesByTag(editor.root, "SELECT");
+        const previewPanels = findPreviewPanels(editor.root);
+        const uiPreviewPanel = previewPanels.find((node) => node?.dataset?.previewArea === "ui");
+        const pdfPreviewPanel = previewPanels.find((node) => node?.dataset?.previewArea === "pdf");
+        const host = createFakeNode("div");
+        host.dataset.tableLayoutShell = "1";
+        editor.attachFullscreenHost(host);
+        const fullscreenToggle = findNodeByText(editor.root, "Normalgröße");
+        assert.ok(fullscreenToggle, "fullscreen toggle missing");
+        assert.ok(uiPreviewPanel, "UI preview panel missing");
+        assert.ok(pdfPreviewPanel, "PDF preview panel missing");
+        assert.equal(editor.root.dataset.layoutMode, "fullscreen");
+        assert.equal(host.dataset.layoutMode, "fullscreen");
+        assert.equal(host.style.position, "fixed");
+        assert.equal(host.style.inset, "8px");
       assert.equal(calls.filter((item) => item.type === "getOne").length, 1);
       assert.deepEqual(calls.find((item) => item.type === "getOne")?.payload, {
         tableKey: "protokoll_tops",
@@ -654,62 +746,106 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(text.includes("tableKey: protokoll_tops"), true);
       assert.equal(text.includes("Orientierung: portrait"), true);
       assert.equal(text.includes("Quelle: Standardlayout protokoll_tops"), true);
-      assert.equal(text.includes("UI-Vorschau mit Testdaten"), true);
-      assert.equal(text.includes("PDF-Vorschau mit Testdaten"), false);
-        assert.equal(text.includes("Registrierte Beispielzeilen aus der Tabellenregistry"), true);
-        assert.equal(text.includes("Beispielthema fuer die Vorschau"), true);
-        assert.equal(text.includes("Langtext mit laengerer Beschreibung in einer Unterzeile"), true);
-        assert.equal(text.includes("Kurzer Eintrag mit knapper Anzeige"), true);
-        assert.equal(text.includes("Keine Projekt- oder Besprechungsdaten."), true);
-        assert.equal(text.includes("UI- und PDF-Breiten sind produktiv angeschlossen."), true);
-        assert.equal(text.includes("Diese Vorschau erzeugt kein PDF. Der echte PDF-Test mit Testdaten wird später separat ergänzt."), true);
-        assert.equal(text.includes("PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."), false);
-        assert.equal(text.includes("Tabelle speichern"), true);
-        assert.equal(text.includes("Diese Tabelle auf Standard zurücksetzen"), true);
-        assert.equal(text.includes("Gespeichert wird nur die aktuell gewählte Tabelle; kein globales Layout."), true);
-        assert.equal(
-          text.includes("Reset betrifft nur die aktuell gewählte Kombination aus Modul, Tabelle und Orientierung."),
-          true
-        );
-        assert.equal(text.includes("Spalten: 3"), true);
-        assert.equal(text.includes("Layout: UI"), true);
-        assert.equal(previewPanels.length, 1);
-        assert.equal(previewPanels[0]?.dataset?.previewMode, "ui");
+      assert.equal(text.includes("Spiegelansicht"), true);
+      assert.equal(text.includes("UI-Ansicht"), true);
+      assert.equal(text.includes("PDF-Ansicht"), true);
+      assert.equal(text.includes("Für diese Tabelle gibt es keine UI-Ansicht."), false);
+      assert.equal(text.includes("Für diese Tabelle gibt es keine PDF-Ansicht."), false);
+      assert.equal(text.includes("Testdaten: 3 Zeilen"), true);
+      assert.equal(text.includes("Beispielthema fuer die Vorschau"), true);
+      assert.equal(text.includes("Langtext mit laengerer Beschreibung in einer Unterzeile"), true);
+      assert.equal(text.includes("Kurzer Eintrag mit knapper Anzeige"), true);
+      assert.equal(
+        text.includes("Die Vorschau zeigt links bzw. oben die UI-Ansicht und daneben bzw. darunter die PDF-Ansicht."),
+        true
+      );
+      assert.equal(text.includes("Die UI-Spiegelansicht nutzt die aktuellen sichtbaren Spalten aus der Registry."), true);
+      assert.equal(text.includes("Die PDF-Spiegelansicht nutzt die aktuellen Spalten aus der Registry."), true);
+      assert.equal(text.includes("Die PDF-Fläche ist eine interne A4-Nähe für die Registry-Spiegelung."), true);
+      assert.equal(text.includes("Tabelle speichern"), true);
+      assert.equal(text.includes("Diese Tabelle auf Standard zurücksetzen"), true);
+      assert.equal(text.includes("Gespeichert wird nur die aktuell gewählte Tabelle; kein globales Layout."), true);
+      assert.equal(
+        text.includes("Reset betrifft nur die aktuell gewählte Kombination aus Modul, Tabelle und Orientierung."),
+        true
+      );
+      assert.equal(text.includes("Bereich: UI"), true);
+      assert.equal(text.includes("Bereich: PDF"), true);
+      assert.equal(text.includes("Spalten: 3"), true);
+      assert.equal(previewPanels.length, 2);
+      assert.equal(uiPreviewPanel?.dataset?.previewArea, "ui");
+      assert.equal(pdfPreviewPanel?.dataset?.previewArea, "pdf");
+      assert.equal(uiPreviewPanel?.children?.[4]?.dataset?.previewGridColumns != null, true);
+        editor.applyValues({
+          columns: [
+            {
+              key: "topNumber",
+              label: "TOP",
+              uiWidth: "64px",
+              pdfWidth: "23mm",
+              weight: 2,
+              required: true,
+              previewValue: "1",
+              headerLines: ["TOP"],
+            },
+            {
+              key: "shortText",
+              label: "Gegenstand",
+              uiWidth: "minmax(0, 1fr)",
+              pdfWidth: "auto",
+              weight: 6,
+              required: true,
+              previewValue: "Beispielthema fuer die Vorschau",
+              headerLines: ["Gegenstand"],
+            },
+            {
+              key: "meta",
+              label: "Status",
+              uiWidth: "74px",
+              pdfWidth: "15ch",
+              weight: 1,
+              required: true,
+              previewValue: "offen",
+              headerLines: ["Status", "Fertig bis", "verantw"],
+            },
+            {
+              key: "legacy_extra",
+              label: "Alte Zusatzspalte",
+              uiWidth: "90px",
+              pdfWidth: "20mm",
+              weight: 1,
+              required: false,
+              previewValue: "Alt",
+              headerLines: ["Alte Zusatzspalte"],
+            },
+          ],
+        });
+        const mirroredText = collectText(editor.root);
+        assert.equal(mirroredText.includes("Alte Zusatzspalte"), false);
+        assert.equal(uiPreviewPanel?.children?.[4]?.dataset?.previewGridColumns?.includes("90px"), false);
       selects[1].value = "protokoll_participants";
       selects[1].dispatchEvent({ type: "change" });
       await flushMicrotasks();
       const participantText = collectText(editor.root);
-      const participantPanels = findNodesByTag(editor.root, "DIV").filter(
-        (node) => node?.dataset?.previewMode === "ui" || node?.dataset?.previewMode === "pdf"
-      );
+      const participantPanels = findPreviewPanels(editor.root);
+      const participantUiPanel = participantPanels.find((node) => node?.dataset?.previewArea === "ui");
+      const participantPdfPanel = participantPanels.find((node) => node?.dataset?.previewArea === "pdf");
       assert.equal(selects[1].value, "protokoll_participants");
       assert.equal(participantText.includes("Tabelle: Teilnehmerliste"), true);
       assert.equal(participantText.includes("tableKey: protokoll_participants"), true);
+      assert.equal(participantText.includes("UI-Ansicht"), true);
+      assert.equal(participantText.includes("PDF-Ansicht"), true);
       assert.equal(participantText.includes("Spalten: 5"), true);
       assert.equal(participantText.includes("Telefon / E-Mail"), true);
       assert.equal(participantText.includes("Anwesend / Verteiler"), true);
       assert.equal(participantText.includes("Aktion"), false);
       assert.equal(participantText.includes("Invited"), false);
       assert.equal(participantText.includes("Aktiv"), false);
-      assert.equal(participantText.includes("UI-Werte sind für diese Tabelle aktuell nur eine Vorschau."), true);
-      assert.equal(
-        participantText.includes("PDF ist für diese Tabelle aktuell nur Vorschau. Ein produktiver PDF-Druck ist noch nicht angeschlossen."),
-        true
-      );
-      assert.equal(participantPanels.length, 1);
-      assert.equal(participantPanels[0]?.dataset?.previewMode, "ui");
-      previewPdfToggle.click();
-      await flushMicrotasks();
-      const previewPanelsAfterSwitch = findNodesByTag(editor.root, "DIV").filter(
-        (node) => node?.dataset?.previewMode === "ui" || node?.dataset?.previewMode === "pdf"
-      );
-      const switchedText = collectText(editor.root);
-      assert.equal(previewPanelsAfterSwitch.length, 1);
-      assert.equal(previewPanelsAfterSwitch[0]?.dataset?.previewMode, "pdf");
-      assert.equal(switchedText.includes("UI-Vorschau mit Testdaten"), false);
-      assert.equal(switchedText.includes("PDF-Vorschau mit Testdaten"), true);
-      assert.equal(switchedText.includes("PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."), true);
-      assert.equal(switchedText.includes("Layout: PDF"), true);
+      assert.equal(participantPanels.length, 2);
+      assert.equal(participantUiPanel?.dataset?.previewArea, "ui");
+      assert.equal(participantPdfPanel?.dataset?.previewArea, "pdf");
+      assert.equal(participantText.includes("Für diese Tabelle gibt es keine UI-Ansicht."), false);
+      assert.equal(participantText.includes("Für diese Tabelle gibt es keine PDF-Ansicht."), false);
       fullscreenToggle.click();
       await flushMicrotasks();
       assert.equal(editor.root.dataset.layoutMode, "normal");
@@ -868,6 +1004,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
       await flushMicrotasks();
 
       const text = collectText(editor.root);
+      const previewPanels = findPreviewPanels(editor.root);
       assert.equal(selects[0].value, "projektverwaltung");
       assert.equal(selects[1].value, "project_firms");
       assert.equal(text.includes("Tabelle: Projekt-Firmenliste"), true);
@@ -885,6 +1022,73 @@ async function runTableLayoutEditorPrototypeTests(run) {
         text.includes("Reset betrifft nur die aktuell gewählte Kombination aus Modul, Tabelle und Orientierung."),
         true
       );
+      assert.equal(text.includes("UI-Ansicht"), true);
+      assert.equal(text.includes("PDF-Ansicht"), true);
+      assert.equal(previewPanels.length, 2);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("TableLayoutEditor: uiAvailable=false zeigt Hinweis", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+    const { api } = makeEditorApi();
+    const originalListDefinitions = api.tableLayoutsListDefinitions;
+    api.tableLayoutsListDefinitions = async () => {
+      const res = await originalListDefinitions();
+      if (!res?.ok) return res;
+      return {
+        ok: true,
+        data: res.data.map((def) =>
+          def.tableKey === "protokoll_participants" ? { ...def, uiAvailable: false } : def
+        ),
+      };
+    };
+    global.window = { bbmDb: api };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
+      await editor.load();
+      const selects = findNodesByTag(editor.root, "SELECT");
+      selects[1].value = "protokoll_participants";
+      selects[1].dispatchEvent({ type: "change" });
+      await flushMicrotasks();
+      const text = collectText(editor.root);
+      assert.equal(text.includes("Für diese Tabelle gibt es keine UI-Ansicht."), true);
+      assert.equal(text.includes("Für diese Tabelle gibt es keine PDF-Ansicht."), false);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("TableLayoutEditor: pdfAvailable=false zeigt Hinweis", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+    const { api } = makeEditorApi();
+    const originalListDefinitions = api.tableLayoutsListDefinitions;
+    api.tableLayoutsListDefinitions = async () => {
+      const res = await originalListDefinitions();
+      if (!res?.ok) return res;
+      return {
+        ok: true,
+        data: res.data.map((def) => (def.tableKey === "project_firms" ? { ...def, pdfAvailable: false } : def)),
+      };
+    };
+    global.window = { bbmDb: api };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
+      await editor.load();
+      const selects = findNodesByTag(editor.root, "SELECT");
+      selects[0].value = "projektverwaltung";
+      selects[0].dispatchEvent({ type: "change" });
+      await flushMicrotasks();
+      const text = collectText(editor.root);
+      assert.equal(text.includes("Für diese Tabelle gibt es keine PDF-Ansicht."), true);
+      assert.equal(text.includes("Für diese Tabelle gibt es keine UI-Ansicht."), false);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
@@ -961,11 +1165,8 @@ async function runTableLayoutEditorPrototypeTests(run) {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
       const selects = findNodesByTag(editor.root, "SELECT");
-      const previewPdfToggle = findNodeByText(editor.root, "PDF-Vorschau");
       selects[2].value = "landscape";
       selects[2].dispatchEvent({ type: "change" });
-      await flushMicrotasks();
-      previewPdfToggle.click();
       await flushMicrotasks();
       editor.applyValues({
         uiNumberWidth: "76px",
@@ -977,9 +1178,10 @@ async function runTableLayoutEditorPrototypeTests(run) {
         labelText: "Gegenstand / Kurztext",
       });
       const draftText = collectText(editor.root);
-      assert.equal(draftText.includes("Layout: PDF"), true);
+      assert.equal(draftText.includes("Bereich: UI"), true);
+      assert.equal(draftText.includes("Bereich: PDF"), true);
       assert.equal(draftText.includes("Spalten: 3"), true);
-      assert.equal(draftText.includes("Gegenstand / Kurztext"), true);
+      assert.equal(draftText.includes("Testdaten: 3 Zeilen"), true);
       const saveRes = await editor.save();
       assert.equal(saveRes.ok, true);
       assert.equal(calls.filter((item) => item.type === "getOne").length >= 1, true);
@@ -997,7 +1199,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-tops-list-number-col"], "76px");
       assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-tops-list-text-col"], "minmax(0, 1.25fr)");
       assert.equal(saveCall.payload.layout.pdf.columns.meta.width, "18ch");
-      assert.equal(saveCall.payload.layout.labels.text, "Gegenstand / Kurztext");
+      assert.equal(saveCall.payload.layout.labels.text, "Gegenstand");
       assert.equal(saveCall.payload.layout.variant, "landscape");
 
       const resetRes = await editor.reset();
@@ -1042,7 +1244,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
       });
       const draftText = collectText(editor.root);
       assert.equal(draftText.includes("Ungültiger Spaltenwert"), true);
-      assert.equal(draftText.includes("Überschrift darf nicht leer sein"), true);
+      assert.equal(draftText.includes("Überschrift darf nicht leer sein"), false);
       const saveRes = await editor.save();
       assert.equal(saveRes.ok, false);
       assert.equal(calls.filter((item) => item.type === "save").length, 0);
@@ -1053,7 +1255,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
       const afterResetText = collectText(editor.root);
       assert.equal(afterResetText.includes("Ungültiger Spaltenwert"), false);
       assert.equal(afterResetText.includes("Überschrift darf nicht leer sein"), false);
-      assert.equal(afterResetText.includes("Layout: UI"), true);
+      assert.equal(afterResetText.includes("Bereich: UI"), true);
       assert.equal(afterResetText.includes("Spalten: 3"), true);
     } finally {
       global.document = previousDocument;
@@ -1087,18 +1289,18 @@ async function runTableLayoutEditorPrototypeTests(run) {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
       const text = collectText(editor.root);
-      const previewPanels = findNodesByTag(editor.root, "DIV").filter(
-        (node) => node?.dataset?.previewMode === "ui" || node?.dataset?.previewMode === "pdf"
-      );
+      const previewPanels = findPreviewPanels(editor.root);
       assert.equal(editor.root.dataset.layoutMode, "fullscreen");
-      assert.equal(text.includes("UI-Vorschau mit Testdaten"), true);
-      assert.equal(text.includes("PDF-Vorschau mit Testdaten"), false);
+      assert.equal(text.includes("Spiegelansicht"), true);
+      assert.equal(text.includes("UI-Ansicht"), true);
+      assert.equal(text.includes("PDF-Ansicht"), true);
       assert.equal(findNodeByText(editor.root, "Projekt"), null);
       assert.equal(findNodeByText(editor.root, "Besprechung"), null);
       assert.equal(text.includes("Beispielthema fuer die Vorschau"), true);
       assert.equal(text.includes("Kurzer Eintrag mit knapper Anzeige"), true);
-      assert.equal(previewPanels.length, 1);
-      assert.equal(previewPanels[0]?.dataset?.previewMode, "ui");
+      assert.equal(previewPanels.length, 2);
+      assert.equal(previewPanels[0]?.dataset?.previewArea === "ui" || previewPanels[1]?.dataset?.previewArea === "ui", true);
+      assert.equal(previewPanels[0]?.dataset?.previewArea === "pdf" || previewPanels[1]?.dataset?.previewArea === "pdf", true);
       assert.equal(findNodeByText(editor.root, "Normalgröße") != null, true);
     } finally {
       global.document = previousDocument;
