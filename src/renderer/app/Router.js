@@ -1145,7 +1145,7 @@ export default class Router {
       return;
     }
     try {
-      await pm.openTodoPrintPreview({ projectId, meetingId });
+      await pm.openTodoPrintPreview({ projectId });
     } finally {
       await this.closePrintModal({ keepPreview: true });
     }
@@ -1158,7 +1158,7 @@ export default class Router {
       return;
     }
     try {
-      await pm.openTopListAllPreview({ projectId, meetingId });
+      await pm.openTopListAllPreview({ projectId });
     } finally {
       await this.closePrintModal({ keepPreview: true });
     }
@@ -1172,7 +1172,6 @@ export default class Router {
     }
     this._setProjectRuntimeContext({
       projectId: effectiveProjectId,
-      meetingId: meetingId || this.currentMeetingId || null,
     });
     const pm = await this._ensurePrintModal();
     if (typeof pm?.openFirmsPrintPreview !== "function") {
@@ -1180,7 +1179,7 @@ export default class Router {
       return;
     }
     try {
-      await pm.openFirmsPrintPreview({ projectId: effectiveProjectId, meetingId: meetingId || null });
+      await pm.openFirmsPrintPreview({ projectId: effectiveProjectId });
     } finally {
       await this.closePrintModal({ keepPreview: true });
     }
@@ -1244,7 +1243,7 @@ export default class Router {
       return;
     }
     try {
-      const res = await pm.printFirmsDirect({ projectId: effectiveProjectId, meetingId: meetingId || null });
+      const res = await pm.printFirmsDirect({ projectId: effectiveProjectId });
       return res;
     } finally {
       await this.closePrintModal({ keepPreview: false });
@@ -1267,7 +1266,7 @@ export default class Router {
       return;
     }
     try {
-      const res = await pm.printTodoDirect({ projectId: effectiveProjectId, meetingId: meetingId || null });
+      const res = await pm.printTodoDirect({ projectId: effectiveProjectId });
       return res;
     } finally {
       await this.closePrintModal({ keepPreview: false });
@@ -1290,7 +1289,7 @@ export default class Router {
       return;
     }
     try {
-      const res = await pm.printTopListAllDirect({ projectId: effectiveProjectId, meetingId: meetingId || null });
+      const res = await pm.printTopListAllDirect({ projectId: effectiveProjectId });
       return res;
     } finally {
       await this.closePrintModal({ keepPreview: false });

@@ -17,14 +17,20 @@ Sie ergänzt:
 
 ## Aktueller Gesamtstand
 
-- Der Ausgabe-Dialog zeigt wieder die vorhandenen Ausgabearten fuer Protokoll und Listen:
+- Der Ausgabe-Dialog trennt die Druckarten jetzt fachlich korrekter:
   - Protokoll drucken
   - PDF-Vorschau öffnen
   - Firmenliste
   - ToDo-Liste
-  - Top-Liste (alle)
-  - gespeicherte Firmenlisten
+  - TOP-Liste
   - unbekannte Druckmodi werden nicht mehr still auf Protokoll zurückgeführt
+  - TOP-Liste zeigt alle TOPs inkl. erledigter und aller TOP-Arten
+  - ToDo-Liste zeigt projektweit nur noch offene echte ToDos
+  - ToDo-Druck hat einen optionalen Verantwortlichenfilter
+  - Firmenlisten drucken den aktuellen Projektstand ohne geschlossene Protokollauswahl
+  - gespeicherte Firmenlisten werden nicht mehr als funktionale Ausgabeart angeboten
+  - der Druckart-Einstieg akzeptiert jetzt auch den Projektkontext aus `router.context`, damit TOP-Liste nicht wegen eines zu engen Guards gesperrt bleibt
+  - TOP-Liste ist im Druckart-Dialog an den vorhandenen Router-Pfad `openTopListAllPrintPreview` angeschlossen
 - Der Protokoll-Pilot `protokoll_tops` ist jetzt kontrolliert an den Table-Layout-Resolver angebunden:
   - `printData.js` liefert den resolved Payload fuer den Druckweg mit
   - `printApp.js` und `PrintShell.js` lesen Layoutdaten nur, wenn sie im Payload enthalten sind
@@ -1524,4 +1530,7 @@ Wichtig:
 - Der Einstieg `Drucken` oeffnet jetzt zuerst eine Druckart-Auswahl:
   - `Protokoll drucken` fuehrt danach zur gewohnten Auswahl geschlossener Protokolle
   - vorhandene weitere Ausgaben bleiben ueber den ersten Schritt erreichbar, deaktivierte Optionen werden nicht als funktionierend vorgetaeuscht
-  - Protokoll-PDF-Vorschau, Firmenliste, ToDo-Liste, Top-Liste (alle) und gespeicherte Firmenlisten bleiben dabei erreichbar
+  - Protokoll-PDF-Vorschau, Firmenliste, ToDo-Liste und TOP-Liste bleiben dabei erreichbar
+  - gespeicherte Firmenlisten sind nicht mehr als funktionale Ausgabeart angeboten
+  - Firmenliste laeuft direkt ueber den aktuellen Projektstand und braucht keine geschlossene-Protokoll-Auswahl
+  - eine separate Mitarbeiter-/Personenliste ist im aktuellen Druckdialog noch nicht als eigener Modus vorhanden

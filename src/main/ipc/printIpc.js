@@ -337,6 +337,7 @@ async function printToPdf(payload = {}) {
     meetingId,
     settingsOverride: payload.settingsOverride || null,
     orientation,
+    todoResponsibleFilter: payload.todoResponsibleFilter || null,
   });
   const projectNumber = data?.project?.project_number || data?.project?.projectNumber || null;
 
@@ -466,6 +467,7 @@ function registerPrintIpc() {
         meetingId: p.meetingId,
         settingsOverride: p.settingsOverride || null,
         orientation,
+        todoResponsibleFilter: p.todoResponsibleFilter || null,
       });
       // Version/Channel für PDF-Footer mitgeben
       data.appVersion = app.getVersion ? app.getVersion() : "";

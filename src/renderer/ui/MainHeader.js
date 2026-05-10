@@ -558,22 +558,25 @@ export default class MainHeader {
 
     const itemFirms = mkPrintItem("Firmenliste", async (state) => {
       if (!(await this._ensureProtocolOutputEnabled())) return;
-      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "firms" });
+      if (typeof this.router?.openFirmsPrintPreview !== "function") return;
+      await this.router.openFirmsPrintPreview({ projectId: state.projectId });
     });
 
     const itemTodo = mkPrintItem("ToDo-Liste", async (state) => {
       if (!(await this._ensureProtocolOutputEnabled())) return;
-      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "todo" });
+      if (typeof this.router?.openTodoPrintPreview !== "function") return;
+      await this.router.openTodoPrintPreview({ projectId: state.projectId });
     });
 
-    const itemTopList = mkPrintItem("Top-Liste", async (state) => {
-      if (!(await this._ensureProtocolOutputEnabled())) return;
-      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "topsall" });
-    });
+      const itemTopList = mkPrintItem("TOP-Liste", async (state) => {
+        if (!(await this._ensureProtocolOutputEnabled())) return;
+        if (typeof this.router?.openTopListAllPrintPreview !== "function") return;
+        await this.router.openTopListAllPrintPreview({ projectId: state.projectId });
+      });
 
-    const itemMeetingsClosed = mkPrintItem("Protokolle", async (state) => {
+    const itemMeetingsClosed = mkPrintItem("Protokoll drucken", async () => {
       if (!(await this._ensureProtocolOutputEnabled())) return;
-      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "protocol" });
+      await this._openClosedProtocolSelectorFlow("print");
     });
 
     printMenu.append(itemPreview, itemFirms, itemTodo, itemTopList, itemMeetingsClosed);
@@ -2312,8 +2315,18 @@ async _openMailClient(mailType = "", options = {}) {
   }
 
   _buildPrintTypeSelectionItems({ projectId, meetingId } = {}) {
-    const currentProjectId = projectId || this.router?.currentProjectId || null;
-    const currentMeetingId = meetingId || this.router?.currentMeetingId || null;
+    const currentProjectId =
+      projectId ||
+      this.router?.currentProjectId ||
+      this.router?.context?.projectId ||
+      this.router?.context?.project?.id ||
+      null;
+    const currentMeetingId =
+      meetingId ||
+      this.router?.currentMeetingId ||
+      this.router?.context?.meetingId ||
+      this.router?.context?.meeting?.id ||
+      null;
     const actions = getVisiblePrintDialogActions();
     return actions
       .map((action) => {
@@ -2351,30 +2364,23 @@ async _openMailClient(mailType = "", options = {}) {
         }
 
         if (key === "firms-preview") {
-          helper.subLabel = "Projektbezogene Firmenliste";
+          helper.subLabel = "Aktuelle Projektfirmen zum Druckdatum";
           helper.disabled = !currentProjectId || typeof this.router?.openFirmsPrintPreview !== "function";
-          helper.disabledReason = helper.disabled ? "Kommt spaeter." : "";
+          helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
           return helper;
         }
 
         if (key === "todo-preview") {
-          helper.subLabel = "ToDo-Liste für die aktuelle Besprechung";
-          helper.disabled = !currentProjectId || !currentMeetingId || typeof this.router?.openTodoPrintPreview !== "function";
-          helper.disabledReason = helper.disabled ? "Benötigt eine geöffnete Besprechung." : "";
+          helper.subLabel = "Projektweite offene ToDos";
+          helper.disabled = !currentProjectId || typeof this.router?.openTodoPrintPreview !== "function";
+          helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
           return helper;
         }
 
         if (key === "topsAll-preview") {
-          helper.subLabel = "Top-Liste (alle) für die aktuelle Besprechung";
-          helper.disabled = !currentProjectId || !currentMeetingId || typeof this.router?.openTopListAllPreview !== "function";
-          helper.disabledReason = helper.disabled ? "Benötigt eine geöffnete Besprechung." : "";
-          return helper;
-        }
-
-        if (key === "stored-firms") {
-          helper.subLabel = "Gespeicherte Firmenlisten";
-          helper.disabled = !currentProjectId || typeof this.router?.openStoredFirmsPdfSelection !== "function";
-          helper.disabledReason = helper.disabled ? "Kommt spaeter." : "";
+          helper.subLabel = "TOP-Liste mit allen TOPs";
+          helper.disabled = !currentProjectId || typeof this.router?.openTopListAllPrintPreview !== "function";
+          helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
           return helper;
         }
 
@@ -2391,7 +2397,11 @@ async _openMailClient(mailType = "", options = {}) {
     }
     this._setPrintOpen(false);
     this._setMailOpen(false);
-    const projectId = this.router?.currentProjectId || null;
+    const projectId =
+      this.router?.currentProjectId ||
+      this.router?.context?.projectId ||
+      this.router?.context?.project?.id ||
+      null;
     if (!projectId) {
       alert("Bitte zuerst ein Projekt auswählen.");
       return;
@@ -2438,7 +2448,9 @@ async _openMailClient(mailType = "", options = {}) {
         alert("Firmenliste ist nicht verfuegbar.");
         return;
       }
-      await this.router.openFirmsPrintPreview({ projectId, meetingId: meetingId || null });
+      setTimeout(() => {
+        void this.router.openFirmsPrintPreview({ projectId });
+      }, 0);
       return;
     }
     if (key === "todo-preview") {
@@ -2446,23 +2458,20 @@ async _openMailClient(mailType = "", options = {}) {
         alert("ToDo-Liste ist nicht verfuegbar.");
         return;
       }
-      await this.router.openTodoPrintPreview({ projectId, meetingId });
+      setTimeout(() => {
+        void this.router.openTodoPrintPreview({ projectId });
+      }, 0);
       return;
     }
     if (key === "topsAll-preview") {
-      if (typeof this.router?.openTopListAllPreview !== "function") {
-        alert("Top-Liste (alle) ist nicht verfuegbar.");
+      if (typeof this.router?.openTopListAllPrintPreview !== "function") {
+        alert("TOP-Liste ist nicht verfuegbar.");
         return;
       }
-      await this.router.openTopListAllPreview({ projectId, meetingId });
+      setTimeout(() => {
+        void this.router.openTopListAllPrintPreview({ projectId });
+      }, 0);
       return;
-    }
-    if (key === "stored-firms") {
-      if (typeof this.router?.openStoredFirmsPdfSelection !== "function") {
-        alert("Gespeicherte Firmenlisten sind nicht verfuegbar.");
-        return;
-      }
-      await this.router.openStoredFirmsPdfSelection({ projectId });
     }
   }
 

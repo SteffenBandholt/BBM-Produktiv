@@ -172,8 +172,8 @@ async function runPrintModesTests(run) {
     assert.equal(labels.includes("PDF-Vorschau öffnen"), true);
     assert.equal(labels.includes("Firmenliste"), true);
     assert.equal(labels.includes("ToDo-Liste"), true);
-    assert.equal(labels.includes("Top-Liste (alle)"), true);
-    assert.equal(labels.includes("Gespeicherte Firmenlisten"), true);
+    assert.equal(labels.includes("TOP-Liste"), true);
+    assert.equal(labels.includes("Gespeicherte Firmenlisten"), false);
     assert.equal(modesList.includes("protocol"), true);
     assert.equal(modesList.includes("preview"), true);
     assert.equal(modesList.includes("firms"), true);
@@ -188,8 +188,98 @@ async function runPrintModesTests(run) {
       db.initDatabase();
 
       for (const mode of ["protocol", "preview", "vorabzug", "firms", "todo", "topsAll"]) {
-        const data = await getPrintData({ mode, orientation: "portrait" });
+        const data = await getPrintData({ mode, projectId: "17", orientation: "portrait" });
         assert.equal(data.mode, mode);
+      }
+    });
+  });
+
+  await run("PrintData: ToDo und TOP-Liste kommen aus dem Projektkontext", () => {
+    return withTempPrintData(async ({ db, getPrintData }) => {
+      db.initDatabase();
+
+      const meetingTopsRepo = require(path.join(process.cwd(), "src/main/db/meetingTopsRepo.js"));
+      const originalLatest = meetingTopsRepo.listLatestByProject;
+      const originalJoined = meetingTopsRepo.listJoinedByMeeting;
+
+      const sampleRows = [
+        {
+          id: "t1",
+          is_task: 1,
+          level: 2,
+          top_level: 2,
+          title: "Offen",
+          status: "",
+          due_date: "2026-05-01",
+          responsible_kind: "project_firm",
+          responsible_id: "pf1",
+          responsible_label: "AA",
+        },
+        {
+          id: "t2",
+          is_task: 1,
+          level: 2,
+          top_level: 2,
+          title: "Erledigt",
+          status: "erledigt",
+          due_date: "2026-05-02",
+          responsible_kind: "project_firm",
+          responsible_id: "pf2",
+          responsible_label: "BB",
+        },
+        {
+          id: "t3",
+          is_task: 0,
+          level: 2,
+          top_level: 2,
+          title: "Normaler TOP",
+          status: "",
+          due_date: "2026-05-03",
+          responsible_kind: "project_firm",
+          responsible_id: "pf3",
+          responsible_label: "CC",
+        },
+      ];
+      let joinedCalled = false;
+
+      meetingTopsRepo.listLatestByProject = (projectId) => {
+        assert.equal(projectId, "17");
+        return sampleRows;
+      };
+      meetingTopsRepo.listJoinedByMeeting = () => {
+        joinedCalled = true;
+        throw new Error("meeting-scoped load must not be used");
+      };
+
+      try {
+        const todoData = await getPrintData({ mode: "todo", projectId: "17", orientation: "portrait" });
+        assert.equal(joinedCalled, false);
+        assert.equal(todoData.todoRows.length, 1);
+        assert.equal(todoData.todoRows[0].title, "Offen");
+        assert.equal(todoData.todoRows[0].responsible_key, "project_firm::pf1");
+
+        const todoDataFiltered = await getPrintData({
+          mode: "todo",
+          projectId: "17",
+          orientation: "portrait",
+          todoResponsibleFilter: "project_firm::pf1",
+        });
+        assert.equal(todoDataFiltered.todoRows.length, 1);
+        assert.equal(todoDataFiltered.todoRows[0].responsible_key, "project_firm::pf1");
+
+        const todoDataAll = await getPrintData({
+          mode: "todo",
+          projectId: "17",
+          orientation: "portrait",
+          todoResponsibleFilter: "all",
+        });
+        assert.equal(todoDataAll.todoRows.length, 1);
+
+        const topsData = await getPrintData({ mode: "topsAll", projectId: "17", orientation: "portrait" });
+        assert.equal(topsData.tops.length, 3);
+      } finally {
+        meetingTopsRepo.listLatestByProject = originalLatest;
+        meetingTopsRepo.listJoinedByMeeting = originalJoined;
       }
     });
   });

@@ -39,9 +39,9 @@ function _docLabel(mode) {
   const normalizedMode = normalizePrintMode(mode);
   if (normalizedMode === "preview" || normalizedMode === "vorabzug") return "Vorabzug";
   if (normalizedMode === "protocol") return "Protokoll";
-  if (normalizedMode === "topsAll") return "Top-Liste (alle)";
+  if (normalizedMode === "topsAll") return "TOP-Liste";
   if (normalizedMode === "firms") return "Firmenliste";
-  if (normalizedMode === "todo") return "ToDo";
+  if (normalizedMode === "todo") return "ToDo-Liste";
   if (normalizedMode === "headerTest") return "Kopf-Test";
   return "Dokument";
 }

@@ -1090,28 +1090,16 @@ export default class PrintModal {
   // Vorabzug: direkt drucken (ohne Auswahl-Modal)
   async printVorabzug({ projectId, meetingId } = {}) {
     const pid = projectId || this.router?.currentProjectId || null;
-    const mid = meetingId || this.router?.currentMeetingId || null;
-
+    const mid = meetingId || this.selectedMeetingId || null;
     if (!pid) {
-      alert("Bitte zuerst ein Projekt auswählen.");
+      alert("Bitte zuerst ein Projekt ausw?hlen.");
       return;
     }
     if (!mid) {
-      alert("Bitte zuerst eine Besprechung öffnen.");
+      alert("Bitte zuerst eine Besprechung ausw?hlen.");
       return;
     }
-
-    try {
-      if (this.router) {
-        this.router.currentProjectId = pid;
-        this.router.currentMeetingId = mid;
-      }
-    } catch (_e) {}
-
-    this.projectId = pid;
-    this._setUiMode("vorabzug");
-
-    await this._printMeeting({
+    return await this._printMeeting({
       projectId: pid,
       meetingId: mid,
       allowOpen: true,
@@ -1121,311 +1109,55 @@ export default class PrintModal {
     });
   }
 
-  // Direkt-Vorschau für ein bestimmtes Protokoll (ohne Auswahl-Modal)
   async printMeetingPreview({ projectId, meetingId, mode } = {}) {
     const pid = projectId || this.router?.currentProjectId || null;
-    const mid = meetingId || this.router?.currentMeetingId || null;
-    const m = mode === "vorabzug" ? "vorabzug" : "closed";
-
+    const mid = meetingId || this.selectedMeetingId || null;
     if (!pid) {
-      alert("Bitte zuerst ein Projekt auswählen.");
+      alert("Bitte zuerst ein Projekt ausw?hlen.");
       return;
     }
     if (!mid) {
-      alert("Bitte zuerst eine Besprechung auswählen.");
+      alert("Bitte zuerst eine Besprechung ausw?hlen.");
       return;
     }
-
-    try {
-      if (this.router) {
-        this.router.currentProjectId = pid;
-        this.router.currentMeetingId = mid;
-      }
-    } catch (_e) {}
-
-    this.projectId = pid;
-
-    await this._printMeeting({
+    return await this._printMeeting({
       projectId: pid,
       meetingId: mid,
-      allowOpen: m === "vorabzug",
-      mode: m,
+      allowOpen: false,
+      mode: mode || "closed",
       closeModalAfter: false,
       preview: true,
     });
   }
 
-  // Firmenliste: Vorschau mit PDF (keine Save-UX)
-  async openFirmsPrintPreview({ projectId, meetingId } = {}) {
-    await this._printFirmsPdf({ projectId, meetingId, preview: true });
-  }
-
-  async openStoredFirmsPdfSelection({ projectId } = {}) {
-    try {
-      const pid = projectId || this.router?.currentProjectId || null;
-      if (!pid) {
-        alert("Bitte zuerst ein Projekt auswählen.");
-        return;
-      }
-
-      const api = window.bbmDb || {};
-      if (typeof window?.bbmPrint?.listStoredFirmsPdfs !== "function") {
-        alert("Gespeicherte Firmenlisten sind nicht verfügbar.");
-        return;
-      }
-
-      if (this.router) this.router.currentProjectId = pid;
-      this.projectId = pid;
-
-      let settings = this.router?.context?.settings || {};
-      const dirResolved = await this._resolveProtocolsDir({ settings, api, persistIfMissing: true });
-      settings = dirResolved.settings || settings;
-      const baseDir = String(dirResolved.dir || "").trim();
-      const projectInfo = await this._getProjectInfo(pid);
-      const projectLabel = await this._getProjectLabelWithNumber(pid);
-
-      const listRes = await window.bbmPrint.listStoredFirmsPdfs({
-        baseDir,
-        project: {
-          project_number: projectInfo.number || "",
-          name: projectInfo.name || "",
-          short: projectInfo.short || "",
-        },
-      });
-      if (!listRes?.ok) {
-        alert(listRes?.error || "Gespeicherte Firmenlisten konnten nicht geladen werden.");
-        return;
-      }
-
-      await new Promise((resolve) => {
-        const overlay = createPopupOverlay();
-        overlay.classList.add("bbm-print-overlay");
-        overlay.setAttribute("data-bbm-print-overlay", "stored-firms");
-
-        const closeOverlay = () => {
-          try {
-            overlay.remove();
-          } catch (_e) {
-            // ignore
-          }
-          resolve();
-        };
-
-        registerPopupCloseHandlers(overlay, () => closeOverlay());
-        overlay.addEventListener("mousedown", (e) => {
-          if (e.target === overlay) closeOverlay();
-        });
-
-        const card = document.createElement("div");
-        stylePopupCard(card, { width: "760px" });
-        card.style.maxWidth = "calc(100vw - 28px)";
-        card.style.maxHeight = "calc(100vh - 28px)";
-        card.style.padding = "16px";
-        card.style.display = "grid";
-        card.style.gridTemplateRows = "auto auto 1fr auto";
-        card.style.rowGap = "12px";
-
-        const title = document.createElement("div");
-        title.textContent = "Firmenliste";
-        title.style.fontWeight = "800";
-        title.style.fontSize = "16px";
-
-        const subtitle = document.createElement("div");
-        subtitle.textContent = `Vorhandene Firmenlisten-PDFs für ${projectLabel}`;
-        subtitle.style.opacity = "0.8";
-        subtitle.style.lineHeight = "1.4";
-
-        const listWrap = document.createElement("div");
-        listWrap.style.display = "flex";
-        listWrap.style.flexDirection = "column";
-        listWrap.style.gap = "8px";
-        listWrap.style.minHeight = "120px";
-        listWrap.style.maxHeight = "60vh";
-        listWrap.style.overflow = "auto";
-
-        const files = Array.isArray(listRes?.files) ? listRes.files : [];
-        if (!files.length) {
-          const empty = document.createElement("div");
-          empty.textContent = "Keine gespeicherten Firmenlisten-PDFs gefunden.";
-          empty.style.opacity = "0.75";
-          empty.style.padding = "8px 2px";
-          listWrap.appendChild(empty);
-        } else {
-          files.forEach((item) => {
-            const btn = document.createElement("button");
-            btn.type = "button";
-            btn.style.display = "flex";
-            btn.style.flexDirection = "column";
-            btn.style.alignItems = "flex-start";
-            btn.style.gap = "4px";
-            btn.style.width = "100%";
-            btn.style.padding = "10px 12px";
-            btn.style.textAlign = "left";
-            btn.style.border = "1px solid var(--card-border)";
-            btn.style.borderRadius = "8px";
-            btn.style.background = "var(--card-bg)";
-            btn.style.cursor = "pointer";
-
-            const fileName = document.createElement("div");
-            fileName.textContent = String(item?.fileName || item?.filePath || "").trim();
-            fileName.style.fontWeight = "700";
-            fileName.style.wordBreak = "break-word";
-
-            const meta = document.createElement("div");
-            meta.textContent = this._formatStoredPdfMeta(item);
-            meta.style.opacity = "0.75";
-            meta.style.fontSize = "12px";
-            meta.style.wordBreak = "break-word";
-
-            btn.onclick = async () => {
-              await this.openExistingPdfPreview({
-                filePath: item?.filePath,
-                title: "Firmenliste (Vorschau)",
-              });
-            };
-
-            btn.append(fileName, meta);
-            listWrap.appendChild(btn);
-          });
-        }
-
-        const actions = document.createElement("div");
-        actions.style.display = "flex";
-        actions.style.justifyContent = "flex-end";
-        actions.style.gap = "10px";
-
-        const btnClose = document.createElement("button");
-        btnClose.type = "button";
-        btnClose.textContent = "Schließen";
-        applyPopupButtonStyle(btnClose, { variant: "neutral" });
-        btnClose.onclick = () => closeOverlay();
-
-        actions.appendChild(btnClose);
-        card.append(title, subtitle, listWrap, actions);
-        overlay.appendChild(card);
-        document.body.appendChild(overlay);
-        try {
-          overlay.focus();
-        } catch (_e) {
-          // ignore
-        }
-      });
-    } catch (err) {
-      console.error("[PrintModal] openStoredFirmsPdfSelection failed:", err);
-      alert(err?.message || String(err) || "Gespeicherte Firmenlisten konnten nicht geöffnet werden.");
-    }
-  }
-
-  // ToDo-Liste: Vorschau mit PDF (gleiches Preview-Modal)
-  async openTodoPrintPreview({ projectId, meetingId } = {}) {
-    await this._printTodoPdf({ projectId, meetingId, preview: true });
-  }
-
-  // Top-Liste(alle): Vorschau mit PDF (gleiches Preview-Modal)
-  async openTopListAllPreview({ projectId, meetingId } = {}) {
-    await this._printTopListAllPdf({ projectId, meetingId, preview: true });
-  }
-
-  async printFirmsDirect({ projectId, meetingId } = {}) {
-    return await this._printFirmsPdf({ projectId, meetingId, preview: false });
-  }
-
-  async printTodoDirect({ projectId, meetingId } = {}) {
-    return await this._printTodoPdf({ projectId, meetingId, preview: false });
-  }
-
-  async printTopListAllDirect({ projectId, meetingId } = {}) {
-    return await this._printTopListAllPdf({ projectId, meetingId, preview: false });
-  }
-
-  _formatDateForDisplay(value) {
-    const iso = this._formatDateForFile(value);
-    const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (!m) return String(iso || "").trim();
-    return `${m[3]}.${m[2]}.${m[1]}`;
-  }
-
-  _formatStoredPdfMeta(item = {}) {
-    const filePath = String(item?.filePath || "").trim();
-    const mtimeMs = Number(item?.mtimeMs || 0);
-    const stamp = mtimeMs > 0 ? new Date(mtimeMs).toLocaleString("de-DE") : "";
-    return [stamp ? `Geändert: ${stamp}` : "", filePath].filter(Boolean).join(" | ");
-  }
-
-  _buildListPdfFileName({ projectNumber, projectShortName, listLabel, meetingIndex, meetingDate } = {}) {
-    const parts = [
-      this._sanitizeFileSegment(projectNumber || ""),
-      this._sanitizeFileSegment(projectShortName || ""),
-      this._sanitizeFileSegment(listLabel || ""),
-      `Stand #${String(meetingIndex || "").trim() || "?"}`,
-      this._formatDateForDisplay(meetingDate || new Date()),
-    ].filter(Boolean);
-    return this._sanitizeFileName(parts.join(" - ")) + ".pdf";
-  }
-
-  // UI-nahe Nutzung:
-  // Listen-/Vorschau-Workflows bleiben hier, delegieren die technische PDF-Erzeugung
-  // aber konsistent an den gemeinsamen Druckdienst.
-  _buildProjectListPrintRequest({
-    mode,
+  async _printProjectListPdf({
     projectId,
-    meetingId,
-    fileName,
-    protocolsDir,
-    projectNumber,
-    preview,
+    mode,
+    listLabel,
+    previewTitle,
+    preview = true,
+    todoResponsibleFilter = null,
   } = {}) {
-    return {
-      mode,
-      projectId,
-      meetingId: meetingId || null,
-      fileName,
-      baseDir: protocolsDir,
-      projectNumber,
-      overwrite: true,
-      ...(preview ? { targetDir: "temp" } : { silent: true }),
-    };
-  }
+    if (this.printing) return;
 
-  async _printFirmsPdf({ projectId, meetingId, preview = true } = {}) {
-    const pid = projectId || this.router?.currentProjectId || null;
+    const pid = projectId || this.projectId || this.router?.currentProjectId || null;
     if (!pid) {
-      alert("Bitte zuerst ein Projekt auswählen.");
+      alert("Bitte zuerst ein Projekt ausw?hlen.");
       return;
     }
 
     const api = window.bbmDb || {};
-    if (typeof api.projectFirmsListByProject !== "function") {
-      alert("projectFirmsListByProject ist nicht verfuegbar (Preload/IPC fehlt).");
-      return;
-    }
-    if (typeof api.projectFirmsListFirmCandidatesByProject !== "function") {
-      alert("projectFirmsListFirmCandidatesByProject ist nicht verfuegbar (Preload/IPC fehlt).");
-      return;
-    }
-    if (typeof api.firmsListGlobal !== "function") {
-      alert("firmsListGlobal ist nicht verfuegbar (Preload/IPC fehlt).");
-      return;
-    }
-    if (typeof api.projectCandidatesList !== "function") {
-      alert("projectCandidatesList ist nicht verfuegbar (Preload/IPC fehlt).");
-      return;
-    }
-    if (typeof api.projectPersonsListByProjectFirm !== "function") {
-      alert("projectPersonsListByProjectFirm ist nicht verfuegbar (Preload/IPC fehlt).");
-      return;
-    }
-    if (typeof api.personsListByFirm !== "function") {
-      alert("personsListByFirm ist nicht verfuegbar (Preload/IPC fehlt).");
-      return;
-    }
-
     if (typeof window?.bbmPrint?.printPdf !== "function") {
       alert("printPdf ist nicht verfuegbar (Preload/IPC fehlt).");
       return;
     }
 
-    if (preview) {
+    this.printing = true;
+    this._setMsg("Erzeuge PDF?");
+    this._applyState();
+
+    const doPreview = !!preview;
+    if (doPreview) {
       this._ensurePreviewDom();
       this._setPreviewLoading(true);
     }
@@ -1439,132 +1171,6 @@ export default class PrintModal {
       const dirResolved = await this._resolveProtocolsDir({ settings, api, persistIfMissing: true });
       settings = dirResolved.settings || settings;
       const protocolsDir = String(dirResolved.dir || "").trim();
-      if (typeof api.appSettingsGetMany === "function") {
-        const resNext = await api.appSettingsGetMany([
-          "print.nextMeeting.enabled",
-          "print.nextMeeting.date",
-          "print.nextMeeting.time",
-          "print.nextMeeting.place",
-          "print.nextMeeting.extra",
-        ]);
-        if (resNext?.ok) {
-          settings = { ...settings, ...(resNext.data || {}) };
-        }
-      }
-      if (this._nextMeetingOverride) {
-        settings = { ...settings, ...this._nextMeetingOverride };
-        this._nextMeetingOverride = null;
-      }
-      const resolvedUserData = await this._resolvePrintUserData({ settings, api });
-      settings = resolvedUserData.settings || settings;
-      let roleMeta = this._getRoleMetaFromSettings(settings);
-      if (typeof api.appSettingsGetMany === "function") {
-        const resRole = await api.appSettingsGetMany(["firm_role_order", "firm_role_labels"]);
-        if (resRole?.ok) {
-          const data = resRole.data || {};
-          roleMeta = this._getRoleMetaFromSettings({
-            firm_role_order: data.firm_role_order,
-            firm_role_labels: data.firm_role_labels,
-          });
-        }
-      }
-
-      const resLocal = await api.projectFirmsListByProject(pid);
-      if (!resLocal?.ok) {
-        alert(resLocal?.error || "Fehler beim Laden der Projektfirmen");
-        return;
-      }
-      const localFirms = resLocal.list || [];
-
-      const resAssigned = await api.projectFirmsListFirmCandidatesByProject(pid);
-      if (!resAssigned?.ok) {
-        alert(resAssigned?.error || "Fehler beim Laden der zugeordneten Firmen");
-        return;
-      }
-      const assignedIds = new Set(
-        (resAssigned.list || [])
-          .filter((x) => x && x.kind === "global_firm" && x.id)
-          .map((x) => x.id)
-      );
-
-      const resGlobal = await api.firmsListGlobal();
-      if (!resGlobal?.ok) {
-        alert(resGlobal?.error || "Fehler beim Laden der Global-Firmen");
-        return;
-      }
-      const globalFirms = (resGlobal.list || []).filter((f) => assignedIds.has(f.id));
-
-      const resCandidates = await api.projectCandidatesList({ projectId: pid });
-      if (!resCandidates?.ok) {
-        alert(resCandidates?.error || "Fehler beim Laden der Teilnehmer");
-        return;
-      }
-
-      const pickArray = (res) => res?.items || res?.list || res?.data || res?.candidates || [];
-      const candidatesRaw = pickArray(resCandidates);
-      const candidateSet = new Set(
-        (candidatesRaw || [])
-          .map((c) => {
-            const kind = String(c?.kind || "").trim();
-            const personId = c?.personId ?? c?.person_id ?? null;
-            if (!kind || !personId) return "";
-            return `${kind}::${String(personId)}`;
-          })
-          .filter((k) => !!k)
-      );
-
-      const localPeopleByFirm = new Map();
-      const globalPeopleByFirm = new Map();
-
-      const normPersonLocal = (p) => ({
-        name: String(p?.name || `${p?.first_name || ""} ${p?.last_name || ""}` || "").trim(),
-        rolle: String(p?.rolle || "").trim(),
-        funk: String(p?.funktion || "").trim(),
-        email: String(p?.email || "").trim(),
-      });
-      const normPersonGlobal = (p) => ({
-        name: String(p?.name || `${p?.first_name || ""} ${p?.last_name || ""}` || "").trim(),
-        rolle: String(p?.rolle || "").trim(),
-        funk: String(p?.phone || "").trim(),
-        email: String(p?.email || "").trim(),
-      });
-
-      await Promise.all(
-        (localFirms || []).map(async (f) => {
-          try {
-            const res = await api.projectPersonsListByProjectFirm(f.id);
-            if (!res?.ok) {
-              localPeopleByFirm.set(f.id, []);
-              return;
-            }
-            const list = (res.list || [])
-              .filter((p) => candidateSet.has(`project_person::${String(p?.id ?? "")}`))
-              .map((p) => normPersonLocal(p));
-            localPeopleByFirm.set(f.id, list);
-          } catch {
-            localPeopleByFirm.set(f.id, []);
-          }
-        })
-      );
-
-      await Promise.all(
-        (globalFirms || []).map(async (f) => {
-          try {
-            const res = await api.personsListByFirm(f.id);
-            if (!res?.ok) {
-              globalPeopleByFirm.set(f.id, []);
-              return;
-            }
-            const list = (res.list || [])
-              .filter((p) => candidateSet.has(`global_person::${String(p?.id ?? "")}`))
-              .map((p) => normPersonGlobal(p));
-            globalPeopleByFirm.set(f.id, list);
-          } catch {
-            globalPeopleByFirm.set(f.id, []);
-          }
-        })
-      );
-
       const projectInfo = await this._getProjectInfo(pid);
       const projectNumber = projectInfo.number || (pid || "");
       const projectShortName =
@@ -1573,676 +1179,306 @@ export default class PrintModal {
         projectInfo?.projectShortName ||
         projectInfo?.name ||
         "";
-      let meeting = null;
-      if (meetingId && typeof api.topsListByMeeting === "function") {
+      const safeProject = [projectNumber, projectShortName].filter(Boolean).join(" ").trim() || ("Projekt-" + pid);
+      const fileName = this._sanitizeFileName("BBM " + safeProject + " " + (listLabel || "Liste")) + ".pdf";
+
+      const out = await window.bbmPrint.printPdf({
+        bbmVersion: "1.0",
+        mode,
+        projectId: pid,
+        meetingId: null,
+        fileName,
+        todoResponsibleFilter,
+        ...(doPreview
+          ? { targetDir: "temp" }
+          : { baseDir: protocolsDir, projectNumber, overwrite: true, silent: true }),
+      });
+      if (!out?.ok) {
+        if (isBlockedOutputResult(out)) {
+          alert(getBlockedOutputMessage(out));
+          return out;
+        }
+        alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
+        return out;
+      }
+
+      if (doPreview) {
+        if (!out?.filePath) {
+          console.error("[PrintModal] Listen-Vorschau ohne Datei-Pfad", out);
+          alert("Vorschau konnte nicht geladen werden (kein Dateipfad).");
+          return;
+        }
+        this._openPreview({ filePath: out.filePath, title: previewTitle || (listLabel || "Liste") + " (Vorschau)" });
+      }
+
+      return out;
+    } catch (err) {
+      console.error("[PrintModal] Listen-Druck fehlgeschlagen", {
+        projectId: pid,
+        mode,
+        preview: !!preview,
+        message: err?.message || String(err),
+        stack: err?.stack || null,
+      });
+      alert("Druck fehlgeschlagen: " + (err?.message || String(err)));
+    } finally {
+      if (doPreview) this._setPreviewLoading(false);
+      this.printing = false;
+      this._setMsg("");
+      this._applyState();
+    }
+  }
+
+  _todoResponsibleFilterLabel(filterValue) {
+    const s = String(filterValue || "").trim();
+    if (!s || s.toLowerCase() === "all") return "Alle";
+    const match = s.match(/^label::(.+)$/i);
+    if (match) return match[1].trim() || "Ohne Verantwortlich";
+    const parts = s.split("::");
+    if (parts.length >= 2) return parts.slice(1).join("::").trim() || s;
+    return s;
+  }
+
+  _buildTodoResponsibleFilterItems(rows) {
+    const list = Array.isArray(rows) ? rows : [];
+    const seen = new Map();
+    for (const row of list) {
+      if (Number(row?.is_task ?? row?.isTask ?? 0) !== 1) continue;
+      const status = String(row?.status || "").trim().toLowerCase();
+      const completed = row?.completed_in_meeting_id ?? row?.completedInMeetingId ?? null;
+      if (completed != null) {
+        const completedText = String(completed).trim();
+        if (completedText && completedText !== "0" && completedText.toLowerCase() !== "null") continue;
+      }
+      if (status === "erledigt") continue;
+
+      const kind = String(row?.responsible_kind || row?.responsibleKind || "").trim().toLowerCase();
+      const id = String(row?.responsible_id ?? row?.responsibleId ?? "").trim();
+      const labelRaw = String(row?.responsible_label || row?.responsibleLabel || "").trim();
+      const label = labelRaw || "Ohne Verantwortlich";
+      const key = kind && id ? `${kind}::${id}` : `label::${label.toLowerCase()}`;
+      if (!seen.has(key)) {
+        seen.set(key, { id: key, label, searchText: label, disabled: false });
+      }
+    }
+    return [
+      { id: "all", label: "Alle", searchText: "Alle", disabled: false },
+      ...Array.from(seen.values()).sort((a, b) =>
+        String(a.label || "").localeCompare(String(b.label || ""), "de-DE", { sensitivity: "base" })
+      ),
+    ];
+  }
+
+  async _selectTodoResponsibleFilter({ projectId } = {}) {
+    const pid = projectId || this.projectId || this.router?.currentProjectId || null;
+    if (!pid) return null;
+
+    const api = window.bbmDb || {};
+    if (typeof api.topsListByProject !== "function") return "all";
+
+    let rows = [];
+    try {
+      const res = await api.topsListByProject(pid);
+      rows = Array.isArray(res?.list) ? res.list : Array.isArray(res) ? res : [];
+    } catch (_err) {
+      return "all";
+    }
+
+    const items = this._buildTodoResponsibleFilterItems(rows);
+    if (!items.length) return "all";
+
+    return await new Promise((resolve) => {
+      const overlay = createPopupOverlay({ background: "rgba(0,0,0,0.35)", zIndex: 10001 });
+      overlay.classList.add("bbm-print-overlay");
+      overlay.setAttribute("data-bbm-print-overlay", "todo-filter");
+      overlay.style.display = "flex";
+
+      const modal = document.createElement("div");
+      stylePopupCard(modal, { width: "620px" });
+      modal.style.maxWidth = "calc(100vw - 28px)";
+      modal.style.maxHeight = "calc(100vh - 28px)";
+      modal.style.padding = "0";
+
+      const head = document.createElement("div");
+      head.style.display = "flex";
+      head.style.alignItems = "center";
+      head.style.gap = "10px";
+      head.style.padding = "12px 14px";
+      head.style.borderBottom = "1px solid #e2e8f0";
+
+      const title = document.createElement("div");
+      title.textContent = "ToDo-Liste drucken";
+      title.style.fontWeight = "800";
+      title.style.fontSize = "16px";
+
+      const btnClose = document.createElement("button");
+      btnClose.type = "button";
+      btnClose.textContent = "Schließen";
+      applyPopupButtonStyle(btnClose);
+      btnClose.style.marginLeft = "auto";
+
+      head.append(title, btnClose);
+
+      const body = document.createElement("div");
+      body.style.display = "flex";
+      body.style.flexDirection = "column";
+      body.style.gap = "10px";
+      body.style.padding = "14px";
+      body.style.minHeight = "0";
+
+      const hint = document.createElement("div");
+      hint.style.fontSize = "12px";
+      hint.style.opacity = "0.8";
+      hint.textContent = "Optional einen Verantwortlichen wählen. Alle zeigt alle offenen ToDos.";
+
+      const select = document.createElement("select");
+      select.style.width = "100%";
+      select.style.minHeight = "38px";
+      select.style.padding = "8px 10px";
+      select.style.border = "1px solid #cbd5e1";
+      select.style.borderRadius = "10px";
+
+      for (const item of items) {
+        const opt = document.createElement("option");
+        opt.value = item.id;
+        opt.textContent = item.label;
+        select.appendChild(opt);
+      }
+
+      const count = Math.max(0, items.length - 1);
+      const listBox = document.createElement("div");
+      listBox.style.fontSize = "12px";
+      listBox.style.color = "#475569";
+      listBox.textContent = count > 0 ? `${count} Verantwortliche gefunden` : "Keine Verantwortlichen gefunden";
+
+      const actions = document.createElement("div");
+      actions.style.display = "flex";
+      actions.style.justifyContent = "flex-end";
+      actions.style.gap = "8px";
+      actions.style.padding = "10px 14px";
+      actions.style.borderTop = "1px solid #e2e8f0";
+
+      const btnCancel = document.createElement("button");
+      btnCancel.type = "button";
+      btnCancel.textContent = "Abbrechen";
+      applyPopupButtonStyle(btnCancel);
+
+      const btnOk = document.createElement("button");
+      btnOk.type = "button";
+      btnOk.textContent = "Weiter";
+      applyPopupButtonStyle(btnOk, { variant: "primary" });
+
+      actions.append(btnCancel, btnOk);
+      body.append(hint, select, listBox);
+      modal.append(head, body, actions);
+      overlay.appendChild(modal);
+
+      const cleanup = (result = null) => {
+        overlay.removeEventListener("mousedown", onOverlayClick);
+        overlay.removeEventListener("keydown", onOverlayKeyDown);
+        btnCancel.removeEventListener("click", onCancel);
+        btnOk.removeEventListener("click", onOk);
         try {
-          const meetingRes = await api.topsListByMeeting(meetingId);
-          if (meetingRes?.ok) meeting = meetingRes?.meeting || null;
-        } catch (_e) {
+          document.body.removeChild(overlay);
+        } catch {
           // ignore
         }
-      }
-      const meetingNr =
-        meeting?.meeting_index ?? meeting?.meetingIndex ?? meeting?.index ?? meeting?.number ?? "";
-      const meetingDateRaw =
-        meeting?.meeting_date ||
-        meeting?.meetingDate ||
-        meeting?.date ||
-        meeting?.created_at ||
-        meeting?.createdAt ||
-        meeting?.updated_at ||
-        meeting?.updatedAt ||
-        new Date();
-      const fn = this._buildListPdfFileName({
-        projectNumber,
-        projectShortName,
-        listLabel: "Firmenliste",
-        meetingIndex: meetingNr,
-        meetingDate: meetingDateRaw,
-      });
-      const out = await window.bbmPrint.printPdf(
-        this._buildProjectListPrintRequest({
-          mode: "firms",
-          projectId: pid,
-          meetingId,
-          fileName: fn,
-          protocolsDir,
-          projectNumber,
-          preview,
-        })
-      );
-      if (!out?.ok) {
-        if (isBlockedOutputResult(out)) {
-          alert(getBlockedOutputMessage(out));
-          return out;
-        }
-        alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
-        return out;
-      }
-      if (!out?.filePath) {
-        alert("PDF konnte nicht geoeffnet werden (Dateipfad fehlt).");
-        return;
-      }
+        resolve(result);
+      };
 
-      if (preview) {
-        this._openPreview({ filePath: out.filePath, title: "Firmenliste (Vorschau)" });
-      }
-      return out;
-    } catch (err) {
-      console.error("[PrintModal] Firmenliste Vorschau fehlgeschlagen", err);
-      alert("Vorschau konnte nicht erzeugt werden.");
-    } finally {
-      if (preview) this._setPreviewLoading(false);
-    }
-  }
+      const onOverlayClick = (e) => {
+        if (e.target !== overlay) return;
+        cleanup(null);
+      };
 
-  _isDoneStatus(status) {
-    return String(status || "").trim().toLowerCase() === "erledigt";
-  }
+      const onCancel = () => cleanup(null);
 
-  _parseDueTs(value) {
-    const s = String(value || "").slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return Number.POSITIVE_INFINITY;
-    const d = new Date(`${s}T00:00:00`);
-    const ts = d.getTime();
-    return Number.isFinite(ts) ? ts : Number.POSITIVE_INFINITY;
-  }
+      const onOverlayKeyDown = (e) => {
+        if (e.key !== "Escape") return;
+        e.preventDefault();
+        cleanup(null);
+      };
 
-  _positionParts(pos) {
-    const s = String(pos || "").trim();
-    if (!s) return [Number.POSITIVE_INFINITY];
-    return s.split(".").map((x) => {
-      const n = Number(x);
-      return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+      const onOk = () => cleanup(String(select.value || "all"));
+
+      overlay.addEventListener("mousedown", onOverlayClick);
+      overlay.addEventListener("keydown", onOverlayKeyDown);
+      btnCancel.addEventListener("click", onCancel);
+      btnOk.addEventListener("click", onOk);
+
+      document.body.appendChild(overlay);
+      try {
+        select.focus();
+      } catch (_e) {}
     });
   }
 
-  _cmpPosition(a, b) {
-    const pa = this._positionParts(a);
-    const pb = this._positionParts(b);
-    const n = Math.max(pa.length, pb.length);
-    for (let i = 0; i < n; i += 1) {
-      const av = pa[i] ?? -1;
-      const bv = pb[i] ?? -1;
-      if (av !== bv) return av - bv;
-    }
-    return 0;
-  }
-
-  _buildTodoRowsLive({ tops, meeting }) {
-    const allTops = Array.isArray(tops) ? tops : [];
-    const ampelCompute = createAmpelComputer(allTops, new Date());
-
-    const rows = allTops
-      .filter((t) => !this._isDoneStatus(t?.status))
-      .map((t) => {
-        const position = t.displayNumber ?? t.display_number ?? t.number ?? "";
-        const dueRaw = String(t?.due_date || t?.dueDate || "").slice(0, 10);
-        const responsible = String(t?.responsible_label || t?.responsibleLabel || "").trim();
-        const groupLabel = responsible || "Ohne Verantwortlich";
-        const groupSort = responsible ? responsible.toLocaleLowerCase("de-DE") : "\uffff";
-        const color = t?.ampelColor || t?.ampel_color || ampelCompute(t) || null;
-        return {
-          top_id: t?.id || null,
-          position: String(position || ""),
-          short_text: String(t?.title || "(ohne Bezeichnung)").trim(),
-          status: String(t?.status || "").trim(),
-          due_date: /^\d{4}-\d{2}-\d{2}$/.test(dueRaw) ? dueRaw : null,
-          responsible_label: responsible,
-          group_label: groupLabel,
-          ampel_color: color,
-          ampel_hex: ampelHexFrom(color),
-          _group_sort: groupSort,
-        };
-      });
-
-    rows.sort((a, b) => {
-      if (a._group_sort !== b._group_sort) {
-        return a._group_sort < b._group_sort ? -1 : 1;
-      }
-      const ad = this._parseDueTs(a.due_date);
-      const bd = this._parseDueTs(b.due_date);
-      if (ad !== bd) return ad - bd;
-      return this._cmpPosition(a.position, b.position);
-    });
-
-    return rows.map((r) => {
-      const out = { ...r };
-      delete out._group_sort;
-      return out;
+  async openFirmsPrintPreview({ projectId } = {}) {
+    return await this._printProjectListPdf({
+      projectId,
+      mode: "firms",
+      listLabel: "Firmenliste",
+      previewTitle: "Firmenliste (Vorschau)",
+      preview: true,
     });
   }
 
-  _buildTodoPrintHtml({ projectLabel, meeting, rows, settings, logoHeightMm } = {}) {
-    const protocolTitleRaw = String(settings?.["pdf.protocolTitle"] || "").trim();
-    const protocolTitle = protocolTitleRaw || "Baubesprechung";
-    const headerTemplate = this._buildPdfHeaderTemplate({
-      projectLabel,
-      meeting,
-      settings,
-      protocolTitle,
-      logoHeightMm,
-      maxLogoTopMm: 5,
+  async openTodoPrintPreview({ projectId } = {}) {
+    const filter = await this._selectTodoResponsibleFilter({ projectId });
+    if (filter == null) return false;
+    return await this._printProjectListPdf({
+      projectId,
+      mode: "todo",
+      listLabel: "ToDo-Liste",
+      previewTitle: "ToDo-Liste (Vorschau)",
+      preview: true,
+      todoResponsibleFilter: filter,
     });
-    const projectLine = headerTemplate.projectLine;
-    const meetingLine = `ToDo´s für ${headerTemplate.meetingLine}`;
-    const pdfLogoHtml = headerTemplate.pdfLogoHtml;
-    const pdfLogoTopMm = headerTemplate.pdfLogoTopMm;
-    const pdfLogoHeightMm = headerTemplate.effectiveLogoHeightMm;
-    const todoLogoHeightMm = Math.min(Math.max(0, Number(pdfLogoHeightMm || 0)), 18);
-    const headerHeightMm = pdfLogoTopMm + todoLogoHeightMm + 5;
-    const todoHeaderTopMm = 5;
-    const todoHeaderTextReserveMm = 28;
-    const todoPageTopMarginMm = todoHeaderTopMm + headerHeightMm + todoHeaderTextReserveMm;
-
-    const grouped = new Map();
-    for (const r of rows || []) {
-      const key = String(r?.group_label || "Ohne Verantwortlich");
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key).push(r);
-    }
-
-    const groupKeys = Array.from(grouped.keys());
-    groupKeys.sort((a, b) => {
-      const aa = a === "Ohne Verantwortlich" ? "\uffff" : a.toLocaleLowerCase("de-DE");
-      const bb = b === "Ohne Verantwortlich" ? "\uffff" : b.toLocaleLowerCase("de-DE");
-      if (aa < bb) return -1;
-      if (aa > bb) return 1;
-      return 0;
-    });
-
-    const bodyHtml = groupKeys.length === 0
-      ? `<div class="empty">Keine offenen TOPs vorhanden.</div>`
-      : groupKeys.map((grp) => {
-          const list = grouped.get(grp) || [];
-          const rowsHtml = list.map((r) => {
-            const due = r?.due_date ? this._fmtDateYYYYMMDD(r.due_date) : "-";
-            const dotColor = r?.ampel_hex || ampelHexFrom(r?.ampel_color) || null;
-            const dotHtml = dotColor
-              ? `<span class="dot fill" style="background:${dotColor};"></span>`
-              : `<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
-                   <circle cx="5" cy="5" r="4" fill="none" stroke="#bdbdbd" stroke-width="2"></circle>
-                 </svg>`;
-            return `
-              <tr>
-                <td class="colPos">${this._escapeHtml(r?.position || "")}</td>
-                <td class="colTop">${this._escapeHtml(r?.short_text || "")}</td>
-                <td class="colStatus">${this._escapeHtml(r?.status || "")}</td>
-                <td class="colDue">${this._escapeHtml(due)}</td>
-                <td class="colAmp">${dotHtml}</td>
-              </tr>
-            `;
-          }).join("");
-
-          return `
-            <div class="catBlock">
-              <div class="catTitle">${this._escapeHtml(grp)}</div>
-              <table class="todoTable">
-                <thead>
-                  <tr>
-                    <th class="colPos">TOP</th>
-                    <th class="colTop">Kurztext</th>
-                    <th class="colStatus">Status</th>
-                    <th class="colDue">Fertig bis</th>
-                    <th class="colAmp">Ampel</th>
-                  </tr>
-                </thead>
-                <tbody>${rowsHtml}</tbody>
-              </table>
-            </div>
-          `;
-        }).join("");
-
-    return `
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8"/>
-  <title>BBM ToDo</title>
-  <style>
-    @page { size: A4; margin: 0 10mm 8mm 19mm; }
-    :root{ --sepW: 0.25pt; --sepC: #000000; }
-    html, body {
-      margin: 0;
-      padding: 0;
-      font-family: Calibri, Arial, sans-serif;
-      font-size: 10.5pt;
-      color: #111;
-      -webkit-print-color-adjust: exact;
-      print-color-adjust: exact;
-    }
-    .pdfLogo {
-      position: fixed;
-      z-index: 9999;
-      max-height: var(--logoHeight);
-      width: auto !important;
-    }
-    .pdfLogoDummy {
-      background: #f0f0f0;
-      border: 0.2mm solid #bbb;
-      color: #666;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      font-size: 8.5pt;
-      padding: 1mm;
-      box-sizing: border-box;
-    }
-    .topRuleFixed {
-      position: fixed;
-      left: 0;
-      right: 0;
-      top: calc(var(--headerTop) + var(--headerH));
-      border-top: var(--sepW) solid var(--sepC);
-      z-index: 4;
-      pointer-events: none;
-    }
-    .page { position: relative; z-index: 1; }
-    .todoHeaderFixed {
-      position: fixed;
-      left: 19mm;
-      right: 10mm;
-      top: var(--headerTop);
-      z-index: 3;
-    }
-    .page1 {
-      margin: 0 0 6mm 0;
-      padding-top: 0;
-    }
-    .todoPad {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      margin-top: 0;
-    }
-    .todoPad thead { display: table-header-group; }
-    .todoPad .todoHeadPad th {
-      padding: 0;
-      height: var(--todoHeadH);
-      border: 0;
-      background: transparent;
-    }
-    .todoPad td {
-      padding: 0;
-      border: 0;
-      vertical-align: top;
-    }
-    .projLine {
-      margin-top: 1.5mm;
-      font-weight: 400;
-      font-size: 11pt;
-    }
-    .projLabel {
-      margin-top: 2mm;
-      font-weight: 400;
-      font-size: 11pt;
-    }
-    .meetingLine {
-      margin-top: 15mm;
-      font-weight: 700;
-      font-size: 18pt;
-      text-align: center;
-    }
-    .catBlock {
-      margin-bottom: 6mm;
-      padding-bottom: 3mm;
-      border-bottom: var(--sepW) solid var(--sepC);
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-    .catBlock:last-child { border-bottom: none; }
-    .catTitle {
-      font-weight: 700;
-      font-size: 10pt;
-      margin: 0 0 2mm 0;
-    }
-    .todoTable {
-      width: 100%;
-      border-collapse: collapse;
-      table-layout: fixed;
-      border: var(--sepW) solid var(--sepC);
-    }
-    .todoTable th,
-    .todoTable td {
-      text-align: left;
-      padding: 1.8mm 2mm;
-      border-bottom: var(--sepW) solid var(--sepC);
-      font-size: 9.6pt;
-      vertical-align: top;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .todoTable th {
-      background: #efefef;
-      font-weight: 700;
-    }
-    .todoTable tbody tr:last-child td { border-bottom: 0; }
-    .colPos { width: 14mm; }
-    .colTop { width: auto; }
-    .colStatus { width: 23mm; }
-    .colDue { width: 22mm; }
-    .colAmp { width: 14mm; text-align: center !important; }
-    .dot {
-      width: 4mm;
-      height: 4mm;
-      border-radius: 50%;
-      box-sizing: border-box;
-      display: inline-block;
-      vertical-align: middle;
-    }
-    .dot.fill { border: 0.2mm solid rgba(0,0,0,0.25); }
-    .dot.empty { background: transparent; border: 0.2mm solid #aaa; }
-    .empty { padding: 3mm 2mm; opacity: .7; }
-    ${this._pdfCopyrightStyle()}
-  </style>
-</head>
-<body class="closed" style="--logoTop:${pdfLogoTopMm}mm; --logoHeight:${todoLogoHeightMm}mm; --headerH:${headerHeightMm}mm; --headerTop:${todoHeaderTopMm}mm; --todoHeadH:${todoPageTopMarginMm}mm;">
-  ${pdfLogoHtml}
-  ${this._pdfCopyrightHtml()}
-  <div class="topRuleFixed" aria-hidden="true"></div>
-  <div class="todoHeaderFixed">
-    <div class="page1">
-      <div class="projLabel">Projekt:</div>
-      <div class="projLine">${this._escapeHtml(projectLine)}</div>
-      <div class="meetingLine">${meetingLine}</div>
-    </div>
-  </div>
-  <div class="page">
-    <table class="todoPad">
-      <thead>
-        <tr class="todoHeadPad"><th></th></tr>
-      </thead>
-      <tbody>
-        <tr><td>${bodyHtml}</td></tr>
-      </tbody>
-    </table>
-  </div>
-</body>
-</html>
-    `.trim();
   }
 
-  async _printTodoPdf({ projectId, meetingId, preview = true } = {}) {
-    const pid = projectId || this.router?.currentProjectId || null;
-    const mid = meetingId || this.router?.currentMeetingId || null;
-
-    if (!pid) {
-      alert("Bitte zuerst ein Projekt auswählen.");
-      return;
-    }
-    if (!mid) {
-      alert("Bitte zuerst eine Besprechung auswählen.");
-      return;
-    }
-
-    const api = window.bbmDb || {};
-    if (typeof api.topsListByProject !== "function") {
-      alert("topsListByProject ist nicht verfügbar (Preload/IPC fehlt).");
-      return;
-    }
-
-    if (typeof window?.bbmPrint?.printPdf !== "function") {
-      alert("printPdf ist nicht verfuegbar (Preload/IPC fehlt).");
-      return;
-    }
-
-    if (preview) {
-      this._ensurePreviewDom();
-      this._setPreviewLoading(true);
-    }
-
-    try {
-      if (this.router?.ensureAppSettingsLoaded) {
-        await this.router.ensureAppSettingsLoaded({ force: false });
-      }
-
-      let settings = this.router?.context?.settings || {};
-      const dirResolved = await this._resolveProtocolsDir({ settings, api, persistIfMissing: true });
-      settings = dirResolved.settings || settings;
-      const protocolsDir = String(dirResolved.dir || "").trim();
-      if (typeof api.appSettingsGetMany === "function") {
-        const resNext = await api.appSettingsGetMany([
-          "print.nextMeeting.enabled",
-          "print.nextMeeting.date",
-          "print.nextMeeting.time",
-          "print.nextMeeting.place",
-          "print.nextMeeting.extra",
-        ]);
-        if (resNext?.ok) {
-          settings = { ...settings, ...(resNext.data || {}) };
-        }
-      }
-      const resolvedUserData = await this._resolvePrintUserData({ settings, api });
-      settings = resolvedUserData.settings || settings;
-
-      const res = await api.topsListByMeeting(mid);
-      if (!res?.ok) {
-        alert(res?.error || "Fehler beim Laden der TOPs");
-        return;
-      }
-
-      const meeting = res?.meeting || null;
-      if (!meeting) {
-        alert("Besprechung nicht gefunden.");
-        return;
-      }
-
-      let rows = [];
-      const isClosed = Number(meeting?.is_closed) === 1;
-      if (isClosed) {
-        if (meeting?.todo_snapshot_error) {
-          alert(`${meeting.todo_snapshot_error}\nBitte Besprechung erneut schließen.`);
-          return;
-        }
-        const snap = meeting?.todo_snapshot || null;
-        const snapItems = Array.isArray(snap?.items) ? snap.items : null;
-        if (!snapItems) {
-          alert("Kein ToDo-Snapshot vorhanden. Bitte Besprechung erneut schließen.");
-          return;
-        }
-        rows = snapItems;
-      } else {
-        rows = this._buildTodoRowsLive({ tops: res?.list || [], meeting });
-      }
-
-      const projectInfo = await this._getProjectInfo(pid);
-      const projectNumber = projectInfo.number || (pid || "");
-      const projectShortName =
-        projectInfo?.short ||
-        projectInfo?.short_name ||
-        projectInfo?.projectShortName ||
-        projectInfo?.name ||
-        "";
-      const meetingNr =
-        meeting?.meeting_index ?? meeting?.meetingIndex ?? meeting?.index ?? meeting?.number ?? "";
-      const meetingDateRaw =
-        meeting?.meeting_date ||
-        meeting?.meetingDate ||
-        meeting?.date ||
-        meeting?.created_at ||
-        meeting?.createdAt ||
-        meeting?.updated_at ||
-        meeting?.updatedAt ||
-        null;
-      const fileName = this._buildListPdfFileName({
-        projectNumber,
-        projectShortName,
-        listLabel: "ToDo-Liste",
-        meetingIndex: meetingNr,
-        meetingDate: meetingDateRaw || new Date(),
-      });
-
-      const logoHeightMm = 0;
-
-      const out = await window.bbmPrint.printPdf({
-        bbmVersion: "1.0",
-        ...this._buildProjectListPrintRequest({
-          mode: "todo",
-          projectId: pid,
-          meetingId: mid,
-          fileName,
-          protocolsDir,
-          projectNumber,
-          preview,
-        }),
-      });
-      if (!out?.ok) {
-        if (isBlockedOutputResult(out)) {
-          alert(getBlockedOutputMessage(out));
-          return out;
-        }
-        alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
-        return out;
-      }
-      if (!out?.filePath) {
-        alert("PDF konnte nicht geoeffnet werden (Dateipfad fehlt).");
-        return;
-      }
-
-      if (preview) {
-        this._openPreview({ filePath: out.filePath, title: "ToDo (Vorschau)" });
-      }
-      return out;
-    } catch (err) {
-      console.error("[PrintModal] ToDo Vorschau fehlgeschlagen", err);
-      alert("ToDo-Vorschau konnte nicht erzeugt werden.");
-    } finally {
-      if (preview) this._setPreviewLoading(false);
-    }
+  async openTopListAllPreview({ projectId } = {}) {
+    return await this._printProjectListPdf({
+      projectId,
+      mode: "topsAll",
+      listLabel: "TOP-Liste",
+      previewTitle: "TOP-Liste (Vorschau)",
+      preview: true,
+    });
   }
 
-  async _printTopListAllPdf({ projectId, meetingId, preview = true } = {}) {
-    const pid = projectId || this.router?.currentProjectId || null;
-    const mid = meetingId || null;
-    if (!pid) {
-      alert("Bitte zuerst ein Projekt auswählen.");
-      return;
-    }
+  async openStoredFirmsPdfSelection() {
+    alert("Gespeicherte Firmenlisten sind nicht verf?gbar.");
+    return false;
+  }
 
-    const api = window.bbmDb || {};
-    if (typeof api.topsListByMeeting !== "function") {
-      alert("topsListByMeeting ist nicht verfügbar (Preload/IPC fehlt).");
-      return;
-    }
+  async printFirmsDirect({ projectId } = {}) {
+    return await this._printProjectListPdf({
+      projectId,
+      mode: "firms",
+      listLabel: "Firmenliste",
+      preview: false,
+    });
+  }
 
-    if (typeof window?.bbmPrint?.printPdf !== "function") {
-      alert("printPdf ist nicht verfuegbar (Preload/IPC fehlt).");
-      return;
-    }
+  async printTodoDirect({ projectId } = {}) {
+    const filter = await this._selectTodoResponsibleFilter({ projectId });
+    if (filter == null) return false;
+    return await this._printProjectListPdf({
+      projectId,
+      mode: "todo",
+      listLabel: "ToDo-Liste",
+      preview: false,
+      todoResponsibleFilter: filter,
+    });
+  }
 
-    if (preview) {
-      this._ensurePreviewDom();
-      this._setPreviewLoading(true);
-    }
-
-    try {
-      if (this.router?.ensureAppSettingsLoaded) {
-        await this.router.ensureAppSettingsLoaded({ force: false });
-      }
-
-      let settings = this.router?.context?.settings || {};
-      const dirResolved = await this._resolveProtocolsDir({ settings, api, persistIfMissing: true });
-      settings = dirResolved.settings || settings;
-      const protocolsDir = String(dirResolved.dir || "").trim();
-      const resolvedUserData = await this._resolvePrintUserData({ settings, api });
-      settings = resolvedUserData.settings || settings;
-
-      let meeting = null;
-      if (mid) {
-        if (typeof api.topsListByMeeting !== "function") {
-          alert("topsListByMeeting ist nicht verfügbar (Preload/IPC fehlt).");
-          return;
-        }
-        const resMeeting = await api.topsListByMeeting(mid);
-        if (!resMeeting?.ok) {
-          alert(resMeeting?.error || "Fehler beim Laden der Besprechung");
-          return;
-        }
-        meeting = resMeeting.meeting || null;
-        if (!meeting) {
-          alert("Besprechung nicht gefunden.");
-          return;
-        }
-      }
-
-      const resAll = await api.topsListByProject(pid);
-      if (!resAll?.ok) {
-        alert(resAll?.error || "Fehler beim Laden der Projekt-TOPs");
-        return;
-      }
-
-      const projectLabel = await this._getProjectLabelWithNumber(pid);
-      const projectInfo = await this._getProjectInfo(pid);
-      const projectNumber = projectInfo.number || (pid || "");
-      const projectShortName =
-        projectInfo?.short ||
-        projectInfo?.short_name ||
-        projectInfo?.projectShortName ||
-        projectInfo?.name ||
-        "";
-      const meetingNr =
-        meeting?.meeting_index ?? meeting?.meetingIndex ?? meeting?.index ?? meeting?.number ?? "";
-      const meetingDateRaw =
-        meeting?.meeting_date ||
-        meeting?.meetingDate ||
-        meeting?.date ||
-        meeting?.created_at ||
-        meeting?.createdAt ||
-        meeting?.updated_at ||
-        meeting?.updatedAt ||
-        null;
-      const fileName = this._buildListPdfFileName({
-        projectNumber,
-        projectShortName,
-        listLabel: "Top-Liste",
-        meetingIndex: meetingNr,
-        meetingDate: meetingDateRaw || new Date(),
-      });
-
-      const logoHeightMm = 0;
-
-      const tops = resAll.list || [];
-      const html = this._buildTopListAllHtml({
-        projectLabel,
-        meeting,
-        tops,
-        settings,
-        logoHeightMm,
-      });
-
-      const out = await window.bbmPrint.printPdf({
-        bbmVersion: "1.0",
-        ...this._buildProjectListPrintRequest({
-          mode: "topsAll",
-          projectId: pid,
-          meetingId: mid,
-          fileName,
-          protocolsDir,
-          projectNumber,
-          preview,
-        }),
-      });
-      if (!out?.ok) {
-        if (isBlockedOutputResult(out)) {
-          alert(getBlockedOutputMessage(out));
-          return out;
-        }
-        alert(out?.error || "PDF-Erzeugung fehlgeschlagen");
-        return out;
-      }
-
-      if (preview) {
-        this._openPreview({ filePath: out.filePath, title: "Top-Liste (alle)" });
-      }
-      return out;
-    } catch (err) {
-      console.error("[PrintModal] Top-Liste(alle) Vorschau fehlgeschlagen", err);
-      alert("Top-Liste(alle)-Vorschau konnte nicht erzeugt werden.");
-    } finally {
-      if (preview) this._setPreviewLoading(false);
-    }
+  async printTopListAllDirect({ projectId } = {}) {
+    return await this._printProjectListPdf({
+      projectId,
+      mode: "topsAll",
+      listLabel: "TOP-Liste",
+      preview: false,
+    });
   }
 
   close({ keepPreview = false } = {}) {
@@ -3860,7 +3096,7 @@ export default class PrintModal {
 <html>
 <head>
   <meta charset="utf-8"/>
-  <title>BBM Top-Liste (alle)</title>
+  <title>BBM TOP-Liste</title>
   <style>
     @page { size: A4; margin: 0 10mm 28mm 19mm; }
 
@@ -4146,7 +3382,7 @@ export default class PrintModal {
     <div class="page1">
       <div class="projLabel">Projekt:</div>
       <div class="projLine">${this._escapeHtml(projectLine)}</div>
-      <div class="meetingLine">Top-Liste (alle)</div>
+      <div class="meetingLine">TOP-Liste</div>
       <div class="meetingMetaLine">${meeting ? meetingLine : ""}</div>
     </div>
 
@@ -4730,7 +3966,7 @@ export default class PrintModal {
 
       const res = await api.topsListByMeeting(meetingId);
       if (!res?.ok) {
-        alert(res?.error || "Fehler beim Laden der TOPs");
+        alert(res?.error || "Fehler beim Laden der Projekt-ToDos");
         return;
       }
 

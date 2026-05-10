@@ -43,7 +43,7 @@ function _docLabelForMode(mode) {
   const m = String(mode || "").trim();
   if (m === "preview" || m === "vorabzug") return "Vorabzug";
   if (m === "protocol") return "Protokoll";
-  if (m === "topsAll") return "Top-Liste (alle)";
+  if (m === "topsAll") return "TOP-Liste";
   if (m === "firms") return "Firmenliste";
   if (m === "todo") return "ToDo-Liste";
   if (m === "headerTest") return "Kopf-Test";
@@ -290,11 +290,7 @@ function _buildTodoRows(db, rows) {
   const list = Array.isArray(rows) ? rows : [];
   const responsibleNames = _resolveTodoResponsibleNames(db, list);
   return list
-    .filter((t) => !_isDoneStatus(t?.status))
-    .filter((t) => {
-      const lvl = Number(t?.level ?? t?.top_level ?? 0) || 0;
-      return lvl >= 2 && lvl <= 4;
-    })
+    .filter((t) => _isOpenTodoRow(t))
     .map((t) => {
       const kind = String(t?.responsible_kind || "").trim().toLowerCase();
       const id = String(t?.responsible_id ?? "").trim();
@@ -304,11 +300,19 @@ function _buildTodoRows(db, rows) {
       if (responsible.localeCompare("alle", "de-DE", { sensitivity: "base" }) === 0) {
         responsible = "";
       }
+      const responsibleKey = _todoResponsibleKeyFromRow({
+        responsible_kind: kind,
+        responsible_id: id,
+        responsible_label: responsible,
+      });
       return {
         id: String(t?.id ?? "").trim(),
         level: Number(t?.level ?? t?.top_level ?? 0) || 0,
         position: _normalizeTopNumber(t),
         title: String(t?.title || "").trim(),
+        responsible_kind: kind,
+        responsible_id: id,
+        responsible_key: responsibleKey,
         responsible,
         responsible_group: responsible || "Ohne Verantwortlich",
         due_date: String(t?.due_date || t?.dueDate || "").slice(0, 10),
@@ -554,6 +558,35 @@ function _mapTopRow(row) {
 
 function _isDoneStatus(status) {
   return String(status || "").trim().toLowerCase() === "erledigt";
+}
+
+function _normalizeTodoResponsibleFilter(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  const lower = raw.toLowerCase();
+  if (lower === "all" || lower === "alle" || lower === "*") return "all";
+  return raw;
+}
+
+function _todoResponsibleKeyFromRow(row) {
+  const kind = String(row?.responsible_kind || row?.responsibleKind || "").trim().toLowerCase();
+  const id = String(row?.responsible_id ?? row?.responsibleId ?? "").trim();
+  const label = String(row?.responsible_label || row?.responsibleLabel || "").trim();
+  if (kind && id) return `${kind}::${id}`;
+  if (label) return `label::${label.toLowerCase()}`;
+  return "none";
+}
+
+function _isOpenTodoRow(row) {
+  if (!row) return false;
+  if (Number(row?.is_task ?? row?.isTask ?? 0) !== 1) return false;
+  if (_isDoneStatus(row?.status)) return false;
+  const completed = row?.completed_in_meeting_id ?? row?.completedInMeetingId ?? null;
+  if (completed != null) {
+    const s = String(completed).trim();
+    if (s && s !== "0" && s.toLowerCase() !== "null") return false;
+  }
+  return true;
 }
 
 function _listMeetingParticipants(db, meetingId) {
@@ -866,7 +899,15 @@ async function _buildPrintRuntimeContext({
 
 // Fachliche Dokumentinhalte bleiben mode-bezogen:
 // Teilnehmer, TOPs, Firmen und ToDo-Zeilen werden hier je Ausgabeart geladen.
-function _loadPrintDocumentContent({ db, mode, projectId, meetingId, meeting, settings } = {}) {
+function _loadPrintDocumentContent({
+  db,
+  mode,
+  projectId,
+  meetingId,
+  meeting,
+  settings,
+  todoResponsibleFilter,
+} = {}) {
   let participants = [];
   let tops = [];
   let firms = [];
@@ -890,10 +931,17 @@ function _loadPrintDocumentContent({ db, mode, projectId, meetingId, meeting, se
     firms = _sortFirmsByRoleOrderAndName(firms, settings?.["firm_role_order"]);
     firms = _enrichFirmsForCards({ db, firms, settings });
   } else if (mode === "todo") {
-    const rowsRaw = meetingId ? meetingTopsRepo.listJoinedByMeeting(meetingId) : [];
+    const rowsRaw = projectId ? meetingTopsRepo.listLatestByProject(projectId) : [];
     const rows = (rowsRaw || []).map(_mapTopRow);
-    _applyHierDisplayNumbers(rows, Number(meeting?.is_closed) !== 1);
+    _applyHierDisplayNumbers(rows, false);
     todoRows = _buildTodoRows(db, rows);
+    const filter = _normalizeTodoResponsibleFilter(todoResponsibleFilter);
+    if (filter && filter !== "all") {
+      todoRows = todoRows.filter((row) => {
+        const key = String(row?.responsible_key || "").trim().toLowerCase();
+        return key === filter.toLowerCase();
+      });
+    }
   }
 
   return {
@@ -904,7 +952,14 @@ function _loadPrintDocumentContent({ db, mode, projectId, meetingId, meeting, se
   };
 }
 
-async function getPrintData({ mode, projectId, meetingId, settingsOverride, orientation } = {}) {
+async function getPrintData({
+  mode,
+  projectId,
+  meetingId,
+  settingsOverride,
+  orientation,
+  todoResponsibleFilter,
+} = {}) {
   const { resolvePrintMode } = await _loadPrintModesModule();
   const normalizedMode = resolvePrintMode(mode, { fallback: "protocol" });
   if (!normalizedMode) {
@@ -931,6 +986,7 @@ async function getPrintData({ mode, projectId, meetingId, settingsOverride, orie
     meetingId,
     meeting: runtimeContext.meeting,
     settings: runtimeContext.settings,
+    todoResponsibleFilter,
   });
 
   return {

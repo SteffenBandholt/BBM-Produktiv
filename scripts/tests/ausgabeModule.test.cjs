@@ -67,7 +67,7 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printModalSource.includes("PDF-Vorschau"), true);
     assert.equal(printModalSource.includes("Firmenliste"), true);
     assert.equal(printModalSource.includes("ToDo-Liste"), true);
-    assert.equal(printModalSource.includes("Top-Liste (alle)"), true);
+    assert.equal(printModalSource.includes("TOP-Liste"), true);
     assert.equal(printModalSource.includes("Gespeicherte Firmenlisten"), true);
     assert.equal(printModalSource.includes("Weitere Ausgaben"), true);
     assert.equal(
@@ -81,11 +81,15 @@ async function runAusgabeModuleTests(run) {
     );
     assert.equal(printModalSource.includes("printClosedMeetingDirect"), true);
     assert.equal(printModalSource.includes("openTodoPrintPreview"), true);
-    assert.equal(printModalSource.includes("openTopListAllPreview"), true);
+    assert.equal(mainHeaderSource.includes("openTopListAllPrintPreview"), true);
     assert.equal(printModalSource.includes("openFirmsPrintPreview"), true);
     assert.equal(printModalSource.includes("openStoredFirmsPdfSelection"), true);
+    assert.equal(printModalSource.includes("_selectTodoResponsibleFilter"), true);
+    assert.equal(printModalSource.includes("ToDo-Liste drucken"), true);
+    assert.equal(printModalSource.includes("Optional einen Verantwortlichen wählen"), true);
     assert.equal(printAppSource.includes("Unbekannter Druckmodus"), true);
     assert.equal(printIpcSource.includes("Unbekannter Druckmodus"), true);
+    assert.equal(printModalSource.includes("printMeetingPreview"), true);
   });
 
   await run("Ausgabe: Drucken startet mit Druckart-Auswahl", async () => {
@@ -118,7 +122,7 @@ async function runAusgabeModuleTests(run) {
         openTodoPrintPreview: async (args) => {
           calls.push(["todo", args]);
         },
-        openTopListAllPreview: async (args) => {
+        openTopListAllPrintPreview: async (args) => {
           calls.push(["tops", args]);
         },
         openStoredFirmsPdfSelection: async (args) => {
@@ -133,17 +137,16 @@ async function runAusgabeModuleTests(run) {
     await header._handlePrintTypeSelection({ id: "protocol-print" }, { projectId: "17" });
     await header._handlePrintTypeSelection({ id: "protocol-preview" }, { projectId: "17", meetingId: "m1" });
     await header._handlePrintTypeSelection({ id: "firms-preview" }, { projectId: "17" });
-    await header._handlePrintTypeSelection({ id: "todo-preview" }, { projectId: "17", meetingId: "m1" });
-    await header._handlePrintTypeSelection({ id: "topsAll-preview" }, { projectId: "17", meetingId: "m1" });
-    await header._handlePrintTypeSelection({ id: "stored-firms" }, { projectId: "17" });
+    await header._handlePrintTypeSelection({ id: "todo-preview" }, { projectId: "17" });
+    await header._handlePrintTypeSelection({ id: "topsAll-preview" }, { projectId: "17" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
 
     assert.deepEqual(calls, [
       ["protocol-flow", "print"],
       ["preview", { projectId: "17", meetingId: "m1", mode: "closed" }],
-      ["firms", { projectId: "17", meetingId: null }],
-      ["todo", { projectId: "17", meetingId: "m1" }],
-      ["tops", { projectId: "17", meetingId: "m1" }],
-      ["stored", { projectId: "17" }],
+      ["firms", { projectId: "17" }],
+      ["todo", { projectId: "17" }],
+      ["tops", { projectId: "17" }],
     ]);
   });
 
@@ -155,8 +158,7 @@ async function runAusgabeModuleTests(run) {
         openMeetingPrintPreview: async () => {},
         openFirmsPrintPreview: async () => {},
         openTodoPrintPreview: async () => {},
-        openTopListAllPreview: async () => {},
-        openStoredFirmsPdfSelection: async () => {},
+        openTopListAllPrintPreview: async () => {},
       },
     });
     header._setPrintOpen = () => {};
@@ -165,12 +167,34 @@ async function runAusgabeModuleTests(run) {
     const items = header._buildPrintTypeSelectionItems({ projectId: "17", meetingId: null });
     const byId = Object.fromEntries(items.map((item) => [item.id, item]));
 
+    assert.equal(items.some((item) => item.id === "stored-firms"), false);
     assert.equal(byId["protocol-print"]?.disabled, false);
     assert.equal(byId["protocol-preview"]?.disabled, true);
-    assert.equal(byId["todo-preview"]?.disabled, true);
-    assert.equal(byId["topsAll-preview"]?.disabled, true);
+    assert.equal(byId["todo-preview"]?.disabled, false);
+    assert.equal(byId["topsAll-preview"]?.disabled, false);
     assert.equal(byId["firms-preview"]?.disabled, false);
-    assert.equal(byId["stored-firms"]?.disabled, false);
+  });
+
+  await run("Ausgabe: Druckart-Auswahl akzeptiert Projektkontext aus router.context", () => {
+    const header = new MainHeader({
+      router: {
+        context: { projectId: "17" },
+        currentMeetingId: null,
+        openMeetingPrintPreview: async () => {},
+        openFirmsPrintPreview: async () => {},
+        openTodoPrintPreview: async () => {},
+        openTopListAllPrintPreview: async () => {},
+      },
+    });
+    header._setPrintOpen = () => {};
+    header._setMailOpen = () => {};
+
+    const items = header._buildPrintTypeSelectionItems({ projectId: null, meetingId: null });
+    const byId = Object.fromEntries(items.map((item) => [item.id, item]));
+
+    assert.equal(byId["topsAll-preview"]?.disabled, false);
+    assert.equal(byId["todo-preview"]?.disabled, false);
+    assert.equal(mainHeaderSource.includes("this.router?.context?.projectId"), true);
   });
 
   await run("Ausgabe: PDF zeigt das TOP-Anlagedatum nicht auf Level 1", () => {
