@@ -17,7 +17,7 @@ export class DevLayoutToolbar {
     this.previewStateByZone = {
       number: { width: 0, inset: 0, font: 0 },
       text: { width: 0, inset: 0, font: 0 },
-      meta: { width: 74, inset: 4, font: 0 },
+      meta: { width: 74, inset: 4, font: 11 },
     };
     this.activeZone = null;
 
@@ -92,7 +92,7 @@ export class DevLayoutToolbar {
     this.root.dataset.activeZone = zoneKey || "";
     this.line1El.textContent = zoneLabel ? `TOP-Liste > ${zoneLabel}` : "Layout: TOP-Liste | Bereich waehlen";
     this.line2El.textContent = zoneLabel
-      ? `Breite ${preview?.width || 0} px | Innen ${preview?.inset || 0} px | Schrift ${preview?.font || 0}`
+      ? `Breite ${preview?.width || 0} px | Innen ${preview?.inset || 0} px | Schrift ${preview?.font || 0} px`
       : "";
     this.line2El.dataset.empty = zoneLabel ? "false" : "true";
     this.controlsWrap.hidden = !zoneLabel;
@@ -118,7 +118,7 @@ export class DevLayoutToolbar {
 
     const value = document.createElement("div");
     value.className = "bbm-dev-layout-toolbar-control-value";
-    value.textContent = key === "width" ? "74 px" : key === "inset" ? "4 px" : "0";
+    value.textContent = key === "width" ? "74 px" : key === "inset" ? "4 px" : "11 px";
 
     const plus = document.createElement("button");
     plus.type = "button";
@@ -128,10 +128,6 @@ export class DevLayoutToolbar {
     plus.onclick = () => this._nudgeControl(key, 1);
 
     root.append(labelEl, minus, value, plus);
-    if (key === "font") {
-      minus.disabled = true;
-      plus.disabled = true;
-    }
     return { root, valueEl: value, minusEl: minus, plusEl: plus, key };
   }
 
@@ -144,10 +140,10 @@ export class DevLayoutToolbar {
     const preview = this._getZonePreview(zoneKey) || { width: 0, inset: 0, font: 0 };
     for (const [key, control] of Object.entries(this.controls)) {
       const value = Number(preview?.[key] || 0);
-      control.valueEl.textContent = key === "width" || key === "inset" ? `${value} px` : String(value);
-      const isMetaControl = zoneKey === "meta" && (key === "width" || key === "inset");
-      control.minusEl.disabled = !isMetaControl || key === "font";
-      control.plusEl.disabled = !isMetaControl || key === "font";
+      control.valueEl.textContent = key === "width" || key === "inset" || key === "font" ? `${value} px` : String(value);
+      const isMetaControl = zoneKey === "meta" && (key === "width" || key === "inset" || key === "font");
+      control.minusEl.disabled = !isMetaControl;
+      control.plusEl.disabled = !isMetaControl;
       control.root.dataset.active = zoneKey ? "true" : "false";
     }
     this._emitPreviewChange(zoneKey, preview);
@@ -156,11 +152,11 @@ export class DevLayoutToolbar {
   _nudgeControl(controlKey, delta) {
     const zoneKey = this.activeZone;
     if (!zoneKey) return;
-    if (zoneKey !== "meta" || !["width", "inset"].includes(controlKey)) return;
+    if (zoneKey !== "meta" || !["width", "inset", "font"].includes(controlKey)) return;
     const preview = this.previewStateByZone[zoneKey] || { width: 0, inset: 0, font: 0 };
-    const step = controlKey === "inset" ? 2 : 5;
-    const min = controlKey === "inset" ? 0 : 50;
-    const max = controlKey === "inset" ? 24 : 160;
+    const step = controlKey === "inset" ? 2 : controlKey === "font" ? 1 : 5;
+    const min = controlKey === "inset" ? 0 : controlKey === "font" ? 9 : 50;
+    const max = controlKey === "inset" ? 24 : controlKey === "font" ? 16 : 160;
     const nextValue = Math.max(min, Math.min(max, Number(preview[controlKey] || 0) + delta * step));
     const nextPreview = {
       ...preview,
@@ -197,7 +193,16 @@ export class DevLayoutToolbar {
     }
   }
 
-  setMetaValues({ width, inset } = {}) {
+  setMetaFont(font) {
+    const value = Number(font);
+    const next = Number.isFinite(value) ? Math.max(9, Math.min(16, Math.floor(value))) : 11;
+    this.previewStateByZone.meta.font = next;
+    if (this.activeZone === "meta") {
+      this.update({ enabled: true, activeZone: "meta" });
+    }
+  }
+
+  setMetaValues({ width, inset, font } = {}) {
     if (width !== undefined) {
       const value = Number(width);
       this.previewStateByZone.meta.width = Number.isFinite(value)
@@ -209,6 +214,12 @@ export class DevLayoutToolbar {
       this.previewStateByZone.meta.inset = Number.isFinite(value)
         ? Math.max(0, Math.min(24, Math.floor(value)))
         : 4;
+    }
+    if (font !== undefined) {
+      const value = Number(font);
+      this.previewStateByZone.meta.font = Number.isFinite(value)
+        ? Math.max(9, Math.min(16, Math.floor(value)))
+        : 11;
     }
     if (this.activeZone === "meta") {
       this.update({ enabled: true, activeZone: "meta" });
@@ -225,10 +236,16 @@ export class DevLayoutToolbar {
     return Number.isFinite(value) ? value : 4;
   }
 
+  getMetaFont() {
+    const value = Number(this.previewStateByZone?.meta?.font);
+    return Number.isFinite(value) ? value : 11;
+  }
+
   getMetaValues() {
     return {
       width: this.getMetaWidth(),
       inset: this.getMetaInset(),
+      font: this.getMetaFont(),
     };
   }
 

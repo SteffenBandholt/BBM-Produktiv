@@ -7,6 +7,7 @@
   --bbm-tops-meta-col-max: 90px;
   --bbm-tops-list-meta-col: 74px;
   --bbm-tops-list-meta-padding-inline: 4px;
+  --bbm-tops-list-meta-font-size: 11px;
   --bbm-tops-accent-green: #1b8f3a;
   --bbm-top-text-font-family: "Noto Sans", Arial, sans-serif;
   --bbm-top-short-font-size: 10pt;
@@ -651,7 +652,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row-meta {
-  font-size: 8.5pt;
+  font-size: var(--bbm-tops-list-meta-font-size, 11px);
   opacity: 0.9;
   display: grid;
   gap: 2px;

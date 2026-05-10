@@ -744,13 +744,16 @@ export default class TopsScreen {
 
     const width = Number(preview?.width || 0);
     const inset = Number(preview?.inset || 0);
+    const font = Number(preview?.font || 0);
     this.root.dataset.devLayoutActiveZone = zoneKey;
     if (zoneKey !== "meta") return;
     if (!this.topsList?.root?.style) return;
     const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 74));
     const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 4));
+    const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
     this.topsList.root.style.setProperty("--bbm-tops-list-meta-col", `${clampedWidth}px`);
     this.topsList.root.style.setProperty("--bbm-tops-list-meta-padding-inline", `${clampedInset}px`);
+    this.topsList.root.style.setProperty("--bbm-tops-list-meta-font-size", `${clampedFont}px`);
   }
 
   _getDevLayoutMetaWidthFromLayout(layout = null) {
@@ -769,11 +772,20 @@ export default class TopsScreen {
     return Math.max(0, Math.min(24, Math.floor(Number(match[1]))));
   }
 
+  _getDevLayoutMetaFontFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiMetaFontSize || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 11;
+    return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
+  }
+
   _syncDevLayoutMetaWidthFromLayout(layout = null) {
     const width = this._getDevLayoutMetaWidthFromLayout(layout);
     const inset = this._getDevLayoutMetaInsetFromLayout(layout);
+    const font = this._getDevLayoutMetaFontFromLayout(layout);
     if (this.header?.devLayoutToolbar?.setMetaValues) {
-      this.header.devLayoutToolbar.setMetaValues({ width, inset });
+      this.header.devLayoutToolbar.setMetaValues({ width, inset, font });
     } else {
       if (this.header?.devLayoutToolbar?.setMetaWidth) {
         this.header.devLayoutToolbar.setMetaWidth(width);
@@ -781,11 +793,14 @@ export default class TopsScreen {
       if (this.header?.devLayoutToolbar?.setMetaInset) {
         this.header.devLayoutToolbar.setMetaInset(inset);
       }
+      if (this.header?.devLayoutToolbar?.setMetaFont) {
+        this.header.devLayoutToolbar.setMetaFont(font);
+      }
     }
     if (this._devLayoutMode?.enabled && this._devLayoutMode.activeZone === "meta") {
       this._applyDevLayoutPreview({
         activeZone: "meta",
-        preview: { width, inset, font: 0 },
+        preview: { width, inset, font },
       });
     }
   }
@@ -805,10 +820,16 @@ export default class TopsScreen {
       const nextInset = this.header?.devLayoutToolbar?.getMetaInset
         ? this.header.devLayoutToolbar.getMetaInset()
         : this._getDevLayoutMetaInsetFromLayout(currentLayout);
+      const nextFont = this.header?.devLayoutToolbar?.getMetaFont
+        ? this.header.devLayoutToolbar.getMetaFont()
+        : this._getDevLayoutMetaFontFromLayout(currentLayout);
       const normalizedWidth = Math.max(50, Math.min(160, Math.floor(Number(nextWidth) || 74)));
       const normalizedInset = Number.isFinite(Number(nextInset))
         ? Math.max(0, Math.min(24, Math.floor(Number(nextInset))))
         : 4;
+      const normalizedFont = Number.isFinite(Number(nextFont))
+        ? Math.max(9, Math.min(16, Math.floor(Number(nextFont))))
+        : 11;
       const overlay = buildProtokollTopsLayoutOverlay(
         {
           orientation: extracted?.orientation || currentLayout?.variant || "portrait",
@@ -816,6 +837,7 @@ export default class TopsScreen {
           uiTextTrack: extracted?.uiTextTrack,
           uiMetaWidth: `${normalizedWidth}px`,
           uiMetaInset: `${normalizedInset}px`,
+          uiMetaFontSize: `${normalizedFont}px`,
           pdfNumberWidth: extracted?.pdfNumberWidth,
           pdfTextWidth: extracted?.pdfTextWidth,
           pdfMetaWidth: extracted?.pdfMetaWidth,

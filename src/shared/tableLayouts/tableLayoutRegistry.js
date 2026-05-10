@@ -321,6 +321,13 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
             required: true,
           }),
           Object.freeze({
+            key: "uiMetaFontSize",
+            label: "UI Meta-Schrift",
+            path: "ui.rootVars.--bbm-tops-list-meta-font-size",
+            type: "gridTrack",
+            required: true,
+          }),
+          Object.freeze({
             key: "pdfNumberWidth",
             label: "PDF TOP-Spalte",
             path: "pdf.columns.number.width",
