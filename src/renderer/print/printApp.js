@@ -9,7 +9,11 @@ import {
   normalizeTopLongText,
   normalizeTopShortText,
 } from "../shared/text/topTextPresentation.js";
-import { getProtokollTopsLayout } from "../../shared/tableLayouts/protokollTopsLayout.js";
+import {
+  getProtokollTopsLayout,
+  extractProtokollTopsEditorValues,
+  buildProtokollTopsLayoutOverlay,
+} from "../../shared/tableLayouts/protokollTopsLayout.js";
 import { normalizePrintMode } from "../../shared/print/printModes.mjs";
 
 const app = document.getElementById("app");
@@ -1300,6 +1304,7 @@ async function handleInit(payload) {
 
     const pages = _buildPages(data);
     const root = renderPrint({ pages, data });
+    root._bbmRuntimeData = data;
     if (root?.dataset) root.dataset.tableLayout = topsLayout.tableKey || "protokoll_tops";
     if (root?.dataset) root.dataset.orientation = orientation;
     if (payload?.devLayoutPreview && root?.dataset) {
@@ -1333,11 +1338,16 @@ function _enableDevPdfLayoutZones(root) {
     const zone = String(hit.dataset.devPdfZone || "").trim().toLowerCase();
     if (!zones.has(zone)) return;
     root.dataset.devPdfActiveZone = zone;
-    _syncDevPdfLayoutToolbar(toolbar, root);
+    _syncDevPdfLayoutToolbar(toolbar, root, root._bbmRuntimeData || null);
   };
 
   root.addEventListener("click", onClick);
-  _syncDevPdfLayoutToolbar(toolbar, root);
+  _syncDevPdfLayoutToolbar(toolbar, root, root._bbmRuntimeData || null);
+  try {
+    toolbar._orientation = String(root?.dataset?.orientation || "portrait").trim().toLowerCase() === "landscape"
+      ? "landscape"
+      : "portrait";
+  } catch (_e) {}
 }
 
 function _ensureDevPdfLayoutToolbar() {
@@ -1373,14 +1383,41 @@ function _ensureDevPdfLayoutToolbar() {
   plus.title = "Breite erhoehen";
 
   controls.append(minus, value, plus);
-  el.append(line1, line2, controls);
+
+  const actions = document.createElement("div");
+  actions.className = "bbm-dev-pdf-layout-toolbar-controls";
+
+  const save = document.createElement("button");
+  save.type = "button";
+  save.textContent = "Speichern";
+  save.title = "Speichert nur die PDF-Meta-Breite (DEV)";
+
+  const reset = document.createElement("button");
+  reset.type = "button";
+  reset.textContent = "Reset";
+  reset.title = "Setzt nur die PDF-Meta-Breite zurueck (DEV)";
+
+  actions.append(save, reset);
+
+  const status = document.createElement("div");
+  status.className = "bbm-dev-pdf-layout-toolbar-line2";
+  status.style.color = "#9d1c1c";
+  status.style.minHeight = "1.2em";
+  status.textContent = "";
+
+  el.append(line1, line2, controls, actions, status);
   document.body.appendChild(el);
 
   el._line2 = line2;
   el._value = value;
   el._minus = minus;
   el._plus = plus;
+  el._save = save;
+  el._reset = reset;
+  el._status = status;
   el._metaWidthMm = null;
+  el._orientation = "portrait";
+  el._defaultMetaWidthRaw = null;
 
   return el;
 }
@@ -1404,6 +1441,24 @@ function _readMetaWidthMm(root) {
   return px / _pxPerMm();
 }
 
+function _extractPdfMetaWidthRawFromData(data) {
+  const raw =
+    data?.tableLayouts?.protokoll_tops?.effectiveLayout?.pdf?.columns?.meta?.width ||
+    data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.columns?.meta?.width ||
+    "";
+  return String(raw || "").trim();
+}
+
+function _parseMetaWidthMmFromRaw(raw) {
+  const text = String(raw || "").trim();
+  const mmMatch = text.match(/^(\d+(?:\.\d+)?)mm$/i);
+  if (mmMatch) {
+    const value = Number(mmMatch[1]);
+    return Number.isFinite(value) ? value : null;
+  }
+  return null;
+}
+
 function _applyMetaWidthMm(root, mm) {
   const nextMm = Math.max(8, Math.min(40, Math.round(Number(mm) * 10) / 10));
   const tables = root?.querySelectorAll?.("table.topsTable") || [];
@@ -1416,7 +1471,7 @@ function _applyMetaWidthMm(root, mm) {
   return nextMm;
 }
 
-function _syncDevPdfLayoutToolbar(toolbar, root) {
+function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   if (!toolbar) return;
   const zone = String(root?.dataset?.devPdfActiveZone || "").trim().toLowerCase();
   const zoneLabel = zone === "meta" ? "Metablock" : zone === "text" ? "Textblock" : zone === "number" ? "Nummernblock" : "";
@@ -1425,6 +1480,8 @@ function _syncDevPdfLayoutToolbar(toolbar, root) {
   const isMeta = zone === "meta";
   toolbar._minus.disabled = !isMeta;
   toolbar._plus.disabled = !isMeta;
+  toolbar._save.disabled = !isMeta;
+  toolbar._reset.disabled = !isMeta;
 
   if (!isMeta) {
     toolbar._value.textContent = "Breite -";
@@ -1433,7 +1490,10 @@ function _syncDevPdfLayoutToolbar(toolbar, root) {
   }
 
   if (toolbar._metaWidthMm == null) {
-    toolbar._metaWidthMm = _readMetaWidthMm(root);
+    const initialRaw = runtimeData ? _extractPdfMetaWidthRawFromData(runtimeData) : "";
+    toolbar._defaultMetaWidthRaw = toolbar._defaultMetaWidthRaw || initialRaw || null;
+    const mmFromLayout = _parseMetaWidthMmFromRaw(initialRaw);
+    toolbar._metaWidthMm = mmFromLayout != null ? mmFromLayout : _readMetaWidthMm(root);
   }
   const display = Math.round(Number(toolbar._metaWidthMm || 15));
   toolbar._value.textContent = `Breite ${display} mm`;
@@ -1441,12 +1501,96 @@ function _syncDevPdfLayoutToolbar(toolbar, root) {
   toolbar._minus.onclick = () => {
     const current = toolbar._metaWidthMm == null ? _readMetaWidthMm(root) : toolbar._metaWidthMm;
     toolbar._metaWidthMm = _applyMetaWidthMm(root, current - 1);
-    _syncDevPdfLayoutToolbar(toolbar, root);
+    _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
   };
   toolbar._plus.onclick = () => {
     const current = toolbar._metaWidthMm == null ? _readMetaWidthMm(root) : toolbar._metaWidthMm;
     toolbar._metaWidthMm = _applyMetaWidthMm(root, current + 1);
-    _syncDevPdfLayoutToolbar(toolbar, root);
+    _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+  };
+
+  toolbar._save.onclick = async () => {
+    toolbar._status.textContent = "";
+    try {
+      if (root?.dataset?.devPdfLayout !== "true") return;
+      if (typeof window?.bbmPrint?.tableLayoutsSave !== "function") {
+        toolbar._status.textContent = "Speichern nicht verfuegbar.";
+        return;
+      }
+      const widthMm = toolbar._metaWidthMm == null ? _readMetaWidthMm(root) : toolbar._metaWidthMm;
+      const resLayout = await window.bbmPrint.tableLayoutsGetOne({
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: toolbar._orientation || "portrait",
+      });
+      const effective = resLayout?.data?.effectiveLayout || resLayout?.data?.defaultLayout || {};
+      const extracted = extractProtokollTopsEditorValues(effective || {});
+      const nextPdfMetaWidth = `${Math.round(Number(widthMm || 15))}mm`;
+
+      const nextColumns = Array.isArray(extracted?.columns)
+        ? extracted.columns.map((col) => ({ ...(col || {}) }))
+        : [];
+      for (let i = 0; i < nextColumns.length; i += 1) {
+        const col = nextColumns[i] || {};
+        if (String(col.key || "").trim().toLowerCase() !== "meta") continue;
+        nextColumns[i] = {
+          ...col,
+          pdfWidth: nextPdfMetaWidth,
+        };
+        break;
+      }
+      const next = buildProtokollTopsLayoutOverlay(
+        {
+          ...extracted,
+          columns: nextColumns.length ? nextColumns : extracted?.columns,
+          pdfMetaWidth: nextPdfMetaWidth,
+        },
+        extracted?.orientation || toolbar._orientation || "portrait"
+      );
+      const res = await window.bbmPrint.tableLayoutsSave({
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: toolbar._orientation || "portrait",
+        layout: next,
+      });
+      if (!res?.ok) {
+        toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
+        return;
+      }
+      toolbar._status.style.color = "#25624f";
+      toolbar._status.textContent = "Gespeichert.";
+    } catch (err) {
+      toolbar._status.textContent = err?.message || String(err) || "Speichern fehlgeschlagen.";
+    }
+  };
+
+  toolbar._reset.onclick = async () => {
+    toolbar._status.textContent = "";
+    try {
+      if (root?.dataset?.devPdfLayout !== "true") return;
+      if (typeof window?.bbmPrint?.tableLayoutsReset !== "function") {
+        toolbar._status.textContent = "Reset nicht verfuegbar.";
+        return;
+      }
+      const res = await window.bbmPrint.tableLayoutsReset({
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: toolbar._orientation || "portrait",
+      });
+      if (!res?.ok) {
+        toolbar._status.textContent = res?.error || "Reset fehlgeschlagen.";
+        return;
+      }
+      toolbar._status.style.color = "#25624f";
+      toolbar._status.textContent = "Zurueckgesetzt.";
+      // Apply default meta width again (no reload, just restore visually).
+      const mmFromDefault = _parseMetaWidthMmFromRaw(toolbar._defaultMetaWidthRaw);
+      toolbar._metaWidthMm = mmFromDefault != null ? mmFromDefault : 15;
+      toolbar._metaWidthMm = _applyMetaWidthMm(root, toolbar._metaWidthMm);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    } catch (err) {
+      toolbar._status.textContent = err?.message || String(err) || "Reset fehlgeschlagen.";
+    }
   };
 }
 

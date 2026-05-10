@@ -45,6 +45,7 @@ Sie ergÃ¤nzt:
 - Aufraeum-/Absicherung: die zusaetzlichen Padding/Font-Layout-Variablen sind jetzt strikt DEV-only und werden in STABLE nicht angewendet (keine sichtbare STABLE-Aenderung).
 - DEV-only Vorbereitung: In der Print-HTML-Vorschau der TOP-Liste sind jetzt drei PDF-Layout-Zonen (Nummernblock/Textblock/Metablock) per Click aktivierbar und gruen markierbar, ohne Layout-Shift und ohne dass Markierungen in den echten PDF-Export gelangen.
 - DEV-only PDF-Feintuning (live, ohne Speichern): In der Print-HTML-Vorschau kann jetzt die Breite des PDF-Metablocks per +/- live in 1mm-Schritten angepasst werden (nur in der laufenden Vorschau).
+- Bugfix: PDF-Metablock-Breite wird beim Speichern jetzt korrekt in `protokoll_tops` (PDF-Wert) persistiert und beim erneuten Oeffnen/Neustart wieder angewendet.
 - Naechster offener Schritt: die DEV-only Markierung und die neuen Live-Werte einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.
