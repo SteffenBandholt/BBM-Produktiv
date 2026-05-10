@@ -731,20 +731,16 @@ export default class TopsScreen {
     const zoneKey = String(payload?.activeZone || "").trim().toLowerCase();
     const preview = payload?.preview || {};
     if (!zoneKey) {
-      this.root.style.removeProperty("--bbm-dev-layout-preview-width");
-      this.root.style.removeProperty("--bbm-dev-layout-preview-inset");
-      this.root.style.removeProperty("--bbm-dev-layout-preview-font");
       this.root.dataset.devLayoutActiveZone = "";
       return;
     }
 
     const width = Number(preview?.width || 0);
-    const inset = Number(preview?.inset || 0);
-    const font = Number(preview?.font || 0);
     this.root.dataset.devLayoutActiveZone = zoneKey;
-    this.root.style.setProperty("--bbm-dev-layout-preview-width", String(width));
-    this.root.style.setProperty("--bbm-dev-layout-preview-inset", String(inset));
-    this.root.style.setProperty("--bbm-dev-layout-preview-font", String(font));
+    if (zoneKey !== "meta") return;
+    if (!this.topsList?.root?.style) return;
+    const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 74));
+    this.topsList.root.style.setProperty("--bbm-tops-list-meta-col", `${clampedWidth}px`);
   }
 
   async _loadDevLayoutMode() {

@@ -25,6 +25,9 @@ Sie ergÃ¤nzt:
 - Der naechste DEV-only Layout-Schritt ist vorbereitet:
   - die Header-Toolbar zeigt fuer die aktive Zone Dummy-Regler fuer Breite, Innen und Schrift
   - die Regler koennen die laufende UI leicht veraendern, speichern aber nichts dauerhaft
+- Der Metablock bekommt jetzt die erste echte Live-Layout-Umstellung:
+  - `Breite` wirkt im DEV-Modus nur fuer die aktive Zone `Metablock`
+  - die Breite wird ohne Speicherung nur im laufenden Fenster um 5 px pro Klick angepasst
 - Naechster offener Schritt: die DEV-only Markierung einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.

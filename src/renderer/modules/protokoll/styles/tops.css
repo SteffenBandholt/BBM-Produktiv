@@ -372,9 +372,8 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 [data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"][data-layout-zone="meta"] {
-  min-width: calc(var(--bbm-tops-meta-col-min, 70px) + (var(--bbm-dev-layout-preview-width, 0) * 1px));
-  padding-inline: calc(4px + (var(--bbm-dev-layout-preview-inset, 0) * 1px));
-  font-size: calc(100% + (var(--bbm-dev-layout-preview-font, 0) * 3%));
+  min-width: var(--bbm-tops-list-meta-col, 74px);
+  padding-inline: 4px;
 }
 
 [data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"] .bbm-tops-list-row-number-value,

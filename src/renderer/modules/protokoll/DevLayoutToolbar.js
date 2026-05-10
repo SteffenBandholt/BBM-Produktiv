@@ -15,7 +15,7 @@ export class DevLayoutToolbar {
     this.previewStateByZone = {
       number: { width: 0, inset: 0, font: 0 },
       text: { width: 0, inset: 0, font: 0 },
-      meta: { width: 0, inset: 0, font: 0 },
+      meta: { width: 74, inset: 0, font: 0 },
     };
     this.activeZone = null;
 
@@ -63,7 +63,7 @@ export class DevLayoutToolbar {
     this.root.dataset.activeZone = zoneKey || "";
     this.line1El.textContent = zoneLabel ? `TOP-Liste > ${zoneLabel}` : "Layout: TOP-Liste | Bereich waehlen";
     this.line2El.textContent = zoneLabel
-      ? `Breite ${preview?.width || 0} | Innen ${preview?.inset || 0} | Schrift ${preview?.font || 0}`
+      ? `Breite ${preview?.width || 0} px | Innen ${preview?.inset || 0} | Schrift ${preview?.font || 0}`
       : "";
     this.line2El.dataset.empty = zoneLabel ? "false" : "true";
     this.controlsWrap.hidden = !zoneLabel;
@@ -89,7 +89,7 @@ export class DevLayoutToolbar {
 
     const value = document.createElement("div");
     value.className = "bbm-dev-layout-toolbar-control-value";
-    value.textContent = "0";
+    value.textContent = key === "width" ? "74 px" : "0";
 
     const plus = document.createElement("button");
     plus.type = "button";
@@ -111,9 +111,9 @@ export class DevLayoutToolbar {
     const preview = this._getZonePreview(zoneKey) || { width: 0, inset: 0, font: 0 };
     for (const [key, control] of Object.entries(this.controls)) {
       const value = Number(preview?.[key] || 0);
-      control.valueEl.textContent = String(value);
-      control.minusEl.disabled = !zoneKey;
-      control.plusEl.disabled = !zoneKey;
+      control.valueEl.textContent = key === "width" ? `${value} px` : String(value);
+      control.minusEl.disabled = !zoneKey || (key !== "width" || zoneKey !== "meta");
+      control.plusEl.disabled = !zoneKey || (key !== "width" || zoneKey !== "meta");
       control.root.dataset.active = zoneKey ? "true" : "false";
     }
     this._emitPreviewChange(zoneKey, preview);
@@ -122,8 +122,9 @@ export class DevLayoutToolbar {
   _nudgeControl(controlKey, delta) {
     const zoneKey = this.activeZone;
     if (!zoneKey) return;
+    if (zoneKey !== "meta" || controlKey !== "width") return;
     const preview = this.previewStateByZone[zoneKey] || { width: 0, inset: 0, font: 0 };
-    const nextValue = Math.max(-3, Math.min(3, Number(preview[controlKey] || 0) + delta));
+    const nextValue = Math.max(50, Math.min(160, Number(preview[controlKey] || 0) + delta * 5));
     const nextPreview = {
       ...preview,
       [controlKey]: nextValue,
