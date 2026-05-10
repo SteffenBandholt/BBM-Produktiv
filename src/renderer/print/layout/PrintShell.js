@@ -75,17 +75,20 @@ function _buildTableHead(type, topsLayout) {
   tr.className = "tableHeadRow";
 
   if (type === "tops") {
-    tr.innerHTML = `
-      <th class="colNr">${topsLayout.labels.top}</th>
-      <th class="colText">${topsLayout.labels.text}</th>
-      <th class="colMeta">
-        <div class="metaHead">
-          <div>${topsLayout.labels.meta[0]}</div>
-          <div>${topsLayout.labels.meta[1]}</div>
-          <div>${topsLayout.labels.meta[2]}</div>
-        </div>
-      </th>
+    const thNr = _el("th", "colNr", topsLayout.labels.top);
+    thNr.dataset.devPdfZone = "number";
+    const thText = _el("th", "colText", topsLayout.labels.text);
+    thText.dataset.devPdfZone = "text";
+    const thMeta = _el("th", "colMeta");
+    thMeta.dataset.devPdfZone = "meta";
+    thMeta.innerHTML = `
+      <div class="metaHead">
+        <div>${topsLayout.labels.meta[0]}</div>
+        <div>${topsLayout.labels.meta[1]}</div>
+        <div>${topsLayout.labels.meta[2]}</div>
+      </div>
     `;
+    tr.append(thNr, thText, thMeta);
   } else if (type === "firms") {
     tr.innerHTML = `<th>Firma</th><th>Typ</th><th>Aktiv</th>`;
   } else if (type === "todo") {
@@ -129,6 +132,7 @@ function _buildTopRow(row) {
   if (row.isImportant) tr.classList.add("isImportant");
 
   const tdNr = _el("td", "colNr");
+  tdNr.dataset.devPdfZone = "number";
   const numBox = _el("div", "nrBox");
   const topNumberEl = _el("div", "topNumber", row.numText);
   const nrDateEl = _el("div", "nrDate", row.createdDate);
@@ -138,6 +142,7 @@ function _buildTopRow(row) {
   tdNr.appendChild(numBox);
 
   const tdText = _el("td", "colText");
+  tdText.dataset.devPdfZone = "text";
   const txtBlock = _el("div", "txtBlock");
   const shortTextEl = _el("div", "shortText", normalizeTopShortText(row.title));
   txtBlock.appendChild(shortTextEl);
@@ -170,6 +175,7 @@ function _buildTopRow(row) {
   tdText.appendChild(txtBlock);
 
   const tdMeta = _el("td", "colMeta");
+  tdMeta.dataset.devPdfZone = "meta";
   const meta3 = _el("div", "meta3");
   const metaLine1 = _el("div", "metaLine meta1");
   metaLine1.appendChild(_el("span", "metaText", row.status));

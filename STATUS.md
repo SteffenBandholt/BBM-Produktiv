@@ -43,6 +43,7 @@ Sie ergÃ¤nzt:
   - `Breite` bleibt bewusst ein Restbereich und ist im DEV-Toolbar-Regler deaktiviert
   - `Innen` und `Schrift` wirken fuer die aktive Zone `Textblock`
 - Aufraeum-/Absicherung: die zusaetzlichen Padding/Font-Layout-Variablen sind jetzt strikt DEV-only und werden in STABLE nicht angewendet (keine sichtbare STABLE-Aenderung).
+- DEV-only Vorbereitung: In der Print-HTML-Vorschau der TOP-Liste sind jetzt drei PDF-Layout-Zonen (Nummernblock/Textblock/Metablock) per Click aktivierbar und gruen markierbar, ohne Layout-Shift und ohne dass Markierungen in den echten PDF-Export gelangen.
 - Naechster offener Schritt: die DEV-only Markierung und die neuen Live-Werte einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.

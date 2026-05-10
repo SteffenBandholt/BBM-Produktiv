@@ -1302,13 +1302,39 @@ async function handleInit(payload) {
     const root = renderPrint({ pages, data });
     if (root?.dataset) root.dataset.tableLayout = topsLayout.tableKey || "protokoll_tops";
     if (root?.dataset) root.dataset.orientation = orientation;
+    if (payload?.devLayoutPreview && root?.dataset) {
+      root.dataset.devPdfLayout = "true";
+      root.dataset.devPdfActiveZone = "";
+    }
     app.innerHTML = "";
     app.appendChild(root);
+
+    if (payload?.devLayoutPreview) {
+      _enableDevPdfLayoutZones(root);
+    }
+
     window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true });
   } catch (err) {
     setError(err?.message || "Daten konnten nicht geladen werden.");
     window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: false });
   }
+}
+
+function _enableDevPdfLayoutZones(root) {
+  if (!root) return;
+  const zones = new Set(["number", "text", "meta"]);
+
+  const onClick = (event) => {
+    const target = event?.target;
+    if (!target || !target.closest) return;
+    const hit = target.closest("[data-dev-pdf-zone]");
+    if (!hit) return;
+    const zone = String(hit.dataset.devPdfZone || "").trim().toLowerCase();
+    if (!zones.has(zone)) return;
+    root.dataset.devPdfActiveZone = zone;
+  };
+
+  root.addEventListener("click", onClick);
 }
 
 window.bbmPrint.onInit((payload) => {

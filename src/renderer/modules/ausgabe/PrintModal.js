@@ -1437,6 +1437,15 @@ export default class PrintModal {
   }
 
   async openTopListAllPreview({ projectId } = {}) {
+    try {
+      const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
+      const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
+      if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
+        void window.bbmPrint.openHtmlPreview({ mode: "topsAll", projectId });
+      }
+    } catch (_e) {
+      // ignore (DEV-only helper)
+    }
     return await this._printProjectListPdf({
       projectId,
       mode: "topsAll",
