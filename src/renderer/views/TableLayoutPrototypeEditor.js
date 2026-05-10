@@ -60,6 +60,12 @@ function _normalizeDefinitionsList(definitions = []) {
           moduleId: _normalizeId(item.moduleId),
           moduleLabel: _formatText(item.moduleLabel, "Protokoll"),
           moduleDescription: _formatText(item.moduleDescription, ""),
+          tableKind: String(item.tableKind || "content").trim().toLowerCase() === "control" ? "control" : "content",
+          editorEnabled: item.editorEnabled !== false,
+          uiAvailable: item.uiAvailable !== false,
+          pdfAvailable: item.pdfAvailable !== false,
+          uiProductive: item.uiProductive !== false,
+          pdfProductive: item.pdfProductive === true,
           moduleSupportedOrientations: Array.isArray(item.moduleSupportedOrientations)
             ? item.moduleSupportedOrientations.map((entry) => _normalizeOrientation(entry))
             : ["portrait"],
@@ -74,8 +80,12 @@ function _normalizeDefinitionsList(definitions = []) {
           previewData: Array.isArray(item.previewData) ? item.previewData.map((row) => _cloneJson(row)) : [],
           defaultLayout: item.defaultLayout ? _cloneJson(item.defaultLayout) : null,
         }))
-        .filter((item) => item.moduleId && item.tableKey)
+    .filter((item) => item.moduleId && item.tableKey)
     : [];
+}
+
+function _isEditorVisibleTableDefinition(def = {}) {
+  return String(def?.tableKind || "content").trim().toLowerCase() === "content" && def?.editorEnabled !== false;
 }
 
 function _groupModuleDefinitions(definitions = []) {
@@ -395,11 +405,21 @@ function _getPreviewModeConfig(mode) {
 function _getTableLayoutEditorHints(tableDef = {}) {
   const moduleId = _normalizeId(tableDef?.moduleId);
   const tableKey = _normalizeId(tableDef?.tableKey);
+  const uiAvailable = tableDef?.uiAvailable !== false;
+  const pdfAvailable = tableDef?.pdfAvailable !== false;
+  const uiProductive = tableDef?.uiProductive === true;
+  const pdfProductive = tableDef?.pdfProductive === true;
 
-  const genericUiHint =
-    "UI-Werte steuern die Spaltenbreiten in der App, wenn die Tabelle produktiv angeschlossen ist.";
-  const genericPdfHint =
-    "PDF-Werte steuern nur PDF-Spaltenbreiten, wenn ein PDF-Druckpfad für diese Tabelle angeschlossen ist.";
+  const genericUiHint = uiAvailable
+    ? uiProductive
+      ? "UI-Werte steuern die Spaltenbreiten in der App, wenn die Tabelle produktiv angeschlossen ist."
+      : "UI-Werte sind für diese Tabelle aktuell nur eine Vorschau."
+    : "UI ist für diese Tabelle nicht verfügbar.";
+  const genericPdfHint = pdfAvailable
+    ? pdfProductive
+      ? "PDF-Werte steuern nur PDF-Spaltenbreiten, wenn ein PDF-Druckpfad für diese Tabelle angeschlossen ist."
+      : "PDF ist für diese Tabelle aktuell nur Vorschau. Ein produktiver PDF-Druck ist noch nicht angeschlossen."
+    : "PDF ist für diese Tabelle nicht verfügbar.";
   const genericSaveHint = "Gespeichert wird nur die aktuell gewählte Tabelle; kein globales Layout.";
   const genericResetHint =
     "Reset betrifft nur die aktuell gewählte Kombination aus Modul, Tabelle und Orientierung.";
@@ -789,6 +809,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     selectedTableKey: "",
     moduleDefinitions: [],
     tableDefinitions: [],
+    editorTableDefinitions: [],
     contextLoading: false,
     contextError: "",
     validationErrors: {},
@@ -1278,7 +1299,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     state.moduleDefinitions.find((item) => _normalizeId(item?.moduleId) === _normalizeId(state.selectedModuleId)) || null;
 
   const _getSelectedTableDefinition = () =>
-    state.tableDefinitions.find(
+    state.editorTableDefinitions.find(
       (item) =>
         _normalizeId(item?.moduleId) === _normalizeId(state.selectedModuleId) &&
         _normalizeId(item?.tableKey) === _normalizeId(state.selectedTableKey)
@@ -1302,7 +1323,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   const _renderTableOptions = () => {
     const moduleId = _normalizeId(state.selectedModuleId);
-    const defs = state.tableDefinitions.filter((item) => _normalizeId(item?.moduleId) === moduleId);
+    const defs = state.editorTableDefinitions.filter((item) => _normalizeId(item?.moduleId) === moduleId);
     const current = _normalizeId(state.selectedTableKey) || _normalizeId(defs[0]?.tableKey);
     tableSelect.innerHTML = "";
     for (const def of defs) {
@@ -1430,6 +1451,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       state.contextError = "Tabellenregistry nicht verfuegbar.";
       state.moduleDefinitions = [];
       state.tableDefinitions = [];
+      state.editorTableDefinitions = [];
       _renderModuleOptions();
       _renderTableOptions();
       _renderColumnEditors({ columns: [] }, { columns: [] });
@@ -1442,6 +1464,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       state.contextError = res?.error || "Tabellenregistry konnte nicht geladen werden.";
       state.moduleDefinitions = [];
       state.tableDefinitions = [];
+      state.editorTableDefinitions = [];
       _renderModuleOptions();
       _renderTableOptions();
       _renderColumnEditors({ columns: [] }, { columns: [] });
@@ -1451,7 +1474,8 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     }
     const list = _normalizeDefinitionsList(Array.isArray(res.data) ? res.data : []);
     state.tableDefinitions = list;
-    state.moduleDefinitions = _groupModuleDefinitions(list);
+    state.editorTableDefinitions = list.filter(_isEditorVisibleTableDefinition);
+    state.moduleDefinitions = _groupModuleDefinitions(state.editorTableDefinitions);
     _syncSelectionFromDefinitions();
     state.contextError = "";
     _renderModuleOptions();

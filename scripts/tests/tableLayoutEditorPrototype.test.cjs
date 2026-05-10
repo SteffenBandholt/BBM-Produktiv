@@ -176,6 +176,12 @@ async function runTableLayoutEditorPrototypeTests(run) {
         tableKey: "protokoll_tops",
         tableLabel: "TOP-Liste",
         description: "Pilotlayout",
+        tableKind: "content",
+        editorEnabled: true,
+        uiAvailable: true,
+        pdfAvailable: true,
+        uiProductive: true,
+        pdfProductive: true,
         supportedOrientations: ["portrait", "landscape"],
         columns: [
           {
@@ -275,6 +281,12 @@ async function runTableLayoutEditorPrototypeTests(run) {
         tableKey: "project_firms",
         tableLabel: "Projekt-Firmenliste",
         description: "Projektbezogene Firmenliste",
+        tableKind: "content",
+        editorEnabled: true,
+        uiAvailable: true,
+        pdfAvailable: true,
+        uiProductive: true,
+        pdfProductive: false,
         supportedOrientations: ["portrait", "landscape"],
         columns: [
           {
@@ -516,6 +528,161 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(host.style.inset, "8px");
       assert.equal(host.style.maxWidth, "none");
       assert.equal(findNodeByText(editor.root, "Normalgröße") != null, true);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("TableLayoutEditor: Bedienlisten mit editorEnabled=false erscheinen nicht", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+    const { api } = makeEditorApi({
+      tableDefinitions: [
+        {
+          moduleId: "protokoll",
+          moduleLabel: "Protokoll",
+          tableKey: "protokoll_tops",
+          tableLabel: "TOP-Liste",
+          description: "Pilotlayout",
+          tableKind: "content",
+          editorEnabled: true,
+          uiAvailable: true,
+          pdfAvailable: true,
+          uiProductive: true,
+          pdfProductive: true,
+          supportedOrientations: ["portrait", "landscape"],
+          columns: [
+            {
+              key: "topNumber",
+              label: "TOP",
+              uiWidth: "64px",
+              pdfWidth: "23mm",
+              weight: 2,
+              required: true,
+              previewValue: "1",
+              headerLines: ["TOP"],
+            },
+            {
+              key: "shortText",
+              label: "Gegenstand",
+              uiWidth: "minmax(0, 1fr)",
+              pdfWidth: "auto",
+              weight: 6,
+              required: true,
+              previewValue: "Beispielthema fuer die Vorschau",
+              headerLines: ["Gegenstand"],
+            },
+            {
+              key: "meta",
+              label: "Status",
+              uiWidth: "74px",
+              pdfWidth: "15ch",
+              weight: 1,
+              required: true,
+              previewValue: "offen",
+              headerLines: ["Status", "Fertig bis", "verantw"],
+            },
+          ],
+          defaultLayout: {
+            tableKey: "protokoll_tops",
+            moduleId: "protokoll",
+            variant: "portrait",
+            columns: [],
+          },
+          previewData: [],
+        },
+        {
+          moduleId: "protokoll",
+          moduleLabel: "Protokoll",
+          tableKey: "protokoll_participants",
+          tableLabel: "Teilnehmerliste",
+          description: "Bedienliste",
+          tableKind: "control",
+          editorEnabled: false,
+          uiAvailable: true,
+          pdfAvailable: false,
+          uiProductive: false,
+          pdfProductive: false,
+          supportedOrientations: ["portrait", "landscape"],
+          columns: [
+            { key: "name", label: "Name", uiWidth: "1fr", pdfWidth: "1fr", weight: 1, required: true, previewValue: "Max Muster", headerLines: ["Name"] },
+          ],
+          defaultLayout: {
+            tableKey: "protokoll_participants",
+            moduleId: "protokoll",
+            variant: "portrait",
+            columns: [],
+          },
+          previewData: [],
+        },
+        {
+          moduleId: "projektverwaltung",
+          moduleLabel: "Projektverwaltung",
+          tableKey: "project_firms",
+          tableLabel: "Projekt-Firmenliste",
+          description: "Projektbezogene Firmenliste",
+          tableKind: "content",
+          editorEnabled: true,
+          uiAvailable: true,
+          pdfAvailable: true,
+          uiProductive: true,
+          pdfProductive: false,
+          supportedOrientations: ["portrait", "landscape"],
+          columns: [
+            {
+              key: "shortName",
+              label: "Kurzbez.",
+              uiWidth: "160px",
+              pdfWidth: "23mm",
+              weight: 2,
+              required: true,
+              previewValue: "AB",
+              headerLines: ["Kurzbez."],
+            },
+            {
+              key: "role",
+              label: "Funktion/Gewerk",
+              uiWidth: "1fr",
+              pdfWidth: "auto",
+              weight: 6,
+              required: true,
+              previewValue: "Rohbau",
+              headerLines: ["Funktion/Gewerk"],
+            },
+            {
+              key: "active",
+              label: "Aktiv",
+              uiWidth: "70px",
+              pdfWidth: "15mm",
+              weight: 1,
+              required: true,
+              previewValue: "ja",
+              headerLines: ["Aktiv"],
+            },
+          ],
+          defaultLayout: {
+            tableKey: "project_firms",
+            moduleId: "projektverwaltung",
+            variant: "portrait",
+            columns: [],
+          },
+          previewData: [],
+        },
+      ],
+    });
+    global.window = { bbmDb: api };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
+      await editor.load();
+      const selects = findNodesByTag(editor.root, "SELECT");
+      const text = collectText(editor.root);
+      assert.equal(selects[0]?.children?.length, 2);
+      assert.equal(selects[1]?.children?.length, 1);
+      assert.equal(selects[1]?.children?.[0]?.value, "protokoll_tops");
+      assert.equal(text.includes("Teilnehmerliste"), false);
+      assert.equal(text.includes("protokoll_participants"), false);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

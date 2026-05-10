@@ -29,8 +29,9 @@ Er nutzt jetzt ein groesstenteils vollflÃ¤chiges internes ArbeitsflÃ¤chen-Ov
 
 - Layout fuer `protokoll_tops` laden
 - registrierte Module und Tabellen aus der zentralen Tabellenregistry anzeigen
+- die Registry klassifiziert Tabellen mit `tableKind`, `editorEnabled`, `uiAvailable`, `pdfAvailable`, `uiProductive` und `pdfProductive`
 - die Eingabefelder werden aus den Spaltendefinitionen der Tabelle erzeugt
-- der Editor zeigt nur ausdruecklich freigegebene Inhaltstabellen
+- der Editor zeigt nur ausdruecklich freigegebene Inhaltstabellen mit `tableKind = content` und `editorEnabled = true`
 - Bedienlisten und Auswahl-Popups gehoeren nicht in den Editor
 - Spalten werden nicht aus Datenfeldern erraten
 - aktuell sind `Protokoll / TOP-Liste / protokoll_tops` und `Projektverwaltung / Projekt-Firmenliste / project_firms` registriert
@@ -90,4 +91,3 @@ Spaetere Tabellen liefern ihre eigenen Preview-Daten ueber die Registry.
 
 Spaeter kann der Editor um eine echte Layout-Vorschau und feinere Feldvalidierung erweitert werden.
 Die bestehende Protokoll-UI bleibt bis dahin unveraendert.
-

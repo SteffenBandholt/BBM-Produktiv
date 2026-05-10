@@ -18,11 +18,15 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(Array.isArray(modules[0].tables), true);
     assert.equal(modules[0].tables[0].tableKey, "protokoll_tops");
     assert.equal(modules[0].tables[0].tableLabel, "TOP-Liste");
+    assert.equal(modules[0].tables[0].tableKind, "content");
+    assert.equal(modules[0].tables[0].editorEnabled, true);
     const projectModule = modules.find((moduleDef) => moduleDef.moduleId === "projektverwaltung");
     assert.ok(projectModule, "projektverwaltung module missing");
     assert.equal(projectModule.moduleLabel, "Projektverwaltung");
     assert.equal(projectModule.tables[0].tableKey, "project_firms");
     assert.equal(projectModule.tables[0].tableLabel, "Projekt-Firmenliste");
+    assert.equal(projectModule.tables[0].tableKind, "content");
+    assert.equal(projectModule.tables[0].editorEnabled, true);
 
     assert.equal(Array.isArray(definitions), true);
     assert.equal(definitions.length >= 2, true);
@@ -46,6 +50,12 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(definitions[0].previewData[1].topNumber, "1.1");
     assert.equal(definitions[0].defaultLayout?.tableKey, "protokoll_tops");
     assert.equal(definitions[0].defaultLayout?.variant, "portrait");
+    assert.equal(definitions[0].tableKind, "content");
+    assert.equal(definitions[0].editorEnabled, true);
+    assert.equal(definitions[0].uiAvailable, true);
+    assert.equal(definitions[0].pdfAvailable, true);
+    assert.equal(definitions[0].uiProductive, true);
+    assert.equal(definitions[0].pdfProductive, true);
     assert.equal(Array.isArray(definitions[0].columns), true);
     assert.equal(definitions[0].columns[0].key, "topNumber");
     assert.equal(definitions[0].columns[1].label, "Gegenstand");
@@ -53,6 +63,12 @@ async function runTableLayoutRegistryTests(run) {
     assert.ok(projectFirmsDef, "project_firms definition missing");
     assert.equal(projectFirmsDef.moduleId, "projektverwaltung");
     assert.equal(projectFirmsDef.tableLabel, "Projekt-Firmenliste");
+    assert.equal(projectFirmsDef.tableKind, "content");
+    assert.equal(projectFirmsDef.editorEnabled, true);
+    assert.equal(projectFirmsDef.uiAvailable, true);
+    assert.equal(projectFirmsDef.pdfAvailable, true);
+    assert.equal(projectFirmsDef.uiProductive, true);
+    assert.equal(projectFirmsDef.pdfProductive, false);
     assert.equal(Array.isArray(projectFirmsDef.columns), true);
     assert.equal(projectFirmsDef.columns.length, 3);
     assert.equal(projectFirmsDef.columns[0].label, "Kurzbez.");

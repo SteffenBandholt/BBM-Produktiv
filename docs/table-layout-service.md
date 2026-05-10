@@ -83,6 +83,34 @@ Aufgaben:
 - Layouts fuer UI und PDF einheitlich ausgeben
 - spaeter Hochformat-/Querformat-Varianten verwalten
 
+### 5.1.1 Technisches Tabellenverzeichnis
+
+Jede Tabellen-Definition traegt zusaetzlich eine technische Klassifizierung.
+
+Pflichtfelder je Tabelle:
+
+- `tableKey`
+- `tableLabel`
+- `moduleId`
+- `moduleLabel`
+- `tableKind` mit den Werten `content` oder `control`
+- `editorEnabled` als Freigabe fuer den Tabelleneditor
+- `uiAvailable`
+- `pdfAvailable`
+- `uiProductive`
+- `pdfProductive`
+- `columns`
+- `previewData`
+- `description`
+
+Regeln:
+
+- Der Tabelleneditor zeigt nur Tabellen mit `tableKind = content` und `editorEnabled = true`.
+- Bedienlisten duerfen technisch erfasst werden, erscheinen aber nie im Editor.
+- `uiAvailable` und `pdfAvailable` sagen, ob die Tabelle im jeweiligen Bereich ueberhaupt vorgesehen ist.
+- `uiProductive` und `pdfProductive` sagen, ob der jeweilige Bereich bereits produktiv angeschlossen ist oder nur als Vorschau dient.
+- Die Registry bleibt die fachliche Quelle fuer die sichtbaren Editor-Listen.
+
 ### 5.2 Tabelleneditor-UI
 
 Interne Oberflaeche zum Einstellen der Tabellenlayouts.
@@ -91,6 +119,7 @@ Funktionen:
 
 - Modul auswaehlen
 - Tabelle auswaehlen
+- nur freigegebene Inhaltstabellen mit `editorEnabled = true` anzeigen
 - Spaltendefinitionen aus der Registry anzeigen
 - Spaltennamen, Breiten und Preview-Werte bearbeiten, soweit erlaubt
 - UI- und PDF-Breiten getrennt pflegen
@@ -100,6 +129,12 @@ Funktionen:
 - PDF-Vorschau ueber vorhandenen Vorschau-Druck starten
 - Layout speichern
 - Layout auf Standard zuruecksetzen
+
+Hinweise:
+
+- `uiProductive = true` bedeutet: UI-Werte wirken produktiv in der App.
+- `pdfProductive = true` bedeutet: PDF-Werte wirken produktiv im Druckpfad.
+- Ist einer der Werte `false`, wird das im Editor nur als Vorschau bzw. nicht angeschlossen angezeigt.
 
 ### 5.3 UI-Tabellenausgabe
 

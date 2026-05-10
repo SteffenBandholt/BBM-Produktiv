@@ -19,6 +19,7 @@ Sie ergÃ¤nzt:
 
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.
+- Tabellenlayout-Registry mit technischer Tabellenklassifizierung erweitert.
 
 - Der Ausgabe-Dialog trennt die Druckarten jetzt fachlich korrekter:
   - Protokoll drucken

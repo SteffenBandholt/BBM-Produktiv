@@ -12,6 +12,22 @@ function _normalizeText(value) {
   return String(value == null ? "" : value).trim();
 }
 
+function _normalizeTableKind(value) {
+  const text = _normalizeText(value).toLowerCase();
+  if (text === "control") return "control";
+  return "content";
+}
+
+function _normalizeBool(value, fallback = false) {
+  if (value === null || value === undefined) return !!fallback;
+  if (typeof value === "boolean") return value;
+  const text = _normalizeText(value).toLowerCase();
+  if (!text) return !!fallback;
+  if (["1", "true", "yes", "ja", "on"].includes(text)) return true;
+  if (["0", "false", "no", "nein", "off"].includes(text)) return false;
+  return !!fallback;
+}
+
 function _normalizeIdentity(identity = {}) {
   const tableKey = _normalizeText(identity.tableKey);
   const moduleId = _normalizeText(identity.moduleId);
@@ -174,6 +190,12 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
         tableKey: "protokoll_tops",
         tableLabel: "TOP-Liste",
         description: "Pilotlayout fuer die Protokoll-TOP-Liste.",
+        tableKind: "content",
+        editorEnabled: true,
+        uiAvailable: true,
+        pdfAvailable: true,
+        uiProductive: true,
+        pdfProductive: true,
         supportedOrientations: Object.freeze(["portrait", "landscape"]),
         columns: PROTOKOLL_TOPS_COLUMNS,
         editFields: Object.freeze([
@@ -270,6 +292,12 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
         tableKey: "project_firms",
         tableLabel: "Projekt-Firmenliste",
         description: "Projektbezogene Firmenliste fuer den naechsten Firmenlayout-Pilot.",
+        tableKind: "content",
+        editorEnabled: true,
+        uiAvailable: true,
+        pdfAvailable: true,
+        uiProductive: true,
+        pdfProductive: false,
         supportedOrientations: Object.freeze(["portrait", "landscape"]),
         columns: PROJECT_FIRMS_COLUMNS,
         previewData: PROJECT_FIRMS_PREVIEW_DATA,
@@ -290,6 +318,12 @@ function _cloneModuleTableDefinition(moduleDef, tableDef, defaultLayout = null) 
     tableKey: tableDef.tableKey,
     tableLabel: tableDef.tableLabel,
     description: tableDef.description || "",
+    tableKind: _normalizeTableKind(tableDef.tableKind),
+    editorEnabled: _normalizeBool(tableDef.editorEnabled, true),
+    uiAvailable: _normalizeBool(tableDef.uiAvailable, true),
+    pdfAvailable: _normalizeBool(tableDef.pdfAvailable, true),
+    uiProductive: _normalizeBool(tableDef.uiProductive, true),
+    pdfProductive: _normalizeBool(tableDef.pdfProductive, false),
     supportedOrientations: Array.isArray(tableDef.supportedOrientations)
       ? [...tableDef.supportedOrientations]
       : ["portrait"],
@@ -337,6 +371,12 @@ function getTableLayoutModuleDefinition(moduleId) {
       tableKey: tableDef.tableKey,
       tableLabel: tableDef.tableLabel,
       description: tableDef.description || "",
+      tableKind: _normalizeTableKind(tableDef.tableKind),
+      editorEnabled: _normalizeBool(tableDef.editorEnabled, true),
+      uiAvailable: _normalizeBool(tableDef.uiAvailable, true),
+      pdfAvailable: _normalizeBool(tableDef.pdfAvailable, true),
+      uiProductive: _normalizeBool(tableDef.uiProductive, true),
+      pdfProductive: _normalizeBool(tableDef.pdfProductive, false),
       supportedOrientations: Array.isArray(tableDef.supportedOrientations)
         ? [...tableDef.supportedOrientations]
         : ["portrait"],
@@ -372,6 +412,12 @@ function getTableLayoutDefinition(identity = {}) {
     tableKey: tableDef.tableKey,
     tableLabel: tableDef.tableLabel,
     description: tableDef.description || "",
+    tableKind: _normalizeTableKind(tableDef.tableKind),
+    editorEnabled: _normalizeBool(tableDef.editorEnabled, true),
+    uiAvailable: _normalizeBool(tableDef.uiAvailable, true),
+    pdfAvailable: _normalizeBool(tableDef.pdfAvailable, true),
+    uiProductive: _normalizeBool(tableDef.uiProductive, true),
+    pdfProductive: _normalizeBool(tableDef.pdfProductive, false),
     supportedOrientations: Array.isArray(tableDef.supportedOrientations)
       ? [...tableDef.supportedOrientations]
       : ["portrait"],
