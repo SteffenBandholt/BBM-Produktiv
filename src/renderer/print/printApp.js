@@ -1323,6 +1323,7 @@ async function handleInit(payload) {
 function _enableDevPdfLayoutZones(root) {
   if (!root) return;
   const zones = new Set(["number", "text", "meta"]);
+  const toolbar = _ensureDevPdfLayoutToolbar();
 
   const onClick = (event) => {
     const target = event?.target;
@@ -1332,9 +1333,121 @@ function _enableDevPdfLayoutZones(root) {
     const zone = String(hit.dataset.devPdfZone || "").trim().toLowerCase();
     if (!zones.has(zone)) return;
     root.dataset.devPdfActiveZone = zone;
+    _syncDevPdfLayoutToolbar(toolbar, root);
   };
 
   root.addEventListener("click", onClick);
+  _syncDevPdfLayoutToolbar(toolbar, root);
+}
+
+function _ensureDevPdfLayoutToolbar() {
+  let el = document.querySelector(".bbm-dev-pdf-layout-toolbar");
+  if (el) return el;
+
+  el = document.createElement("div");
+  el.className = "bbm-dev-pdf-layout-toolbar";
+
+  const line1 = document.createElement("div");
+  line1.className = "bbm-dev-pdf-layout-toolbar-line1";
+  line1.textContent = "TOP-Liste > PDF";
+
+  const line2 = document.createElement("div");
+  line2.className = "bbm-dev-pdf-layout-toolbar-line2";
+  line2.textContent = "Bereich waehlen";
+
+  const controls = document.createElement("div");
+  controls.className = "bbm-dev-pdf-layout-toolbar-controls";
+
+  const minus = document.createElement("button");
+  minus.type = "button";
+  minus.textContent = "-";
+  minus.title = "Breite verringern";
+
+  const value = document.createElement("div");
+  value.className = "bbm-dev-pdf-layout-toolbar-value";
+  value.textContent = "Breite -";
+
+  const plus = document.createElement("button");
+  plus.type = "button";
+  plus.textContent = "+";
+  plus.title = "Breite erhoehen";
+
+  controls.append(minus, value, plus);
+  el.append(line1, line2, controls);
+  document.body.appendChild(el);
+
+  el._line2 = line2;
+  el._value = value;
+  el._minus = minus;
+  el._plus = plus;
+  el._metaWidthMm = null;
+
+  return el;
+}
+
+function _pxPerMm() {
+  const measure = document.getElementById("mm-measure");
+  if (!measure?.getBoundingClientRect) return 3.78;
+  const rect = measure.getBoundingClientRect();
+  const px = Number(rect?.height || 0);
+  if (!Number.isFinite(px) || px <= 0) return 3.78;
+  return px / 100;
+}
+
+function _readMetaWidthMm(root) {
+  const table = root?.querySelector?.("table.topsTable");
+  const col = table?.querySelector?.("colgroup col.colMeta");
+  if (!col?.getBoundingClientRect) return 15;
+  const rect = col.getBoundingClientRect();
+  const px = Number(rect?.width || 0);
+  if (!Number.isFinite(px) || px <= 0) return 15;
+  return px / _pxPerMm();
+}
+
+function _applyMetaWidthMm(root, mm) {
+  const nextMm = Math.max(8, Math.min(40, Math.round(Number(mm) * 10) / 10));
+  const tables = root?.querySelectorAll?.("table.topsTable") || [];
+  for (const table of tables) {
+    const col = table.querySelector?.("colgroup col.colMeta");
+    if (col?.style) {
+      col.style.width = `${nextMm}mm`;
+    }
+  }
+  return nextMm;
+}
+
+function _syncDevPdfLayoutToolbar(toolbar, root) {
+  if (!toolbar) return;
+  const zone = String(root?.dataset?.devPdfActiveZone || "").trim().toLowerCase();
+  const zoneLabel = zone === "meta" ? "Metablock" : zone === "text" ? "Textblock" : zone === "number" ? "Nummernblock" : "";
+  toolbar._line2.textContent = zoneLabel ? `TOP-Liste > PDF > ${zoneLabel}` : "TOP-Liste > PDF | Bereich waehlen";
+
+  const isMeta = zone === "meta";
+  toolbar._minus.disabled = !isMeta;
+  toolbar._plus.disabled = !isMeta;
+
+  if (!isMeta) {
+    toolbar._value.textContent = "Breite -";
+    toolbar._metaWidthMm = null;
+    return;
+  }
+
+  if (toolbar._metaWidthMm == null) {
+    toolbar._metaWidthMm = _readMetaWidthMm(root);
+  }
+  const display = Math.round(Number(toolbar._metaWidthMm || 15));
+  toolbar._value.textContent = `Breite ${display} mm`;
+
+  toolbar._minus.onclick = () => {
+    const current = toolbar._metaWidthMm == null ? _readMetaWidthMm(root) : toolbar._metaWidthMm;
+    toolbar._metaWidthMm = _applyMetaWidthMm(root, current - 1);
+    _syncDevPdfLayoutToolbar(toolbar, root);
+  };
+  toolbar._plus.onclick = () => {
+    const current = toolbar._metaWidthMm == null ? _readMetaWidthMm(root) : toolbar._metaWidthMm;
+    toolbar._metaWidthMm = _applyMetaWidthMm(root, current + 1);
+    _syncDevPdfLayoutToolbar(toolbar, root);
+  };
 }
 
 window.bbmPrint.onInit((payload) => {
