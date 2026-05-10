@@ -895,6 +895,7 @@ export default class TopsScreen {
   }
 
   async _saveDevLayoutMetaWidth() {
+    if (!this._devLayoutMode?.enabled) return false;
     const api = window.bbmDb || {};
     if (typeof api.tableLayoutsSave !== "function") {
       this.header?.devLayoutToolbar?.setStatus?.("Speichern nicht verfuegbar.");
@@ -988,6 +989,7 @@ export default class TopsScreen {
   }
 
   async _resetDevLayoutMetaWidth() {
+    if (!this._devLayoutMode?.enabled) return false;
     const api = window.bbmDb || {};
     if (typeof api.tableLayoutsReset !== "function") {
       this.header?.devLayoutToolbar?.setStatus?.("Reset nicht verfuegbar.");

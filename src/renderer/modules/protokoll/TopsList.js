@@ -61,11 +61,13 @@ export class TopsList {
     this.root = document.createElement("ul");
     this.root.setAttribute("data-bbm-tops-list-v2", "true");
     applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    this._applyDevOnlyLayoutVarsGate();
   }
 
   setTableLayout(tableLayout) {
     this.tableLayout = tableLayout && typeof tableLayout === "object" ? tableLayout : null;
     applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    this._applyDevOnlyLayoutVarsGate();
   }
 
   setDevLayoutMode(mode = {}) {
@@ -76,6 +78,29 @@ export class TopsList {
       activeZone: enabled ? activeZone : null,
     };
     this.root.dataset.devLayoutMode = enabled ? "true" : "false";
+
+    // DEV-only: the fine-tuning vars (padding/font) must never leak into STABLE.
+    // Re-apply layout when enabling so the current layout (including saved values) becomes visible in DEV.
+    applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    this._applyDevOnlyLayoutVarsGate();
+  }
+
+  _applyDevOnlyLayoutVarsGate() {
+    if (!this.root?.style) return;
+    if (this.devLayoutMode?.enabled) return;
+
+    const devOnlyVars = [
+      "--bbm-tops-list-number-padding-inline",
+      "--bbm-tops-list-number-font-size",
+      "--bbm-tops-list-text-padding-inline",
+      "--bbm-tops-list-text-font-size",
+      "--bbm-tops-list-meta-padding-inline",
+      "--bbm-tops-list-meta-font-size",
+    ];
+
+    for (const key of devOnlyVars) {
+      this.root.style.removeProperty(key);
+    }
   }
 
   setItems(items = []) {
