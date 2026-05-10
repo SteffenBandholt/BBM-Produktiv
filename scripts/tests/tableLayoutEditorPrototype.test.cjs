@@ -471,17 +471,25 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(text.includes("Quelle: Standardlayout protokoll_tops"), true);
       assert.equal(text.includes("UI-Vorschau mit Testdaten"), true);
       assert.equal(text.includes("PDF-Vorschau mit Testdaten"), false);
-      assert.equal(text.includes("Registrierte Beispielzeilen aus der Tabellenregistry"), true);
-      assert.equal(text.includes("Beispielthema fuer die Vorschau"), true);
-      assert.equal(text.includes("Langtext mit laengerer Beschreibung in einer Unterzeile"), true);
-      assert.equal(text.includes("Kurzer Eintrag mit knapper Anzeige"), true);
-      assert.equal(text.includes("Keine Projekt- oder Besprechungsdaten."), true);
-      assert.equal(text.includes("Diese Vorschau erzeugt kein PDF. Der echte PDF-Test mit Testdaten wird später separat ergänzt."), true);
-      assert.equal(text.includes("PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."), false);
-      assert.equal(text.includes("Spalten: 3"), true);
-      assert.equal(text.includes("Layout: UI"), true);
-      assert.equal(previewPanels.length, 1);
-      assert.equal(previewPanels[0]?.dataset?.previewMode, "ui");
+        assert.equal(text.includes("Registrierte Beispielzeilen aus der Tabellenregistry"), true);
+        assert.equal(text.includes("Beispielthema fuer die Vorschau"), true);
+        assert.equal(text.includes("Langtext mit laengerer Beschreibung in einer Unterzeile"), true);
+        assert.equal(text.includes("Kurzer Eintrag mit knapper Anzeige"), true);
+        assert.equal(text.includes("Keine Projekt- oder Besprechungsdaten."), true);
+        assert.equal(text.includes("UI- und PDF-Breiten sind produktiv angeschlossen."), true);
+        assert.equal(text.includes("Diese Vorschau erzeugt kein PDF. Der echte PDF-Test mit Testdaten wird später separat ergänzt."), true);
+        assert.equal(text.includes("PDF-Werte sind eine technische Näherung im Editor, kein echter PDF-Renderer."), false);
+        assert.equal(text.includes("Tabelle speichern"), true);
+        assert.equal(text.includes("Diese Tabelle auf Standard zurücksetzen"), true);
+        assert.equal(text.includes("Gespeichert wird nur die aktuell gewählte Tabelle; kein globales Layout."), true);
+        assert.equal(
+          text.includes("Reset betrifft nur die aktuell gewählte Kombination aus Modul, Tabelle und Orientierung."),
+          true
+        );
+        assert.equal(text.includes("Spalten: 3"), true);
+        assert.equal(text.includes("Layout: UI"), true);
+        assert.equal(previewPanels.length, 1);
+        assert.equal(previewPanels[0]?.dataset?.previewMode, "ui");
       previewPdfToggle.click();
       await flushMicrotasks();
       const previewPanelsAfterSwitch = findNodesByTag(editor.root, "DIV").filter(
@@ -574,6 +582,44 @@ async function runTableLayoutEditorPrototypeTests(run) {
     }
   });
 
+  await run("TableLayoutEditor: project_firms zeigt UI- und PDF-Hinweise", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+    const { api } = makeEditorApi();
+    global.window = { bbmDb: api };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
+      await editor.load();
+      const selects = findNodesByTag(editor.root, "SELECT");
+      selects[0].value = "projektverwaltung";
+      selects[0].dispatchEvent({ type: "change" });
+      await flushMicrotasks();
+
+      const text = collectText(editor.root);
+      assert.equal(selects[0].value, "projektverwaltung");
+      assert.equal(selects[1].value, "project_firms");
+      assert.equal(text.includes("Tabelle: Projekt-Firmenliste"), true);
+      assert.equal(text.includes("tableKey: project_firms"), true);
+      assert.equal(text.includes("UI-Breiten wirken auf die Projekt-Firmenliste."), true);
+      assert.equal(
+        text.includes("PDF ist für diese Tabelle aktuell nur Vorschau. Ein produktiver PDF-Druck ist noch nicht angeschlossen."),
+        true
+      );
+      assert.equal(text.includes("produktiver PDF-Druck ist noch nicht angeschlossen"), true);
+      assert.equal(text.includes("Tabelle speichern"), true);
+      assert.equal(text.includes("Diese Tabelle auf Standard zurücksetzen"), true);
+      assert.equal(text.includes("Gespeichert wird nur die aktuell gewählte Tabelle; kein globales Layout."), true);
+      assert.equal(
+        text.includes("Reset betrifft nur die aktuell gewählte Kombination aus Modul, Tabelle und Orientierung."),
+        true
+      );
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
   await run("SettingsView: Tabellenlayout-Editor bleibt aus der normalen Startansicht heraus", () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
@@ -584,7 +630,6 @@ async function runTableLayoutEditorPrototypeTests(run) {
       const root = view.render();
       const text = collectText(root);
       assert.equal(text.includes("Tabellenlayouts"), false);
-      assert.equal(text.includes("Gespeichertes Layout im PDF testen"), false);
       assert.equal(text.includes("Entwicklung"), true);
     } finally {
       global.document = previousDocument;
@@ -756,7 +801,6 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(editor.root.dataset.orientation, "portrait");
       assert.equal(text.includes("tableKey: -"), true);
       assert.equal(text.includes("Modul: -"), true);
-      assert.equal(text.includes("global"), false);
     } finally {
       global.document = previousDocument;
     }

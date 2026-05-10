@@ -392,6 +392,44 @@ function _getPreviewModeConfig(mode) {
   };
 }
 
+function _getTableLayoutEditorHints(tableDef = {}) {
+  const moduleId = _normalizeId(tableDef?.moduleId);
+  const tableKey = _normalizeId(tableDef?.tableKey);
+
+  const genericUiHint =
+    "UI-Werte steuern die Spaltenbreiten in der App, wenn die Tabelle produktiv angeschlossen ist.";
+  const genericPdfHint =
+    "PDF-Werte steuern nur PDF-Spaltenbreiten, wenn ein PDF-Druckpfad für diese Tabelle angeschlossen ist.";
+  const genericSaveHint = "Gespeichert wird nur die aktuell gewählte Tabelle; kein globales Layout.";
+  const genericResetHint =
+    "Reset betrifft nur die aktuell gewählte Kombination aus Modul, Tabelle und Orientierung.";
+
+  if (moduleId === "projektverwaltung" && tableKey === "project_firms") {
+    return {
+      uiHint: "UI-Breiten wirken auf die Projekt-Firmenliste.",
+      pdfHint: "PDF ist für diese Tabelle aktuell nur Vorschau. Ein produktiver PDF-Druck ist noch nicht angeschlossen.",
+      saveHint: genericSaveHint,
+      resetHint: genericResetHint,
+    };
+  }
+
+  if (moduleId === "protokoll" && tableKey === "protokoll_tops") {
+    return {
+      uiHint: "UI- und PDF-Breiten sind produktiv angeschlossen.",
+      pdfHint: "PDF-Werte steuern hier den produktiven PDF-Druck.",
+      saveHint: genericSaveHint,
+      resetHint: genericResetHint,
+    };
+  }
+
+  return {
+    uiHint: genericUiHint,
+    pdfHint: genericPdfHint,
+    saveHint: genericSaveHint,
+    resetHint: genericResetHint,
+  };
+}
+
 function _buildPreviewGridTemplate(columns = [], mode = "ui") {
   return _cloneColumns(columns)
     .map((column) => {
@@ -906,12 +944,14 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   const btnSave = document.createElement("button");
   btnSave.type = "button";
-  btnSave.textContent = "Speichern";
+  btnSave.textContent = "Tabelle speichern";
+  btnSave.title = "Speichert nur die aktuell gewählte Tabelle; kein globales Layout.";
   applyPopupButtonStyle(btnSave, { variant: "primary" });
 
   const btnReset = document.createElement("button");
   btnReset.type = "button";
-  btnReset.textContent = "Auf Standard";
+  btnReset.textContent = "Diese Tabelle auf Standard zurücksetzen";
+  btnReset.title = "Reset betrifft nur die aktuell gewählte Kombination aus Modul, Tabelle und Orientierung.";
   applyPopupButtonStyle(btnReset);
 
   const status = document.createElement("div");
@@ -920,6 +960,12 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   status.style.color = "#475569";
 
   toolbar.append(orientationWrap, btnReload, btnSave, btnReset, status);
+
+  const actionHint = document.createElement("div");
+  actionHint.style.fontSize = "12px";
+  actionHint.style.lineHeight = "1.4";
+  actionHint.style.opacity = "0.82";
+  actionHint.style.color = "#334155";
 
   const formCard = document.createElement("div");
   applyPopupCardStyle(formCard);
@@ -944,7 +990,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   const columnsSection = makeSection(
     "Spalten",
-    "Der Editor erzeugt die Eingabefelder aus der registrierten Spaltendefinition. Überschriften, Breiten und Vorschauwerte sind spaltenbezogen."
+    "Der Editor erzeugt die Eingabefelder aus der registrierten Spaltendefinition. UI-Werte steuern die App-Spaltenbreiten, PDF-Werte nur PDF-Breiten in angeschlossenen Druckpfaden."
   );
   columnsSection.style.borderBottom = "1px solid rgba(0,0,0,0.08)";
   columnsSection.style.paddingBottom = "8px";
@@ -1168,7 +1214,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   fieldsCard.style.gap = "10px";
   fieldsCard.append(columnsSection);
 
-  root.append(head, contextCard, toolbar, fieldsCard, previewCard);
+  root.append(head, contextCard, toolbar, actionHint, fieldsCard, previewCard);
   const attachFullscreenHost = (host) => {
     fullscreenHost = host || null;
     _applyHostFullscreenState();
@@ -1299,6 +1345,7 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const _updateContextStatus = () => {
     const moduleDef = _getSelectedModuleDefinition();
     const tableDef = _getSelectedTableDefinition();
+    const hints = _getTableLayoutEditorHints(tableDef || {});
     contextCard.dataset.moduleId = state.selectedModuleId || "";
     contextCard.dataset.tableKey = state.selectedTableKey || "";
     contextCard.dataset.orientation = state.orientation;
@@ -1312,7 +1359,12 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     targetInfoOrientation.textContent = `Orientierung: ${state.orientation}`;
     targetInfoSource.textContent = `Quelle: ${sourceLabel}`;
     contextHint.textContent =
-      "Modul- und Tabellenliste kommen aus der zentralen Registry. Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.";
+      [
+        "Modul- und Tabellenliste kommen aus der zentralen Registry. Die Layoutauswahl ist modul- und tabellenbezogen, nicht projektbezogen.",
+        hints.uiHint,
+        hints.pdfHint,
+      ].join(" ");
+    actionHint.textContent = `${hints.saveHint} ${hints.resetHint}`;
     tableInfo.textContent = [
       `Modul: ${moduleLabel}`,
       `Tabelle: ${tableLabel}`,

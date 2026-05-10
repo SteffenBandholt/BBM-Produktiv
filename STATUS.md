@@ -62,6 +62,7 @@ Sie ergänzt:
   - die Vorschau ist in umschaltbare UI- und PDF-Modi mit registrierten Testdaten aufgeteilt
   - der Editor nutzt jetzt ein nahezu vollflächiges internes Arbeitsflächen-Overlay
   - Layoutwerte werden vor dem Speichern validiert und defensiv normalisiert
+  - UI-/PDF-Hinweise im Editor wurden klarer formuliert; `project_firms` ist PDF-seitig nur Vorschau, `protokoll_tops` ist produktiv angeschlossen
   - ungueltige technische Werte werden nicht gespeichert
   - kaputte gespeicherte Layouts fallen auf das Standardlayout der konkreten Tabelle zurueck
   - normale Navigation und sichtbare Protokoll-UI bleiben unveraendert

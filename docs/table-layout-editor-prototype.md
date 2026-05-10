@@ -44,6 +44,12 @@ Er nutzt jetzt ein groesstenteils vollflächiges internes Arbeitsflächen-Overla
 - keine Projekt- oder Besprechungsdaten in der Vorschau
 - keine gleichzeitige Anzeige von UI- und PDF-Vorschau
 - PDF-Werte sind im Editor nur eine technische Naeherung, kein echter PDF-Renderer
+- UI-Werte steuern die Spaltenbreiten in der App, wenn die Tabelle produktiv angeschlossen ist
+- PDF-Werte steuern nur PDF-Spaltenbreiten, wenn ein PDF-Druckpfad fuer die Tabelle angeschlossen ist
+- bei `projektverwaltung / project_firms` ist PDF nur Vorschau; ein produktiver PDF-Druck ist noch nicht angeschlossen
+- bei `protokoll / protokoll_tops` sind UI- und PDF-Breiten produktiv angeschlossen
+- Reset betrifft nur die aktuell gewaehlte Kombination aus Modul, Tabelle und Orientierung
+- Speichern betrifft nur die aktuell gewaehlte Tabelle, nicht ein globales Layout
 - Layoutwerte werden vor dem Speichern validiert und defensiv normalisiert
 - Ungueltige technische Werte werden nicht gespeichert
 - kaputte gespeicherte Layouts fallen auf das Standardlayout der konkreten Tabelle zurueck
