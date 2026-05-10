@@ -47,6 +47,7 @@ Sie ergänzt:
   - `ProjectFirmsView.js` laedt `moduleId=projektverwaltung`, `tableKey=project_firms`, `orientation=portrait` ueber `tableLayoutsGetOne`
   - der PDF-Anschluss fuer `project_firms` bleibt bewusst getrennt
 - Audit fuer den naechsten Tabellenlayout-Kandidaten erstellt; keine Codeaenderung.
+- Teilnehmer im Protokoll als naechsten Tabellenlayout-Kandidaten geprueft; noch kein produktiver Anschluss.
 - Scope-Doku fuer den Firmenlisten-Pilot erstellt; keine Codeaenderung.
 - Contract-Doku fuer `project_firms` Tabellenlayout erstellt; keine Codeaenderung.
 - Naechster offener Schritt: weitere Tabellen nur dann anschliessen, wenn ihre Registry-, Editor- und Preview-Daten sauber bereitstehen.
