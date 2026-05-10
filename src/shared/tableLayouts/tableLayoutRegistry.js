@@ -314,6 +314,13 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
             required: true,
           }),
           Object.freeze({
+            key: "uiMetaInset",
+            label: "UI Meta-Innenabstand",
+            path: "ui.rootVars.--bbm-tops-list-meta-padding-inline",
+            type: "gridTrack",
+            required: true,
+          }),
+          Object.freeze({
             key: "pdfNumberWidth",
             label: "PDF TOP-Spalte",
             path: "pdf.columns.number.width",

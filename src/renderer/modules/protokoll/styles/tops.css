@@ -6,6 +6,7 @@
   --bbm-tops-meta-col-min: 70px;
   --bbm-tops-meta-col-max: 90px;
   --bbm-tops-list-meta-col: 74px;
+  --bbm-tops-list-meta-padding-inline: 4px;
   --bbm-tops-accent-green: #1b8f3a;
   --bbm-top-text-font-family: "Noto Sans", Arial, sans-serif;
   --bbm-top-short-font-size: 10pt;
@@ -401,7 +402,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 [data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"][data-layout-zone="meta"] {
   min-width: var(--bbm-tops-list-meta-col, 74px);
-  padding-inline: 4px;
+  padding-inline: var(--bbm-tops-list-meta-padding-inline, 4px);
 }
 
 [data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"] .bbm-tops-list-row-number-value,

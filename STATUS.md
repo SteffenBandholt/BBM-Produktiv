@@ -32,7 +32,11 @@ Sie ergÃ¤nzt:
   - `Speichern` schreibt nur die UI-Breite der aktuellen Metablock-Zone
   - `Reset` holt den Tabellenstandard zurueck
   - andere Zonen, PDF, Firmenliste und Teilnehmerliste bleiben unveraendert
-- Naechster offener Schritt: die DEV-only Markierung einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
+- Der Metablock-Innenabstand kann jetzt im DEV-Modus ebenfalls live, per Speicher und per Reset gesteuert werden:
+  - `Innen` wirkt nur fuer die aktive Zone `Metablock`
+  - Breite und Innenabstand werden gemeinsam ueber `tableLayouts` gespeichert
+  - `Reset` stellt beide Werte auf den Standard zurueck
+- Naechster offener Schritt: die DEV-only Markierung und den neuen Innenabstand einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.
 - Tabellenlayout-Registry mit technischer Tabellenklassifizierung erweitert.

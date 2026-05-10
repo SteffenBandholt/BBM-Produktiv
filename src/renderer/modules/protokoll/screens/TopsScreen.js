@@ -743,11 +743,14 @@ export default class TopsScreen {
     }
 
     const width = Number(preview?.width || 0);
+    const inset = Number(preview?.inset || 0);
     this.root.dataset.devLayoutActiveZone = zoneKey;
     if (zoneKey !== "meta") return;
     if (!this.topsList?.root?.style) return;
     const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 74));
+    const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 4));
     this.topsList.root.style.setProperty("--bbm-tops-list-meta-col", `${clampedWidth}px`);
+    this.topsList.root.style.setProperty("--bbm-tops-list-meta-padding-inline", `${clampedInset}px`);
   }
 
   _getDevLayoutMetaWidthFromLayout(layout = null) {
@@ -758,15 +761,31 @@ export default class TopsScreen {
     return Math.max(50, Math.min(160, Math.floor(Number(match[1]))));
   }
 
+  _getDevLayoutMetaInsetFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiMetaInset || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 4;
+    return Math.max(0, Math.min(24, Math.floor(Number(match[1]))));
+  }
+
   _syncDevLayoutMetaWidthFromLayout(layout = null) {
     const width = this._getDevLayoutMetaWidthFromLayout(layout);
-    if (this.header?.devLayoutToolbar?.setMetaWidth) {
-      this.header.devLayoutToolbar.setMetaWidth(width);
+    const inset = this._getDevLayoutMetaInsetFromLayout(layout);
+    if (this.header?.devLayoutToolbar?.setMetaValues) {
+      this.header.devLayoutToolbar.setMetaValues({ width, inset });
+    } else {
+      if (this.header?.devLayoutToolbar?.setMetaWidth) {
+        this.header.devLayoutToolbar.setMetaWidth(width);
+      }
+      if (this.header?.devLayoutToolbar?.setMetaInset) {
+        this.header.devLayoutToolbar.setMetaInset(inset);
+      }
     }
     if (this._devLayoutMode?.enabled && this._devLayoutMode.activeZone === "meta") {
       this._applyDevLayoutPreview({
         activeZone: "meta",
-        preview: { width, inset: 0, font: 0 },
+        preview: { width, inset, font: 0 },
       });
     }
   }
@@ -783,12 +802,20 @@ export default class TopsScreen {
       const nextWidth = this.header?.devLayoutToolbar?.getMetaWidth
         ? this.header.devLayoutToolbar.getMetaWidth()
         : this._getDevLayoutMetaWidthFromLayout(currentLayout);
+      const nextInset = this.header?.devLayoutToolbar?.getMetaInset
+        ? this.header.devLayoutToolbar.getMetaInset()
+        : this._getDevLayoutMetaInsetFromLayout(currentLayout);
+      const normalizedWidth = Math.max(50, Math.min(160, Math.floor(Number(nextWidth) || 74)));
+      const normalizedInset = Number.isFinite(Number(nextInset))
+        ? Math.max(0, Math.min(24, Math.floor(Number(nextInset))))
+        : 4;
       const overlay = buildProtokollTopsLayoutOverlay(
         {
           orientation: extracted?.orientation || currentLayout?.variant || "portrait",
           uiNumberWidth: extracted?.uiNumberWidth,
           uiTextTrack: extracted?.uiTextTrack,
-          uiMetaWidth: `${Math.max(50, Math.min(160, Math.floor(Number(nextWidth) || 74)))}px`,
+          uiMetaWidth: `${normalizedWidth}px`,
+          uiMetaInset: `${normalizedInset}px`,
           pdfNumberWidth: extracted?.pdfNumberWidth,
           pdfTextWidth: extracted?.pdfTextWidth,
           pdfMetaWidth: extracted?.pdfMetaWidth,
