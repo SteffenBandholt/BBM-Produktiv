@@ -137,6 +137,12 @@
   gap: 6px;
 }
 
+.bbm-dev-layout-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .bbm-dev-layout-toolbar-control {
   display: grid;
   grid-template-columns: auto auto auto auto;
@@ -182,6 +188,28 @@
   font-size: 7.4pt;
   font-weight: 700;
   color: #1f513f;
+}
+
+.bbm-dev-layout-toolbar-action-btn {
+  min-height: 20px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  border: 1px solid #9ebfa9;
+  background: linear-gradient(180deg, #fff 0%, #edf6ef 100%);
+  color: #245641;
+  font-size: 7.5pt;
+  font-weight: 700;
+}
+
+.bbm-dev-layout-toolbar-action-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #fff 0%, #e4f2e7 100%);
+}
+
+.bbm-dev-layout-toolbar-status {
+  font-size: 7.4pt;
+  font-weight: 700;
+  color: #9d1c1c;
+  min-height: 1.1em;
 }
 
 .bbm-tops-header-line1 {

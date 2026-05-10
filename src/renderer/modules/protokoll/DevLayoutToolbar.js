@@ -10,8 +10,10 @@ function normalizeZoneKey(value) {
 }
 
 export class DevLayoutToolbar {
-  constructor({ onPreviewChange } = {}) {
+  constructor({ onPreviewChange, onSave, onReset } = {}) {
     this.onPreviewChange = typeof onPreviewChange === "function" ? onPreviewChange : null;
+    this.onSave = typeof onSave === "function" ? onSave : null;
+    this.onReset = typeof onReset === "function" ? onReset : null;
     this.previewStateByZone = {
       number: { width: 0, inset: 0, font: 0 },
       text: { width: 0, inset: 0, font: 0 },
@@ -48,7 +50,34 @@ export class DevLayoutToolbar {
 
     this.headWrap.append(this.line1El, this.line2El);
 
-    this.root.append(this.headWrap, this.controlsWrap);
+    this.actionWrap = document.createElement("div");
+    this.actionWrap.className = "bbm-dev-layout-toolbar-actions";
+
+    this.saveButton = document.createElement("button");
+    this.saveButton.type = "button";
+    this.saveButton.className = "bbm-dev-layout-toolbar-action-btn";
+    this.saveButton.textContent = "Speichern";
+    this.saveButton.onclick = async () => {
+      if (!this.onSave) return;
+      await this.onSave();
+    };
+
+    this.resetButton = document.createElement("button");
+    this.resetButton.type = "button";
+    this.resetButton.className = "bbm-dev-layout-toolbar-action-btn";
+    this.resetButton.textContent = "Reset";
+    this.resetButton.onclick = async () => {
+      if (!this.onReset) return;
+      await this.onReset();
+    };
+
+    this.actionWrap.append(this.saveButton, this.resetButton);
+
+    this.statusEl = document.createElement("div");
+    this.statusEl.className = "bbm-dev-layout-toolbar-status";
+    this.statusEl.hidden = true;
+
+    this.root.append(this.headWrap, this.controlsWrap, this.actionWrap, this.statusEl);
   }
 
   update({ enabled, activeZone } = {}) {
@@ -130,6 +159,7 @@ export class DevLayoutToolbar {
       [controlKey]: nextValue,
     };
     this.previewStateByZone[zoneKey] = nextPreview;
+    this.clearStatus();
     this.update({ enabled: true, activeZone: zoneKey });
   }
 
@@ -139,6 +169,29 @@ export class DevLayoutToolbar {
       activeZone: normalizeZoneKey(zoneKey),
       preview: preview || { width: 0, inset: 0, font: 0 },
     });
+  }
+
+  setMetaWidth(width) {
+    const value = Number(width);
+    const next = Number.isFinite(value) ? Math.max(50, Math.min(160, Math.floor(value))) : 74;
+    this.previewStateByZone.meta.width = next;
+    if (this.activeZone === "meta") {
+      this.update({ enabled: true, activeZone: "meta" });
+    }
+  }
+
+  getMetaWidth() {
+    return Number(this.previewStateByZone?.meta?.width || 74);
+  }
+
+  setStatus(message = "") {
+    const text = String(message || "").trim();
+    this.statusEl.textContent = text;
+    this.statusEl.hidden = !text;
+  }
+
+  clearStatus() {
+    this.setStatus("");
   }
 }
 

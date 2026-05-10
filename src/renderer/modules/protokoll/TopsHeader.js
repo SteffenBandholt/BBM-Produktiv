@@ -1,7 +1,14 @@
 import { DevLayoutToolbar } from "./DevLayoutToolbar.js";
 
 export class TopsHeader {
-  constructor({ onClose, onEndMeeting, onKeywordClick, onDevLayoutPreviewChange } = {}) {
+  constructor({
+    onClose,
+    onEndMeeting,
+    onKeywordClick,
+    onDevLayoutPreviewChange,
+    onDevLayoutSave,
+    onDevLayoutReset,
+  } = {}) {
     this.onClose = typeof onClose === "function" ? onClose : null;
     this.onEndMeeting = typeof onEndMeeting === "function" ? onEndMeeting : null;
     this.onKeywordClick = typeof onKeywordClick === "function" ? onKeywordClick : null;
@@ -40,6 +47,8 @@ export class TopsHeader {
 
     this.devLayoutToolbar = new DevLayoutToolbar({
       onPreviewChange: onDevLayoutPreviewChange,
+      onSave: onDevLayoutSave,
+      onReset: onDevLayoutReset,
     });
 
     this.spacer = document.createElement("div");

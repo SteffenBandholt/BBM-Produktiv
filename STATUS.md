@@ -28,6 +28,10 @@ Sie ergÃ¤nzt:
 - Der Metablock bekommt jetzt die erste echte Live-Layout-Umstellung:
   - `Breite` wirkt im DEV-Modus nur fuer die aktive Zone `Metablock`
   - die Breite wird ohne Speicherung nur im laufenden Fenster um 5 px pro Klick angepasst
+- Die Metablock-Breite kann jetzt ueber den bestehenden `tableLayouts`-Weg gespeichert und zurueckgesetzt werden:
+  - `Speichern` schreibt nur die UI-Breite der aktuellen Metablock-Zone
+  - `Reset` holt den Tabellenstandard zurueck
+  - andere Zonen, PDF, Firmenliste und Teilnehmerliste bleiben unveraendert
 - Naechster offener Schritt: die DEV-only Markierung einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.

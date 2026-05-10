@@ -14,6 +14,10 @@ import {
   buildListItemsFromState,
   resolveVisibleSelectionForCollapsedFamilies,
 } from "../buildListItemsFromState.js";
+import {
+  buildProtokollTopsLayoutOverlay,
+  extractProtokollTopsEditorValues,
+} from "../../../../shared/tableLayouts/protokollTopsLayout.js";
 import { editorFromTop } from "../editorFromTop.js";
 import { buildPatchFromDraft } from "../buildPatchFromDraft.js";
 import { canCreateChildFromState } from "../canCreateChildFromState.js";
@@ -212,6 +216,8 @@ export default class TopsScreen {
       },
       onKeywordClick: async () => this._openKeywordDialog(),
       onDevLayoutPreviewChange: (payload) => this._applyDevLayoutPreview(payload),
+      onDevLayoutSave: async () => this._saveDevLayoutMetaWidth(),
+      onDevLayoutReset: async () => this._resetDevLayoutMetaWidth(),
     });
     this.dialogs = new TopsViewDialogs({ view: this._dialogViewAdapter });
   }
@@ -667,6 +673,7 @@ export default class TopsScreen {
     if (this.topsList instanceof TopsList) {
       this.topsList.setTableLayout(this._topListLayout);
     }
+    this._syncDevLayoutMetaWidthFromLayout(this._topListLayout);
   }
 
   async _loadTopListLayout() {
@@ -741,6 +748,104 @@ export default class TopsScreen {
     if (!this.topsList?.root?.style) return;
     const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 74));
     this.topsList.root.style.setProperty("--bbm-tops-list-meta-col", `${clampedWidth}px`);
+  }
+
+  _getDevLayoutMetaWidthFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiMetaWidth || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 74;
+    return Math.max(50, Math.min(160, Math.floor(Number(match[1]))));
+  }
+
+  _syncDevLayoutMetaWidthFromLayout(layout = null) {
+    const width = this._getDevLayoutMetaWidthFromLayout(layout);
+    if (this.header?.devLayoutToolbar?.setMetaWidth) {
+      this.header.devLayoutToolbar.setMetaWidth(width);
+    }
+    if (this._devLayoutMode?.enabled && this._devLayoutMode.activeZone === "meta") {
+      this._applyDevLayoutPreview({
+        activeZone: "meta",
+        preview: { width, inset: 0, font: 0 },
+      });
+    }
+  }
+
+  async _saveDevLayoutMetaWidth() {
+    const api = window.bbmDb || {};
+    if (typeof api.tableLayoutsSave !== "function") {
+      this.header?.devLayoutToolbar?.setStatus?.("Speichern nicht verfuegbar.");
+      return false;
+    }
+    try {
+      const currentLayout = this._topListLayout || (await this._loadTopListLayout()) || {};
+      const extracted = extractProtokollTopsEditorValues(currentLayout);
+      const nextWidth = this.header?.devLayoutToolbar?.getMetaWidth
+        ? this.header.devLayoutToolbar.getMetaWidth()
+        : this._getDevLayoutMetaWidthFromLayout(currentLayout);
+      const overlay = buildProtokollTopsLayoutOverlay(
+        {
+          orientation: extracted?.orientation || currentLayout?.variant || "portrait",
+          uiNumberWidth: extracted?.uiNumberWidth,
+          uiTextTrack: extracted?.uiTextTrack,
+          uiMetaWidth: `${Math.max(50, Math.min(160, Math.floor(Number(nextWidth) || 74)))}px`,
+          pdfNumberWidth: extracted?.pdfNumberWidth,
+          pdfTextWidth: extracted?.pdfTextWidth,
+          pdfMetaWidth: extracted?.pdfMetaWidth,
+          labelTop: extracted?.labelTop,
+          labelText: extracted?.labelText,
+          labelMeta1: extracted?.labelMeta1,
+          labelMeta2: extracted?.labelMeta2,
+          labelMeta3: extracted?.labelMeta3,
+        },
+        extracted?.orientation || currentLayout?.variant || "portrait"
+      );
+      const res = await api.tableLayoutsSave({
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: overlay.variant || "portrait",
+        layout: overlay,
+      });
+      if (!res?.ok) {
+        this.header?.devLayoutToolbar?.setStatus?.(res?.error || "Speichern fehlgeschlagen.");
+        return false;
+      }
+      this.header?.devLayoutToolbar?.clearStatus?.();
+      this._applyTopListLayout(res?.data?.effectiveLayout || res?.data?.defaultLayout || overlay);
+      return true;
+    } catch (err) {
+      this.header?.devLayoutToolbar?.setStatus?.(err?.message || String(err) || "Speichern fehlgeschlagen.");
+      return false;
+    }
+  }
+
+  async _resetDevLayoutMetaWidth() {
+    const api = window.bbmDb || {};
+    if (typeof api.tableLayoutsReset !== "function") {
+      this.header?.devLayoutToolbar?.setStatus?.("Reset nicht verfuegbar.");
+      return false;
+    }
+    try {
+      const orientation =
+        this._topListLayout?.variant ||
+        extractProtokollTopsEditorValues(this._topListLayout || {})?.orientation ||
+        "portrait";
+      const res = await api.tableLayoutsReset({
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation,
+      });
+      if (!res?.ok) {
+        this.header?.devLayoutToolbar?.setStatus?.(res?.error || "Reset fehlgeschlagen.");
+        return false;
+      }
+      this.header?.devLayoutToolbar?.clearStatus?.();
+      await this._loadTopListLayout();
+      return true;
+    } catch (err) {
+      this.header?.devLayoutToolbar?.setStatus?.(err?.message || String(err) || "Reset fehlgeschlagen.");
+      return false;
+    }
   }
 
   async _loadDevLayoutMode() {
