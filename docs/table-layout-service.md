@@ -111,6 +111,16 @@ Regeln:
 - `uiProductive` und `pdfProductive` sagen, ob der jeweilige Bereich bereits produktiv angeschlossen ist oder nur als Vorschau dient.
 - Die Registry bleibt die fachliche Quelle fuer die sichtbaren Editor-Listen.
 
+Entstehungsprozess neuer Inhaltstabellen:
+
+- Sobald eine neue fachliche Inhaltstabelle in UI oder PDF gebaut wird und der Prototyp fachlich steht, muss ein Tabellenlayout-Steckbrief vorbereitet werden.
+- Ein Prototyp gilt als fachlich ausreichend reif, wenn Inhalte, Spalten, Reihenfolge, Grunddesign und UI und/oder PDF bereits vorhanden sind.
+- Ab diesem Punkt wird die Tabelle als Feintuning-Kandidat fuer den Tabellenlayout-Editor gefuehrt.
+- Im Editor werden dann nur noch Spaltenbreiten, getrennte UI-/PDF-Breiten, Speichern, Zuruecksetzen und Pruefen gepflegt.
+- Weitere Breitenaenderungen sollen danach nicht mehr ueber freie Codex-Prompts, sondern ueber den Tabellenlayout-Editor laufen.
+- Fuer jede neue Inhaltstabelle werden mindestens `tableKey`, Anzeigename, Bereich/Modul, Art, UI/PDF-Vorhandensein, sichtbare Spalten in echter Reihenfolge, Standardbreiten und `editorEnabled` dokumentiert bzw. registriert.
+- Bedienlisten bleiben auch in diesem Entstehungsprozess ausgeschlossen.
+
 ### 5.2 Tabelleneditor-UI
 
 Interne Oberflaeche zum Einstellen der Tabellenlayouts.

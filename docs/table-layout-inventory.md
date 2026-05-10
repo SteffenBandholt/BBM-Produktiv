@@ -104,7 +104,7 @@ Der interne Tabellenlayout-Editor soll nur mit fachlich geklaerten Inhaltstabell
 ### 2.4 Teilnehmerliste im Protokoll / Ausdruck / `protokoll_participants`
 
 - Arbeitsname: Teilnehmerliste
-- vorgeschlagener tableKey: `protokoll_participants`
+- tableKey: `protokoll_participants`
 - Bereich/Modul: `protokoll`
 - Fundstellen:
   - `src/renderer/meeting-participant/ui/MeetingParticipantList.js`
@@ -117,18 +117,18 @@ Der interne Tabellenlayout-Editor soll nur mit fachlich geklaerten Inhaltstabell
   - `src/renderer/print/layout/PrintShell.js`
   - `src/renderer/modules/ausgabe/PrintModal.js`
 - Art: Inhaltstabelle
-- Verwendung: UI und PDF
-- aktuell im Tabelleneditor: nein
+- Verwendung: UI und PDF-Vorschau
+- aktuell im Tabelleneditor: ja
 - sichtbare Spalten:
   - Name
   - Funktion
   - Firma
   - Telefon / E-Mail
   - Anwesend / Verteiler
-- Empfehlung: Kandidat, Nutzer fragen
+- Empfehlung: bereits registriert
 - Risiko/Bemerkung:
   - die Tabelle ist fachlich vorhanden, aber von Auswahl- und Bearbeitungsdialogen umgeben
-  - eine spaetere Aufnahme darf nur nach ausdruecklicher Freigabe erfolgen
+  - produktive UI- und PDF-Anschluesse bleiben vorerst Vorschau
 
 ### 2.5 ToDo-Liste
 
@@ -315,18 +315,17 @@ Der interne Tabellenlayout-Editor soll nur mit fachlich geklaerten Inhaltstabell
 Aktuell im Tabellenlayout-Editor registriert:
 
 - `protokoll_tops` / TOP-Liste
+- `protokoll_participants` / Teilnehmerliste
 - `project_firms` / Projekt-Firmenliste
 
 Noch nicht registriert, aber als Kandidat dokumentiert:
 
-- `protokoll_participants` / Teilnehmerliste im Protokoll
 - ToDo-Liste
 
 ## 6. Kandidaten mit Nutzerfreigabe
 
 Diese Tabellen sind fachlich als Kandidaten dokumentiert, brauchen aber vor einer Registrierung ausdrueckliche Nutzerfreigabe:
 
-- Teilnehmerliste im Protokoll (`protokoll_participants`)
 - ToDo-Liste
 - Firmenstamm-Firmenliste
 - Personenliste im Firmenstamm

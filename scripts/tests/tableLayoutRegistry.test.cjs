@@ -20,6 +20,10 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(modules[0].tables[0].tableLabel, "TOP-Liste");
     assert.equal(modules[0].tables[0].tableKind, "content");
     assert.equal(modules[0].tables[0].editorEnabled, true);
+    assert.equal(modules[0].tables[1].tableKey, "protokoll_participants");
+    assert.equal(modules[0].tables[1].tableLabel, "Teilnehmerliste");
+    assert.equal(modules[0].tables[1].tableKind, "content");
+    assert.equal(modules[0].tables[1].editorEnabled, true);
     const projectModule = modules.find((moduleDef) => moduleDef.moduleId === "projektverwaltung");
     assert.ok(projectModule, "projektverwaltung module missing");
     assert.equal(projectModule.moduleLabel, "Projektverwaltung");
@@ -29,7 +33,7 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(projectModule.tables[0].editorEnabled, true);
 
     assert.equal(Array.isArray(definitions), true);
-    assert.equal(definitions.length >= 2, true);
+    assert.equal(definitions.length >= 3, true);
     assert.equal(definitions[0].moduleId, "protokoll");
     assert.equal(definitions[0].moduleLabel, "Protokoll");
     assert.equal(definitions[0].tableKey, "protokoll_tops");
@@ -59,6 +63,31 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(Array.isArray(definitions[0].columns), true);
     assert.equal(definitions[0].columns[0].key, "topNumber");
     assert.equal(definitions[0].columns[1].label, "Gegenstand");
+    const participantsDef = definitions.find((def) => def.tableKey === "protokoll_participants");
+    assert.ok(participantsDef, "protokoll_participants definition missing");
+    assert.equal(participantsDef.moduleId, "protokoll");
+    assert.equal(participantsDef.tableLabel, "Teilnehmerliste");
+    assert.equal(participantsDef.tableKind, "content");
+    assert.equal(participantsDef.editorEnabled, true);
+    assert.equal(participantsDef.uiAvailable, true);
+    assert.equal(participantsDef.pdfAvailable, true);
+    assert.equal(participantsDef.uiProductive, false);
+    assert.equal(participantsDef.pdfProductive, false);
+    assert.equal(Array.isArray(participantsDef.columns), true);
+    assert.equal(participantsDef.columns.length, 5);
+    assert.equal(participantsDef.columns[0].label, "Name");
+    assert.equal(participantsDef.columns[3].label, "Telefon / E-Mail");
+    assert.equal(participantsDef.columns[4].label, "Anwesend / Verteiler");
+    assert.equal(Array.isArray(participantsDef.previewData), true);
+    assert.equal(participantsDef.previewData[0].name, "Max Muster");
+    assert.equal(Array.isArray(participantsDef.previewData[0].contact), true);
+    assert.equal(participantsDef.previewData[0].contact.length, 2);
+    assert.equal(Array.isArray(participantsDef.previewData[0].attendance), true);
+    assert.equal(participantsDef.previewData[0].attendance.length, 2);
+    assert.equal(typeof participantsDef.defaultLayout?.tableKey, "string");
+    assert.equal(participantsDef.defaultLayout?.tableKey, "protokoll_participants");
+    assert.equal(typeof participantsDef.defaultLayout?.variant, "string");
+    assert.equal(participantsDef.defaultLayout?.variant, "portrait");
     const projectFirmsDef = definitions.find((def) => def.tableKey === "project_firms");
     assert.ok(projectFirmsDef, "project_firms definition missing");
     assert.equal(projectFirmsDef.moduleId, "projektverwaltung");
@@ -82,6 +111,13 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(def?.tableKey, "protokoll_tops");
     assert.equal(def?.tableLabel, "TOP-Liste");
     assert.equal(typeof def?.loadStandardLayout, "function");
+
+    const participantsDef = getTableLayoutDefinition({ moduleId: "protokoll", tableKey: "protokoll_participants" });
+    assert.equal(participantsDef?.moduleId, "protokoll");
+    assert.equal(participantsDef?.tableLabel, "Teilnehmerliste");
+    assert.equal(participantsDef?.tableKind, "content");
+    assert.equal(participantsDef?.editorEnabled, true);
+    assert.equal(typeof participantsDef?.loadStandardLayout, "function");
   });
 }
 

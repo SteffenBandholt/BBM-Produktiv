@@ -1,17 +1,17 @@
 ﻿# Tabellenlayout-Scope: Teilnehmer im Protokoll
 
-Status: fachlich geprüft, noch nicht im Editor registriert
+Status: fachlich geprüft und im Editor registriert
 
 ## 1. Ausgangslage
 
-Der naechste moegliche Tabellenlayout-Kandidat nach `protokoll_tops` wurde auf die fachliche Teilnehmerdarstellung im Protokollkontext untersucht.
+Die fachliche Teilnehmerdarstellung im Protokollkontext ist als Inhaltstabelle fuer den Tabellenlayout-Editor freigegeben und registriert.
 
 Wichtig:
 
-- noch kein produktiver Anschluss
+- noch kein produktiver UI-/PDF-Anschluss
 - keine Drucklogik geaendert
 - keine PrintModal-/Druckarten-Aenderung
-- kein PDF-Anschluss
+- PDF bleibt fuer diese Tabelle vorerst Vorschau
 - keine Teilnehmerlogik umgebaut
 - keine DB-Direktnutzung im Renderer
 
@@ -117,19 +117,19 @@ Begruendung:
 - sie ist an Besprechungen und Protokolle gebunden
 - sie ist keine Firmenstamm- oder Projektverwaltungs-Tabelle
 
-## 6. Empfohlener tableKey
+## 6. Registrierter tableKey
 
-Empfohlener Kandidat, falls die Tabelle spaeter angeschlossen wird:
+Registrierter Layout-Key:
 
 - `tableKey: protokoll_participants`
 
-Alternative, falls eine noch naehere technische Anlehnung an den bestehenden IPC-/DB-Begriff bevorzugt wird:
+Alternative, falls eine noch naehere technische Anlehnung an den bestehenden IPC-/DB-Begriff spaeter gewuenscht wird:
 
 - `meeting_participants`
 
 Empfehlung fuer den Layout-Editor:
 
-- **`protokoll_participants`** als Layout-Key
+- **`protokoll_participants`** bleibt der Layout-Key
 
 Begruendung:
 
@@ -139,13 +139,13 @@ Begruendung:
 
 ## 7. Empfohlene erste Umsetzung
 
-Wenn dieser Kandidat spaeter angegangen wird, dann nur in kleinen Schritten:
+Die erste Umsetzung ist bereits erfolgt:
 
 1. Registry-Eintrag fuer die Teilnehmerliste anlegen.
-2. Erst die Drucktabelle als Layoutkandidat behandeln.
-3. UI-Anschluss nur dann, wenn die Teilnehmerdarstellung als isolierte Tabelle im Dialog sauber berechenbar ist.
-4. PDF zunaechst nur als Vorschau.
-5. Erst danach pruefen, ob die duale Modal-Ansicht von denselben Layoutwerten profitieren soll.
+2. Die Tabelle im Editor anzeigen.
+3. UI- und PDF-Vorschau nur als Vorschau behandeln.
+4. Einen produktiven UI-/PDF-Anschluss bewusst noch nicht herstellen.
+5. Spaeter erst pruefen, ob die duale Modal-Ansicht von denselben Layoutwerten profitieren soll.
 
 ## 8. Abgrenzung
 
@@ -177,16 +177,15 @@ Die TOP-Liste bleibt der Protokoll-Hauptkandidat fuer die bestehende Tabellenlay
 
 Empfehlung heute:
 
-- **fachlich gepr?ft, aber noch nicht im Editor registriert**
-- **eine spaetere Aufnahme darf nur nach Nutzerfreigabe und mit den sichtbaren Spalten erfolgen**
-- **nicht sofort als naechster Produktiv-Pilot**
-- **erst weiterer Scope / Feinscope noetig**
+- bereits im Editor registriert
+- UI- und PDF-Anschluss bleiben vorerst Vorschau
+- kein produktiver Teilnehmer-UI-/PDF-Anschluss
+- keine weitere Registrierung oder Umbildung ohne neues Nutzerziel
 
 Warum:
 
-- die Drucktabelle ist zwar klarer als viele Verwaltungslisten
-- die UI ist aber als Teilnehmer-/Kandidaten-Modal komplexer und weniger tabellarisch isoliert
-- fuer den naechsten kleinen Tabellenlayout-Schritt ist daher eine noch klarer getrennte Tabelle risikoaermer
+- die Tabellenspalten sind fachlich geklaert und bereits im Editor verfuegbar
+- die UI ist als Teilnehmer-/Kandidaten-Modal komplexer und weniger tabellarisch isoliert
+- der produktive Anschluss bleibt deshalb bewusst noch aus
 
-Wenn die Teilnehmerliste spaeter als Layoutkandidat gestartet wird, ist sie fachlich gut geeignet. Fuer den naechsten unmittelbaren Pilot ist sie aber eher ein **spaterer Kandidat** als der erste naechste Schritt.
-
+Die Teilnehmerliste ist damit registriert, aber produktiv noch nicht angeschlossen.

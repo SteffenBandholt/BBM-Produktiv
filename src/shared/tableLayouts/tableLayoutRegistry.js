@@ -168,6 +168,99 @@ const PROJECT_FIRMS_COLUMNS = Object.freeze([
   }),
 ]);
 
+const PROTOKOLL_PARTICIPANTS_PREVIEW_DATA = Object.freeze([
+  Object.freeze({
+    name: "Max Muster",
+    function: "Bauleiter",
+    company: "Musterbau GmbH",
+    contact: Object.freeze(["0123 456789", "max@muster.de"]),
+    attendance: Object.freeze(["anwesend", "verteiler"]),
+  }),
+  Object.freeze({
+    name: "Erika Beispiel",
+    function: "Projektleitung",
+    company: "Beispiel AG",
+    contact: Object.freeze(["0456 123456", "erika@beispiel.de"]),
+    attendance: Object.freeze(["abwesend", "verteiler"]),
+  }),
+  Object.freeze({
+    name: "Tim Test",
+    function: "Architekt",
+    company: "Planwerk GmbH",
+    contact: Object.freeze(["030 555555", "tim@planwerk.de"]),
+    attendance: Object.freeze(["anwesend", "verteiler"]),
+  }),
+]);
+
+const PROTOKOLL_PARTICIPANTS_COLUMNS = Object.freeze([
+  Object.freeze({
+    key: "name",
+    label: "Name",
+    uiWidth: "2fr",
+    pdfWidth: "36mm",
+    weight: 2,
+    required: true,
+    previewValue: "Max Muster",
+    previewField: "name",
+    headerLines: Object.freeze(["Name"]),
+  }),
+  Object.freeze({
+    key: "function",
+    label: "Funktion",
+    uiWidth: "2fr",
+    pdfWidth: "36mm",
+    weight: 2,
+    required: true,
+    previewValue: "Bauleiter",
+    previewField: "function",
+    headerLines: Object.freeze(["Funktion"]),
+  }),
+  Object.freeze({
+    key: "company",
+    label: "Firma",
+    uiWidth: "1.5fr",
+    pdfWidth: "30mm",
+    weight: 1,
+    required: true,
+    previewValue: "Musterbau GmbH",
+    previewField: "company",
+    headerLines: Object.freeze(["Firma"]),
+  }),
+  Object.freeze({
+    key: "contact",
+    label: "Telefon / E-Mail",
+    uiWidth: "2.2fr",
+    pdfWidth: "45mm",
+    weight: 2,
+    required: true,
+    previewValue: "0123 456789 / max@muster.de",
+    previewField: "contact",
+    headerLines: Object.freeze(["Telefon / E-Mail"]),
+  }),
+  Object.freeze({
+    key: "attendance",
+    label: "Anwesend / Verteiler",
+    uiWidth: "110px",
+    pdfWidth: "26mm",
+    weight: 1,
+    required: true,
+    previewValue: "anwesend / verteiler",
+    previewField: "attendance",
+    headerLines: Object.freeze(["Anwesend / Verteiler"]),
+  }),
+]);
+
+const PROTOKOLL_PARTICIPANTS_DEFAULT_LAYOUT = Object.freeze({
+  tableKey: "protokoll_participants",
+  moduleId: "protokoll",
+  variant: "portrait",
+  columns: PROTOKOLL_PARTICIPANTS_COLUMNS,
+});
+
+async function _loadProtokollParticipantsLayout() {
+  return _cloneJson(PROTOKOLL_PARTICIPANTS_DEFAULT_LAYOUT);
+}
+
 const PROJECT_FIRMS_DEFAULT_LAYOUT = Object.freeze({
   tableKey: "project_firms",
   moduleId: "projektverwaltung",
@@ -279,6 +372,21 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
         ]),
         previewData: PROTOKOLL_TOPS_PREVIEW_DATA,
         defaultLayoutLoader: _loadProtokollTopsLayout,
+      }),
+      Object.freeze({
+        tableKey: "protokoll_participants",
+        tableLabel: "Teilnehmerliste",
+        description: "Teilnehmerliste im Protokollkontext.",
+        tableKind: "content",
+        editorEnabled: true,
+        uiAvailable: true,
+        pdfAvailable: true,
+        uiProductive: false,
+        pdfProductive: false,
+        supportedOrientations: Object.freeze(["portrait", "landscape"]),
+        columns: PROTOKOLL_PARTICIPANTS_COLUMNS,
+        previewData: PROTOKOLL_PARTICIPANTS_PREVIEW_DATA,
+        defaultLayoutLoader: _loadProtokollParticipantsLayout,
       }),
     ]),
   }),

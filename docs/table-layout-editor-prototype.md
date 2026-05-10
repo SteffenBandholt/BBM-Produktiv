@@ -34,7 +34,8 @@ Er nutzt jetzt ein groesstenteils vollflÃ¤chiges internes ArbeitsflÃ¤chen-Ov
 - der Editor zeigt nur ausdruecklich freigegebene Inhaltstabellen mit `tableKind = content` und `editorEnabled = true`
 - Bedienlisten und Auswahl-Popups gehoeren nicht in den Editor
 - Spalten werden nicht aus Datenfeldern erraten
-- aktuell sind `Protokoll / TOP-Liste / protokoll_tops` und `Projektverwaltung / Projekt-Firmenliste / project_firms` registriert
+- neue Inhaltstabellen kommen erst als fachlich geklaerter Prototyp mit Layout-Steckbrief in den Editor; danach ist der Editor der Feintuning-Schritt fuer Breiten und Vorschau
+- aktuell sind `Protokoll / TOP-Liste / protokoll_tops`, `Protokoll / Teilnehmerliste / protokoll_participants` und `Projektverwaltung / Projekt-Firmenliste / project_firms` registriert
 - nur `protokoll_tops` ist produktiv an UI und PDF angeschlossen
 - Orientierung waehlen: `portrait` / `landscape`
 - der Editor merkt sich die zuletzt gewaehlte Orientierung intern
@@ -51,6 +52,7 @@ Er nutzt jetzt ein groesstenteils vollflÃ¤chiges internes ArbeitsflÃ¤chen-Ov
 - UI-Werte steuern die Spaltenbreiten in der App, wenn die Tabelle produktiv angeschlossen ist
 - PDF-Werte steuern nur PDF-Spaltenbreiten, wenn ein PDF-Druckpfad fuer die Tabelle angeschlossen ist
 - bei `projektverwaltung / project_firms` ist PDF nur Vorschau; ein produktiver PDF-Druck ist noch nicht angeschlossen
+- bei `protokoll / protokoll_participants` sind UI und PDF aktuell nur Vorschau; ein produktiver Anschluss an Teilnehmer-UI und PDF-Druck ist noch nicht angeschlossen
 - bei `protokoll / protokoll_tops` sind UI- und PDF-Breiten produktiv angeschlossen
 - Reset betrifft nur die aktuell gewaehlte Kombination aus Modul, Tabelle und Orientierung
 - Speichern betrifft nur die aktuell gewaehlte Tabelle, nicht ein globales Layout

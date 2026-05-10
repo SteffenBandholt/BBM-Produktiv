@@ -276,6 +276,152 @@ async function runTableLayoutEditorPrototypeTests(run) {
         ],
       },
       {
+        moduleId: "protokoll",
+        moduleLabel: "Protokoll",
+        tableKey: "protokoll_participants",
+        tableLabel: "Teilnehmerliste",
+        description: "Teilnehmerliste im Protokollkontext",
+        tableKind: "content",
+        editorEnabled: true,
+        uiAvailable: true,
+        pdfAvailable: true,
+        uiProductive: false,
+        pdfProductive: false,
+        supportedOrientations: ["portrait", "landscape"],
+        columns: [
+          {
+            key: "name",
+            label: "Name",
+            uiWidth: "2fr",
+            pdfWidth: "36mm",
+            weight: 2,
+            required: true,
+            previewValue: "Max Muster",
+            headerLines: ["Name"],
+          },
+          {
+            key: "function",
+            label: "Funktion",
+            uiWidth: "2fr",
+            pdfWidth: "36mm",
+            weight: 2,
+            required: true,
+            previewValue: "Bauleiter",
+            headerLines: ["Funktion"],
+          },
+          {
+            key: "company",
+            label: "Firma",
+            uiWidth: "1.5fr",
+            pdfWidth: "30mm",
+            weight: 1,
+            required: true,
+            previewValue: "Musterbau GmbH",
+            headerLines: ["Firma"],
+          },
+          {
+            key: "contact",
+            label: "Telefon / E-Mail",
+            uiWidth: "2.2fr",
+            pdfWidth: "45mm",
+            weight: 2,
+            required: true,
+            previewValue: "0123 456789 / max@muster.de",
+            headerLines: ["Telefon / E-Mail"],
+          },
+          {
+            key: "attendance",
+            label: "Anwesend / Verteiler",
+            uiWidth: "110px",
+            pdfWidth: "26mm",
+            weight: 1,
+            required: true,
+            previewValue: "anwesend / verteiler",
+            headerLines: ["Anwesend / Verteiler"],
+          },
+        ],
+        defaultLayout: {
+          tableKey: "protokoll_participants",
+          moduleId: "protokoll",
+          variant: "portrait",
+          columns: [
+            {
+              key: "name",
+              label: "Name",
+              uiWidth: "2fr",
+              pdfWidth: "36mm",
+              weight: 2,
+              required: true,
+              previewValue: "Max Muster",
+              headerLines: ["Name"],
+            },
+            {
+              key: "function",
+              label: "Funktion",
+              uiWidth: "2fr",
+              pdfWidth: "36mm",
+              weight: 2,
+              required: true,
+              previewValue: "Bauleiter",
+              headerLines: ["Funktion"],
+            },
+            {
+              key: "company",
+              label: "Firma",
+              uiWidth: "1.5fr",
+              pdfWidth: "30mm",
+              weight: 1,
+              required: true,
+              previewValue: "Musterbau GmbH",
+              headerLines: ["Firma"],
+            },
+            {
+              key: "contact",
+              label: "Telefon / E-Mail",
+              uiWidth: "2.2fr",
+              pdfWidth: "45mm",
+              weight: 2,
+              required: true,
+              previewValue: "0123 456789 / max@muster.de",
+              headerLines: ["Telefon / E-Mail"],
+            },
+            {
+              key: "attendance",
+              label: "Anwesend / Verteiler",
+              uiWidth: "110px",
+              pdfWidth: "26mm",
+              weight: 1,
+              required: true,
+              previewValue: "anwesend / verteiler",
+              headerLines: ["Anwesend / Verteiler"],
+            },
+          ],
+        },
+        previewData: [
+          {
+            name: "Max Muster",
+            function: "Bauleiter",
+            company: "Musterbau GmbH",
+            contact: ["0123 456789", "max@muster.de"],
+            attendance: ["anwesend", "verteiler"],
+          },
+          {
+            name: "Erika Beispiel",
+            function: "Projektleitung",
+            company: "Beispiel AG",
+            contact: ["0456 123456", "erika@beispiel.de"],
+            attendance: ["abwesend", "verteiler"],
+          },
+          {
+            name: "Tim Test",
+            function: "Architekt",
+            company: "Planwerk GmbH",
+            contact: ["030 555555", "tim@planwerk.de"],
+            attendance: ["anwesend", "verteiler"],
+          },
+        ],
+      },
+      {
         moduleId: "projektverwaltung",
         moduleLabel: "Projektverwaltung",
         tableKey: "project_firms",
@@ -364,14 +510,39 @@ async function runTableLayoutEditorPrototypeTests(run) {
         ],
       },
     ],
-    getOne = async (payload) => ({
-      ok: true,
-      data: {
-        source: "default",
-        schemaVersion: 1,
-        effectiveLayout: editorMod.buildProtokollTopsLayoutOverlay({}, payload.orientation),
-      },
-    }),
+    getOne = async (payload) => {
+      const tableDef = Array.isArray(tableDefinitions)
+        ? tableDefinitions.find(
+            (item) =>
+              String(item?.tableKey || "").trim() === String(payload?.tableKey || "").trim() &&
+              String(item?.moduleId || "").trim() === String(payload?.moduleId || "").trim()
+          )
+        : null;
+      const effectiveLayout =
+        tableDef?.tableKey === "protokoll_tops"
+          ? editorMod.buildProtokollTopsLayoutOverlay({}, payload.orientation)
+          : tableDef?.defaultLayout
+            ? {
+                ...JSON.parse(JSON.stringify(tableDef.defaultLayout)),
+                variant:
+                  String(payload?.orientation || tableDef.defaultLayout.variant || "portrait").trim().toLowerCase() ===
+                  "landscape"
+                    ? "landscape"
+                    : "portrait",
+              }
+            : {
+                variant: String(payload?.orientation || "portrait").trim().toLowerCase() === "landscape" ? "landscape" : "portrait",
+                columns: Array.isArray(tableDef?.columns) ? JSON.parse(JSON.stringify(tableDef.columns)) : [],
+              };
+      return {
+        ok: true,
+        data: {
+          source: "default",
+          schemaVersion: 1,
+          effectiveLayout,
+        },
+      };
+    },
     save = async (payload) => ({
       ok: true,
       data: {
@@ -472,9 +643,11 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(selects[0]?.children?.[0]?.textContent, "Protokoll");
       assert.equal(selects[0]?.children?.[1]?.value, "projektverwaltung");
       assert.equal(selects[0]?.children?.[1]?.textContent, "Projektverwaltung");
-      assert.equal(selects[1]?.children?.length, 1);
+      assert.equal(selects[1]?.children?.length, 2);
       assert.equal(selects[1]?.children?.[0]?.value, "protokoll_tops");
       assert.equal(selects[1]?.children?.[0]?.textContent, "TOP-Liste");
+      assert.equal(selects[1]?.children?.[1]?.value, "protokoll_participants");
+      assert.equal(selects[1]?.children?.[1]?.textContent, "Teilnehmerliste");
       assert.equal(text.includes("Modul: Protokoll"), true);
       assert.equal(text.includes("Projektverwaltung"), true);
       assert.equal(text.includes("Tabelle: TOP-Liste"), true);
@@ -502,6 +675,29 @@ async function runTableLayoutEditorPrototypeTests(run) {
         assert.equal(text.includes("Layout: UI"), true);
         assert.equal(previewPanels.length, 1);
         assert.equal(previewPanels[0]?.dataset?.previewMode, "ui");
+      selects[1].value = "protokoll_participants";
+      selects[1].dispatchEvent({ type: "change" });
+      await flushMicrotasks();
+      const participantText = collectText(editor.root);
+      const participantPanels = findNodesByTag(editor.root, "DIV").filter(
+        (node) => node?.dataset?.previewMode === "ui" || node?.dataset?.previewMode === "pdf"
+      );
+      assert.equal(selects[1].value, "protokoll_participants");
+      assert.equal(participantText.includes("Tabelle: Teilnehmerliste"), true);
+      assert.equal(participantText.includes("tableKey: protokoll_participants"), true);
+      assert.equal(participantText.includes("Spalten: 5"), true);
+      assert.equal(participantText.includes("Telefon / E-Mail"), true);
+      assert.equal(participantText.includes("Anwesend / Verteiler"), true);
+      assert.equal(participantText.includes("Aktion"), false);
+      assert.equal(participantText.includes("Invited"), false);
+      assert.equal(participantText.includes("Aktiv"), false);
+      assert.equal(participantText.includes("UI-Werte sind für diese Tabelle aktuell nur eine Vorschau."), true);
+      assert.equal(
+        participantText.includes("PDF ist für diese Tabelle aktuell nur Vorschau. Ein produktiver PDF-Druck ist noch nicht angeschlossen."),
+        true
+      );
+      assert.equal(participantPanels.length, 1);
+      assert.equal(participantPanels[0]?.dataset?.previewMode, "ui");
       previewPdfToggle.click();
       await flushMicrotasks();
       const previewPanelsAfterSwitch = findNodesByTag(editor.root, "DIV").filter(
@@ -538,140 +734,46 @@ async function runTableLayoutEditorPrototypeTests(run) {
     const previousDocument = global.document;
     const previousWindow = global.window;
     global.document = createFakeDocument();
-    const { api } = makeEditorApi({
-      tableDefinitions: [
+    const { api } = makeEditorApi();
+    const controlTableDefinition = {
+      moduleId: "protokoll",
+      moduleLabel: "Protokoll",
+      tableKey: "protokoll_internal_controls",
+      tableLabel: "Interne Bedienliste",
+      description: "Bedienliste",
+      tableKind: "control",
+      editorEnabled: false,
+      uiAvailable: true,
+      pdfAvailable: false,
+      uiProductive: false,
+      pdfProductive: false,
+      supportedOrientations: ["portrait", "landscape"],
+      columns: [
         {
-          moduleId: "protokoll",
-          moduleLabel: "Protokoll",
-          tableKey: "protokoll_tops",
-          tableLabel: "TOP-Liste",
-          description: "Pilotlayout",
-          tableKind: "content",
-          editorEnabled: true,
-          uiAvailable: true,
-          pdfAvailable: true,
-          uiProductive: true,
-          pdfProductive: true,
-          supportedOrientations: ["portrait", "landscape"],
-          columns: [
-            {
-              key: "topNumber",
-              label: "TOP",
-              uiWidth: "64px",
-              pdfWidth: "23mm",
-              weight: 2,
-              required: true,
-              previewValue: "1",
-              headerLines: ["TOP"],
-            },
-            {
-              key: "shortText",
-              label: "Gegenstand",
-              uiWidth: "minmax(0, 1fr)",
-              pdfWidth: "auto",
-              weight: 6,
-              required: true,
-              previewValue: "Beispielthema fuer die Vorschau",
-              headerLines: ["Gegenstand"],
-            },
-            {
-              key: "meta",
-              label: "Status",
-              uiWidth: "74px",
-              pdfWidth: "15ch",
-              weight: 1,
-              required: true,
-              previewValue: "offen",
-              headerLines: ["Status", "Fertig bis", "verantw"],
-            },
-          ],
-          defaultLayout: {
-            tableKey: "protokoll_tops",
-            moduleId: "protokoll",
-            variant: "portrait",
-            columns: [],
-          },
-          previewData: [],
-        },
-        {
-          moduleId: "protokoll",
-          moduleLabel: "Protokoll",
-          tableKey: "protokoll_participants",
-          tableLabel: "Teilnehmerliste",
-          description: "Bedienliste",
-          tableKind: "control",
-          editorEnabled: false,
-          uiAvailable: true,
-          pdfAvailable: false,
-          uiProductive: false,
-          pdfProductive: false,
-          supportedOrientations: ["portrait", "landscape"],
-          columns: [
-            { key: "name", label: "Name", uiWidth: "1fr", pdfWidth: "1fr", weight: 1, required: true, previewValue: "Max Muster", headerLines: ["Name"] },
-          ],
-          defaultLayout: {
-            tableKey: "protokoll_participants",
-            moduleId: "protokoll",
-            variant: "portrait",
-            columns: [],
-          },
-          previewData: [],
-        },
-        {
-          moduleId: "projektverwaltung",
-          moduleLabel: "Projektverwaltung",
-          tableKey: "project_firms",
-          tableLabel: "Projekt-Firmenliste",
-          description: "Projektbezogene Firmenliste",
-          tableKind: "content",
-          editorEnabled: true,
-          uiAvailable: true,
-          pdfAvailable: true,
-          uiProductive: true,
-          pdfProductive: false,
-          supportedOrientations: ["portrait", "landscape"],
-          columns: [
-            {
-              key: "shortName",
-              label: "Kurzbez.",
-              uiWidth: "160px",
-              pdfWidth: "23mm",
-              weight: 2,
-              required: true,
-              previewValue: "AB",
-              headerLines: ["Kurzbez."],
-            },
-            {
-              key: "role",
-              label: "Funktion/Gewerk",
-              uiWidth: "1fr",
-              pdfWidth: "auto",
-              weight: 6,
-              required: true,
-              previewValue: "Rohbau",
-              headerLines: ["Funktion/Gewerk"],
-            },
-            {
-              key: "active",
-              label: "Aktiv",
-              uiWidth: "70px",
-              pdfWidth: "15mm",
-              weight: 1,
-              required: true,
-              previewValue: "ja",
-              headerLines: ["Aktiv"],
-            },
-          ],
-          defaultLayout: {
-            tableKey: "project_firms",
-            moduleId: "projektverwaltung",
-            variant: "portrait",
-            columns: [],
-          },
-          previewData: [],
+          key: "status",
+          label: "Status",
+          uiWidth: "1fr",
+          pdfWidth: "1fr",
+          weight: 1,
+          required: true,
+          previewValue: "OK",
+          headerLines: ["Status"],
         },
       ],
-    });
+      defaultLayout: {
+        tableKey: "protokoll_internal_controls",
+        moduleId: "protokoll",
+        variant: "portrait",
+        columns: [],
+      },
+      previewData: [],
+    };
+    const originalListDefinitions = api.tableLayoutsListDefinitions;
+    api.tableLayoutsListDefinitions = async () => {
+      const res = await originalListDefinitions();
+      if (!res?.ok) return res;
+      return { ok: true, data: [...res.data, controlTableDefinition] };
+    };
     global.window = { bbmDb: api };
     try {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
@@ -679,10 +781,12 @@ async function runTableLayoutEditorPrototypeTests(run) {
       const selects = findNodesByTag(editor.root, "SELECT");
       const text = collectText(editor.root);
       assert.equal(selects[0]?.children?.length, 2);
-      assert.equal(selects[1]?.children?.length, 1);
+      assert.equal(selects[1]?.children?.length, 2);
       assert.equal(selects[1]?.children?.[0]?.value, "protokoll_tops");
-      assert.equal(text.includes("Teilnehmerliste"), false);
-      assert.equal(text.includes("protokoll_participants"), false);
+      assert.equal(selects[1]?.children?.[1]?.value, "protokoll_participants");
+      assert.equal(text.includes("Teilnehmerliste"), true);
+      assert.equal(text.includes("Interne Bedienliste"), false);
+      assert.equal(text.includes("protokoll_internal_controls"), false);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

@@ -251,3 +251,40 @@ Ohne ausdrückliches Ja des Nutzers:
 - kein Registry-Eintrag
 - keine Editor-Freigabe
 - keine Spaltenlayout-Definition
+
+## Entstehungsprozess neuer Tabellen
+Wenn eine neue fachliche Inhaltstabelle in UI oder PDF gebaut wird, muss Codex beim Bau direkt einen Tabellenlayout-Steckbrief vorbereiten.
+
+Sobald der Tabellen-Prototyp fachlich steht, also:
+- Inhalte klar
+- Spalten klar
+- Reihenfolge klar
+- Grunddesign klar
+- UI und/oder PDF grundsaetzlich vorhanden
+
+gilt die Tabelle als Feintuning-Kandidat fuer den Tabellenlayout-Editor.
+
+Der Tabellenlayout-Editor ist dann der Feintuning-Schritt nach dem Prototyp:
+- Spaltenbreiten einstellen
+- UI- und PDF-Breiten getrennt einstellen
+- speichern
+- resetten
+- pruefen
+
+Dadurch duerfen spaetere Breitenaenderungen nicht mehr ueber Codex-Prompts laufen.
+
+Fuer jede neue Inhaltstabelle muss dokumentiert und registriert werden:
+- `tableKey`
+- Anzeigename
+- Bereich/Modul
+- Art: Inhaltstabelle
+- UI vorhanden ja/nein
+- PDF vorhanden ja/nein
+- sichtbare Spalten in echter Reihenfolge
+- Standardbreiten UI, falls UI vorhanden
+- Standardbreiten PDF, falls PDF vorhanden
+- `editorEnabled`, sobald der Prototyp fuer das Feintuning bereit ist
+
+Bedienlisten bleiben ausgeschlossen.
+
+Ohne diesen Layout-Steckbrief keine spaetere Breitenpflege per Codex-Prompt.
