@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Der erste DEV-only Schritt fuer das TOP-Layout-Feintuning ist umgesetzt:
+  - die TOP-Liste kann im DEV-Build jetzt Layout-Zonen fuer Nummernblock, Textblock und Metablock anzeigen
+  - die aktive Zone wird gruen markiert
+  - der Header zeigt im DEV-Layoutmodus eine kleine Layout-Toolbar mit der aktiven Zone oder dem Hinweis `Bereich waehlen`
+  - im STABLE-Pfad bleibt die Zusatz-UI verborgen und nicht bedienbar
+- Naechster offener Schritt: die DEV-only Markierung einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.
 - Tabellenlayout-Registry mit technischer Tabellenklassifizierung erweitert.

@@ -63,6 +63,11 @@ function parseUiBool(value, fallback) {
   return !!fallback;
 }
 
+function normalizeBuildChannel(value) {
+  const raw = String(value ?? "").trim().toUpperCase();
+  return raw === "DEV" ? "DEV" : "STABLE";
+}
+
 // TOPS-V2: eigenstaendiger Screen inkl. nativer Close-/Output-Flow.
 export default class TopsScreen {
   constructor(options = {}) {
@@ -94,6 +99,11 @@ export default class TopsScreen {
     this.topsList = null;
     this._topListLayout = null;
     this._topListLayoutLoadPromise = null;
+    this._devLayoutMode = {
+      enabled: false,
+      activeZone: null,
+    };
+    this._devLayoutModeLoadPromise = null;
     this.closeFlow = null;
     this.dialogs = null;
     this._dialogViewAdapter = this._createDialogViewAdapter();
@@ -209,6 +219,7 @@ export default class TopsScreen {
     this.topsList = new TopsList({
       onRowClick: async (item) => this._handleListRowClick(item),
       onLevel1Toggle: async (item) => this._toggleLevel1Collapsed(item?.id),
+      onLayoutZoneClick: (zoneKey) => this._setDevLayoutZone(zoneKey),
     });
     this.sheetPaper.appendChild(this.topsList.root);
     void this._loadTopListLayout();
@@ -472,6 +483,7 @@ export default class TopsScreen {
       isBusy: !!state.isLoading || !!state.isWriting,
       canEditKeyword: !!state.meetingId,
       showMetaLegend: !!state.meetingId,
+      devLayoutMode: this._devLayoutMode,
     });
   }
 
@@ -637,6 +649,7 @@ export default class TopsScreen {
 
   _syncListState() {
     if (!(this.topsList instanceof TopsList)) return;
+    this.topsList.setDevLayoutMode(this._devLayoutMode);
     this.topsList.setItems(
       buildListItemsFromState(this.store.getState(), {
         collapsedLevel1Ids: this._getCollapsedLevel1Ids(),
@@ -680,6 +693,62 @@ export default class TopsScreen {
       }
     })();
     return this._topListLayoutLoadPromise;
+  }
+
+  _setDevLayoutMode(mode = {}) {
+    const enabled = !!mode?.enabled;
+    const activeZone = String(mode?.activeZone || "").trim().toLowerCase();
+    const next = {
+      enabled,
+      activeZone: enabled && ["number", "text", "meta"].includes(activeZone) ? activeZone : null,
+    };
+    const currentEnabled = !!this._devLayoutMode.enabled;
+    const currentZone = String(this._devLayoutMode.activeZone || "");
+    if (currentEnabled === next.enabled && currentZone === String(next.activeZone || "")) {
+      return false;
+    }
+    this._devLayoutMode = next;
+    this._syncScreenState();
+    return true;
+  }
+
+  _setDevLayoutZone(zoneKey) {
+    if (!this._devLayoutMode.enabled) return false;
+    const zone = String(zoneKey || "").trim().toLowerCase();
+    if (!["number", "text", "meta"].includes(zone)) return false;
+    if (this._devLayoutMode.activeZone === zone) return false;
+    this._devLayoutMode = {
+      ...this._devLayoutMode,
+      activeZone: zone,
+    };
+    this._syncScreenState();
+    return true;
+  }
+
+  async _loadDevLayoutMode() {
+    if (this._devLayoutModeLoadPromise) return this._devLayoutModeLoadPromise;
+    this._devLayoutModeLoadPromise = (async () => {
+      const api = window.bbmDb || {};
+      if (typeof api.appGetBuildChannel !== "function") {
+        this._setDevLayoutMode({ enabled: false, activeZone: null });
+        return null;
+      }
+      try {
+        const res = await api.appGetBuildChannel();
+        const channel = normalizeBuildChannel(res?.ok ? res?.channel : "");
+        this._setDevLayoutMode({
+          enabled: channel === "DEV",
+          activeZone: null,
+        });
+        return channel;
+      } catch (_err) {
+        this._setDevLayoutMode({ enabled: false, activeZone: null });
+        return null;
+      } finally {
+        this._devLayoutModeLoadPromise = null;
+      }
+    })();
+    return this._devLayoutModeLoadPromise;
   }
 
   async _handleListRowClick(item) {
@@ -1381,6 +1450,7 @@ export default class TopsScreen {
   }
 
   async load() {
+    await this._loadDevLayoutMode();
     const showAmpelInList = await this._loadDisplaySetting({
       key: "tops.ampelEnabled",
       fallback: true,

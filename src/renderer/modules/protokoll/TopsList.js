@@ -3,6 +3,7 @@ import {
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
 import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protokollTopsLayout.js";
+import { DEV_LAYOUT_ZONE_LABELS, normalizeZoneKey } from "./DevLayoutToolbar.js";
 
 function getAssetBaseUrl() {
   if (typeof window !== "undefined" && window?.location?.href) return window.location.href;
@@ -48,10 +49,15 @@ const TODO_PNG = new URL("../../assets/todo.png", ASSET_BASE_URL).href;
 const RED_FLAG_PNG = resolveModuleAsset("../../assets/icons/redFlag.png");
 
 export class TopsList {
-  constructor({ onRowClick, onLevel1Toggle, tableLayout } = {}) {
+  constructor({ onRowClick, onLevel1Toggle, onLayoutZoneClick, tableLayout } = {}) {
     this.onRowClick = typeof onRowClick === "function" ? onRowClick : null;
     this.onLevel1Toggle = typeof onLevel1Toggle === "function" ? onLevel1Toggle : null;
+    this.onLayoutZoneClick = typeof onLayoutZoneClick === "function" ? onLayoutZoneClick : null;
     this.tableLayout = tableLayout && typeof tableLayout === "object" ? tableLayout : null;
+    this.devLayoutMode = {
+      enabled: false,
+      activeZone: null,
+    };
     this.root = document.createElement("ul");
     this.root.setAttribute("data-bbm-tops-list-v2", "true");
     applyProtokollTopsUiLayout(this.root, this.tableLayout);
@@ -60,6 +66,16 @@ export class TopsList {
   setTableLayout(tableLayout) {
     this.tableLayout = tableLayout && typeof tableLayout === "object" ? tableLayout : null;
     applyProtokollTopsUiLayout(this.root, this.tableLayout);
+  }
+
+  setDevLayoutMode(mode = {}) {
+    const enabled = !!mode?.enabled;
+    const activeZone = normalizeZoneKey(mode?.activeZone);
+    this.devLayoutMode = {
+      enabled,
+      activeZone: enabled ? activeZone : null,
+    };
+    this.root.dataset.devLayoutMode = enabled ? "true" : "false";
   }
 
   setItems(items = []) {
@@ -127,6 +143,8 @@ export class TopsList {
       numLine.appendChild(collapseButton);
     }
 
+    this._decorateLayoutZone(num, "number");
+
     const numLabel = document.createElement("span");
     numLabel.className = "bbm-tops-list-row-number-value";
     numLabel.textContent = `${item.number || ""}`;
@@ -150,6 +168,7 @@ export class TopsList {
 
     const text = document.createElement("div");
     text.className = "bbm-tops-list-row-text";
+    this._decorateLayoutZone(text, "text");
 
     const title = document.createElement("div");
     title.className = "bbm-tops-list-row-title";
@@ -173,6 +192,7 @@ export class TopsList {
 
     const meta = document.createElement("div");
     meta.className = "bbm-tops-list-row-meta";
+    this._decorateLayoutZone(meta, "meta");
     const statusTokens = new Set(["-", "offen", "in arbeit", "erledigt", "blockiert", "verzug"]);
     for (const line of item.meta || []) {
       const el = document.createElement("div");
@@ -231,5 +251,37 @@ export class TopsList {
     };
 
     return rowEl;
+  }
+
+  _decorateLayoutZone(zoneEl, zoneKey) {
+    if (!zoneEl) return;
+    if (!this.devLayoutMode?.enabled) return;
+
+    const key = normalizeZoneKey(zoneKey);
+    if (!key) return;
+
+    zoneEl.classList.add("bbm-tops-list-layout-zone");
+    zoneEl.dataset.layoutZone = key;
+    zoneEl.dataset.layoutZoneLabel = DEV_LAYOUT_ZONE_LABELS[key];
+    zoneEl.dataset.layoutZoneActive = this.devLayoutMode.activeZone === key ? "true" : "false";
+    zoneEl.setAttribute("role", "button");
+    zoneEl.tabIndex = 0;
+    zoneEl.title = `Layout-Zone: ${DEV_LAYOUT_ZONE_LABELS[key]}`;
+    zoneEl.setAttribute("aria-label", `Layout-Zone ${DEV_LAYOUT_ZONE_LABELS[key]}`);
+    zoneEl.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof this.onLayoutZoneClick === "function") {
+        this.onLayoutZoneClick(key);
+      }
+    });
+    zoneEl.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof this.onLayoutZoneClick === "function") {
+        this.onLayoutZoneClick(key);
+      }
+    });
   }
 }
