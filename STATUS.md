@@ -18,6 +18,7 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 - Tabellenlayout-Registrierungsregel dokumentiert.
+- Tabellenlayout-Inventar angelegt.
 
 - Der Ausgabe-Dialog trennt die Druckarten jetzt fachlich korrekter:
   - Protokoll drucken
@@ -1538,4 +1539,3 @@ Wichtig:
   - gespeicherte Firmenlisten sind nicht mehr als funktionale Ausgabeart angeboten
   - Firmenliste laeuft direkt ueber den aktuellen Projektstand und braucht keine geschlossene-Protokoll-Auswahl
   - eine separate Mitarbeiter-/Personenliste ist im aktuellen Druckdialog noch nicht als eigener Modus vorhanden
-
