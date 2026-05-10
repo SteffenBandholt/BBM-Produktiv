@@ -1,7 +1,7 @@
 import { DevLayoutToolbar } from "./DevLayoutToolbar.js";
 
 export class TopsHeader {
-  constructor({ onClose, onEndMeeting, onKeywordClick } = {}) {
+  constructor({ onClose, onEndMeeting, onKeywordClick, onDevLayoutPreviewChange } = {}) {
     this.onClose = typeof onClose === "function" ? onClose : null;
     this.onEndMeeting = typeof onEndMeeting === "function" ? onEndMeeting : null;
     this.onKeywordClick = typeof onKeywordClick === "function" ? onKeywordClick : null;
@@ -38,7 +38,9 @@ export class TopsHeader {
 
     this.titleWrap.append(this.line1El, this.line2El, this.line3El);
 
-    this.devLayoutToolbar = new DevLayoutToolbar();
+    this.devLayoutToolbar = new DevLayoutToolbar({
+      onPreviewChange: onDevLayoutPreviewChange,
+    });
 
     this.spacer = document.createElement("div");
     this.spacer.className = "bbm-tops-header-spacer";

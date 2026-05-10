@@ -22,6 +22,9 @@ Sie ergÃ¤nzt:
   - die aktive Zone wird gruen markiert
   - der Header zeigt im DEV-Layoutmodus eine kleine Layout-Toolbar mit der aktiven Zone oder dem Hinweis `Bereich waehlen`
   - im STABLE-Pfad bleibt die Zusatz-UI verborgen und nicht bedienbar
+- Der naechste DEV-only Layout-Schritt ist vorbereitet:
+  - die Header-Toolbar zeigt fuer die aktive Zone Dummy-Regler fuer Breite, Innen und Schrift
+  - die Regler koennen die laufende UI leicht veraendern, speichern aber nichts dauerhaft
 - Naechster offener Schritt: die DEV-only Markierung einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.

@@ -211,6 +211,7 @@ export default class TopsScreen {
         this._syncScreenState();
       },
       onKeywordClick: async () => this._openKeywordDialog(),
+      onDevLayoutPreviewChange: (payload) => this._applyDevLayoutPreview(payload),
     });
     this.dialogs = new TopsViewDialogs({ view: this._dialogViewAdapter });
   }
@@ -723,6 +724,27 @@ export default class TopsScreen {
     };
     this._syncScreenState();
     return true;
+  }
+
+  _applyDevLayoutPreview(payload = {}) {
+    if (!this.root) return;
+    const zoneKey = String(payload?.activeZone || "").trim().toLowerCase();
+    const preview = payload?.preview || {};
+    if (!zoneKey) {
+      this.root.style.removeProperty("--bbm-dev-layout-preview-width");
+      this.root.style.removeProperty("--bbm-dev-layout-preview-inset");
+      this.root.style.removeProperty("--bbm-dev-layout-preview-font");
+      this.root.dataset.devLayoutActiveZone = "";
+      return;
+    }
+
+    const width = Number(preview?.width || 0);
+    const inset = Number(preview?.inset || 0);
+    const font = Number(preview?.font || 0);
+    this.root.dataset.devLayoutActiveZone = zoneKey;
+    this.root.style.setProperty("--bbm-dev-layout-preview-width", String(width));
+    this.root.style.setProperty("--bbm-dev-layout-preview-inset", String(inset));
+    this.root.style.setProperty("--bbm-dev-layout-preview-font", String(font));
   }
 
   async _loadDevLayoutMode() {
