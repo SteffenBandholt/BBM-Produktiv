@@ -1,4 +1,4 @@
-# Tabellenlayout-Editor-Prototyp
+﻿# Tabellenlayout-Editor-Prototyp
 
 Status: intern, nur fuer Entwicklung/Admin
 Bezug:
@@ -19,9 +19,9 @@ Zugang:
 - Tab `Tabellenlayouts`
 
 Der Editor ist absichtlich nicht Teil der normalen Navigation.
-Zusätzlich gibt es oben rechts einen internen Vollbild-Schalter für mehr Arbeitsfläche.
-Der Editor startet dabei standardmäßig direkt im Vollbildmodus.
-Er nutzt jetzt ein groesstenteils vollflächiges internes Arbeitsflächen-Overlay.
+ZusÃ¤tzlich gibt es oben rechts einen internen Vollbild-Schalter fÃ¼r mehr ArbeitsflÃ¤che.
+Der Editor startet dabei standardmÃ¤ÃŸig direkt im Vollbildmodus.
+Er nutzt jetzt ein groesstenteils vollflÃ¤chiges internes ArbeitsflÃ¤chen-Overlay.
 
 ---
 
@@ -30,6 +30,9 @@ Er nutzt jetzt ein groesstenteils vollflächiges internes Arbeitsflächen-Overla
 - Layout fuer `protokoll_tops` laden
 - registrierte Module und Tabellen aus der zentralen Tabellenregistry anzeigen
 - die Eingabefelder werden aus den Spaltendefinitionen der Tabelle erzeugt
+- der Editor zeigt nur ausdruecklich freigegebene Inhaltstabellen
+- Bedienlisten und Auswahl-Popups gehoeren nicht in den Editor
+- Spalten werden nicht aus Datenfeldern erraten
 - aktuell sind `Protokoll / TOP-Liste / protokoll_tops` und `Projektverwaltung / Projekt-Firmenliste / project_firms` registriert
 - nur `protokoll_tops` ist produktiv an UI und PDF angeschlossen
 - Orientierung waehlen: `portrait` / `landscape`
@@ -87,3 +90,4 @@ Spaetere Tabellen liefern ihre eigenen Preview-Daten ueber die Registry.
 
 Spaeter kann der Editor um eine echte Layout-Vorschau und feinere Feldvalidierung erweitert werden.
 Die bestehende Protokoll-UI bleibt bis dahin unveraendert.
+

@@ -1,29 +1,31 @@
-# STATUS.md — BBM-Produktiv
+﻿# STATUS.md â€” BBM-Produktiv
 
 ## Zweck
-Diese Datei hält den tatsächlichen Fortschritt fest.
+Diese Datei hÃ¤lt den tatsÃ¤chlichen Fortschritt fest.
 
-Sie ergänzt:
+Sie ergÃ¤nzt:
 - `AGENTS.md` = Arbeitsregeln
 - `PLAN.md` = Soll-Ablauf / Meilensteine
 
 `STATUS.md` beschreibt den Ist-Stand:
 - was bereits erledigt ist,
 - woran zuletzt gearbeitet wurde,
-- was als Nächstes dran ist,
+- was als NÃ¤chstes dran ist,
 - wo es Hindernisse gibt.
 
 ---
 
 ## Aktueller Gesamtstand
 
+- Tabellenlayout-Registrierungsregel dokumentiert.
+
 - Der Ausgabe-Dialog trennt die Druckarten jetzt fachlich korrekter:
   - Protokoll drucken
-  - PDF-Vorschau öffnen
+  - PDF-Vorschau Ã¶ffnen
   - Firmenliste
   - ToDo-Liste
   - TOP-Liste
-  - unbekannte Druckmodi werden nicht mehr still auf Protokoll zurückgeführt
+  - unbekannte Druckmodi werden nicht mehr still auf Protokoll zurÃ¼ckgefÃ¼hrt
   - TOP-Liste zeigt alle TOPs inkl. erledigter und aller TOP-Arten
   - ToDo-Liste zeigt projektweit nur noch offene echte ToDos
   - ToDo-Druck hat einen optionalen Verantwortlichenfilter
@@ -51,7 +53,7 @@ Sie ergänzt:
 - Scope-Doku fuer den Firmenlisten-Pilot erstellt; keine Codeaenderung.
 - Contract-Doku fuer `project_firms` Tabellenlayout erstellt; keine Codeaenderung.
 - Naechster offener Schritt: weitere Tabellen nur dann anschliessen, wenn ihre Registry-, Editor- und Preview-Daten sauber bereitstehen.
-- Der interne Tabellenlayout-Editor startet jetzt standardmäßig im Vollbildmodus und hat oben rechts einen Vollbild-Schalter fuer mehr Arbeitsfläche.
+- Der interne Tabellenlayout-Editor startet jetzt standardmÃ¤ÃŸig im Vollbildmodus und hat oben rechts einen Vollbild-Schalter fuer mehr ArbeitsflÃ¤che.
 - Der erste interne Tabellenlayout-Editor fuer `protokoll_tops` ist jetzt im Technik-Dialog angehaengt:
   - Zugang nur ueber `Einstellungen > Entwicklung > Technik > Tabellenlayouts`
   - Laden, Aendern, Speichern und Zuruecksetzen laufen fuer `moduleId=protokoll`, `tableKey=protokoll_tops` und die jeweilige Orientierung ueber die vorhandenen `tableLayouts`-IPC-Endpunkte
@@ -59,9 +61,9 @@ Sie ergänzt:
   - die Layoutauswahl ist wieder fachlich korrekt modul- und tabellenbezogen, nicht projektbezogen
   - Modul- und Tabellenlisten kommen aus der bekannten Registry/Definition
   - aktuell ist dort nur `Protokoll / TOP-Liste / protokoll_tops` angemeldet
-  - der frühere Projekt-/Besprechungsansatz im Editor wurde wieder entfernt
+  - der frÃ¼here Projekt-/Besprechungsansatz im Editor wurde wieder entfernt
   - die Vorschau ist in umschaltbare UI- und PDF-Modi mit registrierten Testdaten aufgeteilt
-  - der Editor nutzt jetzt ein nahezu vollflächiges internes Arbeitsflächen-Overlay
+  - der Editor nutzt jetzt ein nahezu vollflÃ¤chiges internes ArbeitsflÃ¤chen-Overlay
   - Layoutwerte werden vor dem Speichern validiert und defensiv normalisiert
   - UI-/PDF-Hinweise im Editor wurden klarer formuliert; `project_firms` ist PDF-seitig nur Vorschau, `protokoll_tops` ist produktiv angeschlossen
   - ungueltige technische Werte werden nicht gespeichert
@@ -149,7 +151,7 @@ Sie ergänzt:
   - die Settings-Schluessel und die Speicherlogik bleiben unveraendert
 - Die sichtbaren Texte im Bereich `Druckinhalt` sind sprachlich geschaerft:
   - der Hinweis nennt jetzt Protokoll und PDF-Ausgabe
-  - die Textgrenzen heissen jetzt `Textgrenzen für TOPs`
+  - die Textgrenzen heissen jetzt `Textgrenzen fÃ¼r TOPs`
   - Kurztext-/Langtext-Grenzen werden als Eingabelaengen fuer TOPs beschrieben
 - Der Legacy-Pfad `PDF-Logo` ist im UI deaktiviert:
   - die sichtbare PDF-Logo-Bearbeitung erscheint nicht mehr in `Profil & Druck`
@@ -167,7 +169,7 @@ Sie ergänzt:
   - der Projektsettings-IPC filtert es aus Whitelist und Patch
   - Altwerte im Projektsettings-Speicher bleiben technisch unkritisch, werden aber nicht mehr als Projektoption verwendet
   - neue Tests sichern den Filter im Projektsettings-IPC und den bereinigten Projektformular-Flow ab
-- Projektbasierte Protokoll-Einstiege werden jetzt nicht mehr stillschweigend mit `showTops(null, ...)` aufgelöst:
+- Projektbasierte Protokoll-Einstiege werden jetzt nicht mehr stillschweigend mit `showTops(null, ...)` aufgelÃ¶st:
   - genau eine offene Besprechung oeffnet den TopsScreen
   - keine offene Besprechung oeffnet die Besprechungsuebersicht als Startview mit Neuanlage-Einstieg
   - mehrere offene Besprechungen gehen als Datenintegritaetsfehler in die Besprechungsuebersicht
@@ -180,22 +182,22 @@ Sie ergänzt:
   - gesperrtes Ziel und direkte Nachkommen: rot schraffiert und nicht klickbar
 - Die rote Schraffur fuer gesperrte Move-Ziele wurde feiner und etwas dezenter gezogen, ohne den blocked-Zustand zu verlieren.
 - Kurztext- und Langtext-Felder im TOP-Editor loesen jetzt beim Verlassen einen Save des aktuellen Drafts aus; die Auswahl bleibt erhalten und blaue TOPs bleiben editierbar.
-- Nächster offener Schritt: fachliche Sichtpruefung der neuen Besprechungsuebersicht/Startview im Projektkontext.
+- NÃ¤chster offener Schritt: fachliche Sichtpruefung der neuen Besprechungsuebersicht/Startview im Projektkontext.
 - Der Projekt-Arbeitsbereich oeffnet `Protokoll` jetzt wieder mit einem echten offenen Meeting-Kontext, wenn eines im Projekt vorhanden ist; andernfalls faellt der Einstieg in die Besprechungsuebersicht zurueck statt in einen leeren Tops-Start.
 - Meilenstein externe Lizenz-App-Vorbereitung ist umgesetzt:
   - BBM registriert keine `license-admin:*`-IPCs mehr und startet keine Generator-/Customer-Setup-Registrierung aus `registerLicenseIpc`.
   - Preload exportiert keine Generator-/license-admin-Methoden mehr; aktive Kundenfunktionen (Status/Import/Delete/Request) bleiben.
-  - Renderer zeigt keine Lizenzverwaltung/Kundenverwaltung mehr im Adminbereich; Entwicklerbereich bleibt unverändert erreichbar.
+  - Renderer zeigt keine Lizenzverwaltung/Kundenverwaltung mehr im Adminbereich; Entwicklerbereich bleibt unverÃ¤ndert erreichbar.
   - Uebergangsbereich `tools/license-app/` wurde angelegt inkl. Zielarchitektur-README und Extrakten (`licenseAdminService`, `licenseRecords`, `licenseIpc.reference`).
-- Nächster offener Schritt: Extrakte in `tools/license-app/` später in eigenständige externe Lizenz-App überführen.
+- NÃ¤chster offener Schritt: Extrakte in `tools/license-app/` spÃ¤ter in eigenstÃ¤ndige externe Lizenz-App Ã¼berfÃ¼hren.
 - Admin-Lizenzverwaltung kann die erzeugte Antwortlizenz jetzt direkt als Outlook-Entwurf vorbereiten:
   - Neuer Button `Antwortlizenz per Outlook senden` im Lizenzeditor.
   - Sichtbarkeit nur fuer Vollversion + vorhandenen `license_file_path` mit `.bbmlic`.
   - Main-IPC `license-admin:send-response-license-mail` prueft Kunden-E-Mail, Dateipfad, Dateiendung und Datei-Existenz.
   - Outlook-Entwurf wird unter Windows via PowerShell/COM erstellt (`Outlook.Application`, `CreateItem`, `Attachments.Add`, `Display()`), ohne automatisches Senden.
-  - Erfolgs-/Fehlermeldungen sind umgesetzt: `Outlook-Mail wurde vorbereitet.`, `Keine Kunden-E-Mail hinterlegt.`, `Antwortlizenz-Datei wurde nicht gefunden.`, `Outlook konnte nicht geöffnet werden.`.
-  - Fallback im UI bei Outlook-Fehler: `Ausgabeordner öffnen` und `Mailtext kopieren`.
-- Nächster offener Schritt: manuelle Endpruefung am Windows-Zielsystem mit installiertem Outlook (Entwurf anzeigen inkl. Anhang, ohne Auto-Send).
+  - Erfolgs-/Fehlermeldungen sind umgesetzt: `Outlook-Mail wurde vorbereitet.`, `Keine Kunden-E-Mail hinterlegt.`, `Antwortlizenz-Datei wurde nicht gefunden.`, `Outlook konnte nicht geÃ¶ffnet werden.`.
+  - Fallback im UI bei Outlook-Fehler: `Ausgabeordner Ã¶ffnen` und `Mailtext kopieren`.
+- NÃ¤chster offener Schritt: manuelle Endpruefung am Windows-Zielsystem mit installiertem Outlook (Entwurf anzeigen inkl. Anhang, ohne Auto-Send).
 - Admin-Lizenzverwaltung dokumentiert den Machine-Setup-Lebenszyklus jetzt direkt am Vollversions-Lizenzdatensatz:
   - `Machine-Setup erstellen` speichert vor dem Build zuerst einen Vollversionsdatensatz (`license_edition=full`, `license_binding=machine`, `license_mode=full`) im aktuellen Kundenkontext.
   - Wenn diese Vorab-Speicherung nicht moeglich ist, wird klar abgebrochen mit `Vollversion muss vor Machine-Setup gespeichert werden.`.
@@ -203,25 +205,25 @@ Sie ergänzt:
   - Nach Mailtext-Uebernahme wird `setup_status=machine_id_received` gespeichert.
   - Nach erfolgreicher Antwortlizenz-Erzeugung wird `setup_status=response_license_created` gespeichert; `license_file_path` bleibt wie bisher erhalten.
   - In UI/Lizenzliste und Lizenzeditor gibt es jetzt den sichtbaren `Machine-Binding-Status` mit den 4 Statusstufen.
-- Nächster offener Schritt: manuelle Endpruefung des kompletten Ablaufes (Vollversion speichern -> Machine-Setup -> Mailtext -> Antwortlizenz) gegen eine reale lokale Mutter-Datenbank.
+- NÃ¤chster offener Schritt: manuelle Endpruefung des kompletten Ablaufes (Vollversion speichern -> Machine-Setup -> Mailtext -> Antwortlizenz) gegen eine reale lokale Mutter-Datenbank.
 - Admin-Lizenzverwaltung kann Machine-ID direkt aus Kunden-E-Mailtext uebernehmen:
-  - Neuer Vollversions-Button `Lizenzanforderung aus E-Mail übernehmen` im Lizenzformular.
-  - Eingabebereich `Mailtext einfügen` parst robust die Zeilen `Kunde`, `Kundennummer`, `Lizenz-ID`, `Machine-ID`, `App-Version` (case-insensitive, tolerant bei Leerzeichen, CRLF/LF).
-  - Bei Erfolg meldet die UI `Lizenzanforderung erkannt.` und `Machine-ID wurde übernommen.` und uebernimmt die Machine-ID in das Formular.
-  - Bei Abweichung von Kundennummer oder Lizenz-ID erscheint die Warnung `Achtung: Die Lizenzanforderung passt möglicherweise nicht zur geöffneten Lizenz.` ohne Blockierung.
+  - Neuer Vollversions-Button `Lizenzanforderung aus E-Mail Ã¼bernehmen` im Lizenzformular.
+  - Eingabebereich `Mailtext einfÃ¼gen` parst robust die Zeilen `Kunde`, `Kundennummer`, `Lizenz-ID`, `Machine-ID`, `App-Version` (case-insensitive, tolerant bei Leerzeichen, CRLF/LF).
+  - Bei Erfolg meldet die UI `Lizenzanforderung erkannt.` und `Machine-ID wurde Ã¼bernommen.` und uebernimmt die Machine-ID in das Formular.
+  - Bei Abweichung von Kundennummer oder Lizenz-ID erscheint die Warnung `Achtung: Die Lizenzanforderung passt mÃ¶glicherweise nicht zur geÃ¶ffneten Lizenz.` ohne Blockierung.
   - Wenn keine Machine-ID enthalten ist, erscheint `Keine Machine-ID im Mailtext gefunden.`.
   - Bestehender Ablauf bleibt unveraendert: Lizenz erstellen -> `.bbmlic` erzeugen -> Antwortlizenz zurueck an den Kunden.
-- Nächster offener Schritt: manuelle Sichtpruefung im Adminbereich mit echtem Mailtext-Paste aus einer Kundenanfrage.
+- NÃ¤chster offener Schritt: manuelle Sichtpruefung im Adminbereich mit echtem Mailtext-Paste aus einer Kundenanfrage.
 - Alter Machine-Setup-Lizenz-Startblock wurde entfernt:
   - `src/renderer/main.js` enthaelt keine `isMachineSetupWithoutLicense`-, `renderMachineSetupLicenseRequired`-, `renderMachineSetupLicenseFallback`- oder `MACHINE_SETUP_LICENSE`-Logik mehr.
   - Der Core startet wieder normal; Lizenzstatus, Lizenzanforderung und Lizenzimport gehoeren nicht mehr in den App-Start.
   - Regressionen in `scripts/tests/licenseRequest.test.cjs` und `scripts/tests/projektverwaltungModule.test.cjs` sichern ab, dass der alte Startblock nicht zurueckkommt.
   - `npm test` ist gruen.
 - Lizenzverwaltung Loeschfunktion fuer Lizenzdatensaetze ist umgesetzt:
-  - Im Lizenzformular gibt es den Button `Lizenz löschen`, sichtbar nur bei bestehender gespeicherter Lizenz.
+  - Im Lizenzformular gibt es den Button `Lizenz lÃ¶schen`, sichtbar nur bei bestehender gespeicherter Lizenz.
   - Vor dem Loeschen erscheint die Sicherheitsabfrage mit Klartext, dass nur der Lizenzdatensatz in der Lizenzverwaltung entfernt wird.
-  - Nach Bestaetigung wird nur `license_records` geloescht; danach Rueckkehr ins Kundendetail mit Meldung `Lizenz wurde gelöscht.`.
-  - Bei Fehler erscheint `Lizenz konnte nicht gelöscht werden.`; bei Abbruch wird nichts geloescht.
+  - Nach Bestaetigung wird nur `license_records` geloescht; danach Rueckkehr ins Kundendetail mit Meldung `Lizenz wurde gelÃ¶scht.`.
+  - Bei Fehler erscheint `Lizenz konnte nicht gelÃ¶scht werden.`; bei Abbruch wird nichts geloescht.
   - Neuer Main-Service `deleteLicenseRecord(id)` + IPC `license-admin:delete-license-record` + Preload `licenseAdminDeleteLicenseRecord(id)` + Renderer-Service `deleteLicense(record)` sind verbunden.
   - Tests decken Main-Service-Loeschfall, fehlende ID, IPC-Registration/-Aufruf, Preload/API, Renderer-Service und UI-Texte ab; `npm test` bleibt gruen.
 - PR #46 Bugfix (Testversion speichern ohne sichtbares Datumsfeld) ist umgesetzt:
@@ -247,16 +249,16 @@ Sie ergänzt:
   - Dist-/IPC-Flow wurde minimal erweitert, damit Kunden-Setups wahlweise mit (Testversion) oder ohne (Machine-Setup) eingebettete Lizenz gebaut werden koennen.
   - Testabdeckung wurde fuer UI-Trennung, Payload-/Setup-Typ und Build-Embedding (mit/ohne `customer.bbmlic`) erweitert; `npm test` bleibt Pflicht.
 - Machine-Binding Schritt 3 (Antwortlizenz-UI-Fuehrung) ist umgesetzt:
-  - Admin-Lizenzformular zeigt bei `Gerätebindung = An Machine-ID binden` den Hinweis `Gerätegebundene Vollversion` mit klarer Schrittfuehrung (Import Lizenzanforderung -> `Lizenz erstellen` -> Antwortlizenz).
-  - Nach erfolgreichem `Lizenz erstellen` wird bei Vollversion + Machine-Binding + vorhandener Machine-ID zusaetzlich angezeigt: `Antwortlizenz wurde erstellt.` sowie `Diese .bbmlic-Datei an den Kunden zurückgeben.`.
-  - Ausgabepfadanzeige und Button `Ausgabeordner öffnen` bleiben unveraendert im bestehenden Generator-Hauptablauf.
+  - Admin-Lizenzformular zeigt bei `GerÃ¤tebindung = An Machine-ID binden` den Hinweis `GerÃ¤tegebundene Vollversion` mit klarer Schrittfuehrung (Import Lizenzanforderung -> `Lizenz erstellen` -> Antwortlizenz).
+  - Nach erfolgreichem `Lizenz erstellen` wird bei Vollversion + Machine-Binding + vorhandener Machine-ID zusaetzlich angezeigt: `Antwortlizenz wurde erstellt.` sowie `Diese .bbmlic-Datei an den Kunden zurÃ¼ckgeben.`.
+  - Ausgabepfadanzeige und Button `Ausgabeordner Ã¶ffnen` bleiben unveraendert im bestehenden Generator-Hauptablauf.
   - Kunden-Lizenzstatusbereich ergaenzt den Hinweis `Antwortlizenz erhalten?` mit Verweis auf den bestehenden Lizenzimport; kein neuer Import-Mechanismus, keine neue Navigation.
   - Tests wurden auf die neuen UI-Texte erweitert; bestehende Flows (`licenseGenerate`, Lizenzimport) bleiben unveraendert und `npm test` bleibt Pflichtpruefung.
 - Machine-Binding Schritt 2 (Admin-Import) ist umgesetzt:
   - Admin-Lizenzformular hat den Button `Lizenzanforderung importieren` (nur im Lizenzformular, keine Kundenliste/Projektbereich).
   - Neuer Main-IPC `license-admin:import-license-request` oeffnet Datei-Dialog, liest JSON, validiert (`schemaVersion`, `requestType`, `product`, `machineId`, `createdAt`, `appVersion`) und liefert strukturierte Request-Daten.
   - Preload stellt `window.bbmDb.licenseAdminImportLicenseRequest()` bereit.
-  - Nach erfolgreichem Import werden im Formular `Machine-ID`, `Gerätebindung=machine` und `Lizenzart=full` gesetzt; es erfolgt **kein** automatisches Speichern.
+  - Nach erfolgreichem Import werden im Formular `Machine-ID`, `GerÃ¤tebindung=machine` und `Lizenzart=full` gesetzt; es erfolgt **kein** automatisches Speichern.
   - UI zeigt klare Erfolg-/Fehlerhinweise inkl. Produktfehler, fehlender Machine-ID sowie optional `customerName`/`licenseId`.
   - Bestehender Generatorfluss bleibt bestehen und nutzt danach weiterhin den bestehenden Ablauf `Lizenz erstellen`.
   - Keine Aenderung an `licenseVerifier.js EXPECTED_PRODUCT`, keine Setup-/Mail-/Online-Aktivierungs-Erweiterung.
@@ -292,9 +294,9 @@ Sie ergänzt:
   - Entwicklungs-UI fuer `Einstellungen -> Entwicklung -> Diktieren` ist als Modul-Baustein angebunden.
   - Keine Sidebar-Anbindung.
   - Kein Modulkatalog-Eintrag.
-  - Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
+  - Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverÃ¤ndert.
 - Im Bereich `Lizenz / bearbeiten` wird das Feature `audio` sichtbar als `Dictate` angezeigt.
-  - `Audio / Diktat` bleibt Maschinenraum und ist kein auswählbares Projektmodul.
+  - `Audio / Diktat` bleibt Maschinenraum und ist kein auswÃ¤hlbares Projektmodul.
   - Der interne Key bleibt `audio`.
   - Die sichtbare Feature-Liste zeigt kein `audio` und `Dictate` nebeneinander.
 - Im Bereich `Lizenz / bearbeiten` ist `Produktumfang` jetzt sichtbar gegliedert:
@@ -303,7 +305,7 @@ Sie ergänzt:
   - `Module` (Protokoll, Dummy) sind als vorbereitet markiert und noch nicht aktiv angebunden.
 - Lizenzverwaltung ist als eigenes Zielmodul geplant; die Detailbeschreibung liegt unter `docs/modules/lizenzverwaltung.md`.
   - Dort ist jetzt auch der geplante Machine-Binding-Ablauf fuer Vollversionen mit Machine-ID verbindlich beschrieben.
-  - Lizenzart (`Testlizenz` / `Vollversion`) und Gerätebindung (`Ohne Gerätebindung` / `An Machine-ID gebunden`) sind dort fachlich getrennt festgehalten.
+  - Lizenzart (`Testlizenz` / `Vollversion`) und GerÃ¤tebindung (`Ohne GerÃ¤tebindung` / `An Machine-ID gebunden`) sind dort fachlich getrennt festgehalten.
 - Lizenzverwaltung Paket 1 ist vorbereitet:
   - neues Modulverzeichnis `src/renderer/modules/lizenzverwaltung/` mit Skeleton-Screen
   - Einstieg `Adminbereich` als eigene Kachel auf oberster Ebene in `Einstellungen` angebunden
@@ -333,7 +335,7 @@ Sie ergänzt:
 - Lizenzverwaltung naechstes Paket ist umgesetzt:
   - Kachel `Produktumfang` im `LicenseAdminScreen` oeffnet jetzt eine einfache vorbereitete Produktumfang-Maske
   - Produktumfang-Maske nutzt `PRODUCT_SCOPE` und zeigt `Standardumfang` (app, pdf, export), `Zusatzfunktionen` (mail, Dictate) und `Module` (Protokoll, Dummy)
-  - `Standardumfang` bleibt sichtbar und nicht abwaehlbar; `Zusatzfunktionen` sind auswählbar; `Module` bleiben vorbereitet und noch nicht aktiv angebunden
+  - `Standardumfang` bleibt sichtbar und nicht abwaehlbar; `Zusatzfunktionen` sind auswÃ¤hlbar; `Module` bleiben vorbereitet und noch nicht aktiv angebunden
   - Produktumfang-Maske bietet `Neu / leeren` und `Pruefen`; Pruefen validiert nur lokal auf app/pdf/export ohne Speicherung, Datenbank oder Persistenz
   - `SettingsView` bleibt Host/Einstieg und oeffnet die Produktumfang-Maske nur ueber den Adminbereich
 - Lizenzverwaltung naechstes Paket ist umgesetzt:
@@ -356,7 +358,7 @@ Sie ergänzt:
   - Leerer Zustand ist in allen drei Masken sichtbar
 - Lizenzverwaltung naechstes Paket ist umgesetzt:
   - DB-Schema/Migration in `src/main/db/database.js` um getrennte Admin-Tabellen `license_customers`, `license_records`, `license_history` erweitert (nicht-destruktiv, ohne UI-/IPC-Umstellung)
-  - `licenseStorageService` bleibt bewusst In-Memory; keine Lizenzdatei-Logik und kein Projektmodul-Verhalten geändert
+  - `licenseStorageService` bleibt bewusst In-Memory; keine Lizenzdatei-Logik und kein Projektmodul-Verhalten geÃ¤ndert
 - Lizenzverwaltung naechstes Paket ist umgesetzt:
   - Main-Process-Service `src/main/licensing/licenseAdminService.js` fuer Admin-Lizenzdaten vorbereitet (list/save fuer Kunden und Lizenzen, Historien-Read/Write)
   - noch keine IPC-/Preload-Anbindung; Renderer-Storage bleibt In-Memory
@@ -396,30 +398,30 @@ Sie ergänzt:
   - Generator-Produkt bleibt technisch `bbm-protokoll` (UI bleibt `BBM-Produktiv`).
   - `license_mode` wird kompatibel gemappt (`soft -> none`, `full -> machine`, `none/machine` bleiben erhalten).
   - Features werden aus `product_scope_json` fuer Generator aufgebaut (inkl. `audio`-Kompatibilitaet als `dictate`).
-  - Ohne ableitbare Features wird Erzeugung blockiert (`Produktumfang enthält keine erzeugbaren Features.`).
-  - Bei Erfolg wird der Ausgabepfad angezeigt und `Ausgabeordner öffnen` nutzt bestehendes `window.bbmDb.licenseOpenOutputDir(...)`.
+  - Ohne ableitbare Features wird Erzeugung blockiert (`Produktumfang enthÃ¤lt keine erzeugbaren Features.`).
+  - Bei Erfolg wird der Ausgabepfad angezeigt und `Ausgabeordner Ã¶ffnen` nutzt bestehendes `window.bbmDb.licenseOpenOutputDir(...)`.
   - Bestehende Main-IPC-Infrastruktur (`license:generate`, `license:open-output-dir`) wurde weiterverwendet, keine neue Generator-Architektur.
 - Lizenzverwaltung Nachbesserung ist umgesetzt:
-  - Lizenzformular trennt jetzt fachlich `Lizenzart` (Testlizenz/Vollversion) und `Gerätebindung` (none/machine); `Lizenzmodus` ist nicht mehr das führende Bedienfeld.
+  - Lizenzformular trennt jetzt fachlich `Lizenzart` (Testlizenz/Vollversion) und `GerÃ¤tebindung` (none/machine); `Lizenzmodus` ist nicht mehr das fÃ¼hrende Bedienfeld.
   - Datumsfelder im Admin-Lizenzformular laufen als Date-Inputs; Generator-Payload normalisiert zusaetzlich ISO- und deutsche Eingaben (`TT.MM.JJJJ` -> `JJJJ-MM-TT`), um `VALID_FROM_REQUIRED` zu vermeiden.
-  - Bei `Gerätebindung = machine` wird `Machine-ID` vor `licenseGenerate` verpflichtend geprüft; bei `none` bleibt Machine-ID optional und wird nicht übergeben.
-  - Kompatibilität fuer Altwerte in `license_mode` bleibt erhalten (`soft/full/none/machine` -> sinnvolle Edition/Binding-Ableitung), neue Felder `license_edition`/`license_binding` haben Vorrang.
-  - DB-Schema `license_records` wurde nicht-destruktiv um optionale Spalten `license_edition` und `license_binding` ergänzt.
-  - Main-Service und Renderer-Normalisierung akzeptieren/liefern snake_case + camelCase für Edition/Binding.
+  - Bei `GerÃ¤tebindung = machine` wird `Machine-ID` vor `licenseGenerate` verpflichtend geprÃ¼ft; bei `none` bleibt Machine-ID optional und wird nicht Ã¼bergeben.
+  - KompatibilitÃ¤t fuer Altwerte in `license_mode` bleibt erhalten (`soft/full/none/machine` -> sinnvolle Edition/Binding-Ableitung), neue Felder `license_edition`/`license_binding` haben Vorrang.
+  - DB-Schema `license_records` wurde nicht-destruktiv um optionale Spalten `license_edition` und `license_binding` ergÃ¤nzt.
+  - Main-Service und Renderer-Normalisierung akzeptieren/liefern snake_case + camelCase fÃ¼r Edition/Binding.
 - Lizenzverwaltung UI-Nachbesserung ist umgesetzt:
   - Nach `Kunde speichern` ist `Neue Lizenz` sofort aktiv; kein Zurueck-/Neuoeffnen noetig.
   - Im Lizenzformular wurden Buttontexte vereinheitlicht: `Lizenz speichern`, `Formular leeren`, `Zurueck`.
   - Kundendetail ist klarer getrennt in `Kundendaten` und `Lizenzen dieses Kunden`.
-  - Die Lizenzliste je Kunde ist als saubere Tabelle mit Spalten fuer Lizenz-ID, Lizenzart, Gerätebindung, Produktumfang, gueltig von/bis und Aktion aufgebaut.
-  - Bearbeiten erfolgt ueber sichtbaren Button `Öffnen` in der Aktion-Spalte statt ueber unsichtbaren Zeilenklick.
+  - Die Lizenzliste je Kunde ist als saubere Tabelle mit Spalten fuer Lizenz-ID, Lizenzart, GerÃ¤tebindung, Produktumfang, gueltig von/bis und Aktion aufgebaut.
+  - Bearbeiten erfolgt ueber sichtbaren Button `Ã–ffnen` in der Aktion-Spalte statt ueber unsichtbaren Zeilenklick.
 - Lizenzverwaltung Abschluss fuer PR #39 ist umgesetzt:
   - Im Lizenzformular gibt es jetzt den kombinierten Hauptbutton `Lizenz erstellen`.
-  - Der Ablauf dahinter ist: Admin-Lizenz speichern -> vorhandenen Generator aufrufen -> Ausgabepfad anzeigen -> Ausgabeordner öffnen.
+  - Der Ablauf dahinter ist: Admin-Lizenz speichern -> vorhandenen Generator aufrufen -> Ausgabepfad anzeigen -> Ausgabeordner Ã¶ffnen.
   - Es gibt keinen separaten Bedienpfad mehr mit erst `Lizenz speichern` und danach `Lizenzdatei erzeugen`.
 - Lizenzverwaltung finale UI-Vereinfachung ist umgesetzt:
   - Im sichtbaren Lizenzformular wurden restliche Einzelbuttons entfernt (`Lizenz-ID erzeugen`, `Formular leeren`).
   - Lizenz-ID bleibt sichtbar, wird aber beim Hauptablauf `Lizenz erstellen` automatisch erzeugt, wenn leer.
-  - Sichtbarer Hauptablauf im Formular ist jetzt auf `Lizenz erstellen` + `Zurueck` reduziert; `Ausgabeordner öffnen` erscheint nur nach erfolgreicher Erzeugung.
+  - Sichtbarer Hauptablauf im Formular ist jetzt auf `Lizenz erstellen` + `Zurueck` reduziert; `Ausgabeordner Ã¶ffnen` erscheint nur nach erfolgreicher Erzeugung.
 - Lizenzverwaltung naechster Schritt (Kunden-Setup) ist umgesetzt:
   - Nach erfolgreicher Lizenzerzeugung wird der Lizenzpfad im Lizenzdatensatz gespeichert (`license_file_path`, `license_file_created_at`).
   - Im Lizenzformular ist `Kunden-Setup erstellen` verfuegbar; ohne bekannte erzeugte Lizenzdatei erscheint `Bitte zuerst die Lizenz erstellen.`.
@@ -434,8 +436,8 @@ Sie ergänzt:
   - Build-Diagnose wird mitgegeben (`repoRoot`, `outputDir`, `customerSlug`, `licenseFilePath`, `exitCode`, `stdout`, `stderr`) und im UI bei Fehlern sichtbar gemacht.
 - Lizenzverwaltung Kunden-Setup-Stabilisierung ist umgesetzt:
   - Build startet nicht mehr blind mit `process.execPath`, sondern ueber aufgeloeste Node-Laufzeit (`npm_node_execpath` -> `NODE_EXE` -> `node`).
-  - Kunden-Setup-Build hat Timeout-Schutz; bei Hänger wird mit `CUSTOMER_SETUP_BUILD_TIMEOUT` sauber beendet.
-  - Spawn-Fehler liefern `CUSTOMER_SETUP_BUILD_FAILED`; der IPC antwortet damit immer mit einem Abschlussstatus statt offenem Hänger.
+  - Kunden-Setup-Build hat Timeout-Schutz; bei HÃ¤nger wird mit `CUSTOMER_SETUP_BUILD_TIMEOUT` sauber beendet.
+  - Spawn-Fehler liefern `CUSTOMER_SETUP_BUILD_FAILED`; der IPC antwortet damit immer mit einem Abschlussstatus statt offenem HÃ¤nger.
   - Pro Buildlauf wird eine Logdatei unter `dist/customers/<slug>/customer-setup-build.log` geschrieben (inkl. Node-Befehl, Env, stdout/stderr, Exitcode, Artefakte).
   - Kundenmodus-Builderkonfiguration deaktiviert native Rebuilds (`npmRebuild: false`, `buildDependenciesFromSource: false`), um `better-sqlite3`-Locking in der laufenden App zu vermeiden.
 - Protokoll-Modul ist eingefroren.
@@ -447,7 +449,7 @@ Sie ergänzt:
 - Codex Cloud ist eingerichtet und kann das Repo lesen.
 - Das Mutter-/Kind-Prinzip ist als verbindliche Leitlinie fuer die gesamte App festgehalten.
 - Der erste CSS-Schritt im Modul `Protokoll` wurde umgesetzt.
-- Der Speichern-/Löschen-Vertrag im Tops-Bereich wurde zwischen Verhalten und Tests synchronisiert.
+- Der Speichern-/LÃ¶schen-Vertrag im Tops-Bereich wurde zwischen Verhalten und Tests synchronisiert.
 
 ## Architektur-Flag
 - Die gesamte App folgt dem Mutter-/Kind-Prinzip.
@@ -456,24 +458,24 @@ Sie ergänzt:
 - Die Mutter-App verwaltet Module, Kunden/Nutzer, Lizenzen, Laufzeiten, Updateberechtigungen und Varianten.
 - Kinder-Apps pruefen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
 - Kinder-Apps werden nicht zur Verwaltungszentrale fuer andere Kunden oder Varianten ausgebaut.
-- Nicht jedes Modul ist ein auswählbares Projektmodul; Maschinenraum-Dienste und Verwaltungsbereiche bleiben getrennt.
-- Aktuell auswählbares Projektmodul ist `Protokoll`; `Restarbeiten` kann spaeter als Projektmodul hinzukommen.
+- Nicht jedes Modul ist ein auswÃ¤hlbares Projektmodul; Maschinenraum-Dienste und Verwaltungsbereiche bleiben getrennt.
+- Aktuell auswÃ¤hlbares Projektmodul ist `Protokoll`; `Restarbeiten` kann spaeter als Projektmodul hinzukommen.
 - `Ausgabe / Drucken / E-Mail` und `Audio / Diktat` sind Maschinenraum-Dienste, keine Projektmodule.
 - `Lizenzierung`, `Settings`, `Updates`, `Backup` und `Diagnose` sind Verwaltung oder Maschinenraum, keine Projektmodule.
 - Die Projektverwaltung setzt den Projektkontext und oeffnet den Projekt-Arbeitsbereich.
 - Ein Projektklick startet nicht direkt `Protokoll`.
-- Im Projekt-Arbeitsbereich werden nur auswählbare Projektmodule angeboten.
+- Im Projekt-Arbeitsbereich werden nur auswÃ¤hlbare Projektmodule angeboten.
 - Das Protokoll-Modul ist aktuell eingefroren.
 - Keine weitere Mini-Modularisierung ohne ausdruecklichen Auftrag.
 - `TopsHeader` und `TopsList` wurden heimgeholt.
 - `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen.
-- Weitere Änderungen nur bei echtem Fehler oder konkretem Featurebedarf.
+- Weitere Ã„nderungen nur bei echtem Fehler oder konkretem Featurebedarf.
 
 ## Projektverwaltung
 - Der erste Modul-Meilenstein ist abgeschlossen.
 - Die Projektverwaltung ist als Renderer-Modul unter `src/renderer/modules/projektverwaltung` aufgestellt.
 - Der bestehende Sidebar-Einstieg `Projekte` bleibt der einzige sichtbare Einstieg.
-- Es gibt keinen zusätzlichen Sidebar-Button `Projektverwaltung`.
+- Es gibt keinen zusÃ¤tzlichen Sidebar-Button `Projektverwaltung`.
 - Der Router nutzt den Modulpfad.
 - Die alten View-Dateien bleiben als Compatibility-Re-Exports bestehen.
 - Keine DB-/IPC-Logik wurde verschoben.
@@ -491,7 +493,7 @@ Sie ergänzt:
 - `TranscriptionService` ist als Renderer-Adapter im Modul verankert.
 - Die Entwicklungs-UI fuer den Bereich `Diktieren` wurde in das Audio-Modul ausgegliedert und in Settings eingehaengt.
 - Es gibt keine Sidebar-Anbindung und keinen Modulkatalog-Eintrag.
-- Die Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverändert.
+- Die Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverÃ¤ndert.
 
 ---
 
@@ -517,8 +519,8 @@ Sie ergänzt:
 - Status: erledigt
 - Beschreibung:
   - Lizenzformular auf einen klaren Hauptablauf mit einem Button `Lizenz erstellen` umgestellt.
-  - Klick speichert zuerst den Lizenzdatensatz und erzeugt danach direkt die `.bbmlic` über die bestehende Generator-Infrastruktur.
-  - Ausgabepfad bleibt sichtbar; `Ausgabeordner öffnen` bleibt verfügbar.
+  - Klick speichert zuerst den Lizenzdatensatz und erzeugt danach direkt die `.bbmlic` Ã¼ber die bestehende Generator-Infrastruktur.
+  - Ausgabepfad bleibt sichtbar; `Ausgabeordner Ã¶ffnen` bleibt verfÃ¼gbar.
   - Tests auf neue UI-Begriffe/Bedienlogik aktualisiert.
 - Betroffene Dateien:
   - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
@@ -534,7 +536,7 @@ Sie ergänzt:
 - Beschreibung:
   - Kundendetail-Screen so angepasst, dass `Neue Lizenz` nach erfolgreichem Kundenspeichern sofort nutzbar bleibt.
   - Lizenzformular-Buttons sprachlich auf klare Begriffe umgestellt (`Lizenz speichern`, `Formular leeren`, `Zurueck`).
-  - Lizenzliste je Kunde optisch/strukturell bereinigt (eigene Aktion-Spalte mit `Öffnen`; kein gesamter Zeilenklick).
+  - Lizenzliste je Kunde optisch/strukturell bereinigt (eigene Aktion-Spalte mit `Ã–ffnen`; kein gesamter Zeilenklick).
   - Tests auf neue Begriffe/Struktur und Direktnutzbarkeit nach Kundenspeichern erweitert.
 - Betroffene Dateien:
   - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
@@ -548,10 +550,10 @@ Sie ergänzt:
 #### Paket: PR #39 Nachbesserung - Lizenzart/Geraetebindung getrennt und Datumsnormalisierung
 - Status: erledigt
 - Beschreibung:
-  - `LicenseAdminScreen` trennt nun `Lizenzart` und `Gerätebindung` im Formular, inklusive Machine-ID-Enable/Disable je Binding.
+  - `LicenseAdminScreen` trennt nun `Lizenzart` und `GerÃ¤tebindung` im Formular, inklusive Machine-ID-Enable/Disable je Binding.
   - Generator-Payload nutzt jetzt Edition/Binding aus neuen Feldern (mit Legacy-Fallback), normalisiert Datumswerte und validiert Machine-ID/Data vor dem IPC-Aufruf.
   - DB-Schema und Main-Service wurden fuer optionale Felder `license_edition`/`license_binding` erweitert (nicht-destruktiv, keine neue Tabelle).
-  - Normalisierer/Tests wurden auf Kompatibilität von legacy `license_mode` + neue Felder angepasst.
+  - Normalisierer/Tests wurden auf KompatibilitÃ¤t von legacy `license_mode` + neue Felder angepasst.
 - Betroffene Dateien:
   - `src/renderer/modules/lizenzverwaltung/screens/LicenseAdminScreen.js`
   - `src/renderer/modules/lizenzverwaltung/licenseRecords.js`
@@ -571,7 +573,7 @@ Sie ergänzt:
   - Lizenzformular in `LicenseAdminScreen` um `Lizenzdatei erzeugen` erweitert; Erzeugung nur fuer gespeicherte Lizenzen.
   - Neue Mapping-Helfer bauen Generator-Payload aus Kunde+Lizenz (customerName, licenseId, product `bbm-protokoll`, edition, binding, validFrom/validUntil, maxDevices, machineId, features).
   - Features-Mapping aus `product_scope_json` deckt Standardumfang, Zusatzfunktionen und Module ab; `audio` bleibt kompatibel als `dictate`.
-  - UI zeigt Statusmeldungen fuer laufende Erzeugung, Erfolg/Fehler, Ausgabepfad und optional `Ausgabeordner öffnen`.
+  - UI zeigt Statusmeldungen fuer laufende Erzeugung, Erfolg/Fehler, Ausgabepfad und optional `Ausgabeordner Ã¶ffnen`.
   - Tests fuer Payload-Mapping, Binding-/Produkt-Mapping, Feature-Mapping und Feature-Leerfall wurden in `licenseAdminDataflow.test.cjs` erweitert.
   - Strukturtests wurden um Nachweise fuer Button, Blockiermeldungen und bestehende IPC-Infrastruktur erweitert.
 - Betroffene Dateien:
@@ -637,7 +639,7 @@ Sie ergänzt:
 #### Paket: CSS-Altpfad im Modul Protokoll abbauen
 - Status: erledigt
 - Beschreibung:
-  - modul-lokale CSS-Datei für Protokoll angelegt
+  - modul-lokale CSS-Datei fÃ¼r Protokoll angelegt
   - CSS-Verweis in `src/renderer/modules/protokoll/styles.js` angepasst
   - alte CSS-Datei blieb bestehen
 - Betroffene Dateien:
@@ -646,20 +648,20 @@ Sie ergänzt:
 - Commit:
   - `siehe aktuellen Branch-Commit`
 - Hinweise:
-  - Commit enthält zusätzlich das Entfernen von ChatGPT-Export-Artefakten
+  - Commit enthÃ¤lt zusÃ¤tzlich das Entfernen von ChatGPT-Export-Artefakten
 
-#### Paket: Speichern-/Löschen-Vertrag im Tops-Bereich stabilisieren
+#### Paket: Speichern-/LÃ¶schen-Vertrag im Tops-Bereich stabilisieren
 - Status: erledigt
 - Beschreibung:
   - `topsCommands`-Testvertrag an den realen Reload-Ablauf nach `saveDraft` und `deleteSelectedTop` angepasst
-  - Reload nach Speichern/Löschen im Test explizit abgedeckt (inkl. Erhalt/Entfernung der Selektion im Ablauf)
+  - Reload nach Speichern/LÃ¶schen im Test explizit abgedeckt (inkl. Erhalt/Entfernung der Selektion im Ablauf)
 - Betroffene Dateien:
   - `scripts/tests/topsCommands.test.cjs`
   - `STATUS.md`
 - Commit:
   - `50cdbc3`
 - Hinweise:
-  - Keine Änderungen an Router, UI oder fachlicher Tops-Logik
+  - Keine Ã„nderungen an Router, UI oder fachlicher Tops-Logik
 
 ---
 
@@ -688,7 +690,7 @@ Sie ergänzt:
 - Status: erledigt
 - Beschreibung:
   - sichtbares Feature-Label `audio` im Bereich `Lizenz / bearbeiten` auf `Dictate` umgestellt
-  - interner Feature-Key `audio` unverändert gelassen
+  - interner Feature-Key `audio` unverÃ¤ndert gelassen
   - Ergebnisanzeige der erzeugten Lizenz zeigt den sichtbaren Feature-Namen ebenfalls als `Dictate`
 - Betroffene Dateien:
   - `src/renderer/views/SettingsView.js`
@@ -697,7 +699,7 @@ Sie ergänzt:
 - Commit:
   - `siehe aktuellen Branch-Commit`
 - Hinweise:
-  - Keine Änderungen an Settings-/Diktieren-Tab, Sidebar, Projektmodul oder Whisper-Logik
+  - Keine Ã„nderungen an Settings-/Diktieren-Tab, Sidebar, Projektmodul oder Whisper-Logik
 
 #### Paket: ProjectWorkspaceScreen minimal stabilisiert
 - Status: erledigt
@@ -719,10 +721,10 @@ Sie ergänzt:
 - Status: erledigt
 - Beschreibung:
   - neues Admin-Modul `src/renderer/modules/lizenzverwaltung/` mit `index.js`, `README.md`, `screens/index.js` und `screens/LicenseAdminScreen.js` angelegt
-  - Skeleton-Screen mit Platzhaltern `Kunden`, `Lizenzen`, `Produktumfang`, `Historie` ergänzt
+  - Skeleton-Screen mit Platzhaltern `Kunden`, `Lizenzen`, `Produktumfang`, `Historie` ergÃ¤nzt
   - Entwicklungsbereich in `SettingsView` minimal um den Einstieg `Adminbereich` erweitert
-  - Modulkatalog und Projektmodule bleiben unverändert (`Protokoll` bleibt einziges Projektmodul)
-  - Testlauf um `lizenzverwaltungModule.test.cjs` ergänzt
+  - Modulkatalog und Projektmodule bleiben unverÃ¤ndert (`Protokoll` bleibt einziges Projektmodul)
+  - Testlauf um `lizenzverwaltungModule.test.cjs` ergÃ¤nzt
 - Betroffene Dateien:
   - `src/renderer/modules/lizenzverwaltung/index.js`
   - `src/renderer/modules/lizenzverwaltung/README.md`
@@ -742,9 +744,9 @@ Sie ergänzt:
 - Status: erledigt
 - Beschreibung:
   - `Adminbereich` aus den Entwicklung-Tabs entfernt und als eigener Einstieg/Kachel im Entwicklungs-Popup verankert
-  - neues Adminbereich-Popup mit Kachel `Lizenzverwaltung` ergänzt
+  - neues Adminbereich-Popup mit Kachel `Lizenzverwaltung` ergÃ¤nzt
   - Klick auf `Lizenzverwaltung` zeigt weiterhin den bestehenden `LicenseAdminScreen`-Skeleton
-  - bestehende Entwicklung-Tabs (`Versionierung`, `Lizenz / bearbeiten`, `DB-Diagnose`, `Diktieren`, `Druck / TOP-Liste`) bleiben unverändert erhalten
+  - bestehende Entwicklung-Tabs (`Versionierung`, `Lizenz / bearbeiten`, `DB-Diagnose`, `Diktieren`, `Druck / TOP-Liste`) bleiben unverÃ¤ndert erhalten
   - Testvertrag fuer Adminbereich-/Lizenzverwaltung-Einstieg entsprechend erweitert
 - Betroffene Dateien:
   - `src/renderer/views/SettingsView.js`
@@ -890,7 +892,7 @@ Sie ergänzt:
 ## Offene Meilensteine
 1. Weitere kleine Altpfade im Modul `Protokoll` abbauen
 
-Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist abgeschlossen und dokumentiert.
+Hinweis: Der Meilenstein â€žProjektverwaltung / Projekt-Arbeitsbereichâ€œ ist abgeschlossen und dokumentiert.
 
 ---
 
@@ -962,8 +964,8 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
   - `npm test` ist gruen
 - Letztes Paket:
   - Machine-Binding Schritt 1: Lizenzanforderung speichern (`bbm-license-request.json`) inkl. Tests (Payload/IPC/Preload/UI/Grenzen)
-- Letzter sinnvoller bestätigter Stand:
-  - Speichern-/Löschen-Vertrag im Tops-Bereich über zugehörigen Testvertrag stabilisiert
+- Letzter sinnvoller bestÃ¤tigter Stand:
+  - Speichern-/LÃ¶schen-Vertrag im Tops-Bereich Ã¼ber zugehÃ¶rigen Testvertrag stabilisiert
 - Letzter Cloud-Kontrolllauf:
   - `AGENTS.md` gefunden
   - `PLAN.md` gefunden
@@ -981,11 +983,11 @@ Hinweis: Der Meilenstein „Projektverwaltung / Projekt-Arbeitsbereich“ ist ab
   - Protokoll-Logik blieb unveraendert
   - `npm test` war gruen
 - Beobachtung:
-  - Ohne Fortschrittsdatei interpretiert Codex den Plan zu wörtlich und nimmt erledigte Meilensteine erneut als offen an.
+  - Ohne Fortschrittsdatei interpretiert Codex den Plan zu wÃ¶rtlich und nimmt erledigte Meilensteine erneut als offen an.
 
 ---
 
-## Aktuell nächster sinnvoller Schritt
+## Aktuell nÃ¤chster sinnvoller Schritt
 Der naechste sinnvolle kleine Schritt nach diesem Paket ist:
 
 ### Lizenzverwaltung Paket 6 vorbereiten
@@ -998,25 +1000,25 @@ Der naechste sinnvolle kleine Schritt nach diesem Paket ist:
 ---
 
 ## Offene Hindernisse / bekannte Probleme
-- Frühere Läufe zeigten bestehende Altprobleme, u. a.:
+- FrÃ¼here LÃ¤ufe zeigten bestehende Altprobleme, u. a.:
   - `ERR_INVALID_URL` im Zusammenhang mit ESM/CSS-Importpfaden
 - Diese Probleme gelten nicht automatisch als Teil jedes neuen Mini-Pakets.
-- Wenn ein neuer Meilenstein an diesen Punkten hängen bleibt, stoppen und offen berichten.
+- Wenn ein neuer Meilenstein an diesen Punkten hÃ¤ngen bleibt, stoppen und offen berichten.
 
 ---
 
-## Regeln für Fortschrittsfortschreibung
-Nach jedem abgeschlossenen Paket oder Meilenstein ergänzen:
+## Regeln fÃ¼r Fortschrittsfortschreibung
+Nach jedem abgeschlossenen Paket oder Meilenstein ergÃ¤nzen:
 1. Was wurde erledigt?
 2. Welche Dateien waren betroffen?
-3. Welcher Commit gehört dazu?
-4. Was ist jetzt der nächste offene Schritt?
+3. Welcher Commit gehÃ¶rt dazu?
+4. Was ist jetzt der nÃ¤chste offene Schritt?
 5. Gab es Hindernisse oder Restrisiken?
 
 Wichtig:
 - `STATUS.md` beschreibt den Ist-Stand.
 - `PLAN.md` bleibt der Soll-Plan.
-- Erledigte Schritte sollen in `STATUS.md` dokumentiert werden, nicht durch ständiges Umschreiben von `PLAN.md`.
+- Erledigte Schritte sollen in `STATUS.md` dokumentiert werden, nicht durch stÃ¤ndiges Umschreiben von `PLAN.md`.
 
 ---
 
@@ -1030,7 +1032,7 @@ Wichtig:
 - Beschreibung:
   - zentrale Produktumfangs-Struktur `PRODUCT_SCOPE` im Modul `lizenzverwaltung` angelegt
   - `createLicenseEditorSection` auf die zentrale Struktur umgestellt (Standardumfang, Zusatzfunktionen, Module)
-  - sichtbares Verhalten beibehalten: Standardumfang fix, mail/Dictate auswählbar, Module vorbereitet/deaktiviert
+  - sichtbares Verhalten beibehalten: Standardumfang fix, mail/Dictate auswÃ¤hlbar, Module vorbereitet/deaktiviert
   - Features-Ausgabe bleibt kompatibel mit internem `audio`-Key fuer Dictate
 - Betroffene Dateien:
   - `src/renderer/modules/lizenzverwaltung/productScope.js`
@@ -1067,7 +1069,7 @@ Wichtig:
 - Commit:
   - `siehe aktuellen Branch-Commit`
 - Naechster offener Schritt:
-  - Renderer-Lizenzstatusanzeige optional feinjustieren (Labels Produkt/Module/Funktionen), ohne Admin/Gene­rator-Rueckbau.
+  - Renderer-Lizenzstatusanzeige optional feinjustieren (Labels Produkt/Module/Funktionen), ohne Admin/GeneÂ­rator-Rueckbau.
 - Risiken/Hinweise:
   - Legacy-Tests mit Alias-Begriffen bleiben teils bewusst erhalten fuer sanften Uebergang.
 
@@ -1112,7 +1114,7 @@ Wichtig:
 - Beschreibung:
   - Header-/Router-Bridges aus `CoreShell.js` in `src/renderer/app/coreShellHeaderBridge.js` ausgelagert.
   - Router-Bridge fuer Output-Mail, Output-Print, Closed-Protocol-Selector und Header-/Theme-/Sticky-Notice-Events bleibt funktional unveraendert.
-  - CoreShell behält Layout, Navigation, Teilnehmer-Aktion und Router-Kanten ausserhalb der Header-Bridge.
+  - CoreShell behÃ¤lt Layout, Navigation, Teilnehmer-Aktion und Router-Kanten ausserhalb der Header-Bridge.
 - Betroffene Dateien:
   - `src/renderer/app/coreShellHeaderBridge.js`
   - `src/renderer/app/CoreShell.js`
@@ -1270,7 +1272,7 @@ Wichtig:
 - Status: erledigt
 - Beschreibung:
   - In den Einstellungen eine sichtbare Kachel `Firmenrollen` ergaenzt.
-  - Die Kachel oeffnet den Dialog `Rollenreihenfolge für Firmen` mit Zwei-Spalten-Liste, Hinweis, Hinzufuegen sowie Schieben/Edit/Loeschen fuer die markierte Rolle.
+  - Die Kachel oeffnet den Dialog `Rollenreihenfolge fÃ¼r Firmen` mit Zwei-Spalten-Liste, Hinweis, Hinzufuegen sowie Schieben/Edit/Loeschen fuer die markierte Rolle.
   - Die bestehenden Settings-Schluessel `firm_role_order` und `firm_role_labels` werden weiterhin fuer Laden und Speichern verwendet.
 - Betroffene Dateien:
   - `src/renderer/views/SettingsView.js`
@@ -1334,10 +1336,10 @@ Wichtig:
 - Risiken/Hinweise:
   - Der Audio-Baustein bleibt intern derselbe; nur der sichtbare Einstieg wurde umgehaengt.
 
-#### Paket: Adminbereich aus Settings-Übersicht entfernen
+#### Paket: Adminbereich aus Settings-Ãœbersicht entfernen
 - Status: erledigt
 - Beschreibung:
-  - Der sichtbare Einstieg `Adminbereich` / `Externe Lizenzverwaltung` wurde aus der normalen Settings-Übersicht entfernt.
+  - Der sichtbare Einstieg `Adminbereich` / `Externe Lizenzverwaltung` wurde aus der normalen Settings-Ãœbersicht entfernt.
   - `Lizenzstatus` bleibt unter `Allgemein` erhalten.
   - `Entwicklung` zeigt danach nur noch `Technik`.
 - Betroffene Dateien:
@@ -1389,7 +1391,7 @@ Wichtig:
 - Risiken/Hinweise:
   - Die Tops-Textschrift bleibt als separate Modul-/Top-Regel bestehen; Print bleibt bewusst unberuehrt.
 
-#### Paket: Settings-Übersicht als Accordion poliert
+#### Paket: Settings-Ãœbersicht als Accordion poliert
 - Status: erledigt
 - Beschreibung:
   - Die Settings-Gruppen sind jetzt als einklappbare Accordions umgesetzt.
@@ -1404,7 +1406,7 @@ Wichtig:
 - Naechster offener Schritt:
   - kein direkter Anschluss aus diesem Paket
 - Risiken/Hinweise:
-  - Die Accordion-Logik speichert keinen Zustand; nach Reload startet die Übersicht wieder mit `Allgemein` offen.
+  - Die Accordion-Logik speichert keinen Zustand; nach Reload startet die Ãœbersicht wieder mit `Allgemein` offen.
 #### Paket: Appweite Button-Styles vereinheitlicht
 - Status: erledigt
 - Beschreibung:
@@ -1536,3 +1538,4 @@ Wichtig:
   - gespeicherte Firmenlisten sind nicht mehr als funktionale Ausgabeart angeboten
   - Firmenliste laeuft direkt ueber den aktuellen Projektstand und braucht keine geschlossene-Protokoll-Auswahl
   - eine separate Mitarbeiter-/Personenliste ist im aktuellen Druckdialog noch nicht als eigener Modus vorhanden
+

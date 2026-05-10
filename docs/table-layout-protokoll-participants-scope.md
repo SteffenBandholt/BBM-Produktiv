@@ -1,6 +1,6 @@
-# Tabellenlayout-Scope: Teilnehmer im Protokoll
+﻿# Tabellenlayout-Scope: Teilnehmer im Protokoll
 
-Status: Audit / Scope, kein produktiver Anschluss
+Status: fachlich geprüft, noch nicht im Editor registriert
 
 ## 1. Ausgangslage
 
@@ -36,11 +36,11 @@ Fachlich relevant fuer die eigentliche Teilnehmerliste sind vor allem:
 
 Die Teilnehmerdarstellung ist also vorhanden, aber nicht als einzelne, isolierte Tabellenansicht aufgebaut wie eine klassische Fachliste.
 
-## 3. Tatsächliche Spalten
+## 3. TatsÃ¤chliche Spalten
 
 ### 3.1 Teilnehmerdialog in der UI
 
-In `src/renderer/ui/ParticipantsModals.js` und den zugehoerigen Datenpfa­den wird die Besprechungs-Teilnehmerliste mit folgenden sichtbaren Spalten gefuehrt:
+In `src/renderer/ui/ParticipantsModals.js` und den zugehoerigen DatenpfaÂ­den wird die Besprechungs-Teilnehmerliste mit folgenden sichtbaren Spalten gefuehrt:
 
 - Name
 - Funktion / Rolle
@@ -177,6 +177,8 @@ Die TOP-Liste bleibt der Protokoll-Hauptkandidat fuer die bestehende Tabellenlay
 
 Empfehlung heute:
 
+- **fachlich gepr?ft, aber noch nicht im Editor registriert**
+- **eine spaetere Aufnahme darf nur nach Nutzerfreigabe und mit den sichtbaren Spalten erfolgen**
 - **nicht sofort als naechster Produktiv-Pilot**
 - **erst weiterer Scope / Feinscope noetig**
 
@@ -187,3 +189,4 @@ Warum:
 - fuer den naechsten kleinen Tabellenlayout-Schritt ist daher eine noch klarer getrennte Tabelle risikoaermer
 
 Wenn die Teilnehmerliste spaeter als Layoutkandidat gestartet wird, ist sie fachlich gut geeignet. Fuer den naechsten unmittelbaren Pilot ist sie aber eher ein **spaterer Kandidat** als der erste naechste Schritt.
+
