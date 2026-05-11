@@ -1680,3 +1680,19 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Die Hauptschriftgroesse des Nummernblocks ist jetzt per CSS-Variable steuerbar; Datum/Hinweis werden im Preview proportional per Inline-Style mitgefuehrt.
+
+#### Paket: DEV PDF-Layout TOP-Liste (Textblock live, ohne Speichern)
+- Status: erledigt
+- Beschreibung:
+  - In der DEV-Print-HTML Vorschau laesst sich der PDF-Textblock live einstellen: Innen (mm) und Schrift (pt).
+  - Breite bleibt gesperrt als "Restbereich" (keine direkte Textblock-Breitenverstellung).
+  - Keine Speicherung/kein Reset fuer Textblock in diesem Schritt.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: Textblock speichern/reset (separater Meilenstein)
+- Risiken/Hinweise:
+  - Text-Schrift wird live per Inline-Style auf `.shortText/.longText` gesetzt (nur im laufenden Preview).

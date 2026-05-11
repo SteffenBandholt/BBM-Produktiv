@@ -1455,6 +1455,8 @@ function _ensureDevPdfLayoutToolbar() {
   el._nrWidthMm = null;
   el._nrInsetMm = null;
   el._nrFontPt = null;
+  el._txtInsetMm = null;
+  el._txtFontPt = null;
   el._defaultNrWidthRaw = null;
   el._defaultNrInsetRaw = null;
   el._defaultNrFontRaw = null;
@@ -1518,6 +1520,27 @@ function _readNumberFontPt(root) {
   const px = Number(String(style?.fontSize || "").replace("px", "").trim());
   if (!Number.isFinite(px) || px <= 0) return null;
   // 1px = 0.75pt (CSS px to pt)
+  return px * 0.75;
+}
+
+function _readTextInsetMm(root) {
+  const cell =
+    root?.querySelector?.("table.topsTable td.colText") ||
+    root?.querySelector?.("table.topsTable th.colText") ||
+    null;
+  if (!cell || typeof window?.getComputedStyle !== "function") return null;
+  const style = window.getComputedStyle(cell);
+  const px = Number(String(style?.paddingLeft || "").replace("px", "").trim());
+  if (!Number.isFinite(px) || px < 0) return null;
+  return px / _pxPerMm();
+}
+
+function _readTextFontPt(root) {
+  const el = root?.querySelector?.("table.topsTable .shortText") || root?.querySelector?.("table.topsTable .longText") || null;
+  if (!el || typeof window?.getComputedStyle !== "function") return null;
+  const style = window.getComputedStyle(el);
+  const px = Number(String(style?.fontSize || "").replace("px", "").trim());
+  if (!Number.isFinite(px) || px <= 0) return null;
   return px * 0.75;
 }
 
@@ -1745,6 +1768,31 @@ function _applyNumberFontPt(root, pt) {
   return nextPt;
 }
 
+function _applyTextInsetMm(root, mm) {
+  const nextMm = Math.max(0, Math.min(10, Math.round(Number(mm) * 2) / 2));
+  const tables = root?.querySelectorAll?.("table.topsTable") || [];
+  for (const table of tables) {
+    if (table?.style?.setProperty) {
+      // apply same inset left/right for a "simple" textblock padding control
+      table.style.setProperty("--bbm-top-col-text-padding-left", `${nextMm}mm`);
+      table.style.setProperty("--bbm-top-col-text-padding-right", `${nextMm}mm`);
+    }
+  }
+  return nextMm;
+}
+
+function _applyTextFontPt(root, pt) {
+  const nextPt = Math.max(6, Math.min(16, Math.round(Number(pt) * 2) / 2));
+  const tables = root?.querySelectorAll?.("table.topsTable") || [];
+  for (const table of tables) {
+    const els = table.querySelectorAll?.(".shortText, .longText") || [];
+    for (const el of els) {
+      if (el?.style) el.style.fontSize = `${nextPt}pt`;
+    }
+  }
+  return nextPt;
+}
+
 function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   if (!toolbar) return;
   const zone = String(root?.dataset?.devPdfActiveZone || "").trim().toLowerCase();
@@ -1753,6 +1801,7 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
 
   const isMeta = zone === "meta";
   const isNumber = zone === "number";
+  const isText = zone === "text";
   toolbar._minus.disabled = !isMeta;
   toolbar._plus.disabled = !isMeta;
   toolbar._insetMinus.disabled = !isMeta;
@@ -1773,7 +1822,19 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     toolbar._fontPlus.disabled = false;
   }
 
-  if (!isMeta && !isNumber) {
+  // Textblock: width is "rest area" and must not be directly adjustable.
+  if (isText) {
+    toolbar._minus.disabled = true;
+    toolbar._plus.disabled = true;
+    toolbar._insetMinus.disabled = false;
+    toolbar._insetPlus.disabled = false;
+    toolbar._fontMinus.disabled = false;
+    toolbar._fontPlus.disabled = false;
+    toolbar._save.disabled = true;
+    toolbar._reset.disabled = true;
+  }
+
+  if (!isMeta && !isNumber && !isText) {
     toolbar._value.textContent = "Breite -";
     toolbar._insetValue.textContent = "Innen -";
     if (toolbar._fontValue) toolbar._fontValue.textContent = "Schrift -";
@@ -1783,6 +1844,8 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     toolbar._nrWidthMm = null;
     toolbar._nrInsetMm = null;
     toolbar._nrFontPt = null;
+    toolbar._txtInsetMm = null;
+    toolbar._txtFontPt = null;
     toolbar._minus.onclick = null;
     toolbar._plus.onclick = null;
     toolbar._insetMinus.onclick = null;
@@ -1963,6 +2026,52 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
       }
     };
 
+    return;
+  }
+
+  if (isText) {
+    toolbar._value.textContent = "Breite Restbereich";
+
+    if (toolbar._txtInsetMm == null) {
+      const inset = _readTextInsetMm(root);
+      toolbar._txtInsetMm = inset != null ? inset : 0;
+      toolbar._txtInsetMm = _applyTextInsetMm(root, toolbar._txtInsetMm);
+    }
+    if (toolbar._txtFontPt == null) {
+      const pt = _readTextFontPt(root);
+      toolbar._txtFontPt = pt != null ? pt : 9;
+      toolbar._txtFontPt = _applyTextFontPt(root, toolbar._txtFontPt);
+    }
+
+    toolbar._insetValue.textContent = `Innen ${_formatMm(toolbar._txtInsetMm)} mm`;
+    if (toolbar._fontValue) toolbar._fontValue.textContent = `Schrift ${_formatMm(toolbar._txtFontPt)} pt`;
+
+    toolbar._minus.onclick = null;
+    toolbar._plus.onclick = null;
+    toolbar._insetMinus.onclick = () => {
+      const current = toolbar._txtInsetMm == null ? 0 : toolbar._txtInsetMm;
+      toolbar._txtInsetMm = _applyTextInsetMm(root, current - 0.5);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    toolbar._insetPlus.onclick = () => {
+      const current = toolbar._txtInsetMm == null ? 0 : toolbar._txtInsetMm;
+      toolbar._txtInsetMm = _applyTextInsetMm(root, current + 0.5);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    if (toolbar._fontMinus) {
+      toolbar._fontMinus.onclick = () => {
+        const current = toolbar._txtFontPt == null ? (_readTextFontPt(root) || 9) : toolbar._txtFontPt;
+        toolbar._txtFontPt = _applyTextFontPt(root, current - 0.5);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      };
+    }
+    if (toolbar._fontPlus) {
+      toolbar._fontPlus.onclick = () => {
+        const current = toolbar._txtFontPt == null ? (_readTextFontPt(root) || 9) : toolbar._txtFontPt;
+        toolbar._txtFontPt = _applyTextFontPt(root, current + 0.5);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      };
+    }
     return;
   }
 
