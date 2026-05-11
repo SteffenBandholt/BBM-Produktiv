@@ -11,7 +11,9 @@ export const TOPLIST_LAYOUT_SURFACE = Object.freeze({
     text: Object.freeze({
       key: "text",
       label: "Textblock",
-      controls: Object.freeze(["inset", "font"]),
+      // Width is treated as "Textbreite" in the UI (rest area stealing/giving space via meta col),
+      // not as a direct fixed column width.
+      controls: Object.freeze(["width", "inset", "font"]),
     }),
     meta: Object.freeze({
       key: "meta",
@@ -31,4 +33,3 @@ export function normalizeToplistZoneKey(value) {
   const key = String(value || "").trim().toLowerCase();
   return Object.prototype.hasOwnProperty.call(TOPLIST_LAYOUT_SURFACE.zones, key) ? key : null;
 }
-

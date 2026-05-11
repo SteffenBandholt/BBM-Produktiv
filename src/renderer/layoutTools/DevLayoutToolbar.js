@@ -20,6 +20,7 @@ export class DevLayoutToolbar {
     this.onReset = typeof onReset === "function" ? onReset : null;
     this.previewStateByZone = {
       number: { width: 64, inset: 5, font: 11 },
+      // "width" for text is a delta ("Textbreite") relative to the rest-area behavior.
       text: { width: 0, inset: 5, font: 11 },
       meta: { width: 74, inset: 4, font: 11 },
     };
@@ -95,9 +96,12 @@ export class DevLayoutToolbar {
     this.root.dataset.visible = isEnabled ? "true" : "false";
     this.root.dataset.activeZone = zoneKey || "";
     this.line1El.textContent = zoneLabel ? `${this.surface.label} > ${zoneLabel}` : `Layout: ${this.surface.label} | Bereich waehlen`;
-    this.line2El.textContent = zoneLabel
-      ? `Breite ${preview?.width || 0} px | Innen ${preview?.inset || 0} px | Schrift ${preview?.font || 0} px`
-      : "";
+    if (zoneLabel) {
+      const widthLabel = zoneKey === "text" ? "Textbreite" : "Breite";
+      this.line2El.textContent = `${widthLabel} ${preview?.width || 0} px | Innen ${preview?.inset || 0} px | Schrift ${preview?.font || 0} px`;
+    } else {
+      this.line2El.textContent = "";
+    }
     this.line2El.dataset.empty = zoneLabel ? "false" : "true";
     this.controlsWrap.hidden = !zoneLabel;
     this.controlsWrap.dataset.activeZone = zoneKey || "";
@@ -132,7 +136,7 @@ export class DevLayoutToolbar {
     plus.onclick = () => this._nudgeControl(key, 1);
 
     root.append(labelEl, minus, value, plus);
-    return { root, valueEl: value, minusEl: minus, plusEl: plus, key };
+    return { root, valueEl: value, minusEl: minus, plusEl: plus, labelEl, key };
   }
 
   _getZonePreview(zoneKey) {
@@ -142,6 +146,10 @@ export class DevLayoutToolbar {
 
   _syncControls(zoneKey) {
     const preview = this._getZonePreview(zoneKey) || { width: 0, inset: 0, font: 0 };
+    // Text zone: the width control represents a delta ("Textbreite") instead of a fixed column width.
+    if (this.controls?.width?.labelEl) {
+      this.controls.width.labelEl.textContent = zoneKey === "text" ? "Textbreite" : "Breite";
+    }
     for (const [key, control] of Object.entries(this.controls)) {
       const value = Number(preview?.[key] || 0);
       control.valueEl.textContent = key === "width" || key === "inset" || key === "font" ? `${value} px` : String(value);
@@ -164,8 +172,9 @@ export class DevLayoutToolbar {
     if (!allowed.includes(controlKey)) return;
     const preview = this.previewStateByZone[zoneKey] || { width: 0, inset: 0, font: 0 };
     const step = controlKey === "inset" ? 2 : controlKey === "font" ? 1 : 5;
-    const min = controlKey === "inset" ? 0 : controlKey === "font" ? 9 : 50;
-    const max = controlKey === "inset" ? 24 : controlKey === "font" ? 16 : 160;
+    const isTextWidth = zoneKey === "text" && controlKey === "width";
+    const min = isTextWidth ? -120 : controlKey === "inset" ? 0 : controlKey === "font" ? 9 : 50;
+    const max = isTextWidth ? 120 : controlKey === "inset" ? 24 : controlKey === "font" ? 16 : 160;
     const nextValue = Math.max(min, Math.min(max, Number(preview[controlKey] || 0) + delta * step));
     const nextPreview = {
       ...preview,

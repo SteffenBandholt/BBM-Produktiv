@@ -749,6 +749,7 @@ export default class TopsScreen {
     if (!this.topsList?.root?.style) return;
 
     if (zoneKey === "meta") {
+      this._devLayoutTextBaseMetaWidth = null;
       const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 74));
       const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 4));
       const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
@@ -759,6 +760,7 @@ export default class TopsScreen {
     }
 
     if (zoneKey === "number") {
+      this._devLayoutTextBaseMetaWidth = null;
       const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 64));
       const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 5));
       const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
@@ -773,6 +775,35 @@ export default class TopsScreen {
       const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
       this.topsList.root.style.setProperty("--bbm-tops-list-text-padding-inline", `${clampedInset}px`);
       this.topsList.root.style.setProperty("--bbm-tops-list-text-font-size", `${clampedFont}px`);
+
+      // "Textbreite" is implemented by taking/giving space via the meta column width.
+      // DEV-only and live-only: no persistence for this behavior yet.
+      const parsePx = (value, fallback) => {
+          const raw = String(value || "").trim();
+          const match = raw.match(/^(-?\\d+(?:\\.\\d+)?)px$/i);
+          if (!match) return fallback;
+          const parsed = Number(match[1]);
+          return Number.isFinite(parsed) ? parsed : fallback;
+        };
+      const computed = typeof window !== "undefined" && window.getComputedStyle ? window.getComputedStyle(this.topsList.root) : null;
+      const currentMeta = parsePx(
+        this.topsList.root.style.getPropertyValue("--bbm-tops-list-meta-col") ||
+          (computed ? computed.getPropertyValue("--bbm-tops-list-meta-col") : ""),
+        74,
+      );
+      if (this._devLayoutTextBaseMetaWidth === null || this._devLayoutTextBaseMetaWidth === undefined) {
+        this._devLayoutTextBaseMetaWidth = currentMeta;
+      }
+      const baseMeta = Number(this._devLayoutTextBaseMetaWidth);
+      const delta = Number.isFinite(width) ? width : 0;
+      const minMeta = 50;
+      const maxMeta = 160;
+      const desiredMeta = baseMeta - delta;
+      const nextMeta = Math.max(minMeta, Math.min(maxMeta, desiredMeta));
+      if (nextMeta === minMeta && desiredMeta < minMeta) {
+        this.header?.devLayoutToolbar?.setStatus?.("Metablock ist am Minimum.");
+      }
+      this.topsList.root.style.setProperty("--bbm-tops-list-meta-col", `${Math.floor(nextMeta)}px`);
     }
   }
 
