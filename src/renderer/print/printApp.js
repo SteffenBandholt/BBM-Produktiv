@@ -1328,6 +1328,7 @@ async function handleInit(payload) {
 function _enableDevPdfLayoutZones(root) {
   if (!root) return;
   const zones = new Set(["number", "text", "meta"]);
+  const participantsZones = new Set(["name", "role", "firm", "contact", "marks"]);
   const toolbar = _ensureDevPdfLayoutToolbar();
 
   const onClick = (event) => {
@@ -1341,7 +1342,48 @@ function _enableDevPdfLayoutZones(root) {
     _syncDevPdfLayoutToolbar(toolbar, root, root._bbmRuntimeData || null);
   };
 
+  const decorateParticipantsZones = () => {
+    const map = [
+      { key: "name", selector: ".v2PartColName" },
+      { key: "role", selector: ".v2PartColRole" },
+      { key: "firm", selector: ".v2PartColFirm" },
+      { key: "contact", selector: ".v2PartColContact" },
+      { key: "marks", selector: ".v2PartColMarks" },
+    ];
+    for (const item of map) {
+      root.querySelectorAll(item.selector).forEach((node) => {
+        if (!node?.dataset) return;
+        node.dataset.devPdfParticipantsZone = item.key;
+      });
+    }
+  };
+
+  const syncParticipantsActiveZone = () => {
+    const active = String(root?.dataset?.devPdfParticipantsActiveZone || "").trim().toLowerCase();
+    root
+      .querySelectorAll("[data-dev-pdf-participants-zone]")
+      .forEach((node) => (node.dataset.devPdfParticipantsZoneActive = "false"));
+    if (!participantsZones.has(active)) return;
+    root
+      .querySelectorAll(`[data-dev-pdf-participants-zone=\"${active}\"]`)
+      .forEach((node) => (node.dataset.devPdfParticipantsZoneActive = "true"));
+  };
+
+  const onParticipantsClick = (event) => {
+    const target = event?.target;
+    if (!target || !target.closest) return;
+    const hit = target.closest("[data-dev-pdf-participants-zone]");
+    if (!hit) return;
+    const zone = String(hit.dataset.devPdfParticipantsZone || "").trim().toLowerCase();
+    if (!participantsZones.has(zone)) return;
+    root.dataset.devPdfParticipantsActiveZone = zone;
+    syncParticipantsActiveZone();
+  };
+
   root.addEventListener("click", onClick);
+  decorateParticipantsZones();
+  syncParticipantsActiveZone();
+  root.addEventListener("click", onParticipantsClick);
   _syncDevPdfLayoutToolbar(toolbar, root, root._bbmRuntimeData || null);
   try {
     toolbar._orientation = String(root?.dataset?.orientation || "portrait").trim().toLowerCase() === "landscape"
