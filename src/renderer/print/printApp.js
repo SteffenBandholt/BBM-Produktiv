@@ -1498,8 +1498,13 @@ function _parseMetaInsetMmFromRaw(raw) {
 
 function _applyMetaInsetMm(root, mm) {
   const nextMm = Math.max(0, Math.min(20, Math.round(Number(mm) * 2) / 2));
-  if (root?.style?.setProperty) {
-    root.style.setProperty("--bbm-top-col-meta-padding-left", `${nextMm}mm`);
+  // The PDF layout vars are applied to the table element via applyProtokollTopsPdfLayout(table,...).
+  // Updating the root would be overridden by the table's inline vars, so we set it on the tables.
+  const tables = root?.querySelectorAll?.("table.topsTable") || [];
+  for (const table of tables) {
+    if (table?.style?.setProperty) {
+      table.style.setProperty("--bbm-top-col-meta-padding-left", `${nextMm}mm`);
+    }
   }
   return nextMm;
 }
@@ -1604,6 +1609,8 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
       const effective = resLayout?.data?.effectiveLayout || resLayout?.data?.defaultLayout || {};
       const extracted = extractProtokollTopsEditorValues(effective || {});
       const nextPdfMetaWidth = `${Math.round(Number(widthMm || 15))}mm`;
+      const insetMm = toolbar._metaInsetMm == null ? 5 : toolbar._metaInsetMm;
+      const nextPdfMetaInset = `${_formatMm(insetMm)}mm`;
 
       const nextColumns = Array.isArray(extracted?.columns)
         ? extracted.columns.map((col) => ({ ...(col || {}) }))
@@ -1622,6 +1629,7 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           ...extracted,
           columns: nextColumns.length ? nextColumns : extracted?.columns,
           pdfMetaWidth: nextPdfMetaWidth,
+          pdfMetaInset: nextPdfMetaInset,
         },
         extracted?.orientation || toolbar._orientation || "portrait"
       );
@@ -1665,6 +1673,9 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
       const mmFromDefault = _parseMetaWidthMmFromRaw(toolbar._defaultMetaWidthRaw);
       toolbar._metaWidthMm = mmFromDefault != null ? mmFromDefault : 15;
       toolbar._metaWidthMm = _applyMetaWidthMm(root, toolbar._metaWidthMm);
+      const insetFromDefault = _parseMetaInsetMmFromRaw(toolbar._defaultMetaInsetRaw);
+      toolbar._metaInsetMm = insetFromDefault != null ? insetFromDefault : 5;
+      toolbar._metaInsetMm = _applyMetaInsetMm(root, toolbar._metaInsetMm);
       _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
     } catch (err) {
       toolbar._status.textContent = err?.message || String(err) || "Reset fehlgeschlagen.";

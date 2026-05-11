@@ -1120,6 +1120,17 @@ export default class PrintModal {
       alert("Bitte zuerst eine Besprechung ausw?hlen.");
       return;
     }
+    // DEV-only helper: open the interactive Print-HTML preview for layout fine-tuning.
+    // This must not affect the actual PDF export.
+    try {
+      const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
+      const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
+      if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
+        void window.bbmPrint.openHtmlPreview({ mode: "protocol", projectId: pid, meetingId: mid });
+      }
+    } catch (_e) {
+      // ignore (DEV-only helper)
+    }
     return await this._printMeeting({
       projectId: pid,
       meetingId: mid,
@@ -3986,7 +3997,9 @@ export default class PrintModal {
       }
 
       const isClosed = Number(meeting.is_closed) === 1;
-      if (!allowOpen && !isClosed) {
+      // Only block final protocol printing for open meetings.
+      // Previews / Vorabzug / DEV layout preview must be possible even when the meeting is not closed.
+      if (!allowOpen && !isClosed && !doPreview) {
         alert("Diese Besprechung ist nicht geschlossen. Druck nur für geschlossene Besprechungen.");
         return;
       }

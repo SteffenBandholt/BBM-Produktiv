@@ -1573,3 +1573,48 @@ Wichtig:
   - gespeicherte Firmenlisten sind nicht mehr als funktionale Ausgabeart angeboten
   - Firmenliste laeuft direkt ueber den aktuellen Projektstand und braucht keine geschlossene-Protokoll-Auswahl
   - eine separate Mitarbeiter-/Personenliste ist im aktuellen Druckdialog noch nicht als eigener Modus vorhanden
+
+#### Paket: DEV PDF-Layout TOP-Liste (Metablock Innenabstand speichern/reset)
+- Status: erledigt
+- Beschreibung:
+  - Der PDF-Metablock-Innenabstand (Print-HTML Vorschau, DEV-only) wird beim Speichern jetzt ueber `protokoll_tops` in der bestehenden `tableLayouts`-Sanitization mitgetragen und nach Neustart wieder angewendet.
+  - Reset stellt Breite und Innenabstand wieder auf Standard zurueck.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/protokollTopsLayout.js`
+  - `src/renderer/print/printApp.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: PDF-Metablock-Innenabstand ebenfalls in der Toolbar als gespeicherter Default nach Save aktualisieren (rein kosmetisch)
+- Risiken/Hinweise:
+  - Keine PDF-Export-Logik angepasst; Markierungen bleiben DEV-only in der HTML-Vorschau.
+
+#### Paket: PDF-Vorschau bei offener Besprechung erlauben (ohne finalen Druck freizugeben)
+- Status: erledigt
+- Beschreibung:
+  - Die Sperre "Druck nur fuer geschlossene Besprechungen" greift jetzt nur noch beim finalen Protokolldruck.
+  - PDF-Vorschau/Vorabzug und DEV-Layout-Preview werden bei offener Besprechung nicht mehr blockiert.
+- Betroffene Dateien:
+  - `src/renderer/modules/ausgabe/PrintModal.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Kein Umbau der Drucklogik; nur die Blockierbedingung wurde um `preview` ergaenzt.
+
+#### Paket: DEV-Layout-Preview auch in Protokoll-PDF-Vorschau wieder aktiv
+- Status: erledigt
+- Beschreibung:
+  - Bei `printMeetingPreview` (Protokoll-PDF-Vorschau) wird im DEV-Channel wieder zusaetzlich das interaktive Print-HTML-Preview geoeffnet, damit Layout-Zonen/Toolbar aktiv sind, ohne den echten PDF-Export zu beeinflussen.
+- Betroffene Dateien:
+  - `src/renderer/modules/ausgabe/PrintModal.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Nur DEV-only Zusatzfenster; STABLE bleibt ohne Layout-Werkzeuge.

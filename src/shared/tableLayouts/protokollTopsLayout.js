@@ -12,6 +12,7 @@
   pdfNumberWidth: "23mm",
   pdfTextWidth: "auto",
   pdfMetaWidth: "15ch",
+  pdfMetaInset: "5mm",
   labelTop: "TOP",
   labelText: "Gegenstand",
   labelMeta1: "Status",
@@ -395,6 +396,8 @@ function _extractValues(layout = {}) {
     pdfNumberWidth: _normalizeText(topCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth,
     pdfTextWidth: _normalizeText(textCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth,
     pdfMetaWidth: _normalizeText(metaCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth,
+    pdfMetaInset:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-meta-padding-left"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
     labelTop: _normalizeText(topCol.label) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelTop,
     labelText: _normalizeText(textCol.label) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelText,
     labelMeta1: _normalizeText(metaLabels[0]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta1,
@@ -427,6 +430,9 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
           },
         },
         pdf: {
+          rootVars: {
+            "--bbm-top-col-meta-padding-left": values?.pdfMetaInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
+          },
           columns: {
             number: { width: values?.pdfNumberWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth },
             text: { width: values?.pdfTextWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth },
@@ -459,6 +465,7 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
       pdfNumberWidth: topCol.pdfWidth,
       pdfTextWidth: textCol.pdfWidth,
       pdfMetaWidth: metaCol.pdfWidth,
+      pdfMetaInset: _normalizeText(values.pdfMetaInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
       labelTop: topCol.label,
       labelText: textCol.label,
       labelMeta1: metaCol.headerLines[0] || metaCol.label,
@@ -496,6 +503,9 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
       },
     },
     pdf: {
+      rootVars: {
+        "--bbm-top-col-meta-padding-left": normalized.pdfMetaInset,
+      },
       columns: {
         number: { key: "top", className: "colNr", width: normalized.pdfNumberWidth },
         text: { key: "text", className: "colText", width: normalized.pdfTextWidth },
