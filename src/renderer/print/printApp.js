@@ -1368,6 +1368,20 @@ function _ensureDevPdfLayoutToolbar() {
   const controls = document.createElement("div");
   controls.className = "bbm-dev-pdf-layout-toolbar-controls";
 
+  const insetMinus = document.createElement("button");
+  insetMinus.type = "button";
+  insetMinus.textContent = "-";
+  insetMinus.title = "Innen verringern";
+
+  const insetValue = document.createElement("div");
+  insetValue.className = "bbm-dev-pdf-layout-toolbar-value";
+  insetValue.textContent = "Innen -";
+
+  const insetPlus = document.createElement("button");
+  insetPlus.type = "button";
+  insetPlus.textContent = "+";
+  insetPlus.title = "Innen erhoehen";
+
   const minus = document.createElement("button");
   minus.type = "button";
   minus.textContent = "-";
@@ -1382,7 +1396,7 @@ function _ensureDevPdfLayoutToolbar() {
   plus.textContent = "+";
   plus.title = "Breite erhoehen";
 
-  controls.append(minus, value, plus);
+  controls.append(insetMinus, insetValue, insetPlus, minus, value, plus);
 
   const actions = document.createElement("div");
   actions.className = "bbm-dev-pdf-layout-toolbar-controls";
@@ -1410,14 +1424,19 @@ function _ensureDevPdfLayoutToolbar() {
 
   el._line2 = line2;
   el._value = value;
+  el._insetValue = insetValue;
   el._minus = minus;
   el._plus = plus;
+  el._insetMinus = insetMinus;
+  el._insetPlus = insetPlus;
   el._save = save;
   el._reset = reset;
   el._status = status;
   el._metaWidthMm = null;
+  el._metaInsetMm = null;
   el._orientation = "portrait";
   el._defaultMetaWidthRaw = null;
+  el._defaultMetaInsetRaw = null;
 
   return el;
 }
@@ -1449,6 +1468,14 @@ function _extractPdfMetaWidthRawFromData(data) {
   return String(raw || "").trim();
 }
 
+function _extractPdfMetaInsetRawFromData(data) {
+  const raw =
+    data?.tableLayouts?.protokoll_tops?.effectiveLayout?.pdf?.rootVars?.["--bbm-top-col-meta-padding-left"] ||
+    data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-meta-padding-left"] ||
+    "";
+  return String(raw || "").trim();
+}
+
 function _parseMetaWidthMmFromRaw(raw) {
   const text = String(raw || "").trim();
   const mmMatch = text.match(/^(\d+(?:\.\d+)?)mm$/i);
@@ -1457,6 +1484,30 @@ function _parseMetaWidthMmFromRaw(raw) {
     return Number.isFinite(value) ? value : null;
   }
   return null;
+}
+
+function _parseMetaInsetMmFromRaw(raw) {
+  const text = String(raw || "").trim();
+  const mmMatch = text.match(/^(\d+(?:\.\d+)?)mm$/i);
+  if (mmMatch) {
+    const value = Number(mmMatch[1]);
+    return Number.isFinite(value) ? value : null;
+  }
+  return null;
+}
+
+function _applyMetaInsetMm(root, mm) {
+  const nextMm = Math.max(0, Math.min(20, Math.round(Number(mm) * 2) / 2));
+  if (root?.style?.setProperty) {
+    root.style.setProperty("--bbm-top-col-meta-padding-left", `${nextMm}mm`);
+  }
+  return nextMm;
+}
+
+function _formatMm(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return "-";
+  return Math.abs(n - Math.round(n)) < 0.001 ? String(Math.round(n)) : n.toFixed(1);
 }
 
 function _applyMetaWidthMm(root, mm) {
@@ -1480,12 +1531,20 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   const isMeta = zone === "meta";
   toolbar._minus.disabled = !isMeta;
   toolbar._plus.disabled = !isMeta;
+  toolbar._insetMinus.disabled = !isMeta;
+  toolbar._insetPlus.disabled = !isMeta;
   toolbar._save.disabled = !isMeta;
   toolbar._reset.disabled = !isMeta;
 
   if (!isMeta) {
     toolbar._value.textContent = "Breite -";
+    toolbar._insetValue.textContent = "Innen -";
     toolbar._metaWidthMm = null;
+    toolbar._metaInsetMm = null;
+    toolbar._minus.onclick = null;
+    toolbar._plus.onclick = null;
+    toolbar._insetMinus.onclick = null;
+    toolbar._insetPlus.onclick = null;
     return;
   }
 
@@ -1495,8 +1554,16 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     const mmFromLayout = _parseMetaWidthMmFromRaw(initialRaw);
     toolbar._metaWidthMm = mmFromLayout != null ? mmFromLayout : _readMetaWidthMm(root);
   }
+  if (toolbar._metaInsetMm == null) {
+    const insetRaw = runtimeData ? _extractPdfMetaInsetRawFromData(runtimeData) : "";
+    toolbar._defaultMetaInsetRaw = toolbar._defaultMetaInsetRaw || insetRaw || null;
+    const mmFromLayout = _parseMetaInsetMmFromRaw(insetRaw);
+    toolbar._metaInsetMm = mmFromLayout != null ? mmFromLayout : 5;
+    toolbar._metaInsetMm = _applyMetaInsetMm(root, toolbar._metaInsetMm);
+  }
   const display = Math.round(Number(toolbar._metaWidthMm || 15));
   toolbar._value.textContent = `Breite ${display} mm`;
+  toolbar._insetValue.textContent = `Innen ${_formatMm(toolbar._metaInsetMm)} mm`;
 
   toolbar._minus.onclick = () => {
     const current = toolbar._metaWidthMm == null ? _readMetaWidthMm(root) : toolbar._metaWidthMm;
@@ -1506,6 +1573,17 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   toolbar._plus.onclick = () => {
     const current = toolbar._metaWidthMm == null ? _readMetaWidthMm(root) : toolbar._metaWidthMm;
     toolbar._metaWidthMm = _applyMetaWidthMm(root, current + 1);
+    _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+  };
+
+  toolbar._insetMinus.onclick = () => {
+    const current = toolbar._metaInsetMm == null ? 5 : toolbar._metaInsetMm;
+    toolbar._metaInsetMm = _applyMetaInsetMm(root, current - 1);
+    _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+  };
+  toolbar._insetPlus.onclick = () => {
+    const current = toolbar._metaInsetMm == null ? 5 : toolbar._metaInsetMm;
+    toolbar._metaInsetMm = _applyMetaInsetMm(root, current + 1);
     _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
   };
 
