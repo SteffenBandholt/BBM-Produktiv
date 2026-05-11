@@ -426,19 +426,52 @@
 
 .printV2Root .v2PartColRole {
   width: 35mm;
+  width: var(--bbm-part-col-role-width, 35mm);
 }
 
 .printV2Root .v2PartColFirm {
   width: 30mm;
+  width: var(--bbm-part-col-firm-width, 30mm);
 }
 
 .printV2Root .v2PartColContact {
   width: 55.12mm;
+  width: var(--bbm-part-col-contact-width, 55.12mm);
 }
 
 .printV2Root .v2PartColMarks {
   width: 14.88mm;
+  width: var(--bbm-part-col-marks-width, 14.88mm);
   text-align: center !important;
+}
+
+/* DEV-Layout preview: per-column inset/font overrides (higher specificity than generic th/td rule). */
+.printV2Root .v2ParticipantsTable th.v2PartColRole,
+.printV2Root .v2ParticipantsTable td.v2PartColRole {
+  padding-left: var(--bbm-part-col-role-padding-inline, 1.4mm);
+  padding-right: var(--bbm-part-col-role-padding-inline, 1.4mm);
+  font-size: var(--bbm-part-col-role-font-size, 9.3pt);
+}
+
+.printV2Root .v2ParticipantsTable th.v2PartColFirm,
+.printV2Root .v2ParticipantsTable td.v2PartColFirm {
+  padding-left: var(--bbm-part-col-firm-padding-inline, 1.4mm);
+  padding-right: var(--bbm-part-col-firm-padding-inline, 1.4mm);
+  font-size: var(--bbm-part-col-firm-font-size, 9.3pt);
+}
+
+.printV2Root .v2ParticipantsTable th.v2PartColContact,
+.printV2Root .v2ParticipantsTable td.v2PartColContact {
+  padding-left: var(--bbm-part-col-contact-padding-inline, 1.4mm);
+  padding-right: var(--bbm-part-col-contact-padding-inline, 1.4mm);
+  font-size: var(--bbm-part-col-contact-font-size, 9.3pt);
+}
+
+.printV2Root .v2ParticipantsTable th.v2PartColMarks,
+.printV2Root .v2ParticipantsTable td.v2PartColMarks {
+  padding-left: var(--bbm-part-col-marks-padding-inline, 1.4mm);
+  padding-right: var(--bbm-part-col-marks-padding-inline, 1.4mm);
+  font-size: var(--bbm-part-col-marks-font-size, 9.3pt);
 }
 
 .printV2Root .v2PartMarksHead {
@@ -483,7 +516,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10pt;
+  /* Keep mark glyphs (x) in sync with the Marks zone font override. */
+  font-size: var(--bbm-part-col-marks-font-size, 10pt);
   font-weight: 600;
 }
 

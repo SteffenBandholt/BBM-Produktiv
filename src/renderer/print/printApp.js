@@ -1624,6 +1624,45 @@ function _readParticipantsNameFontPt(root) {
   return pt != null ? pt : 9.3;
 }
 
+function _participantsColKeyFromZone(zone) {
+  const z = String(zone || "").trim().toLowerCase();
+  if (z === "marks") return "attendance";
+  return z;
+}
+
+function _participantsZoneFromColKey(key) {
+  const k = String(key || "").trim().toLowerCase();
+  if (k === "attendance") return "marks";
+  return k;
+}
+
+function _participantsVarPrefix(zone) {
+  const z = String(zone || "").trim().toLowerCase();
+  return z === "marks" ? "marks" : z;
+}
+
+function _readParticipantsZoneWidthMm(root, zone) {
+  const prefix = _participantsVarPrefix(zone);
+  const raw = String(root?.style?.getPropertyValue?.(`--bbm-part-col-${prefix}-width`) || "").trim();
+  const mm = _parseMetaWidthMmFromRaw(raw);
+  const defaults = { name: 34, role: 35, firm: 30, contact: 55.12, marks: 14.88 };
+  return mm != null ? mm : (defaults[String(zone)] ?? 30);
+}
+
+function _readParticipantsZoneInsetMm(root, zone) {
+  const prefix = _participantsVarPrefix(zone);
+  const raw = String(root?.style?.getPropertyValue?.(`--bbm-part-col-${prefix}-padding-inline`) || "").trim();
+  const mm = _parseMetaInsetMmFromRaw(raw);
+  return mm != null ? mm : 1.4;
+}
+
+function _readParticipantsZoneFontPt(root, zone) {
+  const prefix = _participantsVarPrefix(zone);
+  const raw = String(root?.style?.getPropertyValue?.(`--bbm-part-col-${prefix}-font-size`) || "").trim();
+  const pt = _parsePtFromRaw(raw);
+  return pt != null ? pt : 9.3;
+}
+
 function _readMetaFontPx(root) {
   const cell =
     root?.querySelector?.("table.topsTable td.colMeta") ||
@@ -1936,21 +1975,52 @@ function _applyParticipantsNameFontPt(root, pt) {
   return next;
 }
 
+function _applyParticipantsZoneWidthMm(root, zone, mm) {
+  const z = String(zone || "").trim().toLowerCase();
+  const prefix = _participantsVarPrefix(z);
+  const maxByZone = z === "marks" ? 30 : 90;
+  const next = Math.max(10, Math.min(maxByZone, Math.round(Number(mm) * 2) / 2));
+  if (root?.style?.setProperty) root.style.setProperty(`--bbm-part-col-${prefix}-width`, `${_formatMm(next)}mm`);
+  return next;
+}
+
+function _applyParticipantsZoneInsetMm(root, zone, mm) {
+  const z = String(zone || "").trim().toLowerCase();
+  const prefix = _participantsVarPrefix(z);
+  const next = Math.max(0, Math.min(6, Math.round(Number(mm) * 2) / 2));
+  if (root?.style?.setProperty) root.style.setProperty(`--bbm-part-col-${prefix}-padding-inline`, `${_formatMm(next)}mm`);
+  return next;
+}
+
+function _applyParticipantsZoneFontPt(root, zone, pt) {
+  const z = String(zone || "").trim().toLowerCase();
+  const prefix = _participantsVarPrefix(z);
+  const next = Math.max(7, Math.min(14, Math.round(Number(pt) * 2) / 2));
+  if (root?.style?.setProperty) root.style.setProperty(`--bbm-part-col-${prefix}-font-size`, `${_formatMm(next)}pt`);
+  return next;
+}
+
 function _applyParticipantsNameVarsFromLayout(root, layout) {
   if (!root?.style) return;
   const cols = Array.isArray(layout?.columns) ? layout.columns : [];
-  const nameCol = cols.find((c) => String(c?.key || "").trim().toLowerCase() === "name") || null;
-  const widthMm = _parseMetaWidthMmFromRaw(nameCol?.pdfWidth);
-  if (widthMm != null) {
-    root.style.setProperty("--bbm-part-col-name-width", `${_formatMm(widthMm)}mm`);
-  }
-  const insetMm = _parseMetaInsetMmFromRaw(layout?.pdf?.rootVars?.["--bbm-part-col-name-padding-inline"]);
-  if (insetMm != null) {
-    root.style.setProperty("--bbm-part-col-name-padding-inline", `${_formatMm(insetMm)}mm`);
-  }
-  const fontPt = _parsePtFromRaw(layout?.pdf?.rootVars?.["--bbm-part-col-name-font-size"]);
-  if (fontPt != null) {
-    root.style.setProperty("--bbm-part-col-name-font-size", `${_formatMm(fontPt)}pt`);
+  const rootVars = layout?.pdf?.rootVars || {};
+  const zones = ["name", "role", "firm", "contact", "marks"];
+  for (const zone of zones) {
+    const colKey = _participantsColKeyFromZone(zone);
+    const col = cols.find((c) => String(c?.key || "").trim().toLowerCase() === colKey) || null;
+    const widthMm = _parseMetaWidthMmFromRaw(col?.pdfWidth);
+    if (widthMm != null) {
+      const prefix = _participantsVarPrefix(zone);
+      root.style.setProperty(`--bbm-part-col-${prefix}-width`, `${_formatMm(widthMm)}mm`);
+    }
+    const insetMm = _parseMetaInsetMmFromRaw(rootVars[`--bbm-part-col-${_participantsVarPrefix(zone)}-padding-inline`]);
+    if (insetMm != null) {
+      root.style.setProperty(`--bbm-part-col-${_participantsVarPrefix(zone)}-padding-inline`, `${_formatMm(insetMm)}mm`);
+    }
+    const fontPt = _parsePtFromRaw(rootVars[`--bbm-part-col-${_participantsVarPrefix(zone)}-font-size`]);
+    if (fontPt != null) {
+      root.style.setProperty(`--bbm-part-col-${_participantsVarPrefix(zone)}-font-size`, `${_formatMm(fontPt)}pt`);
+    }
   }
 }
 
@@ -1974,71 +2044,60 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
 
   if (isParticipants) {
     toolbar._line2.textContent = `Teilnehmerliste > ${participantsLabel}`;
-    // Persistence is only implemented for Name in this milestone.
-    toolbar._save.disabled = !isParticipantsName;
-    toolbar._reset.disabled = !isParticipantsName;
-    toolbar._minus.disabled = !isParticipantsName;
-    toolbar._plus.disabled = !isParticipantsName;
-    toolbar._insetMinus.disabled = !isParticipantsName;
-    toolbar._insetPlus.disabled = !isParticipantsName;
-    toolbar._fontMinus.disabled = !isParticipantsName;
-    toolbar._fontPlus.disabled = !isParticipantsName;
+    // Participants: all zones are live + persistable; values stay separated per column key.
+    toolbar._save.disabled = false;
+    toolbar._reset.disabled = false;
+    toolbar._minus.disabled = false;
+    toolbar._plus.disabled = false;
+    toolbar._insetMinus.disabled = false;
+    toolbar._insetPlus.disabled = false;
+    toolbar._fontMinus.disabled = false;
+    toolbar._fontPlus.disabled = false;
 
-    if (!isParticipantsName) {
-      toolbar._value.textContent = "Breite -";
-      toolbar._insetValue.textContent = "Innen -";
-      if (toolbar._fontValue) toolbar._fontValue.textContent = "Schrift -";
-      toolbar._partNameWidthMm = null;
-      toolbar._partNameInsetMm = null;
-      toolbar._partNameFontPt = null;
-      toolbar._minus.onclick = null;
-      toolbar._plus.onclick = null;
-      toolbar._insetMinus.onclick = null;
-      toolbar._insetPlus.onclick = null;
-      if (toolbar._fontMinus) toolbar._fontMinus.onclick = null;
-      if (toolbar._fontPlus) toolbar._fontPlus.onclick = null;
-      return;
-    }
+    toolbar._participantsState = toolbar._participantsState || {};
+    const zoneKey = participantsZone;
+    const state = toolbar._participantsState[zoneKey] || { widthMm: null, insetMm: null, fontPt: null };
+    toolbar._participantsState[zoneKey] = state;
 
-    if (toolbar._partNameWidthMm == null) toolbar._partNameWidthMm = _readParticipantsNameWidthMm(root);
-    if (toolbar._partNameInsetMm == null) toolbar._partNameInsetMm = _readParticipantsNameInsetMm(root);
-    if (toolbar._partNameFontPt == null) toolbar._partNameFontPt = _readParticipantsNameFontPt(root);
+    if (state.widthMm == null) state.widthMm = _readParticipantsZoneWidthMm(root, zoneKey);
+    if (state.insetMm == null) state.insetMm = _readParticipantsZoneInsetMm(root, zoneKey);
+    if (state.fontPt == null) state.fontPt = _readParticipantsZoneFontPt(root, zoneKey);
 
-    toolbar._value.textContent = `Breite ${Math.round(Number(toolbar._partNameWidthMm || 34))} mm`;
-    toolbar._insetValue.textContent = `Innen ${_formatMm(toolbar._partNameInsetMm)} mm`;
-    if (toolbar._fontValue) toolbar._fontValue.textContent = `Schrift ${_formatMm(toolbar._partNameFontPt)} pt`;
+    toolbar._value.textContent = `Breite ${Math.round(Number(state.widthMm || 0))} mm`;
+    toolbar._insetValue.textContent = `Innen ${_formatMm(state.insetMm)} mm`;
+    if (toolbar._fontValue) toolbar._fontValue.textContent = `Schrift ${_formatMm(state.fontPt)} pt`;
 
     toolbar._minus.onclick = () => {
-      const current = toolbar._partNameWidthMm == null ? _readParticipantsNameWidthMm(root) : toolbar._partNameWidthMm;
-      toolbar._partNameWidthMm = _applyParticipantsNameWidthMm(root, current - 1);
+      const current = state.widthMm == null ? _readParticipantsZoneWidthMm(root, zoneKey) : state.widthMm;
+      state.widthMm = _applyParticipantsZoneWidthMm(root, zoneKey, current - 1);
       _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
     };
     toolbar._plus.onclick = () => {
-      const current = toolbar._partNameWidthMm == null ? _readParticipantsNameWidthMm(root) : toolbar._partNameWidthMm;
-      toolbar._partNameWidthMm = _applyParticipantsNameWidthMm(root, current + 1);
+      const current = state.widthMm == null ? _readParticipantsZoneWidthMm(root, zoneKey) : state.widthMm;
+      state.widthMm = _applyParticipantsZoneWidthMm(root, zoneKey, current + 1);
       _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
     };
     toolbar._insetMinus.onclick = () => {
-      const current = toolbar._partNameInsetMm == null ? 1.4 : toolbar._partNameInsetMm;
-      toolbar._partNameInsetMm = _applyParticipantsNameInsetMm(root, current - 0.5);
+      const current = state.insetMm == null ? 1.4 : state.insetMm;
+      state.insetMm = _applyParticipantsZoneInsetMm(root, zoneKey, current - 0.5);
       _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
     };
     toolbar._insetPlus.onclick = () => {
-      const current = toolbar._partNameInsetMm == null ? 1.4 : toolbar._partNameInsetMm;
-      toolbar._partNameInsetMm = _applyParticipantsNameInsetMm(root, current + 0.5);
+      const current = state.insetMm == null ? 1.4 : state.insetMm;
+      state.insetMm = _applyParticipantsZoneInsetMm(root, zoneKey, current + 0.5);
       _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
     };
     if (toolbar._fontMinus) {
       toolbar._fontMinus.onclick = () => {
-        const current = toolbar._partNameFontPt == null ? 9.3 : toolbar._partNameFontPt;
-        toolbar._partNameFontPt = _applyParticipantsNameFontPt(root, current - 0.5);
+        const current = state.fontPt == null ? 9.3 : state.fontPt;
+        state.fontPt = _applyParticipantsZoneFontPt(root, zoneKey, current - 0.5);
         _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
       };
     }
     if (toolbar._fontPlus) {
       toolbar._fontPlus.onclick = () => {
-        const current = toolbar._partNameFontPt == null ? 9.3 : toolbar._partNameFontPt;
-        toolbar._partNameFontPt = _applyParticipantsNameFontPt(root, current + 0.5);
+        const current = state.fontPt == null ? 9.3 : state.fontPt;
+        state.fontPt = _applyParticipantsZoneFontPt(root, zoneKey, current + 0.5);
         _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
       };
     }
@@ -2051,9 +2110,9 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           toolbar._status.textContent = "Speichern nicht verfuegbar.";
           return;
         }
-        const widthMm = toolbar._partNameWidthMm == null ? _readParticipantsNameWidthMm(root) : toolbar._partNameWidthMm;
-        const insetMm = toolbar._partNameInsetMm == null ? _readParticipantsNameInsetMm(root) : toolbar._partNameInsetMm;
-        const fontPt = toolbar._partNameFontPt == null ? _readParticipantsNameFontPt(root) : toolbar._partNameFontPt;
+        const widthMm = state.widthMm == null ? _readParticipantsZoneWidthMm(root, zoneKey) : state.widthMm;
+        const insetMm = state.insetMm == null ? _readParticipantsZoneInsetMm(root, zoneKey) : state.insetMm;
+        const fontPt = state.fontPt == null ? _readParticipantsZoneFontPt(root, zoneKey) : state.fontPt;
 
         const resLayout = await window.bbmPrint.tableLayoutsGetOne({
           tableKey: "protokoll_participants",
@@ -2062,24 +2121,26 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
         });
         const effective = resLayout?.data?.effectiveLayout || resLayout?.data?.defaultLayout || {};
         const nextColumns = Array.isArray(effective?.columns) ? effective.columns.map((col) => ({ ...(col || {}) })) : [];
+        const targetKey = _participantsColKeyFromZone(zoneKey);
         for (let i = 0; i < nextColumns.length; i += 1) {
           const col = nextColumns[i] || {};
-          if (String(col.key || "").trim().toLowerCase() !== "name") continue;
-          nextColumns[i] = { ...col, pdfWidth: `${Math.round(Number(widthMm || 34))}mm` };
+          if (String(col.key || "").trim().toLowerCase() !== String(targetKey).toLowerCase()) continue;
+          nextColumns[i] = { ...col, pdfWidth: `${Math.round(Number(widthMm || 0))}mm` };
           break;
         }
+        const prefix = _participantsVarPrefix(zoneKey);
+        const nextRootVars = {
+          ...((effective?.pdf && effective.pdf.rootVars) || {}),
+          [`--bbm-part-col-${prefix}-padding-inline`]: `${_formatMm(insetMm)}mm`,
+          [`--bbm-part-col-${prefix}-font-size`]: `${_formatMm(fontPt)}pt`,
+        };
         const next = {
           ...(effective || {}),
           variant: toolbar._orientation || effective?.variant || "portrait",
           columns: nextColumns.length ? nextColumns : effective?.columns,
           pdf: {
             ...(effective?.pdf || {}),
-            rootVars: {
-              ...((effective?.pdf && effective.pdf.rootVars) || {}),
-              "--bbm-part-col-name-width": `${Math.round(Number(widthMm || 34))}mm`,
-              "--bbm-part-col-name-padding-inline": `${_formatMm(insetMm)}mm`,
-              "--bbm-part-col-name-font-size": `${_formatMm(fontPt)}pt`,
-            },
+            rootVars: nextRootVars,
           },
         };
         const res = await window.bbmPrint.tableLayoutsSave({
@@ -2103,14 +2164,49 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
       toolbar._status.textContent = "";
       try {
         if (root?.dataset?.devPdfLayout !== "true") return;
-        if (typeof window?.bbmPrint?.tableLayoutsReset !== "function") {
+        if (typeof window?.bbmPrint?.tableLayoutsSave !== "function" || typeof window?.bbmPrint?.tableLayoutsGetOne !== "function") {
           toolbar._status.textContent = "Reset nicht verfuegbar.";
           return;
         }
-        const res = await window.bbmPrint.tableLayoutsReset({
+        const resLayout = await window.bbmPrint.tableLayoutsGetOne({
           tableKey: "protokoll_participants",
           moduleId: "protokoll",
           orientation: toolbar._orientation || "portrait",
+        });
+        const effective = resLayout?.data?.effectiveLayout || resLayout?.data?.defaultLayout || {};
+        const defaults = resLayout?.data?.defaultLayout || {};
+        const targetKey = _participantsColKeyFromZone(zoneKey);
+        const defaultCols = Array.isArray(defaults?.columns) ? defaults.columns : [];
+        const defaultCol = defaultCols.find((c) => String(c?.key || "").trim().toLowerCase() === String(targetKey).toLowerCase()) || null;
+        const defaultPdfWidth = String(defaultCol?.pdfWidth || "").trim();
+
+        const nextColumns = Array.isArray(effective?.columns) ? effective.columns.map((col) => ({ ...(col || {}) })) : [];
+        for (let i = 0; i < nextColumns.length; i += 1) {
+          const col = nextColumns[i] || {};
+          if (String(col.key || "").trim().toLowerCase() !== String(targetKey).toLowerCase()) continue;
+          nextColumns[i] = { ...col, pdfWidth: defaultPdfWidth || col.pdfWidth };
+          break;
+        }
+        const prefix = _participantsVarPrefix(zoneKey);
+        const nextRootVars = { ...((effective?.pdf && effective.pdf.rootVars) || {}) };
+        delete nextRootVars[`--bbm-part-col-${prefix}-padding-inline`];
+        delete nextRootVars[`--bbm-part-col-${prefix}-font-size`];
+        delete nextRootVars[`--bbm-part-col-${prefix}-width`];
+
+        const next = {
+          ...(effective || {}),
+          variant: toolbar._orientation || effective?.variant || "portrait",
+          columns: nextColumns.length ? nextColumns : effective?.columns,
+          pdf: {
+            ...(effective?.pdf || {}),
+            rootVars: nextRootVars,
+          },
+        };
+        const res = await window.bbmPrint.tableLayoutsSave({
+          tableKey: "protokoll_participants",
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+          layout: next,
         });
         if (!res?.ok) {
           toolbar._status.textContent = res?.error || "Reset fehlgeschlagen.";
@@ -2118,14 +2214,15 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
         }
         toolbar._status.style.color = "#25624f";
         toolbar._status.textContent = "Zurueckgesetzt.";
+
         if (root?.style?.removeProperty) {
-          root.style.removeProperty("--bbm-part-col-name-width");
-          root.style.removeProperty("--bbm-part-col-name-padding-inline");
-          root.style.removeProperty("--bbm-part-col-name-font-size");
+          root.style.removeProperty(`--bbm-part-col-${prefix}-padding-inline`);
+          root.style.removeProperty(`--bbm-part-col-${prefix}-font-size`);
+          root.style.removeProperty(`--bbm-part-col-${prefix}-width`);
         }
-        toolbar._partNameWidthMm = null;
-        toolbar._partNameInsetMm = null;
-        toolbar._partNameFontPt = null;
+        state.widthMm = null;
+        state.insetMm = null;
+        state.fontPt = null;
         _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
       } catch (err) {
         toolbar._status.textContent = err?.message || String(err) || "Reset fehlgeschlagen.";
