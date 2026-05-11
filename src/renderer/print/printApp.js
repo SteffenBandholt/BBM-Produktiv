@@ -1979,6 +1979,9 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           toolbar._status.textContent = "Speichern nicht verfuegbar.";
           return;
         }
+        // DEV-only persistence for the TOP PDF pilot:
+        // Important: for protokoll_tops, PDF widths are reconstructed from columns[].pdfWidth during sanitization.
+        // Therefore, saving a PDF width override must also update the corresponding columns[] entry.
         const widthMm = toolbar._nrWidthMm == null ? _readNumberWidthMm(root) : toolbar._nrWidthMm;
         const insetMm = toolbar._nrInsetMm == null ? (_readNumberInsetMm(root) || 1) : toolbar._nrInsetMm;
         const fontPt = toolbar._nrFontPt == null ? (_readNumberFontPt(root) || 10) : toolbar._nrFontPt;
@@ -2044,6 +2047,7 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           toolbar._status.textContent = "Reset nicht verfuegbar.";
           return;
         }
+        // DEV-only reset for the TOP PDF pilot: resets the stored override for the same tableLayouts identity.
         const res = await window.bbmPrint.tableLayoutsReset({
           tableKey: "protokoll_tops",
           moduleId: "protokoll",

@@ -665,8 +665,13 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-preview {
-  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
+  font-size: var(--bbm-top-short-font-size);
   max-inline-size: 82ch;
+}
+
+/* DEV-Layout override: when the text-zone font variable is set, keep the preview in sync. */
+.bbm-tops-list-row-text .bbm-tops-list-row-preview {
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-long-font-size));
 }
 
 .bbm-tops-list-row[data-is-important="true"]:not([data-is-completed="true"]) .bbm-tops-list-row-preview {

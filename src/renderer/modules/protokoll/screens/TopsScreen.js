@@ -961,6 +961,9 @@ export default class TopsScreen {
       return false;
     }
     try {
+      // DEV-only persistence for the TOP UI pilot (surface: protokoll.toplist):
+      // - identity: moduleId=protokoll, tableKey=protokoll_tops, orientation=...
+      // - UI and PDF values are kept separate inside the stored layout object (ui* vs pdf* keys).
       const currentLayout = this._topListLayout || (await this._loadTopListLayout()) || {};
       const extracted = extractProtokollTopsEditorValues(currentLayout);
       const nextWidth = this.header?.devLayoutToolbar?.getMetaWidth
@@ -1055,6 +1058,7 @@ export default class TopsScreen {
       return false;
     }
     try {
+      // DEV-only reset for the TOP UI pilot: resets the stored override for the same tableLayouts identity.
       const orientation =
         this._topListLayout?.variant ||
         extractProtokollTopsEditorValues(this._topListLayout || {})?.orientation ||
