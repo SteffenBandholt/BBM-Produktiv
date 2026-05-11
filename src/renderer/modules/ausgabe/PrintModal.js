@@ -1452,7 +1452,10 @@ export default class PrintModal {
       const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
       const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
       if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
-        void window.bbmPrint.openHtmlPreview({ mode: "topsAll", projectId });
+        // DEV-only: use the interactive print-HTML preview for layoutTools fine-tuning.
+        // Do not also open the real PDF preview in this path, otherwise users land in a non-interactive preview first.
+        await window.bbmPrint.openHtmlPreview({ mode: "topsAll", projectId });
+        return true;
       }
     } catch (_e) {
       // ignore (DEV-only helper)
