@@ -1382,6 +1382,20 @@ function _ensureDevPdfLayoutToolbar() {
   insetPlus.textContent = "+";
   insetPlus.title = "Innen erhoehen";
 
+  const fontMinus = document.createElement("button");
+  fontMinus.type = "button";
+  fontMinus.textContent = "-";
+  fontMinus.title = "Schrift verkleinern";
+
+  const fontValue = document.createElement("div");
+  fontValue.className = "bbm-dev-pdf-layout-toolbar-value";
+  fontValue.textContent = "Schrift -";
+
+  const fontPlus = document.createElement("button");
+  fontPlus.type = "button";
+  fontPlus.textContent = "+";
+  fontPlus.title = "Schrift vergroessern";
+
   const minus = document.createElement("button");
   minus.type = "button";
   minus.textContent = "-";
@@ -1396,7 +1410,7 @@ function _ensureDevPdfLayoutToolbar() {
   plus.textContent = "+";
   plus.title = "Breite erhoehen";
 
-  controls.append(insetMinus, insetValue, insetPlus, minus, value, plus);
+  controls.append(insetMinus, insetValue, insetPlus, minus, value, plus, fontMinus, fontValue, fontPlus);
 
   const actions = document.createElement("div");
   actions.className = "bbm-dev-pdf-layout-toolbar-controls";
@@ -1429,14 +1443,19 @@ function _ensureDevPdfLayoutToolbar() {
   el._plus = plus;
   el._insetMinus = insetMinus;
   el._insetPlus = insetPlus;
+  el._fontMinus = fontMinus;
+  el._fontPlus = fontPlus;
+  el._fontValue = fontValue;
   el._save = save;
   el._reset = reset;
   el._status = status;
   el._metaWidthMm = null;
   el._metaInsetMm = null;
+  el._metaFontPx = null;
   el._orientation = "portrait";
   el._defaultMetaWidthRaw = null;
   el._defaultMetaInsetRaw = null;
+  el._defaultMetaFontSizeRaw = null;
 
   return el;
 }
@@ -1458,6 +1477,17 @@ function _readMetaWidthMm(root) {
   const px = Number(rect?.width || 0);
   if (!Number.isFinite(px) || px <= 0) return 15;
   return px / _pxPerMm();
+}
+
+function _readMetaFontPx(root) {
+  const cell =
+    root?.querySelector?.("table.topsTable td.colMeta") ||
+    root?.querySelector?.("table.topsTable th.colMeta") ||
+    null;
+  if (!cell || typeof window?.getComputedStyle !== "function") return null;
+  const style = window.getComputedStyle(cell);
+  const px = Number(String(style?.fontSize || "").replace("px", "").trim());
+  return Number.isFinite(px) && px > 0 ? px : null;
 }
 
 function _extractPdfMetaWidthRawFromData(data) {
@@ -1486,6 +1516,19 @@ function _extractPdfMetaInsetRawFromDefaults(data) {
   return String(raw || "").trim();
 }
 
+function _extractPdfMetaFontSizeRawFromData(data) {
+  const raw =
+    data?.tableLayouts?.protokoll_tops?.effectiveLayout?.pdf?.rootVars?.["--bbm-top-col-meta-font-size"] ||
+    data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-meta-font-size"] ||
+    "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfMetaFontSizeRawFromDefaults(data) {
+  const raw = data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-meta-font-size"] || "";
+  return String(raw || "").trim();
+}
+
 function _parseMetaWidthMmFromRaw(raw) {
   const text = String(raw || "").trim();
   const mmMatch = text.match(/^(\d+(?:\.\d+)?)mm$/i);
@@ -1504,6 +1547,34 @@ function _parseMetaInsetMmFromRaw(raw) {
     return Number.isFinite(value) ? value : null;
   }
   return null;
+}
+
+function _parseFontPxFromRaw(raw) {
+  const text = String(raw || "").trim();
+  const pxMatch = text.match(/^(\d+(?:\.\d+)?)px$/i);
+  if (pxMatch) {
+    const value = Number(pxMatch[1]);
+    return Number.isFinite(value) ? value : null;
+  }
+  const ptMatch = text.match(/^(\d+(?:\.\d+)?)pt$/i);
+  if (ptMatch) {
+    const pt = Number(ptMatch[1]);
+    if (!Number.isFinite(pt)) return null;
+    // 1pt = 1/72in, 1px = 1/96in => px = pt * 96/72 = pt * 4/3
+    return pt * (4 / 3);
+  }
+  return null;
+}
+
+function _applyMetaFontPx(root, px) {
+  const nextPx = Math.max(6, Math.min(22, Math.round(Number(px))));
+  const tables = root?.querySelectorAll?.("table.topsTable") || [];
+  for (const table of tables) {
+    if (table?.style?.setProperty) {
+      table.style.setProperty("--bbm-top-col-meta-font-size", `${nextPx}px`);
+    }
+  }
+  return nextPx;
 }
 
 function _applyMetaInsetMm(root, mm) {
@@ -1548,18 +1619,24 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   toolbar._plus.disabled = !isMeta;
   toolbar._insetMinus.disabled = !isMeta;
   toolbar._insetPlus.disabled = !isMeta;
+  toolbar._fontMinus.disabled = !isMeta;
+  toolbar._fontPlus.disabled = !isMeta;
   toolbar._save.disabled = !isMeta;
   toolbar._reset.disabled = !isMeta;
 
   if (!isMeta) {
     toolbar._value.textContent = "Breite -";
     toolbar._insetValue.textContent = "Innen -";
+    if (toolbar._fontValue) toolbar._fontValue.textContent = "Schrift -";
     toolbar._metaWidthMm = null;
     toolbar._metaInsetMm = null;
+    toolbar._metaFontPx = null;
     toolbar._minus.onclick = null;
     toolbar._plus.onclick = null;
     toolbar._insetMinus.onclick = null;
     toolbar._insetPlus.onclick = null;
+    if (toolbar._fontMinus) toolbar._fontMinus.onclick = null;
+    if (toolbar._fontPlus) toolbar._fontPlus.onclick = null;
     return;
   }
 
@@ -1578,9 +1655,18 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     toolbar._metaInsetMm = mmFromLayout != null ? mmFromLayout : 5;
     toolbar._metaInsetMm = _applyMetaInsetMm(root, toolbar._metaInsetMm);
   }
+  if (toolbar._metaFontPx == null) {
+    const fontRaw = runtimeData ? _extractPdfMetaFontSizeRawFromData(runtimeData) : "";
+    const defaultFontRaw = runtimeData ? _extractPdfMetaFontSizeRawFromDefaults(runtimeData) : "";
+    toolbar._defaultMetaFontSizeRaw = toolbar._defaultMetaFontSizeRaw || defaultFontRaw || null;
+    const pxFromLayout = _parseFontPxFromRaw(fontRaw);
+    toolbar._metaFontPx = pxFromLayout != null ? pxFromLayout : (_readMetaFontPx(root) || 9);
+    toolbar._metaFontPx = _applyMetaFontPx(root, toolbar._metaFontPx);
+  }
   const display = Math.round(Number(toolbar._metaWidthMm || 15));
   toolbar._value.textContent = `Breite ${display} mm`;
   toolbar._insetValue.textContent = `Innen ${_formatMm(toolbar._metaInsetMm)} mm`;
+  if (toolbar._fontValue) toolbar._fontValue.textContent = `Schrift ${Math.round(Number(toolbar._metaFontPx || 9))} px`;
 
   toolbar._minus.onclick = () => {
     const current = toolbar._metaWidthMm == null ? _readMetaWidthMm(root) : toolbar._metaWidthMm;
@@ -1604,6 +1690,21 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
   };
 
+  if (toolbar._fontMinus) {
+    toolbar._fontMinus.onclick = () => {
+      const current = toolbar._metaFontPx == null ? (_readMetaFontPx(root) || 9) : toolbar._metaFontPx;
+      toolbar._metaFontPx = _applyMetaFontPx(root, current - 1);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+  }
+  if (toolbar._fontPlus) {
+    toolbar._fontPlus.onclick = () => {
+      const current = toolbar._metaFontPx == null ? (_readMetaFontPx(root) || 9) : toolbar._metaFontPx;
+      toolbar._metaFontPx = _applyMetaFontPx(root, current + 1);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+  }
+
   toolbar._save.onclick = async () => {
     toolbar._status.textContent = "";
     try {
@@ -1623,6 +1724,8 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
       const nextPdfMetaWidth = `${Math.round(Number(widthMm || 15))}mm`;
       const insetMm = toolbar._metaInsetMm == null ? 5 : toolbar._metaInsetMm;
       const nextPdfMetaInset = `${_formatMm(insetMm)}mm`;
+      const fontPx = toolbar._metaFontPx == null ? (_readMetaFontPx(root) || 9) : toolbar._metaFontPx;
+      const nextPdfMetaFontSize = `${Math.round(Number(fontPx) || 9)}px`;
 
       const nextColumns = Array.isArray(extracted?.columns)
         ? extracted.columns.map((col) => ({ ...(col || {}) }))
@@ -1642,6 +1745,7 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           columns: nextColumns.length ? nextColumns : extracted?.columns,
           pdfMetaWidth: nextPdfMetaWidth,
           pdfMetaInset: nextPdfMetaInset,
+          pdfMetaFontSize: nextPdfMetaFontSize,
         },
         extracted?.orientation || toolbar._orientation || "portrait"
       );
@@ -1690,6 +1794,9 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
       const insetFromDefault = _parseMetaInsetMmFromRaw(toolbar._defaultMetaInsetRaw);
       toolbar._metaInsetMm = insetFromDefault != null ? insetFromDefault : 5;
       toolbar._metaInsetMm = _applyMetaInsetMm(root, toolbar._metaInsetMm);
+      const fontFromDefault = _parseFontPxFromRaw(toolbar._defaultMetaFontSizeRaw);
+      toolbar._metaFontPx = fontFromDefault != null ? fontFromDefault : (_readMetaFontPx(root) || 9);
+      toolbar._metaFontPx = _applyMetaFontPx(root, toolbar._metaFontPx);
       _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
     } catch (err) {
       toolbar._status.textContent = err?.message || String(err) || "Reset fehlgeschlagen.";

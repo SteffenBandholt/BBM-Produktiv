@@ -13,6 +13,7 @@
   pdfTextWidth: "auto",
   pdfMetaWidth: "15ch",
   pdfMetaInset: "5mm",
+  pdfMetaFontSize: "6.5pt",
   labelTop: "TOP",
   labelText: "Gegenstand",
   labelMeta1: "Status",
@@ -398,6 +399,8 @@ function _extractValues(layout = {}) {
     pdfMetaWidth: _normalizeText(metaCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth,
     pdfMetaInset:
       _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-meta-padding-left"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
+    pdfMetaFontSize:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-meta-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
     labelTop: _normalizeText(topCol.label) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelTop,
     labelText: _normalizeText(textCol.label) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelText,
     labelMeta1: _normalizeText(metaLabels[0]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta1,
@@ -432,6 +435,7 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
         pdf: {
           rootVars: {
             "--bbm-top-col-meta-padding-left": values?.pdfMetaInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
+            "--bbm-top-col-meta-font-size": values?.pdfMetaFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
           },
           columns: {
             number: { width: values?.pdfNumberWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth },
@@ -466,6 +470,7 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
       pdfTextWidth: textCol.pdfWidth,
       pdfMetaWidth: metaCol.pdfWidth,
       pdfMetaInset: _normalizeText(values.pdfMetaInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
+      pdfMetaFontSize: _normalizeText(values.pdfMetaFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
       labelTop: topCol.label,
       labelText: textCol.label,
       labelMeta1: metaCol.headerLines[0] || metaCol.label,
@@ -505,6 +510,7 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
     pdf: {
       rootVars: {
         "--bbm-top-col-meta-padding-left": normalized.pdfMetaInset,
+        "--bbm-top-col-meta-font-size": normalized.pdfMetaFontSize,
       },
       columns: {
         number: { key: "top", className: "colNr", width: normalized.pdfNumberWidth },

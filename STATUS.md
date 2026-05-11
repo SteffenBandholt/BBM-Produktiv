@@ -1632,3 +1632,19 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Nur Reset-/Default-Handling im DEV-Preview angepasst; Speichern/Laden bleibt ueber `tableLayouts` unveraendert.
+
+#### Paket: DEV PDF-Layout TOP-Liste (Metablock Schrift speichern/reset)
+- Status: erledigt
+- Beschreibung:
+  - Der PDF-Metablock speichert jetzt zusaetzlich zur Breite und zum Innenabstand auch die Schriftgroesse ueber `pdf.rootVars.--bbm-top-col-meta-font-size`.
+  - Reset stellt Breite/Innen/Schrift wieder auf die echten Standardwerte aus `defaultLayout`.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/protokollTopsLayout.js`
+  - `src/renderer/print/printApp.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Schrift wird aktuell als `px` gespeichert (Toolbar-Schrittweite 1px); CSS akzeptiert das auch im Print-HTML Preview.
