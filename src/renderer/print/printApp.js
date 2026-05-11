@@ -1476,6 +1476,16 @@ function _extractPdfMetaInsetRawFromData(data) {
   return String(raw || "").trim();
 }
 
+function _extractPdfMetaWidthRawFromDefaults(data) {
+  const raw = data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.columns?.meta?.width || "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfMetaInsetRawFromDefaults(data) {
+  const raw = data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-meta-padding-left"] || "";
+  return String(raw || "").trim();
+}
+
 function _parseMetaWidthMmFromRaw(raw) {
   const text = String(raw || "").trim();
   const mmMatch = text.match(/^(\d+(?:\.\d+)?)mm$/i);
@@ -1554,14 +1564,16 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   }
 
   if (toolbar._metaWidthMm == null) {
-    const initialRaw = runtimeData ? _extractPdfMetaWidthRawFromData(runtimeData) : "";
-    toolbar._defaultMetaWidthRaw = toolbar._defaultMetaWidthRaw || initialRaw || null;
-    const mmFromLayout = _parseMetaWidthMmFromRaw(initialRaw);
+    const effectiveRaw = runtimeData ? _extractPdfMetaWidthRawFromData(runtimeData) : "";
+    const defaultRaw = runtimeData ? _extractPdfMetaWidthRawFromDefaults(runtimeData) : "";
+    toolbar._defaultMetaWidthRaw = toolbar._defaultMetaWidthRaw || defaultRaw || null;
+    const mmFromLayout = _parseMetaWidthMmFromRaw(effectiveRaw);
     toolbar._metaWidthMm = mmFromLayout != null ? mmFromLayout : _readMetaWidthMm(root);
   }
   if (toolbar._metaInsetMm == null) {
     const insetRaw = runtimeData ? _extractPdfMetaInsetRawFromData(runtimeData) : "";
-    toolbar._defaultMetaInsetRaw = toolbar._defaultMetaInsetRaw || insetRaw || null;
+    const defaultInsetRaw = runtimeData ? _extractPdfMetaInsetRawFromDefaults(runtimeData) : "";
+    toolbar._defaultMetaInsetRaw = toolbar._defaultMetaInsetRaw || defaultInsetRaw || null;
     const mmFromLayout = _parseMetaInsetMmFromRaw(insetRaw);
     toolbar._metaInsetMm = mmFromLayout != null ? mmFromLayout : 5;
     toolbar._metaInsetMm = _applyMetaInsetMm(root, toolbar._metaInsetMm);
@@ -1669,7 +1681,9 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
       }
       toolbar._status.style.color = "#25624f";
       toolbar._status.textContent = "Zurueckgesetzt.";
-      // Apply default meta width again (no reload, just restore visually).
+      // Apply standard values again (no reload, just restore visually).
+      // Note: the saved override could have been the only value we saw in effectiveLayout,
+      // so defaults must come from defaultLayout.
       const mmFromDefault = _parseMetaWidthMmFromRaw(toolbar._defaultMetaWidthRaw);
       toolbar._metaWidthMm = mmFromDefault != null ? mmFromDefault : 15;
       toolbar._metaWidthMm = _applyMetaWidthMm(root, toolbar._metaWidthMm);

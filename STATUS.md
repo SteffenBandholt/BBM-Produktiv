@@ -1618,3 +1618,17 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Nur DEV-only Zusatzfenster; STABLE bleibt ohne Layout-Werkzeuge.
+
+#### Paket: DEV PDF-Layout Reset setzt wieder echte Standards (TOP-Liste Metablock)
+- Status: erledigt
+- Beschreibung:
+  - Reset in der DEV-Print-HTML Vorschau nutzt jetzt fuer Breite/Innen die Werte aus `defaultLayout` (nicht aus `effectiveLayout`), damit nach vorherigem Speichern der Reset wirklich auf Standard zurueckgeht.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Nur Reset-/Default-Handling im DEV-Preview angepasst; Speichern/Laden bleibt ueber `tableLayouts` unveraendert.
