@@ -1378,6 +1378,7 @@ function _enableDevPdfLayoutZones(root) {
     if (!participantsZones.has(zone)) return;
     root.dataset.devPdfParticipantsActiveZone = zone;
     syncParticipantsActiveZone();
+    _syncDevPdfLayoutToolbar(toolbar, root, root._bbmRuntimeData || null);
   };
 
   root.addEventListener("click", onClick);
@@ -1499,6 +1500,9 @@ function _ensureDevPdfLayoutToolbar() {
   el._nrFontPt = null;
   el._txtInsetMm = null;
   el._txtFontPt = null;
+  el._partNameWidthMm = null;
+  el._partNameInsetMm = null;
+  el._partNameFontPt = null;
   el._defaultTxtPadLeftRaw = null;
   el._defaultTxtPadRightRaw = null;
   el._defaultTxtFontRaw = null;
@@ -1587,6 +1591,24 @@ function _readTextFontPt(root) {
   const px = Number(String(style?.fontSize || "").replace("px", "").trim());
   if (!Number.isFinite(px) || px <= 0) return null;
   return px * 0.75;
+}
+
+function _readParticipantsNameWidthMm(root) {
+  const raw = String(root?.style?.getPropertyValue?.("--bbm-part-col-name-width") || "").trim();
+  const mm = _parseMetaWidthMmFromRaw(raw);
+  return mm != null ? mm : 34;
+}
+
+function _readParticipantsNameInsetMm(root) {
+  const raw = String(root?.style?.getPropertyValue?.("--bbm-part-col-name-padding-inline") || "").trim();
+  const mm = _parseMetaInsetMmFromRaw(raw);
+  return mm != null ? mm : 1.4;
+}
+
+function _readParticipantsNameFontPt(root) {
+  const raw = String(root?.style?.getPropertyValue?.("--bbm-part-col-name-font-size") || "").trim();
+  const pt = _parsePtFromRaw(raw);
+  return pt != null ? pt : 9.3;
 }
 
 function _readMetaFontPx(root) {
@@ -1883,8 +1905,114 @@ function _applyTextFontPt(root, pt) {
   return nextPt;
 }
 
+function _applyParticipantsNameWidthMm(root, mm) {
+  const next = Math.max(20, Math.min(70, Math.round(Number(mm) * 2) / 2));
+  if (root?.style?.setProperty) root.style.setProperty("--bbm-part-col-name-width", `${_formatMm(next)}mm`);
+  return next;
+}
+
+function _applyParticipantsNameInsetMm(root, mm) {
+  const next = Math.max(0, Math.min(6, Math.round(Number(mm) * 2) / 2));
+  if (root?.style?.setProperty) root.style.setProperty("--bbm-part-col-name-padding-inline", `${_formatMm(next)}mm`);
+  return next;
+}
+
+function _applyParticipantsNameFontPt(root, pt) {
+  const next = Math.max(7, Math.min(14, Math.round(Number(pt) * 2) / 2));
+  if (root?.style?.setProperty) root.style.setProperty("--bbm-part-col-name-font-size", `${_formatMm(next)}pt`);
+  return next;
+}
+
 function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   if (!toolbar) return;
+  const participantsZone = String(root?.dataset?.devPdfParticipantsActiveZone || "").trim().toLowerCase();
+  const participantsLabel =
+    participantsZone === "name"
+      ? "Name"
+      : participantsZone === "role"
+        ? "Funktion"
+        : participantsZone === "firm"
+          ? "Firma"
+          : participantsZone === "contact"
+            ? "Kontakt"
+            : participantsZone === "marks"
+              ? "Anwesend / Verteiler"
+              : "";
+  const isParticipants = !!participantsLabel;
+  const isParticipantsName = participantsZone === "name";
+
+  if (isParticipants) {
+    toolbar._line2.textContent = `Teilnehmerliste > ${participantsLabel}`;
+    toolbar._save.disabled = true;
+    toolbar._reset.disabled = true;
+    toolbar._minus.disabled = !isParticipantsName;
+    toolbar._plus.disabled = !isParticipantsName;
+    toolbar._insetMinus.disabled = !isParticipantsName;
+    toolbar._insetPlus.disabled = !isParticipantsName;
+    toolbar._fontMinus.disabled = !isParticipantsName;
+    toolbar._fontPlus.disabled = !isParticipantsName;
+
+    if (!isParticipantsName) {
+      toolbar._value.textContent = "Breite -";
+      toolbar._insetValue.textContent = "Innen -";
+      if (toolbar._fontValue) toolbar._fontValue.textContent = "Schrift -";
+      toolbar._partNameWidthMm = null;
+      toolbar._partNameInsetMm = null;
+      toolbar._partNameFontPt = null;
+      toolbar._minus.onclick = null;
+      toolbar._plus.onclick = null;
+      toolbar._insetMinus.onclick = null;
+      toolbar._insetPlus.onclick = null;
+      if (toolbar._fontMinus) toolbar._fontMinus.onclick = null;
+      if (toolbar._fontPlus) toolbar._fontPlus.onclick = null;
+      return;
+    }
+
+    if (toolbar._partNameWidthMm == null) toolbar._partNameWidthMm = _readParticipantsNameWidthMm(root);
+    if (toolbar._partNameInsetMm == null) toolbar._partNameInsetMm = _readParticipantsNameInsetMm(root);
+    if (toolbar._partNameFontPt == null) toolbar._partNameFontPt = _readParticipantsNameFontPt(root);
+
+    toolbar._value.textContent = `Breite ${Math.round(Number(toolbar._partNameWidthMm || 34))} mm`;
+    toolbar._insetValue.textContent = `Innen ${_formatMm(toolbar._partNameInsetMm)} mm`;
+    if (toolbar._fontValue) toolbar._fontValue.textContent = `Schrift ${_formatMm(toolbar._partNameFontPt)} pt`;
+
+    toolbar._minus.onclick = () => {
+      const current = toolbar._partNameWidthMm == null ? _readParticipantsNameWidthMm(root) : toolbar._partNameWidthMm;
+      toolbar._partNameWidthMm = _applyParticipantsNameWidthMm(root, current - 1);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    toolbar._plus.onclick = () => {
+      const current = toolbar._partNameWidthMm == null ? _readParticipantsNameWidthMm(root) : toolbar._partNameWidthMm;
+      toolbar._partNameWidthMm = _applyParticipantsNameWidthMm(root, current + 1);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    toolbar._insetMinus.onclick = () => {
+      const current = toolbar._partNameInsetMm == null ? 1.4 : toolbar._partNameInsetMm;
+      toolbar._partNameInsetMm = _applyParticipantsNameInsetMm(root, current - 0.5);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    toolbar._insetPlus.onclick = () => {
+      const current = toolbar._partNameInsetMm == null ? 1.4 : toolbar._partNameInsetMm;
+      toolbar._partNameInsetMm = _applyParticipantsNameInsetMm(root, current + 0.5);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    if (toolbar._fontMinus) {
+      toolbar._fontMinus.onclick = () => {
+        const current = toolbar._partNameFontPt == null ? 9.3 : toolbar._partNameFontPt;
+        toolbar._partNameFontPt = _applyParticipantsNameFontPt(root, current - 0.5);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      };
+    }
+    if (toolbar._fontPlus) {
+      toolbar._fontPlus.onclick = () => {
+        const current = toolbar._partNameFontPt == null ? 9.3 : toolbar._partNameFontPt;
+        toolbar._partNameFontPt = _applyParticipantsNameFontPt(root, current + 0.5);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      };
+    }
+    return;
+  }
+
   const zone = String(root?.dataset?.devPdfActiveZone || "").trim().toLowerCase();
   const zoneLabel = zone === "meta" ? "Metablock" : zone === "text" ? "Textblock" : zone === "number" ? "Nummernblock" : "";
   toolbar._line2.textContent = zoneLabel ? `TOP-Liste > PDF > ${zoneLabel}` : "TOP-Liste > PDF | Bereich waehlen";

@@ -413,6 +413,15 @@
 
 .printV2Root .v2PartColName {
   width: 34mm;
+  width: var(--bbm-part-col-name-width, 34mm);
+}
+
+/* DEV-Layout preview: apply inset/font overrides with higher specificity than the generic th/td rule. */
+.printV2Root .v2ParticipantsTable th.v2PartColName,
+.printV2Root .v2ParticipantsTable td.v2PartColName {
+  padding-left: var(--bbm-part-col-name-padding-inline, 1.4mm);
+  padding-right: var(--bbm-part-col-name-padding-inline, 1.4mm);
+  font-size: var(--bbm-part-col-name-font-size, 9.3pt);
 }
 
 .printV2Root .v2PartColRole {
