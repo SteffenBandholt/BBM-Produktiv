@@ -14,6 +14,9 @@
   pdfMetaWidth: "15ch",
   pdfNumberInset: "1mm",
   pdfNumberFontSize: "8.5pt",
+  pdfTextPaddingLeft: "0mm",
+  pdfTextPaddingRight: "1.5mm",
+  pdfTextFontSize: "9pt",
   pdfMetaInset: "5mm",
   pdfMetaFontSize: "6.5pt",
   labelTop: "TOP",
@@ -175,6 +178,7 @@ const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
       "--bbm-top-col-nr-font-size": "8.5pt",
       "--bbm-top-col-text-padding-left": "0",
       "--bbm-top-col-text-padding-right": "1.5mm",
+      "--bbm-top-col-text-font-size": "9pt",
       "--bbm-top-col-meta-width": "15ch",
       "--bbm-top-col-meta-padding-left": "5mm",
       "--bbm-top-col-meta-font-size": "6.5pt",
@@ -405,6 +409,12 @@ function _extractValues(layout = {}) {
       _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-nr-padding-left"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberInset,
     pdfNumberFontSize:
       _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-nr-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberFontSize,
+    pdfTextPaddingLeft:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-text-padding-left"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingLeft,
+    pdfTextPaddingRight:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-text-padding-right"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingRight,
+    pdfTextFontSize:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-text-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextFontSize,
     pdfMetaInset:
       _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-meta-padding-left"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
     pdfMetaFontSize:
@@ -444,6 +454,9 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
           rootVars: {
             "--bbm-top-col-nr-padding-left": values?.pdfNumberInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberInset,
             "--bbm-top-col-nr-font-size": values?.pdfNumberFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberFontSize,
+            "--bbm-top-col-text-padding-left": values?.pdfTextPaddingLeft || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingLeft,
+            "--bbm-top-col-text-padding-right": values?.pdfTextPaddingRight || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingRight,
+            "--bbm-top-col-text-font-size": values?.pdfTextFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextFontSize,
             "--bbm-top-col-meta-padding-left": values?.pdfMetaInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
             "--bbm-top-col-meta-font-size": values?.pdfMetaFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
           },
@@ -481,6 +494,9 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
       pdfMetaWidth: metaCol.pdfWidth,
       pdfNumberInset: _normalizeText(values.pdfNumberInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberInset,
       pdfNumberFontSize: _normalizeText(values.pdfNumberFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberFontSize,
+      pdfTextPaddingLeft: _normalizeText(values.pdfTextPaddingLeft) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingLeft,
+      pdfTextPaddingRight: _normalizeText(values.pdfTextPaddingRight) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingRight,
+      pdfTextFontSize: _normalizeText(values.pdfTextFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextFontSize,
       pdfMetaInset: _normalizeText(values.pdfMetaInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
       pdfMetaFontSize: _normalizeText(values.pdfMetaFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
       labelTop: topCol.label,
@@ -523,6 +539,9 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
       rootVars: {
         "--bbm-top-col-nr-padding-left": normalized.pdfNumberInset,
         "--bbm-top-col-nr-font-size": normalized.pdfNumberFontSize,
+        "--bbm-top-col-text-padding-left": normalized.pdfTextPaddingLeft,
+        "--bbm-top-col-text-padding-right": normalized.pdfTextPaddingRight,
+        "--bbm-top-col-text-font-size": normalized.pdfTextFontSize,
         "--bbm-top-col-meta-padding-left": normalized.pdfMetaInset,
         "--bbm-top-col-meta-font-size": normalized.pdfMetaFontSize,
       },

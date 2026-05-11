@@ -1457,6 +1457,9 @@ function _ensureDevPdfLayoutToolbar() {
   el._nrFontPt = null;
   el._txtInsetMm = null;
   el._txtFontPt = null;
+  el._defaultTxtPadLeftRaw = null;
+  el._defaultTxtPadRightRaw = null;
+  el._defaultTxtFontRaw = null;
   el._defaultNrWidthRaw = null;
   el._defaultNrInsetRaw = null;
   el._defaultNrFontRaw = null;
@@ -1633,6 +1636,45 @@ function _extractPdfNumberFontSizeRawFromDefaults(data) {
   return String(raw || "").trim();
 }
 
+function _extractPdfTextPaddingLeftRawFromData(data) {
+  const raw =
+    data?.tableLayouts?.protokoll_tops?.effectiveLayout?.pdf?.rootVars?.["--bbm-top-col-text-padding-left"] ||
+    data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-text-padding-left"] ||
+    "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfTextPaddingRightRawFromData(data) {
+  const raw =
+    data?.tableLayouts?.protokoll_tops?.effectiveLayout?.pdf?.rootVars?.["--bbm-top-col-text-padding-right"] ||
+    data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-text-padding-right"] ||
+    "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfTextFontSizeRawFromData(data) {
+  const raw =
+    data?.tableLayouts?.protokoll_tops?.effectiveLayout?.pdf?.rootVars?.["--bbm-top-col-text-font-size"] ||
+    data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-text-font-size"] ||
+    "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfTextPaddingLeftRawFromDefaults(data) {
+  const raw = data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-text-padding-left"] || "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfTextPaddingRightRawFromDefaults(data) {
+  const raw = data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-text-padding-right"] || "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfTextFontSizeRawFromDefaults(data) {
+  const raw = data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-text-font-size"] || "";
+  return String(raw || "").trim();
+}
+
 function _parseMetaWidthMmFromRaw(raw) {
   const text = String(raw || "").trim();
   const mmMatch = text.match(/^(\d+(?:\.\d+)?)mm$/i);
@@ -1770,15 +1812,21 @@ function _applyNumberFontPt(root, pt) {
 
 function _applyTextInsetMm(root, mm) {
   const nextMm = Math.max(0, Math.min(10, Math.round(Number(mm) * 2) / 2));
+  _applyTextPaddingMm(root, nextMm, nextMm);
+  return nextMm;
+}
+
+function _applyTextPaddingMm(root, leftMm, rightMm) {
+  const l = Math.max(0, Math.min(10, Math.round(Number(leftMm) * 2) / 2));
+  const r = Math.max(0, Math.min(10, Math.round(Number(rightMm) * 2) / 2));
   const tables = root?.querySelectorAll?.("table.topsTable") || [];
   for (const table of tables) {
     if (table?.style?.setProperty) {
-      // apply same inset left/right for a "simple" textblock padding control
-      table.style.setProperty("--bbm-top-col-text-padding-left", `${nextMm}mm`);
-      table.style.setProperty("--bbm-top-col-text-padding-right", `${nextMm}mm`);
+      table.style.setProperty("--bbm-top-col-text-padding-left", `${l}mm`);
+      table.style.setProperty("--bbm-top-col-text-padding-right", `${r}mm`);
     }
   }
-  return nextMm;
+  return { leftMm: l, rightMm: r };
 }
 
 function _applyTextFontPt(root, pt) {
@@ -2031,14 +2079,31 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
 
   if (isText) {
     toolbar._value.textContent = "Breite Restbereich";
+    toolbar._save.disabled = false;
+    toolbar._reset.disabled = false;
 
     if (toolbar._txtInsetMm == null) {
-      const inset = _readTextInsetMm(root);
+      const leftRaw = runtimeData ? _extractPdfTextPaddingLeftRawFromData(runtimeData) : "";
+      const rightRaw = runtimeData ? _extractPdfTextPaddingRightRawFromData(runtimeData) : "";
+      const defaultLeftRaw = runtimeData ? _extractPdfTextPaddingLeftRawFromDefaults(runtimeData) : "";
+      const defaultRightRaw = runtimeData ? _extractPdfTextPaddingRightRawFromDefaults(runtimeData) : "";
+      toolbar._defaultTxtPadLeftRaw = toolbar._defaultTxtPadLeftRaw || defaultLeftRaw || null;
+      toolbar._defaultTxtPadRightRaw = toolbar._defaultTxtPadRightRaw || defaultRightRaw || null;
+
+      // UI control is a single value; we apply symmetrically. Read left as source of truth.
+      const leftMmFromLayout = _parseMetaInsetMmFromRaw(leftRaw);
+      const rightMmFromLayout = _parseMetaInsetMmFromRaw(rightRaw);
+      const insetFromLayout = leftMmFromLayout != null ? leftMmFromLayout : rightMmFromLayout;
+      const inset = insetFromLayout != null ? insetFromLayout : _readTextInsetMm(root);
       toolbar._txtInsetMm = inset != null ? inset : 0;
       toolbar._txtInsetMm = _applyTextInsetMm(root, toolbar._txtInsetMm);
     }
     if (toolbar._txtFontPt == null) {
-      const pt = _readTextFontPt(root);
+      const fontRaw = runtimeData ? _extractPdfTextFontSizeRawFromData(runtimeData) : "";
+      const defaultFontRaw = runtimeData ? _extractPdfTextFontSizeRawFromDefaults(runtimeData) : "";
+      toolbar._defaultTxtFontRaw = toolbar._defaultTxtFontRaw || defaultFontRaw || null;
+      const ptFromLayout = _parsePtFromRaw(fontRaw);
+      const pt = ptFromLayout != null ? ptFromLayout : _readTextFontPt(root);
       toolbar._txtFontPt = pt != null ? pt : 9;
       toolbar._txtFontPt = _applyTextFontPt(root, toolbar._txtFontPt);
     }
@@ -2072,6 +2137,94 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
         _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
       };
     }
+
+    toolbar._save.onclick = async () => {
+      toolbar._status.textContent = "";
+      try {
+        if (root?.dataset?.devPdfLayout !== "true") return;
+        if (typeof window?.bbmPrint?.tableLayoutsSave !== "function") {
+          toolbar._status.textContent = "Speichern nicht verfuegbar.";
+          return;
+        }
+        const insetMm = toolbar._txtInsetMm == null ? (_readTextInsetMm(root) || 0) : toolbar._txtInsetMm;
+        const fontPt = toolbar._txtFontPt == null ? (_readTextFontPt(root) || 9) : toolbar._txtFontPt;
+
+        const resLayout = await window.bbmPrint.tableLayoutsGetOne({
+          tableKey: "protokoll_tops",
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+        });
+        const effective = resLayout?.data?.effectiveLayout || resLayout?.data?.defaultLayout || {};
+        const extracted = extractProtokollTopsEditorValues(effective || {});
+
+        const nextPdfTextPaddingLeft = `${_formatMm(insetMm)}mm`;
+        const nextPdfTextPaddingRight = `${_formatMm(insetMm)}mm`;
+        const nextPdfTextFontSize = `${_formatMm(fontPt)}pt`;
+
+        const next = buildProtokollTopsLayoutOverlay(
+          {
+            ...extracted,
+            pdfTextPaddingLeft: nextPdfTextPaddingLeft,
+            pdfTextPaddingRight: nextPdfTextPaddingRight,
+            pdfTextFontSize: nextPdfTextFontSize,
+          },
+          extracted?.orientation || toolbar._orientation || "portrait"
+        );
+
+        const res = await window.bbmPrint.tableLayoutsSave({
+          tableKey: "protokoll_tops",
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+          layout: next,
+        });
+        if (!res?.ok) {
+          toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
+          return;
+        }
+        toolbar._status.style.color = "#25624f";
+        toolbar._status.textContent = "Gespeichert.";
+      } catch (err) {
+        toolbar._status.textContent = err?.message || String(err) || "Speichern fehlgeschlagen.";
+      }
+    };
+
+    toolbar._reset.onclick = async () => {
+      toolbar._status.textContent = "";
+      try {
+        if (root?.dataset?.devPdfLayout !== "true") return;
+        if (typeof window?.bbmPrint?.tableLayoutsReset !== "function") {
+          toolbar._status.textContent = "Reset nicht verfuegbar.";
+          return;
+        }
+        const res = await window.bbmPrint.tableLayoutsReset({
+          tableKey: "protokoll_tops",
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+        });
+        if (!res?.ok) {
+          toolbar._status.textContent = res?.error || "Reset fehlgeschlagen.";
+          return;
+        }
+        toolbar._status.style.color = "#25624f";
+        toolbar._status.textContent = "Zurueckgesetzt.";
+
+        const leftFromDefault = _parseMetaInsetMmFromRaw(toolbar._defaultTxtPadLeftRaw);
+        const rightFromDefault = _parseMetaInsetMmFromRaw(toolbar._defaultTxtPadRightRaw);
+        const leftMm = leftFromDefault != null ? leftFromDefault : 0;
+        const rightMm = rightFromDefault != null ? rightFromDefault : 1.5;
+        _applyTextPaddingMm(root, leftMm, rightMm);
+        toolbar._txtInsetMm = leftMm;
+
+        const fontFromDefault = _parsePtFromRaw(toolbar._defaultTxtFontRaw);
+        toolbar._txtFontPt = fontFromDefault != null ? fontFromDefault : 9;
+        toolbar._txtFontPt = _applyTextFontPt(root, toolbar._txtFontPt);
+
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      } catch (err) {
+        toolbar._status.textContent = err?.message || String(err) || "Reset fehlgeschlagen.";
+      }
+    };
+
     return;
   }
 

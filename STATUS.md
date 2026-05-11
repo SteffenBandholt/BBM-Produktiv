@@ -1696,3 +1696,21 @@ Wichtig:
   - optional: Textblock speichern/reset (separater Meilenstein)
 - Risiken/Hinweise:
   - Text-Schrift wird live per Inline-Style auf `.shortText/.longText` gesetzt (nur im laufenden Preview).
+
+#### Paket: DEV PDF-Layout TOP-Liste (Textblock speichern/reset)
+- Status: erledigt
+- Beschreibung:
+  - Der PDF-Textblock speichert jetzt Innenabstand (pdf.rootVars text padding left/right) und Schriftgroesse (pdf.rootVars `--bbm-top-col-text-font-size`).
+  - Textblock-Breite bleibt "Restbereich" und wird nicht gespeichert.
+  - Reset stellt die Standardwerte aus `defaultLayout` wieder her und wendet sie sofort sichtbar an.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/protokollTopsLayout.js`
+  - `src/renderer/print/printApp.js`
+  - `src/renderer/print/print.css`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Der UI-Regler "Innen" setzt beim Speichern aktuell links und rechts symmetrisch; Standard-Reset stellt die urspruenglichen Default-Werte (0 / 1.5mm) wieder her.
