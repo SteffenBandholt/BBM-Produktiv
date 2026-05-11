@@ -47,6 +47,16 @@ function _assertDevPrintPreviewIpcIsDevOnly() {
   assert.match(js, /devLayoutPreview:\s*true/, "Preview must set devLayoutPreview: true.");
 }
 
+function _assertToPdfDoesNotEnableDevLayoutPreview() {
+  const js = _readText("src/main/ipc/printIpc.js");
+  // Export path must not enable the DEV layout overlay flag.
+  // (Markers are guarded behind devLayoutPreview in the print renderer.)
+  const idxToPdf = js.indexOf('ipcMain.handle("print:toPdf"');
+  assert.ok(idxToPdf !== -1, "print:toPdf handler must exist.");
+  const slice = js.slice(idxToPdf, Math.min(js.length, idxToPdf + 2400));
+  assert.doesNotMatch(slice, /devLayoutPreview\s*:\s*true/, "print:toPdf must not set devLayoutPreview: true.");
+}
+
 async function withTempTableLayoutsRepo(fn) {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-layouttools-regress-"));
   const userDataPath = path.join(tmpRoot, "userData");
@@ -169,6 +179,22 @@ async function _assertParticipantsPdfRootVarsPreserved() {
   });
 }
 
+async function _assertTopsAllUsesProtokollTopsLayout() {
+  // "topsAll" is a print mode, but it must still load the same protokoll_tops tableLayout identity.
+  const { getPrintData } = require(path.join(process.cwd(), "src/main/print/printData.js"));
+  const out = await getPrintData({
+    mode: "topsAll",
+    projectId: null,
+    meetingId: null,
+    settingsOverride: null,
+    orientation: "portrait",
+  });
+  assert.equal(out.mode, "topsAll");
+  assert.equal(Boolean(out.tableLayouts && out.tableLayouts.protokoll_tops), true, "topsAll must include protokoll_tops tableLayouts payload.");
+  assert.equal(out.tableLayouts.protokoll_tops.tableKey, "protokoll_tops");
+  assert.equal(out.tableLayouts.protokoll_tops.moduleId, "protokoll");
+}
+
 async function runLayoutToolsRegressionTests(run) {
   await run("layoutTools: DEV PDF preview markers sind CSS-seitig gated (keine Leaks ins echte PDF)", () => {
     _assertDevPdfMarkersAreGated(run);
@@ -178,10 +204,17 @@ async function runLayoutToolsRegressionTests(run) {
     _assertDevPrintPreviewIpcIsDevOnly();
   });
 
+  await run("layoutTools: PDF-Exportpfad setzt devLayoutPreview nicht (keine Marker im echten PDF)", () => {
+    _assertToPdfDoesNotEnableDevLayoutPreview();
+  });
+
   await run("layoutTools: protokoll_participants PDF rootVars bleiben getrennt und ueberschreiben protokoll_tops nicht", async () => {
     await _assertParticipantsPdfRootVarsPreserved();
+  });
+
+  await run("layoutTools: topsAll nutzt protokoll_tops Layout (gemeinsame TOP-PDF Surface)", async () => {
+    await _assertTopsAllUsesProtokollTopsLayout();
   });
 }
 
 module.exports = { runLayoutToolsRegressionTests };
-
