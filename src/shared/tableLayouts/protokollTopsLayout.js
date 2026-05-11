@@ -12,6 +12,8 @@
   pdfNumberWidth: "23mm",
   pdfTextWidth: "auto",
   pdfMetaWidth: "15ch",
+  pdfNumberInset: "1mm",
+  pdfNumberFontSize: "8.5pt",
   pdfMetaInset: "5mm",
   pdfMetaFontSize: "6.5pt",
   labelTop: "TOP",
@@ -169,6 +171,8 @@ const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
   pdf: Object.freeze({
     rootVars: Object.freeze({
       "--bbm-top-col-nr-width": "23mm",
+      "--bbm-top-col-nr-padding-left": "1mm",
+      "--bbm-top-col-nr-font-size": "8.5pt",
       "--bbm-top-col-text-padding-left": "0",
       "--bbm-top-col-text-padding-right": "1.5mm",
       "--bbm-top-col-meta-width": "15ch",
@@ -397,6 +401,10 @@ function _extractValues(layout = {}) {
     pdfNumberWidth: _normalizeText(topCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth,
     pdfTextWidth: _normalizeText(textCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth,
     pdfMetaWidth: _normalizeText(metaCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth,
+    pdfNumberInset:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-nr-padding-left"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberInset,
+    pdfNumberFontSize:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-nr-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberFontSize,
     pdfMetaInset:
       _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-meta-padding-left"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
     pdfMetaFontSize:
@@ -434,6 +442,8 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
         },
         pdf: {
           rootVars: {
+            "--bbm-top-col-nr-padding-left": values?.pdfNumberInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberInset,
+            "--bbm-top-col-nr-font-size": values?.pdfNumberFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberFontSize,
             "--bbm-top-col-meta-padding-left": values?.pdfMetaInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
             "--bbm-top-col-meta-font-size": values?.pdfMetaFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
           },
@@ -469,6 +479,8 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
       pdfNumberWidth: topCol.pdfWidth,
       pdfTextWidth: textCol.pdfWidth,
       pdfMetaWidth: metaCol.pdfWidth,
+      pdfNumberInset: _normalizeText(values.pdfNumberInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberInset,
+      pdfNumberFontSize: _normalizeText(values.pdfNumberFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberFontSize,
       pdfMetaInset: _normalizeText(values.pdfMetaInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
       pdfMetaFontSize: _normalizeText(values.pdfMetaFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
       labelTop: topCol.label,
@@ -509,6 +521,8 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
     },
     pdf: {
       rootVars: {
+        "--bbm-top-col-nr-padding-left": normalized.pdfNumberInset,
+        "--bbm-top-col-nr-font-size": normalized.pdfNumberFontSize,
         "--bbm-top-col-meta-padding-left": normalized.pdfMetaInset,
         "--bbm-top-col-meta-font-size": normalized.pdfMetaFontSize,
       },

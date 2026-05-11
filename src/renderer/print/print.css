@@ -331,6 +331,7 @@ body[data-orientation="portrait"] .measureRoot,
   min-width: 23mm;
   min-width: var(--bbm-top-col-nr-width, 23mm);
   white-space: nowrap;
+  padding-left: var(--bbm-top-col-nr-padding-left, 1mm);
   padding-right: 0;
 }
 
@@ -447,7 +448,7 @@ body[data-orientation="portrait"] .measureRoot,
 
 .topNumber {
   font-weight: 650;
-  font-size: 8.5pt;
+  font-size: var(--bbm-top-col-nr-font-size, 8.5pt);
 }
 
 .nrBox {

@@ -1663,3 +1663,20 @@ Wichtig:
   - optional: Speicherung/Reset fuer Nummernblock analog Metablock (separater Meilenstein)
 - Risiken/Hinweise:
   - Die Nummernblock-Innenaenderung setzt aktuell `padding-left` inline auf `th/td.colNr` (nur im laufenden Preview).
+
+#### Paket: DEV PDF-Layout TOP-Liste (Nummernblock speichern/reset)
+- Status: erledigt
+- Beschreibung:
+  - Der PDF-Nummernblock speichert jetzt Breite (ueber `columns[].pdfWidth`/`pdfNumberWidth`), Innenabstand (ueber `pdf.rootVars.--bbm-top-col-nr-padding-left`) und Schrift (ueber `pdf.rootVars.--bbm-top-col-nr-font-size`).
+  - Reset stellt die Werte wieder auf Standard zurueck und wendet sie sofort sichtbar an.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/protokollTopsLayout.js`
+  - `src/renderer/print/printApp.js`
+  - `src/renderer/print/print.css`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Die Hauptschriftgroesse des Nummernblocks ist jetzt per CSS-Variable steuerbar; Datum/Hinweis werden im Preview proportional per Inline-Style mitgefuehrt.

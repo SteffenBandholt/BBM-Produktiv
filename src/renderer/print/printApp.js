@@ -1455,6 +1455,9 @@ function _ensureDevPdfLayoutToolbar() {
   el._nrWidthMm = null;
   el._nrInsetMm = null;
   el._nrFontPt = null;
+  el._defaultNrWidthRaw = null;
+  el._defaultNrInsetRaw = null;
+  el._defaultNrFontRaw = null;
   el._orientation = "portrait";
   el._defaultMetaWidthRaw = null;
   el._defaultMetaInsetRaw = null;
@@ -1568,6 +1571,45 @@ function _extractPdfMetaFontSizeRawFromDefaults(data) {
   return String(raw || "").trim();
 }
 
+function _extractPdfNumberWidthRawFromData(data) {
+  const raw =
+    data?.tableLayouts?.protokoll_tops?.effectiveLayout?.pdf?.columns?.number?.width ||
+    data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.columns?.number?.width ||
+    "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfNumberWidthRawFromDefaults(data) {
+  const raw = data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.columns?.number?.width || "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfNumberInsetRawFromData(data) {
+  const raw =
+    data?.tableLayouts?.protokoll_tops?.effectiveLayout?.pdf?.rootVars?.["--bbm-top-col-nr-padding-left"] ||
+    data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-nr-padding-left"] ||
+    "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfNumberInsetRawFromDefaults(data) {
+  const raw = data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-nr-padding-left"] || "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfNumberFontSizeRawFromData(data) {
+  const raw =
+    data?.tableLayouts?.protokoll_tops?.effectiveLayout?.pdf?.rootVars?.["--bbm-top-col-nr-font-size"] ||
+    data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-nr-font-size"] ||
+    "";
+  return String(raw || "").trim();
+}
+
+function _extractPdfNumberFontSizeRawFromDefaults(data) {
+  const raw = data?.tableLayouts?.protokoll_tops?.defaultLayout?.pdf?.rootVars?.["--bbm-top-col-nr-font-size"] || "";
+  return String(raw || "").trim();
+}
+
 function _parseMetaWidthMmFromRaw(raw) {
   const text = String(raw || "").trim();
   const mmMatch = text.match(/^(\d+(?:\.\d+)?)mm$/i);
@@ -1601,6 +1643,21 @@ function _parseFontPxFromRaw(raw) {
     if (!Number.isFinite(pt)) return null;
     // 1pt = 1/72in, 1px = 1/96in => px = pt * 96/72 = pt * 4/3
     return pt * (4 / 3);
+  }
+  return null;
+}
+
+function _parsePtFromRaw(raw) {
+  const text = String(raw || "").trim();
+  const ptMatch = text.match(/^(\d+(?:\.\d+)?)pt$/i);
+  if (ptMatch) {
+    const value = Number(ptMatch[1]);
+    return Number.isFinite(value) ? value : null;
+  }
+  const pxMatch = text.match(/^(\d+(?:\.\d+)?)px$/i);
+  if (pxMatch) {
+    const px = Number(pxMatch[1]);
+    return Number.isFinite(px) ? px * 0.75 : null;
   }
   return null;
 }
@@ -1663,11 +1720,8 @@ function _applyNumberInsetMm(root, mm) {
   const nextMm = Math.max(0, Math.min(10, Math.round(Number(mm) * 2) / 2));
   const tables = root?.querySelectorAll?.("table.topsTable") || [];
   for (const table of tables) {
-    const cells = table.querySelectorAll?.("th.colNr, td.colNr") || [];
-    for (const cell of cells) {
-      if (cell?.style) {
-        cell.style.paddingLeft = `${nextMm}mm`;
-      }
+    if (table?.style?.setProperty) {
+      table.style.setProperty("--bbm-top-col-nr-padding-left", `${nextMm}mm`);
     }
   }
   return nextMm;
@@ -1677,11 +1731,8 @@ function _applyNumberFontPt(root, pt) {
   const nextPt = Math.max(6, Math.min(16, Math.round(Number(pt) * 2) / 2));
   const tables = root?.querySelectorAll?.("table.topsTable") || [];
   for (const table of tables) {
-    // .topNumber/.nrDate/.nrHint have explicit font-size rules in print.css,
-    // so setting the cell font-size alone would not be visible.
-    const numbers = table.querySelectorAll?.(".topNumber") || [];
-    for (const el of numbers) {
-      if (el?.style) el.style.fontSize = `${nextPt}pt`;
+    if (table?.style?.setProperty) {
+      table.style.setProperty("--bbm-top-col-nr-font-size", `${nextPt}pt`);
     }
 
     // Keep date/hint readable but slightly smaller than the main number.
@@ -1742,18 +1793,32 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   }
 
   if (isNumber) {
+    toolbar._save.disabled = false;
+    toolbar._reset.disabled = false;
     if (toolbar._nrWidthMm == null) {
       toolbar._nrWidthMm = _readNumberWidthMm(root);
     }
     if (toolbar._nrInsetMm == null) {
-      const inset = _readNumberInsetMm(root);
+      const insetRaw = runtimeData ? _extractPdfNumberInsetRawFromData(runtimeData) : "";
+      const defaultInsetRaw = runtimeData ? _extractPdfNumberInsetRawFromDefaults(runtimeData) : "";
+      toolbar._defaultNrInsetRaw = toolbar._defaultNrInsetRaw || defaultInsetRaw || null;
+      const insetMmFromLayout = _parseMetaInsetMmFromRaw(insetRaw);
+      const inset = insetMmFromLayout != null ? insetMmFromLayout : _readNumberInsetMm(root);
       toolbar._nrInsetMm = inset != null ? inset : 1;
       toolbar._nrInsetMm = _applyNumberInsetMm(root, toolbar._nrInsetMm);
     }
     if (toolbar._nrFontPt == null) {
-      const pt = _readNumberFontPt(root);
+      const fontRaw = runtimeData ? _extractPdfNumberFontSizeRawFromData(runtimeData) : "";
+      const defaultFontRaw = runtimeData ? _extractPdfNumberFontSizeRawFromDefaults(runtimeData) : "";
+      toolbar._defaultNrFontRaw = toolbar._defaultNrFontRaw || defaultFontRaw || null;
+      const ptFromLayout = _parsePtFromRaw(fontRaw);
+      const pt = ptFromLayout != null ? ptFromLayout : _readNumberFontPt(root);
       toolbar._nrFontPt = pt != null ? pt : 10;
       toolbar._nrFontPt = _applyNumberFontPt(root, toolbar._nrFontPt);
+    }
+    if (toolbar._defaultNrWidthRaw == null) {
+      const defaultWidthRaw = runtimeData ? _extractPdfNumberWidthRawFromDefaults(runtimeData) : "";
+      toolbar._defaultNrWidthRaw = defaultWidthRaw || null;
     }
 
     toolbar._value.textContent = `Breite ${Math.round(Number(toolbar._nrWidthMm || 23))} mm`;
@@ -1794,6 +1859,110 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
         _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
       };
     }
+
+    toolbar._save.onclick = async () => {
+      toolbar._status.textContent = "";
+      try {
+        if (root?.dataset?.devPdfLayout !== "true") return;
+        if (typeof window?.bbmPrint?.tableLayoutsSave !== "function") {
+          toolbar._status.textContent = "Speichern nicht verfuegbar.";
+          return;
+        }
+        const widthMm = toolbar._nrWidthMm == null ? _readNumberWidthMm(root) : toolbar._nrWidthMm;
+        const insetMm = toolbar._nrInsetMm == null ? (_readNumberInsetMm(root) || 1) : toolbar._nrInsetMm;
+        const fontPt = toolbar._nrFontPt == null ? (_readNumberFontPt(root) || 10) : toolbar._nrFontPt;
+
+        const resLayout = await window.bbmPrint.tableLayoutsGetOne({
+          tableKey: "protokoll_tops",
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+        });
+        const effective = resLayout?.data?.effectiveLayout || resLayout?.data?.defaultLayout || {};
+        const extracted = extractProtokollTopsEditorValues(effective || {});
+
+        const nextPdfNumberWidth = `${Math.round(Number(widthMm || 23))}mm`;
+        const nextPdfNumberInset = `${_formatMm(insetMm)}mm`;
+        const nextPdfNumberFontSize = `${_formatMm(fontPt)}pt`;
+
+        const nextColumns = Array.isArray(extracted?.columns)
+          ? extracted.columns.map((col) => ({ ...(col || {}) }))
+          : [];
+        for (let i = 0; i < nextColumns.length; i += 1) {
+          const col = nextColumns[i] || {};
+          if (String(col.key || "").trim().toLowerCase() !== "topnumber") continue;
+          nextColumns[i] = {
+            ...col,
+            pdfWidth: nextPdfNumberWidth,
+          };
+          break;
+        }
+
+        const next = buildProtokollTopsLayoutOverlay(
+          {
+            ...extracted,
+            columns: nextColumns.length ? nextColumns : extracted?.columns,
+            pdfNumberWidth: nextPdfNumberWidth,
+            pdfNumberInset: nextPdfNumberInset,
+            pdfNumberFontSize: nextPdfNumberFontSize,
+          },
+          extracted?.orientation || toolbar._orientation || "portrait"
+        );
+
+        const res = await window.bbmPrint.tableLayoutsSave({
+          tableKey: "protokoll_tops",
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+          layout: next,
+        });
+        if (!res?.ok) {
+          toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
+          return;
+        }
+        toolbar._status.style.color = "#25624f";
+        toolbar._status.textContent = "Gespeichert.";
+      } catch (err) {
+        toolbar._status.textContent = err?.message || String(err) || "Speichern fehlgeschlagen.";
+      }
+    };
+
+    toolbar._reset.onclick = async () => {
+      toolbar._status.textContent = "";
+      try {
+        if (root?.dataset?.devPdfLayout !== "true") return;
+        if (typeof window?.bbmPrint?.tableLayoutsReset !== "function") {
+          toolbar._status.textContent = "Reset nicht verfuegbar.";
+          return;
+        }
+        const res = await window.bbmPrint.tableLayoutsReset({
+          tableKey: "protokoll_tops",
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+        });
+        if (!res?.ok) {
+          toolbar._status.textContent = res?.error || "Reset fehlgeschlagen.";
+          return;
+        }
+        toolbar._status.style.color = "#25624f";
+        toolbar._status.textContent = "Zurueckgesetzt.";
+
+        const widthFromDefault = _parseMetaWidthMmFromRaw(toolbar._defaultNrWidthRaw);
+        toolbar._nrWidthMm = widthFromDefault != null ? widthFromDefault : 23;
+        toolbar._nrWidthMm = _applyNumberWidthMm(root, toolbar._nrWidthMm);
+
+        const insetFromDefault = _parseMetaInsetMmFromRaw(toolbar._defaultNrInsetRaw);
+        toolbar._nrInsetMm = insetFromDefault != null ? insetFromDefault : 1;
+        toolbar._nrInsetMm = _applyNumberInsetMm(root, toolbar._nrInsetMm);
+
+        const fontFromDefault = _parsePtFromRaw(toolbar._defaultNrFontRaw);
+        toolbar._nrFontPt = fontFromDefault != null ? fontFromDefault : 10;
+        toolbar._nrFontPt = _applyNumberFontPt(root, toolbar._nrFontPt);
+
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      } catch (err) {
+        toolbar._status.textContent = err?.message || String(err) || "Reset fehlgeschlagen.";
+      }
+    };
+
     return;
   }
 
