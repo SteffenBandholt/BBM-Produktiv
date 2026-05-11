@@ -1452,6 +1452,9 @@ function _ensureDevPdfLayoutToolbar() {
   el._metaWidthMm = null;
   el._metaInsetMm = null;
   el._metaFontPx = null;
+  el._nrWidthMm = null;
+  el._nrInsetMm = null;
+  el._nrFontPt = null;
   el._orientation = "portrait";
   el._defaultMetaWidthRaw = null;
   el._defaultMetaInsetRaw = null;
@@ -1477,6 +1480,42 @@ function _readMetaWidthMm(root) {
   const px = Number(rect?.width || 0);
   if (!Number.isFinite(px) || px <= 0) return 15;
   return px / _pxPerMm();
+}
+
+function _readNumberWidthMm(root) {
+  const table = root?.querySelector?.("table.topsTable");
+  const col = table?.querySelector?.("colgroup col.colNr");
+  if (!col?.getBoundingClientRect) return 23;
+  const rect = col.getBoundingClientRect();
+  const px = Number(rect?.width || 0);
+  if (!Number.isFinite(px) || px <= 0) return 23;
+  return px / _pxPerMm();
+}
+
+function _readNumberInsetMm(root) {
+  const cell =
+    root?.querySelector?.("table.topsTable td.colNr") ||
+    root?.querySelector?.("table.topsTable th.colNr") ||
+    null;
+  if (!cell || typeof window?.getComputedStyle !== "function") return null;
+  const style = window.getComputedStyle(cell);
+  const px = Number(String(style?.paddingLeft || "").replace("px", "").trim());
+  if (!Number.isFinite(px) || px < 0) return null;
+  return px / _pxPerMm();
+}
+
+function _readNumberFontPt(root) {
+  const el =
+    root?.querySelector?.("table.topsTable .topNumber") ||
+    root?.querySelector?.("table.topsTable td.colNr") ||
+    root?.querySelector?.("table.topsTable th.colNr") ||
+    null;
+  if (!el || typeof window?.getComputedStyle !== "function") return null;
+  const style = window.getComputedStyle(el);
+  const px = Number(String(style?.fontSize || "").replace("px", "").trim());
+  if (!Number.isFinite(px) || px <= 0) return null;
+  // 1px = 0.75pt (CSS px to pt)
+  return px * 0.75;
 }
 
 function _readMetaFontPx(root) {
@@ -1608,6 +1647,53 @@ function _applyMetaWidthMm(root, mm) {
   return nextMm;
 }
 
+function _applyNumberWidthMm(root, mm) {
+  const nextMm = Math.max(12, Math.min(60, Math.round(Number(mm) * 10) / 10));
+  const tables = root?.querySelectorAll?.("table.topsTable") || [];
+  for (const table of tables) {
+    const col = table.querySelector?.("colgroup col.colNr");
+    if (col?.style) {
+      col.style.width = `${nextMm}mm`;
+    }
+  }
+  return nextMm;
+}
+
+function _applyNumberInsetMm(root, mm) {
+  const nextMm = Math.max(0, Math.min(10, Math.round(Number(mm) * 2) / 2));
+  const tables = root?.querySelectorAll?.("table.topsTable") || [];
+  for (const table of tables) {
+    const cells = table.querySelectorAll?.("th.colNr, td.colNr") || [];
+    for (const cell of cells) {
+      if (cell?.style) {
+        cell.style.paddingLeft = `${nextMm}mm`;
+      }
+    }
+  }
+  return nextMm;
+}
+
+function _applyNumberFontPt(root, pt) {
+  const nextPt = Math.max(6, Math.min(16, Math.round(Number(pt) * 2) / 2));
+  const tables = root?.querySelectorAll?.("table.topsTable") || [];
+  for (const table of tables) {
+    // .topNumber/.nrDate/.nrHint have explicit font-size rules in print.css,
+    // so setting the cell font-size alone would not be visible.
+    const numbers = table.querySelectorAll?.(".topNumber") || [];
+    for (const el of numbers) {
+      if (el?.style) el.style.fontSize = `${nextPt}pt`;
+    }
+
+    // Keep date/hint readable but slightly smaller than the main number.
+    const secondaryPt = Math.max(5, Math.round((nextPt - 1.5) * 2) / 2);
+    const secondary = table.querySelectorAll?.(".nrDate, .nrHint") || [];
+    for (const el of secondary) {
+      if (el?.style) el.style.fontSize = `${secondaryPt}pt`;
+    }
+  }
+  return nextPt;
+}
+
 function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   if (!toolbar) return;
   const zone = String(root?.dataset?.devPdfActiveZone || "").trim().toLowerCase();
@@ -1615,28 +1701,99 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   toolbar._line2.textContent = zoneLabel ? `TOP-Liste > PDF > ${zoneLabel}` : "TOP-Liste > PDF | Bereich waehlen";
 
   const isMeta = zone === "meta";
+  const isNumber = zone === "number";
   toolbar._minus.disabled = !isMeta;
   toolbar._plus.disabled = !isMeta;
   toolbar._insetMinus.disabled = !isMeta;
   toolbar._insetPlus.disabled = !isMeta;
   toolbar._fontMinus.disabled = !isMeta;
   toolbar._fontPlus.disabled = !isMeta;
+  // Save/Reset only for Meta for now (Nummernblock is live-only in this milestone).
   toolbar._save.disabled = !isMeta;
   toolbar._reset.disabled = !isMeta;
 
-  if (!isMeta) {
+  // Reuse the same controls for Nummernblock, but without persistence buttons.
+  if (isNumber) {
+    toolbar._minus.disabled = false;
+    toolbar._plus.disabled = false;
+    toolbar._insetMinus.disabled = false;
+    toolbar._insetPlus.disabled = false;
+    toolbar._fontMinus.disabled = false;
+    toolbar._fontPlus.disabled = false;
+  }
+
+  if (!isMeta && !isNumber) {
     toolbar._value.textContent = "Breite -";
     toolbar._insetValue.textContent = "Innen -";
     if (toolbar._fontValue) toolbar._fontValue.textContent = "Schrift -";
     toolbar._metaWidthMm = null;
     toolbar._metaInsetMm = null;
     toolbar._metaFontPx = null;
+    toolbar._nrWidthMm = null;
+    toolbar._nrInsetMm = null;
+    toolbar._nrFontPt = null;
     toolbar._minus.onclick = null;
     toolbar._plus.onclick = null;
     toolbar._insetMinus.onclick = null;
     toolbar._insetPlus.onclick = null;
     if (toolbar._fontMinus) toolbar._fontMinus.onclick = null;
     if (toolbar._fontPlus) toolbar._fontPlus.onclick = null;
+    return;
+  }
+
+  if (isNumber) {
+    if (toolbar._nrWidthMm == null) {
+      toolbar._nrWidthMm = _readNumberWidthMm(root);
+    }
+    if (toolbar._nrInsetMm == null) {
+      const inset = _readNumberInsetMm(root);
+      toolbar._nrInsetMm = inset != null ? inset : 1;
+      toolbar._nrInsetMm = _applyNumberInsetMm(root, toolbar._nrInsetMm);
+    }
+    if (toolbar._nrFontPt == null) {
+      const pt = _readNumberFontPt(root);
+      toolbar._nrFontPt = pt != null ? pt : 10;
+      toolbar._nrFontPt = _applyNumberFontPt(root, toolbar._nrFontPt);
+    }
+
+    toolbar._value.textContent = `Breite ${Math.round(Number(toolbar._nrWidthMm || 23))} mm`;
+    toolbar._insetValue.textContent = `Innen ${_formatMm(toolbar._nrInsetMm)} mm`;
+    if (toolbar._fontValue) toolbar._fontValue.textContent = `Schrift ${_formatMm(toolbar._nrFontPt)} pt`;
+
+    toolbar._minus.onclick = () => {
+      const current = toolbar._nrWidthMm == null ? _readNumberWidthMm(root) : toolbar._nrWidthMm;
+      toolbar._nrWidthMm = _applyNumberWidthMm(root, current - 1);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    toolbar._plus.onclick = () => {
+      const current = toolbar._nrWidthMm == null ? _readNumberWidthMm(root) : toolbar._nrWidthMm;
+      toolbar._nrWidthMm = _applyNumberWidthMm(root, current + 1);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    toolbar._insetMinus.onclick = () => {
+      const current = toolbar._nrInsetMm == null ? 1 : toolbar._nrInsetMm;
+      toolbar._nrInsetMm = _applyNumberInsetMm(root, current - 0.5);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    toolbar._insetPlus.onclick = () => {
+      const current = toolbar._nrInsetMm == null ? 1 : toolbar._nrInsetMm;
+      toolbar._nrInsetMm = _applyNumberInsetMm(root, current + 0.5);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    if (toolbar._fontMinus) {
+      toolbar._fontMinus.onclick = () => {
+        const current = toolbar._nrFontPt == null ? (_readNumberFontPt(root) || 10) : toolbar._nrFontPt;
+        toolbar._nrFontPt = _applyNumberFontPt(root, current - 0.5);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      };
+    }
+    if (toolbar._fontPlus) {
+      toolbar._fontPlus.onclick = () => {
+        const current = toolbar._nrFontPt == null ? (_readNumberFontPt(root) || 10) : toolbar._nrFontPt;
+        toolbar._nrFontPt = _applyNumberFontPt(root, current + 0.5);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      };
+    }
     return;
   }
 

@@ -1648,3 +1648,18 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Schrift wird aktuell als `px` gespeichert (Toolbar-Schrittweite 1px); CSS akzeptiert das auch im Print-HTML Preview.
+
+#### Paket: DEV PDF-Layout TOP-Liste (Nummernblock live, ohne Speichern)
+- Status: erledigt
+- Beschreibung:
+  - In der DEV-Print-HTML Vorschau lassen sich fuer den PDF-Nummernblock jetzt Breite (mm), Innen (mm) und Schrift (pt) live einstellen.
+  - Keine Speicherung/kein Reset fuer Nummernblock in diesem Schritt; beim Neuoeffnen ist wieder Standard aktiv.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: Speicherung/Reset fuer Nummernblock analog Metablock (separater Meilenstein)
+- Risiken/Hinweise:
+  - Die Nummernblock-Innenaenderung setzt aktuell `padding-left` inline auf `th/td.colNr` (nur im laufenden Preview).
