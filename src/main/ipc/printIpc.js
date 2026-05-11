@@ -352,16 +352,16 @@ async function printToPdf(payload = {}) {
   });
 
   const silent = !!payload.silent;
-  const debug = !silent && (!!payload.debug || !app.isPackaged);
+  // DevTools must open only when explicitly requested.
+  const debug = !silent && !!payload.debug;
 
-  const win = createPrintWindow({ debug });
+  const win = createPrintWindow({ show: debug, devTools: debug });
   attachPrintDebugPipes(win, jobId);
 
   if (debug) {
     try {
       win.show();
       win.focus();
-      win.webContents.openDevTools({ mode: "detach" });
     } catch (_e) {}
   }
 
@@ -473,6 +473,44 @@ function registerPrintIpc() {
       data.appVersion = app.getVersion ? app.getVersion() : "";
       data.buildChannel = app.isPackaged ? "STABLE" : "DEV";
       return { ok: true, data };
+    })
+  );
+
+  ipcMain.handle("print:openHtmlPreview", async (_evt, payload) =>
+    _runIpcTask(async () => {
+      _enforceFeature("protokoll");
+      if (app.isPackaged) {
+        return { ok: false, error: "DEV-only." };
+      }
+
+      const p = payload || {};
+      const orientation = _resolveRequestedOrientation(p);
+      const jobId = _randId();
+      const win = createPrintWindow({ show: true, devTools: false });
+      attachPrintDebugPipes(win, jobId);
+
+      const url = getPrintAppUrl();
+      win.webContents.once("did-finish-load", () => {
+        win.webContents.send("print:init", {
+          jobId,
+          mode: p.mode || "topsAll",
+          projectId: p.projectId || null,
+          meetingId: p.meetingId || null,
+          settingsOverride: p.settingsOverride || null,
+          orientation,
+          testOrientation: p.testOrientation || null,
+          debug: false,
+          devLayoutPreview: true,
+        });
+      });
+
+      await win.loadURL(url);
+      try {
+        win.show();
+        win.focus();
+      } catch (_e) {}
+
+      return { ok: true, jobId };
     })
   );
 

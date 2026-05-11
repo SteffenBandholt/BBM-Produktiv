@@ -17,6 +17,40 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- layoutTools-Grundmodul ist als DEV-only Basis nutzbar und dokumentiert:
+  - Pilot 1: TOP-Liste (UI/PDF) inkl. Zonen, live/persist/reset, UI/PDF getrennt
+  - Pilot 2: Teilnehmerliste (PDF) inkl. Zonen, live/persist/reset (inkl. Anwesend/Verteiler "x")
+  - echte PDFs bleiben ohne gruene Markierungen; DevTools oeffnen nicht automatisch
+- Der erste DEV-only Schritt fuer das TOP-Layout-Feintuning ist umgesetzt:
+  - die TOP-Liste kann im DEV-Build jetzt Layout-Zonen fuer Nummernblock, Textblock und Metablock anzeigen
+  - die aktive Zone wird gruen markiert
+  - der Header zeigt im DEV-Layoutmodus eine kleine Layout-Toolbar mit der aktiven Zone oder dem Hinweis `Bereich waehlen`
+  - im STABLE-Pfad bleibt die Zusatz-UI verborgen und nicht bedienbar
+- Der naechste DEV-only Layout-Schritt ist vorbereitet:
+  - die Header-Toolbar zeigt fuer die aktive Zone Dummy-Regler fuer Breite, Innen und Schrift
+  - die Regler koennen die laufende UI leicht veraendern, speichern aber nichts dauerhaft
+- Der Metablock bekommt jetzt die erste echte Live-Layout-Umstellung:
+  - `Breite` wirkt im DEV-Modus nur fuer die aktive Zone `Metablock`
+  - die Breite wird ohne Speicherung nur im laufenden Fenster um 5 px pro Klick angepasst
+- Die Metablock-Breite kann jetzt ueber den bestehenden `tableLayouts`-Weg gespeichert und zurueckgesetzt werden:
+  - `Speichern` schreibt nur die UI-Breite der aktuellen Metablock-Zone
+  - `Reset` holt den Tabellenstandard zurueck
+  - andere Zonen, PDF, Firmenliste und Teilnehmerliste bleiben unveraendert
+- Der Metablock-Innenabstand kann jetzt im DEV-Modus ebenfalls live, per Speicher und per Reset gesteuert werden:
+  - `Innen` wirkt nur fuer die aktive Zone `Metablock`
+  - Breite, Innenabstand und Schriftgroesse werden gemeinsam ueber `tableLayouts` gespeichert
+  - `Reset` stellt alle drei Werte auf den Standard zurueck
+- Der Nummernblock kann jetzt im DEV-Modus ebenfalls live, per Speicher und per Reset gesteuert werden:
+  - `Breite`, `Innen` und `Schrift` wirken fuer die aktive Zone `Nummernblock`
+  - Speicherung und Reset laufen ueber denselben `tableLayouts`-Weg wie beim Metablock
+- Der Textblock kann jetzt im DEV-Modus ebenfalls live, per Speicher und per Reset gesteuert werden:
+  - `Breite` bleibt bewusst ein Restbereich und ist im DEV-Toolbar-Regler deaktiviert
+  - `Innen` und `Schrift` wirken fuer die aktive Zone `Textblock`
+- Aufraeum-/Absicherung: die zusaetzlichen Padding/Font-Layout-Variablen sind jetzt strikt DEV-only und werden in STABLE nicht angewendet (keine sichtbare STABLE-Aenderung).
+- DEV-only Vorbereitung: In der Print-HTML-Vorschau der TOP-Liste sind jetzt drei PDF-Layout-Zonen (Nummernblock/Textblock/Metablock) per Click aktivierbar und gruen markierbar, ohne Layout-Shift und ohne dass Markierungen in den echten PDF-Export gelangen.
+- DEV-only PDF-Feintuning (live, ohne Speichern): In der Print-HTML-Vorschau kann jetzt die Breite des PDF-Metablocks per +/- live in 1mm-Schritten angepasst werden (nur in der laufenden Vorschau).
+- Bugfix: PDF-Metablock-Breite wird beim Speichern jetzt korrekt in `protokoll_tops` (PDF-Wert) persistiert und beim erneuten Oeffnen/Neustart wieder angewendet.
+- Naechster offener Schritt: die DEV-only Markierung und die neuen Live-Werte einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.
 - Tabellenlayout-Registry mit technischer Tabellenklassifizierung erweitert.
@@ -1543,3 +1577,184 @@ Wichtig:
   - gespeicherte Firmenlisten sind nicht mehr als funktionale Ausgabeart angeboten
   - Firmenliste laeuft direkt ueber den aktuellen Projektstand und braucht keine geschlossene-Protokoll-Auswahl
   - eine separate Mitarbeiter-/Personenliste ist im aktuellen Druckdialog noch nicht als eigener Modus vorhanden
+
+#### Paket: DEV PDF-Layout TOP-Liste (Metablock Innenabstand speichern/reset)
+- Status: erledigt
+- Beschreibung:
+  - Der PDF-Metablock-Innenabstand (Print-HTML Vorschau, DEV-only) wird beim Speichern jetzt ueber `protokoll_tops` in der bestehenden `tableLayouts`-Sanitization mitgetragen und nach Neustart wieder angewendet.
+  - Reset stellt Breite und Innenabstand wieder auf Standard zurueck.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/protokollTopsLayout.js`
+  - `src/renderer/print/printApp.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: PDF-Metablock-Innenabstand ebenfalls in der Toolbar als gespeicherter Default nach Save aktualisieren (rein kosmetisch)
+- Risiken/Hinweise:
+  - Keine PDF-Export-Logik angepasst; Markierungen bleiben DEV-only in der HTML-Vorschau.
+
+#### Paket: PDF-Vorschau bei offener Besprechung erlauben (ohne finalen Druck freizugeben)
+- Status: erledigt
+- Beschreibung:
+  - Die Sperre "Druck nur fuer geschlossene Besprechungen" greift jetzt nur noch beim finalen Protokolldruck.
+  - PDF-Vorschau/Vorabzug und DEV-Layout-Preview werden bei offener Besprechung nicht mehr blockiert.
+- Betroffene Dateien:
+  - `src/renderer/modules/ausgabe/PrintModal.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Kein Umbau der Drucklogik; nur die Blockierbedingung wurde um `preview` ergaenzt.
+
+#### Paket: DEV-Layout-Preview auch in Protokoll-PDF-Vorschau wieder aktiv
+- Status: erledigt
+- Beschreibung:
+  - Bei `printMeetingPreview` (Protokoll-PDF-Vorschau) wird im DEV-Channel wieder zusaetzlich das interaktive Print-HTML-Preview geoeffnet, damit Layout-Zonen/Toolbar aktiv sind, ohne den echten PDF-Export zu beeinflussen.
+- Betroffene Dateien:
+  - `src/renderer/modules/ausgabe/PrintModal.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Nur DEV-only Zusatzfenster; STABLE bleibt ohne Layout-Werkzeuge.
+
+#### Paket: DEV PDF-Layout Reset setzt wieder echte Standards (TOP-Liste Metablock)
+- Status: erledigt
+- Beschreibung:
+  - Reset in der DEV-Print-HTML Vorschau nutzt jetzt fuer Breite/Innen die Werte aus `defaultLayout` (nicht aus `effectiveLayout`), damit nach vorherigem Speichern der Reset wirklich auf Standard zurueckgeht.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Nur Reset-/Default-Handling im DEV-Preview angepasst; Speichern/Laden bleibt ueber `tableLayouts` unveraendert.
+
+#### Paket: DEV PDF-Layout TOP-Liste (Metablock Schrift speichern/reset)
+- Status: erledigt
+- Beschreibung:
+  - Der PDF-Metablock speichert jetzt zusaetzlich zur Breite und zum Innenabstand auch die Schriftgroesse ueber `pdf.rootVars.--bbm-top-col-meta-font-size`.
+  - Reset stellt Breite/Innen/Schrift wieder auf die echten Standardwerte aus `defaultLayout`.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/protokollTopsLayout.js`
+  - `src/renderer/print/printApp.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Schrift wird aktuell als `px` gespeichert (Toolbar-Schrittweite 1px); CSS akzeptiert das auch im Print-HTML Preview.
+
+#### Paket: DEV PDF-Layout TOP-Liste (Nummernblock live, ohne Speichern)
+- Status: erledigt
+- Beschreibung:
+  - In der DEV-Print-HTML Vorschau lassen sich fuer den PDF-Nummernblock jetzt Breite (mm), Innen (mm) und Schrift (pt) live einstellen.
+  - Keine Speicherung/kein Reset fuer Nummernblock in diesem Schritt; beim Neuoeffnen ist wieder Standard aktiv.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: Speicherung/Reset fuer Nummernblock analog Metablock (separater Meilenstein)
+- Risiken/Hinweise:
+  - Die Nummernblock-Innenaenderung setzt aktuell `padding-left` inline auf `th/td.colNr` (nur im laufenden Preview).
+
+#### Paket: DEV PDF-Layout TOP-Liste (Nummernblock speichern/reset)
+- Status: erledigt
+- Beschreibung:
+  - Der PDF-Nummernblock speichert jetzt Breite (ueber `columns[].pdfWidth`/`pdfNumberWidth`), Innenabstand (ueber `pdf.rootVars.--bbm-top-col-nr-padding-left`) und Schrift (ueber `pdf.rootVars.--bbm-top-col-nr-font-size`).
+  - Reset stellt die Werte wieder auf Standard zurueck und wendet sie sofort sichtbar an.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/protokollTopsLayout.js`
+  - `src/renderer/print/printApp.js`
+  - `src/renderer/print/print.css`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Die Hauptschriftgroesse des Nummernblocks ist jetzt per CSS-Variable steuerbar; Datum/Hinweis werden im Preview proportional per Inline-Style mitgefuehrt.
+
+#### Paket: DEV PDF-Layout TOP-Liste (Textblock live, ohne Speichern)
+- Status: erledigt
+- Beschreibung:
+  - In der DEV-Print-HTML Vorschau laesst sich der PDF-Textblock live einstellen: Innen (mm) und Schrift (pt).
+  - Breite bleibt gesperrt als "Restbereich" (keine direkte Textblock-Breitenverstellung).
+  - Keine Speicherung/kein Reset fuer Textblock in diesem Schritt.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: Textblock speichern/reset (separater Meilenstein)
+- Risiken/Hinweise:
+  - Text-Schrift wird live per Inline-Style auf `.shortText/.longText` gesetzt (nur im laufenden Preview).
+
+#### Paket: DEV PDF-Layout TOP-Liste (Textblock speichern/reset)
+- Status: erledigt
+- Beschreibung:
+  - Der PDF-Textblock speichert jetzt Innenabstand (pdf.rootVars text padding left/right) und Schriftgroesse (pdf.rootVars `--bbm-top-col-text-font-size`).
+  - Textblock-Breite bleibt "Restbereich" und wird nicht gespeichert.
+  - Reset stellt die Standardwerte aus `defaultLayout` wieder her und wendet sie sofort sichtbar an.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/protokollTopsLayout.js`
+  - `src/renderer/print/printApp.js`
+  - `src/renderer/print/print.css`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Der UI-Regler "Innen" setzt beim Speichern aktuell links und rechts symmetrisch; Standard-Reset stellt die urspruenglichen Default-Werte (0 / 1.5mm) wieder her.
+
+#### Paket: Refactor 1 (DevLayoutToolbar zentralisieren)
+- Status: erledigt
+- Beschreibung:
+  - `DevLayoutToolbar` wurde aus dem Protokoll-Modul in ein zentrales Hilfsmodul verschoben: `src/renderer/layoutTools/DevLayoutToolbar.js`.
+  - Protokoll (TopsHeader/TopsList) importiert die Toolbar jetzt aus dem neuen Pfad; Verhalten bleibt gleich.
+  - Tests wurden minimal angepasst, damit `npm test` nach den CSS-Variablen-Umstellungen weiterhin gruen laeuft (keine Verhaltensaenderung).
+- Betroffene Dateien:
+  - `src/renderer/layoutTools/DevLayoutToolbar.js`
+  - `src/renderer/modules/protokoll/TopsHeader.js`
+  - `src/renderer/modules/protokoll/TopsList.js`
+  - `scripts/tests/tableLayoutRegistry.test.cjs`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Keine funktionalen Aenderungen beabsichtigt; Bitte kurz manuell pruefen: TOP-UI Layout-Toolbar erscheint im DEV-Modus wie vorher.
+
+#### Paket: Refactor 2 (TOP-Zonen aus DevLayoutToolbar auslagern)
+- Status: erledigt
+- Beschreibung:
+  - TOP-spezifische Zonendefinitionen (Keys/Labels/Controls) wurden in eine Surface-Datei ausgelagert:
+    `src/renderer/modules/protokoll/layoutSurfaces/toplistLayoutSurface.js`.
+  - `DevLayoutToolbar` ist jetzt surface-getrieben und enthaelt keine TOP-spezifischen Labels/Zonen mehr (Fallback bleibt fuer Kompatibilitaet).
+  - Protokoll bindet die Toolbar wie vorher ein; Verhalten bleibt gleich.
+- Betroffene Dateien:
+  - `src/renderer/modules/protokoll/layoutSurfaces/toplistLayoutSurface.js`
+  - `src/renderer/layoutTools/DevLayoutToolbar.js`
+  - `src/renderer/modules/protokoll/TopsHeader.js`
+  - `src/renderer/modules/protokoll/TopsList.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Keine Verhaltensaenderung beabsichtigt; nur Zonendefinition/Labels umgezogen.

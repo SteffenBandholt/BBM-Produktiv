@@ -152,7 +152,16 @@ async function _sanitizeTableLayout(layout, orientation, definition) {
   }
   if (mod && typeof mod.buildTableLayoutOverlayFromColumns === "function") {
     const columns = Array.isArray(layout?.columns) && layout.columns.length ? layout.columns : Array.isArray(definition.columns) ? definition.columns : [];
-    return mod.buildTableLayoutOverlayFromColumns(columns, orientation, { fallbackColumns: definition.columns || [] });
+    // Preserve optional layout extras (ui/pdf/labels) for non-protokoll_tops tables.
+    // This keeps UI and PDF values separated inside the stored layout and allows table-specific rootVars.
+    const layoutExtras = {};
+    if (_isPlainObject(layout?.ui)) layoutExtras.ui = layout.ui;
+    if (_isPlainObject(layout?.pdf)) layoutExtras.pdf = layout.pdf;
+    if (_isPlainObject(layout?.labels)) layoutExtras.labels = layout.labels;
+    return mod.buildTableLayoutOverlayFromColumns(columns, orientation, {
+      fallbackColumns: definition.columns || [],
+      layoutExtras: Object.keys(layoutExtras).length ? layoutExtras : null,
+    });
   }
   return _cloneJson(layout);
 }

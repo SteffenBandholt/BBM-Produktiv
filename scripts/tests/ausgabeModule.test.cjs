@@ -210,12 +210,24 @@ async function runAusgabeModuleTests(run) {
   await run("Ausgabe: PDF-Schriftgrößen sind auf die neuen TOP-Werte gesetzt", () => {
     assert.equal(printCssSource.includes("--bbm-top-short-font-size: 8.5pt;"), true);
     assert.equal(printCssSource.includes("--bbm-top-long-font-size: 8.5pt;"), true);
-    assert.equal(printCssSource.includes(".topsTable .shortText {\n  font-weight: 500;\n  font-size: 9pt;"), true);
-    assert.equal(printCssSource.includes(".topsTable .longText {\n  margin-top: 2mm;\n  font-weight: 500;\n  font-size: 9pt;"), true);
+    assert.equal(
+      printCssSource.includes(".topsTable .shortText {\n  font-weight: 500;\n  font-size: 9pt;") ||
+        printCssSource.includes(".topsTable .shortText {\n  font-weight: 500;\n  font-size: var(--bbm-top-col-text-font-size, 9pt);"),
+      true
+    );
+    assert.equal(
+      printCssSource.includes(".topsTable .longText {\n  margin-top: 2mm;\n  font-weight: 500;\n  font-size: 9pt;") ||
+        printCssSource.includes(".topsTable .longText {\n  margin-top: 2mm;\n  font-weight: 500;\n  font-size: var(--bbm-top-col-text-font-size, 9pt);"),
+      true
+    );
     assert.equal(printCssSource.includes(".topsTable .colMeta {"), true);
     assert.equal(printCssSource.includes("font-size: 6.5pt;"), true);
     assert.equal(printCssSource.includes(".lvl1Row .topNumber {\n  font-size: 10pt;"), true);
-    assert.equal(printCssSource.includes(".topNumber {\n  font-weight: 650;\n  font-size: 8.5pt;"), true);
+    assert.equal(
+      printCssSource.includes(".topNumber {\n  font-weight: 650;\n  font-size: 8.5pt;") ||
+        printCssSource.includes(".topNumber {\n  font-weight: 650;\n  font-size: var(--bbm-top-col-nr-font-size, 8.5pt);"),
+      true
+    );
     assert.equal(printCssSource.includes(".topsTable thead .colNr,\n.topsTable thead .colText {\n  font-size: 10pt;"), true);
     assert.equal(printCssSource.includes(".topsTable thead .colMeta,\n.topsTable thead .metaHead,\n.topsTable thead .metaHead > div {\n  font-size: 8pt;"), true);
     assert.equal(printModalSource.includes(".colNr .nr {\n      font-weight: 400;\n      font-size: 8.5pt;"), true);

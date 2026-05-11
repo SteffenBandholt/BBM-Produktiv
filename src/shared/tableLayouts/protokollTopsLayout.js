@@ -1,11 +1,24 @@
 ﻿const PROTOKOLL_TOPS_EDITOR_DEFAULTS = Object.freeze({
   orientation: "portrait",
   uiNumberWidth: "64px",
+  uiNumberInset: "5px",
+  uiNumberFontSize: "11px",
   uiTextTrack: "minmax(0, 1fr)",
+  uiTextInset: "5px",
+  uiTextFontSize: "11px",
   uiMetaWidth: "74px",
+  uiMetaInset: "4px",
+  uiMetaFontSize: "11px",
   pdfNumberWidth: "23mm",
   pdfTextWidth: "auto",
   pdfMetaWidth: "15ch",
+  pdfNumberInset: "1mm",
+  pdfNumberFontSize: "8.5pt",
+  pdfTextPaddingLeft: "0mm",
+  pdfTextPaddingRight: "1.5mm",
+  pdfTextFontSize: "9pt",
+  pdfMetaInset: "5mm",
+  pdfMetaFontSize: "6.5pt",
   labelTop: "TOP",
   labelText: "Gegenstand",
   labelMeta1: "Status",
@@ -15,8 +28,14 @@
 
 export const PROTOKOLL_TOPS_EDIT_FIELDS = Object.freeze([
   Object.freeze({ key: "uiNumberWidth", label: "UI TOP-Spalte", path: "ui.rootVars.--bbm-tops-list-number-col", type: "gridTrack", required: true }),
+  Object.freeze({ key: "uiNumberInset", label: "UI TOP-Innenabstand", path: "ui.rootVars.--bbm-tops-list-number-padding-inline", type: "gridTrack", required: true }),
+  Object.freeze({ key: "uiNumberFontSize", label: "UI TOP-Schrift", path: "ui.rootVars.--bbm-tops-list-number-font-size", type: "gridTrack", required: true }),
   Object.freeze({ key: "uiTextTrack", label: "UI Text-Spalte", path: "ui.rootVars.--bbm-tops-list-text-col", type: "gridTrack", required: true }),
+  Object.freeze({ key: "uiTextInset", label: "UI Text-Innenabstand", path: "ui.rootVars.--bbm-tops-list-text-padding-inline", type: "gridTrack", required: true }),
+  Object.freeze({ key: "uiTextFontSize", label: "UI Text-Schrift", path: "ui.rootVars.--bbm-tops-list-text-font-size", type: "gridTrack", required: true }),
   Object.freeze({ key: "uiMetaWidth", label: "UI Meta-Spalte", path: "ui.rootVars.--bbm-tops-list-meta-col", type: "gridTrack", required: true }),
+  Object.freeze({ key: "uiMetaInset", label: "UI Meta-Innenabstand", path: "ui.rootVars.--bbm-tops-list-meta-padding-inline", type: "gridTrack", required: true }),
+  Object.freeze({ key: "uiMetaFontSize", label: "UI Meta-Schrift", path: "ui.rootVars.--bbm-tops-list-meta-font-size", type: "gridTrack", required: true }),
   Object.freeze({ key: "pdfNumberWidth", label: "PDF TOP-Spalte", path: "pdf.columns.number.width", type: "gridTrack", required: true }),
   Object.freeze({ key: "pdfTextWidth", label: "PDF Text-Spalte", path: "pdf.columns.text.width", type: "gridTrack", required: true }),
   Object.freeze({ key: "pdfMetaWidth", label: "PDF Meta-Spalte", path: "pdf.columns.meta.width", type: "gridTrack", required: true }),
@@ -140,8 +159,14 @@ const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
   ui: Object.freeze({
     rootVars: Object.freeze({
       "--bbm-tops-list-number-col": "64px",
+      "--bbm-tops-list-number-padding-inline": "5px",
+      "--bbm-tops-list-number-font-size": "11px",
       "--bbm-tops-list-text-col": "minmax(0, 1fr)",
+      "--bbm-tops-list-text-padding-inline": "5px",
+      "--bbm-tops-list-text-font-size": "11px",
       "--bbm-tops-list-meta-col": "74px",
+      "--bbm-tops-list-meta-padding-inline": "4px",
+      "--bbm-tops-list-meta-font-size": "11px",
     }),
     gridTemplateColumns:
       "var(--bbm-tops-list-number-col, 64px) var(--bbm-tops-list-text-col, minmax(0, 1fr)) minmax(50px, var(--bbm-tops-list-meta-col, 74px))",
@@ -149,8 +174,11 @@ const PROTOKOLL_TOPS_LAYOUT = Object.freeze({
   pdf: Object.freeze({
     rootVars: Object.freeze({
       "--bbm-top-col-nr-width": "23mm",
+      "--bbm-top-col-nr-padding-left": "1mm",
+      "--bbm-top-col-nr-font-size": "8.5pt",
       "--bbm-top-col-text-padding-left": "0",
       "--bbm-top-col-text-padding-right": "1.5mm",
+      "--bbm-top-col-text-font-size": "9pt",
       "--bbm-top-col-meta-width": "15ch",
       "--bbm-top-col-meta-padding-left": "5mm",
       "--bbm-top-col-meta-font-size": "6.5pt",
@@ -366,11 +394,31 @@ function _extractValues(layout = {}) {
   return {
     orientation: _normalizeOrientation(layout?.variant || layout?.orientation || PROTOKOLL_TOPS_EDITOR_DEFAULTS.orientation),
     uiNumberWidth: _normalizeText(topCol.uiWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
+    uiNumberInset: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-number-padding-inline"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberInset,
+    uiNumberFontSize: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-number-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberFontSize,
     uiTextTrack: _normalizeText(textCol.uiWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
+    uiTextInset: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-text-padding-inline"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextInset,
+    uiTextFontSize: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-text-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextFontSize,
     uiMetaWidth: _normalizeText(metaCol.uiWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
+    uiMetaInset: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-meta-padding-inline"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaInset,
+    uiMetaFontSize: _normalizeText(layout?.ui?.rootVars?.["--bbm-tops-list-meta-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaFontSize,
     pdfNumberWidth: _normalizeText(topCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth,
     pdfTextWidth: _normalizeText(textCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth,
     pdfMetaWidth: _normalizeText(metaCol.pdfWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth,
+    pdfNumberInset:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-nr-padding-left"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberInset,
+    pdfNumberFontSize:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-nr-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberFontSize,
+    pdfTextPaddingLeft:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-text-padding-left"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingLeft,
+    pdfTextPaddingRight:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-text-padding-right"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingRight,
+    pdfTextFontSize:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-text-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextFontSize,
+    pdfMetaInset:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-meta-padding-left"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
+    pdfMetaFontSize:
+      _normalizeText(layout?.pdf?.rootVars?.["--bbm-top-col-meta-font-size"]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
     labelTop: _normalizeText(topCol.label) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelTop,
     labelText: _normalizeText(textCol.label) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelText,
     labelMeta1: _normalizeText(metaLabels[0]) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.labelMeta1,
@@ -392,11 +440,26 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
         ui: {
           rootVars: {
             "--bbm-tops-list-number-col": values?.uiNumberWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberWidth,
+            "--bbm-tops-list-number-padding-inline": values?.uiNumberInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberInset,
+            "--bbm-tops-list-number-font-size": values?.uiNumberFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberFontSize,
             "--bbm-tops-list-text-col": values?.uiTextTrack || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextTrack,
+            "--bbm-tops-list-text-padding-inline": values?.uiTextInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextInset,
+            "--bbm-tops-list-text-font-size": values?.uiTextFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextFontSize,
             "--bbm-tops-list-meta-col": values?.uiMetaWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaWidth,
+            "--bbm-tops-list-meta-padding-inline": values?.uiMetaInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaInset,
+            "--bbm-tops-list-meta-font-size": values?.uiMetaFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaFontSize,
           },
         },
         pdf: {
+          rootVars: {
+            "--bbm-top-col-nr-padding-left": values?.pdfNumberInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberInset,
+            "--bbm-top-col-nr-font-size": values?.pdfNumberFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberFontSize,
+            "--bbm-top-col-text-padding-left": values?.pdfTextPaddingLeft || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingLeft,
+            "--bbm-top-col-text-padding-right": values?.pdfTextPaddingRight || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingRight,
+            "--bbm-top-col-text-font-size": values?.pdfTextFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextFontSize,
+            "--bbm-top-col-meta-padding-left": values?.pdfMetaInset || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
+            "--bbm-top-col-meta-font-size": values?.pdfMetaFontSize || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
+          },
           columns: {
             number: { width: values?.pdfNumberWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth },
             text: { width: values?.pdfTextWidth || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth },
@@ -418,11 +481,24 @@ export function validateProtokollTopsEditorValues(values = {}, orientation = "po
     values: {
       orientation: _normalizeOrientation(values.orientation || orientation),
       uiNumberWidth: topCol.uiWidth,
+      uiNumberInset: _normalizeText(values.uiNumberInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberInset,
+      uiNumberFontSize: _normalizeText(values.uiNumberFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiNumberFontSize,
       uiTextTrack: textCol.uiWidth,
+      uiTextInset: _normalizeText(values.uiTextInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextInset,
+      uiTextFontSize: _normalizeText(values.uiTextFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiTextFontSize,
       uiMetaWidth: metaCol.uiWidth,
+      uiMetaInset: _normalizeText(values.uiMetaInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaInset,
+      uiMetaFontSize: _normalizeText(values.uiMetaFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.uiMetaFontSize,
       pdfNumberWidth: topCol.pdfWidth,
       pdfTextWidth: textCol.pdfWidth,
       pdfMetaWidth: metaCol.pdfWidth,
+      pdfNumberInset: _normalizeText(values.pdfNumberInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberInset,
+      pdfNumberFontSize: _normalizeText(values.pdfNumberFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberFontSize,
+      pdfTextPaddingLeft: _normalizeText(values.pdfTextPaddingLeft) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingLeft,
+      pdfTextPaddingRight: _normalizeText(values.pdfTextPaddingRight) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingRight,
+      pdfTextFontSize: _normalizeText(values.pdfTextFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextFontSize,
+      pdfMetaInset: _normalizeText(values.pdfMetaInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
+      pdfMetaFontSize: _normalizeText(values.pdfMetaFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
       labelTop: topCol.label,
       labelText: textCol.label,
       labelMeta1: metaCol.headerLines[0] || metaCol.label,
@@ -449,11 +525,26 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
     ui: {
       rootVars: {
         "--bbm-tops-list-number-col": normalized.uiNumberWidth,
+        "--bbm-tops-list-number-padding-inline": normalized.uiNumberInset,
+        "--bbm-tops-list-number-font-size": normalized.uiNumberFontSize,
         "--bbm-tops-list-text-col": normalized.uiTextTrack,
+        "--bbm-tops-list-text-padding-inline": normalized.uiTextInset,
+        "--bbm-tops-list-text-font-size": normalized.uiTextFontSize,
         "--bbm-tops-list-meta-col": normalized.uiMetaWidth,
+        "--bbm-tops-list-meta-padding-inline": normalized.uiMetaInset,
+        "--bbm-tops-list-meta-font-size": normalized.uiMetaFontSize,
       },
     },
     pdf: {
+      rootVars: {
+        "--bbm-top-col-nr-padding-left": normalized.pdfNumberInset,
+        "--bbm-top-col-nr-font-size": normalized.pdfNumberFontSize,
+        "--bbm-top-col-text-padding-left": normalized.pdfTextPaddingLeft,
+        "--bbm-top-col-text-padding-right": normalized.pdfTextPaddingRight,
+        "--bbm-top-col-text-font-size": normalized.pdfTextFontSize,
+        "--bbm-top-col-meta-padding-left": normalized.pdfMetaInset,
+        "--bbm-top-col-meta-font-size": normalized.pdfMetaFontSize,
+      },
       columns: {
         number: { key: "top", className: "colNr", width: normalized.pdfNumberWidth },
         text: { key: "text", className: "colText", width: normalized.pdfTextWidth },

@@ -1,5 +1,16 @@
+import { DevLayoutToolbar } from "../../layoutTools/DevLayoutToolbar.js";
+import { TOPLIST_LAYOUT_SURFACE } from "./layoutSurfaces/toplistLayoutSurface.js";
+
 export class TopsHeader {
-  constructor({ onClose, onEndMeeting, onKeywordClick } = {}) {
+  constructor({
+    onClose,
+    onEndMeeting,
+    onKeywordClick,
+    onDevLayoutPreviewChange,
+    onDevLayoutZoneSelect,
+    onDevLayoutSave,
+    onDevLayoutReset,
+  } = {}) {
     this.onClose = typeof onClose === "function" ? onClose : null;
     this.onEndMeeting = typeof onEndMeeting === "function" ? onEndMeeting : null;
     this.onKeywordClick = typeof onKeywordClick === "function" ? onKeywordClick : null;
@@ -35,6 +46,14 @@ export class TopsHeader {
     this.line3El.dataset.empty = "true";
 
     this.titleWrap.append(this.line1El, this.line2El, this.line3El);
+
+    this.devLayoutToolbar = new DevLayoutToolbar({
+      surface: TOPLIST_LAYOUT_SURFACE,
+      onPreviewChange: onDevLayoutPreviewChange,
+      onZoneSelect: onDevLayoutZoneSelect,
+      onSave: onDevLayoutSave,
+      onReset: onDevLayoutReset,
+    });
 
     this.spacer = document.createElement("div");
     this.spacer.className = "bbm-tops-header-spacer";
@@ -75,7 +94,13 @@ export class TopsHeader {
     };
 
     this.actionsWrap.append(this.btnEndMeeting, this.btnClose);
-    this.root.append(this.titleWrap, this.spacer, this.actionsWrap, this.metaLegend);
+    this.root.append(
+      this.titleWrap,
+      this.devLayoutToolbar.root,
+      this.spacer,
+      this.actionsWrap,
+      this.metaLegend
+    );
   }
 
   getActionsHost() {
@@ -97,6 +122,7 @@ export class TopsHeader {
     isBusy,
     canEditKeyword,
     showMetaLegend,
+    devLayoutMode,
   } = {}) {
     const busy = !!isBusy;
     const readOnly = !!isReadOnly;
@@ -115,6 +141,7 @@ export class TopsHeader {
     this.line3El.textContent = context;
     this.line3El.dataset.empty = context ? "false" : "true";
     this.metaLegend.dataset.visible = showMetaLegend ? "true" : "false";
+    this.devLayoutToolbar.update(devLayoutMode);
 
     this.root.dataset.isBusy = busy ? "true" : "false";
     this.root.dataset.isReadOnly = readOnly ? "true" : "false";

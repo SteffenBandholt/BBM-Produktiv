@@ -54,6 +54,15 @@
   padding: 8px 12px 12px;
 }
 
+[data-bbm-tops-screen-sheet-paper="true"][data-dev-layout-mode="true"] {
+  cursor: pointer;
+}
+
+[data-bbm-tops-screen-sheet-paper="true"][data-dev-layout-mode="true"][data-layout-zone-active="true"] {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08), inset 0 0 0 2px rgba(27, 143, 58, 0.42);
+  background: linear-gradient(180deg, rgba(27, 143, 58, 0.06) 0%, rgba(255, 255, 255, 0) 60%);
+}
+
 [data-bbm-tops-screen-area="edit"] {
   flex: 0 0 auto;
   border-top: 1px solid #d9e2ec;
@@ -93,6 +102,149 @@
   padding: 1px 3px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.32);
+}
+
+[data-bbm-dev-layout-toolbar="true"] {
+  display: grid;
+  gap: 4px;
+  min-width: max-content;
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border: 1px solid #c9dfcf;
+  background: rgba(255, 255, 255, 0.4);
+  box-sizing: border-box;
+}
+
+.bbm-dev-layout-toolbar-zones {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bbm-dev-layout-toolbar-zone-btn {
+  border: 1px solid rgba(58, 90, 92, 0.25);
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.bbm-dev-layout-toolbar-zone-btn[disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.bbm-dev-layout-toolbar-zone-btn[data-active="true"] {
+  border-color: rgba(27, 143, 58, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(27, 143, 58, 0.25);
+}
+
+.bbm-dev-layout-toolbar-head {
+  display: grid;
+  gap: 1px;
+}
+
+.bbm-dev-layout-toolbar-line1 {
+  font-size: 8pt;
+  font-weight: 700;
+  color: #25624f;
+  white-space: nowrap;
+}
+
+.bbm-dev-layout-toolbar-line2 {
+  font-size: 7.6pt;
+  font-weight: 600;
+  color: #2b6655;
+  white-space: nowrap;
+}
+
+.bbm-dev-layout-toolbar-line2[data-empty="true"] {
+  opacity: 0.82;
+}
+
+.bbm-dev-layout-toolbar-controls {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, max-content));
+  gap: 6px;
+}
+
+.bbm-dev-layout-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bbm-dev-layout-toolbar-control {
+  display: grid;
+  grid-template-columns: auto auto auto auto;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 7px;
+  border: 1px solid #d8e8db;
+  background: rgba(255, 255, 255, 0.48);
+}
+
+.bbm-dev-layout-toolbar-control-label {
+  font-size: 7.2pt;
+  font-weight: 700;
+  color: #275d4c;
+  white-space: nowrap;
+}
+
+.bbm-dev-layout-toolbar-control-btn {
+  min-width: 18px;
+  min-height: 18px;
+  padding: 0;
+  border-radius: 5px;
+  border: 1px solid #9fc5a9;
+  background: linear-gradient(180deg, #fff 0%, #edf7ef 100%);
+  color: #245641;
+  font-size: 8pt;
+  line-height: 1;
+}
+
+.bbm-dev-layout-toolbar-control-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #fff 0%, #e4f3e7 100%);
+}
+
+.bbm-dev-layout-toolbar-control-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.bbm-dev-layout-toolbar-control-value {
+  min-width: 2ch;
+  text-align: center;
+  font-size: 7.4pt;
+  font-weight: 700;
+  color: #1f513f;
+}
+
+.bbm-dev-layout-toolbar-action-btn {
+  min-height: 20px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  border: 1px solid #9ebfa9;
+  background: linear-gradient(180deg, #fff 0%, #edf6ef 100%);
+  color: #245641;
+  font-size: 7.5pt;
+  font-weight: 700;
+}
+
+.bbm-dev-layout-toolbar-action-btn:hover:not(:disabled) {
+  background: linear-gradient(180deg, #fff 0%, #e4f2e7 100%);
+}
+
+.bbm-dev-layout-toolbar-status {
+  font-size: 7.4pt;
+  font-weight: 700;
+  color: #9d1c1c;
+  min-height: 1.1em;
 }
 
 .bbm-tops-header-line1 {
@@ -251,6 +403,49 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
+[data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone {
+  border-radius: 8px;
+  box-sizing: border-box;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease;
+  cursor: pointer;
+  user-select: none;
+}
+
+[data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone:hover {
+  box-shadow: inset 0 0 0 1px rgba(27, 143, 58, 0.18);
+}
+
+[data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"] {
+  background: rgba(27, 143, 58, 0.11);
+  box-shadow: inset 0 0 0 1px rgba(27, 143, 58, 0.42);
+}
+
+[data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"][data-layout-zone="number"] {
+  min-width: calc(var(--bbm-tops-list-number-col, 64px) + (var(--bbm-dev-layout-preview-width, 0) * 1px));
+  padding-inline: calc(5px + (var(--bbm-dev-layout-preview-inset, 0) * 1px));
+  font-size: calc(100% + (var(--bbm-dev-layout-preview-font, 0) * 3%));
+}
+
+[data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"][data-layout-zone="text"] {
+  min-width: calc(0px + (var(--bbm-dev-layout-preview-width, 0) * 1px));
+  /* UI-Preview is driven via root vars (see TopsScreen._applyDevLayoutPreview). */
+  padding-inline: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
+}
+
+[data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"][data-layout-zone="meta"] {
+  min-width: var(--bbm-tops-list-meta-col, 74px);
+  padding-inline: var(--bbm-tops-list-meta-padding-inline, 4px);
+}
+
+[data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"] .bbm-tops-list-row-number-value,
+[data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"] .bbm-tops-list-row-title,
+[data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"] .bbm-tops-list-row-meta-text {
+  color: #1b8f3a;
+}
+
 .bbm-tops-list-row {
   list-style: none;
   margin: 6px 0;
@@ -347,8 +542,9 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   gap: 1px;
   white-space: nowrap;
   font-family: var(--bbm-top-text-font-family);
-  font-size: var(--bbm-top-short-font-size);
+  font-size: var(--bbm-tops-list-number-font-size, var(--bbm-top-short-font-size));
   line-height: var(--bbm-top-text-line-height);
+  padding-inline: var(--bbm-tops-list-number-padding-inline, 0);
 }
 
 .bbm-tops-list-row-number-line {
@@ -405,7 +601,8 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row-title {
   font-weight: 600;
-  font-size: var(--bbm-top-short-font-size);
+  /* DEV-Layout: allow live fine-tuning via --bbm-tops-list-text-font-size (falls back to default). */
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
   max-inline-size: var(--bbm-top-short-measure);
@@ -456,7 +653,8 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row-preview {
   margin-top: 4px;
-  font-size: var(--bbm-top-long-font-size);
+  /* DEV-Layout: keep preview in sync with the text-zone font size when overridden. */
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-long-font-size));
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
   max-inline-size: var(--bbm-top-long-measure);
@@ -471,6 +669,11 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   max-inline-size: 82ch;
 }
 
+/* DEV-Layout override: when the text-zone font variable is set, keep the preview in sync. */
+.bbm-tops-list-row-text .bbm-tops-list-row-preview {
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-long-font-size));
+}
+
 .bbm-tops-list-row[data-is-important="true"]:not([data-is-completed="true"]) .bbm-tops-list-row-preview {
   opacity: 1;
 }
@@ -478,8 +681,9 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 .bbm-tops-list-row-text {
   width: 100%;
   max-inline-size: min(100%, var(--bbm-top-long-measure));
-  padding-left: var(--bbm-top-text-pad-x);
-  padding-right: var(--bbm-top-text-pad-x);
+  padding-left: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
+  padding-right: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-text {
@@ -491,7 +695,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row-meta {
-  font-size: 8.5pt;
+  font-size: var(--bbm-tops-list-meta-font-size, 8.5pt);
   opacity: 0.9;
   display: grid;
   gap: 2px;
