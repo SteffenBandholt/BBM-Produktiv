@@ -1,4 +1,5 @@
 import { DevLayoutToolbar } from "../../layoutTools/DevLayoutToolbar.js";
+import { TOPLIST_LAYOUT_SURFACE } from "./layoutSurfaces/toplistLayoutSurface.js";
 
 export class TopsHeader {
   constructor({
@@ -46,6 +47,7 @@ export class TopsHeader {
     this.titleWrap.append(this.line1El, this.line2El, this.line3El);
 
     this.devLayoutToolbar = new DevLayoutToolbar({
+      surface: TOPLIST_LAYOUT_SURFACE,
       onPreviewChange: onDevLayoutPreviewChange,
       onSave: onDevLayoutSave,
       onReset: onDevLayoutReset,

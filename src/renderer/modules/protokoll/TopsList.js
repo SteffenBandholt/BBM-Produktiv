@@ -3,7 +3,7 @@ import {
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
 import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protokollTopsLayout.js";
-import { DEV_LAYOUT_ZONE_LABELS, normalizeZoneKey } from "../../layoutTools/DevLayoutToolbar.js";
+import { TOPLIST_LAYOUT_ZONE_LABELS, normalizeToplistZoneKey } from "./layoutSurfaces/toplistLayoutSurface.js";
 
 function getAssetBaseUrl() {
   if (typeof window !== "undefined" && window?.location?.href) return window.location.href;
@@ -72,7 +72,7 @@ export class TopsList {
 
   setDevLayoutMode(mode = {}) {
     const enabled = !!mode?.enabled;
-    const activeZone = normalizeZoneKey(mode?.activeZone);
+    const activeZone = normalizeToplistZoneKey(mode?.activeZone);
     this.devLayoutMode = {
       enabled,
       activeZone: enabled ? activeZone : null,
@@ -282,17 +282,17 @@ export class TopsList {
     if (!zoneEl) return;
     if (!this.devLayoutMode?.enabled) return;
 
-    const key = normalizeZoneKey(zoneKey);
+    const key = normalizeToplistZoneKey(zoneKey);
     if (!key) return;
 
     zoneEl.classList.add("bbm-tops-list-layout-zone");
     zoneEl.dataset.layoutZone = key;
-    zoneEl.dataset.layoutZoneLabel = DEV_LAYOUT_ZONE_LABELS[key];
+    zoneEl.dataset.layoutZoneLabel = TOPLIST_LAYOUT_ZONE_LABELS[key];
     zoneEl.dataset.layoutZoneActive = this.devLayoutMode.activeZone === key ? "true" : "false";
     zoneEl.setAttribute("role", "button");
     zoneEl.tabIndex = 0;
-    zoneEl.title = `Layout-Zone: ${DEV_LAYOUT_ZONE_LABELS[key]}`;
-    zoneEl.setAttribute("aria-label", `Layout-Zone ${DEV_LAYOUT_ZONE_LABELS[key]}`);
+    zoneEl.title = `Layout-Zone: ${TOPLIST_LAYOUT_ZONE_LABELS[key]}`;
+    zoneEl.setAttribute("aria-label", `Layout-Zone ${TOPLIST_LAYOUT_ZONE_LABELS[key]}`);
     zoneEl.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();

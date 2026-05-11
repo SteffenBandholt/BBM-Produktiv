@@ -1,16 +1,20 @@
-const DEV_LAYOUT_ZONE_LABELS = Object.freeze({
-  number: "Nummernblock",
-  text: "Textblock",
-  meta: "Metablock",
-});
-
-function normalizeZoneKey(value) {
-  const key = String(value || "").trim().toLowerCase();
-  return Object.prototype.hasOwnProperty.call(DEV_LAYOUT_ZONE_LABELS, key) ? key : null;
-}
-
 export class DevLayoutToolbar {
-  constructor({ onPreviewChange, onSave, onReset } = {}) {
+  constructor({ surface, onPreviewChange, onSave, onReset } = {}) {
+    // "surface" defines zones + labels + control availability.
+    // Keep a tiny internal fallback to avoid breaking callers that don't pass it.
+    this.surface =
+      surface && typeof surface === "object"
+        ? surface
+        : {
+            surfaceKey: "protokoll.toplist",
+            label: "TOP-Liste",
+            moduleId: "protokoll",
+            zones: {
+              number: { key: "number", label: "Nummernblock", controls: ["width", "inset", "font"] },
+              text: { key: "text", label: "Textblock", controls: ["inset", "font"] },
+              meta: { key: "meta", label: "Metablock", controls: ["width", "inset", "font"] },
+            },
+          };
     this.onPreviewChange = typeof onPreviewChange === "function" ? onPreviewChange : null;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.onReset = typeof onReset === "function" ? onReset : null;
@@ -30,7 +34,7 @@ export class DevLayoutToolbar {
 
     this.line1El = document.createElement("div");
     this.line1El.className = "bbm-dev-layout-toolbar-line1";
-    this.line1El.textContent = "Layout: TOP-Liste | Bereich waehlen";
+    this.line1El.textContent = `Layout: ${this.surface.label} | Bereich waehlen`;
 
     this.line2El = document.createElement("div");
     this.line2El.className = "bbm-dev-layout-toolbar-line2";
@@ -82,15 +86,15 @@ export class DevLayoutToolbar {
 
   update({ enabled, activeZone } = {}) {
     const isEnabled = !!enabled;
-    const zoneKey = normalizeZoneKey(activeZone);
+    const zoneKey = this._normalizeZoneKey(activeZone);
     this.activeZone = isEnabled ? zoneKey : null;
-    const zoneLabel = zoneKey ? DEV_LAYOUT_ZONE_LABELS[zoneKey] : "";
+    const zoneLabel = zoneKey ? this.surface?.zones?.[zoneKey]?.label || "" : "";
     const preview = zoneKey ? this.previewStateByZone[zoneKey] || this.previewStateByZone.number : null;
 
     this.root.hidden = !isEnabled;
     this.root.dataset.visible = isEnabled ? "true" : "false";
     this.root.dataset.activeZone = zoneKey || "";
-    this.line1El.textContent = zoneLabel ? `TOP-Liste > ${zoneLabel}` : "Layout: TOP-Liste | Bereich waehlen";
+    this.line1El.textContent = zoneLabel ? `${this.surface.label} > ${zoneLabel}` : `Layout: ${this.surface.label} | Bereich waehlen`;
     this.line2El.textContent = zoneLabel
       ? `Breite ${preview?.width || 0} px | Innen ${preview?.inset || 0} px | Schrift ${preview?.font || 0} px`
       : "";
@@ -132,7 +136,7 @@ export class DevLayoutToolbar {
   }
 
   _getZonePreview(zoneKey) {
-    const key = normalizeZoneKey(zoneKey);
+    const key = this._normalizeZoneKey(zoneKey);
     return key ? this.previewStateByZone[key] : null;
   }
 
@@ -141,11 +145,9 @@ export class DevLayoutToolbar {
     for (const [key, control] of Object.entries(this.controls)) {
       const value = Number(preview?.[key] || 0);
       control.valueEl.textContent = key === "width" || key === "inset" || key === "font" ? `${value} px` : String(value);
-      const canControlZone = zoneKey === "meta" || zoneKey === "number" || zoneKey === "text";
-      const isWidthAllowed = zoneKey === "meta" || zoneKey === "number";
-      const isActiveControl =
-        canControlZone &&
-        (key === "inset" || key === "font" || (key === "width" && isWidthAllowed));
+      const zone = zoneKey ? this.surface?.zones?.[zoneKey] : null;
+      const allowed = Array.isArray(zone?.controls) ? zone.controls : [];
+      const isActiveControl = !!zoneKey && allowed.includes(key);
       control.minusEl.disabled = !isActiveControl;
       control.plusEl.disabled = !isActiveControl;
       control.root.dataset.active = zoneKey ? "true" : "false";
@@ -156,8 +158,10 @@ export class DevLayoutToolbar {
   _nudgeControl(controlKey, delta) {
     const zoneKey = this.activeZone;
     if (!zoneKey) return;
-    if (!["meta", "number", "text"].includes(zoneKey) || !["width", "inset", "font"].includes(controlKey)) return;
-    if (zoneKey === "text" && controlKey === "width") return;
+    if (!["width", "inset", "font"].includes(controlKey)) return;
+    const zone = this.surface?.zones?.[zoneKey] || null;
+    const allowed = Array.isArray(zone?.controls) ? zone.controls : [];
+    if (!allowed.includes(controlKey)) return;
     const preview = this.previewStateByZone[zoneKey] || { width: 0, inset: 0, font: 0 };
     const step = controlKey === "inset" ? 2 : controlKey === "font" ? 1 : 5;
     const min = controlKey === "inset" ? 0 : controlKey === "font" ? 9 : 50;
@@ -175,9 +179,14 @@ export class DevLayoutToolbar {
   _emitPreviewChange(zoneKey, preview) {
     if (!this.onPreviewChange) return;
     this.onPreviewChange({
-      activeZone: normalizeZoneKey(zoneKey),
+      activeZone: this._normalizeZoneKey(zoneKey),
       preview: preview || { width: 0, inset: 0, font: 0 },
     });
+  }
+
+  _normalizeZoneKey(value) {
+    const key = String(value || "").trim().toLowerCase();
+    return Object.prototype.hasOwnProperty.call(this.surface?.zones || {}, key) ? key : null;
   }
 
   setMetaWidth(width) {
@@ -328,5 +337,3 @@ export class DevLayoutToolbar {
     this.setStatus("");
   }
 }
-
-export { DEV_LAYOUT_ZONE_LABELS, normalizeZoneKey };

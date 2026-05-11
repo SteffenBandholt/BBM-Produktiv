@@ -395,8 +395,9 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 [data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"][data-layout-zone="text"] {
   min-width: calc(0px + (var(--bbm-dev-layout-preview-width, 0) * 1px));
-  padding-inline: calc(5px + (var(--bbm-dev-layout-preview-inset, 0) * 1px));
-  font-size: calc(100% + (var(--bbm-dev-layout-preview-font, 0) * 2%));
+  /* UI-Preview is driven via root vars (see TopsScreen._applyDevLayoutPreview). */
+  padding-inline: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
 }
 
 [data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone[data-layout-zone-active="true"][data-layout-zone="meta"] {
@@ -565,7 +566,8 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row-title {
   font-weight: 600;
-  font-size: var(--bbm-top-short-font-size);
+  /* DEV-Layout: allow live fine-tuning via --bbm-tops-list-text-font-size (falls back to default). */
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
   max-inline-size: var(--bbm-top-short-measure);
@@ -616,7 +618,8 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row-preview {
   margin-top: 4px;
-  font-size: var(--bbm-top-long-font-size);
+  /* DEV-Layout: keep preview in sync with the text-zone font size when overridden. */
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-long-font-size));
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
   max-inline-size: var(--bbm-top-long-measure);
@@ -627,7 +630,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-preview {
-  font-size: var(--bbm-top-short-font-size);
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
   max-inline-size: 82ch;
 }
 

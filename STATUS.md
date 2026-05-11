@@ -1734,3 +1734,23 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Keine funktionalen Aenderungen beabsichtigt; Bitte kurz manuell pruefen: TOP-UI Layout-Toolbar erscheint im DEV-Modus wie vorher.
+
+#### Paket: Refactor 2 (TOP-Zonen aus DevLayoutToolbar auslagern)
+- Status: erledigt
+- Beschreibung:
+  - TOP-spezifische Zonendefinitionen (Keys/Labels/Controls) wurden in eine Surface-Datei ausgelagert:
+    `src/renderer/modules/protokoll/layoutSurfaces/toplistLayoutSurface.js`.
+  - `DevLayoutToolbar` ist jetzt surface-getrieben und enthaelt keine TOP-spezifischen Labels/Zonen mehr (Fallback bleibt fuer Kompatibilitaet).
+  - Protokoll bindet die Toolbar wie vorher ein; Verhalten bleibt gleich.
+- Betroffene Dateien:
+  - `src/renderer/modules/protokoll/layoutSurfaces/toplistLayoutSurface.js`
+  - `src/renderer/layoutTools/DevLayoutToolbar.js`
+  - `src/renderer/modules/protokoll/TopsHeader.js`
+  - `src/renderer/modules/protokoll/TopsList.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Keine Verhaltensaenderung beabsichtigt; nur Zonendefinition/Labels umgezogen.
