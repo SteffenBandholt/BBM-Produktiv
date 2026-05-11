@@ -1315,6 +1315,19 @@ async function handleInit(payload) {
     app.appendChild(root);
 
     if (payload?.devLayoutPreview) {
+      // DEV-only: ensure the participants layout is loaded and applied so save/load works
+      // even when the print payload did not include tableLayouts for this table yet.
+      if (typeof window?.bbmPrint?.tableLayoutsGetOne === "function") {
+        try {
+          const resPart = await window.bbmPrint.tableLayoutsGetOne({
+            tableKey: "protokoll_participants",
+            moduleId: "protokoll",
+            orientation,
+          });
+          const layout = resPart?.ok ? resPart?.data?.effectiveLayout || resPart?.data?.defaultLayout || null : null;
+          if (layout) _applyParticipantsNameVarsFromLayout(root, layout);
+        } catch (_e) {}
+      }
       _enableDevPdfLayoutZones(root);
     }
 
@@ -1923,6 +1936,24 @@ function _applyParticipantsNameFontPt(root, pt) {
   return next;
 }
 
+function _applyParticipantsNameVarsFromLayout(root, layout) {
+  if (!root?.style) return;
+  const cols = Array.isArray(layout?.columns) ? layout.columns : [];
+  const nameCol = cols.find((c) => String(c?.key || "").trim().toLowerCase() === "name") || null;
+  const widthMm = _parseMetaWidthMmFromRaw(nameCol?.pdfWidth);
+  if (widthMm != null) {
+    root.style.setProperty("--bbm-part-col-name-width", `${_formatMm(widthMm)}mm`);
+  }
+  const insetMm = _parseMetaInsetMmFromRaw(layout?.pdf?.rootVars?.["--bbm-part-col-name-padding-inline"]);
+  if (insetMm != null) {
+    root.style.setProperty("--bbm-part-col-name-padding-inline", `${_formatMm(insetMm)}mm`);
+  }
+  const fontPt = _parsePtFromRaw(layout?.pdf?.rootVars?.["--bbm-part-col-name-font-size"]);
+  if (fontPt != null) {
+    root.style.setProperty("--bbm-part-col-name-font-size", `${_formatMm(fontPt)}pt`);
+  }
+}
+
 function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   if (!toolbar) return;
   const participantsZone = String(root?.dataset?.devPdfParticipantsActiveZone || "").trim().toLowerCase();
@@ -1943,8 +1974,9 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
 
   if (isParticipants) {
     toolbar._line2.textContent = `Teilnehmerliste > ${participantsLabel}`;
-    toolbar._save.disabled = true;
-    toolbar._reset.disabled = true;
+    // Persistence is only implemented for Name in this milestone.
+    toolbar._save.disabled = !isParticipantsName;
+    toolbar._reset.disabled = !isParticipantsName;
     toolbar._minus.disabled = !isParticipantsName;
     toolbar._plus.disabled = !isParticipantsName;
     toolbar._insetMinus.disabled = !isParticipantsName;
@@ -2010,6 +2042,95 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
         _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
       };
     }
+
+    toolbar._save.onclick = async () => {
+      toolbar._status.textContent = "";
+      try {
+        if (root?.dataset?.devPdfLayout !== "true") return;
+        if (typeof window?.bbmPrint?.tableLayoutsSave !== "function") {
+          toolbar._status.textContent = "Speichern nicht verfuegbar.";
+          return;
+        }
+        const widthMm = toolbar._partNameWidthMm == null ? _readParticipantsNameWidthMm(root) : toolbar._partNameWidthMm;
+        const insetMm = toolbar._partNameInsetMm == null ? _readParticipantsNameInsetMm(root) : toolbar._partNameInsetMm;
+        const fontPt = toolbar._partNameFontPt == null ? _readParticipantsNameFontPt(root) : toolbar._partNameFontPt;
+
+        const resLayout = await window.bbmPrint.tableLayoutsGetOne({
+          tableKey: "protokoll_participants",
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+        });
+        const effective = resLayout?.data?.effectiveLayout || resLayout?.data?.defaultLayout || {};
+        const nextColumns = Array.isArray(effective?.columns) ? effective.columns.map((col) => ({ ...(col || {}) })) : [];
+        for (let i = 0; i < nextColumns.length; i += 1) {
+          const col = nextColumns[i] || {};
+          if (String(col.key || "").trim().toLowerCase() !== "name") continue;
+          nextColumns[i] = { ...col, pdfWidth: `${Math.round(Number(widthMm || 34))}mm` };
+          break;
+        }
+        const next = {
+          ...(effective || {}),
+          variant: toolbar._orientation || effective?.variant || "portrait",
+          columns: nextColumns.length ? nextColumns : effective?.columns,
+          pdf: {
+            ...(effective?.pdf || {}),
+            rootVars: {
+              ...((effective?.pdf && effective.pdf.rootVars) || {}),
+              "--bbm-part-col-name-width": `${Math.round(Number(widthMm || 34))}mm`,
+              "--bbm-part-col-name-padding-inline": `${_formatMm(insetMm)}mm`,
+              "--bbm-part-col-name-font-size": `${_formatMm(fontPt)}pt`,
+            },
+          },
+        };
+        const res = await window.bbmPrint.tableLayoutsSave({
+          tableKey: "protokoll_participants",
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+          layout: next,
+        });
+        if (!res?.ok) {
+          toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
+          return;
+        }
+        toolbar._status.style.color = "#25624f";
+        toolbar._status.textContent = "Gespeichert.";
+      } catch (err) {
+        toolbar._status.textContent = err?.message || String(err) || "Speichern fehlgeschlagen.";
+      }
+    };
+
+    toolbar._reset.onclick = async () => {
+      toolbar._status.textContent = "";
+      try {
+        if (root?.dataset?.devPdfLayout !== "true") return;
+        if (typeof window?.bbmPrint?.tableLayoutsReset !== "function") {
+          toolbar._status.textContent = "Reset nicht verfuegbar.";
+          return;
+        }
+        const res = await window.bbmPrint.tableLayoutsReset({
+          tableKey: "protokoll_participants",
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+        });
+        if (!res?.ok) {
+          toolbar._status.textContent = res?.error || "Reset fehlgeschlagen.";
+          return;
+        }
+        toolbar._status.style.color = "#25624f";
+        toolbar._status.textContent = "Zurueckgesetzt.";
+        if (root?.style?.removeProperty) {
+          root.style.removeProperty("--bbm-part-col-name-width");
+          root.style.removeProperty("--bbm-part-col-name-padding-inline");
+          root.style.removeProperty("--bbm-part-col-name-font-size");
+        }
+        toolbar._partNameWidthMm = null;
+        toolbar._partNameInsetMm = null;
+        toolbar._partNameFontPt = null;
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      } catch (err) {
+        toolbar._status.textContent = err?.message || String(err) || "Reset fehlgeschlagen.";
+      }
+    };
     return;
   }
 
