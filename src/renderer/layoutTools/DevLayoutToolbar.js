@@ -1,5 +1,13 @@
 export class DevLayoutToolbar {
   constructor({ surface, onPreviewChange, onZoneSelect, onSave, onReset } = {}) {
+    // DEV-only helper UI: host modules must gate visibility/activation by build channel.
+    // This toolbar:
+    // - selects "layout zones" (not columns)
+    // - emits live preview values to the host (no DB/IPC here)
+    // - optionally triggers host-provided save/reset callbacks
+    //
+    // It is intentionally surface-driven (labels/zones/controls are defined by the host).
+
     // "surface" defines zones + labels + control availability.
     // Keep a tiny internal fallback to avoid breaking callers that don't pass it.
     this.surface =
