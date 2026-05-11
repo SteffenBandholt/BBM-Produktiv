@@ -195,6 +195,18 @@ export default class TopsScreen {
     sheetArea.appendChild(sheetCanvas);
     editArea.appendChild(editCanvas);
     root.append(this.header.root, sheetArea, editArea);
+
+    // DEV-only layout zone: allow selecting the overall list width by clicking on the paper background.
+    // Row interactions stay unchanged because we only react when the click target is the paper itself.
+    sheetPaper.addEventListener("click", (event) => {
+      if (!this._devLayoutMode?.enabled) return;
+      const isPaper = !!event && event.target === sheetPaper;
+      const isListRoot = !!event && this.topsList?.root && event.target === this.topsList.root;
+      if (!isPaper && !isListRoot) return;
+      event.preventDefault();
+      event.stopPropagation();
+      this._setDevLayoutZone("list");
+    });
   }
 
   _buildProtocolScreenRegions() {
@@ -216,6 +228,7 @@ export default class TopsScreen {
       },
       onKeywordClick: async () => this._openKeywordDialog(),
       onDevLayoutPreviewChange: (payload) => this._applyDevLayoutPreview(payload),
+      onDevLayoutZoneSelect: (zoneKey) => this._setDevLayoutZone(zoneKey),
       onDevLayoutSave: async () => this._saveDevLayoutMetaWidth(),
       onDevLayoutReset: async () => this._resetDevLayoutMetaWidth(),
     });
@@ -657,6 +670,13 @@ export default class TopsScreen {
   _syncListState() {
     if (!(this.topsList instanceof TopsList)) return;
     this.topsList.setDevLayoutMode(this._devLayoutMode);
+    if (this.sheetPaper?.dataset) {
+      const enabled = !!this._devLayoutMode?.enabled;
+      const active = String(this._devLayoutMode?.activeZone || "") === "list";
+      this.sheetPaper.dataset.devLayoutMode = enabled ? "true" : "false";
+      this.sheetPaper.dataset.layoutZone = "list";
+      this.sheetPaper.dataset.layoutZoneActive = enabled && active ? "true" : "false";
+    }
     this.topsList.setItems(
       buildListItemsFromState(this.store.getState(), {
         collapsedLevel1Ids: this._getCollapsedLevel1Ids(),
@@ -708,7 +728,7 @@ export default class TopsScreen {
     const activeZone = String(mode?.activeZone || "").trim().toLowerCase();
     const next = {
       enabled,
-      activeZone: enabled && ["number", "text", "meta"].includes(activeZone) ? activeZone : null,
+      activeZone: enabled && ["list", "number", "text", "meta"].includes(activeZone) ? activeZone : null,
     };
     const currentEnabled = !!this._devLayoutMode.enabled;
     const currentZone = String(this._devLayoutMode.activeZone || "");
@@ -723,7 +743,7 @@ export default class TopsScreen {
   _setDevLayoutZone(zoneKey) {
     if (!this._devLayoutMode.enabled) return false;
     const zone = String(zoneKey || "").trim().toLowerCase();
-    if (!["number", "text", "meta"].includes(zone)) return false;
+    if (!["list", "number", "text", "meta"].includes(zone)) return false;
     if (this._devLayoutMode.activeZone === zone) return false;
     this._devLayoutMode = {
       ...this._devLayoutMode,
@@ -747,6 +767,14 @@ export default class TopsScreen {
     const font = Number(preview?.font || 0);
     this.root.dataset.devLayoutActiveZone = zoneKey;
     if (!this.topsList?.root?.style) return;
+
+    if (zoneKey === "list") {
+      this._devLayoutTextBaseMetaWidth = null;
+      const clampedWidth = Math.max(720, Math.min(1200, Number.isFinite(width) ? Math.floor(width) : 940));
+      // Scope the override to the TopsScreen so it does not leak outside.
+      this.root.style.setProperty("--bbm-tops-doc-width", `${clampedWidth}px`);
+      return;
+    }
 
     if (zoneKey === "meta") {
       this._devLayoutTextBaseMetaWidth = null;

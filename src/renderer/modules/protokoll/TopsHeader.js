@@ -7,6 +7,7 @@ export class TopsHeader {
     onEndMeeting,
     onKeywordClick,
     onDevLayoutPreviewChange,
+    onDevLayoutZoneSelect,
     onDevLayoutSave,
     onDevLayoutReset,
   } = {}) {
@@ -49,6 +50,7 @@ export class TopsHeader {
     this.devLayoutToolbar = new DevLayoutToolbar({
       surface: TOPLIST_LAYOUT_SURFACE,
       onPreviewChange: onDevLayoutPreviewChange,
+      onZoneSelect: onDevLayoutZoneSelect,
       onSave: onDevLayoutSave,
       onReset: onDevLayoutReset,
     });

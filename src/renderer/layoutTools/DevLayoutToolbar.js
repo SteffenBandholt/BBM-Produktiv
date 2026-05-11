@@ -1,5 +1,5 @@
 export class DevLayoutToolbar {
-  constructor({ surface, onPreviewChange, onSave, onReset } = {}) {
+  constructor({ surface, onPreviewChange, onZoneSelect, onSave, onReset } = {}) {
     // "surface" defines zones + labels + control availability.
     // Keep a tiny internal fallback to avoid breaking callers that don't pass it.
     this.surface =
@@ -16,9 +16,11 @@ export class DevLayoutToolbar {
             },
           };
     this.onPreviewChange = typeof onPreviewChange === "function" ? onPreviewChange : null;
+    this.onZoneSelect = typeof onZoneSelect === "function" ? onZoneSelect : null;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.onReset = typeof onReset === "function" ? onReset : null;
     this.previewStateByZone = {
+      list: { width: 940, inset: 0, font: 0 },
       number: { width: 64, inset: 5, font: 11 },
       // "width" for text is a delta ("Textbreite") relative to the rest-area behavior.
       text: { width: 0, inset: 5, font: 11 },
@@ -55,6 +57,25 @@ export class DevLayoutToolbar {
 
     this.headWrap.append(this.line1El, this.line2El);
 
+    this.zonePickerWrap = document.createElement("div");
+    this.zonePickerWrap.className = "bbm-dev-layout-toolbar-zones";
+    this.zoneButtons = {};
+    for (const zoneKey of ["list", "number", "text", "meta"]) {
+      if (!this.surface?.zones?.[zoneKey]) continue;
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "bbm-dev-layout-toolbar-zone-btn";
+      btn.dataset.zone = zoneKey;
+      btn.textContent = zoneKey === "text" ? "Gegenstand" : this.surface.zones[zoneKey].label;
+      btn.onclick = () => {
+        if (!this.onZoneSelect) return;
+        this.clearStatus();
+        this.onZoneSelect(zoneKey);
+      };
+      this.zoneButtons[zoneKey] = btn;
+      this.zonePickerWrap.appendChild(btn);
+    }
+
     this.actionWrap = document.createElement("div");
     this.actionWrap.className = "bbm-dev-layout-toolbar-actions";
 
@@ -82,7 +103,7 @@ export class DevLayoutToolbar {
     this.statusEl.className = "bbm-dev-layout-toolbar-status";
     this.statusEl.hidden = true;
 
-    this.root.append(this.headWrap, this.controlsWrap, this.actionWrap, this.statusEl);
+    this.root.append(this.headWrap, this.zonePickerWrap, this.controlsWrap, this.actionWrap, this.statusEl);
   }
 
   update({ enabled, activeZone } = {}) {
@@ -95,10 +116,19 @@ export class DevLayoutToolbar {
     this.root.hidden = !isEnabled;
     this.root.dataset.visible = isEnabled ? "true" : "false";
     this.root.dataset.activeZone = zoneKey || "";
+    if (this.zonePickerWrap) this.zonePickerWrap.hidden = !isEnabled;
+    for (const [key, btn] of Object.entries(this.zoneButtons || {})) {
+      btn.dataset.active = key === zoneKey ? "true" : "false";
+      btn.disabled = !isEnabled;
+    }
     this.line1El.textContent = zoneLabel ? `${this.surface.label} > ${zoneLabel}` : `Layout: ${this.surface.label} | Bereich waehlen`;
     if (zoneLabel) {
-      const widthLabel = zoneKey === "text" ? "Textbreite" : "Breite";
-      this.line2El.textContent = `${widthLabel} ${preview?.width || 0} px | Innen ${preview?.inset || 0} px | Schrift ${preview?.font || 0} px`;
+      const widthLabel = zoneKey === "list" ? "Listenbreite" : zoneKey === "text" ? "Textbreite" : "Breite";
+      if (zoneKey === "list") {
+        this.line2El.textContent = `${widthLabel} ${preview?.width || 0} px`;
+      } else {
+        this.line2El.textContent = `${widthLabel} ${preview?.width || 0} px | Innen ${preview?.inset || 0} px | Schrift ${preview?.font || 0} px`;
+      }
     } else {
       this.line2El.textContent = "";
     }
@@ -148,7 +178,7 @@ export class DevLayoutToolbar {
     const preview = this._getZonePreview(zoneKey) || { width: 0, inset: 0, font: 0 };
     // Text zone: the width control represents a delta ("Textbreite") instead of a fixed column width.
     if (this.controls?.width?.labelEl) {
-      this.controls.width.labelEl.textContent = zoneKey === "text" ? "Textbreite" : "Breite";
+      this.controls.width.labelEl.textContent = zoneKey === "list" ? "Listenbreite" : zoneKey === "text" ? "Textbreite" : "Breite";
     }
     for (const [key, control] of Object.entries(this.controls)) {
       const value = Number(preview?.[key] || 0);
@@ -171,11 +201,23 @@ export class DevLayoutToolbar {
     const allowed = Array.isArray(zone?.controls) ? zone.controls : [];
     if (!allowed.includes(controlKey)) return;
     const preview = this.previewStateByZone[zoneKey] || { width: 0, inset: 0, font: 0 };
-    const step = controlKey === "inset" ? 2 : controlKey === "font" ? 1 : 5;
+    const step =
+      zoneKey === "list" && controlKey === "width"
+        ? 20
+        : controlKey === "inset"
+          ? 2
+          : controlKey === "font"
+            ? 1
+            : 5;
     const isTextWidth = zoneKey === "text" && controlKey === "width";
     const min = isTextWidth ? -120 : controlKey === "inset" ? 0 : controlKey === "font" ? 9 : 50;
     const max = isTextWidth ? 120 : controlKey === "inset" ? 24 : controlKey === "font" ? 16 : 160;
-    const nextValue = Math.max(min, Math.min(max, Number(preview[controlKey] || 0) + delta * step));
+    const effectiveMin = zoneKey === "list" && controlKey === "width" ? 720 : min;
+    const effectiveMax = zoneKey === "list" && controlKey === "width" ? 1200 : max;
+    const nextValue = Math.max(
+      effectiveMin,
+      Math.min(effectiveMax, Number(preview[controlKey] || 0) + delta * step),
+    );
     const nextPreview = {
       ...preview,
       [controlKey]: nextValue,

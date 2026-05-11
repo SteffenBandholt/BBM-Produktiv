@@ -3,6 +3,11 @@ export const TOPLIST_LAYOUT_SURFACE = Object.freeze({
   label: "TOP-Liste",
   moduleId: "protokoll",
   zones: Object.freeze({
+    list: Object.freeze({
+      key: "list",
+      label: "Gesamtbreite",
+      controls: Object.freeze(["width"]),
+    }),
     number: Object.freeze({
       key: "number",
       label: "Nummernblock",
@@ -24,6 +29,7 @@ export const TOPLIST_LAYOUT_SURFACE = Object.freeze({
 });
 
 export const TOPLIST_LAYOUT_ZONE_LABELS = Object.freeze({
+  list: TOPLIST_LAYOUT_SURFACE.zones.list.label,
   number: TOPLIST_LAYOUT_SURFACE.zones.number.label,
   text: TOPLIST_LAYOUT_SURFACE.zones.text.label,
   meta: TOPLIST_LAYOUT_SURFACE.zones.meta.label,

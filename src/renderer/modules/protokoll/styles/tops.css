@@ -54,6 +54,15 @@
   padding: 8px 12px 12px;
 }
 
+[data-bbm-tops-screen-sheet-paper="true"][data-dev-layout-mode="true"] {
+  cursor: pointer;
+}
+
+[data-bbm-tops-screen-sheet-paper="true"][data-dev-layout-mode="true"][data-layout-zone-active="true"] {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08), inset 0 0 0 2px rgba(27, 143, 58, 0.42);
+  background: linear-gradient(180deg, rgba(27, 143, 58, 0.06) 0%, rgba(255, 255, 255, 0) 60%);
+}
+
 [data-bbm-tops-screen-area="edit"] {
   flex: 0 0 auto;
   border-top: 1px solid #d9e2ec;
@@ -106,6 +115,32 @@
   border: 1px solid #c9dfcf;
   background: rgba(255, 255, 255, 0.4);
   box-sizing: border-box;
+}
+
+.bbm-dev-layout-toolbar-zones {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bbm-dev-layout-toolbar-zone-btn {
+  border: 1px solid rgba(58, 90, 92, 0.25);
+  background: rgba(255, 255, 255, 0.55);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+}
+
+.bbm-dev-layout-toolbar-zone-btn[disabled] {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.bbm-dev-layout-toolbar-zone-btn[data-active="true"] {
+  border-color: rgba(27, 143, 58, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(27, 143, 58, 0.25);
 }
 
 .bbm-dev-layout-toolbar-head {
