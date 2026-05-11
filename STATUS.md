@@ -17,6 +17,10 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- layoutTools-Grundmodul ist als DEV-only Basis nutzbar und dokumentiert:
+  - Pilot 1: TOP-Liste (UI/PDF) inkl. Zonen, live/persist/reset, UI/PDF getrennt
+  - Pilot 2: Teilnehmerliste (PDF) inkl. Zonen, live/persist/reset (inkl. Anwesend/Verteiler "x")
+  - echte PDFs bleiben ohne gruene Markierungen; DevTools oeffnen nicht automatisch
 - Der erste DEV-only Schritt fuer das TOP-Layout-Feintuning ist umgesetzt:
   - die TOP-Liste kann im DEV-Build jetzt Layout-Zonen fuer Nummernblock, Textblock und Metablock anzeigen
   - die aktive Zone wird gruen markiert
