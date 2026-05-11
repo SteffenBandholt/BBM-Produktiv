@@ -1,4 +1,4 @@
-import { DevLayoutToolbar } from "./DevLayoutToolbar.js";
+import { DevLayoutToolbar } from "../../layoutTools/DevLayoutToolbar.js";
 
 export class TopsHeader {
   constructor({

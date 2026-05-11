@@ -3,7 +3,7 @@ import {
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
 import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protokollTopsLayout.js";
-import { DEV_LAYOUT_ZONE_LABELS, normalizeZoneKey } from "./DevLayoutToolbar.js";
+import { DEV_LAYOUT_ZONE_LABELS, normalizeZoneKey } from "../../layoutTools/DevLayoutToolbar.js";
 
 function getAssetBaseUrl() {
   if (typeof window !== "undefined" && window?.location?.href) return window.location.href;

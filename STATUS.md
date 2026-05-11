@@ -1714,3 +1714,23 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Der UI-Regler "Innen" setzt beim Speichern aktuell links und rechts symmetrisch; Standard-Reset stellt die urspruenglichen Default-Werte (0 / 1.5mm) wieder her.
+
+#### Paket: Refactor 1 (DevLayoutToolbar zentralisieren)
+- Status: erledigt
+- Beschreibung:
+  - `DevLayoutToolbar` wurde aus dem Protokoll-Modul in ein zentrales Hilfsmodul verschoben: `src/renderer/layoutTools/DevLayoutToolbar.js`.
+  - Protokoll (TopsHeader/TopsList) importiert die Toolbar jetzt aus dem neuen Pfad; Verhalten bleibt gleich.
+  - Tests wurden minimal angepasst, damit `npm test` nach den CSS-Variablen-Umstellungen weiterhin gruen laeuft (keine Verhaltensaenderung).
+- Betroffene Dateien:
+  - `src/renderer/layoutTools/DevLayoutToolbar.js`
+  - `src/renderer/modules/protokoll/TopsHeader.js`
+  - `src/renderer/modules/protokoll/TopsList.js`
+  - `scripts/tests/tableLayoutRegistry.test.cjs`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Keine funktionalen Aenderungen beabsichtigt; Bitte kurz manuell pruefen: TOP-UI Layout-Toolbar erscheint im DEV-Modus wie vorher.
