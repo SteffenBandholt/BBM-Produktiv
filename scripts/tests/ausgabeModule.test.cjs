@@ -18,6 +18,7 @@ async function runAusgabeModuleTests(run) {
   const printModalSource = read("src/renderer/modules/ausgabe/PrintModal.js");
   const printAppSource = read("src/renderer/print/printApp.js");
   const printIpcSource = read("src/main/ipc/printIpc.js");
+  const printPreloadSource = read("src/main/preload/printPreload.js");
   const printCssSource = read("src/renderer/print/print.css");
   const layoutCalibrationStateSource = read("src/renderer/layoutTools/layoutCalibrationState.js");
   const settingsViewSource = read("src/renderer/views/SettingsView.js");
@@ -95,8 +96,9 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("Unbekannter Druckmodus"), true);
     assert.equal(printIpcSource.includes("Unbekannter Druckmodus"), true);
     assert.equal(printModalSource.includes("printMeetingPreview"), true);
-    assert.equal(printModalSource.includes('openHtmlPreview({ mode: "todo", projectId });'), true);
-    assert.equal(printModalSource.includes('openHtmlPreview({ mode: "topsAll", projectId });'), true);
+    assert.equal(printModalSource.includes("layoutCalibrationEnabled"), true);
+    assert.equal(printModalSource.includes('openHtmlPreview({ mode: "todo", projectId, layoutCalibrationEnabled });'), true);
+    assert.equal(printModalSource.includes('openHtmlPreview({ mode: "topsAll", projectId, layoutCalibrationEnabled });'), true);
     assert.equal(printAppSource.includes("_readAutoZoneWidthMm"), true);
     assert.equal(printAppSource.includes("_applyAutoZoneWidthMm"), true);
     assert.equal(printAppSource.includes("_applyAutoZoneInsetMm"), true);
@@ -107,8 +109,10 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("_buildDevLayoutExportPayload"), true);
     assert.equal(printAppSource.includes("_showDevLayoutExport"), true);
     assert.equal(printAppSource.includes("loadLayoutCalibrationEnabled"), true);
+    assert.equal(printAppSource.includes("parseLayoutCalibrationEnabled"), true);
     assert.equal(printAppSource.includes("LAYOUT_CALIBRATION_SETTING_KEY"), true);
-    assert.equal(printAppSource.includes("appSettingsOnChanged"), true);
+    assert.equal(printAppSource.includes("window.bbmPrint.appSettingsOnChanged"), true);
+    assert.equal(printAppSource.includes("_resolveLayoutCalibrationEnabled"), true);
     assert.equal(printAppSource.includes("root.dataset.devPdfLayout = layoutCalibrationEnabled ? \"true\" : \"false\";"), true);
     assert.equal(printAppSource.includes("Export"), true);
     assert.equal(printAppSource.includes("toolbar._autoState = toolbar._autoState || {};"), true);
@@ -117,7 +121,10 @@ async function runAusgabeModuleTests(run) {
     assert.equal(settingsViewSource.includes("dev.layoutCalibrationEnabled"), true);
     assert.equal(routerSource.includes("dev.layoutCalibrationEnabled"), true);
     assert.equal(preloadSource.includes("appSettingsOnChanged"), true);
+    assert.equal(printPreloadSource.includes("appSettingsGetMany"), true);
+    assert.equal(printPreloadSource.includes("appSettingsOnChanged"), true);
     assert.equal(settingsIpcSource.includes("app-settings:changed"), true);
+    assert.equal(printIpcSource.includes("layoutCalibrationEnabled"), true);
     assert.equal(layoutCalibrationStateSource.includes("bbm:layout-calibration-changed"), true);
   });
 

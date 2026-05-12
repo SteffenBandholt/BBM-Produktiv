@@ -25,6 +25,7 @@ const {
   enforceLicensedFeature,
   toLicenseErrorPayload,
 } = require("../licensing/featureGuard");
+const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const {
   sanitizeDirName,
   resolveProjectFolderName,
@@ -78,6 +79,24 @@ function _resolveRequestedOrientation(payload = {}) {
     testOrientation: payload.testOrientation,
     smokeOrientation: process.env.BBM_PRINT_SMOKE_ORIENTATION,
   });
+}
+
+function _readLayoutCalibrationEnabled() {
+  try {
+    const settings = appSettingsGetMany(["dev.layoutCalibrationEnabled"]) || {};
+    return String(settings["dev.layoutCalibrationEnabled"] || "").trim() === "1";
+  } catch (_err) {
+    return false;
+  }
+}
+
+function _normalizeLayoutCalibrationEnabled(value, fallback = false) {
+  if (value == null) return !!fallback;
+  const raw = String(value).trim().toLowerCase();
+  if (!raw) return !!fallback;
+  if (["1", "true", "yes", "on"].includes(raw)) return true;
+  if (["0", "false", "no", "off"].includes(raw)) return false;
+  return !!fallback;
 }
 
 // Shared technical output infrastructure:
@@ -441,6 +460,7 @@ async function printToPdf(payload = {}) {
         orientation,
         testOrientation: payload.testOrientation || null,
         debug,
+        layoutCalibrationEnabled: _readLayoutCalibrationEnabled(),
       });
     });
 
@@ -501,6 +521,10 @@ function registerPrintIpc() {
           testOrientation: p.testOrientation || null,
           debug: false,
           devLayoutPreview: true,
+          layoutCalibrationEnabled:
+            p.layoutCalibrationEnabled == null
+              ? _readLayoutCalibrationEnabled()
+              : _normalizeLayoutCalibrationEnabled(p.layoutCalibrationEnabled, _readLayoutCalibrationEnabled()),
         });
       });
 

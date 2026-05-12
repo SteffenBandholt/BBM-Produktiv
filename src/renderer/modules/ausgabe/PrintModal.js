@@ -37,6 +37,7 @@ import { OVERLAY_TOP } from "../../ui/zIndex.js";
 import { buildProtocolPdfFileName } from "../../utils/protocolPdfNaming.js";
 import { resolvePrintUserData } from "../../../shared/print/userDataResolver.mjs";
 import { getPrintDialogActions } from "../../../shared/print/printModes.mjs";
+import { loadLayoutCalibrationEnabled } from "../../layoutTools/layoutCalibrationState.js";
 
 const BLOCKED_OUTPUT_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
 
@@ -1087,6 +1088,14 @@ export default class PrintModal {
     this._applyState();
   }
 
+  async _getLayoutCalibrationEnabledForPreview() {
+    try {
+      return await loadLayoutCalibrationEnabled(window.bbmDb || {}, false);
+    } catch (_err) {
+      return false;
+    }
+  }
+
   // Vorabzug: direkt drucken (ohne Auswahl-Modal)
   async printVorabzug({ projectId, meetingId } = {}) {
     const pid = projectId || this.router?.currentProjectId || null;
@@ -1126,7 +1135,13 @@ export default class PrintModal {
       const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
       const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
       if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
-        void window.bbmPrint.openHtmlPreview({ mode: "protocol", projectId: pid, meetingId: mid });
+        const layoutCalibrationEnabled = await this._getLayoutCalibrationEnabledForPreview();
+        void window.bbmPrint.openHtmlPreview({
+          mode: "protocol",
+          projectId: pid,
+          meetingId: mid,
+          layoutCalibrationEnabled,
+        });
       }
     } catch (_e) {
       // ignore (DEV-only helper)
@@ -1439,7 +1454,8 @@ export default class PrintModal {
       const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
       const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
       if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
-        await window.bbmPrint.openHtmlPreview({ mode: "todo", projectId });
+        const layoutCalibrationEnabled = await this._getLayoutCalibrationEnabledForPreview();
+        await window.bbmPrint.openHtmlPreview({ mode: "todo", projectId, layoutCalibrationEnabled });
         return true;
       }
     } catch (_e) {
@@ -1465,7 +1481,8 @@ export default class PrintModal {
       if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
         // DEV-only: use the interactive print-HTML preview for layoutTools fine-tuning.
         // Do not also open the real PDF preview in this path, otherwise users land in a non-interactive preview first.
-        await window.bbmPrint.openHtmlPreview({ mode: "topsAll", projectId });
+        const layoutCalibrationEnabled = await this._getLayoutCalibrationEnabledForPreview();
+        await window.bbmPrint.openHtmlPreview({ mode: "topsAll", projectId, layoutCalibrationEnabled });
         return true;
       }
     } catch (_e) {

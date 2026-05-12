@@ -23,6 +23,7 @@ import {
 import {
   APP_SETTINGS_CHANGED_EVENT,
   LAYOUT_CALIBRATION_SETTING_KEY,
+  parseLayoutCalibrationEnabled,
   loadLayoutCalibrationEnabled,
 } from "../layoutTools/layoutCalibrationState.js";
 
@@ -330,6 +331,13 @@ async function _loadStoredAutoLayouts(root, runtimeData = null) {
       }
     } catch (_err) {}
   }
+}
+
+function _resolveLayoutCalibrationEnabled(payload = null, fallback = false) {
+  if (payload && Object.prototype.hasOwnProperty.call(payload, "layoutCalibrationEnabled")) {
+    return parseLayoutCalibrationEnabled(payload.layoutCalibrationEnabled, fallback);
+  }
+  return fallback;
 }
 
 function _buildAutoLayoutOverlayFromDom(root, surfaceKey) {
@@ -1778,7 +1786,7 @@ async function handleInit(payload) {
     if (root?.dataset) root.dataset.orientation = orientation;
     const isDevLayoutPreview = !!payload?.devLayoutPreview && isDevLayoutBuildChannel(data.buildChannel);
     const layoutCalibrationEnabled = isDevLayoutPreview
-      ? await loadLayoutCalibrationEnabled(window.bbmDb || {}, false)
+      ? _resolveLayoutCalibrationEnabled(payload, await loadLayoutCalibrationEnabled(window.bbmPrint || {}, false))
       : false;
     if (isDevLayoutPreview && root?.dataset) {
       root.dataset.devPdfLayout = layoutCalibrationEnabled ? "true" : "false";
@@ -1804,15 +1812,15 @@ async function handleInit(payload) {
       await _enableDevPdfLayoutZones(root, data, layoutCalibrationEnabled);
     }
 
-    if (isDevLayoutPreview && typeof window?.bbmDb?.appSettingsOnChanged === "function") {
+    if (isDevLayoutPreview && typeof window?.bbmPrint?.appSettingsOnChanged === "function") {
       const onSettingsChanged = async (payloadChanged = {}) => {
         const changed = payloadChanged?.keys || [];
         if (Array.isArray(changed) && changed.length && !changed.includes(LAYOUT_CALIBRATION_SETTING_KEY)) return;
-        const enabled = await loadLayoutCalibrationEnabled(window.bbmDb || {}, false);
+        const enabled = await loadLayoutCalibrationEnabled(window.bbmPrint || {}, false);
         _setDevPdfLayoutMode(root, null, enabled);
         _syncDevPdfLayoutToolbar(document.querySelector(".bbm-dev-pdf-layout-toolbar"), root, data);
       };
-      const unsubscribe = window.bbmDb.appSettingsOnChanged(onSettingsChanged);
+      const unsubscribe = window.bbmPrint.appSettingsOnChanged(onSettingsChanged);
       window.addEventListener(APP_SETTINGS_CHANGED_EVENT, onSettingsChanged);
       window.addEventListener("beforeunload", () => {
         try {

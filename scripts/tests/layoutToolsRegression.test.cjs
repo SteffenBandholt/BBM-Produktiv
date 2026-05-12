@@ -45,6 +45,11 @@ function _assertDevPrintPreviewIpcIsDevOnly() {
 
   // Layout mode must be explicitly flagged to the print renderer.
   assert.match(js, /devLayoutPreview:\s*true/, "Preview must set devLayoutPreview: true.");
+  assert.match(
+    js,
+    /layoutCalibrationEnabled:\s*/s,
+    "Preview must forward the layout calibration flag to the print renderer."
+  );
 }
 
 function _assertToPdfDoesNotEnableDevLayoutPreview() {

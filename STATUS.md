@@ -26,6 +26,7 @@ Sie ergÃ¤nzt:
   - wirkt appweit auf UI-TOP-Liste, PDF-Layoutvorschauen und Auto-Tabellen
   - gespeicherte Layoutwerte bleiben beim Ausschalten erhalten
   - echte PDF-Erzeugung bleibt ungebremst und markerfrei
+  - die Print-HTML-Vorschau bekommt den Schalter jetzt auch direkt ueber `print:init` und das Print-Preload-Binding, damit DEV-Layout-Bearbeitung dort nicht mehr ausfaellt
 - Der erste DEV-only Schritt fuer das TOP-Layout-Feintuning ist umgesetzt:
   - die TOP-Liste kann im DEV-Build jetzt Layout-Zonen fuer Nummernblock, Textblock und Metablock anzeigen
   - die aktive Zone wird gruen markiert
@@ -55,7 +56,7 @@ Sie ergÃ¤nzt:
 - DEV-only Vorbereitung: In der Print-HTML-Vorschau der TOP-Liste sind jetzt drei PDF-Layout-Zonen (Nummernblock/Textblock/Metablock) per Click aktivierbar und gruen markierbar, ohne Layout-Shift und ohne dass Markierungen in den echten PDF-Export gelangen.
 - DEV-only PDF-Feintuning (live, ohne Speichern): In der Print-HTML-Vorschau kann jetzt die Breite des PDF-Metablocks per +/- live in 1mm-Schritten angepasst werden (nur in der laufenden Vorschau).
 - Bugfix: PDF-Metablock-Breite wird beim Speichern jetzt korrekt in `protokoll_tops` (PDF-Wert) persistiert und beim erneuten Oeffnen/Neustart wieder angewendet.
-- Naechster offener Schritt: die DEV-only Markierung und die neuen Live-Werte einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
+- Naechster offener Schritt: die DEV-only Markierung, die neue Preview-Weitergabe und die neuen Live-Werte einmal im laufenden UI gegenpruefen und erst danach weitere Layout-Schritte planen.
 - Tabellenlayout-Registrierungsregel dokumentiert.
 - Tabellenlayout-Inventar angelegt.
 - Tabellenlayout-Registry mit technischer Tabellenklassifizierung erweitert.
