@@ -319,6 +319,17 @@ function _enforceFeature(feature) {
   enforceLicensedFeature(feature);
 }
 
+function _enforcePrintFeature(payload = null) {
+  const p = payload || {};
+  const candidate = String(p.hostModuleId || p.moduleId || "").trim();
+  if (candidate) {
+    _enforceFeature(candidate);
+    return;
+  }
+  // Default behaviour (current app): printing belongs to Protokoll unless a host module is provided.
+  _enforceFeature("protokoll");
+}
+
 function attachPrintDebugPipes(win, jobId) {
   win.webContents.on("console-message", (_event, level, message, line, sourceId) => {
     const lvl = ["LOG", "WARN", "ERROR", "DEBUG"][level] || String(level);
@@ -342,6 +353,7 @@ async function printToPdf(payload = {}) {
   if (!mode) {
     throw new Error(`Unbekannter Druckmodus: ${String(payload.mode || "").trim() || "-"}`);
   }
+  _enforcePrintFeature(payload);
   const projectId = payload.projectId || null;
   const meetingId = payload.meetingId || null;
   const orientation = _resolveRequestedOrientation(payload);
@@ -357,6 +369,7 @@ async function printToPdf(payload = {}) {
     settingsOverride: payload.settingsOverride || null,
     orientation,
     todoResponsibleFilter: payload.todoResponsibleFilter || null,
+    hostModuleId: payload.hostModuleId || payload.moduleId || null,
   });
   const projectNumber = data?.project?.project_number || data?.project?.projectNumber || null;
 
@@ -478,7 +491,7 @@ function registerPrintIpc() {
   // Stable technical service entry points for renderer callers.
   ipcMain.handle("print:getData", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
+      _enforcePrintFeature(payload);
       const p = payload || {};
       const orientation = _resolveRequestedOrientation(p);
       const data = await getPrintData({
@@ -488,6 +501,7 @@ function registerPrintIpc() {
         settingsOverride: p.settingsOverride || null,
         orientation,
         todoResponsibleFilter: p.todoResponsibleFilter || null,
+        hostModuleId: p.hostModuleId || p.moduleId || null,
       });
       // Version/Channel für PDF-Footer mitgeben
       data.appVersion = app.getVersion ? app.getVersion() : "";
@@ -498,7 +512,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:openHtmlPreview", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
+      _enforcePrintFeature(payload);
       if (app.isPackaged) {
         return { ok: false, error: "DEV-only." };
       }
@@ -546,7 +560,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:toPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
+      _enforcePrintFeature(payload);
       console.log(
         `[PRINT_ACTIVE] handler=print:toPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""
@@ -596,7 +610,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:htmlToPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
+      _enforcePrintFeature(payload);
       console.log(
         `[PRINT_ACTIVE] handler=print:htmlToPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""

@@ -71,6 +71,7 @@ export class TopsList {
   }
 
   setDevLayoutMode(mode = {}) {
+    const prevEnabled = !!this.devLayoutMode?.enabled;
     const enabled = !!mode?.enabled;
     const activeZone = normalizeToplistZoneKey(mode?.activeZone);
     this.devLayoutMode = {
@@ -80,8 +81,11 @@ export class TopsList {
     this.root.dataset.devLayoutMode = enabled ? "true" : "false";
 
     // DEV-only: the fine-tuning vars (padding/font) must never leak into STABLE.
-    // Re-apply layout when enabling so the current layout (including saved values) becomes visible in DEV.
-    applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    // Re-apply layout only when enabling so the current stored layout becomes visible,
+    // but do not overwrite live preview tweaks on every screen sync.
+    if (enabled && !prevEnabled) {
+      applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    }
     this._applyDevOnlyLayoutVarsGate();
   }
 

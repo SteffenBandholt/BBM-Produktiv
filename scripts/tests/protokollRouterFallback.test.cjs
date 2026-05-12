@@ -276,6 +276,8 @@ async function runProtokollRouterFallbackTests(run) {
 
     assert.equal(listSource.includes("dataset.moveState"), true);
     assert.equal(listSource.includes('moveState === "current" || moveState === "blocked"'), true);
+    // DEV layout preview must not be overwritten on each screen sync.
+    assert.equal(listSource.includes("if (enabled && !prevEnabled)"), true);
     assert.equal(styleSource.includes('[data-move-state="current"]'), true);
     assert.equal(styleSource.includes('[data-move-state="blocked"]'), true);
     assert.equal(styleSource.includes('[data-move-state="target"]:hover'), true);

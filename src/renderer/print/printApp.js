@@ -326,8 +326,26 @@ function _applyAutoLayoutLayoutForPersistenceKey(root, persistenceKey, layout) {
   return applied;
 }
 
+function _resolveAutoLayoutModuleId(runtimeData = null) {
+  const direct = String(runtimeData?.hostModuleId || runtimeData?.moduleId || "").trim();
+  if (direct) return direct;
+
+  // If the print payload already carries any resolved tableLayouts, reuse that moduleId
+  // as the host context for auto surfaces.
+  const tableLayouts = runtimeData?.tableLayouts;
+  if (tableLayouts && typeof tableLayouts === "object") {
+    const first = Object.values(tableLayouts).find((x) => x && typeof x === "object" && x.moduleId);
+    const fromLayouts = String(first?.moduleId || "").trim();
+    if (fromLayouts) return fromLayouts;
+  }
+
+  // Neutral technical fallback: must be non-empty for tableLayoutsRepo identity.
+  return "layoutTools";
+}
+
 async function _loadStoredAutoLayouts(root, runtimeData = null) {
   if (!root || typeof window?.bbmPrint?.tableLayoutsGetOne !== "function") return;
+  const moduleId = _resolveAutoLayoutModuleId(runtimeData || root?._bbmRuntimeData || null);
   const orientation = _normalizeOrientation(root?.dataset?.orientation || runtimeData?.orientation || "portrait");
   const surfaces = Array.isArray(root._bbmDevPdfAutoLayoutSurfaces) ? root._bbmDevPdfAutoLayoutSurfaces : [];
   const seenPersistenceKeys = new Set();
@@ -340,7 +358,7 @@ async function _loadStoredAutoLayouts(root, runtimeData = null) {
       const res = await window.bbmPrint.tableLayoutsGetOne({
         tableKey: persistenceKey,
         surfaceKey: persistenceKey,
-        moduleId: "protokoll",
+        moduleId,
         mode: runtimeData?.mode || "preview",
         medium: "pdf",
         orientation,
@@ -3088,6 +3106,7 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     toolbar._save.onclick = null;
     toolbar._save.disabled = false;
     toolbar._reset.disabled = false;
+    const autoModuleId = _resolveAutoLayoutModuleId(runtimeData || root?._bbmRuntimeData || null);
     toolbar._save.onclick = async () => {
       toolbar._status.textContent = "";
       try {
@@ -3104,7 +3123,7 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
         const res = await window.bbmPrint.tableLayoutsSave({
           tableKey: autoPersistenceKey,
           surfaceKey: autoPersistenceKey,
-          moduleId: "protokoll",
+          moduleId: autoModuleId,
           mode: runtimeData?.mode || "preview",
           medium: "pdf",
           orientation: toolbar._orientation || "portrait",
@@ -3151,7 +3170,7 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
         const res = await window.bbmPrint.tableLayoutsSave({
           tableKey: autoPersistenceKey,
           surfaceKey: autoPersistenceKey,
-          moduleId: "protokoll",
+          moduleId: autoModuleId,
           mode: runtimeData?.mode || "preview",
           medium: "pdf",
           orientation: toolbar._orientation || "portrait",

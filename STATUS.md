@@ -1871,6 +1871,26 @@ Wichtig:
 - Risiken/Hinweise:
   - Die Auto-Tabellen werden auch im echten PDF dekoriert (Data-Attribute), sind aber CSS-seitig weiterhin nur bei aktivem DEV-Layoutmodus sichtbar.
 
+#### Paket: layoutTools Auto-Tabellen ohne hartes Protokoll-moduleId
+- Status: erledigt
+- Beschreibung:
+  - Auto-Tabellen-Save/Load/Reset verwenden nicht mehr hart `moduleId: \"protokoll\"`, sondern lesen das Host-Modul aus dem Print-Kontext (`hostModuleId`).
+  - `print:getData`/`print:toPdf` akzeptieren optional `hostModuleId`/`moduleId` und erzwingen nur dann dieses Feature; ohne Angabe bleibt der Default wie bisher `protokoll`.
+  - Protokoll-spezifische Surfaces (TOP/Teilnehmer) bleiben unveraendert im Protokoll-Kontext.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `src/main/ipc/printIpc.js`
+  - `src/main/print/printData.js`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `scripts/tests/tableLayoutsRepo.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Das Host-Modul wird aktuell nur technisch durchgereicht; eine spaetere Nutzung in anderen Modulen erfordert, dass diese den Print-Call mit `hostModuleId` ausloesen.
+
 #### Paket: DEV Auto-Layout Export
 - Status: erledigt
 - Beschreibung:
@@ -1923,6 +1943,22 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Der Schalter ist bewusst nur in den DEV-Einstellungen vorhanden und steuert nur die Sichtbarkeit/Bearbeitbarkeit der laufenden Vorschau, nicht die gespeicherten Werte.
+
+#### Paket: TOP-Liste UI Nummernblock-Schrift reagiert wieder
+- Status: erledigt
+- Beschreibung:
+  - Im DEV-Layoutmodus wird die UI-Layoutbasis nicht mehr bei jedem `_syncScreenState()` erneut auf die TOP-Liste geschrieben.
+  - Dadurch bleiben Live-Preview-Aenderungen (u.a. Nummernblock `--bbm-tops-list-number-font-size`) sofort sichtbar und werden nicht direkt wieder ueberschrieben.
+- Betroffene Dateien:
+  - `src/renderer/modules/protokoll/TopsList.js`
+  - `scripts/tests/protokollRouterFallback.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - PDF und Auto-Tabellen sind nicht betroffen; es wurde nur die UI-DEV-Anwendung der Vars stabilisiert.
 
 #### Paket: DEV Layout-Kalibrierung zentral in Einstellungen
 - Status: erledigt

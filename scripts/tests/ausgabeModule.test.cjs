@@ -108,6 +108,8 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("_applyAutoLayoutLayoutForPersistenceKey"), true);
     assert.equal(printAppSource.includes("_captureAutoLayoutDefaults"), true);
     assert.equal(printAppSource.includes("_loadStoredAutoLayouts"), true);
+    assert.equal(printAppSource.includes("_resolveAutoLayoutModuleId"), true);
+    assert.equal(printAppSource.includes("moduleId: autoModuleId"), true);
     assert.equal(printAppSource.includes("_decorateAutoLayoutTables(root, data);"), true);
     assert.equal(printAppSource.includes("await _loadStoredAutoLayouts(root, data);"), true);
     assert.equal(printAppSource.includes("_buildAutoLayoutOverlayFromDom"), true);

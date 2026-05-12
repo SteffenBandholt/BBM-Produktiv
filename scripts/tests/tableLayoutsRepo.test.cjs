@@ -198,7 +198,7 @@ async function runTableLayoutsRepoTests(run) {
 
       const layout = {
         tableKey: "print.todo.todoTable",
-        moduleId: "protokoll",
+        moduleId: "fremdmodul",
         variant: "portrait",
         surfaceKey: "print.todo.todoTable",
         label: "Todo Table",
@@ -219,7 +219,7 @@ async function runTableLayoutsRepoTests(run) {
 
       const saveRes = await repo.saveTableLayout({
         tableKey: "print.todo.todoTable",
-        moduleId: "protokoll",
+        moduleId: "fremdmodul",
         orientation: "portrait",
         layout,
       });
@@ -234,7 +234,7 @@ async function runTableLayoutsRepoTests(run) {
 
       const resolved = await repo.getResolvedTableLayout({
         tableKey: "print.todo.todoTable",
-        moduleId: "protokoll",
+        moduleId: "fremdmodul",
         orientation: "portrait",
       });
 

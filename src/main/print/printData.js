@@ -959,6 +959,7 @@ async function getPrintData({
   settingsOverride,
   orientation,
   todoResponsibleFilter,
+  hostModuleId,
 } = {}) {
   const { resolvePrintMode } = await _loadPrintModesModule();
   const normalizedMode = resolvePrintMode(mode, { fallback: "protocol" });
@@ -991,6 +992,7 @@ async function getPrintData({
 
   return {
     mode: normalizedMode,
+    hostModuleId: String(hostModuleId || "").trim() || "protokoll",
     ...runtimeContext,
     ...documentContent,
     tableLayouts,
