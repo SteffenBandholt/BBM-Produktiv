@@ -1758,3 +1758,39 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Keine Verhaltensaenderung beabsichtigt; nur Zonendefinition/Labels umgezogen.
+
+#### Paket: DEV layoutTools Auto-Erkennung fuer einfache PDF-Tabellen
+- Status: erledigt
+- Beschreibung:
+  - In der DEV-Print-HTML-Vorschau werden einfache Tabellen jetzt automatisch als layoutfaehige Surfaces erkannt, sofern sie `thead/th` oder `colgroup/col` haben und keine manuellen layoutTools-Marker tragen.
+  - Manueller Protokoll-Stand bleibt priorisiert; TOP-Liste und Teilnehmerliste behalten ihre bisherigen Zonen.
+  - Auto-Surfaces sind anklickbar und werden im DEV-Layoutmodus gruen markiert; echte PDF-Ausgaben bleiben markerfrei.
+- Betroffene Dateien:
+  - `src/renderer/layoutTools/autoTableLayout.mjs`
+  - `src/renderer/print/printApp.js`
+  - `src/renderer/print/print.css`
+  - `scripts/tests/layoutToolsAutoDetection.test.cjs`
+  - `scripts/test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: Persistenz/Speicherpfad fuer stabile neue Auto-Surfaces vorbereiten, wenn ein echter stabiler `tableKey` feststeht
+- Risiken/Hinweise:
+  - Auto-Erkennung bleibt heuristisch und absichtlich konservativ; komplexe Karten-/Sonderlayouts werden weiterhin nicht automatisch als Layout-Surface behandelt.
+
+#### Paket: DEV Layout-Einstieg ToDo-Vorschau
+- Status: erledigt
+- Beschreibung:
+  - Der DEV-only Vorschauweg fuer `mode: "todo"` nutzt jetzt ebenfalls `print:openHtmlPreview` mit `devLayoutPreview`.
+  - Normale ToDo-PDF-Erzeugung bleibt unveraendert; der neue Weg ist nur fuer die Layout-HTML-Vorschau gedacht.
+- Betroffene Dateien:
+  - `src/renderer/modules/ausgabe/PrintModal.js`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Der neue Einstieg bleibt bewusst DEV-only und greift nicht in die fertige PDF-Erzeugung ein.

@@ -1435,6 +1435,17 @@ export default class PrintModal {
   }
 
   async openTodoPrintPreview({ projectId } = {}) {
+    try {
+      const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
+      const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
+      if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
+        await window.bbmPrint.openHtmlPreview({ mode: "todo", projectId });
+        return true;
+      }
+    } catch (_e) {
+      // ignore (DEV-only helper)
+    }
+
     const filter = await this._selectTodoResponsibleFilter({ projectId });
     if (filter == null) return false;
     return await this._printProjectListPdf({
