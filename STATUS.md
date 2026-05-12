@@ -1794,3 +1794,20 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Der neue Einstieg bleibt bewusst DEV-only und greift nicht in die fertige PDF-Erzeugung ein.
+
+#### Paket: DEV Auto-Tabellen Live-Regler
+- Status: erledigt
+- Beschreibung:
+  - Fuer automatisch erkannte einfache PDF-Tabellen in der DEV-Print-HTML-Vorschau funktionieren jetzt generische Live-Regler fuer Breite, Innenabstand und Schriftgroesse.
+  - Die Werte bleiben bewusst nur im laufenden Vorschau-Tab wirksam; es gibt noch keine Speicherung oder Reset-Funktion fuer Auto-Tabellen.
+  - Manuelle Surfaces wie TOP-Liste und Teilnehmerliste behalten Vorrang und ihr bisheriges Verhalten bleibt erhalten.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: falls spaeter ein stabiler `tableKey` fuer weitere Auto-Tabellen feststeht, kann ein Persistenzpfad separat vorbereitet werden
+- Risiken/Hinweise:
+  - Die Auto-Regler greifen nur auf einfache erkannte Tabellen in DEV; komplexe Karten-/Sonderlayouts bleiben ausgeschlossen.

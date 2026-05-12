@@ -2125,6 +2125,161 @@ function _applyNumberFontPt(root, pt) {
   return nextPt;
 }
 
+function _pxToMm(px) {
+  const value = Number(px);
+  if (!Number.isFinite(value)) return null;
+  return value * 25.4 / 96;
+}
+
+function _pxToPt(px) {
+  const value = Number(px);
+  if (!Number.isFinite(value)) return null;
+  return value * 0.75;
+}
+
+function _readAutoLayoutLengthMm(raw) {
+  const text = String(raw || "").trim();
+  const mmMatch = text.match(/^(-?\d+(?:\.\d+)?)mm$/i);
+  if (mmMatch) {
+    const value = Number(mmMatch[1]);
+    return Number.isFinite(value) ? value : null;
+  }
+  const ptMatch = text.match(/^(-?\d+(?:\.\d+)?)pt$/i);
+  if (ptMatch) {
+    const value = Number(ptMatch[1]);
+    return Number.isFinite(value) ? value * (25.4 / 72) : null;
+  }
+  const pxMatch = text.match(/^(-?\d+(?:\.\d+)?)px$/i);
+  if (pxMatch) {
+    return _pxToMm(Number(pxMatch[1]));
+  }
+  return null;
+}
+
+function _readAutoLayoutLengthPt(raw) {
+  const text = String(raw || "").trim();
+  const ptMatch = text.match(/^(-?\d+(?:\.\d+)?)pt$/i);
+  if (ptMatch) {
+    const value = Number(ptMatch[1]);
+    return Number.isFinite(value) ? value : null;
+  }
+  const pxMatch = text.match(/^(-?\d+(?:\.\d+)?)px$/i);
+  if (pxMatch) {
+    return _pxToPt(Number(pxMatch[1]));
+  }
+  const mmMatch = text.match(/^(-?\d+(?:\.\d+)?)mm$/i);
+  if (mmMatch) {
+    const value = Number(mmMatch[1]);
+    return Number.isFinite(value) ? value * (72 / 25.4) : null;
+  }
+  return null;
+}
+
+function _getAutoLayoutSurfaceDescriptor(root, surfaceKey) {
+  const key = String(surfaceKey || "").trim();
+  if (!key || !root?._bbmDevPdfAutoLayoutSurfaceMap) return null;
+  return root._bbmDevPdfAutoLayoutSurfaceMap.get(key) || null;
+}
+
+function _getAutoLayoutZoneNodes(root, surfaceKey, zoneKey) {
+  const descriptor = _getAutoLayoutSurfaceDescriptor(root, surfaceKey);
+  const table = descriptor?.table || null;
+  if (!table) return [];
+  const key = String(zoneKey || "").trim();
+  if (!key) return [];
+  return Array.from(table.querySelectorAll?.("[data-dev-pdf-auto-zone]") || []).filter((node) => {
+    return String(node?.dataset?.devPdfAutoZoneKey || "").trim() === key;
+  });
+}
+
+function _getAutoLayoutZoneIndex(root, surfaceKey, zoneKey) {
+  const descriptor = _getAutoLayoutSurfaceDescriptor(root, surfaceKey);
+  const key = String(zoneKey || "").trim();
+  if (!descriptor || !key) return -1;
+  const zone = Array.isArray(descriptor.zones)
+    ? descriptor.zones.find((item) => String(item?.key || "").trim() === key)
+    : null;
+  return Number.isFinite(Number(zone?.index)) ? Number(zone.index) : -1;
+}
+
+function _getAutoLayoutZoneCol(root, surfaceKey, zoneKey) {
+  const descriptor = _getAutoLayoutSurfaceDescriptor(root, surfaceKey);
+  const table = descriptor?.table || null;
+  const index = _getAutoLayoutZoneIndex(root, surfaceKey, zoneKey);
+  if (!table || index < 0) return null;
+  return Array.from(table.querySelectorAll?.("colgroup col") || [])[index] || null;
+}
+
+function _readAutoZoneWidthMm(root, surfaceKey, zoneKey) {
+  const nodes = _getAutoLayoutZoneNodes(root, surfaceKey, zoneKey);
+  const first = nodes[0] || null;
+  const inlineWidth = _readAutoLayoutLengthMm(first?.style?.width || first?.getAttribute?.("width") || "");
+  if (inlineWidth != null) return inlineWidth;
+  const col = _getAutoLayoutZoneCol(root, surfaceKey, zoneKey);
+  const colWidth = _readAutoLayoutLengthMm(col?.style?.width || col?.getAttribute?.("width") || "");
+  if (colWidth != null) return colWidth;
+  const rectWidth = Number(first?.getBoundingClientRect?.().width || 0);
+  if (Number.isFinite(rectWidth) && rectWidth > 0) return _pxToMm(rectWidth);
+  return 18;
+}
+
+function _readAutoZoneInsetMm(root, surfaceKey, zoneKey) {
+  const nodes = _getAutoLayoutZoneNodes(root, surfaceKey, zoneKey);
+  const first = nodes[0] || null;
+  const computed = first && typeof window?.getComputedStyle === "function" ? window.getComputedStyle(first) : null;
+  const inlineInset = _readAutoLayoutLengthMm(first?.style?.paddingLeft || computed?.paddingLeft || "");
+  if (inlineInset != null) return inlineInset;
+  return 1;
+}
+
+function _readAutoZoneFontPt(root, surfaceKey, zoneKey) {
+  const nodes = _getAutoLayoutZoneNodes(root, surfaceKey, zoneKey);
+  const first = nodes[0] || null;
+  const computed = first && typeof window?.getComputedStyle === "function" ? window.getComputedStyle(first) : null;
+  const inlineFont = _readAutoLayoutLengthPt(first?.style?.fontSize || computed?.fontSize || "");
+  if (inlineFont != null) return inlineFont;
+  return 9;
+}
+
+function _applyAutoZoneWidthMm(root, surfaceKey, zoneKey, mm) {
+  const nextMm = Math.max(6, Math.min(120, Math.round(Number(mm) * 1) / 1));
+  const nodes = _getAutoLayoutZoneNodes(root, surfaceKey, zoneKey);
+  for (const node of nodes) {
+    if (!node?.style) continue;
+    node.style.width = `${nextMm}mm`;
+    node.style.minWidth = `${nextMm}mm`;
+    node.style.maxWidth = `${nextMm}mm`;
+  }
+  const col = _getAutoLayoutZoneCol(root, surfaceKey, zoneKey);
+  if (col?.style) {
+    col.style.width = `${nextMm}mm`;
+    col.style.minWidth = `${nextMm}mm`;
+    col.style.maxWidth = `${nextMm}mm`;
+  }
+  return nextMm;
+}
+
+function _applyAutoZoneInsetMm(root, surfaceKey, zoneKey, mm) {
+  const nextMm = Math.max(0, Math.min(10, Math.round(Number(mm) * 2) / 2));
+  const nodes = _getAutoLayoutZoneNodes(root, surfaceKey, zoneKey);
+  for (const node of nodes) {
+    if (!node?.style) continue;
+    node.style.paddingLeft = `${nextMm}mm`;
+    node.style.paddingRight = `${nextMm}mm`;
+  }
+  return nextMm;
+}
+
+function _applyAutoZoneFontPt(root, surfaceKey, zoneKey, pt) {
+  const nextPt = Math.max(6, Math.min(16, Math.round(Number(pt) * 2) / 2));
+  const nodes = _getAutoLayoutZoneNodes(root, surfaceKey, zoneKey);
+  for (const node of nodes) {
+    if (!node?.style) continue;
+    node.style.fontSize = `${nextPt}pt`;
+  }
+  return nextPt;
+}
+
 function _applyTextInsetMm(root, mm) {
   const nextMm = Math.max(0, Math.min(10, Math.round(Number(mm) * 2) / 2));
   _applyTextPaddingMm(root, nextMm, nextMm);
@@ -2448,23 +2603,67 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     toolbar._line2.textContent = `${surfaceLabel} > ${zoneLabel}`;
     toolbar._save.disabled = true;
     toolbar._reset.disabled = true;
-    toolbar._minus.disabled = true;
-    toolbar._plus.disabled = true;
-    toolbar._insetMinus.disabled = true;
-    toolbar._insetPlus.disabled = true;
-    toolbar._fontMinus.disabled = true;
-    toolbar._fontPlus.disabled = true;
-    toolbar._value.textContent = "Auswahl";
-    toolbar._insetValue.textContent = "Innen -";
-    if (toolbar._fontValue) toolbar._fontValue.textContent = "Schrift -";
+    toolbar._minus.disabled = false;
+    toolbar._plus.disabled = false;
+    toolbar._insetMinus.disabled = false;
+    toolbar._insetPlus.disabled = false;
+    toolbar._fontMinus.disabled = false;
+    toolbar._fontPlus.disabled = false;
+
+    toolbar._autoState = toolbar._autoState || {};
+    const stateKey = `${autoSurfaceKey}::${autoZoneKey}`;
+    const state = toolbar._autoState[stateKey] || { widthMm: null, insetMm: null, fontPt: null };
+    toolbar._autoState[stateKey] = state;
+
+    if (state.widthMm == null) state.widthMm = _readAutoZoneWidthMm(root, autoSurfaceKey, autoZoneKey);
+    if (state.insetMm == null) state.insetMm = _readAutoZoneInsetMm(root, autoSurfaceKey, autoZoneKey);
+    if (state.fontPt == null) state.fontPt = _readAutoZoneFontPt(root, autoSurfaceKey, autoZoneKey);
+
+    toolbar._value.textContent = `Breite ${Math.round(Number(state.widthMm || 0))} mm`;
+    toolbar._insetValue.textContent = `Innen ${_formatMm(state.insetMm)} mm`;
+    if (toolbar._fontValue) toolbar._fontValue.textContent = `Schrift ${_formatMm(state.fontPt)} pt`;
     toolbar._save.onclick = null;
     toolbar._reset.onclick = null;
-    toolbar._minus.onclick = null;
-    toolbar._plus.onclick = null;
-    toolbar._insetMinus.onclick = null;
-    toolbar._insetPlus.onclick = null;
-    if (toolbar._fontMinus) toolbar._fontMinus.onclick = null;
-    if (toolbar._fontPlus) toolbar._fontPlus.onclick = null;
+    toolbar._minus.onclick = () => {
+      const current = state.widthMm == null ? _readAutoZoneWidthMm(root, autoSurfaceKey, autoZoneKey) : state.widthMm;
+      state.widthMm = _applyAutoZoneWidthMm(root, autoSurfaceKey, autoZoneKey, current - 1);
+      _syncDevPdfAutoSelection(root);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    toolbar._plus.onclick = () => {
+      const current = state.widthMm == null ? _readAutoZoneWidthMm(root, autoSurfaceKey, autoZoneKey) : state.widthMm;
+      state.widthMm = _applyAutoZoneWidthMm(root, autoSurfaceKey, autoZoneKey, current + 1);
+      _syncDevPdfAutoSelection(root);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    toolbar._insetMinus.onclick = () => {
+      const current = state.insetMm == null ? _readAutoZoneInsetMm(root, autoSurfaceKey, autoZoneKey) : state.insetMm;
+      state.insetMm = _applyAutoZoneInsetMm(root, autoSurfaceKey, autoZoneKey, current - 0.5);
+      _syncDevPdfAutoSelection(root);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    toolbar._insetPlus.onclick = () => {
+      const current = state.insetMm == null ? _readAutoZoneInsetMm(root, autoSurfaceKey, autoZoneKey) : state.insetMm;
+      state.insetMm = _applyAutoZoneInsetMm(root, autoSurfaceKey, autoZoneKey, current + 0.5);
+      _syncDevPdfAutoSelection(root);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+    };
+    if (toolbar._fontMinus) {
+      toolbar._fontMinus.onclick = () => {
+        const current = state.fontPt == null ? _readAutoZoneFontPt(root, autoSurfaceKey, autoZoneKey) : state.fontPt;
+        state.fontPt = _applyAutoZoneFontPt(root, autoSurfaceKey, autoZoneKey, current - 0.5);
+        _syncDevPdfAutoSelection(root);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      };
+    }
+    if (toolbar._fontPlus) {
+      toolbar._fontPlus.onclick = () => {
+        const current = state.fontPt == null ? _readAutoZoneFontPt(root, autoSurfaceKey, autoZoneKey) : state.fontPt;
+        state.fontPt = _applyAutoZoneFontPt(root, autoSurfaceKey, autoZoneKey, current + 0.5);
+        _syncDevPdfAutoSelection(root);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      };
+    }
     return;
   }
 

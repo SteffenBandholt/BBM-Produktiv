@@ -92,6 +92,11 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printModalSource.includes("printMeetingPreview"), true);
     assert.equal(printModalSource.includes('openHtmlPreview({ mode: "todo", projectId });'), true);
     assert.equal(printModalSource.includes('openHtmlPreview({ mode: "topsAll", projectId });'), true);
+    assert.equal(printAppSource.includes("_readAutoZoneWidthMm"), true);
+    assert.equal(printAppSource.includes("_applyAutoZoneWidthMm"), true);
+    assert.equal(printAppSource.includes("_applyAutoZoneInsetMm"), true);
+    assert.equal(printAppSource.includes("_applyAutoZoneFontPt"), true);
+    assert.equal(printAppSource.includes("toolbar._autoState = toolbar._autoState || {};"), true);
   });
 
   await run("Ausgabe: Drucken startet mit Druckart-Auswahl", async () => {
