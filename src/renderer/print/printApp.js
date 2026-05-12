@@ -2717,6 +2717,51 @@ function _applyParticipantsNameVarsFromLayout(root, layout) {
   }
 }
 
+function _applyProtokollTopsPdfLayoutFromLayout(root, layout) {
+  if (!root || !layout) return;
+  const pdf = layout?.pdf || {};
+  const columns = pdf?.columns || {};
+  const rootVars = pdf?.rootVars || {};
+
+  const numberWidthMm = _parseMetaWidthMmFromRaw(columns?.number?.width);
+  if (numberWidthMm != null) _applyNumberWidthMm(root, numberWidthMm);
+  const numberInsetMm = _parseMetaInsetMmFromRaw(rootVars["--bbm-top-col-nr-padding-left"]);
+  if (numberInsetMm != null) _applyNumberInsetMm(root, numberInsetMm);
+  const numberFontPt = _parsePtFromRaw(rootVars["--bbm-top-col-nr-font-size"]);
+  if (numberFontPt != null) _applyNumberFontPt(root, numberFontPt);
+
+  const textLeftMm = _parseMetaInsetMmFromRaw(rootVars["--bbm-top-col-text-padding-left"]);
+  const textRightMm = _parseMetaInsetMmFromRaw(rootVars["--bbm-top-col-text-padding-right"]);
+  if (textLeftMm != null || textRightMm != null) {
+    _applyTextPaddingMm(root, textLeftMm ?? 0, textRightMm ?? textLeftMm ?? 0);
+  }
+  const textFontPt = _parsePtFromRaw(rootVars["--bbm-top-col-text-font-size"]);
+  if (textFontPt != null) _applyTextFontPt(root, textFontPt);
+
+  const metaWidthMm = _parseMetaWidthMmFromRaw(columns?.meta?.width);
+  if (metaWidthMm != null) _applyMetaWidthMm(root, metaWidthMm);
+  const metaInsetMm = _parseMetaInsetMmFromRaw(rootVars["--bbm-top-col-meta-padding-left"]);
+  if (metaInsetMm != null) _applyMetaInsetMm(root, metaInsetMm);
+  const metaFontPx = _parseFontPxFromRaw(rootVars["--bbm-top-col-meta-font-size"]);
+  if (metaFontPx != null) _applyMetaFontPx(root, metaFontPx);
+}
+
+function _applySavedLayoutToPreview(root, layout, surfaceKey = "") {
+  if (!root || !layout) return;
+  const key = String(surfaceKey || "").trim().toLowerCase();
+  if (key === "protokoll_participants") {
+    _applyParticipantsNameVarsFromLayout(root, layout);
+    return;
+  }
+  if (key && _getAutoLayoutSurfaceDescriptor(root, key)) {
+    _applyAutoLayoutLayout(root, key, layout);
+    return;
+  }
+  if (key === "protokoll_tops") {
+    _applyProtokollTopsPdfLayoutFromLayout(root, layout);
+  }
+}
+
 function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   if (!toolbar) return;
   const enabled = String(root?.dataset?.devPdfLayout || "true").trim() === "true";
@@ -2882,6 +2927,11 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
           return;
         }
+        _applySavedLayoutToPreview(root, res?.data?.effectiveLayout || res?.data?.defaultLayout || next, "protokoll_participants");
+        state.widthMm = _readParticipantsZoneWidthMm(root, zoneKey);
+        state.insetMm = _readParticipantsZoneInsetMm(root, zoneKey);
+        state.fontPt = _readParticipantsZoneFontPt(root, zoneKey);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
         toolbar._status.style.color = "#25624f";
         toolbar._status.textContent = "Gespeichert.";
       } catch (err) {
@@ -3012,6 +3062,11 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
           return;
         }
+        _applySavedLayoutToPreview(root, res?.data?.effectiveLayout || res?.data?.defaultLayout || layout, autoSurfaceKey);
+        state.widthMm = _readAutoZoneWidthMm(root, autoSurfaceKey, autoZoneKey);
+        state.insetMm = _readAutoZoneInsetMm(root, autoSurfaceKey, autoZoneKey);
+        state.fontPt = _readAutoZoneFontPt(root, autoSurfaceKey, autoZoneKey);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
         toolbar._status.style.color = "#25624f";
         toolbar._status.textContent = "Gespeichert.";
       } catch (err) {
@@ -3291,6 +3346,11 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
           return;
         }
+        _applySavedLayoutToPreview(root, res?.data?.effectiveLayout || res?.data?.defaultLayout || next, "protokoll_tops");
+        toolbar._nrWidthMm = _readNumberWidthMm(root);
+        toolbar._nrInsetMm = _readNumberInsetMm(root);
+        toolbar._nrFontPt = _readNumberFontPt(root);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
         toolbar._status.style.color = "#25624f";
         toolbar._status.textContent = "Gespeichert.";
       } catch (err) {
@@ -3444,6 +3504,10 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
           return;
         }
+        _applySavedLayoutToPreview(root, res?.data?.effectiveLayout || res?.data?.defaultLayout || next, "protokoll_tops");
+        toolbar._txtInsetMm = _readTextInsetMm(root);
+        toolbar._txtFontPt = _readTextFontPt(root);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
         toolbar._status.style.color = "#25624f";
         toolbar._status.textContent = "Gespeichert.";
       } catch (err) {
@@ -3610,6 +3674,11 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
         toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
         return;
       }
+      _applySavedLayoutToPreview(root, res?.data?.effectiveLayout || res?.data?.defaultLayout || next, "protokoll_tops");
+      toolbar._metaWidthMm = _readMetaWidthMm(root);
+      toolbar._metaInsetMm = _readMetaInsetMm(root);
+      toolbar._metaFontPx = _readMetaFontPx(root);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
       toolbar._status.style.color = "#25624f";
       toolbar._status.textContent = "Gespeichert.";
     } catch (err) {

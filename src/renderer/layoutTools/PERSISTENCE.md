@@ -4,6 +4,10 @@
 Persistence is implemented by the hosting surface/module via callbacks (save/reset) and the existing
 `tableLayouts*` IPC/DB plumbing.
 
+Important runtime rule:
+- `Speichern` is the apply step. As soon as the hosting module saves a layout, the current UI/PDF preview must use the persisted values.
+- `Export` is optional helper output only and must never be required for the values to become active.
+
 This note documents the conventions used by the current pilots:
 - Protokoll TOP-Liste (UI + PDF): `tableKey = protokoll_tops`
 - Protokoll Teilnehmerliste (PDF): `tableKey = protokoll_participants`

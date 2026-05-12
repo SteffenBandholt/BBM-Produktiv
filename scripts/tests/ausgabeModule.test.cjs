@@ -104,6 +104,7 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("_applyAutoZoneWidthMm"), true);
     assert.equal(printAppSource.includes("_applyAutoZoneInsetMm"), true);
     assert.equal(printAppSource.includes("_applyAutoZoneFontPt"), true);
+    assert.equal(printAppSource.includes("_applySavedLayoutToPreview"), true);
     assert.equal(printAppSource.includes("_captureAutoLayoutDefaults"), true);
     assert.equal(printAppSource.includes("_loadStoredAutoLayouts"), true);
     assert.equal(printAppSource.includes("_buildAutoLayoutOverlayFromDom"), true);

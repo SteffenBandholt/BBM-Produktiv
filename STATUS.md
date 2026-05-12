@@ -32,6 +32,11 @@ Sie ergÃ¤nzt:
   - bei deaktivierter Kalibrierung laeuft der normale PDF-Weg ohne Layoutfenster
   - gespeicherte/finale Layoutwerte bleiben wirksam
   - geprueft mit `npm test`
+- layoutTools-Speichern ist jetzt die sofortige Uebernahme:
+  - die Vorschau re-applied nach erfolgreichem Speichern den effektiven Layoutstand
+  - Export bleibt nur ein Hilfsweg fuer den Snapshot
+  - gespeicherte Werte bleiben auch bei ausgeschalteter Kalibrierung in UI/PDF aktiv
+  - geprueft mit `npm test`
 - Der erste DEV-only Schritt fuer das TOP-Layout-Feintuning ist umgesetzt:
   - die TOP-Liste kann im DEV-Build jetzt Layout-Zonen fuer Nummernblock, Textblock und Metablock anzeigen
   - die aktive Zone wird gruen markiert
