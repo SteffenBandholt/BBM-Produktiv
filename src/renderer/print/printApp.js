@@ -312,22 +312,44 @@ function _applyAutoLayoutLayout(root, surfaceKey, layout) {
   }
 }
 
+function _applyAutoLayoutLayoutForPersistenceKey(root, persistenceKey, layout) {
+  const key = String(persistenceKey || "").trim();
+  if (!root || !key || !layout) return;
+  const surfaces = Array.isArray(root._bbmDevPdfAutoLayoutSurfaces) ? root._bbmDevPdfAutoLayoutSurfaces : [];
+  let applied = false;
+  for (const surface of surfaces) {
+    const baseKey = String(surface?.baseSurfaceKey || surface?.surfaceKey || "").trim();
+    if (baseKey !== key) continue;
+    _applyAutoLayoutLayout(root, String(surface?.surfaceKey || "").trim(), layout);
+    applied = true;
+  }
+  return applied;
+}
+
 async function _loadStoredAutoLayouts(root, runtimeData = null) {
   if (!root || typeof window?.bbmPrint?.tableLayoutsGetOne !== "function") return;
   const orientation = _normalizeOrientation(root?.dataset?.orientation || runtimeData?.orientation || "portrait");
   const surfaces = Array.isArray(root._bbmDevPdfAutoLayoutSurfaces) ? root._bbmDevPdfAutoLayoutSurfaces : [];
+  const seenPersistenceKeys = new Set();
   for (const surface of surfaces) {
     const surfaceKey = String(surface?.surfaceKey || "").trim();
-    if (!surfaceKey) continue;
+    const persistenceKey = String(surface?.baseSurfaceKey || surfaceKey || "").trim();
+    if (!surfaceKey || !persistenceKey || seenPersistenceKeys.has(persistenceKey)) continue;
+    seenPersistenceKeys.add(persistenceKey);
     try {
       const res = await window.bbmPrint.tableLayoutsGetOne({
-        tableKey: surfaceKey,
+        tableKey: persistenceKey,
+        surfaceKey: persistenceKey,
         moduleId: "protokoll",
+        mode: runtimeData?.mode || "preview",
+        medium: "pdf",
         orientation,
+        scopeType: "global",
+        scopeId: "",
       });
       const layout = res?.ok ? res?.data?.effectiveLayout || res?.data?.storedLayout || null : null;
       if (layout) {
-        _applyAutoLayoutLayout(root, surfaceKey, layout);
+        _applyAutoLayoutLayoutForPersistenceKey(root, persistenceKey, layout);
       }
     } catch (_err) {}
   }
@@ -345,6 +367,7 @@ function _buildAutoLayoutOverlayFromDom(root, surfaceKey) {
   if (!descriptor) return null;
   const columns = [];
   const rootVars = {};
+  const zones = [];
   for (const zone of Array.isArray(descriptor.zones) ? descriptor.zones : []) {
     const zoneKey = String(zone?.key || "").trim();
     if (!zoneKey) continue;
@@ -363,10 +386,26 @@ function _buildAutoLayoutOverlayFromDom(root, surfaceKey) {
     });
     rootVars[`--bbm-auto-col-${zoneKey}-padding-inline`] = `${_formatMm(insetMm)}mm`;
     rootVars[`--bbm-auto-col-${zoneKey}-font-size`] = `${_formatMm(fontPt)}pt`;
+    zones.push({
+      key: zoneKey,
+      label,
+      width: widthMm,
+      inset: insetMm,
+      font: fontPt,
+      unit: { width: "mm", inset: "mm", font: "pt" },
+    });
   }
   return {
     variant: _normalizeOrientation(root?.dataset?.orientation || "portrait"),
+    tableKey: String(surfaceKey || "").trim(),
+    surfaceKey: String(surfaceKey || "").trim(),
+    label: String(descriptor.surfaceLabel || "Tabelle").trim() || "Tabelle",
+    medium: "pdf",
+    mode: normalizePrintMode(root?._bbmRuntimeData?.mode || "preview"),
+    orientation: _normalizeOrientation(root?.dataset?.orientation || "portrait"),
+    activeZone: String(root?.dataset?.devPdfAutoActiveZone || "").trim() || undefined,
     columns,
+    zones,
     pdf: {
       rootVars,
     },
@@ -1795,7 +1834,15 @@ async function handleInit(payload) {
     app.innerHTML = "";
     app.appendChild(root);
 
+    // Always apply stored auto-table layouts for the rendered print DOM.
+    // Markers/toolbar stay gated behind devLayoutPreview (data-dev-pdf-layout).
+    _decorateAutoLayoutTables(root, data);
+
     if (isDevLayoutPreview) {
+      // Capture defaults before applying stored overrides, so "Reset" restores the original rendering defaults.
+      _captureAutoLayoutDefaults(root);
+      await _loadStoredAutoLayouts(root, data);
+
       // DEV-only: ensure the participants layout is loaded and applied so save/load works
       // even when the print payload did not include tableLayouts for this table yet.
       if (typeof window?.bbmPrint?.tableLayoutsGetOne === "function") {
@@ -1810,6 +1857,9 @@ async function handleInit(payload) {
         } catch (_e) {}
       }
       await _enableDevPdfLayoutZones(root, data, layoutCalibrationEnabled);
+    } else {
+      // Non-DEV preview / real PDF: apply stored layouts, but do not enable any layoutTools UI.
+      await _loadStoredAutoLayouts(root, data);
     }
 
     if (isDevLayoutPreview && typeof window?.bbmPrint?.appSettingsOnChanged === "function") {
@@ -1846,9 +1896,7 @@ async function _enableDevPdfLayoutZones(root, runtimeData = null, layoutCalibrat
   const toolbar = _ensureDevPdfLayoutToolbar();
   _setDevPdfLayoutMode(root, toolbar, !!layoutCalibrationEnabled);
 
-  _decorateAutoLayoutTables(root, runtimeData);
-  _captureAutoLayoutDefaults(root);
-  await _loadStoredAutoLayouts(root, runtimeData);
+  // Auto layouts are decorated/applied during init already; here we only enable DEV interactions.
 
   const decorateParticipantsZones = () => {
     const map = [
@@ -2804,6 +2852,7 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   const autoZone = autoSurfaceKey && autoZoneKey
     ? (Array.isArray(autoSurface?.zones) ? autoSurface.zones : []).find((zone) => String(zone?.key || "").trim() === autoZoneKey) || null
     : null;
+  const autoPersistenceKey = String(autoSurface?.baseSurfaceKey || autoSurfaceKey).trim() || autoSurfaceKey;
   const isAutoSurface = !!autoSurface && !!autoZone;
   const manualZone = String(root?.dataset?.devPdfActiveZone || "").trim().toLowerCase();
   const hasExportableSelection = isParticipants || isAutoSurface || !!manualZone;
@@ -3053,16 +3102,25 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           return;
         }
         const res = await window.bbmPrint.tableLayoutsSave({
-          tableKey: autoSurfaceKey,
+          tableKey: autoPersistenceKey,
+          surfaceKey: autoPersistenceKey,
           moduleId: "protokoll",
+          mode: runtimeData?.mode || "preview",
+          medium: "pdf",
           orientation: toolbar._orientation || "portrait",
+          scopeType: "global",
+          scopeId: "",
           layout,
         });
         if (!res?.ok) {
           toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
           return;
         }
-        _applySavedLayoutToPreview(root, res?.data?.effectiveLayout || res?.data?.defaultLayout || layout, autoSurfaceKey);
+        _applyAutoLayoutLayoutForPersistenceKey(
+          root,
+          autoPersistenceKey,
+          res?.data?.effectiveLayout || res?.data?.defaultLayout || layout
+        );
         state.widthMm = _readAutoZoneWidthMm(root, autoSurfaceKey, autoZoneKey);
         state.insetMm = _readAutoZoneInsetMm(root, autoSurfaceKey, autoZoneKey);
         state.fontPt = _readAutoZoneFontPt(root, autoSurfaceKey, autoZoneKey);
@@ -3091,9 +3149,14 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
           return;
         }
         const res = await window.bbmPrint.tableLayoutsSave({
-          tableKey: autoSurfaceKey,
+          tableKey: autoPersistenceKey,
+          surfaceKey: autoPersistenceKey,
           moduleId: "protokoll",
+          mode: runtimeData?.mode || "preview",
+          medium: "pdf",
           orientation: toolbar._orientation || "portrait",
+          scopeType: "global",
+          scopeId: "",
           layout,
         });
         if (!res?.ok) {

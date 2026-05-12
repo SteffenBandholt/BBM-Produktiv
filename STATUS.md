@@ -37,6 +37,14 @@ Sie ergÃ¤nzt:
   - Export bleibt nur ein Hilfsweg fuer den Snapshot
   - gespeicherte Werte bleiben auch bei ausgeschalteter Kalibrierung in UI/PDF aktiv
   - geprueft mit `npm test`
+- generische Print-Auto-Layouts behalten ihre komplette Layoutstruktur beim Speichern:
+  - `print.todo.todoTable` bleibt mit `zones`, `mode`, `medium` und `surfaceKey` erhalten
+  - gespeicherte ToDo-Layoutwerte laden nach Vorschau-Neuaufbau und Neustart wieder ein
+  - geprueft mit `npm test`
+- Auto-Layout-Vorschau nutzt jetzt fuer Save/Load den stabilen Basis-Schluessel:
+  - keine Abhaengigkeit mehr von `__2`-/`__3`-Suffixen der laufenden Seiteninstanzen
+  - gespeicherte Auto-Tabellenwerte werden beim erneuten Oeffnen der Vorschau wieder auf alle passenden Instanzen angewendet
+  - geprueft mit `npm test`
 - Der erste DEV-only Schritt fuer das TOP-Layout-Feintuning ist umgesetzt:
   - die TOP-Liste kann im DEV-Build jetzt Layout-Zonen fuer Nummernblock, Textblock und Metablock anzeigen
   - die aktive Zone wird gruen markiert
@@ -1846,6 +1854,22 @@ Wichtig:
   - optional: fachlich weitere komplexe PDF-Tabellen pruefen, bevor neue Auto-Surfaces in groesserem Umfang entstehen
 - Risiken/Hinweise:
   - Der Auto-Key ist bewusst generisch; bei mehreren Tabellen derselben Klasse bekommt die spaetere Instanz einen stabilen Suffix, um Vermischung zu vermeiden.
+
+#### Paket: Auto-Tabellenlayouts wirken auch im echten PDF
+- Status: erledigt
+- Beschreibung:
+  - Gespeicherte Auto-Tabellenlayouts (z.B. `print.todo.todoTable`) werden jetzt nicht nur in der DEV-Layoutvorschau, sondern auch im normalen `print:toPdf`-Pfad geladen und auf den Print-DOM angewendet.
+  - Marker/Toolbar/Zonenbedienung bleiben weiterhin strikt an `devLayoutPreview` gekoppelt und erscheinen im echten PDF nicht.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Die Auto-Tabellen werden auch im echten PDF dekoriert (Data-Attribute), sind aber CSS-seitig weiterhin nur bei aktivem DEV-Layoutmodus sichtbar.
 
 #### Paket: DEV Auto-Layout Export
 - Status: erledigt

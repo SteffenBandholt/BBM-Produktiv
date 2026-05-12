@@ -105,9 +105,13 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("_applyAutoZoneInsetMm"), true);
     assert.equal(printAppSource.includes("_applyAutoZoneFontPt"), true);
     assert.equal(printAppSource.includes("_applySavedLayoutToPreview"), true);
+    assert.equal(printAppSource.includes("_applyAutoLayoutLayoutForPersistenceKey"), true);
     assert.equal(printAppSource.includes("_captureAutoLayoutDefaults"), true);
     assert.equal(printAppSource.includes("_loadStoredAutoLayouts"), true);
+    assert.equal(printAppSource.includes("_decorateAutoLayoutTables(root, data);"), true);
+    assert.equal(printAppSource.includes("await _loadStoredAutoLayouts(root, data);"), true);
     assert.equal(printAppSource.includes("_buildAutoLayoutOverlayFromDom"), true);
+    assert.equal(printAppSource.includes("zones.push({"), true);
     assert.equal(printAppSource.includes("_buildDevLayoutExportPayload"), true);
     assert.equal(printAppSource.includes("_showDevLayoutExport"), true);
     assert.equal(printAppSource.includes("loadLayoutCalibrationEnabled"), true);

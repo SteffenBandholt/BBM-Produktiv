@@ -192,6 +192,60 @@ async function runTableLayoutsRepoTests(run) {
     });
   });
 
+  await run("TableLayoutsRepo: generische Print-Auto-Layouts behalten ihre Zonen ueber Save/Load", async () => {
+    return withTempTableLayoutsRepo(async ({ db, repo }) => {
+      db.initDatabase();
+
+      const layout = {
+        tableKey: "print.todo.todoTable",
+        moduleId: "protokoll",
+        variant: "portrait",
+        surfaceKey: "print.todo.todoTable",
+        label: "Todo Table",
+        medium: "pdf",
+        mode: "todo",
+        orientation: "portrait",
+        zones: [
+          { key: "top", label: "TOP", width: 21, inset: 0.5, font: 11 },
+          { key: "status", label: "Status", width: 32, inset: 4, font: 12.5 },
+        ],
+        pdf: {
+          rootVars: {
+            "--bbm-todo-col-top-width": "21mm",
+            "--bbm-todo-col-status-width": "32mm",
+          },
+        },
+      };
+
+      const saveRes = await repo.saveTableLayout({
+        tableKey: "print.todo.todoTable",
+        moduleId: "protokoll",
+        orientation: "portrait",
+        layout,
+      });
+
+      assert.equal(saveRes.ok, true);
+      assert.equal(saveRes.source, "stored");
+      assert.equal(saveRes.effectiveLayout.surfaceKey, "print.todo.todoTable");
+      assert.equal(saveRes.effectiveLayout.mode, "todo");
+      assert.equal(saveRes.effectiveLayout.medium, "pdf");
+      assert.equal(saveRes.effectiveLayout.zones[0].width, 21);
+      assert.equal(saveRes.effectiveLayout.pdf.rootVars["--bbm-todo-col-top-width"], "21mm");
+
+      const resolved = await repo.getResolvedTableLayout({
+        tableKey: "print.todo.todoTable",
+        moduleId: "protokoll",
+        orientation: "portrait",
+      });
+
+      assert.equal(resolved.ok, true);
+      assert.equal(resolved.source, "stored");
+      assert.equal(resolved.effectiveLayout.surfaceKey, "print.todo.todoTable");
+      assert.equal(resolved.effectiveLayout.zones[1].width, 32);
+      assert.equal(resolved.effectiveLayout.pdf.rootVars["--bbm-todo-col-status-width"], "32mm");
+    });
+  });
+
   await run("TableLayoutsRepo: kaputte gespeicherte Layoutwerte fallen auf Standard des konkreten Tables zurueck", async () => {
     return withTempTableLayoutsRepo(async ({ db, repo }) => {
       const conn = db.initDatabase();

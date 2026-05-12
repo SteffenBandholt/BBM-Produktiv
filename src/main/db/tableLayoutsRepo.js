@@ -150,6 +150,11 @@ async function _sanitizeTableLayout(layout, orientation, definition) {
   if (definition.tableKey === "protokoll_tops" && mod && typeof mod.sanitizeProtokollTopsLayout === "function") {
     return mod.sanitizeProtokollTopsLayout(layout || {}, orientation);
   }
+  if (String(definition.tableKey || "").startsWith("print.")) {
+    // Keep the full editable payload for generic print auto layouts so save/load
+    // roundtrips preserve the exact live preview state.
+    return _cloneJson(layout);
+  }
   if (mod && typeof mod.buildTableLayoutOverlayFromColumns === "function") {
     const columns = Array.isArray(layout?.columns) && layout.columns.length ? layout.columns : Array.isArray(definition.columns) ? definition.columns : [];
     // Preserve optional layout extras (ui/pdf/labels) for non-protokoll_tops tables.
