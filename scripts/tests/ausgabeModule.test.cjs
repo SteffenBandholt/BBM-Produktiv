@@ -19,6 +19,11 @@ async function runAusgabeModuleTests(run) {
   const printAppSource = read("src/renderer/print/printApp.js");
   const printIpcSource = read("src/main/ipc/printIpc.js");
   const printCssSource = read("src/renderer/print/print.css");
+  const layoutCalibrationStateSource = read("src/renderer/layoutTools/layoutCalibrationState.js");
+  const settingsViewSource = read("src/renderer/views/SettingsView.js");
+  const routerSource = read("src/renderer/app/Router.js");
+  const preloadSource = read("src/main/preload.js");
+  const settingsIpcSource = read("src/main/ipc/settingsIpc.js");
   const printV2CssSource = read("src/renderer/print/v2/v2.css");
   const closedProtocolSelectorSource = read("src/renderer/ui/react/ClosedProtocolSelector.js");
   const sendMailSource = read("src/renderer/modules/ausgabe/sendMailPayload.js");
@@ -101,13 +106,19 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("_buildAutoLayoutOverlayFromDom"), true);
     assert.equal(printAppSource.includes("_buildDevLayoutExportPayload"), true);
     assert.equal(printAppSource.includes("_showDevLayoutExport"), true);
-    assert.equal(printAppSource.includes("_ensureDevPdfLayoutModeToggle"), true);
-    assert.equal(printAppSource.includes("bbm-dev-pdf-layout-mode-toggle"), true);
-    assert.equal(printAppSource.includes("Layoutmodus: AN"), true);
-    assert.equal(printAppSource.includes("toolbar.hidden = !enabled;"), true);
-    assert.equal(printAppSource.includes('root.dataset.devPdfLayout = enabled ? "true" : "false";'), true);
+    assert.equal(printAppSource.includes("loadLayoutCalibrationEnabled"), true);
+    assert.equal(printAppSource.includes("LAYOUT_CALIBRATION_SETTING_KEY"), true);
+    assert.equal(printAppSource.includes("appSettingsOnChanged"), true);
+    assert.equal(printAppSource.includes("root.dataset.devPdfLayout = layoutCalibrationEnabled ? \"true\" : \"false\";"), true);
     assert.equal(printAppSource.includes("Export"), true);
     assert.equal(printAppSource.includes("toolbar._autoState = toolbar._autoState || {};"), true);
+    assert.equal(printAppSource.includes("Layoutmodus: AN"), false);
+    assert.equal(settingsViewSource.includes("Layout-Kalibrierung aktivieren"), true);
+    assert.equal(settingsViewSource.includes("dev.layoutCalibrationEnabled"), true);
+    assert.equal(routerSource.includes("dev.layoutCalibrationEnabled"), true);
+    assert.equal(preloadSource.includes("appSettingsOnChanged"), true);
+    assert.equal(settingsIpcSource.includes("app-settings:changed"), true);
+    assert.equal(layoutCalibrationStateSource.includes("bbm:layout-calibration-changed"), true);
   });
 
   await run("Ausgabe: Drucken startet mit Druckart-Auswahl", async () => {

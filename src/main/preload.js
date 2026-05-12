@@ -163,6 +163,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   appSettingsGetMany: (keys) => ipcRenderer.invoke("appSettings:getMany", keys),
   appSettingsSetMany: (data) => ipcRenderer.invoke("appSettings:setMany", data),
+  appSettingsOnChanged: (callback) => {
+    if (typeof callback !== "function") return () => {};
+    const handler = (_event, payload) => callback(payload || {});
+    ipcRenderer.on("app-settings:changed", handler);
+    return () => ipcRenderer.removeListener("app-settings:changed", handler);
+  },
   securitySettingsPinStatus: () => ipcRenderer.invoke("security:settingsPinStatus"),
   securitySettingsPinSet: (data) => ipcRenderer.invoke("security:settingsPinSet", data),
   securitySettingsPinDisable: (data) => ipcRenderer.invoke("security:settingsPinDisable", data),

@@ -21,6 +21,11 @@ Sie ergÃ¤nzt:
   - Pilot 1: TOP-Liste (UI/PDF) inkl. Zonen, live/persist/reset, UI/PDF getrennt
   - Pilot 2: Teilnehmerliste (PDF) inkl. Zonen, live/persist/reset (inkl. Anwesend/Verteiler "x")
   - echte PDFs bleiben ohne gruene Markierungen; DevTools oeffnen nicht automatisch
+- Die layoutTools-Aktivierung wird jetzt zentral ueber die DEV-Einstellung `Layout-Kalibrierung aktivieren` geschaltet:
+  - nur im DEV-Build sichtbar
+  - wirkt appweit auf UI-TOP-Liste, PDF-Layoutvorschauen und Auto-Tabellen
+  - gespeicherte Layoutwerte bleiben beim Ausschalten erhalten
+  - echte PDF-Erzeugung bleibt ungebremst und markerfrei
 - Der erste DEV-only Schritt fuer das TOP-Layout-Feintuning ist umgesetzt:
   - die TOP-Liste kann im DEV-Build jetzt Layout-Zonen fuer Nummernblock, Textblock und Metablock anzeigen
   - die aktive Zone wird gruen markiert
@@ -1869,7 +1874,7 @@ Wichtig:
 #### Paket: DEV Layoutmodus-Schalter fuer PDF-Vorschau
 - Status: erledigt
 - Beschreibung:
-  - Die DEV-PDF-Layout-Vorschau hat jetzt einen echten AN/AUS-Schalter fuer den Layoutmodus.
+  - Die DEV-PDF-Layout-Vorschau wurde vom lokalen AN/AUS-Schalter wieder entkoppelt und folgt jetzt dem zentralen DEV-Flag aus den Einstellungen.
   - Im Zustand AN sind Toolbar, Marker und Zonenbedienung sichtbar; im Zustand AUS bleibt die Layout-Toolbar verborgen, waehrend die gespeicherten Layoutwerte weiterhin angewendet bleiben.
   - STABLE und echte PDF-Ausgaben bleiben unveraendert und markerfrei.
 - Betroffene Dateien:
@@ -1882,4 +1887,27 @@ Wichtig:
 - Naechster offener Schritt:
   - keiner
 - Risiken/Hinweise:
-  - Der Schalter ist bewusst nur in der DEV-Layoutvorschau vorhanden und steuert nur die Sichtbarkeit/Bearbeitbarkeit der laufenden Vorschau, nicht die gespeicherten Werte.
+  - Der Schalter ist bewusst nur in den DEV-Einstellungen vorhanden und steuert nur die Sichtbarkeit/Bearbeitbarkeit der laufenden Vorschau, nicht die gespeicherten Werte.
+
+#### Paket: DEV Layout-Kalibrierung zentral in Einstellungen
+- Status: erledigt
+- Beschreibung:
+  - Die aktive Layout-Kalibrierung wird jetzt zentral in den Einstellungen per DEV-Checkbox gesteuert und per App-Settings-Broadcast an Renderer und PDF-Vorschauen verteilt.
+  - Die lokale Preview-Schaltfläche wurde aus dem laufenden PDF-Workflow entfernt; stattdessen reagieren TopsScreen, Print-HTML-Vorschau und Auto-Tabellen auf den zentralen Zustand.
+  - STABLE sieht den Schalter nicht, und echte PDFs bleiben markerfrei.
+- Betroffene Dateien:
+  - `src/renderer/views/SettingsView.js`
+  - `src/renderer/modules/protokoll/screens/TopsScreen.js`
+  - `src/renderer/print/printApp.js`
+  - `src/renderer/layoutTools/layoutCalibrationState.js`
+  - `src/renderer/app/Router.js`
+  - `src/main/ipc/settingsIpc.js`
+  - `src/main/preload.js`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Der Broadcast-Mechanismus ist bewusst leichtgewichtig; falls spaeter weitere Layout-Renderer hinzukommen, sollten sie denselben zentralen Zustand aus der App-Settings-Quelle lesen.

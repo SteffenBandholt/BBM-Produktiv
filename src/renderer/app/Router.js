@@ -48,6 +48,7 @@ const APP_KERNEL_SETTINGS_KEYS = [
   "defaults.ui.themeHeaderTone",
   "defaults.ui.themeSidebarTone",
   "defaults.ui.themeMainTone",
+  "dev.layoutCalibrationEnabled",
   "pdf.userLogoPngDataUrl",
   "pdf.userLogoEnabled",
   "pdf.userLogoWidthMm",

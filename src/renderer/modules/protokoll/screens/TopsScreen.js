@@ -31,6 +31,11 @@ import { attachAudioFeature } from "../../../features/audio/AudioFeature.js";
 import { DictationController } from "../../../features/audio-dictation/DictationController.js";
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 import {
+  APP_SETTINGS_CHANGED_EVENT,
+  LAYOUT_CALIBRATION_SETTING_KEY,
+  loadLayoutCalibrationEnabled,
+} from "../../../layoutTools/layoutCalibrationState.js";
+import {
   createPopupOverlay,
   stylePopupCard,
   registerPopupCloseHandlers,
@@ -108,6 +113,7 @@ export default class TopsScreen {
       activeZone: null,
     };
     this._devLayoutModeLoadPromise = null;
+    this._layoutCalibrationChangeHandler = null;
     this.closeFlow = null;
     this.dialogs = null;
     this._dialogViewAdapter = this._createDialogViewAdapter();
@@ -740,6 +746,23 @@ export default class TopsScreen {
     return true;
   }
 
+  _bindLayoutCalibrationChanges() {
+    if (this._layoutCalibrationChangeHandler) return;
+    this._layoutCalibrationChangeHandler = async (payload = {}) => {
+      const data = payload?.detail || payload || {};
+      const changedKeys = Array.isArray(data?.keys) ? data.keys.map((key) => String(key || "").trim()) : [];
+      if (changedKeys.length && !changedKeys.includes(LAYOUT_CALIBRATION_SETTING_KEY)) return;
+      await this._loadDevLayoutMode({ force: true });
+      this._syncListState();
+    };
+    const api = window.bbmDb || {};
+    if (typeof api.appSettingsOnChanged === "function") {
+      this._layoutCalibrationUnsubscribe = api.appSettingsOnChanged(this._layoutCalibrationChangeHandler);
+    } else {
+      window.addEventListener(APP_SETTINGS_CHANGED_EVENT, this._layoutCalibrationChangeHandler);
+    }
+  }
+
   _setDevLayoutZone(zoneKey) {
     if (!this._devLayoutMode.enabled) return false;
     const zone = String(zoneKey || "").trim().toLowerCase();
@@ -1081,7 +1104,8 @@ export default class TopsScreen {
     }
   }
 
-  async _loadDevLayoutMode() {
+  async _loadDevLayoutMode({ force = false } = {}) {
+    if (force) this._devLayoutModeLoadPromise = null;
     if (this._devLayoutModeLoadPromise) return this._devLayoutModeLoadPromise;
     this._devLayoutModeLoadPromise = (async () => {
       const api = window.bbmDb || {};
@@ -1092,8 +1116,9 @@ export default class TopsScreen {
       try {
         const res = await api.appGetBuildChannel();
         const channel = normalizeBuildChannel(res?.ok ? res?.channel : "");
+        const calibrationEnabled = await loadLayoutCalibrationEnabled(api, false);
         this._setDevLayoutMode({
-          enabled: channel === "DEV",
+          enabled: channel === "DEV" && calibrationEnabled,
           activeZone: null,
         });
         return channel;
@@ -1806,6 +1831,7 @@ export default class TopsScreen {
   }
 
   async load() {
+    this._bindLayoutCalibrationChanges();
     await this._loadDevLayoutMode();
     const showAmpelInList = await this._loadDisplaySetting({
       key: "tops.ampelEnabled",
@@ -1832,6 +1858,18 @@ export default class TopsScreen {
     await this.closeFlow?.destroy?.();
     this._destroyAudioFeature?.();
     this._destroyDictationController?.();
+    if (this._layoutCalibrationUnsubscribe) {
+      try {
+        this._layoutCalibrationUnsubscribe();
+      } catch (_e) {}
+      this._layoutCalibrationUnsubscribe = null;
+    }
+    if (this._layoutCalibrationChangeHandler) {
+      try {
+        window.removeEventListener(APP_SETTINGS_CHANGED_EVENT, this._layoutCalibrationChangeHandler);
+      } catch (_e) {}
+      this._layoutCalibrationChangeHandler = null;
+    }
     this._showSidebar();
   }
 }

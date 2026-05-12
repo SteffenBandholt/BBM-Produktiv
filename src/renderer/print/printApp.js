@@ -20,6 +20,11 @@ import {
   isDevLayoutBuildChannel,
   isSimpleAutoLayoutTableCandidate,
 } from "../layoutTools/autoTableLayout.mjs";
+import {
+  APP_SETTINGS_CHANGED_EVENT,
+  LAYOUT_CALIBRATION_SETTING_KEY,
+  loadLayoutCalibrationEnabled,
+} from "../layoutTools/layoutCalibrationState.js";
 
 const app = document.getElementById("app");
 const PROTOKOLL_TOPS_LAYOUT = getProtokollTopsLayout();
@@ -505,44 +510,12 @@ async function _showDevLayoutExport(toolbar, payload) {
   return true;
 }
 
-function _ensureDevPdfLayoutModeToggle() {
-  let el = document.querySelector(".bbm-dev-pdf-layout-mode-toggle");
-  if (el) return el;
-
-  el = document.createElement("button");
-  el.type = "button";
-  el.className = "bbm-dev-pdf-layout-mode-toggle";
-  el.textContent = "Layoutmodus: AN";
-  el.title = "Schaltet die DEV-Layout-Toolbar und Marker an oder aus";
-
-  document.body.appendChild(el);
-  el._root = null;
-  el._toolbar = null;
-  el._runtimeData = null;
-  el.onclick = () => {
-    const root = el._root;
-    if (!root?.dataset) return;
-    const toolbar = el._toolbar || null;
-    const runtimeData = el._runtimeData || null;
-    const nextEnabled = String(root.dataset.devPdfLayout || "true").trim() !== "true";
-    _setDevPdfLayoutMode(root, toolbar, nextEnabled);
-    _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
-  };
-
-  return el;
-}
-
 function _setDevPdfLayoutMode(root, toolbar, enabled) {
   if (!root?.dataset) return;
   root.dataset.devPdfLayout = enabled ? "true" : "false";
   if (toolbar) {
     toolbar.hidden = !enabled;
     toolbar.style.display = enabled ? "" : "none";
-  }
-  const toggle = document.querySelector(".bbm-dev-pdf-layout-mode-toggle");
-  if (toggle) {
-    toggle.textContent = `Layoutmodus: ${enabled ? "AN" : "AUS"}`;
-    toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
   }
 }
 
@@ -1804,8 +1777,11 @@ async function handleInit(payload) {
     if (root?.dataset) root.dataset.tableLayout = topsLayout.tableKey || "protokoll_tops";
     if (root?.dataset) root.dataset.orientation = orientation;
     const isDevLayoutPreview = !!payload?.devLayoutPreview && isDevLayoutBuildChannel(data.buildChannel);
+    const layoutCalibrationEnabled = isDevLayoutPreview
+      ? await loadLayoutCalibrationEnabled(window.bbmDb || {}, false)
+      : false;
     if (isDevLayoutPreview && root?.dataset) {
-      root.dataset.devPdfLayout = "true";
+      root.dataset.devPdfLayout = layoutCalibrationEnabled ? "true" : "false";
       root.dataset.devPdfActiveZone = "";
     }
     app.innerHTML = "";
@@ -1825,7 +1801,27 @@ async function handleInit(payload) {
           if (layout) _applyParticipantsNameVarsFromLayout(root, layout);
         } catch (_e) {}
       }
-      await _enableDevPdfLayoutZones(root, data);
+      await _enableDevPdfLayoutZones(root, data, layoutCalibrationEnabled);
+    }
+
+    if (isDevLayoutPreview && typeof window?.bbmDb?.appSettingsOnChanged === "function") {
+      const onSettingsChanged = async (payloadChanged = {}) => {
+        const changed = payloadChanged?.keys || [];
+        if (Array.isArray(changed) && changed.length && !changed.includes(LAYOUT_CALIBRATION_SETTING_KEY)) return;
+        const enabled = await loadLayoutCalibrationEnabled(window.bbmDb || {}, false);
+        _setDevPdfLayoutMode(root, null, enabled);
+        _syncDevPdfLayoutToolbar(document.querySelector(".bbm-dev-pdf-layout-toolbar"), root, data);
+      };
+      const unsubscribe = window.bbmDb.appSettingsOnChanged(onSettingsChanged);
+      window.addEventListener(APP_SETTINGS_CHANGED_EVENT, onSettingsChanged);
+      window.addEventListener("beforeunload", () => {
+        try {
+          unsubscribe?.();
+        } catch (_e) {}
+        try {
+          window.removeEventListener(APP_SETTINGS_CHANGED_EVENT, onSettingsChanged);
+        } catch (_e) {}
+      });
     }
 
     window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true });
@@ -1835,17 +1831,12 @@ async function handleInit(payload) {
   }
 }
 
-async function _enableDevPdfLayoutZones(root, runtimeData = null) {
+async function _enableDevPdfLayoutZones(root, runtimeData = null, layoutCalibrationEnabled = false) {
   if (!root) return;
   const zones = new Set(["number", "text", "meta"]);
   const participantsZones = new Set(["name", "role", "firm", "contact", "marks"]);
   const toolbar = _ensureDevPdfLayoutToolbar();
-  const modeToggle = _ensureDevPdfLayoutModeToggle();
-
-  modeToggle._root = root;
-  modeToggle._toolbar = toolbar;
-  modeToggle._runtimeData = runtimeData;
-  _setDevPdfLayoutMode(root, toolbar, String(root?.dataset?.devPdfLayout || "true").trim() === "true");
+  _setDevPdfLayoutMode(root, toolbar, !!layoutCalibrationEnabled);
 
   _decorateAutoLayoutTables(root, runtimeData);
   _captureAutoLayoutDefaults(root);
@@ -2723,11 +2714,6 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
   const enabled = String(root?.dataset?.devPdfLayout || "true").trim() === "true";
   toolbar.hidden = !enabled;
   toolbar.style.display = enabled ? "" : "none";
-  const toggle = document.querySelector(".bbm-dev-pdf-layout-mode-toggle");
-  if (toggle) {
-    toggle.textContent = `Layoutmodus: ${enabled ? "AN" : "AUS"}`;
-    toggle.setAttribute("aria-pressed", enabled ? "true" : "false");
-  }
   if (!enabled) {
     toolbar._export.disabled = true;
     toolbar._export.onclick = null;
