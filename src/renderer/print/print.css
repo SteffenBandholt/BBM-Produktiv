@@ -421,6 +421,31 @@ body[data-orientation="portrait"] .measureRoot,
   color: #1f513f;
 }
 
+.bbm-dev-pdf-layout-mode-toggle {
+  position: fixed;
+  top: 10px;
+  left: 10px;
+  z-index: 10000;
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(27, 143, 58, 0.3);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+  color: #1f513f;
+  font-family: "Noto Sans", Arial, sans-serif;
+  font-size: 9pt;
+  font-weight: 800;
+}
+
+.bbm-dev-pdf-layout-mode-toggle[aria-pressed="true"] {
+  background: linear-gradient(180deg, #fff 0%, #edf7ef 100%);
+}
+
+.bbm-dev-pdf-layout-mode-toggle[aria-pressed="false"] {
+  opacity: 0.95;
+}
+
 .bbm-dev-pdf-layout-toolbar-line1 {
   font-size: 10pt;
   font-weight: 800;

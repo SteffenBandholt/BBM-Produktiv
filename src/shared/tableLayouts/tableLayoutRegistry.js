@@ -536,6 +536,106 @@ function _createGenericAutoPrintTableDefinition(identity = {}) {
   };
 }
 
+function _buildGenericTodoPrintStandardLayout() {
+  return _cloneJson({
+    tableKey: "print.todo.todoTable",
+    moduleId: "protokoll",
+    variant: "portrait",
+    surfaceKey: "print.todo.todoTable",
+    label: "Todo Table",
+    medium: "pdf",
+    mode: "todo",
+    orientation: "portrait",
+    activeZone: "top",
+    unit: {
+      width: "mm",
+      inset: "mm",
+      font: "pt",
+    },
+    zones: [
+      {
+        key: "top",
+        label: "TOP",
+        width: 21,
+        inset: 0.5,
+        font: 11,
+        unit: {
+          width: "mm",
+          inset: "mm",
+          font: "pt",
+        },
+      },
+      {
+        key: "kurztext",
+        label: "Kurztext",
+        width: 85,
+        inset: 1,
+        font: 11,
+        unit: {
+          width: "mm",
+          inset: "mm",
+          font: "pt",
+        },
+      },
+      {
+        key: "status",
+        label: "Status",
+        width: 32,
+        inset: 4,
+        font: 12.5,
+        unit: {
+          width: "mm",
+          inset: "mm",
+          font: "pt",
+        },
+      },
+      {
+        key: "fertig_bis",
+        label: "Fertig bis",
+        width: 25,
+        inset: 1,
+        font: 11,
+        unit: {
+          width: "mm",
+          inset: "mm",
+          font: "pt",
+        },
+      },
+      {
+        key: "ampel",
+        label: "Ampel",
+        width: 14,
+        inset: 1,
+        font: 11,
+        unit: {
+          width: "mm",
+          inset: "mm",
+          font: "pt",
+        },
+      },
+    ],
+    pdf: {
+      rootVars: {
+        "--bbm-todo-col-top-width": "21mm",
+        "--bbm-todo-col-top-padding-inline": "0.5mm",
+        "--bbm-todo-col-top-font-size": "11pt",
+        "--bbm-todo-col-kurztext-width": "85mm",
+        "--bbm-todo-col-kurztext-padding-inline": "1mm",
+        "--bbm-todo-col-kurztext-font-size": "11pt",
+        "--bbm-todo-col-status-width": "32mm",
+        "--bbm-todo-col-status-padding-inline": "4mm",
+        "--bbm-todo-col-status-font-size": "12.5pt",
+        "--bbm-todo-col-fertig_bis-width": "25mm",
+        "--bbm-todo-col-fertig_bis-padding-inline": "1mm",
+        "--bbm-todo-col-fertig_bis-font-size": "11pt",
+        "--bbm-todo-col-ampel-width": "14mm",
+        "--bbm-todo-col-ampel-padding-inline": "1mm",
+        "--bbm-todo-col-ampel-font-size": "11pt",
+      },
+    },
+  });
+}
+
 function getTableLayoutModuleDefinition(moduleId) {
   const moduleDef = _findModuleDefinition(moduleId);
   if (!moduleDef) return null;
@@ -646,6 +746,9 @@ function listTableLayoutModules() {
 async function loadStandardTableLayout(identity = {}) {
   const definition = getTableLayoutDefinition(identity);
   if (!definition) return null;
+  if (definition.tableKey === "print.todo.todoTable") {
+    return _buildGenericTodoPrintStandardLayout();
+  }
   const layout =
     typeof definition.loadStandardLayout === "function"
       ? await definition.loadStandardLayout()

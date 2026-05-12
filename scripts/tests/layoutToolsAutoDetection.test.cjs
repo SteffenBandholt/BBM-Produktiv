@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
-const { getTableLayoutDefinition } = require("../../src/shared/tableLayouts/tableLayoutRegistry.js");
+const { getTableLayoutDefinition, loadStandardTableLayout } = require("../../src/shared/tableLayouts/tableLayoutRegistry.js");
 
 async function _loadModule() {
   const modulePath = path.join(__dirname, "../../src/renderer/layoutTools/autoTableLayout.mjs");
@@ -90,6 +90,23 @@ async function runLayoutToolsAutoDetectionTests(run) {
     assert.equal(def?.editorEnabled, false);
     assert.equal(def?.pdfAvailable, true);
     assert.equal(def?.uiAvailable, false);
+  });
+
+  await run("layout auto detection: todo print standard layout uses calibrated defaults", async () => {
+    const layout = await loadStandardTableLayout({
+      tableKey: "print.todo.todoTable",
+      moduleId: "protokoll",
+      orientation: "portrait",
+    });
+
+    assert.equal(layout?.tableKey, "print.todo.todoTable");
+    assert.equal(layout?.mode, "todo");
+    assert.equal(layout?.orientation, "portrait");
+    assert.equal(layout?.activeZone, "top");
+    assert.deepEqual(layout?.zones?.map((zone) => zone.key), ["top", "kurztext", "status", "fertig_bis", "ampel"]);
+    assert.deepEqual(layout?.zones?.map((zone) => zone.width), [21, 85, 32, 25, 14]);
+    assert.deepEqual(layout?.zones?.map((zone) => zone.inset), [0.5, 1, 4, 1, 1]);
+    assert.deepEqual(layout?.zones?.map((zone) => zone.font), [11, 11, 12.5, 11, 11]);
   });
 }
 
