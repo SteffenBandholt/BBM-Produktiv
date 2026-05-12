@@ -99,6 +99,9 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("_captureAutoLayoutDefaults"), true);
     assert.equal(printAppSource.includes("_loadStoredAutoLayouts"), true);
     assert.equal(printAppSource.includes("_buildAutoLayoutOverlayFromDom"), true);
+    assert.equal(printAppSource.includes("_buildDevLayoutExportPayload"), true);
+    assert.equal(printAppSource.includes("_showDevLayoutExport"), true);
+    assert.equal(printAppSource.includes("Export"), true);
     assert.equal(printAppSource.includes("toolbar._autoState = toolbar._autoState || {};"), true);
   });
 

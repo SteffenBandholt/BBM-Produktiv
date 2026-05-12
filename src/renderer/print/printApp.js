@@ -350,6 +350,151 @@ function _buildAutoLayoutOverlayFromDom(root, surfaceKey) {
   };
 }
 
+function _formatExportMm(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.round(n * 10) / 10 : null;
+}
+
+function _formatExportPt(value) {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.round(n * 10) / 10 : null;
+}
+
+function _buildTopLayoutExportPayload(root, runtimeData, toolbar) {
+  const orientation = toolbar?._orientation || _normalizeOrientation(root?.dataset?.orientation || "portrait");
+  const mode = normalizePrintMode(runtimeData?.mode || "protocol");
+  const numberWidthMm = _readNumberWidthMm(root);
+  const numberInsetMm = _readNumberInsetMm(root);
+  const numberFontPt = _formatExportPt(_readNumberFontPt(root));
+  const textInsetMm = _readTextInsetMm(root);
+  const textFontPt = _readTextFontPt(root);
+  const metaWidthMm = _readMetaWidthMm(root);
+  const metaInsetMm = _readMetaInsetMm(root);
+  const metaFontPt = _pxToPt(_readMetaFontPx(root));
+
+  return {
+    surfaceKey: "protokoll_tops",
+    tableKey: "protokoll_tops",
+    label: "TOP-Liste",
+    medium: "pdf",
+    mode,
+    orientation,
+    unit: { width: "mm", inset: "mm", font: "pt" },
+    zones: [
+      { key: "number", label: "TOP", width: _formatExportMm(numberWidthMm), inset: _formatExportMm(numberInsetMm), font: _formatExportPt(numberFontPt), unit: { width: "mm", inset: "mm", font: "pt" } },
+      { key: "text", label: "Gegenstand", width: "rest", inset: _formatExportMm(textInsetMm), font: _formatExportPt(textFontPt), unit: { width: "rest", inset: "mm", font: "pt" } },
+      { key: "meta", label: "Status", width: _formatExportMm(metaWidthMm), inset: _formatExportMm(metaInsetMm), font: _formatExportPt(metaFontPt), unit: { width: "mm", inset: "mm", font: "pt" } },
+    ],
+  };
+}
+
+function _buildParticipantsExportPayload(root, runtimeData, toolbar) {
+  const orientation = toolbar?._orientation || _normalizeOrientation(root?.dataset?.orientation || "portrait");
+  const mode = normalizePrintMode(runtimeData?.mode || "protocol");
+  const zones = ["name", "role", "firm", "contact", "marks"].map((zone) => {
+    const label =
+      zone === "name"
+        ? "Name"
+        : zone === "role"
+          ? "Funktion"
+          : zone === "firm"
+            ? "Firma"
+            : zone === "contact"
+              ? "Kontakt"
+              : "Anwesend / Verteiler";
+    return {
+      key: zone,
+      label,
+      width: _formatExportMm(_readParticipantsZoneWidthMm(root, zone)),
+      inset: _formatExportMm(_readParticipantsZoneInsetMm(root, zone)),
+      font: _formatExportPt(_readParticipantsZoneFontPt(root, zone)),
+      unit: { width: "mm", inset: "mm", font: "pt" },
+    };
+  });
+  return {
+    surfaceKey: "protokoll_participants",
+    tableKey: "protokoll_participants",
+    label: "Teilnehmerliste",
+    medium: "pdf",
+    mode,
+    orientation,
+    unit: { width: "mm", inset: "mm", font: "pt" },
+    zones,
+  };
+}
+
+function _buildAutoLayoutExportPayload(root, runtimeData, toolbar, surfaceKey, zoneKey = "") {
+  const descriptor = _getAutoLayoutSurfaceDescriptor(root, surfaceKey);
+  if (!descriptor) return null;
+  const orientation = toolbar?._orientation || _normalizeOrientation(root?.dataset?.orientation || "portrait");
+  const mode = normalizePrintMode(runtimeData?.mode || "preview");
+  const zones = Array.isArray(descriptor.zones)
+    ? descriptor.zones.map((zone) => {
+        const key = String(zone?.key || "").trim();
+        return {
+          key,
+          label: String(zone?.label || key || "Spalte").trim() || key,
+          width: _formatExportMm(_readAutoZoneWidthMm(root, surfaceKey, key)),
+          inset: _formatExportMm(_readAutoZoneInsetMm(root, surfaceKey, key)),
+          font: _formatExportPt(_readAutoZoneFontPt(root, surfaceKey, key)),
+          unit: { width: "mm", inset: "mm", font: "pt" },
+        };
+      })
+    : [];
+  return {
+    surfaceKey,
+    tableKey: surfaceKey,
+    label: String(descriptor.surfaceLabel || "Tabelle").trim() || "Tabelle",
+    medium: "pdf",
+    mode,
+    orientation,
+    activeZone: String(zoneKey || "").trim() || undefined,
+    unit: { width: "mm", inset: "mm", font: "pt" },
+    zones,
+  };
+}
+
+function _buildDevLayoutExportPayload(root, runtimeData, toolbar) {
+  const autoSurfaceKey = String(root?.dataset?.devPdfAutoActiveSurfaceKey || "").trim();
+  const autoZoneKey = String(root?.dataset?.devPdfAutoActiveZone || "").trim();
+  if (autoSurfaceKey) {
+    return _buildAutoLayoutExportPayload(root, runtimeData, toolbar, autoSurfaceKey, autoZoneKey);
+  }
+  const participantsZone = String(root?.dataset?.devPdfParticipantsActiveZone || "").trim().toLowerCase();
+  if (participantsZone) {
+    return _buildParticipantsExportPayload(root, runtimeData, toolbar);
+  }
+  const zone = manualZone;
+  if (zone) {
+    return _buildTopLayoutExportPayload(root, runtimeData, toolbar);
+  }
+  return null;
+}
+
+async function _showDevLayoutExport(toolbar, payload) {
+  if (!payload) {
+    if (toolbar?._status) toolbar._status.textContent = "Kein aktives Layout zum Exportieren.";
+    return false;
+  }
+  const json = JSON.stringify(payload, null, 2);
+  const snippet = `const layout = ${json};`;
+  try {
+    if (window?.navigator?.clipboard?.writeText) {
+      await window.navigator.clipboard.writeText(snippet);
+    }
+  } catch (_e) {}
+  try {
+    if (typeof window?.prompt === "function") {
+      window.prompt("DEV Layout Export", snippet);
+    }
+  } catch (_e) {}
+  if (toolbar?._status) {
+    toolbar._status.style.color = "#25624f";
+    toolbar._status.textContent = "Export erstellt und in die Zwischenablage kopiert.";
+  }
+  return true;
+}
+
 const DEFAULT_V2_PRE_REMARKS_TITLE = "Vorbemerkung:";
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -1808,7 +1953,12 @@ function _ensureDevPdfLayoutToolbar() {
   reset.textContent = "Reset";
   reset.title = "Setzt nur die PDF-Meta-Breite zurueck (DEV)";
 
-  actions.append(save, reset);
+  const exportBtn = document.createElement("button");
+  exportBtn.type = "button";
+  exportBtn.textContent = "Export";
+  exportBtn.title = "Kopiert den aktuellen DEV-Layout-Snapshot als JSON";
+
+  actions.append(save, reset, exportBtn);
 
   const status = document.createElement("div");
   status.className = "bbm-dev-pdf-layout-toolbar-line2";
@@ -1832,6 +1982,7 @@ function _ensureDevPdfLayoutToolbar() {
   el._fontValue = fontValue;
   el._save = save;
   el._reset = reset;
+  el._export = exportBtn;
   el._status = status;
   el._metaWidthMm = null;
   el._metaInsetMm = null;
@@ -2534,6 +2685,15 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     ? (Array.isArray(autoSurface?.zones) ? autoSurface.zones : []).find((zone) => String(zone?.key || "").trim() === autoZoneKey) || null
     : null;
   const isAutoSurface = !!autoSurface && !!autoZone;
+  const manualZone = String(root?.dataset?.devPdfActiveZone || "").trim().toLowerCase();
+  const hasExportableSelection = isParticipants || isAutoSurface || !!manualZone;
+
+  toolbar._export.disabled = !hasExportableSelection;
+  toolbar._export.onclick = hasExportableSelection
+    ? async () => {
+        await _showDevLayoutExport(toolbar, _buildDevLayoutExportPayload(root, runtimeData, toolbar));
+      }
+    : null;
 
   if (isParticipants) {
     if (toolbar._line1) toolbar._line1.textContent = "Teilnehmerliste > PDF";
@@ -2908,6 +3068,8 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     toolbar._value.textContent = "Breite -";
     toolbar._insetValue.textContent = "Innen -";
     if (toolbar._fontValue) toolbar._fontValue.textContent = "Schrift -";
+    toolbar._export.disabled = true;
+    toolbar._export.onclick = null;
     toolbar._metaWidthMm = null;
     toolbar._metaInsetMm = null;
     toolbar._metaFontPx = null;

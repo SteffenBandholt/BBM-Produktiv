@@ -1830,3 +1830,20 @@ Wichtig:
   - optional: fachlich weitere komplexe PDF-Tabellen pruefen, bevor neue Auto-Surfaces in groesserem Umfang entstehen
 - Risiken/Hinweise:
   - Der Auto-Key ist bewusst generisch; bei mehreren Tabellen derselben Klasse bekommt die spaetere Instanz einen stabilen Suffix, um Vermischung zu vermeiden.
+
+#### Paket: DEV Auto-Layout Export
+- Status: erledigt
+- Beschreibung:
+  - Im DEV-Layoutmodus kann die aktive Surface/Tabelle jetzt als lesbarer JSON-/Code-Snippet-Export ausgegeben werden.
+  - Der Export kopiert den Snapshot in die Zwischenablage und zeigt ihn ueber den nativen Dialog an, ohne Standardlayout-Dateien automatisch zu aendern.
+  - STABLE bleibt ohne layoutTools-Bedienung; manuelle Surfaces und Auto-Tabellen behalten ihr bisheriges Verhalten.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: den Export bei Bedarf noch um eine separate Datei-Ablage erweitern, falls spaeter ein manueller Copy/Paste-Workflow nicht reicht
+- Risiken/Hinweise:
+  - Der Export ist absichtlich nur ein Snapshot-Hilfsweg fuer Entwickler und fuehrt keine Code-Aenderung an den Standardlayout-Dateien aus.
