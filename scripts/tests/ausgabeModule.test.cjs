@@ -90,6 +90,8 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("Unbekannter Druckmodus"), true);
     assert.equal(printIpcSource.includes("Unbekannter Druckmodus"), true);
     assert.equal(printModalSource.includes("printMeetingPreview"), true);
+    assert.equal(printModalSource.includes('openHtmlPreview({ mode: "todo", projectId });'), true);
+    assert.equal(printModalSource.includes('openHtmlPreview({ mode: "topsAll", projectId });'), true);
   });
 
   await run("Ausgabe: Drucken startet mit Druckart-Auswahl", async () => {

@@ -15,6 +15,11 @@ import {
   buildProtokollTopsLayoutOverlay,
 } from "../../shared/tableLayouts/protokollTopsLayout.js";
 import { normalizePrintMode } from "../../shared/print/printModes.mjs";
+import {
+  buildAutoLayoutSurfaceDescriptor,
+  isDevLayoutBuildChannel,
+  isSimpleAutoLayoutTableCandidate,
+} from "../layoutTools/autoTableLayout.mjs";
 
 const app = document.getElementById("app");
 const PROTOKOLL_TOPS_LAYOUT = getProtokollTopsLayout();
@@ -48,6 +53,174 @@ function _docLabel(mode) {
   if (normalizedMode === "todo") return "ToDo-Liste";
   if (normalizedMode === "headerTest") return "Kopf-Test";
   return "Dokument";
+}
+
+function _normalizeAutoLayoutText(value) {
+  return String(value == null ? "" : value).replace(/\s+/g, " ").trim();
+}
+
+function _getAutoLayoutTableHeaderTexts(table) {
+  const headerRow = table?.querySelector?.("thead tr");
+  if (!headerRow) return [];
+  return Array.from(headerRow.querySelectorAll("th"))
+    .map((cell) => _normalizeAutoLayoutText(cell?.textContent || ""))
+    .filter((text) => text.length > 0);
+}
+
+function _getAutoLayoutTableColClasses(table) {
+  const cols = Array.from(table?.querySelectorAll?.("colgroup col") || []);
+  return cols.map((col) => _normalizeAutoLayoutText(col?.className || ""));
+}
+
+function _getAutoLayoutTableColumnCount(table) {
+  const headerCount = table?.querySelectorAll?.("thead tr:first-child th")?.length || 0;
+  const colCount = table?.querySelectorAll?.("colgroup col")?.length || 0;
+  let bodyCount = 0;
+  const rows = Array.from(table?.querySelectorAll?.("tbody tr") || []);
+  for (const row of rows) {
+    const cells = Array.from(row.children || []).filter((cell) => cell?.tagName === "TD" || cell?.tagName === "TH");
+    let count = 0;
+    for (const cell of cells) {
+      const span = Number(cell?.colSpan || 1);
+      count += Number.isFinite(span) && span > 0 ? span : 1;
+    }
+    bodyCount = Math.max(bodyCount, count);
+  }
+  return Math.max(headerCount, colCount, bodyCount);
+}
+
+function _getAutoLayoutTableClassToken(table) {
+  const classes = String(table?.className || "")
+    .split(/\s+/)
+    .map((item) => String(item || "").trim())
+    .filter(Boolean);
+  for (const token of classes) {
+    const lower = token.toLowerCase();
+    if (["topsTable", "v2ParticipantsTable", "firmsTable", "firmsCardsTable"].includes(token)) continue;
+    if (lower.includes("card")) continue;
+    if (lower === "printroot" || lower === "page" || lower === "table") continue;
+    return token;
+  }
+  return "";
+}
+
+function _clearDevPdfAutoSelection(root) {
+  if (!root?.dataset) return;
+  delete root.dataset.devPdfAutoActiveSurfaceKey;
+  delete root.dataset.devPdfAutoActiveZone;
+  root
+    .querySelectorAll?.("[data-dev-pdf-auto-surface]")
+    .forEach((table) => (table.dataset.devPdfAutoSurfaceActive = "false"));
+  root
+    .querySelectorAll?.("[data-dev-pdf-auto-zone]")
+    .forEach((node) => (node.dataset.devPdfAutoZoneActive = "false"));
+}
+
+function _syncDevPdfAutoSelection(root) {
+  if (!root?.dataset) return null;
+  const activeSurfaceKey = String(root.dataset.devPdfAutoActiveSurfaceKey || "").trim();
+  const activeZone = String(root.dataset.devPdfAutoActiveZone || "").trim();
+  const surfaces = Array.from(root.querySelectorAll?.("[data-dev-pdf-auto-surface]") || []);
+  let activeSurface = null;
+
+  for (const table of surfaces) {
+    const tableKey = String(table?.dataset?.devPdfAutoSurfaceKey || "").trim();
+    const isActive = !!activeSurfaceKey && tableKey === activeSurfaceKey;
+    table.dataset.devPdfAutoSurfaceActive = isActive ? "true" : "false";
+    if (isActive) activeSurface = table;
+    const zones = Array.from(table.querySelectorAll?.("[data-dev-pdf-auto-zone]") || []);
+    for (const node of zones) {
+      const zoneKey = String(node?.dataset?.devPdfAutoZoneKey || "").trim();
+      node.dataset.devPdfAutoZoneActive = isActive && zoneKey === activeZone ? "true" : "false";
+    }
+  }
+
+  return activeSurface;
+}
+
+function _decorateAutoLayoutTables(root, runtimeData = null) {
+  if (!root) return [];
+  const mode = runtimeData?.mode || "preview";
+  const tables = Array.from(root.querySelectorAll?.("table") || []);
+  const descriptors = [];
+
+  tables.forEach((table, index) => {
+    if (!table || !isSimpleAutoLayoutTableCandidate({
+      hasTheadTh: !!table.querySelector?.("thead th"),
+      hasColgroupCol: !!table.querySelector?.("colgroup col"),
+      hasNestedTable: !!table.querySelector?.("table table"),
+      hasManualMarkers:
+        !!table.querySelector?.("[data-dev-pdf-zone], [data-dev-pdf-participants-zone]") ||
+        !!table.closest?.("[data-dev-pdf-zone], [data-dev-pdf-participants-zone]"),
+      tableClassName: table.className || "",
+    })) {
+      return;
+    }
+
+    const headerTexts = _getAutoLayoutTableHeaderTexts(table);
+    const colClasses = _getAutoLayoutTableColClasses(table);
+    const columnCount = _getAutoLayoutTableColumnCount(table);
+    const descriptor = buildAutoLayoutSurfaceDescriptor({
+      mode,
+      tableClassName: _getAutoLayoutTableClassToken(table) || table.className || `table${index + 1}`,
+      headerTexts,
+      colClasses,
+      columnCount,
+    });
+    if (!descriptor?.zones?.length) return;
+
+    table.dataset.devPdfAutoSurface = "true";
+    table.dataset.devPdfAutoSurfaceKey = descriptor.surfaceKey;
+    table.dataset.devPdfAutoSurfaceLabel = descriptor.surfaceLabel || "Tabelle";
+    table.dataset.devPdfAutoSurfaceIndex = String(index);
+    table.dataset.devPdfAutoSurfaceActive = "false";
+
+    const zoneByIndex = new Map(descriptor.zones.map((zone) => [zone.index, zone]));
+    const zoneKeys = new Set(descriptor.zones.map((zone) => zone.key));
+
+    const markCell = (cell, zone, cellIndex) => {
+      if (!cell || !zone) return;
+      cell.dataset.devPdfAutoZone = "true";
+      cell.dataset.devPdfAutoZoneKey = zone.key;
+      cell.dataset.devPdfAutoZoneLabel = zone.label;
+      cell.dataset.devPdfAutoZoneIndex = String(cellIndex);
+      cell.dataset.devPdfAutoZoneSource = zone.source;
+    };
+
+    const headerRow = table.querySelector?.("thead tr");
+    if (headerRow) {
+      Array.from(headerRow.children || []).forEach((cell, cellIndex) => {
+        if (!cell || (cell.tagName !== "TH" && cell.tagName !== "TD")) return;
+        const zone = zoneByIndex.get(cellIndex) || null;
+        markCell(cell, zone, cellIndex);
+      });
+    }
+
+    const bodyRows = Array.from(table.querySelectorAll?.("tbody tr") || []);
+    for (const row of bodyRows) {
+      const cells = Array.from(row.children || []).filter((cell) => cell?.tagName === "TD" || cell?.tagName === "TH");
+      let columnIndex = 0;
+      for (const cell of cells) {
+        const span = Math.max(1, Number(cell?.colSpan || 1) || 1);
+        const zone = zoneByIndex.get(columnIndex) || null;
+        if (span === 1 && zone) {
+          markCell(cell, zone, columnIndex);
+        }
+        columnIndex += span;
+      }
+    }
+
+    descriptors.push({
+      ...descriptor,
+      columnCount,
+      zoneKeys,
+      table,
+    });
+  });
+
+  root._bbmDevPdfAutoLayoutSurfaces = descriptors;
+  root._bbmDevPdfAutoLayoutSurfaceMap = new Map(descriptors.map((desc) => [desc.surfaceKey, desc]));
+  return descriptors;
 }
 
 const DEFAULT_V2_PRE_REMARKS_TITLE = "Vorbemerkung:";
@@ -1307,14 +1480,15 @@ async function handleInit(payload) {
     root._bbmRuntimeData = data;
     if (root?.dataset) root.dataset.tableLayout = topsLayout.tableKey || "protokoll_tops";
     if (root?.dataset) root.dataset.orientation = orientation;
-    if (payload?.devLayoutPreview && root?.dataset) {
+    const isDevLayoutPreview = !!payload?.devLayoutPreview && isDevLayoutBuildChannel(data.buildChannel);
+    if (isDevLayoutPreview && root?.dataset) {
       root.dataset.devPdfLayout = "true";
       root.dataset.devPdfActiveZone = "";
     }
     app.innerHTML = "";
     app.appendChild(root);
 
-    if (payload?.devLayoutPreview) {
+    if (isDevLayoutPreview) {
       // DEV-only: ensure the participants layout is loaded and applied so save/load works
       // even when the print payload did not include tableLayouts for this table yet.
       if (typeof window?.bbmPrint?.tableLayoutsGetOne === "function") {
@@ -1328,7 +1502,7 @@ async function handleInit(payload) {
           if (layout) _applyParticipantsNameVarsFromLayout(root, layout);
         } catch (_e) {}
       }
-      _enableDevPdfLayoutZones(root);
+      _enableDevPdfLayoutZones(root, data);
     }
 
     window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true });
@@ -1338,22 +1512,13 @@ async function handleInit(payload) {
   }
 }
 
-function _enableDevPdfLayoutZones(root) {
+function _enableDevPdfLayoutZones(root, runtimeData = null) {
   if (!root) return;
   const zones = new Set(["number", "text", "meta"]);
   const participantsZones = new Set(["name", "role", "firm", "contact", "marks"]);
   const toolbar = _ensureDevPdfLayoutToolbar();
 
-  const onClick = (event) => {
-    const target = event?.target;
-    if (!target || !target.closest) return;
-    const hit = target.closest("[data-dev-pdf-zone]");
-    if (!hit) return;
-    const zone = String(hit.dataset.devPdfZone || "").trim().toLowerCase();
-    if (!zones.has(zone)) return;
-    root.dataset.devPdfActiveZone = zone;
-    _syncDevPdfLayoutToolbar(toolbar, root, root._bbmRuntimeData || null);
-  };
+  _decorateAutoLayoutTables(root, runtimeData);
 
   const decorateParticipantsZones = () => {
     const map = [
@@ -1378,27 +1543,60 @@ function _enableDevPdfLayoutZones(root) {
       .forEach((node) => (node.dataset.devPdfParticipantsZoneActive = "false"));
     if (!participantsZones.has(active)) return;
     root
-      .querySelectorAll(`[data-dev-pdf-participants-zone=\"${active}\"]`)
+      .querySelectorAll(`[data-dev-pdf-participants-zone="${active}"]`)
       .forEach((node) => (node.dataset.devPdfParticipantsZoneActive = "true"));
   };
 
-  const onParticipantsClick = (event) => {
+  const clearManualSelection = () => {
+    delete root.dataset.devPdfActiveZone;
+    delete root.dataset.devPdfParticipantsActiveZone;
+  };
+
+  const onClick = (event) => {
     const target = event?.target;
     if (!target || !target.closest) return;
-    const hit = target.closest("[data-dev-pdf-participants-zone]");
+
+    const participantHit = target.closest("[data-dev-pdf-participants-zone]");
+    if (participantHit) {
+      const zone = String(participantHit.dataset.devPdfParticipantsZone || "").trim().toLowerCase();
+      if (!participantsZones.has(zone)) return;
+      clearManualSelection();
+      _clearDevPdfAutoSelection(root);
+      root.dataset.devPdfParticipantsActiveZone = zone;
+      syncParticipantsActiveZone();
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData || root._bbmRuntimeData || null);
+      return;
+    }
+
+    const autoHit = target.closest("[data-dev-pdf-auto-zone]");
+    if (autoHit) {
+      const table = autoHit.closest("[data-dev-pdf-auto-surface]");
+      const surfaceKey = String(table?.dataset?.devPdfAutoSurfaceKey || "").trim();
+      const zoneKey = String(autoHit.dataset.devPdfAutoZoneKey || "").trim();
+      if (!surfaceKey || !zoneKey) return;
+      clearManualSelection();
+      root.dataset.devPdfAutoActiveSurfaceKey = surfaceKey;
+      root.dataset.devPdfAutoActiveZone = zoneKey;
+      _syncDevPdfAutoSelection(root);
+      _syncDevPdfLayoutToolbar(toolbar, root, runtimeData || root._bbmRuntimeData || null);
+      return;
+    }
+
+    const hit = target.closest("[data-dev-pdf-zone]");
     if (!hit) return;
-    const zone = String(hit.dataset.devPdfParticipantsZone || "").trim().toLowerCase();
-    if (!participantsZones.has(zone)) return;
-    root.dataset.devPdfParticipantsActiveZone = zone;
-    syncParticipantsActiveZone();
-    _syncDevPdfLayoutToolbar(toolbar, root, root._bbmRuntimeData || null);
+    const zone = String(hit.dataset.devPdfZone || "").trim().toLowerCase();
+    if (!zones.has(zone)) return;
+    clearManualSelection();
+    _clearDevPdfAutoSelection(root);
+    root.dataset.devPdfActiveZone = zone;
+    _syncDevPdfLayoutToolbar(toolbar, root, runtimeData || root._bbmRuntimeData || null);
   };
 
   root.addEventListener("click", onClick);
   decorateParticipantsZones();
   syncParticipantsActiveZone();
-  root.addEventListener("click", onParticipantsClick);
-  _syncDevPdfLayoutToolbar(toolbar, root, root._bbmRuntimeData || null);
+  _syncDevPdfAutoSelection(root);
+  _syncDevPdfLayoutToolbar(toolbar, root, runtimeData || root._bbmRuntimeData || null);
   try {
     toolbar._orientation = String(root?.dataset?.orientation || "portrait").trim().toLowerCase() === "landscape"
       ? "landscape"
@@ -1492,6 +1690,7 @@ function _ensureDevPdfLayoutToolbar() {
   el.append(line1, line2, controls, actions, status);
   document.body.appendChild(el);
 
+  el._line1 = line1;
   el._line2 = line2;
   el._value = value;
   el._insetValue = insetValue;
@@ -2041,8 +2240,19 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
               : "";
   const isParticipants = !!participantsLabel;
   const isParticipantsName = participantsZone === "name";
+  const autoSurfaceKey = String(root?.dataset?.devPdfAutoActiveSurfaceKey || "").trim();
+  const autoZoneKey = String(root?.dataset?.devPdfAutoActiveZone || "").trim();
+  const autoSurfaceMap = root && root._bbmDevPdfAutoLayoutSurfaceMap ? root._bbmDevPdfAutoLayoutSurfaceMap : null;
+  const autoSurface = autoSurfaceKey && autoSurfaceMap
+    ? autoSurfaceMap.get(autoSurfaceKey) || null
+    : null;
+  const autoZone = autoSurfaceKey && autoZoneKey
+    ? (Array.isArray(autoSurface?.zones) ? autoSurface.zones : []).find((zone) => String(zone?.key || "").trim() === autoZoneKey) || null
+    : null;
+  const isAutoSurface = !!autoSurface && !!autoZone;
 
   if (isParticipants) {
+    if (toolbar._line1) toolbar._line1.textContent = "Teilnehmerliste > PDF";
     toolbar._line2.textContent = `Teilnehmerliste > ${participantsLabel}`;
     // Participants: all zones are live + persistable; values stay separated per column key.
     toolbar._save.disabled = false;
@@ -2231,8 +2441,36 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     return;
   }
 
+  if (isAutoSurface) {
+    const surfaceLabel = String(autoSurface?.surfaceLabel || "Tabelle").trim();
+    const zoneLabel = String(autoZone?.label || "Spalte").trim();
+    if (toolbar._line1) toolbar._line1.textContent = `${surfaceLabel} > PDF`;
+    toolbar._line2.textContent = `${surfaceLabel} > ${zoneLabel}`;
+    toolbar._save.disabled = true;
+    toolbar._reset.disabled = true;
+    toolbar._minus.disabled = true;
+    toolbar._plus.disabled = true;
+    toolbar._insetMinus.disabled = true;
+    toolbar._insetPlus.disabled = true;
+    toolbar._fontMinus.disabled = true;
+    toolbar._fontPlus.disabled = true;
+    toolbar._value.textContent = "Auswahl";
+    toolbar._insetValue.textContent = "Innen -";
+    if (toolbar._fontValue) toolbar._fontValue.textContent = "Schrift -";
+    toolbar._save.onclick = null;
+    toolbar._reset.onclick = null;
+    toolbar._minus.onclick = null;
+    toolbar._plus.onclick = null;
+    toolbar._insetMinus.onclick = null;
+    toolbar._insetPlus.onclick = null;
+    if (toolbar._fontMinus) toolbar._fontMinus.onclick = null;
+    if (toolbar._fontPlus) toolbar._fontPlus.onclick = null;
+    return;
+  }
+
   const zone = String(root?.dataset?.devPdfActiveZone || "").trim().toLowerCase();
   const zoneLabel = zone === "meta" ? "Metablock" : zone === "text" ? "Textblock" : zone === "number" ? "Nummernblock" : "";
+  if (toolbar._line1) toolbar._line1.textContent = "TOP-Liste > PDF";
   toolbar._line2.textContent = zoneLabel ? `TOP-Liste > PDF > ${zoneLabel}` : "TOP-Liste > PDF | Bereich waehlen";
 
   const isMeta = zone === "meta";

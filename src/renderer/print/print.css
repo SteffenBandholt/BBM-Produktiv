@@ -374,6 +374,22 @@ body[data-orientation="portrait"] .measureRoot,
   background-color: rgba(27, 143, 58, 0.06);
 }
 
+/* DEV-only: auto-detected simple tables in print preview (no layout shift, never in real PDF export). */
+.printRoot[data-dev-pdf-layout="true"] [data-dev-pdf-auto-surface] [data-dev-pdf-auto-zone] {
+  position: relative;
+  cursor: pointer;
+}
+
+.printRoot[data-dev-pdf-layout="true"] [data-dev-pdf-auto-surface] [data-dev-pdf-auto-zone]:hover {
+  box-shadow: inset 0 0 0 1px rgba(27, 143, 58, 0.18);
+}
+
+.printRoot[data-dev-pdf-layout="true"] [data-dev-pdf-auto-surface][data-dev-pdf-auto-surface-active="true"]
+  [data-dev-pdf-auto-zone][data-dev-pdf-auto-zone-active="true"] {
+  box-shadow: inset 0 0 0 2px rgba(27, 143, 58, 0.55);
+  background-color: rgba(27, 143, 58, 0.06);
+}
+
 /* DEV-only: Participants list zones in print preview (no layout shift, never in real PDF export). */
 .printRoot[data-dev-pdf-layout="true"] [data-dev-pdf-participants-zone] {
   position: relative;
