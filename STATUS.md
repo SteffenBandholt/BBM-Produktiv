@@ -1830,3 +1830,56 @@ Wichtig:
   - optional: fachlich weitere komplexe PDF-Tabellen pruefen, bevor neue Auto-Surfaces in groesserem Umfang entstehen
 - Risiken/Hinweise:
   - Der Auto-Key ist bewusst generisch; bei mehreren Tabellen derselben Klasse bekommt die spaetere Instanz einen stabilen Suffix, um Vermischung zu vermeiden.
+
+#### Paket: DEV Auto-Layout Export
+- Status: erledigt
+- Beschreibung:
+  - Im DEV-Layoutmodus kann die aktive Surface/Tabelle jetzt als lesbarer JSON-/Code-Snippet-Export ausgegeben werden.
+  - Der Export kopiert den Snapshot in die Zwischenablage und zeigt ihn ueber den nativen Dialog an, ohne Standardlayout-Dateien automatisch zu aendern.
+  - STABLE bleibt ohne layoutTools-Bedienung; manuelle Surfaces und Auto-Tabellen behalten ihr bisheriges Verhalten.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: den Export bei Bedarf noch um eine separate Datei-Ablage erweitern, falls spaeter ein manueller Copy/Paste-Workflow nicht reicht
+- Risiken/Hinweise:
+  - Der Export ist absichtlich nur ein Snapshot-Hilfsweg fuer Entwickler und fuehrt keine Code-Aenderung an den Standardlayout-Dateien aus.
+
+#### Paket: ToDo-Standardlayout aus Exportwerten fest übernommen
+- Status: erledigt
+- Beschreibung:
+  - Die exportierten Kalibrierwerte fuer `print.todo.todoTable` sind jetzt als Standardlayout fuer die ToDo-PDF-Vorschau im Code hinterlegt.
+  - Ohne gespeicherte Entwicklerwerte greifen die neuen Standardwerte; vorhandene gespeicherte DEV-Werte behalten Vorrang.
+  - Auto-Erkennung, Live-Regler, Export sowie manuelle Surfaces wie TOP-Liste und Teilnehmerliste bleiben unveraendert.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/tableLayoutRegistry.js`
+  - `src/renderer/print/printApp.js`
+  - `scripts/tests/layoutToolsAutoDetection.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Das Standardlayout ist bewusst nur fuer die ToDo-PDF-Surface `print.todo.todoTable` hinterlegt und greift nicht auf andere Tabellen ueber.
+
+#### Paket: DEV Layoutmodus-Schalter fuer PDF-Vorschau
+- Status: erledigt
+- Beschreibung:
+  - Die DEV-PDF-Layout-Vorschau hat jetzt einen echten AN/AUS-Schalter fuer den Layoutmodus.
+  - Im Zustand AN sind Toolbar, Marker und Zonenbedienung sichtbar; im Zustand AUS bleibt die Layout-Toolbar verborgen, waehrend die gespeicherten Layoutwerte weiterhin angewendet bleiben.
+  - STABLE und echte PDF-Ausgaben bleiben unveraendert und markerfrei.
+- Betroffene Dateien:
+  - `src/renderer/print/printApp.js`
+  - `src/renderer/print/print.css`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Der Schalter ist bewusst nur in der DEV-Layoutvorschau vorhanden und steuert nur die Sichtbarkeit/Bearbeitbarkeit der laufenden Vorschau, nicht die gespeicherten Werte.

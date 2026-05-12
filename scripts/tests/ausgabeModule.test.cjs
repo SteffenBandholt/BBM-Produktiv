@@ -99,6 +99,14 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("_captureAutoLayoutDefaults"), true);
     assert.equal(printAppSource.includes("_loadStoredAutoLayouts"), true);
     assert.equal(printAppSource.includes("_buildAutoLayoutOverlayFromDom"), true);
+    assert.equal(printAppSource.includes("_buildDevLayoutExportPayload"), true);
+    assert.equal(printAppSource.includes("_showDevLayoutExport"), true);
+    assert.equal(printAppSource.includes("_ensureDevPdfLayoutModeToggle"), true);
+    assert.equal(printAppSource.includes("bbm-dev-pdf-layout-mode-toggle"), true);
+    assert.equal(printAppSource.includes("Layoutmodus: AN"), true);
+    assert.equal(printAppSource.includes("toolbar.hidden = !enabled;"), true);
+    assert.equal(printAppSource.includes('root.dataset.devPdfLayout = enabled ? "true" : "false";'), true);
+    assert.equal(printAppSource.includes("Export"), true);
     assert.equal(printAppSource.includes("toolbar._autoState = toolbar._autoState || {};"), true);
   });
 
