@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
+const { getTableLayoutDefinition } = require("../../src/shared/tableLayouts/tableLayoutRegistry.js");
 
 async function _loadModule() {
   const modulePath = path.join(__dirname, "../../src/renderer/layoutTools/autoTableLayout.mjs");
@@ -76,6 +77,19 @@ async function runLayoutToolsAutoDetectionTests(run) {
       }),
       false
     );
+  });
+
+  await run("layout auto detection: generic print tables can be resolved for persistence", () => {
+    const def = getTableLayoutDefinition({
+      tableKey: "print.todo.todoTable",
+      moduleId: "protokoll",
+    });
+
+    assert.equal(def?.tableKey, "print.todo.todoTable");
+    assert.equal(def?.moduleId, "protokoll");
+    assert.equal(def?.editorEnabled, false);
+    assert.equal(def?.pdfAvailable, true);
+    assert.equal(def?.uiAvailable, false);
   });
 }
 

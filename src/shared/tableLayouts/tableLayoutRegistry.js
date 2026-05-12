@@ -507,6 +507,35 @@ function _findTableDefinition(identity = {}) {
   );
 }
 
+function _isGenericAutoPrintTableKey(tableKey) {
+  return /^print\.[a-z0-9]+(?:[._-][a-z0-9]+)*(?:__\d+)?$/i.test(_normalizeText(tableKey));
+}
+
+function _createGenericAutoPrintTableDefinition(identity = {}) {
+  const norm = _normalizeIdentity(identity);
+  if (!_isGenericAutoPrintTableKey(norm.tableKey)) return null;
+  return {
+    moduleId: norm.moduleId,
+    moduleLabel: norm.moduleId,
+    moduleDescription: "Generische Auto-Layout-Surface aus der Print-Vorschau.",
+    moduleSupportedOrientations: ["portrait", "landscape"],
+    tableKey: norm.tableKey,
+    tableLabel: norm.tableKey,
+    description: "Generische Auto-Layout-Surface aus der Print-Vorschau.",
+    tableKind: "content",
+    editorEnabled: false,
+    uiAvailable: false,
+    pdfAvailable: true,
+    uiProductive: false,
+    pdfProductive: false,
+    supportedOrientations: ["portrait", "landscape"],
+    columns: [],
+    editFields: [],
+    previewData: [],
+    loadStandardLayout: async () => null,
+  };
+}
+
 function getTableLayoutModuleDefinition(moduleId) {
   const moduleDef = _findModuleDefinition(moduleId);
   if (!moduleDef) return null;
@@ -549,9 +578,12 @@ function getTableLayoutModuleDefinition(moduleId) {
 function getTableLayoutDefinition(identity = {}) {
   const norm = _normalizeIdentity(identity);
   const moduleDef = _findModuleDefinition(norm.moduleId);
-  if (!moduleDef) return null;
-  const tableDef = moduleDef.tables.find((item) => _normalizeText(item.tableKey) === norm.tableKey) || null;
-  if (!tableDef) return null;
+  const tableDef = moduleDef
+    ? moduleDef.tables.find((item) => _normalizeText(item.tableKey) === norm.tableKey) || null
+    : null;
+  if (!tableDef) {
+    return _createGenericAutoPrintTableDefinition(norm);
+  }
   return {
     moduleId: moduleDef.moduleId,
     moduleLabel: moduleDef.moduleLabel,

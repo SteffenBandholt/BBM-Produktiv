@@ -143,6 +143,7 @@ function _decorateAutoLayoutTables(root, runtimeData = null) {
   const mode = runtimeData?.mode || "preview";
   const tables = Array.from(root.querySelectorAll?.("table") || []);
   const descriptors = [];
+  const seenSurfaceCounts = new Map();
 
   tables.forEach((table, index) => {
     if (!table || !isSimpleAutoLayoutTableCandidate({
@@ -169,14 +170,21 @@ function _decorateAutoLayoutTables(root, runtimeData = null) {
     });
     if (!descriptor?.zones?.length) return;
 
+    const baseSurfaceKey = String(descriptor.surfaceKey || "").trim();
+    const surfaceCount = (seenSurfaceCounts.get(baseSurfaceKey) || 0) + 1;
+    seenSurfaceCounts.set(baseSurfaceKey, surfaceCount);
+    const surfaceKey = surfaceCount === 1 ? baseSurfaceKey : `${baseSurfaceKey}__${surfaceCount}`;
+    const uniqueDescriptor = surfaceKey === baseSurfaceKey ? descriptor : { ...descriptor, surfaceKey };
+
     table.dataset.devPdfAutoSurface = "true";
-    table.dataset.devPdfAutoSurfaceKey = descriptor.surfaceKey;
-    table.dataset.devPdfAutoSurfaceLabel = descriptor.surfaceLabel || "Tabelle";
+    table.dataset.devPdfAutoSurfaceKey = uniqueDescriptor.surfaceKey;
+    table.dataset.devPdfAutoSurfaceBaseKey = baseSurfaceKey;
+    table.dataset.devPdfAutoSurfaceLabel = uniqueDescriptor.surfaceLabel || "Tabelle";
     table.dataset.devPdfAutoSurfaceIndex = String(index);
     table.dataset.devPdfAutoSurfaceActive = "false";
 
-    const zoneByIndex = new Map(descriptor.zones.map((zone) => [zone.index, zone]));
-    const zoneKeys = new Set(descriptor.zones.map((zone) => zone.key));
+    const zoneByIndex = new Map(uniqueDescriptor.zones.map((zone) => [zone.index, zone]));
+    const zoneKeys = new Set(uniqueDescriptor.zones.map((zone) => zone.key));
 
     const markCell = (cell, zone, cellIndex) => {
       if (!cell || !zone) return;
@@ -211,16 +219,135 @@ function _decorateAutoLayoutTables(root, runtimeData = null) {
     }
 
     descriptors.push({
-      ...descriptor,
+      ...uniqueDescriptor,
       columnCount,
       zoneKeys,
       table,
+      baseSurfaceKey,
     });
   });
 
   root._bbmDevPdfAutoLayoutSurfaces = descriptors;
   root._bbmDevPdfAutoLayoutSurfaceMap = new Map(descriptors.map((desc) => [desc.surfaceKey, desc]));
   return descriptors;
+}
+
+function _captureAutoLayoutDefaults(root) {
+  const surfaces = Array.isArray(root?._bbmDevPdfAutoLayoutSurfaces) ? root._bbmDevPdfAutoLayoutSurfaces : [];
+  const defaults = new Map();
+
+  for (const surface of surfaces) {
+    const surfaceKey = String(surface?.surfaceKey || "").trim();
+    if (!surfaceKey || defaults.has(surfaceKey)) continue;
+    const zones = new Map();
+    for (const zone of Array.isArray(surface?.zones) ? surface.zones : []) {
+      const zoneKey = String(zone?.key || "").trim();
+      if (!zoneKey || zones.has(zoneKey)) continue;
+      zones.set(zoneKey, {
+        widthMm: _readAutoZoneWidthMm(root, surfaceKey, zoneKey),
+        insetMm: _readAutoZoneInsetMm(root, surfaceKey, zoneKey),
+        fontPt: _readAutoZoneFontPt(root, surfaceKey, zoneKey),
+      });
+    }
+    defaults.set(surfaceKey, {
+      surfaceKey,
+      zones,
+    });
+  }
+
+  root._bbmDevPdfAutoLayoutDefaults = defaults;
+  return defaults;
+}
+
+function _getAutoLayoutDefaults(root, surfaceKey, zoneKey) {
+  const defaults = root?._bbmDevPdfAutoLayoutDefaults;
+  const surface = defaults instanceof Map ? defaults.get(String(surfaceKey || "").trim()) || null : null;
+  const zone = surface?.zones instanceof Map ? surface.zones.get(String(zoneKey || "").trim()) || null : null;
+  return zone || {
+    widthMm: _readAutoZoneWidthMm(root, surfaceKey, zoneKey),
+    insetMm: _readAutoZoneInsetMm(root, surfaceKey, zoneKey),
+    fontPt: _readAutoZoneFontPt(root, surfaceKey, zoneKey),
+  };
+}
+
+function _applyAutoLayoutLayout(root, surfaceKey, layout) {
+  const descriptor = _getAutoLayoutSurfaceDescriptor(root, surfaceKey);
+  const table = descriptor?.table || null;
+  if (!table || !layout) return;
+
+  const columns = Array.isArray(layout?.columns) ? layout.columns : [];
+  const rootVars = layout?.pdf?.rootVars || {};
+
+  for (const zone of Array.isArray(descriptor.zones) ? descriptor.zones : []) {
+    const zoneKey = String(zone?.key || "").trim();
+    if (!zoneKey) continue;
+    const col = columns.find((item) => String(item?.key || "").trim() === zoneKey) || null;
+    if (col?.pdfWidth) {
+      _applyAutoZoneWidthMm(root, surfaceKey, zoneKey, _readAutoLayoutLengthMm(col.pdfWidth));
+    }
+    const insetMm = _readAutoLayoutLengthMm(rootVars[`--bbm-auto-col-${zoneKey}-padding-inline`]);
+    if (insetMm != null) {
+      _applyAutoZoneInsetMm(root, surfaceKey, zoneKey, insetMm);
+    }
+    const fontPt = _readAutoLayoutLengthPt(rootVars[`--bbm-auto-col-${zoneKey}-font-size`]);
+    if (fontPt != null) {
+      _applyAutoZoneFontPt(root, surfaceKey, zoneKey, fontPt);
+    }
+  }
+}
+
+async function _loadStoredAutoLayouts(root, runtimeData = null) {
+  if (!root || typeof window?.bbmPrint?.tableLayoutsGetOne !== "function") return;
+  const orientation = _normalizeOrientation(root?.dataset?.orientation || runtimeData?.orientation || "portrait");
+  const surfaces = Array.isArray(root._bbmDevPdfAutoLayoutSurfaces) ? root._bbmDevPdfAutoLayoutSurfaces : [];
+  for (const surface of surfaces) {
+    const surfaceKey = String(surface?.surfaceKey || "").trim();
+    if (!surfaceKey) continue;
+    try {
+      const res = await window.bbmPrint.tableLayoutsGetOne({
+        tableKey: surfaceKey,
+        moduleId: "protokoll",
+        orientation,
+      });
+      const layout = res?.ok ? res?.data?.effectiveLayout || res?.data?.storedLayout || null : null;
+      if (layout) {
+        _applyAutoLayoutLayout(root, surfaceKey, layout);
+      }
+    } catch (_err) {}
+  }
+}
+
+function _buildAutoLayoutOverlayFromDom(root, surfaceKey) {
+  const descriptor = _getAutoLayoutSurfaceDescriptor(root, surfaceKey);
+  if (!descriptor) return null;
+  const columns = [];
+  const rootVars = {};
+  for (const zone of Array.isArray(descriptor.zones) ? descriptor.zones : []) {
+    const zoneKey = String(zone?.key || "").trim();
+    if (!zoneKey) continue;
+    const label = String(zone?.label || zoneKey).trim() || zoneKey;
+    const widthMm = _readAutoZoneWidthMm(root, surfaceKey, zoneKey);
+    const insetMm = _readAutoZoneInsetMm(root, surfaceKey, zoneKey);
+    const fontPt = _readAutoZoneFontPt(root, surfaceKey, zoneKey);
+    columns.push({
+      key: zoneKey,
+      label,
+      uiWidth: "1fr",
+      pdfWidth: `${_formatMm(widthMm)}mm`,
+      headerLines: [label],
+      previewValue: "",
+      previewField: zoneKey,
+    });
+    rootVars[`--bbm-auto-col-${zoneKey}-padding-inline`] = `${_formatMm(insetMm)}mm`;
+    rootVars[`--bbm-auto-col-${zoneKey}-font-size`] = `${_formatMm(fontPt)}pt`;
+  }
+  return {
+    variant: _normalizeOrientation(root?.dataset?.orientation || "portrait"),
+    columns,
+    pdf: {
+      rootVars,
+    },
+  };
 }
 
 const DEFAULT_V2_PRE_REMARKS_TITLE = "Vorbemerkung:";
@@ -1502,7 +1629,7 @@ async function handleInit(payload) {
           if (layout) _applyParticipantsNameVarsFromLayout(root, layout);
         } catch (_e) {}
       }
-      _enableDevPdfLayoutZones(root, data);
+      await _enableDevPdfLayoutZones(root, data);
     }
 
     window.bbmPrint.ready({ jobId: payload?.jobId || null, ok: true });
@@ -1512,13 +1639,15 @@ async function handleInit(payload) {
   }
 }
 
-function _enableDevPdfLayoutZones(root, runtimeData = null) {
+async function _enableDevPdfLayoutZones(root, runtimeData = null) {
   if (!root) return;
   const zones = new Set(["number", "text", "meta"]);
   const participantsZones = new Set(["name", "role", "firm", "contact", "marks"]);
   const toolbar = _ensureDevPdfLayoutToolbar();
 
   _decorateAutoLayoutTables(root, runtimeData);
+  _captureAutoLayoutDefaults(root);
+  await _loadStoredAutoLayouts(root, runtimeData);
 
   const decorateParticipantsZones = () => {
     const map = [
@@ -2623,7 +2752,75 @@ function _syncDevPdfLayoutToolbar(toolbar, root, runtimeData = null) {
     toolbar._insetValue.textContent = `Innen ${_formatMm(state.insetMm)} mm`;
     if (toolbar._fontValue) toolbar._fontValue.textContent = `Schrift ${_formatMm(state.fontPt)} pt`;
     toolbar._save.onclick = null;
-    toolbar._reset.onclick = null;
+    toolbar._save.disabled = false;
+    toolbar._reset.disabled = false;
+    toolbar._save.onclick = async () => {
+      toolbar._status.textContent = "";
+      try {
+        if (root?.dataset?.devPdfLayout !== "true") return;
+        if (typeof window?.bbmPrint?.tableLayoutsSave !== "function") {
+          toolbar._status.textContent = "Speichern nicht verfuegbar.";
+          return;
+        }
+        const layout = _buildAutoLayoutOverlayFromDom(root, autoSurfaceKey);
+        if (!layout) {
+          toolbar._status.textContent = "Auto-Layout nicht verfuegbar.";
+          return;
+        }
+        const res = await window.bbmPrint.tableLayoutsSave({
+          tableKey: autoSurfaceKey,
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+          layout,
+        });
+        if (!res?.ok) {
+          toolbar._status.textContent = res?.error || "Speichern fehlgeschlagen.";
+          return;
+        }
+        toolbar._status.style.color = "#25624f";
+        toolbar._status.textContent = "Gespeichert.";
+      } catch (err) {
+        toolbar._status.textContent = err?.message || String(err) || "Speichern fehlgeschlagen.";
+      }
+    };
+    toolbar._reset.onclick = async () => {
+      toolbar._status.textContent = "";
+      try {
+        if (root?.dataset?.devPdfLayout !== "true") return;
+        if (typeof window?.bbmPrint?.tableLayoutsSave !== "function") {
+          toolbar._status.textContent = "Reset nicht verfuegbar.";
+          return;
+        }
+        const defaults = _getAutoLayoutDefaults(root, autoSurfaceKey, autoZoneKey);
+        _applyAutoZoneWidthMm(root, autoSurfaceKey, autoZoneKey, defaults.widthMm);
+        _applyAutoZoneInsetMm(root, autoSurfaceKey, autoZoneKey, defaults.insetMm);
+        _applyAutoZoneFontPt(root, autoSurfaceKey, autoZoneKey, defaults.fontPt);
+        const layout = _buildAutoLayoutOverlayFromDom(root, autoSurfaceKey);
+        if (!layout) {
+          toolbar._status.textContent = "Auto-Layout nicht verfuegbar.";
+          return;
+        }
+        const res = await window.bbmPrint.tableLayoutsSave({
+          tableKey: autoSurfaceKey,
+          moduleId: "protokoll",
+          orientation: toolbar._orientation || "portrait",
+          layout,
+        });
+        if (!res?.ok) {
+          toolbar._status.textContent = res?.error || "Reset fehlgeschlagen.";
+          return;
+        }
+        state.widthMm = defaults.widthMm;
+        state.insetMm = defaults.insetMm;
+        state.fontPt = defaults.fontPt;
+        toolbar._status.style.color = "#25624f";
+        toolbar._status.textContent = "Zurueckgesetzt.";
+        _syncDevPdfAutoSelection(root);
+        _syncDevPdfLayoutToolbar(toolbar, root, runtimeData);
+      } catch (err) {
+        toolbar._status.textContent = err?.message || String(err) || "Reset fehlgeschlagen.";
+      }
+    };
     toolbar._minus.onclick = () => {
       const current = state.widthMm == null ? _readAutoZoneWidthMm(root, autoSurfaceKey, autoZoneKey) : state.widthMm;
       state.widthMm = _applyAutoZoneWidthMm(root, autoSurfaceKey, autoZoneKey, current - 1);

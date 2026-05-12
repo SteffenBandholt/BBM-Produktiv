@@ -1811,3 +1811,22 @@ Wichtig:
   - optional: falls spaeter ein stabiler `tableKey` fuer weitere Auto-Tabellen feststeht, kann ein Persistenzpfad separat vorbereitet werden
 - Risiken/Hinweise:
   - Die Auto-Regler greifen nur auf einfache erkannte Tabellen in DEV; komplexe Karten-/Sonderlayouts bleiben ausgeschlossen.
+
+#### Paket: DEV Auto-Tabellen Persistenz
+- Status: erledigt
+- Beschreibung:
+  - Automatisch erkannte einfache PDF-Tabellen koennen ihre aktiven Auto-Zonen jetzt generisch speichern und zuruecksetzen.
+  - Die Persistenz nutzt einen stabil abgeleiteten `print.*`-Surface-Key pro Preview-Tabelle; TOP-Liste und Teilnehmerliste bleiben unveraendert.
+  - Live-Regler bleiben bestehen und Auto-Layouts werden beim Oeffnen der DEV-Vorschau wieder geladen.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/tableLayoutRegistry.js`
+  - `src/renderer/print/printApp.js`
+  - `scripts/tests/layoutToolsAutoDetection.test.cjs`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - optional: fachlich weitere komplexe PDF-Tabellen pruefen, bevor neue Auto-Surfaces in groesserem Umfang entstehen
+- Risiken/Hinweise:
+  - Der Auto-Key ist bewusst generisch; bei mehreren Tabellen derselben Klasse bekommt die spaetere Instanz einen stabilen Suffix, um Vermischung zu vermeiden.
