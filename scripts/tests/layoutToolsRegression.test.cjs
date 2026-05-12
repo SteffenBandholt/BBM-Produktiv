@@ -50,6 +50,11 @@ function _assertDevPrintPreviewIpcIsDevOnly() {
     /layoutCalibrationEnabled:\s*/s,
     "Preview must forward the layout calibration flag to the print renderer."
   );
+  assert.match(
+    js,
+    /if\s*\(\s*!layoutCalibrationEnabled\s*\)\s*\{\s*return\s*\{\s*ok:\s*false,\s*error:\s*"Layout-Kalibrierung ist deaktiviert\."\s*\}\s*;\s*\}/s,
+    "Preview handler must refuse when layout calibration is disabled."
+  );
 }
 
 function _assertToPdfDoesNotEnableDevLayoutPreview() {

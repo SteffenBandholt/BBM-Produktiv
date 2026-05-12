@@ -505,6 +505,15 @@ function registerPrintIpc() {
 
       const p = payload || {};
       const orientation = _resolveRequestedOrientation(p);
+      const layoutCalibrationEnabled =
+        p.layoutCalibrationEnabled == null
+          ? _readLayoutCalibrationEnabled()
+          : _normalizeLayoutCalibrationEnabled(p.layoutCalibrationEnabled, _readLayoutCalibrationEnabled());
+
+      if (!layoutCalibrationEnabled) {
+        return { ok: false, error: "Layout-Kalibrierung ist deaktiviert." };
+      }
+
       const jobId = _randId();
       const win = createPrintWindow({ show: true, devTools: false });
       attachPrintDebugPipes(win, jobId);
@@ -521,10 +530,7 @@ function registerPrintIpc() {
           testOrientation: p.testOrientation || null,
           debug: false,
           devLayoutPreview: true,
-          layoutCalibrationEnabled:
-            p.layoutCalibrationEnabled == null
-              ? _readLayoutCalibrationEnabled()
-              : _normalizeLayoutCalibrationEnabled(p.layoutCalibrationEnabled, _readLayoutCalibrationEnabled()),
+          layoutCalibrationEnabled,
         });
       });
 

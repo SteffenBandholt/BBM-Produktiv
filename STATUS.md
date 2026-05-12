@@ -27,6 +27,11 @@ Sie ergÃ¤nzt:
   - gespeicherte Layoutwerte bleiben beim Ausschalten erhalten
   - echte PDF-Erzeugung bleibt ungebremst und markerfrei
   - die Print-HTML-Vorschau bekommt den Schalter jetzt auch direkt ueber `print:init` und das Print-Preload-Binding, damit DEV-Layout-Bearbeitung dort nicht mehr ausfaellt
+- Der Ausgabeweg fuer layoutTools ist jetzt wieder sauber getrennt:
+  - `print:openHtmlPreview` wird nur bei aktiver Layout-Kalibrierung genutzt
+  - bei deaktivierter Kalibrierung laeuft der normale PDF-Weg ohne Layoutfenster
+  - gespeicherte/finale Layoutwerte bleiben wirksam
+  - geprueft mit `npm test`
 - Der erste DEV-only Schritt fuer das TOP-Layout-Feintuning ist umgesetzt:
   - die TOP-Liste kann im DEV-Build jetzt Layout-Zonen fuer Nummernblock, Textblock und Metablock anzeigen
   - die aktive Zone wird gruen markiert

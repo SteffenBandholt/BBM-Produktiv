@@ -1096,6 +1096,17 @@ export default class PrintModal {
     }
   }
 
+  async _shouldOpenLayoutCalibrationPreview() {
+    try {
+      const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
+      const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
+      if (isPackaged) return false;
+      return !!(await this._getLayoutCalibrationEnabledForPreview());
+    } catch (_err) {
+      return false;
+    }
+  }
+
   // Vorabzug: direkt drucken (ohne Auswahl-Modal)
   async printVorabzug({ projectId, meetingId } = {}) {
     const pid = projectId || this.router?.currentProjectId || null;
@@ -1132,9 +1143,7 @@ export default class PrintModal {
     // DEV-only helper: open the interactive Print-HTML preview for layout fine-tuning.
     // This must not affect the actual PDF export.
     try {
-      const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
-      const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
-      if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
+      if (typeof window?.bbmPrint?.openHtmlPreview === "function" && await this._shouldOpenLayoutCalibrationPreview()) {
         const layoutCalibrationEnabled = await this._getLayoutCalibrationEnabledForPreview();
         void window.bbmPrint.openHtmlPreview({
           mode: "protocol",
@@ -1451,9 +1460,7 @@ export default class PrintModal {
 
   async openTodoPrintPreview({ projectId } = {}) {
     try {
-      const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
-      const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
-      if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
+      if (typeof window?.bbmPrint?.openHtmlPreview === "function" && await this._shouldOpenLayoutCalibrationPreview()) {
         const layoutCalibrationEnabled = await this._getLayoutCalibrationEnabledForPreview();
         await window.bbmPrint.openHtmlPreview({ mode: "todo", projectId, layoutCalibrationEnabled });
         return true;
@@ -1476,9 +1483,7 @@ export default class PrintModal {
 
   async openTopListAllPreview({ projectId } = {}) {
     try {
-      const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
-      const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
-      if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
+      if (typeof window?.bbmPrint?.openHtmlPreview === "function" && await this._shouldOpenLayoutCalibrationPreview()) {
         // DEV-only: use the interactive print-HTML preview for layoutTools fine-tuning.
         // Do not also open the real PDF preview in this path, otherwise users land in a non-interactive preview first.
         const layoutCalibrationEnabled = await this._getLayoutCalibrationEnabledForPreview();

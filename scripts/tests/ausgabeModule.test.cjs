@@ -97,6 +97,7 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printIpcSource.includes("Unbekannter Druckmodus"), true);
     assert.equal(printModalSource.includes("printMeetingPreview"), true);
     assert.equal(printModalSource.includes("layoutCalibrationEnabled"), true);
+    assert.equal(printModalSource.includes("await this._shouldOpenLayoutCalibrationPreview()"), true);
     assert.equal(printModalSource.includes('openHtmlPreview({ mode: "todo", projectId, layoutCalibrationEnabled });'), true);
     assert.equal(printModalSource.includes('openHtmlPreview({ mode: "topsAll", projectId, layoutCalibrationEnabled });'), true);
     assert.equal(printAppSource.includes("_readAutoZoneWidthMm"), true);
@@ -125,6 +126,7 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printPreloadSource.includes("appSettingsOnChanged"), true);
     assert.equal(settingsIpcSource.includes("app-settings:changed"), true);
     assert.equal(printIpcSource.includes("layoutCalibrationEnabled"), true);
+    assert.equal(printIpcSource.includes("if (!layoutCalibrationEnabled)"), true);
     assert.equal(layoutCalibrationStateSource.includes("bbm:layout-calibration-changed"), true);
   });
 
