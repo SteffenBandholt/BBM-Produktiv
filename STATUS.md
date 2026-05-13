@@ -1912,3 +1912,45 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Der Broadcast-Mechanismus ist bewusst leichtgewichtig; falls spaeter weitere Layout-Renderer hinzukommen, sollten sie denselben zentralen Zustand aus der App-Settings-Quelle lesen.
+
+#### Paket: Notfall-Stabilisierung layoutTools deaktiviert
+- Status: erledigt
+- Beschreibung:
+  - Die Layout-Kalibrierung ist aus dem aktiven Laufweg entfernt und wird nicht mehr als normale Bedienfunktion angeboten.
+  - Der Entwicklungs-Dialog zeigt keinen aktiven Layout-Kalibrierungs- oder Tabelleneditor-Einstieg mehr.
+  - Der interaktive Print-HTML-Layoutweg ist aus den normalen Druckeinstiegen entfernt.
+  - Protokoll-PDF, TOP-Liste, ToDo und Teilnehmerliste laufen wieder ohne aktive Toolbar, Marker oder Layoutfenster.
+  - Die tableLayouts-Infrastruktur bleibt als Codebasis vorhanden, ist im aktuellen Laufweg aber nicht mehr aktiv.
+- Betroffene Dateien:
+  - `src/renderer/layoutTools/layoutCalibrationState.js`
+  - `src/main/ipc/printIpc.js`
+  - `src/main/preload.js`
+  - `src/renderer/modules/ausgabe/PrintModal.js`
+  - `src/renderer/views/SettingsView.js`
+  - `scripts/tests/ausgabeModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - Editor 1 spaeter neu konzipieren, falls wieder ein sauberer, entkoppelter Kalibrierweg benoetigt wird.
+- Risiken/Hinweise:
+  - Der technische Unterbau fuer tableLayouts bleibt im Code vorhanden, wird aber durch die normale App nicht mehr als aktiver Einstieg genutzt.
+
+#### Paket: TOP-Toolbar aus dem aktiven Laufweg entfernt
+- Status: erledigt
+- Beschreibung:
+  - Die sichtbare Layout-Toolbar aus der TOP-Liste wurde aus `TopsHeader` entfernt.
+  - Die Layout-Zonenbedienung in der TOP-Liste wurde aus `TopsList` und `TopsScreen` entkoppelt, so dass keine aktiven Marker/Click-Zonen mehr erscheinen.
+  - `layoutTools`-Schalter und Toolbar-Callbacks laufen im TOP-Screen nicht mehr an.
+  - Normale TOP-Bedienung, Bearbeitung und PDF-Ausgabe bleiben unveraendert.
+- Betroffene Dateien:
+  - `src/renderer/modules/protokoll/TopsHeader.js`
+  - `src/renderer/modules/protokoll/TopsList.js`
+  - `src/renderer/modules/protokoll/screens/TopsScreen.js`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Die technische layoutTools-Basis bleibt als Code im Repo, ist aber im TOP-Laufweg nicht mehr aktiv verdrahtet.

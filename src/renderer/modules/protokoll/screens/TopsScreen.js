@@ -31,11 +31,6 @@ import { attachAudioFeature } from "../../../features/audio/AudioFeature.js";
 import { DictationController } from "../../../features/audio-dictation/DictationController.js";
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 import {
-  APP_SETTINGS_CHANGED_EVENT,
-  LAYOUT_CALIBRATION_SETTING_KEY,
-  loadLayoutCalibrationEnabled,
-} from "../../../layoutTools/layoutCalibrationState.js";
-import {
   createPopupOverlay,
   stylePopupCard,
   registerPopupCloseHandlers,
@@ -108,12 +103,6 @@ export default class TopsScreen {
     this.topsList = null;
     this._topListLayout = null;
     this._topListLayoutLoadPromise = null;
-    this._devLayoutMode = {
-      enabled: false,
-      activeZone: null,
-    };
-    this._devLayoutModeLoadPromise = null;
-    this._layoutCalibrationChangeHandler = null;
     this.closeFlow = null;
     this.dialogs = null;
     this._dialogViewAdapter = this._createDialogViewAdapter();
@@ -202,17 +191,6 @@ export default class TopsScreen {
     editArea.appendChild(editCanvas);
     root.append(this.header.root, sheetArea, editArea);
 
-    // DEV-only layout zone: allow selecting the overall list width by clicking on the paper background.
-    // Row interactions stay unchanged because we only react when the click target is the paper itself.
-    sheetPaper.addEventListener("click", (event) => {
-      if (!this._devLayoutMode?.enabled) return;
-      const isPaper = !!event && event.target === sheetPaper;
-      const isListRoot = !!event && this.topsList?.root && event.target === this.topsList.root;
-      if (!isPaper && !isListRoot) return;
-      event.preventDefault();
-      event.stopPropagation();
-      this._setDevLayoutZone("list");
-    });
   }
 
   _buildProtocolScreenRegions() {
@@ -233,10 +211,6 @@ export default class TopsScreen {
         this._syncScreenState();
       },
       onKeywordClick: async () => this._openKeywordDialog(),
-      onDevLayoutPreviewChange: (payload) => this._applyDevLayoutPreview(payload),
-      onDevLayoutZoneSelect: (zoneKey) => this._setDevLayoutZone(zoneKey),
-      onDevLayoutSave: async () => this._saveDevLayoutMetaWidth(),
-      onDevLayoutReset: async () => this._resetDevLayoutMetaWidth(),
     });
     this.dialogs = new TopsViewDialogs({ view: this._dialogViewAdapter });
   }
@@ -509,7 +483,6 @@ export default class TopsScreen {
       isBusy: !!state.isLoading || !!state.isWriting,
       canEditKeyword: !!state.meetingId,
       showMetaLegend: !!state.meetingId,
-      devLayoutMode: this._devLayoutMode,
     });
   }
 
@@ -675,14 +648,6 @@ export default class TopsScreen {
 
   _syncListState() {
     if (!(this.topsList instanceof TopsList)) return;
-    this.topsList.setDevLayoutMode(this._devLayoutMode);
-    if (this.sheetPaper?.dataset) {
-      const enabled = !!this._devLayoutMode?.enabled;
-      const active = String(this._devLayoutMode?.activeZone || "") === "list";
-      this.sheetPaper.dataset.devLayoutMode = enabled ? "true" : "false";
-      this.sheetPaper.dataset.layoutZone = "list";
-      this.sheetPaper.dataset.layoutZoneActive = enabled && active ? "true" : "false";
-    }
     this.topsList.setItems(
       buildListItemsFromState(this.store.getState(), {
         collapsedLevel1Ids: this._getCollapsedLevel1Ids(),
@@ -730,132 +695,21 @@ export default class TopsScreen {
   }
 
   _setDevLayoutMode(mode = {}) {
-    const enabled = !!mode?.enabled;
-    const activeZone = String(mode?.activeZone || "").trim().toLowerCase();
-    const next = {
-      enabled,
-      activeZone: enabled && ["list", "number", "text", "meta"].includes(activeZone) ? activeZone : null,
-    };
-    const currentEnabled = !!this._devLayoutMode.enabled;
-    const currentZone = String(this._devLayoutMode.activeZone || "");
-    if (currentEnabled === next.enabled && currentZone === String(next.activeZone || "")) {
-      return false;
-    }
-    this._devLayoutMode = next;
-    this._syncScreenState();
-    return true;
+    void mode;
+    return false;
   }
 
   _bindLayoutCalibrationChanges() {
-    if (this._layoutCalibrationChangeHandler) return;
-    this._layoutCalibrationChangeHandler = async (payload = {}) => {
-      const data = payload?.detail || payload || {};
-      const changedKeys = Array.isArray(data?.keys) ? data.keys.map((key) => String(key || "").trim()) : [];
-      if (changedKeys.length && !changedKeys.includes(LAYOUT_CALIBRATION_SETTING_KEY)) return;
-      await this._loadDevLayoutMode({ force: true });
-      this._syncListState();
-    };
-    const api = window.bbmDb || {};
-    if (typeof api.appSettingsOnChanged === "function") {
-      this._layoutCalibrationUnsubscribe = api.appSettingsOnChanged(this._layoutCalibrationChangeHandler);
-    } else {
-      window.addEventListener(APP_SETTINGS_CHANGED_EVENT, this._layoutCalibrationChangeHandler);
-    }
+    return;
   }
 
   _setDevLayoutZone(zoneKey) {
-    if (!this._devLayoutMode.enabled) return false;
-    const zone = String(zoneKey || "").trim().toLowerCase();
-    if (!["list", "number", "text", "meta"].includes(zone)) return false;
-    if (this._devLayoutMode.activeZone === zone) return false;
-    this._devLayoutMode = {
-      ...this._devLayoutMode,
-      activeZone: zone,
-    };
-    this._syncScreenState();
     return true;
   }
 
   _applyDevLayoutPreview(payload = {}) {
-    if (!this.root) return;
-    const zoneKey = String(payload?.activeZone || "").trim().toLowerCase();
-    const preview = payload?.preview || {};
-    if (!zoneKey) {
-      this.root.dataset.devLayoutActiveZone = "";
-      return;
-    }
-
-    const width = Number(preview?.width || 0);
-    const inset = Number(preview?.inset || 0);
-    const font = Number(preview?.font || 0);
-    this.root.dataset.devLayoutActiveZone = zoneKey;
-    if (!this.topsList?.root?.style) return;
-
-    if (zoneKey === "list") {
-      this._devLayoutTextBaseMetaWidth = null;
-      const clampedWidth = Math.max(720, Math.min(1200, Number.isFinite(width) ? Math.floor(width) : 940));
-      // Scope the override to the TopsScreen so it does not leak outside.
-      this.root.style.setProperty("--bbm-tops-doc-width", `${clampedWidth}px`);
-      return;
-    }
-
-    if (zoneKey === "meta") {
-      this._devLayoutTextBaseMetaWidth = null;
-      const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 74));
-      const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 4));
-      const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
-      this.topsList.root.style.setProperty("--bbm-tops-list-meta-col", `${clampedWidth}px`);
-      this.topsList.root.style.setProperty("--bbm-tops-list-meta-padding-inline", `${clampedInset}px`);
-      this.topsList.root.style.setProperty("--bbm-tops-list-meta-font-size", `${clampedFont}px`);
-      return;
-    }
-
-    if (zoneKey === "number") {
-      this._devLayoutTextBaseMetaWidth = null;
-      const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 64));
-      const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 5));
-      const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
-      this.topsList.root.style.setProperty("--bbm-tops-list-number-col", `${clampedWidth}px`);
-      this.topsList.root.style.setProperty("--bbm-tops-list-number-padding-inline", `${clampedInset}px`);
-      this.topsList.root.style.setProperty("--bbm-tops-list-number-font-size", `${clampedFont}px`);
-      return;
-    }
-
-    if (zoneKey === "text") {
-      const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 5));
-      const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
-      this.topsList.root.style.setProperty("--bbm-tops-list-text-padding-inline", `${clampedInset}px`);
-      this.topsList.root.style.setProperty("--bbm-tops-list-text-font-size", `${clampedFont}px`);
-
-      // "Textbreite" is implemented by taking/giving space via the meta column width.
-      // DEV-only and live-only: no persistence for this behavior yet.
-      const parsePx = (value, fallback) => {
-          const raw = String(value || "").trim();
-          const match = raw.match(/^(-?\\d+(?:\\.\\d+)?)px$/i);
-          if (!match) return fallback;
-          const parsed = Number(match[1]);
-          return Number.isFinite(parsed) ? parsed : fallback;
-        };
-      const computed = typeof window !== "undefined" && window.getComputedStyle ? window.getComputedStyle(this.topsList.root) : null;
-      const currentMeta = parsePx(
-        this.topsList.root.style.getPropertyValue("--bbm-tops-list-meta-col") ||
-          (computed ? computed.getPropertyValue("--bbm-tops-list-meta-col") : ""),
-        74,
-      );
-      if (this._devLayoutTextBaseMetaWidth === null || this._devLayoutTextBaseMetaWidth === undefined) {
-        this._devLayoutTextBaseMetaWidth = currentMeta;
-      }
-      const baseMeta = Number(this._devLayoutTextBaseMetaWidth);
-      const delta = Number.isFinite(width) ? width : 0;
-      const minMeta = 50;
-      const maxMeta = 160;
-      const desiredMeta = baseMeta - delta;
-      const nextMeta = Math.max(minMeta, Math.min(maxMeta, desiredMeta));
-      if (nextMeta === minMeta && desiredMeta < minMeta) {
-        this.header?.devLayoutToolbar?.setStatus?.("Metablock ist am Minimum.");
-      }
-      this.topsList.root.style.setProperty("--bbm-tops-list-meta-col", `${Math.floor(nextMeta)}px`);
-    }
+    void payload;
+    return;
   }
 
   _getDevLayoutMetaWidthFromLayout(layout = null) {
@@ -923,213 +777,22 @@ export default class TopsScreen {
   }
 
   _syncDevLayoutMetaWidthFromLayout(layout = null) {
-    const width = this._getDevLayoutMetaWidthFromLayout(layout);
-    const inset = this._getDevLayoutMetaInsetFromLayout(layout);
-    const font = this._getDevLayoutMetaFontFromLayout(layout);
-    if (this.header?.devLayoutToolbar?.setMetaValues) {
-      this.header.devLayoutToolbar.setMetaValues({ width, inset, font });
-    } else {
-      if (this.header?.devLayoutToolbar?.setMetaWidth) {
-        this.header.devLayoutToolbar.setMetaWidth(width);
-      }
-      if (this.header?.devLayoutToolbar?.setMetaInset) {
-        this.header.devLayoutToolbar.setMetaInset(inset);
-      }
-      if (this.header?.devLayoutToolbar?.setMetaFont) {
-        this.header.devLayoutToolbar.setMetaFont(font);
-      }
-    }
-    if (this._devLayoutMode?.enabled && this._devLayoutMode.activeZone === "meta") {
-      this._applyDevLayoutPreview({
-        activeZone: "meta",
-        preview: { width, inset, font },
-      });
-    }
-
-    const numberWidth = this._getDevLayoutNumberWidthFromLayout(layout);
-    const numberInset = this._getDevLayoutNumberInsetFromLayout(layout);
-    const numberFont = this._getDevLayoutNumberFontFromLayout(layout);
-    if (this.header?.devLayoutToolbar?.setNumberValues) {
-      this.header.devLayoutToolbar.setNumberValues({
-        width: numberWidth,
-        inset: numberInset,
-        font: numberFont,
-      });
-    }
-    if (this._devLayoutMode?.enabled && this._devLayoutMode.activeZone === "number") {
-      this._applyDevLayoutPreview({
-        activeZone: "number",
-        preview: { width: numberWidth, inset: numberInset, font: numberFont },
-      });
-    }
-
-    const textInset = this._getDevLayoutTextInsetFromLayout(layout);
-    const textFont = this._getDevLayoutTextFontFromLayout(layout);
-    if (this.header?.devLayoutToolbar?.setTextValues) {
-      this.header.devLayoutToolbar.setTextValues({ inset: textInset, font: textFont });
-    }
-    if (this._devLayoutMode?.enabled && this._devLayoutMode.activeZone === "text") {
-      this._applyDevLayoutPreview({
-        activeZone: "text",
-        preview: { width: 0, inset: textInset, font: textFont },
-      });
-    }
+    void layout;
+    return;
   }
 
   async _saveDevLayoutMetaWidth() {
-    if (!this._devLayoutMode?.enabled) return false;
-    const api = window.bbmDb || {};
-    if (typeof api.tableLayoutsSave !== "function") {
-      this.header?.devLayoutToolbar?.setStatus?.("Speichern nicht verfuegbar.");
-      return false;
-    }
-    try {
-      // DEV-only persistence for the TOP UI pilot (surface: protokoll.toplist):
-      // - identity: moduleId=protokoll, tableKey=protokoll_tops, orientation=...
-      // - UI and PDF values are kept separate inside the stored layout object (ui* vs pdf* keys).
-      const currentLayout = this._topListLayout || (await this._loadTopListLayout()) || {};
-      const extracted = extractProtokollTopsEditorValues(currentLayout);
-      const nextWidth = this.header?.devLayoutToolbar?.getMetaWidth
-        ? this.header.devLayoutToolbar.getMetaWidth()
-        : this._getDevLayoutMetaWidthFromLayout(currentLayout);
-      const nextInset = this.header?.devLayoutToolbar?.getMetaInset
-        ? this.header.devLayoutToolbar.getMetaInset()
-        : this._getDevLayoutMetaInsetFromLayout(currentLayout);
-      const nextFont = this.header?.devLayoutToolbar?.getMetaFont
-        ? this.header.devLayoutToolbar.getMetaFont()
-        : this._getDevLayoutMetaFontFromLayout(currentLayout);
-      const nextNumber = this.header?.devLayoutToolbar?.getNumberValues
-        ? this.header.devLayoutToolbar.getNumberValues()
-        : {
-            width: this._getDevLayoutNumberWidthFromLayout(currentLayout),
-            inset: this._getDevLayoutNumberInsetFromLayout(currentLayout),
-            font: this._getDevLayoutNumberFontFromLayout(currentLayout),
-          };
-      const nextText = this.header?.devLayoutToolbar?.getTextValues
-        ? this.header.devLayoutToolbar.getTextValues()
-        : {
-            inset: this._getDevLayoutTextInsetFromLayout(currentLayout),
-            font: this._getDevLayoutTextFontFromLayout(currentLayout),
-          };
-      const normalizedWidth = Math.max(50, Math.min(160, Math.floor(Number(nextWidth) || 74)));
-      const normalizedInset = Number.isFinite(Number(nextInset))
-        ? Math.max(0, Math.min(24, Math.floor(Number(nextInset))))
-        : 4;
-      const normalizedFont = Number.isFinite(Number(nextFont))
-        ? Math.max(9, Math.min(16, Math.floor(Number(nextFont))))
-        : 11;
-      const normalizedNumberWidth = Math.max(50, Math.min(160, Math.floor(Number(nextNumber?.width) || 64)));
-      const normalizedNumberInset = Number.isFinite(Number(nextNumber?.inset))
-        ? Math.max(0, Math.min(24, Math.floor(Number(nextNumber.inset))))
-        : 5;
-      const normalizedNumberFont = Number.isFinite(Number(nextNumber?.font))
-        ? Math.max(9, Math.min(16, Math.floor(Number(nextNumber.font))))
-        : 11;
-      const normalizedTextInset = Number.isFinite(Number(nextText?.inset))
-        ? Math.max(0, Math.min(24, Math.floor(Number(nextText.inset))))
-        : 5;
-      const normalizedTextFont = Number.isFinite(Number(nextText?.font))
-        ? Math.max(9, Math.min(16, Math.floor(Number(nextText.font))))
-        : 11;
-      const overlay = buildProtokollTopsLayoutOverlay(
-        {
-          orientation: extracted?.orientation || currentLayout?.variant || "portrait",
-          uiNumberWidth: `${normalizedNumberWidth}px`,
-          uiNumberInset: `${normalizedNumberInset}px`,
-          uiNumberFontSize: `${normalizedNumberFont}px`,
-          uiTextTrack: extracted?.uiTextTrack,
-          uiTextInset: `${normalizedTextInset}px`,
-          uiTextFontSize: `${normalizedTextFont}px`,
-          uiMetaWidth: `${normalizedWidth}px`,
-          uiMetaInset: `${normalizedInset}px`,
-          uiMetaFontSize: `${normalizedFont}px`,
-          pdfNumberWidth: extracted?.pdfNumberWidth,
-          pdfTextWidth: extracted?.pdfTextWidth,
-          pdfMetaWidth: extracted?.pdfMetaWidth,
-          labelTop: extracted?.labelTop,
-          labelText: extracted?.labelText,
-          labelMeta1: extracted?.labelMeta1,
-          labelMeta2: extracted?.labelMeta2,
-          labelMeta3: extracted?.labelMeta3,
-        },
-        extracted?.orientation || currentLayout?.variant || "portrait"
-      );
-      const res = await api.tableLayoutsSave({
-        tableKey: "protokoll_tops",
-        moduleId: "protokoll",
-        orientation: overlay.variant || "portrait",
-        layout: overlay,
-      });
-      if (!res?.ok) {
-        this.header?.devLayoutToolbar?.setStatus?.(res?.error || "Speichern fehlgeschlagen.");
-        return false;
-      }
-      this.header?.devLayoutToolbar?.clearStatus?.();
-      this._applyTopListLayout(res?.data?.effectiveLayout || res?.data?.defaultLayout || overlay);
-      return true;
-    } catch (err) {
-      this.header?.devLayoutToolbar?.setStatus?.(err?.message || String(err) || "Speichern fehlgeschlagen.");
-      return false;
-    }
+    return false;
   }
 
   async _resetDevLayoutMetaWidth() {
-    if (!this._devLayoutMode?.enabled) return false;
-    const api = window.bbmDb || {};
-    if (typeof api.tableLayoutsReset !== "function") {
-      this.header?.devLayoutToolbar?.setStatus?.("Reset nicht verfuegbar.");
-      return false;
-    }
-    try {
-      // DEV-only reset for the TOP UI pilot: resets the stored override for the same tableLayouts identity.
-      const orientation =
-        this._topListLayout?.variant ||
-        extractProtokollTopsEditorValues(this._topListLayout || {})?.orientation ||
-        "portrait";
-      const res = await api.tableLayoutsReset({
-        tableKey: "protokoll_tops",
-        moduleId: "protokoll",
-        orientation,
-      });
-      if (!res?.ok) {
-        this.header?.devLayoutToolbar?.setStatus?.(res?.error || "Reset fehlgeschlagen.");
-        return false;
-      }
-      this.header?.devLayoutToolbar?.clearStatus?.();
-      await this._loadTopListLayout();
-      return true;
-    } catch (err) {
-      this.header?.devLayoutToolbar?.setStatus?.(err?.message || String(err) || "Reset fehlgeschlagen.");
-      return false;
-    }
+    return false;
   }
 
   async _loadDevLayoutMode({ force = false } = {}) {
-    if (force) this._devLayoutModeLoadPromise = null;
-    if (this._devLayoutModeLoadPromise) return this._devLayoutModeLoadPromise;
-    this._devLayoutModeLoadPromise = (async () => {
-      const api = window.bbmDb || {};
-      if (typeof api.appGetBuildChannel !== "function") {
-        this._setDevLayoutMode({ enabled: false, activeZone: null });
-        return null;
-      }
-      try {
-        const res = await api.appGetBuildChannel();
-        const channel = normalizeBuildChannel(res?.ok ? res?.channel : "");
-        const calibrationEnabled = await loadLayoutCalibrationEnabled(api, false);
-        this._setDevLayoutMode({
-          enabled: channel === "DEV" && calibrationEnabled,
-          activeZone: null,
-        });
-        return channel;
-      } catch (_err) {
-        this._setDevLayoutMode({ enabled: false, activeZone: null });
-        return null;
-      } finally {
-        this._devLayoutModeLoadPromise = null;
-      }
-    })();
-    return this._devLayoutModeLoadPromise;
+    void force;
+    this._setDevLayoutMode({ enabled: false, activeZone: null });
+    return null;
   }
 
   async _handleListRowClick(item) {
@@ -1831,8 +1494,6 @@ export default class TopsScreen {
   }
 
   async load() {
-    this._bindLayoutCalibrationChanges();
-    await this._loadDevLayoutMode();
     const showAmpelInList = await this._loadDisplaySetting({
       key: "tops.ampelEnabled",
       fallback: true,
@@ -1858,18 +1519,6 @@ export default class TopsScreen {
     await this.closeFlow?.destroy?.();
     this._destroyAudioFeature?.();
     this._destroyDictationController?.();
-    if (this._layoutCalibrationUnsubscribe) {
-      try {
-        this._layoutCalibrationUnsubscribe();
-      } catch (_e) {}
-      this._layoutCalibrationUnsubscribe = null;
-    }
-    if (this._layoutCalibrationChangeHandler) {
-      try {
-        window.removeEventListener(APP_SETTINGS_CHANGED_EVENT, this._layoutCalibrationChangeHandler);
-      } catch (_e) {}
-      this._layoutCalibrationChangeHandler = null;
-    }
     this._showSidebar();
   }
 }

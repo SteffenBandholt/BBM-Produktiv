@@ -14,7 +14,6 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
-import { createTableLayoutPrototypeEditor } from "./TableLayoutPrototypeEditor.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -5066,12 +5065,6 @@ export default class SettingsView {
       "Diktat-Testfreigabe",
       "Aktiviert Diktat unabhängig von der Lizenz für Entwicklung und Prüfung."
     );
-    const layoutCalibrationCard = mkCard(
-      "Layout-Kalibrierung",
-      "Aktiviert layoutTools in den DEV-Ansichten für UI und PDF."
-    );
-    const tableLayoutEditor = createTableLayoutPrototypeEditor({ api, router: this.router });
-
     const btn = (label, primary = false) => {
       const el = document.createElement("button");
       el.type = "button";
@@ -5369,73 +5362,6 @@ export default class SettingsView {
     dictationDevRow.append(dictationDevEnabled, dictationDevLabel);
     dictationDevCard.box.append(dictationDevRow, dictationDevMsg);
 
-    const LAYOUT_CALIBRATION_KEY = "dev.layoutCalibrationEnabled";
-    const layoutCalibrationRow = document.createElement("label");
-    layoutCalibrationRow.style.display = "flex";
-    layoutCalibrationRow.style.alignItems = "center";
-    layoutCalibrationRow.style.gap = "8px";
-    layoutCalibrationRow.style.fontSize = "12px";
-    layoutCalibrationRow.style.cursor = "pointer";
-    const layoutCalibrationEnabled = document.createElement("input");
-    layoutCalibrationEnabled.type = "checkbox";
-    const layoutCalibrationLabel = document.createElement("span");
-    layoutCalibrationLabel.textContent = "Layout-Kalibrierung aktivieren";
-    const layoutCalibrationMsg = document.createElement("div");
-    layoutCalibrationMsg.style.fontSize = "12px";
-    layoutCalibrationMsg.style.opacity = "0.78";
-    const loadLayoutCalibrationSetting = async () => {
-      if (!has("appSettingsGetMany")) {
-        layoutCalibrationEnabled.disabled = true;
-        layoutCalibrationMsg.textContent = "Settings-API fehlt.";
-        return;
-      }
-      const res = await api.appSettingsGetMany([LAYOUT_CALIBRATION_KEY]);
-      if (!res?.ok) {
-        layoutCalibrationMsg.textContent = res?.error || "Layout-Kalibrierung konnte nicht geladen werden.";
-        return;
-      }
-      layoutCalibrationEnabled.checked = String(res.data?.[LAYOUT_CALIBRATION_KEY] || "").trim() === "1";
-      layoutCalibrationMsg.textContent = layoutCalibrationEnabled.checked
-        ? "layoutTools sind im DEV-Modus aktiv."
-        : "layoutTools sind im DEV-Modus aus.";
-    };
-    const saveLayoutCalibrationSetting = async () => {
-      if (!has("appSettingsSetMany")) {
-        layoutCalibrationMsg.textContent = "Settings-API fehlt.";
-        return false;
-      }
-      const enabled = !!layoutCalibrationEnabled.checked;
-      const res = await api.appSettingsSetMany({
-        [LAYOUT_CALIBRATION_KEY]: enabled ? "1" : "0",
-      });
-      if (!res?.ok) {
-        layoutCalibrationMsg.textContent = res?.error || "Layout-Kalibrierung konnte nicht gespeichert werden.";
-        return false;
-      }
-      layoutCalibrationMsg.textContent = enabled
-        ? "Layout-Kalibrierung aktiviert."
-        : "Layout-Kalibrierung deaktiviert.";
-      if (this.router?.context) {
-        this.router.context.settings = {
-          ...(this.router.context.settings || {}),
-          [LAYOUT_CALIBRATION_KEY]: enabled ? "1" : "0",
-        };
-      }
-      try {
-        window.dispatchEvent(
-          new CustomEvent("bbm:layout-calibration-changed", {
-            detail: { enabled },
-          })
-        );
-      } catch (_e) {}
-      return true;
-    };
-    layoutCalibrationEnabled.addEventListener("change", () => {
-      void saveLayoutCalibrationSetting();
-    });
-    layoutCalibrationRow.append(layoutCalibrationEnabled, layoutCalibrationLabel);
-    layoutCalibrationCard.box.append(layoutCalibrationRow, layoutCalibrationMsg);
-
     const mkScaleGroup = (labelText, buttons) => {
       const row = document.createElement("div");
       row.style.display = "grid";
@@ -5470,9 +5396,7 @@ export default class SettingsView {
       { key: "version", label: "Versionierung", el: versionCard.box },
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
       { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
-      { key: "tableLayouts", label: "Tabellenlayouts", el: tableLayoutEditor.root },
       { key: "dictation", label: "Diktat-Testfreigabe", el: dictationDevCard.box },
-      { key: "layoutCalibration", label: "Layout-Kalibrierung", el: layoutCalibrationCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
     ];
     const tabHead = document.createElement("div");
@@ -5506,9 +5430,7 @@ export default class SettingsView {
       addTabBtn("Versionierung", "version"),
       addTabBtn("DB-Diagnose", "db"),
       addTabBtn("Protokoll-Textgrenzen", "tops"),
-      addTabBtn("Tabellenlayouts", "tableLayouts"),
       addTabBtn("Diktat-Testfreigabe", "dictation"),
-      addTabBtn("Layout-Kalibrierung", "layoutCalibration"),
       addTabBtn("Farbschema", "theme")
     );
     tabBody.append(...tabs.map((t) => t.el));
@@ -5517,9 +5439,7 @@ export default class SettingsView {
     await loadVersioningData();
     await loadDbDiagnostics();
     await loadTopLimitSettings();
-    await tableLayoutEditor.load();
     await loadDictationDevSetting();
-    await loadLayoutCalibrationSetting();
     setTab("version");
 
     this._openSettingsModal({
@@ -5527,9 +5447,6 @@ export default class SettingsView {
       content: [section],
       closeOnly: true,
     });
-    if (typeof tableLayoutEditor.attachFullscreenHost === "function") {
-      tableLayoutEditor.attachFullscreenHost(this.settingsModalEl);
-    }
   }
 
   async load() {

@@ -37,7 +37,6 @@ import { OVERLAY_TOP } from "../../ui/zIndex.js";
 import { buildProtocolPdfFileName } from "../../utils/protocolPdfNaming.js";
 import { resolvePrintUserData } from "../../../shared/print/userDataResolver.mjs";
 import { getPrintDialogActions } from "../../../shared/print/printModes.mjs";
-import { loadLayoutCalibrationEnabled } from "../../layoutTools/layoutCalibrationState.js";
 
 const BLOCKED_OUTPUT_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
 
@@ -1088,14 +1087,6 @@ export default class PrintModal {
     this._applyState();
   }
 
-  async _getLayoutCalibrationEnabledForPreview() {
-    try {
-      return await loadLayoutCalibrationEnabled(window.bbmDb || {}, false);
-    } catch (_err) {
-      return false;
-    }
-  }
-
   // Vorabzug: direkt drucken (ohne Auswahl-Modal)
   async printVorabzug({ projectId, meetingId } = {}) {
     const pid = projectId || this.router?.currentProjectId || null;
@@ -1128,23 +1119,6 @@ export default class PrintModal {
     if (!mid) {
       alert("Bitte zuerst eine Besprechung ausw?hlen.");
       return;
-    }
-    // DEV-only helper: open the interactive Print-HTML preview for layout fine-tuning.
-    // This must not affect the actual PDF export.
-    try {
-      const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
-      const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
-      if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
-        const layoutCalibrationEnabled = await this._getLayoutCalibrationEnabledForPreview();
-        void window.bbmPrint.openHtmlPreview({
-          mode: "protocol",
-          projectId: pid,
-          meetingId: mid,
-          layoutCalibrationEnabled,
-        });
-      }
-    } catch (_e) {
-      // ignore (DEV-only helper)
     }
     return await this._printMeeting({
       projectId: pid,
@@ -1450,18 +1424,6 @@ export default class PrintModal {
   }
 
   async openTodoPrintPreview({ projectId } = {}) {
-    try {
-      const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
-      const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
-      if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
-        const layoutCalibrationEnabled = await this._getLayoutCalibrationEnabledForPreview();
-        await window.bbmPrint.openHtmlPreview({ mode: "todo", projectId, layoutCalibrationEnabled });
-        return true;
-      }
-    } catch (_e) {
-      // ignore (DEV-only helper)
-    }
-
     const filter = await this._selectTodoResponsibleFilter({ projectId });
     if (filter == null) return false;
     return await this._printProjectListPdf({
@@ -1475,19 +1437,6 @@ export default class PrintModal {
   }
 
   async openTopListAllPreview({ projectId } = {}) {
-    try {
-      const isPackagedRes = await window?.bbmDb?.appIsPackaged?.();
-      const isPackaged = !!isPackagedRes?.ok && !!isPackagedRes?.isPackaged;
-      if (!isPackaged && typeof window?.bbmPrint?.openHtmlPreview === "function") {
-        // DEV-only: use the interactive print-HTML preview for layoutTools fine-tuning.
-        // Do not also open the real PDF preview in this path, otherwise users land in a non-interactive preview first.
-        const layoutCalibrationEnabled = await this._getLayoutCalibrationEnabledForPreview();
-        await window.bbmPrint.openHtmlPreview({ mode: "topsAll", projectId, layoutCalibrationEnabled });
-        return true;
-      }
-    } catch (_e) {
-      // ignore (DEV-only helper)
-    }
     return await this._printProjectListPdf({
       projectId,
       mode: "topsAll",

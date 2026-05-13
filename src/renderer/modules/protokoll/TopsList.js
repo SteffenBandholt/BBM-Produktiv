@@ -3,7 +3,6 @@ import {
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
 import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protokollTopsLayout.js";
-import { TOPLIST_LAYOUT_ZONE_LABELS, normalizeToplistZoneKey } from "./layoutSurfaces/toplistLayoutSurface.js";
 
 function getAssetBaseUrl() {
   if (typeof window !== "undefined" && window?.location?.href) return window.location.href;
@@ -71,16 +70,15 @@ export class TopsList {
   }
 
   setDevLayoutMode(mode = {}) {
-    const enabled = !!mode?.enabled;
-    const activeZone = normalizeToplistZoneKey(mode?.activeZone);
+    void mode;
     this.devLayoutMode = {
-      enabled,
-      activeZone: enabled ? activeZone : null,
+      enabled: false,
+      activeZone: null,
     };
-    this.root.dataset.devLayoutMode = enabled ? "true" : "false";
-
-    // DEV-only: the fine-tuning vars (padding/font) must never leak into STABLE.
-    // Re-apply layout when enabling so the current layout (including saved values) becomes visible in DEV.
+    this.root.dataset.devLayoutMode = "false";
+    if (this.root?.removeAttribute) {
+      this.root.removeAttribute("data-dev-layout-mode");
+    }
     applyProtokollTopsUiLayout(this.root, this.tableLayout);
     this._applyDevOnlyLayoutVarsGate();
   }
@@ -279,34 +277,7 @@ export class TopsList {
   }
 
   _decorateLayoutZone(zoneEl, zoneKey) {
-    if (!zoneEl) return;
-    if (!this.devLayoutMode?.enabled) return;
-
-    const key = normalizeToplistZoneKey(zoneKey);
-    if (!key) return;
-
-    zoneEl.classList.add("bbm-tops-list-layout-zone");
-    zoneEl.dataset.layoutZone = key;
-    zoneEl.dataset.layoutZoneLabel = TOPLIST_LAYOUT_ZONE_LABELS[key];
-    zoneEl.dataset.layoutZoneActive = this.devLayoutMode.activeZone === key ? "true" : "false";
-    zoneEl.setAttribute("role", "button");
-    zoneEl.tabIndex = 0;
-    zoneEl.title = `Layout-Zone: ${TOPLIST_LAYOUT_ZONE_LABELS[key]}`;
-    zoneEl.setAttribute("aria-label", `Layout-Zone ${TOPLIST_LAYOUT_ZONE_LABELS[key]}`);
-    zoneEl.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      if (typeof this.onLayoutZoneClick === "function") {
-        this.onLayoutZoneClick(key);
-      }
-    });
-    zoneEl.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      event.stopPropagation();
-      if (typeof this.onLayoutZoneClick === "function") {
-        this.onLayoutZoneClick(key);
-      }
-    });
+    void zoneEl;
+    void zoneKey;
   }
 }

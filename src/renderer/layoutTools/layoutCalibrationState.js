@@ -11,13 +11,7 @@ export function parseLayoutCalibrationEnabled(value, fallback = false) {
 }
 
 export async function loadLayoutCalibrationEnabled(api = null, fallback = false) {
-  if (typeof api?.appSettingsGetMany !== "function") return !!fallback;
-  try {
-    const res = await api.appSettingsGetMany([LAYOUT_CALIBRATION_SETTING_KEY]);
-    if (!res?.ok) return !!fallback;
-    return parseLayoutCalibrationEnabled(res?.data?.[LAYOUT_CALIBRATION_SETTING_KEY], fallback);
-  } catch (_err) {
-    return !!fallback;
-  }
+  void api;
+  void fallback;
+  return false;
 }
-
