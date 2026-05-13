@@ -17,12 +17,12 @@ export class DevLayoutToolbar {
             surfaceKey: "protokoll.toplist",
             label: "TOP-Liste",
             moduleId: "protokoll",
-            zones: {
-              number: { key: "number", label: "Nummernblock", controls: ["width", "inset", "font"] },
-              text: { key: "text", label: "Textblock", controls: ["inset", "font"] },
-              meta: { key: "meta", label: "Metablock", controls: ["width", "inset", "font"] },
-            },
-          };
+          zones: {
+            number: { key: "number", label: "Nummernblock", controls: ["width", "inset", "font"] },
+            text: { key: "text", label: "Textblock", controls: ["width", "inset", "font"] },
+            meta: { key: "meta", label: "Metablock", controls: ["width", "inset", "font"] },
+          },
+        };
     this.onPreviewChange = typeof onPreviewChange === "function" ? onPreviewChange : null;
     this.onZoneSelect = typeof onZoneSelect === "function" ? onZoneSelect : null;
     this.onSave = typeof onSave === "function" ? onSave : null;
@@ -30,7 +30,7 @@ export class DevLayoutToolbar {
     this.previewStateByZone = {
       list: { width: 940, inset: 0, font: 0 },
       number: { width: 64, inset: 5, font: 11 },
-      // "width" for text is a delta ("Textbreite") relative to the rest-area behavior.
+      // Text uses an actual width value so the text zone can be calibrated directly.
       text: { width: 0, inset: 5, font: 11 },
       meta: { width: 74, inset: 4, font: 11 },
     };
@@ -184,7 +184,6 @@ export class DevLayoutToolbar {
 
   _syncControls(zoneKey) {
     const preview = this._getZonePreview(zoneKey) || { width: 0, inset: 0, font: 0 };
-    // Text zone: the width control represents a delta ("Textbreite") instead of a fixed column width.
     if (this.controls?.width?.labelEl) {
       this.controls.width.labelEl.textContent = zoneKey === "list" ? "Listenbreite" : zoneKey === "text" ? "Textbreite" : "Breite";
     }
@@ -212,14 +211,29 @@ export class DevLayoutToolbar {
     const step =
       zoneKey === "list" && controlKey === "width"
         ? 20
+        : zoneKey === "text" && controlKey === "width"
+          ? 20
         : controlKey === "inset"
           ? 2
           : controlKey === "font"
             ? 1
             : 5;
-    const isTextWidth = zoneKey === "text" && controlKey === "width";
-    const min = isTextWidth ? -120 : controlKey === "inset" ? 0 : controlKey === "font" ? 9 : 50;
-    const max = isTextWidth ? 120 : controlKey === "inset" ? 24 : controlKey === "font" ? 16 : 160;
+    const min =
+      zoneKey === "text" && controlKey === "width"
+        ? 120
+        : controlKey === "inset"
+          ? 0
+          : controlKey === "font"
+            ? 9
+            : 50;
+    const max =
+      zoneKey === "text" && controlKey === "width"
+        ? 1200
+        : controlKey === "inset"
+          ? 24
+          : controlKey === "font"
+            ? 16
+            : 160;
     const effectiveMin = zoneKey === "list" && controlKey === "width" ? 720 : min;
     const effectiveMax = zoneKey === "list" && controlKey === "width" ? 1200 : max;
     const nextValue = Math.max(
@@ -357,10 +371,14 @@ export class DevLayoutToolbar {
     };
   }
 
-  setTextValues({ inset, font } = {}) {
+  setTextValues({ width, inset, font } = {}) {
     const next = {
       ...this.previewStateByZone.text,
     };
+    if (width !== undefined) {
+      const value = Number(width);
+      next.width = Number.isFinite(value) ? Math.max(120, Math.min(1200, Math.floor(value))) : 0;
+    }
     if (inset !== undefined) {
       const value = Number(inset);
       next.inset = Number.isFinite(value) ? Math.max(0, Math.min(24, Math.floor(value))) : 5;
@@ -377,10 +395,12 @@ export class DevLayoutToolbar {
   }
 
   getTextValues() {
-    const preview = this.previewStateByZone?.text || { inset: 5, font: 11 };
+    const preview = this.previewStateByZone?.text || { width: 0, inset: 5, font: 11 };
+    const width = Number(preview.width);
     const inset = Number(preview.inset);
     const font = Number(preview.font);
     return {
+      width: Number.isFinite(width) ? width : 0,
       inset: Number.isFinite(inset) ? inset : 5,
       font: Number.isFinite(font) ? font : 11,
     };

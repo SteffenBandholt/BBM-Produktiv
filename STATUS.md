@@ -1960,6 +1960,42 @@ Wichtig:
 - Risiken/Hinweise:
   - PDF und Auto-Tabellen sind nicht betroffen; es wurde nur die UI-DEV-Anwendung der Vars stabilisiert.
 
+#### Paket: TOP-Liste UI Nummernblock-Breite wird nicht mehr von gridTemplateColumns uebersteuert
+- Status: erledigt
+- Beschreibung:
+  - Beim Speichern des TOP-Listen-UI-Layouts wird `ui.gridTemplateColumns` jetzt explizit auf `null` gesetzt.
+  - Dadurch ueberschreibt die Default-Struktur nicht mehr die variablen Spaltenbreiten (`--bbm-tops-list-number-col` usw.), und der Nummernblock (TOP-Nummer) laesst sich im Layoutmodus wieder sichtbar aendern und persistieren.
+- Betroffene Dateien:
+  - `src/shared/tableLayouts/protokollTopsLayout.js`
+  - `scripts/tests/tableLayoutEditorPrototype.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - keiner
+- Risiken/Hinweise:
+  - Gilt nur fuer UI; PDF wird nicht veraendert.
+
+#### Paket: TOP-Liste UI Textbreite und Schrift wieder getrennt
+- Status: erledigt
+- Beschreibung:
+  - Die DEV-Layout-Preview fuer die TOP-Liste UI schreibt die Textbreite jetzt direkt auf `--bbm-tops-list-text-col` statt den Metablock mitzuschieben.
+  - Die aktiven Layout-Zonen ueberschreiben Innenabstand und Schriftgroesse nicht mehr mit festen CSS-Defaults; Nummernblock und Textblock reagieren wieder getrennt auf ihre Werte.
+  - Die Kurztext-/Langtext-Maße in der Listenansicht sind nicht mehr an `ch` gekoppelt, damit Schriftaenderungen nicht mehr nebenbei die Breite veraendern.
+- Betroffene Dateien:
+  - `src/renderer/layoutTools/DevLayoutToolbar.js`
+  - `src/renderer/modules/protokoll/layoutSurfaces/toplistLayoutSurface.js`
+  - `src/renderer/modules/protokoll/screens/TopsScreen.js`
+  - `src/renderer/modules/protokoll/styles/tops.css`
+  - `scripts/tests/topsScreen.integration.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - manuelle UI-Abnahme mit aktivierter Layout-Kalibrierung
+- Risiken/Hinweise:
+  - `npm test` ist gruen; der interaktive App-Smoke-Run wurde in dieser Sitzung nicht manuell durchgeklickt.
+
 #### Paket: DEV Layout-Kalibrierung zentral in Einstellungen
 - Status: erledigt
 - Beschreibung:

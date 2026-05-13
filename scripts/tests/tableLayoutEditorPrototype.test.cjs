@@ -602,6 +602,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
     assert.equal(overlay.ui.rootVars["--bbm-tops-list-number-col"], "72px");
     assert.equal(overlay.ui.rootVars["--bbm-tops-list-text-col"], "minmax(0, 1.2fr)");
     assert.equal(overlay.ui.rootVars["--bbm-tops-list-meta-col"], "80px");
+    assert.equal(overlay.ui.gridTemplateColumns, undefined);
     assert.equal(overlay.pdf.columns.number.width, "24mm");
     assert.equal(overlay.pdf.columns.text.width, "auto");
     assert.equal(overlay.pdf.columns.meta.width, "16ch");

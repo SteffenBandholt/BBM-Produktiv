@@ -523,6 +523,11 @@ export function buildProtokollTopsLayoutOverlay(values = {}, orientation = "port
       meta: [normalized.labelMeta1, normalized.labelMeta2, normalized.labelMeta3],
     },
     ui: {
+      // Important: do not keep the default "gridTemplateColumns" in the effective layout,
+      // otherwise live column width vars (e.g. number/meta width) won't have any effect.
+      // Setting this to null overwrites the default during merge and makes applyProtokollTopsUiLayout
+      // fall back to the var-based grid template.
+      gridTemplateColumns: null,
       rootVars: {
         "--bbm-tops-list-number-col": normalized.uiNumberWidth,
         "--bbm-tops-list-number-padding-inline": normalized.uiNumberInset,

@@ -16,8 +16,7 @@ export const TOPLIST_LAYOUT_SURFACE = Object.freeze({
     text: Object.freeze({
       key: "text",
       label: "Textblock",
-      // Width is treated as "Textbreite" in the UI (rest area stealing/giving space via meta col),
-      // not as a direct fixed column width.
+      // Width is treated as the visible text-zone width, separate from font and inset.
       controls: Object.freeze(["width", "inset", "font"]),
     }),
     meta: Object.freeze({

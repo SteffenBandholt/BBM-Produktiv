@@ -792,7 +792,6 @@ export default class TopsScreen {
     if (!this.topsList?.root?.style) return;
 
     if (zoneKey === "list") {
-      this._devLayoutTextBaseMetaWidth = null;
       const clampedWidth = Math.max(720, Math.min(1200, Number.isFinite(width) ? Math.floor(width) : 940));
       // Scope the override to the TopsScreen so it does not leak outside.
       this.root.style.setProperty("--bbm-tops-doc-width", `${clampedWidth}px`);
@@ -800,7 +799,6 @@ export default class TopsScreen {
     }
 
     if (zoneKey === "meta") {
-      this._devLayoutTextBaseMetaWidth = null;
       const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 74));
       const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 4));
       const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
@@ -811,7 +809,6 @@ export default class TopsScreen {
     }
 
     if (zoneKey === "number") {
-      this._devLayoutTextBaseMetaWidth = null;
       const clampedWidth = Math.max(50, Math.min(160, Number.isFinite(width) ? width : 64));
       const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 5));
       const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
@@ -822,40 +819,33 @@ export default class TopsScreen {
     }
 
     if (zoneKey === "text") {
+      const renderedWidth = this._getRenderedTextZoneWidth();
+      const fallbackWidth = Number.isFinite(renderedWidth) && renderedWidth > 0 ? renderedWidth : 420;
+      const clampedWidth = Math.max(
+        120,
+        Math.min(1200, Number.isFinite(width) && width > 0 ? Math.floor(width) : fallbackWidth)
+      );
       const clampedInset = Math.max(0, Math.min(24, Number.isFinite(inset) ? inset : 5));
       const clampedFont = Math.max(9, Math.min(16, Number.isFinite(font) ? font : 11));
+      this.topsList.root.style.setProperty("--bbm-tops-list-text-col", `${clampedWidth}px`);
       this.topsList.root.style.setProperty("--bbm-tops-list-text-padding-inline", `${clampedInset}px`);
       this.topsList.root.style.setProperty("--bbm-tops-list-text-font-size", `${clampedFont}px`);
-
-      // "Textbreite" is implemented by taking/giving space via the meta column width.
-      // DEV-only and live-only: no persistence for this behavior yet.
-      const parsePx = (value, fallback) => {
-          const raw = String(value || "").trim();
-          const match = raw.match(/^(-?\\d+(?:\\.\\d+)?)px$/i);
-          if (!match) return fallback;
-          const parsed = Number(match[1]);
-          return Number.isFinite(parsed) ? parsed : fallback;
-        };
-      const computed = typeof window !== "undefined" && window.getComputedStyle ? window.getComputedStyle(this.topsList.root) : null;
-      const currentMeta = parsePx(
-        this.topsList.root.style.getPropertyValue("--bbm-tops-list-meta-col") ||
-          (computed ? computed.getPropertyValue("--bbm-tops-list-meta-col") : ""),
-        74,
-      );
-      if (this._devLayoutTextBaseMetaWidth === null || this._devLayoutTextBaseMetaWidth === undefined) {
-        this._devLayoutTextBaseMetaWidth = currentMeta;
-      }
-      const baseMeta = Number(this._devLayoutTextBaseMetaWidth);
-      const delta = Number.isFinite(width) ? width : 0;
-      const minMeta = 50;
-      const maxMeta = 160;
-      const desiredMeta = baseMeta - delta;
-      const nextMeta = Math.max(minMeta, Math.min(maxMeta, desiredMeta));
-      if (nextMeta === minMeta && desiredMeta < minMeta) {
-        this.header?.devLayoutToolbar?.setStatus?.("Metablock ist am Minimum.");
-      }
-      this.topsList.root.style.setProperty("--bbm-tops-list-meta-col", `${Math.floor(nextMeta)}px`);
     }
+  }
+
+  _parsePxValue(value, fallback = null) {
+    const raw = String(value == null ? "" : value).trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return fallback;
+    const parsed = Number(match[1]);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  }
+
+  _getRenderedTextZoneWidth() {
+    const textZone = this.topsList?.root?.querySelector?.(".bbm-tops-list-row-text");
+    if (!textZone?.getBoundingClientRect) return null;
+    const width = Math.round(textZone.getBoundingClientRect().width || 0);
+    return Number.isFinite(width) && width > 0 ? width : null;
   }
 
   _getDevLayoutMetaWidthFromLayout(layout = null) {
@@ -922,6 +912,20 @@ export default class TopsScreen {
     return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
   }
 
+  _getDevLayoutTextWidthFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiTextTrack || "").trim();
+    const parsed = this._parsePxValue(raw, null);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return Math.max(120, Math.min(1200, Math.floor(parsed)));
+    }
+    const rendered = this._getRenderedTextZoneWidth();
+    if (Number.isFinite(rendered) && rendered > 0) {
+      return Math.max(120, Math.min(1200, Math.floor(rendered)));
+    }
+    return 420;
+  }
+
   _syncDevLayoutMetaWidthFromLayout(layout = null) {
     const width = this._getDevLayoutMetaWidthFromLayout(layout);
     const inset = this._getDevLayoutMetaInsetFromLayout(layout);
@@ -965,13 +969,14 @@ export default class TopsScreen {
 
     const textInset = this._getDevLayoutTextInsetFromLayout(layout);
     const textFont = this._getDevLayoutTextFontFromLayout(layout);
+    const textWidth = this._getDevLayoutTextWidthFromLayout(layout);
     if (this.header?.devLayoutToolbar?.setTextValues) {
-      this.header.devLayoutToolbar.setTextValues({ inset: textInset, font: textFont });
+      this.header.devLayoutToolbar.setTextValues({ width: textWidth, inset: textInset, font: textFont });
     }
     if (this._devLayoutMode?.enabled && this._devLayoutMode.activeZone === "text") {
       this._applyDevLayoutPreview({
         activeZone: "text",
-        preview: { width: 0, inset: textInset, font: textFont },
+        preview: { width: textWidth, inset: textInset, font: textFont },
       });
     }
   }
@@ -1008,6 +1013,7 @@ export default class TopsScreen {
       const nextText = this.header?.devLayoutToolbar?.getTextValues
         ? this.header.devLayoutToolbar.getTextValues()
         : {
+            width: this._getDevLayoutTextWidthFromLayout(currentLayout),
             inset: this._getDevLayoutTextInsetFromLayout(currentLayout),
             font: this._getDevLayoutTextFontFromLayout(currentLayout),
           };
@@ -1031,13 +1037,16 @@ export default class TopsScreen {
       const normalizedTextFont = Number.isFinite(Number(nextText?.font))
         ? Math.max(9, Math.min(16, Math.floor(Number(nextText.font))))
         : 11;
+      const normalizedTextWidth = Number.isFinite(Number(nextText?.width))
+        ? Math.max(120, Math.min(1200, Math.floor(Number(nextText.width))))
+        : this._getDevLayoutTextWidthFromLayout(currentLayout);
       const overlay = buildProtokollTopsLayoutOverlay(
         {
           orientation: extracted?.orientation || currentLayout?.variant || "portrait",
           uiNumberWidth: `${normalizedNumberWidth}px`,
           uiNumberInset: `${normalizedNumberInset}px`,
           uiNumberFontSize: `${normalizedNumberFont}px`,
-          uiTextTrack: extracted?.uiTextTrack,
+          uiTextTrack: `${normalizedTextWidth}px`,
           uiTextInset: `${normalizedTextInset}px`,
           uiTextFontSize: `${normalizedTextFont}px`,
           uiMetaWidth: `${normalizedWidth}px`,
