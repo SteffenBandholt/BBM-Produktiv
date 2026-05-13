@@ -16,6 +16,7 @@ import {
 } from "../buildListItemsFromState.js";
 import {
   buildProtokollTopsLayoutOverlay,
+  deriveProtokollTopsPdfValuesFromUiValues,
   extractProtokollTopsEditorValues,
 } from "../../../../shared/tableLayouts/protokollTopsLayout.js";
 import { editorFromTop } from "../editorFromTop.js";
@@ -1040,6 +1041,20 @@ export default class TopsScreen {
       const normalizedTextWidth = Number.isFinite(Number(nextText?.width))
         ? Math.max(120, Math.min(1200, Math.floor(Number(nextText.width))))
         : this._getDevLayoutTextWidthFromLayout(currentLayout);
+      const derivedPdfValues = deriveProtokollTopsPdfValuesFromUiValues(
+        {
+          uiNumberWidth: `${normalizedNumberWidth}px`,
+          uiNumberInset: `${normalizedNumberInset}px`,
+          uiNumberFontSize: `${normalizedNumberFont}px`,
+          uiTextTrack: `${normalizedTextWidth}px`,
+          uiTextInset: `${normalizedTextInset}px`,
+          uiTextFontSize: `${normalizedTextFont}px`,
+          uiMetaWidth: `${normalizedWidth}px`,
+          uiMetaInset: `${normalizedInset}px`,
+          uiMetaFontSize: `${normalizedFont}px`,
+        },
+        currentLayout
+      );
       const overlay = buildProtokollTopsLayoutOverlay(
         {
           orientation: extracted?.orientation || currentLayout?.variant || "portrait",
@@ -1052,9 +1067,7 @@ export default class TopsScreen {
           uiMetaWidth: `${normalizedWidth}px`,
           uiMetaInset: `${normalizedInset}px`,
           uiMetaFontSize: `${normalizedFont}px`,
-          pdfNumberWidth: extracted?.pdfNumberWidth,
-          pdfTextWidth: extracted?.pdfTextWidth,
-          pdfMetaWidth: extracted?.pdfMetaWidth,
+          ...derivedPdfValues,
           labelTop: extracted?.labelTop,
           labelText: extracted?.labelText,
           labelMeta1: extracted?.labelMeta1,

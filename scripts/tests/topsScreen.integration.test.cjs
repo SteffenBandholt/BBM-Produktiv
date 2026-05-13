@@ -1268,7 +1268,18 @@ async function runTopsScreenIntegrationTests(run) {
       true
     );
     assert.equal(
-      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-preview {\n  font-size: var(--bbm-top-short-font-size);\n  max-inline-size: 100%;"),
+      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-preview {\n  max-inline-size: 100%;"),
+      true
+    );
+    assert.equal(topsCss.includes("--bbm-top-short-font-size: 10pt;"), true);
+    assert.equal(topsCss.includes("--bbm-top-long-font-size: 10pt;"), true);
+    assert.equal(
+      topsCss.includes(".bbm-tops-list-row[data-top-level=\"1\"] .bbm-tops-list-row-title {\n  font-weight: 500;"),
+      true
+    );
+    assert.equal(topsCss.includes(".bbm-tops-list-row[data-is-selected=\"true\"] .bbm-tops-list-row-title {\n  font-weight: 500;"), true);
+    assert.equal(
+      topsCss.includes(".bbm-tops-list-row-preview {\n  margin-top: 4px;\n  /* DEV-Layout: keep preview in sync with the text-zone font size when overridden. */\n  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));\n  font-weight: 450;"),
       true
     );
     assert.equal(

@@ -217,6 +217,33 @@ function _normalizeText(value) {
   return String(value == null ? "" : value).replace(/[\r\n]+/g, " ").trim();
 }
 
+// TOP-UI speichert Layoutwerte in CSS-Pixeln, das PDF-Layout arbeitet in mm/pt.
+// Diese Konstanten bilden die feste Umrechnung beim Speichern ab.
+const CSS_PX_TO_MM = 25.4 / 96;
+const CSS_PX_TO_PT = 72 / 96;
+
+function _parsePxLength(value) {
+  const raw = _normalizeText(value);
+  const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+  if (!match) return null;
+  const parsed = Number(match[1]);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function _formatMmLength(mm) {
+  const value = Number(mm);
+  if (!Number.isFinite(value)) return null;
+  const rounded = Math.round(value * 10) / 10;
+  return `${Number.isInteger(rounded) ? String(Math.round(rounded)) : rounded.toFixed(1)}mm`;
+}
+
+function _formatPtLength(pt) {
+  const value = Number(pt);
+  if (!Number.isFinite(value)) return null;
+  const rounded = Math.round(value * 10) / 10;
+  return `${Number.isInteger(rounded) ? String(Math.round(rounded)) : rounded.toFixed(1)}pt`;
+}
+
 function _isDangerousLayoutText(text) {
   return /[;{}<>]/.test(text) || /\b(?:url|expression|var|calc)\s*\(/i.test(text);
 }
@@ -430,6 +457,45 @@ function _extractValues(layout = {}) {
 
 export function extractProtokollTopsEditorValues(layout = {}) {
   return _extractValues(layout);
+}
+
+export function deriveProtokollTopsPdfValuesFromUiValues(uiValues = {}, layout = {}) {
+  const extracted = extractProtokollTopsEditorValues(layout || {});
+  const currentPdf = {
+    pdfNumberWidth: _normalizeText(extracted?.pdfNumberWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberWidth,
+    pdfTextWidth: _normalizeText(extracted?.pdfTextWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextWidth,
+    pdfMetaWidth: _normalizeText(extracted?.pdfMetaWidth) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaWidth,
+    pdfNumberInset: _normalizeText(extracted?.pdfNumberInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberInset,
+    pdfNumberFontSize: _normalizeText(extracted?.pdfNumberFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfNumberFontSize,
+    pdfTextPaddingLeft: _normalizeText(extracted?.pdfTextPaddingLeft) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingLeft,
+    pdfTextPaddingRight: _normalizeText(extracted?.pdfTextPaddingRight) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextPaddingRight,
+    pdfTextFontSize: _normalizeText(extracted?.pdfTextFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfTextFontSize,
+    pdfMetaInset: _normalizeText(extracted?.pdfMetaInset) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaInset,
+    pdfMetaFontSize: _normalizeText(extracted?.pdfMetaFontSize) || PROTOKOLL_TOPS_EDITOR_DEFAULTS.pdfMetaFontSize,
+  };
+
+  const uiNumberWidthPx = _parsePxLength(uiValues?.uiNumberWidth);
+  const uiNumberInsetPx = _parsePxLength(uiValues?.uiNumberInset);
+  const uiNumberFontPx = _parsePxLength(uiValues?.uiNumberFontSize);
+  const uiTextWidthPx = _parsePxLength(uiValues?.uiTextTrack);
+  const uiTextInsetPx = _parsePxLength(uiValues?.uiTextInset);
+  const uiTextFontPx = _parsePxLength(uiValues?.uiTextFontSize);
+  const uiMetaWidthPx = _parsePxLength(uiValues?.uiMetaWidth);
+  const uiMetaInsetPx = _parsePxLength(uiValues?.uiMetaInset);
+  const uiMetaFontPx = _parsePxLength(uiValues?.uiMetaFontSize);
+
+  return {
+    pdfNumberWidth: uiNumberWidthPx != null ? _formatMmLength(uiNumberWidthPx * CSS_PX_TO_MM) : currentPdf.pdfNumberWidth,
+    pdfTextWidth: uiTextWidthPx != null ? _formatMmLength(uiTextWidthPx * CSS_PX_TO_MM) : currentPdf.pdfTextWidth,
+    pdfMetaWidth: uiMetaWidthPx != null ? _formatMmLength(uiMetaWidthPx * CSS_PX_TO_MM) : currentPdf.pdfMetaWidth,
+    pdfNumberInset: uiNumberInsetPx != null ? _formatMmLength(uiNumberInsetPx * CSS_PX_TO_MM) : currentPdf.pdfNumberInset,
+    pdfNumberFontSize: uiNumberFontPx != null ? _formatPtLength(uiNumberFontPx * CSS_PX_TO_PT) : currentPdf.pdfNumberFontSize,
+    pdfTextPaddingLeft: uiTextInsetPx != null ? _formatMmLength(uiTextInsetPx * CSS_PX_TO_MM) : currentPdf.pdfTextPaddingLeft,
+    pdfTextPaddingRight: uiTextInsetPx != null ? _formatMmLength(uiTextInsetPx * CSS_PX_TO_MM) : currentPdf.pdfTextPaddingRight,
+    pdfTextFontSize: uiTextFontPx != null ? _formatPtLength(uiTextFontPx * CSS_PX_TO_PT) : currentPdf.pdfTextFontSize,
+    pdfMetaInset: uiMetaInsetPx != null ? _formatMmLength(uiMetaInsetPx * CSS_PX_TO_MM) : currentPdf.pdfMetaInset,
+    pdfMetaFontSize: uiMetaFontPx != null ? _formatPtLength(uiMetaFontPx * CSS_PX_TO_PT) : currentPdf.pdfMetaFontSize,
+  };
 }
 
 export function validateProtokollTopsEditorValues(values = {}, orientation = "portrait") {

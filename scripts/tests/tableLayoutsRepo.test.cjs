@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const Module = require("node:module");
+const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function withTempTableLayoutsRepo(fn) {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-table-layouts-"));
@@ -101,6 +102,84 @@ async function runTableLayoutsRepoTests(run) {
       });
       assert.equal(fallbackAfterReset.source, "default");
       assert.equal(fallbackAfterReset.effectiveLayout.ui.rootVars["--bbm-tops-list-number-col"], "64px");
+    });
+  });
+
+  await run("TableLayoutsRepo: TOP UI-Werte schreiben die passenden PDF-Werte mit", async () => {
+    return withTempTableLayoutsRepo(async ({ db, repo }) => {
+      db.initDatabase();
+
+      const mod = await importEsmFromFile(path.join(process.cwd(), "src/shared/tableLayouts/protokollTopsLayout.js"));
+      const derivedPdf = mod.deriveProtokollTopsPdfValuesFromUiValues({
+        uiNumberWidth: "96px",
+        uiNumberInset: "8px",
+        uiNumberFontSize: "12px",
+        uiTextTrack: "480px",
+        uiTextInset: "6px",
+        uiTextFontSize: "13px",
+        uiMetaWidth: "88px",
+        uiMetaInset: "5px",
+        uiMetaFontSize: "11px",
+      });
+
+      const saveRes = await repo.saveTableLayout({
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: "portrait",
+        layout: {
+          ui: {
+            rootVars: {
+              "--bbm-tops-list-number-col": "96px",
+              "--bbm-tops-list-number-padding-inline": "8px",
+              "--bbm-tops-list-number-font-size": "12px",
+              "--bbm-tops-list-text-col": "480px",
+              "--bbm-tops-list-text-padding-inline": "6px",
+              "--bbm-tops-list-text-font-size": "13px",
+              "--bbm-tops-list-meta-col": "88px",
+              "--bbm-tops-list-meta-padding-inline": "5px",
+              "--bbm-tops-list-meta-font-size": "11px",
+            },
+          },
+          pdf: {
+            rootVars: {
+              "--bbm-top-col-nr-padding-left": derivedPdf.pdfNumberInset,
+              "--bbm-top-col-nr-font-size": derivedPdf.pdfNumberFontSize,
+              "--bbm-top-col-text-padding-left": derivedPdf.pdfTextPaddingLeft,
+              "--bbm-top-col-text-padding-right": derivedPdf.pdfTextPaddingRight,
+              "--bbm-top-col-text-font-size": derivedPdf.pdfTextFontSize,
+              "--bbm-top-col-meta-padding-left": derivedPdf.pdfMetaInset,
+              "--bbm-top-col-meta-font-size": derivedPdf.pdfMetaFontSize,
+            },
+            columns: {
+              number: { width: derivedPdf.pdfNumberWidth },
+              text: { width: derivedPdf.pdfTextWidth },
+              meta: { width: derivedPdf.pdfMetaWidth },
+            },
+          },
+          columns: [
+            { key: "topNumber", label: "TOP", uiWidth: "96px", pdfWidth: derivedPdf.pdfNumberWidth, previewValue: "1", headerLines: ["TOP"] },
+            { key: "shortText", label: "Gegenstand", uiWidth: "480px", pdfWidth: derivedPdf.pdfTextWidth, previewValue: "Beispielthema", headerLines: ["Gegenstand"] },
+            { key: "meta", label: "Status", uiWidth: "88px", pdfWidth: derivedPdf.pdfMetaWidth, previewValue: "offen", headerLines: ["Status", "Fertig bis", "verantw"] },
+          ],
+        },
+      });
+      assert.equal(saveRes.ok, true);
+
+      const stored = repo.getStoredTableLayout({
+        tableKey: "protokoll_tops",
+        moduleId: "protokoll",
+        orientation: "portrait",
+      });
+      assert.equal(stored.layout.columns[0].pdfWidth, derivedPdf.pdfNumberWidth);
+      assert.equal(stored.layout.columns[1].pdfWidth, derivedPdf.pdfTextWidth);
+      assert.equal(stored.layout.columns[2].pdfWidth, derivedPdf.pdfMetaWidth);
+      assert.equal(stored.layout.pdf.rootVars["--bbm-top-col-nr-padding-left"], derivedPdf.pdfNumberInset);
+      assert.equal(stored.layout.pdf.rootVars["--bbm-top-col-nr-font-size"], derivedPdf.pdfNumberFontSize);
+      assert.equal(stored.layout.pdf.rootVars["--bbm-top-col-text-padding-left"], derivedPdf.pdfTextPaddingLeft);
+      assert.equal(stored.layout.pdf.rootVars["--bbm-top-col-text-padding-right"], derivedPdf.pdfTextPaddingRight);
+      assert.equal(stored.layout.pdf.rootVars["--bbm-top-col-text-font-size"], derivedPdf.pdfTextFontSize);
+      assert.equal(stored.layout.pdf.rootVars["--bbm-top-col-meta-padding-left"], derivedPdf.pdfMetaInset);
+      assert.equal(stored.layout.pdf.rootVars["--bbm-top-col-meta-font-size"], derivedPdf.pdfMetaFontSize);
     });
   });
 

@@ -9,7 +9,7 @@
   --bbm-tops-accent-green: #1b8f3a;
   --bbm-top-text-font-family: "Noto Sans", Arial, sans-serif;
   --bbm-top-short-font-size: 10pt;
-  --bbm-top-long-font-size: 9.5pt;
+  --bbm-top-long-font-size: 10pt;
   --bbm-top-text-line-height: 1.35;
   --bbm-top-text-pad-x: 5px;
   --bbm-top-short-measure: 72ch;
@@ -461,7 +461,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row[data-top-level="1"] .bbm-tops-list-row-title {
-  font-weight: 700;
+  font-weight: 500;
   color: #203728;
 }
 
@@ -642,13 +642,14 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row[data-is-selected="true"] .bbm-tops-list-row-title {
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .bbm-tops-list-row-preview {
   margin-top: 4px;
   /* DEV-Layout: keep preview in sync with the text-zone font size when overridden. */
-  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-long-font-size));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
+  font-weight: 450;
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
   min-width: 0;
@@ -660,13 +661,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-preview {
-  font-size: var(--bbm-top-short-font-size);
   max-inline-size: 100%;
-}
-
-/* DEV-Layout override: when the text-zone font variable is set, keep the preview in sync. */
-.bbm-tops-list-row-text .bbm-tops-list-row-preview {
-  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-long-font-size));
 }
 
 .bbm-tops-list-row[data-is-important="true"]:not([data-is-completed="true"]) .bbm-tops-list-row-preview {

@@ -21,6 +21,13 @@ Sie ergÃ¤nzt:
   - Pilot 1: TOP-Liste (UI/PDF) inkl. Zonen, live/persist/reset, UI/PDF getrennt
   - Pilot 2: Teilnehmerliste (PDF) inkl. Zonen, live/persist/reset (inkl. Anwesend/Verteiler "x")
   - echte PDFs bleiben ohne gruene Markierungen; DevTools oeffnen nicht automatisch
+- TOP-Liste UI-Kalibrierung uebertraegt gespeicherte UI-Werte jetzt auch wieder in die passenden PDF-Werte:
+  - Nummernblock, Gegenstand/Textblock und Metablock schreiben beim Speichern die zugehoerigen PDF-Masse mit
+  - das echte TOP-PDF nutzt diese gespeicherten Werte direkt
+  - geprueft mit `npm test`
+- TOP-Kurztext und TOP-Langtext verwenden jetzt dieselbe Schriftgroesse in der UI, damit der Textblock-Regler nicht mehr optisch auseinanderlaeuft
+- TOP-Langtext-Preview folgt jetzt ebenfalls der Textblock-Schrift statt einem alten Kurztext-Fallback
+- TOP-Kurztext ist jetzt nur noch minimal staerker, der Langtext bleibt leicht
 - Die layoutTools-Aktivierung wird jetzt zentral ueber die DEV-Einstellung `Layout-Kalibrierung aktivieren` geschaltet:
   - nur im DEV-Build sichtbar
   - wirkt appweit auf UI-TOP-Liste, PDF-Layoutvorschauen und Auto-Tabellen
