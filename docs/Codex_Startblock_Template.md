@@ -1,7 +1,7 @@
-# Editor 1 – Codex-Startblock-Template
+﻿# Editor 1 â€“ Codex-Startblock-Template
 
 Stand: 14.05.2026  
-Zweck: Vorlage für jeden späteren Codex-Auftrag zu Editor 1.
+Zweck: Vorlage fÃ¼r jeden spÃ¤teren Codex-Auftrag zu Editor 1.
 
 ---
 
@@ -17,8 +17,8 @@ Vor Beginn zwingend lesen:
 2. ZUERST_LESEN_Codex.md
 3. ARCHITECTURE.md
 4. docs/MODULARISIERUNGSPLAN.md
-5. docs/Editor_1_Konzept_und_Vertrag.md
-6. docs/Editor_1_Projektsteuerung_Anti_Kleinklein.md
+5. docs/Konzept_und_Vertrag_FINAL.md
+6. docs/Projektsteuerung_Anti_Kleinklein.md
 
 Danach zuerst ausgeben:
 
@@ -39,22 +39,22 @@ Erlaubte Bereiche/Dateien:
 Verbotene Bereiche/Dateien:
 - ...
 
-Geplante Prüfung/Tests:
+Geplante PrÃ¼fung/Tests:
 - ...
 
 Konflikte oder Unsicherheiten:
 - keine / ...
 
-Erst nach dieser Startplanung Änderungen durchführen.
+Erst nach dieser Startplanung Ã„nderungen durchfÃ¼hren.
 
-Wenn der Auftrag gegen eine Regel aus den gelesenen Dokumenten verstößt, stoppe sofort und melde:
+Wenn der Auftrag gegen eine Regel aus den gelesenen Dokumenten verstÃ¶ÃŸt, stoppe sofort und melde:
 
 STOPP
 Grund:
 ...
 Betroffene Regel:
 ...
-Vorschlag für sauberen nächsten Schritt:
+Vorschlag fÃ¼r sauberen nÃ¤chsten Schritt:
 ...
 
 Paketname:
@@ -82,40 +82,40 @@ Abnahmekriterien:
 - [KRITERIUM]
 - [KRITERIUM]
 
-Tests/Prüfung:
-- [TEST ODER PRÜFUNG]
+Tests/PrÃ¼fung:
+- [TEST ODER PRÃœFUNG]
 
 Abschlussbericht muss enthalten:
-- geänderte Dateien,
+- geÃ¤nderte Dateien,
 - was umgesetzt wurde,
-- was ausdrücklich nicht geändert wurde,
+- was ausdrÃ¼cklich nicht geÃ¤ndert wurde,
 - welche Tests gelaufen sind,
 - offene Punkte,
-- nächster empfohlener Schritt.
+- nÃ¤chster empfohlener Schritt.
 ```
 
 ---
 
-## Beispiel für Teil 1 – Fundament
+## Beispiel fÃ¼r Teil 1 â€“ Fundament
 
 ```text
 Paketname:
-Editor 1 – Teil 1 Fundament: Tabellenvertrag, Registry, Variantenmodell
+Editor 1 â€“ Teil 1 Fundament: Tabellenvertrag, Registry, Variantenmodell
 
 Ziel:
-Nur die technische Grundlage für Editor 1 schaffen.
+Nur die technische Grundlage fÃ¼r Editor 1 schaffen.
 
 Nicht-Ziel:
 Keine sichtbare Editor-UI.
-Keine echte Tabelle anschließen.
-Keine TOP-Liste ändern.
-Keine PDF-Ausgabe ändern.
-Keinen Druckweg ändern.
+Keine echte Tabelle anschlieÃŸen.
+Keine TOP-Liste Ã¤ndern.
+Keine PDF-Ausgabe Ã¤ndern.
+Keinen Druckweg Ã¤ndern.
 Keine Toolbar.
 Keine Marker in echten Tabellen.
 
 Erlaubte Bereiche:
-- neuer Editor-1-Grundlagenbereich unter layoutTools, sofern passend nach Repo-Prüfung
+- neuer Editor-1-Grundlagenbereich unter layoutTools, sofern passend nach Repo-PrÃ¼fung
 - Tests unter scripts/tests/
 - Dokumentation unter docs/
 
@@ -127,21 +127,22 @@ Verbotene Bereiche:
 - ToDo-/Teilnehmerlisten-Ausgaben
 
 Konkrete Aufgaben:
-1. Prüfe die vorhandene Repo-Struktur für layoutTools/tableLayouts, ohne Laufwege zu ändern.
-2. Lege ein kleines Editor-1-Fundament für Tabellenvertrag, Variantenmodell und Registry an.
-3. Ergänze Plausibilitätsfunktionen für Layoutwerte.
-4. Ergänze Tests für Vertrag, Registry, Varianten und Plausibilität.
-5. Dokumentiere kurz, wie spätere Tabellen angebunden werden sollen.
+1. PrÃ¼fe die vorhandene Repo-Struktur fÃ¼r layoutTools/tableLayouts, ohne Laufwege zu Ã¤ndern.
+2. Lege ein kleines Editor-1-Fundament fÃ¼r Tabellenvertrag, Variantenmodell und Registry an.
+3. ErgÃ¤nze PlausibilitÃ¤tsfunktionen fÃ¼r Layoutwerte.
+4. ErgÃ¤nze Tests fÃ¼r Vertrag, Registry, Varianten und PlausibilitÃ¤t.
+5. Dokumentiere kurz, wie spÃ¤tere Tabellen angebunden werden sollen.
 
 Abnahmekriterien:
 - Es existiert ein Tabellenvertrag mit stabilen Keys.
-- Es existiert ein Variantenmodell für UI, PDF Hochformat, PDF Querformat.
+- Es existiert ein Variantenmodell fÃ¼r UI, PDF Hochformat, PDF Querformat.
 - Es existiert eine Registry-Struktur.
-- Layoutwerte können plausibel geprüft werden.
-- Tests laufen grün.
-- Keine echte UI/PDF-Ausgabe wurde verändert.
+- Layoutwerte kÃ¶nnen plausibel geprÃ¼ft werden.
+- Tests laufen grÃ¼n.
+- Keine echte UI/PDF-Ausgabe wurde verÃ¤ndert.
 
-Tests/Prüfung:
+Tests/PrÃ¼fung:
 - npm test
-- zusätzlich gezielte neue Tests nennen
+- zusÃ¤tzlich gezielte neue Tests nennen
 ```
+
