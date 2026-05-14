@@ -1,13 +1,13 @@
-﻿# AGENTS.md â€” BBM-Produktiv
+# AGENTS.md — BBM-Produktiv
 
 ## Zweck
-Diese Datei legt die dauerhaften Arbeitsregeln fÃ¼r Codex in diesem Repository fest.
+Diese Datei legt die dauerhaften Arbeitsregeln für Codex in diesem Repository fest.
 
-Codex soll in diesem Repo vorsichtig, kleinrÃ¤umig und nachvollziehbar arbeiten.
-Ziel ist die weitere Modularisierung und Konsolidierung, ohne unnÃ¶tige VerhaltensÃ¤nderungen.
+Codex soll in diesem Repo vorsichtig, kleinräumig und nachvollziehbar arbeiten.
+Ziel ist die weitere Modularisierung und Konsolidierung, ohne unnötige Verhaltensänderungen.
 
 ## Vor jeder Arbeit lesen
-Lies zuerst diese Dateien, soweit vorhanden und fÃ¼r die Aufgabe relevant:
+Lies zuerst diese Dateien, soweit vorhanden und für die Aufgabe relevant:
 
 1. `AGENTS.md`
 2. `ZUERST_LESEN_Codex.md`
@@ -19,33 +19,132 @@ Wenn sich Regeln widersprechen, gilt diese Reihenfolge:
 1. direkte Nutzeranweisung
 2. `AGENTS.md`
 3. aufgabenspezifische Plan-Datei
-4. Ã¼brige Doku
+4. übrige Doku
+
+## Pflichtregeln für Editor 1 / Tabelleneditor / layoutTools
+Bei allen Arbeiten an Editor 1, Tabelleneditor, layoutTools, Tabellen-Kalibrierung, Tabellen-Registry, Tabellenverträgen, UI-/PDF-Tabellenlayouts oder tableLayouts sind vor jeder Änderung zusätzlich zu lesen:
+
+1. `docs/Editor_1_Konzept_und_Vertrag.md`
+2. `docs/Editor_1_Projektsteuerung_Anti_Kleinklein.md`
+3. `docs/Editor_1_Codex_Startblock_Template.md`, falls ein konkreter Codex-Auftrag vorbereitet oder ausgeführt wird
+
+Diese Dokumente sind bindend.
+
+Falls eine dieser Dateien fehlt, darf Codex nicht improvisieren. Dann gilt: stoppen, fehlende Datei melden und keinen Editor-1-Code ändern.
+
+### Vor Arbeitsbeginn bei Editor-1-Aufgaben
+Codex darf bei Editor-1-Aufgaben nicht sofort losarbeiten.
+
+Vor jeder Änderung muss Codex zuerst eine kurze Startplanung ausgeben:
+
+```text
+STARTPLANUNG
+
+Gelesene Steuerungsdateien:
+- ...
+
+Ziel dieses Pakets:
+- ...
+
+Nicht-Ziele dieses Pakets:
+- ...
+
+Erlaubte Bereiche/Dateien:
+- ...
+
+Verbotene Bereiche/Dateien:
+- ...
+
+Geplante Prüfung/Tests:
+- ...
+
+Konflikte oder Unsicherheiten:
+- keine / ...
+```
+
+Erst danach darf Codex Änderungen durchführen.
+
+### Harte Verbote bei Editor-1-Aufgaben
+Ohne ausdrücklichen Auftrag sind verboten:
+
+- echte TOP-Liste ändern,
+- echte PDF-Ausgabe ändern,
+- Druckweg ändern,
+- bestehende Tabellen-Renderer ändern,
+- sichtbare Editor-UI bauen,
+- Toolbar oder Marker in echte App-Laufwege einbauen,
+- automatische DOM-/CSS-/PDF-Erkennung bauen,
+- Speicherschlüssel aus CSS-Klassen, DOM-Reihenfolge oder sichtbaren Überschriften ableiten,
+- UI und PDF automatisch angleichen,
+- Sonderlogik pro Tabelle ohne Tabellenvertrag bauen,
+- große Refactorings nebenbei durchführen.
+
+### Stop-Pflicht bei Editor-1-Aufgaben
+Bei Konflikt, Unsicherheit oder nötigem Zugriff auf verbotene Bereiche muss Codex sofort stoppen und melden:
+
+```text
+STOPP
+Grund:
+...
+Betroffene Regel:
+...
+Vorschlag für sauberen nächsten Schritt:
+...
+```
+
+Keine eigenmächtigen Architekturentscheidungen.
+Keine Workarounds gegen die Steuerungsdokumente.
+
+### Abschlussbericht bei Editor-1-Aufgaben
+Nach jedem Editor-1-Lauf muss Codex zusätzlich zum normalen Abschlussformat berichten:
+
+```text
+ABSCHLUSSBERICHT EDITOR 1
+
+Geänderte Dateien:
+- ...
+
+Umgesetzt:
+- ...
+
+Ausdrücklich nicht geändert:
+- ...
+
+Tests/Prüfung:
+- ...
+
+Risiken/Restpunkte:
+- ...
+
+Nächster sinnvoller Schritt:
+- ...
+```
 
 ## Arbeitsmodus
-Arbeite standardmÃ¤ÃŸig im Meilensteinbetrieb.
+Arbeite standardmäßig im Meilensteinbetrieb.
 
-Das heiÃŸt:
-- immer nur den **nÃ¤chsten offenen Meilenstein** bearbeiten
+Das heißt:
+- immer nur den **nächsten offenen Meilenstein** bearbeiten
 - niemals mehrere offene Baustellen gleichzeitig vermischen
-- nach jedem Meilenstein prÃ¼fen und kurz berichten
-- erst dann mit dem nÃ¤chsten Meilenstein weitermachen
+- nach jedem Meilenstein prüfen und kurz berichten
+- erst dann mit dem nächsten Meilenstein weitermachen
 
 Wenn keine Plan-Datei vorhanden ist:
-- nicht eigenmÃ¤chtig eine groÃŸe Umbauaktion starten
-- zuerst einen kleinen, sicheren nÃ¤chsten Schritt vorschlagen
+- nicht eigenmächtig eine große Umbauaktion starten
+- zuerst einen kleinen, sicheren nächsten Schritt vorschlagen
 - nur diesen einen Schritt umsetzen
 
 ## Grundregeln
 - Arbeite in **kleinen, reviewbaren Paketen**.
-- Halte das **bestehende Verhalten stabil**, auÃŸer wenn im Auftrag ausdrÃ¼cklich etwas anderes steht.
-- **Keine neuen Features**, wenn sie nicht ausdrÃ¼cklich verlangt sind.
-- **Keine breiten Refactorings** auÃŸerhalb des aktuellen Meilensteins.
-- **Keine Versions-Upgrades** oder neue AbhÃ¤ngigkeiten, auÃŸer wenn zwingend nÃ¶tig und ausdrÃ¼cklich erlaubt.
+- Halte das **bestehende Verhalten stabil**, außer wenn im Auftrag ausdrücklich etwas anderes steht.
+- **Keine neuen Features**, wenn sie nicht ausdrücklich verlangt sind.
+- **Keine breiten Refactorings** außerhalb des aktuellen Meilensteins.
+- **Keine Versions-Upgrades** oder neue Abhängigkeiten, außer wenn zwingend nötig und ausdrücklich erlaubt.
 - **Keine kosmetischen Formatierungswellen** ohne fachlichen Nutzen.
-- Ã„ndere nur die Dateien, die fÃ¼r das aktuelle Paket wirklich nÃ¶tig sind.
+- Ändere nur die Dateien, die für das aktuelle Paket wirklich nötig sind.
 
 ## Fokus des Repos
-Dieses Repo befindet sich in einem kontrollierten Umbau von einer stÃ¤rker monolithischen Struktur zu klareren Modulen.
+Dieses Repo befindet sich in einem kontrollierten Umbau von einer stärker monolithischen Struktur zu klareren Modulen.
 
 Aktuell wichtige Bereiche:
 - `Protokoll`
@@ -53,67 +152,67 @@ Aktuell wichtige Bereiche:
 ARCHITEKTUR-LEITLINIE:
 - Die gesamte App folgt dem Mutter-/Kind-Prinzip.
 - Diese Codebasis ist die Mutter-App / Bauzentrale.
-- Spaetere Kinder-Apps sind freigegebene Produktvarianten mit eingegrenztem Modul- und Funktionsumfang.
+- Spätere Kinder-Apps sind freigegebene Produktvarianten mit eingegrenztem Modul- und Funktionsumfang.
 - Die Mutter-App verwaltet Module, Kunden/Nutzer, Lizenzen, Laufzeiten, Updateberechtigungen und Varianten.
-- Kinder-Apps pruefen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
-- Kinder-Apps werden nicht zur Verwaltungszentrale fuer andere Kunden oder Varianten ausgebaut.
-- Nicht jedes Modul ist ein auswÃ¤hlbares Projektmodul; Maschinenraum-Dienste und Verwaltungsbereiche bleiben getrennt.
-- Aktuell auswÃ¤hlbares Projektmodul ist `Protokoll`; `Restarbeiten` kann spaeter als Projektmodul hinzukommen.
+- Kinder-Apps prüfen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
+- Kinder-Apps werden nicht zur Verwaltungszentrale für andere Kunden oder Varianten ausgebaut.
+- Nicht jedes Modul ist ein auswählbares Projektmodul; Maschinenraum-Dienste und Verwaltungsbereiche bleiben getrennt.
+- Aktuell auswählbares Projektmodul ist `Protokoll`; `Restarbeiten` kann später als Projektmodul hinzukommen.
 - `Ausgabe / Drucken / E-Mail` und `Audio / Diktat` sind Maschinenraum-Dienste, keine Projektmodule.
 - `Lizenzierung`, `Settings`, `Updates`, `Backup` und `Diagnose` sind Verwaltung oder Maschinenraum, keine Projektmodule.
 - Die Projektverwaltung setzt den Projektkontext; ein Projektklick startet nicht direkt `Protokoll`.
 
 ARCHITEKTUR-FLAG:
 - Das Protokoll-Modul wird aktuell nicht weiter modularisiert.
-- Der aktuelle Stand bleibt bestehen; keine weiteren Modularisierungsarbeiten ohne ausdrÃ¼cklichen Auftrag.
+- Der aktuelle Stand bleibt bestehen; keine weiteren Modularisierungsarbeiten ohne ausdrücklichen Auftrag.
 - `TopsHeader` und `TopsList` sind wieder im Protokoll-Modul verankert.
-- `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen, ausser bei echtem Fehler oder konkretem Featurebedarf.
+- `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen, außer bei echtem Fehler oder konkretem Featurebedarf.
 
 Wichtig:
 - Der Umbau ist **nicht abgeschlossen**.
-- Altpfade und Ãœbergangsstrukturen kÃ¶nnen noch vorhanden sein.
-- Nicht gleichzeitig â€žaufrÃ¤umenâ€œ, â€žverbessernâ€œ und â€žneu strukturierenâ€œ, wenn das nicht ausdrÃ¼cklich Teil des aktuellen Pakets ist.
+- Altpfade und Übergangsstrukturen können noch vorhanden sein.
+- Nicht gleichzeitig „aufräumen“, „verbessern“ und „neu strukturieren“, wenn das nicht ausdrücklich Teil des aktuellen Pakets ist.
 
 ## Bevorzugte Arbeitsweise
 Bei Umbau- und Modularisierungsaufgaben:
 1. aktuellen Meilenstein kurz zusammenfassen
 2. betroffene Dateien nennen
-3. Ã„nderung minimal umsetzen
-4. nur passende PrÃ¼fungen ausfÃ¼hren
+3. Änderung minimal umsetzen
+4. nur passende Prüfungen ausführen
 5. Ergebnis knapp berichten
 
-Wenn ein kleiner, sicherer Zwischenschritt mÃ¶glich ist, bevorzuge diesen gegenÃ¼ber einer grÃ¶ÃŸeren KomplettlÃ¶sung.
+Wenn ein kleiner, sicherer Zwischenschritt möglich ist, bevorzuge diesen gegenüber einer größeren Komplettlösung.
 
-## Was ausdrÃ¼cklich vermieden werden soll
+## Was ausdrücklich vermieden werden soll
 - keine stillen Architekturentscheidungen nebenbei
-- keine Umbauten in angrenzenden Modulen â€žder Ordnung halberâ€œ
-- keine Ã„nderungen an Router, Datenbank, Navigation oder Build-Setup, wenn das aktuelle Paket das nicht verlangt
-- keine erfundenen PrÃ¼fungen oder Behauptungen, dass etwas getestet wurde, wenn es nicht wirklich ausgefÃ¼hrt wurde
-- keine Aussage â€žfertigâ€œ, wenn noch rote Checks, unklare Folgen oder offene Hindernisse bestehen
+- keine Umbauten in angrenzenden Modulen „der Ordnung halber“
+- keine Änderungen an Router, Datenbank, Navigation oder Build-Setup, wenn das aktuelle Paket das nicht verlangt
+- keine erfundenen Prüfungen oder Behauptungen, dass etwas getestet wurde, wenn es nicht wirklich ausgeführt wurde
+- keine Aussage „fertig“, wenn noch rote Checks, unklare Folgen oder offene Hindernisse bestehen
 
 ## Validierung
-Wenn fÃ¼r den aktuellen Meilenstein passende PrÃ¼fungen existieren, fÃ¼hre sie aus.
+Wenn für den aktuellen Meilenstein passende Prüfungen existieren, führe sie aus.
 
 Bevorzugte Reihenfolge:
-1. kleine, direkt passende PrÃ¼fungen
-2. relevante Tests fÃ¼r den betroffenen Bereich
-3. Build/Lint nur dann, wenn sinnvoll vorhanden und nicht unverhÃ¤ltnismÃ¤ÃŸig fÃ¼r das Mini-Paket
+1. kleine, direkt passende Prüfungen
+2. relevante Tests für den betroffenen Bereich
+3. Build/Lint nur dann, wenn sinnvoll vorhanden und nicht unverhältnismäßig für das Mini-Paket
 
-Wenn keine zuverlÃ¤ssige technische PrÃ¼fung vorhanden ist, sage das offen.
+Wenn keine zuverlässige technische Prüfung vorhanden ist, sage das offen.
 
 Wichtig:
-- Nicht so tun, als sei die fachliche NutzerprÃ¼fung ersetzt.
-- Der Mensch prÃ¼ft am Ende fachlich, ob die App noch tut, was sie soll.
+- Nicht so tun, als sei die fachliche Nutzerprüfung ersetzt.
+- Der Mensch prüft am Ende fachlich, ob die App noch tut, was sie soll.
 
 ## Stop-Regel
-Stoppe und berichte, statt weiter umzubauen, wenn mindestens einer dieser FÃ¤lle eintritt:
+Stoppe und berichte, statt weiter umzubauen, wenn mindestens einer dieser Fälle eintritt:
 
-- der aktuelle Meilenstein wird deutlich grÃ¶ÃŸer als geplant
-- es wÃ¤ren mehr Dateien oder Module betroffen als vorgesehen
-- eine Architekturentscheidung ist nÃ¶tig, die nicht dokumentiert ist
-- die Validierung schlÃ¤gt fehl und ist nicht mit kleinem, lokalem Fix lÃ¶sbar
-- die Aufgabe wÃ¼rde neue AbhÃ¤ngigkeiten, Upgrades oder Nebenumbauten erzwingen
-- die Anforderung im Repo ist widersprÃ¼chlich oder unklar
+- der aktuelle Meilenstein wird deutlich größer als geplant
+- es wären mehr Dateien oder Module betroffen als vorgesehen
+- eine Architekturentscheidung ist nötig, die nicht dokumentiert ist
+- die Validierung schlägt fehl und ist nicht mit kleinem, lokalem Fix lösbar
+- die Aufgabe würde neue Abhängigkeiten, Upgrades oder Nebenumbauten erzwingen
+- die Anforderung im Repo ist widersprüchlich oder unklar
 
 ## Ausgabeformat nach jeder Aufgabe
 Antworte am Ende immer in dieser Form:
@@ -121,11 +220,11 @@ Antworte am Ende immer in dieser Form:
 ### Ergebnis
 - Was wurde gemacht?
 
-### GeÃ¤nderte Dateien
-- Liste aller geÃ¤nderten Dateien
+### Geänderte Dateien
+- Liste aller geänderten Dateien
 
-### PrÃ¼fung
-- Welche PrÃ¼fungen wurden ausgefÃ¼hrt?
+### Prüfung
+- Welche Prüfungen wurden ausgeführt?
 - Was war das Ergebnis?
 
 ### Risiken / offen
@@ -134,49 +233,49 @@ Antworte am Ende immer in dieser Form:
 
 ### Status
 - fertig
-- oder: gestoppt bei Meilenstein X mit BegrÃ¼ndung
+- oder: gestoppt bei Meilenstein X mit Begründung
 
 ## Review-Regeln
 Achte bei Reviews besonders auf:
-- unbeabsichtigte VerhaltensÃ¤nderungen
-- Paketbruch: zu viele Dateien oder zu groÃŸe Seiteneffekte
-- Ã„nderungen auÃŸerhalb des aktuellen Meilensteins
+- unbeabsichtigte Verhaltensänderungen
+- Paketbruch: zu viele Dateien oder zu große Seiteneffekte
+- Änderungen außerhalb des aktuellen Meilensteins
 - versteckte Kopplung zwischen Altstruktur und Modulstruktur
 - unstimmige Importpfade
-- Ã„nderungen, die nach â€žkleinem Paketâ€œ aussehen, aber faktisch mehrere Baustellen zugleich Ã¶ffnen
+- Änderungen, die nach „kleinem Paket“ aussehen, aber faktisch mehrere Baustellen zugleich öffnen
 
 ## Git- und PR-Regeln
 - Ein PR soll idealerweise nur **einen sauberen Meilenstein** oder ein klar abgegrenztes Mini-Paket enthalten.
-- Keine Sammel-PRs mit mehreren unabhÃ¤ngigen Umbauten.
+- Keine Sammel-PRs mit mehreren unabhängigen Umbauten.
 - PR-Titel und Beschreibung sollen kurz sagen:
   - welches Paket bearbeitet wurde
   - was nicht angefasst wurde
-  - welche PrÃ¼fungen gelaufen sind
+  - welche Prüfungen gelaufen sind
 
 ## Codex-Cloud-Regeln
-Diese Regeln gelten fÃ¼r alle Aufgaben, die in Codex Cloud laufen.
+Diese Regeln gelten für alle Aufgaben, die in Codex Cloud laufen.
 
 - Jede Cloud-Aufgabe muss mit einem klaren Base-Branch starten.
-- Der Base-Branch wird im jeweiligen Auftrag ausdrÃ¼cklich genannt.
+- Der Base-Branch wird im jeweiligen Auftrag ausdrücklich genannt.
 - Codex Cloud darf keinen Base-Branch selbst raten.
 - Jede Cloud-Aufgabe muss auf einem eigenen Branch arbeiten, z. B. `codex/<kurzer-aufgabenname>`.
-- Am Ende muss Codex Cloud entweder einen GitHub-Branch verÃ¶ffentlichen oder einen Pull Request gegen den genannten Base-Branch erstellen.
-- Ein Cloud-Ergebnis ohne verÃ¶ffentlichten GitHub-Branch und ohne Pull Request gilt als nicht geliefert.
-- Ein Commit-Hash aus der Cloud-Sandbox reicht nicht als Ãœbergabe.
-- Wenn Codex Cloud keinen Branch oder PR erstellen kann, muss der Status lauten: `gestoppt â€“ nicht verÃ¶ffentlicht`.
+- Am Ende muss Codex Cloud entweder einen GitHub-Branch veröffentlichen oder einen Pull Request gegen den genannten Base-Branch erstellen.
+- Ein Cloud-Ergebnis ohne veröffentlichten GitHub-Branch und ohne Pull Request gilt als nicht geliefert.
+- Ein Commit-Hash aus der Cloud-Sandbox reicht nicht als Übergabe.
+- Wenn Codex Cloud keinen Branch oder PR erstellen kann, muss der Status lauten: `gestoppt – nicht veröffentlicht`.
 
 Die Abschlussmeldung muss immer enthalten:
 
 - Base-Branch
 - Ergebnis-Branch
 - Pull-Request-Link oder klare Meldung, dass kein PR erstellt wurde
-- geÃ¤nderte Dateien
-- ausgefÃ¼hrte Tests
+- geänderte Dateien
+- ausgeführte Tests
 - `git status`-Ergebnis
 
-Codex Cloud darf nicht behaupten, ein Paket sei fertig Ã¼bernommen, solange es nicht Ã¼ber GitHub als Branch oder PR sichtbar ist.
+Codex Cloud darf nicht behaupten, ein Paket sei fertig übernommen, solange es nicht über GitHub als Branch oder PR sichtbar ist.
 
-Lokale Ãœbernahme erfolgt erst nach:
+Lokale Übernahme erfolgt erst nach:
 
 ```bash
 git fetch origin
@@ -185,25 +284,25 @@ npm test
 ```
 
 ## Wenn keine Plan-Datei existiert
-Wenn `PLAN.md` oder eine vergleichbare Plandatei fehlt und die Aufgabe grÃ¶ÃŸer als ein Mini-Paket ist:
+Wenn `PLAN.md` oder eine vergleichbare Plandatei fehlt und die Aufgabe größer als ein Mini-Paket ist:
 - nicht direkt losbauen
 - zuerst einen knappen Plan mit kleinen Meilensteinen vorschlagen
 - erst danach mit Meilenstein 1 beginnen
 
 ## Merksatz
-Lieber ein kleiner sauberer Schritt mit klarer Abnahme als ein groÃŸer cleverer Umbau mit unklaren Folgen.
+Lieber ein kleiner sauberer Schritt mit klarer Abnahme als ein großer cleverer Umbau mit unklaren Folgen.
 
 ## Nach jedem abgeschlossenen Meilenstein:
 - STATUS.md aktualisieren
 - erledigten Schritt eintragen
-- Commit-Hash oder PR erwÃ¤hnen, wenn vorhanden
-- nÃ¤chsten offenen Schritt nennen
-- offene Risiken/Hindernisse ergÃ¤nzen
+- Commit-Hash oder PR erwähnen, wenn vorhanden
+- nächsten offenen Schritt nennen
+- offene Risiken/Hindernisse ergänzen
 
 ## Tabellenlayout-Regel
-Keine Tabelle darf fuer den Tabellenlayout-Editor geraten werden.
+Keine Tabelle darf für den Tabellenlayout-Editor geraten werden.
 
-Vor jeder Aufnahme in den Tabellenlayout-Editor muss zuerst fachlich geklärt und vom Nutzer bestaetigt werden:
+Vor jeder Aufnahme in den Tabellenlayout-Editor muss zuerst fachlich geklärt und vom Nutzer bestätigt werden:
 
 - Name der Tabelle
 - Bereich/Modul
@@ -213,15 +312,15 @@ Vor jeder Aufnahme in den Tabellenlayout-Editor muss zuerst fachlich geklärt un
 - zusammengefasste Spalten bleiben zusammen
 - `editorEnabled`: ja/nein
 
-In den Tabellenlayout-Editor duerfen nur Inhaltstabellen.
+In den Tabellenlayout-Editor dürfen nur Inhaltstabellen.
 
-Nicht in den Tabellenlayout-Editor duerfen:
+Nicht in den Tabellenlayout-Editor dürfen:
 - Auswahl-Popups
 - Bedienlisten
 - Dropdowns
 - Filterlisten
-- Protokollauswahl fuer Druck
-- Verantwortlichen-Auswahl fuer ToDo-Druck
+- Protokollauswahl für Druck
+- Verantwortlichen-Auswahl für ToDo-Druck
 - Projekt-/Firma-/Person-Auswahl
 
 Verboten:
@@ -230,7 +329,7 @@ Verboten:
 - Spalten aus Druckdaten erraten
 - Telefon und E-Mail trennen, wenn sie sichtbar eine gemeinsame Spalte sind
 - Anwesend und Verteiler trennen, wenn sie sichtbar eine gemeinsame Spalte sind
-- zusaetzliche Status-/Aktiv-/Rollen-Spalten erfinden
+- zusätzliche Status-/Aktiv-/Rollen-Spalten erfinden
 
 Pflichtfrage vor Aufnahme:
 
@@ -260,20 +359,20 @@ Sobald der Tabellen-Prototyp fachlich steht, also:
 - Spalten klar
 - Reihenfolge klar
 - Grunddesign klar
-- UI und/oder PDF grundsaetzlich vorhanden
+- UI und/oder PDF grundsätzlich vorhanden
 
-gilt die Tabelle als Feintuning-Kandidat fuer den Tabellenlayout-Editor.
+gilt die Tabelle als Feintuning-Kandidat für den Tabellenlayout-Editor.
 
 Der Tabellenlayout-Editor ist dann der Feintuning-Schritt nach dem Prototyp:
 - Spaltenbreiten einstellen
 - UI- und PDF-Breiten getrennt einstellen
 - speichern
 - resetten
-- pruefen
+- prüfen
 
-Dadurch duerfen spaetere Breitenaenderungen nicht mehr ueber Codex-Prompts laufen.
+Dadurch dürfen spätere Breitenänderungen nicht mehr über Codex-Prompts laufen.
 
-Fuer jede neue Inhaltstabelle muss dokumentiert und registriert werden:
+Für jede neue Inhaltstabelle muss dokumentiert und registriert werden:
 - `tableKey`
 - Anzeigename
 - Bereich/Modul
@@ -283,8 +382,8 @@ Fuer jede neue Inhaltstabelle muss dokumentiert und registriert werden:
 - sichtbare Spalten in echter Reihenfolge
 - Standardbreiten UI, falls UI vorhanden
 - Standardbreiten PDF, falls PDF vorhanden
-- `editorEnabled`, sobald der Prototyp fuer das Feintuning bereit ist
+- `editorEnabled`, sobald der Prototyp für das Feintuning bereit ist
 
 Bedienlisten bleiben ausgeschlossen.
 
-Ohne diesen Layout-Steckbrief keine spaetere Breitenpflege per Codex-Prompt.
+Ohne diesen Layout-Steckbrief keine spätere Breitenpflege per Codex-Prompt.
