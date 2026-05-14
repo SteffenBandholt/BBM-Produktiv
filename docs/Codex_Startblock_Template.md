@@ -1,7 +1,7 @@
-﻿# Editor 1 â€“ Codex-Startblock-Template
+# Editor 1 - Codex-Startblock-Template
 
-Stand: 14.05.2026  
-Zweck: Vorlage fÃ¼r jeden spÃ¤teren Codex-Auftrag zu Editor 1.
+Stand: 14.05.2026
+Zweck: Vorlage fuer jeden spaeteren Codex-Auftrag zu Editor 1.
 
 ---
 
@@ -39,22 +39,22 @@ Erlaubte Bereiche/Dateien:
 Verbotene Bereiche/Dateien:
 - ...
 
-Geplante PrÃ¼fung/Tests:
+Geplante Pruefung/Tests:
 - ...
 
 Konflikte oder Unsicherheiten:
 - keine / ...
 
-Erst nach dieser Startplanung Ã„nderungen durchfÃ¼hren.
+Erst nach dieser Startplanung Aenderungen durchfuehren.
 
-Wenn der Auftrag gegen eine Regel aus den gelesenen Dokumenten verstÃ¶ÃŸt, stoppe sofort und melde:
+Wenn der Auftrag gegen eine Regel aus den gelesenen Dokumenten verstoesst, stoppe sofort und melde:
 
 STOPP
 Grund:
 ...
 Betroffene Regel:
 ...
-Vorschlag fÃ¼r sauberen nÃ¤chsten Schritt:
+Vorschlag fuer sauberen naechsten Schritt:
 ...
 
 Paketname:
@@ -82,40 +82,40 @@ Abnahmekriterien:
 - [KRITERIUM]
 - [KRITERIUM]
 
-Tests/PrÃ¼fung:
-- [TEST ODER PRÃœFUNG]
+Tests/Pruefung:
+- [TEST ODER PRUEFUNG]
 
 Abschlussbericht muss enthalten:
-- geÃ¤nderte Dateien,
+- geaenderte Dateien,
 - was umgesetzt wurde,
-- was ausdrÃ¼cklich nicht geÃ¤ndert wurde,
+- was ausdruecklich nicht geaendert wurde,
 - welche Tests gelaufen sind,
 - offene Punkte,
-- nÃ¤chster empfohlener Schritt.
+- naechster empfohlener Schritt.
 ```
 
 ---
 
-## Beispiel fÃ¼r Teil 1 â€“ Fundament
+## Beispiel fuer Teil 1 - Fundament
 
 ```text
 Paketname:
-Editor 1 â€“ Teil 1 Fundament: Tabellenvertrag, Registry, Variantenmodell
+Editor 1 - Teil 1 Fundament: Tabellenvertrag, Registry, Variantenmodell
 
 Ziel:
-Nur die technische Grundlage fÃ¼r Editor 1 schaffen.
+Nur die technische Grundlage fuer Editor 1 schaffen.
 
 Nicht-Ziel:
 Keine sichtbare Editor-UI.
-Keine echte Tabelle anschlieÃŸen.
-Keine TOP-Liste Ã¤ndern.
-Keine PDF-Ausgabe Ã¤ndern.
-Keinen Druckweg Ã¤ndern.
+Keine echte Tabelle anschliessen.
+Keine TOP-Liste aendern.
+Keine PDF-Ausgabe aendern.
+Keinen Druckweg aendern.
 Keine Toolbar.
 Keine Marker in echten Tabellen.
 
 Erlaubte Bereiche:
-- neuer Editor-1-Grundlagenbereich unter layoutTools, sofern passend nach Repo-PrÃ¼fung
+- neuer Editor-1-Grundlagenbereich unter layoutTools, sofern passend nach Repo-Pruefung
 - Tests unter scripts/tests/
 - Dokumentation unter docs/
 
@@ -127,22 +127,21 @@ Verbotene Bereiche:
 - ToDo-/Teilnehmerlisten-Ausgaben
 
 Konkrete Aufgaben:
-1. PrÃ¼fe die vorhandene Repo-Struktur fÃ¼r layoutTools/tableLayouts, ohne Laufwege zu Ã¤ndern.
-2. Lege ein kleines Editor-1-Fundament fÃ¼r Tabellenvertrag, Variantenmodell und Registry an.
-3. ErgÃ¤nze PlausibilitÃ¤tsfunktionen fÃ¼r Layoutwerte.
-4. ErgÃ¤nze Tests fÃ¼r Vertrag, Registry, Varianten und PlausibilitÃ¤t.
-5. Dokumentiere kurz, wie spÃ¤tere Tabellen angebunden werden sollen.
+1. Pruefe die vorhandene Repo-Struktur fuer layoutTools/tableLayouts, ohne Laufwege zu aendern.
+2. Lege ein kleines Editor-1-Fundament fuer Tabellenvertrag, Variantenmodell und Registry an.
+3. Ergaenze Plausibilitaetsfunktionen fuer Layoutwerte.
+4. Ergaenze Tests fuer Vertrag, Registry, Varianten und Plausibilitaet.
+5. Dokumentiere kurz, wie spaetere Tabellen angebunden werden sollen.
 
 Abnahmekriterien:
 - Es existiert ein Tabellenvertrag mit stabilen Keys.
-- Es existiert ein Variantenmodell fÃ¼r UI, PDF Hochformat, PDF Querformat.
+- Es existiert ein Variantenmodell fuer UI, PDF Hochformat, PDF Querformat.
 - Es existiert eine Registry-Struktur.
-- Layoutwerte kÃ¶nnen plausibel geprÃ¼ft werden.
-- Tests laufen grÃ¼n.
-- Keine echte UI/PDF-Ausgabe wurde verÃ¤ndert.
+- Layoutwerte koennen plausibel geprueft werden.
+- Tests laufen gruen.
+- Keine echte UI/PDF-Ausgabe wurde veraendert.
 
-Tests/PrÃ¼fung:
+Tests/Pruefung:
 - npm test
-- zusÃ¤tzlich gezielte neue Tests nennen
+- zusaetzlich gezielte neue Tests nennen
 ```
-
