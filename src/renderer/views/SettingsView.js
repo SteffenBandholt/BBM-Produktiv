@@ -14,6 +14,7 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
+import { createProjectFirmsMiniCalibratorV1 } from "../layoutTools/projectFirmsMiniCalibratorV1.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -5003,6 +5004,15 @@ export default class SettingsView {
     const api = window.bbmDb || {};
     const has = (name) => typeof api?.[name] === "function";
     const DEV_AUDIO_DICTATION_UNLOCK_KEY = "dev.audioDictationUnlock";
+    const isDevBuildChannel = async () => {
+      if (!has("appGetBuildChannel")) return false;
+      try {
+        const res = await api.appGetBuildChannel();
+        return !!res?.ok && String(res.channel || "").trim().toUpperCase() === "DEV";
+      } catch (_e) {
+        return false;
+      }
+    };
     const clampInt = (val, min, max, fallback) => {
       const n = Math.floor(Number(val));
       if (!Number.isFinite(n) || n <= 0) return fallback;
@@ -5064,6 +5074,10 @@ export default class SettingsView {
     const dictationDevCard = mkCard(
       "Diktat-Testfreigabe",
       "Aktiviert Diktat unabhängig von der Lizenz für Entwicklung und Prüfung."
+    );
+    const tableCalibratorCard = mkCard(
+      "Tabellen-Kalibrator V1",
+      "DEV-only: Mini-Kalibrator fuer project_firms (UI-Spaltenbreiten)."
     );
     const btn = (label, primary = false) => {
       const el = document.createElement("button");
@@ -5174,6 +5188,42 @@ export default class SettingsView {
       mkRow("Naechste Version", nextVersionValue),
       (() => { const row = document.createElement("div"); row.style.display = "flex"; row.style.gap = "8px"; row.append(bumpBtn, set100Btn); return row; })(),
       versionStatus
+    );
+
+    // ------------------------------------------------------------
+    // DEV-only: Mini-Kalibrator V1 (project_firms UI-Spaltenbreiten)
+    // ------------------------------------------------------------
+    const tableCalibratorStatus = document.createElement("div");
+    tableCalibratorStatus.style.fontSize = "12px";
+    tableCalibratorStatus.style.minHeight = "16px";
+    tableCalibratorStatus.style.color = "#4b5563";
+
+    const openTableCalibratorBtn = btn("Oeffnen", true);
+    openTableCalibratorBtn.onclick = async () => {
+      const devChannel = await isDevBuildChannel();
+      if (!devChannel) {
+        tableCalibratorStatus.textContent = "Nicht verfuegbar (nur DEV-Build-Kanal).";
+        return;
+      }
+      if (!has("tableLayoutsGetOne") || !has("tableLayoutsSave") || !has("tableLayoutsReset")) {
+        tableCalibratorStatus.textContent = "Table-Layout-IPC ist nicht verfuegbar.";
+        return;
+      }
+      tableCalibratorStatus.textContent = "";
+      const calibrator = createProjectFirmsMiniCalibratorV1({ api });
+      await calibrator.load();
+      this._openSettingsModal({
+        title: "Tabellen-Kalibrator V1",
+        content: [calibrator.root],
+        closeOnly: true,
+      });
+    };
+
+    tableCalibratorCard.box.append(
+      mkRow("Tabelle", "Projekt-Firmenliste (project_firms)"),
+      mkRow("Variante", "UI / portrait"),
+      mkRow("", openTableCalibratorBtn),
+      mkRow("", tableCalibratorStatus)
     );
 
     const dbText = document.createElement("pre");
@@ -5392,12 +5442,14 @@ export default class SettingsView {
       el.style.color = active ? "white" : "#1565c0";
       el.style.borderColor = active ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
     };
+    const devBuildChannel = await isDevBuildChannel();
     const tabs = [
       { key: "version", label: "Versionierung", el: versionCard.box },
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
       { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
       { key: "dictation", label: "Diktat-Testfreigabe", el: dictationDevCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
+      ...(devBuildChannel ? [{ key: "tableCal", label: "Tabellen-Kalibrator V1", el: tableCalibratorCard.box }] : []),
     ];
     const tabHead = document.createElement("div");
     tabHead.style.display = "flex";
@@ -5426,13 +5478,15 @@ export default class SettingsView {
       tabButtons.set(key, b);
       return b;
     };
-    tabHead.append(
-      addTabBtn("Versionierung", "version"),
-      addTabBtn("DB-Diagnose", "db"),
-      addTabBtn("Protokoll-Textgrenzen", "tops"),
-      addTabBtn("Diktat-Testfreigabe", "dictation"),
-      addTabBtn("Farbschema", "theme")
-    );
+    const tabButtonsToAdd = [
+      ["Versionierung", "version"],
+      ["DB-Diagnose", "db"],
+      ["Protokoll-Textgrenzen", "tops"],
+      ["Diktat-Testfreigabe", "dictation"],
+      ["Farbschema", "theme"],
+      ...(devBuildChannel ? [["Tabellen-Kalibrator V1", "tableCal"]] : []),
+    ];
+    tabHead.append(...tabButtonsToAdd.map(([label, key]) => addTabBtn(label, key)));
     tabBody.append(...tabs.map((t) => t.el));
     section.append(tabHead, tabBody);
 
