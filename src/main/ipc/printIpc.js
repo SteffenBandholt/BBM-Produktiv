@@ -25,7 +25,6 @@ const {
   enforceLicensedFeature,
   toLicenseErrorPayload,
 } = require("../licensing/featureGuard");
-const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const {
   sanitizeDirName,
   resolveProjectFolderName,
@@ -82,12 +81,7 @@ function _resolveRequestedOrientation(payload = {}) {
 }
 
 function _readLayoutCalibrationEnabled() {
-  try {
-    const settings = appSettingsGetMany(["dev.layoutCalibrationEnabled"]) || {};
-    return String(settings["dev.layoutCalibrationEnabled"] || "").trim() === "1";
-  } catch (_err) {
-    return false;
-  }
+  return false;
 }
 
 function _normalizeLayoutCalibrationEnabled(value, fallback = false) {

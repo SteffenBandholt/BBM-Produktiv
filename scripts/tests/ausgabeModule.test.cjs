@@ -96,9 +96,8 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("Unbekannter Druckmodus"), true);
     assert.equal(printIpcSource.includes("Unbekannter Druckmodus"), true);
     assert.equal(printModalSource.includes("printMeetingPreview"), true);
-    assert.equal(printModalSource.includes("layoutCalibrationEnabled"), true);
-    assert.equal(printModalSource.includes('openHtmlPreview({ mode: "todo", projectId, layoutCalibrationEnabled });'), true);
-    assert.equal(printModalSource.includes('openHtmlPreview({ mode: "topsAll", projectId, layoutCalibrationEnabled });'), true);
+    assert.equal(printModalSource.includes("layoutCalibrationEnabled"), false);
+    assert.equal(printModalSource.includes("openHtmlPreview("), false);
     assert.equal(printAppSource.includes("_readAutoZoneWidthMm"), true);
     assert.equal(printAppSource.includes("_applyAutoZoneWidthMm"), true);
     assert.equal(printAppSource.includes("_applyAutoZoneInsetMm"), true);
@@ -117,8 +116,8 @@ async function runAusgabeModuleTests(run) {
     assert.equal(printAppSource.includes("Export"), true);
     assert.equal(printAppSource.includes("toolbar._autoState = toolbar._autoState || {};"), true);
     assert.equal(printAppSource.includes("Layoutmodus: AN"), false);
-    assert.equal(settingsViewSource.includes("Layout-Kalibrierung aktivieren"), true);
-    assert.equal(settingsViewSource.includes("dev.layoutCalibrationEnabled"), true);
+    assert.equal(settingsViewSource.includes("Layout-Kalibrierung aktivieren"), false);
+    assert.equal(settingsViewSource.includes("dev.layoutCalibrationEnabled"), false);
     assert.equal(routerSource.includes("dev.layoutCalibrationEnabled"), true);
     assert.equal(preloadSource.includes("appSettingsOnChanged"), true);
     assert.equal(printPreloadSource.includes("appSettingsGetMany"), true);

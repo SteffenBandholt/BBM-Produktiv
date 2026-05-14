@@ -234,7 +234,6 @@ contextBridge.exposeInMainWorld("bbmDb", {
 
 contextBridge.exposeInMainWorld("bbmPrint", {
   printPdf: (data) => ipcRenderer.invoke("print:toPdf", data),
-  openHtmlPreview: (data) => ipcRenderer.invoke("print:openHtmlPreview", data),
   findStoredProtocolPdf: (data) => ipcRenderer.invoke("protocol:findStoredPdf", data),
   listStoredFirmsPdfs: (data) => ipcRenderer.invoke("firms:listStoredPdfs", data),
   listStoredProjectPdfs: (data) => ipcRenderer.invoke("print:listStoredProjectPdfs", data),

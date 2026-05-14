@@ -21,6 +21,105 @@ Wenn sich Regeln widersprechen, gilt diese Reihenfolge:
 3. aufgabenspezifische Plan-Datei
 4. Ã¼brige Doku
 
+## Pflichtregeln fÃ¼r Editor 1 / Tabelleneditor / layoutTools
+Bei allen Arbeiten an Editor 1, Tabelleneditor, layoutTools, Tabellen-Kalibrierung, Tabellen-Registry, TabellenvertrÃ¤gen, UI-/PDF-Tabellenlayouts oder tableLayouts sind vor jeder Ã„nderung zusÃ¤tzlich zu lesen:
+
+1. `docs/Konzept_und_Vertrag_FINAL.md`
+2. `docs/Projektsteuerung_Anti_Kleinklein.md`
+3. `docs/Codex_Startblock_Template.md`, falls ein konkreter Codex-Auftrag vorbereitet oder ausgefÃ¼hrt wird
+
+Diese Dokumente sind bindend.
+
+Falls eine dieser Dateien fehlt, darf Codex nicht improvisieren. Dann gilt: stoppen, fehlende Datei melden und keinen Editor-1-Code Ã¤ndern.
+
+### Vor Arbeitsbeginn bei Editor-1-Aufgaben
+Codex darf bei Editor-1-Aufgaben nicht sofort losarbeiten.
+
+Vor jeder Ã„nderung muss Codex zuerst eine kurze Startplanung ausgeben:
+
+```text
+STARTPLANUNG
+
+Gelesene Steuerungsdateien:
+- ...
+
+Ziel dieses Pakets:
+- ...
+
+Nicht-Ziele dieses Pakets:
+- ...
+
+Erlaubte Bereiche/Dateien:
+- ...
+
+Verbotene Bereiche/Dateien:
+- ...
+
+Geplante PrÃ¼fung/Tests:
+- ...
+
+Konflikte oder Unsicherheiten:
+- keine / ...
+```
+
+Erst danach darf Codex Ã„nderungen durchfÃ¼hren.
+
+### Harte Verbote bei Editor-1-Aufgaben
+Ohne ausdrÃ¼cklichen Auftrag sind verboten:
+
+- echte TOP-Liste Ã¤ndern,
+- echte PDF-Ausgabe Ã¤ndern,
+- Druckweg Ã¤ndern,
+- bestehende Tabellen-Renderer Ã¤ndern,
+- sichtbare Editor-UI bauen,
+- Toolbar oder Marker in echte App-Laufwege einbauen,
+- automatische DOM-/CSS-/PDF-Erkennung bauen,
+- SpeicherschlÃ¼ssel aus CSS-Klassen, DOM-Reihenfolge oder sichtbaren Ãœberschriften ableiten,
+- UI und PDF automatisch angleichen,
+- Sonderlogik pro Tabelle ohne Tabellenvertrag bauen,
+- groÃŸe Refactorings nebenbei durchfÃ¼hren.
+
+### Stop-Pflicht bei Editor-1-Aufgaben
+Bei Konflikt, Unsicherheit oder nÃ¶tigem Zugriff auf verbotene Bereiche muss Codex sofort stoppen und melden:
+
+```text
+STOPP
+Grund:
+...
+Betroffene Regel:
+...
+Vorschlag fÃ¼r sauberen nÃ¤chsten Schritt:
+...
+```
+
+Keine eigenmÃ¤chtigen Architekturentscheidungen.
+Keine Workarounds gegen die Steuerungsdokumente.
+
+### Abschlussbericht bei Editor-1-Aufgaben
+Nach jedem Editor-1-Lauf muss Codex zusÃ¤tzlich zum normalen Abschlussformat berichten:
+
+```text
+ABSCHLUSSBERICHT EDITOR 1
+
+GeÃ¤nderte Dateien:
+- ...
+
+Umgesetzt:
+- ...
+
+AusdrÃ¼cklich nicht geÃ¤ndert:
+- ...
+
+Tests/PrÃ¼fung:
+- ...
+
+Risiken/Restpunkte:
+- ...
+
+NÃ¤chster sinnvoller Schritt:
+- ...
+```
+
 ## Arbeitsmodus
 Arbeite standardmÃ¤ÃŸig im Meilensteinbetrieb.
 
@@ -53,12 +152,12 @@ Aktuell wichtige Bereiche:
 ARCHITEKTUR-LEITLINIE:
 - Die gesamte App folgt dem Mutter-/Kind-Prinzip.
 - Diese Codebasis ist die Mutter-App / Bauzentrale.
-- Spaetere Kinder-Apps sind freigegebene Produktvarianten mit eingegrenztem Modul- und Funktionsumfang.
+- SpÃ¤tere Kinder-Apps sind freigegebene Produktvarianten mit eingegrenztem Modul- und Funktionsumfang.
 - Die Mutter-App verwaltet Module, Kunden/Nutzer, Lizenzen, Laufzeiten, Updateberechtigungen und Varianten.
-- Kinder-Apps pruefen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
-- Kinder-Apps werden nicht zur Verwaltungszentrale fuer andere Kunden oder Varianten ausgebaut.
+- Kinder-Apps prÃ¼fen nur ihre Lizenz, freigeschaltete Module, Laufzeit und Updateberechtigung.
+- Kinder-Apps werden nicht zur Verwaltungszentrale fÃ¼r andere Kunden oder Varianten ausgebaut.
 - Nicht jedes Modul ist ein auswÃ¤hlbares Projektmodul; Maschinenraum-Dienste und Verwaltungsbereiche bleiben getrennt.
-- Aktuell auswÃ¤hlbares Projektmodul ist `Protokoll`; `Restarbeiten` kann spaeter als Projektmodul hinzukommen.
+- Aktuell auswÃ¤hlbares Projektmodul ist `Protokoll`; `Restarbeiten` kann spÃ¤ter als Projektmodul hinzukommen.
 - `Ausgabe / Drucken / E-Mail` und `Audio / Diktat` sind Maschinenraum-Dienste, keine Projektmodule.
 - `Lizenzierung`, `Settings`, `Updates`, `Backup` und `Diagnose` sind Verwaltung oder Maschinenraum, keine Projektmodule.
 - Die Projektverwaltung setzt den Projektkontext; ein Projektklick startet nicht direkt `Protokoll`.
@@ -67,7 +166,7 @@ ARCHITEKTUR-FLAG:
 - Das Protokoll-Modul wird aktuell nicht weiter modularisiert.
 - Der aktuelle Stand bleibt bestehen; keine weiteren Modularisierungsarbeiten ohne ausdrÃ¼cklichen Auftrag.
 - `TopsHeader` und `TopsList` sind wieder im Protokoll-Modul verankert.
-- `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen, ausser bei echtem Fehler oder konkretem Featurebedarf.
+- `TopsWorkbench`, `TopsViewDialogs`, Router, Commands, CloseFlow, Repository, Store und Selectors nicht anfassen, auÃŸer bei echtem Fehler oder konkretem Featurebedarf.
 
 Wichtig:
 - Der Umbau ist **nicht abgeschlossen**.
@@ -201,9 +300,9 @@ Lieber ein kleiner sauberer Schritt mit klarer Abnahme als ein groÃŸer clevere
 - offene Risiken/Hindernisse ergÃ¤nzen
 
 ## Tabellenlayout-Regel
-Keine Tabelle darf fuer den Tabellenlayout-Editor geraten werden.
+Keine Tabelle darf fÃ¼r den Tabellenlayout-Editor geraten werden.
 
-Vor jeder Aufnahme in den Tabellenlayout-Editor muss zuerst fachlich geklärt und vom Nutzer bestaetigt werden:
+Vor jeder Aufnahme in den Tabellenlayout-Editor muss zuerst fachlich geklÃ¤rt und vom Nutzer bestÃ¤tigt werden:
 
 - Name der Tabelle
 - Bereich/Modul
@@ -213,15 +312,15 @@ Vor jeder Aufnahme in den Tabellenlayout-Editor muss zuerst fachlich geklärt un
 - zusammengefasste Spalten bleiben zusammen
 - `editorEnabled`: ja/nein
 
-In den Tabellenlayout-Editor duerfen nur Inhaltstabellen.
+In den Tabellenlayout-Editor dÃ¼rfen nur Inhaltstabellen.
 
-Nicht in den Tabellenlayout-Editor duerfen:
+Nicht in den Tabellenlayout-Editor dÃ¼rfen:
 - Auswahl-Popups
 - Bedienlisten
 - Dropdowns
 - Filterlisten
-- Protokollauswahl fuer Druck
-- Verantwortlichen-Auswahl fuer ToDo-Druck
+- Protokollauswahl fÃ¼r Druck
+- Verantwortlichen-Auswahl fÃ¼r ToDo-Druck
 - Projekt-/Firma-/Person-Auswahl
 
 Verboten:
@@ -230,7 +329,7 @@ Verboten:
 - Spalten aus Druckdaten erraten
 - Telefon und E-Mail trennen, wenn sie sichtbar eine gemeinsame Spalte sind
 - Anwesend und Verteiler trennen, wenn sie sichtbar eine gemeinsame Spalte sind
-- zusaetzliche Status-/Aktiv-/Rollen-Spalten erfinden
+- zusÃ¤tzliche Status-/Aktiv-/Rollen-Spalten erfinden
 
 Pflichtfrage vor Aufnahme:
 
@@ -247,7 +346,7 @@ Sichtbare Spalten:
 
 Soll diese Tabelle in den Tabellenlayout-Editor aufgenommen werden?"
 
-Ohne ausdrückliches Ja des Nutzers:
+Ohne ausdrÃ¼ckliches Ja des Nutzers:
 - kein Registry-Eintrag
 - keine Editor-Freigabe
 - keine Spaltenlayout-Definition
@@ -260,20 +359,20 @@ Sobald der Tabellen-Prototyp fachlich steht, also:
 - Spalten klar
 - Reihenfolge klar
 - Grunddesign klar
-- UI und/oder PDF grundsaetzlich vorhanden
+- UI und/oder PDF grundsÃ¤tzlich vorhanden
 
-gilt die Tabelle als Feintuning-Kandidat fuer den Tabellenlayout-Editor.
+gilt die Tabelle als Feintuning-Kandidat fÃ¼r den Tabellenlayout-Editor.
 
 Der Tabellenlayout-Editor ist dann der Feintuning-Schritt nach dem Prototyp:
 - Spaltenbreiten einstellen
 - UI- und PDF-Breiten getrennt einstellen
 - speichern
 - resetten
-- pruefen
+- prÃ¼fen
 
-Dadurch duerfen spaetere Breitenaenderungen nicht mehr ueber Codex-Prompts laufen.
+Dadurch dÃ¼rfen spÃ¤tere BreitenÃ¤nderungen nicht mehr Ã¼ber Codex-Prompts laufen.
 
-Fuer jede neue Inhaltstabelle muss dokumentiert und registriert werden:
+FÃ¼r jede neue Inhaltstabelle muss dokumentiert und registriert werden:
 - `tableKey`
 - Anzeigename
 - Bereich/Modul
@@ -283,8 +382,9 @@ Fuer jede neue Inhaltstabelle muss dokumentiert und registriert werden:
 - sichtbare Spalten in echter Reihenfolge
 - Standardbreiten UI, falls UI vorhanden
 - Standardbreiten PDF, falls PDF vorhanden
-- `editorEnabled`, sobald der Prototyp fuer das Feintuning bereit ist
+- `editorEnabled`, sobald der Prototyp fÃ¼r das Feintuning bereit ist
 
 Bedienlisten bleiben ausgeschlossen.
 
-Ohne diesen Layout-Steckbrief keine spaetere Breitenpflege per Codex-Prompt.
+Ohne diesen Layout-Steckbrief keine spÃ¤tere Breitenpflege per Codex-Prompt.
+
