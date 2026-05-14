@@ -20,9 +20,14 @@ Zusatzlich existiert ein generischer PDF-Sonderfall fuer `print.todo.todoTable`
 und mehrere direkt im Print-Code verdrahtete Tabellen-/Listenpfade.
 
 Die technisch sauberste und gleichzeitig kleinste naechste Layout-Stufe ist
-aus heutiger Sicht die **Projekt-Firmenliste** (`project_firms`), weil sie
-bereits registriert ist, fachlich klar geschnitten ist und nur drei sichtbare
-Spalten hat.
+aus heutiger Sicht **nicht** eine fertige produktive Tabelle, sondern eine
+ungefaehrliche **Test-/Dummy-Tabelle** oder eine neue, noch nicht produktive
+Tabelle.
+
+`project_firms` ist zwar bereits registriert und fachlich klar, wird aber
+bewusst **nicht** als erster Pilot verwendet, weil die Projekt-Firmenliste
+produktiv, fachlich weitgehend fertig und fuer einen ersten Layoutversuch zu
+empfindlich ist.
 
 Die TOP-Liste bleibt der am tiefsten integrierte Sonderfall und ist fuer V1
 nicht der naechste sichere Einstieg.
@@ -33,7 +38,7 @@ nicht der naechste sichere Einstieg.
 |---|---|---:|---:|---|---|
 | `protokoll_tops` | Protokoll | ja | ja | hoch | behalten, nicht als naechster V1-Pilot |
 | `protokoll_participants` | Protokoll | ja | teilweise | mittel | spaeter / nach TOP-Pilot |
-| `project_firms` | Projektverwaltung | ja | teilweise | mittel | erster neuer Pilot |
+| `project_firms` | Projektverwaltung | ja | teilweise | mittel | behalten, nicht als erster Pilot; spaeter nur bei Bedarf und mit ausdruecklicher Freigabe |
 | `print.todo.todoTable` | Protokoll / Druck | nein | ja | mittel | spaeter / technisch vorbereiteter Sonderfall |
 | `firms`-Druckliste | Ausgabe / Druck | teilweise | ja | hoch | nicht als erster Pilot |
 
@@ -129,13 +134,15 @@ Warum:
   - Druck-CSS in `src/renderer/print/print.css`
 - zentrale Layoutwerte vorhanden: teilweise
 - Umbau-Risiko: mittel
-- Empfehlung: erster neuer Pilot
+- Empfehlung: behalten, nicht als erster Pilot; spaeter nur bei echtem Bedarf und mit ausdruecklicher Freigabe
 
 Warum:
 
 - die Tabelle ist bereits im Layout-Registry-Modell sichtbar
 - sie hat nur drei Spalten und ist fachlich eindeutig
-- sie ist produktiv genug, aber kleiner und einfacher als die TOP-Liste
+- sie ist produktiv, fachlich weitgehend fertig und deshalb fuer einen ersten
+  Layoutversuch zu empfindlich (Risiko unbeabsichtigter Seiteneffekte in einer
+  produktiven Kernliste)
 
 ### Tabelle: `print.todo.todoTable`
 
@@ -303,22 +310,24 @@ vollwertiger V1-Tabellenvertrag.
 
 ## 6. Empfohlene erste Pilot-Tabelle
 
-**Empfohlene erste Pilot-Tabelle:**
-`project_firms`
+**Empfohlener erster Pilot (V1):**
+Eine ungefaehrliche **Test-/Dummy-Tabelle** oder eine neue, noch nicht
+produktive Tabelle.
 
 **Begruendung:**
 
-- bereits registriert
-- fachlich klar
-- nur drei sichtbare Spalten
-- produktiv genug, aber deutlich schlichter als die TOP-Liste
-- eignet sich besser fuer einen sauberen ersten Layout-Nachweis als die
-  technisch stark verdrahtete TOP-Liste
+- erste Layout-Erprobung soll nicht an einer fertigen produktiven Tabelle
+  erfolgen
+- der erste Pilot soll bewusst isoliert und risikoarm sein (kein Eingriff in
+  produktive Kernlisten)
+- eine Dummy-/Testtabelle erlaubt einen sauberen Nachweis, ohne reale
+  Endnutzerstrecken zu beruehren
 
 **Risiko:**
 
-- PDF-Seite ist noch nicht komplett so zentralisiert wie die Registry
-- der bestehende Print-Unterbau braucht noch Feinschnitt
+- der Pilot muss als eigene kleine Referenz entstehen oder an eine neue,
+  noch nicht produktive Tabelle gekoppelt werden (sonst besteht wieder
+  Seiteneffekt-Risiko)
 
 **Warum nicht TOP-Liste zuerst:**
 
@@ -328,8 +337,11 @@ vollwertiger V1-Tabellenvertrag.
 
 **Naechster Auftrag:**
 
-- `project_firms` als erste wirklich bewusst layoutfaehige Tabelle schrittweise
-  zentralisieren und die aktuellen Fallback-Breiten ehrlich dokumentieren
+- Eine Dummy-/Testtabelle (oder eine neue, noch nicht produktive Tabelle) als
+  erste echte Layout-Erprobung definieren und komplett ueber die zentrale
+  Layouttechnik steuern.
+- `project_firms` erst spaeter bei echtem Bedarf und nur mit ausdruecklicher
+  Freigabe anfassen.
 
 ## 7. Nicht empfohlene Kandidaten
 
@@ -346,8 +358,10 @@ vollwertiger V1-Tabellenvertrag.
 
 ## 8. Offene Fragen / Risiken
 
-- Soll `project_firms` zuerst nur fuer UI oder gleich fuer UI und PDF scharf
-  zentralisiert werden?
+- Soll der erste Pilot als reine Dummy-/Testtabelle entstehen oder an eine neue,
+  noch nicht produktive Tabelle gekoppelt werden?
+- Wie wird der DEV-only Einstieg fuer die Pilot-Erprobung gewaehlt, ohne echte
+  Endnutzerstrecken sichtbar zu beeinflussen?
 - Welche bestehenden Print-CSS-Fallbacks duerfen im ersten Schritt bewusst
   unangetastet bleiben?
 - Welche Layoutwerte sollen spaeter aus der Registry in den Print-Unterbau
@@ -357,8 +371,10 @@ vollwertiger V1-Tabellenvertrag.
 
 ## 9. Naechster Auftrag
 
-1. Fuer `project_firms` einen kleinen, klaren Layout-Schritt definieren.
-2. Die heutige Breitenquelle pro Spalte dokumentieren und als Sollwert
-   festhalten.
-3. Erst danach die naechste Tabellenvariante oder einen zweiten Kandidaten
-   bewerten.
+1. Einen ungefaehrlichen ersten Pilot definieren (Dummy-/Testtabelle oder neue,
+   noch nicht produktive Tabelle).
+2. Spalten/Keys/Defaults fuer diesen Pilot sauber festlegen und den Nachweis
+   fuehren: eine Breite wird ueber einen zentralen Layoutwert geaendert.
+3. Erst danach reale produktive Tabellen fuer spaetere Pakete bewerten.
+4. `project_firms` erst spaeter bei echtem Bedarf und nur mit ausdruecklicher
+   Freigabe anfassen.
