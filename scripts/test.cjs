@@ -18,6 +18,7 @@ const { runTopServiceHierarchyTests } = require("./tests/topServiceHierarchy.tes
 const { runProtokollRouterFallbackTests } = require("./tests/protokollRouterFallback.test.cjs");
 const { runProtokollProjectEntryRoutingTests } = require("./tests/protokollProjectEntryRouting.test.cjs");
 const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungModule.test.cjs");
+const { runRestarbeitenModuleTests } = require("./tests/restarbeitenModule.test.cjs");
 const { runHomeViewTests } = require("./tests/homeView.test.cjs");
 const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.cjs");
 const { runSettingsUserProfileSourceTests } = require("./tests/settingsUserProfileSource.test.cjs");
@@ -111,6 +112,7 @@ async function main() {
   await runProtokollRouterFallbackTests(run);
   await runProtokollProjectEntryRoutingTests(run);
   await runProjektverwaltungModuleTests(run);
+  await runRestarbeitenModuleTests(run);
   await runHomeViewTests(run);
   await runProjectSettingsIpcTests(run);
   await runSettingsUserProfileSourceTests(run);
