@@ -139,9 +139,24 @@ function createMemoryDictionaryRepo() {
   };
 }
 
+function collectText(node) {
+  if (!node) return "";
+  const parts = [];
+  const walk = (current) => {
+    if (!current) return;
+    if (typeof current.textContent === "string" && current.textContent.trim()) {
+      parts.push(current.textContent.trim());
+    }
+    for (const child of current.children || []) walk(child);
+  };
+  walk(node);
+  return parts.join(" ");
+}
+
 async function runDictionaryModuleTests(run) {
-  const [{ DictationController }] = await Promise.all([
+  const [{ DictationController }, { SharedEditboxCore }] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/features/audio-dictation/DictationController.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/protokoll/SharedEditboxCore.js")),
   ]);
 
   const dictionaryRepoSource = read("src/main/db/dictionaryRepo.js");
@@ -149,6 +164,8 @@ async function runDictionaryModuleTests(run) {
   const databaseSource = read("src/main/db/database.js");
   const schemaSource = read("src/main/db/schema.sql");
   const preloadSource = read("src/main/preload.js");
+  const dictationDevUiSource = read("src/renderer/modules/audio/ui/createDictationDevSection.js");
+  const sharedEditboxCoreSource = read("src/renderer/modules/protokoll/SharedEditboxCore.js");
   const editBoxStateSource = read("src/renderer/features/editor/EditBoxStateService.js");
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
 
@@ -163,6 +180,258 @@ async function runDictionaryModuleTests(run) {
     assert.equal(preloadSource.includes("dictionaryUpdateEntry"), true);
     assert.equal(preloadSource.includes("dictionaryDeleteEntry"), true);
     assert.equal(preloadSource.includes("dictionaryApplyToText"), true);
+  });
+
+  await run("Dictionary: UI zeigt deutsche Begriffe und klare Buttonlogik", () => {
+    assert.equal(dictationDevUiSource.includes("Korrektur"), true);
+    assert.equal(dictationDevUiSource.includes("Grundstamm"), true);
+    assert.equal(dictationDevUiSource.includes("Fachbegriff"), true);
+    assert.equal(dictationDevUiSource.includes("Eigener Eintrag"), true);
+    assert.equal(dictationDevUiSource.includes("wird ersetzt durch:"), true);
+    assert.equal(dictationDevUiSource.includes("Begriff:"), true);
+    assert.equal(dictationDevUiSource.includes('makeField("Eintragstyp", entryTypeSelect)'), true);
+    assert.equal(dictationDevUiSource.includes('makeField("Fachbegriff", termInput)'), true);
+    assert.equal(dictationDevUiSource.includes('formTitle.textContent = "Eintrag anlegen";'), true);
+    assert.equal(dictationDevUiSource.includes('formTitle.textContent = "Eintrag bearbeiten";'), true);
+    assert.equal(dictationDevUiSource.includes('resetButton.textContent = "Neu";'), true);
+    assert.equal(dictationDevUiSource.includes('cancelButton.textContent = "Abbrechen";'), true);
+    assert.equal(dictationDevUiSource.includes('if (String(entry?.source || "") === "user") {'), true);
+    assert.equal(dictationDevUiSource.includes("deleteButton.textContent ="), true);
+    assert.equal(dictationDevUiSource.includes('actions.append(editButton, toggleButton);'), true);
+    assert.equal(dictationDevUiSource.includes("Deaktivieren"), true);
+    assert.equal(dictationDevUiSource.includes("Aktivieren"), true);
+    assert.equal(read("src/renderer/core/editbox/EditboxShell.js").includes('this.longInput.rows = 4;'), true);
+    assert.equal(
+      read("src/renderer/modules/protokoll/styles/tops.css").includes("calc(4 * var(--bbm-top-text-line-height) * 1em + 8px)"),
+      true
+    );
+  });
+
+  await run("Dictionary: Korrigieren-Button und Dialog im Editbox-Kontext arbeiten mit Auswahl", async () => {
+    function createFakeDocument() {
+      const createNode = (tag, doc) => {
+        const node = {
+          tagName: String(tag || "").toUpperCase(),
+          ownerDocument: doc,
+          parentElement: null,
+          children: [],
+          style: {
+            setProperty(name, value) {
+              this[String(name)] = String(value);
+            },
+            removeProperty(name) {
+              delete this[String(name)];
+            },
+          },
+          dataset: {},
+          className: "",
+          textContent: "",
+          disabled: false,
+          readOnly: false,
+          value: "",
+          selectionStart: 0,
+          selectionEnd: 0,
+          maxLength: 0,
+          append(...nodes) {
+            for (const child of nodes) {
+              if (child && typeof child === "object") child.parentElement = this;
+              this.children.push(child);
+            }
+          },
+          appendChild(nodeChild) {
+            if (nodeChild && typeof nodeChild === "object") nodeChild.parentElement = this;
+            this.children.push(nodeChild);
+            return nodeChild;
+          },
+          replaceChildren(...nodes) {
+            this.children = [...nodes];
+            for (const child of this.children) {
+              if (child && typeof child === "object") child.parentElement = this;
+            }
+          },
+          removeChild(nodeChild) {
+            const idx = this.children.indexOf(nodeChild);
+            if (idx >= 0) {
+              this.children.splice(idx, 1);
+              if (nodeChild && typeof nodeChild === "object") nodeChild.parentElement = null;
+            }
+            return nodeChild;
+          },
+          setAttribute(name, value) {
+            this[String(name)] = String(value);
+          },
+          addEventListener(type, handler) {
+            if (!this._listeners) this._listeners = {};
+            if (!this._listeners[type]) this._listeners[type] = [];
+            this._listeners[type].push(handler);
+          },
+          removeEventListener(type, handler) {
+            if (!this._listeners?.[type]) return;
+            this._listeners[type] = this._listeners[type].filter((fn) => fn !== handler);
+          },
+          dispatchEvent(event) {
+            const evt = event || {};
+            const type = String(evt.type || "");
+            for (const handler of this._listeners?.[type] || []) {
+              handler.call(this, { ...evt, target: this, currentTarget: this });
+            }
+            return true;
+          },
+          contains(target) {
+            if (target === this) return true;
+            for (const child of this.children || []) {
+              if (child === target) return true;
+              if (child && typeof child.contains === "function" && child.contains(target)) return true;
+            }
+            return false;
+          },
+          querySelector(selector) {
+            const wanted = String(selector || "").trim().toLowerCase();
+            let found = null;
+            const walk = (nodeToWalk) => {
+              if (!nodeToWalk || found) return;
+              for (const child of nodeToWalk.children || []) {
+                if (!child || found) continue;
+                const tag = String(child.tagName || "").toLowerCase();
+                const cls = String(child.className || "").toLowerCase();
+                if (wanted === tag || (wanted.startsWith(".") && cls.split(/\s+/).includes(wanted.slice(1)))) {
+                  found = child;
+                  return;
+                }
+                walk(child);
+              }
+            };
+            walk(this);
+            return found;
+          },
+          focus() {
+            doc.activeElement = this;
+            this.dispatchEvent({ type: "focus" });
+          },
+          select() {
+            this.selectionStart = 0;
+            this.selectionEnd = String(this.value || "").length;
+            this.dispatchEvent({ type: "select" });
+          },
+          setSelectionRange(start, end) {
+            this.selectionStart = Number(start) || 0;
+            this.selectionEnd = Number(end) || 0;
+          },
+          classList: {
+            add() {},
+            toggle() {},
+          },
+        };
+        return node;
+      };
+
+      const doc = {
+        activeElement: null,
+        createElement(tag) {
+          return createNode(tag, doc);
+        },
+        body: null,
+        head: null,
+        addEventListener(type, handler) {
+          if (!this._listeners) this._listeners = {};
+          if (!this._listeners[type]) this._listeners[type] = [];
+          this._listeners[type].push(handler);
+        },
+        removeEventListener(type, handler) {
+          if (!this._listeners?.[type]) return;
+          this._listeners[type] = this._listeners[type].filter((fn) => fn !== handler);
+        },
+        dispatchEvent(event) {
+          const evt = event || {};
+          const type = String(evt.type || "");
+          for (const handler of this._listeners?.[type] || []) {
+            handler.call(this, { ...evt, target: this, currentTarget: this });
+          }
+        },
+      };
+
+      doc.body = createNode("body", doc);
+      doc.head = createNode("head", doc);
+      return doc;
+    }
+
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const calls = [];
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    globalThis.window = {
+      document: doc,
+      bbmDb: {
+        dictionaryCreateEntry: async (payload) => {
+          calls.push(payload);
+          return { ok: true, entry: payload };
+        },
+      },
+    };
+
+    try {
+      const core = new SharedEditboxCore({ onDraftChange() {} });
+      core.applyEditorState(
+        {
+          level: 2,
+          value: {
+            title: "Der sikker ko prueft die Baustelle.",
+            longText: "",
+            flags: {},
+          },
+          access: {},
+        },
+        { hasSelection: true, isReadOnly: false }
+      );
+
+      assert.equal(sharedEditboxCoreSource.includes("Korrektur"), true);
+      assert.equal(sharedEditboxCoreSource.includes("Ersetzen"), true);
+      assert.equal(sharedEditboxCoreSource.includes("Abbrechen"), true);
+      assert.equal(sharedEditboxCoreSource.includes('this.dictionaryCorrectionButton.textContent = "Korrektur";'), true);
+
+      core.editbox.shortInput.focus();
+      core.editbox.shortInput.setSelectionRange(4, 13);
+      core.editbox.shortInput.dispatchEvent({ type: "select" });
+      core.dictionaryCorrectionButton.dispatchEvent({ type: "pointerdown" });
+      doc.activeElement = null;
+
+      assert.equal(core.dictionaryCorrectionButton.disabled, false);
+      assert.equal(core.dictionaryCorrectionButton.textContent, "Korrektur");
+      assert.equal(core._dictionaryCorrectionSnapshot.selectedText, "sikker ko");
+
+      await core.dictionaryCorrectionButton.onclick();
+
+      assert.equal(core._dictionaryCorrectionOverlay.style.display, "flex");
+      assert.equal(collectText(core.dictionaryCorrectionDialog).includes('"sikker ko" ändern zu'), true);
+      assert.equal(core.dictionaryCorrectionReplaceButton.textContent, "Ersetzen");
+      assert.equal(core.dictionaryCorrectionCancelButton.textContent, "Abbrechen");
+
+      core.dictionaryCorrectionInput.value = "SiGeKo";
+      await core.dictionaryCorrectionReplaceButton.onclick();
+
+      assert.equal(core.editbox.shortInput.value, "Der SiGeKo prueft die Baustelle.");
+      assert.equal(calls.length, 1);
+      assert.equal(calls[0].entryType, "correction");
+      assert.equal(calls[0].wrongText, "sikker ko");
+      assert.equal(calls[0].correctText, "SiGeKo");
+      assert.equal(calls[0].category, "Bau");
+      assert.equal(calls[0].source, "user");
+      assert.equal(calls[0].active, true);
+
+      core.editbox.shortInput.focus();
+      core.editbox.shortInput.setSelectionRange(4, 11);
+      core.editbox.shortInput.dispatchEvent({ type: "select" });
+      await core.dictionaryCorrectionButton.onclick();
+      core.dictionaryCorrectionInput.value = "Siehe";
+      await core.dictionaryCorrectionCancelButton.onclick();
+      assert.equal(core.editbox.shortInput.value, "Der SiGeKo prueft die Baustelle.");
+      assert.equal(calls.length, 1);
+
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
   });
 
   await run("Dictionary: Service speichert term/correction und respektiert Kategorie, Quelle und Loeschen", () => {

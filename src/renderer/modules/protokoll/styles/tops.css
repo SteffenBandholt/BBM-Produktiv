@@ -969,19 +969,19 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 .bbm-tops-workbench-editbox .bbm-tops-editbox-long-wrap {
   flex: 1 1 auto;
   align-self: stretch;
-  min-height: 0;
+  min-height: calc(4 * var(--bbm-top-text-line-height) * 1em + 8px);
 }
 
 .bbm-tops-workbench-editbox .bbm-tops-editbox-long-wrap .bbm-tops-editbox-field-cell {
   display: flex;
   align-items: stretch;
-  min-height: 0;
+  min-height: calc(4 * var(--bbm-top-text-line-height) * 1em + 8px);
 }
 
 .bbm-tops-workbench-editbox .bbm-tops-editbox-long-wrap .editbox-textarea {
   flex: 1 1 auto;
-  height: 100%;
-  min-height: 0;
+  height: auto;
+  min-height: calc(4 * var(--bbm-top-text-line-height) * 1em + 8px);
 }
 
 .bbm-tops-workbench-editbox:not([data-top-level="1"]) .editbox-textarea {

@@ -256,10 +256,10 @@ export function createDictationDevSection({
   const entryTypeSelect = document.createElement("select");
   const optionTerm = document.createElement("option");
   optionTerm.value = "term";
-  optionTerm.textContent = "term";
+  optionTerm.textContent = "Fachbegriff";
   const optionCorrection = document.createElement("option");
   optionCorrection.value = "correction";
-  optionCorrection.textContent = "correction";
+  optionCorrection.textContent = "Korrektur";
   entryTypeSelect.append(optionTerm, optionCorrection);
 
   const termInput = document.createElement("input");
@@ -302,14 +302,14 @@ export function createDictationDevSection({
 
   const cancelButton = document.createElement("button");
   cancelButton.type = "button";
-  cancelButton.textContent = "Bearbeitung beenden";
+  cancelButton.textContent = "Abbrechen";
   applyScaleBtnBase(cancelButton);
 
   formActions.append(saveButton, resetButton, cancelButton);
 
   formGrid.append(
-    makeField("Typ", entryTypeSelect),
-    makeField("Begriff", termInput),
+    makeField("Eintragstyp", entryTypeSelect),
+    makeField("Fachbegriff", termInput),
     makeField("erkannt / falsch", wrongInput),
     makeField("korrekt / soll", correctInput)
   );
@@ -336,6 +336,40 @@ export function createDictationDevSection({
     dictionaryMessage.textContent = String(text || "");
   };
 
+  const getEntryTypeLabel = (entryType) => {
+    return String(entryType || "").trim() === "term" ? "Fachbegriff" : "Korrektur";
+  };
+
+  const getSourceLabel = (source) => {
+    return String(source || "").trim() === "base" ? "Grundstamm" : "Eigener Eintrag";
+  };
+
+  const getStatusLabel = (entry) => (Number(entry?.active) === 1 ? "aktiv" : "inaktiv");
+
+  const getEntrySummary = (entry) => {
+    const typeLabel = getEntryTypeLabel(entry?.entry_type);
+    const sourceLabel = getSourceLabel(entry?.source);
+    const statusLabel = getStatusLabel(entry);
+    const categoryLabel = String(entry?.category || "Bau").trim() || "Bau";
+
+    if (String(entry?.entry_type || "") === "term") {
+      return [
+        `${typeLabel} · ${sourceLabel}`,
+        `Begriff: ${entry?.term_text || ""}`,
+        `Status: ${statusLabel}`,
+        `Kategorie: ${categoryLabel}`,
+      ];
+    }
+
+    return [
+      `${typeLabel} · ${sourceLabel}`,
+      `erkannt: ${entry?.wrong_text || ""}`,
+      `wird ersetzt durch: ${entry?.correct_text || ""}`,
+      `Status: ${statusLabel}`,
+      `Kategorie: ${categoryLabel}`,
+    ];
+  };
+
   const syncFormVisibility = () => {
     const isCorrection = String(entryTypeSelect.value || "correction") === "correction";
     termInput.closest("label").style.display = isCorrection ? "none" : "";
@@ -351,12 +385,19 @@ export function createDictationDevSection({
     correctInput.value = "";
     activeInput.checked = true;
     formTitle.textContent = "Eintrag anlegen";
+    resetButton.style.display = "";
+    resetButton.textContent = "Neu";
+    cancelButton.style.display = "none";
+    cancelButton.textContent = "Abbrechen";
     syncFormVisibility();
   };
 
   const fillForm = (entry) => {
     editingEntry = entry || null;
     formTitle.textContent = editingEntry ? "Eintrag bearbeiten" : "Eintrag anlegen";
+    resetButton.style.display = "none";
+    cancelButton.style.display = "";
+    cancelButton.textContent = "Abbrechen";
     entryTypeSelect.value = String(entry?.entry_type || "correction");
     termInput.value = String(entry?.term_text || "");
     wrongInput.value = String(entry?.wrong_text || "");
@@ -395,31 +436,30 @@ export function createDictationDevSection({
     visibleEntries.forEach((entry) => {
       const row = document.createElement("div");
       row.style.display = "grid";
-      row.style.gridTemplateColumns = "110px 70px 1fr auto";
+      row.style.gridTemplateColumns = "1.1fr 1.4fr auto";
       row.style.gap = "8px";
       row.style.alignItems = "start";
       row.style.padding = "8px";
       row.style.border = "1px solid var(--card-border)";
       row.style.borderRadius = "8px";
       row.style.background = "var(--card-bg)";
+      row.style.minWidth = "0";
 
       const meta = document.createElement("div");
       meta.style.display = "grid";
       meta.style.gap = "4px";
       meta.style.fontSize = "12px";
+      meta.style.minWidth = "0";
 
-      const typeLine = document.createElement("div");
-      typeLine.style.fontWeight = "700";
-      typeLine.textContent = `${entry?.entry_type || ""} / ${entry?.source || ""}`;
-
-      const stateLine = document.createElement("div");
-      stateLine.textContent = Number(entry?.active) === 1 ? "aktiv" : "inaktiv";
-
-      const categoryLine = document.createElement("div");
-      categoryLine.style.opacity = "0.75";
-      categoryLine.textContent = `Kategorie: ${entry?.category || "Bau"}`;
-
-      meta.append(typeLine, stateLine, categoryLine);
+      const summaryLines = getEntrySummary(entry);
+      summaryLines.forEach((line, index) => {
+        const lineEl = document.createElement("div");
+        lineEl.textContent = line;
+        if (index === 0) {
+          lineEl.style.fontWeight = "700";
+        }
+        meta.appendChild(lineEl);
+      });
 
       const textCol = document.createElement("div");
       textCol.style.display = "grid";
@@ -428,13 +468,13 @@ export function createDictationDevSection({
       textCol.style.minWidth = "0";
       if (entry?.entry_type === "term") {
         const termLine = document.createElement("div");
-        termLine.textContent = entry?.term_text || "";
+        termLine.textContent = `Begriff: ${entry?.term_text || ""}`;
         textCol.append(termLine);
       } else {
         const wrongLine = document.createElement("div");
         wrongLine.textContent = `erkannt: ${entry?.wrong_text || ""}`;
         const correctLine = document.createElement("div");
-        correctLine.textContent = `soll: ${entry?.correct_text || ""}`;
+        correctLine.textContent = `wird ersetzt durch: ${entry?.correct_text || ""}`;
         textCol.append(wrongLine, correctLine);
       }
 
@@ -462,25 +502,24 @@ export function createDictationDevSection({
         await loadEntries();
       };
 
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.textContent = Number(entry?.source) === 1 ? "Deaktivieren" : entry?.source === "base" ? "Deaktivieren" : "Löschen";
-      if (entry?.source === "base") {
-        deleteButton.textContent = "Deaktivieren";
-      } else {
-        deleteButton.textContent = "Löschen";
-      }
-      applyScaleBtnBase(deleteButton);
-      deleteButton.onclick = async () => {
-        const api = getApi();
-        if (typeof api.dictionaryDeleteEntry !== "function") return;
-        const res = await api.dictionaryDeleteEntry({ id: entry.id });
-        setMessage(res?.ok ? (entry?.source === "base" ? "Grundstamm-Eintrag deaktiviert." : "Eintrag gelöscht.") : res?.error || "Aktion fehlgeschlagen.");
-        await loadEntries();
-        if (editingEntry?.id === entry.id) clearForm();
-      };
+      actions.append(editButton, toggleButton);
 
-      actions.append(editButton, toggleButton, deleteButton);
+      if (String(entry?.source || "") === "user") {
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.textContent = "Löschen";
+        applyScaleBtnBase(deleteButton);
+        deleteButton.onclick = async () => {
+          const api = getApi();
+          if (typeof api.dictionaryDeleteEntry !== "function") return;
+          const res = await api.dictionaryDeleteEntry({ id: entry.id });
+          setMessage(res?.ok ? "Eintrag gelöscht." : res?.error || "Aktion fehlgeschlagen.");
+          await loadEntries();
+          if (editingEntry?.id === entry.id) clearForm();
+        };
+        actions.append(deleteButton);
+      }
+
       row.append(meta, textCol, actions);
       dictionaryList.appendChild(row);
     });
