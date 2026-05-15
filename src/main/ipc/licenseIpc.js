@@ -104,21 +104,17 @@ function registerLicenseStatusIpc() {
   });
 }
 
-function registerLicenseInstallationIpc() {
-  ipcMain.handle("license:import", async (event) => {
-    try {
-      const result = await dialog.showOpenDialog(_pickWindow(event), { title: "Lizenzdatei auswählen", properties: ["openFile"], filters: LICENSE_FILE_FILTER });
-      if (result.canceled || !result.filePaths?.[0]) return { ok: false, canceled: true };
-      const parsed = _readLicenseFile(result.filePaths[0]);
-      const verification = verifyLicense(parsed);
-      if (!verification.valid) return { ok: false, error: verification.reason || "INVALID_FORMAT", ..._toStatusPayload(verification) };
-      saveLicense(parsed);
-      return { ok: true, filePath: result.filePaths[0], ..._toStatusPayload(refreshStatus()) };
-    } catch (err) {
-      const reason = String(err?.code || err?.message || "INVALID_FORMAT");
-      return { ok: false, error: reason, ..._toStatusPayload({ valid: false, reason }) };
-    }
-  });
+function registerLicenseInstallationIpc() { 
+  ipcMain.handle("license:import", async (event) => { 
+    try { 
+      const result = await dialog.showOpenDialog(_pickWindow(event), { title: "Lizenzdatei auswählen", properties: ["openFile"], filters: LICENSE_FILE_FILTER }); 
+      if (result.canceled || !result.filePaths?.[0]) return { ok: true, canceled: true }; 
+      return importLicenseFromFilePath(result.filePaths[0]); 
+    } catch (err) { 
+      const reason = String(err?.code || err?.message || "INVALID_FORMAT"); 
+      return { ok: false, error: reason, ..._toStatusPayload({ valid: false, reason }) }; 
+    } 
+  }); 
 
   ipcMain.handle("license:delete", async () => {
     try { deleteLicense(); return { ok: true, ..._toStatusPayload(refreshStatus()) }; }
@@ -150,12 +146,31 @@ function registerLicenseInstallationIpc() {
     } catch (err) {
       return { ok: false, error: String(err?.code || err?.message || "REQUEST_SAVE_FAILED").trim() || "REQUEST_SAVE_FAILED" };
     }
-  });
-}
-
-function registerLicenseIpc() {
-  registerLicenseStatusIpc();
-  registerLicenseInstallationIpc();
-}
-
-module.exports = { registerLicenseIpc, _buildLicenseRequestPayload };
+  }); 
+} 
+ 
+function importLicenseFromFilePath(filePath) { 
+  const normalizedPath = String(filePath || "").trim(); 
+  try { 
+    if (!normalizedPath) { 
+      return { ok: false, error: "INVALID_FORMAT", ..._toStatusPayload({ valid: false, reason: "INVALID_FORMAT" }) }; 
+    } 
+    const parsed = _readLicenseFile(normalizedPath); 
+    const verification = verifyLicense(parsed); 
+    if (!verification.valid) { 
+      return { ok: false, error: verification.reason || "INVALID_FORMAT", filePath: normalizedPath, ..._toStatusPayload(verification) }; 
+    } 
+    saveLicense(parsed); 
+    return { ok: true, filePath: normalizedPath, ..._toStatusPayload(refreshStatus()) }; 
+  } catch (err) { 
+    const reason = String(err?.code || err?.message || "INVALID_FORMAT"); 
+    return { ok: false, error: reason, filePath: normalizedPath, ..._toStatusPayload({ valid: false, reason }) }; 
+  } 
+} 
+ 
+function registerLicenseIpc() { 
+  registerLicenseStatusIpc(); 
+  registerLicenseInstallationIpc(); 
+} 
+ 
+module.exports = { registerLicenseIpc, _buildLicenseRequestPayload, importLicenseFromFilePath };

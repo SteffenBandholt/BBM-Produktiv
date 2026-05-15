@@ -38,11 +38,12 @@ const { runAusgabeModuleTests } = require("./tests/ausgabeModule.test.cjs");
 const { runAudioModuleTests } = require("./tests/audioModule.test.cjs");
 const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cjs");
 const { runLicenseStorageBootstrapTests } = require("./tests/licenseStorageBootstrap.test.cjs");
-const { runLicenseTrialRuntimeTests } = require("./tests/licenseTrialRuntime.test.cjs");
-const { runLicenseRequestTests } = require("./tests/licenseRequest.test.cjs");
-const { runLicenseFeatureGuardTests } = require("./tests/licenseFeatureGuards.test.cjs");
-const { runLicenseStandardFeaturesTests } = require("./tests/licenseStandardFeatures.test.cjs");
-const { runFeatureGuardEnforcementTests } = require("./tests/featureGuardEnforcement.test.cjs");
+const { runLicenseTrialRuntimeTests } = require("./tests/licenseTrialRuntime.test.cjs"); 
+const { runLicenseRequestTests } = require("./tests/licenseRequest.test.cjs"); 
+const { runLicenseDoubleClickImportTests } = require("./tests/licenseDoubleClickImport.test.cjs"); 
+const { runLicenseFeatureGuardTests } = require("./tests/licenseFeatureGuards.test.cjs"); 
+const { runLicenseStandardFeaturesTests } = require("./tests/licenseStandardFeatures.test.cjs"); 
+const { runFeatureGuardEnforcementTests } = require("./tests/featureGuardEnforcement.test.cjs"); 
 
 let failed = false;
 
@@ -126,12 +127,13 @@ async function main() {
   await runAusgabeModuleTests(run);
   await runAudioModuleTests(run);
   await runDistCustomerBuildTests(run);
-  await runLicenseTrialRuntimeTests(run);
-  await runLicenseStorageBootstrapTests(run);
-  await runLicenseRequestTests(run);
-  await runLicenseFeatureGuardTests(run);
-  await runLicenseStandardFeaturesTests(run);
-  await runFeatureGuardEnforcementTests(run);
+  await runLicenseTrialRuntimeTests(run); 
+  await runLicenseStorageBootstrapTests(run); 
+  await runLicenseRequestTests(run); 
+  await runLicenseDoubleClickImportTests(run); 
+  await runLicenseFeatureGuardTests(run); 
+  await runLicenseStandardFeaturesTests(run); 
+  await runFeatureGuardEnforcementTests(run); 
 
   if (failed) {
     process.exitCode = 1;
