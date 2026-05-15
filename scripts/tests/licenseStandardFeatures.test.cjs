@@ -100,6 +100,44 @@ async function runLicenseStandardFeaturesTests(run) {
     assert.throws(() => svc.requireFeature("protokoll"), /FEATURE_NOT_ALLOWED:protokoll/);
   });
 
+
+  await run("Lizenzmodell: RESTARBEITEN als Modul ist erlaubt", () => {
+    const svc = loadLicenseServiceWithStatus({
+      valid: true,
+      reason: "OK",
+      license: { modules: ["restarbeiten"], features: [] },
+    });
+    assert.equal(svc.requireFeature("restarbeiten"), true);
+  });
+
+  await run("Lizenzmodell: Protokoll und Restarbeiten sind gemeinsam erlaubt", () => {
+    const svc = loadLicenseServiceWithStatus({
+      valid: true,
+      reason: "OK",
+      license: { modules: ["protokoll", "restarbeiten"], features: [] },
+    });
+    assert.equal(svc.requireFeature("protokoll"), true);
+    assert.equal(svc.requireFeature("restarbeiten"), true);
+  });
+
+  await run("Lizenzmodell: Restarbeiten bleibt ohne Modulfreigabe gesperrt", () => {
+    const svc = loadLicenseServiceWithStatus({
+      valid: true,
+      reason: "OK",
+      license: { modules: [], features: [] },
+    });
+    assert.throws(() => svc.requireFeature("restarbeiten"), /FEATURE_NOT_ALLOWED:restarbeiten/);
+  });
+
+  await run("Lizenzmodell: Legacy-Features aktivieren nur Protokoll, nicht Restarbeiten", () => {
+    const svc = loadLicenseServiceWithStatus({
+      valid: true,
+      reason: "OK",
+      license: { features: ["protokoll"] },
+    });
+    assert.equal(svc.requireFeature("protokoll"), true);
+    assert.throws(() => svc.requireFeature("restarbeiten"), /FEATURE_NOT_ALLOWED:restarbeiten/);
+  });
   await run("Lizenzmodell: Legacy ohne modules-Feld erkennt protokoll ueber features", () => {
     const svc = loadLicenseServiceWithStatus({
       valid: true,
