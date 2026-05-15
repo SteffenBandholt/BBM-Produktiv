@@ -1,7 +1,6 @@
 import { TopsHeader } from "../TopsHeader.js";
 import { TopsList } from "../TopsList.js";
 import { TopsWorkbench } from "../TopsWorkbench.js";
-import { TopsQuicklane } from "../TopsQuicklane.js";
 import { TopsCommands } from "../TopsCommands.js";
 import { TopsCloseFlow } from "../TopsCloseFlow.js";
 import { TopsRepository } from "../TopsRepository.js";
@@ -11,7 +10,14 @@ import { getSelectedTop, hasSelection } from "../TopsSelectors.js";
 import { TopsViewDialogs } from "../TopsViewDialogs.js";
 import { buildHeaderState } from "../buildHeaderState.js";
 import { ensureProtokollModuleStyles } from "../styles.js";
-import { buildListItemsFromState } from "../buildListItemsFromState.js";
+import {
+  buildListItemsFromState,
+  resolveVisibleSelectionForCollapsedFamilies,
+} from "../buildListItemsFromState.js";
+import {
+  buildProtokollTopsLayoutOverlay,
+  extractProtokollTopsEditorValues,
+} from "../../../../shared/tableLayouts/protokollTopsLayout.js";
 import { editorFromTop } from "../editorFromTop.js";
 import { buildPatchFromDraft } from "../buildPatchFromDraft.js";
 import { canCreateChildFromState } from "../canCreateChildFromState.js";
@@ -19,6 +25,18 @@ import { canDeleteFromState } from "../canDeleteFromState.js";
 import { canMoveFromState } from "../canMoveFromState.js";
 import { shouldShowWorkbench } from "../shouldShowWorkbench.js";
 import { buildWorkbenchVm } from "../buildWorkbenchVm.js";
+import { focusCreatedTopAfterReload } from "../topCreateFocus.js";
+import { normalizeTopFilterMode } from "../topFilterMode.js";
+import { attachAudioFeature } from "../../../features/audio/AudioFeature.js";
+import { DictationController } from "../../../features/audio-dictation/DictationController.js";
+import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
+import {
+  createPopupOverlay,
+  stylePopupCard,
+  registerPopupCloseHandlers,
+  cleanupPopupHandlers,
+} from "../../../ui/popupCommon.js";
+import { OVERLAY_TOP } from "../../../ui/zIndex.js";
 
 function buildInitialProtocolScreenState({ projectId = null, meetingId = null } = {}) {
   return {
@@ -26,14 +44,32 @@ function buildInitialProtocolScreenState({ projectId = null, meetingId = null } 
     meetingId,
     tops: [],
     selectedTopId: null,
+    createParentTopId: null,
     editor: {},
     isReadOnly: false,
     isMoveMode: false,
     isLoading: false,
     isWriting: false,
+    topFilter: "all",
+    collapsedLevel1Ids: [],
+    showAmpelInList: true,
+    showLongtextInList: false,
     error: null,
     meetingMeta: null,
   };
+}
+
+function parseUiBool(value, fallback) {
+  const raw = String(value ?? "").trim().toLowerCase();
+  if (!raw) return !!fallback;
+  if (["1", "true", "yes", "on"].includes(raw)) return true;
+  if (["0", "false", "no", "off"].includes(raw)) return false;
+  return !!fallback;
+}
+
+function normalizeBuildChannel(value) {
+  const raw = String(value ?? "").trim().toUpperCase();
+  return raw === "DEV" ? "DEV" : "STABLE";
 }
 
 // TOPS-V2: eigenstaendiger Screen inkl. nativer Close-/Output-Flow.
@@ -42,6 +78,7 @@ export default class TopsScreen {
     this.router = options.router || null;
     this.projectId = options.projectId || null;
     this.meetingId = options.meetingId || null;
+    this.returnContext = options.returnContext || null;
 
     this.root = null;
     this.header = null;
@@ -50,15 +87,26 @@ export default class TopsScreen {
     this.sheetPaper = null;
     this.editArea = null;
     this.editCanvas = null;
+    this.btnTitleDictate = null;
+    this.btnLongDictate = null;
 
     this._sidebarEl = null;
     this._sidebarDisplay = "";
-    this.quicklane = null;
+    this._suppressNextWorkbenchTextBlur = false;
+    this._autoSaveTimer = null;
+    this._autoSaveQueued = false;
+    this._autoSaveInFlight = false;
+    this._autoSaveRevision = 0;
+    this._autoSaveLatestDraft = null;
+    this._autoSaveDelayMs = 400;
     this.workbench = null;
     this.topsList = null;
+    this._topListLayout = null;
+    this._topListLayoutLoadPromise = null;
     this.closeFlow = null;
     this.dialogs = null;
     this._dialogViewAdapter = this._createDialogViewAdapter();
+    this._topRulesOverlay = null;
 
     this._buildProtocolModuleRuntime(options);
   }
@@ -72,6 +120,11 @@ export default class TopsScreen {
   _buildProtocolModuleRuntime(options = {}) {
     this.topsRepository = options.topsRepository || new TopsRepository();
     this.assigneeDataSource = options.assigneeDataSource || new TopsAssigneeDataSource();
+    attachAudioFeature(this);
+    this.dictationController = new DictationController({
+      view: this,
+      ensureAudioAvailable: (opts) => this._ensureAudioAvailable?.(opts),
+    });
     this.store = createTopsStore(
       buildInitialProtocolScreenState({
         projectId: this.projectId,
@@ -137,11 +190,11 @@ export default class TopsScreen {
     sheetArea.appendChild(sheetCanvas);
     editArea.appendChild(editCanvas);
     root.append(this.header.root, sheetArea, editArea);
+
   }
 
   _buildProtocolScreenRegions() {
     this._buildHeader();
-    this._buildQuicklane();
     this._buildList();
     this._buildProtocolWorkbenchHost();
   }
@@ -149,9 +202,7 @@ export default class TopsScreen {
   _buildHeader() {
     this.header = new TopsHeader({
       onClose: async () => {
-        if (typeof this.router?.showProjects === "function") {
-          await this.router.showProjects();
-        }
+        await this._returnAfterClose();
       },
       onEndMeeting: async () => {
         if (this.store.getState().isWriting) return;
@@ -164,35 +215,14 @@ export default class TopsScreen {
     this.dialogs = new TopsViewDialogs({ view: this._dialogViewAdapter });
   }
 
-  _buildQuicklane() {
-    this.quicklane = new TopsQuicklane({
-      projectId: this._getQuicklaneProjectId(),
-      isReadOnly: !!this.store.getState().isReadOnly,
-      isWriting: !!this.store.getState().isWriting,
-      onOpenProject: async (projectId) => {
-        if (typeof this.router?.openProjectFormModal === "function") {
-          await this.router.openProjectFormModal({ projectId });
-        }
-      },
-      onOpenFirms: async (projectId) => {
-        if (typeof this.router?.showProjectFirms === "function") {
-          await this.router.showProjectFirms(projectId);
-        }
-      },
-      onOpenOutput: async (projectId) => {
-        if (typeof this.router?.openPrintModal === "function") {
-          await this.router.openPrintModal({ projectId });
-        }
-      },
-    });
-    this._mountQuicklaneIntoHeader();
-  }
-
   _buildList() {
     this.topsList = new TopsList({
       onRowClick: async (item) => this._handleListRowClick(item),
+      onLevel1Toggle: async (item) => this._toggleLevel1Collapsed(item?.id),
+      onLayoutZoneClick: (zoneKey) => this._setDevLayoutZone(zoneKey),
     });
     this.sheetPaper.appendChild(this.topsList.root);
+    void this._loadTopListLayout();
   }
 
   // ---------------------------------------------------------------------------
@@ -202,13 +232,19 @@ export default class TopsScreen {
   // UI-/View-nahe Host-Logik im Modul `Protokoll`:
   // Der Screen bleibt Verdrahtungsschicht; gemeinsamer Bearbeitungskern liegt weiterhin ausserhalb.
   _buildProtocolWorkbenchHost() {
-    this.workbench = new TopsWorkbench(this._createProtocolWorkbenchUiAdapter());
+    this.workbench = new TopsWorkbench({
+      ...this._createProtocolWorkbenchUiAdapter(),
+      onStartDictation: (target) => this._startDictation({ target }),
+    });
     this.editCanvas.appendChild(this.workbench.root);
+    this._syncDictationButtonRefs();
   }
 
   _createProtocolWorkbenchActionBridge() {
     return {
       onDraftChange: (draft) => this._handleWorkbenchDraftChange(draft),
+      onButtonPointerDown: () => this._markWorkbenchButtonPointerDown(),
+      onTextBlur: async (payload) => this._handleWorkbenchTextBlur(payload),
       onSave: async () => this._handleWorkbenchSave(),
       onDelete: async () => this._handleWorkbenchDelete(),
       onToggleMove: async () => this._handleWorkbenchToggleMove(),
@@ -237,11 +273,161 @@ export default class TopsScreen {
     };
   }
 
-  _mountQuicklaneIntoHeader() {
-    const host = this.header?.getActionsHost?.();
-    if (!(host instanceof HTMLElement)) return;
-    if (!(this.quicklane instanceof TopsQuicklane)) return;
-    this.quicklane.mountInto(host);
+  _setTopFilter(filterMode) {
+    const topFilter = normalizeTopFilterMode(filterMode);
+    const current = normalizeTopFilterMode(this.store.getState().topFilter);
+    if (topFilter === current) {
+      return false;
+    }
+    this.store.setState({ topFilter });
+    this._syncScreenState();
+    return true;
+  }
+
+  setTopFilter(filterMode) {
+    return this._setTopFilter(filterMode);
+  }
+
+  getTopFilter() {
+    return normalizeTopFilterMode(this.store.getState().topFilter);
+  }
+
+  _setCreateParentTopId(topId) {
+    this.store.setState({ createParentTopId: topId ?? null });
+  }
+
+  _getCollapsedLevel1Ids() {
+    const current = this.store.getState().collapsedLevel1Ids;
+    return Array.isArray(current) ? current.filter((id) => String(id || "").trim()) : [];
+  }
+
+  _setCollapsedLevel1Ids(nextIds) {
+    this.store.setState({
+      collapsedLevel1Ids: Array.isArray(nextIds)
+        ? nextIds.map((id) => String(id || "").trim()).filter(Boolean)
+        : [],
+    });
+  }
+
+  _normalizeSelectionAfterCollapseChange() {
+    const state = this.store.getState();
+    const fallbackTopId = resolveVisibleSelectionForCollapsedFamilies(
+      state,
+      this._getCollapsedLevel1Ids()
+    );
+    if (fallbackTopId === null) return false;
+
+    const currentSelectedId = String(state.selectedTopId ?? "");
+    if (!fallbackTopId || String(fallbackTopId) === currentSelectedId) return false;
+
+    const fallbackTop =
+      state.tops.find((top) => String(top?.id ?? "") === String(fallbackTopId)) || null;
+    this.commands.selectTop(fallbackTop?.id ?? null);
+    this.commands.updateDraft(editorFromTop(fallbackTop));
+    this._setCreateParentTopId(fallbackTop?.id ?? null);
+    return true;
+  }
+
+  _toggleLevel1Collapsed(topId) {
+    if (this.store.getState().isMoveMode) return false;
+    const key = String(topId || "").trim();
+    if (!key) return false;
+
+    const current = new Set(this._getCollapsedLevel1Ids());
+    if (current.has(key)) current.delete(key);
+    else current.add(key);
+
+    this._setCollapsedLevel1Ids(Array.from(current));
+    this._normalizeSelectionAfterCollapseChange();
+    this._syncScreenState();
+    return true;
+  }
+
+  _resolveCreateParentTop(state = this.store.getState()) {
+    const tops = Array.isArray(state?.tops) ? state.tops : [];
+    const storedCreateParentTopId = state?.createParentTopId ?? null;
+    if (storedCreateParentTopId !== null && storedCreateParentTopId !== undefined) {
+      const storedTop =
+        tops.find((top) => String(top?.id) === String(storedCreateParentTopId)) || null;
+      if (storedTop) return storedTop;
+    }
+    return getSelectedTop(state) || null;
+  }
+
+  _saveUiSetting(key, value) {
+    const api = window.bbmDb || {};
+    if (typeof api.appSettingsSetMany === "function") {
+      return api.appSettingsSetMany({ [key]: value ? "1" : "0" });
+    }
+    try {
+      window.localStorage?.setItem?.(key, value ? "1" : "0");
+    } catch (_e) {
+      // ignore
+    }
+    return Promise.resolve({ ok: true });
+  }
+
+  async _loadDisplaySetting({ key, fallback }) {
+    const api = window.bbmDb || {};
+    if (typeof api.appSettingsGetMany === "function") {
+      const res = await api.appSettingsGetMany([key]);
+      if (res?.ok) {
+        return parseUiBool(res?.data?.[key], fallback);
+      }
+    } else {
+      try {
+        const raw = window.localStorage?.getItem?.(key);
+        if (raw != null) {
+          return parseUiBool(raw, fallback);
+        }
+      } catch (_e) {
+        // ignore
+      }
+    }
+    return !!fallback;
+  }
+
+  _applyAmpelVisibility() {
+    if (this.workbench?.metaColumn?.statusAmpelBridge?.root) {
+      this.workbench.metaColumn.statusAmpelBridge.root.style.display = this.showAmpelInList ? "" : "none";
+    }
+  }
+
+  _emitAmpelStateChanged() {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("bbm:ampel-state", {
+          detail: { enabled: !!this.showAmpelInList },
+        })
+      );
+    } catch (_e) {}
+  }
+
+  _emitLongtextStateChanged() {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("bbm:longtext-state", {
+          detail: { enabled: !!this.showLongtextInList },
+        })
+      );
+    } catch (_e) {}
+  }
+
+  async toggleAmpelDisplay() {
+    this.store.setState({ showAmpelInList: !this.showAmpelInList });
+    this._syncScreenState();
+    this._applyAmpelVisibility();
+    this._emitAmpelStateChanged();
+    await this._saveUiSetting("tops.ampelEnabled", this.showAmpelInList);
+    return this.showAmpelInList;
+  }
+
+  async toggleLongtextDisplay() {
+    this.store.setState({ showLongtextInList: !this.showLongtextInList });
+    this._syncScreenState();
+    this._emitLongtextStateChanged();
+    await this._saveUiSetting("tops.showLongtextInList", this.showLongtextInList);
+    return this.showLongtextInList;
   }
 
   // ---------------------------------------------------------------------------
@@ -278,18 +464,6 @@ export default class TopsScreen {
       projectId: state.projectId || this.router?.currentProjectId || null,
       projectLabel: String(this.router?.context?.projectLabel || "").trim(),
     };
-  }
-
-  _syncQuicklaneState() {
-    const state = this.store.getState();
-    if (!(this.quicklane instanceof TopsQuicklane)) return;
-    const projectContext = this._getProjectScreenContext();
-    this.quicklane.update({
-      projectId: projectContext.projectId,
-      isReadOnly: !!state.isReadOnly,
-      isWriting: !!state.isWriting,
-    });
-    this._mountQuicklaneIntoHeader();
   }
 
   _syncHeaderState() {
@@ -356,9 +530,269 @@ export default class TopsScreen {
     await this.dialogs.handleOpenMeetingKeyword();
   }
 
+  _openTopRulesDialog() {
+    if (this._topRulesOverlay) {
+      this._topRulesOverlay.style.display = "flex";
+      return;
+    }
+
+    const overlay = createPopupOverlay();
+    overlay.style.zIndex = String(OVERLAY_TOP + 1);
+    registerPopupCloseHandlers(overlay, () => this._closeTopRulesDialog());
+
+    const card = document.createElement("div");
+    stylePopupCard(card, { width: "min(640px, calc(100vw - 24px))" });
+
+    const head = document.createElement("div");
+    head.style.display = "flex";
+    head.style.alignItems = "center";
+    head.style.gap = "10px";
+    head.style.padding = "12px";
+    head.style.borderBottom = "1px solid #e2e8f0";
+
+    const title = document.createElement("div");
+    title.textContent = "TOP-Regeln";
+    title.style.fontWeight = "800";
+    title.style.fontSize = "16px";
+
+    const btnClose = document.createElement("button");
+    btnClose.type = "button";
+    btnClose.textContent = "X";
+    applyPopupButtonStyle(btnClose);
+    btnClose.style.marginLeft = "auto";
+    btnClose.onclick = () => this._closeTopRulesDialog();
+
+    head.append(title, btnClose);
+
+    const body = document.createElement("div");
+    body.style.padding = "12px";
+    body.style.display = "grid";
+    body.style.gap = "10px";
+    body.style.lineHeight = "1.45";
+
+    const sections = [
+      {
+        title: "Ampelfarben",
+        lines: [
+          "Blockiert: blau",
+          "Verzug: rot",
+          "Erledigt: grün",
+          "Offen/In Arbeit mit Fälligkeit: rot, orange oder grün nach Restzeit",
+        ],
+      },
+      {
+        title: "Erledigte TOPs",
+        lines: [
+          "Erledigte TOPs werden grau dargestellt und bleiben im aktuellen Protokoll sichtbar.",
+        ],
+      },
+      {
+        title: "Übernahme",
+        lines: [
+          "Ein erledigter TOP wird noch genau einmal in das nächste Protokoll übernommen.",
+          "Wenn er dort weiterhin erledigt bleibt, erscheint er ab dem darauffolgenden Protokoll nicht mehr in der normalen Arbeitsliste.",
+          "Dabei wird nichts gelöscht und nichts renummeriert. Die Historie bleibt erhalten.",
+        ],
+      },
+    ];
+
+    for (const section of sections) {
+      const box = document.createElement("div");
+      box.style.display = "grid";
+      box.style.gap = "4px";
+
+      const h = document.createElement("div");
+      h.textContent = section.title;
+      h.style.fontWeight = "700";
+      h.style.color = "#264a4a";
+
+      box.appendChild(h);
+      for (const line of section.lines) {
+        const row = document.createElement("div");
+        row.textContent = line;
+        box.appendChild(row);
+      }
+      body.appendChild(box);
+    }
+
+    const footer = document.createElement("div");
+    footer.style.display = "flex";
+    footer.style.justifyContent = "flex-end";
+    footer.style.gap = "8px";
+    footer.style.padding = "10px 12px";
+    footer.style.borderTop = "1px solid #e2e8f0";
+
+    const btnOk = document.createElement("button");
+    btnOk.type = "button";
+    btnOk.textContent = "Schliessen";
+    applyPopupButtonStyle(btnOk, { variant: "neutral" });
+    btnOk.onclick = () => this._closeTopRulesDialog();
+    footer.appendChild(btnOk);
+
+    card.append(head, body, footer);
+    overlay.appendChild(card);
+    document.body.appendChild(overlay);
+    this._topRulesOverlay = overlay;
+  }
+
+  _closeTopRulesDialog() {
+    if (!this._topRulesOverlay) return;
+    cleanupPopupHandlers(this._topRulesOverlay);
+    if (this._topRulesOverlay.parentElement && typeof this._topRulesOverlay.parentElement.removeChild === "function") {
+      this._topRulesOverlay.parentElement.removeChild(this._topRulesOverlay);
+    } else {
+      this._topRulesOverlay.style.display = "none";
+    }
+    this._topRulesOverlay = null;
+  }
+
   _syncListState() {
     if (!(this.topsList instanceof TopsList)) return;
-    this.topsList.setItems(buildListItemsFromState(this.store.getState()));
+    this.topsList.setItems(
+      buildListItemsFromState(this.store.getState(), {
+        collapsedLevel1Ids: this._getCollapsedLevel1Ids(),
+      })
+    );
+  }
+
+  _getTopListLayoutApi() {
+    return globalThis.window?.bbmDb || null;
+  }
+
+  _applyTopListLayout(layout) {
+    this._topListLayout = layout && typeof layout === "object" ? layout : null;
+    if (this.topsList instanceof TopsList) {
+      this.topsList.setTableLayout(this._topListLayout);
+    }
+    this._syncDevLayoutMetaWidthFromLayout(this._topListLayout);
+  }
+
+  async _loadTopListLayout() {
+    if (this._topListLayoutLoadPromise) return this._topListLayoutLoadPromise;
+    this._topListLayoutLoadPromise = (async () => {
+      const api = this._getTopListLayoutApi();
+      if (typeof api?.tableLayoutsGetOne !== "function") {
+        this._applyTopListLayout(null);
+        return null;
+      }
+      try {
+        const res = await api.tableLayoutsGetOne({
+          moduleId: "protokoll",
+          tableKey: "protokoll_tops",
+          orientation: "portrait",
+        });
+        const layout = res?.ok ? res?.data?.effectiveLayout || res?.data?.defaultLayout || null : null;
+        this._applyTopListLayout(layout);
+        return layout;
+      } catch (_err) {
+        this._applyTopListLayout(null);
+        return null;
+      } finally {
+        this._topListLayoutLoadPromise = null;
+      }
+    })();
+    return this._topListLayoutLoadPromise;
+  }
+
+  _setDevLayoutMode(mode = {}) {
+    void mode;
+    return false;
+  }
+
+  _bindLayoutCalibrationChanges() {
+    return;
+  }
+
+  _setDevLayoutZone(zoneKey) {
+    return true;
+  }
+
+  _applyDevLayoutPreview(payload = {}) {
+    void payload;
+    return;
+  }
+
+  _getDevLayoutMetaWidthFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiMetaWidth || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 74;
+    return Math.max(50, Math.min(160, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutMetaInsetFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiMetaInset || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 4;
+    return Math.max(0, Math.min(24, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutMetaFontFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiMetaFontSize || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 11;
+    return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutNumberWidthFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiNumberWidth || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 64;
+    return Math.max(50, Math.min(160, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutNumberInsetFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiNumberInset || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 5;
+    return Math.max(0, Math.min(24, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutNumberFontFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiNumberFontSize || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 11;
+    return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutTextInsetFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiTextInset || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 5;
+    return Math.max(0, Math.min(24, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutTextFontFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiTextFontSize || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 11;
+    return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
+  }
+
+  _syncDevLayoutMetaWidthFromLayout(layout = null) {
+    void layout;
+    return;
+  }
+
+  async _saveDevLayoutMetaWidth() {
+    return false;
+  }
+
+  async _resetDevLayoutMetaWidth() {
+    return false;
+  }
+
+  async _loadDevLayoutMode({ force = false } = {}) {
+    void force;
+    this._setDevLayoutMode({ enabled: false, activeZone: null });
+    return null;
   }
 
   async _handleListRowClick(item) {
@@ -396,6 +830,7 @@ export default class TopsScreen {
     if (state.isWriting) return;
     this.commands.selectTop(top.id);
     this.commands.updateDraft(editorFromTop(top));
+    this._setCreateParentTopId(top?.id ?? null);
     this._syncScreenState();
   }
 
@@ -415,15 +850,92 @@ export default class TopsScreen {
     const vm = this._buildProtocolWorkbenchScreenVm(state, selectedTop);
 
     this.workbench.setState(vm);
+    this._applyAmpelVisibility();
+    this._syncDictationButtonRefs();
+    this._updateDictationButtons({
+      readOnly: !!state.isReadOnly,
+      busy: !!(state.isWriting || state.isLoading),
+      meetingId: state.meetingId || this.meetingId || null,
+    });
+  }
+
+  _syncDictationButtonRefs() {
+    const core = this.workbench?.sharedEditboxCore || null;
+    this.btnTitleDictate = core?.shortDictateButton || null;
+    this.btnLongDictate = core?.longDictateButton || null;
+  }
+
+  get selectedTopId() {
+    return this.store?.getState?.()?.selectedTopId ?? null;
+  }
+
+  get selectedTop() {
+    return getSelectedTop(this.store?.getState?.() || null);
+  }
+
+  get inpTitle() {
+    return this.workbench?.sharedEditboxCore?.editbox?.shortInput || null;
+  }
+
+  get taLongtext() {
+    return this.workbench?.sharedEditboxCore?.editbox?.longInput || null;
+  }
+
+  get titleCountEl() {
+    return this.workbench?.sharedEditboxCore?.editbox?.shortCounter || null;
+  }
+
+  get longCountEl() {
+    return this.workbench?.sharedEditboxCore?.editbox?.longCounter || null;
+  }
+
+  _titleMax() {
+    return Number(this.inpTitle?.maxLength || 100) || 100;
+  }
+
+  _longMax() {
+    const current = Number(this.taLongtext?.maxLength || 500);
+    return Number.isFinite(current) && current > 0 ? current : 500;
+  }
+
+  _clampStr(value, maxLen = 0) {
+    const text = String(value ?? "");
+    const limit = Number(maxLen);
+    if (!Number.isFinite(limit) || limit <= 0) return text;
+    return text.slice(0, limit);
+  }
+
+  _normTitle(value) {
+    return String(value ?? "").trim().replace(/\s+/g, " ");
+  }
+
+  _normLong(value) {
+    return String(value ?? "").replace(/\r\n/g, "\n").trimEnd();
+  }
+
+  _updateCharCounters() {
+    const core = this.workbench?.sharedEditboxCore?.editbox || null;
+    if (!core || typeof core._updateCounters !== "function") return;
+    core._updateCounters();
   }
 
   _syncScreenState() {
+    this._normalizeSelectionAfterCollapseChange();
     const state = this.store.getState();
+    this.showAmpelInList = state.showAmpelInList !== undefined ? !!state.showAmpelInList : true;
+    this.showLongtextInList = state.showLongtextInList !== undefined ? !!state.showLongtextInList : false;
     this._syncCloseFlowContext();
     this._syncHeaderState();
-    this._syncQuicklaneState();
     this._syncListState();
     this._syncProtocolWorkbenchHostState();
+    if (this.router?.context?.ui) {
+      this.router.context.ui.topFilter = normalizeTopFilterMode(state.topFilter || "all");
+      this.router.context.ui.onTopFilterChange = (mode) => this.setTopFilter(mode);
+      this.router.context.ui.showAmpelInList = this.showAmpelInList;
+      this.router.context.ui.showLongtextInList = this.showLongtextInList;
+      this.router.context.ui.onAmpelToggle = () => this.toggleAmpelDisplay();
+      this.router.context.ui.onLongtextToggle = () => this.toggleLongtextDisplay();
+    }
 
     if (this.editArea) {
       this.editArea.dataset.bbmWorkbenchVisible = shouldShowWorkbench(state) ? "true" : "false";
@@ -442,30 +954,239 @@ export default class TopsScreen {
     });
   }
 
+  async _returnAfterClose() {
+    const projectId =
+      this.projectId ||
+      this.returnContext?.projectId ||
+      this.store?.getState?.()?.projectId ||
+      this.router?.currentProjectId ||
+      null;
+
+    if (typeof this.router?.showProjects === "function") {
+      await this.router.showProjects();
+      return true;
+    }
+
+    return false;
+  }
+
   _handleWorkbenchDraftChange(draft) {
-    this.commands.updateDraft(draft || {});
+    const payload = draft && typeof draft === "object" && "draft" in draft ? draft : { draft, source: "text" };
+    const nextDraft = payload?.draft || {};
+    this.commands.updateDraft(nextDraft);
+    this._applyLiveShortTextPreview(nextDraft);
+    this._markAutoSaveDraft();
+    this._requestAutoSave(String(payload?.source || "text"));
+    this._syncScreenState();
+    return true;
+  }
+
+  _startDictation(options = {}) {
+    const state = this.store?.getState?.() || {};
+    return this.dictationController?.start({
+      ...options,
+      meetingId: options?.meetingId ?? state.meetingId ?? this.meetingId ?? null,
+      projectId: options?.projectId ?? state.projectId ?? this.projectId ?? null,
+    });
+  }
+
+  _updateDictationButtons(options = {}) {
+    return this.dictationController?.updateButtons(options);
+  }
+
+  _destroyDictationController() {
+    return this.dictationController?.destroy?.();
+  }
+
+  applyEditBoxState() {
     this._syncProtocolWorkbenchHostState();
   }
 
+  _markWorkbenchButtonPointerDown() {
+    this._suppressNextWorkbenchTextBlur = true;
+  }
+
   async _handleWorkbenchSave() {
+    await this._saveActiveDraft({ resetMoveMode: true });
+  }
+
+  async _handleWorkbenchTextBlur(_payload = {}) {
+    if (this._suppressNextWorkbenchTextBlur) {
+      this._suppressNextWorkbenchTextBlur = false;
+      return;
+    }
+    const payload = _payload && typeof _payload === "object" ? _payload : {};
+    const latestDraft =
+      (typeof this.workbench?.getDraft === "function" ? this.workbench.getDraft() : null) ||
+      payload?.draft ||
+      {};
+
+    if (latestDraft && typeof latestDraft === "object") {
+      if (String(payload?.field || "") === "shortText") {
+        latestDraft.title = this._normTitle(payload?.value ?? latestDraft.title ?? "");
+      } else if (String(payload?.field || "") === "longText") {
+        latestDraft.longtext = this._normLong(payload?.value ?? latestDraft.longtext ?? "");
+      }
+      this.commands.updateDraft(latestDraft);
+      this._markAutoSaveDraft();
+    }
+    await this._requestAutoSave("blur", { forceImmediate: true });
+  }
+
+  _markAutoSaveDraft() {
+    this._autoSaveRevision += 1;
+    const currentEditor = this.store.getState()?.editor || {};
+    this._autoSaveLatestDraft = { ...currentEditor };
+  }
+
+  _applyLiveShortTextPreview(draft = {}) {
     const state = this.store.getState();
-    if (state.isWriting) return;
+    const selectedTopId = String(state?.selectedTopId ?? "");
+    const nextTitle = this._normTitle(draft?.title);
+    if (!selectedTopId) return false;
+
+    const tops = Array.isArray(state?.tops) ? state.tops : [];
+    let changed = false;
+    const nextTops = tops.map((top) => {
+      if (String(top?.id ?? "") !== selectedTopId) return top;
+      const currentTitle = this._normTitle(top?.title);
+      if (currentTitle === nextTitle) return top;
+      changed = true;
+      return {
+        ...top,
+        previewTitle: nextTitle,
+      };
+    });
+
+    if (!changed) return false;
+    this.store.setState({ tops: nextTops });
+    return true;
+  }
+
+  _mergeSavedPatchIntoSelectedTop(patch = {}, selectedTopId = null) {
+    const topId = String(selectedTopId ?? "").trim();
+    if (!topId) return false;
+    const nextPatch = patch && typeof patch === "object" ? patch : {};
+    if (!Object.keys(nextPatch).length) return false;
+
+    const state = this.store.getState();
+    const tops = Array.isArray(state?.tops) ? state.tops : [];
+    let changed = false;
+    const nextTops = tops.map((top) => {
+      if (String(top?.id ?? "") !== topId) return top;
+      changed = true;
+      const nextTop = {
+        ...top,
+        ...nextPatch,
+      };
+      if (Object.prototype.hasOwnProperty.call(nextPatch, "title")) {
+        delete nextTop.previewTitle;
+      }
+      return nextTop;
+    });
+
+    if (!changed) return false;
+    this.store.setState({ tops: nextTops });
+    return true;
+  }
+
+  _clearAutoSaveTimer() {
+    if (this._autoSaveTimer) {
+      clearTimeout(this._autoSaveTimer);
+      this._autoSaveTimer = null;
+    }
+  }
+
+  _canAutoSaveNow() {
+    const state = this.store.getState();
+    if (!state || state.isReadOnly) return false;
+    return !!getSelectedTop(state);
+  }
+
+  async _requestAutoSave(source = "text", { forceImmediate = false } = {}) {
+    if (!this._canAutoSaveNow()) return false;
+
+    if (this.store.getState().isWriting || this._autoSaveInFlight) {
+      this._autoSaveQueued = true;
+      return false;
+    }
+
+    const isDebouncedText = !forceImmediate && String(source || "text") === "text";
+    if (isDebouncedText) {
+      this._clearAutoSaveTimer();
+      this._autoSaveTimer = setTimeout(() => {
+        this._autoSaveTimer = null;
+        void this._runAutoSave("text");
+      }, this._autoSaveDelayMs);
+      return true;
+    }
+
+    this._clearAutoSaveTimer();
+    return this._runAutoSave(source);
+  }
+
+  async _runAutoSave(source = "text") {
+    if (!this._canAutoSaveNow()) return false;
+    if (this.store.getState().isWriting || this._autoSaveInFlight) {
+      this._autoSaveQueued = true;
+      return false;
+    }
+
+    this._autoSaveInFlight = true;
+    let needsRepeat = false;
+    try {
+      const saveRevision = this._autoSaveRevision;
+      const saved = await this._saveActiveDraft({ resetMoveMode: false, saveRevision, source });
+      if (saved === false) return false;
+      needsRepeat = this._autoSaveQueued;
+      this._autoSaveQueued = false;
+      return true;
+    } finally {
+      this._autoSaveInFlight = false;
+      if (needsRepeat) {
+        void this._runAutoSave("queued");
+      }
+    }
+  }
+
+  async _saveActiveDraft({ resetMoveMode = false, saveRevision = this._autoSaveRevision, source = "manual" } = {}) {
+    const state = this.store.getState();
+    this._clearAutoSaveTimer();
+    if (state.isWriting) return false;
     const selectedTop = getSelectedTop(state);
-    if (!selectedTop) return;
+    if (!selectedTop) return false;
 
     const patch = buildPatchFromDraft(selectedTop, state.editor || {});
-    if (!Object.keys(patch).length) return;
+    if (!Object.keys(patch).length) return true;
 
     this.store.setState({ isWriting: true });
     try {
       this.store.setState({ error: null });
       const res = await this.commands.saveDraft(patch);
-      if (!res?.ok) return;
-      this.commands.updateDraft(editorFromTop(getSelectedTop(this.store.getState())));
-      this.commands.toggleMoveMode(false);
-      this._syncScreenState();
+      if (!res?.ok) return false;
+      const currentSelectedTopId = getSelectedTop(this.store.getState())?.id ?? null;
+      this._mergeSavedPatchIntoSelectedTop(patch, currentSelectedTopId);
+      const currentSelectedTop = getSelectedTop(this.store.getState());
+      if (this._autoSaveRevision === saveRevision) {
+        this.commands.updateDraft(editorFromTop(currentSelectedTop));
+      } else if (this._autoSaveLatestDraft) {
+        this.commands.updateDraft(this._autoSaveLatestDraft);
+        this._autoSaveQueued = true;
+      }
+      if (resetMoveMode) {
+        this.commands.toggleMoveMode(false);
+      }
+      return true;
     } finally {
       this.store.setState({ isWriting: false });
+      this._syncScreenState();
+      if (!this._autoSaveInFlight && this._autoSaveQueued) {
+        const queued = this._autoSaveQueued;
+        this._autoSaveQueued = false;
+        if (queued) {
+          void this._runAutoSave("queued");
+        }
+      }
     }
   }
 
@@ -474,15 +1195,27 @@ export default class TopsScreen {
     if (state.isWriting) return;
     const selectedTop = getSelectedTop(state);
     if (!canDeleteFromState(state, selectedTop)) return;
+    const nextSelectionId = this._getDeleteSelectionCandidateId(state.tops, selectedTop?.id);
 
     this.store.setState({ isWriting: true });
     try {
       this.store.setState({ error: null });
-      const saveRes = await this.commands.saveDraft({ is_hidden: 1 });
+      const saveRes = await this.commands.saveDraft({
+        ...(buildPatchFromDraft(selectedTop, state.editor || {}) || {}),
+        is_hidden: 1,
+      });
       if (!saveRes?.ok) return;
       const res = await this.commands.deleteSelectedTop();
       if (!res?.ok) return;
-      this.commands.updateDraft(editorFromTop(getSelectedTop(this.store.getState())));
+      await this._autoFixNumberGapsAfterDelete();
+      const nextTop = this.store
+        .getState()
+        .tops.find((t) => String(t?.id) === String(nextSelectionId ?? "")) || null;
+      this.commands.selectTop(nextTop?.id ?? null);
+      this.commands.updateDraft(editorFromTop(nextTop));
+      this._setCreateParentTopId(
+        nextTop?.level <= 1 ? nextTop?.id ?? null : nextTop?.parent_top_id ?? nextTop?.id ?? null
+      );
       this.commands.toggleMoveMode(false);
       this._syncScreenState();
     } finally {
@@ -495,6 +1228,8 @@ export default class TopsScreen {
     if (state.isWriting) return;
     const selectedTop = getSelectedTop(state);
     if (!state.isMoveMode && !canMoveFromState(state, selectedTop)) return;
+    const saved = await this._saveActiveDraft({ resetMoveMode: false });
+    if (saved === false) return;
     this.commands.toggleMoveMode();
     this._syncScreenState();
   }
@@ -504,9 +1239,16 @@ export default class TopsScreen {
     if (state.isWriting) return;
     if (state.isReadOnly || !state.meetingId || !state.projectId) return;
 
+    let createdId = null;
+    let shouldFocusCreatedTop = false;
+    this.store.setState({ error: null });
+    const selectedTop = getSelectedTop(state);
+    if (selectedTop) {
+      const saved = await this._saveActiveDraft({ resetMoveMode: false });
+      if (saved === false) return;
+    }
     this.store.setState({ isWriting: true });
     try {
-      this.store.setState({ error: null });
       let res;
       try {
         res = await this.topsRepository.createTop({
@@ -515,6 +1257,7 @@ export default class TopsScreen {
           level: 1,
           parentTopId: null,
           title: "(ohne Bezeichnung)",
+          isCarriedOver: false,
         });
       } catch (err) {
         const error = err?.message ? String(err.message) : String(err || "create failed");
@@ -525,26 +1268,43 @@ export default class TopsScreen {
         this.store.setState({ error: res?.error || "create failed" });
         return;
       }
-      const createdId = res?.top?.id || null;
+      createdId = res?.top?.id || null;
+      shouldFocusCreatedTop = !!createdId;
+      this._setCreateParentTopId(createdId);
       await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
       this._syncScreenState();
     } finally {
       this.store.setState({ isWriting: false });
+    }
+
+    if (shouldFocusCreatedTop) {
+      this._syncScreenState();
+      await focusCreatedTopAfterReload({
+        createdTopId: createdId,
+        selectedTopId: this.store.getState().selectedTopId,
+        topsListRoot: this.topsList?.root,
+        workbench: this.workbench,
+        awaitNextPaint: () => this._awaitNextPaint(),
+      });
     }
   }
 
   async _handleWorkbenchCreateChild() {
     const state = this.store.getState();
     if (state.isWriting) return;
-    const selectedTop = getSelectedTop(state);
+    const selectedTop = this._resolveCreateParentTop(state);
     if (!canCreateChildFromState(state, selectedTop)) return;
 
     const level = Number(selectedTop.level) + 1;
     if (!Number.isFinite(level) || level > 4) return;
 
+    let createdId = null;
+    let shouldFocusCreatedTop = false;
+    this.store.setState({ error: null });
+    const saved = await this._saveActiveDraft({ resetMoveMode: false });
+    if (saved === false) return;
     this.store.setState({ isWriting: true });
     try {
-      this.store.setState({ error: null });
       let res;
       try {
         res = await this.topsRepository.createTop({
@@ -563,11 +1323,24 @@ export default class TopsScreen {
         this.store.setState({ error: res?.error || "create failed" });
         return;
       }
-      const createdId = res?.top?.id || null;
+      createdId = res?.top?.id || null;
+      shouldFocusCreatedTop = !!createdId;
+      this._setCreateParentTopId(selectedTop.id ?? null);
       await this._reloadTops({ keepSelection: true, selectTopId: createdId || null });
       this._syncScreenState();
     } finally {
       this.store.setState({ isWriting: false });
+    }
+
+    if (shouldFocusCreatedTop) {
+      this._syncScreenState();
+      await focusCreatedTopAfterReload({
+        createdTopId: createdId,
+        selectedTopId: this.store.getState().selectedTopId,
+        topsListRoot: this.topsList?.root,
+        workbench: this.workbench,
+        awaitNextPaint: () => this._awaitNextPaint(),
+      });
     }
   }
 
@@ -598,8 +1371,143 @@ export default class TopsScreen {
     });
   }
 
+  _getDeleteSelectionCandidateId(tops, selectedTopId) {
+    const rows = Array.isArray(tops) ? tops : [];
+    const key = String(selectedTopId ?? "");
+    if (!key) return null;
+
+    const ids = rows.map((row) => String(row?.id ?? "")).filter(Boolean);
+    const index = ids.indexOf(key);
+    if (index < 0) return null;
+    return ids[index + 1] || ids[index - 1] || null;
+  }
+
+  _firstNumberGapFromItems(items = []) {
+    const rows = Array.isArray(items) ? items : [];
+    const groups = new Map();
+
+    for (const row of rows) {
+      const id = row?.id;
+      const level = Math.floor(Number(row?.level));
+      const number = Math.floor(Number(row?.number));
+      if (!id || !Number.isFinite(level) || level < 1 || level > 4) continue;
+      if (!Number.isFinite(number) || number < 1) continue;
+
+      const parentTopId = row?.parent_top_id ?? null;
+      const key = `${level}::${parentTopId ?? "root"}`;
+      if (!groups.has(key)) groups.set(key, { level, parentTopId, items: [] });
+      groups.get(key).items.push({ id, number });
+    }
+
+    const gaps = [];
+    for (const group of groups.values()) {
+      if (!group.items.length) continue;
+      const numbers = new Set();
+      let maxNumber = 0;
+      for (const item of group.items) {
+        numbers.add(item.number);
+        if (item.number > maxNumber) maxNumber = item.number;
+      }
+      if (maxNumber < 1) continue;
+
+      let missingNumber = null;
+      for (let i = 1; i <= maxNumber; i += 1) {
+        if (!numbers.has(i)) {
+          missingNumber = i;
+          break;
+        }
+      }
+      if (missingNumber === null) continue;
+
+      let lastTopId = null;
+      for (const item of group.items) {
+        if (item.number !== maxNumber) continue;
+        if (lastTopId === null || String(item.id) > String(lastTopId)) lastTopId = item.id;
+      }
+      if (!lastTopId) continue;
+
+      gaps.push({
+        level: group.level,
+        parentTopId: group.parentTopId,
+        missingNumber,
+        lastTopId,
+      });
+    }
+
+    gaps.sort((a, b) => {
+      if (a.level !== b.level) return a.level - b.level;
+      const ap = a.parentTopId ?? "";
+      const bp = b.parentTopId ?? "";
+      if (ap !== bp) return String(ap) < String(bp) ? -1 : 1;
+      return a.missingNumber - b.missingNumber;
+    });
+
+    return gaps[0] || null;
+  }
+
+  async _autoFixNumberGapsAfterDelete() {
+    if (this.store.getState().isReadOnly) return true;
+    if (typeof window.bbmDb?.meetingTopsFixNumberGap !== "function") return true;
+
+    const maxSteps = 20;
+    for (let i = 0; i < maxSteps; i += 1) {
+      const gap = this._firstNumberGapFromItems(this.store.getState().tops);
+      if (!gap?.lastTopId) return true;
+
+      const fixRes = await window.bbmDb.meetingTopsFixNumberGap({
+        meetingId: this.store.getState().meetingId || this.meetingId || null,
+        level: gap.level,
+        parentTopId: gap.parentTopId ?? null,
+        fromTopId: gap.lastTopId,
+        toNumber: gap.missingNumber,
+      });
+
+      if (!fixRes?.ok) {
+        this.store.setState({
+          error: fixRes?.error || fixRes?.errorCode || "Numbernluecke konnte nicht repariert werden",
+        });
+        return false;
+      }
+
+      await this._reloadTops({ keepSelection: false });
+    }
+
+    return true;
+  }
+
+  _awaitNextPaint() {
+    return new Promise((resolve) => {
+      const raf =
+        typeof window !== "undefined" && typeof window.requestAnimationFrame === "function"
+          ? window.requestAnimationFrame.bind(window)
+          : typeof requestAnimationFrame === "function"
+            ? requestAnimationFrame
+            : null;
+
+      if (raf) {
+        raf(() => resolve());
+        return;
+      }
+
+      setTimeout(resolve, 0);
+    });
+  }
+
   async load() {
+    const showAmpelInList = await this._loadDisplaySetting({
+      key: "tops.ampelEnabled",
+      fallback: true,
+    });
+    const showLongtextInList = await this._loadDisplaySetting({
+      key: "tops.showLongtextInList",
+      fallback: false,
+    });
+    this.store.setState({
+      showAmpelInList,
+      showLongtextInList,
+    });
     await this._reloadTops({ keepSelection: true });
+    await this._loadAudioLicenseState(true);
     this._syncScreenState();
   }
 
@@ -609,6 +1517,8 @@ export default class TopsScreen {
 
   async destroy() {
     await this.closeFlow?.destroy?.();
+    this._destroyAudioFeature?.();
+    this._destroyDictationController?.();
     this._showSidebar();
   }
 }

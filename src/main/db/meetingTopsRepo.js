@@ -731,16 +731,23 @@ function carryOverFromMeeting(arg1, arg2) {
     params.push(now);
   }
 
-  params.push(fromMeetingId);
+  const whereParts = ["meeting_id = ?"];
+  const whereParams = [fromMeetingId];
+  if (hasCompleted) {
+    whereParts.push(
+      "(LOWER(TRIM(status)) <> 'erledigt' OR completed_in_meeting_id IS NULL OR completed_in_meeting_id = ?)"
+    );
+    whereParams.push(fromMeetingId);
+  }
 
   const sql = `
     INSERT OR IGNORE INTO meeting_tops (${cols.join(", ")})
     SELECT ${selectParts.join(", ")}
     FROM meeting_tops
-    WHERE meeting_id = ?
+    WHERE ${whereParts.join(" AND ")}
   `;
 
-  const info = db.prepare(sql).run(...params);
+  const info = db.prepare(sql).run(...params, ...whereParams);
   return { inserted: info.changes };
 }
 

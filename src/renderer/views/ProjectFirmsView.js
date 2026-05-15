@@ -18,6 +18,83 @@ import { fireAndForget } from "../utils/async.js";
 // - Die Zuordnungsmaske MUSS bei Klick auf "Speichern" geschlossen werden.
 //   => Modal schlieÃŸt sofort, Speichern lÃ¤uft danach weiter; Fehler werden per alert angezeigt.
 
+const PROJECT_FIRMS_LAYOUT_IDENTITY = Object.freeze({
+  moduleId: "projektverwaltung",
+  tableKey: "project_firms",
+  orientation: "portrait",
+});
+
+const PROJECT_FIRMS_DEFAULT_COLUMNS = Object.freeze([
+  Object.freeze({
+    key: "shortName",
+    label: "Kurzbez.",
+    uiWidth: "160px",
+    pdfWidth: "23mm",
+    weight: 2,
+    required: true,
+    previewValue: "AB",
+    previewField: "shortName",
+    headerLines: Object.freeze(["Kurzbez."]),
+  }),
+  Object.freeze({
+    key: "role",
+    label: "Funktion/Gewerk",
+    uiWidth: "1fr",
+    pdfWidth: "auto",
+    weight: 6,
+    required: true,
+    previewValue: "Rohbau",
+    previewField: "role",
+    headerLines: Object.freeze(["Funktion/Gewerk"]),
+  }),
+  Object.freeze({
+    key: "active",
+    label: "Aktiv",
+    uiWidth: "70px",
+    pdfWidth: "15mm",
+    weight: 1,
+    required: true,
+    previewValue: "ja",
+    previewField: "active",
+    headerLines: Object.freeze(["Aktiv"]),
+  }),
+]);
+
+function _cloneJson(value) {
+  if (value == null) return value;
+  return JSON.parse(JSON.stringify(value));
+}
+
+function _cloneColumns(columns = []) {
+  return Array.isArray(columns) ? columns.map((column) => _cloneJson(column)) : [];
+}
+
+function _normalizeText(value) {
+  return String(value == null ? "" : value).trim();
+}
+
+function _isFixedTableWidth(value) {
+  return /^(?:\d+(?:\.\d+)?)(?:px|mm|cm|ch|em|rem|pt|pc|%)$/i.test(_normalizeText(value));
+}
+
+function _normalizeTableColumnWidth(width, fallback = "") {
+  const value = _normalizeText(width);
+  if (!value) return _normalizeText(fallback);
+
+  const lower = value.toLowerCase();
+  if (lower === "auto" || lower.endsWith("fr") || lower.includes("var(") || lower.includes("calc(")) {
+    return "";
+  }
+
+  if (lower.startsWith("minmax(")) {
+    const match = value.match(/^minmax\(\s*([^,]+?)\s*,/i);
+    const minWidth = _normalizeText(match?.[1]);
+    return _isFixedTableWidth(minWidth) ? minWidth : "";
+  }
+
+  return _isFixedTableWidth(value) ? value : _normalizeText(fallback);
+}
+
 export default class ProjectFirmsView {
   constructor({ router, projectId, readOnly } = {}) {
     this.router = router;
@@ -45,6 +122,8 @@ export default class ProjectFirmsView {
     // busy
     this.savingFirm = false;
     this.savingPerson = false;
+    this.projectFirmsLayoutColumns = [];
+    this.projectFirmsLayoutSource = "default";
 
     // state (global assignment)
     this.globalFirms = []; // alle globalen Firmen (firmsListGlobal)
@@ -63,6 +142,8 @@ export default class ProjectFirmsView {
 
     // local firms list refs
     this.tableBodyEl = null;
+    this.firmsTableEl = null;
+    this.firmsTableColEls = [];
     this.btnNewFirm = null;
     this.btnImportCsv = null;
     this.btnEditFirmList = null;
@@ -221,26 +302,14 @@ export default class ProjectFirmsView {
     head.style.marginBottom = "10px";
 
     const title = document.createElement("h2");
-    title.textContent = "Firmen";
+    title.textContent = "Firmen im Projekt";
     title.style.margin = "0";
-
-    const viewLabel = document.createElement("div");
-    viewLabel.textContent = "";
-    viewLabel.style.fontSize = "16px";
-    viewLabel.style.fontWeight = "600";
-    viewLabel.style.opacity = "0.9";
-
-    const viewScope = document.createElement("div");
-    viewScope.textContent = this._projectScopeText();
-    viewScope.style.fontSize = "16px";
-    viewScope.style.fontWeight = "600";
-    viewScope.style.opacity = "0.9";
 
     const titleWrap = document.createElement("div");
     titleWrap.style.display = "inline-flex";
     titleWrap.style.alignItems = "baseline";
     titleWrap.style.gap = "10px";
-    titleWrap.append(title, viewLabel, viewScope);
+    titleWrap.append(title);
 
     const btnToProject = document.createElement("button");
     btnToProject.type = "button";
@@ -249,25 +318,28 @@ export default class ProjectFirmsView {
     btnToProject.onclick = async () => {
       const r = this.router || null;
       const pid = this.projectId || r?.currentProjectId || null;
-      if (!r || !pid || typeof r.showTops !== "function") {
+      if (!r || !pid) {
         if (r && typeof r.showProjects === "function") await r.showProjects();
         return;
       }
 
-      let meetingId = r.currentMeetingId || null;
-      if (!meetingId && typeof window?.bbmDb?.meetingsListByProject === "function") {
-        const res = await window.bbmDb.meetingsListByProject(pid);
-        if (res?.ok && Array.isArray(res.list) && res.list.length) {
-          meetingId = res.list[0]?.id || null;
-        }
-      }
-
-      if (!meetingId) {
-        alert("Keine Besprechung vorhanden. Bitte zuerst ein Protokoll anlegen.");
+      if (typeof r.openProjectProtocol === "function") {
+        await r.openProjectProtocol(pid);
         return;
       }
 
-      await r.showTops(meetingId, pid);
+      if (typeof r.showMeetings === "function") {
+        await r.showMeetings(pid, {
+          startMode: true,
+          startReason: "protocol-start-unavailable",
+          integrityError: false,
+        });
+        return;
+      }
+
+      if (typeof r.showProjects === "function") {
+        await r.showProjects();
+      }
     };
 
     const msg = document.createElement("div");
@@ -340,7 +412,7 @@ export default class ProjectFirmsView {
     listActions.style.gap = "6px";
 
     const btnGlobalAssign = document.createElement("button");
-    btnGlobalAssign.textContent = "Aus globaler Liste hinzufuegen";
+    btnGlobalAssign.textContent = "Aus Firmenstamm hinzufügen";
     applyPopupButtonStyle(btnGlobalAssign);
     btnGlobalAssign.onclick = async () => {
       if (this._isReadOnly()) return;
@@ -365,6 +437,12 @@ export default class ProjectFirmsView {
     firmsTable.style.width = "100%";
     firmsTable.style.borderCollapse = "collapse";
 
+    const colgroup = document.createElement("colgroup");
+    const colShort = document.createElement("col");
+    const colGewerk = document.createElement("col");
+    const colActive = document.createElement("col");
+    colgroup.append(colShort, colGewerk, colActive);
+
     const thead = document.createElement("thead");
     thead.innerHTML = `
       <tr>
@@ -375,7 +453,7 @@ export default class ProjectFirmsView {
     `;
 
     const tbody = document.createElement("tbody");
-    firmsTable.append(thead, tbody);
+    firmsTable.append(colgroup, thead, tbody);
 
     const listHint = document.createElement("div");
     listHint.textContent = "Aktiv = Firma ist in der Verantwortlich-Auswahl f\u00fcr TOPs sichtbar.";
@@ -749,7 +827,7 @@ const taFirmNotes = document.createElement("textarea");
     modalHead.style.borderBottom = "1px solid #e2e8f0";
 
     const modalTitle = document.createElement("div");
-    modalTitle.textContent = "Aus globaler Liste hinzufuegen";
+    modalTitle.textContent = "Aus Firmenstamm hinzufügen";
     modalTitle.style.fontWeight = "bold";
 
     const btnClose = document.createElement("button");
@@ -798,7 +876,7 @@ const taFirmNotes = document.createElement("textarea");
       return { col, list };
     };
 
-    const leftCol = mkListCol("Globale Firmen");
+    const leftCol = mkListCol("Firmen hinzufügen");
     const rightCol = mkListCol("Firmen im Projekt");
 
     modalGrid.append(leftCol.col, rightCol.col);
@@ -1139,6 +1217,8 @@ const taFirmNotes = document.createElement("textarea");
     this.btnImportCsv = btnImportCsv;
     this.btnGlobalAssign = btnGlobalAssign;
     this.tableBodyEl = tbody;
+    this.firmsTableEl = firmsTable;
+    this.firmsTableColEls = [colShort, colGewerk, colActive];
 
     this.editWrapEl = editWrap;
     this.firmGridEl = firmGrid;
@@ -1191,6 +1271,8 @@ const taFirmNotes = document.createElement("textarea");
     this.globalAssignBtnCancelEl = btnCancel;
     this.globalAssignBtnCloseEl = btnClose;
 
+    this._applyProjectFirmsLayout();
+
     this.localFirmOverlayEl = localFirmOverlay;
     this.localFirmTitleEl = localFirmTitle;
     this.localFirmErrEl = localFirmErr;
@@ -1230,7 +1312,7 @@ const taFirmNotes = document.createElement("textarea");
 
   async load() {
     this._ensureProjectId();
-    await this._loadRoleMeta();
+    await Promise.all([this._ensureProjectFirmsLayout(), this._loadRoleMeta()]);
 
     if (!this.projectId) {
       this._setMsg("Bitte zuerst ein Projekt auswÃ¤hlen (Projekt-Kontext fehlt).");
@@ -1254,6 +1336,101 @@ const taFirmNotes = document.createElement("textarea");
   // ------------------------------------------------------------
   _ensureProjectId() {
     this.projectId = this.projectId || this.router?.currentProjectId || null;
+  }
+
+  _getProjectFirmsDefaultColumns() {
+    return _cloneColumns(PROJECT_FIRMS_DEFAULT_COLUMNS);
+  }
+
+  _getProjectFirmsUiColumns() {
+    const defaultColumns = this._getProjectFirmsDefaultColumns();
+    const activeColumns = Array.isArray(this.projectFirmsLayoutColumns) && this.projectFirmsLayoutColumns.length
+      ? this.projectFirmsLayoutColumns
+      : defaultColumns;
+
+    return activeColumns.map((column, index) => {
+      const fallback = defaultColumns[index] || {};
+      return {
+        ..._cloneJson(fallback),
+        ..._cloneJson(column),
+        uiWidth: _normalizeTableColumnWidth(column?.uiWidth, fallback.uiWidth || ""),
+        pdfWidth: _normalizeText(column?.pdfWidth) || _normalizeText(fallback.pdfWidth),
+        label: _normalizeText(column?.label) || _normalizeText(fallback.label),
+      };
+    });
+  }
+
+  _applyProjectFirmsLayout() {
+    const cols = Array.isArray(this.firmsTableColEls) ? this.firmsTableColEls : [];
+    if (!cols.length) return;
+    const widths = this._getProjectFirmsUiColumns().map((column) => _normalizeTableColumnWidth(column?.uiWidth, ""));
+    for (let i = 0; i < cols.length; i += 1) {
+      const colEl = cols[i];
+      if (!colEl?.style) continue;
+      const width = widths[i] || "";
+      if (width) {
+        colEl.style.width = width;
+      } else if (typeof colEl.style.removeProperty === "function") {
+        colEl.style.removeProperty("width");
+      } else {
+        colEl.style.width = "";
+      }
+    }
+  }
+
+  async _ensureProjectFirmsLayout() {
+    const api = window.bbmDb || {};
+    const defaultColumns = this._getProjectFirmsDefaultColumns();
+    const defaultLayout = {
+      moduleId: PROJECT_FIRMS_LAYOUT_IDENTITY.moduleId,
+      tableKey: PROJECT_FIRMS_LAYOUT_IDENTITY.tableKey,
+      variant: PROJECT_FIRMS_LAYOUT_IDENTITY.orientation,
+      columns: defaultColumns,
+    };
+
+    if (typeof api.tableLayoutsGetOne !== "function") {
+      this.projectFirmsLayoutSource = "default";
+      this.projectFirmsLayoutColumns = defaultColumns;
+      this._applyProjectFirmsLayout();
+      return defaultLayout;
+    }
+
+    try {
+      const res = await api.tableLayoutsGetOne(PROJECT_FIRMS_LAYOUT_IDENTITY);
+      const effective = res?.ok ? res?.data?.effectiveLayout || res?.data?.defaultLayout || null : null;
+      const candidateColumns = Array.isArray(effective?.columns) ? effective.columns : [];
+      if (!candidateColumns.length) {
+        this.projectFirmsLayoutSource = "default";
+        this.projectFirmsLayoutColumns = defaultColumns;
+        this._applyProjectFirmsLayout();
+        return defaultLayout;
+      }
+
+      const normalizedColumns = candidateColumns.map((column, index) => {
+        const fallback = defaultColumns[index] || {};
+        return {
+          ..._cloneJson(fallback),
+          ..._cloneJson(column),
+          uiWidth: _normalizeTableColumnWidth(column?.uiWidth, fallback.uiWidth || ""),
+          pdfWidth: _normalizeText(column?.pdfWidth) || _normalizeText(fallback.pdfWidth),
+          label: _normalizeText(column?.label) || _normalizeText(fallback.label),
+        };
+      });
+      this.projectFirmsLayoutSource = res?.data?.source || (res?.ok ? "stored" : "default");
+      this.projectFirmsLayoutColumns = normalizedColumns.length ? normalizedColumns : defaultColumns;
+      this._applyProjectFirmsLayout();
+      return {
+        moduleId: PROJECT_FIRMS_LAYOUT_IDENTITY.moduleId,
+        tableKey: PROJECT_FIRMS_LAYOUT_IDENTITY.tableKey,
+        variant: PROJECT_FIRMS_LAYOUT_IDENTITY.orientation,
+        columns: this.projectFirmsLayoutColumns,
+      };
+    } catch (_err) {
+      this.projectFirmsLayoutSource = "default";
+      this.projectFirmsLayoutColumns = defaultColumns;
+      this._applyProjectFirmsLayout();
+      return defaultLayout;
+    }
   }
 
   _readUiMode() {
@@ -1988,7 +2165,7 @@ const taFirmNotes = document.createElement("textarea");
 
     const res = await window.bbmDb.projectFirmsListByProject(this.projectId);
     if (!res?.ok) {
-      this._setMsg(res?.error || "Fehler beim Laden der Projektfirmen");
+      this._setMsg(res?.error || "Fehler beim Laden der Firmen im Projekt");
 
       this.firms = [];
       this._closeFirmEditor();
@@ -1996,6 +2173,7 @@ const taFirmNotes = document.createElement("textarea");
       this.persons = [];
 
       this._renderFirmsOnly();
+      this._applyProjectFirmsLayout();
       this._renderPersonsOnly();
       this._applyFirmFormState();
       this._applyPersonFormState();
@@ -2020,6 +2198,7 @@ const taFirmNotes = document.createElement("textarea");
     }
 
     this._renderFirmsOnly();
+    this._applyProjectFirmsLayout();
     if (this.firmMode === "edit" && this.selectedFirmId) {
       await this._reloadPersons();
     } else {
@@ -2077,6 +2256,7 @@ const taFirmNotes = document.createElement("textarea");
     if (!tb) return;
 
     tb.innerHTML = "";
+    const uiWidths = this._getProjectFirmsUiColumns().map((column) => _normalizeTableColumnWidth(column?.uiWidth, ""));
 
     for (const f of this.firms) {
       const tr = document.createElement("tr");
@@ -2096,17 +2276,20 @@ const taFirmNotes = document.createElement("textarea");
       const tdShort = document.createElement("td");
       tdShort.style.padding = "6px";
       tdShort.style.borderBottom = "1px solid #eee";
+      if (uiWidths[0]) tdShort.style.width = uiWidths[0];
       tdShort.textContent = this._firmShortText(f);
 
       const tdGewerk = document.createElement("td");
       tdGewerk.style.padding = "6px";
       tdGewerk.style.borderBottom = "1px solid #eee";
+      if (uiWidths[1]) tdGewerk.style.width = uiWidths[1];
       tdGewerk.textContent = this._firmGewerkText(f);
 
       const tdActive = document.createElement("td");
       tdActive.style.padding = "6px";
       tdActive.style.borderBottom = "1px solid #eee";
       tdActive.style.textAlign = "center";
+      if (uiWidths[2]) tdActive.style.width = uiWidths[2];
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = this._parseActiveFlag(f?.is_active) === 1;
@@ -2151,7 +2334,7 @@ const taFirmNotes = document.createElement("textarea");
     if (!(this.firms || []).length) {
       const tr = document.createElement("tr");
       const td = document.createElement("td");
-      td.colSpan = 2;
+      td.colSpan = 3;
       td.style.padding = "10px 6px";
       td.style.fontSize = "12px";
       td.style.opacity = "0.75";

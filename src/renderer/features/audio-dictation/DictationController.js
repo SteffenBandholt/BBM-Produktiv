@@ -1,5 +1,8 @@
 import { TranscriptionService } from "../../services/audio/TranscriptionService.js";
 
+const DICTATION_START_ICON_URL = "./assets/icons/dictation-start.svg";
+const DICTATION_STOP_ICON_URL = "./assets/icons/dictation-stop.svg";
+
 export class DictationController {
   constructor({ view, ensureAudioAvailable }) {
     this.view = view;
@@ -19,6 +22,46 @@ export class DictationController {
     this._termPromptEl = null;
     this._pendingTermPrompt = null;
     this.transcriptionService = new TranscriptionService();
+  }
+
+  _createMicrophoneIcon(doc) {
+    const img = doc.createElement("img");
+    img.alt = "";
+    img.setAttribute("aria-hidden", "true");
+    img.setAttribute("draggable", "false");
+    img.className = "bbm-tops-dictation-icon";
+    img.src = DICTATION_START_ICON_URL;
+    return img;
+  }
+
+  _renderButtonContent(btn, { active = false } = {}) {
+    if (!btn) return;
+    const doc = btn.ownerDocument || (typeof document !== "undefined" ? document : null);
+    if (!doc?.createElement) return;
+    if (!btn._bbmDictationIcon) {
+      btn._bbmDictationIcon = this._createMicrophoneIcon(doc);
+      btn.append(btn._bbmDictationIcon);
+    }
+    btn.style.display = "inline-flex";
+    btn.style.alignItems = "center";
+    btn.style.justifyContent = "center";
+    btn.style.padding = "0";
+    btn.style.minWidth = "24px";
+    btn.style.width = "24px";
+    btn.style.height = "24px";
+    btn.style.minHeight = "24px";
+    btn.style.lineHeight = "0";
+    btn.dataset.size = "sm";
+    btn.dataset.variant = "secondary";
+    btn._bbmDictationIcon.src = active ? DICTATION_STOP_ICON_URL : DICTATION_START_ICON_URL;
+
+    if (active) {
+      btn.title = "Aufnahme läuft – klicken zum Stoppen";
+      btn.setAttribute("aria-label", "Aufnahme läuft – klicken zum Stoppen");
+    } else {
+      btn.title = "Diktat starten";
+      btn.setAttribute("aria-label", "Diktat starten");
+    }
   }
 
   // UI-nahe Nutzung des Audio-Addons:
@@ -41,14 +84,22 @@ export class DictationController {
 
     const applyBtnState = (btn, isTarget) => {
       if (!btn) return;
+      if (audioLocked) {
+        btn.style.display = "none";
+        btn.hidden = true;
+        btn.title = view._audioLicenseMessage || "Audio-Funktion ist fuer diese Lizenz nicht freigeschaltet.";
+        btn.setAttribute("aria-label", btn.title);
+        btn.disabled = true;
+        btn.style.opacity = "0.65";
+        return;
+      }
+      btn.style.display = "inline-flex";
+      btn.hidden = false;
       const active = this._audioDictationActive && isTarget;
       const disallowBecauseOtherTarget = this._audioDictationActive && !isTarget;
       btn.disabled = disabledBase || this._audioDictationBusy || disallowBecauseOtherTarget;
-      btn.textContent = active ? "Stopp" : "Diktat";
       btn.style.opacity = btn.disabled ? "0.65" : "1";
-      if (audioLocked && view._audioLicenseMessage) {
-        btn.title = view._audioLicenseMessage;
-      }
+      this._renderButtonContent(btn, { active });
     };
 
     applyBtnState(btnShort, this._audioDictationTarget === "shortText");

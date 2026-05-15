@@ -1,4 +1,4 @@
-import TopsScreen from "./screens/TopsScreen.js";
+﻿import TopsScreen from "./screens/TopsScreen.js";
 import { PROTOKOLL_WORK_SCREEN_ID } from "./screens/index.js";
 import * as protokollViewModels from "./viewmodel/index.js";
 
@@ -23,7 +23,7 @@ function buildProtokollModuleNavigation() {
     project: Object.freeze([
       Object.freeze({
         key: PROTOKOLL_NAV_ENTRY_KEY,
-        label: "Protokolle",
+        label: "Protokoll",
         moduleId: PROTOKOLL_MODULE_ID,
         workScreenId: PROTOKOLL_WORK_SCREEN_ID,
         section: "meetings",

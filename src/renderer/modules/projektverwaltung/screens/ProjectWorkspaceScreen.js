@@ -1,13 +1,5 @@
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 
-const PROJECT_MODULES = Object.freeze([
-  Object.freeze({
-    moduleId: "protokoll",
-    label: "Protokoll öffnen",
-    description: "Das Protokoll im aktuellen Projektkontext öffnen.",
-  }),
-]);
-
 function normalizeText(value) {
   return String(value || "").trim();
 }
@@ -40,10 +32,11 @@ function getProjectTitle(project, fallbackProjectId = null) {
 }
 
 export default class ProjectWorkspaceScreen {
-  constructor({ router, projectId, project } = {}) {
+  constructor({ router, projectId, project, projectModules } = {}) {
     this.router = router || null;
     this.projectId = projectId || null;
     this.project = project || null;
+    this.projectModules = Array.isArray(projectModules) ? projectModules : [];
 
     this.root = null;
     this.hostEl = null;
@@ -54,7 +47,7 @@ export default class ProjectWorkspaceScreen {
   }
 
   getAvailableProjectModules() {
-    return PROJECT_MODULES;
+    return this.projectModules;
   }
 
   getProjectDisplayText() {
@@ -104,15 +97,68 @@ export default class ProjectWorkspaceScreen {
     return true;
   }
 
+  _pickLatestOpenMeeting(openMeetings) {
+    const list = Array.isArray(openMeetings) ? openMeetings : [];
+    if (!list.length) return null;
+
+    return list.reduce((best, cur) => {
+      const bestIdx = Number(best?.meeting_index ?? best?.meetingIndex ?? 0);
+      const curIdx = Number(cur?.meeting_index ?? cur?.meetingIndex ?? 0);
+      if (curIdx > bestIdx) return cur;
+      if (curIdx === bestIdx) {
+        const bestId = Number(best?.id ?? 0);
+        const curId = Number(cur?.id ?? 0);
+        return curId > bestId ? cur : best;
+      }
+      return best;
+    }, list[0]);
+  }
+
+  async _openProtocolModule(projectId) {
+    const effectiveProjectId = projectId || this.projectId || this.router?.currentProjectId || null;
+    if (!effectiveProjectId) return false;
+    if (typeof this.router?.openProjectModule === "function") {
+      const result = await this.router.openProjectModule(effectiveProjectId, "protokoll", {
+        project: this.project || null,
+      });
+      return typeof result === "object" ? !!result?.ok : result !== false;
+    }
+
+    if (typeof this.router?.openProjectProtocol === "function") {
+      const result = await this.router.openProjectProtocol(effectiveProjectId, {
+        project: this.project || null,
+      });
+      return typeof result === "object" ? !!result?.ok : result !== false;
+    }
+
+    if (typeof this.router?.showMeetings === "function") {
+      await this.router.showMeetings(effectiveProjectId, {
+        startMode: true,
+        startReason: "protocol-start-unavailable",
+        integrityError: false,
+      });
+      return true;
+    }
+
+    return false;
+  }
+
   async openProjectModule(moduleId) {
     const normalizedModuleId = normalizeText(moduleId);
-    if (normalizedModuleId !== "protokoll") return false;
-
     const projectId = this.projectId || this.router?.currentProjectId || null;
-    if (!projectId || typeof this.router?.showTops !== "function") return false;
+    if (!projectId) return false;
 
-    await this.router.showTops(null, projectId);
-    return true;
+    if (normalizedModuleId === "projectFirms") {
+      if (typeof this.router?.showProjectFirms !== "function") return false;
+      await this.router.showProjectFirms(projectId);
+      return true;
+    }
+
+    if (normalizedModuleId === "protokoll") {
+      return await this._openProtocolModule(projectId);
+    }
+
+    return false;
   }
 
   _renderModuleTiles(container) {
@@ -183,16 +229,30 @@ export default class ProjectWorkspaceScreen {
     info.style.marginBottom = "16px";
     this._renderProjectInfo(info);
 
+    const availableModules = this.getAvailableProjectModules();
+
     const sectionTitle = document.createElement("h3");
-    sectionTitle.textContent = "Verfügbare Projektmodule";
+    sectionTitle.textContent = "Arbeitsbereiche im Projekt";
     sectionTitle.style.margin = "0 0 10px";
 
     const grid = document.createElement("div");
     grid.style.display = "grid";
-    grid.style.gridTemplateColumns = "repeat(auto-fit, minmax(240px, 1fr))";
-    grid.style.gap = "12px";
+    grid.style.gridTemplateColumns = "1fr";
+    grid.style.gap = "8px";
 
-    this._renderModuleTiles(grid);
+    if (availableModules.length > 0) {
+      this._renderModuleTiles(grid);
+    } else {
+      const empty = document.createElement("div");
+      empty.textContent = "Für dieses Projekt sind keine Arbeitsmodule freigeschaltet.";
+      empty.style.border = "1px solid var(--card-border)";
+      empty.style.borderRadius = "8px";
+      empty.style.padding = "10px 12px";
+      empty.style.background = "var(--card-bg)";
+      empty.style.fontSize = "13px";
+      empty.style.opacity = "0.85";
+      grid.appendChild(empty);
+    }
 
     this.hostEl.append(info);
 

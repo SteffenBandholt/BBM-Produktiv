@@ -1,5 +1,11 @@
 const TOPS_V2_STYLE_TAG = "bbm-tops-v2-styles";
-const TOPS_V2_STYLE_HREF = new URL("./styles/tops.css", import.meta.url).href;
+let TOPS_V2_STYLE_HREF = "./styles/tops.css";
+
+try {
+  TOPS_V2_STYLE_HREF = new URL("./styles/tops.css", import.meta.url).href;
+} catch (_err) {
+  // Testloader/Data-URL fallback: relative href bleibt fuer den Renderer harmless.
+}
 
 export function ensureProtokollModuleStyles() {
   if (typeof document === "undefined") return;

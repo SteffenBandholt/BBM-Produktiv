@@ -6,12 +6,14 @@
   "main": "src/main/main.js",
   "type": "commonjs",
   "scripts": {
-    "start": "set ELECTRON_RUN_AS_NODE=&& electron .",
+    "start": "npm run fix:electron-deps && npm run start:raw",
+    "start:raw": "set ELECTRON_RUN_AS_NODE=&& electron .",
     "pack": "electron-builder --dir",
     "dist": "node scripts/dist.cjs",
     "test": "node scripts/test.cjs",
     "lint": "eslint \"src/**/*.js\"",
     "lint:fix": "eslint \"src/**/*.js\" --fix",
+    "fix:electron-deps": "electron-builder install-app-deps",
     "postinstall": "electron-builder install-app-deps"
   },
   "devDependencies": {

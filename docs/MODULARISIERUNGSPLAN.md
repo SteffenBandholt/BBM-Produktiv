@@ -158,6 +158,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - `TopsScreen` bindet Styles nicht mehr direkt ueber den globalen `tops/`-Pfad ein
 - `TopsScreen` ist fuer die bisher bearbeitete Kleinschnitt-Achse weitgehend von direkten Tiefenimports entlastet
 - ein kleiner Nachweis fuer den entmischten Screen-Stand ist vorhanden
+- die Diktat-Buttons nutzen jetzt die vorhandenen SVG-Assets und sitzen direkt neben der Restzeichenanzeige in der echten Tops-Editbox
 
 **Noch offen**
 - grosser Unterbau liegt weiter unter `src/renderer/tops/`
@@ -191,6 +192,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - erste Konsolidierungsschritte
 - kleine Nachweise zur Kernnavigation, Router-Entkopplung und Modulsichtbarkeit sind nachgezogen
 - der entmischte `TopsScreen`-Zwischenstand ist per Test abgesichert
+- die inline platzierte Diktat-Schaltflaeche ist testseitig mit Asset-Icons, Start-/Stop-Umschaltung und Freischaltung abgesichert
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
