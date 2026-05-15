@@ -7,6 +7,13 @@ function _audioLog(message, extra = null) {
 }
 
 const MODEL_SETTING_KEY = "audio.whisper.quality";
+const DEFAULT_MODEL_FILE_NAME = "ggml-small.bin";
+const MODEL_FILE_BY_QUALITY = Object.freeze({
+  fast: "ggml-base.bin",
+  balanced: "ggml-small.bin",
+  best: "ggml-medium.bin",
+  large: "ggml-large.bin",
+});
 
 class TranscriptionService {
   constructor({ meetingsRepo, audioImportsRepo, transcriptsRepo, engine, appSettingsRepo }) {
@@ -24,14 +31,44 @@ class TranscriptionService {
 
   _resolveModelFileName() {
     if (!this.appSettingsRepo || typeof this.appSettingsRepo.appSettingsGetMany !== "function") {
-      return "ggml-base.bin";
+      return DEFAULT_MODEL_FILE_NAME;
     }
     const data = this.appSettingsRepo.appSettingsGetMany([MODEL_SETTING_KEY]) || {};
     const raw = String(data[MODEL_SETTING_KEY] || "").trim().toLowerCase();
-    if (raw === "large") return "ggml-large.bin";
-    if (raw === "best") return "ggml-medium.bin";
-    if (raw === "balanced") return "ggml-small.bin";
-    return "ggml-base.bin";
+    return MODEL_FILE_BY_QUALITY[raw] || DEFAULT_MODEL_FILE_NAME;
+  }
+
+  _getModelAvailability(modelFileName) {
+    if (!this.engine || typeof this.engine.getModelAvailability !== "function") {
+      return null;
+    }
+    try {
+      return this.engine.getModelAvailability(modelFileName);
+    } catch (_err) {
+      return null;
+    }
+  }
+
+  _resolveTranscriptionModelFileName(modelFileName) {
+    const requestedModelFileName = String(modelFileName || DEFAULT_MODEL_FILE_NAME).trim() ||
+      DEFAULT_MODEL_FILE_NAME;
+    const requestedAvailability = this._getModelAvailability(requestedModelFileName);
+    if (!requestedAvailability || requestedAvailability.available) {
+      return requestedModelFileName;
+    }
+
+    if (requestedModelFileName === DEFAULT_MODEL_FILE_NAME) {
+      throw new Error(`Whisper-Modell nicht verfuegbar: ${DEFAULT_MODEL_FILE_NAME}`);
+    }
+
+    const fallbackAvailability = this._getModelAvailability(DEFAULT_MODEL_FILE_NAME);
+    if (fallbackAvailability?.available) {
+      return DEFAULT_MODEL_FILE_NAME;
+    }
+
+    throw new Error(
+      `Whisper-Modell nicht verfuegbar: ${requestedModelFileName}; auch ${DEFAULT_MODEL_FILE_NAME} fehlt`
+    );
   }
 
   _loadOpenMeeting(audioImport) {
@@ -61,10 +98,12 @@ class TranscriptionService {
     });
 
     try {
+      const requestedModelFileName = this._resolveModelFileName();
+      const resolvedModelFileName = this._resolveTranscriptionModelFileName(requestedModelFileName);
       const result = await this.engine.transcribe({
         filePath: audioImport.file_path,
         language,
-        modelFileName: this._resolveModelFileName(),
+        modelFileName: resolvedModelFileName,
         audioImport,
       });
 

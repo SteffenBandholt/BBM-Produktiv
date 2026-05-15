@@ -6,6 +6,8 @@ export function createDictationDevSection({
   settingsApi,
 }) {
   const AUDIO_WHISPER_QUALITY_KEY = "audio.whisper.quality";
+  const DEFAULT_WHISPER_QUALITY = "balanced";
+  const WHISPER_QUALITIES = ["fast", "balanced", "best", "large"];
 
   const dictationTab = document.createElement("div");
   dictationTab.style.display = "grid";
@@ -52,7 +54,7 @@ export function createDictationDevSection({
   whisperMsg.style.opacity = "0.75";
   whisperMsg.style.marginTop = "2px";
 
-  let whisperQuality = "fast";
+  let whisperQuality = DEFAULT_WHISPER_QUALITY;
   let whisperModels = {
     fast: { available: true },
     balanced: { available: true },
@@ -108,7 +110,7 @@ export function createDictationDevSection({
       const res = await api.appSettingsGetMany([AUDIO_WHISPER_QUALITY_KEY]);
       if (res?.ok) {
         const raw = String(res.data?.[AUDIO_WHISPER_QUALITY_KEY] || "").trim().toLowerCase();
-        whisperQuality = ["fast", "balanced", "best", "large"].includes(raw) ? raw : "fast";
+        whisperQuality = WHISPER_QUALITIES.includes(raw) ? raw : DEFAULT_WHISPER_QUALITY;
       }
     }
     if (typeof api.audioWhisperModelsStatus === "function") {
