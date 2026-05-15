@@ -5,15 +5,17 @@
   --bbm-tops-list-number-col: 64px;
   --bbm-tops-meta-col-min: 70px;
   --bbm-tops-meta-col-max: 90px;
-  --bbm-tops-list-meta-col: 74px;
+  /* UI TOP-Liste: Metaspalte soll am rechten Rand stehen und Werte voll sichtbar halten. */
+  --bbm-tops-list-meta-col: 25mm;
   --bbm-tops-accent-green: #1b8f3a;
   --bbm-top-text-font-family: "Noto Sans", Arial, sans-serif;
   --bbm-top-short-font-size: 10pt;
   --bbm-top-long-font-size: 9.5pt;
   --bbm-top-text-line-height: 1.35;
   --bbm-top-text-pad-x: 5px;
-  --bbm-top-short-measure: 72ch;
-  --bbm-top-long-measure: 77ch;
+  /* UI: Gegenstandsspalte wirkt breiter, ohne Grid/Meta/PDF zu aendern. */
+  --bbm-top-short-measure: 97ch;
+  --bbm-top-long-measure: 102ch;
   --bbm-top-long-edit-measure: 65ch;
   --bbm-top-short-input-measure: 62ch;
 }
@@ -401,6 +403,12 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   background: linear-gradient(180deg, #eef6f6 0%, #e6eff0 100%);
   border: 1px solid #cad9db;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  /* Ensure the meta column stays as the right-most grid column in the normal UI list. */
+  --bbm-tops-list-grid-columns: var(--bbm-tops-list-number-col, 64px) minmax(0, 1fr)
+    minmax(var(--bbm-tops-list-meta-col, 25mm), 40mm);
+  /* Ensure the list uses the full available paper width so the meta column can "stick" to the right edge. */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 [data-bbm-tops-list-v2="true"][data-dev-layout-mode="true"] .bbm-tops-list-layout-zone {
@@ -455,6 +463,8 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   cursor: pointer;
   background: linear-gradient(180deg, #fcfefe 0%, #f4f8f8 100%);
   box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .bbm-tops-list-row[data-top-level="1"] {
@@ -524,13 +534,23 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row-grid {
   display: grid;
-  grid-template-columns: var(
-    --bbm-tops-list-grid-columns,
-    var(--bbm-tops-list-number-col, 64px) var(--bbm-tops-list-text-col, minmax(0, 1fr))
-      minmax(50px, var(--bbm-tops-list-meta-col, 74px))
-  );
+  /*
+    IMPORTANT (UI hotfix):
+    Keep the TOP list as a stable 3-column grid:
+    1) number (fixed)
+    2) text (flexible, fills remaining space)
+    3) meta (fixed/min width)
+
+    We intentionally DO NOT use --bbm-tops-list-grid-columns / --bbm-tops-list-text-col here,
+    because persisted layout values may turn the text track into a fixed width which prevents
+    the meta column from sticking to the right edge.
+  */
+  grid-template-columns: var(--bbm-tops-list-number-col, 64px) minmax(0, 1fr)
+    minmax(50px, var(--bbm-tops-list-meta-col, 74px));
   gap: 8px;
   align-items: start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .bbm-tops-list-row-number {
@@ -615,7 +635,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-title {
-  max-inline-size: 82ch;
+  max-inline-size: 107ch;
 }
 
 .bbm-tops-list-row-title[data-tone="blue"] {
@@ -654,7 +674,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 .bbm-tops-list-row-preview {
   margin-top: 4px;
   /* DEV-Layout: keep preview in sync with the text-zone font size when overridden. */
-  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-long-font-size));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
   max-inline-size: var(--bbm-top-long-measure);
@@ -666,7 +686,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-preview {
   font-size: var(--bbm-top-short-font-size);
-  max-inline-size: 82ch;
+  max-inline-size: 107ch;
 }
 
 /* DEV-Layout override: when the text-zone font variable is set, keep the preview in sync. */
@@ -687,7 +707,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-text {
-  max-inline-size: min(100%, 82ch);
+  max-inline-size: min(100%, 107ch);
 }
 
 .bbm-tops-list-row-preview[data-has-preview="false"] {
@@ -701,7 +721,9 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   gap: 2px;
   min-width: 0;
   width: 100%;
-  transform: translateX(-2mm);
+  justify-self: stretch;
+  transform: none;
+  justify-items: end;
 }
 
 .bbm-tops-list-row-meta-line {
@@ -717,6 +739,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-align: right;
 }
 
 .bbm-tops-list-row-meta-line-status,
@@ -1296,7 +1319,8 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   opacity: 0.72;
 }
 
-@media (max-width: 900px) {
+/* Keep meta column on the right for normal window sizes; only collapse on very small widths. */
+@media (max-width: 640px) {
   .bbm-tops-header-meta-legend {
     display: none !important;
   }

@@ -5052,6 +5052,706 @@ export default class SettingsView {
       return { box, title, hint };
     };
 
+    const dispatchTableLayoutChanged = (identity = {}) => {
+      try {
+        window.dispatchEvent(
+          new CustomEvent("bbm:tableLayoutChanged", {
+            detail: {
+              moduleId: String(identity.moduleId || "").trim(),
+              tableKey: String(identity.tableKey || "").trim(),
+              orientation: String(identity.orientation || "portrait").trim(),
+            },
+          })
+        );
+      } catch (_err) {
+        // ignore
+      }
+    };
+
+    const openProtokollTopsCalibrator = async () => {
+      const identity = Object.freeze({
+        moduleId: "protokoll",
+        tableKey: "protokoll_tops",
+        orientation: "portrait",
+      });
+
+      const {
+        extractProtokollTopsEditorValues,
+        buildProtokollTopsLayoutOverlay,
+        validateProtokollTopsEditorValues,
+      } = await import("../../shared/tableLayouts/protokollTopsLayout.js");
+
+      const clampText = (v) => String(v ?? "").trim();
+      const mkInputRow = (labelText, inputEl, hintText = "") => {
+        const row = document.createElement("div");
+        row.style.display = "grid";
+        row.style.gridTemplateColumns = "220px 180px 1fr";
+        row.style.gap = "10px";
+        row.style.alignItems = "center";
+
+        const label = document.createElement("div");
+        label.textContent = labelText;
+        label.style.fontWeight = "700";
+        label.style.fontSize = "12px";
+        label.style.color = "#334155";
+
+        const hint = document.createElement("div");
+        hint.textContent = hintText;
+        hint.style.fontSize = "12px";
+        hint.style.opacity = "0.75";
+
+        row.append(label, inputEl, hint);
+        return row;
+      };
+
+      const wrap = document.createElement("div");
+      wrap.style.display = "grid";
+      wrap.style.gap = "10px";
+      wrap.style.minWidth = "min(860px, calc(100vw - 80px))";
+      wrap.style.maxWidth = "980px";
+
+      const head = document.createElement("div");
+      head.style.display = "grid";
+      head.style.gap = "2px";
+      const title = document.createElement("div");
+      title.textContent = "Tabellen-Kalibrator (DEV-only) – TOP-Liste";
+      title.style.fontWeight = "900";
+      const sub = document.createElement("div");
+      sub.textContent = "Tabelle: protokoll_tops (UI + PDF). Speichern schreibt Layoutwerte dauerhaft.";
+      sub.style.fontSize = "12px";
+      sub.style.opacity = "0.8";
+      head.append(title, sub);
+
+      const card = document.createElement("div");
+      applyPopupCardStyle(card);
+      card.style.padding = "10px 12px";
+      card.style.display = "grid";
+      card.style.gap = "10px";
+
+      const uiNumberWidth = document.createElement("input");
+      uiNumberWidth.type = "text";
+      uiNumberWidth.placeholder = "z.B. 64px";
+      const uiMetaWidth = document.createElement("input");
+      uiMetaWidth.type = "text";
+      uiMetaWidth.placeholder = "z.B. 74px";
+      const pdfNumberWidth = document.createElement("input");
+      pdfNumberWidth.type = "text";
+      pdfNumberWidth.placeholder = "z.B. 23mm";
+      const pdfMetaWidth = document.createElement("input");
+      pdfMetaWidth.type = "text";
+      pdfMetaWidth.placeholder = "z.B. 15ch";
+
+      for (const el of [uiNumberWidth, uiMetaWidth, pdfNumberWidth, pdfMetaWidth]) {
+        el.style.width = "100%";
+        el.style.boxSizing = "border-box";
+        el.style.padding = "6px 8px";
+        el.style.border = "1px solid rgba(0,0,0,0.18)";
+        el.style.borderRadius = "8px";
+        el.style.fontSize = "12px";
+        el.autocomplete = "off";
+        el.spellcheck = false;
+      }
+
+      const msg = document.createElement("div");
+      msg.style.fontSize = "12px";
+      msg.style.minHeight = "18px";
+      msg.style.color = "#334155";
+
+      const load = async () => {
+        if (!has("tableLayoutsGetOne")) {
+          msg.textContent = "tableLayoutsGetOne fehlt.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        const res = await api.tableLayoutsGetOne(identity);
+        if (!res?.ok) {
+          msg.textContent = res?.error || "Layout konnte nicht geladen werden.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        const layout = res?.data?.effectiveLayout || res?.data?.defaultLayout || null;
+        const values = extractProtokollTopsEditorValues(layout || {});
+        uiNumberWidth.value = clampText(values.uiNumberWidth || "");
+        uiMetaWidth.value = clampText(values.uiMetaWidth || "");
+        pdfNumberWidth.value = clampText(values.pdfNumberWidth || "");
+        pdfMetaWidth.value = clampText(values.pdfMetaWidth || "");
+        msg.textContent = "Layout geladen.";
+        msg.style.color = "#334155";
+        return true;
+      };
+
+      const apply = async ({ reset = false } = {}) => {
+        if (reset) {
+          if (!has("tableLayoutsReset")) {
+            msg.textContent = "tableLayoutsReset fehlt.";
+            msg.style.color = "#9d1c1c";
+            return false;
+          }
+          const resReset = await api.tableLayoutsReset({ ...identity, scopeType: "global" });
+          if (!resReset?.ok) {
+            msg.textContent = resReset?.error || "Reset fehlgeschlagen.";
+            msg.style.color = "#9d1c1c";
+            return false;
+          }
+          dispatchTableLayoutChanged(identity);
+          msg.textContent = "Reset ausgeführt (Defaults aktiv).";
+          msg.style.color = "#334155";
+          await load();
+          return true;
+        }
+
+        if (!has("tableLayoutsSave")) {
+          msg.textContent = "tableLayoutsSave fehlt.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+
+        const draft = {
+          orientation: "portrait",
+          uiNumberWidth: clampText(uiNumberWidth.value),
+          uiMetaWidth: clampText(uiMetaWidth.value),
+          pdfNumberWidth: clampText(pdfNumberWidth.value),
+          pdfMetaWidth: clampText(pdfMetaWidth.value),
+        };
+        const validated = validateProtokollTopsEditorValues(draft, "portrait");
+        if (!validated?.isValid) {
+          msg.textContent = "Ungültige Werte. Beispiele: 64px, 23mm, 15ch";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        const layout = buildProtokollTopsLayoutOverlay(validated.values, validated.values.orientation);
+
+        const resSave = await api.tableLayoutsSave({
+          ...identity,
+          scopeType: "global",
+          layout,
+        });
+        if (!resSave?.ok) {
+          msg.textContent = resSave?.error || "Speichern fehlgeschlagen.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        dispatchTableLayoutChanged(identity);
+        msg.textContent = "Gespeichert und angewendet.";
+        msg.style.color = "#334155";
+        return true;
+      };
+
+      const btnRow = document.createElement("div");
+      btnRow.style.display = "flex";
+      btnRow.style.gap = "8px";
+      btnRow.style.flexWrap = "wrap";
+
+      const bLoad = document.createElement("button");
+      bLoad.type = "button";
+      bLoad.textContent = "Laden";
+      applyPopupButtonStyle(bLoad, { variant: "neutral" });
+      bLoad.onclick = async () => void (await load());
+
+      const bApply = document.createElement("button");
+      bApply.type = "button";
+      bApply.textContent = "Anwenden (Speichern)";
+      applyPopupButtonStyle(bApply, { variant: "primary" });
+      bApply.onclick = async () => void (await apply({ reset: false }));
+
+      const bReset = document.createElement("button");
+      bReset.type = "button";
+      bReset.textContent = "Reset (Defaults)";
+      applyPopupButtonStyle(bReset, { variant: "danger" });
+      bReset.onclick = async () => void (await apply({ reset: true }));
+
+      btnRow.append(bLoad, bApply, bReset);
+
+      card.append(
+        mkInputRow("UI: Nummernspalte", uiNumberWidth, "z.B. 64px"),
+        mkInputRow("UI: Metaspalte", uiMetaWidth, "z.B. 74px"),
+        mkInputRow("PDF: Nummernspalte", pdfNumberWidth, "z.B. 23mm"),
+        mkInputRow("PDF: Metaspalte", pdfMetaWidth, "z.B. 15ch"),
+        btnRow,
+        msg
+      );
+
+      wrap.append(head, card);
+
+      this._openSettingsModal({
+        title: "Tabellen-Kalibrator (DEV-only)",
+        content: [wrap],
+        closeOnly: true,
+      });
+
+      await load();
+    };
+
+    const openProtokollParticipantsCalibrator = async () => {
+      const identity = Object.freeze({
+        moduleId: "protokoll",
+        tableKey: "protokoll_participants",
+        orientation: "portrait",
+      });
+
+      const { validateTableLayoutColumns, buildTableLayoutOverlayFromColumns } = await import(
+        "../../shared/tableLayouts/protokollTopsLayout.js"
+      );
+
+      const clampText = (v) => String(v ?? "").trim();
+      const keys = ["name", "function", "company", "contact", "attendance"];
+      const labels = Object.freeze({
+        name: "Name",
+        function: "Funktion",
+        company: "Firma",
+        contact: "Telefon / E-Mail",
+        attendance: "Anwesend / Verteiler",
+      });
+
+      const mkInputRow = (labelText, inputEl, hintText = "") => {
+        const row = document.createElement("div");
+        row.style.display = "grid";
+        row.style.gridTemplateColumns = "220px 180px 1fr";
+        row.style.gap = "10px";
+        row.style.alignItems = "center";
+
+        const label = document.createElement("div");
+        label.textContent = labelText;
+        label.style.fontWeight = "700";
+        label.style.fontSize = "12px";
+        label.style.color = "#334155";
+
+        const hint = document.createElement("div");
+        hint.textContent = hintText;
+        hint.style.fontSize = "12px";
+        hint.style.opacity = "0.75";
+
+        row.append(label, inputEl, hint);
+        return row;
+      };
+
+      const wrap = document.createElement("div");
+      wrap.style.display = "grid";
+      wrap.style.gap = "10px";
+      wrap.style.minWidth = "min(920px, calc(100vw - 80px))";
+      wrap.style.maxWidth = "1040px";
+
+      const head = document.createElement("div");
+      head.style.display = "grid";
+      head.style.gap = "2px";
+      const title = document.createElement("div");
+      title.textContent = "Tabellen-Kalibrator (DEV-only) – Teilnehmerliste (PDF)";
+      title.style.fontWeight = "900";
+      const sub = document.createElement("div");
+      sub.textContent = "Tabelle: protokoll_participants (nur PDF-Breiten). Speichern schreibt Layoutwerte dauerhaft.";
+      sub.style.fontSize = "12px";
+      sub.style.opacity = "0.8";
+      head.append(title, sub);
+
+      const card = document.createElement("div");
+      applyPopupCardStyle(card);
+      card.style.padding = "10px 12px";
+      card.style.display = "grid";
+      card.style.gap = "10px";
+
+      const inputs = new Map();
+      for (const key of keys) {
+        const el = document.createElement("input");
+        el.type = "text";
+        el.placeholder = "z.B. 36mm";
+        el.style.width = "100%";
+        el.style.boxSizing = "border-box";
+        el.style.padding = "6px 8px";
+        el.style.border = "1px solid rgba(0,0,0,0.18)";
+        el.style.borderRadius = "8px";
+        el.style.fontSize = "12px";
+        el.autocomplete = "off";
+        el.spellcheck = false;
+        inputs.set(key, el);
+      }
+
+      const msg = document.createElement("div");
+      msg.style.fontSize = "12px";
+      msg.style.minHeight = "18px";
+      msg.style.color = "#334155";
+
+      let lastLoadedColumns = [];
+      let fallbackColumns = [];
+
+      const load = async () => {
+        if (!has("tableLayoutsGetOne")) {
+          msg.textContent = "tableLayoutsGetOne fehlt.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        const res = await api.tableLayoutsGetOne(identity);
+        if (!res?.ok) {
+          msg.textContent = res?.error || "Layout konnte nicht geladen werden.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        const effective = res?.data?.effectiveLayout || null;
+        const def = res?.data?.defaultLayout || null;
+        lastLoadedColumns = Array.isArray(effective?.columns) ? effective.columns : Array.isArray(def?.columns) ? def.columns : [];
+        fallbackColumns = Array.isArray(def?.columns) ? def.columns : [];
+
+        const byKey = new Map();
+        for (const col of lastLoadedColumns) byKey.set(String(col?.key || ""), col);
+        for (const key of keys) {
+          const col = byKey.get(key) || {};
+          const input = inputs.get(key);
+          if (input) input.value = clampText(col.pdfWidth || "");
+        }
+        msg.textContent = "Layout geladen.";
+        msg.style.color = "#334155";
+        return true;
+      };
+
+      const apply = async ({ reset = false } = {}) => {
+        if (reset) {
+          if (!has("tableLayoutsReset")) {
+            msg.textContent = "tableLayoutsReset fehlt.";
+            msg.style.color = "#9d1c1c";
+            return false;
+          }
+          const resReset = await api.tableLayoutsReset({ ...identity, scopeType: "global" });
+          if (!resReset?.ok) {
+            msg.textContent = resReset?.error || "Reset fehlgeschlagen.";
+            msg.style.color = "#9d1c1c";
+            return false;
+          }
+          dispatchTableLayoutChanged(identity);
+          msg.textContent = "Reset ausgeführt (Defaults aktiv).";
+          msg.style.color = "#334155";
+          await load();
+          return true;
+        }
+
+        if (!has("tableLayoutsSave")) {
+          msg.textContent = "tableLayoutsSave fehlt.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+
+        const updated = (Array.isArray(lastLoadedColumns) ? lastLoadedColumns : []).map((c) => ({ ...(c || {}) }));
+        const byKey = new Map();
+        for (const col of updated) byKey.set(String(col?.key || ""), col);
+        for (const key of keys) {
+          const col = byKey.get(key);
+          if (!col) continue;
+          col.pdfWidth = clampText(inputs.get(key)?.value || "");
+        }
+
+        const validated = validateTableLayoutColumns(updated, fallbackColumns);
+        if (!validated?.isValid) {
+          msg.textContent = "Ungültige Werte. Beispiele: 36mm, 45mm, 110px";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+
+        const layout = buildTableLayoutOverlayFromColumns(validated.columns, "portrait", {
+          fallbackColumns,
+        });
+
+        const resSave = await api.tableLayoutsSave({
+          ...identity,
+          scopeType: "global",
+          layout,
+        });
+        if (!resSave?.ok) {
+          msg.textContent = resSave?.error || "Speichern fehlgeschlagen.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        dispatchTableLayoutChanged(identity);
+        msg.textContent = "Gespeichert und angewendet.";
+        msg.style.color = "#334155";
+        return true;
+      };
+
+      const btnRow = document.createElement("div");
+      btnRow.style.display = "flex";
+      btnRow.style.gap = "8px";
+      btnRow.style.flexWrap = "wrap";
+
+      const bLoad = document.createElement("button");
+      bLoad.type = "button";
+      bLoad.textContent = "Laden";
+      applyPopupButtonStyle(bLoad, { variant: "neutral" });
+      bLoad.onclick = async () => void (await load());
+
+      const bApply = document.createElement("button");
+      bApply.type = "button";
+      bApply.textContent = "Anwenden (Speichern)";
+      applyPopupButtonStyle(bApply, { variant: "primary" });
+      bApply.onclick = async () => void (await apply({ reset: false }));
+
+      const bReset = document.createElement("button");
+      bReset.type = "button";
+      bReset.textContent = "Reset (Defaults)";
+      applyPopupButtonStyle(bReset, { variant: "danger" });
+      bReset.onclick = async () => void (await apply({ reset: true }));
+
+      btnRow.append(bLoad, bApply, bReset);
+
+      card.append(
+        mkInputRow("PDF: Name", inputs.get("name"), "z.B. 36mm"),
+        mkInputRow("PDF: Funktion", inputs.get("function"), "z.B. 36mm"),
+        mkInputRow("PDF: Firma", inputs.get("company"), "z.B. 30mm"),
+        mkInputRow("PDF: Telefon / E-Mail", inputs.get("contact"), "z.B. 45mm"),
+        mkInputRow("PDF: Anwesend / Verteiler", inputs.get("attendance"), "z.B. 26mm"),
+        btnRow,
+        msg
+      );
+
+      wrap.append(head, card);
+
+      this._openSettingsModal({
+        title: "Tabellen-Kalibrator (DEV-only)",
+        content: [wrap],
+        closeOnly: true,
+      });
+
+      await load();
+    };
+
+    const openTodoPrintCalibrator = async () => {
+      const identity = Object.freeze({
+        moduleId: "protokoll",
+        tableKey: "print.todo.todoTable",
+        orientation: "portrait",
+      });
+
+      const clampText = (v) => String(v ?? "").trim();
+      const zones = [
+        { key: "top", label: "TOP" },
+        { key: "kurztext", label: "Kurztext" },
+        { key: "status", label: "Status" },
+        { key: "fertig_bis", label: "Fertig bis" },
+        { key: "ampel", label: "Ampel" },
+      ];
+
+      const mkInputRow = (labelText, inputEl, hintText = "") => {
+        const row = document.createElement("div");
+        row.style.display = "grid";
+        row.style.gridTemplateColumns = "220px 180px 1fr";
+        row.style.gap = "10px";
+        row.style.alignItems = "center";
+
+        const label = document.createElement("div");
+        label.textContent = labelText;
+        label.style.fontWeight = "700";
+        label.style.fontSize = "12px";
+        label.style.color = "#334155";
+
+        const hint = document.createElement("div");
+        hint.textContent = hintText;
+        hint.style.fontSize = "12px";
+        hint.style.opacity = "0.75";
+
+        row.append(label, inputEl, hint);
+        return row;
+      };
+
+      const wrap = document.createElement("div");
+      wrap.style.display = "grid";
+      wrap.style.gap = "10px";
+      wrap.style.minWidth = "min(980px, calc(100vw - 80px))";
+      wrap.style.maxWidth = "1120px";
+
+      const head = document.createElement("div");
+      head.style.display = "grid";
+      head.style.gap = "2px";
+      const title = document.createElement("div");
+      title.textContent = "Tabellen-Kalibrator (DEV-only) – ToDo-Liste (PDF)";
+      title.style.fontWeight = "900";
+      const sub = document.createElement("div");
+      sub.textContent = "Tabelle: print.todo.todoTable (nur PDF rootVars). Speichern schreibt Layoutwerte dauerhaft.";
+      sub.style.fontSize = "12px";
+      sub.style.opacity = "0.8";
+      head.append(title, sub);
+
+      const card = document.createElement("div");
+      applyPopupCardStyle(card);
+      card.style.padding = "10px 12px";
+      card.style.display = "grid";
+      card.style.gap = "10px";
+
+      const inputs = new Map();
+      for (const z of zones) {
+        const widthEl = document.createElement("input");
+        widthEl.type = "text";
+        widthEl.placeholder = "z.B. 21mm";
+        const insetEl = document.createElement("input");
+        insetEl.type = "text";
+        insetEl.placeholder = "z.B. 1mm";
+        const fontEl = document.createElement("input");
+        fontEl.type = "text";
+        fontEl.placeholder = "z.B. 11pt";
+
+        for (const el of [widthEl, insetEl, fontEl]) {
+          el.style.width = "100%";
+          el.style.boxSizing = "border-box";
+          el.style.padding = "6px 8px";
+          el.style.border = "1px solid rgba(0,0,0,0.18)";
+          el.style.borderRadius = "8px";
+          el.style.fontSize = "12px";
+          el.autocomplete = "off";
+          el.spellcheck = false;
+        }
+        inputs.set(z.key, { widthEl, insetEl, fontEl });
+      }
+
+      const msg = document.createElement("div");
+      msg.style.fontSize = "12px";
+      msg.style.minHeight = "18px";
+      msg.style.color = "#334155";
+
+      let lastLoadedLayout = null;
+
+      const load = async () => {
+        if (!has("tableLayoutsGetOne")) {
+          msg.textContent = "tableLayoutsGetOne fehlt.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        const res = await api.tableLayoutsGetOne(identity);
+        if (!res?.ok) {
+          msg.textContent = res?.error || "Layout konnte nicht geladen werden.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        const layout = res?.data?.effectiveLayout || res?.data?.defaultLayout || null;
+        lastLoadedLayout = layout && typeof layout === "object" ? layout : null;
+        const rootVars = (layout?.pdf?.rootVars && typeof layout.pdf.rootVars === "object") ? layout.pdf.rootVars : {};
+
+        for (const z of zones) {
+          const bag = inputs.get(z.key);
+          if (!bag) continue;
+          bag.widthEl.value = clampText(rootVars[`--bbm-todo-col-${z.key}-width`] || "");
+          bag.insetEl.value = clampText(rootVars[`--bbm-todo-col-${z.key}-padding-inline`] || "");
+          bag.fontEl.value = clampText(rootVars[`--bbm-todo-col-${z.key}-font-size`] || "");
+        }
+
+        msg.textContent = "Layout geladen.";
+        msg.style.color = "#334155";
+        return true;
+      };
+
+      const apply = async ({ reset = false } = {}) => {
+        if (reset) {
+          if (!has("tableLayoutsReset")) {
+            msg.textContent = "tableLayoutsReset fehlt.";
+            msg.style.color = "#9d1c1c";
+            return false;
+          }
+          const resReset = await api.tableLayoutsReset({ ...identity, scopeType: "global" });
+          if (!resReset?.ok) {
+            msg.textContent = resReset?.error || "Reset fehlgeschlagen.";
+            msg.style.color = "#9d1c1c";
+            return false;
+          }
+          dispatchTableLayoutChanged(identity);
+          msg.textContent = "Reset ausgeführt (Defaults aktiv).";
+          msg.style.color = "#334155";
+          await load();
+          return true;
+        }
+
+        if (!has("tableLayoutsSave")) {
+          msg.textContent = "tableLayoutsSave fehlt.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+
+        const pdfRootVars = { ...(lastLoadedLayout?.pdf?.rootVars || {}) };
+        for (const z of zones) {
+          const bag = inputs.get(z.key);
+          if (!bag) continue;
+          pdfRootVars[`--bbm-todo-col-${z.key}-width`] = clampText(bag.widthEl.value);
+          pdfRootVars[`--bbm-todo-col-${z.key}-padding-inline`] = clampText(bag.insetEl.value);
+          pdfRootVars[`--bbm-todo-col-${z.key}-font-size`] = clampText(bag.fontEl.value);
+        }
+
+        const layout = {
+          variant: "portrait",
+          pdf: { rootVars: pdfRootVars },
+        };
+
+        const resSave = await api.tableLayoutsSave({
+          ...identity,
+          scopeType: "global",
+          layout,
+        });
+        if (!resSave?.ok) {
+          msg.textContent = resSave?.error || "Speichern fehlgeschlagen.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        dispatchTableLayoutChanged(identity);
+        msg.textContent = "Gespeichert und angewendet.";
+        msg.style.color = "#334155";
+        return true;
+      };
+
+      const btnRow = document.createElement("div");
+      btnRow.style.display = "flex";
+      btnRow.style.gap = "8px";
+      btnRow.style.flexWrap = "wrap";
+
+      const bLoad = document.createElement("button");
+      bLoad.type = "button";
+      bLoad.textContent = "Laden";
+      applyPopupButtonStyle(bLoad, { variant: "neutral" });
+      bLoad.onclick = async () => void (await load());
+
+      const bApply = document.createElement("button");
+      bApply.type = "button";
+      bApply.textContent = "Anwenden (Speichern)";
+      applyPopupButtonStyle(bApply, { variant: "primary" });
+      bApply.onclick = async () => void (await apply({ reset: false }));
+
+      const bReset = document.createElement("button");
+      bReset.type = "button";
+      bReset.textContent = "Reset (Defaults)";
+      applyPopupButtonStyle(bReset, { variant: "danger" });
+      bReset.onclick = async () => void (await apply({ reset: true }));
+
+      btnRow.append(bLoad, bApply, bReset);
+
+      const grid = document.createElement("div");
+      grid.style.display = "grid";
+      grid.style.gap = "10px";
+      for (const z of zones) {
+        const bag = inputs.get(z.key);
+        const row = document.createElement("div");
+        row.style.display = "grid";
+        row.style.gridTemplateColumns = "220px 1fr 1fr 1fr";
+        row.style.gap = "10px";
+        row.style.alignItems = "center";
+
+        const label = document.createElement("div");
+        label.textContent = `PDF: ${z.label}`;
+        label.style.fontWeight = "700";
+        label.style.fontSize = "12px";
+        label.style.color = "#334155";
+
+        row.append(label, bag.widthEl, bag.insetEl, bag.fontEl);
+        grid.appendChild(row);
+      }
+
+      const hints = document.createElement("div");
+      hints.style.fontSize = "12px";
+      hints.style.opacity = "0.75";
+      hints.textContent = "Spalten: Breite (mm), Innenabstand (mm), Schrift (pt). Beispiele: 21mm / 1mm / 11pt";
+
+      card.append(grid, hints, btnRow, msg);
+      wrap.append(head, card);
+
+      this._openSettingsModal({
+        title: "Tabellen-Kalibrator (DEV-only)",
+        content: [wrap],
+        closeOnly: true,
+      });
+
+      await load();
+    };
+
     const section = document.createElement("div");
     section.style.display = "grid";
     section.style.gap = "10px";
@@ -5061,6 +5761,7 @@ export default class SettingsView {
     const versionCard = mkCard("Versionierung", "SemVer und Build-Kanal verwalten.");
     const dbCard = mkCard("DB-Diagnose", "Aktive DB, Legacy und Importpfade prüfen.");
     const topsCard = mkCard("Textgrenzen für TOPs", "Maximale Länge für Kurztext und Langtext in TOPs.");
+    const tableCalCard = mkCard("Tabellen-Kalibrator", "DEV-only: Spaltenbreiten speichern und resetten.");
     const themeCard = mkCard("Farbschema", "Start-Defaults des Themes verwalten.");
     const dictationDevCard = mkCard(
       "Diktat-Testfreigabe",
@@ -5360,13 +6061,374 @@ export default class SettingsView {
     dictationDevEnabled.addEventListener("change", () => {
       void saveDictationDevSetting();
     });
-    dictationDevRow.append(dictationDevEnabled, dictationDevLabel);
-    dictationDevCard.box.append(dictationDevRow, dictationDevMsg);
+    dictationDevRow.append(dictationDevEnabled, dictationDevLabel); 
+    dictationDevCard.box.append(dictationDevRow, dictationDevMsg); 
 
-    const mkScaleGroup = (labelText, buttons) => {
-      const row = document.createElement("div");
-      row.style.display = "grid";
-      row.style.gap = "6px";
+    const { buildDevTableCalibratorCard } = await import("../layoutTools/DevTableCalibrator.js");
+    tableCalCard.box.append(
+      await buildDevTableCalibratorCard({
+        api,
+        has,
+        applyPopupCardStyle,
+        applyPopupButtonStyle,
+        openSettingsModal: (opts) => this._openSettingsModal(opts),
+      })
+    );
+
+    // Legacy inline calibrator code (kept for now, but disabled). The active implementation lives in layoutTools.
+    if (false) {
+    const btnOpenTopsCal = btn("TOP-Liste (protokoll_tops)", true); 
+    btnOpenTopsCal.onclick = async () => void (await openProtokollTopsCalibrator()); 
+    tableCalCard.box.append(btnOpenTopsCal); 
+
+    const btnOpenTopsAllHint = btn("TOP-Liste alle (Druckmodus topsAll) – nutzt protokoll_tops", false);
+    btnOpenTopsAllHint.onclick = async () => void (await openProtokollTopsCalibrator());
+    tableCalCard.box.append(btnOpenTopsAllHint);
+
+    const btnOpenParticipantsCal = btn("Teilnehmerliste (protokoll_participants)", false);
+    btnOpenParticipantsCal.onclick = async () => void (await openProtokollParticipantsCalibrator());
+    tableCalCard.box.append(btnOpenParticipantsCal);
+
+    const btnOpenTodoCal = btn("ToDo-Liste (print.todo.todoTable)", false);
+    btnOpenTodoCal.onclick = async () => void (await openTodoPrintCalibrator());
+    tableCalCard.box.append(btnOpenTodoCal);
+
+    // Registry-based picker: helps finding internal table keys without any DOM/PDF auto-detection.
+    const tableDefsWrap = document.createElement("div");
+    tableDefsWrap.style.display = "grid";
+    tableDefsWrap.style.gap = "8px";
+    tableDefsWrap.style.marginTop = "6px";
+
+    const tableDefsHead = document.createElement("div");
+    tableDefsHead.textContent = "Registrierte Tabellen (aus der Registry):";
+    tableDefsHead.style.fontSize = "12px";
+    tableDefsHead.style.fontWeight = "800";
+    tableDefsHead.style.opacity = "0.9";
+
+    const tableDefsSearch = document.createElement("input");
+    tableDefsSearch.type = "text";
+    tableDefsSearch.placeholder = "Tabelle suchen (Name oder tableKey)...";
+    tableDefsSearch.style.width = "100%";
+    tableDefsSearch.style.boxSizing = "border-box";
+    tableDefsSearch.style.padding = "6px 8px";
+    tableDefsSearch.style.border = "1px solid rgba(0,0,0,0.18)";
+    tableDefsSearch.style.borderRadius = "8px";
+    tableDefsSearch.style.fontSize = "12px";
+    tableDefsSearch.autocomplete = "off";
+    tableDefsSearch.spellcheck = false;
+
+    const tableDefsList = document.createElement("div");
+    tableDefsList.style.display = "grid";
+    tableDefsList.style.gap = "6px";
+
+    tableDefsWrap.append(tableDefsHead, tableDefsSearch, tableDefsList);
+    tableCalCard.box.append(tableDefsWrap);
+
+    let _tableDefs = [];
+    const openGenericTableCalibrator = async (def) => {
+      const d = def && typeof def === "object" ? def : null;
+      const moduleId = String(d?.moduleId || "").trim();
+      const tableKey = String(d?.tableKey || "").trim();
+      if (!moduleId || !tableKey) return;
+
+      // Prefer dedicated mini calibrators for known pilots.
+      if (moduleId === "protokoll" && tableKey === "protokoll_tops") {
+        await openProtokollTopsCalibrator();
+        return;
+      }
+      if (moduleId === "protokoll" && tableKey === "protokoll_participants") {
+        await openProtokollParticipantsCalibrator();
+        return;
+      }
+
+      const identity = Object.freeze({ moduleId, tableKey, orientation: "portrait" });
+      const { validateTableLayoutColumns, buildTableLayoutOverlayFromColumns } = await import(
+        "../../shared/tableLayouts/protokollTopsLayout.js"
+      );
+      const clampText = (v) => String(v ?? "").trim();
+
+      const hasUi = !!d?.uiAvailable;
+      const hasPdf = !!d?.pdfAvailable;
+      const fallbackColumns = Array.isArray(d?.columns) ? d.columns : [];
+
+      const wrap = document.createElement("div");
+      wrap.style.display = "grid";
+      wrap.style.gap = "10px";
+      wrap.style.minWidth = "min(980px, calc(100vw - 80px))";
+      wrap.style.maxWidth = "1120px";
+
+      const head = document.createElement("div");
+      head.style.display = "grid";
+      head.style.gap = "2px";
+      const title = document.createElement("div");
+      title.textContent = `Tabellen-Kalibrator (DEV-only) – ${String(d?.tableLabel || tableKey)}`;
+      title.style.fontWeight = "900";
+      const sub = document.createElement("div");
+      sub.textContent = `moduleId=${moduleId}, tableKey=${tableKey} (Spaltenbreiten)`;
+      sub.style.fontSize = "12px";
+      sub.style.opacity = "0.8";
+      head.append(title, sub);
+
+      const card = document.createElement("div");
+      applyPopupCardStyle(card);
+      card.style.padding = "10px 12px";
+      card.style.display = "grid";
+      card.style.gap = "10px";
+
+      const msg = document.createElement("div");
+      msg.style.fontSize = "12px";
+      msg.style.minHeight = "18px";
+      msg.style.color = "#334155";
+
+      const grid = document.createElement("div");
+      grid.style.display = "grid";
+      grid.style.gap = "8px";
+
+      const btnRow = document.createElement("div");
+      btnRow.style.display = "flex";
+      btnRow.style.gap = "8px";
+      btnRow.style.flexWrap = "wrap";
+
+      const bLoad = document.createElement("button");
+      bLoad.type = "button";
+      bLoad.textContent = "Laden";
+      applyPopupButtonStyle(bLoad, { variant: "neutral" });
+
+      const bApply = document.createElement("button");
+      bApply.type = "button";
+      bApply.textContent = "Anwenden (Speichern)";
+      applyPopupButtonStyle(bApply, { variant: "primary" });
+
+      const bReset = document.createElement("button");
+      bReset.type = "button";
+      bReset.textContent = "Reset (Defaults)";
+      applyPopupButtonStyle(bReset, { variant: "danger" });
+
+      btnRow.append(bLoad, bApply, bReset);
+
+      const mkInput = (placeholder) => {
+        const el = document.createElement("input");
+        el.type = "text";
+        el.placeholder = placeholder;
+        el.style.width = "100%";
+        el.style.boxSizing = "border-box";
+        el.style.padding = "6px 8px";
+        el.style.border = "1px solid rgba(0,0,0,0.18)";
+        el.style.borderRadius = "8px";
+        el.style.fontSize = "12px";
+        el.autocomplete = "off";
+        el.spellcheck = false;
+        return el;
+      };
+
+      const inputs = new Map(); // key -> { uiEl, pdfEl }
+      const rebuildGrid = (columns) => {
+        grid.replaceChildren();
+        inputs.clear();
+        const cols = Array.isArray(columns) ? columns : [];
+        for (const col of cols) {
+          const key = String(col?.key || "").trim();
+          if (!key) continue;
+          const labelText = String(col?.label || key);
+          const row = document.createElement("div");
+          row.style.display = "grid";
+          row.style.gridTemplateColumns = hasUi && hasPdf ? "260px 1fr 1fr" : "260px 1fr";
+          row.style.gap = "10px";
+          row.style.alignItems = "center";
+
+          const label = document.createElement("div");
+          label.textContent = labelText;
+          label.style.fontWeight = "700";
+          label.style.fontSize = "12px";
+          label.style.color = "#334155";
+
+          const uiEl = mkInput("UI (z.B. 1fr / 120px)");
+          const pdfEl = mkInput("PDF (z.B. 36mm / 15ch)");
+          inputs.set(key, { uiEl, pdfEl });
+
+          row.append(label);
+          if (hasUi && hasPdf) {
+            row.append(uiEl, pdfEl);
+          } else if (hasPdf) {
+            row.append(pdfEl);
+          } else {
+            row.append(uiEl);
+          }
+          grid.appendChild(row);
+        }
+      };
+
+      let loadedColumns = [];
+      const load = async () => {
+        if (!has("tableLayoutsGetOne")) {
+          msg.textContent = "tableLayoutsGetOne fehlt.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        const res = await api.tableLayoutsGetOne(identity);
+        if (!res?.ok) {
+          msg.textContent = res?.error || "Layout konnte nicht geladen werden.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        const layout = res?.data?.effectiveLayout || res?.data?.defaultLayout || null;
+        loadedColumns = Array.isArray(layout?.columns) ? layout.columns : [];
+        const cols = loadedColumns.length ? loadedColumns : fallbackColumns;
+        rebuildGrid(cols);
+
+        const byKey = new Map();
+        for (const c of cols) byKey.set(String(c?.key || ""), c);
+        for (const [key, bag] of inputs.entries()) {
+          const c = byKey.get(key) || {};
+          bag.uiEl.value = clampText(c.uiWidth || "");
+          bag.pdfEl.value = clampText(c.pdfWidth || "");
+        }
+        msg.textContent = "Layout geladen.";
+        msg.style.color = "#334155";
+        return true;
+      };
+
+      const apply = async ({ reset = false } = {}) => {
+        if (reset) {
+          if (!has("tableLayoutsReset")) {
+            msg.textContent = "tableLayoutsReset fehlt.";
+            msg.style.color = "#9d1c1c";
+            return false;
+          }
+          const resReset = await api.tableLayoutsReset({ ...identity, scopeType: "global" });
+          if (!resReset?.ok) {
+            msg.textContent = resReset?.error || "Reset fehlgeschlagen.";
+            msg.style.color = "#9d1c1c";
+            return false;
+          }
+          dispatchTableLayoutChanged(identity);
+          msg.textContent = "Reset ausgeführt (Defaults aktiv).";
+          msg.style.color = "#334155";
+          await load();
+          return true;
+        }
+
+        if (!has("tableLayoutsSave")) {
+          msg.textContent = "tableLayoutsSave fehlt.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+
+        const base = (Array.isArray(loadedColumns) && loadedColumns.length ? loadedColumns : fallbackColumns).map((c) => ({
+          ...(c || {}),
+          headerLines: Array.isArray(c?.headerLines) ? [...c.headerLines] : [],
+        }));
+        const byKey = new Map();
+        for (const c of base) byKey.set(String(c?.key || ""), c);
+        for (const [key, bag] of inputs.entries()) {
+          const c = byKey.get(key);
+          if (!c) continue;
+          if (hasUi) c.uiWidth = clampText(bag.uiEl.value);
+          if (hasPdf) c.pdfWidth = clampText(bag.pdfEl.value);
+        }
+
+        const validated = validateTableLayoutColumns(base, fallbackColumns);
+        if (!validated?.isValid) {
+          msg.textContent = "Ungültige Werte. Beispiele: 1fr / 120px / 36mm / 15ch";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+
+        const layout = buildTableLayoutOverlayFromColumns(validated.columns, "portrait", {
+          fallbackColumns,
+        });
+
+        const resSave = await api.tableLayoutsSave({
+          ...identity,
+          scopeType: "global",
+          layout,
+        });
+        if (!resSave?.ok) {
+          msg.textContent = resSave?.error || "Speichern fehlgeschlagen.";
+          msg.style.color = "#9d1c1c";
+          return false;
+        }
+        dispatchTableLayoutChanged(identity);
+        msg.textContent = "Gespeichert und angewendet.";
+        msg.style.color = "#334155";
+        return true;
+      };
+
+      bLoad.onclick = async () => void (await load());
+      bApply.onclick = async () => void (await apply({ reset: false }));
+      bReset.onclick = async () => void (await apply({ reset: true }));
+
+      card.append(grid, btnRow, msg);
+      wrap.append(head, card);
+
+      this._openSettingsModal({
+        title: "Tabellen-Kalibrator (DEV-only)",
+        content: [wrap],
+        closeOnly: true,
+      });
+
+      await load();
+    };
+
+    const renderTableDefs = () => {
+      const q = String(tableDefsSearch.value || "").trim().toLowerCase();
+      tableDefsList.replaceChildren();
+      const items = Array.isArray(_tableDefs) ? _tableDefs : [];
+      const filtered = q
+        ? items.filter((d) => {
+            const t = `${d.moduleLabel || d.moduleId || ""} ${d.tableLabel || ""} ${d.tableKey || ""}`.toLowerCase();
+            return t.includes(q);
+          })
+        : items;
+
+      for (const def of filtered.slice(0, 80)) {
+        const row = document.createElement("button");
+        row.type = "button";
+        row.style.textAlign = "left";
+        row.style.padding = "8px 10px";
+        row.style.borderRadius = "10px";
+        row.style.border = "1px solid rgba(0,0,0,0.12)";
+        row.style.background = "rgba(255,255,255,0.65)";
+        row.style.cursor = "pointer";
+        row.style.display = "grid";
+        row.style.gap = "2px";
+
+        const line1 = document.createElement("div");
+        line1.textContent = `${String(def.moduleLabel || def.moduleId || "Modul")}: ${String(def.tableLabel || def.tableKey)}`;
+        line1.style.fontWeight = "800";
+        line1.style.fontSize = "12px";
+
+        const line2 = document.createElement("div");
+        line2.textContent = `tableKey: ${String(def.tableKey)} | moduleId: ${String(def.moduleId)} | UI: ${def.uiAvailable ? "ja" : "nein"} | PDF: ${def.pdfAvailable ? "ja" : "nein"}`;
+        line2.style.fontSize = "12px";
+        line2.style.opacity = "0.78";
+
+        row.append(line1, line2);
+        row.onclick = async () => void (await openGenericTableCalibrator(def));
+        tableDefsList.appendChild(row);
+      }
+    };
+
+    tableDefsSearch.addEventListener("input", () => renderTableDefs());
+    void (async () => { 
+      if (!has("tableLayoutsListDefinitions")) { 
+        const m = document.createElement("div"); 
+        m.textContent = "tableLayoutsListDefinitions fehlt."; 
+        m.style.fontSize = "12px"; 
+        m.style.opacity = "0.8"; 
+        tableDefsList.appendChild(m); 
+        return; 
+      } 
+      const res = await api.tableLayoutsListDefinitions(); 
+      _tableDefs = res?.ok && Array.isArray(res.data) ? res.data : []; 
+      renderTableDefs(); 
+    })(); 
+    }
+ 
+    const mkScaleGroup = (labelText, buttons) => { 
+      const row = document.createElement("div"); 
+      row.style.display = "grid"; 
+      row.style.gap = "6px"; 
       const lbl = document.createElement("div");
       lbl.textContent = labelText;
       lbl.style.fontWeight = "700";
@@ -5397,6 +6459,7 @@ export default class SettingsView {
       { key: "version", label: "Versionierung", el: versionCard.box },
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
       { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
+      { key: "tablecal", label: "Tabellen", el: tableCalCard.box },
       { key: "dictation", label: "Diktat-Testfreigabe", el: dictationDevCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
     ];
@@ -5431,6 +6494,7 @@ export default class SettingsView {
       addTabBtn("Versionierung", "version"),
       addTabBtn("DB-Diagnose", "db"),
       addTabBtn("Protokoll-Textgrenzen", "tops"),
+      addTabBtn("Tabellen", "tablecal"),
       addTabBtn("Diktat-Testfreigabe", "dictation"),
       addTabBtn("Farbschema", "theme")
     );
