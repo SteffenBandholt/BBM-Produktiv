@@ -32,19 +32,20 @@ const { runTableLayoutsRepoTests } = require("./tests/tableLayoutsRepo.test.cjs"
 const { runTableLayoutsIpcTests } = require("./tests/tableLayoutsIpc.test.cjs");
 const { runTableLayoutRegistryTests } = require("./tests/tableLayoutRegistry.test.cjs");
 const { runLayoutToolsRegressionTests } = require("./tests/layoutToolsRegression.test.cjs");
-const { runLayoutToolsAutoDetectionTests } = require("./tests/layoutToolsAutoDetection.test.cjs");
-const { runSendMailPayloadTests } = require("./tests/sendMailPayload.test.cjs");
-const { runAusgabeModuleTests } = require("./tests/ausgabeModule.test.cjs");
-const { runAudioModuleTests } = require("./tests/audioModule.test.cjs"); 
-const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cjs"); 
-const { runLicenseStorageBootstrapTests } = require("./tests/licenseStorageBootstrap.test.cjs"); 
-const { runLicenseTrialRuntimeTests } = require("./tests/licenseTrialRuntime.test.cjs"); 
-const { runLicenseRequestTests } = require("./tests/licenseRequest.test.cjs"); 
-const { runLicenseDoubleClickImportTests } = require("./tests/licenseDoubleClickImport.test.cjs"); 
-const { runLicenseFeatureGuardTests } = require("./tests/licenseFeatureGuards.test.cjs"); 
-const { runLicenseStandardFeaturesTests } = require("./tests/licenseStandardFeatures.test.cjs"); 
-const { runFeatureGuardEnforcementTests } = require("./tests/featureGuardEnforcement.test.cjs"); 
-const { runLicensePresentationTests } = require("./tests/licensePresentation.test.cjs"); 
+const { runLayoutToolsAutoDetectionTests } = require("./tests/layoutToolsAutoDetection.test.cjs"); 
+const { runSendMailPayloadTests } = require("./tests/sendMailPayload.test.cjs"); 
+const { runAusgabeModuleTests } = require("./tests/ausgabeModule.test.cjs"); 
+const { runAudioModuleTests } = require("./tests/audioModule.test.cjs");
+const { runDrucklayoutModuleTests } = require("./tests/drucklayoutModule.test.cjs");
+const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cjs");
+const { runLicenseStorageBootstrapTests } = require("./tests/licenseStorageBootstrap.test.cjs");
+const { runLicenseTrialRuntimeTests } = require("./tests/licenseTrialRuntime.test.cjs");
+const { runLicenseRequestTests } = require("./tests/licenseRequest.test.cjs");
+const { runLicenseDoubleClickImportTests } = require("./tests/licenseDoubleClickImport.test.cjs");
+const { runLicenseFeatureGuardTests } = require("./tests/licenseFeatureGuards.test.cjs");
+const { runLicenseStandardFeaturesTests } = require("./tests/licenseStandardFeatures.test.cjs");
+const { runFeatureGuardEnforcementTests } = require("./tests/featureGuardEnforcement.test.cjs");
+const { runLicensePresentationTests } = require("./tests/licensePresentation.test.cjs");
 
 let failed = false;
 
@@ -127,6 +128,7 @@ async function main() {
   await runSendMailPayloadTests(run);
   await runAusgabeModuleTests(run);
   await runAudioModuleTests(run);
+  await runDrucklayoutModuleTests(run);
   await runDistCustomerBuildTests(run);
   await runLicenseTrialRuntimeTests(run); 
   await runLicenseStorageBootstrapTests(run); 
