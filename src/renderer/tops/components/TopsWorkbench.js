@@ -24,6 +24,9 @@ function buildProtocolActionButtonSpecs() {
 export class TopsWorkbench {
   constructor({
     onDraftChange,
+    onTextBlur,
+    onStartDictation,
+    onButtonPointerDown,
     onSave,
     onDelete,
     onToggleMove,
@@ -33,6 +36,9 @@ export class TopsWorkbench {
     loadEmployeesByCompany,
   } = {}) {
     this.onDraftChange = typeof onDraftChange === "function" ? onDraftChange : null;
+    this.onTextBlur = typeof onTextBlur === "function" ? onTextBlur : null;
+    this.onStartDictation = typeof onStartDictation === "function" ? onStartDictation : null;
+    this.onButtonPointerDown = typeof onButtonPointerDown === "function" ? onButtonPointerDown : null;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.onDelete = typeof onDelete === "function" ? onDelete : null;
     this.onToggleMove = typeof onToggleMove === "function" ? onToggleMove : null;
@@ -73,7 +79,8 @@ export class TopsWorkbench {
     this._buildProtocolWorkbenchActionButtons();
 
     this.headerAddActions.append(this.btnL1, this.btnChild);
-    this.headerPrimaryActions.append(this.btnMove, this.btnSave, this.btnDelete);
+    this.headerPrimaryActions.append(this.btnMove, this.btnDelete);
+    this.btnSave.style.display = "none";
   }
 
   _buildProtocolWorkbenchActionButtons() {
@@ -99,7 +106,9 @@ export class TopsWorkbench {
   // wiederverwendbarer Editbox-Baustein ohne TOP-spezifische Meta-/Ablauflogik.
   _buildSharedEditboxCore() {
     this.sharedEditboxCore = new SharedEditboxCore({
-      onDraftChange: () => this._emitDraftChange(),
+      onDraftChange: (payload) => this._emitDraftChange(payload),
+      onTextBlur: (payload) => this._emitTextBlur(payload),
+      onStartDictation: (target) => this._emitStartDictation(target),
     });
   }
 
@@ -108,7 +117,7 @@ export class TopsWorkbench {
       flagsWrap: this.sharedEditboxCore.flagsWrap,
       loadCompanies: this.loadCompanies,
       loadEmployeesByCompany: this.loadEmployeesByCompany,
-      onChange: () => this._emitDraftChange(),
+      onChange: (payload) => this._emitDraftChange(payload),
     });
   }
 
@@ -132,18 +141,35 @@ export class TopsWorkbench {
     btn.type = "button";
     btn.textContent = String(spec?.label || "");
     btn.className = `bbm-tops-btn bbm-tops-workbench-btn bbm-tops-workbench-btn-${spec?.tone || "neutral"}`;
+    const notifyPointerDown = () => {
+      if (this.onButtonPointerDown) this.onButtonPointerDown(spec || {});
+    };
+    btn.addEventListener("pointerdown", notifyPointerDown);
+    btn.addEventListener("mousedown", notifyPointerDown);
     btn.onclick = async () => {
       if (typeof onClick === "function") await onClick();
     };
     return btn;
   }
 
-  _emitDraftChange() {
-    if (this.onDraftChange) this.onDraftChange(this.getDraft());
+  _emitDraftChange(payload) {
+    if (this.onDraftChange) this.onDraftChange(payload || { draft: this.getDraft(), source: "text" });
+  }
+
+  _emitTextBlur(payload) {
+    if (this.onTextBlur) this.onTextBlur(payload || {});
+  }
+
+  _emitStartDictation(target) {
+    if (this.onStartDictation) this.onStartDictation(target);
   }
 
   getDraft() {
     return this.actionDraftState.getDraft();
+  }
+
+  focusShortText(options = {}) {
+    return this.sharedEditboxCore?.focusShortText?.(options) || false;
   }
 
   // ---------------------------------------------------------------------------

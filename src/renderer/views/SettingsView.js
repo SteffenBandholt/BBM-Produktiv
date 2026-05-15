@@ -1,6 +1,7 @@
 // src/renderer/views/SettingsView.js
 //
-// Nutzerdaten werden in DB + appSettings gepflegt (DB ist Quelle beim Laden).
+// Nutzerdaten werden primär aus user_profile geladen und dort gespeichert.
+// Legacy-Werte aus app_settings bleiben nur als Fallback/Migrationsquelle.
 // Persistenz: ueber window.bbmDb.userProfileGet/userProfileUpsert + appSettingsGetMany/appSettingsSetMany.
 
 import { applyPopupButtonStyle, applyPopupCardStyle } from "../ui/popupButtonStyles.js";
@@ -17,49 +18,20 @@ import { createDictationDevSection } from "../modules/audio/index.js";
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
 const DEFAULT_V2_PRE_REMARKS_ENABLED = true;
-const PRINT_DEFAULTS_FIELD_GROUPS = [
-  {
-    title: "Nutzerdaten",
-    fields: [
-      { key: "user_name", label: "Nutzername" },
-      { key: "user_company", label: "Firma" },
-      { key: "user_name1", label: "Name 1" },
-      { key: "user_name2", label: "Name 2" },
-      { key: "user_street", label: "Strasse" },
-      { key: "user_zip", label: "PLZ" },
-      { key: "user_city", label: "Ort" },
-    ],
-  },
-  {
-    title: "Druckeinstellungen",
-    fields: [
-      { key: "pdf.protocolTitle", label: "Protokolltitel" },
-      { key: "pdf.preRemarks", label: "Vorbemerkung", multiline: true },
-      { key: "print.preRemarks.enabled", label: "Vorbemerkung drucken (true/false)" },
-      { key: "pdf.footerPlace", label: "Footer Ort" },
-      { key: "pdf.footerDate", label: "Footer Datum" },
-      { key: "pdf.footerName1", label: "Footer Name 1" },
-      { key: "pdf.footerName2", label: "Footer Name 2" },
-      { key: "pdf.footerRecorder", label: "Footer Protokollfuehrer" },
-      { key: "pdf.footerStreet", label: "Footer Strasse" },
-      { key: "pdf.footerZip", label: "Footer PLZ" },
-      { key: "pdf.footerCity", label: "Footer Ort" },
-      { key: "pdf.footerUseUserData", label: "Footer nutzt Nutzerdaten (true/false)" },
-      { key: "print.v2.pagePadTopMm", label: "Rand oben (mm)" },
-      { key: "print.v2.pagePadLeftMm", label: "Rand links (mm)" },
-      { key: "print.v2.pagePadRightMm", label: "Rand rechts (mm)" },
-      { key: "print.v2.pagePadBottomMm", label: "Rand unten (mm)" },
-      { key: "print.v2.footerReserveMm", label: "Footer-Reserve (mm)" },
-    ],
-  },
-];
-const PRINT_LAYOUT_TOUCHED_KEYS = [
-  "print.v2.pagePadLeftMm",
-  "print.v2.pagePadRightMm",
-  "print.v2.pagePadTopMm",
-  "print.v2.pagePadBottomMm",
-  "print.v2.footerReserveMm",
-];
+const PRINT_LAYOUT_MM_LIMITS = {
+  "print.v2.pagePadTopMm": { min: 0, max: 40, step: 1, fallback: 2 },
+  "print.v2.pagePadLeftMm": { min: 0, max: 30, step: 1, fallback: 12 },
+  "print.v2.pagePadRightMm": { min: 0, max: 30, step: 1, fallback: 12 },
+  "print.v2.pagePadBottomMm": { min: 0, max: 30, step: 1, fallback: 0 },
+  "print.v2.footerReserveMm": { min: 0, max: 30, step: 1, fallback: 12 },
+};
+const PRINT_LAYOUT_DEFAULT_VALUES = {
+  "print.v2.pagePadTopMm": "2",
+  "print.v2.pagePadLeftMm": "12",
+  "print.v2.pagePadRightMm": "12",
+  "print.v2.pagePadBottomMm": "0",
+  "print.v2.footerReserveMm": "12",
+};
 const THEME_DEFAULT_KEYS = [
   "defaults.ui.themeHeaderBaseColor",
   "defaults.ui.themeSidebarBaseColor",
@@ -204,6 +176,7 @@ export default class SettingsView {
     this.inpPrintHeaderAdaptive = null;
     this._printLogoDataUrls = ["", "", ""];
     this._printLogoSaving = false;
+    this._printLogoSaveTimer = null;
 
     this.btnSave = null;
     this.btnArchive = null;
@@ -231,8 +204,11 @@ export default class SettingsView {
     this.btnAddRole = null;
     this.inpAddRole = null;
     this.btnRoleMove = null;
+    this.btnRoleMoveUp = null;
+    this.btnRoleMoveDown = null;
     this.btnRoleDelete = null;
     this.btnRoleRename = null;
+    this.roleActionBarEl = null;
     this.roleMoveHintEl = null;
     this.roleSelectedCode = null;
     this.roleMoveModeActive = false;
@@ -264,6 +240,7 @@ export default class SettingsView {
     this._settingsModalSaveFn = null;
     this._settingsModalCloseOnly = false;
     this._settingsModalOpen = false;
+    this._settingsInputs = null;
     this._bodyLockCount = 0;
     this._bodyOverflowBackup = null;
     this.devUnlocked = false;
@@ -560,7 +537,7 @@ export default class SettingsView {
     ta.maxLength = 300;
     ta.style.width = "100%";
     ta.style.resize = "vertical";
-    ta.style.fontFamily = "Calibri, Arial, sans-serif";
+    ta.style.fontFamily = "var(--bbm-font-ui)";
     ta.style.fontSize = "11pt";
     ta.style.lineHeight = "1.35";
     ta.value = String(this.pdfPreRemarks || "");
@@ -691,6 +668,95 @@ export default class SettingsView {
     if (!v) return "";
     const lim = Math.max(1, Number(maxLen) || 10);
     return v.length > lim ? v.slice(0, lim) : v;
+  }
+
+  _normalizeUserProfileRecord(profile) {
+    if (!profile || typeof profile !== "object") return null;
+    return {
+      name1: this._normalizeUserText(profile.name1, 80),
+      name2: this._normalizeUserText(profile.name2, 80),
+      street: this._normalizeUserText(profile.street, 80),
+      zip: this._normalizeUserZip(profile.zip, 5),
+      city: this._normalizeUserText(profile.city, 80),
+    };
+  }
+
+  _resolveUserSettingsState({ data = {}, profile = null } = {}) {
+    const legacy = {
+      userName: this._normalizeUserText(data.user_name, 80),
+      userCompany: this._normalizeUserText(data.user_company, 80),
+      name1: this._normalizeUserText(data.user_name1, 80),
+      name2: this._normalizeUserText(data.user_name2, 80),
+      street: this._normalizeUserText(data.user_street, 80),
+      zip: this._normalizeUserZip(data.user_zip, 5),
+      city: this._normalizeUserText(data.user_city, 80),
+    };
+    const profileRecord = this._normalizeUserProfileRecord(profile);
+    const profileHasAny = !!profileRecord && Object.values(profileRecord).some((value) => !!String(value || "").trim());
+    const legacyProfileHasAny = Object.values({
+      name1: legacy.name1,
+      name2: legacy.name2,
+      street: legacy.street,
+      zip: legacy.zip,
+      city: legacy.city,
+    }).some((value) => !!String(value || "").trim());
+
+    const resolvedProfile = {
+      name1: profileHasAny && profileRecord.name1 ? profileRecord.name1 : legacy.name1,
+      name2: profileHasAny && profileRecord.name2 ? profileRecord.name2 : legacy.name2,
+      street: profileHasAny && profileRecord.street ? profileRecord.street : legacy.street,
+      zip: profileHasAny && profileRecord.zip ? profileRecord.zip : legacy.zip,
+      city: profileHasAny && profileRecord.city ? profileRecord.city : legacy.city,
+    };
+    const profileFallbackUsed =
+      (!profileHasAny && legacyProfileHasAny) ||
+      (profileHasAny &&
+        Object.entries(resolvedProfile).some(([key, value]) => value !== (profileRecord?.[key] || "")));
+
+    return {
+      userName: legacy.userName,
+      userCompany: legacy.userCompany,
+      userName1: resolvedProfile.name1,
+      userName2: resolvedProfile.name2,
+      userStreet: resolvedProfile.street,
+      userZip: resolvedProfile.zip,
+      userCity: resolvedProfile.city,
+      profileRecord: resolvedProfile,
+      profileHasAny,
+      legacyProfileHasAny,
+      profileFallbackUsed,
+    };
+  }
+
+  _isPrintLayoutMmKey(key) {
+    return Object.prototype.hasOwnProperty.call(PRINT_LAYOUT_MM_LIMITS, String(key || "").trim());
+  }
+
+  _normalizePrintLayoutMmValue(value, key) {
+    const limits = PRINT_LAYOUT_MM_LIMITS[String(key || "").trim()];
+    if (!limits) return String(value ?? "");
+    const fallback = Number.isFinite(Number(limits.fallback)) ? Number(limits.fallback) : 0;
+    const raw = String(value ?? "").trim();
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return String(fallback);
+    const rounded = Math.round(n);
+    const min = Number.isFinite(Number(limits.min)) ? Number(limits.min) : 0;
+    const max = Number.isFinite(Number(limits.max)) ? Number(limits.max) : rounded;
+    const clamped = Math.max(min, Math.min(max, rounded));
+    return String(clamped);
+  }
+
+  _normalizePrintLayoutMmLimits(key) {
+    return PRINT_LAYOUT_MM_LIMITS[String(key || "").trim()] || null;
+  }
+
+  _resetPrintLayoutFields() {
+    const keys = Object.keys(PRINT_LAYOUT_DEFAULT_VALUES);
+    for (const key of keys) {
+      const inp = this._settingsInputs?.get?.(key);
+      if (!inp) continue;
+      inp.value = PRINT_LAYOUT_DEFAULT_VALUES[key];
+    }
   }
 
   _clampLogoNumber(value, min, max, fallback) {
@@ -2307,6 +2373,15 @@ export default class SettingsView {
     }
   }
 
+  _schedulePrintLogoSave() {
+    if (this._printLogoSaveTimer) clearTimeout(this._printLogoSaveTimer);
+    this._printLogoSaveTimer = setTimeout(async () => {
+      this._printLogoSaveTimer = null;
+      await this._savePrintLogoSettings();
+    }, 250);
+  }
+
+
   async _handlePrintLogoFileInput(slotIndex) {
     const idx = Number(slotIndex);
     if (!Number.isInteger(idx) || idx < 0 || idx > 2) return;
@@ -2322,6 +2397,7 @@ export default class SettingsView {
       if (this.printLogoEnabledInputs?.[idx]) {
         this.printLogoEnabledInputs[idx].checked = true;
       }
+      this._schedulePrintLogoSave();
     } catch (_e) {
       alert("Logo konnte nicht verarbeitet werden.");
     } finally {
@@ -2667,7 +2743,7 @@ export default class SettingsView {
 
     return order.map((code) => ({
       code,
-      label: labels[code] || `Kategorie ${code}`,
+      label: labels[code] || `Rolle ${code}`,
     }));
   }
 
@@ -2683,55 +2759,40 @@ export default class SettingsView {
     const list = Array.isArray(this.roleOrder) ? this.roleOrder : [];
     const visible = list.filter((code) => labelByCode.has(code));
 
-    visible.forEach((code) => {
-      const row = document.createElement("div");
-      row.style.display = "flex";
-      row.style.alignItems = "center";
-      row.style.padding = "6px 8px";
-      row.style.borderBottom = "1px solid #eee";
-      row.style.borderRadius = "6px";
-      row.style.cursor = "pointer";
+    if (!visible.length) {
+      const emptyRow = document.createElement("tr");
+      const emptyCell = document.createElement("td");
+      emptyCell.colSpan = 2;
+      emptyCell.textContent = "Keine Rollen vorhanden";
+      emptyCell.style.padding = "12px";
+      emptyCell.style.opacity = "0.75";
+      emptyRow.append(emptyCell);
+      this.roleListEl.appendChild(emptyRow);
+      this._updateRoleActionsState();
+      return;
+    }
 
-      const isSelected = String(this.roleSelectedCode || "") === String(code);
-      row.style.background = isSelected ? "#dff0ff" : "transparent";
-      row.style.border = isSelected ? "1px solid #7aa7ff" : "1px solid transparent";
-      row.style.fontWeight = isSelected ? "700" : "400";
+    visible.forEach((code, index) => {
+      const row = document.createElement("tr");
+      row.style.borderBottom = "1px solid #eef2f7";
+      row.style.cursor = "pointer";
+      row.style.background = String(this.roleSelectedCode || "") === String(code) ? "#dff0ff" : "transparent";
 
       row.onclick = () => {
         if (busy) return;
         this._selectRole(code);
-        if (this.roleListEl) this.roleListEl.focus();
       };
 
-      const labelWrap = document.createElement("div");
-      labelWrap.style.flex = "1 1 auto";
-      labelWrap.style.minWidth = "0";
+      const orderCell = document.createElement("td");
+      orderCell.style.padding = "10px 12px";
+      orderCell.style.whiteSpace = "nowrap";
+      orderCell.textContent = String(index + 1);
 
-      if (String(this.roleRenameCode || "") === String(code)) {
-        const inp = document.createElement("input");
-        inp.type = "text";
-        inp.value = labelByCode.get(code) || String(code);
-        inp.style.width = "100%";
-        inp.onkeydown = (e) => this._handleRoleRenameKey(e);
-        inp.onblur = () => this._commitRoleInlineRename({ commit: true });
-        this.roleRenameInputEl = inp;
-        labelWrap.append(inp);
-        setTimeout(() => {
-          try {
-            inp.focus();
-            inp.select();
-          } catch {
-            // ignore
-          }
-        }, 0);
-      } else {
-        const label = document.createElement("div");
-        label.textContent = labelByCode.get(code) || String(code);
-        label.title = `Code ${code}`;
-        labelWrap.append(label);
-      }
+      const labelCell = document.createElement("td");
+      labelCell.style.padding = "10px 12px";
+      labelCell.textContent = labelByCode.get(code) || `Rolle ${code}`;
 
-      row.append(labelWrap);
+      row.append(orderCell, labelCell);
       this.roleListEl.appendChild(row);
     });
 
@@ -2750,9 +2811,33 @@ export default class SettingsView {
       this.btnRoleMove.style.border = this.roleMoveModeActive
         ? "1px solid #7aa7ff"
         : "1px solid #ddd";
+      this.btnRoleMove.textContent = "Schieben";
+      this.btnRoleMove.title = this.roleMoveModeActive
+        ? "Markierte Rolle mit den Pfeilen verschieben"
+        : "Schieben aktivieren";
+      this.btnRoleMove.setAttribute("aria-pressed", this.roleMoveModeActive ? "true" : "false");
+    }
+    const selectedIndex = Array.isArray(this.roleOrder)
+      ? this.roleOrder.findIndex((c) => String(c) === String(this.roleSelectedCode))
+      : -1;
+    const canMoveUp = hasSelection && selectedIndex > 0;
+    const canMoveDown =
+      hasSelection && Array.isArray(this.roleOrder) && selectedIndex >= 0 && selectedIndex < this.roleOrder.length - 1;
+    if (this.btnRoleMoveUp) {
+      this.btnRoleMoveUp.disabled = busy || !this.roleMoveModeActive || !canMoveUp;
+      this.btnRoleMoveUp.style.opacity = this.btnRoleMoveUp.disabled ? "0.55" : "1";
+      this.btnRoleMoveUp.style.display = this.roleMoveModeActive ? "" : "none";
+    }
+    if (this.btnRoleMoveDown) {
+      this.btnRoleMoveDown.disabled = busy || !this.roleMoveModeActive || !canMoveDown;
+      this.btnRoleMoveDown.style.opacity = this.btnRoleMoveDown.disabled ? "0.55" : "1";
+      this.btnRoleMoveDown.style.display = this.roleMoveModeActive ? "" : "none";
     }
     if (this.roleMoveHintEl) {
       this.roleMoveHintEl.style.display = this.roleMoveModeActive ? "" : "none";
+      this.roleMoveHintEl.textContent = this.roleMoveModeActive
+        ? "Markierte Rolle mit den Pfeilen verschieben."
+        : "";
     }
     if (this.btnRoleDelete) {
       this.btnRoleDelete.disabled = busy || !canDelete;
@@ -2945,7 +3030,7 @@ export default class SettingsView {
 
   async _renameRoleCategory(code) {
     if (this.saving) return;
-    const current = (this.roleLabels && this.roleLabels[code]) || `Kategorie ${code}`;
+    const current = (this.roleLabels && this.roleLabels[code]) || `Rolle ${code}`;
     const ok = await this._promptRenameCategory(current);
     if (!ok) return;
     const next = this.renameInputEl?.value ?? "";
@@ -2987,11 +3072,11 @@ export default class SettingsView {
 
     const labels = this.roleLabels || this._defaultRoleLabels();
     const fallbackCode = this._fallbackRoleCode();
-    const label = labels[code] || `Kategorie ${code}`;
+    const label = labels[code] || `Rolle ${code}`;
     const fallbackLabel = labels[fallbackCode] || this._defaultRoleLabels()[fallbackCode];
 
     const ok = await this._confirmDeleteCategory(
-      `Kategorie "${label}" wird geloescht. Firmen werden auf "${fallbackLabel}" umgestellt. Fortfahren?`
+      `Rolle/Kategorie "${label}" wird geloescht. Firmen werden auf "${fallbackLabel}" umgestellt. Fortfahren?`
     );
     if (!ok) return;
 
@@ -3068,6 +3153,190 @@ export default class SettingsView {
     }
   }
 
+  _createFirmRoleOrderPopupContent() {
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "12px";
+    wrap.style.minWidth = "min(920px, calc(100vw - 80px))";
+    wrap.style.maxWidth = "1040px";
+
+    const intro = document.createElement("div");
+    intro.style.display = "grid";
+    intro.style.gap = "4px";
+
+    const introHint = document.createElement("div");
+    introHint.textContent =
+      "Legt fest, in welcher Reihenfolge Firmenrollen in Listen und im Druck erscheinen.";
+    introHint.style.fontSize = "12px";
+    introHint.style.opacity = "0.8";
+    intro.append(introHint);
+
+    const actionBar = document.createElement("div");
+    actionBar.style.display = "flex";
+    actionBar.style.gap = "8px";
+    actionBar.style.flexWrap = "wrap";
+    actionBar.style.alignItems = "center";
+    this.roleActionBarEl = actionBar;
+
+    const moveBtn = document.createElement("button");
+    moveBtn.type = "button";
+    moveBtn.textContent = "Schieben";
+    applyPopupButtonStyle(moveBtn);
+    moveBtn.onclick = () => {
+      this._toggleRoleMoveMode();
+    };
+    this.btnRoleMove = moveBtn;
+
+    const editBtn = document.createElement("button");
+    editBtn.type = "button";
+    editBtn.textContent = "Edit";
+    applyPopupButtonStyle(editBtn);
+    editBtn.onclick = async () => {
+      if (!this.roleSelectedCode) return;
+      await this._renameRoleCategory(this.roleSelectedCode);
+    };
+    this.btnRoleRename = editBtn;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "Löschen";
+    applyPopupButtonStyle(deleteBtn);
+    deleteBtn.onclick = async () => {
+      if (!this.roleSelectedCode) return;
+      await this._deleteSelectedRole();
+    };
+    this.btnRoleDelete = deleteBtn;
+
+    const moveControls = document.createElement("div");
+    moveControls.style.display = "flex";
+    moveControls.style.gap = "8px";
+    moveControls.style.flexWrap = "wrap";
+    moveControls.style.alignItems = "center";
+
+    const btnUp = document.createElement("button");
+    btnUp.type = "button";
+    btnUp.textContent = "▲ Hoch";
+    applyPopupButtonStyle(btnUp);
+    btnUp.onclick = async () => {
+      await this._moveSelectedRole(-1);
+    };
+    this.btnRoleMoveUp = btnUp;
+
+    const btnDown = document.createElement("button");
+    btnDown.type = "button";
+    btnDown.textContent = "▼ Runter";
+    applyPopupButtonStyle(btnDown);
+    btnDown.onclick = async () => {
+      await this._moveSelectedRole(1);
+    };
+    this.btnRoleMoveDown = btnDown;
+
+    this.roleMoveHintEl = document.createElement("div");
+    this.roleMoveHintEl.style.fontSize = "12px";
+    this.roleMoveHintEl.style.opacity = "0.8";
+    this.roleMoveHintEl.style.display = "none";
+
+    moveControls.append(btnUp, btnDown, this.roleMoveHintEl);
+    actionBar.append(moveBtn, editBtn, deleteBtn, moveControls);
+
+    const addBar = document.createElement("div");
+    addBar.style.display = "flex";
+    addBar.style.gap = "8px";
+    addBar.style.flexWrap = "wrap";
+    addBar.style.alignItems = "end";
+
+    const addLabel = document.createElement("label");
+    addLabel.style.display = "grid";
+    addLabel.style.gap = "4px";
+    addLabel.style.minWidth = "260px";
+
+    const addLabelText = document.createElement("span");
+    addLabelText.textContent = "Neue Rolle";
+    addLabelText.style.fontSize = "12px";
+    addLabelText.style.fontWeight = "700";
+
+    const addInput = document.createElement("input");
+    addInput.type = "text";
+    addInput.placeholder = "z. B. Gutachter";
+    addInput.style.width = "100%";
+    addInput.style.minWidth = "240px";
+    this.inpAddRole = addInput;
+
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.textContent = "Rolle hinzufügen";
+    applyPopupButtonStyle(addBtn, { variant: "primary" });
+    addBtn.onclick = async () => {
+      await this._addRoleCategory();
+    };
+    this.btnAddRole = addBtn;
+
+    addInput.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter") return;
+      e.preventDefault();
+      addBtn.click();
+    });
+    addInput.addEventListener("input", () => {
+      addBtn.disabled = !String(addInput.value || "").trim();
+    });
+    addBtn.disabled = !String(addInput.value || "").trim();
+
+    addLabel.append(addLabelText, addInput);
+    addBar.append(addLabel, addBtn);
+
+    const tableWrap = document.createElement("div");
+    tableWrap.style.border = "1px solid #dbe3ea";
+    tableWrap.style.borderRadius = "8px";
+    tableWrap.style.overflow = "auto";
+    tableWrap.style.background = "#fff";
+
+    const table = document.createElement("table");
+    table.style.width = "100%";
+    table.style.borderCollapse = "collapse";
+    table.style.fontSize = "13px";
+
+    const thead = document.createElement("thead");
+    const headRow = document.createElement("tr");
+    for (const text of ["Nr.", "Rolle/Kategorie"]) {
+      const th = document.createElement("th");
+      th.textContent = text;
+      th.style.textAlign = "left";
+      th.style.padding = "10px 12px";
+      th.style.borderBottom = "1px solid #dbe3ea";
+      th.style.background = "#f8fafc";
+      th.style.position = "sticky";
+      th.style.top = "0";
+      th.style.zIndex = "1";
+      headRow.append(th);
+    }
+    thead.append(headRow);
+
+    const tbody = document.createElement("tbody");
+    this.roleListEl = tbody;
+    this.roleRenameInputEl = null;
+
+    table.append(thead, tbody);
+    tableWrap.append(table);
+    wrap.append(intro, actionBar, addBar, tableWrap);
+
+    if (!this.roleSelectedCode && Array.isArray(this.roleOrder) && this.roleOrder.length) {
+      this.roleSelectedCode = this.roleOrder[0];
+    }
+    this._renderRoleOrderList();
+
+    return wrap;
+  }
+
+  async _openFirmRoleOrderPopup() {
+    const content = this._createFirmRoleOrderPopupContent();
+    this._openSettingsModal({
+      title: "Rollenreihenfolge für Firmen",
+      content: [content],
+      saveFn: async () => (await this._saveRoleMeta()) !== false,
+      closeOnly: false,
+    });
+  }
+
   async _reload() {
     this._setMsg("");
     this._applyState();
@@ -3077,6 +3346,16 @@ export default class SettingsView {
       this._setMsg("Settings-API fehlt (IPC noch nicht aktiv).");
       this._applyState();
       return;
+    }
+
+    let profile = null;
+    if (typeof api.userProfileGet === "function") {
+      const resProfile = await api.userProfileGet();
+      if (!resProfile?.ok) {
+        this._setMsg(resProfile?.error || "Fehler beim Laden der Nutzerdaten");
+      } else {
+        profile = resProfile.profile || null;
+      }
     }
 
     const res = await api.appSettingsGetMany([
@@ -3174,53 +3453,20 @@ export default class SettingsView {
     }
 
     const data = res.data || {};
-    this.userName = (data.user_name ?? "").toString();
-    this.userCompany = (data.user_company ?? "").toString();
+    const userState = this._resolveUserSettingsState({ data, profile });
+    this.userName = userState.userName;
+    this.userCompany = userState.userCompany;
 
-    let profile = null;
-    if (typeof api.userProfileGet === "function") {
-      const resProfile = await api.userProfileGet();
+    const userName1 = userState.userName1;
+    const userName2 = userState.userName2;
+    const userStreet = userState.userStreet;
+    const userZip = userState.userZip;
+    const userCity = userState.userCity;
+
+    if (userState.profileFallbackUsed && typeof api.userProfileUpsert === "function") {
+      const resProfile = await api.userProfileUpsert(userState.profileRecord);
       if (!resProfile?.ok) {
-        this._setMsg(resProfile?.error || "Fehler beim Laden der Nutzerdaten");
-      } else {
-        profile = resProfile.profile || null;
-      }
-    }
-
-    const profileHasAny = !!profile && [
-      profile.name1,
-      profile.name2,
-      profile.street,
-      profile.zip,
-      profile.city,
-    ].some((v) => String(v || "").trim());
-    if (profile && !profileHasAny) profile = null;
-
-    let userName1 = (data.user_name1 ?? "").toString();
-    let userName2 = (data.user_name2 ?? "").toString();
-    let userStreet = (data.user_street ?? "").toString();
-    let userZip = this._normalizeUserZip((data.user_zip ?? "").toString(), 5);
-    let userCity = (data.user_city ?? "").toString();
-
-    if (profile) {
-      userName1 = (profile.name1 ?? "").toString();
-      userName2 = (profile.name2 ?? "").toString();
-      userStreet = (profile.street ?? "").toString();
-      userZip = this._normalizeUserZip((profile.zip ?? "").toString(), 5);
-      userCity = (profile.city ?? "").toString();
-    } else if (typeof api.userProfileUpsert === "function") {
-      const hasAny = [userName1, userName2, userStreet, userZip, userCity].some((v) => String(v || "").trim());
-      if (hasAny) {
-        const resProfile = await api.userProfileUpsert({
-          name1: userName1,
-          name2: userName2,
-          street: userStreet,
-          zip: userZip,
-          city: userCity,
-        });
-        if (!resProfile?.ok) {
-          this._setMsg(resProfile?.error || "Fehler beim Speichern der Nutzerdaten");
-        }
+        this._setMsg(resProfile?.error || "Fehler beim Speichern der Nutzerdaten");
       }
     }
 
@@ -3545,9 +3791,9 @@ export default class SettingsView {
         }
       }
 
-      const payload = {
-        user_name,
-        user_company,
+    const payload = {
+      user_name,
+      user_company,
         user_name1,
         user_name2,
         user_street,
@@ -3655,6 +3901,794 @@ export default class SettingsView {
     target.appendChild(document.createTextNode(String(item)));
   }
 
+  _applyPdfFooterUserDefaultsToInputs(targets = {}, values, { overwriteExisting = false } = {}) {
+    const data = values || this._getNormalizedUserFooterDefaults();
+    const pairs = [
+      [targets.name1, data.name1],
+      [targets.name2, data.name2],
+      [targets.street, data.street],
+      [targets.zip, data.zip],
+      [targets.city, data.city],
+    ];
+
+    for (const [input, value] of pairs) {
+      if (!input) continue;
+      const current = String(input.value || "").trim();
+      if (current && !overwriteExisting) continue;
+      const next = String(value || "").trim();
+      if (!next) continue;
+      input.value = next;
+    }
+  }
+
+  async _createProfileAddressContent() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(560px, calc(100vw - 80px))";
+
+    const info = document.createElement("div");
+    info.style.fontSize = "12px";
+    info.style.opacity = "0.85";
+    info.textContent = "Nutzerprofil, Adresse und globale Stammdaten.";
+    wrap.append(info);
+
+    const inputs = new Map();
+    this._settingsInputs = inputs;
+
+    const renderField = (field) => {
+      const row = document.createElement("label");
+      row.style.display = "grid";
+      row.style.gap = "4px";
+
+      const lbl = document.createElement("span");
+      lbl.textContent = field.label || field.key;
+      lbl.style.fontSize = "12px";
+
+      const inp = document.createElement("input");
+      inp.type = "text";
+      inp.style.width = "100%";
+      row.append(lbl, inp);
+      inputs.set(field.key, inp);
+      return row;
+    };
+
+    const makeCard = (titleText, hintText, fields) => {
+      const card = document.createElement("div");
+      applyPopupCardStyle(card);
+      card.style.padding = "10px";
+      card.style.display = "grid";
+      card.style.gap = "8px";
+
+      const heading = document.createElement("div");
+      heading.textContent = titleText;
+      heading.style.fontWeight = "800";
+      card.append(heading);
+
+      const hint = document.createElement("div");
+      hint.textContent = hintText;
+      hint.style.fontSize = "12px";
+      hint.style.opacity = "0.78";
+      card.append(hint);
+
+      for (const field of fields) {
+        card.append(renderField(field));
+      }
+      return card;
+    };
+
+    const profileCard = makeCard("Profil", "Name, Firma und Anzeigedaten", [
+      { key: "user_name", label: "Nutzername" },
+      { key: "user_company", label: "Firma" },
+    ]);
+    const addressCard = makeCard("Adresse", "Strasse, PLZ und Ort", [
+      { key: "user_name1", label: "Name 1" },
+      { key: "user_name2", label: "Name 2" },
+      { key: "user_street", label: "Strasse" },
+      { key: "user_zip", label: "PLZ" },
+      { key: "user_city", label: "Ort" },
+    ]);
+
+    wrap.append(profileCard, addressCard);
+
+    let profile = null;
+    if (typeof api.userProfileGet === "function") {
+      const resProfile = await api.userProfileGet();
+      if (resProfile?.ok) {
+        profile = resProfile.profile || null;
+      }
+    }
+    const footerDefaults = profile
+      ? this._normalizeUserProfileRecord(profile)
+      : this._getNormalizedUserFooterDefaults();
+
+    if (typeof api.appSettingsGetMany === "function") {
+      const res = await api.appSettingsGetMany([
+        "user_name",
+        "user_company",
+        "user_name1",
+        "user_name2",
+        "user_street",
+        "user_zip",
+        "user_city",
+      ]);
+      if (res?.ok) {
+        const data = res.data || {};
+        const userState = this._resolveUserSettingsState({ data, profile });
+        const values = {
+          user_name: userState.userName,
+          user_company: userState.userCompany,
+          user_name1: userState.userName1,
+          user_name2: userState.userName2,
+          user_street: userState.userStreet,
+          user_zip: userState.userZip,
+          user_city: userState.userCity,
+        };
+        for (const [key, inp] of inputs.entries()) {
+          if (inp) inp.value = String(values[key] ?? "");
+        }
+      }
+    }
+
+    this.inpName = inputs.get("user_name") || null;
+    this.inpCompany = inputs.get("user_company") || null;
+    this.inpUserName1 = inputs.get("user_name1") || null;
+    this.inpUserName2 = inputs.get("user_name2") || null;
+    this.inpUserStreet = inputs.get("user_street") || null;
+    this.inpUserZip = inputs.get("user_zip") || null;
+    this.inpUserCity = inputs.get("user_city") || null;
+
+    this._openSettingsModal({
+      title: "Profil / Adresse",
+      content: [wrap],
+      saveFn: async () => {
+        if (typeof api.userProfileUpsert !== "function" || typeof api.appSettingsSetMany !== "function") {
+          alert("Settings-API fehlt (IPC noch nicht aktiv).");
+          return false;
+        }
+
+        const user_name = this._normalizeUserText(inputs.get("user_name")?.value, 80);
+        const user_company = this._normalizeUserText(inputs.get("user_company")?.value, 80);
+        const user_name1 = this._normalizeUserText(inputs.get("user_name1")?.value, 80);
+        const user_name2 = this._normalizeUserText(inputs.get("user_name2")?.value, 80);
+        const user_street = this._normalizeUserText(inputs.get("user_street")?.value, 80);
+        const user_zip = this._normalizeUserZip(inputs.get("user_zip")?.value, 5);
+        const user_city = this._normalizeUserText(inputs.get("user_city")?.value, 80);
+
+        const resProfile = await api.userProfileUpsert({
+          name1: user_name1,
+          name2: user_name2,
+          street: user_street,
+          zip: user_zip,
+          city: user_city,
+        });
+        if (!resProfile?.ok) {
+          alert(resProfile?.error || "Speichern der Nutzerdaten fehlgeschlagen");
+          return false;
+        }
+
+        const payload = {
+          user_name,
+          user_company,
+          user_name1,
+          user_name2,
+          user_street,
+          user_zip,
+          user_city,
+          ...this._buildTouchedPayloadFromValues({
+            user_name,
+            user_company,
+            user_name1,
+            user_name2,
+            user_street,
+            user_zip,
+            user_city,
+          }),
+        };
+
+        const res = await api.appSettingsSetMany(payload);
+        if (!res?.ok) {
+          alert(res?.error || "Speichern fehlgeschlagen");
+          return false;
+        }
+
+        this.userName = user_name;
+        this.userCompany = user_company;
+        if (this.router?.context) {
+          this.router.context.settings = {
+            ...(this.router.context.settings || {}),
+            user_name,
+            user_company,
+            user_name1,
+            user_name2,
+            user_street,
+            user_zip,
+            user_city,
+          };
+        }
+        if (typeof window.dispatchEvent === "function") {
+          window.dispatchEvent(new Event("bbm:header-refresh"));
+        }
+        this._setMsg("Gespeichert");
+        return true;
+      },
+      closeOnly: false,
+    });
+  }
+
+  async _createDictationAudioContent() {
+    const mkScaleGroup = (labelText, buttons) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gap = "6px";
+      const lbl = document.createElement("div");
+      lbl.textContent = labelText;
+      lbl.style.fontWeight = "700";
+      lbl.style.fontSize = "12px";
+      const btnWrap = document.createElement("div");
+      btnWrap.style.display = "flex";
+      btnWrap.style.gap = "6px";
+      btnWrap.style.flexWrap = "wrap";
+      btnWrap.append(...buttons);
+      row.append(lbl, btnWrap);
+      return row;
+    };
+    const applyScaleBtnBase = (el) => {
+      el.style.padding = "6px 10px";
+      el.style.borderRadius = "8px";
+      el.style.border = "1px solid rgba(0,0,0,0.18)";
+      el.style.fontWeight = "600";
+      el.style.cursor = "pointer";
+      el.style.minHeight = "30px";
+      el.style.boxShadow = "none";
+    };
+    const setScaleBtnActive = (el, active) => {
+      el.style.background = active ? "#1976d2" : "#fff";
+      el.style.color = active ? "white" : "#1565c0";
+      el.style.borderColor = active ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
+    };
+    const dictationSection = createDictationDevSection({
+      applyPopupCardStyle,
+      mkScaleGroup,
+      applyScaleBtnBase,
+      setScaleBtnActive,
+      settingsApi: () => window.bbmDb || {},
+    });
+    if (typeof dictationSection.load === "function") {
+      await dictationSection.load();
+    }
+
+    this._openSettingsModal({
+      title: "Diktat / Audio",
+      content: [dictationSection.tab],
+      closeOnly: true,
+    });
+  }
+
+  async _createOutputPrintContent() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(720px, calc(100vw - 80px))";
+
+    const info = document.createElement("div");
+    info.style.fontSize = "12px";
+    info.style.opacity = "0.85";
+    info.textContent = "Footer, Druckränder, Drucklogos und Ausgabeordner.";
+    wrap.append(info);
+
+    const inputs = new Map();
+    this._settingsInputs = inputs;
+
+    const renderField = (field) => {
+      const row = document.createElement("label");
+      row.style.display = "grid";
+      row.style.gap = "4px";
+
+      const lbl = document.createElement("span");
+      lbl.textContent = field.label || field.key;
+      lbl.style.fontSize = "12px";
+
+      let inp;
+      if (field.type === "checkbox") {
+        inp = document.createElement("input");
+        inp.type = "checkbox";
+        const box = document.createElement("span");
+        box.style.display = "inline-flex";
+        box.style.alignItems = "center";
+        box.style.gap = "8px";
+        box.append(inp, document.createTextNode(field.checkboxLabel || "Aktiv"));
+        row.append(lbl, box);
+      } else {
+        inp = field.multiline ? document.createElement("textarea") : document.createElement("input");
+        inp.style.width = "100%";
+        if (field.type === "number") {
+          const limits = this._normalizePrintLayoutMmLimits(field.key);
+          if (limits) {
+            inp.type = "number";
+            inp.min = String(limits.min);
+            inp.max = String(limits.max);
+            inp.step = String(limits.step);
+            inp.inputMode = "numeric";
+          }
+        }
+        if (inp.tagName === "TEXTAREA") inp.rows = field.rows || 4;
+        row.append(lbl, inp);
+      }
+      inputs.set(field.key, inp);
+      return row;
+    };
+
+    const footerCard = document.createElement("div");
+    applyPopupCardStyle(footerCard);
+    footerCard.style.padding = "10px";
+    footerCard.style.display = "grid";
+    footerCard.style.gap = "8px";
+    const footerTitle = document.createElement("div");
+    footerTitle.textContent = "Footer / Drucksignatur";
+    footerTitle.style.fontWeight = "800";
+    footerCard.append(footerTitle);
+    const footerHint = document.createElement("div");
+    footerHint.textContent = "Fusszeilenangaben und Profil-/Adressbezug.";
+    footerHint.style.fontSize = "12px";
+    footerHint.style.opacity = "0.78";
+    footerCard.append(footerHint);
+
+    const footerFields = [
+      { key: "pdf.footerPlace", label: "Ort" },
+      { key: "pdf.footerDate", label: "Datum" },
+      { key: "pdf.footerName1", label: "Name 1" },
+      { key: "pdf.footerName2", label: "Name 2" },
+      { key: "pdf.footerRecorder", label: "Protokollfuehrer" },
+      { key: "pdf.footerStreet", label: "Strasse" },
+      { key: "pdf.footerZip", label: "PLZ" },
+      { key: "pdf.footerCity", label: "Ort (Adresse)" },
+      { key: "pdf.footerUseUserData", label: "Profil-/Adressdaten im Footer verwenden", type: "checkbox" },
+    ];
+    for (const field of footerFields) {
+      footerCard.append(
+        renderField({
+          ...field,
+          type: field.type || "text",
+          checkboxLabel: "Aktiv",
+        })
+      );
+    }
+
+    const storageCard = document.createElement("div");
+    applyPopupCardStyle(storageCard);
+    storageCard.style.padding = "10px";
+    storageCard.style.display = "grid";
+    storageCard.style.gap = "8px";
+    const storageTitle = document.createElement("div");
+    storageTitle.textContent = "Ausgabeordner / Speicherort";
+    storageTitle.style.fontWeight = "800";
+    storageCard.append(storageTitle);
+    const storageHint = document.createElement("div");
+    storageHint.textContent = "Ablageordner fuer Protokoll-PDFs und Ausgabe.";
+    storageHint.style.fontSize = "12px";
+    storageHint.style.opacity = "0.78";
+    storageCard.append(storageHint);
+    const protocolsDirRow = document.createElement("label");
+    protocolsDirRow.style.display = "grid";
+    protocolsDirRow.style.gap = "4px";
+    const protocolsDirLabel = document.createElement("span");
+    protocolsDirLabel.textContent = "Ausgabeordner";
+    protocolsDirLabel.style.fontSize = "12px";
+    const inpProtocolsDir = document.createElement("input");
+    inpProtocolsDir.type = "text";
+    inpProtocolsDir.style.width = "100%";
+    protocolsDirRow.append(protocolsDirLabel, inpProtocolsDir);
+    storageCard.append(protocolsDirRow);
+    inputs.set("pdf.protocolsDir", inpProtocolsDir);
+
+    const logosCard = document.createElement("div");
+    applyPopupCardStyle(logosCard);
+    logosCard.style.padding = "10px";
+    logosCard.style.display = "grid";
+    logosCard.style.gap = "8px";
+    const logosTitle = document.createElement("div");
+    logosTitle.textContent = "Drucklogos";
+    logosTitle.style.fontWeight = "800";
+    logosCard.append(logosTitle);
+    const logosHint = document.createElement("div");
+    logosHint.textContent = "Drucklogos weiterhin ueber den bestehenden Dialog verwalten.";
+    logosHint.style.fontSize = "12px";
+    logosHint.style.opacity = "0.78";
+    logosCard.append(logosHint);
+    const btnLogos = document.createElement("button");
+    btnLogos.type = "button";
+    btnLogos.textContent = "Drucklogos verwalten";
+    applyPopupButtonStyle(btnLogos);
+    btnLogos.onclick = async () => {
+      await this._openPrintLogosPopup();
+    };
+    logosCard.append(btnLogos);
+
+    const layoutCard = document.createElement("div");
+    applyPopupCardStyle(layoutCard);
+    layoutCard.style.padding = "10px";
+    layoutCard.style.display = "grid";
+    layoutCard.style.gap = "8px";
+    const layoutTitle = document.createElement("div");
+    layoutTitle.textContent = "Drucklayout";
+    layoutTitle.style.fontWeight = "800";
+    layoutCard.append(layoutTitle);
+    const layoutHint = document.createElement("div");
+    layoutHint.textContent = "Seitenraender und Footer-Abstand.";
+    layoutHint.style.fontSize = "12px";
+    layoutHint.style.opacity = "0.78";
+    layoutCard.append(layoutHint);
+    const layoutFields = [
+      { key: "print.v2.pagePadTopMm", label: "Rand oben (mm)", type: "number" },
+      { key: "print.v2.pagePadLeftMm", label: "Rand links (mm)", type: "number" },
+      { key: "print.v2.pagePadRightMm", label: "Rand rechts (mm)", type: "number" },
+      { key: "print.v2.pagePadBottomMm", label: "Rand unten (mm)", type: "number" },
+      { key: "print.v2.footerReserveMm", label: "Footer-Reserve (mm)", type: "number" },
+    ];
+    for (const field of layoutFields) {
+      layoutCard.append(
+        renderField({
+          ...field,
+          type: "number",
+        })
+      );
+    }
+    const layoutActions = document.createElement("div");
+    layoutActions.style.display = "flex";
+    layoutActions.style.gap = "8px";
+    layoutActions.style.flexWrap = "wrap";
+    const btnResetLayout = document.createElement("button");
+    btnResetLayout.type = "button";
+    btnResetLayout.textContent = "Standardwerte wiederherstellen";
+    applyPopupButtonStyle(btnResetLayout);
+    btnResetLayout.onclick = () => {
+      this._resetPrintLayoutFields();
+    };
+    layoutActions.append(btnResetLayout);
+    layoutCard.append(layoutActions);
+
+    wrap.append(footerCard, storageCard, logosCard, layoutCard);
+
+    let profile = null;
+    if (typeof api.userProfileGet === "function") {
+      const resProfile = await api.userProfileGet();
+      if (resProfile?.ok) {
+        profile = resProfile.profile || null;
+      }
+    }
+
+    if (typeof api.appSettingsGetMany === "function") {
+      const res = await api.appSettingsGetMany([
+        "pdf.footerPlace",
+        "pdf.footerDate",
+        "pdf.footerName1",
+        "pdf.footerName2",
+        "pdf.footerRecorder",
+        "pdf.footerStreet",
+        "pdf.footerZip",
+        "pdf.footerCity",
+        "pdf.footerUseUserData",
+        "pdf.protocolsDir",
+        "print.v2.pagePadTopMm",
+        "print.v2.pagePadLeftMm",
+        "print.v2.pagePadRightMm",
+        "print.v2.pagePadBottomMm",
+        "print.v2.footerReserveMm",
+      ]);
+      if (res?.ok) {
+        const data = res.data || {};
+        const footerUseUserData = this._parseBool(data["pdf.footerUseUserData"], false);
+        for (const [key, inp] of inputs.entries()) {
+          if (!inp) continue;
+          const value = data[key];
+          if (inp.type === "checkbox") {
+            inp.checked = this._parseBool(value, false);
+          } else if (this._isPrintLayoutMmKey(key)) {
+            inp.value = this._normalizePrintLayoutMmValue(value, key);
+          } else {
+            inp.value = String(value ?? "");
+          }
+        }
+        if (footerUseUserData) {
+          this._applyPdfFooterUserDefaultsToInputs(
+            {
+              name1: inputs.get("pdf.footerName1"),
+              name2: inputs.get("pdf.footerName2"),
+              street: inputs.get("pdf.footerStreet"),
+              zip: inputs.get("pdf.footerZip"),
+              city: inputs.get("pdf.footerCity"),
+            },
+            footerDefaults,
+            { overwriteExisting: false }
+          );
+        }
+        if (!String(data["pdf.protocolsDir"] || "").trim()) {
+          inputs.get("pdf.protocolsDir").value = this._pdfSettingsDefaults().protocolsDir;
+        }
+      }
+    }
+
+    this.inpPdfFooterPlace = inputs.get("pdf.footerPlace") || null;
+    this.inpPdfFooterDate = inputs.get("pdf.footerDate") || null;
+    this.inpPdfFooterName1 = inputs.get("pdf.footerName1") || null;
+    this.inpPdfFooterName2 = inputs.get("pdf.footerName2") || null;
+    this.inpPdfFooterRecorder = inputs.get("pdf.footerRecorder") || null;
+    this.inpPdfFooterStreet = inputs.get("pdf.footerStreet") || null;
+    this.inpPdfFooterZip = inputs.get("pdf.footerZip") || null;
+    this.inpPdfFooterCity = inputs.get("pdf.footerCity") || null;
+    this.inpPdfFooterUseUserData = inputs.get("pdf.footerUseUserData") || null;
+    this.inpPdfProtocolsDir = inputs.get("pdf.protocolsDir") || null;
+    this.btnPdfFooterUseUserData = null;
+    this.btnPdfProtocolsBrowse = null;
+    this.btnPdfSettingsSave = null;
+    this.inpPdfProtocolTitle = null;
+    this.inpPdfTrafficLightAll = null;
+
+    this._openSettingsModal({
+      title: "Ausgabe & Druck",
+      content: [wrap],
+      saveFn: async () => {
+        if (typeof api.appSettingsSetMany !== "function") return false;
+
+        const footerPlace = this._normalizeUserText(inputs.get("pdf.footerPlace")?.value, 80);
+        const footerDate = this._normalizeUserText(inputs.get("pdf.footerDate")?.value, 40);
+        const footerName1 = this._normalizeUserText(inputs.get("pdf.footerName1")?.value, 80);
+        const footerName2 = this._normalizeUserText(inputs.get("pdf.footerName2")?.value, 80);
+        const footerRecorder = this._normalizeUserText(inputs.get("pdf.footerRecorder")?.value, 80);
+        const footerStreet = this._normalizeUserText(inputs.get("pdf.footerStreet")?.value, 80);
+        const footerZip = this._normalizeUserZip(inputs.get("pdf.footerZip")?.value);
+        const footerCity = this._normalizeUserText(inputs.get("pdf.footerCity")?.value, 80);
+        const footerUseUserData = this._parseBool(inputs.get("pdf.footerUseUserData")?.checked, false);
+        if (footerUseUserData) {
+          this._applyPdfFooterUserDefaultsToInputs(
+            {
+              name1: inputs.get("pdf.footerName1"),
+              name2: inputs.get("pdf.footerName2"),
+              street: inputs.get("pdf.footerStreet"),
+              zip: inputs.get("pdf.footerZip"),
+              city: inputs.get("pdf.footerCity"),
+            },
+            footerDefaults,
+            { overwriteExisting: false }
+          );
+        }
+        const protocolsDir = String(inputs.get("pdf.protocolsDir")?.value || "").trim() || this._pdfSettingsDefaults().protocolsDir;
+        const layoutValues = {
+          "print.v2.pagePadTopMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadTopMm")?.value, "print.v2.pagePadTopMm"),
+          "print.v2.pagePadLeftMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadLeftMm")?.value, "print.v2.pagePadLeftMm"),
+          "print.v2.pagePadRightMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadRightMm")?.value, "print.v2.pagePadRightMm"),
+          "print.v2.pagePadBottomMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.pagePadBottomMm")?.value, "print.v2.pagePadBottomMm"),
+          "print.v2.footerReserveMm": this._normalizePrintLayoutMmValue(inputs.get("print.v2.footerReserveMm")?.value, "print.v2.footerReserveMm"),
+        };
+
+        const payload = {
+          "pdf.footerPlace": footerPlace,
+          "pdf.footerDate": footerDate,
+          "pdf.footerName1": footerName1,
+          "pdf.footerName2": footerName2,
+          "pdf.footerRecorder": footerRecorder,
+          "pdf.footerStreet": footerStreet,
+          "pdf.footerZip": footerZip,
+          "pdf.footerCity": footerCity,
+          "pdf.footerUseUserData": footerUseUserData ? "true" : "false",
+          "pdf.protocolsDir": protocolsDir,
+          ...layoutValues,
+          ...this._buildTouchedPayloadFromValues({
+            "pdf.footerPlace": footerPlace,
+            "pdf.footerDate": footerDate,
+            "pdf.footerName1": footerName1,
+            "pdf.footerName2": footerName2,
+            "pdf.footerRecorder": footerRecorder,
+            "pdf.footerStreet": footerStreet,
+            "pdf.footerZip": footerZip,
+            "pdf.footerCity": footerCity,
+            "pdf.protocolsDir": protocolsDir,
+            ...layoutValues,
+          }),
+          ...this._buildTouchedPayloadForKeys(["pdf.footerUseUserData"]),
+        };
+
+        const res = await api.appSettingsSetMany(payload);
+        if (!res?.ok) {
+          alert(res?.error || "Speichern fehlgeschlagen");
+          return false;
+        }
+
+        if (this.router?.context) {
+          this.router.context.settings = {
+            ...(this.router.context.settings || {}),
+            ...payload,
+          };
+        }
+        this._setMsg("Gespeichert");
+        return true;
+      },
+      closeOnly: false,
+    });
+  }
+
+  async _createProtocolContent() {
+    const api = window.bbmDb || {};
+    const wrap = document.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "10px";
+    wrap.style.minWidth = "min(620px, calc(100vw - 80px))";
+
+    const info = document.createElement("div");
+    info.style.fontSize = "12px";
+    info.style.opacity = "0.85";
+    info.textContent = "Protokollspezifische Einstellungen.";
+    wrap.append(info);
+
+    const inputs = new Map();
+    this._settingsInputs = inputs;
+
+    const renderField = (field) => {
+      const row = document.createElement("label");
+      row.style.display = "grid";
+      row.style.gap = "4px";
+
+      const lbl = document.createElement("span");
+      lbl.textContent = field.label || field.key;
+      lbl.style.fontSize = "12px";
+
+      let inp;
+      if (field.type === "checkbox") {
+        inp = document.createElement("input");
+        inp.type = "checkbox";
+        const box = document.createElement("span");
+        box.style.display = "inline-flex";
+        box.style.alignItems = "center";
+        box.style.gap = "8px";
+        box.append(inp, document.createTextNode(field.checkboxLabel || "Aktiv"));
+        row.append(lbl, box);
+      } else {
+        inp = field.multiline ? document.createElement("textarea") : document.createElement("input");
+        inp.style.width = "100%";
+        if (inp.tagName === "TEXTAREA") inp.rows = field.rows || 5;
+        row.append(lbl, inp);
+      }
+      inputs.set(field.key, inp);
+      return row;
+    };
+
+    const titleCard = document.createElement("div");
+    applyPopupCardStyle(titleCard);
+    titleCard.style.padding = "10px";
+    titleCard.style.display = "grid";
+    titleCard.style.gap = "8px";
+    const titleHeading = document.createElement("div");
+    titleHeading.textContent = "Protokollbezeichnung / Protokolltitel";
+    titleHeading.style.fontWeight = "800";
+    titleCard.append(titleHeading);
+    const titleHint = document.createElement("div");
+    titleHint.textContent = "Protokolltitel und sichtbare Bezeichnung.";
+    titleHint.style.fontSize = "12px";
+    titleHint.style.opacity = "0.78";
+    titleCard.append(titleHint);
+    titleCard.append(
+      renderField({
+        key: "pdf.protocolTitle",
+        label: "Protokolltitel",
+      })
+    );
+
+    const remarksCard = document.createElement("div");
+    applyPopupCardStyle(remarksCard);
+    remarksCard.style.padding = "10px";
+    remarksCard.style.display = "grid";
+    remarksCard.style.gap = "8px";
+    const remarksHeading = document.createElement("div");
+    remarksHeading.textContent = "Vorbemerkung";
+    remarksHeading.style.fontWeight = "800";
+    remarksCard.append(remarksHeading);
+    const remarksHint = document.createElement("div");
+    remarksHint.textContent = "Hinweistext fuer das Protokoll und die optionale Ausgabe.";
+    remarksHint.style.fontSize = "12px";
+    remarksHint.style.opacity = "0.78";
+    remarksCard.append(remarksHint);
+    remarksCard.append(
+      renderField({
+        key: "pdf.preRemarks",
+        label: "Vorbemerkung",
+        multiline: true,
+        rows: 5,
+      })
+    );
+    remarksCard.append(
+      renderField({
+        key: "print.preRemarks.enabled",
+        label: "Vorbemerkung in der Ausgabe drucken",
+        type: "checkbox",
+        checkboxLabel: "Aktiv",
+      })
+    );
+
+    wrap.append(titleCard, remarksCard);
+
+    if (typeof api.appSettingsGetMany === "function") {
+      const res = await api.appSettingsGetMany(["pdf.protocolTitle", "pdf.preRemarks", "print.preRemarks.enabled"]);
+      if (res?.ok) {
+        const data = res.data || {};
+        for (const [key, inp] of inputs.entries()) {
+          if (!inp) continue;
+          const value = data[key];
+          if (inp.type === "checkbox") {
+            inp.checked = this._parseBool(value, false);
+          } else if (key === "pdf.preRemarks") {
+            inp.value = this._normalizePdfPreRemarks(value);
+          } else {
+            inp.value = String(value ?? "");
+          }
+        }
+      }
+    }
+
+    this.inpPdfProtocolTitle = inputs.get("pdf.protocolTitle") || null;
+    this.inpPdfTrafficLightAll = null;
+    this.inpPdfProtocolsDir = null;
+    this.inpPdfFooterPlace = null;
+    this.inpPdfFooterDate = null;
+    this.inpPdfFooterName1 = null;
+    this.inpPdfFooterName2 = null;
+    this.inpPdfFooterRecorder = null;
+    this.inpPdfFooterStreet = null;
+    this.inpPdfFooterZip = null;
+    this.inpPdfFooterCity = null;
+    this.inpPdfFooterUseUserData = null;
+    this.btnPdfFooterUseUserData = null;
+    this.btnPdfProtocolsBrowse = null;
+    this.btnPdfSettingsSave = null;
+    this.pdfPreRemarks = this._normalizePdfPreRemarks(inputs.get("pdf.preRemarks")?.value || "");
+    this.pdfPreRemarksEnabled = this._parseBool(inputs.get("print.preRemarks.enabled")?.checked, false);
+
+    this._openSettingsModal({
+      title: "Protokoll",
+      content: [wrap],
+      saveFn: async () => {
+        if (typeof api.appSettingsSetMany !== "function") return false;
+
+        const protocolTitle = this._normalizeUserText(inputs.get("pdf.protocolTitle")?.value, 80);
+        const preRemarks = this._normalizePdfPreRemarks(inputs.get("pdf.preRemarks")?.value);
+        const preRemarksEnabled = this._parseBool(inputs.get("print.preRemarks.enabled")?.checked, false);
+
+        const payload = {
+          "pdf.protocolTitle": protocolTitle,
+          "pdf.preRemarks": preRemarks,
+          "print.preRemarks.enabled": preRemarksEnabled ? "true" : "false",
+          ...this._buildTouchedPayloadFromValues({
+            "pdf.protocolTitle": protocolTitle,
+            "pdf.preRemarks": preRemarks,
+          }),
+          ...this._buildTouchedPayloadForKeys(["print.preRemarks.enabled"]),
+        };
+
+        const res = await api.appSettingsSetMany(payload);
+        if (!res?.ok) {
+          alert(res?.error || "Speichern fehlgeschlagen");
+          return false;
+        }
+
+        this.pdfPreRemarks = preRemarks;
+        this.pdfPreRemarksEnabled = preRemarksEnabled;
+        if (this.router?.context) {
+          this.router.context.settings = {
+            ...(this.router.context.settings || {}),
+            "pdf.protocolTitle": protocolTitle,
+            "pdf.preRemarks": preRemarks,
+            "print.preRemarks.enabled": preRemarksEnabled ? "true" : "false",
+          };
+        }
+        this._setMsg("Gespeichert");
+        return true;
+      },
+      closeOnly: false,
+    });
+  }
+
   _createLicenseSettingsContent() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
@@ -3734,92 +4768,241 @@ export default class SettingsView {
     return wrap;
   }
 
-  async _createLegacySettingsContent() {
+
+  async _openPrintLogosPopup() {
     const api = window.bbmDb || {};
     const wrap = document.createElement("div");
     wrap.style.display = "grid";
     wrap.style.gap = "10px";
-    wrap.style.minWidth = "min(720px, calc(100vw - 80px))";
+    wrap.style.minWidth = "min(860px, calc(100vw - 80px))";
+    wrap.style.maxWidth = "1020px";
 
-    const info = document.createElement("div");
-    info.style.fontSize = "12px";
-    info.style.opacity = "0.85";
-    info.textContent = "Nutzerdaten und Druckeinstellungen (Bestandsbereich).";
-    wrap.append(info);
+    const mkRow = (labelText, valueNode) => {
+      const row = document.createElement("div");
+      row.style.display = "grid";
+      row.style.gridTemplateColumns = "160px 1fr";
+      row.style.gap = "8px";
+      row.style.alignItems = "center";
+      const label = document.createElement("div");
+      label.textContent = labelText;
+      label.style.fontWeight = "700";
+      label.style.fontSize = "12px";
+      label.style.color = "#334155";
+      const value = valueNode instanceof HTMLElement ? valueNode : document.createElement("div");
+      if (!(valueNode instanceof HTMLElement)) value.textContent = String(valueNode ?? "-");
+      value.style.minWidth = "0";
+      value.style.fontSize = "12px";
+      value.style.wordBreak = "break-word";
+      row.append(label, value);
+      return row;
+    };
 
-    const settings = [
-      { title: "Nutzerdaten", keys: ["user_name", "user_company", "user_name1", "user_name2", "user_street", "user_zip", "user_city"] },
-      { title: "Seitenränder / Drucklayout", keys: ["print.v2.pagePadTopMm", "print.v2.pagePadLeftMm", "print.v2.pagePadRightMm", "print.v2.pagePadBottomMm", "print.v2.footerReserveMm"] },
-      { title: "Header / Fullheader / Miniheader", keys: ["print.v2.globalHeaderAdaptive"] },
-      { title: "Footer-/PDF-Einstellungen", keys: ["pdf.protocolTitle", "pdf.footerPlace", "pdf.footerDate", "pdf.footerName1", "pdf.footerName2", "pdf.footerRecorder", "pdf.footerStreet", "pdf.footerZip", "pdf.footerCity", "pdf.footerUseUserData"] },
-      { title: "Vorbemerkung", keys: ["pdf.preRemarks", "print.preRemarks.enabled"] },
-      { title: "Logos", keys: ["print.logo1.enabled", "print.logo2.enabled", "print.logo3.enabled"] },
-    ];
+    const headerCard = document.createElement("div");
+    applyPopupCardStyle(headerCard);
+    headerCard.style.padding = "10px";
+    headerCard.style.display = "grid";
+    headerCard.style.gap = "8px";
+    const headerTitle = document.createElement("div");
+    headerTitle.textContent = "Header";
+    headerTitle.style.fontWeight = "800";
+    const inpPrintHeaderAdaptive = document.createElement("input");
+    inpPrintHeaderAdaptive.type = "checkbox";
+    const headerRow = document.createElement("label");
+    headerRow.style.display = "inline-flex";
+    headerRow.style.alignItems = "center";
+    headerRow.style.gap = "8px";
+    headerRow.append(inpPrintHeaderAdaptive, document.createTextNode("Header-Adaptive aktiv"));
+    headerCard.append(headerTitle, headerRow);
+    wrap.append(headerCard);
 
-    const inputs = new Map();
-    for (const section of settings) {
+    const enabledInputs = [null, null, null];
+    const fileInputs = [null, null, null];
+    const previewImgs = [null, null, null];
+    const previewFrames = [null, null, null];
+    const placeholderEls = [null, null, null];
+    const removeBtns = [null, null, null];
+    const sizeSelects = [null, null, null];
+    const alignChecks = [null, null, null];
+    const vAlignChecks = [null, null, null];
+
+    const mkRadioGroup = (name, values, selected) => {
+      const row = document.createElement("div");
+      row.style.display = "flex";
+      row.style.flexWrap = "wrap";
+      row.style.gap = "8px";
+      const refs = {};
+      for (const [value, label] of values) {
+        const lab = document.createElement("label");
+        lab.style.display = "inline-flex";
+        lab.style.alignItems = "center";
+        lab.style.gap = "4px";
+        lab.style.cursor = "pointer";
+        const inp = document.createElement("input");
+        inp.type = "radio";
+        inp.name = name;
+        inp.value = value;
+        inp.checked = value === selected;
+        const txt = document.createElement("span");
+        txt.textContent = label;
+        lab.append(inp, txt);
+        row.append(lab);
+        refs[value] = inp;
+      }
+      return { row, refs };
+    };
+
+    const mkSlotCard = (idx) => {
       const card = document.createElement("div");
       applyPopupCardStyle(card);
       card.style.padding = "10px";
       card.style.display = "grid";
       card.style.gap = "8px";
+
       const title = document.createElement("div");
-      title.textContent = section.title;
+      title.textContent = `Drucklogo ${idx + 1}`;
       title.style.fontWeight = "800";
-      card.append(title);
-      for (const key of section.keys) {
-        const row = document.createElement("label");
-        row.style.display = "grid";
-        row.style.gap = "4px";
-        const lbl = document.createElement("span");
-        lbl.textContent = key;
-        lbl.style.fontSize = "12px";
-        const inp = key === "pdf.preRemarks" ? document.createElement("textarea") : document.createElement("input");
-        inp.style.width = "100%";
-        if (inp.tagName === "TEXTAREA") inp.rows = 4;
-        row.append(lbl, inp);
-        card.append(row);
-        inputs.set(key, inp);
+
+      const enabled = document.createElement("input");
+      enabled.type = "checkbox";
+      enabledInputs[idx] = enabled;
+      const enabledRow = document.createElement("label");
+      enabledRow.style.display = "inline-flex";
+      enabledRow.style.alignItems = "center";
+      enabledRow.style.gap = "8px";
+      enabledRow.style.cursor = "pointer";
+      enabledRow.append(enabled, document.createTextNode("Logo verwenden"));
+
+      const file = document.createElement("input");
+      file.type = "file";
+      file.accept = "image/*";
+      fileInputs[idx] = file;
+
+      const frame = document.createElement("div");
+      frame.style.display = "flex";
+      frame.style.justifyContent = "center";
+      frame.style.alignItems = "center";
+      frame.style.minHeight = "110px";
+      frame.style.border = "1px dashed rgba(0,0,0,0.15)";
+      frame.style.borderRadius = "8px";
+      frame.style.background = "#f8fafc";
+      previewFrames[idx] = frame;
+
+      const placeholder = document.createElement("div");
+      placeholder.textContent = "Kein Logo gewählt";
+      placeholder.style.fontSize = "12px";
+      placeholder.style.opacity = "0.75";
+      placeholderEls[idx] = placeholder;
+
+      const img = document.createElement("img");
+      img.alt = `Logo ${idx + 1}`;
+      img.style.display = "none";
+      img.style.maxWidth = "100%";
+      img.style.objectFit = "contain";
+      previewImgs[idx] = img;
+      frame.append(placeholder, img);
+
+      const size = document.createElement("select");
+      for (const [value, label] of [["small", "Klein"], ["medium", "Mittel"], ["large", "Gross"]]) {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = label;
+        size.append(opt);
       }
-      wrap.append(card);
+      sizeSelects[idx] = size;
+
+      const align = mkRadioGroup(`printLogoAlign_${idx}`, [["left", "Links"], ["center", "Mitte"], ["right", "Rechts"]], "center");
+      alignChecks[idx] = align.refs;
+      const vAlign = mkRadioGroup(`printLogoVAlign_${idx}`, [["top", "Oben"], ["middle", "Mitte"], ["bottom", "Unten"]], "bottom");
+      vAlignChecks[idx] = vAlign.refs;
+
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.textContent = "Logo entfernen";
+      applyPopupButtonStyle(removeBtn);
+      removeBtns[idx] = removeBtn;
+      removeBtn.onclick = () => {
+        if (file) file.value = "";
+        if (img) {
+          img.src = "";
+          img.style.display = "none";
+        }
+        if (placeholder) placeholder.style.display = "flex";
+        if (enabled) enabled.checked = false;
+        this._schedulePrintLogoSave();
+      };
+
+      enabled.addEventListener("change", () => this._schedulePrintLogoSave());
+      file.addEventListener("change", async () => {
+        await this._handlePrintLogoFileInput(idx);
+      });
+      size.addEventListener("change", () => this._schedulePrintLogoSave());
+      align.row.querySelectorAll("input").forEach((inp) => inp.addEventListener("change", () => this._schedulePrintLogoSave()));
+      vAlign.row.querySelectorAll("input").forEach((inp) => inp.addEventListener("change", () => this._schedulePrintLogoSave()));
+
+      card.append(
+        title,
+        enabledRow,
+        file,
+        frame,
+        mkRow("Größe in mm", size),
+        mkRow("Position horizontal", align.row),
+        mkRow("Position vertikal", vAlign.row),
+        removeBtn
+      );
+      return card;
+    };
+
+    for (let i = 0; i < 3; i++) {
+      wrap.append(mkSlotCard(i));
     }
 
-    const preRemarksBtn = document.createElement("button");
-    preRemarksBtn.type = "button";
-    preRemarksBtn.textContent = "Vorbemerkung-Editor";
-    applyPopupButtonStyle(preRemarksBtn);
-    preRemarksBtn.onclick = async () => { await this._openPdfPreRemarksPopup(); };
-    wrap.append(preRemarksBtn);
+    this.inpPrintHeaderAdaptive = inpPrintHeaderAdaptive;
+    this.printLogoEnabledInputs = enabledInputs;
+    this.printLogoFileInputs = fileInputs;
+    this.printLogoPreviewImgs = previewImgs;
+    this.printLogoPreviewFrames = previewFrames;
+    this.printLogoPlaceholderEls = placeholderEls;
+    this.printLogoRemoveBtns = removeBtns;
+    this.printLogoSizeSelects = sizeSelects;
+    this.printLogoAlignChecks = alignChecks;
+    this.printLogoVAlignChecks = vAlignChecks;
 
     if (typeof api.appSettingsGetMany === "function") {
-      const res = await api.appSettingsGetMany([...inputs.keys()]);
-      if (res?.ok) {
-        const data = res.data || {};
-        for (const [key, inp] of inputs.entries()) inp.value = String(data[key] ?? "");
-      }
+      const res = await api.appSettingsGetMany([
+        "print.logo1.enabled",
+        "print.logo1.size",
+        "print.logo1.align",
+        "print.logo1.vAlign",
+        "print.logo1.pngDataUrl",
+        "print.logo2.enabled",
+        "print.logo2.size",
+        "print.logo2.align",
+        "print.logo2.vAlign",
+        "print.logo2.pngDataUrl",
+        "print.logo3.enabled",
+        "print.logo3.size",
+        "print.logo3.align",
+        "print.logo3.vAlign",
+        "print.logo3.pngDataUrl",
+        "print.logoSizePreset",
+        "print.v2.globalHeaderAdaptive",
+      ]);
+      if (res?.ok) this._applyPrintLogoInputsFromSettings(res.data || {});
     }
 
     this._openSettingsModal({
-      title: "Nutzereinstellungen / Druckeinstellungen",
+      title: "Drucklogos verwalten",
       content: [wrap],
-      saveFn: async () => {
-        if (typeof api.appSettingsSetMany !== "function") return false;
-        const payload = {};
-        for (const [key, inp] of inputs.entries()) {
-          payload[key] = String(inp.value ?? "");
-        }
-        const res = await api.appSettingsSetMany(payload);
-        if (!res?.ok) return false;
-        this._setMsg("Gespeichert");
-        return true;
-      },
+      saveFn: async () => (await this._savePrintLogoSettings()) !== false,
       closeOnly: false,
     });
   }
 
+
   async _openDevelopmentModal() {
     const api = window.bbmDb || {};
     const has = (name) => typeof api?.[name] === "function";
+    const DEV_AUDIO_DICTATION_UNLOCK_KEY = "dev.audioDictationUnlock";
     const clampInt = (val, min, max, fallback) => {
       const n = Math.floor(Number(val));
       if (!Number.isFinite(n) || n <= 0) return fallback;
@@ -3876,10 +5059,12 @@ export default class SettingsView {
 
     const versionCard = mkCard("Versionierung", "SemVer und Build-Kanal verwalten.");
     const dbCard = mkCard("DB-Diagnose", "Aktive DB, Legacy und Importpfade prüfen.");
-    const topsCard = mkCard("TOP-Limits", "Kurz- und Langtextgrenzen verwalten.");
+    const topsCard = mkCard("Textgrenzen für TOPs", "Maximale Länge für Kurztext und Langtext in TOPs.");
     const themeCard = mkCard("Farbschema", "Start-Defaults des Themes verwalten.");
-    const dictationCard = mkCard("Diktieren", "Audio-/Diktat-Entwicklung bleibt hier erreichbar.");
-
+    const dictationDevCard = mkCard(
+      "Diktat-Testfreigabe",
+      "Aktiviert Diktat unabhängig von der Lizenz für Entwicklung und Prüfung."
+    );
     const btn = (label, primary = false) => {
       const el = document.createElement("button");
       el.type = "button";
@@ -4124,6 +5309,59 @@ export default class SettingsView {
     themeActions.append(btnThemeLoad, btnThemeSave, btnThemeApply);
     themeCard.box.append(themeInfo, themeActions);
 
+    const dictationDevRow = document.createElement("label");
+    dictationDevRow.style.display = "flex";
+    dictationDevRow.style.alignItems = "center";
+    dictationDevRow.style.gap = "8px";
+    dictationDevRow.style.fontSize = "12px";
+    dictationDevRow.style.cursor = "pointer";
+    const dictationDevEnabled = document.createElement("input");
+    dictationDevEnabled.type = "checkbox";
+    const dictationDevLabel = document.createElement("span");
+    dictationDevLabel.textContent = "Diktat-Testfreigabe aktiv";
+    const dictationDevMsg = document.createElement("div");
+    dictationDevMsg.style.fontSize = "12px";
+    dictationDevMsg.style.opacity = "0.78";
+    const loadDictationDevSetting = async () => {
+      if (!has("appSettingsGetMany")) {
+        dictationDevEnabled.disabled = true;
+        dictationDevMsg.textContent = "Settings-API fehlt.";
+        return;
+      }
+      const res = await api.appSettingsGetMany([DEV_AUDIO_DICTATION_UNLOCK_KEY]);
+      if (!res?.ok) {
+        dictationDevMsg.textContent = res?.error || "Diktat-Testfreigabe konnte nicht geladen werden.";
+        return;
+      }
+      dictationDevEnabled.checked = String(res.data?.[DEV_AUDIO_DICTATION_UNLOCK_KEY] || "").trim() === "1";
+      dictationDevMsg.textContent = dictationDevEnabled.checked
+        ? "Diktat ist testweise freigeschaltet."
+        : "Diktat ist nur per Lizenz oder Testfreigabe aktiv.";
+    };
+    const saveDictationDevSetting = async () => {
+      if (!has("appSettingsSetMany")) {
+        dictationDevMsg.textContent = "Settings-API fehlt.";
+        return false;
+      }
+      const res = await api.appSettingsSetMany({
+        [DEV_AUDIO_DICTATION_UNLOCK_KEY]: dictationDevEnabled.checked ? "1" : "0",
+      });
+      if (!res?.ok) {
+        dictationDevMsg.textContent = res?.error || "Diktat-Testfreigabe konnte nicht gespeichert werden.";
+        return false;
+      }
+      dictationDevMsg.textContent = dictationDevEnabled.checked
+        ? "Diktat-Testfreigabe aktiviert."
+        : "Diktat-Testfreigabe deaktiviert.";
+      window.dispatchEvent(new Event("bbm:audio-dev-unlock-changed"));
+      return true;
+    };
+    dictationDevEnabled.addEventListener("change", () => {
+      void saveDictationDevSetting();
+    });
+    dictationDevRow.append(dictationDevEnabled, dictationDevLabel);
+    dictationDevCard.box.append(dictationDevRow, dictationDevMsg);
+
     const mkScaleGroup = (labelText, buttons) => {
       const row = document.createElement("div");
       row.style.display = "grid";
@@ -4154,18 +5392,11 @@ export default class SettingsView {
       el.style.color = active ? "white" : "#1565c0";
       el.style.borderColor = active ? "rgba(25,118,210,0.65)" : "rgba(0,0,0,0.18)";
     };
-    const dictationSection = createDictationDevSection({
-      applyPopupCardStyle,
-      mkScaleGroup,
-      applyScaleBtnBase,
-      setScaleBtnActive,
-      settingsApi: () => window.bbmDb || {},
-    });
     const tabs = [
       { key: "version", label: "Versionierung", el: versionCard.box },
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
-      { key: "dictation", label: "Diktieren", el: dictationSection.tab },
-      { key: "tops", label: "TOP-Liste", el: topsCard.box },
+      { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
+      { key: "dictation", label: "Diktat-Testfreigabe", el: dictationDevCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
     ];
     const tabHead = document.createElement("div");
@@ -4177,13 +5408,8 @@ export default class SettingsView {
     const tabBody = document.createElement("div");
     tabBody.style.display = "grid";
     tabBody.style.gap = "10px";
-    let dictationLoaded = false;
     const tabButtons = new Map();
     const setTab = (key) => {
-      if (key === "dictation" && !dictationLoaded) {
-        dictationLoaded = true;
-        if (typeof dictationSection.load === "function") dictationSection.load();
-      }
       for (const tab of tabs) {
         const active = tab.key === key;
         tab.el.style.display = active ? "grid" : "none";
@@ -4203,8 +5429,8 @@ export default class SettingsView {
     tabHead.append(
       addTabBtn("Versionierung", "version"),
       addTabBtn("DB-Diagnose", "db"),
-      addTabBtn("Diktieren", "dictation"),
-      addTabBtn("TOP-Liste", "tops"),
+      addTabBtn("Protokoll-Textgrenzen", "tops"),
+      addTabBtn("Diktat-Testfreigabe", "dictation"),
       addTabBtn("Farbschema", "theme")
     );
     tabBody.append(...tabs.map((t) => t.el));
@@ -4213,6 +5439,7 @@ export default class SettingsView {
     await loadVersioningData();
     await loadDbDiagnostics();
     await loadTopLimitSettings();
+    await loadDictationDevSetting();
     setTab("version");
 
     this._openSettingsModal({
@@ -4275,32 +5502,55 @@ export default class SettingsView {
 
     const tiles = document.createElement("div");
     tiles.style.display = "grid";
-    tiles.style.gridTemplateColumns = "repeat(auto-fit, minmax(220px, 1fr))";
-    tiles.style.gap = "10px";
+    tiles.style.gridTemplateColumns = "1fr";
+    tiles.style.gap = "12px";
+    tiles.style.maxWidth = "820px";
 
     const mkTile = ({ titleText, subText, onClick }) => {
       const tile = document.createElement("button");
       tile.type = "button";
       tile.style.textAlign = "left";
-      tile.style.border = "1px solid #ddd";
-      tile.style.borderRadius = "10px";
-      tile.style.background = "#fff";
-      tile.style.padding = "12px";
+      tile.style.border = "1px solid #d7dee8";
+      tile.style.borderRadius = "14px";
+      tile.style.background = "linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)";
+      tile.style.boxShadow = "0 1px 1px rgba(15, 23, 42, 0.03)";
+      tile.style.padding = "10px 12px";
       tile.style.cursor = "pointer";
       tile.style.userSelect = "none";
+      tile.style.display = "flex";
+      tile.style.flexDirection = "column";
+      tile.style.alignItems = "flex-start";
+      tile.style.gap = "4px";
+      tile.style.minHeight = "0";
+      tile.style.transition = "box-shadow 0.15s ease, border-color 0.15s ease, transform 0.15s ease";
+      tile.style.color = "#111827";
 
       const t = document.createElement("div");
       t.textContent = titleText;
-      t.style.fontWeight = "900";
-      t.style.fontSize = "16px";
-      t.style.marginBottom = "6px";
+      t.style.fontWeight = "700";
+      t.style.fontSize = "14px";
+      t.style.letterSpacing = "0.01em";
+      t.style.marginBottom = "0";
+      t.style.color = "#0f172a";
 
       const s = document.createElement("div");
       s.textContent = subText || "";
-      s.style.opacity = "0.8";
+      s.style.color = "#64748b";
       s.style.fontSize = "12px";
+      s.style.lineHeight = "1.35";
+      s.style.maxWidth = "62ch";
 
       tile.append(t, s);
+      tile.addEventListener("mouseenter", () => {
+        tile.style.borderColor = "#93c5fd";
+        tile.style.boxShadow = "0 6px 18px rgba(15, 23, 42, 0.06)";
+        tile.style.transform = "translateY(-1px)";
+      });
+      tile.addEventListener("mouseleave", () => {
+        tile.style.borderColor = "#d7dee8";
+        tile.style.boxShadow = "0 1px 1px rgba(15, 23, 42, 0.03)";
+        tile.style.transform = "translateY(0)";
+      });
       tile.addEventListener("click", async () => {
         if (this.saving) return;
         await onClick?.();
@@ -4308,9 +5558,169 @@ export default class SettingsView {
       return tile;
     };
 
+    const mkGroup = ({
+      key,
+      titleText,
+      subText,
+      tiles = [],
+      emptyText = "",
+      variant = "default",
+      defaultOpen = false,
+    }) => {
+      const group = document.createElement("section");
+      group.style.display = "grid";
+      group.style.gap = "10px";
+      group.style.padding = "12px 12px 10px";
+      group.style.border = "1px solid #e5e7eb";
+      group.style.borderRadius = "16px";
+      group.style.background = variant === "dev" ? "linear-gradient(180deg, #f8fbff 0%, #ffffff 100%)" : "#fff";
+      group.style.borderColor = variant === "dev" ? "#dbe7f5" : "#e5e7eb";
+      group.style.boxShadow = "0 1px 0 rgba(15, 23, 42, 0.02)";
+      group.style.transition = "border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease";
+      group.dataset.settingsGroup = key || titleText;
+
+      const head = document.createElement("button");
+      head.type = "button";
+      head.style.display = "grid";
+      head.style.gridTemplateColumns = "1fr auto";
+      head.style.alignItems = "start";
+      head.style.gap = "10px";
+      head.style.width = "100%";
+      head.style.padding = "0";
+      head.style.minHeight = "0";
+      head.style.border = "0";
+      head.style.background = "transparent";
+      head.style.borderRadius = "0";
+      head.style.boxShadow = "";
+      head.style.padding = "0";
+      head.style.textAlign = "left";
+      head.style.cursor = "pointer";
+      head.style.color = "#111827";
+      head.style.fontFamily = "var(--bbm-font-ui)";
+      head.setAttribute("aria-controls", `settings-group-body-${key || titleText}`);
+
+      const headText = document.createElement("div");
+      headText.style.display = "grid";
+      headText.style.gap = "3px";
+
+      const groupTitle = document.createElement("div");
+      groupTitle.textContent = titleText;
+      groupTitle.style.fontWeight = "700";
+      groupTitle.style.fontSize = "13px";
+      groupTitle.style.letterSpacing = "0.01em";
+      groupTitle.style.color = "#0f172a";
+
+      const groupText = document.createElement("div");
+      groupText.textContent = subText || "";
+      groupText.style.fontSize = "12px";
+      groupText.style.color = "#64748b";
+      groupText.style.lineHeight = "1.35";
+      groupText.style.maxWidth = "68ch";
+
+      const chevron = document.createElement("div");
+      chevron.textContent = "▸";
+      chevron.style.fontSize = "16px";
+      chevron.style.lineHeight = "1";
+      chevron.style.color = "#2563eb";
+      chevron.style.paddingTop = "1px";
+      chevron.style.flex = "0 0 auto";
+
+      headText.append(groupTitle, groupText);
+      head.append(headText, chevron);
+
+      const body = document.createElement("div");
+      body.style.display = "grid";
+      body.style.gap = "10px";
+      body.id = `settings-group-body-${key || titleText}`;
+      body.style.paddingTop = "2px";
+
+      if (tiles.length) {
+        body.append(...tiles);
+      } else if (emptyText) {
+        const note = document.createElement("div");
+        note.textContent = emptyText;
+        note.style.fontSize = "12px";
+        note.style.color = "#64748b";
+        note.style.lineHeight = "1.35";
+        note.style.padding = "10px 12px";
+        note.style.border = "1px dashed #dbe3ee";
+        note.style.borderRadius = "10px";
+        note.style.background = "#f8fafc";
+        body.append(note);
+      }
+
+      group.append(head, body);
+      const applyOpenState = (open) => {
+        group.dataset.open = open ? "true" : "false";
+        body.style.display = open ? "grid" : "none";
+        chevron.textContent = open ? "▾" : "▸";
+        head.setAttribute("aria-expanded", open ? "true" : "false");
+        group.style.borderColor = open ? "#c7ddfa" : variant === "dev" ? "#dbe7f5" : "#e5e7eb";
+        group.style.boxShadow = open ? "0 6px 18px rgba(37, 99, 235, 0.06)" : "0 1px 0 rgba(15, 23, 42, 0.02)";
+        group.style.background = variant === "dev"
+          ? (open ? "linear-gradient(180deg, #f7fbff 0%, #ffffff 100%)" : "linear-gradient(180deg, #f8fbff 0%, #ffffff 100%)")
+          : "#fff";
+      };
+      head.onclick = () => applyOpenState(group.dataset.open !== "true");
+      applyOpenState(!!defaultOpen);
+      return group;
+    };
+
+    const tileProfileAddress = mkTile({
+      titleText: "Profil / Adresse",
+      subText: "Stammdaten und Adresse",
+      onClick: async () => {
+        await this._createProfileAddressContent();
+      },
+    });
+
+    const tileOutputPrint = mkTile({
+      titleText: "Ausgabe & Druck",
+      subText: "Footer, Layout, Logos und Speicherorte",
+      onClick: async () => {
+        await this._createOutputPrintContent();
+      },
+    });
+
+    const tileDictationAudio = mkTile({
+      titleText: "Diktat / Audio",
+      subText: "Diktieren, Transkription und Audio-Optionen",
+      onClick: async () => {
+        await this._createDictationAudioContent();
+      },
+    });
+
+    const tileProtocol = mkTile({
+      titleText: "Protokoll",
+      subText: "Bezeichnung und Vorbemerkung",
+      onClick: async () => {
+        await this._createProtocolContent();
+      },
+    });
+
+    const tileFirmRoles = mkTile({
+      titleText: "Firmenrollen",
+      subText: "Reihenfolge für Listen und Ausgaben",
+      onClick: async () => {
+        await this._openFirmRoleOrderPopup();
+      },
+    });
+
+    const tileLicense = mkTile({
+      titleText: "Lizenzstatus",
+      subText: "Lizenz und Freischaltung",
+      onClick: async () => {
+        this._openSettingsModal({
+          title: "Lizenz",
+          content: [this._createLicenseSettingsContent()],
+          closeOnly: true,
+        });
+      },
+    });
+
     const tileArchive = mkTile({
       titleText: "Archiv",
-      subText: "Archivierte Projekte anzeigen",
+      subText: "Archivierte Projekte",
       onClick: async () => {
         if (!this.router || typeof this.router.showArchive !== "function") {
           alert("Router.showArchive ist nicht verfuegbar.");
@@ -4320,51 +5730,52 @@ export default class SettingsView {
       },
     });
 
-    const tileLicense = mkTile({
-      titleText: "Lizenz",
-      subText: "Lizenzstatus anzeigen",
-      onClick: async () => {
-        this._openSettingsModal({
-          title: "Lizenz",
-          content: [this._createLicenseSettingsContent()],
-          closeOnly: true,
-        });
-      },
-    });
-    const tileUser = mkTile({
-      titleText: "Nutzereinstellungen / Druckeinstellungen",
-      subText: "Nutzerdaten, Seitenränder, Logos, Header/Footer, Vorbemerkung, Drucklayout",
-      onClick: async () => {
-        await this._createLegacySettingsContent();
-      },
-    });
-
-    const tileAdmin = mkTile({
-      titleText: "Adminbereich",
-      subText: "Externe Lizenz-App",
-      onClick: async () => {
-        const adminInfo = document.createElement("div");
-        adminInfo.style.maxWidth = "720px";
-        adminInfo.style.lineHeight = "1.45";
-        adminInfo.textContent =
-          "Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert.";
-        this._openSettingsModal({
-          title: "Adminbereich",
-          content: [adminInfo],
-          closeOnly: true,
-        });
-      },
-    });
-
     const tileDev = mkTile({
-      titleText: "Entwicklung",
-      subText: "Versionierung, Farben, Diagnose",
+      titleText: "Technik",
+      subText: "Diagnose und technische Grenzen",
       onClick: async () => {
         await this._openDevelopmentModal();
       },
     });
 
-    tiles.append(tileArchive, tileUser, tileLicense, tileAdmin, tileDev);
+    const groupGeneral = mkGroup({
+      key: "general",
+      titleText: "Allgemein",
+      subText: "Persoenliche Daten und Freischaltung.",
+      tiles: [tileProfileAddress, tileLicense],
+      defaultOpen: true,
+    });
+
+    const groupInput = mkGroup({
+      key: "input",
+      titleText: "Eingabe & Erfassung",
+      subText: "Hilfsfunktionen fuer Erfassung und Sprache.",
+      tiles: [tileDictationAudio],
+    });
+
+    const groupOutput = mkGroup({
+      key: "output",
+      titleText: "Ausgabe & Kommunikation",
+      subText: "Druck, Versand, Archiv und Speicherorte.",
+      tiles: [tileOutputPrint, tileFirmRoles, tileArchive],
+    });
+
+    const groupModule = mkGroup({
+      key: "module",
+      titleText: "Module",
+      subText: "Fachmodule und Erweiterungen.",
+      tiles: [tileProtocol],
+    });
+
+    const groupDev = mkGroup({
+      key: "dev",
+      titleText: "Entwicklung",
+      subText: "Technische Werkzeuge und Grenzen.",
+      tiles: [tileDev],
+      variant: "dev",
+    });
+
+    tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);
     root.append(head, tiles);
     this.root = root;
 
@@ -4382,7 +5793,7 @@ export default class SettingsView {
     modal.style.background = "#fff";
     modal.style.boxShadow = "0 10px 30px rgba(0,0,0,0.25)";
     modal.style.padding = "0";
-    modal.style.fontFamily = "Calibri, Arial, sans-serif";
+    modal.style.fontFamily = "var(--bbm-font-ui)";
     modal.tabIndex = -1;
 
     const modalHead = document.createElement("div");
@@ -4472,7 +5883,19 @@ export default class SettingsView {
         titleNorm === "lizenz" || titleNorm === "entwicklung" || titleNorm === "adminbereich";
       const isPrintSettingsPopup = titleNorm === "druckeinstellungen";
       const isLayoutPopup = titleNorm === "druck-layout";
-      if (isPrintSettingsPopup) {
+      const isTableLayoutPopup = titleNorm === "tabellenlayouts";
+      if (isTableLayoutPopup) {
+        this.settingsModalEl.dataset.tableLayoutShell = "1";
+      } else {
+        delete this.settingsModalEl.dataset.tableLayoutShell;
+      }
+      if (isTableLayoutPopup) {
+        this.settingsModalEl.style.width = "min(980px, calc(100vw - 24px))";
+        this.settingsModalEl.style.height = "";
+        this.settingsModalEl.style.maxHeight = "calc(100vh - 24px)";
+        this.settingsModalEl.style.maxWidth = "";
+        this.settingsModalEl.dataset.layoutMode = "normal";
+      } else if (isPrintSettingsPopup) {
         this.settingsModalEl.style.width = "min(760px, calc(100vw - 24px))";
       } else if (isLayoutPopup) {
         this.settingsModalEl.style.width = "min(344px, calc(100vw - 24px))";
@@ -4484,6 +5907,11 @@ export default class SettingsView {
       const footerInner = this.settingsModalFooterEl?.firstElementChild;
       if (footerInner) {
         footerInner.style.maxWidth = isPrintSettingsPopup ? "600px" : "720px";
+      }
+      if (!isTableLayoutPopup) {
+        this.settingsModalEl.style.height = "";
+        this.settingsModalEl.style.maxHeight = "calc(100vh - 24px)";
+        delete this.settingsModalEl.dataset.layoutMode;
       }
     }
     this.settingsModalBodyEl.innerHTML = "";

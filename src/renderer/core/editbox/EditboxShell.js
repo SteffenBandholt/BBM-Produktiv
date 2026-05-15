@@ -110,7 +110,7 @@ export class EditboxShell {
     this.longWrap = mkEl(doc, "div", "editbox-field");
     this.longLabel = mkEl(doc, "label", "editbox-label", "Langtext");
     this.longInput = mkEl(doc, "textarea", "editbox-textarea");
-    this.longInput.rows = 6;
+    this.longInput.rows = 1;
     this.longCounter = mkEl(doc, "div", "editbox-counter", "0");
     this.longWrap.append(this.longLabel, this.longInput, this.longCounter);
 
@@ -268,6 +268,13 @@ export class EditboxShell {
       longText: this.longInput.value,
       flags,
     };
+  }
+
+  focusShortText({ select = true } = {}) {
+    if (this.shortInput.disabled || this.shortInput.readOnly) return false;
+    if (typeof this.shortInput.focus === "function") this.shortInput.focus();
+    if (select && typeof this.shortInput.select === "function") this.shortInput.select();
+    return true;
   }
 
   setVisibleFlags(flagKeys) {

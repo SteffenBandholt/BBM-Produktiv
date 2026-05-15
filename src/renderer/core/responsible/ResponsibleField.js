@@ -76,11 +76,11 @@ export class ResponsibleField {
     });
 
     if (normalized.length === 0) return;
-    if (normalized.some((item) => item.value === currentValue)) {
+    if (currentValue && normalized.some((item) => item.value === currentValue)) {
       this.selectEl.value = currentValue;
-    } else {
-      this.selectEl.value = normalized[0].value;
+      return;
     }
+    this.selectEl.value = "";
   }
 
   setValue(value) {

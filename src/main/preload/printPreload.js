@@ -29,6 +29,24 @@ function makeApi() {
     getData: async (payload) => {
       return ipcRenderer.invoke("print:getData", payload || {});
     },
+    appSettingsGetMany: async (keys) => {
+      return ipcRenderer.invoke("appSettings:getMany", keys || []);
+    },
+    appSettingsOnChanged: (callback) => {
+      if (typeof callback !== "function") return () => {};
+      const handler = (_event, payload) => callback(payload || {});
+      ipcRenderer.on("app-settings:changed", handler);
+      return () => ipcRenderer.removeListener("app-settings:changed", handler);
+    },
+    tableLayoutsGetOne: async (payload) => {
+      return ipcRenderer.invoke("tableLayouts:getOne", payload || {});
+    },
+    tableLayoutsSave: async (payload) => {
+      return ipcRenderer.invoke("tableLayouts:save", payload || {});
+    },
+    tableLayoutsReset: async (payload) => {
+      return ipcRenderer.invoke("tableLayouts:reset", payload || {});
+    },
     // sometimes useful for debugging
     _invoke: (channel, payload) => ipcRenderer.invoke(channel, payload),
     _send: (channel, payload) => ipcRenderer.send(channel, payload),

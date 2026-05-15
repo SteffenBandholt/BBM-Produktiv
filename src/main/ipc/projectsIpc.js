@@ -5,14 +5,7 @@ const { ipcMain, app } = require("electron");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const projectsRepo = require("../db/projectsRepo");
 const { buildStoragePreviewPaths } = require("./projectStoragePaths");
-const {
-  enforceLicensedFeature,
-  toLicenseErrorPayload,
-} = require("../licensing/featureGuard");
-
-function _ensureAppLicensed() {
-  enforceLicensedFeature("protokoll");
-}
+const { toLicenseErrorPayload } = require("../licensing/featureGuard");
 
 function _isLicenseError(err) {
   const message = String(err?.message || "");
@@ -21,7 +14,6 @@ function _isLicenseError(err) {
 
 function _runProjectTask(task) {
   try {
-    _ensureAppLicensed();
     return task();
   } catch (err) {
     if (_isLicenseError(err)) {

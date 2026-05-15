@@ -7,11 +7,139 @@ function read(relPath) {
   return fs.readFileSync(path.join(process.cwd(), relPath), "utf8");
 }
 
+function createFakeNode(tag) {
+  const listeners = new Map();
+  const style = {
+    setProperty(name, value) {
+      this[name] = value;
+    },
+    removeProperty(name) {
+      delete this[name];
+    },
+  };
+  const node = {
+    tagName: String(tag || "").toUpperCase(),
+    children: [],
+    style,
+    dataset: {},
+    classList: {
+      add() {},
+      remove() {},
+      toggle() {},
+      contains() {
+        return false;
+      },
+    },
+    append(...items) {
+      for (const item of items) {
+        if (item == null) continue;
+        this.children.push(item);
+      }
+    },
+    appendChild(item) {
+      if (item != null) this.children.push(item);
+      return item;
+    },
+    addEventListener() {},
+    removeEventListener(type, handler) {
+      const list = listeners.get(type);
+      if (!list) return;
+      const idx = list.indexOf(handler);
+      if (idx >= 0) list.splice(idx, 1);
+    },
+    focus() {},
+    click() {},
+    setAttribute() {},
+    removeAttribute() {},
+    contains() {
+      return false;
+    },
+    replaceChildren(...items) {
+      this.children = [];
+      for (const item of items) {
+        if (item != null) this.children.push(item);
+      }
+    },
+    dispatchEvent(evt) {
+      const type = String(evt?.type || "");
+      const list = listeners.get(type) || [];
+      for (const handler of list.slice()) {
+        handler.call(this, evt);
+      }
+      return true;
+    },
+  };
+  node.addEventListener = (type, handler) => {
+    const list = listeners.get(type) || [];
+    list.push(handler);
+    listeners.set(type, list);
+  };
+  Object.defineProperty(node, "innerHTML", {
+    configurable: true,
+    enumerable: true,
+    get() {
+      return this._innerHTML || "";
+    },
+    set(value) {
+      this._innerHTML = String(value || "");
+      this.children = [];
+    },
+  });
+  return node;
+}
+
+function createFakeDocument() {
+  const doc = {
+    activeElement: null,
+    createElement(tag) {
+      return createFakeNode(tag);
+    },
+    createElementNS(_ns, tag) {
+      return createFakeNode(tag);
+    },
+    createTextNode(text) {
+      return {
+        nodeType: 3,
+        textContent: String(text ?? ""),
+        children: [],
+      };
+    },
+    addEventListener() {},
+    removeEventListener() {},
+  };
+  doc.body = createFakeNode("body");
+  return doc;
+}
+
+function collectFakeText(node) {
+  if (node == null) return "";
+  if (Array.isArray(node)) {
+    return node.map(collectFakeText).join(" ");
+  }
+  if (typeof node === "string") return node;
+  if (typeof node.textContent === "string") {
+    let own = node.textContent;
+    if (Array.isArray(node.children) && node.children.length) {
+      own += node.children.map(collectFakeText).join(" ");
+    }
+    return own;
+  }
+  if (Array.isArray(node.children)) {
+    return node.children.map(collectFakeText).join(" ");
+  }
+  return "";
+}
+
 async function runLizenzverwaltungModuleTests(run) {
   const originalWindow = global.window;
+  const originalDocument = global.document;
   const restoreWindow = () => {
     if (typeof originalWindow === "undefined") delete global.window;
     else global.window = originalWindow;
+  };
+  const restoreDocument = () => {
+    if (typeof originalDocument === "undefined") delete global.document;
+    else global.document = originalDocument;
   };
   const [
     {
@@ -803,11 +931,690 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(projektEntry.moduleLabel, "Projektverwaltung");
   });
 
-  await run("Lizenzverwaltung: Einstellungen enthaelt den Einstieg Adminbereich auf oberster Ebene", () => {
-    assert.equal(settingsViewSource.includes("tiles.append(tileArchive, tileUser, tileLicense, tileAdmin, tileDev);"), true);
-    assert.equal(settingsViewSource.includes("titleText: \"Nutzereinstellungen / Druckeinstellungen\""), true);
-    assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), true);
-    assert.equal(settingsViewSource.includes("subText: \"Externe Lizenz-App\""), true);
+  await run("Lizenzverwaltung: Einstellungen enthaelt getrennte Einstiege fuer Profil / Adresse, Ausgabe & Druck und Protokoll", () => {
+    assert.equal(settingsViewSource.includes("../modules/lizenzverwaltung/index.js"), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Profil / Adresse\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Ausgabe & Druck\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Protokoll\""), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Profil & Druck\""), false);
+    assert.equal(settingsViewSource.includes("_createOutputPrintContent"), true);
+    assert.equal(settingsViewSource.includes("await this._createOutputPrintContent();"), true);
+    assert.equal(settingsViewSource.includes("_createProtocolContent"), true);
+    assert.equal(settingsViewSource.includes("await this._createProtocolContent();"), true);
+    assert.equal(settingsViewSource.includes("_createLegacySettingsContent"), false);
+    assert.equal(settingsViewSource.includes('focusSection: "Footer"'), false);
+    assert.equal(settingsViewSource.includes('focusSection: "Druckinhalt"'), false);
+    assert.equal(settingsViewSource.includes("subText: \"Nutzerprofil, Adresse und globale Stammdaten\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Footer, Druckränder, Drucklogos, Ausgabeordner und Versand\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Protokollbezeichnung und Vorbemerkung\""), true);
+    assert.equal(settingsViewSource.includes('titleText: "Diktat-Testfreigabe"'), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Firmenrollen\""), true);
+    assert.equal(
+      settingsViewSource.includes("subText: \"Reihenfolge und Bezeichnungen für Firmenlisten und Druck\""),
+      true
+    );
+    assert.equal(settingsViewSource.includes("await this._openFirmRoleOrderPopup();"), true);
+    assert.equal(settingsViewSource.includes('title: "Rollenreihenfolge für Firmen"'), true);
+    assert.equal(settingsViewSource.includes('textContent = "Schieben";'), true);
+    assert.equal(settingsViewSource.includes('textContent = "Edit";'), true);
+    assert.equal(settingsViewSource.includes('textContent = "Löschen";'), true);
+    assert.equal(settingsViewSource.includes('textContent = "Rolle hinzufügen";'), true);
+    assert.equal(settingsViewSource.includes('textContent = "▲ Hoch";'), true);
+    assert.equal(settingsViewSource.includes('textContent = "▼ Runter";'), true);
+    assert.equal(settingsViewSource.includes('for (const text of ["Nr.", "Rolle/Kategorie"])'), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Lizenzstatus\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), false);
+    assert.equal(settingsViewSource.includes("titleText: \"Technik\""), true);
+    assert.equal(settingsViewSource.includes("subText: \"Versionierung, Textgrenzen, DB-Diagnose und Diktat / Audio\""), false);
+    assert.equal(settingsViewSource.includes("subText: \"Diagnose und technische Grenzen\""), true);
+    assert.equal(settingsViewSource.includes('titleText: "Diktat-Testfreigabe"'), true);
+    assert.equal(settingsViewSource.includes("tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);"), true);
+    assert.equal(settingsViewSource.includes("titleText: \"Adminbereich\""), false);
+    assert.equal(settingsViewSource.includes("subText: \"Externe Lizenzverwaltung\""), false);
+  });
+
+  await run("SettingsView: Firmenrollen oeffnet Dialog mit Rollenliste", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsSetMany: async () => ({ ok: true }),
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view.roleOrder = [10, 20];
+      view.roleLabels = { 10: "Bauherr", 20: "Planer" };
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._openFirmRoleOrderPopup();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Rollenreihenfolge für Firmen");
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(
+        contentText.includes("Legt fest, in welcher Reihenfolge Firmenrollen in Listen und im Druck erscheinen."),
+        true
+      );
+      assert.equal(contentText.includes("Nr."), true);
+      assert.equal(contentText.includes("Rolle/Kategorie"), true);
+      assert.equal(contentText.includes("Schieben"), true);
+      assert.equal(contentText.includes("Edit"), true);
+      assert.equal(contentText.includes("Löschen"), true);
+      assert.equal(contentText.includes("Rolle hinzufügen"), true);
+      assert.equal(contentText.includes("Hoch"), true);
+      assert.equal(contentText.includes("Runter"), true);
+      assert.equal(contentText.includes("Bauherr"), true);
+      assert.equal(contentText.includes("Planer"), true);
+      assert.equal(contentText.includes("Aktionen"), false);
+
+      assert.equal(view.roleSelectedCode, 10);
+      assert.equal(view.roleListEl.children.length >= 2, true);
+      view.roleListEl.children[1].onclick();
+      assert.equal(view.roleSelectedCode, 20);
+
+      const saved = [];
+      global.window.bbmDb.appSettingsSetMany = async (payload) => {
+        saved.push(payload);
+        return { ok: true };
+      };
+      view.roleOrder = [10, 20];
+      view.roleSelectedCode = 10;
+      await view._moveSelectedRole(1);
+      assert.deepEqual(view.roleOrder, [20, 10]);
+      assert.equal(saved.length >= 1, true);
+
+      view.roleLabels = { 10: "Bauherr", 20: "Planer" };
+      view.roleSelectedCode = 20;
+      view._promptRenameCategory = async () => {
+        view.renameInputEl = {
+          value: "Planung",
+          focus() {},
+          select() {},
+        };
+        return true;
+      };
+      await view._renameRoleCategory(20);
+      assert.equal(view.roleLabels[20], "Planung");
+
+      let deleteArgs = null;
+      global.window.bbmDb.settingsCategoriesDelete = async (payload) => {
+        deleteArgs = payload;
+        return { ok: true, reassignedCounts: { firms: 1, projectFirms: 2 } };
+      };
+      view._confirmDeleteCategory = async () => true;
+      view._reload = async () => {
+        view.roleOrder = [10];
+        view.roleLabels = { 10: "Bauherr" };
+      };
+      view.roleOrder = [10, 20];
+      view.roleLabels = { 10: "Bauherr", 20: "Planung" };
+      view.roleSelectedCode = 20;
+      await view._deleteSelectedRole();
+      assert.equal(deleteArgs.code, 20);
+      assert.deepEqual(view.roleOrder, [10]);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: Startseite ist in fuenf Hauptgruppen gegliedert", () => {
+    const idx = (needle) => settingsViewSource.indexOf(needle);
+    assert.equal(settingsViewSource.includes('titleText: "Allgemein"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Eingabe & Erfassung"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Ausgabe & Kommunikation"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Module"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Entwicklung"'), true);
+    assert.equal(settingsViewSource.includes('subText: "Persoenliche Daten und Freischaltung."'), true);
+    assert.equal(settingsViewSource.includes('subText: "Hilfsfunktionen fuer Erfassung und Sprache."'), true);
+    assert.equal(settingsViewSource.includes('emptyText: "Noch keine eigenen Einstellungen."'), false);
+    assert.equal(
+      settingsViewSource.includes(
+        'subText: "Druck, Versand, Archiv und Speicherorte."'
+      ),
+      true
+    );
+    assert.equal(
+      settingsViewSource.includes('subText: "Fachmodule und Erweiterungen."'),
+      true
+    );
+    assert.equal(
+      settingsViewSource.includes('subText: "Technische Werkzeuge und Grenzen."'),
+      true
+    );
+    assert.equal(
+      settingsViewSource.includes("tiles.append(groupGeneral, groupInput, groupOutput, groupModule, groupDev);"),
+      true
+    );
+    assert.equal(settingsViewSource.includes('titleText: "Profil / Adresse"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Diktat / Audio"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Ausgabe & Druck"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Protokoll"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Profil & Druck"'), false);
+    assert.equal(settingsViewSource.includes('titleText: "Lizenzstatus"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Firmenrollen"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Archiv"'), true);
+    assert.equal(settingsViewSource.includes('titleText: "Technik"'), true);
+    assert.equal(settingsViewSource.includes('subText: "Diktieren, Transkription und Audio-Optionen"'), true);
+    assert.equal(settingsViewSource.includes('tiles: [tileOutputPrint, tileFirmRoles, tileArchive]'), true);
+    assert.equal(settingsViewSource.includes('tiles: [tileDictationAudio]'), true);
+    assert.equal(settingsViewSource.includes('tiles: [tileDev]'), true);
+    assert.equal(
+      idx('titleText: "Allgemein"') < idx('titleText: "Eingabe & Erfassung"'),
+      true
+    );
+    assert.equal(
+      idx('titleText: "Eingabe & Erfassung"') < idx('titleText: "Ausgabe & Kommunikation"'),
+      true
+    );
+    assert.equal(idx('titleText: "Ausgabe & Kommunikation"') < idx('titleText: "Module"'), true);
+    assert.equal(idx('titleText: "Module"') < idx('titleText: "Entwicklung"'), true);
+    assert.equal(settingsViewSource.includes('addTabBtn("Diktat / Audio", "dictation")'), false);
+    assert.equal(settingsViewSource.includes('{ key: "dictation", label: "Diktat / Audio", el: dictationSection.tab }'), false);
+    assert.equal(settingsViewSource.includes('group.dataset.settingsGroup = key || titleText;'), true);
+    assert.equal(settingsViewSource.includes('head.onclick = () => applyOpenState(group.dataset.open !== "true");'), true);
+    assert.equal(settingsViewSource.includes('chevron.textContent = open ? "▾" : "▸";'), true);
+    assert.equal(settingsViewSource.includes('tile.style.color = "#111827";'), true);
+    assert.equal(settingsViewSource.includes('t.style.color = "#0f172a";'), true);
+    assert.equal(settingsViewSource.includes('s.style.color = "#64748b";'), true);
+  });
+
+  await run("SettingsView: Accordion startet mit Allgemein offen und Rest zu", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+
+    global.document = createFakeDocument();
+    global.window = { bbmDb: {} };
+
+    try {
+      const view = new SettingsView({});
+      const root = view.render();
+      const groups = root.children[1].children;
+      const groupByName = Object.fromEntries(
+        groups.map((group) => [group.dataset.settingsGroup, group])
+      );
+
+      assert.equal(groupByName.general.dataset.open, "true");
+      assert.equal(groupByName.input.dataset.open, "false");
+      assert.equal(groupByName.output.dataset.open, "false");
+      assert.equal(groupByName.module.dataset.open, "false");
+      assert.equal(groupByName.dev.dataset.open, "false");
+      assert.equal(groupByName.general.children[1].style.display, "grid");
+      assert.equal(groupByName.input.children[1].style.display, "none");
+
+      groupByName.input.children[0].onclick();
+      assert.equal(groupByName.input.dataset.open, "true");
+      assert.equal(groupByName.input.children[1].style.display, "grid");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: sichtbare Druckinhalt-Texte sind sprachlich geschaerft", () => {
+    assert.equal(settingsViewSource.includes('label: "Protokolltitel"'), true);
+    assert.equal(settingsViewSource.includes('label: "Vorbemerkung"'), true);
+    assert.equal(settingsViewSource.includes('label: "Vorbemerkung in der Ausgabe drucken"'), true);
+    assert.equal(settingsViewSource.includes('title: "Textgrenzen für TOPs"'), true);
+    assert.equal(settingsViewSource.includes('hint: "Maximale Länge für Kurztext und Langtext in TOPs."'), true);
+    assert.equal(settingsViewSource.includes('label: "Vorbemerkung drucken (true/false)"'), false);
+    assert.equal(settingsViewSource.includes('title: "Protokoll-Textgrenzen"'), false);
+  });
+
+  await run("SettingsView: sichtbare Footer-Labels sind sprachlich vereinfacht", () => {
+    assert.equal(settingsViewSource.includes('label: "Ort"'), true);
+    assert.equal(settingsViewSource.includes('label: "Datum"'), true);
+    assert.equal(settingsViewSource.includes('label: "Name 1"'), true);
+    assert.equal(settingsViewSource.includes('label: "Name 2"'), true);
+    assert.equal(settingsViewSource.includes('label: "Protokollfuehrer"'), true);
+    assert.equal(settingsViewSource.includes('label: "Strasse"'), true);
+    assert.equal(settingsViewSource.includes('label: "PLZ"'), true);
+    assert.equal(settingsViewSource.includes('label: "Ort (Adresse)"'), true);
+    assert.equal(settingsViewSource.includes('label: "Profil-/Adressdaten im Footer verwenden"'), true);
+    assert.equal(settingsViewSource.includes('label: "Footer nutzt Nutzerdaten (true/false)"'), false);
+  });
+
+  await run("SettingsView: Profil / Adresse oeffnet einen eigenen schlanken Dialog", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+    const calls = { profile: [], settings: [] };
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        userProfileGet: async () => ({
+          ok: true,
+          profile: {
+            name1: "Profilname 1",
+            name2: "Profilname 2",
+            street: "Profilstrasse 7",
+            zip: "12345",
+            city: "Profilstadt",
+          },
+        }),
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            user_name: "Profil Nutzer",
+            user_company: "Profil Firma",
+          },
+        }),
+        userProfileUpsert: async (payload) => {
+          calls.profile.push(payload);
+          return { ok: true };
+        },
+        appSettingsSetMany: async (payload) => {
+          calls.settings.push(payload);
+          return { ok: true };
+        },
+      },
+    };
+
+    try {
+      const view = new SettingsView({ router: { context: { settings: {} } } });
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._createProfileAddressContent();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Profil / Adresse");
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(contentText.includes("Profil"), true);
+      assert.equal(contentText.includes("Adresse"), true);
+      assert.equal(contentText.includes("Drucklogos verwalten"), false);
+      assert.equal(contentText.includes("Vorbemerkung-Editor"), false);
+      assert.equal(contentText.includes("Protokolltitel"), false);
+      assert.equal(contentText.includes("Footer"), false);
+
+      const profileCard = opened[0].content[0].children[1];
+      const addressCard = opened[0].content[0].children[2];
+      profileCard.children[2].children[1].value = "Geaenderter Nutzer";
+      profileCard.children[3].children[1].value = "Geaenderte Firma";
+      addressCard.children[1].children[1].value = "Name A";
+      addressCard.children[2].children[1].value = "Name B";
+      addressCard.children[3].children[1].value = "Musterweg 3";
+      addressCard.children[4].children[1].value = "54321";
+      addressCard.children[5].children[1].value = "Musterstadt";
+
+      const saved = await opened[0].saveFn();
+      assert.equal(saved, true);
+      assert.deepEqual(calls.profile[0], {
+        name1: "Name A",
+        name2: "Name B",
+        street: "Musterweg 3",
+        zip: "54321",
+        city: "Musterstadt",
+      });
+      assert.deepEqual(calls.settings[0].user_name, "Geaenderter Nutzer");
+      assert.deepEqual(calls.settings[0].user_company, "Geaenderte Firma");
+      assert.equal(calls.settings[0].user_name1, "Name A");
+      assert.equal(calls.settings[0].user_city, "Musterstadt");
+      assert.equal(view.router.context.settings.user_name, "Geaenderter Nutzer");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: Diktat / Audio oeffnet einen eigenen Dialog", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            "audio.whisper.quality": "balanced",
+          },
+        }),
+        audioWhisperModelsStatus: async () => ({
+          ok: true,
+          models: {
+            fast: { available: true },
+            balanced: { available: true },
+            best: { available: true },
+            large: { available: true },
+          },
+        }),
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._createDictationAudioContent();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Diktat / Audio");
+      assert.equal(opened[0].closeOnly, true);
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(contentText.includes("Diktierprodukt"), true);
+      assert.equal(contentText.includes("Whisper-Modelle"), true);
+      assert.equal(contentText.includes("Woerterbuch"), true);
+      assert.equal(contentText.includes("Versionierung"), false);
+      assert.equal(contentText.includes("DB-Diagnose"), false);
+      assert.equal(contentText.includes("Protokoll-Textgrenzen"), false);
+      assert.equal(contentText.includes("Farbschema"), false);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: Entwicklung zeigt Diktat-Testfreigabe", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            "dev.audioDictationUnlock": "1",
+            "tops.titleMax": "100",
+            "tops.longMax": "500",
+          },
+        }),
+        appSettingsSetMany: async () => ({ ok: true }),
+        devVersionGet: async () => ({ ok: true, appVersion: "1.0.0", repoVersion: "1.0.0" }),
+        devBuildChannelGet: async () => ({ ok: true, channel: "DEV" }),
+        dbDiagnosticsGet: async () => ({
+          ok: true,
+          data: {
+            dbPath: "db.sqlite",
+            backupPath: "db.backup",
+            legacyDbPath: "legacy.sqlite",
+            legacyImportPath: "legacy-import.sqlite",
+            legacyAvailable: false,
+            activeLikelyEmpty: true,
+            backup: { exists: false, size: 0 },
+            legacy: { exists: false, size: 0 },
+            legacyImport: { exists: false, size: 0 },
+          },
+        }),
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._openDevelopmentModal();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Entwicklung");
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(contentText.includes("Diktat-Testfreigabe"), true);
+      assert.equal(contentText.includes("Aktiviert Diktat unabhängig von der Lizenz"), true);
+      assert.equal(contentText.includes("Versionierung"), true);
+      assert.equal(contentText.includes("DB-Diagnose"), true);
+      assert.equal(contentText.includes("Protokoll-Textgrenzen"), true);
+      assert.equal(contentText.includes("Farbschema"), true);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: Entwicklungsschalter speichert Diktat-Testfreigabe", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+    const calls = [];
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            "dev.audioDictationUnlock": "0",
+            "tops.titleMax": "100",
+            "tops.longMax": "500",
+          },
+        }),
+        appSettingsSetMany: async (payload) => {
+          calls.push(payload);
+          return { ok: true };
+        },
+        devVersionGet: async () => ({ ok: true, appVersion: "1.0.0", repoVersion: "1.0.0" }),
+        devBuildChannelGet: async () => ({ ok: true, channel: "DEV" }),
+        dbDiagnosticsGet: async () => ({
+          ok: true,
+          data: {
+            dbPath: "db.sqlite",
+            backupPath: "db.backup",
+            legacyDbPath: "legacy.sqlite",
+            legacyImportPath: "legacy-import.sqlite",
+            legacyAvailable: false,
+            activeLikelyEmpty: true,
+            backup: { exists: false, size: 0 },
+            legacy: { exists: false, size: 0 },
+            legacyImport: { exists: false, size: 0 },
+          },
+        }),
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._openDevelopmentModal();
+
+      const content = opened[0]?.content?.[0];
+      const findNode = (node, predicate) => {
+        if (!node) return null;
+        if (predicate(node)) return node;
+        for (const child of node.children || []) {
+          const found = findNode(child, predicate);
+          if (found) return found;
+        }
+        return null;
+      };
+      const checkbox = findNode(content, (node) =>
+        String(node?.textContent || "").includes("Diktat-Testfreigabe aktiv")
+      );
+      assert.ok(checkbox, "checkbox row not found");
+      const input = findNode(content, (node) => node?.tagName === "INPUT" && node.type === "checkbox");
+      assert.ok(input, "checkbox input not found");
+      input.checked = true;
+      input.dispatchEvent?.({ type: "change" });
+      assert.equal(calls.length > 0, true);
+      assert.equal(calls[calls.length - 1]?.["dev.audioDictationUnlock"], "1");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: Ausgabe & Druck oeffnet einen eigenen Dialogpfad", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+    const calls = { settings: [] };
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        userProfileGet: async () => ({
+          ok: true,
+          profile: {
+            name1: "Profilname 1",
+            name2: "Profilname 2",
+            street: "Profilstrasse 7",
+            zip: "12345",
+            city: "Profilstadt",
+          },
+        }),
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            "pdf.footerPlace": "Berlin",
+            "pdf.footerDate": "04.05.2026",
+            "pdf.footerName1": "",
+            "pdf.footerName2": "",
+            "pdf.footerRecorder": "Protokollant",
+            "pdf.footerStreet": "",
+            "pdf.footerZip": "",
+            "pdf.footerCity": "",
+            "pdf.footerUseUserData": "true",
+            "pdf.protocolsDir": "C:\\Temp\\Protokolle",
+            "print.v2.pagePadTopMm": "3",
+            "print.v2.pagePadLeftMm": "11",
+            "print.v2.pagePadRightMm": "11",
+            "print.v2.pagePadBottomMm": "1",
+            "print.v2.footerReserveMm": "10",
+          },
+        }),
+        appSettingsSetMany: async (payload) => {
+          calls.settings.push(payload);
+          return { ok: true };
+        },
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._createOutputPrintContent();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Ausgabe & Druck");
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(contentText.includes("Footer / Drucksignatur"), true);
+      assert.equal(contentText.includes("Drucklayout"), true);
+      assert.equal(contentText.includes("Drucklogos verwalten"), true);
+      assert.equal(contentText.includes("Ausgabeordner / Speicherort"), true);
+      assert.equal(contentText.includes("Nutzername"), false);
+      assert.equal(contentText.includes("Firma"), false);
+      assert.equal(contentText.includes("Protokolltitel"), false);
+      assert.equal(contentText.includes("Vorbemerkung-Editor"), false);
+      assert.equal(contentText.includes("Profil / Adresse"), false);
+
+      const footerCard = opened[0].content[0].children[1];
+      const storageCard = opened[0].content[0].children[2];
+      const layoutCard = opened[0].content[0].children[3];
+      footerCard.children[2].children[1].value = "Stuttgart";
+      storageCard.children[2].children[1].value = "C:\\Daten\\Protokolle";
+      layoutCard.children[1].children[1].value = "4";
+      layoutCard.children[2].children[1].value = "12";
+      layoutCard.children[3].children[1].value = "12";
+      layoutCard.children[4].children[1].value = "2";
+      layoutCard.children[5].children[1].value = "8";
+
+      const saved = await opened[0].saveFn();
+      assert.equal(saved, true);
+      assert.equal(calls.settings.length >= 1, true);
+      assert.equal(calls.settings[0]["pdf.footerPlace"], "Stuttgart");
+      assert.equal(calls.settings[0]["pdf.protocolsDir"], "C:\\Daten\\Protokolle");
+      assert.equal(calls.settings[0]["print.v2.pagePadTopMm"], "4");
+      assert.equal(calls.settings[0]["print.v2.footerReserveMm"], "8");
+      assert.equal(calls.settings[0]["pdf.footerUseUserData"], "true");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
+  await run("SettingsView: Protokoll oeffnet einen eigenen Dialogpfad", async () => {
+    const { default: SettingsView } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/views/SettingsView.js")
+    );
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const opened = [];
+    const calls = { settings: [] };
+
+    global.document = createFakeDocument();
+    global.window = {
+      bbmDb: {
+        appSettingsGetMany: async () => ({
+          ok: true,
+          data: {
+            "pdf.protocolTitle": "Baubesprechung",
+            "pdf.preRemarks": "Erste Zeile\nZweite Zeile",
+            "print.preRemarks.enabled": "true",
+          },
+        }),
+        appSettingsSetMany: async (payload) => {
+          calls.settings.push(payload);
+          return { ok: true };
+        },
+      },
+    };
+
+    try {
+      const view = new SettingsView({});
+      view._openSettingsModal = (payload) => opened.push(payload);
+
+      await view._createProtocolContent();
+
+      assert.equal(opened.length, 1);
+      assert.equal(opened[0].title, "Protokoll");
+      const contentText = collectFakeText(opened[0].content);
+      assert.equal(contentText.includes("Protokollbezeichnung"), true);
+      assert.equal(contentText.includes("Protokolltitel"), true);
+      assert.equal(contentText.includes("Vorbemerkung"), true);
+      assert.equal(contentText.includes("Vorbemerkung in der Ausgabe drucken"), true);
+      assert.equal(contentText.includes("Profil"), false);
+      assert.equal(contentText.includes("Adresse"), false);
+      assert.equal(contentText.includes("Footer"), false);
+      assert.equal(contentText.includes("Drucklayout"), false);
+      assert.equal(contentText.includes("Drucklogos verwalten"), false);
+      assert.equal(contentText.includes("Ausgabeordner / Speicherort"), false);
+      assert.equal(contentText.includes("Textgrenzen"), false);
+
+      const titleCard = opened[0].content[0].children[1];
+      const remarksCard = opened[0].content[0].children[2];
+      titleCard.children[2].children[1].value = "Neuer Protokolltitel";
+      remarksCard.children[2].children[1].value = "Zeile 1\nZeile 2";
+      remarksCard.children[3].children[1].checked = false;
+
+      const saved = await opened[0].saveFn();
+      assert.equal(saved, true);
+      assert.equal(calls.settings.length >= 1, true);
+      assert.equal(calls.settings[0]["pdf.protocolTitle"], "Neuer Protokolltitel");
+      assert.equal(calls.settings[0]["pdf.preRemarks"], "Zeile 1\nZeile 2");
+      assert.equal(calls.settings[0]["print.preRemarks.enabled"], "false");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
   });
 
   await run("Lizenzverwaltung: Entwicklung enthaelt keinen sichtbaren Tab Lizenz / bearbeiten", () => {
@@ -816,24 +1623,11 @@ async function runLizenzverwaltungModuleTests(run) {
     assert.equal(settingsViewSource.includes("tabLicense.append(licenseBox, licenseGenBox);"), false);
   });
 
-  await run("Lizenzverwaltung: Adminbereich-Popup enthaelt Kachel Lizenzverwaltung", () => {
-    assert.equal(settingsViewSource.includes("title: \"Adminbereich\""), true);
-    assert.equal(settingsViewSource.includes("titleText: \"Lizenzverwaltung\""), true);
-    assert.equal(settingsViewSource.includes("openLicenseAdminPopup"), true);
-  });
-
-
-  await run("SettingsView: neuer Adminbereich nutzt keine alten Popup-Callbacks", () => {
+  await run("SettingsView: keine alten Popup-Callbacks im sichtbaren Settings-Startfluss", () => {
     assert.equal(settingsViewSource.includes("onOpenLicenseEditor:"), false);
     assert.equal(settingsViewSource.includes("onOpenCustomerEditor:"), false);
     assert.equal(settingsViewSource.includes("onOpenProductScopeEditor:"), false);
     assert.equal(settingsViewSource.includes("onOpenLicenseHistory:"), false);
-  });
-
-  await run("LicenseAdminScreen wird direkt aus SettingsView geoeffnet", () => {
-    assert.equal(settingsViewSource.includes("new LicenseAdminScreen({"), true);
-    assert.equal(settingsViewSource.includes("onBackToAdminbereich"), true);
-    assert.equal(settingsViewSource.includes("onOpenLicenseEditor"), false);
   });
 
 

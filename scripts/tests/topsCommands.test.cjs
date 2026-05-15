@@ -94,6 +94,50 @@ async function runTopsCommandsTests(run) {
     assert.equal(store.getState().selectedTopId, null);
     assert.deepEqual(reloadedMeetingIds, [9, 9]);
   });
+
+  await run("TopsCommands: saveDraft fuer Kurz- und Langtext haelt Auswahl und bleibt offen", async () => {
+    const store = createTopsStore({
+      meetingId: 12,
+      projectId: 44,
+      selectedTopId: 77,
+      editor: { title: "Alt", longtext: "Alt" },
+    });
+
+    const reloadCalls = [];
+    const repository = {
+      async saveTop(payload) {
+        assert.equal(payload.meetingId, 12);
+        assert.equal(payload.topId, 77);
+        assert.deepEqual(payload.patch, { title: "Neu", longtext: "Neu lang" });
+        return { ok: true };
+      },
+      async loadByMeeting(payload) {
+        const id = payload && typeof payload === "object" ? payload.meetingId : payload;
+        reloadCalls.push(id);
+        return {
+          ok: true,
+          meeting: { id, is_closed: 0 },
+          list: [
+            {
+              id: 77,
+              title: "Neu",
+              longtext: "Neu lang",
+            },
+          ],
+        };
+      },
+    };
+
+    const commands = new TopsCommands({ store, repository });
+    const res = await commands.saveDraft({ title: "Neu", longtext: "Neu lang" });
+
+    assert.equal(res.ok, true);
+    assert.equal(store.getState().selectedTopId, 77);
+    assert.equal(store.getState().isReadOnly, false);
+    assert.equal(store.getState().tops[0].title, "Neu");
+    assert.equal(store.getState().tops[0].longtext, "Neu lang");
+    assert.deepEqual(reloadCalls, [12]);
+  });
 }
 
 module.exports = { runTopsCommandsTests };
