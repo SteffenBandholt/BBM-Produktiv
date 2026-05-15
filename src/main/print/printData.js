@@ -3,12 +3,15 @@ const { initDatabase } = require("../db/database");
 const projectsRepo = require("../db/projectsRepo");
 const meetingsRepo = require("../db/meetingsRepo");
 const projectSettingsRepo = require("../db/projectSettingsRepo");
-const meetingTopsRepo = require("../db/meetingTopsRepo");
-const projectFirmsRepo = require("../db/projectFirmsRepo");
-const { appSettingsGetManyWithDb } = require("../db/appSettingsRepo");
-const { getResolvedTableLayout } = require("../db/tableLayoutsRepo");
-const { getUserProfile } = require("../db/userProfileRepo");
-const { normalizePrintOrientation } = require("./printOrientation");
+const meetingTopsRepo = require("../db/meetingTopsRepo"); 
+const projectFirmsRepo = require("../db/projectFirmsRepo"); 
+const { appSettingsGetManyWithDb } = require("../db/appSettingsRepo"); 
+const { getResolvedTableLayout } = require("../db/tableLayoutsRepo"); 
+const { getUserProfile } = require("../db/userProfileRepo"); 
+const { getStatus } = require("../licensing/licenseService"); 
+const { buildLicensedToText } = require("../licensing/featureGuard"); 
+const { normalizeLicensedModules, normalizeLicensedFeatures } = require("../licensing/licenseFeatures"); 
+const { normalizePrintOrientation } = require("./printOrientation"); 
 
 let _printModesModulePromise = null;
 
@@ -979,22 +982,33 @@ async function getPrintData({
     mode: normalizedMode,
     orientation: runtimeContext.orientation,
   });
-  const documentContent = _loadPrintDocumentContent({
-    db,
-    mode: normalizedMode,
-    projectId,
-    meetingId,
-    meeting: runtimeContext.meeting,
-    settings: runtimeContext.settings,
-    todoResponsibleFilter,
-  });
-
-  return {
-    mode: normalizedMode,
-    ...runtimeContext,
-    ...documentContent,
-    tableLayouts,
-  };
-}
+  const documentContent = _loadPrintDocumentContent({ 
+    db, 
+    mode: normalizedMode, 
+    projectId, 
+    meetingId, 
+    meeting: runtimeContext.meeting, 
+    settings: runtimeContext.settings, 
+    todoResponsibleFilter, 
+  }); 
+ 
+  const status = getStatus({ fresh: false }); 
+  const license = status?.license && typeof status.license === "object" ? status.license : {}; 
+ 
+  return { 
+    mode: normalizedMode, 
+    ...runtimeContext, 
+    ...documentContent, 
+    license: { 
+      licensedToText: buildLicensedToText(status), 
+      customerName: String(license.customerName || "").trim(), 
+      licenseId: String(license.licenseId || "").trim(), 
+      product: String(license.product || "").trim(), 
+      modules: normalizeLicensedModules(license.modules, license.features), 
+      features: normalizeLicensedFeatures(license.features), 
+    }, 
+    tableLayouts, 
+  }; 
+} 
 
 module.exports = { getPrintData };
