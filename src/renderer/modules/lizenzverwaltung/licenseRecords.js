@@ -109,23 +109,23 @@ export function createDefaultLicenseHistoryRecord(overrides = {}) {
   };
 }
 
-export function normalizeCustomerRecord(input = {}) {
-  const base = createDefaultCustomerRecord();
-  const id = String(input.id ?? base.id).trim();
-  const customerNumber = String(input.customerNumber ?? input.customer_number ?? base.customerNumber).trim();
-  const companyName = String(input.companyName ?? input.company_name ?? base.companyName).trim();
-  const contactPerson = String(input.contactPerson ?? input.contact_person ?? base.contactPerson).trim();
-  const email = String(input.email ?? base.email).trim();
-  const phone = String(input.phone ?? base.phone).trim();
-  const notes = String(input.notes ?? base.notes).trim();
-
-  return {
-    id,
-    customerNumber,
-    customer_number: customerNumber,
-    companyName,
-    company_name: companyName,
-    contactPerson,
+export function normalizeCustomerRecord(input = {}) { 
+  const base = createDefaultCustomerRecord(); 
+  const id = String(input.id ?? "").trim(); 
+  const customerNumber = String(input.customerNumber ?? input.customer_number ?? base.customerNumber).trim(); 
+  const companyName = String(input.companyName ?? input.company_name ?? base.companyName).trim(); 
+  const contactPerson = String(input.contactPerson ?? input.contact_person ?? base.contactPerson).trim(); 
+  const email = String(input.email ?? base.email).trim(); 
+  const phone = String(input.phone ?? base.phone).trim(); 
+  const notes = String(input.notes ?? base.notes).trim(); 
+ 
+  return { 
+    ...(id ? { id } : {}), 
+    customerNumber, 
+    customer_number: customerNumber, 
+    companyName, 
+    company_name: companyName, 
+    contactPerson, 
     contact_person: contactPerson,
     email,
     phone,

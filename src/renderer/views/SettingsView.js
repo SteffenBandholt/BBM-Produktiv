@@ -4723,25 +4723,26 @@ export default class SettingsView {
     status.style.whiteSpace = "pre-line";
     status.textContent = "Lizenzstatus wird geladen ...";
 
-    const btnReload = document.createElement("button");
-    btnReload.type = "button";
-    btnReload.textContent = "Status aktualisieren";
-    applyPopupButtonStyle(btnReload);
-
-    const renderStatus = (res, fallbackError = "") => {
-      const valid = !!res?.valid;
-      const reason = String(res?.reason || "").trim();
-      const licenseId = String(res?.licenseId || "").trim() || "-";
-      const customer = String(res?.customerName || "").trim() || "-";
-      const machineId = String(res?.machineId || "").trim() || "-";
-      const validUntil = this._formatLicenseDate(res?.validUntil);
-      const reasonText = this._formatLicenseReason(reason, fallbackError);
-      const warningText = this._formatLicenseWarning(res, fallbackError);
-
-      status.textContent = valid
-        ? `Gueltig fuer: ${customer}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}\nGueltig bis: ${validUntil}\nHinweis: ${warningText}`
-        : `Ungueltig\nGrund: ${reasonText}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}`;
-    };
+    const btnReload = document.createElement("button"); 
+    btnReload.type = "button"; 
+    btnReload.textContent = "Status aktualisieren"; 
+    applyPopupButtonStyle(btnReload); 
+ 
+    const renderStatus = (res, fallbackError = "") => { 
+      const valid = !!res?.valid; 
+      const reason = String(res?.reason || "").trim(); 
+      const licensedToText = String(res?.licensedToText || "").trim(); 
+      const licenseId = String(res?.licenseId || "").trim() || "-"; 
+      const customer = String(res?.customerName || "").trim() || "-"; 
+      const machineId = String(res?.machineId || "").trim() || "-"; 
+      const validUntil = this._formatLicenseDate(res?.validUntil); 
+      const reasonText = this._formatLicenseReason(reason, fallbackError); 
+      const warningText = this._formatLicenseWarning(res, fallbackError); 
+ 
+      status.textContent = valid 
+        ? `${licensedToText ? `Lizenz: ${licensedToText}\n` : ""}Gueltig fuer: ${customer}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}\nGueltig bis: ${validUntil}\nHinweis: ${warningText}` 
+        : `Ungueltig\nGrund: ${reasonText}\nLizenz-ID: ${licenseId}\nMachine-ID: ${machineId}`; 
+    }; 
 
     const loadStatus = async () => {
       if (typeof api.licenseGetStatus !== "function") {
