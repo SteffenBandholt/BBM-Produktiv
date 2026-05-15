@@ -55,6 +55,16 @@ function _getResourcesRoot() {
   }
 }
 
+function _getUserModelRoot() {
+  try {
+    const userDataPath = app?.getPath ? app.getPath("userData") : null;
+    if (!userDataPath) return null;
+    return path.join(userDataPath, "audio", "models");
+  } catch (_err) {
+    return null;
+  }
+}
+
 function _runProcess(command, args, { cwd } = {}) {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
@@ -223,9 +233,10 @@ class WhisperCppEngine {
     ];
   }
 
-  _getModelCandidates(executablePath, modelFileName = "ggml-base.bin") {
+  _getModelCandidates(executablePath, modelFileName = "ggml-small.bin") {
     const executableDir = executablePath ? path.dirname(executablePath) : null;
     const resourcesRoot = _getResourcesRoot();
+    const userModelRoot = _getUserModelRoot();
     const packaged = resourcesRoot
       ? [
           path.join(resourcesRoot, "audio", "models"),
@@ -235,6 +246,7 @@ class WhisperCppEngine {
     return [
       process.env.BBM_WHISPER_MODEL_PATH,
       process.env.WHISPER_MODEL_PATH,
+      userModelRoot,
       ...packaged,
       path.join(this.workspaceRoot, "dev", "models"),
       path.join(this.workspaceRoot, "dev", "models", "whisper"),
@@ -421,10 +433,10 @@ class WhisperCppEngine {
   }
 
   getAvailability() {
-    return this._getAvailabilityForModel("ggml-base.bin");
+    return this._getAvailabilityForModel("ggml-small.bin");
   }
 
-  getModelAvailability(modelFileName = "ggml-base.bin") {
+  getModelAvailability(modelFileName = "ggml-small.bin") {
     const availability = this._getAvailabilityForModel(modelFileName);
     return {
       available: !!availability.available,
@@ -433,7 +445,7 @@ class WhisperCppEngine {
     };
   }
 
-  _ensureAvailable(modelFileName = "ggml-base.bin") {
+  _ensureAvailable(modelFileName = "ggml-small.bin") {
     const availability = this._getAvailabilityForModel(modelFileName);
     if (_isTruthString(process.env.BBM_DEV_AUDIO_FFMPEG_LOG)) {
       _audioLog("ffmpeg-check", {

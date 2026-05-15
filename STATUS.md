@@ -537,6 +537,12 @@ Sie ergÃ¤nzt:
 - Das Renderer-Modul ist begonnen.
 - `TranscriptionService` ist als Renderer-Adapter im Modul verankert.
 - Die Entwicklungs-UI fuer den Bereich `Diktieren` wurde in das Audio-Modul ausgegliedert und in Settings eingehaengt.
+- Die Whisper-Modellstrategie ist jetzt auf `small`/`balanced` als Default ausgerichtet:
+  - DEV bleibt bei `fast`/`balanced`/`best`/`large`
+  - produktive Builds packen nur noch `ggml-small.bin`
+  - der Main-Service faellt bei fehlendem Wunschmodell auf `ggml-small.bin` zurueck, wenn es vorhanden ist
+  - der Nutzer-Modellordner `userData/audio/models` wird im Whisper-Engine-Pfad mitberuecksichtigt
+- Die Audio-Tests wurden um Default-, Fallback-, User-Model- und Packaging-Pruefungen erweitert.
 - Es gibt keine Sidebar-Anbindung und keinen Modulkatalog-Eintrag.
 - Die Main-/IPC-/Whisper-/Lizenz-/Settings-Logik bleibt unverÃ¤ndert.
 
@@ -1954,3 +1960,27 @@ Wichtig:
   - keiner
 - Risiken/Hinweise:
   - Die technische layoutTools-Basis bleibt als Code im Repo, ist aber im TOP-Laufweg nicht mehr aktiv verdrahtet.
+
+#### Paket: Whisper-Modellstrategie fuer DEV und Produktivbuild stabilisiert
+- Status: erledigt
+- Beschreibung:
+  - Der Main-Service nutzt jetzt `small`/`balanced` als Defaultmodell.
+  - Die vorhandenen Whisper-Qualitaeten `fast`/`balanced`/`best`/`large` bleiben einzeln waehlbar.
+  - Wenn das gewaehlte Modell fehlt und `ggml-small.bin` vorhanden ist, faellt die Transkription auf `small` zurueck.
+  - Fehlt auch `ggml-small.bin`, liefert der Main-Service eine klare Fehlermeldung statt still zu scheitern.
+  - Die Whisper-Engine schaut zusaetzlich in `userData/audio/models` nach Modellen.
+  - Produktive Builds packen nur noch `ggml-small.bin`; `ggml-base.bin`, `ggml-medium.bin` und `ggml-large.bin` werden nicht mehr automatisch mitgeliefert.
+  - Die Audio-Tests decken Default, Mapping, Fallback, User-Model-Pfad und Packaging-Regel ab.
+- Betroffene Dateien:
+  - `src/main/services/audio/TranscriptionService.js`
+  - `src/main/services/audio/engines/WhisperCppEngine.js`
+  - `src/renderer/modules/audio/ui/createDictationDevSection.js`
+  - `package.json`
+  - `scripts/tests/audioModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - `kein Commit`
+- Naechster offener Schritt:
+  - DEV- und Produktivsichtung im laufenden App-Kontext mit vorhandenem und optional userseitig abgelegtem Whisper-Modell.
+- Risiken/Hinweise:
+  - `npm test` ist in dieser Umgebung weiterhin durch das bereits bekannte `better-sqlite3`-Native-Modul blockiert; die Audio-Subtests selbst laufen gruen.
