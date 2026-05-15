@@ -2,6 +2,7 @@ import {
   normalizeTopLongText,
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
+import { applyProtokollTopsUiLayout } from "../../../shared/tableLayouts/protokollTopsLayout.js";
 
 function getAssetBaseUrl() {
   if (typeof window !== "undefined" && window?.location?.href) return window.location.href;
@@ -47,11 +48,57 @@ const TODO_PNG = new URL("../../assets/todo.png", ASSET_BASE_URL).href;
 const RED_FLAG_PNG = resolveModuleAsset("../../assets/icons/redFlag.png");
 
 export class TopsList {
-  constructor({ onRowClick, onLevel1Toggle } = {}) {
+  constructor({ onRowClick, onLevel1Toggle, onLayoutZoneClick, tableLayout } = {}) {
     this.onRowClick = typeof onRowClick === "function" ? onRowClick : null;
     this.onLevel1Toggle = typeof onLevel1Toggle === "function" ? onLevel1Toggle : null;
+    this.onLayoutZoneClick = typeof onLayoutZoneClick === "function" ? onLayoutZoneClick : null;
+    this.tableLayout = tableLayout && typeof tableLayout === "object" ? tableLayout : null;
+    this.devLayoutMode = {
+      enabled: false,
+      activeZone: null,
+    };
     this.root = document.createElement("ul");
     this.root.setAttribute("data-bbm-tops-list-v2", "true");
+    applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    this._applyDevOnlyLayoutVarsGate();
+  }
+
+  setTableLayout(tableLayout) {
+    this.tableLayout = tableLayout && typeof tableLayout === "object" ? tableLayout : null;
+    applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    this._applyDevOnlyLayoutVarsGate();
+  }
+
+  setDevLayoutMode(mode = {}) {
+    void mode;
+    this.devLayoutMode = {
+      enabled: false,
+      activeZone: null,
+    };
+    this.root.dataset.devLayoutMode = "false";
+    if (this.root?.removeAttribute) {
+      this.root.removeAttribute("data-dev-layout-mode");
+    }
+    applyProtokollTopsUiLayout(this.root, this.tableLayout);
+    this._applyDevOnlyLayoutVarsGate();
+  }
+
+  _applyDevOnlyLayoutVarsGate() {
+    if (!this.root?.style) return;
+    if (this.devLayoutMode?.enabled) return;
+
+    const devOnlyVars = [
+      "--bbm-tops-list-number-padding-inline",
+      "--bbm-tops-list-number-font-size",
+      "--bbm-tops-list-text-padding-inline",
+      "--bbm-tops-list-text-font-size",
+      "--bbm-tops-list-meta-padding-inline",
+      "--bbm-tops-list-meta-font-size",
+    ];
+
+    for (const key of devOnlyVars) {
+      this.root.style.removeProperty(key);
+    }
   }
 
   setItems(items = []) {
@@ -119,6 +166,8 @@ export class TopsList {
       numLine.appendChild(collapseButton);
     }
 
+    this._decorateLayoutZone(num, "number");
+
     const numLabel = document.createElement("span");
     numLabel.className = "bbm-tops-list-row-number-value";
     numLabel.textContent = `${item.number || ""}`;
@@ -142,6 +191,7 @@ export class TopsList {
 
     const text = document.createElement("div");
     text.className = "bbm-tops-list-row-text";
+    this._decorateLayoutZone(text, "text");
 
     const title = document.createElement("div");
     title.className = "bbm-tops-list-row-title";
@@ -165,6 +215,7 @@ export class TopsList {
 
     const meta = document.createElement("div");
     meta.className = "bbm-tops-list-row-meta";
+    this._decorateLayoutZone(meta, "meta");
     const statusTokens = new Set(["-", "offen", "in arbeit", "erledigt", "blockiert", "verzug"]);
     for (const line of item.meta || []) {
       const el = document.createElement("div");
@@ -223,5 +274,10 @@ export class TopsList {
     };
 
     return rowEl;
+  }
+
+  _decorateLayoutZone(zoneEl, zoneKey) {
+    void zoneEl;
+    void zoneKey;
   }
 }

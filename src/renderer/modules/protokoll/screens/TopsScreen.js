@@ -14,6 +14,10 @@ import {
   buildListItemsFromState,
   resolveVisibleSelectionForCollapsedFamilies,
 } from "../buildListItemsFromState.js";
+import {
+  buildProtokollTopsLayoutOverlay,
+  extractProtokollTopsEditorValues,
+} from "../../../../shared/tableLayouts/protokollTopsLayout.js";
 import { editorFromTop } from "../editorFromTop.js";
 import { buildPatchFromDraft } from "../buildPatchFromDraft.js";
 import { canCreateChildFromState } from "../canCreateChildFromState.js";
@@ -63,6 +67,11 @@ function parseUiBool(value, fallback) {
   return !!fallback;
 }
 
+function normalizeBuildChannel(value) {
+  const raw = String(value ?? "").trim().toUpperCase();
+  return raw === "DEV" ? "DEV" : "STABLE";
+}
+
 // TOPS-V2: eigenstaendiger Screen inkl. nativer Close-/Output-Flow.
 export default class TopsScreen {
   constructor(options = {}) {
@@ -92,6 +101,8 @@ export default class TopsScreen {
     this._autoSaveDelayMs = 400;
     this.workbench = null;
     this.topsList = null;
+    this._topListLayout = null;
+    this._topListLayoutLoadPromise = null;
     this.closeFlow = null;
     this.dialogs = null;
     this._dialogViewAdapter = this._createDialogViewAdapter();
@@ -179,6 +190,7 @@ export default class TopsScreen {
     sheetArea.appendChild(sheetCanvas);
     editArea.appendChild(editCanvas);
     root.append(this.header.root, sheetArea, editArea);
+
   }
 
   _buildProtocolScreenRegions() {
@@ -207,8 +219,10 @@ export default class TopsScreen {
     this.topsList = new TopsList({
       onRowClick: async (item) => this._handleListRowClick(item),
       onLevel1Toggle: async (item) => this._toggleLevel1Collapsed(item?.id),
+      onLayoutZoneClick: (zoneKey) => this._setDevLayoutZone(zoneKey),
     });
     this.sheetPaper.appendChild(this.topsList.root);
+    void this._loadTopListLayout();
   }
 
   // ---------------------------------------------------------------------------
@@ -639,6 +653,146 @@ export default class TopsScreen {
         collapsedLevel1Ids: this._getCollapsedLevel1Ids(),
       })
     );
+  }
+
+  _getTopListLayoutApi() {
+    return globalThis.window?.bbmDb || null;
+  }
+
+  _applyTopListLayout(layout) {
+    this._topListLayout = layout && typeof layout === "object" ? layout : null;
+    if (this.topsList instanceof TopsList) {
+      this.topsList.setTableLayout(this._topListLayout);
+    }
+    this._syncDevLayoutMetaWidthFromLayout(this._topListLayout);
+  }
+
+  async _loadTopListLayout() {
+    if (this._topListLayoutLoadPromise) return this._topListLayoutLoadPromise;
+    this._topListLayoutLoadPromise = (async () => {
+      const api = this._getTopListLayoutApi();
+      if (typeof api?.tableLayoutsGetOne !== "function") {
+        this._applyTopListLayout(null);
+        return null;
+      }
+      try {
+        const res = await api.tableLayoutsGetOne({
+          moduleId: "protokoll",
+          tableKey: "protokoll_tops",
+          orientation: "portrait",
+        });
+        const layout = res?.ok ? res?.data?.effectiveLayout || res?.data?.defaultLayout || null : null;
+        this._applyTopListLayout(layout);
+        return layout;
+      } catch (_err) {
+        this._applyTopListLayout(null);
+        return null;
+      } finally {
+        this._topListLayoutLoadPromise = null;
+      }
+    })();
+    return this._topListLayoutLoadPromise;
+  }
+
+  _setDevLayoutMode(mode = {}) {
+    void mode;
+    return false;
+  }
+
+  _bindLayoutCalibrationChanges() {
+    return;
+  }
+
+  _setDevLayoutZone(zoneKey) {
+    return true;
+  }
+
+  _applyDevLayoutPreview(payload = {}) {
+    void payload;
+    return;
+  }
+
+  _getDevLayoutMetaWidthFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiMetaWidth || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 74;
+    return Math.max(50, Math.min(160, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutMetaInsetFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiMetaInset || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 4;
+    return Math.max(0, Math.min(24, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutMetaFontFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiMetaFontSize || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 11;
+    return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutNumberWidthFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiNumberWidth || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 64;
+    return Math.max(50, Math.min(160, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutNumberInsetFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiNumberInset || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 5;
+    return Math.max(0, Math.min(24, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutNumberFontFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiNumberFontSize || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 11;
+    return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutTextInsetFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiTextInset || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 5;
+    return Math.max(0, Math.min(24, Math.floor(Number(match[1]))));
+  }
+
+  _getDevLayoutTextFontFromLayout(layout = null) {
+    const extracted = extractProtokollTopsEditorValues(layout || {});
+    const raw = String(extracted?.uiTextFontSize || "").trim();
+    const match = raw.match(/^(\d+(?:\.\d+)?)px$/i);
+    if (!match) return 11;
+    return Math.max(9, Math.min(16, Math.floor(Number(match[1]))));
+  }
+
+  _syncDevLayoutMetaWidthFromLayout(layout = null) {
+    void layout;
+    return;
+  }
+
+  async _saveDevLayoutMetaWidth() {
+    return false;
+  }
+
+  async _resetDevLayoutMetaWidth() {
+    return false;
+  }
+
+  async _loadDevLayoutMode({ force = false } = {}) {
+    void force;
+    this._setDevLayoutMode({ enabled: false, activeZone: null });
+    return null;
   }
 
   async _handleListRowClick(item) {

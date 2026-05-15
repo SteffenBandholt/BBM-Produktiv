@@ -889,6 +889,55 @@ function ensureProjectSettingsSchema(dbConn) {
   }
 }
 
+function ensureTableLayoutsSchema(dbConn) {
+  if (!tableExists(dbConn, "table_layouts")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS table_layouts (
+        table_key TEXT NOT NULL,
+        module_id TEXT NOT NULL,
+        orientation TEXT NOT NULL DEFAULT 'portrait',
+        scope_type TEXT NOT NULL DEFAULT 'global',
+        scope_id TEXT NOT NULL DEFAULT '',
+        schema_version INTEGER NOT NULL DEFAULT 1,
+        layout_json TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        PRIMARY KEY (table_key, module_id, orientation, scope_type, scope_id)
+      );
+    `);
+    return;
+  }
+
+  const addCol = (name, sqlType) => {
+    if (!columnExists(dbConn, "table_layouts", name)) {
+      dbConn.exec(`ALTER TABLE table_layouts ADD COLUMN ${name} ${sqlType};`);
+    }
+  };
+
+  addCol("table_key", "TEXT");
+  addCol("module_id", "TEXT");
+  addCol("orientation", "TEXT");
+  addCol("scope_type", "TEXT");
+  addCol("scope_id", "TEXT");
+  addCol("schema_version", "INTEGER");
+  addCol("layout_json", "TEXT");
+
+  if (!columnExists(dbConn, "table_layouts", "created_at")) {
+    dbConn.exec(`
+      ALTER TABLE table_layouts
+      ADD COLUMN created_at TEXT NOT NULL
+      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));
+    `);
+  }
+  if (!columnExists(dbConn, "table_layouts", "updated_at")) {
+    dbConn.exec(`
+      ALTER TABLE table_layouts
+      ADD COLUMN updated_at TEXT NOT NULL
+      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));
+    `);
+  }
+}
+
 function ensureProjectCandidatesSchema(dbConn) {
   if (!tableExists(dbConn, "project_candidates")) {
     dbConn.exec(`
@@ -1525,6 +1574,7 @@ function ensureSchema(dbConn) {
   ensureAudioTermCorrectionsSchema(dbConn);
 
   ensureDictionarySchema(dbConn);
+  ensureTableLayoutsSchema(dbConn);
   ensureAppSettingsSchema(dbConn);
   ensureLicenseAdminSchema(dbConn);
 }

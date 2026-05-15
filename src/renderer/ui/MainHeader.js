@@ -9,6 +9,7 @@ import { openClosedProtocolSelector } from "./react/ClosedProtocolSelector.js";
 import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
 import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
 import { isModuleActive, refreshCachedActiveModuleAccess } from "../app/modules/moduleAccessState.js";
+import { getVisiblePrintDialogActions } from "../../shared/print/printModes.mjs";
 
 const PROTOCOL_DISABLED_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
 
@@ -557,22 +558,25 @@ export default class MainHeader {
 
     const itemFirms = mkPrintItem("Firmenliste", async (state) => {
       if (!(await this._ensureProtocolOutputEnabled())) return;
-      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "firms" });
+      if (typeof this.router?.openFirmsPrintPreview !== "function") return;
+      await this.router.openFirmsPrintPreview({ projectId: state.projectId });
     });
 
     const itemTodo = mkPrintItem("ToDo-Liste", async (state) => {
       if (!(await this._ensureProtocolOutputEnabled())) return;
-      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "todo" });
+      if (typeof this.router?.openTodoPrintPreview !== "function") return;
+      await this.router.openTodoPrintPreview({ projectId: state.projectId });
     });
 
-    const itemTopList = mkPrintItem("Top-Liste", async (state) => {
-      if (!(await this._ensureProtocolOutputEnabled())) return;
-      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "topsall" });
-    });
+      const itemTopList = mkPrintItem("TOP-Liste", async (state) => {
+        if (!(await this._ensureProtocolOutputEnabled())) return;
+        if (typeof this.router?.openTopListAllPrintPreview !== "function") return;
+        await this.router.openTopListAllPrintPreview({ projectId: state.projectId });
+      });
 
-    const itemMeetingsClosed = mkPrintItem("Protokolle", async (state) => {
+    const itemMeetingsClosed = mkPrintItem("Protokoll drucken", async () => {
       if (!(await this._ensureProtocolOutputEnabled())) return;
-      await this._openStoredProjectPdfSelectionPopup({ projectId: state.projectId, kind: "protocol" });
+      await this._openClosedProtocolSelectorFlow("print");
     });
 
     printMenu.append(itemPreview, itemFirms, itemTodo, itemTopList, itemMeetingsClosed);
@@ -2307,7 +2311,168 @@ async _openMailClient(mailType = "", options = {}) {
   }
 
   async _openPrintFileFlow() {
-    await this._openClosedProtocolSelectorFlow("print");
+    await this._openPrintTypeSelectorFlow();
+  }
+
+  _buildPrintTypeSelectionItems({ projectId, meetingId } = {}) {
+    const currentProjectId =
+      projectId ||
+      this.router?.currentProjectId ||
+      this.router?.context?.projectId ||
+      this.router?.context?.project?.id ||
+      null;
+    const currentMeetingId =
+      meetingId ||
+      this.router?.currentMeetingId ||
+      this.router?.context?.meetingId ||
+      this.router?.context?.meeting?.id ||
+      null;
+    const actions = getVisiblePrintDialogActions();
+    return actions
+      .map((action) => {
+        const key = String(action?.key || "").trim();
+        const label = String(action?.label || "").trim() || "Druckart";
+        const method = String(action?.method || "").trim();
+        const helper = {
+          id: key,
+          key,
+          label,
+          searchText: label,
+          action: { ...action, key },
+          disabled: false,
+          disabledReason: "",
+        };
+
+        if (!key) {
+          helper.disabled = true;
+          helper.disabledReason = "kommt spaeter";
+          return helper;
+        }
+
+        if (key === "protocol-print") {
+          helper.subLabel = "Geschlossene Protokolle auswaehlen";
+          helper.disabled = !currentProjectId;
+          helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
+          return helper;
+        }
+
+        if (key === "protocol-preview") {
+          helper.subLabel = "PDF-Vorschau für eine Besprechung";
+          helper.disabled = !currentProjectId || !currentMeetingId || typeof this.router?.openMeetingPrintPreview !== "function";
+          helper.disabledReason = helper.disabled ? "Benötigt eine geöffnete Besprechung." : "";
+          return helper;
+        }
+
+        if (key === "firms-preview") {
+          helper.subLabel = "Aktuelle Projektfirmen zum Druckdatum";
+          helper.disabled = !currentProjectId || typeof this.router?.openFirmsPrintPreview !== "function";
+          helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
+          return helper;
+        }
+
+        if (key === "todo-preview") {
+          helper.subLabel = "Projektweite offene ToDos";
+          helper.disabled = !currentProjectId || typeof this.router?.openTodoPrintPreview !== "function";
+          helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
+          return helper;
+        }
+
+        if (key === "topsAll-preview") {
+          helper.subLabel = "TOP-Liste mit allen TOPs";
+          helper.disabled = !currentProjectId || typeof this.router?.openTopListAllPrintPreview !== "function";
+          helper.disabledReason = helper.disabled ? "Benötigt ein ausgewähltes Projekt." : "";
+          return helper;
+        }
+
+        helper.disabled = true;
+        helper.disabledReason = "kommt spaeter";
+        return helper;
+      })
+      .filter((item) => item.id);
+  }
+
+  async _openPrintTypeSelectorFlow() {
+    if (!(await this._ensureProtocolOutputEnabled())) {
+      return;
+    }
+    this._setPrintOpen(false);
+    this._setMailOpen(false);
+    const projectId =
+      this.router?.currentProjectId ||
+      this.router?.context?.projectId ||
+      this.router?.context?.project?.id ||
+      null;
+    if (!projectId) {
+      alert("Bitte zuerst ein Projekt auswählen.");
+      return;
+    }
+    const meetingId = this.router?.currentMeetingId || null;
+    const items = this._buildPrintTypeSelectionItems({ projectId, meetingId });
+    if (!items.length) {
+      alert("Keine Druckarten verfügbar.");
+      return;
+    }
+
+    await openClosedProtocolSelector({
+      mode: "output",
+      items,
+      selectedId: items.find((item) => !item.disabled)?.id || items[0]?.id || null,
+      searchEnabled: false,
+      onConfirm: async (item) => {
+        await this._handlePrintTypeSelection(item, { projectId, meetingId });
+      },
+    });
+  }
+
+  async _handlePrintTypeSelection(item, { projectId, meetingId } = {}) {
+    const key = String(item?.id || item?.key || item?.action?.key || "").trim();
+    if (!key) return;
+    if (key === "protocol-print") {
+      await this._openClosedProtocolSelectorFlow("print");
+      return;
+    }
+    if (key === "protocol-preview") {
+      if (typeof this.router?.openMeetingPrintPreview !== "function") {
+        alert("PDF-Vorschau ist nicht verfuegbar.");
+        return;
+      }
+      await this.router.openMeetingPrintPreview({
+        projectId,
+        meetingId,
+        mode: "closed",
+      });
+      return;
+    }
+    if (key === "firms-preview") {
+      if (typeof this.router?.openFirmsPrintPreview !== "function") {
+        alert("Firmenliste ist nicht verfuegbar.");
+        return;
+      }
+      setTimeout(() => {
+        void this.router.openFirmsPrintPreview({ projectId });
+      }, 0);
+      return;
+    }
+    if (key === "todo-preview") {
+      if (typeof this.router?.openTodoPrintPreview !== "function") {
+        alert("ToDo-Liste ist nicht verfuegbar.");
+        return;
+      }
+      setTimeout(() => {
+        void this.router.openTodoPrintPreview({ projectId });
+      }, 0);
+      return;
+    }
+    if (key === "topsAll-preview") {
+      if (typeof this.router?.openTopListAllPrintPreview !== "function") {
+        alert("TOP-Liste ist nicht verfuegbar.");
+        return;
+      }
+      setTimeout(() => {
+        void this.router.openTopListAllPrintPreview({ projectId });
+      }, 0);
+      return;
+    }
   }
 
   async _openClosedProtocolSelectorFlow(mode = "view") {

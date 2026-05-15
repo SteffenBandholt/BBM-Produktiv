@@ -14,7 +14,6 @@ import {
   parseCssColor,
 } from "../theme/themes.js";
 import { createDictationDevSection } from "../modules/audio/index.js";
-import { createDrucklayoutDevScreen } from "../modules/drucklayout/index.js";
 
 const DEFAULT_V2_PRE_REMARKS_TEXT =
   "folgende Punkte gelten als fest vereinbart, Diesen Text anpassen unter Einstellungen - Druckeinstellungen - Vorbemergung";
@@ -5066,8 +5065,6 @@ export default class SettingsView {
       "Diktat-Testfreigabe",
       "Aktiviert Diktat unabhängig von der Lizenz für Entwicklung und Prüfung."
     );
-    const drucklayoutCard = mkCard("Drucklayout", "Interne Kalibrieransicht für Tabellenlayout (ohne Produktivumschaltung).");
-
     const btn = (label, primary = false) => {
       const el = document.createElement("button");
       el.type = "button";
@@ -5365,9 +5362,6 @@ export default class SettingsView {
     dictationDevRow.append(dictationDevEnabled, dictationDevLabel);
     dictationDevCard.box.append(dictationDevRow, dictationDevMsg);
 
-    const drucklayoutScreen = createDrucklayoutDevScreen();
-    drucklayoutCard.box.append(drucklayoutScreen.render());
-
     const mkScaleGroup = (labelText, buttons) => {
       const row = document.createElement("div");
       row.style.display = "grid";
@@ -5403,7 +5397,6 @@ export default class SettingsView {
       { key: "db", label: "DB-Diagnose", el: dbCard.box },
       { key: "tops", label: "Protokoll-Textgrenzen", el: topsCard.box },
       { key: "dictation", label: "Diktat-Testfreigabe", el: dictationDevCard.box },
-      { key: "drucklayout", label: "Drucklayout", el: drucklayoutCard.box },
       { key: "theme", label: "Farbschema", el: themeCard.box },
     ];
     const tabHead = document.createElement("div");
@@ -5438,7 +5431,6 @@ export default class SettingsView {
       addTabBtn("DB-Diagnose", "db"),
       addTabBtn("Protokoll-Textgrenzen", "tops"),
       addTabBtn("Diktat-Testfreigabe", "dictation"),
-      addTabBtn("Drucklayout", "drucklayout"),
       addTabBtn("Farbschema", "theme")
     );
     tabBody.append(...tabs.map((t) => t.el));
@@ -5891,7 +5883,19 @@ export default class SettingsView {
         titleNorm === "lizenz" || titleNorm === "entwicklung" || titleNorm === "adminbereich";
       const isPrintSettingsPopup = titleNorm === "druckeinstellungen";
       const isLayoutPopup = titleNorm === "druck-layout";
-      if (isPrintSettingsPopup) {
+      const isTableLayoutPopup = titleNorm === "tabellenlayouts";
+      if (isTableLayoutPopup) {
+        this.settingsModalEl.dataset.tableLayoutShell = "1";
+      } else {
+        delete this.settingsModalEl.dataset.tableLayoutShell;
+      }
+      if (isTableLayoutPopup) {
+        this.settingsModalEl.style.width = "min(980px, calc(100vw - 24px))";
+        this.settingsModalEl.style.height = "";
+        this.settingsModalEl.style.maxHeight = "calc(100vh - 24px)";
+        this.settingsModalEl.style.maxWidth = "";
+        this.settingsModalEl.dataset.layoutMode = "normal";
+      } else if (isPrintSettingsPopup) {
         this.settingsModalEl.style.width = "min(760px, calc(100vw - 24px))";
       } else if (isLayoutPopup) {
         this.settingsModalEl.style.width = "min(344px, calc(100vw - 24px))";
@@ -5903,6 +5907,11 @@ export default class SettingsView {
       const footerInner = this.settingsModalFooterEl?.firstElementChild;
       if (footerInner) {
         footerInner.style.maxWidth = isPrintSettingsPopup ? "600px" : "720px";
+      }
+      if (!isTableLayoutPopup) {
+        this.settingsModalEl.style.height = "";
+        this.settingsModalEl.style.maxHeight = "calc(100vh - 24px)";
+        delete this.settingsModalEl.dataset.layoutMode;
       }
     }
     this.settingsModalBodyEl.innerHTML = "";

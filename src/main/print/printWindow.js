@@ -19,7 +19,11 @@ function getPrintAppUrl() {
 }
 
 function createPrintWindow(opts = {}) {
-  const debug = !!opts.debug;
+  const hasExplicitShow = Object.prototype.hasOwnProperty.call(opts, "show");
+  const hasExplicitDevTools = Object.prototype.hasOwnProperty.call(opts, "devTools");
+  const legacyDebug = !!opts.debug;
+  const show = hasExplicitShow ? !!opts.show : legacyDebug;
+  const devTools = hasExplicitDevTools ? !!opts.devTools : legacyDebug;
 
   // Dedicated PRELOAD for print window (must exist!)
   const preloadPath = path.join(app.getAppPath(), "src", "main", "preload", "printPreload.js");
@@ -27,7 +31,7 @@ function createPrintWindow(opts = {}) {
   const win = new BrowserWindow({
     width: 1100,
     height: 900,
-    show: debug, // DEV: show the print window
+    show, // keep hidden for real PDF export
     backgroundColor: "#ffffff",
     webPreferences: {
       contextIsolation: true,
@@ -41,7 +45,7 @@ function createPrintWindow(opts = {}) {
     win.setMenuBarVisibility(false);
   } catch (_e) {}
 
-  if (debug) {
+  if (devTools) {
     win.webContents.once("did-finish-load", () => {
       try {
         win.webContents.openDevTools({ mode: "detach" });

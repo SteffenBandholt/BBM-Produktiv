@@ -230,6 +230,7 @@ const GLOBAL_APP_SETTING_KEYS = new Set([
   "ui.themeHeaderUseDefault",
   "ui.themeSidebarUseDefault",
   "ui.themeMainUseDefault",
+  "dev.layoutCalibrationEnabled",
   "pdf.userLogoPngDataUrl",
   "pdf.userLogoEnabled",
   "pdf.userLogoWidthMm",
@@ -672,6 +673,14 @@ function registerSettingsIpc() {
       const data = _cleanGlobalAppSettingPatch(payload);
 
       appSettingsSetMany(data);
+      try {
+        const windows = BrowserWindow.getAllWindows ? BrowserWindow.getAllWindows() : [];
+        for (const win of windows) {
+          try {
+            win.webContents.send("app-settings:changed", { keys: Object.keys(data || {}) });
+          } catch (_e) {}
+        }
+      } catch (_e) {}
       return { ok: true };
     } catch (err) {
       return { ok: false, error: err?.message || String(err) };
