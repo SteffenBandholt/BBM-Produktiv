@@ -910,6 +910,14 @@ export default class TopsScreen {
     return this.workbench?.sharedEditboxCore?.editbox?.longCounter || null;
   }
 
+  setDictationStatus(payload) {
+    return this.workbench?.sharedEditboxCore?.setDictionaryStatus?.(payload) || null;
+  }
+
+  clearDictationStatus() {
+    return this.workbench?.sharedEditboxCore?.clearDictionaryStatus?.() || null;
+  }
+
   _titleMax() {
     return Number(this.inpTitle?.maxLength || 100) || 100;
   }

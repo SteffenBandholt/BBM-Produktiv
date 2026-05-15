@@ -123,7 +123,8 @@ async function runAudioModuleTests(run) {
     );
     assert.equal(dictationDevUiSource.includes("Aktuelle Engine: Whisper"), true);
     assert.equal(dictationDevUiSource.includes("Whisper-Modelle"), true);
-    assert.equal(dictationDevUiSource.includes("noch nicht eingerichtet"), true);
+    assert.equal(dictationDevUiSource.includes("Wörterbuch V1"), true);
+    assert.equal(dictationDevUiSource.includes("Global fuer die ganze App"), true);
     assert.equal(settingsViewSource.includes("createDictationDevSection"), true);
   });
 
@@ -219,6 +220,7 @@ async function runAudioModuleTests(run) {
     assert.equal(moduleCatalogSource.includes("AUDIO_MODULE_ID"), false);
     assert.equal(moduleCatalogSource.includes("audio"), false);
     assert.equal(moduleCatalogSource.includes("diktieren"), false);
+    assert.equal(moduleCatalogSource.includes("dictionary"), false);
   });
 
   await run("Audio: Doku beschreibt das Renderer-Modul", () => {

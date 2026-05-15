@@ -36,6 +36,7 @@ const { runLayoutToolsAutoDetectionTests } = require("./tests/layoutToolsAutoDet
 const { runSendMailPayloadTests } = require("./tests/sendMailPayload.test.cjs"); 
 const { runAusgabeModuleTests } = require("./tests/ausgabeModule.test.cjs"); 
 const { runAudioModuleTests } = require("./tests/audioModule.test.cjs");
+const { runDictionaryModuleTests } = require("./tests/dictionaryModule.test.cjs");
 const { runDrucklayoutModuleTests } = require("./tests/drucklayoutModule.test.cjs");
 const { runDistCustomerBuildTests } = require("./tests/distCustomerBuild.test.cjs");
 const { runLicenseStorageBootstrapTests } = require("./tests/licenseStorageBootstrap.test.cjs");
@@ -128,6 +129,7 @@ async function main() {
   await runSendMailPayloadTests(run);
   await runAusgabeModuleTests(run);
   await runAudioModuleTests(run);
+  await runDictionaryModuleTests(run);
   await runDrucklayoutModuleTests(run);
   await runDistCustomerBuildTests(run);
   await runLicenseTrialRuntimeTests(run); 

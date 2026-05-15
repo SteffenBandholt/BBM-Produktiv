@@ -179,7 +179,6 @@ export class EditBoxStateService {
   }
 
   applyResponsibleAndPromptState(top) {
-    this.view._tryShowPendingTermPrompt();
     this.view.responsibleEditor.syncStateAfterSelection(top);
     this.view._updateCharCounters();
   }

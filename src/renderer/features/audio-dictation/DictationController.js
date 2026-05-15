@@ -21,6 +21,7 @@ export class DictationController {
     this._termCorrectionsLoading = null;
     this._termPromptEl = null;
     this._pendingTermPrompt = null;
+    this._dictationInputTrackingBound = false;
     this.transcriptionService = new TranscriptionService();
   }
 
@@ -214,9 +215,12 @@ export class DictationController {
         res?.transcriptText ??
         res?.text ??
         "";
-
-      const cleaned = this._cleanupDictationText(transcriptText || "");
-      await this._applyDictationTextToField(cleaned, meta?.target);
+      const correctedText = String(res?.transcriptText || transcriptText || "").trim();
+      const dictionary = res?.dictionary || null;
+      await this._applyDictationTextToField(correctedText || String(transcriptText || "").trim(), meta?.target, {
+        rawText: String(res?.rawTranscriptText || transcriptText || ""),
+        dictionary,
+      });
     } catch (err) {
       alert(err?.message || "Transkription fehlgeschlagen.");
     } finally {
@@ -248,12 +252,6 @@ export class DictationController {
     cleaned = cleaned.replace(/\)\s*(\w)/g, ") $1");
     cleaned = cleaned.replace(/\s+$/g, "").trim();
 
-    if (/^[a-z\u00e4\u00f6\u00fc]/.test(cleaned)) {
-      cleaned = cleaned[0].toUpperCase() + cleaned.slice(1);
-    }
-
-    cleaned = this._applyDictationDictionary(cleaned);
-    cleaned = this._applyProjectTermCorrections(cleaned);
     return cleaned;
   }
 
@@ -327,11 +325,17 @@ export class DictationController {
     return typeof view._clampStr === "function" ? view._clampStr(candidate, maxLen) : candidate;
   }
 
-  async _applyDictationTextToField(text, target) {
+  async _applyDictationTextToField(text, target, meta = {}) {
     const view = this.view || {};
     const tgt = target === "longText" ? "longText" : "shortText";
     const shortField = view.inpTitle;
     const longField = view.taLongtext;
+    this._ensureDictationInputTracking();
+
+    const beforeValue =
+      tgt === "longText"
+        ? String(longField?.value || "")
+        : String(shortField?.value || "");
 
     if (tgt === "shortText" && shortField) {
       const normalized = typeof view._normTitle === "function" ? view._normTitle(text) : text;
@@ -363,9 +367,151 @@ export class DictationController {
       }
     }
 
-    this._lastDictation = { target: tgt, text: String(text || "") };
+    const afterValue =
+      tgt === "longText"
+        ? String(longField?.value || "")
+        : String(shortField?.value || "");
+    const insertChunk = this._buildInsertedDictationChunk(tgt, String(text || ""), beforeValue);
+
+    this._lastDictation = {
+      target: tgt,
+      rawText: String(meta?.rawText || ""),
+      text: String(text || ""),
+      beforeValue,
+      afterValue,
+      insertChunk,
+      dictionary: meta?.dictionary || null,
+      canUndo: !!(meta?.dictionary?.appliedCount > 0),
+      undoDisabledReason: "",
+    };
     if (typeof view._updateCharCounters === "function") {
       view._updateCharCounters();
+    }
+    this._publishDictionaryStatus();
+  }
+
+  _buildInsertedDictationChunk(target, text, beforeValue = "") {
+    const cleanText = String(text || "");
+    if (!cleanText) return "";
+    if (target !== "longText") return cleanText;
+    return String(beforeValue || "") ? `\n${cleanText}` : cleanText;
+  }
+
+  _ensureDictationInputTracking() {
+    if (this._dictationInputTrackingBound) return;
+    const shortField = this.view?.inpTitle || null;
+    const longField = this.view?.taLongtext || null;
+    const track = () => this._refreshDictionaryUndoState();
+    if (shortField?.addEventListener) shortField.addEventListener("input", track);
+    if (longField?.addEventListener) longField.addEventListener("input", track);
+    this._dictationInputTrackingBound = true;
+  }
+
+  _getDictationField(target) {
+    return target === "longText" ? this.view?.taLongtext || null : this.view?.inpTitle || null;
+  }
+
+  _getDictationFieldValue(target) {
+    const field = this._getDictationField(target);
+    return String(field?.value || "");
+  }
+
+  _refreshDictionaryUndoState() {
+    if (!this._lastDictation) return;
+    const target = this._lastDictation.target;
+    const currentValue = this._getDictationFieldValue(target);
+    const insertChunk = String(this._lastDictation.insertChunk || "");
+    const isSafe =
+      !!insertChunk &&
+      ((target === "shortText" && currentValue === insertChunk) ||
+        (target === "longText" && currentValue.endsWith(insertChunk)));
+    this._lastDictation.canUndo = isSafe;
+    this._lastDictation.undoDisabledReason = isSafe
+      ? ""
+      : "Rückgängig nicht mehr möglich, weil der diktierte Text bereits geändert wurde.";
+    this._publishDictionaryStatus();
+  }
+
+  _publishDictionaryStatus() {
+    const view = this.view || {};
+    if (typeof view.setDictationStatus !== "function") return;
+    const dictionary = this._lastDictation?.dictionary || null;
+    if (!dictionary || Number(dictionary.appliedCount || 0) <= 0) {
+      view.clearDictationStatus?.();
+      return;
+    }
+
+    const details = Array.isArray(dictionary.applied) ? dictionary.applied : [];
+    view.setDictationStatus({
+      summaryText: dictionary.summaryText || `Wörterbuch: ${dictionary.appliedCount || 0} Korrekturen angewendet`,
+      details,
+      canUndo: !!this._lastDictation?.canUndo,
+      undoDisabledReason: this._lastDictation?.undoDisabledReason || dictionary.undoDisabledReason || "",
+      onUndo: () => this.undoLastDictation(),
+    });
+  }
+
+  _clearDictionaryStatus() {
+    const view = this.view || {};
+    if (typeof view.clearDictationStatus === "function") {
+      view.clearDictationStatus();
+    }
+  }
+
+  undoLastDictation() {
+    const last = this._lastDictation;
+    if (!last) return false;
+
+    const field = this._getDictationField(last.target);
+    if (!field) return false;
+
+    const currentValue = String(field.value || "");
+    const insertChunk = String(last.insertChunk || "");
+    if (!insertChunk) {
+      this._showDictionaryUndoMessage(
+        "Rückgängig nicht mehr möglich, weil der diktierte Text bereits geändert wurde."
+      );
+      return false;
+    }
+
+    if (last.target === "shortText") {
+      if (currentValue !== insertChunk) {
+        this._showDictionaryUndoMessage(
+          "Rückgängig nicht mehr möglich, weil der diktierte Text bereits geändert wurde."
+        );
+        return false;
+      }
+      field.value = String(last.beforeValue || "");
+    } else if (last.target === "longText") {
+      if (!currentValue.endsWith(insertChunk)) {
+        this._showDictionaryUndoMessage(
+          "Rückgängig nicht mehr möglich, weil der diktierte Text bereits geändert wurde."
+        );
+        return false;
+      }
+      field.value = currentValue.slice(0, currentValue.length - insertChunk.length);
+    }
+
+    if (typeof this.view?._updateCharCounters === "function") {
+      this.view._updateCharCounters();
+    }
+    this._lastDictation = null;
+    this._clearDictionaryStatus();
+    return true;
+  }
+
+  _showDictionaryUndoMessage(message) {
+    const view = this.view || {};
+    if (typeof view.setDictationStatus === "function") {
+      view.setDictationStatus({
+        summaryText: message,
+        details: [],
+        canUndo: false,
+        undoDisabledReason: message,
+        onUndo: null,
+      });
+    } else {
+      alert(message);
     }
   }
 
@@ -556,6 +702,7 @@ export class DictationController {
     this._audioDictationTarget = null;
     this._audioDictationActive = false;
     this._audioDictationBusy = false;
+    this._clearDictionaryStatus();
   }
 
   destroy() {
@@ -568,5 +715,9 @@ export class DictationController {
     this._termPromptEl = null;
     this._pendingTermPrompt = null;
     this._lastDictation = null;
+    this._audioDictationTarget = null;
+    this._audioDictationActive = false;
+    this._audioDictationBusy = false;
+    this._clearDictionaryStatus();
   }
 }

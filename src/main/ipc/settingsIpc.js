@@ -10,6 +10,7 @@ const {
 } = require("../db/database");
 const { appSettingsGetMany, appSettingsSetMany, appSettingsGetManyWithDb, appSettingsSetManyWithDb } = require("../db/appSettingsRepo");
 const { getUserProfile, upsertUserProfile } = require("../db/userProfileRepo");
+const { createDictionaryService } = require("../services/dictionary/DictionaryService");
 const firmsRepo = require("../db/firmsRepo");
 const projectFirmsRepo = require("../db/projectFirmsRepo");
 
@@ -197,6 +198,7 @@ const DICTIONARY_COMMON_WORDS = new Set([
   "bitte",
   "danke",
 ]);
+const dictionaryService = createDictionaryService();
 // Globale App-Einstellungen:
 // persistente App-Kern-Settings; projektbezogene Settings bleiben in
 // `projectSettingsIpc.js` getrennt.
@@ -898,6 +900,73 @@ function registerSettingsIpc() {
   ipcMain.handle("db:diagnostics", async () => {
     try {
       return { ok: true, data: getDatabaseDiagnostics() };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
+  ipcMain.handle("dictionary:listEntries", async (_evt, payload) => {
+    try {
+      const filters = payload && typeof payload === "object" ? payload : {};
+      const entries = dictionaryService.listEntries(filters);
+      return { ok: true, entries };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
+  ipcMain.handle("dictionary:createEntry", async (_evt, payload) => {
+    try {
+      const data = payload && typeof payload === "object" ? payload : {};
+      const entry = dictionaryService.createEntry(data);
+      return { ok: true, entry };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
+  ipcMain.handle("dictionary:updateEntry", async (_evt, payload) => {
+    try {
+      const data = payload && typeof payload === "object" ? payload : {};
+      const id = String(data.id || "").trim();
+      if (!id) return { ok: false, error: "id fehlt" };
+      const entry = dictionaryService.updateEntry(id, data);
+      return { ok: true, entry };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
+  ipcMain.handle("dictionary:setEntryActive", async (_evt, payload) => {
+    try {
+      const data = payload && typeof payload === "object" ? payload : {};
+      const id = String(data.id || "").trim();
+      if (!id) return { ok: false, error: "id fehlt" };
+      const entry = dictionaryService.setEntryActive(id, data.active);
+      return { ok: true, entry };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
+  ipcMain.handle("dictionary:deleteEntry", async (_evt, payload) => {
+    try {
+      const data = payload && typeof payload === "object" ? payload : {};
+      const id = String(data.id || "").trim();
+      if (!id) return { ok: false, error: "id fehlt" };
+      const result = dictionaryService.deleteEntry(id);
+      return { ok: true, ...result };
+    } catch (err) {
+      return { ok: false, error: err?.message || String(err) };
+    }
+  });
+
+  ipcMain.handle("dictionary:applyToText", async (_evt, payload) => {
+    try {
+      const data = payload && typeof payload === "object" ? payload : {};
+      const text = String(data.text || "").toString();
+      const result = dictionaryService.applyCorrectionsToText(text);
+      return { ok: true, ...result };
     } catch (err) {
       return { ok: false, error: err?.message || String(err) };
     }

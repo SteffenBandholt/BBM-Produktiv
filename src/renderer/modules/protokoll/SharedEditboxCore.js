@@ -51,11 +51,14 @@ export class SharedEditboxCore {
     this.longLabel = this.editbox.longLabel;
     this.root.classList.add("bbm-tops-workbench-editbox");
     this._currentEditorValue = {};
+    this._dictationStatus = null;
+    this._dictationUndoHandler = null;
     this.editbox.setVisibleFlags(["important", "task", "decision"]);
     this.editbox.setCounterFormatter((evaluation) => String(evaluation?.remaining ?? ""));
 
     this._configurePresentation();
     this._buildDictationButtons();
+    this._buildDictationStatusUi();
     this._bindDraftChangeSources();
   }
 
@@ -153,6 +156,103 @@ export class SharedEditboxCore {
     this.longDictateButton = createButton("longText", "Diktat starten");
     appendToHost(this.shortLabelRow, this.shortDictateButton, this.shortLabel);
     appendToHost(this.longLabelRow, this.longDictateButton, this.longLabel);
+  }
+
+  _buildDictationStatusUi() {
+    this.dictationStatusBar = document.createElement("div");
+    this.dictationStatusBar.className = "bbm-tops-dictation-status";
+    this.dictationStatusBar.style.display = "none";
+    this.dictationStatusBar.style.alignItems = "center";
+    this.dictationStatusBar.style.justifyContent = "space-between";
+    this.dictationStatusBar.style.gap = "10px";
+    this.dictationStatusBar.style.marginTop = "6px";
+    this.dictationStatusBar.style.padding = "6px 8px";
+    this.dictationStatusBar.style.border = "1px solid var(--card-border)";
+    this.dictationStatusBar.style.borderRadius = "8px";
+    this.dictationStatusBar.style.background = "var(--card-bg)";
+
+    this.dictationStatusTextWrap = document.createElement("div");
+    this.dictationStatusTextWrap.style.display = "grid";
+    this.dictationStatusTextWrap.style.gap = "2px";
+    this.dictationStatusTextWrap.style.minWidth = "0";
+
+    this.dictationStatusText = document.createElement("div");
+    this.dictationStatusText.style.fontSize = "12px";
+    this.dictationStatusText.style.fontWeight = "600";
+
+    this.dictationStatusDetails = document.createElement("div");
+    this.dictationStatusDetails.style.fontSize = "11px";
+    this.dictationStatusDetails.style.opacity = "0.82";
+    this.dictationStatusDetails.style.whiteSpace = "pre-wrap";
+
+    this.dictationUndoButton = document.createElement("button");
+    this.dictationUndoButton.type = "button";
+    this.dictationUndoButton.textContent = "Rückgängig";
+    this.dictationUndoButton.className = "bbm-tops-workbench-btn bbm-tops-workbench-btn-neutral";
+    this.dictationUndoButton.style.flex = "0 0 auto";
+    this.dictationUndoButton.style.display = "none";
+    this.dictationUndoButton.onclick = () => {
+      if (typeof this._dictationUndoHandler === "function") {
+        this._dictationUndoHandler();
+      }
+    };
+
+    this.dictationStatusTextWrap.append(this.dictationStatusText, this.dictationStatusDetails);
+    this.dictationStatusBar.append(this.dictationStatusTextWrap, this.dictationUndoButton);
+    this.root.appendChild(this.dictationStatusBar);
+  }
+
+  setDictionaryStatus({
+    summaryText = "",
+    details = [],
+    canUndo = false,
+    undoDisabledReason = "",
+    onUndo = null,
+  } = {}) {
+    const summary = String(summaryText || "").trim();
+    const lines = Array.isArray(details)
+      ? details
+          .map((item) => {
+            if (typeof item === "string") return item.trim();
+            const wrong = String(item?.wrongText || item?.wrong || "").trim();
+            const correct = String(item?.correctText || item?.correct || "").trim();
+            if (!wrong || !correct) return "";
+            return `${wrong} -> ${correct}`;
+          })
+          .filter(Boolean)
+      : [];
+
+    this._dictationUndoHandler = typeof onUndo === "function" ? onUndo : null;
+    this._dictationStatus = summary ? { summaryText: summary, details: lines } : null;
+
+    if (!summary) {
+      this.dictationStatusBar.style.display = "none";
+      this.dictationUndoButton.style.display = "none";
+      this.dictationStatusText.textContent = "";
+      this.dictationStatusDetails.textContent = "";
+      return;
+    }
+
+    this.dictationStatusBar.style.display = "flex";
+    this.dictationStatusText.textContent = summary;
+    this.dictationStatusDetails.textContent = lines.join("\n");
+    this.dictationUndoButton.style.display = "inline-flex";
+    this.dictationUndoButton.disabled = !canUndo;
+    this.dictationUndoButton.style.opacity = canUndo ? "1" : "0.55";
+    this.dictationUndoButton.title = canUndo
+      ? "Letzten Diktatblock zurücknehmen"
+      : String(undoDisabledReason || "Rückgängig nicht möglich").trim();
+  }
+
+  clearDictionaryStatus() {
+    this._dictationUndoHandler = null;
+    this._dictationStatus = null;
+    if (!this.dictationStatusBar) return;
+    this.dictationStatusBar.style.display = "none";
+    this.dictationUndoButton.style.display = "none";
+    this.dictationUndoButton.disabled = true;
+    this.dictationStatusText.textContent = "";
+    this.dictationStatusDetails.textContent = "";
   }
 
   _emitDraftChange(source = "text") {

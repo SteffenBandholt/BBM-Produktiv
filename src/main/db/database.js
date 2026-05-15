@@ -1290,8 +1290,44 @@ function ensureDictionarySchema(dbConn) {
     `);
   }
 
+  if (!tableExists(dbConn, "dictionary_entries")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS dictionary_entries (
+        id TEXT PRIMARY KEY,
+        entry_type TEXT NOT NULL CHECK (entry_type IN ('term', 'correction')),
+        wrong_text TEXT,
+        correct_text TEXT,
+        term_text TEXT,
+        category TEXT NOT NULL DEFAULT 'Bau',
+        source TEXT NOT NULL DEFAULT 'user' CHECK (source IN ('base', 'user')),
+        active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+      );
+    `);
+  } else {
+    const addCol = (name, sqlType) => {
+      if (!columnExists(dbConn, "dictionary_entries", name)) {
+        dbConn.exec(`ALTER TABLE dictionary_entries ADD COLUMN ${name} ${sqlType};`);
+      }
+    };
+
+    addCol("entry_type", "TEXT");
+    addCol("wrong_text", "TEXT");
+    addCol("correct_text", "TEXT");
+    addCol("term_text", "TEXT");
+    addCol("category", "TEXT NOT NULL DEFAULT 'Bau'");
+    addCol("source", "TEXT NOT NULL DEFAULT 'user'");
+    addCol("active", "INTEGER NOT NULL DEFAULT 1");
+    addCol("created_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
+    addCol("updated_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
+  }
+
   dbConn.exec(`CREATE INDEX IF NOT EXISTS idx_dictionary_suggestions_status ON dictionary_suggestions(status);`);
   dbConn.exec(`CREATE INDEX IF NOT EXISTS idx_dictionary_terms_active ON dictionary_terms(is_active);`);
+  dbConn.exec(`CREATE INDEX IF NOT EXISTS idx_dictionary_entries_type ON dictionary_entries(entry_type);`);
+  dbConn.exec(`CREATE INDEX IF NOT EXISTS idx_dictionary_entries_source ON dictionary_entries(source);`);
+  dbConn.exec(`CREATE INDEX IF NOT EXISTS idx_dictionary_entries_active ON dictionary_entries(active);`);
 }
 
 // ✅ Nutzerdaten (Name 1/2, Straße, PLZ, Ort)
