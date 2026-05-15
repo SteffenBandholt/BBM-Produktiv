@@ -1,15 +1,24 @@
 import { loadReactRuntime } from "./loadReactRuntime.js";
 
 function getPrimaryLabel(mode) {
+  if (mode === "output") return "Weiter";
   if (mode === "mail") return "E-Mail senden";
   if (mode === "print") return "PDF-Vorschau";
   return "Protokoll oeffnen";
 }
 
 function getTitle(mode) {
+  if (mode === "output") return "Druckart waehlen";
   if (mode === "mail") return "Geschlossenes Protokoll fuer E-Mail waehlen";
   if (mode === "print") return "Geschlossenes Protokoll fuer Druck waehlen";
   return "Geschlossenes Protokoll waehlen";
+}
+
+function getSubtitle(mode) {
+  if (mode === "output") return "Waehle zuerst die gewuenschte Ausgabeart.";
+  if (mode === "mail") return "Listenbasierte Auswahl geschlossener Protokolle.";
+  if (mode === "print") return "Listenbasierte Auswahl geschlossener Protokolle.";
+  return "Listenbasierte Auswahl geschlossener Protokolle.";
 }
 
 export async function openClosedProtocolSelector({
@@ -71,19 +80,30 @@ export async function openClosedProtocolSelector({
     } catch (_err) {}
 
     function ClosedProtocolSelector(props) {
+      const items = Array.isArray(props.items) ? props.items : [];
       const [query, setQuery] = React.useState("");
-      const [currentId, setCurrentId] = React.useState(props.selectedId || props.items[0]?.id || null);
+      const selectableItems = React.useMemo(
+        () => items.filter((item) => !item?.disabled),
+        [items]
+      );
+      const initialSelectedId =
+        props.selectedId ||
+        selectableItems[0]?.id ||
+        items.find((item) => !item?.disabled)?.id ||
+        items[0]?.id ||
+        null;
+      const [currentId, setCurrentId] = React.useState(initialSelectedId);
       const [isSubmitting, setIsSubmitting] = React.useState(false);
       const searchRef = React.useRef(null);
 
       const filtered = React.useMemo(() => {
         const raw = String(query || "").trim().toLowerCase();
-        if (!raw) return props.items;
-        return props.items.filter((item) => {
+        if (!raw) return items;
+        return items.filter((item) => {
           const hay = `${item.label || ""} ${item.searchText || ""}`.toLowerCase();
           return hay.includes(raw);
         });
-      }, [props.items, query]);
+      }, [items, query]);
 
       React.useEffect(() => {
         if (props.searchEnabled && searchRef.current) {
@@ -94,28 +114,30 @@ export async function openClosedProtocolSelector({
       }, [props.searchEnabled]);
 
       React.useEffect(() => {
-        if (!filtered.length) {
+        const selectableFiltered = filtered.filter((item) => !item?.disabled);
+        if (!selectableFiltered.length) {
           if (currentId !== null) setCurrentId(null);
           return;
         }
-        const hasCurrent = filtered.some((item) => String(item.id) === String(currentId || ""));
-        if (!hasCurrent) setCurrentId(filtered[0]?.id || null);
+        const hasCurrent = selectableFiltered.some((item) => String(item.id) === String(currentId || ""));
+        if (!hasCurrent) setCurrentId(selectableFiltered[0]?.id || null);
       }, [filtered, currentId]);
 
       const activeItem =
-        filtered.find((item) => String(item.id) === String(currentId || "")) ||
+        filtered.find((item) => !item?.disabled && String(item.id) === String(currentId || "")) ||
         null;
 
       const handleMoveSelection = (direction) => {
-        if (!filtered.length) return;
-        const currentIndex = filtered.findIndex((item) => String(item.id) === String(currentId || ""));
+        const options = filtered.filter((item) => !item?.disabled);
+        if (!options.length) return;
+        const currentIndex = options.findIndex((item) => String(item.id) === String(currentId || ""));
         const baseIndex = currentIndex >= 0 ? currentIndex : 0;
-        const nextIndex = Math.min(filtered.length - 1, Math.max(0, baseIndex + direction));
-        setCurrentId(filtered[nextIndex]?.id || null);
+        const nextIndex = Math.min(options.length - 1, Math.max(0, baseIndex + direction));
+        setCurrentId(options[nextIndex]?.id || null);
       };
 
       const submitActiveItem = async (item) => {
-        if (!item || isSubmitting) return;
+        if (!item || item.disabled || isSubmitting) return;
         setIsSubmitting(true);
         try {
           await props.onConfirm(item);
@@ -178,7 +200,7 @@ export async function openClosedProtocolSelector({
             React.createElement(
               "div",
               { style: { marginTop: "4px", fontSize: "12px", color: "#64748b" } },
-              "Listenbasierte Auswahl geschlossener Protokolle."
+              getSubtitle(props.mode)
             )
           ),
           React.createElement(
@@ -249,6 +271,7 @@ export async function openClosedProtocolSelector({
                     {
                       key: item.id,
                       type: "button",
+                      disabled: !!item.disabled,
                       onClick: () => setCurrentId(item.id),
                       onDoubleClick: () => submitActiveItem(item),
                       onKeyDown: handleListKeyDown,
@@ -260,15 +283,20 @@ export async function openClosedProtocolSelector({
                         width: "100%",
                         textAlign: "left",
                         border:
-                          String(item.id) === String(activeItem?.id || "")
+                          !item.disabled && String(item.id) === String(activeItem?.id || "")
                             ? "1px solid #2563eb"
                             : "1px solid #dbe4ee",
                         background:
-                          String(item.id) === String(activeItem?.id || "") ? "#eff6ff" : "#ffffff",
+                          item.disabled
+                            ? "#f8fafc"
+                            : String(item.id) === String(activeItem?.id || "")
+                              ? "#eff6ff"
+                              : "#ffffff",
                         borderRadius: "12px",
                         padding: "12px 14px",
-                        cursor: "pointer",
+                        cursor: item.disabled ? "not-allowed" : "pointer",
                         outline: "none",
+                        opacity: item.disabled ? 0.6 : 1,
                       },
                     },
                     React.createElement(

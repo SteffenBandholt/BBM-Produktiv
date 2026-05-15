@@ -1,10 +1,15 @@
 // src/renderer/app/Router.js
 
 import {
+  getActiveProjectModuleNavigation,
   PROTOKOLL_MODULE_ID,
-  hasActiveModule,
   resolveActiveModuleScreen,
 } from "./modules/index.js";
+import {
+  isModuleActive,
+  refreshCachedActiveModuleAccess,
+} from "./modules/moduleAccessState.js";
+import { resolveProjectProtocolEntry } from "./projectProtocolRouting.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -43,6 +48,7 @@ const APP_KERNEL_SETTINGS_KEYS = [
   "defaults.ui.themeHeaderTone",
   "defaults.ui.themeSidebarTone",
   "defaults.ui.themeMainTone",
+  "dev.layoutCalibrationEnabled",
   "pdf.userLogoPngDataUrl",
   "pdf.userLogoEnabled",
   "pdf.userLogoWidthMm",
@@ -383,6 +389,26 @@ export default class Router {
     }
   }
 
+  async ensureActiveModuleAccess({ force = false } = {}) {
+    return await refreshCachedActiveModuleAccess({ force });
+  }
+
+  _isModuleActive(moduleId) {
+    return isModuleActive(moduleId);
+  }
+
+  _buildModuleDisabledPayload(projectId, meetingId = null) {
+    return {
+      ok: false,
+      blocked: true,
+      reason: "MODULE_DISABLED",
+      moduleId: PROTOKOLL_MODULE_ID,
+      projectId: projectId || null,
+      meetingId: meetingId || null,
+      target: "blocked",
+    };
+  }
+
   async _syncProjectContextUi() {
     await this.ensureCurrentProjectLabelLoaded({ force: false });
 
@@ -444,6 +470,11 @@ export default class Router {
     this.context.ui = this.context.ui || {};
     this.context.ui.isTopsView = !!isTopsView;
     this.context.ui.pageTitle = pageTitle;
+    if (!isTopsView) {
+      this.context.ui.onTopFilterChange = null;
+      this.context.ui.onAmpelToggle = null;
+      this.context.ui.onLongtextToggle = null;
+    }
 
     try {
       const lane = await this._ensureProjectContextQuicklane();
@@ -470,6 +501,7 @@ export default class Router {
 
   // Kern-Routing / UI-Rahmenlogik: allgemeine Screen-Wechsel bleiben im Router gebuendelt.
   async showProjects() {
+    await this.ensureActiveModuleAccess({ force: true });
     const mod = await import("../modules/projektverwaltung/index.js");
     const V = mod.ProjectsScreen;
     this.currentMeetingId = null;
@@ -477,6 +509,7 @@ export default class Router {
   }
 
   async showProjectWorkspace(projectId, options = {}) {
+    await this.ensureActiveModuleAccess({ force: true });
     const mod = await import("../modules/projektverwaltung/index.js");
     const V = mod.ProjectWorkspaceScreen;
     const opts = options && typeof options === "object" ? options : {};
@@ -493,13 +526,82 @@ export default class Router {
         router: this,
         projectId: effectiveProjectId,
         project: opts.project || null,
+        projectModules: this._getProjectWorkspaceModules(),
       }),
       {
         section: "projectWorkspace",
         isTopsView: false,
-        pageTitle: "Projekt-Arbeitsbereich",
+        pageTitle: null,
+        activeModuleLabel: this._getProjectWorkspaceModules()?.[0]?.label || "Protokoll",
       }
     );
+  }
+
+  async openProjectModule(projectId, moduleId, options = {}) {
+    await this.ensureActiveModuleAccess({ force: true });
+    const effectiveProjectId = this._resolveProjectId(projectId);
+    const normalizedModuleId = String(moduleId || "").trim();
+    if (!effectiveProjectId || !normalizedModuleId) return false;
+
+    if (normalizedModuleId === PROTOKOLL_MODULE_ID) {
+      return await this.openProjectProtocol(effectiveProjectId, options || {});
+    }
+
+    const navEntry =
+      getActiveProjectModuleNavigation().find(
+        (entry) => String(entry?.moduleId || "").trim() === normalizedModuleId
+      ) || null;
+    if (!navEntry) return false;
+
+    const moduleScreen =
+      resolveActiveModuleScreen(normalizedModuleId, navEntry.workScreenId) || null;
+    if (typeof moduleScreen !== "function") return false;
+
+    const project = options && typeof options === "object" ? options.project || null : null;
+    const pageTitle = String(options?.pageTitle || navEntry?.label || "").trim() || null;
+    const activeModuleLabel =
+      String(options?.activeModuleLabel || navEntry?.label || "").trim() || null;
+
+    this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
+    await this.show(
+      new moduleScreen({
+        router: this,
+        projectId: effectiveProjectId,
+        project,
+        moduleId: normalizedModuleId,
+      }),
+      {
+        section: navEntry.section || normalizedModuleId,
+        isTopsView: false,
+        pageTitle,
+        activeModuleLabel,
+      }
+    );
+
+    return true;
+  }
+
+  _getProjectWorkspaceModules() {
+    const activeModules = getActiveProjectModuleNavigation()
+      .filter((entry) => this._isModuleActive(entry?.moduleId))
+      .map((entry) =>
+        Object.freeze({
+          moduleId: String(entry?.moduleId || "").trim(),
+          label: String(entry?.label || "Arbeitsbereich öffnen").trim(),
+          description: String(
+            entry?.description || "Arbeitsbereich im aktuellen Projektkontext öffnen."
+          ).trim(),
+        })
+      );
+
+    return [
+      ...activeModules,
+      Object.freeze({
+        moduleId: "projectFirms",
+        label: "Firmen im Projekt",
+        description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen.",
+      }),
+    ];
   }
 
   async showFirmsPool(projectId) {
@@ -517,6 +619,7 @@ export default class Router {
 
   // Kern-Routing / Screen-Host-Grundpfad: Start ohne Projekt- oder Protokollkontext.
   async showHome() {
+    await this.ensureActiveModuleAccess({ force: true });
     const mod = await import("../views/HomeView.js");
     const V = mod.default;
     this._setProjectRuntimeContext({ projectId: null, meetingId: null });
@@ -542,7 +645,17 @@ export default class Router {
   }
 
   // Fachlich/protokollzentrierte Pfade: Besprechungen und Tops bleiben noch direkt verdrahtet.
-  async showMeetings(projectId, { printSelectionMode = false, printKind = null } = {}) {
+  async showMeetings(
+    projectId,
+    {
+      printSelectionMode = false,
+      printKind = null,
+      startMode = false,
+      startReason = null,
+      integrityError = false,
+      projectProtocolContext = null,
+    } = {}
+  ) {
     const mod = await import("../views/MeetingsView.js");
     const V = mod.default;
 
@@ -553,18 +666,35 @@ export default class Router {
         projectId,
         printSelectionMode: !!printSelectionMode,
         printKind: printKind || null,
+        startMode: !!startMode,
+        startReason: startReason || null,
+        integrityError: !!integrityError,
+        projectProtocolContext: projectProtocolContext || null,
       }),
       { section: "meetings", isTopsView: false }
     );
   }
 
   async showTops(meetingId, projectId, options = {}) {
+    await this.ensureActiveModuleAccess({ force: true });
+    const effectiveMeetingId = meetingId || null;
+    if (!effectiveMeetingId) {
+      alert("Bitte zuerst eine Besprechung oeffnen.");
+      return false;
+    }
+
+    const effectiveProjectId = projectId || this.currentProjectId || null;
+    if (!effectiveProjectId) {
+      alert("Bitte zuerst ein Projekt auswaehlen.");
+      return false;
+    }
+
     // App-Kern / Screen-Host:
     // Tops laeuft nur, wenn das Protokoll-Modul im aktiven Modulumfang liegt.
     // Der Router umgeht diese Entscheidung an dieser Stelle nicht mehr stillschweigend.
-    if (!hasActiveModule(PROTOKOLL_MODULE_ID)) {
+    if (!this._isModuleActive(PROTOKOLL_MODULE_ID)) {
       alert("Das Protokoll-Modul ist im aktiven Modulumfang nicht freigegeben.");
-      return;
+      return this._buildModuleDisabledPayload(effectiveProjectId, effectiveMeetingId);
     }
 
     // Modulinterner Unterbau und Workbench-Anbindung bleiben ausdruecklich im Fachmodul.
@@ -574,19 +704,100 @@ export default class Router {
 
     const opts = options && typeof options === "object" ? options : {};
     const readOnly = !!opts.readOnly;
+    const returnContext = opts.returnContext || null;
 
     this._setProjectRuntimeContext({
-      projectId: projectId || this.currentProjectId || null,
-      meetingId: meetingId || null,
+      projectId: effectiveProjectId,
+      meetingId: effectiveMeetingId,
     });
     this.lastTopsProjectId = this.currentProjectId || null;
     this.lastTopsMeetingId = this.currentMeetingId || null;
 
-    await this.show(new V({ router: this, meetingId, projectId, readOnly }), {
-      section: "meetings",
-      isTopsView: true,
-      pageTitle: "Protokoll",
+    await this.show(
+      new V({
+        router: this,
+        meetingId: effectiveMeetingId,
+        projectId: effectiveProjectId,
+        readOnly,
+        returnContext,
+      }),
+      {
+        section: "meetings",
+        isTopsView: true,
+        pageTitle: "Protokoll",
+      }
+    );
+
+    return true;
+  }
+
+  async openProjectProtocol(projectId, options = {}) {
+    await this.ensureActiveModuleAccess({ force: true });
+    const effectiveProjectId = this._resolveProjectId(projectId);
+    if (!effectiveProjectId) {
+      alert("Bitte zuerst ein Projekt auswaehlen.");
+      return {
+        ok: false,
+        reason: "missing-project",
+        target: "blocked",
+        projectId: null,
+        meetingId: null,
+      };
+    }
+
+    if (!this._isModuleActive(PROTOKOLL_MODULE_ID)) {
+      alert("Das Protokoll-Modul ist im aktiven Modulumfang nicht freigegeben.");
+      return this._buildModuleDisabledPayload(effectiveProjectId, null);
+    }
+
+    const api = window.bbmDb || {};
+    const meetingsRes =
+      typeof api.meetingsListByProject === "function"
+        ? await api.meetingsListByProject(effectiveProjectId)
+        : { ok: false, error: "meetingsListByProject unavailable", list: [] };
+    const meetings = meetingsRes?.ok ? meetingsRes.list || [] : [];
+    const decision = resolveProjectProtocolEntry({
+      projectId: effectiveProjectId,
+      meetings,
     });
+
+    if (decision.target === "tops" && decision.meetingId) {
+      const returnContext =
+        options?.returnContext ||
+        {
+          section: "projects",
+          projectId: effectiveProjectId,
+          project: options?.project || null,
+        };
+      const opened = await this.showTops(decision.meetingId, effectiveProjectId, {
+        ...options,
+        returnContext,
+      });
+      if (opened === false || opened?.blocked) {
+        return this._buildModuleDisabledPayload(effectiveProjectId, decision.meetingId || null);
+      }
+      return {
+        ...decision,
+        ok: true,
+      };
+    }
+
+    await this.showMeetings(effectiveProjectId, {
+      printSelectionMode: false,
+      printKind: null,
+      startMode: true,
+      startReason: decision.reason,
+      integrityError: decision.reason === "multiple-open-meetings",
+      projectProtocolContext: {
+        projectId: effectiveProjectId,
+        openMeetingCount: decision.openMeetingCount,
+      },
+    });
+
+    return {
+      ...decision,
+      ok: !!decision.ok,
+    };
   }
 
   async showFirms() {
@@ -935,7 +1146,7 @@ export default class Router {
       return;
     }
     try {
-      await pm.openTodoPrintPreview({ projectId, meetingId });
+      await pm.openTodoPrintPreview({ projectId });
     } finally {
       await this.closePrintModal({ keepPreview: true });
     }
@@ -948,7 +1159,7 @@ export default class Router {
       return;
     }
     try {
-      await pm.openTopListAllPreview({ projectId, meetingId });
+      await pm.openTopListAllPreview({ projectId });
     } finally {
       await this.closePrintModal({ keepPreview: true });
     }
@@ -962,7 +1173,6 @@ export default class Router {
     }
     this._setProjectRuntimeContext({
       projectId: effectiveProjectId,
-      meetingId: meetingId || this.currentMeetingId || null,
     });
     const pm = await this._ensurePrintModal();
     if (typeof pm?.openFirmsPrintPreview !== "function") {
@@ -970,7 +1180,7 @@ export default class Router {
       return;
     }
     try {
-      await pm.openFirmsPrintPreview({ projectId: effectiveProjectId, meetingId: meetingId || null });
+      await pm.openFirmsPrintPreview({ projectId: effectiveProjectId });
     } finally {
       await this.closePrintModal({ keepPreview: true });
     }
@@ -1034,7 +1244,7 @@ export default class Router {
       return;
     }
     try {
-      const res = await pm.printFirmsDirect({ projectId: effectiveProjectId, meetingId: meetingId || null });
+      const res = await pm.printFirmsDirect({ projectId: effectiveProjectId });
       return res;
     } finally {
       await this.closePrintModal({ keepPreview: false });
@@ -1057,7 +1267,7 @@ export default class Router {
       return;
     }
     try {
-      const res = await pm.printTodoDirect({ projectId: effectiveProjectId, meetingId: meetingId || null });
+      const res = await pm.printTodoDirect({ projectId: effectiveProjectId });
       return res;
     } finally {
       await this.closePrintModal({ keepPreview: false });
@@ -1080,7 +1290,7 @@ export default class Router {
       return;
     }
     try {
-      const res = await pm.printTopListAllDirect({ projectId: effectiveProjectId, meetingId: meetingId || null });
+      const res = await pm.printTopListAllDirect({ projectId: effectiveProjectId });
       return res;
     } finally {
       await this.closePrintModal({ keepPreview: false });

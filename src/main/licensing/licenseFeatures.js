@@ -1,23 +1,20 @@
-const LICENSE_FEATURES = Object.freeze({
-  APP: "app",
-  PDF: "pdf",
-  EXPORT: "export",
-  MAIL: "mail",
-  MAIL_OUTLOOK_DRAFT: "mail",
-  AUDIO: "audio",
+const LICENSE_MODULES = Object.freeze({
+  PROTOKOLL: "protokoll",
 });
 
-const STANDARD_LICENSE_FEATURES = Object.freeze([
-  LICENSE_FEATURES.APP,
-  LICENSE_FEATURES.PDF,
-  LICENSE_FEATURES.EXPORT,
-  LICENSE_FEATURES.MAIL,
-]);
+const LICENSE_FEATURES = Object.freeze({
+  DIKTAT: "diktat",
+  AUDIO: "diktat",
+});
 
-const OPTIONAL_LICENSE_FEATURES = Object.freeze([LICENSE_FEATURES.AUDIO]);
-
-const STANDARD_LICENSE_FEATURE_SET = new Set(STANDARD_LICENSE_FEATURES);
-const OPTIONAL_LICENSE_FEATURE_SET = new Set(OPTIONAL_LICENSE_FEATURES);
+const LEGACY_FEATURE_ALIASES = Object.freeze({
+  audio: LICENSE_FEATURES.DIKTAT,
+  dictate: LICENSE_FEATURES.DIKTAT,
+  app: LICENSE_MODULES.PROTOKOLL,
+  pdf: LICENSE_MODULES.PROTOKOLL,
+  export: LICENSE_MODULES.PROTOKOLL,
+  mail: LICENSE_MODULES.PROTOKOLL,
+});
 
 function _normalizeFeatureValue(value) {
   return String(value || "").trim().toLowerCase();
@@ -30,8 +27,8 @@ function normalizeOptionalLicensedFeatures(features) {
   const seen = new Set();
 
   features.forEach((value) => {
-    const feature = _normalizeFeatureValue(value);
-    if (!feature || !OPTIONAL_LICENSE_FEATURE_SET.has(feature) || seen.has(feature)) return;
+    const feature = normalizeFeatureAlias(value);
+    if (!feature || feature !== LICENSE_FEATURES.DIKTAT || seen.has(feature)) return;
     seen.add(feature);
     normalized.push(feature);
   });
@@ -40,23 +37,60 @@ function normalizeOptionalLicensedFeatures(features) {
 }
 
 function normalizeLicensedFeatures(features) {
-  return [...STANDARD_LICENSE_FEATURES, ...normalizeOptionalLicensedFeatures(features)];
+  return normalizeOptionalLicensedFeatures(features);
+}
+
+function normalizeFeatureAlias(feature) {
+  const normalized = _normalizeFeatureValue(feature);
+  if (!normalized) return "";
+  return LEGACY_FEATURE_ALIASES[normalized] || normalized;
 }
 
 function isStandardLicensedFeature(feature) {
-  return STANDARD_LICENSE_FEATURE_SET.has(_normalizeFeatureValue(feature));
+  return isLicensedModule(feature);
 }
 
 function isOptionalLicensedFeature(feature) {
-  return OPTIONAL_LICENSE_FEATURE_SET.has(_normalizeFeatureValue(feature));
+  return normalizeFeatureAlias(feature) === LICENSE_FEATURES.DIKTAT;
+}
+
+function normalizeLicensedModules(modules, features) {
+  const rawModules = Array.isArray(modules) ? modules : [];
+  const normalized = [];
+  const seen = new Set();
+  rawModules.forEach((value) => {
+    const mod = _normalizeFeatureValue(value);
+    if (!mod || mod !== LICENSE_MODULES.PROTOKOLL || seen.has(mod)) return;
+    seen.add(mod);
+    normalized.push(mod);
+  });
+  if (!seen.has(LICENSE_MODULES.PROTOKOLL)) {
+    const fallback = Array.isArray(features)
+      ? features.some((value) => normalizeFeatureAlias(value) === LICENSE_MODULES.PROTOKOLL)
+      : false;
+    if (fallback) normalized.push(LICENSE_MODULES.PROTOKOLL);
+  }
+  return normalized;
+}
+
+function isLicensedModule(moduleId) {
+  return _normalizeFeatureValue(moduleId) === LICENSE_MODULES.PROTOKOLL;
+}
+
+function isLicensedProduct(product) {
+  const normalized = _normalizeFeatureValue(product);
+  return normalized === "bbm" || normalized === "bbm-protokoll";
 }
 
 module.exports = {
+  LICENSE_MODULES,
   LICENSE_FEATURES,
-  STANDARD_LICENSE_FEATURES,
-  OPTIONAL_LICENSE_FEATURES,
+  normalizeLicensedModules,
+  normalizeFeatureAlias,
   normalizeLicensedFeatures,
   normalizeOptionalLicensedFeatures,
   isStandardLicensedFeature,
   isOptionalLicensedFeature,
+  isLicensedModule,
+  isLicensedProduct,
 };

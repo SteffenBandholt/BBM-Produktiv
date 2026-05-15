@@ -1,4 +1,7 @@
+const DEV_AUDIO_DICTATION_UNLOCK_KEY = "dev.audioDictationUnlock";
+
 export function attachAudioFeature(view) {
+  const DEV_UNLOCK_EVENT = "bbm:audio-dev-unlock-changed";
   view._audioLicensed = false;
   view._audioLicenseChecked = false;
   view._audioLicenseMessage = "Audio-Funktion ist fuer diese Lizenz nicht freigeschaltet.";
@@ -6,9 +9,38 @@ export function attachAudioFeature(view) {
   view._audioDevOverride = false;
   view._audioDevOverrideChecked = false;
   view._audioDevOverrideLoading = null;
+  view._audioDevDictationUnlocked = false;
+  view._audioDevDictationUnlockedChecked = false;
+  view._audioDevDictationUnlockedLoading = null;
   view._audioSuggestionsDevEnabled = false;
   view._audioSuggestionsDevChecked = false;
   view._audioSuggestionsDevLoading = null;
+
+  const refreshAudioAvailability = async () => {
+    view._audioDevDictationUnlockedChecked = false;
+    view._audioDevDictationUnlockedLoading = null;
+    view._audioDevOverrideChecked = false;
+    view._audioDevOverrideLoading = null;
+    view._audioLicenseChecked = false;
+    view._audioLicenseLoading = null;
+    await view._loadAudioLicenseState(true);
+    view.dictationController?.updateButtons();
+    view.audioSuggestionsFlow?.applyReadOnlyState?.(view.isReadOnly, view._busy);
+  };
+
+  const onDevUnlockChanged = () => {
+    void refreshAudioAvailability();
+  };
+
+  if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+    window.addEventListener(DEV_UNLOCK_EVENT, onDevUnlockChanged);
+  }
+
+  view._destroyAudioFeature = () => {
+    if (typeof window !== "undefined" && typeof window.removeEventListener === "function") {
+      window.removeEventListener(DEV_UNLOCK_EVENT, onDevUnlockChanged);
+    }
+  };
 
   Object.assign(view, {
     _formatAudioLicenseMessage(status = null) {
@@ -70,7 +102,8 @@ export function attachAudioFeature(view) {
           const features = Array.isArray(res?.features)
             ? res.features.map((value) => String(value || "").trim().toLowerCase())
             : [];
-          const licensed = !!res?.ok && !!res?.valid && features.includes("audio");
+          const licensed =
+            !!res?.ok && !!res?.valid && (features.includes("audio") || features.includes("diktat"));
           this._setAudioLicenseState(licensed, this._formatAudioLicenseMessage(res));
           return licensed;
         } catch (_err) {
@@ -90,61 +123,54 @@ export function attachAudioFeature(view) {
       if (!force && this._audioDevOverrideLoading) return this._audioDevOverrideLoading;
 
       const task = (async () => {
-        const api = window.bbmDb || {};
-        const readDevFallback = async () => {
-          if (typeof api.appGetBuildChannel === "function") {
-            try {
-              const res = await api.appGetBuildChannel();
-              const channel = String(res?.channel || "").trim().toLowerCase();
-              if (res?.ok && channel === "dev") return true;
-            } catch (_err) {
-              // ignore
-            }
-          }
-          if (typeof api.appIsPackaged !== "function") return false;
-          try {
-            const packaged = await api.appIsPackaged();
-            return packaged === false;
-          } catch (_err) {
-            return false;
-          }
-        };
-
-        if (typeof api.devAudioUnlockStatus !== "function") {
-          this._audioDevOverride = await readDevFallback();
+        const devDictationUnlocked = await this._loadAudioDevDictationUnlockState(force);
+        if (devDictationUnlocked) {
+          this._audioDevOverride = true;
           this._audioDevOverrideChecked = true;
           this.dictationController?.updateButtons();
           this.audioSuggestionsFlow?.applyReadOnlyState?.(this.isReadOnly, this._busy);
-          return this._audioDevOverride;
+          return true;
         }
 
-        try {
-          const res = await api.devAudioUnlockStatus();
-          const enabled = !!res?.ok && !!res?.enabled;
-          const fallback = enabled ? false : await readDevFallback();
-          this._audioDevOverride = enabled;
-          this._audioDevOverrideChecked = true;
-          this.dictationController?.updateButtons();
-          this.audioSuggestionsFlow?.applyReadOnlyState?.(this.isReadOnly, this._busy);
-          if (fallback) {
-            this._audioDevOverride = true;
-            this.dictationController?.updateButtons();
-            this.audioSuggestionsFlow?.applyReadOnlyState?.(this.isReadOnly, this._busy);
-            return true;
-          }
-          return enabled;
-        } catch (_err) {
-          this._audioDevOverride = await readDevFallback();
-          this._audioDevOverrideChecked = true;
-          this.dictationController?.updateButtons();
-          this.audioSuggestionsFlow?.applyReadOnlyState?.(this.isReadOnly, this._busy);
-          return this._audioDevOverride;
-        } finally {
-          this._audioDevOverrideLoading = null;
-        }
+        this._audioDevOverride = false;
+        this._audioDevOverrideChecked = true;
+        this.dictationController?.updateButtons();
+        this.audioSuggestionsFlow?.applyReadOnlyState?.(this.isReadOnly, this._busy);
+        return false;
       })();
 
       this._audioDevOverrideLoading = task;
+      return task;
+    },
+
+    async _loadAudioDevDictationUnlockState(force = false) {
+      if (!force && this._audioDevDictationUnlockedChecked) return this._audioDevDictationUnlocked;
+      if (!force && this._audioDevDictationUnlockedLoading) return this._audioDevDictationUnlockedLoading;
+
+      const task = (async () => {
+        const api = window.bbmDb || {};
+        if (typeof api.appSettingsGetMany !== "function") {
+          this._audioDevDictationUnlocked = false;
+          this._audioDevDictationUnlockedChecked = true;
+          return this._audioDevDictationUnlocked;
+        }
+
+        try {
+          const res = await api.appSettingsGetMany([DEV_AUDIO_DICTATION_UNLOCK_KEY]);
+          const enabled = String(res?.data?.[DEV_AUDIO_DICTATION_UNLOCK_KEY] || "").trim() === "1";
+          this._audioDevDictationUnlocked = enabled;
+          this._audioDevDictationUnlockedChecked = true;
+          return enabled;
+        } catch (_err) {
+          this._audioDevDictationUnlocked = false;
+          this._audioDevDictationUnlockedChecked = true;
+          return false;
+        } finally {
+          this._audioDevDictationUnlockedLoading = null;
+        }
+      })();
+
+      this._audioDevDictationUnlockedLoading = task;
       return task;
     },
 
@@ -157,7 +183,7 @@ export function attachAudioFeature(view) {
         if (typeof api.devAudioSuggestionsEnabled !== "function") {
           this._audioSuggestionsDevEnabled = false;
           this._audioSuggestionsDevChecked = true;
-          this._applyReadOnlyState();
+          this._applyReadOnlyState?.();
           return this._audioSuggestionsDevEnabled;
         }
 
@@ -165,12 +191,12 @@ export function attachAudioFeature(view) {
           const res = await api.devAudioSuggestionsEnabled();
           this._audioSuggestionsDevEnabled = !!res?.ok && !!res?.enabled;
           this._audioSuggestionsDevChecked = true;
-          this._applyReadOnlyState();
+          this._applyReadOnlyState?.();
           return this._audioSuggestionsDevEnabled;
         } catch (_err) {
           this._audioSuggestionsDevEnabled = false;
           this._audioSuggestionsDevChecked = true;
-          this._applyReadOnlyState();
+          this._applyReadOnlyState?.();
           return this._audioSuggestionsDevEnabled;
         } finally {
           this._audioSuggestionsDevLoading = null;

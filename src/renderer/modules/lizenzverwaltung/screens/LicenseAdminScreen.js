@@ -532,6 +532,15 @@ export default class LicenseAdminScreen {
       })
     );
 
+
+    const message = document.createElement("div");
+    message.style.minHeight = "20px";
+    message.style.fontSize = "13px";
+    if (this.flashMessage) {
+      message.textContent = this.flashMessage;
+      this.flashMessage = "";
+    }
+
     const customers = await listCustomers();
     if (!customers.length) {
       const empty = document.createElement("caption");
@@ -542,7 +551,7 @@ export default class LicenseAdminScreen {
       const row = document.createElement("tr");
       row.style.cursor = "pointer";
       row.onclick = () => {
-        this.currentCustomer = { ...customer };
+        this.currentCustomer = customer;
         this.currentView = "customer-detail";
         this._render();
       };
@@ -559,7 +568,7 @@ export default class LicenseAdminScreen {
       body.appendChild(row);
     }
 
-    container.append(title, header, actions, table);
+    container.append(title, header, actions, message, table);
   }
 
   async _renderCustomerDetail(container) {
@@ -626,33 +635,24 @@ export default class LicenseAdminScreen {
     customerTitle.textContent = "Kundendaten";
 
     const saveBtn = this._button("Kunde speichern", async () => {
-      const existingCustomerId = String(this.currentCustomer?.id || "").trim();
       try {
-        const payload = buildCustomerEditorPayload({
-          customer: existingCustomerId ? { id: existingCustomerId } : {},
-          inputs: {
-            customer_number: inputs.customer_number.value,
-            company_name: inputs.company_name.value,
-            contact_person: inputs.contact_person.value,
-            email: inputs.email.value,
-            phone: inputs.phone.value,
-            notes: inputs.notes.value,
-          },
-        });
-        if (existingCustomerId) {
-          payload.id = existingCustomerId;
-        }
-
-        const saved = await saveCustomer(payload);
-        if (existingCustomerId && String(saved?.id || "").trim() !== existingCustomerId) {
-          throw new Error("KUNDEN_ID_UNERWARTET_GEÄNDERT");
-        }
-
+        const saved = await saveCustomer(
+          buildCustomerEditorPayload({
+            customer,
+            inputs: {
+              customer_number: inputs.customer_number.value,
+              company_name: inputs.company_name.value,
+              contact_person: inputs.contact_person.value,
+              email: inputs.email.value,
+              phone: inputs.phone.value,
+              notes: inputs.notes.value,
+            },
+          })
+        );
         this.currentCustomer = saved;
         newLicenseBtn.disabled = false;
-        this.flashMessage = "Kunde gespeichert.";
-        this.currentView = "customer-detail";
-        this._render();
+        message.textContent = "Kunde gespeichert.";
+        await renderLicenses();
       } catch (err) {
         message.textContent = `Fehler: ${err?.message || err}`;
       }
@@ -669,32 +669,66 @@ export default class LicenseAdminScreen {
     });
     newLicenseBtn.disabled = !this.currentCustomer?.id;
 
-
-    const deleteBtn = this._button("Kunde löschen", async () => {
-      if (!this.currentCustomer?.id) return;
-      const confirmed = globalThis.window?.confirm(
-        "Kunde wirklich löschen?\nDabei werden auch die Lizenzdatensätze dieses Kunden gelöscht.\nErzeugte Lizenzdateien und Setups bleiben erhalten."
-      );
-      if (!confirmed) return;
-      try {
-        await deleteCustomer(this.currentCustomer);
-        this.currentCustomer = null;
-        this.currentLicense = null;
-        this.currentView = "customers";
-        this.flashMessage = "Kunde gelöscht.";
-        this._render();
-      } catch (err) {
-        message.textContent = `Fehler: ${err?.message || err}`;
-      }
-    });
-    deleteBtn.style.display = this.currentCustomer?.id ? "" : "none";
-
     const backBtn = this._button("Zurueck zur Kundenliste", () => {
       this.currentView = "customers";
       this._render();
     });
 
-    customerActions.append(saveBtn, deleteBtn, backBtn);
+    const deleteCustomerBtn = this._button("Kunde löschen", async () => {
+      if (!this.currentCustomer?.id) {
+        message.textContent = "Bitte zuerst den Kunden speichern.";
+        return;
+      }
+      try {
+        const records = await listLicensesByCustomer(this.currentCustomer.id);
+        const count = Array.isArray(records) ? records.length : 0;
+        const label = customerLabel(this.currentCustomer);
+        let shouldDelete = false;
+        let options = { deleteLicenses: false };
+        if (count > 0) {
+          const confirmText = `Kunde ${label} hat ${count} Lizenz(en). Kunde inklusive Lizenzdatensätzen löschen? Bereits erzeugte .bbmlic-Dateien und Lizenzhistorie bleiben erhalten.`;
+          shouldDelete = globalThis?.window?.confirm ? window.confirm(confirmText) : true;
+          options = { deleteLicenses: true };
+        } else {
+          shouldDelete = globalThis?.window?.confirm ? window.confirm(`Kunde ${label} wirklich löschen?`) : true;
+        }
+        if (!shouldDelete) return;
+
+        const result = await deleteCustomer(this.currentCustomer, options);
+        if (result?.ok === false) {
+          const errorCode = String(result?.error || "").trim();
+          if (errorCode === "CUSTOMER_HAS_LICENSES") {
+            message.textContent = "Kunde hat noch Lizenzen und kann nur inklusive Lizenzdatensätzen gelöscht werden.";
+            return;
+          }
+          if (errorCode === "CUSTOMER_HAS_LICENSE_HISTORY") {
+            message.textContent = "Kunde hat erzeugte Lizenzhistorie und kann nicht inklusive Lizenzdatensätzen gelöscht werden. Historie bleibt erhalten.";
+            return;
+          }
+          message.textContent = `Fehler: ${errorCode || "Unbekannter Fehler"}`;
+          return;
+        }
+        this.currentCustomer = null;
+        this.currentLicense = null;
+        this.currentView = "customers";
+        this.flashMessage = "Kunde wurde gelöscht.";
+        this._render();
+      } catch (err) {
+        const errorCode = String(err?.message || err || "").trim();
+        if (errorCode === "CUSTOMER_HAS_LICENSES") {
+          message.textContent = "Kunde hat noch Lizenzen und kann nur inklusive Lizenzdatensätzen gelöscht werden.";
+          return;
+        }
+        if (errorCode === "CUSTOMER_HAS_LICENSE_HISTORY") {
+          message.textContent = "Kunde hat erzeugte Lizenzhistorie und kann nicht inklusive Lizenzdatensätzen gelöscht werden. Historie bleibt erhalten.";
+          return;
+        }
+        message.textContent = `Fehler: ${errorCode || "Unbekannter Fehler"}`;
+      }
+    });
+    deleteCustomerBtn.disabled = !this.currentCustomer?.id;
+
+    customerActions.append(saveBtn, deleteCustomerBtn, backBtn);
 
     const renderLicenses = async () => {
       licenseSection.replaceChildren();
@@ -750,7 +784,25 @@ export default class LicenseAdminScreen {
           this.currentLicense = record;
           this._render();
         });
-        actionCell.appendChild(openBtn);
+        const deleteBtn = this._button("Löschen", async (event) => {
+          event?.stopPropagation?.();
+          const licenseIdText = String(valueOf(record, "license_id", "licenseId") || valueOf(record, "id") || "").trim();
+          const confirmText =
+            `Lizenz ${licenseIdText || "(ohne ID)"} wirklich löschen? Diese Aktion entfernt nur den Lizenzdatensatz aus der Verwaltung, nicht bereits erzeugte .bbmlic-Dateien.`;
+          const shouldDelete = globalThis?.window?.confirm ? window.confirm(confirmText) : true;
+          if (!shouldDelete) return;
+          try {
+            await deleteLicense(record);
+            if (this.currentLicense?.id === record?.id) {
+              this.currentLicense = null;
+            }
+            message.textContent = "Lizenz wurde gelöscht.";
+            await renderLicenses();
+          } catch (err) {
+            message.textContent = `Fehler: ${err?.message || err}`;
+          }
+        });
+        actionCell.append(openBtn, deleteBtn);
         row.appendChild(actionCell);
         tbody.appendChild(row);
       }

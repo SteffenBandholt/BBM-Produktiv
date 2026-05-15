@@ -11,7 +11,6 @@ const ALLOWED_KEYS = new Set([
   "pdf.footerStreet",
   "pdf.footerZip",
   "pdf.footerCity",
-  "pdf.footerUseUserData",
 ]);
 
 function _normalizeProjectId(data) {

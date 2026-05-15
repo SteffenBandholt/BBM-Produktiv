@@ -26,10 +26,17 @@ async function runTopsActionPolicyTests(run) {
 
   await run("TopsActionPolicy: isAllowedMoveTarget", () => {
     const movingTop = { id: 1 };
-    assert.equal(isAllowedMoveTarget({ id: 1, level: 2 }, movingTop), false);
-    assert.equal(isAllowedMoveTarget({ id: 2, level: 0 }, movingTop), false);
-    assert.equal(isAllowedMoveTarget({ id: 2, level: 4 }, movingTop), false);
-    assert.equal(isAllowedMoveTarget({ id: 2, level: 2 }, movingTop), true);
+    const tops = [
+      { id: 1, parent_top_id: null, level: 2 },
+      { id: 2, parent_top_id: 1, level: 3 },
+      { id: 3, parent_top_id: 2, level: 4 },
+      { id: 4, parent_top_id: null, level: 2 },
+    ];
+    assert.equal(isAllowedMoveTarget({ id: 1, level: 2 }, movingTop, tops), false);
+    assert.equal(isAllowedMoveTarget({ id: 2, level: 0 }, movingTop, tops), false);
+    assert.equal(isAllowedMoveTarget({ id: 2, level: 4 }, movingTop, tops), false);
+    assert.equal(isAllowedMoveTarget({ id: 2, level: 2 }, movingTop, tops), false);
+    assert.equal(isAllowedMoveTarget({ id: 4, level: 2 }, movingTop, tops), true);
   });
 
   await run("TopsActionPolicy: canCreateChild/canDelete/canMove", () => {
