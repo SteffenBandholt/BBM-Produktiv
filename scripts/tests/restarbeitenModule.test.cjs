@@ -55,6 +55,22 @@ async function runRestarbeitenModuleTests(run) {
     const restCall = calls.find((c) => c.type === "module" && c.moduleId === "restarbeiten");
     assert.equal(restCall.options.project.id, "22");
   });
+
+  await run("Restarbeiten: Modulkatalog leitet Restarbeiten gezielt ab", async () => {
+    const moduleCatalog = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/app/modules/moduleCatalog.js")
+    );
+
+    assert.deepEqual(moduleCatalog.getDerivedActiveModuleIds(["restarbeiten"]), ["restarbeiten"]);
+
+    const derivedCatalog = moduleCatalog.getDerivedActiveModuleCatalog(["restarbeiten"]);
+    assert.equal(Array.isArray(derivedCatalog), true);
+    assert.equal(derivedCatalog.length, 1);
+    assert.equal(derivedCatalog[0].moduleId, "restarbeiten");
+
+    assert.deepEqual(moduleCatalog.getActiveModuleIds(), ["protokoll"]);
+  });
+
 }
 
 module.exports = { runRestarbeitenModuleTests };

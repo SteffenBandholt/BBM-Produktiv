@@ -157,7 +157,7 @@ async function runLicenseFeatureGuardTests(run) {
     global.window = {
       bbmDb: {
         async licenseGetStatus() {
-          return { ok: true, valid: true, modules: ["protokoll"] };
+          return { ok: true, valid: true, modules: ["restarbeiten"] };
         },
       },
     };
@@ -165,13 +165,25 @@ async function runLicenseFeatureGuardTests(run) {
     try {
       const activeIds = await mod.refreshCachedActiveModuleAccess({ force: true });
       assert.equal(Array.isArray(activeIds), true);
-      assert.equal(mod.isModuleActive("protokoll"), true);
+      assert.equal(mod.isModuleActive("restarbeiten"), true);
+      assert.equal(mod.isModuleActive("protokoll"), false);
       assert.equal(mod.isModuleActive("audio"), false);
+
+      global.window.bbmDb.licenseGetStatus = async () => ({
+        ok: true,
+        valid: true,
+        modules: ["protokoll", "restarbeiten"],
+      });
+      const bothIds = await mod.refreshCachedActiveModuleAccess({ force: true });
+      assert.equal(Array.isArray(bothIds), true);
+      assert.equal(mod.isModuleActive("protokoll"), true);
+      assert.equal(mod.isModuleActive("restarbeiten"), true);
 
       global.window.bbmDb.licenseGetStatus = async () => ({ ok: true, valid: true, modules: [] });
       const inactiveIds = await mod.refreshCachedActiveModuleAccess({ force: true });
       assert.equal(Array.isArray(inactiveIds), true);
       assert.equal(mod.isModuleActive("protokoll"), false);
+      assert.equal(mod.isModuleActive("restarbeiten"), false);
     } finally {
       global.window = previousWindow;
     }

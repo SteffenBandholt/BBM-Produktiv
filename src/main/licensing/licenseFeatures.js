@@ -1,5 +1,6 @@
 const LICENSE_MODULES = Object.freeze({
   PROTOKOLL: "protokoll",
+  RESTARBEITEN: "restarbeiten",
 });
 
 const LICENSE_FEATURES = Object.freeze({
@@ -60,7 +61,9 @@ function normalizeLicensedModules(modules, features) {
   const seen = new Set();
   rawModules.forEach((value) => {
     const mod = _normalizeFeatureValue(value);
-    if (!mod || mod !== LICENSE_MODULES.PROTOKOLL || seen.has(mod)) return;
+    const isAllowedModule =
+      mod === LICENSE_MODULES.PROTOKOLL || mod === LICENSE_MODULES.RESTARBEITEN;
+    if (!mod || !isAllowedModule || seen.has(mod)) return;
     seen.add(mod);
     normalized.push(mod);
   });
@@ -74,7 +77,8 @@ function normalizeLicensedModules(modules, features) {
 }
 
 function isLicensedModule(moduleId) {
-  return _normalizeFeatureValue(moduleId) === LICENSE_MODULES.PROTOKOLL;
+  const normalized = _normalizeFeatureValue(moduleId);
+  return normalized === LICENSE_MODULES.PROTOKOLL || normalized === LICENSE_MODULES.RESTARBEITEN;
 }
 
 function isLicensedProduct(product) {
