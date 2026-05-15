@@ -17,9 +17,27 @@ const path = require("path");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");
 const { getPrintData } = require("../print/printData");
 const {
+  createPrintToPdfOptions,
+  normalizePrintOrientation,
+  resolvePrintRequestedOrientation,
+} = require("../print/printOrientation");
+const {
+  enforceLicensedFeature,
+  toLicenseErrorPayload,
+} = require("../licensing/featureGuard");
+const {
   sanitizeDirName,
   resolveProjectFolderName,
 } = require("./projectStoragePaths");
+
+let _printModesModulePromise = null;
+
+async function _loadPrintModesModule() {
+  if (!_printModesModulePromise) {
+    _printModesModulePromise = import("../../shared/print/printModes.mjs");
+  }
+  return await _printModesModulePromise;
+}
 
 function _randId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -50,19 +68,29 @@ function uniquePath(dir, fileName) {
   return path.join(dir, `${stem} (${Date.now()})${ext}`);
 }
 
-function buildPrintToPdfOptions() {
-  return {
-    printBackground: true,
-    landscape: false,
-    pageSize: "A4",
-    displayHeaderFooter: false,
-    margin: {
-      top: 0,
-      bottom: 0,
-      left: 0,
-      right: 0,
-    },
-  };
+function buildPrintToPdfOptions({ orientation } = {}) {
+  return createPrintToPdfOptions({ orientation });
+}
+
+function _resolveRequestedOrientation(payload = {}) {
+  return resolvePrintRequestedOrientation({
+    orientation: payload.orientation,
+    testOrientation: payload.testOrientation,
+    smokeOrientation: process.env.BBM_PRINT_SMOKE_ORIENTATION,
+  });
+}
+
+function _readLayoutCalibrationEnabled() {
+  return false;
+}
+
+function _normalizeLayoutCalibrationEnabled(value, fallback = false) {
+  if (value == null) return !!fallback;
+  const raw = String(value).trim().toLowerCase();
+  if (!raw) return !!fallback;
+  if (["1", "true", "yes", "on"].includes(raw)) return true;
+  if (["0", "false", "no", "off"].includes(raw)) return false;
+  return !!fallback;
 }
 
 // Shared technical output infrastructure:
@@ -274,8 +302,15 @@ async function _runIpcTask(task) {
   try {
     return await task();
   } catch (err) {
+    if (err?.licenseError || String(err?.message || "").startsWith("LICENSE_")) {
+      return toLicenseErrorPayload(err);
+    }
     return { ok: false, error: err?.message || String(err) };
   }
+}
+
+function _enforceFeature(feature) {
+  enforceLicensedFeature(feature);
 }
 
 function attachPrintDebugPipes(win, jobId) {
@@ -296,17 +331,26 @@ function attachPrintDebugPipes(win, jobId) {
 
 async function printToPdf(payload = {}) {
   const jobId = _randId();
-  const mode = String(payload.mode || "").trim() || "protocol";
+  const { resolvePrintMode } = await _loadPrintModesModule();
+  const mode = resolvePrintMode(payload.mode, { fallback: "protocol" });
+  if (!mode) {
+    throw new Error(`Unbekannter Druckmodus: ${String(payload.mode || "").trim() || "-"}`);
+  }
   const projectId = payload.projectId || null;
   const meetingId = payload.meetingId || null;
+  const orientation = _resolveRequestedOrientation(payload);
 
-  console.log(`[print:${jobId}] start mode=${mode} projectId=${projectId} meetingId=${meetingId}`);
+  console.log(
+    `[print:${jobId}] start mode=${mode} projectId=${projectId} meetingId=${meetingId} orientation=${orientation}`
+  );
 
   const data = await getPrintData({
     mode,
     projectId,
     meetingId,
     settingsOverride: payload.settingsOverride || null,
+    orientation,
+    todoResponsibleFilter: payload.todoResponsibleFilter || null,
   });
   const projectNumber = data?.project?.project_number || data?.project?.projectNumber || null;
 
@@ -321,16 +365,16 @@ async function printToPdf(payload = {}) {
   });
 
   const silent = !!payload.silent;
-  const debug = !silent && (!!payload.debug || !app.isPackaged);
+  // DevTools must open only when explicitly requested.
+  const debug = !silent && !!payload.debug;
 
-  const win = createPrintWindow({ debug });
+  const win = createPrintWindow({ show: debug, devTools: debug });
   attachPrintDebugPipes(win, jobId);
 
   if (debug) {
     try {
       win.show();
       win.focus();
-      win.webContents.openDevTools({ mode: "detach" });
     } catch (_e) {}
   }
 
@@ -369,13 +413,15 @@ async function printToPdf(payload = {}) {
       console.log(`[print:${jobId}] print:ready received`);
 
       try {
-        const options = buildPrintToPdfOptions();
+        const options = buildPrintToPdfOptions({ orientation });
         console.log(
           `[PRINT_ACTIVE] printToPDF options: ${JSON.stringify(
             {
+              orientation,
+              landscape: options.landscape,
+              pageSize: options.pageSize,
               displayHeaderFooter: options.displayHeaderFooter,
               margin: options.margin,
-              pageSize: options.pageSize,
             },
             null,
             0
@@ -405,7 +451,10 @@ async function printToPdf(payload = {}) {
         projectId,
         meetingId,
         settingsOverride: payload.settingsOverride || null,
+        orientation,
+        testOrientation: payload.testOrientation || null,
         debug,
+        layoutCalibrationEnabled: _readLayoutCalibrationEnabled(),
       });
     });
 
@@ -423,12 +472,16 @@ function registerPrintIpc() {
   // Stable technical service entry points for renderer callers.
   ipcMain.handle("print:getData", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature("protokoll");
       const p = payload || {};
+      const orientation = _resolveRequestedOrientation(p);
       const data = await getPrintData({
         mode: p.mode,
         projectId: p.projectId,
         meetingId: p.meetingId,
         settingsOverride: p.settingsOverride || null,
+        orientation,
+        todoResponsibleFilter: p.todoResponsibleFilter || null,
       });
       // Version/Channel für PDF-Footer mitgeben
       data.appVersion = app.getVersion ? app.getVersion() : "";
@@ -437,8 +490,51 @@ function registerPrintIpc() {
     })
   );
 
+  ipcMain.handle("print:openHtmlPreview", async (_evt, payload) =>
+    _runIpcTask(async () => {
+      _enforceFeature("protokoll");
+      if (app.isPackaged) {
+        return { ok: false, error: "DEV-only." };
+      }
+
+      const p = payload || {};
+      const orientation = _resolveRequestedOrientation(p);
+      const jobId = _randId();
+      const win = createPrintWindow({ show: true, devTools: false });
+      attachPrintDebugPipes(win, jobId);
+
+      const url = getPrintAppUrl();
+      win.webContents.once("did-finish-load", () => {
+        win.webContents.send("print:init", {
+          jobId,
+          mode: p.mode || "topsAll",
+          projectId: p.projectId || null,
+          meetingId: p.meetingId || null,
+          settingsOverride: p.settingsOverride || null,
+          orientation,
+          testOrientation: p.testOrientation || null,
+          debug: false,
+          devLayoutPreview: true,
+          layoutCalibrationEnabled:
+            p.layoutCalibrationEnabled == null
+              ? _readLayoutCalibrationEnabled()
+              : _normalizeLayoutCalibrationEnabled(p.layoutCalibrationEnabled, _readLayoutCalibrationEnabled()),
+        });
+      });
+
+      await win.loadURL(url);
+      try {
+        win.show();
+        win.focus();
+      } catch (_e) {}
+
+      return { ok: true, jobId };
+    })
+  );
+
   ipcMain.handle("print:toPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature("protokoll");
       console.log(
         `[PRINT_ACTIVE] handler=print:toPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""
@@ -452,6 +548,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("protocol:findStoredPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature("protokoll");
       const p = payload || {};
       return findStoredProtocolPdf({
         baseDir: p.baseDir,
@@ -464,6 +561,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("firms:listStoredPdfs", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature("protokoll");
       const p = payload || {};
       return listStoredFirmsPdfs({
         baseDir: p.baseDir,
@@ -474,6 +572,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:listStoredProjectPdfs", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature("protokoll");
       const p = payload || {};
       return listStoredProjectPdfs({
         baseDir: p.baseDir,
@@ -485,6 +584,7 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:htmlToPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
+      _enforceFeature("protokoll");
       console.log(
         `[PRINT_ACTIVE] handler=print:htmlToPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""

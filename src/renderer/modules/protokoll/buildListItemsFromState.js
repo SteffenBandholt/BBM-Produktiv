@@ -1,1 +1,4 @@
-export { buildListItemsFromState } from "./viewmodel/TopsScreenViewModel.js";
+export {
+  buildListItemsFromState,
+  resolveVisibleSelectionForCollapsedFamilies,
+} from "./viewmodel/TopsScreenViewModel.js";

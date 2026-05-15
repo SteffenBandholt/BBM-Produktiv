@@ -1,9 +1,10 @@
 const { app } = require("electron");
 const { requireFeature, getStatus } = require("./licenseService");
 const {
+  LICENSE_MODULES,
   LICENSE_FEATURES,
+  normalizeLicensedModules,
   normalizeLicensedFeatures,
-  isStandardLicensedFeature,
 } = require("./licenseFeatures");
 
 // Zentrale Kernlogik fuer nutzende Stellen:
@@ -18,6 +19,7 @@ function _extractLicenseInfo(status) {
     licenseId: String(license.licenseId || license.id || "").trim(),
     edition: String(license.edition || "").trim(),
     validUntil: String(license.validUntil || "").trim(),
+    modules: normalizeLicensedModules(license.modules, license.features),
     features: normalizeLicensedFeatures(license.features),
     appVersion: String(app?.getVersion?.() || "").trim(),
   };
@@ -65,21 +67,14 @@ function isDevAudioSuggestionsEnabled() {
   return false;
 }
 
-function _isCoveredByBaseLicense(feature) {
-  return isStandardLicensedFeature(feature);
-}
 
 // Zentraler Guard fuer technische Dienste/Addons:
 // Views und Fachablaeufe fragen nicht direkt die Lizenzdatei ab, sondern laufen ueber diesen Einstieg.
 function enforceLicensedFeature(feature) {
   const normalizedFeature = String(feature || "").trim().toLowerCase();
-  if (normalizedFeature === LICENSE_FEATURES.AUDIO && isDevAudioOverrideEnabled()) {
+  if (normalizedFeature === LICENSE_FEATURES.DIKTAT && isDevAudioOverrideEnabled()) {
     return _extractLicenseInfo(getStatus({ fresh: true }));
   }
-  if (_isCoveredByBaseLicense(normalizedFeature)) {
-    return _extractLicenseInfo(getStatus({ fresh: true }));
-  }
-
   try {
     requireFeature(normalizedFeature);
     return _extractLicenseInfo(getStatus({ fresh: true }));
@@ -171,16 +166,10 @@ function mapLicenseReasonToMessage(reason) {
 // Feature-Ablehnungen bleiben textlich zentral, damit nutzende Stellen keine eigenen Meldungen bauen muessen.
 function mapFeatureToMessage(feature) {
   switch (feature) {
-    case LICENSE_FEATURES.PDF:
-      return "PDF-Erzeugung ist fuer diese Lizenz nicht freigeschaltet.";
-    case LICENSE_FEATURES.EXPORT:
-      return "Export ist fuer diese Lizenz nicht freigeschaltet.";
-    case LICENSE_FEATURES.MAIL:
-      return "Mail-Funktion ist fuer diese Lizenz nicht freigeschaltet.";
-    case LICENSE_FEATURES.AUDIO:
-      return "Audio-Funktion ist fuer diese Lizenz nicht freigeschaltet.";
-    case LICENSE_FEATURES.APP:
-      return "Diese Funktion ist fuer diese Lizenz nicht freigeschaltet.";
+    case LICENSE_MODULES.PROTOKOLL:
+      return "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
+    case LICENSE_FEATURES.DIKTAT:
+      return "Funktion Diktat ist fuer diese Lizenz nicht freigeschaltet.";
     default:
       return `Feature nicht freigeschaltet: ${feature}`;
   }

@@ -1,5 +1,9 @@
 export class TopsHeader {
-  constructor({ onClose, onEndMeeting, onKeywordClick } = {}) {
+  constructor({
+    onClose,
+    onEndMeeting,
+    onKeywordClick,
+  } = {}) {
     this.onClose = typeof onClose === "function" ? onClose : null;
     this.onEndMeeting = typeof onEndMeeting === "function" ? onEndMeeting : null;
     this.onKeywordClick = typeof onKeywordClick === "function" ? onKeywordClick : null;
@@ -59,6 +63,7 @@ export class TopsHeader {
     this.btnEndMeeting.type = "button";
     this.btnEndMeeting.textContent = "Protokoll beenden";
     this.btnEndMeeting.className = "bbm-tops-btn bbm-tops-btn-end-meeting";
+    this.btnEndMeeting.dataset.action = "end-meeting";
     this.btnEndMeeting.onclick = async () => {
       if (this.btnEndMeeting.disabled) return;
       if (this.onEndMeeting) await this.onEndMeeting();
@@ -74,7 +79,12 @@ export class TopsHeader {
     };
 
     this.actionsWrap.append(this.btnEndMeeting, this.btnClose);
-    this.root.append(this.titleWrap, this.spacer, this.actionsWrap, this.metaLegend);
+    this.root.append(
+      this.titleWrap,
+      this.spacer,
+      this.actionsWrap,
+      this.metaLegend
+    );
   }
 
   getActionsHost() {
@@ -96,6 +106,7 @@ export class TopsHeader {
     isBusy,
     canEditKeyword,
     showMetaLegend,
+    devLayoutMode,
   } = {}) {
     const busy = !!isBusy;
     const readOnly = !!isReadOnly;

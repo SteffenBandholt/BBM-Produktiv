@@ -128,6 +128,15 @@ contextBridge.exposeInMainWorld("bbmDb", {
   printPdf: (data) => ipcRenderer.invoke("print:toPdf", data),
 
   // ============================================================
+  // Tabellenlayouts (intern)
+  // ============================================================
+  tableLayoutsGetMany: (data) => ipcRenderer.invoke("tableLayouts:getMany", data),
+  tableLayoutsGetOne: (data) => ipcRenderer.invoke("tableLayouts:getOne", data),
+  tableLayoutsSave: (data) => ipcRenderer.invoke("tableLayouts:save", data),
+  tableLayoutsReset: (data) => ipcRenderer.invoke("tableLayouts:reset", data),
+  tableLayoutsListDefinitions: () => ipcRenderer.invoke("tableLayouts:listDefinitions"),
+
+  // ============================================================
   // App
   // ============================================================
   appQuit: () => ipcRenderer.invoke("app:quit"),
@@ -154,6 +163,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   appSettingsGetMany: (keys) => ipcRenderer.invoke("appSettings:getMany", keys),
   appSettingsSetMany: (data) => ipcRenderer.invoke("appSettings:setMany", data),
+  appSettingsOnChanged: (callback) => {
+    if (typeof callback !== "function") return () => {};
+    const handler = (_event, payload) => callback(payload || {});
+    ipcRenderer.on("app-settings:changed", handler);
+    return () => ipcRenderer.removeListener("app-settings:changed", handler);
+  },
   securitySettingsPinStatus: () => ipcRenderer.invoke("security:settingsPinStatus"),
   securitySettingsPinSet: (data) => ipcRenderer.invoke("security:settingsPinSet", data),
   securitySettingsPinDisable: (data) => ipcRenderer.invoke("security:settingsPinDisable", data),
@@ -197,26 +212,6 @@ contextBridge.exposeInMainWorld("bbmDb", {
   licenseDelete: () => ipcRenderer.invoke("license:delete"),
   licenseGetInstalled: () => ipcRenderer.invoke("license:get-installed"),
   licenseCreateRequest: (data) => ipcRenderer.invoke("license:create-request", data),
-  // ============================================================
-  // Lizenzierung: Dev-/Werkzeugfluss fuer internen Generator
-  // ============================================================
-  licenseLoadRequestForGenerate: (data) => ipcRenderer.invoke("license:load-request-for-generate", data),
-  licenseLoadForEdit: (data) => ipcRenderer.invoke("license:load-for-edit", data),
-  licenseGenerate: (data) => ipcRenderer.invoke("license:generate", data),
-  licenseOpenOutputDir: (data) => ipcRenderer.invoke("license:open-output-dir", data),
-  licenseAdminListLicenseCustomers: () => ipcRenderer.invoke("license-admin:list-customers"),
-  licenseAdminSaveLicenseCustomer: (customer) => ipcRenderer.invoke("license-admin:save-customer", customer),
-  licenseAdminListLicenseRecords: () => ipcRenderer.invoke("license-admin:list-records"),
-  licenseAdminListLicenseRecordsByCustomer: (customerId) =>
-    ipcRenderer.invoke("license-admin:list-records-by-customer", customerId),
-  licenseAdminSaveLicenseRecord: (license) => ipcRenderer.invoke("license-admin:save-record", license),
-  licenseAdminDeleteLicenseRecord: (id) => ipcRenderer.invoke("license-admin:delete-license-record", id),
-  licenseAdminListLicenseHistory: () => ipcRenderer.invoke("license-admin:list-history"),
-  licenseAdminAddLicenseHistoryEntry: (entry) => ipcRenderer.invoke("license-admin:add-history-entry", entry),
-  licenseAdminCreateCustomerSetup: (payload) => ipcRenderer.invoke("license-admin:create-customer-setup", payload),
-  licenseAdminImportLicenseRequest: () => ipcRenderer.invoke("license-admin:import-license-request"),
-  licenseAdminSendResponseLicenseMail: (payload) =>
-    ipcRenderer.invoke("license-admin:send-response-license-mail", payload),
 
   // DEV: Audio Override Status
   devAudioUnlockStatus: () => ipcRenderer.invoke("dev:audioUnlockStatus"),

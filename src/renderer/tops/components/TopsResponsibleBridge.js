@@ -47,7 +47,11 @@ export class TopsResponsibleBridge {
     el.addEventListener("input", () => this._syncFromField());
   }
 
-  mount() {
+  mount(container = null) {
+    if (container) {
+      container.appendChild(this.root);
+      return;
+    }
     if (!this.metaPanel?.root) return;
     this.metaPanel.root.appendChild(this.root);
   }

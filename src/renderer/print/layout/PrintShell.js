@@ -6,8 +6,23 @@ import {
   normalizeTopLongText,
   normalizeTopShortText,
 } from "../../shared/text/topTextPresentation.js";
+import {
+  applyProtokollTopsPdfLayout,
+  getProtokollTopsLayout,
+} from "../../../shared/tableLayouts/protokollTopsLayout.js";
+import { normalizePrintMode } from "../../../shared/print/printModes.mjs";
 
 const APP_ICON_URL = new URL("../assets/bbm-icon.png", window.location.href).toString();
+const PROTOKOLL_TOPS_LAYOUT = getProtokollTopsLayout();
+
+function _normalizeOrientation(value) {
+  const s = String(value || "").trim().toLowerCase();
+  return s === "landscape" ? "landscape" : "portrait";
+}
+
+function _getTopLayout(data) {
+  return data?.tableLayouts?.protokoll_tops?.effectiveLayout || PROTOKOLL_TOPS_LAYOUT;
+}
 
 function _el(tag, className, text) {
   const el = document.createElement(tag);
@@ -53,24 +68,27 @@ function _buildPageHeader({ projectLabel, docLabel, pageNo, totalPages }) {
   return header;
 }
 
-function _buildTableHead(type) {
+function _buildTableHead(type, topsLayout) {
   if (type === "firmsCards") return null;
   const thead = document.createElement("thead");
   const tr = document.createElement("tr");
   tr.className = "tableHeadRow";
 
   if (type === "tops") {
-    tr.innerHTML = `
-      <th class="colNr">TOP</th>
-      <th class="colText">Gegenstand</th>
-      <th class="colMeta">
-        <div class="metaHead">
-          <div>Status</div>
-          <div>Fertig bis</div>
-          <div>verantw</div>
-        </div>
-      </th>
+    const thNr = _el("th", "colNr", topsLayout.labels.top);
+    thNr.dataset.devPdfZone = "number";
+    const thText = _el("th", "colText", topsLayout.labels.text);
+    thText.dataset.devPdfZone = "text";
+    const thMeta = _el("th", "colMeta");
+    thMeta.dataset.devPdfZone = "meta";
+    thMeta.innerHTML = `
+      <div class="metaHead">
+        <div>${topsLayout.labels.meta[0]}</div>
+        <div>${topsLayout.labels.meta[1]}</div>
+        <div>${topsLayout.labels.meta[2]}</div>
+      </div>
     `;
+    tr.append(thNr, thText, thMeta);
   } else if (type === "firms") {
     tr.innerHTML = `<th>Firma</th><th>Typ</th><th>Aktiv</th>`;
   } else if (type === "todo") {
@@ -114,6 +132,7 @@ function _buildTopRow(row) {
   if (row.isImportant) tr.classList.add("isImportant");
 
   const tdNr = _el("td", "colNr");
+  tdNr.dataset.devPdfZone = "number";
   const numBox = _el("div", "nrBox");
   const topNumberEl = _el("div", "topNumber", row.numText);
   const nrDateEl = _el("div", "nrDate", row.createdDate);
@@ -123,6 +142,7 @@ function _buildTopRow(row) {
   tdNr.appendChild(numBox);
 
   const tdText = _el("td", "colText");
+  tdText.dataset.devPdfZone = "text";
   const txtBlock = _el("div", "txtBlock");
   const shortTextEl = _el("div", "shortText", normalizeTopShortText(row.title));
   txtBlock.appendChild(shortTextEl);
@@ -155,6 +175,7 @@ function _buildTopRow(row) {
   tdText.appendChild(txtBlock);
 
   const tdMeta = _el("td", "colMeta");
+  tdMeta.dataset.devPdfZone = "meta";
   const meta3 = _el("div", "meta3");
   const metaLine1 = _el("div", "metaLine meta1");
   metaLine1.appendChild(_el("span", "metaText", row.status));
@@ -285,15 +306,21 @@ function _buildGenericRow(row) {
   return tr;
 }
 
-function _buildColGroup(type) {
+function _buildColGroup(type, topsLayout) {
   if (type !== "tops") return null;
   const colgroup = document.createElement("colgroup");
+  const { number, text, meta } = topsLayout.pdf.columns;
   colgroup.innerHTML = `
-    <col class="colNr" />
-    <col class="colText" />
-    <col class="colMeta" />
+    <col class="${number.className}" style="width:${number.width};" />
+    <col class="${text.className}" style="width:${text.width};" />
+    <col class="${meta.className}" style="width:${meta.width};" />
   `;
   return colgroup;
+}
+
+function _applyTopsTableLayout(table, topsLayout) {
+  if (!table || String(table.className || "") !== "topsTable") return;
+  applyProtokollTopsPdfLayout(table, topsLayout);
 }
 
 function _applyV2Vars(root, data) {
@@ -342,19 +369,21 @@ function _applyV2Vars(root, data) {
   root.style.setProperty("--v2-line-thickness", String(V2_LAYOUT.global.lineThicknessPx) + "px");
 }
 
-function _buildTable(page) {
+function _buildTable(page, data) {
   const table = document.createElement("table");
   const type = page.table?.type || "tops";
+  const topsLayout = _getTopLayout(data);
 
   if (type === "tops") table.className = "topsTable";
   else if (type === "firms") table.className = "firmsTable";
   else if (type === "firmsCards") table.className = "firmsCardsTable";
   else if (type === "todo") table.className = "todoTable";
+  _applyTopsTableLayout(table, topsLayout);
 
-  const colgroup = _buildColGroup(type);
+  const colgroup = _buildColGroup(type, topsLayout);
   if (colgroup) table.appendChild(colgroup);
 
-  const head = _buildTableHead(type);
+  const head = _buildTableHead(type, topsLayout);
   if (head) table.appendChild(head);
 
   const tbody = document.createElement("tbody");
@@ -537,24 +566,31 @@ function _buildSpineNote(data = {}) {
 }
 
 export function renderPrint({ pages, data } = {}) {
+  const normalizedMode = normalizePrintMode(data?.mode || "protocol");
+  if (!normalizedMode) {
+    throw new Error(`Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`);
+  }
+  const runtimeData = { ...(data || {}), mode: normalizedMode };
   const root = _el("div", "printRoot printV2Root");
+  root.dataset.orientation = _normalizeOrientation(runtimeData?.orientation);
+  root.dataset.tableLayout = _getTopLayout(runtimeData).tableKey || "protokoll_tops";
 
   // Force colors into PDF output (Chromium/Electron)
   root.style.webkitPrintColorAdjust = "exact";
   root.style.printColorAdjust = "exact";
 
   const showVorabzugWatermark =
-    ["vorabzug", "preview"].includes(String(data?.mode || "").trim().toLowerCase());
+    ["vorabzug", "preview"].includes(String(runtimeData?.mode || "").trim().toLowerCase());
   if (showVorabzugWatermark) {
     const watermark = _el("div", "v2VorabzugWatermark", "Vorabzug");
     watermark.setAttribute("aria-hidden", "true");
     root.appendChild(watermark);
   }
-  const profileKey = String(data?.printProfile?.key || "").trim();
+  const profileKey = String(runtimeData?.printProfile?.key || "").trim();
   if (profileKey) root.classList.add("v2Profile" + profileKey.charAt(0).toUpperCase() + profileKey.slice(1));
-  _applyV2Vars(root, data);
+  _applyV2Vars(root, runtimeData);
   const totalPages = Array.isArray(pages) ? pages.length : 0;
-  const modeLabel = String(data?.printProfile?.documentLabel || "").trim() || "Dokument";
+  const modeLabel = String(runtimeData?.printProfile?.documentLabel || "").trim() || "Dokument";
   const lastTopsPageIdx = (pages || []).reduce((last, p, idx) => {
     const isTops = String(p?.table?.type || "") === "tops";
     return isTops ? idx : last;
@@ -570,14 +606,14 @@ export function renderPrint({ pages, data } = {}) {
     const pageEl = _el("div", "page");
     const pageNo = Number(page?.header?.pageNo || 0);
     if (pageNo === 1) {
-      pageEl.appendChild(_buildSpineNote(data));
+      pageEl.appendChild(_buildSpineNote(runtimeData));
     }
     if (pageNo === 1) {
-      pageEl.appendChild(renderV2GlobalHeader({ data }));
-      pageEl.appendChild(renderV2FullHeader({ data, pageNo, totalPages, modeLabel }));
+      pageEl.appendChild(renderV2GlobalHeader({ data: runtimeData }));
+      pageEl.appendChild(renderV2FullHeader({ data: runtimeData, pageNo, totalPages, modeLabel }));
       pageEl.appendChild(_el("div", "v2FullGapLineBody"));
     } else {
-      pageEl.appendChild(renderV2MiniHeader({ data, pageNo, totalPages, modeLabel }));
+      pageEl.appendChild(renderV2MiniHeader({ data: runtimeData, pageNo, totalPages, modeLabel }));
     }
     const intro = _buildIntro(page);
     if (intro) pageEl.appendChild(intro);
@@ -588,10 +624,10 @@ export function renderPrint({ pages, data } = {}) {
     // Tops-Tabelle ohne Zeilen nicht rendern (sonst Tabellenkopf allein).
     const renderTable = !(isTops && !hasRows);
     if (renderTable) {
-      pageEl.appendChild(_buildTable(page));
+      pageEl.appendChild(_buildTable(page, runtimeData));
     }
     if (isTops && idx === tailPageIdx) {
-      const tail = _buildTopsTail(page, data);
+      const tail = _buildTopsTail(page, runtimeData);
       if (tail) pageEl.appendChild(tail);
     }
     pageEl.appendChild(_el("div", "v2FooterReserveSpacer"));

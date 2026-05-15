@@ -15,6 +15,7 @@ const { registerTopsIpc } = require("./ipc/topsIpc");
 const { registerProjectFirmsIpc } = require("./ipc/projectFirmsIpc");
 const { registerParticipantsIpc } = require("./ipc/participantsIpc");
 const { registerPrintIpc } = require("./ipc/printIpc");
+const { registerTableLayoutsIpc } = require("./ipc/tableLayoutsIpc");
 const { registerSettingsIpc } = require("./ipc/settingsIpc");
 const { registerProjectSettingsIpc } = require("./ipc/projectSettingsIpc");
 const { registerEditorIpc } = require("./ipc/editorIpc");
@@ -27,6 +28,7 @@ const {
   toLicenseErrorPayload,
   isDevAudioOverrideEnabled,
   isDevAudioSuggestionsEnabled,
+  enforceLicensedFeature,
 } = require("./licensing/featureGuard");
 const { appSettingsGetMany, appSettingsSetMany } = require("./db/appSettingsRepo");
 const { getDatabaseDiagnostics, importLegacyIntoActive } = require("./db/database");
@@ -554,6 +556,7 @@ app.whenReady().then(async () => {
   registerProjectFirmsIpc();
   registerParticipantsIpc();
   registerPrintIpc();
+  registerTableLayoutsIpc();
   registerSettingsIpc();
   registerProjectSettingsIpc();
   registerEditorIpc({ getMainWindow: () => mainWindow });
@@ -617,6 +620,7 @@ app.whenReady().then(async () => {
   // Main kapselt nur die Outlook-/Windows-spezifische Transporttechnik.
   ipcMain.handle("mail:createOutlookDraft", async (_event, payload) => {
   try {
+    enforceLicensedFeature("protokoll");
     if (process.platform !== "win32") {
       return { ok: false, error: "Outlook-Entwurf ist nur unter Windows verfügbar." };
     }
@@ -695,6 +699,9 @@ app.whenReady().then(async () => {
 
     return result;
   } catch (err) {
+    if (err?.licenseError || String(err?.message || "").startsWith("LICENSE_")) {
+      return toLicenseErrorPayload(err);
+    }
     return { ok: false, error: err?.message || String(err) };
   }
   });
