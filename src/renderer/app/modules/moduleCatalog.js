@@ -2,11 +2,19 @@ import {
   getProtokollModuleEntry,
   PROTOKOLL_MODULE_ID,
 } from "../../modules/protokoll/index.js";
+import {
+  getRestarbeitenModuleEntry,
+  RESTARBEITEN_MODULE_ID,
+} from "../../modules/restarbeiten/index.js";
 
 const AVAILABLE_MODULE_ENTRIES = Object.freeze([
   Object.freeze({
     moduleId: PROTOKOLL_MODULE_ID,
     entry: getProtokollModuleEntry(),
+  }),
+  Object.freeze({
+    moduleId: RESTARBEITEN_MODULE_ID,
+    entry: getRestarbeitenModuleEntry(),
   }),
 ]);
 

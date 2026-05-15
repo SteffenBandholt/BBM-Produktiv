@@ -158,7 +158,11 @@ export default class ProjectWorkspaceScreen {
       return await this._openProtocolModule(projectId);
     }
 
-    return false;
+    if (typeof this.router?.openProjectModule !== "function") return false;
+    const result = await this.router.openProjectModule(projectId, normalizedModuleId, {
+      project: this.project || null,
+    });
+    return typeof result === "object" ? !!result?.ok : result !== false;
   }
 
   _renderModuleTiles(container) {
