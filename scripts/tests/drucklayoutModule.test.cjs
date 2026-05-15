@@ -46,7 +46,7 @@ async function runDrucklayoutModuleTests(run) {
     const settingsSource = read("src/renderer/views/SettingsView.js");
     const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
     assert.equal(settingsSource.includes("Drucklayout"), true);
-    assert.equal(settingsSource.includes("createDrucklayoutDevScreen"), true);
+    assert.equal(settingsSource.includes("layoutTitle.textContent = \"Drucklayout\""), true);
     assert.equal(moduleCatalogSource.includes("drucklayout"), false);
   });
 

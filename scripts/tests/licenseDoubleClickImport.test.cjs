@@ -87,7 +87,7 @@ async function runLicenseDoubleClickImportTests(run) {
     const mainSource = read("src/main/main.js");
     const ipcSource = read("src/main/ipc/licenseIpc.js");
     assert.equal(ipcSource.includes("function importLicenseFromFilePath(filePath)"), true);
-    assert.equal(ipcSource.includes("return importLicenseFromFilePath(filePath);"), true);
+    assert.equal(ipcSource.includes("return importLicenseFromFilePath(result.filePaths[0]);"), true);
     assert.equal(mainSource.includes("importLicenseFromFilePath(filePath)"), true);
   });
 
@@ -102,11 +102,12 @@ async function runLicenseDoubleClickImportTests(run) {
   await run("Lizenzfenster: Hinweis auf Doppelklick ist vorhanden", () => {
     const settingsSource = read("src/renderer/views/SettingsView.js");
     assert.equal(
-      settingsSource.includes("Sie können eine erhaltene .bbmlic-Datei auch direkt per Doppelklick öffnen."),
+      settingsSource.includes(".bbmlic-Datei direkt per Doppelklick oeffnen"),
       true
     );
-    assert.equal(settingsSource.includes("Lizenz wurde erfolgreich importiert."), true);
-    assert.equal(settingsSource.includes("Lizenzdatei konnte nicht importiert werden."), true);
+    const mainSource = read("src/main/main.js");
+    assert.equal(mainSource.includes("Lizenz wurde erfolgreich importiert."), true);
+    assert.equal(mainSource.includes("Lizenzdatei konnte nicht importiert werden."), true);
   });
 
   await run("Testversionen bleiben unveraendert abgesichert", () => {

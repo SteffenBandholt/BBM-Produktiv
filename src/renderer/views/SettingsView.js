@@ -4714,6 +4714,12 @@ export default class SettingsView {
     note.textContent =
       "Lizenzstatus wird hier nur angezeigt. Lizenzverwaltung und Generator sind in die externe Lizenz-App ausgelagert.";
 
+    const doubleClickHint = document.createElement("div");
+    doubleClickHint.style.fontSize = "12px";
+    doubleClickHint.style.lineHeight = "1.45";
+    doubleClickHint.style.opacity = "0.82";
+    doubleClickHint.textContent = "Hinweis: Sie koennen eine erhaltene .bbmlic-Datei direkt per Doppelklick oeffnen und importieren.";
+
     const status = document.createElement("div");
     status.style.padding = "8px 10px";
     status.style.border = "1px solid rgba(0,0,0,0.08)";
@@ -4762,7 +4768,7 @@ export default class SettingsView {
     };
 
     btnReload.addEventListener("click", loadStatus);
-    card.append(title, note, status, btnReload);
+    card.append(title, note, doubleClickHint, status, btnReload);
     wrap.append(card);
 
     void loadStatus();
