@@ -166,29 +166,44 @@ body[data-orientation="portrait"] .measureRoot,
 
 .todoTable th:nth-child(1),
 .todoTable td:nth-child(1) {
-  width: 12%;
+  width: var(--bbm-todo-col-top-width, 12%);
+  padding-left: var(--bbm-todo-col-top-padding-inline, 1mm);
+  padding-right: var(--bbm-todo-col-top-padding-inline, 1mm);
+  font-size: var(--bbm-todo-col-top-font-size, inherit);
   white-space: nowrap;
 }
 
 .todoTable th:nth-child(2),
 .todoTable td:nth-child(2) {
-  width: 48%;
+  width: var(--bbm-todo-col-kurztext-width, 48%);
+  padding-left: var(--bbm-todo-col-kurztext-padding-inline, 1mm);
+  padding-right: var(--bbm-todo-col-kurztext-padding-inline, 1mm);
+  font-size: var(--bbm-todo-col-kurztext-font-size, inherit);
 }
 
 .todoTable th:nth-child(3),
 .todoTable td:nth-child(3) {
-  width: 18%;
+  width: var(--bbm-todo-col-status-width, 18%);
+  padding-left: var(--bbm-todo-col-status-padding-inline, 1mm);
+  padding-right: var(--bbm-todo-col-status-padding-inline, 1mm);
+  font-size: var(--bbm-todo-col-status-font-size, inherit);
 }
 
 .todoTable th:nth-child(4),
 .todoTable td:nth-child(4) {
-  width: 14%;
+  width: var(--bbm-todo-col-fertig_bis-width, 14%);
+  padding-left: var(--bbm-todo-col-fertig_bis-padding-inline, 1mm);
+  padding-right: var(--bbm-todo-col-fertig_bis-padding-inline, 1mm);
+  font-size: var(--bbm-todo-col-fertig_bis-font-size, inherit);
   white-space: nowrap;
 }
 
 .todoTable th:nth-child(5),
 .todoTable td:nth-child(5) {
-  width: 8%;
+  width: var(--bbm-todo-col-ampel-width, 8%);
+  padding-left: var(--bbm-todo-col-ampel-padding-inline, 1mm);
+  padding-right: var(--bbm-todo-col-ampel-padding-inline, 1mm);
+  font-size: var(--bbm-todo-col-ampel-font-size, inherit);
   text-align: center;
 }
 

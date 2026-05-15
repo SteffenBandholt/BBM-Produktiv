@@ -1795,6 +1795,20 @@ async function handleInit(payload) {
     app.innerHTML = "";
     app.appendChild(root);
 
+    // Ensure stored ToDo table layout is applied to the print root (PDF + preview),
+    // so width/inset/font settings take effect for the real output.
+    if (typeof window?.bbmPrint?.tableLayoutsGetOne === "function") {
+      try {
+        const resTodo = await window.bbmPrint.tableLayoutsGetOne({
+          tableKey: "print.todo.todoTable",
+          moduleId: "protokoll",
+          orientation,
+        });
+        const todoLayout = resTodo?.ok ? resTodo?.data?.effectiveLayout || resTodo?.data?.defaultLayout || null : null;
+        if (todoLayout) _applyTodoVarsFromLayout(root, todoLayout);
+      } catch (_e) {}
+    }
+
     if (isDevLayoutPreview) {
       // DEV-only: ensure the participants layout is loaded and applied so save/load works
       // even when the print payload did not include tableLayouts for this table yet.
@@ -2714,6 +2728,17 @@ function _applyParticipantsNameVarsFromLayout(root, layout) {
     if (fontPt != null) {
       root.style.setProperty(`--bbm-part-col-${_participantsVarPrefix(zone)}-font-size`, `${_formatMm(fontPt)}pt`);
     }
+  }
+}
+
+function _applyTodoVarsFromLayout(root, layout) {
+  if (!root?.style) return;
+  const rootVars = layout?.pdf?.rootVars || {};
+  if (!rootVars || typeof rootVars !== "object") return;
+  for (const [key, value] of Object.entries(rootVars)) {
+    if (!key || typeof key !== "string") continue;
+    if (value == null) continue;
+    root.style.setProperty(key, String(value));
   }
 }
 

@@ -2,6 +2,9 @@
 
 :root {
   --bbm-tops-doc-width: 940px;
+  --bbm-tops-list-number-col: 64px;
+  /* UI TOP-Liste: Metaspalte soll am rechten Rand stehen und Werte voll sichtbar halten. */
+  --bbm-tops-list-meta-col: 25mm;
   --bbm-tops-meta-col-min: 70px;
   --bbm-tops-meta-col-max: 90px;
   --bbm-tops-accent-green: #1b8f3a;
@@ -10,8 +13,9 @@
   --bbm-top-long-font-size: 9.5pt;
   --bbm-top-text-line-height: 1.35;
   --bbm-top-text-pad-x: 5px;
-  --bbm-top-short-measure: 72ch;
-  --bbm-top-long-measure: 77ch;
+  /* UI: Gegenstandsspalte wirkt breiter, ohne Grid/Meta/PDF zu aendern. */
+  --bbm-top-short-measure: 97ch;
+  --bbm-top-long-measure: 102ch;
   --bbm-top-long-edit-measure: 65ch;
   --bbm-top-short-input-measure: 62ch;
 }
@@ -224,6 +228,12 @@
 [data-bbm-tops-list-v2="true"] {
   margin: 0;
   padding: 10px 0 12px;
+  /* Ensure the meta column stays as the right-most grid column in the normal UI list. */
+  --bbm-tops-list-grid-columns: var(--bbm-tops-list-number-col, 64px) minmax(0, 1fr)
+    minmax(var(--bbm-tops-list-meta-col, 25mm), 40mm);
+  /* Ensure the list uses the full available paper width so the meta column can "stick" to the right edge. */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .bbm-tops-list-row {
@@ -234,6 +244,8 @@
   border: 1px solid #dfe7f1;
   cursor: pointer;
   background: #fff;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .bbm-tops-list-row[data-top-level="1"] {
@@ -287,9 +299,13 @@
 
 .bbm-tops-list-row-grid {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) minmax(35px, 55px);
+  /* Keep legacy TOP list row as a stable 3-column grid (number | flexible text | meta). */
+  grid-template-columns: var(--bbm-tops-list-number-col, 64px) minmax(0, 1fr)
+    minmax(50px, var(--bbm-tops-list-meta-col, 74px));
   gap: 8px;
   align-items: start;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .bbm-tops-list-row-number {
@@ -334,7 +350,7 @@
 
 .bbm-tops-list-row-preview {
   margin-top: 4px;
-  font-size: var(--bbm-top-long-font-size);
+  font-size: var(--bbm-top-short-font-size);
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
   max-inline-size: var(--bbm-top-long-measure);
@@ -362,7 +378,9 @@
   gap: 2px;
   min-width: 0;
   width: 100%;
-  transform: translateX(-4mm);
+  justify-self: stretch;
+  transform: none;
+  justify-items: end;
 }
 
 .bbm-tops-list-row-meta-line {
@@ -377,6 +395,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Align meta values to the right edge of the meta column. */
+.bbm-tops-list-row-meta-text {
+  text-align: right;
 }
 
 .bbm-tops-list-row-ampel {
@@ -805,7 +828,8 @@
   opacity: 0.72;
 }
 
-@media (max-width: 900px) {
+/* Keep meta column on the right for normal window sizes; only collapse on very small widths. */
+@media (max-width: 640px) {
   .bbm-tops-header-meta-legend {
     display: none !important;
   }

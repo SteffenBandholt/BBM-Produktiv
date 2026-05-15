@@ -222,6 +222,7 @@ export default class TopsScreen {
       onLayoutZoneClick: (zoneKey) => this._setDevLayoutZone(zoneKey),
     });
     this.sheetPaper.appendChild(this.topsList.root);
+    this._bindTableLayoutChangeListener();
     void this._loadTopListLayout();
   }
 
@@ -646,6 +647,13 @@ export default class TopsScreen {
     this._topRulesOverlay = null;
   }
 
+  destroy() {
+    if (this._onTableLayoutChanged && typeof window?.removeEventListener === "function") {
+      window.removeEventListener("bbm:tableLayoutChanged", this._onTableLayoutChanged);
+    }
+    this._onTableLayoutChanged = null;
+  }
+
   _syncListState() {
     if (!(this.topsList instanceof TopsList)) return;
     this.topsList.setItems(
@@ -657,6 +665,19 @@ export default class TopsScreen {
 
   _getTopListLayoutApi() {
     return globalThis.window?.bbmDb || null;
+  }
+
+  _bindTableLayoutChangeListener() {
+    if (typeof window === "undefined" || !window?.addEventListener) return;
+    if (this._onTableLayoutChanged) return;
+    this._onTableLayoutChanged = (evt) => {
+      const d = evt?.detail || {};
+      if (String(d.moduleId || "") !== "protokoll") return;
+      if (String(d.tableKey || "") !== "protokoll_tops") return;
+      if (String(d.orientation || "portrait") !== "portrait") return;
+      void this._loadTopListLayout();
+    };
+    window.addEventListener("bbm:tableLayoutChanged", this._onTableLayoutChanged);
   }
 
   _applyTopListLayout(layout) {
