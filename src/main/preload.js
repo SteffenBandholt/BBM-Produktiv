@@ -193,6 +193,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
   dictionaryListTerms: () => ipcRenderer.invoke("dictionary:listTerms"),
   dictionarySetTermActive: (data) => ipcRenderer.invoke("dictionary:setTermActive", data),
   dictionaryDeleteTerm: (data) => ipcRenderer.invoke("dictionary:deleteTerm", data),
+  dictionaryListEntries: (data) => ipcRenderer.invoke("dictionary:listEntries", data),
+  dictionaryCreateEntry: (data) => ipcRenderer.invoke("dictionary:createEntry", data),
+  dictionaryUpdateEntry: (data) => ipcRenderer.invoke("dictionary:updateEntry", data),
+  dictionarySetEntryActive: (data) => ipcRenderer.invoke("dictionary:setEntryActive", data),
+  dictionaryDeleteEntry: (data) => ipcRenderer.invoke("dictionary:deleteEntry", data),
+  dictionaryApplyToText: (data) => ipcRenderer.invoke("dictionary:applyToText", data),
 
   dbDiagnosticsGet: () => ipcRenderer.invoke("db:diagnostics"),
   dbLegacyImport: () => ipcRenderer.invoke("db:legacyImport"),

@@ -18,6 +18,7 @@ const {
 const { createMeetingMappingService } = require("../services/audio/MeetingMappingService");
 const { createSuggestionApplyService } = require("../services/audio/SuggestionApplyService");
 const { createWhisperCppEngine } = require("../services/audio/engines/WhisperCppEngine");
+const { createDictionaryService } = require("../services/dictionary/DictionaryService");
 const {
   LICENSE_FEATURES,
   toLicenseErrorPayload,
@@ -26,6 +27,7 @@ const { requireFeature } = require("../licensing/licenseService");
 const { isDevAudioSuggestionsEnabled } = require("../licensing/featureGuard");
 
 const DEV_AUDIO_DICTATION_UNLOCK_KEY = "dev.audioDictationUnlock";
+const dictionaryService = createDictionaryService();
 
 const AUDIO_FILE_FILTER = [
   {
@@ -241,7 +243,42 @@ function registerAudioIpc() {
       });
 
       const result = await transcriptionService.transcribe({ audioImportId: audioImport.id });
-      return { ok: true, audioImport, ...result };
+      const rawTranscriptText =
+        result?.transcript?.full_text ??
+        result?.transcript?.fullText ??
+        result?.full_text ??
+        result?.fullText ??
+        result?.transcriptText ??
+        result?.text ??
+        "";
+      const dictionaryResult = dictionaryService.applyCorrectionsToText(rawTranscriptText);
+      let transcript = result?.transcript || null;
+
+      if (dictionaryResult.appliedCount > 0 && transcript) {
+        transcript = transcriptsRepo.upsertTranscript({
+          audioImportId: audioImport.id,
+          engine: transcript.engine || result?.engine || "whisper.cpp",
+          language: transcript.language || result?.language || null,
+          fullText: dictionaryResult.text,
+          segmentsJson: transcript.segments_json || result?.segmentsJson || "[]",
+        });
+      }
+
+      const summaryText = `Wörterbuch: ${dictionaryResult.appliedCount} Korrekturen angewendet`;
+      return {
+        ok: true,
+        audioImport,
+        ...result,
+        transcript,
+        rawTranscriptText,
+        transcriptText: dictionaryResult.text,
+        dictionary: {
+          summaryText,
+          appliedCount: dictionaryResult.appliedCount,
+          applied: dictionaryResult.applied,
+          canUndo: dictionaryResult.appliedCount > 0,
+        },
+      };
     } catch (err) {
       return _toAudioErrorPayload(err);
     }

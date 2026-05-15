@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Das globale FachwÃ¶rterbuch V1 fuer das Diktat ist jetzt technisch angebunden:
+  - globale `dictionary_entries`-Tabelle, Dictionary-Service und IPC-/Preload-Bruecken sind vorhanden
+  - `term` und `correction` sind getrennt modelliert, Kategorie bleibt fest `Bau`
+  - Diktat nutzt jetzt die globale Korrekturpipeline und bietet Undo nur fuer den letzten Diktatblock
+  - der alte Projekt-Prompt zur Korrektur-Ãœbernahme ist aus dem aktiven Flow entfernt
+  - geprueft mit den neuen Dictionary-Tests; der volle `npm test`-Lauf haengt weiter am bekannten `better-sqlite3`-Native-Mismatch
 - layoutTools-Grundmodul ist als DEV-only Basis nutzbar und dokumentiert:
   - Pilot 1: TOP-Liste (UI/PDF) inkl. Zonen, live/persist/reset, UI/PDF getrennt
   - Pilot 2: Teilnehmerliste (PDF) inkl. Zonen, live/persist/reset (inkl. Anwesend/Verteiler "x")

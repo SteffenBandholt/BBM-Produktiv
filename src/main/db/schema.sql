@@ -166,3 +166,16 @@ CREATE TABLE IF NOT EXISTS dictionary_terms (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
+
+CREATE TABLE IF NOT EXISTS dictionary_entries (
+  id TEXT PRIMARY KEY,
+  entry_type TEXT NOT NULL CHECK (entry_type IN ('term', 'correction')),
+  wrong_text TEXT,
+  correct_text TEXT,
+  term_text TEXT,
+  category TEXT NOT NULL DEFAULT 'Bau',
+  source TEXT NOT NULL DEFAULT 'user' CHECK (source IN ('base', 'user')),
+  active INTEGER NOT NULL DEFAULT 1,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
+);
