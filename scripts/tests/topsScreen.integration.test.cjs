@@ -1238,7 +1238,7 @@ async function runTopsScreenIntegrationTests(run) {
     }
   });
 
-  await run("Tops v2 Integration: Kurztext-Laenge ist fuer Level 2-4 in der UI auf 82ch gesetzt", () => {
+  await run("Tops v2 Integration: Kurztext-Laenge ist fuer Level 2-4 in der UI auf 107ch gesetzt", () => {
     const topsCss = fs.readFileSync(
       path.join(__dirname, "../../src/renderer/modules/protokoll/styles/tops.css"),
       "utf8"
@@ -1260,14 +1260,14 @@ async function runTopsScreenIntegrationTests(run) {
       true
     );
     assert.equal(
-      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-preview {\n  font-size: var(--bbm-top-short-font-size);\n  max-inline-size: 82ch;"),
+      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-preview {\n  font-size: var(--bbm-top-short-font-size);\n  max-inline-size: 107ch;"),
       true
     );
     assert.equal(
       topsCss.includes(".bbm-tops-workbench-editbox:not([data-top-level=\"1\"]) .editbox-textarea"),
       true
     );
-    assert.equal(topsCss.includes("82ch"), true);
+    assert.equal(topsCss.includes("107ch"), true);
   });
 
   await run("Tops v2 Integration: ToDo- und Beschluss-Symbole folgen dem Draft in der Metazeile", () => {
