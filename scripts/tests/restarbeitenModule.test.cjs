@@ -502,26 +502,26 @@ async function runRestarbeitenModuleTests(run) {
         const handlers = {};
         mod.registerRestarbeitenIpc({ ipcMain: { handle: (name, fn) => { handlers[name] = fn; } } });
         const result = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
-        assert.equal(result.ok, true);
-        assert.equal(result.canceled, false);
-        assert.equal(repoState.added.length, 3);
-        assert.match(String(repoState.added[0].file_path), /Restarbeiten[\/]Fotos/);
+        assert.equal(result.ok, true, result.error || JSON.stringify(result));
+        assert.equal(result.canceled, false, JSON.stringify(result));
+        assert.equal(repoState.added.length, 3, JSON.stringify(repoState.added));
+        assert.match(String(repoState.added[0]?.file_path || ""), /Restarbeiten[\/]Fotos/, JSON.stringify(repoState.added[0] || {}));
 
         repoState.attachments = [{ id: "1" }, { id: "2" }];
         repoState.added = [];
         const resultLimited = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
-        assert.equal(resultLimited.ok, true);
-        assert.equal(repoState.added.length, 1);
+        assert.equal(resultLimited.ok, true, resultLimited.error || JSON.stringify(resultLimited));
+        assert.equal(repoState.added.length, 1, JSON.stringify(repoState.added));
 
         stubs.electron.dialog.showOpenDialog = async () => ({ canceled: true, filePaths: [] });
         const canceled = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
-        assert.equal(canceled.ok, true);
-        assert.equal(canceled.canceled, true);
+        assert.equal(canceled.ok, true, canceled.error || JSON.stringify(canceled));
+        assert.equal(canceled.canceled, true, JSON.stringify(canceled));
 
         repoState.attachments = [{ id: "1" }, { id: "2" }, { id: "3" }];
         const rejected = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
-        assert.equal(rejected.ok, false);
-        assert.match(String(rejected.error || ""), /Maximal 3 Fotos/);
+        assert.equal(rejected.ok, false, JSON.stringify(rejected));
+        assert.match(String(rejected.error || ""), /Maximal 3 Fotos/, JSON.stringify(rejected));
       });
     } finally {
       fs.mkdirSync = prev.mkdirSync;
