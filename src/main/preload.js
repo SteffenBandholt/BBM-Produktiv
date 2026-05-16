@@ -247,6 +247,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   restarbeitenListAttachments: (data) => ipcRenderer.invoke("restarbeiten:listAttachments", data),
   restarbeitenSetPrimaryAttachment: (data) => ipcRenderer.invoke("restarbeiten:setPrimaryAttachment", data),
   restarbeitenImportAttachments: (data) => ipcRenderer.invoke("restarbeiten:importAttachments", data),
+  restarbeitenDeleteAttachment: (data) => ipcRenderer.invoke("restarbeiten:deleteAttachment", data),
 });
 
 contextBridge.exposeInMainWorld("bbmPrint", {

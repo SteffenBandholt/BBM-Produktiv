@@ -5,6 +5,8 @@ import {
   listResponsibleProjectFirms,
   listRestarbeitAttachments,
   setPrimaryRestarbeitAttachment,
+  importRestarbeitAttachments,
+  deleteRestarbeitAttachment,
   updateRestarbeitItem,
 } from "../data/restarbeitenDataSource.js";
 import { toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
@@ -195,6 +197,20 @@ export default class RestarbeitenScreen {
             this.editbox?.setStatus(result?.canceled ? "Fotoimport abgebrochen." : "Fotos importiert.");
           } catch (_error) {
             this.editbox?.setStatus("Fotos konnten nicht importiert werden.");
+          }
+        },
+        onDeleteAttachment: async (attachmentId) => {
+          const selectedItem = this._getSelectedItem();
+          if (!selectedItem?.id) return;
+          try {
+            const result = await deleteRestarbeitAttachment(selectedItem.id, attachmentId);
+            const attachments = Array.isArray(result?.attachments) ? result.attachments : [];
+            this.attachmentsByItemId.set(String(selectedItem.id), attachments);
+            this.editbox?.setAttachments(attachments);
+            this.editbox?.setItem(selectedItem);
+            this.editbox?.setStatus(result?.warning ? `Foto entfernt. Hinweis: ${result.warning}` : "Foto entfernt.");
+          } catch (_error) {
+            this.editbox?.setStatus("Foto konnte nicht entfernt werden.");
           }
         },
       });

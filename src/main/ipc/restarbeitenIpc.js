@@ -202,6 +202,39 @@ function registerRestarbeitenIpc({ ipcMain }) {
     }
   });
 
+  ipcMain.handle("restarbeiten:deleteAttachment", async (_event, payload) => {
+    try {
+      const source = payload && typeof payload === "object" ? payload : {};
+      const restarbeitId = normalizeRestarbeitId(source);
+      const attachmentId = normalizeAttachmentId(source);
+      if (!restarbeitId) throw new Error("restarbeitId erforderlich");
+      if (!attachmentId) throw new Error("attachmentId erforderlich");
+
+      const deleted = repo.deleteRestarbeitAttachment(restarbeitId, attachmentId);
+      const warnings = [];
+
+      for (const filePath of [deleted?.file_path, deleted?.thumbnail_path]) {
+        const normalized = String(filePath || "").trim();
+        if (!normalized) continue;
+        try {
+          fs.rmSync(normalized, { force: true });
+        } catch (error) {
+          warnings.push(`Datei konnte nicht entfernt werden (${normalized}): ${error?.message || "Unbekannter Fehler"}`);
+        }
+      }
+
+      const attachments = repo.listRestarbeitAttachments(restarbeitId);
+      return {
+        ok: true,
+        attachments: Array.isArray(attachments) ? attachments : [],
+        ...(warnings.length ? { warning: warnings.join(" | ") } : {}),
+      };
+    } catch (error) {
+      return { ok: false, error: error?.message || "Attachment konnte nicht entfernt werden." };
+    }
+  });
+
+
   ipcMain.handle("restarbeiten:setPrimaryAttachment", async (_event, payload) => {
     try {
       const source = payload && typeof payload === "object" ? payload : {};

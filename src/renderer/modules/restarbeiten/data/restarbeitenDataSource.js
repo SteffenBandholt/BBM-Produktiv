@@ -144,3 +144,19 @@ export async function importRestarbeitAttachments(restarbeitId, projectId) {
     attachments: Array.isArray(response.attachments) ? response.attachments : [],
   };
 }
+
+export async function deleteRestarbeitAttachment(restarbeitId, attachmentId) {
+  const bbmDb = requireBbmDb();
+  if (typeof bbmDb.restarbeitenDeleteAttachment !== "function") {
+    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenDeleteAttachment fehlt.");
+  }
+  const rid = extractRestarbeitId(restarbeitId);
+  const aid = extractAttachmentId(attachmentId);
+  const response = await bbmDb.restarbeitenDeleteAttachment({ restarbeitId: rid, attachmentId: aid });
+  if (!response || typeof response !== "object") throw new Error("Restarbeiten-attachments-delete: ungueltige IPC-Antwort.");
+  if (response.ok !== true) throw new Error(response.error || "Foto konnte nicht entfernt werden.");
+  return {
+    attachments: Array.isArray(response.attachments) ? response.attachments : [],
+    warning: typeof response.warning === "string" && response.warning.trim() ? response.warning.trim() : null,
+  };
+}

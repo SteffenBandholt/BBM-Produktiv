@@ -244,6 +244,49 @@ function setPrimaryRestarbeitAttachment(restarbeitId, attachmentId) {
   tx();
 }
 
+
+function deleteRestarbeitAttachment(restarbeitId, attachmentId) {
+  const db = initDatabase();
+  const rid = reqText(restarbeitId, "restarbeitId");
+  const aid = reqText(attachmentId, "attachmentId");
+
+  const attachment = db.prepare(`
+    SELECT * FROM restarbeiten_attachments
+    WHERE id = ? AND restarbeit_id = ?
+  `).get(aid, rid);
+  if (!attachment) throw new Error("attachment not found");
+
+  const filePath = toText(attachment.file_path);
+  const thumbnailPath = toText(attachment.thumbnail_path);
+  const wasPrimary = Number(attachment.is_primary) === 1 || attachment.is_primary === true;
+  const now = new Date().toISOString();
+
+  const tx = db.transaction(() => {
+    db.prepare(`DELETE FROM restarbeiten_attachments WHERE id = ? AND restarbeit_id = ?`).run(aid, rid);
+
+    if (wasPrimary) {
+      const next = db.prepare(`
+        SELECT id FROM restarbeiten_attachments
+        WHERE restarbeit_id = ?
+        ORDER BY sort_order ASC, created_at ASC
+        LIMIT 1
+      `).get(rid);
+
+      if (next?.id) {
+        db.prepare(`UPDATE restarbeiten_attachments SET is_primary = 1, updated_at = ? WHERE id = ?`).run(now, next.id);
+      }
+    }
+  });
+
+  tx();
+
+  return {
+    deleted: true,
+    attachment,
+    file_path: filePath,
+    thumbnail_path: thumbnailPath,
+  };
+}
 function listRestarbeitAttachments(restarbeitId) {
   const db = initDatabase();
   const rid = reqText(restarbeitId, "restarbeitId");
@@ -263,4 +306,5 @@ module.exports = {
   addRestarbeitAttachment,
   setPrimaryRestarbeitAttachment,
   listRestarbeitAttachments,
+  deleteRestarbeitAttachment,
 };
