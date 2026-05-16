@@ -321,7 +321,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(ipc, /restarbeiten:setPrimaryAttachment/);
     assert.match(preload, /restarbeitenListAttachments/);
     assert.match(preload, /restarbeitenSetPrimaryAttachment/);
-    assert.doesNotMatch(ipc, /restarbeiten:deleteAttachment|restarbeiten:uploadAttachment|image/i);
+    assert.doesNotMatch(ipc, /restarbeiten:deleteAttachment|restarbeiten:uploadAttachment|deleteAttachment|uploadAttachment|thumbnail|imageProcessing/i);
   });
 
   await run("M7 DataSource: Attachments-Liste/Primary und Bridge-Fehler", async () => {
@@ -456,6 +456,80 @@ async function runRestarbeitenModuleTests(run) {
 
 
 
+
+  await run("M8 Main-IPC: Import-Handler begrenzt, bricht ab und speichert in Restarbeiten/Fotos", async () => {
+    const repoState = { attachments: [], added: [] };
+    const stubs = {
+      electron: {
+        app: { getPath: () => "/downloads" },
+        dialog: {
+          async showOpenDialog() {
+            return {
+              canceled: false,
+              filePaths: ["/tmp/a.jpg", "/tmp/b.png", "/tmp/c.webp"],
+            };
+          },
+        },
+      },
+      restarbeitenRepo: {
+        listRestarbeitItems: () => [],
+        getRestarbeitProjectSettings: () => ({}),
+        createRestarbeitItem: () => ({}),
+        updateRestarbeitItem: () => ({}),
+        setPrimaryRestarbeitAttachment: () => true,
+        listRestarbeitAttachments: () => repoState.attachments,
+        addRestarbeitAttachment: (payload) => {
+          repoState.added.push(payload);
+          repoState.attachments = [...repoState.attachments, { id: String(repoState.attachments.length + 1), ...payload }];
+          return repoState.attachments[repoState.attachments.length - 1];
+        },
+      },
+    };
+
+    const prev = {
+      mkdirSync: fs.mkdirSync,
+      copyFileSync: fs.copyFileSync,
+      statSync: fs.statSync,
+      existsSync: fs.existsSync,
+    };
+    fs.mkdirSync = () => true;
+    fs.copyFileSync = () => true;
+    fs.statSync = () => ({ size: 11 });
+    fs.existsSync = () => false;
+
+    try {
+      await withPatchedRestarbeitenIpc(stubs, async (mod) => {
+        const handlers = {};
+        mod.registerRestarbeitenIpc({ ipcMain: { handle: (name, fn) => { handlers[name] = fn; } } });
+        const result = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
+        assert.equal(result.ok, true);
+        assert.equal(result.canceled, false);
+        assert.equal(repoState.added.length, 3);
+        assert.match(String(repoState.added[0].file_path), /Restarbeiten[\/]Fotos/);
+
+        repoState.attachments = [{ id: "1" }, { id: "2" }];
+        repoState.added = [];
+        const resultLimited = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
+        assert.equal(resultLimited.ok, true);
+        assert.equal(repoState.added.length, 1);
+
+        stubs.electron.dialog.showOpenDialog = async () => ({ canceled: true, filePaths: [] });
+        const canceled = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
+        assert.equal(canceled.ok, true);
+        assert.equal(canceled.canceled, true);
+
+        repoState.attachments = [{ id: "1" }, { id: "2" }, { id: "3" }];
+        const rejected = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
+        assert.equal(rejected.ok, false);
+        assert.match(String(rejected.error || ""), /Maximal 3 Fotos/);
+      });
+    } finally {
+      fs.mkdirSync = prev.mkdirSync;
+      fs.copyFileSync = prev.copyFileSync;
+      fs.statSync = prev.statSync;
+      fs.existsSync = prev.existsSync;
+    }
+  });
   await run("M8 IPC/Preload: Import-Endpunkte vorhanden ohne Delete/Image-Processing", () => {
     const ipc = fs.readFileSync(path.join(__dirname, "../../src/main/ipc/restarbeitenIpc.js"), "utf8");
     const preload = fs.readFileSync(path.join(__dirname, "../../src/main/preload.js"), "utf8");

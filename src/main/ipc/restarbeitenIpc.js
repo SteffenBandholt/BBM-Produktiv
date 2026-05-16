@@ -2,7 +2,7 @@ const { dialog, app } = require("electron");
 const fs = require("node:fs");
 const path = require("node:path");
 const repo = require("../db/restarbeitenRepo");
-const { resolveProjectFolderName, sanitizeDirName } = require("./projectStoragePaths");
+const { resolveProjectFolderName, sanitizeDirName, buildStoragePreviewPaths } = require("./projectStoragePaths");
 
 function normalizeProjectId(payload) {
   if (payload && typeof payload === "object") {
@@ -44,10 +44,19 @@ function sanitizeBaseFileName(name) {
   return sanitizeDirName(raw).replace(/\s+/g, "_");
 }
 
-function resolveRestarbeitenPhotosDir(projectId) {
-  const baseDir = String(app.getPath("downloads") || "").trim();
-  const projectFolder = resolveProjectFolderName({ project_number: projectId, short: `Projekt-${projectId}` });
-  return path.join(baseDir, "bbm", projectFolder, "Restarbeiten", "Fotos");
+function resolveRestarbeitenPhotosDir(payload = {}) {
+  const source = payload && typeof payload === "object" ? payload : {};
+  const projectId = normalizeProjectId(source);
+  const baseDir = String(source.baseDir || app.getPath("downloads") || "").trim();
+  const project = source.project && typeof source.project === "object" ? source.project : {};
+  const fallbackProject = {
+    project_number: projectId || project.project_number || project.projectNumber || project.number || "",
+    short: project.short || project.name || (projectId ? `Projekt-${projectId}` : "Projekt"),
+    name: project.name || "",
+  };
+  const storage = buildStoragePreviewPaths({ baseDir, project: { ...project, ...fallbackProject } });
+  const projectBaseDir = path.dirname(storage.protocolsDir);
+  return path.join(projectBaseDir, "Restarbeiten", "Fotos");
 }
 
 function uniqueDestinationFilePath(targetDir, fileName) {
@@ -161,7 +170,7 @@ function registerRestarbeitenIpc({ ipcMain }) {
       const capacity = Math.max(0, Math.min(3, maxFiles) - existingAttachments.length);
       const selected = Array.isArray(result?.filePaths) ? result.filePaths.slice(0, capacity) : [];
 
-      const targetDir = resolveRestarbeitenPhotosDir(projectId);
+      const targetDir = resolveRestarbeitenPhotosDir(source);
       fs.mkdirSync(targetDir, { recursive: true });
 
       const now = Date.now();
@@ -207,4 +216,4 @@ function registerRestarbeitenIpc({ ipcMain }) {
 
 }
 
-module.exports = { registerRestarbeitenIpc };
+module.exports = { registerRestarbeitenIpc, resolveRestarbeitenPhotosDir, detectMimeType };
