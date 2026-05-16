@@ -1,3 +1,5 @@
+import RestarbeitenAttachmentsView from "./RestarbeitenAttachmentsView.js";
+
 function normalizeText(value) {
   return String(value ?? "").trim();
 }
@@ -57,7 +59,7 @@ function normalizeFirmEntries(list) {
 }
 
 export default class RestarbeitenEditbox {
-  constructor({ documentRef = globalThis.document, onSave = null } = {}) {
+  constructor({ documentRef = globalThis.document, onSave = null, onSetPrimaryAttachment = null } = {}) {
     this.document = documentRef || globalThis.document;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.root = null;
@@ -67,6 +69,9 @@ export default class RestarbeitenEditbox {
     this.currentItem = null;
     this.projectFirms = [];
     this.fields = {};
+    this.attachments = [];
+    this.attachmentsView = null;
+    this.onSetPrimaryAttachment = typeof onSetPrimaryAttachment === "function" ? onSetPrimaryAttachment : null;
   }
 
   render() {
@@ -128,6 +133,25 @@ export default class RestarbeitenEditbox {
       createField(doc, "responsible_project_firm_id", responsibleProjectFirmId)
     );
 
+
+    const attachmentsHost = doc.createElement("div");
+    attachmentsHost.style.display = "grid";
+    attachmentsHost.style.gap = "8px";
+
+    const attachmentsTitle = doc.createElement("div");
+    attachmentsTitle.textContent = "Fotos";
+    attachmentsTitle.style.fontSize = "12px";
+    attachmentsTitle.style.fontWeight = "700";
+
+    this.attachmentsView = new RestarbeitenAttachmentsView({
+      documentRef: doc,
+      onSetPrimary: (attachmentId) => {
+        if (this.onSetPrimaryAttachment) this.onSetPrimaryAttachment(attachmentId);
+      },
+    });
+
+    attachmentsHost.append(attachmentsTitle, this.attachmentsView.render());
+
     const footer = doc.createElement("div");
     footer.style.display = "flex";
     footer.style.alignItems = "center";
@@ -147,7 +171,7 @@ export default class RestarbeitenEditbox {
     statusEl.style.opacity = "0.8";
 
     footer.append(saveBtn, statusEl);
-    form.append(footer);
+    form.append(attachmentsHost, footer);
     root.append(title, subtitle, form);
 
     form.addEventListener("submit", async (event) => {
@@ -174,6 +198,7 @@ export default class RestarbeitenEditbox {
       responsible_project_firm_id: responsibleProjectFirmId,
     };
 
+    this.setAttachments([]);
     this.setItem(null);
     return root;
   }
@@ -203,6 +228,11 @@ export default class RestarbeitenEditbox {
       select.appendChild(legacy);
       select.value = targetId;
     }
+  }
+
+  setAttachments(attachments) {
+    this.attachments = Array.isArray(attachments) ? attachments : [];
+    if (this.attachmentsView) this.attachmentsView.setAttachments(this.attachments);
   }
 
   setStatus(text) {

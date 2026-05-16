@@ -8,6 +8,24 @@ function normalizeProjectId(payload) {
   return String(payload ?? "").trim();
 }
 
+
+
+function normalizeRestarbeitId(payload) {
+  if (payload && typeof payload === "object") {
+    const candidate = payload.restarbeitId ?? payload.restarbeit_id ?? payload.id;
+    return String(candidate ?? "").trim();
+  }
+  return String(payload ?? "").trim();
+}
+
+function normalizeAttachmentId(payload) {
+  if (payload && typeof payload === "object") {
+    const candidate = payload.attachmentId ?? payload.attachment_id ?? payload.id;
+    return String(candidate ?? "").trim();
+  }
+  return String(payload ?? "").trim();
+}
+
 function toBool(value, fallback = false) {
   if (value == null) return fallback;
   if (typeof value === "boolean") return value;
@@ -69,6 +87,32 @@ function registerRestarbeitenIpc({ ipcMain }) {
       return { ok: false, error: error?.message || "Restarbeit konnte nicht gespeichert werden." };
     }
   });
+
+  ipcMain.handle("restarbeiten:listAttachments", async (_event, payload) => {
+    try {
+      const restarbeitId = normalizeRestarbeitId(payload);
+      if (!restarbeitId) throw new Error("restarbeitId erforderlich");
+      const attachments = repo.listRestarbeitAttachments(restarbeitId);
+      return { ok: true, attachments: Array.isArray(attachments) ? attachments : [] };
+    } catch (error) {
+      return { ok: false, error: error?.message || "Attachments konnten nicht geladen werden." };
+    }
+  });
+
+  ipcMain.handle("restarbeiten:setPrimaryAttachment", async (_event, payload) => {
+    try {
+      const source = payload && typeof payload === "object" ? payload : {};
+      const restarbeitId = normalizeRestarbeitId(source);
+      const attachmentId = normalizeAttachmentId(source);
+      if (!restarbeitId) throw new Error("restarbeitId erforderlich");
+      if (!attachmentId) throw new Error("attachmentId erforderlich");
+      repo.setPrimaryRestarbeitAttachment(restarbeitId, attachmentId);
+      return { ok: true };
+    } catch (error) {
+      return { ok: false, error: error?.message || "Hauptfoto konnte nicht gesetzt werden." };
+    }
+  });
+
 }
 
 module.exports = { registerRestarbeitenIpc };
