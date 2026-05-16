@@ -18,6 +18,14 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 
+- M15 Restarbeiten-UI wurde strukturell auf TopsScreen-Shell umgestellt:
+  - Header mit vier Verortungsfiltern (projektbezogene Labels + Fallback Ebene 1-4)
+  - Sheet/Canvas/Paper + Edit-Canvas als feste Screen-Bereiche per data-Attributen
+  - Hauptliste als kompakte ul/li-Zeilen (kein table) mit einklappbarem Fotobereich
+  - UI-Filterung auf location_level_1..4 (Option Alle, kombinierbar, nur Anzeige)
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`
+
+
 - M14 Restarbeiten-Arbeitsblatt-UI wurde auf das Zielbild angehoben:
   - zentrierte Blattflaeche mit klarer Listen-/Arbeitsstruktur
   - Header mit Schliessen, + Restarbeit, Verortung und Metaspalten
