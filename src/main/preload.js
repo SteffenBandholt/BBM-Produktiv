@@ -242,6 +242,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   restarbeitenListByProject: (data) => ipcRenderer.invoke("restarbeiten:listByProject", data),
   restarbeitenGetProjectSettings: (data) => ipcRenderer.invoke("restarbeiten:getProjectSettings", data),
+  restarbeitenCreateItem: (data) => ipcRenderer.invoke("restarbeiten:createItem", data),
+  restarbeitenUpdateItem: (data) => ipcRenderer.invoke("restarbeiten:updateItem", data),
 });
 
 contextBridge.exposeInMainWorld("bbmPrint", {

@@ -1990,3 +1990,8 @@ Wichtig:
   - DEV- und Produktivsichtung im laufenden App-Kontext mit vorhandenem und optional userseitig abgelegtem Whisper-Modell.
 - Risiken/Hinweise:
   - `npm test` ist in dieser Umgebung weiterhin durch das bereits bekannte `better-sqlite3`-Native-Modul blockiert; die Audio-Subtests selbst laufen gruen.
+- Restarbeiten M5 ist jetzt umgesetzt:
+  - Restarbeiten koennen neu angelegt, ausgewaehlt und in einer Editbox-Grundform bearbeitet werden
+  - Speichern laedt die Liste erneut und haelt die Auswahl konsistent
+  - Foto-/Diktat-/Druck-/Mail-/Loesch- und Archivpfade bleiben ausserhalb dieses Pakets
+  - `npm test` laeuft gruen

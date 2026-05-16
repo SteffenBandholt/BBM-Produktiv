@@ -251,3 +251,9 @@ Dabei gilt:
 - Restarbeiten laden im Projektkontext über IPC (`restarbeiten:listByProject`, `restarbeiten:getProjectSettings`).
 - Renderer zeigt erste einfache Listenstruktur mit den Hauptspalten Nr./Datum, Verortung, Restarbeit, Status.
 - Bearbeitung, Editbox, Fotos, Druck, Mail und Diktat folgen in späteren Schritten.
+### M5 Restarbeiten anlegen, auswaehlen und Editbox-Grundform speichern (neu)
+- Restarbeiten koennen jetzt ueber IPC und Datasource neu angelegt und aktualisiert werden.
+- Der Screen zeigt eine auswaehlbare Liste, markiert die Auswahl und blendet die Editbox erst bei Auswahl ein.
+- Die Editbox-Grundform deckt `item_class`, `status`, Verortung, Kurz-/Langtext, Faelligkeitsdatum und Verantwortlichen-Label ab.
+- Speichern laedt die Liste erneut und haelt die Auswahl konsistent.
+- Foto-/Diktat-/Druck-/Mail-/Loesch- und Archivpfade bleiben weiterhin ausserhalb dieses Pakets.

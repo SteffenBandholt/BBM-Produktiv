@@ -35,6 +35,26 @@ function normalizeRestarbeitItemClass(value) {
   return ALLOWED_ITEM_CLASSES.has(normalized) ? normalized : "rest";
 }
 
+function buildRestarbeitUpdatePatch(patch = {}) {
+  const out = {};
+
+  if (patch.location_level_1 !== undefined) out.location_level_1 = toText(patch.location_level_1);
+  if (patch.location_level_2 !== undefined) out.location_level_2 = toText(patch.location_level_2);
+  if (patch.location_level_3 !== undefined) out.location_level_3 = toText(patch.location_level_3);
+  if (patch.location_level_4 !== undefined) out.location_level_4 = toText(patch.location_level_4);
+  if (patch.short_text !== undefined) out.short_text = toText(patch.short_text) || "";
+  if (patch.long_text !== undefined) out.long_text = toText(patch.long_text) || "";
+  if (patch.item_class !== undefined) out.item_class = normalizeRestarbeitItemClass(patch.item_class);
+  if (patch.status !== undefined) out.status = normalizeStatus(patch.status);
+  if (patch.due_date !== undefined) out.due_date = toText(patch.due_date);
+  if (patch.responsible_project_firm_id !== undefined) {
+    out.responsible_project_firm_id = toText(patch.responsible_project_firm_id);
+  }
+  if (patch.responsible_label !== undefined) out.responsible_label = toText(patch.responsible_label);
+
+  return out;
+}
+
 function ensureRestarbeitProjectSettings(projectId) {
   const db = initDatabase();
   const pid = reqText(projectId, "projectId");
@@ -52,40 +72,48 @@ function getRestarbeitProjectSettings(projectId) {
   return db.prepare(`SELECT * FROM restarbeiten_project_settings WHERE project_id = ?`).get(pid);
 }
 
-function createRestarbeitItem(payload = {}) {
+function createRestarbeitItem(projectIdOrPayload = {}, payload = {}) {
   const db = initDatabase();
-  const pid = reqText(payload.project_id, "project_id");
+  const sourcePayload =
+    projectIdOrPayload && typeof projectIdOrPayload === "object" && !Array.isArray(projectIdOrPayload)
+      ? projectIdOrPayload
+      : payload;
+  const pidCandidate =
+    typeof projectIdOrPayload === "string" || typeof projectIdOrPayload === "number"
+      ? projectIdOrPayload
+      : sourcePayload.project_id ?? sourcePayload.projectId;
+  const pid = reqText(pidCandidate, "project_id");
   const now = new Date().toISOString();
   const nextRunning = db
     .prepare(`SELECT COALESCE(MAX(running_number), 0) + 1 AS next_no FROM restarbeiten_items WHERE project_id = ?`)
     .get(pid)?.next_no;
-  const runningNumber = Number.isInteger(payload.running_number) && payload.running_number > 0
-    ? payload.running_number
+  const runningNumber = Number.isInteger(sourcePayload.running_number) && sourcePayload.running_number > 0
+    ? sourcePayload.running_number
     : nextRunning;
 
-  const id = toText(payload.id) || crypto.randomUUID();
-  const sortOrder = Number.isFinite(Number(payload.sort_order)) ? Number(payload.sort_order) : 0;
+  const id = toText(sourcePayload.id) || crypto.randomUUID();
+  const sortOrder = Number.isFinite(Number(sourcePayload.sort_order)) ? Number(sourcePayload.sort_order) : 0;
   const data = {
     id,
     project_id: pid,
     running_number: runningNumber,
     sort_order: sortOrder,
-    location_level_1: toText(payload.location_level_1),
-    location_level_2: toText(payload.location_level_2),
-    location_level_3: toText(payload.location_level_3),
-    location_level_4: toText(payload.location_level_4),
-    short_text: toText(payload.short_text) || "",
-    long_text: toText(payload.long_text) || "",
-    item_class: normalizeRestarbeitItemClass(payload.item_class),
-    status: normalizeStatus(payload.status),
-    due_date: toText(payload.due_date),
-    responsible_project_firm_id: toText(payload.responsible_project_firm_id),
-    responsible_label: toText(payload.responsible_label),
-    source: toText(payload.source) || "desktop",
-    import_batch_id: toText(payload.import_batch_id),
-    archived_at: toText(payload.archived_at),
-    completed_at: toText(payload.completed_at),
-    verified_at: toText(payload.verified_at),
+    location_level_1: toText(sourcePayload.location_level_1),
+    location_level_2: toText(sourcePayload.location_level_2),
+    location_level_3: toText(sourcePayload.location_level_3),
+    location_level_4: toText(sourcePayload.location_level_4),
+    short_text: toText(sourcePayload.short_text) || "",
+    long_text: toText(sourcePayload.long_text) || "",
+    item_class: normalizeRestarbeitItemClass(sourcePayload.item_class),
+    status: normalizeStatus(sourcePayload.status),
+    due_date: toText(sourcePayload.due_date),
+    responsible_project_firm_id: toText(sourcePayload.responsible_project_firm_id),
+    responsible_label: toText(sourcePayload.responsible_label),
+    source: toText(sourcePayload.source) || "desktop",
+    import_batch_id: toText(sourcePayload.import_batch_id),
+    archived_at: toText(sourcePayload.archived_at),
+    completed_at: toText(sourcePayload.completed_at),
+    verified_at: toText(sourcePayload.verified_at),
     created_at: now,
     updated_at: now,
   };
@@ -106,6 +134,31 @@ function createRestarbeitItem(payload = {}) {
     )
   `).run(data);
   return db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(id);
+}
+
+function updateRestarbeitItem(id, patch = {}) {
+  const db = initDatabase();
+  const rid = reqText(id, "id");
+  const data = buildRestarbeitUpdatePatch(patch);
+  const keys = Object.keys(data);
+  if (!keys.length) {
+    return db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(rid);
+  }
+
+  const setClause = keys.map((key) => `${key} = @${key}`).join(", ");
+  const now = new Date().toISOString();
+  db.prepare(`
+    UPDATE restarbeiten_items
+    SET ${setClause},
+        updated_at = @updated_at
+    WHERE id = @id
+  `).run({
+    id: rid,
+    updated_at: now,
+    ...data,
+  });
+
+  return db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(rid);
 }
 
 function listRestarbeitItems(projectId, { includeArchived = false } = {}) {
@@ -196,6 +249,7 @@ module.exports = {
   ensureRestarbeitProjectSettings,
   getRestarbeitProjectSettings,
   createRestarbeitItem,
+  updateRestarbeitItem,
   listRestarbeitItems,
   addRestarbeitAttachment,
   setPrimaryRestarbeitAttachment,

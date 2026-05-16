@@ -22,6 +22,20 @@ async function callAndNormalize(callFn, payload, entityName) {
   return response;
 }
 
+function buildCreatePayload(projectId, payload = {}) {
+  const pid = extractProjectId(projectId);
+  const out = { ...payload, projectId: pid };
+  delete out.project_id;
+  delete out.id;
+  return out;
+}
+
+function buildUpdatePayload(id, patch = {}) {
+  const rid = String(id ?? "").trim();
+  if (!rid) throw new Error("Restarbeiten-Datenzugriff: id fehlt.");
+  return { id: rid, patch: { ...patch } };
+}
+
 export async function listRestarbeitenByProject(projectId) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenListByProject !== "function") {
@@ -40,4 +54,26 @@ export async function getRestarbeitenProjectSettings(projectId) {
   const pid = extractProjectId(projectId);
   const response = await callAndNormalize(bbmDb.restarbeitenGetProjectSettings, { projectId: pid }, "settings");
   return response.settings && typeof response.settings === "object" ? response.settings : {};
+}
+
+export async function createRestarbeitItem(projectId, payload = {}) {
+  const bbmDb = requireBbmDb();
+  if (typeof bbmDb.restarbeitenCreateItem !== "function") {
+    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenCreateItem fehlt.");
+  }
+  const response = await callAndNormalize(
+    bbmDb.restarbeitenCreateItem,
+    buildCreatePayload(projectId, payload),
+    "create"
+  );
+  return response.item && typeof response.item === "object" ? response.item : null;
+}
+
+export async function updateRestarbeitItem(id, patch = {}) {
+  const bbmDb = requireBbmDb();
+  if (typeof bbmDb.restarbeitenUpdateItem !== "function") {
+    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenUpdateItem fehlt.");
+  }
+  const response = await callAndNormalize(bbmDb.restarbeitenUpdateItem, buildUpdatePayload(id, patch), "update");
+  return response.item && typeof response.item === "object" ? response.item : null;
 }

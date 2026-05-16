@@ -41,6 +41,34 @@ function registerRestarbeitenIpc({ ipcMain }) {
       return { ok: false, error: error?.message || "Restarbeiten-Einstellungen konnten nicht geladen werden." };
     }
   });
+
+  ipcMain.handle("restarbeiten:createItem", async (_event, payload) => {
+    try {
+      const projectId = normalizeProjectId(payload);
+      if (!projectId) throw new Error("projectId erforderlich");
+      const data = payload && typeof payload === "object" ? { ...payload } : {};
+      delete data.projectId;
+      delete data.project_id;
+      delete data.id;
+      const item = repo.createRestarbeitItem(projectId, data);
+      return { ok: true, item };
+    } catch (error) {
+      return { ok: false, error: error?.message || "Restarbeit konnte nicht angelegt werden." };
+    }
+  });
+
+  ipcMain.handle("restarbeiten:updateItem", async (_event, payload) => {
+    try {
+      const source = payload && typeof payload === "object" ? payload : {};
+      const id = String(source.id ?? source.restarbeitId ?? source.restarbeit_id ?? "").trim();
+      if (!id) throw new Error("id erforderlich");
+      const patch = source.patch && typeof source.patch === "object" ? source.patch : source;
+      const item = repo.updateRestarbeitItem(id, patch);
+      return { ok: true, item };
+    } catch (error) {
+      return { ok: false, error: error?.message || "Restarbeit konnte nicht gespeichert werden." };
+    }
+  });
 }
 
 module.exports = { registerRestarbeitenIpc };
