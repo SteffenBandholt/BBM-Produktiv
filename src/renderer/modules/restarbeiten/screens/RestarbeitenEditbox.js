@@ -194,7 +194,7 @@ export default class RestarbeitenEditbox {
     }
 
     const fallbackId = normalizeText(this.currentItem?.responsible_project_firm_id);
-    const targetId = selectedBefore || fallbackId;
+    const targetId = fallbackId || selectedBefore;
     select.value = targetId;
     if (targetId && select.value !== targetId) {
       const legacy = this.document.createElement("option");
