@@ -18,6 +18,14 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 
+- M14 Restarbeiten-Arbeitsblatt-UI wurde auf das Zielbild angehoben:
+  - zentrierte Blattflaeche mit klarer Listen-/Arbeitsstruktur
+  - Header mit Schliessen, + Restarbeit, Verortung und Metaspalten
+  - Verortung als vier Ebenen (L1-L4) nebeneinander
+  - pro Datensatz einklappbare Fotozeile vorbereitet (inkl. Expand/Collapse-Status)
+  - Editbox bleibt unterhalb der Arbeitsblattliste
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`
+
 - Hotfix M13.2: Die reale Runtime-Projektmodulliste liefert jetzt `Restarbeiten` fuer die Projektkachel; der Kachelpfad zeigt damit zur Laufzeit `Protokoll`, `Restarbeiten`, `Edit` (ohne `projectFirms`) und oeffnet `Restarbeiten` ueber `openProjectModule(...)`.
 
 - M11 Restarbeiten-Fotoanzeige ist stabilisiert:

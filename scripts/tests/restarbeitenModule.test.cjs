@@ -240,22 +240,69 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(ipc, /restarbeiten:deleteItem/);
   });
 
-  await run("M4 Screen-Grenzen: sync render, load-Methode, 4 Spalten, kein innerHTML-Datenbau", () => {
+  await run("M14 Screen-UI: Header, Blattstruktur, Verortung 1-4, Fotos einklappbar, Editbox unten", () => {
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+    const stylePath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenListStyle.js");
     const content = fs.readFileSync(screenPath, "utf8");
+    const styleContent = fs.readFileSync(stylePath, "utf8");
 
     assert.doesNotMatch(content, /async\s+render\s*\(/);
     assert.match(content, /render\s*\(/);
     assert.match(content, /async\s+load\s*\(/);
+    assert.match(content, /Schließen/);
     assert.match(content, /\+ Restarbeit/);
+    assert.match(content, /Verortung/);
+    assert.match(content, /Metaspalten/);
     assert.match(content, /Restarbeiten werden geladen/);
     assert.match(content, /Restarbeiten vorhanden/);
     assert.match(content, /Nr\. \/ Datum/);
     assert.match(content, /Verortung/);
     assert.match(content, /Restarbeit/);
     assert.match(content, /Status/);
+    assert.match(content, /restarbeiten-sheet/);
+    assert.match(content, /restarbeiten-list__locationLevel--1/);
+    assert.match(content, /restarbeiten-list__locationLevel--2/);
+    assert.match(content, /restarbeiten-list__locationLevel--3/);
+    assert.match(content, /restarbeiten-list__locationLevel--4/);
+    assert.match(content, /restarbeiten-list__attachmentsRow/);
+    assert.match(content, /restarbeiten-list__photosToggle/);
+    assert.match(content, /dataset\.expanded/);
     assert.doesNotMatch(content, /tr\.innerHTML|innerHTML\s*=\s*\[/);
     assert.doesNotMatch(content, /Diktat|Druck|Mail|Loeschen|Archivieren/);
+    assert.match(styleContent, /restarbeiten-sheet__list/);
+  });
+
+  await run("M14 Smoke: RestarbeitenScreen import + render ohne ReferenceError", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    assert.equal(typeof mod.default, "function");
+    const RestarbeitenScreen = mod.default;
+
+    const prevWindow = globalThis.window;
+    const prevDocument = globalThis.document;
+    globalThis.window = { bbmDb: {} };
+    globalThis.document = createFakeDocument();
+
+    try {
+      const screen = new RestarbeitenScreen({
+        projectId: "p-1",
+        router: { async showProjectWorkspace() { return true; } },
+      });
+      const root = screen.render();
+      assert.equal(typeof root, "object");
+      assert.match(String(root.className || ""), /restarbeiten-sheet/);
+      assert.equal(String(screen.listHost?.className || "").includes("restarbeiten-sheet__list"), true);
+
+      const allText = collectText(root);
+      assert.equal(allText.includes("Schließen"), true);
+      assert.equal(allText.includes("+ Restarbeit"), true);
+      assert.equal(allText.includes("Verortung"), true);
+      assert.equal(allText.includes("Metaspalten"), true);
+    } finally {
+      globalThis.window = prevWindow;
+      globalThis.document = prevDocument;
+    }
   });
 
   await run("M5 Repo/IPC/Preload/DataSource: Create und Update sind verdrahtet", async () => {

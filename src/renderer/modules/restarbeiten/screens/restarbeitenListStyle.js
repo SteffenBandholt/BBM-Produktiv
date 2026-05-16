@@ -2,7 +2,22 @@ const STYLE_ID = "restarbeiten-list-style";
 
 const CSS_TEXT = `
 .restarbeiten-list {
-  display: block;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.restarbeiten-sheet__list,
+.restarbeiten-list > :first-child,
+.restarbeiten-list > :last-child {
+  width: min(100%, 980px);
+}
+
+.restarbeiten-sheet__list {
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: 10px;
 }
 
 .restarbeiten-list__table {
@@ -15,6 +30,15 @@ const CSS_TEXT = `
   vertical-align: top;
   text-align: left;
   padding: 6px 8px;
+}
+.restarbeiten-list__photosToggle,
+.restarbeiten-list__filterBtn {
+  margin-top: 4px;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--card-border, #cfcfcf);
+  background: #fff;
 }
 
 .restarbeiten-list__row {
@@ -41,6 +65,15 @@ const CSS_TEXT = `
   opacity: 0.85;
   font-size: 12px;
 }
+.restarbeiten-list__locationCell {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.restarbeiten-list__locationLevel {
+  font-size: 12px;
+  opacity: 0.9;
+}
 
 .restarbeiten-list__meta {
   display: grid;
@@ -61,6 +94,27 @@ const CSS_TEXT = `
 .restarbeiten-list__ampel--orange { background: #f0a000; }
 .restarbeiten-list__ampel--gruen { background: #1b8a3a; }
 .restarbeiten-list__ampel--neutral { background: #8a8a8a; }
+
+.restarbeiten-list__attachmentsRow td {
+  padding-top: 0;
+  padding-bottom: 10px;
+}
+.restarbeiten-list__attachmentsWrap {
+  border-top: 1px dashed #d8d8d8;
+  padding-top: 6px;
+}
+.restarbeiten-list__attachmentsStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.restarbeiten-list__attachmentThumb {
+  font-size: 11px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 2px 6px;
+}
 `;
 
 export function ensureRestarbeitenListStyle(documentRef = globalThis.document) {
