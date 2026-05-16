@@ -182,9 +182,11 @@ async function runProjektverwaltungModuleTests(run) {
       ProjectWorkspaceScreen,
     },
     { resolveModuleScreenFromEntry },
+    { getActiveProjectModuleNavigation },
   ] = await Promise.all([
     importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/projektverwaltung/index.js")),
     importEsmFromFile(path.join(__dirname, "../../src/renderer/app/modules/moduleEntryScreenResolver.js")),
+    importEsmFromFile(path.join(__dirname, "../../src/renderer/app/modules/moduleNavigation.js")),
   ]);
 
   const moduleCatalogSource = read("src/renderer/app/modules/moduleCatalog.js");
@@ -561,6 +563,15 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
+  await run("Projektverwaltung: Runtime-Projektmodulliste enthaelt Restarbeiten", async () => {
+    const projectNavigation = getActiveProjectModuleNavigation();
+    const moduleIds = projectNavigation.map((entry) => String(entry?.moduleId || "").trim());
+
+    assert.equal(moduleIds.includes("protokoll"), true);
+    assert.equal(moduleIds.includes("restarbeiten"), true);
+    assert.equal(moduleIds.filter((moduleId) => moduleId === "restarbeiten").length, 1);
+  });
+
   await run("Projektverwaltung: Projektkarte rendert rechte Modul-Aktionsleiste und stoppt Bubble", async () => {
     const previousDocument = global.document;
     const fakeDocument = createFakeDocumentWithBubbling();
@@ -573,16 +584,11 @@ async function runProjektverwaltungModuleTests(run) {
         currentMeetingId: null,
         _getProjectWorkspaceModules() {
           return [
-            {
-              moduleId: "protokoll",
-              label: "Protokoll",
-              description: "Protokoll im aktuellen Projekt öffnen.",
-            },
-            {
-              moduleId: "restarbeiten",
-              label: "Restarbeiten",
-              description: "Restarbeiten im aktuellen Projekt öffnen.",
-            },
+            ...getActiveProjectModuleNavigation().map((entry) => ({
+              moduleId: String(entry?.moduleId || "").trim(),
+              label: String(entry?.label || "").trim(),
+              description: String(entry?.description || "").trim(),
+            })),
             {
               moduleId: "projectFirms",
               label: "Firmen im Projekt",
