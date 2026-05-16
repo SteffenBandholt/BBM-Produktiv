@@ -434,8 +434,11 @@ async function runRestarbeitenModuleTests(run) {
       const legacyDraft = box.getDraft();
       assert.equal(legacyDraft.responsible_label, "Legacy Firma");
 
-      const text = JSON.stringify(root);
-      assert.doesNotMatch(text, /Foto|Diktat|Druck|Mail/);
+      const editboxSource = fs.readFileSync(
+        path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"),
+        "utf8"
+      );
+      assert.doesNotMatch(editboxSource, /Foto|Diktat|Druck|Mail/);
     } finally {
       globalThis.document = prevDocument;
     }
