@@ -30,6 +30,23 @@ function setCachedActiveModuleIds(moduleIds, source = "license") {
   return cachedActiveModuleIds;
 }
 
+async function isPackagedRuntime() {
+  const root = typeof window !== "undefined" ? window : globalThis;
+  const api = root?.bbmDb || {};
+
+  if (typeof api.appIsPackaged !== "function") {
+    return null;
+  }
+
+  try {
+    const res = await api.appIsPackaged();
+    if (!res?.ok) return null;
+    return !!res?.isPackaged;
+  } catch (_err) {
+    return null;
+  }
+}
+
 export function getCachedActiveModuleIds() {
   return cachedActiveModuleIds;
 }
@@ -51,6 +68,11 @@ export function isModuleActive(moduleId) {
 export async function refreshCachedActiveModuleAccess({ force = false } = {}) {
   if (!force && cachedActiveModulePromise) {
     return await cachedActiveModulePromise;
+  }
+
+  const packagedRuntime = await isPackagedRuntime();
+  if (packagedRuntime === false) {
+    return setCachedActiveModuleIds(DEFAULT_ACTIVE_MODULE_IDS, "dev");
   }
 
   const root = typeof window !== "undefined" ? window : globalThis;
