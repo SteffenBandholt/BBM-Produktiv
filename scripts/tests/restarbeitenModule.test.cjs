@@ -258,14 +258,10 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /async\s+load\s*\(/);
     assert.match(content, /Schließen/);
     assert.match(content, /\+ Restarbeit/);
-    assert.match(content, /Verortung/);
     assert.match(content, /Metaspalten/);
-    assert.match(content, /Restarbeiten werden geladen/);
-    assert.match(content, /Restarbeiten vorhanden/);
-    assert.match(content, /Nr\. \/ Datum/);
-    assert.match(content, /Verortung/);
-    assert.match(content, /Restarbeit/);
-    assert.match(content, /Status/);
+    assert.match(content, /location_level_1/);
+    assert.match(content, /location_level_4/);
+    assert.match(content, /Keine Restarbeiten für die aktuellen Filter/);
     assert.match(content, /data-bbm-restarbeiten-screen/);
     assert.match(content, /restarbeiten-header__filters/);
     assert.match(content, /restarbeiten-list__attachmentsWrap/);
@@ -425,8 +421,8 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(root.children.length >= 3, true);
       await screen.load();
 
-      assert.equal(screen.listHost.children[0].tagName, "TABLE");
-      const row = screen.listHost.children[0].children[1].children[0];
+      assert.equal(screen.listHost.children[0].tagName, "UL");
+      const row = screen.listHost.children[0].children[0];
       row.dispatchEvent({ type: "click" });
       assert.equal(screen.selectedItemId, "r-1");
       assert.equal(screen.editbox.fields.short_text.value, "Alt");
@@ -524,12 +520,12 @@ async function runRestarbeitenModuleTests(run) {
       screen.render();
       await screen.load();
 
-      const row = screen.listHost.children[0].children[1].children[0];
+      const row = screen.listHost.children[0].children[0];
       row.dispatchEvent({ type: "click" });
       await new Promise((resolve) => setTimeout(resolve, 0));
 
       assert.equal(screen.selectedItemId, "r-1");
-      assert.equal(screen.listHost.children[0].tagName, "TABLE");
+      assert.equal(screen.listHost.children[0].tagName, "UL");
       assert.equal(screen.editbox?.statusEl?.textContent, "Fotos konnten nicht geladen werden.");
     } finally {
       globalThis.window = prevWindow;
@@ -601,6 +597,7 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(Boolean(addButton), true);
       assert.equal(addButton.disabled, true);
       assert.equal(Boolean(findButtonByText(screen.headerHost, "Schließen")), true);
+      const allText = collectText(root);
       assert.equal(allText.includes("Alle"), true);
       assert.equal(Boolean(findButtonByText(screen.headerHost, "Metaspalten")), true);
 
@@ -898,7 +895,7 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(screen.projectFirms.length, 1);
       assert.equal(screen.editbox.projectFirms[0].id, "f1");
 
-      const row = screen.listHost.children[0].children[1].children[0];
+      const row = screen.listHost.children[0].children[0];
       row.dispatchEvent({ type: "click" });
       screen.editbox.fields.responsible_project_firm_id.value = "f1";
       await screen.editbox.onSave(screen.editbox.getDraft());
