@@ -23,6 +23,21 @@ function withPatchedRestarbeitenIpc(stubs, fn) {
   }
 }
 
+function collectText(node) {
+  const ownText = String(node?.textContent || "");
+  const children = Array.isArray(node?.children) ? node.children : [];
+  return [ownText, ...children.map((child) => collectText(child))].join(" ");
+}
+
+function findNodes(node, predicate, acc = []) {
+  if (!node || typeof node !== "object") return acc;
+  if (predicate(node)) acc.push(node);
+  for (const child of Array.isArray(node?.children) ? node.children : []) {
+    findNodes(child, predicate, acc);
+  }
+  return acc;
+}
+
 function createFakeDocument() {
   const createNode = (tag, doc) => {
     const node = {
@@ -137,6 +152,73 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(await screen.openProjectModule("restarbeiten"), true);
     const restCall = calls.find((c) => c.type === "module" && c.moduleId === "restarbeiten");
     assert.equal(restCall.options.project.id, "22");
+  });
+
+
+
+  await run("ProjectWorkspaceScreen: Restarbeiten-Kachel ist sichtbar, startet korrekt und bleibt eindeutig", async () => {
+    const routerCalls = [];
+    const screen = new workspaceModule.default({
+      router: {
+        currentProjectId: "22",
+        async openProjectModule(projectId, moduleId, options) {
+          routerCalls.push({ projectId, moduleId, options });
+          return { ok: true };
+        },
+        async showProjectFirms(projectId) {
+          routerCalls.push({ projectId, moduleId: "projectFirms" });
+          return true;
+        },
+      },
+      projectId: "22",
+      project: { id: "22", name: "Test" },
+      projectModules: [
+        { moduleId: "protokoll", label: "Protokoll", description: "Protokoll im aktuellen Projekt öffnen." },
+        { moduleId: "restarbeiten", label: "Restarbeiten", description: "Restarbeiten und Mängel im Projekt verwalten" },
+        { moduleId: "projectFirms", label: "Firmen im Projekt", description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen." },
+      ],
+    });
+
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const root = screen.render();
+      const allText = collectText(root);
+      assert.equal(allText.includes("Restarbeiten"), true);
+
+      const restButtons = findNodes(
+        root,
+        (node) => node?.tagName === "BUTTON" && node?.textContent === "Restarbeiten"
+      );
+      const protokollButtons = findNodes(
+        root,
+        (node) => node?.tagName === "BUTTON" && node?.textContent === "Protokoll"
+      );
+      const projectFirmsButtons = findNodes(
+        root,
+        (node) => node?.tagName === "BUTTON" && node?.textContent === "Firmen im Projekt"
+      );
+
+      assert.equal(restButtons.length, 1);
+      assert.equal(protokollButtons.length, 1);
+      assert.equal(projectFirmsButtons.length, 1);
+
+      restButtons[0].click();
+      protokollButtons[0].click();
+      projectFirmsButtons[0].click();
+
+      const restCall = routerCalls.find((entry) => entry.moduleId === "restarbeiten");
+      assert.deepEqual(restCall, {
+        projectId: "22",
+        moduleId: "restarbeiten",
+        options: { project: { id: "22", name: "Test" } },
+      });
+      assert.equal(routerCalls.filter((entry) => entry.moduleId === "restarbeiten").length, 1);
+      assert.equal(routerCalls.some((entry) => entry.moduleId === "protokoll"), true);
+      assert.equal(routerCalls.some((entry) => entry.moduleId === "projectFirms"), true);
+    } finally {
+      globalThis.document = prevDocument;
+    }
   });
 
   await run("M4 IPC/Preload: Restarbeiten-Lesewege vorhanden, keine Schreibwege", () => {

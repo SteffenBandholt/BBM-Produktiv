@@ -2009,3 +2009,8 @@ Wichtig:
   - Status-Metaspalte mit Klasse, Status, Fertig bis, Verantwortlich und Ampel (inkl. testbarem data-ampel).
   - modulnahe Style-Injektion fuer Restarbeiten-Liste hinzugefuegt.
 - Naechster offener Schritt: fachliche Sichtpruefung der M12-Listenoptik im UI.
+
+- M13 Restarbeiten-Startbutton ist umgesetzt:
+  - Projekt-Arbeitsbereich zeigt jetzt auch `Restarbeiten`, wenn das Modul freigeschaltet ist
+  - der Button startet ueber den vorhandenen Projektmodulpfad (`openProjectModule`)
+  - Protokoll- und Projektfirmen-Einstieg bleiben unveraendert
