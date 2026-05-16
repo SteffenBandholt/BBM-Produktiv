@@ -23,6 +23,21 @@ function withPatchedRestarbeitenIpc(stubs, fn) {
   }
 }
 
+function collectText(node) {
+  const ownText = String(node?.textContent || "");
+  const children = Array.isArray(node?.children) ? node.children : [];
+  return [ownText, ...children.map((child) => collectText(child))].join(" ");
+}
+
+function findNodes(node, predicate, acc = []) {
+  if (!node || typeof node !== "object") return acc;
+  if (predicate(node)) acc.push(node);
+  for (const child of Array.isArray(node?.children) ? node.children : []) {
+    findNodes(child, predicate, acc);
+  }
+  return acc;
+}
+
 function createFakeDocument() {
   const createNode = (tag, doc) => {
     const node = {
@@ -168,21 +183,29 @@ async function runRestarbeitenModuleTests(run) {
     globalThis.document = createFakeDocument();
     try {
       const root = screen.render();
-      const text = JSON.stringify(root);
-      assert.equal(text.includes("Restarbeiten"), true);
-      assert.equal((text.match(/Restarbeiten/g) || []).length >= 2, true);
-      assert.equal((text.match(/\"moduleId\":\"restarbeiten\"/g) || []).length <= 1, true);
+      const allText = collectText(root);
+      assert.equal(allText.includes("Restarbeiten"), true);
 
-      const grid = root.children.find((child) => child?.style?.display === "grid");
-      const restTile = grid.children.find((tile) => tile.children?.[0]?.textContent === "Restarbeiten");
-      const restButton = restTile.children.find((child) => child.tagName === "BUTTON");
-      restButton.click();
+      const restButtons = findNodes(
+        root,
+        (node) => node?.tagName === "BUTTON" && node?.textContent === "Restarbeiten"
+      );
+      const protokollButtons = findNodes(
+        root,
+        (node) => node?.tagName === "BUTTON" && node?.textContent === "Protokoll"
+      );
+      const projectFirmsButtons = findNodes(
+        root,
+        (node) => node?.tagName === "BUTTON" && node?.textContent === "Firmen im Projekt"
+      );
 
-      const protocolTile = grid.children.find((tile) => tile.children?.[0]?.textContent === "Protokoll");
-      protocolTile.children.find((child) => child.tagName === "BUTTON").click();
+      assert.equal(restButtons.length, 1);
+      assert.equal(protokollButtons.length, 1);
+      assert.equal(projectFirmsButtons.length, 1);
 
-      const firmsTile = grid.children.find((tile) => tile.children?.[0]?.textContent === "Firmen im Projekt");
-      firmsTile.children.find((child) => child.tagName === "BUTTON").click();
+      restButtons[0].click();
+      protokollButtons[0].click();
+      projectFirmsButtons[0].click();
 
       const restCall = routerCalls.find((entry) => entry.moduleId === "restarbeiten");
       assert.deepEqual(restCall, {
