@@ -263,3 +263,7 @@ Dabei gilt:
 - Beim Speichern werden `responsible_project_firm_id` und `responsible_label` gemeinsam gesetzt; bestehende Label-Fallbacks bleiben erhalten.
 - Liste zeigt weiterhin `responsible_label` in der Status-Metaspalte.
 - Fotos, Diktat, Druck, Mail, Filter und Smartphone-Import bleiben fuer spaetere Schritte offen.
+
+### M7 Restarbeiten-Attachments anzeigen und Hauptfoto markieren (neu)
+- Restarbeiten-Attachments koennen geladen, in der Editbox angezeigt und als Hauptfoto markiert werden.
+- Dateiimport, Projektordner-Kopie, Bildzuschnitt und Thumbnail-Erzeugung folgen in spaeteren Schritten.

@@ -172,7 +172,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /Restarbeit/);
     assert.match(content, /Status/);
     assert.doesNotMatch(content, /tr\.innerHTML|innerHTML\s*=\s*\[/);
-    assert.doesNotMatch(content, /Diktat|Foto|Druck|Mail|Loeschen|Archivieren/);
+    assert.doesNotMatch(content, /Diktat|Druck|Mail|Loeschen|Archivieren/);
   });
 
   await run("M5 Repo/IPC/Preload/DataSource: Create und Update sind verdrahtet", async () => {
@@ -262,6 +262,8 @@ async function runRestarbeitenModuleTests(run) {
           if (target) Object.assign(target, payload.patch || {});
           return { ok: true, item: { id: payload.id, ...payload.patch } };
         },
+        restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
+        restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
         projectFirmsListByProject: async () => ({
           ok: true,
           list: [
@@ -309,6 +311,110 @@ async function runRestarbeitenModuleTests(run) {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
     }
+  });
+
+
+  await run("M7 IPC/Preload: Attachment-Endpunkte vorhanden ohne Upload/Delete", () => {
+    const ipc = fs.readFileSync(path.join(__dirname, "../../src/main/ipc/restarbeitenIpc.js"), "utf8");
+    const preload = fs.readFileSync(path.join(__dirname, "../../src/main/preload.js"), "utf8");
+    assert.match(ipc, /restarbeiten:listAttachments/);
+    assert.match(ipc, /restarbeiten:setPrimaryAttachment/);
+    assert.match(preload, /restarbeitenListAttachments/);
+    assert.match(preload, /restarbeitenSetPrimaryAttachment/);
+    assert.doesNotMatch(ipc, /restarbeiten:deleteAttachment|restarbeiten:uploadAttachment|image/i);
+  });
+
+  await run("M7 DataSource: Attachments-Liste/Primary und Bridge-Fehler", async () => {
+    const repo = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js")
+    );
+    const prevWindow = globalThis.window;
+    const calls = [];
+    globalThis.window = {
+      bbmDb: {
+        restarbeitenListAttachments: async (payload) => {
+          calls.push({ type: "list", payload });
+          return { ok: true, attachments: [{ id: "a-1" }] };
+        },
+        restarbeitenSetPrimaryAttachment: async (payload) => {
+          calls.push({ type: "primary", payload });
+          return { ok: true };
+        },
+      },
+    };
+    try {
+      const list = await repo.listRestarbeitAttachments("r-1");
+      assert.equal(Array.isArray(list), true);
+      await repo.setPrimaryRestarbeitAttachment("r-1", "a-1");
+      assert.equal(calls[0].payload.restarbeitId, "r-1");
+      assert.equal(calls[1].payload.attachmentId, "a-1");
+    } finally {
+      globalThis.window = prevWindow;
+    }
+
+    globalThis.window = { bbmDb: {} };
+    try {
+      await assert.rejects(() => repo.listRestarbeitAttachments("r-1"), /restarbeitenListAttachments fehlt/);
+    } finally {
+      globalThis.window = prevWindow;
+    }
+  });
+
+
+
+
+  await run("M7 Screen: Attachment-Ladefehler bricht Screen nicht hart ab", async () => {
+    const prevWindow = globalThis.window;
+    const prevDocument = globalThis.document;
+    globalThis.window = {
+      bbmDb: {
+        restarbeitenGetProjectSettings: async () => ({ ok: true, settings: {} }),
+        restarbeitenListByProject: async () => ({
+          ok: true,
+          items: [{ id: "r-1", running_number: 1, created_at: "2026-05-16", status: "offen", short_text: "A" }],
+        }),
+        projectFirmsListByProject: async () => ({ ok: true, list: [] }),
+        restarbeitenListAttachments: async () => ({ ok: false, error: "kaputt" }),
+        restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
+      },
+    };
+    globalThis.document = createFakeDocument();
+
+    try {
+      const Screen = (
+        await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"))
+      ).default;
+      const screen = new Screen({ projectId: "p-1" });
+      screen.render();
+      await screen.load();
+
+      const row = screen.listHost.children[0].children[1].children[0];
+      row.dispatchEvent({ type: "click" });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      assert.equal(screen.selectedItemId, "r-1");
+      assert.equal(screen.listHost.children[0].tagName, "TABLE");
+      assert.equal(screen.editbox?.statusEl?.textContent, "Fotos konnten nicht geladen werden.");
+    } finally {
+      globalThis.window = prevWindow;
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("M7 View/Editbox/Screen: Attachment-Anzeige verdrahtet", () => {
+    const view = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenAttachmentsView.js"), "utf8");
+    const editbox = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"), "utf8");
+    const screen = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"), "utf8");
+
+    assert.match(view, /Noch keine Fotos vorhanden\./);
+    assert.match(view, /slice\(0, 3\)/);
+    assert.match(view, /Hauptfoto/);
+    assert.match(editbox, /setAttachments\(attachments\)/);
+    assert.match(editbox, /onSetPrimaryAttachment/);
+    assert.match(screen, /listRestarbeitAttachments/);
+    assert.match(screen, /setPrimaryRestarbeitAttachment/);
+    assert.doesNotMatch(screen, /innerHTML\s*=/);
+    assert.doesNotMatch(editbox + view + screen, /Foto-Hinzufuegen|Loeschen|Diktat|Druck|Mail/);
   });
 
   await run("M5 Screen: fehlender Projektkontext zeigt nur den Kontext-Hinweis", async () => {
@@ -438,7 +544,7 @@ async function runRestarbeitenModuleTests(run) {
         path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"),
         "utf8"
       );
-      assert.doesNotMatch(editboxSource, /Foto|Diktat|Druck|Mail/);
+      assert.doesNotMatch(editboxSource, /Diktat|Druck|Mail/);
     } finally {
       globalThis.document = prevDocument;
     }
@@ -456,6 +562,8 @@ async function runRestarbeitenModuleTests(run) {
       bbmDb: {
         restarbeitenGetProjectSettings: async () => ({ ok: true, settings: {} }),
         restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
+        restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
+        restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
         projectFirmsListByProject: async () => ({ ok: true, list: [{ id: "f1", name: "Firma A" }] }),
         restarbeitenCreateItem: async () => ({ ok: true, item: { id: "r-2" } }),
         restarbeitenUpdateItem: async (payload) => {

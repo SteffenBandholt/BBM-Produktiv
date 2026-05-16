@@ -88,3 +88,42 @@ export async function updateRestarbeitItem(id, patch = {}) {
   const response = await callAndNormalize(bbmDb.restarbeitenUpdateItem, buildUpdatePayload(id, patch), "update");
   return response.item && typeof response.item === "object" ? response.item : null;
 }
+
+
+function extractRestarbeitId(restarbeitId) {
+  const normalized = String(restarbeitId ?? "").trim();
+  if (!normalized) throw new Error("Restarbeiten-Datenzugriff: restarbeitId fehlt.");
+  return normalized;
+}
+
+function extractAttachmentId(attachmentId) {
+  const normalized = String(attachmentId ?? "").trim();
+  if (!normalized) throw new Error("Restarbeiten-Datenzugriff: attachmentId fehlt.");
+  return normalized;
+}
+
+
+export async function listRestarbeitAttachments(restarbeitId) {
+  const bbmDb = requireBbmDb();
+  if (typeof bbmDb.restarbeitenListAttachments !== "function") {
+    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenListAttachments fehlt.");
+  }
+  const rid = extractRestarbeitId(restarbeitId);
+  const response = await callAndNormalize(bbmDb.restarbeitenListAttachments, { restarbeitId: rid }, "attachments-liste");
+  return Array.isArray(response.attachments) ? response.attachments : [];
+}
+
+export async function setPrimaryRestarbeitAttachment(restarbeitId, attachmentId) {
+  const bbmDb = requireBbmDb();
+  if (typeof bbmDb.restarbeitenSetPrimaryAttachment !== "function") {
+    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenSetPrimaryAttachment fehlt.");
+  }
+  const rid = extractRestarbeitId(restarbeitId);
+  const aid = extractAttachmentId(attachmentId);
+  await callAndNormalize(
+    bbmDb.restarbeitenSetPrimaryAttachment,
+    { restarbeitId: rid, attachmentId: aid },
+    "attachments-hauptfoto"
+  );
+  return true;
+}

@@ -3,6 +3,8 @@ import {
   getRestarbeitenProjectSettings,
   listRestarbeitenByProject,
   listResponsibleProjectFirms,
+  listRestarbeitAttachments,
+  setPrimaryRestarbeitAttachment,
   updateRestarbeitItem,
 } from "../data/restarbeitenDataSource.js";
 import { toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
@@ -104,6 +106,7 @@ export default class RestarbeitenScreen {
     this.isLoading = false;
     this.editbox = null;
     this.projectFirms = [];
+    this.attachmentsByItemId = new Map();
   }
 
   _getSelectedItem() {
@@ -136,6 +139,7 @@ export default class RestarbeitenScreen {
         this._setSelectedItemId(itemId);
         this._renderList();
         this._renderEditbox();
+        this._loadSelectedAttachments().catch(() => {});
       })
     );
   }
@@ -173,13 +177,37 @@ export default class RestarbeitenScreen {
             this.editbox?.setSaving(false);
           }
         },
+        onSetPrimaryAttachment: async (attachmentId) => {
+          const selectedItem = this._getSelectedItem();
+          if (!selectedItem?.id) return;
+          await setPrimaryRestarbeitAttachment(selectedItem.id, attachmentId);
+          await this._loadSelectedAttachments();
+          this._renderEditbox();
+        },
       });
       this.editHost.replaceChildren(this.editbox.render());
     }
 
     this.editbox.setProjectFirms(this.projectFirms);
     this.editbox.setItem(selectedItem);
+    this.editbox.setAttachments(this.attachmentsByItemId.get(String(selectedItem.id)) || []);
     this.editbox.setStatus(selectedItem ? `Ausgewählt: #${selectedItem.running_number || selectedItem.id}` : "");
+  }
+
+  async _loadSelectedAttachments() {
+    const selectedItem = this._getSelectedItem();
+    if (!selectedItem?.id || !this.editbox) return;
+    const itemId = String(selectedItem.id);
+    try {
+      const attachments = await listRestarbeitAttachments(itemId);
+      this.attachmentsByItemId.set(itemId, Array.isArray(attachments) ? attachments : []);
+      this.editbox.setAttachments(this.attachmentsByItemId.get(itemId) || []);
+    } catch (_error) {
+      this.attachmentsByItemId.set(itemId, []);
+      this.editbox.setAttachments([]);
+      this.editbox.setStatus("Fotos konnten nicht geladen werden.");
+      throw _error;
+    }
   }
 
   async _createRestarbeit() {
@@ -270,6 +298,7 @@ export default class RestarbeitenScreen {
         listResponsibleProjectFirms(this.effectiveProjectId),
       ]);
       this.rows = Array.isArray(rows) ? rows : [];
+      this.attachmentsByItemId = new Map();
       this.projectFirms = Array.isArray(firms) ? firms : [];
       this.items = toRestarbeitenListItems(this.rows);
       const wantedId = normalizeText(selectItemId);
@@ -287,6 +316,7 @@ export default class RestarbeitenScreen {
       this.rows = [];
       this.items = [];
       this.projectFirms = [];
+      this.attachmentsByItemId = new Map();
       if (this.listHost) {
         this.listHost.replaceChildren(
           createMessage(
