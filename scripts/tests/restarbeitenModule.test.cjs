@@ -594,9 +594,9 @@ async function runRestarbeitenModuleTests(run) {
 
   await run("M11 View/CSS: Landscape-2-Spalten-Layout stabil und modulnah", () => {
     const viewPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenAttachmentsView.js");
-    const cssPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenAttachments.css");
+    const stylePath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenAttachmentsStyle.js");
     const view = fs.readFileSync(viewPath, "utf8");
-    const css = fs.readFileSync(cssPath, "utf8");
+    const styleCode = fs.readFileSync(stylePath, "utf8");
 
     assert.match(view, /restarbeiten-attachments__grid/);
     assert.match(view, /restarbeiten-attachments__primary/);
@@ -610,14 +610,16 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(view, /Hauptfoto/);
     assert.match(view, /caption\) \|\| normalizeText\(attachment\?\.file_name\) \|\| "Ohne Bezeichnung"/);
 
-    assert.match(css, /grid-template-columns:\s*minmax\(0, 2fr\)\s+minmax\(0, 1fr\)/);
-    assert.match(css, /aspect-ratio:\s*16 \/ 9/);
-    assert.match(css, /object-fit:\s*cover/);
+    assert.match(styleCode, /grid-template-columns:\s*minmax\(0, 2fr\)\s+minmax\(0, 1fr\)/);
+    assert.match(styleCode, /aspect-ratio:\s*16 \/ 9/);
+    assert.match(styleCode, /object-fit:\s*cover/);
+    assert.match(styleCode, /data-bbm-restarbeiten-attachments-style/);
+    assert.doesNotMatch(view, /import\s+["']\.\/restarbeitenAttachments\.css["']/);
 
-    assert.doesNotMatch(view + css, /gallery|lightbox/i);
-    assert.doesNotMatch(view + css, /thumbnail/i);
-    assert.doesNotMatch(view + css, /imageProcessing/i);
-    assert.doesNotMatch(view + css, /Diktat|Druck|Mail/);
+    assert.doesNotMatch(view + styleCode, /gallery|lightbox/i);
+    assert.doesNotMatch(view + styleCode, /thumbnail/i);
+    assert.doesNotMatch(view + styleCode, /imageProcessing/i);
+    assert.doesNotMatch(view + styleCode, /Diktat|Druck|Mail/);
     assert.doesNotMatch(view, /modules\/protokoll\/styles|tops\/styles/i);
   });
 

@@ -1,3 +1,6 @@
+const RESTARBEITEN_ATTACHMENTS_STYLE_ATTR = "data-bbm-restarbeiten-attachments-style";
+
+const RESTARBEITEN_ATTACHMENTS_STYLE_TEXT = `
 .restarbeiten-attachments {
   display: grid;
   gap: 8px;
@@ -66,4 +69,16 @@
 .restarbeiten-attachments__caption,
 .restarbeiten-attachments__meta {
   margin: 0;
+}
+`;
+
+export function ensureRestarbeitenAttachmentsStyle(documentRef = globalThis.document) {
+  const doc = documentRef || globalThis.document;
+  if (!doc?.head || typeof doc.createElement !== "function") return;
+  if (doc.querySelector(`style[${RESTARBEITEN_ATTACHMENTS_STYLE_ATTR}="true"]`)) return;
+
+  const style = doc.createElement("style");
+  style.setAttribute(RESTARBEITEN_ATTACHMENTS_STYLE_ATTR, "true");
+  style.textContent = RESTARBEITEN_ATTACHMENTS_STYLE_TEXT;
+  doc.head.appendChild(style);
 }

@@ -6,7 +6,7 @@ function getDisplayLabel(attachment) {
   return normalizeText(attachment?.caption) || normalizeText(attachment?.file_name) || "Ohne Bezeichnung";
 }
 
-import "./restarbeitenAttachments.css";
+import { ensureRestarbeitenAttachmentsStyle } from "./restarbeitenAttachmentsStyle.js";
 
 export default class RestarbeitenAttachmentsView {
   constructor({ documentRef = globalThis.document, onSetPrimary = null, onImportAttachments = null, onDeleteAttachment = null } = {}) {
@@ -19,6 +19,7 @@ export default class RestarbeitenAttachmentsView {
   }
 
   render() {
+    ensureRestarbeitenAttachmentsStyle(this.document);
     const root = this.document.createElement("section");
     root.className = "restarbeiten-attachments";
     this.root = root;
