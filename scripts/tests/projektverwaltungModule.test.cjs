@@ -653,8 +653,9 @@ async function runProjektverwaltungModuleTests(run) {
       await restarbeitenButton.click();
       assert.deepEqual(calls, [
         {
-          type: "protocol",
+          type: "module",
           projectId: "17",
+          moduleId: "protokoll",
           options: {
             project: {
               id: "17",
@@ -682,8 +683,9 @@ async function runProjektverwaltungModuleTests(run) {
       await editButton.click();
       assert.deepEqual(calls, [
         {
-          type: "protocol",
+          type: "module",
           projectId: "17",
+          moduleId: "protokoll",
           options: {
             project: {
               id: "17",
@@ -712,8 +714,9 @@ async function runProjektverwaltungModuleTests(run) {
       await projectCard.click();
       assert.deepEqual(calls, [
         {
-          type: "protocol",
+          type: "module",
           projectId: "17",
+          moduleId: "protokoll",
           options: {
             project: {
               id: "17",
