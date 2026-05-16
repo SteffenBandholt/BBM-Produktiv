@@ -139,7 +139,7 @@ export default class RestarbeitenScreen {
         this._setSelectedItemId(itemId);
         this._renderList();
         this._renderEditbox();
-        this._loadSelectedAttachments();
+        this._loadSelectedAttachments().catch(() => {});
       })
     );
   }
@@ -198,9 +198,16 @@ export default class RestarbeitenScreen {
     const selectedItem = this._getSelectedItem();
     if (!selectedItem?.id || !this.editbox) return;
     const itemId = String(selectedItem.id);
-    const attachments = await listRestarbeitAttachments(itemId);
-    this.attachmentsByItemId.set(itemId, Array.isArray(attachments) ? attachments : []);
-    this.editbox.setAttachments(this.attachmentsByItemId.get(itemId) || []);
+    try {
+      const attachments = await listRestarbeitAttachments(itemId);
+      this.attachmentsByItemId.set(itemId, Array.isArray(attachments) ? attachments : []);
+      this.editbox.setAttachments(this.attachmentsByItemId.get(itemId) || []);
+    } catch (_error) {
+      this.attachmentsByItemId.set(itemId, []);
+      this.editbox.setAttachments([]);
+      this.editbox.setStatus("Fotos konnten nicht geladen werden.");
+      throw _error;
+    }
   }
 
   async _createRestarbeit() {
@@ -309,7 +316,7 @@ export default class RestarbeitenScreen {
       this.rows = [];
       this.items = [];
       this.projectFirms = [];
-    this.attachmentsByItemId = new Map();
+      this.attachmentsByItemId = new Map();
       if (this.listHost) {
         this.listHost.replaceChildren(
           createMessage(

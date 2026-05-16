@@ -262,6 +262,8 @@ async function runRestarbeitenModuleTests(run) {
           if (target) Object.assign(target, payload.patch || {});
           return { ok: true, item: { id: payload.id, ...payload.patch } };
         },
+        restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
+        restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
         projectFirmsListByProject: async () => ({
           ok: true,
           list: [
@@ -358,6 +360,46 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
+
+
+
+  await run("M7 Screen: Attachment-Ladefehler bricht Screen nicht hart ab", async () => {
+    const prevWindow = globalThis.window;
+    const prevDocument = globalThis.document;
+    globalThis.window = {
+      bbmDb: {
+        restarbeitenGetProjectSettings: async () => ({ ok: true, settings: {} }),
+        restarbeitenListByProject: async () => ({
+          ok: true,
+          items: [{ id: "r-1", running_number: 1, created_at: "2026-05-16", status: "offen", short_text: "A" }],
+        }),
+        projectFirmsListByProject: async () => ({ ok: true, list: [] }),
+        restarbeitenListAttachments: async () => ({ ok: false, error: "kaputt" }),
+        restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
+      },
+    };
+    globalThis.document = createFakeDocument();
+
+    try {
+      const Screen = (
+        await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"))
+      ).default;
+      const screen = new Screen({ projectId: "p-1" });
+      screen.render();
+      await screen.load();
+
+      const row = screen.listHost.children[0].children[1].children[0];
+      row.dispatchEvent({ type: "click" });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      assert.equal(screen.selectedItemId, "r-1");
+      assert.equal(screen.listHost.children[0].tagName, "TABLE");
+      assert.equal(screen.editbox?.statusEl?.textContent, "Fotos konnten nicht geladen werden.");
+    } finally {
+      globalThis.window = prevWindow;
+      globalThis.document = prevDocument;
+    }
+  });
 
   await run("M7 View/Editbox/Screen: Attachment-Anzeige verdrahtet", () => {
     const view = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenAttachmentsView.js"), "utf8");
@@ -520,6 +562,8 @@ async function runRestarbeitenModuleTests(run) {
       bbmDb: {
         restarbeitenGetProjectSettings: async () => ({ ok: true, settings: {} }),
         restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
+        restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
+        restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
         projectFirmsListByProject: async () => ({ ok: true, list: [{ id: "f1", name: "Firma A" }] }),
         restarbeitenCreateItem: async () => ({ ok: true, item: { id: "r-2" } }),
         restarbeitenUpdateItem: async (payload) => {
