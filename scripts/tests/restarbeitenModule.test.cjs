@@ -590,6 +590,41 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(screen, /importRestarbeitAttachments\(/);
     assert.match(screen, /Fotos importiert\.|Fotoimport abgebrochen\.|Fotos konnten nicht importiert werden\./);
   });
+
+
+  await run("M11 View/CSS: Landscape-2-Spalten-Layout stabil und modulnah", () => {
+    const viewPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenAttachmentsView.js");
+    const stylePath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenAttachmentsStyle.js");
+    const view = fs.readFileSync(viewPath, "utf8");
+    const styleCode = fs.readFileSync(stylePath, "utf8");
+
+    assert.match(view, /restarbeiten-attachments__grid/);
+    assert.match(view, /restarbeiten-attachments__primary/);
+    assert.match(view, /restarbeiten-attachments__secondary/);
+    assert.match(view, /others\.slice\(0, 2\)/);
+    assert.match(view, /restarbeiten-attachments__image/);
+    assert.match(view, /Kein Bildpfad vorhanden\./);
+    assert.match(view, /Foto hinzufügen/);
+    assert.match(view, /Maximal 3 Fotos vorhanden\./);
+    assert.match(view, /Foto entfernen/);
+    assert.match(view, /Hauptfoto/);
+    assert.match(view, /caption\) \|\| normalizeText\(attachment\?\.file_name\) \|\| "Ohne Bezeichnung"/);
+
+    assert.match(styleCode, /grid-template-columns:\s*minmax\(0, 2fr\)\s+minmax\(0, 1fr\)/);
+    assert.match(styleCode, /aspect-ratio:\s*16 \/ 9/);
+    assert.match(styleCode, /object-fit:\s*cover/);
+    assert.match(styleCode, /data-bbm-restarbeiten-attachments-style/);
+    assert.match(styleCode, /typeof\s+doc\?\.querySelector\s*===\s*["']function["']/);
+    assert.match(styleCode, /function\s+hasInjectedStyle\s*\(/);
+    assert.doesNotMatch(view, /import\s+["']\.\/restarbeitenAttachments\.css["']/);
+
+    assert.doesNotMatch(view + styleCode, /gallery|lightbox/i);
+    assert.doesNotMatch(view + styleCode, /thumbnail/i);
+    assert.doesNotMatch(view + styleCode, /imageProcessing/i);
+    assert.doesNotMatch(view + styleCode, /Diktat|Druck|Mail/);
+    assert.doesNotMatch(view, /modules\/protokoll\/styles|tops\/styles/i);
+  });
+
   await run("M6 DataSource: listResponsibleProjectFirms nutzt Bridge und normalisiert Antworten", async () => {
     const repo = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js")

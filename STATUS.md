@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+
+- M11 Restarbeiten-Fotoanzeige ist stabilisiert:
+  - feste 2-Spalten-Ansicht mit Hauptfoto links und bis zu zwei Nebenfotos rechts
+  - alle Bildflaechen im festen Landscape-Format mit `object-fit: cover`
+  - keine Bilddateibearbeitung, nur Anzeigeformatierung
+- Naechster offener Schritt: fachliche Sichtpruefung der Restarbeiten-Fotoansicht im UI.
 - Das globale FachwÃ¶rterbuch V1 fuer das Diktat ist jetzt technisch angebunden:
   - globale `dictionary_entries`-Tabelle, Dictionary-Service und IPC-/Preload-Bruecken sind vorhanden
   - `term` und `correction` sind getrennt modelliert, Kategorie bleibt fest `Bau`
