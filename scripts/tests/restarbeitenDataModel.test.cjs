@@ -44,8 +44,8 @@ async function runRestarbeitenDataModelTests(run) {
 
   await run("Projektbezug und running_number je Projekt", async () => withTemp(({ db, repo }) => {
     const conn = db.initDatabase();
-    conn.prepare("INSERT INTO projects (id, title) VALUES (?, ?)").run("p1", "P1");
-    conn.prepare("INSERT INTO projects (id, title) VALUES (?, ?)").run("p2", "P2");
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p2", "P2");
     repo.createRestarbeitItem({ project_id: "p1", short_text: "A" });
     repo.createRestarbeitItem({ project_id: "p1", short_text: "B" });
     repo.createRestarbeitItem({ project_id: "p2", short_text: "C" });
@@ -57,8 +57,8 @@ async function runRestarbeitenDataModelTests(run) {
 
   await run("Verortung und Settings", async () => withTemp(({ db, repo }) => {
     const conn = db.initDatabase();
-    conn.prepare("INSERT INTO projects (id, title) VALUES (?, ?)").run("p1", "P1");
-    conn.prepare("INSERT INTO projects (id, title) VALUES (?, ?)").run("p2", "P2");
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p2", "P2");
     const item = repo.createRestarbeitItem({ project_id: "p1", location_level_1: "Haus A", location_level_2: "EG", location_level_3: "WE 1", location_level_4: "Kueche", status: "unbekannt" });
     assert.equal(item.location_level_1, "Haus A");
     assert.equal(item.location_level_4, "Kueche");
@@ -74,7 +74,7 @@ async function runRestarbeitenDataModelTests(run) {
 
   await run("Foto-Regeln inkl. primary und max 3", async () => withTemp(({ db, repo }) => {
     const conn = db.initDatabase();
-    conn.prepare("INSERT INTO projects (id, title) VALUES (?, ?)").run("p1", "P1");
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
     const item = repo.createRestarbeitItem({ project_id: "p1", short_text: "R1" });
     const a1 = repo.addRestarbeitAttachment({ restarbeit_id: item.id, project_id: "p1", file_path: "/a.jpg" });
     assert.equal(a1.is_primary, 1);
