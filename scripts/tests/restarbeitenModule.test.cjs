@@ -531,7 +531,7 @@ async function runRestarbeitenModuleTests(run) {
         assert.equal(repoState.added.length, 3, JSON.stringify(repoState.added));
         assert.equal(repoState.added[0]?.restarbeit_id, "r1", JSON.stringify(repoState.added[0] || {}));
         assert.equal(repoState.added[0]?.project_id, "p1", JSON.stringify(repoState.added[0] || {}));
-        assert.match(String(repoState.added[0]?.file_path || ""), /Restarbeiten[\/]Fotos/, JSON.stringify(repoState.added[0] || {}));
+        assert.match(String(repoState.added[0]?.file_path || ""), /Restarbeiten[\\/]Fotos/, JSON.stringify(repoState.added[0] || {}));
         assert.equal(Boolean(repoState.added[0]?.original_file_name), true, JSON.stringify(repoState.added[0] || {}));
         assert.match(String(repoState.added[0]?.mime_type || ""), /^image\/(jpeg|png|webp)$/i, JSON.stringify(repoState.added[0] || {}));
 
