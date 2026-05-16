@@ -2014,3 +2014,5 @@ Wichtig:
   - Projekt-Arbeitsbereich zeigt jetzt auch `Restarbeiten`, wenn das Modul freigeschaltet ist
   - der Button startet ueber den vorhandenen Projektmodulpfad (`openProjectModule`)
   - Protokoll- und Projektfirmen-Einstieg bleiben unveraendert
+
+- Hotfix M13.1: Restarbeiten-Button ist jetzt auch direkt auf der Projektkachel sichtbar und startet über openProjectModule.

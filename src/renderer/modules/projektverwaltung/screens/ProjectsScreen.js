@@ -196,6 +196,19 @@ export default class ProjectsScreen {
       return false;
     }
 
+    if (typeof this.router?.openProjectModule === "function") {
+      const result = await this.router.openProjectModule(effectiveProjectId, normalizedModuleId, {
+        project: project || null,
+      });
+      if (typeof result === "object") {
+        if (result?.blocked) {
+          this._flashMsg(`${normalizedModuleId} ist fuer diese Lizenz nicht freigeschaltet.`, 9000);
+        }
+        return !!result?.ok;
+      }
+      return result !== false;
+    }
+
     return false;
   }
 

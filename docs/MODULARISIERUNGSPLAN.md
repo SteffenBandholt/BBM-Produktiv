@@ -298,3 +298,7 @@ Dabei gilt:
 - Restarbeiten ist im Projekt-Arbeitsbereich als sichtbarer Modulstart enthalten, wenn das Modul im aktiven Modulumfang freigegeben ist.
 - Der Start erfolgt wie bei anderen Projektmodulen ueber `openProjectModule(projectId, "restarbeiten", { project })`.
 - Projektfirmen- und Protokoll-Einstiege bleiben unveraendert.
+
+### M13.1 Restarbeiten-Button auf Projektkachel (Hotfix)
+- Restarbeiten ist sowohl im Projekt-Arbeitsbereich als auch direkt auf der Projektkachel startbar.
+- Der Projektkachel-Start nutzt den bestehenden Projektmodulpfad `openProjectModule(projectId, "restarbeiten", { project })`.
