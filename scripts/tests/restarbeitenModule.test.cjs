@@ -38,6 +38,13 @@ function findNodes(node, predicate, acc = []) {
   return acc;
 }
 
+function findButtonByText(root, text) {
+  return findNodes(
+    root,
+    (node) => node?.tagName === "BUTTON" && String(node?.textContent || "").trim() === String(text)
+  )[0] || null;
+}
+
 function createFakeDocument() {
   const createNode = (tag, doc) => {
     const node = {
@@ -260,10 +267,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /Restarbeit/);
     assert.match(content, /Status/);
     assert.match(content, /restarbeiten-sheet/);
-    assert.match(content, /restarbeiten-list__locationLevel--1/);
-    assert.match(content, /restarbeiten-list__locationLevel--2/);
-    assert.match(content, /restarbeiten-list__locationLevel--3/);
-    assert.match(content, /restarbeiten-list__locationLevel--4/);
+    assert.match(content, /restarbeiten-list__locationLevel--\$\{idx \+ 1\}/);
     assert.match(content, /restarbeiten-list__attachmentsRow/);
     assert.match(content, /restarbeiten-list__photosToggle/);
     assert.match(content, /dataset\.expanded/);
@@ -299,6 +303,23 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(allText.includes("+ Restarbeit"), true);
       assert.equal(allText.includes("Verortung"), true);
       assert.equal(allText.includes("Metaspalten"), true);
+
+      const locationCell = findNodes(
+        root,
+        (node) => node?.className === "restarbeiten-list__locationCell"
+      )[0];
+      if (locationCell) {
+        const locationLevelClasses = findNodes(
+          locationCell,
+          (node) =>
+            typeof node?.className === "string" &&
+            node.className.includes("restarbeiten-list__locationLevel--")
+        ).map((node) => node.className);
+        assert.equal(locationLevelClasses.some((name) => name.includes("--1")), true);
+        assert.equal(locationLevelClasses.some((name) => name.includes("--2")), true);
+        assert.equal(locationLevelClasses.some((name) => name.includes("--3")), true);
+        assert.equal(locationLevelClasses.some((name) => name.includes("--4")), true);
+      }
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
@@ -591,7 +612,12 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(root.children.length >= 3, true);
       assert.match(screen.listHost.children[0].textContent, /Kein Projektkontext/);
       assert.equal(screen.editHost.children.length, 0);
-      assert.equal(screen.headerHost.children[0].children[1].disabled, true);
+      const addButton = findButtonByText(screen.headerHost, "+ Restarbeit");
+      assert.equal(Boolean(addButton), true);
+      assert.equal(addButton.disabled, true);
+      assert.equal(Boolean(findButtonByText(screen.headerHost, "Schließen")), true);
+      assert.equal(Boolean(findButtonByText(screen.headerHost, "Verortung")), true);
+      assert.equal(Boolean(findButtonByText(screen.headerHost, "Metaspalten")), true);
 
       await screen.load();
       assert.match(screen.listHost.children[0].textContent, /Kein Projektkontext/);
