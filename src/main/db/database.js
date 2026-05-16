@@ -1275,6 +1275,7 @@ function ensureRestarbeitenSchema(dbConn) {
         location_level_4 TEXT,
         short_text TEXT NOT NULL DEFAULT '',
         long_text TEXT NOT NULL DEFAULT '',
+        item_class TEXT NOT NULL DEFAULT 'rest',
         status TEXT NOT NULL DEFAULT 'offen',
         due_date TEXT,
         responsible_project_firm_id TEXT,
@@ -1306,6 +1307,7 @@ function ensureRestarbeitenSchema(dbConn) {
     addCol("location_level_4", "TEXT");
     addCol("short_text", "TEXT NOT NULL DEFAULT ''");
     addCol("long_text", "TEXT NOT NULL DEFAULT ''");
+    addCol("item_class", "TEXT NOT NULL DEFAULT 'rest'");
     addCol("status", "TEXT NOT NULL DEFAULT 'offen'");
     addCol("due_date", "TEXT");
     addCol("responsible_project_firm_id", "TEXT");

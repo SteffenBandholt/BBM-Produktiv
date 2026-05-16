@@ -37,7 +37,7 @@ async function runRestarbeitenDataModelTests(run) {
       assert.ok(conn.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t));
     }
     const cols = conn.prepare("PRAGMA table_info(restarbeiten_items)").all().map((c) => c.name);
-    ["project_id","running_number","location_level_1","location_level_2","location_level_3","location_level_4","short_text","long_text","status","due_date","responsible_project_firm_id","responsible_label","archived_at","created_at","updated_at"].forEach((c)=>assert.ok(cols.includes(c)));
+    ["project_id","running_number","location_level_1","location_level_2","location_level_3","location_level_4","short_text","long_text","item_class","status","due_date","responsible_project_firm_id","responsible_label","archived_at","created_at","updated_at"].forEach((c)=>assert.ok(cols.includes(c)));
     const aCols = conn.prepare("PRAGMA table_info(restarbeiten_attachments)").all().map((c) => c.name);
     ["restarbeit_id","file_path","thumbnail_path","sort_order","is_primary"].forEach((c)=>assert.ok(aCols.includes(c)));
   }));
@@ -70,6 +70,29 @@ async function runRestarbeitenDataModelTests(run) {
     assert.equal(s1.level_3_label, "Einheit");
     assert.equal(s1.level_4_label, "Raum");
     assert.notEqual(s1.project_id, s2.project_id);
+  }));
+
+  await run("item_class default, akzeptierte Werte und Normalisierung", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+
+    const d = repo.createRestarbeitItem({ project_id: "p1", short_text: "Default" });
+    const m = repo.createRestarbeitItem({ project_id: "p1", short_text: "Mangel", item_class: "mangel" });
+    const upperM = repo.createRestarbeitItem({ project_id: "p1", short_text: "Upper", item_class: "MANGEL" });
+    const mixedR = repo.createRestarbeitItem({ project_id: "p1", short_text: "Mixed", item_class: "Rest" });
+    const invalid = repo.createRestarbeitItem({ project_id: "p1", short_text: "Invalid", item_class: "abc" });
+    const empty = repo.createRestarbeitItem({ project_id: "p1", short_text: "Empty", item_class: "   " });
+
+    assert.equal(d.item_class, "rest");
+    assert.equal(m.item_class, "mangel");
+    assert.equal(upperM.item_class, "mangel");
+    assert.equal(mixedR.item_class, "rest");
+    assert.equal(invalid.item_class, "rest");
+    assert.equal(empty.item_class, "rest");
+
+    const list = repo.listRestarbeitItems("p1");
+    assert.ok(list.every((row) => typeof row.item_class === "string"));
+    assert.equal(list.find((row) => row.id === m.id)?.item_class, "mangel");
   }));
 
   await run("Foto-Regeln inkl. primary und max 3", async () => withTemp(({ db, repo }) => {

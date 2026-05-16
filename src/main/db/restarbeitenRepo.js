@@ -8,6 +8,7 @@ const ALLOWED_STATUS = new Set([
   "geprueft_erledigt",
   "zurueckgewiesen",
 ]);
+const ALLOWED_ITEM_CLASSES = new Set(["rest", "mangel"]);
 
 function toText(value) {
   if (value == null) return null;
@@ -25,6 +26,13 @@ function normalizeStatus(value) {
   const clean = toText(value);
   if (!clean) return "offen";
   return ALLOWED_STATUS.has(clean) ? clean : "offen";
+}
+
+function normalizeRestarbeitItemClass(value) {
+  const clean = toText(value);
+  if (!clean) return "rest";
+  const normalized = clean.toLowerCase();
+  return ALLOWED_ITEM_CLASSES.has(normalized) ? normalized : "rest";
 }
 
 function ensureRestarbeitProjectSettings(projectId) {
@@ -68,6 +76,7 @@ function createRestarbeitItem(payload = {}) {
     location_level_4: toText(payload.location_level_4),
     short_text: toText(payload.short_text) || "",
     long_text: toText(payload.long_text) || "",
+    item_class: normalizeRestarbeitItemClass(payload.item_class),
     status: normalizeStatus(payload.status),
     due_date: toText(payload.due_date),
     responsible_project_firm_id: toText(payload.responsible_project_firm_id),
@@ -85,13 +94,13 @@ function createRestarbeitItem(payload = {}) {
     INSERT INTO restarbeiten_items (
       id, project_id, running_number, sort_order,
       location_level_1, location_level_2, location_level_3, location_level_4,
-      short_text, long_text, status, due_date,
+      short_text, long_text, item_class, status, due_date,
       responsible_project_firm_id, responsible_label, source, import_batch_id,
       archived_at, completed_at, verified_at, created_at, updated_at
     ) VALUES (
       @id, @project_id, @running_number, @sort_order,
       @location_level_1, @location_level_2, @location_level_3, @location_level_4,
-      @short_text, @long_text, @status, @due_date,
+      @short_text, @long_text, @item_class, @status, @due_date,
       @responsible_project_firm_id, @responsible_label, @source, @import_batch_id,
       @archived_at, @completed_at, @verified_at, @created_at, @updated_at
     )
