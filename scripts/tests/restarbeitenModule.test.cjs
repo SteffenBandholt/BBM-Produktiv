@@ -321,7 +321,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(ipc, /restarbeiten:setPrimaryAttachment/);
     assert.match(preload, /restarbeitenListAttachments/);
     assert.match(preload, /restarbeitenSetPrimaryAttachment/);
-    assert.doesNotMatch(ipc, /restarbeiten:deleteAttachment|restarbeiten:uploadAttachment|image/i);
+    assert.doesNotMatch(ipc, /restarbeiten:deleteAttachment|restarbeiten:uploadAttachment|deleteAttachment|uploadAttachment|thumbnail|imageProcessing/i);
   });
 
   await run("M7 DataSource: Attachments-Liste/Primary und Bridge-Fehler", async () => {
@@ -455,6 +455,111 @@ async function runRestarbeitenModuleTests(run) {
 
 
 
+
+
+  await run("M8 Main-IPC: Import-Handler begrenzt, bricht ab und speichert in Restarbeiten/Fotos", async () => {
+    const repoState = { attachments: [], added: [] };
+    const stubs = {
+      electron: {
+        app: { getPath: () => "/downloads" },
+        dialog: {
+          async showOpenDialog() {
+            return {
+              canceled: false,
+              filePaths: ["/tmp/a.jpg", "/tmp/b.png", "/tmp/c.webp"],
+            };
+          },
+        },
+      },
+      restarbeitenRepo: {
+        listRestarbeitItems: () => [],
+        getRestarbeitProjectSettings: () => ({}),
+        createRestarbeitItem: () => ({}),
+        updateRestarbeitItem: () => ({}),
+        setPrimaryRestarbeitAttachment: () => true,
+        listRestarbeitAttachments: () => repoState.attachments,
+        addRestarbeitAttachment: (payload) => {
+          repoState.added.push(payload);
+          repoState.attachments = [...repoState.attachments, { id: String(repoState.attachments.length + 1), ...payload }];
+          return repoState.attachments[repoState.attachments.length - 1];
+        },
+      },
+    };
+
+    const prev = {
+      mkdirSync: fs.mkdirSync,
+      copyFileSync: fs.copyFileSync,
+      statSync: fs.statSync,
+      existsSync: fs.existsSync,
+    };
+    fs.mkdirSync = () => true;
+    fs.copyFileSync = () => true;
+    fs.statSync = () => ({ size: 11 });
+    fs.existsSync = () => false;
+
+    try {
+      await withPatchedRestarbeitenIpc(stubs, async (mod) => {
+        const handlers = {};
+        mod.registerRestarbeitenIpc({ ipcMain: { handle: (name, fn) => { handlers[name] = fn; } } });
+        const result = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
+        assert.equal(result.ok, true, result.error || JSON.stringify(result));
+        assert.equal(result.canceled, false, JSON.stringify(result));
+        assert.equal(repoState.added.length, 3, JSON.stringify(repoState.added));
+        assert.match(String(repoState.added[0]?.file_path || ""), /Restarbeiten[\/]Fotos/, JSON.stringify(repoState.added[0] || {}));
+
+        repoState.attachments = [{ id: "1" }, { id: "2" }];
+        repoState.added = [];
+        const resultLimited = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
+        assert.equal(resultLimited.ok, true, resultLimited.error || JSON.stringify(resultLimited));
+        assert.equal(repoState.added.length, 1, JSON.stringify(repoState.added));
+
+        repoState.attachments = [{ id: "1" }];
+        repoState.added = [];
+        stubs.electron.dialog.showOpenDialog = async () => ({ canceled: true, filePaths: [] });
+        const canceled = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
+        assert.equal(canceled.ok, true, canceled.error || JSON.stringify(canceled));
+        assert.equal(canceled.canceled, true, JSON.stringify(canceled));
+        assert.equal(repoState.added.length, 0, JSON.stringify(repoState.added));
+
+        repoState.attachments = [{ id: "1" }, { id: "2" }, { id: "3" }];
+        const rejected = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
+        assert.equal(rejected.ok, false, JSON.stringify(rejected));
+        assert.match(String(rejected.error || ""), /Maximal 3 Fotos/, JSON.stringify(rejected));
+      });
+    } finally {
+      fs.mkdirSync = prev.mkdirSync;
+      fs.copyFileSync = prev.copyFileSync;
+      fs.statSync = prev.statSync;
+      fs.existsSync = prev.existsSync;
+    }
+  });
+  await run("M8 IPC/Preload: Import-Endpunkte vorhanden ohne Delete/Image-Processing", () => {
+    const ipc = fs.readFileSync(path.join(__dirname, "../../src/main/ipc/restarbeitenIpc.js"), "utf8");
+    const preload = fs.readFileSync(path.join(__dirname, "../../src/main/preload.js"), "utf8");
+    assert.match(ipc, /restarbeiten:importAttachments/);
+    assert.match(preload, /restarbeitenImportAttachments/);
+    assert.doesNotMatch(ipc + preload, /deleteAttachment|thumbnail|imageProcessing/i);
+  });
+
+  await run("M8 DataSource: importRestarbeitAttachments normalisiert Antwort", async () => {
+    const repo = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js"));
+    const prevWindow = globalThis.window;
+    globalThis.window = { bbmDb: { restarbeitenImportAttachments: async () => ({ ok: true, canceled: true }) } };
+    try {
+      const out = await repo.importRestarbeitAttachments("r-1", "p-1");
+      assert.equal(out.canceled, true);
+      assert.deepEqual(out.attachments, []);
+    } finally { globalThis.window = prevWindow; }
+  });
+
+  await run("M8 View/Screen: Foto-hinzufuegen und Max-3-Hinweis verdrahtet", () => {
+    const view = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenAttachmentsView.js"), "utf8");
+    const screen = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"), "utf8");
+    assert.match(view, /Foto hinzufügen/);
+    assert.match(view, /Maximal 3 Fotos vorhanden\./);
+    assert.match(screen, /importRestarbeitAttachments\(/);
+    assert.match(screen, /Fotos importiert\.|Fotoimport abgebrochen\.|Fotos konnten nicht importiert werden\./);
+  });
   await run("M6 DataSource: listResponsibleProjectFirms nutzt Bridge und normalisiert Antworten", async () => {
     const repo = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js")

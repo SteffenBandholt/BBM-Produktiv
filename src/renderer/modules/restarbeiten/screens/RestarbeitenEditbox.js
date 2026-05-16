@@ -59,7 +59,7 @@ function normalizeFirmEntries(list) {
 }
 
 export default class RestarbeitenEditbox {
-  constructor({ documentRef = globalThis.document, onSave = null, onSetPrimaryAttachment = null } = {}) {
+  constructor({ documentRef = globalThis.document, onSave = null, onSetPrimaryAttachment = null, onImportAttachments = null } = {}) {
     this.document = documentRef || globalThis.document;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.root = null;
@@ -72,6 +72,7 @@ export default class RestarbeitenEditbox {
     this.attachments = [];
     this.attachmentsView = null;
     this.onSetPrimaryAttachment = typeof onSetPrimaryAttachment === "function" ? onSetPrimaryAttachment : null;
+    this.onImportAttachments = typeof onImportAttachments === "function" ? onImportAttachments : null;
   }
 
   render() {
@@ -147,6 +148,9 @@ export default class RestarbeitenEditbox {
       documentRef: doc,
       onSetPrimary: (attachmentId) => {
         if (this.onSetPrimaryAttachment) this.onSetPrimaryAttachment(attachmentId);
+      },
+      onImportAttachments: () => {
+        if (this.onImportAttachments) this.onImportAttachments();
       },
     });
 

@@ -1,4 +1,8 @@
+const { dialog, app } = require("electron");
+const fs = require("node:fs");
+const path = require("node:path");
 const repo = require("../db/restarbeitenRepo");
+const { resolveProjectFolderName, sanitizeDirName, buildStoragePreviewPaths } = require("./projectStoragePaths");
 
 function normalizeProjectId(payload) {
   if (payload && typeof payload === "object") {
@@ -24,6 +28,47 @@ function normalizeAttachmentId(payload) {
     return String(candidate ?? "").trim();
   }
   return String(payload ?? "").trim();
+}
+
+
+function detectMimeType(filePath) {
+  const ext = String(path.extname(filePath) || "").toLowerCase();
+  if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+  if (ext === ".png") return "image/png";
+  if (ext === ".webp") return "image/webp";
+  return "application/octet-stream";
+}
+
+function sanitizeBaseFileName(name) {
+  const raw = String(name || "").trim() || "foto";
+  return sanitizeDirName(raw).replace(/\s+/g, "_");
+}
+
+function resolveRestarbeitenPhotosDir(payload = {}) {
+  const source = payload && typeof payload === "object" ? payload : {};
+  const projectId = normalizeProjectId(source);
+  const baseDir = String(source.baseDir || app.getPath("downloads") || "").trim();
+  const project = source.project && typeof source.project === "object" ? source.project : {};
+  const fallbackProject = {
+    project_number: projectId || project.project_number || project.projectNumber || project.number || "",
+    short: project.short || project.name || (projectId ? `Projekt-${projectId}` : "Projekt"),
+    name: project.name || "",
+  };
+  const storage = buildStoragePreviewPaths({ baseDir, project: { ...project, ...fallbackProject } });
+  const projectBaseDir = path.dirname(storage.protocolsDir);
+  return path.join(projectBaseDir, "Restarbeiten", "Fotos");
+}
+
+function uniqueDestinationFilePath(targetDir, fileName) {
+  const ext = path.extname(fileName) || ".jpg";
+  const stem = fileName.slice(0, fileName.length - ext.length);
+  let candidate = path.join(targetDir, fileName);
+  if (!fs.existsSync(candidate)) return candidate;
+  for (let i = 2; i < 5000; i += 1) {
+    candidate = path.join(targetDir, `${stem}_${i}${ext}`);
+    if (!fs.existsSync(candidate)) return candidate;
+  }
+  return path.join(targetDir, `${stem}_${Date.now()}${ext}`);
 }
 
 function toBool(value, fallback = false) {
@@ -99,6 +144,62 @@ function registerRestarbeitenIpc({ ipcMain }) {
     }
   });
 
+
+  ipcMain.handle("restarbeiten:importAttachments", async (_event, payload) => {
+    try {
+      const source = payload && typeof payload === "object" ? payload : {};
+      const restarbeitId = normalizeRestarbeitId(source);
+      const projectId = normalizeProjectId(source);
+      if (!restarbeitId) throw new Error("restarbeitId erforderlich");
+      if (!projectId) throw new Error("projectId erforderlich");
+
+      const existing = repo.listRestarbeitAttachments(restarbeitId);
+      const existingAttachments = Array.isArray(existing) ? existing : [];
+      if (existingAttachments.length >= 3) return { ok: false, error: "Maximal 3 Fotos pro Restarbeit erlaubt." };
+
+      const result = await dialog.showOpenDialog({
+        properties: ["openFile", "multiSelections"],
+        filters: [{ name: "Bilder", extensions: ["jpg", "jpeg", "png", "webp"] }],
+      });
+
+      if (result?.canceled) {
+        return { ok: true, canceled: true, attachments: existingAttachments };
+      }
+
+      const maxFiles = Number(source.maxFiles) > 0 ? Math.min(3, Number(source.maxFiles)) : 3;
+      const capacity = Math.max(0, Math.min(3, maxFiles) - existingAttachments.length);
+      const selected = Array.isArray(result?.filePaths) ? result.filePaths.slice(0, capacity) : [];
+
+      const targetDir = resolveRestarbeitenPhotosDir(source);
+      fs.mkdirSync(targetDir, { recursive: true });
+
+      const now = Date.now();
+      for (let index = 0; index < selected.length; index += 1) {
+        const src = String(selected[index] || "").trim();
+        if (!src) continue;
+        const originalBase = sanitizeBaseFileName(path.basename(src, path.extname(src)));
+        const ext = String(path.extname(src) || "").toLowerCase();
+        const fileName = `${sanitizeBaseFileName(restarbeitId)}_${now}_${index + 1}_${originalBase}${ext}`;
+        const destPath = uniqueDestinationFilePath(targetDir, fileName);
+        fs.copyFileSync(src, destPath);
+        const stats = fs.statSync(destPath);
+
+        repo.addRestarbeitAttachment({
+          restarbeit_id: restarbeitId,
+          file_path: destPath,
+          file_name: path.basename(destPath),
+          mime_type: detectMimeType(destPath),
+          file_size: Number(stats?.size || 0),
+        });
+      }
+
+      const attachments = repo.listRestarbeitAttachments(restarbeitId);
+      return { ok: true, canceled: false, attachments: Array.isArray(attachments) ? attachments : [] };
+    } catch (error) {
+      return { ok: false, error: error?.message || "Fotos konnten nicht importiert werden." };
+    }
+  });
+
   ipcMain.handle("restarbeiten:setPrimaryAttachment", async (_event, payload) => {
     try {
       const source = payload && typeof payload === "object" ? payload : {};
@@ -115,4 +216,4 @@ function registerRestarbeitenIpc({ ipcMain }) {
 
 }
 
-module.exports = { registerRestarbeitenIpc };
+module.exports = { registerRestarbeitenIpc, resolveRestarbeitenPhotosDir, detectMimeType };

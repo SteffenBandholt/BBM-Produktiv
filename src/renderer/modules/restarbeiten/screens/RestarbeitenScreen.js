@@ -184,6 +184,19 @@ export default class RestarbeitenScreen {
           await this._loadSelectedAttachments();
           this._renderEditbox();
         },
+        onImportAttachments: async () => {
+          const selectedItem = this._getSelectedItem();
+          if (!selectedItem?.id || !this.effectiveProjectId) return;
+          try {
+            const result = await importRestarbeitAttachments(selectedItem.id, this.effectiveProjectId);
+            const attachments = Array.isArray(result?.attachments) ? result.attachments : [];
+            this.attachmentsByItemId.set(String(selectedItem.id), attachments);
+            this.editbox?.setAttachments(attachments);
+            this.editbox?.setStatus(result?.canceled ? "Fotoimport abgebrochen." : "Fotos importiert.");
+          } catch (_error) {
+            this.editbox?.setStatus("Fotos konnten nicht importiert werden.");
+          }
+        },
       });
       this.editHost.replaceChildren(this.editbox.render());
     }

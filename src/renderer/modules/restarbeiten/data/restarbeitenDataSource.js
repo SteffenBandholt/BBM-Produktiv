@@ -127,3 +127,20 @@ export async function setPrimaryRestarbeitAttachment(restarbeitId, attachmentId)
   );
   return true;
 }
+
+
+export async function importRestarbeitAttachments(restarbeitId, projectId) {
+  const bbmDb = requireBbmDb();
+  if (typeof bbmDb.restarbeitenImportAttachments !== "function") {
+    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenImportAttachments fehlt.");
+  }
+  const rid = extractRestarbeitId(restarbeitId);
+  const pid = extractProjectId(projectId);
+  const response = await bbmDb.restarbeitenImportAttachments({ restarbeitId: rid, projectId: pid });
+  if (!response || typeof response !== "object") throw new Error("Restarbeiten-attachments-import: ungueltige IPC-Antwort.");
+  if (response.ok !== true) throw new Error(response.error || "Fotos konnten nicht importiert werden.");
+  return {
+    canceled: response.canceled === true,
+    attachments: Array.isArray(response.attachments) ? response.attachments : [],
+  };
+}
