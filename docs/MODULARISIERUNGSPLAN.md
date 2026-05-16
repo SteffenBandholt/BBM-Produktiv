@@ -286,3 +286,9 @@ Dabei gilt:
 - Restarbeiten-Fotoanzeige ist jetzt als stabiles 2-Spalten-Landscape-Layout umgesetzt.
 - Hauptfoto steht links groß, bis zu zwei Nebenfotos stehen rechts untereinander.
 - Die Bilddateien werden nicht bearbeitet; es bleibt reine Anzeigeformatierung mit `object-fit: cover`.
+
+### M12 Restarbeiten-Liste fachlich layoutet (neu)
+- Die Restarbeiten-Liste bleibt bei 4 Hauptspalten (Nr./Datum, Verortung, Restarbeit, Status).
+- Verortung wird als Metaspalte mit zwei Zeilen dargestellt (L1/L2 und L3/L4).
+- Die Status-Metaspalte zeigt Klasse, Status, Fertig bis, Verantwortlich und Ampel (rot/orange/gruen/neutral).
+- M12 umfasst keine Filter-, Druck-, Mail- oder Archivfunktion.

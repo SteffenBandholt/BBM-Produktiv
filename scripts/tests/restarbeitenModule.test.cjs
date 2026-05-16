@@ -779,39 +779,81 @@ async function runRestarbeitenModuleTests(run) {
       globalThis.document = prevDocument;
     }
   });
-  await run("M4 ViewModel: Mapping fuer Anzeigezeilen", async () => {
+  await run("M12 ViewModel: Mapping und Ampel-Logik fuer Listenlayout", async () => {
     const vm = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenListItems.js")
     );
 
-    const item = vm.toRestarbeitenListItem({
-      id: "x",
-      running_number: 1,
-      created_at: "2026-05-16",
-      location_level_1: "Haus A",
-      location_level_2: "EG",
-      short_text: "Fenster",
-      long_text: "nachstellen",
-      item_class: "mangel",
-      status: "geprueft_erledigt",
-      due_date: "2026-05-20",
-      responsible_label: "Firma Test",
-    });
+    const today = new Date("2026-05-16T00:00:00Z");
+    const item = vm.toRestarbeitenListItem(
+      {
+        id: "x",
+        running_number: 12,
+        created_at: "2026-05-16",
+        location_level_1: "Haus A",
+        location_level_2: "EG",
+        location_level_3: "Raum 01",
+        location_level_4: "Fenster 2",
+        short_text: "Fenster",
+        long_text: "nachstellen",
+        item_class: "mangel",
+        status: "offen",
+        due_date: "2026-05-20",
+        responsible_label: "Firma Test",
+      },
+      today
+    );
 
-    assert.equal(item.numberLine, "#1");
+    assert.equal(item.numberLine, "#12");
+    assert.equal(item.dateLine, "2026-05-16");
     assert.equal(item.locationLine1, "Haus A / EG");
+    assert.equal(item.locationLine2, "Raum 01 / Fenster 2");
+    assert.equal(item.workLine1, "Fenster");
     assert.equal(item.workLine2, "nachstellen");
-    assert.match(item.statusLine1, /Mangel/);
-    assert.match(item.statusLine1, /gepr[üu]ft erledigt/);
-    assert.equal(item.statusLine2, "2026-05-20");
-    assert.equal(item.statusLine3, "Firma Test");
+    assert.equal(item.itemClassLabel, "Mangel");
+    assert.equal(vm.toRestarbeitenListItem({ item_class: "rest" }, today).itemClassLabel, "Rest");
+    assert.equal(item.statusLabel, "offen");
+    assert.equal(item.dueDateLabel, "2026-05-20");
+    assert.equal(item.responsibleLabel, "Firma Test");
+    assert.equal(item.ampelState, "orange");
 
-    const fallback = vm.toRestarbeitenListItem({ item_class: "rest", status: "in_arbeit" });
-    assert.match(fallback.statusLine1, /Rest/);
-    assert.match(fallback.statusLine1, /in Arbeit/);
-    assert.equal(fallback.statusLine3, "—");
-    assert.equal(JSON.stringify(fallback).includes("undefined"), false);
+    assert.equal(vm.getRestarbeitenAmpelState({ due_date: "2026-05-15", status: "offen" }, today), "rot");
+    assert.equal(vm.getRestarbeitenAmpelState({ due_date: "2026-05-24", status: "offen" }, today), "orange");
+    assert.equal(vm.getRestarbeitenAmpelState({ due_date: "2026-05-30", status: "offen" }, today), "gruen");
+    assert.equal(vm.getRestarbeitenAmpelState({ status: "offen" }, today), "neutral");
+    assert.equal(vm.getRestarbeitenAmpelState({ due_date: "ungültig", status: "offen" }, today), "neutral");
+    assert.equal(vm.getRestarbeitenAmpelState({ due_date: "2026-06-20", status: "verzug" }, today), "rot");
+    assert.equal(
+      vm.getRestarbeitenAmpelState({ due_date: "2026-05-01", status: "geprueft_erledigt" }, today),
+      "gruen"
+    );
   });
+  await run("M12 Screen/List: Status-Metaspalte und Klassenstruktur vorhanden", async () => {
+    const content = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"),
+      "utf8"
+    );
+    const styleContent = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenListStyle.js"),
+      "utf8"
+    );
+
+    assert.match(content, /data\.restarbeitId/);
+    assert.match(content, /data\.selected/);
+    assert.match(content, /data\.ampel/);
+    assert.match(content, /Klasse:/);
+    assert.match(content, /Status:/);
+    assert.match(content, /Fertig bis:/);
+    assert.match(content, /Verantwortlich:/);
+    assert.doesNotMatch(content, /innerHTML\s*=/);
+
+    assert.match(styleContent, /restarbeiten-list__ampel--rot/);
+    assert.match(styleContent, /restarbeiten-list__ampel--orange/);
+    assert.match(styleContent, /restarbeiten-list__ampel--gruen/);
+    assert.match(styleContent, /restarbeiten-list__ampel--neutral/);
+    assert.doesNotMatch(styleContent, /import\s+["'].*\.css["']/);
+  });
+
 }
 
 module.exports = { runRestarbeitenModuleTests };
