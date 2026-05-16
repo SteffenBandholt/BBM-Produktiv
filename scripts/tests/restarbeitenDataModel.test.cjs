@@ -168,6 +168,33 @@ async function runRestarbeitenDataModelTests(run) {
     assert.equal(list2[0].id, a2.id);
     assert.equal(list2.filter((x) => x.is_primary === 1).length, 1);
   }));
+
+  await run("Attachment-Delete entfernt Datensatz und liefert Pfade", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+    const item = repo.createRestarbeitItem({ project_id: "p1", short_text: "R1" });
+    const a1 = repo.addRestarbeitAttachment({ restarbeit_id: item.id, project_id: "p1", file_path: "/a.jpg", thumbnail_path: "/a_t.jpg", is_primary: true });
+    repo.addRestarbeitAttachment({ restarbeit_id: item.id, project_id: "p1", file_path: "/b.jpg", sort_order: 2 });
+
+    const result = repo.deleteRestarbeitAttachment(item.id, a1.id);
+    assert.equal(result.deleted, true);
+    assert.equal(result.file_path, "/a.jpg");
+    assert.equal(result.thumbnail_path, "/a_t.jpg");
+    assert.equal(repo.listRestarbeitAttachments(item.id).length, 1);
+    assert.equal(repo.listRestarbeitAttachments(item.id)[0].is_primary, 1);
+  }));
+
+  await run("Attachment-Delete behaelt Primary bei Nicht-Primary-Loeschung", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+    const item = repo.createRestarbeitItem({ project_id: "p1", short_text: "R1" });
+    const a1 = repo.addRestarbeitAttachment({ restarbeit_id: item.id, project_id: "p1", file_path: "/a.jpg", is_primary: true });
+    const a2 = repo.addRestarbeitAttachment({ restarbeit_id: item.id, project_id: "p1", file_path: "/b.jpg", sort_order: 2 });
+    repo.deleteRestarbeitAttachment(item.id, a2.id);
+    assert.equal(repo.listRestarbeitAttachments(item.id)[0].id, a1.id);
+    assert.throws(() => repo.deleteRestarbeitAttachment(item.id, "x"), /attachment not found/);
+  }));
+
 }
 
 module.exports = { runRestarbeitenDataModelTests };

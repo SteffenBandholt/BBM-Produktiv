@@ -275,3 +275,9 @@ Dabei gilt:
 ### M9 M8-Fotoimport gegen Repo-Vertrag stabilisiert (neu)
 - Der M8-Fotoimport wurde gegen den echten Attachment-Repo-Vertrag stabilisiert.
 - Beim Speichern von Attachments wird `project_id` jetzt aus dem normalisierten `projectId` mitgegeben.
+
+### M10 Restarbeiten-Attachment loeschen (neu)
+- Restarbeiten-Attachments koennen entfernt werden; DB-Datensatz wird geloescht.
+- Datei und optionales Thumbnail werden nach DB-Delete bestmoeglich entfernt.
+- Nach Loeschen wird die Attachment-Liste neu geladen; bei geloeschtem Hauptfoto wird ein verbleibendes Foto wieder Hauptfoto.
+- Bildzuschnitt, Thumbnail-Erzeugung und Smartphone-Import folgen spaeter.

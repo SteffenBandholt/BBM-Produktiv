@@ -321,7 +321,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(ipc, /restarbeiten:setPrimaryAttachment/);
     assert.match(preload, /restarbeitenListAttachments/);
     assert.match(preload, /restarbeitenSetPrimaryAttachment/);
-    assert.doesNotMatch(ipc, /restarbeiten:deleteAttachment|restarbeiten:uploadAttachment|deleteAttachment|uploadAttachment|thumbnail|imageProcessing/i);
+    assert.doesNotMatch(ipc, /restarbeiten:uploadAttachment|uploadAttachment|imageProcessing/i);
   });
 
   await run("M7 DataSource: Attachments-Liste/Primary und Bridge-Fehler", async () => {
@@ -414,8 +414,28 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(screen, /listRestarbeitAttachments/);
     assert.match(screen, /setPrimaryRestarbeitAttachment/);
     assert.doesNotMatch(screen, /innerHTML\s*=/);
-    assert.doesNotMatch(editbox + view + screen, /Foto-Hinzufuegen|Loeschen|Diktat|Druck|Mail/);
+    assert.doesNotMatch(editbox + view + screen, /Diktat|Druck|Mail|Bildbearbeitung/);
   });
+
+
+  await run("M10 IPC/Preload: deleteAttachment verdrahtet", () => {
+    const ipc = fs.readFileSync(path.join(__dirname, "../../src/main/ipc/restarbeitenIpc.js"), "utf8");
+    const preload = fs.readFileSync(path.join(__dirname, "../../src/main/preload.js"), "utf8");
+    assert.match(ipc, /restarbeiten:deleteAttachment/);
+    assert.match(preload, /restarbeitenDeleteAttachment/);
+  });
+
+  await run("M10 DataSource: deleteAttachment normalisiert Antwort", async () => {
+    const ds = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js"));
+    const prevWindow = globalThis.window;
+    globalThis.window = { bbmDb: { restarbeitenDeleteAttachment: async () => ({ ok: true, attachments: null, warning: "x" }) } };
+    try {
+      const out = await ds.deleteRestarbeitAttachment("r-1", "a-1");
+      assert.equal(Array.isArray(out.attachments), true);
+      assert.equal(out.warning, "x");
+    } finally { globalThis.window = prevWindow; }
+  });
+
 
   await run("M5 Screen: fehlender Projektkontext zeigt nur den Kontext-Hinweis", async () => {
     const prevWindow = globalThis.window;

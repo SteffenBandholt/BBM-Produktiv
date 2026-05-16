@@ -7,12 +7,13 @@ function getDisplayLabel(attachment) {
 }
 
 export default class RestarbeitenAttachmentsView {
-  constructor({ documentRef = globalThis.document, onSetPrimary = null, onImportAttachments = null } = {}) {
+  constructor({ documentRef = globalThis.document, onSetPrimary = null, onImportAttachments = null, onDeleteAttachment = null } = {}) {
     this.document = documentRef || globalThis.document;
     this.onSetPrimary = typeof onSetPrimary === "function" ? onSetPrimary : null;
     this.root = null;
     this.attachments = [];
     this.onImportAttachments = typeof onImportAttachments === "function" ? onImportAttachments : null;
+    this.onDeleteAttachment = typeof onDeleteAttachment === "function" ? onDeleteAttachment : null;
   }
 
   render() {
@@ -115,7 +116,21 @@ export default class RestarbeitenAttachmentsView {
     caption.textContent = " Hauptfoto";
     radioWrap.append(radio, caption);
 
-    card.append(label, radioWrap);
+    const deleteBtn = doc.createElement("button");
+    deleteBtn.type = "button";
+    deleteBtn.textContent = "Foto entfernen";
+    deleteBtn.disabled = !normalizeText(attachment?.id) || !this.onDeleteAttachment;
+    deleteBtn.addEventListener("click", () => {
+      const id = normalizeText(attachment?.id);
+      if (!id || !this.onDeleteAttachment) return;
+      const confirmed = typeof window !== "undefined" && typeof window.confirm === "function"
+        ? window.confirm("Foto wirklich entfernen?")
+        : false;
+      if (!confirmed) return;
+      this.onDeleteAttachment(id);
+    });
+
+    card.append(label, radioWrap, deleteBtn);
     return card;
   }
 }
