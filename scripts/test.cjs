@@ -49,6 +49,7 @@ const { runLicenseFeatureGuardTests } = require("./tests/licenseFeatureGuards.te
 const { runLicenseStandardFeaturesTests } = require("./tests/licenseStandardFeatures.test.cjs");
 const { runFeatureGuardEnforcementTests } = require("./tests/featureGuardEnforcement.test.cjs");
 const { runLicensePresentationTests } = require("./tests/licensePresentation.test.cjs");
+const { runNativeTestRuntimeTests } = require("./tests/nativeTestRuntime.test.cjs");
 
 let failed = false;
 
@@ -144,6 +145,7 @@ async function main() {
   await runLicenseStandardFeaturesTests(run); 
   await runFeatureGuardEnforcementTests(run); 
   await runLicensePresentationTests(run); 
+  await runNativeTestRuntimeTests(run);
 
   if (failed) {
     process.exitCode = 1;

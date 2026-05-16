@@ -10,11 +10,12 @@
     "start:raw": "set ELECTRON_RUN_AS_NODE=&& electron .",
     "pack": "electron-builder --dir",
     "dist": "node scripts/dist.cjs",
-    "test": "node scripts/test.cjs",
+    "test": "node scripts/runElectronNodeTest.cjs",
     "lint": "eslint \"src/**/*.js\"",
     "lint:fix": "eslint \"src/**/*.js\" --fix",
     "fix:electron-deps": "electron-builder install-app-deps",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "electron-builder install-app-deps",
+    "test:node": "node scripts/test.cjs"
   },
   "devDependencies": {
     "eslint": "^8.57.1",
