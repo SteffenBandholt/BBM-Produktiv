@@ -18,6 +18,8 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 
+- Hotfix M13.2: Die reale Runtime-Projektmodulliste liefert jetzt `Restarbeiten` fuer die Projektkachel; der Kachelpfad zeigt damit zur Laufzeit `Protokoll`, `Restarbeiten`, `Edit` (ohne `projectFirms`) und oeffnet `Restarbeiten` ueber `openProjectModule(...)`.
+
 - M11 Restarbeiten-Fotoanzeige ist stabilisiert:
   - feste 2-Spalten-Ansicht mit Hauptfoto links und bis zu zwei Nebenfotos rechts
   - alle Bildflaechen im festen Landscape-Format mit `object-fit: cover`

@@ -582,6 +582,7 @@ export default class Router {
   }
 
   _getProjectWorkspaceModules() {
+    const uniqueModuleIds = [];
     const activeModules = getActiveProjectModuleNavigation()
       .filter((entry) => this._isModuleActive(entry?.moduleId))
       .map((entry) =>
@@ -592,7 +593,13 @@ export default class Router {
             entry?.description || "Arbeitsbereich im aktuellen Projektkontext öffnen."
           ).trim(),
         })
-      );
+      )
+      .filter((entry) => {
+        const moduleId = String(entry?.moduleId || "").trim();
+        if (!moduleId || uniqueModuleIds.includes(moduleId)) return false;
+        uniqueModuleIds.push(moduleId);
+        return true;
+      });
 
     return [
       ...activeModules,
