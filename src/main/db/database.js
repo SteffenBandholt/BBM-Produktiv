@@ -1260,6 +1260,151 @@ function ensureLicenseAdminSchema(dbConn) {
   }
 }
 
+
+function ensureRestarbeitenSchema(dbConn) {
+  if (!tableExists(dbConn, "restarbeiten_items")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS restarbeiten_items (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        running_number INTEGER NOT NULL,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        location_level_1 TEXT,
+        location_level_2 TEXT,
+        location_level_3 TEXT,
+        location_level_4 TEXT,
+        short_text TEXT NOT NULL DEFAULT '',
+        long_text TEXT NOT NULL DEFAULT '',
+        status TEXT NOT NULL DEFAULT 'offen',
+        due_date TEXT,
+        responsible_project_firm_id TEXT,
+        responsible_label TEXT,
+        source TEXT NOT NULL DEFAULT 'desktop',
+        import_batch_id TEXT,
+        archived_at TEXT,
+        completed_at TEXT,
+        verified_at TEXT,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
+        FOREIGN KEY (responsible_project_firm_id) REFERENCES project_firms(id) ON DELETE SET NULL
+      );
+    `);
+  } else {
+    const addCol = (name, sqlType) => {
+      if (!columnExists(dbConn, "restarbeiten_items", name)) {
+        dbConn.exec(`ALTER TABLE restarbeiten_items ADD COLUMN ${name} ${sqlType};`);
+      }
+    };
+
+    addCol("project_id", "TEXT");
+    addCol("running_number", "INTEGER");
+    addCol("sort_order", "INTEGER NOT NULL DEFAULT 0");
+    addCol("location_level_1", "TEXT");
+    addCol("location_level_2", "TEXT");
+    addCol("location_level_3", "TEXT");
+    addCol("location_level_4", "TEXT");
+    addCol("short_text", "TEXT NOT NULL DEFAULT ''");
+    addCol("long_text", "TEXT NOT NULL DEFAULT ''");
+    addCol("status", "TEXT NOT NULL DEFAULT 'offen'");
+    addCol("due_date", "TEXT");
+    addCol("responsible_project_firm_id", "TEXT");
+    addCol("responsible_label", "TEXT");
+    addCol("source", "TEXT NOT NULL DEFAULT 'desktop'");
+    addCol("import_batch_id", "TEXT");
+    addCol("archived_at", "TEXT");
+    addCol("completed_at", "TEXT");
+    addCol("verified_at", "TEXT");
+    addCol("created_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
+    addCol("updated_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
+  }
+
+  if (!tableExists(dbConn, "restarbeiten_project_settings")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS restarbeiten_project_settings (
+        project_id TEXT PRIMARY KEY,
+        level_1_label TEXT NOT NULL DEFAULT 'Haus',
+        level_2_label TEXT NOT NULL DEFAULT 'Geschoss',
+        level_3_label TEXT NOT NULL DEFAULT 'Einheit',
+        level_4_label TEXT NOT NULL DEFAULT 'Raum',
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+      );
+    `);
+  } else {
+    const addCol = (name, sqlType) => {
+      if (!columnExists(dbConn, "restarbeiten_project_settings", name)) {
+        dbConn.exec(`ALTER TABLE restarbeiten_project_settings ADD COLUMN ${name} ${sqlType};`);
+      }
+    };
+
+    addCol("project_id", "TEXT");
+    addCol("level_1_label", "TEXT NOT NULL DEFAULT 'Haus'");
+    addCol("level_2_label", "TEXT NOT NULL DEFAULT 'Geschoss'");
+    addCol("level_3_label", "TEXT NOT NULL DEFAULT 'Einheit'");
+    addCol("level_4_label", "TEXT NOT NULL DEFAULT 'Raum'");
+    addCol("created_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
+    addCol("updated_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
+  }
+
+  if (!tableExists(dbConn, "restarbeiten_attachments")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS restarbeiten_attachments (
+        id TEXT PRIMARY KEY,
+        restarbeit_id TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        thumbnail_path TEXT,
+        file_name TEXT,
+        original_file_name TEXT,
+        mime_type TEXT,
+        caption TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 1,
+        is_primary INTEGER NOT NULL DEFAULT 0,
+        source TEXT NOT NULL DEFAULT 'desktop',
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        FOREIGN KEY (restarbeit_id) REFERENCES restarbeiten_items(id) ON DELETE CASCADE,
+        FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
+      );
+    `);
+  } else {
+    const addCol = (name, sqlType) => {
+      if (!columnExists(dbConn, "restarbeiten_attachments", name)) {
+        dbConn.exec(`ALTER TABLE restarbeiten_attachments ADD COLUMN ${name} ${sqlType};`);
+      }
+    };
+
+    addCol("restarbeit_id", "TEXT");
+    addCol("project_id", "TEXT");
+    addCol("file_path", "TEXT");
+    addCol("thumbnail_path", "TEXT");
+    addCol("file_name", "TEXT");
+    addCol("original_file_name", "TEXT");
+    addCol("mime_type", "TEXT");
+    addCol("caption", "TEXT");
+    addCol("sort_order", "INTEGER NOT NULL DEFAULT 1");
+    addCol("is_primary", "INTEGER NOT NULL DEFAULT 0");
+    addCol("source", "TEXT NOT NULL DEFAULT 'desktop'");
+    addCol("created_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
+    addCol("updated_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
+  }
+
+  dbConn.exec(`
+    CREATE INDEX IF NOT EXISTS idx_restarbeiten_items_project_id ON restarbeiten_items(project_id);
+    CREATE INDEX IF NOT EXISTS idx_restarbeiten_items_project_status ON restarbeiten_items(project_id, status);
+    CREATE INDEX IF NOT EXISTS idx_restarbeiten_items_project_due_date ON restarbeiten_items(project_id, due_date);
+    CREATE INDEX IF NOT EXISTS idx_restarbeiten_items_project_archive ON restarbeiten_items(project_id, archived_at);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_restarbeiten_items_project_running_number ON restarbeiten_items(project_id, running_number);
+    CREATE INDEX IF NOT EXISTS idx_restarbeiten_attachments_restarbeit_id ON restarbeiten_attachments(restarbeit_id);
+    CREATE INDEX IF NOT EXISTS idx_restarbeiten_attachments_project_id ON restarbeiten_attachments(project_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_restarbeiten_attachments_one_primary
+    ON restarbeiten_attachments(restarbeit_id)
+    WHERE is_primary = 1;
+  `);
+}
+
 function ensureDictionarySchema(dbConn) {
   if (!tableExists(dbConn, "dictionary_suggestions")) {
     dbConn.exec(`
@@ -1611,6 +1756,7 @@ function ensureSchema(dbConn) {
 
   ensureDictionarySchema(dbConn);
   ensureTableLayoutsSchema(dbConn);
+  ensureRestarbeitenSchema(dbConn);
   ensureAppSettingsSchema(dbConn);
   ensureLicenseAdminSchema(dbConn);
 }
