@@ -513,10 +513,13 @@ async function runRestarbeitenModuleTests(run) {
         assert.equal(resultLimited.ok, true, resultLimited.error || JSON.stringify(resultLimited));
         assert.equal(repoState.added.length, 1, JSON.stringify(repoState.added));
 
+        repoState.attachments = [{ id: "1" }];
+        repoState.added = [];
         stubs.electron.dialog.showOpenDialog = async () => ({ canceled: true, filePaths: [] });
         const canceled = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
         assert.equal(canceled.ok, true, canceled.error || JSON.stringify(canceled));
         assert.equal(canceled.canceled, true, JSON.stringify(canceled));
+        assert.equal(repoState.added.length, 0, JSON.stringify(repoState.added));
 
         repoState.attachments = [{ id: "1" }, { id: "2" }, { id: "3" }];
         const rejected = await handlers["restarbeiten:importAttachments"]({}, { restarbeitId: "r1", projectId: "p1" });
