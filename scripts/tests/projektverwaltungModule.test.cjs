@@ -572,6 +572,39 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(moduleIds.filter((moduleId) => moduleId === "restarbeiten").length, 1);
   });
 
+  await run("Projektverwaltung: DEV-Version schaltet Modulfreigabe auf alle aktiven Module frei", async () => {
+    const moduleAccessState = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/app/modules/moduleAccessState.js")
+    );
+
+    const previousWindow = global.window;
+    global.window = {
+      bbmDb: {
+        async appIsPackaged() {
+          return { ok: true, isPackaged: false };
+        },
+        async licenseGetStatus() {
+          return {
+            ok: true,
+            valid: true,
+            modules: ["protokoll"],
+            features: [],
+          };
+        },
+      },
+    };
+
+    try {
+      await moduleAccessState.refreshCachedActiveModuleAccess({ force: true });
+      assert.equal(moduleAccessState.getCachedActiveModuleSource(), "dev");
+      assert.equal(moduleAccessState.isModuleActive("protokoll"), true);
+      assert.equal(moduleAccessState.isModuleActive("restarbeiten"), true);
+    } finally {
+      global.window = previousWindow;
+      await moduleAccessState.refreshCachedActiveModuleAccess({ force: true });
+    }
+  });
+
   await run("Projektverwaltung: Projektkarte rendert rechte Modul-Aktionsleiste und stoppt Bubble", async () => {
     const previousDocument = global.document;
     const fakeDocument = createFakeDocumentWithBubbling();
