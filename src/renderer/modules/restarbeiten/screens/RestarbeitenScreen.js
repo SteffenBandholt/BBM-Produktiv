@@ -2,6 +2,7 @@ import {
   createRestarbeitItem,
   getRestarbeitenProjectSettings,
   listRestarbeitenByProject,
+  listResponsibleProjectFirms,
   updateRestarbeitItem,
 } from "../data/restarbeitenDataSource.js";
 import { toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
@@ -102,6 +103,7 @@ export default class RestarbeitenScreen {
     this.selectedItemId = "";
     this.isLoading = false;
     this.editbox = null;
+    this.projectFirms = [];
   }
 
   _getSelectedItem() {
@@ -175,6 +177,7 @@ export default class RestarbeitenScreen {
       this.editHost.replaceChildren(this.editbox.render());
     }
 
+    this.editbox.setProjectFirms(this.projectFirms);
     this.editbox.setItem(selectedItem);
     this.editbox.setStatus(selectedItem ? `Ausgewählt: #${selectedItem.running_number || selectedItem.id}` : "");
   }
@@ -262,8 +265,12 @@ export default class RestarbeitenScreen {
 
     try {
       await getRestarbeitenProjectSettings(this.effectiveProjectId);
-      const rows = await listRestarbeitenByProject(this.effectiveProjectId);
+      const [rows, firms] = await Promise.all([
+        listRestarbeitenByProject(this.effectiveProjectId),
+        listResponsibleProjectFirms(this.effectiveProjectId),
+      ]);
       this.rows = Array.isArray(rows) ? rows : [];
+      this.projectFirms = Array.isArray(firms) ? firms : [];
       this.items = toRestarbeitenListItems(this.rows);
       const wantedId = normalizeText(selectItemId);
       if (wantedId && this.items.some((item) => String(item.id) === wantedId)) {
@@ -279,6 +286,7 @@ export default class RestarbeitenScreen {
     } catch (error) {
       this.rows = [];
       this.items = [];
+      this.projectFirms = [];
       if (this.listHost) {
         this.listHost.replaceChildren(
           createMessage(

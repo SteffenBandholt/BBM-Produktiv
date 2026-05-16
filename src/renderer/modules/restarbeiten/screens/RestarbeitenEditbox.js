@@ -45,6 +45,17 @@ function createInput(doc, type = "text") {
   return input;
 }
 
+function normalizeFirmEntries(list) {
+  if (!Array.isArray(list)) return [];
+  return list
+    .map((firm) => {
+      const id = normalizeText(firm?.id);
+      if (!id) return null;
+      return { id, name: normalizeText(firm?.name) };
+    })
+    .filter(Boolean);
+}
+
 export default class RestarbeitenEditbox {
   constructor({ documentRef = globalThis.document, onSave = null } = {}) {
     this.document = documentRef || globalThis.document;
@@ -54,6 +65,7 @@ export default class RestarbeitenEditbox {
     this.saveBtn = null;
     this.statusEl = null;
     this.currentItem = null;
+    this.projectFirms = [];
     this.fields = {};
   }
 
@@ -101,7 +113,7 @@ export default class RestarbeitenEditbox {
     const longText = createInput(doc, "textarea");
     longText.rows = 4;
     const dueDate = createInput(doc, "date");
-    const responsibleLabel = createInput(doc, "text");
+    const responsibleProjectFirmId = createSelect(doc, [{ value: "", label: "— keine Auswahl —" }]);
 
     form.append(
       createField(doc, "item_class", itemClass),
@@ -113,7 +125,7 @@ export default class RestarbeitenEditbox {
       createField(doc, "short_text", shortText),
       createField(doc, "long_text", longText),
       createField(doc, "due_date", dueDate),
-      createField(doc, "responsible_label", responsibleLabel)
+      createField(doc, "responsible_project_firm_id", responsibleProjectFirmId)
     );
 
     const footer = doc.createElement("div");
@@ -159,11 +171,38 @@ export default class RestarbeitenEditbox {
       short_text: shortText,
       long_text: longText,
       due_date: dueDate,
-      responsible_label: responsibleLabel,
+      responsible_project_firm_id: responsibleProjectFirmId,
     };
 
     this.setItem(null);
     return root;
+  }
+
+  setProjectFirms(firms) {
+    this.projectFirms = normalizeFirmEntries(firms);
+    const select = this.fields?.responsible_project_firm_id;
+    if (!select) return;
+
+    const selectedBefore = normalizeText(select.value);
+    const options = [{ id: "", name: "— keine Auswahl —" }, ...this.projectFirms];
+    select.replaceChildren();
+    for (const option of options) {
+      const opt = this.document.createElement("option");
+      opt.value = option.id;
+      opt.textContent = option.name || "—";
+      select.appendChild(opt);
+    }
+
+    const fallbackId = normalizeText(this.currentItem?.responsible_project_firm_id);
+    const targetId = fallbackId || selectedBefore;
+    select.value = targetId;
+    if (targetId && select.value !== targetId) {
+      const legacy = this.document.createElement("option");
+      legacy.value = targetId;
+      legacy.textContent = normalizeText(this.currentItem?.responsible_label) || "(nicht mehr vorhanden)";
+      select.appendChild(legacy);
+      select.value = targetId;
+    }
   }
 
   setStatus(text) {
@@ -190,7 +229,8 @@ export default class RestarbeitenEditbox {
     if (fields.short_text) fields.short_text.value = normalizeText(source.short_text);
     if (fields.long_text) fields.long_text.value = normalizeText(source.long_text);
     if (fields.due_date) fields.due_date.value = normalizeText(source.due_date);
-    if (fields.responsible_label) fields.responsible_label.value = normalizeText(source.responsible_label);
+
+    this.setProjectFirms(this.projectFirms);
     if (this.root) {
       this.root.dataset.hasItem = this.currentItem ? "1" : "0";
     }
@@ -198,6 +238,21 @@ export default class RestarbeitenEditbox {
 
   getDraft() {
     const fields = this.fields || {};
+    const selectedFirmId = normalizeText(fields.responsible_project_firm_id?.value);
+    const selectedFirm = this.projectFirms.find((entry) => entry.id === selectedFirmId) || null;
+    const oldLabel = normalizeText(this.currentItem?.responsible_label);
+
+    let responsibleProjectFirmId = null;
+    let responsibleLabel = oldLabel;
+
+    if (selectedFirmId && selectedFirm) {
+      responsibleProjectFirmId = selectedFirm.id;
+      responsibleLabel = selectedFirm.name;
+    } else if (!selectedFirmId) {
+      responsibleProjectFirmId = null;
+      responsibleLabel = oldLabel;
+    }
+
     return {
       item_class: normalizeText(fields.item_class?.value) || "rest",
       status: normalizeText(fields.status?.value) || "offen",
@@ -208,7 +263,8 @@ export default class RestarbeitenEditbox {
       short_text: normalizeText(fields.short_text?.value),
       long_text: normalizeText(fields.long_text?.value),
       due_date: normalizeText(fields.due_date?.value),
-      responsible_label: normalizeText(fields.responsible_label?.value),
+      responsible_project_firm_id: responsibleProjectFirmId,
+      responsible_label: responsibleLabel,
     };
   }
 }
