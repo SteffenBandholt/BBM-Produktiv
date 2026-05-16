@@ -4,9 +4,6 @@ import {
   listRestarbeitenByProject,
   listResponsibleProjectFirms,
   listRestarbeitAttachments,
-  setPrimaryRestarbeitAttachment,
-  importRestarbeitAttachments,
-  deleteRestarbeitAttachment,
   updateRestarbeitItem,
 } from "../data/restarbeitenDataSource.js";
 import { toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
@@ -474,37 +471,13 @@ export default class RestarbeitenScreen {
             this.editbox?.setSaving(false);
           }
         },
-        onSetPrimaryAttachment: async (attachmentId) => {
-          const selected = this._getSelectedItem();
-          if (!selected?.id) return;
-          await setPrimaryRestarbeitAttachment(selected.id, attachmentId);
-          await this._loadSelectedAttachments();
-          this._renderEditbox();
-        },
-        onImportAttachments: async () => {
-          const selected = this._getSelectedItem();
-          if (!selected?.id || !this.effectiveProjectId) return;
-          const result = await importRestarbeitAttachments(selected.id, this.effectiveProjectId);
-          const attachments = Array.isArray(result?.attachments) ? result.attachments : [];
-          this.attachmentsByItemId.set(String(selected.id), attachments);
-          await this._loadSelectedAttachments();
-          this._renderList();
-          this._renderEditbox();
-        },
-        onDeleteAttachment: async (attachmentId) => {
-          const selected = this._getSelectedItem();
-          if (!selected?.id || !attachmentId) return;
-          await deleteRestarbeitAttachment(selected.id, attachmentId);
-          await this._loadSelectedAttachments();
-          this._renderEditbox();
-          this._renderList();
-        },
       });
 
       this.editHost.replaceChildren(this.editbox.render());
       this.editbox.setProjectFirms(this.projectFirms);
     }
 
+    this.editbox.setLocationLabels(this.projectSettings || {});
     this.editbox.setItem(selectedItem);
     this.editbox.setProjectFirms(this.projectFirms);
     this.editbox.setAttachments(this.attachmentsByItemId.get(String(selectedItem.id)) || []);

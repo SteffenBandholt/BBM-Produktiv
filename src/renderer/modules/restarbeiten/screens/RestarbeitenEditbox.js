@@ -1,18 +1,17 @@
-import RestarbeitenAttachmentsView from "./RestarbeitenAttachmentsView.js";
-
 function normalizeText(value) {
   return String(value ?? "").trim();
 }
 
-function createField(doc, labelText, control) {
-  const wrap = doc.createElement("label");
-  wrap.style.display = "grid";
-  wrap.style.gap = "6px";
+const LOCATION_KEYS = ["location_level_1", "location_level_2", "location_level_3", "location_level_4"];
+const LOCATION_LABEL_FALLBACKS = ["Ebene 1", "Ebene 2", "Ebene 3", "Ebene 4"];
 
-  const label = doc.createElement("div");
+function createField(doc, labelText, control, className = "") {
+  const wrap = doc.createElement("label");
+  wrap.className = `restarbeiten-editbox__field ${className}`.trim();
+
+  const label = doc.createElement("span");
+  label.className = "restarbeiten-editbox__label";
   label.textContent = labelText;
-  label.style.fontSize = "12px";
-  label.style.fontWeight = "700";
 
   wrap.append(label, control);
   return wrap;
@@ -20,46 +19,34 @@ function createField(doc, labelText, control) {
 
 function createSelect(doc, options) {
   const select = doc.createElement("select");
-  select.style.minHeight = "34px";
-  select.style.padding = "6px 8px";
-  select.style.borderRadius = "8px";
-  select.style.border = "1px solid var(--card-border, #cfcfcf)";
-  select.style.background = "var(--card-bg, #fff)";
-
+  select.className = "restarbeiten-editbox__control";
   for (const option of options) {
     const opt = doc.createElement("option");
     opt.value = String(option.value ?? "");
     opt.textContent = String(option.label ?? "");
-    select.appendChild(opt);
+    select.append(opt);
   }
-
   return select;
 }
 
 function createInput(doc, type = "text") {
   const input = doc.createElement(type === "textarea" ? "textarea" : "input");
+  input.className = "restarbeiten-editbox__control";
   if (type !== "textarea") input.type = type;
-  input.style.minHeight = "34px";
-  input.style.padding = "6px 8px";
-  input.style.borderRadius = "8px";
-  input.style.border = "1px solid var(--card-border, #cfcfcf)";
-  input.style.background = "var(--card-bg, #fff)";
   return input;
 }
 
 function normalizeFirmEntries(list) {
   if (!Array.isArray(list)) return [];
-  return list
-    .map((firm) => {
-      const id = normalizeText(firm?.id);
-      if (!id) return null;
-      return { id, name: normalizeText(firm?.name) };
-    })
-    .filter(Boolean);
+  return list.map((firm) => {
+    const id = normalizeText(firm?.id);
+    if (!id) return null;
+    return { id, name: normalizeText(firm?.name) };
+  }).filter(Boolean);
 }
 
 export default class RestarbeitenEditbox {
-  constructor({ documentRef = globalThis.document, onSave = null, onSetPrimaryAttachment = null, onImportAttachments = null, onDeleteAttachment = null } = {}) {
+  constructor({ documentRef = globalThis.document, onSave = null } = {}) {
     this.document = documentRef || globalThis.document;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.root = null;
@@ -68,41 +55,80 @@ export default class RestarbeitenEditbox {
     this.statusEl = null;
     this.currentItem = null;
     this.projectFirms = [];
+    this.locationLabels = {};
     this.fields = {};
     this.attachments = [];
-    this.attachmentsView = null;
-    this.onSetPrimaryAttachment = typeof onSetPrimaryAttachment === "function" ? onSetPrimaryAttachment : null;
-    this.onImportAttachments = typeof onImportAttachments === "function" ? onImportAttachments : null;
-    this.onDeleteAttachment = typeof onDeleteAttachment === "function" ? onDeleteAttachment : null;
+  }
+
+  _getLocationLabel(index) {
+    const configured = normalizeText(this.locationLabels?.[`level_${index}_label`]);
+    return configured || LOCATION_LABEL_FALLBACKS[index - 1];
+  }
+
+  setLocationLabels(settings) {
+    this.locationLabels = settings && typeof settings === "object" ? { ...settings } : {};
+    LOCATION_KEYS.forEach((key, idx) => {
+      const labelEl = this.fields?.[`${key}__label`];
+      if (labelEl) labelEl.textContent = this._getLocationLabel(idx + 1);
+    });
   }
 
   render() {
     const doc = this.document;
     const root = doc.createElement("section");
-    root.style.display = "grid";
-    root.style.gap = "10px";
-    root.style.padding = "12px";
-    root.style.border = "1px solid var(--card-border, #cfcfcf)";
-    root.style.borderRadius = "12px";
-    root.style.background = "var(--card-bg, #fff)";
-
-    const title = doc.createElement("h3");
-    title.textContent = "Editbox";
-    title.style.margin = "0";
-
-    const subtitle = doc.createElement("div");
-    subtitle.textContent = "Restarbeit bearbeiten";
-    subtitle.style.fontSize = "13px";
-    subtitle.style.opacity = "0.8";
+    root.className = "restarbeiten-editbox restarbeiten-editbox--compact";
 
     const form = doc.createElement("form");
-    form.style.display = "grid";
-    form.style.gap = "10px";
+    form.className = "restarbeiten-editbox__layout";
 
-    const itemClass = createSelect(doc, [
-      { value: "rest", label: "Rest" },
-      { value: "mangel", label: "Mangel" },
-    ]);
+    const mainCol = doc.createElement("div");
+    mainCol.className = "restarbeiten-editbox__main";
+
+    const metaCol = doc.createElement("aside");
+    metaCol.className = "restarbeiten-editbox__meta";
+
+    const shortText = createInput(doc, "text");
+    const longText = createInput(doc, "textarea");
+    longText.rows = 4;
+    const level1 = createInput(doc, "text");
+    const level2 = createInput(doc, "text");
+    const level3 = createInput(doc, "text");
+    const level4 = createInput(doc, "text");
+
+    const locationGrid = doc.createElement("div");
+    locationGrid.className = "restarbeiten-editbox__locationGrid";
+    const loc1Field = createField(doc, this._getLocationLabel(1), level1, "restarbeiten-editbox__locationField");
+    const loc2Field = createField(doc, this._getLocationLabel(2), level2, "restarbeiten-editbox__locationField");
+    const loc3Field = createField(doc, this._getLocationLabel(3), level3, "restarbeiten-editbox__locationField");
+    const loc4Field = createField(doc, this._getLocationLabel(4), level4, "restarbeiten-editbox__locationField");
+    locationGrid.append(loc1Field, loc2Field, loc3Field, loc4Field);
+
+    mainCol.append(
+      createField(doc, "Kurztext", shortText),
+      createField(doc, "Langtext", longText),
+      locationGrid
+    );
+
+    const itemClass = createInput(doc, "hidden");
+    itemClass.value = "rest";
+
+    const marker = doc.createElement("div");
+    marker.className = "restarbeiten-editbox__marker";
+    const restBtn = doc.createElement("button");
+    restBtn.type = "button";
+    restBtn.textContent = "Rest";
+    const mangelBtn = doc.createElement("button");
+    mangelBtn.type = "button";
+    mangelBtn.textContent = "Mangel";
+    marker.append(restBtn, mangelBtn);
+
+    const setItemClass = (value) => {
+      itemClass.value = value === "mangel" ? "mangel" : "rest";
+      restBtn.dataset.active = itemClass.value === "rest" ? "1" : "0";
+      mangelBtn.dataset.active = itemClass.value === "mangel" ? "1" : "0";
+    };
+    restBtn.addEventListener("click", () => setItemClass("rest"));
+    mangelBtn.addEventListener("click", () => setItemClass("mangel"));
 
     const status = createSelect(doc, [
       { value: "offen", label: "offen" },
@@ -111,82 +137,30 @@ export default class RestarbeitenEditbox {
       { value: "geprueft_erledigt", label: "geprueft erledigt" },
       { value: "zurueckgewiesen", label: "zurueckgewiesen" },
     ]);
-
-    const level1 = createInput(doc, "text");
-    const level2 = createInput(doc, "text");
-    const level3 = createInput(doc, "text");
-    const level4 = createInput(doc, "text");
-    const shortText = createInput(doc, "text");
-    const longText = createInput(doc, "textarea");
-    longText.rows = 4;
     const dueDate = createInput(doc, "date");
     const responsibleProjectFirmId = createSelect(doc, [{ value: "", label: "— keine Auswahl —" }]);
-
-    form.append(
-      createField(doc, "item_class", itemClass),
-      createField(doc, "status", status),
-      createField(doc, "location_level_1", level1),
-      createField(doc, "location_level_2", level2),
-      createField(doc, "location_level_3", level3),
-      createField(doc, "location_level_4", level4),
-      createField(doc, "short_text", shortText),
-      createField(doc, "long_text", longText),
-      createField(doc, "due_date", dueDate),
-      createField(doc, "responsible_project_firm_id", responsibleProjectFirmId)
-    );
-
-
-    const attachmentsHost = doc.createElement("div");
-    attachmentsHost.style.display = "grid";
-    attachmentsHost.style.gap = "8px";
-
-    const attachmentsTitle = doc.createElement("div");
-    attachmentsTitle.textContent = "Fotos";
-    attachmentsTitle.style.fontSize = "12px";
-    attachmentsTitle.style.fontWeight = "700";
-
-    this.attachmentsView = new RestarbeitenAttachmentsView({
-      documentRef: doc,
-      onSetPrimary: (attachmentId) => {
-        if (this.onSetPrimaryAttachment) this.onSetPrimaryAttachment(attachmentId);
-      },
-      onImportAttachments: () => {
-        if (this.onImportAttachments) this.onImportAttachments();
-      },
-      onDeleteAttachment: (attachmentId) => {
-        if (this.onDeleteAttachment) this.onDeleteAttachment(attachmentId);
-      },
-    });
-
-    attachmentsHost.append(attachmentsTitle, this.attachmentsView.render());
-
-    const footer = doc.createElement("div");
-    footer.style.display = "flex";
-    footer.style.alignItems = "center";
-    footer.style.gap = "10px";
-
     const saveBtn = doc.createElement("button");
     saveBtn.type = "submit";
     saveBtn.textContent = "Speichern";
-    saveBtn.style.minHeight = "36px";
-    saveBtn.style.padding = "8px 14px";
-    saveBtn.style.borderRadius = "8px";
-    saveBtn.style.border = "1px solid var(--card-border, #cfcfcf)";
-    saveBtn.style.fontWeight = "700";
-
+    saveBtn.className = "restarbeiten-editbox__save";
     const statusEl = doc.createElement("div");
-    statusEl.style.fontSize = "12px";
-    statusEl.style.opacity = "0.8";
+    statusEl.className = "restarbeiten-editbox__status";
 
-    footer.append(saveBtn, statusEl);
-    form.append(attachmentsHost, footer);
-    root.append(title, subtitle, form);
+    metaCol.append(
+      createField(doc, "Rest / Mangel", marker),
+      createField(doc, "Status", status),
+      createField(doc, "Fertig bis", dueDate),
+      createField(doc, "Verantwortlich", responsibleProjectFirmId),
+      saveBtn,
+      statusEl
+    );
+
+    form.append(mainCol, metaCol, itemClass);
+    root.append(form);
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      if (this.onSave) {
-        await this.onSave(this.getDraft());
-      }
+      if (this.onSave) await this.onSave(this.getDraft());
     });
 
     this.root = root;
@@ -204,9 +178,13 @@ export default class RestarbeitenEditbox {
       long_text: longText,
       due_date: dueDate,
       responsible_project_firm_id: responsibleProjectFirmId,
+      location_level_1__label: loc1Field.querySelector?.(".restarbeiten-editbox__label") || loc1Field.children[0],
+      location_level_2__label: loc2Field.querySelector?.(".restarbeiten-editbox__label") || loc2Field.children[0],
+      location_level_3__label: loc3Field.querySelector?.(".restarbeiten-editbox__label") || loc3Field.children[0],
+      location_level_4__label: loc4Field.querySelector?.(".restarbeiten-editbox__label") || loc4Field.children[0],
     };
 
-    this.setAttachments([]);
+    this._setItemClass = setItemClass;
     this.setItem(null);
     return root;
   }
@@ -219,6 +197,7 @@ export default class RestarbeitenEditbox {
     const selectedBefore = normalizeText(select.value);
     const options = [{ id: "", name: "— keine Auswahl —" }, ...this.projectFirms];
     select.replaceChildren();
+
     for (const option of options) {
       const opt = this.document.createElement("option");
       opt.value = option.id;
@@ -229,6 +208,7 @@ export default class RestarbeitenEditbox {
     const fallbackId = normalizeText(this.currentItem?.responsible_project_firm_id);
     const targetId = fallbackId || selectedBefore;
     select.value = targetId;
+
     if (targetId && select.value !== targetId) {
       const legacy = this.document.createElement("option");
       legacy.value = targetId;
@@ -240,38 +220,21 @@ export default class RestarbeitenEditbox {
 
   setAttachments(attachments) {
     this.attachments = Array.isArray(attachments) ? attachments : [];
-    if (this.attachmentsView) this.attachmentsView.setAttachments(this.attachments);
   }
-
-  setStatus(text) {
-    if (!this.statusEl) return;
-    this.statusEl.textContent = String(text || "");
-  }
-
-  setSaving(isSaving) {
-    if (!this.saveBtn) return;
-    this.saveBtn.disabled = !!isSaving;
-  }
+  setStatus(text) { if (this.statusEl) this.statusEl.textContent = String(text || ""); }
+  setSaving(isSaving) { if (this.saveBtn) this.saveBtn.disabled = !!isSaving; }
 
   setItem(item) {
     this.currentItem = item || null;
     const source = this.currentItem || {};
     const fields = this.fields || {};
-
-    if (fields.item_class) fields.item_class.value = normalizeText(source.item_class) || "rest";
+    this._setItemClass?.(normalizeText(source.item_class) || "rest");
     if (fields.status) fields.status.value = normalizeText(source.status) || "offen";
-    if (fields.location_level_1) fields.location_level_1.value = normalizeText(source.location_level_1);
-    if (fields.location_level_2) fields.location_level_2.value = normalizeText(source.location_level_2);
-    if (fields.location_level_3) fields.location_level_3.value = normalizeText(source.location_level_3);
-    if (fields.location_level_4) fields.location_level_4.value = normalizeText(source.location_level_4);
+    LOCATION_KEYS.forEach((key) => { if (fields[key]) fields[key].value = normalizeText(source[key]); });
     if (fields.short_text) fields.short_text.value = normalizeText(source.short_text);
     if (fields.long_text) fields.long_text.value = normalizeText(source.long_text);
     if (fields.due_date) fields.due_date.value = normalizeText(source.due_date);
-
     this.setProjectFirms(this.projectFirms);
-    if (this.root) {
-      this.root.dataset.hasItem = this.currentItem ? "1" : "0";
-    }
   }
 
   getDraft() {
@@ -279,18 +242,12 @@ export default class RestarbeitenEditbox {
     const selectedFirmId = normalizeText(fields.responsible_project_firm_id?.value);
     const selectedFirm = this.projectFirms.find((entry) => entry.id === selectedFirmId) || null;
     const oldLabel = normalizeText(this.currentItem?.responsible_label);
-
     let responsibleProjectFirmId = null;
     let responsibleLabel = oldLabel;
-
     if (selectedFirmId && selectedFirm) {
       responsibleProjectFirmId = selectedFirm.id;
       responsibleLabel = selectedFirm.name;
-    } else if (!selectedFirmId) {
-      responsibleProjectFirmId = null;
-      responsibleLabel = oldLabel;
     }
-
     return {
       item_class: normalizeText(fields.item_class?.value) || "rest",
       status: normalizeText(fields.status?.value) || "offen",

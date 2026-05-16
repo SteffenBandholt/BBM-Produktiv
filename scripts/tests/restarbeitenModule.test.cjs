@@ -991,6 +991,81 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(styleContent, /import\s+["'].*\.css["']/);
   });
 
+  await run("M16 Editbox: kompakt ohne Fotos mit Verortungslabels und Marker", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js")
+    );
+    const doc = createFakeDocument();
+    const saveCalls = [];
+    const editbox = new mod.default({ documentRef: doc, onSave: async (draft) => saveCalls.push(draft) });
+    const root = editbox.render();
+
+    assert.equal(String(root.className || "").includes("restarbeiten-editbox"), true);
+    assert.equal(String(root.className || "").includes("restarbeiten-editbox--compact"), true);
+    assert.equal(collectText(root).includes("Fotos"), false);
+    assert.equal(collectText(root).includes("RestarbeitenAttachmentsView"), false);
+    assert.equal(typeof editbox.setAttachments, "function");
+    editbox.setAttachments([{ id: "a1" }]);
+
+    editbox.setLocationLabels({ level_1_label: "Haus", level_2_label: "Geschoss", level_3_label: "Wohnung", level_4_label: "Raum" });
+    assert.equal(collectText(root).includes("Haus"), true);
+    assert.equal(collectText(root).includes("Geschoss"), true);
+    assert.equal(collectText(root).includes("Wohnung"), true);
+    assert.equal(collectText(root).includes("Raum"), true);
+    assert.equal(collectText(root).includes("Level 1"), false);
+
+    const fallback = new mod.default({ documentRef: createFakeDocument() });
+    const fallbackRoot = fallback.render();
+    assert.equal(collectText(fallbackRoot).includes("Ebene 1"), true);
+    assert.equal(collectText(fallbackRoot).includes("Ebene 4"), true);
+
+    editbox.setProjectFirms([{ id: "f1", name: "Firma A" }]);
+    editbox.setItem({ item_class: "rest", status: "offen", short_text: "Kurz", long_text: "Lang", due_date: "2026-05-16" });
+
+    const legacyEditbox = new mod.default({ documentRef: createFakeDocument() });
+    legacyEditbox.render();
+    legacyEditbox.setItem({ responsible_project_firm_id: "alt-1", responsible_label: "Alte Firma" });
+    legacyEditbox.setProjectFirms([{ id: "f1", name: "Firma A" }]);
+    const legacySelect = legacyEditbox.fields.responsible_project_firm_id;
+    assert.equal(legacySelect.value, "alt-1");
+    const legacyTexts = (legacySelect.children || []).map((option) => String(option?.textContent || ""));
+    assert.equal(legacyTexts.includes("Alte Firma") || legacyTexts.includes("(nicht mehr vorhanden)"), true);
+    const markerButtons = findNodes(root, (node) => node?.tagName === "BUTTON" && (node?.textContent === "Rest" || node?.textContent === "Mangel"));
+    markerButtons.find((b) => b.textContent === "Mangel").click();
+    editbox.fields.status.value = "in_arbeit";
+    editbox.fields.responsible_project_firm_id.value = "f1";
+    const draft = editbox.getDraft();
+    assert.equal(draft.item_class, "mangel");
+    assert.equal(draft.status, "in_arbeit");
+    assert.equal(draft.due_date, "2026-05-16");
+    assert.equal(draft.responsible_project_firm_id, "f1");
+
+    editbox.form.dispatchEvent({ type: "submit", preventDefault() {} });
+    assert.equal(saveCalls.length, 1);
+    assert.equal(typeof saveCalls[0].short_text, "string");
+    assert.equal(typeof saveCalls[0].long_text, "string");
+    assert.equal(Object.hasOwn(saveCalls[0], "location_level_1"), true);
+    assert.equal(Object.hasOwn(saveCalls[0], "location_level_4"), true);
+  });
+
+  await run("M16 Guardrails: Dateiinhalte ohne git-status-Check", () => {
+    const editboxContent = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"),
+      "utf8"
+    );
+    const screenContent = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"),
+      "utf8"
+    );
+
+    assert.doesNotMatch(editboxContent, /from\s+["'][^"']*protokoll\//i);
+    assert.doesNotMatch(screenContent, /from\s+["'][^"']*protokoll\//i);
+    assert.doesNotMatch(editboxContent, /Diktat|Druck|Mail/);
+    const combinedContent = `${editboxContent}\n${screenContent}`;
+    assert.doesNotMatch(combinedContent, /execSync\(\s*["']git status/);
+    assert.doesNotMatch(combinedContent, /node:child_process/);
+  });
+
 }
 
 module.exports = { runRestarbeitenModuleTests };
