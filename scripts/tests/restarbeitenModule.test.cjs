@@ -272,6 +272,39 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(styleContent, /restarbeiten-sheet__list/);
   });
 
+  await run("M14 Smoke: RestarbeitenScreen import + render ohne ReferenceError", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    assert.equal(typeof mod.default, "function");
+    const RestarbeitenScreen = mod.default;
+
+    const prevWindow = globalThis.window;
+    const prevDocument = globalThis.document;
+    globalThis.window = { bbmDb: {} };
+    globalThis.document = createFakeDocument();
+
+    try {
+      const screen = new RestarbeitenScreen({
+        projectId: "p-1",
+        router: { async showProjectWorkspace() { return true; } },
+      });
+      const root = screen.render();
+      assert.equal(typeof root, "object");
+      assert.match(String(root.className || ""), /restarbeiten-sheet/);
+      assert.equal(String(screen.listHost?.className || "").includes("restarbeiten-sheet__list"), true);
+
+      const allText = collectText(root);
+      assert.equal(allText.includes("Schließen"), true);
+      assert.equal(allText.includes("+ Restarbeit"), true);
+      assert.equal(allText.includes("Verortung"), true);
+      assert.equal(allText.includes("Metaspalten"), true);
+    } finally {
+      globalThis.window = prevWindow;
+      globalThis.document = prevDocument;
+    }
+  });
+
   await run("M5 Repo/IPC/Preload/DataSource: Create und Update sind verdrahtet", async () => {
     const repo = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js")

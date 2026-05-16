@@ -398,6 +398,26 @@ export default class RestarbeitenScreen {
       await this._createRestarbeit();
     };
 
+    const closeBtn = doc.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.textContent = "Schließen";
+    applyPopupButtonStyle(closeBtn, { variant: "secondary" });
+    closeBtn.onclick = () => {
+      if (this.router && typeof this.router.showProjectWorkspace === "function") {
+        this.router.showProjectWorkspace(this.effectiveProjectId, { project: this.project }).catch(() => {});
+      }
+    };
+
+    const locationFilterBtn = doc.createElement("button");
+    locationFilterBtn.type = "button";
+    locationFilterBtn.className = "restarbeiten-list__filterBtn";
+    locationFilterBtn.textContent = "Verortung";
+
+    const metaColumnsBtn = doc.createElement("button");
+    metaColumnsBtn.type = "button";
+    metaColumnsBtn.className = "restarbeiten-list__filterBtn";
+    metaColumnsBtn.textContent = "Metaspalten";
+
     const context = doc.createElement("div");
     context.textContent = this.effectiveProjectId
       ? `Projektkontext: #${this.effectiveProjectId}`
@@ -490,22 +510,3 @@ export default class RestarbeitenScreen {
     }
   }
 }
-    const closeBtn = doc.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.textContent = "Schließen";
-    applyPopupButtonStyle(closeBtn, { variant: "secondary" });
-    closeBtn.onclick = () => {
-      if (this.router && typeof this.router.showProjectWorkspace === "function") {
-        this.router.showProjectWorkspace(this.effectiveProjectId, { project: this.project }).catch(() => {});
-      }
-    };
-
-    const locationFilterBtn = doc.createElement("button");
-    locationFilterBtn.type = "button";
-    locationFilterBtn.className = "restarbeiten-list__filterBtn";
-    locationFilterBtn.textContent = "Verortung";
-
-    const metaColumnsBtn = doc.createElement("button");
-    metaColumnsBtn.type = "button";
-    metaColumnsBtn.className = "restarbeiten-list__filterBtn";
-    metaColumnsBtn.textContent = "Metaspalten";
