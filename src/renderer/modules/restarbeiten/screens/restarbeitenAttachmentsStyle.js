@@ -72,13 +72,37 @@ const RESTARBEITEN_ATTACHMENTS_STYLE_TEXT = `
 }
 `;
 
+function hasInjectedStyle(doc) {
+  if (typeof doc?.querySelector === "function") {
+    return !!doc.querySelector(`style[${RESTARBEITEN_ATTACHMENTS_STYLE_ATTR}="true"]`);
+  }
+
+  const children = Array.from(doc?.head?.children || []);
+  return children.some((node) => {
+    if (!node) return false;
+    if (typeof node.getAttribute === "function") {
+      return node.getAttribute(RESTARBEITEN_ATTACHMENTS_STYLE_ATTR) === "true";
+    }
+    return node[RESTARBEITEN_ATTACHMENTS_STYLE_ATTR] === "true";
+  });
+}
+
 export function ensureRestarbeitenAttachmentsStyle(documentRef = globalThis.document) {
   const doc = documentRef || globalThis.document;
   if (!doc?.head || typeof doc.createElement !== "function") return;
-  if (doc.querySelector(`style[${RESTARBEITEN_ATTACHMENTS_STYLE_ATTR}="true"]`)) return;
+  if (hasInjectedStyle(doc)) return;
 
   const style = doc.createElement("style");
-  style.setAttribute(RESTARBEITEN_ATTACHMENTS_STYLE_ATTR, "true");
+  if (typeof style.setAttribute === "function") {
+    style.setAttribute(RESTARBEITEN_ATTACHMENTS_STYLE_ATTR, "true");
+  } else {
+    style[RESTARBEITEN_ATTACHMENTS_STYLE_ATTR] = "true";
+  }
   style.textContent = RESTARBEITEN_ATTACHMENTS_STYLE_TEXT;
-  doc.head.appendChild(style);
+
+  if (typeof doc.head.appendChild === "function") {
+    doc.head.appendChild(style);
+  } else if (typeof doc.head.append === "function") {
+    doc.head.append(style);
+  }
 }

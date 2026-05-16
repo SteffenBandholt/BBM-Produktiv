@@ -614,6 +614,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(styleCode, /aspect-ratio:\s*16 \/ 9/);
     assert.match(styleCode, /object-fit:\s*cover/);
     assert.match(styleCode, /data-bbm-restarbeiten-attachments-style/);
+    assert.match(styleCode, /typeof\s+doc\?\.querySelector\s*===\s*["']function["']/);
+    assert.match(styleCode, /function\s+hasInjectedStyle\s*\(/);
     assert.doesNotMatch(view, /import\s+["']\.\/restarbeitenAttachments\.css["']/);
 
     assert.doesNotMatch(view + styleCode, /gallery|lightbox/i);
