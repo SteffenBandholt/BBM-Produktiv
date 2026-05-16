@@ -17,6 +17,12 @@ const CSS_TEXT = `
 .restarbeiten-list__number,.restarbeiten-list__shortText{font-weight:700}
 .restarbeiten-list__date,.restarbeiten-list__longText,.restarbeiten-list__locationCompact{font-size:12px;opacity:.88}
 .restarbeiten-list__metaCol{font-size:12px;display:grid;gap:2px}
+.restarbeiten-list__ampelLine{display:inline-flex;align-items:center;gap:6px}
+.restarbeiten-list__ampel{display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.2)}
+.restarbeiten-list__ampel--rot{background:#d33}
+.restarbeiten-list__ampel--orange{background:#f0a000}
+.restarbeiten-list__ampel--gruen{background:#1b8a3a}
+.restarbeiten-list__ampel--neutral{background:#8a8a8a}
 .restarbeiten-list__photosToggle{font-size:11px;padding:2px 6px}
 .restarbeiten-list__attachmentsWrap{padding-top:6px;font-size:12px}
 `;
