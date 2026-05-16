@@ -160,6 +160,19 @@ function findNode(root, predicate) {
   return null;
 }
 
+function findNodes(root, predicate) {
+  const matches = [];
+  const stack = [root];
+  while (stack.length) {
+    const node = stack.shift();
+    if (predicate(node)) matches.push(node);
+    for (const child of node?.children || []) {
+      stack.push(child);
+    }
+  }
+  return matches;
+}
+
 async function runProjektverwaltungModuleTests(run) {
   const [
     {
@@ -565,10 +578,24 @@ async function runProjektverwaltungModuleTests(run) {
               label: "Protokoll",
               description: "Protokoll im aktuellen Projekt öffnen.",
             },
+            {
+              moduleId: "restarbeiten",
+              label: "Restarbeiten",
+              description: "Restarbeiten im aktuellen Projekt öffnen.",
+            },
+            {
+              moduleId: "projectFirms",
+              label: "Firmen im Projekt",
+              description: "Projektfirmen anzeigen.",
+            },
           ];
         },
         async openProjectProtocol(projectId, options) {
           calls.push({ type: "protocol", projectId, options });
+        },
+        async openProjectModule(projectId, moduleId, options) {
+          calls.push({ type: "module", projectId, moduleId, options });
+          return { ok: true };
         },
       },
     });
@@ -599,6 +626,14 @@ async function runProjektverwaltungModuleTests(run) {
         root,
         (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "protokoll"
       );
+      const restarbeitenButton = findNode(
+        root,
+        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "restarbeiten"
+      );
+      const allRestarbeitenButtons = findNodes(
+        root,
+        (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "restarbeiten"
+      );
       const projectFirmsButton = findNode(
         root,
         (node) => node?.dataset?.projectAction === "module" && node?.dataset?.moduleId === "projectFirms"
@@ -608,15 +643,31 @@ async function runProjektverwaltungModuleTests(run) {
       assert.equal(!!projectCard, true);
       assert.equal(!!actionRail, true);
       assert.equal(!!moduleButton, true);
+      assert.equal(!!restarbeitenButton, true);
+      assert.equal(allRestarbeitenButtons.length, 1);
       assert.equal(!!projectFirmsButton, false);
       assert.equal(!!editButton, true);
-      assert.equal(actionRail.children.length >= 1, true);
+      assert.equal(actionRail.children.length >= 2, true);
 
       await moduleButton.click();
+      await restarbeitenButton.click();
       assert.deepEqual(calls, [
         {
           type: "protocol",
           projectId: "17",
+          options: {
+            project: {
+              id: "17",
+              short: "Projekt A",
+              name: "Projekt A",
+              project_number: "17",
+            },
+          },
+        },
+        {
+          type: "module",
+          projectId: "17",
+          moduleId: "restarbeiten",
           options: {
             project: {
               id: "17",
@@ -642,6 +693,19 @@ async function runProjektverwaltungModuleTests(run) {
             },
           },
         },
+        {
+          type: "module",
+          projectId: "17",
+          moduleId: "restarbeiten",
+          options: {
+            project: {
+              id: "17",
+              short: "Projekt A",
+              name: "Projekt A",
+              project_number: "17",
+            },
+          },
+        },
         { type: "edit", projectId: "17" },
       ]);
 
@@ -650,6 +714,19 @@ async function runProjektverwaltungModuleTests(run) {
         {
           type: "protocol",
           projectId: "17",
+          options: {
+            project: {
+              id: "17",
+              short: "Projekt A",
+              name: "Projekt A",
+              project_number: "17",
+            },
+          },
+        },
+        {
+          type: "module",
+          projectId: "17",
+          moduleId: "restarbeiten",
           options: {
             project: {
               id: "17",
