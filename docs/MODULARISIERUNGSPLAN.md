@@ -257,3 +257,9 @@ Dabei gilt:
 - Die Editbox-Grundform deckt `item_class`, `status`, Verortung, Kurz-/Langtext, Faelligkeitsdatum und Verantwortlichen-Label ab.
 - Speichern laedt die Liste erneut und haelt die Auswahl konsistent.
 - Foto-/Diktat-/Druck-/Mail-/Loesch- und Archivpfade bleiben weiterhin ausserhalb dieses Pakets.
+
+### M6 Restarbeiten-Verantwortliche aus Projektfirmen waehlen (neu)
+- Die Restarbeiten-Editbox kann Verantwortliche aus den Projektfirmen des aktuellen Projekts auswaehlen.
+- Beim Speichern werden `responsible_project_firm_id` und `responsible_label` gemeinsam gesetzt; bestehende Label-Fallbacks bleiben erhalten.
+- Liste zeigt weiterhin `responsible_label` in der Status-Metaspalte.
+- Fotos, Diktat, Druck, Mail, Filter und Smartphone-Import bleiben fuer spaetere Schritte offen.

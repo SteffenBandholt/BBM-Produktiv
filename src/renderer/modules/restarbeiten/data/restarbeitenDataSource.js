@@ -56,6 +56,17 @@ export async function getRestarbeitenProjectSettings(projectId) {
   return response.settings && typeof response.settings === "object" ? response.settings : {};
 }
 
+export async function listResponsibleProjectFirms(projectId) {
+  const bbmDb = requireBbmDb();
+  if (typeof bbmDb.projectFirmsListByProject !== "function") {
+    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: projectFirmsListByProject fehlt.");
+  }
+  const pid = extractProjectId(projectId);
+  const response = await callAndNormalize(bbmDb.projectFirmsListByProject, pid, "firmenliste");
+  const source = Array.isArray(response.list) ? response.list : Array.isArray(response.firms) ? response.firms : [];
+  return source.filter((entry) => entry && typeof entry === "object");
+}
+
 export async function createRestarbeitItem(projectId, payload = {}) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenCreateItem !== "function") {
