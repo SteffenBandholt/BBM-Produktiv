@@ -186,8 +186,10 @@ function registerRestarbeitenIpc({ ipcMain }) {
 
         repo.addRestarbeitAttachment({
           restarbeit_id: restarbeitId,
+          project_id: projectId,
           file_path: destPath,
           file_name: path.basename(destPath),
+          original_file_name: path.basename(src),
           mime_type: detectMimeType(destPath),
           file_size: Number(stats?.size || 0),
         });
