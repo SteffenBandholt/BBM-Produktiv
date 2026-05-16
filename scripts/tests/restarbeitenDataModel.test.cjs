@@ -95,6 +95,61 @@ async function runRestarbeitenDataModelTests(run) {
     assert.equal(list.find((row) => row.id === m.id)?.item_class, "mangel");
   }));
 
+  await run("Restarbeit Update normalisiert Felder und schuetzt Kernfelder", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+    conn.prepare("INSERT INTO project_firms (id, project_id, name) VALUES (?, ?, ?)").run("f1", "p1", "Firma A");
+    conn.prepare("INSERT INTO project_firms (id, project_id, name) VALUES (?, ?, ?)").run("f2", "p1", "Firma B");
+    const item = repo.createRestarbeitItem({
+      project_id: "p1",
+      short_text: "Alt",
+      long_text: "Lang alt",
+      item_class: "rest",
+      status: "offen",
+      due_date: "2026-05-16",
+      responsible_project_firm_id: "f1",
+      responsible_label: "Firma A",
+    });
+
+    const updated = repo.updateRestarbeitItem(item.id, {
+      project_id: "p2",
+      running_number: 99,
+      created_at: "2000-01-01",
+      location_level_1: "Haus B",
+      location_level_2: "EG",
+      location_level_3: "W1",
+      location_level_4: "Kueche",
+      short_text: "Neu",
+      long_text: "Lang neu",
+      item_class: "MANGEL",
+      status: "unbekannt",
+      due_date: "2026-06-01",
+      responsible_project_firm_id: "f2",
+      responsible_label: "Firma B",
+    });
+
+    assert.equal(updated.project_id, "p1");
+    assert.equal(updated.running_number, item.running_number);
+    assert.equal(updated.created_at, item.created_at);
+    assert.equal(updated.location_level_1, "Haus B");
+    assert.equal(updated.location_level_4, "Kueche");
+    assert.equal(updated.short_text, "Neu");
+    assert.equal(updated.long_text, "Lang neu");
+    assert.equal(updated.item_class, "mangel");
+    assert.equal(updated.status, "offen");
+    assert.equal(updated.due_date, "2026-06-01");
+    assert.equal(updated.responsible_project_firm_id, "f2");
+    assert.equal(updated.responsible_label, "Firma B");
+    assert.equal(String(repo.listRestarbeitItems("p1")[0].id), String(item.id));
+  }));
+
+  await run("Restarbeit Update wirft bei unbekannter ID", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+    assert.throws(() => repo.updateRestarbeitItem("unbekannt", { short_text: "x" }), /restarbeit not found/);
+    assert.throws(() => repo.updateRestarbeitItem("unbekannt", {}), /restarbeit not found/);
+  }));
+
   await run("Foto-Regeln inkl. primary und max 3", async () => withTemp(({ db, repo }) => {
     const conn = db.initDatabase();
     conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
