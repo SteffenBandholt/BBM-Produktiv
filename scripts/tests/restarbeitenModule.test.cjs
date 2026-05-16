@@ -240,22 +240,36 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(ipc, /restarbeiten:deleteItem/);
   });
 
-  await run("M4 Screen-Grenzen: sync render, load-Methode, 4 Spalten, kein innerHTML-Datenbau", () => {
+  await run("M14 Screen-UI: Header, Blattstruktur, Verortung 1-4, Fotos einklappbar, Editbox unten", () => {
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+    const stylePath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenListStyle.js");
     const content = fs.readFileSync(screenPath, "utf8");
+    const styleContent = fs.readFileSync(stylePath, "utf8");
 
     assert.doesNotMatch(content, /async\s+render\s*\(/);
     assert.match(content, /render\s*\(/);
     assert.match(content, /async\s+load\s*\(/);
+    assert.match(content, /Schließen/);
     assert.match(content, /\+ Restarbeit/);
+    assert.match(content, /Verortung/);
+    assert.match(content, /Metaspalten/);
     assert.match(content, /Restarbeiten werden geladen/);
     assert.match(content, /Restarbeiten vorhanden/);
     assert.match(content, /Nr\. \/ Datum/);
     assert.match(content, /Verortung/);
     assert.match(content, /Restarbeit/);
     assert.match(content, /Status/);
+    assert.match(content, /restarbeiten-sheet/);
+    assert.match(content, /restarbeiten-list__locationLevel--1/);
+    assert.match(content, /restarbeiten-list__locationLevel--2/);
+    assert.match(content, /restarbeiten-list__locationLevel--3/);
+    assert.match(content, /restarbeiten-list__locationLevel--4/);
+    assert.match(content, /restarbeiten-list__attachmentsRow/);
+    assert.match(content, /restarbeiten-list__photosToggle/);
+    assert.match(content, /dataset\.expanded/);
     assert.doesNotMatch(content, /tr\.innerHTML|innerHTML\s*=\s*\[/);
     assert.doesNotMatch(content, /Diktat|Druck|Mail|Loeschen|Archivieren/);
+    assert.match(styleContent, /restarbeiten-sheet__list/);
   });
 
   await run("M5 Repo/IPC/Preload/DataSource: Create und Update sind verdrahtet", async () => {

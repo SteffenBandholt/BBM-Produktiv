@@ -34,6 +34,24 @@ function createLineCell(doc, line1, line2, class1, class2) {
   return td;
 }
 
+function createLocationCell(doc, item) {
+  const td = doc.createElement("td");
+  td.className = "restarbeiten-list__locationCell";
+  const levels = [
+    item.locationLevel1 || "",
+    item.locationLevel2 || "",
+    item.locationLevel3 || "",
+    item.locationLevel4 || "",
+  ];
+  levels.forEach((value, idx) => {
+    const div = doc.createElement("div");
+    div.className = `restarbeiten-list__locationLevel restarbeiten-list__locationLevel--${idx + 1}`;
+    div.textContent = value || "—";
+    td.append(div);
+  });
+  return td;
+}
+
 function createStatusCell(doc, item) {
   const td = doc.createElement("td");
   td.dataset.ampel = item.ampelState;
@@ -77,7 +95,45 @@ function createHeaderCell(doc, text) {
   return th;
 }
 
-function buildListTable(doc, items, selectedId, onSelect) {
+function createAttachmentRow(doc, itemId, attachments = [], isOpen = false) {
+  const row = doc.createElement("tr");
+  row.className = "restarbeiten-list__attachmentsRow";
+  row.dataset.restarbeitId = itemId;
+  row.dataset.expanded = isOpen ? "1" : "0";
+  row.hidden = !isOpen;
+
+  const td = doc.createElement("td");
+  td.colSpan = 4;
+  const wrap = doc.createElement("div");
+  wrap.className = "restarbeiten-list__attachmentsWrap";
+
+  const count = doc.createElement("div");
+  count.className = "restarbeiten-list__attachmentsCount";
+  count.textContent = `Fotos: ${attachments.length}`;
+
+  const strip = doc.createElement("div");
+  strip.className = "restarbeiten-list__attachmentsStrip";
+  if (!attachments.length) {
+    const empty = doc.createElement("span");
+    empty.className = "restarbeiten-list__attachmentsEmpty";
+    empty.textContent = "Keine Fotos vorbereitet.";
+    strip.append(empty);
+  } else {
+    for (const attachment of attachments.slice(0, 3)) {
+      const thumb = doc.createElement("span");
+      thumb.className = "restarbeiten-list__attachmentThumb";
+      thumb.textContent = String(attachment?.caption || attachment?.file_name || "Foto");
+      strip.append(thumb);
+    }
+  }
+
+  wrap.append(count, strip);
+  td.append(wrap);
+  row.append(td);
+  return row;
+}
+
+function buildListTable(doc, items, selectedId, attachmentsByItemId, expandedPhotoRows, onTogglePhotos, onSelect) {
   const table = doc.createElement("table");
   table.className = "restarbeiten-list__table";
 
@@ -102,14 +158,44 @@ function buildListTable(doc, items, selectedId, onSelect) {
       row.classList.add("restarbeiten-list__row--selected");
       row.dataset.selected = "1";
     }
+    const photosOpen = expandedPhotoRows.get(String(item.id)) === true;
+    row.dataset.photosExpanded = photosOpen ? "1" : "0";
     row.addEventListener("click", () => onSelect(item.id));
+
+    const numberCell = doc.createElement("td");
+    const numberLine = doc.createElement("div");
+    numberLine.className = "restarbeiten-list__number";
+    numberLine.textContent = item.numberLine;
+    const dateLine = doc.createElement("div");
+    dateLine.className = "restarbeiten-list__date";
+    dateLine.textContent = item.dateLine;
+    const toggle = doc.createElement("button");
+    toggle.type = "button";
+    toggle.className = "restarbeiten-list__photosToggle";
+    toggle.dataset.expanded = photosOpen ? "1" : "0";
+    toggle.textContent = photosOpen ? "▾ Fotos" : "▸ Fotos";
+    toggle.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onTogglePhotos(item.id);
+    });
+    numberCell.append(numberLine, dateLine, toggle);
+
     row.append(
-      createLineCell(doc, item.numberLine, item.dateLine, "restarbeiten-list__number", "restarbeiten-list__date"),
-      createLineCell(doc, item.locationLine1, item.locationLine2, "restarbeiten-list__location", "restarbeiten-list__location"),
+      numberCell,
+      createLocationCell(doc, item),
       createLineCell(doc, item.workLine1, item.workLine2, "restarbeiten-list__shortText", "restarbeiten-list__longText"),
       createStatusCell(doc, item)
     );
     tbody.append(row);
+    tbody.append(
+      createAttachmentRow(
+        doc,
+        String(item.id),
+        attachmentsByItemId.get(String(item.id)) || [],
+        photosOpen
+      )
+    );
   }
 
   table.append(tbody);
@@ -141,6 +227,7 @@ export default class RestarbeitenScreen {
     this.editbox = null;
     this.projectFirms = [];
     this.attachmentsByItemId = new Map();
+    this.expandedPhotoRows = new Map();
   }
 
   _getSelectedItem() {
@@ -169,8 +256,15 @@ export default class RestarbeitenScreen {
     }
 
     this.listHost.replaceChildren(
-      buildListTable(doc, this.items, this.selectedItemId, (itemId) => {
+      buildListTable(doc, this.items, this.selectedItemId, this.attachmentsByItemId, this.expandedPhotoRows, (itemId) => {
+        const key = String(itemId);
+        const current = this.expandedPhotoRows.get(key) === true;
+        this.expandedPhotoRows.set(key, !current);
+        this._renderList();
+      }, (itemId) => {
         this._setSelectedItemId(itemId);
+        const key = String(itemId);
+        if (!this.expandedPhotoRows.has(key)) this.expandedPhotoRows.set(key, true);
         this._renderList();
         this._renderEditbox();
         this._loadSelectedAttachments().catch(() => {});
@@ -312,7 +406,7 @@ export default class RestarbeitenScreen {
     context.style.fontSize = "12px";
     context.style.opacity = "0.85";
 
-    row.append(title, actionBtn, context);
+    row.append(title, closeBtn, actionBtn, locationFilterBtn, metaColumnsBtn, context);
     this.headerHost.replaceChildren(row);
   }
 
@@ -320,7 +414,7 @@ export default class RestarbeitenScreen {
     ensureRestarbeitenListStyle(document);
 
     const root = document.createElement("div");
-    root.className = "restarbeiten-list";
+    root.className = "restarbeiten-list restarbeiten-sheet";
     root.style.display = "grid";
     root.style.gap = "12px";
 
@@ -328,6 +422,7 @@ export default class RestarbeitenScreen {
 
     this.headerHost = document.createElement("div");
     this.listHost = document.createElement("div");
+    this.listHost.className = "restarbeiten-sheet__list";
     this.editHost = document.createElement("div");
 
     this._renderHeader();
@@ -395,3 +490,22 @@ export default class RestarbeitenScreen {
     }
   }
 }
+    const closeBtn = doc.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.textContent = "Schließen";
+    applyPopupButtonStyle(closeBtn, { variant: "secondary" });
+    closeBtn.onclick = () => {
+      if (this.router && typeof this.router.showProjectWorkspace === "function") {
+        this.router.showProjectWorkspace(this.effectiveProjectId, { project: this.project }).catch(() => {});
+      }
+    };
+
+    const locationFilterBtn = doc.createElement("button");
+    locationFilterBtn.type = "button";
+    locationFilterBtn.className = "restarbeiten-list__filterBtn";
+    locationFilterBtn.textContent = "Verortung";
+
+    const metaColumnsBtn = doc.createElement("button");
+    metaColumnsBtn.type = "button";
+    metaColumnsBtn.className = "restarbeiten-list__filterBtn";
+    metaColumnsBtn.textContent = "Metaspalten";
