@@ -262,6 +262,13 @@ async function runRestarbeitenModuleTests(run) {
           if (target) Object.assign(target, payload.patch || {});
           return { ok: true, item: { id: payload.id, ...payload.patch } };
         },
+        projectFirmsListByProject: async () => ({
+          ok: true,
+          list: [
+            { id: "f1", name: "Firma A" },
+            { id: "f2", name: "Firma B" },
+          ],
+        }),
       },
     };
     const fakeDoc = createFakeDocument();
@@ -340,6 +347,157 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
+
+
+  await run("M6 DataSource: listResponsibleProjectFirms nutzt Bridge und normalisiert Antworten", async () => {
+    const repo = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js")
+    );
+
+    const prevWindow = globalThis.window;
+    const calls = [];
+    globalThis.window = {
+      bbmDb: {
+        projectFirmsListByProject: async (projectId) => {
+          calls.push(projectId);
+          return { ok: true, list: [{ id: "f1", name: "Firma A" }] };
+        },
+      },
+    };
+
+    try {
+      const rows = await repo.listResponsibleProjectFirms("p-1");
+      assert.equal(Array.isArray(rows), true);
+      assert.equal(rows[0].id, "f1");
+      assert.equal(calls[0], "p-1");
+
+      globalThis.window.bbmDb.projectFirmsListByProject = async () => ({ ok: true, firms: [{ id: "f2", name: "Firma B" }] });
+      const rows2 = await repo.listResponsibleProjectFirms("p-2");
+      assert.equal(Array.isArray(rows2), true);
+      assert.equal(rows2[0].id, "f2");
+
+      globalThis.window.bbmDb.projectFirmsListByProject = async () => ({ ok: true });
+      const rows3 = await repo.listResponsibleProjectFirms("p-3");
+      assert.equal(Array.isArray(rows3), true);
+      assert.equal(rows3.length, 0);
+    } finally {
+      globalThis.window = prevWindow;
+    }
+
+    const prevWindow2 = globalThis.window;
+    globalThis.window = { bbmDb: {} };
+    try {
+      await assert.rejects(
+        () => repo.listResponsibleProjectFirms("p-1"),
+        /projectFirmsListByProject fehlt/
+      );
+    } finally {
+      globalThis.window = prevWindow2;
+    }
+  });
+
+  await run("M6 Editbox: Select, Optionen und Save-Payload inkl. Fallback", async () => {
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const Editbox = (
+        await importEsmFromFile(
+          path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js")
+        )
+      ).default;
+
+      const box = new Editbox({ documentRef: globalThis.document, onSave: async () => {} });
+      const root = box.render();
+      assert.equal(root.tagName, "SECTION");
+
+      const select = box.fields.responsible_project_firm_id;
+      assert.equal(select.tagName, "SELECT");
+      assert.equal(select.children[0].textContent, "— keine Auswahl —");
+
+      box.setProjectFirms([
+        { id: "f1", name: "Firma A" },
+        { id: "f2", name: "Firma B" },
+      ]);
+      assert.equal(select.children.length >= 3, true);
+      assert.equal(select.children[1].textContent, "Firma A");
+
+      box.setItem({ id: "r1", responsible_label: "Altlabel" });
+      select.value = "f1";
+      const draft = box.getDraft();
+      assert.equal(draft.responsible_project_firm_id, "f1");
+      assert.equal(draft.responsible_label, "Firma A");
+
+      box.setProjectFirms([{ id: "f2", name: "Firma B" }]);
+      box.setItem({ id: "r2", responsible_project_firm_id: "missing", responsible_label: "Legacy Firma" });
+      const selectedLegacy = box.fields.responsible_project_firm_id.value;
+      assert.equal(selectedLegacy, "missing");
+      const legacyDraft = box.getDraft();
+      assert.equal(legacyDraft.responsible_label, "Legacy Firma");
+
+      const text = JSON.stringify(root);
+      assert.doesNotMatch(text, /Foto|Diktat|Druck|Mail/);
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("M6 Screen: load laedt Firmen, gibt an Editbox weiter und speichert Firmendaten", async () => {
+    const prevWindow = globalThis.window;
+    const prevDocument = globalThis.document;
+    const calls = [];
+    globalThis.document = createFakeDocument();
+    const items = [
+      { id: "r-1", running_number: 1, created_at: "2026-05-16", item_class: "rest", status: "offen", responsible_label: "Alt" },
+    ];
+    globalThis.window = {
+      bbmDb: {
+        restarbeitenGetProjectSettings: async () => ({ ok: true, settings: {} }),
+        restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
+        projectFirmsListByProject: async () => ({ ok: true, list: [{ id: "f1", name: "Firma A" }] }),
+        restarbeitenCreateItem: async () => ({ ok: true, item: { id: "r-2" } }),
+        restarbeitenUpdateItem: async (payload) => {
+          calls.push(payload);
+          return { ok: true, item: { id: payload.id, ...payload.patch } };
+        },
+      },
+    };
+
+    try {
+      const Screen = (
+        await importEsmFromFile(
+          path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+        )
+      ).default;
+      const screen = new Screen({ projectId: "p-1" });
+      const root = screen.render();
+      assert.equal(typeof screen.load, "function");
+      assert.equal(root.children.length >= 3, true);
+
+      await screen.load();
+      assert.equal(screen.projectFirms.length, 1);
+      assert.equal(screen.editbox.projectFirms[0].id, "f1");
+
+      const row = screen.listHost.children[0].children[1].children[0];
+      row.dispatchEvent({ type: "click" });
+      screen.editbox.fields.responsible_project_firm_id.value = "f1";
+      await screen.editbox.onSave(screen.editbox.getDraft());
+
+      assert.equal(calls.length > 0, true);
+      const patch = calls[0].patch || {};
+      assert.equal(patch.responsible_project_firm_id, "f1");
+      assert.equal(patch.responsible_label, "Firma A");
+
+      const fileContent = fs.readFileSync(
+        path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"),
+        "utf8"
+      );
+      assert.doesNotMatch(fileContent, /innerHTML\s*=/);
+      assert.doesNotMatch(fileContent, /async\s+render\s*\(/);
+    } finally {
+      globalThis.window = prevWindow;
+      globalThis.document = prevDocument;
+    }
+  });
   await run("M4 ViewModel: Mapping fuer Anzeigezeilen", async () => {
     const vm = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenListItems.js")
