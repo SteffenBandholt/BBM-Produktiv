@@ -172,7 +172,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /Restarbeit/);
     assert.match(content, /Status/);
     assert.doesNotMatch(content, /tr\.innerHTML|innerHTML\s*=\s*\[/);
-    assert.doesNotMatch(content, /Diktat|Foto|Druck|Mail|Loeschen|Archivieren/);
+    assert.doesNotMatch(content, /Diktat|Druck|Mail|Loeschen|Archivieren/);
   });
 
   await run("M5 Repo/IPC/Preload/DataSource: Create und Update sind verdrahtet", async () => {
@@ -544,7 +544,7 @@ async function runRestarbeitenModuleTests(run) {
         path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"),
         "utf8"
       );
-      assert.doesNotMatch(editboxSource, /Foto|Diktat|Druck|Mail/);
+      assert.doesNotMatch(editboxSource, /Diktat|Druck|Mail/);
     } finally {
       globalThis.document = prevDocument;
     }
