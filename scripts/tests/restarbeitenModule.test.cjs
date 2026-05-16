@@ -1061,8 +1061,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(editboxContent, /from\s+["'][^"']*protokoll\//i);
     assert.doesNotMatch(screenContent, /from\s+["'][^"']*protokoll\//i);
     assert.doesNotMatch(editboxContent, /Diktat|Druck|Mail/);
-    assert.doesNotMatch(s, /execSync\(\s*["']git status/);
-    assert.doesNotMatch(s, /node:child_process/);
+    const combinedContent = `${editboxContent}\n${screenContent}`;
+    assert.doesNotMatch(combinedContent, /execSync\(\s*["']git status/);
+    assert.doesNotMatch(combinedContent, /node:child_process/);
   });
 
 }
