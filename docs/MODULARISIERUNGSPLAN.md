@@ -271,3 +271,7 @@ Dabei gilt:
 ### M8 Restarbeiten-Fotos importieren und als Attachments speichern (neu)
 - Restarbeiten-Fotos koennen per Dateiauswahl importiert, in den Projektordner kopiert und als Attachments gespeichert werden.
 - Bildzuschnitt, Thumbnail-Erzeugung, Smartphone-Import und Foto-Loeschen folgen spaeter.
+
+### M9 M8-Fotoimport gegen Repo-Vertrag stabilisiert (neu)
+- Der M8-Fotoimport wurde gegen den echten Attachment-Repo-Vertrag stabilisiert.
+- Beim Speichern von Attachments wird `project_id` jetzt aus dem normalisierten `projectId` mitgegeben.

@@ -479,6 +479,9 @@ async function runRestarbeitenModuleTests(run) {
         setPrimaryRestarbeitAttachment: () => true,
         listRestarbeitAttachments: () => repoState.attachments,
         addRestarbeitAttachment: (payload) => {
+          if (!payload?.restarbeit_id) throw new Error("restarbeit_id required");
+          if (!payload?.project_id) throw new Error("project_id required");
+          if (!payload?.file_path) throw new Error("file_path required");
           repoState.added.push(payload);
           repoState.attachments = [...repoState.attachments, { id: String(repoState.attachments.length + 1), ...payload }];
           return repoState.attachments[repoState.attachments.length - 1];
@@ -505,7 +508,11 @@ async function runRestarbeitenModuleTests(run) {
         assert.equal(result.ok, true, result.error || JSON.stringify(result));
         assert.equal(result.canceled, false, JSON.stringify(result));
         assert.equal(repoState.added.length, 3, JSON.stringify(repoState.added));
+        assert.equal(repoState.added[0]?.restarbeit_id, "r1", JSON.stringify(repoState.added[0] || {}));
+        assert.equal(repoState.added[0]?.project_id, "p1", JSON.stringify(repoState.added[0] || {}));
         assert.match(String(repoState.added[0]?.file_path || ""), /Restarbeiten[\/]Fotos/, JSON.stringify(repoState.added[0] || {}));
+        assert.equal(Boolean(repoState.added[0]?.original_file_name), true, JSON.stringify(repoState.added[0] || {}));
+        assert.match(String(repoState.added[0]?.mime_type || ""), /^image\/(jpeg|png|webp)$/i, JSON.stringify(repoState.added[0] || {}));
 
         repoState.attachments = [{ id: "1" }, { id: "2" }];
         repoState.added = [];

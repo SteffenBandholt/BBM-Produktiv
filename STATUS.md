@@ -1995,3 +1995,5 @@ Wichtig:
   - Speichern laedt die Liste erneut und haelt die Auswahl konsistent
   - Foto-/Diktat-/Druck-/Mail-/Loesch- und Archivpfade bleiben ausserhalb dieses Pakets
   - `npm test` laeuft gruen
+
+- M9 ist abgeschlossen: Der M8-Fotoimport speichert Attachments jetzt IPC-seitig DB-konform mit `project_id` ueber `addRestarbeitAttachment(...)`; der zugehoerige M8-Test erzwingt den Repo-Vertrag (`restarbeit_id`, `project_id`, `file_path`) und prueft die erwarteten Attachment-Felder.
