@@ -455,6 +455,34 @@ async function runRestarbeitenModuleTests(run) {
 
 
 
+
+  await run("M8 IPC/Preload: Import-Endpunkte vorhanden ohne Delete/Image-Processing", () => {
+    const ipc = fs.readFileSync(path.join(__dirname, "../../src/main/ipc/restarbeitenIpc.js"), "utf8");
+    const preload = fs.readFileSync(path.join(__dirname, "../../src/main/preload.js"), "utf8");
+    assert.match(ipc, /restarbeiten:importAttachments/);
+    assert.match(preload, /restarbeitenImportAttachments/);
+    assert.doesNotMatch(ipc + preload, /deleteAttachment|thumbnail|imageProcessing/i);
+  });
+
+  await run("M8 DataSource: importRestarbeitAttachments normalisiert Antwort", async () => {
+    const repo = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js"));
+    const prevWindow = globalThis.window;
+    globalThis.window = { bbmDb: { restarbeitenImportAttachments: async () => ({ ok: true, canceled: true }) } };
+    try {
+      const out = await repo.importRestarbeitAttachments("r-1", "p-1");
+      assert.equal(out.canceled, true);
+      assert.deepEqual(out.attachments, []);
+    } finally { globalThis.window = prevWindow; }
+  });
+
+  await run("M8 View/Screen: Foto-hinzufuegen und Max-3-Hinweis verdrahtet", () => {
+    const view = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenAttachmentsView.js"), "utf8");
+    const screen = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"), "utf8");
+    assert.match(view, /Foto hinzufügen/);
+    assert.match(view, /Maximal 3 Fotos vorhanden\./);
+    assert.match(screen, /importRestarbeitAttachments\(/);
+    assert.match(screen, /Fotos importiert\.|Fotoimport abgebrochen\.|Fotos konnten nicht importiert werden\./);
+  });
   await run("M6 DataSource: listResponsibleProjectFirms nutzt Bridge und normalisiert Antworten", async () => {
     const repo = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js")

@@ -7,11 +7,12 @@ function getDisplayLabel(attachment) {
 }
 
 export default class RestarbeitenAttachmentsView {
-  constructor({ documentRef = globalThis.document, onSetPrimary = null } = {}) {
+  constructor({ documentRef = globalThis.document, onSetPrimary = null, onImportAttachments = null } = {}) {
     this.document = documentRef || globalThis.document;
     this.onSetPrimary = typeof onSetPrimary === "function" ? onSetPrimary : null;
     this.root = null;
     this.attachments = [];
+    this.onImportAttachments = typeof onImportAttachments === "function" ? onImportAttachments : null;
   }
 
   render() {
@@ -31,10 +32,25 @@ export default class RestarbeitenAttachmentsView {
   _renderContent() {
     if (!this.root) return;
     const doc = this.document;
+    const actions = doc.createElement("div");
+    actions.style.display = "grid";
+    actions.style.gap = "6px";
+    if (this.attachments.length < 3 && this.onImportAttachments) {
+      const addBtn = doc.createElement("button");
+      addBtn.type = "button";
+      addBtn.textContent = "Foto hinzufügen";
+      addBtn.addEventListener("click", () => this.onImportAttachments());
+      actions.append(addBtn);
+    } else if (this.attachments.length >= 3) {
+      const maxHint = doc.createElement("div");
+      maxHint.textContent = "Maximal 3 Fotos vorhanden.";
+      actions.append(maxHint);
+    }
+
     if (!this.attachments.length) {
       const empty = doc.createElement("div");
       empty.textContent = "Noch keine Fotos vorhanden.";
-      this.root.replaceChildren(empty);
+      this.root.replaceChildren(actions, empty);
       return;
     }
 
@@ -54,7 +70,7 @@ export default class RestarbeitenAttachmentsView {
     for (const attachment of others) rightCol.append(this._buildCard(attachment, false));
     wrapper.append(rightCol);
 
-    this.root.replaceChildren(wrapper);
+    this.root.replaceChildren(actions, wrapper);
   }
 
   _buildCard(attachment, isPrimary) {

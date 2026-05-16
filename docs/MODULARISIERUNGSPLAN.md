@@ -267,3 +267,7 @@ Dabei gilt:
 ### M7 Restarbeiten-Attachments anzeigen und Hauptfoto markieren (neu)
 - Restarbeiten-Attachments koennen geladen, in der Editbox angezeigt und als Hauptfoto markiert werden.
 - Dateiimport, Projektordner-Kopie, Bildzuschnitt und Thumbnail-Erzeugung folgen in spaeteren Schritten.
+
+### M8 Restarbeiten-Fotos importieren und als Attachments speichern (neu)
+- Restarbeiten-Fotos koennen per Dateiauswahl importiert, in den Projektordner kopiert und als Attachments gespeichert werden.
+- Bildzuschnitt, Thumbnail-Erzeugung, Smartphone-Import und Foto-Loeschen folgen spaeter.
