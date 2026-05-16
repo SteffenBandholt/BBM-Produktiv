@@ -62,16 +62,21 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(ipc, /restarbeiten:create|restarbeiten:update|restarbeiten:delete/);
   });
 
-  await run("M4 Screen-Grenzen und Spalten: nur Anzeige", () => {
+  await run("M4 Screen-Grenzen: sync render, load-Methode, 4 Spalten, kein innerHTML-Datenbau", () => {
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
     const content = fs.readFileSync(screenPath, "utf8");
 
+    assert.doesNotMatch(content, /async\s+render\s*\(/);
+    assert.match(content, /render\s*\(/);
+    assert.match(content, /async\s+load\s*\(/);
     assert.match(content, /Kein Projektkontext für Restarbeiten vorhanden\./);
-    assert.match(content, /this\.projectId \|\| this\.project\?\.id/);
+    assert.match(content, /Restarbeiten werden geladen…/);
+    assert.match(content, /Für dieses Projekt sind noch keine Restarbeiten vorhanden\./);
     assert.match(content, /Nr\. \/ Datum/);
     assert.match(content, /Verortung/);
     assert.match(content, /Restarbeit/);
     assert.match(content, /Status/);
+    assert.doesNotMatch(content, /tr\.innerHTML|innerHTML\s*=\s*\[/);
     assert.doesNotMatch(content, /Diktat|Foto|Druck|Mail|Editbox|Neu|Löschen/);
   });
 
