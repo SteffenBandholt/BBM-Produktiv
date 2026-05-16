@@ -590,6 +590,37 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(screen, /importRestarbeitAttachments\(/);
     assert.match(screen, /Fotos importiert\.|Fotoimport abgebrochen\.|Fotos konnten nicht importiert werden\./);
   });
+
+
+  await run("M11 View/CSS: Landscape-2-Spalten-Layout stabil und modulnah", () => {
+    const viewPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenAttachmentsView.js");
+    const cssPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenAttachments.css");
+    const view = fs.readFileSync(viewPath, "utf8");
+    const css = fs.readFileSync(cssPath, "utf8");
+
+    assert.match(view, /restarbeiten-attachments__grid/);
+    assert.match(view, /restarbeiten-attachments__primary/);
+    assert.match(view, /restarbeiten-attachments__secondary/);
+    assert.match(view, /others\.slice\(0, 2\)/);
+    assert.match(view, /restarbeiten-attachments__image/);
+    assert.match(view, /Kein Bildpfad vorhanden\./);
+    assert.match(view, /Foto hinzufügen/);
+    assert.match(view, /Maximal 3 Fotos vorhanden\./);
+    assert.match(view, /Foto entfernen/);
+    assert.match(view, /Hauptfoto/);
+    assert.match(view, /caption\) \|\| normalizeText\(attachment\?\.file_name\) \|\| "Ohne Bezeichnung"/);
+
+    assert.match(css, /grid-template-columns:\s*minmax\(0, 2fr\)\s+minmax\(0, 1fr\)/);
+    assert.match(css, /aspect-ratio:\s*16 \/ 9/);
+    assert.match(css, /object-fit:\s*cover/);
+
+    assert.doesNotMatch(view + css, /gallery|lightbox/i);
+    assert.doesNotMatch(view + css, /thumbnail/i);
+    assert.doesNotMatch(view + css, /imageProcessing/i);
+    assert.doesNotMatch(view + css, /Diktat|Druck|Mail/);
+    assert.doesNotMatch(view, /modules\/protokoll\/styles|tops\/styles/i);
+  });
+
   await run("M6 DataSource: listResponsibleProjectFirms nutzt Bridge und normalisiert Antworten", async () => {
     const repo = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js")

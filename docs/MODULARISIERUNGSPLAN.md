@@ -281,3 +281,8 @@ Dabei gilt:
 - Datei und optionales Thumbnail werden nach DB-Delete bestmoeglich entfernt.
 - Nach Loeschen wird die Attachment-Liste neu geladen; bei geloeschtem Hauptfoto wird ein verbleibendes Foto wieder Hauptfoto.
 - Bildzuschnitt, Thumbnail-Erzeugung und Smartphone-Import folgen spaeter.
+
+### M11 Restarbeiten-Fotoanzeige im festen Landscape-Layout (neu)
+- Restarbeiten-Fotoanzeige ist jetzt als stabiles 2-Spalten-Landscape-Layout umgesetzt.
+- Hauptfoto steht links groß, bis zu zwei Nebenfotos stehen rechts untereinander.
+- Die Bilddateien werden nicht bearbeitet; es bleibt reine Anzeigeformatierung mit `object-fit: cover`.
