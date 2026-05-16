@@ -838,9 +838,9 @@ async function runRestarbeitenModuleTests(run) {
       "utf8"
     );
 
-    assert.match(content, /data\.restarbeitId/);
-    assert.match(content, /data\.selected/);
-    assert.match(content, /data\.ampel/);
+    assert.match(content, /dataset\.restarbeitId/);
+    assert.match(content, /dataset\.selected/);
+    assert.match(content, /dataset\.ampel/);
     assert.match(content, /Klasse:/);
     assert.match(content, /Status:/);
     assert.match(content, /Fertig bis:/);
