@@ -1021,6 +1021,15 @@ async function runRestarbeitenModuleTests(run) {
 
     editbox.setProjectFirms([{ id: "f1", name: "Firma A" }]);
     editbox.setItem({ item_class: "rest", status: "offen", short_text: "Kurz", long_text: "Lang", due_date: "2026-05-16" });
+
+    const legacyEditbox = new mod.default({ documentRef: createFakeDocument() });
+    legacyEditbox.render();
+    legacyEditbox.setItem({ responsible_project_firm_id: "alt-1", responsible_label: "Alte Firma" });
+    legacyEditbox.setProjectFirms([{ id: "f1", name: "Firma A" }]);
+    const legacySelect = legacyEditbox.fields.responsible_project_firm_id;
+    assert.equal(legacySelect.value, "alt-1");
+    const legacyTexts = (legacySelect.children || []).map((option) => String(option?.textContent || ""));
+    assert.equal(legacyTexts.includes("Alte Firma") || legacyTexts.includes("(nicht mehr vorhanden)"), true);
     const markerButtons = findNodes(root, (node) => node?.tagName === "BUTTON" && (node?.textContent === "Rest" || node?.textContent === "Mangel"));
     markerButtons.find((b) => b.textContent === "Mangel").click();
     editbox.fields.status.value = "in_arbeit";
@@ -1039,10 +1048,21 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(Object.hasOwn(saveCalls[0], "location_level_4"), true);
   });
 
-  await run("M16 Guardrails: keine Protokoll-/Druck-/Mail-/Diktat-Dateien fuer dieses Paket geaendert", () => {
-    const status = require("node:child_process").execSync("git status --short", { cwd: path.join(__dirname, "../..") }).toString();
-    assert.doesNotMatch(status, /src\/renderer\/modules\/protokoll\//);
-    assert.doesNotMatch(status, /druck|mail|diktat/i);
+  await run("M16 Guardrails: Dateiinhalte ohne git-status-Check", () => {
+    const editboxContent = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"),
+      "utf8"
+    );
+    const screenContent = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"),
+      "utf8"
+    );
+
+    assert.doesNotMatch(editboxContent, /from\s+["'][^"']*protokoll\//i);
+    assert.doesNotMatch(screenContent, /from\s+["'][^"']*protokoll\//i);
+    assert.doesNotMatch(editboxContent, /Diktat|Druck|Mail/);
+    assert.doesNotMatch(s, /execSync\(\s*["']git status/);
+    assert.doesNotMatch(s, /node:child_process/);
   });
 
 }

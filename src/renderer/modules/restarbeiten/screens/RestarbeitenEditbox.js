@@ -189,22 +189,33 @@ export default class RestarbeitenEditbox {
     return root;
   }
 
-  setProjectFirms(firms) { /* unchanged */
+  setProjectFirms(firms) {
     this.projectFirms = normalizeFirmEntries(firms);
     const select = this.fields?.responsible_project_firm_id;
     if (!select) return;
+
     const selectedBefore = normalizeText(select.value);
     const options = [{ id: "", name: "— keine Auswahl —" }, ...this.projectFirms];
     select.replaceChildren();
+
     for (const option of options) {
       const opt = this.document.createElement("option");
       opt.value = option.id;
       opt.textContent = option.name || "—";
-      select.append(opt);
+      select.appendChild(opt);
     }
+
     const fallbackId = normalizeText(this.currentItem?.responsible_project_firm_id);
     const targetId = fallbackId || selectedBefore;
     select.value = targetId;
+
+    if (targetId && select.value !== targetId) {
+      const legacy = this.document.createElement("option");
+      legacy.value = targetId;
+      legacy.textContent = normalizeText(this.currentItem?.responsible_label) || "(nicht mehr vorhanden)";
+      select.appendChild(legacy);
+      select.value = targetId;
+    }
   }
 
   setAttachments(attachments) {
