@@ -246,3 +246,8 @@ Dabei gilt:
 - Darstellung von `item_class` in UI/PDF folgt in einem spaeteren Schritt.
 - Fotoregeln in Repo-Basis vorbereitet: max. 3 je Restarbeit, genau ein Hauptfoto.
 - Bildverarbeitung folgt in spaeterem Schritt.
+
+### M4 Restarbeiten-Laden + erste Liste (neu)
+- Restarbeiten laden im Projektkontext über IPC (`restarbeiten:listByProject`, `restarbeiten:getProjectSettings`).
+- Renderer zeigt erste einfache Listenstruktur mit den Hauptspalten Nr./Datum, Verortung, Restarbeit, Status.
+- Bearbeitung, Editbox, Fotos, Druck, Mail und Diktat folgen in späteren Schritten.

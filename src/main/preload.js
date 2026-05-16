@@ -236,6 +236,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   userProfileGet: () => ipcRenderer.invoke("userProfile:get"),
   userProfileUpsert: (data) => ipcRenderer.invoke("userProfile:upsert", data),
+
+  // ============================================================
+  // Restarbeiten
+  // ============================================================
+  restarbeitenListByProject: (data) => ipcRenderer.invoke("restarbeiten:listByProject", data),
+  restarbeitenGetProjectSettings: (data) => ipcRenderer.invoke("restarbeiten:getProjectSettings", data),
 });
 
 contextBridge.exposeInMainWorld("bbmPrint", {
