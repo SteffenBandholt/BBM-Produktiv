@@ -17,6 +17,13 @@ function withMockedLicenseStorage({ userDataSetup, resourcesSetup }, fn) {
   if (typeof resourcesSetup === 'function') resourcesSetup({ userDataPath, resourcesPath, appPath });
 
   const originalLoad = Module._load;
+  const originalResourcesPathDescriptor = Object.getOwnPropertyDescriptor(process, 'resourcesPath');
+  Object.defineProperty(process, 'resourcesPath', {
+    value: resourcesPath,
+    configurable: true,
+    writable: true,
+  });
+
   Module._load = function patched(request, parent, isMain) {
     if (request === 'electron' && String(parent?.filename || '').endsWith('licenseStorage.js')) {
       return {
@@ -40,6 +47,11 @@ function withMockedLicenseStorage({ userDataSetup, resourcesSetup }, fn) {
     return fn({ mod, userDataPath, resourcesPath });
   } finally {
     Module._load = originalLoad;
+    if (originalResourcesPathDescriptor) {
+      Object.defineProperty(process, 'resourcesPath', originalResourcesPathDescriptor);
+    } else {
+      delete process.resourcesPath;
+    }
     fs.rmSync(tmpRoot, { recursive: true, force: true });
   }
 }

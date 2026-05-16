@@ -912,3 +912,12 @@ Ein wesentlicher Zielzustand ist erst dann erreicht, wenn der Modulrahmen fachli
 Die dafür nötige Freigabelogik gehört in den App-Kern und den Modulrahmen. Die Fachlogik bleibt in den Modulen.
 
 
+
+---
+
+## Testlaufzeit-Hinweis (native Electron-Abhängigkeiten)
+
+- Der offizielle Testlauf ist `npm test`.
+- `npm test` läuft über Electron im Node-Modus (`ELECTRON_RUN_AS_NODE=1`).
+- Grund: Native Electron-Abhängigkeiten wie `better-sqlite3` müssen mit passender ABI geladen werden.
+- Nicht manuell zwischen Node- und Electron-Rebuilds für denselben Standard-Testlauf hin- und herschalten.
