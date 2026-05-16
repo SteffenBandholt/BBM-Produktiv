@@ -238,3 +238,9 @@ Dabei gilt:
 - keine Parallelplaene anlegen
 - keine Fortschritte groesser schreiben, als sie technisch sind
 
+
+
+### M3 Restarbeiten-Datenmodell (neu)
+- Datenmodell vorbereitet: `restarbeiten_items`, `restarbeiten_project_settings`, `restarbeiten_attachments`.
+- Fotoregeln in Repo-Basis vorbereitet: max. 3 je Restarbeit, genau ein Hauptfoto.
+- Bildverarbeitung folgt in spaeterem Schritt.
