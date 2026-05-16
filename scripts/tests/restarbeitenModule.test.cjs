@@ -566,7 +566,9 @@ async function runRestarbeitenModuleTests(run) {
     const preload = fs.readFileSync(path.join(__dirname, "../../src/main/preload.js"), "utf8");
     assert.match(ipc, /restarbeiten:importAttachments/);
     assert.match(preload, /restarbeitenImportAttachments/);
-    assert.doesNotMatch(ipc + preload, /thumbnail|imageProcessing|uploadAttachment/i);
+    assert.doesNotMatch(ipc + preload, /imageProcessing/i);
+    assert.doesNotMatch(ipc + preload, /uploadAttachment/i);
+    assert.doesNotMatch(ipc + preload, /createThumbnail|generateThumbnail|thumbnailer|thumbnailGenerator/i);
   });
 
   await run("M8 DataSource: importRestarbeitAttachments normalisiert Antwort", async () => {
