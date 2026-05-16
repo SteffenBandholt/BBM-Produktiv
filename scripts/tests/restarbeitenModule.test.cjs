@@ -154,7 +154,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(preload, /restarbeitenGetProjectSettings/);
     assert.match(preload, /restarbeitenCreateItem/);
     assert.match(preload, /restarbeitenUpdateItem/);
-    assert.doesNotMatch(ipc, /restarbeiten:delete|restarbeiten:archive|restarbeiten:attachment/);
+    assert.doesNotMatch(ipc, /restarbeiten:archive/);
+    assert.doesNotMatch(ipc, /restarbeiten:deleteItem/);
   });
 
   await run("M4 Screen-Grenzen: sync render, load-Methode, 4 Spalten, kein innerHTML-Datenbau", () => {
@@ -565,7 +566,7 @@ async function runRestarbeitenModuleTests(run) {
     const preload = fs.readFileSync(path.join(__dirname, "../../src/main/preload.js"), "utf8");
     assert.match(ipc, /restarbeiten:importAttachments/);
     assert.match(preload, /restarbeitenImportAttachments/);
-    assert.doesNotMatch(ipc + preload, /deleteAttachment|thumbnail|imageProcessing/i);
+    assert.doesNotMatch(ipc + preload, /thumbnail|imageProcessing|uploadAttachment/i);
   });
 
   await run("M8 DataSource: importRestarbeitAttachments normalisiert Antwort", async () => {
