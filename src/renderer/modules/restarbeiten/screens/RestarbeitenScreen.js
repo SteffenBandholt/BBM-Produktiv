@@ -12,28 +12,62 @@ import {
 import { toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
 import RestarbeitenEditbox from "./RestarbeitenEditbox.js";
 import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
+import { ensureRestarbeitenListStyle } from "./restarbeitenListStyle.js";
 
 function normalizeText(value) {
   return String(value || "").trim();
 }
 
-function createLineCell(doc, line1, line2, line3) {
+function createLineCell(doc, line1, line2, class1, class2) {
   const td = doc.createElement("td");
 
   const line1Div = doc.createElement("div");
+  if (class1) line1Div.className = class1;
   line1Div.textContent = line1;
   td.append(line1Div);
 
   const line2Div = doc.createElement("div");
+  if (class2) line2Div.className = class2;
   line2Div.textContent = line2;
   td.append(line2Div);
 
-  if (typeof line3 === "string") {
-    const line3Div = doc.createElement("div");
-    line3Div.textContent = line3;
-    td.append(line3Div);
-  }
+  return td;
+}
 
+function createStatusCell(doc, item) {
+  const td = doc.createElement("td");
+  td.dataset.ampel = item.ampelState;
+
+  const meta = doc.createElement("div");
+  meta.className = "restarbeiten-list__meta";
+
+  const classLine = doc.createElement("div");
+  classLine.className = "restarbeiten-list__class";
+  classLine.textContent = `Klasse: ${item.itemClassLabel}`;
+
+  const statusLine = doc.createElement("div");
+  statusLine.className = "restarbeiten-list__status";
+  statusLine.textContent = `Status: ${item.statusLabel}`;
+
+  const dueLine = doc.createElement("div");
+  dueLine.className = "restarbeiten-list__due";
+  dueLine.textContent = `Fertig bis: ${item.dueDateLabel}`;
+
+  const responsibleLine = doc.createElement("div");
+  responsibleLine.className = "restarbeiten-list__responsible";
+  responsibleLine.textContent = `Verantwortlich: ${item.responsibleLabel}`;
+
+  const ampelLine = doc.createElement("div");
+  const ampelDot = doc.createElement("span");
+  ampelDot.className = `restarbeiten-list__ampel restarbeiten-list__ampel--${item.ampelState}`;
+  ampelDot.dataset.ampel = item.ampelState;
+
+  const ampelText = doc.createElement("span");
+  ampelText.textContent = `Ampel: ${item.ampelLabel}`;
+  ampelLine.append(ampelDot, ampelText);
+
+  meta.append(classLine, statusLine, dueLine, responsibleLine, ampelLine);
+  td.append(meta);
   return td;
 }
 
@@ -45,8 +79,7 @@ function createHeaderCell(doc, text) {
 
 function buildListTable(doc, items, selectedId, onSelect) {
   const table = doc.createElement("table");
-  table.style.width = "100%";
-  table.style.borderCollapse = "collapse";
+  table.className = "restarbeiten-list__table";
 
   const thead = doc.createElement("thead");
   const headRow = doc.createElement("tr");
@@ -62,20 +95,19 @@ function buildListTable(doc, items, selectedId, onSelect) {
   const tbody = doc.createElement("tbody");
   for (const item of items) {
     const row = doc.createElement("tr");
+    row.className = "restarbeiten-list__row";
     row.dataset.restarbeitId = item.id;
-    row.style.cursor = "pointer";
-    row.style.borderBottom = "1px solid var(--card-border, #d6d6d6)";
-    row.style.verticalAlign = "top";
+    row.dataset.ampel = item.ampelState;
     if (String(item.id) === String(selectedId)) {
-      row.style.background = "rgba(0, 0, 0, 0.05)";
+      row.classList.add("restarbeiten-list__row--selected");
       row.dataset.selected = "1";
     }
     row.addEventListener("click", () => onSelect(item.id));
     row.append(
-      createLineCell(doc, item.numberLine, item.dateLine),
-      createLineCell(doc, item.locationLine1, item.locationLine2),
-      createLineCell(doc, item.workLine1, item.workLine2),
-      createLineCell(doc, item.statusLine1, item.statusLine2, item.statusLine3)
+      createLineCell(doc, item.numberLine, item.dateLine, "restarbeiten-list__number", "restarbeiten-list__date"),
+      createLineCell(doc, item.locationLine1, item.locationLine2, "restarbeiten-list__location", "restarbeiten-list__location"),
+      createLineCell(doc, item.workLine1, item.workLine2, "restarbeiten-list__shortText", "restarbeiten-list__longText"),
+      createStatusCell(doc, item)
     );
     tbody.append(row);
   }
@@ -285,7 +317,10 @@ export default class RestarbeitenScreen {
   }
 
   render() {
+    ensureRestarbeitenListStyle(document);
+
     const root = document.createElement("div");
+    root.className = "restarbeiten-list";
     root.style.display = "grid";
     root.style.gap = "12px";
 

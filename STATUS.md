@@ -2003,3 +2003,9 @@ Wichtig:
   - `npm test` laeuft gruen
 
 - M9 ist abgeschlossen: Der M8-Fotoimport speichert Attachments jetzt IPC-seitig DB-konform mit `project_id` ueber `addRestarbeitAttachment(...)`; der zugehoerige M8-Test erzwingt den Repo-Vertrag (`restarbeit_id`, `project_id`, `file_path`) und prueft die erwarteten Attachment-Felder.
+
+- M12 Restarbeiten-Liste fachlich layoutet:
+  - 4-spaltige Tabelle blieb erhalten; Verortung als 2-zeilige Metaspalte.
+  - Status-Metaspalte mit Klasse, Status, Fertig bis, Verantwortlich und Ampel (inkl. testbarem data-ampel).
+  - modulnahe Style-Injektion fuer Restarbeiten-Liste hinzugefuegt.
+- Naechster offener Schritt: fachliche Sichtpruefung der M12-Listenoptik im UI.
