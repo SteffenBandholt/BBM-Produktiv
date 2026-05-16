@@ -292,3 +292,9 @@ Dabei gilt:
 - Verortung wird als Metaspalte mit zwei Zeilen dargestellt (L1/L2 und L3/L4).
 - Die Status-Metaspalte zeigt Klasse, Status, Fertig bis, Verantwortlich und Ampel (rot/orange/gruen/neutral).
 - M12 umfasst keine Filter-, Druck-, Mail- oder Archivfunktion.
+
+
+### M13 Restarbeiten-Startbutton im Projekt-Arbeitsbereich (neu)
+- Restarbeiten ist im Projekt-Arbeitsbereich als sichtbarer Modulstart enthalten, wenn das Modul im aktiven Modulumfang freigegeben ist.
+- Der Start erfolgt wie bei anderen Projektmodulen ueber `openProjectModule(projectId, "restarbeiten", { project })`.
+- Projektfirmen- und Protokoll-Einstiege bleiben unveraendert.
