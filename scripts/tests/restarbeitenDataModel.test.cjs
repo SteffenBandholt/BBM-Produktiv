@@ -143,6 +143,13 @@ async function runRestarbeitenDataModelTests(run) {
     assert.equal(String(repo.listRestarbeitItems("p1")[0].id), String(item.id));
   }));
 
+  await run("Restarbeit Update wirft bei unbekannter ID", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+    assert.throws(() => repo.updateRestarbeitItem("unbekannt", { short_text: "x" }), /restarbeit not found/);
+    assert.throws(() => repo.updateRestarbeitItem("unbekannt", {}), /restarbeit not found/);
+  }));
+
   await run("Foto-Regeln inkl. primary und max 3", async () => withTemp(({ db, repo }) => {
     const conn = db.initDatabase();
     conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");

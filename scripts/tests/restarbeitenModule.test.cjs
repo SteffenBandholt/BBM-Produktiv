@@ -304,6 +304,42 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
+  await run("M5 Screen: fehlender Projektkontext zeigt nur den Kontext-Hinweis", async () => {
+    const prevWindow = globalThis.window;
+    const prevDocument = globalThis.document;
+    globalThis.window = {
+      bbmDb: {
+        restarbeitenGetProjectSettings: async () => ({ ok: true, settings: {} }),
+        restarbeitenListByProject: async () => ({ ok: true, items: [] }),
+        restarbeitenCreateItem: async () => ({ ok: true, item: { id: "x" } }),
+        restarbeitenUpdateItem: async () => ({ ok: true, item: { id: "x" } }),
+      },
+    };
+    globalThis.document = createFakeDocument();
+
+    try {
+      const screen = new (
+        await importEsmFromFile(
+          path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+        )
+      ).default({});
+
+      const root = screen.render();
+      assert.equal(root.children.length >= 3, true);
+      assert.match(screen.listHost.children[0].textContent, /Kein Projektkontext/);
+      assert.equal(screen.editHost.children.length, 0);
+      assert.equal(screen.headerHost.children[0].children[1].disabled, true);
+
+      await screen.load();
+      assert.match(screen.listHost.children[0].textContent, /Kein Projektkontext/);
+      assert.equal(screen.editHost.children.length, 0);
+      assert.notEqual(screen.listHost.children[0].textContent, "Für dieses Projekt sind noch keine Restarbeiten vorhanden.");
+    } finally {
+      globalThis.window = prevWindow;
+      globalThis.document = prevDocument;
+    }
+  });
+
   await run("M4 ViewModel: Mapping fuer Anzeigezeilen", async () => {
     const vm = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenListItems.js")

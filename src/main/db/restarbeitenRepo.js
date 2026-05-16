@@ -139,15 +139,18 @@ function createRestarbeitItem(projectIdOrPayload = {}, payload = {}) {
 function updateRestarbeitItem(id, patch = {}) {
   const db = initDatabase();
   const rid = reqText(id, "id");
+  const existing = db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(rid);
+  if (!existing) throw new Error("restarbeit not found");
+
   const data = buildRestarbeitUpdatePatch(patch);
   const keys = Object.keys(data);
   if (!keys.length) {
-    return db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(rid);
+    return existing;
   }
 
   const setClause = keys.map((key) => `${key} = @${key}`).join(", ");
   const now = new Date().toISOString();
-  db.prepare(`
+  const result = db.prepare(`
     UPDATE restarbeiten_items
     SET ${setClause},
         updated_at = @updated_at
@@ -158,7 +161,13 @@ function updateRestarbeitItem(id, patch = {}) {
     ...data,
   });
 
-  return db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(rid);
+  if (!result || Number(result.changes || 0) < 1) {
+    throw new Error("restarbeit not found");
+  }
+
+  const updated = db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(rid);
+  if (!updated) throw new Error("restarbeit not found");
+  return updated;
 }
 
 function listRestarbeitItems(projectId, { includeArchived = false } = {}) {

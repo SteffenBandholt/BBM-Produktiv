@@ -110,15 +110,18 @@ export default class RestarbeitenScreen {
 
   _setSelectedItemId(itemId) {
     this.selectedItemId = normalizeText(itemId);
-    if (this.editbox) {
-      this.editbox.setItem(this._getSelectedItem());
-    }
+    if (this.editbox) this.editbox.setItem(this._getSelectedItem());
   }
 
   _renderList() {
     if (!this.listHost) return;
 
     const doc = this.listHost.ownerDocument || globalThis.document;
+    if (!this.effectiveProjectId) {
+      this.listHost.replaceChildren(createMessage(doc, "Kein Projektkontext für Restarbeiten vorhanden."));
+      return;
+    }
+
     if (!this.items.length) {
       this.listHost.replaceChildren(
         createMessage(doc, "Für dieses Projekt sind noch keine Restarbeiten vorhanden.")
@@ -138,6 +141,13 @@ export default class RestarbeitenScreen {
   _renderEditbox() {
     if (!this.editHost) return;
     const doc = this.editHost.ownerDocument || globalThis.document;
+
+    if (!this.effectiveProjectId) {
+      if (this.editbox) this.editbox.setItem(null);
+      this.editHost.replaceChildren();
+      return;
+    }
+
     const selectedItem = this._getSelectedItem();
 
     if (!selectedItem) {
@@ -226,8 +236,15 @@ export default class RestarbeitenScreen {
     this.editHost = document.createElement("div");
 
     this._renderHeader();
-    this._renderList();
-    this._renderEditbox();
+    if (this.effectiveProjectId) {
+      this._renderList();
+      this._renderEditbox();
+    } else {
+      this.listHost.replaceChildren(
+        createMessage(this.listHost.ownerDocument || globalThis.document, "Kein Projektkontext für Restarbeiten vorhanden.")
+      );
+      this.editHost.replaceChildren();
+    }
 
     root.append(this.headerHost, this.listHost, this.editHost);
     this.host = root;
@@ -238,7 +255,9 @@ export default class RestarbeitenScreen {
     if (!this.effectiveProjectId || !this.host) return;
 
     this.isLoading = true;
-    this.listHost?.replaceChildren(createMessage(this.listHost.ownerDocument || globalThis.document, "Restarbeiten werden geladen…"));
+    this.listHost?.replaceChildren(
+      createMessage(this.listHost.ownerDocument || globalThis.document, "Restarbeiten werden geladen…")
+    );
     if (this.editbox) this.editbox.setStatus("Lade...");
 
     try {
