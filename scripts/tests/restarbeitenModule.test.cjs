@@ -537,13 +537,19 @@ async function runRestarbeitenModuleTests(run) {
     const view = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenAttachmentsView.js"), "utf8");
     const editbox = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"), "utf8");
     const screen = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"), "utf8");
+    const dataSource = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js"), "utf8");
 
     assert.match(view, /Noch keine Fotos vorhanden\./);
     assert.match(view, /slice\(0, 3\)/);
     assert.match(view, /Hauptfoto/);
     assert.match(editbox, /setAttachments\(attachments\)/);
+    assert.doesNotMatch(editbox, /Fotos/);
     assert.match(screen, /listRestarbeitAttachments/);
-    assert.match(screen, /setPrimaryRestarbeitAttachment/);
+    assert.match(screen, /_renderAttachmentsPreview|restarbeiten-list__photosToggle/);
+    assert.match(screen, /listRestarbeitAttachments/);
+    assert.match(dataSource, /setPrimaryRestarbeitAttachment\(/);
+    assert.match(dataSource, /importRestarbeitAttachments\(/);
+    assert.match(dataSource, /deleteRestarbeitAttachment\(/);
     assert.doesNotMatch(screen, /innerHTML\s*=/);
     assert.doesNotMatch(editbox + view + screen, /Diktat|Druck|Mail|Bildbearbeitung/);
   });
