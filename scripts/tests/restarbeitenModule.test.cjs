@@ -1184,6 +1184,83 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(saveCalls.length, 3);
   });
 
+  await run("M21.1 Autosave: pending Draft bleibt trotz setItem waehrend Save erhalten", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js")
+    );
+
+    let resolveFirstSave;
+    const calls = [];
+    let running = 0;
+    const editbox = new mod.default({
+      documentRef: createFakeDocument(),
+      onSave: async (draft) => {
+        calls.push(draft);
+        running += 1;
+        if (running === 1) {
+          await new Promise((resolve) => { resolveFirstSave = resolve; });
+        }
+        running -= 1;
+      },
+    });
+
+    editbox.render();
+    editbox.setItem({ id: "r1", short_text: "Alt", status: "offen" });
+
+    editbox.fields.short_text.value = "Neu 1";
+    const firstFlush = editbox.flushAutosave();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    editbox.fields.short_text.value = "Neu 2";
+    await editbox.flushAutosave();
+    editbox.setItem({ id: "r1", short_text: "Neu 1", status: "offen" });
+
+    resolveFirstSave();
+    await firstFlush;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(calls.length, 2);
+    assert.equal(calls[0].short_text, "Neu 1");
+    assert.equal(calls[1].short_text, "Neu 2");
+  });
+
+  await run("M21.1 Autosave: laufender Save plus neue Aenderung fuehrt zu zweitem Save", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js")
+    );
+
+    let resolveFirstSave;
+    const calls = [];
+    const editbox = new mod.default({
+      documentRef: createFakeDocument(),
+      onSave: async (draft) => {
+        calls.push(draft);
+        if (calls.length === 1) {
+          await new Promise((resolve) => { resolveFirstSave = resolve; });
+        }
+      },
+    });
+
+    editbox.render();
+    editbox.setItem({ id: "r1", short_text: "Alt", status: "offen" });
+
+    editbox.fields.short_text.value = "A";
+    const firstFlush = editbox.flushAutosave();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    editbox.fields.short_text.value = "B";
+    await editbox.flushAutosave();
+
+    resolveFirstSave();
+    await firstFlush;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(calls.length, 2);
+    assert.equal(calls[0].short_text, "A");
+    assert.equal(calls[1].short_text, "B");
+  });
+
+
   await run("M20 Verortung: input+datalist, Options-Uebergabe und kompakte Klassen", async () => {
     const editboxPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js");
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");

@@ -68,6 +68,7 @@ export default class RestarbeitenEditbox {
     this.isSaving = false;
     this.autosaveTimer = null;
     this.pendingDraftKey = "";
+    this.currentItemDraftKey = "";
     this.lastSavedDraftKey = "";
     this.lastRequestedDraftKey = "";
   }
@@ -221,7 +222,8 @@ export default class RestarbeitenEditbox {
     if (!this._canAutosave()) return;
     const draft = this.getDraft();
     const draftKey = this._draftKeyFor(draft);
-    if (draftKey === this.lastSavedDraftKey || draftKey === this.lastRequestedDraftKey) return;
+    if (draftKey === this.lastSavedDraftKey) return;
+    if (this.isSaving && draftKey === this.lastRequestedDraftKey) return;
     this.pendingDraftKey = draftKey;
     if (this.isSaving) return;
     await this._runSaveLoop();
@@ -248,9 +250,46 @@ export default class RestarbeitenEditbox {
     }
   }
 
-  _normalizeLocationOptions(options = {}) { const normalized = {}; for (const key of LOCATION_KEYS) { const values = Array.isArray(options?.[key]) ? options[key] : []; const unique = [...new Set(values.map((value) => normalizeText(value)).filter(Boolean))]; normalized[key] = unique.sort((a, b) => a.localeCompare(b, "de")); } return normalized; }
-  setLocationOptions(options) { this.locationOptions = this._normalizeLocationOptions(options); this._wireLocationDatalists(); }
-  _wireLocationDatalists() { const doc = this.document; for (const key of LOCATION_KEYS) { const input = this.fields?.[key]; if (!input || !doc?.createElement) continue; let datalist = this.locationOptionLists[key]; if (!datalist) { datalist = doc.createElement("datalist"); datalist.id = `restarbeiten-editbox-${key}-options`; this.locationOptionLists[key] = datalist; } datalist.replaceChildren(); for (const value of this.locationOptions?.[key] || []) { const opt = doc.createElement("option"); opt.value = value; datalist.append(opt); } const parent = input.parentElement; if (parent && !Array.from(parent.children || []).includes(datalist)) parent.append(datalist); input.setAttribute("list", datalist.id); } }
+  _normalizeLocationOptions(options = {}) {
+    const normalized = {};
+    for (const key of LOCATION_KEYS) {
+      const values = Array.isArray(options?.[key]) ? options[key] : [];
+      const unique = [...new Set(values.map((value) => normalizeText(value)).filter(Boolean))];
+      normalized[key] = unique.sort((a, b) => a.localeCompare(b, "de"));
+    }
+    return normalized;
+  }
+  setLocationOptions(options) {
+    this.locationOptions = this._normalizeLocationOptions(options);
+    this._wireLocationDatalists();
+  }
+  _wireLocationDatalists() {
+    const doc = this.document;
+    for (const key of LOCATION_KEYS) {
+      const input = this.fields?.[key];
+      if (!input || !doc?.createElement) continue;
+
+      let datalist = this.locationOptionLists[key];
+      if (!datalist) {
+        datalist = doc.createElement("datalist");
+        datalist.id = `restarbeiten-editbox-${key}-options`;
+        this.locationOptionLists[key] = datalist;
+      }
+
+      datalist.replaceChildren();
+      for (const value of this.locationOptions?.[key] || []) {
+        const opt = doc.createElement("option");
+        opt.value = value;
+        datalist.append(opt);
+      }
+
+      const parent = input.parentElement;
+      if (parent && !Array.from(parent.children || []).includes(datalist)) {
+        parent.append(datalist);
+      }
+      input.setAttribute("list", datalist.id);
+    }
+  }
 
   setProjectFirms(firms) { this.projectFirms = normalizeFirmEntries(firms); const select = this.fields?.responsible_project_firm_id; if (!select) return; const selectedBefore = normalizeText(select.value); const options = [{ id: "", name: "— keine Auswahl —" }, ...this.projectFirms]; select.replaceChildren(); for (const option of options) { const opt = this.document.createElement("option"); opt.value = option.id; opt.textContent = option.name || "—"; select.appendChild(opt); } const fallbackId = normalizeText(this.currentItem?.responsible_project_firm_id); const targetId = fallbackId || selectedBefore; const selectOptions = Array.from(select.children || []); const hasTargetOption = !!targetId && selectOptions.some((option) => normalizeText(option?.value) === targetId); if (targetId && !hasTargetOption) { const legacy = this.document.createElement("option"); legacy.value = targetId; legacy.textContent = normalizeText(this.currentItem?.responsible_label) || "(nicht mehr vorhanden)"; select.appendChild(legacy); } select.value = targetId; }
   setAttachments(attachments) { this.attachments = Array.isArray(attachments) ? attachments : []; }
@@ -262,16 +301,29 @@ export default class RestarbeitenEditbox {
     this.currentItem = item || null;
     const source = this.currentItem || {};
     const fields = this.fields || {};
+
     this._setItemClass?.(normalizeText(source.item_class) || "rest");
     if (fields.status) fields.status.value = normalizeText(source.status) || "offen";
-    LOCATION_KEYS.forEach((key) => { if (fields[key]) fields[key].value = normalizeText(source[key]); });
+    LOCATION_KEYS.forEach((key) => {
+      if (fields[key]) fields[key].value = normalizeText(source[key]);
+    });
     if (fields.short_text) fields.short_text.value = normalizeText(source.short_text);
     if (fields.long_text) fields.long_text.value = normalizeText(source.long_text);
     if (fields.due_date) fields.due_date.value = normalizeText(source.due_date);
     this.setProjectFirms(this.projectFirms);
-    this.lastSavedDraftKey = this._draftKeyFor(this.getDraft());
-    this.pendingDraftKey = "";
-    this.lastRequestedDraftKey = "";
+
+    const loadedDraftKey = this._draftKeyFor(this.getDraft());
+    this.currentItemDraftKey = loadedDraftKey;
+    this.lastSavedDraftKey = loadedDraftKey;
+
+    const hasPending = !!this.pendingDraftKey;
+    const visibleDraftKey = this._draftKeyFor(this.getDraft());
+    const hasUnsavedVisibleDraft = visibleDraftKey !== loadedDraftKey;
+    if (!this.isSaving && !hasPending && !hasUnsavedVisibleDraft) {
+      this.pendingDraftKey = "";
+      this.lastRequestedDraftKey = "";
+    }
+
     this.isApplyingItem = false;
   }
 
@@ -282,7 +334,23 @@ export default class RestarbeitenEditbox {
     const oldLabel = normalizeText(this.currentItem?.responsible_label);
     let responsibleProjectFirmId = null;
     let responsibleLabel = oldLabel;
-    if (selectedFirmId && selectedFirm) { responsibleProjectFirmId = selectedFirm.id; responsibleLabel = selectedFirm.name; }
-    return { item_class: normalizeText(fields.item_class?.value) || "rest", status: normalizeText(fields.status?.value) || "offen", location_level_1: normalizeText(fields.location_level_1?.value), location_level_2: normalizeText(fields.location_level_2?.value), location_level_3: normalizeText(fields.location_level_3?.value), location_level_4: normalizeText(fields.location_level_4?.value), short_text: normalizeText(fields.short_text?.value), long_text: normalizeText(fields.long_text?.value), due_date: normalizeText(fields.due_date?.value), responsible_project_firm_id: responsibleProjectFirmId, responsible_label: responsibleLabel };
+    if (selectedFirmId && selectedFirm) {
+      responsibleProjectFirmId = selectedFirm.id;
+      responsibleLabel = selectedFirm.name;
+    }
+
+    return {
+      item_class: normalizeText(fields.item_class?.value) || "rest",
+      status: normalizeText(fields.status?.value) || "offen",
+      location_level_1: normalizeText(fields.location_level_1?.value),
+      location_level_2: normalizeText(fields.location_level_2?.value),
+      location_level_3: normalizeText(fields.location_level_3?.value),
+      location_level_4: normalizeText(fields.location_level_4?.value),
+      short_text: normalizeText(fields.short_text?.value),
+      long_text: normalizeText(fields.long_text?.value),
+      due_date: normalizeText(fields.due_date?.value),
+      responsible_project_firm_id: responsibleProjectFirmId,
+      responsible_label: responsibleLabel,
+    };
   }
 }
