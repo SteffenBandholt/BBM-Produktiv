@@ -340,7 +340,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(vm, /return "M"/);
     assert.match(vm, /return "R"/);
     assert.doesNotMatch(screen, /item\.itemClassLabel/);
-    assert.doesNotMatch(screen, /Mangel|Restarbeit/);
+    assert.match(screen, /number\.textContent\s*=\s*`\$\{item\.itemClassToken\} \$\{item\.numberLine\}`/);
 
     assert.match(screen, /statusLine\.className\s*=\s*"restarbeiten-list__ampelLine"/);
     assert.match(screen, /statusLine\.textContent\s*=\s*item\.statusLabel/);
@@ -359,7 +359,11 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(editbox, /restarbeiten-editbox__classToggle--compact/);
     assert.match(editbox, /classActions\.append\(createField\(doc, "", marker\)\)/);
     assert.match(editbox, /\+ Restarbeit/);
-    assert.doesNotMatch(editbox, /Speichern/);
+    assert.doesNotMatch(editbox, /textContent\s*=\s*"Speichern"/);
+    assert.doesNotMatch(editbox, /restarbeiten-editbox__save/);
+    assert.doesNotMatch(editbox, /saveBtn/);
+    assert.match(editbox, /setStatus\("Änderungen werden gespeichert …"\)/);
+    assert.match(editbox, /setStatus\("Speichern fehlgeschlagen"\)/);
 
     assert.match(editbox, /form\.addEventListener\("submit",/);
     assert.match(editbox, /event\.preventDefault\(\)/);
