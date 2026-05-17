@@ -331,7 +331,7 @@ async function runRestarbeitenModuleTests(run) {
     const vm = fs.readFileSync(vmPath, "utf8");
     const editbox = fs.readFileSync(editboxPath, "utf8");
 
-    assert.match(screen, /title\.textContent\s*=\s*"Restarbeiten"/);
+    assert.doesNotMatch(screen, /title\.textContent\s*=\s*"Restarbeiten"/);
     assert.doesNotMatch(screen, /restarbeiten-sheet__title|Arbeitsblatttitel/);
     assert.match(screen, /restarbeiten-header__filters/);
     assert.match(screen, /Schließen/);

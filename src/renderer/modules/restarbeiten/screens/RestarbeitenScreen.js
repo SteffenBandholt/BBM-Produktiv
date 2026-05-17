@@ -89,9 +89,6 @@ export default class RestarbeitenScreen {
     const header = doc.createElement("header");
     header.className = "restarbeiten-header";
 
-    const title = doc.createElement("div");
-    title.textContent = "Restarbeiten";
-
     const filters = doc.createElement("div");
     filters.className = "restarbeiten-header__filters";
 
@@ -104,7 +101,7 @@ export default class RestarbeitenScreen {
     btnClose.onclick = () => this.router?.showProjectWorkspace?.();
 
     actions.append(btnClose);
-    header.append(title, filters, actions);
+    header.append(filters, actions);
 
     this.headerHost = header;
     this.headerFiltersHost = filters;
