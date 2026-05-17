@@ -319,6 +319,52 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
+
+  await run("M23 UI-Nachschaerfung: Header, R/M, Ampel, Typografie und Editbox-Meta", () => {
+    const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+    const stylePath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenListStyle.js");
+    const vmPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenListItems.js");
+    const editboxPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js");
+
+    const screen = fs.readFileSync(screenPath, "utf8");
+    const style = fs.readFileSync(stylePath, "utf8");
+    const vm = fs.readFileSync(vmPath, "utf8");
+    const editbox = fs.readFileSync(editboxPath, "utf8");
+
+    assert.match(screen, /title\.textContent\s*=\s*"Restarbeiten"/);
+    assert.doesNotMatch(screen, /restarbeiten-sheet__title|Arbeitsblatttitel/);
+    assert.match(screen, /restarbeiten-header__filters/);
+    assert.match(screen, /Schließen/);
+
+    assert.match(vm, /itemClassToken/);
+    assert.match(vm, /return "M"/);
+    assert.match(vm, /return "R"/);
+    assert.doesNotMatch(screen, /item\.itemClassLabel/);
+    assert.doesNotMatch(screen, /Mangel|Restarbeit/);
+
+    assert.match(screen, /statusLine\.className\s*=\s*"restarbeiten-list__ampelLine"/);
+    assert.match(screen, /statusLine\.textContent\s*=\s*item\.statusLabel/);
+    assert.match(screen, /ampelDot\.dataset\.ampel/);
+    assert.match(screen, /restarbeiten-list__ampel--\$\{item\.ampelState\}/);
+
+    assert.match(style, /restarbeiten-list__metaCol\{font-size:8pt/);
+    assert.match(style, /restarbeiten-list__date\{font-size:8pt/);
+    assert.match(style, /restarbeiten-list__shortText\{font-weight:500/);
+
+    assert.match(editbox, /restarbeiten-editbox__metaRow--triple/);
+    assert.match(editbox, /createField\(doc, "Status", status\)/);
+    assert.match(editbox, /createField\(doc, "Fertig bis", dueDate\)/);
+    assert.match(editbox, /createField\(doc, "Ampel", ampelPreview\)/);
+    assert.match(editbox, /createField\(doc, "Verantwortlich", responsibleProjectFirmId\)/);
+    assert.match(editbox, /restarbeiten-editbox__classToggle--compact/);
+    assert.match(editbox, /classActions\.append\(createField\(doc, "", marker\)\)/);
+    assert.match(editbox, /\+ Restarbeit/);
+    assert.doesNotMatch(editbox, /Speichern/);
+
+    assert.match(editbox, /form\.addEventListener\("submit",/);
+    assert.match(editbox, /event\.preventDefault\(\)/);
+    assert.match(editbox, /input\.setAttribute\("list", datalist\.id\)/);
+  });
   await run("M5 Repo/IPC/Preload/DataSource: Create und Update sind verdrahtet", async () => {
     const repo = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js")

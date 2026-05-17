@@ -1,3 +1,4 @@
+import { getRestarbeitenAmpelState } from "../viewModel/restarbeitenListItems.js";
 function normalizeText(value) {
   return String(value ?? "").trim();
 }
@@ -57,6 +58,7 @@ export default class RestarbeitenEditbox {
     this.root = null;
     this.form = null;
     this.statusEl = null;
+    this.ampelPreviewEl = null;
     this.currentItem = null;
     this.projectFirms = [];
     this.locationLabels = {};
@@ -65,6 +67,7 @@ export default class RestarbeitenEditbox {
     this.fields = {};
     this.attachments = [];
     this.isApplyingItem = false;
+    this._updateAmpelPreview();
     this.isSaving = false;
     this.autosaveTimer = null;
     this.pendingDraftKey = "";
@@ -162,6 +165,8 @@ export default class RestarbeitenEditbox {
     const dueDate = createInput(doc, "date");
     const responsibleProjectFirmId = createSelect(doc, [{ value: "", label: "— keine Auswahl —" }]);
     responsibleProjectFirmId.className += " restarbeiten-editbox__metaControl";
+    const ampelPreview = doc.createElement("span");
+    ampelPreview.className = "restarbeiten-editbox__ampelPreview";
     const createBtn = this.onCreate ? doc.createElement("button") : null;
     if (createBtn) {
       createBtn.type = "button";
@@ -175,12 +180,25 @@ export default class RestarbeitenEditbox {
     const statusEl = doc.createElement("div");
     statusEl.className = "restarbeiten-editbox__status";
 
-    metaCol.append(
-      createField(doc, "Rest / Mangel", marker),
+    marker.className += " restarbeiten-editbox__classToggle--compact";
+
+    const statusRow = doc.createElement("div");
+    statusRow.className = "restarbeiten-editbox__metaRow restarbeiten-editbox__metaRow--triple";
+    statusRow.append(
       createField(doc, "Status", status),
       createField(doc, "Fertig bis", dueDate),
+      createField(doc, "Ampel", ampelPreview)
+    );
+
+    const classActions = doc.createElement("div");
+    classActions.className = "restarbeiten-editbox__classActions";
+    classActions.append(createField(doc, "", marker));
+    if (createBtn) classActions.append(createBtn);
+
+    metaCol.append(
+      statusRow,
       createField(doc, "Verantwortlich", responsibleProjectFirmId),
-      ...(createBtn ? [createBtn] : []),
+      classActions,
       statusEl
     );
     form.append(mainCol, metaCol, itemClass);
@@ -195,6 +213,7 @@ export default class RestarbeitenEditbox {
     this.root = root;
     this.form = form;
     this.statusEl = statusEl;
+    this.ampelPreviewEl = ampelPreview;
     this.fields = {
       item_class: itemClass,
       status,
@@ -229,7 +248,7 @@ export default class RestarbeitenEditbox {
     ["status", "due_date", "responsible_project_firm_id"].forEach((key) => {
       const input = this.fields?.[key];
       if (!input?.addEventListener) return;
-      input.addEventListener("change", () => this._triggerAutosaveImmediate());
+      input.addEventListener("change", () => { this._updateAmpelPreview(); this._triggerAutosaveImmediate(); });
     });
   }
 
@@ -376,6 +395,17 @@ export default class RestarbeitenEditbox {
 
   setSaving() {}
 
+  _updateAmpelPreview() {
+    if (!this.ampelPreviewEl) return;
+    const state = getRestarbeitenAmpelState({
+      status: normalizeText(this.fields?.status?.value) || "offen",
+      due_date: normalizeText(this.fields?.due_date?.value),
+    });
+    this.ampelPreviewEl.className = `restarbeiten-editbox__ampelPreview restarbeiten-list__ampel restarbeiten-list__ampel--${state}`;
+    this.ampelPreviewEl.dataset.ampel = state;
+    this.ampelPreviewEl.textContent = "";
+  }
+
   setItem(item) {
     this.isApplyingItem = true;
     this.currentItem = item || null;
@@ -407,6 +437,7 @@ export default class RestarbeitenEditbox {
     }
 
     this.isApplyingItem = false;
+    this._updateAmpelPreview();
   }
 
   getDraft() {
