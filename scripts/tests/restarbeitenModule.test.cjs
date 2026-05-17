@@ -1125,7 +1125,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(collectText(fallbackRoot).includes("Ebene 4"), true);
 
     editbox.setProjectFirms([{ id: "f1", name: "Firma A" }]);
-    editbox.setItem({ item_class: "rest", status: "offen", short_text: "Kurz", long_text: "Lang", due_date: "2026-05-16" });
+    // Autosave erwartet bewusst eine Item-ID (ohne ID kein Save-Call).
+    editbox.setItem({ id: "r1", item_class: "rest", status: "offen", short_text: "Kurz", long_text: "Lang", due_date: "2026-05-16" });
 
     const legacyEditbox = new mod.default({ documentRef: createFakeDocument() });
     legacyEditbox.render();
