@@ -1083,7 +1083,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(styleContent, /restarbeiten-list__ampel--orange/);
     assert.match(styleContent, /restarbeiten-list__ampel--gruen/);
     assert.match(styleContent, /restarbeiten-list__ampel--neutral/);
-    assert.match(styleContent, /restarbeiten-list__date,.restarbeiten-list__shortText,.restarbeiten-list__longText,.restarbeiten-list__locationCompact\{font-size:12px/);
+    assert.match(styleContent, /restarbeiten-list__date\{font-size:8pt/);
+    assert.match(styleContent, /restarbeiten-list__shortText,.restarbeiten-list__longText,.restarbeiten-list__locationCompact\{font-size:12px/);
     assert.doesNotMatch(styleContent, /import\s+["'].*\.css["']/);
   });
 
@@ -1153,6 +1154,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(Boolean(createBtn), true);
     assert.equal(String(createBtn?.className || "").includes("restarbeiten-editbox__create"), true);
     createBtn.click();
+    await Promise.resolve();
+    await Promise.resolve();
     assert.equal(createCalls.length, 1);
     editbox.fields.status.value = "in_arbeit";
     editbox.fields.responsible_project_firm_id.value = "f1";
