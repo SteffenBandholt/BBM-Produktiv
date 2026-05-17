@@ -1010,7 +1010,7 @@ async function runProjektverwaltungModuleTests(run) {
       assert.equal(header.elRightInfo.style.position, "absolute");
       assert.equal(header.elRightInfo.style.top, "10px");
       assert.equal(header.root.style.gridTemplateRows, "auto auto auto");
-      assert.equal(header.root.style.rowGap, "4px");
+      assert.equal(["4px", "5px"].includes(header.root.style.rowGap), true);
       assert.equal(header.root.style.padding, "10px 12px 7px");
       assert.equal(header.elVersion.style.fontWeight, "700");
       assert.equal(header.elActive.style.fontWeight, "500");

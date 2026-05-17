@@ -1036,6 +1036,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(item.workLine2, "nachstellen");
     assert.equal(item.itemClassLabel, "Mangel");
     assert.equal(vm.toRestarbeitenListItem({ item_class: "rest" }, today).itemClassLabel, "Rest");
+    assert.equal(item.itemClassToken, "M");
+    assert.equal(vm.toRestarbeitenListItem({ item_class: "rest" }, today).itemClassToken, "R");
     assert.equal(item.statusLabel, "offen");
     assert.equal(item.dueDateLabel, "20.05.2026");
     assert.equal(vm.toRestarbeitenListItem({ created_at: "2026-05-17T19:08:44.076Z" }, today).dateLine, "17.05.2026");
@@ -1053,7 +1055,7 @@ async function runRestarbeitenModuleTests(run) {
       "gruen"
     );
   });
-  await run("M12 Screen/List: Status-Metaspalte und Klassenstruktur vorhanden", async () => {
+  await run("M12 Screen/List: Token-Darstellung und Metaspalte ohne Label", async () => {
     const content = fs.readFileSync(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"),
       "utf8"
@@ -1071,7 +1073,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(content, /Fertig bis:/);
     assert.doesNotMatch(content, /Verantwortlich:/);
     assert.doesNotMatch(content, /Ampel:/);
-    assert.match(content, /item\.itemClassLabel/);
+    assert.match(content, /item\.itemClassToken/);
     assert.match(content, /item\.statusLabel/);
     assert.match(content, /item\.dueDateLabel/);
     assert.match(content, /item\.responsibleLabel/);
@@ -1085,7 +1087,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(styleContent, /import\s+["'].*\.css["']/);
   });
 
-  await run("M16 Editbox: kompakt ohne Fotos mit Verortungslabels und Marker", async () => {
+  await run("M16 Editbox: aktueller Kompakt-Stand mit Autosave und Meta-Layout", async () => {
     const mod = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js")
     );
@@ -1105,6 +1107,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(Boolean(findNodes(root, (node) => String(node?.className || "").includes("restarbeiten-editbox__meta"))[0]), true);
     assert.equal(collectText(root).includes("Fotos"), false);
     assert.equal(collectText(root).includes("RestarbeitenAttachmentsView"), false);
+    assert.equal(collectText(root).includes("Speichern"), false);
     assert.equal(typeof editbox.setAttachments, "function");
     editbox.setAttachments([{ id: "a1" }]);
 
@@ -1186,7 +1189,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(combinedContent, /node:child_process/);
   });
 
-  await run("M19 Guardrails: Editbox CSS verdichtet und Segment-Umschalter vorhanden", () => {
+  await run("M19 Guardrails: Editbox CSS verdichtet und Filterleiste fachlich geklärt", () => {
     const editboxContent = fs.readFileSync(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"),
       "utf8"
@@ -1223,6 +1226,12 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(editboxContent, /itemClass\.value = value === "mangel" \? "mangel" : "rest"/);
     assert.match(screenContent, /restarbeiten-list/);
     assert.doesNotMatch(screenContent, /<table|createElement\("table"\)/);
+
+    // Fachbegriff: die grüne Leiste im Restarbeiten-Modul ist die Filterleiste (Filter + Schließen), nicht der globale Header.
+    assert.match(screenContent, /restarbeiten-header__filters/);
+    assert.match(screenContent, /btnClose\.textContent = "Schließen"/);
+    assert.match(screenContent, /_buildHeader/);
+
   });
 
 
