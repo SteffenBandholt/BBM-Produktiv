@@ -343,6 +343,8 @@ export default class RestarbeitenScreen {
     toggle.type = "button";
     toggle.className = "restarbeiten-list__photosToggle";
     toggle.textContent = photosOpen ? "▾ Fotos" : "▸ Fotos";
+    toggle.dataset.expanded = photosOpen ? "1" : "0";
+    toggle.setAttribute("aria-expanded", photosOpen ? "true" : "false");
     toggle.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
@@ -413,6 +415,7 @@ export default class RestarbeitenScreen {
 
     const wrap = doc.createElement("div");
     wrap.className = "restarbeiten-list__attachmentsWrap";
+    wrap.dataset.expanded = photosOpen ? "1" : "0";
     wrap.hidden = !photosOpen;
 
     if (!attachments.length) {
