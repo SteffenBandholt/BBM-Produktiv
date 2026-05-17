@@ -353,14 +353,22 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(style, /restarbeiten-list__metaCol\{font-size:8pt/);
     assert.match(style, /restarbeiten-list__date\{font-size:8pt/);
     assert.match(style, /restarbeiten-list__shortText\{font-weight:500/);
-    assert.match(style, /restarbeiten-editbox__metaRow--triple\{[^}]*align-items:start/);
+    assert.match(style, /restarbeiten-editbox__metaRow--triple\{[^}]*align-items:end/);
     assert.match(style, /restarbeiten-editbox__metaDate/);
+    assert.doesNotMatch(style, /restarbeiten-editbox__ampelPreview\{[^}]*min-height:23px/);
+    assert.match(style, /restarbeiten-editbox__ampelPreview\{[^}]*min-height:0/);
+    assert.match(style, /restarbeiten-editbox__ampelPreview\{[^}]*padding:0/);
+    assert.match(style, /restarbeiten-editbox__ampelPreview\{[^}]*border:0/);
+    assert.match(style, /restarbeiten-editbox__ampelPreview\{[^}]*background:transparent/);
+    assert.match(style, /restarbeiten-list__ampel\{[^}]*width:10px;[^}]*height:10px/);
     assert.match(style, /restarbeiten-header\{[^}]*border-bottom/);
 
     assert.match(editbox, /restarbeiten-editbox__metaRow--triple/);
     assert.match(editbox, /createField\(doc, "Status", status\)/);
     assert.match(editbox, /createField\(doc, "Fertig bis", dueDate\)/);
     assert.match(editbox, /restarbeiten-editbox__metaDate/);
+    assert.doesNotMatch(style, /restarbeiten-editbox__metaDate\{[^}]*appearance\s*:\s*none/);
+    assert.doesNotMatch(style, /restarbeiten-editbox__metaDate\{[^}]*-webkit-appearance\s*:\s*none/);
     assert.match(editbox, /createField\(doc, "Ampel", ampelPreview\)/);
     assert.match(editbox, /ampelPreview\.className\s*=\s*"restarbeiten-editbox__ampelPreview restarbeiten-list__ampel"/);
     assert.match(editbox, /createField\(doc, "Verantwortlich", responsibleProjectFirmId\)/);

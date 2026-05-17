@@ -15,11 +15,10 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-editbox__locationControl{min-height:22px;padding:2px 5px;font-size:10px}
 .restarbeiten-editbox__metaControl{min-height:23px;padding:2px 5px;font-size:10px}
 .restarbeiten-editbox__metaRow{display:grid;gap:6px}
-.restarbeiten-editbox__metaRow--triple{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:start}
-.restarbeiten-editbox__metaRow--triple .restarbeiten-editbox__field{align-content:start}
-.restarbeiten-editbox__ampelPreview{display:inline-flex;align-items:center;justify-content:center;min-height:23px;padding:0;border:0;border-radius:0;background:transparent}
-.restarbeiten-editbox__metaDate{appearance:none;-webkit-appearance:none}
-.restarbeiten-editbox__metaDate::-webkit-date-and-time-value{min-height:1.2em;line-height:1.2}
+.restarbeiten-editbox__metaRow--triple{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end}
+.restarbeiten-editbox__metaRow--triple .restarbeiten-editbox__field{align-content:end}
+.restarbeiten-editbox__ampelPreview{display:inline-block;padding:0;min-height:0;border:0;background:transparent}
+.restarbeiten-editbox__metaDate{min-height:23px;padding:2px 5px;font-size:10px;line-height:1.2;box-sizing:border-box}
 .restarbeiten-editbox__classActions{display:flex;align-items:center;gap:6px}
 .restarbeiten-editbox__classToggle--compact{width:max-content;min-width:90px;padding:1px 3px;gap:2px}
 .restarbeiten-editbox__classToggle--compact .restarbeiten-editbox__classToggleButton{min-height:20px;padding:1px 6px;font-size:10px}
