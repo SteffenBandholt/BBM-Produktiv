@@ -18,6 +18,15 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 
+
+- M20 Restarbeiten-Editbox Verortungsvorschlaege + kompaktere Feldoptik umgesetzt:
+  - Verortungsfelder `location_level_1..4` sind als freie `input`-Felder mit `datalist`-Vorschlaegen verdrahtet (Auswahl + freie Eingabe).
+  - RestarbeitenScreen leitet eindeutige, sortierte Vorschlagswerte aus geladenen Rows ab und uebergibt sie an die Editbox.
+  - Verortungs- und Verantwortlich-Feldoptik ist sichtbar kompakter (kleinere Labels/Controls, weniger Padding).
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` scheitert in Codex Cloud weiter an fehlendem `libatk-1.0.so.0`.
+  - Naechster offener Schritt: UI-Sichtpruefung der neuen Verortungs-Datalist im laufenden Client.
+
+
 - M16.3 Restarbeiten-Tests und Editbox-Legacy-Firma nach M16-Merge repariert:
   - M7/M8-Tests auf M16-Fachentscheidung angepasst (Fotos nicht in der Editbox, Fotoanzeige listenseitig).
   - `setProjectFirms(...)` in der Editbox robust auf explizite Optionenpruefung fuer Legacy-Firmen umgestellt.

@@ -45,6 +45,7 @@ export default class RestarbeitenScreen {
     this.selectedItemId = "";
     this.projectFirms = [];
     this.projectSettings = null;
+    this.locationOptions = { location_level_1: [], location_level_2: [], location_level_3: [], location_level_4: [] };
     this.editbox = null;
 
     this.filterState = {
@@ -162,6 +163,7 @@ export default class RestarbeitenScreen {
     this.items = toRestarbeitenListItems(this.rows);
     this.projectFirms = Array.isArray(projectFirms) ? projectFirms : [];
     this.projectSettings = projectSettings || null;
+    this.locationOptions = this._collectLocationOptionsFromRows(this.rows);
 
     if (selectItemId) {
       this._setSelectedItemId(selectItemId);
@@ -173,6 +175,20 @@ export default class RestarbeitenScreen {
     this._renderHeaderFilters();
     this._renderList();
     this._renderEditbox();
+  }
+
+
+  _collectLocationOptionsFromRows(rows = []) {
+    const options = {};
+    for (const key of LOCATION_KEYS) {
+      const unique = new Set();
+      for (const row of Array.isArray(rows) ? rows : []) {
+        const value = normalizeText(row?.[key]);
+        if (value) unique.add(value);
+      }
+      options[key] = [...unique].sort((a, b) => a.localeCompare(b, "de"));
+    }
+    return options;
   }
 
   _setSelectedItemId(itemId) {
@@ -458,6 +474,7 @@ export default class RestarbeitenScreen {
     }
 
     this.editbox.setLocationLabels(this.projectSettings || {});
+    this.editbox.setLocationOptions(this.locationOptions);
     this.editbox.setItem(selectedItem);
     this.editbox.setProjectFirms(this.projectFirms);
     this.editbox.setAttachments(this.attachmentsByItemId.get(String(selectedItem.id)) || []);

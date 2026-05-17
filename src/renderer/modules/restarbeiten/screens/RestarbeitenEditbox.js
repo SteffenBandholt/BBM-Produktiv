@@ -29,9 +29,10 @@ function createSelect(doc, options) {
   return select;
 }
 
-function createInput(doc, type = "text") {
+function createInput(doc, type = "text", className = "") {
   const input = doc.createElement(type === "textarea" ? "textarea" : "input");
   input.className = "restarbeiten-editbox__control";
+  if (className) input.className += ` ${className}`;
   if (type === "text") input.className += " restarbeiten-editbox__control--short";
   if (type === "textarea") input.className += " restarbeiten-editbox__control--long";
   if (type !== "textarea") input.type = type;
@@ -59,6 +60,8 @@ export default class RestarbeitenEditbox {
     this.currentItem = null;
     this.projectFirms = [];
     this.locationLabels = {};
+    this.locationOptions = {};
+    this.locationOptionLists = {};
     this.fields = {};
     this.attachments = [];
   }
@@ -93,10 +96,10 @@ export default class RestarbeitenEditbox {
     const shortText = createInput(doc, "text");
     const longText = createInput(doc, "textarea");
     longText.rows = 4;
-    const level1 = createInput(doc, "text");
-    const level2 = createInput(doc, "text");
-    const level3 = createInput(doc, "text");
-    const level4 = createInput(doc, "text");
+    const level1 = createInput(doc, "text", "restarbeiten-editbox__locationControl");
+    const level2 = createInput(doc, "text", "restarbeiten-editbox__locationControl");
+    const level3 = createInput(doc, "text", "restarbeiten-editbox__locationControl");
+    const level4 = createInput(doc, "text", "restarbeiten-editbox__locationControl");
 
     const locationGrid = doc.createElement("div");
     locationGrid.className = "restarbeiten-editbox__locationGrid";
@@ -104,6 +107,10 @@ export default class RestarbeitenEditbox {
     const loc2Field = createField(doc, this._getLocationLabel(2), level2, "restarbeiten-editbox__locationField");
     const loc3Field = createField(doc, this._getLocationLabel(3), level3, "restarbeiten-editbox__locationField");
     const loc4Field = createField(doc, this._getLocationLabel(4), level4, "restarbeiten-editbox__locationField");
+    [loc1Field, loc2Field, loc3Field, loc4Field].forEach((field) => {
+      const label = field.querySelector?.(".restarbeiten-editbox__label") || field.children[0];
+      if (label) label.className = `${label.className} restarbeiten-editbox__locationLabel`.trim();
+    });
     locationGrid.append(loc1Field, loc2Field, loc3Field, loc4Field);
 
     mainCol.append(
@@ -146,6 +153,7 @@ export default class RestarbeitenEditbox {
     ]);
     const dueDate = createInput(doc, "date");
     const responsibleProjectFirmId = createSelect(doc, [{ value: "", label: "— keine Auswahl —" }]);
+    responsibleProjectFirmId.className += " restarbeiten-editbox__metaControl";
     const saveBtn = doc.createElement("button");
     saveBtn.type = "submit";
     saveBtn.textContent = "Speichern";
@@ -202,10 +210,51 @@ export default class RestarbeitenEditbox {
     };
 
     this._setItemClass = setItemClass;
+    this._wireLocationDatalists();
     this.setItem(null);
     return root;
   }
 
+
+  _normalizeLocationOptions(options = {}) {
+    const normalized = {};
+    for (const key of LOCATION_KEYS) {
+      const values = Array.isArray(options?.[key]) ? options[key] : [];
+      const unique = [...new Set(values.map((value) => normalizeText(value)).filter(Boolean))];
+      normalized[key] = unique.sort((a, b) => a.localeCompare(b, "de"));
+    }
+    return normalized;
+  }
+
+  setLocationOptions(options) {
+    this.locationOptions = this._normalizeLocationOptions(options);
+    this._wireLocationDatalists();
+  }
+
+  _wireLocationDatalists() {
+    const doc = this.document;
+    for (const key of LOCATION_KEYS) {
+      const input = this.fields?.[key];
+      if (!input || !doc?.createElement) continue;
+      let datalist = this.locationOptionLists[key];
+      if (!datalist) {
+        datalist = doc.createElement("datalist");
+        datalist.id = `restarbeiten-editbox-${key}-options`;
+        this.locationOptionLists[key] = datalist;
+      }
+      datalist.replaceChildren();
+      for (const value of this.locationOptions?.[key] || []) {
+        const opt = doc.createElement("option");
+        opt.value = value;
+        datalist.append(opt);
+      }
+      const parent = input.parentElement;
+      if (parent && !parent.children.includes?.(datalist) && !Array.from(parent.children || []).includes(datalist)) {
+        parent.append(datalist);
+      }
+      input.setAttribute("list", datalist.id);
+    }
+  }
   setProjectFirms(firms) {
     this.projectFirms = normalizeFirmEntries(firms);
     const select = this.fields?.responsible_project_firm_id;

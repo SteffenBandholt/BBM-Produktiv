@@ -5,12 +5,15 @@ const CSS_TEXT = `
 .restarbeiten-editbox__layout{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:8px;align-items:start}
 .restarbeiten-editbox__main,.restarbeiten-editbox__meta{display:grid;gap:6px}
 .restarbeiten-editbox__field{display:grid;gap:3px}
-.restarbeiten-editbox__label{font-size:10px;font-weight:700}
-.restarbeiten-editbox__control{min-height:28px;padding:4px 7px;border-radius:6px;border:1px solid #cfcfcf;font-size:12px}
-.restarbeiten-editbox__control--short{min-height:26px;padding-top:3px;padding-bottom:3px}
+.restarbeiten-editbox__label{font-size:9px;font-weight:700;line-height:1.15}
+.restarbeiten-editbox__control{min-height:24px;padding:3px 6px;border-radius:6px;border:1px solid #cfcfcf;font-size:11px;line-height:1.2}
+.restarbeiten-editbox__control--short{min-height:23px;padding-top:2px;padding-bottom:2px}
 textarea.restarbeiten-editbox__control{min-height:74px;resize:vertical}
 textarea.restarbeiten-editbox__control--long{min-height:74px}
-.restarbeiten-editbox__locationGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.restarbeiten-editbox__locationGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+.restarbeiten-editbox__locationLabel{font-size:8px;letter-spacing:.01em}
+.restarbeiten-editbox__locationControl{min-height:22px;padding:2px 5px;font-size:10px}
+.restarbeiten-editbox__metaControl{min-height:23px;padding:2px 5px;font-size:10px}
 .restarbeiten-editbox__classToggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:2px;border:1px solid #cfd8d8;border-radius:999px;background:#f6f8f8}
 .restarbeiten-editbox__classToggleButton{min-height:26px;padding:3px 6px;border:1px solid transparent;border-radius:999px;background:transparent;font-size:12px;font-weight:600}
 .restarbeiten-editbox__classToggleButton[data-active="1"]{background:#dfeaea;border-color:#87a5a5;font-weight:700}
