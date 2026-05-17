@@ -25,7 +25,6 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-editbox__classToggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:2px;border:1px solid #cfd8d8;border-radius:999px;background:#f6f8f8}
 .restarbeiten-editbox__classToggleButton{min-height:26px;padding:3px 6px;border:1px solid transparent;border-radius:999px;background:transparent;font-size:12px;font-weight:600}
 .restarbeiten-editbox__classToggleButton[data-active="1"]{background:#dfeaea;border-color:#87a5a5;font-weight:700}
-.restarbeiten-editbox__save{min-height:28px;padding:4px 8px;border:1px solid #cfcfcf;border-radius:6px;background:#f5f5f5;font-size:12px;font-weight:700}
 .restarbeiten-editbox__create{min-height:26px;padding:3px 8px;justify-self:start;border:1px solid #cfcfcf;border-radius:6px;background:#f5f5f5;font-size:12px;font-weight:700}
 .restarbeiten-editbox__status{font-size:11px;opacity:.8}
 @media (max-width:900px){.restarbeiten-editbox__layout{grid-template-columns:1fr}.restarbeiten-editbox__locationGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}

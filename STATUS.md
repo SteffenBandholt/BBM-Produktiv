@@ -19,6 +19,15 @@ Sie ergÃ¤nzt:
 
 
 
+- Hotfix M26.2 Testlauf repariert und Filterleiste-Begriff in Restarbeiten-Tests abgesichert:
+  - MainHeader-Test akzeptiert den kompakten Header im alten und neuen UI-Modus deterministisch (rowGap 4px/5px), ohne Versions- oder Grid-Vertragsrueckbau.
+  - Restarbeiten-M12/M16/M19-Tests auf aktuellen Zielstand angehoben (Token M/R, kein itemClassLabel in Metaspalte, kompakte Editbox ohne Speichern-Button).
+  - ungenutzte CSS-Regel `.restarbeiten-editbox__save{...}` aus `restarbeitenListStyle.js` entfernt.
+  - Fachklarstellung in Tests: gruene Restarbeiten-Leiste = Filterleiste (Filter + Schliessen), nicht globaler Header.
+  - geprueft mit `node scripts/tests/projektverwaltungModule.test.cjs` und `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` scheitert in Codex Cloud weiter an fehlendem `libatk-1.0.so.0`.
+  - Naechster offener Schritt: Volltestlauf (`npm test`) auf Host/CI mit installierten Electron-Systemlibs.
+
+
 - M20 Restarbeiten-Editbox Verortungsvorschlaege + kompaktere Feldoptik umgesetzt:
   - Verortungsfelder `location_level_1..4` sind als freie `input`-Felder mit `datalist`-Vorschlaegen verdrahtet (Auswahl + freie Eingabe).
   - RestarbeitenScreen leitet eindeutige, sortierte Vorschlagswerte aus geladenen Rows ab und uebergibt sie an die Editbox.
