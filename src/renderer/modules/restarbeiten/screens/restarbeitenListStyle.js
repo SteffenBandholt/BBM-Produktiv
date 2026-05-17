@@ -22,6 +22,7 @@ textarea.restarbeiten-editbox__control{min-height:84px;resize:vertical}
 .restarbeiten-header__filter{display:grid;gap:2px;font-size:11px}
 .restarbeiten-header__actions{display:flex;gap:6px}
 [data-bbm-restarbeiten-screen-area="sheet"]{flex:1;min-height:0;overflow:auto;padding:12px 22px 14px}
+.restarbeiten-sheet__list{min-height:0}
 [data-bbm-restarbeiten-screen-sheet-canvas="true"],[data-bbm-restarbeiten-screen-edit-canvas="true"]{width:100%;max-width:940px;margin:0 auto}
 [data-bbm-restarbeiten-screen-sheet-paper="true"]{background:#fff;border:1px solid #dce6f2;border-radius:12px;box-shadow:0 10px 24px rgba(15,23,42,.08);padding:8px 12px 12px}
 [data-bbm-restarbeiten-screen-area="edit"]{border-top:1px solid #d9e2ec;background:linear-gradient(180deg,#f8f4ec,#f1ebdf);padding:6px 10px 8px}
