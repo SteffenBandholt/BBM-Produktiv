@@ -46,9 +46,10 @@ function normalizeFirmEntries(list) {
 }
 
 export default class RestarbeitenEditbox {
-  constructor({ documentRef = globalThis.document, onSave = null } = {}) {
+  constructor({ documentRef = globalThis.document, onSave = null, onCreate = null } = {}) {
     this.document = documentRef || globalThis.document;
     this.onSave = typeof onSave === "function" ? onSave : null;
+    this.onCreate = typeof onCreate === "function" ? onCreate : null;
     this.root = null;
     this.form = null;
     this.saveBtn = null;
@@ -143,6 +144,15 @@ export default class RestarbeitenEditbox {
     saveBtn.type = "submit";
     saveBtn.textContent = "Speichern";
     saveBtn.className = "restarbeiten-editbox__save";
+    const createBtn = this.onCreate ? doc.createElement("button") : null;
+    if (createBtn) {
+      createBtn.type = "button";
+      createBtn.textContent = "+ Restarbeit";
+      createBtn.className = "restarbeiten-editbox__create";
+      createBtn.addEventListener("click", async () => {
+        await this.onCreate?.();
+      });
+    }
     const statusEl = doc.createElement("div");
     statusEl.className = "restarbeiten-editbox__status";
 
@@ -151,6 +161,7 @@ export default class RestarbeitenEditbox {
       createField(doc, "Status", status),
       createField(doc, "Fertig bis", dueDate),
       createField(doc, "Verantwortlich", responsibleProjectFirmId),
+      ...(createBtn ? [createBtn] : []),
       saveBtn,
       statusEl
     );

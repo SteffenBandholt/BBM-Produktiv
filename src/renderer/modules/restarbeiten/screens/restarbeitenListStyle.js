@@ -13,6 +13,7 @@ textarea.restarbeiten-editbox__control{min-height:84px;resize:vertical}
 .restarbeiten-editbox__marker button{min-height:30px;border:1px solid #cfcfcf;border-radius:8px;background:#f7f7f7}
 .restarbeiten-editbox__marker button[data-active="1"]{background:#dfeaea;border-color:#87a5a5;font-weight:700}
 .restarbeiten-editbox__save{min-height:34px;border:1px solid #cfcfcf;border-radius:8px;background:#f5f5f5;font-weight:700}
+.restarbeiten-editbox__create{min-height:30px;padding:4px 8px;justify-self:start;border:1px solid #cfcfcf;border-radius:8px;background:#f5f5f5;font-size:12px;font-weight:700}
 .restarbeiten-editbox__status{font-size:11px;opacity:.8}
 @media (max-width:900px){.restarbeiten-editbox__layout{grid-template-columns:1fr}.restarbeiten-editbox__locationGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
