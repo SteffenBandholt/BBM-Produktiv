@@ -955,6 +955,9 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(mainHeaderSource.includes("_syncHeaderIdentity"), true);
     assert.equal(mainHeaderSource.includes("_getHeaderModuleText"), true);
     assert.equal(mainHeaderSource.includes("_getHeaderProjectText"), true);
+    assert.equal(mainHeaderSource.includes("actionWrap.style.gridRow = \"2\""), true);
+    assert.equal(mainHeaderSource.includes("stickyNotice.style.gridRow = \"3\""), true);
+    assert.equal(mainHeaderSource.includes("actionWrap.style.gridRow = \"3\""), false);
   });
 
   await run("Projektverwaltung: MainHeader rendert Version, Aktiv-Kontext und Kundentext", async () => {

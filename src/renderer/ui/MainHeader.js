@@ -263,7 +263,7 @@ export default class MainHeader {
 
     const actionWrap = document.createElement("div");
     actionWrap.style.gridColumn = "1 / span 3";
-    actionWrap.style.gridRow = "3";
+    actionWrap.style.gridRow = "2";
     actionWrap.style.justifySelf = "center";
     actionWrap.style.alignSelf = "end";
     actionWrap.style.display = "inline-flex";
