@@ -1012,8 +1012,15 @@ async function runProjektverwaltungModuleTests(run) {
       assert.equal(header.root.style.gridTemplateRows, "auto auto auto");
       assert.equal(["4px", "5px"].includes(header.root.style.rowGap), true);
       assert.equal(header.root.style.padding, "10px 12px 7px");
-      assert.equal(header.elVersion.style.fontWeight, "700");
+      assert.equal(header.elVersion.style.fontSize, "12px");
+      assert.equal(header.elVersion.style.lineHeight, "15px");
+      assert.equal(["500", "600"].includes(header.elVersion.style.fontWeight), true);
+      assert.equal(header.elVersion.style.fontWeight === "700", false);
+      assert.equal(header.elVersion.style.fontWeight === "800", false);
+      assert.equal(header.elActive.style.fontSize, "12px");
+      assert.equal(header.elActive.style.lineHeight, "15px");
       assert.equal(header.elActive.style.fontWeight, "500");
+      assert.equal(header.elVersion.style.fontSize <= header.elRightInfo.style.fontSize, true);
       assert.equal(!!findNode(header.root, (node) => node?.textContent === "DEV"), false);
       assert.equal(header.elActive.textContent.includes("bereit:"), false);
       assert.equal(header.elActive.textContent.includes("| -"), false);

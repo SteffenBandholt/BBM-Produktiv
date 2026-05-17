@@ -19,6 +19,14 @@ Sie ergÃ¤nzt:
 
 
 
+- M27 Globaler Header links typografisch an rechte Buerozeile angeglichen:
+  - `BBM ${version}` links auf 12px/15px reduziert und Font-Weight von 700 auf 600 abgesenkt.
+  - `aktiv: ...` links auf 12px/15px gehalten und bei Weight 500 belassen, damit die linke Seite nicht dominanter als `rightInfo` wirkt.
+  - Header-Zeilenstruktur bleibt unveraendert (`actionWrap` Zeile 2, `stickyNotice` Zeile 3); keine Zusatzzeile, keine Filterleisten-Aenderung.
+  - geprueft mit `node scripts/tests/projektverwaltungModule.test.cjs` und `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` scheitert in Codex Cloud weiter an fehlendem `libatk-1.0.so.0`.
+  - Naechster offener Schritt: Volltestlauf (`npm test`) auf Host/CI mit installierten Electron-Systemlibs.
+
+
 - Hotfix M26.2 Testlauf repariert und Filterleiste-Begriff in Restarbeiten-Tests abgesichert:
   - MainHeader-Test akzeptiert den kompakten Header im alten und neuen UI-Modus deterministisch (rowGap 4px/5px), ohne Versions- oder Grid-Vertragsrueckbau.
   - Restarbeiten-M12/M16/M19-Tests auf aktuellen Zielstand angehoben (Token M/R, kein itemClassLabel in Metaspalte, kompakte Editbox ohne Speichern-Button).

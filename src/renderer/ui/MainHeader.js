@@ -220,9 +220,9 @@ export default class MainHeader {
     leftIdentity.style.maxWidth = "100%";
 
     const elVersion = document.createElement("div");
-    elVersion.style.fontSize = "14px";
-    elVersion.style.lineHeight = "16px";
-    elVersion.style.fontWeight = "700";
+    elVersion.style.fontSize = "12px";
+    elVersion.style.lineHeight = "15px";
+    elVersion.style.fontWeight = "600";
     elVersion.style.whiteSpace = "nowrap";
     elVersion.style.overflow = "hidden";
     elVersion.style.textOverflow = "ellipsis";
@@ -231,7 +231,7 @@ export default class MainHeader {
 
     const elActive = document.createElement("div");
     elActive.style.display = "block";
-    elActive.style.fontSize = "13px";
+    elActive.style.fontSize = "12px";
     elActive.style.lineHeight = "15px";
     elActive.style.fontWeight = "500";
     elActive.style.whiteSpace = "nowrap";
