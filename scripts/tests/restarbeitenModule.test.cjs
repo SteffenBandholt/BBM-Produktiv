@@ -337,8 +337,11 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(screen, /Schließen/);
 
     assert.match(vm, /itemClassToken/);
+    assert.match(vm, /itemClassLabel/);
     assert.match(vm, /return "M"/);
     assert.match(vm, /return "R"/);
+    assert.match(vm, /return "Mangel"/);
+    assert.match(vm, /return "Rest"/);
     assert.doesNotMatch(screen, /item\.itemClassLabel/);
     assert.match(screen, /number\.textContent\s*=\s*`\$\{item\.itemClassToken\} \$\{item\.numberLine\}`/);
 

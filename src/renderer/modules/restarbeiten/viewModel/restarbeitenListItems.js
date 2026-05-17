@@ -9,6 +9,12 @@ function mapItemClassToken(value) {
   return "R";
 }
 
+function mapItemClassLabel(value) {
+  const raw = toText(value).toLowerCase();
+  if (raw === "mangel") return "Mangel";
+  return "Rest";
+}
+
 function mapStatus(value) {
   const raw = toText(value).toLowerCase();
   const map = {
@@ -92,6 +98,7 @@ export function getRestarbeitenAmpelState(row = {}, today = new Date()) {
 
 export function toRestarbeitenListItem(row = {}, today = new Date()) {
   const itemClassToken = mapItemClassToken(row.item_class);
+  const itemClassLabel = mapItemClassLabel(row.item_class);
   const statusLabel = mapStatus(row.status);
   const dueDateLabel = formatDateDisplay(row.due_date, "—");
   const responsibleLabel = toText(row.responsible_label, "—");
@@ -100,6 +107,7 @@ export function toRestarbeitenListItem(row = {}, today = new Date()) {
   return {
     id: toText(row.id, ""),
     itemClassToken,
+    itemClassLabel,
     statusLabel,
     dueDateLabel,
     responsibleLabel,
