@@ -257,8 +257,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /render\s*\(/);
     assert.match(content, /async\s+load\s*\(/);
     assert.match(content, /Schließen/);
-    assert.match(content, /\+ Restarbeit/);
-    assert.match(content, /Metaspalten/);
+    assert.doesNotMatch(content, /Metaspalten/);
     assert.match(content, /location_level_1/);
     assert.match(content, /location_level_4/);
     assert.match(content, /Keine Restarbeiten für die aktuellen Filter/);
@@ -296,9 +295,9 @@ async function runRestarbeitenModuleTests(run) {
 
       const allText = collectText(root);
       assert.equal(allText.includes("Schließen"), true);
-      assert.equal(allText.includes("+ Restarbeit"), true);
+      assert.equal(Boolean(findButtonByText(screen.headerHost, "+ Restarbeit")), false);
       assert.equal(allText.includes("Ebene 1") || allText.includes("Haus"), true);
-      assert.equal(allText.includes("Metaspalten"), true);
+      assert.equal(Boolean(findButtonByText(screen.headerHost, "Metaspalten")), false);
 
       assert.equal(allText.includes("Alle"), true);
     } finally {
@@ -599,12 +598,11 @@ async function runRestarbeitenModuleTests(run) {
       assert.match(screen.listHost.children[0].textContent, /Kein Projektkontext/);
       assert.equal(screen.editHost.children.length, 0);
       const addButton = findButtonByText(screen.headerHost, "+ Restarbeit");
-      assert.equal(Boolean(addButton), true);
-      assert.equal(addButton.disabled, true);
+      assert.equal(Boolean(addButton), false);
       assert.equal(Boolean(findButtonByText(screen.headerHost, "Schließen")), true);
       const allText = collectText(root);
       assert.equal(allText.includes("Alle"), true);
-      assert.equal(Boolean(findButtonByText(screen.headerHost, "Metaspalten")), true);
+      assert.equal(Boolean(findButtonByText(screen.headerHost, "Metaspalten")), false);
 
       await screen.load();
       assert.match(screen.listHost.children[0].textContent, /Kein Projektkontext/);
@@ -1014,7 +1012,12 @@ async function runRestarbeitenModuleTests(run) {
     );
     const doc = createFakeDocument();
     const saveCalls = [];
-    const editbox = new mod.default({ documentRef: doc, onSave: async (draft) => saveCalls.push(draft) });
+    const createCalls = [];
+    const editbox = new mod.default({
+      documentRef: doc,
+      onSave: async (draft) => saveCalls.push(draft),
+      onCreate: async () => createCalls.push("create"),
+    });
     const root = editbox.render();
 
     assert.equal(String(root.className || "").includes("restarbeiten-editbox"), true);
@@ -1052,6 +1055,11 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(["Alte Firma", "(nicht mehr vorhanden)"].includes(String(legacyOption?.textContent || "")), true);
     const markerButtons = findNodes(root, (node) => node?.tagName === "BUTTON" && (node?.textContent === "Rest" || node?.textContent === "Mangel"));
     markerButtons.find((b) => b.textContent === "Mangel").click();
+    const createBtn = findButtonByText(root, "+ Restarbeit");
+    assert.equal(Boolean(createBtn), true);
+    assert.equal(String(createBtn?.className || "").includes("restarbeiten-editbox__create"), true);
+    createBtn.click();
+    assert.equal(createCalls.length, 1);
     editbox.fields.status.value = "in_arbeit";
     editbox.fields.responsible_project_firm_id.value = "f1";
     const draft = editbox.getDraft();

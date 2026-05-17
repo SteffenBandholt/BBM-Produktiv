@@ -8,7 +8,6 @@ import {
 } from "../data/restarbeitenDataSource.js";
 import { toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
 import RestarbeitenEditbox from "./RestarbeitenEditbox.js";
-import { applyPopupButtonStyle } from "../../../ui/popupButtonStyles.js";
 import { ensureRestarbeitenListStyle } from "./restarbeitenListStyle.js";
 
 const LOCATION_KEYS = ["location_level_1", "location_level_2", "location_level_3", "location_level_4"];
@@ -61,7 +60,6 @@ export default class RestarbeitenScreen {
     this.host = null;
     this.headerHost = null;
     this.headerFiltersHost = null;
-    this.btnCreate = null;
     this.listHost = null;
     this.editHost = null;
   }
@@ -104,23 +102,11 @@ export default class RestarbeitenScreen {
     btnClose.textContent = "Schließen";
     btnClose.onclick = () => this.router?.showProjectWorkspace?.();
 
-    const btnCreate = doc.createElement("button");
-    btnCreate.type = "button";
-    btnCreate.textContent = "+ Restarbeit";
-    btnCreate.disabled = true;
-    btnCreate.onclick = () => this._createRestarbeit();
-
-    const btnMeta = doc.createElement("button");
-    btnMeta.type = "button";
-    btnMeta.textContent = "Metaspalten";
-    applyPopupButtonStyle(btnMeta);
-
-    actions.append(btnClose, btnCreate, btnMeta);
+    actions.append(btnClose);
     header.append(title, filters, actions);
 
     this.headerHost = header;
     this.headerFiltersHost = filters;
-    this.btnCreate = btnCreate;
   }
 
   _buildSheetArea(doc) {
@@ -205,7 +191,6 @@ export default class RestarbeitenScreen {
     const controls = LOCATION_KEYS.map((key, idx) => this._buildSingleFilter(doc, key, idx + 1));
 
     this.headerFiltersHost.replaceChildren(...controls);
-    this._syncCreateButtonState();
   }
 
   _buildSingleFilter(doc, key, levelIndex) {
@@ -252,22 +237,16 @@ export default class RestarbeitenScreen {
     return normalizeText(this.projectSettings?.[`level_${levelIndex}_label`]) || LOCATION_LABEL_FALLBACKS[levelIndex - 1];
   }
 
-  _syncCreateButtonState() {
-    if (this.btnCreate) this.btnCreate.disabled = !this.effectiveProjectId;
-  }
-
   _renderList() {
     if (!this.listHost) return;
     const doc = this.listHost.ownerDocument || globalThis.document;
 
     if (!this.effectiveProjectId) {
       this.listHost.replaceChildren(createMessage(doc, "Kein Projektkontext für Restarbeiten vorhanden."));
-      this._syncCreateButtonState();
       return;
     }
 
     this.filteredItems = this._getFilteredItems();
-    this._syncCreateButtonState();
 
     if (!this.filteredItems.length) {
       this.listHost.replaceChildren(createMessage(doc, "Keine Restarbeiten für die aktuellen Filter."));
@@ -461,6 +440,7 @@ export default class RestarbeitenScreen {
     if (!this.editbox) {
       this.editbox = new RestarbeitenEditbox({
         documentRef: doc,
+        onCreate: this.effectiveProjectId ? async () => this._createRestarbeit() : null,
         onSave: async (draft) => {
           if (!this.selectedItemId) return;
           this.editbox?.setSaving(true);
