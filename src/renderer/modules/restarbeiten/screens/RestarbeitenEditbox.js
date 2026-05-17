@@ -32,6 +32,8 @@ function createSelect(doc, options) {
 function createInput(doc, type = "text") {
   const input = doc.createElement(type === "textarea" ? "textarea" : "input");
   input.className = "restarbeiten-editbox__control";
+  if (type === "text") input.className += " restarbeiten-editbox__control--short";
+  if (type === "textarea") input.className += " restarbeiten-editbox__control--long";
   if (type !== "textarea") input.type = type;
   return input;
 }
@@ -114,13 +116,17 @@ export default class RestarbeitenEditbox {
     itemClass.value = "rest";
 
     const marker = doc.createElement("div");
-    marker.className = "restarbeiten-editbox__marker";
+    marker.className = "restarbeiten-editbox__classToggle";
+    marker.setAttribute("role", "group");
+    marker.setAttribute("aria-label", "Rest oder Mangel");
     const restBtn = doc.createElement("button");
     restBtn.type = "button";
     restBtn.textContent = "Rest";
+    restBtn.className = "restarbeiten-editbox__classToggleButton";
     const mangelBtn = doc.createElement("button");
     mangelBtn.type = "button";
     mangelBtn.textContent = "Mangel";
+    mangelBtn.className = "restarbeiten-editbox__classToggleButton";
     marker.append(restBtn, mangelBtn);
 
     const setItemClass = (value) => {

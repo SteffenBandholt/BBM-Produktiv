@@ -1,19 +1,21 @@
 const STYLE_ID = "restarbeiten-list-style";
 
 const CSS_TEXT = `
-.restarbeiten-editbox{max-width:940px;margin:0 auto;padding:10px;border:1px solid #bfd2d2;border-radius:10px;background:#fff;box-sizing:border-box}
-.restarbeiten-editbox__layout{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:10px;align-items:start}
-.restarbeiten-editbox__main,.restarbeiten-editbox__meta{display:grid;gap:8px}
-.restarbeiten-editbox__field{display:grid;gap:4px}
-.restarbeiten-editbox__label{font-size:11px;font-weight:700}
-.restarbeiten-editbox__control{min-height:32px;padding:6px 8px;border-radius:8px;border:1px solid #cfcfcf}
-textarea.restarbeiten-editbox__control{min-height:84px;resize:vertical}
+.restarbeiten-editbox{max-width:940px;margin:0 auto;padding:8px;border:1px solid #bfd2d2;border-radius:10px;background:#fff;box-sizing:border-box}
+.restarbeiten-editbox__layout{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:8px;align-items:start}
+.restarbeiten-editbox__main,.restarbeiten-editbox__meta{display:grid;gap:6px}
+.restarbeiten-editbox__field{display:grid;gap:3px}
+.restarbeiten-editbox__label{font-size:10px;font-weight:700}
+.restarbeiten-editbox__control{min-height:28px;padding:4px 7px;border-radius:6px;border:1px solid #cfcfcf;font-size:12px}
+.restarbeiten-editbox__control--short{min-height:26px;padding-top:3px;padding-bottom:3px}
+textarea.restarbeiten-editbox__control{min-height:74px;resize:vertical}
+textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-editbox__locationGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
-.restarbeiten-editbox__marker{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.restarbeiten-editbox__marker button{min-height:30px;border:1px solid #cfcfcf;border-radius:8px;background:#f7f7f7}
-.restarbeiten-editbox__marker button[data-active="1"]{background:#dfeaea;border-color:#87a5a5;font-weight:700}
-.restarbeiten-editbox__save{min-height:34px;border:1px solid #cfcfcf;border-radius:8px;background:#f5f5f5;font-weight:700}
-.restarbeiten-editbox__create{min-height:30px;padding:4px 8px;justify-self:start;border:1px solid #cfcfcf;border-radius:8px;background:#f5f5f5;font-size:12px;font-weight:700}
+.restarbeiten-editbox__classToggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:2px;border:1px solid #cfd8d8;border-radius:999px;background:#f6f8f8}
+.restarbeiten-editbox__classToggleButton{min-height:26px;padding:3px 6px;border:1px solid transparent;border-radius:999px;background:transparent;font-size:12px;font-weight:600}
+.restarbeiten-editbox__classToggleButton[data-active="1"]{background:#dfeaea;border-color:#87a5a5;font-weight:700}
+.restarbeiten-editbox__save{min-height:28px;padding:4px 8px;border:1px solid #cfcfcf;border-radius:6px;background:#f5f5f5;font-size:12px;font-weight:700}
+.restarbeiten-editbox__create{min-height:26px;padding:3px 8px;justify-self:start;border:1px solid #cfcfcf;border-radius:6px;background:#f5f5f5;font-size:12px;font-weight:700}
 .restarbeiten-editbox__status{font-size:11px;opacity:.8}
 @media (max-width:900px){.restarbeiten-editbox__layout{grid-template-columns:1fr}.restarbeiten-editbox__locationGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 

@@ -1022,6 +1022,8 @@ async function runRestarbeitenModuleTests(run) {
 
     assert.equal(String(root.className || "").includes("restarbeiten-editbox"), true);
     assert.equal(String(root.className || "").includes("restarbeiten-editbox--compact"), true);
+    assert.equal(Boolean(findNodes(root, (node) => String(node?.className || "").includes("restarbeiten-editbox__main"))[0]), true);
+    assert.equal(Boolean(findNodes(root, (node) => String(node?.className || "").includes("restarbeiten-editbox__meta"))[0]), true);
     assert.equal(collectText(root).includes("Fotos"), false);
     assert.equal(collectText(root).includes("RestarbeitenAttachmentsView"), false);
     assert.equal(typeof editbox.setAttachments, "function");
@@ -1053,7 +1055,17 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(Boolean(legacyOption), true);
     assert.equal(legacySelect.value, "alt-1");
     assert.equal(["Alte Firma", "(nicht mehr vorhanden)"].includes(String(legacyOption?.textContent || "")), true);
+    const toggleWrap = findNodes(root, (node) => String(node?.className || "").includes("restarbeiten-editbox__classToggle"))[0];
+    assert.equal(Boolean(toggleWrap), true);
     const markerButtons = findNodes(root, (node) => node?.tagName === "BUTTON" && (node?.textContent === "Rest" || node?.textContent === "Mangel"));
+    assert.equal(markerButtons.length, 2);
+    assert.equal(String(markerButtons.find((b) => b.textContent === "Rest")?.dataset?.active || ""), "1");
+    markerButtons.find((b) => b.textContent === "Mangel").click();
+    assert.equal(String(markerButtons.find((b) => b.textContent === "Mangel")?.dataset?.active || ""), "1");
+    assert.equal(String(markerButtons.find((b) => b.textContent === "Rest")?.dataset?.active || ""), "0");
+    markerButtons.find((b) => b.textContent === "Rest").click();
+    assert.equal(String(markerButtons.find((b) => b.textContent === "Rest")?.dataset?.active || ""), "1");
+    assert.equal(String(markerButtons.find((b) => b.textContent === "Mangel")?.dataset?.active || ""), "0");
     markerButtons.find((b) => b.textContent === "Mangel").click();
     const createBtn = findButtonByText(root, "+ Restarbeit");
     assert.equal(Boolean(createBtn), true);
@@ -1092,6 +1104,45 @@ async function runRestarbeitenModuleTests(run) {
     const combinedContent = `${editboxContent}\n${screenContent}`;
     assert.doesNotMatch(combinedContent, /execSync\(\s*["']git status/);
     assert.doesNotMatch(combinedContent, /node:child_process/);
+  });
+
+  await run("M19 Guardrails: Editbox CSS verdichtet und Segment-Umschalter vorhanden", () => {
+    const editboxContent = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"),
+      "utf8"
+    );
+    const styleContent = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenListStyle.js"),
+      "utf8"
+    );
+    const screenContent = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"),
+      "utf8"
+    );
+
+    assert.match(editboxContent, /restarbeiten-editbox__classToggle/);
+    assert.match(editboxContent, /restarbeiten-editbox__classToggleButton/);
+    assert.match(editboxContent, /restarbeiten-editbox__control--short/);
+    assert.match(editboxContent, /restarbeiten-editbox__control--long/);
+    assert.doesNotMatch(editboxContent, /style\s*=\s*["']/);
+
+    assert.match(styleContent, /\.restarbeiten-editbox__save\{/);
+    assert.match(styleContent, /\.restarbeiten-editbox__create\{/);
+    assert.match(styleContent, /\.restarbeiten-editbox__classToggle\{/);
+    assert.match(styleContent, /\.restarbeiten-editbox__classToggleButton\{/);
+    assert.match(styleContent, /\.restarbeiten-editbox__control\{/);
+    assert.match(styleContent, /\.restarbeiten-editbox__control--short\{/);
+    assert.match(styleContent, /textarea\.restarbeiten-editbox__control--long\{/);
+
+    assert.match(editboxContent, /short_text/);
+    assert.match(editboxContent, /long_text/);
+    assert.match(editboxContent, /responsible_project_firm_id/);
+    assert.match(editboxContent, /location_level_1/);
+    assert.match(editboxContent, /location_level_4/);
+
+    assert.match(editboxContent, /itemClass\.value = value === "mangel" \? "mangel" : "rest"/);
+    assert.match(screenContent, /restarbeiten-list/);
+    assert.doesNotMatch(screenContent, /<table|createElement\("table"\)/);
   });
 
 }
