@@ -30,8 +30,8 @@ textarea.restarbeiten-editbox__control{min-height:84px;resize:vertical}
 .restarbeiten-list__row{border:1px solid #dae2ee;border-radius:8px;padding:6px;cursor:pointer}
 .restarbeiten-list__row[data-selected="1"]{background:#eef6ff;border-color:#95b8e8}
 .restarbeiten-list__rowGrid{display:grid;grid-template-columns:72px minmax(0,1fr) 180px;gap:8px}
-.restarbeiten-list__number,.restarbeiten-list__shortText{font-weight:700}
-.restarbeiten-list__date,.restarbeiten-list__longText,.restarbeiten-list__locationCompact{font-size:12px;opacity:.88}
+.restarbeiten-list__number{font-weight:700}
+.restarbeiten-list__date,.restarbeiten-list__shortText,.restarbeiten-list__longText,.restarbeiten-list__locationCompact{font-size:12px;opacity:.88}
 .restarbeiten-list__metaCol{font-size:12px;display:grid;gap:2px}
 .restarbeiten-list__ampelLine{display:inline-flex;align-items:center;gap:6px}
 .restarbeiten-list__ampel{display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.2)}
