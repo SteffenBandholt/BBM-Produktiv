@@ -1234,6 +1234,47 @@ async function runRestarbeitenModuleTests(run) {
 
   });
 
+  await run("M28 Filterleiste: links Klassenfilter, Mitte Verortung, rechts Metafilter (nicht globaler Header)", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const screen = new mod.default({ projectId: "p-1", router: { showProjectWorkspace() {} } });
+    const doc = createFakeDocument();
+    globalThis.document = doc;
+    screen.render();
+    screen.rows = [
+      { id: "1", item_class: "mangel", status: "offen", due_date: "2026-05-20", responsible_project_firm_id: "f1", location_level_1: "Haus A" },
+      { id: "2", item_class: "rest", status: "in_arbeit", due_date: "2026-05-21", responsible_project_firm_id: "f2", location_level_1: "Haus B" },
+    ];
+    screen.items = [
+      { id: "1", itemClassLabel: "Mangel", locationLevel1: "Haus A", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
+      { id: "2", itemClassLabel: "Rest", locationLevel1: "Haus B", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
+    ];
+    screen.projectFirms = [{ id: "f1", name: "Firma 1" }, { id: "f2", name: "Firma 2" }];
+    screen._renderHeaderFilters();
+
+    const source = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"), "utf8");
+    assert.match(source, /item_class/);
+    assert.match(source, /responsible_project_firm_id/);
+    assert.match(source, /due_date/);
+    assert.match(source, /restarbeiten-filterleiste__classFilter/);
+    assert.match(source, /Status/);
+    assert.match(source, /Fertig bis/);
+    assert.match(source, /Verantwortlich/);
+    assert.doesNotMatch(source, /title\.textContent\s*=\s*["']Restarbeiten["']/);
+
+    screen.filterState.item_class = "mangel";
+    assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["1"]);
+    screen.filterState.item_class = "rest";
+    assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["2"]);
+    screen.filterState.item_class = "";
+    screen.filterState.location_level_1 = "Haus A";
+    screen.filterState.status = "offen";
+    screen.filterState.due_date = "2026-05-20";
+    screen.filterState.responsible_project_firm_id = "f1";
+    assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["1"]);
+  });
+
 
   
 

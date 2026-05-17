@@ -49,10 +49,14 @@ export default class RestarbeitenScreen {
     this.editbox = null;
 
     this.filterState = {
+      item_class: "",
       location_level_1: "",
       location_level_2: "",
       location_level_3: "",
       location_level_4: "",
+      status: "",
+      due_date: "",
+      responsible_project_firm_id: "",
     };
 
     this.attachmentsByItemId = new Map();
@@ -201,9 +205,57 @@ export default class RestarbeitenScreen {
     if (!this.headerFiltersHost) return;
 
     const doc = this.headerFiltersHost.ownerDocument || globalThis.document;
-    const controls = LOCATION_KEYS.map((key, idx) => this._buildSingleFilter(doc, key, idx + 1));
+    const classFilter = this._buildClassFilter(doc);
+    const locationWrap = doc.createElement("div");
+    locationWrap.className = "restarbeiten-filterleiste__locationFilters";
+    locationWrap.append(...LOCATION_KEYS.map((key, idx) => this._buildSingleFilter(doc, key, idx + 1)));
 
-    this.headerFiltersHost.replaceChildren(...controls);
+    const metaWrap = doc.createElement("div");
+    metaWrap.className = "restarbeiten-filterleiste__metaFilters";
+    metaWrap.append(
+      this._buildMetaFilter(doc, {
+        key: "status",
+        label: "Status",
+        values: this._collectUniqueRowsValues("status"),
+      }),
+      this._buildMetaFilter(doc, {
+        key: "due_date",
+        label: "Fertig bis",
+        values: this._collectUniqueRowsValues("due_date"),
+        formatDisplay: (value) => this._formatDateDisplay(value),
+      }),
+      this._buildMetaFilter(doc, {
+        key: "responsible_project_firm_id",
+        label: "Verantwortlich",
+        values: this._collectResponsibleValues(),
+      })
+    );
+
+    this.headerFiltersHost.replaceChildren(classFilter, locationWrap, metaWrap);
+  }
+
+  _buildClassFilter(doc) {
+    const wrap = doc.createElement("div");
+    wrap.className = "restarbeiten-filterleiste__classFilter";
+    const values = [
+      { value: "", label: "Alle" },
+      { value: "mangel", label: "Mangel" },
+      { value: "rest", label: "Rest" },
+    ];
+    for (const entry of values) {
+      const button = doc.createElement("button");
+      button.type = "button";
+      button.className = "restarbeiten-filterleiste__classFilterButton";
+      button.textContent = entry.label;
+      button.dataset.active = this.filterState.item_class === entry.value ? "1" : "0";
+      button.onclick = () => {
+        this.filterState.item_class = entry.value;
+        this._renderHeaderFilters();
+        this._renderList();
+      };
+      wrap.append(button);
+    }
+    return wrap;
   }
 
   _buildSingleFilter(doc, key, levelIndex) {
@@ -246,6 +298,66 @@ export default class RestarbeitenScreen {
     return [...new Set(values)].sort((a, b) => a.localeCompare(b, "de"));
   }
 
+  _collectUniqueRowsValues(key) {
+    const unique = new Set();
+    for (const row of this.rows) {
+      const value = normalizeText(row?.[key]);
+      if (value) unique.add(value);
+    }
+    return [...unique].sort((a, b) => a.localeCompare(b, "de"));
+  }
+
+  _collectResponsibleValues() {
+    const map = new Map();
+    for (const firm of this.projectFirms) {
+      const id = normalizeText(firm?.id);
+      const label = normalizeText(firm?.name || firm?.display_name || firm?.label);
+      if (id && label) map.set(id, label);
+    }
+    for (const row of this.rows) {
+      const id = normalizeText(row?.responsible_project_firm_id);
+      const label = normalizeText(row?.responsible_label);
+      if (id && !map.has(id)) map.set(id, label || id);
+    }
+    return [...map.entries()].map(([value, label]) => ({ value, label }));
+  }
+
+  _formatDateDisplay(value) {
+    const text = normalizeText(value);
+    const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return text || "—";
+    return `${match[3]}.${match[2]}.${match[1]}`;
+  }
+
+  _buildMetaFilter(doc, { key, label, values = [], formatDisplay = null } = {}) {
+    const wrap = doc.createElement("label");
+    wrap.className = "restarbeiten-header__filter restarbeiten-header__filter--meta";
+    const caption = doc.createElement("span");
+    caption.textContent = label;
+    const select = doc.createElement("select");
+    select.dataset.filterKey = key;
+    const allOption = doc.createElement("option");
+    allOption.value = "";
+    allOption.textContent = "Alle";
+    select.append(allOption);
+    for (const entry of values) {
+      const rawValue = typeof entry === "object" ? normalizeText(entry.value) : normalizeText(entry);
+      if (!rawValue) continue;
+      const opt = doc.createElement("option");
+      opt.value = rawValue;
+      const display = typeof entry === "object" ? normalizeText(entry.label || entry.value) : rawValue;
+      opt.textContent = formatDisplay ? formatDisplay(display) : display;
+      select.append(opt);
+    }
+    select.value = normalizeText(this.filterState[key]);
+    select.addEventListener("change", () => {
+      this.filterState[key] = normalizeText(select.value);
+      this._renderList();
+    });
+    wrap.append(caption, select);
+    return wrap;
+  }
+
   _getFilterLabel(levelIndex) {
     return normalizeText(this.projectSettings?.[`level_${levelIndex}_label`]) || LOCATION_LABEL_FALLBACKS[levelIndex - 1];
   }
@@ -278,11 +390,29 @@ export default class RestarbeitenScreen {
 
   _getFilteredItems() {
     return this.items.filter((item) => {
-      return LOCATION_KEYS.every((key, idx) => {
+      const classFilter = normalizeText(this.filterState.item_class).toLowerCase();
+      if (classFilter && normalizeText(item.itemClassLabel).toLowerCase() !== classFilter) return false;
+
+      const locationMatches = LOCATION_KEYS.every((key, idx) => {
         const selected = normalizeText(this.filterState[key]);
         if (!selected) return true;
         return normalizeText(item[`locationLevel${idx + 1}`]) === selected;
       });
+      if (!locationMatches) return false;
+
+      const row = this.rows.find((entry) => String(entry.id) === String(item.id));
+      if (!row) return false;
+
+      const statusFilter = normalizeText(this.filterState.status);
+      if (statusFilter && normalizeText(row.status) !== statusFilter) return false;
+
+      const dueDateFilter = normalizeText(this.filterState.due_date);
+      if (dueDateFilter && normalizeText(row.due_date) !== dueDateFilter) return false;
+
+      const responsibleFilter = normalizeText(this.filterState.responsible_project_firm_id);
+      if (responsibleFilter && normalizeText(row.responsible_project_firm_id) !== responsibleFilter) return false;
+
+      return true;
     });
   }
 
