@@ -30,16 +30,22 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 @media (max-width:900px){.restarbeiten-editbox__layout{grid-template-columns:1fr}.restarbeiten-editbox__locationGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 [data-bbm-restarbeiten-screen="true"]{display:flex;flex-direction:column;height:100%;min-height:0;background:linear-gradient(180deg,#faf7ef,#f3eee3)}
-.restarbeiten-header{display:flex;align-items:flex-end;gap:8px;padding:8px 10px;border-bottom:1px solid #bfd2d2;background:linear-gradient(180deg,#d9ead6,#c7e1c1);width:100%;box-sizing:border-box;flex-wrap:wrap}
-.restarbeiten-header__filters{display:flex;gap:8px;flex:1;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
-.restarbeiten-header__filter{display:grid;gap:2px;font-size:11px}
-.restarbeiten-filterleiste__classFilter{display:inline-grid;grid-template-columns:repeat(3,auto);gap:2px;padding:2px;border:1px solid #b6cdb4;border-radius:999px;background:#f2f8ef;align-self:end}
-.restarbeiten-filterleiste__classFilterButton{min-height:22px;padding:1px 8px;border:1px solid transparent;border-radius:999px;background:transparent;font-size:10px;font-weight:700;white-space:nowrap}
+.restarbeiten-header{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-bottom:1px solid #bfd2d2;background:linear-gradient(180deg,#d9ead6,#c7e1c1);width:100%;box-sizing:border-box;flex-wrap:wrap}
+.restarbeiten-header__filters{display:flex;gap:8px;flex:1;align-items:flex-start;flex-wrap:wrap}
+.restarbeiten-filterleiste__field{display:inline-flex;align-items:center;gap:5px;font-size:10px;white-space:nowrap}
+.restarbeiten-filterleiste__fieldLabel{font-size:10px;font-weight:600}
+.restarbeiten-filterleiste__field select{min-height:22px;padding:1px 5px;font-size:10px;max-width:140px}
+.restarbeiten-filterleiste__classFilter{display:grid;grid-template-columns:1fr;gap:2px;padding:2px;border:1px solid #b6cdb4;border-radius:8px;background:#f2f8ef;align-self:flex-start}
+.restarbeiten-filterleiste__classFilterButton{min-height:18px;padding:1px 6px;border:1px solid transparent;border-radius:999px;background:transparent;font-size:10px;font-weight:700;white-space:nowrap;text-align:left}
 .restarbeiten-filterleiste__classFilterButton[data-active="1"]{background:#dbead6;border-color:#86a786}
-.restarbeiten-filterleiste__locationFilters{display:grid;grid-template-columns:repeat(4,minmax(110px,1fr));gap:6px;flex:1;min-width:340px}
-.restarbeiten-filterleiste__metaFilters{display:grid;grid-template-columns:repeat(3,minmax(110px,150px));gap:6px;justify-content:end}
-.restarbeiten-header__actions{display:flex;gap:6px}
-@media (max-width:980px){.restarbeiten-filterleiste__locationFilters{grid-template-columns:repeat(2,minmax(120px,1fr));min-width:260px}.restarbeiten-filterleiste__metaFilters{grid-template-columns:repeat(3,minmax(100px,1fr));width:100%}}
+.restarbeiten-filterleiste__locationFilters{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:6px 10px;min-width:360px}
+.restarbeiten-filterleiste__locationGroupA,.restarbeiten-filterleiste__locationGroupB{display:grid;gap:4px}
+.restarbeiten-filterleiste__metaFilters{display:grid;gap:4px;min-width:320px}
+.restarbeiten-filterleiste__metaTopRow{display:grid;grid-template-columns:repeat(2,minmax(145px,1fr));gap:8px}
+.restarbeiten-filterleiste__metaResponsibleRow{display:grid;grid-template-columns:minmax(0,1fr)}
+.restarbeiten-filterleiste__metaResponsibleRow .restarbeiten-filterleiste__field select{max-width:220px;width:100%}
+.restarbeiten-header__actions{display:flex;gap:6px;margin-left:auto;align-self:flex-start}
+@media (max-width:980px){.restarbeiten-filterleiste__locationFilters{grid-template-columns:1fr;min-width:280px}.restarbeiten-filterleiste__metaFilters{min-width:280px}.restarbeiten-filterleiste__metaTopRow{grid-template-columns:1fr}.restarbeiten-header__actions{margin-left:0}}
 [data-bbm-restarbeiten-screen-area="sheet"]{flex:1;min-height:0;overflow:auto;padding:12px 22px 14px}
 .restarbeiten-sheet__list{min-height:0}
 [data-bbm-restarbeiten-screen-sheet-canvas="true"],[data-bbm-restarbeiten-screen-edit-canvas="true"]{width:100%;max-width:940px;margin:0 auto}
