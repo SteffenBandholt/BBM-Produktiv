@@ -1261,6 +1261,45 @@ async function runRestarbeitenModuleTests(run) {
   });
 
 
+  await run("M21.2 Autosave: fehlgeschlagener Draft kann erneut gespeichert werden", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js")
+    );
+
+    const saveCalls = [];
+    const editbox = new mod.default({
+      documentRef: createFakeDocument(),
+      onSave: async (draft) => {
+        saveCalls.push(draft);
+        if (saveCalls.length === 1) {
+          throw new Error("transient");
+        }
+      },
+    });
+
+    editbox.render();
+    editbox.setItem({ id: "r1", short_text: "Alt", status: "offen" });
+
+    editbox.fields.short_text.value = "Neu";
+    await editbox.flushAutosave();
+
+    assert.equal(saveCalls.length, 1);
+    assert.equal(saveCalls[0].short_text, "Neu");
+    assert.equal(
+      String(editbox.statusEl?.textContent || "").includes("fehlgeschlagen") || editbox.pendingDraftKey.length > 0,
+      true
+    );
+
+    await editbox.flushAutosave();
+
+    assert.equal(saveCalls.length, 2);
+    assert.equal(saveCalls[1].short_text, "Neu");
+    assert.equal(String(editbox.statusEl?.textContent || ""), "Gespeichert");
+    assert.equal(editbox.pendingDraftKey, "");
+    assert.equal(editbox.lastSavedDraftKey, editbox._draftKeyFor(saveCalls[1]));
+  });
+
+
   await run("M20 Verortung: input+datalist, Options-Uebergabe und kompakte Klassen", async () => {
     const editboxPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js");
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");

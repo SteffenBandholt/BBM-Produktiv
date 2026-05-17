@@ -71,6 +71,8 @@ export default class RestarbeitenEditbox {
     this.currentItemDraftKey = "";
     this.lastSavedDraftKey = "";
     this.lastRequestedDraftKey = "";
+    this.lastSaveFailed = false;
+    this.failedDraftKey = "";
   }
 
   _getLocationLabel(index) {
@@ -117,7 +119,11 @@ export default class RestarbeitenEditbox {
     });
     locationGrid.append(loc1Field, loc2Field, loc3Field, loc4Field);
 
-    mainCol.append(createField(doc, "Kurztext", shortText), createField(doc, "Langtext", longText), locationGrid);
+    mainCol.append(
+      createField(doc, "Kurztext", shortText),
+      createField(doc, "Langtext", longText),
+      locationGrid
+    );
 
     const itemClass = createInput(doc, "hidden");
     itemClass.value = "rest";
@@ -147,8 +153,11 @@ export default class RestarbeitenEditbox {
     });
 
     const status = createSelect(doc, [
-      { value: "offen", label: "offen" }, { value: "in_arbeit", label: "in Arbeit" }, { value: "erledigt_gemeldet", label: "erledigt gemeldet" },
-      { value: "geprueft_erledigt", label: "geprueft erledigt" }, { value: "zurueckgewiesen", label: "zurueckgewiesen" },
+      { value: "offen", label: "offen" },
+      { value: "in_arbeit", label: "in Arbeit" },
+      { value: "erledigt_gemeldet", label: "erledigt gemeldet" },
+      { value: "geprueft_erledigt", label: "geprueft erledigt" },
+      { value: "zurueckgewiesen", label: "zurueckgewiesen" },
     ]);
     const dueDate = createInput(doc, "date");
     const responsibleProjectFirmId = createSelect(doc, [{ value: "", label: "— keine Auswahl —" }]);
@@ -166,18 +175,36 @@ export default class RestarbeitenEditbox {
     const statusEl = doc.createElement("div");
     statusEl.className = "restarbeiten-editbox__status";
 
-    metaCol.append(createField(doc, "Rest / Mangel", marker), createField(doc, "Status", status), createField(doc, "Fertig bis", dueDate), createField(doc, "Verantwortlich", responsibleProjectFirmId), ...(createBtn ? [createBtn] : []), statusEl);
+    metaCol.append(
+      createField(doc, "Rest / Mangel", marker),
+      createField(doc, "Status", status),
+      createField(doc, "Fertig bis", dueDate),
+      createField(doc, "Verantwortlich", responsibleProjectFirmId),
+      ...(createBtn ? [createBtn] : []),
+      statusEl
+    );
     form.append(mainCol, metaCol, itemClass);
     root.append(form);
 
     this.root = root;
     this.form = form;
     this.statusEl = statusEl;
-    this.fields = { item_class: itemClass, status, location_level_1: level1, location_level_2: level2, location_level_3: level3, location_level_4: level4, short_text: shortText, long_text: longText, due_date: dueDate, responsible_project_firm_id: responsibleProjectFirmId,
+    this.fields = {
+      item_class: itemClass,
+      status,
+      location_level_1: level1,
+      location_level_2: level2,
+      location_level_3: level3,
+      location_level_4: level4,
+      short_text: shortText,
+      long_text: longText,
+      due_date: dueDate,
+      responsible_project_firm_id: responsibleProjectFirmId,
       location_level_1__label: loc1Field.querySelector?.(".restarbeiten-editbox__label") || loc1Field.children[0],
       location_level_2__label: loc2Field.querySelector?.(".restarbeiten-editbox__label") || loc2Field.children[0],
       location_level_3__label: loc3Field.querySelector?.(".restarbeiten-editbox__label") || loc3Field.children[0],
-      location_level_4__label: loc4Field.querySelector?.(".restarbeiten-editbox__label") || loc4Field.children[0], };
+      location_level_4__label: loc4Field.querySelector?.(".restarbeiten-editbox__label") || loc4Field.children[0],
+    };
     this._setItemClass = setItemClass;
     this._wireLocationDatalists();
     this._bindAutosaveInputs();
@@ -200,8 +227,13 @@ export default class RestarbeitenEditbox {
     });
   }
 
-  _draftKeyFor(draft) { return JSON.stringify(draft || {}); }
-  _canAutosave() { return !!this.onSave && !!normalizeText(this.currentItem?.id) && !this.isApplyingItem; }
+  _draftKeyFor(draft) {
+    return JSON.stringify(draft || {});
+  }
+
+  _canAutosave() {
+    return !!this.onSave && !!normalizeText(this.currentItem?.id) && !this.isApplyingItem;
+  }
 
   _queueAutosave() {
     if (!this._canAutosave()) return;
@@ -223,7 +255,9 @@ export default class RestarbeitenEditbox {
     const draft = this.getDraft();
     const draftKey = this._draftKeyFor(draft);
     if (draftKey === this.lastSavedDraftKey) return;
-    if (this.isSaving && draftKey === this.lastRequestedDraftKey) return;
+
+    const isFailedDraft = this.lastSaveFailed && draftKey === this.failedDraftKey;
+    if (this.isSaving && draftKey === this.lastRequestedDraftKey && !isFailedDraft) return;
     this.pendingDraftKey = draftKey;
     if (this.isSaving) return;
     await this._runSaveLoop();
@@ -239,8 +273,12 @@ export default class RestarbeitenEditbox {
       try {
         await this.onSave?.(JSON.parse(draftKey));
         this.lastSavedDraftKey = draftKey;
+        this.lastSaveFailed = false;
+        this.failedDraftKey = "";
         this.setStatus("Gespeichert");
       } catch {
+        this.lastSaveFailed = true;
+        this.failedDraftKey = draftKey;
         this.pendingDraftKey = draftKey;
         this.setStatus("Speichern fehlgeschlagen");
         break;
@@ -291,9 +329,45 @@ export default class RestarbeitenEditbox {
     }
   }
 
-  setProjectFirms(firms) { this.projectFirms = normalizeFirmEntries(firms); const select = this.fields?.responsible_project_firm_id; if (!select) return; const selectedBefore = normalizeText(select.value); const options = [{ id: "", name: "— keine Auswahl —" }, ...this.projectFirms]; select.replaceChildren(); for (const option of options) { const opt = this.document.createElement("option"); opt.value = option.id; opt.textContent = option.name || "—"; select.appendChild(opt); } const fallbackId = normalizeText(this.currentItem?.responsible_project_firm_id); const targetId = fallbackId || selectedBefore; const selectOptions = Array.from(select.children || []); const hasTargetOption = !!targetId && selectOptions.some((option) => normalizeText(option?.value) === targetId); if (targetId && !hasTargetOption) { const legacy = this.document.createElement("option"); legacy.value = targetId; legacy.textContent = normalizeText(this.currentItem?.responsible_label) || "(nicht mehr vorhanden)"; select.appendChild(legacy); } select.value = targetId; }
-  setAttachments(attachments) { this.attachments = Array.isArray(attachments) ? attachments : []; }
-  setStatus(text) { if (this.statusEl) this.statusEl.textContent = String(text || ""); }
+  setProjectFirms(firms) {
+    this.projectFirms = normalizeFirmEntries(firms);
+    const select = this.fields?.responsible_project_firm_id;
+    if (!select) return;
+
+    const selectedBefore = normalizeText(select.value);
+    const options = [{ id: "", name: "— keine Auswahl —" }, ...this.projectFirms];
+    select.replaceChildren();
+
+    for (const option of options) {
+      const opt = this.document.createElement("option");
+      opt.value = option.id;
+      opt.textContent = option.name || "—";
+      select.appendChild(opt);
+    }
+
+    const fallbackId = normalizeText(this.currentItem?.responsible_project_firm_id);
+    const targetId = fallbackId || selectedBefore;
+    const selectOptions = Array.from(select.children || []);
+    const hasTargetOption = !!targetId && selectOptions.some((option) => normalizeText(option?.value) === targetId);
+
+    if (targetId && !hasTargetOption) {
+      const legacy = this.document.createElement("option");
+      legacy.value = targetId;
+      legacy.textContent = normalizeText(this.currentItem?.responsible_label) || "(nicht mehr vorhanden)";
+      select.appendChild(legacy);
+    }
+
+    select.value = targetId;
+  }
+
+  setAttachments(attachments) {
+    this.attachments = Array.isArray(attachments) ? attachments : [];
+  }
+
+  setStatus(text) {
+    if (this.statusEl) this.statusEl.textContent = String(text || "");
+  }
+
   setSaving() {}
 
   setItem(item) {
@@ -315,6 +389,8 @@ export default class RestarbeitenEditbox {
     const loadedDraftKey = this._draftKeyFor(this.getDraft());
     this.currentItemDraftKey = loadedDraftKey;
     this.lastSavedDraftKey = loadedDraftKey;
+    this.lastSaveFailed = false;
+    this.failedDraftKey = "";
 
     const hasPending = !!this.pendingDraftKey;
     const visibleDraftKey = this._draftKeyFor(this.getDraft());
@@ -322,6 +398,8 @@ export default class RestarbeitenEditbox {
     if (!this.isSaving && !hasPending && !hasUnsavedVisibleDraft) {
       this.pendingDraftKey = "";
       this.lastRequestedDraftKey = "";
+    this.lastSaveFailed = false;
+    this.failedDraftKey = "";
     }
 
     this.isApplyingItem = false;
