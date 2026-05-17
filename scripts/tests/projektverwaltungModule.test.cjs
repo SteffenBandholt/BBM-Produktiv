@@ -955,6 +955,9 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(mainHeaderSource.includes("_syncHeaderIdentity"), true);
     assert.equal(mainHeaderSource.includes("_getHeaderModuleText"), true);
     assert.equal(mainHeaderSource.includes("_getHeaderProjectText"), true);
+    assert.equal(mainHeaderSource.includes("actionWrap.style.gridRow = \"2\""), true);
+    assert.equal(mainHeaderSource.includes("stickyNotice.style.gridRow = \"3\""), true);
+    assert.equal(mainHeaderSource.includes("actionWrap.style.gridRow = \"3\""), false);
   });
 
   await run("Projektverwaltung: MainHeader rendert Version, Aktiv-Kontext und Kundentext", async () => {
@@ -1005,7 +1008,12 @@ async function runProjektverwaltungModuleTests(run) {
       assert.equal(header.elActive.textContent, "aktiv: Protokoll | 04-2026 - UI-Polish für BBM");
       assert.equal(header.elRightInfo.textContent, "Planungsbüro Steffen Bandholt, 22880 Wedel");
       assert.equal(header.elRightInfo.style.position, "absolute");
-      assert.equal(header.elRightInfo.style.top, "12px");
+      assert.equal(header.elRightInfo.style.top, "10px");
+      assert.equal(header.root.style.gridTemplateRows, "auto auto auto");
+      assert.equal(header.root.style.rowGap, "4px");
+      assert.equal(header.root.style.padding, "10px 12px 7px");
+      assert.equal(header.elVersion.style.fontWeight, "700");
+      assert.equal(header.elActive.style.fontWeight, "500");
       assert.equal(!!findNode(header.root, (node) => node?.textContent === "DEV"), false);
       assert.equal(header.elActive.textContent.includes("bereit:"), false);
       assert.equal(header.elActive.textContent.includes("| -"), false);
