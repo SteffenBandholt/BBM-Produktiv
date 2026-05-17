@@ -145,7 +145,8 @@ export default class MainHeader {
     const root = document.createElement("div");
     root.style.boxSizing = "border-box";
     root.style.width = "100%";
-    root.style.padding = `${this.padding}px`;
+    const headerPadding = Math.max(8, this.padding - 2);
+    root.style.padding = `${headerPadding}px ${this.padding}px ${Math.max(6, headerPadding - 3)}px`;
     root.style.borderBottom = "1px solid var(--card-border)";
     root.style.background = "var(--header-bg)";
     root.style.color = "var(--header-text)";
@@ -161,9 +162,9 @@ export default class MainHeader {
     // fixed-ish layout, PDF-nah
     root.style.display = "grid";
     root.style.gridTemplateColumns = "1fr auto 1fr";
-    root.style.gridTemplateRows = "auto auto auto auto";
+    root.style.gridTemplateRows = "auto auto auto";
     root.style.columnGap = "12px";
-    root.style.rowGap = "6px";
+    root.style.rowGap = "4px";
     root.style.alignItems = "start";
 
     const logoGroup = document.createElement("div");
@@ -219,9 +220,9 @@ export default class MainHeader {
     leftIdentity.style.maxWidth = "100%";
 
     const elVersion = document.createElement("div");
-    elVersion.style.fontSize = "15px";
-    elVersion.style.lineHeight = "18px";
-    elVersion.style.fontWeight = "800";
+    elVersion.style.fontSize = "14px";
+    elVersion.style.lineHeight = "16px";
+    elVersion.style.fontWeight = "700";
     elVersion.style.whiteSpace = "nowrap";
     elVersion.style.overflow = "hidden";
     elVersion.style.textOverflow = "ellipsis";
@@ -231,8 +232,8 @@ export default class MainHeader {
     const elActive = document.createElement("div");
     elActive.style.display = "block";
     elActive.style.fontSize = "13px";
-    elActive.style.lineHeight = "16px";
-    elActive.style.fontWeight = "600";
+    elActive.style.lineHeight = "15px";
+    elActive.style.fontWeight = "500";
     elActive.style.whiteSpace = "nowrap";
     elActive.style.overflow = "hidden";
     elActive.style.textOverflow = "ellipsis";
@@ -244,15 +245,15 @@ export default class MainHeader {
     // Right info (license/customer line) bottom-right
     const rightInfo = document.createElement("div");
     rightInfo.style.position = "absolute";
-    rightInfo.style.top = `${this.padding}px`;
+    rightInfo.style.top = `${headerPadding}px`;
     rightInfo.style.right = `${this.padding}px`;
     rightInfo.style.display = "block";
     rightInfo.style.minWidth = "160px";
     rightInfo.style.maxWidth = "100%";
     rightInfo.style.textAlign = "right";
     rightInfo.style.fontSize = "12px";
-    rightInfo.style.lineHeight = "16px";
-    rightInfo.style.fontWeight = "600";
+    rightInfo.style.lineHeight = "15px";
+    rightInfo.style.fontWeight = "500";
     rightInfo.style.whiteSpace = "nowrap";
     rightInfo.style.overflow = "hidden";
     rightInfo.style.textOverflow = "ellipsis";
@@ -262,7 +263,7 @@ export default class MainHeader {
 
     const actionWrap = document.createElement("div");
     actionWrap.style.gridColumn = "1 / span 3";
-    actionWrap.style.gridRow = "2";
+    actionWrap.style.gridRow = "3";
     actionWrap.style.justifySelf = "center";
     actionWrap.style.alignSelf = "end";
     actionWrap.style.display = "inline-flex";
@@ -755,7 +756,7 @@ export default class MainHeader {
 
     const stickyNotice = document.createElement("div");
     stickyNotice.style.gridColumn = "1 / span 3";
-    stickyNotice.style.gridRow = "4";
+    stickyNotice.style.gridRow = "3";
     stickyNotice.style.display = "none";
     stickyNotice.style.alignItems = "center";
     stickyNotice.style.gap = "10px";
@@ -784,7 +785,7 @@ export default class MainHeader {
 
     if (this._isNewUi) {
       root.style.gridTemplateRows = "auto auto auto";
-      root.style.rowGap = "8px";
+      root.style.rowGap = "5px";
       elCenterTitle.style.fontSize = "20px";
       elCenterTitle.style.lineHeight = "24px";
       elCenterTitle.style.fontWeight = "700";
