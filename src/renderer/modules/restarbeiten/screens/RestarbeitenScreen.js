@@ -209,11 +209,19 @@ export default class RestarbeitenScreen {
     const classFilter = this._buildClassFilter(doc);
     const locationWrap = doc.createElement("div");
     locationWrap.className = "restarbeiten-filterleiste__locationFilters";
-    locationWrap.append(...LOCATION_KEYS.map((key, idx) => this._buildSingleFilter(doc, key, idx + 1)));
+    const locationGroupA = doc.createElement("div");
+    locationGroupA.className = "restarbeiten-filterleiste__locationGroupA";
+    locationGroupA.append(this._buildSingleFilter(doc, "location_level_1", 1), this._buildSingleFilter(doc, "location_level_2", 2));
+    const locationGroupB = doc.createElement("div");
+    locationGroupB.className = "restarbeiten-filterleiste__locationGroupB";
+    locationGroupB.append(this._buildSingleFilter(doc, "location_level_3", 3), this._buildSingleFilter(doc, "location_level_4", 4));
+    locationWrap.append(locationGroupA, locationGroupB);
 
     const metaWrap = doc.createElement("div");
     metaWrap.className = "restarbeiten-filterleiste__metaFilters";
-    metaWrap.append(
+    const metaTopRow = doc.createElement("div");
+    metaTopRow.className = "restarbeiten-filterleiste__metaTopRow";
+    metaTopRow.append(
       this._buildMetaFilter(doc, {
         key: "status",
         label: "Status",
@@ -224,13 +232,18 @@ export default class RestarbeitenScreen {
         label: "Fertig bis",
         values: this._collectUniqueRowsValues("due_date"),
         formatDisplay: (value) => this._formatDateDisplay(value),
-      }),
+      })
+    );
+    const metaResponsibleRow = doc.createElement("div");
+    metaResponsibleRow.className = "restarbeiten-filterleiste__metaResponsibleRow";
+    metaResponsibleRow.append(
       this._buildMetaFilter(doc, {
         key: "responsible_project_firm_id",
         label: "Verantwortlich",
         values: this._collectResponsibleValues(),
       })
     );
+    metaWrap.append(metaTopRow, metaResponsibleRow);
 
     this.headerFiltersHost.replaceChildren(classFilter, locationWrap, metaWrap);
   }
@@ -261,9 +274,10 @@ export default class RestarbeitenScreen {
 
   _buildSingleFilter(doc, key, levelIndex) {
     const wrap = doc.createElement("label");
-    wrap.className = "restarbeiten-header__filter";
+    wrap.className = "restarbeiten-filterleiste__field";
 
     const caption = doc.createElement("span");
+    caption.className = "restarbeiten-filterleiste__fieldLabel";
     caption.textContent = this._getFilterLabel(levelIndex);
 
     const select = doc.createElement("select");
@@ -350,8 +364,9 @@ export default class RestarbeitenScreen {
 
   _buildMetaFilter(doc, { key, label, values = [], formatDisplay = null } = {}) {
     const wrap = doc.createElement("label");
-    wrap.className = "restarbeiten-header__filter restarbeiten-header__filter--meta";
+    wrap.className = "restarbeiten-filterleiste__field";
     const caption = doc.createElement("span");
+    caption.className = "restarbeiten-filterleiste__fieldLabel";
     caption.textContent = label;
     const select = doc.createElement("select");
     select.dataset.filterKey = key;

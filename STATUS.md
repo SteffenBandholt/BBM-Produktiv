@@ -18,6 +18,15 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 
+- M29 Restarbeiten-Filterleiste neu gegliedert und kompakter angeordnet:
+  - Klassenfilter (Alle/Mangel/Rest) ist jetzt vertikal und kleiner, aktive Auswahl bleibt visuell markiert.
+  - Verortungsfilter sind als zwei Zweiergruppen aufgebaut (Level 1+2, Level 3+4) und die Label-Logik bleibt projektbezogen unverändert.
+  - Metafilter sind in obere Zeile (Status + Fertig bis) und untere Zeile (Verantwortlich) aufgeteilt; Feldlabels stehen neben den Selects.
+  - Schließen bleibt als eigener rechter Aktionsbereich in der Filterleiste.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs` und `node scripts/tests/projektverwaltungModule.test.cjs`; `npm test` scheitert in Codex Cloud weiter an fehlendem `libatk-1.0.so.0`.
+  - Naechster offener Schritt: visueller UI-Check der kompakten Filterleiste auf realer Laufzeitbreite.
+
+
 
 - M27 Globaler Header links typografisch an rechte Buerozeile angeglichen:
   - `BBM ${version}` links auf 12px/15px reduziert und Font-Weight von 700 auf 600 abgesenkt.

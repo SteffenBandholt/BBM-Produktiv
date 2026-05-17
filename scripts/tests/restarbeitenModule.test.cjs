@@ -1254,19 +1254,35 @@ async function runRestarbeitenModuleTests(run) {
     screen._renderHeaderFilters();
 
     const source = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"), "utf8");
+    const styleSource = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenListStyle.js"), "utf8");
     assert.match(source, /item_class/);
     assert.match(source, /responsible_project_firm_id/);
     assert.match(source, /due_date/);
     assert.match(source, /restarbeiten-filterleiste__classFilter/);
+    assert.match(source, /restarbeiten-filterleiste__locationGroupA/);
+    assert.match(source, /restarbeiten-filterleiste__locationGroupB/);
+    assert.match(source, /restarbeiten-filterleiste__metaTopRow/);
+    assert.match(source, /restarbeiten-filterleiste__metaResponsibleRow/);
+    assert.match(source, /restarbeiten-filterleiste__fieldLabel/);
     assert.match(source, /Status/);
     assert.match(source, /Fertig bis/);
     assert.match(source, /Verantwortlich/);
     assert.doesNotMatch(source, /title\.textContent\s*=\s*["']Restarbeiten["']/);
+    assert.doesNotMatch(source, /Haus\s*\/\s*Geschoss|Einheit\s*\/\s*Raum/);
+    assert.match(styleSource, /restarbeiten-filterleiste__classFilter\{display:grid;grid-template-columns:1fr/);
+    assert.match(styleSource, /restarbeiten-filterleiste__field\{display:inline-flex;align-items:center/);
+    assert.match(styleSource, /restarbeiten-filterleiste__locationFilters\{display:grid;grid-template-columns:repeat\(2/);
+    assert.match(styleSource, /restarbeiten-filterleiste__metaTopRow\{display:grid;grid-template-columns:repeat\(2/);
+    assert.match(styleSource, /restarbeiten-header__actions\{display:flex;gap:6px;margin-left:auto/);
 
     const statusFilter = findNodes(
       screen.headerFiltersHost,
       (node) => node?.tagName === "SELECT" && node?.dataset?.filterKey === "status"
     )[0];
+    const fieldNodes = findNodes(screen.headerFiltersHost, (node) =>
+      String(node?.className || "").includes("restarbeiten-filterleiste__field")
+    );
+    assert.equal(fieldNodes.length >= 7, true);
     const statusOptions = Array.isArray(statusFilter?.children) ? statusFilter.children : [];
     const inArbeitOption = statusOptions.find((opt) => opt.value === "in_arbeit");
     assert.equal(Boolean(inArbeitOption), true);
