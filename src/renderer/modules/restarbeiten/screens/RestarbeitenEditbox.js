@@ -163,10 +163,12 @@ export default class RestarbeitenEditbox {
       { value: "zurueckgewiesen", label: "zurueckgewiesen" },
     ]);
     const dueDate = createInput(doc, "date");
+    dueDate.className += " restarbeiten-editbox__metaControl restarbeiten-editbox__metaDate";
     const responsibleProjectFirmId = createSelect(doc, [{ value: "", label: "— keine Auswahl —" }]);
+    status.className += " restarbeiten-editbox__metaControl";
     responsibleProjectFirmId.className += " restarbeiten-editbox__metaControl";
     const ampelPreview = doc.createElement("span");
-    ampelPreview.className = "restarbeiten-editbox__ampelPreview";
+    ampelPreview.className = "restarbeiten-editbox__ampelPreview restarbeiten-list__ampel";
     const createBtn = this.onCreate ? doc.createElement("button") : null;
     if (createBtn) {
       createBtn.type = "button";
