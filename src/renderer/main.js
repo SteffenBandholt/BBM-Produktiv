@@ -8,7 +8,6 @@ import { DEFAULT_THEME_SETTINGS, applyThemeForSettings } from "./theme/themes.js
 import { applyPopupButtonStyle, applyPopupCardStyle } from "./ui/popupButtonStyles.js";
 
 // App-Kern-Bootstrap: zentrale Startkonstanten und lokale Storage-/Settings-Keys.
-const APP_VERSION = "1.0";
 const PRINT_V2_PAD_LEFT_KEY = "print.v2.pagePadLeftMm";
 const PRINT_V2_PAD_RIGHT_KEY = "print.v2.pagePadRightMm";
 const PRINT_V2_PAD_TOP_KEY = "print.v2.pagePadTopMm";
@@ -159,8 +158,18 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const coreShell = new CoreShell({
     router,
-    version: APP_VERSION,
+    version: "",
   });
 
   coreShell.start();
+
+  try {
+    const versionRes = await window.bbmDb?.appGetVersion?.();
+    const runtimeVersion = String(versionRes?.version || "").trim();
+    if (versionRes?.ok && runtimeVersion) {
+      coreShell.setVersion(runtimeVersion);
+    }
+  } catch (_e) {
+    // keep fallback header version
+  }
 });

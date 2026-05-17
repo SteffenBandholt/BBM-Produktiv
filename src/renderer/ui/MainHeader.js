@@ -32,7 +32,7 @@ function getBlockedTransportMessage(payload = null) {
 }
 
 export default class MainHeader {
-  constructor({ router, version = "1.0", sidebarWidth = 220, padding = 12 } = {}) {
+  constructor({ router, version = "", sidebarWidth = 220, padding = 12 } = {}) {
     this.router = router;
     this.version = version;
     this.sidebarWidth = Number(sidebarWidth) || 220;
@@ -125,6 +125,11 @@ export default class MainHeader {
     this._buildChannelLoading = null;
     this._buildChannel = "";
     this._baseWindowTitle = String(document?.title || "BBM").trim() || "BBM";
+  }
+
+  setVersion(version) {
+    this.version = String(version || "").trim();
+    this._syncHeaderIdentity();
   }
 
   _readUiMode() {

@@ -25,10 +25,18 @@ export default class CoreShell {
   constructor({ router, version } = {}) {
     this.router = router || null;
     this.version = version || "";
+    this.header = null;
   }
 
   start() {
     this._initShell();
+  }
+
+  setVersion(version) {
+    const normalizedVersion = String(version || "").trim();
+    if (!normalizedVersion) return;
+    this.version = normalizedVersion;
+    this.header?.setVersion?.(normalizedVersion);
   }
 
   _initShell() {
@@ -44,6 +52,7 @@ export default class CoreShell {
       sidebarWidth: CORE_SHELL_LAYOUT_SIDEBAR_WIDTH,
       padding: CORE_SHELL_LAYOUT_PADDING,
     });
+    this.header = header;
     const headerEl = header.render();
 
     const { contentRoot: content, topBox, bottomBox, sidebar, bodyRow } = createCoreShellLayout({ headerEl });
