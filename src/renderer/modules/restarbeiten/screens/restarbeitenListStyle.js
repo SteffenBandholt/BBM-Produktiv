@@ -14,6 +14,12 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-editbox__locationLabel{font-size:8px;letter-spacing:.01em}
 .restarbeiten-editbox__locationControl{min-height:22px;padding:2px 5px;font-size:10px}
 .restarbeiten-editbox__metaControl{min-height:23px;padding:2px 5px;font-size:10px}
+.restarbeiten-editbox__metaRow{display:grid;gap:6px}
+.restarbeiten-editbox__metaRow--triple{grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:end}
+.restarbeiten-editbox__ampelPreview{display:inline-flex;align-items:center;justify-content:center;min-height:23px;padding:0 8px;border:1px solid #cfcfcf;border-radius:6px;background:#f8fafb}
+.restarbeiten-editbox__classActions{display:flex;align-items:center;gap:6px}
+.restarbeiten-editbox__classToggle--compact{width:max-content;min-width:90px;padding:1px 3px;gap:2px}
+.restarbeiten-editbox__classToggle--compact .restarbeiten-editbox__classToggleButton{min-height:20px;padding:1px 6px;font-size:10px}
 .restarbeiten-editbox__classToggle{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:2px;border:1px solid #cfd8d8;border-radius:999px;background:#f6f8f8}
 .restarbeiten-editbox__classToggleButton{min-height:26px;padding:3px 6px;border:1px solid transparent;border-radius:999px;background:transparent;font-size:12px;font-weight:600}
 .restarbeiten-editbox__classToggleButton[data-active="1"]{background:#dfeaea;border-color:#87a5a5;font-weight:700}
@@ -37,8 +43,10 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-list__row[data-selected="1"]{background:#eef6ff;border-color:#95b8e8}
 .restarbeiten-list__rowGrid{display:grid;grid-template-columns:72px minmax(0,1fr) 180px;gap:8px}
 .restarbeiten-list__number{font-weight:700}
-.restarbeiten-list__date,.restarbeiten-list__shortText,.restarbeiten-list__longText,.restarbeiten-list__locationCompact{font-size:12px;opacity:.88}
-.restarbeiten-list__metaCol{font-size:12px;display:grid;gap:2px}
+.restarbeiten-list__date{font-size:8pt}
+.restarbeiten-list__shortText,.restarbeiten-list__longText,.restarbeiten-list__locationCompact{font-size:12px;opacity:.88}
+.restarbeiten-list__shortText{font-weight:500}
+.restarbeiten-list__metaCol{font-size:8pt;display:grid;gap:2px}
 .restarbeiten-list__ampelLine{display:inline-flex;align-items:center;gap:6px}
 .restarbeiten-list__ampel{display:inline-block;width:10px;height:10px;border-radius:50%;border:1px solid rgba(0,0,0,.2)}
 .restarbeiten-list__ampel--rot{background:#d33}

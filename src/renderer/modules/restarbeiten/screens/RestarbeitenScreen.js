@@ -318,7 +318,7 @@ export default class RestarbeitenScreen {
 
     const number = doc.createElement("div");
     number.className = "restarbeiten-list__number";
-    number.textContent = item.numberLine;
+    number.textContent = `${item.itemClassToken} ${item.numberLine}`;
 
     const date = doc.createElement("div");
     date.className = "restarbeiten-list__date";
@@ -374,28 +374,22 @@ export default class RestarbeitenScreen {
     const col = doc.createElement("div");
     col.className = "restarbeiten-list__metaCol";
 
-    const lines = [
-      item.itemClassLabel,
-      item.statusLabel,
-      item.dueDateLabel,
-      item.responsibleLabel,
-    ];
-
-    for (const text of lines) {
-      const line = doc.createElement("div");
-      line.textContent = text;
-      col.append(line);
-    }
-
-    const ampelLine = doc.createElement("div");
-    ampelLine.className = "restarbeiten-list__ampelLine";
+    const statusLine = doc.createElement("div");
+    statusLine.className = "restarbeiten-list__ampelLine";
+    statusLine.textContent = item.statusLabel;
 
     const ampelDot = doc.createElement("span");
     ampelDot.className = `restarbeiten-list__ampel restarbeiten-list__ampel--${item.ampelState}`;
     ampelDot.dataset.ampel = String(item.ampelState || "neutral");
+    statusLine.append(ampelDot);
 
-    ampelLine.append(ampelDot);
-    col.append(ampelLine);
+    const dueDateLine = doc.createElement("div");
+    dueDateLine.textContent = item.dueDateLabel;
+
+    const responsibleLine = doc.createElement("div");
+    responsibleLine.textContent = item.responsibleLabel;
+
+    col.append(statusLine, dueDateLine, responsibleLine);
 
     return col;
   }

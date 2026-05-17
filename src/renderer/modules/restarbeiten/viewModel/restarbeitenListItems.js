@@ -3,7 +3,13 @@ function toText(value, fallback = "") {
   return text || fallback;
 }
 
-function mapItemClass(value) {
+function mapItemClassToken(value) {
+  const raw = toText(value).toLowerCase();
+  if (raw === "mangel") return "M";
+  return "R";
+}
+
+function mapItemClassLabel(value) {
   const raw = toText(value).toLowerCase();
   if (raw === "mangel") return "Mangel";
   return "Rest";
@@ -90,29 +96,22 @@ export function getRestarbeitenAmpelState(row = {}, today = new Date()) {
   return "gruen";
 }
 
-function mapAmpelLabel(state) {
-  if (state === "rot") return "Rot";
-  if (state === "orange") return "Orange";
-  if (state === "gruen") return "Grün";
-  return "—";
-}
-
 export function toRestarbeitenListItem(row = {}, today = new Date()) {
-  const itemClassLabel = mapItemClass(row.item_class);
+  const itemClassToken = mapItemClassToken(row.item_class);
+  const itemClassLabel = mapItemClassLabel(row.item_class);
   const statusLabel = mapStatus(row.status);
   const dueDateLabel = formatDateDisplay(row.due_date, "—");
   const responsibleLabel = toText(row.responsible_label, "—");
   const ampelState = getRestarbeitenAmpelState(row, today);
-  const ampelLabel = mapAmpelLabel(ampelState);
 
   return {
     id: toText(row.id, ""),
+    itemClassToken,
     itemClassLabel,
     statusLabel,
     dueDateLabel,
     responsibleLabel,
     ampelState,
-    ampelLabel,
     numberLine: toText(row.running_number) || "—",
     dateLine: formatDateDisplay(row.created_at, "—"),
     locationLine1: joinSlash(row.location_level_1, row.location_level_2) || "—",
@@ -123,9 +122,6 @@ export function toRestarbeitenListItem(row = {}, today = new Date()) {
     locationLevel4: toText(row.location_level_4, ""),
     workLine1: toText(row.short_text, "—"),
     workLine2: toText(row.long_text, "—"),
-    statusLine1: `${itemClassLabel} · ${statusLabel} · Ampel: ${ampelLabel}`,
-    statusLine2: dueDateLabel,
-    statusLine3: responsibleLabel,
   };
 }
 
