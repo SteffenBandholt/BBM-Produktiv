@@ -131,6 +131,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(entry.moduleLabel, "Restarbeiten");
     assert.equal(entry.workScreenId, "restarbeitenWork");
     assert.equal(entry.navigation.project[0].key, "restarbeiten");
+    assert.equal(entry.shell.hideSidebar, true);
   });
 
   await run("Restarbeiten: Workscreen ist ueber Resolver aufloesbar", () => {
@@ -139,6 +140,18 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(typeof resolved, "function");
   });
 
+
+  await run("Restarbeiten: Router wertet hideSidebar nur modulbezogen aus", () => {
+    const routerPath = path.join(__dirname, "../../src/renderer/app/Router.js");
+    const coreShellPath = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
+    const routerSource = fs.readFileSync(routerPath, "utf8");
+    const coreShellSource = fs.readFileSync(coreShellPath, "utf8");
+
+    assert.equal(routerSource.includes("moduleEntry?.shell?.hideSidebar === true"), true);
+    assert.equal(routerSource.includes("this._setSidebarVisibility(!hideSidebar);"), true);
+    assert.equal(routerSource.includes("hideSidebar: false"), true);
+    assert.equal(coreShellSource.includes("router.shellLayout = { sidebar, bodyRow };"), true);
+  });
   await run("ProjectWorkspaceScreen: Restarbeiten wird als Modul geoeffnet", async () => {
     const calls = [];
     const screen = new workspaceModule.default({
