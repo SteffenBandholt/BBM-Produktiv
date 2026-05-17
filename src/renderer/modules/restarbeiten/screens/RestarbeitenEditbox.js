@@ -207,15 +207,17 @@ export default class RestarbeitenEditbox {
 
     const fallbackId = normalizeText(this.currentItem?.responsible_project_firm_id);
     const targetId = fallbackId || selectedBefore;
-    select.value = targetId;
+    const selectOptions = Array.from(select.children || []);
+    const hasTargetOption = !!targetId && selectOptions.some((option) => normalizeText(option?.value) === targetId);
 
-    if (targetId && select.value !== targetId) {
+    if (targetId && !hasTargetOption) {
       const legacy = this.document.createElement("option");
       legacy.value = targetId;
       legacy.textContent = normalizeText(this.currentItem?.responsible_label) || "(nicht mehr vorhanden)";
       select.appendChild(legacy);
-      select.value = targetId;
     }
+
+    select.value = targetId;
   }
 
   setAttachments(attachments) {

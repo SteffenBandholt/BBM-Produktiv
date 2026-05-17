@@ -533,7 +533,7 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
-  await run("M7 View/Editbox/Screen: Attachment-Anzeige verdrahtet", () => {
+  await run("M7 View/Editbox/Screen: Editbox ohne Fotos, Foto-Logik bleibt erhalten", () => {
     const view = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenAttachmentsView.js"), "utf8");
     const editbox = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"), "utf8");
     const screen = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"), "utf8");
@@ -542,7 +542,6 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(view, /slice\(0, 3\)/);
     assert.match(view, /Hauptfoto/);
     assert.match(editbox, /setAttachments\(attachments\)/);
-    assert.match(editbox, /onSetPrimaryAttachment/);
     assert.match(screen, /listRestarbeitAttachments/);
     assert.match(screen, /setPrimaryRestarbeitAttachment/);
     assert.doesNotMatch(screen, /innerHTML\s*=/);
@@ -719,13 +718,18 @@ async function runRestarbeitenModuleTests(run) {
     } finally { globalThis.window = prevWindow; }
   });
 
-  await run("M8 View/Screen: Foto-hinzufuegen und Max-3-Hinweis verdrahtet", () => {
+  await run("M8 View/Screen: Fotoanzeige bleibt listenseitig, Import-UI nicht in Editbox", () => {
     const view = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenAttachmentsView.js"), "utf8");
     const screen = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"), "utf8");
+    const ds = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js"), "utf8");
     assert.match(view, /Foto hinzufügen/);
     assert.match(view, /Maximal 3 Fotos vorhanden\./);
-    assert.match(screen, /importRestarbeitAttachments\(/);
-    assert.match(screen, /Fotos importiert\.|Fotoimport abgebrochen\.|Fotos konnten nicht importiert werden\./);
+    assert.match(ds, /importRestarbeitAttachments\(/);
+    assert.match(screen, /listRestarbeitAttachments/);
+    assert.match(screen, /restarbeiten-list__photosToggle|_renderAttachmentsPreview/);
+    assert.doesNotMatch(screen, /importRestarbeitAttachments\(/);
+    const editbox = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"), "utf8");
+    assert.doesNotMatch(editbox, /Fotos/);
   });
 
 
@@ -1028,8 +1032,11 @@ async function runRestarbeitenModuleTests(run) {
     legacyEditbox.setProjectFirms([{ id: "f1", name: "Firma A" }]);
     const legacySelect = legacyEditbox.fields.responsible_project_firm_id;
     assert.equal(legacySelect.value, "alt-1");
-    const legacyTexts = (legacySelect.children || []).map((option) => String(option?.textContent || ""));
-    assert.equal(legacyTexts.includes("Alte Firma") || legacyTexts.includes("(nicht mehr vorhanden)"), true);
+    const legacyOptions = legacySelect.children || [];
+    const legacyOption = legacyOptions.find((option) => String(option?.value || "") === "alt-1");
+    assert.equal(Boolean(legacyOption), true);
+    assert.equal(legacySelect.value, "alt-1");
+    assert.equal(["Alte Firma", "(nicht mehr vorhanden)"].includes(String(legacyOption?.textContent || "")), true);
     const markerButtons = findNodes(root, (node) => node?.tagName === "BUTTON" && (node?.textContent === "Rest" || node?.textContent === "Mangel"));
     markerButtons.find((b) => b.textContent === "Mangel").click();
     editbox.fields.status.value = "in_arbeit";
