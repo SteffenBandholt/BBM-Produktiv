@@ -186,6 +186,12 @@ export default class RestarbeitenEditbox {
     form.append(mainCol, metaCol, itemClass);
     root.append(form);
 
+
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      event.stopPropagation?.();
+    });
+
     this.root = root;
     this.form = form;
     this.statusEl = statusEl;
@@ -389,8 +395,6 @@ export default class RestarbeitenEditbox {
     const loadedDraftKey = this._draftKeyFor(this.getDraft());
     this.currentItemDraftKey = loadedDraftKey;
     this.lastSavedDraftKey = loadedDraftKey;
-    this.lastSaveFailed = false;
-    this.failedDraftKey = "";
 
     const hasPending = !!this.pendingDraftKey;
     const visibleDraftKey = this._draftKeyFor(this.getDraft());
@@ -398,8 +402,8 @@ export default class RestarbeitenEditbox {
     if (!this.isSaving && !hasPending && !hasUnsavedVisibleDraft) {
       this.pendingDraftKey = "";
       this.lastRequestedDraftKey = "";
-    this.lastSaveFailed = false;
-    this.failedDraftKey = "";
+      this.lastSaveFailed = false;
+      this.failedDraftKey = "";
     }
 
     this.isApplyingItem = false;

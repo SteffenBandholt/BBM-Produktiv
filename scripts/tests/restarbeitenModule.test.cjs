@@ -1165,6 +1165,16 @@ async function runRestarbeitenModuleTests(run) {
     editbox.setItem({ id: "r1", short_text: "Alt", status: "offen" });
     assert.equal(saveCalls.length, 0);
 
+    const submitState = { prevented: false, stopped: false };
+    editbox.form.dispatchEvent({
+      type: "submit",
+      preventDefault() { submitState.prevented = true; },
+      stopPropagation() { submitState.stopped = true; },
+    });
+    assert.equal(submitState.prevented, true);
+    assert.equal(submitState.stopped, true);
+    assert.equal(saveCalls.length, 0);
+
     editbox.fields.short_text.value = "Neu";
     await editbox.flushAutosave();
     assert.equal(saveCalls.length, 1);
