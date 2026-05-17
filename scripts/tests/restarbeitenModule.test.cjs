@@ -1247,7 +1247,7 @@ async function runRestarbeitenModuleTests(run) {
       { id: "2", item_class: "rest", status: "in_arbeit", due_date: "2026-05-21", responsible_project_firm_id: "f2", location_level_1: "Haus B" },
     ];
     screen.items = [
-      { id: "1", itemClassLabel: "Mangel", locationLevel1: "Haus A", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
+      { id: "1", itemClassLabel: "", locationLevel1: "Haus A", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
       { id: "2", itemClassLabel: "Rest", locationLevel1: "Haus B", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
     ];
     screen.projectFirms = [{ id: "f1", name: "Firma 1" }, { id: "f2", name: "Firma 2" }];
@@ -1263,9 +1263,22 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(source, /Verantwortlich/);
     assert.doesNotMatch(source, /title\.textContent\s*=\s*["']Restarbeiten["']/);
 
+    const statusFilter = findNodes(
+      screen.headerFiltersHost,
+      (node) => node?.tagName === "SELECT" && node?.dataset?.filterKey === "status"
+    )[0];
+    const statusOptions = Array.isArray(statusFilter?.children) ? statusFilter.children : [];
+    const inArbeitOption = statusOptions.find((opt) => opt.value === "in_arbeit");
+    assert.equal(Boolean(inArbeitOption), true);
+    assert.equal(inArbeitOption.textContent, "in Arbeit");
+    assert.equal(statusOptions.some((opt) => opt.textContent === "in_arbeit"), false);
+
     screen.filterState.item_class = "mangel";
     assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["1"]);
     screen.filterState.item_class = "rest";
+    assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["2"]);
+    screen.filterState.item_class = "";
+    screen.filterState.status = "in_arbeit";
     assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["2"]);
     screen.filterState.item_class = "";
     screen.filterState.location_level_1 = "Haus A";

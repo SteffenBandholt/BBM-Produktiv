@@ -6,12 +6,13 @@ import {
   listRestarbeitAttachments,
   updateRestarbeitItem,
 } from "../data/restarbeitenDataSource.js";
-import { toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
+import { mapRestarbeitenStatusLabel, toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
 import RestarbeitenEditbox from "./RestarbeitenEditbox.js";
 import { ensureRestarbeitenListStyle } from "./restarbeitenListStyle.js";
 
 const LOCATION_KEYS = ["location_level_1", "location_level_2", "location_level_3", "location_level_4"];
 const LOCATION_LABEL_FALLBACKS = ["Ebene 1", "Ebene 2", "Ebene 3", "Ebene 4"];
+const STATUS_FILTER_ORDER = ["offen", "in_arbeit", "erledigt_gemeldet", "geprueft_erledigt", "zurueckgewiesen", "verzug"];
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -216,7 +217,7 @@ export default class RestarbeitenScreen {
       this._buildMetaFilter(doc, {
         key: "status",
         label: "Status",
-        values: this._collectUniqueRowsValues("status"),
+        values: this._collectStatusFilterValues(),
       }),
       this._buildMetaFilter(doc, {
         key: "due_date",
@@ -307,6 +308,24 @@ export default class RestarbeitenScreen {
     return [...unique].sort((a, b) => a.localeCompare(b, "de"));
   }
 
+  _collectStatusFilterValues() {
+    const unique = new Set();
+    for (const row of this.rows) {
+      const value = normalizeText(row?.status).toLowerCase();
+      if (value) unique.add(value);
+    }
+    const values = [...unique];
+    values.sort((a, b) => {
+      const indexA = STATUS_FILTER_ORDER.indexOf(a);
+      const indexB = STATUS_FILTER_ORDER.indexOf(b);
+      if (indexA >= 0 && indexB >= 0) return indexA - indexB;
+      if (indexA >= 0) return -1;
+      if (indexB >= 0) return 1;
+      return a.localeCompare(b, "de");
+    });
+    return values.map((value) => ({ value, label: mapRestarbeitenStatusLabel(value) }));
+  }
+
   _collectResponsibleValues() {
     const map = new Map();
     for (const firm of this.projectFirms) {
@@ -390,8 +409,11 @@ export default class RestarbeitenScreen {
 
   _getFilteredItems() {
     return this.items.filter((item) => {
+      const row = this.rows.find((entry) => String(entry.id) === String(item.id));
+      if (!row) return false;
+
       const classFilter = normalizeText(this.filterState.item_class).toLowerCase();
-      if (classFilter && normalizeText(item.itemClassLabel).toLowerCase() !== classFilter) return false;
+      if (classFilter && normalizeText(row.item_class).toLowerCase() !== classFilter) return false;
 
       const locationMatches = LOCATION_KEYS.every((key, idx) => {
         const selected = normalizeText(this.filterState[key]);
@@ -399,9 +421,6 @@ export default class RestarbeitenScreen {
         return normalizeText(item[`locationLevel${idx + 1}`]) === selected;
       });
       if (!locationMatches) return false;
-
-      const row = this.rows.find((entry) => String(entry.id) === String(item.id));
-      if (!row) return false;
 
       const statusFilter = normalizeText(this.filterState.status);
       if (statusFilter && normalizeText(row.status) !== statusFilter) return false;
