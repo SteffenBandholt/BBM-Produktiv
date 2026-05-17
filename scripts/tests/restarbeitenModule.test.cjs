@@ -1200,6 +1200,39 @@ async function runRestarbeitenModuleTests(run) {
     } finally {
       globalThis.document = prevDocument;
     }
+
+    const screenMod = await importEsmFromFile(screenPath);
+    const RestarbeitenScreen = screenMod.default;
+    const prevDocument2 = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const screen = new RestarbeitenScreen({ projectId: "p-1" });
+      const options = screen._collectLocationOptionsFromRows([
+        { location_level_1: "Haus 2", location_level_2: "OG", location_level_3: "WE 10", location_level_4: "Wohnen" },
+        { location_level_1: "Haus 1", location_level_2: "EG", location_level_3: "WE 01", location_level_4: "Bad" },
+        { location_level_1: "Haus 1", location_level_2: "EG", location_level_3: "WE 01", location_level_4: "" },
+      ]);
+      assert.deepEqual(options.location_level_1, ["Haus 1", "Haus 2"]);
+      assert.deepEqual(options.location_level_2, ["EG", "OG"]);
+
+      let forwardedOptions = null;
+      screen.editHost = globalThis.document.createElement("div");
+      screen.effectiveProjectId = "p-1";
+      screen.locationOptions = options;
+      screen.rows = [{ id: "r-1", location_level_1: "Haus 1" }];
+      screen.selectedItemId = "r-1";
+      screen.editbox = {
+        setLocationLabels() {},
+        setLocationOptions(value) { forwardedOptions = value; },
+        setItem() {},
+        setProjectFirms() {},
+        setAttachments() {},
+      };
+      screen._renderEditbox();
+      assert.deepEqual(forwardedOptions, options);
+    } finally {
+      globalThis.document = prevDocument2;
+    }
   });
 
 }

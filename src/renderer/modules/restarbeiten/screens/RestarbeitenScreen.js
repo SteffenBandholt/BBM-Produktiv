@@ -474,6 +474,7 @@ export default class RestarbeitenScreen {
     }
 
     this.editbox.setLocationLabels(this.projectSettings || {});
+    this.editbox.setLocationOptions(this.locationOptions);
     this.editbox.setItem(selectedItem);
     this.editbox.setProjectFirms(this.projectFirms);
     this.editbox.setAttachments(this.attachmentsByItemId.get(String(selectedItem.id)) || []);
