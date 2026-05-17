@@ -380,10 +380,10 @@ export default class RestarbeitenScreen {
     col.className = "restarbeiten-list__metaCol";
 
     const lines = [
-      `Klasse: ${item.itemClassLabel}`,
-      `Status: ${item.statusLabel}`,
-      `Fertig bis: ${item.dueDateLabel}`,
-      `Verantwortlich: ${item.responsibleLabel}`,
+      item.itemClassLabel,
+      item.statusLabel,
+      item.dueDateLabel,
+      item.responsibleLabel,
     ];
 
     for (const text of lines) {
@@ -399,10 +399,7 @@ export default class RestarbeitenScreen {
     ampelDot.className = `restarbeiten-list__ampel restarbeiten-list__ampel--${item.ampelState}`;
     ampelDot.dataset.ampel = String(item.ampelState || "neutral");
 
-    const ampelText = doc.createElement("span");
-    ampelText.textContent = `Ampel: ${item.ampelLabel}`;
-
-    ampelLine.append(ampelDot, ampelText);
+    ampelLine.append(ampelDot);
     col.append(ampelLine);
 
     return col;

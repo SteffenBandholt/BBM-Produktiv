@@ -951,8 +951,8 @@ async function runRestarbeitenModuleTests(run) {
       today
     );
 
-    assert.equal(item.numberLine, "#12");
-    assert.equal(item.dateLine, "2026-05-16");
+    assert.equal(item.numberLine, "12");
+    assert.equal(item.dateLine, "16.05.2026");
     assert.equal(item.locationLine1, "Haus A / EG");
     assert.equal(item.locationLine2, "Raum 01 / Fenster 2");
     assert.equal(item.workLine1, "Fenster");
@@ -960,7 +960,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(item.itemClassLabel, "Mangel");
     assert.equal(vm.toRestarbeitenListItem({ item_class: "rest" }, today).itemClassLabel, "Rest");
     assert.equal(item.statusLabel, "offen");
-    assert.equal(item.dueDateLabel, "2026-05-20");
+    assert.equal(item.dueDateLabel, "20.05.2026");
+    assert.equal(vm.toRestarbeitenListItem({ created_at: "2026-05-17T19:08:44.076Z" }, today).dateLine, "17.05.2026");
     assert.equal(item.responsibleLabel, "Firma Test");
     assert.equal(item.ampelState, "orange");
 
@@ -988,16 +989,22 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /dataset\.restarbeitId/);
     assert.match(content, /dataset\.selected/);
     assert.match(content, /dataset\.ampel/);
-    assert.match(content, /Klasse:/);
-    assert.match(content, /Status:/);
-    assert.match(content, /Fertig bis:/);
-    assert.match(content, /Verantwortlich:/);
+    assert.doesNotMatch(content, /Klasse:/);
+    assert.doesNotMatch(content, /Status:/);
+    assert.doesNotMatch(content, /Fertig bis:/);
+    assert.doesNotMatch(content, /Verantwortlich:/);
+    assert.doesNotMatch(content, /Ampel:/);
+    assert.match(content, /item\.itemClassLabel/);
+    assert.match(content, /item\.statusLabel/);
+    assert.match(content, /item\.dueDateLabel/);
+    assert.match(content, /item\.responsibleLabel/);
     assert.doesNotMatch(content, /innerHTML\s*=/);
 
     assert.match(styleContent, /restarbeiten-list__ampel--rot/);
     assert.match(styleContent, /restarbeiten-list__ampel--orange/);
     assert.match(styleContent, /restarbeiten-list__ampel--gruen/);
     assert.match(styleContent, /restarbeiten-list__ampel--neutral/);
+    assert.match(styleContent, /restarbeiten-list__date,.restarbeiten-list__shortText,.restarbeiten-list__longText,.restarbeiten-list__locationCompact\{font-size:12px/);
     assert.doesNotMatch(styleContent, /import\s+["'].*\.css["']/);
   });
 

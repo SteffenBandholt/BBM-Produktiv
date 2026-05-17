@@ -29,6 +29,16 @@ function joinSlash(a, b) {
   return left || right || "";
 }
 
+
+function formatDateDisplay(value, fallback = "—") {
+  const text = toText(value);
+  if (!text) return fallback;
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) return text;
+  const [, year, month, day] = match;
+  return `${day}.${month}.${year}`;
+}
+
 function parseDateOnly(value) {
   const text = toText(value);
   if (!text) return null;
@@ -90,7 +100,7 @@ function mapAmpelLabel(state) {
 export function toRestarbeitenListItem(row = {}, today = new Date()) {
   const itemClassLabel = mapItemClass(row.item_class);
   const statusLabel = mapStatus(row.status);
-  const dueDateLabel = toText(row.due_date, "—");
+  const dueDateLabel = formatDateDisplay(row.due_date, "—");
   const responsibleLabel = toText(row.responsible_label, "—");
   const ampelState = getRestarbeitenAmpelState(row, today);
   const ampelLabel = mapAmpelLabel(ampelState);
@@ -103,8 +113,8 @@ export function toRestarbeitenListItem(row = {}, today = new Date()) {
     responsibleLabel,
     ampelState,
     ampelLabel,
-    numberLine: toText(row.running_number) ? `#${toText(row.running_number)}` : "—",
-    dateLine: toText(row.created_at, "—"),
+    numberLine: toText(row.running_number) || "—",
+    dateLine: formatDateDisplay(row.created_at, "—"),
     locationLine1: joinSlash(row.location_level_1, row.location_level_2) || "—",
     locationLine2: joinSlash(row.location_level_3, row.location_level_4) || "—",
     locationLevel1: toText(row.location_level_1, ""),
