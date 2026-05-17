@@ -1145,6 +1145,63 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(screenContent, /<table|createElement\("table"\)/);
   });
 
+
+  await run("M20 Verortung: input+datalist, Options-Uebergabe und kompakte Klassen", async () => {
+    const editboxPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js");
+    const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+    const stylePath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenListStyle.js");
+
+    const editboxContent = fs.readFileSync(editboxPath, "utf8");
+    const screenContent = fs.readFileSync(screenPath, "utf8");
+    const styleContent = fs.readFileSync(stylePath, "utf8");
+
+    assert.match(editboxContent, /setLocationOptions\s*\(/);
+    assert.match(editboxContent, /createElement\("datalist"\)/);
+    assert.match(editboxContent, /input\.setAttribute\("list",\s*datalist\.id\)/);
+    assert.doesNotMatch(editboxContent, /innerHTML\s*=/);
+    assert.match(editboxContent, /location_level_1/);
+    assert.match(editboxContent, /location_level_4/);
+
+    assert.match(screenContent, /_collectLocationOptionsFromRows\s*\(/);
+    assert.match(screenContent, /this\.editbox\.setLocationOptions\(this\.locationOptions\)/);
+    assert.doesNotMatch(editboxContent, /from\s+["'][^"']*restarbeitenDataSource\.js["']/);
+
+    assert.match(styleContent, /\.restarbeiten-editbox__locationControl\{/);
+    assert.match(styleContent, /\.restarbeiten-editbox__metaControl\{/);
+    assert.match(styleContent, /\.restarbeiten-editbox__locationLabel\{/);
+
+    const mod = await importEsmFromFile(editboxPath);
+    const Editbox = mod.default;
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+
+    try {
+      const editbox = new Editbox({ documentRef: globalThis.document });
+      editbox.render();
+      editbox.setLocationOptions({
+        location_level_1: ["Haus 2", "Haus 1", "Haus 1"],
+        location_level_2: ["OG", "EG"],
+        location_level_3: ["WE 01"],
+        location_level_4: ["Bad"],
+      });
+
+      const listId = String(editbox.fields.location_level_1.list || "");
+      assert.equal(Boolean(listId), true);
+      const datalist = (editbox.fields.location_level_1.parentElement?.children || []).find((n) => n?.tagName === "DATALIST");
+      assert.equal(Boolean(datalist), true);
+      const optionValues = (datalist.children || []).map((n) => n.value);
+      assert.deepEqual(optionValues, ["Haus 1", "Haus 2"]);
+
+      editbox.fields.location_level_1.value = "Neues Haus";
+      assert.equal(editbox.getDraft().location_level_1, "Neues Haus");
+
+      assert.equal(String(editbox.fields.location_level_1.className).includes("restarbeiten-editbox__locationControl"), true);
+      assert.equal(String(editbox.fields.responsible_project_firm_id.className).includes("restarbeiten-editbox__metaControl"), true);
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
 }
 
 module.exports = { runRestarbeitenModuleTests };
