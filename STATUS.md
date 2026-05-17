@@ -18,6 +18,13 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 
+- M16.3 Restarbeiten-Tests und Editbox-Legacy-Firma nach M16-Merge repariert:
+  - M7/M8-Tests auf M16-Fachentscheidung angepasst (Fotos nicht in der Editbox, Fotoanzeige listenseitig).
+  - `setProjectFirms(...)` in der Editbox robust auf explizite Optionenpruefung fuer Legacy-Firmen umgestellt.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` scheitert in Codex Cloud weiter an fehlendem `libatk-1.0.so.0`.
+  - Naechster offener Schritt: CI/Host mit GUI-Libs fuer vollstaendigen `npm test`-Lauf verwenden.
+
+
 - M15 Restarbeiten-UI wurde strukturell auf TopsScreen-Shell umgestellt:
   - Header mit vier Verortungsfiltern (projektbezogene Labels + Fallback Ebene 1-4)
   - Sheet/Canvas/Paper + Edit-Canvas als feste Screen-Bereiche per data-Attributen
