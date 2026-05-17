@@ -1,6 +1,7 @@
 // src/renderer/app/Router.js
 
 import {
+  findActiveModuleEntry,
   getActiveProjectModuleNavigation,
   PROTOKOLL_MODULE_ID,
   resolveActiveModuleScreen,
@@ -447,7 +448,7 @@ export default class Router {
   }
 
   // App-Kern: einheitlicher View-Host. Fachspezifische Pfade landen derzeit noch hier.
-  async show(v, { section, isTopsView = false, pageTitle = null } = {}) {
+  async show(v, { section, isTopsView = false, pageTitle = null, hideSidebar = false } = {}) {
     const prevView = this.currentView;
     if (prevView && prevView !== v) {
       try {
@@ -485,6 +486,8 @@ export default class Router {
 
     this._setActiveSection(section);
 
+    this._setSidebarVisibility(!hideSidebar);
+
     await this.ensureAppSettingsLoaded({ force: false });
     await this._syncProjectContextUi();
 
@@ -499,13 +502,24 @@ export default class Router {
     this._emitContextChange();
   }
 
+  _setSidebarVisibility(visible) {
+    const shellLayout = this.shellLayout || null;
+    const sidebar = shellLayout?.sidebar || null;
+    const bodyRow = shellLayout?.bodyRow || null;
+    if (!sidebar) return;
+
+    const isVisible = visible !== false;
+    sidebar.style.display = isVisible ? "flex" : "none";
+    if (bodyRow?.dataset) bodyRow.dataset.sidebarHidden = isVisible ? "0" : "1";
+  }
+
   // Kern-Routing / UI-Rahmenlogik: allgemeine Screen-Wechsel bleiben im Router gebuendelt.
   async showProjects() {
     await this.ensureActiveModuleAccess({ force: true });
     const mod = await import("../modules/projektverwaltung/index.js");
     const V = mod.ProjectsScreen;
     this.currentMeetingId = null;
-    await this.show(new V({ router: this }), { section: "projects", isTopsView: false });
+    await this.show(new V({ router: this }), { section: "projects", isTopsView: false, hideSidebar: false });
   }
 
   async showProjectWorkspace(projectId, options = {}) {
@@ -533,6 +547,7 @@ export default class Router {
         isTopsView: false,
         pageTitle: null,
         activeModuleLabel: this._getProjectWorkspaceModules()?.[0]?.label || "Protokoll",
+        hideSidebar: false,
       }
     );
   }
@@ -561,6 +576,11 @@ export default class Router {
     const pageTitle = String(options?.pageTitle || navEntry?.label || "").trim() || null;
     const activeModuleLabel =
       String(options?.activeModuleLabel || navEntry?.label || "").trim() || null;
+    const moduleEntry = findActiveModuleEntry(normalizedModuleId);
+    const hideSidebar =
+      options?.hideSidebar === true ||
+      navEntry?.hideSidebar === true ||
+      moduleEntry?.shell?.hideSidebar === true;
 
     this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
     await this.show(
@@ -575,6 +595,7 @@ export default class Router {
         isTopsView: false,
         pageTitle,
         activeModuleLabel,
+        hideSidebar,
       }
     );
 

@@ -46,9 +46,10 @@ export default class CoreShell {
     });
     const headerEl = header.render();
 
-    const { contentRoot: content, topBox, bottomBox } = createCoreShellLayout({ headerEl });
+    const { contentRoot: content, topBox, bottomBox, sidebar, bodyRow } = createCoreShellLayout({ headerEl });
 
     router.contentRoot = content;
+    router.shellLayout = { sidebar, bodyRow };
 
     const applyThemeFromRouterContext = () => {
       applyThemeForSettings(router?.context?.settings || {});

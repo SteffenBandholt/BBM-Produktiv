@@ -85,6 +85,8 @@ export function createCoreShellLayout({ headerEl } = {}) {
     content,
     topBox,
     bottomBox,
+    sidebar,
+    bodyRow,
     sidebarWidth: CORE_SHELL_LAYOUT_SIDEBAR_WIDTH,
     padding: CORE_SHELL_LAYOUT_PADDING,
   };

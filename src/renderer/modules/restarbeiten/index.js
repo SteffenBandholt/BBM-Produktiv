@@ -32,6 +32,9 @@ export function getRestarbeitenModuleEntry() {
     workScreenId: RESTARBEITEN_WORK_SCREEN_ID,
     screens: buildRestarbeitenModuleScreens(),
     navigation: buildRestarbeitenModuleNavigation(),
+    shell: Object.freeze({
+      hideSidebar: true,
+    }),
   });
 }
 
