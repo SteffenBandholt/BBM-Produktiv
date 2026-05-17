@@ -1286,6 +1286,59 @@ async function runRestarbeitenModuleTests(run) {
     screen.filterState.due_date = "2026-05-20";
     screen.filterState.responsible_project_firm_id = "f1";
     assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["1"]);
+
+    const getMetaSelect = (filterKey) =>
+      findNodes(
+        screen.headerFiltersHost,
+        (node) => node?.tagName === "SELECT" && node?.dataset?.filterKey === filterKey
+      )[0];
+
+    // stale status value wird beim Rendern bereinigt
+    screen.filterState.status = "in_arbeit";
+    screen.filterState.due_date = "";
+    screen.filterState.responsible_project_firm_id = "";
+    screen.rows = [
+      { id: "3", item_class: "rest", status: "offen", due_date: "2026-05-20", responsible_project_firm_id: "f1", location_level_1: "Haus A" },
+    ];
+    screen.items = [
+      { id: "3", itemClassLabel: "Rest", locationLevel1: "Haus A", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
+    ];
+    screen.projectFirms = [{ id: "f1", name: "Firma 1" }];
+    screen._renderHeaderFilters();
+    assert.equal(screen.filterState.status, "");
+    assert.equal(getMetaSelect("status")?.value, "");
+    assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["3"]);
+
+    // stale due_date value wird beim Rendern bereinigt
+    screen.filterState.due_date = "2026-05-21";
+    screen._renderHeaderFilters();
+    assert.equal(screen.filterState.due_date, "");
+    assert.equal(getMetaSelect("due_date")?.value, "");
+
+    // stale responsible value wird beim Rendern bereinigt
+    screen.filterState.responsible_project_firm_id = "f-alt";
+    screen._renderHeaderFilters();
+    assert.equal(screen.filterState.responsible_project_firm_id, "");
+    assert.equal(getMetaSelect("responsible_project_firm_id")?.value, "");
+
+    // row lookup bleibt funktional mit Map-basiertem Zugriff
+    screen.rows = [
+      { id: "4", item_class: "mangel", status: "offen", due_date: "2026-05-20", responsible_project_firm_id: "f1", location_level_1: "Haus A" },
+      { id: "5", item_class: "rest", status: "offen", due_date: "2026-05-20", responsible_project_firm_id: "f2", location_level_1: "Haus A" },
+    ];
+    screen.items = [
+      { id: "4", itemClassLabel: "", locationLevel1: "Haus A", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
+      { id: "5", itemClassLabel: "", locationLevel1: "Haus A", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
+    ];
+    screen.filterState.item_class = "mangel";
+    screen.filterState.status = "offen";
+    screen.filterState.responsible_project_firm_id = "f1";
+    assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["4"]);
+
+    const getFilteredItemsSource = source.match(/_getFilteredItems\(\)\s*\{[\s\S]*?\n  \}/)?.[0] || "";
+    assert.match(getFilteredItemsSource, /rowsById/);
+    assert.match(getFilteredItemsSource, /new Map\(/);
+    assert.doesNotMatch(getFilteredItemsSource, /this\.rows\.find\(/);
   });
 
 

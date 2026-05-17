@@ -359,16 +359,24 @@ export default class RestarbeitenScreen {
     allOption.value = "";
     allOption.textContent = "Alle";
     select.append(allOption);
+    const allowedValues = new Set([""]);
     for (const entry of values) {
       const rawValue = typeof entry === "object" ? normalizeText(entry.value) : normalizeText(entry);
       if (!rawValue) continue;
+      allowedValues.add(rawValue);
       const opt = doc.createElement("option");
       opt.value = rawValue;
       const display = typeof entry === "object" ? normalizeText(entry.label || entry.value) : rawValue;
       opt.textContent = formatDisplay ? formatDisplay(display) : display;
       select.append(opt);
     }
-    select.value = normalizeText(this.filterState[key]);
+    const currentValue = normalizeText(this.filterState[key]);
+    if (currentValue && !allowedValues.has(currentValue)) {
+      this.filterState[key] = "";
+      select.value = "";
+    } else {
+      select.value = currentValue;
+    }
     select.addEventListener("change", () => {
       this.filterState[key] = normalizeText(select.value);
       this._renderList();
@@ -408,8 +416,9 @@ export default class RestarbeitenScreen {
   }
 
   _getFilteredItems() {
+    const rowsById = new Map(this.rows.map((row) => [String(row?.id), row]));
     return this.items.filter((item) => {
-      const row = this.rows.find((entry) => String(entry.id) === String(item.id));
+      const row = rowsById.get(String(item.id));
       if (!row) return false;
 
       const classFilter = normalizeText(this.filterState.item_class).toLowerCase();
