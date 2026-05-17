@@ -4,6 +4,7 @@ function normalizeText(value) {
 
 const LOCATION_KEYS = ["location_level_1", "location_level_2", "location_level_3", "location_level_4"];
 const LOCATION_LABEL_FALLBACKS = ["Ebene 1", "Ebene 2", "Ebene 3", "Ebene 4"];
+const AUTOSAVE_DELAY_MS = 650;
 
 function createField(doc, labelText, control, className = "") {
   const wrap = doc.createElement("label");
@@ -55,7 +56,6 @@ export default class RestarbeitenEditbox {
     this.onCreate = typeof onCreate === "function" ? onCreate : null;
     this.root = null;
     this.form = null;
-    this.saveBtn = null;
     this.statusEl = null;
     this.currentItem = null;
     this.projectFirms = [];
@@ -64,6 +64,12 @@ export default class RestarbeitenEditbox {
     this.locationOptionLists = {};
     this.fields = {};
     this.attachments = [];
+    this.isApplyingItem = false;
+    this.isSaving = false;
+    this.autosaveTimer = null;
+    this.pendingDraftKey = "";
+    this.lastSavedDraftKey = "";
+    this.lastRequestedDraftKey = "";
   }
 
   _getLocationLabel(index) {
@@ -83,13 +89,10 @@ export default class RestarbeitenEditbox {
     const doc = this.document;
     const root = doc.createElement("section");
     root.className = "restarbeiten-editbox restarbeiten-editbox--compact";
-
     const form = doc.createElement("form");
     form.className = "restarbeiten-editbox__layout";
-
     const mainCol = doc.createElement("div");
     mainCol.className = "restarbeiten-editbox__main";
-
     const metaCol = doc.createElement("aside");
     metaCol.className = "restarbeiten-editbox__meta";
 
@@ -113,19 +116,12 @@ export default class RestarbeitenEditbox {
     });
     locationGrid.append(loc1Field, loc2Field, loc3Field, loc4Field);
 
-    mainCol.append(
-      createField(doc, "Kurztext", shortText),
-      createField(doc, "Langtext", longText),
-      locationGrid
-    );
+    mainCol.append(createField(doc, "Kurztext", shortText), createField(doc, "Langtext", longText), locationGrid);
 
     const itemClass = createInput(doc, "hidden");
     itemClass.value = "rest";
-
     const marker = doc.createElement("div");
     marker.className = "restarbeiten-editbox__classToggle";
-    marker.setAttribute("role", "group");
-    marker.setAttribute("aria-label", "Rest oder Mangel");
     const restBtn = doc.createElement("button");
     restBtn.type = "button";
     restBtn.textContent = "Rest";
@@ -135,164 +131,134 @@ export default class RestarbeitenEditbox {
     mangelBtn.textContent = "Mangel";
     mangelBtn.className = "restarbeiten-editbox__classToggleButton";
     marker.append(restBtn, mangelBtn);
-
     const setItemClass = (value) => {
       itemClass.value = value === "mangel" ? "mangel" : "rest";
       restBtn.dataset.active = itemClass.value === "rest" ? "1" : "0";
       mangelBtn.dataset.active = itemClass.value === "mangel" ? "1" : "0";
     };
-    restBtn.addEventListener("click", () => setItemClass("rest"));
-    mangelBtn.addEventListener("click", () => setItemClass("mangel"));
+    restBtn.addEventListener("click", () => {
+      setItemClass("rest");
+      this._triggerAutosaveImmediate();
+    });
+    mangelBtn.addEventListener("click", () => {
+      setItemClass("mangel");
+      this._triggerAutosaveImmediate();
+    });
 
     const status = createSelect(doc, [
-      { value: "offen", label: "offen" },
-      { value: "in_arbeit", label: "in Arbeit" },
-      { value: "erledigt_gemeldet", label: "erledigt gemeldet" },
-      { value: "geprueft_erledigt", label: "geprueft erledigt" },
-      { value: "zurueckgewiesen", label: "zurueckgewiesen" },
+      { value: "offen", label: "offen" }, { value: "in_arbeit", label: "in Arbeit" }, { value: "erledigt_gemeldet", label: "erledigt gemeldet" },
+      { value: "geprueft_erledigt", label: "geprueft erledigt" }, { value: "zurueckgewiesen", label: "zurueckgewiesen" },
     ]);
     const dueDate = createInput(doc, "date");
     const responsibleProjectFirmId = createSelect(doc, [{ value: "", label: "— keine Auswahl —" }]);
     responsibleProjectFirmId.className += " restarbeiten-editbox__metaControl";
-    const saveBtn = doc.createElement("button");
-    saveBtn.type = "submit";
-    saveBtn.textContent = "Speichern";
-    saveBtn.className = "restarbeiten-editbox__save";
     const createBtn = this.onCreate ? doc.createElement("button") : null;
     if (createBtn) {
       createBtn.type = "button";
       createBtn.textContent = "+ Restarbeit";
       createBtn.className = "restarbeiten-editbox__create";
       createBtn.addEventListener("click", async () => {
+        await this.flushAutosave();
         await this.onCreate?.();
       });
     }
     const statusEl = doc.createElement("div");
     statusEl.className = "restarbeiten-editbox__status";
 
-    metaCol.append(
-      createField(doc, "Rest / Mangel", marker),
-      createField(doc, "Status", status),
-      createField(doc, "Fertig bis", dueDate),
-      createField(doc, "Verantwortlich", responsibleProjectFirmId),
-      ...(createBtn ? [createBtn] : []),
-      saveBtn,
-      statusEl
-    );
-
+    metaCol.append(createField(doc, "Rest / Mangel", marker), createField(doc, "Status", status), createField(doc, "Fertig bis", dueDate), createField(doc, "Verantwortlich", responsibleProjectFirmId), ...(createBtn ? [createBtn] : []), statusEl);
     form.append(mainCol, metaCol, itemClass);
     root.append(form);
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      if (this.onSave) await this.onSave(this.getDraft());
-    });
-
     this.root = root;
     this.form = form;
-    this.saveBtn = saveBtn;
     this.statusEl = statusEl;
-    this.fields = {
-      item_class: itemClass,
-      status,
-      location_level_1: level1,
-      location_level_2: level2,
-      location_level_3: level3,
-      location_level_4: level4,
-      short_text: shortText,
-      long_text: longText,
-      due_date: dueDate,
-      responsible_project_firm_id: responsibleProjectFirmId,
+    this.fields = { item_class: itemClass, status, location_level_1: level1, location_level_2: level2, location_level_3: level3, location_level_4: level4, short_text: shortText, long_text: longText, due_date: dueDate, responsible_project_firm_id: responsibleProjectFirmId,
       location_level_1__label: loc1Field.querySelector?.(".restarbeiten-editbox__label") || loc1Field.children[0],
       location_level_2__label: loc2Field.querySelector?.(".restarbeiten-editbox__label") || loc2Field.children[0],
       location_level_3__label: loc3Field.querySelector?.(".restarbeiten-editbox__label") || loc3Field.children[0],
-      location_level_4__label: loc4Field.querySelector?.(".restarbeiten-editbox__label") || loc4Field.children[0],
-    };
-
+      location_level_4__label: loc4Field.querySelector?.(".restarbeiten-editbox__label") || loc4Field.children[0], };
     this._setItemClass = setItemClass;
     this._wireLocationDatalists();
+    this._bindAutosaveInputs();
     this.setItem(null);
     return root;
   }
 
-
-  _normalizeLocationOptions(options = {}) {
-    const normalized = {};
-    for (const key of LOCATION_KEYS) {
-      const values = Array.isArray(options?.[key]) ? options[key] : [];
-      const unique = [...new Set(values.map((value) => normalizeText(value)).filter(Boolean))];
-      normalized[key] = unique.sort((a, b) => a.localeCompare(b, "de"));
-    }
-    return normalized;
-  }
-
-  setLocationOptions(options) {
-    this.locationOptions = this._normalizeLocationOptions(options);
-    this._wireLocationDatalists();
-  }
-
-  _wireLocationDatalists() {
-    const doc = this.document;
-    for (const key of LOCATION_KEYS) {
+  _bindAutosaveInputs() {
+    const debouncedKeys = [...LOCATION_KEYS, "short_text", "long_text"];
+    debouncedKeys.forEach((key) => {
       const input = this.fields?.[key];
-      if (!input || !doc?.createElement) continue;
-      let datalist = this.locationOptionLists[key];
-      if (!datalist) {
-        datalist = doc.createElement("datalist");
-        datalist.id = `restarbeiten-editbox-${key}-options`;
-        this.locationOptionLists[key] = datalist;
-      }
-      datalist.replaceChildren();
-      for (const value of this.locationOptions?.[key] || []) {
-        const opt = doc.createElement("option");
-        opt.value = value;
-        datalist.append(opt);
-      }
-      const parent = input.parentElement;
-      if (parent && !parent.children.includes?.(datalist) && !Array.from(parent.children || []).includes(datalist)) {
-        parent.append(datalist);
-      }
-      input.setAttribute("list", datalist.id);
-    }
-  }
-  setProjectFirms(firms) {
-    this.projectFirms = normalizeFirmEntries(firms);
-    const select = this.fields?.responsible_project_firm_id;
-    if (!select) return;
-
-    const selectedBefore = normalizeText(select.value);
-    const options = [{ id: "", name: "— keine Auswahl —" }, ...this.projectFirms];
-    select.replaceChildren();
-
-    for (const option of options) {
-      const opt = this.document.createElement("option");
-      opt.value = option.id;
-      opt.textContent = option.name || "—";
-      select.appendChild(opt);
-    }
-
-    const fallbackId = normalizeText(this.currentItem?.responsible_project_firm_id);
-    const targetId = fallbackId || selectedBefore;
-    const selectOptions = Array.from(select.children || []);
-    const hasTargetOption = !!targetId && selectOptions.some((option) => normalizeText(option?.value) === targetId);
-
-    if (targetId && !hasTargetOption) {
-      const legacy = this.document.createElement("option");
-      legacy.value = targetId;
-      legacy.textContent = normalizeText(this.currentItem?.responsible_label) || "(nicht mehr vorhanden)";
-      select.appendChild(legacy);
-    }
-
-    select.value = targetId;
+      if (!input?.addEventListener) return;
+      input.addEventListener("input", () => this._queueAutosave());
+      input.addEventListener("blur", () => this.flushAutosave());
+    });
+    ["status", "due_date", "responsible_project_firm_id"].forEach((key) => {
+      const input = this.fields?.[key];
+      if (!input?.addEventListener) return;
+      input.addEventListener("change", () => this._triggerAutosaveImmediate());
+    });
   }
 
-  setAttachments(attachments) {
-    this.attachments = Array.isArray(attachments) ? attachments : [];
+  _draftKeyFor(draft) { return JSON.stringify(draft || {}); }
+  _canAutosave() { return !!this.onSave && !!normalizeText(this.currentItem?.id) && !this.isApplyingItem; }
+
+  _queueAutosave() {
+    if (!this._canAutosave()) return;
+    if (this.autosaveTimer) clearTimeout(this.autosaveTimer);
+    this.autosaveTimer = setTimeout(() => { this.autosaveTimer = null; this.flushAutosave(); }, AUTOSAVE_DELAY_MS);
   }
+
+  _triggerAutosaveImmediate() {
+    if (!this._canAutosave()) return;
+    if (this.autosaveTimer) {
+      clearTimeout(this.autosaveTimer);
+      this.autosaveTimer = null;
+    }
+    void this.flushAutosave();
+  }
+
+  async flushAutosave() {
+    if (!this._canAutosave()) return;
+    const draft = this.getDraft();
+    const draftKey = this._draftKeyFor(draft);
+    if (draftKey === this.lastSavedDraftKey || draftKey === this.lastRequestedDraftKey) return;
+    this.pendingDraftKey = draftKey;
+    if (this.isSaving) return;
+    await this._runSaveLoop();
+  }
+
+  async _runSaveLoop() {
+    while (this.pendingDraftKey && !this.isApplyingItem) {
+      const draftKey = this.pendingDraftKey;
+      this.pendingDraftKey = "";
+      this.lastRequestedDraftKey = draftKey;
+      this.isSaving = true;
+      this.setStatus("Änderungen werden gespeichert …");
+      try {
+        await this.onSave?.(JSON.parse(draftKey));
+        this.lastSavedDraftKey = draftKey;
+        this.setStatus("Gespeichert");
+      } catch {
+        this.pendingDraftKey = draftKey;
+        this.setStatus("Speichern fehlgeschlagen");
+        break;
+      } finally {
+        this.isSaving = false;
+      }
+    }
+  }
+
+  _normalizeLocationOptions(options = {}) { const normalized = {}; for (const key of LOCATION_KEYS) { const values = Array.isArray(options?.[key]) ? options[key] : []; const unique = [...new Set(values.map((value) => normalizeText(value)).filter(Boolean))]; normalized[key] = unique.sort((a, b) => a.localeCompare(b, "de")); } return normalized; }
+  setLocationOptions(options) { this.locationOptions = this._normalizeLocationOptions(options); this._wireLocationDatalists(); }
+  _wireLocationDatalists() { const doc = this.document; for (const key of LOCATION_KEYS) { const input = this.fields?.[key]; if (!input || !doc?.createElement) continue; let datalist = this.locationOptionLists[key]; if (!datalist) { datalist = doc.createElement("datalist"); datalist.id = `restarbeiten-editbox-${key}-options`; this.locationOptionLists[key] = datalist; } datalist.replaceChildren(); for (const value of this.locationOptions?.[key] || []) { const opt = doc.createElement("option"); opt.value = value; datalist.append(opt); } const parent = input.parentElement; if (parent && !Array.from(parent.children || []).includes(datalist)) parent.append(datalist); input.setAttribute("list", datalist.id); } }
+
+  setProjectFirms(firms) { this.projectFirms = normalizeFirmEntries(firms); const select = this.fields?.responsible_project_firm_id; if (!select) return; const selectedBefore = normalizeText(select.value); const options = [{ id: "", name: "— keine Auswahl —" }, ...this.projectFirms]; select.replaceChildren(); for (const option of options) { const opt = this.document.createElement("option"); opt.value = option.id; opt.textContent = option.name || "—"; select.appendChild(opt); } const fallbackId = normalizeText(this.currentItem?.responsible_project_firm_id); const targetId = fallbackId || selectedBefore; const selectOptions = Array.from(select.children || []); const hasTargetOption = !!targetId && selectOptions.some((option) => normalizeText(option?.value) === targetId); if (targetId && !hasTargetOption) { const legacy = this.document.createElement("option"); legacy.value = targetId; legacy.textContent = normalizeText(this.currentItem?.responsible_label) || "(nicht mehr vorhanden)"; select.appendChild(legacy); } select.value = targetId; }
+  setAttachments(attachments) { this.attachments = Array.isArray(attachments) ? attachments : []; }
   setStatus(text) { if (this.statusEl) this.statusEl.textContent = String(text || ""); }
-  setSaving(isSaving) { if (this.saveBtn) this.saveBtn.disabled = !!isSaving; }
+  setSaving() {}
 
   setItem(item) {
+    this.isApplyingItem = true;
     this.currentItem = item || null;
     const source = this.currentItem || {};
     const fields = this.fields || {};
@@ -303,6 +269,10 @@ export default class RestarbeitenEditbox {
     if (fields.long_text) fields.long_text.value = normalizeText(source.long_text);
     if (fields.due_date) fields.due_date.value = normalizeText(source.due_date);
     this.setProjectFirms(this.projectFirms);
+    this.lastSavedDraftKey = this._draftKeyFor(this.getDraft());
+    this.pendingDraftKey = "";
+    this.lastRequestedDraftKey = "";
+    this.isApplyingItem = false;
   }
 
   getDraft() {
@@ -312,22 +282,7 @@ export default class RestarbeitenEditbox {
     const oldLabel = normalizeText(this.currentItem?.responsible_label);
     let responsibleProjectFirmId = null;
     let responsibleLabel = oldLabel;
-    if (selectedFirmId && selectedFirm) {
-      responsibleProjectFirmId = selectedFirm.id;
-      responsibleLabel = selectedFirm.name;
-    }
-    return {
-      item_class: normalizeText(fields.item_class?.value) || "rest",
-      status: normalizeText(fields.status?.value) || "offen",
-      location_level_1: normalizeText(fields.location_level_1?.value),
-      location_level_2: normalizeText(fields.location_level_2?.value),
-      location_level_3: normalizeText(fields.location_level_3?.value),
-      location_level_4: normalizeText(fields.location_level_4?.value),
-      short_text: normalizeText(fields.short_text?.value),
-      long_text: normalizeText(fields.long_text?.value),
-      due_date: normalizeText(fields.due_date?.value),
-      responsible_project_firm_id: responsibleProjectFirmId,
-      responsible_label: responsibleLabel,
-    };
+    if (selectedFirmId && selectedFirm) { responsibleProjectFirmId = selectedFirm.id; responsibleLabel = selectedFirm.name; }
+    return { item_class: normalizeText(fields.item_class?.value) || "rest", status: normalizeText(fields.status?.value) || "offen", location_level_1: normalizeText(fields.location_level_1?.value), location_level_2: normalizeText(fields.location_level_2?.value), location_level_3: normalizeText(fields.location_level_3?.value), location_level_4: normalizeText(fields.location_level_4?.value), short_text: normalizeText(fields.short_text?.value), long_text: normalizeText(fields.long_text?.value), due_date: normalizeText(fields.due_date?.value), responsible_project_firm_id: responsibleProjectFirmId, responsible_label: responsibleLabel };
   }
 }

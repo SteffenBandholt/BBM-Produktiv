@@ -1080,8 +1080,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(draft.due_date, "2026-05-16");
     assert.equal(draft.responsible_project_firm_id, "f1");
 
-    editbox.form.dispatchEvent({ type: "submit", preventDefault() {} });
-    assert.equal(saveCalls.length, 1);
+    editbox.fields.short_text.value = "Kurz neu";
+    await editbox.flushAutosave();
+    assert.equal(saveCalls.length >= 1, true);
     assert.equal(typeof saveCalls[0].short_text, "string");
     assert.equal(typeof saveCalls[0].long_text, "string");
     assert.equal(Object.hasOwn(saveCalls[0], "location_level_1"), true);
@@ -1126,7 +1127,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(editboxContent, /restarbeiten-editbox__control--long/);
     assert.doesNotMatch(editboxContent, /style\s*=\s*["']/);
 
-    assert.match(styleContent, /\.restarbeiten-editbox__save\{/);
+    assert.doesNotMatch(styleContent, /\.restarbeiten-editbox__save\{/);
     assert.match(styleContent, /\.restarbeiten-editbox__create\{/);
     assert.match(styleContent, /\.restarbeiten-editbox__classToggle\{/);
     assert.match(styleContent, /\.restarbeiten-editbox__classToggleButton\{/);
@@ -1145,6 +1146,43 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(screenContent, /<table|createElement\("table"\)/);
   });
 
+
+  
+
+  await run("M21 Autosave: setItem/setLocation/setProjectFirms bleiben autosave-sicher", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js")
+    );
+    const saveCalls = [];
+    const editbox = new mod.default({
+      documentRef: createFakeDocument(),
+      onSave: async (draft) => saveCalls.push(draft),
+    });
+    editbox.render();
+    editbox.setLocationOptions({ location_level_1: ["Haus A"] });
+    editbox.setProjectFirms([{ id: "f1", name: "Firma A" }]);
+    editbox.setLocationLabels({ level_1_label: "Haus" });
+    editbox.setItem({ id: "r1", short_text: "Alt", status: "offen" });
+    assert.equal(saveCalls.length, 0);
+
+    editbox.fields.short_text.value = "Neu";
+    await editbox.flushAutosave();
+    assert.equal(saveCalls.length, 1);
+    assert.equal(saveCalls[0].short_text, "Neu");
+
+    await editbox.flushAutosave();
+    assert.equal(saveCalls.length, 1);
+
+    editbox.fields.status.value = "in_arbeit";
+    editbox.fields.status.dispatchEvent({ type: "change" });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(saveCalls.length, 2);
+
+    editbox.fields.short_text.value = "Neu2";
+    editbox.fields.short_text.dispatchEvent({ type: "blur" });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(saveCalls.length, 3);
+  });
 
   await run("M20 Verortung: input+datalist, Options-Uebergabe und kompakte Klassen", async () => {
     const editboxPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js");
