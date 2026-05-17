@@ -15,7 +15,7 @@ function mapItemClassLabel(value) {
   return "Rest";
 }
 
-function mapStatus(value) {
+export function mapRestarbeitenStatusLabel(value) {
   const raw = toText(value).toLowerCase();
   const map = {
     offen: "offen",
@@ -99,7 +99,7 @@ export function getRestarbeitenAmpelState(row = {}, today = new Date()) {
 export function toRestarbeitenListItem(row = {}, today = new Date()) {
   const itemClassToken = mapItemClassToken(row.item_class);
   const itemClassLabel = mapItemClassLabel(row.item_class);
-  const statusLabel = mapStatus(row.status);
+  const statusLabel = mapRestarbeitenStatusLabel(row.status);
   const dueDateLabel = formatDateDisplay(row.due_date, "—");
   const responsibleLabel = toText(row.responsible_label, "—");
   const ampelState = getRestarbeitenAmpelState(row, today);
