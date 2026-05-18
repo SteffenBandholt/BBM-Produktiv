@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Arbeitsstand #117 Restarbeiten-Editbox-Layout:
+  - Quicklane-Schloss-Icon vorbereitet.
+  - Restarbeiten-Editbox-Layout optisch stabilisiert.
+  - Buttonbegriff auf + Restpunkt vereinheitlicht.
+  - farbige Hilfsrahmen / Outlines bleiben bewusst erhalten.
+  - Fake-Diktat-Platzhalter wurden entfernt.
+  - npm test lokal gruen.
+
 
 - M29 Restarbeiten-Filterleiste neu gegliedert und kompakter angeordnet:
   - Klassenfilter (Alle/Mangel/Rest) ist jetzt vertikal und kleiner, aktive Auswahl bleibt visuell markiert.

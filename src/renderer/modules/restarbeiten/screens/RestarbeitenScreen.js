@@ -68,6 +68,7 @@ export default class RestarbeitenScreen {
     this.headerFiltersHost = null;
     this.listHost = null;
     this.editHost = null;
+    this.createScrollPending = false;
   }
 
   render() {
@@ -177,6 +178,7 @@ export default class RestarbeitenScreen {
     this._renderHeaderFilters();
     this._renderList();
     this._renderEditbox();
+    if (this.createScrollPending) this._scrollListToBottom();
   }
 
 
@@ -612,7 +614,7 @@ export default class RestarbeitenScreen {
     if (!selectedItem) {
       if (this.editbox) this.editbox.setItem(null);
       this.editHost.replaceChildren(
-        createMessage(doc, "Eine Restarbeit auswaehlen oder ueber + Restarbeit neu anlegen.")
+        createMessage(doc, "Einen Restpunkt auswaehlen oder ueber + Restpunkt neu anlegen.")
       );
       return;
     }
@@ -647,6 +649,7 @@ export default class RestarbeitenScreen {
   async _createRestarbeit() {
     if (!this.effectiveProjectId) return;
     const created = await createRestarbeitItem(this.effectiveProjectId, {});
+    this.createScrollPending = true;
     await this.load({ selectItemId: created?.id || "" });
   }
 
@@ -662,5 +665,12 @@ export default class RestarbeitenScreen {
       this.attachmentsByItemId.set(String(selected.id), []);
       this.editbox?.setStatus("Fotos konnten nicht geladen werden.");
     }
+  }
+
+  _scrollListToBottom() {
+    if (!this.sheetArea) return;
+    const target = Number(this.sheetArea.scrollHeight || 0) - Number(this.sheetArea.clientHeight || 0);
+    this.sheetArea.scrollTop = target > 0 ? target : 0;
+    this.createScrollPending = false;
   }
 }

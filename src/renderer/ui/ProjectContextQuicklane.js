@@ -11,6 +11,50 @@ const TOP_FILTER_OPTIONS = Object.freeze([
   { mode: "decision", label: "Beschluss" },
 ]);
 
+function createLockIcon(documentRef, { open = false } = {}) {
+  const svg = typeof documentRef?.createElementNS === "function"
+    ? documentRef.createElementNS("http://www.w3.org/2000/svg", "svg")
+    : documentRef.createElement("svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.style.width = "18px";
+  svg.style.height = "18px";
+  svg.style.display = "block";
+  svg.style.fill = "none";
+  svg.style.stroke = "currentColor";
+  svg.style.strokeWidth = "1.8";
+  svg.style.strokeLinecap = "round";
+  svg.style.strokeLinejoin = "round";
+
+  const body = typeof documentRef?.createElementNS === "function"
+    ? documentRef.createElementNS("http://www.w3.org/2000/svg", "rect")
+    : documentRef.createElement("rect");
+  body.setAttribute("x", "6");
+  body.setAttribute("y", "10");
+  body.setAttribute("width", "12");
+  body.setAttribute("height", "9");
+  body.setAttribute("rx", "2");
+
+  const shackle = typeof documentRef?.createElementNS === "function"
+    ? documentRef.createElementNS("http://www.w3.org/2000/svg", "path")
+    : documentRef.createElement("path");
+  shackle.setAttribute(
+    "d",
+    open
+      ? "M9 10V7.5a3 3 0 0 1 6 0V9"
+      : "M9 10V7.5a3 3 0 0 1 6 0V10"
+  );
+  if (open) shackle.setAttribute("transform", "rotate(-18 12 10)");
+
+  const keyhole = typeof documentRef?.createElementNS === "function"
+    ? documentRef.createElementNS("http://www.w3.org/2000/svg", "path")
+    : documentRef.createElement("path");
+  keyhole.setAttribute("d", "M12 13.5v2");
+
+  svg.append(body, shackle, keyhole);
+  return svg;
+}
+
 export default class ProjectContextQuicklane {
   constructor({ router } = {}) {
     this.router = router || null;
@@ -127,7 +171,6 @@ export default class ProjectContextQuicklane {
 
     const pinBtn = document.createElement("button");
     pinBtn.type = "button";
-    pinBtn.textContent = "P";
     pinBtn.title = "Anheften";
     pinBtn.style.border = "1px solid #d5d5d5";
     pinBtn.style.background = "#ffffff";
@@ -142,26 +185,8 @@ export default class ProjectContextQuicklane {
     pinBtn.style.fontSize = "12px";
     pinBtn.style.fontWeight = "700";
     pinBtn.onclick = () => this._togglePinned();
-
-    const closeBtn = document.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.textContent = "X";
-    closeBtn.title = "Schliessen";
-    closeBtn.style.border = "1px solid #d5d5d5";
-    closeBtn.style.background = "#ffffff";
-    closeBtn.style.borderRadius = "10px";
-    closeBtn.style.width = "40px";
-    closeBtn.style.height = "40px";
-    closeBtn.style.padding = "0";
-    closeBtn.style.cursor = "pointer";
-    closeBtn.style.display = "none";
-    closeBtn.style.alignItems = "center";
-    closeBtn.style.justifyContent = "center";
-    closeBtn.style.fontSize = "12px";
-    closeBtn.style.fontWeight = "700";
-    closeBtn.onclick = () => this.close();
-
-    header.append(pinBtn, closeBtn);
+    pinBtn.replaceChildren(createLockIcon(document, { open: true }));
+    header.append(pinBtn);
 
     const body = document.createElement("div");
     body.style.flex = "1 1 auto";
@@ -539,7 +564,6 @@ export default class ProjectContextQuicklane {
 
     this.root = wrap;
     this.tabEl = tab;
-    this.closeBtn = closeBtn;
     this.pinBtn = pinBtn;
     this.bodyEl = body;
     this.projectSectionEl = projectSection;
@@ -838,10 +862,8 @@ export default class ProjectContextQuicklane {
     this.root.style.transform =
       this._isOpen || this._isPinned ? "translateX(0)" : "translateX(calc(100% - 22px))";
 
-    if (this.closeBtn) this.closeBtn.style.display = this._isPinned ? "inline-flex" : "none";
-
     if (this.pinBtn) {
-      this.pinBtn.textContent = this._isPinned ? "U" : "P";
+      this.pinBtn.replaceChildren(createLockIcon(document, { open: !this._isPinned }));
       this.pinBtn.title = this._isPinned ? "Loesen" : "Anheften";
       this.pinBtn.style.background = this._isPinned ? "#eef7ff" : "#ffffff";
       this.pinBtn.style.borderColor = this._isPinned ? "#b6d4ff" : "#d5d5d5";

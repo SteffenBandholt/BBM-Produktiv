@@ -1188,6 +1188,10 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(projectContextQuicklaneSource.includes("ToDo"), true);
     assert.equal(projectContextQuicklaneSource.includes("Beschluss"), true);
     assert.equal(projectContextQuicklaneSource.includes("filterSection"), true);
+    assert.equal(projectContextQuicklaneSource.includes("createLockIcon"), true);
+    assert.equal(projectContextQuicklaneSource.includes("createElementNS"), true);
+    assert.equal(projectContextQuicklaneSource.includes("pinBtn.replaceChildren(createLockIcon"), true);
+    assert.equal(projectContextQuicklaneSource.includes('this.pinBtn.textContent = this._isPinned ? "U" : "P"'), false);
   });
 
   await run("Projektverwaltung: CoreShell nutzt updateContextButtons weiterhin im Start- und Nav-Flow", () => {
