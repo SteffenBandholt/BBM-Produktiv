@@ -384,6 +384,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(editbox, /restarbeiten-editbox__metaRow--status/);
     assert.match(editbox, /createField\(doc, "Status", status\)/);
     assert.match(editbox, /createField\(doc, "Fertig bis", dueDate\)/);
+    assert.match(editbox, /createField\(doc, "erledigt am", completedAt\)/);
+    assert.match(editbox, /Folgende Maßnahmen sind getroffen:/);
+    assert.match(editbox, /aria-label", "Notiz"/);
     assert.match(editbox, /restarbeiten-editbox__metaDate/);
     assert.doesNotMatch(style, /restarbeiten-editbox__metaDate\{[^}]*appearance\s*:\s*none/);
     assert.doesNotMatch(style, /restarbeiten-editbox__metaDate\{[^}]*-webkit-appearance\s*:\s*none/);
@@ -540,7 +543,7 @@ async function runRestarbeitenModuleTests(run) {
       screen.editbox.fields.short_text.value = "Neu";
       screen.editbox.fields.long_text.value = "Lang 2";
       screen.editbox.fields.item_class.value = "mangel";
-      screen.editbox.fields.status.value = "in_arbeit";
+      screen.editbox.fields.status.value = "in arbeit";
       await screen.editbox.onSave(screen.editbox.getDraft());
 
       assert.equal(calls.find((call) => call.type === "update")?.payload.id, "r-1");
@@ -1192,11 +1195,11 @@ async function runRestarbeitenModuleTests(run) {
     await Promise.resolve();
     await Promise.resolve();
     assert.equal(createCalls.length, 1);
-    editbox.fields.status.value = "in_arbeit";
+    editbox.fields.status.value = "in arbeit";
     editbox.fields.responsible_project_firm_id.value = "f1";
     const draft = editbox.getDraft();
     assert.equal(draft.item_class, "mangel");
-    assert.equal(draft.status, "in_arbeit");
+    assert.equal(draft.status, "in arbeit");
     assert.equal(draft.due_date, "2026-05-16");
     assert.equal(draft.responsible_project_firm_id, "f1");
 
@@ -1225,6 +1228,72 @@ async function runRestarbeitenModuleTests(run) {
     const combinedContent = `${editboxContent}\n${screenContent}`;
     assert.doesNotMatch(combinedContent, /execSync\(\s*["']git status/);
     assert.doesNotMatch(combinedContent, /node:child_process/);
+  });
+
+  await run("M31.1 Notiz/Status/Ampel: completion_note leer speicherbar und Legacy-Mapping stabil", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js")
+    );
+    const vm = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenListItems.js")
+    );
+    const saveCalls = [];
+    const editbox = new mod.default({
+      documentRef: createFakeDocument(),
+      onSave: async (draft) => saveCalls.push(draft),
+    });
+    const root = editbox.render();
+
+    editbox.setItem({ id: "r1", status: "offen", completion_note: "Alt", completed_at: "" });
+    const noteBtn = findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.getAttribute?.("aria-label") || "") === "Notiz")[0];
+    assert.equal(Boolean(noteBtn), true);
+    noteBtn.click();
+    const textareaA = findNodes(root, (n) => n?.tagName === "TEXTAREA")[0];
+    assert.equal(textareaA.value, "Alt");
+    textareaA.value = "";
+    findButtonByText(root, "Speichern").click();
+    await Promise.resolve();
+    await editbox.flushAutosave();
+    assert.equal(editbox.getDraft().completion_note, "");
+    assert.equal(saveCalls.some((x) => x.completion_note === ""), true);
+
+    editbox.setItem({ id: "r1", status: "offen", completion_note: "Alt" });
+    noteBtn.click();
+    const textareaB = findNodes(root, (n) => n?.tagName === "TEXTAREA")[0];
+    textareaB.value = "Neu";
+    findButtonByText(root, "Abbrechen").click();
+    assert.equal(editbox.getDraft().completion_note, "Alt");
+
+    editbox.setItem({ id: "r1", status: "in_arbeit" });
+    assert.equal(editbox.fields.status.value, "in arbeit");
+    editbox.setItem({ id: "r1", status: "erledigt_gemeldet" });
+    assert.equal(editbox.fields.status.value, "erledigt");
+    editbox.setItem({ id: "r1", status: "geprueft_erledigt" });
+    assert.equal(editbox.fields.status.value, "erledigt");
+    editbox.setItem({ id: "r1", status: "geprüft erledigt" });
+    assert.equal(editbox.fields.status.value, "erledigt");
+    editbox.setItem({ id: "r1", status: "x-unknown" });
+    assert.equal(editbox.fields.status.value, "offen");
+
+    const today = new Date(Date.UTC(2026, 4, 18));
+    assert.equal(vm.getRestarbeitenAmpelState({ status: "erledigt", due_date: "2026-05-01" }, today), "gruen");
+    assert.equal(vm.getRestarbeitenAmpelState({ status: "erledigt_gemeldet", due_date: "2026-05-01" }, today), "gruen");
+    assert.equal(vm.getRestarbeitenAmpelState({ status: "geprueft_erledigt", due_date: "2026-05-01" }, today), "gruen");
+
+    editbox.setItem({ id: "r1", status: "offen", completion_note: "Alt", completed_at: "" });
+    editbox.fields.status.value = "erledigt";
+    editbox.fields.status.dispatchEvent({ type: "change" });
+    assert.equal(Boolean(editbox.fields.completed_at.value), true);
+    assert.equal(Boolean(findNodes(root, (n) => String(n?.className || "").includes("restarbeiten-editbox__noteDialog"))[0]), true);
+    const keepDate = "2026-05-20";
+    editbox.setItem({ id: "r1", status: "offen", completion_note: "Alt", completed_at: keepDate });
+    editbox.fields.status.value = "erledigt";
+    editbox.fields.status.dispatchEvent({ type: "change" });
+    assert.equal(editbox.fields.completed_at.value, keepDate);
+    editbox.fields.status.value = "offen";
+    editbox.fields.status.dispatchEvent({ type: "change" });
+    assert.equal(editbox.getDraft().completed_at, keepDate);
+    assert.equal(editbox.getDraft().completion_note, "Alt");
   });
 
   await run("M19 Guardrails: Editbox CSS verdichtet und Filterleiste fachlich geklärt", () => {
@@ -1432,7 +1501,7 @@ async function runRestarbeitenModuleTests(run) {
     await editbox.flushAutosave();
     assert.equal(saveCalls.length, 1);
 
-    editbox.fields.status.value = "in_arbeit";
+    editbox.fields.status.value = "in arbeit";
     editbox.fields.status.dispatchEvent({ type: "change" });
     await new Promise((resolve) => setTimeout(resolve, 0));
     assert.equal(saveCalls.length, 2);

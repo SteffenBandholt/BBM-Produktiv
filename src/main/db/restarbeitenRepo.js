@@ -3,10 +3,8 @@ const { initDatabase } = require("./database");
 
 const ALLOWED_STATUS = new Set([
   "offen",
-  "in_arbeit",
-  "erledigt_gemeldet",
-  "geprueft_erledigt",
-  "zurueckgewiesen",
+  "in arbeit",
+  "erledigt",
 ]);
 const ALLOWED_ITEM_CLASSES = new Set(["rest", "mangel"]);
 
@@ -25,7 +23,10 @@ function reqText(value, name) {
 function normalizeStatus(value) {
   const clean = toText(value);
   if (!clean) return "offen";
-  return ALLOWED_STATUS.has(clean) ? clean : "offen";
+  if (ALLOWED_STATUS.has(clean)) return clean;
+  if (clean === "in_arbeit") return "in arbeit";
+  if (clean === "erledigt_gemeldet" || clean === "geprueft_erledigt") return "erledigt";
+  return "offen";
 }
 
 function normalizeRestarbeitItemClass(value) {

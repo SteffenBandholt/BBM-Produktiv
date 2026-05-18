@@ -19,7 +19,9 @@ export function mapRestarbeitenStatusLabel(value) {
   const raw = toText(value).toLowerCase();
   const map = {
     offen: "offen",
+    "in arbeit": "in arbeit",
     in_arbeit: "in Arbeit",
+    erledigt: "erledigt",
     erledigt_gemeldet: "erledigt gemeldet",
     geprueft_erledigt: "geprüft erledigt",
     zurueckgewiesen: "zurückgewiesen",
@@ -77,7 +79,7 @@ function toDayStartUtc(dateLike = new Date()) {
 export function getRestarbeitenAmpelState(row = {}, today = new Date()) {
   const status = toText(row.status).toLowerCase();
   if (status === "verzug") return "rot";
-  if (status === "erledigt_gemeldet" || status === "geprueft_erledigt" || status === "geprüft erledigt") {
+  if (status === "erledigt" || status === "erledigt_gemeldet" || status === "geprueft_erledigt" || status === "geprüft erledigt") {
     return "gruen";
   }
 

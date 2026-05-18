@@ -6,6 +6,11 @@ function normalizeText(value) {
 const LOCATION_KEYS = ["location_level_1", "location_level_2", "location_level_3", "location_level_4"];
 const LOCATION_LABEL_FALLBACKS = ["Ebene 1", "Ebene 2", "Ebene 3", "Ebene 4"];
 const AUTOSAVE_DELAY_MS = 650;
+const EDITBOX_STATUS_OPTIONS = [
+  { value: "offen", label: "offen" },
+  { value: "in arbeit", label: "in arbeit" },
+  { value: "erledigt", label: "erledigt" },
+];
 
 function createField(doc, labelText, control, className = "") {
   const wrap = doc.createElement("label");
@@ -50,6 +55,15 @@ function normalizeFirmEntries(list) {
   }).filter(Boolean);
 }
 
+function normalizeEditboxStatus(value) {
+  const raw = normalizeText(value).toLowerCase();
+  if (!raw) return "offen";
+  if (raw === "in arbeit" || raw === "erledigt" || raw === "offen") return raw;
+  if (raw === "in_arbeit") return "in arbeit";
+  if (raw === "erledigt_gemeldet" || raw === "geprueft_erledigt" || raw === "geprüft erledigt") return "erledigt";
+  return "offen";
+}
+
 export default class RestarbeitenEditbox {
   constructor({ documentRef = globalThis.document, onSave = null, onCreate = null } = {}) {
     this.document = documentRef || globalThis.document;
@@ -77,6 +91,7 @@ export default class RestarbeitenEditbox {
     this.lastRequestedDraftKey = "";
     this.lastSaveFailed = false;
     this.failedDraftKey = "";
+    this.noteDraftValue = "";
   }
 
   _getLocationLabel(index) {
@@ -198,13 +213,7 @@ export default class RestarbeitenEditbox {
       this._triggerAutosaveImmediate();
     });
 
-    const status = createSelect(doc, [
-      { value: "offen", label: "offen" },
-      { value: "in_arbeit", label: "in Arbeit" },
-      { value: "erledigt_gemeldet", label: "erledigt gemeldet" },
-      { value: "geprueft_erledigt", label: "geprueft erledigt" },
-      { value: "zurueckgewiesen", label: "zurueckgewiesen" },
-    ]);
+    const status = createSelect(doc, EDITBOX_STATUS_OPTIONS);
     const dueDate = createInput(doc, "date");
     dueDate.className += " restarbeiten-editbox__metaControl restarbeiten-editbox__metaDate";
     const responsibleProjectFirmId = createSelect(doc, [{ value: "", label: "— keine Auswahl —" }]);
@@ -250,10 +259,25 @@ export default class RestarbeitenEditbox {
     }
     const responsibleField = createField(doc, "Verantwortlich", responsibleProjectFirmId);
     responsibleField.className += " restarbeiten-editbox__responsibleField";
+    const completedAt = createInput(doc, "date");
+    completedAt.className += " restarbeiten-editbox__metaControl restarbeiten-editbox__metaDate";
+    const completionNoteBtn = doc.createElement("button");
+    completionNoteBtn.type = "button";
+    completionNoteBtn.textContent = "✎";
+    completionNoteBtn.title = "Notiz";
+    completionNoteBtn.setAttribute("aria-label", "Notiz");
+    completionNoteBtn.className = "restarbeiten-editbox__noteBtn";
+    completionNoteBtn.addEventListener("click", () => this._openCompletionNoteDialog());
+    const completedAtRow = doc.createElement("div");
+    completedAtRow.className = "restarbeiten-editbox__metaRow restarbeiten-editbox__metaRow--completedAt";
+    const completedAtField = createField(doc, "erledigt am", completedAt);
+    const completionNoteField = createField(doc, "", completionNoteBtn);
+    completedAtRow.append(completedAtField, completionNoteField);
     metaCol.append(
       dueDateRow,
       statusFieldRow,
       responsibleField,
+      completedAtRow,
       statusEl
     );
     rightGroup.append(locationGrid, metaCol);
@@ -285,6 +309,7 @@ export default class RestarbeitenEditbox {
       short_text__counter: shortCounter,
       long_text__counter: longCounter,
       due_date: dueDate,
+      completed_at: completedAt,
       responsible_project_firm_id: responsibleProjectFirmId,
       location_level_1__label: loc1Field.querySelector?.(".restarbeiten-editbox__label") || loc1Field.children[0],
       location_level_2__label: loc2Field.querySelector?.(".restarbeiten-editbox__label") || loc2Field.children[0],
@@ -310,11 +335,58 @@ export default class RestarbeitenEditbox {
       });
       input.addEventListener("blur", () => this.flushAutosave());
     });
-    ["status", "due_date", "responsible_project_firm_id"].forEach((key) => {
+    ["status", "due_date", "completed_at", "responsible_project_firm_id"].forEach((key) => {
       const input = this.fields?.[key];
       if (!input?.addEventListener) return;
-      input.addEventListener("change", () => { this._updateAmpelPreview(); this._triggerAutosaveImmediate(); });
+      input.addEventListener("change", () => {
+        if (key === "status") this._handleStatusChange();
+        this._updateAmpelPreview();
+        this._triggerAutosaveImmediate();
+      });
     });
+  }
+
+  _todayIsoDate() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  }
+
+  _openCompletionNoteDialog() {
+    const doc = this.document;
+    const overlay = doc.createElement("div");
+    overlay.className = "restarbeiten-editbox__noteDialog";
+    const card = doc.createElement("div");
+    const prompt = doc.createElement("p");
+    prompt.textContent = "Folgende Maßnahmen sind getroffen:";
+    const textarea = createInput(doc, "textarea");
+    textarea.value = normalizeText(this.noteDraftValue);
+    const actions = doc.createElement("div");
+    const saveBtn = doc.createElement("button");
+    saveBtn.type = "button";
+    saveBtn.textContent = "Speichern";
+    const cancelBtn = doc.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.textContent = "Abbrechen";
+    cancelBtn.addEventListener("click", () => overlay.remove());
+    saveBtn.addEventListener("click", async () => {
+      this.noteDraftValue = normalizeText(textarea.value);
+      overlay.remove();
+      this._triggerAutosaveImmediate();
+      await this.flushAutosave();
+    });
+    actions.append(saveBtn, cancelBtn);
+    card.append(prompt, textarea, actions);
+    overlay.append(card);
+    this.root?.append(overlay);
+  }
+
+  _handleStatusChange() {
+    const status = normalizeText(this.fields?.status?.value);
+    if (status !== "erledigt") return;
+    if (!normalizeText(this.fields?.completed_at?.value) && this.fields?.completed_at) {
+      this.fields.completed_at.value = this._todayIsoDate();
+    }
+    this._openCompletionNoteDialog();
   }
 
   _draftKeyFor(draft) {
@@ -502,13 +574,17 @@ export default class RestarbeitenEditbox {
     const fields = this.fields || {};
 
     this._setItemClass?.(normalizeText(source.item_class) || "rest");
-    if (fields.status) fields.status.value = normalizeText(source.status) || "offen";
+    if (fields.status) {
+      fields.status.value = normalizeEditboxStatus(source.status);
+    }
     LOCATION_KEYS.forEach((key) => {
       if (fields[key]) fields[key].value = normalizeText(source[key]);
     });
     if (fields.short_text) fields.short_text.value = normalizeText(source.short_text);
     if (fields.long_text) fields.long_text.value = normalizeText(source.long_text);
     if (fields.due_date) fields.due_date.value = normalizeText(source.due_date);
+    if (fields.completed_at) fields.completed_at.value = normalizeText(source.completed_at);
+    this.noteDraftValue = normalizeText(source.completion_note);
     this.setProjectFirms(this.projectFirms);
     this._updateTextRailCounters();
     this._updateTitle();
@@ -553,6 +629,8 @@ export default class RestarbeitenEditbox {
       short_text: normalizeText(fields.short_text?.value),
       long_text: normalizeText(fields.long_text?.value),
       due_date: normalizeText(fields.due_date?.value),
+      completed_at: normalizeText(fields.completed_at?.value),
+      completion_note: normalizeText(this.noteDraftValue),
       responsible_project_firm_id: responsibleProjectFirmId,
       responsible_label: responsibleLabel,
     };
