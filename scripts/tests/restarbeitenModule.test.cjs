@@ -310,7 +310,7 @@ async function runRestarbeitenModuleTests(run) {
 
       const allText = collectText(root);
       assert.equal(allText.includes("Schließen"), true);
-      assert.equal(Boolean(findButtonByText(screen.headerHost, "+ Restarbeit")), false);
+      assert.equal(Boolean(findButtonByText(screen.headerHost, "+ Restpunkt")), false);
       assert.equal(allText.includes("Ebene 1") || allText.includes("Haus"), true);
       assert.equal(Boolean(findButtonByText(screen.headerHost, "Metaspalten")), false);
 
@@ -376,7 +376,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(editbox, /createField\(doc, "Verantwortlich", responsibleProjectFirmId\)/);
     assert.match(editbox, /restarbeiten-editbox__classToggle--compact/);
     assert.match(editbox, /classActions\.append\(createField\(doc, "", marker\)\)/);
-    assert.match(editbox, /\+ Restarbeit/);
+    assert.match(editbox, /\+ Restpunkt/);
     assert.doesNotMatch(editbox, /textContent\s*=\s*"Speichern"/);
     assert.doesNotMatch(editbox, /restarbeiten-editbox__save/);
     assert.doesNotMatch(editbox, /saveBtn/);
@@ -680,7 +680,7 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(root.children.length >= 3, true);
       assert.match(screen.listHost.children[0].textContent, /Kein Projektkontext/);
       assert.equal(screen.editHost.children.length, 0);
-      const addButton = findButtonByText(screen.headerHost, "+ Restarbeit");
+      const addButton = findButtonByText(screen.headerHost, "+ Restpunkt");
       assert.equal(Boolean(addButton), false);
       assert.equal(Boolean(findButtonByText(screen.headerHost, "Schließen")), true);
       const allText = collectText(root);
@@ -1155,7 +1155,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(String(markerButtons.find((b) => b.textContent === "Rest")?.dataset?.active || ""), "1");
     assert.equal(String(markerButtons.find((b) => b.textContent === "Mangel")?.dataset?.active || ""), "0");
     markerButtons.find((b) => b.textContent === "Mangel").click();
-    const createBtn = findButtonByText(root, "+ Restarbeit");
+    const createBtn = findButtonByText(root, "+ Restpunkt");
     assert.equal(Boolean(createBtn), true);
     assert.equal(String(createBtn?.className || "").includes("restarbeiten-editbox__create"), true);
     createBtn.click();
