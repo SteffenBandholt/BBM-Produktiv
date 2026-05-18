@@ -133,11 +133,7 @@ export default class RestarbeitenEditbox {
     shortRailLabel.textContent = "Kurztext";
     const shortCounter = doc.createElement("span");
     shortCounter.className = "restarbeiten-editbox__railCounter";
-    const shortDictation = doc.createElement("span");
-    shortDictation.className = "restarbeiten-editbox__railDictation";
-    shortDictation.textContent = "🎙";
-    shortDictation.title = "Symbol";
-    shortRailRow.append(shortRailLabel, shortCounter, shortDictation);
+    shortRailRow.append(shortRailLabel, shortCounter);
 
     const longRailRow = doc.createElement("div");
     longRailRow.className = "restarbeiten-editbox__railRow restarbeiten-editbox__railRow--long";
@@ -146,11 +142,7 @@ export default class RestarbeitenEditbox {
     longRailLabel.textContent = "Langtext";
     const longCounter = doc.createElement("span");
     longCounter.className = "restarbeiten-editbox__railCounter";
-    const longDictation = doc.createElement("span");
-    longDictation.className = "restarbeiten-editbox__railDictation";
-    longDictation.textContent = "🎙";
-    longDictation.title = "Symbol";
-    longRailRow.append(longRailLabel, longCounter, longDictation);
+    longRailRow.append(longRailLabel, longCounter);
 
     textRail.append(shortRailRow, longRailRow);
     const classActions = doc.createElement("div");
@@ -294,8 +286,6 @@ export default class RestarbeitenEditbox {
       long_text__counter: longCounter,
       due_date: dueDate,
       responsible_project_firm_id: responsibleProjectFirmId,
-      short_text__dictation: shortDictation,
-      long_text__dictation: longDictation,
       location_level_1__label: loc1Field.querySelector?.(".restarbeiten-editbox__label") || loc1Field.children[0],
       location_level_2__label: loc2Field.querySelector?.(".restarbeiten-editbox__label") || loc2Field.children[0],
       location_level_3__label: loc3Field.querySelector?.(".restarbeiten-editbox__label") || loc3Field.children[0],

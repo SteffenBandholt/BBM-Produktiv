@@ -13,7 +13,7 @@ const CSS_TEXT = `
 .restarbeiten-editbox__railRow{display:flex;align-items:center;gap:5px;min-height:22px}
 .restarbeiten-editbox__railLabel{font-size:9px;font-weight:700;line-height:1.1;min-width:0}
 .restarbeiten-editbox__railCounter{font-size:9px;line-height:1.1;opacity:.82;min-width:18px;text-align:left}
-.restarbeiten-editbox__railDictation{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid #bfd2d2;border-radius:999px;font-size:11px;line-height:1;background:#fff}
+
 .restarbeiten-editbox__inputSlot{display:block;width:100%;min-width:0}
 .restarbeiten-editbox__inputSlot .restarbeiten-editbox__control{width:100%;box-sizing:border-box}
 .restarbeiten-editbox__rightGroup{display:grid;grid-template-columns:auto auto;align-items:start;justify-content:flex-end;gap:12px;flex:0 0 auto;width:max-content;min-width:0;outline:1px solid rgba(16,185,129,.35)}
