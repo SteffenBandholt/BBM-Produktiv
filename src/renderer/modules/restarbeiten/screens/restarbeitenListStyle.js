@@ -34,7 +34,9 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-editbox__metaRow{display:grid;gap:4px;width:max-content;outline:1px solid rgba(251,191,36,.25)}
 .restarbeiten-editbox__metaRow--dueDate{grid-template-columns:max-content 14px;align-items:end;justify-items:start}
 .restarbeiten-editbox__metaRow--status{grid-template-columns:max-content;align-items:end;justify-items:start}
+.restarbeiten-editbox__metaRow--completedAt{grid-template-columns:max-content max-content;align-items:end;justify-items:start}
 .restarbeiten-editbox__metaRow--dueDate .restarbeiten-editbox__field,.restarbeiten-editbox__metaRow--status .restarbeiten-editbox__field{align-content:end}
+.restarbeiten-editbox__metaRow--completedAt .restarbeiten-editbox__field{align-content:end}
 .restarbeiten-editbox__statusField,.restarbeiten-editbox__dueDateField,.restarbeiten-editbox__responsibleField{justify-self:start}
 .restarbeiten-editbox__statusField,.restarbeiten-editbox__responsibleField{width:auto;max-width:none}
 .restarbeiten-editbox__dueDateField{width:auto;max-width:none}
@@ -54,6 +56,11 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-editbox__create{min-height:18px;padding:0 6px;justify-self:start;border:1px solid #cfcfcf;border-radius:6px;background:#f5f5f5;font-size:8px;font-weight:700}
 .restarbeiten-editbox__create--right{justify-self:end}
 .restarbeiten-editbox__status{font-size:8px;opacity:.8}
+.restarbeiten-editbox__noteBtn{min-height:18px;padding:0 6px;border:1px solid #cfcfcf;border-radius:6px;background:#fff;font-size:10px;line-height:1}
+.restarbeiten-editbox__noteDialog{position:fixed;inset:0;display:grid;place-items:center;background:rgba(15,23,42,.24);z-index:9999}
+.restarbeiten-editbox__noteDialog>div{background:#fff;border:1px solid #cfcfcf;border-radius:8px;padding:10px;display:grid;gap:8px;min-width:280px;max-width:420px}
+.restarbeiten-editbox__noteDialog textarea{min-height:110px}
+.restarbeiten-editbox__noteDialog div:last-child{display:flex;justify-content:flex-end;gap:6px}
 @media (max-width:900px){.restarbeiten-editbox__body{display:grid;grid-template-columns:1fr}.restarbeiten-editbox__rightGroup{display:grid;grid-template-columns:1fr;width:100%}.restarbeiten-editbox__main{display:grid;grid-template-columns:1fr;max-width:none;width:100%}.restarbeiten-editbox__locationGrid{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none;width:100%}}
 
 [data-bbm-restarbeiten-screen="true"]{display:flex;flex-direction:column;height:100%;min-height:0;background:linear-gradient(180deg,#faf7ef,#f3eee3)}

@@ -384,6 +384,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(editbox, /restarbeiten-editbox__metaRow--status/);
     assert.match(editbox, /createField\(doc, "Status", status\)/);
     assert.match(editbox, /createField\(doc, "Fertig bis", dueDate\)/);
+    assert.match(editbox, /createField\(doc, "erledigt am", completedAt\)/);
+    assert.match(editbox, /Folgende Maßnahmen sind getroffen:/);
+    assert.match(editbox, /aria-label", "Notiz"/);
     assert.match(editbox, /restarbeiten-editbox__metaDate/);
     assert.doesNotMatch(style, /restarbeiten-editbox__metaDate\{[^}]*appearance\s*:\s*none/);
     assert.doesNotMatch(style, /restarbeiten-editbox__metaDate\{[^}]*-webkit-appearance\s*:\s*none/);
@@ -540,7 +543,7 @@ async function runRestarbeitenModuleTests(run) {
       screen.editbox.fields.short_text.value = "Neu";
       screen.editbox.fields.long_text.value = "Lang 2";
       screen.editbox.fields.item_class.value = "mangel";
-      screen.editbox.fields.status.value = "in_arbeit";
+      screen.editbox.fields.status.value = "in arbeit";
       await screen.editbox.onSave(screen.editbox.getDraft());
 
       assert.equal(calls.find((call) => call.type === "update")?.payload.id, "r-1");
@@ -1192,11 +1195,11 @@ async function runRestarbeitenModuleTests(run) {
     await Promise.resolve();
     await Promise.resolve();
     assert.equal(createCalls.length, 1);
-    editbox.fields.status.value = "in_arbeit";
+    editbox.fields.status.value = "in arbeit";
     editbox.fields.responsible_project_firm_id.value = "f1";
     const draft = editbox.getDraft();
     assert.equal(draft.item_class, "mangel");
-    assert.equal(draft.status, "in_arbeit");
+    assert.equal(draft.status, "in arbeit");
     assert.equal(draft.due_date, "2026-05-16");
     assert.equal(draft.responsible_project_firm_id, "f1");
 
@@ -1432,7 +1435,7 @@ async function runRestarbeitenModuleTests(run) {
     await editbox.flushAutosave();
     assert.equal(saveCalls.length, 1);
 
-    editbox.fields.status.value = "in_arbeit";
+    editbox.fields.status.value = "in arbeit";
     editbox.fields.status.dispatchEvent({ type: "change" });
     await new Promise((resolve) => setTimeout(resolve, 0));
     assert.equal(saveCalls.length, 2);
