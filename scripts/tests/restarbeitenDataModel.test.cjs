@@ -37,7 +37,7 @@ async function runRestarbeitenDataModelTests(run) {
       assert.ok(conn.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t));
     }
     const cols = conn.prepare("PRAGMA table_info(restarbeiten_items)").all().map((c) => c.name);
-    ["project_id","running_number","location_level_1","location_level_2","location_level_3","location_level_4","short_text","long_text","item_class","status","due_date","responsible_project_firm_id","responsible_label","archived_at","created_at","updated_at"].forEach((c)=>assert.ok(cols.includes(c)));
+    ["project_id","running_number","location_level_1","location_level_2","location_level_3","location_level_4","short_text","long_text","item_class","status","due_date","responsible_project_firm_id","responsible_label","archived_at","completed_at","completion_note","deleted_at","created_at","updated_at"].forEach((c)=>assert.ok(cols.includes(c)));
     const aCols = conn.prepare("PRAGMA table_info(restarbeiten_attachments)").all().map((c) => c.name);
     ["restarbeit_id","file_path","thumbnail_path","sort_order","is_primary"].forEach((c)=>assert.ok(aCols.includes(c)));
   }));
@@ -148,6 +148,46 @@ async function runRestarbeitenDataModelTests(run) {
     conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
     assert.throws(() => repo.updateRestarbeitItem("unbekannt", { short_text: "x" }), /restarbeit not found/);
     assert.throws(() => repo.updateRestarbeitItem("unbekannt", {}), /restarbeit not found/);
+  }));
+
+
+
+  await run("Restpunkte (RP): completed_at/completion_note werden normalisiert", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+    const created = repo.createRestarbeitItem({ project_id: "p1", short_text: "R1" });
+    assert.equal(created.completed_at, null);
+    assert.equal(created.completion_note, "");
+
+    const updated = repo.updateRestarbeitItem(created.id, {
+      completed_at: "2026-05-18",
+      completion_note: "Folgende Maßnahmen sind getroffen: Test",
+      deleted_at: "2026-05-18T12:00:00.000Z",
+    });
+    assert.equal(updated.completed_at, "2026-05-18");
+    assert.equal(updated.completion_note.includes("Folgende Maßnahmen"), true);
+    assert.equal(updated.deleted_at, null);
+  }));
+
+  await run("Soft Delete blendet RP im Listenpfad aus und running_number bleibt stabil", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+    const rp1 = repo.createRestarbeitItem({ project_id: "p1", short_text: "RP1" });
+    const rp2 = repo.createRestarbeitItem({ project_id: "p1", short_text: "RP2" });
+    const rp3 = repo.createRestarbeitItem({ project_id: "p1", short_text: "RP3" });
+    assert.deepEqual([rp1.running_number, rp2.running_number, rp3.running_number], [1,2,3]);
+
+    const deleted = repo.softDeleteRestarbeitItem(rp3.id);
+    assert.ok(typeof deleted.deleted_at === "string" && deleted.deleted_at.length > 10);
+
+    const visible = repo.listRestarbeitItems("p1");
+    assert.deepEqual(visible.map((x) => x.running_number), [1,2]);
+
+    const withDeleted = repo.listRestarbeitItems("p1", { includeDeleted: true });
+    assert.deepEqual(withDeleted.map((x) => x.running_number), [1,2,3]);
+
+    const rp4 = repo.createRestarbeitItem({ project_id: "p1", short_text: "RP4" });
+    assert.equal(rp4.running_number, 4);
   }));
 
   await run("Foto-Regeln inkl. primary und max 3", async () => withTemp(({ db, repo }) => {

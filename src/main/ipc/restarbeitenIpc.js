@@ -87,7 +87,8 @@ function registerRestarbeitenIpc({ ipcMain }) {
       const projectId = normalizeProjectId(payload);
       if (!projectId) throw new Error("projectId erforderlich");
       const includeArchived = toBool(payload && typeof payload === "object" ? payload.includeArchived : false, false);
-      const items = repo.listRestarbeitItems(projectId, { includeArchived });
+      const includeDeleted = toBool(payload && typeof payload === "object" ? payload.includeDeleted : false, false);
+      const items = repo.listRestarbeitItems(projectId, { includeArchived, includeDeleted });
       return { ok: true, items: Array.isArray(items) ? items : [] };
     } catch (error) {
       return { ok: false, error: error?.message || "Restarbeiten konnten nicht geladen werden." };
@@ -133,6 +134,18 @@ function registerRestarbeitenIpc({ ipcMain }) {
     }
   });
 
+
+  ipcMain.handle("restarbeiten:softDeleteItem", async (_event, payload) => {
+    try {
+      const source = payload && typeof payload === "object" ? payload : {};
+      const id = String(source.id ?? source.restarbeitId ?? source.restarbeit_id ?? "").trim();
+      if (!id) throw new Error("id erforderlich");
+      const item = repo.softDeleteRestarbeitItem(id);
+      return { ok: true, item };
+    } catch (error) {
+      return { ok: false, error: error?.message || "Restarbeit konnte nicht geloescht werden." };
+    }
+  });
   ipcMain.handle("restarbeiten:listAttachments", async (_event, payload) => {
     try {
       const restarbeitId = normalizeRestarbeitId(payload);

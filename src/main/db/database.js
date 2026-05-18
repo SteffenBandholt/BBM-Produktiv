@@ -1284,6 +1284,8 @@ function ensureRestarbeitenSchema(dbConn) {
         import_batch_id TEXT,
         archived_at TEXT,
         completed_at TEXT,
+        completion_note TEXT NOT NULL DEFAULT '',
+        deleted_at TEXT,
         verified_at TEXT,
         created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
         updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
@@ -1316,6 +1318,8 @@ function ensureRestarbeitenSchema(dbConn) {
     addCol("import_batch_id", "TEXT");
     addCol("archived_at", "TEXT");
     addCol("completed_at", "TEXT");
+    addCol("completion_note", "TEXT NOT NULL DEFAULT ''");
+    addCol("deleted_at", "TEXT");
     addCol("verified_at", "TEXT");
     addCol("created_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
     addCol("updated_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");

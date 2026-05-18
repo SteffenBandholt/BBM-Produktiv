@@ -2076,3 +2076,10 @@ Wichtig:
   - Protokoll- und Projektfirmen-Einstieg bleiben unveraendert
 
 - Hotfix M13.1: Restarbeiten-Button ist jetzt auch direkt auf der Projektkachel sichtbar und startet über openProjectModule.
+
+- M30 Restarbeiten-Datenbasis erweitert:
+  - `completed_at` und `completion_note` in Schema/Repo/Create/Update ergänzt.
+  - `deleted_at` additiv ergänzt; Soft Delete als eigener Repo-/IPC-/Preload-/DataSource-Pfad vorbereitet.
+  - Standard-Listenpfad blendet soft-gelöschte RP aus; optionaler Include-Flag bleibt für Rohzugriffe möglich.
+  - RP-Nummernlogik bleibt stabil ohne Wiederverwendung (Soft-Delete-Datensätze zählen weiterhin in `MAX(running_number)`).
+  - keine sichtbare UI-Änderung.

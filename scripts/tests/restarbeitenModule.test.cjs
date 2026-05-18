@@ -256,6 +256,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(preload, /restarbeitenGetProjectSettings/);
     assert.match(preload, /restarbeitenCreateItem/);
     assert.match(preload, /restarbeitenUpdateItem/);
+    assert.match(ipc, /restarbeiten:softDeleteItem/);
+    assert.match(preload, /restarbeitenSoftDeleteItem/);
     assert.doesNotMatch(ipc, /restarbeiten:archive/);
     assert.doesNotMatch(ipc, /restarbeiten:deleteItem/);
   });
@@ -396,6 +398,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(ipcSource, /restarbeiten:updateItem/);
     assert.match(preload, /restarbeitenCreateItem/);
     assert.match(preload, /restarbeitenUpdateItem/);
+    assert.match(ipc, /restarbeiten:softDeleteItem/);
+    assert.match(preload, /restarbeitenSoftDeleteItem/);
 
     const calls = [];
     const prevWindow = globalThis.window;
@@ -1612,6 +1616,13 @@ async function runRestarbeitenModuleTests(run) {
     } finally {
       globalThis.document = prevDocument2;
     }
+  });
+
+
+  await run("M30 Fachregel Begriffe: Restpunkt (RP) statt TOP in Restarbeiten", () => {
+    const modelPath = path.join(__dirname, "../../scripts/tests/restarbeitenDataModel.test.cjs");
+    const source = fs.readFileSync(modelPath, "utf8");
+    assert.equal(source.includes("Restpunkte (RP)"), true);
   });
 
 }

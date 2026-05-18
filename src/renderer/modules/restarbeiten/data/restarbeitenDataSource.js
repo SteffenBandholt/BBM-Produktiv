@@ -31,9 +31,11 @@ function buildCreatePayload(projectId, payload = {}) {
 }
 
 function buildUpdatePayload(id, patch = {}) {
+  const safePatch = { ...patch };
+  delete safePatch.deleted_at;
   const rid = String(id ?? "").trim();
   if (!rid) throw new Error("Restarbeiten-Datenzugriff: id fehlt.");
-  return { id: rid, patch: { ...patch } };
+  return { id: rid, patch: safePatch };
 }
 
 export async function listRestarbeitenByProject(projectId) {
@@ -159,4 +161,16 @@ export async function deleteRestarbeitAttachment(restarbeitId, attachmentId) {
     attachments: Array.isArray(response.attachments) ? response.attachments : [],
     warning: typeof response.warning === "string" && response.warning.trim() ? response.warning.trim() : null,
   };
+}
+
+
+export async function softDeleteRestarbeitItem(id) {
+  const bbmDb = requireBbmDb();
+  if (typeof bbmDb.restarbeitenSoftDeleteItem !== "function") {
+    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenSoftDeleteItem fehlt.");
+  }
+  const rid = String(id ?? "").trim();
+  if (!rid) throw new Error("Restarbeiten-Datenzugriff: id fehlt.");
+  const response = await callAndNormalize(bbmDb.restarbeitenSoftDeleteItem, { id: rid }, "soft-delete");
+  return response.item && typeof response.item === "object" ? response.item : null;
 }
