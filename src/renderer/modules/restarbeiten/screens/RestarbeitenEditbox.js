@@ -55,6 +55,15 @@ function normalizeFirmEntries(list) {
   }).filter(Boolean);
 }
 
+function normalizeEditboxStatus(value) {
+  const raw = normalizeText(value).toLowerCase();
+  if (!raw) return "offen";
+  if (raw === "in arbeit" || raw === "erledigt" || raw === "offen") return raw;
+  if (raw === "in_arbeit") return "in arbeit";
+  if (raw === "erledigt_gemeldet" || raw === "geprueft_erledigt" || raw === "geprüft erledigt") return "erledigt";
+  return "offen";
+}
+
 export default class RestarbeitenEditbox {
   constructor({ documentRef = globalThis.document, onSave = null, onCreate = null } = {}) {
     this.document = documentRef || globalThis.document;
@@ -350,7 +359,7 @@ export default class RestarbeitenEditbox {
     const prompt = doc.createElement("p");
     prompt.textContent = "Folgende Maßnahmen sind getroffen:";
     const textarea = createInput(doc, "textarea");
-    textarea.value = normalizeText(this.noteDraftValue || this.currentItem?.completion_note);
+    textarea.value = normalizeText(this.noteDraftValue);
     const actions = doc.createElement("div");
     const saveBtn = doc.createElement("button");
     saveBtn.type = "button";
@@ -566,9 +575,7 @@ export default class RestarbeitenEditbox {
 
     this._setItemClass?.(normalizeText(source.item_class) || "rest");
     if (fields.status) {
-      const status = normalizeText(source.status) || "offen";
-      const allowed = EDITBOX_STATUS_OPTIONS.map((entry) => entry.value);
-      fields.status.value = allowed.includes(status) ? status : "offen";
+      fields.status.value = normalizeEditboxStatus(source.status);
     }
     LOCATION_KEYS.forEach((key) => {
       if (fields[key]) fields[key].value = normalizeText(source[key]);
@@ -623,7 +630,7 @@ export default class RestarbeitenEditbox {
       long_text: normalizeText(fields.long_text?.value),
       due_date: normalizeText(fields.due_date?.value),
       completed_at: normalizeText(fields.completed_at?.value),
-      completion_note: normalizeText(this.noteDraftValue || this.currentItem?.completion_note),
+      completion_note: normalizeText(this.noteDraftValue),
       responsible_project_firm_id: responsibleProjectFirmId,
       responsible_label: responsibleLabel,
     };
