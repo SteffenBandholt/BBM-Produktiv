@@ -614,7 +614,7 @@ export default class RestarbeitenScreen {
     if (!selectedItem) {
       if (this.editbox) this.editbox.setItem(null);
       this.editHost.replaceChildren(
-        createMessage(doc, "Eine Restarbeit auswaehlen oder ueber + Restpunkt neu anlegen.")
+        createMessage(doc, "Einen Restpunkt auswaehlen oder ueber + Restpunkt neu anlegen.")
       );
       return;
     }
