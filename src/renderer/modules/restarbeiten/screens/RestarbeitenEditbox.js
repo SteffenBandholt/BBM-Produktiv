@@ -270,7 +270,7 @@ export default class RestarbeitenEditbox {
       deleteBtn.addEventListener("click", async () => {
         const selectedId = normalizeText(this.currentItem?.id);
         if (!selectedId || this.isDeleting) return;
-        const approve = globalThis.confirm?.("Diesen Restpunkt wirklich löschen?");
+        const approve = await this._openDeleteDialog();
         if (!approve) return;
         this.isDeleting = true;
         deleteBtn.disabled = true;
@@ -415,6 +415,38 @@ export default class RestarbeitenEditbox {
     card.append(prompt, textarea, actions);
     overlay.append(card);
     this.root?.append(overlay);
+  }
+
+
+  _openDeleteDialog() {
+    const doc = this.document;
+    return new Promise((resolve) => {
+      const overlay = doc.createElement("div");
+      overlay.className = "restarbeiten-editbox__deleteDialog";
+      const card = doc.createElement("div");
+      const prompt = doc.createElement("p");
+      prompt.textContent = "Diesen Restpunkt wirklich löschen?";
+      const actions = doc.createElement("div");
+      const deleteBtn = doc.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "Löschen";
+      const cancelBtn = doc.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.textContent = "Abbrechen";
+      const close = (approved) => {
+        if (typeof overlay.remove === "function") overlay.remove();
+        else if (overlay.parentElement && Array.isArray(overlay.parentElement.children)) {
+          overlay.parentElement.children = overlay.parentElement.children.filter((child) => child !== overlay);
+        }
+        resolve(approved === true);
+      };
+      cancelBtn.addEventListener("click", () => close(false));
+      deleteBtn.addEventListener("click", () => close(true));
+      actions.append(deleteBtn, cancelBtn);
+      card.append(prompt, actions);
+      overlay.append(card);
+      this.root?.append(overlay);
+    });
   }
 
   _handleStatusChange() {

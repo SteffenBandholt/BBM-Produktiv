@@ -321,7 +321,6 @@ async function runRestarbeitenModuleTests(run) {
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
-      globalThis.confirm = undefined;
     }
   });
 
@@ -410,6 +409,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(editbox, /\+ Restpunkt/);
     assert.match(editbox, /textContent = "Löschen"/);
     assert.match(editbox, /Diesen Restpunkt wirklich löschen\?/);
+    assert.match(editbox, /_openDeleteDialog\(/);
+    assert.match(editbox, /Abbrechen/);
+    assert.doesNotMatch(editbox, /globalThis\.confirm/);
     assert.match(editbox, /deleteBtn\.disabled = true/);
     assert.doesNotMatch(editbox, /textContent\s*=\s*"Speichern"/);
     assert.doesNotMatch(editbox, /restarbeiten-editbox__save/);
@@ -559,15 +561,24 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(calls.find((call) => call.type === "update")?.payload.id, "r-1");
       assert.equal(calls.find((call) => call.type === "update")?.payload.patch.short_text, "Neu");
 
-      globalThis.confirm = () => false;
       const deleteBtn = screen.editbox.fields.delete_button;
       assert.equal(Boolean(deleteBtn), true);
       assert.equal(deleteBtn.disabled, false);
       await deleteBtn.click();
+      const deleteDialog = screen.editbox.root.querySelector?.(".restarbeiten-editbox__deleteDialog");
+      assert.equal(Boolean(deleteDialog), true);
+      assert.match(deleteDialog.textContent, /Diesen Restpunkt wirklich löschen\?/);
+      const cancelBtn = findButtonByText(deleteDialog, "Abbrechen");
+      const confirmDeleteBtn = findButtonByText(deleteDialog, "Löschen");
+      assert.equal(Boolean(cancelBtn), true);
+      assert.equal(Boolean(confirmDeleteBtn), true);
+      await cancelBtn.click();
       assert.equal(calls.some((call) => call.type === "soft-delete"), false);
 
-      globalThis.confirm = () => true;
       await deleteBtn.click();
+      const deleteDialog2 = screen.editbox.root.querySelector?.(".restarbeiten-editbox__deleteDialog");
+      const confirmDeleteBtn2 = findButtonByText(deleteDialog2, "Löschen");
+      await confirmDeleteBtn2.click();
       assert.equal(calls.find((call) => call.type === "soft-delete")?.payload.id, "r-1");
       assert.equal(screen.selectedItemId, "");
       assert.match(screen.editHost.children[0].textContent, /Einen Restpunkt auswaehlen oder ueber \+ Restpunkt neu anlegen\./);
@@ -580,7 +591,6 @@ async function runRestarbeitenModuleTests(run) {
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
-      globalThis.confirm = undefined;
     }
   });
 
@@ -675,7 +685,6 @@ async function runRestarbeitenModuleTests(run) {
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
-      globalThis.confirm = undefined;
     }
   });
 
@@ -758,7 +767,6 @@ async function runRestarbeitenModuleTests(run) {
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
-      globalThis.confirm = undefined;
     }
   });
 
@@ -1076,7 +1084,6 @@ async function runRestarbeitenModuleTests(run) {
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
-      globalThis.confirm = undefined;
     }
   });
   await run("M12 ViewModel: Mapping und Ampel-Logik fuer Listenlayout", async () => {
