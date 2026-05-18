@@ -355,25 +355,35 @@ export default class RestarbeitenEditbox {
     const doc = this.document;
     const overlay = doc.createElement("div");
     overlay.className = "restarbeiten-editbox__noteDialog";
+    const closeOverlay = () => {
+      if (typeof overlay.remove === "function") {
+        overlay.remove();
+        return;
+      }
+      const parent = overlay.parentElement;
+      if (parent && Array.isArray(parent.children)) {
+        parent.children = parent.children.filter((child) => child !== overlay);
+      }
+    };
     const card = doc.createElement("div");
     const prompt = doc.createElement("p");
     prompt.textContent = "Folgende Maßnahmen sind getroffen:";
     const textarea = createInput(doc, "textarea");
     textarea.value = normalizeText(this.noteDraftValue);
     const actions = doc.createElement("div");
-    const saveBtn = doc.createElement("button");
-    saveBtn.type = "button";
-    saveBtn.textContent = "Übernehmen";
+    const applyBtn = doc.createElement("button");
+    applyBtn.type = "button";
+    applyBtn.textContent = "Übernehmen";
     const cancelBtn = doc.createElement("button");
     cancelBtn.type = "button";
     cancelBtn.textContent = "Abbrechen";
-    cancelBtn.addEventListener("click", () => overlay.remove());
-    saveBtn.addEventListener("click", async () => {
+    cancelBtn.addEventListener("click", () => closeOverlay());
+    applyBtn.addEventListener("click", async () => {
       this.noteDraftValue = normalizeText(textarea.value);
-      overlay.remove();
+      closeOverlay();
       await this.flushAutosave();
     });
-    actions.append(saveBtn, cancelBtn);
+    actions.append(applyBtn, cancelBtn);
     card.append(prompt, textarea, actions);
     overlay.append(card);
     this.root?.append(overlay);

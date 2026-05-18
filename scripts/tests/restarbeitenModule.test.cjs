@@ -1248,10 +1248,17 @@ async function runRestarbeitenModuleTests(run) {
     const noteBtn = findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.className || "").includes("restarbeiten-editbox__noteBtn"))[0];
     assert.equal(Boolean(noteBtn), true);
     noteBtn.click();
-    const textareaA = findNodes(root, (n) => n?.tagName === "TEXTAREA")[0];
+    const currentOverlay = () =>
+      findNodes(root, (n) => String(n?.className || "").includes("restarbeiten-editbox__noteDialog")).at(-1) || null;
+    const currentTextarea = () =>
+      findNodes(currentOverlay() || root, (n) => n?.tagName === "TEXTAREA").at(-1) || null;
+    const currentButton = (text) =>
+      findNodes(currentOverlay() || root, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === text).at(-1) || null;
+
+    const textareaA = currentTextarea();
     assert.equal(textareaA.value, "Alt");
     textareaA.value = "";
-    findButtonByText(root, "Übernehmen").click();
+    currentButton("Übernehmen").click();
     await Promise.resolve();
     await editbox.flushAutosave();
     assert.equal(editbox.getDraft().completion_note, "");
@@ -1259,9 +1266,10 @@ async function runRestarbeitenModuleTests(run) {
 
     editbox.setItem({ id: "r1", status: "offen", completion_note: "Alt" });
     noteBtn.click();
-    const textareaB = findNodes(root, (n) => n?.tagName === "TEXTAREA")[0];
+    const textareaB = currentTextarea();
+    assert.equal(textareaB.value, "Alt");
     textareaB.value = "Neu";
-    findButtonByText(root, "Abbrechen").click();
+    currentButton("Abbrechen").click();
     assert.equal(editbox.getDraft().completion_note, "Alt");
 
     editbox.setItem({ id: "r1", status: "in_arbeit" });
