@@ -18,6 +18,142 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 
+- M50 Protokoll-Quicklane zeigt offenes und geschlossenes Schloss statt P/U:
+  - Der Quicklane-Pin zeigt jetzt ein kleines Schloss-SVG: offen fuer den freien Zustand, geschlossen fuer den fixierten Zustand.
+  - Die Bedienlogik bleibt gleich, nur die sichtbare Steuerung wurde von Buchstaben auf Schloss-Symbole umgestellt.
+  - Das separate `X` unter dem Schloss wurde entfernt; das Schloss ist jetzt die einzige sichtbare Steuerung.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: falls gewuenscht, die Symbolgroesse oder den Kontrast noch fein anpassen.
+
+- M49 Restarbeiten-Screen scrollt den selektierten Punkt in der Liste nach oben:
+  - Nur beim Anlegen eines neuen Punkts ueber `+ Restleistung` springt die Liste nach unten.
+  - Normale Auswahl und Reloads lassen die aktuelle Listenposition stehen.
+  - Die Editbox selbst bleibt frei von Zusatzvorschau.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: falls gewuenscht, die genaue Listenposition im Create-Fall noch fein abstimmen.
+
+- M48 Restarbeiten-Editbox Titel nutzt jetzt M/R statt Nr.:
+  - Der obere Titel lautet nun `M <Nummer> bearbeiten` oder `R <Nummer> bearbeiten`, je nach `item_class`.
+  - `M` steht fuer Mangel, `R` fuer Restleistung.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: falls gewuenscht, die Titelzeile visuell noch enger an den oberen Arbeitsbereich anpassen.
+
+- M47 Restarbeiten-Editbox mit oberem Titel links:
+  - Im oberen Rahmen steht jetzt links der Listentitel als `Nr. X bearbeiten`.
+  - Die obere Aktionsleiste bleibt mittig ausgerichtet, der Titel sitzt links davor.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: die verbleibende Gesamtproportion der linken Arbeitszone weiter mit dem Verortungsblock abstimmen.
+
+- M46 Restarbeiten-Editbox gelben Textblock bis an den rechten Rahmen aufgezogen:
+  - Die gelbe Kurz-/Langtext-Fläche nutzt jetzt die verfuegbare Breite ohne die alte Maximalbremsung.
+  - Die Textfelder darin wachsen mit und enden nun sichtbar weiter rechts.
+  - Die rechte Verortungsgruppe blieb dabei unberuehrt.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: die optische Kante des gelben Blocks im laufenden Client gegen das Zielbild feinjustieren.
+
+- M45 Restarbeiten-Editbox gelben Textblock nach rechts vergroessert:
+  - Der gelbe Kurz-/Langtext-Block nimmt jetzt mehr Breite ein und reicht naeher an den Verortungsblock heran.
+  - Der linke Arbeitsbereich bleibt dabei oben links verankert, die rechte Gruppe bleibt rechts.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: den rechten Verortungsblock und die Metaspalten im gleichen Tempo weiter sauber zum Gesamtbild ziehen.
+
+- M44 Restarbeiten-Editbox linke Rail nach links oben gezogen:
+  - Die Kurz-/Langtext-Rail sitzt jetzt oben links im gruenen Arbeitsbereich, statt nach rechts gedrueckt zu sein.
+  - Die rechte Gruppe bleibt weiterhin rechts, waehrend der linke Block die obere linke Ecke der Arbeitsflaeche einnimmt.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: die rechte Gruppe und die Metaspalten weiter zur finalen Gesamtanordnung ziehen.
+
+- M43 Restarbeiten-Editbox mit linker Rail fuer Kurztext/Langtext begonnen:
+  - Links ist jetzt ein eigener schmaler Rail-Bereich fuer `Kurztext` und `Langtext` mit Zaehlern und Symbolen sichtbar.
+  - Die eigentlichen Textfelder sitzen separat daneben, damit die linke Editbox-Anmutung der Protokoll-Workbench naeherkommt.
+  - Die Symbolhinweise sind rein visuell und bewusst ohne Diktat-Funktion.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: die rechte Gruppe unter die neue Struktur ordnen und die linke Rail optisch noch feiner an die Protokoll-Referenz anpassen.
+
+- M42 Restarbeiten-Editbox: neue Bereiche ebenfalls farbig markiert:
+  - Auch `topBar` und `body` sind jetzt mit temporären Hilfsrahmen sichtbar.
+  - Dadurch lassen sich die neue obere Aktionsleiste und der Arbeitsbereich darunter beim weiteren Umbau sauber verfolgen.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: die beiden rechten Blöcke unter die neue obere Leiste ziehen und dabei die sichtbaren Bereiche weiter nutzen.
+
+- M41 Restarbeiten-Editbox mit temporären farbigen Bereichsrahmen:
+  - Die sichtbaren Hilfsrahmen für Hauptbereich, rechte Gruppe, Verortung und Metaspalte sind wieder aktiv.
+  - Sie bleiben absichtlich bis zum Ende der Layout-Gestaltung sichtbar, damit die nächsten Verschiebungen sauber kontrolliert werden können.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: die beiden rechten Blöcke unter die neue obere Leiste ziehen und dabei die Hilfsrahmen zum Positionieren nutzen.
+
+- M40 Restarbeiten-Editbox mit eigener oberer Aktionsleiste begonnen:
+  - `Rest`, `Mangel` und `+ Restleistung` sitzen jetzt in einer separaten oberen Leiste.
+  - Der Arbeitsbereich darunter bleibt als eigener Block erhalten; links sind vorerst nur noch Kurztext und Langtext.
+  - Die alten Debug-Rahmen wurden aus dem Editbox-Layout entfernt.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs` und `npm test`.
+  - Naechster offener Schritt: die beiden rechten Blöcke unter die neue Leiste ziehen und dann die linke Protokoll-Anmutung mit Zähler und Diktat sauber nachziehen.
+
+- M39 Restarbeiten-Editbox gelbe Metazone nach links gezogen:
+  - Die gelbe Debug-Zone fuer `Fertig bis` und `Status` richtet sich jetzt links im lila Metabereich aus.
+  - Ziel ist die bessere Lesbarkeit der rechten Metaspalte ohne weitere Bremsbreiten.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: den Verortungsblock weiter gegen die nun links sitzende Metazone prüfen.
+
+- M38 Restarbeiten-Editbox mit farbigen Debug-Linien sichtbar gemacht:
+  - Editbox-Grenzen und zentrale Layout-Container sind jetzt farblich markiert.
+  - Ziel ist die visuelle Kontrolle von Hauptbereich, rechter Gruppe, Verortung und Metaspalte.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: mit dem farbigen Raster die naechsten sichtbaren Verschiebungen sauber prüfen.
+
+- M37 Restarbeiten-Editbox von starren Breiten weiter befreit:
+  - Die linke Textspalte richtet sich jetzt wieder frei nach ihrem Inhalt aus.
+  - Die rechte Metaspalte laeuft ohne die alten festen Feldbreiten und schrumpft nicht mehr gegen einen Bremsrahmen.
+  - Die verbliebenen Regeln sind nur noch Mindeststruktur fuer Ausrichtung und Lesbarkeit.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: reale Sichtpruefung im laufenden Client, ob die Felder jetzt nach Inhalt statt nach Zwangsbreite laufen.
+
+- M36 Restarbeiten-Editbox: Verantwortlich unter Status ausgerichtet
+  - Die Metaspalte hat jetzt eine gemeinsame Breite fuer `Status` und `Verantwortlich`.
+  - Ziel des Schritts: `Verantwortlich` direkt sauber unter `Status` zu fuehren, ohne die linke Seite wieder anzufassen.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: Verortungsblock weiterhin nach rechts nachziehen, jetzt auf Basis der bereinigten Metaspalte.
+
+- M35 Restarbeiten-Editbox von Bremsen befreit:
+  - viele feste Breiten- und Calc-Regeln wurden entfernt.
+  - rechter Bereich ist jetzt ein einfacher, rechts ausgerichteter Flex-Cluster statt einer breiten festen Rasterzwangslage.
+  - Der Test schützt jetzt explizit dagegen, dass die alten Bremsregeln wieder zurückkommen.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: reale Sichtpruefung im laufenden Client, ob der Verortungsblock jetzt endlich sichtbar an den rechten Block nachzieht.
+
+- M34 Restarbeiten-Editbox rechts als fester Cluster umgesetzt:
+  - Layout ist jetzt auf einen rechts gebuendelten Cluster aus linkem Arbeitsbereich und rechtem Feldraster umgestellt.
+  - Ziel: Verortungsblock und Metaspalte sollen als ein sichtbarer Block an die rechte Boxkante wandern.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: reale Sichtpruefung im laufenden Client, ob der rechte Cluster jetzt optisch ausreichend nachzieht.
+
+- M33 Restarbeiten-Editbox rechter Verbund als breiter Träger ausgerichtet:
+  - rechter Layout-Block nimmt jetzt die verfügbare Breite auf und richtet Verortungsblock plus Metaspalte gemeinsam zur rechten Boxkante aus.
+  - Ziel ist, dass der Verortungsblock sichtbar nach rechts nachzieht, statt eng an seiner alten Position zu bleiben.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: reale Sichtpruefung im laufenden Client, ob der Verortungsblock jetzt mit der Metaspalte als rechte Gruppe mitwandert.
+
+- M32 Restarbeiten-Editbox rechte Gruppierung wieder an die Boxkante gezogen:
+  - Layout ist wieder zweispaltig mit linkem Hauptbereich und rechtem Verbund aus Verortungsblock + Metaspalte.
+  - Die linke Spalte gibt den freien Raum wieder an die rechte Seite ab, damit der Gesamtverbund weiter rechts sitzt.
+  - Ziel ist weiterhin, Verortung und Metaspalte nebeneinander am rechten Rand der Editbox zu halten.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: reale Sichtpruefung im laufenden Client, ob der rechte Verbund jetzt an der erwarteten Boxkante steht.
+
+- M31 Restarbeiten-Editbox links an Protokoll-Anmutung angenähert:
+  - linker Textbereich ist jetzt bewusst auf eine kompaktere Breite begrenzt, damit der rechte Layout-Block näher heranrückt.
+  - Zielbild orientiert sich am linken Teil der Protokoll-Editbox: kompakter, aufgeräumter Textblock statt breit auslaufender Fläche.
+  - Verortungsblock bleibt rechts vor der Metaspalte eingeordnet.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: reale UI-Sichtpruefung der neuen linken Proportionen und des Abstands zur rechten Gruppe.
+
+- M30 Restarbeiten-Editbox rechts enger zusammengezogen:
+  - Verortungsblock `Haus / Geschoss / Einheit / Raum` und die Metaspalte sitzen jetzt gemeinsam im rechten Layout-Block.
+  - Die rechte Metaspalte `Fertig bis / Status / Verantwortlich` blieb in ihrer Feldlogik unangetastet.
+  - Ziel des Schritts: den Verortungsblock optisch deutlich näher an die rechte Metaspalte ziehen.
+  - geprueft mit `npm test`.
+  - Naechster offener Schritt: reale Sichtpruefung der neuen rechten Gruppierung im laufenden Client.
+
 - M29 Restarbeiten-Filterleiste neu gegliedert und kompakter angeordnet:
   - Klassenfilter (Alle/Mangel/Rest) ist jetzt vertikal und kleiner, aktive Auswahl bleibt visuell markiert.
   - Verortungsfilter sind als zwei Zweiergruppen aufgebaut (Level 1+2, Level 3+4) und die Label-Logik bleibt projektbezogen unverändert.

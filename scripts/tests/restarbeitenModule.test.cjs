@@ -59,6 +59,9 @@ function createFakeDocument() {
       value: "",
       type: "",
       rows: 0,
+      scrollTop: 0,
+      scrollHeight: 1000,
+      clientHeight: 200,
       append(...nodes) {
         for (const child of nodes) {
           if (child && typeof child === "object") child.parentElement = this;
@@ -355,8 +358,20 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(style, /restarbeiten-list__metaCol\{font-size:8pt/);
     assert.match(style, /restarbeiten-list__date\{font-size:8pt/);
     assert.match(style, /restarbeiten-list__shortText\{font-weight:500/);
-    assert.match(style, /restarbeiten-editbox__metaRow--triple\{[^}]*align-items:end/);
+    assert.match(style, /restarbeiten-sheet__list\{[^}]*display:flex/);
+    assert.match(style, /restarbeiten-sheet__list\{[^}]*justify-content:flex-end/);
+    assert.match(style, /restarbeiten-editbox__metaRow--dueDate\{[^}]*align-items:end/);
+    assert.match(style, /restarbeiten-editbox__metaRow--status\{[^}]*align-items:end/);
     assert.match(style, /restarbeiten-editbox__metaDate/);
+    assert.match(style, /restarbeiten-editbox__topBar\{[^}]*display:flex/);
+    assert.match(style, /restarbeiten-editbox__body\{[^}]*display:flex/);
+    assert.match(style, /restarbeiten-editbox__rightGroup\{[^}]*display:flex/);
+    assert.match(style, /restarbeiten-editbox__rightGroup\{[^}]*justify-content:flex-end/);
+    assert.doesNotMatch(style, /calc\(100% - 3cm\)/);
+    assert.doesNotMatch(style, /width:60%/);
+    assert.doesNotMatch(style, /grid-template-columns:92px 250px/);
+    assert.doesNotMatch(style, /max-width:92px/);
+    assert.doesNotMatch(style, /width:190px/);
     assert.doesNotMatch(style, /restarbeiten-editbox__ampelPreview\{[^}]*min-height:23px/);
     assert.match(style, /restarbeiten-editbox__ampelPreview\{[^}]*min-height:0/);
     assert.match(style, /restarbeiten-editbox__ampelPreview\{[^}]*padding:0/);
@@ -365,18 +380,30 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(style, /restarbeiten-list__ampel\{[^}]*width:10px;[^}]*height:10px/);
     assert.match(style, /restarbeiten-header\{[^}]*border-bottom/);
 
-    assert.match(editbox, /restarbeiten-editbox__metaRow--triple/);
+    assert.match(editbox, /restarbeiten-editbox__metaRow--dueDate/);
+    assert.match(editbox, /restarbeiten-editbox__metaRow--status/);
     assert.match(editbox, /createField\(doc, "Status", status\)/);
     assert.match(editbox, /createField\(doc, "Fertig bis", dueDate\)/);
     assert.match(editbox, /restarbeiten-editbox__metaDate/);
     assert.doesNotMatch(style, /restarbeiten-editbox__metaDate\{[^}]*appearance\s*:\s*none/);
     assert.doesNotMatch(style, /restarbeiten-editbox__metaDate\{[^}]*-webkit-appearance\s*:\s*none/);
-    assert.match(editbox, /createField\(doc, "Ampel", ampelPreview\)/);
+    assert.match(editbox, /createField\(doc, "", ampelPreview\)/);
     assert.match(editbox, /ampelPreview\.className\s*=\s*"restarbeiten-editbox__ampelPreview restarbeiten-list__ampel"/);
     assert.match(editbox, /createField\(doc, "Verantwortlich", responsibleProjectFirmId\)/);
     assert.match(editbox, /restarbeiten-editbox__classToggle--compact/);
-    assert.match(editbox, /classActions\.append\(createField\(doc, "", marker\)\)/);
-    assert.match(editbox, /\+ Restarbeit/);
+    assert.match(editbox, /topBar\.className = "restarbeiten-editbox__topBar"/);
+    assert.match(editbox, /titleEl\.className = "restarbeiten-editbox__title"/);
+    assert.match(editbox, /body\.className = "restarbeiten-editbox__body"/);
+    assert.match(editbox, /textRail\.className = "restarbeiten-editbox__textRail"/);
+    assert.match(editbox, /shortField\.className = "restarbeiten-editbox__inputSlot restarbeiten-editbox__inputSlot--short"/);
+    assert.match(editbox, /longField\.className = "restarbeiten-editbox__inputSlot restarbeiten-editbox__inputSlot--long"/);
+    assert.match(editbox, /shortRailRow\.className = "restarbeiten-editbox__railRow restarbeiten-editbox__railRow--short"/);
+    assert.match(editbox, /longRailRow\.className = "restarbeiten-editbox__railRow restarbeiten-editbox__railRow--long"/);
+    assert.match(editbox, /topBar\.append\(titleEl, classActions\)/);
+    assert.match(editbox, /form\.append\(topBar, body, itemClass\)/);
+    assert.doesNotMatch(editbox, /textColumn\.append\(\s*classActions,/);
+    assert.match(editbox, /const markerField = createField\(doc, "", marker\)/);
+    assert.match(editbox, /\+ Restleistung/);
     assert.doesNotMatch(editbox, /textContent\s*=\s*"Speichern"/);
     assert.doesNotMatch(editbox, /restarbeiten-editbox__save/);
     assert.doesNotMatch(editbox, /saveBtn/);
@@ -508,6 +535,7 @@ async function runRestarbeitenModuleTests(run) {
       row.dispatchEvent({ type: "click" });
       assert.equal(screen.selectedItemId, "r-1");
       assert.equal(screen.editbox.fields.short_text.value, "Alt");
+      assert.equal(screen.sheetArea.scrollTop, 0);
 
       screen.editbox.fields.short_text.value = "Neu";
       screen.editbox.fields.long_text.value = "Lang 2";
@@ -521,6 +549,8 @@ async function runRestarbeitenModuleTests(run) {
       await screen._createRestarbeit();
       assert.equal(calls.find((call) => call.type === "create")?.payload.projectId, "p-1");
       assert.equal(screen.selectedItemId, "r-2");
+      assert.equal(screen.sheetArea.scrollTop > 0, true);
+      assert.equal(screen.createScrollPending, false);
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
@@ -1155,7 +1185,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(String(markerButtons.find((b) => b.textContent === "Rest")?.dataset?.active || ""), "1");
     assert.equal(String(markerButtons.find((b) => b.textContent === "Mangel")?.dataset?.active || ""), "0");
     markerButtons.find((b) => b.textContent === "Mangel").click();
-    const createBtn = findButtonByText(root, "+ Restarbeit");
+    const createBtn = findButtonByText(root, "+ Restleistung");
     assert.equal(Boolean(createBtn), true);
     assert.equal(String(createBtn?.className || "").includes("restarbeiten-editbox__create"), true);
     createBtn.click();

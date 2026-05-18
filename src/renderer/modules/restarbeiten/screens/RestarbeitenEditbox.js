@@ -57,6 +57,7 @@ export default class RestarbeitenEditbox {
     this.onCreate = typeof onCreate === "function" ? onCreate : null;
     this.root = null;
     this.form = null;
+    this.titleEl = null;
     this.statusEl = null;
     this.ampelPreviewEl = null;
     this.currentItem = null;
@@ -97,14 +98,63 @@ export default class RestarbeitenEditbox {
     root.className = "restarbeiten-editbox restarbeiten-editbox--compact";
     const form = doc.createElement("form");
     form.className = "restarbeiten-editbox__layout";
+    const topBar = doc.createElement("div");
+    topBar.className = "restarbeiten-editbox__topBar";
+    const titleEl = doc.createElement("div");
+    titleEl.className = "restarbeiten-editbox__title";
+    titleEl.textContent = "R der Liste bearbeiten";
+    const body = doc.createElement("div");
+    body.className = "restarbeiten-editbox__body";
     const mainCol = doc.createElement("div");
     mainCol.className = "restarbeiten-editbox__main";
+    const textRail = doc.createElement("div");
+    textRail.className = "restarbeiten-editbox__textRail";
+    const rightGroup = doc.createElement("div");
+    rightGroup.className = "restarbeiten-editbox__rightGroup";
     const metaCol = doc.createElement("aside");
     metaCol.className = "restarbeiten-editbox__meta";
 
     const shortText = createInput(doc, "text");
     const longText = createInput(doc, "textarea");
     longText.rows = 4;
+    const textColumn = doc.createElement("div");
+    textColumn.className = "restarbeiten-editbox__textColumn";
+    const shortField = doc.createElement("div");
+    shortField.className = "restarbeiten-editbox__inputSlot restarbeiten-editbox__inputSlot--short";
+    shortField.append(shortText);
+    const longField = doc.createElement("div");
+    longField.className = "restarbeiten-editbox__inputSlot restarbeiten-editbox__inputSlot--long";
+    longField.append(longText);
+
+    const shortRailRow = doc.createElement("div");
+    shortRailRow.className = "restarbeiten-editbox__railRow restarbeiten-editbox__railRow--short";
+    const shortRailLabel = doc.createElement("span");
+    shortRailLabel.className = "restarbeiten-editbox__railLabel";
+    shortRailLabel.textContent = "Kurztext";
+    const shortCounter = doc.createElement("span");
+    shortCounter.className = "restarbeiten-editbox__railCounter";
+    const shortDictation = doc.createElement("span");
+    shortDictation.className = "restarbeiten-editbox__railDictation";
+    shortDictation.textContent = "🎙";
+    shortDictation.title = "Symbol";
+    shortRailRow.append(shortRailLabel, shortCounter, shortDictation);
+
+    const longRailRow = doc.createElement("div");
+    longRailRow.className = "restarbeiten-editbox__railRow restarbeiten-editbox__railRow--long";
+    const longRailLabel = doc.createElement("span");
+    longRailLabel.className = "restarbeiten-editbox__railLabel";
+    longRailLabel.textContent = "Langtext";
+    const longCounter = doc.createElement("span");
+    longCounter.className = "restarbeiten-editbox__railCounter";
+    const longDictation = doc.createElement("span");
+    longDictation.className = "restarbeiten-editbox__railDictation";
+    longDictation.textContent = "🎙";
+    longDictation.title = "Symbol";
+    longRailRow.append(longRailLabel, longCounter, longDictation);
+
+    textRail.append(shortRailRow, longRailRow);
+    const classActions = doc.createElement("div");
+    classActions.className = "restarbeiten-editbox__classActions restarbeiten-editbox__classActions--top";
     const level1 = createInput(doc, "text", "restarbeiten-editbox__locationControl");
     const level2 = createInput(doc, "text", "restarbeiten-editbox__locationControl");
     const level3 = createInput(doc, "text", "restarbeiten-editbox__locationControl");
@@ -122,10 +172,11 @@ export default class RestarbeitenEditbox {
     });
     locationGrid.append(loc1Field, loc2Field, loc3Field, loc4Field);
 
+    textColumn.append(shortField, longField);
+
     mainCol.append(
-      createField(doc, "Kurztext", shortText),
-      createField(doc, "Langtext", longText),
-      locationGrid
+      textRail,
+      textColumn
     );
 
     const itemClass = createInput(doc, "hidden");
@@ -172,7 +223,7 @@ export default class RestarbeitenEditbox {
     const createBtn = this.onCreate ? doc.createElement("button") : null;
     if (createBtn) {
       createBtn.type = "button";
-      createBtn.textContent = "+ Restarbeit";
+      createBtn.textContent = "+ Restleistung";
       createBtn.className = "restarbeiten-editbox__create";
       createBtn.addEventListener("click", async () => {
         await this.flushAutosave();
@@ -184,26 +235,39 @@ export default class RestarbeitenEditbox {
 
     marker.className += " restarbeiten-editbox__classToggle--compact";
 
-    const statusRow = doc.createElement("div");
-    statusRow.className = "restarbeiten-editbox__metaRow restarbeiten-editbox__metaRow--triple";
-    statusRow.append(
-      createField(doc, "Status", status),
-      createField(doc, "Fertig bis", dueDate),
-      createField(doc, "Ampel", ampelPreview)
-    );
+    const dueDateRow = doc.createElement("div");
+    dueDateRow.className = "restarbeiten-editbox__metaRow restarbeiten-editbox__metaRow--dueDate";
+    const dueDateField = createField(doc, "Fertig bis", dueDate);
+    dueDateField.className += " restarbeiten-editbox__dueDateField";
+    const ampelField = createField(doc, "", ampelPreview);
+    ampelField.className += " restarbeiten-editbox__ampelField";
+    dueDateRow.append(dueDateField, ampelField);
 
-    const classActions = doc.createElement("div");
-    classActions.className = "restarbeiten-editbox__classActions";
-    classActions.append(createField(doc, "", marker));
-    if (createBtn) classActions.append(createBtn);
+    const statusFieldRow = doc.createElement("div");
+    statusFieldRow.className = "restarbeiten-editbox__metaRow restarbeiten-editbox__metaRow--status";
+    const statusField = createField(doc, "Status", status);
+    statusField.className += " restarbeiten-editbox__statusField";
+    statusFieldRow.append(statusField);
 
+    const markerField = createField(doc, "", marker);
+    markerField.className += " restarbeiten-editbox__classToggleWrap";
+    classActions.append(markerField);
+    if (createBtn) {
+      createBtn.className += " restarbeiten-editbox__create--right";
+      classActions.append(createBtn);
+    }
+    const responsibleField = createField(doc, "Verantwortlich", responsibleProjectFirmId);
+    responsibleField.className += " restarbeiten-editbox__responsibleField";
     metaCol.append(
-      statusRow,
-      createField(doc, "Verantwortlich", responsibleProjectFirmId),
-      classActions,
+      dueDateRow,
+      statusFieldRow,
+      responsibleField,
       statusEl
     );
-    form.append(mainCol, metaCol, itemClass);
+    rightGroup.append(locationGrid, metaCol);
+    topBar.append(titleEl, classActions);
+    body.append(mainCol, rightGroup);
+    form.append(topBar, body, itemClass);
     root.append(form);
 
 
@@ -214,6 +278,7 @@ export default class RestarbeitenEditbox {
 
     this.root = root;
     this.form = form;
+    this.titleEl = titleEl;
     this.statusEl = statusEl;
     this.ampelPreviewEl = ampelPreview;
     this.fields = {
@@ -225,8 +290,12 @@ export default class RestarbeitenEditbox {
       location_level_4: level4,
       short_text: shortText,
       long_text: longText,
+      short_text__counter: shortCounter,
+      long_text__counter: longCounter,
       due_date: dueDate,
       responsible_project_firm_id: responsibleProjectFirmId,
+      short_text__dictation: shortDictation,
+      long_text__dictation: longDictation,
       location_level_1__label: loc1Field.querySelector?.(".restarbeiten-editbox__label") || loc1Field.children[0],
       location_level_2__label: loc2Field.querySelector?.(".restarbeiten-editbox__label") || loc2Field.children[0],
       location_level_3__label: loc3Field.querySelector?.(".restarbeiten-editbox__label") || loc3Field.children[0],
@@ -235,6 +304,7 @@ export default class RestarbeitenEditbox {
     this._setItemClass = setItemClass;
     this._wireLocationDatalists();
     this._bindAutosaveInputs();
+    this._updateTextRailCounters();
     this.setItem(null);
     return root;
   }
@@ -244,7 +314,10 @@ export default class RestarbeitenEditbox {
     debouncedKeys.forEach((key) => {
       const input = this.fields?.[key];
       if (!input?.addEventListener) return;
-      input.addEventListener("input", () => this._queueAutosave());
+      input.addEventListener("input", () => {
+        this._updateTextRailCounters();
+        this._queueAutosave();
+      });
       input.addEventListener("blur", () => this.flushAutosave());
     });
     ["status", "due_date", "responsible_project_firm_id"].forEach((key) => {
@@ -256,6 +329,30 @@ export default class RestarbeitenEditbox {
 
   _draftKeyFor(draft) {
     return JSON.stringify(draft || {});
+  }
+
+  _formatTitlePrefix(item = null) {
+    const itemClass = normalizeText(item?.item_class).toLowerCase();
+    return itemClass === "mangel" ? "M" : "R";
+  }
+
+  _formatTitleNumber(item = null) {
+    const raw = normalizeText(item?.running_number ?? item?.numberLine ?? "");
+    return raw || "";
+  }
+
+  _updateTitle() {
+    if (!this.titleEl) return;
+    const prefix = this._formatTitlePrefix(this.currentItem);
+    const number = this._formatTitleNumber(this.currentItem);
+    this.titleEl.textContent = number ? `${prefix} ${number} bearbeiten` : `${prefix} der Liste bearbeiten`;
+  }
+
+  _updateTextRailCounters() {
+    const shortCounter = this.fields?.short_text__counter;
+    const longCounter = this.fields?.long_text__counter;
+    if (shortCounter) shortCounter.textContent = String(normalizeText(this.fields?.short_text?.value).length);
+    if (longCounter) longCounter.textContent = String(normalizeText(this.fields?.long_text?.value).length);
   }
 
   _canAutosave() {
@@ -423,6 +520,8 @@ export default class RestarbeitenEditbox {
     if (fields.long_text) fields.long_text.value = normalizeText(source.long_text);
     if (fields.due_date) fields.due_date.value = normalizeText(source.due_date);
     this.setProjectFirms(this.projectFirms);
+    this._updateTextRailCounters();
+    this._updateTitle();
 
     const loadedDraftKey = this._draftKeyFor(this.getDraft());
     this.currentItemDraftKey = loadedDraftKey;
