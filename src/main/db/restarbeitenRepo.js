@@ -51,6 +51,8 @@ function buildRestarbeitUpdatePatch(patch = {}) {
     out.responsible_project_firm_id = toText(patch.responsible_project_firm_id);
   }
   if (patch.responsible_label !== undefined) out.responsible_label = toText(patch.responsible_label);
+  if (patch.completed_at !== undefined) out.completed_at = toText(patch.completed_at);
+  if (patch.completion_note !== undefined) out.completion_note = toText(patch.completion_note) || "";
 
   return out;
 }
@@ -87,9 +89,7 @@ function createRestarbeitItem(projectIdOrPayload = {}, payload = {}) {
   const nextRunning = db
     .prepare(`SELECT COALESCE(MAX(running_number), 0) + 1 AS next_no FROM restarbeiten_items WHERE project_id = ?`)
     .get(pid)?.next_no;
-  const runningNumber = Number.isInteger(sourcePayload.running_number) && sourcePayload.running_number > 0
-    ? sourcePayload.running_number
-    : nextRunning;
+  const runningNumber = nextRunning;
 
   const id = toText(sourcePayload.id) || crypto.randomUUID();
   const sortOrder = Number.isFinite(Number(sourcePayload.sort_order)) ? Number(sourcePayload.sort_order) : 0;
@@ -113,6 +113,8 @@ function createRestarbeitItem(projectIdOrPayload = {}, payload = {}) {
     import_batch_id: toText(sourcePayload.import_batch_id),
     archived_at: toText(sourcePayload.archived_at),
     completed_at: toText(sourcePayload.completed_at),
+    completion_note: toText(sourcePayload.completion_note) || "",
+    deleted_at: null,
     verified_at: toText(sourcePayload.verified_at),
     created_at: now,
     updated_at: now,
@@ -124,13 +126,13 @@ function createRestarbeitItem(projectIdOrPayload = {}, payload = {}) {
       location_level_1, location_level_2, location_level_3, location_level_4,
       short_text, long_text, item_class, status, due_date,
       responsible_project_firm_id, responsible_label, source, import_batch_id,
-      archived_at, completed_at, verified_at, created_at, updated_at
+      archived_at, completed_at, completion_note, deleted_at, verified_at, created_at, updated_at
     ) VALUES (
       @id, @project_id, @running_number, @sort_order,
       @location_level_1, @location_level_2, @location_level_3, @location_level_4,
       @short_text, @long_text, @item_class, @status, @due_date,
       @responsible_project_firm_id, @responsible_label, @source, @import_batch_id,
-      @archived_at, @completed_at, @verified_at, @created_at, @updated_at
+      @archived_at, @completed_at, @completion_note, @deleted_at, @verified_at, @created_at, @updated_at
     )
   `).run(data);
   return db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(id);
@@ -170,17 +172,29 @@ function updateRestarbeitItem(id, patch = {}) {
   return updated;
 }
 
-function listRestarbeitItems(projectId, { includeArchived = false } = {}) {
+function listRestarbeitItems(projectId, { includeArchived = false, includeDeleted = false } = {}) {
   const db = initDatabase();
   const pid = reqText(projectId, "projectId");
-  const where = includeArchived ? "" : "AND archived_at IS NULL";
+  const archivedWhere = includeArchived ? "" : "AND archived_at IS NULL";
+  const deletedWhere = includeDeleted ? "" : "AND deleted_at IS NULL";
   return db.prepare(`
     SELECT * FROM restarbeiten_items
-    WHERE project_id = ? ${where}
+    WHERE project_id = ? ${archivedWhere} ${deletedWhere}
     ORDER BY sort_order ASC, running_number ASC, created_at ASC
   `).all(pid);
 }
 
+
+function softDeleteRestarbeitItem(id) {
+  const db = initDatabase();
+  const rid = reqText(id, "id");
+  const existing = db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(rid);
+  if (!existing) throw new Error("restarbeit not found");
+  if (toText(existing.deleted_at)) return existing;
+  const now = new Date().toISOString();
+  db.prepare(`UPDATE restarbeiten_items SET deleted_at = ?, updated_at = ? WHERE id = ?`).run(now, now, rid);
+  return db.prepare(`SELECT * FROM restarbeiten_items WHERE id = ?`).get(rid);
+}
 function addRestarbeitAttachment(payload = {}) {
   const db = initDatabase();
   const restarbeitId = reqText(payload.restarbeit_id, "restarbeit_id");
@@ -307,4 +321,5 @@ module.exports = {
   setPrimaryRestarbeitAttachment,
   listRestarbeitAttachments,
   deleteRestarbeitAttachment,
+  softDeleteRestarbeitItem,
 };
