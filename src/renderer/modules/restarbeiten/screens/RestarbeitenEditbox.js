@@ -172,7 +172,7 @@ export default class RestarbeitenEditbox {
     const createBtn = this.onCreate ? doc.createElement("button") : null;
     if (createBtn) {
       createBtn.type = "button";
-      createBtn.textContent = "+ Restarbeit";
+      createBtn.textContent = "+ Restpunkt";
       createBtn.className = "restarbeiten-editbox__create";
       createBtn.addEventListener("click", async () => {
         await this.flushAutosave();
