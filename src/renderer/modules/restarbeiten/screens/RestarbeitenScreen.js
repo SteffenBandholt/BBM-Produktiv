@@ -5,6 +5,7 @@ import {
   listResponsibleProjectFirms,
   listRestarbeitAttachments,
   updateRestarbeitItem,
+  softDeleteRestarbeitItem,
 } from "../data/restarbeitenDataSource.js";
 import { mapRestarbeitenStatusLabel, toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
 import RestarbeitenEditbox from "./RestarbeitenEditbox.js";
@@ -632,6 +633,13 @@ export default class RestarbeitenScreen {
           } finally {
             this.editbox?.setSaving(false);
           }
+        },
+        onDelete: async (itemId) => {
+          if (!normalizeText(itemId)) return;
+          await softDeleteRestarbeitItem(itemId);
+          this.selectedItemId = "";
+          this.attachmentsByItemId.delete(String(itemId));
+          await this.load({ selectItemId: "" });
         },
       });
 
