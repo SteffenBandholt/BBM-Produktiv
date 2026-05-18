@@ -1245,13 +1245,13 @@ async function runRestarbeitenModuleTests(run) {
     const root = editbox.render();
 
     editbox.setItem({ id: "r1", status: "offen", completion_note: "Alt", completed_at: "" });
-    const noteBtn = findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.getAttribute?.("aria-label") || "") === "Notiz")[0];
+    const noteBtn = findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.className || "").includes("restarbeiten-editbox__noteBtn"))[0];
     assert.equal(Boolean(noteBtn), true);
     noteBtn.click();
     const textareaA = findNodes(root, (n) => n?.tagName === "TEXTAREA")[0];
     assert.equal(textareaA.value, "Alt");
     textareaA.value = "";
-    findButtonByText(root, "Speichern").click();
+    findButtonByText(root, "Übernehmen").click();
     await Promise.resolve();
     await editbox.flushAutosave();
     assert.equal(editbox.getDraft().completion_note, "");

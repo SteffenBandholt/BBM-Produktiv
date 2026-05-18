@@ -363,7 +363,7 @@ export default class RestarbeitenEditbox {
     const actions = doc.createElement("div");
     const saveBtn = doc.createElement("button");
     saveBtn.type = "button";
-    saveBtn.textContent = "Speichern";
+    saveBtn.textContent = "Übernehmen";
     const cancelBtn = doc.createElement("button");
     cancelBtn.type = "button";
     cancelBtn.textContent = "Abbrechen";
@@ -371,7 +371,6 @@ export default class RestarbeitenEditbox {
     saveBtn.addEventListener("click", async () => {
       this.noteDraftValue = normalizeText(textarea.value);
       overlay.remove();
-      this._triggerAutosaveImmediate();
       await this.flushAutosave();
     });
     actions.append(saveBtn, cancelBtn);
