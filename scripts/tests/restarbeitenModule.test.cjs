@@ -364,8 +364,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(style, /restarbeiten-editbox__metaRow--status\{[^}]*align-items:end/);
     assert.match(style, /restarbeiten-editbox__metaDate/);
     assert.match(style, /restarbeiten-editbox__topBar\{[^}]*display:flex/);
-    assert.match(style, /restarbeiten-editbox__body\{[^}]*display:flex/);
-    assert.match(style, /restarbeiten-editbox__rightGroup\{[^}]*display:flex/);
+    assert.match(style, /restarbeiten-editbox__body\{[^}]*display:grid/);
+    assert.match(style, /restarbeiten-editbox__rightGroup\{[^}]*display:grid/);
     assert.match(style, /restarbeiten-editbox__rightGroup\{[^}]*justify-content:flex-end/);
     assert.doesNotMatch(style, /calc\(100% - 3cm\)/);
     assert.doesNotMatch(style, /width:60%/);

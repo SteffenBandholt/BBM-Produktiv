@@ -7,8 +7,8 @@ const CSS_TEXT = `
 .restarbeiten-editbox__topBar{display:flex;align-items:center;justify-content:flex-start;gap:8px;min-height:22px;outline:1px solid rgba(244,114,182,.45)}
 .restarbeiten-editbox__title{font-size:11px;font-weight:700;line-height:1.1;white-space:nowrap}
 .restarbeiten-editbox__topBar .restarbeiten-editbox__classActions--top{margin:0 auto 2px}
-.restarbeiten-editbox__body{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:nowrap;outline:1px solid rgba(34,197,94,.35)}
-.restarbeiten-editbox__main{display:flex;align-items:flex-start;gap:10px;min-width:0;flex:1 1 auto;width:auto;outline:1px solid rgba(239,68,68,.35)}
+.restarbeiten-editbox__body{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:18px;outline:1px solid rgba(34,197,94,.35)}
+.restarbeiten-editbox__main{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:start;gap:10px;min-width:0;outline:1px solid rgba(239,68,68,.35)}
 .restarbeiten-editbox__textRail{display:grid;gap:8px;width:84px;flex:0 0 84px;align-content:start;outline:1px solid rgba(248,113,113,.5)}
 .restarbeiten-editbox__railRow{display:flex;align-items:center;gap:5px;min-height:22px}
 .restarbeiten-editbox__railLabel{font-size:9px;font-weight:700;line-height:1.1;min-width:0}
@@ -16,7 +16,7 @@ const CSS_TEXT = `
 .restarbeiten-editbox__railDictation{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid #bfd2d2;border-radius:999px;font-size:11px;line-height:1;background:#fff}
 .restarbeiten-editbox__inputSlot{display:block;width:100%;min-width:0}
 .restarbeiten-editbox__inputSlot .restarbeiten-editbox__control{width:100%;box-sizing:border-box}
-.restarbeiten-editbox__rightGroup{display:flex;align-items:flex-start;justify-content:flex-end;gap:12px;flex:0 0 auto;width:max-content;min-width:0;outline:1px solid rgba(16,185,129,.35)}
+.restarbeiten-editbox__rightGroup{display:grid;grid-template-columns:auto auto;align-items:start;justify-content:flex-end;gap:12px;flex:0 0 auto;width:max-content;min-width:0;outline:1px solid rgba(16,185,129,.35)}
 .restarbeiten-editbox__textColumn,.restarbeiten-editbox__meta{display:grid;gap:5px;width:max-content}
 .restarbeiten-editbox__textColumn{justify-items:start;flex:1 1 auto;width:100%;max-width:none}
 .restarbeiten-editbox__textColumn{outline:1px solid rgba(245,158,11,.35)}
@@ -54,7 +54,7 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-editbox__create{min-height:18px;padding:0 6px;justify-self:start;border:1px solid #cfcfcf;border-radius:6px;background:#f5f5f5;font-size:8px;font-weight:700}
 .restarbeiten-editbox__create--right{justify-self:end}
 .restarbeiten-editbox__status{font-size:8px;opacity:.8}
-@media (max-width:900px){.restarbeiten-editbox__body{display:grid;grid-template-columns:1fr}.restarbeiten-editbox__rightGroup{display:grid;grid-template-columns:1fr;width:100%}.restarbeiten-editbox__main{grid-template-columns:1fr;max-width:none;width:100%;flex:none}.restarbeiten-editbox__locationGrid{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none;width:100%}}
+@media (max-width:900px){.restarbeiten-editbox__body{display:grid;grid-template-columns:1fr}.restarbeiten-editbox__rightGroup{display:grid;grid-template-columns:1fr;width:100%}.restarbeiten-editbox__main{display:grid;grid-template-columns:1fr;max-width:none;width:100%}.restarbeiten-editbox__locationGrid{grid-template-columns:repeat(2,minmax(0,1fr));max-width:none;width:100%}}
 
 [data-bbm-restarbeiten-screen="true"]{display:flex;flex-direction:column;height:100%;min-height:0;background:linear-gradient(180deg,#faf7ef,#f3eee3)}
 .restarbeiten-header{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-bottom:1px solid #bfd2d2;background:linear-gradient(180deg,#d9ead6,#c7e1c1);width:100%;box-sizing:border-box;flex-wrap:wrap}
