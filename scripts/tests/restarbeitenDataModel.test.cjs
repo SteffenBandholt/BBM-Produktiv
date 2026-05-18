@@ -169,6 +169,41 @@ async function runRestarbeitenDataModelTests(run) {
     assert.equal(updated.deleted_at, null);
   }));
 
+
+
+  await run("Create ignoriert externe running_number (auch nach Soft Delete)", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+
+    const rp1 = repo.createRestarbeitItem({ project_id: "p1", short_text: "RP1" });
+    const rp2 = repo.createRestarbeitItem({ project_id: "p1", short_text: "RP2", running_number: 1 });
+    assert.equal(rp1.running_number, 1);
+    assert.equal(rp2.running_number, 2);
+
+    repo.softDeleteRestarbeitItem(rp2.id);
+    const rp3 = repo.createRestarbeitItem({ project_id: "p1", short_text: "RP3", running_number: 1 });
+    assert.equal(rp3.running_number, 3);
+  }));
+
+  await run("Create ignoriert deleted_at; Soft Delete bleibt einziger Loeschpfad", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+
+    const created = repo.createRestarbeitItem({
+      project_id: "p1",
+      short_text: "RP",
+      deleted_at: "2026-05-18T12:00:00.000Z",
+    });
+
+    assert.equal(created.deleted_at, null);
+    assert.equal(repo.listRestarbeitItems("p1").some((x) => x.id === created.id), true);
+
+    const deleted = repo.softDeleteRestarbeitItem(created.id);
+    assert.ok(typeof deleted.deleted_at === "string" && deleted.deleted_at.length > 10);
+    assert.equal(repo.listRestarbeitItems("p1").some((x) => x.id === created.id), false);
+    assert.equal(repo.listRestarbeitItems("p1", { includeDeleted: true }).some((x) => x.id === created.id), true);
+  }));
+
   await run("Soft Delete blendet RP im Listenpfad aus und running_number bleibt stabil", async () => withTemp(({ db, repo }) => {
     const conn = db.initDatabase();
     conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");

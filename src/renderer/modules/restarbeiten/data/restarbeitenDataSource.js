@@ -27,6 +27,8 @@ function buildCreatePayload(projectId, payload = {}) {
   const out = { ...payload, projectId: pid };
   delete out.project_id;
   delete out.id;
+  delete out.deleted_at;
+  delete out.running_number;
   return out;
 }
 

@@ -114,6 +114,8 @@ function registerRestarbeitenIpc({ ipcMain }) {
       delete data.projectId;
       delete data.project_id;
       delete data.id;
+      delete data.deleted_at;
+      delete data.running_number;
       const item = repo.createRestarbeitItem(projectId, data);
       return { ok: true, item };
     } catch (error) {

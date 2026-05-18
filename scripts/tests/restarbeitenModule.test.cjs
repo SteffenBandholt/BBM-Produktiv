@@ -1625,6 +1625,25 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(source.includes("Restpunkte (RP)"), true);
   });
 
+
+  await run("M30.1 Guardrails: Create-Pfade bereinigen running_number/deleted_at", () => {
+    const dsPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js");
+    const ipcPath = path.join(__dirname, "../../src/main/ipc/restarbeitenIpc.js");
+    const repoPath = path.join(__dirname, "../../src/main/db/restarbeitenRepo.js");
+    const ds = fs.readFileSync(dsPath, "utf8");
+    const ipc = fs.readFileSync(ipcPath, "utf8");
+    const repo = fs.readFileSync(repoPath, "utf8");
+
+    assert.match(ds, /delete\s+out\.deleted_at/);
+    assert.match(ds, /delete\s+out\.running_number/);
+    assert.match(ipc, /delete\s+data\.deleted_at/);
+    assert.match(ipc, /delete\s+data\.running_number/);
+    assert.match(repo, /const runningNumber = nextRunning;/);
+    assert.match(repo, /deleted_at:\s*null/);
+    assert.match(ipc, /restarbeiten:softDeleteItem/);
+    assert.doesNotMatch(ipc, /restarbeiten:deleteItem/);
+  });
+
 }
 
 module.exports = { runRestarbeitenModuleTests };
