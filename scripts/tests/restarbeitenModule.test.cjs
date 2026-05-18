@@ -398,7 +398,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(ipcSource, /restarbeiten:updateItem/);
     assert.match(preload, /restarbeitenCreateItem/);
     assert.match(preload, /restarbeitenUpdateItem/);
-    assert.match(ipc, /restarbeiten:softDeleteItem/);
+    assert.match(ipcSource, /restarbeiten:softDeleteItem/);
     assert.match(preload, /restarbeitenSoftDeleteItem/);
 
     const calls = [];
