@@ -8,6 +8,8 @@ function runPrintIpcInternalPdfPreviewTests() {
   assert.match(source, /ipcMain\.handle\("print:toPdfAndPreviewInternal"/);
   assert.match(source, /const outPath = await printToPdf\(p\);/);
   assert.match(source, /openInternalPdfPreview\(\{[\s\S]*filePath: outPath/);
+  assert.match(source, /const \{ pathToFileURL \} = require\("url"\);/);
+  assert.match(source, /const pdfUrl = pathToFileURL\(normalizedPath\)\.toString\(\);/);
   assert.doesNotMatch(source, /print:toPdfAndPreviewInternal[\s\S]*shell\.openPath/);
 
   assert.match(source, /ipcMain\.handle\("print:toPdfAndOpen"/);

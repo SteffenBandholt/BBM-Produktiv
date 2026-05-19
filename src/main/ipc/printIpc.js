@@ -14,6 +14,7 @@
 const { ipcMain, app, shell, BrowserWindow } = require("electron");
 const fs = require("fs");
 const path = require("path");
+const { pathToFileURL } = require("url");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");
 const { getPrintData } = require("../print/printData");
 const {
@@ -328,7 +329,7 @@ function openInternalPdfPreview({ filePath, title } = {}) {
     win.setMenuBarVisibility(false);
   } catch (_e) {}
 
-  const pdfUrl = `file://${normalizedPath.replace(/\/g, "/")}`;
+  const pdfUrl = pathToFileURL(normalizedPath).toString();
   return win.loadURL(pdfUrl).then(() => {
     try { win.show(); win.focus(); } catch (_e) {}
     return { ok: true, filePath: normalizedPath };
