@@ -1819,9 +1819,10 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(source.includes("Restpunkte (RP)"), true);
   });
 
-  await run("M33.1 Restarbeiten-Druck: Button, Filter-Payload, deleted_at, keine Fotos, Leerfall", async () => {
+  await run("M33.5 Restarbeiten-Druck: Button, Preview-Payload, deleted_at, keine Fotos, Leerfall", async () => {
     const prevWindow = globalThis.window;
     const prevDocument = globalThis.document;
+    const previewCalls = [];
     const printCalls = [];
     const statusCalls = [];
     const items = [
@@ -1845,6 +1846,7 @@ async function runRestarbeitenModuleTests(run) {
     globalThis.window = {
       bbmPrint: { printPdf: async (payload) => { printCalls.push(payload); return { ok: true }; } },
       bbmDb: {
+        printOpenHtmlPreview: async (payload) => { previewCalls.push(payload); return { ok: true }; },
         restarbeitenGetProjectSettings: async () => ({ ok: true, settings: { level_1_label: "Gebäude", level_2_label: "Stock", level_3_label: "Bereich", level_4_label: "Zone" } }),
         restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
         projectFirmsListByProject: async () => ({ ok: true, list: [] }),
@@ -1869,20 +1871,21 @@ async function runRestarbeitenModuleTests(run) {
       screen._renderList();
       await btnPrint.onclick();
 
-      assert.equal(printCalls.length, 1);
-      assert.equal(printCalls[0].mode, "restarbeiten");
-      assert.equal(printCalls[0].projectId, "p-1");
-      assert.equal(Array.isArray(printCalls[0].restarbeitenRows), true);
-      assert.equal(printCalls[0].restarbeitenRows.length, 1);
-      assert.equal(printCalls[0].restarbeitenRows[0].running_number, 2);
-      assert.equal(printCalls[0].restarbeitenRows[0].item_class, "mangel");
-      assert.deepEqual(printCalls[0].restarbeitenLocationLabels, {
+      assert.equal(previewCalls.length, 1);
+      assert.equal(printCalls.length, 0);
+      assert.equal(previewCalls[0].mode, "restarbeiten");
+      assert.equal(previewCalls[0].projectId, "p-1");
+      assert.equal(Array.isArray(previewCalls[0].restarbeitenRows), true);
+      assert.equal(previewCalls[0].restarbeitenRows.length, 1);
+      assert.equal(previewCalls[0].restarbeitenRows[0].running_number, 2);
+      assert.equal(previewCalls[0].restarbeitenRows[0].item_class, "mangel");
+      assert.deepEqual(previewCalls[0].restarbeitenLocationLabels, {
         level_1_label: "Gebäude",
         level_2_label: "Stock",
         level_3_label: "Bereich",
         level_4_label: "Zone",
       });
-      const row = printCalls[0].restarbeitenRows[0];
+      const row = previewCalls[0].restarbeitenRows[0];
       for (const key of ["running_number","item_class","short_text","long_text","location_level_1","location_level_2","location_level_3","location_level_4","status","due_date","responsible_label","completed_at","completion_note"]) {
         assert.equal(Object.prototype.hasOwnProperty.call(row, key), true);
       }
@@ -1894,12 +1897,19 @@ async function runRestarbeitenModuleTests(run) {
       screen.filterState.location_level_1 = "Nicht vorhanden";
       screen._renderList();
       await btnPrint.onclick();
-      assert.equal(printCalls.length, 1);
+      assert.equal(previewCalls.length, 1);
+      assert.equal(printCalls.length, 0);
       assert.equal(statusCalls.includes("Keine Restpunkte für den Druck vorhanden."), true);
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
     }
+  });
+
+  await run("M33.5 Preload-Bridge: printOpenHtmlPreview -> print:openHtmlPreview", () => {
+    const preloadPath = path.join(__dirname, "../../src/main/preload.js");
+    const source = fs.readFileSync(preloadPath, "utf8");
+    assert.match(source, /printOpenHtmlPreview:\s*\(data\)\s*=>\s*ipcRenderer\.invoke\("print:openHtmlPreview",\s*data\)/);
   });
 
 

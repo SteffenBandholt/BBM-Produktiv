@@ -2091,3 +2091,8 @@ Wichtig:
   - Standard-Listenpfad blendet soft-gelöschte RP aus; optionaler Include-Flag bleibt für Rohzugriffe möglich.
   - RP-Nummernlogik bleibt stabil ohne Wiederverwendung (Soft-Delete-Datensätze zählen weiterhin in `MAX(running_number)`).
   - keine sichtbare UI-Änderung.
+
+- M33.5 Restarbeiten:
+  - Drucken im Restarbeiten-Header öffnet jetzt den bestehenden V2-Vorschaupfad (`print:openHtmlPreview`) statt direktem PDF-Write.
+  - Payload bleibt modebasiert auf `mode: "restarbeiten"` inklusive gefilterter `restarbeitenRows` und `restarbeitenLocationLabels`.
+  - Restarbeiten-Ordner/`restarbeitenDir` und modebasierter Feature-Guard aus M33.4/M33.4.1 bleiben unverändert.
