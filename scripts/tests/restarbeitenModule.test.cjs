@@ -525,7 +525,6 @@ async function runRestarbeitenModuleTests(run) {
           return { ok: true, item: { id: payload.id, ...payload.patch } };
         },
         restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
-        projectsOpenRestarbeitenDir: async (payload) => { openRestarbeitenDirCalls.push(payload); return { ok: true, dir: "C:/tmp/Restarbeiten" }; },
         restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
         restarbeitenSoftDeleteItem: async (payload) => {
           calls.push({ type: "soft-delete", payload });
@@ -1076,7 +1075,6 @@ async function runRestarbeitenModuleTests(run) {
         restarbeitenGetProjectSettings: async () => ({ ok: true, settings: {} }),
         restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
         restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
-        projectsOpenRestarbeitenDir: async (payload) => { openRestarbeitenDirCalls.push(payload); return { ok: true, dir: "C:/tmp/Restarbeiten" }; },
         restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
         restarbeitenSoftDeleteItem: async (payload) => {
           calls.push({ type: "soft-delete", payload });
@@ -1861,7 +1859,6 @@ async function runRestarbeitenModuleTests(run) {
         restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
         projectFirmsListByProject: async () => ({ ok: true, list: [] }),
         restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
-        projectsOpenRestarbeitenDir: async (payload) => { openRestarbeitenDirCalls.push(payload); return { ok: true, dir: "C:/tmp/Restarbeiten" }; },
       },
     };
     globalThis.document = createFakeDocument();
