@@ -577,7 +577,10 @@ async function runRestarbeitenModuleTests(run) {
       const deleteBtn = screen.editbox.fields.delete_button;
       assert.equal(Boolean(deleteBtn), true);
       assert.equal(deleteBtn.disabled, false);
-      await deleteBtn.click();
+
+      const deleteHandler = deleteBtn._listeners?.click?.[0];
+      assert.equal(typeof deleteHandler, "function");
+      const deletePromise = deleteHandler.call(deleteBtn, { type: "click", preventDefault() {} });
       await Promise.resolve();
       const deleteDialog =
         screen.editbox.root.querySelector?.(".restarbeiten-editbox__deleteDialog") ||
@@ -585,23 +588,33 @@ async function runRestarbeitenModuleTests(run) {
           String(n?.className || "").includes("restarbeiten-editbox__deleteDialog")
         )[0];
       assert.equal(Boolean(deleteDialog), true);
-      assert.match(deleteDialog.textContent, /Diesen Restpunkt wirklich löschen\?/);
+      assert.match(collectText(deleteDialog), /Diesen Restpunkt wirklich löschen\?/);
       const cancelBtn = findButtonByText(deleteDialog, "Abbrechen");
       const confirmDeleteBtn = findButtonByText(deleteDialog, "Löschen");
       assert.equal(Boolean(cancelBtn), true);
       assert.equal(Boolean(confirmDeleteBtn), true);
-      await cancelBtn.click();
+      const cancelHandler = cancelBtn._listeners?.click?.[0];
+      assert.equal(typeof cancelHandler, "function");
+      await cancelHandler.call(cancelBtn, { type: "click", preventDefault() {} });
+      await deletePromise;
       assert.equal(calls.some((call) => call.type === "soft-delete"), false);
 
-      await deleteBtn.click();
+      const deleteHandler2 = deleteBtn._listeners?.click?.[0];
+      assert.equal(typeof deleteHandler2, "function");
+      const deletePromise2 = deleteHandler2.call(deleteBtn, { type: "click", preventDefault() {} });
       await Promise.resolve();
       const deleteDialog2 =
         screen.editbox.root.querySelector?.(".restarbeiten-editbox__deleteDialog") ||
         findNodes(screen.editbox.root, (n) =>
           String(n?.className || "").includes("restarbeiten-editbox__deleteDialog")
         )[0];
+      assert.match(collectText(deleteDialog2), /Diesen Restpunkt wirklich löschen\?/);
       const confirmDeleteBtn2 = findButtonByText(deleteDialog2, "Löschen");
-      await confirmDeleteBtn2.click();
+      assert.equal(Boolean(confirmDeleteBtn2), true);
+      const confirmDeleteHandler2 = confirmDeleteBtn2._listeners?.click?.[0];
+      assert.equal(typeof confirmDeleteHandler2, "function");
+      await confirmDeleteHandler2.call(confirmDeleteBtn2, { type: "click", preventDefault() {} });
+      await deletePromise2;
       assert.equal(calls.find((call) => call.type === "soft-delete")?.payload.id, "r-1");
       assert.equal(screen.selectedItemId, "");
       assert.equal(screen.listHost.children[0].tagName, "UL");
