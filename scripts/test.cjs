@@ -99,6 +99,7 @@ async function main() {
     assert.equal(out.protocolsDir, path.join("C:\\Daten", "bbm", "12 - Test", "Protokolle"));
     assert.equal(out.previewDir, path.join("C:\\Daten", "bbm", "12 - Test", "Vorabzug"));
     assert.equal(out.listsDir, path.join("C:\\Daten", "bbm", "12 - Test", "Listen"));
+    assert.equal(out.restarbeitenDir, path.join("C:\\Daten", "bbm", "12 - Test", "Restarbeiten"));
   });
 
   await runTopsStoreTests(run);
