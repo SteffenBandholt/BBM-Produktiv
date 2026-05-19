@@ -11,7 +11,7 @@
 // Der alte Name bleibt, die Implementierung nutzt jetzt die neue Print-Engine.
 // ============================================================
 
-const { ipcMain, app, shell } = require("electron");
+const { ipcMain, app, shell, BrowserWindow } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");
@@ -299,6 +299,47 @@ function listStoredProjectPdfs({ baseDir, project, kind } = {}) {
   return { ok: true, dir: targetDir, projectFolder, files };
 }
 
+
+
+function openInternalPdfPreview({ filePath, title } = {}) {
+  const rawFilePath = String(filePath || "").trim();
+  if (!rawFilePath) {
+    throw new Error("PDF-Dateipfad fehlt");
+  }
+  const normalizedPath = path.resolve(rawFilePath);
+  if (!fs.existsSync(normalizedPath)) {
+    throw new Error("PDF-Datei nicht gefunden");
+  }
+
+  const win = new BrowserWindow({
+    width: 1100,
+    height: 900,
+    show: false,
+    backgroundColor: "#ffffff",
+    title: normalizeTextPreviewTitle(title),
+    webPreferences: {
+      contextIsolation: true,
+      sandbox: false,
+      nodeIntegration: false,
+    },
+  });
+
+  try {
+    win.setMenuBarVisibility(false);
+  } catch (_e) {}
+
+  const pdfUrl = `file://${normalizedPath.replace(/\/g, "/")}`;
+  return win.loadURL(pdfUrl).then(() => {
+    try { win.show(); win.focus(); } catch (_e) {}
+    return { ok: true, filePath: normalizedPath };
+  });
+}
+
+function normalizeTextPreviewTitle(value) {
+  const text = String(value || "").trim();
+  return text || "PDF Vorschau";
+}
+
 async function _runIpcTask(task) {
   try {
     return await task();
@@ -559,6 +600,23 @@ function registerPrintIpc() {
       const openError = await shell.openPath(outPath);
       if (String(openError || "").trim()) {
         return { ok: false, error: openError, filePath: outPath };
+      }
+      return { ok: true, filePath: outPath };
+    })
+  );
+
+
+  ipcMain.handle("print:toPdfAndPreviewInternal", async (_evt, payload) =>
+    _runIpcTask(async () => {
+      const p = payload || {};
+      _enforceFeature(_featureForPrintMode(p.mode));
+      const outPath = await printToPdf(p);
+      const previewResult = await openInternalPdfPreview({
+        filePath: outPath,
+        title: p.previewTitle || p.title || "PDF Vorschau",
+      });
+      if (previewResult?.ok === false) {
+        return { ok: false, error: previewResult.error || "PDF-Vorschau konnte nicht geöffnet werden.", filePath: outPath };
       }
       return { ok: true, filePath: outPath };
     })

@@ -2122,3 +2122,10 @@ Wichtig:
   - Drucken im Restarbeiten-Header öffnet jetzt den bestehenden V2-Vorschaupfad (`print:openHtmlPreview`) statt direktem PDF-Write.
   - Payload bleibt modebasiert auf `mode: "restarbeiten"` inklusive gefilterter `restarbeitenRows` und `restarbeitenLocationLabels`.
   - Restarbeiten-Ordner/`restarbeitenDir` und modebasierter Feature-Guard aus M33.4/M33.4.1 bleiben unverändert.
+
+
+### M33.10
+- Restarbeiten-Drucken erzeugt PDF weiterhin über den V2-PDF-Pfad.
+- PDF wird im Restarbeiten-Ordner gespeichert.
+- PDF wird intern in der BBM/Chromium-Vorschau angezeigt.
+- Externer Adobe-/Windows-Viewer ist nicht mehr der primäre Restarbeiten-Vorschauweg.
