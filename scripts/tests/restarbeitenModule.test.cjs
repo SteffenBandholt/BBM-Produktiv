@@ -1819,9 +1819,10 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(source.includes("Restpunkte (RP)"), true);
   });
 
-  await run("M33.5 Restarbeiten-Druck: Button, Preview-Payload, deleted_at, keine Fotos, Leerfall", async () => {
+  await run("M33.9 Restarbeiten-Druck: PDF-und-Öffnen-Payload, deleted_at, keine Fotos, Leerfall", async () => {
     const prevWindow = globalThis.window;
     const prevDocument = globalThis.document;
+    const printPdfAndOpenCalls = [];
     const previewCalls = [];
     const printCalls = [];
     const statusCalls = [];
@@ -1844,7 +1845,13 @@ async function runRestarbeitenModuleTests(run) {
       },
     ];
     globalThis.window = {
-      bbmPrint: { printPdf: async (payload) => { printCalls.push(payload); return { ok: true }; } },
+      bbmPrint: {
+        printPdf: async (payload) => { printCalls.push(payload); return { ok: true }; },
+        printPdfAndOpen: async (payload) => {
+          printPdfAndOpenCalls.push(payload);
+          return { ok: true, filePath: "C:/tmp/Restarbeitenliste.pdf" };
+        },
+      },
       bbmDb: {
         printOpenHtmlPreview: async (payload) => { previewCalls.push(payload); return { ok: true }; },
         restarbeitenGetProjectSettings: async () => ({ ok: true, settings: { level_1_label: "Gebäude", level_2_label: "Stock", level_3_label: "Bereich", level_4_label: "Zone" } }),
@@ -1871,17 +1878,18 @@ async function runRestarbeitenModuleTests(run) {
       screen._renderList();
       await btnPrint.onclick();
 
-      assert.equal(previewCalls.length, 1);
-      assert.equal(statusCalls.includes("Druckvorschau geöffnet."), true);
+      assert.equal(printPdfAndOpenCalls.length, 1);
+      assert.equal(previewCalls.length, 0);
+      assert.equal(statusCalls.includes("PDF-Druckvorschau geöffnet."), true);
       assert.equal(printCalls.length, 0);
-      assert.equal(previewCalls[0].mode, "restarbeiten");
-      assert.equal(previewCalls[0].projectId, "p-1");
-      assert.equal(previewCalls[0].devLayoutPreview, false);
-      assert.equal(Array.isArray(previewCalls[0].restarbeitenRows), true);
-      assert.equal(previewCalls[0].restarbeitenRows.length, 1);
-      assert.equal(previewCalls[0].restarbeitenRows[0].running_number, 2);
-      assert.equal(previewCalls[0].restarbeitenRows[0].item_class, "mangel");
-      assert.deepEqual(previewCalls[0].restarbeitenLocationLabels, {
+      assert.equal(printPdfAndOpenCalls[0].mode, "restarbeiten");
+      assert.equal(printPdfAndOpenCalls[0].projectId, "p-1");
+      assert.equal(printPdfAndOpenCalls[0].devLayoutPreview, false);
+      assert.equal(Array.isArray(printPdfAndOpenCalls[0].restarbeitenRows), true);
+      assert.equal(printPdfAndOpenCalls[0].restarbeitenRows.length, 1);
+      assert.equal(printPdfAndOpenCalls[0].restarbeitenRows[0].running_number, 2);
+      assert.equal(printPdfAndOpenCalls[0].restarbeitenRows[0].item_class, "mangel");
+      assert.deepEqual(printPdfAndOpenCalls[0].restarbeitenLocationLabels, {
         level_1_label: "Gebäude",
         level_2_label: "Stock",
         level_3_label: "Bereich",
