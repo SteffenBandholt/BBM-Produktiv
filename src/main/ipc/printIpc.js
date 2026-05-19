@@ -11,7 +11,7 @@
 // Der alte Name bleibt, die Implementierung nutzt jetzt die neue Print-Engine.
 // ============================================================
 
-const { ipcMain } = require("electron");
+const { ipcMain, app } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");

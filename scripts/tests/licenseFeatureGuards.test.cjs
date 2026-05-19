@@ -37,6 +37,18 @@ async function runLicenseFeatureGuardTests(run) {
   const topsScreenSource = read("src/renderer/modules/protokoll/screens/TopsScreen.js");
   const dictationControllerSource = read("src/renderer/features/audio-dictation/DictationController.js");
 
+  await run("License-Guard: printIpc importiert ipcMain+app und Preview bleibt nicht DEV-only", () => {
+    assert.match(printIpc, /const\s*\{\s*ipcMain\s*,\s*app\s*\}\s*=\s*require\("electron"\)/);
+    assert.doesNotMatch(printIpc, /print:openHtmlPreview[\s\S]*if\s*\(\s*app\.isPackaged\s*\)/);
+  });
+
+  await run("License-Guard: printIpc nutzt app weiter fuer Hidden-PDF-Flow und Metadaten", () => {
+    assert.equal(printIpc.includes('app.getPath("downloads")'), true);
+    assert.equal(printIpc.includes('app.getPath("temp")'), true);
+    assert.equal(printIpc.includes('app.getVersion ? app.getVersion() : ""'), true);
+    assert.equal(printIpc.includes('app.isPackaged ? "STABLE" : "DEV"'), true);
+  });
+
   await run("License-Guard: PDF-IPC nutzt modebasierte Feature-Zuordnung", () => {
     assert.equal(printIpc.includes("function _featureForPrintMode(mode)"), true);
     assert.equal(printIpc.includes('if (m === "restarbeiten") return "restarbeiten";'), true);
