@@ -1887,7 +1887,7 @@ async function runRestarbeitenModuleTests(run) {
       screen._renderList();
       await btnPrint.onclick();
 
-      assert.equal(printPdfAndPreviewInternalCalls.length, 2);
+      assert.equal(printPdfAndPreviewInternalCalls.length, 1);
       assert.equal(previewCalls.length, 0);
       assert.equal(statusCalls.includes("PDF-Druckvorschau geöffnet."), true);
       assert.equal(printCalls.length, 0);
@@ -1914,15 +1914,18 @@ async function runRestarbeitenModuleTests(run) {
 
       await btnQuicklanePrint.onclick();
       assert.equal(printPdfAndPreviewInternalCalls.length, 2);
-      assert.equal(printPdfAndPreviewInternalCalls[1].mode, "restarbeiten");
-      assert.equal(printPdfAndPreviewInternalCalls[1].devLayoutPreview, false);
-      assert.equal(printPdfAndPreviewInternalCalls[1].restarbeitenRows.length, 1);
+      for (const payload of printPdfAndPreviewInternalCalls.slice(0, 2)) {
+        assert.equal(payload.mode, "restarbeiten");
+        assert.equal(payload.devLayoutPreview, false);
+        assert.equal(Array.isArray(payload.restarbeitenRows), true);
+        assert.equal(payload.restarbeitenRows.length, 1);
+      }
 
       screen.filterState.item_class = "mangel";
       screen.filterState.location_level_1 = "Nicht vorhanden";
       screen._renderList();
       await btnPrint.onclick();
-      assert.equal(printPdfAndPreviewInternalCalls.length, 1);
+      assert.equal(printPdfAndPreviewInternalCalls.length, 2);
       assert.equal(previewCalls.length, 0);
       assert.equal(printCalls.length, 0);
       assert.equal(statusCalls.includes("Keine Restpunkte für den Druck vorhanden."), true);
