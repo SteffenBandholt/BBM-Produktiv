@@ -33,6 +33,7 @@ function buildStoragePreviewPaths({ baseDir, project } = {}) {
     protocolsDir: path.join(projectBaseDir, "Protokolle"),
     previewDir: path.join(projectBaseDir, "Vorabzug"),
     listsDir: path.join(projectBaseDir, "Listen"),
+    restarbeitenDir: path.join(projectBaseDir, "Restarbeiten"),
   };
 }
 

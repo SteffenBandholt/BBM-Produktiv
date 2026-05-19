@@ -37,8 +37,10 @@ async function runLicenseFeatureGuardTests(run) {
   const topsScreenSource = read("src/renderer/modules/protokoll/screens/TopsScreen.js");
   const dictationControllerSource = read("src/renderer/features/audio-dictation/DictationController.js");
 
-  await run("License-Guard: PDF-IPC prüft Protokoll-Modul", () => {
-    assert.equal(printIpc.includes('_enforceFeature("protokoll");'), true);
+  await run("License-Guard: PDF-IPC nutzt modebasierte Feature-Zuordnung", () => {
+    assert.equal(printIpc.includes("function _featureForPrintMode(mode)"), true);
+    assert.equal(printIpc.includes('if (m === "restarbeiten") return "restarbeiten";'), true);
+    assert.equal(printIpc.includes("_enforceFeature(_featureForPrintMode(p.mode));"), true);
   });
 
   await run("License-Guard: Audio-IPC prüft Diktat-Feature", () => {

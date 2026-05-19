@@ -100,6 +100,7 @@ function _folderForMode(mode) {
   if (m === "protocol") return "Protokolle";
   if (m === "preview" || m === "vorabzug") return "Vorabzug";
   if (m === "todo" || m === "topsall" || m === "firms") return "Listen";
+  if (m === "restarbeiten") return "Restarbeiten";
   return "PDF";
 }
 
@@ -313,6 +314,12 @@ function _enforceFeature(feature) {
   enforceLicensedFeature(feature);
 }
 
+function _featureForPrintMode(mode) {
+  const m = String(mode || "").trim().toLowerCase();
+  if (m === "restarbeiten") return "restarbeiten";
+  return "protokoll";
+}
+
 function attachPrintDebugPipes(win, jobId) {
   win.webContents.on("console-message", (_event, level, message, line, sourceId) => {
     const lvl = ["LOG", "WARN", "ERROR", "DEBUG"][level] || String(level);
@@ -476,8 +483,8 @@ function registerPrintIpc() {
   // Stable technical service entry points for renderer callers.
   ipcMain.handle("print:getData", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
       const p = payload || {};
+      _enforceFeature(_featureForPrintMode(p.mode));
       const orientation = _resolveRequestedOrientation(p);
       const data = await getPrintData({
         mode: p.mode,
@@ -498,12 +505,12 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:openHtmlPreview", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
+      const p = payload || {};
+      _enforceFeature(_featureForPrintMode(p.mode));
       if (app.isPackaged) {
         return { ok: false, error: "DEV-only." };
       }
 
-      const p = payload || {};
       const orientation = _resolveRequestedOrientation(p);
       const jobId = _randId();
       const win = createPrintWindow({ show: true, devTools: false });
@@ -542,13 +549,14 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:toPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
+      const p = payload || {};
+      _enforceFeature(_featureForPrintMode(p.mode));
       console.log(
         `[PRINT_ACTIVE] handler=print:toPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""
         } meetingId=${payload?.meetingId ?? ""}`
       );
-      const outPath = await printToPdf(payload || {});
+      const outPath = await printToPdf(p);
       return { ok: true, filePath: outPath };
     })
   );
@@ -556,8 +564,8 @@ function registerPrintIpc() {
 
   ipcMain.handle("protocol:findStoredPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
       const p = payload || {};
+      _enforceFeature(_featureForPrintMode(p.mode));
       return findStoredProtocolPdf({
         baseDir: p.baseDir,
         project: p.project || null,
@@ -569,8 +577,8 @@ function registerPrintIpc() {
 
   ipcMain.handle("firms:listStoredPdfs", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
       const p = payload || {};
+      _enforceFeature(_featureForPrintMode(p.mode));
       return listStoredFirmsPdfs({
         baseDir: p.baseDir,
         project: p.project || null,
@@ -580,8 +588,8 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:listStoredProjectPdfs", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
       const p = payload || {};
+      _enforceFeature(_featureForPrintMode(p.mode));
       return listStoredProjectPdfs({
         baseDir: p.baseDir,
         project: p.project || null,
@@ -592,13 +600,14 @@ function registerPrintIpc() {
 
   ipcMain.handle("print:htmlToPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
-      _enforceFeature("protokoll");
+      const p = payload || {};
+      _enforceFeature(_featureForPrintMode(p.mode));
       console.log(
         `[PRINT_ACTIVE] handler=print:htmlToPdf payload.mode=${payload?.mode || ""} projectId=${
           payload?.projectId ?? ""
         } meetingId=${payload?.meetingId ?? ""}`
       );
-      const outPath = await printToPdf(payload || {});
+      const outPath = await printToPdf(p);
       return { ok: true, filePath: outPath };
     })
   );
