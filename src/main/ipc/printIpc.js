@@ -531,11 +531,13 @@ function registerPrintIpc() {
           orientation,
           testOrientation: p.testOrientation || null,
           debug: false,
-          devLayoutPreview: true,
+          devLayoutPreview: p.devLayoutPreview === true,
           layoutCalibrationEnabled:
-            p.layoutCalibrationEnabled == null
-              ? _readLayoutCalibrationEnabled()
-              : _normalizeLayoutCalibrationEnabled(p.layoutCalibrationEnabled, _readLayoutCalibrationEnabled()),
+            p.devLayoutPreview === true
+              ? p.layoutCalibrationEnabled == null
+                ? _readLayoutCalibrationEnabled()
+                : _normalizeLayoutCalibrationEnabled(p.layoutCalibrationEnabled, _readLayoutCalibrationEnabled())
+              : false,
         });
       });
 

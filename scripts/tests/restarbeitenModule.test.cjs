@@ -1876,6 +1876,7 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(printCalls.length, 0);
       assert.equal(previewCalls[0].mode, "restarbeiten");
       assert.equal(previewCalls[0].projectId, "p-1");
+      assert.equal(previewCalls[0].devLayoutPreview, false);
       assert.equal(Array.isArray(previewCalls[0].restarbeitenRows), true);
       assert.equal(previewCalls[0].restarbeitenRows.length, 1);
       assert.equal(previewCalls[0].restarbeitenRows[0].running_number, 2);
