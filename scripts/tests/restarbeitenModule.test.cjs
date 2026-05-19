@@ -285,7 +285,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /restarbeiten-list__photosToggle/);
     assert.match(content, /dataset\.expanded/);
     assert.doesNotMatch(content, /tr\.innerHTML|innerHTML\s*=\s*\[/);
-    assert.doesNotMatch(content, /Diktat|Druck|Mail|Loeschen|Archivieren/);
+    assert.doesNotMatch(content, /Diktat|Mail|Archivieren/);
+    assert.match(content, /Drucken/);
+    assert.match(content, /_printFilteredList/);
     assert.match(styleContent, /restarbeiten-sheet__list/);
   });
 
@@ -576,7 +578,12 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(Boolean(deleteBtn), true);
       assert.equal(deleteBtn.disabled, false);
       await deleteBtn.click();
-      const deleteDialog = screen.editbox.root.querySelector?.(".restarbeiten-editbox__deleteDialog");
+      await Promise.resolve();
+      const deleteDialog =
+        screen.editbox.root.querySelector?.(".restarbeiten-editbox__deleteDialog") ||
+        findNodes(screen.editbox.root, (n) =>
+          String(n?.className || "").includes("restarbeiten-editbox__deleteDialog")
+        )[0];
       assert.equal(Boolean(deleteDialog), true);
       assert.match(deleteDialog.textContent, /Diesen Restpunkt wirklich löschen\?/);
       const cancelBtn = findButtonByText(deleteDialog, "Abbrechen");
@@ -587,7 +594,12 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(calls.some((call) => call.type === "soft-delete"), false);
 
       await deleteBtn.click();
-      const deleteDialog2 = screen.editbox.root.querySelector?.(".restarbeiten-editbox__deleteDialog");
+      await Promise.resolve();
+      const deleteDialog2 =
+        screen.editbox.root.querySelector?.(".restarbeiten-editbox__deleteDialog") ||
+        findNodes(screen.editbox.root, (n) =>
+          String(n?.className || "").includes("restarbeiten-editbox__deleteDialog")
+        )[0];
       const confirmDeleteBtn2 = findButtonByText(deleteDialog2, "Löschen");
       await confirmDeleteBtn2.click();
       assert.equal(calls.find((call) => call.type === "soft-delete")?.payload.id, "r-1");
@@ -719,7 +731,10 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(dataSource, /importRestarbeitAttachments\(/);
     assert.match(dataSource, /deleteRestarbeitAttachment\(/);
     assert.doesNotMatch(screen, /innerHTML\s*=/);
-    assert.doesNotMatch(editbox + view + screen, /Diktat|Druck|Mail|Bildbearbeitung/);
+    assert.doesNotMatch(editbox + view, /Diktat|Druck|Mail|Bildbearbeitung/);
+    assert.doesNotMatch(screen, /Diktat|Mail|Bildbearbeitung/);
+    assert.match(screen, /Drucken/);
+    assert.match(screen, /_printFilteredList/);
   });
 
 
