@@ -1,11 +1,12 @@
 ﻿// src/main/ipc/projectsIpc.js
 // TECH-CONTRACT (verbindlich): docs/UI-TECH-CONTRACT.md
 // CONTRACT-VERSION: 1.0.1
-const { ipcMain, app } = require("electron");
+const { ipcMain, app, shell } = require("electron");
 const { appSettingsGetMany } = require("../db/appSettingsRepo");
 const projectsRepo = require("../db/projectsRepo");
 const { buildStoragePreviewPaths } = require("./projectStoragePaths");
 const { toLicenseErrorPayload } = require("../licensing/featureGuard");
+const fs = require("fs");
 
 function _isLicenseError(err) {
   const message = String(err?.message || "");
@@ -129,6 +130,36 @@ function registerProjectsIpc() {
       return { ok: true, ...preview };
     })
   );
+
+  ipcMain.handle("projects:openRestarbeitenDir", async (_e, data) => {
+    let dir = "";
+    try {
+      const d = data && typeof data === "object" ? data : {};
+      const settings = appSettingsGetMany(["pdf.protocolsDir"]) || {};
+      const baseDirRaw = String(settings["pdf.protocolsDir"] || "").trim();
+      const baseDir = baseDirRaw || app.getPath("downloads");
+      const preview = buildStoragePreviewPaths({
+        baseDir,
+        project: {
+          project_number: d.project_number ?? d.projectNumber ?? d.number ?? "",
+          short: d.short ?? "",
+          name: d.name ?? "",
+        },
+      });
+      dir = String(preview.restarbeitenDir || "").trim();
+      if (!dir) return { ok: false, error: "Ordnerpfad fehlt", dir: "" };
+      fs.mkdirSync(dir, { recursive: true });
+      const errorText = await shell.openPath(dir);
+      if (errorText) return { ok: false, error: String(errorText), dir };
+      return { ok: true, dir };
+    } catch (err) {
+      if (_isLicenseError(err)) {
+        return toLicenseErrorPayload(err);
+      }
+      return { ok: false, error: err?.message || String(err), dir };
+    }
+  });
+
 }
 
 module.exports = { registerProjectsIpc };

@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   projectsCreate: (data) => ipcRenderer.invoke("projects:create", data),
   projectsUpdate: (data) => ipcRenderer.invoke("projects:update", data),
   projectsStoragePreview: (data) => ipcRenderer.invoke("projects:storagePreview", data),
+  projectsOpenRestarbeitenDir: (data) => ipcRenderer.invoke("projects:openRestarbeitenDir", data),
 
   // Archiv
   projectsArchive: _wrapIdArg("projects:archive", "projectId"),

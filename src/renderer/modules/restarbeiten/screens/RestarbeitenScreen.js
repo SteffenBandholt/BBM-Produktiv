@@ -158,6 +158,7 @@ export default class RestarbeitenScreen {
   _buildQuicklane(doc) {
     this.quicklane = new RestarbeitenQuicklane({
       onPrint: () => this._printFilteredList(),
+      onOpenOutputDir: () => this._openOutputDir(),
     });
     const quicklaneHost = this.quicklane.render(doc);
     this.workArea.append(quicklaneHost);
@@ -711,6 +712,36 @@ export default class RestarbeitenScreen {
     const target = Number(this.sheetArea.scrollHeight || 0) - Number(this.sheetArea.clientHeight || 0);
     this.sheetArea.scrollTop = target > 0 ? target : 0;
     this.createScrollPending = false;
+  }
+
+
+  async _openOutputDir() {
+    if (!this.effectiveProjectId || !this.project) {
+      this.editbox?.setStatus("Ausgabeordner ist nicht verfügbar.");
+      return;
+    }
+    const openDirBridge = globalThis.window?.bbmDb?.projectsOpenRestarbeitenDir;
+    if (typeof openDirBridge !== "function") {
+      this.editbox?.setStatus("Ausgabeordner ist nicht verfügbar.");
+      return;
+    }
+
+    try {
+      const result = await openDirBridge({
+        project_number: this.project.project_number || "",
+        short: this.project.short || "",
+        name: this.project.name || "",
+      });
+      if (result?.ok === false) {
+        const errorText = normalizeText(result?.error) || "Unbekannter Fehler";
+        this.editbox?.setStatus(`Ausgabeordner konnte nicht geöffnet werden: ${errorText}`);
+        return;
+      }
+      this.editbox?.setStatus("Ausgabeordner geöffnet.");
+    } catch (error) {
+      console.warn("[Restarbeiten] Ausgabeordner konnte nicht geöffnet werden", error);
+      this.editbox?.setStatus("Ausgabeordner konnte nicht geöffnet werden.");
+    }
   }
 
   async _printFilteredList() {

@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M34.2 Restarbeiten: Quicklane-Ausgabe um „Ordner öffnen“ ergänzt:
+  - RestarbeitenQuicklane enthält in der Ausgabegruppe jetzt `Drucken` und `Ordner öffnen`.
+  - `Ordner öffnen` nutzt den neuen IPC-/Preload-Pfad `projects:openRestarbeitenDir` / `projectsOpenRestarbeitenDir` und öffnet den Restarbeiten-Ausgabeordner des aktuellen Projekts.
+  - Die Ordnerauflösung basiert weiter auf `buildStoragePreviewPaths(...)` inkl. `restarbeitenDir`; der Ordner wird bei Bedarf erstellt und dann per `shell.openPath(dir)` geöffnet.
+  - M33-Druckpfad (`printPdfAndPreviewInternal`) inkl. interner BBM/Chromium-PDF-Vorschau bleibt unverändert.
+  - Header-/Filterleisten-Reorganisation bleibt bewusst offen.
+
 - M34.1 Restarbeiten: rechte Ausgabe-Toolbox/Quicklane vorbereitet:
   - RestarbeitenScreen rendert jetzt eine modulnahe rechte Quicklane (`RestarbeitenQuicklane`) innerhalb des Arbeitsbereichs.
   - Die Quicklane enthält eine kompakte Ausgabegruppe mit `Drucken` und nutzt denselben bestehenden M33-Druck-/Vorschaupfad.
