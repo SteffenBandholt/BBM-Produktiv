@@ -407,6 +407,12 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(editbox, /textColumn\.append\(\s*classActions,/);
     assert.match(editbox, /const markerField = createField\(doc, "", marker\)/);
     assert.match(editbox, /\+ Restpunkt/);
+    assert.match(editbox, /textContent = "Löschen"/);
+    assert.match(editbox, /Diesen Restpunkt wirklich löschen\?/);
+    assert.match(editbox, /_openDeleteDialog\(/);
+    assert.match(editbox, /Abbrechen/);
+    assert.doesNotMatch(editbox, /globalThis\.confirm/);
+    assert.match(editbox, /deleteBtn\.disabled = true/);
     assert.doesNotMatch(editbox, /textContent\s*=\s*"Speichern"/);
     assert.doesNotMatch(editbox, /restarbeiten-editbox__save/);
     assert.doesNotMatch(editbox, /saveBtn/);
@@ -478,6 +484,16 @@ async function runRestarbeitenModuleTests(run) {
         item_class: "rest",
         status: "offen",
       },
+      {
+        id: "r-9",
+        running_number: 9,
+        created_at: "2026-05-16",
+        location_level_1: "Haus B",
+        short_text: "Zweit",
+        long_text: "Noch da",
+        item_class: "rest",
+        status: "offen",
+      },
     ];
     globalThis.window = {
       bbmDb: {
@@ -508,6 +524,12 @@ async function runRestarbeitenModuleTests(run) {
         },
         restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
         restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
+        restarbeitenSoftDeleteItem: async (payload) => {
+          calls.push({ type: "soft-delete", payload });
+          const idx = items.findIndex((item) => String(item.id) === String(payload.id));
+          if (idx >= 0) items[idx].deleted_at = "2026-05-18T12:00:00.000Z";
+          return { ok: true, item: idx >= 0 ? { ...items[idx] } : null };
+        },
         projectFirmsListByProject: async () => ({
           ok: true,
           list: [
@@ -534,6 +556,7 @@ async function runRestarbeitenModuleTests(run) {
       await screen.load();
 
       assert.equal(screen.listHost.children[0].tagName, "UL");
+      assert.equal(screen.selectedItemId, "r-1");
       const row = screen.listHost.children[0].children[0];
       row.dispatchEvent({ type: "click" });
       assert.equal(screen.selectedItemId, "r-1");
@@ -548,6 +571,30 @@ async function runRestarbeitenModuleTests(run) {
 
       assert.equal(calls.find((call) => call.type === "update")?.payload.id, "r-1");
       assert.equal(calls.find((call) => call.type === "update")?.payload.patch.short_text, "Neu");
+
+      const deleteBtn = screen.editbox.fields.delete_button;
+      assert.equal(Boolean(deleteBtn), true);
+      assert.equal(deleteBtn.disabled, false);
+      await deleteBtn.click();
+      const deleteDialog = screen.editbox.root.querySelector?.(".restarbeiten-editbox__deleteDialog");
+      assert.equal(Boolean(deleteDialog), true);
+      assert.match(deleteDialog.textContent, /Diesen Restpunkt wirklich löschen\?/);
+      const cancelBtn = findButtonByText(deleteDialog, "Abbrechen");
+      const confirmDeleteBtn = findButtonByText(deleteDialog, "Löschen");
+      assert.equal(Boolean(cancelBtn), true);
+      assert.equal(Boolean(confirmDeleteBtn), true);
+      await cancelBtn.click();
+      assert.equal(calls.some((call) => call.type === "soft-delete"), false);
+
+      await deleteBtn.click();
+      const deleteDialog2 = screen.editbox.root.querySelector?.(".restarbeiten-editbox__deleteDialog");
+      const confirmDeleteBtn2 = findButtonByText(deleteDialog2, "Löschen");
+      await confirmDeleteBtn2.click();
+      assert.equal(calls.find((call) => call.type === "soft-delete")?.payload.id, "r-1");
+      assert.equal(screen.selectedItemId, "");
+      assert.equal(screen.listHost.children[0].tagName, "UL");
+      assert.equal(screen.listHost.children[0].children.length >= 1, true);
+      assert.match(screen.editHost.children[0].textContent, /Einen Restpunkt auswaehlen oder ueber \+ Restpunkt neu anlegen\./);
 
       await screen._createRestarbeit();
       assert.equal(calls.find((call) => call.type === "create")?.payload.projectId, "p-1");
@@ -623,6 +670,12 @@ async function runRestarbeitenModuleTests(run) {
         projectFirmsListByProject: async () => ({ ok: true, list: [] }),
         restarbeitenListAttachments: async () => ({ ok: false, error: "kaputt" }),
         restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
+        restarbeitenSoftDeleteItem: async (payload) => {
+          calls.push({ type: "soft-delete", payload });
+          const idx = items.findIndex((item) => String(item.id) === String(payload.id));
+          if (idx >= 0) items[idx].deleted_at = "2026-05-18T12:00:00.000Z";
+          return { ok: true, item: idx >= 0 ? { ...items[idx] } : null };
+        },
       },
     };
     globalThis.document = createFakeDocument();
@@ -995,6 +1048,12 @@ async function runRestarbeitenModuleTests(run) {
         restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
         restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
         restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
+        restarbeitenSoftDeleteItem: async (payload) => {
+          calls.push({ type: "soft-delete", payload });
+          const idx = items.findIndex((item) => String(item.id) === String(payload.id));
+          if (idx >= 0) items[idx].deleted_at = "2026-05-18T12:00:00.000Z";
+          return { ok: true, item: idx >= 0 ? { ...items[idx] } : null };
+        },
         projectFirmsListByProject: async () => ({ ok: true, list: [{ id: "f1", name: "Firma A" }] }),
         restarbeitenCreateItem: async () => ({ ok: true, item: { id: "r-2" } }),
         restarbeitenUpdateItem: async (payload) => {

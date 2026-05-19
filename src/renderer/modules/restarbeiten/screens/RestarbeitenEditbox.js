@@ -65,10 +65,11 @@ function normalizeEditboxStatus(value) {
 }
 
 export default class RestarbeitenEditbox {
-  constructor({ documentRef = globalThis.document, onSave = null, onCreate = null } = {}) {
+  constructor({ documentRef = globalThis.document, onSave = null, onCreate = null, onDelete = null } = {}) {
     this.document = documentRef || globalThis.document;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.onCreate = typeof onCreate === "function" ? onCreate : null;
+    this.onDelete = typeof onDelete === "function" ? onDelete : null;
     this.root = null;
     this.form = null;
     this.titleEl = null;
@@ -92,6 +93,7 @@ export default class RestarbeitenEditbox {
     this.lastSaveFailed = false;
     this.failedDraftKey = "";
     this.noteDraftValue = "";
+    this.isDeleting = false;
   }
 
   _getLocationLabel(index) {
@@ -257,6 +259,31 @@ export default class RestarbeitenEditbox {
       createBtn.className += " restarbeiten-editbox__create--right";
       classActions.append(createBtn);
     }
+
+    const deleteBtn = this.onDelete ? doc.createElement("button") : null;
+    if (deleteBtn) {
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "Löschen";
+      deleteBtn.title = "Löschen";
+      deleteBtn.className = "restarbeiten-editbox__delete";
+      deleteBtn.disabled = true;
+      deleteBtn.addEventListener("click", async () => {
+        const selectedId = normalizeText(this.currentItem?.id);
+        if (!selectedId || this.isDeleting) return;
+        const approve = await this._openDeleteDialog();
+        if (!approve) return;
+        this.isDeleting = true;
+        deleteBtn.disabled = true;
+        try {
+          await this.flushAutosave();
+          await this.onDelete?.(selectedId);
+        } finally {
+          this.isDeleting = false;
+          deleteBtn.disabled = !normalizeText(this.currentItem?.id);
+        }
+      });
+      classActions.append(deleteBtn);
+    }
     const responsibleField = createField(doc, "Verantwortlich", responsibleProjectFirmId);
     responsibleField.className += " restarbeiten-editbox__responsibleField";
     const completedAt = createInput(doc, "date");
@@ -315,6 +342,7 @@ export default class RestarbeitenEditbox {
       location_level_2__label: loc2Field.querySelector?.(".restarbeiten-editbox__label") || loc2Field.children[0],
       location_level_3__label: loc3Field.querySelector?.(".restarbeiten-editbox__label") || loc3Field.children[0],
       location_level_4__label: loc4Field.querySelector?.(".restarbeiten-editbox__label") || loc4Field.children[0],
+      delete_button: deleteBtn,
     };
     this._setItemClass = setItemClass;
     this._wireLocationDatalists();
@@ -387,6 +415,38 @@ export default class RestarbeitenEditbox {
     card.append(prompt, textarea, actions);
     overlay.append(card);
     this.root?.append(overlay);
+  }
+
+
+  _openDeleteDialog() {
+    const doc = this.document;
+    return new Promise((resolve) => {
+      const overlay = doc.createElement("div");
+      overlay.className = "restarbeiten-editbox__deleteDialog";
+      const card = doc.createElement("div");
+      const prompt = doc.createElement("p");
+      prompt.textContent = "Diesen Restpunkt wirklich löschen?";
+      const actions = doc.createElement("div");
+      const deleteBtn = doc.createElement("button");
+      deleteBtn.type = "button";
+      deleteBtn.textContent = "Löschen";
+      const cancelBtn = doc.createElement("button");
+      cancelBtn.type = "button";
+      cancelBtn.textContent = "Abbrechen";
+      const close = (approved) => {
+        if (typeof overlay.remove === "function") overlay.remove();
+        else if (overlay.parentElement && Array.isArray(overlay.parentElement.children)) {
+          overlay.parentElement.children = overlay.parentElement.children.filter((child) => child !== overlay);
+        }
+        resolve(approved === true);
+      };
+      cancelBtn.addEventListener("click", () => close(false));
+      deleteBtn.addEventListener("click", () => close(true));
+      actions.append(deleteBtn, cancelBtn);
+      card.append(prompt, actions);
+      overlay.append(card);
+      this.root?.append(overlay);
+    });
   }
 
   _handleStatusChange() {
@@ -597,6 +657,7 @@ export default class RestarbeitenEditbox {
     this.setProjectFirms(this.projectFirms);
     this._updateTextRailCounters();
     this._updateTitle();
+    if (fields.delete_button) fields.delete_button.disabled = !normalizeText(source.id) || this.isDeleting;
 
     const loadedDraftKey = this._draftKeyFor(this.getDraft());
     this.currentItemDraftKey = loadedDraftKey;

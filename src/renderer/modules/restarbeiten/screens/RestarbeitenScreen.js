@@ -5,6 +5,7 @@ import {
   listResponsibleProjectFirms,
   listRestarbeitAttachments,
   updateRestarbeitItem,
+  softDeleteRestarbeitItem,
 } from "../data/restarbeitenDataSource.js";
 import { mapRestarbeitenStatusLabel, toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
 import RestarbeitenEditbox from "./RestarbeitenEditbox.js";
@@ -144,7 +145,7 @@ export default class RestarbeitenScreen {
     this.editHost = editCanvas;
   }
 
-  async load({ selectItemId = "" } = {}) {
+  async load({ selectItemId = "", keepSelectionEmpty = false } = {}) {
     this.effectiveProjectId = normalizeText(this.projectId || this.project?.id || this.router?.currentProjectId);
 
     if (!this.effectiveProjectId) {
@@ -168,7 +169,9 @@ export default class RestarbeitenScreen {
     this.projectSettings = projectSettings || null;
     this.locationOptions = this._collectLocationOptionsFromRows(this.rows);
 
-    if (selectItemId) {
+    if (keepSelectionEmpty) {
+      this._setSelectedItemId("");
+    } else if (selectItemId) {
       this._setSelectedItemId(selectItemId);
     } else if (!this.selectedItemId && this.rows[0]?.id) {
       this._setSelectedItemId(this.rows[0].id);
@@ -632,6 +635,13 @@ export default class RestarbeitenScreen {
           } finally {
             this.editbox?.setSaving(false);
           }
+        },
+        onDelete: async (itemId) => {
+          if (!normalizeText(itemId)) return;
+          await softDeleteRestarbeitItem(itemId);
+          this.selectedItemId = "";
+          this.attachmentsByItemId.delete(String(itemId));
+          await this.load({ selectItemId: "", keepSelectionEmpty: true });
         },
       });
 
