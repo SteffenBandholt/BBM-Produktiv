@@ -127,6 +127,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   printOpenHtmlPreview: (data) => ipcRenderer.invoke("print:openHtmlPreview", data),
   printHtmlToPdf: (data) => ipcRenderer.invoke("print:htmlToPdf", data),
   printPdf: (data) => ipcRenderer.invoke("print:toPdf", data),
+  printPdfAndOpen: (data) => ipcRenderer.invoke("print:toPdfAndOpen", data),
 
   // ============================================================
   // Tabellenlayouts (intern)
@@ -254,6 +255,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
 
 contextBridge.exposeInMainWorld("bbmPrint", {
   printPdf: (data) => ipcRenderer.invoke("print:toPdf", data),
+  printPdfAndOpen: (data) => ipcRenderer.invoke("print:toPdfAndOpen", data),
   findStoredProtocolPdf: (data) => ipcRenderer.invoke("protocol:findStoredPdf", data),
   listStoredFirmsPdfs: (data) => ipcRenderer.invoke("firms:listStoredPdfs", data),
   listStoredProjectPdfs: (data) => ipcRenderer.invoke("print:listStoredProjectPdfs", data),

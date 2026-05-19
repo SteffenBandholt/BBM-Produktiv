@@ -1887,7 +1887,7 @@ async function runRestarbeitenModuleTests(run) {
         level_3_label: "Bereich",
         level_4_label: "Zone",
       });
-      const row = previewCalls[0].restarbeitenRows[0];
+      const row = printPdfAndOpenCalls[0].restarbeitenRows[0];
       for (const key of ["running_number","item_class","short_text","long_text","location_level_1","location_level_2","location_level_3","location_level_4","status","due_date","responsible_label","completed_at","completion_note"]) {
         assert.equal(Object.prototype.hasOwnProperty.call(row, key), true);
       }
@@ -1899,7 +1899,8 @@ async function runRestarbeitenModuleTests(run) {
       screen.filterState.location_level_1 = "Nicht vorhanden";
       screen._renderList();
       await btnPrint.onclick();
-      assert.equal(previewCalls.length, 1);
+      assert.equal(printPdfAndOpenCalls.length, 1);
+      assert.equal(previewCalls.length, 0);
       assert.equal(printCalls.length, 0);
       assert.equal(statusCalls.includes("Keine Restpunkte für den Druck vorhanden."), true);
     } finally {
@@ -1909,7 +1910,7 @@ async function runRestarbeitenModuleTests(run) {
   });
 
 
-  await run("M33.6 Restarbeiten-Druckvorschau meldet Fehler bei bridge/result/exception", async () => {
+  await run("M33.6 Restarbeiten-PDF-Druckvorschau meldet Fehler bei bridge/result/exception", async () => {
     const prevWindow = globalThis.window;
     const prevDocument = globalThis.document;
     const statusCalls = [];
@@ -1944,31 +1945,31 @@ async function runRestarbeitenModuleTests(run) {
     try {
       // result ok false
       statusCalls.length = 0;
-      let prepared = await buildScreen({ bbmDb: { ...baseDb, printOpenHtmlPreview: async () => ({ ok: false, error: "Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet." }) } });
+      let prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: { printPdfAndOpen: async () => ({ ok: false, error: "Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet." }) } });
       await prepared.btnPrint.onclick();
-      assert.equal(statusCalls.includes("Druckvorschau konnte nicht geöffnet werden: Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet."), true);
+      assert.equal(statusCalls.includes("PDF-Druckvorschau konnte nicht geöffnet werden: Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet."), true);
 
       // bridge fehlt
       statusCalls.length = 0;
-      prepared = await buildScreen({ bbmDb: { ...baseDb } });
+      prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: {} });
       await prepared.btnPrint.onclick();
-      assert.equal(statusCalls.includes("Druckvorschau ist nicht verfügbar."), true);
+      assert.equal(statusCalls.includes("PDF-Druckvorschau ist nicht verfügbar."), true);
 
       // exception
       statusCalls.length = 0;
-      prepared = await buildScreen({ bbmDb: { ...baseDb, printOpenHtmlPreview: async () => { throw new Error("kaputt"); } } });
+      prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: { printPdfAndOpen: async () => { throw new Error("kaputt"); } } });
       await prepared.btnPrint.onclick();
-      assert.equal(statusCalls.includes("Druckvorschau konnte nicht geöffnet werden."), true);
+      assert.equal(statusCalls.includes("PDF-Druckvorschau konnte nicht geöffnet werden."), true);
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
     }
   });
 
-  await run("M33.5 Preload-Bridge: printOpenHtmlPreview -> print:openHtmlPreview", () => {
+  await run("M33.9 Preload-Bridge: printPdfAndOpen -> print:toPdfAndOpen", () => {
     const preloadPath = path.join(__dirname, "../../src/main/preload.js");
     const source = fs.readFileSync(preloadPath, "utf8");
-    assert.match(source, /printOpenHtmlPreview:\s*\(data\)\s*=>\s*ipcRenderer\.invoke\("print:openHtmlPreview",\s*data\)/);
+    assert.match(source, /printPdfAndOpen:\s*\(data\)\s*=>\s*ipcRenderer\.invoke\("print:toPdfAndOpen",\s*data\)/);
   });
 
 
