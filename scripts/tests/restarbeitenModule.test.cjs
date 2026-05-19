@@ -1943,9 +1943,9 @@ async function runRestarbeitenModuleTests(run) {
     try {
       // result ok false
       statusCalls.length = 0;
-      let prepared = await buildScreen({ bbmDb: { ...baseDb, printOpenHtmlPreview: async () => ({ ok: false, error: "DEV-only." }) } });
+      let prepared = await buildScreen({ bbmDb: { ...baseDb, printOpenHtmlPreview: async () => ({ ok: false, error: "Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet." }) } });
       await prepared.btnPrint.onclick();
-      assert.equal(statusCalls.includes("Druckvorschau konnte nicht geöffnet werden: DEV-only."), true);
+      assert.equal(statusCalls.includes("Druckvorschau konnte nicht geöffnet werden: Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet."), true);
 
       // bridge fehlt
       statusCalls.length = 0;

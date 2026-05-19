@@ -34,6 +34,8 @@ async function runLicenseFeatureGuardTests(run) {
   const audioIpc = read("src/main/ipc/audioIpc.js");
   const mainSource = read("src/main/main.js");
   const projectsIpc = read("src/main/ipc/projectsIpc.js");
+  const featureGuardSource = read("src/main/licensing/featureGuard.js");
+  const licenseFeaturesSource = read("src/main/licensing/licenseFeatures.js");
   const topsScreenSource = read("src/renderer/modules/protokoll/screens/TopsScreen.js");
   const dictationControllerSource = read("src/renderer/features/audio-dictation/DictationController.js");
 
@@ -221,6 +223,17 @@ async function runLicenseFeatureGuardTests(run) {
     } finally {
       global.window = previousWindow;
     }
+  });
+
+  await run("License-Guard: Restarbeiten ist als Lizenzmodul bekannt und Meldung ist klar", () => {
+    assert.equal(licenseFeaturesSource.includes('RESTARBEITEN: "restarbeiten"'), true);
+    assert.equal(featureGuardSource.includes('Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet.'), true);
+  });
+
+  await run("License-Guard: DEV-Moduloverride bleibt auf bekannte Module und !packaged begrenzt", () => {
+    assert.equal(featureGuardSource.includes("function isDevModuleOverrideEnabled(moduleId)"), true);
+    assert.equal(featureGuardSource.includes("if (app.isPackaged) return false;"), true);
+    assert.equal(featureGuardSource.includes("normalizedModuleId === LICENSE_MODULES.PROTOKOLL || normalizedModuleId === LICENSE_MODULES.RESTARBEITEN"), true);
   });
 
   await run("License-Guard: Lizenzfehler werden payload-freundlich gemappt", () => {
