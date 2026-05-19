@@ -1819,10 +1819,10 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(source.includes("Restpunkte (RP)"), true);
   });
 
-  await run("M33.9 Restarbeiten-Druck: PDF-und-Öffnen-Payload, deleted_at, keine Fotos, Leerfall", async () => {
+  await run("M33.10 Restarbeiten-Druck: interne PDF-Vorschau-Payload, deleted_at, keine Fotos, Leerfall", async () => {
     const prevWindow = globalThis.window;
     const prevDocument = globalThis.document;
-    const printPdfAndOpenCalls = [];
+    const printPdfAndPreviewInternalCalls = [];
     const previewCalls = [];
     const printCalls = [];
     const statusCalls = [];
@@ -1847,8 +1847,8 @@ async function runRestarbeitenModuleTests(run) {
     globalThis.window = {
       bbmPrint: {
         printPdf: async (payload) => { printCalls.push(payload); return { ok: true }; },
-        printPdfAndOpen: async (payload) => {
-          printPdfAndOpenCalls.push(payload);
+        printPdfAndPreviewInternal: async (payload) => {
+          printPdfAndPreviewInternalCalls.push(payload);
           return { ok: true, filePath: "C:/tmp/Restarbeitenliste.pdf" };
         },
       },
@@ -1878,24 +1878,24 @@ async function runRestarbeitenModuleTests(run) {
       screen._renderList();
       await btnPrint.onclick();
 
-      assert.equal(printPdfAndOpenCalls.length, 1);
+      assert.equal(printPdfAndPreviewInternalCalls.length, 1);
       assert.equal(previewCalls.length, 0);
       assert.equal(statusCalls.includes("PDF-Druckvorschau geöffnet."), true);
       assert.equal(printCalls.length, 0);
-      assert.equal(printPdfAndOpenCalls[0].mode, "restarbeiten");
-      assert.equal(printPdfAndOpenCalls[0].projectId, "p-1");
-      assert.equal(printPdfAndOpenCalls[0].devLayoutPreview, false);
-      assert.equal(Array.isArray(printPdfAndOpenCalls[0].restarbeitenRows), true);
-      assert.equal(printPdfAndOpenCalls[0].restarbeitenRows.length, 1);
-      assert.equal(printPdfAndOpenCalls[0].restarbeitenRows[0].running_number, 2);
-      assert.equal(printPdfAndOpenCalls[0].restarbeitenRows[0].item_class, "mangel");
-      assert.deepEqual(printPdfAndOpenCalls[0].restarbeitenLocationLabels, {
+      assert.equal(printPdfAndPreviewInternalCalls[0].mode, "restarbeiten");
+      assert.equal(printPdfAndPreviewInternalCalls[0].projectId, "p-1");
+      assert.equal(printPdfAndPreviewInternalCalls[0].devLayoutPreview, false);
+      assert.equal(Array.isArray(printPdfAndPreviewInternalCalls[0].restarbeitenRows), true);
+      assert.equal(printPdfAndPreviewInternalCalls[0].restarbeitenRows.length, 1);
+      assert.equal(printPdfAndPreviewInternalCalls[0].restarbeitenRows[0].running_number, 2);
+      assert.equal(printPdfAndPreviewInternalCalls[0].restarbeitenRows[0].item_class, "mangel");
+      assert.deepEqual(printPdfAndPreviewInternalCalls[0].restarbeitenLocationLabels, {
         level_1_label: "Gebäude",
         level_2_label: "Stock",
         level_3_label: "Bereich",
         level_4_label: "Zone",
       });
-      const row = printPdfAndOpenCalls[0].restarbeitenRows[0];
+      const row = printPdfAndPreviewInternalCalls[0].restarbeitenRows[0];
       for (const key of ["running_number","item_class","short_text","long_text","location_level_1","location_level_2","location_level_3","location_level_4","status","due_date","responsible_label","completed_at","completion_note"]) {
         assert.equal(Object.prototype.hasOwnProperty.call(row, key), true);
       }
@@ -1907,7 +1907,7 @@ async function runRestarbeitenModuleTests(run) {
       screen.filterState.location_level_1 = "Nicht vorhanden";
       screen._renderList();
       await btnPrint.onclick();
-      assert.equal(printPdfAndOpenCalls.length, 1);
+      assert.equal(printPdfAndPreviewInternalCalls.length, 1);
       assert.equal(previewCalls.length, 0);
       assert.equal(printCalls.length, 0);
       assert.equal(statusCalls.includes("Keine Restpunkte für den Druck vorhanden."), true);
@@ -1953,7 +1953,7 @@ async function runRestarbeitenModuleTests(run) {
     try {
       // result ok false
       statusCalls.length = 0;
-      let prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: { printPdfAndOpen: async () => ({ ok: false, error: "Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet." }) } });
+      let prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: { printPdfAndPreviewInternal: async () => ({ ok: false, error: "Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet." }) } });
       await prepared.btnPrint.onclick();
       assert.equal(statusCalls.includes("PDF-Druckvorschau konnte nicht geöffnet werden: Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet."), true);
 
@@ -1965,7 +1965,7 @@ async function runRestarbeitenModuleTests(run) {
 
       // exception
       statusCalls.length = 0;
-      prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: { printPdfAndOpen: async () => { throw new Error("kaputt"); } } });
+      prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: { printPdfAndPreviewInternal: async () => { throw new Error("kaputt"); } } });
       await prepared.btnPrint.onclick();
       assert.equal(statusCalls.includes("PDF-Druckvorschau konnte nicht geöffnet werden."), true);
     } finally {
@@ -1974,10 +1974,10 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
-  await run("M33.9 Preload-Bridge: printPdfAndOpen -> print:toPdfAndOpen", () => {
+  await run("M33.10 Preload-Bridge: printPdfAndPreviewInternal -> print:toPdfAndPreviewInternal", () => {
     const preloadPath = path.join(__dirname, "../../src/main/preload.js");
     const source = fs.readFileSync(preloadPath, "utf8");
-    assert.match(source, /printPdfAndOpen:\s*\(data\)\s*=>\s*ipcRenderer\.invoke\("print:toPdfAndOpen",\s*data\)/);
+    assert.match(source, /printPdfAndPreviewInternal:\s*\(data\)\s*=>\s*ipcRenderer\.invoke\("print:toPdfAndPreviewInternal",\s*data\)/);
   });
 
 

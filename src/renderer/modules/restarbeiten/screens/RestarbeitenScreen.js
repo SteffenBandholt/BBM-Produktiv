@@ -730,7 +730,7 @@ export default class RestarbeitenScreen {
       this.editbox?.setStatus("Keine Restpunkte für den Druck vorhanden.");
       return;
     }
-    const pdfBridge = globalThis.window?.bbmPrint?.printPdfAndOpen;
+    const pdfBridge = globalThis.window?.bbmPrint?.printPdfAndPreviewInternal;
     if (typeof pdfBridge !== "function") {
       this.editbox?.setStatus("PDF-Druckvorschau ist nicht verfügbar.");
       return;
@@ -743,6 +743,7 @@ export default class RestarbeitenScreen {
         restarbeitenRows,
         restarbeitenLocationLabels: buildRestarbeitenLocationLabels(this.projectSettings),
         devLayoutPreview: false,
+        previewTitle: "Restarbeiten (Vorschau)",
       });
       if (result?.ok === false) {
         const errorText = normalizeText(result?.error) || "Unbekannter Fehler";
