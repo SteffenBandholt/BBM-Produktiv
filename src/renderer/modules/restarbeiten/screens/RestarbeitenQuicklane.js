@@ -9,8 +9,9 @@ function createQuicklaneSection(doc, title) {
 }
 
 export default class RestarbeitenQuicklane {
-  constructor({ onPrint = null } = {}) {
+  constructor({ onPrint = null, onOpenOutputDir = null } = {}) {
     this.onPrint = typeof onPrint === "function" ? onPrint : null;
+    this.onOpenOutputDir = typeof onOpenOutputDir === "function" ? onOpenOutputDir : null;
     this.root = null;
   }
 
@@ -27,6 +28,13 @@ export default class RestarbeitenQuicklane {
     printBtn.textContent = "Drucken";
     printBtn.onclick = () => this.onPrint?.();
     outputSection.append(printBtn);
+
+    const openDirBtn = doc.createElement("button");
+    openDirBtn.type = "button";
+    openDirBtn.className = "restarbeiten-quicklane__button";
+    openDirBtn.textContent = "Ordner öffnen";
+    openDirBtn.onclick = () => this.onOpenOutputDir?.();
+    outputSection.append(openDirBtn);
 
     root.append(outputSection);
     this.root = root;

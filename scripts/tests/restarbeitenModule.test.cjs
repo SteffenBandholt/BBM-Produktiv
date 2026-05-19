@@ -525,6 +525,7 @@ async function runRestarbeitenModuleTests(run) {
           return { ok: true, item: { id: payload.id, ...payload.patch } };
         },
         restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
+        projectsOpenRestarbeitenDir: async (payload) => { openRestarbeitenDirCalls.push(payload); return { ok: true, dir: "C:/tmp/Restarbeiten" }; },
         restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
         restarbeitenSoftDeleteItem: async (payload) => {
           calls.push({ type: "soft-delete", payload });
@@ -1075,6 +1076,7 @@ async function runRestarbeitenModuleTests(run) {
         restarbeitenGetProjectSettings: async () => ({ ok: true, settings: {} }),
         restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
         restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
+        projectsOpenRestarbeitenDir: async (payload) => { openRestarbeitenDirCalls.push(payload); return { ok: true, dir: "C:/tmp/Restarbeiten" }; },
         restarbeitenSetPrimaryAttachment: async () => ({ ok: true }),
         restarbeitenSoftDeleteItem: async (payload) => {
           calls.push({ type: "soft-delete", payload });
@@ -1783,7 +1785,7 @@ async function runRestarbeitenModuleTests(run) {
     const prevDocument2 = globalThis.document;
     globalThis.document = createFakeDocument();
     try {
-      const screen = new RestarbeitenScreen({ projectId: "p-1" });
+      const screen = new RestarbeitenScreen({ projectId: "p-1", project: { id: "p-1", project_number: "P-100", short: "Kurz", name: "Name" } });
       const options = screen._collectLocationOptionsFromRows([
         { location_level_1: "Haus 2", location_level_2: "OG", location_level_3: "WE 10", location_level_4: "Wohnen" },
         { location_level_1: "Haus 1", location_level_2: "EG", location_level_3: "WE 01", location_level_4: "Bad" },
@@ -1825,6 +1827,7 @@ async function runRestarbeitenModuleTests(run) {
     const printPdfAndPreviewInternalCalls = [];
     const previewCalls = [];
     const printCalls = [];
+    const openRestarbeitenDirCalls = [];
     const statusCalls = [];
     const items = [
       {
@@ -1858,13 +1861,14 @@ async function runRestarbeitenModuleTests(run) {
         restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
         projectFirmsListByProject: async () => ({ ok: true, list: [] }),
         restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
+        projectsOpenRestarbeitenDir: async (payload) => { openRestarbeitenDirCalls.push(payload); return { ok: true, dir: "C:/tmp/Restarbeiten" }; },
       },
     };
     globalThis.document = createFakeDocument();
 
     try {
       const RestarbeitenScreen = (await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"))).default;
-      const screen = new RestarbeitenScreen({ projectId: "p-1" });
+      const screen = new RestarbeitenScreen({ projectId: "p-1", project: { id: "p-1", project_number: "P-100", short: "Kurz", name: "Name" } });
       const root = screen.render();
       await screen.load();
       screen.editbox = { setStatus: (msg) => statusCalls.push(msg) };
@@ -1873,11 +1877,14 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(printButtons.length >= 2, true);
       const btnPrint = printButtons[0];
       const btnQuicklanePrint = printButtons[1];
+      const btnOpenDir = findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === "Ordner öffnen")[0];
       assert.ok(btnPrint);
       assert.ok(btnQuicklanePrint);
+      assert.ok(btnOpenDir);
       const quicklane = findNodes(root, (n) => n?.["data-bbm-restarbeiten-quicklane"] === "true")[0];
       assert.ok(quicklane);
       assert.match(collectText(quicklane), /Ausgabe/);
+      assert.match(collectText(quicklane), /Ordner öffnen/);
       assert.doesNotMatch(collectText(quicklane), /E-?Mail/i);
       assert.doesNotMatch(collectText(quicklane), /Foto|Attachment/i);
       assert.equal(findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === "+ Restpunkt").length >= 1, true);
@@ -1913,6 +1920,12 @@ async function runRestarbeitenModuleTests(run) {
       }
 
       await btnQuicklanePrint.onclick();
+      await btnOpenDir.onclick();
+      assert.equal(openRestarbeitenDirCalls.length, 1);
+      assert.equal(openRestarbeitenDirCalls[0].project_number, "P-100");
+      assert.equal(openRestarbeitenDirCalls[0].short, "Kurz");
+      assert.equal(openRestarbeitenDirCalls[0].name, "Name");
+      assert.equal(statusCalls.includes("Ausgabeordner geöffnet."), true);
       assert.equal(printPdfAndPreviewInternalCalls.length, 2);
       for (const payload of printPdfAndPreviewInternalCalls.slice(0, 2)) {
         assert.equal(payload.mode, "restarbeiten");
@@ -1945,7 +1958,7 @@ async function runRestarbeitenModuleTests(run) {
       globalThis.window = windowMock;
       globalThis.document = createFakeDocument();
       const RestarbeitenScreen = (await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"))).default;
-      const screen = new RestarbeitenScreen({ projectId: "p-1" });
+      const screen = new RestarbeitenScreen({ projectId: "p-1", project: { id: "p-1", project_number: "P-100", short: "Kurz", name: "Name" } });
       const root = screen.render();
       await screen.load();
       screen.editbox = { setStatus: (msg) => statusCalls.push(msg) };
@@ -1992,10 +2005,68 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
+
+
+  await run("M34.2 Restarbeiten-Ausgabeordner: bridge/result/exception/kein Projekt", async () => {
+    const prevWindow = globalThis.window;
+    const prevDocument = globalThis.document;
+    const statusCalls = [];
+
+    async function buildScreen(windowMock, options = {}) {
+      globalThis.window = windowMock;
+      globalThis.document = createFakeDocument();
+      const RestarbeitenScreen = (await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"))).default;
+      const screen = new RestarbeitenScreen({
+        projectId: options.projectId ?? "p-1",
+        project: options.project ?? { id: "p-1", project_number: "P-100", short: "Kurz", name: "Name" },
+      });
+      const root = screen.render();
+      await screen.load();
+      screen.editbox = { setStatus: (msg) => statusCalls.push(msg) };
+      const btnOpenDir = findButtonByText(root, "Ordner öffnen");
+      assert.ok(btnOpenDir);
+      return { btnOpenDir };
+    }
+
+    const sharedRows = [{ id: "r-1", running_number: 1, item_class: "rest", short_text: "Rest A", long_text: "Lang A" }];
+    const baseDb = {
+      restarbeitenGetProjectSettings: async () => ({ ok: true, settings: {} }),
+      restarbeitenListByProject: async () => ({ ok: true, items: sharedRows.map((i) => ({ ...i })) }),
+      projectFirmsListByProject: async () => ({ ok: true, list: [] }),
+      restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
+    };
+
+    try {
+      statusCalls.length = 0;
+      let prepared = await buildScreen({ bbmDb: { ...baseDb, projectsOpenRestarbeitenDir: async () => ({ ok: false, error: "kaputt" }) }, bbmPrint: {} });
+      await prepared.btnOpenDir.onclick();
+      assert.equal(statusCalls.includes("Ausgabeordner konnte nicht geöffnet werden: kaputt"), true);
+
+      statusCalls.length = 0;
+      prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: {} });
+      await prepared.btnOpenDir.onclick();
+      assert.equal(statusCalls.includes("Ausgabeordner ist nicht verfügbar."), true);
+
+      statusCalls.length = 0;
+      prepared = await buildScreen({ bbmDb: { ...baseDb, projectsOpenRestarbeitenDir: async () => { throw new Error("x"); } }, bbmPrint: {} });
+      await prepared.btnOpenDir.onclick();
+      assert.equal(statusCalls.includes("Ausgabeordner konnte nicht geöffnet werden."), true);
+
+      statusCalls.length = 0;
+      prepared = await buildScreen({ bbmDb: { ...baseDb, projectsOpenRestarbeitenDir: async () => ({ ok: true, dir: "C:/tmp" }) }, bbmPrint: {} }, { project: null });
+      await prepared.btnOpenDir.onclick();
+      assert.equal(statusCalls.includes("Ausgabeordner ist nicht verfügbar."), true);
+    } finally {
+      globalThis.window = prevWindow;
+      globalThis.document = prevDocument;
+    }
+  });
+
   await run("M33.10 Preload-Bridge: printPdfAndPreviewInternal -> print:toPdfAndPreviewInternal", () => {
     const preloadPath = path.join(__dirname, "../../src/main/preload.js");
     const source = fs.readFileSync(preloadPath, "utf8");
     assert.match(source, /printPdfAndPreviewInternal:\s*\(data\)\s*=>\s*ipcRenderer\.invoke\("print:toPdfAndPreviewInternal",\s*data\)/);
+    assert.match(source, /projectsOpenRestarbeitenDir:\s*\(data\)\s*=>\s*ipcRenderer\.invoke\("projects:openRestarbeitenDir",\s*data\)/);
   });
 
 
