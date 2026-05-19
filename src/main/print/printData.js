@@ -49,6 +49,7 @@ function _docLabelForMode(mode) {
   if (m === "topsAll") return "TOP-Liste";
   if (m === "firms") return "Firmenliste";
   if (m === "todo") return "ToDo-Liste";
+  if (m === "restarbeiten") return "Restarbeitenliste";
   if (m === "headerTest") return "Kopf-Test";
   return "Dokument";
 }
@@ -91,7 +92,7 @@ function _resolvePrintProfile(mode) {
     };
   }
 
-  if (m === "firms" || m === "todo" || m === "topsAll") {
+  if (m === "firms" || m === "todo" || m === "topsAll" || m === "restarbeiten") {
     return {
       key: "list",
       parent: "base",
@@ -910,11 +911,13 @@ function _loadPrintDocumentContent({
   meeting,
   settings,
   todoResponsibleFilter,
+  restarbeitenRows,
 } = {}) {
   let participants = [];
   let tops = [];
   let firms = [];
   let todoRows = [];
+  let restarbeitenItems = [];
 
   if (mode === "preview" || mode === "protocol" || mode === "headerTest") {
     participants = _listMeetingParticipants(db, meetingId);
@@ -945,6 +948,8 @@ function _loadPrintDocumentContent({
         return key === filter.toLowerCase();
       });
     }
+  } else if (mode === "restarbeiten") {
+    restarbeitenItems = Array.isArray(restarbeitenRows) ? restarbeitenRows : [];
   }
 
   return {
@@ -952,6 +957,7 @@ function _loadPrintDocumentContent({
     tops,
     firms,
     todoRows,
+    restarbeitenItems,
   };
 }
 
@@ -962,6 +968,7 @@ async function getPrintData({
   settingsOverride,
   orientation,
   todoResponsibleFilter,
+  restarbeitenRows,
 } = {}) {
   const { resolvePrintMode } = await _loadPrintModesModule();
   const normalizedMode = resolvePrintMode(mode, { fallback: "protocol" });
@@ -990,6 +997,7 @@ async function getPrintData({
     meeting: runtimeContext.meeting, 
     settings: runtimeContext.settings, 
     todoResponsibleFilter, 
+    restarbeitenRows,
   }); 
  
   const status = getStatus({ fresh: false }); 

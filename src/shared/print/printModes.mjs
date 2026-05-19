@@ -26,6 +26,11 @@ const PRINT_MODE_DEFINITIONS = Object.freeze([
     dialogLabel: "ToDo-Liste",
   }),
   Object.freeze({
+    key: "restarbeiten",
+    label: "Restarbeitenliste",
+    dialogLabel: "Restarbeitenliste",
+  }),
+  Object.freeze({
     key: "topsAll",
     label: "TOP-Liste",
     dialogLabel: "TOP-Liste",
