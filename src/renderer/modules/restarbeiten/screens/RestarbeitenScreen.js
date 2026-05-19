@@ -33,6 +33,15 @@ function buildCompactLocation(item = {}) {
   return values.length ? values.join(" · ") : "—";
 }
 
+function buildRestarbeitenLocationLabels(projectSettings = null) {
+  return {
+    level_1_label: normalizeText(projectSettings?.level_1_label) || "Haus",
+    level_2_label: normalizeText(projectSettings?.level_2_label) || "Geschoss",
+    level_3_label: normalizeText(projectSettings?.level_3_label) || "Einheit",
+    level_4_label: normalizeText(projectSettings?.level_4_label) || "Raum",
+  };
+}
+
 export default class RestarbeitenScreen {
   constructor({ router, projectId, project, moduleId } = {}) {
     this.router = router || null;
@@ -107,7 +116,12 @@ export default class RestarbeitenScreen {
     btnClose.textContent = "Schließen";
     btnClose.onclick = () => this.router?.showProjectWorkspace?.();
 
-    actions.append(btnClose);
+    const btnPrint = doc.createElement("button");
+    btnPrint.type = "button";
+    btnPrint.textContent = "Drucken";
+    btnPrint.onclick = () => this._printFilteredList();
+
+    actions.append(btnPrint, btnClose);
     header.append(filters, actions);
 
     this.headerHost = header;
@@ -682,5 +696,45 @@ export default class RestarbeitenScreen {
     const target = Number(this.sheetArea.scrollHeight || 0) - Number(this.sheetArea.clientHeight || 0);
     this.sheetArea.scrollTop = target > 0 ? target : 0;
     this.createScrollPending = false;
+  }
+
+  async _printFilteredList() {
+    const visibleItems = Array.isArray(this.filteredItems) ? this.filteredItems : [];
+    if (!visibleItems.length) {
+      this.editbox?.setStatus("Keine Restpunkte für den Druck vorhanden.");
+      return;
+    }
+    const rowsById = new Map(this.rows.map((row) => [String(row?.id), row]));
+    const restarbeitenRows = visibleItems
+      .map((item) => {
+        const row = rowsById.get(String(item.id));
+        if (!row || row.deleted_at) return null;
+        return {
+          running_number: row.running_number || "",
+          item_class: row.item_class || "",
+          short_text: row.short_text || "",
+          long_text: row.long_text || "",
+          location_level_1: row.location_level_1 || "",
+          location_level_2: row.location_level_2 || "",
+          location_level_3: row.location_level_3 || "",
+          location_level_4: row.location_level_4 || "",
+          status: row.status || "",
+          due_date: row.due_date || "",
+          responsible_label: row.responsible_label || "",
+          completed_at: row.completed_at || "",
+          completion_note: row.completion_note || "",
+        };
+      })
+      .filter(Boolean);
+    if (!restarbeitenRows.length) {
+      this.editbox?.setStatus("Keine Restpunkte für den Druck vorhanden.");
+      return;
+    }
+    await globalThis.window?.bbmPrint?.printPdf?.({
+      mode: "restarbeiten",
+      projectId: this.effectiveProjectId,
+      restarbeitenRows,
+      restarbeitenLocationLabels: buildRestarbeitenLocationLabels(this.projectSettings),
+    });
   }
 }

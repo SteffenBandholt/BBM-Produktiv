@@ -93,6 +93,13 @@ function _buildTableHead(type, topsLayout) {
     tr.innerHTML = `<th>Firma</th><th>Typ</th><th>Aktiv</th>`;
   } else if (type === "todo") {
     tr.innerHTML = `<th>TOP</th><th>Kurztext</th><th>Status</th><th>Fertig bis</th><th>Ampel</th>`;
+  } else if (type === "restarbeiten") {
+    const labels = globalThis.__bbmRestarbeitenLocationLabels || {};
+    const level1 = String(labels.level_1_label || "").trim() || "Haus";
+    const level2 = String(labels.level_2_label || "").trim() || "Geschoss";
+    const level3 = String(labels.level_3_label || "").trim() || "Einheit";
+    const level4 = String(labels.level_4_label || "").trim() || "Raum";
+    tr.innerHTML = `<th>Nr.</th><th>Klasse</th><th>Kurztext</th><th>Langtext</th><th>${level1}</th><th>${level2}</th><th>${level3}</th><th>${level4}</th><th>Status</th><th>Fertig bis</th><th>Verantwortlich</th><th>erledigt am</th><th>Notiz/Maßnahmen</th>`;
   }
 
   thead.appendChild(tr);
@@ -214,6 +221,13 @@ function _buildGenericRow(row) {
     const tdAmpel = _el("td", "todoAmpelCell");
     if (row.ampelColor) tdAmpel.appendChild(_el("span", `ampelDot ${row.ampelColor}`));
     tr.appendChild(tdAmpel);
+    return tr;
+  }
+  if (row?.kind === "restarbeitItem") {
+    const tr = document.createElement("tr");
+    tr.className = "restarbeitItemRow";
+    const cells = Array.isArray(row.cells) ? row.cells : [];
+    for (const cell of cells) tr.appendChild(_el("td", "", cell || ""));
     return tr;
   }
 
@@ -378,6 +392,7 @@ function _buildTable(page, data) {
   else if (type === "firms") table.className = "firmsTable";
   else if (type === "firmsCards") table.className = "firmsCardsTable";
   else if (type === "todo") table.className = "todoTable";
+  else if (type === "restarbeiten") table.className = "restarbeitenTable";
   _applyTopsTableLayout(table, topsLayout);
 
   const colgroup = _buildColGroup(type, topsLayout);
@@ -400,9 +415,11 @@ function _buildTable(page, data) {
           ? "Keine Firmen vorhanden."
           : type === "todo"
             ? "Keine offenen ToDos vorhanden."
+            : type === "restarbeiten"
+              ? "Keine Restpunkte für den Druck vorhanden."
             : "Keine Einträge vorhanden.";
     const td = _el("td", "", msg);
-    td.colSpan = type === "todo" ? 5 : type === "firms" ? 3 : 1;
+    td.colSpan = type === "todo" ? 5 : type === "firms" ? 3 : type === "restarbeiten" ? 13 : 1;
     tr.appendChild(td);
     tbody.appendChild(tr);
   }
@@ -572,6 +589,7 @@ export function renderPrint({ pages, data } = {}) {
     throw new Error(`Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`);
   }
   const runtimeData = { ...(data || {}), mode: normalizedMode };
+  globalThis.__bbmRestarbeitenLocationLabels = runtimeData?.restarbeitenLocationLabels || null;
   const root = _el("div", "printRoot printV2Root");
   root.dataset.orientation = _normalizeOrientation(runtimeData?.orientation);
   root.dataset.tableLayout = _getTopLayout(runtimeData).tableKey || "protokoll_tops";

@@ -1791,6 +1791,89 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(source.includes("Restpunkte (RP)"), true);
   });
 
+  await run("M33.1 Restarbeiten-Druck: Button, Filter-Payload, deleted_at, keine Fotos, Leerfall", async () => {
+    const prevWindow = globalThis.window;
+    const prevDocument = globalThis.document;
+    const printCalls = [];
+    const statusCalls = [];
+    const items = [
+      {
+        id: "r-1", running_number: 1, item_class: "rest", short_text: "Rest A", long_text: "Lang A",
+        location_level_1: "Haus A", location_level_2: "EG", location_level_3: "WE 1", location_level_4: "Bad",
+        status: "offen", due_date: "2026-05-30", responsible_label: "Firma A", completed_at: "", completion_note: "",
+      },
+      {
+        id: "r-2", running_number: 2, item_class: "mangel", short_text: "Mangel A", long_text: "Lang M1",
+        location_level_1: "Haus B", location_level_2: "OG", location_level_3: "WE 2", location_level_4: "Küche",
+        status: "in_arbeit", due_date: "2026-05-20", responsible_label: "Firma B", completed_at: "", completion_note: "Note",
+      },
+      {
+        id: "r-3", running_number: 3, item_class: "mangel", short_text: "Mangel B", long_text: "Lang M2",
+        location_level_1: "Haus C", location_level_2: "DG", location_level_3: "WE 3", location_level_4: "Flur",
+        status: "offen", due_date: "2026-05-21", responsible_label: "Firma C", completed_at: "", completion_note: "",
+        deleted_at: "2026-05-19T10:00:00.000Z",
+      },
+    ];
+    globalThis.window = {
+      bbmPrint: { printPdf: async (payload) => { printCalls.push(payload); return { ok: true }; } },
+      bbmDb: {
+        restarbeitenGetProjectSettings: async () => ({ ok: true, settings: { level_1_label: "Gebäude", level_2_label: "Stock", level_3_label: "Bereich", level_4_label: "Zone" } }),
+        restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
+        projectFirmsListByProject: async () => ({ ok: true, list: [] }),
+        restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
+      },
+    };
+    globalThis.document = createFakeDocument();
+
+    try {
+      const RestarbeitenScreen = (await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"))).default;
+      const screen = new RestarbeitenScreen({ projectId: "p-1" });
+      const root = screen.render();
+      await screen.load();
+      screen.editbox = { setStatus: (msg) => statusCalls.push(msg) };
+
+      const btnPrint = findButtonByText(root, "Drucken");
+      assert.ok(btnPrint);
+      assert.equal(findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === "+ Restpunkt").length >= 1, true);
+      assert.equal(findNodes(screen.editHost, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === "Drucken").length, 0);
+
+      screen.filterState.item_class = "mangel";
+      screen._renderList();
+      await btnPrint.onclick();
+
+      assert.equal(printCalls.length, 1);
+      assert.equal(printCalls[0].mode, "restarbeiten");
+      assert.equal(printCalls[0].projectId, "p-1");
+      assert.equal(Array.isArray(printCalls[0].restarbeitenRows), true);
+      assert.equal(printCalls[0].restarbeitenRows.length, 1);
+      assert.equal(printCalls[0].restarbeitenRows[0].running_number, 2);
+      assert.equal(printCalls[0].restarbeitenRows[0].item_class, "mangel");
+      assert.deepEqual(printCalls[0].restarbeitenLocationLabels, {
+        level_1_label: "Gebäude",
+        level_2_label: "Stock",
+        level_3_label: "Bereich",
+        level_4_label: "Zone",
+      });
+      const row = printCalls[0].restarbeitenRows[0];
+      for (const key of ["running_number","item_class","short_text","long_text","location_level_1","location_level_2","location_level_3","location_level_4","status","due_date","responsible_label","completed_at","completion_note"]) {
+        assert.equal(Object.prototype.hasOwnProperty.call(row, key), true);
+      }
+      for (const key of ["attachments", "photos", "file_path", "thumbnail_path"]) {
+        assert.equal(Object.prototype.hasOwnProperty.call(row, key), false);
+      }
+
+      screen.filterState.item_class = "mangel";
+      screen.filterState.location_level_1 = "Nicht vorhanden";
+      screen._renderList();
+      await btnPrint.onclick();
+      assert.equal(printCalls.length, 1);
+      assert.equal(statusCalls.includes("Keine Restpunkte für den Druck vorhanden."), true);
+    } finally {
+      globalThis.window = prevWindow;
+      globalThis.document = prevDocument;
+    }
+  });
+
 
   await run("M30.1 Guardrails: Create-Pfade bereinigen running_number/deleted_at", () => {
     const dsPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js");

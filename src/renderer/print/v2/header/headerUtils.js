@@ -35,6 +35,7 @@ function _docLabelFromMode(mode) {
   if (m === "topsAll") return "Liste aller Top´s im Projekt";
   if (m === "firms") return "Firmenliste";
   if (m === "todo") return "ToDo-Liste";
+  if (m === "restarbeiten") return "Restarbeitenliste";
   if (m === "headerTest") return "Kopf-Test";
   return "Dokument";
 }
@@ -154,7 +155,7 @@ function _resolveHeaderTitle({ data, settings, meeting, modeLabel } = {}) {
 
 function _listStandLine({ data, meeting } = {}) {
   const mode = String(data?.mode || "").trim();
-  if (!(mode === "firms" || mode === "todo" || mode === "topsAll" || mode === "protocol")) return "";
+  if (!(mode === "firms" || mode === "todo" || mode === "topsAll" || mode === "protocol" || mode === "restarbeiten")) return "";
   // In der v2-Vollkopfzeile sollen für Protokoll/Vorabzug keine Nummer-/Datumszeilen angezeigt werden.
   if (mode === "protocol" || mode === "preview") return "";
 

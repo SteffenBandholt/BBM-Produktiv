@@ -57,6 +57,7 @@ function _docLabel(mode) {
   if (normalizedMode === "topsAll") return "TOP-Liste";
   if (normalizedMode === "firms") return "Firmenliste";
   if (normalizedMode === "todo") return "ToDo-Liste";
+  if (normalizedMode === "restarbeiten") return "Restarbeitenliste";
   if (normalizedMode === "headerTest") return "Kopf-Test";
   return "Dokument";
 }
@@ -1725,6 +1726,30 @@ function _buildPages(data) {
       });
     }
     return _paginateGeneric({ rows, type: "todo", projectLabel, docLabel, data });
+  }
+  if (mode === "restarbeiten") {
+    const rows = [];
+    for (const r of data.restarbeitenItems || []) {
+      rows.push({
+        kind: "restarbeitItem",
+        cells: [
+          r.running_number || "",
+          String(r.item_class || "").toLowerCase() === "mangel" ? "M" : "R",
+          r.short_text || "",
+          r.long_text || "",
+          r.location_level_1 || "",
+          r.location_level_2 || "",
+          r.location_level_3 || "",
+          r.location_level_4 || "",
+          r.status || "",
+          _formatDateIso(r.due_date),
+          r.responsible_label || "",
+          _formatDateIso(r.completed_at),
+          r.completion_note || "",
+        ],
+      });
+    }
+    return _paginateGeneric({ rows, type: "restarbeiten", projectLabel, docLabel, data });
   }
 
   return _paginateTops(data);

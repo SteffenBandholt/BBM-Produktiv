@@ -351,6 +351,8 @@ async function printToPdf(payload = {}) {
     settingsOverride: payload.settingsOverride || null,
     orientation,
     todoResponsibleFilter: payload.todoResponsibleFilter || null,
+    restarbeitenRows: payload.restarbeitenRows || null,
+    restarbeitenLocationLabels: payload.restarbeitenLocationLabels || null,
   });
   const projectNumber = data?.project?.project_number || data?.project?.projectNumber || null;
 
@@ -450,6 +452,8 @@ async function printToPdf(payload = {}) {
         mode,
         projectId,
         meetingId,
+        restarbeitenRows: payload.restarbeitenRows || null,
+        restarbeitenLocationLabels: payload.restarbeitenLocationLabels || null,
         settingsOverride: payload.settingsOverride || null,
         orientation,
         testOrientation: payload.testOrientation || null,
@@ -482,6 +486,8 @@ function registerPrintIpc() {
         settingsOverride: p.settingsOverride || null,
         orientation,
         todoResponsibleFilter: p.todoResponsibleFilter || null,
+        restarbeitenRows: p.restarbeitenRows || null,
+        restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
       });
       // Version/Channel für PDF-Footer mitgeben
       data.appVersion = app.getVersion ? app.getVersion() : "";
@@ -510,6 +516,8 @@ function registerPrintIpc() {
           mode: p.mode || "topsAll",
           projectId: p.projectId || null,
           meetingId: p.meetingId || null,
+          restarbeitenRows: p.restarbeitenRows || null,
+          restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
           settingsOverride: p.settingsOverride || null,
           orientation,
           testOrientation: p.testOrientation || null,
