@@ -11,7 +11,7 @@
 // Der alte Name bleibt, die Implementierung nutzt jetzt die neue Print-Engine.
 // ============================================================
 
-const { ipcMain, app } = require("electron");
+const { ipcMain, app, shell } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");
@@ -548,6 +548,19 @@ function registerPrintIpc() {
       } catch (_e) {}
 
       return { ok: true, jobId };
+    })
+  );
+
+  ipcMain.handle("print:toPdfAndOpen", async (_evt, payload) =>
+    _runIpcTask(async () => {
+      const p = payload || {};
+      _enforceFeature(_featureForPrintMode(p.mode));
+      const outPath = await printToPdf(p);
+      const openError = await shell.openPath(outPath);
+      if (String(openError || "").trim()) {
+        return { ok: false, error: openError, filePath: outPath };
+      }
+      return { ok: true, filePath: outPath };
     })
   );
 

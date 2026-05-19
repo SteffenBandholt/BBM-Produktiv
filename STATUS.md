@@ -18,6 +18,15 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 
+- M33.9 Restarbeiten-Drucken nutzt jetzt echte PDF-Druckvorschau (PDF erzeugen + PDF öffnen):
+  - Neuer IPC `print:toPdfAndOpen` erzeugt über den bestehenden V2-PDF-Pfad (`printToPdf(...)`) die Datei und öffnet sie anschließend mit `shell.openPath(filePath)`.
+  - Rückgabe ist bei Erfolg `{ ok: true, filePath }`; bei Öffnungsfehler `{ ok: false, error, filePath }`.
+  - Preload-Bridge `bbmPrint.printPdfAndOpen(...)` ergänzt.
+  - RestarbeitenScreen nutzt für den Button `Drucken` jetzt den PDF-und-Öffnen-Pfad statt HTML-Preview und meldet klare PDF-Statusmeldungen.
+  - HTML-Vorschau (`print:openHtmlPreview`) bleibt unverändert für andere Pfade erhalten.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`, `node scripts/tests/projektverwaltungModule.test.cjs`, `node scripts/tests/licenseFeatureGuards.test.cjs`, `node scripts/tests/layoutToolsRegression.test.cjs`, `node scripts/tests/printIpcToPdfAndOpen.test.cjs`; `npm test` scheitert in Codex Cloud weiter an fehlendem `libatk-1.0.so.0`.
+  - Naechster offener Schritt: App-Sichtpruefung, dass Restarbeiten-Drucken eine PDF-Datei erzeugt und im System-PDF-Viewer öffnet.
+
 - M33.8 Restarbeiten-Druckvorschau ohne DEV-Layouteditor umgesetzt:
   - `print:openHtmlPreview` setzt `devLayoutPreview` nicht mehr pauschal, sondern nur noch bei explizitem `payload.devLayoutPreview === true`; ohne explizite Anforderung bleibt die Vorschau im normalen Endanwender-Modus.
   - `layoutCalibrationEnabled` wird im Preview-IPC nur noch fuer explizite DEV-Layoutvorschau durchgereicht, sonst erzwungen `false`.

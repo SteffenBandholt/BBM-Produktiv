@@ -730,14 +730,14 @@ export default class RestarbeitenScreen {
       this.editbox?.setStatus("Keine Restpunkte für den Druck vorhanden.");
       return;
     }
-    const previewBridge = globalThis.window?.bbmDb?.printOpenHtmlPreview;
-    if (typeof previewBridge !== "function") {
-      this.editbox?.setStatus("Druckvorschau ist nicht verfügbar.");
+    const pdfBridge = globalThis.window?.bbmPrint?.printPdfAndOpen;
+    if (typeof pdfBridge !== "function") {
+      this.editbox?.setStatus("PDF-Druckvorschau ist nicht verfügbar.");
       return;
     }
 
     try {
-      const result = await previewBridge({
+      const result = await pdfBridge({
         mode: "restarbeiten",
         projectId: this.effectiveProjectId,
         restarbeitenRows,
@@ -746,13 +746,13 @@ export default class RestarbeitenScreen {
       });
       if (result?.ok === false) {
         const errorText = normalizeText(result?.error) || "Unbekannter Fehler";
-        this.editbox?.setStatus(`Druckvorschau konnte nicht geöffnet werden: ${errorText}`);
+        this.editbox?.setStatus(`PDF-Druckvorschau konnte nicht geöffnet werden: ${errorText}`);
         return;
       }
-      this.editbox?.setStatus("Druckvorschau geöffnet.");
+      this.editbox?.setStatus("PDF-Druckvorschau geöffnet.");
     } catch (error) {
-      console.warn("[Restarbeiten] Druckvorschau konnte nicht geöffnet werden", error);
-      this.editbox?.setStatus("Druckvorschau konnte nicht geöffnet werden.");
+      console.warn("[Restarbeiten] PDF-Druckvorschau konnte nicht geöffnet werden", error);
+      this.editbox?.setStatus("PDF-Druckvorschau konnte nicht geöffnet werden.");
     }
   }
 }
