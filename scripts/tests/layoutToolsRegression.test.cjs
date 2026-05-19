@@ -42,12 +42,12 @@ function _assertPrintPreviewIpcAllowsPackagedBuilds() {
   // DevTools must not open automatically in the normal preview path.
   assert.match(js, /createPrintWindow\(\s*\{\s*show:\s*true,\s*devTools:\s*false\s*\}\s*\)/, "Preview must not open DevTools.");
 
-  // Layout mode must be explicitly flagged to the print renderer.
-  assert.match(js, /devLayoutPreview:\s*true/, "Preview must set devLayoutPreview: true.");
+  // Layout mode must be opt-in and not forced for every preview.
+  assert.match(js, /devLayoutPreview:\s*p\.devLayoutPreview === true/, "Preview must only enable dev layout preview when explicitly requested.");
   assert.match(
     js,
-    /layoutCalibrationEnabled:\s*/s,
-    "Preview must forward the layout calibration flag to the print renderer."
+    /layoutCalibrationEnabled:[\s\S]*p\.devLayoutPreview === true[\s\S]*: false/s,
+    "Preview must disable layout calibration when devLayoutPreview is not explicitly enabled."
   );
 }
 

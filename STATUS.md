@@ -18,6 +18,14 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 
+- M33.8 Restarbeiten-Druckvorschau ohne DEV-Layouteditor umgesetzt:
+  - `print:openHtmlPreview` setzt `devLayoutPreview` nicht mehr pauschal, sondern nur noch bei explizitem `payload.devLayoutPreview === true`; ohne explizite Anforderung bleibt die Vorschau im normalen Endanwender-Modus.
+  - `layoutCalibrationEnabled` wird im Preview-IPC nur noch fuer explizite DEV-Layoutvorschau durchgereicht, sonst erzwungen `false`.
+  - Restarbeiten-Preview-Aufruf setzt explizit `devLayoutPreview: false`, damit Header-Button `Drucken` keine Layouteditor-Werkzeuge/Zonen aktiviert.
+  - Regressionstests fuer Restarbeiten-Preview-Payload und LayoutTools-Preview-Guard auf den neuen Opt-in-Mechanismus angehoben.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`, `node scripts/tests/projektverwaltungModule.test.cjs`, `node scripts/tests/licenseFeatureGuards.test.cjs`, `node scripts/tests/layoutToolsRegression.test.cjs`; `npm test` scheitert in Codex Cloud weiter an fehlendem `libatk-1.0.so.0`.
+  - Naechster offener Schritt: App-Sichtpruefung, dass Restarbeiten-Drucken eine normale PDF-nahe Vorschau ohne Tabelleneditor-Werkzeuge oeffnet.
+
 - M33.6 Restarbeiten-V2-Vorschau in App sichtbar + Fehlerstatus umgesetzt:
   - `print:openHtmlPreview` blockiert packaged nicht mehr; bestehender V2-Preview-Pfad oeffnet sichtbar mit `show/focus` weiter ueber `createPrintWindow` + `getPrintAppUrl`.
   - RestarbeitenScreen wertet das Ergebnis von `printOpenHtmlPreview` jetzt aus und meldet Bridge-fehlt, `{ok:false,error}` und Exceptions klar in der Statuszeile.

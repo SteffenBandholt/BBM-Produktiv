@@ -742,6 +742,7 @@ export default class RestarbeitenScreen {
         projectId: this.effectiveProjectId,
         restarbeitenRows,
         restarbeitenLocationLabels: buildRestarbeitenLocationLabels(this.projectSettings),
+        devLayoutPreview: false,
       });
       if (result?.ok === false) {
         const errorText = normalizeText(result?.error) || "Unbekannter Fehler";
