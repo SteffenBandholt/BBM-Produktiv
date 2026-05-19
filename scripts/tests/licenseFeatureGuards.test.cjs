@@ -40,7 +40,27 @@ async function runLicenseFeatureGuardTests(run) {
   await run("License-Guard: PDF-IPC nutzt modebasierte Feature-Zuordnung", () => {
     assert.equal(printIpc.includes("function _featureForPrintMode(mode)"), true);
     assert.equal(printIpc.includes('if (m === "restarbeiten") return "restarbeiten";'), true);
+    assert.equal(printIpc.includes('ipcMain.handle("print:getData"'), true);
+    assert.equal(printIpc.includes('ipcMain.handle("print:openHtmlPreview"'), true);
+    assert.equal(printIpc.includes('ipcMain.handle("print:toPdf"'), true);
+    assert.equal(printIpc.includes('ipcMain.handle("print:htmlToPdf"'), true);
     assert.equal(printIpc.includes("_enforceFeature(_featureForPrintMode(p.mode));"), true);
+  });
+
+  await run("License-Guard: Protokoll-Listenendpunkte bleiben protokollgeschuetzt", () => {
+    assert.equal(printIpc.includes('ipcMain.handle("protocol:findStoredPdf"'), true);
+    assert.equal(printIpc.includes('_enforceFeature("protokoll");'), true);
+    assert.equal(printIpc.includes('ipcMain.handle("firms:listStoredPdfs"'), true);
+    assert.equal(printIpc.includes('_enforceFeature(_featureForStoredProjectKind(p.kind));'), true);
+    assert.equal(printIpc.includes('function _featureForStoredProjectKind(kind)'), true);
+  });
+
+
+  await run("License-Guard: protocol:findStoredPdf darf nicht modebasiert sein", () => {
+    const idx = printIpc.indexOf('ipcMain.handle("protocol:findStoredPdf"');
+    assert.equal(idx >= 0, true);
+    const slice = printIpc.slice(idx, idx + 320);
+    assert.equal(slice.includes('_featureForPrintMode(p.mode)'), false);
   });
 
   await run("License-Guard: Audio-IPC prüft Diktat-Feature", () => {

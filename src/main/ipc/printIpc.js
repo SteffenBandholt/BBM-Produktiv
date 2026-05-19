@@ -320,6 +320,12 @@ function _featureForPrintMode(mode) {
   return "protokoll";
 }
 
+function _featureForStoredProjectKind(kind) {
+  const k = String(kind || "").trim().toLowerCase();
+  if (k === "protocol") return "protokoll";
+  return "protokoll";
+}
+
 function attachPrintDebugPipes(win, jobId) {
   win.webContents.on("console-message", (_event, level, message, line, sourceId) => {
     const lvl = ["LOG", "WARN", "ERROR", "DEBUG"][level] || String(level);
@@ -565,7 +571,7 @@ function registerPrintIpc() {
   ipcMain.handle("protocol:findStoredPdf", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      _enforceFeature(_featureForPrintMode(p.mode));
+      _enforceFeature("protokoll");
       return findStoredProtocolPdf({
         baseDir: p.baseDir,
         project: p.project || null,
@@ -578,7 +584,7 @@ function registerPrintIpc() {
   ipcMain.handle("firms:listStoredPdfs", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      _enforceFeature(_featureForPrintMode(p.mode));
+      _enforceFeature("protokoll");
       return listStoredFirmsPdfs({
         baseDir: p.baseDir,
         project: p.project || null,
@@ -589,7 +595,7 @@ function registerPrintIpc() {
   ipcMain.handle("print:listStoredProjectPdfs", async (_evt, payload) =>
     _runIpcTask(async () => {
       const p = payload || {};
-      _enforceFeature(_featureForPrintMode(p.mode));
+      _enforceFeature(_featureForStoredProjectKind(p.kind));
       return listStoredProjectPdfs({
         baseDir: p.baseDir,
         project: p.project || null,
