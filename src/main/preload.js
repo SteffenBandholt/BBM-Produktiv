@@ -124,6 +124,7 @@ contextBridge.exposeInMainWorld("bbmDb", {
   // ============================================================
   // Druck (HTML -> PDF)
   // ============================================================
+  printOpenHtmlPreview: (data) => ipcRenderer.invoke("print:openHtmlPreview", data),
   printHtmlToPdf: (data) => ipcRenderer.invoke("print:htmlToPdf", data),
   printPdf: (data) => ipcRenderer.invoke("print:toPdf", data),
 

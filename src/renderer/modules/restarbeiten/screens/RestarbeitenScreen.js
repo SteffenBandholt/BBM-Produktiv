@@ -730,7 +730,7 @@ export default class RestarbeitenScreen {
       this.editbox?.setStatus("Keine Restpunkte für den Druck vorhanden.");
       return;
     }
-    await globalThis.window?.bbmPrint?.printPdf?.({
+    await globalThis.window?.bbmDb?.printOpenHtmlPreview?.({
       mode: "restarbeiten",
       projectId: this.effectiveProjectId,
       restarbeitenRows,
