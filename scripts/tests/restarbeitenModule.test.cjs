@@ -1872,6 +1872,7 @@ async function runRestarbeitenModuleTests(run) {
       await btnPrint.onclick();
 
       assert.equal(previewCalls.length, 1);
+      assert.equal(statusCalls.includes("Druckvorschau geöffnet."), true);
       assert.equal(printCalls.length, 0);
       assert.equal(previewCalls[0].mode, "restarbeiten");
       assert.equal(previewCalls[0].projectId, "p-1");
@@ -1900,6 +1901,63 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(previewCalls.length, 1);
       assert.equal(printCalls.length, 0);
       assert.equal(statusCalls.includes("Keine Restpunkte für den Druck vorhanden."), true);
+    } finally {
+      globalThis.window = prevWindow;
+      globalThis.document = prevDocument;
+    }
+  });
+
+
+  await run("M33.6 Restarbeiten-Druckvorschau meldet Fehler bei bridge/result/exception", async () => {
+    const prevWindow = globalThis.window;
+    const prevDocument = globalThis.document;
+    const statusCalls = [];
+
+    async function buildScreen(windowMock) {
+      globalThis.window = windowMock;
+      globalThis.document = createFakeDocument();
+      const RestarbeitenScreen = (await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"))).default;
+      const screen = new RestarbeitenScreen({ projectId: "p-1" });
+      const root = screen.render();
+      await screen.load();
+      screen.editbox = { setStatus: (msg) => statusCalls.push(msg) };
+      const btnPrint = findButtonByText(root, "Drucken");
+      assert.ok(btnPrint);
+      return { btnPrint };
+    }
+
+    const sharedRows = [
+      {
+        id: "r-1", running_number: 1, item_class: "rest", short_text: "Rest A", long_text: "Lang A",
+        location_level_1: "Haus A", location_level_2: "EG", location_level_3: "WE 1", location_level_4: "Bad",
+        status: "offen", due_date: "2026-05-30", responsible_label: "Firma A", completed_at: "", completion_note: "",
+      },
+    ];
+    const baseDb = {
+      restarbeitenGetProjectSettings: async () => ({ ok: true, settings: {} }),
+      restarbeitenListByProject: async () => ({ ok: true, items: sharedRows.map((i) => ({ ...i })) }),
+      projectFirmsListByProject: async () => ({ ok: true, list: [] }),
+      restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
+    };
+
+    try {
+      // result ok false
+      statusCalls.length = 0;
+      let prepared = await buildScreen({ bbmDb: { ...baseDb, printOpenHtmlPreview: async () => ({ ok: false, error: "DEV-only." }) } });
+      await prepared.btnPrint.onclick();
+      assert.equal(statusCalls.includes("Druckvorschau konnte nicht geöffnet werden: DEV-only."), true);
+
+      // bridge fehlt
+      statusCalls.length = 0;
+      prepared = await buildScreen({ bbmDb: { ...baseDb } });
+      await prepared.btnPrint.onclick();
+      assert.equal(statusCalls.includes("Druckvorschau ist nicht verfügbar."), true);
+
+      // exception
+      statusCalls.length = 0;
+      prepared = await buildScreen({ bbmDb: { ...baseDb, printOpenHtmlPreview: async () => { throw new Error("kaputt"); } } });
+      await prepared.btnPrint.onclick();
+      assert.equal(statusCalls.includes("Druckvorschau konnte nicht geöffnet werden."), true);
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;

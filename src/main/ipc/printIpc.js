@@ -513,10 +513,6 @@ function registerPrintIpc() {
     _runIpcTask(async () => {
       const p = payload || {};
       _enforceFeature(_featureForPrintMode(p.mode));
-      if (app.isPackaged) {
-        return { ok: false, error: "DEV-only." };
-      }
-
       const orientation = _resolveRequestedOrientation(p);
       const jobId = _randId();
       const win = createPrintWindow({ show: true, devTools: false });

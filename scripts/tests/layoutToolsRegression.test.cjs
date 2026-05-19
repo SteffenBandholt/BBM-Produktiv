@@ -33,12 +33,11 @@ function _assertDevPdfMarkersAreGated(run) {
   assert.match(css, /box-shadow:\s*inset/i, "DEV marker styles should use inset box-shadow (no layout shift).");
 }
 
-function _assertDevPrintPreviewIpcIsDevOnly() {
+function _assertPrintPreviewIpcAllowsPackagedBuilds() {
   const js = _readText("src/main/ipc/printIpc.js");
 
-  // DEV-only: html preview must be blocked in packaged builds.
   assert.match(js, /ipcMain\.handle\(["']print:openHtmlPreview["']/, "print:openHtmlPreview handler must exist.");
-  assert.match(js, /print:openHtmlPreview[\s\S]*if\s*\(\s*app\.isPackaged\s*\)/, "Preview must guard app.isPackaged.");
+  assert.doesNotMatch(js, /print:openHtmlPreview[\s\S]*if\s*\(\s*app\.isPackaged\s*\)/, "Preview must not be blocked for packaged builds.");
 
   // DevTools must not open automatically in the normal preview path.
   assert.match(js, /createPrintWindow\(\s*\{\s*show:\s*true,\s*devTools:\s*false\s*\}\s*\)/, "Preview must not open DevTools.");
@@ -205,8 +204,8 @@ async function runLayoutToolsRegressionTests(run) {
     _assertDevPdfMarkersAreGated(run);
   });
 
-  await run("layoutTools: Print-HTML Vorschau ist DEV-only und oeffnet DevTools nicht automatisch", () => {
-    _assertDevPrintPreviewIpcIsDevOnly();
+  await run("layoutTools: Print-HTML Vorschau laeuft auch packaged und oeffnet DevTools nicht automatisch", () => {
+    _assertPrintPreviewIpcAllowsPackagedBuilds();
   });
 
   await run("layoutTools: PDF-Exportpfad setzt devLayoutPreview nicht (keine Marker im echten PDF)", () => {

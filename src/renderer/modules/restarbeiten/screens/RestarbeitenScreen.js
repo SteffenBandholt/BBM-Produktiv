@@ -730,11 +730,28 @@ export default class RestarbeitenScreen {
       this.editbox?.setStatus("Keine Restpunkte für den Druck vorhanden.");
       return;
     }
-    await globalThis.window?.bbmDb?.printOpenHtmlPreview?.({
-      mode: "restarbeiten",
-      projectId: this.effectiveProjectId,
-      restarbeitenRows,
-      restarbeitenLocationLabels: buildRestarbeitenLocationLabels(this.projectSettings),
-    });
+    const previewBridge = globalThis.window?.bbmDb?.printOpenHtmlPreview;
+    if (typeof previewBridge !== "function") {
+      this.editbox?.setStatus("Druckvorschau ist nicht verfügbar.");
+      return;
+    }
+
+    try {
+      const result = await previewBridge({
+        mode: "restarbeiten",
+        projectId: this.effectiveProjectId,
+        restarbeitenRows,
+        restarbeitenLocationLabels: buildRestarbeitenLocationLabels(this.projectSettings),
+      });
+      if (result?.ok === false) {
+        const errorText = normalizeText(result?.error) || "Unbekannter Fehler";
+        this.editbox?.setStatus(`Druckvorschau konnte nicht geöffnet werden: ${errorText}`);
+        return;
+      }
+      this.editbox?.setStatus("Druckvorschau geöffnet.");
+    } catch (error) {
+      console.warn("[Restarbeiten] Druckvorschau konnte nicht geöffnet werden", error);
+      this.editbox?.setStatus("Druckvorschau konnte nicht geöffnet werden.");
+    }
   }
 }
