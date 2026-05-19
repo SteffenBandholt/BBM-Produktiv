@@ -84,6 +84,12 @@ function isDevAudioOverrideEnabled() {
 
 // Uebergangs-/Altlogik:
 // Legacy-Audio-Suggestions bleiben sichtbar getrennt von der eigentlichen Kern-Lizenzpruefung.
+function isDevModuleOverrideEnabled(moduleId) {
+  const normalizedModuleId = String(moduleId || "").trim().toLowerCase();
+  if (app.isPackaged) return false;
+  return normalizedModuleId === LICENSE_MODULES.PROTOKOLL || normalizedModuleId === LICENSE_MODULES.RESTARBEITEN;
+}
+
 function isDevAudioSuggestionsEnabled() {
   // Dev-only legacy audio suggestions flow.
   const explicit = _readEnvFlag("BBM_DEV_ENABLE_AUDIO_SUGGESTIONS");
@@ -98,6 +104,9 @@ function isDevAudioSuggestionsEnabled() {
 function enforceLicensedFeature(feature) {
   const normalizedFeature = String(feature || "").trim().toLowerCase();
   if (normalizedFeature === LICENSE_FEATURES.DIKTAT && isDevAudioOverrideEnabled()) {
+    return _extractLicenseInfo(getStatus({ fresh: true }));
+  }
+  if (isDevModuleOverrideEnabled(normalizedFeature)) {
     return _extractLicenseInfo(getStatus({ fresh: true }));
   }
   try {
@@ -193,6 +202,8 @@ function mapFeatureToMessage(feature) {
   switch (feature) {
     case LICENSE_MODULES.PROTOKOLL:
       return "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
+    case LICENSE_MODULES.RESTARBEITEN:
+      return "Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet.";
     case LICENSE_FEATURES.DIKTAT:
       return "Funktion Diktat ist fuer diese Lizenz nicht freigeschaltet.";
     default:
@@ -205,6 +216,7 @@ module.exports = {
   createLicenseBadgeText,
   enforceLicensedFeature,
   isDevAudioOverrideEnabled,
+  isDevModuleOverrideEnabled,
   isDevAudioSuggestionsEnabled,
   buildLicensedToText,
   toLicenseErrorPayload,

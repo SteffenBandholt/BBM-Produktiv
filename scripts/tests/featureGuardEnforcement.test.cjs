@@ -59,6 +59,14 @@ async function runFeatureGuardEnforcementTests(run) {
     assert.equal(!!g.enforceLicensedFeature("mail"), true);
     assert.equal(!!g.enforceLicensedFeature("export"), true);
   });
+  await run("FeatureGuard: restarbeiten in DEV ohne Lizenzmodul via Module-Override erlaubt", () => {
+    const g = loadFeatureGuardWithStatus({ valid: true, reason: "OK", license: { modules: ["protokoll"], features: ["protokoll"] } }, { packaged: false });
+    assert.equal(!!g.enforceLicensedFeature("restarbeiten"), true);
+  });
+  await run("FeatureGuard: restarbeiten in packaged ohne Lizenzmodul bleibt gesperrt", () => {
+    const g = loadFeatureGuardWithStatus({ valid: true, reason: "OK", license: { modules: ["protokoll"], features: ["protokoll"] } }, { packaged: true });
+    assert.throws(() => g.enforceLicensedFeature("restarbeiten"), /FEATURE_NOT_ALLOWED:restarbeiten/);
+  });
   await run("FeatureGuard: audio ohne audio-Feature wirft FEATURE_NOT_ALLOWED:audio", () => {
     const g = loadFeatureGuardWithStatus({ valid: true, reason: "OK", license: { features: ["protokoll"] } });
     assert.throws(() => g.enforceLicensedFeature("audio"), /FEATURE_NOT_ALLOWED:diktat/);
