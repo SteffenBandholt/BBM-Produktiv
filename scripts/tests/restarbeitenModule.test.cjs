@@ -2066,6 +2066,20 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(source, /projectsOpenRestarbeitenDir:\s*\(data\)\s*=>\s*ipcRenderer\.invoke\("projects:openRestarbeitenDir",\s*data\)/);
   });
 
+  await run("M34.2 IPC projects:openRestarbeitenDir faengt Async-Fehler strukturiert ab", () => {
+    const projectsIpcPath = path.join(__dirname, "../../src/main/ipc/projectsIpc.js");
+    const source = fs.readFileSync(projectsIpcPath, "utf8");
+    assert.match(source, /ipcMain\.handle\("projects:openRestarbeitenDir",\s*async\s*\(_e,\s*data\)\s*=>\s*\{/);
+    assert.doesNotMatch(source, /projects:openRestarbeitenDir"[\s\S]*?_runProjectTask\(async\s*\(\)\s*=>/);
+    assert.match(source, /fs\.mkdirSync\(dir,\s*\{\s*recursive:\s*true\s*\}\)/);
+    assert.match(source, /await\s+shell\.openPath\(dir\)/);
+    assert.match(source, /buildStoragePreviewPaths\(/);
+    assert.match(source, /restarbeitenDir/);
+    assert.match(source, /catch\s*\(err\)\s*\{/);
+    assert.match(source, /return\s*\{\s*ok:\s*false,\s*error:\s*err\?\.message\s*\|\|\s*String\(err\),\s*dir\s*\}/);
+  });
+
+
 
   await run("M30.1 Guardrails: Create-Pfade bereinigen running_number/deleted_at", () => {
     const dsPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js");

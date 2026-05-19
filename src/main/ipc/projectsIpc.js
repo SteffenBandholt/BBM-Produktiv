@@ -131,8 +131,9 @@ function registerProjectsIpc() {
     })
   );
 
-  ipcMain.handle("projects:openRestarbeitenDir", (_e, data) =>
-    _runProjectTask(async () => {
+  ipcMain.handle("projects:openRestarbeitenDir", async (_e, data) => {
+    let dir = "";
+    try {
       const d = data && typeof data === "object" ? data : {};
       const settings = appSettingsGetMany(["pdf.protocolsDir"]) || {};
       const baseDirRaw = String(settings["pdf.protocolsDir"] || "").trim();
@@ -145,14 +146,19 @@ function registerProjectsIpc() {
           name: d.name ?? "",
         },
       });
-      const dir = String(preview.restarbeitenDir || "").trim();
+      dir = String(preview.restarbeitenDir || "").trim();
       if (!dir) return { ok: false, error: "Ordnerpfad fehlt", dir: "" };
       fs.mkdirSync(dir, { recursive: true });
       const errorText = await shell.openPath(dir);
       if (errorText) return { ok: false, error: String(errorText), dir };
       return { ok: true, dir };
-    })
-  );
+    } catch (err) {
+      if (_isLicenseError(err)) {
+        return toLicenseErrorPayload(err);
+      }
+      return { ok: false, error: err?.message || String(err), dir };
+    }
+  });
 
 }
 
