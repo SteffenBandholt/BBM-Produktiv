@@ -9,6 +9,7 @@ import {
 } from "../data/restarbeitenDataSource.js";
 import { mapRestarbeitenStatusLabel, toRestarbeitenListItems } from "../viewModel/restarbeitenListItems.js";
 import RestarbeitenEditbox from "./RestarbeitenEditbox.js";
+import RestarbeitenQuicklane from "./RestarbeitenQuicklane.js";
 import { ensureRestarbeitenListStyle } from "./restarbeitenListStyle.js";
 
 const LOCATION_KEYS = ["location_level_1", "location_level_2", "location_level_3", "location_level_4"];
@@ -58,6 +59,7 @@ export default class RestarbeitenScreen {
     this.projectSettings = null;
     this.locationOptions = { location_level_1: [], location_level_2: [], location_level_3: [], location_level_4: [] };
     this.editbox = null;
+    this.quicklane = null;
 
     this.filterState = {
       item_class: "",
@@ -90,9 +92,10 @@ export default class RestarbeitenScreen {
 
     this._buildHeader(doc);
     this._buildSheetArea(doc);
+    this._buildQuicklane(doc);
     this._buildEditArea(doc);
 
-    this.host.append(this.headerHost, this.sheetArea, this.editArea);
+    this.host.append(this.headerHost, this.workArea, this.editArea);
 
     this._renderHeaderFilters();
     this._renderList();
@@ -129,6 +132,9 @@ export default class RestarbeitenScreen {
   }
 
   _buildSheetArea(doc) {
+    this.workArea = doc.createElement("div");
+    this.workArea.className = "restarbeiten-workarea";
+
     this.sheetArea = doc.createElement("section");
     this.sheetArea.setAttribute("data-bbm-restarbeiten-screen-area", "sheet");
 
@@ -146,6 +152,15 @@ export default class RestarbeitenScreen {
     this.sheetArea.append(sheetCanvas);
 
     this.listHost = listHost;
+    this.workArea.append(this.sheetArea);
+  }
+
+  _buildQuicklane(doc) {
+    this.quicklane = new RestarbeitenQuicklane({
+      onPrint: () => this._printFilteredList(),
+    });
+    const quicklaneHost = this.quicklane.render(doc);
+    this.workArea.append(quicklaneHost);
   }
 
   _buildEditArea(doc) {

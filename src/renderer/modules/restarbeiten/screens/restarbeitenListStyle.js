@@ -80,11 +80,17 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-filterleiste__metaResponsibleRow .restarbeiten-filterleiste__field select{max-width:220px;width:100%}
 .restarbeiten-header__actions{display:flex;gap:6px;margin-left:auto;align-self:flex-start}
 @media (max-width:980px){.restarbeiten-filterleiste__locationFilters{grid-template-columns:1fr;min-width:280px}.restarbeiten-filterleiste__metaFilters{min-width:280px}.restarbeiten-filterleiste__metaTopRow{grid-template-columns:1fr}.restarbeiten-header__actions{margin-left:0}}
+.restarbeiten-workarea{display:flex;flex:1;min-height:0;align-items:stretch}
 [data-bbm-restarbeiten-screen-area="sheet"]{flex:1;min-height:0;overflow:auto;padding:12px 22px 14px}
 .restarbeiten-sheet__list{min-height:100%;display:flex;flex-direction:column;justify-content:flex-end}
 [data-bbm-restarbeiten-screen-sheet-canvas="true"],[data-bbm-restarbeiten-screen-edit-canvas="true"]{width:100%;max-width:940px;margin:0 auto}
 [data-bbm-restarbeiten-screen-sheet-paper="true"]{background:#fff;border:1px solid #dce6f2;border-radius:12px;box-shadow:0 10px 24px rgba(15,23,42,.08);padding:8px 12px 12px}
+[data-bbm-restarbeiten-quicklane="true"]{flex:0 0 auto;width:176px;border-left:1px solid #d9e2ec;background:linear-gradient(180deg,#f6f8fb,#eef3f9);padding:10px 8px;display:flex;flex-direction:column;gap:8px}
+.restarbeiten-quicklane__section{border:1px solid #d4deea;border-radius:8px;background:#fff;padding:8px;display:grid;gap:6px}
+.restarbeiten-quicklane__sectionTitle{margin:0;font-size:11px;line-height:1.1}
+.restarbeiten-quicklane__button{min-height:24px;padding:3px 8px;font-size:11px;border:1px solid #c4cedd;border-radius:6px;background:#f8fafc}
 [data-bbm-restarbeiten-screen-area="edit"]{border-top:1px solid #d9e2ec;background:linear-gradient(180deg,#f8f4ec,#f1ebdf);padding:6px 10px 8px}
+@media (max-width:1160px){.restarbeiten-workarea{flex-direction:column}[data-bbm-restarbeiten-quicklane="true"]{width:100%;border-left:none;border-top:1px solid #d9e2ec}}
 .restarbeiten-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .restarbeiten-list__row{border:1px solid #dae2ee;border-radius:8px;padding:6px;cursor:pointer}
 .restarbeiten-list__row[data-selected="1"]{background:#eef6ff;border-color:#95b8e8}
