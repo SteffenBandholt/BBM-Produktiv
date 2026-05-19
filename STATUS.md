@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M34.1 Restarbeiten: rechte Ausgabe-Toolbox/Quicklane vorbereitet:
+  - RestarbeitenScreen rendert jetzt eine modulnahe rechte Quicklane (`RestarbeitenQuicklane`) innerhalb des Arbeitsbereichs.
+  - Die Quicklane enthält eine kompakte Ausgabegruppe mit `Drucken` und nutzt denselben bestehenden M33-Druck-/Vorschaupfad.
+  - Header-Button `Drucken` bleibt unverändert erhalten; `+ Restpunkt` bleibt unverändert.
+  - Keine E-Mail, keine Fotos und keine neue Druckarchitektur.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`, `node scripts/tests/projektverwaltungModule.test.cjs`, `node scripts/tests/licenseFeatureGuards.test.cjs`, `node scripts/tests/layoutToolsRegression.test.cjs`, `node scripts/tests/printIpcToPdfAndOpen.test.cjs`, `node scripts/tests/printIpcInternalPdfPreview.test.cjs`; `npm test` in Codex Cloud weiter mit fehlendem `libatk-1.0.so.0`.
+
 
 - M33.9 Restarbeiten-Drucken nutzt jetzt echte PDF-Druckvorschau (PDF erzeugen + PDF öffnen):
   - Neuer IPC `print:toPdfAndOpen` erzeugt über den bestehenden V2-PDF-Pfad (`printToPdf(...)`) die Datei und öffnet sie anschließend mit `shell.openPath(filePath)`.

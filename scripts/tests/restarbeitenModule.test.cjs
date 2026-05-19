@@ -1869,8 +1869,17 @@ async function runRestarbeitenModuleTests(run) {
       await screen.load();
       screen.editbox = { setStatus: (msg) => statusCalls.push(msg) };
 
-      const btnPrint = findButtonByText(root, "Drucken");
+      const printButtons = findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === "Drucken");
+      assert.equal(printButtons.length >= 2, true);
+      const btnPrint = printButtons[0];
+      const btnQuicklanePrint = printButtons[1];
       assert.ok(btnPrint);
+      assert.ok(btnQuicklanePrint);
+      const quicklane = findNodes(root, (n) => n?.["data-bbm-restarbeiten-quicklane"] === "true")[0];
+      assert.ok(quicklane);
+      assert.match(collectText(quicklane), /Ausgabe/);
+      assert.doesNotMatch(collectText(quicklane), /E-?Mail/i);
+      assert.doesNotMatch(collectText(quicklane), /Foto|Attachment/i);
       assert.equal(findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === "+ Restpunkt").length >= 1, true);
       assert.equal(findNodes(screen.editHost, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === "Drucken").length, 0);
 
@@ -1903,11 +1912,20 @@ async function runRestarbeitenModuleTests(run) {
         assert.equal(Object.prototype.hasOwnProperty.call(row, key), false);
       }
 
+      await btnQuicklanePrint.onclick();
+      assert.equal(printPdfAndPreviewInternalCalls.length, 2);
+      for (const payload of printPdfAndPreviewInternalCalls.slice(0, 2)) {
+        assert.equal(payload.mode, "restarbeiten");
+        assert.equal(payload.devLayoutPreview, false);
+        assert.equal(Array.isArray(payload.restarbeitenRows), true);
+        assert.equal(payload.restarbeitenRows.length, 1);
+      }
+
       screen.filterState.item_class = "mangel";
       screen.filterState.location_level_1 = "Nicht vorhanden";
       screen._renderList();
       await btnPrint.onclick();
-      assert.equal(printPdfAndPreviewInternalCalls.length, 1);
+      assert.equal(printPdfAndPreviewInternalCalls.length, 2);
       assert.equal(previewCalls.length, 0);
       assert.equal(printCalls.length, 0);
       assert.equal(statusCalls.includes("Keine Restpunkte für den Druck vorhanden."), true);
