@@ -11,7 +11,7 @@
 // Der alte Name bleibt, die Implementierung nutzt jetzt die neue Print-Engine.
 // ============================================================
 
-const { ipcMain, app } = require("electron");
+const { ipcMain } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const { createPrintWindow, getPrintAppUrl } = require("../print/printWindow");
@@ -513,10 +513,6 @@ function registerPrintIpc() {
     _runIpcTask(async () => {
       const p = payload || {};
       _enforceFeature(_featureForPrintMode(p.mode));
-      if (app.isPackaged) {
-        return { ok: false, error: "DEV-only." };
-      }
-
       const orientation = _resolveRequestedOrientation(p);
       const jobId = _randId();
       const win = createPrintWindow({ show: true, devTools: false });

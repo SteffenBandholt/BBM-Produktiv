@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+
+- M33.6 Restarbeiten-V2-Vorschau in App sichtbar + Fehlerstatus umgesetzt:
+  - `print:openHtmlPreview` blockiert packaged nicht mehr; bestehender V2-Preview-Pfad oeffnet sichtbar mit `show/focus` weiter ueber `createPrintWindow` + `getPrintAppUrl`.
+  - RestarbeitenScreen wertet das Ergebnis von `printOpenHtmlPreview` jetzt aus und meldet Bridge-fehlt, `{ok:false,error}` und Exceptions klar in der Statuszeile.
+  - Erfolgspfad setzt zusaetzlich `Druckvorschau geoeffnet.` als Rueckmeldung.
+  - Restarbeiten-Tests fuer Erfolgs-/Fehler-/Bridge-/Exception-Pfade ergaenzt; LayoutTools-Regression auf packaged-faehige Preview-Guard aktualisiert.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`, `node scripts/tests/projektverwaltungModule.test.cjs`, `node scripts/tests/licenseFeatureGuards.test.cjs`; `npm test` scheitert in Codex Cloud weiter an fehlendem `libatk-1.0.so.0`.
+  - Naechster offener Schritt: App-Sichtpruefung im echten packaged Build (Preview-Fenster oeffnet/fokussiert).
+
 - Arbeitsstand #117 Restarbeiten-Editbox-Layout:
   - Quicklane-Schloss-Icon vorbereitet.
   - Restarbeiten-Editbox-Layout optisch stabilisiert.
