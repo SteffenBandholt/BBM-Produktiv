@@ -484,6 +484,16 @@ async function runRestarbeitenModuleTests(run) {
         item_class: "rest",
         status: "offen",
       },
+      {
+        id: "r-9",
+        running_number: 9,
+        created_at: "2026-05-16",
+        location_level_1: "Haus B",
+        short_text: "Zweit",
+        long_text: "Noch da",
+        item_class: "rest",
+        status: "offen",
+      },
     ];
     globalThis.window = {
       bbmDb: {
@@ -546,6 +556,7 @@ async function runRestarbeitenModuleTests(run) {
       await screen.load();
 
       assert.equal(screen.listHost.children[0].tagName, "UL");
+      assert.equal(screen.selectedItemId, "r-1");
       const row = screen.listHost.children[0].children[0];
       row.dispatchEvent({ type: "click" });
       assert.equal(screen.selectedItemId, "r-1");
@@ -581,6 +592,8 @@ async function runRestarbeitenModuleTests(run) {
       await confirmDeleteBtn2.click();
       assert.equal(calls.find((call) => call.type === "soft-delete")?.payload.id, "r-1");
       assert.equal(screen.selectedItemId, "");
+      assert.equal(screen.listHost.children[0].tagName, "UL");
+      assert.equal(screen.listHost.children[0].children.length >= 1, true);
       assert.match(screen.editHost.children[0].textContent, /Einen Restpunkt auswaehlen oder ueber \+ Restpunkt neu anlegen\./);
 
       await screen._createRestarbeit();
