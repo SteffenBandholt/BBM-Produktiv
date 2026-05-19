@@ -33,6 +33,15 @@ function buildCompactLocation(item = {}) {
   return values.length ? values.join(" · ") : "—";
 }
 
+function buildRestarbeitenLocationLabels(projectSettings = null) {
+  return {
+    level_1_label: normalizeText(projectSettings?.level_1_label) || "Haus",
+    level_2_label: normalizeText(projectSettings?.level_2_label) || "Geschoss",
+    level_3_label: normalizeText(projectSettings?.level_3_label) || "Einheit",
+    level_4_label: normalizeText(projectSettings?.level_4_label) || "Raum",
+  };
+}
+
 export default class RestarbeitenScreen {
   constructor({ router, projectId, project, moduleId } = {}) {
     this.router = router || null;
@@ -725,6 +734,7 @@ export default class RestarbeitenScreen {
       mode: "restarbeiten",
       projectId: this.effectiveProjectId,
       restarbeitenRows,
+      restarbeitenLocationLabels: buildRestarbeitenLocationLabels(this.projectSettings),
     });
   }
 }

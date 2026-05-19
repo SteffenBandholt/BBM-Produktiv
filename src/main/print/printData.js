@@ -912,12 +912,14 @@ function _loadPrintDocumentContent({
   settings,
   todoResponsibleFilter,
   restarbeitenRows,
+  restarbeitenLocationLabels,
 } = {}) {
   let participants = [];
   let tops = [];
   let firms = [];
   let todoRows = [];
   let restarbeitenItems = [];
+  let restarbeitenLabels = null;
 
   if (mode === "preview" || mode === "protocol" || mode === "headerTest") {
     participants = _listMeetingParticipants(db, meetingId);
@@ -950,6 +952,7 @@ function _loadPrintDocumentContent({
     }
   } else if (mode === "restarbeiten") {
     restarbeitenItems = Array.isArray(restarbeitenRows) ? restarbeitenRows : [];
+    restarbeitenLabels = restarbeitenLocationLabels || null;
   }
 
   return {
@@ -958,6 +961,7 @@ function _loadPrintDocumentContent({
     firms,
     todoRows,
     restarbeitenItems,
+    restarbeitenLocationLabels: restarbeitenLabels,
   };
 }
 
@@ -969,6 +973,7 @@ async function getPrintData({
   orientation,
   todoResponsibleFilter,
   restarbeitenRows,
+  restarbeitenLocationLabels,
 } = {}) {
   const { resolvePrintMode } = await _loadPrintModesModule();
   const normalizedMode = resolvePrintMode(mode, { fallback: "protocol" });
@@ -998,6 +1003,7 @@ async function getPrintData({
     settings: runtimeContext.settings, 
     todoResponsibleFilter, 
     restarbeitenRows,
+    restarbeitenLocationLabels,
   }); 
  
   const status = getStatus({ fresh: false }); 

@@ -94,7 +94,12 @@ function _buildTableHead(type, topsLayout) {
   } else if (type === "todo") {
     tr.innerHTML = `<th>TOP</th><th>Kurztext</th><th>Status</th><th>Fertig bis</th><th>Ampel</th>`;
   } else if (type === "restarbeiten") {
-    tr.innerHTML = `<th>Nr.</th><th>Klasse</th><th>Kurztext</th><th>Langtext</th><th>Haus</th><th>Geschoss</th><th>Einheit</th><th>Raum</th><th>Status</th><th>Fertig bis</th><th>Verantwortlich</th><th>erledigt am</th><th>Notiz/Maßnahmen</th>`;
+    const labels = globalThis.__bbmRestarbeitenLocationLabels || {};
+    const level1 = String(labels.level_1_label || "").trim() || "Haus";
+    const level2 = String(labels.level_2_label || "").trim() || "Geschoss";
+    const level3 = String(labels.level_3_label || "").trim() || "Einheit";
+    const level4 = String(labels.level_4_label || "").trim() || "Raum";
+    tr.innerHTML = `<th>Nr.</th><th>Klasse</th><th>Kurztext</th><th>Langtext</th><th>${level1}</th><th>${level2}</th><th>${level3}</th><th>${level4}</th><th>Status</th><th>Fertig bis</th><th>Verantwortlich</th><th>erledigt am</th><th>Notiz/Maßnahmen</th>`;
   }
 
   thead.appendChild(tr);
@@ -584,6 +589,7 @@ export function renderPrint({ pages, data } = {}) {
     throw new Error(`Unbekannter Druckmodus: ${String(data?.mode || "").trim() || "-"}`);
   }
   const runtimeData = { ...(data || {}), mode: normalizedMode };
+  globalThis.__bbmRestarbeitenLocationLabels = runtimeData?.restarbeitenLocationLabels || null;
   const root = _el("div", "printRoot printV2Root");
   root.dataset.orientation = _normalizeOrientation(runtimeData?.orientation);
   root.dataset.tableLayout = _getTopLayout(runtimeData).tableKey || "protokoll_tops";
