@@ -1,4 +1,4 @@
-import {
+﻿import {
   createRestarbeitItem,
   getRestarbeitenProjectSettings,
   listRestarbeitenByProject,
@@ -15,9 +15,16 @@ import { ensureRestarbeitenListStyle } from "./restarbeitenListStyle.js";
 const LOCATION_KEYS = ["location_level_1", "location_level_2", "location_level_3", "location_level_4"];
 const LOCATION_LABEL_FALLBACKS = ["Ebene 1", "Ebene 2", "Ebene 3", "Ebene 4"];
 const STATUS_FILTER_ORDER = ["offen", "in_arbeit", "erledigt_gemeldet", "geprueft_erledigt", "zurueckgewiesen", "verzug"];
+const COMPLETED_STATUS_VALUES = new Set(["erledigt", "erledigt_gemeldet", "geprueft_erledigt", "geprüft erledigt"]);
 
 function normalizeText(value) {
   return String(value || "").trim();
+}
+
+function isRestarbeitenCompletedRow(row = {}) {
+  const status = normalizeText(row?.status).toLowerCase();
+  if (COMPLETED_STATUS_VALUES.has(status)) return true;
+  return !!normalizeText(row?.completed_at);
 }
 
 function createMessage(doc, text) {
@@ -31,7 +38,7 @@ function buildCompactLocation(item = {}) {
   const values = [item.locationLevel1, item.locationLevel2, item.locationLevel3, item.locationLevel4]
     .map(normalizeText)
     .filter(Boolean);
-  return values.length ? values.join(" · ") : "—";
+  return values.length ? values.join(" Â· ") : "â€”";
 }
 
 function buildRestarbeitenLocationLabels(projectSettings = null) {
@@ -72,6 +79,7 @@ export default class RestarbeitenScreen {
       status: "",
       due_date: "",
       responsible_project_firm_id: "",
+      completed_state: "",
     };
 
     this.attachmentsByItemId = new Map();
@@ -80,6 +88,8 @@ export default class RestarbeitenScreen {
     this.host = null;
     this.headerHost = null;
     this.headerFiltersHost = null;
+    this.moduleHeaderContextHost = null;
+    this.listHeaderHost = null;
     this.listHost = null;
     this.editHost = null;
     this.createScrollPending = false;
@@ -97,7 +107,7 @@ export default class RestarbeitenScreen {
     this._buildQuicklane(doc);
     this._buildEditArea(doc);
 
-    this.host.append(this.headerHost, this.workArea, this.editArea);
+    this.host.append(this.workArea, this.editArea);
 
     this._applyAmpelVisibility();
     this._syncRestarbeitenContextUi();
@@ -110,34 +120,27 @@ export default class RestarbeitenScreen {
 
   _buildHeader(doc) {
     const header = doc.createElement("header");
-    header.className = "restarbeiten-header";
-
-    const filters = doc.createElement("div");
-    filters.className = "restarbeiten-header__filters";
-
-    const actions = doc.createElement("div");
-    actions.className = "restarbeiten-header__actions";
+    header.className = "restarbeiten-header restarbeiten-moduleHeader";
 
     const btnClose = doc.createElement("button");
     btnClose.type = "button";
     btnClose.textContent = "Schließen";
     btnClose.onclick = () => this.router?.showProjectWorkspace?.();
 
-    const btnPrint = doc.createElement("button");
-    btnPrint.type = "button";
-    btnPrint.textContent = "Drucken";
-    btnPrint.onclick = () => this._printFilteredList();
-
-    actions.append(btnPrint, btnClose);
-    header.append(filters, actions);
-
     this.headerHost = header;
-    this.headerFiltersHost = filters;
+    this.headerCloseButton = btnClose;
   }
 
   _buildSheetArea(doc) {
     this.workArea = doc.createElement("div");
     this.workArea.className = "restarbeiten-workarea";
+
+    this.contentArea = doc.createElement("div");
+    this.contentArea.className = "restarbeiten-workarea__content";
+
+    this.listHeaderHost = doc.createElement("div");
+    this.listHeaderHost.className = "restarbeiten-listHeader";
+    this.headerFiltersHost = this.listHeaderHost;
 
     this.sheetArea = doc.createElement("section");
     this.sheetArea.setAttribute("data-bbm-restarbeiten-screen-area", "sheet");
@@ -156,7 +159,8 @@ export default class RestarbeitenScreen {
     this.sheetArea.append(sheetCanvas);
 
     this.listHost = listHost;
-    this.workArea.append(this.sheetArea);
+    this.contentArea.append(this.listHeaderHost, this.sheetArea);
+    this.workArea.append(this.contentArea);
   }
 
   _buildQuicklane(doc) {
@@ -273,10 +277,12 @@ export default class RestarbeitenScreen {
   }
 
   _renderHeaderFilters() {
-    if (!this.headerFiltersHost) return;
+    if (!this.listHeaderHost) return;
 
-    const doc = this.headerFiltersHost.ownerDocument || globalThis.document;
-    const classFilter = this._buildClassFilter(doc);
+    const doc = this.listHeaderHost.ownerDocument || globalThis.document;
+    const headerGrid = doc.createElement("div");
+    headerGrid.className = "restarbeiten-listHeader__grid";
+
     const locationWrap = doc.createElement("div");
     locationWrap.className = "restarbeiten-filterleiste__locationFilters";
     const locationGroupA = doc.createElement("div");
@@ -286,6 +292,17 @@ export default class RestarbeitenScreen {
     locationGroupB.className = "restarbeiten-filterleiste__locationGroupB";
     locationGroupB.append(this._buildSingleFilter(doc, "location_level_3", 3), this._buildSingleFilter(doc, "location_level_4", 4));
     locationWrap.append(locationGroupA, locationGroupB);
+    const locationPanel = this._buildListHeaderPanel(doc, {
+      title: "Hauptfilter / Verortung",
+      body: locationWrap,
+      className: "restarbeiten-listHeader__panel restarbeiten-listHeader__panel--location",
+    });
+
+    const classPanel = this._buildListHeaderPanel(doc, {
+      title: "Klasse",
+      body: this._buildClassFilter(doc),
+      className: "restarbeiten-listHeader__panel restarbeiten-listHeader__panel--class",
+    });
 
     const metaWrap = doc.createElement("div");
     metaWrap.className = "restarbeiten-filterleiste__metaFilters";
@@ -293,29 +310,72 @@ export default class RestarbeitenScreen {
     metaTopRow.className = "restarbeiten-filterleiste__metaTopRow";
     metaTopRow.append(
       this._buildMetaFilter(doc, {
-        key: "status",
-        label: "Status",
-        values: this._collectStatusFilterValues(),
-      }),
-      this._buildMetaFilter(doc, {
         key: "due_date",
         label: "Fertig bis",
         values: this._collectUniqueRowsValues("due_date"),
         formatDisplay: (value) => this._formatDateDisplay(value),
+      }),
+      this._buildMetaFilter(doc, {
+        key: "status",
+        label: "Status",
+        values: this._collectStatusFilterValues(),
       })
     );
-    const metaResponsibleRow = doc.createElement("div");
-    metaResponsibleRow.className = "restarbeiten-filterleiste__metaResponsibleRow";
-    metaResponsibleRow.append(
+    const metaBottomRow = doc.createElement("div");
+    metaBottomRow.className = "restarbeiten-filterleiste__metaBottomRow";
+    metaBottomRow.append(
       this._buildMetaFilter(doc, {
         key: "responsible_project_firm_id",
         label: "Verantwortlich",
         values: this._collectResponsibleValues(),
+      }),
+      this._buildMetaFilter(doc, {
+        key: "completed_state",
+        label: "Erledigt",
+        values: [
+          { value: "", label: "Alle" },
+          { value: "nicht_erledigt", label: "Nicht erledigt" },
+          { value: "erledigt", label: "Erledigt" },
+        ],
       })
     );
-    metaWrap.append(metaTopRow, metaResponsibleRow);
+    metaWrap.append(metaTopRow, metaBottomRow);
+    const metaPanel = this._buildListHeaderPanel(doc, {
+      title: "Meta",
+      body: metaWrap,
+      className: "restarbeiten-listHeader__panel restarbeiten-listHeader__panel--meta",
+    });
 
-    this.headerFiltersHost.replaceChildren(classFilter, locationWrap, metaWrap);
+    const closePanel = doc.createElement("div");
+    closePanel.className = "restarbeiten-listHeader__closePanel restarbeiten-listHeader__panel restarbeiten-listHeader__panel--close";
+    if (!this.headerCloseButton) {
+      this.headerCloseButton = doc.createElement("button");
+      this.headerCloseButton.type = "button";
+      this.headerCloseButton.textContent = "Schließen";
+      this.headerCloseButton.onclick = () => this.router?.showProjectWorkspace?.();
+    }
+    this.headerCloseButton.className = "restarbeiten-listHeader__closeButton";
+    closePanel.append(this.headerCloseButton);
+
+    headerGrid.append(locationPanel, classPanel, metaPanel, closePanel);
+    this.listHeaderHost.replaceChildren(headerGrid);
+  }
+
+
+  _buildListHeaderPanel(doc, { title, body, className } = {}) {
+    const panel = doc.createElement("div");
+    panel.className = className || "restarbeiten-listHeader__panel";
+
+    const label = doc.createElement("div");
+    label.className = "restarbeiten-listHeader__label";
+    label.textContent = title || "";
+
+    const content = doc.createElement("div");
+    content.className = "restarbeiten-listHeader__content";
+    if (body) content.append(body);
+
+    panel.append(label, content);
+    return panel;
   }
 
   _buildClassFilter(doc) {
@@ -428,7 +488,7 @@ export default class RestarbeitenScreen {
   _formatDateDisplay(value) {
     const text = normalizeText(value);
     const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if (!match) return text || "—";
+    if (!match) return text || "â€”";
     return `${match[3]}.${match[2]}.${match[1]}`;
   }
 
@@ -498,6 +558,7 @@ export default class RestarbeitenScreen {
     }
 
     this.listHost.replaceChildren(list);
+    this._renderHeaderFilters();
   }
 
   _getFilteredItems() {
@@ -524,6 +585,10 @@ export default class RestarbeitenScreen {
 
       const responsibleFilter = normalizeText(this.filterState.responsible_project_firm_id);
       if (responsibleFilter && normalizeText(row.responsible_project_firm_id) !== responsibleFilter) return false;
+
+      const completedFilter = normalizeText(this.filterState.completed_state).toLowerCase();
+      if (completedFilter === "erledigt" && !isRestarbeitenCompletedRow(row)) return false;
+      if (completedFilter === "nicht_erledigt" && isRestarbeitenCompletedRow(row)) return false;
 
       return true;
     });
@@ -577,7 +642,7 @@ export default class RestarbeitenScreen {
     const toggle = doc.createElement("button");
     toggle.type = "button";
     toggle.className = "restarbeiten-list__photosToggle";
-    toggle.textContent = photosOpen ? "▾ Fotos" : "▸ Fotos";
+    toggle.textContent = photosOpen ? "â–¾ Fotos" : "â–¸ Fotos";
     toggle.dataset.expanded = photosOpen ? "1" : "0";
     toggle.setAttribute("aria-expanded", photosOpen ? "true" : "false");
     toggle.addEventListener("click", (event) => {
@@ -757,12 +822,12 @@ export default class RestarbeitenScreen {
 
   async _openOutputDir() {
     if (!this.effectiveProjectId || !this.project) {
-      this.editbox?.setStatus("Ausgabeordner ist nicht verfügbar.");
+      this.editbox?.setStatus("Ausgabeordner ist nicht verfÃ¼gbar.");
       return;
     }
     const openDirBridge = globalThis.window?.bbmDb?.projectsOpenRestarbeitenDir;
     if (typeof openDirBridge !== "function") {
-      this.editbox?.setStatus("Ausgabeordner ist nicht verfügbar.");
+      this.editbox?.setStatus("Ausgabeordner ist nicht verfÃ¼gbar.");
       return;
     }
 
@@ -774,13 +839,13 @@ export default class RestarbeitenScreen {
       });
       if (result?.ok === false) {
         const errorText = normalizeText(result?.error) || "Unbekannter Fehler";
-        this.editbox?.setStatus(`Ausgabeordner konnte nicht geöffnet werden: ${errorText}`);
+        this.editbox?.setStatus(`Ausgabeordner konnte nicht geÃ¶ffnet werden: ${errorText}`);
         return;
       }
-      this.editbox?.setStatus("Ausgabeordner geöffnet.");
+      this.editbox?.setStatus("Ausgabeordner geÃ¶ffnet.");
     } catch (error) {
-      console.warn("[Restarbeiten] Ausgabeordner konnte nicht geöffnet werden", error);
-      this.editbox?.setStatus("Ausgabeordner konnte nicht geöffnet werden.");
+      console.warn("[Restarbeiten] Ausgabeordner konnte nicht geÃ¶ffnet werden", error);
+      this.editbox?.setStatus("Ausgabeordner konnte nicht geÃ¶ffnet werden.");
     }
   }
 
@@ -894,12 +959,12 @@ export default class RestarbeitenScreen {
   async _printFilteredList() {
     const pdfPayload = this._buildRestarbeitenPdfPayload();
     if (!pdfPayload.restarbeitenRows.length) {
-      this.editbox?.setStatus("Keine Restpunkte für den Druck vorhanden.");
+      this.editbox?.setStatus("Keine Restpunkte fÃ¼r den Druck vorhanden.");
       return;
     }
     const pdfBridge = globalThis.window?.bbmPrint?.printPdfAndPreviewInternal;
     if (typeof pdfBridge !== "function") {
-      this.editbox?.setStatus("PDF-Druckvorschau ist nicht verfügbar.");
+      this.editbox?.setStatus("PDF-Druckvorschau ist nicht verfÃ¼gbar.");
       return;
     }
 
@@ -909,26 +974,26 @@ export default class RestarbeitenScreen {
       });
       if (result?.ok === false) {
         const errorText = normalizeText(result?.error) || "Unbekannter Fehler";
-        this.editbox?.setStatus(`PDF-Druckvorschau konnte nicht geöffnet werden: ${errorText}`);
+        this.editbox?.setStatus(`PDF-Druckvorschau konnte nicht geÃ¶ffnet werden: ${errorText}`);
         return;
       }
-      this.editbox?.setStatus("PDF-Druckvorschau geöffnet.");
+      this.editbox?.setStatus("PDF-Druckvorschau geÃ¶ffnet.");
     } catch (error) {
-      console.warn("[Restarbeiten] PDF-Druckvorschau konnte nicht geöffnet werden", error);
-      this.editbox?.setStatus("PDF-Druckvorschau konnte nicht geöffnet werden.");
+      console.warn("[Restarbeiten] PDF-Druckvorschau konnte nicht geÃ¶ffnet werden", error);
+      this.editbox?.setStatus("PDF-Druckvorschau konnte nicht geÃ¶ffnet werden.");
     }
   }
 
   async _emailFilteredList() {
     const pdfPayload = this._buildRestarbeitenPdfPayload();
     if (!pdfPayload.restarbeitenRows.length) {
-      this.editbox?.setStatus("Keine Restpunkte für den Versand vorhanden.");
+      this.editbox?.setStatus("Keine Restpunkte fÃ¼r den Versand vorhanden.");
       return;
     }
 
     const printBridge = globalThis.window?.bbmPrint?.printPdf;
     if (typeof printBridge !== "function") {
-      this.editbox?.setStatus("PDF-Erzeugung ist nicht verfügbar.");
+      this.editbox?.setStatus("PDF-Erzeugung ist nicht verfÃ¼gbar.");
       return;
     }
 
@@ -964,7 +1029,7 @@ export default class RestarbeitenScreen {
         return;
       }
 
-      this.editbox?.setStatus("E-Mail mit PDF-Anhang geöffnet.");
+      this.editbox?.setStatus("E-Mail mit PDF-Anhang geÃ¶ffnet.");
     } catch (error) {
       console.warn("[Restarbeiten] E-Mail konnte nicht vorbereitet werden", error);
       this.editbox?.setStatus(`E-Mail konnte nicht vorbereitet werden: ${normalizeText(error?.message) || "Unbekannter Fehler"}`);

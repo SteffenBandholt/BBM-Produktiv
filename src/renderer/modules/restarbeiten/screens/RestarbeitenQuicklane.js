@@ -437,7 +437,7 @@ export default class RestarbeitenQuicklane {
     });
 
     const mailSection = createToolItem(doc, {
-      iconNode: createMailIcon(doc),
+      iconText: "E-Mail",
       title: "E-Mail",
       actionHandler: () => this.onOpenEmail?.(),
     });

@@ -1,4 +1,4 @@
-const assert = require("node:assert/strict");
+﻿const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const Module = require("node:module");
@@ -196,9 +196,9 @@ async function runRestarbeitenModuleTests(run) {
       projectId: "22",
       project: { id: "22", name: "Test" },
       projectModules: [
-        { moduleId: "protokoll", label: "Protokoll", description: "Protokoll im aktuellen Projekt öffnen." },
-        { moduleId: "restarbeiten", label: "Restarbeiten", description: "Restarbeiten und Mängel im Projekt verwalten" },
-        { moduleId: "projectFirms", label: "Firmen im Projekt", description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt öffnen." },
+        { moduleId: "protokoll", label: "Protokoll", description: "Protokoll im aktuellen Projekt Ã¶ffnen." },
+        { moduleId: "restarbeiten", label: "Restarbeiten", description: "Restarbeiten und MÃ¤ngel im Projekt verwalten" },
+        { moduleId: "projectFirms", label: "Firmen im Projekt", description: "Projektbezogene Firmen und Mitarbeiter im aktuellen Projekt Ã¶ffnen." },
       ],
     });
 
@@ -270,6 +270,7 @@ async function runRestarbeitenModuleTests(run) {
     const stylePath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenListStyle.js");
     const content = fs.readFileSync(screenPath, "utf8");
     const styleContent = fs.readFileSync(stylePath, "utf8");
+    const screenContent = content;
 
     assert.doesNotMatch(content, /async\s+render\s*\(/);
     assert.match(content, /render\s*\(/);
@@ -279,14 +280,16 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /location_level_1/);
     assert.match(content, /location_level_4/);
     assert.match(content, /Keine Restarbeiten für die aktuellen Filter/);
-    assert.match(content, /data-bbm-restarbeiten-screen/);
-    assert.match(content, /restarbeiten-header__filters/);
-    assert.match(content, /restarbeiten-list__attachmentsWrap/);
-    assert.match(content, /restarbeiten-list__photosToggle/);
+    // Fachbegriff: oben ist der Listen-/Filterkopf mit Schließen rechts neben Meta.
+    assert.doesNotMatch(screenContent, /restarbeiten-header__title|restarbeiten-header__context/);
+    assert.match(screenContent, /restarbeiten-listHeader__grid/);
+    assert.match(screenContent, /restarbeiten-listHeader__panel--close/);
+    assert.match(screenContent, /Schließen/);
     assert.match(content, /dataset\.expanded/);
     assert.doesNotMatch(content, /tr\.innerHTML|innerHTML\s*=\s*\[/);
     assert.doesNotMatch(content, /Diktat|Archivieren/);
-    assert.match(content, /Drucken/);
+    assert.doesNotMatch(content, /btnPrint\.textContent\s*=\s*"Drucken"/);
+    assert.doesNotMatch(content, /actions\.append\(btnPrint, btnClose\)/);
     assert.match(content, /_printFilteredList/);
     assert.match(styleContent, /restarbeiten-sheet__list/);
   });
@@ -315,6 +318,9 @@ async function runRestarbeitenModuleTests(run) {
 
       const allText = collectText(root);
       assert.equal(allText.includes("Schließen"), true);
+      assert.equal(Boolean(findButtonByText(screen.headerFiltersHost, "Schließen")), true);
+      assert.equal(Boolean(findButtonByText(screen.headerHost, "Schließen")), false);
+      assert.equal(Boolean(findButtonByText(screen.headerHost, "Drucken")), false);
       assert.equal(Boolean(findButtonByText(screen.headerHost, "+ Restpunkt")), false);
       assert.equal(allText.includes("Ebene 1") || allText.includes("Haus"), true);
       assert.equal(Boolean(findButtonByText(screen.headerHost, "Metaspalten")), false);
@@ -338,9 +344,9 @@ async function runRestarbeitenModuleTests(run) {
     const vm = fs.readFileSync(vmPath, "utf8");
     const editbox = fs.readFileSync(editboxPath, "utf8");
 
-    assert.doesNotMatch(screen, /title\.textContent\s*=\s*"Restarbeiten"/);
+    assert.doesNotMatch(screen, /title\.textContent\s*=\s*"Restarbeiten"|restarbeiten-header__title|restarbeiten-header__context/);
     assert.doesNotMatch(screen, /restarbeiten-sheet__title|Arbeitsblatttitel/);
-    assert.match(screen, /restarbeiten-header__filters/);
+    assert.match(screen, /restarbeiten-listHeader__grid/);
     assert.match(screen, /Schließen/);
 
     assert.match(vm, /itemClassToken/);
@@ -380,7 +386,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(style, /restarbeiten-editbox__ampelPreview\{[^}]*border:0/);
     assert.match(style, /restarbeiten-editbox__ampelPreview\{[^}]*background:transparent/);
     assert.match(style, /restarbeiten-list__ampel\{[^}]*width:10px;[^}]*height:10px/);
-    assert.match(style, /restarbeiten-header\{[^}]*border-bottom/);
+    assert.match(style, /restarbeiten-header\{[^}]*display:\s*none/);
 
     assert.match(editbox, /restarbeiten-editbox__metaRow--dueDate/);
     assert.match(editbox, /restarbeiten-editbox__metaRow--status/);
@@ -554,7 +560,7 @@ async function runRestarbeitenModuleTests(run) {
       });
 
       const root = screen.render();
-      assert.equal(root.children.length >= 3, true);
+      assert.equal(root.children.length >= 2, true);
       await screen.load();
 
       assert.equal(screen.listHost.children[0].tagName, "UL");
@@ -746,7 +752,6 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(screen, /innerHTML\s*=/);
     assert.doesNotMatch(editbox + view, /Diktat|Druck|Bildbearbeitung/);
     assert.doesNotMatch(screen, /Diktat|Bildbearbeitung/);
-    assert.match(screen, /Drucken/);
     assert.match(screen, /_printFilteredList/);
   });
 
@@ -791,12 +796,12 @@ async function runRestarbeitenModuleTests(run) {
       ).default({});
 
       const root = screen.render();
-      assert.equal(root.children.length >= 3, true);
+      assert.equal(root.children.length >= 2, true);
       assert.match(screen.listHost.children[0].textContent, /Kein Projektkontext/);
       assert.equal(screen.editHost.children.length, 0);
       const addButton = findButtonByText(screen.headerHost, "+ Restpunkt");
       assert.equal(Boolean(addButton), false);
-      assert.equal(Boolean(findButtonByText(screen.headerHost, "Schließen")), true);
+      assert.equal(Boolean(findButtonByText(screen.headerFiltersHost, "Schließen")), true);
       const allText = collectText(root);
       assert.equal(allText.includes("Alle"), true);
       assert.equal(Boolean(findButtonByText(screen.headerHost, "Metaspalten")), false);
@@ -1100,7 +1105,7 @@ async function runRestarbeitenModuleTests(run) {
       const screen = new Screen({ projectId: "p-1" });
       const root = screen.render();
       assert.equal(typeof screen.load, "function");
-      assert.equal(root.children.length >= 3, true);
+      assert.equal(root.children.length >= 2, true);
 
       await screen.load();
       assert.equal(screen.projectFirms.length, 1);
@@ -1391,7 +1396,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(editbox.getDraft().completion_note, "Alt");
   });
 
-  await run("M19 Guardrails: Editbox CSS verdichtet und Filterleiste fachlich geklärt", () => {
+  await run("M19 Guardrails: Editbox CSS verdichtet und Filterleiste fachlich geklÃ¤rt", () => {
     const editboxContent = fs.readFileSync(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"),
       "utf8"
@@ -1429,10 +1434,11 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(screenContent, /restarbeiten-list/);
     assert.doesNotMatch(screenContent, /<table|createElement\("table"\)/);
 
-    // Fachbegriff: die grüne Leiste im Restarbeiten-Modul ist die Filterleiste (Filter + Schließen), nicht der globale Header.
-    assert.match(screenContent, /restarbeiten-header__filters/);
-    assert.match(screenContent, /btnClose\.textContent = "Schließen"/);
-    assert.match(screenContent, /_buildHeader/);
+    // Fachbegriff: oben ist der Listen-/Filterkopf mit Schließen rechts neben Meta.
+    assert.doesNotMatch(screenContent, /restarbeiten-header__title|restarbeiten-header__context/);
+    assert.match(screenContent, /restarbeiten-listHeader__grid/);
+    assert.match(screenContent, /restarbeiten-listHeader__panel--close/);
+    assert.match(screenContent, /Schließen/);
 
   });
 
@@ -1447,10 +1453,12 @@ async function runRestarbeitenModuleTests(run) {
     screen.rows = [
       { id: "1", item_class: "mangel", status: "offen", due_date: "2026-05-20", responsible_project_firm_id: "f1", location_level_1: "Haus A" },
       { id: "2", item_class: "rest", status: "in_arbeit", due_date: "2026-05-21", responsible_project_firm_id: "f2", location_level_1: "Haus B" },
+      { id: "3", item_class: "rest", status: "erledigt", due_date: "2026-05-22", completed_at: "2026-05-22", responsible_project_firm_id: "f1", location_level_1: "Haus C" },
     ];
     screen.items = [
       { id: "1", itemClassLabel: "", locationLevel1: "Haus A", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
       { id: "2", itemClassLabel: "Rest", locationLevel1: "Haus B", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
+      { id: "3", itemClassLabel: "Rest", locationLevel1: "Haus C", locationLevel2: "", locationLevel3: "", locationLevel4: "" },
     ];
     screen.projectFirms = [{ id: "f1", name: "Firma 1" }, { id: "f2", name: "Firma 2" }];
     screen._renderHeaderFilters();
@@ -1460,22 +1468,39 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(source, /item_class/);
     assert.match(source, /responsible_project_firm_id/);
     assert.match(source, /due_date/);
+    assert.doesNotMatch(source, /restarbeiten-header__title|restarbeiten-header__context/);
+    assert.match(source, /restarbeiten-listHeader__grid/);
+    assert.match(source, /restarbeiten-listHeader__panel--location/);
+    assert.match(source, /restarbeiten-listHeader__panel--class/);
+    assert.match(source, /restarbeiten-listHeader__panel--meta/);
     assert.match(source, /restarbeiten-filterleiste__classFilter/);
     assert.match(source, /restarbeiten-filterleiste__locationGroupA/);
     assert.match(source, /restarbeiten-filterleiste__locationGroupB/);
     assert.match(source, /restarbeiten-filterleiste__metaTopRow/);
-    assert.match(source, /restarbeiten-filterleiste__metaResponsibleRow/);
+    assert.match(source, /restarbeiten-filterleiste__metaBottomRow/);
     assert.match(source, /restarbeiten-filterleiste__fieldLabel/);
-    assert.match(source, /Status/);
     assert.match(source, /Fertig bis/);
+    assert.match(source, /Status/);
     assert.match(source, /Verantwortlich/);
-    assert.doesNotMatch(source, /title\.textContent\s*=\s*["']Restarbeiten["']/);
-    assert.doesNotMatch(source, /Haus\s*\/\s*Geschoss|Einheit\s*\/\s*Raum/);
-    assert.match(styleSource, /restarbeiten-filterleiste__classFilter\{display:grid;grid-template-columns:1fr/);
-    assert.match(styleSource, /restarbeiten-filterleiste__field\{display:inline-flex;align-items:center/);
-    assert.match(styleSource, /restarbeiten-filterleiste__locationFilters\{display:grid;grid-template-columns:repeat\(2/);
-    assert.match(styleSource, /restarbeiten-filterleiste__metaTopRow\{display:grid;grid-template-columns:repeat\(2/);
-    assert.match(styleSource, /restarbeiten-header__actions\{display:flex;gap:6px;margin-left:auto/);
+    assert.match(source, /Erledigt/);
+    assert.match(source, /completed_state/);
+    assert.match(source, /nicht_erledigt/);
+    assert.doesNotMatch(source, /Titel:|Projekt:/);
+    assert.match(styleSource, /restarbeiten-header\{display:none/);
+    assert.match(styleSource, /restarbeiten-listHeader\{position:sticky;top:0;z-index:2/);
+    assert.match(styleSource, /restarbeiten-listHeader__grid\{display:grid;grid-template-columns:minmax\(240px,1.55fr\)\s+minmax\(110px,.45fr\)\s+minmax\(270px,1.35fr\)\s+auto;/);
+    assert.match(styleSource, /restarbeiten-listHeader\{[^}]*outline:1px solid rgba\(96,165,250,.38\)/);
+    assert.match(styleSource, /restarbeiten-listHeader__panel\{display:grid;gap:5px/);
+    assert.match(styleSource, /restarbeiten-listHeader__panel--location\{outline-color:rgba\(34,197,94,.42\);margin-left:18px;width:calc\(100% - 18px\)\}/);
+    assert.match(styleSource, /restarbeiten-listHeader__panel--class\{outline-color:rgba\(168,85,247,.42\)\}/);
+    assert.match(styleSource, /restarbeiten-listHeader__panel--meta\{outline-color:rgba\(249,115,22,.42\)\}/);
+    assert.match(styleSource, /restarbeiten-filterleiste__field\{display:grid;gap:3px/);
+    assert.match(styleSource, /restarbeiten-filterleiste__classFilterButton\[data-active="1"\]\{background:#dbead6;border-color:#86a786;color:#1f4d2f\}/);
+    assert.match(styleSource, /restarbeiten-filterleiste__metaBottomRow\{display:grid;grid-template-columns:repeat\(2,minmax\(0,1fr\)\);gap:8px\}/);
+    assert.match(styleSource, /restarbeiten-listHeader__panel--close\{display:flex;align-items:flex-start;justify-content:flex-end;padding:0;box-sizing:border-box;background:transparent;border:0;box-shadow:none;outline:1px solid rgba\(236,72,153,.42\);outline-offset:-1px\}/);
+    assert.match(styleSource, /restarbeiten-listHeader__closePanel\{padding:6px 0 0;box-sizing:border-box\}/);
+    assert.match(styleSource, /restarbeiten-listHeader__closeButton\{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;min-height:24px/);
+    assert.doesNotMatch(styleSource, /#d9ead6,#c7e1c1/);
 
     const statusFilter = findNodes(
       screen.headerFiltersHost,
@@ -1484,17 +1509,27 @@ async function runRestarbeitenModuleTests(run) {
     const fieldNodes = findNodes(screen.headerFiltersHost, (node) =>
       String(node?.className || "").includes("restarbeiten-filterleiste__field")
     );
-    assert.equal(fieldNodes.length >= 7, true);
+    assert.equal(fieldNodes.length >= 8, true);
     const statusOptions = Array.isArray(statusFilter?.children) ? statusFilter.children : [];
     const inArbeitOption = statusOptions.find((opt) => opt.value === "in_arbeit");
     assert.equal(Boolean(inArbeitOption), true);
     assert.equal(inArbeitOption.textContent, "in Arbeit");
     assert.equal(statusOptions.some((opt) => opt.textContent === "in_arbeit"), false);
+    const getMetaSelect = (filterKey) =>
+      findNodes(
+        screen.headerFiltersHost,
+        (node) => node?.tagName === "SELECT" && node?.dataset?.filterKey === filterKey
+      )[0];
+    const doneFilter = getMetaSelect("completed_state");
+    assert.equal(Boolean(doneFilter), true);
+    const doneOptions = Array.isArray(doneFilter?.children) ? doneFilter.children : [];
+    assert.equal(doneOptions.some((opt) => opt.value === "nicht_erledigt"), true);
+    assert.equal(doneOptions.some((opt) => opt.value === "erledigt"), true);
 
     screen.filterState.item_class = "mangel";
     assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["1"]);
     screen.filterState.item_class = "rest";
-    assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["2"]);
+    assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["2", "3"]);
     screen.filterState.item_class = "";
     screen.filterState.status = "in_arbeit";
     assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["2"]);
@@ -1504,12 +1539,16 @@ async function runRestarbeitenModuleTests(run) {
     screen.filterState.due_date = "2026-05-20";
     screen.filterState.responsible_project_firm_id = "f1";
     assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["1"]);
-
-    const getMetaSelect = (filterKey) =>
-      findNodes(
-        screen.headerFiltersHost,
-        (node) => node?.tagName === "SELECT" && node?.dataset?.filterKey === filterKey
-      )[0];
+    screen.filterState.location_level_1 = "";
+    screen.filterState.status = "";
+    screen.filterState.due_date = "";
+    screen.filterState.responsible_project_firm_id = "";
+    screen.filterState.item_class = "";
+    screen.filterState.completed_state = "erledigt";
+    assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["3"]);
+    screen.filterState.completed_state = "nicht_erledigt";
+    assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["1", "2"]);
+    screen.filterState.completed_state = "";
 
     // stale status value wird beim Rendern bereinigt
     screen.filterState.status = "in_arbeit";
@@ -1526,6 +1565,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(screen.filterState.status, "");
     assert.equal(getMetaSelect("status")?.value, "");
     assert.deepEqual(screen._getFilteredItems().map((item) => item.id), ["3"]);
+    assert.equal(getMetaSelect("completed_state")?.value, "");
 
     // stale due_date value wird beim Rendern bereinigt
     screen.filterState.due_date = "2026-05-21";
@@ -1836,7 +1876,7 @@ async function runRestarbeitenModuleTests(run) {
       },
       {
         id: "r-2", running_number: 2, item_class: "mangel", short_text: "Mangel A", long_text: "Lang M1",
-        location_level_1: "Haus B", location_level_2: "OG", location_level_3: "WE 2", location_level_4: "Küche",
+        location_level_1: "Haus B", location_level_2: "OG", location_level_3: "WE 2", location_level_4: "KÃ¼che",
         status: "in_arbeit", due_date: "2026-05-20", responsible_label: "Firma B", completed_at: "", completion_note: "Note",
       },
       {
@@ -1862,7 +1902,7 @@ async function runRestarbeitenModuleTests(run) {
       },
       bbmDb: {
         printOpenHtmlPreview: async (payload) => { previewCalls.push(payload); return { ok: true }; },
-        restarbeitenGetProjectSettings: async () => ({ ok: true, settings: { level_1_label: "Gebäude", level_2_label: "Stock", level_3_label: "Bereich", level_4_label: "Zone" } }),
+        restarbeitenGetProjectSettings: async () => ({ ok: true, settings: { level_1_label: "GebÃ¤ude", level_2_label: "Stock", level_3_label: "Bereich", level_4_label: "Zone" } }),
         restarbeitenListByProject: async () => ({ ok: true, items: items.map((i) => ({ ...i })) }),
         projectFirmsListByProject: async () => ({ ok: true, list: [] }),
         restarbeitenListAttachments: async () => ({ ok: true, attachments: [] }),
@@ -1903,7 +1943,7 @@ async function runRestarbeitenModuleTests(run) {
 
       assert.equal(printPdfAndPreviewInternalCalls.length, 1);
       assert.equal(previewCalls.length, 0);
-      assert.equal(statusCalls.includes("PDF-Druckvorschau geöffnet."), true);
+      assert.equal(statusCalls.includes("PDF-Druckvorschau geÃ¶ffnet."), true);
       assert.equal(printCalls.length, 0);
       assert.equal(printPdfAndPreviewInternalCalls[0].mode, "restarbeiten");
       assert.equal(printPdfAndPreviewInternalCalls[0].projectId, "p-1");
@@ -1913,7 +1953,7 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(printPdfAndPreviewInternalCalls[0].restarbeitenRows[0].running_number, 2);
       assert.equal(printPdfAndPreviewInternalCalls[0].restarbeitenRows[0].item_class, "mangel");
       assert.deepEqual(printPdfAndPreviewInternalCalls[0].restarbeitenLocationLabels, {
-        level_1_label: "Gebäude",
+        level_1_label: "GebÃ¤ude",
         level_2_label: "Stock",
         level_3_label: "Bereich",
         level_4_label: "Zone",
@@ -1932,7 +1972,7 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(openRestarbeitenDirCalls[0].project_number, "P-100");
       assert.equal(openRestarbeitenDirCalls[0].short, "Kurz");
       assert.equal(openRestarbeitenDirCalls[0].name, "Name");
-      assert.equal(statusCalls.includes("Ausgabeordner geöffnet."), true);
+      assert.equal(statusCalls.includes("Ausgabeordner geÃ¶ffnet."), true);
       assert.equal(printPdfAndPreviewInternalCalls.length, 2);
       for (const payload of printPdfAndPreviewInternalCalls.slice(0, 2)) {
         assert.equal(payload.mode, "restarbeiten");
@@ -1951,7 +1991,7 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(mailCalls[0].subject, "Restarbeitenliste");
       assert.equal(mailCalls[0].body, "Anbei die gefilterte Restarbeitenliste als PDF.");
       assert.equal(mailCalls[0].attachmentPath, "C:/tmp/Restarbeitenliste.pdf");
-      assert.equal(statusCalls.includes("E-Mail mit PDF-Anhang geöffnet."), true);
+      assert.equal(statusCalls.includes("E-Mail mit PDF-Anhang geÃ¶ffnet."), true);
 
       screen.filterState.item_class = "mangel";
       screen.filterState.location_level_1 = "Nicht vorhanden";
@@ -1960,7 +2000,7 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(printPdfAndPreviewInternalCalls.length, 2);
       assert.equal(previewCalls.length, 0);
       assert.equal(printCalls.length, 0);
-      assert.equal(statusCalls.includes("Keine Restpunkte für den Druck vorhanden."), true);
+      assert.equal(statusCalls.includes("Keine Restpunkte fÃ¼r den Druck vorhanden."), true);
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
@@ -2007,19 +2047,19 @@ async function runRestarbeitenModuleTests(run) {
       statusCalls.length = 0;
       let prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: { printPdfAndPreviewInternal: async () => ({ ok: false, error: "Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet." }) } });
       await prepared.btnPreview.onclick();
-      assert.equal(statusCalls.includes("PDF-Druckvorschau konnte nicht geöffnet werden: Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet."), true);
+      assert.equal(statusCalls.includes("PDF-Druckvorschau konnte nicht geÃ¶ffnet werden: Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet."), true);
 
       // bridge fehlt
       statusCalls.length = 0;
       prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: {} });
       await prepared.btnPreview.onclick();
-      assert.equal(statusCalls.includes("PDF-Druckvorschau ist nicht verfügbar."), true);
+      assert.equal(statusCalls.includes("PDF-Druckvorschau ist nicht verfÃ¼gbar."), true);
 
       // exception
       statusCalls.length = 0;
       prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: { printPdfAndPreviewInternal: async () => { throw new Error("kaputt"); } } });
       await prepared.btnPreview.onclick();
-      assert.equal(statusCalls.includes("PDF-Druckvorschau konnte nicht geöffnet werden."), true);
+      assert.equal(statusCalls.includes("PDF-Druckvorschau konnte nicht geÃ¶ffnet werden."), true);
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
@@ -2063,22 +2103,22 @@ async function runRestarbeitenModuleTests(run) {
       statusCalls.length = 0;
       let prepared = await buildScreen({ bbmDb: { ...baseDb, projectsOpenRestarbeitenDir: async () => ({ ok: false, error: "kaputt" }) }, bbmPrint: {} });
       await prepared.btnOpenDir.onclick();
-      assert.equal(statusCalls.includes("Ausgabeordner konnte nicht geöffnet werden: kaputt"), true);
+      assert.equal(statusCalls.includes("Ausgabeordner konnte nicht geÃ¶ffnet werden: kaputt"), true);
 
       statusCalls.length = 0;
       prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: {} });
       await prepared.btnOpenDir.onclick();
-      assert.equal(statusCalls.includes("Ausgabeordner ist nicht verfügbar."), true);
+      assert.equal(statusCalls.includes("Ausgabeordner ist nicht verfÃ¼gbar."), true);
 
       statusCalls.length = 0;
       prepared = await buildScreen({ bbmDb: { ...baseDb, projectsOpenRestarbeitenDir: async () => { throw new Error("x"); } }, bbmPrint: {} });
       await prepared.btnOpenDir.onclick();
-      assert.equal(statusCalls.includes("Ausgabeordner konnte nicht geöffnet werden."), true);
+      assert.equal(statusCalls.includes("Ausgabeordner konnte nicht geÃ¶ffnet werden."), true);
 
       statusCalls.length = 0;
       prepared = await buildScreen({ bbmDb: { ...baseDb, projectsOpenRestarbeitenDir: async () => ({ ok: true, dir: "C:/tmp" }) }, bbmPrint: {} }, { project: null });
       await prepared.btnOpenDir.onclick();
-      assert.equal(statusCalls.includes("Ausgabeordner ist nicht verfügbar."), true);
+      assert.equal(statusCalls.includes("Ausgabeordner ist nicht verfÃ¼gbar."), true);
     } finally {
       globalThis.window = prevWindow;
       globalThis.document = prevDocument;
