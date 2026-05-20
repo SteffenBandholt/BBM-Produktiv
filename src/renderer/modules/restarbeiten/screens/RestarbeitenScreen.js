@@ -60,6 +60,8 @@ export default class RestarbeitenScreen {
     this.locationOptions = { location_level_1: [], location_level_2: [], location_level_3: [], location_level_4: [] };
     this.editbox = null;
     this.quicklane = null;
+    this.showAmpelInList = true;
+    this.showLongtextInList = true;
 
     this.filterState = {
       item_class: "",
@@ -97,6 +99,8 @@ export default class RestarbeitenScreen {
 
     this.host.append(this.headerHost, this.workArea, this.editArea);
 
+    this._applyAmpelVisibility();
+    this._syncRestarbeitenContextUi();
     this._renderHeaderFilters();
     this._renderList();
     this._renderEditbox();
@@ -157,11 +161,37 @@ export default class RestarbeitenScreen {
 
   _buildQuicklane(doc) {
     this.quicklane = new RestarbeitenQuicklane({
-      onPrint: () => this._printFilteredList(),
-      onOpenOutputDir: () => this._openOutputDir(),
+      onTogglePin: (pinned) => {
+        this.quicklane?.setPinned?.(pinned);
+      },
+      onOpenFirms: async () => {
+        const projectId = this.effectiveProjectId || this.projectId || this.router?.currentProjectId || null;
+        if (!projectId) return;
+        const project = this.project || null;
+        await this.router?.showProjectFirms?.(projectId, {
+          returnContext: {
+            section: "restarbeiten",
+            projectId,
+            project,
+          },
+        });
+      },
+      onOpenPreview: async () => {
+        await this.openRestarbeitenPreview();
+      },
+      onToggleLight: async () => {
+        await this.toggleAmpelDisplay();
+      },
+      onToggleLongtext: async () => {
+        await this.toggleLongtextDisplay();
+      },
+      ampelEnabled: this.showAmpelInList,
+      longtextEnabled: this.showLongtextInList,
     });
     const quicklaneHost = this.quicklane.render(doc);
     this.workArea.append(quicklaneHost);
+    this.quicklane?.setAmpelEnabled?.(this.showAmpelInList);
+    this.quicklane?.setLongtextEnabled?.(this.showLongtextInList);
   }
 
   _buildEditArea(doc) {
@@ -177,6 +207,8 @@ export default class RestarbeitenScreen {
 
   async load({ selectItemId = "", keepSelectionEmpty = false } = {}) {
     this.effectiveProjectId = normalizeText(this.projectId || this.project?.id || this.router?.currentProjectId);
+    this._applyAmpelVisibility();
+    this._syncRestarbeitenContextUi();
 
     if (!this.effectiveProjectId) {
       this.rows = [];
@@ -570,8 +602,12 @@ export default class RestarbeitenScreen {
     const longText = doc.createElement("div");
     longText.className = "restarbeiten-list__longText";
     longText.textContent = item.workLine2;
+    longText.hidden = !this.showLongtextInList;
 
-    col.append(location, shortText, longText);
+    col.append(location, shortText);
+    if (this.showLongtextInList) {
+      col.append(longText);
+    }
     return col;
   }
 
@@ -684,6 +720,7 @@ export default class RestarbeitenScreen {
     this.editbox.setItem(selectedItem);
     this.editbox.setProjectFirms(this.projectFirms);
     this.editbox.setAttachments(this.attachmentsByItemId.get(String(selectedItem.id)) || []);
+    this.editbox.setAmpelVisible?.(this.showAmpelInList);
   }
 
   async _createRestarbeit() {
@@ -744,6 +781,67 @@ export default class RestarbeitenScreen {
     }
   }
 
+  _emitAmpelStateChanged() {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("bbm:ampel-state", {
+          detail: { enabled: !!this.showAmpelInList },
+        })
+      );
+    } catch (_e) {}
+  }
+
+  _emitLongtextStateChanged() {
+    try {
+      window.dispatchEvent(
+        new CustomEvent("bbm:longtext-state", {
+          detail: { enabled: !!this.showLongtextInList },
+        })
+      );
+    } catch (_e) {}
+  }
+
+  _applyAmpelVisibility() {
+    if (!this.host) return;
+    this.host.dataset.ampelVisible = this.showAmpelInList ? "1" : "0";
+  }
+
+  _syncRestarbeitenContextUi() {
+    if (!this.router?.context?.ui) return;
+    this.router.context.ui.showAmpelInList = this.showAmpelInList;
+    this.router.context.ui.showLongtextInList = this.showLongtextInList;
+    this.router.context.ui.onAmpelToggle = () => this.toggleAmpelDisplay();
+    this.router.context.ui.onLongtextToggle = () => this.toggleLongtextDisplay();
+  }
+
+  async toggleAmpelDisplay() {
+    this.showAmpelInList = !this.showAmpelInList;
+    this._applyAmpelVisibility();
+    this._syncRestarbeitenContextUi();
+    this._emitAmpelStateChanged();
+    this._renderList();
+    this.editbox?.setAmpelVisible?.(this.showAmpelInList);
+    this.quicklane?.setAmpelEnabled?.(this.showAmpelInList);
+    this._renderEditbox();
+    return this.showAmpelInList;
+  }
+
+  async toggleLongtextDisplay() {
+    this.showLongtextInList = !this.showLongtextInList;
+    this._syncRestarbeitenContextUi();
+    this._emitLongtextStateChanged();
+    this._renderList();
+    this.quicklane?.setLongtextEnabled?.(this.showLongtextInList);
+    return this.showLongtextInList;
+  }
+
+  async openRestarbeitenPreview() {
+    return await this._printFilteredList();
+  }
+
+  async openRestarbeitenOutput() {
+    return await this._openOutputDir();
+  }
   async _printFilteredList() {
     const visibleItems = Array.isArray(this.filteredItems) ? this.filteredItems : [];
     if (!visibleItems.length) {
@@ -769,6 +867,8 @@ export default class RestarbeitenScreen {
           responsible_label: row.responsible_label || "",
           completed_at: row.completed_at || "",
           completion_note: row.completion_note || "",
+          ampelState: item.ampelState || "neutral",
+          showAmpelInList: !!this.showAmpelInList,
         };
       })
       .filter(Boolean);
@@ -788,6 +888,7 @@ export default class RestarbeitenScreen {
         projectId: this.effectiveProjectId,
         restarbeitenRows,
         restarbeitenLocationLabels: buildRestarbeitenLocationLabels(this.projectSettings),
+        showAmpelInList: !!this.showAmpelInList,
         devLayoutPreview: false,
         previewTitle: "Restarbeiten (Vorschau)",
       });
@@ -803,3 +904,4 @@ export default class RestarbeitenScreen {
     }
   }
 }
+

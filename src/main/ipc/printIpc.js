@@ -408,6 +408,7 @@ async function printToPdf(payload = {}) {
     todoResponsibleFilter: payload.todoResponsibleFilter || null,
     restarbeitenRows: payload.restarbeitenRows || null,
     restarbeitenLocationLabels: payload.restarbeitenLocationLabels || null,
+    showAmpelInList: typeof payload.showAmpelInList === "boolean" ? payload.showAmpelInList : null,
   });
   const projectNumber = data?.project?.project_number || data?.project?.projectNumber || null;
 
@@ -543,6 +544,7 @@ function registerPrintIpc() {
         todoResponsibleFilter: p.todoResponsibleFilter || null,
         restarbeitenRows: p.restarbeitenRows || null,
         restarbeitenLocationLabels: p.restarbeitenLocationLabels || null,
+        showAmpelInList: typeof p.showAmpelInList === "boolean" ? p.showAmpelInList : null,
       });
       // Version/Channel für PDF-Footer mitgeben
       data.appVersion = app.getVersion ? app.getVersion() : "";

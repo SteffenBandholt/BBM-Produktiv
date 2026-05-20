@@ -55,6 +55,10 @@ function createLockIcon(documentRef, { open = false } = {}) {
   return svg;
 }
 
+function createPinIcon(documentRef, { pinned = false } = {}) {
+  return createLockIcon(documentRef, { open: !pinned });
+}
+
 export default class ProjectContextQuicklane {
   constructor({ router } = {}) {
     this.router = router || null;
@@ -85,6 +89,7 @@ export default class ProjectContextQuicklane {
     this._ampelEnabled = null;
     this._longtextEnabled = null;
     this._isOutputOpen = false;
+    this._isRestarbeitenContext = false;
     this._ampelStateHandler = (e) => {
       this._ampelEnabled = !!e?.detail?.enabled;
       this._renderContext();
@@ -171,7 +176,7 @@ export default class ProjectContextQuicklane {
 
     const pinBtn = document.createElement("button");
     pinBtn.type = "button";
-    pinBtn.title = "Anheften";
+    pinBtn.title = "Fixieren";
     pinBtn.style.border = "1px solid #d5d5d5";
     pinBtn.style.background = "#ffffff";
     pinBtn.style.borderRadius = "10px";
@@ -261,8 +266,20 @@ export default class ProjectContextQuicklane {
     const previewSection = createToolItem({
       icon: "📄",
       title: "Vorschau",
-      actionHandler: () => {
-        if (!this._lastOpts?.projectId || !this._lastOpts?.meetingId) return;
+      actionHandler: async () => {
+        if (!this._lastOpts?.projectId) return;
+        if (this._isRestarbeitenContext) {
+          const activeView = this.router?.activeView || null;
+          if (typeof activeView?.openRestarbeitenPreview === "function") {
+            await activeView.openRestarbeitenPreview();
+            return;
+          }
+          if (typeof activeView?._printFilteredList === "function") {
+            await activeView._printFilteredList();
+          }
+          return;
+        }
+        if (!this._lastOpts?.meetingId) return;
         this.router?.openPrintVorabzug?.({
           projectId: this._lastOpts.projectId,
           meetingId: this._lastOpts.meetingId,
@@ -482,22 +499,50 @@ export default class ProjectContextQuicklane {
     });
     filterPopup.append(...filterActions);
 
-    const outputProtocols = createOutputAction("Protokolle", async () => {
-      if (!this._lastOpts?.projectId) return;
-      await this.router?.openClosedProtocolSelector?.({ mode: "view" });
-      this._setOutputOpen(false);
-    });
     const outputPrint = createOutputAction("Drucken", async () => {
       if (!this._lastOpts?.projectId) return;
-      await this.router?.openOutputPrint?.();
+      if (this._isRestarbeitenContext) {
+        const activeView = this.router?.activeView || null;
+        if (typeof activeView?.openRestarbeitenOutput === "function") {
+          await activeView.openRestarbeitenOutput();
+        } else if (typeof activeView?._openOutputDir === "function") {
+          await activeView._openOutputDir();
+        }
+      } else {
+        await this.router?.openOutputPrint?.();
+      }
+      this._setOutputOpen(false);
+    });
+    const outputPreview = createOutputAction("Vorschau", async () => {
+      if (!this._lastOpts?.projectId) return;
+      if (this._isRestarbeitenContext) {
+        const activeView = this.router?.activeView || null;
+        if (typeof activeView?.openRestarbeitenPreview === "function") {
+          await activeView.openRestarbeitenPreview();
+        } else if (typeof activeView?._printFilteredList === "function") {
+          await activeView._printFilteredList();
+        }
+      } else {
+        if (!this._lastOpts?.meetingId) return;
+        await this.router?.openClosedProtocolSelector?.({ mode: "view" });
+      }
       this._setOutputOpen(false);
     });
     const outputMail = createOutputAction("E-Mail senden", async () => {
-      if (!this._lastOpts?.projectId) return;
+      if (!this._lastOpts?.projectId || this._isRestarbeitenContext) return;
       await this.router?.openClosedProtocolSelector?.({ mode: "mail" });
       this._setOutputOpen(false);
     });
-    outputPopup.append(outputProtocols, outputPrint, outputMail);
+    if (this._isRestarbeitenContext) {
+      outputPopup.append(outputPrint, outputPreview);
+    } else {
+      const outputProtocols = createOutputAction("Protokolle", async () => {
+        if (!this._lastOpts?.projectId) return;
+        await this.router?.openClosedProtocolSelector?.({ mode: "view" });
+        this._setOutputOpen(false);
+      });
+      outputPopup.append(outputProtocols, outputPrint, outputMail);
+    }
 
     body.append(
       projectSection,
@@ -652,8 +697,9 @@ export default class ProjectContextQuicklane {
   _renderContext() {
     const meta = this._getNormalizedProjectMeta();
     const hasProject = meta.hasProject;
-    const hasParticipants = meta.hasProject && meta.hasMeeting;
-    const hasPreview = meta.hasProject && meta.hasMeeting;
+    this._isRestarbeitenContext = String(this.router?.activeSection || "").trim() === "restarbeiten";
+    const hasParticipants = meta.hasProject && meta.hasMeeting && !this._isRestarbeitenContext;
+    const hasPreview = this._isRestarbeitenContext ? meta.hasProject : meta.hasProject && meta.hasMeeting;
     const ampelSource = this.router?.activeView || null;
     const ampelOn =
       typeof this._ampelEnabled === "boolean"
@@ -676,7 +722,7 @@ export default class ProjectContextQuicklane {
       typeof longtextSource?.toggleLongtextDisplay === "function" ||
       typeof this.router?.context?.ui?.onLongtextToggle === "function" ||
       typeof longtextSource?.showLongtextInList === "boolean";
-    const hasTopFilter = !!this.router?.context?.ui?.isTopsView;
+    const hasTopFilter = !this._isRestarbeitenContext && !!this.router?.context?.ui?.isTopsView;
     const hasOutput = hasProject;
     this._applyToolItemState(this.projectSectionEl, hasProject);
     this._applyToolItemState(this.firmsSectionEl, hasProject);
@@ -686,6 +732,12 @@ export default class ProjectContextQuicklane {
     this._applyToolItemState(this.longtextSectionEl, hasLongtext);
     this._applyToolItemState(this.filterSectionEl, hasTopFilter);
     this._applyToolItemState(this.outputSectionEl, hasOutput);
+    if (this.employeesSectionEl) {
+      this.employeesSectionEl.style.display = this._isRestarbeitenContext ? "none" : "flex";
+    }
+    if (this.filterSectionEl) {
+      this.filterSectionEl.style.display = this._isRestarbeitenContext ? "none" : "flex";
+    }
     if (this.ampelSectionEl) {
       this.ampelSectionEl.dataset.active = ampelOn ? "true" : "false";
       this.ampelSectionEl.style.background = ampelOn ? "#eef7ff" : hasAmpel ? "#ffffff" : "#f3f3f3";
@@ -698,8 +750,10 @@ export default class ProjectContextQuicklane {
       this.longtextSectionEl.style.borderColor = longtextOn ? "#b6d4ff" : hasLongtext ? "#d8d8d8" : "#e3e3e3";
       this.longtextSectionEl.style.color = longtextOn ? "#0b4db4" : "";
     }
-    this._renderTopFilterButton();
-    this._syncTopFilterMenuState();
+    if (!this._isRestarbeitenContext) {
+      this._renderTopFilterButton();
+      this._syncTopFilterMenuState();
+    }
     if (this.ampelSectionEl?.firstChild) {
       const lamps = this.ampelSectionEl.firstChild.children || [];
       const red = lamps[0];
@@ -735,7 +789,7 @@ export default class ProjectContextQuicklane {
       }
     }
     if (!hasOutput) this._isOutputOpen = false;
-    if (!hasTopFilter) this._setTopFilterMenuOpen(false);
+    if (!hasTopFilter || this._isRestarbeitenContext) this._setTopFilterMenuOpen(false);
     if (this.outputPopupEl && this.outputSectionEl) {
       if (this._isOutputOpen && hasOutput) {
         const rect = this.outputSectionEl.getBoundingClientRect();
@@ -809,6 +863,14 @@ export default class ProjectContextQuicklane {
     this._isPinned = !this._isPinned;
     this._cancelClose();
     this._isOpen = this._isPinned;
+    if (this.pinBtn) {
+      this.pinBtn.replaceChildren(createLockIcon(document, { open: !this._isPinned }));
+      this.pinBtn.title = this._isPinned ? "Lösen" : "Fixieren";
+      this.pinBtn.setAttribute("aria-label", this._isPinned ? "Quicklane lösen" : "Quicklane fixieren");
+      this.pinBtn.style.background = this._isPinned ? "#eef7ff" : "#ffffff";
+      this.pinBtn.style.borderColor = this._isPinned ? "#b6d4ff" : "#d5d5d5";
+      this.pinBtn.style.color = this._isPinned ? "#0b4db4" : "#222";
+    }
     this._applyState();
   }
 
@@ -846,8 +908,14 @@ export default class ProjectContextQuicklane {
     this._applyState();
   }
 
+  _isRestarbeitenMode() {
+    return String(this.router?.activeSection || "").trim() === "restarbeiten";
+  }
+
   _applyState() {
     if (!this.root) return;
+
+    this._isRestarbeitenContext = this._isRestarbeitenMode();
 
     if (!this._enabled) {
       this.root.style.display = "none";
@@ -858,13 +926,14 @@ export default class ProjectContextQuicklane {
 
     this.root.style.display = "flex";
     this.root.style.pointerEvents = "auto";
-    this.root.style.width = this._isPinned ? "176px" : "56px";
+    this.root.style.width = (this._isOpen || this._isPinned) ? "176px" : "56px";
     this.root.style.transform =
       this._isOpen || this._isPinned ? "translateX(0)" : "translateX(calc(100% - 22px))";
 
     if (this.pinBtn) {
       this.pinBtn.replaceChildren(createLockIcon(document, { open: !this._isPinned }));
-      this.pinBtn.title = this._isPinned ? "Loesen" : "Anheften";
+      this.pinBtn.title = this._isPinned ? "Lösen" : "Fixieren";
+      this.pinBtn.setAttribute("aria-label", this._isPinned ? "Quicklane lösen" : "Quicklane fixieren");
       this.pinBtn.style.background = this._isPinned ? "#eef7ff" : "#ffffff";
       this.pinBtn.style.borderColor = this._isPinned ? "#b6d4ff" : "#d5d5d5";
       this.pinBtn.style.color = this._isPinned ? "#0b4db4" : "#222";
@@ -877,7 +946,6 @@ export default class ProjectContextQuicklane {
     this._renderContext();
     this._enabled = true;
     this._cancelClose();
-    this._isPinned = true;
     this._isOpen = true;
     this._applyState();
   }

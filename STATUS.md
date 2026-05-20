@@ -17,6 +17,54 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M35.1 Restarbeiten-Quicklane ist wieder ohne E-Mail-Button:
+  - Das Mail-Icon wurde aus der Quicklane entfernt.
+  - Der Restarbeiten-Screen haelt keinen eigenen Mail-Transport mehr vor.
+  - Quicklane, Tests und Status sind wieder auf den reinen Restarbeiten-Stand ohne Mail-Fallback ausgerichtet.
+
+- M35 Restarbeiten-Mail-Icon faellt jetzt auch ohne Outlook und ohne Empfaenger nicht mehr still aus:
+  - Der Mail-Button versucht zuerst den Outlook-Entwurf.
+  - Wenn Outlook nicht greift, baut der Flow einen direkten `mailto:`-Entwurf.
+  - Auch bei fehlenden Projekt-Empfaengern kann der Mail-Client damit noch aufgehen.
+  - geprueft mit `npm test`.
+
+- M34.9 Restarbeiten-Quicklane-Mail ist jetzt robuster verdrahtet:
+  - Der Mail-Button erzeugt den Restarbeiten-PDF-Anhang jetzt ueber den reinen PDF-Export statt ueber die Vorschau.
+  - Outlook wird zuerst versucht; falls das nicht klappt, faellt der Flow auf den normalen Mail-Client zurueck.
+  - Der neue Mail-Transport haengt weiter an den aktuellen Restarbeiten-Daten und nutzt denselben Quicklane-Einstieg.
+  - geprueft mit `npm test`.
+
+- M34.8 Restarbeiten-Quicklane hat jetzt einen E-Mail-Button fuer Outlook:
+  - Der neue Quicklane-Button erzeugt einen Restarbeiten-PDF-Anhang und startet danach einen Outlook-Entwurf.
+  - Empfaenger, Betreff und Text werden aus dem aktuellen Restarbeiten-Projekt abgeleitet.
+  - Auch ohne vorhandene Empfaenger wird Outlook jetzt geoeffnet; die Mail kann dann manuell vervollstaendigt werden.
+  - Die bestehende PDF-Vorschau bleibt unveraendert; der neue Mail-Flow ist separat angebunden.
+  - Guardrail-Tests fuer Restarbeiten wurden auf den neuen Mailpfad angehoben.
+
+- M34.7 Restarbeiten-Quicklane hat jetzt einen Drucker-Button fuer die PDF-Vorschau:
+  - Der neue Quicklane-Button startet den bestehenden Restarbeiten-Preview-Pfad.
+  - Die Vorschau bleibt ueber `openRestarbeitenPreview()` / `printPdfAndPreviewInternal` verdrahtet.
+  - Der Rest der Quicklane bleibt unveraendert.
+  - geprueft mit `npm test`.
+
+- M34.6 Restarbeiten-Quicklane-Schloss wechselt jetzt sichtbar offen/geschlossen:
+  - Der Pin-Button der Restarbeiten-Quicklane nutzt nun ein eindeutiges gelbes Schloss mit offenem und geschlossenem Zustand.
+  - Der bestehende Pin-Mechanismus bleibt unverändert, nur die Darstellung des Schlosses ist jetzt klar umschaltbar.
+  - geprueft mit `npm test`.
+
+- M34.5 Restarbeiten-Ampelsteuerung auf Screen-Root gehoben:
+  - Der Restarbeiten-Screen setzt jetzt einen Root-Zustand `data-ampel-visible`, damit Liste und Editbox nicht nur per Einzel-`hidden`-Logik reagieren.
+  - Die Ampel-Sichtbarkeit wird im Screen zentral mitgeführt und an den Router-Kontext gespiegelt.
+  - Quicklane, Liste, Editbox und PDF nutzen weiter denselben `showAmpelInList`-Schalter.
+  - geprueft mit `npm test`.
+
+- M34.4 Restarbeiten-Ampelschaltung zentralisiert:
+  - Der Restarbeiten-Screen bleibt die Quelle fuer `showAmpelInList`.
+  - Die Quicklane schaltet weiter nur den Screen-Zustand.
+  - Der PDF-Pfad bekommt `showAmpelInList` jetzt explizit ueber IPC und Printdaten mit.
+  - Die Editbox wird beim Rendern erneut an den aktuellen Ampelzustand gebunden.
+  - geprueft mit `npm test`.
+
 - M34.3 Restarbeiten: Quicklane-Beschriftung und stabiles Rechtsverhalten angepasst:
   - RestarbeitenQuicklane enthält in der Ausgabegruppe jetzt `Vorschau` und `Drucken`.
   - `Vorschau` nutzt weiterhin den bestehenden M33.10-Pfad `printPdfAndPreviewInternal` (inkl. `mode: "restarbeiten"` und `devLayoutPreview: false`).

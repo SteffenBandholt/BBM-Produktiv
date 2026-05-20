@@ -65,7 +65,12 @@ function normalizeEditboxStatus(value) {
 }
 
 export default class RestarbeitenEditbox {
-  constructor({ documentRef = globalThis.document, onSave = null, onCreate = null, onDelete = null } = {}) {
+  constructor({
+    documentRef = globalThis.document,
+    onSave = null,
+    onCreate = null,
+    onDelete = null,
+  } = {}) {
     this.document = documentRef || globalThis.document;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.onCreate = typeof onCreate === "function" ? onCreate : null;
@@ -82,6 +87,7 @@ export default class RestarbeitenEditbox {
     this.locationOptionLists = {};
     this.fields = {};
     this.attachments = [];
+    this.showAmpelPreview = true;
     this.isApplyingItem = false;
     this._updateAmpelPreview();
     this.isSaving = false;
@@ -634,6 +640,12 @@ export default class RestarbeitenEditbox {
     this.ampelPreviewEl.className = `restarbeiten-editbox__ampelPreview restarbeiten-list__ampel restarbeiten-list__ampel--${state}`;
     this.ampelPreviewEl.dataset.ampel = state;
     this.ampelPreviewEl.textContent = "";
+    this.ampelPreviewEl.dataset.visible = this.showAmpelPreview ? "1" : "0";
+  }
+
+  setAmpelVisible(visible) {
+    this.showAmpelPreview = !!visible;
+    this._updateAmpelPreview();
   }
 
   setItem(item) {

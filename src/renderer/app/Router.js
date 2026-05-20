@@ -497,6 +497,7 @@ export default class Router {
     if (v.load) await v.load();
     this.currentView = v;
     this.activeView = v;
+    await this._syncProjectContextUi();
 
     this._refreshHeaderSafe();
     this._emitContextChange();
@@ -836,15 +837,24 @@ export default class Router {
     await this.show(new V({ router: this }), { section: "firms", isTopsView: false });
   }
 
-  async showProjectFirms(projectId) {
+  async showProjectFirms(projectId, options = {}) {
     const mod = await import("../views/ProjectFirmsView.js");
     const V = mod.default;
 
+    const opts = options && typeof options === "object" ? options : {};
     this._setProjectRuntimeContext({ projectId: projectId || this.currentProjectId || null });
-    await this.show(new V({ router: this, projectId: this.currentProjectId }), {
+    await this.show(
+      new V({
+        router: this,
+        projectId: this.currentProjectId,
+        returnContext: opts.returnContext || null,
+      }),
+      {
       section: "projectFirms",
       isTopsView: false,
-    });
+      pageTitle: null,
+      }
+    );
   }
 
   async showSettings() {

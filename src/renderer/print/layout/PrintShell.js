@@ -227,7 +227,28 @@ function _buildGenericRow(row) {
     const tr = document.createElement("tr");
     tr.className = "restarbeitItemRow";
     const cells = Array.isArray(row.cells) ? row.cells : [];
-    for (const cell of cells) tr.appendChild(_el("td", "", cell || ""));
+    for (let i = 0; i < cells.length; i += 1) {
+      const cell = cells[i];
+      if (i === 8) {
+        const tdStatus = _el("td", "", "");
+        const statusWrap = _el("span", "restarbeitStatusWrap", cell || "");
+        const shouldShowAmpel = row.showAmpelInList !== false && row.ampelState;
+        const ampelClassMap = {
+          rot: "red",
+          gruen: "green",
+          orange: "orange",
+          neutral: "neutral",
+        };
+        if (shouldShowAmpel) {
+          const dot = _el("span", `ampelDot ${ampelClassMap[row.ampelState] || "neutral"}`);
+          statusWrap.appendChild(dot);
+        }
+        tdStatus.appendChild(statusWrap);
+        tr.appendChild(tdStatus);
+        continue;
+      }
+      tr.appendChild(_el("td", "", cell || ""));
+    }
     return tr;
   }
 

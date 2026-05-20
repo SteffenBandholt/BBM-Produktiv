@@ -20,6 +20,7 @@ import {
   isDevLayoutBuildChannel,
   isSimpleAutoLayoutTableCandidate,
 } from "../layoutTools/autoTableLayout.mjs";
+import { getRestarbeitenAmpelState } from "../modules/restarbeiten/viewModel/restarbeitenListItems.js";
 import {
   APP_SETTINGS_CHANGED_EVENT,
   LAYOUT_CALIBRATION_SETTING_KEY,
@@ -1730,8 +1731,14 @@ function _buildPages(data) {
   if (mode === "restarbeiten") {
     const rows = [];
     for (const r of data.restarbeitenItems || []) {
+      const showAmpelInList = data?.showAmpelInList !== false;
       rows.push({
         kind: "restarbeitItem",
+        ampelState: getRestarbeitenAmpelState({
+          status: r.status || "",
+          due_date: r.due_date || "",
+        }),
+        showAmpelInList,
         cells: [
           r.running_number || "",
           String(r.item_class || "").toLowerCase() === "mangel" ? "M" : "R",

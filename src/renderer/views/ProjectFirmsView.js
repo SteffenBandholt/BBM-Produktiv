@@ -96,7 +96,7 @@ function _normalizeTableColumnWidth(width, fallback = "") {
 }
 
 export default class ProjectFirmsView {
-  constructor({ router, projectId, readOnly } = {}) {
+  constructor({ router, projectId, readOnly, returnContext } = {}) {
     this.router = router;
 
     // wichtig: projektId robust ziehen (nicht nur ctor-arg)
@@ -104,6 +104,7 @@ export default class ProjectFirmsView {
 
     // optionaler Readonly-Override (wenn euer Kontext sowas hat)
     this.readOnly = typeof readOnly === "boolean" ? readOnly : undefined;
+    this.returnContext = returnContext && typeof returnContext === "object" ? returnContext : null;
 
     this.root = null;
 
@@ -318,6 +319,13 @@ export default class ProjectFirmsView {
     btnToProject.onclick = async () => {
       const r = this.router || null;
       const pid = this.projectId || r?.currentProjectId || null;
+      const returnContext = this.returnContext || null;
+      if (r && returnContext?.section === "restarbeiten" && typeof r.openProjectModule === "function") {
+        await r.openProjectModule(returnContext.projectId || pid, "restarbeiten", {
+          project: returnContext.project || null,
+        });
+        return;
+      }
       if (!r || !pid) {
         if (r && typeof r.showProjects === "function") await r.showProjects();
         return;

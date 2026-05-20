@@ -673,6 +673,16 @@ body[data-orientation="portrait"] .measureRoot,
   background: #1565c0;
 }
 
+.ampelDot.neutral {
+  background: #8a8a8a;
+}
+
+.restarbeitStatusWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .lvl1Row td {
   background: #e7f2ff;
 }

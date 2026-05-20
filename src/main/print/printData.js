@@ -913,6 +913,7 @@ function _loadPrintDocumentContent({
   todoResponsibleFilter,
   restarbeitenRows,
   restarbeitenLocationLabels,
+  showAmpelInList,
 } = {}) {
   let participants = [];
   let tops = [];
@@ -962,6 +963,12 @@ function _loadPrintDocumentContent({
     todoRows,
     restarbeitenItems,
     restarbeitenLocationLabels: restarbeitenLabels,
+    showAmpelInList:
+      typeof showAmpelInList === "boolean"
+        ? showAmpelInList
+        : Array.isArray(restarbeitenItems) && restarbeitenItems.length > 0
+          ? restarbeitenItems[0]?.showAmpelInList !== false
+          : true,
   };
 }
 
@@ -974,6 +981,7 @@ async function getPrintData({
   todoResponsibleFilter,
   restarbeitenRows,
   restarbeitenLocationLabels,
+  showAmpelInList,
 } = {}) {
   const { resolvePrintMode } = await _loadPrintModesModule();
   const normalizedMode = resolvePrintMode(mode, { fallback: "protocol" });
@@ -1001,10 +1009,11 @@ async function getPrintData({
     meetingId, 
     meeting: runtimeContext.meeting, 
     settings: runtimeContext.settings, 
-    todoResponsibleFilter, 
+    todoResponsibleFilter,
     restarbeitenRows,
     restarbeitenLocationLabels,
-  }); 
+    showAmpelInList,
+  });
  
   const status = getStatus({ fresh: false }); 
   const license = status?.license && typeof status.license === "object" ? status.license : {}; 

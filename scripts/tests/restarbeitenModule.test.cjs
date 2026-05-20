@@ -285,7 +285,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /restarbeiten-list__photosToggle/);
     assert.match(content, /dataset\.expanded/);
     assert.doesNotMatch(content, /tr\.innerHTML|innerHTML\s*=\s*\[/);
-    assert.doesNotMatch(content, /Diktat|Mail|Archivieren/);
+    assert.doesNotMatch(content, /Diktat|Archivieren/);
     assert.match(content, /Drucken/);
     assert.match(content, /_printFilteredList/);
     assert.match(styleContent, /restarbeiten-sheet__list/);
@@ -744,8 +744,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(dataSource, /importRestarbeitAttachments\(/);
     assert.match(dataSource, /deleteRestarbeitAttachment\(/);
     assert.doesNotMatch(screen, /innerHTML\s*=/);
-    assert.doesNotMatch(editbox + view, /Diktat|Druck|Mail|Bildbearbeitung/);
-    assert.doesNotMatch(screen, /Diktat|Mail|Bildbearbeitung/);
+    assert.doesNotMatch(editbox + view, /Diktat|Druck|Bildbearbeitung/);
+    assert.doesNotMatch(screen, /Diktat|Bildbearbeitung/);
     assert.match(screen, /Drucken/);
     assert.match(screen, /_printFilteredList/);
   });
