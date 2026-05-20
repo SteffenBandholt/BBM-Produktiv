@@ -145,8 +145,8 @@ export default class MainHeader {
     const root = document.createElement("div");
     root.style.boxSizing = "border-box";
     root.style.width = "100%";
-    const headerPadding = Math.max(8, this.padding - 2);
-    root.style.padding = `${headerPadding}px ${this.padding}px ${Math.max(6, headerPadding - 3)}px`;
+    const headerPadding = Math.max(7, this.padding - 4);
+    root.style.padding = `${headerPadding}px ${this.padding}px ${Math.max(4, headerPadding - 4)}px`;
     root.style.borderBottom = "1px solid var(--card-border)";
     root.style.background = "var(--header-bg)";
     root.style.color = "var(--header-text)";
@@ -164,7 +164,7 @@ export default class MainHeader {
     root.style.gridTemplateColumns = "1fr auto 1fr";
     root.style.gridTemplateRows = "auto auto auto";
     root.style.columnGap = "12px";
-    root.style.rowGap = "4px";
+    root.style.rowGap = "3px";
     root.style.alignItems = "start";
 
     const logoGroup = document.createElement("div");
@@ -221,8 +221,8 @@ export default class MainHeader {
 
     const elVersion = document.createElement("div");
     elVersion.style.fontSize = "12px";
-    elVersion.style.lineHeight = "15px";
-    elVersion.style.fontWeight = "600";
+    elVersion.style.lineHeight = "14px";
+    elVersion.style.fontWeight = "500";
     elVersion.style.whiteSpace = "nowrap";
     elVersion.style.overflow = "hidden";
     elVersion.style.textOverflow = "ellipsis";
@@ -232,7 +232,7 @@ export default class MainHeader {
     const elActive = document.createElement("div");
     elActive.style.display = "block";
     elActive.style.fontSize = "12px";
-    elActive.style.lineHeight = "15px";
+    elActive.style.lineHeight = "14px";
     elActive.style.fontWeight = "500";
     elActive.style.whiteSpace = "nowrap";
     elActive.style.overflow = "hidden";
@@ -252,7 +252,7 @@ export default class MainHeader {
     rightInfo.style.maxWidth = "100%";
     rightInfo.style.textAlign = "right";
     rightInfo.style.fontSize = "12px";
-    rightInfo.style.lineHeight = "15px";
+    rightInfo.style.lineHeight = "14px";
     rightInfo.style.fontWeight = "500";
     rightInfo.style.whiteSpace = "nowrap";
     rightInfo.style.overflow = "hidden";
@@ -268,7 +268,7 @@ export default class MainHeader {
     actionWrap.style.alignSelf = "end";
     actionWrap.style.display = "inline-flex";
     actionWrap.style.alignItems = "center";
-    actionWrap.style.gap = "8px";
+    actionWrap.style.gap = "6px";
     actionWrap.style.paddingRight = "0px";
 
     // Trial Info (Header) – existiert, aber wird NICHT angezeigt (Fenster-Titel bleibt aktiv)
@@ -785,7 +785,7 @@ export default class MainHeader {
 
     if (this._isNewUi) {
       root.style.gridTemplateRows = "auto auto auto";
-      root.style.rowGap = "5px";
+      root.style.rowGap = "3px";
       elCenterTitle.style.fontSize = "20px";
       elCenterTitle.style.lineHeight = "24px";
       elCenterTitle.style.fontWeight = "700";
@@ -802,12 +802,12 @@ export default class MainHeader {
       actionWrap.style.justifySelf = "center";
       actionWrap.style.alignSelf = "end";
       actionWrap.style.paddingRight = "0px";
-      actionWrap.style.marginBottom = "var(--header-action-baseline-offset)";
+      actionWrap.style.marginBottom = "calc(var(--header-action-baseline-offset) - 1px)";
       actionWrap.style.transform = "translateX(clamp(0px, 12vw, var(--header-action-offset-x)))";
       actionWrap.style.maxWidth = "min(calc(100% - 20px), 760px)";
       actionWrap.style.flexWrap = "wrap";
       actionWrap.style.justifyContent = "center";
-      actionWrap.style.rowGap = "6px";
+      actionWrap.style.rowGap = "4px";
 
       trialInfo.style.gridRow = "1";
       trialInfo.style.marginBottom = "0";
