@@ -179,6 +179,9 @@ export default class RestarbeitenScreen {
       onOpenPreview: async () => {
         await this.openRestarbeitenPreview();
       },
+      onOpenEmail: async () => {
+        await this.openRestarbeitenEmail();
+      },
       onToggleLight: async () => {
         await this.toggleAmpelDisplay();
       },
@@ -839,17 +842,18 @@ export default class RestarbeitenScreen {
     return await this._printFilteredList();
   }
 
+  async openRestarbeitenEmail() {
+    return await this._emailFilteredList();
+  }
+
   async openRestarbeitenOutput() {
     return await this._openOutputDir();
   }
-  async _printFilteredList() {
+
+  _buildRestarbeitenPdfRows() {
     const visibleItems = Array.isArray(this.filteredItems) ? this.filteredItems : [];
-    if (!visibleItems.length) {
-      this.editbox?.setStatus("Keine Restpunkte für den Druck vorhanden.");
-      return;
-    }
     const rowsById = new Map(this.rows.map((row) => [String(row?.id), row]));
-    const restarbeitenRows = visibleItems
+    return visibleItems
       .map((item) => {
         const row = rowsById.get(String(item.id));
         if (!row || row.deleted_at) return null;
@@ -872,7 +876,24 @@ export default class RestarbeitenScreen {
         };
       })
       .filter(Boolean);
-    if (!restarbeitenRows.length) {
+  }
+
+  _buildRestarbeitenPdfPayload() {
+    return {
+      mode: "restarbeiten",
+      projectId: this.effectiveProjectId,
+      restarbeitenRows: this._buildRestarbeitenPdfRows(),
+      restarbeitenLocationLabels: buildRestarbeitenLocationLabels(this.projectSettings),
+      showAmpelInList: !!this.showAmpelInList,
+      devLayoutPreview: false,
+      previewTitle: "Restarbeiten (Vorschau)",
+      fileName: "Restarbeitenliste.pdf",
+    };
+  }
+
+  async _printFilteredList() {
+    const pdfPayload = this._buildRestarbeitenPdfPayload();
+    if (!pdfPayload.restarbeitenRows.length) {
       this.editbox?.setStatus("Keine Restpunkte für den Druck vorhanden.");
       return;
     }
@@ -884,13 +905,7 @@ export default class RestarbeitenScreen {
 
     try {
       const result = await pdfBridge({
-        mode: "restarbeiten",
-        projectId: this.effectiveProjectId,
-        restarbeitenRows,
-        restarbeitenLocationLabels: buildRestarbeitenLocationLabels(this.projectSettings),
-        showAmpelInList: !!this.showAmpelInList,
-        devLayoutPreview: false,
-        previewTitle: "Restarbeiten (Vorschau)",
+        ...pdfPayload,
       });
       if (result?.ok === false) {
         const errorText = normalizeText(result?.error) || "Unbekannter Fehler";
@@ -903,5 +918,56 @@ export default class RestarbeitenScreen {
       this.editbox?.setStatus("PDF-Druckvorschau konnte nicht geöffnet werden.");
     }
   }
-}
 
+  async _emailFilteredList() {
+    const pdfPayload = this._buildRestarbeitenPdfPayload();
+    if (!pdfPayload.restarbeitenRows.length) {
+      this.editbox?.setStatus("Keine Restpunkte für den Versand vorhanden.");
+      return;
+    }
+
+    const printBridge = globalThis.window?.bbmPrint?.printPdf;
+    if (typeof printBridge !== "function") {
+      this.editbox?.setStatus("PDF-Erzeugung ist nicht verfügbar.");
+      return;
+    }
+
+    const mailBridge = globalThis.window?.bbmMail?.createOutlookDraft;
+    if (typeof mailBridge !== "function") {
+      this.editbox?.setStatus("E-Mail konnte nicht vorbereitet werden: Mail-Bridge fehlt.");
+      return;
+    }
+
+    try {
+      const pdfResult = await printBridge(pdfPayload);
+      if (pdfResult?.ok === false) {
+        const errorText = normalizeText(pdfResult?.error) || "Unbekannter Fehler";
+        this.editbox?.setStatus(`E-Mail konnte nicht vorbereitet werden: ${errorText}`);
+        return;
+      }
+
+      const pdfPath = normalizeText(pdfResult?.filePath);
+      if (!pdfPath) {
+        this.editbox?.setStatus("E-Mail konnte nicht vorbereitet werden: PDF-Datei fehlt.");
+        return;
+      }
+
+      const mailResult = await mailBridge({
+        subject: "Restarbeitenliste",
+        body: "Anbei die gefilterte Restarbeitenliste als PDF.",
+        attachmentPath: pdfPath,
+      });
+
+      if (mailResult?.ok === false) {
+        const errorText = normalizeText(mailResult?.error) || "Unbekannter Fehler";
+        this.editbox?.setStatus(`E-Mail konnte nicht vorbereitet werden: ${errorText}`);
+        return;
+      }
+
+      this.editbox?.setStatus("E-Mail mit PDF-Anhang geöffnet.");
+    } catch (error) {
+      console.warn("[Restarbeiten] E-Mail konnte nicht vorbereitet werden", error);
+      this.editbox?.setStatus(`E-Mail konnte nicht vorbereitet werden: ${normalizeText(error?.message) || "Unbekannter Fehler"}`);
+    }
+  }
+}

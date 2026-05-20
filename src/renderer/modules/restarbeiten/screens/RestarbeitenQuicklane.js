@@ -114,6 +114,45 @@ function createPrinterIcon(doc) {
   return svg;
 }
 
+function createMailIcon(doc) {
+  const svg = typeof doc?.createElementNS === "function"
+    ? doc.createElementNS("http://www.w3.org/2000/svg", "svg")
+    : doc.createElement("svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.style.width = "18px";
+  svg.style.height = "18px";
+  svg.style.display = "block";
+  svg.style.fill = "none";
+  svg.style.stroke = "currentColor";
+  svg.style.strokeWidth = "1.7";
+  svg.style.strokeLinecap = "round";
+  svg.style.strokeLinejoin = "round";
+
+  const envelope = typeof doc?.createElementNS === "function"
+    ? doc.createElementNS("http://www.w3.org/2000/svg", "path")
+    : doc.createElement("path");
+  envelope.setAttribute("d", "M4.5 7.5h15v9h-15z");
+
+  const flapLeft = typeof doc?.createElementNS === "function"
+    ? doc.createElementNS("http://www.w3.org/2000/svg", "path")
+    : doc.createElement("path");
+  flapLeft.setAttribute("d", "M4.8 7.9 12 13.2");
+
+  const flapRight = typeof doc?.createElementNS === "function"
+    ? doc.createElementNS("http://www.w3.org/2000/svg", "path")
+    : doc.createElement("path");
+  flapRight.setAttribute("d", "M19.2 7.9 12 13.2");
+
+  const atSign = typeof doc?.createElementNS === "function"
+    ? doc.createElementNS("http://www.w3.org/2000/svg", "path")
+    : doc.createElement("path");
+  atSign.setAttribute("d", "M15.2 14.5a2.2 2.2 0 1 1-1.4-3.9c1.1 0 1.9.7 1.9 1.7v2.2");
+
+  svg.append(envelope, flapLeft, flapRight, atSign);
+  return svg;
+}
+
 function createLockIcon(doc, { open = false } = {}) {
   const svg = typeof doc?.createElementNS === "function"
     ? doc.createElementNS("http://www.w3.org/2000/svg", "svg")
@@ -188,6 +227,7 @@ export default class RestarbeitenQuicklane {
     onTogglePin = null,
     onOpenFirms = null,
     onOpenPreview = null,
+    onOpenEmail = null,
     onToggleLight = null,
     onToggleLongtext = null,
     ampelEnabled = true,
@@ -196,6 +236,7 @@ export default class RestarbeitenQuicklane {
     this.onTogglePin = typeof onTogglePin === "function" ? onTogglePin : null;
     this.onOpenFirms = typeof onOpenFirms === "function" ? onOpenFirms : null;
     this.onOpenPreview = typeof onOpenPreview === "function" ? onOpenPreview : null;
+    this.onOpenEmail = typeof onOpenEmail === "function" ? onOpenEmail : null;
     this.onToggleLight = typeof onToggleLight === "function" ? onToggleLight : null;
     this.onToggleLongtext = typeof onToggleLongtext === "function" ? onToggleLongtext : null;
     this._ampelEnabled = !!ampelEnabled;
@@ -395,6 +436,12 @@ export default class RestarbeitenQuicklane {
       actionHandler: () => this.onOpenPreview?.(),
     });
 
+    const mailSection = createToolItem(doc, {
+      iconNode: createMailIcon(doc),
+      title: "E-Mail",
+      actionHandler: () => this.onOpenEmail?.(),
+    });
+
     const longtextSection = createToolItem(doc, {
       title: "Langtext an/aus",
       actionHandler: () => this.onToggleLongtext?.(),
@@ -422,7 +469,7 @@ export default class RestarbeitenQuicklane {
     longtextSection.replaceChildren(longtextWrap);
     this.longtextBtn = longtextSection;
 
-    body.append(firmsSection, ampelSection, previewSection, longtextSection);
+    body.append(firmsSection, ampelSection, previewSection, mailSection, longtextSection);
     root.append(tab, header, body);
     this.root = root;
     this.setAmpelEnabled(this._ampelEnabled);

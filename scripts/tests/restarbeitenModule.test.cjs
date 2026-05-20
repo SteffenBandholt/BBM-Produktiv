@@ -1825,6 +1825,7 @@ async function runRestarbeitenModuleTests(run) {
     const printPdfAndPreviewInternalCalls = [];
     const previewCalls = [];
     const printCalls = [];
+    const mailCalls = [];
     const openRestarbeitenDirCalls = [];
     const statusCalls = [];
     const items = [
@@ -1853,6 +1854,12 @@ async function runRestarbeitenModuleTests(run) {
           return { ok: true, filePath: "C:/tmp/Restarbeitenliste.pdf" };
         },
       },
+      bbmMail: {
+        createOutlookDraft: async (payload) => {
+          mailCalls.push(payload);
+          return { ok: true };
+        },
+      },
       bbmDb: {
         printOpenHtmlPreview: async (payload) => { previewCalls.push(payload); return { ok: true }; },
         restarbeitenGetProjectSettings: async () => ({ ok: true, settings: { level_1_label: "Gebäude", level_2_label: "Stock", level_3_label: "Bereich", level_4_label: "Zone" } }),
@@ -1878,8 +1885,10 @@ async function runRestarbeitenModuleTests(run) {
       assert.ok(quicklane);
       const quicklanePreviewBtn = findButtonByText(quicklane, "Vorschau");
       const quicklanePrintBtn = findButtonByText(quicklane, "Drucken");
+      const quicklaneEmailBtn = findNodes(quicklane, (n) => n?.tagName === "BUTTON" && n?.["aria-label"] === "E-Mail")[0];
       assert.ok(quicklanePreviewBtn);
       assert.ok(quicklanePrintBtn);
+      assert.ok(quicklaneEmailBtn);
       assert.match(collectText(quicklane), /Ausgabe/);
       assert.match(collectText(quicklane), /Vorschau/);
       assert.match(collectText(quicklane), /Drucken/);
@@ -1931,6 +1940,18 @@ async function runRestarbeitenModuleTests(run) {
         assert.equal(Array.isArray(payload.restarbeitenRows), true);
         assert.equal(payload.restarbeitenRows.length, 1);
       }
+
+      await quicklaneEmailBtn.onclick();
+      assert.equal(printCalls.length, 1);
+      assert.equal(mailCalls.length, 1);
+      assert.equal(printCalls[0].mode, "restarbeiten");
+      assert.equal(printCalls[0].fileName, "Restarbeitenliste.pdf");
+      assert.equal(Array.isArray(printCalls[0].restarbeitenRows), true);
+      assert.equal(printCalls[0].restarbeitenRows.length, 1);
+      assert.equal(mailCalls[0].subject, "Restarbeitenliste");
+      assert.equal(mailCalls[0].body, "Anbei die gefilterte Restarbeitenliste als PDF.");
+      assert.equal(mailCalls[0].attachmentPath, "C:/tmp/Restarbeitenliste.pdf");
+      assert.equal(statusCalls.includes("E-Mail mit PDF-Anhang geöffnet."), true);
 
       screen.filterState.item_class = "mangel";
       screen.filterState.location_level_1 = "Nicht vorhanden";
