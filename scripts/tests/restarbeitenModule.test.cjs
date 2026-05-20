@@ -1873,15 +1873,16 @@ async function runRestarbeitenModuleTests(run) {
       const printButtons = findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === "Drucken");
       assert.equal(printButtons.length >= 2, true);
       const btnPrint = printButtons[0];
-      const btnQuicklanePrint = printButtons[1];
-      const btnOpenDir = findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === "Ordner öffnen")[0];
       assert.ok(btnPrint);
-      assert.ok(btnQuicklanePrint);
-      assert.ok(btnOpenDir);
       const quicklane = findNodes(root, (n) => n?.["data-bbm-restarbeiten-quicklane"] === "true")[0];
       assert.ok(quicklane);
+      const quicklanePreviewBtn = findButtonByText(quicklane, "Vorschau");
+      const quicklanePrintBtn = findButtonByText(quicklane, "Drucken");
+      assert.ok(quicklanePreviewBtn);
+      assert.ok(quicklanePrintBtn);
       assert.match(collectText(quicklane), /Ausgabe/);
-      assert.match(collectText(quicklane), /Ordner öffnen/);
+      assert.match(collectText(quicklane), /Vorschau/);
+      assert.match(collectText(quicklane), /Drucken/);
       assert.doesNotMatch(collectText(quicklane), /E-?Mail/i);
       assert.doesNotMatch(collectText(quicklane), /Foto|Attachment/i);
       assert.equal(findNodes(root, (n) => n?.tagName === "BUTTON" && String(n?.textContent || "").trim() === "+ Restpunkt").length >= 1, true);
@@ -1916,8 +1917,8 @@ async function runRestarbeitenModuleTests(run) {
         assert.equal(Object.prototype.hasOwnProperty.call(row, key), false);
       }
 
-      await btnQuicklanePrint.onclick();
-      await btnOpenDir.onclick();
+      await quicklanePreviewBtn.onclick();
+      await quicklanePrintBtn.onclick();
       assert.equal(openRestarbeitenDirCalls.length, 1);
       assert.equal(openRestarbeitenDirCalls[0].project_number, "P-100");
       assert.equal(openRestarbeitenDirCalls[0].short, "Kurz");
@@ -1959,9 +1960,11 @@ async function runRestarbeitenModuleTests(run) {
       const root = screen.render();
       await screen.load();
       screen.editbox = { setStatus: (msg) => statusCalls.push(msg) };
-      const btnPrint = findButtonByText(root, "Drucken");
-      assert.ok(btnPrint);
-      return { btnPrint };
+      const quicklane = findNodes(root, (n) => n?.["data-bbm-restarbeiten-quicklane"] === "true")[0];
+      assert.ok(quicklane);
+      const btnPreview = findButtonByText(quicklane, "Vorschau");
+      assert.ok(btnPreview);
+      return { btnPreview };
     }
 
     const sharedRows = [
@@ -1982,19 +1985,19 @@ async function runRestarbeitenModuleTests(run) {
       // result ok false
       statusCalls.length = 0;
       let prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: { printPdfAndPreviewInternal: async () => ({ ok: false, error: "Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet." }) } });
-      await prepared.btnPrint.onclick();
+      await prepared.btnPreview.onclick();
       assert.equal(statusCalls.includes("PDF-Druckvorschau konnte nicht geöffnet werden: Modul Restarbeiten ist fuer diese Lizenz nicht freigeschaltet."), true);
 
       // bridge fehlt
       statusCalls.length = 0;
       prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: {} });
-      await prepared.btnPrint.onclick();
+      await prepared.btnPreview.onclick();
       assert.equal(statusCalls.includes("PDF-Druckvorschau ist nicht verfügbar."), true);
 
       // exception
       statusCalls.length = 0;
       prepared = await buildScreen({ bbmDb: { ...baseDb }, bbmPrint: { printPdfAndPreviewInternal: async () => { throw new Error("kaputt"); } } });
-      await prepared.btnPrint.onclick();
+      await prepared.btnPreview.onclick();
       assert.equal(statusCalls.includes("PDF-Druckvorschau konnte nicht geöffnet werden."), true);
     } finally {
       globalThis.window = prevWindow;
@@ -2020,7 +2023,9 @@ async function runRestarbeitenModuleTests(run) {
       const root = screen.render();
       await screen.load();
       screen.editbox = { setStatus: (msg) => statusCalls.push(msg) };
-      const btnOpenDir = findButtonByText(root, "Ordner öffnen");
+      const quicklane = findNodes(root, (n) => n?.["data-bbm-restarbeiten-quicklane"] === "true")[0];
+      assert.ok(quicklane);
+      const btnOpenDir = findButtonByText(quicklane, "Drucken");
       assert.ok(btnOpenDir);
       return { btnOpenDir };
     }

@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M34.3 Restarbeiten: Quicklane-Beschriftung und stabiles Rechtsverhalten angepasst:
+  - RestarbeitenQuicklane enthält in der Ausgabegruppe jetzt `Vorschau` und `Drucken`.
+  - `Vorschau` nutzt weiterhin den bestehenden M33.10-Pfad `printPdfAndPreviewInternal` (inkl. `mode: "restarbeiten"` und `devLayoutPreview: false`).
+  - `Drucken` nutzt weiterhin den bestehenden M34.2-Pfad `projectsOpenRestarbeitenDir`.
+  - Quicklane ist rechts sticky/stabil ausgerichtet; die Liste bleibt beim Hover ohne Breiten-/Layoutsprung stabil, inklusive responsive Rückfall auf schmale Breiten.
+  - Keine neue Drucklogik und keine Header-/Filterleisten-Reorganisation.
+
 - M34.2 Restarbeiten: Quicklane-Ausgabe um „Ordner öffnen“ ergänzt:
   - RestarbeitenQuicklane enthält in der Ausgabegruppe jetzt `Drucken` und `Ordner öffnen`.
   - `Ordner öffnen` nutzt den neuen IPC-/Preload-Pfad `projects:openRestarbeitenDir` / `projectsOpenRestarbeitenDir` und öffnet den Restarbeiten-Ausgabeordner des aktuellen Projekts.

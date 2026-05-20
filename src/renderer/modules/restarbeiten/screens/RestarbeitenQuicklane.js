@@ -25,14 +25,14 @@ export default class RestarbeitenQuicklane {
     const printBtn = doc.createElement("button");
     printBtn.type = "button";
     printBtn.className = "restarbeiten-quicklane__button";
-    printBtn.textContent = "Drucken";
+    printBtn.textContent = "Vorschau";
     printBtn.onclick = () => this.onPrint?.();
     outputSection.append(printBtn);
 
     const openDirBtn = doc.createElement("button");
     openDirBtn.type = "button";
     openDirBtn.className = "restarbeiten-quicklane__button";
-    openDirBtn.textContent = "Ordner öffnen";
+    openDirBtn.textContent = "Drucken";
     openDirBtn.onclick = () => this.onOpenOutputDir?.();
     outputSection.append(openDirBtn);
 
