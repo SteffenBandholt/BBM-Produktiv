@@ -388,3 +388,16 @@ Bedienlisten bleiben ausgeschlossen.
 
 Ohne diesen Layout-Steckbrief keine spÃ¤tere Breitenpflege per Codex-Prompt.
 
+
+## UI-Inspektor-Projekt
+
+Regeln:
+- Vor Arbeiten am UI-Inspektor zuerst lesen:
+  - `docs/UI_INSPEKTOR_PROJEKTAUFTRAG.md`
+  - `docs/UI_INSPEKTOR_ARCHITEKTUR.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+- Keine UI-Inspektor-Aufgabe ohne Aufgabenheft-Update abschließen.
+- UI-Inspektor-Core muss exportierbar und frei von BBM-Fachlogik bleiben.
+- Tabellen-Kalibrator nicht als UI-Inspektor-Bedienoberfläche weiterentwickeln.
+- Keine bestehenden App-Bereiche ändern, wenn der Auftrag nur Dokumentation betrifft.
