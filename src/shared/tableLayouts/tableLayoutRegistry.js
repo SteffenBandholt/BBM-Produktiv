@@ -291,6 +291,59 @@ async function _loadProjectFirmsLayout() {
   return _cloneJson(PROJECT_FIRMS_DEFAULT_LAYOUT);
 }
 
+const RESTARBEITEN_FILTER_META_DEFAULT_LAYOUT = Object.freeze({
+  tableKey: "restarbeiten_filter_meta",
+  moduleId: "restarbeiten",
+  variant: "portrait",
+  surfaceKey: "restarbeiten_filter_meta",
+  surfaceKind: "filterBar",
+  surfaceLabel: "Filterleiste Meta",
+  tableKind: "control",
+  ui: Object.freeze({
+    rootVars: Object.freeze({
+      "--bbm-restarbeiten-meta-due-width": "minmax(0, 1fr)",
+      "--bbm-restarbeiten-meta-status-width": "minmax(0, 1fr)",
+      "--bbm-restarbeiten-meta-done-width": "minmax(0, 1fr)",
+      "--bbm-restarbeiten-meta-responsible-width": "minmax(0, 1fr)",
+    }),
+  }),
+});
+
+const RESTARBEITEN_FILTER_META_EDIT_FIELDS = Object.freeze([
+  Object.freeze({
+    key: "metaDueWidth",
+    label: "Fertig bis",
+    path: "ui.rootVars.--bbm-restarbeiten-meta-due-width",
+    type: "gridTrack",
+    required: true,
+  }),
+  Object.freeze({
+    key: "metaStatusWidth",
+    label: "Status",
+    path: "ui.rootVars.--bbm-restarbeiten-meta-status-width",
+    type: "gridTrack",
+    required: true,
+  }),
+  Object.freeze({
+    key: "metaDoneWidth",
+    label: "Erledigt",
+    path: "ui.rootVars.--bbm-restarbeiten-meta-done-width",
+    type: "gridTrack",
+    required: true,
+  }),
+  Object.freeze({
+    key: "metaResponsibleWidth",
+    label: "Verantwortlich",
+    path: "ui.rootVars.--bbm-restarbeiten-meta-responsible-width",
+    type: "gridTrack",
+    required: true,
+  }),
+]);
+
+async function _loadRestarbeitenFilterMetaLayout() {
+  return _cloneJson(RESTARBEITEN_FILTER_META_DEFAULT_LAYOUT);
+}
+
 const TABLE_LAYOUT_MODULES = Object.freeze([
   Object.freeze({
     moduleId: "protokoll",
@@ -480,6 +533,33 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
         columns: PROJECT_FIRMS_COLUMNS,
         previewData: PROJECT_FIRMS_PREVIEW_DATA,
         defaultLayoutLoader: _loadProjectFirmsLayout,
+      }),
+    ]),
+  }),
+  Object.freeze({
+    moduleId: "restarbeiten",
+    moduleLabel: "Restarbeiten",
+    description: "Restarbeiten-Layouts und Layout-Surfaces fuer den Layout-Kalibrator.",
+    supportedOrientations: Object.freeze(["portrait", "landscape"]),
+    tables: Object.freeze([
+      Object.freeze({
+        tableKey: "restarbeiten_filter_meta",
+        tableLabel: "Filterleiste Meta",
+        description: "Kalibrierbare Layout-Surface fuer die Restarbeiten-Filterleiste Meta.",
+        surfaceKind: "filterBar",
+        surfaceLabel: "Filterleiste Meta",
+        surfaceDescription: "Kalibrierbare Layout-Surface fuer die Restarbeiten-Filterleiste Meta.",
+        tableKind: "control",
+        editorEnabled: true,
+        uiAvailable: true,
+        pdfAvailable: false,
+        uiProductive: true,
+        pdfProductive: false,
+        supportedOrientations: Object.freeze(["portrait", "landscape"]),
+        columns: [],
+        editFields: RESTARBEITEN_FILTER_META_EDIT_FIELDS,
+        previewData: [],
+        defaultLayoutLoader: _loadRestarbeitenFilterMetaLayout,
       }),
     ]),
   }),

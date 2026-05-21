@@ -88,6 +88,10 @@ function _normalizeLayoutPayload(layout) {
   return _cloneJson(value);
 }
 
+function _isControlLayoutDefinition(definition = {}) {
+  return String(definition?.tableKind || "").trim().toLowerCase() === "control";
+}
+
 function _mergeLayouts(base, overlay) {
   if (overlay == null) return _cloneJson(base);
   if (base == null) return _cloneJson(overlay);
@@ -129,6 +133,9 @@ async function _validateTableLayout(layout, orientation, definition) {
   if (!definition) {
     return { values: null, errors: {}, isValid: false };
   }
+  if (_isControlLayoutDefinition(definition)) {
+    return { values: null, errors: {}, isValid: _isPlainObject(layout) };
+  }
   if (definition.tableKey === "protokoll_tops" && mod && typeof mod.validateProtokollTopsEditorValues === "function") {
     return mod.validateProtokollTopsEditorValues(mod.extractProtokollTopsEditorValues(layout || {}), orientation);
   }
@@ -142,6 +149,9 @@ async function _validateTableLayout(layout, orientation, definition) {
 async function _sanitizeTableLayout(layout, orientation, definition) {
   const mod = await _loadProtokollTopsLayoutModule();
   if (!definition) {
+    return _cloneJson(layout);
+  }
+  if (_isControlLayoutDefinition(definition)) {
     return _cloneJson(layout);
   }
   if (definition.tableKey === "protokoll_tops" && mod && typeof mod.sanitizeProtokollTopsLayout !== "function") {

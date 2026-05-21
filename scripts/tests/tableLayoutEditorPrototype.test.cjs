@@ -929,6 +929,70 @@ async function runTableLayoutEditorPrototypeTests(run) {
     }
   });
 
+  await run("TableLayoutEditor: control surface mit editorEnabled=true erscheint", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+    const { api } = makeEditorApi();
+    const controlTableDefinition = {
+      moduleId: "restarbeiten",
+      moduleLabel: "Restarbeiten",
+      tableKey: "restarbeiten_filter_meta",
+      tableLabel: "Filterleiste Meta",
+      description: "Meta-Filterleiste",
+      tableKind: "control",
+      editorEnabled: true,
+      uiAvailable: true,
+      pdfAvailable: false,
+      uiProductive: true,
+      pdfProductive: false,
+      supportedOrientations: ["portrait", "landscape"],
+      columns: [],
+      editFields: [
+        {
+          key: "metaDueWidth",
+          label: "Fertig bis",
+          path: "ui.rootVars.--bbm-restarbeiten-meta-due-width",
+          type: "gridTrack",
+          required: true,
+        },
+      ],
+      defaultLayout: {
+        tableKey: "restarbeiten_filter_meta",
+        moduleId: "restarbeiten",
+        variant: "portrait",
+        ui: { rootVars: { "--bbm-restarbeiten-meta-due-width": "minmax(0, 1fr)" } },
+      },
+      previewData: [],
+    };
+    const originalListDefinitions = api.tableLayoutsListDefinitions;
+    api.tableLayoutsListDefinitions = async () => {
+      const res = await originalListDefinitions();
+      if (!res?.ok) return res;
+      return { ok: true, data: [...res.data, controlTableDefinition] };
+    };
+    global.window = { bbmDb: api };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
+      await editor.load();
+      const selects = findNodesByTag(editor.root, "SELECT");
+      const text = collectText(editor.root);
+      assert.equal(selects[0]?.children?.length, 2);
+      assert.equal(selects[1]?.children?.length, 2);
+      selects[0].value = "restarbeiten";
+      selects[0].dispatchEvent({ type: "change" });
+      await flushMicrotasks();
+      const refreshedText = collectText(editor.root);
+      const refreshedSelects = findNodesByTag(editor.root, "SELECT");
+      assert.equal(refreshedSelects[1]?.children?.length, 1);
+      assert.equal(refreshedText.includes("Filterleiste Meta"), true);
+      assert.equal(refreshedText.includes("restarbeiten_filter_meta"), true);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
   await run("TableLayoutEditor: protokoll_tops landscape bleibt getrennte Layoutvariante", async () => {
     const previousDocument = global.document;
     const previousWindow = global.window;

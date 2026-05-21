@@ -192,6 +192,55 @@ async function runTableLayoutsRepoTests(run) {
     });
   });
 
+  await run("TableLayoutsRepo: control surfaces speichern rootVars ohne Spalten-Validierung", async () => {
+    return withTempTableLayoutsRepo(async ({ db, repo }) => {
+      db.initDatabase();
+
+      const saveRes = await repo.saveTableLayout({
+        tableKey: "restarbeiten_filter_meta",
+        moduleId: "restarbeiten",
+        orientation: "portrait",
+        layout: {
+          tableKey: "restarbeiten_filter_meta",
+          moduleId: "restarbeiten",
+          variant: "portrait",
+          ui: {
+            rootVars: {
+              "--bbm-restarbeiten-meta-due-width": "88px",
+              "--bbm-restarbeiten-meta-status-width": "112px",
+            },
+          },
+        },
+      });
+
+      assert.equal(saveRes.source, "stored");
+      assert.equal(saveRes.effectiveLayout.ui.rootVars["--bbm-restarbeiten-meta-due-width"], "88px");
+      assert.equal(saveRes.effectiveLayout.ui.rootVars["--bbm-restarbeiten-meta-status-width"], "112px");
+      assert.equal(
+        saveRes.effectiveLayout.ui.rootVars["--bbm-restarbeiten-meta-done-width"],
+        "minmax(0, 1fr)"
+      );
+
+      const stored = repo.getStoredTableLayout({
+        tableKey: "restarbeiten_filter_meta",
+        moduleId: "restarbeiten",
+        orientation: "portrait",
+      });
+      assert.equal(stored.layout.ui.rootVars["--bbm-restarbeiten-meta-due-width"], "88px");
+      assert.equal(stored.layout.ui.rootVars["--bbm-restarbeiten-meta-status-width"], "112px");
+      assert.equal(saveRes.effectiveLayout.tableKind, "control");
+
+      const resolved = await repo.getResolvedTableLayout({
+        tableKey: "restarbeiten_filter_meta",
+        moduleId: "restarbeiten",
+        orientation: "portrait",
+      });
+      assert.equal(resolved.ok, true);
+      assert.equal(resolved.source, "stored");
+      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-restarbeiten-meta-done-width"], "minmax(0, 1fr)");
+    });
+  });
+
   await run("TableLayoutsRepo: kaputte gespeicherte Layoutwerte fallen auf Standard des konkreten Tables zurueck", async () => {
     return withTempTableLayoutsRepo(async ({ db, repo }) => {
       const conn = db.initDatabase();

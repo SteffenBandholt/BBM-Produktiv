@@ -373,6 +373,14 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(style, /restarbeiten-editbox__metaDate/);
     assert.match(style, /restarbeiten-editbox__topBar\{[^}]*display:flex/);
     assert.match(style, /restarbeiten-editbox__body\{[^}]*display:grid/);
+    assert.match(style, /--bbm-restarbeiten-meta-due-width/);
+    assert.match(style, /--bbm-restarbeiten-meta-status-width/);
+    assert.match(style, /--bbm-restarbeiten-meta-done-width/);
+    assert.match(style, /--bbm-restarbeiten-meta-responsible-width/);
+    assert.match(style, /var\(--bbm-restarbeiten-meta-due-width/);
+    assert.match(style, /var\(--bbm-restarbeiten-meta-status-width/);
+    assert.match(style, /var\(--bbm-restarbeiten-meta-done-width/);
+    assert.match(style, /var\(--bbm-restarbeiten-meta-responsible-width/);
     assert.match(style, /restarbeiten-editbox__rightGroup\{[^}]*display:grid/);
     assert.match(style, /restarbeiten-editbox__rightGroup\{[^}]*justify-content:flex-end/);
     assert.doesNotMatch(style, /calc\(100% - 3cm\)/);
@@ -402,6 +410,12 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(editbox, /ampelPreview\.className\s*=\s*"restarbeiten-editbox__ampelPreview restarbeiten-list__ampel"/);
     assert.match(editbox, /createField\(doc, "Verantwortlich", responsibleProjectFirmId\)/);
     assert.match(editbox, /restarbeiten-editbox__classToggle--compact/);
+    assert.match(screen, /tableLayoutsGetOne/);
+    assert.match(screen, /restarbeiten_filter_meta/);
+    assert.match(
+      screen,
+      /key: "due_date"[\s\S]*key: "status"[\s\S]*key: "responsible_project_firm_id"[\s\S]*key: "completed_state"/
+    );
     assert.match(editbox, /topBar\.className = "restarbeiten-editbox__topBar"/);
     assert.match(editbox, /titleEl\.className = "restarbeiten-editbox__title"/);
     assert.match(editbox, /body\.className = "restarbeiten-editbox__body"/);
@@ -1498,7 +1512,10 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(styleSource, /restarbeiten-filterleiste__classFilter\{display:grid;grid-template-columns:repeat\(3,minmax\(0,1fr\)\);gap:2px;align-self:stretch;min-width:0\}/);
     assert.match(styleSource, /restarbeiten-filterleiste__locationFilters\{display:grid;grid-template-columns:repeat\(4,minmax\(0,1fr\)\);gap:2px;min-width:0;align-items:end\}/);
     assert.match(styleSource, /restarbeiten-filterleiste__classFilterButton\[data-active="1"\]\{background:#dbead6;border-color:#86a786;color:#1f4d2f\}/);
-    assert.match(styleSource, /restarbeiten-filterleiste__metaFilters\{display:grid;grid-template-columns:repeat\(4,minmax\(0,1fr\)\);gap:2px;min-width:0;align-items:end\}/);
+    assert.match(
+      styleSource,
+      /restarbeiten-filterleiste__metaFilters\{display:grid;grid-template-columns:var\(--bbm-restarbeiten-meta-due-width,minmax\(0,1fr\)\)\s+var\(--bbm-restarbeiten-meta-status-width,minmax\(0,1fr\)\)\s+var\(--bbm-restarbeiten-meta-responsible-width,minmax\(0,1fr\)\)\s+var\(--bbm-restarbeiten-meta-done-width,minmax\(0,1fr\)\);gap:2px;min-width:0;align-items:end\}/
+    );
     assert.match(styleSource, /restarbeiten-listHeader__panel--close\{grid-column:4;grid-row:1\}/);
     assert.match(styleSource, /restarbeiten-listHeader__panel--close\{display:flex;align-items:flex-start;justify-content:flex-end;padding:0;box-sizing:border-box;background:transparent;border:0;box-shadow:none;outline:1px solid rgba\(236,72,153,.42\);outline-offset:-1px\}/);
     assert.match(styleSource, /restarbeiten-listHeader__closePanel\{padding:6px 0 0;box-sizing:border-box\}/);

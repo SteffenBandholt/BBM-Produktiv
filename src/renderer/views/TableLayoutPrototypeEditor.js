@@ -89,7 +89,7 @@ function _normalizeDefinitionsList(definitions = []) {
 }
 
 function _isEditorVisibleTableDefinition(def = {}) {
-  return String(def?.tableKind || "content").trim().toLowerCase() === "content" && def?.editorEnabled !== false;
+  return def?.editorEnabled !== false;
 }
 
 function _groupModuleDefinitions(definitions = []) {
