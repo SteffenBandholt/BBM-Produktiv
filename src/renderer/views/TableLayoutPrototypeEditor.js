@@ -1880,12 +1880,18 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     refreshPreview();
   };
 
-  const load = async () => {
+  const load = async (options = {}) => {
     if (typeof resolvedApi?.tableLayoutsGetOne !== "function") {
       state.error = "Table-Layout-IPC nicht verfügbar.";
       refreshPreview();
       return { ok: false, error: state.error };
     }
+    const requestedModuleId = _normalizeId(options.moduleId || state.selectedModuleId);
+    const requestedTableKey = _normalizeId(options.tableKey || state.selectedTableKey);
+    const requestedOrientation = _normalizeOrientation(options.orientation || orientationSelect.value || state.orientation);
+    if (requestedModuleId) state.selectedModuleId = requestedModuleId;
+    if (requestedTableKey) state.selectedTableKey = requestedTableKey;
+    state.orientation = requestedOrientation;
     setBusy(true);
     state.error = "";
     state.contextLoading = true;
@@ -1893,8 +1899,6 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
       await loadTableDefinitions();
       _renderModuleOptions();
       _renderTableOptions();
-      const requestedOrientation = _normalizeOrientation(orientationSelect.value || state.orientation);
-      state.orientation = requestedOrientation;
       const tableDef = _getSelectedTableDefinition();
       if (!tableDef) {
         state.error = state.contextError || "Keine Tabellen-Definition verfuegbar.";

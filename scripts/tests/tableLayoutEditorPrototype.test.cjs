@@ -1049,6 +1049,93 @@ async function runTableLayoutEditorPrototypeTests(run) {
     }
   });
 
+  await run("TableLayoutEditor: control surface kann direkt per tableKey geladen werden", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    global.document = createFakeDocument();
+    const { api } = makeEditorApi();
+    const controlTableDefinition = {
+      moduleId: "restarbeiten",
+      moduleLabel: "Restarbeiten",
+      tableKey: "restarbeiten_filter_meta",
+      tableLabel: "Filterleiste Meta",
+      description: "Meta-Filterleiste",
+      tableKind: "control",
+      editorEnabled: true,
+      uiAvailable: true,
+      pdfAvailable: false,
+      uiProductive: true,
+      pdfProductive: false,
+      supportedOrientations: ["portrait", "landscape"],
+      columns: [],
+      editFields: [
+        {
+          key: "metaDueWidth",
+          label: "Fertig bis",
+          path: "ui.rootVars.--bbm-restarbeiten-meta-due-width",
+          type: "gridTrack",
+          required: true,
+        },
+        {
+          key: "metaStatusWidth",
+          label: "Status",
+          path: "ui.rootVars.--bbm-restarbeiten-meta-status-width",
+          type: "gridTrack",
+          required: true,
+        },
+        {
+          key: "metaResponsibleWidth",
+          label: "Verantwortlich",
+          path: "ui.rootVars.--bbm-restarbeiten-meta-responsible-width",
+          type: "gridTrack",
+          required: true,
+        },
+        {
+          key: "metaDoneWidth",
+          label: "Erledigt",
+          path: "ui.rootVars.--bbm-restarbeiten-meta-done-width",
+          type: "gridTrack",
+          required: true,
+        },
+      ],
+      defaultLayout: {
+        tableKey: "restarbeiten_filter_meta",
+        moduleId: "restarbeiten",
+        variant: "portrait",
+        ui: {
+          rootVars: {
+            "--bbm-restarbeiten-meta-due-width": "minmax(0, 1fr)",
+            "--bbm-restarbeiten-meta-status-width": "minmax(0, 1fr)",
+            "--bbm-restarbeiten-meta-responsible-width": "minmax(0, 1fr)",
+            "--bbm-restarbeiten-meta-done-width": "minmax(0, 1fr)",
+          },
+        },
+      },
+      previewData: [],
+    };
+    const originalListDefinitions = api.tableLayoutsListDefinitions;
+    api.tableLayoutsListDefinitions = async () => {
+      const res = await originalListDefinitions();
+      if (!res?.ok) return res;
+      return { ok: true, data: [...res.data, controlTableDefinition] };
+    };
+    global.window = { bbmDb: api };
+    try {
+      const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
+      await editor.load({ moduleId: "restarbeiten", tableKey: "restarbeiten_filter_meta", orientation: "portrait" });
+      const text = collectText(editor.root);
+      assert.equal(text.includes("Filterleiste Meta"), true);
+      assert.equal(text.includes("restarbeiten_filter_meta"), true);
+      assert.equal(text.includes("Layoutbereich ohne Tabellenvorschau"), true);
+      const selectValues = findNodesByTag(editor.root, "SELECT").map((node) => node?.value);
+      assert.equal(selectValues.includes("restarbeiten"), true);
+      assert.equal(selectValues.includes("restarbeiten_filter_meta"), true);
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
   await run("TableLayoutEditor: protokoll_tops landscape bleibt getrennte Layoutvariante", async () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
