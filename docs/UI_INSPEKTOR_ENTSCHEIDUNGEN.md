@@ -1,0 +1,26 @@
+# UI-Inspektor Entscheidungslog
+
+## Entscheidung 001
+**Beschluss:** Der UI-Inspektor wird neu und exportierbar entwickelt.
+
+**Begründung:** Nur ein sauberer Neustart als Modul sichert Wiederverwendbarkeit und verhindert BBM-spezifische Verkopplung.
+
+## Entscheidung 002
+**Beschluss:** Der vorhandene Tabellen-Kalibrator wird nicht zur Hauptbedienung des UI-Inspektors weiterentwickelt.
+
+**Begründung:** Der Tabellen-Kalibrator verfolgt einen anderen Zweck und deckt nicht die geforderte, allgemeine UI-Bereichsbedienung ab.
+
+## Entscheidung 003
+**Beschluss:** Der Nutzer soll keine UI-Technik lernen müssen; technische Begriffe bleiben intern.
+
+**Begründung:** Zielgruppe sind fachliche Anwender ohne Programmierkenntnisse.
+
+## Entscheidung 004
+**Beschluss:** Jede App liefert später eine Layout-Landkarte; der Core bleibt allgemein.
+
+**Begründung:** So bleibt das Modul exportierbar, während App-Spezifika sauber ausgelagert werden.
+
+## Entscheidung 005
+**Beschluss:** Bestehende UIs werden nachträglich erkannt/markiert; neue UIs werden künftig von Anfang an mit Bereichs-Landkarte gebaut.
+
+**Begründung:** Das erlaubt Bestandseinführung und zukünftige Stabilität über einen gemeinsamen Arbeitsansatz.
