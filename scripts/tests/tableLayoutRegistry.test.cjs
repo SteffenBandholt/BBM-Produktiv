@@ -12,7 +12,7 @@ async function runTableLayoutRegistryTests(run) {
     const definitions = await listTableLayoutDefinitions();
 
     assert.equal(Array.isArray(modules), true);
-    assert.equal(modules.length, 2);
+    assert.equal(modules.length, 3);
     assert.equal(modules[0].moduleId, "protokoll");
     assert.equal(modules[0].moduleLabel, "Protokoll");
     assert.equal(Array.isArray(modules[0].tables), true);
@@ -40,12 +40,23 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(projectModule.tables[0].surfaceLabel, "Projekt-Firmenliste");
     assert.equal(projectModule.tables[0].tableKind, "content");
     assert.equal(projectModule.tables[0].editorEnabled, true);
+    const restarbeitenModule = modules.find((moduleDef) => moduleDef.moduleId === "restarbeiten");
+    assert.ok(restarbeitenModule, "restarbeiten module missing");
+    assert.equal(restarbeitenModule.moduleLabel, "Restarbeiten");
+    assert.equal(restarbeitenModule.tables[0].tableKey, "restarbeiten_filter_meta");
+    assert.equal(restarbeitenModule.tables[0].surfaceKey, "restarbeiten_filter_meta");
+    assert.equal(restarbeitenModule.tables[0].surfaceKind, "filterBar");
+    assert.equal(restarbeitenModule.tables[0].surfaceLabel, "Filterleiste Meta");
+    assert.equal(restarbeitenModule.tables[0].tableKind, "control");
+    assert.equal(restarbeitenModule.tables[0].editorEnabled, true);
+    assert.equal(restarbeitenModule.tables[0].uiAvailable, true);
+    assert.equal(restarbeitenModule.tables[0].pdfAvailable, false);
 
     assert.equal(Array.isArray(definitions), true);
-    assert.equal(definitions.length, 3);
+    assert.equal(definitions.length, 4);
     assert.deepEqual(
       definitions.map((def) => def.tableKey),
-      ["protokoll_tops", "protokoll_participants", "project_firms"]
+      ["protokoll_tops", "protokoll_participants", "project_firms", "restarbeiten_filter_meta"]
     );
     assert.equal(definitions[0].moduleId, "protokoll");
     assert.equal(definitions[0].moduleLabel, "Protokoll");
@@ -126,6 +137,24 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(projectFirmsDef.columns.length, 3);
     assert.equal(projectFirmsDef.columns[0].label, "Kurzbez.");
     assert.equal(projectFirmsDef.previewData[0].shortName, "AB");
+    const restarbeitenDef = definitions.find((def) => def.tableKey === "restarbeiten_filter_meta");
+    assert.ok(restarbeitenDef, "restarbeiten_filter_meta definition missing");
+    assert.equal(restarbeitenDef.moduleId, "restarbeiten");
+    assert.equal(restarbeitenDef.tableLabel, "Filterleiste Meta");
+    assert.equal(restarbeitenDef.surfaceKey, "restarbeiten_filter_meta");
+    assert.equal(restarbeitenDef.surfaceKind, "filterBar");
+    assert.equal(restarbeitenDef.surfaceLabel, "Filterleiste Meta");
+    assert.equal(restarbeitenDef.tableKind, "control");
+    assert.equal(restarbeitenDef.editorEnabled, true);
+    assert.equal(restarbeitenDef.uiAvailable, true);
+    assert.equal(restarbeitenDef.pdfAvailable, false);
+    assert.equal(restarbeitenDef.uiProductive, true);
+    assert.equal(restarbeitenDef.pdfProductive, false);
+    assert.equal(Array.isArray(restarbeitenDef.columns), true);
+    assert.equal(restarbeitenDef.columns.length, 0);
+    assert.equal(Array.isArray(restarbeitenDef.editFields), true);
+    assert.equal(restarbeitenDef.editFields[0].path, "ui.rootVars.--bbm-restarbeiten-meta-due-width");
+    assert.equal(restarbeitenDef.defaultLayout?.ui?.rootVars?.["--bbm-restarbeiten-meta-due-width"], "minmax(0, 1fr)");
   });
 
   await run("TableLayoutRegistry: getTableLayoutDefinition findet den Pilot", () => {
@@ -148,6 +177,20 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(participantsDef?.tableKind, "content");
     assert.equal(participantsDef?.editorEnabled, true);
     assert.equal(typeof participantsDef?.loadStandardLayout, "function");
+
+    const restarbeitenDef = getTableLayoutDefinition({ moduleId: "restarbeiten", tableKey: "restarbeiten_filter_meta" });
+    assert.equal(restarbeitenDef?.moduleId, "restarbeiten");
+    assert.equal(restarbeitenDef?.moduleLabel, "Restarbeiten");
+    assert.equal(restarbeitenDef?.tableKey, "restarbeiten_filter_meta");
+    assert.equal(restarbeitenDef?.tableLabel, "Filterleiste Meta");
+    assert.equal(restarbeitenDef?.surfaceKey, "restarbeiten_filter_meta");
+    assert.equal(restarbeitenDef?.surfaceKind, "filterBar");
+    assert.equal(restarbeitenDef?.surfaceLabel, "Filterleiste Meta");
+    assert.equal(restarbeitenDef?.tableKind, "control");
+    assert.equal(restarbeitenDef?.editorEnabled, true);
+    assert.equal(restarbeitenDef?.uiAvailable, true);
+    assert.equal(restarbeitenDef?.pdfAvailable, false);
+    assert.equal(typeof restarbeitenDef?.loadStandardLayout, "function");
   });
 }
 

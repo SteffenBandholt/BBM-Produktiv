@@ -213,11 +213,13 @@ export default class RestarbeitenScreen {
   }
 
   async load({ selectItemId = "", keepSelectionEmpty = false } = {}) {
+    const metaLayoutPromise = this._syncRestarbeitenMetaSurfaceLayout();
     this.effectiveProjectId = normalizeText(this.projectId || this.project?.id || this.router?.currentProjectId);
     this._applyAmpelVisibility();
     this._syncRestarbeitenContextUi();
 
     if (!this.effectiveProjectId) {
+      await metaLayoutPromise;
       this.rows = [];
       this.items = [];
       this._renderHeaderFilters();
@@ -226,7 +228,8 @@ export default class RestarbeitenScreen {
       return;
     }
 
-    const [rows, projectFirms, projectSettings] = await Promise.all([
+    const [, rows, projectFirms, projectSettings] = await Promise.all([
+      metaLayoutPromise,
       listRestarbeitenByProject(this.effectiveProjectId),
       listResponsibleProjectFirms(this.effectiveProjectId),
       getRestarbeitenProjectSettings(this.effectiveProjectId),
@@ -251,6 +254,32 @@ export default class RestarbeitenScreen {
     this._renderList();
     this._renderEditbox();
     if (this.createScrollPending) this._scrollListToBottom();
+  }
+
+  async _syncRestarbeitenMetaSurfaceLayout() {
+    const header = this.listHeaderHost;
+    const api = globalThis.window?.bbmDb;
+    if (!header?.style?.setProperty || typeof api?.tableLayoutsGetOne !== "function") return null;
+    try {
+      const res = await api.tableLayoutsGetOne({
+        moduleId: "restarbeiten",
+        tableKey: "restarbeiten_filter_meta",
+        orientation: "portrait",
+        scopeType: "global",
+        scopeId: "",
+      });
+      if (!res?.ok) return null;
+
+      const layout = res?.data?.effectiveLayout || res?.data?.defaultLayout || null;
+      const rootVars = layout?.ui?.rootVars && typeof layout.ui.rootVars === "object" ? layout.ui.rootVars : {};
+      for (const [key, value] of Object.entries(rootVars)) {
+        if (!String(key || "").startsWith("--bbm-restarbeiten-meta-")) continue;
+        header.style.setProperty(key, String(value == null ? "" : value));
+      }
+      return layout;
+    } catch (_err) {
+      return null;
+    }
   }
 
 
