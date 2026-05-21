@@ -72,6 +72,10 @@ function _normalizeDefinitionsList(definitions = []) {
           tableKey: _normalizeId(item.tableKey),
           tableLabel: _formatText(item.tableLabel, "TOP-Liste"),
           description: _formatText(item.description, ""),
+          surfaceKey: _formatText(item.surfaceKey, _normalizeId(item.tableKey)),
+          surfaceKind: _formatText(item.surfaceKind, "table"),
+          surfaceLabel: _formatText(item.surfaceLabel, _formatText(item.tableLabel, "TOP-Liste")),
+          surfaceDescription: _formatText(item.surfaceDescription, _formatText(item.description, "")),
           supportedOrientations: Array.isArray(item.supportedOrientations)
             ? item.supportedOrientations.map((entry) => _normalizeOrientation(entry))
             : ["portrait"],

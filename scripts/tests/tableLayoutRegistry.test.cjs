@@ -18,10 +18,16 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(Array.isArray(modules[0].tables), true);
     assert.equal(modules[0].tables[0].tableKey, "protokoll_tops");
     assert.equal(modules[0].tables[0].tableLabel, "TOP-Liste");
+    assert.equal(modules[0].tables[0].surfaceKey, "protokoll_tops");
+    assert.equal(modules[0].tables[0].surfaceKind, "table");
+    assert.equal(modules[0].tables[0].surfaceLabel, "TOP-Liste");
     assert.equal(modules[0].tables[0].tableKind, "content");
     assert.equal(modules[0].tables[0].editorEnabled, true);
     assert.equal(modules[0].tables[1].tableKey, "protokoll_participants");
     assert.equal(modules[0].tables[1].tableLabel, "Teilnehmerliste");
+    assert.equal(modules[0].tables[1].surfaceKey, "protokoll_participants");
+    assert.equal(modules[0].tables[1].surfaceKind, "table");
+    assert.equal(modules[0].tables[1].surfaceLabel, "Teilnehmerliste");
     assert.equal(modules[0].tables[1].tableKind, "content");
     assert.equal(modules[0].tables[1].editorEnabled, true);
     const projectModule = modules.find((moduleDef) => moduleDef.moduleId === "projektverwaltung");
@@ -29,6 +35,9 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(projectModule.moduleLabel, "Projektverwaltung");
     assert.equal(projectModule.tables[0].tableKey, "project_firms");
     assert.equal(projectModule.tables[0].tableLabel, "Projekt-Firmenliste");
+    assert.equal(projectModule.tables[0].surfaceKey, "project_firms");
+    assert.equal(projectModule.tables[0].surfaceKind, "table");
+    assert.equal(projectModule.tables[0].surfaceLabel, "Projekt-Firmenliste");
     assert.equal(projectModule.tables[0].tableKind, "content");
     assert.equal(projectModule.tables[0].editorEnabled, true);
 
@@ -42,6 +51,10 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(definitions[0].moduleLabel, "Protokoll");
     assert.equal(definitions[0].tableKey, "protokoll_tops");
     assert.equal(definitions[0].tableLabel, "TOP-Liste");
+    assert.equal(definitions[0].surfaceKey, "protokoll_tops");
+    assert.equal(definitions[0].surfaceKind, "table");
+    assert.equal(definitions[0].surfaceLabel, "TOP-Liste");
+    assert.equal(definitions[0].surfaceDescription, "Kalibrierbare Layout-Surface fuer die Protokoll-TOP-Liste.");
     assert.equal(Array.isArray(definitions[0].supportedOrientations), true);
     assert.equal(definitions[0].supportedOrientations.includes("portrait"), true);
     assert.equal(definitions[0].supportedOrientations.includes("landscape"), true);
@@ -72,6 +85,9 @@ async function runTableLayoutRegistryTests(run) {
     assert.ok(participantsDef, "protokoll_participants definition missing");
     assert.equal(participantsDef.moduleId, "protokoll");
     assert.equal(participantsDef.tableLabel, "Teilnehmerliste");
+    assert.equal(participantsDef.surfaceKey, "protokoll_participants");
+    assert.equal(participantsDef.surfaceKind, "table");
+    assert.equal(participantsDef.surfaceLabel, "Teilnehmerliste");
     assert.equal(participantsDef.tableKind, "content");
     assert.equal(participantsDef.editorEnabled, true);
     assert.equal(participantsDef.uiAvailable, true);
@@ -97,6 +113,9 @@ async function runTableLayoutRegistryTests(run) {
     assert.ok(projectFirmsDef, "project_firms definition missing");
     assert.equal(projectFirmsDef.moduleId, "projektverwaltung");
     assert.equal(projectFirmsDef.tableLabel, "Projekt-Firmenliste");
+    assert.equal(projectFirmsDef.surfaceKey, "project_firms");
+    assert.equal(projectFirmsDef.surfaceKind, "table");
+    assert.equal(projectFirmsDef.surfaceLabel, "Projekt-Firmenliste");
     assert.equal(projectFirmsDef.tableKind, "content");
     assert.equal(projectFirmsDef.editorEnabled, true);
     assert.equal(projectFirmsDef.uiAvailable, true);
@@ -115,11 +134,17 @@ async function runTableLayoutRegistryTests(run) {
     assert.equal(def?.moduleLabel, "Protokoll");
     assert.equal(def?.tableKey, "protokoll_tops");
     assert.equal(def?.tableLabel, "TOP-Liste");
+    assert.equal(def?.surfaceKey, "protokoll_tops");
+    assert.equal(def?.surfaceKind, "table");
+    assert.equal(def?.surfaceLabel, "TOP-Liste");
     assert.equal(typeof def?.loadStandardLayout, "function");
 
     const participantsDef = getTableLayoutDefinition({ moduleId: "protokoll", tableKey: "protokoll_participants" });
     assert.equal(participantsDef?.moduleId, "protokoll");
     assert.equal(participantsDef?.tableLabel, "Teilnehmerliste");
+    assert.equal(participantsDef?.surfaceKey, "protokoll_participants");
+    assert.equal(participantsDef?.surfaceKind, "table");
+    assert.equal(participantsDef?.surfaceLabel, "Teilnehmerliste");
     assert.equal(participantsDef?.tableKind, "content");
     assert.equal(participantsDef?.editorEnabled, true);
     assert.equal(typeof participantsDef?.loadStandardLayout, "function");
