@@ -71,34 +71,32 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-header__actions{display:flex;gap:6px;margin-left:auto;align-self:flex-start}
 .restarbeiten-workarea{display:flex;flex:1;min-height:0;align-items:stretch;position:relative}
 .restarbeiten-workarea__content{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0}
-.restarbeiten-listHeader{position:sticky;top:0;z-index:2;padding:8px 22px 10px;background:linear-gradient(180deg,rgba(250,247,239,.98),rgba(243,238,227,.98));border-bottom:1px solid rgba(191,210,210,.8);outline:1px solid rgba(96,165,250,.38);outline-offset:-1px}
-.restarbeiten-listHeader__grid{display:grid;grid-template-columns:minmax(240px,1.55fr) minmax(110px,.45fr) minmax(270px,1.35fr) auto;gap:8px;align-items:start}
+.restarbeiten-listHeader{position:sticky;top:0;z-index:2;min-height:108px;padding:8px 22px 10px;background:linear-gradient(180deg,rgba(250,247,239,.98),rgba(243,238,227,.98));border-bottom:1px solid rgba(191,210,210,.8);outline:1px solid rgba(96,165,250,.38);outline-offset:-1px}
+.restarbeiten-listHeader__grid{display:grid;width:100%;max-width:940px;margin:0 auto;grid-template-columns:minmax(240px,1.55fr) minmax(110px,.45fr) minmax(270px,1.35fr) auto;grid-template-rows:auto auto;gap:8px;align-items:start}
 .restarbeiten-listHeader__panel{display:grid;gap:5px;padding:6px 8px;border:1px solid #d6dfdf;border-radius:10px;background:rgba(255,255,255,.72);box-sizing:border-box;outline:1px solid transparent;outline-offset:0}
-.restarbeiten-listHeader__panel--location{outline-color:rgba(34,197,94,.42);margin-left:18px;width:calc(100% - 18px)}
-.restarbeiten-listHeader__panel--class{outline-color:rgba(168,85,247,.42)}
-.restarbeiten-listHeader__panel--meta{outline-color:rgba(249,115,22,.42)}
+.restarbeiten-listHeader__panel--location{outline-color:rgba(34,197,94,.42);margin-left:-20px;width:calc(100% + 20px);padding:2px 6px 2px;align-self:end}
+.restarbeiten-listHeader__panel--class{outline-color:rgba(168,85,247,.42);padding:2px 6px 2px;align-self:end}
+.restarbeiten-listHeader__panel--meta{outline-color:rgba(249,115,22,.42);margin-left:-56px;width:calc(100% + 56px);padding:2px 6px 2px;align-self:end;grid-column:3 / span 2;grid-row:2}
+.restarbeiten-listHeader__panel--close{grid-column:4;grid-row:1}
 .restarbeiten-listHeader__label{font-size:10px;font-weight:600;line-height:1.1;letter-spacing:.02em;color:#47515c}
-.restarbeiten-listHeader__content{display:grid;gap:4px;align-items:start}
-.restarbeiten-listHeader__panel--class .restarbeiten-listHeader__content{min-height:62px}
-.restarbeiten-listHeader__panel--meta .restarbeiten-listHeader__content{min-height:62px}
+.restarbeiten-listHeader__content{display:grid;gap:3px;align-items:start}
+.restarbeiten-listHeader__panel--class .restarbeiten-listHeader__content{min-height:0;gap:1px}
+.restarbeiten-listHeader__panel--meta .restarbeiten-listHeader__content{min-height:0;gap:1px}
 .restarbeiten-listHeader__panel--close{display:flex;align-items:flex-start;justify-content:flex-end;padding:0;box-sizing:border-box;background:transparent;border:0;box-shadow:none;outline:1px solid rgba(236,72,153,.42);outline-offset:-1px}
 .restarbeiten-listHeader__closePanel{padding:6px 0 0;box-sizing:border-box}
 .restarbeiten-listHeader__closeButton{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:3px 10px;border:1px solid #d6dfdf;border-radius:8px;background:#fff;box-shadow:0 1px 0 rgba(15,23,42,.04);font-size:10px;font-weight:600;color:#253041}
 .restarbeiten-listHeader__closeButton:hover{background:#f8fbff;border-color:#b8cce0}
 .restarbeiten-listHeader__closeButton:focus-visible{outline:2px solid #8bb7ff;outline-offset:1px}
-.restarbeiten-filterleiste__field{display:grid;gap:3px;font-size:10px;white-space:nowrap}
-.restarbeiten-filterleiste__fieldLabel{font-size:9px;font-weight:600;line-height:1.1;opacity:.86}
-.restarbeiten-filterleiste__field select{min-height:22px;padding:2px 6px;font-size:10px;max-width:100%;border:1px solid #d6dddd;border-radius:8px;background:#fff}
-.restarbeiten-filterleiste__classFilter{display:grid;grid-template-columns:1fr;gap:4px;align-self:flex-start}
-.restarbeiten-filterleiste__classFilterButton{min-height:20px;padding:2px 8px;border:1px solid #d6dddd;border-radius:999px;background:#fff;font-size:10px;font-weight:600;white-space:nowrap;text-align:left;color:#253041}
+.restarbeiten-filterleiste__field{display:grid;gap:1px;font-size:10px;white-space:nowrap}
+.restarbeiten-filterleiste__fieldLabel{font-size:8px;font-weight:600;line-height:1;opacity:.86}
+.restarbeiten-filterleiste__field select{min-height:18px;padding:0 4px;font-size:9px;max-width:100%;border:1px solid #d6dddd;border-radius:6px;background:#fff}
+.restarbeiten-filterleiste__classFilter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;align-self:stretch;min-width:0}
+.restarbeiten-filterleiste__classFilterButton{min-height:18px;padding:1px 6px;border:1px solid #d6dddd;border-radius:999px;background:#fff;font-size:9px;font-weight:600;white-space:nowrap;text-align:center;color:#253041}
 .restarbeiten-filterleiste__classFilterButton[data-active="1"]{background:#dbead6;border-color:#86a786;color:#1f4d2f}
-.restarbeiten-filterleiste__locationFilters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 8px;min-width:0}
-.restarbeiten-filterleiste__locationGroupA,.restarbeiten-filterleiste__locationGroupB{display:grid;gap:4px}
-.restarbeiten-filterleiste__metaFilters{display:grid;gap:5px;min-width:0}
-.restarbeiten-filterleiste__metaTopRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.restarbeiten-filterleiste__metaBottomRow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.restarbeiten-filterleiste__metaBottomRow .restarbeiten-filterleiste__field select{width:100%}
-@media (max-width:980px){.restarbeiten-listHeader__grid{grid-template-columns:1fr}.restarbeiten-listHeader__panel--class .restarbeiten-listHeader__content,.restarbeiten-listHeader__panel--meta .restarbeiten-listHeader__content{min-height:0}.restarbeiten-filterleiste__locationFilters{grid-template-columns:1fr}.restarbeiten-filterleiste__metaTopRow{grid-template-columns:1fr}.restarbeiten-header__actions{margin-left:0}}
+.restarbeiten-filterleiste__locationFilters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;min-width:0;align-items:end}
+.restarbeiten-filterleiste__locationGroupA,.restarbeiten-filterleiste__locationGroupB{display:contents}
+.restarbeiten-filterleiste__metaFilters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;min-width:0;align-items:end}
+@media (max-width:980px){.restarbeiten-listHeader__grid{grid-template-columns:1fr}.restarbeiten-listHeader__panel--class .restarbeiten-listHeader__content,.restarbeiten-listHeader__panel--meta .restarbeiten-listHeader__content{min-height:0}.restarbeiten-filterleiste__locationFilters{grid-template-columns:1fr}.restarbeiten-filterleiste__metaFilters{grid-template-columns:1fr 1fr}.restarbeiten-header__actions{margin-left:0}}
 [data-bbm-restarbeiten-screen-area="sheet"]{flex:1;min-height:0;overflow:auto;padding:12px 22px 14px}
 .restarbeiten-sheet__list{min-height:100%;display:flex;flex-direction:column;justify-content:flex-end}
 [data-bbm-restarbeiten-screen-sheet-canvas="true"],[data-bbm-restarbeiten-screen-edit-canvas="true"]{width:100%;max-width:940px;margin:0 auto}

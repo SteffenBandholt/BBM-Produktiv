@@ -306,9 +306,7 @@ export default class RestarbeitenScreen {
 
     const metaWrap = doc.createElement("div");
     metaWrap.className = "restarbeiten-filterleiste__metaFilters";
-    const metaTopRow = doc.createElement("div");
-    metaTopRow.className = "restarbeiten-filterleiste__metaTopRow";
-    metaTopRow.append(
+    metaWrap.append(
       this._buildMetaFilter(doc, {
         key: "due_date",
         label: "Fertig bis",
@@ -319,11 +317,7 @@ export default class RestarbeitenScreen {
         key: "status",
         label: "Status",
         values: this._collectStatusFilterValues(),
-      })
-    );
-    const metaBottomRow = doc.createElement("div");
-    metaBottomRow.className = "restarbeiten-filterleiste__metaBottomRow";
-    metaBottomRow.append(
+      }),
       this._buildMetaFilter(doc, {
         key: "responsible_project_firm_id",
         label: "Verantwortlich",
@@ -339,7 +333,6 @@ export default class RestarbeitenScreen {
         ],
       })
     );
-    metaWrap.append(metaTopRow, metaBottomRow);
     const metaPanel = this._buildListHeaderPanel(doc, {
       title: "Meta",
       body: metaWrap,
