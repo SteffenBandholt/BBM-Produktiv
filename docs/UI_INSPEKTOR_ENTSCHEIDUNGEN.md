@@ -24,3 +24,9 @@
 **Beschluss:** Bestehende UIs werden nachträglich erkannt/markiert; neue UIs werden künftig von Anfang an mit Bereichs-Landkarte gebaut.
 
 **Begründung:** Das erlaubt Bestandseinführung und zukünftige Stabilität über einen gemeinsamen Arbeitsansatz.
+
+## Entscheidung 006
+**Beschluss:** Der UI-Inspektor erhält einen verbindlichen Arbeitsvertrag.
+
+**Begründung:** Damit ChatGPT, Codex Cloud, Codex lokal und der Nutzer nach festen Regeln arbeiten und neue Chats nicht wieder bei null beginnen.
+
