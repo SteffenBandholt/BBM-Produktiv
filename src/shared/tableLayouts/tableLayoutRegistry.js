@@ -34,6 +34,25 @@ function _normalizeIdentity(identity = {}) {
   return { tableKey, moduleId };
 }
 
+function _resolveSurfaceMetadata(source = {}, fallback = {}) {
+  const tableKey = _normalizeText(source.tableKey) || _normalizeText(fallback.tableKey);
+  return {
+    // tableKey bleibt der stabile Layout-Surface-Schluessel fuer Speicherung und Aufloesung.
+    surfaceKey: _normalizeText(source.surfaceKey) || tableKey,
+    surfaceKind: _normalizeText(source.surfaceKind) || _normalizeText(fallback.surfaceKind) || "table",
+    surfaceLabel:
+      _normalizeText(source.surfaceLabel) ||
+      _normalizeText(source.tableLabel) ||
+      _normalizeText(fallback.surfaceLabel) ||
+      tableKey,
+    surfaceDescription:
+      _normalizeText(source.surfaceDescription) ||
+      _normalizeText(source.description) ||
+      _normalizeText(fallback.surfaceDescription) ||
+      "",
+  };
+}
+
 async function _loadProtokollTopsLayout() {
   if (!_protokollTopsLayoutPromise) {
     const layoutPath = path.join(__dirname, "protokollTopsLayout.js");
@@ -283,6 +302,9 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
         tableKey: "protokoll_tops",
         tableLabel: "TOP-Liste",
         description: "Pilotlayout fuer die Protokoll-TOP-Liste.",
+        surfaceKind: "table",
+        surfaceLabel: "TOP-Liste",
+        surfaceDescription: "Kalibrierbare Layout-Surface fuer die Protokoll-TOP-Liste.",
         tableKind: "content",
         editorEnabled: true,
         uiAvailable: true,
@@ -419,6 +441,9 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
         tableKey: "protokoll_participants",
         tableLabel: "Teilnehmerliste",
         description: "Teilnehmerliste im Protokollkontext.",
+        surfaceKind: "table",
+        surfaceLabel: "Teilnehmerliste",
+        surfaceDescription: "Kalibrierbare Layout-Surface fuer die Protokoll-Teilnehmerliste.",
         tableKind: "content",
         editorEnabled: true,
         uiAvailable: true,
@@ -442,6 +467,9 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
         tableKey: "project_firms",
         tableLabel: "Projekt-Firmenliste",
         description: "Projektbezogene Firmenliste fuer den naechsten Firmenlayout-Pilot.",
+        surfaceKind: "table",
+        surfaceLabel: "Projekt-Firmenliste",
+        surfaceDescription: "Kalibrierbare Layout-Surface fuer die Projekt-Firmenliste.",
         tableKind: "content",
         editorEnabled: true,
         uiAvailable: true,
@@ -458,6 +486,7 @@ const TABLE_LAYOUT_MODULES = Object.freeze([
 ]);
 
 function _cloneModuleTableDefinition(moduleDef, tableDef, defaultLayout = null) {
+  const surface = _resolveSurfaceMetadata(tableDef, { tableKey: tableDef.tableKey });
   return {
     moduleId: moduleDef.moduleId,
     moduleLabel: moduleDef.moduleLabel,
@@ -468,6 +497,10 @@ function _cloneModuleTableDefinition(moduleDef, tableDef, defaultLayout = null) 
     tableKey: tableDef.tableKey,
     tableLabel: tableDef.tableLabel,
     description: tableDef.description || "",
+    surfaceKey: surface.surfaceKey,
+    surfaceKind: surface.surfaceKind,
+    surfaceLabel: surface.surfaceLabel,
+    surfaceDescription: surface.surfaceDescription,
     tableKind: _normalizeTableKind(tableDef.tableKind),
     editorEnabled: _normalizeBool(tableDef.editorEnabled, true),
     uiAvailable: _normalizeBool(tableDef.uiAvailable, true),
@@ -522,6 +555,10 @@ function _createGenericAutoPrintTableDefinition(identity = {}) {
     tableKey: norm.tableKey,
     tableLabel: norm.tableKey,
     description: "Generische Auto-Layout-Surface aus der Print-Vorschau.",
+    surfaceKey: norm.tableKey,
+    surfaceKind: "surface",
+    surfaceLabel: norm.tableKey,
+    surfaceDescription: "Generische Auto-Layout-Surface aus der Print-Vorschau.",
     tableKind: "content",
     editorEnabled: false,
     uiAvailable: false,
@@ -647,6 +684,7 @@ function getTableLayoutModuleDefinition(moduleId) {
       ? [...moduleDef.supportedOrientations]
       : ["portrait"],
     tables: moduleDef.tables.map((tableDef) => ({
+      ..._resolveSurfaceMetadata(tableDef, { tableKey: tableDef.tableKey }),
       tableKey: tableDef.tableKey,
       tableLabel: tableDef.tableLabel,
       description: tableDef.description || "",
@@ -694,6 +732,7 @@ function getTableLayoutDefinition(identity = {}) {
     tableKey: tableDef.tableKey,
     tableLabel: tableDef.tableLabel,
     description: tableDef.description || "",
+    ..._resolveSurfaceMetadata(tableDef, { tableKey: tableDef.tableKey }),
     tableKind: _normalizeTableKind(tableDef.tableKind),
     editorEnabled: _normalizeBool(tableDef.editorEnabled, true),
     uiAvailable: _normalizeBool(tableDef.uiAvailable, true),
