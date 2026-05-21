@@ -397,6 +397,7 @@ Regeln:
   - `docs/UI_INSPEKTOR_ARCHITEKTUR.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+  - `docs/UI_INSPEKTOR_ARBEITSVERTRAG.md`
 - Keine UI-Inspektor-Aufgabe ohne Aufgabenheft-Update abschließen.
 - UI-Inspektor-Core muss exportierbar und frei von BBM-Fachlogik bleiben.
 - Tabellen-Kalibrator nicht als UI-Inspektor-Bedienoberfläche weiterentwickeln.
