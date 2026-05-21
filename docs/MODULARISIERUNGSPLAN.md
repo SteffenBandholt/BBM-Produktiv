@@ -115,6 +115,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 
 - `Protokoll` schrittweise weiter entmischen
 - `weitere Module` dosiert sichtbarer und tragfaehiger machen
+- Restarbeiten-Filterleiste bei Bedarf nur noch fein nachschärfen, ohne die Fachlogik oder andere Module anzufassen
 - kleine Nachweise und Konsolidierungen mitziehen, wo sie den Umbau direkt belegen
 - der erreichte Screen-Stand in `Protokoll` bleibt dabei sichtbar abgesichert
 

@@ -76,7 +76,7 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-listHeader__panel{display:grid;gap:5px;padding:6px 8px;border:1px solid #d6dfdf;border-radius:10px;background:rgba(255,255,255,.72);box-sizing:border-box;outline:1px solid transparent;outline-offset:0}
 .restarbeiten-listHeader__panel--location{outline-color:rgba(34,197,94,.42);margin-left:-20px;width:calc(100% + 20px);padding:2px 6px 2px;align-self:end}
 .restarbeiten-listHeader__panel--class{outline-color:rgba(168,85,247,.42);padding:2px 6px 2px;align-self:end}
-.restarbeiten-listHeader__panel--meta{outline-color:rgba(249,115,22,.42);margin-left:-56px;width:calc(100% + 56px);padding:2px 6px 2px;align-self:end;grid-column:3 / span 2;grid-row:2}
+.restarbeiten-listHeader__panel--meta{outline-color:rgba(249,115,22,.42);background:rgba(255,243,224,.82);margin-left:0;width:max-content;justify-self:end;padding:2px 4px 2px;align-self:end;grid-column:3 / span 2;grid-row:2}
 .restarbeiten-listHeader__panel--close{grid-column:4;grid-row:1}
 .restarbeiten-listHeader__label{font-size:10px;font-weight:600;line-height:1.1;letter-spacing:.02em;color:#47515c}
 .restarbeiten-listHeader__content{display:grid;gap:3px;align-items:start}
@@ -87,15 +87,19 @@ textarea.restarbeiten-editbox__control--long{min-height:74px}
 .restarbeiten-listHeader__closeButton{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;min-height:24px;padding:3px 10px;border:1px solid #d6dfdf;border-radius:8px;background:#fff;box-shadow:0 1px 0 rgba(15,23,42,.04);font-size:10px;font-weight:600;color:#253041}
 .restarbeiten-listHeader__closeButton:hover{background:#f8fbff;border-color:#b8cce0}
 .restarbeiten-listHeader__closeButton:focus-visible{outline:2px solid #8bb7ff;outline-offset:1px}
-.restarbeiten-filterleiste__field{display:grid;gap:1px;font-size:10px;white-space:nowrap}
-.restarbeiten-filterleiste__fieldLabel{font-size:8px;font-weight:600;line-height:1;opacity:.86}
-.restarbeiten-filterleiste__field select{min-height:18px;padding:0 4px;font-size:9px;max-width:100%;border:1px solid #d6dddd;border-radius:6px;background:#fff}
+.restarbeiten-filterleiste__field{display:grid;width:100%;min-width:0;gap:1px;font-size:10px;white-space:nowrap;overflow:hidden}
+.restarbeiten-filterleiste__fieldLabel{font-size:8px;font-weight:600;line-height:1;opacity:.86;overflow:hidden;text-overflow:clip}
+.restarbeiten-filterleiste__field select{display:block;width:100%;min-height:18px;padding:0 4px;font-size:9px;max-width:100%;box-sizing:border-box;border:1px solid #d6dddd;border-radius:6px;background:#fff;overflow:hidden;text-overflow:clip}
+.restarbeiten-filterleiste__metaFilters > .restarbeiten-filterleiste__field:nth-child(1){background:#eef6ff;box-shadow:inset 0 0 0 1px rgba(59,130,246,.18)}
+.restarbeiten-filterleiste__metaFilters > .restarbeiten-filterleiste__field:nth-child(2){background:#fff4e8;box-shadow:inset 0 0 0 1px rgba(249,115,22,.18)}
+.restarbeiten-filterleiste__metaFilters > .restarbeiten-filterleiste__field:nth-child(3){background:#eff9ef;box-shadow:inset 0 0 0 1px rgba(34,197,94,.18)}
+.restarbeiten-filterleiste__metaFilters > .restarbeiten-filterleiste__field:nth-child(4){background:#f4efff;box-shadow:inset 0 0 0 1px rgba(168,85,247,.18)}
 .restarbeiten-filterleiste__classFilter{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;align-self:stretch;min-width:0}
 .restarbeiten-filterleiste__classFilterButton{min-height:18px;padding:1px 6px;border:1px solid #d6dddd;border-radius:999px;background:#fff;font-size:9px;font-weight:600;white-space:nowrap;text-align:center;color:#253041}
 .restarbeiten-filterleiste__classFilterButton[data-active="1"]{background:#dbead6;border-color:#86a786;color:#1f4d2f}
 .restarbeiten-filterleiste__locationFilters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;min-width:0;align-items:end}
 .restarbeiten-filterleiste__locationGroupA,.restarbeiten-filterleiste__locationGroupB{display:contents}
-.restarbeiten-filterleiste__metaFilters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;min-width:0;align-items:end}
+.restarbeiten-filterleiste__metaFilters{display:grid;width:max-content;box-sizing:border-box;padding-left:0;grid-template-columns:80px 70px 110px 96px;gap:4px;justify-content:end;min-width:0;align-items:end;background:rgba(255,252,245,.72);outline:1px dashed rgba(245,158,11,.34);outline-offset:-1px}
 @media (max-width:980px){.restarbeiten-listHeader__grid{grid-template-columns:1fr}.restarbeiten-listHeader__panel--class .restarbeiten-listHeader__content,.restarbeiten-listHeader__panel--meta .restarbeiten-listHeader__content{min-height:0}.restarbeiten-filterleiste__locationFilters{grid-template-columns:1fr}.restarbeiten-filterleiste__metaFilters{grid-template-columns:1fr 1fr}.restarbeiten-header__actions{margin-left:0}}
 [data-bbm-restarbeiten-screen-area="sheet"]{flex:1;min-height:0;overflow:auto;padding:12px 22px 14px}
 .restarbeiten-sheet__list{min-height:100%;display:flex;flex-direction:column;justify-content:flex-end}

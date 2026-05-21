@@ -17,6 +17,56 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M36 Restarbeiten-Meta-Filter im Header enger gezogen:
+  - Die Felder `Fertig bis`, `Status` und `Erledigt` im Meta-Filterbereich sind jetzt schmaler ausgelegt.
+  - Der Meta-Block passt sich wieder enger an die tatsächliche Feldbreite an, ohne die Filterleiste umzubauen.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs` und `npm test`.
+
+- M36.1 Restarbeiten-Meta-Feinwerte nachgezogen:
+  - Die Meta-Breiten wurden jetzt auf `Fertig bis 85px`, `Status 55px` und `Erledigt 96px` gesetzt.
+  - Der restliche Meta-Aufbau bleibt unveraendert kompakt.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`.
+
+- M36.2 Restarbeiten-Meta-Block jetzt breiter ausgerichtet:
+  - Der Meta-Container streckt sich jetzt ueber die verfuegbare Breite.
+  - Die vier Meta-Felder teilen sich die Flaeche mit flexiblen Spalten und den aktuellen Mindestbreiten.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` folgt noch.
+
+- M36.3 Restarbeiten-Meta-Block wieder auf Inhaltsbreite gezogen:
+  - `Fertig bis` wurde auf `70px` und `Status` auf `35px` gesetzt.
+  - Der Meta-Block ist wieder auf `max-content` verkleinert und die vier Felder sitzen kompakt nebeneinander.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` folgt noch.
+
+- M36.4 Restarbeiten-Meta-Block wieder gestreckt:
+  - Der Meta-Container nutzt jetzt wieder die verfuegbare Breite.
+  - Die vier Meta-Felder verteilen sich darin mit Mindestbreiten und ohne Zusammenquetschen.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` folgt noch.
+
+- M36.5 Restarbeiten-Meta-Block auf feste Feldbreiten gezogen:
+  - Der Meta-Block nutzt jetzt wieder feste Spaltenbreiten, damit `Status` und `Fertig bis` sichtbar kleiner bleiben.
+  - Die Gesamtbreite ergibt sich direkt aus den vier Feldbreiten plus Gap, damit die Anordnung sauber und stabil bleibt.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` folgt noch.
+
+- M36.6 Restarbeiten-Meta-Block wieder breit genug fuer die festen Felder:
+  - Der Meta-Container streckt sich jetzt wieder ueber die verfuegbare Breite.
+  - Die festen Feldbreiten bleiben unveraendert; nur der Block selbst bekommt wieder mehr Platz.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` folgt noch.
+
+- M36.7 Restarbeiten-Meta-Felder jetzt als echte Spalten aufgespannt:
+  - Die Feld-Wrapper und Selects fuellen ihre festen Meta-Spalten jetzt sauber aus.
+  - Die Feldbreiten und die Metablock-Groesse bleiben dabei unveraendert.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` folgt noch.
+
+- M36.8 Restarbeiten-Meta-Spalten farblich markiert:
+  - Die vier Meta-Spalten bekommen jetzt eigene dezente Farbflächen.
+  - Feldgrößen und Blockbreite bleiben unverändert.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` folgt noch.
+
+- M36.9 Restarbeiten-Meta-Spalten erneut breiter ausgerichtet:
+  - Die Meta-Spalten stehen jetzt auf `80px / 70px / 110px / 96px` mit `gap: 4px`.
+  - Die Ausrichtung bleibt rechtsbündig ueber `justify-content: end`.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`; `npm test` folgt noch.
+
 - M35.1 Restarbeiten-Quicklane ist wieder ohne E-Mail-Button:
   - Das Mail-Icon wurde aus der Quicklane entfernt.
   - Der Restarbeiten-Screen haelt keinen eigenen Mail-Transport mehr vor.
@@ -2198,3 +2248,28 @@ Wichtig:
 - PDF wird im Restarbeiten-Ordner gespeichert.
 - PDF wird intern in der BBM/Chromium-Vorschau angezeigt.
 - Externer Adobe-/Windows-Viewer ist nicht mehr der primäre Restarbeiten-Vorschauweg.
+
+### M36.10
+- Restarbeiten-Header Meta-Block links innen auf 4px justiert.
+- Feldbreiten im Meta-Block bleiben unverändert.
+- Naechster Schritt: nur noch fachliche Sichtpruefung im UI.
+
+### M36.11
+- Restarbeiten-Meta-Filterleiste hat jetzt innen am Metablock selbst 4px linken Abstand.
+- Die festen Feldbreiten bleiben unverändert.
+- Naechster Schritt: UI-Sichtprobe.
+
+### M36.12
+- Restarbeiten-Meta-Zeile ist links ausgerichtet, damit der sichtbare Abstand am Blockstart sauber sitzt.
+- Die festen Feldbreiten bleiben unverändert.
+- Naechster Schritt: UI-Sichtprobe.
+
+### M36.13
+- Restarbeiten-Meta-Block und Meta-Zeile sind jetzt farbig markiert, damit die Konturen eindeutig sichtbar werden.
+- Die festen Feldbreiten bleiben unverändert.
+- Naechster Schritt: Sichtprüfung im UI.
+
+### M36.14
+- Restarbeiten-Meta-Panel ist jetzt auf Inhaltsbreite (`max-content`) statt Streckung gesetzt.
+- Die vier Feldbreiten bleiben unverändert.
+- Naechster Schritt: UI-Sichtprobe auf schmale Hülle.
