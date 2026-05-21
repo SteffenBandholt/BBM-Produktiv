@@ -375,6 +375,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(style, /restarbeiten-editbox__body\{[^}]*display:grid/);
     assert.match(style, /restarbeiten-editbox__rightGroup\{[^}]*display:grid/);
     assert.match(style, /restarbeiten-editbox__rightGroup\{[^}]*justify-content:flex-end/);
+    assert.doesNotMatch(style, /restarbeiten-editbox\{[^}]*transform:translateX\(/);
     assert.doesNotMatch(style, /calc\(100% - 3cm\)/);
     assert.doesNotMatch(style, /width:60%/);
     assert.doesNotMatch(style, /grid-template-columns:92px 250px/);
@@ -1487,6 +1488,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(source, /Titel:|Projekt:/);
     assert.match(styleSource, /restarbeiten-header\{display:none/);
     assert.match(styleSource, /restarbeiten-listHeader\{position:sticky;top:0;z-index:2/);
+    assert.match(styleSource, /restarbeiten-workarea__content\{display:flex;flex-direction:column;flex:1;min-width:0;min-height:0;width:100%;max-width:940px;margin:0 auto\}/);
     assert.match(styleSource, /restarbeiten-listHeader__grid\{display:grid;width:100%;max-width:940px;margin:0 auto;grid-template-columns:minmax\(240px,1.55fr\)\s+minmax\(110px,.45fr\)\s+minmax\(270px,1.35fr\)\s+auto;/);
     assert.match(styleSource, /restarbeiten-listHeader\{[^}]*outline:1px solid rgba\(96,165,250,.38\)/);
     assert.match(styleSource, /restarbeiten-listHeader__grid\{display:grid;width:100%;max-width:940px;margin:0 auto;grid-template-columns:minmax\(240px,1.55fr\)\s+minmax\(110px,.45fr\)\s+minmax\(270px,1.35fr\)\s+auto;grid-template-rows:auto auto;gap:8px;align-items:start\}/);
@@ -1507,6 +1509,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(styleSource, /restarbeiten-listHeader__panel--close\{display:flex;align-items:flex-start;justify-content:flex-end;padding:0;box-sizing:border-box;background:transparent;border:0;box-shadow:none;outline:1px solid rgba\(236,72,153,.42\);outline-offset:-1px\}/);
     assert.match(styleSource, /restarbeiten-listHeader__closePanel\{padding:6px 0 0;box-sizing:border-box\}/);
     assert.match(styleSource, /restarbeiten-listHeader__closeButton\{appearance:none;-webkit-appearance:none;display:inline-flex;align-items:center;justify-content:center;min-height:24px/);
+    assert.match(styleSource, /\[data-bbm-restarbeiten-screen-area="edit"\]\{border-top:1px solid #d9e2ec;background:linear-gradient\(180deg,#f8f4ec,#f1ebdf\);padding:6px 22px 8px;box-sizing:border-box;width:100%;max-width:940px;margin:0 auto\}/);
     assert.doesNotMatch(styleSource, /#d9ead6,#c7e1c1/);
 
     const statusFilter = findNodes(

@@ -122,13 +122,7 @@ export default class RestarbeitenScreen {
     const header = doc.createElement("header");
     header.className = "restarbeiten-header restarbeiten-moduleHeader";
 
-    const btnClose = doc.createElement("button");
-    btnClose.type = "button";
-    btnClose.textContent = "Schließen";
-    btnClose.onclick = () => this.router?.showProjectWorkspace?.();
-
     this.headerHost = header;
-    this.headerCloseButton = btnClose;
   }
 
   _buildSheetArea(doc) {
@@ -339,18 +333,7 @@ export default class RestarbeitenScreen {
       className: "restarbeiten-listHeader__panel restarbeiten-listHeader__panel--meta",
     });
 
-    const closePanel = doc.createElement("div");
-    closePanel.className = "restarbeiten-listHeader__closePanel restarbeiten-listHeader__panel restarbeiten-listHeader__panel--close";
-    if (!this.headerCloseButton) {
-      this.headerCloseButton = doc.createElement("button");
-      this.headerCloseButton.type = "button";
-      this.headerCloseButton.textContent = "Schließen";
-      this.headerCloseButton.onclick = () => this.router?.showProjectWorkspace?.();
-    }
-    this.headerCloseButton.className = "restarbeiten-listHeader__closeButton";
-    closePanel.append(this.headerCloseButton);
-
-    headerGrid.append(locationPanel, classPanel, metaPanel, closePanel);
+    headerGrid.append(locationPanel, classPanel, metaPanel);
     this.listHeaderHost.replaceChildren(headerGrid);
   }
 
@@ -753,6 +736,7 @@ export default class RestarbeitenScreen {
       this.editbox = new RestarbeitenEditbox({
         documentRef: doc,
         onCreate: this.effectiveProjectId ? async () => this._createRestarbeit() : null,
+        onClose: () => this.router?.showProjectWorkspace?.(),
         onSave: async (draft) => {
           if (!this.selectedItemId) return;
           this.editbox?.setSaving(true);

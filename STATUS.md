@@ -17,6 +17,26 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M37.4 Restarbeiten-Hauptfilter 20px nach links geschoben:
+  - Der Container `Hauptfilter / Verortung` ist als Ganzes 20px nach links versetzt.
+  - Die vier Verortungsfelder wandern mit dem Container mit.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`.
+
+- M37.3 Restarbeiten-Hauptfilter nochmals 20px schmaler gezogen:
+  - Der Container `Hauptfilter / Verortung` behält seinen linken Rand und verliert weitere 20px Breite.
+  - Die vier Verortungsfelder werden dadurch erneut gleichmäßig enger.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`.
+
+- M37.1 Restarbeiten-Schließen-Button in die Editbox verlagert:
+  - Der Button `Schließen` sitzt jetzt in der oberen Editbox-Leiste neben `Löschen`.
+  - Der alte Einstieg im Header / Filterbereich wurde entfernt.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`.
+
+- M37 Restarbeiten-Header Hauptfilter/Klasse jetzt nur noch 18px nach rechts geschoben:
+  - Die Panels `Hauptfilter / Verortung` und `Klasse` im Restarbeiten-Header werden auf breiten Ansichten nun gemeinsam 18px nach rechts versetzt.
+  - Auf schmalen Ansichten wird der Shift wieder aufgehoben, damit das mobile Layout unveraendert bleibt.
+  - geprueft mit `node scripts/tests/restarbeitenModule.test.cjs`.
+
 - M36 Restarbeiten-Meta-Filter im Header enger gezogen:
   - Die Felder `Fertig bis`, `Status` und `Erledigt` im Meta-Filterbereich sind jetzt schmaler ausgelegt.
   - Der Meta-Block passt sich wieder enger an die tatsächliche Feldbreite an, ohne die Filterleiste umzubauen.
@@ -2273,3 +2293,28 @@ Wichtig:
 - Restarbeiten-Meta-Panel ist jetzt auf Inhaltsbreite (`max-content`) statt Streckung gesetzt.
 - Die vier Feldbreiten bleiben unverändert.
 - Naechster Schritt: UI-Sichtprobe auf schmale Hülle.
+
+### M36.15
+- Restarbeiten-Editbereich und Listenbereich haben jetzt denselben horizontalen Innenrahmen.
+- Die Editbox ist auf dieselbe Arbeitsbreite wie die Liste gezogen.
+- Naechster Schritt: UI-Sichtprobe auf gleiche Außenbreite beider Bereiche.
+
+### M36.16
+- Die Restarbeiten-Editbox ist jetzt minimal 5mm nach links verschoben.
+- Die Breite bleibt unveraendert; nur die Position wurde fein korrigiert.
+- Naechster Schritt: UI-Sichtprobe auf die neue Position.
+
+### M36.17
+- Die Restarbeiten-Editbox ist jetzt 5px nach rechts korrigiert.
+- Die Breite bleibt unverändert; nur die Position wurde leicht angepasst.
+- Naechster Schritt: UI-Sichtprobe.
+
+### M36.18
+- Die Restarbeiten-Editbox sitzt wieder exakt auf der gemeinsamen Mittelachse.
+- Der vorherige Seitversatz wurde entfernt, der Außenrahmen bleibt gleich.
+- Naechster Schritt: UI-Sichtprobe auf gemeinsame Zentrierung von Liste und Editbox.
+
+### M36.19
+- Restarbeiten-Liste und Editbereich teilen sich jetzt denselben äußeren 940px-Container.
+- Beide Bereiche sind horizontal mittig ausgerichtet.
+- Naechster Schritt: UI-Sichtprobe auf bündige Außenkanten.

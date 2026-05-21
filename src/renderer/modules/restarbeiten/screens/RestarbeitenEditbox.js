@@ -70,11 +70,13 @@ export default class RestarbeitenEditbox {
     onSave = null,
     onCreate = null,
     onDelete = null,
+    onClose = null,
   } = {}) {
     this.document = documentRef || globalThis.document;
     this.onSave = typeof onSave === "function" ? onSave : null;
     this.onCreate = typeof onCreate === "function" ? onCreate : null;
     this.onDelete = typeof onDelete === "function" ? onDelete : null;
+    this.onClose = typeof onClose === "function" ? onClose : null;
     this.root = null;
     this.form = null;
     this.titleEl = null;
@@ -288,6 +290,15 @@ export default class RestarbeitenEditbox {
           deleteBtn.disabled = !normalizeText(this.currentItem?.id);
         }
       });
+      if (this.onClose) {
+        const closeBtn = doc.createElement("button");
+        closeBtn.type = "button";
+        closeBtn.textContent = "Schließen";
+        closeBtn.title = "Schließen";
+        closeBtn.className = "restarbeiten-editbox__close";
+        closeBtn.addEventListener("click", () => this.onClose?.());
+        classActions.append(closeBtn);
+      }
       classActions.append(deleteBtn);
     }
     const responsibleField = createField(doc, "Verantwortlich", responsibleProjectFirmId);
