@@ -92,6 +92,10 @@ function _isEditorVisibleTableDefinition(def = {}) {
   return def?.editorEnabled !== false;
 }
 
+function _isControlSurfaceDefinition(def = {}) {
+  return String(def?.tableKind || "content").trim().toLowerCase() === "control";
+}
+
 function _groupModuleDefinitions(definitions = []) {
   const modules = [];
   const byModule = new Map();
@@ -150,6 +154,44 @@ function _cloneColumns(columns = []) {
 
 function _columnFieldKey(columnKey, field) {
   return `${String(columnKey || "").trim()}.${String(field || "").trim()}`;
+}
+
+function _splitLayoutPath(pathValue = "") {
+  const text = String(pathValue || "").trim();
+  if (!text) return [];
+  const parts = [];
+  const re = /[^.[\]]+|\[(\d+)\]/g;
+  let match;
+  while ((match = re.exec(text))) {
+    parts.push(match[1] != null ? Number(match[1]) : match[0]);
+  }
+  return parts;
+}
+
+function _readLayoutPath(source, pathValue) {
+  const parts = _splitLayoutPath(pathValue);
+  let current = source;
+  for (const part of parts) {
+    if (current == null) return undefined;
+    current = current[part];
+  }
+  return current;
+}
+
+function _writeLayoutPath(target, pathValue, value) {
+  const parts = _splitLayoutPath(pathValue);
+  if (!parts.length) return target;
+  let current = target;
+  for (let i = 0; i < parts.length - 1; i += 1) {
+    const part = parts[i];
+    const nextPart = parts[i + 1];
+    if (current[part] == null || typeof current[part] !== "object") {
+      current[part] = typeof nextPart === "number" ? [] : {};
+    }
+    current = current[part];
+  }
+  current[parts[parts.length - 1]] = value;
+  return target;
 }
 
 function _normalizeHeaderLinesInput(value, fallbackLines = []) {
@@ -412,6 +454,85 @@ function _buildColumnDraft(column = {}, fallback = {}) {
   };
 }
 
+function _normalizeControlFieldValue(field = {}, value) {
+  const type = String(field?.type || "text").trim().toLowerCase();
+  const text = String(value == null ? "" : value).trim();
+  if (type === "gridtrack") {
+    return text;
+  }
+  if (type === "headingtext") {
+    return text;
+  }
+  return text;
+}
+
+function _validateControlLayoutFields(editFields = [], layout = {}) {
+  const fields = Array.isArray(editFields) ? editFields : [];
+  const values = {};
+  const errors = {};
+  for (const field of fields) {
+    if (!field || typeof field !== "object") continue;
+    const path = String(field.path || "").trim();
+    if (!path) continue;
+    const raw = _readLayoutPath(layout, path);
+    const value = _normalizeControlFieldValue(field, raw);
+    values[path] = value;
+    const required = field.required !== false;
+    const type = String(field.type || "text").trim().toLowerCase();
+    if (required && !value) {
+      errors[path] = "Wert darf nicht leer sein";
+      continue;
+    }
+    if (type === "gridtrack" && !_isAllowedGridTrack(value)) {
+      errors[path] = "Ungültiger Layoutwert";
+      continue;
+    }
+    if (type === "headingtext" && !_isAllowedHeadingText(value)) {
+      errors[path] = "Ungültige Überschrift";
+    }
+  }
+  return { values, errors, isValid: Object.keys(errors).length === 0 };
+}
+
+function _buildControlLayoutOverlayFromFields(definition = {}, values = {}) {
+  const baseLayout =
+    values.layout && typeof values.layout === "object"
+      ? _cloneJson(values.layout)
+      : _cloneJson(definition?.defaultLayout || {});
+  const layout = baseLayout && typeof baseLayout === "object" ? baseLayout : {};
+  layout.tableKey = layout.tableKey || definition?.tableKey || "";
+  layout.moduleId = layout.moduleId || definition?.moduleId || "";
+  layout.variant = String(values.orientation || layout.variant || "portrait").trim().toLowerCase() === "landscape"
+    ? "landscape"
+    : "portrait";
+  for (const field of Array.isArray(definition?.editFields) ? definition.editFields : []) {
+    if (!field || typeof field !== "object") continue;
+    const path = String(field.path || "").trim();
+    if (!path) continue;
+    if (Object.prototype.hasOwnProperty.call(values, field.key)) {
+      _writeLayoutPath(layout, path, values[field.key]);
+      continue;
+    }
+    if (Object.prototype.hasOwnProperty.call(values, path)) {
+      _writeLayoutPath(layout, path, values[path]);
+      continue;
+    }
+    if (field.label && Object.prototype.hasOwnProperty.call(values, field.label)) {
+      _writeLayoutPath(layout, path, values[field.label]);
+    }
+  }
+  return layout;
+}
+
+function _createControlFieldDraft(field = {}, layout = {}) {
+  const path = String(field?.path || "").trim();
+  const value = path ? _readLayoutPath(layout, path) : undefined;
+  return {
+    ...field,
+    value: _normalizeControlFieldValue(field, value),
+  };
+}
+
 function _normalizePreviewRows(definition) {
   return Array.isArray(definition?.previewData) ? definition.previewData.map((row) => ({ ...row })) : [];
 }
@@ -419,10 +540,22 @@ function _normalizePreviewRows(definition) {
 function _getTableLayoutEditorHints(tableDef = {}) {
   const moduleId = _normalizeId(tableDef?.moduleId);
   const tableKey = _normalizeId(tableDef?.tableKey);
+  const isControl = _isControlSurfaceDefinition(tableDef);
   const uiAvailable = tableDef?.uiAvailable !== false;
   const pdfAvailable = tableDef?.pdfAvailable !== false;
   const uiProductive = tableDef?.uiProductive === true;
   const pdfProductive = tableDef?.pdfProductive === true;
+
+  if (isControl) {
+    return {
+      uiHint: "Layoutbereiche ohne Tabellenspaltenschema werden über Eingabefelder gesteuert.",
+      pdfHint: pdfAvailable
+        ? "PDF ist für diesen Layoutbereich nur Vorschau."
+        : "PDF ist für diesen Layoutbereich nicht verfügbar.",
+      saveHint: "Gespeichert wird nur der aktuell gewählte Layoutbereich; kein globales Layout.",
+      resetHint: "Reset betrifft nur die aktuell gewählte Kombination aus Modul, Layoutbereich und Orientierung.",
+    };
+  }
 
   const genericUiHint = uiAvailable
     ? uiProductive
@@ -562,6 +695,7 @@ function _renderMirrorPreviewPanel(target, definition, values, mode, { available
   target.innerHTML = "";
 
   const isPdf = mode === "pdf";
+  const isControl = _isControlSurfaceDefinition(definition);
   const columns = Array.isArray(values?.columns) && values.columns.length
     ? _cloneColumns(values.columns)
     : _cloneColumns(definition?.columns || []);
@@ -625,6 +759,33 @@ function _renderMirrorPreviewPanel(target, definition, values, mode, { available
     message.style.color = "#0f172a";
     message.textContent = isPdf ? "Für diese Tabelle gibt es keine PDF-Ansicht." : "Für diese Tabelle gibt es keine UI-Ansicht.";
     target.append(panelTitle, panelHint, panelSummary, panelNote, message);
+    return;
+  }
+
+  if (isControl) {
+    const message = document.createElement("div");
+    message.style.padding = "12px";
+    message.style.border = "1px solid rgba(15,23,42,0.12)";
+    message.style.borderRadius = "10px";
+    message.style.background = "#f8fafc";
+    message.style.fontSize = "13px";
+    message.style.color = "#0f172a";
+    message.textContent = "Layoutbereich ohne Tabellenvorschau – Werte werden über Eingabefelder bearbeitet.";
+
+    const valueList = document.createElement("div");
+    valueList.style.display = "grid";
+    valueList.style.gap = "4px";
+    valueList.style.fontSize = "12px";
+    valueList.style.color = "#334155";
+    for (const field of Array.isArray(definition?.editFields) ? definition.editFields : []) {
+      const row = document.createElement("div");
+      const label = String(field?.label || field?.key || "").trim();
+      const currentValue = String(_readLayoutPath(values?.layout || values || {}, field?.path) ?? "");
+      row.textContent = `${label}: ${currentValue || "—"}`;
+      valueList.appendChild(row);
+    }
+
+    target.append(panelTitle, panelHint, panelSummary, panelNote, message, valueList);
     return;
   }
 
@@ -794,13 +955,17 @@ function _renderValuesSummary(target, state, definition) {
   if (!target) return;
   const activeValues = _getPreviewValue(state);
   const previewCount = Array.isArray(definition?.previewData) ? definition.previewData.length : 0;
+  const isControl = _isControlSurfaceDefinition(definition);
+  const fieldCount = Array.isArray(definition?.editFields) ? definition.editFields.length : 0;
   const dirty = _hasDirtyValuesState(state);
   target.textContent = [
     `Quelle: ${state.source || "default"}`,
     `Layoutwerte: ${dirty ? "ungespeicherte Eingaben" : "gespeicherte Werte"}`,
-    `Testdaten: ${previewCount} Zeilen`,
+    isControl ? `Layoutfelder: ${fieldCount}` : `Testdaten: ${previewCount} Zeilen`,
     `Orientierung: ${activeValues.orientation || state.orientation}`,
-    `Spaltenbreite UI: ${activeValues.uiNumberWidth} | ${activeValues.uiTextTrack} | ${activeValues.uiMetaWidth}`,
+    isControl
+      ? `Layoutbereich: ${definition?.surfaceLabel || definition?.tableLabel || definition?.tableKey || "-"}`
+      : `Spaltenbreite UI: ${activeValues.uiNumberWidth} | ${activeValues.uiTextTrack} | ${activeValues.uiMetaWidth}`,
   ].join(" | ");
 }
 
@@ -841,10 +1006,12 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     loadedValues: {
       orientation: DEFAULT_ORIENTATION,
       columns: [],
+      layout: {},
     },
     editValues: {
       orientation: DEFAULT_ORIENTATION,
       columns: [],
+      layout: {},
     },
     busy: false,
     error: "",
@@ -1070,6 +1237,34 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     input.value = String(value == null ? "" : value);
   };
 
+  const _buildControlLayoutFromFields = (definition, baseLayout = null) => {
+    const layout = _cloneJson(baseLayout || definition?.defaultLayout || {});
+    const orientation = _normalizeOrientation(orientationSelect.value || state.orientation);
+    layout.tableKey = layout.tableKey || definition?.tableKey || "";
+    layout.moduleId = layout.moduleId || definition?.moduleId || "";
+    layout.variant = orientation;
+    for (const field of Array.isArray(definition?.editFields) ? definition.editFields : []) {
+      if (!field || typeof field !== "object") continue;
+      const path = String(field.path || "").trim();
+      if (!path) continue;
+      const input = fields.get(field.key) || fields.get(path);
+      const value = _normalizeControlFieldValue(field, input?.value);
+      _writeLayoutPath(layout, path, value);
+    }
+    return layout;
+  };
+
+  const _syncControlFields = (definition, layout = {}) => {
+    const valueLayout = layout && typeof layout === "object" ? layout : {};
+    for (const field of Array.isArray(definition?.editFields) ? definition.editFields : []) {
+      if (!field || typeof field !== "object") continue;
+      const path = String(field.path || "").trim();
+      if (!path) continue;
+      const input = fields.get(field.key) || fields.get(path);
+      _setFieldValue(input, _normalizeControlFieldValue(field, _readLayoutPath(valueLayout, path)));
+    }
+  };
+
   const _buildTableColumnsFromFields = (definition) => {
     const fallbackColumns = _cloneColumns(definition?.columns || []);
     const columns = [];
@@ -1119,6 +1314,87 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     fields.clear();
     fields.set("orientation", orientationSelect);
     columnsGrid.innerHTML = "";
+    const isControl = _isControlSurfaceDefinition(definition);
+    if (isControl) {
+      const editFields = Array.isArray(definition?.editFields) ? definition.editFields : [];
+      if (!editFields.length) {
+        const empty = document.createElement("div");
+        empty.style.fontSize = "12px";
+        empty.style.color = "#64748b";
+        empty.textContent = "Für diesen Layoutbereich sind keine Eingabefelder registriert.";
+        columnsGrid.appendChild(empty);
+        return;
+      }
+
+      for (const field of editFields) {
+        const card = document.createElement("div");
+        card.style.display = "grid";
+        card.style.gap = "8px";
+        card.style.padding = "10px";
+        card.style.border = "1px solid rgba(15,23,42,0.12)";
+        card.style.borderRadius = "10px";
+        card.style.background = "#fff";
+        card.style.minWidth = "0";
+
+        const cardHead = document.createElement("div");
+        cardHead.style.display = "grid";
+        cardHead.style.gap = "2px";
+        const cardTitle = document.createElement("div");
+        cardTitle.style.fontWeight = "800";
+        cardTitle.textContent = field.label || field.key || "Feld";
+        const cardMeta = document.createElement("div");
+        cardMeta.style.fontSize = "12px";
+        cardMeta.style.color = "#64748b";
+        cardMeta.textContent = `${field.path || field.key || ""}${field.required ? " · Pflicht" : ""}${field.type ? ` · ${field.type}` : ""}`;
+        cardHead.append(cardTitle, cardMeta);
+
+        const formGrid = document.createElement("div");
+        formGrid.style.display = "grid";
+        formGrid.style.gridTemplateColumns = "minmax(0, 1fr)";
+        formGrid.style.gap = "8px";
+
+        const inputField = _createField(field.label || field.key || "Wert", "");
+        inputField.input.dataset.fieldKey = field.key || "";
+        inputField.input.dataset.fieldPath = field.path || "";
+        inputField.input.dataset.surfaceKind = "control";
+        inputField.input.disabled = !!state.busy;
+        fields.set(field.key || field.path, inputField.input);
+        if (field.path) fields.set(field.path, inputField.input);
+        const fieldKind = String(field.type || "text").trim().toLowerCase();
+        if (fieldKind === "gridtrack" || fieldKind === "headingtext") {
+          inputField.input.type = "text";
+        }
+        if (field.description) {
+          const desc = document.createElement("div");
+          desc.style.fontSize = "11px";
+          desc.style.color = "#64748b";
+          desc.textContent = field.description;
+          card.append(cardHead, formGrid, desc);
+        } else {
+          card.append(cardHead, formGrid);
+        }
+        formGrid.append(inputField.row);
+
+        const handleControlInput = () => {
+          const currentTableDef = _getSelectedTableDefinition();
+          const layout = _buildControlLayoutFromFields(currentTableDef, state.editValues.layout || state.loadedValues.layout || {});
+          state.editValues = {
+            orientation: _normalizeOrientation(orientationSelect.value || state.orientation),
+            layout,
+            columns: [],
+          };
+          state.testResult = "";
+          state.error = "";
+          refreshPreview();
+        };
+        inputField.input.addEventListener("input", handleControlInput);
+        columnsGrid.appendChild(card);
+      }
+
+      _syncControlFields(definition, values.layout || values || {});
+      return;
+    }
+
     const columns = _cloneColumns(definition?.columns || []);
     if (!columns.length) {
       const empty = document.createElement("div");
@@ -1349,7 +1625,9 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     tableSelect.disabled = !defs.length;
     const def = _getSelectedTableDefinition();
     tableInfo.textContent = def
-      ? `Aktive Tabelle: ${def.tableLabel || "TOP-Liste"} | tableKey: ${def.tableKey}`
+      ? _isControlSurfaceDefinition(def)
+        ? `Aktiver Layoutbereich: ${def.surfaceLabel || def.tableLabel || "Layoutbereich"} | surfaceKey: ${def.surfaceKey || def.tableKey}`
+        : `Aktive Tabelle: ${def.tableLabel || "TOP-Liste"} | tableKey: ${def.tableKey}`
       : "Aktive Tabelle: - | tableKey: -";
   };
 
@@ -1386,8 +1664,10 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     const tableKey = tableDef?.tableKey || "-";
     const sourceLabel = formatSourceLabel();
     targetInfoModule.textContent = `Modul: ${moduleLabel}`;
-    targetInfoTable.textContent = `Tabelle: ${tableLabel}`;
-    targetInfoKey.textContent = `tableKey: ${tableKey}`;
+    targetInfoTable.textContent = _isControlSurfaceDefinition(tableDef) ? `Layoutbereich: ${tableLabel}` : `Tabelle: ${tableLabel}`;
+    targetInfoKey.textContent = _isControlSurfaceDefinition(tableDef)
+      ? `surfaceKey: ${tableDef?.surfaceKey || tableKey}`
+      : `tableKey: ${tableKey}`;
     targetInfoOrientation.textContent = `Orientierung: ${state.orientation}`;
     targetInfoSource.textContent = `Quelle: ${sourceLabel}`;
     contextHint.textContent =
@@ -1399,8 +1679,8 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     actionHint.textContent = `${hints.saveHint} ${hints.resetHint}`;
     tableInfo.textContent = [
       `Modul: ${moduleLabel}`,
-      `Tabelle: ${tableLabel}`,
-      `tableKey: ${tableKey}`,
+      _isControlSurfaceDefinition(tableDef) ? `Layoutbereich: ${tableLabel}` : `Tabelle: ${tableLabel}`,
+      _isControlSurfaceDefinition(tableDef) ? `surfaceKey: ${tableDef?.surfaceKey || tableKey}` : `tableKey: ${tableKey}`,
       `Orientierung: ${state.orientation}`,
       `Quelle: ${sourceLabel}`,
     ].join(" | ");
@@ -1409,16 +1689,26 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   const _updateTestPdfState = (validation = { errors: {} }, tableDef = null) => {
     const errors = validation?.errors || {};
+    const isControl = _isControlSurfaceDefinition(tableDef);
     const columns = Array.isArray(tableDef?.columns) ? tableDef.columns : [];
+    const editFields = Array.isArray(tableDef?.editFields) ? tableDef.editFields : [];
     const fieldLabelMap = new Map();
-    for (const column of columns) {
-      const columnLabel = String(column?.label || column?.key || "").trim();
-      fieldLabelMap.set(_columnFieldKey(column.key, "headerLines"), `${columnLabel} Überschrift`);
-      fieldLabelMap.set(_columnFieldKey(column.key, "uiWidth"), `${columnLabel} UI-Breite`);
-      fieldLabelMap.set(_columnFieldKey(column.key, "pdfWidth"), `${columnLabel} PDF-Breite`);
-      fieldLabelMap.set(_columnFieldKey(column.key, "weight"), `${columnLabel} Gewichtung`);
-      fieldLabelMap.set(_columnFieldKey(column.key, "previewValue"), `${columnLabel} Preview-Wert`);
-      fieldLabelMap.set(_columnFieldKey(column.key, "label"), `${columnLabel} Überschrift`);
+    if (isControl) {
+      for (const field of editFields) {
+        const label = String(field?.label || field?.key || "").trim();
+        if (field?.path) fieldLabelMap.set(field.path, label || field.path);
+        if (field?.key) fieldLabelMap.set(field.key, label || field.key);
+      }
+    } else {
+      for (const column of columns) {
+        const columnLabel = String(column?.label || column?.key || "").trim();
+        fieldLabelMap.set(_columnFieldKey(column.key, "headerLines"), `${columnLabel} Überschrift`);
+        fieldLabelMap.set(_columnFieldKey(column.key, "uiWidth"), `${columnLabel} UI-Breite`);
+        fieldLabelMap.set(_columnFieldKey(column.key, "pdfWidth"), `${columnLabel} PDF-Breite`);
+        fieldLabelMap.set(_columnFieldKey(column.key, "weight"), `${columnLabel} Gewichtung`);
+        fieldLabelMap.set(_columnFieldKey(column.key, "previewValue"), `${columnLabel} Preview-Wert`);
+        fieldLabelMap.set(_columnFieldKey(column.key, "label"), `${columnLabel} Überschrift`);
+      }
     }
     const messages = Object.entries(errors).map(([fieldKey, message]) => {
       const label =
@@ -1521,10 +1811,14 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
   const refreshPreview = () => {
     const tableDef = _getSelectedTableDefinition();
     const activeValues = _getPreviewValue(state);
-    const validation = _validateTableLayoutColumns(activeValues?.columns || [], tableDef?.columns || []);
+    const isControl = _isControlSurfaceDefinition(tableDef);
+    const validation = isControl
+      ? _validateControlLayoutFields(tableDef?.editFields || [], activeValues?.layout || {})
+      : _validateTableLayoutColumns(activeValues?.columns || [], tableDef?.columns || []);
     const previewValues = {
       orientation: _normalizeOrientation(activeValues?.orientation || state.orientation),
       columns: validation.columns,
+      layout: activeValues?.layout || {},
       source: state.source,
     };
     root.dataset.orientation = state.orientation;
@@ -1554,17 +1848,26 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
 
   const syncLoadedValues = (layout, meta = {}, tableDef = null) => {
     const definitionColumns = _cloneColumns(tableDef?.columns || []);
+    const isControl = _isControlSurfaceDefinition(tableDef);
     const layoutColumns =
-      Array.isArray(layout?.columns) && layout.columns.length
+      !isControl && Array.isArray(layout?.columns) && layout.columns.length
         ? _normalizeTableLayoutColumns(layout.columns, definitionColumns)
-        : _normalizeTableLayoutColumns(
-            tableDef?.tableKey === "protokoll_tops" ? _buildProtokollTopsColumnsFromLegacy(layout || {}) : [],
-            definitionColumns
-          );
-    const values = {
-      orientation: _normalizeOrientation(meta.requestedOrientation || layout?.variant || layout?.orientation || DEFAULT_ORIENTATION),
-      columns: layoutColumns.length ? layoutColumns : definitionColumns,
-    };
+        : !isControl
+          ? _normalizeTableLayoutColumns(
+              tableDef?.tableKey === "protokoll_tops" ? _buildProtokollTopsColumnsFromLegacy(layout || {}) : [],
+              definitionColumns
+            )
+          : [];
+    const values = isControl
+      ? {
+          orientation: _normalizeOrientation(meta.requestedOrientation || layout?.variant || layout?.orientation || DEFAULT_ORIENTATION),
+          columns: [],
+          layout: _cloneJson(layout || tableDef?.defaultLayout || {}),
+        }
+      : {
+          orientation: _normalizeOrientation(meta.requestedOrientation || layout?.variant || layout?.orientation || DEFAULT_ORIENTATION),
+          columns: layoutColumns.length ? layoutColumns : definitionColumns,
+        };
     state.orientation = values.orientation;
     state.schemaVersion = Number(meta.schemaVersion || layout?.schemaVersion || 1) || 1;
     state.source = String(meta.source || "default").trim() || "default";
@@ -1652,27 +1955,38 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
         refreshPreview();
         return { ok: false, error: state.error };
       }
-      const values = {
-        orientation: _normalizeOrientation(orientationSelect.value || state.orientation),
-        columns: _buildTableColumnsFromFields(tableDef),
-      };
+      const isControl = _isControlSurfaceDefinition(tableDef);
+      const values = isControl
+        ? {
+            orientation: _normalizeOrientation(orientationSelect.value || state.orientation),
+            layout: _buildControlLayoutFromFields(tableDef, state.editValues.layout || state.loadedValues.layout || {}),
+            columns: [],
+          }
+        : {
+            orientation: _normalizeOrientation(orientationSelect.value || state.orientation),
+            columns: _buildTableColumnsFromFields(tableDef),
+          };
       values.orientation = _normalizeOrientation(orientationSelect.value || values.orientation);
       state.editValues = values;
       state.testResult = "";
-      const validation = _validateTableLayoutColumns(values.columns || [], tableDef.columns || []);
+      const validation = isControl
+        ? _validateControlLayoutFields(tableDef.editFields || [], values.layout || {})
+        : _validateTableLayoutColumns(values.columns || [], tableDef.columns || []);
       if (!validation.isValid) {
         state.error =
+          validation.errors?.[Object.keys(validation.errors || {})[0] || ""] ||
           validation.errors?.[`${validation.columns?.[0]?.key || ""}.uiWidth`] ||
           validation.errors?.[`${validation.columns?.[0]?.key || ""}.pdfWidth`] ||
           validation.errors?.[`${validation.columns?.[0]?.key || ""}.label`] ||
           validation.errors?.[`${validation.columns?.[0]?.key || ""}.headerLines.0`] ||
           Object.values(validation.errors || {})[0] ||
-          "Ungültiger Spaltenwert";
+          "Ungültiger Layoutwert";
         refreshPreview();
         return { ok: false, error: state.error, validationErrors: validation.errors };
       }
-      const layout =
-        tableDef.tableKey === "protokoll_tops"
+      const layout = isControl
+        ? _buildControlLayoutOverlayFromFields(tableDef, values)
+        : tableDef.tableKey === "protokoll_tops"
           ? buildProtokollTopsLayoutOverlay({ columns: validation.columns }, values.orientation)
           : _buildTableLayoutOverlayFromColumns(validation.columns, values.orientation);
       const res = await resolvedApi.tableLayoutsSave({
@@ -1745,11 +2059,33 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     const currentColumns = Array.isArray(state.editValues.columns) && state.editValues.columns.length
       ? _cloneColumns(state.editValues.columns)
       : _cloneColumns(tableDef?.columns || []);
+    const isControl = _isControlSurfaceDefinition(tableDef);
     let next = {
       orientation,
       columns: Array.isArray(values.columns) ? _cloneColumns(values.columns) : _cloneColumns(state.editValues.columns || []),
     };
-    if (!Array.isArray(values.columns) && tableDef?.tableKey === "protokoll_tops") {
+    if (isControl) {
+      for (const field of Array.isArray(tableDef?.editFields) ? tableDef.editFields : []) {
+        if (!field || typeof field !== "object") continue;
+        const input = fields.get(field.key) || fields.get(field.path);
+        const directValue = Object.prototype.hasOwnProperty.call(values, field.key)
+          ? values[field.key]
+          : Object.prototype.hasOwnProperty.call(values, field.path || "")
+            ? values[field.path]
+            : Object.prototype.hasOwnProperty.call(values, field.label || "")
+              ? values[field.label]
+              : _readLayoutPath(next.layout, field.path);
+        _setFieldValue(input, directValue);
+      }
+      next = {
+        orientation,
+        columns: [],
+        layout: _buildControlLayoutFromFields(tableDef, {
+          ...(state.editValues.layout || state.loadedValues.layout || {}),
+          orientation,
+        }),
+      };
+    } else if (!Array.isArray(values.columns) && tableDef?.tableKey === "protokoll_tops") {
       const topCol = currentColumns[0] || {};
       const textCol = currentColumns[1] || {};
       const metaCol = currentColumns[2] || {};
@@ -1802,7 +2138,11 @@ export function createTableLayoutPrototypeEditor({ api } = {}) {
     state.editValues = next;
     state.testResult = "";
     orientationSelect.value = next.orientation;
-    _syncColumnFields(tableDef, next);
+    if (isControl) {
+      _syncControlFields(tableDef, next.layout || {});
+    } else {
+      _syncColumnFields(tableDef, next);
+    }
     refreshPreview();
   };
 
