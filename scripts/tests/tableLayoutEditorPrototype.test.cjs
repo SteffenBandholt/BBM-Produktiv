@@ -956,12 +956,40 @@ async function runTableLayoutEditorPrototypeTests(run) {
           type: "gridTrack",
           required: true,
         },
+        {
+          key: "metaStatusWidth",
+          label: "Status",
+          path: "ui.rootVars.--bbm-restarbeiten-meta-status-width",
+          type: "gridTrack",
+          required: true,
+        },
+        {
+          key: "metaResponsibleWidth",
+          label: "Verantwortlich",
+          path: "ui.rootVars.--bbm-restarbeiten-meta-responsible-width",
+          type: "gridTrack",
+          required: true,
+        },
+        {
+          key: "metaDoneWidth",
+          label: "Erledigt",
+          path: "ui.rootVars.--bbm-restarbeiten-meta-done-width",
+          type: "gridTrack",
+          required: true,
+        },
       ],
       defaultLayout: {
         tableKey: "restarbeiten_filter_meta",
         moduleId: "restarbeiten",
         variant: "portrait",
-        ui: { rootVars: { "--bbm-restarbeiten-meta-due-width": "minmax(0, 1fr)" } },
+        ui: {
+          rootVars: {
+            "--bbm-restarbeiten-meta-due-width": "minmax(0, 1fr)",
+            "--bbm-restarbeiten-meta-status-width": "minmax(0, 1fr)",
+            "--bbm-restarbeiten-meta-responsible-width": "minmax(0, 1fr)",
+            "--bbm-restarbeiten-meta-done-width": "minmax(0, 1fr)",
+          },
+        },
       },
       previewData: [],
     };
@@ -987,6 +1015,34 @@ async function runTableLayoutEditorPrototypeTests(run) {
       assert.equal(refreshedSelects[1]?.children?.length, 1);
       assert.equal(refreshedText.includes("Filterleiste Meta"), true);
       assert.equal(refreshedText.includes("restarbeiten_filter_meta"), true);
+      assert.equal(refreshedText.includes("Layoutbereich ohne Tabellenvorschau"), true);
+      const dueInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-restarbeiten-meta-due-width");
+      const statusInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-restarbeiten-meta-status-width");
+      const responsibleInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-restarbeiten-meta-responsible-width");
+      const doneInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-restarbeiten-meta-done-width");
+      assert.equal(dueInput?.value, "minmax(0, 1fr)");
+      assert.equal(statusInput?.value, "");
+      assert.equal(responsibleInput?.value, "");
+      assert.equal(doneInput?.value, "");
+      editor.applyValues({
+        metaDueWidth: "88px",
+        metaStatusWidth: "112px",
+        metaResponsibleWidth: "136px",
+        metaDoneWidth: "120px",
+      });
+      const saveRes = await editor.save();
+      assert.equal(saveRes.ok, true);
+      const saveCall = calls.find((item) => item.type === "save");
+      assert.equal(saveCall.payload.tableKey, "restarbeiten_filter_meta");
+      assert.equal(saveCall.payload.moduleId, "restarbeiten");
+      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-restarbeiten-meta-due-width"], "88px");
+      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-restarbeiten-meta-status-width"], "112px");
+      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-restarbeiten-meta-responsible-width"], "136px");
+      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-restarbeiten-meta-done-width"], "120px");
+      const resetRes = await editor.reset();
+      assert.equal(resetRes.ok, true);
+      const restoredDueInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-restarbeiten-meta-due-width");
+      assert.equal(restoredDueInput?.value, "minmax(0, 1fr)");
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
