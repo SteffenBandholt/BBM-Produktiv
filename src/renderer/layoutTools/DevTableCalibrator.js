@@ -78,6 +78,40 @@ function _mkRow({ labelText, cols = [], width = "260px", hintText = "" } = {}) {
   return row;
 }
 
+async function _openRegistryLayoutEditor({ api, openSettingsModal, definition } = {}) {
+  const def = definition && typeof definition === "object" ? definition : null;
+  const moduleId = String(def?.moduleId || "").trim();
+  const tableKey = String(def?.tableKey || "").trim();
+  if (!moduleId || !tableKey) return false;
+  if (def?.editorEnabled === false) return false;
+
+  const { createTableLayoutPrototypeEditor } = await import("../views/TableLayoutPrototypeEditor.js");
+  const editor = createTableLayoutPrototypeEditor({ api });
+
+  const shell = document.createElement("div");
+  shell.dataset.tableLayoutShell = "1";
+  shell.style.display = "grid";
+  shell.style.gap = "8px";
+  shell.style.minWidth = "min(1120px, calc(100vw - 80px))";
+  shell.style.maxWidth = "min(1600px, calc(100vw - 24px))";
+
+  shell.append(editor.root);
+  openSettingsModal({
+    title: `Tabellen-Kalibrator (DEV-only) – ${String(def?.tableLabel || tableKey)}`,
+    content: [shell],
+    closeOnly: true,
+  });
+  if (typeof editor.attachFullscreenHost === "function") {
+    editor.attachFullscreenHost(shell);
+  }
+  await editor.load({
+    moduleId,
+    tableKey,
+    orientation: "portrait",
+  });
+  return true;
+}
+
 async function _openProtokollTopsCalibrator({ api, has, openSettingsModal, applyPopupCardStyle, applyPopupButtonStyle } = {}) {
   const identity = Object.freeze({
     moduleId: "protokoll",
@@ -682,9 +716,13 @@ export async function buildDevTableCalibratorCard({
           await _openTodoPrintCalibrator({ api, has, openSettingsModal, applyPopupCardStyle, applyPopupButtonStyle }); 
           return; 
         } 
-        // For other tables, we currently just show the identity. (Next step: generic editor) 
+        if (def?.editorEnabled !== false) {
+          const opened = await _openRegistryLayoutEditor({ api, openSettingsModal, definition: def });
+          if (opened) return;
+        }
+        // Keep the block for layouts that are not editor-enabled yet.
         const info = document.createElement("div"); 
-        info.textContent = `Noch nicht angebunden: moduleId=${def.moduleId}, tableKey=${def.tableKey}`; 
+        info.textContent = `Nicht fuer den Layout-Kalibrator freigeschaltet: moduleId=${def.moduleId}, tableKey=${def.tableKey}`; 
         info.style.fontSize = "12px"; 
         info.style.opacity = "0.85";
         openSettingsModal({ title: "Tabellen-Kalibrator (DEV-only)", content: [info], closeOnly: true });
