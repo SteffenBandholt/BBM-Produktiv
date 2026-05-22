@@ -1,10 +1,10 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M8 abgeschlossen (Restarbeiten-Pilot-Landkarte dokumentiert, ohne sichtbare UI-Funktion).
+Status: M9 abgeschlossen (Restarbeiten-DOM-Markierungen minimal eingeführt, ohne sichtbare UI-Funktion).
 
 Aktueller Stand:
-- M1 bis M8 abgeschlossen.
+- M1 bis M9 abgeschlossen.
 
 ## Haken-System
 - `[x]` erledigt
@@ -21,6 +21,7 @@ Aktueller Stand:
 - [x] M6 erster Code-Schritt: Modulgerüst
 - [x] M7 Layout-Landkarten-Format definieren
 - [x] M8 Restarbeiten als erste Pilot-Landkarte dokumentieren
+- [x] M9 Restarbeiten-DOM-Markierungen minimal einführen
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -67,7 +68,7 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M9 Restarbeiten-DOM-Markierungen minimal einführen**
+- **M10 Overlay nur anzeigen**
 
 Hinweis:
 - M6 hat nur ein Modulgerüst gebaut, ohne sichtbare UI-Funktion
@@ -161,3 +162,23 @@ Hinweis:
   - **M9 Restarbeiten-DOM-Markierungen minimal einführen**
 - Hinweis:
   - M8 hat nur dokumentiert, keine DOM-Markierungen eingebaut, kein Overlay gebaut und keine sichtbare UI-Funktion ergänzt.
+
+
+## M9 Abschlussnotiz
+- M9 hat in der bestehenden Restarbeiten-UI ausschließlich minimale `data-ui-inspector-id` DOM-Markierungen ergänzt.
+- Kein Overlay, kein Panel, keine sichtbare UI-Funktion, keine Layoutänderung, keine Fachlogik- oder Speicherlogik-Änderung.
+- Geänderte/neu angelegte Dateien:
+  - `src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js`
+  - `src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js`
+  - `scripts/tests/restarbeitenModule.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+  - `docs/ui-landkarten/RESTARBEITEN.md`
+- Tests/Prüfung:
+  - `node scripts/tests/uiInspectorCore.test.cjs`
+  - `node scripts/tests/uiInspectorRegistry.test.cjs`
+  - `node scripts/tests/uiInspectorMapSchema.test.cjs`
+  - `node scripts/tests/restarbeitenModule.test.cjs`
+  - `npm test`
+- Nächster Schritt:
+  - **M10 Overlay nur anzeigen**

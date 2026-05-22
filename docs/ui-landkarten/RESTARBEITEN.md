@@ -6,8 +6,8 @@
 - Sie verändert die App nicht.
 
 ## 2. Status
-- M8 dokumentiert nur.
-- Noch keine DOM-Markierungen.
+- M9 DOM-Markierungen minimal eingeführt.
+- Marker-IDs sind technisch in der bestehenden Restarbeiten-UI verankert.
 - Noch kein Overlay.
 - Noch kein Panel.
 - Noch keine sichtbare UI-Funktion.
@@ -58,8 +58,8 @@ Restarbeiten
 - `restarbeiten.editbox.meta`
 
 Hinweis:
-- Die IDs sind fachliche Vorschläge für die spätere Landkarten-/Adapterarbeit.
-- In M8 werden keine App-Dateien markiert oder angebunden.
+- Die IDs wurden in M9 als `data-ui-inspector-id` in bestehende DOM-Struktur ergänzt.
+- Es wurden keine zusätzlichen sichtbaren Wrapper gebaut; Marker folgen der vorhandenen Struktur.
 
 ## 5. Einstell-Ebenen
 
