@@ -40,6 +40,9 @@ export function createUiInspectorOverlay(options = {}) {
       selectionBadge.style.border = '1px solid rgba(255, 255, 255, 0.35)';
       selectionBadge.style.borderRadius = '4px';
       selectionBadge.style.pointerEvents = 'none';
+    }
+    const badgeDetached = !Array.isArray(overlayRoot.children) || !overlayRoot.children.includes(selectionBadge);
+    if (selectionBadge.parentElement !== overlayRoot || badgeDetached) {
       overlayRoot.append(selectionBadge);
     }
     selectionBadge.textContent = selectedId ? `Auswahl: ${selectedId}` : 'Auswahl: -';

@@ -29,6 +29,10 @@ function createInspectableRoot(document) {
   return { ownerDocument: document, querySelectorAll: (sel)=> sel==='[data-ui-inspector-id]'?[nodeA,nodeB]:[] };
 }
 
+function getSelectionBadge(overlayRoot) {
+  return (overlayRoot.children || []).find((child) => child?.attributes?.['data-ui-inspector-overlay-selection'] === 'true') || null;
+}
+
 (async function run() {
   const { createUiInspectorOverlay } = await importEsmFromFile(path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorOverlay.js'));
   assert.equal(typeof createUiInspectorOverlay, 'function');
@@ -39,16 +43,30 @@ function createInspectableRoot(document) {
   const overlayRoot = document.body.children[0];
   assert.equal(overlayRoot.style.pointerEvents, 'none');
   assert.equal(overlayRoot.children.length, 3);
+  const badgeAfterMount = getSelectionBadge(overlayRoot);
+  assert.equal(!!badgeAfterMount, true);
+  assert.equal(badgeAfterMount.textContent, 'Auswahl: -');
   assert.equal(overlayRoot.children[0].style.pointerEvents, 'auto');
   assert.equal(overlayRoot.children[0].attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.header');
   assert.equal(overlayRoot.children[0].children[0].textContent, 'restarbeiten.header');
   overlayRoot.children[0].click();
   assert.equal(overlay.getSelectedId(), 'restarbeiten.header');
   assert.equal(overlayRoot.children[0].attributes['data-ui-inspector-selected'], 'true');
+  const badgeAfterClick = getSelectionBadge(overlayRoot);
+  assert.equal(!!badgeAfterClick, true);
+  assert.equal(badgeAfterClick.textContent, 'Auswahl: restarbeiten.header');
+
+  assert.equal(overlay.refresh(), true);
+  const badgeAfterRefresh = getSelectionBadge(overlayRoot);
+  assert.equal(!!badgeAfterRefresh, true);
+  assert.equal(badgeAfterRefresh.textContent, 'Auswahl: restarbeiten.header');
+
   assert.equal(root.querySelectorAll('[data-ui-inspector-id]')[0].attributes?.className, undefined);
   overlay.clearSelection();
   assert.equal(overlay.getSelectedId(), '');
-  assert.equal(overlay.refresh(), true);
+  const badgeAfterClear = getSelectionBadge(overlayRoot);
+  assert.equal(!!badgeAfterClear, true);
+  assert.equal(badgeAfterClear.textContent, 'Auswahl: -');
   assert.equal(overlay.unmount(), true);
   assert.equal(overlay.getSelectedId(), '');
   assert.equal(document.body.children.length, 0);
