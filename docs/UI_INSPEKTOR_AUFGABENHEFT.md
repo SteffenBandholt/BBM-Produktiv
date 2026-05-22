@@ -16,7 +16,7 @@ Aktueller Stand:
 - [x] M1.1 Projektdateien im Repo angelegt
 - [x] M2 Arbeitsvertrag und Regeln finalisiert
 - [x] M3 Projektgedächtnis vollständig
-- [ ] M4 Architektur des exportierbaren Moduls final
+- [x] M4 Architektur des exportierbaren Moduls final
 - [ ] M5 Umsetzungsplan ohne Code final
 - [ ] M6 erster Code-Schritt: Modulgerüst
 
@@ -65,7 +65,20 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M4 Architektur des exportierbaren Moduls vertiefen**
+- **M5 Umsetzungsplan ohne Code finalisieren**
 
 Hinweis:
 - Noch kein Code, noch kein Modulgerüst
+
+
+## M4 Abschlussnotiz
+- M4 Architektur des exportierbaren UI-Inspektor-Moduls vertieft und als Schichtenmodell konkretisiert.
+- Geänderte Dateien:
+  - `docs/UI_INSPEKTOR_ARCHITEKTUR.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+- Nächster Schritt:
+  - **M5 Umsetzungsplan ohne Code finalisieren**
+- Hinweis:
+  - Noch kein Code, noch kein Modulgerüst
