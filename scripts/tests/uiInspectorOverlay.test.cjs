@@ -41,6 +41,14 @@ function getSelectionBadge(overlayRoot) {
   return (overlayRoot.children || []).find((child) => child?.attributes?.['data-ui-inspector-overlay-selection'] === 'true') || null;
 }
 
+function getFrames(overlayRoot) {
+  return overlayRoot.children.filter((child) => child?.attributes?.['data-ui-inspector-overlay-frame']);
+}
+
+function getHandles(overlayRoot) {
+  return getFrames(overlayRoot).flatMap((frame) => frame.children || []).filter((child) => child?.attributes?.['data-ui-inspector-overlay-handle']);
+}
+
 (async function run() {
   const { createUiInspectorOverlay } = await importEsmFromFile(path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorOverlay.js'));
   assert.equal(typeof createUiInspectorOverlay, 'function');
@@ -54,13 +62,16 @@ function getSelectionBadge(overlayRoot) {
   const badgeAfterMount = getSelectionBadge(overlayRoot);
   assert.equal(!!badgeAfterMount, true);
   assert.equal(badgeAfterMount.textContent, 'Auswahl: -');
-  const baseFrames = overlayRoot.children.filter((child) => child?.attributes?.['data-ui-inspector-overlay-frame']);
+  const baseFrames = getFrames(overlayRoot);
   const headerFrame = baseFrames.find((frame) => frame.attributes['data-ui-inspector-overlay-frame'] === 'restarbeiten.header');
-  assert.equal(headerFrame.style.pointerEvents, 'auto');
-  assert.equal(headerFrame.children[0].textContent, 'restarbeiten.header');
-  headerFrame.click();
+  const headerHandle = (headerFrame.children || [])[0];
+  assert.equal(headerFrame.style.pointerEvents, 'none');
+  assert.equal(headerHandle.attributes['data-ui-inspector-overlay-handle'], 'restarbeiten.header');
+  assert.equal(headerHandle.style.pointerEvents, 'auto');
+  assert.equal(headerHandle.textContent, 'restarbeiten.header');
+  headerHandle.click();
   assert.equal(overlay.getSelectedId(), 'restarbeiten.header');
-  const baseFramesAfterClick = overlayRoot.children.filter((child) => child?.attributes?.['data-ui-inspector-overlay-frame']);
+  const baseFramesAfterClick = getFrames(overlayRoot);
   const selectedHeaderFrame = baseFramesAfterClick.find((frame) => frame.attributes['data-ui-inspector-overlay-frame'] === 'restarbeiten.header');
   assert.equal(selectedHeaderFrame.attributes['data-ui-inspector-selected'], 'true');
   const badgeAfterClick = getSelectionBadge(overlayRoot);
@@ -86,21 +97,34 @@ function getSelectionBadge(overlayRoot) {
   const overlapRoot = createOverlapRoot(document);
   assert.equal(overlapOverlay.mount(overlapRoot), true);
   const overlayRoot2 = document.body.children[0];
-  const frames = overlayRoot2.children.filter((child) => child?.attributes?.['data-ui-inspector-overlay-frame']);
+  const frames = getFrames(overlayRoot2);
+  const handles = getHandles(overlayRoot2);
   assert.equal(frames.length, 3);
+  assert.equal(handles.length, 3);
   for (const frame of frames) {
-    assert.equal(frame.style.pointerEvents, 'auto');
+    assert.equal(frame.style.pointerEvents, 'none');
   }
   assert.equal(frames[0].attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.root');
   assert.equal(frames[1].attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.filterleiste.meta');
   assert.equal(frames[2].attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.filterleiste.meta.status');
 
-  frames[2].click();
+  const rootHandle = handles.find((h) => h.attributes['data-ui-inspector-overlay-handle'] === 'restarbeiten.root');
+  const metaHandle = handles.find((h) => h.attributes['data-ui-inspector-overlay-handle'] === 'restarbeiten.filterleiste.meta');
+  const statusHandle = handles.find((h) => h.attributes['data-ui-inspector-overlay-handle'] === 'restarbeiten.filterleiste.meta.status');
+  assert.equal(rootHandle.style.pointerEvents, 'auto');
+  assert.equal(metaHandle.style.pointerEvents, 'auto');
+  assert.equal(statusHandle.style.pointerEvents, 'auto');
+  statusHandle.click();
   assert.equal(overlapOverlay.getSelectedId(), 'restarbeiten.filterleiste.meta.status');
   const overlapBadgeAfterField = getSelectionBadge(overlayRoot2);
   assert.equal(overlapBadgeAfterField.textContent, 'Auswahl: restarbeiten.filterleiste.meta.status');
 
-  frames[0].click();
+  metaHandle.click();
+  assert.equal(overlapOverlay.getSelectedId(), 'restarbeiten.filterleiste.meta');
+  const overlapBadgeAfterMeta = getSelectionBadge(overlayRoot2);
+  assert.equal(overlapBadgeAfterMeta.textContent, 'Auswahl: restarbeiten.filterleiste.meta');
+
+  rootHandle.click();
   assert.equal(overlapOverlay.getSelectedId(), 'restarbeiten.root');
   const overlapBadgeAfterRoot = getSelectionBadge(overlayRoot2);
   assert.equal(overlapBadgeAfterRoot.textContent, 'Auswahl: restarbeiten.root');

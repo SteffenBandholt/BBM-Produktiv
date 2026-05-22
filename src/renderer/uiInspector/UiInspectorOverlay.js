@@ -55,7 +55,7 @@ export function createUiInspectorOverlay(options = {}) {
     frame.style.background = isSelected ? 'rgba(255, 133, 40, 0.16)' : 'rgba(43, 157, 255, 0.08)';
   }
 
-  function createFrame(doc, id, rect) {
+  function createFrame(doc, id, rect, index) {
     const frame = doc.createElement('div');
     frame.setAttribute('data-ui-inspector-overlay-frame', id);
     frame.style.position = 'fixed';
@@ -64,31 +64,33 @@ export function createUiInspectorOverlay(options = {}) {
     frame.style.width = `${rect.width}px`;
     frame.style.height = `${rect.height}px`;
     frame.style.boxSizing = 'border-box';
-    frame.style.pointerEvents = 'auto';
+    frame.style.pointerEvents = 'none';
     setFrameSelectionState(frame, id);
-    frame.onclick = (event) => {
+    const handle = doc.createElement('button');
+    handle.type = 'button';
+    handle.setAttribute('data-ui-inspector-overlay-handle', id);
+    handle.textContent = id;
+    handle.style.position = 'absolute';
+    handle.style.left = '0';
+    handle.style.top = `${-16 - (index * 18)}px`;
+    handle.style.maxWidth = '320px';
+    handle.style.whiteSpace = 'nowrap';
+    handle.style.overflow = 'hidden';
+    handle.style.textOverflow = 'ellipsis';
+    handle.style.background = 'rgba(43, 157, 255, 0.95)';
+    handle.style.color = '#ffffff';
+    handle.style.font = '11px/1.2 monospace';
+    handle.style.padding = '2px 4px';
+    handle.style.border = '1px solid rgba(255, 255, 255, 0.35)';
+    handle.style.borderRadius = '3px';
+    handle.style.pointerEvents = 'auto';
+    handle.style.cursor = 'pointer';
+    handle.onclick = (event) => {
       event?.preventDefault?.();
       event?.stopPropagation?.();
       select(id);
     };
-
-    const label = doc.createElement('div');
-    label.setAttribute('data-ui-inspector-overlay-label', id);
-    label.textContent = id;
-    label.style.position = 'absolute';
-    label.style.left = '0';
-    label.style.top = '-16px';
-    label.style.maxWidth = '320px';
-    label.style.whiteSpace = 'nowrap';
-    label.style.overflow = 'hidden';
-    label.style.textOverflow = 'ellipsis';
-    label.style.background = 'rgba(43, 157, 255, 0.95)';
-    label.style.color = '#ffffff';
-    label.style.font = '11px/1.2 monospace';
-    label.style.padding = '2px 4px';
-    label.style.pointerEvents = 'none';
-
-    frame.append(label);
+    frame.append(handle);
     return frame;
   }
 
@@ -120,8 +122,8 @@ export function createUiInspectorOverlay(options = {}) {
     });
 
     const doc = rootElement.ownerDocument || globalThis.document;
-    for (const entry of overlayEntries) {
-      overlayRoot.append(createFrame(doc, entry.id, entry.rect));
+    for (const [index, entry] of overlayEntries.entries()) {
+      overlayRoot.append(createFrame(doc, entry.id, entry.rect, index % 4));
     }
     if (!hasSelectedNode) selectedId = '';
     updateSelectionBadge(doc);
