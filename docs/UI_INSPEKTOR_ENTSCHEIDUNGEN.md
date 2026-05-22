@@ -55,3 +55,9 @@
 **Begründung:** Bei verschachtelten UI-Bereichen ist Handle-/Rahmenklick für Laien nicht zuverlässig und unübersichtlich.
 
 **Auswirkung:** Die Trefferliste trennt Auswahl von Rahmenanzeige und bleibt in komplexen UIs bedienbar.
+
+
+## Entscheidung 011
+**Beschluss:** Das M12-Panel bleibt rein lesend und zeigt nur erlaubte Stellschrauben.
+
+**Begründung:** Anwendung und Speicherung werden bewusst getrennt in M13/M14 umgesetzt.

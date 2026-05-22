@@ -91,6 +91,23 @@ function createInspectableRoot(document) {
   const hitListAfterOptionPointerdown = overlayRoot.children.find((c) => c.attributes['data-ui-inspector-hit-list'] === 'true');
   assert.equal(hitListAfterOptionPointerdown, firstHitListRef);
 
+  const panelNode = document.createElement('div');
+  panelNode.setAttribute('data-ui-inspector-panel', 'true');
+  overlayRoot.append(panelNode);
+  const panelChild = document.createElement('button');
+  panelNode.append(panelChild);
+  const preventedPanelPointerdown = { value: false };
+  document.dispatch('pointerdown', {
+    clientX: 200,
+    clientY: 200,
+    target: panelChild,
+    preventDefault() { preventedPanelPointerdown.value = true; },
+    stopPropagation() {},
+    stopImmediatePropagation() {},
+  });
+  assert.equal(preventedPanelPointerdown.value, false);
+  assert.equal(overlayRoot.children.find((c) => c.attributes['data-ui-inspector-hit-list'] === 'true'), firstHitListRef);
+
   firstOption.click();
 
   assert.equal(overlay.getSelectedId(), 'restarbeiten.filterleiste.meta.status');

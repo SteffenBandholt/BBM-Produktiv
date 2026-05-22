@@ -305,6 +305,34 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(screenContent, /inspector:save/);
   });
 
+
+  await run("M12 UI-Inspector Panel ist read-only und ESM-kompatibel", () => {
+    const panelPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorPanel.js");
+    const runtimePath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorRuntime.js");
+    const panelContent = fs.readFileSync(panelPath, "utf8");
+    const runtimeContent = fs.readFileSync(runtimePath, "utf8");
+
+    assert.match(panelContent, /data-ui-inspector-panel/);
+    assert.match(panelContent, /UI-Inspektor/);
+    assert.match(panelContent, /Nur Anzeige/);
+    assert.doesNotMatch(panelContent, /module\.exports/);
+    assert.doesNotMatch(panelContent, /require\s*\(/);
+    assert.doesNotMatch(panelContent, /localStorage/);
+    assert.doesNotMatch(panelContent, /ipc/i);
+    assert.doesNotMatch(panelContent, /store/i);
+    assert.doesNotMatch(panelContent, /Speichern/);
+    assert.doesNotMatch(panelContent, /Anwenden/);
+    assert.doesNotMatch(panelContent, /<input|\btype\s*=\s*['"](range|text|number)['"]/i);
+
+    assert.match(runtimeContent, /getAllowedControlsForSelectedId/);
+    assert.match(runtimeContent, /restarbeiten\.filterleiste\.meta/);
+    assert.match(runtimeContent, /restarbeiten\.editbox\.header/);
+    assert.match(runtimeContent, /restarbeiten\.editbox\.verortung/);
+    assert.match(runtimeContent, /restarbeiten\.editbox\.meta/);
+    assert.doesNotMatch(runtimeContent, /localStorage/);
+    assert.doesNotMatch(runtimeContent, /ui-inspector:save/);
+    assert.doesNotMatch(runtimeContent, /inspector:save/);
+  });
   await run("M10 UI-Inspector Overlay-Toggle ist klar begrenzt", () => {
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
     const content = fs.readFileSync(screenPath, "utf8");
