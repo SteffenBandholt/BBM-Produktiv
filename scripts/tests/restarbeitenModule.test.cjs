@@ -266,7 +266,7 @@ async function runRestarbeitenModuleTests(run) {
   });
 
 
-  await run("M10 Renderer-UI-Inspector ist ESM-kompatibel", () => {
+  await run("M11 Renderer-UI-Inspector ist ESM-kompatibel", () => {
     const overlayPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorOverlay.js");
     const runtimePath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorRuntime.js");
     const panelPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorPanel.js");
@@ -298,7 +298,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(screenContent, /inspector:save/);
   });
 
-  await run("M10 UI-Inspector Overlay-Toggle ist klar begrenzt", () => {
+  await run("M11 UI-Inspector Overlay-Toggle und Auswahl bleiben klar begrenzt", () => {
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
     const content = fs.readFileSync(screenPath, "utf8");
 
@@ -309,6 +309,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /key\s*===\s*['"]i['"]/);
     assert.match(content, /this\.uiInspectorRuntime\.activateOverlay\(this\.host\)/);
     assert.match(content, /this\.uiInspectorRuntime\.deactivateOverlay\(\)/);
+    assert.doesNotMatch(content, /createUiInspectorPanel/);
     assert.match(content, /if \(!doc \|\| this\.uiInspectorKeydownHandler\) return;/);
     assert.match(content, /typeof doc\.addEventListener !== ["']function["']/);
     assert.match(content, /dispose\(\)/);

@@ -32,18 +32,20 @@ Pflichtreihenfolge:
 - M8 Restarbeiten-Pilot-Landkarte dokumentiert
 - M9 Restarbeiten-DOM-Markierungen minimal eingeführt
 - M10 Overlay nur anzeigen abgeschlossen
+- M11 Bereich anklicken und Auswahl anzeigen abgeschlossen
 - UI-Inspector-Modulgerüst und Layout-Landkarten-Format existieren
 - Overlay kann angezeigt werden
 - Restarbeiten-DOM-Markierungen vorhanden
 - Noch keine sichtbare App-Funktion
 
 ## 5. Nächster geplanter Schritt
-- Nächster Schritt: M11 Bereich anklicken und Auswahl anzeigen
-- M10 zeigt nur Overlay-Rahmen über Marker
+- Nächster Schritt: M12 Panel zeigt erlaubte Stellschrauben
+- Overlay zeigt Bereiche und Inspector-ID
+- Bereiche sind im Overlay anklickbar und auswählbar
 - Noch kein Panel
-- Noch keine Klickauswahl
-- Noch keine Layoutänderung
+- Noch keine Werte
 - Noch keine Speicherung
+- Noch keine Layoutänderung
 
 ## 6. Harte Stopps
 Nicht fortführen:
@@ -56,4 +58,4 @@ Nicht fortführen:
 ## 7. Definition für neue Chats
 Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 
-„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst und die erste Restarbeiten-Pilot-Landkarte sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M10 (Overlay nur anzeigen; weiterhin ohne Panel und ohne sichtbare Fachfunktion).“
+„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst und die erste Restarbeiten-Pilot-Landkarte sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M12 (Panel zeigt erlaubte Stellschrauben; weiterhin ohne Speicherung und ohne Layoutänderung).“

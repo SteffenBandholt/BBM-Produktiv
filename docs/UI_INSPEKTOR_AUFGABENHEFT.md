@@ -1,10 +1,10 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M10 abgeschlossen (Overlay nur anzeigen).
+Status: M11 abgeschlossen (Bereich anklicken und Auswahl anzeigen).
 
 Aktueller Stand:
-- M1 bis M10 abgeschlossen.
+- M1 bis M11 abgeschlossen.
 
 ## Haken-System
 - `[x]` erledigt
@@ -23,6 +23,7 @@ Aktueller Stand:
 - [x] M8 Restarbeiten als erste Pilot-Landkarte dokumentieren
 - [x] M9 Restarbeiten-DOM-Markierungen minimal einführen
 - [x] M10 Overlay nur anzeigen
+- [x] M11 Bereich anklicken und Auswahl anzeigen
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -69,7 +70,7 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M11 Bereich anklicken und Auswahl anzeigen**
+- **M12 Panel zeigt erlaubte Stellschrauben**
 
 Hinweis:
 - M6 hat nur ein Modulgerüst gebaut, ohne sichtbare UI-Funktion
@@ -206,4 +207,29 @@ Hinweis:
   - `node scripts/tests/restarbeitenModule.test.cjs`
   - `npm test`
 - Nächster Schritt:
-  - **M11 Bereich anklicken und Auswahl anzeigen**
+  - **M12 Panel zeigt erlaubte Stellschrauben**
+
+
+## M11 Abschlussnotiz
+- M11 hat das bestehende Overlay klickbar gemacht und die aktive Auswahl im Overlay sichtbar markiert.
+- Enthalten: klickbare Overlay-Frames, Auswahlzustand im Overlay, Badge mit ausgewählter Inspector-ID, Auswahl-Reset beim Deaktivieren.
+- Nicht enthalten: Panel, Werteanzeige, Werteänderung, Speicherung, Layoutänderung.
+- Geänderte/neu angelegte Dateien:
+  - `src/renderer/uiInspector/UiInspectorOverlay.js`
+  - `src/renderer/uiInspector/UiInspectorRuntime.js`
+  - `scripts/tests/uiInspectorOverlay.test.cjs`
+  - `scripts/tests/restarbeitenModule.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+  - `docs/ui-landkarten/RESTARBEITEN.md`
+- Tests/Prüfung:
+  - `node scripts/tests/uiInspectorCore.test.cjs`
+  - `node scripts/tests/uiInspectorRegistry.test.cjs`
+  - `node scripts/tests/uiInspectorMapSchema.test.cjs`
+  - `node scripts/tests/uiInspectorOverlay.test.cjs`
+  - `node scripts/tests/restarbeitenModule.test.cjs`
+  - `npm test`
+- Nächster Schritt:
+  - **M12 Panel zeigt erlaubte Stellschrauben**
+- Hinweis:
+  - M11 ergänzt nur Overlay-Auswahl; noch kein Panel, keine Werte, keine Speicherung.

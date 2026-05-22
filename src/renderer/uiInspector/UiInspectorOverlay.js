@@ -5,6 +5,8 @@ export function createUiInspectorOverlay(options = {}) {
 
   let rootElement = null;
   let overlayRoot = null;
+  let selectedId = '';
+  let selectionBadge = null;
 
   function clearOverlayChildren() {
     if (!overlayRoot) return;
@@ -23,6 +25,33 @@ export function createUiInspectorOverlay(options = {}) {
     return overlayRoot;
   }
 
+  function updateSelectionBadge(doc) {
+    if (!overlayRoot) return;
+    if (!selectionBadge) {
+      selectionBadge = doc.createElement('div');
+      selectionBadge.setAttribute('data-ui-inspector-overlay-selection', 'true');
+      selectionBadge.style.position = 'fixed';
+      selectionBadge.style.right = '12px';
+      selectionBadge.style.top = '12px';
+      selectionBadge.style.background = 'rgba(9, 30, 66, 0.94)';
+      selectionBadge.style.color = '#ffffff';
+      selectionBadge.style.font = '12px/1.2 monospace';
+      selectionBadge.style.padding = '4px 8px';
+      selectionBadge.style.border = '1px solid rgba(255, 255, 255, 0.35)';
+      selectionBadge.style.borderRadius = '4px';
+      selectionBadge.style.pointerEvents = 'none';
+      overlayRoot.append(selectionBadge);
+    }
+    selectionBadge.textContent = selectedId ? `Auswahl: ${selectedId}` : 'Auswahl: -';
+  }
+
+  function setFrameSelectionState(frame, id) {
+    const isSelected = !!selectedId && selectedId === id;
+    frame.setAttribute('data-ui-inspector-selected', isSelected ? 'true' : 'false');
+    frame.style.border = isSelected ? '2px solid rgba(255, 133, 40, 1)' : '1px solid rgba(43, 157, 255, 0.95)';
+    frame.style.background = isSelected ? 'rgba(255, 133, 40, 0.16)' : 'rgba(43, 157, 255, 0.08)';
+  }
+
   function createFrame(doc, id, rect) {
     const frame = doc.createElement('div');
     frame.setAttribute('data-ui-inspector-overlay-frame', id);
@@ -32,9 +61,13 @@ export function createUiInspectorOverlay(options = {}) {
     frame.style.width = `${rect.width}px`;
     frame.style.height = `${rect.height}px`;
     frame.style.boxSizing = 'border-box';
-    frame.style.border = '1px solid rgba(43, 157, 255, 0.95)';
-    frame.style.background = 'rgba(43, 157, 255, 0.08)';
-    frame.style.pointerEvents = 'none';
+    frame.style.pointerEvents = 'auto';
+    setFrameSelectionState(frame, id);
+    frame.onclick = (event) => {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      select(id);
+    };
 
     const label = doc.createElement('div');
     label.setAttribute('data-ui-inspector-overlay-label', id);
@@ -61,15 +94,39 @@ export function createUiInspectorOverlay(options = {}) {
     clearOverlayChildren();
 
     const nodes = rootElement.querySelectorAll(selector);
+    let hasSelectedNode = false;
     for (const node of nodes) {
       if (!node || typeof node.getBoundingClientRect !== 'function') continue;
       const id = String(node.getAttribute('data-ui-inspector-id') || '').trim();
       if (!id) continue;
       const rect = node.getBoundingClientRect();
       if (!rect || rect.width <= 0 || rect.height <= 0) continue;
+      if (id === selectedId) hasSelectedNode = true;
       overlayRoot.append(createFrame(rootElement.ownerDocument || globalThis.document, id, rect));
     }
+    if (!hasSelectedNode) selectedId = '';
+    updateSelectionBadge(rootElement.ownerDocument || globalThis.document);
     return true;
+  }
+
+  function getSelectedId() {
+    return selectedId;
+  }
+
+  function select(id) {
+    const nextId = String(id || '').trim();
+    selectedId = nextId;
+    refresh();
+    if (typeof options.onSelect === 'function') options.onSelect(selectedId, { id: selectedId });
+    return selectedId;
+  }
+
+  function clearSelection() {
+    if (!selectedId) return '';
+    selectedId = '';
+    refresh();
+    if (typeof options.onSelect === 'function') options.onSelect('', { id: '' });
+    return selectedId;
   }
 
   function mount(nextRootElement) {
@@ -87,8 +144,10 @@ export function createUiInspectorOverlay(options = {}) {
     clearOverlayChildren();
     if (overlayRoot?.parentElement) overlayRoot.parentElement.removeChild(overlayRoot);
     rootElement = null;
+    selectionBadge = null;
+    selectedId = '';
     return true;
   }
 
-  return { mount, unmount, refresh };
+  return { mount, unmount, refresh, getSelectedId, select, clearSelection };
 }

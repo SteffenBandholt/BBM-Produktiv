@@ -13,6 +13,7 @@ function createFakeDom() {
       setAttribute(name, value) { this.attributes[name] = String(value); },
       getAttribute(name) { return this.attributes[name]; },
       removeChild(child) { this.children = this.children.filter((e) => e !== child); child.parentElement = null; child.isConnected = false; },
+      click() { if (typeof this.onclick === 'function') this.onclick({ preventDefault() {}, stopPropagation() {} }); },
     };
   }
   const document = { body: createElement('body'), createElement };
@@ -37,11 +38,19 @@ function createInspectableRoot(document) {
   assert.equal(overlay.mount(root), true);
   const overlayRoot = document.body.children[0];
   assert.equal(overlayRoot.style.pointerEvents, 'none');
-  assert.equal(overlayRoot.children.length, 2);
+  assert.equal(overlayRoot.children.length, 3);
+  assert.equal(overlayRoot.children[0].style.pointerEvents, 'auto');
   assert.equal(overlayRoot.children[0].attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.header');
   assert.equal(overlayRoot.children[0].children[0].textContent, 'restarbeiten.header');
+  overlayRoot.children[0].click();
+  assert.equal(overlay.getSelectedId(), 'restarbeiten.header');
+  assert.equal(overlayRoot.children[0].attributes['data-ui-inspector-selected'], 'true');
+  assert.equal(root.querySelectorAll('[data-ui-inspector-id]')[0].attributes?.className, undefined);
+  overlay.clearSelection();
+  assert.equal(overlay.getSelectedId(), '');
   assert.equal(overlay.refresh(), true);
   assert.equal(overlay.unmount(), true);
+  assert.equal(overlay.getSelectedId(), '');
   assert.equal(document.body.children.length, 0);
   console.log('ok - uiInspectorOverlay.test');
 })();
