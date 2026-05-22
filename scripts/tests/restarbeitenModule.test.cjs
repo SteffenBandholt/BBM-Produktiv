@@ -283,6 +283,13 @@ async function runRestarbeitenModuleTests(run) {
       assert.doesNotMatch(source, /require\s*\(/);
     }
 
+
+    assert.match(overlayContent, /data-ui-inspector-hit-list/);
+    assert.match(overlayContent, /data-ui-inspector-hit-option/);
+    assert.match(overlayContent, /getHitsAtPoint/);
+    assert.match(overlayContent, /showHitListAtPoint/);
+    assert.doesNotMatch(overlayContent, /data-ui-inspector-overlay-handle/);
+
     assert.doesNotMatch(runtimeContent, /\.\.\/\.\.\/shared\/uiInspector\/index\.js/);
     assert.doesNotMatch(runtimeContent, /createUiInspectorCore|createUiInspectorRegistry|createMemoryUiInspectorStore/);
 
@@ -514,7 +521,9 @@ async function runRestarbeitenModuleTests(run) {
       "restarbeiten.header",
       "restarbeiten.filterleiste",
       "restarbeiten.filterleiste.klassenfilter",
+      "restarbeiten.filterleiste.klassenfilter.feld",
       "restarbeiten.filterleiste.verortung",
+      "restarbeiten.filterleiste.verortung.feld",
       "restarbeiten.filterleiste.meta",
       "restarbeiten.filterleiste.meta.fertig_bis",
       "restarbeiten.filterleiste.meta.status",
@@ -528,8 +537,14 @@ async function runRestarbeitenModuleTests(run) {
 
     [
       "restarbeiten.editbox",
+      "restarbeiten.editbox.header",
+      "restarbeiten.editbox.verortung",
       "restarbeiten.editbox.kurztext",
+      "restarbeiten.editbox.kurztext.label",
+      "restarbeiten.editbox.kurztext.restzeichen",
       "restarbeiten.editbox.langtext",
+      "restarbeiten.editbox.langtext.label",
+      "restarbeiten.editbox.langtext.restzeichen",
       "restarbeiten.editbox.meta",
     ].forEach((id) => assert.equal(editbox.includes(id), true));
 

@@ -20,11 +20,21 @@ export function createUiInspectorRuntime({ overlay } = {}) {
     return resolvedOverlay.refresh() === true;
   }
 
+  function getSelectedElementId() {
+    return resolvedOverlay.getSelectedId?.() || '';
+  }
+
+  function clearSelection() {
+    return resolvedOverlay.clearSelection?.() === true;
+  }
+
   return {
     overlay: resolvedOverlay,
     activateOverlay,
     deactivateOverlay,
     refreshOverlay,
+    getSelectedElementId,
+    clearSelection,
     isOverlayActive() {
       return overlayActive;
     },

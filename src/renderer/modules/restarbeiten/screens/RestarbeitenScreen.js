@@ -453,6 +453,7 @@ export default class RestarbeitenScreen {
   _buildClassFilter(doc) {
     const wrap = doc.createElement("div");
     wrap.className = "restarbeiten-filterleiste__classFilter";
+    wrap.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.klassenfilter.feld");
     const values = [
       { value: "", label: "Alle" },
       { value: "mangel", label: "Mangel" },
@@ -477,6 +478,7 @@ export default class RestarbeitenScreen {
   _buildSingleFilter(doc, key, levelIndex) {
     const wrap = doc.createElement("label");
     wrap.className = "restarbeiten-filterleiste__field";
+    wrap.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.verortung.feld");
 
     const caption = doc.createElement("span");
     caption.className = "restarbeiten-filterleiste__fieldLabel";
