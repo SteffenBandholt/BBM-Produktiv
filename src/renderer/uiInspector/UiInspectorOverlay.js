@@ -109,12 +109,14 @@ export function createUiInspectorOverlay(options = {}) {
   function select(id) {
     selectedId = String(id || '').trim();
     removeHitList();
+    options.onSelect?.(selectedId);
     return refresh();
   }
 
   function clearSelection() {
     selectedId = '';
     removeHitList();
+    options.onClearSelection?.();
     return refresh();
   }
 
@@ -215,7 +217,11 @@ export function createUiInspectorOverlay(options = {}) {
     captureHandler = null;
   }
 
-  function mount(nextRootElement) {
+  function mount(nextRootElement, runtimeOptions = {}) {
+    if (runtimeOptions && typeof runtimeOptions === 'object') {
+      options.onSelect = runtimeOptions.onSelect || options.onSelect;
+      options.onClearSelection = runtimeOptions.onClearSelection || options.onClearSelection;
+    }
     if (!nextRootElement || typeof nextRootElement.querySelectorAll !== 'function') return false;
     rootElement = nextRootElement;
     const doc = rootElement.ownerDocument || globalThis.document;
@@ -236,5 +242,5 @@ export function createUiInspectorOverlay(options = {}) {
     return true;
   }
 
-  return { mount, unmount, refresh, getSelectedId: () => selectedId, select, clearSelection, getHitsAtPoint, showHitListAtPoint };
+  return { mount, unmount, refresh, getSelectedId: () => selectedId, getOverlayRoot: () => overlayRoot, select, clearSelection, getHitsAtPoint, showHitListAtPoint };
 }
