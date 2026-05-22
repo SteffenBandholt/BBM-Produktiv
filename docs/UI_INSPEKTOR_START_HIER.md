@@ -28,16 +28,18 @@ Pflichtreihenfolge:
 - M4 Architekturvertiefung erledigt
 - M5 Umsetzungsplan ohne Code erledigt
 - M6 Modulgerüst erledigt
-- UI-Inspector-Modulgerüst existiert
+- M7 Layout-Landkarten-Format erledigt
+- UI-Inspector-Modulgerüst und Layout-Landkarten-Format existieren
 - Noch kein Overlay
-- Noch keine Restarbeiten-Anbindung
+- Noch keine Restarbeiten-DOM-Markierung
 - Noch keine sichtbare App-Funktion
 
 ## 5. Nächster geplanter Schritt
-- Nächster Schritt: M7 Layout-Landkarten-Format definieren
-- M6 wurde als reines Modulgerüst umgesetzt
+- Nächster Schritt: M8 Restarbeiten als erste Pilot-Landkarte dokumentieren
+- M7 hat nur das Layout-Landkarten-Format definiert
+- Noch kein Overlay
+- Noch keine Restarbeiten-DOM-Markierung
 - Noch keine sichtbare UI-Funktion
-- Noch keine App-Integration
 
 ## 6. Harte Stopps
 Nicht fortführen:
@@ -50,4 +52,4 @@ Nicht fortführen:
 ## 7. Definition für neue Chats
 Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 
-„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Bisher wurden nur Dokumentationsgrundlagen erstellt. Es gibt jetzt ein UI-Inspector-Modulgerüst. Nächster Schritt laut Aufgabenheft ist M7 (Layout-Landkarten-Format definieren, weiterhin ohne sichtbare UI-Funktion und ohne App-Integration).“
+„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Bisher wurden nur Dokumentationsgrundlagen erstellt. Es gibt jetzt ein UI-Inspector-Modulgerüst. Nächster Schritt laut Aufgabenheft ist M8 (Restarbeiten als erste Pilot-Landkarte dokumentieren, weiterhin ohne Overlay, ohne Restarbeiten-DOM-Markierung und ohne sichtbare App-Funktion).“

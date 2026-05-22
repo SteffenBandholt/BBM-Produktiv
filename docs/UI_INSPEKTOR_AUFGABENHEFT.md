@@ -1,10 +1,10 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M6 abgeschlossen (Modulgerüst vorhanden, ohne sichtbare UI-Funktion).
+Status: M7 abgeschlossen (Layout-Landkarten-Format vorhanden, ohne sichtbare UI-Funktion).
 
 Aktueller Stand:
-- M1 bis M6 abgeschlossen.
+- M1 bis M7 abgeschlossen.
 
 ## Haken-System
 - `[x]` erledigt
@@ -19,6 +19,7 @@ Aktueller Stand:
 - [x] M4 Architektur des exportierbaren Moduls final
 - [x] M5 Umsetzungsplan ohne Code final
 - [x] M6 erster Code-Schritt: Modulgerüst
+- [x] M7 Layout-Landkarten-Format definieren
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -65,7 +66,7 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M7 Layout-Landkarten-Format definieren**
+- **M8 Restarbeiten als erste Pilot-Landkarte dokumentieren**
 
 Hinweis:
 - M6 hat nur ein Modulgerüst gebaut, ohne sichtbare UI-Funktion
@@ -119,6 +120,27 @@ Hinweis:
   - `node scripts/tests/uiInspectorRegistry.test.cjs`
   - `npm test`
 - Nächster Schritt:
-  - **M7 Layout-Landkarten-Format definieren**
+  - **M8 Restarbeiten als erste Pilot-Landkarte dokumentieren**
 - Hinweis:
   - M6 enthält nur Modulgerüst, kein Overlay, keine Restarbeiten-Anbindung, keine sichtbare App-Funktion.
+
+
+## M7 Abschlussnotiz
+- M7 Layout-Landkarten-Format als reines Core-/Registry-Schema definiert und mit Tests abgesichert.
+- Geänderte/neu angelegte Dateien:
+  - `src/shared/uiInspector/uiInspectorMapSchema.js`
+  - `src/shared/uiInspector/uiInspectorRegistry.js`
+  - `src/shared/uiInspector/index.js`
+  - `scripts/tests/uiInspectorMapSchema.test.cjs`
+  - `scripts/tests/uiInspectorRegistry.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+- Tests:
+  - `node scripts/tests/uiInspectorCore.test.cjs`
+  - `node scripts/tests/uiInspectorRegistry.test.cjs`
+  - `node scripts/tests/uiInspectorMapSchema.test.cjs`
+  - `npm test`
+- Nächster Schritt:
+  - **M8 Restarbeiten als erste Pilot-Landkarte dokumentieren**
+- Hinweis:
+  - M7 definiert nur das Layout-Landkarten-Format, noch keine echte App-Anbindung, kein Overlay, keine Restarbeiten-DOM-Markierung und keine sichtbare App-Funktion.
