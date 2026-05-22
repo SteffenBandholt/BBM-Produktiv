@@ -8,7 +8,7 @@
 ## 2. Status
 - M9 DOM-Markierungen minimal eingeführt.
 - Marker-IDs sind technisch in der bestehenden Restarbeiten-UI verankert.
-- Noch kein Overlay.
+- Ab M10 kann ein visuelles Overlay die Marker rahmen und die Inspector-ID anzeigen.
 - Noch kein Panel.
 - Noch keine sichtbare UI-Funktion.
 - Noch keine Layoutänderung.

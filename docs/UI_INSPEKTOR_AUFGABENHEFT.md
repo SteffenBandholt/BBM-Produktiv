@@ -1,10 +1,10 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M9 abgeschlossen (Restarbeiten-DOM-Markierungen minimal eingeführt, ohne sichtbare UI-Funktion).
+Status: M10 abgeschlossen (Overlay nur anzeigen).
 
 Aktueller Stand:
-- M1 bis M9 abgeschlossen.
+- M1 bis M10 abgeschlossen.
 
 ## Haken-System
 - `[x]` erledigt
@@ -22,6 +22,7 @@ Aktueller Stand:
 - [x] M7 Layout-Landkarten-Format definieren
 - [x] M8 Restarbeiten als erste Pilot-Landkarte dokumentieren
 - [x] M9 Restarbeiten-DOM-Markierungen minimal einführen
+- [x] M10 Overlay nur anzeigen
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -68,7 +69,7 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M10 Overlay nur anzeigen**
+- **M11 Bereich anklicken und Auswahl anzeigen**
 
 Hinweis:
 - M6 hat nur ein Modulgerüst gebaut, ohne sichtbare UI-Funktion
@@ -182,3 +183,27 @@ Hinweis:
   - `npm test`
 - Nächster Schritt:
   - **M10 Overlay nur anzeigen**
+
+
+## M10 Abschlussnotiz
+- M10 hat ein reines Anzeige-Overlay für vorhandene `data-ui-inspector-id` Marker eingeführt.
+- Enthalten: Overlay-Rahmen + Inspector-ID-Label, aktivierbar im Restarbeiten-Screen über `Strg + Alt + I`.
+- Nicht enthalten: Panel, Klickauswahl, Layoutänderung, Speicherung.
+- Geänderte/neu angelegte Dateien:
+  - `src/renderer/uiInspector/UiInspectorOverlay.js`
+  - `src/renderer/uiInspector/UiInspectorRuntime.js`
+  - `src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js`
+  - `scripts/tests/uiInspectorOverlay.test.cjs`
+  - `scripts/tests/restarbeitenModule.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+  - `docs/ui-landkarten/RESTARBEITEN.md`
+- Tests/Prüfung:
+  - `node scripts/tests/uiInspectorCore.test.cjs`
+  - `node scripts/tests/uiInspectorRegistry.test.cjs`
+  - `node scripts/tests/uiInspectorMapSchema.test.cjs`
+  - `node scripts/tests/uiInspectorOverlay.test.cjs`
+  - `node scripts/tests/restarbeitenModule.test.cjs`
+  - `npm test`
+- Nächster Schritt:
+  - **M11 Bereich anklicken und Auswahl anzeigen**

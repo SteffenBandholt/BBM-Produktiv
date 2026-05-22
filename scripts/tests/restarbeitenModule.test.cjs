@@ -265,6 +265,19 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(ipc, /restarbeiten:deleteItem/);
   });
 
+  await run("M10 UI-Inspector Overlay-Toggle ist klar begrenzt", () => {
+    const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+    const content = fs.readFileSync(screenPath, "utf8");
+
+    assert.match(content, /createUiInspectorRuntime/);
+    assert.match(content, /event\.ctrlKey\s*&&\s*event\.altKey/);
+    assert.match(content, /key\s*===\s*['"]i['"]/);
+    assert.match(content, /activateOverlay\(this\.host\)/);
+    assert.match(content, /deactivateOverlay\(\)/);
+    assert.doesNotMatch(content, /createUiInspectorPanel/);
+    assert.doesNotMatch(content, /save|speicher/i);
+  });
+
   await run("M14 Screen-UI: Header, Blattstruktur, Verortung 1-4, Fotos einklappbar, Editbox unten", () => {
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
     const stylePath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenListStyle.js");

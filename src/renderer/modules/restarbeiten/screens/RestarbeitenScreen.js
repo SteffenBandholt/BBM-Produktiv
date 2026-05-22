@@ -11,6 +11,7 @@ import { mapRestarbeitenStatusLabel, toRestarbeitenListItems } from "../viewMode
 import RestarbeitenEditbox from "./RestarbeitenEditbox.js";
 import RestarbeitenQuicklane from "./RestarbeitenQuicklane.js";
 import { ensureRestarbeitenListStyle } from "./restarbeitenListStyle.js";
+import { createUiInspectorRuntime } from "../../../uiInspector/index.js";
 
 const LOCATION_KEYS = ["location_level_1", "location_level_2", "location_level_3", "location_level_4"];
 const LOCATION_LABEL_FALLBACKS = ["Ebene 1", "Ebene 2", "Ebene 3", "Ebene 4"];
@@ -115,8 +116,27 @@ export default class RestarbeitenScreen {
     this._renderHeaderFilters();
     this._renderList();
     this._renderEditbox();
+    this._bindUiInspectorToggleShortcut(doc);
 
     return this.host;
+  }
+
+
+  _bindUiInspectorToggleShortcut(doc) {
+    if (!doc || this.uiInspectorKeydownHandler) return;
+    this.uiInspectorKeydownHandler = (event) => {
+      if (!event || event.repeat) return;
+      const key = String(event.key || '').toLowerCase();
+      if (!(event.ctrlKey && event.altKey && key === 'i')) return;
+      event.preventDefault?.();
+      if (this.uiInspectorOverlayActive) {
+        this.uiInspectorRuntime.deactivateOverlay();
+        this.uiInspectorOverlayActive = false;
+      } else if (this.host) {
+        this.uiInspectorOverlayActive = this.uiInspectorRuntime.activateOverlay(this.host) === true;
+      }
+    };
+    doc.addEventListener('keydown', this.uiInspectorKeydownHandler);
   }
 
   _buildHeader(doc) {
