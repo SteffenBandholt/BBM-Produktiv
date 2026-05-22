@@ -97,7 +97,9 @@ export function createUiInspectorOverlay(options = {}) {
     clearOverlayChildren();
 
     const nodes = rootElement.querySelectorAll(selector);
+    const overlayEntries = [];
     let hasSelectedNode = false;
+    let sourceIndex = 0;
     for (const node of nodes) {
       if (!node || typeof node.getBoundingClientRect !== 'function') continue;
       const id = String(node.getAttribute('data-ui-inspector-id') || '').trim();
@@ -105,10 +107,24 @@ export function createUiInspectorOverlay(options = {}) {
       const rect = node.getBoundingClientRect();
       if (!rect || rect.width <= 0 || rect.height <= 0) continue;
       if (id === selectedId) hasSelectedNode = true;
-      overlayRoot.append(createFrame(rootElement.ownerDocument || globalThis.document, id, rect));
+      const area = Number(rect.width) * Number(rect.height);
+      const depth = id.split('.').length;
+      overlayEntries.push({ id, rect, area: Number.isFinite(area) ? area : 0, depth, sourceIndex });
+      sourceIndex += 1;
+    }
+
+    overlayEntries.sort((a, b) => {
+      if (b.area !== a.area) return b.area - a.area;
+      if (a.depth !== b.depth) return a.depth - b.depth;
+      return a.sourceIndex - b.sourceIndex;
+    });
+
+    const doc = rootElement.ownerDocument || globalThis.document;
+    for (const entry of overlayEntries) {
+      overlayRoot.append(createFrame(doc, entry.id, entry.rect));
     }
     if (!hasSelectedNode) selectedId = '';
-    updateSelectionBadge(rootElement.ownerDocument || globalThis.document);
+    updateSelectionBadge(doc);
     return true;
   }
 

@@ -29,6 +29,14 @@ function createInspectableRoot(document) {
   return { ownerDocument: document, querySelectorAll: (sel)=> sel==='[data-ui-inspector-id]'?[nodeA,nodeB]:[] };
 }
 
+function createOverlapRoot(document) {
+  const mk = (id, rect) => ({ ownerDocument: document, getAttribute: (n)=> n==='data-ui-inspector-id'?id:null, getBoundingClientRect: ()=>rect });
+  const root = mk('restarbeiten.root', { left: 0, top: 0, width: 500, height: 400 });
+  const meta = mk('restarbeiten.filterleiste.meta', { left: 20, top: 20, width: 250, height: 100 });
+  const field = mk('restarbeiten.filterleiste.meta.status', { left: 30, top: 30, width: 80, height: 24 });
+  return { ownerDocument: document, querySelectorAll: (sel)=> sel==='[data-ui-inspector-id]'?[root,meta,field]:[] };
+}
+
 function getSelectionBadge(overlayRoot) {
   return (overlayRoot.children || []).find((child) => child?.attributes?.['data-ui-inspector-overlay-selection'] === 'true') || null;
 }
@@ -46,12 +54,15 @@ function getSelectionBadge(overlayRoot) {
   const badgeAfterMount = getSelectionBadge(overlayRoot);
   assert.equal(!!badgeAfterMount, true);
   assert.equal(badgeAfterMount.textContent, 'Auswahl: -');
-  assert.equal(overlayRoot.children[0].style.pointerEvents, 'auto');
-  assert.equal(overlayRoot.children[0].attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.header');
-  assert.equal(overlayRoot.children[0].children[0].textContent, 'restarbeiten.header');
-  overlayRoot.children[0].click();
+  const baseFrames = overlayRoot.children.filter((child) => child?.attributes?.['data-ui-inspector-overlay-frame']);
+  const headerFrame = baseFrames.find((frame) => frame.attributes['data-ui-inspector-overlay-frame'] === 'restarbeiten.header');
+  assert.equal(headerFrame.style.pointerEvents, 'auto');
+  assert.equal(headerFrame.children[0].textContent, 'restarbeiten.header');
+  headerFrame.click();
   assert.equal(overlay.getSelectedId(), 'restarbeiten.header');
-  assert.equal(overlayRoot.children[0].attributes['data-ui-inspector-selected'], 'true');
+  const baseFramesAfterClick = overlayRoot.children.filter((child) => child?.attributes?.['data-ui-inspector-overlay-frame']);
+  const selectedHeaderFrame = baseFramesAfterClick.find((frame) => frame.attributes['data-ui-inspector-overlay-frame'] === 'restarbeiten.header');
+  assert.equal(selectedHeaderFrame.attributes['data-ui-inspector-selected'], 'true');
   const badgeAfterClick = getSelectionBadge(overlayRoot);
   assert.equal(!!badgeAfterClick, true);
   assert.equal(badgeAfterClick.textContent, 'Auswahl: restarbeiten.header');
@@ -69,6 +80,33 @@ function getSelectionBadge(overlayRoot) {
   assert.equal(badgeAfterClear.textContent, 'Auswahl: -');
   assert.equal(overlay.unmount(), true);
   assert.equal(overlay.getSelectedId(), '');
+  assert.equal(document.body.children.length, 0);
+
+  const overlapOverlay = createUiInspectorOverlay();
+  const overlapRoot = createOverlapRoot(document);
+  assert.equal(overlapOverlay.mount(overlapRoot), true);
+  const overlayRoot2 = document.body.children[0];
+  const frames = overlayRoot2.children.filter((child) => child?.attributes?.['data-ui-inspector-overlay-frame']);
+  assert.equal(frames.length, 3);
+  for (const frame of frames) {
+    assert.equal(frame.style.pointerEvents, 'auto');
+  }
+  assert.equal(frames[0].attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.root');
+  assert.equal(frames[1].attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.filterleiste.meta');
+  assert.equal(frames[2].attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.filterleiste.meta.status');
+
+  frames[2].click();
+  assert.equal(overlapOverlay.getSelectedId(), 'restarbeiten.filterleiste.meta.status');
+  const overlapBadgeAfterField = getSelectionBadge(overlayRoot2);
+  assert.equal(overlapBadgeAfterField.textContent, 'Auswahl: restarbeiten.filterleiste.meta.status');
+
+  frames[0].click();
+  assert.equal(overlapOverlay.getSelectedId(), 'restarbeiten.root');
+  const overlapBadgeAfterRoot = getSelectionBadge(overlayRoot2);
+  assert.equal(overlapBadgeAfterRoot.textContent, 'Auswahl: restarbeiten.root');
+
+  assert.equal(overlapOverlay.unmount(), true);
+  assert.equal(overlapOverlay.getSelectedId(), '');
   assert.equal(document.body.children.length, 0);
   console.log('ok - uiInspectorOverlay.test');
 })();
