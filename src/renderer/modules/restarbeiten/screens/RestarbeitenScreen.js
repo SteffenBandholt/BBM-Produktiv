@@ -128,6 +128,7 @@ export default class RestarbeitenScreen {
 
   _bindUiInspectorToggleShortcut(doc) {
     if (!doc || this.uiInspectorKeydownHandler) return;
+    if (typeof doc.addEventListener !== "function") return;
     this.uiInspectorKeydownHandler = (event) => {
       if (!event || event.repeat) return;
       const key = String(event.key || '').toLowerCase();
@@ -146,7 +147,11 @@ export default class RestarbeitenScreen {
 
 
   dispose() {
-    if (this.uiInspectorKeydownHost && this.uiInspectorKeydownHandler) {
+    if (
+      this.uiInspectorKeydownHost &&
+      typeof this.uiInspectorKeydownHost.removeEventListener === "function" &&
+      this.uiInspectorKeydownHandler
+    ) {
       this.uiInspectorKeydownHost.removeEventListener('keydown', this.uiInspectorKeydownHandler);
     }
     this.uiInspectorRuntime?.deactivateOverlay?.();

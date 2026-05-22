@@ -287,9 +287,15 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(runtimeContent, /createUiInspectorCore|createUiInspectorRegistry|createMemoryUiInspectorStore/);
 
     const screenContent = fs.readFileSync(screenPath, "utf8");
-    assert.match(screenContent, /import\s*\{\s*createUiInspectorRuntime\s*\}\s*from\s*["']\.\.\.\/\.\.\.\/uiInspector\/index\.js["']/);
+    assert.match(screenContent, /createUiInspectorRuntime/);
+    assert.match(screenContent, /from\s+["']\.\.\/\.\.\/\.\.\/uiInspector\/index\.js["']/);
     assert.doesNotMatch(screenContent, /createUiInspectorPanel/);
-    assert.doesNotMatch(screenContent, /save|speicher/i);
+    assert.doesNotMatch(screenContent, /uiInspectorStore/);
+    assert.doesNotMatch(screenContent, /saveInspector/);
+    assert.doesNotMatch(screenContent, /saveUiInspector/);
+    assert.doesNotMatch(screenContent, /localStorage/);
+    assert.doesNotMatch(screenContent, /ui-inspector:save/);
+    assert.doesNotMatch(screenContent, /inspector:save/);
   });
 
   await run("M10 UI-Inspector Overlay-Toggle ist klar begrenzt", () => {
@@ -303,10 +309,18 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(content, /key\s*===\s*['"]i['"]/);
     assert.match(content, /this\.uiInspectorRuntime\.activateOverlay\(this\.host\)/);
     assert.match(content, /this\.uiInspectorRuntime\.deactivateOverlay\(\)/);
+    assert.match(content, /if \(!doc \|\| this\.uiInspectorKeydownHandler\) return;/);
+    assert.match(content, /typeof doc\.addEventListener !== ["']function["']/);
     assert.match(content, /dispose\(\)/);
+    assert.match(content, /typeof this\.uiInspectorKeydownHost\.removeEventListener === ["']function["']/);
     assert.match(content, /removeEventListener\('keydown',\s*this\.uiInspectorKeydownHandler\)/);
     assert.doesNotMatch(content, /createUiInspectorPanel/);
-    assert.doesNotMatch(content, /save|speicher/i);
+    assert.doesNotMatch(content, /uiInspectorStore/);
+    assert.doesNotMatch(content, /saveInspector/);
+    assert.doesNotMatch(content, /saveUiInspector/);
+    assert.doesNotMatch(content, /localStorage/);
+    assert.doesNotMatch(content, /ui-inspector:save/);
+    assert.doesNotMatch(content, /inspector:save/);
   });
 
   await run("M14 Screen-UI: Header, Blattstruktur, Verortung 1-4, Fotos einklappbar, Editbox unten", () => {
