@@ -98,11 +98,10 @@ export function createUiInspectorOverlay(options = {}) {
 
   function removeHitList() {
     if (!overlayRoot) return;
-    overlayRoot.children = overlayRoot.children; // noop for fake dom safety
-    const children = Array.isArray(overlayRoot.children) ? [...overlayRoot.children] : [];
+    const children = Array.from(overlayRoot.children || []);
     for (const child of children) {
       if (child?.getAttribute?.('data-ui-inspector-hit-list') === 'true') {
-        overlayRoot.removeChild(child);
+        child.parentElement?.removeChild?.(child);
       }
     }
   }

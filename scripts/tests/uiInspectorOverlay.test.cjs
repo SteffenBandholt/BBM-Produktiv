@@ -44,6 +44,10 @@ function createInspectableRoot(document) {
 
 (async function run() {
   const { createUiInspectorOverlay } = await importEsmFromFile(path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorOverlay.js'));
+
+  const overlaySource = require('node:fs').readFileSync(path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorOverlay.js'), 'utf8');
+  assert.equal(overlaySource.includes('overlayRoot.children ='), false);
+
   const { document } = createFakeDom();
   const overlay = createUiInspectorOverlay();
   const root = createInspectableRoot(document);
