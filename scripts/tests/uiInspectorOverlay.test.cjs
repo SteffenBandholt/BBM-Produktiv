@@ -72,6 +72,21 @@ function createInspectableRoot(document) {
   assert.equal(hitList.style.pointerEvents, 'auto');
   const firstOption = hitList.children[0];
   assert.equal(firstOption.attributes['data-ui-inspector-hit-option'], 'restarbeiten.filterleiste.meta.status');
+
+  const firstHitListRef = hitList;
+  const preventedHitOption = { value: false };
+  document.dispatch('pointerdown', {
+    clientX: 66,
+    clientY: 56,
+    target: firstOption,
+    preventDefault() { preventedHitOption.value = true; },
+    stopPropagation() {},
+    stopImmediatePropagation() {},
+  });
+  assert.equal(preventedHitOption.value, false);
+  const hitListAfterOptionPointerdown = overlayRoot.children.find((c) => c.attributes['data-ui-inspector-hit-list'] === 'true');
+  assert.equal(hitListAfterOptionPointerdown, firstHitListRef);
+
   firstOption.click();
 
   assert.equal(overlay.getSelectedId(), 'restarbeiten.filterleiste.meta.status');

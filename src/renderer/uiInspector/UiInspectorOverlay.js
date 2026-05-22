@@ -180,9 +180,21 @@ export function createUiInspectorOverlay(options = {}) {
     return true;
   }
 
+
+  function isInsideHitList(target) {
+    let node = target;
+    while (node) {
+      if (node.getAttribute?.('data-ui-inspector-hit-list') === 'true') return true;
+      if (node.getAttribute?.('data-ui-inspector-hit-option')) return true;
+      node = node.parentElement;
+    }
+    return false;
+  }
+
   function bindCaptureListener(doc) {
     if (!doc || captureHandler || typeof doc.addEventListener !== 'function') return;
     captureHandler = (event) => {
+      if (isInsideHitList(event?.target)) return;
       const x = Number(event?.clientX);
       const y = Number(event?.clientY);
       if (!Number.isFinite(x) || !Number.isFinite(y)) return;
