@@ -17,7 +17,7 @@ Aktueller Stand:
 - [x] M2 Arbeitsvertrag und Regeln finalisiert
 - [x] M3 Projektgedächtnis vollständig
 - [x] M4 Architektur des exportierbaren Moduls final
-- [ ] M5 Umsetzungsplan ohne Code final
+- [x] M5 Umsetzungsplan ohne Code final
 - [ ] M6 erster Code-Schritt: Modulgerüst
 
 ## Definition of Done (DoD)
@@ -65,10 +65,10 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M5 Umsetzungsplan ohne Code finalisieren**
+- **M6 erster Code-Schritt: Modulgerüst**
 
 Hinweis:
-- Noch kein Code, noch kein Modulgerüst
+- Ab M6 beginnt Code, aber nur Modulgerüst ohne sichtbare Funktion
 
 
 ## M4 Abschlussnotiz
@@ -82,3 +82,17 @@ Hinweis:
   - **M5 Umsetzungsplan ohne Code finalisieren**
 - Hinweis:
   - Noch kein Code, noch kein Modulgerüst
+
+
+## M5 Abschlussnotiz
+- M5 Umsetzungsplan ohne Code finalisiert.
+- Geänderte Dateien:
+  - `docs/UI_INSPEKTOR_UMSETZUNGSPLAN.md` (neu)
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+  - `AGENTS.md`
+- Nächster Schritt:
+  - **M6 erster Code-Schritt: Modulgerüst**
+- Hinweis:
+  - Ab M6 beginnt Code, aber nur Modulgerüst ohne sichtbare Funktion

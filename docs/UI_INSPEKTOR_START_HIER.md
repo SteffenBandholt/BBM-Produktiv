@@ -26,12 +26,17 @@ Pflichtreihenfolge:
 - M2 Arbeitsvertrag erledigt
 - M3 Projektgedächtnis erledigt
 - M4 Architekturvertiefung erledigt
+- M5 Umsetzungsplan ohne Code erledigt
 - Noch kein Implementierungscode
 - Noch kein UI-Inspector-Modul
 - Noch keine App-Funktion
 
 ## 5. Nächster geplanter Schritt
-- Nächster Schritt: M5 Umsetzungsplan ohne Code finalisieren
+- Nächster Schritt: M6 erster Code-Schritt: Modulgerüst
+- Ab M6 beginnt Code
+- M6 ist nur Modulgerüst
+- Noch keine sichtbare UI-Funktion
+- Noch keine App-Integration
 
 ## 6. Harte Stopps
 Nicht fortführen:
@@ -44,4 +49,4 @@ Nicht fortführen:
 ## 7. Definition für neue Chats
 Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 
-„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Bisher wurden nur Dokumentationsgrundlagen erstellt. Es gibt noch keinen Code. Nächster Schritt laut Aufgabenheft ist M5.“
+„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Bisher wurden nur Dokumentationsgrundlagen erstellt. Es gibt noch keinen Code. Nächster Schritt laut Aufgabenheft ist M6 (erster Code-Schritt: Modulgerüst ohne sichtbare UI-Funktion und ohne App-Integration).“
