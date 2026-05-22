@@ -269,11 +269,15 @@ async function runRestarbeitenModuleTests(run) {
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
     const content = fs.readFileSync(screenPath, "utf8");
 
-    assert.match(content, /createUiInspectorRuntime/);
+    assert.match(content, /this\.uiInspectorRuntime\s*=\s*createUiInspectorRuntime\(\)/);
+    assert.match(content, /this\.uiInspectorOverlayActive\s*=\s*false/);
+    assert.match(content, /this\.uiInspectorKeydownHandler\s*=\s*null/);
     assert.match(content, /event\.ctrlKey\s*&&\s*event\.altKey/);
     assert.match(content, /key\s*===\s*['"]i['"]/);
-    assert.match(content, /activateOverlay\(this\.host\)/);
-    assert.match(content, /deactivateOverlay\(\)/);
+    assert.match(content, /this\.uiInspectorRuntime\.activateOverlay\(this\.host\)/);
+    assert.match(content, /this\.uiInspectorRuntime\.deactivateOverlay\(\)/);
+    assert.match(content, /dispose\(\)/);
+    assert.match(content, /removeEventListener\('keydown',\s*this\.uiInspectorKeydownHandler\)/);
     assert.doesNotMatch(content, /createUiInspectorPanel/);
     assert.doesNotMatch(content, /save|speicher/i);
   });

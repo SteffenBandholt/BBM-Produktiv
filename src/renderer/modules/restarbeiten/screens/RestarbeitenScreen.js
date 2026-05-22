@@ -94,6 +94,10 @@ export default class RestarbeitenScreen {
     this.listHost = null;
     this.editHost = null;
     this.createScrollPending = false;
+    this.uiInspectorRuntime = createUiInspectorRuntime();
+    this.uiInspectorOverlayActive = false;
+    this.uiInspectorKeydownHandler = null;
+    this.uiInspectorKeydownHost = null;
   }
 
   render() {
@@ -137,6 +141,18 @@ export default class RestarbeitenScreen {
       }
     };
     doc.addEventListener('keydown', this.uiInspectorKeydownHandler);
+    this.uiInspectorKeydownHost = doc;
+  }
+
+
+  dispose() {
+    if (this.uiInspectorKeydownHost && this.uiInspectorKeydownHandler) {
+      this.uiInspectorKeydownHost.removeEventListener('keydown', this.uiInspectorKeydownHandler);
+    }
+    this.uiInspectorRuntime?.deactivateOverlay?.();
+    this.uiInspectorOverlayActive = false;
+    this.uiInspectorKeydownHandler = null;
+    this.uiInspectorKeydownHost = null;
   }
 
   _buildHeader(doc) {
