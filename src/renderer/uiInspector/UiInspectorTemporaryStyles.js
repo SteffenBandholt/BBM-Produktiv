@@ -7,6 +7,15 @@ function parsePixelValue(rawValue) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function getBoundingRectBaseValue(targetElement, property) {
+  if (!targetElement || typeof targetElement.getBoundingClientRect !== 'function') return 0;
+  const rect = targetElement.getBoundingClientRect();
+  if (!rect) return 0;
+  if (property === 'width') return Number.isFinite(rect.width) ? rect.width : 0;
+  if (property === 'height') return Number.isFinite(rect.height) ? rect.height : 0;
+  return 0;
+}
+
 export function createUiInspectorTemporaryStyles() {
   const originalInlineByElement = new Map();
   const previewStateById = new Map();
@@ -20,7 +29,12 @@ export function createUiInspectorTemporaryStyles() {
   function applyDelta(targetElement, property, delta, id = '') {
     if (!targetElement || !ALLOWED_PROPERTIES.has(property) || !Number.isFinite(delta)) return false;
     ensureOriginalInlineStyle(targetElement);
-    const currentValue = parsePixelValue(targetElement.style?.[property]);
+    const inlineValue = String(targetElement.style?.[property] || '').trim();
+    const currentValue = inlineValue
+      ? parsePixelValue(inlineValue)
+      : ((property === 'width' || property === 'height')
+        ? getBoundingRectBaseValue(targetElement, property)
+        : 0);
     targetElement.style[property] = `${currentValue + delta}px`;
     previewStateById.set(String(id || ''), {
       ...(previewStateById.get(String(id || '')) || {}),

@@ -8,11 +8,14 @@ const { importEsmFromFile } = require('./_esmLoader.cjs');
   assert.doesNotMatch(source, /localStorage|ipc|save/i);
   const { createUiInspectorTemporaryStyles } = await importEsmFromFile(path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorTemporaryStyles.js'));
   const styles = createUiInspectorTemporaryStyles();
-  const a = { style: { cssText: '', width: '', height: '', marginLeft: '', marginTop: '', visibility: '' } };
+  const a = {
+    style: { cssText: '', width: '', height: '', marginLeft: '', marginTop: '', visibility: '' },
+    getBoundingClientRect() { return { width: 120, height: 40 }; },
+  };
   const b = { style: { cssText: 'width:10px;', width: '10px', height: '', marginLeft: '', marginTop: '', visibility: '' } };
 
-  styles.applyDelta(a, 'width', 5, 'a'); assert.equal(a.style.width, '5px');
-  styles.applyDelta(a, 'height', 5, 'a'); assert.equal(a.style.height, '5px');
+  styles.applyDelta(a, 'width', 5, 'a'); assert.equal(a.style.width, '125px');
+  styles.applyDelta(a, 'height', 5, 'a'); assert.equal(a.style.height, '45px');
   styles.applyDelta(a, 'marginLeft', 5, 'a'); assert.equal(a.style.marginLeft, '5px');
   styles.applyDelta(a, 'marginTop', 5, 'a'); assert.equal(a.style.marginTop, '5px');
   styles.toggleVisibility(a, 'a'); assert.equal(a.style.visibility, 'hidden');
