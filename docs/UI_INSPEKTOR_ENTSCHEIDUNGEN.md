@@ -41,3 +41,9 @@
 **Beschluss:** Die Architektur wird als exportierbares Schichtenmodell festgelegt.
 
 **Begründung:** Core, Overlay, Panel, Registry, Store, Adapter und Layout-Landkarte müssen getrennt bleiben, damit der UI-Inspektor nicht BBM-spezifisch wird und später in andere Apps exportiert werden kann.
+
+
+## Entscheidung 009
+**Beschluss:** Der UI-Inspektor wird schrittweise ab M6 über ein Modulgerüst, Landkartenformat, Pilot-Landkarte, Markierungen, Overlay, Auswahl, Panel, temporäre Anwendung und Speicherung aufgebaut.
+
+**Begründung:** Der Inspektor darf nicht als Großpaket entstehen. Die schrittweise Umsetzung verhindert Nebenwirkungen und hält das Modul exportierbar.

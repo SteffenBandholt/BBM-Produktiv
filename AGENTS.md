@@ -404,3 +404,5 @@ Regeln:
 - UI-Inspektor-Core muss exportierbar und frei von BBM-Fachlogik bleiben.
 - Tabellen-Kalibrator nicht als UI-Inspektor-Bedienoberfläche weiterentwickeln.
 - Keine bestehenden App-Bereiche ändern, wenn der Auftrag nur Dokumentation betrifft.
+- M6 ist der erste Code-Schritt, aber nur Modulgerüst.
+- Kein Overlay und keine Restarbeiten-Anbindung in M6.
