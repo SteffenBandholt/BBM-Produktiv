@@ -226,3 +226,11 @@ Hinweis:
 - Geänderte Dateien: `src/renderer/uiInspector/UiInspectorPanel.js`, `src/renderer/uiInspector/UiInspectorRuntime.js`, `src/renderer/uiInspector/UiInspectorOverlay.js`, `scripts/tests/uiInspectorPanel.test.cjs`, `scripts/tests/restarbeitenModule.test.cjs`, `docs/UI_INSPEKTOR_AUFGABENHEFT.md`, `docs/UI_INSPEKTOR_START_HIER.md`, `docs/ui-landkarten/RESTARBEITEN.md`, `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`.
 - Tests: `node scripts/tests/uiInspectorCore.test.cjs`, `node scripts/tests/uiInspectorRegistry.test.cjs`, `node scripts/tests/uiInspectorMapSchema.test.cjs`, `node scripts/tests/uiInspectorOverlay.test.cjs`, `node scripts/tests/restarbeitenModule.test.cjs`, `node scripts/tests/uiInspectorPanel.test.cjs`, `npm test`.
 - Nächster Schritt: M13 – Werte temporär anwenden, aber noch nicht speichern.
+
+
+## M13 Abschlussnotiz
+- Temporäre Vorschau für Breite/Höhe/Abstand links/Abstand oben/Sichtbarkeit ergänzt.
+- Keine Speicherung implementiert.
+- Reset pro Element und global bei Deaktivierung aktiv.
+- Geänderte Dateien: `UiInspectorPanel.js`, `UiInspectorRuntime.js`, `UiInspectorTemporaryStyles.js`, Tests und Doku.
+- Nächster Schritt: M14 Speichern / Standard zurück.

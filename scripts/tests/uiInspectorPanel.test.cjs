@@ -84,9 +84,16 @@ function createFakeDomForRuntime() {
   assert.match(text, /Breite/);
   assert.match(text, /Höhe/);
   assert.match(text, /Sichtbarkeit/);
-  assert.match(text, /Nur Anzeige/);
+  assert.match(text, /Temporäre Vorschau/);
   assert.doesNotMatch(text, /Speichern/);
   assert.doesNotMatch(text, /Anwenden/);
+
+  assert.equal(panel.render({ selectedId: 'restarbeiten.editbox.kurztext', controls: ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit'], onControl: ()=>{} }), true);
+  const buttonText = collectText(panelNode);
+  assert.match(buttonText, /\+ 5px/);
+  assert.match(buttonText, /- 5px/);
+  assert.match(buttonText, /Zurücksetzen/);
+  assert.doesNotMatch(buttonText, /Übernehmen/);
 
   assert.equal(panel.unmount(), true);
   assert.equal(document.body.children.some((c) => c.attributes['data-ui-inspector-panel'] === 'true'), false);

@@ -61,3 +61,9 @@
 **Beschluss:** Das M12-Panel bleibt rein lesend und zeigt nur erlaubte Stellschrauben.
 
 **Begründung:** Anwendung und Speicherung werden bewusst getrennt in M13/M14 umgesetzt.
+
+
+## Entscheidung 012
+**Beschluss:** M13 setzt Änderungen nur als gesicherte Inline-Style-Vorschau im Renderer um.
+
+**Begründung:** Temporäre Anwendung bleibt vollständig rücksetzbar; Persistenz folgt getrennt in M14.
