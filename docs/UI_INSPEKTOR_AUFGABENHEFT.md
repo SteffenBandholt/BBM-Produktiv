@@ -15,7 +15,7 @@ Aktueller Stand:
 - [x] M1 Projektklärung fachlich freigegeben
 - [x] M1.1 Projektdateien im Repo angelegt
 - [x] M2 Arbeitsvertrag und Regeln finalisiert
-- [ ] M3 Projektgedächtnis vollständig
+- [x] M3 Projektgedächtnis vollständig
 - [ ] M4 Architektur des exportierbaren Moduls final
 - [ ] M5 Umsetzungsplan ohne Code final
 - [ ] M6 erster Code-Schritt: Modulgerüst
@@ -39,9 +39,33 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
   - `AGENTS.md`
 
+## M3 Abschlussnotiz
+- M3 Projektgedächtnis vollständig strukturiert.
+- Geänderte Dateien:
+  - `docs/UI_INSPEKTOR_START_HIER.md` (neu)
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+  - `AGENTS.md`
+- Einstiegspunkt für neue Chats und Codex-Läufe:
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+
+## Lesereihenfolge für neue Chats
+1. `docs/UI_INSPEKTOR_START_HIER.md`
+2. `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+3. `docs/UI_INSPEKTOR_PROJEKTAUFTRAG.md`
+4. `docs/UI_INSPEKTOR_ARBEITSVERTRAG.md`
+5. `docs/UI_INSPEKTOR_ARCHITEKTUR.md`
+6. `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+## Aktueller Stand für neue Chats
+- Projektphase: Dokumentationsgrundlagen vorhanden
+- Implementierungscode: noch keiner
+- UI-Inspector-Modul: noch nicht angelegt
+- App-Funktionen: keine Änderungen
+
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M3 Projektgedächtnis vollständig strukturieren**
-
-Alternativ (falls M3 im Folgeauftrag bereits abgedeckt ist):
 - **M4 Architektur des exportierbaren Moduls vertiefen**
+
+Hinweis:
+- Noch kein Code, noch kein Modulgerüst
