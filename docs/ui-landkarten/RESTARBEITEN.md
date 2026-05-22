@@ -42,7 +42,9 @@ Restarbeiten
 - `restarbeiten.header`
 - `restarbeiten.filterleiste`
 - `restarbeiten.filterleiste.klassenfilter`
+- `restarbeiten.filterleiste.klassenfilter.feld`
 - `restarbeiten.filterleiste.verortung`
+- `restarbeiten.filterleiste.verortung.feld`
 - `restarbeiten.filterleiste.meta`
 - `restarbeiten.filterleiste.meta.fertig_bis`
 - `restarbeiten.filterleiste.meta.status`
@@ -53,8 +55,14 @@ Restarbeiten
 - `restarbeiten.liste.textbereich`
 - `restarbeiten.liste.metabereich`
 - `restarbeiten.editbox`
+- `restarbeiten.editbox.header`
+- `restarbeiten.editbox.verortung`
 - `restarbeiten.editbox.kurztext`
+- `restarbeiten.editbox.kurztext.label`
+- `restarbeiten.editbox.kurztext.restzeichen`
 - `restarbeiten.editbox.langtext`
+- `restarbeiten.editbox.langtext.label`
+- `restarbeiten.editbox.langtext.restzeichen`
 - `restarbeiten.editbox.meta`
 
 Hinweis:

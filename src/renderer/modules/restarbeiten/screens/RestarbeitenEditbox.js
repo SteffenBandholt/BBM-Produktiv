@@ -124,6 +124,7 @@ export default class RestarbeitenEditbox {
     form.className = "restarbeiten-editbox__layout";
     const topBar = doc.createElement("div");
     topBar.className = "restarbeiten-editbox__topBar";
+    topBar.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.header");
     const titleEl = doc.createElement("div");
     titleEl.className = "restarbeiten-editbox__title";
     titleEl.textContent = "R der Liste bearbeiten";
@@ -157,18 +158,22 @@ export default class RestarbeitenEditbox {
     shortRailRow.className = "restarbeiten-editbox__railRow restarbeiten-editbox__railRow--short";
     const shortRailLabel = doc.createElement("span");
     shortRailLabel.className = "restarbeiten-editbox__railLabel";
+    shortRailLabel.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.kurztext.label");
     shortRailLabel.textContent = "Kurztext";
     const shortCounter = doc.createElement("span");
     shortCounter.className = "restarbeiten-editbox__railCounter";
+    shortCounter.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.kurztext.restzeichen");
     shortRailRow.append(shortRailLabel, shortCounter);
 
     const longRailRow = doc.createElement("div");
     longRailRow.className = "restarbeiten-editbox__railRow restarbeiten-editbox__railRow--long";
     const longRailLabel = doc.createElement("span");
     longRailLabel.className = "restarbeiten-editbox__railLabel";
+    longRailLabel.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.langtext.label");
     longRailLabel.textContent = "Langtext";
     const longCounter = doc.createElement("span");
     longCounter.className = "restarbeiten-editbox__railCounter";
+    longCounter.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.langtext.restzeichen");
     longRailRow.append(longRailLabel, longCounter);
 
     textRail.append(shortRailRow, longRailRow);
@@ -181,6 +186,7 @@ export default class RestarbeitenEditbox {
 
     const locationGrid = doc.createElement("div");
     locationGrid.className = "restarbeiten-editbox__locationGrid";
+    locationGrid.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.verortung");
     const loc1Field = createField(doc, this._getLocationLabel(1), level1, "restarbeiten-editbox__locationField");
     const loc2Field = createField(doc, this._getLocationLabel(2), level2, "restarbeiten-editbox__locationField");
     const loc3Field = createField(doc, this._getLocationLabel(3), level3, "restarbeiten-editbox__locationField");
