@@ -57,7 +57,7 @@ export function createUiInspectorRuntime({ overlay, panel } = {}) {
       return false;
     }
 
-    const panelMounted = resolvedPanel.mount(resolvedOverlay.getOverlayRoot?.() || rootElement?.ownerDocument?.body || globalThis.document?.body) === true;
+    const panelMounted = resolvedPanel.mount(rootElement?.ownerDocument?.body || globalThis.document?.body) === true;
     overlayActive = panelMounted;
 
     if (overlayActive) {
