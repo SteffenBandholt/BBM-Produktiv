@@ -27,14 +27,15 @@ Pflichtreihenfolge:
 - M3 Projektgedächtnis erledigt
 - M4 Architekturvertiefung erledigt
 - M5 Umsetzungsplan ohne Code erledigt
-- Noch kein Implementierungscode
-- Noch kein UI-Inspector-Modul
-- Noch keine App-Funktion
+- M6 Modulgerüst erledigt
+- UI-Inspector-Modulgerüst existiert
+- Noch kein Overlay
+- Noch keine Restarbeiten-Anbindung
+- Noch keine sichtbare App-Funktion
 
 ## 5. Nächster geplanter Schritt
-- Nächster Schritt: M6 erster Code-Schritt: Modulgerüst
-- Ab M6 beginnt Code
-- M6 ist nur Modulgerüst
+- Nächster Schritt: M7 Layout-Landkarten-Format definieren
+- M6 wurde als reines Modulgerüst umgesetzt
 - Noch keine sichtbare UI-Funktion
 - Noch keine App-Integration
 
@@ -49,4 +50,4 @@ Nicht fortführen:
 ## 7. Definition für neue Chats
 Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 
-„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Bisher wurden nur Dokumentationsgrundlagen erstellt. Es gibt noch keinen Code. Nächster Schritt laut Aufgabenheft ist M6 (erster Code-Schritt: Modulgerüst ohne sichtbare UI-Funktion und ohne App-Integration).“
+„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Bisher wurden nur Dokumentationsgrundlagen erstellt. Es gibt jetzt ein UI-Inspector-Modulgerüst. Nächster Schritt laut Aufgabenheft ist M7 (Layout-Landkarten-Format definieren, weiterhin ohne sichtbare UI-Funktion und ohne App-Integration).“
