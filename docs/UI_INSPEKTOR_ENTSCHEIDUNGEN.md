@@ -30,3 +30,8 @@
 
 **Begründung:** Damit ChatGPT, Codex Cloud, Codex lokal und der Nutzer nach festen Regeln arbeiten und neue Chats nicht wieder bei null beginnen.
 
+## Entscheidung 007
+**Beschluss:** Das Projekt erhält mit `docs/UI_INSPEKTOR_START_HIER.md` einen festen Einstiegspunkt.
+
+**Begründung:** Neue Chats und Codex-Läufe sollen nicht aus verstreuten Informationen den Projektstand zusammensuchen müssen.
+

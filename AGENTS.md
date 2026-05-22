@@ -393,11 +393,13 @@ Ohne diesen Layout-Steckbrief keine spÃ¤tere Breitenpflege per Codex-Prompt.
 
 Regeln:
 - Vor Arbeiten am UI-Inspektor zuerst lesen:
+  - `docs/UI_INSPEKTOR_START_HIER.md`
   - `docs/UI_INSPEKTOR_PROJEKTAUFTRAG.md`
   - `docs/UI_INSPEKTOR_ARCHITEKTUR.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
   - `docs/UI_INSPEKTOR_ARBEITSVERTRAG.md`
+- Die verbindliche Lesereihenfolge steht in `docs/UI_INSPEKTOR_START_HIER.md` (Startpunkt für neue Chats und Codex-Läufe).
 - Keine UI-Inspektor-Aufgabe ohne Aufgabenheft-Update abschließen.
 - UI-Inspektor-Core muss exportierbar und frei von BBM-Fachlogik bleiben.
 - Tabellen-Kalibrator nicht als UI-Inspektor-Bedienoberfläche weiterentwickeln.
