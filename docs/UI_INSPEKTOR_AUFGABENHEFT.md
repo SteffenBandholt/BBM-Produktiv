@@ -1,10 +1,10 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M7 abgeschlossen (Layout-Landkarten-Format vorhanden, ohne sichtbare UI-Funktion).
+Status: M8 abgeschlossen (Restarbeiten-Pilot-Landkarte dokumentiert, ohne sichtbare UI-Funktion).
 
 Aktueller Stand:
-- M1 bis M7 abgeschlossen.
+- M1 bis M8 abgeschlossen.
 
 ## Haken-System
 - `[x]` erledigt
@@ -20,6 +20,7 @@ Aktueller Stand:
 - [x] M5 Umsetzungsplan ohne Code final
 - [x] M6 erster Code-Schritt: Modulgerüst
 - [x] M7 Layout-Landkarten-Format definieren
+- [x] M8 Restarbeiten als erste Pilot-Landkarte dokumentieren
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -66,7 +67,7 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M8 Restarbeiten als erste Pilot-Landkarte dokumentieren**
+- **M9 Restarbeiten-DOM-Markierungen minimal einführen**
 
 Hinweis:
 - M6 hat nur ein Modulgerüst gebaut, ohne sichtbare UI-Funktion
@@ -120,7 +121,7 @@ Hinweis:
   - `node scripts/tests/uiInspectorRegistry.test.cjs`
   - `npm test`
 - Nächster Schritt:
-  - **M8 Restarbeiten als erste Pilot-Landkarte dokumentieren**
+  - **M9 Restarbeiten-DOM-Markierungen minimal einführen**
 - Hinweis:
   - M6 enthält nur Modulgerüst, kein Overlay, keine Restarbeiten-Anbindung, keine sichtbare App-Funktion.
 
@@ -141,6 +142,22 @@ Hinweis:
   - `node scripts/tests/uiInspectorMapSchema.test.cjs`
   - `npm test`
 - Nächster Schritt:
-  - **M8 Restarbeiten als erste Pilot-Landkarte dokumentieren**
+  - **M9 Restarbeiten-DOM-Markierungen minimal einführen**
 - Hinweis:
   - M7 definiert nur das Layout-Landkarten-Format, noch keine echte App-Anbindung, kein Overlay, keine Restarbeiten-DOM-Markierung und keine sichtbare App-Funktion.
+
+
+## M8 Abschlussnotiz
+- M8 Restarbeiten als erste Pilot-Landkarte rein dokumentarisch festgehalten.
+- Geänderte/neu angelegte Dateien:
+  - `docs/ui-landkarten/RESTARBEITEN.md` (neu)
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+- Tests/Prüfung:
+  - `git diff --stat`
+  - `git diff --name-only`
+  - `git status --short --branch`
+- Nächster Schritt:
+  - **M9 Restarbeiten-DOM-Markierungen minimal einführen**
+- Hinweis:
+  - M8 hat nur dokumentiert, keine DOM-Markierungen eingebaut, kein Overlay gebaut und keine sichtbare UI-Funktion ergänzt.
