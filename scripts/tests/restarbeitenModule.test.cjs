@@ -273,15 +273,18 @@ async function runRestarbeitenModuleTests(run) {
     const indexPath = path.join(__dirname, "../../src/renderer/uiInspector/index.js");
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
 
-    for (const source of [
-      fs.readFileSync(overlayPath, "utf8"),
-      fs.readFileSync(runtimePath, "utf8"),
-      fs.readFileSync(panelPath, "utf8"),
-      fs.readFileSync(indexPath, "utf8"),
-    ]) {
+    const overlayContent = fs.readFileSync(overlayPath, "utf8");
+    const runtimeContent = fs.readFileSync(runtimePath, "utf8");
+    const panelContent = fs.readFileSync(panelPath, "utf8");
+    const indexContent = fs.readFileSync(indexPath, "utf8");
+
+    for (const source of [overlayContent, runtimeContent, panelContent, indexContent]) {
       assert.doesNotMatch(source, /module\.exports/);
       assert.doesNotMatch(source, /require\s*\(/);
     }
+
+    assert.doesNotMatch(runtimeContent, /\.\.\/\.\.\/shared\/uiInspector\/index\.js/);
+    assert.doesNotMatch(runtimeContent, /createUiInspectorCore|createUiInspectorRegistry|createMemoryUiInspectorStore/);
 
     const screenContent = fs.readFileSync(screenPath, "utf8");
     assert.match(screenContent, /import\s*\{\s*createUiInspectorRuntime\s*\}\s*from\s*["']\.\.\.\/\.\.\.\/uiInspector\/index\.js["']/);

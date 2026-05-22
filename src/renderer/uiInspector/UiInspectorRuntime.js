@@ -1,14 +1,7 @@
-import sharedUiInspector from '../../shared/uiInspector/index.js';
 import { createUiInspectorOverlay } from './UiInspectorOverlay.js';
 
-const { createUiInspectorCore, createUiInspectorRegistry, createMemoryUiInspectorStore } = sharedUiInspector;
-
-export function createUiInspectorRuntime({ registry, store, core, overlay } = {}) {
-  const resolvedRegistry = registry || createUiInspectorRegistry();
-  const resolvedStore = store || createMemoryUiInspectorStore();
-  const resolvedCore = core || createUiInspectorCore({ registry: resolvedRegistry, store: resolvedStore });
+export function createUiInspectorRuntime({ overlay } = {}) {
   const resolvedOverlay = overlay || createUiInspectorOverlay();
-
   let overlayActive = false;
 
   function activateOverlay(rootElement) {
@@ -28,9 +21,6 @@ export function createUiInspectorRuntime({ registry, store, core, overlay } = {}
   }
 
   return {
-    registry: resolvedRegistry,
-    store: resolvedStore,
-    core: resolvedCore,
     overlay: resolvedOverlay,
     activateOverlay,
     deactivateOverlay,
