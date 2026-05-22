@@ -101,6 +101,7 @@ export default class RestarbeitenScreen {
 
     this.host = doc.createElement("div");
     this.host.setAttribute("data-bbm-restarbeiten-screen", "true");
+    this.host.setAttribute("data-ui-inspector-id", "restarbeiten.root");
 
     this._buildHeader(doc);
     this._buildSheetArea(doc);
@@ -121,6 +122,7 @@ export default class RestarbeitenScreen {
   _buildHeader(doc) {
     const header = doc.createElement("header");
     header.className = "restarbeiten-header restarbeiten-moduleHeader";
+    header.setAttribute("data-ui-inspector-id", "restarbeiten.header");
 
     const btnClose = doc.createElement("button");
     btnClose.type = "button";
@@ -134,12 +136,14 @@ export default class RestarbeitenScreen {
   _buildSheetArea(doc) {
     this.workArea = doc.createElement("div");
     this.workArea.className = "restarbeiten-workarea";
+    this.workArea.setAttribute("data-ui-inspector-id", "restarbeiten.main");
 
     this.contentArea = doc.createElement("div");
     this.contentArea.className = "restarbeiten-workarea__content";
 
     this.listHeaderHost = doc.createElement("div");
     this.listHeaderHost.className = "restarbeiten-listHeader";
+    this.listHeaderHost.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste");
     this.headerFiltersHost = this.listHeaderHost;
 
     this.sheetArea = doc.createElement("section");
@@ -153,6 +157,7 @@ export default class RestarbeitenScreen {
 
     const listHost = doc.createElement("div");
     listHost.className = "restarbeiten-sheet__list";
+    listHost.setAttribute("data-ui-inspector-id", "restarbeiten.liste");
 
     sheetPaper.append(listHost);
     sheetCanvas.append(sheetPaper);
@@ -204,6 +209,7 @@ export default class RestarbeitenScreen {
   _buildEditArea(doc) {
     this.editArea = doc.createElement("section");
     this.editArea.setAttribute("data-bbm-restarbeiten-screen-area", "edit");
+    this.editArea.setAttribute("data-ui-inspector-id", "restarbeiten.editbox");
 
     const editCanvas = doc.createElement("div");
     editCanvas.setAttribute("data-bbm-restarbeiten-screen-edit-canvas", "true");
@@ -314,6 +320,7 @@ export default class RestarbeitenScreen {
 
     const locationWrap = doc.createElement("div");
     locationWrap.className = "restarbeiten-filterleiste__locationFilters";
+    locationWrap.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.verortung");
     const locationGroupA = doc.createElement("div");
     locationGroupA.className = "restarbeiten-filterleiste__locationGroupA";
     locationGroupA.append(this._buildSingleFilter(doc, "location_level_1", 1), this._buildSingleFilter(doc, "location_level_2", 2));
@@ -332,9 +339,11 @@ export default class RestarbeitenScreen {
       body: this._buildClassFilter(doc),
       className: "restarbeiten-listHeader__panel restarbeiten-listHeader__panel--class",
     });
+    classPanel.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.klassenfilter");
 
     const metaWrap = doc.createElement("div");
     metaWrap.className = "restarbeiten-filterleiste__metaFilters";
+    metaWrap.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.meta");
     metaWrap.append(
       this._buildMetaFilter(doc, {
         key: "due_date",
@@ -517,6 +526,14 @@ export default class RestarbeitenScreen {
   _buildMetaFilter(doc, { key, label, values = [], formatDisplay = null } = {}) {
     const wrap = doc.createElement("label");
     wrap.className = "restarbeiten-filterleiste__field";
+    const inspectorMap = {
+      due_date: "restarbeiten.filterleiste.meta.fertig_bis",
+      status: "restarbeiten.filterleiste.meta.status",
+      responsible_project_firm_id: "restarbeiten.filterleiste.meta.verantwortlich",
+      completed_state: "restarbeiten.filterleiste.meta.erledigt",
+    };
+    const inspectorId = inspectorMap[key];
+    if (inspectorId) wrap.setAttribute("data-ui-inspector-id", inspectorId);
     const caption = doc.createElement("span");
     caption.className = "restarbeiten-filterleiste__fieldLabel";
     caption.textContent = label;
@@ -680,6 +697,7 @@ export default class RestarbeitenScreen {
   _renderTextColumn(doc, item) {
     const col = doc.createElement("div");
     col.className = "restarbeiten-list__textCol";
+    col.setAttribute("data-ui-inspector-id", "restarbeiten.liste.textbereich");
 
     const location = doc.createElement("div");
     location.className = "restarbeiten-list__locationCompact";
@@ -704,6 +722,7 @@ export default class RestarbeitenScreen {
   _renderMetaColumn(doc, item) {
     const col = doc.createElement("div");
     col.className = "restarbeiten-list__metaCol";
+    col.setAttribute("data-ui-inspector-id", "restarbeiten.liste.metabereich");
 
     const statusLine = doc.createElement("div");
     statusLine.className = "restarbeiten-list__ampelLine";

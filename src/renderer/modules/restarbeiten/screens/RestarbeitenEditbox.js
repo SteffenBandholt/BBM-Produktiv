@@ -119,6 +119,7 @@ export default class RestarbeitenEditbox {
     const doc = this.document;
     const root = doc.createElement("section");
     root.className = "restarbeiten-editbox restarbeiten-editbox--compact";
+    root.setAttribute("data-ui-inspector-id", "restarbeiten.editbox");
     const form = doc.createElement("form");
     form.className = "restarbeiten-editbox__layout";
     const topBar = doc.createElement("div");
@@ -136,6 +137,7 @@ export default class RestarbeitenEditbox {
     rightGroup.className = "restarbeiten-editbox__rightGroup";
     const metaCol = doc.createElement("aside");
     metaCol.className = "restarbeiten-editbox__meta";
+    metaCol.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.meta");
 
     const shortText = createInput(doc, "text");
     const longText = createInput(doc, "textarea");
@@ -144,9 +146,11 @@ export default class RestarbeitenEditbox {
     textColumn.className = "restarbeiten-editbox__textColumn";
     const shortField = doc.createElement("div");
     shortField.className = "restarbeiten-editbox__inputSlot restarbeiten-editbox__inputSlot--short";
+    shortField.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.kurztext");
     shortField.append(shortText);
     const longField = doc.createElement("div");
     longField.className = "restarbeiten-editbox__inputSlot restarbeiten-editbox__inputSlot--long";
+    longField.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.langtext");
     longField.append(longText);
 
     const shortRailRow = doc.createElement("div");

@@ -445,6 +445,39 @@ async function runRestarbeitenModuleTests(run) {
     assert.match(editbox, /event\.preventDefault\(\)/);
     assert.match(editbox, /input\.setAttribute\("list", datalist\.id\)/);
   });
+
+
+  await run("M9 UI-Inspektor: Restarbeiten DOM-Marker sind minimal vorhanden", () => {
+    const screen = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"), "utf8");
+    const editbox = fs.readFileSync(path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js"), "utf8");
+
+    [
+      "restarbeiten.root",
+      "restarbeiten.header",
+      "restarbeiten.filterleiste",
+      "restarbeiten.filterleiste.klassenfilter",
+      "restarbeiten.filterleiste.verortung",
+      "restarbeiten.filterleiste.meta",
+      "restarbeiten.filterleiste.meta.fertig_bis",
+      "restarbeiten.filterleiste.meta.status",
+      "restarbeiten.filterleiste.meta.verantwortlich",
+      "restarbeiten.filterleiste.meta.erledigt",
+      "restarbeiten.main",
+      "restarbeiten.liste",
+      "restarbeiten.liste.textbereich",
+      "restarbeiten.liste.metabereich",
+    ].forEach((id) => assert.equal(screen.includes(id), true));
+
+    [
+      "restarbeiten.editbox",
+      "restarbeiten.editbox.kurztext",
+      "restarbeiten.editbox.langtext",
+      "restarbeiten.editbox.meta",
+    ].forEach((id) => assert.equal(editbox.includes(id), true));
+
+    assert.doesNotMatch(screen, /data-ui-inspector-id\s*=\s*"restarbeiten\.overlay"/);
+    assert.doesNotMatch(screen, /ui-inspector-panel|inspector-panel/);
+  });
   await run("M5 Repo/IPC/Preload/DataSource: Create und Update sind verdrahtet", async () => {
     const repo = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js")
