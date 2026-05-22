@@ -1,10 +1,10 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: in Vorbereitung, ohne Implementierungscode.
+Status: M6 abgeschlossen (Modulgerüst vorhanden, ohne sichtbare UI-Funktion).
 
 Aktueller Stand:
-- M1.1 Projektfundament wird angelegt.
+- M1 bis M6 abgeschlossen.
 
 ## Haken-System
 - `[x]` erledigt
@@ -18,7 +18,7 @@ Aktueller Stand:
 - [x] M3 Projektgedächtnis vollständig
 - [x] M4 Architektur des exportierbaren Moduls final
 - [x] M5 Umsetzungsplan ohne Code final
-- [ ] M6 erster Code-Schritt: Modulgerüst
+- [x] M6 erster Code-Schritt: Modulgerüst
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -58,17 +58,17 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 6. `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
 
 ## Aktueller Stand für neue Chats
-- Projektphase: Dokumentationsgrundlagen vorhanden
-- Implementierungscode: noch keiner
-- UI-Inspector-Modul: noch nicht angelegt
+- Projektphase: Modulgerüst vorhanden
+- Implementierungscode: M6-Grundgerüst angelegt
+- UI-Inspector-Modul: vorhanden (ohne sichtbare UI)
 - App-Funktionen: keine Änderungen
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M6 erster Code-Schritt: Modulgerüst**
+- **M7 Layout-Landkarten-Format definieren**
 
 Hinweis:
-- Ab M6 beginnt Code, aber nur Modulgerüst ohne sichtbare Funktion
+- M6 hat nur ein Modulgerüst gebaut, ohne sichtbare UI-Funktion
 
 
 ## M4 Abschlussnotiz
@@ -96,3 +96,29 @@ Hinweis:
   - **M6 erster Code-Schritt: Modulgerüst**
 - Hinweis:
   - Ab M6 beginnt Code, aber nur Modulgerüst ohne sichtbare Funktion
+
+
+## M6 Abschlussnotiz
+- M6 erstes Code-Paket als reines UI-Inspector-Modulgerüst umgesetzt.
+- Geänderte/neu angelegte Dateien:
+  - `src/shared/uiInspector/uiInspectorCore.js`
+  - `src/shared/uiInspector/uiInspectorRegistry.js`
+  - `src/shared/uiInspector/uiInspectorStore.js`
+  - `src/shared/uiInspector/uiInspectorTypes.js`
+  - `src/shared/uiInspector/index.js`
+  - `src/renderer/uiInspector/UiInspectorRuntime.js`
+  - `src/renderer/uiInspector/UiInspectorOverlay.js`
+  - `src/renderer/uiInspector/UiInspectorPanel.js`
+  - `src/renderer/uiInspector/index.js`
+  - `scripts/tests/uiInspectorCore.test.cjs`
+  - `scripts/tests/uiInspectorRegistry.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+- Tests:
+  - `node scripts/tests/uiInspectorCore.test.cjs`
+  - `node scripts/tests/uiInspectorRegistry.test.cjs`
+  - `npm test`
+- Nächster Schritt:
+  - **M7 Layout-Landkarten-Format definieren**
+- Hinweis:
+  - M6 enthält nur Modulgerüst, kein Overlay, keine Restarbeiten-Anbindung, keine sichtbare App-Funktion.
