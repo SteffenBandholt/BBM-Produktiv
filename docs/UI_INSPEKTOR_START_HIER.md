@@ -31,18 +31,19 @@ Pflichtreihenfolge:
 - M7 Layout-Landkarten-Format erledigt
 - M8 Restarbeiten-Pilot-Landkarte dokumentiert
 - M9 Restarbeiten-DOM-Markierungen minimal eingeführt
+- M10 Overlay nur anzeigen abgeschlossen
 - UI-Inspector-Modulgerüst und Layout-Landkarten-Format existieren
-- Noch kein Overlay
+- Overlay kann angezeigt werden
 - Restarbeiten-DOM-Markierungen vorhanden
 - Noch keine sichtbare App-Funktion
 
 ## 5. Nächster geplanter Schritt
-- Nächster Schritt: M10 Overlay nur anzeigen
-- M9 hat minimale Restarbeiten-DOM-Markierungen eingeführt
-- Noch kein Overlay
+- Nächster Schritt: M11 Bereich anklicken und Auswahl anzeigen
+- M10 zeigt nur Overlay-Rahmen über Marker
 - Noch kein Panel
+- Noch keine Klickauswahl
 - Noch keine Layoutänderung
-- Noch keine sichtbare UI-Funktion
+- Noch keine Speicherung
 
 ## 6. Harte Stopps
 Nicht fortführen:

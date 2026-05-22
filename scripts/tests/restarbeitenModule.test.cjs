@@ -265,6 +265,50 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(ipc, /restarbeiten:deleteItem/);
   });
 
+
+  await run("M10 Renderer-UI-Inspector ist ESM-kompatibel", () => {
+    const overlayPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorOverlay.js");
+    const runtimePath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorRuntime.js");
+    const panelPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorPanel.js");
+    const indexPath = path.join(__dirname, "../../src/renderer/uiInspector/index.js");
+    const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+
+    const overlayContent = fs.readFileSync(overlayPath, "utf8");
+    const runtimeContent = fs.readFileSync(runtimePath, "utf8");
+    const panelContent = fs.readFileSync(panelPath, "utf8");
+    const indexContent = fs.readFileSync(indexPath, "utf8");
+
+    for (const source of [overlayContent, runtimeContent, panelContent, indexContent]) {
+      assert.doesNotMatch(source, /module\.exports/);
+      assert.doesNotMatch(source, /require\s*\(/);
+    }
+
+    assert.doesNotMatch(runtimeContent, /\.\.\/\.\.\/shared\/uiInspector\/index\.js/);
+    assert.doesNotMatch(runtimeContent, /createUiInspectorCore|createUiInspectorRegistry|createMemoryUiInspectorStore/);
+
+    const screenContent = fs.readFileSync(screenPath, "utf8");
+    assert.match(screenContent, /import\s*\{\s*createUiInspectorRuntime\s*\}\s*from\s*["']\.\.\.\/\.\.\.\/uiInspector\/index\.js["']/);
+    assert.doesNotMatch(screenContent, /createUiInspectorPanel/);
+    assert.doesNotMatch(screenContent, /save|speicher/i);
+  });
+
+  await run("M10 UI-Inspector Overlay-Toggle ist klar begrenzt", () => {
+    const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+    const content = fs.readFileSync(screenPath, "utf8");
+
+    assert.match(content, /this\.uiInspectorRuntime\s*=\s*createUiInspectorRuntime\(\)/);
+    assert.match(content, /this\.uiInspectorOverlayActive\s*=\s*false/);
+    assert.match(content, /this\.uiInspectorKeydownHandler\s*=\s*null/);
+    assert.match(content, /event\.ctrlKey\s*&&\s*event\.altKey/);
+    assert.match(content, /key\s*===\s*['"]i['"]/);
+    assert.match(content, /this\.uiInspectorRuntime\.activateOverlay\(this\.host\)/);
+    assert.match(content, /this\.uiInspectorRuntime\.deactivateOverlay\(\)/);
+    assert.match(content, /dispose\(\)/);
+    assert.match(content, /removeEventListener\('keydown',\s*this\.uiInspectorKeydownHandler\)/);
+    assert.doesNotMatch(content, /createUiInspectorPanel/);
+    assert.doesNotMatch(content, /save|speicher/i);
+  });
+
   await run("M14 Screen-UI: Header, Blattstruktur, Verortung 1-4, Fotos einklappbar, Editbox unten", () => {
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
     const stylePath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/restarbeitenListStyle.js");
