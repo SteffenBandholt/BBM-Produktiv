@@ -35,3 +35,9 @@
 
 **Begründung:** Neue Chats und Codex-Läufe sollen nicht aus verstreuten Informationen den Projektstand zusammensuchen müssen.
 
+
+
+## Entscheidung 008
+**Beschluss:** Die Architektur wird als exportierbares Schichtenmodell festgelegt.
+
+**Begründung:** Core, Overlay, Panel, Registry, Store, Adapter und Layout-Landkarte müssen getrennt bleiben, damit der UI-Inspektor nicht BBM-spezifisch wird und später in andere Apps exportiert werden kann.
