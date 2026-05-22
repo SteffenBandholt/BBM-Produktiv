@@ -10,9 +10,14 @@ function getAllowedControlsForSelectedId(selectedId) {
 
   const containerIds = new Set([
     'restarbeiten.root',
+    'restarbeiten.header',
     'restarbeiten.main',
     'restarbeiten.filterleiste',
+    'restarbeiten.filterleiste.meta',
     'restarbeiten.editbox',
+    'restarbeiten.editbox.header',
+    'restarbeiten.editbox.verortung',
+    'restarbeiten.editbox.meta',
     'restarbeiten.liste',
   ]);
   if (containerIds.has(normalizedId)) return [...CONTAINER_CONTROLS];

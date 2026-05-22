@@ -325,6 +325,10 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(panelContent, /<input|\btype\s*=\s*['"](range|text|number)['"]/i);
 
     assert.match(runtimeContent, /getAllowedControlsForSelectedId/);
+    assert.match(runtimeContent, /restarbeiten\.filterleiste\.meta/);
+    assert.match(runtimeContent, /restarbeiten\.editbox\.header/);
+    assert.match(runtimeContent, /restarbeiten\.editbox\.verortung/);
+    assert.match(runtimeContent, /restarbeiten\.editbox\.meta/);
     assert.doesNotMatch(runtimeContent, /localStorage/);
     assert.doesNotMatch(runtimeContent, /ui-inspector:save/);
     assert.doesNotMatch(runtimeContent, /inspector:save/);
