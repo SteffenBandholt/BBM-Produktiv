@@ -1,15 +1,12 @@
-const {
-  createUiInspectorCore,
-  createUiInspectorRegistry,
-  createMemoryUiInspectorStore,
-} = require('../../shared/uiInspector');
-const { createUiInspectorOverlay } = require('./UiInspectorOverlay');
+import sharedUiInspector from '../../shared/uiInspector/index.js';
+import { createUiInspectorOverlay } from './UiInspectorOverlay.js';
 
-function createUiInspectorRuntime({ registry, store, core, overlay } = {}) {
+const { createUiInspectorCore, createUiInspectorRegistry, createMemoryUiInspectorStore } = sharedUiInspector;
+
+export function createUiInspectorRuntime({ registry, store, core, overlay } = {}) {
   const resolvedRegistry = registry || createUiInspectorRegistry();
   const resolvedStore = store || createMemoryUiInspectorStore();
-  const resolvedCore =
-    core || createUiInspectorCore({ registry: resolvedRegistry, store: resolvedStore });
+  const resolvedCore = core || createUiInspectorCore({ registry: resolvedRegistry, store: resolvedStore });
   const resolvedOverlay = overlay || createUiInspectorOverlay();
 
   let overlayActive = false;
@@ -43,7 +40,3 @@ function createUiInspectorRuntime({ registry, store, core, overlay } = {}) {
     },
   };
 }
-
-module.exports = {
-  createUiInspectorRuntime,
-};

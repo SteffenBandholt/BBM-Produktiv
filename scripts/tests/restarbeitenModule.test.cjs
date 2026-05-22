@@ -265,6 +265,30 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(ipc, /restarbeiten:deleteItem/);
   });
 
+
+  await run("M10 Renderer-UI-Inspector ist ESM-kompatibel", () => {
+    const overlayPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorOverlay.js");
+    const runtimePath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorRuntime.js");
+    const panelPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorPanel.js");
+    const indexPath = path.join(__dirname, "../../src/renderer/uiInspector/index.js");
+    const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+
+    for (const source of [
+      fs.readFileSync(overlayPath, "utf8"),
+      fs.readFileSync(runtimePath, "utf8"),
+      fs.readFileSync(panelPath, "utf8"),
+      fs.readFileSync(indexPath, "utf8"),
+    ]) {
+      assert.doesNotMatch(source, /module\.exports/);
+      assert.doesNotMatch(source, /require\s*\(/);
+    }
+
+    const screenContent = fs.readFileSync(screenPath, "utf8");
+    assert.match(screenContent, /import\s*\{\s*createUiInspectorRuntime\s*\}\s*from\s*["']\.\.\.\/\.\.\.\/uiInspector\/index\.js["']/);
+    assert.doesNotMatch(screenContent, /createUiInspectorPanel/);
+    assert.doesNotMatch(screenContent, /save|speicher/i);
+  });
+
   await run("M10 UI-Inspector Overlay-Toggle ist klar begrenzt", () => {
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
     const content = fs.readFileSync(screenPath, "utf8");

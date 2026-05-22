@@ -1,4 +1,4 @@
-function createUiInspectorPanel() {
+export function createUiInspectorPanel() {
   return {
     mount() {
       return false;
@@ -8,7 +8,3 @@ function createUiInspectorPanel() {
     },
   };
 }
-
-module.exports = {
-  createUiInspectorPanel,
-};

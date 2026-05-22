@@ -1,4 +1,4 @@
-function createUiInspectorOverlay(options = {}) {
+export function createUiInspectorOverlay(options = {}) {
   const defaultSelector = '[data-ui-inspector-id]';
   const selector = typeof options.selector === 'string' && options.selector.trim() ? options.selector : defaultSelector;
   const zIndex = Number.isFinite(options.zIndex) ? String(options.zIndex) : '2147483000';
@@ -58,7 +58,6 @@ function createUiInspectorOverlay(options = {}) {
 
   function refresh() {
     if (!rootElement || !overlayRoot) return false;
-    const doc = rootElement.ownerDocument || globalThis.document;
     clearOverlayChildren();
 
     const nodes = rootElement.querySelectorAll(selector);
@@ -68,7 +67,7 @@ function createUiInspectorOverlay(options = {}) {
       if (!id) continue;
       const rect = node.getBoundingClientRect();
       if (!rect || rect.width <= 0 || rect.height <= 0) continue;
-      overlayRoot.append(createFrame(doc, id, rect));
+      overlayRoot.append(createFrame(rootElement.ownerDocument || globalThis.document, id, rect));
     }
     return true;
   }
@@ -91,13 +90,5 @@ function createUiInspectorOverlay(options = {}) {
     return true;
   }
 
-  return {
-    mount,
-    unmount,
-    refresh,
-  };
+  return { mount, unmount, refresh };
 }
-
-module.exports = {
-  createUiInspectorOverlay,
-};

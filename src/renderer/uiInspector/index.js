@@ -1,9 +1,3 @@
-const { createUiInspectorRuntime } = require('./UiInspectorRuntime');
-const { createUiInspectorOverlay } = require('./UiInspectorOverlay');
-const { createUiInspectorPanel } = require('./UiInspectorPanel');
-
-module.exports = {
-  createUiInspectorRuntime,
-  createUiInspectorOverlay,
-  createUiInspectorPanel,
-};
+export { createUiInspectorRuntime } from './UiInspectorRuntime.js';
+export { createUiInspectorOverlay } from './UiInspectorOverlay.js';
+export { createUiInspectorPanel } from './UiInspectorPanel.js';
