@@ -144,3 +144,9 @@ Editbox:
 - Ist die Liste in Textbereich und Metabereich sinnvoll trennbar?
 - Gehört Foto/Anlagen fachlich zur Liste, zur Editbox oder als eigener Sonderbereich?
 - Welche Stellschrauben sind für den Nutzer wirklich verständlich?
+
+
+## M11 Hinweis
+- Ab M11 erfolgt die Bereichsauswahl über eine temporäre Trefferliste am Klickpunkt.
+- Keine Handles pro Rahmen als primärer Auswahlweg.
+- Keine Einstellfunktion in M11.

@@ -57,3 +57,11 @@ Nicht fortführen:
 Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 
 „Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst und die erste Restarbeiten-Pilot-Landkarte sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M10 (Overlay nur anzeigen; weiterhin ohne Panel und ohne sichtbare Fachfunktion).“
+
+
+## Statusupdate M11 (neu)
+- M11 ist erledigt.
+- Overlay zeigt Bereiche weiterhin als Rahmen.
+- Auswahl erfolgt über Trefferliste am Klickpunkt.
+- Noch kein Panel, keine Werte, keine Speicherung, keine Layoutänderung.
+- Nächster Meilenstein: M12 (Panel zeigt erlaubte Stellschrauben).

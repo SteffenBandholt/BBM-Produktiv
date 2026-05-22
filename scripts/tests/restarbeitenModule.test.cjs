@@ -283,6 +283,13 @@ async function runRestarbeitenModuleTests(run) {
       assert.doesNotMatch(source, /require\s*\(/);
     }
 
+
+    assert.match(overlayContent, /data-ui-inspector-hit-list/);
+    assert.match(overlayContent, /data-ui-inspector-hit-option/);
+    assert.match(overlayContent, /getHitsAtPoint/);
+    assert.match(overlayContent, /showHitListAtPoint/);
+    assert.doesNotMatch(overlayContent, /data-ui-inspector-overlay-handle/);
+
     assert.doesNotMatch(runtimeContent, /\.\.\/\.\.\/shared\/uiInspector\/index\.js/);
     assert.doesNotMatch(runtimeContent, /createUiInspectorCore|createUiInspectorRegistry|createMemoryUiInspectorStore/);
 

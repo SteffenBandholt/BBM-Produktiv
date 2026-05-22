@@ -47,3 +47,11 @@
 **Beschluss:** Der UI-Inspektor wird schrittweise ab M6 über ein Modulgerüst, Landkartenformat, Pilot-Landkarte, Markierungen, Overlay, Auswahl, Panel, temporäre Anwendung und Speicherung aufgebaut.
 
 **Begründung:** Der Inspektor darf nicht als Großpaket entstehen. Die schrittweise Umsetzung verhindert Nebenwirkungen und hält das Modul exportierbar.
+
+
+## Entscheidung 010
+**Beschluss:** M11 nutzt eine Trefferliste am Klickpunkt statt klickbarer Rahmen/Handles.
+
+**Begründung:** Bei verschachtelten UI-Bereichen ist Handle-/Rahmenklick für Laien nicht zuverlässig und unübersichtlich.
+
+**Auswirkung:** Die Trefferliste trennt Auswahl von Rahmenanzeige und bleibt in komplexen UIs bedienbar.
