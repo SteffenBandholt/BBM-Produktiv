@@ -233,3 +233,8 @@ Hinweis:
 - Instanzschlüssel pro Treffer (`...::1`, `...::2`) für eindeutige Mehrfachauswahl eingeführt.
 - Read-only: keine Layoutänderung, keine Speicherung.
 - Nächster Schritt: **M13.2 – Temporäre Vorschau auf stabiler Auswahl wieder aufnehmen**.
+
+## M13.1.1 Nachschärfung (PR-Feedback)
+- Panel-Select ist an Runtime/Overlay verdrahtet (`onSelectTargetKey`), Auswahl setzt `selectedTargetKey` instanzscharf.
+- Overlay-Verhalten aus M10/M11 konservativ gesichert (Hitlist-Position am Klickpunkt, Frame- und Badge-Styling, Listener-Cleanup).
+- Tests für Bedienkette ergänzt: Panel-Select-Callback, Runtime-Weiterleitung an Overlay, Overlay-Stil-/Positionsprüfungen.

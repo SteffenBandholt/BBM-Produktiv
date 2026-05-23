@@ -125,6 +125,10 @@ export function createUiInspectorRuntime({ overlay, panel } = {}) {
       selectedTargetKey: selectedTarget?.key || '',
       controls: getAllowedControlsForSelectedId(selectedId),
       targets: resolvedOverlay.getTargets?.() || [],
+      onSelectTargetKey: (targetKey) => {
+        if (!targetKey) return;
+        resolvedOverlay.select?.(targetKey);
+      },
     });
   };
 
