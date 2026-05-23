@@ -76,6 +76,8 @@ function createFakeDomForRuntime() {
   const panelNode = document.body.children.find((c) => c.attributes['data-ui-inspector-panel'] === 'true');
   assert.ok(panelNode);
   assert.equal(panelNode.style.pointerEvents, 'auto');
+  assert.equal(panelNode.getAttribute('data-ui-inspector-panel'), 'true');
+  assert.equal(panelNode.style.top, '12px');
 
   assert.equal(panel.render({ selectedId: 'restarbeiten.editbox.kurztext', controls: ['Breite', 'Höhe', 'Sichtbarkeit'] }), true);
   const text = collectText(panelNode);

@@ -3,7 +3,7 @@ function createPanelRoot(doc) {
   panel.setAttribute('data-ui-inspector-panel', 'true');
   panel.style.position = 'fixed';
   panel.style.right = '12px';
-  panel.style.bottom = '12px';
+  panel.style.top = '12px';
   panel.style.width = '340px';
   panel.style.maxWidth = 'calc(100vw - 24px)';
   panel.style.background = 'rgba(20, 25, 35, 0.96)';

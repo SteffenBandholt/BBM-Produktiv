@@ -21,6 +21,8 @@ function mkEl(id){return {attrs:{'data-ui-inspector-id':id},style:{cssText:'',wi
   assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.filterleiste.verortung'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
   assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.filterleiste.klassenfilter'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
   assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.filterleiste.verortung.feld'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
+  assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.liste.metabereich'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
+  assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.liste.textbereich'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
   assert.equal(rt.activateOverlay(root), true);
   overlay.sid = 'restarbeiten.editbox.kurztext'; overlay.onSelect(overlay.sid);
   panelState.onControl('width.increase');
