@@ -226,3 +226,10 @@ Hinweis:
 - Geänderte Dateien: `src/renderer/uiInspector/UiInspectorPanel.js`, `src/renderer/uiInspector/UiInspectorRuntime.js`, `src/renderer/uiInspector/UiInspectorOverlay.js`, `scripts/tests/uiInspectorPanel.test.cjs`, `scripts/tests/restarbeitenModule.test.cjs`, `docs/UI_INSPEKTOR_AUFGABENHEFT.md`, `docs/UI_INSPEKTOR_START_HIER.md`, `docs/ui-landkarten/RESTARBEITEN.md`, `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`.
 - Tests: `node scripts/tests/uiInspectorCore.test.cjs`, `node scripts/tests/uiInspectorRegistry.test.cjs`, `node scripts/tests/uiInspectorMapSchema.test.cjs`, `node scripts/tests/uiInspectorOverlay.test.cjs`, `node scripts/tests/restarbeitenModule.test.cjs`, `node scripts/tests/uiInspectorPanel.test.cjs`, `npm test`.
 - Nächster Schritt: M13 – Werte temporär anwenden, aber noch nicht speichern.
+
+
+## M13.1.1 (PR-Zwischenstand, lokale Abnahme offen)
+- Hierarchisches Auswahlmodell (Parent/Child) im Panel und Overlay stabilisiert.
+- Instanzschlüssel pro Treffer (`...::1`, `...::2`) für eindeutige Mehrfachauswahl eingeführt.
+- Read-only: keine Layoutänderung, keine Speicherung.
+- Nächster Schritt: **M13.2 – Temporäre Vorschau auf stabiler Auswahl wieder aufnehmen**.

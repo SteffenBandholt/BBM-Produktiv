@@ -159,3 +159,10 @@ Editbox:
 - Ab M11 erfolgt die Bereichsauswahl über eine temporäre Trefferliste am Klickpunkt.
 - Keine Handles pro Rahmen als primärer Auswahlweg.
 - Keine Einstellfunktion in M11.
+
+
+## M13.1.1 Auswahlhierarchie (read-only)
+- Top-Level: `restarbeiten.header`, `restarbeiten.main`, `restarbeiten.editbox`.
+- Unter `restarbeiten.main`: `restarbeiten.filterleiste`, `restarbeiten.liste`.
+- Unter `restarbeiten.filterleiste`: `klassenfilter`, `verortung`, `meta`; Felder als Child-Instanzen `#1/#2/...`.
+- Unter `restarbeiten.editbox`: `header`, `verortung`, `kurztext`, `langtext`, `meta`; Label/Restzeichen unter kurz/langtext.

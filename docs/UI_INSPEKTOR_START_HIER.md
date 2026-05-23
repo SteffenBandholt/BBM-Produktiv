@@ -65,3 +65,8 @@ Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 - Panel zeigt den ausgewählten Bereich und die erlaubten Stellschrauben.
 - Noch keine Anwendung, noch keine Speicherung, noch keine Layoutänderung.
 - Nächster Meilenstein: M13 (Werte temporär anwenden, noch nicht speichern).
+
+
+## Aktueller Zwischenstand (nicht gemergt)
+- M13.1.1 ist als sauberer Ersatz für das Auswahlmodell in Arbeit.
+- PR #155 und PR #156 bleiben blockierte Problemreferenzen und werden nicht übernommen.
