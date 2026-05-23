@@ -30,7 +30,7 @@ function createFakeDom() {
   return { document };
 }
 
-function createInspectableRoot(document) {
+function createInspectableRoot(document, selector = '[data-ui-inspector-id]') {
   const mk = (id, rect) => ({ ownerDocument: document, className:'', getAttribute: (n)=> n==='data-ui-inspector-id'?id:null, getBoundingClientRect: ()=>rect });
   const nodes = [
     mk('restarbeiten.root', { left: 0, top: 0, width: 500, height: 400 }),
@@ -39,7 +39,7 @@ function createInspectableRoot(document) {
     mk('restarbeiten.filterleiste.meta', { left: 40, top: 40, width: 180, height: 50 }),
     mk('restarbeiten.filterleiste.meta.status', { left: 60, top: 50, width: 70, height: 20 }),
   ];
-  return { ownerDocument: document, querySelectorAll: (sel)=> sel==='[data-ui-inspector-id]'?nodes:[] };
+  return { ownerDocument: document, querySelectorAll: (sel)=> sel===selector?nodes:[] };
 }
 
 (async function run() {
@@ -124,6 +124,23 @@ function createInspectableRoot(document) {
 
   assert.equal(overlay.unmount(), true);
   assert.equal(document.listenerCount('pointerdown'), 0);
+
+  const rootWithCustomSelector = createInspectableRoot(document, '[data-test-id]');
+  const overlayWithSelector = createUiInspectorOverlay({ selector: '[data-test-id]' });
+  assert.equal(overlayWithSelector.mount(rootWithCustomSelector), true);
+  assert.equal(overlayWithSelector.refresh(), true);
+  assert.equal(overlayWithSelector.unmount(), true);
+
+  const dynamicNodes = root.querySelectorAll('[data-ui-inspector-id]').slice();
+  const dynamicRoot = { ownerDocument: document, querySelectorAll: (sel)=> sel==='[data-ui-inspector-id]'?dynamicNodes:[] };
+  const dynamicOverlay = createUiInspectorOverlay();
+  assert.equal(dynamicOverlay.mount(dynamicRoot), true);
+  dynamicNodes.push({ ownerDocument: document, className:'', getAttribute: (n)=> n==='data-ui-inspector-id'?'restarbeiten.editbox':null, getBoundingClientRect: ()=>({ left: 20, top: 20, width: 90, height: 40 }) });
+  assert.equal(dynamicOverlay.refresh(), true);
+  const dynamicOverlayRoot = dynamicOverlay.getOverlayRoot();
+  assert.equal(dynamicOverlayRoot.children.some((c) => c.attributes['data-ui-inspector-overlay-id'] === 'restarbeiten.editbox'), true);
+  assert.equal(dynamicOverlay.unmount(), true);
+
 
   const noEventsDoc = { ...document, addEventListener: undefined, removeEventListener: undefined, body: document.body, createElement: document.createElement };
   const root2 = createInspectableRoot(noEventsDoc);

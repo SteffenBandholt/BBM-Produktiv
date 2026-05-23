@@ -24,7 +24,7 @@ Aktueller Stand:
 - [x] M9 Restarbeiten-DOM-Markierungen minimal einführen
 - [x] M10 Overlay nur anzeigen
 - [x] M12 Panel zeigt erlaubte Stellschrauben
-- [x] M13.1 Hierarchische Auswahl + Parent/Child stabilisiert (read-only)
+- [ ] M13.1 Hierarchische Auswahl + Parent/Child stabilisiert (read-only, Abnahme offen)
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -229,8 +229,8 @@ Hinweis:
 - Nächster Schritt: M13 – Werte temporär anwenden, aber noch nicht speichern.
 
 
-## M13.1 Abschluss
-- Status: erledigt.
+## M13.1 Zwischenstand
+- Status: umgesetzt im PR, lokale Abnahme noch offen.
 - Ergebnis: hierarchische Bereichsauswahl, Parent/Child getrennt auswählbar, Mehrfachfelder instanzscharf (#1/#2/#3), Overlay/Panel synchron.
 - Weiterhin read-only: keine temporäre Style-Anwendung, keine Speicherung.
 - Nächster Schritt: M13.2 – Temporäre Vorschau auf stabiler Auswahl wieder aufnehmen.
