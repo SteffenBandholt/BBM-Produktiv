@@ -38,6 +38,8 @@ function createInspectableRoot(document) {
     mk('restarbeiten.filterleiste', { left: 20, top: 30, width: 300, height: 80 }),
     mk('restarbeiten.filterleiste.meta', { left: 40, top: 40, width: 180, height: 50 }),
     mk('restarbeiten.filterleiste.meta.status', { left: 60, top: 50, width: 70, height: 20 }),
+    mk('restarbeiten.filterleiste.verortung.feld', { left: 260, top: 40, width: 80, height: 20 }),
+    mk('restarbeiten.filterleiste.verortung.feld', { left: 260, top: 70, width: 80, height: 20 }),
   ];
   return { ownerDocument: document, querySelectorAll: (sel)=> sel==='[data-ui-inspector-id]'?nodes:[] };
 }
@@ -75,7 +77,7 @@ function createInspectableRoot(document) {
   assert.ok(hitList);
   assert.equal(hitList.style.pointerEvents, 'auto');
   const firstOption = hitList.children[0];
-  assert.equal(firstOption.attributes['data-ui-inspector-hit-option'], 'restarbeiten.filterleiste.meta.status');
+  assert.equal(firstOption.attributes['data-ui-inspector-hit-option'], 'restarbeiten.filterleiste.meta.status::1');
 
   const firstHitListRef = hitList;
   const preventedHitOption = { value: false };
@@ -116,6 +118,16 @@ function createInspectableRoot(document) {
   const badge = overlayRoot.children.find((c) => c.attributes['data-ui-inspector-selection-badge'] === 'true');
   assert.equal(badge.textContent, 'Auswahl: restarbeiten.filterleiste.meta.status');
   assert.equal(overlayRoot.children.some((c) => c.attributes['data-ui-inspector-hit-list'] === 'true'), false);
+
+  assert.equal(overlay.showHitListAtPoint(270, 75), true);
+  const duplicateHitList = overlayRoot.children.find((c) => c.attributes['data-ui-inspector-hit-list'] === 'true');
+  const duplicateOption = duplicateHitList.children.find((c) => c.attributes['data-ui-inspector-hit-option'] === 'restarbeiten.filterleiste.verortung.feld::2');
+  assert.ok(duplicateOption);
+  duplicateOption.click();
+  const selectedDuplicateFrames = overlayRoot.children.filter((c) => c.attributes['data-ui-inspector-selected'] === 'true' && c.attributes['data-ui-inspector-overlay-frame'] === 'restarbeiten.filterleiste.verortung.feld');
+  assert.equal(selectedDuplicateFrames.length, 1);
+  const duplicateBadge = overlayRoot.children.find((c) => c.attributes['data-ui-inspector-selection-badge'] === 'true');
+  assert.equal(duplicateBadge.textContent, 'Auswahl: restarbeiten.filterleiste.verortung.feld #2');
 
   overlay.clearSelection();
   const badgeAfterClear = overlayRoot.children.find((c) => c.attributes['data-ui-inspector-selection-badge'] === 'true');

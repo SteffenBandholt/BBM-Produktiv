@@ -85,7 +85,7 @@ export function createUiInspectorRuntime({ overlay, panel } = {}) {
         const selectedTarget = availableTargets.find((target) => target.key === selection || target.id === selection);
         selectedTargetKey = selectedTarget?.key || '';
         if (typeof resolvedOverlay.select === 'function') {
-          resolvedOverlay.select(selectedTarget?.id || selection);
+          resolvedOverlay.select(selectedTarget?.id || selection, { targetKey: selectedTarget?.key, label: selectedTarget?.label });
           return;
         }
         renderPanelForSelection(selectedTarget?.id || selection);

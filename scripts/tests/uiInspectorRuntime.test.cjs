@@ -38,10 +38,12 @@ function mkEl(id){return {attrs:{'data-ui-inspector-id':id},style:{cssText:'',wi
   let selectCalls = 0;
   const overlay = {
     sid:'',
+    selectedTargetKey: '',
+    selectedLabel: '',
     mount(_r,o){ this.onSelect=o.onSelect; this.onClearSelection=o.onClearSelection; return true;},
     unmount(){return true;},
     refresh(){return true;},
-    select(id){ this.sid = id; selectCalls += 1; this.onSelect?.(id); return true; },
+    select(id, options = {}){ this.sid = id; this.selectedTargetKey = options.targetKey || ''; this.selectedLabel = options.label || ''; selectCalls += 1; this.onSelect?.(id); return true; },
     getSelectedId(){return this.sid;},
     clearSelection(){this.sid=''; this.onClearSelection?.(); return true;}
   };
@@ -58,12 +60,14 @@ function mkEl(id){return {attrs:{'data-ui-inspector-id':id},style:{cssText:'',wi
   assert.equal(panelState.availableTargets.some((entry) => entry.label === 'restarbeiten.filterleiste.verortung.feld #2'), true);
   panelState.onSelectTarget('restarbeiten.filterleiste.verortung.feld::2');
   assert.equal(selectCalls, 1);
+  assert.equal(overlay.selectedTargetKey, 'restarbeiten.filterleiste.verortung.feld::2');
+  assert.equal(overlay.selectedLabel, 'restarbeiten.filterleiste.verortung.feld #2');
   assert.equal(panelState.selectedId, 'restarbeiten.filterleiste.verortung.feld');
   assert.equal(rt.getSelectedElementId(), 'restarbeiten.filterleiste.verortung.feld');
   panelState.onControl('width.increase');
   assert.equal(duplicateTwo.style.width, '5px');
   panelState.onControl('reset');
-  assert.equal(target.style.cssText, '');
+  assert.equal(duplicateTwo.style.cssText, '');
   rt.deactivateOverlay();
   assert.equal(target.style.cssText, '');
   console.log('ok - uiInspectorRuntime.test');
