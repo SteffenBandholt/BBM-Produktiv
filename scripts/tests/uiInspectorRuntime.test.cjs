@@ -30,7 +30,16 @@ function mkEl(id){return {attrs:{'data-ui-inspector-id':id},style:{cssText:'',wi
   };
   let panelState = null;
   const panel = { mount(){return true;}, unmount(){return true;}, clear(){return true;}, render(s){panelState=s;return true;} };
-  const overlay = { sid:'', mount(_r,o){ this.onSelect=o.onSelect; this.onClearSelection=o.onClearSelection; return true;}, unmount(){return true;}, refresh(){return true;}, getSelectedId(){return this.sid;}, clearSelection(){this.sid=''; this.onClearSelection?.(); return true;} };
+  let selectCalls = 0;
+  const overlay = {
+    sid:'',
+    mount(_r,o){ this.onSelect=o.onSelect; this.onClearSelection=o.onClearSelection; return true;},
+    unmount(){return true;},
+    refresh(){return true;},
+    select(id){ this.sid = id; selectCalls += 1; this.onSelect?.(id); return true; },
+    getSelectedId(){return this.sid;},
+    clearSelection(){this.sid=''; this.onClearSelection?.(); return true;}
+  };
 
   const rt = createUiInspectorRuntime({overlay,panel});
   assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.filterleiste.verortung'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
@@ -42,7 +51,9 @@ function mkEl(id){return {attrs:{'data-ui-inspector-id':id},style:{cssText:'',wi
   overlay.sid = 'restarbeiten.editbox.kurztext'; overlay.onSelect(overlay.sid);
   assert.deepEqual(panelState.availableTargets, ['restarbeiten.editbox.kurztext', 'restarbeiten.filterleiste.verortung']);
   panelState.onSelectTarget('restarbeiten.filterleiste.verortung');
+  assert.equal(selectCalls, 1);
   assert.equal(panelState.selectedId, 'restarbeiten.filterleiste.verortung');
+  assert.equal(rt.getSelectedElementId(), 'restarbeiten.filterleiste.verortung');
   panelState.onControl('width.increase');
   assert.equal(target.style.width, '5px');
   panelState.onControl('reset');

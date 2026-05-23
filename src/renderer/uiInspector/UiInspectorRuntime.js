@@ -51,7 +51,13 @@ export function createUiInspectorRuntime({ overlay, panel } = {}) {
     const targetElement = getSelectedTargetElement();
     const targetMissing = Boolean(selectedId) && !targetElement;
     resolvedPanel.render({ selectedId, controls, note: controls.length ? '' : 'Für diesen Bereich sind noch keine Stellschrauben definiert.', previewState: temporaryStyles.getPreviewState(selectedId), targetMissing, availableTargets: collectAvailableTargets(),
-      onSelectTarget: (id) => renderPanelForSelection(id),
+      onSelectTarget: (id) => {
+        if (typeof resolvedOverlay.select === 'function') {
+          resolvedOverlay.select(id);
+          return;
+        }
+        renderPanelForSelection(id);
+      },
       onControl: (action) => {
         if (!targetElement) return;
         if (action === 'reset') temporaryStyles.resetElement(targetElement, selectedId);
