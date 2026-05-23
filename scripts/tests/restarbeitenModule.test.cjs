@@ -270,6 +270,7 @@ async function runRestarbeitenModuleTests(run) {
     const overlayPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorOverlay.js");
     const runtimePath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorRuntime.js");
     const panelPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorPanel.js");
+    const tempStylesPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorTemporaryStyles.js");
     const indexPath = path.join(__dirname, "../../src/renderer/uiInspector/index.js");
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
 
@@ -308,13 +309,15 @@ async function runRestarbeitenModuleTests(run) {
 
   await run("M12 UI-Inspector Panel ist read-only und ESM-kompatibel", () => {
     const panelPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorPanel.js");
+    const tempStylesPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorTemporaryStyles.js");
     const runtimePath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorRuntime.js");
     const panelContent = fs.readFileSync(panelPath, "utf8");
     const runtimeContent = fs.readFileSync(runtimePath, "utf8");
+    const tempStylesContent = fs.readFileSync(tempStylesPath, "utf8");
 
     assert.match(panelContent, /data-ui-inspector-panel/);
     assert.match(panelContent, /UI-Inspektor/);
-    assert.match(panelContent, /Nur Anzeige/);
+    assert.match(panelContent, /Temporäre Vorschau/);
     assert.doesNotMatch(panelContent, /module\.exports/);
     assert.doesNotMatch(panelContent, /require\s*\(/);
     assert.doesNotMatch(panelContent, /localStorage/);
@@ -322,6 +325,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(panelContent, /store/i);
     assert.doesNotMatch(panelContent, /Speichern/);
     assert.doesNotMatch(panelContent, /Anwenden/);
+    assert.doesNotMatch(panelContent, /Übernehmen/);
     assert.doesNotMatch(panelContent, /<input|\btype\s*=\s*['"](range|text|number)['"]/i);
 
     assert.match(runtimeContent, /getAllowedControlsForSelectedId/);
@@ -332,6 +336,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(runtimeContent, /localStorage/);
     assert.doesNotMatch(runtimeContent, /ui-inspector:save/);
     assert.doesNotMatch(runtimeContent, /inspector:save/);
+    assert.doesNotMatch(tempStylesContent, /localStorage/);
+    assert.doesNotMatch(tempStylesContent, /ipc/i);
   });
   await run("M10 UI-Inspector Overlay-Toggle ist klar begrenzt", () => {
     const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");

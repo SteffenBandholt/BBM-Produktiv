@@ -6,6 +6,8 @@ export function createUiInspectorOverlay(options = {}) {
   let rootElement = null;
   let overlayRoot = null;
   let selectedId = '';
+  let selectedTargetKey = '';
+  let selectedLabel = '';
   let captureHost = null;
   let captureHandler = null;
   let domSequence = 0;
@@ -39,11 +41,11 @@ export function createUiInspectorOverlay(options = {}) {
     badge.style.padding = '6px 8px';
     badge.style.borderRadius = '4px';
     badge.style.pointerEvents = 'none';
-    badge.textContent = `Auswahl: ${selectedId || '-'}`;
+    badge.textContent = `Auswahl: ${selectedLabel || selectedId || '-'}`;
     return badge;
   }
 
-  function createFrame(doc, id, rect) {
+  function createFrame(doc, id, rect, isSelected) {
     const frame = doc.createElement('div');
     frame.setAttribute('data-ui-inspector-overlay-frame', id);
     frame.style.position = 'fixed';
@@ -52,10 +54,10 @@ export function createUiInspectorOverlay(options = {}) {
     frame.style.width = `${rect.width}px`;
     frame.style.height = `${rect.height}px`;
     frame.style.boxSizing = 'border-box';
-    frame.style.border = selectedId === id ? '2px solid rgba(255, 168, 42, 0.98)' : '1px solid rgba(43, 157, 255, 0.95)';
-    frame.style.background = selectedId === id ? 'rgba(255, 168, 42, 0.16)' : 'rgba(43, 157, 255, 0.08)';
+    frame.style.border = isSelected ? '2px solid rgba(255, 168, 42, 0.98)' : '1px solid rgba(43, 157, 255, 0.95)';
+    frame.style.background = isSelected ? 'rgba(255, 168, 42, 0.16)' : 'rgba(43, 157, 255, 0.08)';
     frame.style.pointerEvents = 'none';
-    if (selectedId === id) frame.setAttribute('data-ui-inspector-selected', 'true');
+    if (isSelected) frame.setAttribute('data-ui-inspector-selected', 'true');
 
     const label = doc.createElement('div');
     label.setAttribute('data-ui-inspector-overlay-label', id);
@@ -67,7 +69,7 @@ export function createUiInspectorOverlay(options = {}) {
     label.style.whiteSpace = 'nowrap';
     label.style.overflow = 'hidden';
     label.style.textOverflow = 'ellipsis';
-    label.style.background = selectedId === id ? 'rgba(255, 168, 42, 0.98)' : 'rgba(43, 157, 255, 0.95)';
+    label.style.background = isSelected ? 'rgba(255, 168, 42, 0.98)' : 'rgba(43, 157, 255, 0.95)';
     label.style.color = '#ffffff';
     label.style.font = '11px/1.2 monospace';
     label.style.padding = '2px 4px';
@@ -82,15 +84,19 @@ export function createUiInspectorOverlay(options = {}) {
     const nodes = rootElement.querySelectorAll(selector);
     const hits = [];
     domSequence = 0;
+    const idCounter = new Map();
     for (const node of nodes) {
       domSequence += 1;
       if (!node || typeof node.getBoundingClientRect !== 'function') continue;
       const id = String(node.getAttribute('data-ui-inspector-id') || '').trim();
       if (!id) continue;
+      const instanceIndex = (idCounter.get(id) || 0) + 1;
+      idCounter.set(id, instanceIndex);
       const rect = node.getBoundingClientRect();
       if (!rect || rect.width <= 0 || rect.height <= 0) continue;
       if (x < rect.left || x > rect.left + rect.width || y < rect.top || y > rect.top + rect.height) continue;
-      hits.push({ id, rect, area: rect.width * rect.height, depth: id.split('.').length, index: domSequence });
+      const duplicateLabel = instanceIndex > 1 ? `${id} #${instanceIndex}` : id;
+      hits.push({ id, key: `${id}::${instanceIndex}`, label: duplicateLabel, rect, area: rect.width * rect.height, depth: id.split('.').length, index: domSequence });
     }
     hits.sort((a, b) => a.area - b.area || b.depth - a.depth || a.index - b.index);
     return hits;
@@ -106,8 +112,10 @@ export function createUiInspectorOverlay(options = {}) {
     }
   }
 
-  function select(id) {
+  function select(id, selectOptions = {}) {
     selectedId = String(id || '').trim();
+    selectedTargetKey = String(selectOptions?.targetKey || '').trim();
+    selectedLabel = String(selectOptions?.label || '').trim();
     removeHitList();
     options.onSelect?.(selectedId);
     return refresh();
@@ -115,6 +123,8 @@ export function createUiInspectorOverlay(options = {}) {
 
   function clearSelection() {
     selectedId = '';
+    selectedTargetKey = '';
+    selectedLabel = '';
     removeHitList();
     options.onClearSelection?.();
     return refresh();
@@ -148,15 +158,15 @@ export function createUiInspectorOverlay(options = {}) {
     for (const hit of hits) {
       const option = doc.createElement('button');
       option.type = 'button';
-      option.setAttribute('data-ui-inspector-hit-option', hit.id);
-      option.textContent = hit.id;
+      option.setAttribute('data-ui-inspector-hit-option', hit.key);
+      option.textContent = hit.label;
       option.style.pointerEvents = 'auto';
       option.style.textAlign = 'left';
       option.onclick = (event) => {
         event?.preventDefault?.();
         event?.stopPropagation?.();
         event?.stopImmediatePropagation?.();
-        select(hit.id);
+        select(hit.id, { targetKey: hit.key, label: hit.label });
       };
       list.append(option);
     }
@@ -169,13 +179,18 @@ export function createUiInspectorOverlay(options = {}) {
     clearOverlayChildren();
 
     const nodes = rootElement.querySelectorAll(selector);
+    const idCounter = new Map();
     for (const node of nodes) {
       if (!node || typeof node.getBoundingClientRect !== 'function') continue;
       const id = String(node.getAttribute('data-ui-inspector-id') || '').trim();
       if (!id) continue;
+      const instanceIndex = (idCounter.get(id) || 0) + 1;
+      idCounter.set(id, instanceIndex);
+      const frameKey = `${id}::${instanceIndex}`;
+      const isSelected = selectedId === id && (!selectedTargetKey || selectedTargetKey === frameKey);
       const rect = node.getBoundingClientRect();
       if (!rect || rect.width <= 0 || rect.height <= 0) continue;
-      overlayRoot.append(createFrame(rootElement.ownerDocument || globalThis.document, id, rect));
+      overlayRoot.append(createFrame(rootElement.ownerDocument || globalThis.document, id, rect, isSelected));
     }
     overlayRoot.append(createBadge(rootElement.ownerDocument || globalThis.document));
     return true;

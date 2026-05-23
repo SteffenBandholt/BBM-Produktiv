@@ -10,8 +10,9 @@
 - Marker-IDs sind technisch in der bestehenden Restarbeiten-UI verankert.
 - Ab M10 kann ein visuelles Overlay die Marker rahmen und die Inspector-ID anzeigen.
 - Ab M12 zeigt ein Inspector-Panel die für den gewählten Bereich erlaubten Stellschrauben.
-- Noch keine Anwendung.
+- M13 erlaubt temporäre Vorschau für markierte Bereiche.
 - Noch keine Speicherung.
+- Keine dauerhafte Layoutänderung durch M13.
 - Noch keine Layoutänderung.
 
 ## 3. Fachliche Bereichsstruktur

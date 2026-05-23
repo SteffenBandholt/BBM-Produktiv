@@ -64,4 +64,13 @@ Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 - Auswahl läuft weiterhin über Trefferliste am Klickpunkt.
 - Panel zeigt den ausgewählten Bereich und die erlaubten Stellschrauben.
 - Noch keine Anwendung, noch keine Speicherung, noch keine Layoutänderung.
-- Nächster Meilenstein: M13 (Werte temporär anwenden, noch nicht speichern).
+- Nächster Meilenstein: M14 (Speichern / Standard zurück).
+
+
+## Statusupdate M13
+- M13 ist erledigt.
+- Auswahl läuft über Trefferliste am Klickpunkt.
+- Panel zeigt Stellschrauben und erlaubt temporäre Vorschau im laufenden Renderer.
+- Keine Speicherung (kein localStorage/IPC/DB).
+- Temporäre Änderungen werden beim Ausschalten vollständig zurückgesetzt.
+- Nächster Meilenstein: M14 (Speichern / Standard zurück).

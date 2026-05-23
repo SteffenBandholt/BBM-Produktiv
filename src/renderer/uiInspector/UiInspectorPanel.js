@@ -3,7 +3,7 @@ function createPanelRoot(doc) {
   panel.setAttribute('data-ui-inspector-panel', 'true');
   panel.style.position = 'fixed';
   panel.style.right = '12px';
-  panel.style.bottom = '12px';
+  panel.style.top = '12px';
   panel.style.width = '340px';
   panel.style.maxWidth = 'calc(100vw - 24px)';
   panel.style.background = 'rgba(20, 25, 35, 0.96)';
@@ -18,10 +18,44 @@ function createPanelRoot(doc) {
   return panel;
 }
 
-function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = '' } = {}) {
-  panelRoot.replaceChildren();
+function addControlButtons(doc, panelRoot, controls, onControl) {
+  const buttonConfig = [
+    { key: 'Breite', actions: [['- 5px', 'width.decrease'], ['+ 5px', 'width.increase']] },
+    { key: 'Höhe', actions: [['- 5px', 'height.decrease'], ['+ 5px', 'height.increase']] },
+    { key: 'Abstand links', actions: [['- 5px', 'marginLeft.decrease'], ['+ 5px', 'marginLeft.increase']] },
+    { key: 'Abstand oben', actions: [['- 5px', 'marginTop.decrease'], ['+ 5px', 'marginTop.increase']] },
+    { key: 'Sichtbarkeit', actions: [['an/aus', 'visibility.toggle']] },
+  ];
 
+  const controlsSet = new Set((controls || []).map((entry) => String(entry)));
+  for (const config of buttonConfig) {
+    if (!controlsSet.has(config.key)) continue;
+    const row = doc.createElement('div');
+    row.textContent = `${config.key}: `;
+    row.style.marginBottom = '4px';
+    for (const [label, action] of config.actions) {
+      const btn = doc.createElement('button');
+      btn.type = 'button';
+      btn.textContent = label;
+      btn.setAttribute('data-ui-inspector-control-action', action);
+      btn.onclick = () => onControl?.(action);
+      row.append(btn);
+    }
+    panelRoot.append(row);
+  }
+
+  const reset = doc.createElement('button');
+  reset.type = 'button';
+  reset.textContent = 'Zurücksetzen';
+  reset.setAttribute('data-ui-inspector-control-action', 'reset');
+  reset.onclick = () => onControl?.('reset');
+  panelRoot.append(reset);
+}
+
+function renderPanelContent(panelRoot, { selectedId = '', selectedTargetKey = '', controls = [], note = '', targetMissing = false, availableTargets = [], onSelectTarget = null, onControl = null } = {}) {
+  panelRoot.replaceChildren();
   const doc = panelRoot.ownerDocument || globalThis.document;
+
   const title = doc.createElement('div');
   title.textContent = 'UI-Inspektor';
   title.style.fontWeight = '700';
@@ -52,10 +86,58 @@ function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = 
   }
 
   const hint = doc.createElement('div');
-  hint.textContent = 'Nur Anzeige – Änderungen folgen erst in M13.';
+  hint.textContent = 'Temporäre Vorschau – nichts wird gespeichert.';
   hint.style.opacity = '0.9';
+  hint.style.marginBottom = '4px';
 
-  panelRoot.append(title, selectedLabel, controlsTitle, controlsList, hint);
+  const shiftHint = doc.createElement('div');
+  shiftHint.textContent = 'Vorschau kann benachbarte Bereiche temporär verschieben.';
+  shiftHint.style.opacity = '0.9';
+  shiftHint.style.marginBottom = '8px';
+
+  panelRoot.append(title, selectedLabel, controlsTitle, controlsList, hint, shiftHint);
+
+  if (Array.isArray(availableTargets) && availableTargets.length > 0) {
+    const targetLabel = doc.createElement('div');
+    targetLabel.textContent = 'Bereichsauswahl:';
+    targetLabel.style.marginBottom = '4px';
+
+    const targetSelect = doc.createElement('select');
+    targetSelect.setAttribute('data-ui-inspector-target-select', 'true');
+    targetSelect.style.marginBottom = '8px';
+    targetSelect.style.width = '100%';
+
+    const emptyOption = doc.createElement('option');
+    emptyOption.value = '';
+    emptyOption.textContent = '-- Bereich wählen --';
+    targetSelect.append(emptyOption);
+
+    for (const targetEntry of availableTargets) {
+      const targetId = String(targetEntry?.id || '');
+      const targetLabelValue = String(targetEntry?.label || targetId);
+      const targetKey = String(targetEntry?.key || targetId);
+      if (!targetId) continue;
+      const option = doc.createElement('option');
+      option.value = targetKey;
+      option.textContent = targetLabelValue;
+      if (targetKey === String(selectedTargetKey) || (!selectedTargetKey && targetId === String(selectedId))) option.selected = true;
+      targetSelect.append(option);
+    }
+
+    targetSelect.onchange = () => onSelectTarget?.(targetSelect.value);
+    panelRoot.append(targetLabel, targetSelect);
+  }
+
+  if (targetMissing) {
+    const warn = doc.createElement('div');
+    warn.textContent = 'Ziel nicht gefunden.';
+    panelRoot.append(warn);
+    return;
+  }
+
+  if (selectedId && controls.length > 0) {
+    addControlButtons(doc, panelRoot, controls, onControl);
+  }
 }
 
 export function createUiInspectorPanel(options = {}) {
@@ -71,10 +153,8 @@ export function createUiInspectorPanel(options = {}) {
   function mount(target) {
     const doc = target?.ownerDocument || globalThis.document;
     if (!doc || typeof doc.createElement !== 'function') return false;
-
     const host = target || doc.body;
     if (!host || typeof host.append !== 'function') return false;
-
     mountHost = host;
     const node = ensurePanel(doc);
     if (!node.isConnected) mountHost.append(node);

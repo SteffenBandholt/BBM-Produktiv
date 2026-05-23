@@ -1,0 +1,74 @@
+const assert = require('node:assert/strict');
+const path = require('node:path');
+const fs = require('node:fs');
+const { importEsmFromFile } = require('./_esmLoader.cjs');
+
+function mkEl(id){return {attrs:{'data-ui-inspector-id':id},style:{cssText:'',width:'',height:'',marginLeft:'',marginTop:'',visibility:''},getAttribute(n){return this.attrs[n];}}}
+
+(async function run(){
+  const runtimePath = path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorRuntime.js');
+  const runtimeSource = fs.readFileSync(runtimePath,'utf8');
+  assert.doesNotMatch(runtimeSource,/localStorage|ipc|save/i);
+  const { createUiInspectorRuntime } = await importEsmFromFile(runtimePath);
+
+  const target = mkEl('restarbeiten.editbox.kurztext');
+  const duplicateOne = mkEl('restarbeiten.filterleiste.verortung.feld');
+  const duplicateTwo = mkEl('restarbeiten.filterleiste.verortung.feld');
+  const root = {
+    ownerDocument:{body:{}},
+    querySelector(sel){
+      if (sel.includes('restarbeiten.editbox.kurztext')) return target;
+      if (sel.includes('restarbeiten.filterleiste.verortung.feld')) return duplicateOne;
+      if (sel.includes('restarbeiten.filterleiste.verortung')) return target;
+      return null;
+    },
+    querySelectorAll(sel){
+      if (sel !== '[data-ui-inspector-id]') return [];
+      return [
+        { getAttribute: () => 'restarbeiten.filterleiste.verortung' },
+        { getAttribute: () => 'restarbeiten.editbox.kurztext' },
+        { getAttribute: () => 'restarbeiten.editbox.kurztext' },
+        duplicateOne,
+        duplicateTwo,
+      ];
+    }
+  };
+  let panelState = null;
+  const panel = { mount(){return true;}, unmount(){return true;}, clear(){return true;}, render(s){panelState=s;return true;} };
+  let selectCalls = 0;
+  const overlay = {
+    sid:'',
+    selectedTargetKey: '',
+    selectedLabel: '',
+    mount(_r,o){ this.onSelect=o.onSelect; this.onClearSelection=o.onClearSelection; return true;},
+    unmount(){return true;},
+    refresh(){return true;},
+    select(id, options = {}){ this.sid = id; this.selectedTargetKey = options.targetKey || ''; this.selectedLabel = options.label || ''; selectCalls += 1; this.onSelect?.(id); return true; },
+    getSelectedId(){return this.sid;},
+    clearSelection(){this.sid=''; this.onClearSelection?.(); return true;}
+  };
+
+  const rt = createUiInspectorRuntime({overlay,panel});
+  assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.filterleiste.verortung'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
+  assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.filterleiste.klassenfilter'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
+  assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.filterleiste.verortung.feld'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
+  assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.liste.metabereich'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
+  assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.liste.textbereich'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
+  assert.equal(rt.activateOverlay(root), true);
+  overlay.sid = 'restarbeiten.editbox.kurztext'; overlay.onSelect(overlay.sid);
+  assert.equal(panelState.availableTargets.some((entry) => entry.label === 'restarbeiten.filterleiste.verortung.feld #1'), true);
+  assert.equal(panelState.availableTargets.some((entry) => entry.label === 'restarbeiten.filterleiste.verortung.feld #2'), true);
+  panelState.onSelectTarget('restarbeiten.filterleiste.verortung.feld::2');
+  assert.equal(selectCalls, 1);
+  assert.equal(overlay.selectedTargetKey, 'restarbeiten.filterleiste.verortung.feld::2');
+  assert.equal(overlay.selectedLabel, 'restarbeiten.filterleiste.verortung.feld #2');
+  assert.equal(panelState.selectedId, 'restarbeiten.filterleiste.verortung.feld');
+  assert.equal(rt.getSelectedElementId(), 'restarbeiten.filterleiste.verortung.feld');
+  panelState.onControl('width.increase');
+  assert.equal(duplicateTwo.style.width, '5px');
+  panelState.onControl('reset');
+  assert.equal(duplicateTwo.style.cssText, '');
+  rt.deactivateOverlay();
+  assert.equal(target.style.cssText, '');
+  console.log('ok - uiInspectorRuntime.test');
+})();

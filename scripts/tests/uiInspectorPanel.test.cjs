@@ -48,6 +48,7 @@ function createFakeDomForRuntime() {
       removeChild(child) { this.children = this.children.filter((e) => e !== child); child.parentElement = null; child.isConnected = false; },
       setAttribute(name, value) { this.attributes[name] = String(value); },
       getAttribute(name) { return this.attributes[name]; },
+      value: '',
       click() { this.onclick?.({ preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {} }); },
     };
   }
@@ -76,6 +77,8 @@ function createFakeDomForRuntime() {
   const panelNode = document.body.children.find((c) => c.attributes['data-ui-inspector-panel'] === 'true');
   assert.ok(panelNode);
   assert.equal(panelNode.style.pointerEvents, 'auto');
+  assert.equal(panelNode.getAttribute('data-ui-inspector-panel'), 'true');
+  assert.equal(panelNode.style.top, '12px');
 
   assert.equal(panel.render({ selectedId: 'restarbeiten.editbox.kurztext', controls: ['Breite', 'Höhe', 'Sichtbarkeit'] }), true);
   const text = collectText(panelNode);
@@ -84,9 +87,17 @@ function createFakeDomForRuntime() {
   assert.match(text, /Breite/);
   assert.match(text, /Höhe/);
   assert.match(text, /Sichtbarkeit/);
-  assert.match(text, /Nur Anzeige/);
+  assert.match(text, /Temporäre Vorschau/);
+  assert.match(text, /temporär verschieben/);
   assert.doesNotMatch(text, /Speichern/);
   assert.doesNotMatch(text, /Anwenden/);
+
+  assert.equal(panel.render({ selectedId: 'restarbeiten.editbox.kurztext', controls: ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit'], onControl: ()=>{} }), true);
+  const buttonText = collectText(panelNode);
+  assert.match(buttonText, /\+ 5px/);
+  assert.match(buttonText, /- 5px/);
+  assert.match(buttonText, /Zurücksetzen/);
+  assert.doesNotMatch(buttonText, /Übernehmen/);
 
   assert.equal(panel.unmount(), true);
   assert.equal(document.body.children.some((c) => c.attributes['data-ui-inspector-panel'] === 'true'), false);
@@ -98,6 +109,8 @@ function createFakeDomForRuntime() {
   const rootNodes = [
     { getAttribute: (n) => n === 'data-ui-inspector-id' ? 'restarbeiten.main' : null, getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 }) },
     { getAttribute: (n) => n === 'data-ui-inspector-id' ? 'restarbeiten.editbox.meta' : null, getBoundingClientRect: () => ({ left: 20, top: 20, width: 100, height: 40 }) },
+    { getAttribute: (n) => n === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld' : null, getBoundingClientRect: () => ({ left: 50, top: 20, width: 80, height: 20 }) },
+    { getAttribute: (n) => n === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld' : null, getBoundingClientRect: () => ({ left: 150, top: 20, width: 80, height: 20 }) },
   ];
   const root = { ownerDocument: runtimeDocument, querySelectorAll: (sel) => sel === '[data-ui-inspector-id]' ? rootNodes : [] };
   assert.equal(runtime.activateOverlay(root), true);
@@ -107,6 +120,13 @@ function createFakeDomForRuntime() {
   assert.ok(mountedPanel);
   assert.match(collectText(mountedPanel), /restarbeiten\.editbox\.meta/);
   assert.match(collectText(mountedPanel), /Breite/);
+  const targetSelect = mountedPanel.children.find((c) => c.attributes?.['data-ui-inspector-target-select'] === 'true');
+  assert.ok(targetSelect);
+  const duplicateOption = targetSelect.children.find((child) => String(child.textContent).includes('#2'));
+  assert.ok(duplicateOption);
+  targetSelect.value = duplicateOption.value;
+  targetSelect.onchange?.();
+  assert.match(collectText(mountedPanel), /restarbeiten\.filterleiste\.verortung\.feld/);
   assert.equal(runtime.deactivateOverlay(), true);
   assert.equal(runtimeDocument.body.children.some((c) => c.attributes['data-ui-inspector-panel'] === 'true'), false);
 
