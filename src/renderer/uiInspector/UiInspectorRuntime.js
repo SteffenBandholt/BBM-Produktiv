@@ -100,6 +100,20 @@ function getOrderRank(id) {
   return 9999;
 }
 
+function buildLevelMap(sortedTargets) {
+  const levelById = new Map();
+  sortedTargets.forEach((target) => {
+    if (!target.parentId) {
+      levelById.set(target.id, 1);
+      return;
+    }
+
+    const parentLevel = levelById.get(target.parentId);
+    levelById.set(target.id, typeof parentLevel === 'number' ? parentLevel + 1 : 1);
+  });
+  return levelById;
+}
+
 function buildTargets(rootElement) {
   if (!rootElement?.querySelectorAll) return [];
 
@@ -129,7 +143,7 @@ function buildTargets(rootElement) {
       key: `${id}::${nextInstance}`,
       id,
       label: totalCount > 1 ? `${labelBase} #${nextInstance}` : labelBase,
-      level: Math.max(0, segments.length - 1),
+      level: 1,
       parentId: '',
       element: node,
       instance: nextInstance,
@@ -165,6 +179,11 @@ function buildTargets(rootElement) {
 
   result.forEach((target) => {
     delete target._domIndex;
+  });
+
+  const levelById = buildLevelMap(result);
+  result.forEach((target) => {
+    target.level = levelById.get(target.id) || 1;
   });
   return result;
 }
