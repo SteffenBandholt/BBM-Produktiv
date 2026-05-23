@@ -159,3 +159,9 @@ Editbox:
 - Ab M11 erfolgt die Bereichsauswahl über eine temporäre Trefferliste am Klickpunkt.
 - Keine Handles pro Rahmen als primärer Auswahlweg.
 - Keine Einstellfunktion in M11.
+
+
+## M13.1 Auswahlhierarchie (Panel)
+- Die Auswahl wird hierarchisch dargestellt (Parent vor Child).
+- Mehrfach vorhandene Marker werden instanzscharf als `#1`, `#2`, `#3` geführt.
+- Parent-Bereiche (z. B. `restarbeiten.filterleiste.verortung`) bleiben separat auswählbar neben Child-Feldern (`...verortung.feld #n`).

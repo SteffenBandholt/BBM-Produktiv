@@ -59,6 +59,13 @@ Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 „Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst und die erste Restarbeiten-Pilot-Landkarte sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M10 (Overlay nur anzeigen; weiterhin ohne Panel und ohne sichtbare Fachfunktion).“
 
 
+## Statusupdate M13.1
+- M13.1 ist erledigt.
+- Hierarchische Bereichsauswahl im Panel eingeführt (Parent/Child + Instanzen #1/#2).
+- Auswahl bleibt read-only: keine Layoutänderung, keine Speicherung.
+- PR #155 bleibt blockiert und wurde nicht übernommen.
+- Nächster Meilenstein: M13.2 – Temporäre Vorschau.
+
 ## Statusupdate M12
 - M12 ist erledigt.
 - Auswahl läuft weiterhin über Trefferliste am Klickpunkt.

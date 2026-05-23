@@ -61,3 +61,9 @@
 **Beschluss:** Das M12-Panel bleibt rein lesend und zeigt nur erlaubte Stellschrauben.
 
 **Begründung:** Anwendung und Speicherung werden bewusst getrennt in M13/M14 umgesetzt.
+
+
+## Entscheidung 012
+**Beschluss:** Auswahlmodell wird vor temporärer Layoutänderung stabilisiert.
+
+**Begründung:** Ohne sichere Parent/Child-Auswahl ist Layoutbearbeitung nicht sinnvoll abnahmefähig.

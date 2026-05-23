@@ -24,6 +24,7 @@ Aktueller Stand:
 - [x] M9 Restarbeiten-DOM-Markierungen minimal einführen
 - [x] M10 Overlay nur anzeigen
 - [x] M12 Panel zeigt erlaubte Stellschrauben
+- [x] M13.1 Hierarchische Auswahl + Parent/Child stabilisiert (read-only)
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -226,3 +227,10 @@ Hinweis:
 - Geänderte Dateien: `src/renderer/uiInspector/UiInspectorPanel.js`, `src/renderer/uiInspector/UiInspectorRuntime.js`, `src/renderer/uiInspector/UiInspectorOverlay.js`, `scripts/tests/uiInspectorPanel.test.cjs`, `scripts/tests/restarbeitenModule.test.cjs`, `docs/UI_INSPEKTOR_AUFGABENHEFT.md`, `docs/UI_INSPEKTOR_START_HIER.md`, `docs/ui-landkarten/RESTARBEITEN.md`, `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`.
 - Tests: `node scripts/tests/uiInspectorCore.test.cjs`, `node scripts/tests/uiInspectorRegistry.test.cjs`, `node scripts/tests/uiInspectorMapSchema.test.cjs`, `node scripts/tests/uiInspectorOverlay.test.cjs`, `node scripts/tests/restarbeitenModule.test.cjs`, `node scripts/tests/uiInspectorPanel.test.cjs`, `npm test`.
 - Nächster Schritt: M13 – Werte temporär anwenden, aber noch nicht speichern.
+
+
+## M13.1 Abschluss
+- Status: erledigt.
+- Ergebnis: hierarchische Bereichsauswahl, Parent/Child getrennt auswählbar, Mehrfachfelder instanzscharf (#1/#2/#3), Overlay/Panel synchron.
+- Weiterhin read-only: keine temporäre Style-Anwendung, keine Speicherung.
+- Nächster Schritt: M13.2 – Temporäre Vorschau auf stabiler Auswahl wieder aufnehmen.

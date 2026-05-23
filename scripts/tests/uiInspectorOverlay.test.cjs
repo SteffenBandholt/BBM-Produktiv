@@ -51,11 +51,11 @@ function createInspectableRoot(document) {
   const { document } = createFakeDom();
   const overlay = createUiInspectorOverlay();
   const root = createInspectableRoot(document);
-
-  assert.equal(overlay.mount(root), true);
+  const targets = root.querySelectorAll('[data-ui-inspector-id]').map((n,i)=>({ key: `${n.getAttribute('data-ui-inspector-id')}::${i+1}`, id:n.getAttribute('data-ui-inspector-id'), label:n.getAttribute('data-ui-inspector-id'), level:1, parentId:'', element:n }));
+  assert.equal(overlay.mount(root,{targets}), true);
   const overlayRoot = document.body.children[0];
   assert.equal(overlayRoot.style.pointerEvents, 'none');
-  assert.equal(overlayRoot.children.some((c) => c.attributes['data-ui-inspector-overlay-frame'] === 'restarbeiten.main'), true);
+  assert.equal(overlayRoot.children.some((c) => c.attributes['data-ui-inspector-overlay-id'] === 'restarbeiten.main'), true);
   assert.equal(document.listenerCount('pointerdown'), 1);
 
   const hits = overlay.getHitsAtPoint(65, 55).map((h) => h.id);
@@ -75,7 +75,7 @@ function createInspectableRoot(document) {
   assert.ok(hitList);
   assert.equal(hitList.style.pointerEvents, 'auto');
   const firstOption = hitList.children[0];
-  assert.equal(firstOption.attributes['data-ui-inspector-hit-option'], 'restarbeiten.filterleiste.meta.status');
+  assert.match(firstOption.attributes['data-ui-inspector-hit-option'], /restarbeiten\.filterleiste\.meta\.status::/);
 
   const firstHitListRef = hitList;
   const preventedHitOption = { value: false };
@@ -111,8 +111,9 @@ function createInspectableRoot(document) {
   firstOption.click();
 
   assert.equal(overlay.getSelectedId(), 'restarbeiten.filterleiste.meta.status');
+  assert.match(overlay.getSelectedTargetKey(), /restarbeiten\.filterleiste\.meta\.status::/);
   const selectedFrame = overlayRoot.children.find((c) => c.attributes['data-ui-inspector-selected'] === 'true');
-  assert.equal(selectedFrame.attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.filterleiste.meta.status');
+  assert.match(selectedFrame.attributes['data-ui-inspector-overlay-id'], /restarbeiten\.filterleiste\.meta\.status/);
   const badge = overlayRoot.children.find((c) => c.attributes['data-ui-inspector-selection-badge'] === 'true');
   assert.equal(badge.textContent, 'Auswahl: restarbeiten.filterleiste.meta.status');
   assert.equal(overlayRoot.children.some((c) => c.attributes['data-ui-inspector-hit-list'] === 'true'), false);
