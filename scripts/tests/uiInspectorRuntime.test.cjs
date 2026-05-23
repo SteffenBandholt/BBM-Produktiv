@@ -12,10 +12,13 @@ function mkEl(id){return {attrs:{'data-ui-inspector-id':id},style:{cssText:'',wi
   const { createUiInspectorRuntime } = await importEsmFromFile(runtimePath);
 
   const target = mkEl('restarbeiten.editbox.kurztext');
+  const duplicateOne = mkEl('restarbeiten.filterleiste.verortung.feld');
+  const duplicateTwo = mkEl('restarbeiten.filterleiste.verortung.feld');
   const root = {
     ownerDocument:{body:{}},
     querySelector(sel){
       if (sel.includes('restarbeiten.editbox.kurztext')) return target;
+      if (sel.includes('restarbeiten.filterleiste.verortung.feld')) return duplicateOne;
       if (sel.includes('restarbeiten.filterleiste.verortung')) return target;
       return null;
     },
@@ -25,6 +28,8 @@ function mkEl(id){return {attrs:{'data-ui-inspector-id':id},style:{cssText:'',wi
         { getAttribute: () => 'restarbeiten.filterleiste.verortung' },
         { getAttribute: () => 'restarbeiten.editbox.kurztext' },
         { getAttribute: () => 'restarbeiten.editbox.kurztext' },
+        duplicateOne,
+        duplicateTwo,
       ];
     }
   };
@@ -49,13 +54,14 @@ function mkEl(id){return {attrs:{'data-ui-inspector-id':id},style:{cssText:'',wi
   assert.deepEqual(rt.getAllowedControlsForSelectedId('restarbeiten.liste.textbereich'), ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sichtbarkeit']);
   assert.equal(rt.activateOverlay(root), true);
   overlay.sid = 'restarbeiten.editbox.kurztext'; overlay.onSelect(overlay.sid);
-  assert.deepEqual(panelState.availableTargets, ['restarbeiten.editbox.kurztext', 'restarbeiten.filterleiste.verortung']);
-  panelState.onSelectTarget('restarbeiten.filterleiste.verortung');
+  assert.equal(panelState.availableTargets.some((entry) => entry.label === 'restarbeiten.filterleiste.verortung.feld #1'), true);
+  assert.equal(panelState.availableTargets.some((entry) => entry.label === 'restarbeiten.filterleiste.verortung.feld #2'), true);
+  panelState.onSelectTarget('restarbeiten.filterleiste.verortung.feld::2');
   assert.equal(selectCalls, 1);
-  assert.equal(panelState.selectedId, 'restarbeiten.filterleiste.verortung');
-  assert.equal(rt.getSelectedElementId(), 'restarbeiten.filterleiste.verortung');
+  assert.equal(panelState.selectedId, 'restarbeiten.filterleiste.verortung.feld');
+  assert.equal(rt.getSelectedElementId(), 'restarbeiten.filterleiste.verortung.feld');
   panelState.onControl('width.increase');
-  assert.equal(target.style.width, '5px');
+  assert.equal(duplicateTwo.style.width, '5px');
   panelState.onControl('reset');
   assert.equal(target.style.cssText, '');
   rt.deactivateOverlay();

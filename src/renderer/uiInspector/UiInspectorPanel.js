@@ -52,7 +52,7 @@ function addControlButtons(doc, panelRoot, controls, onControl) {
   panelRoot.append(reset);
 }
 
-function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = '', targetMissing = false, availableTargets = [], onSelectTarget = null, onControl = null } = {}) {
+function renderPanelContent(panelRoot, { selectedId = '', selectedTargetKey = '', controls = [], note = '', targetMissing = false, availableTargets = [], onSelectTarget = null, onControl = null } = {}) {
   panelRoot.replaceChildren();
   const doc = panelRoot.ownerDocument || globalThis.document;
 
@@ -88,9 +88,14 @@ function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = 
   const hint = doc.createElement('div');
   hint.textContent = 'Temporäre Vorschau – nichts wird gespeichert.';
   hint.style.opacity = '0.9';
-  hint.style.marginBottom = '8px';
+  hint.style.marginBottom = '4px';
 
-  panelRoot.append(title, selectedLabel, controlsTitle, controlsList, hint);
+  const shiftHint = doc.createElement('div');
+  shiftHint.textContent = 'Vorschau kann benachbarte Bereiche temporär verschieben.';
+  shiftHint.style.opacity = '0.9';
+  shiftHint.style.marginBottom = '8px';
+
+  panelRoot.append(title, selectedLabel, controlsTitle, controlsList, hint, shiftHint);
 
   if (Array.isArray(availableTargets) && availableTargets.length > 0) {
     const targetLabel = doc.createElement('div');
@@ -107,11 +112,15 @@ function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = 
     emptyOption.textContent = '-- Bereich wählen --';
     targetSelect.append(emptyOption);
 
-    for (const targetId of availableTargets) {
+    for (const targetEntry of availableTargets) {
+      const targetId = String(targetEntry?.id || '');
+      const targetLabelValue = String(targetEntry?.label || targetId);
+      const targetKey = String(targetEntry?.key || targetId);
+      if (!targetId) continue;
       const option = doc.createElement('option');
-      option.value = String(targetId);
-      option.textContent = String(targetId);
-      if (String(targetId) === String(selectedId)) option.selected = true;
+      option.value = targetKey;
+      option.textContent = targetLabelValue;
+      if (targetKey === String(selectedTargetKey) || (!selectedTargetKey && targetId === String(selectedId))) option.selected = true;
       targetSelect.append(option);
     }
 
