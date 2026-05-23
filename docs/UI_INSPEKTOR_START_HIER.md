@@ -60,7 +60,7 @@ Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 
 
 ## Statusupdate M13.1
-- M13.1 ist erledigt.
+- M13.1 ist im PR umgesetzt, lokale Abnahme offen.
 - Hierarchische Bereichsauswahl im Panel eingeführt (Parent/Child + Instanzen #1/#2).
 - Auswahl bleibt read-only: keine Layoutänderung, keine Speicherung.
 - PR #155 bleibt blockiert und wurde nicht übernommen.
