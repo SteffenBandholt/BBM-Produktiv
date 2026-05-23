@@ -14,6 +14,11 @@ const { importEsmFromFile } = require('./_esmLoader.cjs');
   };
   const b = { style: { cssText: 'width:10px;', width: '10px', height: '', marginLeft: '', marginTop: '', visibility: '' } };
 
+  const c = {
+    style: { cssText: '', width: '', height: '', marginLeft: '', marginTop: '', visibility: '' },
+    getBoundingClientRect() { return { width: 3, height: 3 }; },
+  };
+
   styles.applyDelta(a, 'width', 5, 'a'); assert.equal(a.style.width, '125px');
   styles.applyDelta(a, 'height', 5, 'a'); assert.equal(a.style.height, '45px');
   styles.applyDelta(a, 'marginLeft', 5, 'a'); assert.equal(a.style.marginLeft, '5px');
@@ -23,8 +28,16 @@ const { importEsmFromFile } = require('./_esmLoader.cjs');
   assert.ok(styles.getPreviewState('a'));
 
   styles.applyDelta(b, 'width', 5, 'b');
+  assert.equal(b.style.width, '15px');
   styles.resetElement(b, 'b');
   assert.equal(b.style.cssText, 'width:10px;');
+
+  styles.applyDelta(c, 'width', -5, 'c');
+  assert.equal(c.style.width, '1px');
+  styles.applyDelta(c, 'height', -5, 'c');
+  assert.equal(c.style.height, '1px');
+  styles.applyDelta(c, 'marginLeft', -5, 'c');
+  assert.equal(c.style.marginLeft, '-5px');
 
   styles.resetAll();
   assert.equal(a.style.cssText, '');

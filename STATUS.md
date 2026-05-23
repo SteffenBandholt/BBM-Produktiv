@@ -2198,3 +2198,9 @@ Wichtig:
 - PDF wird im Restarbeiten-Ordner gespeichert.
 - PDF wird intern in der BBM/Chromium-Vorschau angezeigt.
 - Externer Adobe-/Windows-Viewer ist nicht mehr der primäre Restarbeiten-Vorschauweg.
+
+
+## UI-Inspektor M13 Nachkorrektur (Breite/Höhe Untergrenze)
+- `applyDelta` begrenzt `width`/`height` jetzt auf mindestens `1px` (kein negativer oder 0-Wert).
+- Tests ergänzt: Untergrenze für width/height sowie weiterhin negatives `marginLeft`.
+- Volltestlauf inkl. bekannter `npm test`-Einschränkung dokumentiert.

@@ -35,7 +35,11 @@ export function createUiInspectorTemporaryStyles() {
       : ((property === 'width' || property === 'height')
         ? getBoundingRectBaseValue(targetElement, property)
         : 0);
-    targetElement.style[property] = `${currentValue + delta}px`;
+    const nextValue = currentValue + delta;
+    const safeValue = (property === 'width' || property === 'height')
+      ? Math.max(1, nextValue)
+      : nextValue;
+    targetElement.style[property] = `${safeValue}px`;
     previewStateById.set(String(id || ''), {
       ...(previewStateById.get(String(id || '')) || {}),
       [property]: targetElement.style[property],

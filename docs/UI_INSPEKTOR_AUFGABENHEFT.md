@@ -234,3 +234,10 @@ Hinweis:
 - Reset pro Element und global bei Deaktivierung aktiv.
 - Geänderte Dateien: `UiInspectorPanel.js`, `UiInspectorRuntime.js`, `UiInspectorTemporaryStyles.js`, Tests und Doku.
 - Nächster Schritt: M14 Speichern / Standard zurück.
+
+
+## M13 Nachkorrektur (PR #155 Folgefeedback)
+- `width` und `height` werden in der temporären Vorschau nach unten auf mindestens `1px` begrenzt.
+- `marginLeft`/`marginTop` bleiben weiterhin auch negativ möglich.
+- Tests ergänzt: Untergrenzenfälle für Breite/Höhe und negatives Margin-Verhalten.
+- Nächster Schritt: M14 Speichern / Standard zurück (unverändert).
