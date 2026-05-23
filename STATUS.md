@@ -2204,3 +2204,9 @@ Wichtig:
 - `applyDelta` begrenzt `width`/`height` jetzt auf mindestens `1px` (kein negativer oder 0-Wert).
 - Tests ergänzt: Untergrenze für width/height sowie weiterhin negatives `marginLeft`.
 - Volltestlauf inkl. bekannter `npm test`-Einschränkung dokumentiert.
+
+
+## UI-Inspektor M13 Nachkorrektur (Filterleisten-Control-Zuordnung)
+- `getAllowedControlsForSelectedId(...)` enthält jetzt auch `restarbeiten.filterleiste.verortung` und `restarbeiten.filterleiste.klassenfilter` als bekannte Container-Bereiche.
+- Ergebnis: Diese Bereiche enden nicht mehr mit `keine Stellschrauben definiert`, sondern erhalten die M13-Container-Steuerungen.
+- Testabdeckung ergänzt im Runtime-Test für beide IDs sowie den `.feld`-Unterbereich.

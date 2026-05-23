@@ -8,7 +8,7 @@ const FIELD_CONTROLS = ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Sic
 function getAllowedControlsForSelectedId(selectedId) {
   const normalizedId = String(selectedId || '').trim();
   if (!normalizedId) return [];
-  const containerIds = new Set(['restarbeiten.root', 'restarbeiten.header', 'restarbeiten.main', 'restarbeiten.filterleiste', 'restarbeiten.filterleiste.meta', 'restarbeiten.editbox', 'restarbeiten.editbox.header', 'restarbeiten.editbox.verortung', 'restarbeiten.editbox.meta', 'restarbeiten.liste']);
+  const containerIds = new Set(['restarbeiten.root', 'restarbeiten.header', 'restarbeiten.main', 'restarbeiten.filterleiste', 'restarbeiten.filterleiste.meta', 'restarbeiten.filterleiste.verortung', 'restarbeiten.filterleiste.klassenfilter', 'restarbeiten.editbox', 'restarbeiten.editbox.header', 'restarbeiten.editbox.verortung', 'restarbeiten.editbox.meta', 'restarbeiten.liste']);
   if (containerIds.has(normalizedId)) return [...CONTAINER_CONTROLS];
   const fieldSuffixes = ['.feld', '.kurztext', '.langtext', '.fertig_bis', '.status', '.verantwortlich', '.label', '.restzeichen'];
   if (fieldSuffixes.some((suffix) => normalizedId.endsWith(suffix))) return [...FIELD_CONTROLS];

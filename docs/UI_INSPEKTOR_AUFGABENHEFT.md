@@ -241,3 +241,10 @@ Hinweis:
 - `marginLeft`/`marginTop` bleiben weiterhin auch negativ möglich.
 - Tests ergänzt: Untergrenzenfälle für Breite/Höhe und negatives Margin-Verhalten.
 - Nächster Schritt: M14 Speichern / Standard zurück (unverändert).
+
+
+## M13 Nachkorrektur (PR #155 Filterleisten-Control-Zuordnung)
+- Bekannte Filterleisten-Bereiche `restarbeiten.filterleiste.verortung` und `restarbeiten.filterleiste.klassenfilter` in die M13-Container-Control-Zuordnung aufgenommen.
+- `.feld`-Unterbereiche bleiben über die bestehende Field-Suffix-Regel abgedeckt.
+- Tests ergänzt: `getAllowedControlsForSelectedId(...)` liefert für beide Bereiche sowie optional für `.feld` weiterhin die erwarteten Stellschrauben.
+- Nächster Schritt: M14 Speichern / Standard zurück (unverändert).
