@@ -4,6 +4,52 @@ import { createUiInspectorPanel } from './UiInspectorPanel.js';
 const CONTAINER_CONTROLS = ['Breite', 'Höhe', 'Abstand außen', 'Abstand innen', 'Sichtbarkeit'];
 const FIELD_CONTROLS = ['Breite', 'Höhe', 'Abstand links', 'Abstand oben', 'Schriftgröße', 'Sichtbarkeit'];
 
+const INSPECTOR_PARENT_MAP = {
+  'restarbeiten.header': '',
+  'restarbeiten.main': '',
+  'restarbeiten.filterleiste': 'restarbeiten.main',
+  'restarbeiten.filterleiste.klassenfilter': 'restarbeiten.filterleiste',
+  'restarbeiten.filterleiste.verortung': 'restarbeiten.filterleiste',
+  'restarbeiten.filterleiste.meta': 'restarbeiten.filterleiste',
+  'restarbeiten.liste': 'restarbeiten.main',
+  'restarbeiten.liste.textbereich': 'restarbeiten.liste',
+  'restarbeiten.liste.metabereich': 'restarbeiten.liste',
+  'restarbeiten.editbox': '',
+  'restarbeiten.editbox.header': 'restarbeiten.editbox',
+  'restarbeiten.editbox.verortung': 'restarbeiten.editbox',
+  'restarbeiten.editbox.kurztext': 'restarbeiten.editbox',
+  'restarbeiten.editbox.kurztext.label': 'restarbeiten.editbox.kurztext',
+  'restarbeiten.editbox.kurztext.restzeichen': 'restarbeiten.editbox.kurztext',
+  'restarbeiten.editbox.langtext': 'restarbeiten.editbox',
+  'restarbeiten.editbox.langtext.label': 'restarbeiten.editbox.langtext',
+  'restarbeiten.editbox.langtext.restzeichen': 'restarbeiten.editbox.langtext',
+  'restarbeiten.editbox.meta': 'restarbeiten.editbox',
+};
+
+const ORDERED_KNOWN_IDS = [
+  'restarbeiten.root',
+  'restarbeiten.header',
+  'restarbeiten.main',
+  'restarbeiten.filterleiste',
+  'restarbeiten.filterleiste.klassenfilter',
+  'restarbeiten.filterleiste.verortung',
+  'restarbeiten.filterleiste.meta',
+  'restarbeiten.liste',
+  'restarbeiten.liste.textbereich',
+  'restarbeiten.liste.metabereich',
+  'restarbeiten.editbox',
+  'restarbeiten.editbox.header',
+  'restarbeiten.editbox.verortung',
+  'restarbeiten.editbox.kurztext',
+  'restarbeiten.editbox.kurztext.label',
+  'restarbeiten.editbox.kurztext.restzeichen',
+  'restarbeiten.editbox.langtext',
+  'restarbeiten.editbox.langtext.label',
+  'restarbeiten.editbox.langtext.restzeichen',
+  'restarbeiten.editbox.meta',
+];
+const ORDER_INDEX = new Map(ORDERED_KNOWN_IDS.map((id, index) => [id, index]));
+
 function toTitleSegment(segment) {
   const map = {
     root: 'Root',
@@ -26,18 +72,32 @@ function toTitleSegment(segment) {
   return map[segment] || segment.charAt(0).toUpperCase() + segment.slice(1);
 }
 
+function resolveParentId(id, idSet) {
+  if (Object.prototype.hasOwnProperty.call(INSPECTOR_PARENT_MAP, id)) {
+    const mappedParent = INSPECTOR_PARENT_MAP[id] || '';
+    if (!mappedParent || idSet.has(mappedParent)) return mappedParent;
 
-function getSegmentPriority(id) {
-  const last = id.split('.').pop();
-  const priority = {
-    root: 0,
-    header: 1,
-    main: 2,
-    filterleiste: 3,
-    liste: 4,
-    editbox: 5,
-  };
-  return priority[last] ?? 99;
+    let fallback = mappedParent;
+    while (fallback.includes('.')) {
+      fallback = fallback.split('.').slice(0, -1).join('.');
+      if (idSet.has(fallback)) return fallback;
+    }
+    return '';
+  }
+
+  if (!id.includes('.')) return '';
+  const fallbackParent = id.split('.').slice(0, -1).join('.');
+  return idSet.has(fallbackParent) ? fallbackParent : '';
+}
+
+function getOrderRank(id) {
+  if (ORDER_INDEX.has(id)) return ORDER_INDEX.get(id);
+
+  for (let i = ORDERED_KNOWN_IDS.length - 1; i >= 0; i -= 1) {
+    const knownId = ORDERED_KNOWN_IDS[i];
+    if (id.startsWith(`${knownId}.`)) return i + 0.5;
+  }
+  return 9999;
 }
 
 function buildTargets(rootElement) {
@@ -45,68 +105,68 @@ function buildTargets(rootElement) {
 
   const nodes = Array.from(rootElement.querySelectorAll('[data-ui-inspector-id]'));
   const counts = new Map();
-  const result = [];
+  const totals = new Map();
 
-  for (const node of nodes) {
+  nodes.forEach((node) => {
     const id = String(node?.getAttribute?.('data-ui-inspector-id') || '').trim();
-    if (!id) continue;
+    if (!id) return;
+    totals.set(id, (totals.get(id) || 0) + 1);
+  });
 
-    const next = (counts.get(id) || 0) + 1;
-    counts.set(id, next);
+  const result = [];
+  nodes.forEach((node) => {
+    const id = String(node?.getAttribute?.('data-ui-inspector-id') || '').trim();
+    if (!id) return;
+
+    const nextInstance = (counts.get(id) || 0) + 1;
+    counts.set(id, nextInstance);
 
     const segments = id.split('.');
     const labelBase = toTitleSegment(segments[segments.length - 1] || id);
-    const totalCount = nodes.filter((item) => String(item?.getAttribute?.('data-ui-inspector-id') || '').trim() === id).length;
+    const totalCount = totals.get(id) || 1;
 
     result.push({
-      key: `${id}::${next}`,
+      key: `${id}::${nextInstance}`,
       id,
-      label: totalCount > 1 ? `${labelBase} #${next}` : labelBase,
+      label: totalCount > 1 ? `${labelBase} #${nextInstance}` : labelBase,
       level: Math.max(0, segments.length - 1),
-      parentId: segments.length > 1 ? segments.slice(0, -1).join('.') : '',
+      parentId: '',
       element: node,
-      instance: next,
+      instance: nextInstance,
+      _domIndex: result.length,
     });
-  }
+  });
 
-  const byId = new Set(result.map((target) => target.id));
-  const childrenByParent = new Map();
-  for (const target of result) {
-    const parentId = target.parentId || '__root__';
-    if (!childrenByParent.has(parentId)) childrenByParent.set(parentId, []);
-    childrenByParent.get(parentId).push(target);
-  }
+  const idSet = new Set(result.map((target) => target.id));
+  result.forEach((target) => {
+    target.parentId = resolveParentId(target.id, idSet);
+  });
 
-  const ordered = [];
-  function walk(parentId) {
-    const children = childrenByParent.get(parentId) || [];
-    children.sort((a, b) => {
-      const byDepth = a.id.split('.').length - b.id.split('.').length;
-      if (byDepth !== 0) return byDepth;
-      const bySegmentPriority = getSegmentPriority(a.id) - getSegmentPriority(b.id);
-      if (bySegmentPriority !== 0) return bySegmentPriority;
-      const byId = a.id.localeCompare(b.id, 'de');
-      if (byId !== 0) return byId;
-      return a.instance - b.instance;
-    });
+  result.sort((a, b) => {
+    const rank = getOrderRank(a.id) - getOrderRank(b.id);
+    if (rank !== 0) return rank;
 
-    for (const child of children) {
-      ordered.push(child);
-      walk(child.id);
+    if (a.id !== b.id) return a.id.localeCompare(b.id, 'de');
+    if (a.instance !== b.instance) return a.instance - b.instance;
+    return a._domIndex - b._domIndex;
+  });
+
+  const indexById = new Map(result.map((target, index) => [target.id, index]));
+  for (let i = 0; i < result.length; i += 1) {
+    const target = result[i];
+    if (!target.parentId) continue;
+
+    const parentIndex = indexById.get(target.parentId);
+    if (typeof parentIndex === 'number' && parentIndex > i) {
+      result.splice(i, 1);
+      result.splice(parentIndex, 0, target);
     }
   }
 
-  const roots = result.filter((target) => !target.parentId || !byId.has(target.parentId));
-  roots.sort((a, b) => {
-    const byPriority = getSegmentPriority(a.id) - getSegmentPriority(b.id);
-    if (byPriority !== 0) return byPriority;
-    return a.id.localeCompare(b.id, 'de');
+  result.forEach((target) => {
+    delete target._domIndex;
   });
-  for (const rootTarget of roots) {
-    ordered.push(rootTarget);
-    walk(rootTarget.id);
-  }
-  return ordered;
+  return result;
 }
 
 function getAllowedControlsForSelectedId(selectedId) {
