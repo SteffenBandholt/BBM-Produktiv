@@ -27,6 +27,17 @@ export function createUiInspectorRuntime({ overlay, panel } = {}) {
   let hostRoot = null;
   let selectedId = '';
 
+  function collectAvailableTargets() {
+    if (!hostRoot || typeof hostRoot.querySelectorAll !== 'function') return [];
+    const ids = [];
+    const nodes = hostRoot.querySelectorAll('[data-ui-inspector-id]');
+    for (const node of nodes || []) {
+      const id = String(node?.getAttribute?.('data-ui-inspector-id') || '').trim();
+      if (id) ids.push(id);
+    }
+    return [...new Set(ids)].sort((a, b) => a.localeCompare(b));
+  }
+
   function getSelectedTargetElement() {
     if (!hostRoot || !selectedId) return null;
     const escapedId = escapeSelectorValue(selectedId);
@@ -39,7 +50,8 @@ export function createUiInspectorRuntime({ overlay, panel } = {}) {
     const controls = getAllowedControlsForSelectedId(selectedId);
     const targetElement = getSelectedTargetElement();
     const targetMissing = Boolean(selectedId) && !targetElement;
-    resolvedPanel.render({ selectedId, controls, note: controls.length ? '' : 'Für diesen Bereich sind noch keine Stellschrauben definiert.', previewState: temporaryStyles.getPreviewState(selectedId), targetMissing,
+    resolvedPanel.render({ selectedId, controls, note: controls.length ? '' : 'Für diesen Bereich sind noch keine Stellschrauben definiert.', previewState: temporaryStyles.getPreviewState(selectedId), targetMissing, availableTargets: collectAvailableTargets(),
+      onSelectTarget: (id) => renderPanelForSelection(id),
       onControl: (action) => {
         if (!targetElement) return;
         if (action === 'reset') temporaryStyles.resetElement(targetElement, selectedId);

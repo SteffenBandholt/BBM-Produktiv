@@ -248,3 +248,11 @@ Hinweis:
 - `.feld`-Unterbereiche bleiben über die bestehende Field-Suffix-Regel abgedeckt.
 - Tests ergänzt: `getAllowedControlsForSelectedId(...)` liefert für beide Bereiche sowie optional für `.feld` weiterhin die erwarteten Stellschrauben.
 - Nächster Schritt: M14 Speichern / Standard zurück (unverändert).
+
+## M13 Nachkorrektur (PR #155 robuste Bereichsauswahl)
+- Panel ergänzt um eine sichere Bereichsauswahl aller aktuell markierten `data-ui-inspector-id` im aktiven Root.
+- Marker-Liste wird zur Laufzeit gesammelt, dedupliziert und alphabetisch sortiert.
+- Auswahl im Panel setzt dieselbe `selectedId` wie die Klick-Trefferliste und aktualisiert Overlay/Controls synchron.
+- Klickbasierte Trefferliste bleibt unverändert als zusätzlicher Auswahlweg erhalten.
+- Keine Persistenz, kein localStorage, kein IPC, keine DB und keine CSS-Dateien geändert.
+- Nächster Schritt: M14 Speichern / Standard zurück (unverändert).

@@ -48,6 +48,7 @@ function createFakeDomForRuntime() {
       removeChild(child) { this.children = this.children.filter((e) => e !== child); child.parentElement = null; child.isConnected = false; },
       setAttribute(name, value) { this.attributes[name] = String(value); },
       getAttribute(name) { return this.attributes[name]; },
+      value: '',
       click() { this.onclick?.({ preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {} }); },
     };
   }
@@ -116,6 +117,11 @@ function createFakeDomForRuntime() {
   assert.ok(mountedPanel);
   assert.match(collectText(mountedPanel), /restarbeiten\.editbox\.meta/);
   assert.match(collectText(mountedPanel), /Breite/);
+  const targetSelect = mountedPanel.children.find((c) => c.attributes?.['data-ui-inspector-target-select'] === 'true');
+  assert.ok(targetSelect);
+  targetSelect.value = 'restarbeiten.main';
+  targetSelect.onchange?.();
+  assert.match(collectText(mountedPanel), /restarbeiten\.main/);
   assert.equal(runtime.deactivateOverlay(), true);
   assert.equal(runtimeDocument.body.children.some((c) => c.attributes['data-ui-inspector-panel'] === 'true'), false);
 

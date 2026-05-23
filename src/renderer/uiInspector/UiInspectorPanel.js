@@ -52,7 +52,7 @@ function addControlButtons(doc, panelRoot, controls, onControl) {
   panelRoot.append(reset);
 }
 
-function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = '', targetMissing = false, onControl = null } = {}) {
+function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = '', targetMissing = false, availableTargets = [], onSelectTarget = null, onControl = null } = {}) {
   panelRoot.replaceChildren();
   const doc = panelRoot.ownerDocument || globalThis.document;
 
@@ -91,6 +91,33 @@ function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = 
   hint.style.marginBottom = '8px';
 
   panelRoot.append(title, selectedLabel, controlsTitle, controlsList, hint);
+
+  if (Array.isArray(availableTargets) && availableTargets.length > 0) {
+    const targetLabel = doc.createElement('div');
+    targetLabel.textContent = 'Bereichsauswahl:';
+    targetLabel.style.marginBottom = '4px';
+
+    const targetSelect = doc.createElement('select');
+    targetSelect.setAttribute('data-ui-inspector-target-select', 'true');
+    targetSelect.style.marginBottom = '8px';
+    targetSelect.style.width = '100%';
+
+    const emptyOption = doc.createElement('option');
+    emptyOption.value = '';
+    emptyOption.textContent = '-- Bereich wählen --';
+    targetSelect.append(emptyOption);
+
+    for (const targetId of availableTargets) {
+      const option = doc.createElement('option');
+      option.value = String(targetId);
+      option.textContent = String(targetId);
+      if (String(targetId) === String(selectedId)) option.selected = true;
+      targetSelect.append(option);
+    }
+
+    targetSelect.onchange = () => onSelectTarget?.(targetSelect.value);
+    panelRoot.append(targetLabel, targetSelect);
+  }
 
   if (targetMissing) {
     const warn = doc.createElement('div');
