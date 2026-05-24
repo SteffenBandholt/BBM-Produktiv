@@ -18,7 +18,7 @@ function createPanelRoot(doc) {
   return panel;
 }
 
-function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = '' } = {}) {
+function renderPanelContent(panelRoot, { selectedId = '', controls = [], targets = [], note = '' } = {}) {
   panelRoot.replaceChildren();
 
   const doc = panelRoot.ownerDocument || globalThis.document;
@@ -30,6 +30,35 @@ function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = 
   const selectedLabel = doc.createElement('div');
   selectedLabel.textContent = selectedId ? `Ausgewählter Bereich: ${selectedId}` : 'Kein Bereich ausgewählt';
   selectedLabel.style.marginBottom = '8px';
+
+
+  const targetLabel = doc.createElement('div');
+  targetLabel.textContent = 'Bereich auswählen:';
+  targetLabel.style.marginBottom = '4px';
+
+  const targetSelect = doc.createElement('select');
+  targetSelect.setAttribute('data-ui-inspector-target-select', 'true');
+  targetSelect.style.width = '100%';
+  targetSelect.style.marginBottom = '8px';
+
+  const empty = doc.createElement('option');
+  empty.value = '';
+  empty.textContent = '— Bereich wählen —';
+  targetSelect.append(empty);
+
+  for (const target of Array.isArray(targets) ? targets : []) {
+    const option = doc.createElement('option');
+    option.value = String(target?.key || '');
+    const level = Number(target?.level || 0);
+    const indent = '  '.repeat(Math.max(0, level));
+    option.textContent = `${indent}${String(target?.label || target?.id || '')}`;
+    if (selectedId && String(target?.id || '') === String(selectedId)) option.selected = true;
+    targetSelect.append(option);
+  }
+
+  if (typeof panelRoot.__onSelectTarget === 'function') {
+    targetSelect.onchange = () => panelRoot.__onSelectTarget(targetSelect.value);
+  }
 
   const controlsTitle = doc.createElement('div');
   controlsTitle.textContent = 'Erlaubte Stellschrauben:';
@@ -55,12 +84,14 @@ function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = 
   hint.textContent = 'Nur Anzeige – Änderungen folgen erst in M13.';
   hint.style.opacity = '0.9';
 
-  panelRoot.append(title, selectedLabel, controlsTitle, controlsList, hint);
+  panelRoot.append(title, selectedLabel, targetLabel, targetSelect, controlsTitle, controlsList, hint);
 }
 
 export function createUiInspectorPanel(options = {}) {
   let panelRoot = null;
   let mountHost = null;
+  let latestState = options.initialState || {};
+  const onSelectTarget = typeof options.onSelectTarget === 'function' ? options.onSelectTarget : null;
 
   function ensurePanel(doc) {
     if (panelRoot?.isConnected) return panelRoot;
@@ -78,7 +109,8 @@ export function createUiInspectorPanel(options = {}) {
     mountHost = host;
     const node = ensurePanel(doc);
     if (!node.isConnected) mountHost.append(node);
-    renderPanelContent(node, options.initialState || {});
+    node.__onSelectTarget = onSelectTarget;
+    renderPanelContent(node, latestState);
     return true;
   }
 
@@ -90,13 +122,15 @@ export function createUiInspectorPanel(options = {}) {
 
   function render(nextState = {}) {
     if (!panelRoot) return false;
-    renderPanelContent(panelRoot, nextState);
+    latestState = { ...latestState, ...nextState };
+    renderPanelContent(panelRoot, latestState);
     return true;
   }
 
-  function clear() {
+  function clear(nextState = {}) {
     if (!panelRoot) return false;
-    renderPanelContent(panelRoot, { selectedId: '', controls: [] });
+    latestState = { ...latestState, ...nextState, selectedId: '', controls: [] };
+    renderPanelContent(panelRoot, latestState);
     return true;
   }
 

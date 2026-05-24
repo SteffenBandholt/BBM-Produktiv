@@ -65,3 +65,10 @@ Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 - Panel zeigt den ausgewählten Bereich und die erlaubten Stellschrauben.
 - Noch keine Anwendung, noch keine Speicherung, noch keine Layoutänderung.
 - Nächster Meilenstein: M13 (Werte temporär anwenden, noch nicht speichern).
+
+
+## Statusupdate M13.1.2 (PR-Zwischenstand)
+- M13.1.2 ist als PR-Zwischenstand in Arbeit (lokale Abnahme offen).
+- Clear behält die Target-Liste sichtbar.
+- Refresh aktualisiert Targets nach DOM-Änderungen.
+- Panel bleibt read-only (keine Layoutänderung, keine Speicherung).
