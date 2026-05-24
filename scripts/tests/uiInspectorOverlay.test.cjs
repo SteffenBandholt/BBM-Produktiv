@@ -75,7 +75,7 @@ function createInspectableRoot(document) {
   assert.ok(hitList);
   assert.equal(hitList.style.pointerEvents, 'auto');
   const firstOption = hitList.children[0];
-  assert.equal(firstOption.attributes['data-ui-inspector-hit-option'], 'restarbeiten.filterleiste.meta.status');
+  assert.equal(firstOption.attributes['data-ui-inspector-hit-option'], 'restarbeiten.filterleiste.meta.status::1');
 
   const firstHitListRef = hitList;
   const preventedHitOption = { value: false };
@@ -111,6 +111,7 @@ function createInspectableRoot(document) {
   firstOption.click();
 
   assert.equal(overlay.getSelectedId(), 'restarbeiten.filterleiste.meta.status');
+  assert.equal(overlay.getSelectedTargetKey(), 'restarbeiten.filterleiste.meta.status::1');
   const selectedFrame = overlayRoot.children.find((c) => c.attributes['data-ui-inspector-selected'] === 'true');
   assert.equal(selectedFrame.attributes['data-ui-inspector-overlay-frame'], 'restarbeiten.filterleiste.meta.status');
   const badge = overlayRoot.children.find((c) => c.attributes['data-ui-inspector-selection-badge'] === 'true');

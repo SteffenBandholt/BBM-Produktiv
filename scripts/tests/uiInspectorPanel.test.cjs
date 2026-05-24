@@ -84,7 +84,7 @@ function createFakeDomForRuntime() {
   assert.match(text, /Breite/);
   assert.match(text, /Höhe/);
   assert.match(text, /Sichtbarkeit/);
-  assert.match(text, /Nur Anzeige/);
+  assert.match(text, /Auswahlmodell/);
   assert.doesNotMatch(text, /Speichern/);
   assert.doesNotMatch(text, /Anwenden/);
 
@@ -101,7 +101,7 @@ function createFakeDomForRuntime() {
   ];
   const root = { ownerDocument: runtimeDocument, querySelectorAll: (sel) => sel === '[data-ui-inspector-id]' ? rootNodes : [] };
   assert.equal(runtime.activateOverlay(root), true);
-  assert.equal(runtime.overlay.select('restarbeiten.editbox.meta'), true);
+  assert.equal(runtime.overlay.select('restarbeiten.editbox.meta::1'), true);
   assert.equal(runtime.refreshOverlay(), true);
   const mountedPanel = runtimeDocument.body.children.find((c) => c.attributes['data-ui-inspector-panel'] === 'true');
   assert.ok(mountedPanel);
