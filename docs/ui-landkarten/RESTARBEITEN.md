@@ -8,6 +8,8 @@
 ## 2. Status
 - M9 DOM-Markierungen minimal eingeführt.
 - Marker-IDs sind technisch in der bestehenden Restarbeiten-UI verankert.
+- Die Gruppenmarker sitzen auf echten DOM-Containern, die Feldmarker liegen darunter.
+- Runtime-Parent-Mapping ersetzt keine fehlenden DOM-Gruppenmarker.
 - Ab M10 kann ein visuelles Overlay die Marker rahmen und die Inspector-ID anzeigen.
 - Ab M12 zeigt ein Inspector-Panel die für den gewählten Bereich erlaubten Stellschrauben.
 - Noch keine Anwendung.
@@ -69,6 +71,7 @@ Restarbeiten
 Hinweis:
 - Die IDs wurden in M9 als `data-ui-inspector-id` in bestehende DOM-Struktur ergänzt.
 - Es wurden keine zusätzlichen sichtbaren Wrapper gebaut; Marker folgen der vorhandenen Struktur.
+- M12.1 schärft die Landkarte als Voraussetzung für spätere Layoutänderungen nach: Gruppenmarker auf Container-Ebene, Feldmarker darunter.
 
 ## 5. Einstell-Ebenen
 

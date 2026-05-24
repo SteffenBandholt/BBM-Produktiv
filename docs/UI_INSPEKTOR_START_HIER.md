@@ -32,18 +32,18 @@ Pflichtreihenfolge:
 - M8 Restarbeiten-Pilot-Landkarte dokumentiert
 - M9 Restarbeiten-DOM-Markierungen minimal eingeführt
 - M10 Overlay nur anzeigen abgeschlossen
+- M12.1 Restarbeiten-Gruppenmarker als echte DOM-Container ergänzt
 - UI-Inspector-Modulgerüst und Layout-Landkarten-Format existieren
 - Overlay kann angezeigt werden
 - Restarbeiten-DOM-Markierungen vorhanden
+- Gruppenmarker liegen auf echten DOM-Containern, Feldmarker darunter
 - Noch keine sichtbare App-Funktion
 
 ## 5. Nächster geplanter Schritt
-- Nächster Schritt: M11 Bereich anklicken und Auswahl anzeigen
-- M10 zeigt nur Overlay-Rahmen über Marker
-- Noch kein Panel
-- Noch keine Klickauswahl
+- Nächster Schritt: M13 Werte temporär anwenden, aber noch nicht speichern
+- M12.1 schärft nur die Restarbeiten-Landkarte und die DOM-Marker-Ebene
+- Noch kein Speichern
 - Noch keine Layoutänderung
-- Noch keine Speicherung
 
 ## 6. Harte Stopps
 Nicht fortführen:

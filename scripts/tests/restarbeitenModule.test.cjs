@@ -45,6 +45,10 @@ function findButtonByText(root, text) {
   )[0] || null;
 }
 
+function findInspectorNode(root, id) {
+  return findNodes(root, (node) => node?.["data-ui-inspector-id"] === id)[0] || null;
+}
+
 function createFakeDocument() {
   const createNode = (tag, doc) => {
     const node = {
@@ -578,6 +582,106 @@ async function runRestarbeitenModuleTests(run) {
 
     assert.doesNotMatch(screen, /data-ui-inspector-id\s*=\s*"restarbeiten\.overlay"/);
     assert.doesNotMatch(screen, /ui-inspector-panel|inspector-panel/);
+  });
+
+  await run("M12.1 Restarbeiten: echte Gruppenmarker sind im DOM verankert", async () => {
+    const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js");
+    const editboxPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenEditbox.js");
+    const vmPath = path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenListItems.js");
+
+    const [screenMod, editboxMod, vmMod] = await Promise.all([
+      importEsmFromFile(screenPath),
+      importEsmFromFile(editboxPath),
+      importEsmFromFile(vmPath),
+    ]);
+
+    const RestarbeitenScreen = screenMod.default;
+    const RestarbeitenEditbox = editboxMod.default;
+    const { toRestarbeitenListItems } = vmMod;
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+
+    try {
+      const screen = new RestarbeitenScreen({
+        projectId: "p-1",
+        project: { id: "p-1", name: "Projekt" },
+        router: { async showProjectWorkspace() { return true; } },
+      });
+
+      screen.render();
+      screen.effectiveProjectId = "p-1";
+      screen.rows = [{
+        id: "r-1",
+        running_number: 1,
+        item_class: "rest",
+        short_text: "Kurz",
+        long_text: "Lang",
+        location_level_1: "Haus A",
+        location_level_2: "EG",
+        location_level_3: "WE 1",
+        location_level_4: "Bad",
+        status: "offen",
+        due_date: "2026-05-30",
+        responsible_label: "Firma A",
+        responsible_project_firm_id: "f-1",
+        completed_at: "",
+        completion_note: "",
+      }];
+      screen.items = toRestarbeitenListItems(screen.rows);
+      screen.filteredItems = screen.items;
+      screen._renderList();
+
+      const root = screen.host;
+      assert.equal(!!findInspectorNode(root, "restarbeiten.filterleiste"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.filterleiste.verortung"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.filterleiste.verortung.feld"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.filterleiste.klassenfilter"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.filterleiste.klassenfilter.feld"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.liste"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.liste.textbereich"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.liste.metabereich"), true);
+
+      const verortungGroup = findInspectorNode(root, "restarbeiten.filterleiste.verortung");
+      const verortungFields = findNodes(
+        verortungGroup,
+        (node) => node?.["data-ui-inspector-id"] === "restarbeiten.filterleiste.verortung.feld"
+      );
+      assert.equal(verortungFields.length, 4);
+
+      const klassenfilterGroup = findInspectorNode(root, "restarbeiten.filterleiste.klassenfilter");
+      const klassenfilterFields = findNodes(
+        klassenfilterGroup,
+        (node) => node?.["data-ui-inspector-id"] === "restarbeiten.filterleiste.klassenfilter.feld"
+      );
+      assert.equal(klassenfilterFields.length, 1);
+
+      const listRoot = findInspectorNode(root, "restarbeiten.liste");
+      assert.equal(
+        findNodes(listRoot, (node) => node?.["data-ui-inspector-id"] === "restarbeiten.liste.textbereich").length,
+        1
+      );
+      assert.equal(
+        findNodes(listRoot, (node) => node?.["data-ui-inspector-id"] === "restarbeiten.liste.metabereich").length,
+        1
+      );
+
+      const editbox = new RestarbeitenEditbox({ documentRef: globalThis.document });
+      const editboxRoot = editbox.render();
+      [
+        "restarbeiten.editbox",
+        "restarbeiten.editbox.header",
+        "restarbeiten.editbox.verortung",
+        "restarbeiten.editbox.kurztext",
+        "restarbeiten.editbox.kurztext.label",
+        "restarbeiten.editbox.kurztext.restzeichen",
+        "restarbeiten.editbox.langtext",
+        "restarbeiten.editbox.langtext.label",
+        "restarbeiten.editbox.langtext.restzeichen",
+        "restarbeiten.editbox.meta",
+      ].forEach((id) => assert.equal(!!findInspectorNode(editboxRoot, id), true));
+    } finally {
+      globalThis.document = prevDocument;
+    }
   });
   await run("M5 Repo/IPC/Preload/DataSource: Create und Update sind verdrahtet", async () => {
     const repo = await importEsmFromFile(

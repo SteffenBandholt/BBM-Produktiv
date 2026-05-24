@@ -1,10 +1,10 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M10 abgeschlossen (Overlay nur anzeigen).
+Status: M12.1 abgeschlossen (echte DOM-Gruppenmarker ergänzt).
 
 Aktueller Stand:
-- M1 bis M10 abgeschlossen.
+- M1 bis M12.1 abgeschlossen.
 
 ## Haken-System
 - `[x]` erledigt
@@ -24,6 +24,7 @@ Aktueller Stand:
 - [x] M9 Restarbeiten-DOM-Markierungen minimal einführen
 - [x] M10 Overlay nur anzeigen
 - [x] M12 Panel zeigt erlaubte Stellschrauben
+- [x] M12.1 Restarbeiten-Gruppenmarker als echte DOM-Container ergänzen
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -226,3 +227,19 @@ Hinweis:
 - Geänderte Dateien: `src/renderer/uiInspector/UiInspectorPanel.js`, `src/renderer/uiInspector/UiInspectorRuntime.js`, `src/renderer/uiInspector/UiInspectorOverlay.js`, `scripts/tests/uiInspectorPanel.test.cjs`, `scripts/tests/restarbeitenModule.test.cjs`, `docs/UI_INSPEKTOR_AUFGABENHEFT.md`, `docs/UI_INSPEKTOR_START_HIER.md`, `docs/ui-landkarten/RESTARBEITEN.md`, `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`.
 - Tests: `node scripts/tests/uiInspectorCore.test.cjs`, `node scripts/tests/uiInspectorRegistry.test.cjs`, `node scripts/tests/uiInspectorMapSchema.test.cjs`, `node scripts/tests/uiInspectorOverlay.test.cjs`, `node scripts/tests/restarbeitenModule.test.cjs`, `node scripts/tests/uiInspectorPanel.test.cjs`, `npm test`.
 - Nächster Schritt: M13 – Werte temporär anwenden, aber noch nicht speichern.
+
+## M12.1 Abschlussnotiz
+- M12.1 ergänzt die echten DOM-Gruppenmarker für Restarbeiten als Voraussetzung für spätere Layoutänderungen.
+- Gruppenmarker sitzen auf echten Container-Elementen; Feldmarker bleiben darunter.
+- Runtime-Parent-Mapping ersetzt keine fehlenden DOM-Gruppenmarker.
+- Geänderte Dateien:
+  - `scripts/tests/restarbeitenModule.test.cjs`
+  - `docs/ui-landkarten/RESTARBEITEN.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+- Tests:
+  - `node scripts/tests/restarbeitenModule.test.cjs`
+  - `node scripts/tests/uiInspectorOverlay.test.cjs`
+  - `node scripts/tests/uiInspectorPanel.test.cjs`
+- Nächster Schritt:
+  - **M13 Werte temporär anwenden, aber noch nicht speichern**
