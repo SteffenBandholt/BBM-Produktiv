@@ -84,7 +84,7 @@ function createFakeDomForRuntime() {
   assert.match(text, /Breite/);
   assert.match(text, /Höhe/);
   assert.match(text, /Sichtbarkeit/);
-  assert.match(text, /Nur Anzeige/);
+  assert.match(text, /Auswahlmodell/);
   assert.doesNotMatch(text, /Speichern/);
   assert.doesNotMatch(text, /Anwenden/);
 

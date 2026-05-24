@@ -18,7 +18,7 @@ function createPanelRoot(doc) {
   return panel;
 }
 
-function renderPanelContent(panelRoot, { selectedId = '', controls = [], targets = [], note = '' } = {}) {
+function renderPanelContent(panelRoot, { selectedId = '', selectedTargetKey = '', controls = [], targets = [], note = '' } = {}) {
   panelRoot.replaceChildren();
 
   const doc = panelRoot.ownerDocument || globalThis.document;
@@ -52,7 +52,7 @@ function renderPanelContent(panelRoot, { selectedId = '', controls = [], targets
     const level = Number(target?.level || 0);
     const indent = '  '.repeat(Math.max(0, level));
     option.textContent = `${indent}${String(target?.label || target?.id || '')}`;
-    if (selectedId && String(target?.id || '') === String(selectedId)) option.selected = true;
+    if (selectedTargetKey && String(target?.key || '') === String(selectedTargetKey)) option.selected = true;
     targetSelect.append(option);
   }
 
@@ -81,7 +81,7 @@ function renderPanelContent(panelRoot, { selectedId = '', controls = [], targets
   }
 
   const hint = doc.createElement('div');
-  hint.textContent = 'Nur Anzeige – Änderungen folgen erst in M13.';
+  hint.textContent = 'Auswahlmodell – noch keine Layoutänderung.';
   hint.style.opacity = '0.9';
 
   panelRoot.append(title, selectedLabel, targetLabel, targetSelect, controlsTitle, controlsList, hint);

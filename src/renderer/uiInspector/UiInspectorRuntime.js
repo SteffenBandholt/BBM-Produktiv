@@ -30,14 +30,14 @@ export function buildTargets(rawTargets = []) {
   }
   return out;
 }
-function getAllowedControlsForSelectedId(selectedId) { const normalizedId = String(selectedId || '').trim(); if (!normalizedId) return []; const containerIds = new Set(['restarbeiten.root','restarbeiten.header','restarbeiten.main','restarbeiten.filterleiste','restarbeiten.filterleiste.meta','restarbeiten.editbox','restarbeiten.editbox.header','restarbeiten.editbox.verortung','restarbeiten.editbox.meta','restarbeiten.liste']); if (containerIds.has(normalizedId)) return [...CONTAINER_CONTROLS]; const fieldSuffixes = ['.feld', '.kurztext', '.langtext', '.fertig_bis', '.status', '.verantwortlich', '.label', '.restzeichen']; if (fieldSuffixes.some((suffix) => normalizedId.endsWith(suffix))) return [...FIELD_CONTROLS]; return []; }
+function getAllowedControlsForSelectedId(selectedId) { const normalizedId = String(selectedId || '').trim(); if (!normalizedId) return []; const containerIds = new Set(['restarbeiten.root','restarbeiten.header','restarbeiten.main','restarbeiten.filterleiste','restarbeiten.filterleiste.klassenfilter','restarbeiten.filterleiste.verortung','restarbeiten.filterleiste.meta','restarbeiten.editbox','restarbeiten.editbox.header','restarbeiten.editbox.verortung','restarbeiten.editbox.meta','restarbeiten.liste','restarbeiten.liste.textbereich','restarbeiten.liste.metabereich']); if (containerIds.has(normalizedId)) return [...CONTAINER_CONTROLS]; const fieldSuffixes = ['.feld', '.kurztext', '.langtext', '.fertig_bis', '.status', '.verantwortlich', '.label', '.restzeichen']; if (fieldSuffixes.some((suffix) => normalizedId.endsWith(suffix))) return [...FIELD_CONTROLS]; return []; }
 
 export function createUiInspectorRuntime({ overlay, panel } = {}) {
   const resolvedOverlay = overlay || createUiInspectorOverlay();
   const resolvedPanel = panel || createUiInspectorPanel({ onSelectTarget: (key) => { if (key) resolvedOverlay.select?.(key); } });
   let overlayActive = false;
   const targets = () => buildTargets(resolvedOverlay.getTargets?.() || []);
-  function renderPanelForSelection(selectedId) { const controls = getAllowedControlsForSelectedId(selectedId); resolvedPanel.render({ selectedId, controls, targets: targets(), note: controls.length ? '' : 'Für diesen Bereich sind noch keine Stellschrauben definiert.' }); }
+  function renderPanelForSelection(selectedId) { const controls = getAllowedControlsForSelectedId(selectedId); resolvedPanel.render({ selectedId, selectedTargetKey: resolvedOverlay.getSelectedTargetKey?.() || '', controls, targets: targets(), note: controls.length ? '' : 'Für diesen Bereich sind noch keine Stellschrauben definiert.' }); }
   function activateOverlay(rootElement) {
     const overlayMounted = resolvedOverlay.mount(rootElement, { onSelect: (id) => renderPanelForSelection(id), onClearSelection: () => resolvedPanel.clear({ targets: targets() }) }) === true;
     if (!overlayMounted) { overlayActive = false; return false; }

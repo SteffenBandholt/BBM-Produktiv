@@ -16,5 +16,54 @@ const { importEsmFromFile } = require('./_esmLoader.cjs');
   assert.equal(built.find((x)=>x.key.endsWith('::1') && x.id.endsWith('.feld')).label, 'Feld #1');
   assert.equal(built.find((x)=>x.key.endsWith('::2') && x.id.endsWith('.feld')).label, 'Feld #2');
   assert.equal(built.find((x)=>x.id==='restarbeiten.filterleiste.verortung').parentId, 'restarbeiten.filterleiste');
+
+  const panelStates = [];
+  const fakePanel = {
+    mount: () => true,
+    unmount: () => true,
+    render(state) { panelStates.push({ kind: 'render', state }); return true; },
+    clear(state) { panelStates.push({ kind: 'clear', state }); return true; },
+  };
+  const markers = [{ id: 'restarbeiten.main', key: 'restarbeiten.main::1', instance: 1, element: {} }];
+  let selected = '';
+  let selectedKey = '';
+  const fakeOverlay = {
+    mount: () => true,
+    unmount: () => true,
+    refresh: () => true,
+    getTargets: () => markers,
+    getSelectedId: () => selected,
+    getSelectedTargetKey: () => selectedKey,
+    select(key) {
+      const match = markers.find((target) => target.key === key);
+      if (!match) return false;
+      selected = match.id;
+      selectedKey = match.key;
+      return true;
+    },
+    clearSelection() {
+      selected = '';
+      selectedKey = '';
+      return true;
+    },
+  };
+  const runtime = createUiInspectorRuntime({ overlay: fakeOverlay, panel: fakePanel });
+  assert.equal(runtime.activateOverlay({ ownerDocument: { body: {} } }), true);
+
+  runtime.overlay.select('restarbeiten.main::1');
+  assert.equal(runtime.refreshOverlay(), true);
+  assert.equal(panelStates.at(-1).kind, 'render');
+  assert.ok(Array.isArray(panelStates.at(-1).state.targets));
+  assert.equal(panelStates.at(-1).state.targets.length > 0, true);
+
+  assert.equal(runtime.clearSelection(), true);
+  assert.equal(panelStates.at(-1).kind, 'clear');
+  assert.equal(Array.isArray(panelStates.at(-1).state.targets), true);
+  assert.equal(panelStates.at(-1).state.targets.length > 0, true);
+
+  markers.push({ id: 'restarbeiten.filterleiste', key: 'restarbeiten.filterleiste::1', instance: 1, element: {} });
+  assert.equal(runtime.refreshOverlay(), true);
+  const latestTargets = panelStates.at(-1).state.targets;
+  assert.equal(latestTargets.some((target) => target.id === 'restarbeiten.filterleiste'), true);
   console.log('ok - uiInspectorRuntime.test');
 })();
