@@ -99,9 +99,9 @@ function findButtonByText(root, text) {
   const panelPath = path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorPanel.js');
   const panelSource = fs.readFileSync(panelPath, 'utf8');
   assert.doesNotMatch(panelSource, /Speichern|Anwenden|Übernehmen|Persistieren/);
-  assert.match(panelSource, /Bereichstyp/);
-  assert.match(panelSource, /Reset ausgewählt/);
-  assert.match(panelSource, /Alles zurücksetzen/);
+  assert.match(panelSource, /Elternbereich auswählen/);
+  assert.match(panelSource, /Vorheriges Feld/);
+  assert.match(panelSource, /Nächstes Feld/);
 
   const { createUiInspectorPanel } = await importEsmFromFile(panelPath);
   assert.equal(typeof createUiInspectorPanel, 'function');
@@ -121,7 +121,17 @@ function findButtonByText(root, text) {
     assert.equal(
       panel.render({
         selectedId: 'restarbeiten.filterleiste.verortung',
+        selectedLabel: 'Verortung',
         selectedKind: 'Gruppe',
+        parentId: 'restarbeiten.filterleiste',
+        parentLabel: 'Filterleiste',
+        children: [
+          { id: 'restarbeiten.filterleiste.verortung.feld::1', label: 'Feld #1' },
+          { id: 'restarbeiten.filterleiste.verortung.feld::2', label: 'Feld #2' },
+          { id: 'restarbeiten.filterleiste.verortung.feld::3', label: 'Feld #3' },
+          { id: 'restarbeiten.filterleiste.verortung.feld::4', label: 'Feld #4' },
+        ],
+        siblings: [],
         controls: [
           { label: 'Breite', key: 'width', kind: 'delta', step: 5 },
           { label: 'Höhe', key: 'height', kind: 'delta', step: 5 },
@@ -139,32 +149,42 @@ function findButtonByText(root, text) {
 
     const text = collectText(panelNode);
     assert.match(text, /UI-Inspektor/);
-    assert.match(text, /Ausgewählter Bereich: restarbeiten\.filterleiste\.verortung/);
-    assert.match(text, /Bereichstyp: Gruppe/);
+    assert.match(text, /Ausgewählt: Verortung/);
+    assert.match(text, /Typ: Gruppe/);
+    assert.match(text, /Elternbereich: Filterleiste/);
+    assert.match(text, /Enthält:/);
     assert.match(text, /Temporäre Vorschau – keine Speicherung\./);
     assert.doesNotMatch(text, /Speichern/);
     assert.doesNotMatch(text, /Anwenden/);
     assert.doesNotMatch(text, /Übernehmen/);
     assert.doesNotMatch(text, /Persistieren/);
 
+    assert.ok(findButtonByText(panelNode, 'Feld #1'));
+    assert.ok(findButtonByText(panelNode, 'Feld #2'));
+    assert.ok(findButtonByText(panelNode, 'Feld #3'));
+    assert.ok(findButtonByText(panelNode, 'Feld #4'));
+    assert.ok(findButtonByText(panelNode, 'Elternbereich auswählen'));
     assert.ok(findButtonByText(panelNode, 'Breite -5'));
     assert.ok(findButtonByText(panelNode, 'Breite +5'));
-    assert.ok(findButtonByText(panelNode, 'Höhe -5'));
-    assert.ok(findButtonByText(panelNode, 'Höhe +5'));
-    assert.ok(findButtonByText(panelNode, 'Position X -5'));
     assert.ok(findButtonByText(panelNode, 'Position X +5'));
-    assert.ok(findButtonByText(panelNode, 'Position Y -5'));
-    assert.ok(findButtonByText(panelNode, 'Position Y +5'));
-    assert.ok(findButtonByText(panelNode, 'Abstand außen oben -5'));
-    assert.ok(findButtonByText(panelNode, 'Abstand innen links +5'));
     assert.ok(findButtonByText(panelNode, 'Sichtbarkeit umschalten'));
     assert.ok(findButtonByText(panelNode, 'Reset ausgewählt'));
     assert.ok(findButtonByText(panelNode, 'Alles zurücksetzen'));
 
     assert.equal(
       panel.render({
-        selectedId: 'restarbeiten.editbox.kurztext',
+        selectedId: 'restarbeiten.filterleiste.verortung.feld::2',
+        selectedLabel: 'Feld #2',
         selectedKind: 'Feld',
+        parentId: 'restarbeiten.filterleiste.verortung',
+        parentLabel: 'Verortung',
+        children: [],
+        siblings: [
+          { id: 'restarbeiten.filterleiste.verortung.feld::1', label: 'Feld #1' },
+          { id: 'restarbeiten.filterleiste.verortung.feld::2', label: 'Feld #2' },
+          { id: 'restarbeiten.filterleiste.verortung.feld::3', label: 'Feld #3' },
+          { id: 'restarbeiten.filterleiste.verortung.feld::4', label: 'Feld #4' },
+        ],
         controls: [
           { label: 'Breite', key: 'width', kind: 'delta', step: 5 },
           { label: 'Höhe', key: 'height', kind: 'delta', step: 5 },
@@ -182,11 +202,13 @@ function findButtonByText(root, text) {
     );
 
     const fieldText = collectText(panelNode);
-    assert.match(fieldText, /Bereichstyp: Feld/);
-    assert.ok(findButtonByText(panelNode, 'Schriftgröße -1'));
+    assert.match(fieldText, /Ausgewählt: Feld #2/);
+    assert.match(fieldText, /Typ: Feld/);
+    assert.match(fieldText, /Elternbereich: Verortung/);
+    assert.ok(findButtonByText(panelNode, 'Elternbereich auswählen'));
+    assert.ok(findButtonByText(panelNode, 'Vorheriges Feld'));
+    assert.ok(findButtonByText(panelNode, 'Nächstes Feld'));
     assert.ok(findButtonByText(panelNode, 'Schriftgröße +1'));
-    assert.ok(findButtonByText(panelNode, 'Abstand außen links +5'));
-    assert.ok(findButtonByText(panelNode, 'Reset ausgewählt'));
 
     assert.equal(panel.unmount(), true);
     assert.equal(document.body.children.some((c) => c.attributes['data-ui-inspector-panel'] === 'true'), false);
@@ -197,6 +219,11 @@ function findButtonByText(root, text) {
     const runtime = createUiInspectorRuntime();
     const rootNodes = [
       {
+        getAttribute: (n) => (n === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste' : null),
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 420, height: 140 }),
+        style: { cssText: 'width: 420px; height: 140px;' },
+      },
+      {
         getAttribute: (n) => (n === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung' : null),
         getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 }),
         style: {
@@ -205,8 +232,13 @@ function findButtonByText(root, text) {
         },
       },
       {
-        getAttribute: (n) => (n === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld' : null),
+        getAttribute: (n) => (n === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld::1' : null),
         getBoundingClientRect: () => ({ left: 20, top: 20, width: 100, height: 40 }),
+        style: { cssText: 'width: 100px; height: 40px; margin-top: 3px; margin-left: 2px; font-size: 12px;' },
+      },
+      {
+        getAttribute: (n) => (n === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld::2' : null),
+        getBoundingClientRect: () => ({ left: 120, top: 20, width: 100, height: 40 }),
         style: { cssText: 'width: 100px; height: 40px; margin-top: 3px; margin-left: 2px; font-size: 12px;' },
       },
     ];
@@ -219,10 +251,10 @@ function findButtonByText(root, text) {
     assert.equal(runtime.refreshOverlay(), true);
     const mountedPanel = runtimeDocument.body.children.find((c) => c.attributes['data-ui-inspector-panel'] === 'true');
     assert.ok(mountedPanel);
-    assert.match(collectText(mountedPanel), /restarbeiten\.filterleiste\.verortung/);
-    assert.match(collectText(mountedPanel), /Bereichstyp: Gruppe/);
-    assert.match(collectText(mountedPanel), /Position X \+5/);
-    assert.match(collectText(mountedPanel), /Position Y \+5/);
+    assert.match(collectText(mountedPanel), /Ausgewählt: Verortung/);
+    assert.match(collectText(mountedPanel), /Feld #1/);
+    assert.match(collectText(mountedPanel), /Feld #2/);
+    assert.match(collectText(mountedPanel), /Elternbereich: Filterleiste/);
     assert.match(collectText(mountedPanel), /Temporäre Vorschau – keine Speicherung\./);
     assert.doesNotMatch(collectText(mountedPanel), /Speichern|Anwenden|Übernehmen|Persistieren/);
     assert.equal(runtime.deactivateOverlay(), true);

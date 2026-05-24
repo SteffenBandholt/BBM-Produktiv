@@ -111,11 +111,9 @@ function findButtonByText(root, text) {
   const runtimePath = path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorRuntime.js');
   const runtimeSource = fs.readFileSync(runtimePath, 'utf8');
   assert.doesNotMatch(runtimeSource, /localStorage|saveInspector|saveUiInspector|ui-inspector:save|inspector:save|ipc|db/);
-  assert.match(runtimeSource, /getAllowedControlsForSelectedId/);
-  assert.match(runtimeSource, /applyPreviewDelta/);
-  assert.match(runtimeSource, /resetSelectedPreview/);
-  assert.match(runtimeSource, /resetAllPreview/);
-  assert.match(runtimeSource, /toggleSelectedVisibility/);
+  assert.match(runtimeSource, /getSelectionContext/);
+  assert.match(runtimeSource, /selectInspectorTarget/);
+  assert.match(runtimeSource, /getNextSiblingId/);
 
   const { createUiInspectorRuntime } = await importEsmFromFile(runtimePath);
   assert.equal(typeof createUiInspectorRuntime, 'function');
@@ -126,30 +124,41 @@ function findButtonByText(root, text) {
 
   const parentOriginal =
     'width: 200px; height: 80px; margin-top: 4px; margin-right: 6px; margin-bottom: 8px; margin-left: 10px; padding-top: 1px; padding-right: 2px; padding-bottom: 3px; padding-left: 4px;';
-  const childOriginal = 'width: 90px; height: 30px; margin-top: 3px; margin-left: 2px; font-size: 12px;';
-  const classOriginal = 'width: 180px; height: 60px; margin-top: 1px; padding-top: 2px;';
-  const classFieldOriginal = 'width: 80px; height: 20px; font-size: 11px;';
+  const child1Original = 'width: 90px; height: 30px; margin-top: 3px; margin-left: 2px; font-size: 12px;';
+  const child2Original = 'width: 95px; height: 30px; margin-top: 3px; margin-left: 2px; font-size: 12px;';
+  const child3Original = 'width: 100px; height: 30px; margin-top: 3px; margin-left: 2px; font-size: 12px;';
+  const child4Original = 'width: 105px; height: 30px; margin-top: 3px; margin-left: 2px; font-size: 12px;';
 
   const nodes = [
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 420, height: 120 }),
+      style: { cssText: 'width: 420px; height: 120px;' },
+    },
     {
       getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung' : null),
       getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 80 }),
       style: { cssText: parentOriginal },
     },
     {
-      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld' : null),
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld::1' : null),
       getBoundingClientRect: () => ({ left: 10, top: 10, width: 90, height: 30 }),
-      style: { cssText: childOriginal },
+      style: { cssText: child1Original },
     },
     {
-      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.klassenfilter' : null),
-      getBoundingClientRect: () => ({ left: 220, top: 0, width: 180, height: 60 }),
-      style: { cssText: classOriginal },
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld::2' : null),
+      getBoundingClientRect: () => ({ left: 105, top: 10, width: 95, height: 30 }),
+      style: { cssText: child2Original },
     },
     {
-      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.klassenfilter.feld' : null),
-      getBoundingClientRect: () => ({ left: 230, top: 8, width: 80, height: 20 }),
-      style: { cssText: classFieldOriginal },
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld::3' : null),
+      getBoundingClientRect: () => ({ left: 205, top: 10, width: 100, height: 30 }),
+      style: { cssText: child3Original },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld::4' : null),
+      getBoundingClientRect: () => ({ left: 310, top: 10, width: 105, height: 30 }),
+      style: { cssText: child4Original },
     },
   ];
 
@@ -162,79 +171,57 @@ function findButtonByText(root, text) {
     const runtime = createUiInspectorRuntime();
     assert.equal(runtime.activateOverlay(root), true);
 
+    const context = runtime.getSelectionContext('restarbeiten.filterleiste.verortung');
+    assert.equal(context.selectedKind, 'Gruppe');
+    assert.equal(context.children.length, 4);
+    assert.equal(context.children[1].id, 'restarbeiten.filterleiste.verortung.feld::2');
+    assert.equal(context.parentLabel, 'Filterleiste');
+
     runtime.overlay.select('restarbeiten.filterleiste.verortung');
     let panelNode = document.body.children.find((node) => node.attributes['data-ui-inspector-panel'] === 'true');
     assert.ok(panelNode);
-    assert.match(collectText(panelNode), /Bereichstyp: Gruppe/);
-    assert.ok(findButtonByText(panelNode, 'Position X +5'));
-    assert.ok(findButtonByText(panelNode, 'Position Y +5'));
-    assert.ok(findButtonByText(panelNode, 'Abstand außen oben +5'));
-    assert.ok(findButtonByText(panelNode, 'Abstand innen links +5'));
-    assert.ok(findButtonByText(panelNode, 'Sichtbarkeit umschalten'));
-    assert.ok(findButtonByText(panelNode, 'Reset ausgewählt'));
-    assert.ok(findButtonByText(panelNode, 'Alles zurücksetzen'));
+    assert.match(collectText(panelNode), /Ausgewählt: Verortung/);
+    assert.match(collectText(panelNode), /Typ: Gruppe/);
+    assert.match(collectText(panelNode), /Elternbereich: Filterleiste/);
+    assert.ok(findButtonByText(panelNode, 'Feld #1'));
+    assert.ok(findButtonByText(panelNode, 'Feld #2'));
+    assert.ok(findButtonByText(panelNode, 'Feld #3'));
+    assert.ok(findButtonByText(panelNode, 'Feld #4'));
 
-    findButtonByText(panelNode, 'Position X +5').click();
-    assert.match(nodes[0].style.cssText, /transform:\s*translate\(5px,\s*0px\)/);
-    assert.equal(nodes[1].style.cssText, childOriginal);
-
+    findButtonByText(panelNode, 'Feld #2').click();
+    assert.equal(runtime.getSelectedId(), 'restarbeiten.filterleiste.verortung.feld::2');
     panelNode = document.body.children.find((node) => node.attributes['data-ui-inspector-panel'] === 'true');
-    findButtonByText(panelNode, 'Position Y +5').click();
-    assert.match(nodes[0].style.cssText, /transform:\s*translate\(5px,\s*5px\)/);
-    assert.equal(nodes[1].style.cssText, childOriginal);
+    assert.match(collectText(panelNode), /Ausgewählt: Feld #2/);
+    assert.ok(findButtonByText(panelNode, 'Elternbereich auswählen'));
+    assert.ok(findButtonByText(panelNode, 'Vorheriges Feld'));
+    assert.ok(findButtonByText(panelNode, 'Nächstes Feld'));
 
-    runtime.resetSelectedPreview();
-    assert.equal(nodes[0].style.cssText, parentOriginal);
-    assert.equal(nodes[1].style.cssText, childOriginal);
+    findButtonByText(panelNode, 'Elternbereich auswählen').click();
+    assert.equal(runtime.getSelectedId(), 'restarbeiten.filterleiste.verortung');
 
-    runtime.overlay.select('restarbeiten.filterleiste.verortung.feld');
+    runtime.overlay.select('restarbeiten.filterleiste.verortung.feld::2');
     panelNode = document.body.children.find((node) => node.attributes['data-ui-inspector-panel'] === 'true');
-    assert.match(collectText(panelNode), /Bereichstyp: Feld/);
-    findButtonByText(panelNode, 'Position X +5').click();
-    assert.match(nodes[1].style.cssText, /transform:\s*translate\(5px,\s*0px\)/);
-    assert.equal(nodes[0].style.cssText, parentOriginal);
-
-    runtime.resetSelectedPreview();
-    assert.equal(nodes[1].style.cssText, childOriginal);
-
-    runtime.overlay.select('restarbeiten.filterleiste.verortung');
+    findButtonByText(panelNode, 'Nächstes Feld').click();
+    assert.equal(runtime.getSelectedId(), 'restarbeiten.filterleiste.verortung.feld::3');
     panelNode = document.body.children.find((node) => node.attributes['data-ui-inspector-panel'] === 'true');
-    findButtonByText(panelNode, 'Abstand außen oben +5').click();
-    assert.match(nodes[0].style.cssText, /margin-top:\s*9px/);
-    assert.match(nodes[0].style.cssText, /margin-left:\s*10px/);
-    findButtonByText(panelNode, 'Abstand außen links +5').click();
-    assert.match(nodes[0].style.cssText, /margin-left:\s*15px/);
-    assert.match(nodes[0].style.cssText, /margin-top:\s*9px/);
-
-    runtime.resetSelectedPreview();
-    assert.equal(nodes[0].style.cssText, parentOriginal);
-
-    runtime.overlay.select('restarbeiten.filterleiste.verortung');
-    panelNode = document.body.children.find((node) => node.attributes['data-ui-inspector-panel'] === 'true');
-    findButtonByText(panelNode, 'Abstand innen oben +5').click();
-    assert.match(nodes[0].style.cssText, /padding-top:\s*6px/);
-    assert.match(nodes[0].style.cssText, /padding-left:\s*4px/);
-    findButtonByText(panelNode, 'Abstand innen links +5').click();
-    assert.match(nodes[0].style.cssText, /padding-left:\s*9px/);
-    assert.match(nodes[0].style.cssText, /padding-top:\s*6px/);
-
-    runtime.resetSelectedPreview();
-    assert.equal(nodes[0].style.cssText, parentOriginal);
+    findButtonByText(panelNode, 'Vorheriges Feld').click();
+    assert.equal(runtime.getSelectedId(), 'restarbeiten.filterleiste.verortung.feld::2');
+    findButtonByText(panelNode, 'Vorheriges Feld').click();
+    assert.equal(runtime.getSelectedId(), 'restarbeiten.filterleiste.verortung.feld::1');
 
     runtime.overlay.select('restarbeiten.filterleiste.verortung');
     panelNode = document.body.children.find((node) => node.attributes['data-ui-inspector-panel'] === 'true');
     findButtonByText(panelNode, 'Breite +5').click();
-    runtime.overlay.select('restarbeiten.filterleiste.verortung.feld');
-    panelNode = document.body.children.find((node) => node.attributes['data-ui-inspector-panel'] === 'true');
-    findButtonByText(panelNode, 'Breite +5').click();
-    assert.notEqual(nodes[0].style.cssText, parentOriginal);
-    assert.notEqual(nodes[1].style.cssText, childOriginal);
+    assert.match(nodes[1].style.cssText, /width:\s*205px/);
+    assert.equal(nodes[2].style.cssText, child1Original);
 
     assert.equal(runtime.deactivateOverlay(), true);
-    assert.equal(nodes[0].style.cssText, parentOriginal);
-    assert.equal(nodes[1].style.cssText, childOriginal);
-    assert.equal(nodes[2].style.cssText, classOriginal);
-    assert.equal(nodes[3].style.cssText, classFieldOriginal);
+    assert.equal(nodes[0].style.cssText, 'width: 420px; height: 120px;');
+    assert.equal(nodes[1].style.cssText, parentOriginal);
+    assert.equal(nodes[2].style.cssText, child1Original);
+    assert.equal(nodes[3].style.cssText, child2Original);
+    assert.equal(nodes[4].style.cssText, child3Original);
+    assert.equal(nodes[5].style.cssText, child4Original);
     assert.equal(document.body.children.some((node) => node.attributes['data-ui-inspector-panel'] === 'true'), false);
 
     console.log('ok - uiInspectorRuntime.test');

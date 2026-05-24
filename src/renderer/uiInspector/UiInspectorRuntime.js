@@ -32,6 +32,23 @@ const FIELD_CONTROLS = [
   { key: 'visibility', label: 'Sichtbarkeit', kind: 'toggle' },
 ];
 
+function normalizeInspectorId(id) {
+  return String(id || '').trim();
+}
+
+function splitInspectorId(id) {
+  const rawId = normalizeInspectorId(id);
+  const markerIndex = rawId.indexOf('::');
+  if (markerIndex < 0) {
+    return { rawId, baseId: rawId, instanceId: '' };
+  }
+  return {
+    rawId,
+    baseId: rawId.slice(0, markerIndex),
+    instanceId: rawId.slice(markerIndex + 2),
+  };
+}
+
 function escapeRegExp(value) {
   return String(value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -158,46 +175,181 @@ function createUiInspectorRuntime() {
   let rootElement = null;
   let selectedId = '';
   const elementsById = new Map();
+  const entryById = new Map();
+  const entriesByBaseId = new Map();
+  const allEntries = [];
   const snapshotsByElement = new Map();
+  let suppressOverlaySelectionCallback = false;
 
   function rebuildIndex() {
     elementsById.clear();
+    entryById.clear();
+    entriesByBaseId.clear();
+    allEntries.length = 0;
     if (!rootElement || typeof rootElement.querySelectorAll !== 'function') return;
 
     const nodes = rootElement.querySelectorAll('[data-ui-inspector-id]');
     for (const node of nodes || []) {
-      const id = String(node?.getAttribute?.('data-ui-inspector-id') || '').trim();
+      const id = normalizeInspectorId(node?.getAttribute?.('data-ui-inspector-id'));
       if (!id) continue;
+      const entry = {
+        id,
+        ...splitInspectorId(id),
+        node,
+      };
       elementsById.set(id, node);
+      entryById.set(id, entry);
+      allEntries.push(entry);
+      if (!entriesByBaseId.has(entry.baseId)) entriesByBaseId.set(entry.baseId, []);
+      entriesByBaseId.get(entry.baseId).push(entry);
     }
+  }
+
+  function getEntryById(id) {
+    const normalized = normalizeInspectorId(id);
+    if (!normalized) return null;
+    let entry = entryById.get(normalized) || null;
+    if (entry) return entry;
+    const baseId = splitInspectorId(normalized).baseId;
+    const entries = entriesByBaseId.get(baseId) || [];
+    return entries[0] || null;
+  }
+
+  function getEntryByBaseId(baseId) {
+    const entries = entriesByBaseId.get(normalizeInspectorId(baseId)) || [];
+    return entries[0] || null;
+  }
+
+  function getSelectedEntry() {
+    if (!selectedId) return null;
+    const entry = getEntryById(selectedId);
+    if (entry) return entry;
+    rebuildIndex();
+    return getEntryById(selectedId);
   }
 
   function getSelectedElement() {
-    if (!selectedId) return null;
-    let element = elementsById.get(selectedId) || null;
-    if (element) return element;
-    rebuildIndex();
-    return elementsById.get(selectedId) || null;
+    const entry = getSelectedEntry();
+    return entry?.node || null;
   }
 
-  function classifySelectedId(id) {
-    const selected = String(id || '').trim();
-    if (!selected) return '';
-    const prefix = `${selected}.`;
-    for (const candidate of elementsById.keys()) {
-      if (candidate !== selected && candidate.startsWith(prefix)) {
-        return 'Gruppe';
+  function getDisplayLabel(id) {
+    const { baseId, instanceId } = splitInspectorId(id);
+    const parts = baseId.split('.').filter(Boolean);
+    const lastPart = parts[parts.length - 1] || baseId || '';
+    if (instanceId) {
+      if (/feld/i.test(lastPart)) return `Feld #${instanceId}`;
+      return `${lastPart.charAt(0).toUpperCase()}${lastPart.slice(1)} #${instanceId}`;
+    }
+    return lastPart ? `${lastPart.charAt(0).toUpperCase()}${lastPart.slice(1)}` : '';
+  }
+
+  function getParentEntry(entry) {
+    if (!entry?.baseId) return null;
+    const parentBaseId = entry.baseId.includes('.') ? entry.baseId.slice(0, entry.baseId.lastIndexOf('.')) : '';
+    if (!parentBaseId) return null;
+    return getEntryByBaseId(parentBaseId);
+  }
+
+  function getChildEntries(entry) {
+    if (!entry?.baseId) return [];
+    const byParentBase = new Map();
+    for (const child of allEntries) {
+      if (child.baseId === entry.baseId) continue;
+      const parentBaseId = child.baseId.includes('.') ? child.baseId.slice(0, child.baseId.lastIndexOf('.')) : '';
+      if (parentBaseId === entry.baseId) {
+        byParentBase.set(child.id, child);
       }
     }
-    return 'Feld';
+    return Array.from(byParentBase.values());
+  }
+
+  function getSiblingEntries(entry) {
+    const parentEntry = getParentEntry(entry);
+    if (!parentEntry) return [];
+    return getChildEntries(parentEntry);
+  }
+
+  function getSelectionContext(id = selectedId) {
+    const entry = getEntryById(id);
+    if (!entry) {
+      return {
+        selectedId: normalizeInspectorId(id),
+        selectedBaseId: '',
+        selectedKind: '',
+        selectedLabel: '',
+        parentId: '',
+        parentBaseId: '',
+        parentLabel: '',
+        children: [],
+        siblings: [],
+      };
+    }
+
+    const children = getChildEntries(entry);
+    const parentEntry = getParentEntry(entry);
+    const siblings = getSiblingEntries(entry);
+    const selectedKind = children.length > 0 ? 'Gruppe' : 'Feld';
+
+    return {
+      selectedId: entry.id,
+      selectedBaseId: entry.baseId,
+      selectedKind,
+      selectedLabel: getDisplayLabel(entry.id),
+      parentId: parentEntry?.id || '',
+      parentBaseId: parentEntry?.baseId || '',
+      parentLabel: parentEntry ? getDisplayLabel(parentEntry.id) : '',
+      children: children.map((child, index) => ({
+        id: child.id,
+        baseId: child.baseId,
+        label: child.instanceId ? `Feld #${child.instanceId}` : getDisplayLabel(child.id) || `Feld #${index + 1}`,
+      })),
+      siblings: siblings.map((sibling, index) => ({
+        id: sibling.id,
+        baseId: sibling.baseId,
+        label: sibling.instanceId ? `Feld #${sibling.instanceId}` : getDisplayLabel(sibling.id) || `Feld #${index + 1}`,
+      })),
+    };
+  }
+
+  function getSelectedContext() {
+    return getSelectionContext(selectedId);
+  }
+
+  function getNextSiblingId(direction = 1) {
+    const context = getSelectedContext();
+    if (!context.siblings.length) return '';
+    const currentIndex = context.siblings.findIndex((item) => item.id === context.selectedId);
+    if (currentIndex < 0) return '';
+    const nextIndex = currentIndex + Number(direction || 0);
+    if (nextIndex < 0 || nextIndex >= context.siblings.length) return '';
+    return context.siblings[nextIndex]?.id || '';
+  }
+
+  function selectInspectorTarget(id) {
+    const normalized = normalizeInspectorId(id);
+    if (!normalized) return false;
+    suppressOverlaySelectionCallback = true;
+    try {
+      overlay.select(normalized);
+    } finally {
+      suppressOverlaySelectionCallback = false;
+    }
+    selectedId = normalized;
+    renderPanel();
+    return true;
   }
 
   function getAllowedControlsForSelectedId(id) {
-    const selectedKind = classifySelectedId(id);
+    const { selectedKind } = getSelectionContext(id);
     return {
       selectedKind,
       controls: selectedKind === 'Gruppe' ? GROUP_CONTROLS : FIELD_CONTROLS,
     };
+  }
+
+  function getSelectionContextForSelectedId(id) {
+    return getSelectionContext(id);
   }
 
   function ensureSnapshot(element) {
@@ -278,6 +430,7 @@ function createUiInspectorRuntime() {
   }
 
   function renderPanel() {
+    const context = getSelectedContext();
     const selectedElement = getSelectedElement();
     if (!selectedElement) {
       panel.clear();
@@ -286,7 +439,8 @@ function createUiInspectorRuntime() {
 
     const { selectedKind, controls } = getAllowedControlsForSelectedId(selectedId);
     panel.render({
-      selectedId,
+      ...context,
+      selectedId: context.selectedId || selectedId,
       selectedKind,
       controls,
       note: TEMPORARY_NOTE,
@@ -295,6 +449,18 @@ function createUiInspectorRuntime() {
         toggleVisibility: toggleSelectedVisibility,
         resetSelected: resetSelectedPreview,
         resetAll: resetAllPreview,
+        selectTarget: selectInspectorTarget,
+        selectParent: () => {
+          const parentId = getSelectedContext().parentId;
+          if (!parentId) return false;
+          return selectInspectorTarget(parentId);
+        },
+        selectChild: (childId) => selectInspectorTarget(childId),
+        selectSiblingOffset: (offset) => {
+          const nextId = getNextSiblingId(offset);
+          if (!nextId) return false;
+          return selectInspectorTarget(nextId);
+        },
       },
     });
     return true;
@@ -307,7 +473,13 @@ function createUiInspectorRuntime() {
   }
 
   function handleSelection(id) {
-    return selectElementById(id);
+    if (suppressOverlaySelectionCallback) {
+      selectedId = normalizeInspectorId(id);
+      renderPanel();
+      return true;
+    }
+    selectedId = normalizeInspectorId(id);
+    return renderPanel();
   }
 
   function handleClearSelection() {
@@ -425,10 +597,12 @@ function createUiInspectorRuntime() {
     refreshOverlay,
     getSelectedId: () => selectedId,
     getAllowedControlsForSelectedId,
+    getSelectionContext: getSelectionContextForSelectedId,
     applyPreviewDelta,
     resetSelectedPreview,
     resetAllPreview,
     toggleSelectedVisibility,
+    selectInspectorTarget,
   };
 }
 

@@ -71,3 +71,8 @@
 **Beschluss:** M13.2.1 trennt die temporären Stellschrauben nach Richtung und Seiten und nutzt für Positionsänderungen `transform: translate(...)`.
 
 **Begründung:** Gruppenrahmen und einzelne Felder müssen separat bedienbar bleiben, während die Vorschau weiterhin nur temporär im laufenden DOM arbeitet.
+
+## Entscheidung 014
+**Beschluss:** M13.3 ergänzt nur die Rahmen-zuerst-Bedienung und leitet die Auswahl für Elternbereich, Kindbereiche und Nachbarfelder aus den vorhandenen DOM-Markern ab.
+
+**Begründung:** Die Bedienung soll schnell zwischen Außenrahmen und enthaltenen Feldern wechseln können, ohne neue Persistenz- oder Layoutlogik einzuführen.

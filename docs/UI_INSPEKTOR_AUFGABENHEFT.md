@@ -1,10 +1,10 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.2.1 abgeschlossen (gerichtete Stellschrauben und Gruppenposition X/Y).
+Status: M13.3 abgeschlossen (Rahmen-zuerst-Bedienung mit Feldnavigation).
 
 Aktueller Stand:
-- M1 bis M13.2.1 abgeschlossen.
+- M1 bis M13.3 abgeschlossen.
 
 ## Haken-System
 - `[x]` erledigt
@@ -27,6 +27,7 @@ Aktueller Stand:
 - [x] M12.1 Restarbeiten-Gruppenmarker als echte DOM-Container ergänzen
 - [x] M13.2 Temporäre Vorschau auf ausgewählten Elementen
 - [x] M13.2.1 Gerichtete Stellschrauben und Gruppenposition X/Y ergänzen
+- [x] M13.3 Rahmen-zuerst-Bedienung mit Feldnavigation
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -294,4 +295,27 @@ Hinweis:
   - `node scripts/tests/restarbeitenModule.test.cjs`
   - `npm test`
 - Nächster Schritt:
-  - **M13.3 temporäre Vorschau weiter absichern oder feinschärfen**
+  - **M13.3 Rahmen-zuerst-Bedienung mit Feldnavigation**
+
+## M13.3 Abschlussnotiz
+- M13.3 ergänzt die Panel-Kontextanzeige für Elternbereich und Kindbereiche.
+- Gruppen zeigen ihre Kinder direkt als auswählbare Ziele; Felder können zum Elternbereich und zu Vorherigem/Nächstem springen.
+- Die temporäre Vorschau aus M13.2.1 bleibt unverändert und weiterhin nicht-persistent.
+- Keine Speicherung, kein localStorage, kein IPC, keine DB, kein CSS-Datei-Schreiben.
+- Geänderte Dateien:
+  - `src/renderer/uiInspector/UiInspectorRuntime.js`
+  - `src/renderer/uiInspector/UiInspectorPanel.js`
+  - `scripts/tests/uiInspectorRuntime.test.cjs`
+  - `scripts/tests/uiInspectorPanel.test.cjs`
+  - `scripts/tests/restarbeitenModule.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+- Tests:
+  - `node scripts/tests/uiInspectorRuntime.test.cjs`
+  - `node scripts/tests/uiInspectorPanel.test.cjs`
+  - `node scripts/tests/uiInspectorOverlay.test.cjs`
+  - `node scripts/tests/restarbeitenModule.test.cjs`
+  - `npm test`
+- Nächster Schritt:
+  - **M13.4 weitere UI-Inspector-Feinschärfung**

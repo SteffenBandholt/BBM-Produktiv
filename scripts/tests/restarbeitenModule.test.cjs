@@ -310,7 +310,7 @@ async function runRestarbeitenModuleTests(run) {
   });
 
 
-  await run("M13.2.1 UI-Inspector Panel bietet gerichtete Stellschrauben und bleibt nicht-persistent", () => {
+  await run("M13.3 UI-Inspector Panel bietet Rahmen-zuerst-Bedienung ohne Persistenz", () => {
     const panelPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorPanel.js");
     const runtimePath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorRuntime.js");
     const panelContent = fs.readFileSync(panelPath, "utf8");
@@ -318,7 +318,10 @@ async function runRestarbeitenModuleTests(run) {
 
     assert.match(panelContent, /data-ui-inspector-panel/);
     assert.match(panelContent, /UI-Inspektor/);
-    assert.match(panelContent, /Bereichstyp/);
+    assert.match(panelContent, /Ausgewählt/);
+    assert.match(panelContent, /Elternbereich auswählen/);
+    assert.match(panelContent, /Vorheriges Feld/);
+    assert.match(panelContent, /Nächstes Feld/);
     assert.match(panelContent, /Temporäre Vorschau/);
     assert.match(panelContent, /Reset ausgewählt/);
     assert.match(panelContent, /Alles zurücksetzen/);
@@ -333,7 +336,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(panelContent, /Persistieren/);
     assert.doesNotMatch(panelContent, /<input|\btype\s*=\s*['"](range|text|number)['"]/i);
 
-    assert.match(runtimeContent, /getAllowedControlsForSelectedId/);
+    assert.match(runtimeContent, /getSelectionContext/);
+    assert.match(runtimeContent, /selectInspectorTarget/);
+    assert.match(runtimeContent, /getNextSiblingId/);
     assert.match(runtimeContent, /applyPreviewDelta/);
     assert.match(runtimeContent, /resetSelectedPreview/);
     assert.match(runtimeContent, /resetAllPreview/);

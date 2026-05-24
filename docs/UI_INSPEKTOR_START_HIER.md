@@ -35,18 +35,21 @@ Pflichtreihenfolge:
 - M12.1 Restarbeiten-Gruppenmarker als echte DOM-Container ergänzt
 - M13.2 Temporäre Vorschau auf ausgewählten Elementen abgeschlossen
 - M13.2.1 Gerichtete Stellschrauben und Gruppenposition X/Y ergänzt
+- M13.3 Rahmen-zuerst-Bedienung mit Feldnavigation ergänzt
 - UI-Inspector-Modulgerüst und Layout-Landkarten-Format existieren
 - Overlay kann angezeigt werden
 - Restarbeiten-DOM-Markierungen vorhanden
 - Gruppenmarker liegen auf echten DOM-Containern, Feldmarker darunter
 - Temporäre Vorschau wirkt nur auf dem ausgewählten Element und wird beim Deaktivieren zurückgesetzt
 - Position X/Y arbeitet temporär über `transform: translate(...)`
+- Panel zeigt Elternbereich, Kindbereiche und Vorheriges/Nächstes Feld
 - Noch keine sichtbare App-Funktion
 
 ## 5. Nächster geplanter Schritt
-- Nächster Schritt: M13.3 temporäre Vorschau weiter absichern oder feinschärfen
+- Nächster Schritt: M13.4 weitere UI-Inspector-Feinschärfung
 - M13.2 ist nur Vorschau, ohne Speicherung
 - M13.2.1 trennt Richtungen, Seiten und Gruppen-/Feldsteuerung
+- M13.3 führt Eltern-/Kindnavigation ein
 - Noch keine Layoutänderung
 
 ## 6. Harte Stopps
@@ -63,10 +66,10 @@ Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 „Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst, die Restarbeiten-Landkarte und die temporäre Vorschau sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M13.3 (temporäre Vorschau weiter absichern oder feinschärfen; weiterhin ohne Speicherung).“
 
 
-## Statusupdate M13.2.1
-- M13.2.1 ist erledigt.
+## Statusupdate M13.3
+- M13.3 ist erledigt.
 - Temporäre Vorschau arbeitet nur auf dem ausgewählten Element.
 - Originale Inline-Styles werden gemerkt und wiederhergestellt.
 - Beim Deaktivieren werden alle temporären Änderungen zurückgesetzt.
 - Noch keine Speicherung, kein localStorage, kein IPC, keine DB.
-- Nächster Meilenstein: M13.3 (temporäre Vorschau weiter absichern oder feinschärfen).
+- Nächster Meilenstein: M13.4 (weitere UI-Inspector-Feinschärfung).

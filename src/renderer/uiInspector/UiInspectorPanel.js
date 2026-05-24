@@ -87,7 +87,82 @@ function createKindBadge(doc, selectedKind) {
   return badge;
 }
 
-function renderPanelContent(panelRoot, { selectedId = '', selectedKind = '', controls = [], note = '', actions = {} } = {}) {
+function createContextSection(doc, state, actions) {
+  const section = doc.createElement('div');
+  section.style.display = 'flex';
+  section.style.flexDirection = 'column';
+  section.style.gap = '6px';
+  section.style.marginBottom = '10px';
+
+  const addLine = (labelText, valueText) => {
+    const line = doc.createElement('div');
+    line.textContent = `${labelText}: ${valueText || '—'}`;
+    section.append(line);
+  };
+
+  addLine('Ausgewählt', state.selectedLabel || state.selectedId);
+  addLine('Schlüssel', state.selectedId);
+  addLine('Typ', state.selectedKind);
+  addLine('Elternbereich', state.parentLabel);
+
+  if (state.parentId) {
+    const parentRow = doc.createElement('div');
+    parentRow.style.display = 'flex';
+    parentRow.style.gap = '6px';
+    parentRow.style.flexWrap = 'wrap';
+    parentRow.append(
+      createButton(doc, 'Elternbereich auswählen', () => actions.selectTarget?.(state.parentId), 'ui-inspector-preview-button')
+    );
+    section.append(parentRow);
+  }
+
+  if (Array.isArray(state.children) && state.children.length > 0) {
+    const childrenTitle = doc.createElement('div');
+    childrenTitle.textContent = 'Enthält:';
+    section.append(childrenTitle);
+
+    const childrenWrap = doc.createElement('div');
+    childrenWrap.style.display = 'flex';
+    childrenWrap.style.flexWrap = 'wrap';
+    childrenWrap.style.gap = '6px';
+    for (const child of state.children) {
+      childrenWrap.append(
+        createButton(doc, child.label || child.id, () => actions.selectTarget?.(child.id), 'ui-inspector-preview-button')
+      );
+    }
+    section.append(childrenWrap);
+  }
+
+  if (state.selectedKind === 'Feld' && Array.isArray(state.siblings) && state.siblings.length > 1) {
+    const siblingRow = doc.createElement('div');
+    siblingRow.style.display = 'flex';
+    siblingRow.style.gap = '6px';
+    siblingRow.style.flexWrap = 'wrap';
+    siblingRow.append(
+      createButton(doc, 'Vorheriges Feld', () => actions.selectSiblingOffset?.(-1), 'ui-inspector-preview-button'),
+      createButton(doc, 'Nächstes Feld', () => actions.selectSiblingOffset?.(1), 'ui-inspector-preview-button')
+    );
+    section.append(siblingRow);
+  }
+
+  return section;
+}
+
+function renderPanelContent(
+  panelRoot,
+  {
+    selectedId = '',
+    selectedKind = '',
+    selectedLabel = '',
+    parentId = '',
+    parentLabel = '',
+    children = [],
+    siblings = [],
+    controls = [],
+    note = '',
+    actions = {},
+  } = {}
+) {
   panelRoot.replaceChildren();
 
   const doc = panelRoot.ownerDocument || globalThis.document;
@@ -96,9 +171,9 @@ function renderPanelContent(panelRoot, { selectedId = '', selectedKind = '', con
   title.style.fontWeight = '700';
   title.style.marginBottom = '8px';
 
-  const selectedLabel = doc.createElement('div');
-  selectedLabel.textContent = selectedId ? `Ausgewählter Bereich: ${selectedId}` : 'Kein Bereich ausgewählt';
-  selectedLabel.style.marginBottom = '6px';
+  const selectedLabelNode = doc.createElement('div');
+  selectedLabelNode.textContent = selectedId ? `Ausgewählt: ${selectedLabel || selectedId}` : 'Kein Bereich ausgewählt';
+  selectedLabelNode.style.marginBottom = '6px';
 
   const kindBadge = createKindBadge(doc, selectedKind);
   kindBadge.style.marginBottom = '8px';
@@ -106,6 +181,12 @@ function renderPanelContent(panelRoot, { selectedId = '', selectedKind = '', con
   const hint = doc.createElement('div');
   hint.textContent = note || TEMPORARY_NOTE;
   hint.style.marginBottom = '8px';
+
+  const contextSection = createContextSection(
+    doc,
+    { selectedId, selectedKind, selectedLabel, parentId, parentLabel, children, siblings },
+    actions
+  );
 
   const controlsTitle = doc.createElement('div');
   controlsTitle.textContent = 'Erlaubte Stellschrauben:';
@@ -137,7 +218,7 @@ function renderPanelContent(panelRoot, { selectedId = '', selectedKind = '', con
     createButton(doc, 'Alles zurücksetzen', () => actions.resetAll?.(), 'ui-inspector-preview-button')
   );
 
-  panelRoot.append(title, selectedLabel, kindBadge, hint, controlsTitle, controlsList, actionRow);
+  panelRoot.append(title, selectedLabelNode, kindBadge, hint, contextSection, controlsTitle, controlsList, actionRow);
 }
 
 export function createUiInspectorPanel(options = {}) {
@@ -181,6 +262,11 @@ export function createUiInspectorPanel(options = {}) {
     renderPanelContent(panelRoot, {
       selectedId: '',
       selectedKind: '',
+      selectedLabel: '',
+      parentId: '',
+      parentLabel: '',
+      children: [],
+      siblings: [],
       controls: [],
       note: TEMPORARY_NOTE,
     });
