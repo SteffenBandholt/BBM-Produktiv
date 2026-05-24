@@ -1,27 +1,76 @@
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const fs = require('node:fs');
 const { importEsmFromFile } = require('./_esmLoader.cjs');
 
+function createFakeElement(tagName, document) {
+  return {
+    tagName: String(tagName || '').toUpperCase(),
+    children: [],
+    style: { cssText: '' },
+    attributes: {},
+    parentElement: null,
+    ownerDocument: document,
+    textContent: '',
+    isConnected: false,
+    onclick: null,
+    append(...items) {
+      for (const child of items) {
+        if (child && typeof child === 'object') {
+          child.parentElement = this;
+          child.ownerDocument = this.ownerDocument;
+          child.isConnected = this.isConnected;
+        }
+        this.children.push(child);
+      }
+    },
+    replaceChildren(...items) {
+      this.children = [];
+      this.append(...items);
+    },
+    removeChild(child) {
+      this.children = this.children.filter((entry) => entry !== child);
+      if (child && typeof child === 'object') {
+        child.parentElement = null;
+        child.isConnected = false;
+      }
+    },
+    setAttribute(name, value) {
+      this.attributes[name] = String(value);
+    },
+    getAttribute(name) {
+      return this.attributes[name];
+    },
+    click() {
+      this.onclick?.({
+        preventDefault() {},
+        stopPropagation() {},
+        stopImmediatePropagation() {},
+      });
+    },
+  };
+}
+
 function createFakeDocument() {
-  function createElement(tagName) {
-    return {
-      tagName: String(tagName || '').toUpperCase(),
-      children: [],
-      style: {},
-      attributes: {},
-      parentElement: null,
-      textContent: '',
-      isConnected: false,
-      append(...items) { for (const child of items) { child.parentElement = this; child.isConnected = this.isConnected; this.children.push(child); } },
-      replaceChildren(...items) { this.children = []; this.append(...items); },
-      removeChild(child) { this.children = this.children.filter((e) => e !== child); child.parentElement = null; child.isConnected = false; },
-      setAttribute(name, value) { this.attributes[name] = String(value); },
-      getAttribute(name) { return this.attributes[name]; },
-    };
-  }
-  const document = { createElement, body: createElement('body') };
+  const document = {
+    createElement(tag) {
+      return createFakeElement(tag, document);
+    },
+    body: null,
+  };
+
+  document.body = createFakeElement('body', document);
   document.body.isConnected = true;
-  document.body.append = (...items) => { for (const item of items) { item.parentElement = document.body; item.isConnected = true; document.body.children.push(item); } };
+  document.body.append = (...items) => {
+    for (const item of items) {
+      if (item && typeof item === 'object') {
+        item.parentElement = document.body;
+        item.ownerDocument = document;
+        item.isConnected = true;
+      }
+      document.body.children.push(item);
+    }
+  };
   return document;
 }
 
@@ -30,85 +79,157 @@ function collectText(node) {
   return [String(node.textContent || ''), ...(node.children || []).map(collectText)].join(' ');
 }
 
-function createFakeDomForRuntime() {
-  const listeners = new Map();
-  function createElement(tagName) {
-    return {
-      tagName: String(tagName || '').toUpperCase(),
-      children: [],
-      style: {},
-      attributes: {},
-      parentElement: null,
-      textContent: '',
-      isConnected: false,
-      onclick: null,
-      ownerDocument: null,
-      append(...items) { for (const child of items) { child.parentElement = this; child.ownerDocument = this.ownerDocument; child.isConnected = this.isConnected; this.children.push(child); } },
-      replaceChildren(...items) { this.children = []; this.append(...items); },
-      removeChild(child) { this.children = this.children.filter((e) => e !== child); child.parentElement = null; child.isConnected = false; },
-      setAttribute(name, value) { this.attributes[name] = String(value); },
-      getAttribute(name) { return this.attributes[name]; },
-      click() { this.onclick?.({ preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {} }); },
-    };
+function findNodes(node, predicate, acc = []) {
+  if (!node || typeof node !== 'object') return acc;
+  if (predicate(node)) acc.push(node);
+  for (const child of Array.isArray(node.children) ? node.children : []) {
+    findNodes(child, predicate, acc);
   }
-  const document = {
-    createElement(tag) { const node = createElement(tag); node.ownerDocument = document; return node; },
-    body: null,
-    addEventListener(type, handler) { if (!listeners.has(type)) listeners.set(type, []); listeners.get(type).push(handler); },
-    removeEventListener(type, handler) { listeners.set(type, (listeners.get(type) || []).filter((h) => h !== handler)); },
-  };
-  document.body = document.createElement('body');
-  document.body.isConnected = true;
-  document.body.append = (...items) => { for (const item of items) { item.parentElement = document.body; item.ownerDocument = document; item.isConnected = true; document.body.children.push(item); } };
-  return document;
+  return acc;
+}
+
+function findButtonByText(root, text) {
+  return (
+    findNodes(root, (node) => node?.tagName === 'BUTTON' && String(node?.textContent || '').trim() === String(text))[0] ||
+    null
+  );
 }
 
 (async function run() {
-  const { createUiInspectorPanel } = await importEsmFromFile(path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorPanel.js'));
+  const panelPath = path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorPanel.js');
+  const panelSource = fs.readFileSync(panelPath, 'utf8');
+  assert.doesNotMatch(panelSource, /Speichern|Anwenden|Übernehmen|Persistieren/);
+  assert.match(panelSource, /Bereichstyp/);
+  assert.match(panelSource, /Reset ausgewählt/);
+  assert.match(panelSource, /Alles zurücksetzen/);
+
+  const { createUiInspectorPanel } = await importEsmFromFile(panelPath);
   assert.equal(typeof createUiInspectorPanel, 'function');
 
   const document = createFakeDocument();
-  global.document = document;
+  const previousDocument = globalThis.document;
+  globalThis.document = document;
 
-  const panel = createUiInspectorPanel();
-  assert.equal(panel.mount(document.body), true);
+  try {
+    const panel = createUiInspectorPanel();
+    assert.equal(panel.mount(document.body), true);
 
-  const panelNode = document.body.children.find((c) => c.attributes['data-ui-inspector-panel'] === 'true');
-  assert.ok(panelNode);
-  assert.equal(panelNode.style.pointerEvents, 'auto');
+    const panelNode = document.body.children.find((c) => c.attributes['data-ui-inspector-panel'] === 'true');
+    assert.ok(panelNode);
+    assert.equal(panelNode.style.pointerEvents, 'auto');
 
-  assert.equal(panel.render({ selectedId: 'restarbeiten.editbox.kurztext', controls: ['Breite', 'Höhe', 'Sichtbarkeit'] }), true);
-  const text = collectText(panelNode);
-  assert.match(text, /UI-Inspektor/);
-  assert.match(text, /restarbeiten\.editbox\.kurztext/);
-  assert.match(text, /Breite/);
-  assert.match(text, /Höhe/);
-  assert.match(text, /Sichtbarkeit/);
-  assert.match(text, /Nur Anzeige/);
-  assert.doesNotMatch(text, /Speichern/);
-  assert.doesNotMatch(text, /Anwenden/);
+    assert.equal(
+      panel.render({
+        selectedId: 'restarbeiten.filterleiste.verortung',
+        selectedKind: 'Gruppe',
+        controls: [
+          { label: 'Breite', key: 'width', kind: 'delta', step: 5 },
+          { label: 'Höhe', key: 'height', kind: 'delta', step: 5 },
+          { label: 'Position X', key: 'translateX', kind: 'delta', step: 5 },
+          { label: 'Position Y', key: 'translateY', kind: 'delta', step: 5 },
+          { label: 'Abstand außen oben', key: 'marginTop', kind: 'delta', step: 5 },
+          { label: 'Abstand innen links', key: 'paddingLeft', kind: 'delta', step: 5 },
+          { label: 'Sichtbarkeit', key: 'visibility', kind: 'toggle' },
+        ],
+        note: 'Temporäre Vorschau – keine Speicherung.',
+        actions: {},
+      }),
+      true
+    );
 
-  assert.equal(panel.unmount(), true);
-  assert.equal(document.body.children.some((c) => c.attributes['data-ui-inspector-panel'] === 'true'), false);
+    const text = collectText(panelNode);
+    assert.match(text, /UI-Inspektor/);
+    assert.match(text, /Ausgewählter Bereich: restarbeiten\.filterleiste\.verortung/);
+    assert.match(text, /Bereichstyp: Gruppe/);
+    assert.match(text, /Temporäre Vorschau – keine Speicherung\./);
+    assert.doesNotMatch(text, /Speichern/);
+    assert.doesNotMatch(text, /Anwenden/);
+    assert.doesNotMatch(text, /Übernehmen/);
+    assert.doesNotMatch(text, /Persistieren/);
 
-  const runtimeDocument = createFakeDomForRuntime();
-  global.document = runtimeDocument;
-  const { createUiInspectorRuntime } = await importEsmFromFile(path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorRuntime.js'));
-  const runtime = createUiInspectorRuntime();
-  const rootNodes = [
-    { getAttribute: (n) => n === 'data-ui-inspector-id' ? 'restarbeiten.main' : null, getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 }) },
-    { getAttribute: (n) => n === 'data-ui-inspector-id' ? 'restarbeiten.editbox.meta' : null, getBoundingClientRect: () => ({ left: 20, top: 20, width: 100, height: 40 }) },
-  ];
-  const root = { ownerDocument: runtimeDocument, querySelectorAll: (sel) => sel === '[data-ui-inspector-id]' ? rootNodes : [] };
-  assert.equal(runtime.activateOverlay(root), true);
-  assert.equal(runtime.overlay.select('restarbeiten.editbox.meta'), true);
-  assert.equal(runtime.refreshOverlay(), true);
-  const mountedPanel = runtimeDocument.body.children.find((c) => c.attributes['data-ui-inspector-panel'] === 'true');
-  assert.ok(mountedPanel);
-  assert.match(collectText(mountedPanel), /restarbeiten\.editbox\.meta/);
-  assert.match(collectText(mountedPanel), /Breite/);
-  assert.equal(runtime.deactivateOverlay(), true);
-  assert.equal(runtimeDocument.body.children.some((c) => c.attributes['data-ui-inspector-panel'] === 'true'), false);
+    assert.ok(findButtonByText(panelNode, 'Breite -5'));
+    assert.ok(findButtonByText(panelNode, 'Breite +5'));
+    assert.ok(findButtonByText(panelNode, 'Höhe -5'));
+    assert.ok(findButtonByText(panelNode, 'Höhe +5'));
+    assert.ok(findButtonByText(panelNode, 'Position X -5'));
+    assert.ok(findButtonByText(panelNode, 'Position X +5'));
+    assert.ok(findButtonByText(panelNode, 'Position Y -5'));
+    assert.ok(findButtonByText(panelNode, 'Position Y +5'));
+    assert.ok(findButtonByText(panelNode, 'Abstand außen oben -5'));
+    assert.ok(findButtonByText(panelNode, 'Abstand innen links +5'));
+    assert.ok(findButtonByText(panelNode, 'Sichtbarkeit umschalten'));
+    assert.ok(findButtonByText(panelNode, 'Reset ausgewählt'));
+    assert.ok(findButtonByText(panelNode, 'Alles zurücksetzen'));
 
-  console.log('ok - uiInspectorPanel.test');
+    assert.equal(
+      panel.render({
+        selectedId: 'restarbeiten.editbox.kurztext',
+        selectedKind: 'Feld',
+        controls: [
+          { label: 'Breite', key: 'width', kind: 'delta', step: 5 },
+          { label: 'Höhe', key: 'height', kind: 'delta', step: 5 },
+          { label: 'Position X', key: 'translateX', kind: 'delta', step: 5 },
+          { label: 'Position Y', key: 'translateY', kind: 'delta', step: 5 },
+          { label: 'Schriftgröße', key: 'fontSize', kind: 'delta', step: 1 },
+          { label: 'Abstand außen links', key: 'marginLeft', kind: 'delta', step: 5 },
+          { label: 'Abstand außen oben', key: 'marginTop', kind: 'delta', step: 5 },
+          { label: 'Sichtbarkeit', key: 'visibility', kind: 'toggle' },
+        ],
+        note: 'Temporäre Vorschau – keine Speicherung.',
+        actions: {},
+      }),
+      true
+    );
+
+    const fieldText = collectText(panelNode);
+    assert.match(fieldText, /Bereichstyp: Feld/);
+    assert.ok(findButtonByText(panelNode, 'Schriftgröße -1'));
+    assert.ok(findButtonByText(panelNode, 'Schriftgröße +1'));
+    assert.ok(findButtonByText(panelNode, 'Abstand außen links +5'));
+    assert.ok(findButtonByText(panelNode, 'Reset ausgewählt'));
+
+    assert.equal(panel.unmount(), true);
+    assert.equal(document.body.children.some((c) => c.attributes['data-ui-inspector-panel'] === 'true'), false);
+
+    const runtimeDocument = createFakeDocument();
+    globalThis.document = runtimeDocument;
+    const { createUiInspectorRuntime } = await importEsmFromFile(path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorRuntime.js'));
+    const runtime = createUiInspectorRuntime();
+    const rootNodes = [
+      {
+        getAttribute: (n) => (n === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung' : null),
+        getBoundingClientRect: () => ({ left: 0, top: 0, width: 300, height: 200 }),
+        style: {
+          cssText:
+            'width: 300px; height: 200px; margin-top: 4px; margin-right: 6px; margin-bottom: 8px; margin-left: 10px; padding-top: 1px; padding-right: 2px; padding-bottom: 3px; padding-left: 4px;',
+        },
+      },
+      {
+        getAttribute: (n) => (n === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.verortung.feld' : null),
+        getBoundingClientRect: () => ({ left: 20, top: 20, width: 100, height: 40 }),
+        style: { cssText: 'width: 100px; height: 40px; margin-top: 3px; margin-left: 2px; font-size: 12px;' },
+      },
+    ];
+    const root = {
+      ownerDocument: runtimeDocument,
+      querySelectorAll: (sel) => (sel === '[data-ui-inspector-id]' ? rootNodes : []),
+    };
+    assert.equal(runtime.activateOverlay(root), true);
+    assert.equal(runtime.overlay.select('restarbeiten.filterleiste.verortung'), true);
+    assert.equal(runtime.refreshOverlay(), true);
+    const mountedPanel = runtimeDocument.body.children.find((c) => c.attributes['data-ui-inspector-panel'] === 'true');
+    assert.ok(mountedPanel);
+    assert.match(collectText(mountedPanel), /restarbeiten\.filterleiste\.verortung/);
+    assert.match(collectText(mountedPanel), /Bereichstyp: Gruppe/);
+    assert.match(collectText(mountedPanel), /Position X \+5/);
+    assert.match(collectText(mountedPanel), /Position Y \+5/);
+    assert.match(collectText(mountedPanel), /Temporäre Vorschau – keine Speicherung\./);
+    assert.doesNotMatch(collectText(mountedPanel), /Speichern|Anwenden|Übernehmen|Persistieren/);
+    assert.equal(runtime.deactivateOverlay(), true);
+    assert.equal(runtimeDocument.body.children.some((c) => c.attributes['data-ui-inspector-panel'] === 'true'), false);
+
+    console.log('ok - uiInspectorPanel.test');
+  } finally {
+    globalThis.document = previousDocument;
+  }
 })();

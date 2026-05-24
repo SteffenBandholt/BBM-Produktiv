@@ -1,10 +1,12 @@
+const TEMPORARY_NOTE = 'Temporäre Vorschau – keine Speicherung.';
+
 function createPanelRoot(doc) {
   const panel = doc.createElement('div');
   panel.setAttribute('data-ui-inspector-panel', 'true');
   panel.style.position = 'fixed';
   panel.style.right = '12px';
   panel.style.bottom = '12px';
-  panel.style.width = '340px';
+  panel.style.width = '380px';
   panel.style.maxWidth = 'calc(100vw - 24px)';
   panel.style.background = 'rgba(20, 25, 35, 0.96)';
   panel.style.color = '#ffffff';
@@ -18,7 +20,74 @@ function createPanelRoot(doc) {
   return panel;
 }
 
-function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = '' } = {}) {
+function createButton(doc, label, onClick, className = '') {
+  const button = doc.createElement('button');
+  button.type = 'button';
+  button.textContent = label;
+  if (className) button.className = className;
+  button.style.margin = '0';
+  button.style.padding = '4px 8px';
+  button.style.border = '1px solid rgba(255,255,255,0.22)';
+  button.style.borderRadius = '4px';
+  button.style.background = 'rgba(255,255,255,0.08)';
+  button.style.color = '#fff';
+  button.style.cursor = 'pointer';
+  button.onclick = (event) => {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    onClick?.();
+  };
+  return button;
+}
+
+function createControlRow(doc, control, actions = {}) {
+  const row = doc.createElement('div');
+  row.style.display = 'flex';
+  row.style.alignItems = 'center';
+  row.style.justifyContent = 'space-between';
+  row.style.gap = '8px';
+  row.style.marginBottom = '6px';
+
+  const label = doc.createElement('div');
+  label.textContent = control.label;
+  label.style.flex = '1 1 auto';
+
+  const buttons = doc.createElement('div');
+  buttons.style.display = 'flex';
+  buttons.style.gap = '6px';
+  buttons.style.flexWrap = 'wrap';
+  buttons.style.justifyContent = 'flex-end';
+
+  if (control.kind === 'delta') {
+    const step = Number(control.step || 0);
+    buttons.append(
+      createButton(doc, `${control.label} -${step}`, () => actions.adjust?.(control.key, -step), 'ui-inspector-preview-button'),
+      createButton(doc, `${control.label} +${step}`, () => actions.adjust?.(control.key, step), 'ui-inspector-preview-button')
+    );
+  } else if (control.kind === 'toggle') {
+    buttons.append(
+      createButton(doc, `${control.label} umschalten`, () => actions.toggleVisibility?.(), 'ui-inspector-preview-button')
+    );
+  }
+
+  row.append(label, buttons);
+  return row;
+}
+
+function createKindBadge(doc, selectedKind) {
+  const badge = doc.createElement('div');
+  badge.style.display = 'inline-flex';
+  badge.style.alignItems = 'center';
+  badge.style.padding = '2px 6px';
+  badge.style.borderRadius = '999px';
+  badge.style.background = 'rgba(255,255,255,0.10)';
+  badge.style.border = '1px solid rgba(255,255,255,0.16)';
+  badge.style.fontSize = '11px';
+  badge.textContent = selectedKind ? `Bereichstyp: ${selectedKind}` : 'Bereichstyp: -';
+  return badge;
+}
+
+function renderPanelContent(panelRoot, { selectedId = '', selectedKind = '', controls = [], note = '', actions = {} } = {}) {
   panelRoot.replaceChildren();
 
   const doc = panelRoot.ownerDocument || globalThis.document;
@@ -29,33 +98,46 @@ function renderPanelContent(panelRoot, { selectedId = '', controls = [], note = 
 
   const selectedLabel = doc.createElement('div');
   selectedLabel.textContent = selectedId ? `Ausgewählter Bereich: ${selectedId}` : 'Kein Bereich ausgewählt';
-  selectedLabel.style.marginBottom = '8px';
+  selectedLabel.style.marginBottom = '6px';
+
+  const kindBadge = createKindBadge(doc, selectedKind);
+  kindBadge.style.marginBottom = '8px';
+
+  const hint = doc.createElement('div');
+  hint.textContent = note || TEMPORARY_NOTE;
+  hint.style.marginBottom = '8px';
 
   const controlsTitle = doc.createElement('div');
   controlsTitle.textContent = 'Erlaubte Stellschrauben:';
   controlsTitle.style.marginBottom = '4px';
 
-  const controlsList = doc.createElement('ul');
-  controlsList.style.margin = '0 0 8px 16px';
-  controlsList.style.padding = '0';
+  const controlsList = doc.createElement('div');
+  controlsList.style.display = 'flex';
+  controlsList.style.flexDirection = 'column';
+  controlsList.style.gap = '2px';
+  controlsList.style.marginBottom = '10px';
 
   if (Array.isArray(controls) && controls.length > 0) {
     for (const control of controls) {
-      const item = doc.createElement('li');
-      item.textContent = String(control);
-      controlsList.append(item);
+      controlsList.append(createControlRow(doc, control, actions));
     }
   } else {
-    const item = doc.createElement('li');
-    item.textContent = note || 'Für diesen Bereich sind noch keine Stellschrauben definiert.';
-    controlsList.append(item);
+    const emptyState = doc.createElement('div');
+    emptyState.textContent = selectedId ? 'Für diesen Bereich sind noch keine Stellschrauben definiert.' : 'Bereich auswählen, um Vorschau zu steuern.';
+    controlsList.append(emptyState);
   }
 
-  const hint = doc.createElement('div');
-  hint.textContent = 'Nur Anzeige – Änderungen folgen erst in M13.';
-  hint.style.opacity = '0.9';
+  const actionRow = doc.createElement('div');
+  actionRow.style.display = 'flex';
+  actionRow.style.flexWrap = 'wrap';
+  actionRow.style.gap = '6px';
+  actionRow.style.marginBottom = '8px';
+  actionRow.append(
+    createButton(doc, 'Reset ausgewählt', () => actions.resetSelected?.(), 'ui-inspector-preview-button'),
+    createButton(doc, 'Alles zurücksetzen', () => actions.resetAll?.(), 'ui-inspector-preview-button')
+  );
 
-  panelRoot.append(title, selectedLabel, controlsTitle, controlsList, hint);
+  panelRoot.append(title, selectedLabel, kindBadge, hint, controlsTitle, controlsList, actionRow);
 }
 
 export function createUiInspectorPanel(options = {}) {
@@ -96,7 +178,12 @@ export function createUiInspectorPanel(options = {}) {
 
   function clear() {
     if (!panelRoot) return false;
-    renderPanelContent(panelRoot, { selectedId: '', controls: [] });
+    renderPanelContent(panelRoot, {
+      selectedId: '',
+      selectedKind: '',
+      controls: [],
+      note: TEMPORARY_NOTE,
+    });
     return true;
   }
 

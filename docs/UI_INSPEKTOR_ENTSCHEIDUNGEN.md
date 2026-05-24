@@ -61,3 +61,13 @@
 **Beschluss:** Das M12-Panel bleibt rein lesend und zeigt nur erlaubte Stellschrauben.
 
 **Begründung:** Anwendung und Speicherung werden bewusst getrennt in M13/M14 umgesetzt.
+
+## Entscheidung 012
+**Beschluss:** Die temporäre Vorschau in M13.2 wirkt nur auf dem ausgewählten DOM-Element und wird beim Deaktivieren vollständig zurückgesetzt.
+
+**Begründung:** Der Inspector darf nur die aktuelle Vorschau beeinflussen, ohne Persistenz, ohne Seiteneffekte auf unselektierte Nachbar-Elemente und ohne dauerhafte Layoutänderung.
+
+## Entscheidung 013
+**Beschluss:** M13.2.1 trennt die temporären Stellschrauben nach Richtung und Seiten und nutzt für Positionsänderungen `transform: translate(...)`.
+
+**Begründung:** Gruppenrahmen und einzelne Felder müssen separat bedienbar bleiben, während die Vorschau weiterhin nur temporär im laufenden DOM arbeitet.

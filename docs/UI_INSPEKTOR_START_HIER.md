@@ -33,16 +33,20 @@ Pflichtreihenfolge:
 - M9 Restarbeiten-DOM-Markierungen minimal eingeführt
 - M10 Overlay nur anzeigen abgeschlossen
 - M12.1 Restarbeiten-Gruppenmarker als echte DOM-Container ergänzt
+- M13.2 Temporäre Vorschau auf ausgewählten Elementen abgeschlossen
+- M13.2.1 Gerichtete Stellschrauben und Gruppenposition X/Y ergänzt
 - UI-Inspector-Modulgerüst und Layout-Landkarten-Format existieren
 - Overlay kann angezeigt werden
 - Restarbeiten-DOM-Markierungen vorhanden
 - Gruppenmarker liegen auf echten DOM-Containern, Feldmarker darunter
+- Temporäre Vorschau wirkt nur auf dem ausgewählten Element und wird beim Deaktivieren zurückgesetzt
+- Position X/Y arbeitet temporär über `transform: translate(...)`
 - Noch keine sichtbare App-Funktion
 
 ## 5. Nächster geplanter Schritt
-- Nächster Schritt: M13 Werte temporär anwenden, aber noch nicht speichern
-- M12.1 schärft nur die Restarbeiten-Landkarte und die DOM-Marker-Ebene
-- Noch kein Speichern
+- Nächster Schritt: M13.3 temporäre Vorschau weiter absichern oder feinschärfen
+- M13.2 ist nur Vorschau, ohne Speicherung
+- M13.2.1 trennt Richtungen, Seiten und Gruppen-/Feldsteuerung
 - Noch keine Layoutänderung
 
 ## 6. Harte Stopps
@@ -56,12 +60,13 @@ Nicht fortführen:
 ## 7. Definition für neue Chats
 Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 
-„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst und die erste Restarbeiten-Pilot-Landkarte sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M10 (Overlay nur anzeigen; weiterhin ohne Panel und ohne sichtbare Fachfunktion).“
+„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst, die Restarbeiten-Landkarte und die temporäre Vorschau sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M13.3 (temporäre Vorschau weiter absichern oder feinschärfen; weiterhin ohne Speicherung).“
 
 
-## Statusupdate M12
-- M12 ist erledigt.
-- Auswahl läuft weiterhin über Trefferliste am Klickpunkt.
-- Panel zeigt den ausgewählten Bereich und die erlaubten Stellschrauben.
-- Noch keine Anwendung, noch keine Speicherung, noch keine Layoutänderung.
-- Nächster Meilenstein: M13 (Werte temporär anwenden, noch nicht speichern).
+## Statusupdate M13.2.1
+- M13.2.1 ist erledigt.
+- Temporäre Vorschau arbeitet nur auf dem ausgewählten Element.
+- Originale Inline-Styles werden gemerkt und wiederhergestellt.
+- Beim Deaktivieren werden alle temporären Änderungen zurückgesetzt.
+- Noch keine Speicherung, kein localStorage, kein IPC, keine DB.
+- Nächster Meilenstein: M13.3 (temporäre Vorschau weiter absichern oder feinschärfen).

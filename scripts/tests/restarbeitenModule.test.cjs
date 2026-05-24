@@ -310,7 +310,7 @@ async function runRestarbeitenModuleTests(run) {
   });
 
 
-  await run("M12 UI-Inspector Panel ist read-only und ESM-kompatibel", () => {
+  await run("M13.2.1 UI-Inspector Panel bietet gerichtete Stellschrauben und bleibt nicht-persistent", () => {
     const panelPath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorPanel.js");
     const runtimePath = path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorRuntime.js");
     const panelContent = fs.readFileSync(panelPath, "utf8");
@@ -318,7 +318,10 @@ async function runRestarbeitenModuleTests(run) {
 
     assert.match(panelContent, /data-ui-inspector-panel/);
     assert.match(panelContent, /UI-Inspektor/);
-    assert.match(panelContent, /Nur Anzeige/);
+    assert.match(panelContent, /Bereichstyp/);
+    assert.match(panelContent, /Temporäre Vorschau/);
+    assert.match(panelContent, /Reset ausgewählt/);
+    assert.match(panelContent, /Alles zurücksetzen/);
     assert.doesNotMatch(panelContent, /module\.exports/);
     assert.doesNotMatch(panelContent, /require\s*\(/);
     assert.doesNotMatch(panelContent, /localStorage/);
@@ -326,14 +329,19 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(panelContent, /store/i);
     assert.doesNotMatch(panelContent, /Speichern/);
     assert.doesNotMatch(panelContent, /Anwenden/);
+    assert.doesNotMatch(panelContent, /Übernehmen/);
+    assert.doesNotMatch(panelContent, /Persistieren/);
     assert.doesNotMatch(panelContent, /<input|\btype\s*=\s*['"](range|text|number)['"]/i);
 
     assert.match(runtimeContent, /getAllowedControlsForSelectedId/);
-    assert.match(runtimeContent, /restarbeiten\.filterleiste\.meta/);
-    assert.match(runtimeContent, /restarbeiten\.editbox\.header/);
-    assert.match(runtimeContent, /restarbeiten\.editbox\.verortung/);
-    assert.match(runtimeContent, /restarbeiten\.editbox\.meta/);
+    assert.match(runtimeContent, /applyPreviewDelta/);
+    assert.match(runtimeContent, /resetSelectedPreview/);
+    assert.match(runtimeContent, /resetAllPreview/);
+    assert.match(runtimeContent, /toggleSelectedVisibility/);
+    assert.match(runtimeContent, /translate\(/);
     assert.doesNotMatch(runtimeContent, /localStorage/);
+    assert.doesNotMatch(runtimeContent, /saveInspector/);
+    assert.doesNotMatch(runtimeContent, /saveUiInspector/);
     assert.doesNotMatch(runtimeContent, /ui-inspector:save/);
     assert.doesNotMatch(runtimeContent, /inspector:save/);
   });
@@ -2423,6 +2431,43 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(ipc, /restarbeiten:deleteItem/);
   });
 
+}
+
+if (require.main === module) {
+  let failed = false;
+
+  function run(name, fn) {
+    try {
+      const out = fn();
+      if (out && typeof out.then === "function") {
+        return out
+          .then(() => {
+            console.log(`ok - ${name}`);
+          })
+          .catch((err) => {
+            failed = true;
+            console.error(`not ok - ${name}`);
+            console.error(err?.stack || err?.message || err);
+          });
+      }
+      console.log(`ok - ${name}`);
+    } catch (err) {
+      failed = true;
+      console.error(`not ok - ${name}`);
+      console.error(err?.stack || err?.message || err);
+    }
+    return Promise.resolve();
+  }
+
+  runRestarbeitenModuleTests(run)
+    .then(() => {
+      if (failed) process.exitCode = 1;
+    })
+    .catch((err) => {
+      failed = true;
+      process.exitCode = 1;
+      console.error(err?.stack || err?.message || err);
+    });
 }
 
 module.exports = { runRestarbeitenModuleTests };

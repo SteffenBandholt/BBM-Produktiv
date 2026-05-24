@@ -1,10 +1,10 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M12.1 abgeschlossen (echte DOM-Gruppenmarker ergänzt).
+Status: M13.2.1 abgeschlossen (gerichtete Stellschrauben und Gruppenposition X/Y).
 
 Aktueller Stand:
-- M1 bis M12.1 abgeschlossen.
+- M1 bis M13.2.1 abgeschlossen.
 
 ## Haken-System
 - `[x]` erledigt
@@ -25,6 +25,8 @@ Aktueller Stand:
 - [x] M10 Overlay nur anzeigen
 - [x] M12 Panel zeigt erlaubte Stellschrauben
 - [x] M12.1 Restarbeiten-Gruppenmarker als echte DOM-Container ergänzen
+- [x] M13.2 Temporäre Vorschau auf ausgewählten Elementen
+- [x] M13.2.1 Gerichtete Stellschrauben und Gruppenposition X/Y ergänzen
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -64,17 +66,17 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 6. `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
 
 ## Aktueller Stand für neue Chats
-- Projektphase: Modulgerüst vorhanden
-- Implementierungscode: M6-Grundgerüst angelegt
-- UI-Inspector-Modul: vorhanden (ohne sichtbare UI)
-- App-Funktionen: keine Änderungen
+- Projektphase: M13.2.1 abgeschlossen
+- Implementierungscode: temporäre Vorschau mit Richtungssteuerung vorhanden
+- UI-Inspector-Modul: vorhanden und im Restarbeiten-DOM testgesichert
+- App-Funktionen: keine dauerhafte Speicherung, keine Layout-Dateien, keine IPC-/DB-Pfade
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M11 Bereich anklicken und Auswahl anzeigen**
+- **M13.3 temporäre Vorschau weiter absichern oder feinschärfen**
 
 Hinweis:
-- M6 hat nur ein Modulgerüst gebaut, ohne sichtbare UI-Funktion
+- M13.2.1 ist nur temporäre Vorschau, ohne Speicherung und ohne dauerhafte Layoutänderung
 
 
 ## M4 Abschlussnotiz
@@ -243,3 +245,53 @@ Hinweis:
   - `node scripts/tests/uiInspectorPanel.test.cjs`
 - Nächster Schritt:
   - **M13 Werte temporär anwenden, aber noch nicht speichern**
+
+## M13.2 Abschlussnotiz
+- M13.2 ergänzt die temporäre Vorschau direkt auf dem ausgewählten DOM-Element.
+- Originale `style.cssText`-Werte werden vor der ersten Vorschauänderung gemerkt und bei Reset wiederhergestellt.
+- Gruppenmarker und Feldmarker bleiben getrennt veränderbar; Parent/Child bekommen keine direkten Inspector-Styles, solange sie nicht selbst ausgewählt sind.
+- Beim Deaktivieren des Inspectors werden alle temporären Inline-Styles zurückgesetzt.
+- Keine Speicherung, kein localStorage, kein IPC, keine DB, kein CSS-Datei-Schreiben.
+- Geänderte Dateien:
+  - `src/renderer/uiInspector/UiInspectorRuntime.js`
+  - `src/renderer/uiInspector/UiInspectorPanel.js`
+  - `scripts/tests/uiInspectorRuntime.test.cjs`
+  - `scripts/tests/uiInspectorPanel.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+- Tests:
+  - `node scripts/tests/uiInspectorCore.test.cjs`
+  - `node scripts/tests/uiInspectorRegistry.test.cjs`
+  - `node scripts/tests/uiInspectorMapSchema.test.cjs`
+  - `node scripts/tests/uiInspectorOverlay.test.cjs`
+  - `node scripts/tests/uiInspectorPanel.test.cjs`
+  - `node scripts/tests/uiInspectorRuntime.test.cjs`
+  - `node scripts/tests/restarbeitenModule.test.cjs`
+  - `npm test`
+- Nächster Schritt:
+  - **M13.3 temporäre Vorschau weiter absichern oder feinschärfen**
+
+## M13.2.1 Abschlussnotiz
+- M13.2.1 trennt die temporären Stellschrauben in Richtungen und Seiten auf, damit Gruppen und Felder gezielt bearbeitet werden können.
+- Position X/Y wird temporär über `transform: translate(...)` umgesetzt.
+- Gruppen behalten ihren Rahmen, Felder bleiben direkt einzeln veränderbar.
+- Reset ausgewählt und Deaktivieren stellen die ursprünglichen `style.cssText`-Werte wieder her.
+- Keine Speicherung, kein localStorage, kein IPC, keine DB, kein CSS-Datei-Schreiben.
+- Geänderte Dateien:
+  - `src/renderer/uiInspector/UiInspectorRuntime.js`
+  - `src/renderer/uiInspector/UiInspectorPanel.js`
+  - `scripts/tests/uiInspectorRuntime.test.cjs`
+  - `scripts/tests/uiInspectorPanel.test.cjs`
+  - `scripts/tests/restarbeitenModule.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_START_HIER.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+- Tests:
+  - `node scripts/tests/uiInspectorOverlay.test.cjs`
+  - `node scripts/tests/uiInspectorPanel.test.cjs`
+  - `node scripts/tests/uiInspectorRuntime.test.cjs`
+  - `node scripts/tests/restarbeitenModule.test.cjs`
+  - `npm test`
+- Nächster Schritt:
+  - **M13.3 temporäre Vorschau weiter absichern oder feinschärfen**
