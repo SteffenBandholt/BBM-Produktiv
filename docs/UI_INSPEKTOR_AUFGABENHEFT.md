@@ -1,7 +1,7 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.4a.2 abgeschlossen (Scanroot und Listenmarker korrigiert).
+Status: M13.4b.1 abgeschlossen (Auswahlmodus-Schalter im Scanpanel verdrahtet).
 
 Aktueller Stand:
 - M1 bis M13.3 abgeschlossen.
@@ -31,6 +31,8 @@ Aktueller Stand:
 - [x] M13.4a UI-Editor: Dev-Button und Scanstatus ohne Bearbeitung
 - [x] M13.4a.1 UI-Editor: Scanstatus korrekt machen
 - [x] M13.4a.2 UI-Editor: Scanroot und Listenmarker korrekt bewerten
+- [x] M13.4b UI-Editor: Objektwahl ohne Bearbeitung
+- [x] M13.4b.1 UI-Editor: Auswahlmodus-Schalter im Scanpanel sichtbar verdrahten
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -72,16 +74,20 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 ## Aktueller Stand für neue Chats
 - Projektphase: M13.4a.1 abgeschlossen
 - Projektphase: M13.4a.2 abgeschlossen
-- Implementierungscode: temporäre Vorschau mit Richtungssteuerung vorhanden
+- Projektphase: M13.4b abgeschlossen
+- Projektphase: M13.4b.1 abgeschlossen
+- Implementierungscode: Scanpanel mit Auswahlmodus-Schaltern vorhanden
 - UI-Inspector-Modul: vorhanden und im Restarbeiten-DOM testgesichert
 - App-Funktionen: keine dauerhafte Speicherung, keine Layout-Dateien, keine IPC-/DB-Pfade
 - M13.4a: DEV-Header scannt den aktuellen Screen nur lesend
 - M13.4a.1: Scanstatus ist jetzt auf `vollständig`/`unvollständig` und Mehrfachmarker-Basis-ID umgestellt
 - M13.4a.2: Listenmarker sind zeilenabhängig und werden nur bei gerenderten Einträgen hart bewertet
+- M13.4b: Objektwahl war ein No-Go-Versuch und blieb unübernommen
+- M13.4b.1: Auswahlmodus-Schalter sind im sichtbaren Scanpanel verdrahtet, ohne Hover/Klick/Bearbeitung
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M13.4b UI-Editor-Scan weiter verfeinern, ohne Bearbeitung**
+- **M13.4c weitere UI-Inspector-Feinschärfung**
 
 Hinweis:
 - M13.2.1 ist nur temporäre Vorschau, ohne Speicherung und ohne dauerhafte Layoutänderung
@@ -331,5 +337,4 @@ Hinweis:
 - DEV-Header scannt den aktuellen Screen nur lesend.
 - Keine Auswahl, keine Bearbeitung, keine Speicherung.
 - Nächster Schritt: M13.4b UI-Editor-Scan weiter verfeinern, ohne Bearbeitung.
-
 

@@ -85,3 +85,7 @@
 **Beschluss:** Der UI-Editor-Scan bewertet nur Pflichtmarker als entscheidend, behandelt `restarbeiten.header` als optional und fasst Marker mit `::`-Suffixen als eine fachliche Basis-ID zusammen.
 
 **Begründung:** Damit der Status ehrlich bleibt, Mehrfachmarker nicht als fehlend zählen und ein nicht im Live-DOM verankerter Header nicht künstlich als Pflichtbedingung in den Scan eingeht.
+## Entscheidung 017
+**Beschluss:** M13.4b.1 verdrahtet im sichtbaren Scanpanel nur die Auswahlmodus-Schalter Rahmen/Feld/Einzelelement.
+
+**Begründung:** Der Nutzer soll den Modus im echten Panel sehen und umschalten können, ohne dass Hover-, Klick- oder Bearbeitungslogik bereits ins UI kommt.

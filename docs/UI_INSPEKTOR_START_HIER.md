@@ -47,9 +47,11 @@ Pflichtreihenfolge:
 - M13.4a DEV-Button und Scanstatus ohne Bearbeitung abgeschlossen
 - M13.4a.1 Scanstatus korrigiert und Mehrfachmarker per Basis-ID zusammengefasst
 - M13.4a.2 Scanroot und Listenmarker korrekt bewertet
+- M13.4b Objektwahl ohne Bearbeitung abgeschlossen
+- M13.4b.1 Auswahlmodus-Schalter im Scanpanel verdrahtet
 
 ## 5. Nächster geplanter Schritt
-- Nächster Schritt: M13.4 weitere UI-Inspector-Feinschärfung
+- Nächster Schritt: M13.4c weitere UI-Inspector-Feinschärfung
 - M13.2 ist nur Vorschau, ohne Speicherung
 - M13.2.1 trennt Richtungen, Seiten und Gruppen-/Feldsteuerung
 - M13.3 führt Eltern-/Kindnavigation ein
@@ -66,7 +68,7 @@ Nicht fortführen:
 ## 7. Definition für neue Chats
 Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 
-„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst, die Restarbeiten-Landkarte und die temporäre Vorschau sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M13.3 (temporäre Vorschau weiter absichern oder feinschärfen; weiterhin ohne Speicherung).“
+„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst, die Restarbeiten-Landkarte, der Scanstatus und die Auswahlmodus-Schalter sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M13.4c (weitere Feinschärfung der Objektwahl; weiterhin ohne Bearbeitung).“
 
 
 ## Statusupdate M13.3
@@ -77,10 +79,10 @@ Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 - Noch keine Speicherung, kein localStorage, kein IPC, keine DB.
 - Nächster Meilenstein: M13.4 (weitere UI-Inspector-Feinschärfung).
 ## Statusupdate M13.4a
-- M13.4a ist erledigt.
+- M13.4b.1 ist erledigt.
 - DEV-Header zeigt einen lesenden UI-Editor-Scan mit Statusanzeige.
-- Keine Auswahl, keine Bearbeitung, keine Speicherung.
-- Nächster Schritt: M13.4b UI-Editor-Scan weiter verfeinern, ohne Bearbeitung.
-
+- Das Scanpanel zeigt die Auswahlmodus-Schalter Rahmen/Feld/Einzelelement.
+- Keine Hover-/Klickauswahl, keine Bearbeitung, keine Speicherung.
+- Nächster Schritt: M13.4c weitere Feinschärfung der Objektwahl, ohne Bearbeitung.
 
 
