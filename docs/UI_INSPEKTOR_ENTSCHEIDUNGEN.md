@@ -76,3 +76,12 @@
 **Beschluss:** M13.3 ergänzt nur die Rahmen-zuerst-Bedienung und leitet die Auswahl für Elternbereich, Kindbereiche und Nachbarfelder aus den vorhandenen DOM-Markern ab.
 
 **Begründung:** Die Bedienung soll schnell zwischen Außenrahmen und enthaltenen Feldern wechseln können, ohne neue Persistenz- oder Layoutlogik einzuführen.
+## Entscheidung 015
+**Beschluss:** M13.4a bringt im DEV-Header nur einen lesenden UI-Editor-Scan-Button mit Statusanzeige.
+
+**BegrÃ¼ndung:** Der erste Schritt soll nur den aktuellen Screen scannen und den Zustand sichtbar machen, ohne Auswahl, Bearbeitung, Speicherung oder Overlay-Logik zu erweitern.
+
+## Entscheidung 016
+**Beschluss:** Der UI-Editor-Scan bewertet nur Pflichtmarker als entscheidend, behandelt `restarbeiten.header` als optional und fasst Marker mit `::`-Suffixen als eine fachliche Basis-ID zusammen.
+
+**Begr�ndung:** Damit der Status ehrlich bleibt, Mehrfachmarker nicht als fehlend z�hlen und ein nicht im Live-DOM verankerter Header nicht k�nstlich als Pflichtbedingung in den Scan eingeht.

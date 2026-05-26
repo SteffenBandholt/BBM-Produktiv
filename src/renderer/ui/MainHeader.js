@@ -10,6 +10,7 @@ import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
 import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
 import { isModuleActive, refreshCachedActiveModuleAccess } from "../app/modules/moduleAccessState.js";
 import { getVisiblePrintDialogActions } from "../../shared/print/printModes.mjs";
+import { formatUiInspectorScanSummary, scanUiInspectorTargets } from "../uiInspector/UiInspectorRuntime.js";
 
 const PROTOCOL_DISABLED_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
 
@@ -59,6 +60,11 @@ export default class MainHeader {
     this.elRightInfo = null;
     this.elTrialInfo = null;
     this.elDevBadge = null;
+    this.elUiEditorWrap = null;
+    this.elUiEditorBtn = null;
+    this.elUiEditorStatus = null;
+    this._uiEditorScanActive = false;
+    this._uiEditorScanSummary = null;
 
     this.elPrintBtn = null;
     this.elPrintWrap = null;
@@ -329,6 +335,26 @@ export default class MainHeader {
       };
     };
 
+    const applyUiEditorButtonStyle = (btn) => {
+      if (!btn) return;
+      btn.style.display = "inline-flex";
+      btn.style.alignItems = "center";
+      btn.style.justifyContent = "center";
+      btn.style.border = "1px solid #c8d0da";
+      btn.style.background = "#eef1f4";
+      btn.style.color = "#4b5563";
+      btn.style.borderRadius = "999px";
+      btn.style.fontSize = "11px";
+      btn.style.fontWeight = "800";
+      btn.style.lineHeight = "1";
+      btn.style.padding = "5px 10px";
+      btn.style.margin = "0";
+      btn.style.minHeight = "24px";
+      btn.style.cursor = "pointer";
+      btn.style.whiteSpace = "nowrap";
+      btn.style.boxShadow = "none";
+    };
+
     const runProjectAction = async (fn) => {
       const projectId = this.router?.currentProjectId || null;
       if (!projectId) return;
@@ -588,6 +614,39 @@ export default class MainHeader {
     printMenu.append(itemPreview, itemFirms, itemTodo, itemTopList, itemMeetingsClosed);
     printWrap.append(printBtn, printMenu);
 
+    const uiEditorWrap = document.createElement("div");
+    uiEditorWrap.style.display = "inline-flex";
+    uiEditorWrap.style.flexDirection = "column";
+    uiEditorWrap.style.alignItems = "flex-start";
+    uiEditorWrap.style.gap = "4px";
+
+    const uiEditorBtn = document.createElement("button");
+    uiEditorBtn.type = "button";
+    uiEditorBtn.textContent = "Editor";
+    applyUiEditorButtonStyle(uiEditorBtn);
+    uiEditorBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (uiEditorBtn.disabled) return;
+      this.toggleUiEditorScan();
+    };
+
+    const uiEditorStatus = document.createElement("div");
+    uiEditorStatus.style.display = "none";
+    uiEditorStatus.style.maxWidth = "280px";
+    uiEditorStatus.style.padding = "6px 8px";
+    uiEditorStatus.style.borderRadius = "8px";
+    uiEditorStatus.style.border = "1px solid #c8d0da";
+    uiEditorStatus.style.background = "rgba(248, 250, 252, 0.98)";
+    uiEditorStatus.style.color = "#1f2937";
+    uiEditorStatus.style.fontSize = "11px";
+    uiEditorStatus.style.lineHeight = "1.35";
+    uiEditorStatus.style.whiteSpace = "pre-line";
+    uiEditorStatus.style.boxSizing = "border-box";
+    uiEditorStatus.style.userSelect = "text";
+
+    uiEditorWrap.append(uiEditorBtn, uiEditorStatus);
+
 
     const mailWrap = document.createElement("div");
     mailWrap.style.position = "relative";
@@ -749,9 +808,9 @@ export default class MainHeader {
 
     // Ausgabe bleibt intern vorbereitet; direkte Header-Hauptaktionen laufen vorerst nur ueber die Quicklane.
     if (this._isNewUi) {
-      // bewusst leer: Ausgabe-/Protokoll-Aktionen bleiben intern verfuegbar, aber nicht direkt im Header priorisiert
+      actionWrap.append(uiEditorWrap);
     } else {
-      actionWrap.append(setupWrap);
+      actionWrap.append(setupWrap, uiEditorWrap);
     }
 
     const stickyNotice = document.createElement("div");
@@ -854,6 +913,9 @@ export default class MainHeader {
     this.elSetupWrap = setupWrap;
     this.elSetupBtn = setupBtn;
     this.elSetupMenu = setupMenu;
+    this.elUiEditorWrap = uiEditorWrap;
+    this.elUiEditorBtn = uiEditorBtn;
+    this.elUiEditorStatus = uiEditorStatus;
     this.elLogoGroup = logoGroup;
     this.elLogoWrap = logoWrap;
     this.elLogoImg = logoImg;
@@ -1597,6 +1659,119 @@ export default class MainHeader {
     }
   }
 
+  _isUiEditorEnabled() {
+    return this._isNewUi;
+  }
+
+  _setUiEditorStatusContent(summary = null) {
+    if (!this.elUiEditorStatus) return;
+
+    if (!summary) {
+      this.elUiEditorStatus.textContent = "";
+      this.elUiEditorStatus.style.display = "none";
+      if (typeof this.elUiEditorStatus.removeAttribute === "function") {
+        this.elUiEditorStatus.removeAttribute("data-ui-editor-status");
+      }
+      return;
+    }
+
+    const scan = formatUiInspectorScanSummary(summary);
+    this.elUiEditorStatus.textContent = scan.text;
+    this.elUiEditorStatus.style.display = "block";
+    this.elUiEditorStatus.dataset.uiEditorStatus = scan.status;
+    this.elUiEditorStatus.dataset.uiEditorState = scan.status;
+  }
+
+  _applyUiEditorButtonState() {
+    if (!this.elUiEditorBtn) return;
+
+    const enabled = this._isUiEditorEnabled();
+    const active = !!this._uiEditorScanActive;
+    const summary = this._uiEditorScanSummary || null;
+    const state = !enabled || !active ? "off" : summary?.status === "ok" ? "scan-ok" : "scan-warning";
+    const severity = !enabled || !active ? "off" : summary?.status === "ok" ? "ok" : "warning";
+
+    this.elUiEditorBtn.disabled = !enabled;
+    this.elUiEditorBtn.dataset.uiEditorState = state;
+    this.elUiEditorBtn.dataset.uiEditorSeverity = severity;
+    this.elUiEditorBtn.setAttribute("aria-pressed", active ? "true" : "false");
+
+    if (!enabled) {
+      this.elUiEditorBtn.style.background = "#ececec";
+      this.elUiEditorBtn.style.borderColor = "#b8b8b8";
+      this.elUiEditorBtn.style.color = "#575757";
+      this.elUiEditorBtn.style.boxShadow = "none";
+      this.elUiEditorBtn.title = "UI-Editor ist nur im DEV-Header verfuegbar.";
+      this._setUiEditorStatusContent(null);
+      if (this.elUiEditorWrap) this.elUiEditorWrap.style.display = "none";
+      return;
+    }
+
+    if (this.elUiEditorWrap) this.elUiEditorWrap.style.display = "inline-flex";
+
+    if (!active) {
+      this.elUiEditorBtn.style.background = "#eef1f4";
+      this.elUiEditorBtn.style.borderColor = "#c8d0da";
+      this.elUiEditorBtn.style.color = "#4b5563";
+      this.elUiEditorBtn.style.boxShadow = "none";
+      this.elUiEditorBtn.title = "UI-Editor Scan einschalten";
+      this._setUiEditorStatusContent(null);
+      return;
+    }
+
+    if (summary?.status === "ok") {
+      this.elUiEditorBtn.style.background = "#e8f7eb";
+      this.elUiEditorBtn.style.borderColor = "#16a34a";
+      this.elUiEditorBtn.style.color = "#166534";
+      this.elUiEditorBtn.style.boxShadow = "0 0 0 1px rgba(22,163,74,0.22) inset";
+      this.elUiEditorBtn.title = "UI-Editor Scan: vollständig";
+    } else {
+      this.elUiEditorBtn.style.background = "#fff5db";
+      this.elUiEditorBtn.style.borderColor = "#d97706";
+      this.elUiEditorBtn.style.color = "#92400e";
+      this.elUiEditorBtn.style.boxShadow = "0 0 0 1px rgba(217,119,6,0.22) inset";
+      this.elUiEditorBtn.title = "UI-Editor Scan: unvollständig";
+    }
+
+    this._setUiEditorStatusContent(summary);
+  }
+
+  _scanUiEditorCurrentScreen() {
+    const root = this.router?.contentRoot || null;
+    if (!root) {
+      this._uiEditorScanSummary = {
+        schemaKey: "",
+        totalMarkers: 0,
+        frameCount: 0,
+        fieldCount: 0,
+        singleElementCount: 0,
+        unknownCount: 0,
+        missingImportantIds: [],
+        status: "warning",
+        statusLabel: "unvollständig",
+      };
+      this._applyUiEditorButtonState();
+      return this._uiEditorScanSummary;
+    }
+
+    this._uiEditorScanSummary = scanUiInspectorTargets(root);
+    this._applyUiEditorButtonState();
+    return this._uiEditorScanSummary;
+  }
+
+  toggleUiEditorScan() {
+    if (!this._isUiEditorEnabled()) return false;
+
+    this._uiEditorScanActive = !this._uiEditorScanActive;
+    if (this._uiEditorScanActive) {
+      this._scanUiEditorCurrentScreen();
+    } else {
+      this._uiEditorScanSummary = null;
+      this._applyUiEditorButtonState();
+    }
+    return this._uiEditorScanActive;
+  }
+
   _applyPrintButtonState() {
     if (!this.elPrintBtn) return;
     const hasProject = !!this.router?.currentProjectId;
@@ -1734,6 +1909,16 @@ export default class MainHeader {
       this._refreshPrintMenuState({ force: false }).catch(() => {});
     } else {
       this._setPrintOpen(false);
+    }
+
+    if (!this._isUiEditorEnabled()) {
+      this._uiEditorScanActive = false;
+      this._uiEditorScanSummary = null;
+    }
+    if (this._uiEditorScanActive) {
+      this._scanUiEditorCurrentScreen();
+    } else {
+      this._applyUiEditorButtonState();
     }
 
     let stickyFromContext = this.router?.context?.ui?.stickyNotice || "";

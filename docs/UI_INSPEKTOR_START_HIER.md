@@ -44,6 +44,9 @@ Pflichtreihenfolge:
 - Position X/Y arbeitet temporär über `transform: translate(...)`
 - Panel zeigt Elternbereich, Kindbereiche und Vorheriges/Nächstes Feld
 - Noch keine sichtbare App-Funktion
+- M13.4a DEV-Button und Scanstatus ohne Bearbeitung abgeschlossen
+- M13.4a.1 Scanstatus korrigiert und Mehrfachmarker per Basis-ID zusammengefasst
+- M13.4a.2 Scanroot und Listenmarker korrekt bewertet
 
 ## 5. Nächster geplanter Schritt
 - Nächster Schritt: M13.4 weitere UI-Inspector-Feinschärfung
@@ -73,3 +76,11 @@ Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 - Beim Deaktivieren werden alle temporären Änderungen zurückgesetzt.
 - Noch keine Speicherung, kein localStorage, kein IPC, keine DB.
 - Nächster Meilenstein: M13.4 (weitere UI-Inspector-Feinschärfung).
+## Statusupdate M13.4a
+- M13.4a ist erledigt.
+- DEV-Header zeigt einen lesenden UI-Editor-Scan mit Statusanzeige.
+- Keine Auswahl, keine Bearbeitung, keine Speicherung.
+- Nächster Schritt: M13.4b UI-Editor-Scan weiter verfeinern, ohne Bearbeitung.
+
+
+

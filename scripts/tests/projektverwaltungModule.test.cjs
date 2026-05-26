@@ -1041,6 +1041,139 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
+  await run("Projektverwaltung: MainHeader zeigt im DEV-Header den UI-Editor-Button und Scanstatus", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const fakeDocument = createFakeDocumentWithBubbling();
+    global.document = fakeDocument;
+    global.window = {
+      localStorage: {
+        getItem(key) {
+          return key === "bbm.uiMode" ? "new" : null;
+        },
+        setItem() {},
+        removeItem() {},
+      },
+      addEventListener() {},
+      removeEventListener() {},
+      requestAnimationFrame(fn) {
+        if (typeof fn === "function") fn();
+      },
+      bbmDb: {},
+    };
+
+    const { default: MainHeader } = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/ui/MainHeader.js")
+    );
+
+    const completeIds = [
+      "restarbeiten.root",
+      "restarbeiten.header",
+      "restarbeiten.main",
+      "restarbeiten.filterleiste",
+      "restarbeiten.filterleiste.klassenfilter",
+      "restarbeiten.filterleiste.verortung",
+      "restarbeiten.filterleiste.meta",
+      "restarbeiten.liste",
+      "restarbeiten.liste.nummernbereich",
+      "restarbeiten.liste.textbereich",
+      "restarbeiten.liste.metabereich",
+      "restarbeiten.editbox",
+      "restarbeiten.editbox.header",
+      "restarbeiten.editbox.verortung",
+      "restarbeiten.editbox.kurztext",
+      "restarbeiten.editbox.langtext",
+      "restarbeiten.editbox.meta",
+      "restarbeiten.filterleiste.klassenfilter.feld",
+      "restarbeiten.filterleiste.verortung.feld",
+      "restarbeiten.liste.kurztext",
+      "restarbeiten.liste.langtext",
+      "restarbeiten.filterleiste.meta.fertig_bis",
+      "restarbeiten.filterleiste.meta.status",
+      "restarbeiten.filterleiste.meta.verantwortlich",
+      "restarbeiten.filterleiste.meta.erledigt",
+      "restarbeiten.editbox.kurztext.label",
+      "restarbeiten.editbox.kurztext.restzeichen",
+      "restarbeiten.editbox.langtext.label",
+      "restarbeiten.editbox.langtext.restzeichen",
+    ];
+    const warningIds = completeIds.filter(
+      (id) =>
+        ![
+          "restarbeiten.filterleiste.verortung",
+        ].includes(id)
+    );
+
+    const mkRoot = (ids) => ({
+      querySelectorAll(selector) {
+        if (selector !== "[data-ui-inspector-id]") return [];
+        return ids.map((id) => ({
+          getAttribute(name) {
+            return name === "data-ui-inspector-id" ? id : null;
+          },
+          style: { cssText: "" },
+          getBoundingClientRect() {
+            return { left: 0, top: 0, width: 10, height: 10 };
+          },
+        }));
+      },
+    });
+
+    try {
+      const router = {
+        currentProjectId: "17",
+        currentMeetingId: null,
+        contentRoot: mkRoot(completeIds),
+        activeSection: "projectWorkspace",
+        context: {
+          ui: { pageTitle: "", activeModuleLabel: "Protokoll", isTopsView: false },
+          settings: {
+            user_company: "Planungsbüro Steffen Bandholt",
+            user_zip: "22880",
+            user_city: "Wedel",
+          },
+          projectLabel: "04-2026 - UI-Polish für BBM",
+        },
+      };
+
+      const header = new MainHeader({ router, version: "1.5.0" });
+      header.render();
+      header.refresh();
+
+      const editorButton = findNode(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "Editor");
+      assert.ok(editorButton);
+      assert.equal(editorButton.dataset.uiEditorState, "off");
+      assert.equal(editorButton.disabled, false);
+
+      assert.equal(header.toggleUiEditorScan(), true);
+      assert.equal(editorButton.dataset.uiEditorState, "scan-ok");
+      assert.equal(editorButton.dataset.uiEditorSeverity, "ok");
+      assert.match(editorButton.title, /vollständig/);
+      assert.match(String(header.elUiEditorStatus?.textContent || ""), /UI-Editor Scan/);
+      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Status: vollständig/);
+      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Marker: \d+/);
+      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Rahmen: \d+/);
+      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Felder: \d+/);
+      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Einzelelemente: \d+/);
+
+      router.contentRoot = mkRoot(warningIds);
+      header.refresh();
+      assert.equal(editorButton.dataset.uiEditorState, "scan-warning");
+      assert.equal(header.elUiEditorStatus.style.display, "block");
+      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Status: unvollständig/);
+      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Fehlt Pflicht:/);
+      assert.match(String(header.elUiEditorStatus?.textContent || ""), /restarbeiten\.filterleiste\.verortung/);
+
+      assert.equal(header.toggleUiEditorScan(), false);
+      assert.equal(editorButton.dataset.uiEditorState, "off");
+      assert.equal(header.elUiEditorStatus.style.display, "none");
+      assert.equal(String(header.elUiEditorStatus?.textContent || ""), "");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
   await run("Projektverwaltung: coreShellKeyboard kapselt das globale Keyboard-Handling", () => {
     assert.equal(
       coreShellKeyboardSource.includes("export function registerCoreShellKeyboardHandling"),

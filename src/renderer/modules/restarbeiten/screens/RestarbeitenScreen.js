@@ -702,6 +702,7 @@ export default class RestarbeitenScreen {
   _renderNumberColumn(doc, item) {
     const col = doc.createElement("div");
     col.className = "restarbeiten-list__numberCol";
+    col.setAttribute("data-ui-inspector-id", "restarbeiten.liste.nummernbereich");
 
     const number = doc.createElement("div");
     number.className = "restarbeiten-list__number";
@@ -749,10 +750,12 @@ export default class RestarbeitenScreen {
     const shortText = doc.createElement("div");
     shortText.className = "restarbeiten-list__shortText";
     shortText.textContent = item.workLine1;
+    shortText.setAttribute("data-ui-inspector-id", "restarbeiten.liste.kurztext");
 
     const longText = doc.createElement("div");
     longText.className = "restarbeiten-list__longText";
     longText.textContent = item.workLine2;
+    longText.setAttribute("data-ui-inspector-id", "restarbeiten.liste.langtext");
     longText.hidden = !this.showLongtextInList;
 
     col.append(location, shortText);

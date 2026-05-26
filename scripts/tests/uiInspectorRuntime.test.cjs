@@ -107,6 +107,14 @@ function findButtonByText(root, text) {
   );
 }
 
+function makeInspectorNode(id, width = 10, height = 10) {
+  return {
+    getAttribute: (name) => (name === 'data-ui-inspector-id' ? id : null),
+    getBoundingClientRect: () => ({ left: 0, top: 0, width, height }),
+    style: { cssText: `width: ${width}px; height: ${height}px;` },
+  };
+}
+
 (async function run() {
   const runtimePath = path.join(__dirname, '../../src/renderer/uiInspector/UiInspectorRuntime.js');
   const runtimeSource = fs.readFileSync(runtimePath, 'utf8');
@@ -115,8 +123,257 @@ function findButtonByText(root, text) {
   assert.match(runtimeSource, /selectInspectorTarget/);
   assert.match(runtimeSource, /getNextSiblingId/);
 
-  const { createUiInspectorRuntime } = await importEsmFromFile(runtimePath);
+  const { createUiInspectorRuntime, formatUiInspectorScanSummary, scanUiInspectorTargets } = await importEsmFromFile(runtimePath);
   assert.equal(typeof createUiInspectorRuntime, 'function');
+  assert.equal(typeof scanUiInspectorTargets, 'function');
+
+  const scanNodes = [
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.root' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 900, height: 600 }),
+      style: { cssText: 'width: 900px; height: 600px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.main' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 800, height: 500 }),
+      style: { cssText: 'width: 800px; height: 500px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 760, height: 120 }),
+      style: { cssText: 'width: 760px; height: 120px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.klassenfilter' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 200, height: 40 }),
+      style: { cssText: 'width: 200px; height: 40px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.klassenfilter.feld' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 180, height: 28 }),
+      style: { cssText: 'width: 180px; height: 28px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.filterleiste.meta.fertig_bis' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 180, height: 28 }),
+      style: { cssText: 'width: 180px; height: 28px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.liste' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 760, height: 280 }),
+      style: { cssText: 'width: 760px; height: 280px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.liste.textbereich' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 420, height: 280 }),
+      style: { cssText: 'width: 420px; height: 280px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.liste.metabereich' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 160, height: 280 }),
+      style: { cssText: 'width: 160px; height: 280px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.editbox' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 760, height: 320 }),
+      style: { cssText: 'width: 760px; height: 320px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.editbox.header' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 760, height: 36 }),
+      style: { cssText: 'width: 760px; height: 36px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.editbox.kurztext' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 620, height: 44 }),
+      style: { cssText: 'width: 620px; height: 44px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.editbox.kurztext.label' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 120, height: 20 }),
+      style: { cssText: 'width: 120px; height: 20px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.editbox.kurztext.restzeichen' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 60, height: 20 }),
+      style: { cssText: 'width: 60px; height: 20px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.editbox.langtext' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 620, height: 120 }),
+      style: { cssText: 'width: 620px; height: 120px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.editbox.langtext.restzeichen' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 60, height: 20 }),
+      style: { cssText: 'width: 60px; height: 20px;' },
+    },
+    {
+      getAttribute: (name) => (name === 'data-ui-inspector-id' ? 'restarbeiten.unknown.widget' : null),
+      getBoundingClientRect: () => ({ left: 0, top: 0, width: 40, height: 20 }),
+      style: { cssText: 'width: 40px; height: 20px;' },
+    },
+  ];
+  const scanRoot = {
+    ownerDocument: null,
+    querySelectorAll: (selector) => (selector === '[data-ui-inspector-id]' ? scanNodes : []),
+  };
+  const scanBeforeStyles = scanNodes.map((node) => node.style.cssText);
+  const scanSummary = scanUiInspectorTargets(scanRoot, {
+    schemaKey: 'custom',
+    importantIds: ['restarbeiten.root', 'restarbeiten.main', 'restarbeiten.liste.langtext'],
+  });
+  assert.equal(scanSummary.totalMarkers, 17);
+  assert.equal(scanSummary.frameCount, 11);
+  assert.equal(scanSummary.fieldCount, 1);
+  assert.equal(scanSummary.singleElementCount, 4);
+  assert.equal(scanSummary.unknownCount, 1);
+  assert.deepEqual(scanSummary.missingImportantIds, ['restarbeiten.liste.langtext']);
+  assert.equal(scanSummary.status, 'warning');
+  assert.equal(scanSummary.statusLabel, 'unvollständig');
+  assert.deepEqual(scanNodes.map((node) => node.style.cssText), scanBeforeStyles);
+
+  const completeScanIds = [
+    'restarbeiten.root',
+    'restarbeiten.main',
+    'restarbeiten.filterleiste',
+    'restarbeiten.filterleiste.klassenfilter',
+    'restarbeiten.filterleiste.verortung',
+    'restarbeiten.filterleiste.meta',
+    'restarbeiten.liste',
+    'restarbeiten.liste.nummernbereich',
+    'restarbeiten.liste.textbereich',
+    'restarbeiten.liste.metabereich',
+    'restarbeiten.editbox',
+    'restarbeiten.editbox.header',
+    'restarbeiten.editbox.verortung',
+    'restarbeiten.editbox.kurztext',
+    'restarbeiten.editbox.langtext',
+    'restarbeiten.editbox.meta',
+    'restarbeiten.filterleiste.klassenfilter.feld',
+    'restarbeiten.filterleiste.verortung.feld::1',
+    'restarbeiten.filterleiste.verortung.feld::2',
+    'restarbeiten.liste.kurztext::1',
+    'restarbeiten.liste.kurztext::2',
+    'restarbeiten.liste.langtext::1',
+    'restarbeiten.filterleiste.meta.fertig_bis',
+    'restarbeiten.filterleiste.meta.status',
+    'restarbeiten.filterleiste.meta.verantwortlich',
+    'restarbeiten.filterleiste.meta.erledigt',
+    'restarbeiten.editbox.kurztext.label',
+    'restarbeiten.editbox.kurztext.restzeichen',
+    'restarbeiten.editbox.langtext.label',
+    'restarbeiten.editbox.langtext.restzeichen',
+    'restarbeiten.unknown.widget',
+  ];
+  const completeScanNodes = completeScanIds.map((id, index) => makeInspectorNode(id, 900 - index * 10, 40 + (index % 4) * 10));
+  const completeScanRoot = {
+    ownerDocument: null,
+    querySelectorAll: (selector) => {
+      if (selector === '[data-ui-inspector-id]') return completeScanNodes;
+      if (selector === '.restarbeiten-list__row') return [{}, {}];
+      return [];
+    },
+  };
+  const completeScanBeforeStyles = completeScanNodes.map((node) => node.style.cssText);
+  const completeScanSummary = scanUiInspectorTargets(completeScanRoot);
+  assert.equal(completeScanSummary.status, 'ok');
+  assert.equal(completeScanSummary.statusLabel, 'vollständig');
+  assert.equal(completeScanSummary.totalMarkers, 31);
+  assert.equal(completeScanSummary.frameCount, 16);
+  assert.equal(completeScanSummary.fieldCount, 6);
+  assert.equal(completeScanSummary.singleElementCount, 8);
+  assert.equal(completeScanSummary.unknownCount, 1);
+  assert.deepEqual(completeScanSummary.missingImportantIds, []);
+  assert.deepEqual(completeScanSummary.optionalMissingIds, []);
+  assert.equal(completeScanSummary.hasListRows, true);
+  assert.deepEqual(completeScanNodes.map((node) => node.style.cssText), completeScanBeforeStyles);
+
+  const warningScanIds = completeScanIds.filter((id) => id !== 'restarbeiten.liste.langtext::1');
+  const warningScanNodes = warningScanIds.map((id, index) => makeInspectorNode(id, 760 - index * 5, 30 + (index % 3) * 8));
+  const warningScanRoot = {
+    ownerDocument: null,
+    querySelectorAll: (selector) => {
+      if (selector === '[data-ui-inspector-id]') return warningScanNodes;
+      if (selector === '.restarbeiten-list__row') return [{}, {}];
+      return [];
+    },
+  };
+  const warningScanSummary = scanUiInspectorTargets(warningScanRoot);
+  assert.equal(warningScanSummary.status, 'warning');
+  assert.equal(warningScanSummary.statusLabel, 'unvollständig');
+  assert.deepEqual(warningScanSummary.missingImportantIds, []);
+  assert.equal(warningScanSummary.missingListMarkerIds.includes('restarbeiten.liste.langtext'), true);
+  assert.match(formatUiInspectorScanSummary(warningScanSummary).text, /Fehlt Listenmarker:/);
+
+  const noListEntryScanIds = [
+    'restarbeiten.root',
+    'restarbeiten.main',
+    'restarbeiten.filterleiste',
+    'restarbeiten.filterleiste.klassenfilter',
+    'restarbeiten.filterleiste.verortung',
+    'restarbeiten.filterleiste.meta',
+    'restarbeiten.liste',
+    'restarbeiten.editbox',
+    'restarbeiten.editbox.header',
+    'restarbeiten.editbox.verortung',
+    'restarbeiten.editbox.kurztext',
+    'restarbeiten.editbox.langtext',
+    'restarbeiten.editbox.meta',
+    'restarbeiten.filterleiste.klassenfilter.feld',
+    'restarbeiten.filterleiste.verortung.feld::1',
+    'restarbeiten.filterleiste.verortung.feld::2',
+    'restarbeiten.filterleiste.meta.fertig_bis',
+    'restarbeiten.filterleiste.meta.status',
+    'restarbeiten.filterleiste.meta.verantwortlich',
+    'restarbeiten.filterleiste.meta.erledigt',
+    'restarbeiten.editbox.kurztext.label',
+    'restarbeiten.editbox.langtext.label',
+  ];
+  const noListEntryRoot = {
+    ownerDocument: null,
+    querySelectorAll: (selector) => {
+      if (selector === '[data-ui-inspector-id]') {
+        return noListEntryScanIds.map((id) => makeInspectorNode(id));
+      }
+      if (selector === '.restarbeiten-list__row') return [];
+      return [];
+    },
+  };
+  const noListEntrySummary = scanUiInspectorTargets(noListEntryRoot);
+  assert.equal(noListEntrySummary.status, 'ok');
+  assert.equal(noListEntrySummary.statusLabel, 'vollständig');
+  assert.equal(noListEntrySummary.hasListRows, false);
+  assert.deepEqual(noListEntrySummary.missingImportantIds, []);
+  assert.deepEqual(noListEntrySummary.missingListMarkerIds, []);
+  assert.match(formatUiInspectorScanSummary(noListEntrySummary).text, /Listenmarker: keine Einträge gerendert/);
+
+  const duplicateScanIds = [
+    'restarbeiten.root',
+    'restarbeiten.main',
+    'restarbeiten.liste',
+    'restarbeiten.liste.textbereich',
+    'restarbeiten.liste.metabereich',
+    'restarbeiten.liste.kurztext::1',
+    'restarbeiten.liste.kurztext::2',
+    'restarbeiten.liste.langtext::1',
+    'restarbeiten.editbox',
+    'restarbeiten.editbox.header',
+    'restarbeiten.editbox.verortung',
+    'restarbeiten.editbox.kurztext',
+    'restarbeiten.editbox.langtext',
+    'restarbeiten.editbox.meta',
+  ];
+  const duplicateScanRoot = {
+    ownerDocument: null,
+    querySelectorAll: (selector) =>
+      selector === '[data-ui-inspector-id]' ? duplicateScanIds.map((id) => makeInspectorNode(id)) : [],
+  };
+  const duplicateScanSummary = scanUiInspectorTargets(duplicateScanRoot, {
+    schemaKey: 'custom',
+    importantIds: ['restarbeiten.root', 'restarbeiten.liste.kurztext', 'restarbeiten.liste.langtext'],
+  });
+  assert.deepEqual(duplicateScanSummary.missingImportantIds, []);
 
   const document = createFakeDocument();
   const previousDocument = globalThis.document;

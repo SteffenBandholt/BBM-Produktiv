@@ -642,7 +642,9 @@ async function runRestarbeitenModuleTests(run) {
       }];
       screen.items = toRestarbeitenListItems(screen.rows);
       screen.filteredItems = screen.items;
+      screen._setSelectedItemId("r-1");
       screen._renderList();
+      screen._renderEditbox();
 
       const root = screen.host;
       assert.equal(!!findInspectorNode(root, "restarbeiten.filterleiste"), true);
@@ -653,6 +655,39 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(!!findInspectorNode(root, "restarbeiten.liste"), true);
       assert.equal(!!findInspectorNode(root, "restarbeiten.liste.textbereich"), true);
       assert.equal(!!findInspectorNode(root, "restarbeiten.liste.metabereich"), true);
+      assert.equal(findNodes(root, (node) => node?.["data-ui-inspector-id"] === "restarbeiten.liste.nummernbereich").length >= 1, true);
+      assert.equal(findNodes(root, (node) => node?.["data-ui-inspector-id"] === "restarbeiten.liste.kurztext").length >= 1, true);
+      assert.equal(findNodes(root, (node) => node?.["data-ui-inspector-id"] === "restarbeiten.liste.langtext").length >= 1, true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.editbox"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.editbox.kurztext"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.editbox.langtext"), true);
+
+      const { formatUiInspectorScanSummary, scanUiInspectorTargets } = await importEsmFromFile(
+        path.join(__dirname, "../../src/renderer/uiInspector/UiInspectorRuntime.js")
+      );
+      const scanRoot = {
+        querySelectorAll: (selector) =>
+          selector === "[data-ui-inspector-id]"
+            ? findNodes(root, (node) => node?.["data-ui-inspector-id"]).map((node) => ({
+                getAttribute: (name) => (name === "data-ui-inspector-id" ? node?.["data-ui-inspector-id"] : null),
+              }))
+            : selector === ".restarbeiten-list__row"
+              ? findNodes(root, (node) => node?.className === "restarbeiten-list__row")
+              : [],
+      };
+      const scanSummary = scanUiInspectorTargets(scanRoot);
+      assert.equal(scanSummary.status, "ok");
+      assert.equal(scanSummary.statusLabel, "vollständig");
+      assert.equal(scanSummary.totalMarkers > 0, true);
+      assert.equal(scanSummary.frameCount > 0, true);
+      assert.equal(scanSummary.fieldCount >= 2, true);
+      assert.equal(scanSummary.singleElementCount >= 4, true);
+      assert.equal(scanSummary.unknownCount, 0);
+      assert.equal(scanSummary.hasListRows, true);
+      assert.deepEqual(scanSummary.missingImportantIds, []);
+      assert.deepEqual(scanSummary.missingListMarkerIds, []);
+      assert.deepEqual(scanSummary.optionalMissingIds, []);
+      assert.match(formatUiInspectorScanSummary(scanSummary).text, /Listenmarker: vorhanden/);
 
       const verortungGroup = findInspectorNode(root, "restarbeiten.filterleiste.verortung");
       const verortungFields = findNodes(
@@ -675,6 +710,18 @@ async function runRestarbeitenModuleTests(run) {
       );
       assert.equal(
         findNodes(listRoot, (node) => node?.["data-ui-inspector-id"] === "restarbeiten.liste.metabereich").length,
+        1
+      );
+      assert.equal(
+        findNodes(listRoot, (node) => node?.["data-ui-inspector-id"] === "restarbeiten.liste.nummernbereich").length,
+        1
+      );
+      assert.equal(
+        findNodes(listRoot, (node) => node?.["data-ui-inspector-id"] === "restarbeiten.liste.kurztext").length,
+        1
+      );
+      assert.equal(
+        findNodes(listRoot, (node) => node?.["data-ui-inspector-id"] === "restarbeiten.liste.langtext").length,
         1
       );
 

@@ -1,7 +1,7 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.3 abgeschlossen (Rahmen-zuerst-Bedienung mit Feldnavigation).
+Status: M13.4a.2 abgeschlossen (Scanroot und Listenmarker korrigiert).
 
 Aktueller Stand:
 - M1 bis M13.3 abgeschlossen.
@@ -28,6 +28,9 @@ Aktueller Stand:
 - [x] M13.2 Temporäre Vorschau auf ausgewählten Elementen
 - [x] M13.2.1 Gerichtete Stellschrauben und Gruppenposition X/Y ergänzen
 - [x] M13.3 Rahmen-zuerst-Bedienung mit Feldnavigation
+- [x] M13.4a UI-Editor: Dev-Button und Scanstatus ohne Bearbeitung
+- [x] M13.4a.1 UI-Editor: Scanstatus korrekt machen
+- [x] M13.4a.2 UI-Editor: Scanroot und Listenmarker korrekt bewerten
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -67,14 +70,18 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 6. `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
 
 ## Aktueller Stand für neue Chats
-- Projektphase: M13.2.1 abgeschlossen
+- Projektphase: M13.4a.1 abgeschlossen
+- Projektphase: M13.4a.2 abgeschlossen
 - Implementierungscode: temporäre Vorschau mit Richtungssteuerung vorhanden
 - UI-Inspector-Modul: vorhanden und im Restarbeiten-DOM testgesichert
 - App-Funktionen: keine dauerhafte Speicherung, keine Layout-Dateien, keine IPC-/DB-Pfade
+- M13.4a: DEV-Header scannt den aktuellen Screen nur lesend
+- M13.4a.1: Scanstatus ist jetzt auf `vollständig`/`unvollständig` und Mehrfachmarker-Basis-ID umgestellt
+- M13.4a.2: Listenmarker sind zeilenabhängig und werden nur bei gerenderten Einträgen hart bewertet
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M13.3 temporäre Vorschau weiter absichern oder feinschärfen**
+- **M13.4b UI-Editor-Scan weiter verfeinern, ohne Bearbeitung**
 
 Hinweis:
 - M13.2.1 ist nur temporäre Vorschau, ohne Speicherung und ohne dauerhafte Layoutänderung
@@ -319,3 +326,10 @@ Hinweis:
   - `npm test`
 - Nächster Schritt:
   - **M13.4 weitere UI-Inspector-Feinschärfung**
+## Statusupdate M13.4a
+- M13.4a ist erledigt.
+- DEV-Header scannt den aktuellen Screen nur lesend.
+- Keine Auswahl, keine Bearbeitung, keine Speicherung.
+- Nächster Schritt: M13.4b UI-Editor-Scan weiter verfeinern, ohne Bearbeitung.
+
+
