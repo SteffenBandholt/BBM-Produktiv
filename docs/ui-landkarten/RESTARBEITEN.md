@@ -42,7 +42,6 @@ Restarbeiten
 
 ## 4. Erste technische Landkarten-IDs
 - `restarbeiten.root`
-- `restarbeiten.header`
 - `restarbeiten.filterleiste`
 - `restarbeiten.filterleiste.klassenfilter`
 - `restarbeiten.filterleiste.klassenfilter.feld`
@@ -72,6 +71,8 @@ Hinweis:
 - Die IDs wurden in M9 als `data-ui-inspector-id` in bestehende DOM-Struktur ergänzt.
 - Es wurden keine zusätzlichen sichtbaren Wrapper gebaut; Marker folgen der vorhandenen Struktur.
 - M12.1 schärft die Landkarte als Voraussetzung für spätere Layoutänderungen nach: Gruppenmarker auf Container-Ebene, Feldmarker darunter.
+- `restarbeiten.header` ist aktuell kein Pflichtmarker im Live-DOM.
+- Wiederholte Marker mit `::1`, `::2` usw. zählen als eine fachliche Basis-ID und werden vom UI-Inspektor zusammengefasst.
 
 ## 5. Einstell-Ebenen
 
