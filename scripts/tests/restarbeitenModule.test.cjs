@@ -287,15 +287,12 @@ async function runRestarbeitenModuleTests(run) {
       assert.doesNotMatch(source, /require\s*\(/);
     }
 
-
-    assert.match(overlayContent, /data-ui-inspector-hit-list/);
-    assert.match(overlayContent, /data-ui-inspector-hit-option/);
-    assert.match(overlayContent, /getHitsAtPoint/);
-    assert.match(overlayContent, /showHitListAtPoint/);
-    assert.doesNotMatch(overlayContent, /data-ui-inspector-overlay-handle/);
-
-    assert.doesNotMatch(runtimeContent, /\.\.\/\.\.\/shared\/uiInspector\/index\.js/);
-    assert.doesNotMatch(runtimeContent, /createUiInspectorCore|createUiInspectorRegistry|createMemoryUiInspectorStore/);
+    assert.match(runtimeContent, /createUiInspectorRuntime/);
+    assert.match(runtimeContent, /scanUiInspectorTargets/);
+    assert.match(runtimeContent, /getSelectionMode/);
+    assert.match(runtimeContent, /setSelectionMode/);
+    assert.match(runtimeContent, /getPanelState/);
+    assert.doesNotMatch(runtimeContent, /applyPreviewDelta|resetSelectedPreview|resetAllPreview|toggleSelectedVisibility/);
 
     const screenContent = fs.readFileSync(screenPath, "utf8");
     assert.match(screenContent, /createUiInspectorRuntime/);
@@ -317,14 +314,11 @@ async function runRestarbeitenModuleTests(run) {
     const runtimeContent = fs.readFileSync(runtimePath, "utf8");
 
     assert.match(panelContent, /data-ui-inspector-panel/);
-    assert.match(panelContent, /UI-Inspektor/);
-    assert.match(panelContent, /Ausgewählt/);
-    assert.match(panelContent, /Elternbereich auswählen/);
-    assert.match(panelContent, /Vorheriges Feld/);
-    assert.match(panelContent, /Nächstes Feld/);
-    assert.match(panelContent, /Temporäre Vorschau/);
-    assert.match(panelContent, /Reset ausgewählt/);
-    assert.match(panelContent, /Alles zurücksetzen/);
+    assert.match(panelContent, /UI-Editor Scan/);
+    assert.match(panelContent, /Auswahlmodus/);
+    assert.match(panelContent, /Rahmen/);
+    assert.match(panelContent, /Feld/);
+    assert.match(panelContent, /Einzelelement/);
     assert.doesNotMatch(panelContent, /module\.exports/);
     assert.doesNotMatch(panelContent, /require\s*\(/);
     assert.doesNotMatch(panelContent, /localStorage/);
@@ -336,14 +330,12 @@ async function runRestarbeitenModuleTests(run) {
     assert.doesNotMatch(panelContent, /Persistieren/);
     assert.doesNotMatch(panelContent, /<input|\btype\s*=\s*['"](range|text|number)['"]/i);
 
-    assert.match(runtimeContent, /getSelectionContext/);
-    assert.match(runtimeContent, /selectInspectorTarget/);
-    assert.match(runtimeContent, /getNextSiblingId/);
-    assert.match(runtimeContent, /applyPreviewDelta/);
-    assert.match(runtimeContent, /resetSelectedPreview/);
-    assert.match(runtimeContent, /resetAllPreview/);
-    assert.match(runtimeContent, /toggleSelectedVisibility/);
-    assert.match(runtimeContent, /translate\(/);
+    assert.match(runtimeContent, /createUiInspectorRuntime/);
+    assert.match(runtimeContent, /scanUiInspectorTargets/);
+    assert.match(runtimeContent, /getSelectionMode/);
+    assert.match(runtimeContent, /setSelectionMode/);
+    assert.match(runtimeContent, /getPanelState/);
+    assert.doesNotMatch(runtimeContent, /applyPreviewDelta|resetSelectedPreview|resetAllPreview|toggleSelectedVisibility|translate\(/);
     assert.doesNotMatch(runtimeContent, /localStorage/);
     assert.doesNotMatch(runtimeContent, /saveInspector/);
     assert.doesNotMatch(runtimeContent, /saveUiInspector/);

@@ -173,6 +173,22 @@ function findNodes(root, predicate) {
   return matches;
 }
 
+function collectText(root) {
+  const stack = [root];
+  const parts = [];
+  while (stack.length) {
+    const node = stack.shift();
+    if (!node) continue;
+    if (typeof node.textContent === "string" && node.textContent.trim()) {
+      parts.push(node.textContent.trim());
+    }
+    for (const child of node?.children || []) {
+      stack.push(child);
+    }
+  }
+  return parts.join(" ");
+}
+
 async function runProjektverwaltungModuleTests(run) {
   const [
     {
@@ -1149,20 +1165,45 @@ async function runProjektverwaltungModuleTests(run) {
       assert.equal(editorButton.dataset.uiEditorState, "scan-ok");
       assert.equal(editorButton.dataset.uiEditorSeverity, "ok");
       assert.match(editorButton.title, /vollständig/);
-      assert.match(String(header.elUiEditorStatus?.textContent || ""), /UI-Editor Scan/);
-      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Status: vollständig/);
-      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Marker: \d+/);
-      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Rahmen: \d+/);
-      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Felder: \d+/);
-      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Einzelelemente: \d+/);
+      const panelRoot = header.elUiEditorPanel?.getPanelRoot?.();
+      assert.ok(panelRoot);
+      assert.equal(
+        panelRoot.getAttribute?.("data-ui-editor-mode") || panelRoot["data-ui-editor-mode"],
+        "frame"
+      );
+      const panelText = collectText(panelRoot);
+      assert.match(panelText, /UI-Editor Scan/);
+      assert.match(panelText, /Status: vollständig/);
+      assert.match(panelText, /Marker: \d+/);
+      assert.match(panelText, /Rahmen: \d+/);
+      assert.match(panelText, /Felder: \d+/);
+      assert.match(panelText, /Einzelelemente: \d+/);
+      assert.equal(Boolean(findNode(panelRoot, (node) => node?.tagName === "BUTTON" && node?.textContent === "Rahmen")), true);
+      assert.equal(Boolean(findNode(panelRoot, (node) => node?.tagName === "BUTTON" && node?.textContent === "Feld")), true);
+      assert.equal(Boolean(findNode(panelRoot, (node) => node?.tagName === "BUTTON" && node?.textContent === "Einzelelement")), true);
+
+      const fieldButton = findNode(panelRoot, (node) => node?.tagName === "BUTTON" && node?.textContent === "Feld");
+      fieldButton.click();
+      const updatedPanelRoot = header.elUiEditorPanel?.getPanelRoot?.();
+      assert.equal(
+        updatedPanelRoot.getAttribute?.("data-ui-editor-mode") || updatedPanelRoot["data-ui-editor-mode"],
+        "field"
+      );
+      assert.equal(editorButton.dataset.uiEditorState, "scan-ok");
 
       router.contentRoot = mkRoot(warningIds);
       header.refresh();
       assert.equal(editorButton.dataset.uiEditorState, "scan-warning");
       assert.equal(header.elUiEditorStatus.style.display, "block");
-      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Status: unvollständig/);
-      assert.match(String(header.elUiEditorStatus?.textContent || ""), /Fehlt Pflicht:/);
-      assert.match(String(header.elUiEditorStatus?.textContent || ""), /restarbeiten\.filterleiste\.verortung/);
+      const warningPanelText = collectText(header.elUiEditorPanel?.getPanelRoot?.());
+      assert.match(warningPanelText, /Status: unvollständig/);
+      assert.match(warningPanelText, /Fehlt Pflicht:/);
+      assert.match(warningPanelText, /restarbeiten\.filterleiste\.verortung/);
+      assert.equal(
+        header.elUiEditorPanel?.getPanelRoot?.().getAttribute?.("data-ui-editor-mode") ||
+          header.elUiEditorPanel?.getPanelRoot?.()["data-ui-editor-mode"],
+        "field"
+      );
 
       assert.equal(header.toggleUiEditorScan(), false);
       assert.equal(editorButton.dataset.uiEditorState, "off");

@@ -10,7 +10,8 @@ import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
 import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
 import { isModuleActive, refreshCachedActiveModuleAccess } from "../app/modules/moduleAccessState.js";
 import { getVisiblePrintDialogActions } from "../../shared/print/printModes.mjs";
-import { formatUiInspectorScanSummary, scanUiInspectorTargets } from "../uiInspector/UiInspectorRuntime.js";
+import { createUiInspectorPanel } from "../uiInspector/UiInspectorPanel.js";
+import { createUiInspectorRuntime, formatUiInspectorScanSummary, scanUiInspectorTargets } from "../uiInspector/UiInspectorRuntime.js";
 
 const PROTOCOL_DISABLED_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
 
@@ -63,8 +64,11 @@ export default class MainHeader {
     this.elUiEditorWrap = null;
     this.elUiEditorBtn = null;
     this.elUiEditorStatus = null;
+    this.elUiEditorPanel = null;
     this._uiEditorScanActive = false;
     this._uiEditorScanSummary = null;
+    this._uiEditorSelectionMode = "frame";
+    this.uiInspectorRuntime = createUiInspectorRuntime({ initialSelectionMode: "frame" });
 
     this.elPrintBtn = null;
     this.elPrintWrap = null;
@@ -633,15 +637,8 @@ export default class MainHeader {
 
     const uiEditorStatus = document.createElement("div");
     uiEditorStatus.style.display = "none";
-    uiEditorStatus.style.maxWidth = "280px";
-    uiEditorStatus.style.padding = "6px 8px";
-    uiEditorStatus.style.borderRadius = "8px";
-    uiEditorStatus.style.border = "1px solid #c8d0da";
-    uiEditorStatus.style.background = "rgba(248, 250, 252, 0.98)";
-    uiEditorStatus.style.color = "#1f2937";
-    uiEditorStatus.style.fontSize = "11px";
-    uiEditorStatus.style.lineHeight = "1.35";
-    uiEditorStatus.style.whiteSpace = "pre-line";
+    uiEditorStatus.style.maxWidth = "320px";
+    uiEditorStatus.style.whiteSpace = "normal";
     uiEditorStatus.style.boxSizing = "border-box";
     uiEditorStatus.style.userSelect = "text";
 
@@ -1667,7 +1664,8 @@ export default class MainHeader {
     if (!this.elUiEditorStatus) return;
 
     if (!summary) {
-      this.elUiEditorStatus.textContent = "";
+      this.uiInspectorRuntime?.clearScanSummary?.();
+      this.elUiEditorStatus.replaceChildren();
       this.elUiEditorStatus.style.display = "none";
       if (typeof this.elUiEditorStatus.removeAttribute === "function") {
         this.elUiEditorStatus.removeAttribute("data-ui-editor-status");
@@ -1676,10 +1674,25 @@ export default class MainHeader {
     }
 
     const scan = formatUiInspectorScanSummary(summary);
-    this.elUiEditorStatus.textContent = scan.text;
+    this.uiInspectorRuntime?.setScanSummary?.(summary);
     this.elUiEditorStatus.style.display = "block";
     this.elUiEditorStatus.dataset.uiEditorStatus = scan.status;
     this.elUiEditorStatus.dataset.uiEditorState = scan.status;
+    this.elUiEditorStatus.dataset.uiEditorMode = this.uiInspectorRuntime?.getSelectionMode?.() || "frame";
+
+    if (!this.elUiEditorPanel) {
+      this.elUiEditorPanel = createUiInspectorPanel();
+    }
+    this.elUiEditorPanel.mount(this.elUiEditorStatus);
+
+    this.elUiEditorPanel.render({
+      scanSummary: summary,
+      selectionMode: this.uiInspectorRuntime?.getSelectionMode?.() || "frame",
+      selectionModeLabel: this.uiInspectorRuntime?.getSelectionModeLabel?.() || "Rahmen",
+      actions: {
+        setSelectionMode: (mode) => this.setUiEditorSelectionMode(mode),
+      },
+    });
   }
 
   _applyUiEditorButtonState() {
@@ -1736,6 +1749,16 @@ export default class MainHeader {
     this._setUiEditorStatusContent(summary);
   }
 
+  setUiEditorSelectionMode(nextMode) {
+    const changed = this.uiInspectorRuntime?.setSelectionMode?.(nextMode) === true;
+    this._uiEditorSelectionMode = this.uiInspectorRuntime?.getSelectionMode?.() || "frame";
+    if (this._uiEditorScanActive && this._uiEditorScanSummary) {
+      this._setUiEditorStatusContent(this._uiEditorScanSummary);
+      this._applyUiEditorButtonState();
+    }
+    return changed;
+  }
+
   _scanUiEditorCurrentScreen() {
     const root = this.router?.contentRoot || null;
     if (!root) {
@@ -1750,11 +1773,13 @@ export default class MainHeader {
         status: "warning",
         statusLabel: "unvollständig",
       };
+      this.uiInspectorRuntime?.setScanSummary?.(this._uiEditorScanSummary);
       this._applyUiEditorButtonState();
       return this._uiEditorScanSummary;
     }
 
     this._uiEditorScanSummary = scanUiInspectorTargets(root);
+    this.uiInspectorRuntime?.setScanSummary?.(this._uiEditorScanSummary);
     this._applyUiEditorButtonState();
     return this._uiEditorScanSummary;
   }
@@ -1764,9 +1789,12 @@ export default class MainHeader {
 
     this._uiEditorScanActive = !this._uiEditorScanActive;
     if (this._uiEditorScanActive) {
+      this.uiInspectorRuntime?.setSelectionMode?.("frame");
+      this._uiEditorSelectionMode = this.uiInspectorRuntime?.getSelectionMode?.() || "frame";
       this._scanUiEditorCurrentScreen();
     } else {
       this._uiEditorScanSummary = null;
+      this.uiInspectorRuntime?.clearScanSummary?.();
       this._applyUiEditorButtonState();
     }
     return this._uiEditorScanActive;
