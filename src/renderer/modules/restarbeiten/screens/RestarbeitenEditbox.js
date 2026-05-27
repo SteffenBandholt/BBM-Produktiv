@@ -11,6 +11,14 @@ const EDITBOX_STATUS_OPTIONS = [
   { value: "in arbeit", label: "in arbeit" },
   { value: "erledigt", label: "erledigt" },
 ];
+const EDITOR_FRAME_LABELS = Object.freeze({
+  editbox: "Editbox",
+  header: "Header",
+  kurztext: "Kurztext",
+  langtext: "Langtext",
+  verortung: "Verortung",
+  meta: "Meta",
+});
 
 function createField(doc, labelText, control, className = "") {
   const wrap = doc.createElement("label");
@@ -34,6 +42,17 @@ function createSelect(doc, options) {
     select.append(opt);
   }
   return select;
+}
+
+function applyEditorFrameMeta(node, { id, parent = "", label = "", editable = "false", ops = "none" } = {}) {
+  if (!node || typeof node.setAttribute !== "function") return;
+  if (id) node.setAttribute("data-ui-inspector-id", id);
+  node.setAttribute("data-ui-editor-kind", "frame");
+  node.setAttribute("data-ui-editor-label", label || id || "");
+  if (parent) node.setAttribute("data-ui-editor-parent", parent);
+  else if (typeof node.removeAttribute === "function") node.removeAttribute("data-ui-editor-parent");
+  node.setAttribute("data-ui-editor-editable", String(editable));
+  node.setAttribute("data-ui-editor-ops", String(ops));
 }
 
 function createInput(doc, type = "text", className = "") {
@@ -119,12 +138,24 @@ export default class RestarbeitenEditbox {
     const doc = this.document;
     const root = doc.createElement("section");
     root.className = "restarbeiten-editbox restarbeiten-editbox--compact";
-    root.setAttribute("data-ui-inspector-id", "restarbeiten.editbox");
+    applyEditorFrameMeta(root, {
+      id: "restarbeiten.editbox",
+      parent: "restarbeiten.root",
+      label: EDITOR_FRAME_LABELS.editbox,
+      editable: "false",
+      ops: "none",
+    });
     const form = doc.createElement("form");
     form.className = "restarbeiten-editbox__layout";
     const topBar = doc.createElement("div");
     topBar.className = "restarbeiten-editbox__topBar";
-    topBar.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.header");
+    applyEditorFrameMeta(topBar, {
+      id: "restarbeiten.editbox.header",
+      parent: "restarbeiten.editbox",
+      label: EDITOR_FRAME_LABELS.header,
+      editable: "false",
+      ops: "none",
+    });
     const titleEl = doc.createElement("div");
     titleEl.className = "restarbeiten-editbox__title";
     titleEl.textContent = "R der Liste bearbeiten";
@@ -138,7 +169,13 @@ export default class RestarbeitenEditbox {
     rightGroup.className = "restarbeiten-editbox__rightGroup";
     const metaCol = doc.createElement("aside");
     metaCol.className = "restarbeiten-editbox__meta";
-    metaCol.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.meta");
+    applyEditorFrameMeta(metaCol, {
+      id: "restarbeiten.editbox.meta",
+      parent: "restarbeiten.editbox",
+      label: EDITOR_FRAME_LABELS.meta,
+      editable: "false",
+      ops: "none",
+    });
 
     const shortText = createInput(doc, "text");
     const longText = createInput(doc, "textarea");
@@ -147,11 +184,23 @@ export default class RestarbeitenEditbox {
     textColumn.className = "restarbeiten-editbox__textColumn";
     const shortField = doc.createElement("div");
     shortField.className = "restarbeiten-editbox__inputSlot restarbeiten-editbox__inputSlot--short";
-    shortField.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.kurztext");
+    applyEditorFrameMeta(shortField, {
+      id: "restarbeiten.editbox.kurztext",
+      parent: "restarbeiten.editbox",
+      label: EDITOR_FRAME_LABELS.kurztext,
+      editable: "false",
+      ops: "none",
+    });
     shortField.append(shortText);
     const longField = doc.createElement("div");
     longField.className = "restarbeiten-editbox__inputSlot restarbeiten-editbox__inputSlot--long";
-    longField.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.langtext");
+    applyEditorFrameMeta(longField, {
+      id: "restarbeiten.editbox.langtext",
+      parent: "restarbeiten.editbox",
+      label: EDITOR_FRAME_LABELS.langtext,
+      editable: "false",
+      ops: "none",
+    });
     longField.append(longText);
 
     const shortRailRow = doc.createElement("div");
@@ -186,7 +235,13 @@ export default class RestarbeitenEditbox {
 
     const locationGrid = doc.createElement("div");
     locationGrid.className = "restarbeiten-editbox__locationGrid";
-    locationGrid.setAttribute("data-ui-inspector-id", "restarbeiten.editbox.verortung");
+    applyEditorFrameMeta(locationGrid, {
+      id: "restarbeiten.editbox.verortung",
+      parent: "restarbeiten.editbox",
+      label: EDITOR_FRAME_LABELS.verortung,
+      editable: "false",
+      ops: "none",
+    });
     const loc1Field = createField(doc, this._getLocationLabel(1), level1, "restarbeiten-editbox__locationField");
     const loc2Field = createField(doc, this._getLocationLabel(2), level2, "restarbeiten-editbox__locationField");
     const loc3Field = createField(doc, this._getLocationLabel(3), level3, "restarbeiten-editbox__locationField");

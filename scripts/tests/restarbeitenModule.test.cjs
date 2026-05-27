@@ -3,6 +3,76 @@ const fs = require("node:fs");
 const path = require("node:path");
 const Module = require("node:module");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
+const { validateEditorTargets } = require("./uiEditorContract.test.cjs");
+
+const RESTARBEITEN_LEGACY_INSPECTOR_IDS = new Set([
+  "restarbeiten.root",
+  "restarbeiten.header",
+  "restarbeiten.main",
+  "restarbeiten.filterleiste",
+  "restarbeiten.filterleiste.klassenfilter",
+  "restarbeiten.filterleiste.klassenfilter.feld",
+  "restarbeiten.filterleiste.verortung",
+  "restarbeiten.filterleiste.verortung.feld",
+  "restarbeiten.filterleiste.meta",
+  "restarbeiten.filterleiste.meta.fertig_bis",
+  "restarbeiten.filterleiste.meta.status",
+  "restarbeiten.filterleiste.meta.verantwortlich",
+  "restarbeiten.filterleiste.meta.erledigt",
+  "restarbeiten.liste",
+  "restarbeiten.liste.nummernbereich",
+  "restarbeiten.liste.textbereich",
+  "restarbeiten.liste.kurztext",
+  "restarbeiten.liste.langtext",
+  "restarbeiten.liste.metabereich",
+  "restarbeiten.editbox",
+  "restarbeiten.editbox.header",
+  "restarbeiten.editbox.verortung",
+  "restarbeiten.editbox.kurztext",
+  "restarbeiten.editbox.kurztext.label",
+  "restarbeiten.editbox.kurztext.restzeichen",
+  "restarbeiten.editbox.langtext",
+  "restarbeiten.editbox.langtext.label",
+  "restarbeiten.editbox.langtext.restzeichen",
+  "restarbeiten.editbox.meta",
+]);
+
+const RESTARBEITEN_EDITOR_FRAME_TARGETS = [
+  "restarbeiten.root",
+  "restarbeiten.main",
+  "restarbeiten.filterleiste",
+  "restarbeiten.filterleiste.klasse",
+  "restarbeiten.filterleiste.verortung",
+  "restarbeiten.filterleiste.meta",
+  "restarbeiten.liste",
+  "restarbeiten.liste.nummernspalte",
+  "restarbeiten.liste.textbereich",
+  "restarbeiten.liste.metabereich",
+  "restarbeiten.editbox",
+  "restarbeiten.editbox.header",
+  "restarbeiten.editbox.kurztext",
+  "restarbeiten.editbox.langtext",
+  "restarbeiten.editbox.verortung",
+  "restarbeiten.editbox.meta",
+];
+
+const RESTARBEITEN_EDITOR_FRAME_PARENTS = {
+  "restarbeiten.main": "restarbeiten.root",
+  "restarbeiten.filterleiste": "restarbeiten.main",
+  "restarbeiten.filterleiste.klasse": "restarbeiten.filterleiste",
+  "restarbeiten.filterleiste.verortung": "restarbeiten.filterleiste",
+  "restarbeiten.filterleiste.meta": "restarbeiten.filterleiste",
+  "restarbeiten.liste": "restarbeiten.main",
+  "restarbeiten.liste.nummernspalte": "restarbeiten.liste",
+  "restarbeiten.liste.textbereich": "restarbeiten.liste",
+  "restarbeiten.liste.metabereich": "restarbeiten.liste",
+  "restarbeiten.editbox": "restarbeiten.root",
+  "restarbeiten.editbox.header": "restarbeiten.editbox",
+  "restarbeiten.editbox.kurztext": "restarbeiten.editbox",
+  "restarbeiten.editbox.langtext": "restarbeiten.editbox",
+  "restarbeiten.editbox.verortung": "restarbeiten.editbox",
+  "restarbeiten.editbox.meta": "restarbeiten.editbox",
+};
 
 function withPatchedRestarbeitenIpc(stubs, fn) {
   const originalLoad = Module._load;
@@ -47,6 +117,25 @@ function findButtonByText(root, text) {
 
 function findInspectorNode(root, id) {
   return findNodes(root, (node) => node?.["data-ui-inspector-id"] === id)[0] || null;
+}
+
+function toEditorTargetNode(node) {
+  return {
+    getAttribute(name) {
+      return node?.[name] ?? null;
+    },
+  };
+}
+
+function buildEditorScanRoot(root, ids) {
+  const nodes = findNodes(root, (node) => ids.has(String(node?.["data-ui-inspector-id"] || ""))).map(
+    (node) => toEditorTargetNode(node)
+  );
+  return {
+    querySelectorAll(selector) {
+      return selector === "[data-ui-inspector-id]" ? nodes : [];
+    },
+  };
 }
 
 function createFakeDocument() {
@@ -660,9 +749,10 @@ async function runRestarbeitenModuleTests(run) {
       const scanRoot = {
         querySelectorAll: (selector) =>
           selector === "[data-ui-inspector-id]"
-            ? findNodes(root, (node) => node?.["data-ui-inspector-id"]).map((node) => ({
-                getAttribute: (name) => (name === "data-ui-inspector-id" ? node?.["data-ui-inspector-id"] : null),
-              }))
+            ? findNodes(root, (node) => RESTARBEITEN_LEGACY_INSPECTOR_IDS.has(node?.["data-ui-inspector-id"]))
+                .map((node) => ({
+                  getAttribute: (name) => (name === "data-ui-inspector-id" ? node?.["data-ui-inspector-id"] : null),
+                }))
             : selector === ".restarbeiten-list__row"
               ? findNodes(root, (node) => node?.className === "restarbeiten-list__row")
               : [],
@@ -680,6 +770,34 @@ async function runRestarbeitenModuleTests(run) {
       assert.deepEqual(scanSummary.missingListMarkerIds, []);
       assert.deepEqual(scanSummary.optionalMissingIds, []);
       assert.match(formatUiInspectorScanSummary(scanSummary).text, /Listenmarker: vorhanden/);
+
+      const frameScanRoot = buildEditorScanRoot(root, new Set(RESTARBEITEN_EDITOR_FRAME_TARGETS));
+      const frameScan = validateEditorTargets(frameScanRoot);
+      assert.equal(frameScan.valid, true);
+      assert.deepEqual(frameScan.issues, []);
+      assert.deepEqual(
+        frameScan.targets.map((target) => target.id).sort(),
+        [...RESTARBEITEN_EDITOR_FRAME_TARGETS].sort()
+      );
+      for (const target of frameScan.targets) {
+        assert.equal(target.kind, "frame");
+        assert.equal(target.editable, "false");
+        assert.equal(target.ops, "none");
+        assert.equal(String(target.label || "").length > 0, true);
+        if (target.id === "restarbeiten.root") {
+          assert.equal(target.rootTarget, true);
+          assert.equal(target.parent, "");
+        } else {
+          assert.equal(target.rootTarget, false);
+          assert.equal(target.parent, RESTARBEITEN_EDITOR_FRAME_PARENTS[target.id]);
+        }
+      }
+
+      assert.equal(!!findInspectorNode(root, "restarbeiten.filterleiste.klasse"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.filterleiste.klassenfilter"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.filterleiste.klassenfilter.feld"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.liste.nummernspalte"), true);
+      assert.equal(!!findInspectorNode(root, "restarbeiten.liste.nummernbereich"), true);
 
       const verortungGroup = findInspectorNode(root, "restarbeiten.filterleiste.verortung");
       const verortungFields = findNodes(

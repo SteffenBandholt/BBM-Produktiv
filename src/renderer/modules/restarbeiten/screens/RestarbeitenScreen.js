@@ -17,6 +17,22 @@ const LOCATION_KEYS = ["location_level_1", "location_level_2", "location_level_3
 const LOCATION_LABEL_FALLBACKS = ["Ebene 1", "Ebene 2", "Ebene 3", "Ebene 4"];
 const STATUS_FILTER_ORDER = ["offen", "in_arbeit", "erledigt_gemeldet", "geprueft_erledigt", "zurueckgewiesen", "verzug"];
 const COMPLETED_STATUS_VALUES = new Set(["erledigt", "erledigt_gemeldet", "geprueft_erledigt", "geprüft erledigt"]);
+const EDITOR_FRAME_LABELS = Object.freeze({
+  root: "Restarbeiten",
+  main: "Hauptbereich",
+  filterleiste: "Filterleiste",
+  klasse: "Klasse",
+  verortung: "Verortung",
+  meta: "Meta",
+  liste: "Liste",
+  nummernspalte: "Nummernspalte",
+  textbereich: "Textbereich",
+  metabereich: "Metabereich",
+  editbox: "Editbox",
+  header: "Header",
+  kurztext: "Kurztext",
+  langtext: "Langtext",
+});
 
 function normalizeText(value) {
   return String(value || "").trim();
@@ -33,6 +49,17 @@ function createMessage(doc, text) {
   el.textContent = text;
   el.style.margin = "0";
   return el;
+}
+
+function applyEditorFrameMeta(node, { id, parent = "", label = "", editable = "false", ops = "none" } = {}) {
+  if (!node || typeof node.setAttribute !== "function") return;
+  if (id) node.setAttribute("data-ui-inspector-id", id);
+  node.setAttribute("data-ui-editor-kind", "frame");
+  node.setAttribute("data-ui-editor-label", label || id || "");
+  if (parent) node.setAttribute("data-ui-editor-parent", parent);
+  else if (typeof node.removeAttribute === "function") node.removeAttribute("data-ui-editor-parent");
+  node.setAttribute("data-ui-editor-editable", String(editable));
+  node.setAttribute("data-ui-editor-ops", String(ops));
 }
 
 function buildCompactLocation(item = {}) {
@@ -106,7 +133,12 @@ export default class RestarbeitenScreen {
 
     this.host = doc.createElement("div");
     this.host.setAttribute("data-bbm-restarbeiten-screen", "true");
-    this.host.setAttribute("data-ui-inspector-id", "restarbeiten.root");
+    applyEditorFrameMeta(this.host, {
+      id: "restarbeiten.root",
+      label: EDITOR_FRAME_LABELS.root,
+      editable: "false",
+      ops: "none",
+    });
 
     this._buildHeader(doc);
     this._buildSheetArea(doc);
@@ -177,14 +209,26 @@ export default class RestarbeitenScreen {
   _buildSheetArea(doc) {
     this.workArea = doc.createElement("div");
     this.workArea.className = "restarbeiten-workarea";
-    this.workArea.setAttribute("data-ui-inspector-id", "restarbeiten.main");
+    applyEditorFrameMeta(this.workArea, {
+      id: "restarbeiten.main",
+      parent: "restarbeiten.root",
+      label: EDITOR_FRAME_LABELS.main,
+      editable: "false",
+      ops: "none",
+    });
 
     this.contentArea = doc.createElement("div");
     this.contentArea.className = "restarbeiten-workarea__content";
 
     this.listHeaderHost = doc.createElement("div");
     this.listHeaderHost.className = "restarbeiten-listHeader";
-    this.listHeaderHost.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste");
+    applyEditorFrameMeta(this.listHeaderHost, {
+      id: "restarbeiten.filterleiste",
+      parent: "restarbeiten.main",
+      label: EDITOR_FRAME_LABELS.filterleiste,
+      editable: "false",
+      ops: "none",
+    });
     this.headerFiltersHost = this.listHeaderHost;
 
     this.sheetArea = doc.createElement("section");
@@ -198,7 +242,13 @@ export default class RestarbeitenScreen {
 
     const listHost = doc.createElement("div");
     listHost.className = "restarbeiten-sheet__list";
-    listHost.setAttribute("data-ui-inspector-id", "restarbeiten.liste");
+    applyEditorFrameMeta(listHost, {
+      id: "restarbeiten.liste",
+      parent: "restarbeiten.main",
+      label: EDITOR_FRAME_LABELS.liste,
+      editable: "false",
+      ops: "none",
+    });
 
     sheetPaper.append(listHost);
     sheetCanvas.append(sheetPaper);
@@ -250,7 +300,6 @@ export default class RestarbeitenScreen {
   _buildEditArea(doc) {
     this.editArea = doc.createElement("section");
     this.editArea.setAttribute("data-bbm-restarbeiten-screen-area", "edit");
-    this.editArea.setAttribute("data-ui-inspector-id", "restarbeiten.editbox");
 
     const editCanvas = doc.createElement("div");
     editCanvas.setAttribute("data-bbm-restarbeiten-screen-edit-canvas", "true");
@@ -361,7 +410,13 @@ export default class RestarbeitenScreen {
 
     const locationWrap = doc.createElement("div");
     locationWrap.className = "restarbeiten-filterleiste__locationFilters";
-    locationWrap.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.verortung");
+    applyEditorFrameMeta(locationWrap, {
+      id: "restarbeiten.filterleiste.verortung",
+      parent: "restarbeiten.filterleiste",
+      label: EDITOR_FRAME_LABELS.verortung,
+      editable: "false",
+      ops: "none",
+    });
     const locationGroupA = doc.createElement("div");
     locationGroupA.className = "restarbeiten-filterleiste__locationGroupA";
     locationGroupA.append(this._buildSingleFilter(doc, "location_level_1", 1), this._buildSingleFilter(doc, "location_level_2", 2));
@@ -380,11 +435,23 @@ export default class RestarbeitenScreen {
       body: this._buildClassFilter(doc),
       className: "restarbeiten-listHeader__panel restarbeiten-listHeader__panel--class",
     });
-    classPanel.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.klassenfilter");
+    applyEditorFrameMeta(classPanel, {
+      id: "restarbeiten.filterleiste.klasse",
+      parent: "restarbeiten.filterleiste",
+      label: EDITOR_FRAME_LABELS.klasse,
+      editable: "false",
+      ops: "none",
+    });
 
     const metaWrap = doc.createElement("div");
     metaWrap.className = "restarbeiten-filterleiste__metaFilters";
-    metaWrap.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.meta");
+    applyEditorFrameMeta(metaWrap, {
+      id: "restarbeiten.filterleiste.meta",
+      parent: "restarbeiten.filterleiste",
+      label: EDITOR_FRAME_LABELS.meta,
+      editable: "false",
+      ops: "none",
+    });
     metaWrap.append(
       this._buildMetaFilter(doc, {
         key: "due_date",
@@ -453,7 +520,7 @@ export default class RestarbeitenScreen {
   _buildClassFilter(doc) {
     const wrap = doc.createElement("div");
     wrap.className = "restarbeiten-filterleiste__classFilter";
-    wrap.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.klassenfilter.feld");
+    wrap.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.klassenfilter");
     const values = [
       { value: "", label: "Alle" },
       { value: "mangel", label: "Mangel" },
@@ -465,6 +532,9 @@ export default class RestarbeitenScreen {
       button.className = "restarbeiten-filterleiste__classFilterButton";
       button.textContent = entry.label;
       button.dataset.active = this.filterState.item_class === entry.value ? "1" : "0";
+      if (entry.value === values[0]?.value) {
+        button.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.klassenfilter.feld");
+      }
       button.onclick = () => {
         this.filterState.item_class = entry.value;
         this._renderHeaderFilters();
@@ -702,11 +772,18 @@ export default class RestarbeitenScreen {
   _renderNumberColumn(doc, item) {
     const col = doc.createElement("div");
     col.className = "restarbeiten-list__numberCol";
-    col.setAttribute("data-ui-inspector-id", "restarbeiten.liste.nummernbereich");
+    applyEditorFrameMeta(col, {
+      id: "restarbeiten.liste.nummernspalte",
+      parent: "restarbeiten.liste",
+      label: EDITOR_FRAME_LABELS.nummernspalte,
+      editable: "false",
+      ops: "none",
+    });
 
     const number = doc.createElement("div");
     number.className = "restarbeiten-list__number";
     number.textContent = `${item.itemClassToken} ${item.numberLine}`;
+    number.setAttribute("data-ui-inspector-id", "restarbeiten.liste.nummernbereich");
 
     const date = doc.createElement("div");
     date.className = "restarbeiten-list__date";
@@ -741,7 +818,13 @@ export default class RestarbeitenScreen {
   _renderTextColumn(doc, item) {
     const col = doc.createElement("div");
     col.className = "restarbeiten-list__textCol";
-    col.setAttribute("data-ui-inspector-id", "restarbeiten.liste.textbereich");
+    applyEditorFrameMeta(col, {
+      id: "restarbeiten.liste.textbereich",
+      parent: "restarbeiten.liste",
+      label: EDITOR_FRAME_LABELS.textbereich,
+      editable: "false",
+      ops: "none",
+    });
 
     const location = doc.createElement("div");
     location.className = "restarbeiten-list__locationCompact";
@@ -768,7 +851,13 @@ export default class RestarbeitenScreen {
   _renderMetaColumn(doc, item) {
     const col = doc.createElement("div");
     col.className = "restarbeiten-list__metaCol";
-    col.setAttribute("data-ui-inspector-id", "restarbeiten.liste.metabereich");
+    applyEditorFrameMeta(col, {
+      id: "restarbeiten.liste.metabereich",
+      parent: "restarbeiten.liste",
+      label: EDITOR_FRAME_LABELS.metabereich,
+      editable: "false",
+      ops: "none",
+    });
 
     const statusLine = doc.createElement("div");
     statusLine.className = "restarbeiten-list__ampelLine";
