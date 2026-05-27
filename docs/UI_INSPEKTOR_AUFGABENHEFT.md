@@ -1,7 +1,7 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.4b.1 abgeschlossen (Auswahlmodus-Schalter im Scanpanel verdrahtet).
+Status: M13.5a abgeschlossen (UI-Editor-Vertrag und Restarbeiten-Rahmenlandkarte festgelegt).
 
 Aktueller Stand:
 - M1 bis M13.3 abgeschlossen.
@@ -33,6 +33,7 @@ Aktueller Stand:
 - [x] M13.4a.2 UI-Editor: Scanroot und Listenmarker korrekt bewerten
 - [x] M13.4b UI-Editor: Objektwahl ohne Bearbeitung
 - [x] M13.4b.1 UI-Editor: Auswahlmodus-Schalter im Scanpanel sichtbar verdrahten
+- [x] M13.5a UI-Editor-Vertrag und Restarbeiten-Rahmenlandkarte festlegen
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -87,10 +88,16 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M13.4c weitere UI-Inspector-Feinschärfung**
+- **M13.5b Pflichtstruktur-Tests für den UI-Editor-Vertrag**
 
 Hinweis:
 - M13.2.1 ist nur temporäre Vorschau, ohne Speicherung und ohne dauerhafte Layoutänderung
+
+## Statusupdate M13.5a
+- Der UI-Editor-Vertrag ist als neue verbindliche Steuerdatei dokumentiert (`docs/UI_EDITOR_VERTRAG.md`).
+- Die Restarbeiten-Rahmenlandkarte ist mit einer klaren Zielstruktur für editorfähige Neuordnung festgelegt.
+- Protokoll bleibt ausdrücklich unberührt; der Vertrag gilt zuerst für neue/neu strukturierte Restarbeiten-UI.
+- Reines Doku-Paket ohne Code-, Test-, CSS-, IPC-, DB- oder Print/PDF-Änderungen.
 
 
 ## M4 Abschlussnotiz
@@ -337,4 +344,3 @@ Hinweis:
 - DEV-Header scannt den aktuellen Screen nur lesend.
 - Keine Auswahl, keine Bearbeitung, keine Speicherung.
 - Nächster Schritt: M13.4b UI-Editor-Scan weiter verfeinern, ohne Bearbeitung.
-

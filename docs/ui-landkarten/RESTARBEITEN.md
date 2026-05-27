@@ -67,6 +67,37 @@ Restarbeiten
 - `restarbeiten.editbox.langtext.restzeichen`
 - `restarbeiten.editbox.meta`
 
+## 4.1 Zielstruktur Rahmenebene (verbindlich für editorfähige Neuordnung)
+
+Restarbeiten:
+- `restarbeiten.root`
+- `restarbeiten.main`
+
+Filterleiste:
+- `restarbeiten.filterleiste`
+- `restarbeiten.filterleiste.klasse`
+- `restarbeiten.filterleiste.verortung`
+- `restarbeiten.filterleiste.meta`
+
+Liste:
+- `restarbeiten.liste`
+- `restarbeiten.liste.nummernspalte`
+- `restarbeiten.liste.textbereich`
+- `restarbeiten.liste.metabereich`
+
+Editbox:
+- `restarbeiten.editbox`
+- `restarbeiten.editbox.header`
+- `restarbeiten.editbox.kurztext`
+- `restarbeiten.editbox.langtext`
+- `restarbeiten.editbox.verortung`
+- `restarbeiten.editbox.meta`
+
+Hinweis:
+- Diese Namen sind die Zielstruktur für die editorfähige Neuordnung.
+- Bestehende IDs mit anderen Bezeichnungen gelten als Altstand/Bestand und nicht als neue Zielstruktur.
+- Beispiel Altstand: `restarbeiten.filterleiste.klassenfilter`, `restarbeiten.liste.nummernbereich`.
+
 Hinweis:
 - Die IDs wurden in M9 als `data-ui-inspector-id` in bestehende DOM-Struktur ergänzt.
 - Es wurden keine zusätzlichen sichtbaren Wrapper gebaut; Marker folgen der vorhandenen Struktur.
@@ -157,6 +188,11 @@ Editbox:
 - Ist die Liste in Textbereich und Metabereich sinnvoll trennbar?
 - Gehört Foto/Anlagen fachlich zur Liste, zur Editbox oder als eigener Sonderbereich?
 - Welche Stellschrauben sind für den Nutzer wirklich verständlich?
+
+## 9. Abgrenzung Protokoll
+- Protokoll-UI ist fachlich fertig und bleibt unberührt.
+- Diese Restarbeiten-Rahmenlandkarte ändert Protokoll nicht.
+- Der UI-Editor-Vertrag gilt für neue oder neu strukturierte UIs, zuerst Restarbeiten.
 
 
 ## M11 Hinweis

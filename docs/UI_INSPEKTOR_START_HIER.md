@@ -7,11 +7,12 @@
 ## 2. Lesereihenfolge
 Pflichtreihenfolge:
 1. `docs/UI_INSPEKTOR_START_HIER.md`
-2. `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
-3. `docs/UI_INSPEKTOR_PROJEKTAUFTRAG.md`
-4. `docs/UI_INSPEKTOR_ARBEITSVERTRAG.md`
-5. `docs/UI_INSPEKTOR_ARCHITEKTUR.md`
-6. `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+2. `docs/UI_EDITOR_VERTRAG.md`
+3. `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+4. `docs/UI_INSPEKTOR_PROJEKTAUFTRAG.md`
+5. `docs/UI_INSPEKTOR_ARBEITSVERTRAG.md`
+6. `docs/UI_INSPEKTOR_ARCHITEKTUR.md`
+7. `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
 
 ## 3. Kurzfassung Projektziel
 - Neues exportierbares UI-Inspector-Modul.
@@ -57,6 +58,18 @@ Pflichtreihenfolge:
 - M13.3 führt Eltern-/Kindnavigation ein
 - Noch keine Layoutänderung
 
+## 5.1 Verbindliche Reihenfolge für neue editorfähige UIs
+1. UI-Editor-Vertrag
+2. UI-Landkarte
+3. Tests für Pflichtstruktur
+4. UI-Code
+5. Rahmenmodus
+6. Rahmenauswahl
+7. Rahmenbearbeitung
+8. Feldmodus
+9. Einzelelementmodus
+10. Speicherung
+
 ## 6. Harte Stopps
 Nicht fortführen:
 - Tabellen-Kalibrator als Bedienoberfläche des UI-Inspektors
@@ -85,4 +98,8 @@ Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 - Keine Hover-/Klickauswahl, keine Bearbeitung, keine Speicherung.
 - Nächster Schritt: M13.4c weitere Feinschärfung der Objektwahl, ohne Bearbeitung.
 
+## Statusupdate M13.5a
+- Der UI-Editor-Vertrag ist als verbindliche Planungsgrundlage dokumentiert.
+- Die Restarbeiten-Rahmenlandkarte ist als Zielstruktur (inkl. Altstand-Abgrenzung) festgelegt.
+- Protokoll bleibt ausdrücklich unberührt.
 
