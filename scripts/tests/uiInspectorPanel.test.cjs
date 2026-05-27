@@ -4,6 +4,7 @@ const path = require('node:path');
 const { importEsmFromFile } = require('./_esmLoader.cjs');
 
 function createFakeDocument() {
+  const listeners = new Map();
   function createNode(tagName, doc) {
     return {
       tagName: String(tagName || '').toUpperCase(),
@@ -16,6 +17,26 @@ function createFakeDocument() {
       dataset: {},
       attributes: {},
       onclick: null,
+      addEventListener(type, handler) {
+        if (!listeners.has(type)) listeners.set(type, []);
+        listeners.get(type).push(handler);
+      },
+      removeEventListener(type, handler) {
+        listeners.set(type, (listeners.get(type) || []).filter((entry) => entry !== handler));
+      },
+      dispatchEvent(eventInput) {
+        const event = typeof eventInput === 'string' ? { type: eventInput } : (eventInput || {});
+        if (!event.type) event.type = 'click';
+        if (event.target == null) event.target = this;
+        event.currentTarget = this;
+        event.preventDefault = event.preventDefault || (() => {});
+        event.stopPropagation = event.stopPropagation || (() => {});
+        event.stopImmediatePropagation = event.stopImmediatePropagation || (() => {});
+        for (const handler of listeners.get(event.type) || []) {
+          handler.call(this, event);
+        }
+        return event;
+      },
       append(...items) {
         for (const item of items) {
           if (item && typeof item === 'object') {
@@ -52,6 +73,17 @@ function createFakeDocument() {
   const document = {
     createElement(tagName) {
       return createNode(tagName, document);
+    },
+    addEventListener(type, handler) {
+      if (!listeners.has(type)) listeners.set(type, []);
+      listeners.get(type).push(handler);
+    },
+    removeEventListener(type, handler) {
+      listeners.set(type, (listeners.get(type) || []).filter((entry) => entry !== handler));
+    },
+    dispatch(type, event = {}) {
+      event.type = type;
+      for (const handler of listeners.get(type) || []) handler(event);
     },
   };
   document.body = createNode('body', document);
@@ -97,6 +129,8 @@ function findButtonByText(root, text) {
   assert.match(panelSource, /UI-Editor Scan/);
   assert.match(panelSource, /Auswahlmodus/);
   assert.match(panelSource, /data-ui-editor-mode/);
+  assert.match(panelSource, /data-ui-inspector-panel-drag-handle/);
+  assert.match(panelSource, /position:\s*'fixed'|style\.position = 'fixed'/);
 
   const { createUiInspectorPanel } = await importEsmFromFile(panelPath);
   assert.equal(typeof createUiInspectorPanel, 'function');
@@ -111,7 +145,12 @@ function findButtonByText(root, text) {
 
     const panelNode = document.body.children.find((c) => c.attributes['data-ui-inspector-panel'] === 'true');
     assert.ok(panelNode);
+    assert.equal(panel.getMountHost(), document.body);
     assert.equal(panelNode.style.boxSizing, 'border-box');
+    assert.equal(panelNode.style.position, 'fixed');
+    assert.equal(panelNode.style.pointerEvents, 'auto');
+    assert.equal(panelNode.style.zIndex, '2147483600');
+    assert.equal(panelNode.parentElement, document.body);
     assert.equal(panelNode.attributes['data-ui-editor-mode'], 'frame');
 
     const selectionCalls = [];
@@ -157,6 +196,35 @@ function findButtonByText(root, text) {
     assert.equal(frameButton.attributes['data-ui-editor-mode-active'], 'true');
     assert.equal(Boolean(fieldButton.attributes['data-ui-editor-mode-active']), false);
     assert.equal(Boolean(singleButton.attributes['data-ui-editor-mode-active']), false);
+
+    const dragHandle = findNodes(panelNode, (node) => node?.attributes['data-ui-inspector-panel-drag-handle'] === 'true')[0];
+    assert.ok(dragHandle);
+    assert.equal(dragHandle.style.cursor, 'move');
+    assert.equal(dragHandle.style.touchAction, 'none');
+    assert.equal(dragHandle.style.userSelect, 'none');
+    const initialLeft = panelNode.style.left;
+    const initialTop = panelNode.style.top;
+    dragHandle.dispatchEvent({
+      type: 'pointerdown',
+      clientX: 40,
+      clientY: 90,
+      button: 0,
+      preventDefault() {},
+      stopPropagation() {},
+      stopImmediatePropagation() {},
+    });
+    document.dispatch('pointermove', {
+      clientX: 90,
+      clientY: 130,
+      preventDefault() {},
+    });
+    document.dispatch('pointerup', {
+      clientX: 90,
+      clientY: 130,
+      preventDefault() {},
+    });
+    assert.notEqual(panelNode.style.left, initialLeft);
+    assert.notEqual(panelNode.style.top, initialTop);
 
     fieldButton.click();
     singleButton.click();

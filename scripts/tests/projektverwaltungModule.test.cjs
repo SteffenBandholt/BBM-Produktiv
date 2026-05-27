@@ -1019,6 +1019,7 @@ async function runProjektverwaltungModuleTests(run) {
       const header = new MainHeader({ router, version: "1.5.0" });
       header.render();
       header.refresh();
+      const headerChildCountBefore = header.root.children.length;
 
       assert.equal(header.elVersion.textContent, "BBM 1.5.0");
       assert.equal(header.elActive.textContent, "aktiv: Protokoll | 04-2026 - UI-Polish für BBM");
@@ -1155,6 +1156,7 @@ async function runProjektverwaltungModuleTests(run) {
       const header = new MainHeader({ router, version: "1.5.0" });
       header.render();
       header.refresh();
+      const headerChildCountBefore = header.root.children.length;
 
       const editorButton = findNode(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "Editor");
       assert.ok(editorButton);
@@ -1167,6 +1169,8 @@ async function runProjektverwaltungModuleTests(run) {
       assert.match(editorButton.title, /vollständig/);
       const panelRoot = header.elUiEditorPanel?.getPanelRoot?.();
       assert.ok(panelRoot);
+      assert.equal(panelRoot.parentElement || panelRoot.parentNode, fakeDocument.body);
+      assert.equal(panelRoot.style.position, "fixed");
       assert.equal(
         panelRoot.getAttribute?.("data-ui-editor-mode") || panelRoot["data-ui-editor-mode"],
         "frame"
@@ -1190,11 +1194,14 @@ async function runProjektverwaltungModuleTests(run) {
         "field"
       );
       assert.equal(editorButton.dataset.uiEditorState, "scan-ok");
+      assert.equal(header.elUiEditorStatus.style.display, "none");
+      assert.equal(header.root.children.length, headerChildCountBefore);
+      assert.equal(Boolean(findNode(header.root, (node) => node?.attributes?.["data-ui-inspector-panel"] === "true")), false);
 
       router.contentRoot = mkRoot(warningIds);
       header.refresh();
       assert.equal(editorButton.dataset.uiEditorState, "scan-warning");
-      assert.equal(header.elUiEditorStatus.style.display, "block");
+      assert.equal(header.elUiEditorStatus.style.display, "none");
       const warningPanelText = collectText(header.elUiEditorPanel?.getPanelRoot?.());
       assert.match(warningPanelText, /Status: unvollständig/);
       assert.match(warningPanelText, /Fehlt Pflicht:/);
@@ -1209,6 +1216,7 @@ async function runProjektverwaltungModuleTests(run) {
       assert.equal(editorButton.dataset.uiEditorState, "off");
       assert.equal(header.elUiEditorStatus.style.display, "none");
       assert.equal(String(header.elUiEditorStatus?.textContent || ""), "");
+      assert.equal(Boolean(findNode(fakeDocument.body, (node) => node?.attributes?.["data-ui-inspector-panel"] === "true")), false);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

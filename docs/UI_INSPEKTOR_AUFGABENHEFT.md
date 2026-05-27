@@ -1,10 +1,10 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.5a abgeschlossen (UI-Editor-Vertrag und Restarbeiten-Rahmenlandkarte festgelegt).
+Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar).
 
 Aktueller Stand:
-- M1 bis M13.3 abgeschlossen.
+- M1 bis M13.6a abgeschlossen.
 
 ## Haken-System
 - `[x]` erledigt
@@ -34,6 +34,10 @@ Aktueller Stand:
 - [x] M13.4b UI-Editor: Objektwahl ohne Bearbeitung
 - [x] M13.4b.1 UI-Editor: Auswahlmodus-Schalter im Scanpanel sichtbar verdrahten
 - [x] M13.5a UI-Editor-Vertrag und Restarbeiten-Rahmenlandkarte festlegen
+- [x] M13.5b Pflichtstruktur-Tests für den UI-Editor-Vertrag
+- [x] M13.5c Restarbeiten-UI Rahmenstruktur editorfähig vorbereiten
+- [x] M13.6 UI-Editor: Rahmenmodus nur für editorfähige Rahmenziele
+- [x] M13.6a UI-Editor-Panel aus Header lösen und verschiebbar halten
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:
@@ -88,7 +92,7 @@ Kein Codex-Auftrag gilt als fertig, wenn das Aufgabenheft nicht aktualisiert wur
 
 ## Nächster Schritt
 Als nächster Schritt folgt:
-- **M13.5b Pflichtstruktur-Tests für den UI-Editor-Vertrag**
+- **M13.6b UI-Editor: Hover-Rahmen wieder sichtbar machen**
 
 Hinweis:
 - M13.2.1 ist nur temporäre Vorschau, ohne Speicherung und ohne dauerhafte Layoutänderung
@@ -98,6 +102,12 @@ Hinweis:
 - Die Restarbeiten-Rahmenlandkarte ist mit einer klaren Zielstruktur für editorfähige Neuordnung festgelegt.
 - Protokoll bleibt ausdrücklich unberührt; der Vertrag gilt zuerst für neue/neu strukturierte Restarbeiten-UI.
 - Reines Doku-Paket ohne Code-, Test-, CSS-, IPC-, DB- oder Print/PDF-Änderungen.
+
+## Statusupdate M13.6a
+- Das UI-Editor-Panel ist nun als schwebende Oberfläche außerhalb des Header-Layouts platziert.
+- Der Header bleibt bei aktivem Editor auf seiner Höhe; der Panel-Inhalt sitzt schwebend über der App.
+- Ein Drag-Handle erlaubt das Verschieben des Panels im laufenden Lauf, ohne Speicherung.
+- Die Hover- und Auswahllogik blieb unberührt.
 
 
 ## M4 Abschlussnotiz

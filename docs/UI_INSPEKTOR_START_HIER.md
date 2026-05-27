@@ -52,7 +52,7 @@ Pflichtreihenfolge:
 - M13.4b.1 Auswahlmodus-Schalter im Scanpanel verdrahtet
 
 ## 5. Nächster geplanter Schritt
-- Nächster Schritt: M13.4c weitere UI-Inspector-Feinschärfung
+- Nächster Schritt: M13.6a UI-Editor-Panel aus Header lösen und verschiebbar halten
 - M13.2 ist nur Vorschau, ohne Speicherung
 - M13.2.1 trennt Richtungen, Seiten und Gruppen-/Feldsteuerung
 - M13.3 führt Eltern-/Kindnavigation ein
@@ -81,7 +81,7 @@ Nicht fortführen:
 ## 7. Definition für neue Chats
 Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 
-„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst, die Restarbeiten-Landkarte, der Scanstatus und die Auswahlmodus-Schalter sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M13.4c (weitere Feinschärfung der Objektwahl; weiterhin ohne Bearbeitung).“
+„Wir bauen ein neues exportierbares UI-Inspector-Modul. Projektauftrag, Architektur, Arbeitsvertrag, Aufgabenheft und Entscheidungslog liegen im Repo. Das Modulgerüst, die Restarbeiten-Landkarte, der Scanstatus und die Auswahlmodus-Schalter sind dokumentiert. Nächster Schritt laut Aufgabenheft ist M13.6a (Panel aus dem Header lösen und als schwebende Oberfläche halten; weiterhin ohne Hover- oder Auswahlreparatur).“
 
 
 ## Statusupdate M13.3
@@ -96,10 +96,9 @@ Ein neuer Chat soll mit dieser Zusammenfassung starten können:
 - DEV-Header zeigt einen lesenden UI-Editor-Scan mit Statusanzeige.
 - Das Scanpanel zeigt die Auswahlmodus-Schalter Rahmen/Feld/Einzelelement.
 - Keine Hover-/Klickauswahl, keine Bearbeitung, keine Speicherung.
-- Nächster Schritt: M13.4c weitere Feinschärfung der Objektwahl, ohne Bearbeitung.
+- Nächster Schritt: M13.6a UI-Editor-Panel aus Header lösen und verschiebbar halten.
 
 ## Statusupdate M13.5a
 - Der UI-Editor-Vertrag ist als verbindliche Planungsgrundlage dokumentiert.
 - Die Restarbeiten-Rahmenlandkarte ist als Zielstruktur (inkl. Altstand-Abgrenzung) festgelegt.
 - Protokoll bleibt ausdrücklich unberührt.
-

@@ -1,12 +1,19 @@
 import { formatUiInspectorScanSummary } from './UiInspectorRuntime.js';
 
-function createPanelRoot(doc) {
+function createPanelRoot(doc, options = {}) {
   const panel = doc.createElement('div');
   panel.setAttribute('data-ui-inspector-panel', 'true');
+  panel.style.position = 'fixed';
+  panel.style.left = `${Number.isFinite(options.initialLeft) ? Number(options.initialLeft) : 16}px`;
+  panel.style.top = `${Number.isFinite(options.initialTop) ? Number(options.initialTop) : 72}px`;
+  panel.style.zIndex = String(Number.isFinite(options.zIndex) ? Number(options.zIndex) : 2147483600);
+  panel.style.pointerEvents = 'auto';
   panel.style.display = 'flex';
   panel.style.flexDirection = 'column';
   panel.style.gap = '8px';
-  panel.style.maxWidth = '320px';
+  panel.style.width = '320px';
+  panel.style.minWidth = '280px';
+  panel.style.maxWidth = '360px';
   panel.style.padding = '8px 10px';
   panel.style.borderRadius = '8px';
   panel.style.border = '1px solid rgba(200, 208, 218, 0.9)';
@@ -14,6 +21,7 @@ function createPanelRoot(doc) {
   panel.style.color = '#1f2937';
   panel.style.font = '12px/1.35 sans-serif';
   panel.style.boxSizing = 'border-box';
+  panel.style.boxShadow = '0 12px 28px rgba(15, 23, 42, 0.16)';
   return panel;
 }
 
@@ -96,11 +104,34 @@ function renderPanelContent(panelRoot, state = {}) {
     actions = {},
   } = state;
 
+  const dragHandle = doc.createElement('div');
+  dragHandle.setAttribute('data-ui-inspector-panel-drag-handle', 'true');
+  dragHandle.textContent = 'UI-Editor';
+  dragHandle.style.display = 'flex';
+  dragHandle.style.alignItems = 'center';
+  dragHandle.style.justifyContent = 'space-between';
+  dragHandle.style.padding = '4px 6px';
+  dragHandle.style.margin = '0';
+  dragHandle.style.borderRadius = '6px';
+  dragHandle.style.background = 'rgba(225, 232, 240, 0.9)';
+  dragHandle.style.border = '1px solid rgba(148, 163, 184, 0.45)';
+  dragHandle.style.color = '#0f172a';
+  dragHandle.style.fontWeight = '700';
+  dragHandle.style.cursor = 'move';
+  dragHandle.style.userSelect = 'none';
+  dragHandle.style.touchAction = 'none';
+
+  const dragHint = doc.createElement('span');
+  dragHint.textContent = 'ziehen';
+  dragHint.style.fontWeight = '500';
+  dragHint.style.opacity = '0.72';
+  dragHandle.append(dragHint);
+
   const title = doc.createElement('div');
   title.textContent = 'UI-Editor Scan';
   title.style.fontWeight = '700';
 
-  panelRoot.append(title);
+  panelRoot.append(dragHandle, title);
 
   if (scanSummary) {
     renderSummaryLines(doc, panelRoot, scanSummary);
@@ -116,17 +147,82 @@ function renderPanelContent(panelRoot, state = {}) {
   modeTitle.textContent = `Auswahlmodus: ${selectionModeLabel || 'Rahmen'}`;
   panelRoot.append(modeTitle);
   renderModeRow(doc, panelRoot, selectionMode, actions);
+  return dragHandle;
 }
 
 export function createUiInspectorPanel(options = {}) {
   let panelRoot = null;
   let mountHost = null;
   let currentState = { ...(options.initialState || {}) };
+  let dragDocument = null;
+  let dragState = null;
 
   function ensurePanel(doc) {
     if (panelRoot?.isConnected) return panelRoot;
-    panelRoot = createPanelRoot(doc);
+    panelRoot = createPanelRoot(doc, options);
     return panelRoot;
+  }
+
+  function removeDragListeners() {
+    if (!dragDocument || !dragState) return;
+    if (typeof dragDocument.removeEventListener === 'function') {
+      dragDocument.removeEventListener('pointermove', dragState.onMove, true);
+      dragDocument.removeEventListener('pointerup', dragState.onUp, true);
+      dragDocument.removeEventListener('pointercancel', dragState.onUp, true);
+    }
+    dragDocument = null;
+    dragState = null;
+  }
+
+  function installDragListeners(doc, handle) {
+    removeDragListeners();
+    if (!doc || typeof doc.addEventListener !== 'function' || !handle) return;
+
+    const position = {
+      left: Number.parseFloat(panelRoot?.style?.left || '16') || 16,
+      top: Number.parseFloat(panelRoot?.style?.top || '72') || 72,
+    };
+
+    const onMove = (event) => {
+      if (!dragState) return;
+      const x = Number(event?.clientX);
+      const y = Number(event?.clientY);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      position.left = Math.max(0, x - dragState.offsetX);
+      position.top = Math.max(0, y - dragState.offsetY);
+      panelRoot.style.left = `${Math.round(position.left)}px`;
+      panelRoot.style.top = `${Math.round(position.top)}px`;
+      event?.preventDefault?.();
+    };
+
+    const onUp = (event) => {
+      if (!dragState) return;
+      event?.preventDefault?.();
+      removeDragListeners();
+    };
+
+    const onDown = (event) => {
+      if ((event?.button ?? 0) !== 0) return;
+      const x = Number(event?.clientX);
+      const y = Number(event?.clientY);
+      if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+      dragState = {
+        offsetX: x - position.left,
+        offsetY: y - position.top,
+        onMove,
+        onUp,
+      };
+      dragDocument = doc;
+      doc.addEventListener('pointermove', onMove, true);
+      doc.addEventListener('pointerup', onUp, true);
+      doc.addEventListener('pointercancel', onUp, true);
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+    };
+
+    if (typeof handle.addEventListener === 'function') {
+      handle.addEventListener('pointerdown', onDown);
+    }
   }
 
   function mount(target) {
@@ -146,11 +242,13 @@ export function createUiInspectorPanel(options = {}) {
       }
       mountHost.append(node);
     }
-    renderPanelContent(node, currentState);
+    const dragHandle = renderPanelContent(node, currentState);
+    installDragListeners(doc, dragHandle);
     return true;
   }
 
   function unmount() {
+    removeDragListeners();
     if (panelRoot?.parentElement) panelRoot.parentElement.removeChild(panelRoot);
     mountHost = null;
     return true;
@@ -159,14 +257,18 @@ export function createUiInspectorPanel(options = {}) {
   function render(nextState = {}) {
     currentState = { ...currentState, ...nextState };
     if (!panelRoot) return false;
-    renderPanelContent(panelRoot, currentState);
+    const doc = panelRoot.ownerDocument || globalThis.document;
+    const dragHandle = renderPanelContent(panelRoot, currentState);
+    installDragListeners(doc, dragHandle);
     return true;
   }
 
   function clear() {
     currentState = { ...(options.initialState || {}) };
     if (!panelRoot) return true;
-    renderPanelContent(panelRoot, currentState);
+    const doc = panelRoot.ownerDocument || globalThis.document;
+    const dragHandle = renderPanelContent(panelRoot, currentState);
+    installDragListeners(doc, dragHandle);
     return true;
   }
 

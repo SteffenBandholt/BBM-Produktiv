@@ -1670,12 +1670,13 @@ export default class MainHeader {
       if (typeof this.elUiEditorStatus.removeAttribute === "function") {
         this.elUiEditorStatus.removeAttribute("data-ui-editor-status");
       }
+      this.elUiEditorPanel?.unmount?.();
       return;
     }
 
     const scan = formatUiInspectorScanSummary(summary);
     this.uiInspectorRuntime?.setScanSummary?.(summary);
-    this.elUiEditorStatus.style.display = "block";
+    this.elUiEditorStatus.style.display = "none";
     this.elUiEditorStatus.dataset.uiEditorStatus = scan.status;
     this.elUiEditorStatus.dataset.uiEditorState = scan.status;
     this.elUiEditorStatus.dataset.uiEditorMode = this.uiInspectorRuntime?.getSelectionMode?.() || "frame";
@@ -1683,7 +1684,8 @@ export default class MainHeader {
     if (!this.elUiEditorPanel) {
       this.elUiEditorPanel = createUiInspectorPanel();
     }
-    this.elUiEditorPanel.mount(this.elUiEditorStatus);
+    const panelHost = this.elUiEditorStatus.ownerDocument?.body || document.body || this.elUiEditorStatus;
+    this.elUiEditorPanel.mount(panelHost);
 
     this.elUiEditorPanel.render({
       scanSummary: summary,
