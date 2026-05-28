@@ -156,11 +156,12 @@ async function runEditorV2PanelTests(run) {
 
   assert.equal(typeof createEditorV2Panel, "function");
 
+  const registry = createEditorLabRegistry();
   const stubCalls = [];
   const stubCore = {
     mode: "frame",
-    hoverTargetId: "hover.alpha",
-    selectedTargetId: "selected.alpha",
+    hoverTargetId: "editorlab.main.groupA.buttonA2",
+    selectedTargetId: "editorlab.main.groupA.fieldA1",
     setMode(mode) {
       stubCalls.push(["setMode", mode]);
       this.mode = mode;
@@ -174,6 +175,9 @@ async function runEditorV2PanelTests(run) {
     },
     getSelectedTargetId() {
       return this.selectedTargetId;
+    },
+    getRegistry() {
+      return registry;
     },
     moveSelected(dx, dy) {
       stubCalls.push(["moveSelected", dx, dy]);
@@ -209,21 +213,35 @@ async function runEditorV2PanelTests(run) {
     assert.equal(panelTexts.includes("Rahmen"), true);
     assert.equal(panelTexts.includes("Feld"), true);
     assert.equal(panelTexts.includes("Control"), true);
-    assert.equal(panelTexts.includes("Hover-Ziel"), true);
-    assert.equal(panelTexts.includes("Ausgewähltes Ziel"), true);
-    assert.equal(panelTexts.includes("\u2190"), true);
-    assert.equal(panelTexts.includes("Breite +"), true);
+    assert.equal(panelTexts.includes("Hover"), true);
+    assert.equal(panelTexts.includes("Auswahl"), true);
+    assert.equal(panelTexts.includes("Aktiv moeglich"), true);
+    assert.equal(panelTexts.includes("Hover aktiv"), true);
+    assert.equal(panelTexts.includes("Auswahl aktiv"), true);
+    assert.equal(panelTexts.includes("Label: Eingabefeld A"), true);
+    assert.equal(panelTexts.includes("ID: editorlab.main.groupA.fieldA1"), true);
+    assert.equal(panelTexts.includes("Typ: field"), true);
+    assert.equal(panelTexts.includes("Label: Aktion A"), true);
+    assert.equal(panelTexts.includes("ID: editorlab.main.groupA.buttonA2"), true);
+    assert.equal(panelTexts.includes("Typ: control"), true);
+    assert.equal(panelTexts.includes("Gruppe: Gruppe A: Feld + Aktion (editorlab.main.groupA)"), true);
     assert.equal(panelTexts.includes("Auswahl zurücksetzen"), true);
     assert.equal(panelTexts.includes("Alles zurücksetzen"), true);
     assert.equal(findNodeByText(panelRoot, "Rahmen", "strong").textContent, "Rahmen");
-    assert.equal(findNodeByText(panelRoot, "hover.alpha").textContent, "hover.alpha");
-    assert.equal(findNodeByText(panelRoot, "selected.alpha").textContent, "selected.alpha");
+    assert.equal(findNodeByText(panelRoot, "Hover aktiv").textContent, "Hover aktiv");
+    assert.equal(findNodeByText(panelRoot, "Label: Eingabefeld A").textContent, "Label: Eingabefeld A");
+    assert.equal(findNodeByText(panelRoot, "ID: editorlab.main.groupA.fieldA1").textContent, "ID: editorlab.main.groupA.fieldA1");
+    assert.equal(findNodeByText(panelRoot, "Typ: field").textContent, "Typ: field");
+    assert.equal(findNodeByText(panelRoot, "Label: Aktion A").textContent, "Label: Aktion A");
+    assert.equal(findNodeByText(panelRoot, "ID: editorlab.main.groupA.buttonA2").textContent, "ID: editorlab.main.groupA.buttonA2");
+    assert.equal(findNodeByText(panelRoot, "Typ: control").textContent, "Typ: control");
+    assert.equal(findNodeByText(panelRoot, "Gruppe: Gruppe A: Feld + Aktion (editorlab.main.groupA)").textContent, "Gruppe: Gruppe A: Feld + Aktion (editorlab.main.groupA)");
 
     const clickButton = (label) => findNodeByText(panelRoot, label, "button").dispatchEvent({ type: "click" });
     clickButton("Feld");
     clickButton("Control");
     clickButton("Rahmen");
-    clickButton("\u2190");
+    clickButton("←");
     clickButton("→");
     clickButton("↑");
     clickButton("↓");
@@ -256,13 +274,12 @@ async function runEditorV2PanelTests(run) {
     assert.equal(typeof panel.speichern, "undefined");
     assert.equal(typeof panel.commit, "undefined");
 
-    stubCore.hoverTargetId = "hover.beta";
-    stubCore.selectedTargetId = "selected.beta";
+    stubCore.hoverTargetId = "editorlab.footer.groupD.buttonD2";
+    stubCore.selectedTargetId = "";
     panel.refresh();
-    assert.equal(findNodeByText(panelRoot, "hover.beta").textContent, "hover.beta");
-    assert.equal(findNodeByText(panelRoot, "selected.beta").textContent, "selected.beta");
+    assert.equal(findNodeByText(panelRoot, "Hover aktiv").textContent, "Hover aktiv");
+    assert.equal(findNodeByText(panelRoot, "Keine Auswahl").textContent, "Keine Auswahl");
 
-    const registry = createEditorLabRegistry();
     const core = createEditorV2Core({ registry, mode: "frame" });
     const screen = createEditorLabScreen({ registry, editorV2Core: core });
     const root = screen.render(doc.body);

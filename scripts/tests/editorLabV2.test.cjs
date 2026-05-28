@@ -145,13 +145,13 @@ async function runEditorLabV2Tests(run) {
       (node) => String(node.textContent || "").trim()
     );
 
-    assert.equal(text.includes("Header / Titel"), true);
-    assert.equal(text.includes("Suche / Filter"), true);
-    assert.equal(text.includes("Status / Hinweis"), true);
+    assert.equal(text.includes("Titelbereich"), true);
+    assert.equal(text.includes("Such- und Filterbereich"), true);
+    assert.equal(text.includes("Statusbereich"), true);
     assert.equal(text.includes("Neu"), true);
     assert.equal(text.includes("Speichern"), true);
     assert.equal(text.includes("Ansicht"), true);
-    assert.equal(text.includes("Button D2"), true);
+    assert.equal(text.includes("Aktion D"), true);
 
     const allRegistryNodes = collectNodes(root, (node) => typeof node.getAttribute === "function" && node.getAttribute("data-ui-v2-id"));
     assert.equal(allRegistryNodes.length, registry.length);

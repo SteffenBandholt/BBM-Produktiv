@@ -5,6 +5,21 @@ function getModeLabel(mode) {
   return "Rahmen";
 }
 
+function getKindLabel(kind) {
+  const value = String(kind || "").trim();
+  if (value === "field") return "field";
+  if (value === "control") return "control";
+  if (value === "frame") return "frame";
+  return "unbekannt";
+}
+
+function getActionLabel(mode) {
+  const value = String(mode || "").trim();
+  if (value === "field") return "Hover, Auswahl und Bearbeitung von Feldern";
+  if (value === "control") return "Hover und Auswahl von Controls";
+  return "Hover, Auswahl und Bearbeitung von Rahmen";
+}
+
 function scheduleRefresh(refresh) {
   if (typeof refresh !== "function") return;
   if (typeof queueMicrotask === "function") {
@@ -38,14 +53,47 @@ export function createEditorV2Panel(options = {}) {
     return value == null || value === "" ? fallback : String(value);
   }
 
+  function getRegistryEntries() {
+    return Array.isArray(core?.getRegistry?.()) ? core.getRegistry() : [];
+  }
+
+  function findRegistryEntry(entryId) {
+    const normalizedId = String(entryId || "").trim();
+    if (!normalizedId) return null;
+    return getRegistryEntries().find((entry) => String(entry?.id || "").trim() === normalizedId) || null;
+  }
+
+  function formatGroupLabel(entry) {
+    if (!entry?.parentId) return "Gruppe: keine";
+    const parent = findRegistryEntry(entry.parentId);
+    if (!parent) return `Gruppe: ${entry.parentId}`;
+    return `Gruppe: ${parent.label || parent.id} (${parent.id})`;
+  }
+
   function refresh() {
     if (!rootNode) return false;
-    nodes.modeValue.textContent = getModeLabel(getCoreValue("getMode", "frame"));
-    nodes.hoverValue.textContent = getCoreValue("getHoverTargetId", "kein Ziel");
-    nodes.selectedValue.textContent = getCoreValue("getSelectedTargetId", "kein Ziel");
-    for (const [mode, button] of Object.entries(nodes.modeButtons)) {
-      button.setAttribute("aria-pressed", getCoreValue("getMode", "frame") === mode ? "true" : "false");
+    const mode = getCoreValue("getMode", "frame");
+    const hoverEntry = findRegistryEntry(getCoreValue("getHoverTargetId", ""));
+    const selectedEntry = findRegistryEntry(getCoreValue("getSelectedTargetId", ""));
+
+    nodes.modeValue.textContent = getModeLabel(mode);
+    nodes.actionValue.textContent = getActionLabel(mode);
+
+    nodes.hoverSummary.textContent = hoverEntry ? "Hover aktiv" : "Kein Hover-Ziel";
+    nodes.hoverLabel.textContent = hoverEntry ? `Label: ${hoverEntry.label || hoverEntry.id}` : "Label: -";
+    nodes.hoverId.textContent = hoverEntry ? `ID: ${hoverEntry.id}` : "ID: -";
+    nodes.hoverKind.textContent = hoverEntry ? `Typ: ${getKindLabel(hoverEntry.kind)}` : "Typ: -";
+
+    nodes.selectedSummary.textContent = selectedEntry ? "Auswahl aktiv" : "Keine Auswahl";
+    nodes.selectedLabel.textContent = selectedEntry ? `Label: ${selectedEntry.label || selectedEntry.id}` : "Label: -";
+    nodes.selectedId.textContent = selectedEntry ? `ID: ${selectedEntry.id}` : "ID: -";
+    nodes.selectedKind.textContent = selectedEntry ? `Typ: ${getKindLabel(selectedEntry.kind)}` : "Typ: -";
+    nodes.selectedParent.textContent = selectedEntry ? formatGroupLabel(selectedEntry) : "Gruppe: keine";
+
+    for (const [modeKey, button] of Object.entries(nodes.modeButtons || {})) {
+      button.setAttribute("aria-pressed", mode === modeKey ? "true" : "false");
     }
+
     return true;
   }
 
@@ -79,6 +127,9 @@ export function createEditorV2Panel(options = {}) {
     nodes.modeValue = panelDoc.createElement("strong");
     const modeValueWrap = panelDoc.createElement("div");
     modeValueWrap.append(nodes.modeValue);
+    nodes.modeHint = panelDoc.createElement("div");
+    nodes.modeHint.textContent = "Aktiv moeglich";
+    nodes.actionValue = panelDoc.createElement("div");
 
     const modeButtonsWrap = panelDoc.createElement("div");
     modeButtonsWrap.style.display = "flex";
@@ -89,19 +140,33 @@ export function createEditorV2Panel(options = {}) {
       control: createButton(panelDoc, "Control", () => runCore("setMode", "control")),
     };
     modeButtonsWrap.append(nodes.modeButtons.frame, nodes.modeButtons.field, nodes.modeButtons.control);
-    modeBlock.append(modeLabel, modeValueWrap, modeButtonsWrap);
+    modeBlock.append(modeLabel, modeValueWrap, nodes.modeHint, nodes.actionValue, modeButtonsWrap);
 
     const hoverBlock = panelDoc.createElement("div");
     const hoverLabel = panelDoc.createElement("div");
-    hoverLabel.textContent = "Hover-Ziel";
-    nodes.hoverValue = panelDoc.createElement("div");
-    hoverBlock.append(hoverLabel, nodes.hoverValue);
+    hoverLabel.textContent = "Hover";
+    nodes.hoverSummary = panelDoc.createElement("div");
+    nodes.hoverLabel = panelDoc.createElement("div");
+    nodes.hoverId = panelDoc.createElement("div");
+    nodes.hoverKind = panelDoc.createElement("div");
+    hoverBlock.append(hoverLabel, nodes.hoverSummary, nodes.hoverLabel, nodes.hoverId, nodes.hoverKind);
 
     const selectedBlock = panelDoc.createElement("div");
     const selectedLabel = panelDoc.createElement("div");
-    selectedLabel.textContent = "Ausgewähltes Ziel";
-    nodes.selectedValue = panelDoc.createElement("div");
-    selectedBlock.append(selectedLabel, nodes.selectedValue);
+    selectedLabel.textContent = "Auswahl";
+    nodes.selectedSummary = panelDoc.createElement("div");
+    nodes.selectedLabel = panelDoc.createElement("div");
+    nodes.selectedId = panelDoc.createElement("div");
+    nodes.selectedKind = panelDoc.createElement("div");
+    nodes.selectedParent = panelDoc.createElement("div");
+    selectedBlock.append(
+      selectedLabel,
+      nodes.selectedSummary,
+      nodes.selectedLabel,
+      nodes.selectedId,
+      nodes.selectedKind,
+      nodes.selectedParent
+    );
 
     const moveBlock = panelDoc.createElement("div");
     const moveTitle = panelDoc.createElement("div");
@@ -133,7 +198,7 @@ export function createEditorV2Panel(options = {}) {
 
     const resetBlock = panelDoc.createElement("div");
     const resetTitle = panelDoc.createElement("div");
-    resetTitle.textContent = "Reset";
+    resetTitle.textContent = "Zurücksetzen";
     const resetRow = panelDoc.createElement("div");
     resetRow.style.display = "flex";
     resetRow.style.gap = "6px";

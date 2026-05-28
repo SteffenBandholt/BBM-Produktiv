@@ -19,7 +19,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.header.titleGroup",
-      label: "Titelgruppe",
+      label: "Titelbereich",
       kind: "frame",
       parentId: "editorlab.header",
       editable: true,
@@ -28,7 +28,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.header.searchGroup",
-      label: "Such-/Filtergruppe",
+      label: "Such- und Filterbereich",
       kind: "frame",
       parentId: "editorlab.header",
       editable: true,
@@ -37,7 +37,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.header.statusGroup",
-      label: "Statusgruppe",
+      label: "Statusbereich",
       kind: "frame",
       parentId: "editorlab.header",
       editable: true,
@@ -100,7 +100,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.main.groupA",
-      label: "Gruppe A",
+      label: "Gruppe A: Feld + Aktion",
       kind: "frame",
       parentId: "editorlab.main",
       editable: true,
@@ -111,7 +111,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.main.groupA.fieldA1",
-      label: "Feld A1",
+      label: "Eingabefeld A",
       kind: "field",
       parentId: "editorlab.main.groupA",
       editable: true,
@@ -120,7 +120,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.main.groupA.buttonA2",
-      label: "Button A2",
+      label: "Aktion A",
       kind: "control",
       parentId: "editorlab.main.groupA",
       editable: false,
@@ -129,7 +129,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.main.groupB",
-      label: "Gruppe B",
+      label: "Gruppe B: Feld + Aktion",
       kind: "frame",
       parentId: "editorlab.main",
       editable: true,
@@ -138,7 +138,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.main.groupB.fieldB1",
-      label: "Feld B1",
+      label: "Eingabefeld B",
       kind: "field",
       parentId: "editorlab.main.groupB",
       editable: true,
@@ -147,7 +147,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.main.groupB.buttonB2",
-      label: "Button B2",
+      label: "Aktion B",
       kind: "control",
       parentId: "editorlab.main.groupB",
       editable: false,
@@ -174,7 +174,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.footer.groupC.fieldC1",
-      label: "Feld C1",
+      label: "Eingabefeld C",
       kind: "field",
       parentId: "editorlab.footer.groupC",
       editable: true,
@@ -192,7 +192,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.footer.groupD.fieldD1",
-      label: "Feld D1",
+      label: "Eingabefeld D",
       kind: "field",
       parentId: "editorlab.footer.groupD",
       editable: true,
@@ -201,7 +201,7 @@ export function createEditorLabRegistry() {
     },
     {
       id: "editorlab.footer.groupD.buttonD2",
-      label: "Button D2",
+      label: "Aktion D",
       kind: "control",
       parentId: "editorlab.footer.groupD",
       editable: false,

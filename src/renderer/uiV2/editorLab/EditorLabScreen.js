@@ -32,19 +32,19 @@ function createScreenStructure(doc, registry) {
 
   const header = createNode(doc, "div", entries.get("editorlab.header"), "");
   header.style.gridArea = "header";
-  const headerTitle = createNode(doc, "div", entries.get("editorlab.header.titleGroup"), "Header / Titel");
-  const headerSearch = createNode(doc, "div", entries.get("editorlab.header.searchGroup"), "Suche / Filter");
-  const headerStatus = createNode(doc, "div", entries.get("editorlab.header.statusGroup"), "Status / Hinweis");
+  const headerTitle = createNode(doc, "div", entries.get("editorlab.header.titleGroup"), "Titelbereich");
+  const headerSearch = createNode(doc, "div", entries.get("editorlab.header.searchGroup"), "Such- und Filterbereich");
+  const headerStatus = createNode(doc, "div", entries.get("editorlab.header.statusGroup"), "Statusbereich");
   header.append(headerTitle, headerSearch, headerStatus);
 
   const main = createNode(doc, "div", entries.get("editorlab.main"), "");
   main.style.gridArea = "main";
   const mainGroupA = createNode(doc, "div", entries.get("editorlab.main.groupA"), "");
-  const mainFieldA1 = createNode(doc, "div", entries.get("editorlab.main.groupA.fieldA1"), "Feld A1");
-  const mainButtonA2 = createNode(doc, "button", entries.get("editorlab.main.groupA.buttonA2"), "Button A2");
+  const mainFieldA1 = createNode(doc, "div", entries.get("editorlab.main.groupA.fieldA1"), "Eingabefeld A");
+  const mainButtonA2 = createNode(doc, "button", entries.get("editorlab.main.groupA.buttonA2"), "Aktion A");
   const mainGroupB = createNode(doc, "div", entries.get("editorlab.main.groupB"), "");
-  const mainFieldB1 = createNode(doc, "div", entries.get("editorlab.main.groupB.fieldB1"), "Feld B1");
-  const mainButtonB2 = createNode(doc, "button", entries.get("editorlab.main.groupB.buttonB2"), "Button B2");
+  const mainFieldB1 = createNode(doc, "div", entries.get("editorlab.main.groupB.fieldB1"), "Eingabefeld B");
+  const mainButtonB2 = createNode(doc, "button", entries.get("editorlab.main.groupB.buttonB2"), "Aktion B");
   mainGroupA.append(mainFieldA1, mainButtonA2);
   mainGroupB.append(mainFieldB1, mainButtonB2);
   main.append(mainGroupA, mainGroupB);
@@ -69,11 +69,11 @@ function createScreenStructure(doc, registry) {
   const footer = createNode(doc, "div", entries.get("editorlab.footer"), "");
   footer.style.gridArea = "footer";
   const footerGroupC = createNode(doc, "div", entries.get("editorlab.footer.groupC"), "");
-  const footerFieldC1 = createNode(doc, "div", entries.get("editorlab.footer.groupC.fieldC1"), "Feld C1");
+  const footerFieldC1 = createNode(doc, "div", entries.get("editorlab.footer.groupC.fieldC1"), "Eingabefeld C");
   footerGroupC.append(footerFieldC1);
   const footerGroupD = createNode(doc, "div", entries.get("editorlab.footer.groupD"), "");
-  const footerFieldD1 = createNode(doc, "div", entries.get("editorlab.footer.groupD.fieldD1"), "Feld D1");
-  const footerButtonD2 = createNode(doc, "button", entries.get("editorlab.footer.groupD.buttonD2"), "Button D2");
+  const footerFieldD1 = createNode(doc, "div", entries.get("editorlab.footer.groupD.fieldD1"), "Eingabefeld D");
+  const footerButtonD2 = createNode(doc, "button", entries.get("editorlab.footer.groupD.buttonD2"), "Aktion D");
   footerGroupD.append(footerFieldD1, footerButtonD2);
   footer.append(footerGroupC, footerGroupD);
 
