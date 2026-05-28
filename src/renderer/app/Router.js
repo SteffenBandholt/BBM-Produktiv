@@ -11,6 +11,9 @@ import {
   refreshCachedActiveModuleAccess,
 } from "./modules/moduleAccessState.js";
 import { resolveProjectProtocolEntry } from "./projectProtocolRouting.js";
+import { createEditorLabScreen } from "../uiV2/editorLab/EditorLabScreen.js";
+import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js";
+import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -653,6 +656,58 @@ export default class Router {
     const V = mod.default;
     this._setProjectRuntimeContext({ projectId: null, meetingId: null });
     await this.show(new V({ router: this }), { section: "home", isTopsView: false });
+  }
+
+  _isEditorLabV2Enabled() {
+    const value = String(this.context?.settings?.["dev.layoutCalibrationEnabled"] || "").trim().toLowerCase();
+    return value === "1" || value === "true" || value === "yes";
+  }
+
+  async showEditorLabV2() {
+    await this.ensureAppSettingsLoaded({ force: false });
+    if (!this._isEditorLabV2Enabled()) {
+      alert("EditorLab V2 ist nur im DEV-Testzugang verfuegbar.");
+      return false;
+    }
+    const registry = createEditorLabRegistry();
+    const core = createEditorV2Core({ registry, mode: "frame" });
+    const screen = createEditorLabScreen({ registry, editorV2Core: core });
+
+    const view = {
+      render: () => {
+        const host = document.createElement("div");
+        host.setAttribute("data-ui-v2-editorlab-host", "true");
+        host.style.display = "grid";
+        host.style.gap = "12px";
+        host.style.padding = "12px";
+        const root = screen.render(host);
+        if (root) {
+          core.mount(root, registry);
+        }
+        return host;
+      },
+      async destroy() {
+        try {
+          core.unmount?.();
+        } catch (_e) {
+          // ignore
+        }
+        try {
+          screen.panel?.unmount?.();
+        } catch (_e) {
+          // ignore
+        }
+      },
+    };
+
+    this._setProjectRuntimeContext({ projectId: null, meetingId: null });
+    await this.show(view, {
+      section: "editorLabV2",
+      isTopsView: false,
+      pageTitle: "EditorLab V2",
+      hideSidebar: false,
+    });
+    return true;
   }
 
   // Kern-Routing mit Projektkontext: allgemeine Fachscreens ohne direkten Protokollmodus.

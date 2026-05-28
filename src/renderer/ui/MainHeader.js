@@ -65,6 +65,8 @@ export default class MainHeader {
     this.elUiEditorBtn = null;
     this.elUiEditorStatus = null;
     this.elUiEditorPanel = null;
+    this.elEditorLabWrap = null;
+    this.elEditorLabBtn = null;
     this._uiEditorScanActive = false;
     this._uiEditorScanSummary = null;
     this._uiEditorSelectionMode = "frame";
@@ -644,6 +646,25 @@ export default class MainHeader {
 
     uiEditorWrap.append(uiEditorBtn, uiEditorStatus);
 
+    const editorLabWrap = document.createElement("div");
+    editorLabWrap.style.display = "inline-flex";
+    editorLabWrap.style.flexDirection = "column";
+    editorLabWrap.style.alignItems = "flex-start";
+    editorLabWrap.style.gap = "4px";
+
+    const editorLabBtn = document.createElement("button");
+    editorLabBtn.type = "button";
+    editorLabBtn.textContent = "EditorLab V2";
+    applyUiEditorButtonStyle(editorLabBtn);
+    editorLabBtn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (editorLabBtn.disabled) return;
+      this.router?.showEditorLabV2?.();
+    };
+    editorLabBtn.title = "EditorLab V2 oeffnen";
+    editorLabWrap.append(editorLabBtn);
+
 
     const mailWrap = document.createElement("div");
     mailWrap.style.position = "relative";
@@ -809,6 +830,7 @@ export default class MainHeader {
     } else {
       actionWrap.append(setupWrap, uiEditorWrap);
     }
+    actionWrap.append(editorLabWrap);
 
     const stickyNotice = document.createElement("div");
     stickyNotice.style.gridColumn = "1 / span 3";
@@ -913,6 +935,8 @@ export default class MainHeader {
     this.elUiEditorWrap = uiEditorWrap;
     this.elUiEditorBtn = uiEditorBtn;
     this.elUiEditorStatus = uiEditorStatus;
+    this.elEditorLabWrap = editorLabWrap;
+    this.elEditorLabBtn = editorLabBtn;
     this.elLogoGroup = logoGroup;
     this.elLogoWrap = logoWrap;
     this.elLogoImg = logoImg;
@@ -1660,6 +1684,12 @@ export default class MainHeader {
     return this._isNewUi;
   }
 
+  _isEditorLabV2Enabled() {
+    if (!this._isNewUi) return false;
+    const value = String(this.router?.context?.settings?.["dev.layoutCalibrationEnabled"] || "").trim().toLowerCase();
+    return value === "1" || value === "true" || value === "yes";
+  }
+
   _setUiEditorStatusContent(summary = null) {
     if (!this.elUiEditorStatus) return;
 
@@ -1749,6 +1779,17 @@ export default class MainHeader {
     }
 
     this._setUiEditorStatusContent(summary);
+  }
+
+  _applyEditorLabButtonState() {
+    if (!this.elEditorLabWrap || !this.elEditorLabBtn) return;
+    const enabled = this._isEditorLabV2Enabled();
+    this.elEditorLabWrap.style.display = enabled ? "inline-flex" : "none";
+    this.elEditorLabBtn.disabled = !enabled;
+    this.elEditorLabBtn.setAttribute("aria-disabled", enabled ? "false" : "true");
+    this.elEditorLabBtn.title = enabled
+      ? "EditorLab V2 oeffnen"
+      : "EditorLab V2 ist nur im DEV-Testzugang verfuegbar.";
   }
 
   setUiEditorSelectionMode(nextMode) {
@@ -1950,6 +1991,7 @@ export default class MainHeader {
     } else {
       this._applyUiEditorButtonState();
     }
+    this._applyEditorLabButtonState();
 
     let stickyFromContext = this.router?.context?.ui?.stickyNotice || "";
     if (/^hinweis:\s*klick-blocker entfernt/i.test(String(stickyFromContext))) {
