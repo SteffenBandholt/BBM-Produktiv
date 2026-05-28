@@ -104,6 +104,8 @@ export function createEditorLabRegistry() {
       kind: "frame",
       parentId: "editorlab.main",
       editable: true,
+      minWidth: 140,
+      minHeight: 80,
       ops: ["move", "resize", "hide"],
       selector: '[data-ui-v2-id="editorlab.main.groupA"]',
     },
@@ -208,4 +210,3 @@ export function createEditorLabRegistry() {
     },
   ];
 }
-

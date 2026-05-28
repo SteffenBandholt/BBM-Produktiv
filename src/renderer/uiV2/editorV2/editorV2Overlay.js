@@ -100,16 +100,39 @@ export function createEditorV2Overlay(options = {}) {
     return selectedFrame;
   }
 
+  function paintFrame(frame, node, entry, attrName) {
+    if (!frame || !node || !entry) return false;
+    const rect = typeof node.getBoundingClientRect === "function" ? node.getBoundingClientRect() : null;
+    if (!rect || !(rect.width > 0) || !(rect.height > 0)) return false;
+    frame.style.left = `${Math.round(rect.left)}px`;
+    frame.style.top = `${Math.round(rect.top)}px`;
+    frame.style.width = `${Math.round(rect.width)}px`;
+    frame.style.height = `${Math.round(rect.height)}px`;
+    frame.style.display = "block";
+    frame.setAttribute(attrName, "true");
+    frame.textContent = entry.label || entry.id;
+    return true;
+  }
+
   function syncOverlay() {
     const overlay = ensureOverlayRoot();
-    const hover = currentHover?.entry && currentHover?.node ? ensureHoverFrame() : null;
-    const selected = currentSelected?.entry && currentSelected?.node ? ensureSelectedFrame() : null;
-
     if (!overlay) return false;
 
     const children = [];
-    if (selected) children.push(selected);
-    if (hover && (!selected || currentHover.entry.id !== currentSelected.entry.id)) {
+    const selected = currentSelected?.entry && currentSelected?.node ? ensureSelectedFrame() : null;
+    const hover = currentHover?.entry && currentHover?.node ? ensureHoverFrame() : null;
+
+    if (selected && paintFrame(selected, currentSelected.node, currentSelected.entry, "data-ui-editor-v2-selected-frame")) {
+      selected.setAttribute("data-ui-editor-v2-selected-id", currentSelected.entry.id);
+      children.push(selected);
+    }
+
+    if (
+      hover &&
+      (!currentSelected || currentHover.entry.id !== currentSelected.entry.id) &&
+      paintFrame(hover, currentHover.node, currentHover.entry, "data-ui-editor-v2-hover-frame")
+    ) {
+      hover.setAttribute("data-ui-editor-v2-hover-id", currentHover.entry.id);
       children.push(hover);
     }
 
@@ -128,45 +151,20 @@ export function createEditorV2Overlay(options = {}) {
   }
 
   function renderHoverFrame(targetNode, entry) {
-    const frame = ensureHoverFrame();
-    if (!frame || !targetNode || !entry) {
+    if (!targetNode || !entry) {
       clearHoverFrame();
       return false;
     }
-
-    const rect = typeof targetNode.getBoundingClientRect === "function" ? targetNode.getBoundingClientRect() : null;
-    if (!rect || !(rect.width > 0) || !(rect.height > 0)) {
-      clearHoverFrame();
-      return false;
-    }
-
-    frame.style.left = `${Math.round(rect.left)}px`;
-    frame.style.top = `${Math.round(rect.top)}px`;
-    frame.style.width = `${Math.round(rect.width)}px`;
-    frame.style.height = `${Math.round(rect.height)}px`;
-    frame.style.display = "block";
-    frame.setAttribute("data-ui-editor-v2-hover-id", entry.id);
-    frame.textContent = entry.label || entry.id;
     currentHover = { entry, node: targetNode };
     return syncOverlay();
   }
 
   function renderSelectedFrame(targetNode, entry) {
-    const frame = ensureSelectedFrame();
-    if (!frame || !targetNode || !entry) return false;
-
+    if (!targetNode || !entry) return false;
     const rect = typeof targetNode.getBoundingClientRect === "function" ? targetNode.getBoundingClientRect() : null;
     if (!rect || !(rect.width > 0) || !(rect.height > 0)) {
       return false;
     }
-
-    frame.style.left = `${Math.round(rect.left)}px`;
-    frame.style.top = `${Math.round(rect.top)}px`;
-    frame.style.width = `${Math.round(rect.width)}px`;
-    frame.style.height = `${Math.round(rect.height)}px`;
-    frame.style.display = "block";
-    frame.setAttribute("data-ui-editor-v2-selected-id", entry.id);
-    frame.textContent = entry.label || entry.id;
     currentSelected = { entry, node: targetNode };
     return syncOverlay();
   }
@@ -243,6 +241,10 @@ export function createEditorV2Overlay(options = {}) {
     return true;
   }
 
+  function refreshFrames() {
+    return syncOverlay();
+  }
+
   function unmount() {
     clearHoverFrame();
     clearSelectedFrame();
@@ -291,6 +293,7 @@ export function createEditorV2Overlay(options = {}) {
     getCurrentSelected: () => currentSelected,
     clearHoverFrame,
     clearSelectedFrame,
+    refreshFrames,
     resolveRegistryTarget: (candidateNode) => resolveRegistryTarget(rootElement, registry, mode, candidateNode),
     handlePointerSelect,
   };
