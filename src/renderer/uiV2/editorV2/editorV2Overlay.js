@@ -49,8 +49,11 @@ export function createEditorV2Overlay(options = {}) {
   let doc = null;
   let overlayRoot = null;
   let hoverFrame = null;
+  let selectedFrame = null;
   let pointerMoveHandler = null;
+  let pointerDownHandler = null;
   let currentHover = null;
+  let currentSelected = null;
   let mode = normalizeMode(options.mode || "frame");
   let registry = Array.isArray(options.registry) ? options.registry : [];
 
@@ -82,20 +85,51 @@ export function createEditorV2Overlay(options = {}) {
     return hoverFrame;
   }
 
+  function ensureSelectedFrame() {
+    if (selectedFrame) return selectedFrame;
+    if (!doc || typeof doc.createElement !== "function") return null;
+    selectedFrame = doc.createElement("div");
+    selectedFrame.setAttribute("data-ui-editor-v2-selected-frame", "true");
+    selectedFrame.style.position = "fixed";
+    selectedFrame.style.pointerEvents = "none";
+    selectedFrame.style.display = "none";
+    selectedFrame.style.boxSizing = "border-box";
+    selectedFrame.style.border = "2px solid rgba(245, 158, 11, 0.98)";
+    selectedFrame.style.background = "rgba(245, 158, 11, 0.08)";
+    selectedFrame.style.borderRadius = "4px";
+    return selectedFrame;
+  }
+
+  function syncOverlay() {
+    const overlay = ensureOverlayRoot();
+    const hover = currentHover?.entry && currentHover?.node ? ensureHoverFrame() : null;
+    const selected = currentSelected?.entry && currentSelected?.node ? ensureSelectedFrame() : null;
+
+    if (!overlay) return false;
+
+    const children = [];
+    if (selected) children.push(selected);
+    if (hover && (!selected || currentHover.entry.id !== currentSelected.entry.id)) {
+      children.push(hover);
+    }
+
+    if (typeof overlay.replaceChildren === "function") {
+      overlay.replaceChildren(...children);
+    } else {
+      overlay.children = children;
+    }
+
+    return true;
+  }
+
   function clearHoverFrame() {
     currentHover = null;
-    if (!overlayRoot) return;
-    if (typeof overlayRoot.replaceChildren === "function") {
-      overlayRoot.replaceChildren();
-    } else if (overlayRoot.children) {
-      overlayRoot.children = [];
-    }
+    syncOverlay();
   }
 
   function renderHoverFrame(targetNode, entry) {
     const frame = ensureHoverFrame();
-    const overlay = ensureOverlayRoot();
-    if (!frame || !overlay || !targetNode || !entry) {
+    if (!frame || !targetNode || !entry) {
       clearHoverFrame();
       return false;
     }
@@ -113,14 +147,33 @@ export function createEditorV2Overlay(options = {}) {
     frame.style.display = "block";
     frame.setAttribute("data-ui-editor-v2-hover-id", entry.id);
     frame.textContent = entry.label || entry.id;
+    currentHover = { entry, node: targetNode };
+    return syncOverlay();
+  }
 
-    if (typeof overlay.replaceChildren === "function") {
-      overlay.replaceChildren(frame);
-    } else {
-      overlay.children = [frame];
+  function renderSelectedFrame(targetNode, entry) {
+    const frame = ensureSelectedFrame();
+    if (!frame || !targetNode || !entry) return false;
+
+    const rect = typeof targetNode.getBoundingClientRect === "function" ? targetNode.getBoundingClientRect() : null;
+    if (!rect || !(rect.width > 0) || !(rect.height > 0)) {
+      return false;
     }
-    currentHover = { entry, targetNode };
-    return true;
+
+    frame.style.left = `${Math.round(rect.left)}px`;
+    frame.style.top = `${Math.round(rect.top)}px`;
+    frame.style.width = `${Math.round(rect.width)}px`;
+    frame.style.height = `${Math.round(rect.height)}px`;
+    frame.style.display = "block";
+    frame.setAttribute("data-ui-editor-v2-selected-id", entry.id);
+    frame.textContent = entry.label || entry.id;
+    currentSelected = { entry, node: targetNode };
+    return syncOverlay();
+  }
+
+  function clearSelectedFrame() {
+    currentSelected = null;
+    syncOverlay();
   }
 
   function getHitCandidate(event = {}) {
@@ -147,6 +200,16 @@ export function createEditorV2Overlay(options = {}) {
     return renderHoverFrame(resolved.node, resolved.entry);
   }
 
+  function handlePointerSelect(event = {}) {
+    if (!rootElement || !doc) return false;
+    const candidate = getHitCandidate(event);
+    const resolved = resolveRegistryTarget(rootElement, registry, mode, candidate);
+    if (!resolved) {
+      return false;
+    }
+    return renderSelectedFrame(resolved.node, resolved.entry);
+  }
+
   function mount(nextRootElement, nextRegistry = registry) {
     if (!nextRootElement || typeof nextRootElement !== "object") return false;
     const nextDoc = nextRootElement.ownerDocument || globalThis.document;
@@ -171,20 +234,33 @@ export function createEditorV2Overlay(options = {}) {
       doc.addEventListener("pointermove", pointerMoveHandler, true);
     }
 
+    if (!pointerDownHandler && typeof doc.addEventListener === "function") {
+      pointerDownHandler = (event) => handlePointerSelect(event);
+      doc.addEventListener("pointerdown", pointerDownHandler, true);
+      doc.addEventListener("click", pointerDownHandler, true);
+    }
+
     return true;
   }
 
   function unmount() {
     clearHoverFrame();
+    clearSelectedFrame();
     if (doc && pointerMoveHandler && typeof doc.removeEventListener === "function") {
       doc.removeEventListener("pointermove", pointerMoveHandler, true);
     }
+    if (doc && pointerDownHandler && typeof doc.removeEventListener === "function") {
+      doc.removeEventListener("pointerdown", pointerDownHandler, true);
+      doc.removeEventListener("click", pointerDownHandler, true);
+    }
     pointerMoveHandler = null;
+    pointerDownHandler = null;
     if (overlayRoot?.parentElement?.removeChild) {
       overlayRoot.parentElement.removeChild(overlayRoot);
     }
     overlayRoot = null;
     hoverFrame = null;
+    selectedFrame = null;
     rootElement = null;
     doc = null;
     return true;
@@ -209,10 +285,14 @@ export function createEditorV2Overlay(options = {}) {
     getRegistry: () => registry,
     setRegistry,
     getHoverFrame: () => hoverFrame,
+    getSelectedFrame: () => selectedFrame,
     getOverlayRoot: () => overlayRoot,
     getCurrentHover: () => currentHover,
+    getCurrentSelected: () => currentSelected,
     clearHoverFrame,
+    clearSelectedFrame,
     resolveRegistryTarget: (candidateNode) => resolveRegistryTarget(rootElement, registry, mode, candidateNode),
+    handlePointerSelect,
   };
 }
 

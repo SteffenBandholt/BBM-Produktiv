@@ -15,6 +15,14 @@ export function createEditorV2Core(options = {}) {
   let registry = normalizeRegistry(options.registry);
   let mode = normalizeMode(options.mode || "frame");
 
+  function getHoverTargetId() {
+    return String(overlay.getCurrentHover()?.entry?.id || "").trim() || null;
+  }
+
+  function getSelectedTargetId() {
+    return String(overlay.getCurrentSelected()?.entry?.id || "").trim() || null;
+  }
+
   function mount(nextRootElement, nextRegistry = registry) {
     rootElement = nextRootElement || null;
     registry = normalizeRegistry(nextRegistry);
@@ -54,9 +62,14 @@ export function createEditorV2Core(options = {}) {
     handlePointerMove,
     getOverlayRoot: () => overlay.getOverlayRoot(),
     getHoverFrame: () => overlay.getHoverFrame(),
+    getSelectedFrame: () => overlay.getSelectedFrame(),
     getCurrentHover: () => overlay.getCurrentHover(),
+    getCurrentSelected: () => overlay.getCurrentSelected(),
+    getHoverTargetId,
+    getSelectedTargetId,
     clearHoverFrame: () => overlay.clearHoverFrame(),
+    clearSelectedFrame: () => overlay.clearSelectedFrame(),
+    handlePointerSelect: (event) => overlay.handlePointerSelect(event),
     resolveRegistryTarget: (candidateNode) => resolveRegistryTarget(rootElement, registry, mode, candidateNode),
   };
 }
-
