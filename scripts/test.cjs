@@ -21,6 +21,7 @@ const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungMo
 const { runRestarbeitenModuleTests } = require("./tests/restarbeitenModule.test.cjs");
 const { runRestarbeitenDataModelTests } = require("./tests/restarbeitenDataModel.test.cjs");
 const { runUiEditorContractTests } = require("./tests/uiEditorContract.test.cjs");
+const { runUiV2EditorV2RulesTests } = require("./tests/uiV2EditorV2Rules.test.cjs");
 const { runHomeViewTests } = require("./tests/homeView.test.cjs");
 const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.cjs");
 const { runSettingsUserProfileSourceTests } = require("./tests/settingsUserProfileSource.test.cjs");
@@ -119,6 +120,7 @@ async function main() {
   await runRestarbeitenModuleTests(run);
   await runRestarbeitenDataModelTests(run);
   await runUiEditorContractTests(run);
+  await runUiV2EditorV2RulesTests(run);
   await runHomeViewTests(run);
   await runProjectSettingsIpcTests(run);
   await runSettingsUserProfileSourceTests(run);

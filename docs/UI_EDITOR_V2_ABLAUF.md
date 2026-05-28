@@ -44,6 +44,7 @@ Fachmodule werden erst nach EditorLab angeschlossen.
 Regeln:
 - Restarbeiten V2 wird das erste Fachmodul nach EditorLab
 - Protokoll bleibt unberuehrt
+- Protokoll bleibt unberührt
 - die alte Restarbeiten-UI ist nicht die technische Grundlage fuer Editor V2
 - die alte UI darf fachlich als Orientierung dienen
 
@@ -54,6 +55,7 @@ Tests reichen nicht allein aus.
 
 Regeln:
 - echte App-Sichtpruefung bleibt Pflicht
+- echte App-Sichtprüfung
 - kein Commit bei sichtbarem No-Go
 - kein Mergen trotz gruener Tests, wenn die UI nicht stimmt
 
@@ -65,9 +67,10 @@ Der Arbeitsstil bleibt bewusst klein.
 Regeln:
 - kleine Pakete
 - ein Paket = ein Ziel
+- temporäres Verschieben
+- Größe
 - keine Mischung aus Editor-Core und Fach-UI
 - keine Mischung aus UI-Code und PDF / Druck
 - keine gleichzeitige Bearbeitung von frame / field / control, wenn nur frame geplant ist
 
 Das haelt die Folgepakete klein, pruefbar und sauber trennbar.
-

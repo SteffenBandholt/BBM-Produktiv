@@ -8,6 +8,7 @@ Geltungsbereich:
 - neue Modul-UI
 - neues gemeinsames Standardlayout
 - spaetere Benutzerlayouts als zusaetzliche Ebene
+- Modul-Layouts als Ableitungen des gemeinsamen Kerns
 
 Nicht Ziel:
 - bestehende Fach-UIs nachtraeglich umzubauen
@@ -44,13 +45,14 @@ Funktionen:
 
 Verhalten:
 - Hover rein und raus
-- Vorhaengeschloss zum Fixieren
+- Vorhaengeschloss / Vorhängeschloss zum Fixieren
 - Schloss offen: Quicklane klappt automatisch ein und aus
 - Schloss geschlossen: Quicklane bleibt ausgefahren sichtbar
 
 Die Quicklane ist fuer schnelle, wiederkehrende Aktionen gedacht.
 
 ## 5. Main
+Main = Uebersicht / Auswahl
 Der Main-Bereich traegt die eigentliche fachliche Uebersicht.
 
 Moegliche Formen:
@@ -66,6 +68,7 @@ Grundregel:
 - der Main-Bereich sammelt, ordnet und fuehrt zur Auswahl
 
 ## 6. Footer / Workbench
+Footer = Bearbeitung / Details
 Der Footer ist der fest angedockte Arbeitsbereich fuer Bearbeitung und Details.
 
 Eigenschaften:
@@ -92,6 +95,7 @@ Wenn mehr Struktur gebraucht wird, sind Tabs, Akkordeon oder eine zweite Ansicht
 
 ## 8. Gruppenlimit
 Pro Hauptbereich sind maximal sechs Gruppen erlaubt.
+Kurzregel: maximal 6 Gruppen.
 
 Wenn mehr Gruppen noetig werden, sind Tabs, Akkordeon oder eine zweite Ansicht einzusetzen.
 
@@ -109,6 +113,7 @@ Es gibt ein gemeinsames UI-V2-Standardlayout als Kern.
 Regeln:
 - alle neuen Modul-UIs bauen darauf auf
 - Module duerfen eigene Abweichungen haben
+- Modul-Layouts bauen darauf auf
 - Benutzerlayouts kommen spaeter zusaetzlich
 - der gemeinsame Kern bleibt erhalten
 
@@ -169,6 +174,7 @@ Regeln:
   - 16 px
   - 20 px
   - 24 px
+- Kurzform: 0 / 2 / 4 / 6 / 8 / 10 / 12 / 16 / 20 / 24 px
 
 ## 14. Raster / Spalten
 Spaltenbreiten und Raster-Aufteilung duerfen spaeter nur bei freigegebenen Gruppen veraendert werden.
@@ -178,4 +184,3 @@ Regeln:
 - Freigabe erfolgt ueber `grid-editable` oder ein vergleichbares Registry-Merkmal
 
 Das Raster bleibt kontrolliert und bewusst begrenzt.
-
