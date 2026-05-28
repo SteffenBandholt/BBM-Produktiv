@@ -1,4 +1,5 @@
 import { createEditorLabRegistry } from "./editorLabRegistry.js";
+import { createEditorV2Panel } from "../editorV2/EditorV2Panel.js";
 
 function applyV2Attributes(node, entry) {
   node.setAttribute("data-ui-v2-id", entry.id);
@@ -82,6 +83,7 @@ function createScreenStructure(doc, registry) {
 
 export function createEditorLabScreen(options = {}) {
   const registry = Array.isArray(options.registry) ? options.registry : createEditorLabRegistry();
+  const panel = options.editorV2Panel || (options.editorV2Core ? createEditorV2Panel({ core: options.editorV2Core }) : null);
   let rootNode = null;
 
   function render(target) {
@@ -91,13 +93,17 @@ export function createEditorLabScreen(options = {}) {
     if (target && typeof target.append === "function") {
       target.append(rootNode);
     }
+    if (panel && typeof panel.render === "function") {
+      panel.render(target || doc.body || null);
+    }
     return rootNode;
   }
 
   return {
     registry,
     render,
+    panel,
     getRootNode: () => rootNode,
+    getPanelNode: () => panel?.getRootNode?.() || null,
   };
 }
-

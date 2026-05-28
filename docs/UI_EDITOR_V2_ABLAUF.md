@@ -9,7 +9,8 @@ Der Umbau folgt dieser Reihenfolge:
 - M14.3: Editor V2 Klickauswahl im EditorLab
 - M14.4: Editor V2 temporäres Verschieben / Groesse im EditorLab
 - M14.5: Editor V2 Registry-Schnittstelle stabilisieren
-- M14.6: Erst danach Restarbeiten V2 anschliessen
+- M14.6: Editor V2 sichtbare Bedienoberflaeche im EditorLab
+- M14.7: Erst danach Restarbeiten V2 anschliessen
 - danach weitere Module nach gleichem Muster
 
 Die Reihenfolge ist absichtlich streng.

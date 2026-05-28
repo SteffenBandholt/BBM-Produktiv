@@ -27,6 +27,7 @@ const { runEditorV2RegistryTests } = require("./tests/editorV2Registry.test.cjs"
 const { runEditorV2HoverTests } = require("./tests/editorV2Hover.test.cjs");
 const { runEditorV2SelectionTests } = require("./tests/editorV2Selection.test.cjs");
 const { runEditorV2PreviewTests } = require("./tests/editorV2Preview.test.cjs");
+const { runEditorV2PanelTests } = require("./tests/editorV2Panel.test.cjs");
 const { runHomeViewTests } = require("./tests/homeView.test.cjs");
 const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.cjs");
 const { runSettingsUserProfileSourceTests } = require("./tests/settingsUserProfileSource.test.cjs");
@@ -131,6 +132,7 @@ async function main() {
   await runEditorV2HoverTests(run);
   await runEditorV2SelectionTests(run);
   await runEditorV2PreviewTests(run);
+  await runEditorV2PanelTests(run);
   await runHomeViewTests(run);
   await runProjectSettingsIpcTests(run);
   await runSettingsUserProfileSourceTests(run);
