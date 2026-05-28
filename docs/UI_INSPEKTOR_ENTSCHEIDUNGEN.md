@@ -94,3 +94,8 @@
 **Beschluss:** Das UI-Editor-Panel wird außerhalb des Header-Layouts als schwebende Oberfläche gemountet und bleibt per Drag-Handle verschiebbar.
 
 **Begründung:** So bleibt die Headerhöhe stabil, der Arbeitsbereich springt nicht, und die Bedienoberfläche bleibt ohne Persistenz flexibel positionierbar.
+
+## Entscheidung 020
+**Beschluss:** Der alte M13-Hover- und Restarbeiten-Inspector-Pfad ist fachlich beendet; UI-V2 und Editor-V2 werden als Neustart neu geplant.
+
+**Begründung:** Der bisherige Pfad wird nicht weiter repariert. Ein klarer Neustart trennt die neue Architektur sauber von alten Sonderwegen und fuehrt zuerst ueber EditorLab.
