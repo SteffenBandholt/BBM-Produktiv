@@ -23,6 +23,7 @@ const { runRestarbeitenDataModelTests } = require("./tests/restarbeitenDataModel
 const { runUiEditorContractTests } = require("./tests/uiEditorContract.test.cjs");
 const { runUiV2EditorV2RulesTests } = require("./tests/uiV2EditorV2Rules.test.cjs");
 const { runEditorLabV2Tests } = require("./tests/editorLabV2.test.cjs");
+const { runEditorV2RegistryTests } = require("./tests/editorV2Registry.test.cjs");
 const { runEditorV2HoverTests } = require("./tests/editorV2Hover.test.cjs");
 const { runEditorV2SelectionTests } = require("./tests/editorV2Selection.test.cjs");
 const { runEditorV2PreviewTests } = require("./tests/editorV2Preview.test.cjs");
@@ -126,6 +127,7 @@ async function main() {
   await runUiEditorContractTests(run);
   await runUiV2EditorV2RulesTests(run);
   await runEditorLabV2Tests(run);
+  await runEditorV2RegistryTests(run);
   await runEditorV2HoverTests(run);
   await runEditorV2SelectionTests(run);
   await runEditorV2PreviewTests(run);

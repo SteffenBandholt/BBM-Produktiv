@@ -1,8 +1,5 @@
 import { createEditorV2Overlay, normalizeMode, resolveRegistryTarget } from "./editorV2Overlay.js";
-
-function normalizeRegistry(registry) {
-  return Array.isArray(registry) ? registry : [];
-}
+import { normalizeEditorV2Registry, validateEditorV2Registry } from "./editorV2Registry.js";
 
 function getDefaultMinSize(kind) {
   const normalizedKind = String(kind || "").trim();
@@ -48,15 +45,16 @@ function buildCssText(baseCssText, previewState) {
 
 export function createEditorV2Core(options = {}) {
   const overlay = createEditorV2Overlay({
-    registry: normalizeRegistry(options.registry),
+    registry: normalizeEditorV2Registry(options.registry),
     mode: options.mode || "frame",
     zIndex: options.zIndex,
   });
 
   let rootElement = null;
-  let registry = normalizeRegistry(options.registry);
+  let registry = normalizeEditorV2Registry(options.registry);
   let mode = normalizeMode(options.mode || "frame");
   const previewStates = new Map();
+  let lastRegistryValidation = validateEditorV2Registry(registry);
 
   function getSelectedSnapshot() {
     return overlay.getCurrentSelected();
@@ -217,7 +215,8 @@ export function createEditorV2Core(options = {}) {
 
   function mount(nextRootElement, nextRegistry = registry) {
     rootElement = nextRootElement || null;
-    registry = normalizeRegistry(nextRegistry);
+    registry = normalizeEditorV2Registry(nextRegistry);
+    lastRegistryValidation = validateEditorV2Registry(registry);
     overlay.setRegistry(registry);
     overlay.setMode(mode);
     return overlay.mount(rootElement, registry);
@@ -235,7 +234,8 @@ export function createEditorV2Core(options = {}) {
   }
 
   function setRegistry(nextRegistry) {
-    registry = normalizeRegistry(nextRegistry);
+    registry = normalizeEditorV2Registry(nextRegistry);
+    lastRegistryValidation = validateEditorV2Registry(registry);
     overlay.setRegistry(registry);
     return registry;
   }
@@ -276,5 +276,6 @@ export function createEditorV2Core(options = {}) {
     resetSelectedPreview,
     resetAllPreview,
     getPreviewState: (entryId) => previewStates.get(String(entryId || "").trim()) || null,
+    getRegistryValidation: () => lastRegistryValidation,
   };
 }
