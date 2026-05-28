@@ -198,7 +198,7 @@ async function runEditorLabV2AccessTests(run) {
   try {
     router = new Router({ contentRoot });
     router._ensureProjectContextQuicklane = async () => ({ setContext() {}, setEnabled() {} });
-    router.context.settings = { "dev.layoutCalibrationEnabled": "1" };
+    router.context.settings = {};
     router.currentProjectId = null;
     router.currentMeetingId = null;
 

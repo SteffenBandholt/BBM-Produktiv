@@ -1685,9 +1685,7 @@ export default class MainHeader {
   }
 
   _isEditorLabV2Enabled() {
-    if (!this._isNewUi) return false;
-    const value = String(this.router?.context?.settings?.["dev.layoutCalibrationEnabled"] || "").trim().toLowerCase();
-    return value === "1" || value === "true" || value === "yes";
+    return this._isNewUi;
   }
 
   _setUiEditorStatusContent(summary = null) {

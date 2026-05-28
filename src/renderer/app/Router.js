@@ -659,8 +659,7 @@ export default class Router {
   }
 
   _isEditorLabV2Enabled() {
-    const value = String(this.context?.settings?.["dev.layoutCalibrationEnabled"] || "").trim().toLowerCase();
-    return value === "1" || value === "true" || value === "yes";
+    return this._readUiMode() === "new";
   }
 
   async showEditorLabV2() {
