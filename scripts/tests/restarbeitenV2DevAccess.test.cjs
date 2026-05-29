@@ -173,6 +173,15 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(methodSource.includes("createRestarbeitenV2FakeDataSource"), false);
   assert.equal(methodSource.includes("useDataSource: true"), true);
   assert.equal(methodSource.includes("const effectiveProjectId = this.currentProjectId || \"dev-restarbeiten-v2\";"), true);
+  assert.equal(methodSource.includes("createRestarbeitV2"), false);
+  assert.equal(methodSource.includes("updateRestarbeitV2"), false);
+  assert.equal(methodSource.includes("deleteRestarbeitV2"), false);
+  assert.equal(methodSource.includes("restarbeitenImportAttachments"), false);
+  assert.equal(methodSource.includes("restarbeitenDeleteAttachment"), false);
+  assert.equal(methodSource.includes("restarbeitenSetPrimaryAttachment"), false);
+  assert.equal(methodSource.includes("autosave"), false);
+  assert.equal(methodSource.includes("upload"), false);
+  assert.equal(methodSource.includes("save"), false);
   assert.equal(routerSource.includes("restarbeit_id"), true);
   assert.equal(routerSource.includes("lfd_nr"), true);
   assert.equal(routerSource.includes("completion_note"), true);
@@ -321,13 +330,17 @@ async function runRestarbeitenV2DevAccessTests(run) {
     routerWithProjectContext.currentMeetingId = null;
     await routerWithProjectContext.showRestarbeitenV2Dev();
     await flush();
-    assert.equal(routerWithProjectContext.currentProjectId, "project-ctx-17");
-    assert.equal(routerWithProjectContext._restarbeitenV2DevLoadedProjectId, "project-ctx-17");
-    assert.equal(routerWithProjectContext.activeSection, "restarbeitenV2Dev");
-    assert.equal(legacyLoaderCalls.length, 1);
-    const projectContextHost = getNodeByAttr(documentWithProjectContext.body, "data-ui-v2-restarbeiten-host", "true");
-    assert.ok(projectContextHost);
-    assert.ok(getNodeByAttr(projectContextHost, "data-restarbeiten-v2-dummy-id", "LEG-101"));
+  assert.equal(routerWithProjectContext.currentProjectId, "project-ctx-17");
+  assert.equal(routerWithProjectContext._restarbeitenV2DevLoadedProjectId, "project-ctx-17");
+  assert.equal(routerWithProjectContext.activeSection, "restarbeitenV2Dev");
+  assert.equal(legacyLoaderCalls.length, 1);
+  assert.equal(
+    routerWithProjectContext.showRestarbeitenV2Dev.toString().includes("createRestarbeitV2"),
+    false
+  );
+  const projectContextHost = getNodeByAttr(documentWithProjectContext.body, "data-ui-v2-restarbeiten-host", "true");
+  assert.ok(projectContextHost);
+  assert.ok(getNodeByAttr(projectContextHost, "data-restarbeiten-v2-dummy-id", "LEG-101"));
     assert.ok(
       collectNodes(projectContextHost, (node) => String(node.textContent || "").includes("LEG-101 / Echte Legacy-Restarbeit / Haus X / offen")).length >
         0
