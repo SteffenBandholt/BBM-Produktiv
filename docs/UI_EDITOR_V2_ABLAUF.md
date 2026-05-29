@@ -39,6 +39,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Der DEV-Zugang zeigt die sichtbare Kette von einer lokalen Legacy-Quelle ueber den ReadOnly-Adapter bis in den Screen, ohne echte Anbindung.
 - M16.7: Restarbeiten V2 Legacy-Lese-Bridge vorbereiten
   - Eine kleine Bridge kann spaeter vorhandene Lesefunktionen als injizierte Quelle an den ReadOnly-Adapter weiterreichen, ohne Schreibwege zu oeffnen.
+- M16.8: Restarbeiten V2 bestehende Lesewege inventarisieren
+  - Die vorhandenen Restarbeiten-Lesewege werden dokumentiert und auf ihre Eignung fuer die spaetere Legacy-Bridge eingeordnet.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
