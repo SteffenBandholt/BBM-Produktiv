@@ -57,6 +57,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Der Projektworkspace laesst sich als Kontextquelle fuer den ReadOnly-Pfad verwenden; die projectId laeuft aus dem Workspace bis in den Legacy-Leseloader.
 - M17.6: Restarbeiten V2 echten Projektworkspace-Modulstart minimal verdrahten
   - Der Modulstart `restarbeiten` laeuft im DEV-Pfad jetzt kontrolliert in den vorhandenen Restarbeiten-V2-ReadOnly-Flow.
+- M17.7: Restarbeiten V2 ReadOnly-Produktivfreigabe fachlich vorbereiten
+  - Die Freigabebedingung fuer `restarbeiten` bleibt als kleine Router-Guard-Funktion sichtbar und testseitig abgesichert.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
