@@ -49,6 +49,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Der DEV-Zugang nutzt die vorbereitete ReadOnly-Factory testweise fuer die lesende Kette bis in den Screen.
 - M17.2: Restarbeiten V2 ReadOnly-Lesequelle im Projektkontext absichern
   - Der DEV-Einstieg gibt jetzt den aktuellen Projektkontext weiter und faellt nur ohne Projekt auf den DEV-Standard zurueck.
+- M17.3: Echten Legacy-ReadOnly-Loader hinter die Factory haengen
+  - Der DEV-/ReadOnly-Pfad probiert jetzt den vorhandenen Legacy-Leseloader und faellt nur bei fehlendem Projektkontext oder Fehlern auf die DEV-Fallback-Rows zurueck.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

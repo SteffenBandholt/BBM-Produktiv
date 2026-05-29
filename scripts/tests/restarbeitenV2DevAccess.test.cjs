@@ -168,6 +168,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(methodSource.includes("autosave"), false);
   assert.equal(methodSource.includes("createRestarbeitenV2ReadOnlyDataSourceFactory"), true);
   assert.equal(methodSource.includes("createRestarbeitenV2ReadOnlyAdapter"), false);
+  assert.equal(methodSource.includes("listRestarbeitenByProject"), true);
   assert.equal(methodSource.includes("loadRestarbeiten"), true);
   assert.equal(methodSource.includes("createRestarbeitenV2FakeDataSource"), false);
   assert.equal(methodSource.includes("useDataSource: true"), true);
@@ -272,6 +273,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
 
     const documentWithProjectContext = createFakeDocument();
     globalThis.document = documentWithProjectContext;
+    const legacyLoaderCalls = [];
     globalThis.window = {
       localStorage: {
         getItem(key) {
@@ -287,7 +289,30 @@ async function runRestarbeitenV2DevAccessTests(run) {
       innerHeight: 1200,
       addEventListener() {},
       removeEventListener() {},
-      bbmDb: {},
+      bbmDb: {
+        async restarbeitenListByProject(payload) {
+          legacyLoaderCalls.push(payload);
+          assert.deepEqual(payload, { projectId: "project-ctx-17" });
+          return {
+            ok: true,
+            items: [
+              {
+                restarbeit_id: "LEG-101",
+                lfd_nr: "LEG-101",
+                title: "Echte Legacy-Restarbeit",
+                description: "Haus X",
+                location: "Haus X",
+                state: "open",
+                completion_note: "Aus Legacy",
+                responsible_firm_name: "Firma Legacy",
+                due_date: "2026-06-30",
+                note: "Legacy geladen",
+                attachments: [],
+              },
+            ],
+          };
+        },
+      },
     };
     const routerWithProjectContext = new Router({ contentRoot: documentWithProjectContext.body });
     routerWithProjectContext._ensureProjectContextQuicklane = async () => ({ setContext() {}, setEnabled() {} });
@@ -299,6 +324,14 @@ async function runRestarbeitenV2DevAccessTests(run) {
     assert.equal(routerWithProjectContext.currentProjectId, "project-ctx-17");
     assert.equal(routerWithProjectContext._restarbeitenV2DevLoadedProjectId, "project-ctx-17");
     assert.equal(routerWithProjectContext.activeSection, "restarbeitenV2Dev");
+    assert.equal(legacyLoaderCalls.length, 1);
+    const projectContextHost = getNodeByAttr(documentWithProjectContext.body, "data-ui-v2-restarbeiten-host", "true");
+    assert.ok(projectContextHost);
+    assert.ok(getNodeByAttr(projectContextHost, "data-restarbeiten-v2-dummy-id", "LEG-101"));
+    assert.ok(
+      collectNodes(projectContextHost, (node) => String(node.textContent || "").includes("LEG-101 / Echte Legacy-Restarbeit / Haus X / offen")).length >
+        0
+    );
   } finally {
     globalThis.document = previousDocument;
     globalThis.window = previousWindow;

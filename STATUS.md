@@ -17,6 +17,10 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M17.3 Echten Legacy-ReadOnly-Loader hinter die Factory gehaengt:
+  - Der DEV-/ReadOnly-Pfad probiert jetzt den vorhandenen Legacy-Leseweg und faellt nur bei fehlendem Projektkontext oder Loader-Fehlern auf die DEV-Fallback-Rows zurueck.
+  - geprueft mit den Restarbeiten-V2-Tests und `npm test`.
+
 - M17.2 Restarbeiten V2 ReadOnly-Lesequelle im Projektkontext abgesichert:
   - Der DEV-Einstieg reicht den aktuellen Projektkontext jetzt bis in die ReadOnly-Lesequelle durch.
   - Ohne Projektkontext bleibt der bisherige DEV-Fallback aktiv.
