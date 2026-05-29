@@ -15,7 +15,7 @@ async function runRestarbeitenV2ReadPathDecisionTests(run) {
   assert.equal(doc.includes("RestarbeitenV2LegacyReadBridge"), true);
   assert.equal(doc.includes("Mapper"), true);
   assert.equal(doc.includes("projectId"), true);
-  assert.equal(doc.includes("M17.x"), true);
+  assert.equal(doc.includes("M17.8"), true);
   assert.equal(doc.includes("listRestarbeitenByProject(projectId)"), true);
   assert.equal(doc.includes("nicht gewaehlte Kandidaten"), true);
   assert.equal(doc.includes("Spaetere Zielkette"), true);
@@ -23,6 +23,7 @@ async function runRestarbeitenV2ReadPathDecisionTests(run) {
   assert.equal(doc.includes("Kein Speichern in dieser Kette"), true);
   assert.equal(doc.includes("keine Schreibwege"), true);
   assert.equal(doc.includes("nur eine injizierte Lesefunktion"), true);
+  assert.equal(doc.includes("Nicht freigegeben sind Speichern, Create, Update, Delete, Upload, Import, Autosave, neue IPC-Wege und die vollstaendige Ablösung der alten Restarbeiten-UI"), true);
 
   assert.equal(inv.includes("listRestarbeitenByProject(projectId)"), true);
 

@@ -69,3 +69,8 @@ M17.0:
 - keine UI-Umbauten
 - keine Speicherung
 
+## 9. M17.8 Abschluss
+- Die M17-ReadOnly-Phase ist dokumentiert und fachlich eingeordnet.
+- Freigegeben ist nur der lesende Pfad unter der bestehenden Freigabebedingung.
+- Nicht freigegeben sind Speichern, Create, Update, Delete, Upload, Import, Autosave, neue IPC-Wege und die vollstaendige Ablösung der alten Restarbeiten-UI.
+- Ohne Freigabe bleibt der alte Restarbeiten-Pfad erhalten.
