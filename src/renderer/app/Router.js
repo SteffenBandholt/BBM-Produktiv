@@ -14,6 +14,8 @@ import { resolveProjectProtocolEntry } from "./projectProtocolRouting.js";
 import { createEditorLabScreen } from "../uiV2/editorLab/EditorLabScreen.js";
 import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js";
 import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
+import { createRestarbeitenV2Screen } from "../modules/restarbeitenV2/RestarbeitenV2Screen.js";
+import { createRestarbeitenV2Registry } from "../modules/restarbeitenV2/restarbeitenV2Registry.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -704,6 +706,42 @@ export default class Router {
       section: "editorLabV2",
       isTopsView: false,
       pageTitle: "EditorLab V2",
+      hideSidebar: false,
+    });
+    return true;
+  }
+
+  _isRestarbeitenV2DevEnabled() {
+    return this._readUiMode() === "new";
+  }
+
+  async showRestarbeitenV2Dev() {
+    if (!this._isRestarbeitenV2DevEnabled()) {
+      alert("Restarbeiten V2 ist nur im DEV-Testzugang verfuegbar.");
+      return false;
+    }
+
+    const registry = createRestarbeitenV2Registry();
+    const screen = createRestarbeitenV2Screen({ registry });
+
+    const view = {
+      render: () => {
+        const host = document.createElement("div");
+        host.setAttribute("data-ui-v2-restarbeiten-host", "true");
+        host.style.display = "grid";
+        host.style.gap = "12px";
+        host.style.padding = "12px";
+        const root = screen.render(host);
+        return root ? host : null;
+      },
+      async destroy() {},
+    };
+
+    this._setProjectRuntimeContext({ projectId: null, meetingId: null });
+    await this.show(view, {
+      section: "restarbeitenV2Dev",
+      isTopsView: false,
+      pageTitle: "Restarbeiten V2 DEV",
       hideSidebar: false,
     });
     return true;
