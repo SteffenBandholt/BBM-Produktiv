@@ -1,103 +1,29 @@
 import { createRestarbeitenV2Registry } from "./restarbeitenV2Registry.js";
 import { createEditorV2Panel } from "../../uiV2/editorV2/EditorV2Panel.js";
-
-function applyV2Attributes(node, entry) {
-  node.setAttribute("data-ui-v2-id", entry.id);
-  node.setAttribute("data-ui-v2-kind", entry.kind);
-  node.setAttribute("data-ui-v2-label", entry.label);
-  node.setAttribute("data-ui-v2-editable", entry.editable ? "true" : "false");
-  node.setAttribute("data-ui-v2-ops", Array.isArray(entry.ops) ? entry.ops.join(",") : "");
-  if (entry.parentId) {
-    node.setAttribute("data-ui-v2-parent", entry.parentId);
-  }
-  return node;
-}
-
-function createNode(doc, tagName, entry, textContent = "") {
-  const node = applyV2Attributes(doc.createElement(tagName), entry);
-  if (textContent) node.textContent = textContent;
-  return node;
-}
-
-function createTextBlock(doc, text, className = "") {
-  const node = doc.createElement("div");
-  if (className) node.className = className;
-  node.textContent = text;
-  return node;
-}
-
-const DUMMY_ROWS = [
-  {
-    id: "R-001",
-    title: "Offene Restarbeit",
-    location: "Treppenhaus",
-    status: "offen",
-    shortText: "Offene Restarbeit",
-    longText: "Offene Restarbeit im Treppenhaus",
-    meta: "R-001 / offen",
-    photos: "Keine Fotos",
-    note: "Platzhalternotiz",
-  },
-  {
-    id: "R-002",
-    title: "Musterpunkt",
-    location: "Wohnung",
-    status: "erledigt",
-    shortText: "Musterpunkt",
-    longText: "Musterpunkt in der Wohnung",
-    meta: "R-002 / erledigt",
-    photos: "Keine Fotos",
-    note: "Platzhalternotiz",
-  },
-  {
-    id: "R-003",
-    title: "Kontrollpunkt",
-    location: "Außenanlage",
-    status: "offen",
-    shortText: "Kontrollpunkt",
-    longText: "Kontrollpunkt in der Außenanlage",
-    meta: "R-003 / offen",
-    photos: "Keine Fotos",
-    note: "Platzhalternotiz",
-  },
-];
-
-function cloneDummyRows() {
-  return new Map(DUMMY_ROWS.map((row) => [row.id, { ...row }]));
-}
-
-function getNextDummyId(dummyRows) {
-  let maxNumber = 0;
-  for (const id of dummyRows.keys()) {
-    const match = String(id || "").match(/^R-(\d+)$/);
-    if (!match) continue;
-    maxNumber = Math.max(maxNumber, Number(match[1] || 0));
-  }
-  return `R-${String(maxNumber + 1).padStart(3, "0")}`;
-}
-
-function createLocalDummyRow(id) {
-  return {
-    id,
-    title: "Neue Restarbeit",
-    location: "Noch ohne Verortung",
-    status: "offen",
-    shortText: "Neue Restarbeit",
-    longText: "Lokaler DEV-Entwurf ohne Speicherung",
-    meta: "DEV",
-    photos: "Keine Fotos",
-    note: "Nur lokale Vorschau",
-  };
-}
+import {
+  createInitialRestarbeitenV2DummyItems,
+  createNextRestarbeitenV2DummyItem,
+} from "./restarbeitenV2DummyData.js";
+import {
+  findRestarbeitenV2Item,
+  getNextSelectedRestarbeitenV2Id,
+  getVisibleRestarbeitenV2Items,
+  normalizeRestarbeitenV2Filter,
+  updateRestarbeitenV2Item,
+} from "./restarbeitenV2ViewModel.js";
+import {
+  createRestarbeitenV2Node,
+  createRestarbeitenV2TextBlock,
+} from "./restarbeitenV2Dom.js";
 
 function buildTree(doc, registry) {
-  const entries = new Map(registry.map((entry) => [entry.id, entry]));
   const nodes = new Map();
 
   for (const entry of registry) {
     const tagName = entry.kind === "control" ? "button" : "div";
     const text = String(entry.label || "").trim() || entry.id;
-    const node = createNode(doc, tagName, entry, text);
+    const node = createRestarbeitenV2Node(doc, tagName, entry, text);
+
     if (entry.id === "restarbeitenV2.root") {
       node.style.display = "grid";
       node.style.gridTemplateColumns = "1fr 220px";
@@ -125,15 +51,12 @@ function buildTree(doc, registry) {
   for (const entry of registry) {
     const node = nodes.get(entry.id);
     const parentNode = entry.parentId ? nodes.get(entry.parentId) : null;
-    if (parentNode) {
-      parentNode.append(node);
-    }
+    if (parentNode) parentNode.append(node);
   }
 
   const header = nodes.get("restarbeitenV2.header");
-  if (header) {
-    header.append(createTextBlock(doc, "Restarbeiten V2", "restarbeiten-v2-title"));
-  }
+  if (header) header.append(createRestarbeitenV2TextBlock(doc, "Restarbeiten V2", "restarbeiten-v2-title"));
+
   const headerContext = nodes.get("restarbeitenV2.header.context");
   if (headerContext) headerContext.textContent = "Projekt / Bereich / Stand";
   const headerStatus = nodes.get("restarbeitenV2.header.status");
@@ -142,9 +65,7 @@ function buildTree(doc, registry) {
   if (headerFilter) headerFilter.textContent = "Suche / Status / Verortung";
 
   const quicklane = nodes.get("restarbeitenV2.quicklane");
-  if (quicklane) {
-    quicklane.append(createTextBlock(doc, "Quicklane rechts", "restarbeiten-v2-quicklane-label"));
-  }
+  if (quicklane) quicklane.append(createRestarbeitenV2TextBlock(doc, "Quicklane rechts", "restarbeiten-v2-quicklane-label"));
   const quicklaneLabels = [
     ["restarbeitenV2.quicklane.lock", "Lock / Fixieren"],
     ["restarbeitenV2.quicklane.neu", "Neu"],
@@ -161,14 +82,12 @@ function buildTree(doc, registry) {
 
   const main = nodes.get("restarbeitenV2.main");
   const list = nodes.get("restarbeitenV2.main.liste");
-  if (main) {
-    main.append(createTextBlock(doc, "Main / Liste", "restarbeiten-v2-main-title"));
-  }
+  if (main) main.append(createRestarbeitenV2TextBlock(doc, "Main / Liste", "restarbeiten-v2-main-title"));
   if (list) {
     list.append(
-      createTextBlock(doc, "R-001 / Offene Restarbeit / Treppenhaus / offen", "restarbeiten-v2-row"),
-      createTextBlock(doc, "R-002 / Musterpunkt / Wohnung / erledigt", "restarbeiten-v2-row"),
-      createTextBlock(doc, "R-003 / Kontrollpunkt / Außenanlage / offen", "restarbeiten-v2-row")
+      createRestarbeitenV2TextBlock(doc, "R-001 / Offene Restarbeit / Treppenhaus / offen", "restarbeiten-v2-row"),
+      createRestarbeitenV2TextBlock(doc, "R-002 / Musterpunkt / Wohnung / erledigt", "restarbeiten-v2-row"),
+      createRestarbeitenV2TextBlock(doc, "R-003 / Kontrollpunkt / Außenanlage / offen", "restarbeiten-v2-row")
     );
   }
   const mainLabels = [
@@ -183,9 +102,7 @@ function buildTree(doc, registry) {
   }
 
   const footer = nodes.get("restarbeitenV2.footer");
-  if (footer) {
-    footer.append(createTextBlock(doc, "Footer / Workbench", "restarbeiten-v2-footer-title"));
-  }
+  if (footer) footer.append(createRestarbeitenV2TextBlock(doc, "Footer / Workbench", "restarbeiten-v2-footer-title"));
   const footerLabels = [
     ["restarbeitenV2.footer.kurztext", "Kurztext"],
     ["restarbeitenV2.footer.langtext", "Langtext"],
@@ -212,7 +129,7 @@ export function createRestarbeitenV2Screen(options = {}) {
   let selectedDummyId = "R-001";
   let currentFilter = "alle";
   let dummyRowNodes = new Map();
-  let dummyRows = cloneDummyRows();
+  let dummyRows = createInitialRestarbeitenV2DummyItems();
   let workbenchNodes = {};
   let listNode = null;
   let listRowsHost = null;
@@ -234,7 +151,7 @@ export function createRestarbeitenV2Screen(options = {}) {
   }
 
   function appendDummyRow(doc, row) {
-    dummyRows.set(row.id, row);
+    dummyRows = [...dummyRows, row];
     const rowNode = createDummyRowNode(doc, row);
     dummyRowNodes.set(row.id, rowNode);
     if (listRowsHost && typeof listRowsHost.append === "function") {
@@ -245,17 +162,16 @@ export function createRestarbeitenV2Screen(options = {}) {
 
   function createAndSelectDummyRow(doc) {
     currentFilter = "alle";
-    const nextId = getNextDummyId(dummyRows);
-    const row = createLocalDummyRow(nextId);
+    const row = createNextRestarbeitenV2DummyItem(dummyRows);
     appendDummyRow(doc, row);
-    setSelection(nextId);
+    setSelection(row.id);
     syncFilterState();
     syncMainList();
     return row;
   }
 
   function setSelection(nextId) {
-    const next = nextId ? dummyRows.get(nextId) || null : null;
+    const next = findRestarbeitenV2Item(dummyRows, nextId);
     selectedDummyId = next?.id || null;
     for (const [id, node] of dummyRowNodes.entries()) {
       const selected = id === selectedDummyId;
@@ -265,11 +181,9 @@ export function createRestarbeitenV2Screen(options = {}) {
       node.style.borderRadius = "6px";
       node.style.padding = "4px 6px";
     }
-    const current = selectedDummyId ? dummyRows.get(selectedDummyId) || null : null;
+    const current = selectedDummyId ? findRestarbeitenV2Item(dummyRows, selectedDummyId) : null;
     if (current) {
-      if (workbenchNodes.selectionNote) {
-        workbenchNodes.selectionNote.textContent = `Ausgewählt: ${current.id}`;
-      }
+      if (workbenchNodes.selectionNote) workbenchNodes.selectionNote.textContent = `Ausgewählt: ${current.id}`;
       if (workbenchNodes.kurztextInput) workbenchNodes.kurztextInput.value = current.shortText;
       if (workbenchNodes.langtextInput) workbenchNodes.langtextInput.value = current.longText;
       if (workbenchNodes.verortungInput) workbenchNodes.verortungInput.value = current.location;
@@ -301,10 +215,11 @@ export function createRestarbeitenV2Screen(options = {}) {
   }
 
   function getVisibleRows() {
-    return Array.from(dummyRows.values()).filter((row) => currentFilter === "alle" || row.status === currentFilter);
+    return getVisibleRestarbeitenV2Items(dummyRows, currentFilter);
   }
 
   function syncFilterState() {
+    currentFilter = normalizeRestarbeitenV2Filter(currentFilter);
     const filterButtons = [
       ["restarbeitenV2.quicklane.filterAlle", "alle"],
       ["restarbeitenV2.quicklane.filterOffen", "offen"],
@@ -327,11 +242,8 @@ export function createRestarbeitenV2Screen(options = {}) {
 
   function syncMainList() {
     const visibleRows = getVisibleRows();
-    const nextSelectedId = selectedDummyId && visibleRows.some((row) => row.id === selectedDummyId) ? selectedDummyId : visibleRows[0]?.id || null;
-    selectedDummyId = nextSelectedId;
-    if (listRowsHost) {
-      listRowsHost.replaceChildren?.();
-    }
+    selectedDummyId = getNextSelectedRestarbeitenV2Id(dummyRows, currentFilter, selectedDummyId);
+    if (listRowsHost) listRowsHost.replaceChildren?.();
     dummyRowNodes = new Map();
     const doc = renderDoc || rootNode?.ownerDocument || globalThis.document;
     for (const row of visibleRows) {
@@ -350,15 +262,19 @@ export function createRestarbeitenV2Screen(options = {}) {
   }
 
   function updateDraftField(fieldName, value) {
-    const row = dummyRows.get(selectedDummyId);
+    const row = findRestarbeitenV2Item(dummyRows, selectedDummyId);
     if (!row) return false;
     const nextValue = String(value ?? "").trim();
-    if (fieldName === "shortText") row.shortText = nextValue || row.shortText;
-    if (fieldName === "longText") row.longText = nextValue || row.longText;
-    if (fieldName === "location") row.location = nextValue || row.location;
-    if (fieldName === "status") row.status = nextValue || row.status;
-    if (fieldName === "note") row.note = nextValue;
-    if (fieldName === "status") row.meta = `${row.id} / ${row.status}`;
+    const patch = {};
+    if (fieldName === "shortText") patch.shortText = nextValue || row.shortText;
+    if (fieldName === "longText") patch.longText = nextValue || row.longText;
+    if (fieldName === "location") patch.location = nextValue || row.location;
+    if (fieldName === "status") {
+      patch.status = nextValue || row.status;
+      patch.meta = `${row.id} / ${patch.status}`;
+    }
+    if (fieldName === "note") patch.note = nextValue;
+    dummyRows = updateRestarbeitenV2Item(dummyRows, row.id, patch);
     setSelection(row.id);
     syncMainList();
     return true;
@@ -395,7 +311,7 @@ export function createRestarbeitenV2Screen(options = {}) {
     const wrap = doc.createElement("div");
     wrap.style.display = "grid";
     wrap.style.gap = "4px";
-    const label = createTextBlock(doc, labelText, "restarbeiten-v2-field-label");
+    const label = createRestarbeitenV2TextBlock(doc, labelText, "restarbeiten-v2-field-label");
     wrap.append(label);
     if (controlNode) wrap.append(controlNode);
     if (previewNode) wrap.append(previewNode);
@@ -410,14 +326,14 @@ export function createRestarbeitenV2Screen(options = {}) {
     if (headerFilter && !headerFilterStateNode) {
       headerFilter.replaceChildren?.();
       headerFilter.append(
-        createTextBlock(doc, "Suche / Status / Verortung", "restarbeiten-v2-filter-label"),
-        createTextBlock(doc, "", "restarbeiten-v2-filter-state")
+        createRestarbeitenV2TextBlock(doc, "Suche / Status / Verortung", "restarbeiten-v2-filter-label"),
+        createRestarbeitenV2TextBlock(doc, "", "restarbeiten-v2-filter-state")
       );
       headerFilterStateNode = headerFilter.children?.[1] || null;
     }
 
-    const selectionNote = createTextBlock(doc, "Ausgewählt: R-001", "restarbeiten-v2-selection-note");
-    const notice = createTextBlock(doc, "Nur lokale DEV-Vorschau - keine Speicherung", "restarbeiten-v2-no-save");
+    const selectionNote = createRestarbeitenV2TextBlock(doc, "Ausgewählt: R-001", "restarbeiten-v2-selection-note");
+    const notice = createRestarbeitenV2TextBlock(doc, "Nur lokale DEV-Vorschau - keine Speicherung", "restarbeiten-v2-no-save");
 
     const kurztextInput = doc.createElement("input");
     kurztextInput.type = "text";
@@ -447,12 +363,12 @@ export function createRestarbeitenV2Screen(options = {}) {
     notizInput.setAttribute("data-restarbeiten-v2-field", "note");
     notizInput.oninput = (event) => updateDraftField("note", event?.target?.value);
 
-    const kurztextPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
-    const langtextPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
-    const verortungPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
-    const metaPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
-    const fotosPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
-    const notizPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const kurztextPreview = createRestarbeitenV2TextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const langtextPreview = createRestarbeitenV2TextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const verortungPreview = createRestarbeitenV2TextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const metaPreview = createRestarbeitenV2TextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const fotosPreview = createRestarbeitenV2TextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const notizPreview = createRestarbeitenV2TextBlock(doc, "", "restarbeiten-v2-field-preview");
 
     const footerKurztext = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.kurztext"]') || null;
     const footerLangtext = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.langtext"]') || null;
@@ -472,7 +388,7 @@ export function createRestarbeitenV2Screen(options = {}) {
     if (footerLangtext) footerLangtext.append(createLabeledControl(doc, "Langtext", langtextInput, langtextPreview));
     if (footerVerortung) footerVerortung.append(createLabeledControl(doc, "Verortung", verortungInput, verortungPreview));
     if (footerMeta) footerMeta.append(createLabeledControl(doc, "Status / Meta", statusSelect, metaPreview));
-    if (footerFotos) footerFotos.append(createLabeledControl(doc, "Fotos", createTextBlock(doc, "Keine Fotos", "restarbeiten-v2-static-value"), fotosPreview));
+    if (footerFotos) footerFotos.append(createLabeledControl(doc, "Fotos", createRestarbeitenV2TextBlock(doc, "Keine Fotos", "restarbeiten-v2-static-value"), fotosPreview));
     if (footerNotiz) footerNotiz.append(createLabeledControl(doc, "Notiz", notizInput, notizPreview));
 
     workbenchNodes = {
@@ -520,9 +436,7 @@ export function createRestarbeitenV2Screen(options = {}) {
     renderDoc = doc;
     rootNode = buildTree(doc, registry);
     if (!rootNode) return null;
-    if (target && typeof target.append === "function") {
-      target.append(rootNode);
-    }
+    if (target && typeof target.append === "function") target.append(rootNode);
     listNode = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.main.liste"]') || null;
     if (listNode && !listRowsHost) {
       listRowsHost = doc.createElement("div");
@@ -550,18 +464,14 @@ export function createRestarbeitenV2Screen(options = {}) {
     } catch (_e) {
       // ignore
     }
-    if (panelNode?.parentElement?.removeChild) {
-      panelNode.parentElement.removeChild(panelNode);
-    }
-    if (rootNode?.parentElement?.removeChild) {
-      rootNode.parentElement.removeChild(rootNode);
-    }
+    if (panelNode?.parentElement?.removeChild) panelNode.parentElement.removeChild(panelNode);
+    if (rootNode?.parentElement?.removeChild) rootNode.parentElement.removeChild(rootNode);
     panelInstance = null;
     panelNode = null;
     mountedTarget = null;
     rootNode = null;
     dummyRowNodes = new Map();
-    dummyRows = cloneDummyRows();
+    dummyRows = createInitialRestarbeitenV2DummyItems();
     workbenchNodes = {};
     listNode = null;
     listRowsHost = null;

@@ -101,6 +101,9 @@ function hasText(root, expected) {
 
 async function runRestarbeitenV2ScreenTests(run) {
   const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/RestarbeitenV2Screen.js");
+  const dummyDataPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2DummyData.js");
+  const viewModelPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2ViewModel.js");
+  const domPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2Dom.js");
   const registryPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2Registry.js");
   const editorRegistryPath = path.join(__dirname, "../../src/renderer/uiV2/editorV2/editorV2Registry.js");
 
@@ -113,11 +116,66 @@ async function runRestarbeitenV2ScreenTests(run) {
   assert.equal(screenSource.includes("uiInspector"), false);
   assert.equal(screenSource.includes("data-ui-inspector-id"), false);
 
+  const helperSources = [
+    fs.readFileSync(dummyDataPath, "utf8"),
+    fs.readFileSync(viewModelPath, "utf8"),
+    fs.readFileSync(domPath, "utf8"),
+  ];
+  for (const helperSource of helperSources) {
+    assert.equal(helperSource.includes("ipc"), false);
+    assert.equal(helperSource.includes("indexedDB"), false);
+    assert.equal(helperSource.includes("localStorage"), false);
+    assert.equal(helperSource.includes("autosave"), false);
+    assert.equal(helperSource.includes("save"), false);
+    assert.equal(helperSource.includes("db"), false);
+  }
+
   const { createRestarbeitenV2Screen } = await importEsmFromFile(screenPath);
+  const {
+    createInitialRestarbeitenV2DummyItems,
+    createNextRestarbeitenV2DummyItem,
+  } = await importEsmFromFile(dummyDataPath);
+  const {
+    findRestarbeitenV2Item,
+    getNextSelectedRestarbeitenV2Id,
+    getVisibleRestarbeitenV2Items,
+    normalizeRestarbeitenV2Filter,
+    updateRestarbeitenV2Item,
+  } = await importEsmFromFile(viewModelPath);
   const { createRestarbeitenV2Registry } = await importEsmFromFile(registryPath);
   const { validateEditorV2Registry } = await importEsmFromFile(editorRegistryPath);
 
   assert.equal(typeof createRestarbeitenV2Screen, "function");
+  assert.equal(typeof createInitialRestarbeitenV2DummyItems, "function");
+  assert.equal(typeof createNextRestarbeitenV2DummyItem, "function");
+  assert.equal(typeof findRestarbeitenV2Item, "function");
+  assert.equal(typeof getNextSelectedRestarbeitenV2Id, "function");
+  assert.equal(typeof getVisibleRestarbeitenV2Items, "function");
+  assert.equal(typeof normalizeRestarbeitenV2Filter, "function");
+  assert.equal(typeof updateRestarbeitenV2Item, "function");
+
+  const initialDummyItems = createInitialRestarbeitenV2DummyItems();
+  assert.equal(initialDummyItems.map((item) => item.id).join(","), "R-001,R-002,R-003");
+  assert.equal(normalizeRestarbeitenV2Filter("Alle"), "alle");
+  assert.equal(normalizeRestarbeitenV2Filter("offen"), "offen");
+  assert.equal(normalizeRestarbeitenV2Filter("Erledigt"), "erledigt");
+  assert.equal(normalizeRestarbeitenV2Filter(""), "alle");
+  assert.equal(getVisibleRestarbeitenV2Items(initialDummyItems, "alle").map((item) => item.id).join(","), "R-001,R-002,R-003");
+  assert.equal(getVisibleRestarbeitenV2Items(initialDummyItems, "offen").map((item) => item.id).join(","), "R-001,R-003");
+  assert.equal(getVisibleRestarbeitenV2Items(initialDummyItems, "erledigt").map((item) => item.id).join(","), "R-002");
+  assert.equal(getNextSelectedRestarbeitenV2Id(initialDummyItems, "alle", "R-002"), "R-002");
+  assert.equal(getNextSelectedRestarbeitenV2Id(initialDummyItems, "offen", "R-002"), "R-001");
+  assert.equal(getNextSelectedRestarbeitenV2Id(initialDummyItems, "erledigt", "R-001"), "R-002");
+  assert.equal(getNextSelectedRestarbeitenV2Id([], "alle", "R-001"), null);
+
+  const nextDummyItem = createNextRestarbeitenV2DummyItem(initialDummyItems);
+  assert.equal(nextDummyItem.id, "R-004");
+  const nextDummyItem2 = createNextRestarbeitenV2DummyItem([...initialDummyItems, nextDummyItem]);
+  assert.equal(nextDummyItem2.id, "R-005");
+  const patchedDummyItems = updateRestarbeitenV2Item(initialDummyItems, "R-002", { shortText: "Geaendert" });
+  assert.equal(findRestarbeitenV2Item(patchedDummyItems, "R-001").shortText, "Offene Restarbeit");
+  assert.equal(findRestarbeitenV2Item(patchedDummyItems, "R-002").shortText, "Geaendert");
+  assert.equal(findRestarbeitenV2Item(patchedDummyItems, "R-003").shortText, "Kontrollpunkt");
 
   const registry = createRestarbeitenV2Registry();
   const validation = validateEditorV2Registry(registry);
@@ -361,7 +419,6 @@ if (require.main === module) {
 }
 
 module.exports = { runRestarbeitenV2ScreenTests };
-
 
 
 

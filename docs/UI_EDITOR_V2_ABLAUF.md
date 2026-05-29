@@ -21,6 +21,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Quicklane `Neu` erzeugt lokal Dummy-Restarbeiten, waehlt sie direkt aus und aktualisiert Liste plus Workbench ohne Persistenz.
 - M15.10: Restarbeiten V2 DEV lokale Filterfunktion ohne Speicherung
   - Quicklane-Filter `Alle`, `Offen` und `Erledigt` schalten rein lokal, halten Auswahl wenn sichtbar und fallen sonst auf eine sinnvolle lokale Auswahl oder keine Auswahl zurueck.
+- M15.11: Restarbeiten V2 DEV-Screen intern entflechten
+  - Dummy-Daten, ViewModel-Logik und einfache DOM-Helfer sind in kleine Module ausgelagert, ohne das sichtbare Verhalten zu aendern.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
