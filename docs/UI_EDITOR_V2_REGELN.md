@@ -12,6 +12,8 @@ Regeln:
 
 Der Editor ist generisch und fachneutral.
 
+Editor V2 ist damit auch als wiederverwendbares Modul abgegrenzt: Fachmodule binden ihn nur ueber Registry an, nicht ueber Fachlogik.
+
 ## 2. Registry-Pflichtdaten
 Pro Element muessen mindestens diese Daten vorliegen:
 - id

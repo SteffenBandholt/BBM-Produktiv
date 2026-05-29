@@ -11,6 +11,8 @@ Regeln:
 
 Die neue Struktur wird bewusst sauber und getrennt aufgebaut.
 
+Restarbeiten V2 nutzt den Editor V2 nur als fachneutralen Layout-Editor ueber Registry. Es gibt keine Restarbeiten-Sonderlogik im Editor V2.
+
 ## 2. UI-V2-Grundarchitektur
 Restarbeiten V2 nutzt die gemeinsame UI-V2-Grundarchitektur:
 
