@@ -33,6 +33,7 @@ const { runRestarbeitenV2DevAccessTests } = require("./tests/restarbeitenV2DevAc
 const { runRestarbeitenV2EditorDevTests } = require("./tests/restarbeitenV2EditorDev.test.cjs");
 const { runRestarbeitenV2RegistryRulesTests } = require("./tests/restarbeitenV2RegistryRules.test.cjs");
 const { runRestarbeitenV2RegistryTests } = require("./tests/restarbeitenV2Registry.test.cjs");
+const { runRestarbeitenV2DataContractTests } = require("./tests/restarbeitenV2DataContract.test.cjs");
 const { runRestarbeitenV2ScreenTests } = require("./tests/restarbeitenV2Screen.test.cjs");
 const { runHomeViewTests } = require("./tests/homeView.test.cjs");
 const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.cjs");
@@ -144,6 +145,7 @@ async function main() {
   await runRestarbeitenV2EditorDevTests(run);
   await runRestarbeitenV2RegistryRulesTests(run);
   await runRestarbeitenV2RegistryTests(run);
+  await runRestarbeitenV2DataContractTests(run);
   await runRestarbeitenV2ScreenTests(run);
   await runHomeViewTests(run);
   await runProjectSettingsIpcTests(run);
