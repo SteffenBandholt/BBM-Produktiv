@@ -66,6 +66,10 @@ function getDummyById(id) {
   return DUMMY_ROWS.find((row) => row.id === id) || DUMMY_ROWS[0];
 }
 
+function cloneDummyRows() {
+  return new Map(DUMMY_ROWS.map((row) => [row.id, { ...row }]));
+}
+
 function buildTree(doc, registry) {
   const entries = new Map(registry.map((entry) => [entry.id, entry]));
   const nodes = new Map();
@@ -187,9 +191,11 @@ export function createRestarbeitenV2Screen(options = {}) {
   let mountedTarget = null;
   let selectedDummyId = "R-001";
   let dummyRowNodes = new Map();
+  let dummyRows = cloneDummyRows();
+  let workbenchNodes = {};
 
   function setSelection(nextId) {
-    const next = getDummyById(nextId);
+    const next = dummyRows.get(nextId) || dummyRows.get("R-001") || getDummyById(nextId);
     if (!next) return false;
     selectedDummyId = next.id;
     for (const [id, node] of dummyRowNodes.entries()) {
@@ -200,18 +206,51 @@ export function createRestarbeitenV2Screen(options = {}) {
       node.style.borderRadius = "6px";
       node.style.padding = "4px 6px";
     }
-    const footerKurztext = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.kurztext"]') || null;
-    const footerLangtext = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.langtext"]') || null;
-    const footerVerortung = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.verortung"]') || null;
-    const footerMeta = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.meta"]') || null;
-    const footerFotos = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.fotos"]') || null;
-    const footerNotiz = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.notiz"]') || null;
-    if (footerKurztext) footerKurztext.textContent = `Kurztext: ${next.shortText}`;
-    if (footerLangtext) footerLangtext.textContent = `Langtext: ${next.longText}`;
-    if (footerVerortung) footerVerortung.textContent = `Verortung: ${next.location}`;
-    if (footerMeta) footerMeta.textContent = `Meta / Status: ${next.status}`;
-    if (footerFotos) footerFotos.textContent = `Fotos: ${next.photos}`;
-    if (footerNotiz) footerNotiz.textContent = `Notiz: ${next.note}`;
+    const current = dummyRows.get(selectedDummyId) || next;
+    if (workbenchNodes.selectionNote) {
+      workbenchNodes.selectionNote.textContent = `Ausgewählt: ${current.id}`;
+    }
+    if (workbenchNodes.kurztextInput) workbenchNodes.kurztextInput.value = current.shortText;
+    if (workbenchNodes.langtextInput) workbenchNodes.langtextInput.value = current.longText;
+    if (workbenchNodes.verortungInput) workbenchNodes.verortungInput.value = current.location;
+    if (workbenchNodes.statusSelect) workbenchNodes.statusSelect.value = current.status;
+    if (workbenchNodes.notizInput) workbenchNodes.notizInput.value = current.note;
+    if (workbenchNodes.kurztextPreview) workbenchNodes.kurztextPreview.textContent = `Kurztext: ${current.shortText}`;
+    if (workbenchNodes.langtextPreview) workbenchNodes.langtextPreview.textContent = `Langtext: ${current.longText}`;
+    if (workbenchNodes.verortungPreview) workbenchNodes.verortungPreview.textContent = `Verortung: ${current.location}`;
+    if (workbenchNodes.metaPreview) workbenchNodes.metaPreview.textContent = `Meta / Status: ${current.status}`;
+    if (workbenchNodes.fotosPreview) workbenchNodes.fotosPreview.textContent = `Fotos: ${current.photos}`;
+    if (workbenchNodes.notizPreview) workbenchNodes.notizPreview.textContent = `Notiz: ${current.note}`;
+    if (workbenchNodes.notice) workbenchNodes.notice.textContent = "Nur lokale DEV-Vorschau - keine Speicherung";
+    syncMainList();
+    return true;
+  }
+
+  function syncMainList() {
+    for (const [id, node] of dummyRowNodes.entries()) {
+      const row = dummyRows.get(id);
+      if (!row) continue;
+      const selected = id === selectedDummyId;
+      node.setAttribute("data-restarbeiten-v2-selected", selected ? "true" : "false");
+      node.style.background = selected ? "rgba(41, 98, 255, 0.10)" : "transparent";
+      node.style.border = selected ? "1px solid rgba(41, 98, 255, 0.5)" : "1px solid transparent";
+      node.style.borderRadius = "6px";
+      node.style.padding = "4px 6px";
+      node.textContent = `${row.id} / ${row.shortText} / ${row.location} / ${row.status}`;
+    }
+  }
+
+  function updateDraftField(fieldName, value) {
+    const row = dummyRows.get(selectedDummyId);
+    if (!row) return false;
+    const nextValue = String(value ?? "").trim();
+    if (fieldName === "shortText") row.shortText = nextValue || row.shortText;
+    if (fieldName === "longText") row.longText = nextValue || row.longText;
+    if (fieldName === "location") row.location = nextValue || row.location;
+    if (fieldName === "status") row.status = nextValue || row.status;
+    if (fieldName === "note") row.note = nextValue;
+    row.meta = `${row.id} / ${row.status}`;
+    setSelection(row.id);
     return true;
   }
 
@@ -219,11 +258,13 @@ export function createRestarbeitenV2Screen(options = {}) {
     if (!listNode) return;
     dummyRowNodes = new Map();
     for (const row of DUMMY_ROWS) {
+      const draft = dummyRows.get(row.id) || { ...row };
+      dummyRows.set(row.id, draft);
       const rowNode = doc.createElement("button");
       rowNode.type = "button";
       rowNode.setAttribute("data-restarbeiten-v2-dummy-id", row.id);
       rowNode.setAttribute("data-restarbeiten-v2-dummy-row", "true");
-      rowNode.textContent = `${row.id} / ${row.title} / ${row.location} / ${row.status}`;
+      rowNode.textContent = `${draft.id} / ${draft.shortText} / ${draft.location} / ${draft.status}`;
       rowNode.onclick = (event) => {
         event?.preventDefault?.();
         event?.stopPropagation?.();
@@ -232,6 +273,101 @@ export function createRestarbeitenV2Screen(options = {}) {
       dummyRowNodes.set(row.id, rowNode);
       listNode.append(rowNode);
     }
+    setSelection(selectedDummyId);
+  }
+
+  function createLabeledControl(doc, labelText, controlNode, previewNode) {
+    const wrap = doc.createElement("div");
+    wrap.style.display = "grid";
+    wrap.style.gap = "4px";
+    const label = createTextBlock(doc, labelText, "restarbeiten-v2-field-label");
+    wrap.append(label);
+    if (controlNode) wrap.append(controlNode);
+    if (previewNode) wrap.append(previewNode);
+    return wrap;
+  }
+
+  function wireWorkbench(doc) {
+    workbenchNodes = {};
+    const footerRoot = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer"]') || null;
+    if (!footerRoot) return;
+
+    const selectionNote = createTextBlock(doc, "Ausgewählt: R-001", "restarbeiten-v2-selection-note");
+    const notice = createTextBlock(doc, "Nur lokale DEV-Vorschau - keine Speicherung", "restarbeiten-v2-no-save");
+
+    const kurztextInput = doc.createElement("input");
+    kurztextInput.type = "text";
+    kurztextInput.setAttribute("data-restarbeiten-v2-field", "shortText");
+    kurztextInput.oninput = (event) => updateDraftField("shortText", event?.target?.value);
+
+    const langtextInput = doc.createElement("textarea");
+    langtextInput.setAttribute("data-restarbeiten-v2-field", "longText");
+    langtextInput.oninput = (event) => updateDraftField("longText", event?.target?.value);
+
+    const verortungInput = doc.createElement("input");
+    verortungInput.type = "text";
+    verortungInput.setAttribute("data-restarbeiten-v2-field", "location");
+    verortungInput.oninput = (event) => updateDraftField("location", event?.target?.value);
+
+    const statusSelect = doc.createElement("select");
+    statusSelect.setAttribute("data-restarbeiten-v2-field", "status");
+    for (const value of ["offen", "erledigt"]) {
+      const option = doc.createElement("option");
+      option.setAttribute("value", value);
+      option.textContent = value;
+      statusSelect.append(option);
+    }
+    statusSelect.onchange = (event) => updateDraftField("status", event?.target?.value);
+
+    const notizInput = doc.createElement("textarea");
+    notizInput.setAttribute("data-restarbeiten-v2-field", "note");
+    notizInput.oninput = (event) => updateDraftField("note", event?.target?.value);
+
+    const kurztextPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const langtextPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const verortungPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const metaPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const fotosPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
+    const notizPreview = createTextBlock(doc, "", "restarbeiten-v2-field-preview");
+
+    const footerKurztext = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.kurztext"]') || null;
+    const footerLangtext = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.langtext"]') || null;
+    const footerVerortung = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.verortung"]') || null;
+    const footerMeta = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.meta"]') || null;
+    const footerFotos = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.fotos"]') || null;
+    const footerNotiz = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.notiz"]') || null;
+
+    footerKurztext?.replaceChildren?.();
+    footerLangtext?.replaceChildren?.();
+    footerVerortung?.replaceChildren?.();
+    footerMeta?.replaceChildren?.();
+    footerFotos?.replaceChildren?.();
+    footerNotiz?.replaceChildren?.();
+
+    if (footerKurztext) footerKurztext.append(createLabeledControl(doc, "Kurztext", kurztextInput, kurztextPreview));
+    if (footerLangtext) footerLangtext.append(createLabeledControl(doc, "Langtext", langtextInput, langtextPreview));
+    if (footerVerortung) footerVerortung.append(createLabeledControl(doc, "Verortung", verortungInput, verortungPreview));
+    if (footerMeta) footerMeta.append(createLabeledControl(doc, "Status / Meta", statusSelect, metaPreview));
+    if (footerFotos) footerFotos.append(createLabeledControl(doc, "Fotos", createTextBlock(doc, "Keine Fotos", "restarbeiten-v2-static-value"), fotosPreview));
+    if (footerNotiz) footerNotiz.append(createLabeledControl(doc, "Notiz", notizInput, notizPreview));
+
+    workbenchNodes = {
+      selectionNote,
+      notice,
+      kurztextInput,
+      langtextInput,
+      verortungInput,
+      statusSelect,
+      notizInput,
+      kurztextPreview,
+      langtextPreview,
+      verortungPreview,
+      metaPreview,
+      fotosPreview,
+      notizPreview,
+    };
+
+    footerRoot.append(selectionNote, notice);
     setSelection(selectedDummyId);
   }
 
@@ -264,6 +400,7 @@ export function createRestarbeitenV2Screen(options = {}) {
     }
     const listNode = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.main.liste"]') || null;
     wireDummyRows(listNode, doc);
+    wireWorkbench(doc);
     if (editorV2Core) {
       editorV2Core.mount(rootNode, registry);
       mountEditorPanel(target || doc.body || null, doc);
@@ -293,6 +430,8 @@ export function createRestarbeitenV2Screen(options = {}) {
     mountedTarget = null;
     rootNode = null;
     dummyRowNodes = new Map();
+    dummyRows = cloneDummyRows();
+    workbenchNodes = {};
     selectedDummyId = "R-001";
     return true;
   }

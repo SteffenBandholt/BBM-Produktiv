@@ -12,6 +12,7 @@ function createFakeDocument() {
       children: [],
       parentElement: null,
       textContent: "",
+      value: "",
       style: {},
       attributes: {},
       append(...items) {
@@ -22,6 +23,14 @@ function createFakeDocument() {
           }
           this.children.push(item);
         }
+      },
+      appendChild(item) {
+        this.append(item);
+        return item;
+      },
+      replaceChildren(...items) {
+        this.children = [];
+        this.append(...items);
       },
       removeChild(item) {
         this.children = this.children.filter((entry) => entry !== item);
@@ -111,6 +120,7 @@ async function runRestarbeitenV2ScreenTests(run) {
   assert.equal(screenSource.includes("localStorage"), false);
   assert.equal(screenSource.includes("autosave"), false);
   assert.equal(screenSource.includes("uiInspector"), false);
+  assert.equal(screenSource.includes("data-ui-inspector-id"), false);
 
   const { createRestarbeitenV2Screen } = await importEsmFromFile(screenPath);
   const { createRestarbeitenV2Registry } = await importEsmFromFile(registryPath);
@@ -132,6 +142,7 @@ async function runRestarbeitenV2ScreenTests(run) {
     const root = screen.render(document.body);
     assert.ok(root);
     assert.equal(root.getAttribute("data-ui-v2-id"), "restarbeitenV2.root");
+    assert.equal(screen.getSelectedDummyId(), "R-001");
 
     const requiredIds = registry.map((entry) => entry.id);
     for (const id of requiredIds) {
@@ -189,6 +200,7 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(hasText(root, "Alle"), true);
     assert.equal(hasText(root, "Foto"), true);
     assert.equal(hasText(root, "Diktat"), true);
+    assert.equal(hasText(root, "Main / Liste"), true);
     assert.equal(hasText(root, "R-001 / Offene Restarbeit / Treppenhaus / offen"), true);
     assert.equal(hasText(root, "R-002 / Musterpunkt / Wohnung / erledigt"), true);
     assert.equal(hasText(root, "R-003 / Kontrollpunkt / Außenanlage / offen"), true);
@@ -199,12 +211,14 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(hasText(root, "Meta"), true);
     assert.equal(hasText(root, "Fotos"), true);
     assert.equal(hasText(root, "Notiz"), true);
+    assert.equal(hasText(root, "Nur lokale DEV-Vorschau - keine Speicherung"), true);
     assert.equal(hasText(root, "Kurztext: Offene Restarbeit"), true);
     assert.equal(hasText(root, "Langtext: Offene Restarbeit im Treppenhaus"), true);
     assert.equal(hasText(root, "Verortung: Treppenhaus"), true);
     assert.equal(hasText(root, "Meta / Status: offen"), true);
     assert.equal(hasText(root, "Fotos: Keine Fotos"), true);
     assert.equal(hasText(root, "Notiz: Platzhalternotiz"), true);
+
     const row1 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-001");
     const row2 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-002");
     const row3 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-003");
@@ -214,20 +228,74 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(row1.getAttribute("data-restarbeiten-v2-selected"), "true");
     assert.equal(row2.getAttribute("data-restarbeiten-v2-selected"), "false");
     assert.equal(row3.getAttribute("data-restarbeiten-v2-selected"), "false");
+
     row2.onclick?.({
       preventDefault() {},
       stopPropagation() {},
     });
+    assert.equal(screen.getSelectedDummyId(), "R-002");
     assert.equal(row2.getAttribute("data-restarbeiten-v2-selected"), "true");
     assert.equal(row1.getAttribute("data-restarbeiten-v2-selected"), "false");
-    assert.equal(hasText(root, "Kurztext: Musterpunkt"), true);
-    assert.equal(hasText(root, "Langtext: Musterpunkt in der Wohnung"), true);
-    assert.equal(hasText(root, "Verortung: Wohnung"), true);
-    assert.equal(hasText(root, "Meta / Status: erledigt"), true);
+
+    const shortTextInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "shortText");
+    const longTextInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "longText");
+    const locationInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "location");
+    const statusSelect = getNodeByAttr(root, "data-restarbeiten-v2-field", "status");
+    const noteInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "note");
+    assert.ok(shortTextInput);
+    assert.ok(longTextInput);
+    assert.ok(locationInput);
+    assert.ok(statusSelect);
+    assert.ok(noteInput);
+    assert.equal(String(shortTextInput.value || ""), "Musterpunkt");
+    assert.equal(String(longTextInput.value || ""), "Musterpunkt in der Wohnung");
+    assert.equal(String(locationInput.value || ""), "Wohnung");
+    assert.equal(String(statusSelect.value || ""), "erledigt");
+
+    shortTextInput.value = "Musterpunkt aktualisiert";
+    shortTextInput.oninput?.({
+      target: shortTextInput,
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    longTextInput.value = "Musterpunkt in der Wohnung - aktualisiert";
+    longTextInput.oninput?.({
+      target: longTextInput,
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    locationInput.value = "Wohnung 2. OG";
+    locationInput.oninput?.({
+      target: locationInput,
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    statusSelect.value = "offen";
+    statusSelect.onchange?.({
+      target: statusSelect,
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    noteInput.value = "Nur lokal geaendert";
+    noteInput.oninput?.({
+      target: noteInput,
+      preventDefault() {},
+      stopPropagation() {},
+    });
+
+    assert.equal(screen.getSelectedDummyId(), "R-002");
+    assert.equal(hasText(root, "Kurztext: Musterpunkt aktualisiert"), true);
+    assert.equal(hasText(root, "Langtext: Musterpunkt in der Wohnung - aktualisiert"), true);
+    assert.equal(hasText(root, "Verortung: Wohnung 2. OG"), true);
+    assert.equal(hasText(root, "Meta / Status: offen"), true);
+    assert.equal(hasText(root, "Notiz: Nur lokal geaendert"), true);
+    assert.equal(hasText(root, "R-002 / Musterpunkt aktualisiert / Wohnung 2. OG / offen"), true);
+
     row3.onclick?.({
       preventDefault() {},
       stopPropagation() {},
     });
+    assert.equal(screen.getSelectedDummyId(), "R-003");
     assert.equal(row3.getAttribute("data-restarbeiten-v2-selected"), "true");
     assert.equal(hasText(root, "Kurztext: Kontrollpunkt"), true);
     assert.equal(hasText(root, "Verortung: Außenanlage"), true);
