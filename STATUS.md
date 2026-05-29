@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M17.6 Restarbeiten V2 echten Projektworkspace-Modulstart minimal verdrahtet:
+  - Der Projektworkspace startet das Modul `restarbeiten` im DEV-Pfad jetzt kontrolliert in den vorhandenen Restarbeiten-V2-ReadOnly-Flow.
+  - Die projectId laeuft vom Workspace bis in den Legacy-Leseloader; der DEV-Fallback bleibt erhalten.
+  - geprueft mit den Restarbeiten-V2-Tests und `npm test`.
+
 - M17.5 Restarbeiten V2 ReadOnly-Pfad im echten Projektworkspace sichtbar geprueft:
   - Der Projektworkspace dient jetzt im Test als sichtbarer Kontextstart fuer den ReadOnly-Pfad.
   - Die projectId laeuft vom Workspace bis in den Legacy-Leseloader.

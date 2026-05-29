@@ -614,6 +614,11 @@ export default class Router {
       return await this.openProjectProtocol(effectiveProjectId, options || {});
     }
 
+    if (normalizedModuleId === "restarbeiten" && this._isRestarbeitenV2DevEnabled()) {
+      this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
+      return await this.showRestarbeitenV2Dev();
+    }
+
     const navEntry =
       getActiveProjectModuleNavigation().find(
         (entry) => String(entry?.moduleId || "").trim() === normalizedModuleId

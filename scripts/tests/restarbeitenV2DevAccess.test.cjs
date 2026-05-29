@@ -382,8 +382,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
       assert.equal(projectId, "project-ctx-17");
       assert.equal(moduleId, "restarbeiten");
       assert.equal(options?.project?.id, "project-ctx-17");
-      await routerWithProjectContext.showRestarbeitenV2Dev();
-      return true;
+      return await originalOpenProjectModule(projectId, moduleId, options);
     };
 
     const restarbeitenButton = collectNodes(
