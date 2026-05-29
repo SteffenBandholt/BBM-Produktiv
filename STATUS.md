@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M17.7 Restarbeiten V2 ReadOnly-Produktivfreigabe fachlich vorbereitet:
+  - Die Umschaltbedingung fuer `restarbeiten` ist jetzt als kleine Router-Guard-Funktion sichtbar und testseitig abgesichert.
+  - Ohne Freigabe bleibt der alte Restarbeiten-Pfad erhalten; mit Freigabe laeuft der DEV-/ReadOnly-Pfad weiter.
+  - geprueft mit den Restarbeiten-V2-Tests und `npm test`.
+
 - M17.6 Restarbeiten V2 echten Projektworkspace-Modulstart minimal verdrahtet:
   - Der Projektworkspace startet das Modul `restarbeiten` im DEV-Pfad jetzt kontrolliert in den vorhandenen Restarbeiten-V2-ReadOnly-Flow.
   - Die projectId laeuft vom Workspace bis in den Legacy-Leseloader; der DEV-Fallback bleibt erhalten.

@@ -206,6 +206,31 @@ async function runRestarbeitenV2DevAccessTests(run) {
     false
   );
 
+  const routerOnOldUiMode = new Router({ contentRoot: null });
+  routerOnOldUiMode._ensureProjectContextQuicklane = async () => ({ setContext() {}, setEnabled() {} });
+  routerOnOldUiMode.context.settings = {};
+  routerOnOldUiMode.currentProjectId = "project-ctx-17";
+  routerOnOldUiMode.currentMeetingId = null;
+  let oldPathShowCall = null;
+  let oldPathV2Called = false;
+  routerOnOldUiMode.show = async (view, options = {}) => {
+    oldPathShowCall = { view, options };
+    routerOnOldUiMode.activeSection = options?.section || null;
+    return true;
+  };
+  routerOnOldUiMode.showRestarbeitenV2Dev = async () => {
+    oldPathV2Called = true;
+    return true;
+  };
+  await routerOnOldUiMode.openProjectModule("project-ctx-17", "restarbeiten", {
+    project: { id: "project-ctx-17" },
+  });
+  assert.ok(oldPathShowCall);
+  assert.equal(oldPathV2Called, false);
+  assert.equal(oldPathShowCall.view?.constructor?.name, "RestarbeitenScreen");
+  assert.equal(routerOnOldUiMode.currentProjectId, "project-ctx-17");
+  assert.equal(routerOnOldUiMode.activeSection, "restarbeiten");
+
   const document = createFakeDocument();
   const previousDocument = globalThis.document;
   const previousWindow = globalThis.window;

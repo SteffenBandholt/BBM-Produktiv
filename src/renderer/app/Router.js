@@ -614,7 +614,7 @@ export default class Router {
       return await this.openProjectProtocol(effectiveProjectId, options || {});
     }
 
-    if (normalizedModuleId === "restarbeiten" && this._isRestarbeitenV2DevEnabled()) {
+    if (this._shouldRouteRestarbeitenToV2ReadOnly(normalizedModuleId)) {
       this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
       return await this.showRestarbeitenV2Dev();
     }
@@ -764,6 +764,10 @@ export default class Router {
 
   _isRestarbeitenV2DevEnabled() {
     return this._readUiMode() === "new";
+  }
+
+  _shouldRouteRestarbeitenToV2ReadOnly(moduleId) {
+    return String(moduleId || "").trim() === "restarbeiten" && this._isRestarbeitenV2DevEnabled();
   }
 
   async showRestarbeitenV2Dev() {
