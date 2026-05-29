@@ -45,6 +45,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Ein bestehender lesender Weg wird verbindlich als spaetere Grundlage fuer die ReadOnly-Kette festgelegt.
 - M17.0: Restarbeiten V2 ReadOnly-Leseanbindung vorbereiten
   - Die eng begrenzte technische Vorbereitung verbindet den gewaehlten Leseweg ueber Bridge und Adapter, ohne Schreib- oder UI-Umbauten.
+- M17.1: Restarbeiten V2 ReadOnly-Lesequelle testweise anbinden
+  - Der DEV-Zugang nutzt die vorbereitete ReadOnly-Factory testweise fuer die lesende Kette bis in den Screen.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

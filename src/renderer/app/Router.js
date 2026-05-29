@@ -16,7 +16,7 @@ import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js"
 import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
 import { createRestarbeitenV2Screen } from "../modules/restarbeitenV2/RestarbeitenV2Screen.js";
 import { createRestarbeitenV2Registry } from "../modules/restarbeitenV2/restarbeitenV2Registry.js";
-import { createRestarbeitenV2ReadOnlyAdapter } from "../modules/restarbeitenV2/restarbeitenV2ReadOnlyAdapter.js";
+import { createRestarbeitenV2ReadOnlyDataSourceFactory } from "../modules/restarbeitenV2/restarbeitenV2ReadOnlyDataSourceFactory.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -768,12 +768,13 @@ export default class Router {
 
     const registry = createRestarbeitenV2Registry();
     const core = createEditorV2Core({ registry, mode: "frame" });
-    const dataSource = createRestarbeitenV2ReadOnlyAdapter({
-      loadLegacyRestarbeiten: async (projectId) => {
+    const readOnlyFactory = createRestarbeitenV2ReadOnlyDataSourceFactory({
+      loadRestarbeiten: async (projectId) => {
         void projectId;
         return createRestarbeitenV2DevLegacyRows();
       },
     });
+    const dataSource = readOnlyFactory.createRestarbeitenV2ReadOnlyDataSource();
     const screen = createRestarbeitenV2Screen({
       registry,
       editorV2Core: core,
