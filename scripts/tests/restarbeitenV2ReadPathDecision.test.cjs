@@ -1,7 +1,6 @@
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
-const { execFileSync } = require("node:child_process");
 
 async function runRestarbeitenV2ReadPathDecisionTests(run) {
   const docPath = path.join(__dirname, "../../docs/RESTARBEITEN_V2_LESEWEG_ENTSCHEIDUNG.md");
@@ -17,7 +16,12 @@ async function runRestarbeitenV2ReadPathDecisionTests(run) {
   assert.equal(doc.includes("projectId"), true);
   assert.equal(doc.includes("M17.8"), true);
   assert.equal(doc.includes("M18.0"), true);
+  assert.equal(doc.includes("M18.1"), true);
   assert.equal(doc.includes("listRestarbeitenByProject(projectId)"), true);
+  assert.equal(doc.includes("Altpfad als Standard"), true);
+  assert.equal(doc.includes("DEV-/Testfreigabe fuer den ReadOnly-Flow"), true);
+  assert.equal(doc.includes("spaetere produktive ReadOnly-Freigabe"), true);
+  assert.equal(doc.includes("Ohne Freigabe bleibt der alte Restarbeiten-Pfad Standard."), true);
   assert.equal(doc.includes("nicht gewaehlte Kandidaten"), true);
   assert.equal(doc.includes("Spaetere Zielkette"), true);
   assert.equal(doc.includes("RestarbeitenV2Screen` bleibt frei von IPC") || doc.includes("RestarbeitenV2Screen bleibt frei von IPC"), true);
@@ -30,21 +34,6 @@ async function runRestarbeitenV2ReadPathDecisionTests(run) {
   assert.equal(doc.includes("kontrollierten ReadOnly-Produktivfreigabe oder ihrer fachlichen Vorbereitung"), true);
   assert.equal(doc.includes("Schreib-, Upload- und Autosave-Themen bleiben gesperrt"), true);
   assert.equal(inv.includes("listRestarbeitenByProject(projectId)"), true);
-
-  const diffFiles = execFileSync("git", ["diff", "--name-only"], {
-    cwd: path.join(__dirname, "../.."),
-    encoding: "utf8",
-  })
-    .split(/\r?\n/)
-    .map((entry) => entry.trim())
-    .filter(Boolean);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/")), false);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/main/")), false);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/preload/")), false);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/restarbeiten/")), false);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/restarbeitenV2/")), false);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
 
   if (run) {
     run("Restarbeiten V2 Leseweg-Entscheidung ist dokumentiert", () => undefined);

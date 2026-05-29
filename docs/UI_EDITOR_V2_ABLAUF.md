@@ -63,6 +63,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Die M17-ReadOnly-Phase ist dokumentiert; freigegeben ist nur der lesende Pfad unter der bestehenden Freigabebedingung, nicht aber Schreiben, Upload, Import, Autosave oder die vollstaendige Ablösung der alten Restarbeiten-UI.
 - M18.0: Restarbeiten V2 naechste Ausbauphase fachlich festlegen
   - M18 beginnt nicht mit Schreiben; zuerst kommt eine kontrollierte ReadOnly-Produktivfreigabe oder deren fachliche Vorbereitung, waehrend Schreib-, Upload- und Autosave-Themen gesperrt bleiben.
+- M18.1: Restarbeiten V2 ReadOnly-Produktivfreigabe technisch vorbereiten
+  - Der Router unterscheidet jetzt lokal zwischen Altpfad, DEV-/Testfreigabe und spaeterer produktiver ReadOnly-Freigabe, ohne neue IPC oder Schreibwege einzufuehren.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

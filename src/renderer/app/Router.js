@@ -18,6 +18,7 @@ import { createRestarbeitenV2Screen } from "../modules/restarbeitenV2/Restarbeit
 import { createRestarbeitenV2Registry } from "../modules/restarbeitenV2/restarbeitenV2Registry.js";
 import { createRestarbeitenV2ReadOnlyDataSourceFactory } from "../modules/restarbeitenV2/restarbeitenV2ReadOnlyDataSourceFactory.js";
 import { listRestarbeitenByProject } from "../modules/restarbeiten/data/restarbeitenDataSource.js";
+import { RESTARBEITEN_MODULE_ID } from "../modules/restarbeiten/index.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -766,13 +767,29 @@ export default class Router {
     return this._readUiMode() === "new";
   }
 
+  _isRestarbeitenV2ProductiveReadOnlyEnabled() {
+    // Produktive Restarbeiten-V2-ReadOnly-Freigabe ist in M18.1 nur strukturell
+    // vorbereitet. Ohne ausdruecklichen spaeteren Freigabeschalter bleibt sie aus.
+    return false;
+  }
+
+  _getRestarbeitenV2ReadOnlyAccessState() {
+    if (this._isRestarbeitenV2DevEnabled()) return "dev";
+    if (this._isRestarbeitenV2ProductiveReadOnlyEnabled()) return "productive";
+    return null;
+  }
+
   _shouldRouteRestarbeitenToV2ReadOnly(moduleId) {
-    return String(moduleId || "").trim() === "restarbeiten" && this._isRestarbeitenV2DevEnabled();
+    return (
+      String(moduleId || "").trim() === RESTARBEITEN_MODULE_ID &&
+      !!this._getRestarbeitenV2ReadOnlyAccessState()
+    );
   }
 
   async showRestarbeitenV2Dev() {
-    if (!this._isRestarbeitenV2DevEnabled()) {
-      alert("Restarbeiten V2 ist nur im DEV-Testzugang verfuegbar.");
+    const accessState = this._getRestarbeitenV2ReadOnlyAccessState();
+    if (!accessState) {
+      alert("Restarbeiten V2 ist derzeit nicht freigegeben.");
       return false;
     }
 
@@ -825,7 +842,7 @@ export default class Router {
     await this.show(view, {
       section: "restarbeitenV2Dev",
       isTopsView: false,
-      pageTitle: "Restarbeiten V2 DEV",
+      pageTitle: accessState === "productive" ? "Restarbeiten V2 ReadOnly" : "Restarbeiten V2 DEV",
       hideSidebar: false,
     });
     return true;

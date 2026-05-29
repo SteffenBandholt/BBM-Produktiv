@@ -157,6 +157,10 @@ async function runRestarbeitenV2DevAccessTests(run) {
   const headerSource = fs.readFileSync(headerPath, "utf8");
 
   assert.equal(routerSource.includes("showRestarbeitenV2Dev"), true);
+  assert.equal(routerSource.includes("_isRestarbeitenV2ProductiveReadOnlyEnabled"), true);
+  assert.equal(routerSource.includes("_getRestarbeitenV2ReadOnlyAccessState"), true);
+  assert.equal(routerSource.includes("Restarbeiten V2 ReadOnly"), true);
+  assert.equal(routerSource.includes("Restarbeiten V2 ist derzeit nicht freigegeben."), true);
   assert.equal(headerSource.includes("Restarbeiten V2"), true);
   assert.equal(headerSource.includes("showRestarbeitenV2Dev"), true);
 
@@ -170,6 +174,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(methodSource.includes("createRestarbeitenV2ReadOnlyDataSourceFactory"), true);
   assert.equal(methodSource.includes("createRestarbeitenV2ReadOnlyAdapter"), false);
   assert.equal(methodSource.includes("listRestarbeitenByProject"), true);
+  assert.equal(methodSource.includes("productive"), true);
   assert.equal(methodSource.includes("loadRestarbeiten"), true);
   assert.equal(methodSource.includes("createRestarbeitenV2FakeDataSource"), false);
   assert.equal(methodSource.includes("useDataSource: true"), true);
@@ -230,6 +235,98 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(oldPathShowCall.view?.constructor?.name, "RestarbeitenScreen");
   assert.equal(routerOnOldUiMode.currentProjectId, "project-ctx-17");
   assert.equal(routerOnOldUiMode.activeSection, "restarbeiten");
+  assert.equal(routerOnOldUiMode._getRestarbeitenV2ReadOnlyAccessState(), null);
+
+  const productDocument = createFakeDocument();
+  const productPreviousDocument = globalThis.document;
+  const productPreviousWindow = globalThis.window;
+  const productPreviousAlert = globalThis.alert;
+  globalThis.document = productDocument;
+  globalThis.window = {
+    localStorage: {
+      getItem(key) {
+        return key === "bbm.uiMode" ? "old" : null;
+      },
+      setItem() {},
+      removeItem() {},
+    },
+    getComputedStyle(node) {
+      return node?.style || {};
+    },
+    innerWidth: 1600,
+    innerHeight: 1200,
+    addEventListener() {},
+    removeEventListener() {},
+    bbmDb: {
+      appIsPackaged: async () => ({ ok: true, isPackaged: true }),
+      licenseGetStatus: async () => ({
+        valid: true,
+        modules: ["protokoll", "restarbeiten"],
+      }),
+      restarbeitenListByProject: async (payload) => {
+        assert.deepEqual(payload, { projectId: "project-ctx-18" });
+        return {
+          ok: true,
+          items: [
+            {
+              restarbeit_id: "LEG-201",
+              lfd_nr: "LEG-201",
+              title: "Lizenzierte Restarbeit",
+              description: "Haus P",
+              location: "Haus P",
+              state: "open",
+              completion_note: "Lizenz geladen",
+              responsible_firm_name: "Firma Lizenz",
+              due_date: "2026-07-15",
+              note: "Lizenz geladen",
+              attachments: [],
+            },
+          ],
+        };
+      },
+      restarbeitenGetProjectSettings: async (payload) => {
+        assert.deepEqual(payload, { projectId: "project-ctx-18" });
+        return { ok: true, settings: {} };
+      },
+      projectFirmsListByProject: async (projectId) => {
+        assert.equal(projectId, "project-ctx-18");
+        return { ok: true, list: [] };
+      },
+      restarbeitenListAttachments: async (payload) => {
+        assert.ok(payload?.restarbeitId);
+        return { ok: true, attachments: [] };
+      },
+    },
+  };
+  globalThis.alert = () => {};
+  try {
+    const routerWithProductFreigabe = new Router({ contentRoot: productDocument.body });
+    routerWithProductFreigabe._ensureProjectContextQuicklane = async () => ({ setContext() {}, setEnabled() {} });
+    routerWithProductFreigabe.context.settings = {};
+    routerWithProductFreigabe.currentProjectId = "project-ctx-18";
+    routerWithProductFreigabe.currentMeetingId = null;
+    await routerWithProductFreigabe.ensureActiveModuleAccess({ force: true });
+    assert.equal(routerWithProductFreigabe._getRestarbeitenV2ReadOnlyAccessState(), null);
+    assert.equal(routerWithProductFreigabe._isRestarbeitenV2ProductiveReadOnlyEnabled(), false);
+
+    const productOpened = await routerWithProductFreigabe.openProjectModule("project-ctx-18", "restarbeiten", {
+      project: {
+        id: "project-ctx-18",
+        project_number: "18",
+        name: "Projekt 18",
+      },
+    });
+    assert.equal(productOpened, true);
+    assert.equal(routerWithProductFreigabe.currentProjectId, "project-ctx-18");
+    assert.equal(routerWithProductFreigabe.activeSection, "restarbeiten");
+    assert.equal(routerWithProductFreigabe._restarbeitenV2DevLoadedProjectId, undefined);
+    const productHost = getNodeByAttr(productDocument.body, "data-ui-v2-restarbeiten-host", "true");
+    assert.equal(productHost, null);
+  } finally {
+    globalThis.document = productPreviousDocument;
+    globalThis.window = productPreviousWindow;
+    globalThis.alert = productPreviousAlert;
+  }
 
   const document = createFakeDocument();
   const previousDocument = globalThis.document;
