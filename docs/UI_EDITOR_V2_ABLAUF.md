@@ -51,6 +51,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Der DEV-Einstieg gibt jetzt den aktuellen Projektkontext weiter und faellt nur ohne Projekt auf den DEV-Standard zurueck.
 - M17.3: Echten Legacy-ReadOnly-Loader hinter die Factory haengen
   - Der DEV-/ReadOnly-Pfad probiert jetzt den vorhandenen Legacy-Leseloader und faellt nur bei fehlendem Projektkontext oder Fehlern auf die DEV-Fallback-Rows zurueck.
+- M17.4: Legacy-ReadOnly-Pfad gegen Schreib- und Nebenwege absichern
+  - Der bestehende ReadOnly-Pfad bleibt streng lesend; Guardrails pruefen, dass keine Schreib-, Upload-, Autosave- oder neue IPC-Wege dazukommen.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
