@@ -74,6 +74,10 @@ function getNodeById(root, id) {
   return collectNodes(root, (node) => node?.getAttribute?.("data-ui-v2-id") === id)[0] || null;
 }
 
+function hasText(root, expected) {
+  return collectNodes(root, (node) => String(node?.textContent || "").includes(expected)).length > 0;
+}
+
 function getDepthMap(registry) {
   const map = new Map(registry.map((entry) => [entry.id, entry]));
   const depthMemo = new Map();
@@ -169,11 +173,34 @@ async function runRestarbeitenV2ScreenTests(run) {
     const header = getNodeById(root, "restarbeitenV2.header");
     assert.ok(header);
     assert.equal(header.style.gridArea, "header");
+    assert.equal(hasText(root, "Restarbeiten V2"), true);
+    assert.equal(hasText(root, "Projekt / Bereich / Stand"), true);
+    assert.equal(hasText(root, "Offen / Erledigt / Gesamt"), true);
+    assert.equal(hasText(root, "Suche / Status / Verortung"), true);
+    assert.equal(hasText(root, "Quicklane rechts"), true);
+    assert.equal(hasText(root, "Lock / Fixieren"), true);
+    assert.equal(hasText(root, "Neu"), true);
+    assert.equal(hasText(root, "Offen"), true);
+    assert.equal(hasText(root, "Erledigt"), true);
+    assert.equal(hasText(root, "Alle"), true);
+    assert.equal(hasText(root, "Foto"), true);
+    assert.equal(hasText(root, "Diktat"), true);
+    assert.equal(hasText(root, "R-001 / Offene Restarbeit / Treppenhaus / offen"), true);
+    assert.equal(hasText(root, "R-002 / Musterpunkt / Wohnung / erledigt"), true);
+    assert.equal(hasText(root, "R-003 / Kontrollpunkt / Außenanlage / offen"), true);
+    assert.equal(hasText(root, "Footer / Workbench"), true);
+    assert.equal(hasText(root, "Kurztext"), true);
+    assert.equal(hasText(root, "Langtext"), true);
+    assert.equal(hasText(root, "Verortung"), true);
+    assert.equal(hasText(root, "Meta"), true);
+    assert.equal(hasText(root, "Fotos"), true);
+    assert.equal(hasText(root, "Notiz"), true);
 
     assert.equal(screenSource.includes("Router"), false);
     assert.equal(screenSource.includes("MainHeader"), false);
     assert.equal(screenSource.includes("ipc"), false);
     assert.equal(screenSource.includes("db"), false);
+    assert.equal(screenSource.includes("localStorage"), false);
 
     const diffFiles = execFileSync("git", ["diff", "--name-only"], {
       cwd: path.join(__dirname, "../.."),

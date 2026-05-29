@@ -19,6 +19,13 @@ function createNode(doc, tagName, entry, textContent = "") {
   return node;
 }
 
+function createTextBlock(doc, text, className = "") {
+  const node = doc.createElement("div");
+  if (className) node.className = className;
+  node.textContent = text;
+  return node;
+}
+
 function buildTree(doc, registry) {
   const entries = new Map(registry.map((entry) => [entry.id, entry]));
   const nodes = new Map();
@@ -57,6 +64,75 @@ function buildTree(doc, registry) {
     if (parentNode) {
       parentNode.append(node);
     }
+  }
+
+  const header = nodes.get("restarbeitenV2.header");
+  if (header) {
+    header.append(createTextBlock(doc, "Restarbeiten V2", "restarbeiten-v2-title"));
+  }
+  const headerContext = nodes.get("restarbeitenV2.header.context");
+  if (headerContext) headerContext.textContent = "Projekt / Bereich / Stand";
+  const headerStatus = nodes.get("restarbeitenV2.header.status");
+  if (headerStatus) headerStatus.textContent = "Offen / Erledigt / Gesamt";
+  const headerFilter = nodes.get("restarbeitenV2.header.filter");
+  if (headerFilter) headerFilter.textContent = "Suche / Status / Verortung";
+
+  const quicklane = nodes.get("restarbeitenV2.quicklane");
+  if (quicklane) {
+    quicklane.append(createTextBlock(doc, "Quicklane rechts", "restarbeiten-v2-quicklane-label"));
+  }
+  const quicklaneLabels = [
+    ["restarbeitenV2.quicklane.lock", "Lock / Fixieren"],
+    ["restarbeitenV2.quicklane.neu", "Neu"],
+    ["restarbeitenV2.quicklane.filterOffen", "Offen"],
+    ["restarbeitenV2.quicklane.filterErledigt", "Erledigt"],
+    ["restarbeitenV2.quicklane.filterAlle", "Alle"],
+    ["restarbeitenV2.quicklane.foto", "Foto"],
+    ["restarbeitenV2.quicklane.diktat", "Diktat"],
+  ];
+  for (const [id, text] of quicklaneLabels) {
+    const node = nodes.get(id);
+    if (node) node.textContent = text;
+  }
+
+  const main = nodes.get("restarbeitenV2.main");
+  const list = nodes.get("restarbeitenV2.main.liste");
+  if (main) {
+    main.append(createTextBlock(doc, "Main / Liste", "restarbeiten-v2-main-title"));
+  }
+  if (list) {
+    list.append(
+      createTextBlock(doc, "R-001 / Offene Restarbeit / Treppenhaus / offen", "restarbeiten-v2-row"),
+      createTextBlock(doc, "R-002 / Musterpunkt / Wohnung / erledigt", "restarbeiten-v2-row"),
+      createTextBlock(doc, "R-003 / Kontrollpunkt / Außenanlage / offen", "restarbeiten-v2-row")
+    );
+  }
+  const mainLabels = [
+    ["restarbeitenV2.main.nummer", "Nummer / Kennung"],
+    ["restarbeitenV2.main.textbereich", "Kurztext / Langtext"],
+    ["restarbeitenV2.main.verortung", "Verortung"],
+    ["restarbeitenV2.main.meta", "Status / Meta"],
+  ];
+  for (const [id, text] of mainLabels) {
+    const node = nodes.get(id);
+    if (node) node.textContent = text;
+  }
+
+  const footer = nodes.get("restarbeitenV2.footer");
+  if (footer) {
+    footer.append(createTextBlock(doc, "Footer / Workbench", "restarbeiten-v2-footer-title"));
+  }
+  const footerLabels = [
+    ["restarbeitenV2.footer.kurztext", "Kurztext"],
+    ["restarbeitenV2.footer.langtext", "Langtext"],
+    ["restarbeitenV2.footer.verortung", "Verortung"],
+    ["restarbeitenV2.footer.meta", "Meta"],
+    ["restarbeitenV2.footer.fotos", "Fotos"],
+    ["restarbeitenV2.footer.notiz", "Notiz"],
+  ];
+  for (const [id, text] of footerLabels) {
+    const node = nodes.get(id);
+    if (node) node.textContent = text;
   }
 
   return nodes.get("restarbeitenV2.root") || null;
