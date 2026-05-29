@@ -768,9 +768,10 @@ export default class Router {
 
     const registry = createRestarbeitenV2Registry();
     const core = createEditorV2Core({ registry, mode: "frame" });
+    const effectiveProjectId = this.currentProjectId || "dev-restarbeiten-v2";
     const readOnlyFactory = createRestarbeitenV2ReadOnlyDataSourceFactory({
       loadRestarbeiten: async (projectId) => {
-        void projectId;
+        this._restarbeitenV2DevLoadedProjectId = projectId || null;
         return createRestarbeitenV2DevLegacyRows();
       },
     });
@@ -779,7 +780,7 @@ export default class Router {
       registry,
       editorV2Core: core,
       useDataSource: true,
-      projectId: "dev-restarbeiten-v2",
+      projectId: effectiveProjectId,
       dataSource,
     });
 
@@ -802,7 +803,7 @@ export default class Router {
       },
     };
 
-    this._setProjectRuntimeContext({ projectId: null, meetingId: null });
+    this._setProjectRuntimeContext({ projectId: this.currentProjectId || null, meetingId: null });
     await this.show(view, {
       section: "restarbeitenV2Dev",
       isTopsView: false,

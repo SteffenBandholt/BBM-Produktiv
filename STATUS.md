@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M17.2 Restarbeiten V2 ReadOnly-Lesequelle im Projektkontext abgesichert:
+  - Der DEV-Einstieg reicht den aktuellen Projektkontext jetzt bis in die ReadOnly-Lesequelle durch.
+  - Ohne Projektkontext bleibt der bisherige DEV-Fallback aktiv.
+  - geprueft mit den Restarbeiten-V2-Tests und `npm test`.
+
 - M17.1 Restarbeiten V2 ReadOnly-Lesequelle testweise angebunden:
   - Der DEV-Zugang nutzt jetzt testweise die vorbereitete ReadOnly-Factory ueber den lesenden Weg bis in den Restarbeiten-V2-Screen.
   - Der Screen selbst bleibt unveraendert; die Kette bleibt schreibfrei.
