@@ -171,7 +171,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(methodSource.includes("loadRestarbeiten"), true);
   assert.equal(methodSource.includes("createRestarbeitenV2FakeDataSource"), false);
   assert.equal(methodSource.includes("useDataSource: true"), true);
-  assert.equal(methodSource.includes("projectId: \"dev-restarbeiten-v2\""), true);
+  assert.equal(methodSource.includes("const effectiveProjectId = this.currentProjectId || \"dev-restarbeiten-v2\";"), true);
   assert.equal(routerSource.includes("restarbeit_id"), true);
   assert.equal(routerSource.includes("lfd_nr"), true);
   assert.equal(routerSource.includes("completion_note"), true);
@@ -249,6 +249,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
     assert.equal(router.currentProjectId, null);
     assert.equal(router.currentMeetingId, null);
     assert.equal(router.activeSection, "restarbeitenV2Dev");
+    assert.equal(router._restarbeitenV2DevLoadedProjectId, "dev-restarbeiten-v2");
     assert.equal(router.context?.ui?.pageTitle, "Restarbeiten V2 DEV");
     const restarbeitenHost = getNodeByAttr(contentRoot, "data-ui-v2-restarbeiten-host", "true");
     assert.ok(restarbeitenHost);
@@ -268,6 +269,36 @@ async function runRestarbeitenV2DevAccessTests(run) {
     assert.ok(collectNodes(restarbeitenHost, (node) => String(node.textContent || "").includes("DS-001 / Geladene Fake-Restarbeit / Haus A / offen")).length > 0);
     assert.ok(collectNodes(restarbeitenHost, (node) => String(node.textContent || "").includes("DS-002 / Fake erledigt / Wohnung 2 / erledigt")).length > 0);
     assert.ok(collectNodes(restarbeitenHost, (node) => String(node.textContent || "").includes("DS-003 / Fake Pruefung / Aussenanlage / offen")).length > 0);
+
+    const documentWithProjectContext = createFakeDocument();
+    globalThis.document = documentWithProjectContext;
+    globalThis.window = {
+      localStorage: {
+        getItem(key) {
+          return key === "bbm.uiMode" ? "new" : null;
+        },
+        setItem() {},
+        removeItem() {},
+      },
+      getComputedStyle(node) {
+        return node?.style || {};
+      },
+      innerWidth: 1600,
+      innerHeight: 1200,
+      addEventListener() {},
+      removeEventListener() {},
+      bbmDb: {},
+    };
+    const routerWithProjectContext = new Router({ contentRoot: documentWithProjectContext.body });
+    routerWithProjectContext._ensureProjectContextQuicklane = async () => ({ setContext() {}, setEnabled() {} });
+    routerWithProjectContext.context.settings = {};
+    routerWithProjectContext.currentProjectId = "project-ctx-17";
+    routerWithProjectContext.currentMeetingId = null;
+    await routerWithProjectContext.showRestarbeitenV2Dev();
+    await flush();
+    assert.equal(routerWithProjectContext.currentProjectId, "project-ctx-17");
+    assert.equal(routerWithProjectContext._restarbeitenV2DevLoadedProjectId, "project-ctx-17");
+    assert.equal(routerWithProjectContext.activeSection, "restarbeitenV2Dev");
   } finally {
     globalThis.document = previousDocument;
     globalThis.window = previousWindow;

@@ -47,6 +47,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Die eng begrenzte technische Vorbereitung verbindet den gewaehlten Leseweg ueber Bridge und Adapter, ohne Schreib- oder UI-Umbauten.
 - M17.1: Restarbeiten V2 ReadOnly-Lesequelle testweise anbinden
   - Der DEV-Zugang nutzt die vorbereitete ReadOnly-Factory testweise fuer die lesende Kette bis in den Screen.
+- M17.2: Restarbeiten V2 ReadOnly-Lesequelle im Projektkontext absichern
+  - Der DEV-Einstieg gibt jetzt den aktuellen Projektkontext weiter und faellt nur ohne Projekt auf den DEV-Standard zurueck.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
