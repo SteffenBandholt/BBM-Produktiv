@@ -73,9 +73,14 @@ Regeln:
 - kleine Pakete
 - ein Paket = ein Ziel
 - temporaeres Verschieben
+- temporäres Verschieben
 - Groesse
+- Größe
 - keine Mischung aus Editor-Core und Fach-UI
 - keine Mischung aus UI-Code und PDF / Druck
 - keine gleichzeitige Bearbeitung von frame / field / control, wenn nur frame geplant ist
+
+Protokoll bleibt unberührt.
+echte App-Sichtprüfung
 
 Das haelt die Folgepakete klein, pruefbar und sauber trennbar.

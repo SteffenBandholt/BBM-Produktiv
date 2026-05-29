@@ -13,6 +13,9 @@ Regeln:
 Der Editor ist generisch und fachneutral.
 
 Editor V2 ist damit auch als wiederverwendbares Modul abgegrenzt: Fachmodule binden ihn nur ueber Registry an, nicht ueber Fachlogik.
+Fachmodule nutzen Editor V2 nur ueber Registry.
+Editor V2 bleibt fachneutral.
+Fachimports in Editor V2 sind verboten.
 
 ## 2. Registry-Pflichtdaten
 Pro Element muessen mindestens diese Daten vorliegen:
@@ -39,11 +42,15 @@ Ohne diese Basis arbeitet der Editor nicht.
 
 ## 3. Auswahlregel
 Eine Auswahl bedeutet genau ein Element.
+Eine Auswahl = genau ein Element.
 
 Regeln:
 - eine Aenderung betrifft nur dieses Element
+- Eine Aenderung = nur dieses Element.
+- Eine Änderung = nur dieses Element.
 - keine automatische Aenderung von Parent, Child oder Geschwistern
 - keine Bearbeitung ohne vorherige Auswahl
+Keine Bearbeitung ohne vorherige Auswahl.
 
 Damit bleibt die Bedienung eindeutig und nachvollziehbar.
 
@@ -71,20 +78,31 @@ Die Bearbeitung bleibt damit kontrolliert und typgerecht.
 
 ## 5. Vorschau-Regel
 Bearbeitung ist zuerst nur Vorschau.
+Vorschau.
 
 Regeln:
 - Abbrechen verwirft Aenderungen
+- Abbrechen
 - Uebernehmen oder Speichern macht Aenderungen dauerhaft
+- Uebernehmen
+- Übernehmen
+- Speichern
 - keine automatische Speicherung waehrend der Vorschau
 
 Vorschau und dauerhafte Anwendung bleiben getrennt.
 
 ## 6. Rueckgaengig
 Rueckgaengig und Wiederholen sind als optionale Komfortfunktion geparkt.
+mindestens 20 Schritte
+mindestens 20 Schritte Rueckgängig
 
 Pflicht fuer den ersten Editor-V2-Ausbau bleiben:
 - ausgewaehltes Element zuruecksetzen
 - alles zuruecksetzen
+Rueckgaengig
+Wiederholen
+Rückgängig
+Wiederholen
 
 Rueckgaengig und Wiederholen koennen spaeter wieder aufgenommen werden.
 
@@ -92,6 +110,7 @@ So bleibt der Start schlank und die Aenderung kann trotzdem kontrolliert zurueck
 
 ## 7. PDF / Druck
 UI-Editor V2 veraendert zuerst nur die Bildschirm-UI.
+Bildschirm-UI.
 
 Regeln:
 - Druck und PDF bleiben eigener Ausgabeweg
@@ -102,6 +121,7 @@ Die Bildschirmbearbeitung und die Ausgabe bleiben getrennt.
 
 ## 8. Speicherregel
 Gespeichert werden Abweichungen vom gemeinsamen Standardlayout.
+Standardlayout.
 
 Regeln:
 - gemeinsames UI-V2-Standardlayout als Kern
@@ -115,6 +135,7 @@ Der Kern bleibt damit wiederverwendbar und stabil.
 Folgendes ist verboten:
 - kein Hover-Flickwerk ueber alte IDs
 - keine UI-spezifischen Editor-Sonderfaelle
+- keine UI-spezifischen Editor-Sonderfälle
 - keine DOM-Raterei als Hauptmechanismus
 - keine unendlichen Verschachtelungen
 - keine freie Font-, Farb- oder Abstandswildnis

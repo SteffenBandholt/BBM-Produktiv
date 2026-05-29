@@ -12,6 +12,7 @@ Regeln:
 Die neue Struktur wird bewusst sauber und getrennt aufgebaut.
 
 Restarbeiten V2 nutzt den Editor V2 nur als fachneutralen Layout-Editor ueber Registry. Es gibt keine Restarbeiten-Sonderlogik im Editor V2.
+Restarbeiten V2 nutzt den Editor V2 nur ueber Registry.
 
 ## 2. UI-V2-Grundarchitektur
 Restarbeiten V2 nutzt die gemeinsame UI-V2-Grundarchitektur:
@@ -52,6 +53,8 @@ Die Quicklane soll Standardaktionen ohne lange Wege erreichbar machen.
 
 ## 5. Main
 Der Main-Bereich zeigt Uebersicht und Auswahl.
+Die Hauptansicht ist damit die Uebersicht / Auswahl.
+maximale Tiefe
 
 Inhalt:
 - Restarbeitenliste
@@ -73,6 +76,11 @@ Eigenschaften:
 - hoehenveraenderbar
 - einklappbar
 - keine frei schwebende Editbox
+
+Die Kerngedanken sind damit: unten angedockt, höhenveränderbar und einklappbar.
+Der Footer steht fuer Bearbeitung / Details.
+Protokoll bleibt unberuehrt.
+Protokoll bleibt unberührt.
 
 Footer-Gruppen:
 - Kurztext
