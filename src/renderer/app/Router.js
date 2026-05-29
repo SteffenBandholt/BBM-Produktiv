@@ -17,6 +17,7 @@ import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
 import { createRestarbeitenV2Screen } from "../modules/restarbeitenV2/RestarbeitenV2Screen.js";
 import { createRestarbeitenV2Registry } from "../modules/restarbeitenV2/restarbeitenV2Registry.js";
 import { createRestarbeitenV2ReadOnlyDataSourceFactory } from "../modules/restarbeitenV2/restarbeitenV2ReadOnlyDataSourceFactory.js";
+import { listRestarbeitenByProject } from "../modules/restarbeiten/data/restarbeitenDataSource.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -772,7 +773,15 @@ export default class Router {
     const readOnlyFactory = createRestarbeitenV2ReadOnlyDataSourceFactory({
       loadRestarbeiten: async (projectId) => {
         this._restarbeitenV2DevLoadedProjectId = projectId || null;
-        return createRestarbeitenV2DevLegacyRows();
+        if (!projectId || projectId === "dev-restarbeiten-v2") {
+          return createRestarbeitenV2DevLegacyRows();
+        }
+        try {
+          const legacyRows = await listRestarbeitenByProject(projectId);
+          return Array.isArray(legacyRows) ? legacyRows : createRestarbeitenV2DevLegacyRows();
+        } catch (_error) {
+          return createRestarbeitenV2DevLegacyRows();
+        }
       },
     });
     const dataSource = readOnlyFactory.createRestarbeitenV2ReadOnlyDataSource();
