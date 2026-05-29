@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M17.1 Restarbeiten V2 ReadOnly-Lesequelle testweise angebunden:
+  - Der DEV-Zugang nutzt jetzt testweise die vorbereitete ReadOnly-Factory ueber den lesenden Weg bis in den Restarbeiten-V2-Screen.
+  - Der Screen selbst bleibt unveraendert; die Kette bleibt schreibfrei.
+  - geprueft mit den Restarbeiten-V2-Tests und `npm test`.
+
 - M35.1 Restarbeiten-Quicklane ist wieder ohne E-Mail-Button:
   - Das Mail-Icon wurde aus der Quicklane entfernt.
   - Der Restarbeiten-Screen haelt keinen eigenen Mail-Transport mehr vor.

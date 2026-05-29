@@ -166,8 +166,9 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(methodSource.includes("db"), false);
   assert.equal(methodSource.includes("localStorage"), false);
   assert.equal(methodSource.includes("autosave"), false);
-  assert.equal(methodSource.includes("createRestarbeitenV2ReadOnlyAdapter"), true);
-  assert.equal(methodSource.includes("loadLegacyRestarbeiten"), true);
+  assert.equal(methodSource.includes("createRestarbeitenV2ReadOnlyDataSourceFactory"), true);
+  assert.equal(methodSource.includes("createRestarbeitenV2ReadOnlyAdapter"), false);
+  assert.equal(methodSource.includes("loadRestarbeiten"), true);
   assert.equal(methodSource.includes("createRestarbeitenV2FakeDataSource"), false);
   assert.equal(methodSource.includes("useDataSource: true"), true);
   assert.equal(methodSource.includes("projectId: \"dev-restarbeiten-v2\""), true);

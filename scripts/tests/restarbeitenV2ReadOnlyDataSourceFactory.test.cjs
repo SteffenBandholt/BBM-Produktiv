@@ -21,7 +21,7 @@ async function runRestarbeitenV2ReadOnlyDataSourceFactoryTests(run) {
   assert.equal(source.includes("src/main/"), false);
   assert.equal(source.includes("src/preload/"), false);
   assert.equal(screenSource.includes("createRestarbeitenV2ReadOnlyDataSourceFactory"), false);
-  assert.equal(routerSource.includes("createRestarbeitenV2ReadOnlyDataSourceFactory"), false);
+  assert.equal(routerSource.includes("createRestarbeitenV2ReadOnlyDataSourceFactory"), true);
 
   const {
     createRestarbeitenV2ReadOnlyDataSourceFactory,

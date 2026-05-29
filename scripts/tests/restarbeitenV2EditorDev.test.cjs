@@ -155,8 +155,9 @@ async function runRestarbeitenV2EditorDevTests(run) {
   const screenSource = fs.readFileSync(screenPath, "utf8");
   assert.equal(routerSource.includes("showRestarbeitenV2Dev"), true);
   assert.equal(routerSource.includes("createEditorV2Core({ registry, mode: \"frame\" })"), true);
-  assert.equal(routerSource.includes("createRestarbeitenV2ReadOnlyAdapter"), true);
-  assert.equal(routerSource.includes("loadLegacyRestarbeiten"), true);
+  assert.equal(routerSource.includes("createRestarbeitenV2ReadOnlyDataSourceFactory"), true);
+  assert.equal(routerSource.includes("createRestarbeitenV2ReadOnlyAdapter"), false);
+  assert.equal(routerSource.includes("loadRestarbeiten"), true);
   assert.equal(routerSource.includes("createRestarbeitenV2FakeDataSource()"), false);
   assert.equal(routerSource.includes("useDataSource: true"), true);
   assert.equal(screenSource.includes("createEditorV2Panel"), true);
