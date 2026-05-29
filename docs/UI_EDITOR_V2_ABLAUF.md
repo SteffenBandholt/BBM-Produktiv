@@ -12,6 +12,8 @@ Der Umbau folgt dieser Reihenfolge:
 - M14.6: Editor V2 sichtbare Bedienoberflaeche im EditorLab
 - M14.7: EditorLab V2 als Dev-Testzugang sichtbar machen
 - M14.8: Erst danach Restarbeiten V2 anschliessen
+- M15.0: Restarbeiten V2 fachlich/technisch vorbereiten
+- M15.1: Restarbeiten V2 Registry-Test vorbereiten
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
