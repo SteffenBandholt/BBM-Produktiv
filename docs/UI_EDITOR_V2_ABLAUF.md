@@ -53,6 +53,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Der DEV-/ReadOnly-Pfad probiert jetzt den vorhandenen Legacy-Leseloader und faellt nur bei fehlendem Projektkontext oder Fehlern auf die DEV-Fallback-Rows zurueck.
 - M17.4: Legacy-ReadOnly-Pfad gegen Schreib- und Nebenwege absichern
   - Der bestehende ReadOnly-Pfad bleibt streng lesend; Guardrails pruefen, dass keine Schreib-, Upload-, Autosave- oder neue IPC-Wege dazukommen.
+- M17.5: Restarbeiten V2 ReadOnly-Pfad im echten Projektworkspace sichtbar pruefen
+  - Der Projektworkspace laesst sich als Kontextquelle fuer den ReadOnly-Pfad verwenden; die projectId laeuft aus dem Workspace bis in den Legacy-Leseloader.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

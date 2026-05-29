@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M17.5 Restarbeiten V2 ReadOnly-Pfad im echten Projektworkspace sichtbar geprueft:
+  - Der Projektworkspace dient jetzt im Test als sichtbarer Kontextstart fuer den ReadOnly-Pfad.
+  - Die projectId laeuft vom Workspace bis in den Legacy-Leseloader.
+  - geprueft mit den Restarbeiten-V2-Tests und `npm test`.
+
 - M17.4 Legacy-ReadOnly-Pfad gegen Schreib- und Nebenwege abgesichert:
   - Der bestehende ReadOnly-Pfad bleibt strikt lesend; Guardrails pruefen fehlende Schreib-, Upload-, Autosave- und neue IPC-Wege.
   - geprueft mit den Restarbeiten-V2-Tests und `npm test`.
