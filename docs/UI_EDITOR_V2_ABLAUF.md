@@ -35,6 +35,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Der bestehende DEV-Zugang laedt sichtbar ueber eine lokale Fake-DataSource und zeigt, dass der optionale Ladepfad im Entwicklerzugang funktioniert.
 - M16.5: Restarbeiten V2 ReadOnly-Adapter vorbereiten
   - Ein lesender Adapter kann spaeter Legacy- oder Bestandsdaten ueber eine injizierte Quelle ins V2-DTO-Format normalisieren, ohne Schreibwege zu oeffnen.
+- M16.6: Restarbeiten V2 DEV-Zugang ueber ReadOnly-Adapter pruefen
+  - Der DEV-Zugang zeigt die sichtbare Kette von einer lokalen Legacy-Quelle ueber den ReadOnly-Adapter bis in den Screen, ohne echte Anbindung.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

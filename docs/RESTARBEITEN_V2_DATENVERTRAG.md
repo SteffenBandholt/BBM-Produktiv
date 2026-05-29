@@ -145,6 +145,7 @@ Noch nicht implementieren:
 - M16.3: DEV-Screen optional mit injizierter DataSource betreiben
 - M16.4: echte Projektmodul-Anbindung vorbereiten
 - M16.5: ReadOnly-Adapter fuer bestehende Daten vorbereiten
+- M16.6: DEV-Zugang ueber ReadOnly-Adapter pruefen
 
 ## 13. Abgrenzung
 Diese Festlegung betrifft nur den Vertrag und die technische Grenze.

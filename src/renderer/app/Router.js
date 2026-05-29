@@ -16,7 +16,7 @@ import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js"
 import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
 import { createRestarbeitenV2Screen } from "../modules/restarbeitenV2/RestarbeitenV2Screen.js";
 import { createRestarbeitenV2Registry } from "../modules/restarbeitenV2/restarbeitenV2Registry.js";
-import { createRestarbeitenV2FakeDataSource } from "../modules/restarbeitenV2/restarbeitenV2DataSource.js";
+import { createRestarbeitenV2ReadOnlyAdapter } from "../modules/restarbeitenV2/restarbeitenV2ReadOnlyAdapter.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -82,6 +82,50 @@ function _pickAppKernelSettings(raw = {}) {
     out[key] = raw?.[key] ?? "";
   }
   return out;
+}
+
+function createRestarbeitenV2DevLegacyRows() {
+  return [
+    {
+      restarbeit_id: "DS-001",
+      lfd_nr: "DS-001",
+      title: "Geladene Fake-Restarbeit",
+      description: "Haus A",
+      location: "Haus A",
+      state: "open",
+      completion_note: "Fake DEV-Quelle",
+      responsible_firm_name: "Firma Alpha",
+      due_date: "2026-06-01",
+      note: "Nur lokal geladen",
+      attachments: [],
+    },
+    {
+      restarbeit_id: "DS-002",
+      lfd_nr: "DS-002",
+      title: "Fake erledigt",
+      description: "Wohnung 2",
+      location: "Wohnung 2",
+      state: "done",
+      completion_note: "Fake erledigt",
+      responsible_firm_name: "Firma Beta",
+      due_date: "2026-06-02",
+      note: "Nur lokal geladen",
+      attachments: [],
+    },
+    {
+      restarbeit_id: "DS-003",
+      lfd_nr: "DS-003",
+      title: "Fake Pruefung",
+      description: "Aussenanlage",
+      location: "Aussenanlage",
+      state: "open",
+      completion_note: "Fake Pruefung",
+      responsible_firm_name: "Firma Gamma",
+      due_date: "2026-06-03",
+      note: "Nur lokal geladen",
+      attachments: [],
+    },
+  ];
 }
 
 export default class Router {
@@ -724,12 +768,18 @@ export default class Router {
 
     const registry = createRestarbeitenV2Registry();
     const core = createEditorV2Core({ registry, mode: "frame" });
+    const dataSource = createRestarbeitenV2ReadOnlyAdapter({
+      loadLegacyRestarbeiten: async (projectId) => {
+        void projectId;
+        return createRestarbeitenV2DevLegacyRows();
+      },
+    });
     const screen = createRestarbeitenV2Screen({
       registry,
       editorV2Core: core,
       useDataSource: true,
       projectId: "dev-restarbeiten-v2",
-      dataSource: createRestarbeitenV2FakeDataSource(),
+      dataSource,
     });
 
     const view = {

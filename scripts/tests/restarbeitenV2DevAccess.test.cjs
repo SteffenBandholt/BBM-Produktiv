@@ -166,9 +166,16 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(methodSource.includes("db"), false);
   assert.equal(methodSource.includes("localStorage"), false);
   assert.equal(methodSource.includes("autosave"), false);
-  assert.equal(methodSource.includes("createRestarbeitenV2FakeDataSource"), true);
+  assert.equal(methodSource.includes("createRestarbeitenV2ReadOnlyAdapter"), true);
+  assert.equal(methodSource.includes("loadLegacyRestarbeiten"), true);
+  assert.equal(methodSource.includes("createRestarbeitenV2FakeDataSource"), false);
   assert.equal(methodSource.includes("useDataSource: true"), true);
   assert.equal(methodSource.includes("projectId: \"dev-restarbeiten-v2\""), true);
+  assert.equal(routerSource.includes("restarbeit_id"), true);
+  assert.equal(routerSource.includes("lfd_nr"), true);
+  assert.equal(routerSource.includes("completion_note"), true);
+  assert.equal(routerSource.includes("responsible_firm_name"), true);
+  assert.equal(routerSource.includes("due_date"), true);
 
   const [{ default: Router }, { default: MainHeader }, { getActiveProjectModuleNavigation }] = await Promise.all([
     importEsmFromFile(routerPath),
@@ -257,6 +264,9 @@ async function runRestarbeitenV2DevAccessTests(run) {
     assert.ok(getNodeByAttr(restarbeitenHost, "data-restarbeiten-v2-dummy-id", "DS-001"));
     assert.ok(getNodeByAttr(restarbeitenHost, "data-restarbeiten-v2-dummy-id", "DS-002"));
     assert.ok(getNodeByAttr(restarbeitenHost, "data-restarbeiten-v2-dummy-id", "DS-003"));
+    assert.ok(collectNodes(restarbeitenHost, (node) => String(node.textContent || "").includes("DS-001 / Geladene Fake-Restarbeit / Haus A / offen")).length > 0);
+    assert.ok(collectNodes(restarbeitenHost, (node) => String(node.textContent || "").includes("DS-002 / Fake erledigt / Wohnung 2 / erledigt")).length > 0);
+    assert.ok(collectNodes(restarbeitenHost, (node) => String(node.textContent || "").includes("DS-003 / Fake Pruefung / Aussenanlage / offen")).length > 0);
   } finally {
     globalThis.document = previousDocument;
     globalThis.window = previousWindow;
