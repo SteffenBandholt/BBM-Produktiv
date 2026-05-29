@@ -74,3 +74,9 @@ M17.0:
 - Freigegeben ist nur der lesende Pfad unter der bestehenden Freigabebedingung.
 - Nicht freigegeben sind Speichern, Create, Update, Delete, Upload, Import, Autosave, neue IPC-Wege und die vollstaendige Ablösung der alten Restarbeiten-UI.
 - Ohne Freigabe bleibt der alte Restarbeiten-Pfad erhalten.
+
+## 10. M18.0 Startentscheidung
+- M18 beginnt nicht mit Schreiben.
+- M18 beginnt mit einer kontrollierten ReadOnly-Produktivfreigabe oder ihrer fachlichen Vorbereitung.
+- Schreib-, Upload- und Autosave-Themen bleiben gesperrt, bis sie eigene Meilensteine erhalten.
+- Die weitere Ablösung der alten Restarbeiten-UI wird erst danach gesondert entschieden.

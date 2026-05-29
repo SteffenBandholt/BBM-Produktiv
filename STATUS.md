@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M18.0 Restarbeiten V2 naechste Ausbauphase fachlich festgelegt:
+  - M18 beginnt nicht mit Schreiben, sondern mit einer kontrollierten ReadOnly-Produktivfreigabe oder deren fachlicher Vorbereitung.
+  - Schreib-, Upload- und Autosave-Themen bleiben gesperrt, bis sie eigene Meilensteine erhalten.
+  - Die weitere Ablösung der alten Restarbeiten-UI wird spaeter gesondert entschieden.
+
 - M17.8 Restarbeiten V2 ReadOnly-Freigabeentscheidung dokumentiert und Abschluss vorbereitet:
   - Die M17-ReadOnly-Phase ist als lesende Vorbereitungsstrecke dokumentiert.
   - Freigegeben ist nur der ReadOnly-Pfad unter der bestehenden Umschaltbedingung; Altpfad, wenn die Freigabe fehlt, bleibt erhalten.
