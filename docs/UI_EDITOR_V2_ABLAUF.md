@@ -59,6 +59,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Der Modulstart `restarbeiten` laeuft im DEV-Pfad jetzt kontrolliert in den vorhandenen Restarbeiten-V2-ReadOnly-Flow.
 - M17.7: Restarbeiten V2 ReadOnly-Produktivfreigabe fachlich vorbereiten
   - Die Freigabebedingung fuer `restarbeiten` bleibt als kleine Router-Guard-Funktion sichtbar und testseitig abgesichert.
+- M17.8: Restarbeiten V2 ReadOnly-Freigabeentscheidung dokumentieren und Abschluss M17 vorbereiten
+  - Die M17-ReadOnly-Phase ist dokumentiert; freigegeben ist nur der lesende Pfad unter der bestehenden Freigabebedingung, nicht aber Schreiben, Upload, Import, Autosave oder die vollstaendige Ablösung der alten Restarbeiten-UI.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

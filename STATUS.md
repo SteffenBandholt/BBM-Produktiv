@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M17.8 Restarbeiten V2 ReadOnly-Freigabeentscheidung dokumentiert und Abschluss vorbereitet:
+  - Die M17-ReadOnly-Phase ist als lesende Vorbereitungsstrecke dokumentiert.
+  - Freigegeben ist nur der ReadOnly-Pfad unter der bestehenden Umschaltbedingung; Altpfad, wenn die Freigabe fehlt, bleibt erhalten.
+  - Nicht freigegeben sind Schreiben, Create, Update, Delete, Upload, Import, Autosave, neue IPC-Wege und die vollstaendige Ablösung der alten Restarbeiten-UI.
+
 - M17.7 Restarbeiten V2 ReadOnly-Produktivfreigabe fachlich vorbereitet:
   - Die Umschaltbedingung fuer `restarbeiten` ist jetzt als kleine Router-Guard-Funktion sichtbar und testseitig abgesichert.
   - Ohne Freigabe bleibt der alte Restarbeiten-Pfad erhalten; mit Freigabe laeuft der DEV-/ReadOnly-Pfad weiter.
