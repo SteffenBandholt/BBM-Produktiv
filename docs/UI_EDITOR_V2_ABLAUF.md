@@ -15,6 +15,8 @@ Der Umbau folgt dieser Reihenfolge:
 - M15.0a: Editor V2 als fachneutrales Modul dokumentieren
 - M15.0: Restarbeiten V2 fachlich/technisch vorbereiten
 - M15.1: Restarbeiten V2 Registry-Test vorbereiten
+- M15.2: Restarbeiten V2 Registry-Skeleton anlegen
+- M15.3: Restarbeiten V2 Screen-Skeleton ohne Fachfunktion
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

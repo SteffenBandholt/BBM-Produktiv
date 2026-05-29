@@ -31,6 +31,7 @@ const { runEditorV2PanelTests } = require("./tests/editorV2Panel.test.cjs");
 const { runEditorLabV2AccessTests } = require("./tests/editorLabV2Access.test.cjs");
 const { runRestarbeitenV2RegistryRulesTests } = require("./tests/restarbeitenV2RegistryRules.test.cjs");
 const { runRestarbeitenV2RegistryTests } = require("./tests/restarbeitenV2Registry.test.cjs");
+const { runRestarbeitenV2ScreenTests } = require("./tests/restarbeitenV2Screen.test.cjs");
 const { runHomeViewTests } = require("./tests/homeView.test.cjs");
 const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.cjs");
 const { runSettingsUserProfileSourceTests } = require("./tests/settingsUserProfileSource.test.cjs");
@@ -139,6 +140,7 @@ async function main() {
   await runEditorLabV2AccessTests(run);
   await runRestarbeitenV2RegistryRulesTests(run);
   await runRestarbeitenV2RegistryTests(run);
+  await runRestarbeitenV2ScreenTests(run);
   await runHomeViewTests(run);
   await runProjectSettingsIpcTests(run);
   await runSettingsUserProfileSourceTests(run);
