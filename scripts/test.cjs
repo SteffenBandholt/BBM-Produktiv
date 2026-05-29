@@ -40,6 +40,7 @@ const { runRestarbeitenV2ReadOnlyAdapterTests } = require("./tests/restarbeitenV
 const { runRestarbeitenV2LegacyReadBridgeTests } = require("./tests/restarbeitenV2LegacyReadBridge.test.cjs");
 const { runRestarbeitenV2ReadPathInventoryTests } = require("./tests/restarbeitenV2ReadPathInventory.test.cjs");
 const { runRestarbeitenV2ReadPathDecisionTests } = require("./tests/restarbeitenV2ReadPathDecision.test.cjs");
+const { runRestarbeitenV2ReadOnlyDataSourceFactoryTests } = require("./tests/restarbeitenV2ReadOnlyDataSourceFactory.test.cjs");
 const { runRestarbeitenV2ScreenTests } = require("./tests/restarbeitenV2Screen.test.cjs");
 const { runHomeViewTests } = require("./tests/homeView.test.cjs");
 const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.cjs");
@@ -158,6 +159,7 @@ async function main() {
   await runRestarbeitenV2LegacyReadBridgeTests(run);
   await runRestarbeitenV2ReadPathInventoryTests(run);
   await runRestarbeitenV2ReadPathDecisionTests(run);
+  await runRestarbeitenV2ReadOnlyDataSourceFactoryTests(run);
   await runRestarbeitenV2ScreenTests(run);
   await runHomeViewTests(run);
   await runProjectSettingsIpcTests(run);

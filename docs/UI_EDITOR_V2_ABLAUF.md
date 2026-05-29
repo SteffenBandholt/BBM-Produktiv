@@ -43,6 +43,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Die vorhandenen Restarbeiten-Lesewege werden dokumentiert und auf ihre Eignung fuer die spaetere Legacy-Bridge eingeordnet.
 - M16.9: Restarbeiten V2 Leseweg-Kandidat festlegen
   - Ein bestehender lesender Weg wird verbindlich als spaetere Grundlage fuer die ReadOnly-Kette festgelegt.
+- M17.0: Restarbeiten V2 ReadOnly-Leseanbindung vorbereiten
+  - Die eng begrenzte technische Vorbereitung verbindet den gewaehlten Leseweg ueber Bridge und Adapter, ohne Schreib- oder UI-Umbauten.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
