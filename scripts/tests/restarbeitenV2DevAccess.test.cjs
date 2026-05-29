@@ -150,6 +150,7 @@ function getNodeByAttr(root, name, value) {
 async function runRestarbeitenV2DevAccessTests(run) {
   const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
   const routerPath = path.join(__dirname, "../../src/renderer/app/Router.js");
+  const workspacePath = path.join(__dirname, "../../src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const headerPath = path.join(__dirname, "../../src/renderer/ui/MainHeader.js");
   const moduleNavPath = path.join(__dirname, "../../src/renderer/app/modules/moduleNavigation.js");
   const routerSource = fs.readFileSync(routerPath, "utf8");
@@ -188,9 +189,15 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(routerSource.includes("responsible_firm_name"), true);
   assert.equal(routerSource.includes("due_date"), true);
 
-  const [{ default: Router }, { default: MainHeader }, { getActiveProjectModuleNavigation }] = await Promise.all([
+  const [
+    { default: Router },
+    { default: MainHeader },
+    { default: ProjectWorkspaceScreen },
+    { getActiveProjectModuleNavigation },
+  ] = await Promise.all([
     importEsmFromFile(routerPath),
     importEsmFromFile(headerPath),
+    importEsmFromFile(workspacePath),
     importEsmFromFile(moduleNavPath),
   ]);
 
@@ -328,19 +335,82 @@ async function runRestarbeitenV2DevAccessTests(run) {
     routerWithProjectContext.context.settings = {};
     routerWithProjectContext.currentProjectId = "project-ctx-17";
     routerWithProjectContext.currentMeetingId = null;
-    await routerWithProjectContext.showRestarbeitenV2Dev();
+    const workspaceScreen = new ProjectWorkspaceScreen({
+      router: routerWithProjectContext,
+      projectId: "project-ctx-17",
+      project: {
+        id: "project-ctx-17",
+        project_number: "17",
+        name: "Projekt 17",
+      },
+      projectModules: [
+        {
+          moduleId: "protokoll",
+          label: "Protokoll",
+          description: "Protokoll im aktuellen Projekt oeffnen.",
+        },
+        {
+          moduleId: "restarbeiten",
+          label: "Restarbeiten",
+          description: "Restarbeiten im aktuellen Projekt oeffnen.",
+        },
+      ],
+    });
+    const workspaceHost = documentWithProjectContext.createElement("div");
+    documentWithProjectContext.body.append(workspaceHost);
+    workspaceHost.append(workspaceScreen.render());
+    assert.equal(routerWithProjectContext.currentProjectId, "project-ctx-17");
+    assert.equal(
+      collectNodes(documentWithProjectContext.body, (node) =>
+        String(node.textContent || "").includes("Projekt-Arbeitsbereich")
+      ).length > 0,
+      true
+    );
+    assert.equal(
+      collectNodes(workspaceHost, (node) => String(node.textContent || "").includes("Restarbeiten")).length > 0,
+      true
+    );
+
+    const originalOpenProjectModule = routerWithProjectContext.openProjectModule.bind(routerWithProjectContext);
+    let workspaceOpenCall = null;
+    routerWithProjectContext.openProjectModule = async (projectId, moduleId, options = {}) => {
+      workspaceOpenCall = {
+        projectId,
+        moduleId,
+        options,
+      };
+      assert.equal(projectId, "project-ctx-17");
+      assert.equal(moduleId, "restarbeiten");
+      assert.equal(options?.project?.id, "project-ctx-17");
+      await routerWithProjectContext.showRestarbeitenV2Dev();
+      return true;
+    };
+
+    const restarbeitenButton = collectNodes(
+      workspaceHost,
+      (node) => node?.tagName === "BUTTON" && String(node.textContent || "").trim() === "Restarbeiten"
+    )[0];
+    assert.ok(restarbeitenButton);
+    await restarbeitenButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
     await flush();
-  assert.equal(routerWithProjectContext.currentProjectId, "project-ctx-17");
-  assert.equal(routerWithProjectContext._restarbeitenV2DevLoadedProjectId, "project-ctx-17");
-  assert.equal(routerWithProjectContext.activeSection, "restarbeitenV2Dev");
-  assert.equal(legacyLoaderCalls.length, 1);
-  assert.equal(
-    routerWithProjectContext.showRestarbeitenV2Dev.toString().includes("createRestarbeitV2"),
-    false
-  );
-  const projectContextHost = getNodeByAttr(documentWithProjectContext.body, "data-ui-v2-restarbeiten-host", "true");
-  assert.ok(projectContextHost);
-  assert.ok(getNodeByAttr(projectContextHost, "data-restarbeiten-v2-dummy-id", "LEG-101"));
+
+    routerWithProjectContext.openProjectModule = originalOpenProjectModule;
+
+    assert.ok(workspaceOpenCall);
+    assert.equal(routerWithProjectContext.currentProjectId, "project-ctx-17");
+    assert.equal(routerWithProjectContext._restarbeitenV2DevLoadedProjectId, "project-ctx-17");
+    assert.equal(routerWithProjectContext.activeSection, "restarbeitenV2Dev");
+    assert.equal(legacyLoaderCalls.length, 1);
+    assert.equal(
+      routerWithProjectContext.showRestarbeitenV2Dev.toString().includes("createRestarbeitV2"),
+      false
+    );
+    const projectContextHost = getNodeByAttr(documentWithProjectContext.body, "data-ui-v2-restarbeiten-host", "true");
+    assert.ok(projectContextHost);
+    assert.ok(getNodeByAttr(projectContextHost, "data-restarbeiten-v2-dummy-id", "LEG-101"));
     assert.ok(
       collectNodes(projectContextHost, (node) => String(node.textContent || "").includes("LEG-101 / Echte Legacy-Restarbeit / Haus X / offen")).length >
         0
