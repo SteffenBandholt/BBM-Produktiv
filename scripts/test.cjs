@@ -35,6 +35,7 @@ const { runRestarbeitenV2RegistryRulesTests } = require("./tests/restarbeitenV2R
 const { runRestarbeitenV2RegistryTests } = require("./tests/restarbeitenV2Registry.test.cjs");
 const { runRestarbeitenV2DataContractTests } = require("./tests/restarbeitenV2DataContract.test.cjs");
 const { runRestarbeitenV2DataSourceTests } = require("./tests/restarbeitenV2DataSource.test.cjs");
+const { runRestarbeitenV2MapperTests } = require("./tests/restarbeitenV2Mapper.test.cjs");
 const { runRestarbeitenV2ScreenTests } = require("./tests/restarbeitenV2Screen.test.cjs");
 const { runHomeViewTests } = require("./tests/homeView.test.cjs");
 const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.cjs");
@@ -148,6 +149,7 @@ async function main() {
   await runRestarbeitenV2RegistryTests(run);
   await runRestarbeitenV2DataContractTests(run);
   await runRestarbeitenV2DataSourceTests(run);
+  await runRestarbeitenV2MapperTests(run);
   await runRestarbeitenV2ScreenTests(run);
   await runHomeViewTests(run);
   await runProjectSettingsIpcTests(run);

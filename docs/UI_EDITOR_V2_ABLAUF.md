@@ -27,6 +27,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Der fachliche Datenvertrag, die spaetere Adapter-Grenze und die Trennung zu UI und Editor V2 werden dokumentiert, ohne Produktivcode anzufassen.
 - M16.1: Restarbeiten V2 DataSource-Interface als Stub anlegen
   - Ein technischer Stub bereitet die spaetere Grenze zwischen Screen/ViewModel und Adapter/IPC/DB vor, ohne echte Daten anzubinden.
+- M16.2: Restarbeiten V2 Mapper fuer bestehende Daten vorbereiten
+  - Die Mapping-Helfer normalisieren Legacy- und Bestandsfelder in das neue RestarbeitV2Dto-Format, ohne echte Datenanbindung.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
