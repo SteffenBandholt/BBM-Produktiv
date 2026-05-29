@@ -16,6 +16,7 @@ async function runRestarbeitenV2ReadPathDecisionTests(run) {
   assert.equal(doc.includes("Mapper"), true);
   assert.equal(doc.includes("projectId"), true);
   assert.equal(doc.includes("M17.8"), true);
+  assert.equal(doc.includes("M18.0"), true);
   assert.equal(doc.includes("listRestarbeitenByProject(projectId)"), true);
   assert.equal(doc.includes("nicht gewaehlte Kandidaten"), true);
   assert.equal(doc.includes("Spaetere Zielkette"), true);
@@ -25,6 +26,9 @@ async function runRestarbeitenV2ReadPathDecisionTests(run) {
   assert.equal(doc.includes("nur eine injizierte Lesefunktion"), true);
   assert.equal(doc.includes("Nicht freigegeben sind Speichern, Create, Update, Delete, Upload, Import, Autosave, neue IPC-Wege und die vollstaendige Ablösung der alten Restarbeiten-UI"), true);
 
+  assert.equal(doc.includes("M18 beginnt nicht mit Schreiben"), true);
+  assert.equal(doc.includes("kontrollierten ReadOnly-Produktivfreigabe oder ihrer fachlichen Vorbereitung"), true);
+  assert.equal(doc.includes("Schreib-, Upload- und Autosave-Themen bleiben gesperrt"), true);
   assert.equal(inv.includes("listRestarbeitenByProject(projectId)"), true);
 
   const diffFiles = execFileSync("git", ["diff", "--name-only"], {
