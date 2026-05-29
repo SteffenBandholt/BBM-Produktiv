@@ -146,6 +146,7 @@ Noch nicht implementieren:
 - M16.4: echte Projektmodul-Anbindung vorbereiten
 - M16.5: ReadOnly-Adapter fuer bestehende Daten vorbereiten
 - M16.6: DEV-Zugang ueber ReadOnly-Adapter pruefen
+- M16.7: Legacy-Lese-Bridge fuer vorhandene Lesefunktionen vorbereiten
 
 ## 13. Abgrenzung
 Diese Festlegung betrifft nur den Vertrag und die technische Grenze.

@@ -37,6 +37,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Ein lesender Adapter kann spaeter Legacy- oder Bestandsdaten ueber eine injizierte Quelle ins V2-DTO-Format normalisieren, ohne Schreibwege zu oeffnen.
 - M16.6: Restarbeiten V2 DEV-Zugang ueber ReadOnly-Adapter pruefen
   - Der DEV-Zugang zeigt die sichtbare Kette von einer lokalen Legacy-Quelle ueber den ReadOnly-Adapter bis in den Screen, ohne echte Anbindung.
+- M16.7: Restarbeiten V2 Legacy-Lese-Bridge vorbereiten
+  - Eine kleine Bridge kann spaeter vorhandene Lesefunktionen als injizierte Quelle an den ReadOnly-Adapter weiterreichen, ohne Schreibwege zu oeffnen.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
