@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M18.1 Restarbeiten V2 ReadOnly-Produktivfreigabe technisch vorbereitet:
+  - Der Router unterscheidet jetzt lokal zwischen Altpfad, DEV-/Testfreigabe und spaeterer produktiver ReadOnly-Freigabe.
+  - Die produktive ReadOnly-Freigabe ist strukturell vorbereitet, aber ohne ausdruecklichen spaeteren Freigabeschalter nicht aktiv.
+  - Schreib-, Upload-, Import-, Autosave- und neue IPC-Wege bleiben gesperrt.
+
 - M18.0 Restarbeiten V2 naechste Ausbauphase fachlich festgelegt:
   - M18 beginnt nicht mit Schreiben, sondern mit einer kontrollierten ReadOnly-Produktivfreigabe oder deren fachlicher Vorbereitung.
   - Schreib-, Upload- und Autosave-Themen bleiben gesperrt, bis sie eigene Meilensteine erhalten.

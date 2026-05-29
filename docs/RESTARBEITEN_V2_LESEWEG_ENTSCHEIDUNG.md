@@ -80,3 +80,11 @@ M17.0:
 - M18 beginnt mit einer kontrollierten ReadOnly-Produktivfreigabe oder ihrer fachlichen Vorbereitung.
 - Schreib-, Upload- und Autosave-Themen bleiben gesperrt, bis sie eigene Meilensteine erhalten.
 - Die weitere Ablösung der alten Restarbeiten-UI wird erst danach gesondert entschieden.
+
+## 11. M18.1 Technische Freigabestruktur
+- Der Router unterscheidet jetzt lokal zwischen drei Zuständen: Altpfad als Standard, DEV-/Testfreigabe fuer den ReadOnly-Flow und spaetere produktive ReadOnly-Freigabe.
+- Die DEV-/Testfreigabe bleibt an `bbm.uiMode = "new"` gebunden.
+- Produktiv-ReadOnly-Freigabe ist strukturell vorbereitet, aber ohne ausdruecklichen spaeteren Freigabeschalter nicht aktiv.
+- Als lesender Weg bleibt `listRestarbeitenByProject(projectId)` die Grundlage.
+- Schreib-, Upload-, Import-, Autosave- und neue IPC-Wege bleiben gesperrt.
+- Ohne Freigabe bleibt der alte Restarbeiten-Pfad Standard.
