@@ -32,10 +32,11 @@ async function runRestarbeitenV2DataSourceTests(run) {
     createEmptyRestarbeitV2Draft,
     normalizeRestarbeitV2Patch,
   } = await importEsmFromFile(mapperPath);
-  const { createRestarbeitenV2FakeDataSource } = await importEsmFromFile(dataSourcePath);
+  const { createRestarbeitenV2FakeDataSource, createRestarbeitenV2ReadOnlyDataSource } = await importEsmFromFile(dataSourcePath);
 
   assert.equal(typeof createRestarbeitenV2DataSource, "function");
   assert.equal(typeof createRestarbeitenV2FakeDataSource, "function");
+  assert.equal(typeof createRestarbeitenV2ReadOnlyDataSource, "function");
   const dataSource = createRestarbeitenV2DataSource();
   assert.equal(typeof dataSource.listRestarbeitenV2, "function");
   assert.equal(typeof dataSource.createRestarbeitV2, "function");
@@ -82,6 +83,14 @@ async function runRestarbeitenV2DataSourceTests(run) {
   await assert.rejects(fakeUpdatePromise, /fake update nicht verfuegbar|noch nicht angebunden/);
   await assert.rejects(fakeDeletePromise, /fake delete nicht verfuegbar|noch nicht angebunden/);
   assert.deepEqual(await fakeAttachmentsPromise, []);
+
+  const readOnlyDataSource = createRestarbeitenV2ReadOnlyDataSource({
+    loadLegacyRestarbeiten: async (projectId) => [{ restarbeit_id: projectId, title: "RO" }],
+  });
+  const roList = await readOnlyDataSource.listRestarbeitenV2("project-ro");
+  assert.equal(roList[0].id, "project-ro");
+  assert.equal(roList[0].kurztext, "RO");
+  assert.throws(() => readOnlyDataSource.createRestarbeitV2("project-ro", {}), /kein Erstellen/);
 
   const dto = normalizeRestarbeitV2Dto({
     id: "r-1",

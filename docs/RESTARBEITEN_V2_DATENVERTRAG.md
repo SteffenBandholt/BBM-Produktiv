@@ -72,6 +72,7 @@ Die spaetere technische Struktur soll so aussehen:
 
 - `restarbeitenV2DataSource.js`
 - `restarbeitenV2Mapper.js`
+- `restarbeitenV2ReadOnlyAdapter.js`
 - `restarbeitenV2RepositoryBridge.js` nur falls sinnvoll
 
 Regeln:
@@ -80,6 +81,7 @@ Regeln:
 - Der Screen arbeitet mit einem DataSource-Interface.
 - Die DataSource normalisiert IPC- oder Backend-Antworten.
 - Der Mapper uebersetzt alte oder echte Daten in Restarbeiten-V2-DTOs.
+- Ein ReadOnly-Adapter kann spaeter lesend auf eine injizierte Legacy-Quelle zugreifen, ohne Schreibpfade zu oeffnen.
 
 ## 7. Vorgeschlagenes DataSource-Interface
 Noch nicht implementieren:
@@ -142,6 +144,7 @@ Noch nicht implementieren:
 - M16.2: Mapper fuer bestehende Restarbeiten-Daten pruefen
 - M16.3: DEV-Screen optional mit injizierter DataSource betreiben
 - M16.4: echte Projektmodul-Anbindung vorbereiten
+- M16.5: ReadOnly-Adapter fuer bestehende Daten vorbereiten
 
 ## 13. Abgrenzung
 Diese Festlegung betrifft nur den Vertrag und die technische Grenze.

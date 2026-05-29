@@ -4,6 +4,7 @@ import {
   normalizeRestarbeitV2List,
   normalizeRestarbeitV2Patch,
 } from "./restarbeitenV2Mapper.js";
+import { createRestarbeitenV2ReadOnlyAdapter } from "./restarbeitenV2ReadOnlyAdapter.js";
 
 const FAKE_RESTARBEITEN_V2_ROWS = [
   {
@@ -95,6 +96,10 @@ export function createRestarbeitenV2FakeDataSource() {
       return Promise.resolve([]);
     },
   };
+}
+
+export function createRestarbeitenV2ReadOnlyDataSource(options = {}) {
+  return createRestarbeitenV2ReadOnlyAdapter(options);
 }
 
 export {

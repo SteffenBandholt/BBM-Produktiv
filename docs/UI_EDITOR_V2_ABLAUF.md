@@ -33,6 +33,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Der Screen kann optional eine DataSource annehmen und geladenen Datenbestand rein lokal weiterverarbeiten, der Dummy-Modus bleibt der Standard.
 - M16.4: Restarbeiten V2 DEV-Zugang mit Fake-DataSource pruefen
   - Der bestehende DEV-Zugang laedt sichtbar ueber eine lokale Fake-DataSource und zeigt, dass der optionale Ladepfad im Entwicklerzugang funktioniert.
+- M16.5: Restarbeiten V2 ReadOnly-Adapter vorbereiten
+  - Ein lesender Adapter kann spaeter Legacy- oder Bestandsdaten ueber eine injizierte Quelle ins V2-DTO-Format normalisieren, ohne Schreibwege zu oeffnen.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
