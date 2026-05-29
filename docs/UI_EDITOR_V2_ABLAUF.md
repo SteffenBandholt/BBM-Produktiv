@@ -25,6 +25,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Dummy-Daten, ViewModel-Logik und einfache DOM-Helfer sind in kleine Module ausgelagert, ohne das sichtbare Verhalten zu aendern.
 - M16.0: Restarbeiten V2 Datenvertrag und Adapter-Grenze festlegen
   - Der fachliche Datenvertrag, die spaetere Adapter-Grenze und die Trennung zu UI und Editor V2 werden dokumentiert, ohne Produktivcode anzufassen.
+- M16.1: Restarbeiten V2 DataSource-Interface als Stub anlegen
+  - Ein technischer Stub bereitet die spaetere Grenze zwischen Screen/ViewModel und Adapter/IPC/DB vor, ohne echte Daten anzubinden.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
