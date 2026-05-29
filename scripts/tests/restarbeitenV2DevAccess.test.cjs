@@ -148,6 +148,7 @@ function getNodeByAttr(root, name, value) {
 }
 
 async function runRestarbeitenV2DevAccessTests(run) {
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
   const routerPath = path.join(__dirname, "../../src/renderer/app/Router.js");
   const headerPath = path.join(__dirname, "../../src/renderer/ui/MainHeader.js");
   const moduleNavPath = path.join(__dirname, "../../src/renderer/app/modules/moduleNavigation.js");
@@ -165,6 +166,9 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(methodSource.includes("db"), false);
   assert.equal(methodSource.includes("localStorage"), false);
   assert.equal(methodSource.includes("autosave"), false);
+  assert.equal(methodSource.includes("createRestarbeitenV2FakeDataSource"), true);
+  assert.equal(methodSource.includes("useDataSource: true"), true);
+  assert.equal(methodSource.includes("projectId: \"dev-restarbeiten-v2\""), true);
 
   const [{ default: Router }, { default: MainHeader }, { getActiveProjectModuleNavigation }] = await Promise.all([
     importEsmFromFile(routerPath),
@@ -249,6 +253,10 @@ async function runRestarbeitenV2DevAccessTests(run) {
     assert.equal(getNodeById(restarbeitenHost, "restarbeitenV2.quicklane.lock").getAttribute("data-ui-v2-kind"), "control");
     assert.equal(getNodeById(restarbeitenHost, "restarbeitenV2.main.textbereich").getAttribute("data-ui-v2-kind"), "field");
     assert.equal(getNodeById(restarbeitenHost, "restarbeitenV2.footer.notiz").getAttribute("data-ui-v2-kind"), "field");
+    await flush();
+    assert.ok(getNodeByAttr(restarbeitenHost, "data-restarbeiten-v2-dummy-id", "DS-001"));
+    assert.ok(getNodeByAttr(restarbeitenHost, "data-restarbeiten-v2-dummy-id", "DS-002"));
+    assert.ok(getNodeByAttr(restarbeitenHost, "data-restarbeiten-v2-dummy-id", "DS-003"));
   } finally {
     globalThis.document = previousDocument;
     globalThis.window = previousWindow;

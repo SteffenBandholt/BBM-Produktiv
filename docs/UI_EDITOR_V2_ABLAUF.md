@@ -31,6 +31,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Die Mapping-Helfer normalisieren Legacy- und Bestandsfelder in das neue RestarbeitV2Dto-Format, ohne echte Datenanbindung.
 - M16.3: Restarbeiten V2 Screen mit injizierter DataSource vorbereiten
   - Der Screen kann optional eine DataSource annehmen und geladenen Datenbestand rein lokal weiterverarbeiten, der Dummy-Modus bleibt der Standard.
+- M16.4: Restarbeiten V2 DEV-Zugang mit Fake-DataSource pruefen
+  - Der bestehende DEV-Zugang laedt sichtbar ueber eine lokale Fake-DataSource und zeigt, dass der optionale Ladepfad im Entwicklerzugang funktioniert.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

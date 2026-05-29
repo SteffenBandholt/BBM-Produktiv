@@ -16,6 +16,7 @@ import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js"
 import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
 import { createRestarbeitenV2Screen } from "../modules/restarbeitenV2/RestarbeitenV2Screen.js";
 import { createRestarbeitenV2Registry } from "../modules/restarbeitenV2/restarbeitenV2Registry.js";
+import { createRestarbeitenV2FakeDataSource } from "../modules/restarbeitenV2/restarbeitenV2DataSource.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -723,7 +724,13 @@ export default class Router {
 
     const registry = createRestarbeitenV2Registry();
     const core = createEditorV2Core({ registry, mode: "frame" });
-    const screen = createRestarbeitenV2Screen({ registry, editorV2Core: core });
+    const screen = createRestarbeitenV2Screen({
+      registry,
+      editorV2Core: core,
+      useDataSource: true,
+      projectId: "dev-restarbeiten-v2",
+      dataSource: createRestarbeitenV2FakeDataSource(),
+    });
 
     const view = {
       render: () => {

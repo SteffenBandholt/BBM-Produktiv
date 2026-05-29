@@ -32,8 +32,10 @@ async function runRestarbeitenV2DataSourceTests(run) {
     createEmptyRestarbeitV2Draft,
     normalizeRestarbeitV2Patch,
   } = await importEsmFromFile(mapperPath);
+  const { createRestarbeitenV2FakeDataSource } = await importEsmFromFile(dataSourcePath);
 
   assert.equal(typeof createRestarbeitenV2DataSource, "function");
+  assert.equal(typeof createRestarbeitenV2FakeDataSource, "function");
   const dataSource = createRestarbeitenV2DataSource();
   assert.equal(typeof dataSource.listRestarbeitenV2, "function");
   assert.equal(typeof dataSource.createRestarbeitV2, "function");
@@ -57,6 +59,29 @@ async function runRestarbeitenV2DataSourceTests(run) {
   await assert.rejects(updatePromise, /noch nicht angebunden/);
   await assert.rejects(deletePromise, /noch nicht angebunden/);
   await assert.rejects(attachmentsPromise, /noch nicht angebunden/);
+
+  const fakeDataSource = createRestarbeitenV2FakeDataSource();
+  const fakeList = await fakeDataSource.listRestarbeitenV2("dev-restarbeiten-v2");
+  assert.equal(Array.isArray(fakeList), true);
+  assert.equal(fakeList.length, 3);
+  assert.equal(fakeList[0].id, "DS-001");
+  assert.equal(fakeList[0].status, "offen");
+  assert.equal(fakeList[1].id, "DS-002");
+  assert.equal(fakeList[1].status, "erledigt");
+  assert.equal(fakeList[2].id, "DS-003");
+  assert.equal(fakeList[2].status, "offen");
+  const fakeCreatePromise = fakeDataSource.createRestarbeitV2("x", {});
+  const fakeUpdatePromise = fakeDataSource.updateRestarbeitV2("x", {});
+  const fakeDeletePromise = fakeDataSource.deleteRestarbeitV2("x");
+  const fakeAttachmentsPromise = fakeDataSource.listRestarbeitV2Attachments("x");
+  assert.equal(typeof fakeCreatePromise?.then, "function");
+  assert.equal(typeof fakeUpdatePromise?.then, "function");
+  assert.equal(typeof fakeDeletePromise?.then, "function");
+  assert.equal(typeof fakeAttachmentsPromise?.then, "function");
+  await assert.rejects(fakeCreatePromise, /fake create nicht verfuegbar|noch nicht angebunden/);
+  await assert.rejects(fakeUpdatePromise, /fake update nicht verfuegbar|noch nicht angebunden/);
+  await assert.rejects(fakeDeletePromise, /fake delete nicht verfuegbar|noch nicht angebunden/);
+  assert.deepEqual(await fakeAttachmentsPromise, []);
 
   const dto = normalizeRestarbeitV2Dto({
     id: "r-1",
