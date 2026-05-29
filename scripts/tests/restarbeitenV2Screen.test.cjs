@@ -74,6 +74,10 @@ function getNodeById(root, id) {
   return collectNodes(root, (node) => node?.getAttribute?.("data-ui-v2-id") === id)[0] || null;
 }
 
+function getNodeByAttr(root, name, value) {
+  return collectNodes(root, (node) => node?.getAttribute?.(name) === value)[0] || null;
+}
+
 function hasText(root, expected) {
   return collectNodes(root, (node) => String(node?.textContent || "").includes(expected)).length > 0;
 }
@@ -195,6 +199,39 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(hasText(root, "Meta"), true);
     assert.equal(hasText(root, "Fotos"), true);
     assert.equal(hasText(root, "Notiz"), true);
+    assert.equal(hasText(root, "Kurztext: Offene Restarbeit"), true);
+    assert.equal(hasText(root, "Langtext: Offene Restarbeit im Treppenhaus"), true);
+    assert.equal(hasText(root, "Verortung: Treppenhaus"), true);
+    assert.equal(hasText(root, "Meta / Status: offen"), true);
+    assert.equal(hasText(root, "Fotos: Keine Fotos"), true);
+    assert.equal(hasText(root, "Notiz: Platzhalternotiz"), true);
+    const row1 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-001");
+    const row2 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-002");
+    const row3 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-003");
+    assert.ok(row1);
+    assert.ok(row2);
+    assert.ok(row3);
+    assert.equal(row1.getAttribute("data-restarbeiten-v2-selected"), "true");
+    assert.equal(row2.getAttribute("data-restarbeiten-v2-selected"), "false");
+    assert.equal(row3.getAttribute("data-restarbeiten-v2-selected"), "false");
+    row2.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(row2.getAttribute("data-restarbeiten-v2-selected"), "true");
+    assert.equal(row1.getAttribute("data-restarbeiten-v2-selected"), "false");
+    assert.equal(hasText(root, "Kurztext: Musterpunkt"), true);
+    assert.equal(hasText(root, "Langtext: Musterpunkt in der Wohnung"), true);
+    assert.equal(hasText(root, "Verortung: Wohnung"), true);
+    assert.equal(hasText(root, "Meta / Status: erledigt"), true);
+    row3.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(row3.getAttribute("data-restarbeiten-v2-selected"), "true");
+    assert.equal(hasText(root, "Kurztext: Kontrollpunkt"), true);
+    assert.equal(hasText(root, "Verortung: Außenanlage"), true);
+    assert.equal(hasText(root, "Meta / Status: offen"), true);
 
     assert.equal(screenSource.includes("Router"), false);
     assert.equal(screenSource.includes("MainHeader"), false);

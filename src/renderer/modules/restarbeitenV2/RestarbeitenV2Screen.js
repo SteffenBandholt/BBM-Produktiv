@@ -26,6 +26,46 @@ function createTextBlock(doc, text, className = "") {
   return node;
 }
 
+const DUMMY_ROWS = [
+  {
+    id: "R-001",
+    title: "Offene Restarbeit",
+    location: "Treppenhaus",
+    status: "offen",
+    shortText: "Offene Restarbeit",
+    longText: "Offene Restarbeit im Treppenhaus",
+    meta: "R-001 / offen",
+    photos: "Keine Fotos",
+    note: "Platzhalternotiz",
+  },
+  {
+    id: "R-002",
+    title: "Musterpunkt",
+    location: "Wohnung",
+    status: "erledigt",
+    shortText: "Musterpunkt",
+    longText: "Musterpunkt in der Wohnung",
+    meta: "R-002 / erledigt",
+    photos: "Keine Fotos",
+    note: "Platzhalternotiz",
+  },
+  {
+    id: "R-003",
+    title: "Kontrollpunkt",
+    location: "Außenanlage",
+    status: "offen",
+    shortText: "Kontrollpunkt",
+    longText: "Kontrollpunkt in der Außenanlage",
+    meta: "R-003 / offen",
+    photos: "Keine Fotos",
+    note: "Platzhalternotiz",
+  },
+];
+
+function getDummyById(id) {
+  return DUMMY_ROWS.find((row) => row.id === id) || DUMMY_ROWS[0];
+}
+
 function buildTree(doc, registry) {
   const entries = new Map(registry.map((entry) => [entry.id, entry]));
   const nodes = new Map();
@@ -145,6 +185,55 @@ export function createRestarbeitenV2Screen(options = {}) {
   let panelNode = null;
   let panelInstance = null;
   let mountedTarget = null;
+  let selectedDummyId = "R-001";
+  let dummyRowNodes = new Map();
+
+  function setSelection(nextId) {
+    const next = getDummyById(nextId);
+    if (!next) return false;
+    selectedDummyId = next.id;
+    for (const [id, node] of dummyRowNodes.entries()) {
+      const selected = id === selectedDummyId;
+      node.setAttribute("data-restarbeiten-v2-selected", selected ? "true" : "false");
+      node.style.background = selected ? "rgba(41, 98, 255, 0.10)" : "transparent";
+      node.style.border = selected ? "1px solid rgba(41, 98, 255, 0.5)" : "1px solid transparent";
+      node.style.borderRadius = "6px";
+      node.style.padding = "4px 6px";
+    }
+    const footerKurztext = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.kurztext"]') || null;
+    const footerLangtext = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.langtext"]') || null;
+    const footerVerortung = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.verortung"]') || null;
+    const footerMeta = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.meta"]') || null;
+    const footerFotos = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.fotos"]') || null;
+    const footerNotiz = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.footer.notiz"]') || null;
+    if (footerKurztext) footerKurztext.textContent = `Kurztext: ${next.shortText}`;
+    if (footerLangtext) footerLangtext.textContent = `Langtext: ${next.longText}`;
+    if (footerVerortung) footerVerortung.textContent = `Verortung: ${next.location}`;
+    if (footerMeta) footerMeta.textContent = `Meta / Status: ${next.status}`;
+    if (footerFotos) footerFotos.textContent = `Fotos: ${next.photos}`;
+    if (footerNotiz) footerNotiz.textContent = `Notiz: ${next.note}`;
+    return true;
+  }
+
+  function wireDummyRows(listNode, doc) {
+    if (!listNode) return;
+    dummyRowNodes = new Map();
+    for (const row of DUMMY_ROWS) {
+      const rowNode = doc.createElement("button");
+      rowNode.type = "button";
+      rowNode.setAttribute("data-restarbeiten-v2-dummy-id", row.id);
+      rowNode.setAttribute("data-restarbeiten-v2-dummy-row", "true");
+      rowNode.textContent = `${row.id} / ${row.title} / ${row.location} / ${row.status}`;
+      rowNode.onclick = (event) => {
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+        setSelection(row.id);
+      };
+      dummyRowNodes.set(row.id, rowNode);
+      listNode.append(rowNode);
+    }
+    setSelection(selectedDummyId);
+  }
 
   function mountEditorPanel(target, doc) {
     if (!editorV2Core || typeof editorV2Core.mount !== "function") return null;
@@ -173,6 +262,8 @@ export function createRestarbeitenV2Screen(options = {}) {
     if (target && typeof target.append === "function") {
       target.append(rootNode);
     }
+    const listNode = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.main.liste"]') || null;
+    wireDummyRows(listNode, doc);
     if (editorV2Core) {
       editorV2Core.mount(rootNode, registry);
       mountEditorPanel(target || doc.body || null, doc);
@@ -201,6 +292,8 @@ export function createRestarbeitenV2Screen(options = {}) {
     panelNode = null;
     mountedTarget = null;
     rootNode = null;
+    dummyRowNodes = new Map();
+    selectedDummyId = "R-001";
     return true;
   }
 
@@ -211,5 +304,6 @@ export function createRestarbeitenV2Screen(options = {}) {
     getRootNode: () => rootNode,
     getPanelNode: () => panelNode,
     getMountedTarget: () => mountedTarget,
+    getSelectedDummyId: () => selectedDummyId,
   };
 }
