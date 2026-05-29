@@ -19,6 +19,8 @@ Der Umbau folgt dieser Reihenfolge:
 - M15.3: Restarbeiten V2 Screen-Skeleton ohne Fachfunktion
 - M15.9: Restarbeiten V2 DEV lokale Neu-Funktion ohne Speicherung
   - Quicklane `Neu` erzeugt lokal Dummy-Restarbeiten, waehlt sie direkt aus und aktualisiert Liste plus Workbench ohne Persistenz.
+- M15.10: Restarbeiten V2 DEV lokale Filterfunktion ohne Speicherung
+  - Quicklane-Filter `Alle`, `Offen` und `Erledigt` schalten rein lokal, halten Auswahl wenn sichtbar und fallen sonst auf eine sinnvolle lokale Auswahl oder keine Auswahl zurueck.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

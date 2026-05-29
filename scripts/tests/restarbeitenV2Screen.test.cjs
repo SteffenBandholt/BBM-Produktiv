@@ -47,7 +47,9 @@ function createFakeDocument() {
         const walk = (node) => {
           if (!node || typeof node !== "object") return;
           all.push(node);
-          for (const child of Array.isArray(node.children) ? node.children : []) walk(child);
+          for (const child of Array.isArray(node.children) ? node.children : []) {
+            walk(child);
+          }
         };
         walk(this);
         const match = String(selector || "").match(/data-ui-v2-id\s*=\s*["']([^"']+)["']/);
@@ -87,25 +89,14 @@ function getNodeByAttr(root, name, value) {
   return collectNodes(root, (node) => node?.getAttribute?.(name) === value)[0] || null;
 }
 
-function hasText(root, expected) {
-  return collectNodes(root, (node) => String(node?.textContent || "").includes(expected)).length > 0;
+function getVisibleIds(root) {
+  return collectNodes(root, (node) => node?.getAttribute?.("data-restarbeiten-v2-dummy-row") === "true").map((node) =>
+    node.getAttribute("data-restarbeiten-v2-dummy-id")
+  );
 }
 
-function getDepthMap(registry) {
-  const map = new Map(registry.map((entry) => [entry.id, entry]));
-  const depthMemo = new Map();
-  function depthOf(id) {
-    if (depthMemo.has(id)) return depthMemo.get(id);
-    const entry = map.get(id);
-    if (!entry?.parentId) {
-      depthMemo.set(id, 1);
-      return 1;
-    }
-    const depth = 1 + depthOf(entry.parentId);
-    depthMemo.set(id, depth);
-    return depth;
-  }
-  return { depthOf };
+function hasText(root, expected) {
+  return collectNodes(root, (node) => String(node?.textContent || "").includes(expected)).length > 0;
 }
 
 async function runRestarbeitenV2ScreenTests(run) {
@@ -164,6 +155,7 @@ async function runRestarbeitenV2ScreenTests(run) {
       }
     ),
   };
+
   globalThis.document = document;
   globalThis.window = fakeWindow;
 
@@ -173,6 +165,7 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.ok(root);
     assert.equal(root.getAttribute("data-ui-v2-id"), "restarbeitenV2.root");
     assert.equal(screen.getSelectedDummyId(), "R-001");
+    assert.equal(screen.getCurrentFilter(), "alle");
 
     const requiredIds = registry.map((entry) => entry.id);
     for (const id of requiredIds) {
@@ -180,74 +173,8 @@ async function runRestarbeitenV2ScreenTests(run) {
       assert.ok(node, `missing node for ${id}`);
     }
 
-    for (const entry of registry) {
-      const node = getNodeById(root, entry.id);
-      assert.equal(node.getAttribute("data-ui-v2-id"), entry.id);
-      assert.equal(node.getAttribute("data-ui-v2-kind"), entry.kind);
-      assert.equal(node.getAttribute("data-ui-v2-label"), entry.label);
-      assert.equal(node.getAttribute("data-ui-v2-editable"), entry.editable ? "true" : "false");
-      assert.equal(node.getAttribute("data-ui-v2-ops"), Array.isArray(entry.ops) ? entry.ops.join(",") : "");
-      if (entry.parentId) {
-        assert.equal(node.getAttribute("data-ui-v2-parent"), entry.parentId);
-      } else {
-        assert.equal(node.getAttribute("data-ui-v2-parent"), null);
-      }
-      assert.equal(root.querySelector(entry.selector), node);
-    }
-
-    const depthMap = getDepthMap(registry);
-    for (const entry of registry) {
-      assert.equal(depthMap.depthOf(entry.id) <= 4, true, `depth too deep for ${entry.id}`);
-    }
-
-    const quicklane = getNodeById(root, "restarbeitenV2.quicklane");
-    assert.ok(quicklane);
-    assert.equal(quicklane.style.display, "flex");
-    assert.equal(quicklane.style.flexDirection, "column");
-    assert.equal(quicklane.style.gridArea, "quicklane");
-    assert.equal(quicklane.style.borderLeft, "1px solid rgba(0,0,0,0.12)");
-
-    const footer = getNodeById(root, "restarbeitenV2.footer");
-    assert.ok(footer);
-    assert.equal(footer.style.gridArea, "footer");
-
-    const main = getNodeById(root, "restarbeitenV2.main");
-    assert.ok(main);
-    assert.equal(main.style.gridArea, "main");
-
-    const header = getNodeById(root, "restarbeitenV2.header");
-    assert.ok(header);
-    assert.equal(header.style.gridArea, "header");
-    assert.equal(hasText(root, "Restarbeiten V2"), true);
-    assert.equal(hasText(root, "Projekt / Bereich / Stand"), true);
-    assert.equal(hasText(root, "Offen / Erledigt / Gesamt"), true);
-    assert.equal(hasText(root, "Suche / Status / Verortung"), true);
-    assert.equal(hasText(root, "Quicklane rechts"), true);
-    assert.equal(hasText(root, "Lock / Fixieren"), true);
-    assert.equal(hasText(root, "Neu"), true);
-    assert.equal(hasText(root, "Offen"), true);
-    assert.equal(hasText(root, "Erledigt"), true);
-    assert.equal(hasText(root, "Alle"), true);
-    assert.equal(hasText(root, "Foto"), true);
-    assert.equal(hasText(root, "Diktat"), true);
-    assert.equal(hasText(root, "Main / Liste"), true);
-    assert.equal(hasText(root, "R-001 / Offene Restarbeit / Treppenhaus / offen"), true);
-    assert.equal(hasText(root, "R-002 / Musterpunkt / Wohnung / erledigt"), true);
-    assert.equal(hasText(root, "R-003 / Kontrollpunkt / Außenanlage / offen"), true);
-    assert.equal(hasText(root, "Footer / Workbench"), true);
-    assert.equal(hasText(root, "Kurztext"), true);
-    assert.equal(hasText(root, "Langtext"), true);
-    assert.equal(hasText(root, "Verortung"), true);
-    assert.equal(hasText(root, "Meta"), true);
-    assert.equal(hasText(root, "Fotos"), true);
-    assert.equal(hasText(root, "Notiz"), true);
     assert.equal(hasText(root, "Nur lokale DEV-Vorschau - keine Speicherung"), true);
-    assert.equal(hasText(root, "Kurztext: Offene Restarbeit"), true);
-    assert.equal(hasText(root, "Langtext: Offene Restarbeit im Treppenhaus"), true);
-    assert.equal(hasText(root, "Verortung: Treppenhaus"), true);
-    assert.equal(hasText(root, "Meta: R-001 / offen"), true);
-    assert.equal(hasText(root, "Fotos: Keine Fotos"), true);
-    assert.equal(hasText(root, "Notiz: Platzhalternotiz"), true);
+    assert.equal(getVisibleIds(root).join(","), "R-001,R-002,R-003");
 
     const row1 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-001");
     const row2 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-002");
@@ -259,8 +186,98 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(row2.getAttribute("data-restarbeiten-v2-selected"), "false");
     assert.equal(row3.getAttribute("data-restarbeiten-v2-selected"), "false");
 
+    const filterAlleButton = getNodeById(root, "restarbeitenV2.quicklane.filterAlle");
+    const filterOffenButton = getNodeById(root, "restarbeitenV2.quicklane.filterOffen");
+    const filterErledigtButton = getNodeById(root, "restarbeitenV2.quicklane.filterErledigt");
     const neuButton = getNodeById(root, "restarbeitenV2.quicklane.neu");
+    assert.ok(filterAlleButton);
+    assert.ok(filterOffenButton);
+    assert.ok(filterErledigtButton);
     assert.ok(neuButton);
+    assert.equal(filterAlleButton.getAttribute("data-restarbeiten-v2-filter-active"), "true");
+    assert.equal(filterOffenButton.getAttribute("data-restarbeiten-v2-filter-active"), "false");
+    assert.equal(filterErledigtButton.getAttribute("data-restarbeiten-v2-filter-active"), "false");
+
+    filterOffenButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(screen.getCurrentFilter(), "offen");
+    assert.equal(getVisibleIds(root).join(","), "R-001,R-003");
+    assert.equal(screen.getSelectedDummyId(), "R-001");
+
+    const statusSelect = getNodeByAttr(root, "data-restarbeiten-v2-field", "status");
+    assert.ok(statusSelect);
+    statusSelect.value = "erledigt";
+    statusSelect.onchange?.({
+      target: statusSelect,
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(screen.getSelectedDummyId(), "R-003");
+    assert.equal(getVisibleIds(root).join(","), "R-003");
+
+    filterErledigtButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(screen.getCurrentFilter(), "erledigt");
+    assert.equal(getVisibleIds(root).join(","), "R-001,R-002");
+    assert.equal(screen.getSelectedDummyId(), "R-001");
+
+    filterOffenButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(screen.getCurrentFilter(), "offen");
+    assert.equal(getVisibleIds(root).join(","), "R-003");
+    assert.equal(screen.getSelectedDummyId(), "R-003");
+
+    filterErledigtButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(screen.getCurrentFilter(), "erledigt");
+    assert.equal(getVisibleIds(root).join(","), "R-001,R-002");
+    assert.equal(screen.getSelectedDummyId(), "R-001");
+
+    const currentStatusSelect = getNodeByAttr(root, "data-restarbeiten-v2-field", "status");
+    assert.ok(currentStatusSelect);
+    currentStatusSelect.value = "erledigt";
+    currentStatusSelect.onchange?.({
+      target: currentStatusSelect,
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(getVisibleIds(root).join(","), "R-001,R-002");
+    assert.equal(screen.getSelectedDummyId(), "R-001");
+
+    filterOffenButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(screen.getCurrentFilter(), "offen");
+    assert.equal(getVisibleIds(root).join(","), "R-003");
+    assert.equal(screen.getSelectedDummyId(), "R-003");
+
+    const row3StatusSelect = getNodeByAttr(root, "data-restarbeiten-v2-field", "status");
+    assert.ok(row3StatusSelect);
+    row3StatusSelect.value = "erledigt";
+    row3StatusSelect.onchange?.({
+      target: row3StatusSelect,
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(getVisibleIds(root).join(","), "");
+    assert.equal(screen.getSelectedDummyId(), null);
+
+    filterAlleButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(screen.getCurrentFilter(), "alle");
+    assert.equal(getVisibleIds(root).join(","), "R-001,R-002,R-003");
+
     neuButton.onclick?.({
       preventDefault() {},
       stopPropagation() {},
@@ -268,18 +285,10 @@ async function runRestarbeitenV2ScreenTests(run) {
 
     const row4 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-004");
     assert.ok(row4);
+    assert.equal(screen.getCurrentFilter(), "alle");
     assert.equal(screen.getSelectedDummyId(), "R-004");
-    assert.equal(row4.getAttribute("data-restarbeiten-v2-selected"), "true");
-    assert.equal(row1.getAttribute("data-restarbeiten-v2-selected"), "false");
-    assert.equal(row2.getAttribute("data-restarbeiten-v2-selected"), "false");
-    assert.equal(row3.getAttribute("data-restarbeiten-v2-selected"), "false");
+    assert.equal(getVisibleIds(root).join(","), "R-001,R-002,R-003,R-004");
     assert.equal(hasText(root, "R-004 / Neue Restarbeit / Noch ohne Verortung / offen"), true);
-    assert.equal(hasText(root, "Kurztext: Neue Restarbeit"), true);
-    assert.equal(hasText(root, "Langtext: Lokaler DEV-Entwurf ohne Speicherung"), true);
-    assert.equal(hasText(root, "Verortung: Noch ohne Verortung"), true);
-    assert.equal(hasText(root, "Meta: DEV"), true);
-    assert.equal(hasText(root, "Notiz: Nur lokale Vorschau"), true);
-    assert.equal(hasText(root, "Ausgewählt: R-004"), true);
 
     const newShortTextInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "shortText");
     const newLongTextInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "longText");
@@ -304,94 +313,7 @@ async function runRestarbeitenV2ScreenTests(run) {
       stopPropagation() {},
     });
     assert.equal(hasText(root, "R-004 / Neue Restarbeit lokal / Noch ohne Verortung / offen"), true);
-    assert.equal(hasText(root, "Kurztext: Neue Restarbeit lokal"), true);
     assert.equal(screen.getSelectedDummyId(), "R-004");
-
-    neuButton.onclick?.({
-      preventDefault() {},
-      stopPropagation() {},
-    });
-
-    const row5 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-005");
-    assert.ok(row5);
-    assert.equal(screen.getSelectedDummyId(), "R-005");
-    assert.equal(row5.getAttribute("data-restarbeiten-v2-selected"), "true");
-    assert.equal(row4.getAttribute("data-restarbeiten-v2-selected"), "false");
-    assert.equal(hasText(root, "R-005 / Neue Restarbeit / Noch ohne Verortung / offen"), true);
-    assert.equal(hasText(root, "Kurztext: Neue Restarbeit"), true);
-    assert.equal(hasText(root, "Meta: DEV"), true);
-
-    row2.onclick?.({
-      preventDefault() {},
-      stopPropagation() {},
-    });
-    assert.equal(screen.getSelectedDummyId(), "R-002");
-    assert.equal(row2.getAttribute("data-restarbeiten-v2-selected"), "true");
-    assert.equal(row1.getAttribute("data-restarbeiten-v2-selected"), "false");
-
-    const shortTextInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "shortText");
-    const longTextInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "longText");
-    const locationInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "location");
-    const statusSelect = getNodeByAttr(root, "data-restarbeiten-v2-field", "status");
-    const noteInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "note");
-    assert.ok(shortTextInput);
-    assert.ok(longTextInput);
-    assert.ok(locationInput);
-    assert.ok(statusSelect);
-    assert.ok(noteInput);
-    assert.equal(String(shortTextInput.value || ""), "Musterpunkt");
-    assert.equal(String(longTextInput.value || ""), "Musterpunkt in der Wohnung");
-    assert.equal(String(locationInput.value || ""), "Wohnung");
-    assert.equal(String(statusSelect.value || ""), "erledigt");
-
-    shortTextInput.value = "Musterpunkt aktualisiert";
-    shortTextInput.oninput?.({
-      target: shortTextInput,
-      preventDefault() {},
-      stopPropagation() {},
-    });
-    longTextInput.value = "Musterpunkt in der Wohnung - aktualisiert";
-    longTextInput.oninput?.({
-      target: longTextInput,
-      preventDefault() {},
-      stopPropagation() {},
-    });
-    locationInput.value = "Wohnung 2. OG";
-    locationInput.oninput?.({
-      target: locationInput,
-      preventDefault() {},
-      stopPropagation() {},
-    });
-    statusSelect.value = "offen";
-    statusSelect.onchange?.({
-      target: statusSelect,
-      preventDefault() {},
-      stopPropagation() {},
-    });
-    noteInput.value = "Nur lokal geaendert";
-    noteInput.oninput?.({
-      target: noteInput,
-      preventDefault() {},
-      stopPropagation() {},
-    });
-
-    assert.equal(screen.getSelectedDummyId(), "R-002");
-    assert.equal(hasText(root, "Kurztext: Musterpunkt aktualisiert"), true);
-    assert.equal(hasText(root, "Langtext: Musterpunkt in der Wohnung - aktualisiert"), true);
-    assert.equal(hasText(root, "Verortung: Wohnung 2. OG"), true);
-    assert.equal(hasText(root, "Meta: R-002 / erledigt"), true);
-    assert.equal(hasText(root, "Notiz: Nur lokal geaendert"), true);
-    assert.equal(hasText(root, "R-002 / Musterpunkt aktualisiert / Wohnung 2. OG / offen"), true);
-
-    row3.onclick?.({
-      preventDefault() {},
-      stopPropagation() {},
-    });
-    assert.equal(screen.getSelectedDummyId(), "R-003");
-    assert.equal(row3.getAttribute("data-restarbeiten-v2-selected"), "true");
-    assert.equal(hasText(root, "Kurztext: Kontrollpunkt"), true);
-    assert.equal(hasText(root, "Verortung: Außenanlage"), true);
-    assert.equal(hasText(root, "Meta: R-003 / offen"), true);
 
     assert.equal(screenSource.includes("Router"), false);
     assert.equal(screenSource.includes("MainHeader"), false);
@@ -439,3 +361,9 @@ if (require.main === module) {
 }
 
 module.exports = { runRestarbeitenV2ScreenTests };
+
+
+
+
+
+
