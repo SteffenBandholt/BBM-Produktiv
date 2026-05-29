@@ -1,0 +1,71 @@
+# Restarbeiten V2 Leseweg-Entscheidung
+
+## 1. Zweck
+Dieses Dokument entscheidet den spaeteren ReadOnly-Leseweg.
+
+- Es baut noch keine technische Anbindung.
+- Es ist Grundlage fuer M17.x.
+
+## 2. Ausgangslage
+- `RestarbeitenV2Screen` arbeitet ohne IPC.
+- `RestarbeitenV2ReadOnlyAdapter` existiert.
+- `RestarbeitenV2LegacyReadBridge` existiert.
+- Der Mapper existiert.
+- Das Lesewege-Inventar existiert.
+
+## 3. Gewaehlter Kandidat
+Gewaehlter Kandidat fuer den spaeteren ReadOnly-Leseweg ist:
+
+- Datei: `src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js`
+- Funktion: `listRestarbeitenByProject(projectId)`
+- Ebene: Renderer / DataSource
+- erwarteter Parameter: `projectId`
+- erwartete Rueckgabeform: `Array` von Restarbeiten-Rohzeilen
+- Bewertung: geeignet, weil die Funktion bereits lesend arbeitet, die eigentlichen Restarbeiten-Zeilen liefert und sich spaeter ueber eine injizierte Lesefunktion an die LegacyReadBridge anbinden laesst.
+
+## 4. Nicht gewaehlte Kandidaten
+Nicht gewaehlte Kandidaten:
+
+- `getRestarbeitenProjectSettings(projectId)` aus `restarbeitenDataSource.js`
+  - nicht gewaehlte Hauptquelle, weil es Projekt-Einstellungen liefert und nicht die eigentliche Restarbeiten-Liste.
+- `listRestarbeitAttachments(restarbeitId)` aus `restarbeitenDataSource.js`
+  - nicht gewaehlte Hauptquelle, weil es nur Attachments liefert und keine Listenquelle ist.
+- `listResponsibleProjectFirms(projectId)` aus `restarbeitenDataSource.js`
+  - nicht gewaehlte Hauptquelle, weil es nur Begleitdaten fuer die Workbench liefert.
+- `RestarbeitenScreen.render()` aus der alten UI
+  - nicht gewaehlte Quelle, weil sie UI-nah ist und bereits die alte Restarbeiten-UI aufbaut.
+- Schreibwege wie `createRestarbeitItem(...)`, `updateRestarbeitItem(...)`, `softDeleteRestarbeitItem(...)`, `importRestarbeitAttachments(...)`
+  - nicht gewaehlte Kandidaten, weil sie schreiben oder Upload/Delete ausloesen.
+
+## 5. Spaetere Zielkette
+Projektkontext / `projectId`
+→ bestehender lesender Weg (`listRestarbeitenByProject(projectId)`)
+→ `RestarbeitenV2LegacyReadBridge`
+→ `RestarbeitenV2ReadOnlyAdapter`
+→ Mapper
+→ `RestarbeitenV2Screen`
+
+## 6. Grenzen
+- `RestarbeitenV2Screen` bleibt frei von IPC.
+- `RestarbeitenV2Screen` importiert keine alte Restarbeiten-UI.
+- `RestarbeitenV2ReadOnlyAdapter` bleibt DataSource-Ebene.
+- `RestarbeitenV2LegacyReadBridge` nimmt nur eine injizierte Lesefunktion.
+- Der Mapper normalisiert Daten.
+- Kein Speichern in dieser Kette.
+
+## 7. Risiken
+- Moegliche Feldabweichungen zwischen Legacy- und V2-Schema.
+- Moegliche `projectId`-Abhaengigkeit der Quelle.
+- Moegliche unterschiedliche Rueckgabeformen je nach Legacy-Weg.
+- Moegliche Kopplung an das Altmodul ueber `window.bbmDb`.
+- Moeglicherweise fehlen spaeter Attachments oder sie kommen aus einer separaten Quelle.
+
+## 8. Naechster Schritt
+M17.0:
+
+- ReadOnly-Leseanbindung als eng begrenztes Paket vorbereiten
+- nur Lesen
+- keine Schreibwege
+- keine UI-Umbauten
+- keine Speicherung
+
