@@ -29,6 +29,8 @@ Der Umbau folgt dieser Reihenfolge:
   - Ein technischer Stub bereitet die spaetere Grenze zwischen Screen/ViewModel und Adapter/IPC/DB vor, ohne echte Daten anzubinden.
 - M16.2: Restarbeiten V2 Mapper fuer bestehende Daten vorbereiten
   - Die Mapping-Helfer normalisieren Legacy- und Bestandsfelder in das neue RestarbeitV2Dto-Format, ohne echte Datenanbindung.
+- M16.3: Restarbeiten V2 Screen mit injizierter DataSource vorbereiten
+  - Der Screen kann optional eine DataSource annehmen und geladenen Datenbestand rein lokal weiterverarbeiten, der Dummy-Modus bleibt der Standard.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

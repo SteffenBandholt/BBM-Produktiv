@@ -100,6 +100,7 @@ function hasText(root, expected) {
 }
 
 async function runRestarbeitenV2ScreenTests(run) {
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
   const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/RestarbeitenV2Screen.js");
   const dummyDataPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2DummyData.js");
   const viewModelPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2ViewModel.js");
@@ -373,6 +374,172 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(hasText(root, "R-004 / Neue Restarbeit lokal / Noch ohne Verortung / offen"), true);
     assert.equal(screen.getSelectedDummyId(), "R-004");
 
+    const dataSourceCalls = { list: 0, create: 0, update: 0, delete: 0, attachments: 0 };
+    const dataSourceRows = [
+      {
+        restarbeit_id: "R-101",
+        number: "R-101",
+        title: "Geladene Offen",
+        location: "Haus A",
+        state: "open",
+        completion_note: "Meta geladen",
+        note: "Nur DS",
+        attachments: ["foto-1.jpg"],
+        responsible_firm_id: "f-1",
+        responsible_firm_name: "Firma A",
+        due_date: "2026-06-01",
+        created_at: "2026-05-01",
+        updated_at: "2026-05-02",
+        completed_at: null,
+      },
+      {
+        restarbeit_id: "R-102",
+        lfd_nr: "R-102",
+        kurz_text: "Geladene Erledigt",
+        lang_text: "Lang geladen",
+        ort: "Haus B",
+        status: "done",
+        note_meta: "Meta 2",
+        note: "Nur DS 2",
+        photos: [],
+      },
+    ];
+    const dataSource = {
+      listRestarbeitenV2(projectId) {
+        dataSourceCalls.list += 1;
+        assert.equal(projectId, "project-42");
+        return Promise.resolve(dataSourceRows);
+      },
+      createRestarbeitV2() {
+        dataSourceCalls.create += 1;
+        return Promise.reject(new Error("create should not be called"));
+      },
+      updateRestarbeitV2() {
+        dataSourceCalls.update += 1;
+        return Promise.reject(new Error("update should not be called"));
+      },
+      deleteRestarbeitV2() {
+        dataSourceCalls.delete += 1;
+        return Promise.reject(new Error("delete should not be called"));
+      },
+      listRestarbeitV2Attachments() {
+        dataSourceCalls.attachments += 1;
+        return Promise.reject(new Error("attachments should not be called"));
+      },
+    };
+
+    const document2 = createFakeDocument();
+    globalThis.document = document2;
+    globalThis.window = fakeWindow;
+    const screenWithDataSource = createRestarbeitenV2Screen({
+      registry,
+      dataSource,
+      projectId: "project-42",
+      useDataSource: true,
+    });
+    const rootWithDataSource = screenWithDataSource.render(document2.body);
+    assert.ok(rootWithDataSource);
+    assert.equal(screenWithDataSource.getSelectedDummyId(), null);
+    assert.equal(hasText(rootWithDataSource, "Daten werden geladen"), true);
+    await flush();
+    assert.equal(dataSourceCalls.list, 1);
+    assert.equal(dataSourceCalls.create, 0);
+    assert.equal(dataSourceCalls.update, 0);
+    assert.equal(dataSourceCalls.delete, 0);
+    assert.equal(dataSourceCalls.attachments, 0);
+    assert.equal(screenWithDataSource.getSelectedDummyId(), "R-101");
+    assert.equal(screenWithDataSource.getCurrentFilter(), "alle");
+    assert.equal(getVisibleIds(rootWithDataSource).join(","), "R-101,R-102");
+    assert.equal(hasText(rootWithDataSource, "R-101 / Geladene Offen / Haus A / offen"), true);
+    assert.equal(hasText(rootWithDataSource, "R-102 / Geladene Erledigt / Haus B / erledigt"), true);
+    assert.equal(hasText(rootWithDataSource, "Ausgew"), true);
+    assert.equal(hasText(rootWithDataSource, "Nur lokale DEV-Vorschau - keine Speicherung"), true);
+
+    const dsShortTextInput = getNodeByAttr(rootWithDataSource, "data-restarbeiten-v2-field", "shortText");
+    const dsNeuButton = getNodeById(rootWithDataSource, "restarbeitenV2.quicklane.neu");
+    const dsFilterOffenButton = getNodeById(rootWithDataSource, "restarbeitenV2.quicklane.filterOffen");
+    const dsFilterErledigtButton = getNodeById(rootWithDataSource, "restarbeitenV2.quicklane.filterErledigt");
+    assert.ok(dsShortTextInput);
+    assert.ok(dsNeuButton);
+    assert.ok(dsFilterOffenButton);
+    assert.ok(dsFilterErledigtButton);
+
+    dsShortTextInput.value = "Geladene Offen lokal";
+    dsShortTextInput.oninput?.({
+      target: dsShortTextInput,
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(dataSourceCalls.update, 0);
+    assert.equal(hasText(rootWithDataSource, "R-101 / Geladene Offen lokal / Haus A / offen"), true);
+
+    dsNeuButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(dataSourceCalls.create, 0);
+    assert.equal(screenWithDataSource.getSelectedDummyId(), "R-103");
+    assert.equal(getVisibleIds(rootWithDataSource).join(","), "R-101,R-102,R-103");
+
+    dsFilterOffenButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(getVisibleIds(rootWithDataSource).join(","), "R-101,R-103");
+    assert.equal(screenWithDataSource.getSelectedDummyId(), "R-103");
+
+    dsFilterErledigtButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(getVisibleIds(rootWithDataSource).join(","), "R-102");
+    assert.equal(screenWithDataSource.getSelectedDummyId(), "R-102");
+
+    const dataSourceMissingProject = {
+      listCalls: 0,
+      listRestarbeitenV2() {
+        dataSourceMissingProject.listCalls += 1;
+        return Promise.resolve([]);
+      },
+    };
+    const document3 = createFakeDocument();
+    globalThis.document = document3;
+    globalThis.window = fakeWindow;
+    const screenWithoutProject = createRestarbeitenV2Screen({
+      registry,
+      dataSource: dataSourceMissingProject,
+      useDataSource: true,
+    });
+    const rootWithoutProject = screenWithoutProject.render(document3.body);
+    assert.ok(rootWithoutProject);
+    await flush();
+    assert.equal(dataSourceMissingProject.listCalls, 0);
+    assert.equal(hasText(rootWithoutProject, "Projektkontext fehlt"), true);
+    assert.equal(screenWithoutProject.getSelectedDummyId(), null);
+
+    const failingDataSource = {
+      listCalls: 0,
+      listRestarbeitenV2() {
+        failingDataSource.listCalls += 1;
+        return Promise.reject(new Error("DS kaputt"));
+      },
+    };
+    const document4 = createFakeDocument();
+    globalThis.document = document4;
+    globalThis.window = fakeWindow;
+    const screenWithError = createRestarbeitenV2Screen({
+      registry,
+      dataSource: failingDataSource,
+      projectId: "project-43",
+      useDataSource: true,
+    });
+    const rootWithError = screenWithError.render(document4.body);
+    assert.ok(rootWithError);
+    await flush();
+    assert.equal(failingDataSource.listCalls, 1);
+    assert.equal(hasText(rootWithError, "DataSource-Fehler"), true);
+    assert.equal(screenWithError.getSelectedDummyId(), null);
+
     assert.equal(screenSource.includes("Router"), false);
     assert.equal(screenSource.includes("MainHeader"), false);
     assert.equal(screenSource.includes("ipc"), false);
@@ -419,8 +586,4 @@ if (require.main === module) {
 }
 
 module.exports = { runRestarbeitenV2ScreenTests };
-
-
-
-
 

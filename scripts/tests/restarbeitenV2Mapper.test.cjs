@@ -19,7 +19,7 @@ async function runRestarbeitenV2MapperTests(run) {
   assert.equal(source.includes("uiInspector"), false);
 
   const screenSource = fs.readFileSync(screenPath, "utf8");
-  assert.equal(screenSource.includes("restarbeitenV2Mapper"), false);
+  assert.equal(screenSource.includes("normalizeRestarbeitV2List"), true);
 
   const {
     normalizeRestarbeitV2Dto,

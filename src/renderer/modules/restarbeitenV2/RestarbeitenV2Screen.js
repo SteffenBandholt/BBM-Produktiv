@@ -4,6 +4,7 @@ import {
   createInitialRestarbeitenV2DummyItems,
   createNextRestarbeitenV2DummyItem,
 } from "./restarbeitenV2DummyData.js";
+import { normalizeRestarbeitV2List } from "./restarbeitenV2Mapper.js";
 import {
   findRestarbeitenV2Item,
   getNextSelectedRestarbeitenV2Id,
@@ -11,10 +12,7 @@ import {
   normalizeRestarbeitenV2Filter,
   updateRestarbeitenV2Item,
 } from "./restarbeitenV2ViewModel.js";
-import {
-  createRestarbeitenV2Node,
-  createRestarbeitenV2TextBlock,
-} from "./restarbeitenV2Dom.js";
+import { createRestarbeitenV2Node, createRestarbeitenV2TextBlock } from "./restarbeitenV2Dom.js";
 
 function buildTree(doc, registry) {
   const nodes = new Map();
@@ -119,9 +117,35 @@ function buildTree(doc, registry) {
   return nodes.get("restarbeitenV2.root") || null;
 }
 
+function mapV2DtoToScreenRow(item) {
+  const source = item && typeof item === "object" ? item : {};
+  return {
+    id: String(source.id || source.nummer || ""),
+    title: String(source.kurztext || source.nummer || source.id || ""),
+    number: String(source.nummer || ""),
+    location: String(source.verortung || ""),
+    status: String(source.status || "offen"),
+    shortText: String(source.kurztext || ""),
+    longText: String(source.langtext || ""),
+    meta: String(source.meta || ""),
+    photos: Array.isArray(source.fotos) ? source.fotos.slice() : [],
+    note: String(source.notiz || ""),
+    responsibleFirmId: source.responsibleFirmId == null ? null : String(source.responsibleFirmId),
+    responsibleFirmName: String(source.responsibleFirmName || ""),
+    dueDate: source.dueDate == null ? null : String(source.dueDate),
+    createdAt: source.createdAt == null ? null : String(source.createdAt),
+    updatedAt: source.updatedAt == null ? null : String(source.updatedAt),
+    completedAt: source.completedAt == null ? null : String(source.completedAt),
+  };
+}
+
 export function createRestarbeitenV2Screen(options = {}) {
   const registry = Array.isArray(options.registry) ? options.registry : createRestarbeitenV2Registry();
   const editorV2Core = options.editorV2Core || null;
+  const dataSource = options.dataSource || null;
+  const projectId = options.projectId;
+  const useDataSource = options.useDataSource === true;
+
   let rootNode = null;
   let panelNode = null;
   let panelInstance = null;
@@ -135,6 +159,30 @@ export function createRestarbeitenV2Screen(options = {}) {
   let listRowsHost = null;
   let headerFilterStateNode = null;
   let renderDoc = null;
+  let dataSourceLoadToken = 0;
+  let dataSourceState = {
+    enabled: false,
+    loading: false,
+    error: "",
+    projectMissing: false,
+  };
+
+  function setDataSourceState(nextState) {
+    dataSourceState = {
+      enabled: useDataSource,
+      loading: Boolean(nextState?.loading),
+      error: String(nextState?.error || ""),
+      projectMissing: Boolean(nextState?.projectMissing),
+    };
+  }
+
+  function getStatusBannerText() {
+    if (!dataSourceState.enabled) return "Nur lokale DEV-Vorschau - keine Speicherung";
+    if (dataSourceState.projectMissing) return "Projektkontext fehlt - lokaler DEV-Modus";
+    if (dataSourceState.loading) return "Daten werden geladen ...";
+    if (dataSourceState.error) return `DataSource-Fehler: ${dataSourceState.error}`;
+    return "Nur lokale DEV-Vorschau - keine Speicherung";
+  }
 
   function createDummyRowNode(doc, row) {
     const rowNode = doc.createElement("button");
@@ -158,6 +206,41 @@ export function createRestarbeitenV2Screen(options = {}) {
       listRowsHost.append(rowNode);
     }
     return rowNode;
+  }
+
+  function applyRowsFromDtoList(items) {
+    dummyRows = Array.isArray(items) ? items.map(mapV2DtoToScreenRow) : [];
+    selectedDummyId = dummyRows[0]?.id || null;
+    syncMainList();
+  }
+
+  async function loadRestarbeitenFromDataSource() {
+    const loadToken = ++dataSourceLoadToken;
+    if (!dataSource || typeof dataSource.listRestarbeitenV2 !== "function") {
+      setDataSourceState({ enabled: true, error: "DataSource nicht verfuegbar" });
+      syncMainList();
+      return;
+    }
+    if (!projectId) {
+      setDataSourceState({ enabled: true, projectMissing: true });
+      syncMainList();
+      return;
+    }
+    setDataSourceState({ enabled: true, loading: true });
+    syncMainList();
+    try {
+      const result = await dataSource.listRestarbeitenV2(projectId);
+      if (loadToken !== dataSourceLoadToken) return;
+      applyRowsFromDtoList(normalizeRestarbeitV2List(result));
+      setDataSourceState({ enabled: true });
+      syncMainList();
+    } catch (error) {
+      if (loadToken !== dataSourceLoadToken) return;
+      dummyRows = [];
+      selectedDummyId = null;
+      setDataSourceState({ enabled: true, error: String(error?.message || error || "Unbekannter Fehler") });
+      syncMainList();
+    }
   }
 
   function createAndSelectDummyRow(doc) {
@@ -193,7 +276,9 @@ export function createRestarbeitenV2Screen(options = {}) {
       if (workbenchNodes.langtextPreview) workbenchNodes.langtextPreview.textContent = `Langtext: ${current.longText}`;
       if (workbenchNodes.verortungPreview) workbenchNodes.verortungPreview.textContent = `Verortung: ${current.location}`;
       if (workbenchNodes.metaPreview) workbenchNodes.metaPreview.textContent = `Meta: ${current.meta}`;
-      if (workbenchNodes.fotosPreview) workbenchNodes.fotosPreview.textContent = `Fotos: ${current.photos}`;
+      if (workbenchNodes.fotosPreview) {
+        workbenchNodes.fotosPreview.textContent = `Fotos: ${Array.isArray(current.photos) ? current.photos.join(", ") || "Keine Fotos" : current.photos}`;
+      }
       if (workbenchNodes.notizPreview) workbenchNodes.notizPreview.textContent = `Notiz: ${current.note}`;
     } else {
       if (workbenchNodes.selectionNote) workbenchNodes.selectionNote.textContent = "Keine Auswahl";
@@ -209,7 +294,7 @@ export function createRestarbeitenV2Screen(options = {}) {
       if (workbenchNodes.fotosPreview) workbenchNodes.fotosPreview.textContent = "Fotos: Keine Auswahl";
       if (workbenchNodes.notizPreview) workbenchNodes.notizPreview.textContent = "Notiz: Keine Auswahl";
     }
-    if (workbenchNodes.notice) workbenchNodes.notice.textContent = "Nur lokale DEV-Vorschau - keine Speicherung";
+    if (workbenchNodes.notice) workbenchNodes.notice.textContent = getStatusBannerText();
     syncFilterState();
     return true;
   }
@@ -333,7 +418,7 @@ export function createRestarbeitenV2Screen(options = {}) {
     }
 
     const selectionNote = createRestarbeitenV2TextBlock(doc, "Ausgewählt: R-001", "restarbeiten-v2-selection-note");
-    const notice = createRestarbeitenV2TextBlock(doc, "Nur lokale DEV-Vorschau - keine Speicherung", "restarbeiten-v2-no-save");
+    const notice = createRestarbeitenV2TextBlock(doc, getStatusBannerText(), "restarbeiten-v2-no-save");
 
     const kurztextInput = doc.createElement("input");
     kurztextInput.type = "text";
@@ -443,7 +528,23 @@ export function createRestarbeitenV2Screen(options = {}) {
       listRowsHost.setAttribute("data-restarbeiten-v2-list-rows", "true");
       listNode.append(listRowsHost);
     }
-    syncMainList();
+    if (useDataSource) {
+      dummyRows = [];
+      selectedDummyId = null;
+      setDataSourceState({
+        enabled: true,
+        loading: Boolean(dataSource && typeof dataSource.listRestarbeitenV2 === "function" && projectId),
+        error: !dataSource || typeof dataSource.listRestarbeitenV2 !== "function" ? "DataSource nicht verfuegbar" : "",
+        projectMissing: !projectId,
+      });
+      syncMainList();
+      if (dataSource && typeof dataSource.listRestarbeitenV2 === "function" && projectId) {
+        void loadRestarbeitenFromDataSource();
+      }
+    } else {
+      setDataSourceState({ enabled: false });
+      syncMainList();
+    }
     wireWorkbench(doc);
     wireQuicklane(doc);
     if (editorV2Core) {
@@ -479,6 +580,8 @@ export function createRestarbeitenV2Screen(options = {}) {
     renderDoc = null;
     currentFilter = "alle";
     selectedDummyId = "R-001";
+    dataSourceLoadToken += 1;
+    dataSourceState = { enabled: false, loading: false, error: "", projectMissing: false };
     return true;
   }
 
