@@ -30,6 +30,7 @@ const { runEditorV2PreviewTests } = require("./tests/editorV2Preview.test.cjs");
 const { runEditorV2PanelTests } = require("./tests/editorV2Panel.test.cjs");
 const { runEditorLabV2AccessTests } = require("./tests/editorLabV2Access.test.cjs");
 const { runRestarbeitenV2DevAccessTests } = require("./tests/restarbeitenV2DevAccess.test.cjs");
+const { runRestarbeitenV2EditorDevTests } = require("./tests/restarbeitenV2EditorDev.test.cjs");
 const { runRestarbeitenV2RegistryRulesTests } = require("./tests/restarbeitenV2RegistryRules.test.cjs");
 const { runRestarbeitenV2RegistryTests } = require("./tests/restarbeitenV2Registry.test.cjs");
 const { runRestarbeitenV2ScreenTests } = require("./tests/restarbeitenV2Screen.test.cjs");
@@ -140,6 +141,7 @@ async function main() {
   await runEditorV2PanelTests(run);
   await runEditorLabV2AccessTests(run);
   await runRestarbeitenV2DevAccessTests(run);
+  await runRestarbeitenV2EditorDevTests(run);
   await runRestarbeitenV2RegistryRulesTests(run);
   await runRestarbeitenV2RegistryTests(run);
   await runRestarbeitenV2ScreenTests(run);

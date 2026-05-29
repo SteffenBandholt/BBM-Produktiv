@@ -722,7 +722,8 @@ export default class Router {
     }
 
     const registry = createRestarbeitenV2Registry();
-    const screen = createRestarbeitenV2Screen({ registry });
+    const core = createEditorV2Core({ registry, mode: "frame" });
+    const screen = createRestarbeitenV2Screen({ registry, editorV2Core: core });
 
     const view = {
       render: () => {
@@ -734,7 +735,13 @@ export default class Router {
         const root = screen.render(host);
         return root ? host : null;
       },
-      async destroy() {},
+      async destroy() {
+        try {
+          screen.destroy?.();
+        } catch (_e) {
+          // ignore
+        }
+      },
     };
 
     this._setProjectRuntimeContext({ projectId: null, meetingId: null });

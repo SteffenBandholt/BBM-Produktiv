@@ -1,4 +1,5 @@
 import { createRestarbeitenV2Registry } from "./restarbeitenV2Registry.js";
+import { createEditorV2Panel } from "../../uiV2/editorV2/EditorV2Panel.js";
 
 function applyV2Attributes(node, entry) {
   node.setAttribute("data-ui-v2-id", entry.id);
@@ -63,22 +64,76 @@ function buildTree(doc, registry) {
 
 export function createRestarbeitenV2Screen(options = {}) {
   const registry = Array.isArray(options.registry) ? options.registry : createRestarbeitenV2Registry();
+  const editorV2Core = options.editorV2Core || null;
   let rootNode = null;
+  let panelNode = null;
+  let panelInstance = null;
+  let mountedTarget = null;
+
+  function mountEditorPanel(target, doc) {
+    if (!editorV2Core || typeof editorV2Core.mount !== "function") return null;
+    if (!panelInstance) {
+      panelInstance = createEditorV2Panel({ core: editorV2Core });
+    }
+    if (!panelNode) {
+      panelNode = doc.createElement("div");
+      panelNode.setAttribute("data-ui-v2-restarbeiten-editor-panel-host", "true");
+      panelNode.style.display = "block";
+      panelNode.style.marginTop = "12px";
+    }
+    if (target && typeof target.append === "function" && panelNode.parentElement !== target) {
+      target.append(panelNode);
+    }
+    panelInstance.render(panelNode);
+    return panelNode;
+  }
 
   function render(target) {
     const doc = target?.ownerDocument || globalThis.document;
     if (!doc || typeof doc.createElement !== "function") return null;
+    mountedTarget = target || null;
     rootNode = buildTree(doc, registry);
     if (!rootNode) return null;
     if (target && typeof target.append === "function") {
       target.append(rootNode);
     }
+    if (editorV2Core) {
+      editorV2Core.mount(rootNode, registry);
+      mountEditorPanel(target || doc.body || null, doc);
+    }
     return rootNode;
+  }
+
+  function destroy() {
+    try {
+      panelInstance?.unmount?.();
+    } catch (_e) {
+      // ignore
+    }
+    try {
+      editorV2Core?.unmount?.();
+    } catch (_e) {
+      // ignore
+    }
+    if (panelNode?.parentElement?.removeChild) {
+      panelNode.parentElement.removeChild(panelNode);
+    }
+    if (rootNode?.parentElement?.removeChild) {
+      rootNode.parentElement.removeChild(rootNode);
+    }
+    panelInstance = null;
+    panelNode = null;
+    mountedTarget = null;
+    rootNode = null;
+    return true;
   }
 
   return {
     registry,
     render,
+    destroy,
     getRootNode: () => rootNode,
+    getPanelNode: () => panelNode,
+    getMountedTarget: () => mountedTarget,
   };
 }
