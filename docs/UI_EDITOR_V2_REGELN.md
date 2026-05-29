@@ -37,14 +37,11 @@ Ohne diese Basis arbeitet der Editor nicht.
 
 ## 3. Auswahlregel
 Eine Auswahl bedeutet genau ein Element.
-Eine Auswahl = genau ein Element.
 
 Regeln:
 - eine Aenderung betrifft nur dieses Element
 - keine automatische Aenderung von Parent, Child oder Geschwistern
 - keine Bearbeitung ohne vorherige Auswahl
-Eine Änderung = nur dieses Element.
-Keine Bearbeitung ohne vorherige Auswahl.
 
 Damit bleibt die Bedienung eindeutig und nachvollziehbar.
 
@@ -77,22 +74,19 @@ Regeln:
 - Abbrechen verwirft Aenderungen
 - Uebernehmen oder Speichern macht Aenderungen dauerhaft
 - keine automatische Speicherung waehrend der Vorschau
-Übernehmen
-Rückgängig
 
 Vorschau und dauerhafte Anwendung bleiben getrennt.
 
 ## 6. Rueckgaengig
-Der Editor muss Rueckgaengig und Wiederholen koennen.
+Rueckgaengig und Wiederholen sind als optionale Komfortfunktion geparkt.
 
-Mindestens:
-- 20 Schritte Rueckgaengig
-- Wiederholen
+Pflicht fuer den ersten Editor-V2-Ausbau bleiben:
 - ausgewaehltes Element zuruecksetzen
 - alles zuruecksetzen
-mindestens 20 Schritte
 
-So bleiben auch groeßere Versuchsschritte beherrschbar.
+Rueckgaengig und Wiederholen koennen spaeter wieder aufgenommen werden.
+
+So bleibt der Start schlank und die Aenderung kann trotzdem kontrolliert zurueckgestellt werden.
 
 ## 7. PDF / Druck
 UI-Editor V2 veraendert zuerst nur die Bildschirm-UI.
@@ -119,7 +113,6 @@ Der Kern bleibt damit wiederverwendbar und stabil.
 Folgendes ist verboten:
 - kein Hover-Flickwerk ueber alte IDs
 - keine UI-spezifischen Editor-Sonderfaelle
-- keine UI-spezifischen Editor-Sonderfälle
 - keine DOM-Raterei als Hauptmechanismus
 - keine unendlichen Verschachtelungen
 - keine freie Font-, Farb- oder Abstandswildnis
