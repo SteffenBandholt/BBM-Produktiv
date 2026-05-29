@@ -52,6 +52,8 @@ export function createEditorV2Overlay(options = {}) {
   let selectedFrame = null;
   let pointerMoveHandler = null;
   let pointerDownHandler = null;
+  let scrollHandler = null;
+  let resizeHandler = null;
   let currentHover = null;
   let currentSelected = null;
   let mode = normalizeMode(options.mode || "frame");
@@ -143,6 +145,10 @@ export function createEditorV2Overlay(options = {}) {
     }
 
     return true;
+  }
+
+  function refreshOverlay() {
+    return syncOverlay();
   }
 
   function clearHoverFrame() {
@@ -238,10 +244,29 @@ export function createEditorV2Overlay(options = {}) {
       doc.addEventListener("click", pointerDownHandler, true);
     }
 
+    if (!scrollHandler && typeof doc.addEventListener === "function") {
+      scrollHandler = () => refreshOverlay();
+      doc.addEventListener("scroll", scrollHandler, true);
+    }
+
+    const mountWindow = nextDoc.defaultView || globalThis.window || null;
+    if (!resizeHandler && mountWindow && typeof mountWindow.addEventListener === "function") {
+      resizeHandler = () => refreshOverlay();
+      mountWindow.addEventListener("resize", resizeHandler, true);
+    }
+
     return true;
   }
 
   function refreshFrames() {
+    return syncOverlay();
+  }
+
+  function refreshSelectedFrame() {
+    return syncOverlay();
+  }
+
+  function refreshHoverFrame() {
     return syncOverlay();
   }
 
@@ -255,8 +280,17 @@ export function createEditorV2Overlay(options = {}) {
       doc.removeEventListener("pointerdown", pointerDownHandler, true);
       doc.removeEventListener("click", pointerDownHandler, true);
     }
+    if (doc && scrollHandler && typeof doc.removeEventListener === "function") {
+      doc.removeEventListener("scroll", scrollHandler, true);
+    }
+    const mountWindow = doc?.defaultView || globalThis.window || null;
+    if (mountWindow && resizeHandler && typeof mountWindow.removeEventListener === "function") {
+      mountWindow.removeEventListener("resize", resizeHandler, true);
+    }
     pointerMoveHandler = null;
     pointerDownHandler = null;
+    scrollHandler = null;
+    resizeHandler = null;
     if (overlayRoot?.parentElement?.removeChild) {
       overlayRoot.parentElement.removeChild(overlayRoot);
     }
@@ -294,6 +328,9 @@ export function createEditorV2Overlay(options = {}) {
     clearHoverFrame,
     clearSelectedFrame,
     refreshFrames,
+    refreshSelectedFrame,
+    refreshHoverFrame,
+    refreshOverlay,
     resolveRegistryTarget: (candidateNode) => resolveRegistryTarget(rootElement, registry, mode, candidateNode),
     handlePointerSelect,
   };

@@ -189,7 +189,7 @@ export function createEditorV2Core(options = {}) {
     if (!state) return false;
     restorePreviewState(state);
     previewStates.delete(state.id);
-    overlay.refreshFrames();
+    overlay.refreshOverlay?.();
     return true;
   }
 
@@ -200,7 +200,7 @@ export function createEditorV2Core(options = {}) {
     }
     previewStates.clear();
     if (didReset) {
-      overlay.refreshFrames();
+      overlay.refreshOverlay?.();
     }
     return didReset;
   }
@@ -263,6 +263,7 @@ export function createEditorV2Core(options = {}) {
     clearSelectedFrame: () => overlay.clearSelectedFrame(),
     handlePointerSelect: (event) => overlay.handlePointerSelect(event),
     resolveRegistryTarget: (candidateNode) => resolveRegistryTarget(rootElement, registry, mode, candidateNode),
+    refreshOverlay: () => overlay.refreshOverlay?.(),
     moveSelected,
     resizeSelected,
     moveSelectedLeft,

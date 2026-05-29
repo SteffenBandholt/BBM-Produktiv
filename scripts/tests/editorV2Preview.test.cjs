@@ -91,6 +91,7 @@ function createFakeDocument() {
       for (const handler of listeners.get(type) || []) handler(event);
     },
   };
+  document._listeners = listeners;
 
   document.body = createNode("body", document);
   document.body._rect = { left: 0, top: 0, width: 1600, height: 1200 };
@@ -164,11 +165,30 @@ async function runEditorV2PreviewTests(run) {
 
   const document = createFakeDocument();
   const previousDocument = globalThis.document;
+  const previousWindow = globalThis.window;
   const restoreLocalStorage = installThrowingGlobal("localStorage");
   const restoreIndexedDB = installThrowingGlobal("indexedDB");
   const restoreIpcRenderer = installThrowingGlobal("ipcRenderer");
   let core = null;
+  const windowListeners = new Map();
+  const windowMock = {
+    innerWidth: 1600,
+    innerHeight: 1200,
+    addEventListener(type, handler) {
+      if (!windowListeners.has(type)) windowListeners.set(type, []);
+      windowListeners.get(type).push(handler);
+    },
+    removeEventListener(type, handler) {
+      windowListeners.set(type, (windowListeners.get(type) || []).filter((entry) => entry !== handler));
+    },
+    dispatchEvent(event) {
+      const type = String(event?.type || "");
+      for (const handler of windowListeners.get(type) || []) handler.call(windowMock, event);
+    },
+  };
+  document.defaultView = windowMock;
   globalThis.document = document;
+  globalThis.window = windowMock;
 
   try {
     const registry = createEditorLabRegistry();
@@ -272,9 +292,27 @@ async function runEditorV2PreviewTests(run) {
     assert.equal(hoverFrameNodes().length, 1);
     assert.equal(selectedFrameNodes().length, 1);
 
+    setRect(groupA, { left: 120, top: 180, width: 140, height: 80 });
+    document.dispatch("scroll", { type: "scroll" });
+    assert.equal(selectedFrameNodes().length, 1);
+    assert.equal(core.getSelectedFrame().style.left, "120px");
+    assert.equal(core.getSelectedFrame().style.top, "180px");
+    assert.equal(core.getSelectedFrame().style.width, "140px");
+    assert.equal(core.getSelectedFrame().style.height, "80px");
+
+    const groupB = getNodeById(root, "editorlab.main.groupB");
+    setRect(groupB, { left: 180, top: 420, width: 400, height: 180 });
+    windowMock.dispatchEvent({ type: "resize" });
+    assert.equal(hoverFrameNodes().length, 1);
+    assert.equal(core.getHoverFrame().style.left, "180px");
+    assert.equal(core.getHoverFrame().style.top, "420px");
+
     assert.equal(core.resetSelectedPreview(), true);
     assert.equal(groupA.style.cssText, originalCss.get("editorlab.main.groupA"));
+    assert.equal(core.getSelectedTargetId(), "editorlab.main.groupA");
     assert.equal(selectedFrameNodes().length, 1);
+    assert.equal(core.getSelectedFrame().style.left, "40px");
+    assert.equal(core.getSelectedFrame().style.top, "180px");
 
     core.setMode("frame");
     click(getNodeById(root, "editorlab.main.groupB"));
@@ -282,7 +320,6 @@ async function runEditorV2PreviewTests(run) {
     assert.equal(core.moveSelected(6, 2), true);
     assert.equal(core.resizeSelected(10, 4), true);
 
-    const groupB = getNodeById(root, "editorlab.main.groupB");
     assert.notEqual(groupB.style.cssText, originalCss.get("editorlab.main.groupB"));
     assert.equal(getNodeById(root, "editorlab.main.groupA").style.cssText, originalCss.get("editorlab.main.groupA"));
 
@@ -292,9 +329,14 @@ async function runEditorV2PreviewTests(run) {
       assert.equal(node.style.cssText, originalCss.get(entry.id), `style not restored for ${entry.id}`);
     }
 
+    assert.equal(core.getSelectedTargetId(), "editorlab.main.groupB");
     assert.equal(selectedFrameNodes().length, 1);
     assert.equal(hoverFrameNodes().length <= 1, true);
     assert.equal(core.getCurrentSelected().entry.id, "editorlab.main.groupB");
+
+    assert.equal(core.unmount(), true);
+    assert.equal((windowListeners.get("resize") || []).length, 0);
+    assert.equal((document._listeners?.scroll || []).length || 0, 0);
 
     const diffFiles = execFileSync("git", ["diff", "--name-only"], { cwd: path.join(__dirname, "../.."), encoding: "utf8" })
       .split(/\r?\n/)
@@ -305,6 +347,7 @@ async function runEditorV2PreviewTests(run) {
     assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
   } finally {
     globalThis.document = previousDocument;
+    globalThis.window = previousWindow;
     restoreLocalStorage();
     restoreIndexedDB();
     restoreIpcRenderer();
