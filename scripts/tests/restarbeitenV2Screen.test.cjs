@@ -135,7 +135,37 @@ async function runRestarbeitenV2ScreenTests(run) {
 
   const document = createFakeDocument();
   const previousDocument = globalThis.document;
+  const previousWindow = globalThis.window;
+  const accessLog = { localStorage: 0, db: 0 };
+  const fakeWindow = {
+    localStorage: {
+      getItem() {
+        accessLog.localStorage += 1;
+        return null;
+      },
+      setItem() {
+        accessLog.localStorage += 1;
+      },
+      removeItem() {
+        accessLog.localStorage += 1;
+      },
+    },
+    bbmDb: new Proxy(
+      {},
+      {
+        get() {
+          accessLog.db += 1;
+          return undefined;
+        },
+        set() {
+          accessLog.db += 1;
+          return true;
+        },
+      }
+    ),
+  };
   globalThis.document = document;
+  globalThis.window = fakeWindow;
 
   try {
     const screen = createRestarbeitenV2Screen({ registry });
@@ -215,7 +245,7 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(hasText(root, "Kurztext: Offene Restarbeit"), true);
     assert.equal(hasText(root, "Langtext: Offene Restarbeit im Treppenhaus"), true);
     assert.equal(hasText(root, "Verortung: Treppenhaus"), true);
-    assert.equal(hasText(root, "Meta / Status: offen"), true);
+    assert.equal(hasText(root, "Meta: R-001 / offen"), true);
     assert.equal(hasText(root, "Fotos: Keine Fotos"), true);
     assert.equal(hasText(root, "Notiz: Platzhalternotiz"), true);
 
@@ -228,6 +258,68 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(row1.getAttribute("data-restarbeiten-v2-selected"), "true");
     assert.equal(row2.getAttribute("data-restarbeiten-v2-selected"), "false");
     assert.equal(row3.getAttribute("data-restarbeiten-v2-selected"), "false");
+
+    const neuButton = getNodeById(root, "restarbeitenV2.quicklane.neu");
+    assert.ok(neuButton);
+    neuButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+
+    const row4 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-004");
+    assert.ok(row4);
+    assert.equal(screen.getSelectedDummyId(), "R-004");
+    assert.equal(row4.getAttribute("data-restarbeiten-v2-selected"), "true");
+    assert.equal(row1.getAttribute("data-restarbeiten-v2-selected"), "false");
+    assert.equal(row2.getAttribute("data-restarbeiten-v2-selected"), "false");
+    assert.equal(row3.getAttribute("data-restarbeiten-v2-selected"), "false");
+    assert.equal(hasText(root, "R-004 / Neue Restarbeit / Noch ohne Verortung / offen"), true);
+    assert.equal(hasText(root, "Kurztext: Neue Restarbeit"), true);
+    assert.equal(hasText(root, "Langtext: Lokaler DEV-Entwurf ohne Speicherung"), true);
+    assert.equal(hasText(root, "Verortung: Noch ohne Verortung"), true);
+    assert.equal(hasText(root, "Meta: DEV"), true);
+    assert.equal(hasText(root, "Notiz: Nur lokale Vorschau"), true);
+    assert.equal(hasText(root, "Ausgewählt: R-004"), true);
+
+    const newShortTextInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "shortText");
+    const newLongTextInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "longText");
+    const newLocationInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "location");
+    const newStatusSelect = getNodeByAttr(root, "data-restarbeiten-v2-field", "status");
+    const newNoteInput = getNodeByAttr(root, "data-restarbeiten-v2-field", "note");
+    assert.ok(newShortTextInput);
+    assert.ok(newLongTextInput);
+    assert.ok(newLocationInput);
+    assert.ok(newStatusSelect);
+    assert.ok(newNoteInput);
+    assert.equal(String(newShortTextInput.value || ""), "Neue Restarbeit");
+    assert.equal(String(newLongTextInput.value || ""), "Lokaler DEV-Entwurf ohne Speicherung");
+    assert.equal(String(newLocationInput.value || ""), "Noch ohne Verortung");
+    assert.equal(String(newStatusSelect.value || ""), "offen");
+    assert.equal(String(newNoteInput.value || ""), "Nur lokale Vorschau");
+
+    newShortTextInput.value = "Neue Restarbeit lokal";
+    newShortTextInput.oninput?.({
+      target: newShortTextInput,
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(hasText(root, "R-004 / Neue Restarbeit lokal / Noch ohne Verortung / offen"), true);
+    assert.equal(hasText(root, "Kurztext: Neue Restarbeit lokal"), true);
+    assert.equal(screen.getSelectedDummyId(), "R-004");
+
+    neuButton.onclick?.({
+      preventDefault() {},
+      stopPropagation() {},
+    });
+
+    const row5 = getNodeByAttr(root, "data-restarbeiten-v2-dummy-id", "R-005");
+    assert.ok(row5);
+    assert.equal(screen.getSelectedDummyId(), "R-005");
+    assert.equal(row5.getAttribute("data-restarbeiten-v2-selected"), "true");
+    assert.equal(row4.getAttribute("data-restarbeiten-v2-selected"), "false");
+    assert.equal(hasText(root, "R-005 / Neue Restarbeit / Noch ohne Verortung / offen"), true);
+    assert.equal(hasText(root, "Kurztext: Neue Restarbeit"), true);
+    assert.equal(hasText(root, "Meta: DEV"), true);
 
     row2.onclick?.({
       preventDefault() {},
@@ -287,7 +379,7 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(hasText(root, "Kurztext: Musterpunkt aktualisiert"), true);
     assert.equal(hasText(root, "Langtext: Musterpunkt in der Wohnung - aktualisiert"), true);
     assert.equal(hasText(root, "Verortung: Wohnung 2. OG"), true);
-    assert.equal(hasText(root, "Meta / Status: offen"), true);
+    assert.equal(hasText(root, "Meta: R-002 / erledigt"), true);
     assert.equal(hasText(root, "Notiz: Nur lokal geaendert"), true);
     assert.equal(hasText(root, "R-002 / Musterpunkt aktualisiert / Wohnung 2. OG / offen"), true);
 
@@ -299,13 +391,16 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(row3.getAttribute("data-restarbeiten-v2-selected"), "true");
     assert.equal(hasText(root, "Kurztext: Kontrollpunkt"), true);
     assert.equal(hasText(root, "Verortung: Außenanlage"), true);
-    assert.equal(hasText(root, "Meta / Status: offen"), true);
+    assert.equal(hasText(root, "Meta: R-003 / offen"), true);
 
     assert.equal(screenSource.includes("Router"), false);
     assert.equal(screenSource.includes("MainHeader"), false);
     assert.equal(screenSource.includes("ipc"), false);
     assert.equal(screenSource.includes("db"), false);
     assert.equal(screenSource.includes("localStorage"), false);
+    assert.equal(accessLog.localStorage, 0);
+    assert.equal(accessLog.db, 0);
+    assert.equal(typeof fakeWindow.ipcRenderer, "undefined");
 
     const diffFiles = execFileSync("git", ["diff", "--name-only"], {
       cwd: path.join(__dirname, "../.."),
@@ -319,6 +414,7 @@ async function runRestarbeitenV2ScreenTests(run) {
     assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
   } finally {
     globalThis.document = previousDocument;
+    globalThis.window = previousWindow;
   }
 
   await run("Restarbeiten V2 Screen-Skeleton rendert die UI-V2-Grundstruktur", () => undefined);

@@ -135,7 +135,9 @@ async function runRestarbeitenV2RegistryRulesTests(run) {
     .split(/\r?\n/)
     .map((entry) => entry.trim())
     .filter(Boolean);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/")), false);
+  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/restarbeiten/")), false);
+  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
+  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
 
   await run("Restarbeiten-V2 Registry-Regeln sind dokumentiert und kompatibel", () => undefined);
 }

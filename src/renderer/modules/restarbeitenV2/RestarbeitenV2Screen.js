@@ -62,12 +62,32 @@ const DUMMY_ROWS = [
   },
 ];
 
-function getDummyById(id) {
-  return DUMMY_ROWS.find((row) => row.id === id) || DUMMY_ROWS[0];
-}
-
 function cloneDummyRows() {
   return new Map(DUMMY_ROWS.map((row) => [row.id, { ...row }]));
+}
+
+function getNextDummyId(dummyRows) {
+  let maxNumber = 0;
+  for (const id of dummyRows.keys()) {
+    const match = String(id || "").match(/^R-(\d+)$/);
+    if (!match) continue;
+    maxNumber = Math.max(maxNumber, Number(match[1] || 0));
+  }
+  return `R-${String(maxNumber + 1).padStart(3, "0")}`;
+}
+
+function createLocalDummyRow(id) {
+  return {
+    id,
+    title: "Neue Restarbeit",
+    location: "Noch ohne Verortung",
+    status: "offen",
+    shortText: "Neue Restarbeit",
+    longText: "Lokaler DEV-Entwurf ohne Speicherung",
+    meta: "DEV",
+    photos: "Keine Fotos",
+    note: "Nur lokale Vorschau",
+  };
 }
 
 function buildTree(doc, registry) {
@@ -193,9 +213,42 @@ export function createRestarbeitenV2Screen(options = {}) {
   let dummyRowNodes = new Map();
   let dummyRows = cloneDummyRows();
   let workbenchNodes = {};
+  let listNode = null;
+
+  function createDummyRowNode(doc, row) {
+    const rowNode = doc.createElement("button");
+    rowNode.type = "button";
+    rowNode.setAttribute("data-restarbeiten-v2-dummy-id", row.id);
+    rowNode.setAttribute("data-restarbeiten-v2-dummy-row", "true");
+    rowNode.textContent = `${row.id} / ${row.shortText} / ${row.location} / ${row.status}`;
+    rowNode.onclick = (event) => {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      setSelection(row.id);
+    };
+    return rowNode;
+  }
+
+  function appendDummyRow(doc, row) {
+    dummyRows.set(row.id, row);
+    const rowNode = createDummyRowNode(doc, row);
+    dummyRowNodes.set(row.id, rowNode);
+    if (listNode && typeof listNode.append === "function") {
+      listNode.append(rowNode);
+    }
+    return rowNode;
+  }
+
+  function createAndSelectDummyRow(doc) {
+    const nextId = getNextDummyId(dummyRows);
+    const row = createLocalDummyRow(nextId);
+    appendDummyRow(doc, row);
+    setSelection(nextId);
+    return row;
+  }
 
   function setSelection(nextId) {
-    const next = dummyRows.get(nextId) || dummyRows.get("R-001") || getDummyById(nextId);
+    const next = dummyRows.get(nextId) || dummyRows.get("R-001") || null;
     if (!next) return false;
     selectedDummyId = next.id;
     for (const [id, node] of dummyRowNodes.entries()) {
@@ -218,7 +271,7 @@ export function createRestarbeitenV2Screen(options = {}) {
     if (workbenchNodes.kurztextPreview) workbenchNodes.kurztextPreview.textContent = `Kurztext: ${current.shortText}`;
     if (workbenchNodes.langtextPreview) workbenchNodes.langtextPreview.textContent = `Langtext: ${current.longText}`;
     if (workbenchNodes.verortungPreview) workbenchNodes.verortungPreview.textContent = `Verortung: ${current.location}`;
-    if (workbenchNodes.metaPreview) workbenchNodes.metaPreview.textContent = `Meta / Status: ${current.status}`;
+    if (workbenchNodes.metaPreview) workbenchNodes.metaPreview.textContent = `Meta: ${current.meta}`;
     if (workbenchNodes.fotosPreview) workbenchNodes.fotosPreview.textContent = `Fotos: ${current.photos}`;
     if (workbenchNodes.notizPreview) workbenchNodes.notizPreview.textContent = `Notiz: ${current.note}`;
     if (workbenchNodes.notice) workbenchNodes.notice.textContent = "Nur lokale DEV-Vorschau - keine Speicherung";
@@ -249,31 +302,30 @@ export function createRestarbeitenV2Screen(options = {}) {
     if (fieldName === "location") row.location = nextValue || row.location;
     if (fieldName === "status") row.status = nextValue || row.status;
     if (fieldName === "note") row.note = nextValue;
-    row.meta = `${row.id} / ${row.status}`;
     setSelection(row.id);
     return true;
   }
 
   function wireDummyRows(listNode, doc) {
     if (!listNode) return;
+    const orderedRows = Array.from(dummyRows.values());
     dummyRowNodes = new Map();
-    for (const row of DUMMY_ROWS) {
-      const draft = dummyRows.get(row.id) || { ...row };
-      dummyRows.set(row.id, draft);
-      const rowNode = doc.createElement("button");
-      rowNode.type = "button";
-      rowNode.setAttribute("data-restarbeiten-v2-dummy-id", row.id);
-      rowNode.setAttribute("data-restarbeiten-v2-dummy-row", "true");
-      rowNode.textContent = `${draft.id} / ${draft.shortText} / ${draft.location} / ${draft.status}`;
-      rowNode.onclick = (event) => {
-        event?.preventDefault?.();
-        event?.stopPropagation?.();
-        setSelection(row.id);
-      };
+    for (const row of orderedRows) {
+      const rowNode = createDummyRowNode(doc, row);
       dummyRowNodes.set(row.id, rowNode);
       listNode.append(rowNode);
     }
     setSelection(selectedDummyId);
+  }
+
+  function wireQuicklane(doc) {
+    const neuButton = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.quicklane.neu"]') || null;
+    if (!neuButton) return;
+    neuButton.onclick = (event) => {
+      event?.preventDefault?.();
+      event?.stopPropagation?.();
+      createAndSelectDummyRow(doc);
+    };
   }
 
   function createLabeledControl(doc, labelText, controlNode, previewNode) {
@@ -398,9 +450,10 @@ export function createRestarbeitenV2Screen(options = {}) {
     if (target && typeof target.append === "function") {
       target.append(rootNode);
     }
-    const listNode = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.main.liste"]') || null;
+    listNode = rootNode?.querySelector?.('[data-ui-v2-id="restarbeitenV2.main.liste"]') || null;
     wireDummyRows(listNode, doc);
     wireWorkbench(doc);
+    wireQuicklane(doc);
     if (editorV2Core) {
       editorV2Core.mount(rootNode, registry);
       mountEditorPanel(target || doc.body || null, doc);
@@ -432,6 +485,7 @@ export function createRestarbeitenV2Screen(options = {}) {
     dummyRowNodes = new Map();
     dummyRows = cloneDummyRows();
     workbenchNodes = {};
+    listNode = null;
     selectedDummyId = "R-001";
     return true;
   }

@@ -17,6 +17,8 @@ Der Umbau folgt dieser Reihenfolge:
 - M15.1: Restarbeiten V2 Registry-Test vorbereiten
 - M15.2: Restarbeiten V2 Registry-Skeleton anlegen
 - M15.3: Restarbeiten V2 Screen-Skeleton ohne Fachfunktion
+- M15.9: Restarbeiten V2 DEV lokale Neu-Funktion ohne Speicherung
+  - Quicklane `Neu` erzeugt lokal Dummy-Restarbeiten, waehlt sie direkt aus und aktualisiert Liste plus Workbench ohne Persistenz.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
