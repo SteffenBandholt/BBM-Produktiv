@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M19.8 Registry-Kategorien test-/dokumentationsseitig abgesichert:
+  - Keine Produktivaktivierung.
+  - Kein Code-Umbau.
+  - Kein Button-Fix.
+
 - M19.7 technische Zielrichtung fuer Registry-Bereinigung festgelegt:
   - Keine Produktivaktivierung.
   - Kein Code-Umbau.

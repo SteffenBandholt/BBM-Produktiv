@@ -24,16 +24,25 @@ async function runRestarbeitenV2RegistryRulesTests(run) {
   const registryPath = "docs/RESTARBEITEN_V2_REGISTRY.md";
   const modulePath = "docs/UI_EDITOR_V2_MODUL.md";
   const rulesPath = "docs/UI_EDITOR_V2_REGELN.md";
+  const zielvertragPath = "docs/RESTARBEITEN_V2_UI_EDITOR_ZIELVERTRAG_PRUEFUNG.md";
+  const flowPath = "docs/UI_EDITOR_V2_ABLAUF.md";
+  const statusPath = "STATUS.md";
 
   const concept = readDoc(conceptPath);
   const registry = readDoc(registryPath);
   const moduleDoc = readDoc(modulePath);
   const rules = readDoc(rulesPath);
+  const zielvertrag = readDoc(zielvertragPath);
+  const flow = readDoc(flowPath);
+  const status = readDoc(statusPath);
 
   assert.equal(fs.existsSync(conceptPath), true);
   assert.equal(fs.existsSync(registryPath), true);
   assert.equal(fs.existsSync(modulePath), true);
   assert.equal(fs.existsSync(rulesPath), true);
+  assert.equal(fs.existsSync(zielvertragPath), true);
+  assert.equal(fs.existsSync(flowPath), true);
+  assert.equal(fs.existsSync(statusPath), true);
 
   assertContainsAll(concept, conceptPath, [
     "Restarbeiten V2",
@@ -126,6 +135,31 @@ async function runRestarbeitenV2RegistryRulesTests(run) {
     "Editor V2 bleibt fachneutral",
     "Fachimports in Editor V2 sind verboten",
     "Rueckgaengig und Wiederholen sind als optionale Komfortfunktion geparkt",
+  ]);
+
+  assertContainsAll(zielvertrag, zielvertragPath, [
+    "M19.7 Technische Zielrichtung fuer spaetere Registry-Bereinigung",
+    "M19.8: Registry-Kategorien technisch vorbereiten und Doku-Guardrail absichern",
+    "`restarbeitenV2.quicklane.neu` | gehoert spaeter in separaten Fachmodus",
+    "Foto/Upload bleibt keine Editor-Aktion.",
+    "Diktat bleibt keine Editor-Aktion.",
+    "Editor darf Darstellung aendern, aber keine Fachdaten.",
+    "Footer-Eingaben werden spaeter entweder reine Anzeigeelemente oder in separaten Fachmodus verschoben.",
+  ]);
+
+  assertContainsAll(flow, flowPath, [
+    "M19.8",
+    "sichert die Registry-Kategorien aus M19.7 test-/dokumentationsseitig ab",
+    "Keine Aktivierung.",
+    "Keine Implementierung.",
+    "Kein Fachaktions-Fix.",
+  ]);
+
+  assertContainsAll(status, statusPath, [
+    "M19.8 Registry-Kategorien test-/dokumentationsseitig abgesichert",
+    "Keine Produktivaktivierung.",
+    "Kein Code-Umbau.",
+    "Kein Button-Fix.",
   ]);
 
   const diffFiles = execFileSync("git", ["diff", "--name-only"], {

@@ -289,3 +289,13 @@ Hinweis: Das ist aktuell DEV-lokal ohne Persistenz, bleibt aber trotzdem Fachakt
 - M19.8: Registry-Kategorien technisch vorbereiten und Doku-Guardrail absichern.
   - Fokus: reine Vorbereitungsmarkierungen/Vertragsklarheit ohne UI-Umbau.
   - Kein Aktivierungsschritt, kein Fachaktions-Fix.
+
+## M19.8 Festhaltung (Doku-/Guardrail-Paket, kein Umbau)
+- M19.7-Kategorien sind test-/dokumentationsseitig abgesichert.
+- `Neu` bleibt Fachaktion und bleibt ausserhalb des Editor-Kontexts.
+- Quicklane erzeugt im Editor-Kontext keine Fachdatensaetze.
+- Foto/Upload bleibt keine Editor-Aktion.
+- Diktat bleibt keine Editor-Aktion.
+- Footer-Eingaben bleiben offen/getrennt und duerfen nicht unkontrolliert als Editor-Fachmutation laufen.
+- Editor darf Darstellung aendern, aber keine Fachdaten erzeugen, aendern oder loeschen.
+- Keine Produktivaktivierung, kein Button-Fix, kein Code-Umbau.
