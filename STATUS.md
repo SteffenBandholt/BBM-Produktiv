@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M19.5 Ziel-UI-Skelett nach Editor-Regeln festgelegt:
+  - Keine Produktivaktivierung.
+  - Kein Code-Umbau.
+  - Kein Button-Fix.
+
 - M19.4 UI-Entwurf gegen Editor-Regeln abgeglichen:
   - Restarbeiten V2 wurde elementweise gegen die Editor-Regeln bewertet.
   - Keine Produktivaktivierung.
