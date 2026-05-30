@@ -102,6 +102,11 @@ Der Umbau folgt dieser Reihenfolge:
   - M19.4 gleicht Restarbeiten V2 elementweise gegen die Editor-Regeln ab.
   - Keine Aktivierung.
   - Kein Fachaktions-Fix.
+- M19.5: Restarbeiten V2 Ziel-UI-Skelett nach Editor-Regeln festlegen
+  - M19.5 legt das Ziel-UI-Skelett fuer Restarbeiten V2 nach Editor-Regeln fest.
+  - Keine Aktivierung.
+  - Keine Implementierung.
+  - Kein Fachaktions-Fix.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
