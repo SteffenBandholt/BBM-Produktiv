@@ -767,10 +767,15 @@ export default class Router {
     return this._readUiMode() === "new";
   }
 
-  _isRestarbeitenV2ProductiveReadOnlyEnabled() {
-    // Produktive Restarbeiten-V2-ReadOnly-Freigabe ist in M18.1 nur strukturell
-    // vorbereitet. Ohne ausdruecklichen spaeteren Freigabeschalter bleibt sie aus.
+  _hasExplicitRestarbeitenV2ProductiveReadOnlyFreigabe() {
+    // Spaeterer Mutter-/Kind-Freigabeschalter:
+    // Die produktive ReadOnly-Freigabe fuer Restarbeiten V2 wird hier technisch vorbereitet,
+    // bleibt aber bis zur ausdruecklichen Aktivierung aus.
     return false;
+  }
+
+  _isRestarbeitenV2ProductiveReadOnlyEnabled() {
+    return this._hasExplicitRestarbeitenV2ProductiveReadOnlyFreigabe();
   }
 
   _getRestarbeitenV2ReadOnlyAccessState() {

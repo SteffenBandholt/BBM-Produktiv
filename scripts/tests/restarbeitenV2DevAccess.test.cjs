@@ -157,6 +157,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
   const headerSource = fs.readFileSync(headerPath, "utf8");
 
   assert.equal(routerSource.includes("showRestarbeitenV2Dev"), true);
+  assert.equal(routerSource.includes("_hasExplicitRestarbeitenV2ProductiveReadOnlyFreigabe"), true);
   assert.equal(routerSource.includes("_isRestarbeitenV2ProductiveReadOnlyEnabled"), true);
   assert.equal(routerSource.includes("_getRestarbeitenV2ReadOnlyAccessState"), true);
   assert.equal(routerSource.includes("Restarbeiten V2 ReadOnly"), true);
@@ -306,6 +307,8 @@ async function runRestarbeitenV2DevAccessTests(run) {
     routerWithProductFreigabe.currentProjectId = "project-ctx-18";
     routerWithProductFreigabe.currentMeetingId = null;
     await routerWithProductFreigabe.ensureActiveModuleAccess({ force: true });
+    assert.equal(typeof routerWithProductFreigabe._hasExplicitRestarbeitenV2ProductiveReadOnlyFreigabe, "function");
+    assert.equal(routerWithProductFreigabe._hasExplicitRestarbeitenV2ProductiveReadOnlyFreigabe(), false);
     assert.equal(routerWithProductFreigabe._getRestarbeitenV2ReadOnlyAccessState(), null);
     assert.equal(routerWithProductFreigabe._isRestarbeitenV2ProductiveReadOnlyEnabled(), false);
     assert.equal(routerWithProductFreigabe._shouldRouteRestarbeitenToV2ReadOnly("restarbeiten"), false);
