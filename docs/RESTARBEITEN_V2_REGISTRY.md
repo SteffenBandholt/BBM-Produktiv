@@ -88,3 +88,11 @@ Die Struktur bleibt damit eindeutig und editorfreundlich.
 - Das sichtbare Verhalten bleibt unveraendert.
 - Es erfolgt kein UI-Umbau.
 - Kategorien dienen der spaeteren Editor-Trennung (Struktur/Anzeige/DEV-only/ausserhalb Editor/offen).
+
+## 7. M20.1 Editor-Lesefilter
+Der Editor-Lesefilter nutzt `editorCategory`.
+
+- Standardmaessig werden nur `editorStructure` und `display` gelesen.
+- `open` bleibt standardmaessig ausgeschlossen.
+- `devOnly`, `outsideEditor` und `separateDomainMode` bleiben ausserhalb des Standard-Editor-Lesekontexts.
+- Das sichtbare Verhalten bleibt unveraendert.

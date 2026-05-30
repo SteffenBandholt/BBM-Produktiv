@@ -32,13 +32,14 @@ async function runRestarbeitenV2RegistryTests(run) {
   assert.equal(source.includes("screen"), false);
   assert.equal(source.includes("CSS"), false);
 
-  const { createRestarbeitenV2Registry } = await importEsmFromFile(registryPath);
+  const { createRestarbeitenV2Registry, filterRestarbeitenV2RegistryForEditor } = await importEsmFromFile(registryPath);
   const {
     normalizeEditorV2Registry,
     validateEditorV2Registry,
   } = await importEsmFromFile(editorRegistryPath);
 
   assert.equal(typeof createRestarbeitenV2Registry, "function");
+  assert.equal(typeof filterRestarbeitenV2RegistryForEditor, "function");
 
   const registry = createRestarbeitenV2Registry();
   assert.equal(Array.isArray(registry), true);
@@ -141,6 +142,34 @@ async function runRestarbeitenV2RegistryTests(run) {
     assert.equal(byId.has(id), true, `missing registry id for editorCategory check: ${id}`);
     assert.equal(byId.get(id).editorCategory, expectedCategory, `unexpected editorCategory for ${id}`);
   }
+
+  const filteredDefault = filterRestarbeitenV2RegistryForEditor(registry);
+  const filteredDefaultIds = new Set(filteredDefault.map((entry) => entry.id));
+  assert.equal(filteredDefault.every((entry) => entry.editorCategory === "editorStructure" || entry.editorCategory === "display"), true);
+  assert.equal(filteredDefault.some((entry) => entry.editorCategory === "devOnly"), false);
+  assert.equal(filteredDefault.some((entry) => entry.editorCategory === "outsideEditor"), false);
+  assert.equal(filteredDefault.some((entry) => entry.editorCategory === "separateDomainMode"), false);
+  assert.equal(filteredDefault.some((entry) => entry.editorCategory === "open"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.quicklane.neu"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.quicklane.foto"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.quicklane.diktat"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.quicklane.filterAlle"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.quicklane.filterOffen"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.quicklane.filterErledigt"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.footer.kurztext"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.footer.langtext"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.footer.verortung"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.footer.meta"), false);
+  assert.equal(filteredDefaultIds.has("restarbeitenV2.footer.notiz"), false);
+
+  const filteredWithOpen = filterRestarbeitenV2RegistryForEditor(registry, { includeOpen: true });
+  const filteredWithOpenIds = new Set(filteredWithOpen.map((entry) => entry.id));
+  assert.equal(filteredWithOpen.some((entry) => entry.editorCategory === "open"), true);
+  assert.equal(filteredWithOpenIds.has("restarbeitenV2.footer.kurztext"), true);
+  assert.equal(filteredWithOpenIds.has("restarbeitenV2.footer.langtext"), true);
+  assert.equal(filteredWithOpenIds.has("restarbeitenV2.footer.verortung"), true);
+  assert.equal(filteredWithOpenIds.has("restarbeitenV2.footer.meta"), true);
+  assert.equal(filteredWithOpenIds.has("restarbeitenV2.footer.notiz"), true);
 
   assert.equal(normalizeEditorV2Registry(registry).length, registry.length);
   const validation = validateEditorV2Registry(registry);

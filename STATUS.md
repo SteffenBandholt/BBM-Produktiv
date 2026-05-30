@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M20.1 Editor-Lesefilter fuer Registry-Kategorien vorbereitet:
+  - Keine Produktivaktivierung.
+  - Kein UI-Umbau.
+  - Kein Button-Fix.
+
 - M20.0 Registry-Kategorien technisch vorbereitet:
   - Keine Produktivaktivierung.
   - Kein UI-Umbau.

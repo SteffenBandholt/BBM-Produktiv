@@ -127,6 +127,11 @@ Der Umbau folgt dieser Reihenfolge:
   - Keine Aktivierung.
   - Keine UI-Implementierung.
   - Kein Fachaktions-Fix.
+- M20.1: Editor-Lesefilter fuer Registry-Kategorien vorbereiten
+  - M20.1 bereitet den Editor-Lesefilter fuer Registry-Kategorien vor.
+  - Keine Aktivierung.
+  - Keine UI-Implementierung.
+  - Kein Fachaktions-Fix.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
