@@ -140,6 +140,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - `showTops()` nutzt keinen Fallback mehr ueber `views/TopsScreen.js`
 - Restarbeiten V2 ReadOnly bleibt produktiv abgeschaltet; der spaetere explizite Freigabeschalter ist fachlich beschrieben, aber nicht verdrahtet
 - ein klar benannter Router-Checkpoint bereitet den spaeteren Produktiv-ReadOnly-Schalter vor und liefert weiter `false`
+- der gleiche Checkpoint ist testseitig simulierbar und belegt den produktiven ReadOnly-Flow nur im Test
 
 **Noch offen**
 - kein vollstaendig produktiver freigabebasierter Betrieb

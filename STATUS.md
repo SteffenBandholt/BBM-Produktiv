@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M18.4 Restarbeiten V2 Produktiv-ReadOnly-Freigabe simuliert getestet:
+  - Der Router-Checkpoint kann im Test gezielt auf `true` uebersteuert werden.
+  - Der produktive ReadOnly-Flow laeuft dann sichtbar ueber den V2-Pfad und bleibt auf Lesen begrenzt.
+  - Die echte produktive Freigabe bleibt ausserhalb des Tests deaktiviert.
+
 - M18.3 Restarbeiten V2 Produktiv-ReadOnly-Freigabeschalter technisch vorbereitet:
   - Der Router fuehrt jetzt einen klar benannten Vorbereitungs-Checkpoint fuer die explizite Produktivfreigabe.
   - Der Checkpoint bleibt hart deaktiviert und liefert weiter `false`.

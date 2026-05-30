@@ -101,3 +101,10 @@ M17.0:
 - DEV-/Testfreigabe bleibt an `bbm.uiMode = "new"` gebunden.
 - Die normale Restarbeiten-Lizenz allein reicht weiterhin nicht.
 - Keine neue Persistenz, kein neuer IPC, keine produktive Aktivierung.
+
+## 14. M18.4 Simulierter Test
+- Der Router-Checkpoint wird im Test gezielt auf `true` uebersteuert.
+- Dann liefert der Router den produktiven ReadOnly-Zustand und routet den Restarbeiten-Start in den V2-Flow.
+- `projectId` laeuft bis in `listRestarbeitenByProject(projectId)`.
+- Legacy-Rohdaten erscheinen im V2-ReadOnly-Screen.
+- Die echte produktive Aktivierung bleibt aus.
