@@ -14,6 +14,8 @@ function createEntry(id, label, kind, parentId, editable, ops, selector, extras 
   return entry;
 }
 
+const EDITOR_CATEGORY_INCLUDE_DEFAULT = new Set(["editorStructure", "display"]);
+
 export function createRestarbeitenV2Registry() {
   return [
     createEntry(
@@ -277,4 +279,16 @@ export function createRestarbeitenV2Registry() {
       { gridEditable: true, minWidth: 120, minHeight: 40, editorCategory: "open" }
     ),
   ];
+}
+
+export function filterRestarbeitenV2RegistryForEditor(registry, options = {}) {
+  const includeOpen = options?.includeOpen === true;
+  const allowed = new Set(EDITOR_CATEGORY_INCLUDE_DEFAULT);
+  if (includeOpen) allowed.add("open");
+  if (!Array.isArray(registry)) return [];
+  return registry.filter((entry) => {
+    if (!entry || typeof entry !== "object") return false;
+    const category = String(entry.editorCategory || "").trim();
+    return allowed.has(category);
+  });
 }
