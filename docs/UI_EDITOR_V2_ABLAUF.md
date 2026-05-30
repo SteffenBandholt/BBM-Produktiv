@@ -94,6 +94,10 @@ Der Umbau folgt dieser Reihenfolge:
 - M19.2: Manuelle Abnahme-Pruefanweisung vorbereiten
   - M19.2 bereitet die manuelle Abnahme-Pruefanweisung vor.
   - Keine Aktivierung.
+- M19.3R: Restarbeiten V2 gegen UI-Editor-Zielvertrag pruefen
+  - M19.3R ist eine Pruef- und Dokumentationsphase.
+  - M19.3R aktiviert nichts.
+  - M19.3R ist kein Fachaktions-Fix.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
