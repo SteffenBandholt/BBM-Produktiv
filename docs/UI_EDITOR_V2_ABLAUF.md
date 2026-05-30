@@ -85,6 +85,9 @@ Der Umbau folgt dieser Reihenfolge:
   - Vor einer echten Produktiv-ReadOnly-Aktivierung ist ein fachlicher Abnahmetest zwingend.
   - Der Abnahmetest prueft Altpfad, DEV-/Testfreigabe, simulierte Produktivfreigabe, Lesepfad, Legacy-Daten und alle gesperrten Schreib-/Upload-/Autosave-/IPC-Wege.
   - M19.0 aktiviert nichts; die echte Produktivaktivierung bleibt fuer spaeter und braucht ausdrueckliches GO.
+- M19.1a: Abnahme-Checkliste dokumentieren
+  - M19.1a dokumentiert die Abnahme-Checkliste.
+  - Keine Aktivierung.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

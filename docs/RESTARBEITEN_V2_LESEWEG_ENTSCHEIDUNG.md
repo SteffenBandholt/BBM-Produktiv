@@ -122,3 +122,22 @@ M17.0:
 - Der Abnahmetest umfasst mindestens Altpfad, DEV-/Testfreigabe, simulierte Produktivfreigabe, Projektworkspace, projectId-Lauf, Legacy-Datenanzeige und alle gesperrten Schreib-/Upload-/Autosave-/IPC-Wege.
 - M19.0 selbst aktiviert nichts.
 - Die echte Produktivaktivierung bleibt auf einen spaeteren eigenen Meilenstein mit ausdruecklichem GO verschoben.
+
+## 17. M19.1a Abnahme-Checkliste
+- [ ] Projektworkspace oeffnet Restarbeiten korrekt.
+- [ ] Altpfad bleibt ohne Freigabe Standard.
+- [ ] DEV-/Testfreigabe funktioniert weiterhin.
+- [ ] Simulierte Produktiv-ReadOnly-Freigabe oeffnet V2 ReadOnly.
+- [ ] `projectId` laeuft bis `listRestarbeitenByProject(projectId)`.
+- [ ] Vorhandene Legacy-Daten erscheinen im V2-Screen.
+- [ ] Alte Restarbeiten-UI bleibt als Fallback erhalten.
+- [ ] Produktiv-ReadOnly bleibt ohne spaeteren expliziten Schalter inaktiv.
+- [ ] Normale Restarbeiten-Lizenz allein reicht nicht.
+- [ ] Kein Speichern.
+- [ ] Kein Create.
+- [ ] Kein Update.
+- [ ] Kein Delete.
+- [ ] Kein Upload.
+- [ ] Kein Import.
+- [ ] Kein Autosave.
+- [ ] Kein neuer IPC.
