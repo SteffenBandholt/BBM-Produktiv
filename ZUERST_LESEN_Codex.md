@@ -27,6 +27,10 @@ Ohne dieses Lesen dürfen nicht begonnen werden:
 
 Erst nach dem Lesen von `ZUERST\\\_LESEN\\\_Codex.md` werden die weiteren Pflichtdateien in der festgelegten Reihenfolge gelesen.
 
+Zusatz fÃ¼r UI-/PDF-Aufgaben:
+- Vor jeder UI-/PDF-Erstellung oder UI-/PDF-Ã„nderung gilt die Pflicht zur UI-/PDF-Entwurfsentscheidung aus `AGENTS.md`.
+- Ohne vollstÃ¤ndige Entwurfsentscheidung kein Bau-/Umsetzungsschritt.
+
 Verbindliche Reihenfolge:
 
 1. `ZUERST\\\_LESEN\\\_Codex.md`

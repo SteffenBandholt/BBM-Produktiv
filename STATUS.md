@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M20.2 UI-/PDF-Entwurfsentscheidung in Codex-Startplanung verankert:
+  - Keine Editor-CodeÃ¤nderung.
+  - Keine Fachmodul-Ã„nderung.
+  - Keine Produktivaktivierung.
+
 - M20.1 Editor-Lesefilter fuer Registry-Kategorien vorbereitet:
   - Keine Produktivaktivierung.
   - Kein UI-Umbau.

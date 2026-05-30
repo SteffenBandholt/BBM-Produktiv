@@ -132,6 +132,11 @@ Der Umbau folgt dieser Reihenfolge:
   - Keine Aktivierung.
   - Keine UI-Implementierung.
   - Kein Fachaktions-Fix.
+- M20.2: UI-/PDF-Entwurfsentscheidung in Codex-Startplanung verankern
+  - M20.2 verankert die UI-/PDF-Entwurfsentscheidung als Pflicht vor UI-/PDF-Umsetzung.
+  - Keine Aktivierung.
+  - Keine Implementierung.
+  - Kein Fachaktions-Fix.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
