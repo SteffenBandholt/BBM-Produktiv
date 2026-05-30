@@ -166,6 +166,8 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(routerSource.includes("_getRestarbeitenV2ReadOnlyAccessState"), true);
   assert.equal(statusSource.includes("M18.5 Restarbeiten V2 ReadOnly-Freigabevorbereitung abgeschlossen und eingefroren"), true);
   assert.equal(readOnlyDecisionSource.includes("M18.5 Abschluss / Freeze"), true);
+  assert.equal(statusSource.includes("M19.0 Produktiv-ReadOnly-Abnahmetest vor Aktivierung festgelegt"), true);
+  assert.equal(readOnlyDecisionSource.includes("M19.0 Fachlicher Abnahmetest vor Aktivierung"), true);
   assert.equal(routerSource.includes("Restarbeiten V2 ReadOnly"), true);
   assert.equal(routerSource.includes("Restarbeiten V2 ist derzeit nicht freigegeben."), true);
   assert.equal(headerSource.includes("Restarbeiten V2"), true);

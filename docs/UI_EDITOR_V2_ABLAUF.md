@@ -81,6 +81,10 @@ Der Umbau folgt dieser Reihenfolge:
   - M18.0 bis M18.4 sind als ReadOnly-Freigabevorbereitung abgeschlossen und eingefroren.
   - Altpfad bleibt Standard, DEV-/Testfreigabe bleibt moeglich, Produktiv-ReadOnly bleibt im echten Betrieb deaktiviert.
   - Eine echte Produktivaktivierung braucht spaeter einen eigenen Meilenstein und ausdrueckliches GO.
+- M19.0: Produktiv-ReadOnly-Abnahmetest vor Aktivierung festlegen
+  - Vor einer echten Produktiv-ReadOnly-Aktivierung ist ein fachlicher Abnahmetest zwingend.
+  - Der Abnahmetest prueft Altpfad, DEV-/Testfreigabe, simulierte Produktivfreigabe, Lesepfad, Legacy-Daten und alle gesperrten Schreib-/Upload-/Autosave-/IPC-Wege.
+  - M19.0 aktiviert nichts; die echte Produktivaktivierung bleibt fuer spaeter und braucht ausdrueckliches GO.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
