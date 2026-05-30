@@ -153,13 +153,19 @@ async function runRestarbeitenV2DevAccessTests(run) {
   const workspacePath = path.join(__dirname, "../../src/renderer/modules/projektverwaltung/screens/ProjectWorkspaceScreen.js");
   const headerPath = path.join(__dirname, "../../src/renderer/ui/MainHeader.js");
   const moduleNavPath = path.join(__dirname, "../../src/renderer/app/modules/moduleNavigation.js");
+  const statusPath = path.join(__dirname, "../../STATUS.md");
+  const readOnlyDecisionPath = path.join(__dirname, "../../docs/RESTARBEITEN_V2_LESEWEG_ENTSCHEIDUNG.md");
   const routerSource = fs.readFileSync(routerPath, "utf8");
   const headerSource = fs.readFileSync(headerPath, "utf8");
+  const statusSource = fs.readFileSync(statusPath, "utf8");
+  const readOnlyDecisionSource = fs.readFileSync(readOnlyDecisionPath, "utf8");
 
   assert.equal(routerSource.includes("showRestarbeitenV2Dev"), true);
   assert.equal(routerSource.includes("_hasExplicitRestarbeitenV2ProductiveReadOnlyFreigabe"), true);
   assert.equal(routerSource.includes("_isRestarbeitenV2ProductiveReadOnlyEnabled"), true);
   assert.equal(routerSource.includes("_getRestarbeitenV2ReadOnlyAccessState"), true);
+  assert.equal(statusSource.includes("M18.5 Restarbeiten V2 ReadOnly-Freigabevorbereitung abgeschlossen und eingefroren"), true);
+  assert.equal(readOnlyDecisionSource.includes("M18.5 Abschluss / Freeze"), true);
   assert.equal(routerSource.includes("Restarbeiten V2 ReadOnly"), true);
   assert.equal(routerSource.includes("Restarbeiten V2 ist derzeit nicht freigegeben."), true);
   assert.equal(headerSource.includes("Restarbeiten V2"), true);

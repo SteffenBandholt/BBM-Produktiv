@@ -77,6 +77,10 @@ Der Umbau folgt dieser Reihenfolge:
   - Der Router-Checkpoint wird nur im Test auf `true` uebersteuert und laeuft dann sichtbar ueber den V2-ReadOnly-Pfad.
   - Der produktive Fluss bleibt auf Lesen begrenzt.
   - Keine echte Produktivaktivierung, keine neue Persistenz, kein neuer IPC.
+- M18.5: ReadOnly-Freigabevorbereitung abschliessen und einfrieren
+  - M18.0 bis M18.4 sind als ReadOnly-Freigabevorbereitung abgeschlossen und eingefroren.
+  - Altpfad bleibt Standard, DEV-/Testfreigabe bleibt moeglich, Produktiv-ReadOnly bleibt im echten Betrieb deaktiviert.
+  - Eine echte Produktivaktivierung braucht spaeter einen eigenen Meilenstein und ausdrueckliches GO.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

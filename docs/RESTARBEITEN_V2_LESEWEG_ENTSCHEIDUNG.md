@@ -108,3 +108,11 @@ M17.0:
 - `projectId` laeuft bis in `listRestarbeitenByProject(projectId)`.
 - Legacy-Rohdaten erscheinen im V2-ReadOnly-Screen.
 - Die echte produktive Aktivierung bleibt aus.
+
+## 15. M18.5 Abschluss / Freeze
+- M18.0 bis M18.4 sind als ReadOnly-Freigabevorbereitung abgeschlossen und eingefroren.
+- Altpfad bleibt Standard.
+- DEV-/Testfreigabe bleibt moeglich.
+- Produktiv-ReadOnly bleibt technisch vorbereitet, testseitig simuliert geprueft und im echten Betrieb deaktiviert.
+- Eine echte Produktivaktivierung braucht spaeter einen eigenen Meilenstein und ausdrueckliches GO.
+- Weiterhin gesperrt bleiben Speichern, Create, Update, Delete, Upload, Import, Autosave, neue IPC-Wege und die vollstaendige Ablösung der alten Restarbeiten-UI.

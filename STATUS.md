@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M18.5 Restarbeiten V2 ReadOnly-Freigabevorbereitung abgeschlossen und eingefroren:
+  - M18.0 bis M18.4 sind als ReadOnly-Freigabevorbereitung abgeschlossen.
+  - Altpfad bleibt Standard.
+  - DEV-/Testfreigabe bleibt moeglich.
+  - Produktiv-ReadOnly bleibt technisch vorbereitet, testseitig simuliert geprueft und im echten Betrieb deaktiviert.
+
 - M18.4 Restarbeiten V2 Produktiv-ReadOnly-Freigabe simuliert getestet:
   - Der Router-Checkpoint kann im Test gezielt auf `true` uebersteuert werden.
   - Der produktive ReadOnly-Flow laeuft dann sichtbar ueber den V2-Pfad und bleibt auf Lesen begrenzt.
