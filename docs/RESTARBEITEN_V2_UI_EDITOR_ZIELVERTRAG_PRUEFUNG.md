@@ -228,3 +228,64 @@ Hinweis: Das ist aktuell DEV-lokal ohne Persistenz, bleibt aber trotzdem Fachakt
 - Fachaktions-Controls in Quicklane aus Editor-Kontext entkoppeln (`Neu`, fachaktive Filterlogik).
 - Footer-Felder von fachlicher Mutation auf klare Anzeige-/Leselogik trennen oder in separaten Fachmodus verschieben.
 - DEV-/Dummy-Controls als reine DEV-Elemente markieren oder aus Ziel-Registry perspektivisch herausfuehren.
+
+## M19.7 Technische Zielrichtung fuer spaetere Registry-Bereinigung (Pruefung, kein Umbau)
+
+### Grenze fuer M19.7
+- Keine Produktivaktivierung.
+- Kein Code-Umbau.
+- Keine Registry-Aenderung im Code.
+- Kein Button-Fix.
+- Keine Quicklane-Bereinigung im Code.
+
+### Zielkategorien fuer spaetere Bereinigung
+- bleibt im Editor-Kontext
+- wird spaeter als DEV-only markiert
+- wird spaeter aus dem Editor-Kontext herausgenommen
+- wird spaeter reines Anzeigeelement
+- gehoert spaeter in separaten Fachmodus
+- bleibt offen / fachlich zu klaeren
+
+### Zuordnung der Registry-Eintraege
+| Registry-ID | Zielrichtung M19.7 | Begruendung |
+|---|---|---|
+| `restarbeitenV2.root` | bleibt im Editor-Kontext | Strukturanker der deklarativen UI |
+| `restarbeitenV2.header` | bleibt im Editor-Kontext | Ziel-UI-Bereich Header |
+| `restarbeitenV2.header.context` | wird spaeter reines Anzeigeelement | Kontextanzeige ohne Fachaktion |
+| `restarbeitenV2.header.status` | wird spaeter reines Anzeigeelement | Statusanzeige ohne Fachaktion |
+| `restarbeitenV2.header.filter` | bleibt offen / fachlich zu klaeren | unklare Trennung Anzeige-Filter vs. fachaktive Wirkung |
+| `restarbeitenV2.quicklane` | bleibt im Editor-Kontext | Bereich bleibt, Inhalt spaeter klar getrennt |
+| `restarbeitenV2.quicklane.lock` | wird spaeter als DEV-only markiert | derzeit ohne klare fachliche Zielrolle |
+| `restarbeitenV2.quicklane.neu` | gehoert spaeter in separaten Fachmodus | `Neu` bleibt als Fachaktion im Editor-Kontext tabu |
+| `restarbeitenV2.quicklane.filterAlle` | wird spaeter aus dem Editor-Kontext herausgenommen | aktuell fachaktiv gekoppelt, muss von reiner Ansichtssteuerung getrennt werden |
+| `restarbeitenV2.quicklane.filterOffen` | wird spaeter aus dem Editor-Kontext herausgenommen | aktuell fachaktiv gekoppelt, muss von reiner Ansichtssteuerung getrennt werden |
+| `restarbeitenV2.quicklane.filterErledigt` | wird spaeter aus dem Editor-Kontext herausgenommen | aktuell fachaktiv gekoppelt, muss von reiner Ansichtssteuerung getrennt werden |
+| `restarbeitenV2.quicklane.foto` | wird spaeter als DEV-only markiert | Foto/Upload bleibt keine Editor-Aktion |
+| `restarbeitenV2.quicklane.diktat` | wird spaeter als DEV-only markiert | Diktat bleibt keine Editor-Aktion |
+| `restarbeitenV2.main` | bleibt im Editor-Kontext | Ziel-UI-Bereich Main |
+| `restarbeitenV2.main.liste` | bleibt im Editor-Kontext | Ziel-UI-Bereich Liste |
+| `restarbeitenV2.main.nummer` | wird spaeter reines Anzeigeelement | Zeilenstruktur/Anzeige |
+| `restarbeitenV2.main.textbereich` | wird spaeter reines Anzeigeelement | Anzeige von Kurz-/Langtext |
+| `restarbeitenV2.main.verortung` | wird spaeter reines Anzeigeelement | Anzeige von Verortung/Bereich |
+| `restarbeitenV2.main.meta` | bleibt offen / fachlich zu klaeren | Status-/Ampellogik fachlich final abzugrenzen |
+| `restarbeitenV2.footer` | bleibt im Editor-Kontext | Ziel-UI-Bereich Footer/Kontext |
+| `restarbeitenV2.footer.kurztext` | bleibt offen / fachlich zu klaeren | entweder reine Anzeige oder separater Fachmodus |
+| `restarbeitenV2.footer.langtext` | bleibt offen / fachlich zu klaeren | entweder reine Anzeige oder separater Fachmodus |
+| `restarbeitenV2.footer.verortung` | bleibt offen / fachlich zu klaeren | entweder reine Anzeige oder separater Fachmodus |
+| `restarbeitenV2.footer.meta` | bleibt offen / fachlich zu klaeren | entweder reine Anzeige oder separater Fachmodus |
+| `restarbeitenV2.footer.fotos` | wird spaeter reines Anzeigeelement | Foto-/Anlagenbereich nur Anzeige, kein Upload |
+| `restarbeitenV2.footer.notiz` | bleibt offen / fachlich zu klaeren | entweder reine Anzeige oder separater Fachmodus |
+
+### Klare Leitplanken
+- `Neu` wird nicht einzeln repariert; bleibt als Symptom einer Fachaktion dokumentiert.
+- Fachaktives Anlegen gehoert spaeter nur in separaten Fachmodus, nicht in den Editor.
+- Fachaktive Filter werden spaeter klar von reiner Ansichtssteuerung getrennt.
+- Footer-Eingaben werden spaeter entweder reine Anzeigeelemente oder in separaten Fachmodus verschoben.
+- Foto/Upload bleibt keine Editor-Aktion.
+- Diktat bleibt keine Editor-Aktion.
+- Editor darf Darstellung aendern, aber keine Fachdaten.
+
+### Empfohlener naechster technischer Schritt
+- M19.8: Registry-Kategorien technisch vorbereiten und Doku-Guardrail absichern.
+  - Fokus: reine Vorbereitungsmarkierungen/Vertragsklarheit ohne UI-Umbau.
+  - Kein Aktivierungsschritt, kein Fachaktions-Fix.

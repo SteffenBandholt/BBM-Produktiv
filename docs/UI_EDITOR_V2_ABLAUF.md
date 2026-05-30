@@ -112,6 +112,11 @@ Der Umbau folgt dieser Reihenfolge:
   - Keine Aktivierung.
   - Keine Implementierung.
   - Kein Fachaktions-Fix.
+- M19.7: technische Zielrichtung fuer die spaetere Registry-Bereinigung festlegen
+  - M19.7 legt die technische Zielrichtung fuer die spaetere Registry-Bereinigung fest.
+  - Keine Aktivierung.
+  - Keine Implementierung.
+  - Kein Fachaktions-Fix.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
