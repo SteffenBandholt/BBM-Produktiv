@@ -138,6 +138,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - vorbereitende Freigabelogik ist vorhanden
 - aktiver Modulumfang wird an einer zweiten kleinen Kernstelle sichtbar genutzt
 - `showTops()` nutzt keinen Fallback mehr ueber `views/TopsScreen.js`
+- Restarbeiten V2 ReadOnly bleibt produktiv abgeschaltet; der spaetere explizite Freigabeschalter ist fachlich beschrieben, aber nicht verdrahtet
 
 **Noch offen**
 - kein vollstaendig produktiver freigabebasierter Betrieb

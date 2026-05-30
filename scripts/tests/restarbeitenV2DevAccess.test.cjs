@@ -308,6 +308,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
     await routerWithProductFreigabe.ensureActiveModuleAccess({ force: true });
     assert.equal(routerWithProductFreigabe._getRestarbeitenV2ReadOnlyAccessState(), null);
     assert.equal(routerWithProductFreigabe._isRestarbeitenV2ProductiveReadOnlyEnabled(), false);
+    assert.equal(routerWithProductFreigabe._shouldRouteRestarbeitenToV2ReadOnly("restarbeiten"), false);
 
     const productOpened = await routerWithProductFreigabe.openProjectModule("project-ctx-18", "restarbeiten", {
       project: {
