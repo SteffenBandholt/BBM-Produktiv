@@ -190,3 +190,10 @@ F. NO-GO-Kriterien:
 - Daten fehlen oder gehoeren zum falschen Projekt.
 - Schreib-, Upload-, Import- oder Autosave-Wege sind sichtbar oder aktiv.
 - alter Restarbeiten-Pfad ist nicht mehr erreichbar.
+
+## 19. M19.3R Zielvertragspruefung (Abgleich, kein Umbau)
+- M19.3R ist eine reine Pruef- und Dokumentationsphase gegen den urspruenglichen UI-Editor-Zielvertrag.
+- Kein Button-Fix, keine Quicklane-Bereinigung, keine UI-Neugestaltung, keine Produktivaktivierung.
+- Produktiv-ReadOnly bleibt deaktiviert; normale Restarbeiten-Lizenz allein reicht weiterhin nicht.
+- Altpfad bleibt Standard.
+- Der aktuelle DEV-Screen ist als Mischstand aus editor-lesbarer Struktur und fachnaher Interaktion zu bewerten; eine manuelle ReadOnly-Abnahme auf diesem DEV-Screen ist fachlich nicht belastbar.
