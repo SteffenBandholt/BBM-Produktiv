@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M20.0 Registry-Kategorien technisch vorbereitet:
+  - Keine Produktivaktivierung.
+  - Kein UI-Umbau.
+  - Kein Button-Fix.
+
 - M19.8 Registry-Kategorien test-/dokumentationsseitig abgesichert:
   - Keine Produktivaktivierung.
   - Kein Code-Umbau.

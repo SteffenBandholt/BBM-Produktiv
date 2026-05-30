@@ -23,7 +23,8 @@ export function createRestarbeitenV2Registry() {
       null,
       false,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.root"]'
+      '[data-ui-v2-id="restarbeitenV2.root"]',
+      { editorCategory: "editorStructure" }
     ),
     createEntry(
       "restarbeitenV2.header",
@@ -32,7 +33,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.root",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.header"]'
+      '[data-ui-v2-id="restarbeitenV2.header"]',
+      { editorCategory: "editorStructure" }
     ),
     createEntry(
       "restarbeitenV2.header.context",
@@ -41,7 +43,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.header",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.header.context"]'
+      '[data-ui-v2-id="restarbeitenV2.header.context"]',
+      { editorCategory: "display" }
     ),
     createEntry(
       "restarbeitenV2.header.status",
@@ -50,7 +53,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.header",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.header.status"]'
+      '[data-ui-v2-id="restarbeitenV2.header.status"]',
+      { editorCategory: "display" }
     ),
     createEntry(
       "restarbeitenV2.header.filter",
@@ -59,7 +63,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.header",
       false,
       ["move", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.header.filter"]'
+      '[data-ui-v2-id="restarbeitenV2.header.filter"]',
+      { editorCategory: "open" }
     ),
     createEntry(
       "restarbeitenV2.quicklane",
@@ -68,7 +73,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.root",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.quicklane"]'
+      '[data-ui-v2-id="restarbeitenV2.quicklane"]',
+      { editorCategory: "editorStructure" }
     ),
     createEntry(
       "restarbeitenV2.quicklane.lock",
@@ -77,7 +83,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.quicklane",
       false,
       ["move", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.quicklane.lock"]'
+      '[data-ui-v2-id="restarbeitenV2.quicklane.lock"]',
+      { editorCategory: "devOnly" }
     ),
     createEntry(
       "restarbeitenV2.quicklane.neu",
@@ -86,7 +93,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.quicklane",
       false,
       ["move", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.quicklane.neu"]'
+      '[data-ui-v2-id="restarbeitenV2.quicklane.neu"]',
+      { editorCategory: "separateDomainMode" }
     ),
     createEntry(
       "restarbeitenV2.quicklane.filterOffen",
@@ -95,7 +103,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.quicklane",
       false,
       ["move", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.quicklane.filterOffen"]'
+      '[data-ui-v2-id="restarbeitenV2.quicklane.filterOffen"]',
+      { editorCategory: "outsideEditor" }
     ),
     createEntry(
       "restarbeitenV2.quicklane.filterErledigt",
@@ -104,7 +113,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.quicklane",
       false,
       ["move", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.quicklane.filterErledigt"]'
+      '[data-ui-v2-id="restarbeitenV2.quicklane.filterErledigt"]',
+      { editorCategory: "outsideEditor" }
     ),
     createEntry(
       "restarbeitenV2.quicklane.filterAlle",
@@ -113,7 +123,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.quicklane",
       false,
       ["move", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.quicklane.filterAlle"]'
+      '[data-ui-v2-id="restarbeitenV2.quicklane.filterAlle"]',
+      { editorCategory: "outsideEditor" }
     ),
     createEntry(
       "restarbeitenV2.quicklane.foto",
@@ -122,7 +133,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.quicklane",
       false,
       ["move", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.quicklane.foto"]'
+      '[data-ui-v2-id="restarbeitenV2.quicklane.foto"]',
+      { editorCategory: "devOnly" }
     ),
     createEntry(
       "restarbeitenV2.quicklane.diktat",
@@ -131,7 +143,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.quicklane",
       false,
       ["move", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.quicklane.diktat"]'
+      '[data-ui-v2-id="restarbeitenV2.quicklane.diktat"]',
+      { editorCategory: "devOnly" }
     ),
     createEntry(
       "restarbeitenV2.main",
@@ -140,7 +153,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.root",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.main"]'
+      '[data-ui-v2-id="restarbeitenV2.main"]',
+      { editorCategory: "editorStructure" }
     ),
     createEntry(
       "restarbeitenV2.main.liste",
@@ -149,7 +163,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.main",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.main.liste"]'
+      '[data-ui-v2-id="restarbeitenV2.main.liste"]',
+      { editorCategory: "editorStructure" }
     ),
     createEntry(
       "restarbeitenV2.main.nummer",
@@ -158,7 +173,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.main.liste",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.main.nummer"]'
+      '[data-ui-v2-id="restarbeitenV2.main.nummer"]',
+      { editorCategory: "display" }
     ),
     createEntry(
       "restarbeitenV2.main.textbereich",
@@ -167,7 +183,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.main.liste",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.main.textbereich"]'
+      '[data-ui-v2-id="restarbeitenV2.main.textbereich"]',
+      { editorCategory: "display" }
     ),
     createEntry(
       "restarbeitenV2.main.verortung",
@@ -176,7 +193,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.main.liste",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.main.verortung"]'
+      '[data-ui-v2-id="restarbeitenV2.main.verortung"]',
+      { editorCategory: "display" }
     ),
     createEntry(
       "restarbeitenV2.main.meta",
@@ -185,7 +203,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.main.liste",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.main.meta"]'
+      '[data-ui-v2-id="restarbeitenV2.main.meta"]',
+      { editorCategory: "open" }
     ),
     createEntry(
       "restarbeitenV2.footer",
@@ -194,7 +213,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.root",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.footer"]'
+      '[data-ui-v2-id="restarbeitenV2.footer"]',
+      { editorCategory: "editorStructure" }
     ),
     createEntry(
       "restarbeitenV2.footer.kurztext",
@@ -203,7 +223,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.footer",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.footer.kurztext"]'
+      '[data-ui-v2-id="restarbeitenV2.footer.kurztext"]',
+      { editorCategory: "open" }
     ),
     createEntry(
       "restarbeitenV2.footer.langtext",
@@ -212,7 +233,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.footer",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.footer.langtext"]'
+      '[data-ui-v2-id="restarbeitenV2.footer.langtext"]',
+      { editorCategory: "open" }
     ),
     createEntry(
       "restarbeitenV2.footer.verortung",
@@ -221,7 +243,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.footer",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.footer.verortung"]'
+      '[data-ui-v2-id="restarbeitenV2.footer.verortung"]',
+      { editorCategory: "open" }
     ),
     createEntry(
       "restarbeitenV2.footer.meta",
@@ -230,7 +253,8 @@ export function createRestarbeitenV2Registry() {
       "restarbeitenV2.footer",
       true,
       ["move", "resize", "hide"],
-      '[data-ui-v2-id="restarbeitenV2.footer.meta"]'
+      '[data-ui-v2-id="restarbeitenV2.footer.meta"]',
+      { editorCategory: "open" }
     ),
     createEntry(
       "restarbeitenV2.footer.fotos",
@@ -240,7 +264,7 @@ export function createRestarbeitenV2Registry() {
       true,
       ["move", "resize", "hide"],
       '[data-ui-v2-id="restarbeitenV2.footer.fotos"]',
-      { gridEditable: true, minWidth: 120, minHeight: 60 }
+      { gridEditable: true, minWidth: 120, minHeight: 60, editorCategory: "display" }
     ),
     createEntry(
       "restarbeitenV2.footer.notiz",
@@ -250,7 +274,7 @@ export function createRestarbeitenV2Registry() {
       true,
       ["move", "resize", "hide"],
       '[data-ui-v2-id="restarbeitenV2.footer.notiz"]',
-      { gridEditable: true, minWidth: 120, minHeight: 40 }
+      { gridEditable: true, minWidth: 120, minHeight: 40, editorCategory: "open" }
     ),
   ];
 }
