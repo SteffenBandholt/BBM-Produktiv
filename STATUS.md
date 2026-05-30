@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M18.3 Restarbeiten V2 Produktiv-ReadOnly-Freigabeschalter technisch vorbereitet:
+  - Der Router fuehrt jetzt einen klar benannten Vorbereitungs-Checkpoint fuer die explizite Produktivfreigabe.
+  - Der Checkpoint bleibt hart deaktiviert und liefert weiter `false`.
+  - Die normale Restarbeiten-Lizenz allein schaltet V2 ReadOnly weiterhin nicht frei.
+
 - M18.2 Restarbeiten V2 expliziten Produktiv-ReadOnly-Freigabeschalter fachlich definiert:
   - Der spaetere produktive Schalter ist als explizite Produktivfreigabe fuer `restarbeiten` in der vorhandenen Mutter-/Kind-Freigabelogik benannt.
   - Die normale Restarbeiten-Lizenz allein schaltet V2 ReadOnly weiterhin nicht automatisch frei.

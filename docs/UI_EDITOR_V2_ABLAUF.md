@@ -69,6 +69,10 @@ Der Umbau folgt dieser Reihenfolge:
   - Der spaetere produktive Schalter ist als explizite Produktivfreigabe fuer `restarbeiten` in der vorhandenen Mutter-/Kind-Freigabelogik benannt.
   - Die normale Restarbeiten-Lizenz allein aktiviert V2 ReadOnly nicht automatisch.
   - Kein neuer Settings-Schalter, kein neuer IPC, keine automatische Aktivierung.
+- M18.3: Restarbeiten V2 Produktiv-ReadOnly-Freigabeschalter technisch vorbereiten
+  - Ein klar benannter Router-Checkpoint bereitet die explizite Produktivfreigabe vor, bleibt aber hart deaktiviert.
+  - Die normale Restarbeiten-Lizenz allein reicht weiterhin nicht.
+  - Kein produktiver ReadOnly-Start, keine neue Persistenz, kein neuer IPC.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.

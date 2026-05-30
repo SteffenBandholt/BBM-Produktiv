@@ -94,3 +94,10 @@ M17.0:
 - Das ist eine separate Produktivfreigabeebene und nicht die normale Restarbeiten-Lizenz allein.
 - Ohne diesen spaeteren Schalter bleibt die produktive ReadOnly-Freigabe technisch aus.
 - Kein neuer Settings-Schalter, kein neuer IPC, keine automatische Aktivierung.
+
+## 13. M18.3 Technische Vorbereitung
+- Der Router besitzt jetzt einen klar benannten Vorbereitungs-Checkpoint fuer die explizite Produktivfreigabe.
+- Der Checkpoint ist absichtlich hart deaktiviert und liefert weiter `false`.
+- DEV-/Testfreigabe bleibt an `bbm.uiMode = "new"` gebunden.
+- Die normale Restarbeiten-Lizenz allein reicht weiterhin nicht.
+- Keine neue Persistenz, kein neuer IPC, keine produktive Aktivierung.
