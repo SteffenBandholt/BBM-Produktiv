@@ -162,3 +162,69 @@ Hinweis: Das ist aktuell DEV-lokal ohne Persistenz, bleibt aber trotzdem Fachakt
 - Abgleich gegen den urspruenglichen Zielvertrag ist dokumentiert.
 - Kein produktiver Umbau erfolgt.
 - Produktiv-ReadOnly bleibt deaktiviert.
+
+## M19.6 Registry-Abgleich gegen Ziel-UI-Skelett (Pruefung, kein Umbau)
+
+### Grenze fuer M19.6
+- Keine Produktivaktivierung.
+- Kein Code-Umbau.
+- Kein Button-Fix.
+- Keine Quicklane-Bereinigung.
+- Keine ReadOnly-Abnahme.
+
+### Registry-Tabelle
+| Registry-ID | Ziel-UI-Bereich laut M19.5 | aktueller Bereich / parentId | kind | label | selector | editable | ops | passt zum Ziel-Skelett | Charakter | Editor-lesbar | optisch gestaltbar | Fachaktion enthalten | Bewertung | Begruendung |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| `restarbeitenV2.root` | Modulrahmen | Root / `-` | frame | Restarbeiten V2 | `[data-ui-v2-id="restarbeitenV2.root"]` | false | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | zentraler Strukturanker |
+| `restarbeitenV2.header` | Header | Header / `restarbeitenV2.root` | frame | Header | `[data-ui-v2-id="restarbeitenV2.header"]` | true | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | passt direkt zum Zielbereich Header |
+| `restarbeitenV2.header.context` | Status-/Kontextanzeige | Header / `restarbeitenV2.header` | field | Kontext | `[data-ui-v2-id="restarbeitenV2.header.context"]` | true | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | lesende Kontextanzeige |
+| `restarbeitenV2.header.status` | Status-/Kontextanzeige | Header / `restarbeitenV2.header` | field | Status | `[data-ui-v2-id="restarbeitenV2.header.status"]` | true | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | lesende Statusanzeige |
+| `restarbeitenV2.header.filter` | Ansichtsfilter | Header / `restarbeitenV2.header` | control | Filter | `[data-ui-v2-id="restarbeitenV2.header.filter"]` | false | move,hide | teilweise | unklar | teilweise | spaeter | teilweise | noch klaeren | Filterlabel passt, finale Trennung zur Fachwirkung offen |
+| `restarbeitenV2.quicklane` | Quicklane / Ansichtssteuerung | Quicklane / `restarbeitenV2.root` | frame | Quicklane | `[data-ui-v2-id="restarbeitenV2.quicklane"]` | true | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | Bereich ist vorgesehen, Inhalt muss fachaktionsfrei bleiben |
+| `restarbeitenV2.quicklane.lock` | Quicklane / Ansichtssteuerung | Quicklane / `restarbeitenV2.quicklane` | control | Vorhaengeschloss | `[data-ui-v2-id="restarbeitenV2.quicklane.lock"]` | false | move,hide | teilweise | DEV-Dummy | ja | spaeter | nein | nur DEV | aktuell keine klare Zielrolle belegt |
+| `restarbeitenV2.quicklane.neu` | Quicklane / Ansichtssteuerung | Quicklane / `restarbeitenV2.quicklane` | control | Neu | `[data-ui-v2-id="restarbeitenV2.quicklane.neu"]` | false | move,hide | nein | Fachaktion | ja | unklar | ja | spaeter trennen | `Neu` ist im Editor-Kontext nicht zulaessig |
+| `restarbeitenV2.quicklane.filterOffen` | Ansichtsfilter | Quicklane / `restarbeitenV2.quicklane` | control | Filter Offen | `[data-ui-v2-id="restarbeitenV2.quicklane.filterOffen"]` | false | move,hide | teilweise | unklar | ja | ja | ja | spaeter trennen | aktuell gekoppelt mit fachnaher Listensteuerung |
+| `restarbeitenV2.quicklane.filterErledigt` | Ansichtsfilter | Quicklane / `restarbeitenV2.quicklane` | control | Filter Erledigt | `[data-ui-v2-id="restarbeitenV2.quicklane.filterErledigt"]` | false | move,hide | teilweise | unklar | ja | ja | ja | spaeter trennen | aktuell gekoppelt mit fachnaher Listensteuerung |
+| `restarbeitenV2.quicklane.filterAlle` | Ansichtsfilter | Quicklane / `restarbeitenV2.quicklane` | control | Filter Alle | `[data-ui-v2-id="restarbeitenV2.quicklane.filterAlle"]` | false | move,hide | teilweise | unklar | ja | ja | ja | spaeter trennen | aktuell gekoppelt mit fachnaher Listensteuerung |
+| `restarbeitenV2.quicklane.foto` | Quicklane / Ansichtssteuerung | Quicklane / `restarbeitenV2.quicklane` | control | Foto | `[data-ui-v2-id="restarbeitenV2.quicklane.foto"]` | false | move,hide | teilweise | DEV-Dummy | ja | spaeter | nein | nur DEV | im Zielbild nur Anzeigebezug, keine Upload-Fachaktion |
+| `restarbeitenV2.quicklane.diktat` | Quicklane / Ansichtssteuerung | Quicklane / `restarbeitenV2.quicklane` | control | Diktat | `[data-ui-v2-id="restarbeitenV2.quicklane.diktat"]` | false | move,hide | teilweise | DEV-Dummy | ja | spaeter | nein | nur DEV | Diktat ist laut Zielbild keine Editor-Aktion |
+| `restarbeitenV2.main` | Main / Restarbeiten-Liste | Main / `restarbeitenV2.root` | frame | Main | `[data-ui-v2-id="restarbeitenV2.main"]` | true | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | Hauptbereich passt |
+| `restarbeitenV2.main.liste` | Main / Restarbeiten-Liste | Main / `restarbeitenV2.main` | frame | Liste | `[data-ui-v2-id="restarbeitenV2.main.liste"]` | true | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | Listenstruktur ist Kernbestandteil |
+| `restarbeitenV2.main.nummer` | einzelne Restarbeiten-Zeile | Main / `restarbeitenV2.main.liste` | field | Nummer | `[data-ui-v2-id="restarbeitenV2.main.nummer"]` | true | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | passt zu Zeilenaufbau |
+| `restarbeitenV2.main.textbereich` | Kurztext-/Langtext-Anzeige | Main / `restarbeitenV2.main.liste` | field | Textbereich | `[data-ui-v2-id="restarbeitenV2.main.textbereich"]` | true | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | passt zu Anzeigefeldern |
+| `restarbeitenV2.main.verortung` | Verortung / Bereich / Ebene | Main / `restarbeitenV2.main.liste` | field | Verortung | `[data-ui-v2-id="restarbeitenV2.main.verortung"]` | true | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | fachlich vorgesehener Anzeigeanteil |
+| `restarbeitenV2.main.meta` | Status-/Ampelanzeige | Main / `restarbeitenV2.main.liste` | field | Meta | `[data-ui-v2-id="restarbeitenV2.main.meta"]` | true | move,resize,hide | teilweise | unklar | ja | ja | teilweise | noch klaeren | Ampel/Status vorgesehen, genaue Abgrenzung offen |
+| `restarbeitenV2.footer` | Footer / Kontextbereich | Footer / `restarbeitenV2.root` | frame | Footer | `[data-ui-v2-id="restarbeitenV2.footer"]` | true | move,resize,hide | ja | echte Ziel-UI | ja | ja | nein | bleibt | Zielbereich explizit vorhanden |
+| `restarbeitenV2.footer.kurztext` | Detail-/Anzeigezone | Footer / `restarbeitenV2.footer` | field | Kurztext | `[data-ui-v2-id="restarbeitenV2.footer.kurztext"]` | true | move,resize,hide | teilweise | unklar | teilweise | spaeter | ja | spaeter trennen | derzeit als Eingabefeld statt reine Anzeige |
+| `restarbeitenV2.footer.langtext` | Langtext-/Notiz-Anzeige | Footer / `restarbeitenV2.footer` | field | Langtext | `[data-ui-v2-id="restarbeitenV2.footer.langtext"]` | true | move,resize,hide | teilweise | unklar | teilweise | spaeter | ja | spaeter trennen | derzeit als Eingabefeld statt reine Anzeige |
+| `restarbeitenV2.footer.verortung` | Verortung / Bereich / Ebene | Footer / `restarbeitenV2.footer` | field | Verortung | `[data-ui-v2-id="restarbeitenV2.footer.verortung"]` | true | move,resize,hide | teilweise | unklar | teilweise | spaeter | ja | spaeter trennen | derzeit mit fachnaher Mutation gekoppelt |
+| `restarbeitenV2.footer.meta` | Status-/Ampelanzeige | Footer / `restarbeitenV2.footer` | field | Meta | `[data-ui-v2-id="restarbeitenV2.footer.meta"]` | true | move,resize,hide | teilweise | unklar | teilweise | spaeter | ja | spaeter trennen | derzeit mit Statusaenderung gekoppelt |
+| `restarbeitenV2.footer.fotos` | Foto-/Anlagenbereich (Anzeige) | Footer / `restarbeitenV2.footer` | frame | Fotos | `[data-ui-v2-id="restarbeitenV2.footer.fotos"]` | true | move,resize,hide | teilweise | DEV-Dummy | teilweise | spaeter | nein | nur DEV | Zielbild: Anzeige ja, keine Upload-Aktion |
+| `restarbeitenV2.footer.notiz` | Langtext-/Notiz-Anzeige | Footer / `restarbeitenV2.footer` | field | Notiz | `[data-ui-v2-id="restarbeitenV2.footer.notiz"]` | true | move,resize,hide | teilweise | unklar | teilweise | spaeter | ja | spaeter trennen | derzeit als Eingabefeld statt reine Anzeige |
+
+### Nicht als Registry-ID abbildbar (aber fuer Zielbild relevant)
+- einzelne Restarbeiten-Zeile (dynamische Zeilenknoten in `main.liste`): Ziel-UI ja, aktuell teils fachnah (Selektion), spaeter sauber trennen.
+- Detail-/Lesebereich als Lesezone: Ziel-UI ja, aktuelle Workbench-Eingabemuster teils fachaktiv.
+- Editor-V2-Panel / Editor-Zugang: Werkzeugcharakter, nicht fachliche Ziel-UI.
+
+### Festhaltung M19.6
+- Passt bereits gut zum Ziel-Skelett:
+  - `restarbeitenV2.header`, `restarbeitenV2.header.context`, `restarbeitenV2.header.status`
+  - `restarbeitenV2.quicklane` (als Bereich)
+  - `restarbeitenV2.main`, `restarbeitenV2.main.liste`, `restarbeitenV2.main.nummer`, `restarbeitenV2.main.textbereich`, `restarbeitenV2.main.verortung`
+  - `restarbeitenV2.footer` (als Bereich)
+- DEV-/Dummy-Charakter:
+  - `restarbeitenV2.quicklane.lock`, `restarbeitenV2.quicklane.foto`, `restarbeitenV2.quicklane.diktat`, `restarbeitenV2.footer.fotos`
+- Fachaktionscharakter (im Editor-Kontext tabu):
+  - `restarbeitenV2.quicklane.neu`
+  - `restarbeitenV2.quicklane.filterAlle`, `restarbeitenV2.quicklane.filterOffen`, `restarbeitenV2.quicklane.filterErledigt`
+  - `restarbeitenV2.footer.kurztext`, `restarbeitenV2.footer.langtext`, `restarbeitenV2.footer.verortung`, `restarbeitenV2.footer.meta`, `restarbeitenV2.footer.notiz` (aktuelle Eingabekopplung)
+- Spaeter optisch gestaltbar:
+  - alle klaren Struktur-/Anzeigeelemente (Position, Groesse, Sichtbarkeit, Layout)
+- Unklar/offen:
+  - `restarbeitenV2.header.filter`, `restarbeitenV2.main.meta` sowie die endgueltige Lese-vs.-Eingabeabgrenzung im Footer
+
+### Vorbereitung fuer spaetere technische Bereinigung (ohne Umbau in M19.6)
+- Fachaktions-Controls in Quicklane aus Editor-Kontext entkoppeln (`Neu`, fachaktive Filterlogik).
+- Footer-Felder von fachlicher Mutation auf klare Anzeige-/Leselogik trennen oder in separaten Fachmodus verschieben.
+- DEV-/Dummy-Controls als reine DEV-Elemente markieren oder aus Ziel-Registry perspektivisch herausfuehren.

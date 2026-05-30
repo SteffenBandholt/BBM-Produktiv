@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M19.6 Registry gegen Ziel-UI-Skelett abgeglichen:
+  - Keine Produktivaktivierung.
+  - Kein Code-Umbau.
+  - Kein Button-Fix.
+
 - M19.5 Ziel-UI-Skelett nach Editor-Regeln festgelegt:
   - Keine Produktivaktivierung.
   - Kein Code-Umbau.
