@@ -34,6 +34,25 @@ async function runRestarbeitenV2ReadPathDecisionTests(run) {
   assert.equal(doc.includes("kontrollierten ReadOnly-Produktivfreigabe oder ihrer fachlichen Vorbereitung"), true);
   assert.equal(doc.includes("Schreib-, Upload- und Autosave-Themen bleiben gesperrt"), true);
   assert.equal(inv.includes("listRestarbeitenByProject(projectId)"), true);
+  assert.equal(doc.includes("M19.1a Abnahme-Checkliste"), true);
+  assert.equal(doc.includes("Projektworkspace oeffnet Restarbeiten korrekt"), true);
+  assert.equal(doc.includes("Altpfad bleibt ohne Freigabe Standard"), true);
+  assert.equal(doc.includes("DEV-/Testfreigabe funktioniert weiterhin"), true);
+  assert.equal(doc.includes("Simulierte Produktiv-ReadOnly-Freigabe oeffnet V2 ReadOnly"), true);
+  assert.equal(doc.includes("projectId"), true);
+  assert.equal(doc.includes("listRestarbeitenByProject(projectId)"), true);
+  assert.equal(doc.includes("Vorhandene Legacy-Daten erscheinen im V2-Screen"), true);
+  assert.equal(doc.includes("Alte Restarbeiten-UI bleibt als Fallback erhalten"), true);
+  assert.equal(doc.includes("Produktiv-ReadOnly bleibt ohne spaeteren expliziten Schalter inaktiv"), true);
+  assert.equal(doc.includes("Normale Restarbeiten-Lizenz allein reicht nicht"), true);
+  assert.equal(doc.includes("Kein Speichern"), true);
+  assert.equal(doc.includes("Kein Create"), true);
+  assert.equal(doc.includes("Kein Update"), true);
+  assert.equal(doc.includes("Kein Delete"), true);
+  assert.equal(doc.includes("Kein Upload"), true);
+  assert.equal(doc.includes("Kein Import"), true);
+  assert.equal(doc.includes("Kein Autosave"), true);
+  assert.equal(doc.includes("Kein neuer IPC"), true);
 
   if (run) {
     run("Restarbeiten V2 Leseweg-Entscheidung ist dokumentiert", () => undefined);

@@ -88,6 +88,9 @@ Der Umbau folgt dieser Reihenfolge:
 - M19.1a: Abnahme-Checkliste dokumentieren
   - M19.1a dokumentiert die Abnahme-Checkliste.
   - Keine Aktivierung.
+- M19.1b: Abnahme-Checkliste testseitig absichern
+  - M19.1b sichert die Abnahme-Checkliste testseitig ab.
+  - Keine Aktivierung.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
