@@ -142,6 +142,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - ein klar benannter Router-Checkpoint bereitet den spaeteren Produktiv-ReadOnly-Schalter vor und liefert weiter `false`
 - der gleiche Checkpoint ist testseitig simulierbar und belegt den produktiven ReadOnly-Flow nur im Test
 - M18.0 bis M18.4 sind als ReadOnly-Freigabevorbereitung abgeschlossen und eingefroren
+- M19.0 legt vor einer echten Produktivaktivierung einen fachlichen Abnahmetest fest
 
 **Noch offen**
 - kein vollstaendig produktiver freigabebasierter Betrieb

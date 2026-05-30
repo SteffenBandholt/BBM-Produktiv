@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M19.0 Produktiv-ReadOnly-Abnahmetest vor Aktivierung festgelegt:
+  - Vor einer echten Produktiv-ReadOnly-Aktivierung ist ein fachlicher Abnahmetest zwingend.
+  - Produktiv-ReadOnly bleibt im echten Betrieb deaktiviert.
+  - Altpfad bleibt Standard; DEV-/Testfreigabe bleibt moeglich.
+
 - M18.5 Restarbeiten V2 ReadOnly-Freigabevorbereitung abgeschlossen und eingefroren:
   - M18.0 bis M18.4 sind als ReadOnly-Freigabevorbereitung abgeschlossen.
   - Altpfad bleibt Standard.

@@ -116,3 +116,9 @@ M17.0:
 - Produktiv-ReadOnly bleibt technisch vorbereitet, testseitig simuliert geprueft und im echten Betrieb deaktiviert.
 - Eine echte Produktivaktivierung braucht spaeter einen eigenen Meilenstein und ausdrueckliches GO.
 - Weiterhin gesperrt bleiben Speichern, Create, Update, Delete, Upload, Import, Autosave, neue IPC-Wege und die vollstaendige Ablösung der alten Restarbeiten-UI.
+
+## 16. M19.0 Fachlicher Abnahmetest vor Aktivierung
+- Vor einer echten Produktiv-ReadOnly-Aktivierung ist ein fachlicher Abnahmetest zwingend.
+- Der Abnahmetest umfasst mindestens Altpfad, DEV-/Testfreigabe, simulierte Produktivfreigabe, Projektworkspace, projectId-Lauf, Legacy-Datenanzeige und alle gesperrten Schreib-/Upload-/Autosave-/IPC-Wege.
+- M19.0 selbst aktiviert nichts.
+- Die echte Produktivaktivierung bleibt auf einen spaeteren eigenen Meilenstein mit ausdruecklichem GO verschoben.
