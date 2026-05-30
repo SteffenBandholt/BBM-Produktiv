@@ -21,6 +21,57 @@ Wenn sich Regeln widersprechen, gilt diese Reihenfolge:
 3. aufgabenspezifische Plan-Datei
 4. Ã¼brige Doku
 
+## Pflichtregel fÃ¼r UI-/PDF-Entwurfsentscheidung
+Wenn eine Aufgabe eine UI, einen UI-Bereich, ein Layout, eine Maske, ein Formular, eine Tabelle, eine PDF-Ausgabe oder eine Druck-/PDF-Struktur neu erstellt oder verÃ¤ndert, muss Codex **vor** der Umsetzung eine UI-/PDF-Entwurfsentscheidung ausgeben.
+
+Ohne diese Entscheidung darf Codex nicht sofort bauen.
+
+Die UI-/PDF-Entwurfsentscheidung muss enthalten:
+
+A. Art der Ausgabe:
+- UI
+- PDF
+- UI und PDF
+- keine editorrelevante Ausgabe
+
+B. EditorfÃ¤higkeit:
+- editorfÃ¤hig: ja/nein
+- falls nein: kurze BegrÃ¼ndung
+
+C. EditorfÃ¤hige Elemente (pro Element):
+- `data-ui-inspector-id`
+- `data-ui-editor-kind`
+- `data-ui-editor-label`
+- `data-ui-editor-parent`
+- `data-ui-editor-editable`
+- `data-ui-editor-ops`
+
+D. Nicht editorfÃ¤hige Elemente / verbotene Editor-Ziele:
+- Fachaktionen
+- Speichern
+- Anlegen
+- LÃ¶schen
+- Upload
+- Import
+- Autosave
+- fachliche IPC-/Datenaktionen
+- sonstige FachdatenÃ¤nderungen
+
+E. Parent-/Strukturregel:
+- jedes editorfÃ¤hige Element auÃŸer Root braucht einen gÃ¼ltigen Parent
+- der Parent muss selbst als Editor-Ziel existieren
+
+F. PrÃ¼f-/Testangabe:
+- Welche vorhandene PrÃ¼fung oder welcher Guardrail-Test sichert die Regel ab?
+- Falls noch keine technische PrÃ¼fung existiert: ausdrÃ¼cklich melden, nicht behaupten.
+
+### Harte Stop-Regel fÃ¼r UI-/PDF-Aufgaben
+Wenn die UI-/PDF-Entwurfsentscheidung fehlt, unvollstÃ¤ndig ist oder gegen `docs/UI_EDITOR_VERTRAG.md` verstÃ¶ÃŸt:
+- `STOPP`
+- keine Umsetzung
+- keine Improvisation
+- fehlende Entscheidung melden
+
 ## Pflichtregeln fÃ¼r Editor 1 / Tabelleneditor / layoutTools
 Bei allen Arbeiten an Editor 1, Tabelleneditor, layoutTools, Tabellen-Kalibrierung, Tabellen-Registry, TabellenvertrÃ¤gen, UI-/PDF-Tabellenlayouts oder tableLayouts sind vor jeder Ã„nderung zusÃ¤tzlich zu lesen:
 
