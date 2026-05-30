@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M19.1a Abnahme-Checkliste dokumentiert:
+  - Keine Produktivaktivierung.
+  - Altpfad bleibt Standard.
+  - Schreib-/Upload-/Autosave-/IPC-Wege bleiben gesperrt.
+
 - M19.0 Produktiv-ReadOnly-Abnahmetest vor Aktivierung festgelegt:
   - Vor einer echten Produktiv-ReadOnly-Aktivierung ist ein fachlicher Abnahmetest zwingend.
   - Produktiv-ReadOnly bleibt im echten Betrieb deaktiviert.
