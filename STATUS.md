@@ -17,6 +17,10 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M19.2 manuelle Abnahme-Pruefanweisung vorbereitet:
+  - Keine Produktivaktivierung.
+  - Altpfad bleibt Standard.
+
 - M19.1b Abnahme-Checkliste testseitig abgesichert:
   - Keine Produktivaktivierung.
 

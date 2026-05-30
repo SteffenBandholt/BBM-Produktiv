@@ -141,3 +141,52 @@ M17.0:
 - [ ] Kein Import.
 - [ ] Kein Autosave.
 - [ ] Kein neuer IPC.
+
+## 18. M19.2 Manuelle Abnahme-Pruefanweisung
+A. Startbedingungen:
+- Branch/Arbeitsstand sauber.
+- Produktiv-ReadOnly nicht aktiv.
+- Normale Restarbeiten-Lizenz allein reicht nicht.
+- Altpfad bleibt Standard.
+
+B. Manuelle Pruefschritte:
+- Anwendung starten.
+- Ein bestehendes Projekt mit Restarbeiten oeffnen.
+- Restarbeiten aus dem Projektworkspace oeffnen.
+- Ohne DEV-/V2-Freigabe pruefen: alter Restarbeiten-Pfad bleibt aktiv.
+- DEV-/Testfreigabe einschalten, falls im Projekt ueblich ueber `bbm.uiMode = "new"`.
+- Restarbeiten erneut aus dem Projektworkspace oeffnen.
+- Pruefen: V2 ReadOnly wird sichtbar.
+- Pruefen: vorhandene Legacy-Daten erscheinen.
+- Pruefen: projectId-bezogene Daten sind plausibel.
+- Pruefen: keine Schreibaktion ausfuehrbar.
+
+C. Sichtbar erwartet:
+- Restarbeiten-Liste wird lesend angezeigt.
+- Legacy-Daten sind im V2-Screen sichtbar.
+- alte Restarbeiten-UI bleibt ohne Freigabe erreichbar.
+
+D. Darf nicht passieren:
+- kein Speichern.
+- kein Create.
+- kein Update.
+- kein Delete.
+- kein Upload.
+- kein Import.
+- kein Autosave.
+- kein neuer IPC.
+- keine automatische Produktivaktivierung.
+
+E. GO-Kriterien:
+- Altpfad funktioniert ohne Freigabe.
+- DEV-/Testpfad zeigt V2 ReadOnly korrekt.
+- Legacy-Daten erscheinen korrekt.
+- keine Schreib-/Upload-/Autosave-Funktion ist aktiv.
+- keine Fehlermeldung beim lesenden Oeffnen.
+
+F. NO-GO-Kriterien:
+- V2 ReadOnly startet ohne Freigabe produktiv.
+- normale Restarbeiten-Lizenz schaltet V2 ReadOnly frei.
+- Daten fehlen oder gehoeren zum falschen Projekt.
+- Schreib-, Upload-, Import- oder Autosave-Wege sind sichtbar oder aktiv.
+- alter Restarbeiten-Pfad ist nicht mehr erreichbar.
