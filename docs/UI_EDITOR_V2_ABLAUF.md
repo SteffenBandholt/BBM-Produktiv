@@ -98,6 +98,10 @@ Der Umbau folgt dieser Reihenfolge:
   - M19.3R ist eine Pruef- und Dokumentationsphase.
   - M19.3R aktiviert nichts.
   - M19.3R ist kein Fachaktions-Fix.
+- M19.4: Restarbeiten V2 UI-Entwurf nach Editor-Regeln abgleichen
+  - M19.4 gleicht Restarbeiten V2 elementweise gegen die Editor-Regeln ab.
+  - Keine Aktivierung.
+  - Kein Fachaktions-Fix.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
