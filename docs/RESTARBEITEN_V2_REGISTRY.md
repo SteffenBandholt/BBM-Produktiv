@@ -81,3 +81,10 @@ Die Registry folgt der UI-Struktur:
 - darunter die jeweiligen Gruppen und Elemente
 
 Die Struktur bleibt damit eindeutig und editorfreundlich.
+
+## 6. M20.0 Metadaten-Vorbereitung
+`editorCategory` ist eine reine Metadaten-Vorbereitung an bestehenden Registry-Eintraegen.
+
+- Das sichtbare Verhalten bleibt unveraendert.
+- Es erfolgt kein UI-Umbau.
+- Kategorien dienen der spaeteren Editor-Trennung (Struktur/Anzeige/DEV-only/ausserhalb Editor/offen).

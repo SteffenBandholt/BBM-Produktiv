@@ -42,6 +42,7 @@ async function runRestarbeitenV2RegistryTests(run) {
 
   const registry = createRestarbeitenV2Registry();
   assert.equal(Array.isArray(registry), true);
+  const byId = new Map(registry.map((entry) => [entry.id, entry]));
 
   const ids = registry.map((entry) => entry.id);
   const requiredIds = [
@@ -84,10 +85,61 @@ async function runRestarbeitenV2RegistryTests(run) {
     assert.equal(Array.isArray(entry.ops), true, `invalid ops for ${entry.id}`);
     assert.equal(typeof entry.selector, "string", `missing selector for ${entry.id}`);
     assert.equal(entry.ops.every((op) => ["move", "resize", "hide"].includes(op)), true, `invalid op for ${entry.id}`);
+    assert.equal(typeof entry.editorCategory, "string", `missing editorCategory for ${entry.id}`);
     if (entry.id !== "restarbeitenV2.root") {
       assert.equal(typeof entry.parentId, "string", `missing parentId for ${entry.id}`);
       assert.equal(ids.includes(entry.parentId), true, `unknown parentId for ${entry.id}`);
     }
+  }
+
+  const allowedEditorCategories = new Set([
+    "editorStructure",
+    "display",
+    "devOnly",
+    "outsideEditor",
+    "separateDomainMode",
+    "open",
+  ]);
+  for (const entry of registry) {
+    assert.equal(
+      allowedEditorCategories.has(entry.editorCategory),
+      true,
+      `invalid editorCategory for ${entry.id}: ${String(entry.editorCategory)}`
+    );
+  }
+
+  const expectedCategories = {
+    "restarbeitenV2.root": "editorStructure",
+    "restarbeitenV2.header": "editorStructure",
+    "restarbeitenV2.header.context": "display",
+    "restarbeitenV2.header.status": "display",
+    "restarbeitenV2.header.filter": "open",
+    "restarbeitenV2.quicklane": "editorStructure",
+    "restarbeitenV2.quicklane.lock": "devOnly",
+    "restarbeitenV2.quicklane.neu": "separateDomainMode",
+    "restarbeitenV2.quicklane.filterAlle": "outsideEditor",
+    "restarbeitenV2.quicklane.filterOffen": "outsideEditor",
+    "restarbeitenV2.quicklane.filterErledigt": "outsideEditor",
+    "restarbeitenV2.quicklane.foto": "devOnly",
+    "restarbeitenV2.quicklane.diktat": "devOnly",
+    "restarbeitenV2.main": "editorStructure",
+    "restarbeitenV2.main.liste": "editorStructure",
+    "restarbeitenV2.main.nummer": "display",
+    "restarbeitenV2.main.textbereich": "display",
+    "restarbeitenV2.main.verortung": "display",
+    "restarbeitenV2.main.meta": "open",
+    "restarbeitenV2.footer": "editorStructure",
+    "restarbeitenV2.footer.kurztext": "open",
+    "restarbeitenV2.footer.langtext": "open",
+    "restarbeitenV2.footer.verortung": "open",
+    "restarbeitenV2.footer.meta": "open",
+    "restarbeitenV2.footer.fotos": "display",
+    "restarbeitenV2.footer.notiz": "open",
+  };
+
+  for (const [id, expectedCategory] of Object.entries(expectedCategories)) {
+    assert.equal(byId.has(id), true, `missing registry id for editorCategory check: ${id}`);
+    assert.equal(byId.get(id).editorCategory, expectedCategory, `unexpected editorCategory for ${id}`);
   }
 
   assert.equal(normalizeEditorV2Registry(registry).length, registry.length);

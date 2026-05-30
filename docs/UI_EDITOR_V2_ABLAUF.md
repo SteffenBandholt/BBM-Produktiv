@@ -122,6 +122,11 @@ Der Umbau folgt dieser Reihenfolge:
   - Keine Aktivierung.
   - Keine Implementierung.
   - Kein Fachaktions-Fix.
+- M20.0: Registry-Kategorien technisch vorbereiten
+  - M20.0 ergaenzt technische Registry-Kategorien.
+  - Keine Aktivierung.
+  - Keine UI-Implementierung.
+  - Kein Fachaktions-Fix.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
