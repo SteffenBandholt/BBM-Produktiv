@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M19.7 technische Zielrichtung fuer Registry-Bereinigung festgelegt:
+  - Keine Produktivaktivierung.
+  - Kein Code-Umbau.
+  - Kein Button-Fix.
+
 - M19.6 Registry gegen Ziel-UI-Skelett abgeglichen:
   - Keine Produktivaktivierung.
   - Kein Code-Umbau.
