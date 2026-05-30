@@ -242,6 +242,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
   const productPreviousDocument = globalThis.document;
   const productPreviousWindow = globalThis.window;
   const productPreviousAlert = globalThis.alert;
+  const productiveLoaderCalls = [];
   globalThis.document = productDocument;
   globalThis.window = {
     localStorage: {
@@ -265,6 +266,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
         modules: ["protokoll", "restarbeiten"],
       }),
       restarbeitenListByProject: async (payload) => {
+        productiveLoaderCalls.push(payload);
         assert.deepEqual(payload, { projectId: "project-ctx-18" });
         return {
           ok: true,
@@ -326,6 +328,34 @@ async function runRestarbeitenV2DevAccessTests(run) {
     assert.equal(routerWithProductFreigabe._restarbeitenV2DevLoadedProjectId, undefined);
     const productHost = getNodeByAttr(productDocument.body, "data-ui-v2-restarbeiten-host", "true");
     assert.equal(productHost, null);
+
+    routerWithProductFreigabe._hasExplicitRestarbeitenV2ProductiveReadOnlyFreigabe = () => true;
+    assert.equal(routerWithProductFreigabe._hasExplicitRestarbeitenV2ProductiveReadOnlyFreigabe(), true);
+    assert.equal(routerWithProductFreigabe._isRestarbeitenV2ProductiveReadOnlyEnabled(), true);
+    assert.equal(routerWithProductFreigabe._getRestarbeitenV2ReadOnlyAccessState(), "productive");
+    assert.equal(routerWithProductFreigabe._shouldRouteRestarbeitenToV2ReadOnly("restarbeiten"), true);
+
+    const productiveOpened = await routerWithProductFreigabe.openProjectModule("project-ctx-18", "restarbeiten", {
+      project: {
+        id: "project-ctx-18",
+        project_number: "18",
+        name: "Projekt 18",
+      },
+    });
+    assert.equal(productiveOpened, true);
+    assert.equal(routerWithProductFreigabe.activeSection, "restarbeitenV2Dev");
+    assert.equal(routerWithProductFreigabe.context?.ui?.pageTitle, "Restarbeiten V2 ReadOnly");
+    assert.equal(routerWithProductFreigabe._restarbeitenV2DevLoadedProjectId, "project-ctx-18");
+    assert.equal(productiveLoaderCalls.length > 0, true);
+    assert.deepEqual(productiveLoaderCalls[0], { projectId: "project-ctx-18" });
+    await flush();
+    const productiveHost = getNodeByAttr(productDocument.body, "data-ui-v2-restarbeiten-host", "true");
+    assert.ok(productiveHost);
+    assert.ok(
+      collectNodes(productiveHost, (node) =>
+        String(node.textContent || "").includes("LEG-201 / Lizenzierte Restarbeit / Haus P / offen")
+      ).length > 0
+    );
   } finally {
     globalThis.document = productPreviousDocument;
     globalThis.window = productPreviousWindow;

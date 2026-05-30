@@ -73,6 +73,10 @@ Der Umbau folgt dieser Reihenfolge:
   - Ein klar benannter Router-Checkpoint bereitet die explizite Produktivfreigabe vor, bleibt aber hart deaktiviert.
   - Die normale Restarbeiten-Lizenz allein reicht weiterhin nicht.
   - Kein produktiver ReadOnly-Start, keine neue Persistenz, kein neuer IPC.
+- M18.4: Restarbeiten V2 Produktiv-ReadOnly-Freigabe simuliert testen
+  - Der Router-Checkpoint wird nur im Test auf `true` uebersteuert und laeuft dann sichtbar ueber den V2-ReadOnly-Pfad.
+  - Der produktive Fluss bleibt auf Lesen begrenzt.
+  - Keine echte Produktivaktivierung, keine neue Persistenz, kein neuer IPC.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
