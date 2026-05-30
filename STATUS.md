@@ -17,6 +17,9 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M19.1b Abnahme-Checkliste testseitig abgesichert:
+  - Keine Produktivaktivierung.
+
 - M19.1a Abnahme-Checkliste dokumentiert:
   - Keine Produktivaktivierung.
   - Altpfad bleibt Standard.
