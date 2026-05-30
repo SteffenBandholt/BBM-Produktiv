@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M18.2 Restarbeiten V2 expliziten Produktiv-ReadOnly-Freigabeschalter fachlich definiert:
+  - Der spaetere produktive Schalter ist als explizite Produktivfreigabe fuer `restarbeiten` in der vorhandenen Mutter-/Kind-Freigabelogik benannt.
+  - Die normale Restarbeiten-Lizenz allein schaltet V2 ReadOnly weiterhin nicht automatisch frei.
+  - Der produktive ReadOnly-Weg bleibt technisch aus; DEV-/Testfreigabe bleibt an `bbm.uiMode = "new"` gebunden.
+
 - M18.1 Restarbeiten V2 ReadOnly-Produktivfreigabe technisch vorbereitet:
   - Der Router unterscheidet jetzt lokal zwischen Altpfad, DEV-/Testfreigabe und spaeterer produktiver ReadOnly-Freigabe.
   - Die produktive ReadOnly-Freigabe ist strukturell vorbereitet, aber ohne ausdruecklichen spaeteren Freigabeschalter nicht aktiv.

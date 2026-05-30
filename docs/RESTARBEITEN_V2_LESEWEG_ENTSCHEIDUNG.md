@@ -88,3 +88,9 @@ M17.0:
 - Als lesender Weg bleibt `listRestarbeitenByProject(projectId)` die Grundlage.
 - Schreib-, Upload-, Import-, Autosave- und neue IPC-Wege bleiben gesperrt.
 - Ohne Freigabe bleibt der alte Restarbeiten-Pfad Standard.
+
+## 12. M18.2 Expliziter Produktiv-ReadOnly-Schalter
+- Der spaetere explizite Schalter ist die produktive Freigabe fuer `restarbeiten` in der vorhandenen Mutter-/Kind-Freigabelogik.
+- Das ist eine separate Produktivfreigabeebene und nicht die normale Restarbeiten-Lizenz allein.
+- Ohne diesen spaeteren Schalter bleibt die produktive ReadOnly-Freigabe technisch aus.
+- Kein neuer Settings-Schalter, kein neuer IPC, keine automatische Aktivierung.

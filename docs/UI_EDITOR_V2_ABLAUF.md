@@ -65,6 +65,10 @@ Der Umbau folgt dieser Reihenfolge:
   - M18 beginnt nicht mit Schreiben; zuerst kommt eine kontrollierte ReadOnly-Produktivfreigabe oder deren fachliche Vorbereitung, waehrend Schreib-, Upload- und Autosave-Themen gesperrt bleiben.
 - M18.1: Restarbeiten V2 ReadOnly-Produktivfreigabe technisch vorbereiten
   - Der Router unterscheidet jetzt lokal zwischen Altpfad, DEV-/Testfreigabe und spaeterer produktiver ReadOnly-Freigabe, ohne neue IPC oder Schreibwege einzufuehren.
+- M18.2: Restarbeiten V2 expliziten Produktiv-ReadOnly-Freigabeschalter fachlich definieren
+  - Der spaetere produktive Schalter ist als explizite Produktivfreigabe fuer `restarbeiten` in der vorhandenen Mutter-/Kind-Freigabelogik benannt.
+  - Die normale Restarbeiten-Lizenz allein aktiviert V2 ReadOnly nicht automatisch.
+  - Kein neuer Settings-Schalter, kein neuer IPC, keine automatische Aktivierung.
 - weitere Ausbauschritte folgen nur bei Bedarf
 
 Undo/Redo ist fuer spaeter geparkt und ist kein Blocker fuer die Restarbeiten-V2-Anbindung.
