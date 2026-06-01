@@ -1,10 +1,11 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar).
+Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.0 abgeschlossen (BBM liefert explizite Protokoll-UI-Elementliste ohne Integration).
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.0 abgeschlossen: erste explizite UI-Elementliste fuer das Protokoll-Modul, ohne Editor-Integration und ohne produktive UI-Aenderung.
 
 ## Haken-System
 - `[x]` erledigt
@@ -38,6 +39,13 @@ Aktueller Stand:
 - [x] M13.5c Restarbeiten-UI Rahmenstruktur editorfähig vorbereiten
 - [x] M13.6 UI-Editor: Rahmenmodus nur für editorfähige Rahmenziele
 - [x] M13.6a UI-Editor-Panel aus Header lösen und verschiebbar halten
+- [x] K19.0 BBM liefert explizite Protokoll-UI-Elementliste ohne Scan/Integration
+
+## Statusupdate K19.0
+- BBM liefert fuer das Protokoll-Modul erstmals eine feste, explizit klassifizierte UI-Elementliste als Code-Artefakt.
+- Die Liste beschreibt nur UI-Struktur und enthaelt keine Fachdaten, keine Datenbankwerte, keine Personen, keine Termine und keine Statuswerte.
+- Keine Editor-Integration, kein DOM-Scan, keine automatische Erkennung, keine Speicherung und keine produktive UI-Aenderung.
+- Abgesichert durch `scripts/tests/protokollUiEditorElements.test.cjs`.
 
 ## Definition of Done (DoD)
 Ein UI-Inspektor-Meilenstein gilt nur als erledigt, wenn:

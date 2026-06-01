@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- K19.0 BBM liefert erste explizite UI-Elementliste fuer das Protokoll-Modul:
+  - Feste, explizit klassifizierte UI-Strukturliste fuer `protokoll.root`, `protokoll.header`, `protokoll.toolbar`, `protokoll.list`, `protokoll.detail` und `protokoll.footer` ergaenzt.
+  - Keine Editor-Integration, kein DOM-Scan, keine Speicherung und keine produktive UI-Aenderung.
+  - Test prueft Pflichtfelder, eindeutige IDs, Parent-Verweise, fehlende Fachdatenfelder und fehlende Datenbank-/Speicher-/Ausfuehrungslogik.
+
 - M20.2 UI-/PDF-Entwurfsentscheidung in Codex-Startplanung verankert:
   - Keine Editor-CodeÃ¤nderung.
   - Keine Fachmodul-Ã„nderung.
