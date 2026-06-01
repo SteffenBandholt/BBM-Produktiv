@@ -18,6 +18,7 @@ const { runTopServiceHierarchyTests } = require("./tests/topServiceHierarchy.tes
 const { runProtokollRouterFallbackTests } = require("./tests/protokollRouterFallback.test.cjs");
 const { runProtokollProjectEntryRoutingTests } = require("./tests/protokollProjectEntryRouting.test.cjs");
 const { runProtokollUiEditorElementsTests } = require("./tests/protokollUiEditorElements.test.cjs");
+const { runBbmUiEditorRegistryTests } = require("./tests/bbmUiEditorRegistry.test.cjs");
 const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungModule.test.cjs");
 const { runRestarbeitenModuleTests } = require("./tests/restarbeitenModule.test.cjs");
 const { runRestarbeitenDataModelTests } = require("./tests/restarbeitenDataModel.test.cjs");
@@ -138,6 +139,7 @@ async function main() {
   await runProtokollRouterFallbackTests(run);
   await runProtokollProjectEntryRoutingTests(run);
   await runProtokollUiEditorElementsTests(run);
+  await runBbmUiEditorRegistryTests(run);
   await runProjektverwaltungModuleTests(run);
   await runRestarbeitenModuleTests(run);
   await runRestarbeitenDataModelTests(run);

@@ -1,0 +1,52 @@
+import { getProtokollUiEditorElements } from "../modules/protokoll/uiEditor/protokollUiElements.js";
+
+const TARGET_INFO = Object.freeze({
+  targetAppId: "bbm-produktiv",
+  targetAppName: "BBM-Produktiv",
+  registryVersion: "1.0.0",
+});
+
+const PROTOKOLL_TOPS_SCOPE = Object.freeze({
+  uiScope: "protokoll.topsScreen",
+  moduleId: "protokoll",
+  label: "Protokoll",
+  status: "available",
+});
+
+const AVAILABLE_UI_SCOPES = Object.freeze([PROTOKOLL_TOPS_SCOPE]);
+const ACTIVE_UI_SCOPE = "protokoll.topsScreen";
+
+function cloneScope(scope) {
+  return { ...scope };
+}
+
+export function getBbmUiEditorTargetInfo() {
+  return { ...TARGET_INFO };
+}
+
+export function getAvailableUiScopes() {
+  return AVAILABLE_UI_SCOPES.map(cloneScope);
+}
+
+export function getActiveUiScope() {
+  return ACTIVE_UI_SCOPE;
+}
+
+export function getBbmUiEditorRegistry(uiScope = getActiveUiScope()) {
+  if (uiScope !== PROTOKOLL_TOPS_SCOPE.uiScope) {
+    return {
+      ok: false,
+      targetAppId: TARGET_INFO.targetAppId,
+      uiScope,
+      elements: [],
+      reason: `Unknown UI scope: ${String(uiScope)}`,
+    };
+  }
+
+  return {
+    targetAppId: TARGET_INFO.targetAppId,
+    uiScope: PROTOKOLL_TOPS_SCOPE.uiScope,
+    moduleId: PROTOKOLL_TOPS_SCOPE.moduleId,
+    elements: getProtokollUiEditorElements(),
+  };
+}

@@ -17,6 +17,10 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- K19.1 BBM zentrale UI-Editor-Registry eingefuehrt:
+  - Der offizielle Einstieg fuer spaetere Editor-Anbindung ist `src/renderer/uiEditor/bbmUiEditorRegistry.js`.
+  - Keine Editor-Integration, keine Speicherung und keine produktive Aenderung.
+
 - K19.0 BBM liefert erste explizite UI-Elementliste fuer das Protokoll-Modul:
   - Feste, explizit klassifizierte UI-Strukturliste fuer `protokoll.root`, `protokoll.header`, `protokoll.toolbar`, `protokoll.list`, `protokoll.detail` und `protokoll.footer` ergaenzt.
   - Keine Editor-Integration, kein DOM-Scan, keine Speicherung und keine produktive UI-Aenderung.
