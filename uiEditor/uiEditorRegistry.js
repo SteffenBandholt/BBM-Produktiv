@@ -1,45 +1,32 @@
 "use strict";
 
-const path = require("node:path");
-
-const BBM_UI_EDITOR_REGISTRY_RELATIVE_PATH =
-  "src/renderer/uiEditor/bbmUiEditorRegistry.js";
-
-const INSTALLED_UI_EDITOR_REGISTRY_INFO = Object.freeze({
-  installedEntry: "uiEditor/uiEditorRegistry.js",
-  targetApp: "BBM-Produktiv",
-  registryMode: "target-app-registry-reference",
-  officialBbmRegistryPath: BBM_UI_EDITOR_REGISTRY_RELATIVE_PATH,
-  createsOwnRegistry: false,
-  activeExampleScope: false,
+const launcherButton = Object.freeze({
+  id: "uiEditor.launcherButton",
+  type: "button",
+  role: "editor-launcher",
+  area: "overlay",
+  position: Object.freeze({
+    x: 24,
+    y: 24,
+  }),
+  editable: true,
+  allowedOps: Object.freeze(["move", "hide", "show"]),
+  lockedOps: Object.freeze(["delete", "executeTargetAction", "modifyDomainData"]),
 });
 
-function getInstalledUiEditorRegistryInfo() {
-  return { ...INSTALLED_UI_EDITOR_REGISTRY_INFO };
-}
-
-function getOfficialBbmUiEditorRegistryPath(repoRoot = path.resolve(__dirname, "..")) {
-  return path.resolve(repoRoot, BBM_UI_EDITOR_REGISTRY_RELATIVE_PATH);
-}
-
-async function loadBbmUiEditorRegistry(importEsmFromFile, options = {}) {
-  if (typeof importEsmFromFile !== "function") {
-    throw new TypeError("loadBbmUiEditorRegistry needs an ESM file importer function");
-  }
-
-  const registryPath = getOfficialBbmUiEditorRegistryPath(options.repoRoot);
-  return importEsmFromFile(registryPath);
-}
+const globalScope = Object.freeze({
+  id: "uiEditor.global",
+  uiScope: "uiEditor.global",
+  label: "UI-Editor",
+  elements: Object.freeze([launcherButton]),
+});
 
 const uiEditorRegistry = Object.freeze({
-  ...INSTALLED_UI_EDITOR_REGISTRY_INFO,
-  uiScopes: Object.freeze([]),
+  registryId: "uiEditor.installedArtifacts",
+  registryVersion: "1.0.0",
+  uiScopes: Object.freeze([globalScope]),
 });
 
 module.exports = {
-  BBM_UI_EDITOR_REGISTRY_RELATIVE_PATH,
-  getInstalledUiEditorRegistryInfo,
-  getOfficialBbmUiEditorRegistryPath,
-  loadBbmUiEditorRegistry,
   uiEditorRegistry,
 };

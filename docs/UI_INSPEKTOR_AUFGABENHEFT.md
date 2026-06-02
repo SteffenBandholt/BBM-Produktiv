@@ -1,12 +1,13 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.7 abgeschlossen (installierte UI-Editor-Grundstruktur verweist auf die echte BBM-Registry).
+Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.9a abgeschlossen (BBM-Testeinbindung fuer installierte UI-Editor-Artefakte ist von generischen Artefakt-Tests getrennt).
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
 - K19.0 abgeschlossen: erste explizite UI-Elementliste fuer das Protokoll-Modul, ohne Editor-Integration und ohne produktive UI-Aenderung.
-- K19.7 abgeschlossen: installierter Einstieg unter `uiEditor/` ist mit dem offiziellen BBM-Registry-Einstieg verbunden, ohne produktive UI-Aenderung.
+- K19.7 abgeschlossen: installierter Einstieg unter `uiEditor/` war mit dem offiziellen BBM-Registry-Einstieg verbunden, ohne produktive UI-Aenderung.
+- K19.9a abgeschlossen: `uiEditor/` enthaelt installierte UI-Editor-Artefakte; die echte BBM-Registry bleibt separat unter `src/renderer/uiEditor/bbmUiEditorRegistry.js`; `scripts/test.cjs` ist nicht direkt an installierte Artefakt-Testdateien gekoppelt.
 
 ## Haken-System
 - `[x]` erledigt
@@ -42,13 +43,21 @@ Aktueller Stand:
 - [x] M13.6a UI-Editor-Panel aus Header lösen und verschiebbar halten
 - [x] K19.0 BBM liefert explizite Protokoll-UI-Elementliste ohne Scan/Integration
 - [x] K19.7 Installierte UI-Editor-Grundstruktur mit echter BBM-Registry verbinden
+- [x] K19.9a BBM-Testeinbindung nach Neuinstallation der UI-Editor-Artefakte trennen
+
+## Statusupdate K19.9a
+- `uiEditor/` enthaelt installierte UI-Editor-Artefakte.
+- Die BBM-Registry bleibt separat unter `src/renderer/uiEditor/bbmUiEditorRegistry.js`.
+- `scripts/test.cjs` ist nicht direkt an installierte Artefakt-Testdateien unter `uiEditor/tests/` gekoppelt.
+- BBM prueft installierte UI-Editor-Artefakte ueber `scripts/tests/bbmUiEditorInstalledArtifacts.test.cjs`.
+- Keine Editor-Integration, kein Panel, kein Hover-Rahmen, kein DOM-Scan, keine Speicherung und keine Fachlogik.
 
 ## Statusupdate K19.7
 - Der installierte Einstieg `uiEditor/uiEditorRegistry.js` verweist jetzt auf den offiziellen BBM-Registry-Einstieg `src/renderer/uiEditor/bbmUiEditorRegistry.js`.
 - `uiEditor/` bleibt als installierter Einstieg bestehen, erzeugt aber keine zweite aktive Beispiel-Registry.
 - Der Beispiel-Scope ist kein aktiver Registry-Inhalt mehr.
 - Keine Editor-Integration, kein Panel, kein Header-Button, kein DOM-Scan, keine Speicherung und keine produktive UI-Aenderung.
-- Abgesichert durch `uiEditor/tests/uiEditorRegistry.test.cjs`; der Test ist in `scripts/test.cjs` eingebunden.
+- Historische Absicherung: `uiEditor/tests/uiEditorRegistry.test.cjs`. Seit K19.9a ist `scripts/test.cjs` nicht mehr direkt an diese installierte Artefakt-Testdatei gekoppelt.
 
 ## Statusupdate K19.0
 - BBM liefert fuer das Protokoll-Modul erstmals eine feste, explizit klassifizierte UI-Elementliste als Code-Artefakt.

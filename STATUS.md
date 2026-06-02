@@ -17,9 +17,16 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
-- K19.7 installierte UI-Editor-Grundstruktur mit echter BBM-Registry verbunden:
-  - `uiEditor/` ist nicht mehr nur Beispielstruktur, sondern verweist auf den offiziellen BBM-Registry-Einstieg `src/renderer/uiEditor/bbmUiEditorRegistry.js`.
-  - Der Beispiel-Scope ist kein aktiver Registry-Inhalt mehr.
+- K19.9a BBM-Testeinbindung nach Neuinstallation der UI-Editor-Artefakte sauber repariert:
+  - Installierte Artefakt-Tests unter `uiEditor/tests/` bleiben generisch und werden nicht mehr direkt als BBM-Testmodul in `scripts/test.cjs` importiert.
+  - BBM prueft installierte UI-Editor-Artefakte ueber den eigenen Test `scripts/tests/bbmUiEditorInstalledArtifacts.test.cjs`.
+  - Die echte BBM-Registry bleibt separat unter `src/renderer/uiEditor/bbmUiEditorRegistry.js` abgesichert.
+  - Naechster offener Schritt: fachliche/technische Abnahme auf dem Branch mit den neu installierten UI-Editor-Artefakten.
+  - Risiken/Hinweise: `uiEditor/` selbst bleibt installierter Artefaktbereich und wurde nicht mit BBM-Fachlogik erweitert.
+
+- K19.7 installierte UI-Editor-Grundstruktur mit echter BBM-Registry verbunden (historischer Stand, durch K19.9a testseitig getrennt):
+  - `uiEditor/` war als installierter Einstieg mit Verweis auf den offiziellen BBM-Registry-Einstieg `src/renderer/uiEditor/bbmUiEditorRegistry.js` abgesichert.
+  - K19.9a trennt die installierten Artefakte und die echte BBM-Registry wieder sauber in zwei Testbereiche.
   - Kein Editor-Panel, kein Header-Button, keine produktive Aenderung, keine Speicherung und keine Fachlogik/Fachdaten.
 
 - K19.1 BBM zentrale UI-Editor-Registry eingefuehrt:

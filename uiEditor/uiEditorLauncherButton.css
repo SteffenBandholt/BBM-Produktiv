@@ -1,0 +1,13 @@
+.ui-editor-launcher-button {
+  position: fixed;
+  inset-inline-start: 24px;
+  inset-block-start: 24px;
+  z-index: 1000;
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  border: 1px solid #516070;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #1f2933;
+  font: inherit;
+}
