@@ -19,6 +19,7 @@ const { runProtokollRouterFallbackTests } = require("./tests/protokollRouterFall
 const { runProtokollProjectEntryRoutingTests } = require("./tests/protokollProjectEntryRouting.test.cjs");
 const { runProtokollUiEditorElementsTests } = require("./tests/protokollUiEditorElements.test.cjs");
 const { runBbmUiEditorRegistryTests } = require("./tests/bbmUiEditorRegistry.test.cjs");
+const { runInstalledUiEditorRegistryTests } = require("../uiEditor/tests/uiEditorRegistry.test.cjs");
 const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungModule.test.cjs");
 const { runRestarbeitenModuleTests } = require("./tests/restarbeitenModule.test.cjs");
 const { runRestarbeitenDataModelTests } = require("./tests/restarbeitenDataModel.test.cjs");
@@ -140,6 +141,7 @@ async function main() {
   await runProtokollProjectEntryRoutingTests(run);
   await runProtokollUiEditorElementsTests(run);
   await runBbmUiEditorRegistryTests(run);
+  await runInstalledUiEditorRegistryTests(run);
   await runProjektverwaltungModuleTests(run);
   await runRestarbeitenModuleTests(run);
   await runRestarbeitenDataModelTests(run);

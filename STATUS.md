@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- K19.7 installierte UI-Editor-Grundstruktur mit echter BBM-Registry verbunden:
+  - `uiEditor/` ist nicht mehr nur Beispielstruktur, sondern verweist auf den offiziellen BBM-Registry-Einstieg `src/renderer/uiEditor/bbmUiEditorRegistry.js`.
+  - Der Beispiel-Scope ist kein aktiver Registry-Inhalt mehr.
+  - Kein Editor-Panel, kein Header-Button, keine produktive Aenderung, keine Speicherung und keine Fachlogik/Fachdaten.
+
 - K19.1 BBM zentrale UI-Editor-Registry eingefuehrt:
   - Der offizielle Einstieg fuer spaetere Editor-Anbindung ist `src/renderer/uiEditor/bbmUiEditorRegistry.js`.
   - Keine Editor-Integration, keine Speicherung und keine produktive Aenderung.
