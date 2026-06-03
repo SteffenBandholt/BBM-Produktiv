@@ -1,3 +1,7 @@
+import * as installedLauncherButtonArtifactModule from "../../../uiEditor/uiEditorLauncherButton.js";
+
+void installedLauncherButtonArtifactModule;
+
 const INSTALLED_LAUNCHER_SCRIPT_PATH = "../../uiEditor/uiEditorLauncherButton.js";
 const INSTALLED_LAUNCHER_CSS_PATH = "../../uiEditor/uiEditorLauncherButton.css";
 const LAUNCHER_HOST_ATTRIBUTE = "data-ui-editor-launcher-host";

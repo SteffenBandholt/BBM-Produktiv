@@ -4,6 +4,8 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const RUNTIME_PATH = path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
+const CSS_PATH = path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.css");
+const PACKAGE_PATH = path.join(__dirname, "../../package.json");
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -119,6 +121,24 @@ function findNode(node, predicate) {
   return found;
 }
 
+function getCssNumber(source, property) {
+  const match = String(source || "").match(new RegExp(`${property}\\s*:\\s*(\\d+)`));
+  return match ? Number(match[1]) : null;
+}
+
+function isMountedVisibleButton(doc, button) {
+  return Boolean(
+    button &&
+      button.tagName === "BUTTON" &&
+      button.parentElement === doc.body &&
+      button.textContent === "UI-Editor" &&
+      button.id === "uiEditor.launcherButton" &&
+      button.disabled !== true &&
+      button.getAttribute("data-ui-editor-installed-artifact") === "uiEditor/uiEditorLauncherButton.js" &&
+      button.getAttribute("aria-hidden") !== "true"
+  );
+}
+
 function matchesSelector(node, selector) {
   const raw = String(selector || "");
   if (raw === "button") return node.tagName === "BUTTON";
@@ -147,14 +167,21 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(mod.INSTALLED_LAUNCHER_CSS_PATH, "../../uiEditor/uiEditorLauncherButton.css");
 
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    const cssSource = fs.readFileSync(CSS_PATH, "utf8");
+    const packageJson = JSON.parse(fs.readFileSync(PACKAGE_PATH, "utf8"));
     assert.equal(source.includes("uiEditor/uiEditorLauncherButton.js"), true);
     assert.equal(source.includes("uiEditor/uiEditorLauncherButton.css"), true);
+    assert.equal(source.includes("../../../uiEditor/uiEditorLauncherButton.js"), true);
+    assert.equal(packageJson.build.files.includes("uiEditor/**/*"), true);
     assert.equal(source.includes("scanUiInspectorTargets"), false);
     assert.equal(source.includes("createUiInspectorPanel"), false);
     assert.equal(source.includes("localStorage"), false);
     assert.equal(source.includes("sessionStorage"), false);
     assert.equal(source.includes("MutationObserver"), false);
     assert.equal(source.includes("querySelectorAll"), false);
+    assert.equal(cssSource.includes("position: fixed"), true);
+    assert.equal(cssSource.includes("inset-inline-end: 24px"), true);
+    assert.equal(getCssNumber(cssSource, "z-index") > 12010, true);
   });
 
   await run("BBM UI-Editor-Runtime: Launcher ist nur im DEV-Kontext sichtbar", async () => {
@@ -170,12 +197,26 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     const button = await mod.installBbmUiEditorRuntimeLauncher({ devEnabled: true, doc, win, activeUiScope: null });
     assert.equal(Boolean(button), true);
-    assert.equal(button.id, "uiEditor.launcherButton");
+    assert.equal(isMountedVisibleButton(doc, button), true);
     assert.equal(button.className, "ui-editor-launcher-button");
-    assert.equal(button.textContent, "UI-Editor");
-    assert.equal(button.getAttribute("data-ui-editor-installed-artifact"), "uiEditor/uiEditorLauncherButton.js");
     assert.equal(button.getAttribute("data-ui-editor-active-ui-scope"), "");
+    assert.equal(doc.querySelector('[data-ui-editor-launcher-host="true"]'), button);
     assert.equal(doc.querySelector('link[data-ui-editor-launcher-css="true"]').href, "../../uiEditor/uiEditorLauncherButton.css");
+  });
+
+  await run("BBM UI-Editor-Runtime: installierter Artifact-Import erzeugt sichtbaren Fake-DOM-Button", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win: globalThis,
+      activeUiScope: null,
+    });
+
+    assert.equal(isMountedVisibleButton(doc, button), true);
+    assert.equal(button.getAttribute("data-ui-editor-launcher-active"), "false");
+    assert.equal(Boolean(doc.querySelector('[data-ui-inspector-panel="true"]')), false);
   });
 
   await run("BBM UI-Editor-Runtime: Klick toggelt nur neutralen Launcher-State", async () => {

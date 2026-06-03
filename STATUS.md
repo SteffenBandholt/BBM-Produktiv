@@ -2416,3 +2416,23 @@ Wichtig:
   - fachliche App-Sichtpruefung: UI-Editor sichtbar, EditorLab V2/Restarbeiten V2 nicht sichtbar, kein weisser Bildschirm.
 - Risiken/Hinweise:
   - Es wurde kein spezieller Guardrail-Test zu `docs/UI_EDITOR_VERTRAG.md` gefunden; die Absicherung erfolgt ueber die gezielten Runtime-/Header-Tests.
+
+### K19.14-clean-Fix – UI-Editor-Launcher sichtbar machen
+- Status: erledigt
+- Beschreibung:
+  - Ursache behoben: Der Launcher wird jetzt direkt ueber das installierte Launcher-Artefakt importiert und muss nicht mehr auf einen spaeten Script-Tag-Load warten.
+  - Das installierte CSS positioniert den neutralen UI-Editor-Launcher oben rechts mit einer Z-Ebene oberhalb des Headers.
+  - `uiEditor/**/*` ist im Paket-Artefaktbestand enthalten, damit die installierten Launcher-Dateien auch ausserhalb des reinen Quellbaums verfuegbar bleiben.
+  - Kein Panel, kein Scan, keine Speicherung, keine Fachlogik; EditorLab V2 und Restarbeiten V2 bleiben aus dem Header entfernt.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `uiEditor/uiEditorLauncherButton.css`
+  - `package.json`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Fix-Commit erstellt
+- Naechster offener Schritt:
+  - fachliche App-Sichtpruefung in einer Electron-Umgebung mit Systembibliotheken: UI-Editor sichtbar, EditorLab V2/Restarbeiten V2 nicht sichtbar, kein weisser Bildschirm.
+- Risiken/Hinweise:
+  - In dieser Umgebung bleibt `npm start`/`npm test` ueber Electron durch fehlendes `libatk-1.0.so.0` blockiert.

@@ -37,6 +37,7 @@
     },
     "files": [
       "src/**/*",
+      "uiEditor/**/*",
       "package.json",
       "build/bbm-icon.ico",
       "!src/main/db/app.db",
