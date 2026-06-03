@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- K19.16a neutraler UI-Editor-Aktivmodus zeigt festen registrierten Scope:
+  - Der Statushinweis zeigt bei aktivem UI-Editor den registrierten Scope `protokoll.topsScreen` aus der BBM-Registry.
+  - Keine automatische Erkennung, kein Panel, kein Hover, keine Auswahl, keine Speicherung, kein DOM-Scan und keine Fachlogik.
+  - Naechster offener Schritt: fachliche Sichtpruefung per `npm start` auf dem Zielsystem.
+
 - K19.9a BBM-Testeinbindung nach Neuinstallation der UI-Editor-Artefakte sauber repariert:
   - Installierte Artefakt-Tests unter `uiEditor/tests/` bleiben generisch und werden nicht mehr direkt als BBM-Testmodul in `scripts/test.cjs` importiert.
   - BBM prueft installierte UI-Editor-Artefakte ueber den eigenen Test `scripts/tests/bbmUiEditorInstalledArtifacts.test.cjs`.

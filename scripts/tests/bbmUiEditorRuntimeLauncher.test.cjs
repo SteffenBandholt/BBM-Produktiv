@@ -191,6 +191,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(cssSource.includes("position: fixed"), true);
     assert.equal(cssSource.includes("inset-inline-end: 24px"), true);
     assert.equal(cssSource.includes("ui-editor-launcher-status"), true);
+    assert.equal(cssSource.includes("white-space: pre-line"), true);
     assert.equal(cssSource.includes('[data-ui-editor-launcher-active="true"]'), true);
     assert.equal(getCssNumber(cssSource, "z-index") > 12010, true);
   });
@@ -258,7 +259,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(doc.body.getAttribute("data-ui-editor-active"), "true");
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(Boolean(activeStatus), true);
-    assert.equal(activeStatus.textContent, "UI-Editor aktiv");
+    assert.equal(activeStatus.textContent, "UI-Editor aktiv\nScope: nicht erkannt");
 
     button.click();
     assert.equal(button.dataset.uiEditorLauncherActive, "false");
@@ -274,6 +275,53 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-hover-frame="true"]')), false);
   });
 
+  await run("BBM UI-Editor-Runtime: aktiver Status zeigt uebergebenen bekannten Scope", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const toggles = [];
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "protokoll.topsScreen",
+      onToggle: (event) => toggles.push(event),
+    });
+
+    assert.equal(button.getAttribute("data-ui-editor-active-ui-scope"), "protokoll.topsScreen");
+    button.click();
+
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(Boolean(activeStatus), true);
+    assert.equal(activeStatus.textContent, "UI-Editor aktiv\nScope: protokoll.topsScreen");
+    assert.deepEqual(toggles.map((event) => event.activeUiScope), ["protokoll.topsScreen"]);
+    assert.equal(Boolean(doc.querySelector('[data-ui-inspector-panel="true"]')), false);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-panel="true"]')), false);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-hover-frame="true"]')), false);
+  });
+
+  await run("BBM UI-Editor-Runtime: leerer Scope zeigt nicht erkannt", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "   ",
+    });
+
+    button.click();
+
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(Boolean(activeStatus), true);
+    assert.equal(activeStatus.textContent, "UI-Editor aktiv\nScope: nicht erkannt");
+  });
+
   await run("BBM UI-Editor-Runtime: bleibt ohne Scan, Speicherung und Ziel-App-Aktion", async () => {
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
     assert.equal(source.includes("scanUiInspectorTargets"), false);
@@ -285,6 +333,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("writeFile"), false);
     assert.equal(source.includes("showEditorLabV2"), false);
     assert.equal(source.includes("showRestarbeitenV2"), false);
+    assert.equal(source.includes("getStatusScopeLabel"), true);
+    assert.equal(source.includes("activeUiScope"), true);
   });
 
 }

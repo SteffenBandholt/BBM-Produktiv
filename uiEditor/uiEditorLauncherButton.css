@@ -33,5 +33,6 @@
   font: inherit;
   font-size: 12px;
   line-height: 16px;
+  white-space: pre-line;
   pointer-events: none;
 }

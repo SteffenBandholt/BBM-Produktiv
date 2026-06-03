@@ -1060,7 +1060,9 @@ async function runProjektverwaltungModuleTests(run) {
 
   await run("Projektverwaltung: MainHeader/CoreShell ohne alte DEV-Buttons und ohne Scanstatus", async () => {
     assert.equal(coreShellSource.includes("installBbmUiEditorRuntimeLauncher"), true);
-    assert.equal(coreShellSource.includes("activeUiScope: null"), true);
+    assert.equal(coreShellSource.includes("getActiveUiScope"), true);
+    assert.equal(coreShellSource.includes("activeUiScope: getActiveUiScope()"), true);
+    assert.equal(coreShellSource.includes("activeUiScope: null"), false);
     assert.equal(coreShellSource.includes("showEditorLabV2"), false);
     assert.equal(coreShellSource.includes("showRestarbeitenV2Dev"), false);
     assert.equal(coreShellSource.includes("scanUiInspectorTargets"), false);

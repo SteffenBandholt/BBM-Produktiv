@@ -86,14 +86,19 @@ function removeExistingLauncher(doc = getDocument()) {
   doc?.body?.setAttribute?.(UI_EDITOR_ACTIVE_ATTRIBUTE, "false");
 }
 
-function ensureLauncherStatusHint(doc, host) {
+function getStatusScopeLabel(activeUiScope = null) {
+  const normalizedScope = String(activeUiScope == null ? "" : activeUiScope).trim();
+  return normalizedScope || "nicht erkannt";
+}
+
+function ensureLauncherStatusHint(doc, host, activeUiScope = null) {
   const existing = doc?.querySelector?.(`[${LAUNCHER_STATUS_ATTRIBUTE}="true"]`);
   if (existing) return existing;
   if (!doc?.createElement || !host?.appendChild) return null;
 
   const status = doc.createElement("div");
   status.className = "ui-editor-launcher-status";
-  status.textContent = "UI-Editor aktiv";
+  status.textContent = `UI-Editor aktiv\nScope: ${getStatusScopeLabel(activeUiScope)}`;
   status.setAttribute(LAUNCHER_STATUS_ATTRIBUTE, "true");
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
@@ -109,7 +114,7 @@ function syncLauncherButtonState(button, state, { doc = getDocument(), host = nu
   doc?.body?.setAttribute?.(UI_EDITOR_ACTIVE_ATTRIBUTE, active ? "true" : "false");
 
   if (active) {
-    ensureLauncherStatusHint(doc, host || button.parentElement);
+    ensureLauncherStatusHint(doc, host || button.parentElement, state?.activeUiScope);
   } else {
     removeExistingLauncherStatus(doc);
   }
@@ -187,6 +192,7 @@ export {
   getInstalledLauncherArtifact,
   isRuntimeLauncherDevEnabled,
   loadInstalledLauncherButton,
+  getStatusScopeLabel,
   ensureLauncherStatusHint,
   renderLauncherButton,
 };
