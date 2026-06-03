@@ -2370,3 +2370,29 @@ Wichtig:
   - fachliche Abnahme des installierten UI-Editor-Artefaktvertrags im Ziel-Branch.
 - Risiken/Hinweise:
   - Das neue Pflichtartefakt bleibt neutral und enthaelt keine BBM-Fachlogik.
+
+### K19.14 – Installierten UI-Editor-Launcher zur Laufzeit sichtbar machen
+- Status: erledigt
+- Beschreibung:
+  - Der installierte UI-Editor-Launcher wird in BBM zur Laufzeit im DEV-Kontext sichtbar gemacht.
+  - Der Button stammt aus dem installierten Artefaktbestand unter `uiEditor/` (`uiEditorLauncherButton.js` und `uiEditorLauncherButton.css`).
+  - Der Klick toggelt nur einen neutralen Launcher-State (`uiEditorLauncherActive` / `data-ui-editor-launcher-active`).
+  - `activeUiScope` ist strukturell vorbereitet und bleibt in K19.14 neutral auf `null`.
+  - Kein Editor-Panel, kein Hover-Rahmen, keine Speicherung, keine Fachlogik, kein DOM-Scan und keine automatische UI-Erkennung.
+- Betroffene Dateien:
+  - `uiEditor/uiEditorLauncherButton.js`
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `src/renderer/app/CoreShell.js`
+  - `src/renderer/ui/MainHeader.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `scripts/test.cjs`
+  - `STATUS.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+- Commit:
+  - `aktueller Branch-HEAD / PR`
+- Naechster offener Schritt:
+  - Sichtpruefung im lokalen Electron-DEV-Kontext: Launcher sichtbar und Toggle-State am Button nachvollziehbar.
+- Risiken/Hinweise:
+  - Die produktive Scope-Auswertung, Editor-Panel, Hover-/Auswahlmodus und Speicherung bleiben ausdruecklich nicht umgesetzt.
+  - `npm test` ist in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert; gezielte Launcher-/Artefaktpruefungen liefen gruen.

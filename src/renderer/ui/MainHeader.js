@@ -1705,6 +1705,10 @@ export default class MainHeader {
   }
 
   _isUiEditorEnabled() {
+    return false;
+  }
+
+  _isUiEditorRuntimeLauncherEnabled() {
     return this._isNewUi;
   }
 
