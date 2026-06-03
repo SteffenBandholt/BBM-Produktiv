@@ -2351,3 +2351,22 @@ Wichtig:
 - PDF wird im Restarbeiten-Ordner gespeichert.
 - PDF wird intern in der BBM/Chromium-Vorschau angezeigt.
 - Externer Adobe-/Windows-Viewer ist nicht mehr der primäre Restarbeiten-Vorschauweg.
+
+### K19.13a – BBM-Test an aktuelle UI-Editor-Installer-Artefakte angepasst
+- Status: erledigt
+- Beschreibung:
+  - Der BBM-Artefakttest erkennt `uiEditor.global` jetzt robust ueber `id`, `uiScope`, `uiScopeId` oder einen Registry-Schluessel.
+  - `uiEditor/targetAppRegistry.js` ist als neutrales Pflichtartefakt im installierten UI-Editor-Artefaktbestand enthalten.
+  - Die echte BBM-Registry bleibt separat und wird weiterhin auf `protokoll.topsScreen` und `protokoll.root` geprueft.
+  - Keine Speicherung, kein Editor-Panel, kein DOM-Scan, keine automatische UI-Erkennung und keine Ziel-App-Fachlogik in `uiEditor/`.
+- Betroffene Dateien:
+  - `scripts/tests/bbmUiEditorInstalledArtifacts.test.cjs`
+  - `uiEditor/targetAppRegistry.js`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - Paket-Commit dieses Branches; PR-Verweis wird nach Erstellung gefuehrt
+- Naechster offener Schritt:
+  - fachliche Abnahme des installierten UI-Editor-Artefaktvertrags im Ziel-Branch.
+- Risiken/Hinweise:
+  - Das neue Pflichtartefakt bleibt neutral und enthaelt keine BBM-Fachlogik.

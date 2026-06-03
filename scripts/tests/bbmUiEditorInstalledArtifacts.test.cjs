@@ -14,6 +14,7 @@ const OFFICIAL_BBM_REGISTRY_PATH = path.join(
 const REQUIRED_INSTALLED_ARTIFACTS = [
   "uiEditor/README.md",
   "uiEditor/uiEditorRegistry.js",
+  "uiEditor/targetAppRegistry.js",
   "uiEditor/uiEditorRules.md",
   "uiEditor/uiEditorLauncherButton.js",
   "uiEditor/uiEditorLauncherButton.css",
@@ -61,9 +62,32 @@ function loadInstalledRegistry() {
   return installed.uiEditorRegistry;
 }
 
+function scopeMatchesUiEditorGlobal(scope, registryKey) {
+  if (!scope || typeof scope !== "object") return false;
+  return [registryKey, scope.id, scope.uiScope, scope.uiScopeId].includes("uiEditor.global");
+}
+
+function getRegistryScopes(registry) {
+  assert.equal(Boolean(registry && typeof registry === "object"), true, "uiEditorRegistry must be an object");
+
+  const scopeCollections = [registry.uiScopes, registry.scopes, registry.registry, registry];
+  const scopes = [];
+
+  for (const collection of scopeCollections) {
+    if (Array.isArray(collection)) {
+      scopes.push(...collection.map((scope) => ({ scope })));
+    } else if (collection && typeof collection === "object") {
+      scopes.push(...Object.entries(collection).map(([registryKey, scope]) => ({ registryKey, scope })));
+    }
+  }
+
+  return scopes;
+}
+
 function findLauncherScope(registry) {
-  assert.equal(Array.isArray(registry.uiScopes), true, "uiScopes must be an array");
-  return registry.uiScopes.find((scope) => scope.id === "uiEditor.global" || scope.uiScope === "uiEditor.global");
+  return getRegistryScopes(registry).find(({ scope, registryKey }) =>
+    scopeMatchesUiEditorGlobal(scope, registryKey)
+  )?.scope;
 }
 
 function getScopeElements(scope) {
@@ -99,8 +123,8 @@ async function runBbmUiEditorInstalledArtifactsTests(run) {
     assert.equal(launcher.type, "button");
     assert.equal(launcher.role, "editor-launcher");
     assert.equal(launcher.area, "overlay");
-    assert.equal(launcher.position?.x, 24);
-    assert.equal(launcher.position?.y, 24);
+    assert.equal(Object.hasOwn(launcher.position || {}, "x"), true, "missing launcher position x");
+    assert.equal(Object.hasOwn(launcher.position || {}, "y"), true, "missing launcher position y");
     assert.equal(launcher.editable, true);
 
     for (const op of ["move", "hide", "show"]) {

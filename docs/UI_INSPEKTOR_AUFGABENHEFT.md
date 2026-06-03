@@ -1,13 +1,14 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.9a abgeschlossen (BBM-Testeinbindung fuer installierte UI-Editor-Artefakte ist von generischen Artefakt-Tests getrennt).
+Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.13a abgeschlossen (BBM-Test ist an aktuelle UI-Editor-Installer-Artefakte angepasst).
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
 - K19.0 abgeschlossen: erste explizite UI-Elementliste fuer das Protokoll-Modul, ohne Editor-Integration und ohne produktive UI-Aenderung.
 - K19.7 abgeschlossen: installierter Einstieg unter `uiEditor/` war mit dem offiziellen BBM-Registry-Einstieg verbunden, ohne produktive UI-Aenderung.
 - K19.9a abgeschlossen: `uiEditor/` enthaelt installierte UI-Editor-Artefakte; die echte BBM-Registry bleibt separat unter `src/renderer/uiEditor/bbmUiEditorRegistry.js`; `scripts/test.cjs` ist nicht direkt an installierte Artefakt-Testdateien gekoppelt.
+- K19.13a abgeschlossen: Der BBM-Artefakttest erkennt `uiEditor.global` robust ueber `id`, `uiScope`, `uiScopeId` oder den Registry-Schluessel und verlangt `uiEditor/targetAppRegistry.js` als installiertes Pflichtartefakt.
 
 ## Haken-System
 - `[x]` erledigt
@@ -44,6 +45,13 @@ Aktueller Stand:
 - [x] K19.0 BBM liefert explizite Protokoll-UI-Elementliste ohne Scan/Integration
 - [x] K19.7 Installierte UI-Editor-Grundstruktur mit echter BBM-Registry verbinden
 - [x] K19.9a BBM-Testeinbindung nach Neuinstallation der UI-Editor-Artefakte trennen
+- [x] K19.13a BBM-Test an aktuelle UI-Editor-Installer-Artefakte anpassen
+
+## Statusupdate K19.13a
+- `scripts/tests/bbmUiEditorInstalledArtifacts.test.cjs` erkennt den globalen UI-Editor-Scope robust ueber `id`, `uiScope`, `uiScopeId` oder einen standardisierten Registry-Schluessel.
+- `uiEditor/targetAppRegistry.js` ist als neutrales installiertes Pflichtartefakt im Artefaktbestand enthalten.
+- Die echte BBM-Registry bleibt separat unter `src/renderer/uiEditor/bbmUiEditorRegistry.js` und wird weiterhin auf `protokoll.topsScreen` und `protokoll.root` geprueft.
+- Keine Ziel-App-Fachlogik in `uiEditor/`, keine Speicherung, kein Editor-Panel, kein DOM-Scan und keine automatische UI-Erkennung.
 
 ## Statusupdate K19.9a
 - `uiEditor/` enthaelt installierte UI-Editor-Artefakte.
