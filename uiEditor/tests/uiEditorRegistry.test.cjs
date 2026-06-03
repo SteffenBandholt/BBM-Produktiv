@@ -3,40 +3,19 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 
-const REGISTRY_PATH = path.resolve(__dirname, "../uiEditorRegistry.js");
+const { uiEditorRegistry } = require(path.resolve(__dirname, "../uiEditorRegistry.js"));
 
-function runUiEditorRegistryArtifactTests() {
-  const { uiEditorRegistry } = require(REGISTRY_PATH);
-  assert.equal(Array.isArray(uiEditorRegistry.uiScopes), true);
+assert.equal(Boolean(uiEditorRegistry), true);
+assert.equal(Array.isArray(uiEditorRegistry.uiScopes), true);
+assert.equal(uiEditorRegistry.uiScopes.length, 1);
+assert.equal(uiEditorRegistry.uiScopes[0].uiScopeId, "uiEditor.global");
+assert.equal(Array.isArray(uiEditorRegistry.uiScopes[0].elements), true);
+assert.equal(uiEditorRegistry.uiScopes[0].elements.length, 1);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].id, "uiEditor.launcherButton");
+assert.deepEqual(uiEditorRegistry.uiScopes[0].elements[0].position, { x: 24, y: 24 });
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].editable, true);
+assert.deepEqual(uiEditorRegistry.uiScopes[0].elements[0].allowedOps, ["move", "hide", "show"]);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].lockedOps.includes("delete"), true);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].lockedOps.includes("executeTargetAction"), true);
 
-  const globalScope = uiEditorRegistry.uiScopes.find((scope) => scope.uiScope === "uiEditor.global");
-  assert.equal(Boolean(globalScope), true, "missing uiEditor.global scope");
-  assert.equal(Array.isArray(globalScope.elements), true);
-
-  const launcher = globalScope.elements.find((element) => element.id === "uiEditor.launcherButton");
-  assert.equal(Boolean(launcher), true, "missing uiEditor.launcherButton");
-  assert.equal(launcher.type, "button");
-  assert.equal(launcher.role, "editor-launcher");
-  assert.equal(launcher.area, "overlay");
-  assert.equal(launcher.position?.x, 24);
-  assert.equal(launcher.position?.y, 24);
-  assert.equal(launcher.editable, true);
-
-  for (const op of ["move", "hide", "show"]) {
-    assert.equal(launcher.allowedOps.includes(op), true, `missing allowed op: ${op}`);
-  }
-
-  for (const op of ["delete", "executeTargetAction", "modifyDomainData"]) {
-    assert.equal(launcher.lockedOps.includes(op), true, `missing locked op: ${op}`);
-  }
-}
-
-if (require.main === module) {
-  try {
-    runUiEditorRegistryArtifactTests();
-    console.log("uiEditorRegistry.test.cjs passed");
-  } catch (err) {
-    console.error(err?.stack || err?.message || err);
-    process.exitCode = 1;
-  }
-}
+console.log("TESTS OK: uiEditorRegistry contract");

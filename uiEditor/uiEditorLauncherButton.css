@@ -1,13 +1,23 @@
 .ui-editor-launcher-button {
   position: fixed;
-  inset-inline-start: 24px;
-  inset-block-start: 24px;
-  z-index: 1000;
-  min-inline-size: 44px;
-  min-block-size: 44px;
-  border: 1px solid #516070;
+  left: 24px;
+  top: 24px;
+  z-index: 2147483000;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #64748b;
   border-radius: 999px;
-  background: #ffffff;
-  color: #1f2933;
-  font: inherit;
+  background: #0f172a;
+  color: #f8fafc;
+  font: 600 14px/1.2 system-ui, sans-serif;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 24%);
+  cursor: pointer;
+}
+
+.ui-editor-launcher-button[hidden] {
+  display: none;
 }
