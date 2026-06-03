@@ -4,8 +4,6 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const RUNTIME_PATH = path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
-const CORE_SHELL_PATH = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
-const MAIN_HEADER_PATH = path.join(__dirname, "../../src/renderer/ui/MainHeader.js");
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -174,6 +172,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(Boolean(button), true);
     assert.equal(button.id, "uiEditor.launcherButton");
     assert.equal(button.className, "ui-editor-launcher-button");
+    assert.equal(button.textContent, "UI-Editor");
     assert.equal(button.getAttribute("data-ui-editor-installed-artifact"), "uiEditor/uiEditorLauncherButton.js");
     assert.equal(button.getAttribute("data-ui-editor-active-ui-scope"), "");
     assert.equal(doc.querySelector('link[data-ui-editor-launcher-css="true"]').href, "../../uiEditor/uiEditorLauncherButton.css");
@@ -205,14 +204,6 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(Boolean(doc.querySelector('[data-ui-inspector-panel="true"]')), false);
   });
 
-  await run("BBM UI-Editor-Runtime: CoreShell nutzt Runtime-Launcher statt alter Scanstatus-Grundlage", () => {
-    const coreShellSource = fs.readFileSync(CORE_SHELL_PATH, "utf8");
-    const mainHeaderSource = fs.readFileSync(MAIN_HEADER_PATH, "utf8");
-    assert.equal(coreShellSource.includes("installBbmUiEditorRuntimeLauncher"), true);
-    assert.equal(coreShellSource.includes("activeUiScope: null"), true);
-    assert.equal(mainHeaderSource.includes("_isUiEditorRuntimeLauncherEnabled"), true);
-    assert.equal(mainHeaderSource.includes("_isUiEditorEnabled() {\n    return false;\n  }"), true);
-  });
 }
 
 if (require.main === module) {

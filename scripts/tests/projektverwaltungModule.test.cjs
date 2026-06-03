@@ -1058,7 +1058,18 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
-  await run("Projektverwaltung: alter UI-Editor-Scan bleibt im DEV-Header deaktiviert", async () => {
+  await run("Projektverwaltung: MainHeader/CoreShell ohne alte DEV-Buttons und ohne Scanstatus", async () => {
+    assert.equal(coreShellSource.includes("installBbmUiEditorRuntimeLauncher"), true);
+    assert.equal(coreShellSource.includes("activeUiScope: null"), true);
+    assert.equal(coreShellSource.includes("showEditorLabV2"), false);
+    assert.equal(coreShellSource.includes("showRestarbeitenV2Dev"), false);
+    assert.equal(coreShellSource.includes("scanUiInspectorTargets"), false);
+    assert.equal(mainHeaderSource.includes("scanUiInspectorTargets"), false);
+    assert.equal(mainHeaderSource.includes("createUiInspectorPanel"), false);
+    assert.equal(mainHeaderSource.includes("formatUiInspectorScanSummary"), false);
+    assert.equal(mainHeaderSource.includes("EditorLab V2"), false);
+    assert.equal(mainHeaderSource.includes("Restarbeiten V2"), false);
+
     const previousDocument = global.document;
     const previousWindow = global.window;
     const fakeDocument = createFakeDocumentWithBubbling();
@@ -1105,17 +1116,20 @@ async function runProjektverwaltungModuleTests(run) {
       };
 
       const header = new MainHeader({ router, version: "1.5.0" });
-      header.render();
-      header.refresh();
+      assert.doesNotThrow(() => header.render());
+      assert.doesNotThrow(() => header.refresh());
 
-      const editorButton = findNode(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "Editor");
-      assert.ok(editorButton);
-      assert.equal(editorButton.dataset.uiEditorState, "off");
-      assert.equal(editorButton.disabled, true);
-      assert.equal(header.elUiEditorWrap.style.display, "none");
-      assert.equal(header.toggleUiEditorScan(), false);
+      const headerText = collectText(header.root);
+      assert.equal(headerText.includes("UI-Editor"), false);
+      assert.equal(headerText.includes("EditorLab V2"), false);
+      assert.equal(headerText.includes("Restarbeiten V2"), false);
+      assert.equal(headerText.includes("Scan"), false);
+      assert.equal(findNode(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "Editor"), null);
+      assert.equal(header.elUiEditorWrap, null);
       assert.equal(header.elUiEditorPanel, null);
-      assert.equal(Boolean(findNode(fakeDocument.body, (node) => node?.attributes?.["data-ui-inspector-panel"] === "true")), false);
+      assert.equal(header.toggleUiEditorScan(), false);
+      assert.equal(header._isUiEditorRuntimeLauncherEnabled(), true);
+      assert.equal(Boolean(findNode(fakeDocument.body, (node) => node?.getAttribute?.("data-ui-inspector-panel") === "true")), false);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

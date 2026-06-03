@@ -85,14 +85,14 @@ function renderLauncherButton({ artifact, doc, host, state, onToggle = null }) {
   button.type = "button";
   button.id = artifact.id;
   button.className = "ui-editor-launcher-button";
-  button.textContent = "UI";
-  button.title = "UI-Editor Launcher";
+  button.textContent = "UI-Editor";
+  button.title = "UI-Editor";
   button.setAttribute(LAUNCHER_HOST_ATTRIBUTE, "true");
   button.setAttribute("data-ui-editor-installed-artifact", "uiEditor/uiEditorLauncherButton.js");
   button.setAttribute("data-ui-editor-launcher-id", artifact.id);
   button.setAttribute("data-ui-editor-launcher-role", artifact.role || "editor-launcher");
   button.setAttribute("data-ui-editor-active-ui-scope", state.activeUiScope == null ? "" : String(state.activeUiScope));
-  button.setAttribute("aria-label", "UI-Editor Launcher");
+  button.setAttribute("aria-label", "UI-Editor");
   syncLauncherButtonState(button, state);
 
   button.addEventListener("click", (event) => {

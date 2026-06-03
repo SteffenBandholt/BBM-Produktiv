@@ -2396,3 +2396,23 @@ Wichtig:
 - Risiken/Hinweise:
   - Die produktive Scope-Auswertung, Editor-Panel, Hover-/Auswahlmodus und Speicherung bleiben ausdruecklich nicht umgesetzt.
   - `npm test` ist in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert; gezielte Launcher-/Artefaktpruefungen liefen gruen.
+
+### K19.14-clean – UI-Editor-Launcher sauber einbauen
+- Status: erledigt
+- Beschreibung:
+  - Installierter UI-Editor-Launcher sichtbar, alte Header-DEV-Buttons entfernt.
+  - Kein Panel, kein Scan, keine Speicherung, keine Fachlogik.
+  - EditorLab V2 und Restarbeiten V2 werden nicht mehr als globale Headerbuttons gerendert.
+- Betroffene Dateien:
+  - `src/renderer/ui/MainHeader.js`
+  - `src/renderer/app/CoreShell.js`
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - fachliche App-Sichtpruefung: UI-Editor sichtbar, EditorLab V2/Restarbeiten V2 nicht sichtbar, kein weisser Bildschirm.
+- Risiken/Hinweise:
+  - Es wurde kein spezieller Guardrail-Test zu `docs/UI_EDITOR_VERTRAG.md` gefunden; die Absicherung erfolgt ueber die gezielten Runtime-/Header-Tests.

@@ -103,7 +103,7 @@ export default class CoreShell {
     header.refresh();
     installBbmUiEditorRuntimeLauncher({
       header,
-      devEnabled: header._isUiEditorRuntimeLauncherEnabled?.() === true,
+      devEnabled: true,
       activeUiScope: null,
     });
     if (typeof updateContextButtons === "function") {
