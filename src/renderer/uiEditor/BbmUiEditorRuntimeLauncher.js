@@ -27,10 +27,26 @@ function getLauncherHost(doc, host = null) {
   return doc?.body || null;
 }
 
-function createLauncherState({ activeUiScope = null } = {}) {
+function normalizeReadonlyRegisteredElements(registeredElements = null) {
+  if (!Array.isArray(registeredElements)) return [];
+
+  return registeredElements
+    .map((element) => {
+      if (!element || typeof element !== "object") return null;
+      const id = String(element.id == null ? "" : element.id).trim();
+      if (!id) return null;
+      const label = String(element.label ?? element.name ?? "").trim();
+      const area = String(element.area ?? "").trim();
+      return { id, label, area };
+    })
+    .filter(Boolean);
+}
+
+function createLauncherState({ activeUiScope = null, registeredElements = null } = {}) {
   return {
     uiEditorLauncherActive: false,
     activeUiScope,
+    registeredElements: normalizeReadonlyRegisteredElements(registeredElements),
   };
 }
 
@@ -91,14 +107,34 @@ function getStatusScopeLabel(activeUiScope = null) {
   return normalizedScope || "nicht erkannt";
 }
 
-function ensureLauncherStatusHint(doc, host, activeUiScope = null) {
+function getReadonlyRegisteredElementsText(registeredElements = null) {
+  const elements = normalizeReadonlyRegisteredElements(registeredElements);
+  if (elements.length < 1) return "Registrierte Elemente:\nnicht verfügbar";
+
+  const lines = elements.map((element) => {
+    const details = [element.label, element.area].filter(Boolean).join(" · ");
+    return details ? `* ${element.id} (${details})` : `* ${element.id}`;
+  });
+  return ["Registrierte Elemente:", "", ...lines].join("\n");
+}
+
+function getLauncherStatusText({ activeUiScope = null, registeredElements = null } = {}) {
+  return [
+    "UI-Editor aktiv",
+    `Scope: ${getStatusScopeLabel(activeUiScope)}`,
+    "",
+    getReadonlyRegisteredElementsText(registeredElements),
+  ].join("\n");
+}
+
+function ensureLauncherStatusHint(doc, host, state = {}) {
   const existing = doc?.querySelector?.(`[${LAUNCHER_STATUS_ATTRIBUTE}="true"]`);
   if (existing) return existing;
   if (!doc?.createElement || !host?.appendChild) return null;
 
   const status = doc.createElement("div");
   status.className = "ui-editor-launcher-status";
-  status.textContent = `UI-Editor aktiv\nScope: ${getStatusScopeLabel(activeUiScope)}`;
+  status.textContent = getLauncherStatusText(state);
   status.setAttribute(LAUNCHER_STATUS_ATTRIBUTE, "true");
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
@@ -114,7 +150,7 @@ function syncLauncherButtonState(button, state, { doc = getDocument(), host = nu
   doc?.body?.setAttribute?.(UI_EDITOR_ACTIVE_ATTRIBUTE, active ? "true" : "false");
 
   if (active) {
-    ensureLauncherStatusHint(doc, host || button.parentElement, state?.activeUiScope);
+    ensureLauncherStatusHint(doc, host || button.parentElement, state);
   } else {
     removeExistingLauncherStatus(doc);
   }
@@ -167,6 +203,7 @@ export async function installBbmUiEditorRuntimeLauncher({
   header = null,
   devEnabled = null,
   activeUiScope = null,
+  registeredElements = null,
   doc = getDocument(),
   win = getWindow(),
   host = null,
@@ -180,7 +217,7 @@ export async function installBbmUiEditorRuntimeLauncher({
   ensureInstalledLauncherCss(doc);
   const artifact = await loadInstalledLauncherButton({ doc, win });
   const launcherHost = getLauncherHost(doc, host);
-  const state = createLauncherState({ activeUiScope });
+  const state = createLauncherState({ activeUiScope, registeredElements });
   return renderLauncherButton({ artifact, doc, host: launcherHost, state, onToggle });
 }
 
@@ -193,6 +230,9 @@ export {
   isRuntimeLauncherDevEnabled,
   loadInstalledLauncherButton,
   getStatusScopeLabel,
+  getReadonlyRegisteredElementsText,
+  getLauncherStatusText,
+  normalizeReadonlyRegisteredElements,
   ensureLauncherStatusHint,
   renderLauncherButton,
 };

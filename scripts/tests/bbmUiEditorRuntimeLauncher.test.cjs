@@ -192,6 +192,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(cssSource.includes("inset-inline-end: 24px"), true);
     assert.equal(cssSource.includes("ui-editor-launcher-status"), true);
     assert.equal(cssSource.includes("white-space: pre-line"), true);
+    assert.equal(cssSource.includes("max-inline-size: 360px"), true);
     assert.equal(cssSource.includes('[data-ui-editor-launcher-active="true"]'), true);
     assert.equal(getCssNumber(cssSource, "z-index") > 12010, true);
   });
@@ -259,7 +260,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(doc.body.getAttribute("data-ui-editor-active"), "true");
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(Boolean(activeStatus), true);
-    assert.equal(activeStatus.textContent, "UI-Editor aktiv\nScope: nicht erkannt");
+    assert.equal(
+      activeStatus.textContent,
+      "UI-Editor aktiv\nScope: nicht erkannt\n\nRegistrierte Elemente:\nnicht verfügbar"
+    );
 
     button.click();
     assert.equal(button.dataset.uiEditorLauncherActive, "false");
@@ -295,7 +299,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(Boolean(activeStatus), true);
-    assert.equal(activeStatus.textContent, "UI-Editor aktiv\nScope: protokoll.topsScreen");
+    assert.equal(
+      activeStatus.textContent,
+      "UI-Editor aktiv\nScope: protokoll.topsScreen\n\nRegistrierte Elemente:\nnicht verfügbar"
+    );
     assert.deepEqual(toggles.map((event) => event.activeUiScope), ["protokoll.topsScreen"]);
     assert.equal(Boolean(doc.querySelector('[data-ui-inspector-panel="true"]')), false);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-panel="true"]')), false);
@@ -319,8 +326,56 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(Boolean(activeStatus), true);
-    assert.equal(activeStatus.textContent, "UI-Editor aktiv\nScope: nicht erkannt");
+    assert.equal(
+      activeStatus.textContent,
+      "UI-Editor aktiv\nScope: nicht erkannt\n\nRegistrierte Elemente:\nnicht verfügbar"
+    );
   });
+
+  await run("BBM UI-Editor-Runtime: aktiver Status zeigt registrierte Elementliste rein lesend", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "protokoll.topsScreen",
+      registeredElements: [
+        { id: "protokoll.root", label: "Root", area: "Protokoll", projectId: "17", text: "Fachdaten" },
+        { id: "protokoll.header" },
+        { id: "  " },
+      ],
+    });
+
+    button.click();
+
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(Boolean(activeStatus), true);
+    assert.equal(activeStatus.textContent.includes("Registrierte Elemente:"), true);
+    assert.equal(activeStatus.textContent.includes("* protokoll.root (Root · Protokoll)"), true);
+    assert.equal(activeStatus.textContent.includes("* protokoll.header"), true);
+    assert.equal(activeStatus.textContent.includes("projectId"), false);
+    assert.equal(activeStatus.textContent.includes("Fachdaten"), false);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-panel="true"]')), false);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-hover-frame="true"]')), false);
+  });
+
+  await run("BBM UI-Editor-Runtime: Helper uebernimmt nur uebergebene Registry-Daten", async () => {
+    const mod = await loadRuntime();
+    assert.deepEqual(mod.normalizeReadonlyRegisteredElements(null), []);
+    assert.deepEqual(mod.normalizeReadonlyRegisteredElements([{ id: "x", value: "Fachdaten", label: "Name" }]), [
+      { id: "x", label: "Name", area: "" },
+    ]);
+    assert.equal(
+      mod.getReadonlyRegisteredElementsText([{ id: "x", name: "Element" }]),
+      "Registrierte Elemente:\n\n* x (Element)"
+    );
+    assert.equal(mod.getReadonlyRegisteredElementsText([]), "Registrierte Elemente:\nnicht verfügbar");
+  });
+
 
   await run("BBM UI-Editor-Runtime: bleibt ohne Scan, Speicherung und Ziel-App-Aktion", async () => {
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");

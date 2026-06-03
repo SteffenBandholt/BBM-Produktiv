@@ -25,9 +25,12 @@
   inset-inline-end: 24px;
   inset-block-start: 76px;
   z-index: 13100;
-  padding: 6px 10px;
+  box-sizing: border-box;
+  min-inline-size: 220px;
+  max-inline-size: 360px;
+  padding: 8px 10px;
   border: 1px solid #bfdbfe;
-  border-radius: 999px;
+  border-radius: 12px;
   background: #eff6ff;
   color: #1e3a8a;
   font: inherit;

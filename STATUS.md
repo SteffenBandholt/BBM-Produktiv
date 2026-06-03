@@ -17,6 +17,11 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- K19.17 neutraler UI-Editor-Aktivmodus zeigt registrierte UI-Elementliste rein lesend:
+  - Der Statushinweis zeigt bei aktivem UI-Editor den registrierten Scope `protokoll.topsScreen` und darunter die registrierten UI-Elemente aus der BBM-Registry.
+  - Keine Bearbeitung, keine Auswahl, keine Speicherung, kein DOM-Scan und keine Fachlogik.
+  - Naechster offener Schritt: fachliche Sichtpruefung per `npm start` auf dem Zielsystem.
+
 - K19.16a neutraler UI-Editor-Aktivmodus zeigt festen registrierten Scope:
   - Der Statushinweis zeigt bei aktivem UI-Editor den registrierten Scope `protokoll.topsScreen` aus der BBM-Registry.
   - Keine automatische Erkennung, kein Panel, kein Hover, keine Auswahl, keine Speicherung, kein DOM-Scan und keine Fachlogik.
