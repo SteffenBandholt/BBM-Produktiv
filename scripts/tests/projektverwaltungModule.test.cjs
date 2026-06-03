@@ -1058,7 +1058,7 @@ async function runProjektverwaltungModuleTests(run) {
     }
   });
 
-  await run("Projektverwaltung: MainHeader zeigt im DEV-Header den UI-Editor-Button und Scanstatus", async () => {
+  await run("Projektverwaltung: alter UI-Editor-Scan bleibt im DEV-Header deaktiviert", async () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
     const fakeDocument = createFakeDocumentWithBubbling();
@@ -1083,64 +1083,15 @@ async function runProjektverwaltungModuleTests(run) {
       path.join(__dirname, "../../src/renderer/ui/MainHeader.js")
     );
 
-    const completeIds = [
-      "restarbeiten.root",
-      "restarbeiten.header",
-      "restarbeiten.main",
-      "restarbeiten.filterleiste",
-      "restarbeiten.filterleiste.klassenfilter",
-      "restarbeiten.filterleiste.verortung",
-      "restarbeiten.filterleiste.meta",
-      "restarbeiten.liste",
-      "restarbeiten.liste.nummernbereich",
-      "restarbeiten.liste.textbereich",
-      "restarbeiten.liste.metabereich",
-      "restarbeiten.editbox",
-      "restarbeiten.editbox.header",
-      "restarbeiten.editbox.verortung",
-      "restarbeiten.editbox.kurztext",
-      "restarbeiten.editbox.langtext",
-      "restarbeiten.editbox.meta",
-      "restarbeiten.filterleiste.klassenfilter.feld",
-      "restarbeiten.filterleiste.verortung.feld",
-      "restarbeiten.liste.kurztext",
-      "restarbeiten.liste.langtext",
-      "restarbeiten.filterleiste.meta.fertig_bis",
-      "restarbeiten.filterleiste.meta.status",
-      "restarbeiten.filterleiste.meta.verantwortlich",
-      "restarbeiten.filterleiste.meta.erledigt",
-      "restarbeiten.editbox.kurztext.label",
-      "restarbeiten.editbox.kurztext.restzeichen",
-      "restarbeiten.editbox.langtext.label",
-      "restarbeiten.editbox.langtext.restzeichen",
-    ];
-    const warningIds = completeIds.filter(
-      (id) =>
-        ![
-          "restarbeiten.filterleiste.verortung",
-        ].includes(id)
-    );
-
-    const mkRoot = (ids) => ({
-      querySelectorAll(selector) {
-        if (selector !== "[data-ui-inspector-id]") return [];
-        return ids.map((id) => ({
-          getAttribute(name) {
-            return name === "data-ui-inspector-id" ? id : null;
-          },
-          style: { cssText: "" },
-          getBoundingClientRect() {
-            return { left: 0, top: 0, width: 10, height: 10 };
-          },
-        }));
-      },
-    });
-
     try {
       const router = {
         currentProjectId: "17",
         currentMeetingId: null,
-        contentRoot: mkRoot(completeIds),
+        contentRoot: {
+          querySelectorAll() {
+            throw new Error("alter UI-Editor-Scan darf nicht laufen");
+          },
+        },
         activeSection: "projectWorkspace",
         context: {
           ui: { pageTitle: "", activeModuleLabel: "Protokoll", isTopsView: false },
@@ -1156,66 +1107,13 @@ async function runProjektverwaltungModuleTests(run) {
       const header = new MainHeader({ router, version: "1.5.0" });
       header.render();
       header.refresh();
-      const headerChildCountBefore = header.root.children.length;
 
       const editorButton = findNode(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "Editor");
-      assert.ok(editorButton);
-      assert.equal(editorButton.dataset.uiEditorState, "off");
-      assert.equal(editorButton.disabled, false);
-
-      assert.equal(header.toggleUiEditorScan(), true);
-      assert.equal(editorButton.dataset.uiEditorState, "scan-ok");
-      assert.equal(editorButton.dataset.uiEditorSeverity, "ok");
-      assert.match(editorButton.title, /vollständig/);
-      const panelRoot = header.elUiEditorPanel?.getPanelRoot?.();
-      assert.ok(panelRoot);
-      assert.equal(panelRoot.parentElement || panelRoot.parentNode, fakeDocument.body);
-      assert.equal(panelRoot.style.position, "fixed");
-      assert.equal(
-        panelRoot.getAttribute?.("data-ui-editor-mode") || panelRoot["data-ui-editor-mode"],
-        "frame"
-      );
-      const panelText = collectText(panelRoot);
-      assert.match(panelText, /UI-Editor Scan/);
-      assert.match(panelText, /Status: vollständig/);
-      assert.match(panelText, /Marker: \d+/);
-      assert.match(panelText, /Rahmen: \d+/);
-      assert.match(panelText, /Felder: \d+/);
-      assert.match(panelText, /Einzelelemente: \d+/);
-      assert.equal(Boolean(findNode(panelRoot, (node) => node?.tagName === "BUTTON" && node?.textContent === "Rahmen")), true);
-      assert.equal(Boolean(findNode(panelRoot, (node) => node?.tagName === "BUTTON" && node?.textContent === "Feld")), true);
-      assert.equal(Boolean(findNode(panelRoot, (node) => node?.tagName === "BUTTON" && node?.textContent === "Einzelelement")), true);
-
-      const fieldButton = findNode(panelRoot, (node) => node?.tagName === "BUTTON" && node?.textContent === "Feld");
-      fieldButton.click();
-      const updatedPanelRoot = header.elUiEditorPanel?.getPanelRoot?.();
-      assert.equal(
-        updatedPanelRoot.getAttribute?.("data-ui-editor-mode") || updatedPanelRoot["data-ui-editor-mode"],
-        "field"
-      );
-      assert.equal(editorButton.dataset.uiEditorState, "scan-ok");
-      assert.equal(header.elUiEditorStatus.style.display, "none");
-      assert.equal(header.root.children.length, headerChildCountBefore);
-      assert.equal(Boolean(findNode(header.root, (node) => node?.attributes?.["data-ui-inspector-panel"] === "true")), false);
-
-      router.contentRoot = mkRoot(warningIds);
-      header.refresh();
-      assert.equal(editorButton.dataset.uiEditorState, "scan-warning");
-      assert.equal(header.elUiEditorStatus.style.display, "none");
-      const warningPanelText = collectText(header.elUiEditorPanel?.getPanelRoot?.());
-      assert.match(warningPanelText, /Status: unvollständig/);
-      assert.match(warningPanelText, /Fehlt Pflicht:/);
-      assert.match(warningPanelText, /restarbeiten\.filterleiste\.verortung/);
-      assert.equal(
-        header.elUiEditorPanel?.getPanelRoot?.().getAttribute?.("data-ui-editor-mode") ||
-          header.elUiEditorPanel?.getPanelRoot?.()["data-ui-editor-mode"],
-        "field"
-      );
-
+      const editorLabButton = findNode(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "EditorLab V2");
+      assert.equal(Boolean(editorButton), false);
+      assert.equal(Boolean(editorLabButton), false);
       assert.equal(header.toggleUiEditorScan(), false);
-      assert.equal(editorButton.dataset.uiEditorState, "off");
-      assert.equal(header.elUiEditorStatus.style.display, "none");
-      assert.equal(String(header.elUiEditorStatus?.textContent || ""), "");
+      assert.equal(header.elUiEditorPanel, null);
       assert.equal(Boolean(findNode(fakeDocument.body, (node) => node?.attributes?.["data-ui-inspector-panel"] === "true")), false);
     } finally {
       global.document = previousDocument;

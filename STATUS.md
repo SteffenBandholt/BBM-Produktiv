@@ -2370,3 +2370,51 @@ Wichtig:
   - fachliche Abnahme des installierten UI-Editor-Artefaktvertrags im Ziel-Branch.
 - Risiken/Hinweise:
   - Das neue Pflichtartefakt bleibt neutral und enthaelt keine BBM-Fachlogik.
+
+### K19.14 – Installierten UI-Editor-Launcher zur Laufzeit sichtbar machen
+- Status: erledigt
+- Beschreibung:
+  - Der installierte UI-Editor-Launcher wird in BBM zur Laufzeit im DEV-Kontext sichtbar gemacht.
+  - Der Button stammt aus dem installierten Artefaktbestand unter `uiEditor/` (`uiEditorLauncherButton.js` und `uiEditorLauncherButton.css`).
+  - Der Klick toggelt nur einen neutralen Launcher-State (`uiEditorLauncherActive` / `data-ui-editor-launcher-active`).
+  - `activeUiScope` ist strukturell vorbereitet und bleibt in K19.14 neutral auf `null`.
+  - Kein Editor-Panel, kein Hover-Rahmen, keine Speicherung, keine Fachlogik, kein DOM-Scan und keine automatische UI-Erkennung.
+- Betroffene Dateien:
+  - `uiEditor/uiEditorLauncherButton.js`
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `src/renderer/app/CoreShell.js`
+  - `src/renderer/ui/MainHeader.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `scripts/test.cjs`
+  - `STATUS.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+- Commit:
+  - `aktueller Branch-HEAD / PR`
+- Naechster offener Schritt:
+  - Sichtpruefung im lokalen Electron-DEV-Kontext: Launcher sichtbar und Toggle-State am Button nachvollziehbar.
+- Risiken/Hinweise:
+  - Die produktive Scope-Auswertung, Editor-Panel, Hover-/Auswahlmodus und Speicherung bleiben ausdruecklich nicht umgesetzt.
+  - `npm test` ist in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert; gezielte Launcher-/Artefaktpruefungen liefen gruen.
+
+### K19.14a – Alten EditorLab-DEV-Headerbutton entfernen
+- Status: erledigt
+- Beschreibung:
+  - Der alte sichtbare EditorLab-/Scanstatus-/UI-Editor-Headerbutton wird nicht mehr in den Header eingehängt.
+  - Der sichtbare UI-Editor-Launcher ist eindeutig der installierte Runtime-Launcher aus `uiEditor/`.
+  - Der echte Launcher behält `id="uiEditor.launcherButton"`, setzt `data-ui-editor-installed-artifact="uiEditor/uiEditorLauncherButton.js"` und ist sichtbar als `UI-Editor` beschriftet.
+  - Klick toggelt nur den neutralen Launcher-State; kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Speicherung, keine Fachlogik, kein DOM-Scan und keine automatische UI-Erkennung.
+- Betroffene Dateien:
+  - `src/renderer/ui/MainHeader.js`
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `scripts/tests/editorLabV2Access.test.cjs`
+  - `STATUS.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+- Commit:
+  - `aktueller Branch-HEAD / PR`
+- Naechster offener Schritt:
+  - Lokale Sichtpruefung im Electron-DEV-Kontext: `EditorLab V2` ist nicht sichtbar, `UI-Editor`-Launcher ist sichtbar und toggelt neutral.
+- Risiken/Hinweise:
+  - Produktive Scope-Auswertung, Panel, Hover-/Auswahlmodus, Speicherung und automatische Registry-Befuellung bleiben ausdruecklich nicht umgesetzt.

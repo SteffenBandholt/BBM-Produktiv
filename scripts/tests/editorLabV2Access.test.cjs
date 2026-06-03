@@ -154,9 +154,8 @@ async function runEditorLabV2AccessTests(run) {
   const headerSource = fs.readFileSync(headerPath, "utf8");
 
   assert.equal(routerSource.includes("showEditorLabV2"), true);
-  assert.equal(headerSource.includes("EditorLab V2"), true);
-  assert.equal(headerSource.includes("showEditorLabV2"), true);
-  assert.equal(headerSource.includes("uiInspector"), true);
+  assert.equal(headerSource.includes("EditorLab V2"), false);
+  assert.equal(headerSource.includes("showEditorLabV2"), false);
 
   const [{ default: Router }, { default: MainHeader }, { getActiveProjectModuleNavigation }] = await Promise.all([
     importEsmFromFile(routerPath),
@@ -207,8 +206,7 @@ async function runEditorLabV2AccessTests(run) {
     header.refresh();
 
     const button = getNodeById(header.root, "editorlabv2.button") || collectNodes(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "EditorLab V2")[0];
-    assert.ok(button);
-    assert.equal(button.disabled, false);
+    assert.equal(Boolean(button), false);
 
     await router.showEditorLabV2();
     assert.equal(router.currentProjectId, null);
@@ -229,7 +227,7 @@ async function runEditorLabV2AccessTests(run) {
     header = null;
   }
 
-  await run("EditorLab V2 ist als DEV-Testzugang sichtbar", () => undefined);
+  await run("EditorLab V2 bleibt per Router testbar, aber ohne sichtbaren Header-Button", () => undefined);
 }
 
 if (require.main === module) {

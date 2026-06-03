@@ -10,8 +10,6 @@ import { resolveProtocolsDir } from "../utils/pdfProtocolsDir.js";
 import { PROTOKOLL_MODULE_ID } from "../app/modules/index.js";
 import { isModuleActive, refreshCachedActiveModuleAccess } from "../app/modules/moduleAccessState.js";
 import { getVisiblePrintDialogActions } from "../../shared/print/printModes.mjs";
-import { createUiInspectorPanel } from "../uiInspector/UiInspectorPanel.js";
-import { createUiInspectorRuntime, formatUiInspectorScanSummary, scanUiInspectorTargets } from "../uiInspector/UiInspectorRuntime.js";
 
 const PROTOCOL_DISABLED_MESSAGE = "Modul Protokoll ist fuer diese Lizenz nicht freigeschaltet.";
 
@@ -72,7 +70,6 @@ export default class MainHeader {
     this._uiEditorScanActive = false;
     this._uiEditorScanSummary = null;
     this._uiEditorSelectionMode = "frame";
-    this.uiInspectorRuntime = createUiInspectorRuntime({ initialSelectionMode: "frame" });
 
     this.elPrintBtn = null;
     this.elPrintWrap = null;
@@ -622,50 +619,12 @@ export default class MainHeader {
     printMenu.append(itemPreview, itemFirms, itemTodo, itemTopList, itemMeetingsClosed);
     printWrap.append(printBtn, printMenu);
 
-    const uiEditorWrap = document.createElement("div");
-    uiEditorWrap.style.display = "inline-flex";
-    uiEditorWrap.style.flexDirection = "column";
-    uiEditorWrap.style.alignItems = "flex-start";
-    uiEditorWrap.style.gap = "4px";
-
-    const uiEditorBtn = document.createElement("button");
-    uiEditorBtn.type = "button";
-    uiEditorBtn.textContent = "Editor";
-    applyUiEditorButtonStyle(uiEditorBtn);
-    uiEditorBtn.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (uiEditorBtn.disabled) return;
-      this.toggleUiEditorScan();
-    };
-
-    const uiEditorStatus = document.createElement("div");
-    uiEditorStatus.style.display = "none";
-    uiEditorStatus.style.maxWidth = "320px";
-    uiEditorStatus.style.whiteSpace = "normal";
-    uiEditorStatus.style.boxSizing = "border-box";
-    uiEditorStatus.style.userSelect = "text";
-
-    uiEditorWrap.append(uiEditorBtn, uiEditorStatus);
-
-    const editorLabWrap = document.createElement("div");
-    editorLabWrap.style.display = "inline-flex";
-    editorLabWrap.style.flexDirection = "column";
-    editorLabWrap.style.alignItems = "flex-start";
-    editorLabWrap.style.gap = "4px";
-
-    const editorLabBtn = document.createElement("button");
-    editorLabBtn.type = "button";
-    editorLabBtn.textContent = "EditorLab V2";
-    applyUiEditorButtonStyle(editorLabBtn);
-    editorLabBtn.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (editorLabBtn.disabled) return;
-      this.router?.showEditorLabV2?.();
-    };
-    editorLabBtn.title = "EditorLab V2 oeffnen";
-    editorLabWrap.append(editorLabBtn);
+    // K19.14a: alte UI-Editor-/Scanstatus- und EditorLab-Headerbuttons werden nicht mehr gerendert.
+    const uiEditorWrap = null;
+    const uiEditorBtn = null;
+    const uiEditorStatus = null;
+    const editorLabWrap = null;
+    const editorLabBtn = null;
 
     const restarbeitenV2Wrap = document.createElement("div");
     restarbeitenV2Wrap.style.display = "inline-flex";
@@ -846,12 +805,11 @@ export default class MainHeader {
     };
 
     // Ausgabe bleibt intern vorbereitet; direkte Header-Hauptaktionen laufen vorerst nur ueber die Quicklane.
-    if (this._isNewUi) {
-      actionWrap.append(uiEditorWrap);
-    } else {
-      actionWrap.append(setupWrap, uiEditorWrap);
+    // K19.14a: alte UI-Editor-/Scanstatus-/EditorLab-Headerbuttons bleiben aus dem Header entfernt.
+    // Der sichtbare UI-Editor-Launcher wird separat aus dem installierten Artefaktbestand gemountet.
+    if (!this._isNewUi) {
+      actionWrap.append(setupWrap);
     }
-    actionWrap.append(editorLabWrap);
     actionWrap.append(restarbeitenV2Wrap);
 
     const stickyNotice = document.createElement("div");
@@ -1705,179 +1663,43 @@ export default class MainHeader {
   }
 
   _isUiEditorEnabled() {
+    return false;
+  }
+
+  _isUiEditorRuntimeLauncherEnabled() {
     return this._isNewUi;
   }
 
   _isEditorLabV2Enabled() {
-    return this._isNewUi;
+    return false;
   }
 
   _isRestarbeitenV2DevEnabled() {
     return this._isNewUi;
   }
 
-  _setUiEditorStatusContent(summary = null) {
-    if (!this.elUiEditorStatus) return;
-
-    if (!summary) {
-      this.uiInspectorRuntime?.clearScanSummary?.();
-      this.elUiEditorStatus.replaceChildren();
-      this.elUiEditorStatus.style.display = "none";
-      if (typeof this.elUiEditorStatus.removeAttribute === "function") {
-        this.elUiEditorStatus.removeAttribute("data-ui-editor-status");
-      }
-      this.elUiEditorPanel?.unmount?.();
-      return;
-    }
-
-    const scan = formatUiInspectorScanSummary(summary);
-    this.uiInspectorRuntime?.setScanSummary?.(summary);
-    this.elUiEditorStatus.style.display = "none";
-    this.elUiEditorStatus.dataset.uiEditorStatus = scan.status;
-    this.elUiEditorStatus.dataset.uiEditorState = scan.status;
-    this.elUiEditorStatus.dataset.uiEditorMode = this.uiInspectorRuntime?.getSelectionMode?.() || "frame";
-
-    if (!this.elUiEditorPanel) {
-      this.elUiEditorPanel = createUiInspectorPanel();
-    }
-    const panelHost = this.elUiEditorStatus.ownerDocument?.body || document.body || this.elUiEditorStatus;
-    this.elUiEditorPanel.mount(panelHost);
-
-    this.elUiEditorPanel.render({
-      scanSummary: summary,
-      selectionMode: this.uiInspectorRuntime?.getSelectionMode?.() || "frame",
-      selectionModeLabel: this.uiInspectorRuntime?.getSelectionModeLabel?.() || "Rahmen",
-      actions: {
-        setSelectionMode: (mode) => this.setUiEditorSelectionMode(mode),
-      },
-    });
+  _setUiEditorStatusContent(_summary = null) {
+    // K19.14a: alter Scanstatus-Headerpfad ist deaktiviert.
   }
 
   _applyUiEditorButtonState() {
-    if (!this.elUiEditorBtn) return;
-
-    const enabled = this._isUiEditorEnabled();
-    const active = !!this._uiEditorScanActive;
-    const summary = this._uiEditorScanSummary || null;
-    const state = !enabled || !active ? "off" : summary?.status === "ok" ? "scan-ok" : "scan-warning";
-    const severity = !enabled || !active ? "off" : summary?.status === "ok" ? "ok" : "warning";
-
-    this.elUiEditorBtn.disabled = !enabled;
-    this.elUiEditorBtn.dataset.uiEditorState = state;
-    this.elUiEditorBtn.dataset.uiEditorSeverity = severity;
-    this.elUiEditorBtn.setAttribute("aria-pressed", active ? "true" : "false");
-
-    if (!enabled) {
-      this.elUiEditorBtn.style.background = "#ececec";
-      this.elUiEditorBtn.style.borderColor = "#b8b8b8";
-      this.elUiEditorBtn.style.color = "#575757";
-      this.elUiEditorBtn.style.boxShadow = "none";
-      this.elUiEditorBtn.title = "UI-Editor ist nur im DEV-Header verfuegbar.";
-      this._setUiEditorStatusContent(null);
-      if (this.elUiEditorWrap) this.elUiEditorWrap.style.display = "none";
-      return;
-    }
-
-    if (this.elUiEditorWrap) this.elUiEditorWrap.style.display = "inline-flex";
-
-    if (!active) {
-      this.elUiEditorBtn.style.background = "#eef1f4";
-      this.elUiEditorBtn.style.borderColor = "#c8d0da";
-      this.elUiEditorBtn.style.color = "#4b5563";
-      this.elUiEditorBtn.style.boxShadow = "none";
-      this.elUiEditorBtn.title = "UI-Editor Scan einschalten";
-      this._setUiEditorStatusContent(null);
-      return;
-    }
-
-    if (summary?.status === "ok") {
-      this.elUiEditorBtn.style.background = "#e8f7eb";
-      this.elUiEditorBtn.style.borderColor = "#16a34a";
-      this.elUiEditorBtn.style.color = "#166534";
-      this.elUiEditorBtn.style.boxShadow = "0 0 0 1px rgba(22,163,74,0.22) inset";
-      this.elUiEditorBtn.title = "UI-Editor Scan: vollständig";
-    } else {
-      this.elUiEditorBtn.style.background = "#fff5db";
-      this.elUiEditorBtn.style.borderColor = "#d97706";
-      this.elUiEditorBtn.style.color = "#92400e";
-      this.elUiEditorBtn.style.boxShadow = "0 0 0 1px rgba(217,119,6,0.22) inset";
-      this.elUiEditorBtn.title = "UI-Editor Scan: unvollständig";
-    }
-
-    this._setUiEditorStatusContent(summary);
+    // K19.14a: kein alter UI-Editor-Headerbutton; Runtime-Launcher wird separat gemountet.
   }
 
   _applyEditorLabButtonState() {
-    if (!this.elEditorLabWrap || !this.elEditorLabBtn) return;
-    const enabled = this._isEditorLabV2Enabled();
-    this.elEditorLabWrap.style.display = enabled ? "inline-flex" : "none";
-    this.elEditorLabBtn.disabled = !enabled;
-    this.elEditorLabBtn.setAttribute("aria-disabled", enabled ? "false" : "true");
-    this.elEditorLabBtn.title = enabled
-      ? "EditorLab V2 oeffnen"
-      : "EditorLab V2 ist nur im DEV-Testzugang verfuegbar.";
+    // K19.14a: kein sichtbarer EditorLab-Headerbutton.
   }
 
-  _applyRestarbeitenV2ButtonState() {
-    if (!this.elRestarbeitenV2Wrap || !this.elRestarbeitenV2Btn) return;
-    const enabled = this._isRestarbeitenV2DevEnabled();
-    this.elRestarbeitenV2Wrap.style.display = enabled ? "inline-flex" : "none";
-    this.elRestarbeitenV2Btn.disabled = !enabled;
-    this.elRestarbeitenV2Btn.setAttribute("aria-disabled", enabled ? "false" : "true");
-    this.elRestarbeitenV2Btn.title = enabled
-      ? "Restarbeiten V2 oeffnen"
-      : "Restarbeiten V2 ist nur im DEV-Testzugang verfuegbar.";
-  }
-
-  setUiEditorSelectionMode(nextMode) {
-    const changed = this.uiInspectorRuntime?.setSelectionMode?.(nextMode) === true;
-    this._uiEditorSelectionMode = this.uiInspectorRuntime?.getSelectionMode?.() || "frame";
-    if (this._uiEditorScanActive && this._uiEditorScanSummary) {
-      this._setUiEditorStatusContent(this._uiEditorScanSummary);
-      this._applyUiEditorButtonState();
-    }
-    return changed;
+  setUiEditorSelectionMode(_nextMode) {
+    return false;
   }
 
   _scanUiEditorCurrentScreen() {
-    const root = this.router?.contentRoot || null;
-    if (!root) {
-      this._uiEditorScanSummary = {
-        schemaKey: "",
-        totalMarkers: 0,
-        frameCount: 0,
-        fieldCount: 0,
-        singleElementCount: 0,
-        unknownCount: 0,
-        missingImportantIds: [],
-        status: "warning",
-        statusLabel: "unvollständig",
-      };
-      this.uiInspectorRuntime?.setScanSummary?.(this._uiEditorScanSummary);
-      this._applyUiEditorButtonState();
-      return this._uiEditorScanSummary;
-    }
-
-    this._uiEditorScanSummary = scanUiInspectorTargets(root);
-    this.uiInspectorRuntime?.setScanSummary?.(this._uiEditorScanSummary);
-    this._applyUiEditorButtonState();
-    return this._uiEditorScanSummary;
+    return null;
   }
 
   toggleUiEditorScan() {
-    if (!this._isUiEditorEnabled()) return false;
-
-    this._uiEditorScanActive = !this._uiEditorScanActive;
-    if (this._uiEditorScanActive) {
-      this.uiInspectorRuntime?.setSelectionMode?.("frame");
-      this._uiEditorSelectionMode = this.uiInspectorRuntime?.getSelectionMode?.() || "frame";
-      this._scanUiEditorCurrentScreen();
-    } else {
-      this._uiEditorScanSummary = null;
-      this.uiInspectorRuntime?.clearScanSummary?.();
-      this._applyUiEditorButtonState();
-    }
-    return this._uiEditorScanActive;
+    return false;
   }
 
   _applyPrintButtonState() {

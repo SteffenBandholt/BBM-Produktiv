@@ -388,3 +388,22 @@ Hinweis:
 - DEV-Header scannt den aktuellen Screen nur lesend.
 - Keine Auswahl, keine Bearbeitung, keine Speicherung.
 - Nächster Schritt: M13.4b UI-Editor-Scan weiter verfeinern, ohne Bearbeitung.
+
+## K19.14 Abschlussnotiz
+- Der installierte UI-Editor-Launcher wird in BBM im DEV-Kontext als eigenständiger Runtime-Launcher sichtbar.
+- Der Launcher lädt den Button aus `uiEditor/uiEditorLauncherButton.js` und die Styles aus `uiEditor/uiEditorLauncherButton.css`.
+- Der Klick toggelt nur den neutralen Launcher-State; `activeUiScope` bleibt als vorbereiteter Platzhalter `null`.
+- Der alte DEV-Header-Scan bleibt deaktiviert und ist nicht Grundlage des K19.14-Launchers.
+- Kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Speicherung, keine Fachlogik, kein DOM-Scan und keine automatische UI-Erkennung.
+- Tests:
+  - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `npm test`
+- Nächster Schritt:
+  - Lokale Sichtprüfung im Electron-DEV-Kontext.
+
+## K19.14a Abschlussnotiz
+- Der alte EditorLab-/Scanstatus-/UI-Editor-Headerbutton wird nicht mehr in den Header eingehängt.
+- Der sichtbare Launcher ist eindeutig der installierte UI-Editor-Launcher aus `uiEditor/uiEditorLauncherButton.js` mit CSS aus `uiEditor/uiEditorLauncherButton.css`.
+- Die sichtbare Beschriftung lautet `UI-Editor`; `EditorLab V2` wird nicht mehr als Headerbutton gerendert.
+- Der Klick toggelt nur neutralen Launcher-State.
+- Kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Speicherung, keine Fachlogik, kein DOM-Scan und keine automatische UI-Erkennung.

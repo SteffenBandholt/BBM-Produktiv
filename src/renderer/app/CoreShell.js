@@ -20,6 +20,7 @@ import { registerCoreShellHeaderBridge } from "./coreShellHeaderBridge.js";
 import { registerCoreShellContextControls } from "./coreShellContextControls.js";
 import { registerCoreShellKeyboardHandling } from "./coreShellKeyboard.js";
 import { createCoreShellNavigationRuntime } from "./coreShellNavigationRuntime.js";
+import { installBbmUiEditorRuntimeLauncher } from "../uiEditor/BbmUiEditorRuntimeLauncher.js";
 
 export default class CoreShell {
   constructor({ router, version } = {}) {
@@ -100,6 +101,11 @@ export default class CoreShell {
 
     router.showHome();
     header.refresh();
+    installBbmUiEditorRuntimeLauncher({
+      header,
+      devEnabled: header._isUiEditorRuntimeLauncherEnabled?.() === true,
+      activeUiScope: null,
+    });
     if (typeof updateContextButtons === "function") {
       updateContextButtons();
     }
