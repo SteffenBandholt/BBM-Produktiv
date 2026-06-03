@@ -997,9 +997,10 @@ async function runProjektverwaltungModuleTests(run) {
       bbmDb: {},
     };
 
-    const { default: MainHeader } = await importEsmFromFile(
-      path.join(__dirname, "../../src/renderer/ui/MainHeader.js")
-    );
+    const [{ default: MainHeader }, { installBbmUiEditorRuntimeLauncher }] = await Promise.all([
+      importEsmFromFile(path.join(__dirname, "../../src/renderer/ui/MainHeader.js")),
+      importEsmFromFile(path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js")),
+    ]);
 
     try {
       const router = {
@@ -1121,8 +1122,24 @@ async function runProjektverwaltungModuleTests(run) {
       assert.ok(restarbeitenV2Button);
       assert.equal(restarbeitenV2Button.disabled, false);
       assert.equal(header.elRestarbeitenV2Wrap.style.display, "inline-flex");
-      restarbeitenV2Button.click();
+      await restarbeitenV2Button.click();
       assert.equal(restarbeitenV2OpenCount, 1);
+
+      global.window.uiEditorLauncherButtonArtifact = require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js"));
+      const launcherButton = await installBbmUiEditorRuntimeLauncher({
+        header,
+        devEnabled: header._isUiEditorRuntimeLauncherEnabled?.() === true,
+        activeUiScope: null,
+        doc: fakeDocument,
+        win: global.window,
+      });
+      assert.ok(launcherButton);
+      assert.equal(launcherButton.id, "uiEditor.launcherButton");
+      assert.equal(launcherButton.textContent, "UI-Editor");
+      assert.equal(launcherButton.getAttribute("data-ui-editor-installed-artifact"), "uiEditor/uiEditorLauncherButton.js");
+      assert.equal(launcherButton.getAttribute("data-ui-editor-launcher-active"), "false");
+      await launcherButton.click();
+      assert.equal(launcherButton.getAttribute("data-ui-editor-launcher-active"), "true");
       assert.equal(header.toggleUiEditorScan(), false);
       assert.equal(header.elUiEditorPanel, null);
       assert.equal(Boolean(findNode(fakeDocument.body, (node) => node?.attributes?.["data-ui-inspector-panel"] === "true")), false);

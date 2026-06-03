@@ -2,9 +2,10 @@
   position: fixed;
   inset-inline-start: 24px;
   inset-block-start: 24px;
-  z-index: 1000;
+  z-index: 13050;
   min-inline-size: 44px;
   min-block-size: 44px;
+  padding: 0 14px;
   border: 1px solid #516070;
   border-radius: 999px;
   background: #ffffff;

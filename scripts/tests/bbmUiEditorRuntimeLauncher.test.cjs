@@ -6,6 +6,8 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 const RUNTIME_PATH = path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
 const CORE_SHELL_PATH = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
 const MAIN_HEADER_PATH = path.join(__dirname, "../../src/renderer/ui/MainHeader.js");
+const INDEX_PATH = path.join(__dirname, "../../src/renderer/index.html");
+const LAUNCHER_CSS_PATH = path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.css");
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -157,6 +159,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("sessionStorage"), false);
     assert.equal(source.includes("MutationObserver"), false);
     assert.equal(source.includes("querySelectorAll"), false);
+
+    const indexSource = fs.readFileSync(INDEX_PATH, "utf8");
+    assert.equal(indexSource.includes("../../uiEditor/uiEditorLauncherButton.js"), true);
+    const cssSource = fs.readFileSync(LAUNCHER_CSS_PATH, "utf8");
+    assert.equal(cssSource.includes("z-index: 13050"), true);
   });
 
   await run("BBM UI-Editor-Runtime: Launcher ist nur im DEV-Kontext sichtbar", async () => {

@@ -2438,3 +2438,25 @@ Wichtig:
   - Lokale Electron-Sichtpruefung: App startet ohne weißen Bildschirm, Restarbeiten V2 ist sichtbar/funktionsfähig, EditorLab V2 bleibt unsichtbar.
 - Risiken/Hinweise:
   - `npm test` ist in dieser Umgebung weiterhin durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert; gezielte Header-/Launcher-Pruefungen liefen gruen.
+
+### K19.14a-Fix 2 – UI-Editor-Launcher sichtbar gemacht
+- Status: erledigt
+- Beschreibung:
+  - Der installierte UI-Editor-Launcher wird vor dem Renderer-Start als installiertes Artefakt in `index.html` geladen, damit der Runtime-Mount ihn sofort finden kann.
+  - Das installierte Launcher-CSS hebt den Button über den Header, sodass `UI-Editor` sichtbar ist.
+  - Restarbeiten V2 bleibt sichtbar und klickbar; der Test wartet den Klick nun korrekt ab.
+  - EditorLab V2 und alter Scanstatus-/UI-Inspector-Headerbutton bleiben nicht sichtbar.
+  - Der Launcher behält `id="uiEditor.launcherButton"`, `data-ui-editor-installed-artifact="uiEditor/uiEditorLauncherButton.js"` und toggelt nur neutralen State.
+- Betroffene Dateien:
+  - `src/renderer/index.html`
+  - `uiEditor/uiEditorLauncherButton.css`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+- Commit:
+  - `aktueller Branch-HEAD / PR`
+- Naechster offener Schritt:
+  - Lokale Electron-Sichtpruefung: Restarbeiten V2 sichtbar, EditorLab V2 nicht sichtbar, UI-Editor sichtbar und Toggle-State nachvollziehbar.
+- Risiken/Hinweise:
+  - `npm test` ist in dieser Umgebung weiterhin durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert; gezielte Header-/Launcher-Pruefungen liefen gruen.

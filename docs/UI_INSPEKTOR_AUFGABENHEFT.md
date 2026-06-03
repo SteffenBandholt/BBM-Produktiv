@@ -414,3 +414,10 @@ Hinweis:
 - EditorLab V2, alter Scanstatus und UI-Inspector-Headerbutton bleiben nicht sichtbar.
 - Der installierte UI-Editor-Launcher aus `uiEditor/` bleibt der einzige sichtbare UI-Editor-Launcher und toggelt nur neutralen State.
 - Kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Speicherung, kein DOM-Scan und keine automatische UI-Erkennung.
+
+## K19.14a-Fix 2 Abschlussnotiz
+- Der installierte UI-Editor-Launcher wird vor dem Renderer-Start als Artefakt geladen und vom Runtime-Mount sichtbar gemacht.
+- Die Launcher-CSS liegt weiter im installierten Artefaktbestand und hebt den Button über den Header.
+- Sichtbares Soll: `UI-Editor` sichtbar, `Restarbeiten V2` sichtbar, `EditorLab V2` nicht sichtbar.
+- Klick auf `UI-Editor` toggelt nur neutralen Launcher-State; `activeUiScope` bleibt neutral vorbereitet.
+- Kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Speicherung, kein DOM-Scan und keine automatische UI-Erkennung.
