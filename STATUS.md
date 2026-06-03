@@ -2460,3 +2460,25 @@ Wichtig:
   - Lokale Electron-Sichtpruefung: Restarbeiten V2 sichtbar, EditorLab V2 nicht sichtbar, UI-Editor sichtbar und Toggle-State nachvollziehbar.
 - Risiken/Hinweise:
   - `npm test` ist in dieser Umgebung weiterhin durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert; gezielte Header-/Launcher-Pruefungen liefen gruen.
+
+### K19.14b – Globalen DEV-Header bereinigt
+- Status: erledigt
+- Beschreibung:
+  - Der globale Header rendert keinen Restarbeiten-V2-DEV-Shortcut mehr.
+  - Restarbeiten V2 als Modul/Route bleibt unberuehrt und weiterhin separat testbar.
+  - EditorLab V2, alter Scanstatus und UI-Inspector-Altbuttons bleiben nicht sichtbar.
+  - Der einzige sichtbare UI-Werkzeug-Launcher ist der installierte UI-Editor-Launcher aus `uiEditor/`.
+  - Kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Speicherung, kein DOM-Scan und keine automatische UI-Erkennung.
+- Betroffene Dateien:
+  - `src/renderer/ui/MainHeader.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `scripts/tests/restarbeitenV2DevAccess.test.cjs`
+  - `STATUS.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+- Commit:
+  - `aktueller Branch-HEAD / PR`
+- Naechster offener Schritt:
+  - Lokale Electron-Sichtpruefung: UI-Editor sichtbar, EditorLab V2 nicht sichtbar, Restarbeiten V2 nicht sichtbar, kein weißer Bildschirm.
+- Risiken/Hinweise:
+  - Restarbeiten-Moduldateien und Restarbeiten-Fachlogik wurden nicht geaendert.
+  - `npm test` ist in dieser Umgebung weiterhin durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert.

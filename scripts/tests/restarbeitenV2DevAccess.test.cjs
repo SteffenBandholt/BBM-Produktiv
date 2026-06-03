@@ -170,8 +170,8 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(readOnlyDecisionSource.includes("M19.0 Fachlicher Abnahmetest vor Aktivierung"), true);
   assert.equal(routerSource.includes("Restarbeiten V2 ReadOnly"), true);
   assert.equal(routerSource.includes("Restarbeiten V2 ist derzeit nicht freigegeben."), true);
-  assert.equal(headerSource.includes("Restarbeiten V2"), true);
-  assert.equal(headerSource.includes("showRestarbeitenV2Dev"), true);
+  assert.equal(headerSource.includes("Restarbeiten V2"), false);
+  assert.equal(headerSource.includes("showRestarbeitenV2Dev"), false);
 
   const methodSourceMatch = routerSource.match(/async showRestarbeitenV2Dev\(\) \{[\s\S]*?\n  \}\n\n  \/\/ Kern-Routing mit Projektkontext:/);
   assert.ok(methodSourceMatch, "showRestarbeitenV2Dev body not found");
@@ -411,19 +411,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
     header.refresh();
 
     const button = getNodeById(header.root, "restarbeitenv2.button") || collectNodes(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "Restarbeiten V2")[0];
-    assert.ok(button);
-    assert.equal(button.disabled, false);
-
-    let clicked = false;
-    router.showRestarbeitenV2Dev = async () => {
-      clicked = true;
-      return true;
-    };
-    button.onclick?.({
-      preventDefault() {},
-      stopPropagation() {},
-    });
-    assert.equal(clicked, true);
+    assert.equal(Boolean(button), false);
 
     router.showRestarbeitenV2Dev = originalShowRestarbeitenV2Dev;
     await router.showRestarbeitenV2Dev();
@@ -597,7 +585,7 @@ async function runRestarbeitenV2DevAccessTests(run) {
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
 
-  await run("Restarbeiten V2 ist als DEV-Testzugang sichtbar", () => undefined);
+  await run("Restarbeiten V2 bleibt per Route testbar, aber ohne globalen Headerbutton", () => undefined);
 }
 
 if (require.main === module) {

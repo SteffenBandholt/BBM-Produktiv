@@ -421,3 +421,10 @@ Hinweis:
 - Sichtbares Soll: `UI-Editor` sichtbar, `Restarbeiten V2` sichtbar, `EditorLab V2` nicht sichtbar.
 - Klick auf `UI-Editor` toggelt nur neutralen Launcher-State; `activeUiScope` bleibt neutral vorbereitet.
 - Kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Speicherung, kein DOM-Scan und keine automatische UI-Erkennung.
+
+## K19.14b Abschlussnotiz
+- Der globale Header rendert keinen Restarbeiten-V2-DEV-Shortcut mehr.
+- Restarbeiten V2 als Modul/Route bleibt unberührt und separat testbar.
+- Sichtbares Soll: `UI-Editor` sichtbar, `EditorLab V2` nicht sichtbar, `Restarbeiten V2` nicht sichtbar.
+- Der einzige sichtbare UI-Werkzeug-Launcher ist der installierte UI-Editor-Launcher aus `uiEditor/`.
+- Kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Speicherung, kein DOM-Scan und keine automatische UI-Erkennung.

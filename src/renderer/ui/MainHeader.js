@@ -626,25 +626,9 @@ export default class MainHeader {
     const editorLabWrap = null;
     const editorLabBtn = null;
 
-    const restarbeitenV2Wrap = document.createElement("div");
-    restarbeitenV2Wrap.style.display = "inline-flex";
-    restarbeitenV2Wrap.style.flexDirection = "column";
-    restarbeitenV2Wrap.style.alignItems = "flex-start";
-    restarbeitenV2Wrap.style.gap = "4px";
-
-    const restarbeitenV2Btn = document.createElement("button");
-    restarbeitenV2Btn.type = "button";
-    restarbeitenV2Btn.textContent = "Restarbeiten V2";
-    applyUiEditorButtonStyle(restarbeitenV2Btn);
-    restarbeitenV2Btn.onclick = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (restarbeitenV2Btn.disabled) return;
-      this.router?.showRestarbeitenV2Dev?.();
-    };
-    restarbeitenV2Btn.title = "Restarbeiten V2 oeffnen";
-    restarbeitenV2Wrap.append(restarbeitenV2Btn);
-
+    // K19.14b: interner Modul-DEV-Shortcut bleibt aus dem globalen Header entfernt.
+    const restarbeitenV2Wrap = null;
+    const restarbeitenV2Btn = null;
 
     const mailWrap = document.createElement("div");
     mailWrap.style.position = "relative";
@@ -810,7 +794,6 @@ export default class MainHeader {
     if (!this._isNewUi) {
       actionWrap.append(setupWrap);
     }
-    actionWrap.append(restarbeitenV2Wrap);
 
     const stickyNotice = document.createElement("div");
     stickyNotice.style.gridColumn = "1 / span 3";
@@ -1691,14 +1674,7 @@ export default class MainHeader {
   }
 
   _applyRestarbeitenV2ButtonState() {
-    if (!this.elRestarbeitenV2Wrap || !this.elRestarbeitenV2Btn) return;
-    const enabled = this._isRestarbeitenV2DevEnabled();
-    this.elRestarbeitenV2Wrap.style.display = enabled ? "inline-flex" : "none";
-    this.elRestarbeitenV2Btn.disabled = !enabled;
-    this.elRestarbeitenV2Btn.setAttribute("aria-disabled", enabled ? "false" : "true");
-    this.elRestarbeitenV2Btn.title = enabled
-      ? "Restarbeiten V2 oeffnen"
-      : "Restarbeiten V2 ist nur im DEV-Testzugang verfuegbar.";
+    // K19.14b: kein globaler Restarbeiten-V2-Headerbutton.
   }
 
   setUiEditorSelectionMode(_nextMode) {

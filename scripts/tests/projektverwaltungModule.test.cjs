@@ -1085,13 +1085,9 @@ async function runProjektverwaltungModuleTests(run) {
     );
 
     try {
-      let restarbeitenV2OpenCount = 0;
       const router = {
         currentProjectId: "17",
         currentMeetingId: null,
-        showRestarbeitenV2Dev() {
-          restarbeitenV2OpenCount += 1;
-        },
         contentRoot: {
           querySelectorAll() {
             throw new Error("alter UI-Editor-Scan darf nicht laufen");
@@ -1119,11 +1115,9 @@ async function runProjektverwaltungModuleTests(run) {
       const restarbeitenV2Button = findNode(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "Restarbeiten V2");
       assert.equal(Boolean(editorButton), false);
       assert.equal(Boolean(editorLabButton), false);
-      assert.ok(restarbeitenV2Button);
-      assert.equal(restarbeitenV2Button.disabled, false);
-      assert.equal(header.elRestarbeitenV2Wrap.style.display, "inline-flex");
-      await restarbeitenV2Button.click();
-      assert.equal(restarbeitenV2OpenCount, 1);
+      assert.equal(Boolean(restarbeitenV2Button), false);
+      assert.equal(header.elRestarbeitenV2Wrap, null);
+      assert.equal(header.elRestarbeitenV2Btn, null);
 
       global.window.uiEditorLauncherButtonArtifact = require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js"));
       const launcherButton = await installBbmUiEditorRuntimeLauncher({
