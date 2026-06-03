@@ -400,3 +400,18 @@ Hinweis:
   - `npm test`
 - Nächster Schritt:
   - Lokale Sichtprüfung im Electron-DEV-Kontext.
+
+## K19.15 Abschlussnotiz
+- Der sichtbare UI-Editor-Launcher toggelt jetzt einen neutralen Aktivmodus.
+- Aktiv/inaktiv ist am Button, an `data-ui-editor-launcher-active` und am Body-Attribut `data-ui-editor-active` nachvollziehbar.
+- Im aktiven Zustand wird der neutrale Statushinweis „UI-Editor aktiv“ angezeigt.
+- `activeUiScope` bleibt als vorbereitender Platzhalter `null`.
+- Kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Elementauswahl, keine Speicherung, kein DOM-Scan und keine Fachlogik.
+- MainHeader bleibt ohne EditorLab-V2- und Restarbeiten-V2-Headerbutton.
+- Tests:
+  - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `node scripts/tests/editorLabV2Access.test.cjs`
+  - `node scripts/tests/restarbeitenV2DevAccess.test.cjs`
+  - `npm test` (in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert)
+- Nächster Schritt:
+  - Lokale Sichtprüfung per `npm start`.

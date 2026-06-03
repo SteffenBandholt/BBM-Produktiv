@@ -11,3 +11,27 @@
   color: #1f2933;
   font: inherit;
 }
+
+
+.ui-editor-launcher-button[data-ui-editor-launcher-active="true"] {
+  border-color: #1d4ed8;
+  background: #1d4ed8;
+  color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.18);
+}
+
+.ui-editor-launcher-status {
+  position: fixed;
+  inset-inline-end: 24px;
+  inset-block-start: 76px;
+  z-index: 13100;
+  padding: 6px 10px;
+  border: 1px solid #bfdbfe;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1e3a8a;
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  pointer-events: none;
+}

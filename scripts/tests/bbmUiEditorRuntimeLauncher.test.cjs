@@ -151,6 +151,15 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-inspector-panel=\"true\"]") {
     return node.getAttribute("data-ui-inspector-panel") === "true";
   }
+  if (raw === "[data-ui-editor-hover-frame=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hover-frame") === "true";
+  }
+  if (raw === "[data-ui-editor-panel=\"true\"]") {
+    return node.getAttribute("data-ui-editor-panel") === "true";
+  }
+  if (raw === "[data-ui-editor-launcher-status=\"true\"]") {
+    return node.getAttribute("data-ui-editor-launcher-status") === "true";
+  }
   return false;
 }
 
@@ -181,6 +190,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("querySelectorAll"), false);
     assert.equal(cssSource.includes("position: fixed"), true);
     assert.equal(cssSource.includes("inset-inline-end: 24px"), true);
+    assert.equal(cssSource.includes("ui-editor-launcher-status"), true);
+    assert.equal(cssSource.includes('[data-ui-editor-launcher-active="true"]'), true);
     assert.equal(getCssNumber(cssSource, "z-index") > 12010, true);
   });
 
@@ -216,6 +227,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     assert.equal(isMountedVisibleButton(doc, button), true);
     assert.equal(button.getAttribute("data-ui-editor-launcher-active"), "false");
+    assert.equal(doc.body.getAttribute("data-ui-editor-active"), "false");
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-launcher-status="true"]')), false);
     assert.equal(Boolean(doc.querySelector('[data-ui-inspector-panel="true"]')), false);
   });
 
@@ -235,14 +248,43 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     });
 
     assert.equal(button.dataset.uiEditorLauncherActive, "false");
+    assert.equal(button.getAttribute("aria-pressed"), "false");
+    assert.equal(doc.body.getAttribute("data-ui-editor-active"), "false");
+
     button.click();
     assert.equal(button.dataset.uiEditorLauncherActive, "true");
     assert.equal(button.getAttribute("data-ui-editor-launcher-active"), "true");
+    assert.equal(button.getAttribute("aria-pressed"), "true");
+    assert.equal(doc.body.getAttribute("data-ui-editor-active"), "true");
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(Boolean(activeStatus), true);
+    assert.equal(activeStatus.textContent, "UI-Editor aktiv");
+
     button.click();
     assert.equal(button.dataset.uiEditorLauncherActive, "false");
+    assert.equal(button.getAttribute("data-ui-editor-launcher-active"), "false");
+    assert.equal(button.getAttribute("aria-pressed"), "false");
+    assert.equal(doc.body.getAttribute("data-ui-editor-active"), "false");
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-launcher-status="true"]')), false);
+
     assert.deepEqual(toggles.map((event) => event.uiEditorLauncherActive), [true, false]);
     assert.deepEqual(toggles.map((event) => event.activeUiScope), [null, null]);
     assert.equal(Boolean(doc.querySelector('[data-ui-inspector-panel="true"]')), false);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-panel="true"]')), false);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-hover-frame="true"]')), false);
+  });
+
+  await run("BBM UI-Editor-Runtime: bleibt ohne Scan, Speicherung und Ziel-App-Aktion", async () => {
+    const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    assert.equal(source.includes("scanUiInspectorTargets"), false);
+    assert.equal(source.includes("MutationObserver"), false);
+    assert.equal(source.includes("querySelectorAll"), false);
+    assert.equal(source.includes("localStorage"), false);
+    assert.equal(source.includes("sessionStorage"), false);
+    assert.equal(source.includes("ipcRenderer"), false);
+    assert.equal(source.includes("writeFile"), false);
+    assert.equal(source.includes("showEditorLabV2"), false);
+    assert.equal(source.includes("showRestarbeitenV2"), false);
   });
 
 }

@@ -6,6 +6,8 @@ const INSTALLED_LAUNCHER_SCRIPT_PATH = "../../uiEditor/uiEditorLauncherButton.js
 const INSTALLED_LAUNCHER_CSS_PATH = "../../uiEditor/uiEditorLauncherButton.css";
 const LAUNCHER_HOST_ATTRIBUTE = "data-ui-editor-launcher-host";
 const LAUNCHER_CSS_ATTRIBUTE = "data-ui-editor-launcher-css";
+const LAUNCHER_STATUS_ATTRIBUTE = "data-ui-editor-launcher-status";
+const UI_EDITOR_ACTIVE_ATTRIBUTE = "data-ui-editor-active";
 
 function getDocument(explicitDocument = null) {
   return explicitDocument || (typeof document === "object" ? document : null);
@@ -64,20 +66,53 @@ function loadInstalledLauncherButton({ doc = getDocument(), win = getWindow() } 
   });
 }
 
-function removeExistingLauncher(doc = getDocument()) {
-  const existing = doc?.querySelector?.(`[${LAUNCHER_HOST_ATTRIBUTE}="true"]`);
-  if (existing?.parentElement?.removeChild) {
-    existing.parentElement.removeChild(existing);
-  } else if (existing?.remove) {
-    existing.remove();
+function removeNode(node) {
+  if (node?.parentElement?.removeChild) {
+    node.parentElement.removeChild(node);
+  } else if (node?.remove) {
+    node.remove();
   }
 }
 
-function syncLauncherButtonState(button, state) {
+function removeExistingLauncherStatus(doc = getDocument()) {
+  const existing = doc?.querySelector?.(`[${LAUNCHER_STATUS_ATTRIBUTE}="true"]`);
+  removeNode(existing);
+}
+
+function removeExistingLauncher(doc = getDocument()) {
+  const existing = doc?.querySelector?.(`[${LAUNCHER_HOST_ATTRIBUTE}="true"]`);
+  removeNode(existing);
+  removeExistingLauncherStatus(doc);
+  doc?.body?.setAttribute?.(UI_EDITOR_ACTIVE_ATTRIBUTE, "false");
+}
+
+function ensureLauncherStatusHint(doc, host) {
+  const existing = doc?.querySelector?.(`[${LAUNCHER_STATUS_ATTRIBUTE}="true"]`);
+  if (existing) return existing;
+  if (!doc?.createElement || !host?.appendChild) return null;
+
+  const status = doc.createElement("div");
+  status.className = "ui-editor-launcher-status";
+  status.textContent = "UI-Editor aktiv";
+  status.setAttribute(LAUNCHER_STATUS_ATTRIBUTE, "true");
+  status.setAttribute("role", "status");
+  status.setAttribute("aria-live", "polite");
+  host.appendChild(status);
+  return status;
+}
+
+function syncLauncherButtonState(button, state, { doc = getDocument(), host = null } = {}) {
   const active = !!state?.uiEditorLauncherActive;
   button.dataset.uiEditorLauncherActive = active ? "true" : "false";
   button.setAttribute("data-ui-editor-launcher-active", active ? "true" : "false");
   button.setAttribute("aria-pressed", active ? "true" : "false");
+  doc?.body?.setAttribute?.(UI_EDITOR_ACTIVE_ATTRIBUTE, active ? "true" : "false");
+
+  if (active) {
+    ensureLauncherStatusHint(doc, host || button.parentElement);
+  } else {
+    removeExistingLauncherStatus(doc);
+  }
 }
 
 function renderLauncherButton({ artifact, doc, host, state, onToggle = null }) {
@@ -97,13 +132,13 @@ function renderLauncherButton({ artifact, doc, host, state, onToggle = null }) {
   button.setAttribute("data-ui-editor-launcher-role", artifact.role || "editor-launcher");
   button.setAttribute("data-ui-editor-active-ui-scope", state.activeUiScope == null ? "" : String(state.activeUiScope));
   button.setAttribute("aria-label", "UI-Editor");
-  syncLauncherButtonState(button, state);
+  syncLauncherButtonState(button, state, { doc, host });
 
   button.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
     state.uiEditorLauncherActive = !state.uiEditorLauncherActive;
-    syncLauncherButtonState(button, state);
+    syncLauncherButtonState(button, state, { doc, host });
     if (typeof onToggle === "function") {
       onToggle({
         uiEditorLauncherActive: state.uiEditorLauncherActive,
@@ -152,5 +187,6 @@ export {
   getInstalledLauncherArtifact,
   isRuntimeLauncherDevEnabled,
   loadInstalledLauncherButton,
+  ensureLauncherStatusHint,
   renderLauncherButton,
 };

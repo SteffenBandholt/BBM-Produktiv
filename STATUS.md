@@ -2436,3 +2436,24 @@ Wichtig:
   - fachliche App-Sichtpruefung in einer Electron-Umgebung mit Systembibliotheken: UI-Editor sichtbar, EditorLab V2/Restarbeiten V2 nicht sichtbar, kein weisser Bildschirm.
 - Risiken/Hinweise:
   - In dieser Umgebung bleibt `npm start`/`npm test` ueber Electron durch fehlendes `libatk-1.0.so.0` blockiert.
+
+### K19.15 – UI-Editor-Launcher öffnet neutralen Aktivmodus
+- Status: erledigt
+- Beschreibung:
+  - UI-Editor-Launcher öffnet einen neutralen Aktivmodus. Der Modus zeigt nur aktiv/inaktiv und einen Statushinweis. Kein Panel, kein Hover, keine Auswahl, keine Speicherung, kein DOM-Scan und keine Fachlogik.
+  - `activeUiScope` bleibt als vorbereitender Platzhalter `null`.
+  - MainHeader bleibt frei von alten EditorLab-V2- und Restarbeiten-V2-Headerbuttons.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `uiEditor/uiEditorLauncherButton.css`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `scripts/tests/editorLabV2Access.test.cjs`
+  - `scripts/tests/restarbeitenV2DevAccess.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - Lokale Sichtpruefung per `npm start`: UI-Editor sichtbar, Klick aktiviert/deaktiviert neutral, EditorLab V2 und Restarbeiten V2 nicht sichtbar, kein weisser Bildschirm.
+- Risiken/Hinweise:
+  - `npm test` ist in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert; die gezielten Node-Tests liefen gruen.
