@@ -2418,3 +2418,23 @@ Wichtig:
   - Lokale Sichtpruefung im Electron-DEV-Kontext: `EditorLab V2` ist nicht sichtbar, `UI-Editor`-Launcher ist sichtbar und toggelt neutral.
 - Risiken/Hinweise:
   - Produktive Scope-Auswertung, Panel, Hover-/Auswahlmodus, Speicherung und automatische Registry-Befuellung bleiben ausdruecklich nicht umgesetzt.
+
+### K19.14a-Fix – MainHeader-Restarbeiten-V2-State repariert
+- Status: erledigt
+- Beschreibung:
+  - Der weiße Bildschirm durch den fehlenden MainHeader-Methodenpfad wurde behoben.
+  - `_applyRestarbeitenV2ButtonState()` ist wieder vorhanden und steuert nur den fachlich richtigen Restarbeiten-V2-Headerbutton.
+  - Restarbeiten V2 bleibt im DEV-/New-UI-Kontext sichtbar und klickbar.
+  - Alter EditorLab-/Scanstatus-/UI-Inspector-Headerbutton bleibt entfernt.
+  - Der installierte UI-Editor-Launcher aus `uiEditor/` bleibt unverändert der sichtbare `UI-Editor`-Launcher; kein Panel, kein DOM-Scan, keine Speicherung.
+- Betroffene Dateien:
+  - `src/renderer/ui/MainHeader.js`
+  - `scripts/tests/projektverwaltungModule.test.cjs`
+  - `STATUS.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+- Commit:
+  - `aktueller Branch-HEAD / PR`
+- Naechster offener Schritt:
+  - Lokale Electron-Sichtpruefung: App startet ohne weißen Bildschirm, Restarbeiten V2 ist sichtbar/funktionsfähig, EditorLab V2 bleibt unsichtbar.
+- Risiken/Hinweise:
+  - `npm test` ist in dieser Umgebung weiterhin durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert; gezielte Header-/Launcher-Pruefungen liefen gruen.

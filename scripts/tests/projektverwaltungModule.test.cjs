@@ -1084,9 +1084,13 @@ async function runProjektverwaltungModuleTests(run) {
     );
 
     try {
+      let restarbeitenV2OpenCount = 0;
       const router = {
         currentProjectId: "17",
         currentMeetingId: null,
+        showRestarbeitenV2Dev() {
+          restarbeitenV2OpenCount += 1;
+        },
         contentRoot: {
           querySelectorAll() {
             throw new Error("alter UI-Editor-Scan darf nicht laufen");
@@ -1108,10 +1112,17 @@ async function runProjektverwaltungModuleTests(run) {
       header.render();
       header.refresh();
 
+      assert.equal(typeof header._applyRestarbeitenV2ButtonState, "function");
       const editorButton = findNode(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "Editor");
       const editorLabButton = findNode(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "EditorLab V2");
+      const restarbeitenV2Button = findNode(header.root, (node) => node?.tagName === "BUTTON" && node?.textContent === "Restarbeiten V2");
       assert.equal(Boolean(editorButton), false);
       assert.equal(Boolean(editorLabButton), false);
+      assert.ok(restarbeitenV2Button);
+      assert.equal(restarbeitenV2Button.disabled, false);
+      assert.equal(header.elRestarbeitenV2Wrap.style.display, "inline-flex");
+      restarbeitenV2Button.click();
+      assert.equal(restarbeitenV2OpenCount, 1);
       assert.equal(header.toggleUiEditorScan(), false);
       assert.equal(header.elUiEditorPanel, null);
       assert.equal(Boolean(findNode(fakeDocument.body, (node) => node?.attributes?.["data-ui-inspector-panel"] === "true")), false);

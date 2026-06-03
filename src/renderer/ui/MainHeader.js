@@ -1690,6 +1690,17 @@ export default class MainHeader {
     // K19.14a: kein sichtbarer EditorLab-Headerbutton.
   }
 
+  _applyRestarbeitenV2ButtonState() {
+    if (!this.elRestarbeitenV2Wrap || !this.elRestarbeitenV2Btn) return;
+    const enabled = this._isRestarbeitenV2DevEnabled();
+    this.elRestarbeitenV2Wrap.style.display = enabled ? "inline-flex" : "none";
+    this.elRestarbeitenV2Btn.disabled = !enabled;
+    this.elRestarbeitenV2Btn.setAttribute("aria-disabled", enabled ? "false" : "true");
+    this.elRestarbeitenV2Btn.title = enabled
+      ? "Restarbeiten V2 oeffnen"
+      : "Restarbeiten V2 ist nur im DEV-Testzugang verfuegbar.";
+  }
+
   setUiEditorSelectionMode(_nextMode) {
     return false;
   }

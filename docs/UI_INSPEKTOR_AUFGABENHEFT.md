@@ -407,3 +407,10 @@ Hinweis:
 - Die sichtbare Beschriftung lautet `UI-Editor`; `EditorLab V2` wird nicht mehr als Headerbutton gerendert.
 - Der Klick toggelt nur neutralen Launcher-State.
 - Kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Speicherung, keine Fachlogik, kein DOM-Scan und keine automatische UI-Erkennung.
+
+## K19.14a-Fix Abschlussnotiz
+- Der MainHeader-Fehler durch fehlende `_applyRestarbeitenV2ButtonState()` ist behoben.
+- Restarbeiten V2 bleibt als fachlich richtiger DEV-/New-UI-Headerbutton sichtbar und klickbar.
+- EditorLab V2, alter Scanstatus und UI-Inspector-Headerbutton bleiben nicht sichtbar.
+- Der installierte UI-Editor-Launcher aus `uiEditor/` bleibt der einzige sichtbare UI-Editor-Launcher und toggelt nur neutralen State.
+- Kein Editor-Panel, kein Hover-Rahmen, kein Editmodus, keine Speicherung, kein DOM-Scan und keine automatische UI-Erkennung.
