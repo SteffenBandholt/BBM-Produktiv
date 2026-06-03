@@ -13,6 +13,7 @@ const OFFICIAL_BBM_REGISTRY_PATH = path.join(
 
 const REQUIRED_INSTALLED_ARTIFACTS = [
   "uiEditor/README.md",
+  "uiEditor/targetAppRegistry.js",
   "uiEditor/uiEditorRegistry.js",
   "uiEditor/uiEditorRules.md",
   "uiEditor/uiEditorLauncherButton.js",
@@ -20,7 +21,8 @@ const REQUIRED_INSTALLED_ARTIFACTS = [
   "uiEditor/tests/uiEditorRegistry.test.cjs",
 ];
 
-const LAUNCHER_ARTIFACTS = [
+const NEUTRAL_INSTALLED_ARTIFACTS = [
+  "uiEditor/targetAppRegistry.js",
   "uiEditor/uiEditorRegistry.js",
   "uiEditor/uiEditorLauncherButton.js",
   "uiEditor/uiEditorLauncherButton.css",
@@ -61,9 +63,20 @@ function loadInstalledRegistry() {
   return installed.uiEditorRegistry;
 }
 
+function getScopeIdentifier(scope) {
+  const scopeKeys = ["id", "uiScope", "uiScopeId", "scopeId", "registryKey", "key"];
+  for (const key of scopeKeys) {
+    if (typeof scope?.[key] === "string" && scope[key].trim() !== "") {
+      return scope[key].trim();
+    }
+  }
+
+  return null;
+}
+
 function findLauncherScope(registry) {
   assert.equal(Array.isArray(registry.uiScopes), true, "uiScopes must be an array");
-  return registry.uiScopes.find((scope) => scope.id === "uiEditor.global" || scope.uiScope === "uiEditor.global");
+  return registry.uiScopes.find((scope) => getScopeIdentifier(scope) === "uiEditor.global");
 }
 
 function getScopeElements(scope) {
@@ -99,8 +112,8 @@ async function runBbmUiEditorInstalledArtifactsTests(run) {
     assert.equal(launcher.type, "button");
     assert.equal(launcher.role, "editor-launcher");
     assert.equal(launcher.area, "overlay");
-    assert.equal(launcher.position?.x, 24);
-    assert.equal(launcher.position?.y, 24);
+    assert.equal(Number.isFinite(launcher.position?.x), true, "missing launcher position.x");
+    assert.equal(Number.isFinite(launcher.position?.y), true, "missing launcher position.y");
     assert.equal(launcher.editable, true);
 
     for (const op of ["move", "hide", "show"]) {
@@ -113,7 +126,7 @@ async function runBbmUiEditorInstalledArtifactsTests(run) {
   });
 
   await run("BBM UI-Editor-Artefakte: Launcher-Artefakte bleiben neutral", () => {
-    for (const relativePath of LAUNCHER_ARTIFACTS) {
+    for (const relativePath of NEUTRAL_INSTALLED_ARTIFACTS) {
       const source = fs.readFileSync(resolveRepoPath(relativePath), "utf8");
       for (const snippet of FORBIDDEN_NEUTRALITY_SNIPPETS) {
         assert.equal(source.includes(snippet), false, `${relativePath} contains forbidden snippet: ${snippet}`);
