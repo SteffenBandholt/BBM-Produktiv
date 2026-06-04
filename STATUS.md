@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- K19.18 Restarbeiten-Filterleiste bewusst in der UI-Editor-Registry registriert:
+  - Neuer UI-Scope `restarbeiten.screen` ist in der zentralen BBM-UI-Editor-Registry verfügbar.
+  - Die bestehende echte Restarbeiten-Filterleiste ist bewusst nachträglich als Root/Filterbar mit realen Gruppen, Feldern und Buttons registriert.
+  - Im Render-Code wurden nur `data-ui-editor-id`-Marker ergänzt; Fachlogik, Fachdaten, Datenmodell, Repository, IPC, Protokoll und PDF/Druck blieben unverändert.
+  - Kein UI-Scan, keine automatische Elementerkennung und keine Migration.
+  - Naechster offener Schritt: fachliche Sichtpruefung, ob die Filterleiste im UI-Editor-Lesemodus erwartungsgemäß erscheint.
+
 - K19.17 neutraler UI-Editor-Aktivmodus zeigt registrierte UI-Elementliste rein lesend:
   - Der Statushinweis zeigt bei aktivem UI-Editor den registrierten Scope `protokoll.topsScreen` und darunter die registrierten UI-Elemente aus der BBM-Registry.
   - Keine Bearbeitung, keine Auswahl, keine Speicherung, kein DOM-Scan und keine Fachlogik.

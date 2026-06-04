@@ -58,10 +58,10 @@ const RESTARBEITEN_EDITOR_FRAME_TARGETS = [
 
 const RESTARBEITEN_EDITOR_FRAME_PARENTS = {
   "restarbeiten.main": "restarbeiten.root",
-  "restarbeiten.filterleiste": "restarbeiten.main",
-  "restarbeiten.filterleiste.klasse": "restarbeiten.filterleiste",
-  "restarbeiten.filterleiste.verortung": "restarbeiten.filterleiste",
-  "restarbeiten.filterleiste.meta": "restarbeiten.filterleiste",
+  "restarbeiten.filterleiste": "restarbeiten.screen.root",
+  "restarbeiten.filterleiste.klasse": "restarbeiten.screen.filterbar",
+  "restarbeiten.filterleiste.verortung": "restarbeiten.screen.filterbar",
+  "restarbeiten.filterleiste.meta": "restarbeiten.screen.filterbar",
   "restarbeiten.liste": "restarbeiten.main",
   "restarbeiten.liste.nummernspalte": "restarbeiten.liste",
   "restarbeiten.liste.textbereich": "restarbeiten.liste",

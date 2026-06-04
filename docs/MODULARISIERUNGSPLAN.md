@@ -198,11 +198,13 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - kleine Nachweise zur Kernnavigation, Router-Entkopplung und Modulsichtbarkeit sind nachgezogen
 - der entmischte `TopsScreen`-Zwischenstand ist per Test abgesichert
 - die inline platzierte Diktat-Schaltflaeche ist testseitig mit Asset-Icons, Start-/Stop-Umschaltung und Freischaltung abgesichert
+- die echte Restarbeiten-Filterleiste ist als erster realer Restarbeiten-Scope `restarbeiten.screen` bewusst in der UI-Editor-Registry registriert; Protokoll- und Demo-Scope bleiben erhalten
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
 - weitere Altpfade und Restmischzonen vorhanden
 - Konsolidierung ist noch nicht Endabschluss
+- fachliche Sichtpruefung des neuen Restarbeiten-UI-Editor-Scopes im laufenden Editor-Lesemodus
 
 ---
 

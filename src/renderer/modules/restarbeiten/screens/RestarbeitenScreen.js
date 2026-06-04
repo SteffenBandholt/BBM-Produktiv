@@ -51,13 +51,25 @@ function createMessage(doc, text) {
   return el;
 }
 
-function applyEditorFrameMeta(node, { id, parent = "", label = "", editable = "false", ops = "none" } = {}) {
+function applyEditorFrameMeta(node, { id, editorId = "", parent = "", editorParent = "", label = "", editable = "false", ops = "none" } = {}) {
   if (!node || typeof node.setAttribute !== "function") return;
   if (id) node.setAttribute("data-ui-inspector-id", id);
+  if (editorId) node.setAttribute("data-ui-editor-id", editorId);
   node.setAttribute("data-ui-editor-kind", "frame");
   node.setAttribute("data-ui-editor-label", label || id || "");
-  if (parent) node.setAttribute("data-ui-editor-parent", parent);
+  const resolvedParent = editorParent || parent;
+  if (resolvedParent) node.setAttribute("data-ui-editor-parent", resolvedParent);
   else if (typeof node.removeAttribute === "function") node.removeAttribute("data-ui-editor-parent");
+  node.setAttribute("data-ui-editor-editable", String(editable));
+  node.setAttribute("data-ui-editor-ops", String(ops));
+}
+
+function applyUiEditorMarker(node, { editorId, kind = "field", label = "", parent, editable = "false", ops = "inspect" } = {}) {
+  if (!node || typeof node.setAttribute !== "function") return;
+  if (editorId) node.setAttribute("data-ui-editor-id", editorId);
+  node.setAttribute("data-ui-editor-kind", kind);
+  node.setAttribute("data-ui-editor-label", label || editorId || "");
+  if (parent) node.setAttribute("data-ui-editor-parent", parent);
   node.setAttribute("data-ui-editor-editable", String(editable));
   node.setAttribute("data-ui-editor-ops", String(ops));
 }
@@ -135,6 +147,7 @@ export default class RestarbeitenScreen {
     this.host.setAttribute("data-bbm-restarbeiten-screen", "true");
     applyEditorFrameMeta(this.host, {
       id: "restarbeiten.root",
+      editorId: "restarbeiten.screen.root",
       label: EDITOR_FRAME_LABELS.root,
       editable: "false",
       ops: "none",
@@ -224,11 +237,14 @@ export default class RestarbeitenScreen {
     this.listHeaderHost.className = "restarbeiten-listHeader";
     applyEditorFrameMeta(this.listHeaderHost, {
       id: "restarbeiten.filterleiste",
+      editorId: "restarbeiten.screen.filterbar",
       parent: "restarbeiten.main",
+      editorParent: "restarbeiten.screen.root",
       label: EDITOR_FRAME_LABELS.filterleiste,
       editable: "false",
       ops: "none",
     });
+    this.listHeaderHost.setAttribute("data-ui-editor-id", "restarbeiten.screen.filterbar");
     this.headerFiltersHost = this.listHeaderHost;
 
     this.sheetArea = doc.createElement("section");
@@ -412,7 +428,9 @@ export default class RestarbeitenScreen {
     locationWrap.className = "restarbeiten-filterleiste__locationFilters";
     applyEditorFrameMeta(locationWrap, {
       id: "restarbeiten.filterleiste.verortung",
+      editorId: "restarbeiten.filterbar.group.location",
       parent: "restarbeiten.filterleiste",
+      editorParent: "restarbeiten.screen.filterbar",
       label: EDITOR_FRAME_LABELS.verortung,
       editable: "false",
       ops: "none",
@@ -437,7 +455,9 @@ export default class RestarbeitenScreen {
     });
     applyEditorFrameMeta(classPanel, {
       id: "restarbeiten.filterleiste.klasse",
+      editorId: "restarbeiten.filterbar.group.class",
       parent: "restarbeiten.filterleiste",
+      editorParent: "restarbeiten.screen.filterbar",
       label: EDITOR_FRAME_LABELS.klasse,
       editable: "false",
       ops: "none",
@@ -447,7 +467,9 @@ export default class RestarbeitenScreen {
     metaWrap.className = "restarbeiten-filterleiste__metaFilters";
     applyEditorFrameMeta(metaWrap, {
       id: "restarbeiten.filterleiste.meta",
+      editorId: "restarbeiten.filterbar.group.meta",
       parent: "restarbeiten.filterleiste",
+      editorParent: "restarbeiten.screen.filterbar",
       label: EDITOR_FRAME_LABELS.meta,
       editable: "false",
       ops: "none",
@@ -487,6 +509,12 @@ export default class RestarbeitenScreen {
 
     const closePanel = doc.createElement("div");
     closePanel.className = "restarbeiten-listHeader__closePanel restarbeiten-listHeader__panel restarbeiten-listHeader__panel--close";
+    applyUiEditorMarker(closePanel, {
+      editorId: "restarbeiten.filterbar.group.close",
+      kind: "frame",
+      label: "Schliessen",
+      parent: "restarbeiten.screen.filterbar",
+    });
     if (!this.headerCloseButton) {
       this.headerCloseButton = doc.createElement("button");
       this.headerCloseButton.type = "button";
@@ -494,6 +522,12 @@ export default class RestarbeitenScreen {
       this.headerCloseButton.onclick = () => this.router?.showProjectWorkspace?.();
     }
     this.headerCloseButton.className = "restarbeiten-listHeader__closeButton";
+    applyUiEditorMarker(this.headerCloseButton, {
+      editorId: "restarbeiten.filterbar.action.close",
+      kind: "single",
+      label: "Schliessen",
+      parent: "restarbeiten.filterbar.group.close",
+    });
     closePanel.append(this.headerCloseButton);
 
     headerGrid.append(locationPanel, classPanel, metaPanel, closePanel);
@@ -522,9 +556,9 @@ export default class RestarbeitenScreen {
     wrap.className = "restarbeiten-filterleiste__classFilter";
     wrap.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.klassenfilter");
     const values = [
-      { value: "", label: "Alle" },
-      { value: "mangel", label: "Mangel" },
-      { value: "rest", label: "Rest" },
+      { value: "", label: "Alle", editorId: "restarbeiten.filterbar.action.class.all" },
+      { value: "mangel", label: "Mangel", editorId: "restarbeiten.filterbar.action.class.defect" },
+      { value: "rest", label: "Rest", editorId: "restarbeiten.filterbar.action.class.remaining" },
     ];
     for (const entry of values) {
       const button = doc.createElement("button");
@@ -535,6 +569,12 @@ export default class RestarbeitenScreen {
       if (entry.value === values[0]?.value) {
         button.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.klassenfilter.feld");
       }
+      applyUiEditorMarker(button, {
+        editorId: entry.editorId,
+        kind: "single",
+        label: entry.label,
+        parent: "restarbeiten.filterbar.group.class",
+      });
       button.onclick = () => {
         this.filterState.item_class = entry.value;
         this._renderHeaderFilters();
@@ -549,6 +589,18 @@ export default class RestarbeitenScreen {
     const wrap = doc.createElement("label");
     wrap.className = "restarbeiten-filterleiste__field";
     wrap.setAttribute("data-ui-inspector-id", "restarbeiten.filterleiste.verortung.feld");
+    const editorIdMap = {
+      location_level_1: "restarbeiten.filterbar.field.location.level1",
+      location_level_2: "restarbeiten.filterbar.field.location.level2",
+      location_level_3: "restarbeiten.filterbar.field.location.level3",
+      location_level_4: "restarbeiten.filterbar.field.location.level4",
+    };
+    applyUiEditorMarker(wrap, {
+      editorId: editorIdMap[key],
+      kind: "field",
+      label: this._getFilterLabel(levelIndex),
+      parent: "restarbeiten.filterbar.group.location",
+    });
 
     const caption = doc.createElement("span");
     caption.className = "restarbeiten-filterleiste__fieldLabel";
@@ -647,6 +699,18 @@ export default class RestarbeitenScreen {
     };
     const inspectorId = inspectorMap[key];
     if (inspectorId) wrap.setAttribute("data-ui-inspector-id", inspectorId);
+    const editorIdMap = {
+      due_date: "restarbeiten.filterbar.field.meta.due",
+      status: "restarbeiten.filterbar.field.meta.status",
+      responsible_project_firm_id: "restarbeiten.filterbar.field.meta.responsible",
+      completed_state: "restarbeiten.filterbar.field.meta.completed",
+    };
+    applyUiEditorMarker(wrap, {
+      editorId: editorIdMap[key],
+      kind: "field",
+      label,
+      parent: "restarbeiten.filterbar.group.meta",
+    });
     const caption = doc.createElement("span");
     caption.className = "restarbeiten-filterleiste__fieldLabel";
     caption.textContent = label;

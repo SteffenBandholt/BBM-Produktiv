@@ -7,6 +7,14 @@ const REGISTRY_PATH = path.join(
   __dirname,
   "../../src/renderer/uiEditor/bbmUiEditorRegistry.js"
 );
+const RESTARBEITEN_ELEMENTS_PATH = path.join(
+  __dirname,
+  "../../src/renderer/modules/restarbeitenV2/uiEditor/restarbeitenUiElements.js"
+);
+const RESTARBEITEN_SCREEN_PATH = path.join(
+  __dirname,
+  "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"
+);
 
 const FORBIDDEN_DATA_FIELDS = [
   "projectId",
@@ -53,6 +61,29 @@ const FORBIDDEN_LOGIC_SNIPPETS = [
   "readFile",
 ];
 
+const RESTARBEITEN_FORBIDDEN_SNIPPETS = [
+  "querySelector",
+  "DOMParser",
+  "innerHTML",
+  "scan",
+  "detect",
+  "autoRegister",
+  "migration",
+];
+
+const REQUIRED_ELEMENT_FIELDS = [
+  "id",
+  "name",
+  "type",
+  "role",
+  "parentId",
+  "order",
+  "visible",
+  "editable",
+  "allowedOps",
+  "lockedOps",
+];
+
 function assertNoForbiddenFields(value, pathParts = []) {
   if (Array.isArray(value)) {
     value.forEach((entry, index) => assertNoForbiddenFields(entry, [...pathParts, String(index)]));
@@ -80,6 +111,31 @@ async function loadRegistryModule() {
   return mod;
 }
 
+function assertRequiredElementFields(elements) {
+  for (const element of elements) {
+    for (const field of REQUIRED_ELEMENT_FIELDS) {
+      assert.equal(Object.prototype.hasOwnProperty.call(element, field), true, `missing ${field} on ${element?.id}`);
+    }
+  }
+}
+
+function assertKnownParents(elements) {
+  const ids = new Set(elements.map((element) => element.id));
+  for (const element of elements) {
+    assert.equal(
+      element.parentId === null || ids.has(element.parentId),
+      true,
+      `unknown parentId ${element.parentId} on ${element.id}`
+    );
+  }
+}
+
+function assertSourceContainsAll(source, snippets) {
+  for (const snippet of snippets) {
+    assert.equal(source.includes(snippet), true, `missing source snippet: ${snippet}`);
+  }
+}
+
 async function runBbmUiEditorRegistryTests(run) {
   await run("BBM UI-Editor-Registry: exportiert die zentralen Einstiegfunktionen", async () => {
     await loadRegistryModule();
@@ -94,7 +150,7 @@ async function runBbmUiEditorRegistryTests(run) {
     });
   });
 
-  await run("BBM UI-Editor-Registry: listet Protokoll- und Demo-Scope als verfuegbar", async () => {
+  await run("BBM UI-Editor-Registry: listet Protokoll-, Demo- und Restarbeiten-Scope als verfuegbar", async () => {
     const mod = await loadRegistryModule();
     assert.deepEqual(mod.getAvailableUiScopes(), [
       {
@@ -107,6 +163,12 @@ async function runBbmUiEditorRegistryTests(run) {
         uiScope: "bbm.demo.editorMove",
         moduleId: "uiEditor",
         label: "BBM UI-Editor Demo",
+        status: "available",
+      },
+      {
+        uiScope: "restarbeiten.screen",
+        moduleId: "restarbeiten",
+        label: "Restarbeiten",
         status: "available",
       },
     ]);
@@ -131,6 +193,60 @@ async function runBbmUiEditorRegistryTests(run) {
     );
   });
 
+  await run("BBM UI-Editor-Registry: liefert Restarbeiten-Elementliste mit Root und Filterbar", async () => {
+    const mod = await loadRegistryModule();
+    const registry = mod.getBbmUiEditorRegistry("restarbeiten.screen");
+    assert.equal(registry.targetAppId, "bbm-produktiv");
+    assert.equal(registry.uiScope, "restarbeiten.screen");
+    assert.equal(registry.moduleId, "restarbeiten");
+    assert.equal(Array.isArray(registry.elements), true);
+    assert.equal(registry.elements.length > 0, true);
+    assert.equal(registry.elements.some((element) => element.id === "restarbeiten.screen.root"), true);
+    assert.equal(registry.elements.some((element) => element.id === "restarbeiten.screen.filterbar"), true);
+  });
+
+  await run("BBM UI-Editor-Registry: Restarbeiten-Elemente haben Pflichtfelder und gueltige Parents", async () => {
+    const mod = await loadRegistryModule();
+    const elements = mod.getBbmUiEditorRegistry("restarbeiten.screen").elements;
+    assertRequiredElementFields(elements);
+    assertKnownParents(elements);
+  });
+
+  await run("BBM UI-Editor-Registry: Restarbeiten-Filterbar erlaubt reale Gruppen und direkte Buttons", async () => {
+    const mod = await loadRegistryModule();
+    const elements = mod.getBbmUiEditorRegistry("restarbeiten.screen").elements;
+    const byId = new Map(elements.map((element) => [element.id, element]));
+    assert.equal(byId.get("restarbeiten.filterbar.group.location")?.parentId, "restarbeiten.screen.filterbar");
+    assert.equal(byId.get("restarbeiten.filterbar.group.class")?.parentId, "restarbeiten.screen.filterbar");
+    assert.equal(byId.get("restarbeiten.filterbar.group.meta")?.parentId, "restarbeiten.screen.filterbar");
+    assert.equal(byId.get("restarbeiten.filterbar.group.close")?.parentId, "restarbeiten.screen.filterbar");
+    assert.equal(byId.get("restarbeiten.filterbar.action.class.all")?.type, "button");
+    assert.equal(byId.get("restarbeiten.filterbar.action.class.all")?.parentId, "restarbeiten.filterbar.group.class");
+    assert.equal(byId.get("restarbeiten.filterbar.action.close")?.type, "button");
+    assert.equal(byId.get("restarbeiten.filterbar.action.close")?.parentId, "restarbeiten.filterbar.group.close");
+  });
+
+  await run("BBM UI-Editor-Registry: echter Restarbeiten-Code enthaelt Filterbar-Marker", () => {
+    const source = fs.readFileSync(RESTARBEITEN_SCREEN_PATH, "utf8");
+    assert.equal(source.includes('data-ui-editor-id", "restarbeiten.screen.filterbar"'), true);
+  });
+
+  await run("BBM UI-Editor-Registry: echter Restarbeiten-Code nutzt Registry-Parent-Marker", () => {
+    const source = fs.readFileSync(RESTARBEITEN_SCREEN_PATH, "utf8");
+    assertSourceContainsAll(source, [
+      'editorId: "restarbeiten.screen.filterbar"',
+      'editorParent: "restarbeiten.screen.root"',
+      'editorId: "restarbeiten.filterbar.group.location"',
+      'editorId: "restarbeiten.filterbar.group.class"',
+      'editorId: "restarbeiten.filterbar.group.meta"',
+      'editorParent: "restarbeiten.screen.filterbar"',
+      'parent: "restarbeiten.filterbar.group.location"',
+      'parent: "restarbeiten.filterbar.group.class"',
+      'parent: "restarbeiten.filterbar.group.meta"',
+      'parent: "restarbeiten.filterbar.group.close"',
+    ]);
+  });
+
   await run("BBM UI-Editor-Registry: unbekannter Scope wird sauber abgefangen", async () => {
     const mod = await loadRegistryModule();
     const registry = mod.getBbmUiEditorRegistry("unbekannt.scope");
@@ -147,6 +263,7 @@ async function runBbmUiEditorRegistryTests(run) {
     assertNoForbiddenFields(mod.getBbmUiEditorTargetInfo());
     assertNoForbiddenFields(mod.getAvailableUiScopes());
     assertNoForbiddenFields(mod.getBbmUiEditorRegistry("protokoll.topsScreen"));
+    assertNoForbiddenFields(mod.getBbmUiEditorRegistry("restarbeiten.screen"));
     assertNoForbiddenFields(mod.getBbmUiEditorRegistry("unbekannt.scope"));
   });
 
@@ -154,6 +271,13 @@ async function runBbmUiEditorRegistryTests(run) {
     const source = fs.readFileSync(REGISTRY_PATH, "utf8");
     for (const snippet of FORBIDDEN_LOGIC_SNIPPETS) {
       assert.equal(source.includes(snippet), false, `forbidden logic snippet: ${snippet}`);
+    }
+  });
+
+  await run("BBM UI-Editor-Registry: Restarbeiten-UI-Editor-Dateien enthalten keine verbotenen Fragmente", () => {
+    const source = fs.readFileSync(RESTARBEITEN_ELEMENTS_PATH, "utf8");
+    for (const snippet of RESTARBEITEN_FORBIDDEN_SNIPPETS) {
+      assert.equal(source.includes(snippet), false, `forbidden Restarbeiten snippet: ${snippet}`);
     }
   });
 }
