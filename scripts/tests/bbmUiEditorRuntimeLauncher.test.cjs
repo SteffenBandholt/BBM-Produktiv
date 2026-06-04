@@ -4,6 +4,7 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const RUNTIME_PATH = path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
+const CORE_SHELL_PATH = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
 const CSS_PATH = path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.css");
 const PACKAGE_PATH = path.join(__dirname, "../../package.json");
 
@@ -159,6 +160,13 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-launcher-status=\"true\"]") {
     return node.getAttribute("data-ui-editor-launcher-status") === "true";
+  }
+  if (raw === "[data-ui-editor-scope-list=\"true\"]") {
+    return node.getAttribute("data-ui-editor-scope-list") === "true";
+  }
+  const scopeOptionMatch = raw.match(/^\[data-ui-editor-scope-option="([^"]+)"\]$/);
+  if (scopeOptionMatch) {
+    return node.getAttribute("data-ui-editor-scope-option") === scopeOptionMatch[1];
   }
   return false;
 }
@@ -375,11 +383,84 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(mod.getReadonlyRegisteredElementsText([]), "Registrierte Elemente:\nnicht verfügbar");
   });
+  await run("BBM UI-Editor-Runtime: Lesemodus listet Scopes und zeigt Restarbeiten-Registry", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registries = {
+      "protokoll.topsScreen": {
+        uiScope: "protokoll.topsScreen",
+        moduleId: "protokoll",
+        elements: [{ id: "protokoll.root", name: "Protokoll", type: "root", role: "layout", parentId: null, allowedOps: ["inspect"], lockedOps: [] }],
+      },
+      "bbm.demo.editorMove": {
+        uiScope: "bbm.demo.editorMove",
+        moduleId: "uiEditor",
+        elements: [{ id: "bbm.demo.root", name: "Demo", type: "root", role: "layout", parentId: null, allowedOps: ["inspect"], lockedOps: [] }],
+      },
+      "restarbeiten.screen": {
+        uiScope: "restarbeiten.screen",
+        moduleId: "restarbeiten",
+        elements: [
+          { id: "restarbeiten.screen.root", name: "Restarbeiten", type: "root", role: "layout", parentId: null, allowedOps: ["inspect"], lockedOps: [] },
+          { id: "restarbeiten.screen.filterbar", name: "Filterleiste", type: "toolbar", role: "layout", parentId: "restarbeiten.screen.root", allowedOps: ["inspect"], lockedOps: [] },
+          { id: "restarbeiten.filterbar.group.location", name: "Verortung", type: "group", role: "layout", parentId: "restarbeiten.screen.filterbar", allowedOps: ["inspect"], lockedOps: [] },
+          { id: "restarbeiten.filterbar.field.location.level1", name: "Verortung 1", type: "field", role: "meta", parentId: "restarbeiten.filterbar.group.location", allowedOps: ["inspect"], lockedOps: [] },
+          { id: "restarbeiten.filterbar.action.close", name: "Schliessen", type: "button", role: "navigation", parentId: "restarbeiten.filterbar.group.close", allowedOps: ["inspect"], lockedOps: [] },
+        ],
+      },
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "protokoll.topsScreen",
+      availableUiScopes: [
+        { uiScope: "protokoll.topsScreen", moduleId: "protokoll", status: "available" },
+        { uiScope: "bbm.demo.editorMove", moduleId: "uiEditor", status: "available" },
+        { uiScope: "restarbeiten.screen", moduleId: "restarbeiten", status: "available" },
+      ],
+      registryResolver: (scopeId) => registries[scopeId] || { ok: false, uiScope: scopeId, elements: [], reason: "unknown" },
+    });
 
+    button.click();
+    let activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(activeStatus.textContent.includes("Verfuegbare Scopes:"), true);
+    assert.equal(activeStatus.textContent.includes("* protokoll.topsScreen"), true);
+    assert.equal(activeStatus.textContent.includes("* bbm.demo.editorMove"), true);
+    assert.equal(activeStatus.textContent.includes("* restarbeiten.screen"), true);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-scope-list="true"]')), true);
+
+    const restarbeitenScopeButton = doc.querySelector('[data-ui-editor-scope-option="restarbeiten.screen"]');
+    assert.equal(Boolean(restarbeitenScopeButton), true);
+    restarbeitenScopeButton.click();
+
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(activeStatus.textContent.includes("Scope: restarbeiten.screen"), true);
+    assert.equal(activeStatus.textContent.includes("Modul: restarbeiten"), true);
+    assert.equal(activeStatus.textContent.includes("Elemente: 5"), true);
+    assert.equal(activeStatus.textContent.includes("restarbeiten.screen.root"), true);
+    assert.equal(activeStatus.textContent.includes("restarbeiten.screen.filterbar"), true);
+    assert.equal(activeStatus.textContent.includes("restarbeiten.filterbar.group.location"), true);
+    assert.equal(activeStatus.textContent.includes("restarbeiten.filterbar.field.location.level1"), true);
+    assert.equal(activeStatus.textContent.includes("restarbeiten.filterbar.action.close"), true);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-panel="true"]')), false);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-hover-frame="true"]')), false);
+  });
 
   await run("BBM UI-Editor-Runtime: bleibt ohne Scan, Speicherung und Ziel-App-Aktion", async () => {
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    const coreShellSource = fs.readFileSync(CORE_SHELL_PATH, "utf8");
     assert.equal(source.includes("scanUiInspectorTargets"), false);
+    assert.equal(source.includes("querySelector"), false);
+    assert.equal(source.includes("DOMParser"), false);
+    assert.equal(source.includes("innerHTML"), false);
+    assert.equal(source.includes("scan"), false);
+    assert.equal(source.includes("detect"), false);
+    assert.equal(source.includes("autoRegister"), false);
+    assert.equal(source.includes("migration"), false);
     assert.equal(source.includes("MutationObserver"), false);
     assert.equal(source.includes("querySelectorAll"), false);
     assert.equal(source.includes("localStorage"), false);
@@ -388,6 +469,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("writeFile"), false);
     assert.equal(source.includes("showEditorLabV2"), false);
     assert.equal(source.includes("showRestarbeitenV2"), false);
+    assert.equal(coreShellSource.includes("showBbmUiEditorDemo"), false);
+    assert.equal(coreShellSource.includes("getAvailableUiScopes"), true);
+    assert.equal(coreShellSource.includes("registryResolver"), true);
     assert.equal(source.includes("getStatusScopeLabel"), true);
     assert.equal(source.includes("activeUiScope"), true);
   });

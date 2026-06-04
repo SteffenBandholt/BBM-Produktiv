@@ -21,7 +21,7 @@ import { registerCoreShellContextControls } from "./coreShellContextControls.js"
 import { registerCoreShellKeyboardHandling } from "./coreShellKeyboard.js";
 import { createCoreShellNavigationRuntime } from "./coreShellNavigationRuntime.js";
 import { installBbmUiEditorRuntimeLauncher } from "../uiEditor/BbmUiEditorRuntimeLauncher.js";
-import { getActiveUiScope, getBbmUiEditorRegistry } from "../uiEditor/bbmUiEditorRegistry.js";
+import { getActiveUiScope, getAvailableUiScopes, getBbmUiEditorRegistry } from "../uiEditor/bbmUiEditorRegistry.js";
 
 export default class CoreShell {
   constructor({ router, version } = {}) {
@@ -109,11 +109,8 @@ export default class CoreShell {
       devEnabled: true,
       activeUiScope,
       registeredElements: uiEditorRegistry?.elements,
-      onToggle: (event) => {
-        if (event?.uiEditorLauncherActive) {
-          router.showBbmUiEditorDemo?.();
-        }
-      },
+      availableUiScopes: getAvailableUiScopes(),
+      registryResolver: getBbmUiEditorRegistry,
     });
     if (typeof updateContextButtons === "function") {
       updateContextButtons();
