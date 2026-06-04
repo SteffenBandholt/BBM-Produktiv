@@ -117,6 +117,25 @@ function findNodeByText(node, text) {
   return null;
 }
 
+function createPersistentStorageAdapter(initialEntries = {}) {
+  const entries = new Map(Object.entries(initialEntries));
+  return {
+    getItem(key) {
+      return entries.has(key) ? entries.get(key) : null;
+    },
+    setItem(key, value) {
+      entries.set(String(key), String(value));
+    },
+    removeItem(key) {
+      entries.delete(String(key));
+    },
+    readJson(key) {
+      const raw = entries.get(String(key));
+      return raw ? JSON.parse(raw) : null;
+    },
+  };
+}
+
 async function loadRegistry() {
   return await importEsmFromFile(REGISTRY_PATH);
 }
@@ -199,6 +218,52 @@ async function runBbmUiEditorDemoTests(run) {
     assert.deepEqual(store.load("bbm.demo.card.moveable"), saved);
   });
 
+  await run("BBM UI-Editor-Demo: Move speichert x/y im persistenten Storage-Adapter", async () => {
+    const screenMod = await loadScreen();
+    const layout = await loadLayout();
+    const storage = createPersistentStorageAdapter();
+    const store = layout.createDemoLayoutStore(storage);
+    const screen = screenMod.createBbmUiEditorDemoScreen({
+      ui: { node: createFakeNode },
+      layoutStore: store,
+    });
+
+    screen.render();
+    screen.applyAction("right");
+    screen.applyAction("down");
+
+    assert.deepEqual(storage.readJson(layout.DEMO_LAYOUT_STORAGE_KEY), {
+      "bbm.demo.card.moveable": {
+        x: 140,
+        y: 100,
+      },
+    });
+  });
+
+  await run("BBM UI-Editor-Demo: neue Demo-Instanz laedt gespeicherten Wert wieder", async () => {
+    const screenMod = await loadScreen();
+    const layout = await loadLayout();
+    const storage = createPersistentStorageAdapter({
+      [layout.DEMO_LAYOUT_STORAGE_KEY]: JSON.stringify({
+        "bbm.demo.card.moveable": { x: 180, y: 40 },
+      }),
+    });
+
+    const firstScreen = screenMod.createBbmUiEditorDemoScreen({
+      ui: { node: createFakeNode },
+      layoutStore: layout.createDemoLayoutStore(storage),
+    });
+    assert.deepEqual(firstScreen.layoutEntry.layoutValue, { x: 180, y: 40 });
+
+    firstScreen.applyAction("left");
+
+    const secondScreen = screenMod.createBbmUiEditorDemoScreen({
+      ui: { node: createFakeNode },
+      layoutStore: layout.createDemoLayoutStore(storage),
+    });
+    assert.deepEqual(secondScreen.layoutEntry.layoutValue, { x: 160, y: 40 });
+  });
+
   await run("BBM UI-Editor-Demo: Move aendert nur neutrale x/y-Layoutwerte", async () => {
     const layout = await loadLayout();
     assert.deepEqual(layout.moveDemoLayoutValue({ x: 120, y: 80 }, "right"), { x: 140, y: 80 });
@@ -213,6 +278,51 @@ async function runBbmUiEditorDemoTests(run) {
       elementId: "bbm.demo.card.moveable",
       layoutValue: { ...layout.DEFAULT_DEMO_LAYOUT_VALUE },
     });
+  });
+
+  await run("BBM UI-Editor-Demo: Reset speichert den Standardwert persistent", async () => {
+    const layout = await loadLayout();
+    const storage = createPersistentStorageAdapter();
+    const store = layout.createDemoLayoutStore(storage);
+
+    store.save({ layoutValue: { x: 240, y: 180 } });
+    store.reset();
+
+    assert.deepEqual(storage.readJson(layout.DEMO_LAYOUT_STORAGE_KEY), {
+      "bbm.demo.card.moveable": { ...layout.DEFAULT_DEMO_LAYOUT_VALUE },
+    });
+  });
+
+  await run("BBM UI-Editor-Demo: ungueltiger Storage-Payload faellt auf Standard zurueck", async () => {
+    const layout = await loadLayout();
+    const storage = createPersistentStorageAdapter({
+      [layout.DEMO_LAYOUT_STORAGE_KEY]: JSON.stringify({
+        "bbm.demo.card.moveable": { x: "links", y: 100 },
+      }),
+    });
+    const store = layout.createDemoLayoutStore(storage);
+
+    assert.deepEqual(store.load("bbm.demo.card.moveable"), {
+      elementId: "bbm.demo.card.moveable",
+      layoutValue: { ...layout.DEFAULT_DEMO_LAYOUT_VALUE },
+    });
+    assert.deepEqual(storage.readJson(layout.DEMO_LAYOUT_STORAGE_KEY), {
+      "bbm.demo.card.moveable": { ...layout.DEFAULT_DEMO_LAYOUT_VALUE },
+    });
+  });
+
+  await run("BBM UI-Editor-Demo: Storage-Payload enthaelt keine Fachdatenfelder", async () => {
+    const layout = await loadLayout();
+    const storage = createPersistentStorageAdapter();
+    const store = layout.createDemoLayoutStore(storage);
+
+    store.save({ layoutValue: { x: 140, y: 100 } });
+
+    const payload = storage.readJson(layout.DEMO_LAYOUT_STORAGE_KEY);
+    assert.deepEqual(payload, {
+      "bbm.demo.card.moveable": { x: 140, y: 100 },
+    });
+    assertNoForbiddenFields(payload);
   });
 
   await run("BBM UI-Editor-Demo: UI kann importiert und gerendert werden", async () => {
