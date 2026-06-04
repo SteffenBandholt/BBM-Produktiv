@@ -1,4 +1,8 @@
 import { getProtokollUiEditorElements } from "../modules/protokoll/uiEditor/protokollUiElements.js";
+import {
+  BBM_UI_EDITOR_DEMO_SCOPE,
+  getBbmUiEditorDemoElements,
+} from "./demo/bbmUiEditorDemoElements.js";
 
 const TARGET_INFO = Object.freeze({
   targetAppId: "bbm-produktiv",
@@ -13,7 +17,14 @@ const PROTOKOLL_TOPS_SCOPE = Object.freeze({
   status: "available",
 });
 
-const AVAILABLE_UI_SCOPES = Object.freeze([PROTOKOLL_TOPS_SCOPE]);
+const BBM_DEMO_SCOPE = Object.freeze({
+  uiScope: BBM_UI_EDITOR_DEMO_SCOPE,
+  moduleId: "uiEditor",
+  label: "BBM UI-Editor Demo",
+  status: "available",
+});
+
+const AVAILABLE_UI_SCOPES = Object.freeze([PROTOKOLL_TOPS_SCOPE, BBM_DEMO_SCOPE]);
 const ACTIVE_UI_SCOPE = "protokoll.topsScreen";
 
 function cloneScope(scope) {
@@ -33,20 +44,29 @@ export function getActiveUiScope() {
 }
 
 export function getBbmUiEditorRegistry(uiScope = getActiveUiScope()) {
-  if (uiScope !== PROTOKOLL_TOPS_SCOPE.uiScope) {
+  if (uiScope === PROTOKOLL_TOPS_SCOPE.uiScope) {
     return {
-      ok: false,
       targetAppId: TARGET_INFO.targetAppId,
-      uiScope,
-      elements: [],
-      reason: `Unknown UI scope: ${String(uiScope)}`,
+      uiScope: PROTOKOLL_TOPS_SCOPE.uiScope,
+      moduleId: PROTOKOLL_TOPS_SCOPE.moduleId,
+      elements: getProtokollUiEditorElements(),
+    };
+  }
+
+  if (uiScope === BBM_DEMO_SCOPE.uiScope) {
+    return {
+      targetAppId: TARGET_INFO.targetAppId,
+      uiScope: BBM_DEMO_SCOPE.uiScope,
+      moduleId: BBM_DEMO_SCOPE.moduleId,
+      elements: getBbmUiEditorDemoElements(),
     };
   }
 
   return {
+    ok: false,
     targetAppId: TARGET_INFO.targetAppId,
-    uiScope: PROTOKOLL_TOPS_SCOPE.uiScope,
-    moduleId: PROTOKOLL_TOPS_SCOPE.moduleId,
-    elements: getProtokollUiEditorElements(),
+    uiScope,
+    elements: [],
+    reason: `Unknown UI scope: ${String(uiScope)}`,
   };
 }

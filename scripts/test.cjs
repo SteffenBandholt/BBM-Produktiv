@@ -19,6 +19,7 @@ const { runProtokollRouterFallbackTests } = require("./tests/protokollRouterFall
 const { runProtokollProjectEntryRoutingTests } = require("./tests/protokollProjectEntryRouting.test.cjs");
 const { runProtokollUiEditorElementsTests } = require("./tests/protokollUiEditorElements.test.cjs");
 const { runBbmUiEditorRegistryTests } = require("./tests/bbmUiEditorRegistry.test.cjs");
+const { runBbmUiEditorDemoTests } = require("./tests/bbmUiEditorDemo.test.cjs");
 const { runBbmUiEditorInstalledArtifactsTests } = require("./tests/bbmUiEditorInstalledArtifacts.test.cjs");
 const { runBbmUiEditorRuntimeLauncherTests } = require("./tests/bbmUiEditorRuntimeLauncher.test.cjs");
 const { runProjektverwaltungModuleTests } = require("./tests/projektverwaltungModule.test.cjs");
@@ -142,6 +143,7 @@ async function main() {
   await runProtokollProjectEntryRoutingTests(run);
   await runProtokollUiEditorElementsTests(run);
   await runBbmUiEditorRegistryTests(run);
+  await runBbmUiEditorDemoTests(run);
   await runBbmUiEditorInstalledArtifactsTests(run);
   await runBbmUiEditorRuntimeLauncherTests(run);
   await runProjektverwaltungModuleTests(run);

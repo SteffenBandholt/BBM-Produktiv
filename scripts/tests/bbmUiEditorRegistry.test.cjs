@@ -94,13 +94,19 @@ async function runBbmUiEditorRegistryTests(run) {
     });
   });
 
-  await run("BBM UI-Editor-Registry: listet den Protokoll-Scope als verfuegbar", async () => {
+  await run("BBM UI-Editor-Registry: listet Protokoll- und Demo-Scope als verfuegbar", async () => {
     const mod = await loadRegistryModule();
     assert.deepEqual(mod.getAvailableUiScopes(), [
       {
         uiScope: "protokoll.topsScreen",
         moduleId: "protokoll",
         label: "Protokoll",
+        status: "available",
+      },
+      {
+        uiScope: "bbm.demo.editorMove",
+        moduleId: "uiEditor",
+        label: "BBM UI-Editor Demo",
         status: "available",
       },
     ]);

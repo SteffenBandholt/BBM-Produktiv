@@ -14,6 +14,7 @@ import { resolveProjectProtocolEntry } from "./projectProtocolRouting.js";
 import { createEditorLabScreen } from "../uiV2/editorLab/EditorLabScreen.js";
 import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js";
 import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
+import { createBbmUiEditorDemoScreen } from "../uiEditor/demo/BbmUiEditorDemoScreen.js";
 import { createRestarbeitenV2Screen } from "../modules/restarbeitenV2/RestarbeitenV2Screen.js";
 import { createRestarbeitenV2Registry } from "../modules/restarbeitenV2/restarbeitenV2Registry.js";
 import { createRestarbeitenV2ReadOnlyDataSourceFactory } from "../modules/restarbeitenV2/restarbeitenV2ReadOnlyDataSourceFactory.js";
@@ -1060,6 +1061,20 @@ export default class Router {
     const V = mod.default;
 
     await this.show(new V({ router: this }), { section: "settings", isTopsView: false });
+  }
+
+  async showBbmUiEditorDemo() {
+    const ui = {
+      node(tag) {
+        return document.createElement(tag);
+      },
+    };
+    await this.show(createBbmUiEditorDemoScreen({ ui }), {
+      section: "uiEditorDemo",
+      isTopsView: false,
+      pageTitle: "UI-Editor Demo",
+      hideSidebar: false,
+    });
   }
 
   async showArchive() {

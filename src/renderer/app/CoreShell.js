@@ -109,6 +109,11 @@ export default class CoreShell {
       devEnabled: true,
       activeUiScope,
       registeredElements: uiEditorRegistry?.elements,
+      onToggle: (event) => {
+        if (event?.uiEditorLauncherActive) {
+          router.showBbmUiEditorDemo?.();
+        }
+      },
     });
     if (typeof updateContextButtons === "function") {
       updateContextButtons();
