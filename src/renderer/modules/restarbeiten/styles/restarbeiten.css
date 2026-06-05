@@ -284,7 +284,23 @@
   grid-column: 1 / -1;
   display: flex;
   gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bbm-restarbeiten-editbox__current-record {
+  min-width: 0;
+  color: var(--bbm-text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.bbm-restarbeiten-editbox__actions {
+  display: inline-flex;
+  gap: 8px;
   justify-content: flex-end;
+  align-items: center;
+  flex: 0 0 auto;
 }
 
 .bbm-restarbeiten-text-area {

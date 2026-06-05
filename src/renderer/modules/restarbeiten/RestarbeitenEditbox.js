@@ -55,6 +55,7 @@ export function buildRestarbeitenEditbox({
 } = {}) {
   const labels = resolveLocationLabels(settings);
   const canSave = Boolean(String(draft.short_text || "").trim());
+  const currentRecordLabel = draft.id ? `Nr.: ${draft.running_number || "?"} in Bearbeitung` : "Nr.: neu in Bearbeitung";
   let saveEnabled = canSave;
   let validation = null;
   const root = createEl("section", {
@@ -65,6 +66,14 @@ export function buildRestarbeitenEditbox({
   const header = createEl("div", {
     className: "bbm-restarbeiten-editbox__header",
     uiId: "restarbeiten.editbox.header",
+  });
+  const currentRecord = createEl("div", {
+    className: "bbm-restarbeiten-editbox__current-record",
+    text: currentRecordLabel,
+    uiId: "restarbeiten.editbox.header.currentRecord",
+  });
+  const actions = createEl("div", {
+    className: "bbm-restarbeiten-editbox__actions",
   });
   const newBtn = createEl("button", {
     className: "bbm-restarbeiten-button",
@@ -93,7 +102,8 @@ export function buildRestarbeitenEditbox({
   deleteBtn.addEventListener("click", () => {
     if (draft.id) onDelete?.();
   });
-  header.append(newBtn, saveBtn, deleteBtn);
+  actions.append(newBtn, saveBtn, deleteBtn);
+  header.append(currentRecord, actions);
 
   const textArea = createEl("div", {
     className: "bbm-restarbeiten-text-area",

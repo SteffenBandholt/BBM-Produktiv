@@ -51,6 +51,10 @@ function createFakeDocument() {
         this._listeners[type] ||= [];
         this._listeners[type].push(handler);
       },
+      scrollIntoView(options) {
+        this._scrollIntoViewCalls ||= [];
+        this._scrollIntoViewCalls.push(options);
+      },
       click() {
         for (const handler of this._listeners?.click || []) {
           handler.call(this, { type: "click", preventDefault() {} });
@@ -398,8 +402,14 @@ async function runRestarbeitenModuleTests(run) {
       });
       const text = collectText(root);
       const options = collectOptions(root);
+      const header = findByUiId(root, "restarbeiten.editbox.header");
+      const currentRecord = findByUiId(root, "restarbeiten.editbox.header.currentRecord");
       assert.equal(text.includes("Neu"), true);
       assert.equal(text.includes("Speichern"), true);
+      assert.equal(text.includes("Nr.: neu in Bearbeitung"), true);
+      assert.equal(Boolean(header), true);
+      assert.equal(header.children[0], currentRecord);
+      assert.equal(currentRecord.textContent, "Nr.: neu in Bearbeitung");
       assert.equal(text.includes("Datensatz löschen"), true);
       assert.equal(text.includes("Kurztext erforderlich"), true);
       assert.equal(findByText(root, "button", "Speichern").disabled, true);
@@ -407,8 +417,29 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(options.some((option) => option.value === "rest" && option.label === "Restarbeit"), true);
       assert.equal(options.some((option) => option.value === "mangel" && option.label === "Mangel"), true);
       assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.action.new")), true);
+      assert.equal(Boolean(currentRecord), true);
       assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.meta.itemClass")), true);
       assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.validation.shortText")), true);
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Restarbeiten: Editbox zeigt bestehenden Datensatz im Header", async () => {
+    const editbox = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenEditbox.js"));
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const root = editbox.buildRestarbeitenEditbox({
+        draft: { id: "ra-7", running_number: 7, item_class: "rest", status: "offen", short_text: "Pruefen" },
+      });
+      const header = findByUiId(root, "restarbeiten.editbox.header");
+      const currentRecord = findByUiId(root, "restarbeiten.editbox.header.currentRecord");
+      assert.equal(currentRecord.textContent, "Nr.: 7 in Bearbeitung");
+      assert.equal(header.children[0], currentRecord);
+      assert.equal(findByText(header.children[1], "button", "Neu").textContent, "Neu");
+      assert.equal(findByText(header.children[1], "button", "Speichern").textContent, "Speichern");
+      assert.equal(Boolean(findByUiId(header.children[1], "restarbeiten.editbox.action.delete")), true);
     } finally {
       globalThis.document = prevDocument;
     }
@@ -603,6 +634,11 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(Object.prototype.hasOwnProperty.call(calls[0].payload, "running_number"), false);
       assert.equal(screen.selectedId, "ra-new");
       assert.equal(screen.draft.id, "ra-new");
+      const newRecord = findNodes(
+        screen.root,
+        (node) => node.getAttribute?.("data-bbm-restarbeiten-record-id") === "ra-new"
+      )[0];
+      assert.deepEqual(newRecord._scrollIntoViewCalls.at(-1), { block: "end", behavior: "smooth" });
 
       screen.draft.short_text = "Aktualisiert";
       await screen._saveDraft();
@@ -619,6 +655,16 @@ async function runRestarbeitenModuleTests(run) {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
     }
+  });
+
+  await run("Restarbeiten: Scrolllogik nutzt keinen globalen Window-Scroll", () => {
+    const source = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"),
+      "utf8"
+    );
+    assert.equal(source.includes("window.scrollTo"), false);
+    assert.equal(source.includes("scrollIntoView"), true);
+    assert.equal(source.includes("data-bbm-restarbeiten-record-id"), true);
   });
 
   await run("Restarbeiten: Ampellogik nutzt keine Orange-Regel", async () => {
@@ -670,6 +716,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(ids.has("restarbeiten.record.itemClass"), true);
     assert.equal(ids.has("restarbeiten.record.location"), true);
     assert.equal(ids.has("restarbeiten.editbox"), true);
+    assert.equal(ids.has("restarbeiten.editbox.header.currentRecord"), true);
     assert.equal(ids.has("restarbeiten.editbox.action.new"), true);
     assert.equal(ids.has("restarbeiten.editbox.action.save"), true);
     assert.equal(ids.has("restarbeiten.editbox.action.delete"), true);

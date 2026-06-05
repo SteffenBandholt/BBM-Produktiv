@@ -64,6 +64,17 @@ function buildSavePayload(draft = {}) {
   return payload;
 }
 
+function findRestarbeitenRecordById(root, id) {
+  const expected = normalizeText(id);
+  if (!root || !expected) return null;
+  if (root.getAttribute?.("data-bbm-restarbeiten-record-id") === expected) return root;
+  for (const child of Array.isArray(root.children) ? root.children : Array.from(root.children || [])) {
+    const found = findRestarbeitenRecordById(child, expected);
+    if (found) return found;
+  }
+  return null;
+}
+
 function toSelectOptions(values = []) {
   return values
     .map((value) => normalizeText(value))
@@ -227,13 +238,18 @@ export default class RestarbeitenScreen {
     if (!this.projectId) return;
     if (!normalizeText(this.draft.short_text)) return;
     const payload = buildSavePayload(this.draft);
+    let createdId = "";
     if (payload.id) {
       await updateRestarbeitItem(payload.id, payload);
     } else {
       const created = await createRestarbeitItem(this.projectId, payload);
-      if (created?.id) this.selectedId = created.id;
+      if (created?.id) {
+        createdId = normalizeText(created.id);
+        this.selectedId = createdId;
+      }
     }
     await this.load();
+    if (createdId) this._scrollRecordIntoView(createdId);
   }
 
   async _deleteDraft() {
@@ -242,6 +258,18 @@ export default class RestarbeitenScreen {
     this.selectedId = null;
     this.draft = prepareDraft();
     await this.load({ autoSelectFirst: false });
+  }
+
+  _scrollRecordIntoView(id) {
+    const record = findRestarbeitenRecordById(this.root, id);
+    if (!record || typeof record.scrollIntoView !== "function") return false;
+    const run = () => record.scrollIntoView({ block: "end", behavior: "smooth" });
+    if (typeof window !== "undefined" && typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(run);
+    } else {
+      run();
+    }
+    return true;
   }
 
   _renderShell() {

@@ -69,9 +69,10 @@ const RESTARBEITEN_UI_ELEMENTS = Object.freeze([
 
   element("restarbeiten.editbox", "Editbox", "area", "layout", "restarbeiten.root", 30),
   element("restarbeiten.editbox.header", "Editbox-Kopf", "componentPart", "layout", "restarbeiten.editbox", 10),
-  element("restarbeiten.editbox.action.new", "Neu", "button", "action", "restarbeiten.editbox.header", 10, OPS.protectedAction, ["move", "resize", "rename"]),
-  element("restarbeiten.editbox.action.save", "Speichern", "button", "action", "restarbeiten.editbox.header", 20, OPS.protectedAction, ["move", "resize", "rename"]),
-  element("restarbeiten.editbox.action.delete", "Datensatz loeschen", "button", "action", "restarbeiten.editbox.header", 30, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.editbox.header.currentRecord", "Aktueller Datensatz", "label", "structure", "restarbeiten.editbox.header", 10, OPS.content),
+  element("restarbeiten.editbox.action.new", "Neu", "button", "action", "restarbeiten.editbox.header", 20, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.editbox.action.save", "Speichern", "button", "action", "restarbeiten.editbox.header", 30, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.editbox.action.delete", "Datensatz loeschen", "button", "action", "restarbeiten.editbox.header", 40, OPS.protectedAction, ["move", "resize", "rename"]),
   element("restarbeiten.editbox.text.short", "Kurztext", "field", "content", "restarbeiten.editbox", 20, OPS.field),
   element("restarbeiten.editbox.text.short.dictation", "Diktat Kurztext", "button", "action", "restarbeiten.editbox.text.short", 10, OPS.protectedAction, ["move", "resize", "rename"]),
   element("restarbeiten.editbox.text.long", "Langtext", "field", "content", "restarbeiten.editbox", 30, OPS.field),
