@@ -159,6 +159,31 @@ function registerRestarbeitenIpc({ ipcMain }) {
     }
   });
 
+  ipcMain.handle("restarbeiten:listNotes", async (_event, payload) => {
+    try {
+      const restarbeitId = normalizeRestarbeitId(payload);
+      if (!restarbeitId) throw new Error("restarbeitId erforderlich");
+      const notes = repo.listRestarbeitNotes(restarbeitId);
+      return { ok: true, notes: Array.isArray(notes) ? notes : [] };
+    } catch (error) {
+      return { ok: false, error: error?.message || "Notizen konnten nicht geladen werden." };
+    }
+  });
+
+  ipcMain.handle("restarbeiten:createNote", async (_event, payload) => {
+    try {
+      const source = payload && typeof payload === "object" ? payload : {};
+      const restarbeitId = normalizeRestarbeitId(source);
+      const noteText = String(source.noteText ?? source.note_text ?? "").trim();
+      if (!restarbeitId) throw new Error("restarbeitId erforderlich");
+      if (!noteText) throw new Error("noteText erforderlich");
+      const note = repo.createRestarbeitNote(restarbeitId, noteText);
+      return { ok: true, note };
+    } catch (error) {
+      return { ok: false, error: error?.message || "Notiz konnte nicht gespeichert werden." };
+    }
+  });
+
 
   ipcMain.handle("restarbeiten:importAttachments", async (_event, payload) => {
     try {

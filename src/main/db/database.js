@@ -1397,6 +1397,32 @@ function ensureRestarbeitenSchema(dbConn) {
     addCol("updated_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
   }
 
+  if (!tableExists(dbConn, "restarbeiten_notes")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS restarbeiten_notes (
+        id TEXT PRIMARY KEY,
+        restarbeit_id TEXT NOT NULL,
+        note_text TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        created_by TEXT,
+        deleted_at TEXT,
+        FOREIGN KEY (restarbeit_id) REFERENCES restarbeiten_items(id)
+      );
+    `);
+  } else {
+    const addCol = (name, sqlType) => {
+      if (!columnExists(dbConn, "restarbeiten_notes", name)) {
+        dbConn.exec(`ALTER TABLE restarbeiten_notes ADD COLUMN ${name} ${sqlType};`);
+      }
+    };
+
+    addCol("restarbeit_id", "TEXT");
+    addCol("note_text", "TEXT NOT NULL DEFAULT ''");
+    addCol("created_at", "TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))");
+    addCol("created_by", "TEXT");
+    addCol("deleted_at", "TEXT");
+  }
+
   dbConn.exec(`
     CREATE INDEX IF NOT EXISTS idx_restarbeiten_items_project_id ON restarbeiten_items(project_id);
     CREATE INDEX IF NOT EXISTS idx_restarbeiten_items_project_status ON restarbeiten_items(project_id, status);
@@ -1408,6 +1434,8 @@ function ensureRestarbeitenSchema(dbConn) {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_restarbeiten_attachments_one_primary
     ON restarbeiten_attachments(restarbeit_id)
     WHERE is_primary = 1;
+    CREATE INDEX IF NOT EXISTS idx_restarbeiten_notes_restarbeit_id ON restarbeiten_notes(restarbeit_id);
+    CREATE INDEX IF NOT EXISTS idx_restarbeiten_notes_created_at ON restarbeiten_notes(created_at);
   `);
 }
 

@@ -26,6 +26,15 @@ function createFakeDocument() {
         this.children.push(child);
         return child;
       },
+      removeChild(child) {
+        const index = this.children.indexOf(child);
+        if (index >= 0) this.children.splice(index, 1);
+        if (child && typeof child === "object") child.parentElement = null;
+        return child;
+      },
+      remove() {
+        this.parentElement?.removeChild?.(this);
+      },
       replaceChildren(...nodes) {
         this.children = [];
         this.append(...nodes);
@@ -50,6 +59,11 @@ function createFakeDocument() {
         this._listeners ||= {};
         this._listeners[type] ||= [];
         this._listeners[type].push(handler);
+      },
+      removeEventListener(type, handler) {
+        const handlers = this._listeners?.[type];
+        if (!Array.isArray(handlers)) return;
+        this._listeners[type] = handlers.filter((entry) => entry !== handler);
       },
       scrollIntoView(options) {
         this._scrollIntoViewCalls ||= [];
@@ -122,12 +136,25 @@ function findByText(node, tagName, text) {
   )[0] || null;
 }
 
+function findByData(node, name, value) {
+  return findNodes(node, (entry) => entry.getAttribute?.(name) === value)[0] || null;
+}
+
 function findControl(node) {
   return findNodes(node, (entry) => ["INPUT", "SELECT", "TEXTAREA"].includes(entry.tagName))[0] || null;
 }
 
 function triggerValue(node, value, eventName = "input") {
   const control = findControl(node);
+  assert.equal(Boolean(control), true, "missing form control");
+  control.value = value;
+  for (const handler of control._listeners?.[eventName] || []) {
+    handler.call(control, { type: eventName, preventDefault() {} });
+  }
+  return control;
+}
+
+function triggerDirectValue(control, value, eventName = "input") {
   assert.equal(Boolean(control), true, "missing form control");
   control.value = value;
   for (const handler of control._listeners?.[eventName] || []) {
@@ -201,6 +228,21 @@ function buildBbmDbStub() {
     },
     async restarbeitenSoftDeleteItem() {
       return { ok: true, item: { id: "ra-1" } };
+    },
+    async restarbeitenListNotes() {
+      return { ok: true, notes: [] };
+    },
+    async restarbeitenCreateNote(data) {
+      return {
+        ok: true,
+        note: {
+          id: "note-1",
+          restarbeit_id: data?.restarbeitId || "ra-1",
+          note_text: data?.noteText || "",
+          created_at: "2026-06-05T10:00:00.000Z",
+          deleted_at: null,
+        },
+      };
     },
   };
 }
@@ -356,6 +398,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(typeof dataSource.listRestarbeitenByProject, "function");
     assert.equal(typeof dataSource.getRestarbeitenProjectSettings, "function");
     assert.equal(typeof dataSource.listRestarbeitAttachments, "function");
+    assert.equal(typeof dataSource.listRestarbeitNotes, "function");
+    assert.equal(typeof dataSource.createRestarbeitNote, "function");
     assert.equal(typeof dataSource.listResponsibleProjectFirms, "function");
     assert.equal(typeof dataSource.softDeleteRestarbeitItem, "function");
     assert.equal(typeof viewModel.toRestarbeitenListItems, "function");
@@ -414,6 +458,7 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(text.includes("Kurztext erforderlich"), true);
       assert.equal(findByText(root, "button", "Speichern").disabled, true);
       assert.equal(findByText(root, "button", "Datensatz löschen").disabled, true);
+      assert.equal(findByText(root, "button", "Notiz").disabled, true);
       assert.equal(options.some((option) => option.value === "rest" && option.label === "Restarbeit"), true);
       assert.equal(options.some((option) => option.value === "mangel" && option.label === "Mangel"), true);
       assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.action.new")), true);
@@ -440,8 +485,95 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(findByText(header.children[1], "button", "Neu").textContent, "Neu");
       assert.equal(findByText(header.children[1], "button", "Speichern").textContent, "Speichern");
       assert.equal(Boolean(findByUiId(header.children[1], "restarbeiten.editbox.action.delete")), true);
+      assert.equal(findByText(root, "button", "Notiz").disabled, false);
     } finally {
       globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Restarbeiten: Notiz-Popup oeffnet, fuegt Notiz hinzu, bleibt offen und bereitet Druck vor", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    const notes = [];
+    const calls = [];
+    globalThis.document = doc;
+    globalThis.window = {
+      bbmDb: {
+        ...buildBbmDbStub(),
+        async restarbeitenListNotes(payload) {
+          calls.push({ type: "listNotes", payload });
+          return { ok: true, notes: notes.filter((note) => note.restarbeit_id === payload.restarbeitId) };
+        },
+        async restarbeitenCreateNote(payload) {
+          calls.push({ type: "createNote", payload });
+          const note = {
+            id: `note-${notes.length + 1}`,
+            restarbeit_id: payload.restarbeitId,
+            note_text: payload.noteText,
+            created_at: "2026-06-05T10:30:00.000Z",
+            deleted_at: null,
+          };
+          notes.unshift(note);
+          return { ok: true, note };
+        },
+      },
+      dispatchEvent() {},
+    };
+    try {
+      const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
+      screen.items = [
+        {
+          id: "ra-1",
+          running_number: 7,
+          item_class: "mangel",
+          status: "offen",
+          short_text: "Abdichtung pruefen",
+          location_level_1: "Haus A",
+          location_level_2: "EG",
+        },
+      ];
+      screen._selectItem("ra-1", { render: false });
+      const root = screen.render();
+
+      const noteBtn = findByText(root, "button", "Notiz");
+      assert.equal(noteBtn.disabled, false);
+      noteBtn.click();
+      await flush();
+      await flush();
+
+      assert.equal(collectText(doc.body).includes("Notizen zu Nr.: 7"), true);
+      assert.equal(collectText(doc.body).includes("Noch keine Notizen vorhanden."), true);
+      assert.deepEqual(calls[0], { type: "listNotes", payload: { restarbeitId: "ra-1" } });
+
+      const addBtn = findByData(doc.body, "data-bbm-restarbeiten-note-action", "add");
+      assert.equal(addBtn.disabled, true);
+      const input = findByData(doc.body, "data-bbm-restarbeiten-note-input", "true");
+      triggerDirectValue(input, "Erste Notiz zur Restarbeit", "input");
+      assert.equal(addBtn.disabled, false);
+      addBtn.click();
+      await flush();
+      await flush();
+
+      assert.equal(calls.some((call) => call.type === "createNote" && call.payload.noteText === "Erste Notiz zur Restarbeit"), true);
+      assert.equal(collectText(doc.body).includes("Erste Notiz zur Restarbeit"), true);
+      assert.equal(Boolean(screen.notesOverlay), true);
+
+      findByData(doc.body, "data-bbm-restarbeiten-note-action", "print").click();
+      assert.equal(screen._lastRestarbeitNotePrint.status, "prepared");
+      assert.equal(screen._lastRestarbeitNotePrint.mode, "restarbeit-note-history");
+      assert.equal(screen._lastRestarbeitNotePrint.restarbeitId, "ra-1");
+      assert.equal(collectText(doc.body).includes("Druck vorbereitet."), true);
+
+      findByData(doc.body, "data-bbm-restarbeiten-note-action", "close").click();
+      assert.equal(screen.notesOverlay, null);
+      assert.equal(doc.body.children.length, 0);
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
     }
   });
 
@@ -761,6 +893,8 @@ async function runRestarbeitenModuleTests(run) {
       "restarbeiten:updateItem",
       "restarbeiten:softDeleteItem",
       "restarbeiten:listAttachments",
+      "restarbeiten:listNotes",
+      "restarbeiten:createNote",
     ]) {
       assert.equal(ipc.includes(channel), true, channel);
     }
@@ -771,6 +905,8 @@ async function runRestarbeitenModuleTests(run) {
       "restarbeitenUpdateItem",
       "restarbeitenSoftDeleteItem",
       "restarbeitenListAttachments",
+      "restarbeitenListNotes",
+      "restarbeitenCreateNote",
     ]) {
       assert.equal(preload.includes(preloadName), true, preloadName);
     }

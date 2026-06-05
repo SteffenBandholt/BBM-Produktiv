@@ -313,6 +313,43 @@ function listRestarbeitAttachments(restarbeitId) {
   `).all(rid);
 }
 
+function listRestarbeitNotes(restarbeitId, { includeDeleted = false } = {}) {
+  const db = initDatabase();
+  const rid = reqText(restarbeitId, "restarbeitId");
+  const deletedWhere = includeDeleted ? "" : "AND deleted_at IS NULL";
+  return db.prepare(`
+    SELECT * FROM restarbeiten_notes
+    WHERE restarbeit_id = ? ${deletedWhere}
+    ORDER BY created_at DESC
+  `).all(rid);
+}
+
+function createRestarbeitNote(restarbeitId, noteText, options = {}) {
+  const db = initDatabase();
+  const rid = reqText(restarbeitId, "restarbeitId");
+  const text = reqText(noteText, "noteText");
+  const existing = db.prepare(`SELECT id FROM restarbeiten_items WHERE id = ?`).get(rid);
+  if (!existing) throw new Error("restarbeit not found");
+
+  const id = toText(options.id) || crypto.randomUUID();
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO restarbeiten_notes (
+      id, restarbeit_id, note_text, created_at, created_by, deleted_at
+    ) VALUES (
+      @id, @restarbeit_id, @note_text, @created_at, @created_by, @deleted_at
+    )
+  `).run({
+    id,
+    restarbeit_id: rid,
+    note_text: text,
+    created_at: toText(options.created_at) || now,
+    created_by: toText(options.created_by),
+    deleted_at: null,
+  });
+  return db.prepare(`SELECT * FROM restarbeiten_notes WHERE id = ?`).get(id);
+}
+
 module.exports = {
   ensureRestarbeitProjectSettings,
   getRestarbeitProjectSettings,
@@ -324,4 +361,6 @@ module.exports = {
   listRestarbeitAttachments,
   deleteRestarbeitAttachment,
   softDeleteRestarbeitItem,
+  listRestarbeitNotes,
+  createRestarbeitNote,
 };

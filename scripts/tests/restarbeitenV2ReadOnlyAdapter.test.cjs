@@ -96,8 +96,14 @@ async function runRestarbeitenV2ReadOnlyAdapterTests(run) {
     .filter(Boolean);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
+  const allowedRestarbeitenMainFiles = new Set([
+    "src/main/db/database.js",
+    "src/main/db/restarbeitenRepo.js",
+    "src/main/ipc/restarbeitenIpc.js",
+    "src/main/preload.js",
+  ]);
   assert.equal(
-    diffFiles.some((file) => file.startsWith("src/main/") && file !== "src/main/db/restarbeitenRepo.js"),
+    diffFiles.some((file) => file.startsWith("src/main/") && !allowedRestarbeitenMainFiles.has(file)),
     false
   );
   assert.equal(diffFiles.some((file) => file.startsWith("src/preload/")), false);

@@ -1,6 +1,6 @@
 function requireBbmDb() {
   if (!window || !window.bbmDb) {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: window.bbmDb fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: window.bbmDb fehlt.");
   }
   return window.bbmDb;
 }
@@ -43,7 +43,7 @@ function buildUpdatePayload(id, patch = {}) {
 export async function listRestarbeitenByProject(projectId) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenListByProject !== "function") {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenListByProject fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenListByProject fehlt.");
   }
   const pid = extractProjectId(projectId);
   const response = await callAndNormalize(bbmDb.restarbeitenListByProject, { projectId: pid }, "liste");
@@ -53,7 +53,7 @@ export async function listRestarbeitenByProject(projectId) {
 export async function getRestarbeitenProjectSettings(projectId) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenGetProjectSettings !== "function") {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenGetProjectSettings fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenGetProjectSettings fehlt.");
   }
   const pid = extractProjectId(projectId);
   const response = await callAndNormalize(bbmDb.restarbeitenGetProjectSettings, { projectId: pid }, "settings");
@@ -63,7 +63,7 @@ export async function getRestarbeitenProjectSettings(projectId) {
 export async function listResponsibleProjectFirms(projectId) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.projectFirmsListByProject !== "function") {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: projectFirmsListByProject fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: projectFirmsListByProject fehlt.");
   }
   const pid = extractProjectId(projectId);
   const response = await callAndNormalize(bbmDb.projectFirmsListByProject, pid, "firmenliste");
@@ -74,7 +74,7 @@ export async function listResponsibleProjectFirms(projectId) {
 export async function createRestarbeitItem(projectId, payload = {}) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenCreateItem !== "function") {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenCreateItem fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenCreateItem fehlt.");
   }
   const response = await callAndNormalize(
     bbmDb.restarbeitenCreateItem,
@@ -87,7 +87,7 @@ export async function createRestarbeitItem(projectId, payload = {}) {
 export async function updateRestarbeitItem(id, patch = {}) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenUpdateItem !== "function") {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenUpdateItem fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenUpdateItem fehlt.");
   }
   const response = await callAndNormalize(bbmDb.restarbeitenUpdateItem, buildUpdatePayload(id, patch), "update");
   return response.item && typeof response.item === "object" ? response.item : null;
@@ -110,17 +110,43 @@ function extractAttachmentId(attachmentId) {
 export async function listRestarbeitAttachments(restarbeitId) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenListAttachments !== "function") {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenListAttachments fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenListAttachments fehlt.");
   }
   const rid = extractRestarbeitId(restarbeitId);
   const response = await callAndNormalize(bbmDb.restarbeitenListAttachments, { restarbeitId: rid }, "attachments-liste");
   return Array.isArray(response.attachments) ? response.attachments : [];
 }
 
+export async function listRestarbeitNotes(restarbeitId) {
+  const bbmDb = requireBbmDb();
+  if (typeof bbmDb.restarbeitenListNotes !== "function") {
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenListNotes fehlt.");
+  }
+  const rid = extractRestarbeitId(restarbeitId);
+  const response = await callAndNormalize(bbmDb.restarbeitenListNotes, { restarbeitId: rid }, "notizen-liste");
+  return Array.isArray(response.notes) ? response.notes : [];
+}
+
+export async function createRestarbeitNote(restarbeitId, noteText) {
+  const bbmDb = requireBbmDb();
+  if (typeof bbmDb.restarbeitenCreateNote !== "function") {
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenCreateNote fehlt.");
+  }
+  const rid = extractRestarbeitId(restarbeitId);
+  const text = String(noteText ?? "").trim();
+  if (!text) throw new Error("Restarbeiten-Datenzugriff: noteText fehlt.");
+  const response = await callAndNormalize(
+    bbmDb.restarbeitenCreateNote,
+    { restarbeitId: rid, noteText: text },
+    "notiz-create"
+  );
+  return response.note && typeof response.note === "object" ? response.note : null;
+}
+
 export async function setPrimaryRestarbeitAttachment(restarbeitId, attachmentId) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenSetPrimaryAttachment !== "function") {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenSetPrimaryAttachment fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenSetPrimaryAttachment fehlt.");
   }
   const rid = extractRestarbeitId(restarbeitId);
   const aid = extractAttachmentId(attachmentId);
@@ -136,7 +162,7 @@ export async function setPrimaryRestarbeitAttachment(restarbeitId, attachmentId)
 export async function importRestarbeitAttachments(restarbeitId, projectId) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenImportAttachments !== "function") {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenImportAttachments fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenImportAttachments fehlt.");
   }
   const rid = extractRestarbeitId(restarbeitId);
   const pid = extractProjectId(projectId);
@@ -152,7 +178,7 @@ export async function importRestarbeitAttachments(restarbeitId, projectId) {
 export async function deleteRestarbeitAttachment(restarbeitId, attachmentId) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenDeleteAttachment !== "function") {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenDeleteAttachment fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenDeleteAttachment fehlt.");
   }
   const rid = extractRestarbeitId(restarbeitId);
   const aid = extractAttachmentId(attachmentId);
@@ -169,7 +195,7 @@ export async function deleteRestarbeitAttachment(restarbeitId, attachmentId) {
 export async function softDeleteRestarbeitItem(id) {
   const bbmDb = requireBbmDb();
   if (typeof bbmDb.restarbeitenSoftDeleteItem !== "function") {
-    throw new Error("Restarbeiten-Datenzugriff nicht verfuegbar: restarbeitenSoftDeleteItem fehlt.");
+    throw new Error("Restarbeiten-Datenzugriff nicht verfügbar: restarbeitenSoftDeleteItem fehlt.");
   }
   const rid = String(id ?? "").trim();
   if (!rid) throw new Error("Restarbeiten-Datenzugriff: id fehlt.");

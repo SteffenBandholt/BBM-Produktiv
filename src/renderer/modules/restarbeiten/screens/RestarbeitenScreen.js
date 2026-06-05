@@ -1,6 +1,8 @@
 import {
+  createRestarbeitNote,
   createRestarbeitItem,
   getRestarbeitenProjectSettings,
+  listRestarbeitNotes,
   listResponsibleProjectFirms,
   listRestarbeitenByProject,
   softDeleteRestarbeitItem,
@@ -11,9 +13,34 @@ import { buildRestarbeitenFilterbar } from "../RestarbeitenFilterbar.js";
 import { buildRestarbeitenMainBody } from "../RestarbeitenMainBody.js";
 import { buildRestarbeitenEditbox } from "../RestarbeitenEditbox.js";
 import { ensureRestarbeitenStyles } from "../styles.js";
+import {
+  cleanupPopupHandlers,
+  createPopupOverlay,
+  registerPopupCloseHandlers,
+  stylePopupCard,
+} from "../../../ui/popupCommon.js";
 
 function normalizeText(value) {
   return String(value ?? "").trim();
+}
+
+function formatNoteTimestamp(value) {
+  const raw = normalizeText(value);
+  if (!raw) return "-";
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleString("de-DE", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function buildLocationLine(source = {}) {
+  const parts = [1, 2, 3, 4].map((level) => normalizeText(source[`location_level_${level}`])).filter(Boolean);
+  return parts.join(" - ");
 }
 
 function emptyDraft() {
@@ -112,6 +139,16 @@ export default class RestarbeitenScreen {
     this.showLongtextInList = true;
     this.error = null;
     this.isLoading = false;
+    this.notesOverlay = null;
+    this.notesPopup = {
+      restarbeitId: "",
+      notes: [],
+      noteText: "",
+      isLoading: false,
+      error: "",
+      printStatus: "",
+    };
+    this._lastRestarbeitNotePrint = null;
   }
 
   render() {
@@ -272,6 +309,179 @@ export default class RestarbeitenScreen {
     return true;
   }
 
+  async _openNotesPopup() {
+    const restarbeitId = normalizeText(this.draft?.id);
+    if (!restarbeitId) return;
+    if (!this.notesOverlay) {
+      this.notesOverlay = createPopupOverlay({ background: "rgba(15, 23, 42, 0.34)" });
+      document.body?.appendChild?.(this.notesOverlay);
+      registerPopupCloseHandlers(this.notesOverlay, () => this._closeNotesPopup(), { closeOnBackdrop: false });
+    }
+    this.notesPopup = {
+      restarbeitId,
+      notes: [],
+      noteText: "",
+      isLoading: true,
+      error: "",
+      printStatus: "",
+    };
+    this._renderNotesPopup();
+    try {
+      this.notesPopup.notes = await listRestarbeitNotes(restarbeitId);
+    } catch (err) {
+      this.notesPopup.error = err?.message || String(err);
+    } finally {
+      this.notesPopup.isLoading = false;
+      this._renderNotesPopup();
+    }
+  }
+
+  _closeNotesPopup() {
+    if (!this.notesOverlay) return;
+    cleanupPopupHandlers(this.notesOverlay);
+    if (typeof this.notesOverlay.remove === "function") {
+      this.notesOverlay.remove();
+    } else if (this.notesOverlay.parentElement?.removeChild) {
+      this.notesOverlay.parentElement.removeChild(this.notesOverlay);
+    }
+    this.notesOverlay = null;
+  }
+
+  async _addNoteFromPopup(noteText) {
+    const text = normalizeText(noteText);
+    const restarbeitId = normalizeText(this.notesPopup.restarbeitId);
+    if (!restarbeitId || !text) return;
+    this.notesPopup.error = "";
+    this.notesPopup.printStatus = "";
+    try {
+      await createRestarbeitNote(restarbeitId, text);
+      this.notesPopup.noteText = "";
+      this.notesPopup.notes = await listRestarbeitNotes(restarbeitId);
+    } catch (err) {
+      this.notesPopup.error = err?.message || String(err);
+    }
+    this._renderNotesPopup();
+  }
+
+  printRestarbeitNoteHistory(restarbeitId = this.notesPopup.restarbeitId) {
+    const id = normalizeText(restarbeitId);
+    const result = {
+      ok: Boolean(id),
+      status: id ? "prepared" : "missing-restarbeit",
+      mode: "restarbeit-note-history",
+      restarbeitId: id,
+      notes: Array.isArray(this.notesPopup.notes) ? [...this.notesPopup.notes] : [],
+    };
+    this._lastRestarbeitNotePrint = result;
+    return result;
+  }
+
+  _printRestarbeitNoteHistory() {
+    const result = this.printRestarbeitNoteHistory();
+    this.notesPopup.printStatus = result.ok ? "Druck vorbereitet." : "Kein Datensatz ausgewählt.";
+    this._renderNotesPopup();
+  }
+
+  _renderNotesPopup() {
+    if (!this.notesOverlay) return;
+    this.notesOverlay.replaceChildren();
+    this.notesOverlay.style.display = "flex";
+
+    const card = document.createElement("section");
+    card.className = "bbm-restarbeiten-notes-popup";
+    stylePopupCard(card, { width: "min(720px, calc(100vw - 32px))", maxHeight: "calc(100vh - 32px)" });
+
+    const header = document.createElement("header");
+    header.className = "bbm-restarbeiten-notes-popup__header";
+    const title = document.createElement("h2");
+    title.textContent = `Notizen zu Nr.: ${this.draft?.running_number || "?"}`;
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "bbm-restarbeiten-button";
+    closeBtn.textContent = "Schließen";
+    closeBtn.setAttribute("data-bbm-restarbeiten-note-action", "close");
+    closeBtn.addEventListener("click", () => this._closeNotesPopup());
+    header.append(title, closeBtn);
+
+    const body = document.createElement("div");
+    body.className = "bbm-restarbeiten-notes-popup__body";
+    const summary = document.createElement("div");
+    summary.className = "bbm-restarbeiten-notes-popup__summary";
+    const locationLine = buildLocationLine(this.draft);
+    summary.textContent = [
+      this.draft?.item_class === "mangel" ? "Mangel" : "Restarbeit",
+      locationLine,
+      normalizeText(this.draft?.short_text),
+    ].filter(Boolean).join(" - ");
+
+    const history = document.createElement("div");
+    history.className = "bbm-restarbeiten-notes-popup__history";
+    if (this.notesPopup.isLoading) {
+      const loading = document.createElement("p");
+      loading.textContent = "Notizen werden geladen ...";
+      history.appendChild(loading);
+    } else if (this.notesPopup.error) {
+      const error = document.createElement("p");
+      error.className = "bbm-restarbeiten-notes-popup__error";
+      error.textContent = this.notesPopup.error;
+      history.appendChild(error);
+    } else if (!this.notesPopup.notes.length) {
+      const empty = document.createElement("p");
+      empty.className = "bbm-restarbeiten-notes-popup__empty";
+      empty.textContent = "Noch keine Notizen vorhanden.";
+      history.appendChild(empty);
+    } else {
+      for (const note of this.notesPopup.notes) {
+        const item = document.createElement("article");
+        item.className = "bbm-restarbeiten-notes-popup__note";
+        const timestamp = document.createElement("div");
+        timestamp.className = "bbm-restarbeiten-notes-popup__note-time";
+        timestamp.textContent = formatNoteTimestamp(note.created_at);
+        const text = document.createElement("div");
+        text.className = "bbm-restarbeiten-notes-popup__note-text";
+        text.textContent = normalizeText(note.note_text);
+        item.append(timestamp, text);
+        history.appendChild(item);
+      }
+    }
+
+    const input = document.createElement("textarea");
+    input.className = "bbm-restarbeiten-notes-popup__input";
+    input.placeholder = "Neue Notiz";
+    input.value = this.notesPopup.noteText || "";
+    input.setAttribute("data-bbm-restarbeiten-note-input", "true");
+
+    const actions = document.createElement("div");
+    actions.className = "bbm-restarbeiten-notes-popup__actions";
+    const addBtn = document.createElement("button");
+    addBtn.type = "button";
+    addBtn.className = "bbm-restarbeiten-button";
+    addBtn.textContent = "Notiz hinzufügen";
+    addBtn.disabled = !normalizeText(input.value);
+    addBtn.setAttribute("data-bbm-restarbeiten-note-action", "add");
+    input.addEventListener("input", () => {
+      this.notesPopup.noteText = input.value;
+      addBtn.disabled = !normalizeText(input.value);
+    });
+    addBtn.addEventListener("click", () => this._addNoteFromPopup(input.value));
+
+    const printBtn = document.createElement("button");
+    printBtn.type = "button";
+    printBtn.className = "bbm-restarbeiten-button";
+    printBtn.textContent = "Drucken";
+    printBtn.setAttribute("data-bbm-restarbeiten-note-action", "print");
+    printBtn.addEventListener("click", () => this._printRestarbeitNoteHistory());
+    actions.append(addBtn, printBtn);
+
+    const status = document.createElement("div");
+    status.className = "bbm-restarbeiten-notes-popup__status";
+    status.textContent = this.notesPopup.printStatus || "";
+
+    body.append(summary, history, input, actions, status);
+    card.append(header, body);
+    this.notesOverlay.appendChild(card);
+  }
+
   _renderShell() {
     if (!this.root) return;
     this.root.replaceChildren();
@@ -310,6 +520,7 @@ export default class RestarbeitenScreen {
         onDraftChange: (patch, options) => this._updateDraft(patch, options),
         onSave: () => this._saveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
         onDelete: () => this._deleteDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
+        onNote: () => this._openNotesPopup().catch((err) => this._setStubMessage(err?.message || String(err))),
       })
     );
 

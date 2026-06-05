@@ -250,6 +250,8 @@ contextBridge.exposeInMainWorld("bbmDb", {
   restarbeitenUpdateItem: (data) => ipcRenderer.invoke("restarbeiten:updateItem", data),
   restarbeitenSoftDeleteItem: (data) => ipcRenderer.invoke("restarbeiten:softDeleteItem", data),
   restarbeitenListAttachments: (data) => ipcRenderer.invoke("restarbeiten:listAttachments", data),
+  restarbeitenListNotes: (data) => ipcRenderer.invoke("restarbeiten:listNotes", data),
+  restarbeitenCreateNote: (data) => ipcRenderer.invoke("restarbeiten:createNote", data),
   restarbeitenSetPrimaryAttachment: (data) => ipcRenderer.invoke("restarbeiten:setPrimaryAttachment", data),
   restarbeitenImportAttachments: (data) => ipcRenderer.invoke("restarbeiten:importAttachments", data),
   restarbeitenDeleteAttachment: (data) => ipcRenderer.invoke("restarbeiten:deleteAttachment", data),

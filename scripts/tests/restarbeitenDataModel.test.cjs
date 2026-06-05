@@ -33,13 +33,15 @@ async function withTemp(fn) {
 async function runRestarbeitenDataModelTests(run) {
   await run("Restarbeiten Schema wird angelegt", async () => withTemp(({ db }) => {
     const conn = db.initDatabase();
-    for (const t of ["restarbeiten_items", "restarbeiten_project_settings", "restarbeiten_attachments"]) {
+    for (const t of ["restarbeiten_items", "restarbeiten_project_settings", "restarbeiten_attachments", "restarbeiten_notes"]) {
       assert.ok(conn.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name=?").get(t));
     }
     const cols = conn.prepare("PRAGMA table_info(restarbeiten_items)").all().map((c) => c.name);
     ["project_id","running_number","location_level_1","location_level_2","location_level_3","location_level_4","short_text","long_text","item_class","status","due_date","responsible_project_firm_id","responsible_label","archived_at","completed_at","completion_note","deleted_at","created_at","updated_at"].forEach((c)=>assert.ok(cols.includes(c)));
     const aCols = conn.prepare("PRAGMA table_info(restarbeiten_attachments)").all().map((c) => c.name);
     ["restarbeit_id","file_path","thumbnail_path","sort_order","is_primary"].forEach((c)=>assert.ok(aCols.includes(c)));
+    const nCols = conn.prepare("PRAGMA table_info(restarbeiten_notes)").all().map((c) => c.name);
+    ["restarbeit_id","note_text","created_at","created_by","deleted_at"].forEach((c)=>assert.ok(nCols.includes(c)));
   }));
 
   await run("Projektbezug und running_number je Projekt", async () => withTemp(({ db, repo }) => {
@@ -239,6 +241,38 @@ async function runRestarbeitenDataModelTests(run) {
 
     const rp4 = repo.createRestarbeitItem({ project_id: "p1", short_text: "RP4" });
     assert.equal(rp4.running_number, 4);
+  }));
+
+  await run("Restarbeiten-Notizen: speichern, listen und Soft-Delete behaelt Historie", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+    const rp1 = repo.createRestarbeitItem({ project_id: "p1", short_text: "RP1" });
+    const rp2 = repo.createRestarbeitItem({ project_id: "p1", short_text: "RP2" });
+
+    assert.throws(() => repo.createRestarbeitNote(rp1.id, "   "), /noteText/);
+
+    const n1 = repo.createRestarbeitNote(rp1.id, "Erste Notiz", {
+      created_at: "2026-06-05T08:00:00.000Z",
+      created_by: "tester",
+    });
+    const n2 = repo.createRestarbeitNote(rp1.id, "Zweite Notiz", {
+      created_at: "2026-06-05T09:00:00.000Z",
+    });
+    repo.createRestarbeitNote(rp2.id, "Andere Restarbeit", {
+      created_at: "2026-06-05T10:00:00.000Z",
+    });
+
+    assert.equal(n1.restarbeit_id, rp1.id);
+    assert.equal(n1.note_text, "Erste Notiz");
+    assert.equal(n1.created_by, "tester");
+
+    const rp1Notes = repo.listRestarbeitNotes(rp1.id);
+    assert.deepEqual(rp1Notes.map((note) => note.id), [n2.id, n1.id]);
+    assert.equal(rp1Notes.every((note) => note.restarbeit_id === rp1.id), true);
+
+    repo.softDeleteRestarbeitItem(rp1.id);
+    const afterSoftDelete = repo.listRestarbeitNotes(rp1.id);
+    assert.deepEqual(afterSoftDelete.map((note) => note.id), [n2.id, n1.id]);
   }));
 
   await run("Foto-Regeln inkl. primary und max 3", async () => withTemp(({ db, repo }) => {

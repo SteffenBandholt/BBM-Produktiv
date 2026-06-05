@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M2.3 Restarbeiten Notizhistorie und Notiz-Popup umgesetzt:
+  - Der Notiz-Button in der Restarbeiten-Editbox ist fuer gespeicherte Datensaetze aktiv und oeffnet ein einfaches Popup mit Historie, leerem Zustand, Eingabefeld, Hinzufuegen, Drucken und Schliessen.
+  - Neue Notizen werden nur mit nicht leerem Text gespeichert; das Popup bleibt offen und aktualisiert die Historie.
+  - Datenweg ergaenzt: `restarbeiten_notes`, Repository-Funktionen, IPC-/Preload-Bruecke und Renderer-DataSource fuer Listen und Anlegen von Notizen.
+  - Der Drucken-Button ist als strukturierter Restarbeiten-Notizhistorie-Stub vorbereitet; keine allgemeine PDF-/Mail-Anbindung.
+  - Editorfaehig bleibt nur der vorhandene feste Notiz-Button der Editbox; Popup, Fachaktionen, Speichern, Datenbankaktionen und Druckausfuehrung sind nicht editorfaehig.
+  - Geprueft mit `npm test`; alle Tests bestanden.
+  - Naechster offener Schritt: fachliche Sichtpruefung des Notiz-Popups im lokalen App-Kontext.
+
 - M2.1 Restarbeiten Main/Body Detaildarstellung umgesetzt:
   - Das Blatt zeigt jetzt einen dezenten Tabellenkopf mit `Nr.`, `Gegenstand`, `Fertig bis`, `Status` und `Verantw.`.
   - Datensatzzeilen sind dreispaltig und dreizeilig aufgebaut: Nummer/Datum/Klasse, Verortung/Kurztext/Langtext, Fertig-bis mit Ampel/Status/Verantwortlich.

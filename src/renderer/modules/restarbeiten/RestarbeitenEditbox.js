@@ -52,6 +52,7 @@ export function buildRestarbeitenEditbox({
   onNew,
   onSave,
   onDelete,
+  onNote,
 } = {}) {
   const labels = resolveLocationLabels(settings);
   const canSave = Boolean(String(draft.short_text || "").trim());
@@ -222,8 +223,11 @@ export function buildRestarbeitenEditbox({
     uiId: "restarbeiten.editbox.meta.noteButton",
   });
   noteBtn.type = "button";
-  noteBtn.disabled = true;
-  noteBtn.title = "Notiz-Popup folgt später";
+  noteBtn.disabled = !draft.id;
+  noteBtn.title = draft.id ? "Notizen öffnen" : "Notiz erst nach dem Speichern möglich";
+  noteBtn.addEventListener("click", () => {
+    if (draft.id) onNote?.();
+  });
   meta.appendChild(noteBtn);
 
   root.append(header, textArea, location, meta);
