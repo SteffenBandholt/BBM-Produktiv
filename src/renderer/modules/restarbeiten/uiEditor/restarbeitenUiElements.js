@@ -1,0 +1,100 @@
+export const RESTARBEITEN_UI_EDITOR_SCOPE = "restarbeiten.screen";
+
+const OPS = Object.freeze({
+  layout: Object.freeze(["inspect", "show", "hide", "move", "resize", "reset"]),
+  group: Object.freeze(["inspect", "show", "hide", "move", "resize"]),
+  field: Object.freeze(["inspect", "show", "hide", "move", "resize", "rename"]),
+  action: Object.freeze(["inspect", "show", "hide", "move", "rename"]),
+  protectedAction: Object.freeze(["inspect"]),
+  content: Object.freeze(["inspect", "show", "hide", "resize"]),
+});
+
+function element(id, name, type, role, parentId, order, allowedOps = OPS.layout, lockedOps = []) {
+  return Object.freeze({
+    id,
+    name,
+    type,
+    role,
+    parentId,
+    order,
+    visible: true,
+    editable: allowedOps.length > 1,
+    allowedOps: [...allowedOps],
+    lockedOps: [...lockedOps],
+  });
+}
+
+const RESTARBEITEN_UI_ELEMENTS = Object.freeze([
+  element("restarbeiten.root", "Restarbeiten", "root", "layout", null, 1),
+
+  element("restarbeiten.filterbar", "Filterleiste", "toolbar", "layout", "restarbeiten.root", 10),
+  element("restarbeiten.filterbar.group.location", "Verortung", "group", "layout", "restarbeiten.filterbar", 10, OPS.group),
+  element("restarbeiten.filterbar.location.level1", "Verortung L1", "field", "meta", "restarbeiten.filterbar.group.location", 10, OPS.field),
+  element("restarbeiten.filterbar.location.level2", "Verortung L2", "field", "meta", "restarbeiten.filterbar.group.location", 20, OPS.field),
+  element("restarbeiten.filterbar.location.level3", "Verortung L3", "field", "meta", "restarbeiten.filterbar.group.location", 30, OPS.field),
+  element("restarbeiten.filterbar.location.level4", "Verortung L4", "field", "meta", "restarbeiten.filterbar.group.location", 40, OPS.field),
+  element("restarbeiten.filterbar.group.class", "Klasse", "group", "layout", "restarbeiten.filterbar", 20, OPS.group),
+  element("restarbeiten.filterbar.class.all", "Alle", "button", "visibility", "restarbeiten.filterbar.group.class", 10, OPS.action),
+  element("restarbeiten.filterbar.class.rest", "Restarbeit", "button", "visibility", "restarbeiten.filterbar.group.class", 20, OPS.action),
+  element("restarbeiten.filterbar.class.defect", "Mangel", "button", "visibility", "restarbeiten.filterbar.group.class", 30, OPS.action),
+  element("restarbeiten.filterbar.group.meta", "Meta", "group", "layout", "restarbeiten.filterbar", 30, OPS.group),
+  element("restarbeiten.filterbar.meta.status", "Status", "field", "status", "restarbeiten.filterbar.group.meta", 10, OPS.field),
+  element("restarbeiten.filterbar.meta.dueDate", "Fertig bis", "field", "date", "restarbeiten.filterbar.group.meta", 20, OPS.field),
+  element("restarbeiten.filterbar.meta.responsible", "Verantwortlich", "field", "responsible", "restarbeiten.filterbar.group.meta", 30, OPS.field),
+  element("restarbeiten.filterbar.action.close", "Beenden / Schliessen", "button", "navigation", "restarbeiten.filterbar", 40, OPS.action),
+
+  element("restarbeiten.main", "Hauptbereich", "area", "layout", "restarbeiten.root", 20),
+  element("restarbeiten.main.sheet", "Blattansicht", "component", "layout", "restarbeiten.main", 10),
+  element("restarbeiten.main.sheet.paper", "Blatt", "componentPart", "layout", "restarbeiten.main.sheet", 10),
+  element("restarbeiten.main.records", "Datensaetze", "list", "content", "restarbeiten.main.sheet.paper", 20, OPS.content),
+  element("restarbeiten.record.numberColumn", "Nummern-Spalte", "componentPart", "structure", "restarbeiten.main.records", 10, OPS.content),
+  element("restarbeiten.record.number", "Laufende Nummer", "label", "structure", "restarbeiten.record.numberColumn", 10, OPS.content),
+  element("restarbeiten.record.createdAt", "Erfassungsdatum", "label", "date", "restarbeiten.record.numberColumn", 20, OPS.content),
+  element("restarbeiten.record.contentColumn", "Inhaltsspalte", "componentPart", "content", "restarbeiten.main.records", 20, OPS.content),
+  element("restarbeiten.record.shortText", "Kurztext", "label", "content", "restarbeiten.record.contentColumn", 10, OPS.content),
+  element("restarbeiten.record.longText", "Langtext", "label", "content", "restarbeiten.record.contentColumn", 20, OPS.content),
+  element("restarbeiten.record.metaColumn", "Metaspalte", "componentPart", "meta", "restarbeiten.main.records", 30, OPS.content),
+  element("restarbeiten.record.dueDate", "Fertig bis", "label", "date", "restarbeiten.record.metaColumn", 10, OPS.content),
+  element("restarbeiten.record.ampel", "Ampel", "statusIndicator", "status", "restarbeiten.record.metaColumn", 20, OPS.content),
+  element("restarbeiten.record.status", "Status", "label", "status", "restarbeiten.record.metaColumn", 30, OPS.content),
+  element("restarbeiten.record.responsible", "Verantwortlich", "label", "responsible", "restarbeiten.record.metaColumn", 40, OPS.content),
+
+  element("restarbeiten.editbox", "Editbox", "area", "layout", "restarbeiten.root", 30),
+  element("restarbeiten.editbox.header", "Editbox-Kopf", "componentPart", "layout", "restarbeiten.editbox", 10),
+  element("restarbeiten.editbox.action.save", "Speichern", "button", "action", "restarbeiten.editbox.header", 10, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.editbox.action.delete", "Datensatz loeschen", "button", "action", "restarbeiten.editbox.header", 20, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.editbox.text.short", "Kurztext", "field", "content", "restarbeiten.editbox", 20, OPS.field),
+  element("restarbeiten.editbox.text.short.dictation", "Diktat Kurztext", "button", "action", "restarbeiten.editbox.text.short", 10, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.editbox.text.long", "Langtext", "field", "content", "restarbeiten.editbox", 30, OPS.field),
+  element("restarbeiten.editbox.text.long.dictation", "Diktat Langtext", "button", "action", "restarbeiten.editbox.text.long", 10, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.editbox.location", "Editbox-Verortung", "group", "layout", "restarbeiten.editbox", 40, OPS.group),
+  element("restarbeiten.editbox.location.level1", "L1", "field", "meta", "restarbeiten.editbox.location", 10, OPS.field),
+  element("restarbeiten.editbox.location.level2", "L2", "field", "meta", "restarbeiten.editbox.location", 20, OPS.field),
+  element("restarbeiten.editbox.location.level3", "L3", "field", "meta", "restarbeiten.editbox.location", 30, OPS.field),
+  element("restarbeiten.editbox.location.level4", "L4", "field", "meta", "restarbeiten.editbox.location", 40, OPS.field),
+  element("restarbeiten.editbox.meta", "Editbox-Meta", "group", "meta", "restarbeiten.editbox", 50, OPS.group),
+  element("restarbeiten.editbox.meta.status", "Status", "field", "status", "restarbeiten.editbox.meta", 10, OPS.field),
+  element("restarbeiten.editbox.meta.dueDate", "Fertig bis", "field", "date", "restarbeiten.editbox.meta", 20, OPS.field),
+  element("restarbeiten.editbox.meta.responsible", "Verantwortlich", "field", "responsible", "restarbeiten.editbox.meta", 30, OPS.field),
+  element("restarbeiten.editbox.meta.ampel", "Ampel", "statusIndicator", "status", "restarbeiten.editbox.meta", 40, OPS.content),
+  element("restarbeiten.editbox.meta.noteButton", "Notiz", "button", "action", "restarbeiten.editbox.meta", 50, OPS.protectedAction, ["move", "resize", "rename"]),
+
+  element("restarbeiten.quicklane", "Quicklane", "toolbar", "layout", "restarbeiten.root", 40),
+  element("restarbeiten.quicklane.pin", "Fixieren", "button", "navigation", "restarbeiten.quicklane", 10, OPS.action),
+  element("restarbeiten.quicklane.action.project", "Projekt", "button", "navigation", "restarbeiten.quicklane", 20, OPS.action),
+  element("restarbeiten.quicklane.action.firms", "Firmen", "button", "navigation", "restarbeiten.quicklane", 30, OPS.action),
+  element("restarbeiten.quicklane.action.ampel", "Ampel", "button", "visibility", "restarbeiten.quicklane", 40, OPS.action),
+  element("restarbeiten.quicklane.action.longtext", "Langtext", "button", "visibility", "restarbeiten.quicklane", 50, OPS.action),
+  element("restarbeiten.quicklane.action.pdfPreview", "PDF Voransicht", "button", "action", "restarbeiten.quicklane", 60, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.quicklane.action.output", "Ausgabe", "button", "action", "restarbeiten.quicklane", 70, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.quicklane.output.print", "Drucken", "button", "action", "restarbeiten.quicklane.action.output", 10, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.quicklane.output.email", "E-Mail", "button", "action", "restarbeiten.quicklane.action.output", 20, OPS.protectedAction, ["move", "resize", "rename"]),
+]);
+
+export function getRestarbeitenUiEditorElements() {
+  return RESTARBEITEN_UI_ELEMENTS.map((entry) => ({
+    ...entry,
+    allowedOps: [...entry.allowedOps],
+    lockedOps: [...entry.lockedOps],
+  }));
+}

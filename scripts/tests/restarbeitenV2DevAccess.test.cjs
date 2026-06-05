@@ -28,7 +28,8 @@ async function runRestarbeitenV2DevAccessTests(run) {
     assert.equal(routerSource.includes("data-ui-v2-restarbeiten-host"), false);
     assert.equal(routerSource.includes("Restarbeiten V2 DEV"), false);
     assert.equal(routerSource.includes("createRestarbeitenV2DevLegacyRows"), false);
-    assert.equal(routerSource.includes("Restarbeitenliste wird neu aufgebaut."), true);
+    assert.equal(routerSource.includes("Restarbeitenliste wird neu aufgebaut."), false);
+    assert.equal(routerSource.includes("resolveActiveModuleScreen"), true);
   });
 }
 

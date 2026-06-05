@@ -15,7 +15,6 @@ import { createEditorLabScreen } from "../uiV2/editorLab/EditorLabScreen.js";
 import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js";
 import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
 import { createBbmUiEditorDemoScreen } from "../uiEditor/demo/BbmUiEditorDemoScreen.js";
-import { RESTARBEITEN_MODULE_ID } from "../modules/restarbeiten/index.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -81,30 +80,6 @@ function _pickAppKernelSettings(raw = {}) {
     out[key] = raw?.[key] ?? "";
   }
   return out;
-}
-
-function createRestarbeitenRebuildPlaceholderScreen() {
-  return {
-    render() {
-      const doc = globalThis.document;
-      const host = doc.createElement("section");
-      host.setAttribute("data-bbm-restarbeiten-rebuild-placeholder", "true");
-      host.style.display = "grid";
-      host.style.placeItems = "center";
-      host.style.minHeight = "240px";
-      host.style.padding = "24px";
-
-      const message = doc.createElement("p");
-      message.textContent = "Restarbeitenliste wird neu aufgebaut.";
-      message.style.margin = "0";
-      message.style.fontSize = "16px";
-      message.style.fontWeight = "600";
-      message.style.color = "#334155";
-
-      host.append(message);
-      return host;
-    },
-  };
 }
 
 export default class Router {
@@ -590,18 +565,6 @@ export default class Router {
 
     if (normalizedModuleId === PROTOKOLL_MODULE_ID) {
       return await this.openProjectProtocol(effectiveProjectId, options || {});
-    }
-
-    if (normalizedModuleId === RESTARBEITEN_MODULE_ID) {
-      this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
-      await this.show(createRestarbeitenRebuildPlaceholderScreen(), {
-        section: RESTARBEITEN_MODULE_ID,
-        isTopsView: false,
-        pageTitle: "Restarbeiten",
-        activeModuleLabel: "Restarbeiten",
-        hideSidebar: true,
-      });
-      return true;
     }
 
     const navEntry =

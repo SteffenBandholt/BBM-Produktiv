@@ -94,7 +94,7 @@ async function runBbmUiEditorRegistryTests(run) {
     });
   });
 
-  await run("BBM UI-Editor-Registry: listet Protokoll- und Demo-Scope als verfuegbar", async () => {
+  await run("BBM UI-Editor-Registry: listet Protokoll-, Demo- und Restarbeiten-Scope als verfuegbar", async () => {
     const mod = await loadRegistryModule();
     assert.deepEqual(mod.getAvailableUiScopes(), [
       {
@@ -107,6 +107,12 @@ async function runBbmUiEditorRegistryTests(run) {
         uiScope: "bbm.demo.editorMove",
         moduleId: "uiEditor",
         label: "BBM UI-Editor Demo",
+        status: "available",
+      },
+      {
+        uiScope: "restarbeiten.screen",
+        moduleId: "restarbeiten",
+        label: "Restarbeiten",
         status: "available",
       },
     ]);
@@ -141,19 +147,21 @@ async function runBbmUiEditorRegistryTests(run) {
     assert.equal(registry.elements.length > 0, true);
   });
 
-  await run("BBM UI-Editor-Registry: Restarbeiten-Scope ist nicht mehr verfuegbar", async () => {
+  await run("BBM UI-Editor-Registry: liefert Restarbeiten-M1-Elemente ueber den zentralen Einstieg", async () => {
     const mod = await loadRegistryModule();
     assert.equal(
       mod.getAvailableUiScopes().some((scope) => scope.uiScope === "restarbeiten.screen"),
-      false
+      true
     );
     const registry = mod.getBbmUiEditorRegistry("restarbeiten.screen");
-    assert.equal(registry.ok, false);
     assert.equal(registry.targetAppId, "bbm-produktiv");
     assert.equal(registry.uiScope, "restarbeiten.screen");
-    assert.deepEqual(registry.elements, []);
-    assert.equal(typeof registry.reason, "string");
-    assert.equal(registry.reason.length > 0, true);
+    assert.equal(registry.moduleId, "restarbeiten");
+    assert.equal(Array.isArray(registry.elements), true);
+    assert.equal(registry.elements.some((element) => element.id === "restarbeiten.root"), true);
+    assert.equal(registry.elements.some((element) => element.id === "restarbeiten.filterbar"), true);
+    assert.equal(registry.elements.some((element) => element.id === "restarbeiten.editbox"), true);
+    assert.equal(registry.elements.some((element) => element.id === "restarbeiten.quicklane"), true);
   });
 
   await run("BBM UI-Editor-Registry: unbekannter Scope wird sauber abgefangen", async () => {
@@ -182,8 +190,7 @@ async function runBbmUiEditorRegistryTests(run) {
     for (const snippet of FORBIDDEN_LOGIC_SNIPPETS) {
       assert.equal(source.includes(snippet), false, `forbidden logic snippet: ${snippet}`);
     }
-    assert.equal(source.includes("restarbeitenUiElements"), false);
-    assert.equal(source.includes("RESTARBEITEN_UI_EDITOR_SCOPE"), false);
+    assert.equal(source.includes("scanUiInspectorTargets"), false);
   });
 }
 

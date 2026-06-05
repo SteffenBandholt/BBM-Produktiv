@@ -74,6 +74,9 @@ export default class ProjectContextQuicklane {
     this.ampelSectionEl = null;
     this.longtextSectionEl = null;
     this.outputSectionEl = null;
+    this.outputPrintEl = null;
+    this.outputPreviewEl = null;
+    this.outputMailEl = null;
     this.outputPopupEl = null;
     this.filterSectionEl = null;
     this.filterPopupEl = null;
@@ -504,9 +507,7 @@ export default class ProjectContextQuicklane {
       if (this._isRestarbeitenContext) {
         const activeView = this.router?.activeView || null;
         if (typeof activeView?.openRestarbeitenOutput === "function") {
-          await activeView.openRestarbeitenOutput();
-        } else if (typeof activeView?._openOutputDir === "function") {
-          await activeView._openOutputDir();
+          await activeView.openRestarbeitenOutput({ mode: "print" });
         }
       } else {
         await this.router?.openOutputPrint?.();
@@ -529,12 +530,20 @@ export default class ProjectContextQuicklane {
       this._setOutputOpen(false);
     });
     const outputMail = createOutputAction("E-Mail senden", async () => {
-      if (!this._lastOpts?.projectId || this._isRestarbeitenContext) return;
+      if (!this._lastOpts?.projectId) return;
+      if (this._isRestarbeitenContext) {
+        const activeView = this.router?.activeView || null;
+        if (typeof activeView?.openRestarbeitenOutput === "function") {
+          await activeView.openRestarbeitenOutput({ mode: "mail" });
+        }
+        this._setOutputOpen(false);
+        return;
+      }
       await this.router?.openClosedProtocolSelector?.({ mode: "mail" });
       this._setOutputOpen(false);
     });
     if (this._isRestarbeitenContext) {
-      outputPopup.append(outputPrint, outputPreview);
+      outputPopup.append(outputPrint, outputPreview, outputMail);
     } else {
       const outputProtocols = createOutputAction("Protokolle", async () => {
         if (!this._lastOpts?.projectId) return;
@@ -619,6 +628,9 @@ export default class ProjectContextQuicklane {
     this.longtextSectionEl = longtextSection;
     this.outputSectionEl = outputSection;
     this.outputPopupEl = outputPopup;
+    this.outputPrintEl = outputPrint;
+    this.outputPreviewEl = outputPreview;
+    this.outputMailEl = outputMail;
     this.filterSectionEl = filterSection;
     this.filterPopupEl = filterPopup;
     this.filterBadgeEl = filterBadge;
@@ -810,6 +822,30 @@ export default class ProjectContextQuicklane {
         this.filterPopupEl.style.display = "none";
       }
     }
+    this._syncRestarbeitenUiEditorMarkers();
+  }
+
+  _syncRestarbeitenUiEditorMarkers() {
+    const markers = [
+      [this.root, "restarbeiten.quicklane"],
+      [this.pinBtn, "restarbeiten.quicklane.pin"],
+      [this.projectSectionEl, "restarbeiten.quicklane.action.project"],
+      [this.firmsSectionEl, "restarbeiten.quicklane.action.firms"],
+      [this.ampelSectionEl, "restarbeiten.quicklane.action.ampel"],
+      [this.longtextSectionEl, "restarbeiten.quicklane.action.longtext"],
+      [this.previewSectionEl, "restarbeiten.quicklane.action.pdfPreview"],
+      [this.outputSectionEl, "restarbeiten.quicklane.action.output"],
+      [this.outputPrintEl, "restarbeiten.quicklane.output.print"],
+      [this.outputMailEl, "restarbeiten.quicklane.output.email"],
+    ];
+    for (const [el, marker] of markers) {
+      if (!el || typeof el.setAttribute !== "function") continue;
+      if (this._isRestarbeitenContext) {
+        el.setAttribute("data-ui-editor-id", marker);
+      } else if (typeof el.removeAttribute === "function") {
+        el.removeAttribute("data-ui-editor-id");
+      }
+    }
   }
 
   _applyToolItemState(el, interactive) {
@@ -863,13 +899,14 @@ export default class ProjectContextQuicklane {
     this._isPinned = !this._isPinned;
     this._cancelClose();
     this._isOpen = this._isPinned;
+    this._isRestarbeitenContext = this._isRestarbeitenMode();
     if (this.pinBtn) {
       this.pinBtn.replaceChildren(createLockIcon(document, { open: !this._isPinned }));
       this.pinBtn.title = this._isPinned ? "Lösen" : "Fixieren";
       this.pinBtn.setAttribute("aria-label", this._isPinned ? "Quicklane lösen" : "Quicklane fixieren");
-      this.pinBtn.style.background = this._isPinned ? "#eef7ff" : "#ffffff";
-      this.pinBtn.style.borderColor = this._isPinned ? "#b6d4ff" : "#d5d5d5";
-      this.pinBtn.style.color = this._isPinned ? "#0b4db4" : "#222";
+      this.pinBtn.style.background = this._isRestarbeitenContext ? "#fff7cc" : this._isPinned ? "#eef7ff" : "#ffffff";
+      this.pinBtn.style.borderColor = this._isRestarbeitenContext ? "#facc15" : this._isPinned ? "#b6d4ff" : "#d5d5d5";
+      this.pinBtn.style.color = this._isRestarbeitenContext ? "#92400e" : this._isPinned ? "#0b4db4" : "#222";
     }
     this._applyState();
   }
@@ -934,9 +971,9 @@ export default class ProjectContextQuicklane {
       this.pinBtn.replaceChildren(createLockIcon(document, { open: !this._isPinned }));
       this.pinBtn.title = this._isPinned ? "Lösen" : "Fixieren";
       this.pinBtn.setAttribute("aria-label", this._isPinned ? "Quicklane lösen" : "Quicklane fixieren");
-      this.pinBtn.style.background = this._isPinned ? "#eef7ff" : "#ffffff";
-      this.pinBtn.style.borderColor = this._isPinned ? "#b6d4ff" : "#d5d5d5";
-      this.pinBtn.style.color = this._isPinned ? "#0b4db4" : "#222";
+      this.pinBtn.style.background = this._isRestarbeitenContext ? "#fff7cc" : this._isPinned ? "#eef7ff" : "#ffffff";
+      this.pinBtn.style.borderColor = this._isRestarbeitenContext ? "#facc15" : this._isPinned ? "#b6d4ff" : "#d5d5d5";
+      this.pinBtn.style.color = this._isRestarbeitenContext ? "#92400e" : this._isPinned ? "#0b4db4" : "#222";
     }
   }
 

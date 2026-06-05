@@ -198,13 +198,13 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - kleine Nachweise zur Kernnavigation, Router-Entkopplung und Modulsichtbarkeit sind nachgezogen
 - der entmischte `TopsScreen`-Zwischenstand ist per Test abgesichert
 - die inline platzierte Diktat-Schaltflaeche ist testseitig mit Asset-Icons, Start-/Stop-Umschaltung und Freischaltung abgesichert
-- die kaputte sichtbare Restarbeiten-V2-UI ist aus der aktiven App-Struktur entfernt; `restarbeiten.screen` ist kein verfügbarer UI-Editor-Scope mehr, Protokoll- und Demo-Scope bleiben erhalten
+- die kaputte sichtbare Restarbeiten-V2-UI ist aus der aktiven App-Struktur entfernt und bleibt entfernt; der neue M1-RestarbeitenScreen ist bewusst neu aufgebaut und stellt `restarbeiten.screen` wieder als expliziten UI-Editor-Scope bereit, Protokoll- und Demo-Scope bleiben erhalten
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
 - weitere Altpfade und Restmischzonen vorhanden
 - Konsolidierung ist noch nicht Endabschluss
-- neue Restarbeitenliste fachlich getrennt planen und erst danach neu aufbauen
+- naechstes Restarbeiten-Paket fachlich getrennt planen, bevor Ausgabe/PDF/Notizen/Diktat ueber M1-Stubs hinaus umgesetzt werden
 
 ---
 

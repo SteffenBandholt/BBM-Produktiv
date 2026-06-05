@@ -3,8 +3,6 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
-const PLACEHOLDER_TEXT = "Restarbeitenliste wird neu aufgebaut.";
-
 function createFakeDocument() {
   const createNode = (tag, doc) => {
     const node = {
@@ -36,11 +34,17 @@ function createFakeDocument() {
         const key = String(name);
         const text = String(value);
         this.attributes[key] = text;
-        this[key] = text;
+        if (key.startsWith("data-")) {
+          const dataKey = key.slice(5).replace(/-([a-z])/g, (_match, char) => char.toUpperCase());
+          this.dataset[dataKey] = text;
+        }
       },
       getAttribute(name) {
         const key = String(name);
         return Object.prototype.hasOwnProperty.call(this.attributes, key) ? this.attributes[key] : null;
+      },
+      removeAttribute(name) {
+        delete this.attributes[String(name)];
       },
       addEventListener(type, handler) {
         this._listeners ||= {};
@@ -51,7 +55,6 @@ function createFakeDocument() {
         for (const handler of this._listeners?.click || []) {
           handler.call(this, { type: "click", preventDefault() {} });
         }
-        if (typeof this.onclick === "function") this.onclick({ type: "click", preventDefault() {} });
       },
     };
     Object.defineProperty(node, "innerHTML", {
@@ -70,6 +73,9 @@ function createFakeDocument() {
     createElement(tag) {
       return createNode(tag, doc);
     },
+    createElementNS(_ns, tag) {
+      return createNode(tag, doc);
+    },
     body: null,
     head: null,
   };
@@ -79,6 +85,7 @@ function createFakeDocument() {
 }
 
 function collectText(node) {
+  if (typeof node === "string") return node;
   const ownText = String(node?.textContent || "");
   const children = Array.isArray(node?.children) ? node.children : [];
   return [ownText, ...children.map((child) => collectText(child))].join(" ");
@@ -93,61 +100,61 @@ function findNodes(node, predicate, acc = []) {
   return acc;
 }
 
-function hasText(root, text) {
-  return collectText(root).includes(text);
+function flush() {
+  return new Promise((resolve) => setImmediate(resolve));
 }
 
-function legacyClassNames() {
-  const h = String.fromCharCode(72, 101, 97, 100, 101, 114);
-  return [
-    "restarbeiten-list" + h,
-    "restarbeiten-" + "edit" + "box",
-    "restarbeiten-" + "head" + "er",
-    "restarbeiten-list__row",
-    "restarbeiten-filterleiste",
-    "restarbeiten-attachments",
-  ];
+function buildBbmDbStub() {
+  return {
+    async restarbeitenListByProject() {
+      return {
+        ok: true,
+        items: [
+          {
+            id: "ra-1",
+            running_number: 7,
+            created_at: "2026-05-01",
+            item_class: "rest",
+            status: "offen",
+            due_date: "2026-06-20",
+            responsible_label: "AB Bau",
+            short_text: "Tuer einstellen",
+            long_text: "Druecker schleift.",
+            location_level_1: "Haus A",
+            location_level_2: "EG",
+            location_level_3: "Einheit 1",
+            location_level_4: "Flur",
+          },
+        ],
+      };
+    },
+    async restarbeitenGetProjectSettings() {
+      return {
+        ok: true,
+        settings: {
+          level_1_label: "Haus",
+          level_2_label: "Geschoss",
+          level_3_label: "Einheit",
+          level_4_label: "Raum",
+        },
+      };
+    },
+    async projectFirmsListByProject() {
+      return { ok: true, list: [{ id: "firm-1", shortName: "AB Bau" }] };
+    },
+    async restarbeitenCreateItem() {
+      return { ok: true, item: { id: "ra-new" } };
+    },
+    async restarbeitenUpdateItem() {
+      return { ok: true, item: { id: "ra-1" } };
+    },
+    async restarbeitenSoftDeleteItem() {
+      return { ok: true, item: { id: "ra-1" } };
+    },
+  };
 }
 
-function legacyAttributeNames() {
-  return [
-    "data-ui-" + "insp" + "ector-id",
-    "data-ui-" + "ed" + "itor-id",
-    "data-ui-v2-id",
-    "data-ui-v2-restarbeiten-host",
-    "data-ui-" + "ed" + "itor-panel",
-  ];
-}
-
-function assertOnlyNeutralPlaceholder(root) {
-  assert.equal(hasText(root, PLACEHOLDER_TEXT), true);
-
-  const allText = collectText(root);
-  for (const text of ["+ Restpunkt", "Foto", "Fotos", "Quick" + "lane", "UUID", "Spei" + "chern"]) {
-    assert.equal(allText.includes(text), false, text);
-  }
-
-  for (const className of legacyClassNames()) {
-    assert.equal(
-      findNodes(root, (node) => String(node?.className || "").includes(className)).length,
-      0,
-      className
-    );
-  }
-
-  for (const attrName of legacyAttributeNames()) {
-    assert.equal(
-      findNodes(root, (node) => {
-        if (typeof node?.getAttribute === "function" && node.getAttribute(attrName) !== null) return true;
-        return Object.prototype.hasOwnProperty.call(node?.attributes || {}, attrName);
-      }).length,
-      0,
-      attrName
-    );
-  }
-}
-
-async function renderRoutePlaceholder() {
+async function renderRouteScreen() {
   const Router = (await importEsmFromFile(path.join(__dirname, "../../src/renderer/app/Router.js"))).default;
   const prevDocument = globalThis.document;
   const prevWindow = globalThis.window;
@@ -156,7 +163,9 @@ async function renderRoutePlaceholder() {
   globalThis.document = doc;
   globalThis.window = {
     localStorage: { getItem: () => "" },
-    bbmDb: {},
+    bbmDb: buildBbmDbStub(),
+    dispatchEvent() {},
+    addEventListener() {},
     getComputedStyle: () => ({
       position: "static",
       display: "block",
@@ -170,12 +179,14 @@ async function renderRoutePlaceholder() {
     const router = new Router({ contentRoot });
     router._ensureProjectContextQuicklane = async () => null;
     router._syncProjectContextUi = async () => {};
-    router._setSidebarVisibility = () => {};
+    router._setSidebarVisibility = (visible) => {
+      router._lastSidebarVisible = visible;
+    };
     const opened = await router.openProjectModule("p-1", "restarbeiten", {
       project: { id: "p-1", project_number: "P-1", short: "Test" },
     });
-    assert.equal(opened, true);
-    return { root: contentRoot, pageTitle: router.context.ui.pageTitle };
+    await flush();
+    return { root: contentRoot, pageTitle: router.context.ui.pageTitle, sidebarVisible: router._lastSidebarVisible };
   } finally {
     globalThis.document = prevDocument;
     globalThis.window = prevWindow;
@@ -219,24 +230,41 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(call.options.project.id, "22");
   });
 
-  await run("Restarbeiten: aktive Route zeigt nur den neutralen Neuaufbau-Hinweis", async () => {
-    const rendered = await renderRoutePlaceholder();
+  await run("Restarbeiten: aktive Route zeigt den M1-Screen statt Platzhalter", async () => {
+    const rendered = await renderRouteScreen();
+    const text = collectText(rendered.root);
     assert.equal(rendered.pageTitle, "Restarbeiten");
-    assertOnlyNeutralPlaceholder(rendered.root);
+    assert.equal(rendered.sidebarVisible, false);
+    assert.equal(text.includes("Restarbeitenliste wird neu aufgebaut."), false);
+    assert.equal(text.includes("Verortung"), true);
+    assert.equal(text.includes("Tuer einstellen"), true);
+    assert.equal(text.includes("Kurztext / Gegenstand"), true);
+    assert.equal(text.includes("Datensatz l"), true);
   });
 
-  await run("Restarbeiten: Screen selbst zeigt nur den neutralen Neuaufbau-Hinweis", async () => {
+  await run("Restarbeiten: Screen stellt Quicklane-Methoden und M1-Bereiche bereit", async () => {
     const mod = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
     );
     const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
     globalThis.document = createFakeDocument();
+    globalThis.window = { bbmDb: buildBbmDbStub(), dispatchEvent() {} };
     try {
       const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
       const root = screen.render();
-      assertOnlyNeutralPlaceholder(root);
+      await flush();
+      assert.equal(root.getAttribute("data-ui-editor-id"), "restarbeiten.root");
+      assert.equal(typeof screen.toggleAmpelDisplay, "function");
+      assert.equal(typeof screen.toggleLongtextDisplay, "function");
+      assert.equal(typeof screen.openRestarbeitenPreview, "function");
+      assert.equal(typeof screen.openRestarbeitenOutput, "function");
+      assert.equal(findNodes(root, (node) => node.getAttribute?.("data-ui-editor-id") === "restarbeiten.filterbar").length, 1);
+      assert.equal(findNodes(root, (node) => node.getAttribute?.("data-ui-editor-id") === "restarbeiten.main").length, 1);
+      assert.equal(findNodes(root, (node) => node.getAttribute?.("data-ui-editor-id") === "restarbeiten.editbox").length, 1);
     } finally {
       globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
     }
   });
 
@@ -251,24 +279,77 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(typeof dataSource.getRestarbeitenProjectSettings, "function");
     assert.equal(typeof dataSource.listRestarbeitAttachments, "function");
     assert.equal(typeof dataSource.listResponsibleProjectFirms, "function");
+    assert.equal(typeof dataSource.softDeleteRestarbeitItem, "function");
     assert.equal(typeof viewModel.toRestarbeitenListItems, "function");
   });
 
-  await run("Restarbeiten: IPC und Preload behalten vorhandene Lesewege", () => {
+  await run("Restarbeiten: UI-Editor-Elementliste fuer M1 ist gueltig", async () => {
+    const uiEditor = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js")
+    );
+    const elements = uiEditor.getRestarbeitenUiEditorElements();
+    const ids = new Set(elements.map((element) => element.id));
+    assert.equal(uiEditor.RESTARBEITEN_UI_EDITOR_SCOPE, "restarbeiten.screen");
+    assert.equal(Array.isArray(elements), true);
+    assert.equal(ids.has("restarbeiten.root"), true);
+    assert.equal(ids.has("restarbeiten.filterbar"), true);
+    assert.equal(ids.has("restarbeiten.main"), true);
+    assert.equal(ids.has("restarbeiten.editbox"), true);
+    assert.equal(ids.has("restarbeiten.quicklane"), true);
+    assert.equal(ids.has("restarbeiten.editbox.meta.noteButton"), true);
+
+    for (const element of elements) {
+      for (const field of ["id", "name", "type", "role", "parentId", "order", "visible", "editable", "allowedOps", "lockedOps"]) {
+        assert.equal(Object.prototype.hasOwnProperty.call(element, field), true, `${element.id}.${field}`);
+      }
+      assert.equal(element.parentId === null || ids.has(element.parentId), true, `${element.id} parent`);
+      assert.equal(Array.isArray(element.allowedOps), true, `${element.id} allowedOps`);
+      assert.equal(Array.isArray(element.lockedOps), true, `${element.id} lockedOps`);
+      for (const forbidden of ["save", "delete", "upload", "import", "export", "execute"]) {
+        assert.equal(element.allowedOps.includes(forbidden), false, `${element.id} forbidden op ${forbidden}`);
+      }
+    }
+  });
+
+  await run("Restarbeiten: UI-Editor-Datei bleibt frei von Scan- und Speicherlogik", () => {
+    const source = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js"),
+      "utf8"
+    );
+    for (const snippet of ["querySelector", "DOMParser", "innerHTML", "scan", "detect", "autoRegister", "migration", "localStorage", "ipcMain", "ipcRenderer", "database"]) {
+      assert.equal(source.includes(snippet), false, snippet);
+    }
+  });
+
+  await run("Restarbeiten: IPC und Preload behalten vorhandene Wege", () => {
     const ipcPath = path.join(__dirname, "../../src/main/ipc/restarbeitenIpc.js");
     const preloadPath = path.join(__dirname, "../../src/main/preload.js");
     const ipc = fs.readFileSync(ipcPath, "utf8");
     const preload = fs.readFileSync(preloadPath, "utf8");
 
-    assert.match(ipc, /restarbeiten:listByProject/);
-    assert.match(ipc, /restarbeiten:getProjectSettings/);
-    assert.match(ipc, /restarbeiten:listAttachments/);
-    assert.match(preload, /restarbeitenListByProject/);
-    assert.match(preload, /restarbeitenGetProjectSettings/);
-    assert.match(preload, /restarbeitenListAttachments/);
+    for (const channel of [
+      "restarbeiten:listByProject",
+      "restarbeiten:getProjectSettings",
+      "restarbeiten:createItem",
+      "restarbeiten:updateItem",
+      "restarbeiten:softDeleteItem",
+      "restarbeiten:listAttachments",
+    ]) {
+      assert.equal(ipc.includes(channel), true, channel);
+    }
+    for (const preloadName of [
+      "restarbeitenListByProject",
+      "restarbeitenGetProjectSettings",
+      "restarbeitenCreateItem",
+      "restarbeitenUpdateItem",
+      "restarbeitenSoftDeleteItem",
+      "restarbeitenListAttachments",
+    ]) {
+      assert.equal(preload.includes(preloadName), true, preloadName);
+    }
   });
 
-  await run("Restarbeiten: alter UI-Dateisatz ist nicht mehr vorhanden", () => {
+  await run("Restarbeiten: alter Screen-Dateisatz bleibt entfernt", () => {
     const deletedFiles = [
       "Restarbeiten" + "Edit" + "box.js",
       "RestarbeitenQuick" + "lane.js",

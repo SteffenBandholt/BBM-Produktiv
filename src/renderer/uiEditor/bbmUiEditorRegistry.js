@@ -1,5 +1,9 @@
 import { getProtokollUiEditorElements } from "../modules/protokoll/uiEditor/protokollUiElements.js";
 import {
+  RESTARBEITEN_UI_EDITOR_SCOPE,
+  getRestarbeitenUiEditorElements,
+} from "../modules/restarbeiten/uiEditor/restarbeitenUiElements.js";
+import {
   BBM_UI_EDITOR_DEMO_SCOPE,
   getBbmUiEditorDemoElements,
 } from "./demo/bbmUiEditorDemoElements.js";
@@ -24,7 +28,14 @@ const BBM_DEMO_SCOPE = Object.freeze({
   status: "available",
 });
 
-const AVAILABLE_UI_SCOPES = Object.freeze([PROTOKOLL_TOPS_SCOPE, BBM_DEMO_SCOPE]);
+const RESTARBEITEN_SCOPE = Object.freeze({
+  uiScope: RESTARBEITEN_UI_EDITOR_SCOPE,
+  moduleId: "restarbeiten",
+  label: "Restarbeiten",
+  status: "available",
+});
+
+const AVAILABLE_UI_SCOPES = Object.freeze([PROTOKOLL_TOPS_SCOPE, BBM_DEMO_SCOPE, RESTARBEITEN_SCOPE]);
 const ACTIVE_UI_SCOPE = "protokoll.topsScreen";
 
 function cloneScope(scope) {
@@ -59,6 +70,15 @@ export function getBbmUiEditorRegistry(uiScope = getActiveUiScope()) {
       uiScope: BBM_DEMO_SCOPE.uiScope,
       moduleId: BBM_DEMO_SCOPE.moduleId,
       elements: getBbmUiEditorDemoElements(),
+    };
+  }
+
+  if (uiScope === RESTARBEITEN_SCOPE.uiScope) {
+    return {
+      targetAppId: TARGET_INFO.targetAppId,
+      uiScope: RESTARBEITEN_SCOPE.uiScope,
+      moduleId: RESTARBEITEN_SCOPE.moduleId,
+      elements: getRestarbeitenUiEditorElements(),
     };
   }
 

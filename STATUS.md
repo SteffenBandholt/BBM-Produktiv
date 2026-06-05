@@ -17,13 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
-- K19.19 kaputte sichtbare Restarbeiten-V2-UI aus der aktiven App-Struktur entfernt:
-  - Restarbeiten öffnet vorerst nur den neutralen Platzhalter `Restarbeitenliste wird neu aufgebaut.`.
-  - Die alte aktive Restarbeiten-V2-Route mit Editor-V2-/Inspector-/Hover-Struktur ist aus dem Router-Laufweg entfernt.
-  - Der Restarbeiten-UI-Editor-Scope `restarbeiten.screen` ist nicht mehr in der zentralen BBM-UI-Editor-Registry verfügbar; Protokoll- und Demo-Scope bleiben erhalten.
-  - Fachlogik, Fachdaten, Datenmodell, Repository, IPC, Datenbank, Protokoll und PDF/Druck blieben unverändert.
+- M1 RestarbeitenScreen-Grundgeruest nach dem Rueckbau aufgebaut:
+  - Die kaputte sichtbare Restarbeiten-V2-UI bleibt entfernt und wird nicht wiederverwendet.
+  - Restarbeiten oeffnet wieder einen neuen, bewusst gebauten M1-Screen mit Filterbar, Hauptbereich, Editbox und Quicklane-Anbindung.
+  - Der Restarbeiten-UI-Editor-Scope `restarbeiten.screen` ist als explizite M1-Elementliste in der zentralen BBM-UI-Editor-Registry verfuegbar; Protokoll- und Demo-Scope bleiben erhalten.
+  - PDF-Vorschau, Ausgabe, Druck, E-Mail, Notizen und Diktat bleiben fachlich als Stub/Platzhalter fuer spaetere Pakete getrennt.
+  - Fachlogik, Fachdaten, Datenmodell, Repository, IPC, Datenbank, Protokoll und PDF/Druck blieben unveraendert.
   - Kein UI-Scan, keine automatische Elementerkennung und keine Migration.
-  - Naechster offener Schritt: neue Restarbeitenliste fachlich getrennt neu planen.
+  - Naechster offener Schritt: M2 fachlich getrennt planen, bevor Ausgabe/PDF/Notizen/Diktat umgesetzt werden.
 
 - K19.17 neutraler UI-Editor-Aktivmodus zeigt registrierte UI-Elementliste rein lesend:
   - Der Statushinweis zeigt bei aktivem UI-Editor den registrierten Scope `protokoll.topsScreen` und darunter die registrierten UI-Elemente aus der BBM-Registry.
