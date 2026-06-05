@@ -8,11 +8,12 @@ function createEl(tag, { className = "", text = "", uiId = "" } = {}) {
   return el;
 }
 
-function createField({ label, value = "", type = "input", options = [], uiId, onInput }) {
+function createField({ label, value = "", type = "input", options = [], uiId, onInput, required = false }) {
   const wrap = createEl("label", { className: "bbm-restarbeiten-field", uiId });
   wrap.appendChild(createEl("span", { text: label }));
   const input = document.createElement(type === "textarea" ? "textarea" : type === "select" ? "select" : "input");
   if (type === "date") input.type = "date";
+  if (required) input.required = true;
   if (type === "select") {
     for (const option of options) {
       const opt = document.createElement("option");
@@ -28,9 +29,9 @@ function createField({ label, value = "", type = "input", options = [], uiId, on
   return wrap;
 }
 
-function createTextField({ label, value, uiId, dictationUiId, onInput }) {
+function createTextField({ label, value, uiId, dictationUiId, onInput, required = false }) {
   const wrap = createEl("div", { className: "bbm-restarbeiten-text-field", uiId });
-  wrap.appendChild(createField({ label, value, type: "textarea", onInput }));
+  wrap.appendChild(createField({ label, value, type: "textarea", onInput, required }));
   const dictation = createEl("button", {
     className: "bbm-restarbeiten-icon-button",
     text: "Diktat",
@@ -38,7 +39,7 @@ function createTextField({ label, value, uiId, dictationUiId, onInput }) {
   });
   dictation.type = "button";
   dictation.disabled = true;
-  dictation.title = "Diktat wird in M2 angebunden";
+  dictation.title = "Diktat wird später angebunden";
   wrap.appendChild(dictation);
   return wrap;
 }
@@ -48,10 +49,14 @@ export function buildRestarbeitenEditbox({
   draft = {},
   responsibleOptions = [],
   onDraftChange,
+  onNew,
   onSave,
   onDelete,
 } = {}) {
   const labels = resolveLocationLabels(settings);
+  const canSave = Boolean(String(draft.short_text || "").trim());
+  let saveEnabled = canSave;
+  let validation = null;
   const root = createEl("section", {
     className: "bbm-restarbeiten-editbox",
     uiId: "restarbeiten.editbox",
@@ -61,13 +66,23 @@ export function buildRestarbeitenEditbox({
     className: "bbm-restarbeiten-editbox__header",
     uiId: "restarbeiten.editbox.header",
   });
+  const newBtn = createEl("button", {
+    className: "bbm-restarbeiten-button",
+    text: "Neu",
+    uiId: "restarbeiten.editbox.action.new",
+  });
+  newBtn.type = "button";
+  newBtn.addEventListener("click", () => onNew?.());
   const saveBtn = createEl("button", {
     className: "bbm-restarbeiten-button",
     text: "Speichern",
     uiId: "restarbeiten.editbox.action.save",
   });
   saveBtn.type = "button";
-  saveBtn.addEventListener("click", () => onSave?.());
+  saveBtn.disabled = !canSave;
+  saveBtn.addEventListener("click", () => {
+    if (saveEnabled) onSave?.();
+  });
   const deleteBtn = createEl("button", {
     className: "bbm-restarbeiten-button",
     text: "Datensatz löschen",
@@ -75,8 +90,10 @@ export function buildRestarbeitenEditbox({
   });
   deleteBtn.type = "button";
   deleteBtn.disabled = !draft.id;
-  deleteBtn.addEventListener("click", () => onDelete?.());
-  header.append(saveBtn, deleteBtn);
+  deleteBtn.addEventListener("click", () => {
+    if (draft.id) onDelete?.();
+  });
+  header.append(newBtn, saveBtn, deleteBtn);
 
   const textArea = createEl("div", {
     className: "bbm-restarbeiten-text-area",
@@ -87,14 +104,20 @@ export function buildRestarbeitenEditbox({
       value: draft.short_text || "",
       uiId: "restarbeiten.editbox.text.short",
       dictationUiId: "restarbeiten.editbox.text.short.dictation",
-      onInput: (short_text) => onDraftChange?.({ short_text }),
+      required: true,
+      onInput: (short_text) => {
+        saveEnabled = Boolean(String(short_text || "").trim());
+        saveBtn.disabled = !saveEnabled;
+        if (validation) validation.textContent = saveEnabled ? "" : "Kurztext erforderlich";
+        onDraftChange?.({ short_text }, { render: false });
+      },
     }),
     createTextField({
       label: "Langtext / Beschreibung",
       value: draft.long_text || "",
       uiId: "restarbeiten.editbox.text.long",
       dictationUiId: "restarbeiten.editbox.text.long.dictation",
-      onInput: (long_text) => onDraftChange?.({ long_text }),
+      onInput: (long_text) => onDraftChange?.({ long_text }, { render: false }),
     })
   );
 
@@ -122,6 +145,17 @@ export function buildRestarbeitenEditbox({
   meta.appendChild(createEl("p", { className: "bbm-restarbeiten-edit-group__title", text: "Meta" }));
   meta.append(
     createField({
+      label: "Klasse",
+      value: draft.item_class || "rest",
+      type: "select",
+      options: [
+        { value: "rest", label: "Restarbeit" },
+        { value: "mangel", label: "Mangel" },
+      ],
+      uiId: "restarbeiten.editbox.meta.itemClass",
+      onInput: (item_class) => onDraftChange?.({ item_class }),
+    }),
+    createField({
       label: "Status",
       value: draft.status === "in_arbeit" ? "in arbeit" : draft.status || "offen",
       type: "select",
@@ -145,7 +179,7 @@ export function buildRestarbeitenEditbox({
       label: "Verantwortlich",
       value: draft.responsible_project_firm_id || "",
       type: "select",
-      options: [{ value: "", label: draft.responsible_label || "Nicht zugeordnet" }, ...responsibleOptions],
+      options: [{ value: "", label: "Nicht zugeordnet" }, ...responsibleOptions],
       uiId: "restarbeiten.editbox.meta.responsible",
       onInput: (responsible_project_firm_id) => {
         const selected = responsibleOptions.find((item) => String(item.value) === String(responsible_project_firm_id));
@@ -156,12 +190,22 @@ export function buildRestarbeitenEditbox({
       },
     })
   );
-  const ampel = createEl("span", {
-    className: "bbm-restarbeiten-ampel",
+  validation = createEl("span", {
+    className: "bbm-restarbeiten-validation",
+    text: canSave ? "" : "Kurztext erforderlich",
+    uiId: "restarbeiten.editbox.validation.shortText",
+  });
+  meta.appendChild(validation);
+  const ampelWrap = createEl("span", {
+    className: "bbm-restarbeiten-ampel-field",
     uiId: "restarbeiten.editbox.meta.ampel",
   });
+  const ampel = createEl("span", {
+    className: "bbm-restarbeiten-ampel",
+  });
   ampel.dataset.state = draft.ampelState || "neutral";
-  meta.appendChild(ampel);
+  ampelWrap.appendChild(ampel);
+  meta.appendChild(ampelWrap);
   const noteBtn = createEl("button", {
     className: "bbm-restarbeiten-button bbm-restarbeiten-note",
     text: "Notiz",
@@ -169,7 +213,7 @@ export function buildRestarbeitenEditbox({
   });
   noteBtn.type = "button";
   noteBtn.disabled = true;
-  noteBtn.title = "Notiz-Popup folgt in M2";
+  noteBtn.title = "Notiz-Popup folgt später";
   meta.appendChild(noteBtn);
 
   root.append(header, textArea, location, meta);

@@ -107,6 +107,31 @@ function collectOptions(node) {
   }));
 }
 
+function findByUiId(node, uiId) {
+  return findNodes(node, (entry) => entry.getAttribute?.("data-ui-editor-id") === uiId)[0] || null;
+}
+
+function findByText(node, tagName, text) {
+  return findNodes(
+    node,
+    (entry) => entry.tagName === String(tagName || "").toUpperCase() && String(entry.textContent || "") === text
+  )[0] || null;
+}
+
+function findControl(node) {
+  return findNodes(node, (entry) => ["INPUT", "SELECT", "TEXTAREA"].includes(entry.tagName))[0] || null;
+}
+
+function triggerValue(node, value, eventName = "input") {
+  const control = findControl(node);
+  assert.equal(Boolean(control), true, "missing form control");
+  control.value = value;
+  for (const handler of control._listeners?.[eventName] || []) {
+    handler.call(control, { type: eventName, preventDefault() {} });
+  }
+  return control;
+}
+
 function flush() {
   return new Promise((resolve) => setImmediate(resolve));
 }
@@ -261,7 +286,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(text.includes("Verortung"), true);
     assert.equal(text.includes("Tuer einstellen"), true);
     assert.equal(text.includes("Kurztext / Gegenstand"), true);
-    assert.equal(text.includes("Datensatz l"), true);
+    assert.equal(text.includes("Neu"), true);
+    assert.equal(text.includes("Speichern"), true);
+    assert.equal(text.includes("Datensatz löschen"), true);
   });
 
   await run("Restarbeiten: Main/Body rendert M2.1-Tabellenkopf und Datensatzzeilen", async () => {
@@ -272,7 +299,6 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(text.includes("Fertig bis"), true);
     assert.equal(text.includes("Status"), true);
     assert.equal(text.includes("Verantw."), true);
-    assert.equal(text.includes("Ampel"), false);
     assert.equal(text.includes("7"), true);
     assert.equal(text.includes("01.06.26"), true);
     assert.equal(text.includes("Mangel"), true);
@@ -362,6 +388,239 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
+  await run("Restarbeiten: Editbox enthaelt M2.2-Aktionen, Klasse und Pflichtfeld", async () => {
+    const editbox = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenEditbox.js"));
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const root = editbox.buildRestarbeitenEditbox({
+        draft: { item_class: "rest", status: "offen", short_text: "" },
+      });
+      const text = collectText(root);
+      const options = collectOptions(root);
+      assert.equal(text.includes("Neu"), true);
+      assert.equal(text.includes("Speichern"), true);
+      assert.equal(text.includes("Datensatz löschen"), true);
+      assert.equal(text.includes("Kurztext erforderlich"), true);
+      assert.equal(findByText(root, "button", "Speichern").disabled, true);
+      assert.equal(findByText(root, "button", "Datensatz löschen").disabled, true);
+      assert.equal(options.some((option) => option.value === "rest" && option.label === "Restarbeit"), true);
+      assert.equal(options.some((option) => option.value === "mangel" && option.label === "Mangel"), true);
+      assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.action.new")), true);
+      assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.meta.itemClass")), true);
+      assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.validation.shortText")), true);
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Restarbeiten: Editbox speichert nicht ohne Kurztext und kann Verantwortlich leeren", async () => {
+    const editbox = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenEditbox.js"));
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      let saveCalls = 0;
+      const patches = [];
+      const root = editbox.buildRestarbeitenEditbox({
+        draft: {
+          id: "ra-1",
+          short_text: "",
+          responsible_project_firm_id: "firm-1",
+          responsible_label: "AB Bau",
+        },
+        responsibleOptions: [{ value: "firm-1", label: "AB Bau" }],
+        onSave: () => {
+          saveCalls += 1;
+        },
+        onDraftChange: (patch) => patches.push(patch),
+      });
+
+      findByText(root, "button", "Speichern").click();
+      assert.equal(saveCalls, 0);
+
+      triggerValue(findByUiId(root, "restarbeiten.editbox.meta.responsible"), "", "change");
+      assert.deepEqual(patches.at(-1), {
+        responsible_project_firm_id: "",
+        responsible_label: "",
+      });
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Restarbeiten: Kurz- und Langtext-Eingabe erzwingen keinen Shell-Neurender", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    globalThis.document = createFakeDocument();
+    globalThis.window = { bbmDb: buildBbmDbStub(), dispatchEvent() {} };
+    try {
+      const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
+      const root = screen.render();
+      let renderCalls = 0;
+      const renderShell = screen._renderShell.bind(screen);
+      screen._renderShell = () => {
+        renderCalls += 1;
+        return renderShell();
+      };
+
+      const saveBtn = findByText(root, "button", "Speichern");
+      const validation = findByUiId(root, "restarbeiten.editbox.validation.shortText");
+      assert.equal(saveBtn.disabled, true);
+      assert.equal(validation.textContent, "Kurztext erforderlich");
+
+      triggerValue(findByUiId(root, "restarbeiten.editbox.text.short"), "Neue Restarbeit", "input");
+      assert.equal(screen.draft.short_text, "Neue Restarbeit");
+      assert.equal(saveBtn.disabled, false);
+      assert.equal(validation.textContent, "");
+      assert.equal(renderCalls, 0);
+
+      triggerValue(findByUiId(root, "restarbeiten.editbox.text.long"), "Lange Beschreibung", "input");
+      assert.equal(screen.draft.long_text, "Lange Beschreibung");
+      assert.equal(renderCalls, 0);
+
+      triggerValue(findByUiId(root, "restarbeiten.editbox.meta.status"), "verzug", "change");
+      assert.equal(screen.draft.ampelState, "rot");
+      assert.equal(renderCalls, 1);
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Restarbeiten: Neu-Button setzt Draft und Auswahl zurueck", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    globalThis.document = createFakeDocument();
+    globalThis.window = { bbmDb: buildBbmDbStub(), dispatchEvent() {} };
+    try {
+      const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
+      screen.items = [{ id: "ra-1", short_text: "Alt", item_class: "mangel", status: "erledigt" }];
+      screen._selectItem("ra-1", { render: false });
+      const root = screen.render();
+      findByUiId(root, "restarbeiten.editbox.action.new").click();
+      assert.equal(screen.selectedId, null);
+      assert.equal(screen.draft.id, "");
+      assert.equal(screen.draft.item_class, "rest");
+      assert.equal(screen.draft.status, "offen");
+      assert.equal(screen.draft.due_date, "");
+      assert.equal(screen.draft.responsible_project_firm_id, "");
+      assert.equal(screen.draft.responsible_label, "");
+      assert.equal(screen.draft.short_text, "");
+      assert.equal(screen.draft.long_text, "");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Restarbeiten: Draft-Ampel aktualisiert sich bei Status und Fertig-bis", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    globalThis.document = createFakeDocument();
+    globalThis.window = { bbmDb: buildBbmDbStub(), dispatchEvent() {} };
+    try {
+      const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
+      const root = screen.render();
+      triggerValue(findByUiId(root, "restarbeiten.editbox.meta.status"), "verzug", "change");
+      assert.equal(screen.draft.ampelState, "rot");
+      assert.equal(findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").children[0].dataset.state, "rot");
+
+      triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.status"), "offen", "change");
+      triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.dueDate"), "2026-06-20", "change");
+      assert.equal(screen.draft.ampelState, "gruen");
+      assert.equal(findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").children[0].dataset.state, "gruen");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Restarbeiten: Speichern legt neu an, aktualisiert bestehend und nutzt Soft-Delete", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const calls = [];
+    let rows = [];
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      bbmDb: {
+        async restarbeitenListByProject() {
+          return { ok: true, items: rows };
+        },
+        async restarbeitenGetProjectSettings() {
+          return { ok: true, settings: {} };
+        },
+        async projectFirmsListByProject() {
+          return { ok: true, list: [] };
+        },
+        async restarbeitenCreateItem(payload) {
+          calls.push({ type: "create", payload });
+          const item = { ...payload, id: "ra-new", running_number: 1, created_at: "2026-06-05" };
+          rows = [item, { id: "ra-other", item_class: "rest", status: "offen", short_text: "Weiterer Datensatz" }];
+          return { ok: true, item };
+        },
+        async restarbeitenUpdateItem(payload) {
+          calls.push({ type: "update", payload });
+          rows = rows.map((row) => (row.id === payload.id ? { ...row, ...payload.patch } : row));
+          return { ok: true, item: rows.find((row) => row.id === payload.id) };
+        },
+        async restarbeitenSoftDeleteItem(payload) {
+          calls.push({ type: "delete", payload });
+          rows = rows.filter((row) => row.id !== payload.id);
+          return { ok: true, item: { id: payload.id } };
+        },
+      },
+      dispatchEvent() {},
+    };
+    try {
+      const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
+      screen.render();
+      screen.draft = {
+        id: "",
+        item_class: "rest",
+        status: "offen",
+        short_text: "Neue Restarbeit",
+        long_text: "",
+        due_date: "",
+        responsible_project_firm_id: "",
+        responsible_label: "",
+        running_number: "999",
+      };
+      await screen._saveDraft();
+      assert.equal(calls[0].type, "create");
+      assert.equal(calls[0].payload.projectId, "p-1");
+      assert.equal(Object.prototype.hasOwnProperty.call(calls[0].payload, "running_number"), false);
+      assert.equal(screen.selectedId, "ra-new");
+      assert.equal(screen.draft.id, "ra-new");
+
+      screen.draft.short_text = "Aktualisiert";
+      await screen._saveDraft();
+      assert.equal(calls[1].type, "update");
+      assert.equal(calls[1].payload.id, "ra-new");
+      assert.equal(calls[1].payload.patch.short_text, "Aktualisiert");
+
+      await screen._deleteDraft();
+      assert.equal(calls[2].type, "delete");
+      assert.equal(calls[2].payload.id, "ra-new");
+      assert.equal(screen.selectedId, null);
+      assert.equal(screen.draft.id, "");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
   await run("Restarbeiten: Ampellogik nutzt keine Orange-Regel", async () => {
     const viewModel = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenListItems.js")
@@ -411,7 +670,12 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(ids.has("restarbeiten.record.itemClass"), true);
     assert.equal(ids.has("restarbeiten.record.location"), true);
     assert.equal(ids.has("restarbeiten.editbox"), true);
+    assert.equal(ids.has("restarbeiten.editbox.action.new"), true);
+    assert.equal(ids.has("restarbeiten.editbox.action.save"), true);
+    assert.equal(ids.has("restarbeiten.editbox.action.delete"), true);
+    assert.equal(ids.has("restarbeiten.editbox.meta.itemClass"), true);
     assert.equal(ids.has("restarbeiten.quicklane"), true);
+    assert.equal(ids.has("restarbeiten.editbox.validation.shortText"), true);
     assert.equal(ids.has("restarbeiten.editbox.meta.noteButton"), true);
 
     for (const element of elements) {

@@ -33,6 +33,37 @@ function emptyDraft() {
   };
 }
 
+function normalizeDraftStatus(value) {
+  const raw = normalizeText(value).toLowerCase();
+  if (raw === "in_arbeit") return "in arbeit";
+  if (["offen", "in arbeit", "erledigt", "verzug"].includes(raw)) return raw;
+  return "offen";
+}
+
+function prepareDraft(source = {}) {
+  const draft = {
+    ...emptyDraft(),
+    ...source,
+    item_class: normalizeText(source.item_class) === "mangel" ? "mangel" : "rest",
+    status: normalizeDraftStatus(source.status),
+    responsible_project_firm_id: normalizeText(source.responsible_project_firm_id),
+    responsible_label: normalizeText(source.responsible_project_firm_id) ? normalizeText(source.responsible_label) : "",
+  };
+  draft.ampelState = getRestarbeitenAmpelState(draft);
+  return draft;
+}
+
+function buildSavePayload(draft = {}) {
+  const payload = { ...draft };
+  delete payload.ampelState;
+  delete payload.created_at;
+  delete payload.running_number;
+  payload.item_class = normalizeText(payload.item_class) === "mangel" ? "mangel" : "rest";
+  payload.status = normalizeDraftStatus(payload.status);
+  if (!normalizeText(payload.responsible_project_firm_id)) payload.responsible_label = "";
+  return payload;
+}
+
 function toSelectOptions(values = []) {
   return values
     .map((value) => normalizeText(value))
@@ -83,7 +114,7 @@ export default class RestarbeitenScreen {
     return this.root;
   }
 
-  async load() {
+  async load({ autoSelectFirst = true } = {}) {
     if (!this.projectId) return;
     this.isLoading = true;
     this._renderShell();
@@ -96,7 +127,15 @@ export default class RestarbeitenScreen {
       this.items = Array.isArray(items) ? items : [];
       this.settings = settings || {};
       this.responsibleFirms = Array.isArray(firms) ? firms : [];
-      if (!this.selectedId && this.items[0]?.id) this._selectItem(this.items[0].id, { render: false });
+      const selectedExists = this.selectedId && this.items.some((item) => normalizeText(item.id) === this.selectedId);
+      if (selectedExists) {
+        this._selectItem(this.selectedId, { render: false });
+      } else if (autoSelectFirst && this.items[0]?.id) {
+        this._selectItem(this.items[0].id, { render: false });
+      } else {
+        this.selectedId = null;
+        this.draft = prepareDraft();
+      }
       this.error = null;
     } finally {
       this.isLoading = false;
@@ -168,17 +207,26 @@ export default class RestarbeitenScreen {
   _selectItem(id, { render = true } = {}) {
     this.selectedId = normalizeText(id);
     const row = this.items.find((item) => normalizeText(item.id) === this.selectedId) || null;
-    this.draft = row ? { ...emptyDraft(), ...row, ampelState: getRestarbeitenAmpelState(row) } : emptyDraft();
+    this.draft = row ? prepareDraft(row) : prepareDraft();
     if (render) this._renderShell();
   }
 
-  _updateDraft(patch = {}) {
-    this.draft = { ...this.draft, ...patch };
+  _updateDraft(patch = {}, options = {}) {
+    this.draft = prepareDraft({ ...this.draft, ...patch });
+    if (options.render === false) return;
+    this._renderShell();
+  }
+
+  _newDraft() {
+    this.selectedId = null;
+    this.draft = prepareDraft();
+    this._renderShell();
   }
 
   async _saveDraft() {
     if (!this.projectId) return;
-    const payload = { ...this.draft };
+    if (!normalizeText(this.draft.short_text)) return;
+    const payload = buildSavePayload(this.draft);
     if (payload.id) {
       await updateRestarbeitItem(payload.id, payload);
     } else {
@@ -192,8 +240,8 @@ export default class RestarbeitenScreen {
     if (!this.draft?.id) return;
     await softDeleteRestarbeitItem(this.draft.id);
     this.selectedId = null;
-    this.draft = emptyDraft();
-    await this.load();
+    this.draft = prepareDraft();
+    await this.load({ autoSelectFirst: false });
   }
 
   _renderShell() {
@@ -230,7 +278,8 @@ export default class RestarbeitenScreen {
         settings: this.settings,
         draft: this.draft,
         responsibleOptions,
-        onDraftChange: (patch) => this._updateDraft(patch),
+        onNew: () => this._newDraft(),
+        onDraftChange: (patch, options) => this._updateDraft(patch, options),
         onSave: () => this._saveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
         onDelete: () => this._deleteDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
       })

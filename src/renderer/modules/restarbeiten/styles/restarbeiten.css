@@ -276,6 +276,7 @@
   overflow: hidden;
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(220px, 0.65fr) minmax(220px, 0.55fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 12px;
 }
 
@@ -289,6 +290,7 @@
 .bbm-restarbeiten-text-area {
   display: grid;
   gap: 8px;
+  min-height: 0;
 }
 
 .bbm-restarbeiten-text-field {
@@ -304,6 +306,40 @@
 
 .bbm-restarbeiten-icon-button {
   height: 34px;
+}
+
+.bbm-restarbeiten-editbox .bbm-restarbeiten-field input,
+.bbm-restarbeiten-editbox .bbm-restarbeiten-field select,
+.bbm-restarbeiten-editbox .bbm-restarbeiten-field textarea {
+  padding: 5px 7px;
+}
+
+.bbm-restarbeiten-editbox .bbm-restarbeiten-field textarea {
+  min-height: 36px;
+  resize: none;
+}
+
+.bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  min-height: 0;
+}
+
+.bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group__title {
+  grid-column: 1 / -1;
+}
+
+.bbm-restarbeiten-validation {
+  align-self: center;
+  color: var(--bbm-error);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.bbm-restarbeiten-ampel-field {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
 }
 
 .bbm-restarbeiten-note {
