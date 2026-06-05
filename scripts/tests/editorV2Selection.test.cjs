@@ -276,7 +276,6 @@ async function runEditorV2SelectionTests(run) {
     .map((entry) => entry.trim())
     .filter(Boolean);
 
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/restarbeiten/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
 

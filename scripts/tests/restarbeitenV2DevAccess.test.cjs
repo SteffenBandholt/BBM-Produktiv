@@ -6,7 +6,9 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 async function runRestarbeitenV2DevAccessTests(run) {
   const headerPath = path.join(__dirname, "../../src/renderer/ui/MainHeader.js");
   const moduleNavPath = path.join(__dirname, "../../src/renderer/app/modules/moduleNavigation.js");
+  const routerPath = path.join(__dirname, "../../src/renderer/app/Router.js");
   const headerSource = fs.readFileSync(headerPath, "utf8");
+  const routerSource = fs.readFileSync(routerPath, "utf8");
   const { getActiveProjectModuleNavigation } = await importEsmFromFile(moduleNavPath);
 
   await run("Restarbeiten V2: MainHeader enthaelt keinen DEV-Headerbutton mehr", () => {
@@ -17,6 +19,16 @@ async function runRestarbeitenV2DevAccessTests(run) {
       getActiveProjectModuleNavigation().some((entry) => String(entry?.moduleId || "").trim() === "restarbeitenv2"),
       false
     );
+  });
+
+  await run("Restarbeiten V2: alte aktive Router-Anbindung ist entfernt", () => {
+    assert.equal(routerSource.includes("showRestarbeitenV2Dev"), false);
+    assert.equal(routerSource.includes("createRestarbeitenV2Screen"), false);
+    assert.equal(routerSource.includes("createRestarbeitenV2Registry"), false);
+    assert.equal(routerSource.includes("data-ui-v2-restarbeiten-host"), false);
+    assert.equal(routerSource.includes("Restarbeiten V2 DEV"), false);
+    assert.equal(routerSource.includes("createRestarbeitenV2DevLegacyRows"), false);
+    assert.equal(routerSource.includes("Restarbeitenliste wird neu aufgebaut."), true);
   });
 }
 

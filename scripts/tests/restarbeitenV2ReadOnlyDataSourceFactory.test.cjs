@@ -6,11 +6,9 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runRestarbeitenV2ReadOnlyDataSourceFactoryTests(run) {
   const factoryPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2ReadOnlyDataSourceFactory.js");
-  const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/RestarbeitenV2Screen.js");
   const routerPath = path.join(__dirname, "../../src/renderer/app/Router.js");
 
   const source = fs.readFileSync(factoryPath, "utf8");
-  const screenSource = fs.readFileSync(screenPath, "utf8");
   const routerSource = fs.readFileSync(routerPath, "utf8");
   assert.equal(source.includes("ipc"), false);
   assert.equal(source.includes("db"), false);
@@ -20,8 +18,7 @@ async function runRestarbeitenV2ReadOnlyDataSourceFactoryTests(run) {
   assert.equal(source.includes("src/renderer/modules/restarbeiten/"), false);
   assert.equal(source.includes("src/main/"), false);
   assert.equal(source.includes("src/preload/"), false);
-  assert.equal(screenSource.includes("createRestarbeitenV2ReadOnlyDataSourceFactory"), false);
-  assert.equal(routerSource.includes("createRestarbeitenV2ReadOnlyDataSourceFactory"), true);
+  assert.equal(routerSource.includes("createRestarbeitenV2ReadOnlyDataSourceFactory"), false);
 
   const {
     createRestarbeitenV2ReadOnlyDataSourceFactory,
@@ -119,7 +116,6 @@ async function runRestarbeitenV2ReadOnlyDataSourceFactoryTests(run) {
     .split(/\r?\n/)
     .map((entry) => entry.trim())
     .filter(Boolean);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/restarbeiten/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/main/")), false);

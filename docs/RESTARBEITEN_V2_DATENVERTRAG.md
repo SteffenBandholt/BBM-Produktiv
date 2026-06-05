@@ -4,7 +4,7 @@
 Restarbeiten V2 darf echte Daten erst ueber einen eigenen Adapter oder eine eigene DataSource erhalten.
 
 - UI-Komponenten greifen nicht direkt auf IPC oder DB zu.
-- `RestarbeitenV2Screen` bleibt Renderer-UI.
+- Die kaputte sichtbare `RestarbeitenV2Screen`-UI ist entfernt; die verbliebenen V2-Bausteine sind nur Daten-/Mapper-/Adaptergrenzen.
 - Fachlogik liegt in ViewModel- und Adapter-Grenzen.
 - Editor V2 bleibt fachneutral und bekommt nur Registry- und DOM-Bezug.
 - Es gibt keinen Restarbeiten-Fachcode im Editor V2.
@@ -77,8 +77,9 @@ Die spaetere technische Struktur soll so aussehen:
 
 Regeln:
 
-- Der Screen ruft keine IPC-Funktion direkt.
-- Der Screen arbeitet mit einem DataSource-Interface.
+- Es gibt aktuell keinen aktiven Restarbeiten-V2-Screen.
+- Eine spaetere neue UI darf keine IPC-Funktion direkt rufen.
+- Eine spaetere neue UI arbeitet mit einem DataSource-Interface.
 - Die DataSource normalisiert IPC- oder Backend-Antworten.
 - Der Mapper uebersetzt alte oder echte Daten in Restarbeiten-V2-DTOs.
 - Ein ReadOnly-Adapter kann spaeter lesend auf eine injizierte Legacy-Quelle zugreifen, ohne Schreibpfade zu oeffnen.
@@ -123,9 +124,9 @@ Noch nicht implementieren:
 
 ## 9. Migrations- und Altmodul-Regel
 - Die alte Restarbeiten-UI wird in M16.0 nicht geaendert.
-- Die alte Restarbeiten-DataSource wird nicht direkt in den neuen Screen importiert.
+- Die alte Restarbeiten-DataSource wird nicht direkt in eine neue UI importiert.
 - Falls spaeter alte Datenwege genutzt werden, dann nur ueber Mapper oder Adapter.
-- Kein Import aus `src/renderer/modules/restarbeiten/**` in `RestarbeitenV2Screen.js`.
+- Kein Import aus `src/renderer/modules/restarbeiten/**` in eine spaetere neue V2-UI.
 
 ## 10. Projektkontext
 - Der DEV-Zugang braucht weiterhin keinen Projektkontext.

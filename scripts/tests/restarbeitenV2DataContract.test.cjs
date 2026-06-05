@@ -8,7 +8,8 @@ function runRestarbeitenV2DataContractTests(run) {
 
   assert.equal(doc.includes("Restarbeiten V2 Datenvertrag"), true);
   assert.equal(doc.includes("RestarbeitenV2Screen"), true);
-  assert.equal(doc.includes("Renderer-UI"), true);
+  assert.equal(doc.includes("kaputte sichtbare `RestarbeitenV2Screen`-UI ist entfernt"), true);
+  assert.equal(doc.includes("nur Daten-/Mapper-/Adaptergrenzen"), true);
   assert.equal(doc.includes("Editor V2 bleibt fachneutral"), true);
   assert.equal(doc.includes("Restarbeiten-Fachcode"), true);
   assert.equal(doc.includes("Editor V2"), true);
@@ -42,7 +43,7 @@ function runRestarbeitenV2DataContractTests(run) {
   assert.equal(doc.includes("deleteRestarbeitV2(id)"), true);
   assert.equal(doc.includes("listRestarbeitV2Attachments(id)"), true);
   assert.equal(doc.includes("src/renderer/modules/restarbeiten/**"), true);
-  assert.equal(doc.includes("RestarbeitenV2Screen.js"), true);
+  assert.equal(doc.includes("spaetere neue V2-UI"), true);
   assert.equal(doc.includes("projectId"), true);
   assert.equal(doc.includes("Keine IPC-Anbindung"), true);
   assert.equal(doc.includes("Keine DB-Anbindung"), true);

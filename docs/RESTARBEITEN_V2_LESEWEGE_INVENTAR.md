@@ -90,17 +90,17 @@ Risiken:
 
 ## 6. Grenze fuer spaetere Anbindung
 
-- `RestarbeitenV2Screen` bleibt frei von IPC.
-- `RestarbeitenV2Screen` bleibt frei von alter Restarbeiten-UI.
+- Die kaputte sichtbare `RestarbeitenV2Screen`-UI ist entfernt.
+- Eine spaetere neue Restarbeitenliste bleibt frei von direktem IPC.
+- Eine spaetere neue Restarbeitenliste bleibt frei von alter Restarbeiten-UI.
 - `RestarbeitenV2ReadOnlyAdapter` bleibt die DataSource-Ebene.
 - `RestarbeitenV2LegacyReadBridge` bekommt nur eine injizierte Lesefunktion.
 - Das Mapping bleibt im Mapper.
 
 ## 7. NO-GO-Regeln
 
-- Kein Import aus `src/renderer/modules/restarbeiten/**` in `RestarbeitenV2Screen.js`.
+- Kein Import aus `src/renderer/modules/restarbeiten/**` in eine spaetere neue Restarbeitenliste.
 - Keine direkte DB im Renderer.
 - Kein neuer IPC ohne eigenes spaeteres Paket.
 - Keine Schreibfunktion in der ReadOnly-Kette.
 - Kein `create`, `update`, `delete`, `upload` oder `attachment delete` in der ReadOnly-Kette.
-

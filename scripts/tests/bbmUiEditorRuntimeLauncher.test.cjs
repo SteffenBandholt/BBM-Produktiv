@@ -383,7 +383,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(mod.getReadonlyRegisteredElementsText([]), "Registrierte Elemente:\nnicht verfügbar");
   });
-  await run("BBM UI-Editor-Runtime: Lesemodus listet Scopes und zeigt Restarbeiten-Registry", async () => {
+  await run("BBM UI-Editor-Runtime: Lesemodus listet Scopes ohne entfernten Restarbeiten-Scope", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
     const win = {
@@ -400,17 +400,6 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         moduleId: "uiEditor",
         elements: [{ id: "bbm.demo.root", name: "Demo", type: "root", role: "layout", parentId: null, allowedOps: ["inspect"], lockedOps: [] }],
       },
-      "restarbeiten.screen": {
-        uiScope: "restarbeiten.screen",
-        moduleId: "restarbeiten",
-        elements: [
-          { id: "restarbeiten.screen.root", name: "Restarbeiten", type: "root", role: "layout", parentId: null, allowedOps: ["inspect"], lockedOps: [] },
-          { id: "restarbeiten.screen.filterbar", name: "Filterleiste", type: "toolbar", role: "layout", parentId: "restarbeiten.screen.root", allowedOps: ["inspect"], lockedOps: [] },
-          { id: "restarbeiten.filterbar.group.location", name: "Verortung", type: "group", role: "layout", parentId: "restarbeiten.screen.filterbar", allowedOps: ["inspect"], lockedOps: [] },
-          { id: "restarbeiten.filterbar.field.location.level1", name: "Verortung 1", type: "field", role: "meta", parentId: "restarbeiten.filterbar.group.location", allowedOps: ["inspect"], lockedOps: [] },
-          { id: "restarbeiten.filterbar.action.close", name: "Schliessen", type: "button", role: "navigation", parentId: "restarbeiten.filterbar.group.close", allowedOps: ["inspect"], lockedOps: [] },
-        ],
-      },
     };
     const button = await mod.installBbmUiEditorRuntimeLauncher({
       devEnabled: true,
@@ -420,7 +409,6 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       availableUiScopes: [
         { uiScope: "protokoll.topsScreen", moduleId: "protokoll", status: "available" },
         { uiScope: "bbm.demo.editorMove", moduleId: "uiEditor", status: "available" },
-        { uiScope: "restarbeiten.screen", moduleId: "restarbeiten", status: "available" },
       ],
       registryResolver: (scopeId) => registries[scopeId] || { ok: false, uiScope: scopeId, elements: [], reason: "unknown" },
     });
@@ -430,22 +418,19 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(activeStatus.textContent.includes("Verfuegbare Scopes:"), true);
     assert.equal(activeStatus.textContent.includes("* protokoll.topsScreen"), true);
     assert.equal(activeStatus.textContent.includes("* bbm.demo.editorMove"), true);
-    assert.equal(activeStatus.textContent.includes("* restarbeiten.screen"), true);
+    assert.equal(activeStatus.textContent.includes("* restarbeiten.screen"), false);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-scope-list="true"]')), true);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-scope-option="restarbeiten.screen"]')), false);
 
-    const restarbeitenScopeButton = doc.querySelector('[data-ui-editor-scope-option="restarbeiten.screen"]');
-    assert.equal(Boolean(restarbeitenScopeButton), true);
-    restarbeitenScopeButton.click();
+    const demoScopeButton = doc.querySelector('[data-ui-editor-scope-option="bbm.demo.editorMove"]');
+    assert.equal(Boolean(demoScopeButton), true);
+    demoScopeButton.click();
 
     activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
-    assert.equal(activeStatus.textContent.includes("Scope: restarbeiten.screen"), true);
-    assert.equal(activeStatus.textContent.includes("Modul: restarbeiten"), true);
-    assert.equal(activeStatus.textContent.includes("Elemente: 5"), true);
-    assert.equal(activeStatus.textContent.includes("restarbeiten.screen.root"), true);
-    assert.equal(activeStatus.textContent.includes("restarbeiten.screen.filterbar"), true);
-    assert.equal(activeStatus.textContent.includes("restarbeiten.filterbar.group.location"), true);
-    assert.equal(activeStatus.textContent.includes("restarbeiten.filterbar.field.location.level1"), true);
-    assert.equal(activeStatus.textContent.includes("restarbeiten.filterbar.action.close"), true);
+    assert.equal(activeStatus.textContent.includes("Scope: bbm.demo.editorMove"), true);
+    assert.equal(activeStatus.textContent.includes("Modul: uiEditor"), true);
+    assert.equal(activeStatus.textContent.includes("Elemente: 1"), true);
+    assert.equal(activeStatus.textContent.includes("bbm.demo.root"), true);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-panel="true"]')), false);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-hover-frame="true"]')), false);
   });

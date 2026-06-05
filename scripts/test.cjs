@@ -35,9 +35,6 @@ const { runEditorV2PreviewTests } = require("./tests/editorV2Preview.test.cjs");
 const { runEditorV2PanelTests } = require("./tests/editorV2Panel.test.cjs");
 const { runEditorLabV2AccessTests } = require("./tests/editorLabV2Access.test.cjs");
 const { runRestarbeitenV2DevAccessTests } = require("./tests/restarbeitenV2DevAccess.test.cjs");
-const { runRestarbeitenV2EditorDevTests } = require("./tests/restarbeitenV2EditorDev.test.cjs");
-const { runRestarbeitenV2RegistryRulesTests } = require("./tests/restarbeitenV2RegistryRules.test.cjs");
-const { runRestarbeitenV2RegistryTests } = require("./tests/restarbeitenV2Registry.test.cjs");
 const { runRestarbeitenV2DataContractTests } = require("./tests/restarbeitenV2DataContract.test.cjs");
 const { runRestarbeitenV2DataSourceTests } = require("./tests/restarbeitenV2DataSource.test.cjs");
 const { runRestarbeitenV2MapperTests } = require("./tests/restarbeitenV2Mapper.test.cjs");
@@ -46,7 +43,6 @@ const { runRestarbeitenV2LegacyReadBridgeTests } = require("./tests/restarbeiten
 const { runRestarbeitenV2ReadPathInventoryTests } = require("./tests/restarbeitenV2ReadPathInventory.test.cjs");
 const { runRestarbeitenV2ReadPathDecisionTests } = require("./tests/restarbeitenV2ReadPathDecision.test.cjs");
 const { runRestarbeitenV2ReadOnlyDataSourceFactoryTests } = require("./tests/restarbeitenV2ReadOnlyDataSourceFactory.test.cjs");
-const { runRestarbeitenV2ScreenTests } = require("./tests/restarbeitenV2Screen.test.cjs");
 const { runHomeViewTests } = require("./tests/homeView.test.cjs");
 const { runProjectSettingsIpcTests } = require("./tests/projectSettingsIpc.test.cjs");
 const { runSettingsUserProfileSourceTests } = require("./tests/settingsUserProfileSource.test.cjs");
@@ -159,9 +155,6 @@ async function main() {
   await runEditorV2PanelTests(run);
   await runEditorLabV2AccessTests(run);
   await runRestarbeitenV2DevAccessTests(run);
-  await runRestarbeitenV2EditorDevTests(run);
-  await runRestarbeitenV2RegistryRulesTests(run);
-  await runRestarbeitenV2RegistryTests(run);
   await runRestarbeitenV2DataContractTests(run);
   await runRestarbeitenV2DataSourceTests(run);
   await runRestarbeitenV2MapperTests(run);
@@ -170,7 +163,6 @@ async function main() {
   await runRestarbeitenV2ReadPathInventoryTests(run);
   await runRestarbeitenV2ReadPathDecisionTests(run);
   await runRestarbeitenV2ReadOnlyDataSourceFactoryTests(run);
-  await runRestarbeitenV2ScreenTests(run);
   await runHomeViewTests(run);
   await runProjectSettingsIpcTests(run);
   await runSettingsUserProfileSourceTests(run);

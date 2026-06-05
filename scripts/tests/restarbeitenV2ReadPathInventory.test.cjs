@@ -19,8 +19,6 @@ async function runRestarbeitenV2ReadPathInventoryTests(run) {
   assert.equal(source.includes("RestarbeitenV2LegacyReadBridge"), true);
   assert.equal(source.includes("ReadOnly-Adapter"), true);
   assert.equal(source.includes("Mapper"), true);
-  assert.equal(source.includes("RestarbeitenV2Screen"), true);
-  assert.equal(source.includes("`RestarbeitenV2Screen` bleibt frei von IPC."), true);
   assert.equal(source.includes("Keine Schreibfunktion in der ReadOnly-Kette"), true);
 
   assert.equal(abl.includes("M16.7: Restarbeiten V2 Legacy-Lese-Bridge vorbereiten"), true);
@@ -33,7 +31,8 @@ async function runRestarbeitenV2ReadPathInventoryTests(run) {
     .split(/\r?\n/)
     .map((entry) => entry.trim())
     .filter(Boolean);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/")), false);
+  assert.equal(diffFiles.some((file) => file.startsWith("src/main/")), false);
+  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
 
   if (run) {
     run("Restarbeiten V2 Lesewege-Inventar ist dokumentiert", () => undefined);

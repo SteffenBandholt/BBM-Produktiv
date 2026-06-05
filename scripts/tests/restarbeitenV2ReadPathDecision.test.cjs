@@ -9,7 +9,7 @@ async function runRestarbeitenV2ReadPathDecisionTests(run) {
   const inv = fs.readFileSync(invPath, "utf8");
 
   assert.equal(doc.includes("Dieses Dokument entscheidet den spaeteren ReadOnly-Leseweg"), true);
-  assert.equal(doc.includes("RestarbeitenV2Screen"), true);
+  assert.equal(doc.includes("kaputte sichtbare `RestarbeitenV2Screen`-UI ist entfernt"), true);
   assert.equal(doc.includes("RestarbeitenV2ReadOnlyAdapter"), true);
   assert.equal(doc.includes("RestarbeitenV2LegacyReadBridge"), true);
   assert.equal(doc.includes("Mapper"), true);
@@ -24,7 +24,6 @@ async function runRestarbeitenV2ReadPathDecisionTests(run) {
   assert.equal(doc.includes("Ohne Freigabe bleibt der alte Restarbeiten-Pfad Standard."), true);
   assert.equal(doc.includes("nicht gewaehlte Kandidaten"), true);
   assert.equal(doc.includes("Spaetere Zielkette"), true);
-  assert.equal(doc.includes("RestarbeitenV2Screen` bleibt frei von IPC") || doc.includes("RestarbeitenV2Screen bleibt frei von IPC"), true);
   assert.equal(doc.includes("Kein Speichern in dieser Kette"), true);
   assert.equal(doc.includes("keine Schreibwege"), true);
   assert.equal(doc.includes("nur eine injizierte Lesefunktion"), true);

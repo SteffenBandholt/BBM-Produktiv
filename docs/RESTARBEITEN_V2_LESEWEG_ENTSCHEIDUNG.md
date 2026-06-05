@@ -7,7 +7,7 @@ Dieses Dokument entscheidet den spaeteren ReadOnly-Leseweg.
 - Es ist Grundlage fuer M17.x.
 
 ## 2. Ausgangslage
-- `RestarbeitenV2Screen` arbeitet ohne IPC.
+- Die kaputte sichtbare `RestarbeitenV2Screen`-UI ist entfernt und nicht mehr Teil der aktiven App-Struktur.
 - `RestarbeitenV2ReadOnlyAdapter` existiert.
 - `RestarbeitenV2LegacyReadBridge` existiert.
 - Der Mapper existiert.

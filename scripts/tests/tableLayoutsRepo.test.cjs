@@ -4,10 +4,11 @@ const os = require("node:os");
 const path = require("node:path");
 const Module = require("node:module");
 
-async function withTempTableLayoutsRepo(fn) {
+async function withTempTableLayoutsRepo(fn, options = {}) {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-table-layouts-"));
   const userDataPath = path.join(tmpRoot, "userData");
   fs.mkdirSync(userDataPath, { recursive: true });
+  const registryStub = options?.tableLayoutRegistry || null;
 
   const originalLoad = Module._load;
   Module._load = function patched(request, parent, isMain) {
@@ -18,6 +19,13 @@ async function withTempTableLayoutsRepo(fn) {
           isPackaged: true,
         },
       };
+    }
+    if (
+      registryStub &&
+      String(parent?.filename || "").endsWith(path.join("db", "tableLayoutsRepo.js")) &&
+      String(request || "").includes("tableLayoutRegistry")
+    ) {
+      return registryStub;
     }
     return originalLoad.apply(this, arguments);
   };
@@ -193,52 +201,98 @@ async function runTableLayoutsRepoTests(run) {
   });
 
   await run("TableLayoutsRepo: control surfaces speichern rootVars ohne Spalten-Validierung", async () => {
-    return withTempTableLayoutsRepo(async ({ db, repo }) => {
-      db.initDatabase();
+    const tableKey = "editor_test_control_surface";
+    const moduleId = "editor_test";
+    const defaultLayout = {
+      tableKey,
+      moduleId,
+      variant: "portrait",
+      tableKind: "control",
+      ui: {
+        rootVars: {
+          "--bbm-test-control-first-width": "minmax(0, 1fr)",
+          "--bbm-test-control-second-width": "minmax(0, 1fr)",
+        },
+      },
+    };
+    const controlDefinition = {
+      tableKey,
+      moduleId,
+      moduleLabel: "Editor Test",
+      tableLabel: "Test Control Surface",
+      tableKind: "control",
+      editorEnabled: true,
+      columns: [],
+      defaultLayout,
+    };
+    const clone = (value) => JSON.parse(JSON.stringify(value));
+    const tableLayoutRegistry = {
+      getTableLayoutDefinition(identity = {}) {
+        if (identity?.tableKey === tableKey && identity?.moduleId === moduleId) {
+          return clone(controlDefinition);
+        }
+        return null;
+      },
+      async loadStandardTableLayout(identity = {}) {
+        if (identity?.tableKey === tableKey && identity?.moduleId === moduleId) {
+          return clone(defaultLayout);
+        }
+        return null;
+      },
+    };
 
-      const saveRes = await repo.saveTableLayout({
-        tableKey: "restarbeiten_filter_meta",
-        moduleId: "restarbeiten",
-        orientation: "portrait",
-        layout: {
-          tableKey: "restarbeiten_filter_meta",
-          moduleId: "restarbeiten",
-          variant: "portrait",
-          ui: {
-            rootVars: {
-              "--bbm-restarbeiten-meta-due-width": "88px",
-              "--bbm-restarbeiten-meta-status-width": "112px",
+    return withTempTableLayoutsRepo(
+      async ({ db, repo }) => {
+        db.initDatabase();
+
+        const saveRes = await repo.saveTableLayout({
+          tableKey,
+          moduleId,
+          orientation: "portrait",
+          layout: {
+            tableKey,
+            moduleId,
+            variant: "portrait",
+            ui: {
+              rootVars: {
+                "--bbm-test-control-first-width": "88px",
+              },
             },
           },
-        },
-      });
+        });
 
-      assert.equal(saveRes.source, "stored");
-      assert.equal(saveRes.effectiveLayout.ui.rootVars["--bbm-restarbeiten-meta-due-width"], "88px");
-      assert.equal(saveRes.effectiveLayout.ui.rootVars["--bbm-restarbeiten-meta-status-width"], "112px");
-      assert.equal(
-        saveRes.effectiveLayout.ui.rootVars["--bbm-restarbeiten-meta-done-width"],
-        "minmax(0, 1fr)"
-      );
+        assert.equal(saveRes.source, "stored");
+        assert.equal(saveRes.effectiveLayout.tableKind, "control");
+        assert.equal(saveRes.effectiveLayout.ui.rootVars["--bbm-test-control-first-width"], "88px");
+        assert.equal(
+          saveRes.effectiveLayout.ui.rootVars["--bbm-test-control-second-width"],
+          "minmax(0, 1fr)"
+        );
 
-      const stored = repo.getStoredTableLayout({
-        tableKey: "restarbeiten_filter_meta",
-        moduleId: "restarbeiten",
-        orientation: "portrait",
-      });
-      assert.equal(stored.layout.ui.rootVars["--bbm-restarbeiten-meta-due-width"], "88px");
-      assert.equal(stored.layout.ui.rootVars["--bbm-restarbeiten-meta-status-width"], "112px");
-      assert.equal(saveRes.effectiveLayout.tableKind, "control");
+        const stored = repo.getStoredTableLayout({
+          tableKey,
+          moduleId,
+          orientation: "portrait",
+        });
+        assert.equal(stored.layout.ui.rootVars["--bbm-test-control-first-width"], "88px");
+        assert.equal(stored.layout.ui.rootVars["--bbm-test-control-second-width"], undefined);
 
-      const resolved = await repo.getResolvedTableLayout({
-        tableKey: "restarbeiten_filter_meta",
-        moduleId: "restarbeiten",
-        orientation: "portrait",
-      });
-      assert.equal(resolved.ok, true);
-      assert.equal(resolved.source, "stored");
-      assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-restarbeiten-meta-done-width"], "minmax(0, 1fr)");
-    });
+        const resolved = await repo.getResolvedTableLayout({
+          tableKey,
+          moduleId,
+          orientation: "portrait",
+        });
+        assert.equal(resolved.ok, true);
+        assert.equal(resolved.source, "stored");
+        assert.equal(resolved.effectiveLayout.tableKind, "control");
+        assert.equal(resolved.effectiveLayout.ui.rootVars["--bbm-test-control-first-width"], "88px");
+        assert.equal(
+          resolved.effectiveLayout.ui.rootVars["--bbm-test-control-second-width"],
+          "minmax(0, 1fr)"
+        );
+      },
+      { tableLayoutRegistry }
+    );
   });
 
   await run("TableLayoutsRepo: kaputte gespeicherte Layoutwerte fallen auf Standard des konkreten Tables zurueck", async () => {

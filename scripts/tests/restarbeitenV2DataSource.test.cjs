@@ -7,7 +7,6 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 async function runRestarbeitenV2DataSourceTests(run) {
   const dataSourcePath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2DataSource.js");
   const mapperPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2Mapper.js");
-  const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/RestarbeitenV2Screen.js");
 
   const dataSourceSource = fs.readFileSync(dataSourcePath, "utf8");
   assert.equal(dataSourceSource.includes("ipcRenderer"), false);
@@ -21,9 +20,6 @@ async function runRestarbeitenV2DataSourceTests(run) {
   assert.equal(mapperSource.includes("indexedDB"), false);
   assert.equal(mapperSource.includes("localStorage"), false);
   assert.equal(mapperSource.includes("src/renderer/modules/restarbeiten/"), false);
-
-  const screenSource = fs.readFileSync(screenPath, "utf8");
-  assert.equal(screenSource.includes("restarbeitenV2DataSource"), false);
 
   const { createRestarbeitenV2DataSource } = await importEsmFromFile(dataSourcePath);
   const {
@@ -158,7 +154,6 @@ async function runRestarbeitenV2DataSourceTests(run) {
     .split(/\r?\n/)
     .map((entry) => entry.trim())
     .filter(Boolean);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/restarbeiten/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
 

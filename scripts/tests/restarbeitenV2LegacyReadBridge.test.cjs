@@ -7,7 +7,6 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 async function runRestarbeitenV2LegacyReadBridgeTests(run) {
   const bridgePath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2LegacyReadBridge.js");
   const adapterPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2ReadOnlyAdapter.js");
-  const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/RestarbeitenV2Screen.js");
   const routerPath = path.join(__dirname, "../../src/renderer/app/Router.js");
 
   const source = fs.readFileSync(bridgePath, "utf8");
@@ -99,9 +98,7 @@ async function runRestarbeitenV2LegacyReadBridgeTests(run) {
   assert.equal(typeof bridge.uploadRestarbeitV2Attachment, "undefined");
 
   const routerSource = fs.readFileSync(routerPath, "utf8");
-  const screenSource = fs.readFileSync(screenPath, "utf8");
   assert.equal(routerSource.includes("createRestarbeitenV2LegacyReadBridge"), false);
-  assert.equal(screenSource.includes("createRestarbeitenV2LegacyReadBridge"), false);
 
   const diffFiles = execFileSync("git", ["diff", "--name-only"], {
     cwd: path.join(__dirname, "../.."),
@@ -110,7 +107,6 @@ async function runRestarbeitenV2LegacyReadBridgeTests(run) {
     .split(/\r?\n/)
     .map((entry) => entry.trim())
     .filter(Boolean);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/restarbeiten/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/main/")), false);

@@ -870,7 +870,7 @@ async function runTableLayoutEditorPrototypeTests(run) {
     const previousDocument = global.document;
     const previousWindow = global.window;
     global.document = createFakeDocument();
-    const { api } = makeEditorApi();
+    const { api, calls } = makeEditorApi();
     const controlTableDefinition = {
       moduleId: "protokoll",
       moduleLabel: "Protokoll",
@@ -910,6 +910,24 @@ async function runTableLayoutEditorPrototypeTests(run) {
       if (!res?.ok) return res;
       return { ok: true, data: [...res.data, controlTableDefinition] };
     };
+    const originalGetOne = api.tableLayoutsGetOne;
+    api.tableLayoutsGetOne = async (payload) => {
+      if (
+        String(payload?.moduleId || "") === "editor_test" &&
+        String(payload?.tableKey || "") === "editor_test_control_surface"
+      ) {
+        calls.push({ type: "getOne", payload });
+        return {
+          ok: true,
+          data: {
+            source: "default",
+            schemaVersion: 1,
+            effectiveLayout: JSON.parse(JSON.stringify(controlTableDefinition.defaultLayout)),
+          },
+        };
+      }
+      return originalGetOne(payload);
+    };
     global.window = { bbmDb: api };
     try {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
@@ -933,13 +951,13 @@ async function runTableLayoutEditorPrototypeTests(run) {
     const previousDocument = global.document;
     const previousWindow = global.window;
     global.document = createFakeDocument();
-    const { api } = makeEditorApi();
+    const { api, calls } = makeEditorApi();
     const controlTableDefinition = {
-      moduleId: "restarbeiten",
-      moduleLabel: "Restarbeiten",
-      tableKey: "restarbeiten_filter_meta",
-      tableLabel: "Filterleiste Meta",
-      description: "Meta-Filterleiste",
+      moduleId: "editor_test",
+      moduleLabel: "Editor Test",
+      tableKey: "editor_test_control_surface",
+      tableLabel: "Test Control Surface",
+      description: "Test-Control-Surface",
       tableKind: "control",
       editorEnabled: true,
       uiAvailable: true,
@@ -950,44 +968,44 @@ async function runTableLayoutEditorPrototypeTests(run) {
       columns: [],
       editFields: [
         {
-          key: "metaDueWidth",
-          label: "Fertig bis",
-          path: "ui.rootVars.--bbm-restarbeiten-meta-due-width",
+          key: "firstWidth",
+          label: "Erster Bereich",
+          path: "ui.rootVars.--bbm-test-control-first-width",
           type: "gridTrack",
           required: true,
         },
         {
-          key: "metaStatusWidth",
-          label: "Status",
-          path: "ui.rootVars.--bbm-restarbeiten-meta-status-width",
+          key: "secondWidth",
+          label: "Zweiter Bereich",
+          path: "ui.rootVars.--bbm-test-control-second-width",
           type: "gridTrack",
           required: true,
         },
         {
-          key: "metaResponsibleWidth",
-          label: "Verantwortlich",
-          path: "ui.rootVars.--bbm-restarbeiten-meta-responsible-width",
+          key: "thirdWidth",
+          label: "Dritter Bereich",
+          path: "ui.rootVars.--bbm-test-control-third-width",
           type: "gridTrack",
           required: true,
         },
         {
-          key: "metaDoneWidth",
-          label: "Erledigt",
-          path: "ui.rootVars.--bbm-restarbeiten-meta-done-width",
+          key: "fourthWidth",
+          label: "Vierter Bereich",
+          path: "ui.rootVars.--bbm-test-control-fourth-width",
           type: "gridTrack",
           required: true,
         },
       ],
       defaultLayout: {
-        tableKey: "restarbeiten_filter_meta",
-        moduleId: "restarbeiten",
+        tableKey: "editor_test_control_surface",
+        moduleId: "editor_test",
         variant: "portrait",
         ui: {
           rootVars: {
-            "--bbm-restarbeiten-meta-due-width": "minmax(0, 1fr)",
-            "--bbm-restarbeiten-meta-status-width": "minmax(0, 1fr)",
-            "--bbm-restarbeiten-meta-responsible-width": "minmax(0, 1fr)",
-            "--bbm-restarbeiten-meta-done-width": "minmax(0, 1fr)",
+            "--bbm-test-control-first-width": "minmax(0, 1fr)",
+            "--bbm-test-control-second-width": "minmax(0, 1fr)",
+            "--bbm-test-control-third-width": "minmax(0, 1fr)",
+            "--bbm-test-control-fourth-width": "minmax(0, 1fr)",
           },
         },
       },
@@ -999,50 +1017,67 @@ async function runTableLayoutEditorPrototypeTests(run) {
       if (!res?.ok) return res;
       return { ok: true, data: [...res.data, controlTableDefinition] };
     };
+    const originalGetOne = api.tableLayoutsGetOne;
+    api.tableLayoutsGetOne = async (payload) => {
+      if (
+        String(payload?.moduleId || "") === "editor_test" &&
+        String(payload?.tableKey || "") === "editor_test_control_surface"
+      ) {
+        return {
+          ok: true,
+          data: {
+            source: "default",
+            schemaVersion: 1,
+            effectiveLayout: JSON.parse(JSON.stringify(controlTableDefinition.defaultLayout)),
+          },
+        };
+      }
+      return originalGetOne(payload);
+    };
     global.window = { bbmDb: api };
     try {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
       await editor.load();
       const selects = findNodesByTag(editor.root, "SELECT");
       const text = collectText(editor.root);
-      assert.equal(selects[0]?.children?.length, 2);
+      assert.equal(selects[0]?.children?.length, 3);
       assert.equal(selects[1]?.children?.length, 2);
-      selects[0].value = "restarbeiten";
+      selects[0].value = "editor_test";
       selects[0].dispatchEvent({ type: "change" });
       await flushMicrotasks();
       const refreshedText = collectText(editor.root);
       const refreshedSelects = findNodesByTag(editor.root, "SELECT");
       assert.equal(refreshedSelects[1]?.children?.length, 1);
-      assert.equal(refreshedText.includes("Filterleiste Meta"), true);
-      assert.equal(refreshedText.includes("restarbeiten_filter_meta"), true);
+      assert.equal(refreshedText.includes("Test Control Surface"), true);
+      assert.equal(refreshedText.includes("editor_test_control_surface"), true);
       assert.equal(refreshedText.includes("Layoutbereich ohne Tabellenvorschau"), true);
-      const dueInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-restarbeiten-meta-due-width");
-      const statusInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-restarbeiten-meta-status-width");
-      const responsibleInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-restarbeiten-meta-responsible-width");
-      const doneInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-restarbeiten-meta-done-width");
-      assert.equal(dueInput?.value, "minmax(0, 1fr)");
-      assert.equal(statusInput?.value, "");
-      assert.equal(responsibleInput?.value, "");
-      assert.equal(doneInput?.value, "");
+      const firstInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-test-control-first-width");
+      const secondInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-test-control-second-width");
+      const thirdInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-test-control-third-width");
+      const fourthInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-test-control-fourth-width");
+      assert.equal(firstInput?.value, "minmax(0, 1fr)");
+      assert.equal(secondInput?.value, "minmax(0, 1fr)");
+      assert.equal(thirdInput?.value, "minmax(0, 1fr)");
+      assert.equal(fourthInput?.value, "minmax(0, 1fr)");
       editor.applyValues({
-        metaDueWidth: "88px",
-        metaStatusWidth: "112px",
-        metaResponsibleWidth: "136px",
-        metaDoneWidth: "120px",
+        firstWidth: "88px",
+        secondWidth: "112px",
+        thirdWidth: "136px",
+        fourthWidth: "120px",
       });
       const saveRes = await editor.save();
       assert.equal(saveRes.ok, true);
       const saveCall = calls.find((item) => item.type === "save");
-      assert.equal(saveCall.payload.tableKey, "restarbeiten_filter_meta");
-      assert.equal(saveCall.payload.moduleId, "restarbeiten");
-      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-restarbeiten-meta-due-width"], "88px");
-      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-restarbeiten-meta-status-width"], "112px");
-      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-restarbeiten-meta-responsible-width"], "136px");
-      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-restarbeiten-meta-done-width"], "120px");
+      assert.equal(saveCall.payload.tableKey, "editor_test_control_surface");
+      assert.equal(saveCall.payload.moduleId, "editor_test");
+      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-test-control-first-width"], "88px");
+      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-test-control-second-width"], "112px");
+      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-test-control-third-width"], "136px");
+      assert.equal(saveCall.payload.layout.ui.rootVars["--bbm-test-control-fourth-width"], "120px");
       const resetRes = await editor.reset();
       assert.equal(resetRes.ok, true);
-      const restoredDueInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-restarbeiten-meta-due-width");
-      assert.equal(restoredDueInput?.value, "minmax(0, 1fr)");
+      const restoredFirstInput = findNodesByTag(editor.root, "INPUT").find((node) => node?.dataset?.fieldPath === "ui.rootVars.--bbm-test-control-first-width");
+      assert.equal(restoredFirstInput?.value, "minmax(0, 1fr)");
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
@@ -1055,11 +1090,11 @@ async function runTableLayoutEditorPrototypeTests(run) {
     global.document = createFakeDocument();
     const { api } = makeEditorApi();
     const controlTableDefinition = {
-      moduleId: "restarbeiten",
-      moduleLabel: "Restarbeiten",
-      tableKey: "restarbeiten_filter_meta",
-      tableLabel: "Filterleiste Meta",
-      description: "Meta-Filterleiste",
+      moduleId: "editor_test",
+      moduleLabel: "Editor Test",
+      tableKey: "editor_test_control_surface",
+      tableLabel: "Test Control Surface",
+      description: "Test-Control-Surface",
       tableKind: "control",
       editorEnabled: true,
       uiAvailable: true,
@@ -1070,44 +1105,44 @@ async function runTableLayoutEditorPrototypeTests(run) {
       columns: [],
       editFields: [
         {
-          key: "metaDueWidth",
-          label: "Fertig bis",
-          path: "ui.rootVars.--bbm-restarbeiten-meta-due-width",
+          key: "firstWidth",
+          label: "Erster Bereich",
+          path: "ui.rootVars.--bbm-test-control-first-width",
           type: "gridTrack",
           required: true,
         },
         {
-          key: "metaStatusWidth",
-          label: "Status",
-          path: "ui.rootVars.--bbm-restarbeiten-meta-status-width",
+          key: "secondWidth",
+          label: "Zweiter Bereich",
+          path: "ui.rootVars.--bbm-test-control-second-width",
           type: "gridTrack",
           required: true,
         },
         {
-          key: "metaResponsibleWidth",
-          label: "Verantwortlich",
-          path: "ui.rootVars.--bbm-restarbeiten-meta-responsible-width",
+          key: "thirdWidth",
+          label: "Dritter Bereich",
+          path: "ui.rootVars.--bbm-test-control-third-width",
           type: "gridTrack",
           required: true,
         },
         {
-          key: "metaDoneWidth",
-          label: "Erledigt",
-          path: "ui.rootVars.--bbm-restarbeiten-meta-done-width",
+          key: "fourthWidth",
+          label: "Vierter Bereich",
+          path: "ui.rootVars.--bbm-test-control-fourth-width",
           type: "gridTrack",
           required: true,
         },
       ],
       defaultLayout: {
-        tableKey: "restarbeiten_filter_meta",
-        moduleId: "restarbeiten",
+        tableKey: "editor_test_control_surface",
+        moduleId: "editor_test",
         variant: "portrait",
         ui: {
           rootVars: {
-            "--bbm-restarbeiten-meta-due-width": "minmax(0, 1fr)",
-            "--bbm-restarbeiten-meta-status-width": "minmax(0, 1fr)",
-            "--bbm-restarbeiten-meta-responsible-width": "minmax(0, 1fr)",
-            "--bbm-restarbeiten-meta-done-width": "minmax(0, 1fr)",
+            "--bbm-test-control-first-width": "minmax(0, 1fr)",
+            "--bbm-test-control-second-width": "minmax(0, 1fr)",
+            "--bbm-test-control-third-width": "minmax(0, 1fr)",
+            "--bbm-test-control-fourth-width": "minmax(0, 1fr)",
           },
         },
       },
@@ -1122,14 +1157,14 @@ async function runTableLayoutEditorPrototypeTests(run) {
     global.window = { bbmDb: api };
     try {
       const editor = editorMod.createTableLayoutPrototypeEditor({ api: global.window.bbmDb });
-      await editor.load({ moduleId: "restarbeiten", tableKey: "restarbeiten_filter_meta", orientation: "portrait" });
+      await editor.load({ moduleId: "editor_test", tableKey: "editor_test_control_surface", orientation: "portrait" });
       const text = collectText(editor.root);
-      assert.equal(text.includes("Filterleiste Meta"), true);
-      assert.equal(text.includes("restarbeiten_filter_meta"), true);
+      assert.equal(text.includes("Test Control Surface"), true);
+      assert.equal(text.includes("editor_test_control_surface"), true);
       assert.equal(text.includes("Layoutbereich ohne Tabellenvorschau"), true);
       const selectValues = findNodesByTag(editor.root, "SELECT").map((node) => node?.value);
-      assert.equal(selectValues.includes("restarbeiten"), true);
-      assert.equal(selectValues.includes("restarbeiten_filter_meta"), true);
+      assert.equal(selectValues.includes("editor_test"), true);
+      assert.equal(selectValues.includes("editor_test_control_surface"), true);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

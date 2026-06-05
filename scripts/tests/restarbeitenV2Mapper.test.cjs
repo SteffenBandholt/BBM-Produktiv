@@ -6,7 +6,6 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 async function runRestarbeitenV2MapperTests(run) {
   const mapperPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2Mapper.js");
-  const screenPath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/RestarbeitenV2Screen.js");
 
   const source = fs.readFileSync(mapperPath, "utf8");
   assert.equal(source.includes("ipcRenderer"), false);
@@ -17,9 +16,6 @@ async function runRestarbeitenV2MapperTests(run) {
   assert.equal(source.includes("src/renderer/modules/restarbeiten/"), false);
   assert.equal(source.includes("src/renderer/modules/protokoll/"), false);
   assert.equal(source.includes("uiInspector"), false);
-
-  const screenSource = fs.readFileSync(screenPath, "utf8");
-  assert.equal(screenSource.includes("normalizeRestarbeitV2List"), true);
 
   const {
     normalizeRestarbeitV2Dto,
@@ -165,7 +161,6 @@ async function runRestarbeitenV2MapperTests(run) {
     .split(/\r?\n/)
     .map((entry) => entry.trim())
     .filter(Boolean);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/restarbeiten/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
 

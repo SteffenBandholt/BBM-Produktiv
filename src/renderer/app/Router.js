@@ -15,10 +15,6 @@ import { createEditorLabScreen } from "../uiV2/editorLab/EditorLabScreen.js";
 import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js";
 import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
 import { createBbmUiEditorDemoScreen } from "../uiEditor/demo/BbmUiEditorDemoScreen.js";
-import { createRestarbeitenV2Screen } from "../modules/restarbeitenV2/RestarbeitenV2Screen.js";
-import { createRestarbeitenV2Registry } from "../modules/restarbeitenV2/restarbeitenV2Registry.js";
-import { createRestarbeitenV2ReadOnlyDataSourceFactory } from "../modules/restarbeitenV2/restarbeitenV2ReadOnlyDataSourceFactory.js";
-import { listRestarbeitenByProject } from "../modules/restarbeiten/data/restarbeitenDataSource.js";
 import { RESTARBEITEN_MODULE_ID } from "../modules/restarbeiten/index.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
@@ -87,48 +83,28 @@ function _pickAppKernelSettings(raw = {}) {
   return out;
 }
 
-function createRestarbeitenV2DevLegacyRows() {
-  return [
-    {
-      restarbeit_id: "DS-001",
-      lfd_nr: "DS-001",
-      title: "Geladene Fake-Restarbeit",
-      description: "Haus A",
-      location: "Haus A",
-      state: "open",
-      completion_note: "Fake DEV-Quelle",
-      responsible_firm_name: "Firma Alpha",
-      due_date: "2026-06-01",
-      note: "Nur lokal geladen",
-      attachments: [],
+function createRestarbeitenRebuildPlaceholderScreen() {
+  return {
+    render() {
+      const doc = globalThis.document;
+      const host = doc.createElement("section");
+      host.setAttribute("data-bbm-restarbeiten-rebuild-placeholder", "true");
+      host.style.display = "grid";
+      host.style.placeItems = "center";
+      host.style.minHeight = "240px";
+      host.style.padding = "24px";
+
+      const message = doc.createElement("p");
+      message.textContent = "Restarbeitenliste wird neu aufgebaut.";
+      message.style.margin = "0";
+      message.style.fontSize = "16px";
+      message.style.fontWeight = "600";
+      message.style.color = "#334155";
+
+      host.append(message);
+      return host;
     },
-    {
-      restarbeit_id: "DS-002",
-      lfd_nr: "DS-002",
-      title: "Fake erledigt",
-      description: "Wohnung 2",
-      location: "Wohnung 2",
-      state: "done",
-      completion_note: "Fake erledigt",
-      responsible_firm_name: "Firma Beta",
-      due_date: "2026-06-02",
-      note: "Nur lokal geladen",
-      attachments: [],
-    },
-    {
-      restarbeit_id: "DS-003",
-      lfd_nr: "DS-003",
-      title: "Fake Pruefung",
-      description: "Aussenanlage",
-      location: "Aussenanlage",
-      state: "open",
-      completion_note: "Fake Pruefung",
-      responsible_firm_name: "Firma Gamma",
-      due_date: "2026-06-03",
-      note: "Nur lokal geladen",
-      attachments: [],
-    },
-  ];
+  };
 }
 
 export default class Router {
@@ -616,9 +592,16 @@ export default class Router {
       return await this.openProjectProtocol(effectiveProjectId, options || {});
     }
 
-    if (this._shouldRouteRestarbeitenToV2ReadOnly(normalizedModuleId)) {
+    if (normalizedModuleId === RESTARBEITEN_MODULE_ID) {
       this._setProjectRuntimeContext({ projectId: effectiveProjectId, meetingId: null });
-      return await this.showRestarbeitenV2Dev();
+      await this.show(createRestarbeitenRebuildPlaceholderScreen(), {
+        section: RESTARBEITEN_MODULE_ID,
+        isTopsView: false,
+        pageTitle: "Restarbeiten",
+        activeModuleLabel: "Restarbeiten",
+        hideSidebar: true,
+      });
+      return true;
     }
 
     const navEntry =
@@ -759,96 +742,6 @@ export default class Router {
       section: "editorLabV2",
       isTopsView: false,
       pageTitle: "EditorLab V2",
-      hideSidebar: false,
-    });
-    return true;
-  }
-
-  _isRestarbeitenV2DevEnabled() {
-    return this._readUiMode() === "new";
-  }
-
-  _hasExplicitRestarbeitenV2ProductiveReadOnlyFreigabe() {
-    // Spaeterer Mutter-/Kind-Freigabeschalter:
-    // Die produktive ReadOnly-Freigabe fuer Restarbeiten V2 wird hier technisch vorbereitet,
-    // bleibt aber bis zur ausdruecklichen Aktivierung aus.
-    return false;
-  }
-
-  _isRestarbeitenV2ProductiveReadOnlyEnabled() {
-    return this._hasExplicitRestarbeitenV2ProductiveReadOnlyFreigabe();
-  }
-
-  _getRestarbeitenV2ReadOnlyAccessState() {
-    if (this._isRestarbeitenV2DevEnabled()) return "dev";
-    if (this._isRestarbeitenV2ProductiveReadOnlyEnabled()) return "productive";
-    return null;
-  }
-
-  _shouldRouteRestarbeitenToV2ReadOnly(moduleId) {
-    return (
-      String(moduleId || "").trim() === RESTARBEITEN_MODULE_ID &&
-      !!this._getRestarbeitenV2ReadOnlyAccessState()
-    );
-  }
-
-  async showRestarbeitenV2Dev() {
-    const accessState = this._getRestarbeitenV2ReadOnlyAccessState();
-    if (!accessState) {
-      alert("Restarbeiten V2 ist derzeit nicht freigegeben.");
-      return false;
-    }
-
-    const registry = createRestarbeitenV2Registry();
-    const core = createEditorV2Core({ registry, mode: "frame" });
-    const effectiveProjectId = this.currentProjectId || "dev-restarbeiten-v2";
-    const readOnlyFactory = createRestarbeitenV2ReadOnlyDataSourceFactory({
-      loadRestarbeiten: async (projectId) => {
-        this._restarbeitenV2DevLoadedProjectId = projectId || null;
-        if (!projectId || projectId === "dev-restarbeiten-v2") {
-          return createRestarbeitenV2DevLegacyRows();
-        }
-        try {
-          const legacyRows = await listRestarbeitenByProject(projectId);
-          return Array.isArray(legacyRows) ? legacyRows : createRestarbeitenV2DevLegacyRows();
-        } catch (_error) {
-          return createRestarbeitenV2DevLegacyRows();
-        }
-      },
-    });
-    const dataSource = readOnlyFactory.createRestarbeitenV2ReadOnlyDataSource();
-    const screen = createRestarbeitenV2Screen({
-      registry,
-      editorV2Core: core,
-      useDataSource: true,
-      projectId: effectiveProjectId,
-      dataSource,
-    });
-
-    const view = {
-      render: () => {
-        const host = document.createElement("div");
-        host.setAttribute("data-ui-v2-restarbeiten-host", "true");
-        host.style.display = "grid";
-        host.style.gap = "12px";
-        host.style.padding = "12px";
-        const root = screen.render(host);
-        return root ? host : null;
-      },
-      async destroy() {
-        try {
-          screen.destroy?.();
-        } catch (_e) {
-          // ignore
-        }
-      },
-    };
-
-    this._setProjectRuntimeContext({ projectId: this.currentProjectId || null, meetingId: null });
-    await this.show(view, {
-      section: "restarbeitenV2Dev",
-      isTopsView: false,
-      pageTitle: accessState === "productive" ? "Restarbeiten V2 ReadOnly" : "Restarbeiten V2 DEV",
       hideSidebar: false,
     });
     return true;

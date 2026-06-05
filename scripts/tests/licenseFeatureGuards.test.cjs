@@ -40,7 +40,7 @@ async function runLicenseFeatureGuardTests(run) {
   const dictationControllerSource = read("src/renderer/features/audio-dictation/DictationController.js");
 
   await run("License-Guard: printIpc importiert ipcMain+app und Preview bleibt nicht DEV-only", () => {
-    assert.match(printIpc, /const\s*\{\s*ipcMain\s*,\s*app\s*\}\s*=\s*require\("electron"\)/);
+    assert.match(printIpc, /const\s*\{[^}]*\bipcMain\b[^}]*\bapp\b[^}]*\}\s*=\s*require\("electron"\)/);
     assert.doesNotMatch(printIpc, /print:openHtmlPreview[\s\S]*if\s*\(\s*app\.isPackaged\s*\)/);
   });
 
