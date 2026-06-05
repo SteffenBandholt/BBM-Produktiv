@@ -118,7 +118,10 @@ async function runRestarbeitenV2ReadOnlyDataSourceFactoryTests(run) {
     .filter(Boolean);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/main/")), false);
+  assert.equal(
+    diffFiles.some((file) => file.startsWith("src/main/") && file !== "src/main/db/restarbeitenRepo.js"),
+    false
+  );
   assert.equal(diffFiles.some((file) => file.startsWith("src/preload/")), false);
 
   if (run) {

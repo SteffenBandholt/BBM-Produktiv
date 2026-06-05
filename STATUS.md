@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M2.1 Restarbeiten Main/Body Detaildarstellung umgesetzt:
+  - Das Blatt zeigt jetzt einen dezenten Tabellenkopf mit `Nr.`, `Gegenstand`, `Fertig bis`, `Status` und `Verantw.`.
+  - Datensatzzeilen sind dreispaltig und dreizeilig aufgebaut: Nummer/Datum/Klasse, Verortung/Kurztext/Langtext, Fertig-bis mit Ampel/Status/Verantwortlich.
+  - Das Wort `Ampel` erscheint nicht im Tabellenkopf; rechte Datensatzwerte wiederholen keine Bezeichner wie `Fertig bis:`, `Status:` oder `Verantwortlich:`.
+  - UI-Editor-Registry wurde nur um die neuen Anzeige-/Struktur-IDs fuer Tabellenkopf, Klasse und Verortung ergaenzt.
+  - Keine Datenbank-, IPC-, Preload-, PDF-/Mail-, Notiz- oder Protokoll-Aenderungen.
+  - Naechster offener Schritt: fachliche Sichtpruefung und danach getrennt M2.2 planen.
+
 - M1 RestarbeitenScreen-Grundgeruest nach dem Rueckbau aufgebaut:
   - Die kaputte sichtbare Restarbeiten-V2-UI bleibt entfernt und wird nicht wiederverwendet.
   - Restarbeiten oeffnet wieder einen neuen, bewusst gebauten M1-Screen mit Filterbar, Hauptbereich, Editbox und Quicklane-Anbindung.

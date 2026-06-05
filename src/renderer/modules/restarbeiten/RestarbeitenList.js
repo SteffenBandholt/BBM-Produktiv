@@ -12,6 +12,29 @@ function appendText(parent, className, text, uiId = "") {
   return el;
 }
 
+function buildTableHeader() {
+  const header = createEl("div", {
+    className: "bbm-restarbeiten-table-header",
+    uiId: "restarbeiten.main.tableHeader",
+  });
+  const number = createEl("div", {
+    className: "bbm-restarbeiten-table-header__number",
+    text: "Nr.",
+    uiId: "restarbeiten.main.tableHeader.number",
+  });
+  const subject = createEl("div", {
+    className: "bbm-restarbeiten-table-header__subject",
+    text: "Gegenstand",
+    uiId: "restarbeiten.main.tableHeader.subject",
+  });
+  const meta = createEl("div", { className: "bbm-restarbeiten-table-header__meta" });
+  appendText(meta, "", "Fertig bis", "restarbeiten.main.tableHeader.dueDate");
+  appendText(meta, "", "Status", "restarbeiten.main.tableHeader.status");
+  appendText(meta, "", "Verantw.", "restarbeiten.main.tableHeader.responsible");
+  header.append(number, subject, meta);
+  return header;
+}
+
 export function buildRestarbeitenList({
   items = [],
   selectedId = null,
@@ -23,6 +46,7 @@ export function buildRestarbeitenList({
     className: "bbm-restarbeiten-records",
     uiId: "restarbeiten.main.records",
   });
+  records.appendChild(buildTableHeader());
 
   if (!items.length) {
     records.appendChild(
@@ -43,18 +67,26 @@ export function buildRestarbeitenList({
     row.addEventListener("click", () => onSelect?.(item.id));
 
     const numberColumn = createEl("div", { uiId: "restarbeiten.record.numberColumn" });
-    appendText(numberColumn, "bbm-restarbeiten-record__number", item.numberLine, "restarbeiten.record.number");
+    appendText(
+      numberColumn,
+      "bbm-restarbeiten-record__number",
+      item.numberLine === "\u2014" ? item.numberLine : `#${item.numberLine}`,
+      "restarbeiten.record.number"
+    );
     appendText(numberColumn, "bbm-restarbeiten-record__date", item.dateLine, "restarbeiten.record.createdAt");
+    appendText(numberColumn, "bbm-restarbeiten-record__class", item.itemClassLabel, "restarbeiten.record.itemClass");
 
     const contentColumn = createEl("div", { uiId: "restarbeiten.record.contentColumn" });
-    appendText(contentColumn, "bbm-restarbeiten-record__short", item.workLine1, "restarbeiten.record.shortText");
+    appendText(contentColumn, "bbm-restarbeiten-record__location", item.locationLine, "restarbeiten.record.location");
+    appendText(contentColumn, "bbm-restarbeiten-record__short", item.shortTextLine || item.workLine1, "restarbeiten.record.shortText");
     if (showLongtext) {
-      appendText(contentColumn, "bbm-restarbeiten-record__long", item.workLine2, "restarbeiten.record.longText");
+      appendText(contentColumn, "bbm-restarbeiten-record__long", item.longTextLine || item.workLine2, "restarbeiten.record.longText");
     }
 
     const metaColumn = createEl("div", { className: "bbm-restarbeiten-record__meta", uiId: "restarbeiten.record.metaColumn" });
     const dueLine = createEl("div", { uiId: "restarbeiten.record.dueDate" });
-    dueLine.textContent = `Fertig bis: ${item.dueDateLabel}`;
+    dueLine.className = "bbm-restarbeiten-record__due";
+    dueLine.textContent = item.dueDateLabel;
     if (showAmpel) {
       const ampel = createEl("span", { className: "bbm-restarbeiten-ampel", uiId: "restarbeiten.record.ampel" });
       ampel.dataset.state = item.ampelState || "neutral";

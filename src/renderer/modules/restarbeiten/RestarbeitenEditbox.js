@@ -123,12 +123,13 @@ export function buildRestarbeitenEditbox({
   meta.append(
     createField({
       label: "Status",
-      value: draft.status || "offen",
+      value: draft.status === "in_arbeit" ? "in arbeit" : draft.status || "offen",
       type: "select",
       options: [
         { value: "offen", label: "Offen" },
         { value: "in arbeit", label: "In Arbeit" },
         { value: "erledigt", label: "Erledigt" },
+        { value: "verzug", label: "Verzug" },
       ],
       uiId: "restarbeiten.editbox.meta.status",
       onInput: (status) => onDraftChange?.({ status }),

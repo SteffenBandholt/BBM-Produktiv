@@ -5,6 +5,7 @@ const ALLOWED_STATUS = new Set([
   "offen",
   "in arbeit",
   "erledigt",
+  "verzug",
 ]);
 const ALLOWED_ITEM_CLASSES = new Set(["rest", "mangel"]);
 
@@ -21,7 +22,7 @@ function reqText(value, name) {
 }
 
 function normalizeStatus(value) {
-  const clean = toText(value);
+  const clean = toText(value)?.toLowerCase();
   if (!clean) return "offen";
   if (ALLOWED_STATUS.has(clean)) return clean;
   if (clean === "in_arbeit") return "in arbeit";

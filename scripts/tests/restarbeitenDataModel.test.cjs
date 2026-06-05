@@ -72,6 +72,22 @@ async function runRestarbeitenDataModelTests(run) {
     assert.notEqual(s1.project_id, s2.project_id);
   }));
 
+  await run("Statuswerte: verzug erlaubt, in_arbeit normalisiert und unbekannt faellt auf offen", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+
+    const overdue = repo.createRestarbeitItem({ project_id: "p1", short_text: "Verzug", status: "verzug" });
+    const legacy = repo.createRestarbeitItem({ project_id: "p1", short_text: "Legacy", status: "in_arbeit" });
+    const invalid = repo.createRestarbeitItem({ project_id: "p1", short_text: "Invalid", status: "unbekannt" });
+
+    assert.equal(overdue.status, "verzug");
+    assert.equal(legacy.status, "in arbeit");
+    assert.equal(invalid.status, "offen");
+
+    const updated = repo.updateRestarbeitItem(invalid.id, { status: "verzug" });
+    assert.equal(updated.status, "verzug");
+  }));
+
   await run("item_class default, akzeptierte Werte und Normalisierung", async () => withTemp(({ db, repo }) => {
     const conn = db.initDatabase();
     conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");

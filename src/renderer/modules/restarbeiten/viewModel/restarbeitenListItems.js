@@ -12,39 +12,33 @@ function mapItemClassToken(value) {
 function mapItemClassLabel(value) {
   const raw = toText(value).toLowerCase();
   if (raw === "mangel") return "Mangel";
-  return "Rest";
+  return "Restarbeit";
 }
 
 export function mapRestarbeitenStatusLabel(value) {
   const raw = toText(value).toLowerCase();
   const map = {
     offen: "offen",
-    "in arbeit": "in arbeit",
+    "in arbeit": "in Arbeit",
     in_arbeit: "in Arbeit",
     erledigt: "erledigt",
-    erledigt_gemeldet: "erledigt gemeldet",
-    geprueft_erledigt: "geprüft erledigt",
-    zurueckgewiesen: "zurückgewiesen",
     verzug: "Verzug",
   };
-  return map[raw] || (raw || "offen");
+  return map[raw] || "offen";
 }
 
-function joinSlash(a, b) {
-  const left = toText(a);
-  const right = toText(b);
-  if (left && right) return `${left} / ${right}`;
-  return left || right || "";
+function joinLocation(parts = []) {
+  const cleaned = parts.map((part) => toText(part)).filter(Boolean);
+  return cleaned.length ? cleaned.join(" \u00b7 ") : "\u2014";
 }
 
-
-function formatDateDisplay(value, fallback = "—") {
+function formatDateDisplay(value, fallback = "\u2014") {
   const text = toText(value);
   if (!text) return fallback;
   const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
   if (!match) return text;
   const [, year, month, day] = match;
-  return `${day}.${month}.${year}`;
+  return `${day}.${month}.${year.slice(-2)}`;
 }
 
 function parseDateOnly(value) {
@@ -79,32 +73,36 @@ function toDayStartUtc(dateLike = new Date()) {
 export function getRestarbeitenAmpelState(row = {}, today = new Date()) {
   const status = toText(row.status).toLowerCase();
   if (status === "verzug") return "rot";
-  if (status === "erledigt" || status === "erledigt_gemeldet" || status === "geprueft_erledigt" || status === "geprüft erledigt") {
-    return "gruen";
-  }
+  if (status === "erledigt") return "gruen";
 
   const dueDate = parseDateOnly(row.due_date);
   const todayStart = toDayStartUtc(today);
-  if (!dueDate || !todayStart) return "neutral";
+  if (!todayStart) return "neutral";
 
-  const dueTime = dueDate.getTime();
-  const todayTime = todayStart.getTime();
-  if (dueTime < todayTime) return "rot";
+  if (dueDate && dueDate.getTime() < todayStart.getTime()) return "rot";
 
-  const tenDaysAhead = new Date(todayStart);
-  tenDaysAhead.setUTCDate(tenDaysAhead.getUTCDate() + 10);
-  if (dueTime <= tenDaysAhead.getTime()) return "orange";
+  if (status === "offen" || status === "in arbeit" || status === "in_arbeit") {
+    return dueDate ? "gruen" : "neutral";
+  }
 
-  return "gruen";
+  return "neutral";
 }
 
 export function toRestarbeitenListItem(row = {}, today = new Date()) {
   const itemClassToken = mapItemClassToken(row.item_class);
   const itemClassLabel = mapItemClassLabel(row.item_class);
   const statusLabel = mapRestarbeitenStatusLabel(row.status);
-  const dueDateLabel = formatDateDisplay(row.due_date, "—");
-  const responsibleLabel = toText(row.responsible_label, "—");
+  const dueDateLabel = formatDateDisplay(row.due_date, "\u2014");
+  const responsibleLabel = toText(row.responsible_label, "\u2014");
   const ampelState = getRestarbeitenAmpelState(row, today);
+  const locationLine = joinLocation([
+    row.location_level_1,
+    row.location_level_2,
+    row.location_level_3,
+    row.location_level_4,
+  ]);
+  const shortTextLine = toText(row.short_text, "\u2014");
+  const longTextLine = toText(row.long_text, "\u2014");
 
   return {
     id: toText(row.id, ""),
@@ -114,16 +112,19 @@ export function toRestarbeitenListItem(row = {}, today = new Date()) {
     dueDateLabel,
     responsibleLabel,
     ampelState,
-    numberLine: toText(row.running_number) || "—",
-    dateLine: formatDateDisplay(row.created_at, "—"),
-    locationLine1: joinSlash(row.location_level_1, row.location_level_2) || "—",
-    locationLine2: joinSlash(row.location_level_3, row.location_level_4) || "—",
+    numberLine: toText(row.running_number) || "\u2014",
+    dateLine: formatDateDisplay(row.created_at, "\u2014"),
+    locationLine,
+    locationLine1: joinLocation([row.location_level_1, row.location_level_2]),
+    locationLine2: joinLocation([row.location_level_3, row.location_level_4]),
     locationLevel1: toText(row.location_level_1, ""),
     locationLevel2: toText(row.location_level_2, ""),
     locationLevel3: toText(row.location_level_3, ""),
     locationLevel4: toText(row.location_level_4, ""),
-    workLine1: toText(row.short_text, "—"),
-    workLine2: toText(row.long_text, "—"),
+    shortTextLine,
+    longTextLine,
+    workLine1: shortTextLine,
+    workLine2: longTextLine,
   };
 }
 

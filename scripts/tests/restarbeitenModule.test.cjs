@@ -100,6 +100,13 @@ function findNodes(node, predicate, acc = []) {
   return acc;
 }
 
+function collectOptions(node) {
+  return findNodes(node, (entry) => entry.tagName === "OPTION").map((entry) => ({
+    value: entry.value,
+    label: entry.textContent,
+  }));
+}
+
 function flush() {
   return new Promise((resolve) => setImmediate(resolve));
 }
@@ -113,17 +120,32 @@ function buildBbmDbStub() {
           {
             id: "ra-1",
             running_number: 7,
-            created_at: "2026-05-01",
-            item_class: "rest",
+            created_at: "2026-06-01",
+            item_class: "mangel",
             status: "offen",
-            due_date: "2026-06-20",
+            due_date: "2026-06-12",
+            responsible_label: "Mueller Trockenbau",
+            short_text: "Abdichtung im Bad fehlt",
+            long_text: "Abdichtung im Bereich Dusche unvollstaendig.",
+            location_level_1: "Haus A",
+            location_level_2: "EG",
+            location_level_3: "Wohnung 2",
+            location_level_4: "Bad",
+          },
+          {
+            id: "ra-2",
+            running_number: 12,
+            created_at: "2026-06-03",
+            item_class: "rest",
+            status: "in arbeit",
+            due_date: "2026-06-22",
             responsible_label: "AB Bau",
             short_text: "Tuer einstellen",
             long_text: "Druecker schleift.",
-            location_level_1: "Haus A",
-            location_level_2: "EG",
-            location_level_3: "Einheit 1",
-            location_level_4: "Flur",
+            location_level_1: "EG",
+            location_level_2: "Flur",
+            location_level_3: "",
+            location_level_4: "",
           },
         ],
       };
@@ -242,6 +264,32 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(text.includes("Datensatz l"), true);
   });
 
+  await run("Restarbeiten: Main/Body rendert M2.1-Tabellenkopf und Datensatzzeilen", async () => {
+    const rendered = await renderRouteScreen();
+    const text = collectText(rendered.root);
+    assert.equal(text.includes("Nr."), true);
+    assert.equal(text.includes("Gegenstand"), true);
+    assert.equal(text.includes("Fertig bis"), true);
+    assert.equal(text.includes("Status"), true);
+    assert.equal(text.includes("Verantw."), true);
+    assert.equal(text.includes("Ampel"), false);
+    assert.equal(text.includes("7"), true);
+    assert.equal(text.includes("01.06.26"), true);
+    assert.equal(text.includes("Mangel"), true);
+    assert.equal(text.includes("12"), true);
+    assert.equal(text.includes("03.06.26"), true);
+    assert.equal(text.includes("Restarbeit"), true);
+    assert.equal(text.includes("Haus A \u00b7 EG \u00b7 Wohnung 2 \u00b7 Bad"), true);
+    assert.equal(text.includes("Abdichtung im Bad fehlt"), true);
+    assert.equal(text.includes("Abdichtung im Bereich Dusche unvollstaendig."), true);
+    assert.equal(text.includes("12.06.26"), true);
+    assert.equal(text.includes("offen"), true);
+    assert.equal(text.includes("Mueller Trockenbau"), true);
+    assert.equal(text.includes("Fertig bis:"), false);
+    assert.equal(text.includes("Status:"), false);
+    assert.equal(text.includes("Verantwortlich:"), false);
+  });
+
   await run("Restarbeiten: Screen stellt Quicklane-Methoden und M1-Bereiche bereit", async () => {
     const mod = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
@@ -281,6 +329,66 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(typeof dataSource.listResponsibleProjectFirms, "function");
     assert.equal(typeof dataSource.softDeleteRestarbeitItem, "function");
     assert.equal(typeof viewModel.toRestarbeitenListItems, "function");
+    const [rest, emptyLocation] = viewModel.toRestarbeitenListItems([
+      { id: "r", item_class: "rest", running_number: 1, location_level_1: "EG", location_level_2: "Flur" },
+      { id: "e", item_class: "mangel", running_number: 2 },
+    ]);
+    assert.equal(rest.itemClassLabel, "Restarbeit");
+    assert.equal(rest.locationLine, "EG \u00b7 Flur");
+    assert.equal(emptyLocation.locationLine, "\u2014");
+  });
+
+  await run("Restarbeiten: Statusauswahlen enthalten die verbindlichen Werte", async () => {
+    const [filterbar, editbox] = await Promise.all([
+      importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenFilterbar.js")),
+      importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenEditbox.js")),
+    ]);
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const filterOptions = collectOptions(filterbar.buildRestarbeitenFilterbar());
+      const editOptions = collectOptions(editbox.buildRestarbeitenEditbox());
+      for (const expected of [
+        { value: "offen", label: "Offen" },
+        { value: "in arbeit", label: "In Arbeit" },
+        { value: "erledigt", label: "Erledigt" },
+        { value: "verzug", label: "Verzug" },
+      ]) {
+        assert.equal(filterOptions.some((option) => option.value === expected.value && option.label === expected.label), true, `filter ${expected.value}`);
+        assert.equal(editOptions.some((option) => option.value === expected.value && option.label === expected.label), true, `editbox ${expected.value}`);
+      }
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Restarbeiten: Ampellogik nutzt keine Orange-Regel", async () => {
+    const viewModel = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenListItems.js")
+    );
+    const today = new Date(Date.UTC(2026, 5, 5));
+    const cases = [
+      [{ status: "verzug" }, "rot"],
+      [{ status: "erledigt" }, "gruen"],
+      [{ status: "offen" }, "neutral"],
+      [{ status: "offen", due_date: "2026-06-05" }, "gruen"],
+      [{ status: "offen", due_date: "2026-06-20" }, "gruen"],
+      [{ status: "offen", due_date: "2026-06-04" }, "rot"],
+      [{ status: "in arbeit" }, "neutral"],
+      [{ status: "in arbeit", due_date: "2026-06-20" }, "gruen"],
+      [{ status: "in arbeit", due_date: "2026-06-04" }, "rot"],
+      [{ status: "in_arbeit", due_date: "2026-06-20" }, "gruen"],
+    ];
+    const states = cases.map(([row, expected]) => {
+      const actual = viewModel.getRestarbeitenAmpelState(row, today);
+      assert.equal(actual, expected, JSON.stringify(row));
+      return actual;
+    });
+    assert.equal(states.includes("orange"), false);
+    assert.equal(viewModel.mapRestarbeitenStatusLabel("geprueft_erledigt"), "offen");
+    assert.equal(viewModel.mapRestarbeitenStatusLabel("zurueckgewiesen"), "offen");
+    assert.equal(viewModel.getRestarbeitenAmpelState({ status: "geprueft_erledigt" }, today), "neutral");
+    assert.equal(viewModel.getRestarbeitenAmpelState({ status: "zurueckgewiesen" }, today), "neutral");
   });
 
   await run("Restarbeiten: UI-Editor-Elementliste fuer M1 ist gueltig", async () => {
@@ -294,6 +402,14 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(ids.has("restarbeiten.root"), true);
     assert.equal(ids.has("restarbeiten.filterbar"), true);
     assert.equal(ids.has("restarbeiten.main"), true);
+    assert.equal(ids.has("restarbeiten.main.tableHeader"), true);
+    assert.equal(ids.has("restarbeiten.main.tableHeader.number"), true);
+    assert.equal(ids.has("restarbeiten.main.tableHeader.subject"), true);
+    assert.equal(ids.has("restarbeiten.main.tableHeader.dueDate"), true);
+    assert.equal(ids.has("restarbeiten.main.tableHeader.status"), true);
+    assert.equal(ids.has("restarbeiten.main.tableHeader.responsible"), true);
+    assert.equal(ids.has("restarbeiten.record.itemClass"), true);
+    assert.equal(ids.has("restarbeiten.record.location"), true);
     assert.equal(ids.has("restarbeiten.editbox"), true);
     assert.equal(ids.has("restarbeiten.quicklane"), true);
     assert.equal(ids.has("restarbeiten.editbox.meta.noteButton"), true);

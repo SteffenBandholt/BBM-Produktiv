@@ -158,6 +158,30 @@
   gap: 8px;
 }
 
+.bbm-restarbeiten-table-header {
+  display: grid;
+  grid-template-columns: 92px minmax(0, 1fr) 245px;
+  gap: 14px;
+  padding: 0 12px 8px;
+  color: var(--bbm-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0;
+  border-bottom: 1px solid var(--bbm-line);
+}
+
+.bbm-restarbeiten-table-header__number,
+.bbm-restarbeiten-table-header__subject,
+.bbm-restarbeiten-table-header__meta {
+  display: grid;
+  align-content: end;
+}
+
+.bbm-restarbeiten-table-header__meta {
+  gap: 2px;
+}
+
 .bbm-restarbeiten-record {
   display: grid;
   grid-template-columns: 92px minmax(0, 1fr) 245px;
@@ -167,6 +191,9 @@
   border-radius: 8px;
   background: var(--bbm-surface-soft);
   cursor: pointer;
+  color: var(--bbm-text);
+  font: inherit;
+  text-align: left;
 }
 
 .bbm-restarbeiten-record[aria-selected="true"] {
@@ -180,10 +207,20 @@
 }
 
 .bbm-restarbeiten-record__date,
+.bbm-restarbeiten-record__class,
+.bbm-restarbeiten-record__location,
 .bbm-restarbeiten-record__meta,
 .bbm-restarbeiten-empty {
   color: var(--bbm-muted);
   font-size: 12px;
+}
+
+.bbm-restarbeiten-record__class {
+  font-weight: 700;
+}
+
+.bbm-restarbeiten-record__location {
+  margin-bottom: 3px;
 }
 
 .bbm-restarbeiten-record__short {
@@ -193,6 +230,20 @@
 .bbm-restarbeiten-record__long {
   margin-top: 4px;
   color: var(--bbm-muted);
+}
+
+.bbm-restarbeiten-record__meta {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+.bbm-restarbeiten-record__due {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  color: var(--bbm-text);
+  font-weight: 700;
 }
 
 .bbm-restarbeiten-ampel {

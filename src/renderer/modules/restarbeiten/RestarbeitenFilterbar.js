@@ -97,9 +97,10 @@ export function buildRestarbeitenFilterbar({
       value: filters.status || "",
       options: [
         { value: "", label: "Alle" },
-        { value: "offen", label: "offen" },
+        { value: "offen", label: "Offen" },
         { value: "in arbeit", label: "In Arbeit" },
-        { value: "erledigt", label: "erledigt" },
+        { value: "erledigt", label: "Erledigt" },
+        { value: "verzug", label: "Verzug" },
       ],
       uiId: "restarbeiten.filterbar.meta.status",
       onChange: (status) => onFilterChange?.({ status }),
