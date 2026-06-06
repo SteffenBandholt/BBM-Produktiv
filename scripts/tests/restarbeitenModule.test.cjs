@@ -448,6 +448,10 @@ async function runRestarbeitenModuleTests(run) {
 
   await run("Restarbeiten: Filterbar nutzt kleine Wort-Schalter und keine Gruppentitel", async () => {
     const filterbar = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenFilterbar.js"));
+    const css = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/styles/restarbeiten.css"),
+      "utf8"
+    );
     const prevDocument = globalThis.document;
     globalThis.document = createFakeDocument();
     try {
@@ -466,6 +470,12 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(Boolean(close), true);
       assert.equal(Boolean(responsible), true);
       assert.equal(root.children.at(-1), close);
+      assert.equal(css.includes('--bbm-rest-font-family: "Noto Sans", Arial, sans-serif;'), true);
+      assert.equal(css.includes(".bbm-restarbeiten-screen,\n.bbm-restarbeiten-screen button,\n.bbm-restarbeiten-screen input,\n.bbm-restarbeiten-screen select,\n.bbm-restarbeiten-screen textarea {\n  font-family: var(--bbm-rest-font-family);"), true);
+      assert.equal(css.includes(".bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field span,\n.bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field input,\n.bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field select {\n  color: var(--bbm-muted);\n  font-size: 6.5pt;\n  font-weight: 400;\n  line-height: 1.1;"), true);
+      assert.equal(css.includes(".bbm-restarbeiten-filter-group {\n  grid-auto-flow: column;\n  grid-auto-columns: minmax(104px, auto);\n  align-items: center;"), true);
+      assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle {\n  justify-content: center;\n  gap: 0;"), true);
+      assert.equal(css.includes(".bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button {\n  display: block;\n  margin: 0;\n  padding: 0;\n  min-height: 0;\n  height: auto;\n  line-height: 0.95;"), true);
     } finally {
       globalThis.document = prevDocument;
     }
@@ -483,11 +493,16 @@ async function runRestarbeitenModuleTests(run) {
       const options = collectOptions(root);
       const header = findByUiId(root, "restarbeiten.editbox.header");
       const currentRecord = findByUiId(root, "restarbeiten.editbox.header.currentRecord");
+      const shortField = findByUiId(root, "restarbeiten.editbox.text.short");
+      const shortControl = findControl(shortField);
+      const longField = findByUiId(root, "restarbeiten.editbox.text.long");
+      const longControl = findControl(longField);
       assert.equal(text.includes("Neu"), true);
       assert.equal(text.includes("Speichern"), false);
       assert.equal(text.includes("Nr.: neu in Bearbeitung"), true);
       assert.equal(Boolean(header), true);
       assert.equal(header.children[0], currentRecord);
+      assert.equal(header.children.length, 1);
       assert.equal(currentRecord.textContent, "Nr.: neu in Bearbeitung");
       assert.equal(text.includes("Datensatz löschen"), false);
       assert.equal(text.includes("Löschen"), true);
@@ -495,20 +510,39 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(text.includes("Meta"), false);
       assert.equal(text.includes("Kurztext erforderlich"), true);
       assert.equal(findByText(root, "button", "Löschen").disabled, true);
-      assert.equal(findByText(root, "button", "Notiz").disabled, true);
+      const noteButton = findByUiId(root, "restarbeiten.editbox.meta.noteButton");
+      assert.equal(noteButton.disabled, true);
+      assert.equal(noteButton.title, "Notiz");
+      assert.equal(noteButton.getAttribute("aria-label"), "Notiz");
+      assert.equal(findNodes(noteButton, (node) => node.getAttribute?.("data-bbm-note-icon") === "edit").length, 1);
+      assert.equal(findByText(root, "button", "Notiz"), null);
       assert.equal(Boolean(findByText(root, "button", "Rest")), true);
       assert.equal(Boolean(findByText(root, "button", "Mangel")), true);
       assert.equal(options.some((option) => option.value === "rest" && option.label === "Restarbeit"), false);
       assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.action.new")), true);
+      assert.equal(Boolean(findByUiId(shortField, "restarbeiten.editbox.action.new")), true);
+      assert.equal(Boolean(findByUiId(shortField, "restarbeiten.editbox.action.delete")), true);
       assert.equal(Boolean(currentRecord), true);
       assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.meta.itemClass")), true);
+      assert.equal(Boolean(findByUiId(shortField, "restarbeiten.editbox.meta.itemClass")), true);
       assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.validation.shortText")), true);
       assert.equal(findByUiId(root, "restarbeiten.editbox.location").children.length, 4);
-      assert.equal(findByUiId(root, "restarbeiten.editbox.meta").children[0], findByUiId(root, "restarbeiten.editbox.meta.itemClass"));
+      assert.notEqual(findByUiId(root, "restarbeiten.editbox.meta").children[0], findByUiId(root, "restarbeiten.editbox.meta.itemClass"));
+      assert.equal(shortControl.tagName, "INPUT");
+      assert.equal(shortControl.getAttribute("maxlength"), "87");
+      assert.equal(longControl.tagName, "TEXTAREA");
+      assert.equal(longControl.getAttribute("maxlength"), "400");
+      assert.equal(findByUiId(root, "restarbeiten.editbox.text.short.remaining").textContent, "87");
+      assert.equal(findByUiId(root, "restarbeiten.editbox.text.long.remaining").textContent, "400");
+      triggerValue(shortField, "abc", "input");
+      assert.equal(findByUiId(root, "restarbeiten.editbox.text.short.remaining").textContent, "84");
+      triggerValue(longField, "abcd", "input");
+      assert.equal(findByUiId(root, "restarbeiten.editbox.text.long.remaining").textContent, "396");
       const shortDictation = findByUiId(root, "restarbeiten.editbox.text.short.dictation");
       assert.equal(Boolean(shortDictation), true);
       assert.equal(shortDictation.parentElement.className, "bbm-restarbeiten-text-label__row");
-      assert.equal(findNodes(shortDictation, (node) => node.getAttribute?.("data-bbm-dictation-icon") === "stop").length, 1);
+      assert.equal(shortDictation.getAttribute("data-bbm-dictation-state"), "ready");
+      assert.equal(findNodes(shortDictation, (node) => node.getAttribute?.("data-bbm-dictation-icon") === "ready").length, 1);
       assert.equal(findNodes(shortDictation, (node) => node.getAttribute?.("data-bbm-dictation-icon") === "recording").length, 1);
     } finally {
       globalThis.document = prevDocument;
@@ -525,13 +559,19 @@ async function runRestarbeitenModuleTests(run) {
       });
       const header = findByUiId(root, "restarbeiten.editbox.header");
       const currentRecord = findByUiId(root, "restarbeiten.editbox.header.currentRecord");
+      const shortField = findByUiId(root, "restarbeiten.editbox.text.short");
       assert.equal(currentRecord.textContent, "Nr.: 7 in Bearbeitung");
       assert.equal(header.children[0], currentRecord);
-      assert.equal(findByText(header.children[1], "button", "Neu").textContent, "Neu");
-      assert.equal(findByText(header.children[1], "button", "Speichern"), null);
-      assert.equal(findByText(header.children[1], "button", "Löschen").textContent, "Löschen");
-      assert.equal(Boolean(findByUiId(header.children[1], "restarbeiten.editbox.action.delete")), true);
-      assert.equal(findByText(root, "button", "Notiz").disabled, false);
+      assert.equal(header.children.length, 1);
+      assert.equal(findByText(shortField, "button", "Neu").textContent, "Neu");
+      assert.equal(findByText(shortField, "button", "Speichern"), null);
+      assert.equal(findByText(shortField, "button", "Löschen").textContent, "Löschen");
+      assert.equal(Boolean(findByUiId(shortField, "restarbeiten.editbox.action.delete")), true);
+      const noteButton = findByUiId(root, "restarbeiten.editbox.meta.noteButton");
+      assert.equal(noteButton.disabled, false);
+      assert.equal(noteButton.title, "Notiz");
+      assert.equal(noteButton.getAttribute("aria-label"), "Notiz");
+      assert.equal(findByText(root, "button", "Notiz"), null);
     } finally {
       globalThis.document = prevDocument;
     }
@@ -585,7 +625,7 @@ async function runRestarbeitenModuleTests(run) {
       screen._selectItem("ra-1", { render: false });
       const root = screen.render();
 
-      const noteBtn = findByText(root, "button", "Notiz");
+      const noteBtn = findByUiId(root, "restarbeiten.editbox.meta.noteButton");
       assert.equal(noteBtn.disabled, false);
       noteBtn.click();
       await flush();
@@ -740,6 +780,10 @@ async function runRestarbeitenModuleTests(run) {
       triggerValue(findByUiId(root, "restarbeiten.editbox.meta.status"), "verzug", "change");
       assert.equal(screen.draft.ampelState, "rot");
       assert.equal(findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").children[0].dataset.state, "rot");
+      assert.equal(
+        findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").parentElement,
+        findByUiId(screen.root, "restarbeiten.editbox.meta.dueDate")
+      );
 
       triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.status"), "offen", "change");
       triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.dueDate"), "2026-06-20", "change");
@@ -1031,8 +1075,25 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(css.includes("grid-template-rows: 96px minmax(0, 1fr) 250px;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-main {\n  min-height: 0;\n  overflow: auto;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-screen {\n  min-height: calc(100vh - 92px);"), true);
-    assert.equal(css.includes(".bbm-restarbeiten-record__short {\n  font-size: var(--bbm-rest-long-font-size);\n  line-height: var(--bbm-rest-line-height);\n  font-weight: 600;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-record__number {\n  font-size: 8.5pt;\n  font-weight: 600;\n  line-height: 1.15;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-record__short {\n  font-size: 8.5pt;\n  line-height: 1.35;\n  font-weight: 500;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-record__meta {\n  display: grid;\n  gap: 2px;\n  align-content: start;\n  color: var(--bbm-muted);\n  font-size: 8pt;\n  font-weight: 400;\n  line-height: 1.25;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-record__due {\n  display: inline-flex;\n  gap: 5px;\n  align-items: center;\n  color: var(--bbm-muted);\n  font-size: 8pt;\n  font-weight: 400;\n  line-height: 1.25;"), true);
     assert.equal(css.includes(".bbm-restarbeiten-record__photos"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-editbox .bbm-restarbeiten-field input,\n.bbm-restarbeiten-editbox .bbm-restarbeiten-field select,\n.bbm-restarbeiten-editbox .bbm-restarbeiten-field textarea {\n  padding: 3px 5px;\n  font-size: 8pt;\n  line-height: 1.15;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-editbox [data-ui-editor-id=\"restarbeiten.editbox.text.short\"] input {\n  height: 20px;\n  min-height: 20px;\n  padding-top: 1px;\n  padding-bottom: 1px;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group .bbm-restarbeiten-field input,\n.bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group .bbm-restarbeiten-field select {\n  font-size: 7pt;\n  line-height: 1.15;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-editbox__actions--inline {\n  margin-left: 1.5cm;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-class-field--inline {\n  display: inline-flex;\n  align-items: center;\n  min-width: 0;\n  margin-left: 1.5cm;"), true);
+    assert.equal(css.includes("grid-template-columns: minmax(260px, 1fr) 98px 98px;"), true);
+    assert.equal(css.includes("gap: 8px 6px;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group {\n  grid-template-columns: minmax(0, 1fr);\n  align-content: start;\n  gap: 4px;\n  min-height: 0;\n  justify-self: end;\n  width: 96px;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group .bbm-restarbeiten-field {\n  width: 92px;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-editbox [data-ui-editor-id=\"restarbeiten.editbox.meta.dueDate\"] {\n  display: grid;\n  grid-template-columns: minmax(0, 1fr) auto;\n  column-gap: 5px;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-remaining {\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  min-width: 18px;\n  border: 1px solid var(--bbm-line);\n  border-radius: 999px;\n  padding: 0 5px;\n  color: var(--bbm-muted);\n  font-family: var(--bbm-rest-font-family);\n  font-size: 6.5pt;\n  font-weight: 400;\n  line-height: 1.2;"), true);
+    assert.equal(css.includes('.bbm-restarbeiten-dictation-button[data-bbm-dictation-state="ready"] [data-bbm-dictation-icon="recording"],'), true);
+    assert.equal(css.includes('.bbm-restarbeiten-dictation-button[data-bbm-dictation-state="recording"] [data-bbm-dictation-icon="ready"]'), true);
+    assert.equal(css.includes(".bbm-restarbeiten-note {\n  width: 24px;\n  height: 24px;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0;"), true);
   });
 
   await run("Restarbeiten: Ampellogik nutzt keine Orange-Regel", async () => {
@@ -1090,6 +1151,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(ids.has("restarbeiten.editbox.action.save"), false);
     assert.equal(ids.has("restarbeiten.editbox.action.delete"), true);
     assert.equal(ids.has("restarbeiten.editbox.meta.itemClass"), true);
+    assert.equal(ids.has("restarbeiten.editbox.text.short.remaining"), true);
+    assert.equal(ids.has("restarbeiten.editbox.text.long.remaining"), true);
     assert.equal(ids.has("restarbeiten.quicklane"), true);
     assert.equal(ids.has("restarbeiten.editbox.validation.shortText"), true);
     assert.equal(ids.has("restarbeiten.editbox.meta.noteButton"), true);
@@ -1103,6 +1166,12 @@ async function runRestarbeitenModuleTests(run) {
     assert.deepEqual(photosElement.allowedOps, ["inspect"]);
     const deleteElement = elements.find((element) => element.id === "restarbeiten.editbox.action.delete");
     assert.equal(deleteElement.name, "Löschen");
+    assert.equal(deleteElement.parentId, "restarbeiten.editbox.text.short");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.action.new").parentId, "restarbeiten.editbox.text.short");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.meta.itemClass").parentId, "restarbeiten.editbox.text.short");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.text.short.remaining").parentId, "restarbeiten.editbox.text.short");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.text.long.remaining").parentId, "restarbeiten.editbox.text.long");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.meta.ampel").parentId, "restarbeiten.editbox.meta.dueDate");
 
     for (const element of elements) {
       for (const field of ["id", "name", "type", "role", "parentId", "order", "visible", "editable", "allowedOps", "lockedOps"]) {

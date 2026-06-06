@@ -43,6 +43,14 @@
   box-sizing: border-box;
 }
 
+.bbm-restarbeiten-screen,
+.bbm-restarbeiten-screen button,
+.bbm-restarbeiten-screen input,
+.bbm-restarbeiten-screen select,
+.bbm-restarbeiten-screen textarea {
+  font-family: var(--bbm-rest-font-family);
+}
+
 .bbm-restarbeiten-filterbar,
 .bbm-restarbeiten-editbox {
   background: var(--bbm-panel);
@@ -75,8 +83,9 @@
 .bbm-restarbeiten-filter-group {
   grid-auto-flow: column;
   grid-auto-columns: minmax(104px, auto);
-  align-items: end;
+  align-items: center;
   gap: 4px 7px;
+  align-self: center;
 }
 
 .bbm-restarbeiten-filterbar > .bbm-restarbeiten-button {
@@ -126,11 +135,45 @@
   line-height: 1.2;
 }
 
+.bbm-restarbeiten-filterbar .bbm-restarbeiten-field {
+  align-content: center;
+}
+
+.bbm-restarbeiten-filterbar .bbm-restarbeiten-field input,
+.bbm-restarbeiten-filterbar .bbm-restarbeiten-field select {
+  padding: 3px 5px;
+  font-size: var(--bbm-rest-label-font-size);
+  line-height: 1.1;
+}
+
+.bbm-restarbeiten-filterbar [data-ui-editor-id="restarbeiten.filterbar.group.meta"] .bbm-restarbeiten-field span,
+.bbm-restarbeiten-filterbar [data-ui-editor-id="restarbeiten.filterbar.group.meta"] .bbm-restarbeiten-field input,
+.bbm-restarbeiten-filterbar [data-ui-editor-id="restarbeiten.filterbar.group.meta"] .bbm-restarbeiten-field select {
+  color: var(--bbm-muted);
+  font-size: 6.5pt;
+  font-weight: 400;
+  line-height: 1.1;
+}
+
+.bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle {
+  justify-content: center;
+  gap: 0;
+}
+
+.bbm-restarbeiten-filterbar .bbm-restarbeiten-class-toggle button {
+  display: block;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  height: auto;
+  line-height: 0.95;
+}
+
 .bbm-restarbeiten-class-toggle {
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1px;
+  gap: 0;
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -249,8 +292,8 @@
 }
 
 .bbm-restarbeiten-record__number {
-  font-size: var(--bbm-rest-number-font-size);
-  font-weight: 800;
+  font-size: 8.5pt;
+  font-weight: 600;
   line-height: 1.15;
 }
 
@@ -287,9 +330,9 @@
 }
 
 .bbm-restarbeiten-record__short {
-  font-size: var(--bbm-rest-long-font-size);
-  line-height: var(--bbm-rest-line-height);
-  font-weight: 600;
+  font-size: 8.5pt;
+  line-height: 1.35;
+  font-weight: 500;
 }
 
 .bbm-restarbeiten-record__photos {
@@ -315,15 +358,20 @@
   display: grid;
   gap: 2px;
   align-content: start;
+  color: var(--bbm-muted);
+  font-size: 8pt;
+  font-weight: 400;
+  line-height: 1.25;
 }
 
 .bbm-restarbeiten-record__due {
   display: inline-flex;
   gap: 5px;
   align-items: center;
-  color: var(--bbm-text);
-  font-weight: 700;
-  font-size: var(--bbm-rest-meta-font-size);
+  color: var(--bbm-muted);
+  font-size: 8pt;
+  font-weight: 400;
+  line-height: 1.25;
 }
 
 .bbm-restarbeiten-ampel {
@@ -355,9 +403,9 @@
   max-height: 226px;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(150px, 0.42fr) minmax(160px, 0.45fr);
+  grid-template-columns: minmax(260px, 1fr) 98px 98px;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 8px 10px;
+  gap: 8px 6px;
 }
 
 .bbm-restarbeiten-editbox__header {
@@ -384,6 +432,10 @@
   flex: 0 0 auto;
 }
 
+.bbm-restarbeiten-editbox__actions--inline {
+  margin-left: 1.5cm;
+}
+
 .bbm-restarbeiten-text-area {
   display: grid;
   gap: 6px;
@@ -401,6 +453,35 @@
 
 .bbm-restarbeiten-text-label__row {
   display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.bbm-restarbeiten-remaining {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  border: 1px solid var(--bbm-line);
+  border-radius: 999px;
+  padding: 0 5px;
+  color: var(--bbm-muted);
+  font-family: var(--bbm-rest-font-family);
+  font-size: 6.5pt;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.bbm-restarbeiten-class-field--inline {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  margin-left: 1.5cm;
+}
+
+.bbm-restarbeiten-class-field--inline .bbm-restarbeiten-class-toggle {
+  flex-direction: row;
   align-items: center;
   gap: 5px;
 }
@@ -426,12 +507,34 @@
   height: 17px;
 }
 
+.bbm-restarbeiten-dictation-button[data-bbm-dictation-state="ready"] [data-bbm-dictation-icon="recording"],
+.bbm-restarbeiten-dictation-button[data-bbm-dictation-state="recording"] [data-bbm-dictation-icon="ready"] {
+  display: none;
+}
+
+.bbm-restarbeiten-dictation-button[data-bbm-dictation-state="recording"] [data-bbm-dictation-icon="recording"] {
+  display: block;
+}
+
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field input,
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field select,
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field textarea {
   padding: 3px 5px;
-  font-size: var(--bbm-rest-long-font-size);
-  line-height: var(--bbm-rest-line-height);
+  font-size: 8pt;
+  line-height: 1.15;
+}
+
+.bbm-restarbeiten-editbox [data-ui-editor-id="restarbeiten.editbox.text.short"] input {
+  height: 20px;
+  min-height: 20px;
+  padding-top: 1px;
+  padding-bottom: 1px;
+}
+
+.bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group .bbm-restarbeiten-field input,
+.bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group .bbm-restarbeiten-field select {
+  font-size: 7pt;
+  line-height: 1.15;
 }
 
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field textarea {
@@ -444,6 +547,22 @@
   align-content: start;
   gap: 4px;
   min-height: 0;
+  justify-self: end;
+  width: 96px;
+}
+
+.bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group .bbm-restarbeiten-field {
+  width: 92px;
+}
+
+.bbm-restarbeiten-editbox [data-ui-editor-id="restarbeiten.editbox.meta.dueDate"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 5px;
+}
+
+.bbm-restarbeiten-editbox [data-ui-editor-id="restarbeiten.editbox.meta.dueDate"] > span:first-child {
+  grid-column: 1 / -1;
 }
 
 .bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group__title {
@@ -460,11 +579,25 @@
 .bbm-restarbeiten-ampel-field {
   display: inline-flex;
   align-items: center;
-  min-height: 22px;
+  align-self: end;
+  min-height: 0;
 }
 
 .bbm-restarbeiten-note {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
   border-style: dashed;
+  color: var(--bbm-muted);
+}
+
+.bbm-restarbeiten-note svg {
+  display: block;
+  width: 15px;
+  height: 15px;
 }
 
 .bbm-restarbeiten-notes-popup {
