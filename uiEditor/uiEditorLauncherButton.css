@@ -1,14 +1,15 @@
 .ui-editor-launcher-button {
   position: fixed;
-  left: 24px;
-  top: 24px;
   inset-inline-end: 24px;
+  inset-block-start: 24px;
   z-index: 2147483000;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
+  inline-size: auto;
+  width: auto;
+  min-inline-size: 44px;
+  min-block-size: 44px;
   padding: 0 14px;
   border: 1px solid #64748b;
   border-radius: 999px;
