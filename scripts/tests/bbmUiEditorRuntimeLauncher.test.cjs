@@ -463,6 +463,17 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(coreShellSource.includes("showBbmUiEditorDemo"), false);
     assert.equal(coreShellSource.includes("getAvailableUiScopes"), true);
     assert.equal(coreShellSource.includes("registryResolver"), true);
+    assert.equal(coreShellSource.includes("resolveActiveHostUiScope"), true);
+    assert.equal(coreShellSource.includes('restarbeiten: "restarbeiten.screen"'), true);
+    assert.equal(coreShellSource.includes("if (sectionScope) return sectionScope;"), true);
+    assert.equal(coreShellSource.includes('return "protokoll.topsScreen"'), true);
+    assert.equal(coreShellSource.includes("return getActiveUiScope();"), true);
+    assert.equal(
+      coreShellSource.indexOf("if (sectionScope) return sectionScope;") <
+        coreShellSource.indexOf('return "protokoll.topsScreen"'),
+      true
+    );
+    assert.equal(coreShellSource.includes("activeScopeId: activeUiScope"), true);
     assert.equal(source.includes("getStatusScopeLabel"), true);
     assert.equal(source.includes("activeUiScope"), true);
   });

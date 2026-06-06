@@ -23,6 +23,21 @@ import { createCoreShellNavigationRuntime } from "./coreShellNavigationRuntime.j
 import { installBbmUiEditorRuntimeLauncher } from "../uiEditor/BbmUiEditorRuntimeLauncher.js";
 import { getActiveUiScope, getAvailableUiScopes, getBbmUiEditorRegistry } from "../uiEditor/bbmUiEditorRegistry.js";
 
+const HOST_UI_SCOPE_BY_SECTION = Object.freeze({
+  restarbeiten: "restarbeiten.screen",
+});
+
+function resolveActiveHostUiScope(router) {
+  const sectionScope = HOST_UI_SCOPE_BY_SECTION[String(router?.activeSection || "").trim()];
+  if (sectionScope) return sectionScope;
+
+  if (router?.context?.ui?.isTopsView) {
+    return "protokoll.topsScreen";
+  }
+
+  return getActiveUiScope();
+}
+
 export default class CoreShell {
   constructor({ router, version } = {}) {
     this.router = router || null;
@@ -79,7 +94,32 @@ export default class CoreShell {
       getUpdateContextButtons: () => updateContextButtons,
     });
 
-    router.onSectionChange = (section) => setActive(section);
+    let uiEditorRuntimeRefreshToken = 0;
+    const refreshUiEditorRuntimeLauncher = () => {
+      const activeUiScope = resolveActiveHostUiScope(router);
+      const uiEditorRegistry = getBbmUiEditorRegistry(activeUiScope);
+      const refreshToken = ++uiEditorRuntimeRefreshToken;
+      Promise.resolve(
+        installBbmUiEditorRuntimeLauncher({
+          header,
+          devEnabled: true,
+          activeScopeId: activeUiScope,
+          activeUiScope,
+          registeredElements: uiEditorRegistry?.elements,
+          availableUiScopes: getAvailableUiScopes(),
+          registryResolver: getBbmUiEditorRegistry,
+        })
+      ).catch((error) => {
+        if (refreshToken === uiEditorRuntimeRefreshToken) {
+          console.warn("[CoreShell] UI-Editor Runtime-Launcher konnte nicht aktualisiert werden:", error);
+        }
+      });
+    };
+
+    router.onSectionChange = (section) => {
+      setActive(section);
+      refreshUiEditorRuntimeLauncher();
+    };
 
     const shellNavigationRouteDefs = createCoreShellNavigationRouteDefs(router);
 
@@ -102,16 +142,7 @@ export default class CoreShell {
 
     router.showHome();
     header.refresh();
-    const activeUiScope = getActiveUiScope();
-    const uiEditorRegistry = getBbmUiEditorRegistry(activeUiScope);
-    installBbmUiEditorRuntimeLauncher({
-      header,
-      devEnabled: true,
-      activeUiScope,
-      registeredElements: uiEditorRegistry?.elements,
-      availableUiScopes: getAvailableUiScopes(),
-      registryResolver: getBbmUiEditorRegistry,
-    });
+    refreshUiEditorRuntimeLauncher();
     if (typeof updateContextButtons === "function") {
       updateContextButtons();
     }
