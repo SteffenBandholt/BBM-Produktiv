@@ -1,3 +1,5 @@
+@import "../../../shared/styles/notoSans.css";
+
 :root {
   --bbm-bg: #f6f8fc;
   --bbm-panel: #ffffff;
@@ -12,6 +14,16 @@
   --bbm-shadow-soft: 0 10px 24px rgba(31, 41, 55, 0.06);
   --bbm-ok-border-soft: rgba(15, 118, 110, 0.45);
   --bbm-error-border-soft: rgba(180, 35, 24, 0.45);
+  --bbm-rest-font-family: "Noto Sans", Arial, sans-serif;
+  --bbm-rest-short-font-size: 10pt;
+  --bbm-rest-long-font-size: 9.5pt;
+  --bbm-rest-meta-font-size: 8.5pt;
+  --bbm-rest-label-font-size: 7.5pt;
+  --bbm-rest-table-head-font-size: 7.3pt;
+  --bbm-rest-date-font-size: 6.5pt;
+  --bbm-rest-button-font-size: 7.5pt;
+  --bbm-rest-number-font-size: 10.6pt;
+  --bbm-rest-line-height: 1.35;
 }
 
 .bbm-restarbeiten-screen {
@@ -21,6 +33,8 @@
   grid-template-rows: 96px minmax(0, 1fr) 250px;
   background: var(--bbm-bg);
   color: var(--bbm-text);
+  font-family: var(--bbm-rest-font-family);
+  line-height: var(--bbm-rest-line-height);
   overflow: hidden;
 }
 
@@ -39,14 +53,14 @@
 
 .bbm-restarbeiten-filterbar {
   margin: 12px 72px 8px 16px;
-  padding: 10px 12px;
+  padding: 8px 10px;
   box-sizing: border-box;
   height: auto;
   max-height: 72px;
   overflow: hidden;
   display: flex;
   flex-wrap: nowrap;
-  gap: 10px;
+  gap: 8px;
   align-items: end;
   border-radius: 8px;
 }
@@ -54,13 +68,15 @@
 .bbm-restarbeiten-filter-group,
 .bbm-restarbeiten-edit-group {
   display: grid;
-  gap: 6px;
+  gap: 5px;
+  min-width: 0;
 }
 
 .bbm-restarbeiten-filter-group {
   grid-auto-flow: column;
-  grid-auto-columns: minmax(118px, auto);
+  grid-auto-columns: minmax(104px, auto);
   align-items: end;
+  gap: 4px 7px;
 }
 
 .bbm-restarbeiten-filter-group__title,
@@ -68,20 +84,22 @@
   grid-column: 1 / -1;
   margin: 0;
   color: var(--bbm-muted);
-  font-size: 11px;
+  font-size: var(--bbm-rest-label-font-size);
   font-weight: 700;
+  line-height: 1.1;
 }
 
 .bbm-restarbeiten-field {
   display: grid;
-  gap: 3px;
+  gap: 2px;
   min-width: 0;
 }
 
 .bbm-restarbeiten-field span {
-  font-size: 11px;
+  font-size: var(--bbm-rest-label-font-size);
   color: var(--bbm-muted);
   font-weight: 650;
+  line-height: 1.1;
 }
 
 .bbm-restarbeiten-field input,
@@ -90,16 +108,18 @@
   min-width: 0;
   border: 1px solid var(--bbm-line);
   border-radius: 6px;
-  padding: 7px 8px;
+  padding: 4px 6px;
   background: var(--bbm-surface-soft);
   color: var(--bbm-text);
-  font: inherit;
+  font-family: var(--bbm-rest-font-family);
+  font-size: 9pt;
+  line-height: 1.2;
 }
 
 .bbm-restarbeiten-class-toggle {
   display: inline-flex;
   gap: 4px;
-  padding: 3px;
+  padding: 2px;
   border: 1px solid var(--bbm-line);
   border-radius: 8px;
   background: var(--bbm-surface-soft);
@@ -113,13 +133,15 @@
   background: #fff;
   color: var(--bbm-text);
   cursor: pointer;
-  font: inherit;
+  font-family: var(--bbm-rest-font-family);
+  font-size: var(--bbm-rest-button-font-size);
+  line-height: 1.15;
   font-weight: 700;
 }
 
 .bbm-restarbeiten-class-toggle button {
-  min-width: 82px;
-  padding: 7px 8px;
+  min-width: 66px;
+  padding: 4px 7px;
 }
 
 .bbm-restarbeiten-class-toggle button[aria-pressed="true"] {
@@ -128,7 +150,7 @@
 }
 
 .bbm-restarbeiten-button {
-  padding: 8px 10px;
+  padding: 5px 8px;
 }
 
 .bbm-restarbeiten-main {
@@ -150,23 +172,23 @@
   border-radius: 8px;
   background: var(--bbm-panel);
   box-shadow: var(--bbm-shadow-soft);
-  padding: 22px;
+  padding: 18px 20px;
 }
 
 .bbm-restarbeiten-records {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .bbm-restarbeiten-table-header {
   display: grid;
   grid-template-columns: 92px minmax(0, 1fr) 245px;
-  gap: 14px;
-  padding: 0 12px 8px;
+  gap: 12px;
+  padding: 0 10px 6px;
   color: var(--bbm-muted);
-  font-size: 11px;
+  font-size: var(--bbm-rest-table-head-font-size);
   font-weight: 700;
-  line-height: 1.25;
+  line-height: 1.2;
   letter-spacing: 0;
   border-bottom: 1px solid var(--bbm-line);
 }
@@ -185,14 +207,16 @@
 .bbm-restarbeiten-record {
   display: grid;
   grid-template-columns: 92px minmax(0, 1fr) 245px;
-  gap: 14px;
-  padding: 12px;
+  gap: 12px;
+  padding: 9px 10px;
   border: 1px solid var(--bbm-line);
   border-radius: 8px;
   background: var(--bbm-surface-soft);
   cursor: pointer;
   color: var(--bbm-text);
-  font: inherit;
+  font-family: var(--bbm-rest-font-family);
+  font-size: var(--bbm-rest-short-font-size);
+  line-height: var(--bbm-rest-line-height);
   text-align: left;
 }
 
@@ -202,17 +226,33 @@
 }
 
 .bbm-restarbeiten-record__number {
-  font-size: 20px;
+  font-size: var(--bbm-rest-number-font-size);
   font-weight: 800;
+  line-height: 1.15;
 }
 
-.bbm-restarbeiten-record__date,
-.bbm-restarbeiten-record__class,
-.bbm-restarbeiten-record__location,
-.bbm-restarbeiten-record__meta,
 .bbm-restarbeiten-empty {
   color: var(--bbm-muted);
-  font-size: 12px;
+  font-size: var(--bbm-rest-meta-font-size);
+}
+
+.bbm-restarbeiten-record__date {
+  color: var(--bbm-muted);
+  font-size: var(--bbm-rest-date-font-size);
+  line-height: 1.1;
+}
+
+.bbm-restarbeiten-record__class {
+  color: var(--bbm-muted);
+  font-size: var(--bbm-rest-label-font-size);
+  line-height: 1.15;
+}
+
+.bbm-restarbeiten-record__location,
+.bbm-restarbeiten-record__meta {
+  color: var(--bbm-muted);
+  font-size: var(--bbm-rest-meta-font-size);
+  line-height: 1.25;
 }
 
 .bbm-restarbeiten-record__class {
@@ -224,26 +264,31 @@
 }
 
 .bbm-restarbeiten-record__short {
+  font-size: var(--bbm-rest-short-font-size);
+  line-height: var(--bbm-rest-line-height);
   font-weight: 800;
 }
 
 .bbm-restarbeiten-record__long {
-  margin-top: 4px;
+  margin-top: 3px;
   color: var(--bbm-muted);
+  font-size: var(--bbm-rest-long-font-size);
+  line-height: var(--bbm-rest-line-height);
 }
 
 .bbm-restarbeiten-record__meta {
   display: grid;
-  gap: 4px;
+  gap: 2px;
   align-content: start;
 }
 
 .bbm-restarbeiten-record__due {
   display: inline-flex;
-  gap: 7px;
+  gap: 5px;
   align-items: center;
   color: var(--bbm-text);
   font-weight: 700;
+  font-size: var(--bbm-rest-meta-font-size);
 }
 
 .bbm-restarbeiten-ampel {
@@ -269,7 +314,7 @@
 .bbm-restarbeiten-editbox {
   margin: 8px 72px 14px 16px;
   border-radius: 8px;
-  padding: 12px;
+  padding: 9px 10px;
   box-sizing: border-box;
   min-height: 0;
   max-height: 226px;
@@ -277,13 +322,13 @@
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(220px, 0.65fr) minmax(220px, 0.55fr);
   grid-template-rows: auto minmax(0, 1fr);
-  gap: 12px;
+  gap: 8px 10px;
 }
 
 .bbm-restarbeiten-editbox__header {
   grid-column: 1 / -1;
   display: flex;
-  gap: 8px;
+  gap: 7px;
   justify-content: space-between;
   align-items: center;
 }
@@ -291,13 +336,14 @@
 .bbm-restarbeiten-editbox__current-record {
   min-width: 0;
   color: var(--bbm-text);
-  font-size: 13px;
+  font-size: 9pt;
   font-weight: 800;
+  line-height: 1.2;
 }
 
 .bbm-restarbeiten-editbox__actions {
   display: inline-flex;
-  gap: 8px;
+  gap: 6px;
   justify-content: flex-end;
   align-items: center;
   flex: 0 0 auto;
@@ -305,14 +351,14 @@
 
 .bbm-restarbeiten-text-area {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   min-height: 0;
 }
 
 .bbm-restarbeiten-text-field {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 38px;
-  gap: 6px;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  gap: 5px;
   align-items: end;
 }
 
@@ -321,23 +367,28 @@
 }
 
 .bbm-restarbeiten-icon-button {
-  height: 34px;
+  height: 28px;
+  padding: 3px 4px;
+  font-size: var(--bbm-rest-button-font-size);
 }
 
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field input,
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field select,
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field textarea {
-  padding: 5px 7px;
+  padding: 3px 5px;
+  font-size: var(--bbm-rest-short-font-size);
+  line-height: var(--bbm-rest-line-height);
 }
 
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field textarea {
-  min-height: 36px;
+  min-height: 34px;
   resize: none;
 }
 
 .bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   align-content: start;
+  gap: 4px 6px;
   min-height: 0;
 }
 
@@ -348,14 +399,14 @@
 .bbm-restarbeiten-validation {
   align-self: center;
   color: var(--bbm-error);
-  font-size: 11px;
+  font-size: var(--bbm-rest-label-font-size);
   font-weight: 700;
 }
 
 .bbm-restarbeiten-ampel-field {
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
+  min-height: 22px;
 }
 
 .bbm-restarbeiten-note {
@@ -364,6 +415,9 @@
 
 .bbm-restarbeiten-notes-popup {
   color: var(--bbm-text);
+  font-family: var(--bbm-rest-font-family);
+  font-size: var(--bbm-rest-long-font-size);
+  line-height: var(--bbm-rest-line-height);
 }
 
 .bbm-restarbeiten-notes-popup__header {
@@ -371,40 +425,41 @@
   gap: 12px;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border-bottom: 1px solid var(--bbm-line);
 }
 
 .bbm-restarbeiten-notes-popup__header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 11.5pt;
   letter-spacing: 0;
+  line-height: 1.2;
 }
 
 .bbm-restarbeiten-notes-popup__body {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   min-height: 0;
-  padding: 14px 16px 16px;
+  padding: 12px 14px 14px;
   overflow: auto;
 }
 
 .bbm-restarbeiten-notes-popup__summary {
   color: var(--bbm-muted);
-  font-size: 13px;
+  font-size: var(--bbm-rest-meta-font-size);
   font-weight: 700;
 }
 
 .bbm-restarbeiten-notes-popup__history {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   min-height: 96px;
 }
 
 .bbm-restarbeiten-notes-popup__note {
   display: grid;
-  gap: 4px;
-  padding: 10px;
+  gap: 3px;
+  padding: 8px;
   border: 1px solid var(--bbm-line);
   border-radius: 8px;
   background: var(--bbm-surface-soft);
@@ -412,12 +467,14 @@
 
 .bbm-restarbeiten-notes-popup__note-time {
   color: var(--bbm-muted);
-  font-size: 12px;
+  font-size: 7.8pt;
   font-weight: 700;
 }
 
 .bbm-restarbeiten-notes-popup__note-text {
   white-space: pre-wrap;
+  font-size: var(--bbm-rest-long-font-size);
+  line-height: var(--bbm-rest-line-height);
 }
 
 .bbm-restarbeiten-notes-popup__input {
@@ -425,8 +482,10 @@
   resize: vertical;
   border: 1px solid var(--bbm-line);
   border-radius: 8px;
-  padding: 10px;
-  font: inherit;
+  padding: 8px;
+  font-family: var(--bbm-rest-font-family);
+  font-size: var(--bbm-rest-long-font-size);
+  line-height: var(--bbm-rest-line-height);
 }
 
 .bbm-restarbeiten-notes-popup__actions {
