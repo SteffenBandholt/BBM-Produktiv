@@ -3,40 +3,35 @@
 const assert = require("node:assert/strict");
 const path = require("node:path");
 
-const REGISTRY_PATH = path.resolve(__dirname, "../uiEditorRegistry.js");
+const { uiEditorRegistry } = require(path.resolve(__dirname, "../uiEditorRegistry.js"));
 
-function runUiEditorRegistryArtifactTests() {
-  const { uiEditorRegistry } = require(REGISTRY_PATH);
-  assert.equal(Array.isArray(uiEditorRegistry.uiScopes), true);
+assert.equal(Boolean(uiEditorRegistry), true);
+assert.equal(Array.isArray(uiEditorRegistry.uiScopes), true);
+assert.equal(uiEditorRegistry.uiScopes.length, 1);
+assert.equal(uiEditorRegistry.uiScopes[0].uiScopeId, "uiEditor.global");
+assert.equal(Array.isArray(uiEditorRegistry.uiScopes[0].elements), true);
+assert.equal(uiEditorRegistry.uiScopes[0].elements.length, 2);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].id, "uiEditor.root");
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].name, "UI-Editor Root");
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].type, "root");
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].role, "system");
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].parentId, null);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].order, 0);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].visible, true);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[0].editable, false);
+assert.deepEqual(uiEditorRegistry.uiScopes[0].elements[0].allowedOps, ["inspect"]);
+assert.deepEqual(uiEditorRegistry.uiScopes[0].elements[0].lockedOps, []);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[1].id, "uiEditor.launcherButton");
+assert.equal(uiEditorRegistry.uiScopes[0].elements[1].name, "UI-Editor Launcher");
+assert.equal(uiEditorRegistry.uiScopes[0].elements[1].type, "button");
+assert.equal(uiEditorRegistry.uiScopes[0].elements[1].role, "editor-launcher");
+assert.equal(uiEditorRegistry.uiScopes[0].elements[1].parentId, "uiEditor.root");
+assert.equal(uiEditorRegistry.uiScopes[0].elements[1].order, 10);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[1].visible, true);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[1].editable, true);
+assert.equal(uiEditorRegistry.uiScopes[0].elements[1].area, "overlay");
+assert.deepEqual(uiEditorRegistry.uiScopes[0].elements[1].position, { x: 24, y: 24 });
+assert.deepEqual(uiEditorRegistry.uiScopes[0].elements[1].allowedOps, ["inspect", "move", "hide", "show"]);
+assert.deepEqual(uiEditorRegistry.uiScopes[0].elements[1].lockedOps, ["rename", "delete", "executeTargetAction", "modifyDomainData"]);
 
-  const globalScope = uiEditorRegistry.uiScopes.find((scope) => scope.uiScope === "uiEditor.global");
-  assert.equal(Boolean(globalScope), true, "missing uiEditor.global scope");
-  assert.equal(Array.isArray(globalScope.elements), true);
-
-  const launcher = globalScope.elements.find((element) => element.id === "uiEditor.launcherButton");
-  assert.equal(Boolean(launcher), true, "missing uiEditor.launcherButton");
-  assert.equal(launcher.type, "button");
-  assert.equal(launcher.role, "editor-launcher");
-  assert.equal(launcher.area, "overlay");
-  assert.equal(launcher.position?.x, 24);
-  assert.equal(launcher.position?.y, 24);
-  assert.equal(launcher.editable, true);
-
-  for (const op of ["move", "hide", "show"]) {
-    assert.equal(launcher.allowedOps.includes(op), true, `missing allowed op: ${op}`);
-  }
-
-  for (const op of ["delete", "executeTargetAction", "modifyDomainData"]) {
-    assert.equal(launcher.lockedOps.includes(op), true, `missing locked op: ${op}`);
-  }
-}
-
-if (require.main === module) {
-  try {
-    runUiEditorRegistryArtifactTests();
-    console.log("uiEditorRegistry.test.cjs passed");
-  } catch (err) {
-    console.error(err?.stack || err?.message || err);
-    process.exitCode = 1;
-  }
-}
+console.log("TESTS OK: uiEditorRegistry contract");
