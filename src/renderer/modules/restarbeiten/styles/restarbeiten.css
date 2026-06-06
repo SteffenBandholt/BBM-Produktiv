@@ -52,7 +52,7 @@
 }
 
 .bbm-restarbeiten-filterbar {
-  margin: 12px 72px 8px 16px;
+  margin: 0 72px 6px 16px;
   padding: 8px 10px;
   box-sizing: border-box;
   height: auto;
@@ -61,7 +61,7 @@
   display: flex;
   flex-wrap: nowrap;
   gap: 8px;
-  align-items: end;
+  align-items: center;
   border-radius: 8px;
 }
 
@@ -79,8 +79,18 @@
   gap: 4px 7px;
 }
 
+.bbm-restarbeiten-filterbar > .bbm-restarbeiten-button {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
+
+.bbm-restarbeiten-filterbar [data-ui-editor-id="restarbeiten.filterbar.meta.responsible"] {
+  min-width: 132px;
+}
+
 .bbm-restarbeiten-filter-group__title,
 .bbm-restarbeiten-edit-group__title {
+  display: none;
   grid-column: 1 / -1;
   margin: 0;
   color: var(--bbm-muted);
@@ -98,7 +108,7 @@
 .bbm-restarbeiten-field span {
   font-size: var(--bbm-rest-label-font-size);
   color: var(--bbm-muted);
-  font-weight: 650;
+  font-weight: 400;
   line-height: 1.1;
 }
 
@@ -118,11 +128,13 @@
 
 .bbm-restarbeiten-class-toggle {
   display: inline-flex;
-  gap: 4px;
-  padding: 2px;
-  border: 1px solid var(--bbm-line);
-  border-radius: 8px;
-  background: var(--bbm-surface-soft);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
 }
 
 .bbm-restarbeiten-class-toggle button,
@@ -140,13 +152,22 @@
 }
 
 .bbm-restarbeiten-class-toggle button {
-  min-width: 66px;
-  padding: 4px 7px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--bbm-muted);
+  font-size: var(--bbm-rest-label-font-size);
+  font-weight: 400;
+  line-height: 1.15;
+  text-align: left;
 }
 
 .bbm-restarbeiten-class-toggle button[aria-pressed="true"] {
-  background: var(--bbm-soft);
-  border-color: #9fc8ff;
+  background: transparent;
+  border-color: transparent;
+  color: #1d4ed8;
+  font-weight: 650;
 }
 
 .bbm-restarbeiten-button {
@@ -182,7 +203,7 @@
 
 .bbm-restarbeiten-table-header {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr) 245px;
+  grid-template-columns: 82px minmax(0, 1fr) 172px;
   gap: 12px;
   padding: 0 10px 6px;
   color: var(--bbm-muted);
@@ -202,11 +223,13 @@
 
 .bbm-restarbeiten-table-header__meta {
   gap: 2px;
+  font-size: var(--bbm-rest-date-font-size);
+  line-height: 1.12;
 }
 
 .bbm-restarbeiten-record {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr) 245px;
+  grid-template-columns: 82px minmax(0, 1fr) 172px;
   gap: 12px;
   padding: 9px 10px;
   border: 1px solid var(--bbm-line);
@@ -256,7 +279,7 @@
 }
 
 .bbm-restarbeiten-record__class {
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .bbm-restarbeiten-record__location {
@@ -264,9 +287,21 @@
 }
 
 .bbm-restarbeiten-record__short {
-  font-size: var(--bbm-rest-short-font-size);
+  font-size: var(--bbm-rest-long-font-size);
   line-height: var(--bbm-rest-line-height);
-  font-weight: 800;
+  font-weight: 600;
+}
+
+.bbm-restarbeiten-record__photos {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--bbm-muted);
+  font-size: var(--bbm-rest-label-font-size);
+  font-weight: 400;
+  line-height: 1.15;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
 }
 
 .bbm-restarbeiten-record__long {
@@ -320,7 +355,7 @@
   max-height: 226px;
   overflow: hidden;
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(220px, 0.65fr) minmax(220px, 0.55fr);
+  grid-template-columns: minmax(260px, 1fr) minmax(150px, 0.42fr) minmax(160px, 0.45fr);
   grid-template-rows: auto minmax(0, 1fr);
   gap: 8px 10px;
 }
@@ -357,26 +392,45 @@
 
 .bbm-restarbeiten-text-field {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 32px;
-  gap: 5px;
-  align-items: end;
+  min-width: 0;
 }
 
 .bbm-restarbeiten-text-field .bbm-restarbeiten-field {
   min-width: 0;
 }
 
+.bbm-restarbeiten-text-label__row {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
 .bbm-restarbeiten-icon-button {
-  height: 28px;
-  padding: 3px 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
   font-size: var(--bbm-rest-button-font-size);
+}
+
+.bbm-restarbeiten-dictation-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-color: transparent;
+  background: transparent;
+}
+
+.bbm-restarbeiten-dictation-button svg {
+  display: block;
+  width: 17px;
+  height: 17px;
 }
 
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field input,
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field select,
 .bbm-restarbeiten-editbox .bbm-restarbeiten-field textarea {
   padding: 3px 5px;
-  font-size: var(--bbm-rest-short-font-size);
+  font-size: var(--bbm-rest-long-font-size);
   line-height: var(--bbm-rest-line-height);
 }
 
@@ -386,9 +440,9 @@
 }
 
 .bbm-restarbeiten-editbox .bbm-restarbeiten-edit-group {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
-  gap: 4px 6px;
+  gap: 4px;
   min-height: 0;
 }
 

@@ -41,6 +41,7 @@ export function buildRestarbeitenList({
   showAmpel = true,
   showLongtext = true,
   onSelect,
+  onPhotos,
 } = {}) {
   const records = createEl("div", {
     className: "bbm-restarbeiten-records",
@@ -75,6 +76,13 @@ export function buildRestarbeitenList({
     );
     appendText(numberColumn, "bbm-restarbeiten-record__date", item.dateLine, "restarbeiten.record.createdAt");
     appendText(numberColumn, "bbm-restarbeiten-record__class", item.itemClassLabel, "restarbeiten.record.itemClass");
+    const photos = appendText(numberColumn, "bbm-restarbeiten-record__photos", "Fotos", "restarbeiten.record.photos");
+    photos.setAttribute("role", "button");
+    photos.setAttribute("tabindex", "0");
+    photos.addEventListener("click", (event) => {
+      event?.stopPropagation?.();
+      onPhotos?.(item.id);
+    });
 
     const contentColumn = createEl("div", { uiId: "restarbeiten.record.contentColumn" });
     appendText(contentColumn, "bbm-restarbeiten-record__location", item.locationLine, "restarbeiten.record.location");

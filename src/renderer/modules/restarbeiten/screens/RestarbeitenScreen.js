@@ -212,6 +212,12 @@ export default class RestarbeitenScreen {
     this._setStubMessage("Ausgabe, Druck und E-Mail folgen in M2.");
   }
 
+  openRestarbeitPhotos(restarbeitId = this.selectedId) {
+    const id = normalizeText(restarbeitId);
+    this._setStubMessage(id ? "Fotos folgen in einem späteren Paket." : "Kein Datensatz ausgewählt.");
+    return { ok: Boolean(id), restarbeitId: id };
+  }
+
   _setStubMessage(message) {
     this.error = message;
     this._renderShell();
@@ -287,6 +293,11 @@ export default class RestarbeitenScreen {
     }
     await this.load();
     if (createdId) this._scrollRecordIntoView(createdId);
+  }
+
+  async _autoSaveDraft() {
+    if (!normalizeText(this.draft.short_text)) return;
+    await this._saveDraft();
   }
 
   async _deleteDraft() {
@@ -511,6 +522,7 @@ export default class RestarbeitenScreen {
         showAmpel: this.showAmpelInList,
         showLongtext: this.showLongtextInList,
         onSelect: (id) => this._selectItem(id),
+        onPhotos: (id) => this.openRestarbeitPhotos(id),
       }),
       buildRestarbeitenEditbox({
         settings: this.settings,
@@ -518,9 +530,9 @@ export default class RestarbeitenScreen {
         responsibleOptions,
         onNew: () => this._newDraft(),
         onDraftChange: (patch, options) => this._updateDraft(patch, options),
-        onSave: () => this._saveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
         onDelete: () => this._deleteDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
         onNote: () => this._openNotesPopup().catch((err) => this._setStubMessage(err?.message || String(err))),
+        onAutoSave: () => this._autoSaveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
       })
     );
 

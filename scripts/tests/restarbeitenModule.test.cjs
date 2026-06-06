@@ -71,7 +71,7 @@ function createFakeDocument() {
       },
       click() {
         for (const handler of this._listeners?.click || []) {
-          handler.call(this, { type: "click", preventDefault() {} });
+          handler.call(this, { type: "click", preventDefault() {}, stopPropagation() {} });
         }
       },
     };
@@ -161,6 +161,13 @@ function triggerDirectValue(control, value, eventName = "input") {
     handler.call(control, { type: eventName, preventDefault() {} });
   }
   return control;
+}
+
+function triggerEvent(node, eventName) {
+  assert.equal(Boolean(node), true, "missing event target");
+  for (const handler of node._listeners?.[eventName] || []) {
+    handler.call(node, { type: eventName, preventDefault() {}, stopPropagation() {} });
+  }
 }
 
 function flush() {
@@ -329,12 +336,14 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(rendered.pageTitle, "Restarbeiten");
     assert.equal(rendered.sidebarVisible, false);
     assert.equal(text.includes("Restarbeitenliste wird neu aufgebaut."), false);
-    assert.equal(text.includes("Verortung"), true);
+    assert.equal(text.includes("Verortung"), false);
     assert.equal(text.includes("Tuer einstellen"), true);
     assert.equal(text.includes("Kurztext / Gegenstand"), true);
     assert.equal(text.includes("Neu"), true);
-    assert.equal(text.includes("Speichern"), true);
-    assert.equal(text.includes("Datensatz löschen"), true);
+    assert.equal(text.includes("Speichern"), false);
+    assert.equal(text.includes("Datensatz löschen"), false);
+    assert.equal(text.includes("Löschen"), true);
+    assert.equal(text.includes("Schließen"), true);
   });
 
   await run("Restarbeiten: Main/Body rendert M2.1-Tabellenkopf und Datensatzzeilen", async () => {
@@ -351,6 +360,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(text.includes("12"), true);
     assert.equal(text.includes("03.06.26"), true);
     assert.equal(text.includes("Restarbeit"), true);
+    assert.equal(text.includes("Fotos"), true);
     assert.equal(text.includes("Haus A \u00b7 EG \u00b7 Wohnung 2 \u00b7 Bad"), true);
     assert.equal(text.includes("Abdichtung im Bad fehlt"), true);
     assert.equal(text.includes("Abdichtung im Bereich Dusche unvollstaendig."), true);
@@ -436,6 +446,31 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
+  await run("Restarbeiten: Filterbar nutzt kleine Wort-Schalter und keine Gruppentitel", async () => {
+    const filterbar = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenFilterbar.js"));
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const root = filterbar.buildRestarbeitenFilterbar();
+      const text = collectText(root);
+      assert.equal(text.includes("Verortung"), false);
+      assert.equal(text.includes("Klasse"), false);
+      assert.equal(text.includes("Meta"), false);
+      assert.equal(Boolean(findByText(root, "button", "Schließen")), true);
+      assert.equal(Boolean(findByText(root, "button", "Alle")), true);
+      assert.equal(Boolean(findByText(root, "button", "Rest")), true);
+      assert.equal(Boolean(findByText(root, "button", "Mangel")), true);
+      assert.equal(Boolean(findByText(root, "button", "Restarbeit")), false);
+      const close = findByUiId(root, "restarbeiten.filterbar.action.close");
+      const responsible = findByUiId(root, "restarbeiten.filterbar.meta.responsible");
+      assert.equal(Boolean(close), true);
+      assert.equal(Boolean(responsible), true);
+      assert.equal(root.children.at(-1), close);
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
   await run("Restarbeiten: Editbox enthaelt M2.2-Aktionen, Klasse und Pflichtfeld", async () => {
     const editbox = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenEditbox.js"));
     const prevDocument = globalThis.document;
@@ -449,22 +484,32 @@ async function runRestarbeitenModuleTests(run) {
       const header = findByUiId(root, "restarbeiten.editbox.header");
       const currentRecord = findByUiId(root, "restarbeiten.editbox.header.currentRecord");
       assert.equal(text.includes("Neu"), true);
-      assert.equal(text.includes("Speichern"), true);
+      assert.equal(text.includes("Speichern"), false);
       assert.equal(text.includes("Nr.: neu in Bearbeitung"), true);
       assert.equal(Boolean(header), true);
       assert.equal(header.children[0], currentRecord);
       assert.equal(currentRecord.textContent, "Nr.: neu in Bearbeitung");
-      assert.equal(text.includes("Datensatz löschen"), true);
+      assert.equal(text.includes("Datensatz löschen"), false);
+      assert.equal(text.includes("Löschen"), true);
+      assert.equal(text.includes("Verortung"), false);
+      assert.equal(text.includes("Meta"), false);
       assert.equal(text.includes("Kurztext erforderlich"), true);
-      assert.equal(findByText(root, "button", "Speichern").disabled, true);
-      assert.equal(findByText(root, "button", "Datensatz löschen").disabled, true);
+      assert.equal(findByText(root, "button", "Löschen").disabled, true);
       assert.equal(findByText(root, "button", "Notiz").disabled, true);
-      assert.equal(options.some((option) => option.value === "rest" && option.label === "Restarbeit"), true);
-      assert.equal(options.some((option) => option.value === "mangel" && option.label === "Mangel"), true);
+      assert.equal(Boolean(findByText(root, "button", "Rest")), true);
+      assert.equal(Boolean(findByText(root, "button", "Mangel")), true);
+      assert.equal(options.some((option) => option.value === "rest" && option.label === "Restarbeit"), false);
       assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.action.new")), true);
       assert.equal(Boolean(currentRecord), true);
       assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.meta.itemClass")), true);
       assert.equal(Boolean(findByUiId(root, "restarbeiten.editbox.validation.shortText")), true);
+      assert.equal(findByUiId(root, "restarbeiten.editbox.location").children.length, 4);
+      assert.equal(findByUiId(root, "restarbeiten.editbox.meta").children[0], findByUiId(root, "restarbeiten.editbox.meta.itemClass"));
+      const shortDictation = findByUiId(root, "restarbeiten.editbox.text.short.dictation");
+      assert.equal(Boolean(shortDictation), true);
+      assert.equal(shortDictation.parentElement.className, "bbm-restarbeiten-text-label__row");
+      assert.equal(findNodes(shortDictation, (node) => node.getAttribute?.("data-bbm-dictation-icon") === "stop").length, 1);
+      assert.equal(findNodes(shortDictation, (node) => node.getAttribute?.("data-bbm-dictation-icon") === "recording").length, 1);
     } finally {
       globalThis.document = prevDocument;
     }
@@ -483,7 +528,8 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(currentRecord.textContent, "Nr.: 7 in Bearbeitung");
       assert.equal(header.children[0], currentRecord);
       assert.equal(findByText(header.children[1], "button", "Neu").textContent, "Neu");
-      assert.equal(findByText(header.children[1], "button", "Speichern").textContent, "Speichern");
+      assert.equal(findByText(header.children[1], "button", "Speichern"), null);
+      assert.equal(findByText(header.children[1], "button", "Löschen").textContent, "Löschen");
       assert.equal(Boolean(findByUiId(header.children[1], "restarbeiten.editbox.action.delete")), true);
       assert.equal(findByText(root, "button", "Notiz").disabled, false);
     } finally {
@@ -577,12 +623,11 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
-  await run("Restarbeiten: Editbox speichert nicht ohne Kurztext und kann Verantwortlich leeren", async () => {
+  await run("Restarbeiten: Editbox hat keinen Speichern-Button und kann Verantwortlich leeren", async () => {
     const editbox = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenEditbox.js"));
     const prevDocument = globalThis.document;
     globalThis.document = createFakeDocument();
     try {
-      let saveCalls = 0;
       const patches = [];
       const root = editbox.buildRestarbeitenEditbox({
         draft: {
@@ -592,14 +637,10 @@ async function runRestarbeitenModuleTests(run) {
           responsible_label: "AB Bau",
         },
         responsibleOptions: [{ value: "firm-1", label: "AB Bau" }],
-        onSave: () => {
-          saveCalls += 1;
-        },
         onDraftChange: (patch) => patches.push(patch),
       });
 
-      findByText(root, "button", "Speichern").click();
-      assert.equal(saveCalls, 0);
+      assert.equal(findByText(root, "button", "Speichern"), null);
 
       triggerValue(findByUiId(root, "restarbeiten.editbox.meta.responsible"), "", "change");
       assert.deepEqual(patches.at(-1), {
@@ -628,20 +669,23 @@ async function runRestarbeitenModuleTests(run) {
         renderCalls += 1;
         return renderShell();
       };
+      screen._autoSaveDraft = async () => {};
 
-      const saveBtn = findByText(root, "button", "Speichern");
       const validation = findByUiId(root, "restarbeiten.editbox.validation.shortText");
-      assert.equal(saveBtn.disabled, true);
+      assert.equal(findByText(root, "button", "Speichern"), null);
       assert.equal(validation.textContent, "Kurztext erforderlich");
 
       triggerValue(findByUiId(root, "restarbeiten.editbox.text.short"), "Neue Restarbeit", "input");
       assert.equal(screen.draft.short_text, "Neue Restarbeit");
-      assert.equal(saveBtn.disabled, false);
       assert.equal(validation.textContent, "");
       assert.equal(renderCalls, 0);
 
       triggerValue(findByUiId(root, "restarbeiten.editbox.text.long"), "Lange Beschreibung", "input");
       assert.equal(screen.draft.long_text, "Lange Beschreibung");
+      assert.equal(renderCalls, 0);
+
+      triggerValue(findByUiId(root, "restarbeiten.editbox.location.level1"), "Haus A", "input");
+      assert.equal(screen.draft.location_level_1, "Haus A");
       assert.equal(renderCalls, 0);
 
       triggerValue(findByUiId(root, "restarbeiten.editbox.meta.status"), "verzug", "change");
@@ -701,6 +745,189 @@ async function runRestarbeitenModuleTests(run) {
       triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.dueDate"), "2026-06-20", "change");
       assert.equal(screen.draft.ampelState, "gruen");
       assert.equal(findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").children[0].dataset.state, "gruen");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Restarbeiten: Auto-Save legt neuen Datensatz erst bei Kurztext-Blur an", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const calls = [];
+    let rows = [];
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      bbmDb: {
+        async restarbeitenListByProject() {
+          return { ok: true, items: rows };
+        },
+        async restarbeitenGetProjectSettings() {
+          return { ok: true, settings: {} };
+        },
+        async projectFirmsListByProject() {
+          return { ok: true, list: [] };
+        },
+        async restarbeitenCreateItem(payload) {
+          calls.push({ type: "create", payload });
+          const item = { ...payload, id: "ra-auto", running_number: 4, created_at: "2026-06-05" };
+          rows = [item];
+          return { ok: true, item };
+        },
+        async restarbeitenUpdateItem(payload) {
+          calls.push({ type: "update", payload });
+          return { ok: true, item: rows.find((row) => row.id === payload.id) };
+        },
+      },
+      dispatchEvent() {},
+    };
+    try {
+      const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
+      const root = screen.render();
+      const shortControl = triggerValue(findByUiId(root, "restarbeiten.editbox.text.short"), "Automatisch speichern", "input");
+      assert.equal(calls.length, 0);
+      triggerEvent(shortControl, "blur");
+      await flush();
+      await flush();
+      await flush();
+      assert.equal(calls[0].type, "create");
+      assert.equal(calls[0].payload.projectId, "p-1");
+      assert.equal(Object.prototype.hasOwnProperty.call(calls[0].payload, "running_number"), false);
+      assert.equal(screen.selectedId, "ra-auto");
+      assert.equal(screen.draft.running_number, 4);
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Restarbeiten: Auto-Save legt ohne Kurztext keinen neuen Datensatz an", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const calls = [];
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      bbmDb: {
+        ...buildBbmDbStub(),
+        async restarbeitenCreateItem(payload) {
+          calls.push({ type: "create", payload });
+          return { ok: true, item: { id: "should-not-exist" } };
+        },
+      },
+      dispatchEvent() {},
+    };
+    try {
+      const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
+      const root = screen.render();
+      const shortControl = findControl(findByUiId(root, "restarbeiten.editbox.text.short"));
+      triggerEvent(shortControl, "blur");
+      await flush();
+      await flush();
+      assert.equal(calls.length, 0);
+      assert.equal(screen.draft.id, "");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Restarbeiten: Auto-Save aktualisiert bestehenden Datensatz bei Change", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const calls = [];
+    let rows = [{ id: "ra-1", item_class: "rest", status: "offen", short_text: "Alt" }];
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      bbmDb: {
+        async restarbeitenListByProject() {
+          return { ok: true, items: rows };
+        },
+        async restarbeitenGetProjectSettings() {
+          return { ok: true, settings: {} };
+        },
+        async projectFirmsListByProject() {
+          return { ok: true, list: [] };
+        },
+        async restarbeitenUpdateItem(payload) {
+          calls.push({ type: "update", payload });
+          rows = rows.map((row) => (row.id === payload.id ? { ...row, ...payload.patch } : row));
+          return { ok: true, item: rows.find((row) => row.id === payload.id) };
+        },
+      },
+      dispatchEvent() {},
+    };
+    try {
+      const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
+      screen.items = rows;
+      screen._selectItem("ra-1", { render: false });
+      const root = screen.render();
+      const statusControl = triggerValue(findByUiId(root, "restarbeiten.editbox.meta.status"), "erledigt", "change");
+      triggerEvent(statusControl, "blur");
+      await flush();
+      await flush();
+      await flush();
+      assert.equal(calls.length, 1);
+      assert.equal(calls[0].type, "update");
+      assert.equal(calls[0].payload.id, "ra-1");
+      assert.equal(calls[0].payload.patch.status, "erledigt");
+      assert.equal(screen.draft.status, "erledigt");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Restarbeiten: Auto-Save speichert Verortung erst bei Blur und nicht doppelt", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const calls = [];
+    let rows = [{ id: "ra-1", item_class: "rest", status: "offen", short_text: "Alt" }];
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      bbmDb: {
+        async restarbeitenListByProject() {
+          return { ok: true, items: rows };
+        },
+        async restarbeitenGetProjectSettings() {
+          return { ok: true, settings: {} };
+        },
+        async projectFirmsListByProject() {
+          return { ok: true, list: [] };
+        },
+        async restarbeitenUpdateItem(payload) {
+          calls.push({ type: "update", payload });
+          rows = rows.map((row) => (row.id === payload.id ? { ...row, ...payload.patch } : row));
+          return { ok: true, item: rows.find((row) => row.id === payload.id) };
+        },
+      },
+      dispatchEvent() {},
+    };
+    try {
+      const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
+      screen.items = rows;
+      screen._selectItem("ra-1", { render: false });
+      const root = screen.render();
+      const locationControl = triggerValue(findByUiId(root, "restarbeiten.editbox.location.level1"), "Haus A", "input");
+      triggerEvent(locationControl, "change");
+      assert.equal(calls.length, 0);
+      triggerEvent(locationControl, "blur");
+      await flush();
+      await flush();
+      await flush();
+      assert.equal(calls.length, 1);
+      assert.equal(calls[0].payload.patch.location_level_1, "Haus A");
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;
@@ -794,9 +1021,18 @@ async function runRestarbeitenModuleTests(run) {
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"),
       "utf8"
     );
+    const css = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/styles/restarbeiten.css"),
+      "utf8"
+    );
     assert.equal(source.includes("window.scrollTo"), false);
     assert.equal(source.includes("scrollIntoView"), true);
     assert.equal(source.includes("data-bbm-restarbeiten-record-id"), true);
+    assert.equal(css.includes("grid-template-rows: 96px minmax(0, 1fr) 250px;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-main {\n  min-height: 0;\n  overflow: auto;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-screen {\n  min-height: calc(100vh - 92px);"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-record__short {\n  font-size: var(--bbm-rest-long-font-size);\n  line-height: var(--bbm-rest-line-height);\n  font-weight: 600;"), true);
+    assert.equal(css.includes(".bbm-restarbeiten-record__photos"), true);
   });
 
   await run("Restarbeiten: Ampellogik nutzt keine Orange-Regel", async () => {
@@ -846,16 +1082,27 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(ids.has("restarbeiten.main.tableHeader.status"), true);
     assert.equal(ids.has("restarbeiten.main.tableHeader.responsible"), true);
     assert.equal(ids.has("restarbeiten.record.itemClass"), true);
+    assert.equal(ids.has("restarbeiten.record.photos"), true);
     assert.equal(ids.has("restarbeiten.record.location"), true);
     assert.equal(ids.has("restarbeiten.editbox"), true);
     assert.equal(ids.has("restarbeiten.editbox.header.currentRecord"), true);
     assert.equal(ids.has("restarbeiten.editbox.action.new"), true);
-    assert.equal(ids.has("restarbeiten.editbox.action.save"), true);
+    assert.equal(ids.has("restarbeiten.editbox.action.save"), false);
     assert.equal(ids.has("restarbeiten.editbox.action.delete"), true);
     assert.equal(ids.has("restarbeiten.editbox.meta.itemClass"), true);
     assert.equal(ids.has("restarbeiten.quicklane"), true);
     assert.equal(ids.has("restarbeiten.editbox.validation.shortText"), true);
     assert.equal(ids.has("restarbeiten.editbox.meta.noteButton"), true);
+
+    const photosElement = elements.find((element) => element.id === "restarbeiten.record.photos");
+    assert.equal(photosElement.name, "Fotos");
+    assert.equal(photosElement.type, "button");
+    assert.equal(photosElement.role, "action");
+    assert.equal(photosElement.parentId, "restarbeiten.record.numberColumn");
+    assert.equal(photosElement.order, 40);
+    assert.deepEqual(photosElement.allowedOps, ["inspect"]);
+    const deleteElement = elements.find((element) => element.id === "restarbeiten.editbox.action.delete");
+    assert.equal(deleteElement.name, "Löschen");
 
     for (const element of elements) {
       for (const field of ["id", "name", "type", "role", "parentId", "order", "visible", "editable", "allowedOps", "lockedOps"]) {

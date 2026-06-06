@@ -27,6 +27,19 @@ function createField({ label, value = "", options = [], type = "select", uiId, o
   return wrap;
 }
 
+function createClassToggle({ value = "all", options = [], onChange } = {}) {
+  const classToggle = createEl("div", { className: "bbm-restarbeiten-class-toggle" });
+  for (const option of options) {
+    const btn = createEl("button", { text: option.label, uiId: option.uiId });
+    btn.type = "button";
+    btn.className = "bbm-restarbeiten-word-switch";
+    btn.setAttribute("aria-pressed", String(value === option.value));
+    btn.addEventListener("click", () => onChange?.(option.value));
+    classToggle.appendChild(btn);
+  }
+  return classToggle;
+}
+
 export function resolveLocationLabels(settings = {}) {
   return [
     settings.level_1_label,
@@ -53,7 +66,6 @@ export function buildRestarbeitenFilterbar({
     className: "bbm-restarbeiten-filter-group",
     uiId: "restarbeiten.filterbar.group.location",
   });
-  locationGroup.appendChild(createEl("p", { className: "bbm-restarbeiten-filter-group__title", text: "Verortung" }));
   labels.forEach((label, index) => {
     const key = `level${index + 1}`;
     locationGroup.appendChild(
@@ -71,26 +83,22 @@ export function buildRestarbeitenFilterbar({
     className: "bbm-restarbeiten-filter-group",
     uiId: "restarbeiten.filterbar.group.class",
   });
-  classGroup.appendChild(createEl("p", { className: "bbm-restarbeiten-filter-group__title", text: "Klasse" }));
-  const classToggle = createEl("div", { className: "bbm-restarbeiten-class-toggle" });
-  [
-    ["all", "Alle", "restarbeiten.filterbar.class.all"],
-    ["rest", "Restarbeit", "restarbeiten.filterbar.class.rest"],
-    ["mangel", "Mangel", "restarbeiten.filterbar.class.defect"],
-  ].forEach(([value, label, uiId]) => {
-    const btn = createEl("button", { text: label, uiId });
-    btn.type = "button";
-    btn.setAttribute("aria-pressed", String((filters.itemClass || "all") === value));
-    btn.addEventListener("click", () => onFilterChange?.({ itemClass: value }));
-    classToggle.appendChild(btn);
-  });
-  classGroup.appendChild(classToggle);
+  classGroup.appendChild(
+    createClassToggle({
+      value: filters.itemClass || "all",
+      options: [
+        { value: "all", label: "Alle", uiId: "restarbeiten.filterbar.class.all" },
+        { value: "rest", label: "Rest", uiId: "restarbeiten.filterbar.class.rest" },
+        { value: "mangel", label: "Mangel", uiId: "restarbeiten.filterbar.class.defect" },
+      ],
+      onChange: (itemClass) => onFilterChange?.({ itemClass }),
+    })
+  );
 
   const metaGroup = createEl("div", {
     className: "bbm-restarbeiten-filter-group",
     uiId: "restarbeiten.filterbar.group.meta",
   });
-  metaGroup.appendChild(createEl("p", { className: "bbm-restarbeiten-filter-group__title", text: "Meta" }));
   metaGroup.append(
     createField({
       label: "Status",
@@ -123,7 +131,7 @@ export function buildRestarbeitenFilterbar({
 
   const closeBtn = createEl("button", {
     className: "bbm-restarbeiten-button",
-    text: "Beenden / Schließen",
+    text: "Schließen",
     uiId: "restarbeiten.filterbar.action.close",
   });
   closeBtn.type = "button";

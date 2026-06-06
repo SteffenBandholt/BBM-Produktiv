@@ -8,7 +8,16 @@ function createEl(tag, { className = "", text = "", uiId = "" } = {}) {
   return el;
 }
 
-function createField({ label, value = "", type = "input", options = [], uiId, onInput, required = false }) {
+function createField({
+  label,
+  value = "",
+  type = "input",
+  options = [],
+  uiId,
+  onInput,
+  onCommit,
+  required = false,
+} = {}) {
   const wrap = createEl("label", { className: "bbm-restarbeiten-field", uiId });
   wrap.appendChild(createEl("span", { text: label }));
   const input = document.createElement(type === "textarea" ? "textarea" : type === "select" ? "select" : "input");
@@ -23,24 +32,106 @@ function createField({ label, value = "", type = "input", options = [], uiId, on
     }
   }
   input.value = value ?? "";
-  input.addEventListener("input", () => onInput?.(input.value));
-  input.addEventListener("change", () => onInput?.(input.value));
+  if (type === "select" || type === "date") {
+    input.addEventListener("change", () => {
+      onInput?.(input.value);
+      onCommit?.(input.value);
+    });
+  } else {
+    input.addEventListener("input", () => onInput?.(input.value));
+    input.addEventListener("blur", () => onCommit?.(input.value));
+  }
   wrap.appendChild(input);
   return wrap;
 }
 
-function createTextField({ label, value, uiId, dictationUiId, onInput, required = false }) {
-  const wrap = createEl("div", { className: "bbm-restarbeiten-text-field", uiId });
-  wrap.appendChild(createField({ label, value, type: "textarea", onInput, required }));
+function createDictationIcon(state) {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("data-bbm-dictation-icon", state);
+
+  const makePath = (d, attrs = {}) => {
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", d);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", attrs.stroke || "currentColor");
+    path.setAttribute("stroke-width", attrs.strokeWidth || "1.8");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.appendChild(path);
+  };
+
+  if (state === "recording") {
+    makePath("M9 5a3 3 0 0 1 6 0v6a3 3 0 0 1-6 0V5Z", { stroke: "#1d4ed8" });
+    makePath("M6.5 9v2a5.5 5.5 0 0 0 11 0V9", { stroke: "#1d4ed8" });
+    makePath("M12 16.5V20", { stroke: "#1d4ed8" });
+    makePath("M9 20h6", { stroke: "#1d4ed8" });
+    makePath("M5 6c-1.5 1.5-2.2 3.2-2.2 5s.7 3.5 2.2 5", { stroke: "#1d4ed8" });
+    makePath("M19 6c1.5 1.5 2.2 3.2 2.2 5s-.7 3.5-2.2 5", { stroke: "#1d4ed8" });
+  } else {
+    makePath("M9 5a3 3 0 0 1 6 0v6a3 3 0 0 1-.5 1.7", { stroke: "#b42318" });
+    makePath("M9.5 13.4A3 3 0 0 1 9 11V5", { stroke: "#b42318" });
+    makePath("M6.5 9v2a5.5 5.5 0 0 0 8.4 4.7", { stroke: "#b42318" });
+    makePath("M12 16.5V20", { stroke: "#b42318" });
+    makePath("M9 20h6", { stroke: "#b42318" });
+    makePath("M4 4l16 16", { stroke: "#b42318", strokeWidth: "2.2" });
+  }
+
+  return svg;
+}
+
+function createDictationButton(uiId) {
   const dictation = createEl("button", {
-    className: "bbm-restarbeiten-icon-button",
-    text: "Diktat",
-    uiId: dictationUiId,
+    className: "bbm-restarbeiten-icon-button bbm-restarbeiten-dictation-button",
+    uiId,
   });
   dictation.type = "button";
   dictation.disabled = true;
   dictation.title = "Diktat wird später angebunden";
-  wrap.appendChild(dictation);
+  dictation.setAttribute("aria-label", "Diktat");
+  dictation.setAttribute("data-bbm-dictation-state", "stop");
+  const stopIcon = createDictationIcon("stop");
+  const recordingIcon = createDictationIcon("recording");
+  recordingIcon.setAttribute("hidden", "true");
+  dictation.append(stopIcon, recordingIcon);
+  return dictation;
+}
+
+function createTextField({ label, value, uiId, dictationUiId, onInput, onCommit, required = false }) {
+  const wrap = createEl("div", { className: "bbm-restarbeiten-text-field", uiId });
+  const field = createEl("label", { className: "bbm-restarbeiten-field bbm-restarbeiten-text-label" });
+  const labelRow = createEl("span", { className: "bbm-restarbeiten-text-label__row" });
+  labelRow.append(createEl("span", { text: label }), createDictationButton(dictationUiId));
+  const input = document.createElement("textarea");
+  if (required) input.required = true;
+  input.value = value ?? "";
+  input.addEventListener("input", () => onInput?.(input.value));
+  input.addEventListener("blur", () => onCommit?.(input.value));
+  field.append(labelRow, input);
+  wrap.appendChild(field);
+  return wrap;
+}
+
+function createClassToggle({ value = "rest", uiId, onChange, onCommit } = {}) {
+  const wrap = createEl("div", { className: "bbm-restarbeiten-field bbm-restarbeiten-class-field", uiId });
+  wrap.appendChild(createEl("span", { text: "Klasse" }));
+  const classToggle = createEl("div", { className: "bbm-restarbeiten-class-toggle" });
+  for (const option of [
+    { value: "rest", label: "Rest" },
+    { value: "mangel", label: "Mangel" },
+  ]) {
+    const btn = createEl("button", { className: "bbm-restarbeiten-word-switch", text: option.label });
+    btn.type = "button";
+    btn.value = option.value;
+    btn.setAttribute("aria-pressed", String(value === option.value));
+    btn.addEventListener("click", () => {
+      onChange?.(option.value);
+      onCommit?.(option.value);
+    });
+    classToggle.appendChild(btn);
+  }
+  wrap.appendChild(classToggle);
   return wrap;
 }
 
@@ -50,14 +141,13 @@ export function buildRestarbeitenEditbox({
   responsibleOptions = [],
   onDraftChange,
   onNew,
-  onSave,
   onDelete,
   onNote,
+  onAutoSave,
 } = {}) {
   const labels = resolveLocationLabels(settings);
   const canSave = Boolean(String(draft.short_text || "").trim());
   const currentRecordLabel = draft.id ? `Nr.: ${draft.running_number || "?"} in Bearbeitung` : "Nr.: neu in Bearbeitung";
-  let saveEnabled = canSave;
   let validation = null;
   const root = createEl("section", {
     className: "bbm-restarbeiten-editbox",
@@ -83,19 +173,9 @@ export function buildRestarbeitenEditbox({
   });
   newBtn.type = "button";
   newBtn.addEventListener("click", () => onNew?.());
-  const saveBtn = createEl("button", {
-    className: "bbm-restarbeiten-button",
-    text: "Speichern",
-    uiId: "restarbeiten.editbox.action.save",
-  });
-  saveBtn.type = "button";
-  saveBtn.disabled = !canSave;
-  saveBtn.addEventListener("click", () => {
-    if (saveEnabled) onSave?.();
-  });
   const deleteBtn = createEl("button", {
     className: "bbm-restarbeiten-button",
-    text: "Datensatz löschen",
+    text: "Löschen",
     uiId: "restarbeiten.editbox.action.delete",
   });
   deleteBtn.type = "button";
@@ -103,7 +183,7 @@ export function buildRestarbeitenEditbox({
   deleteBtn.addEventListener("click", () => {
     if (draft.id) onDelete?.();
   });
-  actions.append(newBtn, saveBtn, deleteBtn);
+  actions.append(newBtn, deleteBtn);
   header.append(currentRecord, actions);
 
   const textArea = createEl("div", {
@@ -117,11 +197,11 @@ export function buildRestarbeitenEditbox({
       dictationUiId: "restarbeiten.editbox.text.short.dictation",
       required: true,
       onInput: (short_text) => {
-        saveEnabled = Boolean(String(short_text || "").trim());
-        saveBtn.disabled = !saveEnabled;
-        if (validation) validation.textContent = saveEnabled ? "" : "Kurztext erforderlich";
+        const hasShortText = Boolean(String(short_text || "").trim());
+        if (validation) validation.textContent = hasShortText ? "" : "Kurztext erforderlich";
         onDraftChange?.({ short_text }, { render: false });
       },
+      onCommit: () => onAutoSave?.(),
     }),
     createTextField({
       label: "Langtext / Beschreibung",
@@ -129,14 +209,14 @@ export function buildRestarbeitenEditbox({
       uiId: "restarbeiten.editbox.text.long",
       dictationUiId: "restarbeiten.editbox.text.long.dictation",
       onInput: (long_text) => onDraftChange?.({ long_text }, { render: false }),
+      onCommit: () => onAutoSave?.(),
     })
   );
 
   const location = createEl("div", {
-    className: "bbm-restarbeiten-edit-group",
+    className: "bbm-restarbeiten-edit-group bbm-restarbeiten-edit-group--stack",
     uiId: "restarbeiten.editbox.location",
   });
-  location.appendChild(createEl("p", { className: "bbm-restarbeiten-edit-group__title", text: "Verortung" }));
   labels.forEach((label, index) => {
     const sourceKey = `location_level_${index + 1}`;
     location.appendChild(
@@ -144,27 +224,22 @@ export function buildRestarbeitenEditbox({
         label,
         value: draft[sourceKey] || "",
         uiId: `restarbeiten.editbox.location.level${index + 1}`,
-        onInput: (value) => onDraftChange?.({ [sourceKey]: value }),
+        onInput: (value) => onDraftChange?.({ [sourceKey]: value }, { render: false }),
+        onCommit: () => onAutoSave?.(),
       })
     );
   });
 
   const meta = createEl("div", {
-    className: "bbm-restarbeiten-edit-group",
+    className: "bbm-restarbeiten-edit-group bbm-restarbeiten-edit-group--stack",
     uiId: "restarbeiten.editbox.meta",
   });
-  meta.appendChild(createEl("p", { className: "bbm-restarbeiten-edit-group__title", text: "Meta" }));
   meta.append(
-    createField({
-      label: "Klasse",
+    createClassToggle({
       value: draft.item_class || "rest",
-      type: "select",
-      options: [
-        { value: "rest", label: "Restarbeit" },
-        { value: "mangel", label: "Mangel" },
-      ],
       uiId: "restarbeiten.editbox.meta.itemClass",
-      onInput: (item_class) => onDraftChange?.({ item_class }),
+      onChange: (item_class) => onDraftChange?.({ item_class }),
+      onCommit: () => onAutoSave?.(),
     }),
     createField({
       label: "Status",
@@ -178,6 +253,7 @@ export function buildRestarbeitenEditbox({
       ],
       uiId: "restarbeiten.editbox.meta.status",
       onInput: (status) => onDraftChange?.({ status }),
+      onCommit: () => onAutoSave?.(),
     }),
     createField({
       label: "Fertig bis",
@@ -185,6 +261,7 @@ export function buildRestarbeitenEditbox({
       type: "date",
       uiId: "restarbeiten.editbox.meta.dueDate",
       onInput: (due_date) => onDraftChange?.({ due_date }),
+      onCommit: () => onAutoSave?.(),
     }),
     createField({
       label: "Verantwortlich",
@@ -199,6 +276,7 @@ export function buildRestarbeitenEditbox({
           responsible_label: responsible_project_firm_id ? selected?.label || "" : "",
         });
       },
+      onCommit: () => onAutoSave?.(),
     })
   );
   validation = createEl("span", {
