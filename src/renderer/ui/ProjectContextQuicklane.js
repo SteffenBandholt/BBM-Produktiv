@@ -93,6 +93,7 @@ export default class ProjectContextQuicklane {
     this._longtextEnabled = null;
     this._isOutputOpen = false;
     this._isRestarbeitenContext = false;
+    this._isRenderingContext = false;
     this._ampelStateHandler = (e) => {
       this._ampelEnabled = !!e?.detail?.enabled;
       this._renderContext();
@@ -651,7 +652,10 @@ export default class ProjectContextQuicklane {
   }
 
   _setTopFilterMenuOpen(nextOpen) {
-    this._isTopFilterOpen = !!nextOpen;
+    const normalized = !!nextOpen;
+    if (this._isTopFilterOpen === normalized) return;
+    this._isTopFilterOpen = normalized;
+    if (this._isRenderingContext) return;
     this._renderContext();
   }
 
@@ -707,6 +711,16 @@ export default class ProjectContextQuicklane {
   // die Quicklane liest den bereits vorhandenen Projektkontext und bereitet ihn
   // nur fuer Anzeige und Aktionen auf.
   _renderContext() {
+    if (this._isRenderingContext) return;
+    this._isRenderingContext = true;
+    try {
+      this._renderContextContent();
+    } finally {
+      this._isRenderingContext = false;
+    }
+  }
+
+  _renderContextContent() {
     const meta = this._getNormalizedProjectMeta();
     const hasProject = meta.hasProject;
     this._isRestarbeitenContext = String(this.router?.activeSection || "").trim() === "restarbeiten";
@@ -736,6 +750,7 @@ export default class ProjectContextQuicklane {
       typeof longtextSource?.showLongtextInList === "boolean";
     const hasTopFilter = !this._isRestarbeitenContext && !!this.router?.context?.ui?.isTopsView;
     const hasOutput = hasProject;
+    if (!hasTopFilter || this._isRestarbeitenContext) this._isTopFilterOpen = false;
     this._applyToolItemState(this.projectSectionEl, hasProject);
     this._applyToolItemState(this.firmsSectionEl, hasProject);
     this._applyToolItemState(this.employeesSectionEl, hasParticipants);
@@ -801,7 +816,6 @@ export default class ProjectContextQuicklane {
       }
     }
     if (!hasOutput) this._isOutputOpen = false;
-    if (!hasTopFilter || this._isRestarbeitenContext) this._setTopFilterMenuOpen(false);
     if (this.outputPopupEl && this.outputSectionEl) {
       if (this._isOutputOpen && hasOutput) {
         const rect = this.outputSectionEl.getBoundingClientRect();

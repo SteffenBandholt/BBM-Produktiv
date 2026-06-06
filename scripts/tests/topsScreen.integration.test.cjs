@@ -1100,6 +1100,122 @@ async function runTopsScreenIntegrationTests(run) {
     }
   });
 
+  await run("Tops v2 Integration: Quicklane rendert Restarbeiten-Kontext ohne rekursives Filter-Schliessen", () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      addEventListener() {},
+      removeEventListener() {},
+      innerWidth: 1280,
+      innerHeight: 720,
+    };
+    try {
+      const lane = new ProjectContextQuicklane({
+        router: {
+          activeSection: "restarbeiten",
+          context: {
+            ui: {
+              isTopsView: true,
+            },
+          },
+          activeView: {},
+        },
+      });
+      const originalRenderContext = lane._renderContext.bind(lane);
+      let renderCount = 0;
+      lane._renderContext = () => {
+        renderCount += 1;
+        if (renderCount > 3) throw new Error("ProjectContextQuicklane rendert rekursiv");
+        return originalRenderContext();
+      };
+
+      lane.setEnabled(true);
+      const originalApplyToolItemState = lane._applyToolItemState.bind(lane);
+      let simulatedIndirectClose = false;
+      lane._applyToolItemState = (...args) => {
+        if (!simulatedIndirectClose) {
+          simulatedIndirectClose = true;
+          lane._setTopFilterMenuOpen(false);
+        }
+        return originalApplyToolItemState(...args);
+      };
+      lane._isTopFilterOpen = true;
+      lane.setContext({
+        projectId: 17,
+        meetingId: 21,
+        projectLabel: "4711 - Restarbeiten",
+      });
+
+      assert.equal(renderCount, 1);
+      assert.equal(simulatedIndirectClose, true);
+      assert.equal(lane._isTopFilterOpen, false);
+      assert.equal(lane.filterSectionEl.style.display, "none");
+      assert.equal(lane.filterPopupEl.style.display, "none");
+      assert.deepEqual(lane._getNormalizedProjectMeta(), {
+        projectNumber: "4711",
+        projectShort: "Restarbeiten",
+        hasProject: true,
+        hasMeeting: true,
+      });
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: Quicklane-Filter oeffnet und schliesst nur bei Zustandswechsel", () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      addEventListener() {},
+      removeEventListener() {},
+      innerWidth: 1280,
+      innerHeight: 720,
+    };
+    try {
+      const lane = new ProjectContextQuicklane({
+        router: {
+          context: {
+            ui: {
+              isTopsView: true,
+            },
+          },
+          activeView: {},
+        },
+      });
+      const originalRenderContext = lane._renderContext.bind(lane);
+      let renderCount = 0;
+      lane._renderContext = () => {
+        renderCount += 1;
+        if (renderCount > 5) throw new Error("ProjectContextQuicklane rendert zu oft");
+        return originalRenderContext();
+      };
+
+      lane.setEnabled(true);
+      lane.setContext({ projectId: 17, meetingId: 21, projectNumber: "4711", projectShort: "TOPS" });
+      assert.equal(renderCount, 1);
+
+      lane._setTopFilterMenuOpen(false);
+      assert.equal(renderCount, 1);
+
+      lane._setTopFilterMenuOpen(true);
+      assert.equal(renderCount, 2);
+      assert.equal(lane.filterPopupEl.style.display, "flex");
+
+      lane._setTopFilterMenuOpen(true);
+      assert.equal(renderCount, 2);
+
+      lane._setTopFilterMenuOpen(false);
+      assert.equal(renderCount, 3);
+      assert.equal(lane.filterPopupEl.style.display, "none");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
   await run("Tops v2 Integration: Ampel- und Langtext-Quicklane rufen die TopsScreen-Toggles auf", async () => {
     const prevDocument = globalThis.document;
     const prevWindow = globalThis.window;
@@ -2259,4 +2375,3 @@ async function runTopsScreenIntegrationTests(run) {
 }
 
 module.exports = { runTopsScreenIntegrationTests };
-

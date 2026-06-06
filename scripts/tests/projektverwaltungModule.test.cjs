@@ -1305,6 +1305,19 @@ async function runProjektverwaltungModuleTests(run) {
     assert.equal(projectContextQuicklaneSource.includes('this.pinBtn.textContent = this._isPinned ? "U" : "P"'), false);
   });
 
+  await run("Projektverwaltung: ProjectContextQuicklane schliesst TOP-Filter ohne Render-Rekursion", () => {
+    assert.equal(projectContextQuicklaneSource.includes("if (this._isTopFilterOpen === normalized) return;"), true);
+    assert.equal(projectContextQuicklaneSource.includes("if (this._isRenderingContext) return;"), true);
+    assert.equal(
+      projectContextQuicklaneSource.includes("if (!hasTopFilter || this._isRestarbeitenContext) this._isTopFilterOpen = false;"),
+      true
+    );
+    assert.equal(
+      projectContextQuicklaneSource.includes("if (!hasTopFilter || this._isRestarbeitenContext) this._setTopFilterMenuOpen(false);"),
+      false
+    );
+  });
+
   await run("Projektverwaltung: CoreShell nutzt updateContextButtons weiterhin im Start- und Nav-Flow", () => {
     assert.equal(coreShellSource.includes("registerCoreShellContextControls"), true);
     assert.equal(coreShellSource.includes("if (typeof updateContextButtons === \"function\")"), true);
