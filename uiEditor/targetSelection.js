@@ -76,6 +76,16 @@ function getTargetElementId(targetElement, targetAttributeName = DEFAULT_TARGET_
   return normalizeElementId(targetElement.getAttribute(normalizeAttributeName(targetAttributeName)));
 }
 
+function escapeAttributeValue(value) {
+  return String(value).replace(/\\/gu, "\\\\").replace(/"/gu, '\\"');
+}
+
+function findTargetElementById(root, elementId, targetAttributeName = DEFAULT_TARGET_ATTRIBUTE_NAME) {
+  const normalizedElementId = normalizeElementId(elementId);
+  if (!root || !normalizedElementId || typeof root.querySelector !== "function") return null;
+  return root.querySelector(`[${normalizeAttributeName(targetAttributeName)}="${escapeAttributeValue(normalizedElementId)}"]`);
+}
+
 function collectTargetElementChain(event, targetAttributeName = DEFAULT_TARGET_ATTRIBUTE_NAME) {
   const attributeName = normalizeAttributeName(targetAttributeName);
   const chain = [];
@@ -94,16 +104,44 @@ function collectTargetElementChain(event, targetAttributeName = DEFAULT_TARGET_A
   return chain;
 }
 
-function resolveRegisteredTargetFromChain(event, registryIndex, targetAttributeName = DEFAULT_TARGET_ATTRIBUTE_NAME) {
+function resolveRegisteredTargetFromChain(
+  event,
+  registryIndex,
+  targetAttributeName = DEFAULT_TARGET_ATTRIBUTE_NAME,
+  lookupRoot = null
+) {
   const chain = collectTargetElementChain(event, targetAttributeName)
     .filter((entry) => registryIndex.has(entry.elementId));
   if (chain.length === 0) return null;
 
   const wantsParent = Boolean(event?.shiftKey || event?.altKey);
-  const selectedEntry = wantsParent && chain.length > 1 ? chain[1] : chain[0];
+  if (wantsParent && chain.length > 1) {
+    const parentEntry = chain[1];
+    return {
+      targetElement: parentEntry.element,
+      registryElement: registryIndex.get(parentEntry.elementId),
+      reason: "dom-parent",
+    };
+  }
+
+  if (wantsParent) {
+    const firstRegistryElement = registryIndex.get(chain[0].elementId);
+    const registryParentId = normalizeElementId(firstRegistryElement?.parentId);
+    const registryParentElement = registryParentId ? registryIndex.get(registryParentId) : null;
+    if (registryParentElement) {
+      return {
+        targetElement: findTargetElementById(lookupRoot, registryParentElement.id, targetAttributeName),
+        registryElement: registryParentElement,
+        reason: "registry-parent",
+      };
+    }
+  }
+
+  const selectedEntry = chain[0];
   return {
     targetElement: selectedEntry.element,
     registryElement: registryIndex.get(selectedEntry.elementId),
+    reason: "target",
   };
 }
 
@@ -170,6 +208,8 @@ function cloneSelection(activeScopeId, registryElement, targetElement) {
     elementId: registryElement?.id || null,
     element: registryElement ? { ...registryElement } : null,
     targetElement: targetElement || null,
+    hasTargetElement: Boolean(targetElement),
+    message: registryElement && !targetElement ? "Registry-Gruppe gewaehlt, kein DOM-Wrapper gefunden." : "",
   };
 }
 
@@ -307,7 +347,7 @@ function createTargetSelectionController(options = {}) {
   }
 
   function setHoverTarget(targetElement, registryElement) {
-    if (!targetElement || !registryElement) {
+    if (!registryElement) {
       clearHover();
       return false;
     }
@@ -320,7 +360,7 @@ function createTargetSelectionController(options = {}) {
     hoveredTargetElement = targetElement;
     hoveredRegistryElement = registryElement;
     hoveredElementId = registryElement.id;
-    if (targetElement !== selectedTargetElement) {
+    if (targetElement && targetElement !== selectedTargetElement) {
       hoveredPreviousStyle = applyHoverMarker(targetElement);
     }
     notifyHoverChange();
@@ -328,14 +368,14 @@ function createTargetSelectionController(options = {}) {
   }
 
   function selectResolvedTarget(targetElement, registryElement) {
-    if (!targetElement || !registryElement) return false;
+    if (!registryElement) return false;
 
     clearHover({ notify: false });
     clearSelection();
     selectedTargetElement = targetElement;
     selectedRegistryElement = registryElement;
     selectedElementId = registryElement.id;
-    selectedPreviousStyle = applyTargetMarker(targetElement);
+    selectedPreviousStyle = targetElement ? applyTargetMarker(targetElement) : null;
     notifySelectionChange();
     return true;
   }
@@ -347,7 +387,7 @@ function createTargetSelectionController(options = {}) {
   }
 
   function handleClick(event) {
-    const resolvedTarget = resolveRegisteredTargetFromChain(event, registryIndex, targetAttributeName);
+    const resolvedTarget = resolveRegisteredTargetFromChain(event, registryIndex, targetAttributeName, root);
     if (!resolvedTarget) return false;
     const selected = selectResolvedTarget(resolvedTarget.targetElement, resolvedTarget.registryElement);
     if (selected) {
@@ -360,7 +400,7 @@ function createTargetSelectionController(options = {}) {
   }
 
   function handlePointerMove(event) {
-    const resolvedTarget = resolveRegisteredTargetFromChain(event, registryIndex, targetAttributeName);
+    const resolvedTarget = resolveRegisteredTargetFromChain(event, registryIndex, targetAttributeName, root);
     if (!resolvedTarget) {
       clearHover();
       return false;

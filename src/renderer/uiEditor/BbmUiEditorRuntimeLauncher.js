@@ -1,6 +1,8 @@
 import * as installedLauncherButtonArtifactModule from "../../../uiEditor/uiEditorLauncherButton.js";
+import * as installedTargetSelectionArtifactModule from "../../../uiEditor/targetSelection.js";
 
 void installedLauncherButtonArtifactModule;
+void installedTargetSelectionArtifactModule;
 
 const INSTALLED_LAUNCHER_SCRIPT_PATH = "../../uiEditor/uiEditorLauncherButton.js";
 const INSTALLED_LAUNCHER_CSS_PATH = "../../uiEditor/uiEditorLauncherButton.css";
@@ -13,8 +15,11 @@ const UI_EDITOR_SELECTED_ATTRIBUTE = "data-ui-editor-selected";
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
 let launcherStatusNode = null;
+let launcherStatusContentNode = null;
+let launcherStatusReopenNode = null;
 let launcherDocumentClickHandler = null;
 let launcherDocumentClickDocument = null;
+let launcherRuntimeState = null;
 
 function getDocument(explicitDocument = null) {
   return explicitDocument || (typeof document === "object" ? document : null);
@@ -27,6 +32,11 @@ function getWindow(explicitWindow = null) {
 function getInstalledLauncherArtifact(explicitWindow = null) {
   const win = getWindow(explicitWindow);
   return win?.uiEditorLauncherButtonArtifact?.uiEditorLauncherButton || null;
+}
+
+function getInstalledTargetSelectionArtifact(explicitWindow = null) {
+  const win = getWindow(explicitWindow);
+  return win?.uiEditorTargetSelectionArtifact || globalThis?.uiEditorTargetSelectionArtifact || null;
 }
 
 function getLauncherHost(doc, host = null) {
@@ -113,6 +123,13 @@ function createLauncherState({ activeUiScope = null, registeredElements = null, 
     selectedElement: null,
     selectedTargetNode: null,
     selectedTargetPreviousStyle: null,
+    hoverElement: null,
+    hoverTargetNode: null,
+    selectionMessage: "",
+    hoverMessage: "",
+    targetSelectionController: null,
+    targetSelectionPanelController: null,
+    win: null,
     availableUiScopes: normalizeAvailableUiScopes(availableUiScopes),
     registryResolver: resolver,
   };
@@ -164,8 +181,12 @@ function removeNode(node) {
 }
 
 function removeExistingLauncherStatus(doc = getDocument()) {
+  launcherStatusNode?._uiEditorPanelController?.uninstall?.();
   removeNode(launcherStatusNode);
+  removeNode(launcherStatusReopenNode);
   launcherStatusNode = null;
+  launcherStatusContentNode = null;
+  launcherStatusReopenNode = null;
 }
 
 function clearUiEditorTargetSelection(state = {}) {
@@ -178,6 +199,20 @@ function clearUiEditorTargetSelection(state = {}) {
   state.selectedTargetNode = null;
   state.selectedElement = null;
   state.selectedTargetPreviousStyle = null;
+  state.selectionMessage = "";
+}
+
+function clearUiEditorHoverSelection(state = {}) {
+  state.hoverTargetNode = null;
+  state.hoverElement = null;
+  state.hoverMessage = "";
+}
+
+function removeLauncherTargetSelectionController(state = {}) {
+  state.targetSelectionController?.uninstall?.();
+  state.targetSelectionController = null;
+  clearUiEditorTargetSelection(state);
+  clearUiEditorHoverSelection(state);
 }
 
 function removeLauncherDocumentClickHandler() {
@@ -190,6 +225,8 @@ function removeLauncherDocumentClickHandler() {
 
 function removeExistingLauncher(doc = getDocument()) {
   removeLauncherDocumentClickHandler();
+  removeLauncherTargetSelectionController(launcherRuntimeState || {});
+  launcherRuntimeState = null;
   removeNode(launcherHostNode);
   launcherHostNode = null;
   removeExistingLauncherStatus(doc);
@@ -271,6 +308,7 @@ function getReadonlyLauncherStatusText(state = {}) {
   const registry = getSelectedRegistryFromState(state);
   const scopes = normalizeAvailableUiScopes(state.availableUiScopes);
   const selectedElement = state.selectedElement || null;
+  const hoverElement = state.hoverElement || null;
   if (scopes.length < 1 && !registry.moduleId && registry.elements.length < 1) {
     return getLauncherStatusText({ activeUiScope: state.activeUiScope, registeredElements: [] });
   }
@@ -282,11 +320,18 @@ function getReadonlyLauncherStatusText(state = {}) {
     `Modul: ${registry.moduleId || "nicht verfuegbar"}`,
     `Elemente: ${registry.elements.length}`,
     registry.ok === false && registry.reason ? `Hinweis: ${registry.reason}` : "",
+    hoverElement ? `Hover: ${hoverElement.id}` : "Hover: keine",
+    state.hoverMessage ? `Hover-Hinweis: ${state.hoverMessage}` : "",
     selectedElement ? `Auswahl: ${selectedElement.id}` : "Auswahl: keine",
+    state.selectionMessage ? `Auswahl-Hinweis: ${state.selectionMessage}` : "",
     selectedElement ? `Name: ${selectedElement.name || selectedElement.label || ""}` : "",
     "",
     getReadonlyRegistryElementsText(registry.elements),
   ].filter((line) => line !== "").join("\n");
+}
+
+function getLauncherStatusContentNode(status) {
+  return status?._uiEditorStatusContent || launcherStatusContentNode || status;
 }
 
 function ensureLauncherStatusHint(doc, host, state = {}) {
@@ -300,33 +345,118 @@ function ensureLauncherStatusHint(doc, host, state = {}) {
 
   const status = doc.createElement("div");
   status.className = "ui-editor-launcher-status";
-  status.textContent = getReadonlyLauncherStatusText(state);
   status.setAttribute(LAUNCHER_STATUS_ATTRIBUTE, "true");
   status.setAttribute("role", "status");
   status.setAttribute("aria-live", "polite");
+
+  const header = doc.createElement("div");
+  header.className = "ui-editor-launcher-status__header";
+  header.setAttribute("data-ui-editor-status-header", "true");
+  const title = doc.createElement("span");
+  title.textContent = "UI-Editor · Erkennung";
+  const actions = doc.createElement("span");
+  actions.className = "ui-editor-launcher-status__actions";
+  const collapseButton = doc.createElement("button");
+  collapseButton.type = "button";
+  collapseButton.className = "ui-editor-launcher-status__action";
+  collapseButton.textContent = "–";
+  collapseButton.title = "Einklappen";
+  collapseButton.setAttribute("data-ui-editor-status-collapse", "true");
+  const hideButton = doc.createElement("button");
+  hideButton.type = "button";
+  hideButton.className = "ui-editor-launcher-status__action";
+  hideButton.textContent = "×";
+  hideButton.title = "Ausblenden";
+  hideButton.setAttribute("data-ui-editor-status-hide", "true");
+  actions.append(collapseButton, hideButton);
+  header.append(title, actions);
+
+  const content = doc.createElement("div");
+  content.className = "ui-editor-launcher-status__content";
+  content.setAttribute("data-ui-editor-status-content", "true");
+  content.textContent = getReadonlyLauncherStatusText(state);
+  status._uiEditorStatusContent = content;
+  status.append(header, content);
+
+  const reopen = doc.createElement("button");
+  reopen.type = "button";
+  reopen.className = "ui-editor-launcher-status-reopen";
+  reopen.textContent = "UI";
+  reopen.title = "UI-Editor-Erkennung einblenden";
+  reopen.setAttribute("data-ui-editor-status-reopen", "true");
+  reopen.style.display = "none";
+
   host.appendChild(status);
+  host.appendChild(reopen);
   launcherStatusNode = status;
+  launcherStatusContentNode = content;
+  launcherStatusReopenNode = reopen;
+
+  const panelController = getInstalledTargetSelectionArtifact()?.createTargetSelectionPanelController?.({
+    document: doc,
+    window: state.win || getWindow(),
+    panelElement: status,
+    headerElement: header,
+    contentElement: content,
+    collapseButton,
+    hideButton,
+    reopenButton: reopen,
+  });
+  panelController?.install?.();
+  status._uiEditorPanelController = panelController || null;
+  state.targetSelectionPanelController = panelController || null;
   return status;
 }
 
 function updateLauncherStatusHint(doc, host, state = {}) {
   const status = ensureLauncherStatusHint(doc, host, state);
-  if (status) status.textContent = getReadonlyLauncherStatusText(state);
+  const content = getLauncherStatusContentNode(status);
+  if (content) content.textContent = getReadonlyLauncherStatusText(state);
   return status;
 }
 
 function setActiveScopeInState(state, nextScope) {
   const normalizedScope = String(nextScope == null ? "" : nextScope).trim();
-  clearUiEditorTargetSelection(state);
+  removeLauncherTargetSelectionController(state);
   state.activeUiScope = normalizedScope;
   state.selectedRegistry = state.registryResolver
     ? normalizeReadonlyRegistry(state.registryResolver(normalizedScope))
     : normalizeReadonlyRegistry({ uiScope: normalizedScope, elements: [] });
 }
 
+function installLauncherTargetSelectionController(doc, host, state) {
+  if (!state?.uiEditorLauncherActive || !doc?.addEventListener) return null;
+  removeLauncherTargetSelectionController(state);
+  const targetSelectionArtifact = getInstalledTargetSelectionArtifact();
+  const registry = getSelectedRegistryFromState(state);
+  const controller = targetSelectionArtifact?.createTargetSelectionController?.({
+    document: doc,
+    root: doc,
+    activeScopeId: registry.uiScope || state.activeUiScope,
+    registry,
+    onHoverChange(selection) {
+      state.hoverElement = selection.element;
+      state.hoverTargetNode = selection.targetElement;
+      state.hoverMessage = selection.message || "";
+      const status = updateLauncherStatusHint(doc, host, state);
+      renderReadonlyScopeButtons(doc, status, state);
+    },
+    onSelectionChange(selection) {
+      state.selectedElement = selection.element;
+      state.selectedTargetNode = selection.targetElement;
+      state.selectionMessage = selection.message || "";
+      const status = updateLauncherStatusHint(doc, host, state);
+      renderReadonlyScopeButtons(doc, status, state);
+    },
+  });
+  controller?.install?.();
+  state.targetSelectionController = controller || null;
+  return controller || null;
+}
+
 function renderReadonlyScopeButtons(doc, status, state) {
   const scopes = normalizeAvailableUiScopes(state.availableUiScopes);
-  if (!doc?.createElement || !status?.appendChild || scopes.length < 1) return;
+  if (!doc?.createElement || !status || scopes.length < 1) return;
 
   const scopeList = doc.createElement("div");
   scopeList.setAttribute("data-ui-editor-scope-list", "true");
@@ -344,11 +474,12 @@ function renderReadonlyScopeButtons(doc, status, state) {
       setActiveScopeInState(state, scope.uiScope);
       const updatedStatus = updateLauncherStatusHint(doc, status.parentElement, state);
       renderReadonlyScopeButtons(doc, updatedStatus, state);
+      installLauncherTargetSelectionController(doc, status.parentElement, state);
     });
     scopeList.appendChild(button);
   }
 
-  status.appendChild(scopeList);
+  getLauncherStatusContentNode(status)?.appendChild(scopeList);
 }
 
 function syncLauncherButtonState(button, state, { doc = getDocument(), host = null } = {}) {
@@ -361,8 +492,9 @@ function syncLauncherButtonState(button, state, { doc = getDocument(), host = nu
   if (active) {
     const status = updateLauncherStatusHint(doc, host || button.parentElement, state);
     renderReadonlyScopeButtons(doc, status, state);
+    installLauncherTargetSelectionController(doc, host || button.parentElement, state);
   } else {
-    clearUiEditorTargetSelection(state);
+    removeLauncherTargetSelectionController(state);
     removeExistingLauncherStatus(doc);
   }
 }
@@ -448,8 +580,8 @@ function renderLauncherButton({ artifact, doc, host, state, onToggle = null }) {
   });
 
   host.appendChild(button);
-  installLauncherDocumentClickHandler(doc, host, state);
   launcherHostNode = button;
+  launcherRuntimeState = state;
   return button;
 }
 
@@ -480,6 +612,7 @@ export async function installBbmUiEditorRuntimeLauncher({
   const artifact = await loadInstalledLauncherButton({ doc, win });
   const launcherHost = getLauncherHost(doc, host);
   const state = createLauncherState({ activeUiScope, registeredElements, availableUiScopes, registryResolver });
+  state.win = win || null;
   return renderLauncherButton({ artifact, doc, host: launcherHost, state, onToggle });
 }
 
@@ -489,6 +622,7 @@ export {
   createLauncherState,
   ensureInstalledLauncherCss,
   getInstalledLauncherArtifact,
+  getInstalledTargetSelectionArtifact,
   isRuntimeLauncherDevEnabled,
   loadInstalledLauncherButton,
   getStatusScopeLabel,

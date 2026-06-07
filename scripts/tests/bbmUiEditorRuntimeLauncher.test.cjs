@@ -23,6 +23,10 @@ function createFakeDocument() {
       className: "",
       textContent: "",
       disabled: false,
+      clientWidth: 640,
+      clientHeight: 480,
+      offsetWidth: 120,
+      offsetHeight: 40,
       appendChild(child) {
         if (child) {
           child.parentNode = this;
@@ -67,6 +71,13 @@ function createFakeDocument() {
         if (!listeners[type]) return;
         listeners[type] = listeners[type].filter((entry) => entry !== handler);
       },
+      dispatchEvent(event = {}) {
+        const normalizedEvent = event;
+        normalizedEvent.target ||= this;
+        const type = String(normalizedEvent.type || "");
+        for (const handler of listeners[type] || []) handler.call(this, normalizedEvent);
+        return !normalizedEvent.defaultPrevented;
+      },
       closest(selector) {
         let current = this;
         while (current) {
@@ -97,6 +108,14 @@ function createFakeDocument() {
           if (matchesSelector(child, selector)) matches.push(child);
         });
         return matches;
+      },
+      getBoundingClientRect() {
+        return {
+          left: Number.parseFloat(this.style.left) || 0,
+          top: Number.parseFloat(this.style.top) || 0,
+          width: this.offsetWidth,
+          height: this.offsetHeight,
+        };
       },
     };
     return node;
@@ -168,6 +187,10 @@ function isMountedVisibleButton(doc, button) {
   );
 }
 
+function getStatusText(status) {
+  return status?.querySelector?.('[data-ui-editor-status-content="true"]')?.textContent || status?.textContent || "";
+}
+
 function matchesSelector(node, selector) {
   const raw = String(selector || "");
   if (raw === "button") return node.tagName === "BUTTON";
@@ -189,11 +212,30 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-editor-launcher-status=\"true\"]") {
     return node.getAttribute("data-ui-editor-launcher-status") === "true";
   }
+  if (raw === "[data-ui-editor-status-content=\"true\"]") {
+    return node.getAttribute("data-ui-editor-status-content") === "true";
+  }
+  if (raw === "[data-ui-editor-status-header=\"true\"]") {
+    return node.getAttribute("data-ui-editor-status-header") === "true";
+  }
+  if (raw === "[data-ui-editor-status-collapse=\"true\"]") {
+    return node.getAttribute("data-ui-editor-status-collapse") === "true";
+  }
+  if (raw === "[data-ui-editor-status-hide=\"true\"]") {
+    return node.getAttribute("data-ui-editor-status-hide") === "true";
+  }
+  if (raw === "[data-ui-editor-status-reopen=\"true\"]") {
+    return node.getAttribute("data-ui-editor-status-reopen") === "true";
+  }
   if (raw === "[data-ui-editor-scope-list=\"true\"]") {
     return node.getAttribute("data-ui-editor-scope-list") === "true";
   }
   if (raw === "[data-ui-editor-id]") {
     return Boolean(node.getAttribute("data-ui-editor-id"));
+  }
+  const uiEditorIdMatch = raw.match(/^\[data-ui-editor-id="([^"]+)"\]$/);
+  if (uiEditorIdMatch) {
+    return node.getAttribute("data-ui-editor-id") === uiEditorIdMatch[1].replace(/\\"/g, '"').replace(/\\\\/g, "\\");
   }
   const scopeOptionMatch = raw.match(/^\[data-ui-editor-scope-option="([^"]+)"\]$/);
   if (scopeOptionMatch) {
@@ -213,13 +255,16 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const mod = await loadRuntime();
     assert.equal(mod.INSTALLED_LAUNCHER_SCRIPT_PATH, "../../uiEditor/uiEditorLauncherButton.js");
     assert.equal(mod.INSTALLED_LAUNCHER_CSS_PATH, "../../uiEditor/uiEditorLauncherButton.css");
+    assert.equal(typeof mod.getInstalledTargetSelectionArtifact(globalThis)?.createTargetSelectionController, "function");
 
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
     const cssSource = fs.readFileSync(CSS_PATH, "utf8");
     const packageJson = JSON.parse(fs.readFileSync(PACKAGE_PATH, "utf8"));
     assert.equal(source.includes("uiEditor/uiEditorLauncherButton.js"), true);
     assert.equal(source.includes("uiEditor/uiEditorLauncherButton.css"), true);
+    assert.equal(source.includes("uiEditor/targetSelection.js"), true);
     assert.equal(source.includes("../../../uiEditor/uiEditorLauncherButton.js"), true);
+    assert.equal(source.includes("../../../uiEditor/targetSelection.js"), true);
     assert.equal(packageJson.build.files.includes("uiEditor/**/*"), true);
     assert.equal(source.includes("scanUiInspectorTargets"), false);
     assert.equal(source.includes("createUiInspectorPanel"), false);
@@ -230,6 +275,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(cssSource.includes("position: fixed"), true);
     assert.equal(cssSource.includes("inset-inline-end: 24px"), true);
     assert.equal(cssSource.includes("ui-editor-launcher-status"), true);
+    assert.equal(cssSource.includes("ui-editor-launcher-status__header"), true);
+    assert.equal(cssSource.includes("ui-editor-launcher-status-reopen"), true);
+    assert.equal(cssSource.includes('data-ui-editor-panel-collapsed="true"'), true);
+    assert.equal(cssSource.includes('data-ui-editor-panel-hidden="true"'), true);
     assert.equal(cssSource.includes("white-space: pre-line"), true);
     assert.equal(cssSource.includes("max-inline-size: 360px"), true);
     assert.equal(cssSource.includes('[data-ui-editor-launcher-active="true"]'), true);
@@ -300,7 +349,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(Boolean(activeStatus), true);
     assert.equal(
-      activeStatus.textContent,
+      getStatusText(activeStatus),
       "UI-Editor aktiv\nScope: nicht erkannt\n\nRegistrierte Elemente:\nnicht verfügbar"
     );
 
@@ -339,7 +388,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(Boolean(activeStatus), true);
     assert.equal(
-      activeStatus.textContent,
+      getStatusText(activeStatus),
       "UI-Editor aktiv\nScope: protokoll.topsScreen\n\nRegistrierte Elemente:\nnicht verfügbar"
     );
     assert.deepEqual(toggles.map((event) => event.activeUiScope), ["protokoll.topsScreen"]);
@@ -366,7 +415,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(Boolean(activeStatus), true);
     assert.equal(
-      activeStatus.textContent,
+      getStatusText(activeStatus),
       "UI-Editor aktiv\nScope: nicht erkannt\n\nRegistrierte Elemente:\nnicht verfügbar"
     );
   });
@@ -393,11 +442,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(Boolean(activeStatus), true);
-    assert.equal(activeStatus.textContent.includes("Registrierte Elemente:"), true);
-    assert.equal(activeStatus.textContent.includes("* protokoll.root (Root · Protokoll)"), true);
-    assert.equal(activeStatus.textContent.includes("* protokoll.header"), true);
-    assert.equal(activeStatus.textContent.includes("projectId"), false);
-    assert.equal(activeStatus.textContent.includes("Fachdaten"), false);
+    assert.equal(getStatusText(activeStatus).includes("Registrierte Elemente:"), true);
+    assert.equal(getStatusText(activeStatus).includes("* protokoll.root (Root · Protokoll)"), true);
+    assert.equal(getStatusText(activeStatus).includes("* protokoll.header"), true);
+    assert.equal(getStatusText(activeStatus).includes("projectId"), false);
+    assert.equal(getStatusText(activeStatus).includes("Fachdaten"), false);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-panel="true"]')), false);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-hover-frame="true"]')), false);
   });
@@ -452,10 +501,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     button.click();
     let activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
-    assert.equal(activeStatus.textContent.includes("Verfuegbare Scopes:"), true);
-    assert.equal(activeStatus.textContent.includes("* protokoll.topsScreen"), true);
-    assert.equal(activeStatus.textContent.includes("* bbm.demo.editorMove"), true);
-    assert.equal(activeStatus.textContent.includes("* restarbeiten.screen"), true);
+    assert.equal(getStatusText(activeStatus).includes("Verfuegbare Scopes:"), true);
+    assert.equal(getStatusText(activeStatus).includes("* protokoll.topsScreen"), true);
+    assert.equal(getStatusText(activeStatus).includes("* bbm.demo.editorMove"), true);
+    assert.equal(getStatusText(activeStatus).includes("* restarbeiten.screen"), true);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-scope-list="true"]')), true);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-scope-option="restarbeiten.screen"]')), true);
 
@@ -464,10 +513,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     demoScopeButton.click();
 
     activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
-    assert.equal(activeStatus.textContent.includes("Scope: bbm.demo.editorMove"), true);
-    assert.equal(activeStatus.textContent.includes("Modul: uiEditor"), true);
-    assert.equal(activeStatus.textContent.includes("Elemente: 1"), true);
-    assert.equal(activeStatus.textContent.includes("bbm.demo.root"), true);
+    assert.equal(getStatusText(activeStatus).includes("Scope: bbm.demo.editorMove"), true);
+    assert.equal(getStatusText(activeStatus).includes("Modul: uiEditor"), true);
+    assert.equal(getStatusText(activeStatus).includes("Elemente: 1"), true);
+    assert.equal(getStatusText(activeStatus).includes("bbm.demo.root"), true);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-panel="true"]')), false);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-hover-frame="true"]')), false);
   });
@@ -515,8 +564,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     });
 
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
-    assert.equal(activeStatus.textContent.includes("Auswahl: restarbeiten.filterbar.class.defect"), true);
-    assert.equal(activeStatus.textContent.includes("Name: Mangel"), true);
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.filterbar.class.defect"), true);
+    assert.equal(getStatusText(activeStatus).includes("Name: Mangel"), true);
     assert.equal(target.getAttribute("data-ui-editor-selected"), "true");
     assert.equal(target.style.outline.includes("#2563eb"), true);
 
@@ -524,8 +573,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(target.getAttribute("data-ui-editor-selected"), "false");
     assert.equal(target.style.outline, "");
     assert.equal(nextTarget.getAttribute("data-ui-editor-selected"), "true");
-    assert.equal(activeStatus.textContent.includes("Auswahl: restarbeiten.record.longText"), true);
-    assert.equal(activeStatus.textContent.includes("Name: Langtext"), true);
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.record.longText"), true);
+    assert.equal(getStatusText(activeStatus).includes("Name: Langtext"), true);
   });
 
   await run("BBM UI-Editor-Runtime: Klick auf Child findet naechsten data-ui-editor-id-Parent", async () => {
@@ -557,7 +606,245 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(parent.getAttribute("data-ui-editor-selected"), "true");
     assert.equal(child.getAttribute("data-ui-editor-selected"), null);
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
-    assert.equal(activeStatus.textContent.includes("Auswahl: restarbeiten.record.shortText"), true);
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.record.shortText"), true);
+  });
+
+  await run("BBM UI-Editor-Runtime: Hover zeigt registriertes Ziel und blockiert Eingabefeld nicht", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => ({
+        uiScope: "restarbeiten.screen",
+        moduleId: "restarbeiten",
+        elements: [
+          { id: "restarbeiten.editbox.text.long", name: "Langtext", type: "field", role: "content", parentId: "restarbeiten.editbox", allowedOps: ["inspect"], lockedOps: [] },
+        ],
+      }),
+    });
+    const wrapper = doc.createElement("label");
+    wrapper.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.long");
+    const textarea = doc.createElement("textarea");
+    wrapper.appendChild(textarea);
+    doc.body.appendChild(wrapper);
+
+    button.click();
+    const event = {
+      type: "pointermove",
+      target: textarea,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+      stopPropagation() {
+        this.stopped = true;
+      },
+    };
+    doc.dispatchEvent(event);
+
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Hover: restarbeiten.editbox.text.long"), true);
+    assert.equal(wrapper.getAttribute("data-ui-editor-hovered"), "true");
+    assert.equal(wrapper.style.outline.includes("dashed"), true);
+    assert.equal(event.defaultPrevented, undefined);
+  });
+
+  await run("BBM UI-Editor-Runtime: Shift/Alt waehlt DOM- oder Registry-Parent fuer Gruppen", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "restarbeiten.screen",
+      moduleId: "restarbeiten",
+      elements: [
+        { id: "restarbeiten.filterbar.group.class", name: "Klasse", type: "group", role: "layout", parentId: "restarbeiten.filterbar", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.filterbar.class.defect", name: "Mangel", type: "button", role: "visibility", parentId: "restarbeiten.filterbar.group.class", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.filterbar.group.location", name: "Verortung", type: "group", role: "layout", parentId: "restarbeiten.filterbar", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.filterbar.location.level1", name: "Verortung L1", type: "field", role: "meta", parentId: "restarbeiten.filterbar.group.location", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.filterbar.group.meta", name: "Meta", type: "group", role: "layout", parentId: "restarbeiten.filterbar", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.filterbar.meta.status", name: "Status", type: "field", role: "status", parentId: "restarbeiten.filterbar.group.meta", allowedOps: ["inspect"], lockedOps: [] },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => registry,
+    });
+
+    const classGroup = doc.createElement("div");
+    classGroup.setAttribute("data-ui-editor-id", "restarbeiten.filterbar.group.class");
+    const defect = doc.createElement("button");
+    defect.setAttribute("data-ui-editor-id", "restarbeiten.filterbar.class.defect");
+    classGroup.appendChild(defect);
+    const locationGroup = doc.createElement("div");
+    locationGroup.setAttribute("data-ui-editor-id", "restarbeiten.filterbar.group.location");
+    const locationField = doc.createElement("select");
+    locationField.setAttribute("data-ui-editor-id", "restarbeiten.filterbar.location.level1");
+    locationGroup.appendChild(locationField);
+    const metaGroup = doc.createElement("div");
+    metaGroup.setAttribute("data-ui-editor-id", "restarbeiten.filterbar.group.meta");
+    const metaField = doc.createElement("select");
+    metaField.setAttribute("data-ui-editor-id", "restarbeiten.filterbar.meta.status");
+    metaGroup.appendChild(metaField);
+    doc.body.append(classGroup, locationGroup, metaGroup);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target: locationField });
+    let activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.filterbar.location.level1"), true);
+    assert.equal(locationField.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.dispatchEvent({ type: "click", target: metaField });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.filterbar.meta.status"), true);
+    assert.equal(metaField.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.dispatchEvent({ type: "click", target: defect, shiftKey: true });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.filterbar.group.class"), true);
+    assert.equal(classGroup.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.dispatchEvent({ type: "click", target: locationField, altKey: true });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.filterbar.group.location"), true);
+    assert.equal(locationGroup.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.dispatchEvent({ type: "click", target: metaField, shiftKey: true });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.filterbar.group.meta"), true);
+    assert.equal(metaGroup.getAttribute("data-ui-editor-selected"), "true");
+  });
+
+  await run("BBM UI-Editor-Runtime: Kurz- und Langtext-Input sind getrennt von ihren Gruppen auswaehlbar", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "restarbeiten.screen",
+      moduleId: "restarbeiten",
+      elements: [
+        { id: "restarbeiten.editbox.text.short", name: "Kurztext", type: "field", role: "content", parentId: "restarbeiten.editbox", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.editbox.text.short.input", name: "Kurztext-Eingabe", type: "field", role: "content", parentId: "restarbeiten.editbox.text.short", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.editbox.text.long", name: "Langtext", type: "field", role: "content", parentId: "restarbeiten.editbox", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.editbox.text.long.input", name: "Langtext-Eingabe", type: "field", role: "content", parentId: "restarbeiten.editbox.text.long", allowedOps: ["inspect"], lockedOps: [] },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => registry,
+    });
+
+    const shortGroup = doc.createElement("div");
+    shortGroup.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.short");
+    const shortInput = doc.createElement("input");
+    shortInput.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.short.input");
+    shortGroup.appendChild(shortInput);
+    const longGroup = doc.createElement("div");
+    longGroup.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.long");
+    const longInput = doc.createElement("textarea");
+    longInput.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.long.input");
+    longGroup.appendChild(longInput);
+    doc.body.append(shortGroup, longGroup);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target: shortInput });
+    let activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.editbox.text.short.input"), true);
+    assert.equal(shortInput.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.dispatchEvent({ type: "click", target: shortInput, shiftKey: true });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.editbox.text.short"), true);
+    assert.equal(shortGroup.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.dispatchEvent({ type: "click", target: longInput });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.editbox.text.long.input"), true);
+    assert.equal(longInput.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.dispatchEvent({ type: "click", target: longInput, altKey: true });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.editbox.text.long"), true);
+    assert.equal(longGroup.getAttribute("data-ui-editor-selected"), "true");
+  });
+
+  await run("BBM UI-Editor-Runtime: Erkennungspanel ist verschiebbar und ein-/ausblendbar", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      innerWidth: 320,
+      innerHeight: 220,
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => ({ uiScope: "restarbeiten.screen", moduleId: "restarbeiten", elements: [] }),
+    });
+
+    button.click();
+    const panel = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    const header = doc.querySelector('[data-ui-editor-status-header="true"]');
+    const collapse = doc.querySelector('[data-ui-editor-status-collapse="true"]');
+    const hide = doc.querySelector('[data-ui-editor-status-hide="true"]');
+    const reopen = doc.querySelector('[data-ui-editor-status-reopen="true"]');
+    panel.offsetWidth = 200;
+    panel.offsetHeight = 100;
+
+    header.dispatchEvent({
+      type: "pointerdown",
+      target: header,
+      clientX: 20,
+      clientY: 20,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+    });
+    doc.dispatchEvent({
+      type: "pointermove",
+      target: header,
+      clientX: 900,
+      clientY: 900,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+    });
+    doc.dispatchEvent({ type: "pointerup", target: header });
+
+    assert.equal(panel.style.position, "fixed");
+    assert.equal(panel.style.left, "112px");
+    assert.equal(panel.style.top, "112px");
+
+    collapse.click();
+    assert.equal(panel.getAttribute("data-ui-editor-panel-collapsed"), "true");
+    assert.equal(doc.querySelector('[data-ui-editor-status-content="true"]').style.display, "none");
+    collapse.click();
+    assert.equal(panel.getAttribute("data-ui-editor-panel-collapsed"), "false");
+
+    hide.click();
+    assert.equal(panel.getAttribute("data-ui-editor-panel-hidden"), "true");
+    assert.equal(panel.style.display, "none");
+    assert.equal(reopen.style.display, "");
+    reopen.click();
+    assert.equal(panel.getAttribute("data-ui-editor-panel-hidden"), "false");
+    assert.equal(panel.style.display, "");
+    assert.equal(reopen.style.display, "none");
   });
 
   await run("BBM UI-Editor-Runtime: unbekannte oder fehlende data-ui-editor-id wird ignoriert", async () => {
@@ -589,8 +876,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(unknown.getAttribute("data-ui-editor-selected"), null);
     assert.equal(withoutId.getAttribute("data-ui-editor-selected"), null);
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
-    assert.equal(activeStatus.textContent.includes("Auswahl: keine"), true);
-    assert.equal(activeStatus.textContent.includes("restarbeiten.unknown"), false);
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: keine"), true);
+    assert.equal(getStatusText(activeStatus).includes("restarbeiten.unknown"), false);
   });
 
   await run("BBM UI-Editor-Runtime: Klickauswahl bleibt auf aktuellen TOPS-Scope begrenzt", async () => {
@@ -623,8 +910,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     doc.dispatchEvent({ type: "click", target: protokollTarget });
     assert.equal(protokollTarget.getAttribute("data-ui-editor-selected"), "true");
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
-    assert.equal(activeStatus.textContent.includes("Auswahl: protokoll.root"), true);
-    assert.equal(activeStatus.textContent.includes("Name: Protokoll"), true);
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: protokoll.root"), true);
+    assert.equal(getStatusText(activeStatus).includes("Name: Protokoll"), true);
   });
 
   await run("BBM UI-Editor-Runtime: bleibt ohne Scan, Speicherung und Ziel-App-Aktion", async () => {
