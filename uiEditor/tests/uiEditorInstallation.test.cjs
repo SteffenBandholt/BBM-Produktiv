@@ -92,9 +92,14 @@ assertIncludesAll("uiEditor/uiEditorRules.md", UI_EDITOR_RULE_REQUIREMENTS);
 const targetSelection = readTargetFile("uiEditor/targetSelection.js");
 [
   "createTargetSelectionController",
+  "createTargetSelectionPanelController",
   "DEFAULT_TARGET_ATTRIBUTE_NAME",
+  "HOVERED_TARGET_ATTRIBUTE_NAME",
   "SELECTED_TARGET_ATTRIBUTE_NAME",
   "data-ui-editor-id",
+  "data-ui-editor-hovered",
+  "data-ui-editor-panel-collapsed",
+  "data-ui-editor-panel-hidden",
   "closest",
 ].forEach((fragment) => {
   assert.equal(targetSelection.includes(fragment), true, "targetSelection enthaelt nicht: " + fragment);

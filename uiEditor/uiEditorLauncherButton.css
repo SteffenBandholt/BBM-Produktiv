@@ -35,6 +35,10 @@
   top: 76px;
   z-index: 2147482999;
   max-inline-size: 360px;
+  max-block-size: min(420px, calc(100vh - 96px));
+  overflow: auto;
+  pointer-events: auto;
+  resize: both;
   padding: 12px;
   border: 1px solid #64748b;
   border-radius: 8px;
@@ -43,4 +47,53 @@
   font: 13px/1.4 system-ui, sans-serif;
   white-space: pre-line;
   box-shadow: 0 8px 24px rgb(15 23 42 / 18%);
+}
+
+.ui-editor-launcher-status__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: -12px -12px 10px;
+  padding: 8px 10px;
+  border-block-end: 1px solid #cbd5e1;
+  cursor: move;
+  user-select: none;
+}
+
+.ui-editor-launcher-status__actions {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.ui-editor-launcher-status__action {
+  min-inline-size: 28px;
+  min-block-size: 28px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.ui-editor-launcher-status[data-ui-editor-panel-collapsed="true"] .ui-editor-launcher-status__content {
+  display: none;
+}
+
+.ui-editor-launcher-status[data-ui-editor-panel-hidden="true"] {
+  display: none;
+}
+
+.ui-editor-launcher-status-reopen {
+  position: fixed;
+  inset-inline-end: 24px;
+  top: 76px;
+  z-index: 2147482998;
+  min-inline-size: 36px;
+  min-block-size: 36px;
+  border: 1px solid #64748b;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #0f172a;
+  cursor: pointer;
 }
