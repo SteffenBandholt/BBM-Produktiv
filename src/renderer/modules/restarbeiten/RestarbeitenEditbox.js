@@ -124,6 +124,7 @@ function createTextField({
   label,
   value,
   uiId,
+  inputUiId,
   dictationUiId,
   remainingUiId,
   onInput,
@@ -137,6 +138,7 @@ function createTextField({
   const field = createEl("label", { className: "bbm-restarbeiten-field bbm-restarbeiten-text-label" });
   const labelRow = createEl("span", { className: "bbm-restarbeiten-text-label__row" });
   const input = document.createElement(multiline ? "textarea" : "input");
+  if (inputUiId) input.setAttribute("data-ui-editor-id", inputUiId);
   const remaining = createEl("span", {
     className: "bbm-restarbeiten-remaining",
     uiId: remainingUiId,
@@ -259,6 +261,7 @@ export function buildRestarbeitenEditbox({
       label: "Kurztext / Gegenstand",
       value: draft.short_text || "",
       uiId: "restarbeiten.editbox.text.short",
+      inputUiId: "restarbeiten.editbox.text.short.input",
       dictationUiId: "restarbeiten.editbox.text.short.dictation",
       remainingUiId: "restarbeiten.editbox.text.short.remaining",
       required: true,
@@ -276,6 +279,7 @@ export function buildRestarbeitenEditbox({
       label: "Langtext / Beschreibung",
       value: draft.long_text || "",
       uiId: "restarbeiten.editbox.text.long",
+      inputUiId: "restarbeiten.editbox.text.long.input",
       dictationUiId: "restarbeiten.editbox.text.long.dictation",
       remainingUiId: "restarbeiten.editbox.text.long.remaining",
       maxLength: 400,
@@ -322,7 +326,6 @@ export function buildRestarbeitenEditbox({
     onInput: (due_date) => onDraftChange?.({ due_date }),
     onCommit: () => onAutoSave?.(),
   });
-  dueDateField.appendChild(ampelWrap);
   meta.append(
     createField({
       label: "Status",
@@ -339,6 +342,7 @@ export function buildRestarbeitenEditbox({
       onCommit: () => onAutoSave?.(),
     }),
     dueDateField,
+    ampelWrap,
     createField({
       label: "Verantwortlich",
       value: draft.responsible_project_firm_id || "",

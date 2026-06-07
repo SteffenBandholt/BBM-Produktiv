@@ -88,9 +88,13 @@
   align-self: center;
 }
 
-.bbm-restarbeiten-filterbar > .bbm-restarbeiten-button {
+.bbm-restarbeiten-filter-actions {
   flex: 0 0 auto;
   margin-left: auto;
+}
+
+.bbm-restarbeiten-filter-actions > .bbm-restarbeiten-button {
+  display: block;
 }
 
 .bbm-restarbeiten-filterbar [data-ui-editor-id="restarbeiten.filterbar.meta.responsible"] {

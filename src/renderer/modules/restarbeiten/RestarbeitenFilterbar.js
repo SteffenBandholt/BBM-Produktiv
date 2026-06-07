@@ -137,6 +137,12 @@ export function buildRestarbeitenFilterbar({
   closeBtn.type = "button";
   closeBtn.addEventListener("click", () => onClose?.());
 
-  root.append(locationGroup, classGroup, metaGroup, closeBtn);
+  const actions = createEl("div", {
+    className: "bbm-restarbeiten-filter-actions",
+    uiId: "restarbeiten.filterbar.actions",
+  });
+  actions.appendChild(closeBtn);
+
+  root.append(locationGroup, classGroup, metaGroup, actions);
   return root;
 }

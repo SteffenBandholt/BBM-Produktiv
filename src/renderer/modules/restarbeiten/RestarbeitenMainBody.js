@@ -1,4 +1,4 @@
-import { buildRestarbeitenList } from "./RestarbeitenList.js";
+import { buildRestarbeitenList, buildRestarbeitenTableHeader } from "./RestarbeitenList.js";
 
 function createEl(tag, { className = "", uiId = "" } = {}) {
   const el = document.createElement(tag);
@@ -21,7 +21,7 @@ export function buildRestarbeitenMainBody(options = {}) {
     uiId: "restarbeiten.main.sheet.paper",
   });
 
-  paper.appendChild(buildRestarbeitenList(options));
+  paper.append(buildRestarbeitenTableHeader(), buildRestarbeitenList(options));
   sheet.appendChild(paper);
   main.appendChild(sheet);
   return main;

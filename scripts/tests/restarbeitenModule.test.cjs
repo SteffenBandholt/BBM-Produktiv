@@ -129,6 +129,16 @@ function findByUiId(node, uiId) {
   return findNodes(node, (entry) => entry.getAttribute?.("data-ui-editor-id") === uiId)[0] || null;
 }
 
+function nearestUiEditorParentId(node) {
+  let current = node?.parentElement || null;
+  while (current) {
+    const uiId = current.getAttribute?.("data-ui-editor-id");
+    if (uiId) return uiId;
+    current = current.parentElement || null;
+  }
+  return null;
+}
+
 function findByText(node, tagName, text) {
   return findNodes(
     node,
@@ -398,6 +408,122 @@ async function runRestarbeitenModuleTests(run) {
     }
   });
 
+  await run("Restarbeiten: UI-Editor-Zielgruppen sind registriert und im DOM markiert", async () => {
+    const uiEditor = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js")
+    );
+    const elements = uiEditor.getRestarbeitenUiEditorElements();
+    const ids = new Set(elements.map((element) => element.id));
+    const rendered = await renderRouteScreen();
+    const expectedTargets = [
+      "restarbeiten.filterbar.group.location",
+      "restarbeiten.filterbar.group.class",
+      "restarbeiten.filterbar.group.meta",
+      "restarbeiten.editbox.location",
+      "restarbeiten.editbox.meta",
+      "restarbeiten.editbox.meta.itemClass",
+      "restarbeiten.editbox.text.short",
+      "restarbeiten.editbox.text.short.input",
+      "restarbeiten.editbox.text.long",
+      "restarbeiten.editbox.text.long.input",
+      "restarbeiten.record.numberColumn",
+      "restarbeiten.record.contentColumn",
+      "restarbeiten.record.metaColumn",
+      "restarbeiten.record.location",
+      "restarbeiten.record.shortText",
+      "restarbeiten.record.longText",
+      "restarbeiten.record.dueDate",
+      "restarbeiten.record.status",
+      "restarbeiten.record.responsible",
+      "restarbeiten.record.photos",
+    ];
+
+    for (const targetId of expectedTargets) {
+      assert.equal(ids.has(targetId), true, `${targetId} registry`);
+      assert.equal(Boolean(findByUiId(rendered.root, targetId)), true, `${targetId} dom`);
+    }
+  });
+
+  await run("Restarbeiten: UI-Editor-DOM-Hierarchie folgt den Registry-Parent-IDs", async () => {
+    const uiEditor = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js")
+    );
+    const elements = uiEditor.getRestarbeitenUiEditorElements();
+    const byId = new Map(elements.map((element) => [element.id, element]));
+    const rendered = await renderRouteScreen();
+    const expectedParents = new Map([
+      ["restarbeiten.filterbar.group.location", "restarbeiten.filterbar"],
+      ["restarbeiten.filterbar.location.level1", "restarbeiten.filterbar.group.location"],
+      ["restarbeiten.filterbar.location.level2", "restarbeiten.filterbar.group.location"],
+      ["restarbeiten.filterbar.location.level3", "restarbeiten.filterbar.group.location"],
+      ["restarbeiten.filterbar.location.level4", "restarbeiten.filterbar.group.location"],
+      ["restarbeiten.filterbar.group.class", "restarbeiten.filterbar"],
+      ["restarbeiten.filterbar.class.all", "restarbeiten.filterbar.group.class"],
+      ["restarbeiten.filterbar.class.rest", "restarbeiten.filterbar.group.class"],
+      ["restarbeiten.filterbar.class.defect", "restarbeiten.filterbar.group.class"],
+      ["restarbeiten.filterbar.group.meta", "restarbeiten.filterbar"],
+      ["restarbeiten.filterbar.meta.status", "restarbeiten.filterbar.group.meta"],
+      ["restarbeiten.filterbar.meta.dueDate", "restarbeiten.filterbar.group.meta"],
+      ["restarbeiten.filterbar.meta.responsible", "restarbeiten.filterbar.group.meta"],
+      ["restarbeiten.filterbar.actions", "restarbeiten.filterbar"],
+      ["restarbeiten.filterbar.action.close", "restarbeiten.filterbar.actions"],
+      ["restarbeiten.main.sheet", "restarbeiten.main"],
+      ["restarbeiten.main.sheet.paper", "restarbeiten.main.sheet"],
+      ["restarbeiten.main.tableHeader", "restarbeiten.main.sheet.paper"],
+      ["restarbeiten.main.records", "restarbeiten.main.sheet.paper"],
+      ["restarbeiten.record.numberColumn", "restarbeiten.main.records"],
+      ["restarbeiten.record.number", "restarbeiten.record.numberColumn"],
+      ["restarbeiten.record.createdAt", "restarbeiten.record.numberColumn"],
+      ["restarbeiten.record.itemClass", "restarbeiten.record.numberColumn"],
+      ["restarbeiten.record.photos", "restarbeiten.record.numberColumn"],
+      ["restarbeiten.record.contentColumn", "restarbeiten.main.records"],
+      ["restarbeiten.record.location", "restarbeiten.record.contentColumn"],
+      ["restarbeiten.record.shortText", "restarbeiten.record.contentColumn"],
+      ["restarbeiten.record.longText", "restarbeiten.record.contentColumn"],
+      ["restarbeiten.record.metaColumn", "restarbeiten.main.records"],
+      ["restarbeiten.record.dueDate", "restarbeiten.record.metaColumn"],
+      ["restarbeiten.record.ampel", "restarbeiten.record.metaColumn"],
+      ["restarbeiten.record.status", "restarbeiten.record.metaColumn"],
+      ["restarbeiten.record.responsible", "restarbeiten.record.metaColumn"],
+      ["restarbeiten.editbox.header", "restarbeiten.editbox"],
+      ["restarbeiten.editbox.header.currentRecord", "restarbeiten.editbox.header"],
+      ["restarbeiten.editbox.text.short", "restarbeiten.editbox"],
+      ["restarbeiten.editbox.text.short.input", "restarbeiten.editbox.text.short"],
+      ["restarbeiten.editbox.text.short.remaining", "restarbeiten.editbox.text.short"],
+      ["restarbeiten.editbox.text.short.dictation", "restarbeiten.editbox.text.short"],
+      ["restarbeiten.editbox.meta.itemClass", "restarbeiten.editbox.text.short"],
+      ["restarbeiten.editbox.action.new", "restarbeiten.editbox.text.short"],
+      ["restarbeiten.editbox.action.delete", "restarbeiten.editbox.text.short"],
+      ["restarbeiten.editbox.text.long", "restarbeiten.editbox"],
+      ["restarbeiten.editbox.text.long.input", "restarbeiten.editbox.text.long"],
+      ["restarbeiten.editbox.text.long.remaining", "restarbeiten.editbox.text.long"],
+      ["restarbeiten.editbox.text.long.dictation", "restarbeiten.editbox.text.long"],
+      ["restarbeiten.editbox.location", "restarbeiten.editbox"],
+      ["restarbeiten.editbox.location.level1", "restarbeiten.editbox.location"],
+      ["restarbeiten.editbox.location.level2", "restarbeiten.editbox.location"],
+      ["restarbeiten.editbox.location.level3", "restarbeiten.editbox.location"],
+      ["restarbeiten.editbox.location.level4", "restarbeiten.editbox.location"],
+      ["restarbeiten.editbox.meta", "restarbeiten.editbox"],
+      ["restarbeiten.editbox.meta.status", "restarbeiten.editbox.meta"],
+      ["restarbeiten.editbox.meta.dueDate", "restarbeiten.editbox.meta"],
+      ["restarbeiten.editbox.meta.responsible", "restarbeiten.editbox.meta"],
+      ["restarbeiten.editbox.meta.ampel", "restarbeiten.editbox.meta"],
+    ]);
+
+    for (const [targetId, parentId] of expectedParents) {
+      const element = byId.get(targetId);
+      const node = findByUiId(rendered.root, targetId);
+      assert.equal(Boolean(element), true, `${targetId} registry`);
+      assert.equal(Boolean(node), true, `${targetId} dom`);
+      assert.equal(element.parentId, parentId, `${targetId} registry parent`);
+      assert.equal(nearestUiEditorParentId(node), parentId, `${targetId} dom parent`);
+    }
+
+    assert.notEqual(nearestUiEditorParentId(findByUiId(rendered.root, "restarbeiten.filterbar.action.close")), "restarbeiten.filterbar.group.meta");
+    assert.notEqual(nearestUiEditorParentId(findByUiId(rendered.root, "restarbeiten.filterbar.action.close")), "restarbeiten.filterbar.group.class");
+    assert.equal(findByUiId(rendered.root, "restarbeiten.main.records").children.some((child) => child === findByUiId(rendered.root, "restarbeiten.main.tableHeader")), false);
+  });
+
   await run("Restarbeiten: Datenzugang bleibt importierbar", async () => {
     const dataSource = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/data/restarbeitenDataSource.js")
@@ -466,10 +592,13 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(Boolean(findByText(root, "button", "Mangel")), true);
       assert.equal(Boolean(findByText(root, "button", "Restarbeit")), false);
       const close = findByUiId(root, "restarbeiten.filterbar.action.close");
+      const actions = findByUiId(root, "restarbeiten.filterbar.actions");
       const responsible = findByUiId(root, "restarbeiten.filterbar.meta.responsible");
       assert.equal(Boolean(close), true);
+      assert.equal(Boolean(actions), true);
       assert.equal(Boolean(responsible), true);
-      assert.equal(root.children.at(-1), close);
+      assert.equal(root.children.at(-1), actions);
+      assert.equal(actions.children.at(-1), close);
       assert.equal(css.includes('--bbm-rest-font-family: "Noto Sans", Arial, sans-serif;'), true);
       assert.equal(css.includes(".bbm-restarbeiten-screen,\n.bbm-restarbeiten-screen button,\n.bbm-restarbeiten-screen input,\n.bbm-restarbeiten-screen select,\n.bbm-restarbeiten-screen textarea {\n  font-family: var(--bbm-rest-font-family);"), true);
       assert.equal(css.includes(".bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field span,\n.bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field input,\n.bbm-restarbeiten-filterbar [data-ui-editor-id=\"restarbeiten.filterbar.group.meta\"] .bbm-restarbeiten-field select {\n  color: var(--bbm-muted);\n  font-size: 6.5pt;\n  font-weight: 400;\n  line-height: 1.1;"), true);
@@ -529,8 +658,10 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(findByUiId(root, "restarbeiten.editbox.location").children.length, 4);
       assert.notEqual(findByUiId(root, "restarbeiten.editbox.meta").children[0], findByUiId(root, "restarbeiten.editbox.meta.itemClass"));
       assert.equal(shortControl.tagName, "INPUT");
+      assert.equal(shortControl.getAttribute("data-ui-editor-id"), "restarbeiten.editbox.text.short.input");
       assert.equal(shortControl.getAttribute("maxlength"), "87");
       assert.equal(longControl.tagName, "TEXTAREA");
+      assert.equal(longControl.getAttribute("data-ui-editor-id"), "restarbeiten.editbox.text.long.input");
       assert.equal(longControl.getAttribute("maxlength"), "400");
       assert.equal(findByUiId(root, "restarbeiten.editbox.text.short.remaining").textContent, "87");
       assert.equal(findByUiId(root, "restarbeiten.editbox.text.long.remaining").textContent, "400");
@@ -782,7 +913,7 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").children[0].dataset.state, "rot");
       assert.equal(
         findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").parentElement,
-        findByUiId(screen.root, "restarbeiten.editbox.meta.dueDate")
+        findByUiId(screen.root, "restarbeiten.editbox.meta")
       );
 
       triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.status"), "offen", "change");
@@ -1143,6 +1274,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(ids.has("restarbeiten.main.tableHeader.status"), true);
     assert.equal(ids.has("restarbeiten.main.tableHeader.responsible"), true);
     assert.equal(ids.has("restarbeiten.record.itemClass"), true);
+    assert.equal(ids.has("restarbeiten.record.ampel"), true);
     assert.equal(ids.has("restarbeiten.record.photos"), true);
     assert.equal(ids.has("restarbeiten.record.location"), true);
     assert.equal(ids.has("restarbeiten.editbox"), true);
@@ -1151,6 +1283,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(ids.has("restarbeiten.editbox.action.save"), false);
     assert.equal(ids.has("restarbeiten.editbox.action.delete"), true);
     assert.equal(ids.has("restarbeiten.editbox.meta.itemClass"), true);
+    assert.equal(ids.has("restarbeiten.filterbar.actions"), true);
+    assert.equal(ids.has("restarbeiten.editbox.text.short.input"), true);
+    assert.equal(ids.has("restarbeiten.editbox.text.long.input"), true);
     assert.equal(ids.has("restarbeiten.editbox.text.short.remaining"), true);
     assert.equal(ids.has("restarbeiten.editbox.text.long.remaining"), true);
     assert.equal(ids.has("restarbeiten.quicklane"), true);
@@ -1169,9 +1304,13 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(deleteElement.parentId, "restarbeiten.editbox.text.short");
     assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.action.new").parentId, "restarbeiten.editbox.text.short");
     assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.meta.itemClass").parentId, "restarbeiten.editbox.text.short");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.text.short.input").parentId, "restarbeiten.editbox.text.short");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.text.long.input").parentId, "restarbeiten.editbox.text.long");
     assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.text.short.remaining").parentId, "restarbeiten.editbox.text.short");
     assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.text.long.remaining").parentId, "restarbeiten.editbox.text.long");
-    assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.meta.ampel").parentId, "restarbeiten.editbox.meta.dueDate");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.filterbar.action.close").parentId, "restarbeiten.filterbar.actions");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.record.ampel").parentId, "restarbeiten.record.metaColumn");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.meta.ampel").parentId, "restarbeiten.editbox.meta");
 
     for (const element of elements) {
       for (const field of ["id", "name", "type", "role", "parentId", "order", "visible", "editable", "allowedOps", "lockedOps"]) {

@@ -12,7 +12,7 @@ function appendText(parent, className, text, uiId = "") {
   return el;
 }
 
-function buildTableHeader() {
+export function buildRestarbeitenTableHeader() {
   const header = createEl("div", {
     className: "bbm-restarbeiten-table-header",
     uiId: "restarbeiten.main.tableHeader",
@@ -47,7 +47,6 @@ export function buildRestarbeitenList({
     className: "bbm-restarbeiten-records",
     uiId: "restarbeiten.main.records",
   });
-  records.appendChild(buildTableHeader());
 
   if (!items.length) {
     records.appendChild(
@@ -95,12 +94,12 @@ export function buildRestarbeitenList({
     const dueLine = createEl("div", { uiId: "restarbeiten.record.dueDate" });
     dueLine.className = "bbm-restarbeiten-record__due";
     dueLine.textContent = item.dueDateLabel;
+    metaColumn.appendChild(dueLine);
     if (showAmpel) {
       const ampel = createEl("span", { className: "bbm-restarbeiten-ampel", uiId: "restarbeiten.record.ampel" });
       ampel.dataset.state = item.ampelState || "neutral";
-      dueLine.append(" ", ampel);
+      metaColumn.appendChild(ampel);
     }
-    metaColumn.appendChild(dueLine);
     appendText(metaColumn, "", item.statusLabel, "restarbeiten.record.status");
     appendText(metaColumn, "", item.responsibleLabel, "restarbeiten.record.responsible");
 
