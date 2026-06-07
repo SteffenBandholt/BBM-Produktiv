@@ -724,6 +724,56 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(metaGroup.getAttribute("data-ui-editor-selected"), "true");
   });
 
+  await run("BBM UI-Editor-Runtime: Quicklane-Button und Gruppe sind per Klick auswaehlbar", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "restarbeiten.screen",
+      moduleId: "restarbeiten",
+      elements: [
+        { id: "restarbeiten.quicklane", name: "Quicklane", type: "toolbar", role: "layout", parentId: "restarbeiten.root", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.quicklane.group.output", name: "Ausgabe", type: "group", role: "action", parentId: "restarbeiten.quicklane", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.quicklane.action.output", name: "Ausgabe", type: "button", role: "action", parentId: "restarbeiten.quicklane.group.output", allowedOps: ["inspect"], lockedOps: [] },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => registry,
+    });
+
+    const quicklane = doc.createElement("section");
+    quicklane.setAttribute("data-ui-editor-id", "restarbeiten.quicklane");
+    const outputGroup = doc.createElement("div");
+    outputGroup.setAttribute("data-ui-editor-id", "restarbeiten.quicklane.group.output");
+    const outputButton = doc.createElement("button");
+    outputButton.setAttribute("data-ui-editor-id", "restarbeiten.quicklane.action.output");
+    outputGroup.appendChild(outputButton);
+    quicklane.appendChild(outputGroup);
+    doc.body.appendChild(quicklane);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target: outputButton });
+    let activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.quicklane.action.output"), true);
+    assert.equal(outputButton.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.dispatchEvent({ type: "click", target: outputButton, shiftKey: true });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.quicklane.group.output"), true);
+    assert.equal(outputGroup.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.dispatchEvent({ type: "click", target: outputButton, altKey: true });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.quicklane.group.output"), true);
+    assert.equal(outputGroup.getAttribute("data-ui-editor-selected"), "true");
+  });
+
   await run("BBM UI-Editor-Runtime: Kurz- und Langtext-Input sind getrennt von ihren Gruppen auswaehlbar", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();

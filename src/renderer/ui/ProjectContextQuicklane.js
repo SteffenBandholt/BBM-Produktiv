@@ -80,6 +80,9 @@ export default class ProjectContextQuicklane {
     this.outputPopupEl = null;
     this.filterSectionEl = null;
     this.filterPopupEl = null;
+    this.navigationGroupEl = null;
+    this.visibilityGroupEl = null;
+    this.outputGroupEl = null;
     this._topFilterMode = "all";
     this._isTopFilterOpen = false;
     this._isOpen = false;
@@ -205,6 +208,16 @@ export default class ProjectContextQuicklane {
     body.style.flexDirection = "column";
     body.style.alignItems = "center";
     body.style.gap = "10px";
+
+    const createToolGroup = () => {
+      const group = document.createElement("div");
+      group.style.display = "flex";
+      group.style.flexDirection = "column";
+      group.style.alignItems = "center";
+      group.style.gap = "10px";
+      group.style.width = "40px";
+      return group;
+    };
 
     const createToolItem = ({ icon, title, actionHandler = null }) => {
       const item = document.createElement("div");
@@ -554,18 +567,25 @@ export default class ProjectContextQuicklane {
       outputPopup.append(outputProtocols, outputPrint, outputMail);
     }
 
+    const navigationGroup = createToolGroup();
+    const visibilityGroup = createToolGroup();
+    const outputGroup = createToolGroup();
+
+    navigationGroup.append(pinBtn, projectSection, firmsSection);
+    visibilityGroup.append(ampelSection, longtextSection);
+    outputSection.appendChild(outputPopup);
+    outputGroup.append(previewSection, outputSection);
+
+    header.style.display = "none";
+
     body.append(
-      projectSection,
-      firmsSection,
+      navigationGroup,
+      visibilityGroup,
+      outputGroup,
       employeesSection,
-      previewSection,
-      ampelSection,
-      longtextSection,
-      filterSection,
-      outputSection
+      filterSection
     );
     wrap.append(tab, header, body);
-    document.body.appendChild(outputPopup);
     document.body.appendChild(filterPopup);
 
     tab.addEventListener("mouseenter", () => {
@@ -635,6 +655,9 @@ export default class ProjectContextQuicklane {
     this.filterSectionEl = filterSection;
     this.filterPopupEl = filterPopup;
     this.filterBadgeEl = filterBadge;
+    this.navigationGroupEl = navigationGroup;
+    this.visibilityGroupEl = visibilityGroup;
+    this.outputGroupEl = outputGroup;
 
     this._applyState();
     return wrap;
@@ -842,11 +865,14 @@ export default class ProjectContextQuicklane {
   _syncRestarbeitenUiEditorMarkers() {
     const markers = [
       [this.root, "restarbeiten.quicklane"],
+      [this.navigationGroupEl, "restarbeiten.quicklane.group.navigation"],
       [this.pinBtn, "restarbeiten.quicklane.pin"],
       [this.projectSectionEl, "restarbeiten.quicklane.action.project"],
       [this.firmsSectionEl, "restarbeiten.quicklane.action.firms"],
+      [this.visibilityGroupEl, "restarbeiten.quicklane.group.visibility"],
       [this.ampelSectionEl, "restarbeiten.quicklane.action.ampel"],
       [this.longtextSectionEl, "restarbeiten.quicklane.action.longtext"],
+      [this.outputGroupEl, "restarbeiten.quicklane.group.output"],
       [this.previewSectionEl, "restarbeiten.quicklane.action.pdfPreview"],
       [this.outputSectionEl, "restarbeiten.quicklane.action.output"],
       [this.outputPrintEl, "restarbeiten.quicklane.output.print"],

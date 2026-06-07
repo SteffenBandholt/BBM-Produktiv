@@ -108,6 +108,8 @@ const targetContract = readTargetFile("uiEditor/targetContract.js");
 });
 [
   "validateTargetContract",
+  "validateTargetSurfaceContracts",
+  "SURFACE_CONTRACT_FAILED",
   "ERROR_CODES",
   ["D", "OM_TARGET_MISSING"].join(""),
   "PARENT_ID_UNKNOWN",

@@ -35,6 +35,10 @@ function createFakeDocument() {
       remove() {
         this.parentElement?.removeChild?.(this);
       },
+      contains(candidate) {
+        if (candidate === this) return true;
+        return this.children.some((child) => typeof child?.contains === "function" && child.contains(candidate));
+      },
       replaceChildren(...nodes) {
         this.children = [];
         this.append(...nodes);
@@ -74,6 +78,13 @@ function createFakeDocument() {
           handler.call(this, { type: "click", preventDefault() {}, stopPropagation() {} });
         }
       },
+      dispatchEvent(event) {
+        const type = String(event?.type || "");
+        for (const handler of this._listeners?.[type] || []) {
+          handler.call(this, event);
+        }
+        return true;
+      },
       querySelector(selector) {
         const attributeMatch = String(selector || "").match(/^\[([A-Za-z_][A-Za-z0-9_.:-]*)="((?:\\.|[^"])*)"\]$/u);
         if (!attributeMatch) return null;
@@ -100,6 +111,23 @@ function createFakeDocument() {
     },
     createElementNS(_ns, tag) {
       return createNode(tag, doc);
+    },
+    addEventListener(type, handler) {
+      this._listeners ||= {};
+      this._listeners[type] ||= [];
+      this._listeners[type].push(handler);
+    },
+    removeEventListener(type, handler) {
+      const handlers = this._listeners?.[type];
+      if (!Array.isArray(handlers)) return;
+      this._listeners[type] = handlers.filter((entry) => entry !== handler);
+    },
+    dispatchEvent(event) {
+      const type = String(event?.type || "");
+      for (const handler of this._listeners?.[type] || []) {
+        handler.call(this, event);
+      }
+      return true;
     },
     body: null,
     head: null,
@@ -145,6 +173,33 @@ function nearestUiEditorParentId(node) {
     current = current.parentElement || null;
   }
   return null;
+}
+
+function collectRegistrySurfaceElements(elements, rootId) {
+  const byParent = new Map();
+  for (const element of elements) {
+    if (!element?.parentId) continue;
+    const list = byParent.get(element.parentId) || [];
+    list.push(element);
+    byParent.set(element.parentId, list);
+  }
+
+  const surface = [];
+  const pending = [rootId];
+  const visited = new Set();
+  while (pending.length > 0) {
+    const id = pending.shift();
+    if (visited.has(id)) continue;
+    visited.add(id);
+    const element = elements.find((entry) => entry.id === id);
+    if (element) {
+      surface.push(element.id === rootId ? { ...element, parentId: null } : element);
+    }
+    for (const child of byParent.get(id) || []) {
+      pending.push(child.id);
+    }
+  }
+  return surface;
 }
 
 function findByText(node, tagName, text) {
@@ -305,6 +360,48 @@ async function renderRouteScreen() {
     });
     await flush();
     return { root: contentRoot, pageTitle: router.context.ui.pageTitle, sidebarVisible: router._lastSidebarVisible };
+  } finally {
+    globalThis.document = prevDocument;
+    globalThis.window = prevWindow;
+  }
+}
+
+async function renderRestarbeitenQuicklane() {
+  const ProjectContextQuicklane = (await importEsmFromFile(
+    path.join(__dirname, "../../src/renderer/ui/ProjectContextQuicklane.js")
+  )).default;
+  const prevDocument = globalThis.document;
+  const prevWindow = globalThis.window;
+  const doc = createFakeDocument();
+  const win = {
+    addEventListener() {},
+    removeEventListener() {},
+    dispatchEvent() {},
+    setTimeout,
+    clearTimeout,
+  };
+  globalThis.document = doc;
+  globalThis.window = win;
+  try {
+    const router = {
+      activeSection: "restarbeiten",
+      activeView: {
+        showAmpelInList: true,
+        showLongtextInList: true,
+        async toggleAmpelDisplay() {},
+        async toggleLongtextDisplay() {},
+        async openRestarbeitenPreview() {},
+        async openRestarbeitenOutput() {},
+      },
+      context: { ui: {} },
+      openProjectFormModal() {},
+      showProjectFirms() {},
+    };
+    const lane = new ProjectContextQuicklane({ router });
+    lane.setEnabled(true);
+    lane.setContext({ projectId: "p-1", projectLabel: "P-1 - Test", projectNumber: "P-1", projectShort: "Test" });
+    await flush();
+    return { root: lane.root, doc, lane };
   } finally {
     globalThis.document = prevDocument;
     globalThis.window = prevWindow;
@@ -538,20 +635,83 @@ async function runRestarbeitenModuleTests(run) {
       Promise.resolve(require(path.join(__dirname, "../../uiEditor/targetContract.js"))),
     ]);
     const rendered = await renderRouteScreen();
+    const quicklane = await renderRestarbeitenQuicklane();
     const elements = uiEditor.getRestarbeitenUiEditorElements();
-    const contractElements = elements.map((element) => (
-      String(element.id || "").startsWith("restarbeiten.quicklane")
-        ? { ...element, virtual: true }
-        : element
-    ));
-    const result = targetContract.validateTargetContract({
-      elements: contractElements,
-      root: rendered.root,
+    const surfaces = [
+      {
+        surfaceId: "filterbar",
+        rootId: "restarbeiten.filterbar",
+        root: findByUiId(rendered.root, "restarbeiten.filterbar"),
+        elements: collectRegistrySurfaceElements(elements, "restarbeiten.filterbar"),
+      },
+      {
+        surfaceId: "main",
+        rootId: "restarbeiten.main",
+        root: findByUiId(rendered.root, "restarbeiten.main"),
+        elements: collectRegistrySurfaceElements(elements, "restarbeiten.main"),
+      },
+      {
+        surfaceId: "editbox",
+        rootId: "restarbeiten.editbox",
+        root: findByUiId(rendered.root, "restarbeiten.editbox"),
+        elements: collectRegistrySurfaceElements(elements, "restarbeiten.editbox"),
+      },
+      {
+        surfaceId: "quicklane",
+        rootId: "restarbeiten.quicklane",
+        root: quicklane.root,
+        elements: collectRegistrySurfaceElements(elements, "restarbeiten.quicklane"),
+      },
+    ];
+    const result = targetContract.validateTargetSurfaceContracts({
+      surfaces,
       targetAttributeName: "data-ui-editor-id",
       allowVirtualElements: true,
     });
 
-    assert.deepEqual(result, { ok: true, errors: [] });
+    assert.deepEqual(result, {
+      ok: true,
+      errors: [],
+      surfaceResults: surfaces.map((surface) => ({
+        surfaceId: surface.surfaceId,
+        rootId: surface.rootId,
+        ok: true,
+        errors: [],
+      })),
+    });
+  });
+
+  await run("Restarbeiten: Quicklane besitzt echte UI-Editor-Gruppen im DOM", async () => {
+    const uiEditor = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js")
+    );
+    const elements = uiEditor.getRestarbeitenUiEditorElements();
+    const byId = new Map(elements.map((element) => [element.id, element]));
+    const quicklane = await renderRestarbeitenQuicklane();
+    const expectedParents = new Map([
+      ["restarbeiten.quicklane.group.navigation", "restarbeiten.quicklane"],
+      ["restarbeiten.quicklane.pin", "restarbeiten.quicklane.group.navigation"],
+      ["restarbeiten.quicklane.action.project", "restarbeiten.quicklane.group.navigation"],
+      ["restarbeiten.quicklane.action.firms", "restarbeiten.quicklane.group.navigation"],
+      ["restarbeiten.quicklane.group.visibility", "restarbeiten.quicklane"],
+      ["restarbeiten.quicklane.action.ampel", "restarbeiten.quicklane.group.visibility"],
+      ["restarbeiten.quicklane.action.longtext", "restarbeiten.quicklane.group.visibility"],
+      ["restarbeiten.quicklane.group.output", "restarbeiten.quicklane"],
+      ["restarbeiten.quicklane.action.pdfPreview", "restarbeiten.quicklane.group.output"],
+      ["restarbeiten.quicklane.action.output", "restarbeiten.quicklane.group.output"],
+      ["restarbeiten.quicklane.output.print", "restarbeiten.quicklane.action.output"],
+      ["restarbeiten.quicklane.output.email", "restarbeiten.quicklane.action.output"],
+    ]);
+
+    assert.equal(quicklane.root.getAttribute("data-ui-editor-id"), "restarbeiten.quicklane");
+    for (const [targetId, parentId] of expectedParents) {
+      const element = byId.get(targetId);
+      const node = findByUiId(quicklane.root, targetId);
+      assert.equal(Boolean(element), true, `${targetId} registry`);
+      assert.equal(Boolean(node), true, `${targetId} dom`);
+      assert.equal(element.parentId, parentId, `${targetId} registry parent`);
+      assert.equal(nearestUiEditorParentId(node), parentId, `${targetId} dom parent`);
+    }
   });
 
   await run("Restarbeiten: Datenzugang bleibt importierbar", async () => {
@@ -1319,6 +1479,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(ids.has("restarbeiten.editbox.text.short.remaining"), true);
     assert.equal(ids.has("restarbeiten.editbox.text.long.remaining"), true);
     assert.equal(ids.has("restarbeiten.quicklane"), true);
+    assert.equal(ids.has("restarbeiten.quicklane.group.navigation"), true);
+    assert.equal(ids.has("restarbeiten.quicklane.group.visibility"), true);
+    assert.equal(ids.has("restarbeiten.quicklane.group.output"), true);
     assert.equal(ids.has("restarbeiten.editbox.validation.shortText"), true);
     assert.equal(ids.has("restarbeiten.editbox.meta.noteButton"), true);
 
@@ -1341,6 +1504,9 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(elements.find((element) => element.id === "restarbeiten.filterbar.action.close").parentId, "restarbeiten.filterbar.actions");
     assert.equal(elements.find((element) => element.id === "restarbeiten.record.ampel").parentId, "restarbeiten.record.metaColumn");
     assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.meta.ampel").parentId, "restarbeiten.editbox.meta");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.quicklane.pin").parentId, "restarbeiten.quicklane.group.navigation");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.quicklane.action.ampel").parentId, "restarbeiten.quicklane.group.visibility");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.quicklane.action.output").parentId, "restarbeiten.quicklane.group.output");
 
     for (const element of elements) {
       for (const field of ["id", "name", "type", "role", "parentId", "order", "visible", "editable", "allowedOps", "lockedOps"]) {
