@@ -22,6 +22,7 @@ const REQUIRED_FILES = Object.freeze([
   "uiEditor/uiEditorRegistry.js",
   "uiEditor/targetAppRegistry.js",
   "uiEditor/targetSelection.js",
+  "uiEditor/targetContract.js",
   "uiEditor/uiEditorLauncherButton.js",
   "uiEditor/uiEditorLauncherButton.css",
   "uiEditor/tests/uiEditorRegistry.test.cjs",
@@ -90,6 +91,7 @@ assertIncludesAll("uiEditor/INSTALLATION_STATUS.md", INSTALLATION_STATUS_REQUIRE
 assertIncludesAll("uiEditor/uiEditorRules.md", UI_EDITOR_RULE_REQUIREMENTS);
 
 const targetSelection = readTargetFile("uiEditor/targetSelection.js");
+const targetContract = readTargetFile("uiEditor/targetContract.js");
 [
   "createTargetSelectionController",
   "createTargetSelectionPanelController",
@@ -105,6 +107,19 @@ const targetSelection = readTargetFile("uiEditor/targetSelection.js");
   assert.equal(targetSelection.includes(fragment), true, "targetSelection enthaelt nicht: " + fragment);
 });
 [
+  "validateTargetContract",
+  "ERROR_CODES",
+  ["D", "OM_TARGET_MISSING"].join(""),
+  "PARENT_ID_UNKNOWN",
+  ["D", "OM_PARENT_MISMATCH"].join(""),
+  ["GROUP_WITHOUT_D", "OM_WRAPPER"].join(""),
+  "FIELD_NOT_INSIDE_GROUP",
+  "uiEditorTargetContractArtifact",
+  "data-ui-editor-id",
+].forEach((fragment) => {
+  assert.equal(targetContract.includes(fragment), true, "targetContract enthaelt nicht: " + fragment);
+});
+[
   ["query", "SelectorAll"].join(""),
   ["local", "Storage"].join(""),
   ["session", "Storage"].join(""),
@@ -118,6 +133,7 @@ const targetSelection = readTargetFile("uiEditor/targetSelection.js");
   ["Proto", "koll"].join(""),
 ].forEach((fragment) => {
   assert.equal(targetSelection.includes(fragment), false, "targetSelection enthaelt verbotenen Text: " + fragment);
+  assert.equal(targetContract.includes(fragment), false, "targetContract enthaelt verbotenen Text: " + fragment);
 });
 
 console.log("TESTS OK: uiEditorInstallation");

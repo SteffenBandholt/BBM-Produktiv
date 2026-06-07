@@ -74,6 +74,13 @@ function createFakeDocument() {
           handler.call(this, { type: "click", preventDefault() {}, stopPropagation() {} });
         }
       },
+      querySelector(selector) {
+        const attributeMatch = String(selector || "").match(/^\[([A-Za-z_][A-Za-z0-9_.:-]*)="((?:\\.|[^"])*)"\]$/u);
+        if (!attributeMatch) return null;
+        const attributeName = attributeMatch[1];
+        const attributeValue = attributeMatch[2].replace(/\\"/gu, '"').replace(/\\\\/gu, "\\");
+        return findNodes(this, (entry) => entry.getAttribute?.(attributeName) === attributeValue)[0] || null;
+      },
     };
     Object.defineProperty(node, "innerHTML", {
       get() {
@@ -99,6 +106,7 @@ function createFakeDocument() {
   };
   doc.body = createNode("body", doc);
   doc.head = createNode("head", doc);
+  doc.querySelector = (...args) => doc.body.querySelector(...args);
   return doc;
 }
 
@@ -522,6 +530,28 @@ async function runRestarbeitenModuleTests(run) {
     assert.notEqual(nearestUiEditorParentId(findByUiId(rendered.root, "restarbeiten.filterbar.action.close")), "restarbeiten.filterbar.group.meta");
     assert.notEqual(nearestUiEditorParentId(findByUiId(rendered.root, "restarbeiten.filterbar.action.close")), "restarbeiten.filterbar.group.class");
     assert.equal(findByUiId(rendered.root, "restarbeiten.main.records").children.some((child) => child === findByUiId(rendered.root, "restarbeiten.main.tableHeader")), false);
+  });
+
+  await run("Restarbeiten: generischer UI-Editor-Target-Contract ist erfuellt", async () => {
+    const [uiEditor, targetContract] = await Promise.all([
+      importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js")),
+      Promise.resolve(require(path.join(__dirname, "../../uiEditor/targetContract.js"))),
+    ]);
+    const rendered = await renderRouteScreen();
+    const elements = uiEditor.getRestarbeitenUiEditorElements();
+    const contractElements = elements.map((element) => (
+      String(element.id || "").startsWith("restarbeiten.quicklane")
+        ? { ...element, virtual: true }
+        : element
+    ));
+    const result = targetContract.validateTargetContract({
+      elements: contractElements,
+      root: rendered.root,
+      targetAttributeName: "data-ui-editor-id",
+      allowVirtualElements: true,
+    });
+
+    assert.deepEqual(result, { ok: true, errors: [] });
   });
 
   await run("Restarbeiten: Datenzugang bleibt importierbar", async () => {
