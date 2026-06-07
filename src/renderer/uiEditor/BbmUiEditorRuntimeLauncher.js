@@ -8,10 +8,13 @@ const LAUNCHER_HOST_ATTRIBUTE = "data-ui-editor-launcher-host";
 const LAUNCHER_CSS_ATTRIBUTE = "data-ui-editor-launcher-css";
 const LAUNCHER_STATUS_ATTRIBUTE = "data-ui-editor-launcher-status";
 const UI_EDITOR_ACTIVE_ATTRIBUTE = "data-ui-editor-active";
+const UI_EDITOR_SELECTED_ATTRIBUTE = "data-ui-editor-selected";
 
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
 let launcherStatusNode = null;
+let launcherDocumentClickHandler = null;
+let launcherDocumentClickDocument = null;
 
 function getDocument(explicitDocument = null) {
   return explicitDocument || (typeof document === "object" ? document : null);
@@ -107,6 +110,9 @@ function createLauncherState({ activeUiScope = null, registeredElements = null, 
     uiEditorLauncherActive: false,
     activeUiScope: normalizedScope,
     selectedRegistry,
+    selectedElement: null,
+    selectedTargetNode: null,
+    selectedTargetPreviousStyle: null,
     availableUiScopes: normalizeAvailableUiScopes(availableUiScopes),
     registryResolver: resolver,
   };
@@ -162,7 +168,28 @@ function removeExistingLauncherStatus(doc = getDocument()) {
   launcherStatusNode = null;
 }
 
+function clearUiEditorTargetSelection(state = {}) {
+  const target = state.selectedTargetNode || null;
+  if (target?.setAttribute) {
+    target.setAttribute(UI_EDITOR_SELECTED_ATTRIBUTE, "false");
+    target.style.outline = state.selectedTargetPreviousStyle?.outline || "";
+    target.style.boxShadow = state.selectedTargetPreviousStyle?.boxShadow || "";
+  }
+  state.selectedTargetNode = null;
+  state.selectedElement = null;
+  state.selectedTargetPreviousStyle = null;
+}
+
+function removeLauncherDocumentClickHandler() {
+  if (launcherDocumentClickDocument?.removeEventListener && launcherDocumentClickHandler) {
+    launcherDocumentClickDocument.removeEventListener("click", launcherDocumentClickHandler, true);
+  }
+  launcherDocumentClickDocument = null;
+  launcherDocumentClickHandler = null;
+}
+
 function removeExistingLauncher(doc = getDocument()) {
+  removeLauncherDocumentClickHandler();
   removeNode(launcherHostNode);
   launcherHostNode = null;
   removeExistingLauncherStatus(doc);
@@ -243,6 +270,7 @@ function getSelectedRegistryFromState(state = {}) {
 function getReadonlyLauncherStatusText(state = {}) {
   const registry = getSelectedRegistryFromState(state);
   const scopes = normalizeAvailableUiScopes(state.availableUiScopes);
+  const selectedElement = state.selectedElement || null;
   if (scopes.length < 1 && !registry.moduleId && registry.elements.length < 1) {
     return getLauncherStatusText({ activeUiScope: state.activeUiScope, registeredElements: [] });
   }
@@ -254,6 +282,8 @@ function getReadonlyLauncherStatusText(state = {}) {
     `Modul: ${registry.moduleId || "nicht verfuegbar"}`,
     `Elemente: ${registry.elements.length}`,
     registry.ok === false && registry.reason ? `Hinweis: ${registry.reason}` : "",
+    selectedElement ? `Auswahl: ${selectedElement.id}` : "Auswahl: keine",
+    selectedElement ? `Name: ${selectedElement.name || selectedElement.label || ""}` : "",
     "",
     getReadonlyRegistryElementsText(registry.elements),
   ].filter((line) => line !== "").join("\n");
@@ -287,6 +317,7 @@ function updateLauncherStatusHint(doc, host, state = {}) {
 
 function setActiveScopeInState(state, nextScope) {
   const normalizedScope = String(nextScope == null ? "" : nextScope).trim();
+  clearUiEditorTargetSelection(state);
   state.activeUiScope = normalizedScope;
   state.selectedRegistry = state.registryResolver
     ? normalizeReadonlyRegistry(state.registryResolver(normalizedScope))
@@ -331,8 +362,56 @@ function syncLauncherButtonState(button, state, { doc = getDocument(), host = nu
     const status = updateLauncherStatusHint(doc, host || button.parentElement, state);
     renderReadonlyScopeButtons(doc, status, state);
   } else {
+    clearUiEditorTargetSelection(state);
     removeExistingLauncherStatus(doc);
   }
+}
+
+function findClickedUiEditorTarget(event) {
+  const target = event?.target || null;
+  return typeof target?.closest === "function" ? target.closest("[data-ui-editor-id]") : null;
+}
+
+function getRegisteredElementById(state = {}, uiEditorId = "") {
+  const normalizedId = String(uiEditorId || "").trim();
+  if (!normalizedId) return null;
+  const registry = getSelectedRegistryFromState(state);
+  return registry.elements.find((element) => element.id === normalizedId) || null;
+}
+
+function markUiEditorTargetSelection(state, targetNode, registryElement) {
+  clearUiEditorTargetSelection(state);
+  state.selectedTargetNode = targetNode;
+  state.selectedElement = registryElement;
+  state.selectedTargetPreviousStyle = {
+    outline: targetNode.style.outline || "",
+    boxShadow: targetNode.style.boxShadow || "",
+  };
+  targetNode.setAttribute(UI_EDITOR_SELECTED_ATTRIBUTE, "true");
+  targetNode.style.outline = "2px solid #2563eb";
+  targetNode.style.boxShadow = "0 0 0 4px rgb(37 99 235 / 18%)";
+}
+
+function handleUiEditorDocumentClick(event, { state, doc, host }) {
+  if (!state?.uiEditorLauncherActive) return;
+  const targetNode = findClickedUiEditorTarget(event);
+  const uiEditorId = String(targetNode?.getAttribute?.("data-ui-editor-id") || "").trim();
+  const registryElement = getRegisteredElementById(state, uiEditorId);
+  if (!targetNode || !registryElement) return;
+
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+  markUiEditorTargetSelection(state, targetNode, registryElement);
+  const status = updateLauncherStatusHint(doc, host, state);
+  renderReadonlyScopeButtons(doc, status, state);
+}
+
+function installLauncherDocumentClickHandler(doc, host, state) {
+  removeLauncherDocumentClickHandler();
+  if (!doc?.addEventListener) return;
+  launcherDocumentClickHandler = (event) => handleUiEditorDocumentClick(event, { state, doc, host });
+  launcherDocumentClickDocument = doc;
+  doc.addEventListener("click", launcherDocumentClickHandler, true);
 }
 
 function renderLauncherButton({ artifact, doc, host, state, onToggle = null }) {
@@ -369,6 +448,7 @@ function renderLauncherButton({ artifact, doc, host, state, onToggle = null }) {
   });
 
   host.appendChild(button);
+  installLauncherDocumentClickHandler(doc, host, state);
   launcherHostNode = button;
   return button;
 }
@@ -420,5 +500,8 @@ export {
   normalizeReadonlyRegisteredElements,
   normalizeAvailableUiScopes,
   ensureLauncherStatusHint,
+  findClickedUiEditorTarget,
+  getRegisteredElementById,
+  handleUiEditorDocumentClick,
   renderLauncherButton,
 };

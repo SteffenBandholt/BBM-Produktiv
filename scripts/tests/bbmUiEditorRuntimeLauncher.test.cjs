@@ -63,9 +63,22 @@ function createFakeDocument() {
         listeners[type] ||= [];
         listeners[type].push(handler);
       },
+      removeEventListener(type, handler) {
+        if (!listeners[type]) return;
+        listeners[type] = listeners[type].filter((entry) => entry !== handler);
+      },
+      closest(selector) {
+        let current = this;
+        while (current) {
+          if (matchesSelector(current, selector)) return current;
+          current = current.parentElement || current.parentNode || null;
+        }
+        return null;
+      },
       click() {
         const event = {
           type: "click",
+          target: this,
           preventDefault() {
             this.defaultPrevented = true;
           },
@@ -89,9 +102,24 @@ function createFakeDocument() {
     return node;
   };
 
+  const documentListeners = {};
   const doc = {
     createElement(tag) {
       return createNode(tag, doc);
+    },
+    addEventListener(type, handler) {
+      documentListeners[type] ||= [];
+      documentListeners[type].push(handler);
+    },
+    removeEventListener(type, handler) {
+      if (!documentListeners[type]) return;
+      documentListeners[type] = documentListeners[type].filter((entry) => entry !== handler);
+    },
+    dispatchEvent(event) {
+      const normalizedEvent = event || {};
+      const type = String(normalizedEvent.type || "");
+      for (const handler of documentListeners[type] || []) handler.call(this, normalizedEvent);
+      return !normalizedEvent.defaultPrevented;
     },
     querySelector(selector) {
       return this.documentElement.querySelector(selector);
@@ -163,6 +191,9 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-scope-list=\"true\"]") {
     return node.getAttribute("data-ui-editor-scope-list") === "true";
+  }
+  if (raw === "[data-ui-editor-id]") {
+    return Boolean(node.getAttribute("data-ui-editor-id"));
   }
   const scopeOptionMatch = raw.match(/^\[data-ui-editor-scope-option="([^"]+)"\]$/);
   if (scopeOptionMatch) {
@@ -441,11 +472,166 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-hover-frame="true"]')), false);
   });
 
+  await run("BBM UI-Editor-Runtime: Klick auf registrierte Restarbeiten-ID waehlt und markiert Ziel", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "restarbeiten.screen",
+      moduleId: "restarbeiten",
+      elements: [
+        { id: "restarbeiten.filterbar", name: "Filterleiste", type: "toolbar", role: "layout", parentId: "restarbeiten.root", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.filterbar.class.defect", name: "Mangel", type: "button", role: "visibility", parentId: "restarbeiten.filterbar", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.record.shortText", name: "Kurztext", type: "label", role: "content", parentId: "restarbeiten.record.contentColumn", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.record.longText", name: "Langtext", type: "label", role: "content", parentId: "restarbeiten.record.contentColumn", allowedOps: ["inspect"], lockedOps: [] },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => registry,
+    });
+    const target = doc.createElement("button");
+    target.setAttribute("data-ui-editor-id", "restarbeiten.filterbar.class.defect");
+    const nextTarget = doc.createElement("div");
+    nextTarget.setAttribute("data-ui-editor-id", "restarbeiten.record.longText");
+    doc.body.appendChild(target);
+    doc.body.appendChild(nextTarget);
+
+    button.click();
+    doc.dispatchEvent({
+      type: "click",
+      target,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+      stopPropagation() {
+        this.stopped = true;
+      },
+    });
+
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(activeStatus.textContent.includes("Auswahl: restarbeiten.filterbar.class.defect"), true);
+    assert.equal(activeStatus.textContent.includes("Name: Mangel"), true);
+    assert.equal(target.getAttribute("data-ui-editor-selected"), "true");
+    assert.equal(target.style.outline.includes("#2563eb"), true);
+
+    doc.dispatchEvent({ type: "click", target: nextTarget });
+    assert.equal(target.getAttribute("data-ui-editor-selected"), "false");
+    assert.equal(target.style.outline, "");
+    assert.equal(nextTarget.getAttribute("data-ui-editor-selected"), "true");
+    assert.equal(activeStatus.textContent.includes("Auswahl: restarbeiten.record.longText"), true);
+    assert.equal(activeStatus.textContent.includes("Name: Langtext"), true);
+  });
+
+  await run("BBM UI-Editor-Runtime: Klick auf Child findet naechsten data-ui-editor-id-Parent", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => ({
+        uiScope: "restarbeiten.screen",
+        moduleId: "restarbeiten",
+        elements: [{ id: "restarbeiten.record.shortText", name: "Kurztext", type: "label", role: "content", parentId: "restarbeiten.record", allowedOps: ["inspect"], lockedOps: [] }],
+      }),
+    });
+    const parent = doc.createElement("div");
+    parent.setAttribute("data-ui-editor-id", "restarbeiten.record.shortText");
+    const child = doc.createElement("span");
+    parent.appendChild(child);
+    doc.body.appendChild(parent);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target: child });
+
+    assert.equal(parent.getAttribute("data-ui-editor-selected"), "true");
+    assert.equal(child.getAttribute("data-ui-editor-selected"), null);
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(activeStatus.textContent.includes("Auswahl: restarbeiten.record.shortText"), true);
+  });
+
+  await run("BBM UI-Editor-Runtime: unbekannte oder fehlende data-ui-editor-id wird ignoriert", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => ({
+        uiScope: "restarbeiten.screen",
+        moduleId: "restarbeiten",
+        elements: [{ id: "restarbeiten.filterbar", name: "Filterleiste", type: "toolbar", role: "layout", parentId: "restarbeiten.root", allowedOps: ["inspect"], lockedOps: [] }],
+      }),
+    });
+    const unknown = doc.createElement("div");
+    unknown.setAttribute("data-ui-editor-id", "restarbeiten.unknown");
+    const withoutId = doc.createElement("div");
+    doc.body.append(unknown, withoutId);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target: unknown });
+    doc.dispatchEvent({ type: "click", target: withoutId });
+
+    assert.equal(unknown.getAttribute("data-ui-editor-selected"), null);
+    assert.equal(withoutId.getAttribute("data-ui-editor-selected"), null);
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(activeStatus.textContent.includes("Auswahl: keine"), true);
+    assert.equal(activeStatus.textContent.includes("restarbeiten.unknown"), false);
+  });
+
+  await run("BBM UI-Editor-Runtime: Klickauswahl bleibt auf aktuellen TOPS-Scope begrenzt", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "protokoll.topsScreen",
+      registryResolver: () => ({
+        uiScope: "protokoll.topsScreen",
+        moduleId: "protokoll",
+        elements: [{ id: "protokoll.root", name: "Protokoll", type: "root", role: "layout", parentId: null, allowedOps: ["inspect"], lockedOps: [] }],
+      }),
+    });
+    const protokollTarget = doc.createElement("section");
+    protokollTarget.setAttribute("data-ui-editor-id", "protokoll.root");
+    const restarbeitenTarget = doc.createElement("section");
+    restarbeitenTarget.setAttribute("data-ui-editor-id", "restarbeiten.filterbar");
+    doc.body.append(protokollTarget, restarbeitenTarget);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target: restarbeitenTarget });
+    assert.equal(restarbeitenTarget.getAttribute("data-ui-editor-selected"), null);
+
+    doc.dispatchEvent({ type: "click", target: protokollTarget });
+    assert.equal(protokollTarget.getAttribute("data-ui-editor-selected"), "true");
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(activeStatus.textContent.includes("Auswahl: protokoll.root"), true);
+    assert.equal(activeStatus.textContent.includes("Name: Protokoll"), true);
+  });
+
   await run("BBM UI-Editor-Runtime: bleibt ohne Scan, Speicherung und Ziel-App-Aktion", async () => {
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
     const coreShellSource = fs.readFileSync(CORE_SHELL_PATH, "utf8");
     assert.equal(source.includes("scanUiInspectorTargets"), false);
-    assert.equal(source.includes("querySelector"), false);
+    assert.equal(source.includes("querySelectorAll"), false);
     assert.equal(source.includes("DOMParser"), false);
     assert.equal(source.includes("innerHTML"), false);
     assert.equal(source.includes("scan"), false);

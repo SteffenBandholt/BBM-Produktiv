@@ -21,6 +21,7 @@ const REQUIRED_FILES = Object.freeze([
   "uiEditor/INSTALLATION_STATUS.md",
   "uiEditor/uiEditorRegistry.js",
   "uiEditor/targetAppRegistry.js",
+  "uiEditor/targetSelection.js",
   "uiEditor/uiEditorLauncherButton.js",
   "uiEditor/uiEditorLauncherButton.css",
   "uiEditor/tests/uiEditorRegistry.test.cjs",
@@ -87,5 +88,31 @@ REQUIRED_FILES.forEach(assertFileExists);
 assertAgentsMarkers();
 assertIncludesAll("uiEditor/INSTALLATION_STATUS.md", INSTALLATION_STATUS_REQUIREMENTS);
 assertIncludesAll("uiEditor/uiEditorRules.md", UI_EDITOR_RULE_REQUIREMENTS);
+
+const targetSelection = readTargetFile("uiEditor/targetSelection.js");
+[
+  "createTargetSelectionController",
+  "DEFAULT_TARGET_ATTRIBUTE_NAME",
+  "SELECTED_TARGET_ATTRIBUTE_NAME",
+  "data-ui-editor-id",
+  "closest",
+].forEach((fragment) => {
+  assert.equal(targetSelection.includes(fragment), true, "targetSelection enthaelt nicht: " + fragment);
+});
+[
+  ["query", "SelectorAll"].join(""),
+  ["local", "Storage"].join(""),
+  ["session", "Storage"].join(""),
+  "ipc",
+  "preload",
+  "sqlite",
+  "postgres",
+  "mysql",
+  ["B", "BM"].join(""),
+  ["Rest", "arbeiten"].join(""),
+  ["Proto", "koll"].join(""),
+].forEach((fragment) => {
+  assert.equal(targetSelection.includes(fragment), false, "targetSelection enthaelt verbotenen Text: " + fragment);
+});
 
 console.log("TESTS OK: uiEditorInstallation");
