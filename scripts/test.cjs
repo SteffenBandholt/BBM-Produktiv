@@ -33,6 +33,7 @@ const { runRestarbeitenEditorHostAdapterTests } = require("./tests/restarbeitenE
 const { runRestarbeitenEditorRegistryDomAnchorsTests } = require("./tests/restarbeitenEditorRegistry.domAnchors.test.cjs");
 const { runEditorScopeInspectorTests } = require("./tests/editorScopeInspector.test.cjs");
 const { runEditorBoundarySafetyTests } = require("./tests/editorBoundary.safety.test.cjs");
+const { runEditorAltVersucheBoundaryTests } = require("./tests/editorAltVersucheBoundary.test.cjs");
 const { runEditorV2RegistryTests } = require("./tests/editorV2Registry.test.cjs");
 const { runEditorV2HoverTests } = require("./tests/editorV2Hover.test.cjs");
 const { runEditorV2SelectionTests } = require("./tests/editorV2Selection.test.cjs");
@@ -158,6 +159,7 @@ async function main() {
   await runRestarbeitenEditorRegistryDomAnchorsTests(run);
   await runEditorScopeInspectorTests(run);
   await runEditorBoundarySafetyTests(run);
+  await runEditorAltVersucheBoundaryTests(run);
   await runEditorV2RegistryTests(run);
   await runEditorV2HoverTests(run);
   await runEditorV2SelectionTests(run);
