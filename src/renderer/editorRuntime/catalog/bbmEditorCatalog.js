@@ -1,4 +1,5 @@
 import { EDITOR_SCOPE_KINDS, isEditorScopeKind } from "../scopes/editorScopeTypes.js";
+import { getRestarbeitenMainUiRegistry, RESTARBEITEN_MAIN_UI_SCOPE_ID } from "../../modules/restarbeiten/editor/restarbeitenEditorScopes.js";
 
 export const BBM_EDITOR_CATALOG = Object.freeze({
   targetAppId: "bbm",
@@ -8,11 +9,11 @@ export const BBM_EDITOR_CATALOG = Object.freeze({
       moduleLabel: "Restarbeiten",
       scopes: Object.freeze([
         Object.freeze({
-          scopeId: "restarbeiten.ui.main",
+          scopeId: RESTARBEITEN_MAIN_UI_SCOPE_ID,
           scopeLabel: "Restarbeiten Hauptansicht",
           kind: "ui",
-          registry: Object.freeze([]),
-          status: "planned",
+          registry: getRestarbeitenMainUiRegistry(),
+          status: "ready",
         }),
       ]),
     }),

@@ -3,6 +3,10 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const CATALOG_PATH = path.join(__dirname, "../../src/renderer/editorRuntime/catalog/bbmEditorCatalog.js");
+const RESTARBEITEN_SCOPE_PATH = path.join(
+  __dirname,
+  "../../src/renderer/modules/restarbeiten/editor/restarbeitenEditorScopes.js"
+);
 const SCOPE_TYPES_PATH = path.join(__dirname, "../../src/renderer/editorRuntime/scopes/editorScopeTypes.js");
 const REGISTRY_MODEL_PATH = path.join(__dirname, "../../src/renderer/editorRuntime/registry/editorRegistryModel.js");
 const REGISTRY_VALIDATOR_PATH = path.join(
@@ -15,9 +19,10 @@ const HOST_CONTRACT_PATH = path.join(
 );
 
 async function runEditorRuntimeCatalogTests(run) {
-  const [{ BBM_EDITOR_CATALOG, listEditorModules, listEditorScopes, findEditorScope }, scopeTypes, registryModel, validator, hostContract] =
+  const [{ BBM_EDITOR_CATALOG, listEditorModules, findEditorScope }, scopeModule, scopeTypes, registryModel, validator, hostContract] =
     await Promise.all([
       importEsmFromFile(CATALOG_PATH),
+      importEsmFromFile(RESTARBEITEN_SCOPE_PATH),
       importEsmFromFile(SCOPE_TYPES_PATH),
       importEsmFromFile(REGISTRY_MODEL_PATH),
       importEsmFromFile(REGISTRY_VALIDATOR_PATH),
@@ -41,14 +46,19 @@ async function runEditorRuntimeCatalogTests(run) {
     assert.ok(scope);
     assert.equal(scope.scopeId, "restarbeiten.ui.main");
     assert.equal(scope.kind, "ui");
-    assert.equal(scope.status, "planned");
+    assert.equal(scope.status, "ready");
+    assert.equal(Array.isArray(scope.registry), true);
+    assert.ok(scope.registry.length > 0);
   });
 
-  await run("EditorRuntime: leere Registry ist fuer planned-Scope erlaubt", () => {
-    const scope = listEditorScopes().find((entry) => entry.scopeId === "restarbeiten.ui.main");
+  await run("EditorRuntime: Restarbeiten-Scope-Helfer liefert den Ready-Scope", () => {
+    const scopes = scopeModule.getRestarbeitenEditorScopes();
+    const scope = scopes.find((entry) => entry.scopeId === scopeModule.RESTARBEITEN_MAIN_UI_SCOPE_ID);
     assert.ok(scope);
+    assert.equal(scope.status, "ready");
+    assert.equal(scope.moduleId, "restarbeiten");
     assert.equal(Array.isArray(scope.registry), true);
-    assert.equal(scope.registry.length, 0);
+    assert.ok(scope.registry.length > 0);
   });
 
   await run("EditorRuntime: Scope-Typen sind fachneutral", () => {
