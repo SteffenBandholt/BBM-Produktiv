@@ -165,6 +165,10 @@ function findByUiId(node, uiId) {
   return findNodes(node, (entry) => entry.getAttribute?.("data-ui-editor-id") === uiId)[0] || null;
 }
 
+function findQuicklaneIcon(node) {
+  return findNodes(node, (entry) => entry.getAttribute?.("data-bbm-quicklane-icon") === "true")[0] || null;
+}
+
 function nearestUiEditorParentId(node) {
   let current = node?.parentElement || null;
   while (current) {
@@ -327,8 +331,8 @@ function buildBbmDbStub() {
   };
 }
 
-async function renderRouteScreen() {
-  const Router = (await importEsmFromFile(path.join(__dirname, "../../src/renderer/app/Router.js"))).default;
+async function renderRouteScreen({ keepGlobals = false } = {}) {
+  const Router = await importEsmFromFile(path.join(__dirname, "../../src/renderer/app/Router.js")).then((mod) => mod.default);
   const prevDocument = globalThis.document;
   const prevWindow = globalThis.window;
   const doc = createFakeDocument();
@@ -351,7 +355,6 @@ async function renderRouteScreen() {
   try {
     const router = new Router({ contentRoot });
     router._ensureProjectContextQuicklane = async () => null;
-    router._syncProjectContextUi = async () => {};
     router._setSidebarVisibility = (visible) => {
       router._lastSidebarVisible = visible;
     };
@@ -359,52 +362,23 @@ async function renderRouteScreen() {
       project: { id: "p-1", project_number: "P-1", short: "Test" },
     });
     await flush();
-    return { root: contentRoot, pageTitle: router.context.ui.pageTitle, sidebarVisible: router._lastSidebarVisible };
-  } finally {
-    globalThis.document = prevDocument;
-    globalThis.window = prevWindow;
-  }
-}
-
-async function renderRestarbeitenQuicklane() {
-  const ProjectContextQuicklane = (await importEsmFromFile(
-    path.join(__dirname, "../../src/renderer/ui/ProjectContextQuicklane.js")
-  )).default;
-  const prevDocument = globalThis.document;
-  const prevWindow = globalThis.window;
-  const doc = createFakeDocument();
-  const win = {
-    addEventListener() {},
-    removeEventListener() {},
-    dispatchEvent() {},
-    setTimeout,
-    clearTimeout,
-  };
-  globalThis.document = doc;
-  globalThis.window = win;
-  try {
-    const router = {
-      activeSection: "restarbeiten",
-      activeView: {
-        showAmpelInList: true,
-        showLongtextInList: true,
-        async toggleAmpelDisplay() {},
-        async toggleLongtextDisplay() {},
-        async openRestarbeitenPreview() {},
-        async openRestarbeitenOutput() {},
-      },
-      context: { ui: {} },
-      openProjectFormModal() {},
-      showProjectFirms() {},
-    };
-    const lane = new ProjectContextQuicklane({ router });
-    lane.setEnabled(true);
-    lane.setContext({ projectId: "p-1", projectLabel: "P-1 - Test", projectNumber: "P-1", projectShort: "Test" });
     await flush();
-    return { root: lane.root, doc, lane };
+    return {
+      root: contentRoot,
+      doc,
+      quicklaneRoot: findByUiId(contentRoot, "restarbeiten.quicklane"),
+      pageTitle: router.context.ui.pageTitle,
+      sidebarVisible: router._lastSidebarVisible,
+      restoreGlobals() {
+        globalThis.document = prevDocument;
+        globalThis.window = prevWindow;
+      },
+    };
   } finally {
-    globalThis.document = prevDocument;
-    globalThis.window = prevWindow;
+    if (!keepGlobals) {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
   }
 }
 
@@ -635,7 +609,6 @@ async function runRestarbeitenModuleTests(run) {
       Promise.resolve(require(path.join(__dirname, "../../uiEditor/targetContract.js"))),
     ]);
     const rendered = await renderRouteScreen();
-    const quicklane = await renderRestarbeitenQuicklane();
     const elements = uiEditor.getRestarbeitenUiEditorElements();
     const surfaces = [
       {
@@ -659,7 +632,7 @@ async function runRestarbeitenModuleTests(run) {
       {
         surfaceId: "quicklane",
         rootId: "restarbeiten.quicklane",
-        root: quicklane.root,
+        root: rendered.quicklaneRoot,
         elements: collectRegistrySurfaceElements(elements, "restarbeiten.quicklane"),
       },
     ];
@@ -687,7 +660,8 @@ async function runRestarbeitenModuleTests(run) {
     );
     const elements = uiEditor.getRestarbeitenUiEditorElements();
     const byId = new Map(elements.map((element) => [element.id, element]));
-    const quicklane = await renderRestarbeitenQuicklane();
+    const rendered = await renderRouteScreen({ keepGlobals: true });
+    const quicklaneRoot = rendered.quicklaneRoot;
     const expectedParents = new Map([
       ["restarbeiten.quicklane.group.navigation", "restarbeiten.quicklane"],
       ["restarbeiten.quicklane.pin", "restarbeiten.quicklane.group.navigation"],
@@ -698,20 +672,122 @@ async function runRestarbeitenModuleTests(run) {
       ["restarbeiten.quicklane.action.longtext", "restarbeiten.quicklane.group.visibility"],
       ["restarbeiten.quicklane.group.output", "restarbeiten.quicklane"],
       ["restarbeiten.quicklane.action.pdfPreview", "restarbeiten.quicklane.group.output"],
-      ["restarbeiten.quicklane.action.output", "restarbeiten.quicklane.group.output"],
-      ["restarbeiten.quicklane.output.print", "restarbeiten.quicklane.action.output"],
-      ["restarbeiten.quicklane.output.email", "restarbeiten.quicklane.action.output"],
+      ["restarbeiten.quicklane.output.print", "restarbeiten.quicklane.group.output"],
+      ["restarbeiten.quicklane.output.email", "restarbeiten.quicklane.group.output"],
     ]);
 
-    assert.equal(quicklane.root.getAttribute("data-ui-editor-id"), "restarbeiten.quicklane");
+    assert.equal(Boolean(quicklaneRoot), true, "quicklane root");
+    assert.equal(quicklaneRoot.getAttribute("data-ui-editor-id"), "restarbeiten.quicklane");
+    assert.equal(quicklaneRoot.className, "bbm-restarbeiten-quicklane");
+    assert.notEqual(quicklaneRoot.style.display, "none");
+    assert.notEqual(quicklaneRoot.hidden, true);
+    assert.equal(quicklaneRoot.dataset.open, "false");
+    assert.equal(quicklaneRoot.dataset.pinned, "false");
+    assert.equal(findByUiId(rendered.root, "restarbeiten.root").contains(quicklaneRoot), true);
+    quicklaneRoot.dispatchEvent({ type: "mouseenter" });
+    assert.equal(quicklaneRoot.dataset.open, "true");
+    quicklaneRoot.dispatchEvent({ type: "mouseleave" });
+    assert.equal(quicklaneRoot.dataset.open, "false");
     for (const [targetId, parentId] of expectedParents) {
       const element = byId.get(targetId);
-      const node = findByUiId(quicklane.root, targetId);
+      const node = findByUiId(quicklaneRoot, targetId);
       assert.equal(Boolean(element), true, `${targetId} registry`);
       assert.equal(Boolean(node), true, `${targetId} dom`);
       assert.equal(element.parentId, parentId, `${targetId} registry parent`);
       assert.equal(nearestUiEditorParentId(node), parentId, `${targetId} dom parent`);
     }
+
+    const navigationGroup = findByUiId(quicklaneRoot, "restarbeiten.quicklane.group.navigation");
+    const visibilityGroup = findByUiId(quicklaneRoot, "restarbeiten.quicklane.group.visibility");
+    const outputGroup = findByUiId(quicklaneRoot, "restarbeiten.quicklane.group.output");
+    const directIds = (node) => node.children.map((child) => child.getAttribute?.("data-ui-editor-id")).filter(Boolean);
+    assert.deepEqual(directIds(navigationGroup), [
+      "restarbeiten.quicklane.pin",
+      "restarbeiten.quicklane.action.project",
+      "restarbeiten.quicklane.action.firms",
+    ]);
+    assert.deepEqual(directIds(visibilityGroup), [
+      "restarbeiten.quicklane.action.ampel",
+      "restarbeiten.quicklane.action.longtext",
+    ]);
+    assert.deepEqual(directIds(outputGroup), [
+      "restarbeiten.quicklane.action.pdfPreview",
+      "restarbeiten.quicklane.output.print",
+      "restarbeiten.quicklane.output.email",
+    ]);
+    const quicklaneText = collectText(quicklaneRoot);
+    for (const label of ["\u{1f4c1}", "\u{1f3e2}", "\u{1f4c4}", "\u{1f5a8}", "\u2709"]) {
+      assert.equal(quicklaneText.includes(label), true, `quicklane ${label}`);
+    }
+    for (const label of ["PIN", "PRJ", "FIR", "DRK", "MAIL"]) {
+      assert.equal(quicklaneText.includes(label), false, `quicklane ohne ${label}`);
+    }
+    const pinButton = findByUiId(quicklaneRoot, "restarbeiten.quicklane.pin");
+    const pinIconOpen = findQuicklaneIcon(pinButton);
+    assert.equal(Boolean(pinIconOpen), true, "pin icon");
+    assert.equal(collectText(pinButton).includes("PIN"), false);
+    assert.equal(pinButton.title, "Fixieren");
+    assert.equal(pinButton.getAttribute("aria-label"), "Quicklane fixieren");
+    pinButton.dispatchEvent({ type: "click", preventDefault() {} });
+    const pinnedRoot = findByUiId(rendered.root, "restarbeiten.quicklane");
+    const pinnedButton = findByUiId(pinnedRoot, "restarbeiten.quicklane.pin");
+    const pinIconClosed = findQuicklaneIcon(pinnedButton);
+    assert.notEqual(pinIconClosed.textContent, pinIconOpen.textContent);
+    assert.equal(pinnedRoot.dataset.open, "true");
+    assert.equal(pinnedRoot.dataset.pinned, "true");
+    assert.equal(pinnedButton.title, "Lösen");
+    assert.equal(pinnedButton.getAttribute("aria-label"), "Quicklane lösen");
+    pinnedButton.dispatchEvent({ type: "click", preventDefault() {} });
+    const unpinnedRoot = findByUiId(rendered.root, "restarbeiten.quicklane");
+    const unpinnedButton = findByUiId(unpinnedRoot, "restarbeiten.quicklane.pin");
+    assert.equal(unpinnedRoot.dataset.open, "false");
+    assert.equal(unpinnedRoot.dataset.pinned, "false");
+    assert.equal(unpinnedButton.title, "Fixieren");
+    assert.equal(unpinnedButton.getAttribute("aria-label"), "Quicklane fixieren");
+    const projectAction = findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.project");
+    const firmsAction = findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.firms");
+    const previewAction = findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.pdfPreview");
+    const printAction = findByUiId(quicklaneRoot, "restarbeiten.quicklane.output.print");
+    const mailAction = findByUiId(quicklaneRoot, "restarbeiten.quicklane.output.email");
+    assert.equal(projectAction.title, "Projekt");
+    assert.equal(projectAction.getAttribute("aria-label"), "Projekt");
+    assert.equal(firmsAction.title, "Firmen");
+    assert.equal(firmsAction.getAttribute("aria-label"), "Firmen");
+    assert.equal(previewAction.title, "PDF-Vorschau");
+    assert.equal(previewAction.getAttribute("aria-label"), "PDF-Vorschau");
+    assert.equal(printAction.title, "Drucken noch nicht verfügbar");
+    assert.equal(printAction.getAttribute("aria-label"), "Drucken");
+    assert.equal(mailAction.title, "E-Mail noch nicht verfügbar");
+    assert.equal(mailAction.getAttribute("aria-label"), "E-Mail");
+    for (const action of [pinButton, projectAction, firmsAction, previewAction, printAction, mailAction]) {
+      const icon = findQuicklaneIcon(action);
+      assert.equal(Boolean(icon), true, `${action.getAttribute("data-ui-editor-id")} icon`);
+      assert.equal(icon.className, "bbm-project-context-quicklane-icon");
+      assert.equal(icon.style.inlineSize, "20px");
+      assert.equal(icon.style.blockSize, "20px");
+      assert.equal(icon.style.fontSize, "18px");
+    }
+    assert.equal(findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.ampel").title, "Ampel an/aus");
+    assert.equal(findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.longtext").title, "Langtext an/aus");
+    assert.equal(findQuicklaneIcon(findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.ampel")).children.length, 3);
+    assert.equal(findQuicklaneIcon(findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.longtext")).children.length, 4);
+    assert.equal(printAction.getAttribute("aria-disabled"), "true");
+    assert.equal(printAction.tabIndex, -1);
+    assert.equal(printAction.onclick, undefined);
+    assert.equal(mailAction.getAttribute("aria-disabled"), "true");
+    assert.equal(mailAction.tabIndex, -1);
+    assert.equal(mailAction.onclick, undefined);
+    const cssSource = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/styles/restarbeiten.css"),
+      "utf8"
+    );
+    assert.equal(cssSource.includes(".bbm-restarbeiten-quicklane"), true);
+    assert.equal(cssSource.includes("position: absolute"), true);
+    assert.equal(cssSource.includes("inset-inline-end: 0"), true);
+    assert.equal(cssSource.includes("transform: translateX(46px)"), true);
+    assert.equal(cssSource.includes("transform: translateX(0)"), true);
+    assert.equal(cssSource.includes('data-open="true"'), true);
+    rendered.restoreGlobals();
   });
 
   await run("Restarbeiten: Datenzugang bleibt importierbar", async () => {
@@ -1506,7 +1582,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(elements.find((element) => element.id === "restarbeiten.editbox.meta.ampel").parentId, "restarbeiten.editbox.meta");
     assert.equal(elements.find((element) => element.id === "restarbeiten.quicklane.pin").parentId, "restarbeiten.quicklane.group.navigation");
     assert.equal(elements.find((element) => element.id === "restarbeiten.quicklane.action.ampel").parentId, "restarbeiten.quicklane.group.visibility");
-    assert.equal(elements.find((element) => element.id === "restarbeiten.quicklane.action.output").parentId, "restarbeiten.quicklane.group.output");
+    assert.equal(elements.find((element) => element.id === "restarbeiten.quicklane.output.print").parentId, "restarbeiten.quicklane.group.output");
 
     for (const element of elements) {
       for (const field of ["id", "name", "type", "role", "parentId", "order", "visible", "editable", "allowedOps", "lockedOps"]) {

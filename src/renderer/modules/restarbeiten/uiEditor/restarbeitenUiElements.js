@@ -106,9 +106,8 @@ const RESTARBEITEN_UI_ELEMENTS = Object.freeze([
   element("restarbeiten.quicklane.action.longtext", "Langtext", "button", "visibility", "restarbeiten.quicklane.group.visibility", 20, OPS.action),
   element("restarbeiten.quicklane.group.output", "Quicklane Ausgabe", "group", "action", "restarbeiten.quicklane", 30, OPS.group),
   element("restarbeiten.quicklane.action.pdfPreview", "PDF Voransicht", "button", "action", "restarbeiten.quicklane.group.output", 10, OPS.protectedAction, ["move", "resize", "rename"]),
-  element("restarbeiten.quicklane.action.output", "Ausgabe", "button", "action", "restarbeiten.quicklane.group.output", 20, OPS.protectedAction, ["move", "resize", "rename"]),
-  element("restarbeiten.quicklane.output.print", "Drucken", "button", "action", "restarbeiten.quicklane.action.output", 10, OPS.protectedAction, ["move", "resize", "rename"]),
-  element("restarbeiten.quicklane.output.email", "E-Mail", "button", "action", "restarbeiten.quicklane.action.output", 20, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.quicklane.output.print", "Drucken", "button", "action", "restarbeiten.quicklane.group.output", 20, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.quicklane.output.email", "E-Mail", "button", "action", "restarbeiten.quicklane.group.output", 30, OPS.protectedAction, ["move", "resize", "rename"]),
 ]);
 
 export function getRestarbeitenUiEditorElements() {

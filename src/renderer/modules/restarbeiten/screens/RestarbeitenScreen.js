@@ -12,6 +12,7 @@ import { toRestarbeitenListItems, getRestarbeitenAmpelState } from "../viewModel
 import { buildRestarbeitenFilterbar } from "../RestarbeitenFilterbar.js";
 import { buildRestarbeitenMainBody } from "../RestarbeitenMainBody.js";
 import { buildRestarbeitenEditbox } from "../RestarbeitenEditbox.js";
+import { buildRestarbeitenQuicklane } from "../RestarbeitenQuicklane.js";
 import { ensureRestarbeitenStyles } from "../styles.js";
 import {
   cleanupPopupHandlers,
@@ -149,6 +150,7 @@ export default class RestarbeitenScreen {
       printStatus: "",
     };
     this._lastRestarbeitNotePrint = null;
+    this.quicklanePinned = false;
   }
 
   render() {
@@ -506,6 +508,24 @@ export default class RestarbeitenScreen {
       .filter((entry) => entry.value && entry.label);
 
     this.root.append(
+      buildRestarbeitenQuicklane({
+        pinned: this.quicklanePinned,
+        showAmpel: this.showAmpelInList,
+        showLongtext: this.showLongtextInList,
+        onPinToggle: () => {
+          this.quicklanePinned = !this.quicklanePinned;
+          this._renderShell();
+        },
+        onProject: () => this.router?.openProjectFormModal?.({ projectId: this.projectId, project: this.project }),
+        onFirms: () =>
+          this.router?.showProjectFirms?.(this.projectId, {
+            project: this.project,
+            returnContext: { section: "restarbeiten", projectId: this.projectId, project: this.project },
+          }),
+        onAmpelToggle: () => this.toggleAmpelDisplay(),
+        onLongtextToggle: () => this.toggleLongtextDisplay(),
+        onPreview: () => this.openRestarbeitenPreview(),
+      }),
       buildRestarbeitenFilterbar({
         settings: this.settings,
         filters: this.filters,

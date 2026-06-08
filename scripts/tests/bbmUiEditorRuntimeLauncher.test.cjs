@@ -736,7 +736,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       elements: [
         { id: "restarbeiten.quicklane", name: "Quicklane", type: "toolbar", role: "layout", parentId: "restarbeiten.root", allowedOps: ["inspect"], lockedOps: [] },
         { id: "restarbeiten.quicklane.group.output", name: "Ausgabe", type: "group", role: "action", parentId: "restarbeiten.quicklane", allowedOps: ["inspect"], lockedOps: [] },
-        { id: "restarbeiten.quicklane.action.output", name: "Ausgabe", type: "button", role: "action", parentId: "restarbeiten.quicklane.group.output", allowedOps: ["inspect"], lockedOps: [] },
+        { id: "restarbeiten.quicklane.output.print", name: "Drucken", type: "button", role: "action", parentId: "restarbeiten.quicklane.group.output", allowedOps: ["inspect"], lockedOps: [] },
       ],
     };
     const button = await mod.installBbmUiEditorRuntimeLauncher({
@@ -752,7 +752,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const outputGroup = doc.createElement("div");
     outputGroup.setAttribute("data-ui-editor-id", "restarbeiten.quicklane.group.output");
     const outputButton = doc.createElement("button");
-    outputButton.setAttribute("data-ui-editor-id", "restarbeiten.quicklane.action.output");
+    outputButton.setAttribute("data-ui-editor-id", "restarbeiten.quicklane.output.print");
     outputGroup.appendChild(outputButton);
     quicklane.appendChild(outputGroup);
     doc.body.appendChild(quicklane);
@@ -760,7 +760,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     button.click();
     doc.dispatchEvent({ type: "click", target: outputButton });
     let activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
-    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.quicklane.action.output"), true);
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.quicklane.output.print"), true);
     assert.equal(outputButton.getAttribute("data-ui-editor-selected"), "true");
 
     doc.dispatchEvent({ type: "click", target: outputButton, shiftKey: true });

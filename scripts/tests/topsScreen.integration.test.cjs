@@ -1100,6 +1100,51 @@ async function runTopsScreenIntegrationTests(run) {
     }
   });
 
+  await run("Tops v2 Integration: ProjectContextQuicklane nutzt Projekt- und Firmen-Icons", () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      addEventListener() {},
+      removeEventListener() {},
+      innerWidth: 1280,
+      innerHeight: 720,
+    };
+    try {
+      const lane = new ProjectContextQuicklane({
+        router: {
+          activeSection: "protokoll",
+          context: {
+            ui: {
+              isTopsView: true,
+            },
+          },
+          activeView: {},
+        },
+      });
+      lane.setEnabled(true);
+      lane.setContext({ projectId: 17, meetingId: 21 });
+      lane._showOpenState();
+
+      assert.equal(lane.root.style.width, "176px");
+      assert.equal(collectText(lane.projectSectionEl).includes("📁"), true);
+      assert.equal(collectText(lane.projectSectionEl).includes("PRJ"), false);
+      assert.equal(lane.projectSectionEl.title, "Projekt");
+      assert.equal(lane.projectSectionEl["aria-label"], "Projekt");
+      assert.equal(collectText(lane.firmsSectionEl).includes("🏢"), true);
+      assert.equal(collectText(lane.firmsSectionEl).includes("FIR"), false);
+      assert.equal(lane.firmsSectionEl.title, "Firmen");
+      assert.equal(lane.firmsSectionEl["aria-label"], "Firmen");
+      assert.equal(lane.projectSectionEl.children[0].className, "bbm-project-context-quicklane-icon");
+      assert.equal(lane.projectSectionEl.children[0].style.inlineSize, "20px");
+      assert.equal(lane.firmsSectionEl.children[0].className, "bbm-project-context-quicklane-icon");
+      assert.equal(lane.firmsSectionEl.children[0].style.inlineSize, "20px");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
   await run("Tops v2 Integration: Quicklane rendert Restarbeiten-Kontext ohne rekursives Filter-Schliessen", () => {
     const prevDocument = globalThis.document;
     const prevWindow = globalThis.window;

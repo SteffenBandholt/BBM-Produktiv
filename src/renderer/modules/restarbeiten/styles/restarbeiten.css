@@ -29,6 +29,7 @@
 .bbm-restarbeiten-screen {
   min-height: calc(100vh - 92px);
   height: calc(100vh - 92px);
+  position: relative;
   display: grid;
   grid-template-rows: 96px minmax(0, 1fr) 250px;
   background: var(--bbm-bg);
@@ -219,6 +220,96 @@
 
 .bbm-restarbeiten-button {
   padding: 5px 8px;
+}
+
+.bbm-restarbeiten-quicklane {
+  position: absolute;
+  inset-block-start: 8px;
+  inset-inline-end: 0;
+  inset-block-end: 14px;
+  z-index: 3;
+  inline-size: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 5px 8px 11px;
+  border: 1px solid rgba(154, 168, 189, 0.72);
+  border-inline-end: 0;
+  border-radius: 10px 0 0 10px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 10px 22px rgba(31, 41, 55, 0.1);
+  overflow: hidden;
+  transform: translateX(46px);
+  transition: transform 160ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.bbm-restarbeiten-quicklane:hover,
+.bbm-restarbeiten-quicklane[data-open="true"] {
+  transform: translateX(0);
+  border-color: rgba(29, 78, 216, 0.42);
+  box-shadow: 0 14px 28px rgba(31, 41, 55, 0.15);
+}
+
+.bbm-restarbeiten-quicklane::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-start: 5px;
+  inline-size: 4px;
+  block-size: 56px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(95, 107, 122, 0.7) 0,
+    rgba(95, 107, 122, 0.7) 4px,
+    transparent 4px,
+    transparent 10px
+  );
+}
+
+.bbm-restarbeiten-quicklane__group {
+  display: grid;
+  gap: 5px;
+  justify-items: center;
+  inline-size: 100%;
+  padding: 0 0 8px;
+  border-block-end: 1px solid rgba(216, 222, 234, 0.9);
+}
+
+.bbm-restarbeiten-quicklane__group:last-child {
+  border-block-end: 0;
+  padding-block-end: 0;
+}
+
+.bbm-restarbeiten-quicklane__button {
+  inline-size: 36px;
+  block-size: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--bbm-line);
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--bbm-text);
+  cursor: pointer;
+}
+
+.bbm-restarbeiten-quicklane__button:hover:not(:disabled) {
+  border-color: #93c5fd;
+  background: #eff6ff;
+}
+
+.bbm-restarbeiten-quicklane__button[aria-pressed="true"] {
+  border-color: #1d4ed8;
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.bbm-restarbeiten-quicklane__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .bbm-restarbeiten-main {

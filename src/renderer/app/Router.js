@@ -419,6 +419,7 @@ export default class Router {
 
     try {
       const lane = await this._ensureProjectContextQuicklane();
+      lane?.setEnabled?.(this.context?.ui?.isTopsView === true);
       lane?.setContext?.(this._getProjectContextState());
     } catch (_e) {
       // ignore
@@ -481,14 +482,14 @@ export default class Router {
       this.context.ui.onLongtextToggle = null;
     }
 
+    this._setActiveSection(section);
+
     try {
       const lane = await this._ensureProjectContextQuicklane();
       lane?.setEnabled?.(!!isTopsView);
     } catch (_e) {
       // ignore
     }
-
-    this._setActiveSection(section);
 
     this._setSidebarVisibility(!hideSidebar);
 

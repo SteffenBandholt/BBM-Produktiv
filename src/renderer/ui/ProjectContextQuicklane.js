@@ -4,6 +4,7 @@ import {
   getTopFilterLabel,
   normalizeTopFilterMode,
 } from "../modules/protokoll/topFilterMode.js";
+import { HEADER } from "./zIndex.js";
 
 const TOP_FILTER_OPTIONS = Object.freeze([
   { mode: "all", label: "Alle" },
@@ -11,14 +12,47 @@ const TOP_FILTER_OPTIONS = Object.freeze([
   { mode: "decision", label: "Beschluss" },
 ]);
 
+const QUICKLANE_TOP_OFFSET_PX = 92;
+const QUICKLANE_CLOSED_RIGHT = "-56px";
+const QUICKLANE_OPEN_RIGHT = "0";
+const QUICKLANE_Z_INDEX = HEADER + 1;
+const QUICKLANE_TAB_WIDTH_PX = 30;
+const QUICKLANE_ICON_CLASS = "bbm-project-context-quicklane-icon";
+
+function applyQuicklaneIconStyle(iconEl) {
+  if (!iconEl) return iconEl;
+  iconEl.className = QUICKLANE_ICON_CLASS;
+  if (typeof iconEl.setAttribute === "function") {
+    iconEl.setAttribute("data-bbm-quicklane-icon", "true");
+  }
+  iconEl.style.width = "20px";
+  iconEl.style.height = "20px";
+  iconEl.style.inlineSize = "20px";
+  iconEl.style.blockSize = "20px";
+  iconEl.style.fontSize = "18px";
+  iconEl.style.lineHeight = "1";
+  iconEl.style.display = "inline-flex";
+  iconEl.style.alignItems = "center";
+  iconEl.style.justifyContent = "center";
+  iconEl.style.flex = "0 0 auto";
+  return iconEl;
+}
+
+function createTextIcon(documentRef, icon) {
+  const span = documentRef.createElement("span");
+  span.textContent = icon;
+  span.setAttribute("aria-hidden", "true");
+  return applyQuicklaneIconStyle(span);
+}
+
 function createLockIcon(documentRef, { open = false } = {}) {
   const svg = typeof documentRef?.createElementNS === "function"
     ? documentRef.createElementNS("http://www.w3.org/2000/svg", "svg")
     : documentRef.createElement("svg");
   svg.setAttribute("viewBox", "0 0 24 24");
   svg.setAttribute("aria-hidden", "true");
-  svg.style.width = "18px";
-  svg.style.height = "18px";
+  svg.style.width = "20px";
+  svg.style.height = "20px";
   svg.style.display = "block";
   svg.style.fill = "none";
   svg.style.stroke = "currentColor";
@@ -52,7 +86,7 @@ function createLockIcon(documentRef, { open = false } = {}) {
   keyhole.setAttribute("d", "M12 13.5v2");
 
   svg.append(body, shackle, keyhole);
-  return svg;
+  return applyQuicklaneIconStyle(svg);
 }
 
 function createPinIcon(documentRef, { pinned = false } = {}) {
@@ -64,6 +98,7 @@ export default class ProjectContextQuicklane {
     this.router = router || null;
     this.root = null;
     this.tabEl = null;
+    this.edgeGripEl = null;
     this.closeBtn = null;
     this.pinBtn = null;
     this.bodyEl = null;
@@ -129,21 +164,22 @@ export default class ProjectContextQuicklane {
     const wrap = document.createElement("section");
     wrap.setAttribute("data-bbm-quicklane", "project-context");
     wrap.style.position = "fixed";
-    wrap.style.top = "0";
-    wrap.style.right = "0";
-    wrap.style.height = "100%";
+    wrap.style.top = `${QUICKLANE_TOP_OFFSET_PX}px`;
+    wrap.style.right = QUICKLANE_CLOSED_RIGHT;
+    wrap.style.height = `calc(100% - ${QUICKLANE_TOP_OFFSET_PX}px)`;
     wrap.style.width = "56px";
-    wrap.style.background = "#f7f7f7";
-    wrap.style.boxShadow = "-8px 0 22px rgba(0,0,0,0.14)";
+    wrap.style.background = "#f8f9fb";
+    wrap.style.boxShadow = "-4px 0 14px rgba(0,0,0,0.12)";
     wrap.style.borderLeft = "1px solid #dfdfdf";
     wrap.style.display = "flex";
     wrap.style.flexDirection = "column";
-    wrap.style.transform = "translateX(calc(100% - 22px))";
+    wrap.style.transform = "none";
     wrap.style.pointerEvents = "auto";
-    wrap.style.transition = "transform 220ms ease-out";
-    wrap.style.willChange = "transform";
-    wrap.style.zIndex = "24";
-    wrap.style.overflow = "hidden";
+    wrap.style.transition = "right 220ms ease-out";
+    wrap.style.willChange = "right";
+    wrap.style.zIndex = String(QUICKLANE_Z_INDEX);
+    wrap.style.overflow = "visible";
+    wrap.style.fontFamily = '"Noto Sans", system-ui, sans-serif';
 
     const tab = document.createElement("button");
     tab.type = "button";
@@ -151,10 +187,10 @@ export default class ProjectContextQuicklane {
     tab.title = "Projektkontext";
     tab.setAttribute("aria-label", "Projektkontext");
     tab.style.position = "absolute";
-    tab.style.left = "-22px";
-    tab.style.top = "96px";
-    tab.style.width = "22px";
-    tab.style.height = "124px";
+    tab.style.left = `-${QUICKLANE_TAB_WIDTH_PX}px`;
+    tab.style.top = "18px";
+    tab.style.width = `${QUICKLANE_TAB_WIDTH_PX}px`;
+    tab.style.height = "132px";
     tab.style.border = "1px solid #d9d9d9";
     tab.style.borderRight = "none";
     tab.style.borderRadius = "10px 0 0 10px";
@@ -167,10 +203,40 @@ export default class ProjectContextQuicklane {
     tab.style.padding = "8px 0";
     tab.style.writingMode = "vertical-rl";
     tab.style.transform = "rotate(180deg)";
-    tab.style.fontSize = "11px";
+    tab.style.fontSize = "12px";
     tab.style.fontWeight = "700";
     tab.style.letterSpacing = "0.08em";
     tab.style.boxShadow = "-4px 0 12px rgba(0,0,0,0.08)";
+
+    const edgeGrip = document.createElement("button");
+    edgeGrip.type = "button";
+    edgeGrip.textContent = "Tools";
+    edgeGrip.title = "Projektkontext";
+    edgeGrip.setAttribute("aria-label", "Projektkontext öffnen");
+    edgeGrip.setAttribute("data-bbm-quicklane-edge-grip", "true");
+    edgeGrip.style.position = "fixed";
+    edgeGrip.style.right = "0";
+    edgeGrip.style.top = `${QUICKLANE_TOP_OFFSET_PX + 18}px`;
+    edgeGrip.style.width = `${QUICKLANE_TAB_WIDTH_PX}px`;
+    edgeGrip.style.height = "132px";
+    edgeGrip.style.border = "1px solid #c9d2df";
+    edgeGrip.style.borderRight = "none";
+    edgeGrip.style.borderRadius = "10px 0 0 10px";
+    edgeGrip.style.background = "#ffffff";
+    edgeGrip.style.color = "#1f2937";
+    edgeGrip.style.cursor = "pointer";
+    edgeGrip.style.display = "none";
+    edgeGrip.style.alignItems = "center";
+    edgeGrip.style.justifyContent = "center";
+    edgeGrip.style.padding = "8px 0";
+    edgeGrip.style.writingMode = "vertical-rl";
+    edgeGrip.style.transform = "rotate(180deg)";
+    edgeGrip.style.fontSize = "12px";
+    edgeGrip.style.fontWeight = "800";
+    edgeGrip.style.letterSpacing = "0.08em";
+    edgeGrip.style.boxShadow = "-4px 0 12px rgba(0,0,0,0.16)";
+    edgeGrip.style.zIndex = String(QUICKLANE_Z_INDEX + 2);
+    edgeGrip.style.pointerEvents = "auto";
 
     const header = document.createElement("div");
     header.style.display = "flex";
@@ -184,18 +250,19 @@ export default class ProjectContextQuicklane {
     const pinBtn = document.createElement("button");
     pinBtn.type = "button";
     pinBtn.title = "Fixieren";
+    pinBtn.setAttribute("aria-label", "Quicklane fixieren");
     pinBtn.style.border = "1px solid #d5d5d5";
     pinBtn.style.background = "#ffffff";
-    pinBtn.style.borderRadius = "10px";
+    pinBtn.style.borderRadius = "8px";
     pinBtn.style.width = "40px";
-    pinBtn.style.height = "40px";
+    pinBtn.style.height = "34px";
     pinBtn.style.padding = "0";
     pinBtn.style.cursor = "pointer";
     pinBtn.style.display = "inline-flex";
     pinBtn.style.alignItems = "center";
     pinBtn.style.justifyContent = "center";
-    pinBtn.style.fontSize = "12px";
-    pinBtn.style.fontWeight = "700";
+    pinBtn.style.fontSize = "18px";
+    pinBtn.style.fontWeight = "600";
     pinBtn.onclick = () => this._togglePinned();
     pinBtn.replaceChildren(createLockIcon(document, { open: true }));
     header.append(pinBtn);
@@ -207,32 +274,39 @@ export default class ProjectContextQuicklane {
     body.style.display = "flex";
     body.style.flexDirection = "column";
     body.style.alignItems = "center";
-    body.style.gap = "10px";
+    body.style.gap = "8px";
 
-    const createToolGroup = () => {
+    const createToolGroup = ({ title }) => {
       const group = document.createElement("div");
+      group.title = title;
+      group.setAttribute("aria-label", title);
       group.style.display = "flex";
       group.style.flexDirection = "column";
       group.style.alignItems = "center";
-      group.style.gap = "10px";
+      group.style.gap = "6px";
       group.style.width = "40px";
+      group.style.padding = "0 0 8px";
+      group.style.borderBottom = "1px solid #e3e6ea";
       return group;
     };
 
     const createToolItem = ({ icon, title, actionHandler = null }) => {
       const item = document.createElement("div");
       item.title = title;
+      item.setAttribute("aria-label", title);
       item.style.width = "40px";
-      item.style.height = "40px";
+      item.style.height = "34px";
       item.style.border = "1px solid #dfdfdf";
-      item.style.borderRadius = "10px";
+      item.style.borderRadius = "8px";
       item.style.background = "#ffffff";
       item.style.display = "flex";
       item.style.alignItems = "center";
       item.style.justifyContent = "center";
-      item.style.fontSize = "20px";
+      item.style.fontSize = "18px";
       item.style.lineHeight = "1";
       item.style.userSelect = "none";
+      item.style.fontWeight = "600";
+      item.style.color = "#26323f";
       item.style.transition = "background 140ms ease-out, border-color 140ms ease-out";
 
       if (typeof actionHandler === "function") {
@@ -246,7 +320,7 @@ export default class ProjectContextQuicklane {
         });
       }
 
-      item.textContent = icon;
+      item.replaceChildren(createTextIcon(document, icon));
       return item;
     };
 
@@ -282,7 +356,7 @@ export default class ProjectContextQuicklane {
 
     const previewSection = createToolItem({
       icon: "📄",
-      title: "Vorschau",
+      title: "PDF-Vorschau",
       actionHandler: async () => {
         if (!this._lastOpts?.projectId) return;
         if (this._isRestarbeitenContext) {
@@ -431,35 +505,55 @@ export default class ProjectContextQuicklane {
       },
     });
 
-    const createOutputAction = (label, actionHandler) => {
+    const createOutputAction = (
+      label,
+      title,
+      actionHandler,
+      { compact = false, disabled = false, icon = null, ariaLabel = null } = {}
+    ) => {
       const item = document.createElement("div");
-      item.textContent = label;
-      item.style.width = "100%";
-      item.style.minHeight = "32px";
-      item.style.padding = "8px 10px";
+      item.title = title;
+      item.setAttribute("aria-label", ariaLabel || title);
+      item.style.width = compact ? "40px" : "100%";
+      item.style.height = compact ? "34px" : "";
+      item.style.minHeight = compact ? "" : "32px";
+      item.style.padding = compact ? "0 3px" : "8px 10px";
       item.style.boxSizing = "border-box";
       item.style.borderRadius = "8px";
       item.style.border = "1px solid #dfdfdf";
       item.style.background = "#ffffff";
-      item.style.fontSize = "12px";
+      item.style.display = "flex";
+      item.style.alignItems = "center";
+      item.style.justifyContent = "center";
+      item.style.fontSize = icon ? "18px" : compact ? "10px" : "12px";
       item.style.fontWeight = "600";
-      item.style.color = "#222";
-      item.style.cursor = "pointer";
+      item.style.color = disabled ? "#777" : compact ? "#26323f" : "#222";
+      item.style.cursor = disabled ? "default" : "pointer";
       item.style.userSelect = "none";
-      item.tabIndex = 0;
       item.setAttribute("role", "button");
-      item.onclick = actionHandler;
-      item.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        actionHandler();
-      });
-      item.onmouseenter = () => {
-        item.style.background = "#f0f0f0";
-      };
-      item.onmouseleave = () => {
-        item.style.background = "#ffffff";
-      };
+      item.setAttribute("aria-disabled", disabled ? "true" : "false");
+      item.tabIndex = disabled ? -1 : 0;
+      if (icon) {
+        item.replaceChildren(createTextIcon(document, icon));
+      } else {
+        item.textContent = label;
+      }
+      if (disabled) {
+        item.style.opacity = "0.48";
+      } else {
+        item.onclick = actionHandler;
+        item.addEventListener("keydown", (e) => {
+          if (e.key !== "Enter" && e.key !== " ") return;
+          e.preventDefault();
+          actionHandler();
+        });
+        item.onmouseenter = () => {
+          item.style.background = "#f0f0f0";
+        };
+        item.onmouseleave = () => {
+          item.style.background = "#ffffff";
+        };
+      }
       return item;
     };
 
@@ -476,7 +570,7 @@ export default class ProjectContextQuicklane {
     outputPopup.style.boxShadow = "-8px 8px 24px rgba(0,0,0,0.16)";
     outputPopup.style.flexDirection = "column";
     outputPopup.style.gap = "6px";
-    outputPopup.style.zIndex = "40";
+    outputPopup.style.zIndex = String(QUICKLANE_Z_INDEX + 1);
 
     const filterPopup = document.createElement("div");
     filterPopup.style.position = "fixed";
@@ -491,10 +585,10 @@ export default class ProjectContextQuicklane {
     filterPopup.style.boxShadow = "-8px 8px 24px rgba(0,0,0,0.16)";
     filterPopup.style.flexDirection = "column";
     filterPopup.style.gap = "6px";
-    filterPopup.style.zIndex = "40";
+    filterPopup.style.zIndex = String(QUICKLANE_Z_INDEX + 1);
 
     const filterActions = TOP_FILTER_OPTIONS.map((option) => {
-      const item = createOutputAction(option.label, async () => {
+      const item = createOutputAction(option.label, `TOP-Filter ${option.label}`, async () => {
         if (!this._lastOpts?.projectId) return;
         this._setTopFilterMode(option.mode);
         this._setTopFilterMenuOpen(false);
@@ -516,7 +610,7 @@ export default class ProjectContextQuicklane {
     });
     filterPopup.append(...filterActions);
 
-    const outputPrint = createOutputAction("Drucken", async () => {
+    const runOutputPrint = async () => {
       if (!this._lastOpts?.projectId) return;
       if (this._isRestarbeitenContext) {
         const activeView = this.router?.activeView || null;
@@ -527,8 +621,8 @@ export default class ProjectContextQuicklane {
         await this.router?.openOutputPrint?.();
       }
       this._setOutputOpen(false);
-    });
-    const outputPreview = createOutputAction("Vorschau", async () => {
+    };
+    const runOutputPreview = async () => {
       if (!this._lastOpts?.projectId) return;
       if (this._isRestarbeitenContext) {
         const activeView = this.router?.activeView || null;
@@ -542,8 +636,8 @@ export default class ProjectContextQuicklane {
         await this.router?.openClosedProtocolSelector?.({ mode: "view" });
       }
       this._setOutputOpen(false);
-    });
-    const outputMail = createOutputAction("E-Mail senden", async () => {
+    };
+    const runOutputMail = async () => {
       if (!this._lastOpts?.projectId) return;
       if (this._isRestarbeitenContext) {
         const activeView = this.router?.activeView || null;
@@ -555,26 +649,39 @@ export default class ProjectContextQuicklane {
       }
       await this.router?.openClosedProtocolSelector?.({ mode: "mail" });
       this._setOutputOpen(false);
+    };
+    const outputPrint = createOutputAction("Drucken", "Drucken noch nicht verfügbar", runOutputPrint, {
+      compact: true,
+      disabled: true,
+      icon: "🖨",
+      ariaLabel: "Drucken",
     });
-    if (this._isRestarbeitenContext) {
-      outputPopup.append(outputPrint, outputPreview, outputMail);
-    } else {
-      const outputProtocols = createOutputAction("Protokolle", async () => {
-        if (!this._lastOpts?.projectId) return;
-        await this.router?.openClosedProtocolSelector?.({ mode: "view" });
-        this._setOutputOpen(false);
-      });
-      outputPopup.append(outputProtocols, outputPrint, outputMail);
-    }
+    const outputPreview = createOutputAction("PDF-Vorschau", "PDF-Vorschau", runOutputPreview, {
+      compact: true,
+      icon: "📄",
+    });
+    const outputMail = createOutputAction("E-Mail", "E-Mail noch nicht verfügbar", runOutputMail, {
+      compact: true,
+      disabled: true,
+      icon: "✉",
+      ariaLabel: "E-Mail",
+    });
+    const outputProtocols = createOutputAction("PROT", "Protokolle", async () => {
+      if (!this._lastOpts?.projectId) return;
+      await this.router?.openClosedProtocolSelector?.({ mode: "view" });
+      this._setOutputOpen(false);
+    });
+    const outputPrintPopup = createOutputAction("Drucken", "Drucken", runOutputPrint);
+    const outputMailPopup = createOutputAction("E-Mail senden", "E-Mail senden", runOutputMail);
+    outputPopup.append(outputProtocols, outputPrintPopup, outputMailPopup);
 
-    const navigationGroup = createToolGroup();
-    const visibilityGroup = createToolGroup();
-    const outputGroup = createToolGroup();
+    const navigationGroup = createToolGroup({ title: "Navigation" });
+    const visibilityGroup = createToolGroup({ title: "Sichtbarkeit" });
+    const outputGroup = createToolGroup({ title: "Ausgabe" });
 
     navigationGroup.append(pinBtn, projectSection, firmsSection);
     visibilityGroup.append(ampelSection, longtextSection);
-    outputSection.appendChild(outputPopup);
-    outputGroup.append(previewSection, outputSection);
+    outputGroup.append(previewSection, outputPrint, outputMail, outputSection);
 
     header.style.display = "none";
 
@@ -586,6 +693,7 @@ export default class ProjectContextQuicklane {
       filterSection
     );
     wrap.append(tab, header, body);
+    document.body.appendChild(outputPopup);
     document.body.appendChild(filterPopup);
 
     tab.addEventListener("mouseenter", () => {
@@ -601,6 +709,22 @@ export default class ProjectContextQuicklane {
       this._scheduleClose();
     });
     tab.addEventListener("click", () => {
+      if (!this._enabled) return;
+      this._togglePinned();
+    });
+    edgeGrip.addEventListener("mouseenter", () => {
+      if (!this._enabled) return;
+      this._isHoveringTab = true;
+      this._cancelClose();
+      this._showOpenState();
+    });
+    edgeGrip.addEventListener("mouseleave", (e) => {
+      if (!this._enabled) return;
+      this._isHoveringTab = false;
+      if (this.root?.contains(e.relatedTarget)) return;
+      this._scheduleClose();
+    });
+    edgeGrip.addEventListener("click", () => {
       if (!this._enabled) return;
       this._togglePinned();
     });
@@ -635,10 +759,12 @@ export default class ProjectContextQuicklane {
     );
 
     document.body.appendChild(wrap);
+    document.body.appendChild(edgeGrip);
     document.addEventListener("keydown", this._escHandler, true);
 
     this.root = wrap;
     this.tabEl = tab;
+    this.edgeGripEl = edgeGrip;
     this.pinBtn = pinBtn;
     this.bodyEl = body;
     this.projectSectionEl = projectSection;
@@ -788,6 +914,15 @@ export default class ProjectContextQuicklane {
     if (this.filterSectionEl) {
       this.filterSectionEl.style.display = this._isRestarbeitenContext ? "none" : "flex";
     }
+    if (this.outputSectionEl) {
+      this.outputSectionEl.style.display = this._isRestarbeitenContext ? "none" : "flex";
+    }
+    if (this.outputPrintEl) {
+      this.outputPrintEl.style.display = this._isRestarbeitenContext ? "flex" : "none";
+    }
+    if (this.outputMailEl) {
+      this.outputMailEl.style.display = this._isRestarbeitenContext ? "flex" : "none";
+    }
     if (this.ampelSectionEl) {
       this.ampelSectionEl.dataset.active = ampelOn ? "true" : "false";
       this.ampelSectionEl.style.background = ampelOn ? "#eef7ff" : hasAmpel ? "#ffffff" : "#f3f3f3";
@@ -874,7 +1009,6 @@ export default class ProjectContextQuicklane {
       [this.longtextSectionEl, "restarbeiten.quicklane.action.longtext"],
       [this.outputGroupEl, "restarbeiten.quicklane.group.output"],
       [this.previewSectionEl, "restarbeiten.quicklane.action.pdfPreview"],
-      [this.outputSectionEl, "restarbeiten.quicklane.action.output"],
       [this.outputPrintEl, "restarbeiten.quicklane.output.print"],
       [this.outputMailEl, "restarbeiten.quicklane.output.email"],
     ];
@@ -941,7 +1075,8 @@ export default class ProjectContextQuicklane {
     this._isOpen = this._isPinned;
     this._isRestarbeitenContext = this._isRestarbeitenMode();
     if (this.pinBtn) {
-      this.pinBtn.replaceChildren(createLockIcon(document, { open: !this._isPinned }));
+      const documentRef = this.root?.ownerDocument || document;
+      this.pinBtn.replaceChildren(createLockIcon(documentRef, { open: !this._isPinned }));
       this.pinBtn.title = this._isPinned ? "Lösen" : "Fixieren";
       this.pinBtn.setAttribute("aria-label", this._isPinned ? "Quicklane lösen" : "Quicklane fixieren");
       this.pinBtn.style.background = this._isRestarbeitenContext ? "#fff7cc" : this._isPinned ? "#eef7ff" : "#ffffff";
@@ -989,26 +1124,46 @@ export default class ProjectContextQuicklane {
     return String(this.router?.activeSection || "").trim() === "restarbeiten";
   }
 
+  _shouldRenderQuicklane() {
+    return this._enabled && (this._isRestarbeitenMode() || this.router?.context?.ui?.isTopsView === true);
+  }
+
+  _isQuicklaneOpen() {
+    return this._isOpen || this._isPinned || this._isHoveringTab || this._isHoveringPanel;
+  }
+
   _applyState() {
     if (!this.root) return;
 
     this._isRestarbeitenContext = this._isRestarbeitenMode();
 
-    if (!this._enabled) {
+    if (!this._shouldRenderQuicklane()) {
       this.root.style.display = "none";
       this.root.style.pointerEvents = "none";
-      this.root.style.transform = "translateX(calc(100% - 22px))";
+      this.root.style.right = QUICKLANE_CLOSED_RIGHT;
+      this.root.style.transform = "none";
+      if (this.edgeGripEl) {
+        this.edgeGripEl.style.display = "none";
+        this.edgeGripEl.style.pointerEvents = "none";
+      }
       return;
     }
 
     this.root.style.display = "flex";
     this.root.style.pointerEvents = "auto";
-    this.root.style.width = (this._isOpen || this._isPinned) ? "176px" : "56px";
-    this.root.style.transform =
-      this._isOpen || this._isPinned ? "translateX(0)" : "translateX(calc(100% - 22px))";
+    const isQuicklaneOpen = this._isQuicklaneOpen();
+    this.root.style.width = isQuicklaneOpen ? (this._isRestarbeitenContext ? "64px" : "176px") : "56px";
+    this.root.style.right = isQuicklaneOpen ? QUICKLANE_OPEN_RIGHT : QUICKLANE_CLOSED_RIGHT;
+    this.root.style.transform = "none";
+    if (this.edgeGripEl) {
+      this.edgeGripEl.style.display = isQuicklaneOpen ? "none" : "flex";
+      this.edgeGripEl.style.pointerEvents = isQuicklaneOpen ? "none" : "auto";
+      this.edgeGripEl.style.top = `${QUICKLANE_TOP_OFFSET_PX + 18}px`;
+    }
 
     if (this.pinBtn) {
-      this.pinBtn.replaceChildren(createLockIcon(document, { open: !this._isPinned }));
+      const documentRef = this.root?.ownerDocument || document;
+      this.pinBtn.replaceChildren(createLockIcon(documentRef, { open: !this._isPinned }));
       this.pinBtn.title = this._isPinned ? "Lösen" : "Fixieren";
       this.pinBtn.setAttribute("aria-label", this._isPinned ? "Quicklane lösen" : "Quicklane fixieren");
       this.pinBtn.style.background = this._isRestarbeitenContext ? "#fff7cc" : this._isPinned ? "#eef7ff" : "#ffffff";
