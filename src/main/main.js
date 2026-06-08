@@ -364,6 +364,7 @@ function createWindow() {
   mainWindow = new BrowserWindow({
     ...windowOptions,
   });
+  mainWindow.maximize();
 
   if (isProd) {
     if (process.platform === "win32" || process.platform === "linux") {
