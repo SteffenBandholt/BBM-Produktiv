@@ -197,6 +197,7 @@ function createClassToggle({ value = "rest", uiId, onChange, onCommit, inline = 
 export function buildRestarbeitenEditbox({
   settings = {},
   draft = {},
+  showAmpel = true,
   responsibleOptions = [],
   onDraftChange,
   onNew,
@@ -313,6 +314,8 @@ export function buildRestarbeitenEditbox({
     className: "bbm-restarbeiten-ampel-field",
     uiId: "restarbeiten.editbox.meta.ampel",
   });
+  ampelWrap.hidden = showAmpel === false;
+  ampelWrap.style.display = showAmpel === false ? "none" : "";
   const ampel = createEl("span", {
     className: "bbm-restarbeiten-ampel",
   });

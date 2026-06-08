@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 60" role="img" aria-label="Ampelstatus">
+  <circle id="ampel-red" cx="12" cy="10" r="7" fill="#ef4444"/>
+  <circle id="ampel-yellow" cx="12" cy="30" r="7" fill="#facc15"/>
+  <circle id="ampel-green" cx="12" cy="50" r="7" fill="#22c55e"/>
+</svg>

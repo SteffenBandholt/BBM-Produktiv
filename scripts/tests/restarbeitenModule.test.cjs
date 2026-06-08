@@ -459,6 +459,10 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(text.includes("Fertig bis:"), false);
     assert.equal(text.includes("Status:"), false);
     assert.equal(text.includes("Verantwortlich:"), false);
+    const listAmpel = findByUiId(rendered.root, "restarbeiten.record.ampel");
+    assert.equal(Boolean(listAmpel), true);
+    assert.equal(listAmpel.children.length, 0);
+    assert.equal(["rot", "gruen", "neutral"].includes(listAmpel.dataset.state), true);
   });
 
   await run("Restarbeiten: Screen stellt Quicklane-Methoden und M1-Bereiche bereit", async () => {
@@ -683,11 +687,18 @@ async function runRestarbeitenModuleTests(run) {
     assert.notEqual(quicklaneRoot.hidden, true);
     assert.equal(quicklaneRoot.dataset.open, "false");
     assert.equal(quicklaneRoot.dataset.pinned, "false");
+    assert.equal(quicklaneRoot.style.position, "fixed");
+    assert.equal(quicklaneRoot.style.top, "104px");
+    assert.equal(quicklaneRoot.style.right, "0");
+    assert.equal(Number(quicklaneRoot.style.zIndex) > 12010, true);
+    assert.equal(quicklaneRoot.style.transform, "translateX(46px)");
     assert.equal(findByUiId(rendered.root, "restarbeiten.root").contains(quicklaneRoot), true);
     quicklaneRoot.dispatchEvent({ type: "mouseenter" });
     assert.equal(quicklaneRoot.dataset.open, "true");
+    assert.equal(quicklaneRoot.style.transform, "translateX(0)");
     quicklaneRoot.dispatchEvent({ type: "mouseleave" });
     assert.equal(quicklaneRoot.dataset.open, "false");
+    assert.equal(quicklaneRoot.style.transform, "translateX(46px)");
     for (const [targetId, parentId] of expectedParents) {
       const element = byId.get(targetId);
       const node = findByUiId(quicklaneRoot, targetId);
@@ -769,7 +780,9 @@ async function runRestarbeitenModuleTests(run) {
     }
     assert.equal(findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.ampel").title, "Ampel an/aus");
     assert.equal(findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.longtext").title, "Langtext an/aus");
-    assert.equal(findQuicklaneIcon(findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.ampel")).children.length, 3);
+    const quicklaneAmpelIcon = findQuicklaneIcon(findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.ampel"));
+    assert.equal(quicklaneAmpelIcon.tagName, "IMG");
+    assert.equal(String(quicklaneAmpelIcon.src || "").endsWith("assets/icons/ampel-status.svg"), true);
     assert.equal(findQuicklaneIcon(findByUiId(quicklaneRoot, "restarbeiten.quicklane.action.longtext")).children.length, 4);
     assert.equal(printAction.getAttribute("aria-disabled"), "true");
     assert.equal(printAction.tabIndex, -1);
@@ -782,11 +795,38 @@ async function runRestarbeitenModuleTests(run) {
       "utf8"
     );
     assert.equal(cssSource.includes(".bbm-restarbeiten-quicklane"), true);
-    assert.equal(cssSource.includes("position: absolute"), true);
+    assert.equal(cssSource.includes("position: fixed"), true);
+    assert.equal(cssSource.includes("inset-block-start: 104px"), true);
     assert.equal(cssSource.includes("inset-inline-end: 0"), true);
     assert.equal(cssSource.includes("transform: translateX(46px)"), true);
     assert.equal(cssSource.includes("transform: translateX(0)"), true);
     assert.equal(cssSource.includes('data-open="true"'), true);
+    assert.equal(cssSource.includes(".bbm-restarbeiten-ampel__icon"), false);
+    rendered.restoreGlobals();
+  });
+
+  await run("Restarbeiten: Quicklane-Ampel schaltet auch das Editbox-Ampelsymbol", async () => {
+    const rendered = await renderRouteScreen({ keepGlobals: true });
+    const initialEditboxAmpel = findByUiId(rendered.root, "restarbeiten.editbox.meta.ampel");
+    assert.equal(Boolean(initialEditboxAmpel), true);
+    assert.equal(initialEditboxAmpel.hidden, false);
+    assert.notEqual(initialEditboxAmpel.style.display, "none");
+
+    findByUiId(rendered.root, "restarbeiten.quicklane.action.ampel").dispatchEvent({
+      type: "click",
+      preventDefault() {},
+    });
+    const hiddenEditboxAmpel = findByUiId(rendered.root, "restarbeiten.editbox.meta.ampel");
+    assert.equal(hiddenEditboxAmpel.hidden, true);
+    assert.equal(hiddenEditboxAmpel.style.display, "none");
+
+    findByUiId(rendered.root, "restarbeiten.quicklane.action.ampel").dispatchEvent({
+      type: "click",
+      preventDefault() {},
+    });
+    const visibleEditboxAmpel = findByUiId(rendered.root, "restarbeiten.editbox.meta.ampel");
+    assert.equal(visibleEditboxAmpel.hidden, false);
+    assert.notEqual(visibleEditboxAmpel.style.display, "none");
     rendered.restoreGlobals();
   });
 
@@ -1520,6 +1560,31 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(viewModel.mapRestarbeitenStatusLabel("zurueckgewiesen"), "offen");
     assert.equal(viewModel.getRestarbeitenAmpelState({ status: "geprueft_erledigt" }, today), "neutral");
     assert.equal(viewModel.getRestarbeitenAmpelState({ status: "zurueckgewiesen" }, today), "neutral");
+  });
+
+  await run("Restarbeiten: PDF-, Listen- und Editbox-Ampel nutzen das Statussymbol ohne SVG-Asset", () => {
+    const listSource = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenList.js"),
+      "utf8"
+    );
+    const editboxSource = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenEditbox.js"),
+      "utf8"
+    );
+    const cssSource = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/styles/restarbeiten.css"),
+      "utf8"
+    );
+    const printShellSource = fs.readFileSync(
+      path.join(__dirname, "../../src/renderer/print/layout/PrintShell.js"),
+      "utf8"
+    );
+
+    assert.equal(listSource.includes("ampel-status.svg"), false);
+    assert.equal(editboxSource.includes("ampel-status.svg"), false);
+    assert.equal(cssSource.includes("bbm-restarbeiten-ampel__icon"), false);
+    assert.equal(printShellSource.includes("ampel-status.svg"), false);
+    assert.equal(printShellSource.includes("ampelDot"), true);
   });
 
   await run("Restarbeiten: UI-Editor-Elementliste fuer M1 ist gueltig", async () => {

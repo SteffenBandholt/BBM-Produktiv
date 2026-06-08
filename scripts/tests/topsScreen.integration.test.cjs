@@ -108,6 +108,10 @@ async function runTopsScreenIntegrationTests(run) {
           }
           return nodeChild;
         },
+        remove() {
+          if (!this.parentElement || typeof this.parentElement.removeChild !== "function") return;
+          this.parentElement.removeChild(this);
+        },
         setAttribute(name, value) {
           this[String(name)] = String(value);
         },
@@ -208,6 +212,21 @@ async function runTopsScreenIntegrationTests(run) {
     };
     walk(node);
     return parts.join(" ");
+  }
+
+  function findByDataUiEditorId(root, id) {
+    const needle = String(id || "");
+    let found = null;
+    const walk = (current) => {
+      if (!current || found) return;
+      if (String(current["data-ui-editor-id"] || "") === needle) {
+        found = current;
+        return;
+      }
+      for (const child of current.children || []) walk(child);
+    };
+    walk(root);
+    return found;
   }
 
   function sleep(ms) {
@@ -1127,6 +1146,9 @@ async function runTopsScreenIntegrationTests(run) {
       lane._showOpenState();
 
       assert.equal(lane.root.style.width, "176px");
+      assert.equal(lane.root.style.right, "0");
+      assert.equal(lane.root.style.display, "flex");
+      assert.equal(lane.edgeGripEl.style.display, "none");
       assert.equal(collectText(lane.projectSectionEl).includes("📁"), true);
       assert.equal(collectText(lane.projectSectionEl).includes("PRJ"), false);
       assert.equal(lane.projectSectionEl.title, "Projekt");
@@ -1297,6 +1319,126 @@ async function runTopsScreenIntegrationTests(run) {
       await lane.longtextSectionEl.onclick?.();
 
       assert.deepEqual(calls, ["ampel", "longtext"]);
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Tops v2 Integration: TopsScreen rendert eigene Quicklane mit Buttons, Icons und Funktionen", async () => {
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const doc = createFakeDocument();
+    const calls = [];
+    globalThis.document = doc;
+    globalThis.window = {
+      bbmDb: {},
+      document: doc,
+      alert(message) {
+        calls.push(["mail-alert", message]);
+      },
+      dispatchEvent() {},
+      addEventListener() {},
+      removeEventListener() {},
+    };
+    try {
+      const router = {
+        currentProjectId: 17,
+        currentMeetingId: 21,
+        context: { projectLabel: "Projekt X", ui: {} },
+        async openProjectFormModal(payload) {
+          calls.push(["project", payload]);
+        },
+        async showProjectFirms(projectId, options) {
+          calls.push(["firms", projectId, options]);
+        },
+        async openParticipantsModal(payload) {
+          calls.push(["participants", payload]);
+        },
+        async openPrintVorabzug(payload) {
+          calls.push(["preview", payload]);
+        },
+        async openPrintModal(payload) {
+          calls.push(["print", payload]);
+        },
+      };
+      const screen = new TopsScreen({ router, projectId: 17, meetingId: 21 });
+      const root = screen.render();
+
+      const quicklane = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane");
+      assert.ok(quicklane);
+      assert.equal(quicklane.tagName, "ASIDE");
+      assert.equal(quicklane.className, "bbm-tops-screen-quicklane");
+
+      for (const id of [
+        "protokoll.topsScreen.quicklane.group.navigation",
+        "protokoll.topsScreen.quicklane.group.visibility",
+        "protokoll.topsScreen.quicklane.group.filter",
+        "protokoll.topsScreen.quicklane.group.output",
+        "protokoll.topsScreen.quicklane.action.project",
+        "protokoll.topsScreen.quicklane.action.firms",
+        "protokoll.topsScreen.quicklane.action.participants",
+        "protokoll.topsScreen.quicklane.action.ampel",
+        "protokoll.topsScreen.quicklane.action.longtext",
+        "protokoll.topsScreen.quicklane.action.topFilter",
+        "protokoll.topsScreen.quicklane.action.preview",
+        "protokoll.topsScreen.quicklane.action.print",
+        "protokoll.topsScreen.quicklane.action.mail",
+      ]) {
+        assert.ok(findByDataUiEditorId(root, id), id);
+      }
+
+      const projectButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.project");
+      const firmsButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.firms");
+      const participantsButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.participants");
+      const ampelButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.ampel");
+      const longtextButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.longtext");
+      const filterButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.topFilter");
+      const previewButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.preview");
+      const printButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.print");
+      const mailButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.mail");
+
+      assert.equal(projectButton.children[0].className, "bbm-tops-screen-quicklane-icon");
+      assert.equal(ampelButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--ampel");
+      assert.equal(ampelButton.children[0].tagName, "IMG");
+      assert.equal(String(ampelButton.children[0].src || "").endsWith("assets/icons/ampel-status.svg"), true);
+      assert.equal(longtextButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--longtext");
+      assert.equal(filterButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--filter");
+
+      projectButton.dispatchEvent({ type: "click", preventDefault() {} });
+      firmsButton.dispatchEvent({ type: "click", preventDefault() {} });
+      participantsButton.dispatchEvent({ type: "click", preventDefault() {} });
+      previewButton.dispatchEvent({ type: "click", preventDefault() {} });
+      printButton.dispatchEvent({ type: "click", preventDefault() {} });
+      mailButton.dispatchEvent({ type: "click", preventDefault() {} });
+      await Promise.resolve();
+
+      assert.deepEqual(calls[0], ["project", { projectId: 17 }]);
+      assert.equal(calls[1][0], "firms");
+      assert.equal(calls[1][1], 17);
+      assert.deepEqual(calls[2], ["participants", { projectId: 17, meetingId: 21 }]);
+      assert.deepEqual(calls[3], ["preview", { projectId: 17, meetingId: 21 }]);
+      assert.deepEqual(calls[4], ["print", { projectId: 17 }]);
+      assert.equal(calls[5][0], "mail-alert");
+
+      assert.equal(screen.showAmpelInList, true);
+      ampelButton.dispatchEvent({ type: "click", preventDefault() {} });
+      await Promise.resolve();
+      assert.equal(screen.showAmpelInList, false);
+      assert.notEqual(screen.workbench.metaColumn.statusAmpelBridge.root.style.display, "none");
+      assert.notEqual(screen.workbench.metaColumn.statusAmpelBridge.field.dueWrap.style.display, "none");
+      assert.equal(screen.workbench.metaColumn.statusAmpelBridge.field.trafficWrap.style.display, "none");
+
+      assert.equal(screen.showLongtextInList, false);
+      longtextButton.dispatchEvent({ type: "click", preventDefault() {} });
+      await Promise.resolve();
+      assert.equal(screen.showLongtextInList, true);
+
+      filterButton.dispatchEvent({ type: "click", preventDefault() {} });
+      const todoItem = quicklane.querySelectorAll("[data-filter-mode]").find((item) => item.dataset.filterMode === "todo");
+      assert.ok(todoItem);
+      todoItem.dispatchEvent({ type: "click", preventDefault() {} });
+      assert.equal(screen.getTopFilter(), "todo");
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;

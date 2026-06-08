@@ -547,6 +547,7 @@ export default class RestarbeitenScreen {
       buildRestarbeitenEditbox({
         settings: this.settings,
         draft: this.draft,
+        showAmpel: this.showAmpelInList,
         responsibleOptions,
         onNew: () => this._newDraft(),
         onDraftChange: (patch, options) => this._updateDraft(patch, options),

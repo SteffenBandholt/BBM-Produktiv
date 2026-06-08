@@ -84,12 +84,13 @@ async function runProtokollRouterFallbackTests(run) {
     const screenSource = fs.readFileSync(screenFile, "utf8");
 
     assert.equal(screenSource.includes("tops/components/TopsQuicklane.js"), false);
+    assert.equal(screenSource.includes('from "../TopsScreenQuicklane.js"'), true);
     assert.equal(screenSource.includes("_mountQuicklaneIntoWorkbenchGutter"), false);
     assert.equal(screenSource.includes("setTopFilter("), true);
     assert.equal(screenSource.includes("getTopFilter("), true);
   });
 
-  await run("Protokoll Quicklane-Filter sitzt in der rechten Toolbox", () => {
+  await run("Protokoll Quicklane-Filter sitzt in der screen-eigenen rechten Toolbox", () => {
     const screenFile = path.join(
       __dirname,
       "../../src/renderer/modules/protokoll/screens/TopsScreen.js"
@@ -97,7 +98,7 @@ async function runProtokollRouterFallbackTests(run) {
     const routerFile = path.join(__dirname, "../../src/renderer/app/Router.js");
     const quicklaneFile = path.join(
       __dirname,
-      "../../src/renderer/ui/ProjectContextQuicklane.js"
+      "../../src/renderer/modules/protokoll/TopsScreenQuicklane.js"
     );
     const screenSource = fs.readFileSync(screenFile, "utf8");
     const routerSource = fs.readFileSync(routerFile, "utf8");
@@ -107,13 +108,16 @@ async function runProtokollRouterFallbackTests(run) {
     assert.equal(screenSource.includes("this.router.context.ui.topFilter"), true);
     assert.equal(screenSource.includes("onTopFilterChange"), true);
     assert.equal(routerSource.includes("onTopFilterChange = null"), true);
+    assert.equal(routerSource.includes("openProjectContextQuicklane({"), false);
+    assert.equal(routerSource.includes("meetingId: effectiveMeetingId"), true);
     assert.equal(screenSource.includes("_mountQuicklaneIntoWorkbenchGutter"), false);
     assert.equal(screenSource.includes("workbench?.gutter"), false);
+    assert.equal(screenSource.includes("_buildQuicklane()"), true);
     assert.equal(quicklaneSource.includes("TOP-Filter"), true);
     assert.equal(quicklaneSource.includes("top-filter"), true);
     assert.equal(quicklaneSource.includes("onTopFilterChange"), true);
-    assert.equal(quicklaneSource.includes("toggleAmpelDisplay"), true);
-    assert.equal(quicklaneSource.includes("toggleLongtextDisplay"), true);
+    assert.equal(screenSource.includes("toggleAmpelDisplay"), true);
+    assert.equal(screenSource.includes("toggleLongtextDisplay"), true);
     assert.equal(quicklaneSource.includes("ToDo"), true);
     assert.equal(quicklaneSource.includes("Beschluss"), true);
     assert.equal(quicklaneSource.includes("Projektnummer"), false);

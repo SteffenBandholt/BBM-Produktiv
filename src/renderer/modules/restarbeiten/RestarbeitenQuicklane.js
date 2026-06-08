@@ -1,8 +1,38 @@
 const QUICKLANE_ICON_CLASS = "bbm-project-context-quicklane-icon";
+const AMPEL_STATUS_ICON_URL = "./assets/icons/ampel-status.svg";
 
 function setUiEditorId(el, id) {
   if (el && id) el.setAttribute("data-ui-editor-id", id);
   return el;
+}
+
+function applyQuicklaneRootStyles(root) {
+  root.style.position = "fixed";
+  root.style.top = "104px";
+  root.style.right = "0";
+  root.style.bottom = "16px";
+  root.style.zIndex = "12030";
+  root.style.inlineSize = "64px";
+  root.style.display = "flex";
+  root.style.flexDirection = "column";
+  root.style.alignItems = "center";
+  root.style.gap = "8px";
+  root.style.padding = "8px 5px 8px 11px";
+  root.style.border = "1px solid rgba(154, 168, 189, 0.72)";
+  root.style.borderRight = "0";
+  root.style.borderRadius = "10px 0 0 10px";
+  root.style.background = "rgba(255, 255, 255, 0.96)";
+  root.style.boxShadow = "0 10px 22px rgba(31, 41, 55, 0.1)";
+  root.style.overflow = "hidden";
+  root.style.transform = "translateX(46px)";
+  root.style.transition = "transform 160ms ease, box-shadow 140ms ease, border-color 140ms ease";
+}
+
+function setQuicklaneOpen(root, open) {
+  root.dataset.open = open ? "true" : "false";
+  root.style.transform = open ? "translateX(0)" : "translateX(46px)";
+  root.style.borderColor = open ? "rgba(29, 78, 216, 0.42)" : "rgba(154, 168, 189, 0.72)";
+  root.style.boxShadow = open ? "0 14px 28px rgba(31, 41, 55, 0.15)" : "0 10px 22px rgba(31, 41, 55, 0.1)";
 }
 
 
@@ -23,39 +53,21 @@ function createTextIcon(label) {
 }
 
 function createAmpelIcon(active) {
-  const wrap = createTextIcon("");
-  wrap.style.inlineSize = "16px";
-  wrap.style.blockSize = "26px";
-  wrap.style.borderRadius = "8px";
-  wrap.style.background = "#1f1f1f";
-  wrap.style.padding = "3px 0";
-  wrap.style.boxSizing = "border-box";
-  wrap.style.flexDirection = "column";
-  wrap.style.justifyContent = "space-between";
-
-  const lamps = [
-    active
-      ? { color: "#5b2323", opacity: "0.32", shadow: "none" }
-      : { color: "#ff3b30", opacity: "1", shadow: "0 0 10px rgba(255,59,48,0.8)" },
-    { color: "#f4c542", opacity: "0.45", shadow: "none" },
-    active
-      ? { color: "#22c55e", opacity: "1", shadow: "0 0 10px rgba(34,197,94,0.85)" }
-      : { color: "#1f4d2f", opacity: "0.32", shadow: "none" },
-  ];
-
-  for (const lampState of lamps) {
-    const lamp = document.createElement("span");
-    lamp.style.inlineSize = "6px";
-    lamp.style.blockSize = "6px";
-    lamp.style.borderRadius = "999px";
-    lamp.style.display = "block";
-    lamp.style.background = lampState.color;
-    lamp.style.opacity = lampState.opacity;
-    lamp.style.boxShadow = lampState.shadow;
-    wrap.appendChild(lamp);
-  }
-
-  return wrap;
+  const icon = document.createElement("img");
+  icon.className = QUICKLANE_ICON_CLASS;
+  icon.setAttribute("data-bbm-quicklane-icon", "true");
+  icon.setAttribute("aria-hidden", "true");
+  icon.alt = "";
+  icon.src = AMPEL_STATUS_ICON_URL;
+  icon.dataset.active = active ? "true" : "false";
+  icon.style.display = "inline-flex";
+  icon.style.alignItems = "center";
+  icon.style.justifyContent = "center";
+  icon.style.inlineSize = "16px";
+  icon.style.blockSize = "30px";
+  icon.style.objectFit = "contain";
+  icon.style.opacity = active ? "0.92" : "0.48";
+  return icon;
 }
 
 function createLongtextIcon(active) {
@@ -121,7 +133,7 @@ function createGroup(id, label) {
 
 function syncOpenState(root, pinned) {
   root.dataset.pinned = pinned ? "true" : "false";
-  root.dataset.open = pinned ? "true" : "false";
+  setQuicklaneOpen(root, pinned);
 }
 
 export function buildRestarbeitenQuicklane({
@@ -139,13 +151,14 @@ export function buildRestarbeitenQuicklane({
   root.className = "bbm-restarbeiten-quicklane";
   root.setAttribute("aria-label", "Restarbeiten Quicklane");
   setUiEditorId(root, "restarbeiten.quicklane");
+  applyQuicklaneRootStyles(root);
   syncOpenState(root, pinned);
 
   root.addEventListener("mouseenter", () => {
-    root.dataset.open = "true";
+    setQuicklaneOpen(root, true);
   });
   root.addEventListener("mouseleave", () => {
-    if (root.dataset.pinned !== "true") root.dataset.open = "false";
+    if (root.dataset.pinned !== "true") setQuicklaneOpen(root, false);
   });
 
   const navigation = createGroup("restarbeiten.quicklane.group.navigation", "Navigation");

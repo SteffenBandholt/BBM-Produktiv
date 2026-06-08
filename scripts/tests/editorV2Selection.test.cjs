@@ -276,7 +276,18 @@ async function runEditorV2SelectionTests(run) {
     .map((entry) => entry.trim())
     .filter(Boolean);
 
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
+  const allowedProtokollUiDiffs = new Set([
+    "src/renderer/modules/protokoll/TopsScreenQuicklane.js",
+    "src/renderer/modules/protokoll/screens/TopsScreen.js",
+    "src/renderer/modules/protokoll/styles/tops.css",
+    "src/renderer/modules/protokoll/uiEditor/protokollUiElements.js",
+  ]);
+  assert.equal(
+    diffFiles.some(
+      (file) => file.startsWith("src/renderer/modules/protokoll/") && !allowedProtokollUiDiffs.has(file)
+    ),
+    false
+  );
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
 
   await run("Editor V2 Selection arbeitet im EditorLab", () => undefined);

@@ -1151,6 +1151,27 @@ export default class ProjectContextQuicklane {
 
     this.root.style.display = "flex";
     this.root.style.pointerEvents = "auto";
+
+    if (!this._isRestarbeitenContext) {
+      this.root.style.width = "176px";
+      this.root.style.right = QUICKLANE_OPEN_RIGHT;
+      this.root.style.transform = "none";
+      if (this.edgeGripEl) {
+        this.edgeGripEl.style.display = "none";
+        this.edgeGripEl.style.pointerEvents = "none";
+      }
+      if (this.pinBtn) {
+        const documentRef = this.root?.ownerDocument || document;
+        this.pinBtn.replaceChildren(createLockIcon(documentRef, { open: !this._isPinned }));
+        this.pinBtn.title = this._isPinned ? "LÃ¶sen" : "Fixieren";
+        this.pinBtn.setAttribute("aria-label", this._isPinned ? "Quicklane lÃ¶sen" : "Quicklane fixieren");
+        this.pinBtn.style.background = this._isPinned ? "#eef7ff" : "#ffffff";
+        this.pinBtn.style.borderColor = this._isPinned ? "#b6d4ff" : "#d5d5d5";
+        this.pinBtn.style.color = this._isPinned ? "#0b4db4" : "#222";
+      }
+      return;
+    }
+
     const isQuicklaneOpen = this._isQuicklaneOpen();
     this.root.style.width = isQuicklaneOpen ? (this._isRestarbeitenContext ? "64px" : "176px") : "56px";
     this.root.style.right = isQuicklaneOpen ? QUICKLANE_OPEN_RIGHT : QUICKLANE_CLOSED_RIGHT;

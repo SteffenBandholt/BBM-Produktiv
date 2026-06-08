@@ -5,6 +5,7 @@ import { TopsCommands } from "../TopsCommands.js";
 import { TopsCloseFlow } from "../TopsCloseFlow.js";
 import { TopsRepository } from "../TopsRepository.js";
 import { TopsAssigneeDataSource } from "../TopsAssigneeDataSource.js";
+import { TopsScreenQuicklane } from "../TopsScreenQuicklane.js";
 import { createTopsStore } from "../createTopsStore.js";
 import { getSelectedTop, hasSelection } from "../TopsSelectors.js";
 import { TopsViewDialogs } from "../TopsViewDialogs.js";
@@ -89,6 +90,7 @@ export default class TopsScreen {
     this.editCanvas = null;
     this.btnTitleDictate = null;
     this.btnLongDictate = null;
+    this.quicklane = null;
 
     this._sidebarEl = null;
     this._sidebarDisplay = "";
@@ -189,7 +191,7 @@ export default class TopsScreen {
     sheetCanvas.appendChild(sheetPaper);
     sheetArea.appendChild(sheetCanvas);
     editArea.appendChild(editCanvas);
-    root.append(this.header.root, sheetArea, editArea);
+    root.append(this.header.root, sheetArea, editArea, this.quicklane.root);
 
   }
 
@@ -197,6 +199,21 @@ export default class TopsScreen {
     this._buildHeader();
     this._buildList();
     this._buildProtocolWorkbenchHost();
+    this._buildQuicklane();
+  }
+
+  _buildQuicklane() {
+    this.quicklane = new TopsScreenQuicklane({
+      onProject: () => this._openQuicklaneProject(),
+      onFirms: () => this._openQuicklaneFirms(),
+      onParticipants: () => this._openQuicklaneParticipants(),
+      onAmpelToggle: () => this.toggleAmpelDisplay(),
+      onLongtextToggle: () => this.toggleLongtextDisplay(),
+      onTopFilterChange: (mode) => this.setTopFilter(mode),
+      onPreview: () => this._openQuicklanePreview(),
+      onPrint: () => this._openQuicklanePrint(),
+      onMail: () => this._openQuicklaneMail(),
+    });
   }
 
   _buildHeader() {
@@ -389,8 +406,9 @@ export default class TopsScreen {
   }
 
   _applyAmpelVisibility() {
-    if (this.workbench?.metaColumn?.statusAmpelBridge?.root) {
-      this.workbench.metaColumn.statusAmpelBridge.root.style.display = this.showAmpelInList ? "" : "none";
+    const trafficWrap = this.workbench?.metaColumn?.statusAmpelBridge?.field?.trafficWrap || null;
+    if (trafficWrap) {
+      trafficWrap.style.display = this.showAmpelInList ? "" : "none";
     }
   }
 
@@ -455,6 +473,79 @@ export default class TopsScreen {
   _getQuicklaneProjectId() {
     const state = this.store.getState();
     return state.projectId || this.router?.currentProjectId || null;
+  }
+
+  _getQuicklaneMeetingId() {
+    const state = this.store.getState();
+    return state.meetingId || this.meetingId || this.router?.currentMeetingId || null;
+  }
+
+  async _openQuicklaneProject() {
+    const projectId = this._getQuicklaneProjectId();
+    if (!projectId || typeof this.router?.openProjectFormModal !== "function") return false;
+    await this.router.openProjectFormModal({ projectId });
+    return true;
+  }
+
+  async _openQuicklaneFirms() {
+    const projectId = this._getQuicklaneProjectId();
+    if (!projectId || typeof this.router?.showProjectFirms !== "function") return false;
+    await this.router.showProjectFirms(projectId, {
+      returnContext: {
+        section: "meetings",
+        projectId,
+        meetingId: this._getQuicklaneMeetingId(),
+      },
+    });
+    return true;
+  }
+
+  async _openQuicklaneParticipants() {
+    const projectId = this._getQuicklaneProjectId();
+    const meetingId = this._getQuicklaneMeetingId();
+    if (!projectId || !meetingId || typeof this.router?.openParticipantsModal !== "function") return false;
+    await this.router.openParticipantsModal({ projectId, meetingId });
+    return true;
+  }
+
+  async _openQuicklanePreview() {
+    const projectId = this._getQuicklaneProjectId();
+    const meetingId = this._getQuicklaneMeetingId();
+    if (!projectId || !meetingId || typeof this.router?.openPrintVorabzug !== "function") return false;
+    await this.router.openPrintVorabzug({ projectId, meetingId });
+    return true;
+  }
+
+  async _openQuicklanePrint() {
+    const projectId = this._getQuicklaneProjectId();
+    if (!projectId || typeof this.router?.openPrintModal !== "function") return false;
+    await this.router.openPrintModal({ projectId });
+    return true;
+  }
+
+  _openQuicklaneMail() {
+    if (typeof this.router?.openProtocolMailModal === "function") {
+      return this.router.openProtocolMailModal({
+        projectId: this._getQuicklaneProjectId(),
+        meetingId: this._getQuicklaneMeetingId(),
+      });
+    }
+    if (typeof window !== "undefined" && typeof window.alert === "function") {
+      window.alert("E-Mail ist hier noch nicht sicher angebunden.");
+    }
+    return false;
+  }
+
+  _syncQuicklaneState(state = this.store.getState()) {
+    this.quicklane?.update?.({
+      topFilter: state.topFilter || "all",
+      showAmpel: this.showAmpelInList,
+      showLongtext: this.showLongtextInList,
+      hasProject: !!this._getQuicklaneProjectId(),
+      hasMeeting: !!this._getQuicklaneMeetingId(),
+      isReadOnly: !!state.isReadOnly,
+      isBusy: !!state.isLoading || !!state.isWriting,
+    });
   }
 
   // Gemeinsame Domaene, modulnah verbraucht:
@@ -957,6 +1048,7 @@ export default class TopsScreen {
     this._syncHeaderState();
     this._syncListState();
     this._syncProtocolWorkbenchHostState();
+    this._syncQuicklaneState(state);
     if (this.router?.context?.ui) {
       this.router.context.ui.topFilter = normalizeTopFilterMode(state.topFilter || "all");
       this.router.context.ui.onTopFilterChange = (mode) => this.setTopFilter(mode);

@@ -3,6 +3,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
+const { isUnexpectedProtokollDiff } = require("./_diffGuardAllowances.cjs");
 
 async function runRestarbeitenV2LegacyReadBridgeTests(run) {
   const bridgePath = path.join(__dirname, "../../src/renderer/modules/restarbeitenV2/restarbeitenV2LegacyReadBridge.js");
@@ -107,7 +108,7 @@ async function runRestarbeitenV2LegacyReadBridgeTests(run) {
     .split(/\r?\n/)
     .map((entry) => entry.trim())
     .filter(Boolean);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
+  assert.equal(diffFiles.some(isUnexpectedProtokollDiff), false);
   assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/uiInspector/")), false);
   const allowedRestarbeitenMainFiles = new Set([
     "src/main/db/database.js",

@@ -223,11 +223,11 @@
 }
 
 .bbm-restarbeiten-quicklane {
-  position: absolute;
-  inset-block-start: 8px;
+  position: fixed;
+  inset-block-start: 104px;
   inset-inline-end: 0;
-  inset-block-end: 14px;
-  z-index: 3;
+  inset-block-end: 16px;
+  z-index: 12030;
   inline-size: 64px;
   display: flex;
   flex-direction: column;

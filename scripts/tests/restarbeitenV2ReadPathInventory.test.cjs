@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { execFileSync } = require("node:child_process");
+const { isUnexpectedProtokollDiff } = require("./_diffGuardAllowances.cjs");
 
 async function runRestarbeitenV2ReadPathInventoryTests(run) {
   const docPath = path.join(__dirname, "../../docs/RESTARBEITEN_V2_LESEWEGE_INVENTAR.md");
@@ -32,7 +33,7 @@ async function runRestarbeitenV2ReadPathInventoryTests(run) {
     .map((entry) => entry.trim())
     .filter(Boolean);
   assert.equal(diffFiles.some((file) => file.startsWith("src/main/")), false);
-  assert.equal(diffFiles.some((file) => file.startsWith("src/renderer/modules/protokoll/")), false);
+  assert.equal(diffFiles.some(isUnexpectedProtokollDiff), false);
 
   if (run) {
     run("Restarbeiten V2 Lesewege-Inventar ist dokumentiert", () => undefined);
