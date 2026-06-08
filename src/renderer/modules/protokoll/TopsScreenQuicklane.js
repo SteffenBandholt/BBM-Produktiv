@@ -97,7 +97,11 @@ export class TopsScreenQuicklane {
     this.root.className = "bbm-tops-screen-quicklane";
     this.root.setAttribute("aria-label", "TOPS Quicklane");
     this.root.setAttribute("data-ui-editor-id", "protokoll.topsScreen.quicklane");
+    this.root.dataset.pinned = "false";
+    this.root.dataset.open = "false";
     this.filterMenu = null;
+    this.pinned = false;
+    this.lastState = {};
   }
 
   update({
@@ -109,12 +113,23 @@ export class TopsScreenQuicklane {
     isReadOnly = false,
     isBusy = false,
   } = {}) {
+    this.lastState = { topFilter, showAmpel, showLongtext, hasProject, hasMeeting, isReadOnly, isBusy };
     const mode = normalizeTopFilterMode(topFilter);
     const disabled = !!isBusy;
     this.root.replaceChildren();
+    this._syncPinnedState();
 
     const navigation = createGroup("protokoll.topsScreen.quicklane.group.navigation", "Navigation");
     navigation.append(
+      createButton({
+        id: "protokoll.topsScreen.quicklane.pin",
+        icon: this.pinned ? "🔒" : "🔓",
+        title: this.pinned ? "Lösen" : "Fixieren",
+        ariaLabel: this.pinned ? "Quicklane lösen" : "Quicklane fixieren",
+        pressed: this.pinned,
+        disabled,
+        onClick: () => this._togglePinned(),
+      }),
       createButton({
         id: "protokoll.topsScreen.quicklane.action.project",
         icon: "📁",
@@ -225,5 +240,16 @@ export class TopsScreenQuicklane {
     }
     this.filterMenu = menu;
     this.root.appendChild(menu);
+  }
+
+  _togglePinned() {
+    this.pinned = !this.pinned;
+    this._syncPinnedState();
+    this.update(this.lastState);
+  }
+
+  _syncPinnedState() {
+    this.root.dataset.pinned = this.pinned ? "true" : "false";
+    this.root.dataset.open = this.pinned ? "true" : "false";
   }
 }

@@ -19,6 +19,7 @@ const REQUIRED_IDS = [
   "protokoll.topsScreen.quicklane.group.visibility",
   "protokoll.topsScreen.quicklane.group.filter",
   "protokoll.topsScreen.quicklane.group.output",
+  "protokoll.topsScreen.quicklane.pin",
   "protokoll.topsScreen.quicklane.action.project",
   "protokoll.topsScreen.quicklane.action.firms",
   "protokoll.topsScreen.quicklane.action.participants",

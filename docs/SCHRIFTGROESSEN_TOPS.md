@@ -14,10 +14,11 @@ Diese Übersicht fasst die aktuell im Code gesetzten Schriftgrößen für TopsSc
 | Header Meta-Legende | `.bbm-tops-header-meta-legend` | `7pt` |
 | Header Buttons | `.bbm-tops-btn` | `7.5pt` |
 | Workbench Titel links | `.bbm-tops-workbench-left-title` | `9pt` |
-| TOP-Liste Kurztext / Titel | `.bbm-tops-list-row-title` | `10pt` |
+| TOP-Liste Kurztext / Titel | `.bbm-tops-list-row-title` | `8.5pt` |
 | TOP-Liste Langtext / Preview | `.bbm-tops-list-row-preview` | `9.5pt` |
-| TOP-Liste Nummer / Datum | `.bbm-tops-list-row-number-date` | `6pt` |
-| TOP-Liste Meta | `.bbm-tops-list-row-meta` | `8.5pt` |
+| TOP-Liste Nummer | `.bbm-tops-list-row-number` | `8.5pt` |
+| TOP-Liste Datum | `.bbm-tops-list-row-number-date` | `6.5pt` |
+| TOP-Liste Meta | `.bbm-tops-list-row-meta` | `8pt` |
 | Collapse-Button in Liste | `.bbm-tops-list-row-collapse-toggle` | `8pt` |
 | Editbox Label | `.bbm-tops-workbench-editbox .editbox-label` | `8.5pt` |
 | Editbox Kurztext-Eingabe | `.bbm-tops-workbench-editbox .editbox-input` | `10pt` |

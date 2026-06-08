@@ -1369,12 +1369,22 @@ async function runTopsScreenIntegrationTests(run) {
       assert.ok(quicklane);
       assert.equal(quicklane.tagName, "ASIDE");
       assert.equal(quicklane.className, "bbm-tops-screen-quicklane");
+      assert.equal(quicklane.dataset.pinned, "false");
+      assert.equal(quicklane.dataset.open, "false");
+      const topsCss = fs.readFileSync(
+        path.join(__dirname, "../../src/renderer/modules/protokoll/styles/tops.css"),
+        "utf8"
+      );
+      assert.match(topsCss, /\.bbm-tops-screen-quicklane\s*\{[\s\S]*inline-size:\s*64px;/);
+      assert.match(topsCss, /\.bbm-tops-screen-quicklane\s*\{[\s\S]*transform:\s*translateX\(46px\);/);
+      assert.match(topsCss, /\.bbm-tops-screen-quicklane:hover,\s*\.bbm-tops-screen-quicklane\[data-open="true"\]/);
 
       for (const id of [
         "protokoll.topsScreen.quicklane.group.navigation",
         "protokoll.topsScreen.quicklane.group.visibility",
         "protokoll.topsScreen.quicklane.group.filter",
         "protokoll.topsScreen.quicklane.group.output",
+        "protokoll.topsScreen.quicklane.pin",
         "protokoll.topsScreen.quicklane.action.project",
         "protokoll.topsScreen.quicklane.action.firms",
         "protokoll.topsScreen.quicklane.action.participants",
@@ -1388,6 +1398,7 @@ async function runTopsScreenIntegrationTests(run) {
         assert.ok(findByDataUiEditorId(root, id), id);
       }
 
+      const pinButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.pin");
       const projectButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.project");
       const firmsButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.firms");
       const participantsButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.participants");
@@ -1398,12 +1409,22 @@ async function runTopsScreenIntegrationTests(run) {
       const printButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.print");
       const mailButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.action.mail");
 
+      assert.equal(pinButton.getAttribute?.("aria-pressed") || pinButton["aria-pressed"], "false");
       assert.equal(projectButton.children[0].className, "bbm-tops-screen-quicklane-icon");
       assert.equal(ampelButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--ampel");
       assert.equal(ampelButton.children[0].tagName, "IMG");
       assert.equal(String(ampelButton.children[0].src || "").endsWith("assets/icons/ampel-status.svg"), true);
       assert.equal(longtextButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--longtext");
       assert.equal(filterButton.children[0].className, "bbm-tops-screen-quicklane-icon bbm-tops-screen-quicklane-icon--filter");
+
+      pinButton.dispatchEvent({ type: "click", preventDefault() {} });
+      assert.equal(quicklane.dataset.pinned, "true");
+      assert.equal(quicklane.dataset.open, "true");
+      const unpinButton = findByDataUiEditorId(root, "protokoll.topsScreen.quicklane.pin");
+      assert.equal(unpinButton.getAttribute?.("aria-pressed") || unpinButton["aria-pressed"], "true");
+      unpinButton.dispatchEvent({ type: "click", preventDefault() {} });
+      assert.equal(quicklane.dataset.pinned, "false");
+      assert.equal(quicklane.dataset.open, "false");
 
       projectButton.dispatchEvent({ type: "click", preventDefault() {} });
       firmsButton.dispatchEvent({ type: "click", preventDefault() {} });
@@ -1563,7 +1584,7 @@ async function runTopsScreenIntegrationTests(run) {
       true
     );
     assert.equal(
-      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-preview {\n  font-size: var(--bbm-top-short-font-size);\n  max-inline-size: 107ch;"),
+      topsCss.includes(".bbm-tops-list-row:not([data-top-level=\"1\"]) .bbm-tops-list-row-preview {\n  font-size: var(--bbm-tops-list-long-font-size);\n  max-inline-size: 107ch;"),
       true
     );
     assert.equal(

@@ -20,6 +20,11 @@
   --bbm-top-text-font-family: "Noto Sans", Arial, sans-serif;
   --bbm-top-short-font-size: 10pt;
   --bbm-top-long-font-size: 9.5pt;
+  --bbm-tops-list-title-font-size: 8.5pt;
+  --bbm-tops-list-long-font-size: 9.5pt;
+  --bbm-tops-list-meta-default-font-size: 8pt;
+  --bbm-tops-list-date-font-size: 6.5pt;
+  --bbm-tops-list-number-default-font-size: 8.5pt;
   --bbm-top-text-line-height: 1.35;
   --bbm-top-text-pad-x: 5px;
   /* UI: Gegenstandsspalte wirkt breiter, ohne Grid/Meta/PDF zu aendern. */
@@ -413,48 +418,75 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   inset-inline-end: 0;
   inset-block-end: 16px;
   z-index: 12030;
-  inline-size: 62px;
+  inline-size: 64px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  align-items: center;
   gap: 8px;
-  padding: 8px 5px;
-  border: 1px solid rgba(154, 168, 189, 0.48);
+  padding: 8px 5px 8px 11px;
+  border: 1px solid rgba(154, 168, 189, 0.72);
   border-inline-end: 0;
-  border-radius: 8px 0 0 8px;
+  border-radius: 10px 0 0 10px;
   background: rgba(255, 255, 255, 0.96);
-  box-shadow: var(--bbm-tops-shadow-soft);
+  box-shadow: 0 10px 22px rgba(31, 41, 55, 0.1);
+  overflow: hidden;
+  transform: translateX(46px);
+  transition: transform 160ms ease, box-shadow 140ms ease, border-color 140ms ease;
+}
+
+.bbm-tops-screen-quicklane:hover,
+.bbm-tops-screen-quicklane[data-open="true"] {
+  transform: translateX(0);
+  border-color: rgba(29, 78, 216, 0.42);
+  box-shadow: 0 14px 28px rgba(31, 41, 55, 0.15);
+}
+
+.bbm-tops-screen-quicklane::before {
+  content: "";
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline-start: 5px;
+  inline-size: 4px;
+  block-size: 56px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(95, 107, 122, 0.7) 0,
+    rgba(95, 107, 122, 0.7) 4px,
+    transparent 4px,
+    transparent 10px
+  );
 }
 
 .bbm-tops-screen-quicklane__group {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
+  display: grid;
   gap: 5px;
-  padding-block-end: 8px;
-  border-block-end: 1px solid rgba(154, 168, 189, 0.36);
+  justify-items: center;
+  inline-size: 100%;
+  padding: 0 0 8px;
+  border-block-end: 1px solid rgba(216, 222, 234, 0.9);
 }
 
 .bbm-tops-screen-quicklane__group:last-child {
-  padding-block-end: 0;
   border-block-end: 0;
+  padding-block-end: 0;
 }
 
 .bbm-tops-screen-quicklane__button {
-  inline-size: 50px;
+  inline-size: 36px;
   block-size: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  padding: 0;
   border: 1px solid var(--bbm-tops-line);
   border-radius: 8px;
   background: var(--bbm-tops-panel);
   color: var(--bbm-tops-text);
   cursor: pointer;
   font: 700 14px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.88) inset, 0 2px 5px rgba(31, 41, 55, 0.08);
 }
 
 .bbm-tops-screen-quicklane__button:hover:not(:disabled) {
@@ -728,8 +760,9 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   gap: 1px;
   white-space: nowrap;
   font-family: var(--bbm-top-text-font-family);
-  font-size: var(--bbm-tops-list-number-font-size, var(--bbm-top-short-font-size));
-  line-height: var(--bbm-top-text-line-height);
+  font-size: var(--bbm-tops-list-number-font-size, var(--bbm-tops-list-number-default-font-size));
+  font-weight: 600;
+  line-height: 1.15;
   padding-inline: var(--bbm-tops-list-number-padding-inline, 0);
 }
 
@@ -779,16 +812,16 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row-number-date {
-  font-size: 6pt;
-  line-height: 1;
+  font-size: var(--bbm-tops-list-date-font-size);
+  line-height: 1.1;
   opacity: 0.78;
   white-space: nowrap;
 }
 
 .bbm-tops-list-row-title {
-  font-weight: 600;
+  font-weight: 500;
   /* DEV-Layout: allow live fine-tuning via --bbm-tops-list-text-font-size (falls back to default). */
-  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-title-font-size));
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
   max-inline-size: var(--bbm-top-short-measure);
@@ -840,7 +873,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 .bbm-tops-list-row-preview {
   margin-top: 4px;
   /* DEV-Layout: keep preview in sync with the text-zone font size when overridden. */
-  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-long-font-size));
   line-height: var(--bbm-top-text-line-height);
   font-family: var(--bbm-top-text-font-family);
   max-inline-size: var(--bbm-top-long-measure);
@@ -851,13 +884,13 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-preview {
-  font-size: var(--bbm-top-short-font-size);
+  font-size: var(--bbm-tops-list-long-font-size);
   max-inline-size: 107ch;
 }
 
 /* DEV-Layout override: when the text-zone font variable is set, keep the preview in sync. */
 .bbm-tops-list-row-text .bbm-tops-list-row-preview {
-  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-long-font-size));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-long-font-size));
 }
 
 .bbm-tops-list-row[data-is-important="true"]:not([data-is-completed="true"]) .bbm-tops-list-row-preview {
@@ -869,7 +902,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
   max-inline-size: min(100%, var(--bbm-top-long-measure));
   padding-left: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
   padding-right: var(--bbm-tops-list-text-padding-inline, var(--bbm-top-text-pad-x));
-  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-top-short-font-size));
+  font-size: var(--bbm-tops-list-text-font-size, var(--bbm-tops-list-title-font-size));
 }
 
 .bbm-tops-list-row:not([data-top-level="1"]) .bbm-tops-list-row-text {
@@ -881,7 +914,7 @@ button.bbm-tops-btn.bbm-tops-btn-end-meeting[data-action="end-meeting"]:focus-vi
 }
 
 .bbm-tops-list-row-meta {
-  font-size: var(--bbm-tops-list-meta-font-size, 8.5pt);
+  font-size: var(--bbm-tops-list-meta-font-size, var(--bbm-tops-list-meta-default-font-size));
   opacity: 0.9;
   display: grid;
   gap: 2px;
