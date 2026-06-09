@@ -11,6 +11,10 @@ const LAUNCHER_CSS_ATTRIBUTE = "data-ui-editor-launcher-css";
 const LAUNCHER_STATUS_ATTRIBUTE = "data-ui-editor-launcher-status";
 const UI_EDITOR_ACTIVE_ATTRIBUTE = "data-ui-editor-active";
 const UI_EDITOR_SELECTED_ATTRIBUTE = "data-ui-editor-selected";
+const UI_EDITOR_PREVIEW_ATTRIBUTE = "data-ui-editor-preview";
+const RESTARBEITEN_PREVIEW_SCOPE = "restarbeiten.screen";
+const PREVIEW_MOVE_STEP = 5;
+const PREVIEW_RESIZE_STEP = 5;
 
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
@@ -127,6 +131,8 @@ function createLauncherState({ activeUiScope = null, registeredElements = null, 
     hoverTargetNode: null,
     selectionMessage: "",
     hoverMessage: "",
+    previewStates: new Map(),
+    previewMessage: "",
     targetSelectionController: null,
     targetSelectionPanelController: null,
     win: null,
@@ -189,6 +195,120 @@ function removeExistingLauncherStatus(doc = getDocument()) {
   launcherStatusReopenNode = null;
 }
 
+function getElementAllowedOps(element = null) {
+  return Array.isArray(element?.allowedOps)
+    ? element.allowedOps.map((entry) => String(entry || "").trim()).filter(Boolean)
+    : [];
+}
+
+function getElementLockedOps(element = null) {
+  return Array.isArray(element?.lockedOps)
+    ? element.lockedOps.map((entry) => String(entry || "").trim()).filter(Boolean)
+    : [];
+}
+
+function isPreviewOperationAllowed(element = null, operation = "") {
+  const normalizedOperation = String(operation || "").trim();
+  const allowedOps = getElementAllowedOps(element);
+  const lockedOps = getElementLockedOps(element);
+  if (!normalizedOperation || lockedOps.includes(normalizedOperation)) return false;
+  if (normalizedOperation === "resizeWidth") {
+    return allowedOps.includes("resize") || allowedOps.includes("width");
+  }
+  if (normalizedOperation === "resizeHeight") {
+    return allowedOps.includes("resize") || allowedOps.includes("height");
+  }
+  return allowedOps.includes(normalizedOperation);
+}
+
+function getPreviewOriginalStyle(targetNode) {
+  return {
+    transform: targetNode?.style?.transform || "",
+    width: targetNode?.style?.width || "",
+    height: targetNode?.style?.height || "",
+    display: targetNode?.style?.display || "",
+  };
+}
+
+function getPreviewState(state = {}, targetNode = null) {
+  if (!targetNode?.style || !state?.previewStates) return null;
+  let previewState = state.previewStates.get(targetNode);
+  if (!previewState) {
+    previewState = {
+      originalStyle: getPreviewOriginalStyle(targetNode),
+      dx: 0,
+      dy: 0,
+      widthDelta: 0,
+      heightDelta: 0,
+      baseWidth: getTargetBaseSize(targetNode, "width"),
+      baseHeight: getTargetBaseSize(targetNode, "height"),
+      hidden: false,
+    };
+    state.previewStates.set(targetNode, previewState);
+  }
+  return previewState;
+}
+
+function getTargetBaseSize(targetNode, propertyName) {
+  const styleValue = Number.parseFloat(targetNode?.style?.[propertyName]);
+  if (Number.isFinite(styleValue) && styleValue > 0) return styleValue;
+  const rect = typeof targetNode?.getBoundingClientRect === "function" ? targetNode.getBoundingClientRect() : null;
+  const rectValue = Number(rect?.[propertyName]);
+  if (Number.isFinite(rectValue) && rectValue > 0) return rectValue;
+  const fallbackProperty = propertyName === "width" ? "offsetWidth" : "offsetHeight";
+  const fallbackValue = Number(targetNode?.[fallbackProperty]);
+  return Number.isFinite(fallbackValue) && fallbackValue > 0 ? fallbackValue : 0;
+}
+
+function applyPreviewState(targetNode, previewState) {
+  if (!targetNode?.style || !previewState) return false;
+
+  const baseTransform = previewState.originalStyle.transform || "";
+  const previewTransform = previewState.dx || previewState.dy
+    ? `translate(${previewState.dx}px, ${previewState.dy}px)`
+    : "";
+  targetNode.style.transform = [baseTransform, previewTransform].filter(Boolean).join(" ").trim();
+
+  if (previewState.widthDelta) {
+    targetNode.style.width = `${Math.max(1, Math.round(previewState.baseWidth + previewState.widthDelta))}px`;
+  } else {
+    targetNode.style.width = previewState.originalStyle.width;
+  }
+
+  if (previewState.heightDelta) {
+    targetNode.style.height = `${Math.max(1, Math.round(previewState.baseHeight + previewState.heightDelta))}px`;
+  } else {
+    targetNode.style.height = previewState.originalStyle.height;
+  }
+
+  targetNode.style.display = previewState.hidden ? "none" : previewState.originalStyle.display;
+  targetNode.setAttribute?.(UI_EDITOR_PREVIEW_ATTRIBUTE, "true");
+  return true;
+}
+
+function resetPreviewForTarget(state = {}, targetNode = null) {
+  const previewState = targetNode && state?.previewStates?.get?.(targetNode);
+  if (!previewState || !targetNode?.style) return false;
+  targetNode.style.transform = previewState.originalStyle.transform;
+  targetNode.style.width = previewState.originalStyle.width;
+  targetNode.style.height = previewState.originalStyle.height;
+  targetNode.style.display = previewState.originalStyle.display;
+  targetNode.setAttribute?.(UI_EDITOR_PREVIEW_ATTRIBUTE, "false");
+  state.previewStates.delete(targetNode);
+  return true;
+}
+
+function resetAllPreviewChanges(state = {}) {
+  if (!state?.previewStates) return 0;
+  const targets = Array.from(state.previewStates.keys());
+  let resetCount = 0;
+  for (const targetNode of targets) {
+    if (resetPreviewForTarget(state, targetNode)) resetCount += 1;
+  }
+  state.previewMessage = resetCount > 0 ? "Preview zurueckgesetzt." : "Keine Preview-Aenderung aktiv.";
+  return resetCount;
+}
+
 function clearUiEditorTargetSelection(state = {}) {
   const target = state.selectedTargetNode || null;
   if (target?.setAttribute) {
@@ -209,6 +329,7 @@ function clearUiEditorHoverSelection(state = {}) {
 }
 
 function removeLauncherTargetSelectionController(state = {}) {
+  resetAllPreviewChanges(state);
   state.targetSelectionController?.uninstall?.();
   state.targetSelectionController = null;
   clearUiEditorTargetSelection(state);
@@ -324,6 +445,7 @@ function getReadonlyLauncherStatusText(state = {}) {
     state.hoverMessage ? `Hover-Hinweis: ${state.hoverMessage}` : "",
     selectedElement ? `Auswahl: ${selectedElement.id}` : "Auswahl: keine",
     state.selectionMessage ? `Auswahl-Hinweis: ${state.selectionMessage}` : "",
+    state.previewMessage ? `Preview: ${state.previewMessage}` : "",
     selectedElement ? `Name: ${selectedElement.name || selectedElement.label || ""}` : "",
     "",
     getReadonlyRegistryElementsText(registry.elements),
@@ -440,6 +562,7 @@ function installLauncherTargetSelectionController(doc, host, state) {
       state.hoverMessage = selection.message || "";
       const status = updateLauncherStatusHint(doc, host, state);
       renderReadonlyScopeButtons(doc, status, state);
+      renderPreviewControls(doc, status, state);
     },
     onSelectionChange(selection) {
       state.selectedElement = selection.element;
@@ -447,6 +570,7 @@ function installLauncherTargetSelectionController(doc, host, state) {
       state.selectionMessage = selection.message || "";
       const status = updateLauncherStatusHint(doc, host, state);
       renderReadonlyScopeButtons(doc, status, state);
+      renderPreviewControls(doc, status, state);
     },
   });
   controller?.install?.();
@@ -474,12 +598,130 @@ function renderReadonlyScopeButtons(doc, status, state) {
       setActiveScopeInState(state, scope.uiScope);
       const updatedStatus = updateLauncherStatusHint(doc, status.parentElement, state);
       renderReadonlyScopeButtons(doc, updatedStatus, state);
+      renderPreviewControls(doc, updatedStatus, state);
       installLauncherTargetSelectionController(doc, status.parentElement, state);
     });
     scopeList.appendChild(button);
   }
 
   getLauncherStatusContentNode(status)?.appendChild(scopeList);
+}
+
+function getSelectedRegistryElementForPreview(state = {}) {
+  const selectedId = String(state?.selectedElement?.id || "").trim();
+  return selectedId ? getRegisteredElementById(state, selectedId) : null;
+}
+
+function isRestarbeitenPreviewScope(state = {}) {
+  const registry = getSelectedRegistryFromState(state);
+  return (registry.uiScope || state.activeUiScope) === RESTARBEITEN_PREVIEW_SCOPE;
+}
+
+function applyPreviewOperation(state = {}, operation = "", payload = {}) {
+  if (!isRestarbeitenPreviewScope(state)) {
+    state.previewMessage = "Preview nur fuer Restarbeiten freigegeben.";
+    return false;
+  }
+
+  const targetNode = state.selectedTargetNode || null;
+  const registryElement = getSelectedRegistryElementForPreview(state);
+  const normalizedOperation = String(operation || "").trim();
+  if (!targetNode || !registryElement) {
+    state.previewMessage = "Kein registriertes Ziel ausgewaehlt.";
+    return false;
+  }
+
+  if (!isPreviewOperationAllowed(registryElement, normalizedOperation)) {
+    state.previewMessage = `Operation nicht erlaubt: ${normalizedOperation}.`;
+    return false;
+  }
+
+  const previewState = getPreviewState(state, targetNode);
+  if (!previewState) {
+    state.previewMessage = "Preview nicht anwendbar.";
+    return false;
+  }
+
+  if (normalizedOperation === "move") {
+    previewState.dx += Number(payload.dx) || 0;
+    previewState.dy += Number(payload.dy) || 0;
+  } else if (normalizedOperation === "resizeWidth") {
+    previewState.widthDelta += Number(payload.delta) || 0;
+  } else if (normalizedOperation === "resizeHeight") {
+    previewState.heightDelta += Number(payload.delta) || 0;
+  } else if (normalizedOperation === "hide") {
+    previewState.hidden = true;
+  } else if (normalizedOperation === "show") {
+    previewState.hidden = false;
+  }
+
+  applyPreviewState(targetNode, previewState);
+  state.previewMessage = "Preview angewendet.";
+  return true;
+}
+
+function createPreviewControlButton(doc, label, actionId, handler) {
+  const button = doc.createElement("button");
+  button.type = "button";
+  button.textContent = label;
+  button.setAttribute("data-ui-editor-preview-action", actionId);
+  button.disabled = typeof handler !== "function";
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (typeof handler === "function") handler();
+  });
+  return button;
+}
+
+function renderPreviewControls(doc, status, state) {
+  if (!doc?.createElement || !status) return;
+  if (!isRestarbeitenPreviewScope(state)) return;
+  const content = getLauncherStatusContentNode(status);
+  if (!content?.appendChild) return;
+
+  const selectedElement = getSelectedRegistryElementForPreview(state);
+  const hasTarget = Boolean(state.selectedTargetNode);
+  const controls = doc.createElement("div");
+  controls.className = "ui-editor-preview-controls";
+  controls.setAttribute("data-ui-editor-preview-controls", "true");
+
+  const title = doc.createElement("div");
+  title.className = "ui-editor-preview-controls__title";
+  title.textContent = "Preview";
+  controls.appendChild(title);
+
+  const addButton = (label, operation, payload = {}, actionId = operation) => {
+    const allowed = hasTarget && selectedElement && isPreviewOperationAllowed(selectedElement, operation);
+    controls.appendChild(createPreviewControlButton(doc, label, actionId, allowed
+      ? () => {
+          applyPreviewOperation(state, operation, payload);
+          const updatedStatus = updateLauncherStatusHint(doc, status.parentElement, state);
+          renderReadonlyScopeButtons(doc, updatedStatus, state);
+          renderPreviewControls(doc, updatedStatus, state);
+        }
+      : null));
+  };
+
+  addButton("<", "move", { dx: -PREVIEW_MOVE_STEP, dy: 0 }, "<");
+  addButton(">", "move", { dx: PREVIEW_MOVE_STEP, dy: 0 }, ">");
+  addButton("^", "move", { dx: 0, dy: -PREVIEW_MOVE_STEP }, "^");
+  addButton("v", "move", { dx: 0, dy: PREVIEW_MOVE_STEP }, "v");
+  addButton("B-", "resizeWidth", { delta: -PREVIEW_RESIZE_STEP }, "B-");
+  addButton("B+", "resizeWidth", { delta: PREVIEW_RESIZE_STEP }, "B+");
+  addButton("H-", "resizeHeight", { delta: -PREVIEW_RESIZE_STEP }, "H-");
+  addButton("H+", "resizeHeight", { delta: PREVIEW_RESIZE_STEP }, "H+");
+  addButton("Aus", "hide");
+  addButton("Ein", "show");
+
+  controls.appendChild(createPreviewControlButton(doc, "Reset", "reset", () => {
+    resetAllPreviewChanges(state);
+    const updatedStatus = updateLauncherStatusHint(doc, status.parentElement, state);
+    renderReadonlyScopeButtons(doc, updatedStatus, state);
+    renderPreviewControls(doc, updatedStatus, state);
+  }));
+
+  content.appendChild(controls);
 }
 
 function syncLauncherButtonState(button, state, { doc = getDocument(), host = null } = {}) {
@@ -492,6 +734,7 @@ function syncLauncherButtonState(button, state, { doc = getDocument(), host = nu
   if (active) {
     const status = updateLauncherStatusHint(doc, host || button.parentElement, state);
     renderReadonlyScopeButtons(doc, status, state);
+    renderPreviewControls(doc, status, state);
     installLauncherTargetSelectionController(doc, host || button.parentElement, state);
   } else {
     removeLauncherTargetSelectionController(state);
@@ -536,6 +779,7 @@ function handleUiEditorDocumentClick(event, { state, doc, host }) {
   markUiEditorTargetSelection(state, targetNode, registryElement);
   const status = updateLauncherStatusHint(doc, host, state);
   renderReadonlyScopeButtons(doc, status, state);
+  renderPreviewControls(doc, status, state);
 }
 
 function installLauncherDocumentClickHandler(doc, host, state) {
@@ -634,8 +878,11 @@ export {
   normalizeReadonlyRegisteredElements,
   normalizeAvailableUiScopes,
   ensureLauncherStatusHint,
+  applyPreviewOperation,
   findClickedUiEditorTarget,
   getRegisteredElementById,
   handleUiEditorDocumentClick,
+  isPreviewOperationAllowed,
+  resetAllPreviewChanges,
   renderLauncherButton,
 };

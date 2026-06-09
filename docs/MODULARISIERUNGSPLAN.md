@@ -200,12 +200,14 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - die inline platzierte Diktat-Schaltflaeche ist testseitig mit Asset-Icons, Start-/Stop-Umschaltung und Freischaltung abgesichert
 - die kaputte sichtbare Restarbeiten-V2-UI ist aus der aktiven App-Struktur entfernt und bleibt entfernt; der neue M1-RestarbeitenScreen ist bewusst neu aufgebaut und stellt `restarbeiten.screen` wieder als expliziten UI-Editor-Scope bereit, Protokoll- und Demo-Scope bleiben erhalten
 - M2.1 hat die Restarbeiten-Main/Body-Datensatzdarstellung im Blatt mit Tabellenkopf und dreizeiliger Datensatzstruktur nachgezogen
+- Der UI-Editor kann fuer bereits registrierte und markierbare Restarbeiten-UI-Elemente temporaere Preview-Aenderungen anwenden: Move, Resize und Hide/Show laufen nur gegen erlaubte `allowedOps`, bleiben im Speicher und werden per Reset oder Editor-Deaktivierung entfernt.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
 - weitere Altpfade und Restmischzonen vorhanden
 - Konsolidierung ist noch nicht Endabschluss
 - naechstes Restarbeiten-Paket fachlich getrennt planen, bevor Ausgabe/PDF/Notizen/Diktat ueber M1-Stubs hinaus umgesetzt werden
+- fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
 
 ---
 

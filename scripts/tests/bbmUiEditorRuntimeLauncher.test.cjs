@@ -191,6 +191,11 @@ function getStatusText(status) {
   return status?.querySelector?.('[data-ui-editor-status-content="true"]')?.textContent || status?.textContent || "";
 }
 
+function getLatestPreviewAction(doc, action) {
+  const matches = doc.querySelectorAll(`[data-ui-editor-preview-action="${action}"]`);
+  return matches[matches.length - 1] || null;
+}
+
 function matchesSelector(node, selector) {
   const raw = String(selector || "");
   if (raw === "button") return node.tagName === "BUTTON";
@@ -230,8 +235,15 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-editor-scope-list=\"true\"]") {
     return node.getAttribute("data-ui-editor-scope-list") === "true";
   }
+  if (raw === "[data-ui-editor-preview-controls=\"true\"]") {
+    return node.getAttribute("data-ui-editor-preview-controls") === "true";
+  }
   if (raw === "[data-ui-editor-id]") {
     return Boolean(node.getAttribute("data-ui-editor-id"));
+  }
+  const previewActionMatch = raw.match(/^\[data-ui-editor-preview-action="([^"]+)"\]$/);
+  if (previewActionMatch) {
+    return node.getAttribute("data-ui-editor-preview-action") === previewActionMatch[1];
   }
   const uiEditorIdMatch = raw.match(/^\[data-ui-editor-id="([^"]+)"\]$/);
   if (uiEditorIdMatch) {
@@ -832,6 +844,153 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(longGroup.getAttribute("data-ui-editor-selected"), "true");
   });
 
+  await run("BBM UI-Editor-Runtime: Restarbeiten-Preview wendet erlaubte Move/Resize/Hide-Operationen temporaer an", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "restarbeiten.screen",
+      moduleId: "restarbeiten",
+      elements: [
+        { id: "restarbeiten.editbox.text.short", name: "Kurztext", type: "field", role: "content", parentId: "restarbeiten.editbox", allowedOps: ["inspect", "move", "resize", "hide", "show"], lockedOps: [] },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => registry,
+    });
+
+    const target = doc.createElement("div");
+    target.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.short");
+    target.style.width = "100px";
+    target.style.height = "40px";
+    doc.body.appendChild(target);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target });
+
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-preview-controls="true"]')), true);
+    getLatestPreviewAction(doc, ">").click();
+    assert.equal(target.style.transform, "translate(5px, 0px)");
+    assert.equal(target.getAttribute("data-ui-editor-preview"), "true");
+
+    getLatestPreviewAction(doc, "B+").click();
+    assert.equal(target.style.width, "105px");
+
+    getLatestPreviewAction(doc, "H+").click();
+    assert.equal(target.style.height, "45px");
+
+    getLatestPreviewAction(doc, "hide").click();
+    assert.equal(target.style.display, "none");
+
+    getLatestPreviewAction(doc, "show").click();
+    assert.equal(target.style.display, "");
+  });
+
+  await run("BBM UI-Editor-Runtime: Restarbeiten-Preview blockiert nicht erlaubte Operationen", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "restarbeiten.screen",
+      moduleId: "restarbeiten",
+      elements: [
+        { id: "restarbeiten.record.shortText", name: "Kurztext", type: "label", role: "content", parentId: "restarbeiten.record.contentColumn", allowedOps: ["inspect"], lockedOps: ["move", "resize"] },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => registry,
+    });
+    const target = doc.createElement("span");
+    target.setAttribute("data-ui-editor-id", "restarbeiten.record.shortText");
+    target.style.width = "80px";
+    doc.body.appendChild(target);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target });
+
+    const moveButton = getLatestPreviewAction(doc, ">");
+    const resizeButton = getLatestPreviewAction(doc, "B+");
+    assert.equal(moveButton.disabled, true);
+    assert.equal(resizeButton.disabled, true);
+    assert.equal(mod.applyPreviewOperation(mod.createLauncherState({
+      activeUiScope: "restarbeiten.screen",
+      registeredElements: registry.elements,
+    }), "move", { dx: 5, dy: 0 }), false);
+    moveButton.click();
+    resizeButton.click();
+    assert.equal(target.style.transform || "", "");
+    assert.equal(target.style.width, "80px");
+    assert.equal(target.getAttribute("data-ui-editor-preview"), null);
+  });
+
+  await run("BBM UI-Editor-Runtime: Restarbeiten-Preview-Reset und Deaktivieren entfernen alle Preview-Styles", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "restarbeiten.screen",
+      moduleId: "restarbeiten",
+      elements: [
+        { id: "restarbeiten.filterbar", name: "Filterleiste", type: "toolbar", role: "layout", parentId: "restarbeiten.root", allowedOps: ["inspect", "move", "resize", "hide", "show"], lockedOps: [] },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => registry,
+    });
+    const target = doc.createElement("div");
+    target.setAttribute("data-ui-editor-id", "restarbeiten.filterbar");
+    target.style.transform = "scale(1)";
+    target.style.width = "120px";
+    target.style.height = "30px";
+    doc.body.appendChild(target);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target });
+    getLatestPreviewAction(doc, ">").click();
+    getLatestPreviewAction(doc, "B+").click();
+    getLatestPreviewAction(doc, "hide").click();
+    assert.equal(target.style.transform, "scale(1) translate(5px, 0px)");
+    assert.equal(target.style.width, "125px");
+    assert.equal(target.style.display, "none");
+
+    getLatestPreviewAction(doc, "reset").click();
+    assert.equal(target.style.transform, "scale(1)");
+    assert.equal(target.style.width, "120px");
+    assert.equal(target.style.height, "30px");
+    assert.equal(target.style.display, "");
+    assert.equal(target.getAttribute("data-ui-editor-preview"), "false");
+
+    getLatestPreviewAction(doc, ">").click();
+    getLatestPreviewAction(doc, "hide").click();
+    assert.equal(target.style.transform, "scale(1) translate(5px, 0px)");
+    assert.equal(target.style.display, "none");
+
+    button.click();
+    assert.equal(target.style.transform, "scale(1)");
+    assert.equal(target.style.width, "120px");
+    assert.equal(target.style.height, "30px");
+    assert.equal(target.style.display, "");
+    assert.equal(target.getAttribute("data-ui-editor-preview"), "false");
+  });
+
   await run("BBM UI-Editor-Runtime: Erkennungspanel ist verschiebbar und ein-/ausblendbar", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
@@ -962,6 +1121,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(getStatusText(activeStatus).includes("Auswahl: protokoll.root"), true);
     assert.equal(getStatusText(activeStatus).includes("Name: Protokoll"), true);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-preview-controls="true"]')), false);
   });
 
   await run("BBM UI-Editor-Runtime: bleibt ohne Scan, Speicherung und Ziel-App-Aktion", async () => {

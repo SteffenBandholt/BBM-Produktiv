@@ -97,3 +97,31 @@
   color: #0f172a;
   cursor: pointer;
 }
+
+.ui-editor-preview-controls {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(36px, 1fr));
+  gap: 6px;
+  margin-block-start: 10px;
+  padding-block-start: 10px;
+  border-block-start: 1px solid #cbd5e1;
+}
+
+.ui-editor-preview-controls__title {
+  grid-column: 1 / -1;
+  font-weight: 700;
+}
+
+.ui-editor-preview-controls button {
+  min-block-size: 30px;
+  border: 1px solid #94a3b8;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.ui-editor-preview-controls button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

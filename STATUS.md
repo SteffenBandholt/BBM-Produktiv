@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Restarbeiten-Edit-Preview umgesetzt:
+  - Der bestehende UI-Editor-Runtime-Launcher bietet fuer ausgewaehlte, registrierte Restarbeiten-UI-Elemente jetzt temporaere Preview-Aktionen im vorhandenen Panel an.
+  - Move, Resize und Hide/Show werden nur ausgefuehrt, wenn die registrierten `allowedOps` des ausgewaehlten Elements die jeweilige Operation erlauben.
+  - Preview-Zustand bleibt ausschliesslich im Speicher; Reset und Deaktivieren des UI-Editors entfernen die temporaeren Inline-Styles wieder.
+  - Keine neue Registrierung, keine neue Markierungslogik, keine Speicherung, keine Fachlogik, keine Restarbeiten-Fachdaten, keine DB-/IPC-Schreibwege und keine PDF-Aenderung.
+  - Geprueft mit gezieltem Runtime-Test, Restarbeiten-Modultest, UI-Editor-Vertragstest, Legacy-Boundary-Tests und `npm test`; alle Tests bestanden.
+  - Naechster offener Schritt: fachliche Sichtpruefung im lokalen Electron-DEV-Kontext.
+
 - M2.3 Restarbeiten Notizhistorie und Notiz-Popup umgesetzt:
   - Der Notiz-Button in der Restarbeiten-Editbox ist fuer gespeicherte Datensaetze aktiv und oeffnet ein einfaches Popup mit Historie, leerem Zustand, Eingabefeld, Hinzufuegen, Drucken und Schliessen.
   - Neue Notizen werden nur mit nicht leerem Text gespeichert; das Popup bleibt offen und aktualisiert die Historie.
