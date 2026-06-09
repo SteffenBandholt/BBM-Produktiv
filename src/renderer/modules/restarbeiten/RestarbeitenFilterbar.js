@@ -8,9 +8,9 @@ function createEl(tag, { className = "", text = "", uiId = "" } = {}) {
   return el;
 }
 
-function createField({ label, value = "", options = [], type = "select", uiId, onChange }) {
+function createField({ label, labelUiId, value = "", options = [], type = "select", uiId, onChange }) {
   const wrap = createEl("label", { className: "bbm-restarbeiten-field", uiId });
-  const labelEl = createEl("span", { text: label });
+  const labelEl = createEl("span", { text: label, uiId: labelUiId });
   const input = document.createElement(type === "input" || type === "date" ? "input" : "select");
   if (type === "date") input.type = "date";
   if (type === "select") {
@@ -69,11 +69,12 @@ export function buildRestarbeitenFilterbar({
   labels.forEach((label, index) => {
     const key = `level${index + 1}`;
     locationGroup.appendChild(
-      createField({
-        label,
-        value: filters[key] || "",
-        options: [{ value: "", label: "Alle" }, ...(filterOptions[key] || [])],
-        uiId: `restarbeiten.filterbar.location.level${index + 1}`,
+    createField({
+      label,
+      labelUiId: `restarbeiten.filterbar.location.level${index + 1}.label`,
+      value: filters[key] || "",
+      options: [{ value: "", label: "Alle" }, ...(filterOptions[key] || [])],
+      uiId: `restarbeiten.filterbar.location.level${index + 1}`,
         onChange: (value) => onFilterChange?.({ [key]: value }),
       })
     );
@@ -102,6 +103,7 @@ export function buildRestarbeitenFilterbar({
   metaGroup.append(
     createField({
       label: "Status",
+      labelUiId: "restarbeiten.filterbar.meta.status.label",
       value: filters.status || "",
       options: [
         { value: "", label: "Alle" },
@@ -115,6 +117,7 @@ export function buildRestarbeitenFilterbar({
     }),
     createField({
       label: "Fertig bis",
+      labelUiId: "restarbeiten.filterbar.meta.dueDate.label",
       value: filters.dueDate || "",
       type: "date",
       uiId: "restarbeiten.filterbar.meta.dueDate",
@@ -122,6 +125,7 @@ export function buildRestarbeitenFilterbar({
     }),
     createField({
       label: "Verantwortlich",
+      labelUiId: "restarbeiten.filterbar.meta.responsible.label",
       value: filters.responsible || "",
       options: [{ value: "", label: "Alle" }, ...(filterOptions.responsible || [])],
       uiId: "restarbeiten.filterbar.meta.responsible",

@@ -10,6 +10,7 @@ function createEl(tag, { className = "", text = "", uiId = "" } = {}) {
 
 function createField({
   label,
+  labelUiId,
   value = "",
   type = "input",
   options = [],
@@ -19,7 +20,7 @@ function createField({
   required = false,
 } = {}) {
   const wrap = createEl("label", { className: "bbm-restarbeiten-field", uiId });
-  wrap.appendChild(createEl("span", { text: label }));
+  wrap.appendChild(createEl("span", { text: label, uiId: labelUiId }));
   const input = document.createElement(type === "textarea" ? "textarea" : type === "select" ? "select" : "input");
   if (type === "date") input.type = "date";
   if (required) input.required = true;
@@ -122,6 +123,7 @@ function createNoteIcon() {
 
 function createTextField({
   label,
+  labelUiId,
   value,
   uiId,
   inputUiId,
@@ -161,20 +163,20 @@ function createTextField({
     onInput?.(input.value);
   });
   input.addEventListener("blur", () => onCommit?.(input.value));
-  labelRow.append(createEl("span", { text: label }), remaining, createDictationButton(dictationUiId), ...labelControls);
+  labelRow.append(createEl("span", { text: label, uiId: labelUiId }), remaining, createDictationButton(dictationUiId), ...labelControls);
   field.append(labelRow, input);
   wrap.appendChild(field);
   return wrap;
 }
 
-function createClassToggle({ value = "rest", uiId, onChange, onCommit, inline = false } = {}) {
+function createClassToggle({ value = "rest", uiId, labelUiId, onChange, onCommit, inline = false } = {}) {
   const wrap = createEl("div", {
     className: inline
       ? "bbm-restarbeiten-class-field bbm-restarbeiten-class-field--inline"
       : "bbm-restarbeiten-field bbm-restarbeiten-class-field",
     uiId,
   });
-  if (!inline) wrap.appendChild(createEl("span", { text: "Klasse" }));
+  if (!inline || labelUiId) wrap.appendChild(createEl("span", { text: "Klasse", uiId: labelUiId }));
   const classToggle = createEl("div", { className: "bbm-restarbeiten-class-toggle" });
   for (const option of [
     { value: "rest", label: "Rest" },
@@ -249,6 +251,7 @@ export function buildRestarbeitenEditbox({
   const classToggle = createClassToggle({
     value: draft.item_class || "rest",
     uiId: "restarbeiten.editbox.meta.itemClass",
+    labelUiId: "restarbeiten.editbox.meta.itemClass.label",
     inline: true,
     onChange: (item_class) => onDraftChange?.({ item_class }),
     onCommit: () => onAutoSave?.(),
@@ -260,6 +263,7 @@ export function buildRestarbeitenEditbox({
   textArea.append(
     createTextField({
       label: "Kurztext / Gegenstand",
+      labelUiId: "restarbeiten.editbox.text.short.label",
       value: draft.short_text || "",
       uiId: "restarbeiten.editbox.text.short",
       inputUiId: "restarbeiten.editbox.text.short.input",
@@ -278,6 +282,7 @@ export function buildRestarbeitenEditbox({
     }),
     createTextField({
       label: "Langtext / Beschreibung",
+      labelUiId: "restarbeiten.editbox.text.long.label",
       value: draft.long_text || "",
       uiId: "restarbeiten.editbox.text.long",
       inputUiId: "restarbeiten.editbox.text.long.input",
@@ -298,6 +303,7 @@ export function buildRestarbeitenEditbox({
     location.appendChild(
       createField({
         label,
+        labelUiId: `restarbeiten.editbox.location.level${index + 1}.label`,
         value: draft[sourceKey] || "",
         uiId: `restarbeiten.editbox.location.level${index + 1}`,
         onInput: (value) => onDraftChange?.({ [sourceKey]: value }, { render: false }),
@@ -323,6 +329,7 @@ export function buildRestarbeitenEditbox({
   ampelWrap.appendChild(ampel);
   const dueDateField = createField({
     label: "Fertig bis",
+    labelUiId: "restarbeiten.editbox.meta.dueDate.label",
     value: draft.due_date || "",
     type: "date",
     uiId: "restarbeiten.editbox.meta.dueDate",
@@ -332,6 +339,7 @@ export function buildRestarbeitenEditbox({
   meta.append(
     createField({
       label: "Status",
+      labelUiId: "restarbeiten.editbox.meta.status.label",
       value: draft.status === "in_arbeit" ? "in arbeit" : draft.status || "offen",
       type: "select",
       options: [
@@ -348,6 +356,7 @@ export function buildRestarbeitenEditbox({
     ampelWrap,
     createField({
       label: "Verantwortlich",
+      labelUiId: "restarbeiten.editbox.meta.responsible.label",
       value: draft.responsible_project_firm_id || "",
       type: "select",
       options: [{ value: "", label: "Nicht zugeordnet" }, ...responsibleOptions],
