@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor aktiver Markierungspfad dokumentiert:
+  - Der sichtbare blaue Rahmen wurde auf den bestehenden Kit-Auswahlpfad `uiEditor/targetSelection.js` zurueckgefuehrt.
+  - Dokumentiert sind Klickauswahl, Rahmen-Styles, Auswahl-State und der Unterschied zwischen aktivem Markierungspfad und nicht sichtbarem Launcher-Statuspfad.
+  - Empfehlung: Eine spaetere Preview-Bedienung muss an den echten sichtbaren Bediencontainer und an `onSelectionChange(selection)` des aktiven Auswahlpfads andocken.
+  - Keine Preview-Logik, keine Markierungslogik, keine Registrierung, keine Speicherung, keine Fachlogik und keine PDF-Aenderung.
+  - Geprueft wird mit `npm test`.
+
 - UI-Editor Restarbeiten-Preview-Bedienung sichtbar gemacht:
   - Der bestehende UI-Editor-Launcher zeigt nach Auswahl eines registrierten Restarbeiten-Elements einen sichtbaren Preview-Bereich im vorhandenen Panel.
   - Der Bereich zeigt Element-ID und `allowedOps`; Move-, Resize-, Hide-/Show- und Reset-Buttons verwenden die vorhandene Preview-Logik.
