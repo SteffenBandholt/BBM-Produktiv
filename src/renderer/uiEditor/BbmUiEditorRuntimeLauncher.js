@@ -665,6 +665,8 @@ function createPreviewControlButton(doc, label, actionId, handler) {
   button.type = "button";
   button.textContent = label;
   button.setAttribute("data-ui-editor-preview-action", actionId);
+  button.setAttribute("aria-label", label);
+  button.title = label;
   button.disabled = typeof handler !== "function";
   button.addEventListener("click", (event) => {
     event.preventDefault();
@@ -682,6 +684,9 @@ function renderPreviewControls(doc, status, state) {
 
   const selectedElement = getSelectedRegistryElementForPreview(state);
   const hasTarget = Boolean(state.selectedTargetNode);
+  if (!selectedElement || !hasTarget) return;
+
+  const allowedOps = getElementAllowedOps(selectedElement);
   const controls = doc.createElement("div");
   controls.className = "ui-editor-preview-controls";
   controls.setAttribute("data-ui-editor-preview-controls", "true");
@@ -691,8 +696,17 @@ function renderPreviewControls(doc, status, state) {
   title.textContent = "Preview";
   controls.appendChild(title);
 
+  const details = doc.createElement("div");
+  details.className = "ui-editor-preview-controls__details";
+  details.setAttribute("data-ui-editor-preview-selected", selectedElement.id);
+  details.textContent = [
+    `Element: ${selectedElement.id}`,
+    `allowedOps: ${allowedOps.length > 0 ? allowedOps.join(", ") : "keine"}`,
+  ].join("\n");
+  controls.appendChild(details);
+
   const addButton = (label, operation, payload = {}, actionId = operation) => {
-    const allowed = hasTarget && selectedElement && isPreviewOperationAllowed(selectedElement, operation);
+    const allowed = isPreviewOperationAllowed(selectedElement, operation);
     controls.appendChild(createPreviewControlButton(doc, label, actionId, allowed
       ? () => {
           applyPreviewOperation(state, operation, payload);
@@ -703,18 +717,18 @@ function renderPreviewControls(doc, status, state) {
       : null));
   };
 
-  addButton("<", "move", { dx: -PREVIEW_MOVE_STEP, dy: 0 }, "<");
-  addButton(">", "move", { dx: PREVIEW_MOVE_STEP, dy: 0 }, ">");
-  addButton("^", "move", { dx: 0, dy: -PREVIEW_MOVE_STEP }, "^");
-  addButton("v", "move", { dx: 0, dy: PREVIEW_MOVE_STEP }, "v");
-  addButton("B-", "resizeWidth", { delta: -PREVIEW_RESIZE_STEP }, "B-");
-  addButton("B+", "resizeWidth", { delta: PREVIEW_RESIZE_STEP }, "B+");
-  addButton("H-", "resizeHeight", { delta: -PREVIEW_RESIZE_STEP }, "H-");
-  addButton("H+", "resizeHeight", { delta: PREVIEW_RESIZE_STEP }, "H+");
-  addButton("Aus", "hide");
-  addButton("Ein", "show");
+  addButton("← Move links", "move", { dx: -PREVIEW_MOVE_STEP, dy: 0 }, "move-left");
+  addButton("→ Move rechts", "move", { dx: PREVIEW_MOVE_STEP, dy: 0 }, "move-right");
+  addButton("↑ Move hoch", "move", { dx: 0, dy: -PREVIEW_MOVE_STEP }, "move-up");
+  addButton("↓ Move runter", "move", { dx: 0, dy: PREVIEW_MOVE_STEP }, "move-down");
+  addButton("Breite -", "resizeWidth", { delta: -PREVIEW_RESIZE_STEP }, "width-minus");
+  addButton("Breite +", "resizeWidth", { delta: PREVIEW_RESIZE_STEP }, "width-plus");
+  addButton("Hoehe -", "resizeHeight", { delta: -PREVIEW_RESIZE_STEP }, "height-minus");
+  addButton("Hoehe +", "resizeHeight", { delta: PREVIEW_RESIZE_STEP }, "height-plus");
+  addButton("Ausblenden", "hide");
+  addButton("Einblenden", "show");
 
-  controls.appendChild(createPreviewControlButton(doc, "Reset", "reset", () => {
+  controls.appendChild(createPreviewControlButton(doc, "Preview zuruecksetzen", "reset", () => {
     resetAllPreviewChanges(state);
     const updatedStatus = updateLauncherStatusHint(doc, status.parentElement, state);
     renderReadonlyScopeButtons(doc, updatedStatus, state);

@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Restarbeiten-Preview-Bedienung sichtbar gemacht:
+  - Der bestehende UI-Editor-Launcher zeigt nach Auswahl eines registrierten Restarbeiten-Elements einen sichtbaren Preview-Bereich im vorhandenen Panel.
+  - Der Bereich zeigt Element-ID und `allowedOps`; Move-, Resize-, Hide-/Show- und Reset-Buttons verwenden die vorhandene Preview-Logik.
+  - Nicht erlaubte Preview-Aktionen bleiben deaktiviert; Reset bleibt bedienbar und entfernt temporaere Preview-Styles.
+  - Keine neue Registrierung, keine neue Markierungslogik, keine Speicherung, keine Fachlogik, keine Restarbeiten-Fachdaten, keine DB-/IPC-Schreibwege und keine PDF-Aenderung.
+  - Geprueft mit gezieltem Runtime-Test und `npm test`; alle Tests bestanden.
+  - Naechster offener Schritt: fachliche Sichtpruefung im lokalen Electron-DEV-Kontext.
+
 - UI-Editor Restarbeiten-Edit-Preview umgesetzt:
   - Der bestehende UI-Editor-Runtime-Launcher bietet fuer ausgewaehlte, registrierte Restarbeiten-UI-Elemente jetzt temporaere Preview-Aktionen im vorhandenen Panel an.
   - Move, Resize und Hide/Show werden nur ausgefuehrt, wenn die registrierten `allowedOps` des ausgewaehlten Elements die jeweilige Operation erlauben.
