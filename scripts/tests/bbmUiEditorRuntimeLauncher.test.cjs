@@ -974,6 +974,128 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(target.style.display, "");
   });
 
+  await run("BBM UI-Editor-Runtime: Preview-Operationen erzeugen deduplizierte ChangeRequests im State", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const target = doc.createElement("input");
+    target.setAttribute("data-ui-editor-id", "sample.field.input");
+    target.style.width = "100px";
+    target.style.height = "30px";
+    const registryElement = {
+      id: "sample.field.input",
+      name: "Eingabe",
+      type: "field",
+      role: "content",
+      parentId: "sample.field",
+      allowedOps: ["inspect", "move", "width", "height", "hide", "show"],
+      lockedOps: [],
+      previewTargetMode: "self",
+    };
+    const state = mod.createLauncherState({
+      activeUiScope: "sample.screen",
+      registeredElements: [registryElement],
+    });
+    state.selectedElement = registryElement;
+    state.selectedTargetNode = target;
+    state.selectedPreviewTargetNode = target;
+
+    assert.equal(mod.applyPreviewOperation(state, "move", { dx: 5, dy: 0 }), true);
+    assert.equal(mod.applyPreviewOperation(state, "move", { dx: 5, dy: 0 }), true);
+    assert.equal(state.pendingChangeRequests.length, 1);
+    assert.equal(state.pendingChangeRequests[0].operation, "move");
+    assert.equal(state.pendingChangeRequests[0].elementId, "sample.field.input");
+    assert.equal(state.pendingChangeRequests[0].targetElementId, "sample.field.input");
+    assert.equal(state.pendingChangeRequests[0].previewTargetMode, "self");
+    assert.equal(state.pendingChangeRequests[0].source, "preview");
+    assert.equal(state.pendingChangeRequests[0].persistent, false);
+    assert.deepEqual(state.pendingChangeRequests[0].payload, { dx: 10, dy: 0 });
+    assert.equal(target.style.transform, "translate(10px, 0px)");
+
+    mod.applyPreviewOperation(state, "resizeWidth", { delta: 5 });
+    mod.applyPreviewOperation(state, "resizeHeight", { delta: 5 });
+    assert.equal(state.pendingChangeRequests.length, 3);
+    assert.deepEqual(state.pendingChangeRequests.find((request) => request.operation === "width").payload, { delta: 5 });
+    assert.deepEqual(state.pendingChangeRequests.find((request) => request.operation === "height").payload, { delta: 5 });
+    assert.equal(target.style.width, "105px");
+    assert.equal(target.style.height, "35px");
+
+    mod.applyPreviewOperation(state, "hide");
+    mod.applyPreviewOperation(state, "show");
+    const visibilityRequests = state.pendingChangeRequests.filter((request) => request.operation === "visibility");
+    assert.equal(visibilityRequests.length, 1);
+    assert.deepEqual(visibilityRequests[0].payload, { visible: true });
+    assert.equal(target.style.display, "");
+
+    assert.deepEqual(mod.getPendingChangeRequestSummary(state, "sample.field.input").operations.sort(), ["height", "move", "visibility", "width"]);
+    mod.resetSelectedPreviewChange(state);
+    assert.equal(state.pendingChangeRequests.length, 0);
+    assert.equal(target.style.transform, "");
+    assert.equal(target.style.width, "100px");
+    assert.equal(target.style.height, "30px");
+
+    mod.applyPreviewOperation(state, "move", { dx: 5, dy: 0 });
+    assert.equal(state.pendingChangeRequests.length, 1);
+    mod.resetAllPreviewChanges(state);
+    assert.equal(state.pendingChangeRequests.length, 0);
+    assert.equal(target.style.transform, "");
+  });
+
+  await run("BBM UI-Editor-Runtime: Preview-Panel zeigt vorbereitete Aenderungen und verwirft sie temporaer", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "sample.screen",
+      moduleId: "sample",
+      elements: [
+        { id: "sample.target", name: "Ziel", type: "field", role: "content", parentId: "sample.root", allowedOps: ["inspect", "move", "width", "height", "hide", "show"], lockedOps: [], previewTargetMode: "self" },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "sample.screen",
+      registryResolver: () => registry,
+    });
+    const target = doc.createElement("div");
+    target.setAttribute("data-ui-editor-id", "sample.target");
+    target.style.width = "120px";
+    target.style.height = "40px";
+    doc.body.appendChild(target);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target });
+    assert.equal(getRenderedText(getPreviewPanel(doc)).includes("Aenderungen vorbereitet: 0"), true);
+    assert.equal(getRenderedText(getPreviewPanel(doc)).includes("Noch nicht gespeichert"), true);
+
+    getLatestPreviewAction(doc, "move-right").click();
+    getLatestPreviewAction(doc, "move-right").click();
+    getLatestPreviewAction(doc, "width-plus").click();
+    getLatestPreviewAction(doc, "height-plus").click();
+    getLatestPreviewAction(doc, "hide").click();
+    const panelText = getRenderedText(getPreviewPanel(doc));
+    assert.equal(panelText.includes("Aenderungen vorbereitet: 4"), true);
+    assert.equal(panelText.includes("Operationen aktuelles Element: move / width / height / visibility"), true);
+    assert.equal(target.style.transform, "translate(10px, 0px)");
+    assert.equal(target.style.width, "125px");
+    assert.equal(target.style.height, "45px");
+    assert.equal(target.style.display, "none");
+
+    getLatestPreviewAction(doc, "discard-changes").click();
+    const discardedPanelText = getRenderedText(getPreviewPanel(doc));
+    assert.equal(discardedPanelText.includes("Element-ID: sample.target"), true);
+    assert.equal(discardedPanelText.includes("Aenderungen vorbereitet: 0"), true);
+    assert.equal(discardedPanelText.includes("Status: Aenderungen verworfen."), true);
+    assert.equal(target.getAttribute("data-ui-editor-selected"), "true");
+    assert.equal(target.style.transform, "");
+    assert.equal(target.style.width, "120px");
+    assert.equal(target.style.height, "40px");
+    assert.equal(target.style.display, "");
+  });
+
   await run("BBM UI-Editor-Runtime: Editbox-Preview respektiert echte Registry-Granularitaet", async () => {
     const mod = await loadRuntime();
     const registryModule = await importEsmFromFile(BBM_REGISTRY_PATH);

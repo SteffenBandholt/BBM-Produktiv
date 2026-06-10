@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.24 abgeschlossen: Preview-Operationen erzeugen/aktualisieren temporaere ChangeRequests im UI-Editor-State; Reset, Verwerfen und Deaktivieren raeumen sie wieder auf.
 - K19.0 abgeschlossen: erste explizite UI-Elementliste fuer das Protokoll-Modul, ohne Editor-Integration und ohne produktive UI-Aenderung.
 - K19.7 abgeschlossen: installierter Einstieg unter `uiEditor/` war mit dem offiziellen BBM-Registry-Einstieg verbunden, ohne produktive UI-Aenderung.
 - K19.9a abgeschlossen: `uiEditor/` enthaelt installierte UI-Editor-Artefakte; die echte BBM-Registry bleibt separat unter `src/renderer/uiEditor/bbmUiEditorRegistry.js`; `scripts/test.cjs` ist nicht direkt an installierte Artefakt-Testdateien gekoppelt.
@@ -48,6 +49,14 @@ Aktueller Stand:
 - [x] K19.9a BBM-Testeinbindung nach Neuinstallation der UI-Editor-Artefakte trennen
 - [x] K19.13a BBM-Test an aktuelle UI-Editor-Installer-Artefakte anpassen
 - [x] K19.16a UI-Editor zeigt festen registrierten Scope aus BBM-Registry
+- [x] K19.24 UI-Editor Preview-Operationen als ChangeRequests sammeln
+
+## Statusupdate K19.24
+- Preview-Operationen erzeugen jetzt zusaetzlich temporaere ChangeRequests im UI-Editor-State (`pendingChangeRequests`), ohne Speicherung.
+- Verwendet wird die vorhandene ChangeRequest-Struktur aus `src/renderer/editorRuntime/changeRequests/` mit `changeId`, `targetAppId`, `moduleId`, `scopeId`, `elementId`, `operation`, `payload`, `createdAt` und `source`.
+- Move wird je Preview-Ziel kumuliert; Width/Height werden als Delta kumuliert; Hide/Show wird als eine `visibility`-Aenderung ueberschrieben.
+- Reset entfernt Preview-Styles und ChangeRequests nur fuer das aktuelle Preview-Ziel; `Aenderungen verwerfen` entfernt alle Preview-Styles und alle vorbereiteten ChangeRequests, die Auswahl bleibt erhalten.
+- Weiterhin keine Speicherung, kein localStorage, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Restarbeiten-Sonderlogik in der Runtime.
 
 ## Statusupdate K19.16a
 - `CoreShell` uebergibt den festen aktiven Scope aus `src/renderer/uiEditor/bbmUiEditorRegistry.js` an den neutralen Runtime-Launcher.

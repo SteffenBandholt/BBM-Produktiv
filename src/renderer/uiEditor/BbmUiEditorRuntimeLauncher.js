@@ -132,6 +132,7 @@ function normalizeReadonlyRegistry(registry = null) {
   }
 
   return {
+    targetAppId: String(registry.targetAppId ?? "").trim(),
     uiScope: String(registry.uiScope ?? "").trim(),
     moduleId: String(registry.moduleId ?? "").trim(),
     elements: normalizeReadonlyRegistryElements(registry.elements),
@@ -160,6 +161,8 @@ function createLauncherState({ activeUiScope = null, registeredElements = null, 
     selectionMessage: "",
     hoverMessage: "",
     previewStates: new Map(),
+    pendingChangeRequests: [],
+    changeRequestSequence: 0,
     previewMessage: "",
     targetSelectionController: null,
     targetSelectionPanelController: null,
@@ -350,6 +353,10 @@ function getPreviewTargetElement(state = {}) {
   return state.selectedPreviewTargetNode || state.selectedTargetNode || null;
 }
 
+function getPreviewTargetElementId(state = {}, targetNode = null) {
+  return getNodeUiEditorId(targetNode) || String(state?.selectedElement?.id || "").trim();
+}
+
 function describePreviewTargetElement(targetNode = null, selectedNode = null) {
   if (!targetNode) return "nicht verfügbar";
   const tagName = String(targetNode.tagName || "element").toLowerCase();
@@ -414,22 +421,43 @@ function resetPreviewForTarget(state = {}, targetNode = null) {
   return true;
 }
 
+function removePendingChangeRequestsForTarget(state = {}, targetNode = null) {
+  if (!Array.isArray(state.pendingChangeRequests)) return 0;
+  const targetElementId = getPreviewTargetElementId(state, targetNode);
+  if (!targetElementId) return 0;
+  const previousCount = state.pendingChangeRequests.length;
+  state.pendingChangeRequests = state.pendingChangeRequests.filter((request) => request?.targetElementId !== targetElementId);
+  return previousCount - state.pendingChangeRequests.length;
+}
+
 function resetAllPreviewChanges(state = {}) {
-  if (!state?.previewStates) return 0;
+  if (!state?.previewStates) {
+    state.pendingChangeRequests = [];
+    return 0;
+  }
   const targets = Array.from(state.previewStates.keys());
   let resetCount = 0;
   for (const targetNode of targets) {
     if (resetPreviewForTarget(state, targetNode)) resetCount += 1;
   }
+  state.pendingChangeRequests = [];
   state.previewMessage = resetCount > 0 ? "Preview zurueckgesetzt." : "Keine Preview-Aenderung aktiv.";
   return resetCount;
 }
 
 function resetSelectedPreviewChange(state = {}) {
   const targetNode = getPreviewTargetElement(state);
+  const removedRequests = removePendingChangeRequestsForTarget(state, targetNode);
   const reset = resetPreviewForTarget(state, targetNode);
-  state.previewMessage = reset ? "Preview zurueckgesetzt." : "Keine Preview-Aenderung aktiv.";
+  state.previewMessage = reset || removedRequests > 0 ? "Preview zurueckgesetzt." : "Keine Preview-Aenderung aktiv.";
   return reset;
+}
+
+function discardPendingPreviewChanges(state = {}) {
+  const resetCount = resetAllPreviewChanges(state);
+  state.pendingChangeRequests = [];
+  state.previewMessage = resetCount > 0 ? "Aenderungen verworfen." : "Keine vorbereiteten Aenderungen.";
+  return resetCount;
 }
 
 function clearUiEditorTargetSelection(state = {}) {
@@ -555,6 +583,7 @@ function getReadonlyLauncherStatusText(state = {}) {
   const scopes = normalizeAvailableUiScopes(state.availableUiScopes);
   const selectedElement = state.selectedElement || null;
   const hoverElement = state.hoverElement || null;
+  const changeRequestSummary = getPendingChangeRequestSummary(state, selectedElement?.id || "");
   if (scopes.length < 1 && !registry.moduleId && registry.elements.length < 1) {
     return getLauncherStatusText({ activeUiScope: state.activeUiScope, registeredElements: [] });
   }
@@ -570,6 +599,7 @@ function getReadonlyLauncherStatusText(state = {}) {
     state.hoverMessage ? `Hover-Hinweis: ${state.hoverMessage}` : "",
     selectedElement ? `Auswahl: ${selectedElement.id}` : "Auswahl: keine",
     state.selectionMessage ? `Auswahl-Hinweis: ${state.selectionMessage}` : "",
+    `Aenderungen vorbereitet: ${changeRequestSummary.total}`,
     state.previewMessage ? `Preview: ${state.previewMessage}` : "",
     selectedElement ? `Name: ${selectedElement.name || selectedElement.label || ""}` : "",
     "",
@@ -740,6 +770,84 @@ function getSelectedRegistryElementForPreview(state = {}) {
   return selectedId ? getRegisteredElementById(state, selectedId) : null;
 }
 
+function getChangeRequestOperation(operation = "") {
+  if (operation === "resizeWidth") return "width";
+  if (operation === "resizeHeight") return "height";
+  if (operation === "hide" || operation === "show") return "visibility";
+  return operation;
+}
+
+function getNextChangeRequestId(state = {}) {
+  state.changeRequestSequence = (Number(state.changeRequestSequence) || 0) + 1;
+  return `preview-${state.changeRequestSequence}`;
+}
+
+function upsertPreviewChangeRequest(state = {}, registryElement = null, targetNode = null, operation = "", payload = {}) {
+  if (!registryElement || !targetNode) return null;
+  if (!Array.isArray(state.pendingChangeRequests)) state.pendingChangeRequests = [];
+
+  const registry = getSelectedRegistryFromState(state);
+  const normalizedOperation = getChangeRequestOperation(operation);
+  const targetElementId = getPreviewTargetElementId(state, targetNode);
+  if (!normalizedOperation || !targetElementId) return null;
+
+  const existing = state.pendingChangeRequests.find((request) => (
+    request?.targetElementId === targetElementId &&
+    request?.operation === normalizedOperation
+  ));
+  const now = new Date().toISOString();
+  const baseRequest = existing || {
+    changeId: getNextChangeRequestId(state),
+    targetAppId: registry.targetAppId || "bbm",
+    moduleId: registry.moduleId || "",
+    scopeId: registry.uiScope || state.activeUiScope || "",
+    elementId: registryElement.id,
+    operation: normalizedOperation,
+    payload: {},
+    createdAt: now,
+    source: "preview",
+    previewTargetMode: getPreviewTargetMode(registryElement),
+    targetElementId,
+    persistent: false,
+  };
+
+  if (normalizedOperation === "move") {
+    baseRequest.payload = {
+      dx: (Number(baseRequest.payload?.dx) || 0) + (Number(payload.dx) || 0),
+      dy: (Number(baseRequest.payload?.dy) || 0) + (Number(payload.dy) || 0),
+    };
+  } else if (normalizedOperation === "width" || normalizedOperation === "height") {
+    baseRequest.payload = {
+      delta: (Number(baseRequest.payload?.delta) || 0) + (Number(payload.delta) || 0),
+    };
+  } else if (normalizedOperation === "visibility") {
+    baseRequest.payload = {
+      visible: operation === "show",
+    };
+  }
+
+  baseRequest.elementId = registryElement.id;
+  baseRequest.previewTargetMode = getPreviewTargetMode(registryElement);
+  baseRequest.targetElementId = targetElementId;
+  baseRequest.updatedAt = now;
+
+  if (!existing) state.pendingChangeRequests.push(baseRequest);
+  return baseRequest;
+}
+
+function getPendingChangeRequestSummary(state = {}, elementId = "") {
+  const requests = Array.isArray(state.pendingChangeRequests) ? state.pendingChangeRequests : [];
+  const normalizedElementId = String(elementId || "").trim();
+  const elementRequests = normalizedElementId
+    ? requests.filter((request) => request?.elementId === normalizedElementId || request?.targetElementId === normalizedElementId)
+    : [];
+  const operations = Array.from(new Set(elementRequests.map((request) => request?.operation).filter(Boolean)));
+  return {
+    total: requests.length,
+    operations,
+  };
+}
+
 function applyPreviewOperation(state = {}, operation = "", payload = {}) {
   const targetNode = getPreviewTargetElement(state);
   const registryElement = getSelectedRegistryElementForPreview(state);
@@ -774,6 +882,7 @@ function applyPreviewOperation(state = {}, operation = "", payload = {}) {
   }
 
   applyPreviewState(targetNode, previewState);
+  upsertPreviewChangeRequest(state, registryElement, targetNode, normalizedOperation, payload);
   state.previewMessage = "Preview angewendet.";
   return true;
 }
@@ -990,6 +1099,7 @@ function renderPreviewPanel(doc, state = {}) {
   const previewTargetNode = getPreviewTargetElement(state);
   const previewAvailable = Boolean(selectedElement && previewTargetNode);
   const allowedOps = selectedElement ? getElementAllowedOps(selectedElement) : [];
+  const changeRequestSummary = getPendingChangeRequestSummary(state, selectedElement?.id || getPreviewTargetElementId(state, previewTargetNode));
 
   const details = doc.createElement("div");
   details.className = "ui-editor-preview-controls__details";
@@ -1004,6 +1114,9 @@ function renderPreviewPanel(doc, state = {}) {
     selectedElement ? `previewTargetMode: ${formatPreviewMetaValue(getPreviewTargetMode(selectedElement))}` : "",
     selectedElement ? `affectsContainer: ${formatPreviewMetaValue(selectedElement.affectsContainer)}` : "",
     selectedElement ? `Preview-Ziel: ${describePreviewTargetElement(previewTargetNode, targetNode)}` : "",
+    `Aenderungen vorbereitet: ${changeRequestSummary.total}`,
+    selectedElement ? `Operationen aktuelles Element: ${changeRequestSummary.operations.length > 0 ? changeRequestSummary.operations.join(" / ") : "keine"}` : "",
+    "Noch nicht gespeichert",
     selectedElement && allowedOps.length <= 1 ? "Hinweis: Preview-Operationen deaktiviert." : "",
     state.previewMessage ? `Status: ${state.previewMessage}` : "",
   ].filter(Boolean).join("\n");
@@ -1042,6 +1155,13 @@ function renderPreviewPanel(doc, state = {}) {
   buttonGrid.appendChild(createPreviewControlButton(doc, "Reset", "reset", hasPreviewState
     ? () => {
         resetSelectedPreviewChange(state);
+        renderPreviewPanel(doc, state);
+      }
+    : null));
+
+  buttonGrid.appendChild(createPreviewControlButton(doc, "Aenderungen verwerfen", "discard-changes", changeRequestSummary.total > 0
+    ? () => {
+        discardPendingPreviewChanges(state);
         renderPreviewPanel(doc, state);
       }
     : null));
@@ -1275,12 +1395,15 @@ export {
   normalizeAvailableUiScopes,
   ensureLauncherStatusHint,
   applyPreviewOperation,
+  discardPendingPreviewChanges,
   findClickedUiEditorTarget,
+  getPendingChangeRequestSummary,
   getRegisteredElementById,
   handleUiEditorDocumentClick,
   isPreviewOperationAllowed,
   resolvePreviewTargetElement,
   resetAllPreviewChanges,
+  resetSelectedPreviewChange,
   renderPreviewPanel,
   renderLauncherButton,
 };

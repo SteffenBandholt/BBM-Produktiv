@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Preview-ChangeRequests vorbereitet:
+  - Preview-Operationen erzeugen/aktualisieren jetzt zusaetzlich temporaere ChangeRequests im UI-Editor-State.
+  - Move wird je Preview-Ziel kumuliert; Width/Height werden als Delta kumuliert; Hide/Show ueberschreibt eine `visibility`-Aenderung.
+  - Das Preview-Panel zeigt `Aenderungen vorbereitet`, Operationen fuer das aktuelle Element und `Noch nicht gespeichert`.
+  - `Reset` entfernt Preview-Styles und ChangeRequests fuer das aktuelle Preview-Ziel; `Aenderungen verwerfen` leert alle vorbereiteten Aenderungen und setzt alle Preview-Styles zurueck, die Auswahl bleibt erhalten.
+  - Keine Speicherung, kein localStorage, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Restarbeiten-Sonderlogik in der Runtime.
+  - Naechster offener Schritt: fachliche Sichtpruefung im lokalen Electron-DEV-Kontext.
+
 - UI-Editor aktiver Markierungspfad dokumentiert:
   - Der sichtbare blaue Rahmen wurde auf den bestehenden Kit-Auswahlpfad `uiEditor/targetSelection.js` zurueckgefuehrt.
   - Dokumentiert sind Klickauswahl, Rahmen-Styles, Auswahl-State und der Unterschied zwischen aktivem Markierungspfad und nicht sichtbarem Launcher-Statuspfad.
@@ -2699,3 +2707,25 @@ Wichtig:
 - Risiken/Hinweise:
   - Keine Speicherung der Panelposition; nach Deaktivieren/Aktivieren erscheint das Panel wieder an der Standardposition.
   - Keine Registry-Aenderung, keine Fachlogik, keine PDF-Logik und keine Restarbeiten-Sonderlogik in der Runtime.
+
+### K19.24 - UI-Editor Preview-Operationen als ChangeRequests sammeln
+- Status: erledigt
+- Beschreibung:
+  - Preview-Operationen erzeugen/aktualisieren jetzt temporaere ChangeRequests in `pendingChangeRequests`.
+  - Die vorhandene ChangeRequest-Struktur aus `src/renderer/editorRuntime/changeRequests/` wird wiederverwendet: `changeId`, `targetAppId`, `moduleId`, `scopeId`, `elementId`, `operation`, `payload`, `createdAt`, `source`.
+  - `move` wird je Preview-Ziel kumuliert; `width` und `height` werden als Delta kumuliert; `hide`/`show` ueberschreiben eine gemeinsame `visibility`-Aenderung.
+  - `Reset` entfernt ChangeRequests fuer das aktuelle Preview-Ziel; `Aenderungen verwerfen` leert alle ChangeRequests und setzt alle Preview-Styles zurueck.
+  - Das Preview-Panel zeigt die Anzahl vorbereiteter Aenderungen, Operationen fuer das aktuelle Element und den Hinweis `Noch nicht gespeichert`.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Fachliche Sichtpruefung in der echten Electron-DEV-App: Move/Width/Height/Hide/Show, Zaehler, Reset, Aenderungen verwerfen und Editor-aus-Aufraeumen pruefen.
+- Risiken/Hinweise:
+  - Keine Speicherung, kein localStorage, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Restarbeiten-Sonderlogik in der Runtime.
+  - Die vorbereiteten ChangeRequests sind bewusst nur In-Memory-Auftraege fuer einen spaeteren Speicherschritt.
