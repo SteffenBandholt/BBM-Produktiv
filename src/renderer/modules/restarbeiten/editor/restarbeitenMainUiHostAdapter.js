@@ -1,6 +1,10 @@
 import { getRestarbeitenMainUiRegistry } from "./restarbeitenEditorScopes.js";
 import { validateEditorChangeRequest } from "../../../editorRuntime/changeRequests/editorChangeRequestValidator.js";
-import { validateHostAdapterShape } from "../../../editorRuntime/host/bbmEditorHostAdapterContract.js";
+import {
+  normalizeHostCapabilities,
+  normalizeHostContext,
+  validateHostAdapterShape,
+} from "../../../editorRuntime/host/bbmEditorHostAdapterContract.js";
 
 const SCOPE = Object.freeze({
   targetAppId: "bbm",
@@ -10,8 +14,18 @@ const SCOPE = Object.freeze({
 
 export function createRestarbeitenMainUiHostAdapter() {
   const registry = getRestarbeitenMainUiRegistry();
+  const pendingChangeRequests = [];
 
   const adapter = {
+    getHostContext() {
+      return normalizeHostContext({
+        targetAppId: SCOPE.targetAppId,
+        moduleId: SCOPE.moduleId,
+        scopeId: SCOPE.scopeId,
+        activeUiScope: SCOPE.scopeId,
+      });
+    },
+
     getRegistry() {
       return registry.map((entry) => ({
         ...entry,
@@ -22,6 +36,35 @@ export function createRestarbeitenMainUiHostAdapter() {
 
     getCurrentLayoutState() {
       return [];
+    },
+
+    getCapabilities() {
+      return normalizeHostCapabilities({
+        selection: true,
+        preview: true,
+        pendingChangeRequests: true,
+      });
+    },
+
+    onPendingChangeRequestsChanged(changeRequests = []) {
+      const nextRequests = Array.isArray(changeRequests) ? changeRequests.map((entry) => ({ ...entry })) : [];
+      pendingChangeRequests.splice(0, pendingChangeRequests.length, ...nextRequests);
+      return {
+        ok: true,
+        persistent: false,
+        count: pendingChangeRequests.length,
+      };
+    },
+
+    submitChangeRequests(changeRequests = []) {
+      return {
+        ok: false,
+        blocked: true,
+        reason: "PERSISTENCE_DISABLED",
+        persistenceDisabled: true,
+        dryRunOnly: true,
+        changeRequests: Array.isArray(changeRequests) ? changeRequests.map((entry) => ({ ...entry })) : [],
+      };
     },
 
     submitChangeRequest(changeRequest) {
@@ -42,7 +85,9 @@ export function createRestarbeitenMainUiHostAdapter() {
       return {
         ok: false,
         blocked: true,
-        reason: "LAYOUT_WRITE_NOT_IMPLEMENTED",
+        reason: "PERSISTENCE_DISABLED",
+        persistenceDisabled: true,
+        dryRunOnly: true,
         validation,
       };
     },

@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.26 abgeschlossen: Die BBM-HostAdapter-Schnittstelle ist dokumentiert und testseitig stabilisiert; Runtime-Preview bleibt in-memory und ohne Speicherung.
 - K19.25 abgeschlossen: Der Trennschnitt zwischen BBM-Hostintegration, Restarbeiten-Modulankern und generischer UI-Editor-Runtime ist dokumentiert; keine Funktionsaenderung.
 - K19.24 abgeschlossen: Preview-Operationen erzeugen/aktualisieren temporaere ChangeRequests im UI-Editor-State; Reset, Verwerfen und Deaktivieren raeumen sie wieder auf.
 - K19.0 abgeschlossen: erste explizite UI-Elementliste fuer das Protokoll-Modul, ohne Editor-Integration und ohne produktive UI-Aenderung.
@@ -52,6 +53,16 @@ Aktueller Stand:
 - [x] K19.16a UI-Editor zeigt festen registrierten Scope aus BBM-Registry
 - [x] K19.24 UI-Editor Preview-Operationen als ChangeRequests sammeln
 - [x] K19.25 UI-Editor-Trennschnitt BBM vs Kit dokumentieren
+- [x] K19.26 BBM-HostAdapter-Schnittstelle stabilisieren
+
+## Statusupdate K19.26
+- Die BBM-HostAdapter-Schnittstelle ist in `docs/UI_EDITOR_HOSTADAPTER_CONTRACT.md` dokumentiert.
+- Der vorhandene Contract `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js` wurde erweitert statt eine zweite Contract-Struktur anzulegen.
+- Der HostAdapter beschreibt jetzt HostContext, Registry, Layout-State, Capabilities, In-Memory-Pending-ChangeRequests und bewusst blockierte Persistenz.
+- `BbmUiEditorRuntimeLauncher.js` kann mit einem HostAdapter arbeiten, bleibt aber mit den bisherigen CoreShell-Parametern kompatibel.
+- `pendingChangeRequests` werden optional an den HostAdapter gemeldet, bleiben aber temporaer und nicht persistent.
+- Keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Restarbeiten-Sonderlogik in der Runtime.
+- Naechster sinnvoller Schritt: generische Runtime-Teile fuer die spaetere UI-Editor-kit-Rueckfuehrung in kleine extrahierbare Einheiten schneiden, weiterhin ohne Speicherung.
 
 ## Statusupdate K19.25
 - Der Trennschnitt zwischen generischer UI-Editor-Runtime, BBM-spezifischer Hostintegration und Restarbeiten-spezifischen Registry-/DOM-Ankern ist in `docs/UI_EDITOR_TRENNSCHNITT_BBM_VS_KIT.md` dokumentiert.

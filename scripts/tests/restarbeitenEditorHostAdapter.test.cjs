@@ -41,8 +41,12 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
   await run("Restarbeiten HostAdapter: Factory liefert Adapter fuer den Scope", () => {
     const adapter = createBbmEditorHostAdapter("restarbeiten.ui.main");
     assert.ok(adapter);
+    assert.equal(typeof adapter.getHostContext, "function");
     assert.equal(typeof adapter.getRegistry, "function");
     assert.equal(typeof adapter.getCurrentLayoutState, "function");
+    assert.equal(typeof adapter.getCapabilities, "function");
+    assert.equal(typeof adapter.onPendingChangeRequestsChanged, "function");
+    assert.equal(typeof adapter.submitChangeRequests, "function");
     assert.equal(typeof adapter.submitChangeRequest, "function");
   });
 
@@ -61,15 +65,48 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(adapterRegistry[0].id, registry[0].id);
   });
 
+  await run("Restarbeiten HostAdapter: HostContext und Capabilities bleiben ohne Persistenz", () => {
+    assert.deepEqual(adapter.getHostContext(), {
+      targetAppId: "bbm",
+      moduleId: "restarbeiten",
+      activeUiScope: "restarbeiten.ui.main",
+      scopeId: "restarbeiten.ui.main",
+    });
+    const capabilities = adapter.getCapabilities();
+    assert.equal(capabilities.selection, true);
+    assert.equal(capabilities.preview, true);
+    assert.equal(capabilities.pendingChangeRequests, true);
+    assert.equal(capabilities.persistence, false);
+    assert.equal(capabilities.dryRunOnly, true);
+  });
+
   await run("Restarbeiten HostAdapter: Layout-State startet leer", () => {
     assert.deepEqual(adapter.getCurrentLayoutState(), []);
+  });
+
+  await run("Restarbeiten HostAdapter: Pending ChangeRequests bleiben in-memory", () => {
+    const result = adapter.onPendingChangeRequestsChanged([validChangeRequest]);
+    assert.equal(result.ok, true);
+    assert.equal(result.persistent, false);
+    assert.equal(result.count, 1);
+  });
+
+  await run("Restarbeiten HostAdapter: ChangeRequests koennen nicht persistiert werden", () => {
+    const result = adapter.submitChangeRequests([validChangeRequest]);
+    assert.equal(result.ok, false);
+    assert.equal(result.blocked, true);
+    assert.equal(result.reason, "PERSISTENCE_DISABLED");
+    assert.equal(result.persistenceDisabled, true);
+    assert.equal(result.dryRunOnly, true);
   });
 
   await run("Restarbeiten HostAdapter: gueltiger Change Request wird nur blockiert", () => {
     const result = adapter.submitChangeRequest(validChangeRequest);
     assert.equal(result.ok, false);
     assert.equal(result.blocked, true);
-    assert.equal(result.reason, "LAYOUT_WRITE_NOT_IMPLEMENTED");
+    assert.equal(result.reason, "PERSISTENCE_DISABLED");
+    assert.equal(result.persistenceDisabled, true);
+    assert.equal(result.dryRunOnly, true);
     assert.equal(result.validation.ok, true);
   });
 

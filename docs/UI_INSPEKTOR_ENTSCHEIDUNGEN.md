@@ -99,3 +99,8 @@
 **Beschluss:** Der alte M13-Hover- und Restarbeiten-Inspector-Pfad ist fachlich beendet; UI-V2 und Editor-V2 werden als Neustart neu geplant.
 
 **Begründung:** Der bisherige Pfad wird nicht weiter repariert. Ein klarer Neustart trennt die neue Architektur sauber von alten Sonderwegen und fuehrt zuerst ueber EditorLab.
+
+## Entscheidung 021
+**Beschluss:** BBM liefert dem UI-Editor eine explizite HostAdapter-Schnittstelle mit HostContext, Registry, Layout-State, Capabilities und In-Memory-ChangeRequest-Rueckmeldung; Persistenz bleibt deaktiviert.
+
+**Begruendung:** Der UI-Editor soll spaeter ins UI-Editor-kit rueckfuehrbar bleiben. BBM bleibt Host- und Referenz-App, waehrend generische Runtime-Logik nicht dauerhaft an CoreShell, Restarbeiten-IDs oder BBM-Fachpfade gekoppelt wird.

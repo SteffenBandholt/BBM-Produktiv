@@ -163,8 +163,44 @@ async function runEditorRuntimeCatalogTests(run) {
       getRegistry() {},
     });
     assert.equal(result.ok, false);
+    assert.ok(result.errors.some((error) => error.methodName === "getHostContext"));
     assert.ok(result.errors.some((error) => error.methodName === "getCurrentLayoutState"));
-    assert.ok(result.errors.some((error) => error.methodName === "submitChangeRequest"));
+    assert.ok(result.errors.some((error) => error.methodName === "getCapabilities"));
+    assert.ok(result.errors.some((error) => error.methodName === "onPendingChangeRequestsChanged"));
+    assert.ok(result.errors.some((error) => error.methodName === "submitChangeRequests"));
+  });
+
+  await run("EditorRuntime: InMemory HostAdapter liefert Kontext, Registry und blockiert Persistenz", () => {
+    const adapter = hostContract.createInMemoryBbmEditorHostAdapter({
+      hostContext: {
+        targetAppId: "sample-app",
+        moduleId: "sample",
+        activeUiScope: "sample.scope",
+      },
+      registeredElements: [
+        { id: "sample.root", name: "Root", type: "container", role: "root", parentId: null, allowedOps: ["inspect"], lockedOps: [] },
+      ],
+      capabilities: {
+        persistence: true,
+      },
+    });
+
+    assert.equal(hostContract.validateHostAdapterShape(adapter).ok, true);
+    assert.deepEqual(adapter.getHostContext(), {
+      targetAppId: "sample-app",
+      moduleId: "sample",
+      activeUiScope: "sample.scope",
+      scopeId: "sample.scope",
+    });
+    assert.equal(adapter.getRegistry("sample.scope").elements[0].id, "sample.root");
+    assert.deepEqual(adapter.getCurrentLayoutState(), []);
+    assert.equal(adapter.getCapabilities().persistence, false);
+    assert.equal(adapter.getCapabilities().dryRunOnly, true);
+    assert.equal(adapter.onPendingChangeRequestsChanged([{ changeId: "chg-1" }]).persistent, false);
+    const submitResult = adapter.submitChangeRequests([{ changeId: "chg-1" }]);
+    assert.equal(submitResult.ok, false);
+    assert.equal(submitResult.reason, "PERSISTENCE_DISABLED");
+    assert.equal(submitResult.persistenceDisabled, true);
   });
 
   if (!process.exitCode) console.log("editorRuntime.catalog.test.cjs passed");

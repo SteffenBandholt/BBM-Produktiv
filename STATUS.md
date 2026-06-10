@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor HostAdapter-Schnittstelle stabilisiert:
+  - Der vorhandene Contract unter `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js` wurde erweitert, keine zweite Contract-Struktur angelegt.
+  - Der HostAdapter beschreibt jetzt `getHostContext`, `getRegistry`, `getCurrentLayoutState`, `getCapabilities`, `onPendingChangeRequestsChanged` und `submitChangeRequests`.
+  - `submitChangeRequests` bleibt bewusst blockiert mit `PERSISTENCE_DISABLED`; `pendingChangeRequests` werden nur in-memory gemeldet.
+  - Der BBM Runtime-Launcher kann optional einen HostAdapter verwenden und bleibt mit `activeUiScope`, `registeredElements`, `availableUiScopes` und `registryResolver` kompatibel.
+  - Keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Restarbeiten-Sonderlogik in der Runtime.
+  - Naechster offener Schritt: spaetere UI-Editor-kit-Rueckfuehrung in kleinen extrahierbaren Runtime-Einheiten vorbereiten.
+
 - UI-Editor-Trennschnitt BBM vs. UI-Editor-kit dokumentiert:
   - BBM ist als Referenzintegration und Host-App beschrieben, nicht als dauerhafter Produktort generischer UI-Editor-Runtime.
   - Generische Runtime-Teile wie Auswahlmodell, Target Selection, Preview-Panel, temporaere Preview-Operationen, `pendingChangeRequests`, ChangeRequest-Erzeugung und Guardrails sind als kit-Kandidaten abgegrenzt.

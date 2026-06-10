@@ -6,6 +6,7 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 const RUNTIME_PATH = path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
 const BBM_REGISTRY_PATH = path.join(__dirname, "../../src/renderer/uiEditor/bbmUiEditorRegistry.js");
 const CORE_SHELL_PATH = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
+const HOST_CONTRACT_PATH = path.join(__dirname, "../../src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js");
 const CSS_PATH = path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.css");
 const PACKAGE_PATH = path.join(__dirname, "../../package.json");
 
@@ -1038,6 +1039,65 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     mod.resetAllPreviewChanges(state);
     assert.equal(state.pendingChangeRequests.length, 0);
     assert.equal(target.style.transform, "");
+  });
+
+  await run("BBM UI-Editor-Runtime: HostAdapter empfaengt Pending ChangeRequests nur in-memory", async () => {
+    const [mod, hostContract] = await Promise.all([
+      loadRuntime(),
+      importEsmFromFile(HOST_CONTRACT_PATH),
+    ]);
+    const doc = createFakeDocument();
+    const pendingSnapshots = [];
+    const registry = {
+      targetAppId: "sample-app",
+      uiScope: "sample.screen",
+      moduleId: "sample",
+      elements: [
+        {
+          id: "sample.field.input",
+          name: "Eingabe",
+          type: "field",
+          role: "content",
+          parentId: "sample.field",
+          allowedOps: ["inspect", "move", "width", "height", "hide", "show"],
+          lockedOps: [],
+          previewTargetMode: "self",
+        },
+      ],
+    };
+    const hostAdapter = hostContract.createInMemoryBbmEditorHostAdapter({
+      hostContext: {
+        targetAppId: "sample-app",
+        moduleId: "sample",
+        activeUiScope: "sample.screen",
+      },
+      registry: registry.elements,
+      onPendingChangeRequestsChanged(changeRequests) {
+        pendingSnapshots.push(changeRequests);
+      },
+    });
+    const target = doc.createElement("input");
+    target.setAttribute("data-ui-editor-id", "sample.field.input");
+    target.style.width = "100px";
+    target.style.height = "30px";
+    const state = mod.createLauncherState({
+      activeUiScope: "sample.screen",
+      hostAdapter,
+    });
+    state.selectedElement = registry.elements[0];
+    state.selectedTargetNode = target;
+    state.selectedPreviewTargetNode = target;
+
+    assert.equal(state.selectedRegistry.targetAppId, "sample-app");
+    assert.equal(state.selectedRegistry.moduleId, "sample");
+    assert.equal(mod.applyPreviewOperation(state, "move", { dx: 5, dy: 0 }), true);
+    assert.equal(pendingSnapshots.length, 1);
+    assert.equal(pendingSnapshots[0][0].source, "preview");
+    assert.equal(pendingSnapshots[0][0].persistent, false);
+    assert.equal(hostAdapter.submitChangeRequests(state.pendingChangeRequests).reason, "PERSISTENCE_DISABLED");
+
+    mod.resetAllPreviewChanges(state);
+    assert.equal(pendingSnapshots[pendingSnapshots.length - 1].length, 0);
   });
 
   await run("BBM UI-Editor-Runtime: Preview-Panel zeigt vorbereitete Aenderungen und verwirft sie temporaer", async () => {

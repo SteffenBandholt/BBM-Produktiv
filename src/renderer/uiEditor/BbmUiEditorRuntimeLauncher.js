@@ -1,5 +1,6 @@
 import * as installedLauncherButtonArtifactModule from "../../../uiEditor/uiEditorLauncherButton.js";
 import * as installedTargetSelectionArtifactModule from "../../../uiEditor/targetSelection.js";
+import { createInMemoryBbmEditorHostAdapter } from "../editorRuntime/host/bbmEditorHostAdapterContract.js";
 
 void installedLauncherButtonArtifactModule;
 void installedTargetSelectionArtifactModule;
@@ -141,12 +142,53 @@ function normalizeReadonlyRegistry(registry = null) {
   };
 }
 
-function createLauncherState({ activeUiScope = null, registeredElements = null, availableUiScopes = null, registryResolver = null } = {}) {
+function getHostRegistry(hostAdapter = null, scopeId = "") {
+  if (!hostAdapter || typeof hostAdapter.getRegistry !== "function") return null;
+  const registry = hostAdapter.getRegistry(scopeId);
+  if (!Array.isArray(registry)) return registry;
+  const context = typeof hostAdapter.getHostContext === "function" ? hostAdapter.getHostContext() : {};
+  const normalizedScope = String(scopeId || context.scopeId || context.activeUiScope || "").trim();
+  return {
+    targetAppId: String(context.targetAppId || "").trim(),
+    moduleId: String(context.moduleId || "").trim(),
+    uiScope: normalizedScope,
+    scopeId: normalizedScope,
+    elements: registry,
+  };
+}
+
+function notifyPendingChangeRequestsChanged(state = {}) {
+  const adapter = state.hostAdapter || null;
+  if (!adapter || typeof adapter.onPendingChangeRequestsChanged !== "function") return null;
+  return adapter.onPendingChangeRequestsChanged(
+    Array.isArray(state.pendingChangeRequests) ? state.pendingChangeRequests : []
+  );
+}
+
+function createLauncherState({
+  activeUiScope = null,
+  registeredElements = null,
+  availableUiScopes = null,
+  registryResolver = null,
+  hostAdapter = null,
+  onPendingChangeRequestsChanged = null,
+} = {}) {
   const normalizedScope = String(activeUiScope == null ? "" : activeUiScope).trim();
   const resolver = typeof registryResolver === "function" ? registryResolver : null;
-  const selectedRegistry = resolver && normalizedScope
-    ? normalizeReadonlyRegistry(resolver(normalizedScope))
-    : normalizeReadonlyRegistry({ uiScope: normalizedScope, elements: registeredElements });
+  const adapter = hostAdapter || createInMemoryBbmEditorHostAdapter({
+    hostContext: {
+      activeUiScope: normalizedScope,
+      scopeId: normalizedScope,
+    },
+    registeredElements,
+    registryResolver: resolver,
+    onPendingChangeRequestsChanged,
+  });
+  const selectedRegistry = normalizeReadonlyRegistry(
+    getHostRegistry(adapter, normalizedScope)
+    || (resolver && normalizedScope ? resolver(normalizedScope) : null)
+    || { uiScope: normalizedScope, elements: registeredElements }
+  );
 
   return {
     uiEditorLauncherActive: false,
@@ -169,6 +211,7 @@ function createLauncherState({ activeUiScope = null, registeredElements = null, 
     win: null,
     availableUiScopes: normalizeAvailableUiScopes(availableUiScopes),
     registryResolver: resolver,
+    hostAdapter: adapter,
   };
 }
 
@@ -427,12 +470,14 @@ function removePendingChangeRequestsForTarget(state = {}, targetNode = null) {
   if (!targetElementId) return 0;
   const previousCount = state.pendingChangeRequests.length;
   state.pendingChangeRequests = state.pendingChangeRequests.filter((request) => request?.targetElementId !== targetElementId);
+  if (previousCount !== state.pendingChangeRequests.length) notifyPendingChangeRequestsChanged(state);
   return previousCount - state.pendingChangeRequests.length;
 }
 
 function resetAllPreviewChanges(state = {}) {
   if (!state?.previewStates) {
     state.pendingChangeRequests = [];
+    notifyPendingChangeRequestsChanged(state);
     return 0;
   }
   const targets = Array.from(state.previewStates.keys());
@@ -441,6 +486,7 @@ function resetAllPreviewChanges(state = {}) {
     if (resetPreviewForTarget(state, targetNode)) resetCount += 1;
   }
   state.pendingChangeRequests = [];
+  notifyPendingChangeRequestsChanged(state);
   state.previewMessage = resetCount > 0 ? "Preview zurueckgesetzt." : "Keine Preview-Aenderung aktiv.";
   return resetCount;
 }
@@ -696,9 +742,11 @@ function setActiveScopeInState(state, nextScope) {
   const normalizedScope = String(nextScope == null ? "" : nextScope).trim();
   removeLauncherTargetSelectionController(state);
   state.activeUiScope = normalizedScope;
-  state.selectedRegistry = state.registryResolver
-    ? normalizeReadonlyRegistry(state.registryResolver(normalizedScope))
-    : normalizeReadonlyRegistry({ uiScope: normalizedScope, elements: [] });
+  state.selectedRegistry = normalizeReadonlyRegistry(
+    getHostRegistry(state.hostAdapter, normalizedScope)
+    || (state.registryResolver ? state.registryResolver(normalizedScope) : null)
+    || { uiScope: normalizedScope, elements: [] }
+  );
 }
 
 function installLauncherTargetSelectionController(doc, host, state) {
@@ -832,6 +880,7 @@ function upsertPreviewChangeRequest(state = {}, registryElement = null, targetNo
   baseRequest.updatedAt = now;
 
   if (!existing) state.pendingChangeRequests.push(baseRequest);
+  notifyPendingChangeRequestsChanged(state);
   return baseRequest;
 }
 
@@ -1358,6 +1407,8 @@ export async function installBbmUiEditorRuntimeLauncher({
   registeredElements = null,
   availableUiScopes = null,
   registryResolver = null,
+  hostAdapter = null,
+  onPendingChangeRequestsChanged = null,
   doc = getDocument(),
   win = getWindow(),
   host = null,
@@ -1371,7 +1422,14 @@ export async function installBbmUiEditorRuntimeLauncher({
   ensureInstalledLauncherCss(doc);
   const artifact = await loadInstalledLauncherButton({ doc, win });
   const launcherHost = getLauncherHost(doc, host);
-  const state = createLauncherState({ activeUiScope, registeredElements, availableUiScopes, registryResolver });
+  const state = createLauncherState({
+    activeUiScope,
+    registeredElements,
+    availableUiScopes,
+    registryResolver,
+    hostAdapter,
+    onPendingChangeRequestsChanged,
+  });
   state.win = win || null;
   return renderLauncherButton({ artifact, doc, host: launcherHost, state, onToggle });
 }
