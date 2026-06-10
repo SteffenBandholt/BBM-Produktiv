@@ -164,6 +164,69 @@ async function runBbmUiEditorRegistryTests(run) {
     assert.equal(registry.elements.some((element) => element.id === "restarbeiten.quicklane"), true);
   });
 
+  await run("BBM UI-Editor-Registry: echte Restarbeiten-Editbox-Metadaten sind granular", async () => {
+    const mod = await loadRegistryModule();
+    const registry = mod.getBbmUiEditorRegistry("restarbeiten.screen");
+    const byId = (id) => registry.elements.find((element) => element.id === id);
+    const assertMeta = (id, expected) => {
+      const element = byId(id);
+      assert.equal(Boolean(element), true, `${id} exists`);
+      for (const [key, value] of Object.entries(expected)) {
+        assert.deepEqual(element[key], value, `${id}.${key}`);
+      }
+    };
+    const controlLockedOps = ["rename"];
+    const actionControlLockedOps = ["resize", "rename"];
+
+    assertMeta("restarbeiten.editbox.text.short", {
+      type: "field",
+      role: "content",
+      parentId: "restarbeiten.editbox",
+      editGranularity: "container",
+      previewTargetMode: "self",
+      affectsContainer: true,
+    });
+    assertMeta("restarbeiten.editbox.text.short.label", {
+      type: "label",
+      role: "content",
+      parentId: "restarbeiten.editbox.text.short",
+      allowedOps: ["inspect", "move", "width", "hide", "show"],
+      editGranularity: "element",
+      previewTargetMode: "self",
+      affectsContainer: false,
+    });
+    assertMeta("restarbeiten.editbox.text.short.input", {
+      type: "field",
+      role: "content",
+      parentId: "restarbeiten.editbox.text.short",
+      allowedOps: ["inspect", "move", "width", "height", "hide", "show"],
+      lockedOps: controlLockedOps,
+      editGranularity: "control",
+      previewTargetMode: "self",
+      affectsContainer: false,
+    });
+    assertMeta("restarbeiten.editbox.action.new", {
+      type: "button",
+      role: "action",
+      parentId: "restarbeiten.editbox.text.short",
+      allowedOps: ["inspect", "move", "width", "height", "hide", "show"],
+      lockedOps: actionControlLockedOps,
+      editGranularity: "control",
+      previewTargetMode: "self",
+      affectsContainer: false,
+    });
+    assertMeta("restarbeiten.editbox.action.delete", {
+      type: "button",
+      role: "action",
+      parentId: "restarbeiten.editbox.text.short",
+      allowedOps: ["inspect", "move", "width", "height", "hide", "show"],
+      lockedOps: actionControlLockedOps,
+      editGranularity: "control",
+      previewTargetMode: "self",
+      affectsContainer: false,
+    });
+  });
+
   await run("BBM UI-Editor-Registry: unbekannter Scope wird sauber abgefangen", async () => {
     const mod = await loadRegistryModule();
     const registry = mod.getBbmUiEditorRegistry("unbekannt.scope");

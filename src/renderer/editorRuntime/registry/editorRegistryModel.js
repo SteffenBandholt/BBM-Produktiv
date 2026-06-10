@@ -32,10 +32,14 @@ export const EDITOR_ELEMENT_ROLES = Object.freeze([
 ]);
 
 export const EDITOR_ALLOWED_OPERATIONS = Object.freeze([
+  "inspect",
   "move",
   "resize",
+  "resizeWidth",
+  "resizeHeight",
   "hide",
   "show",
+  "rename",
   "label",
   "spacing",
   "width",

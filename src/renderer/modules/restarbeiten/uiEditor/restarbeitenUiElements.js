@@ -1,15 +1,44 @@
-export const RESTARBEITEN_UI_EDITOR_SCOPE = "restarbeiten.screen";
+﻿export const RESTARBEITEN_UI_EDITOR_SCOPE = "restarbeiten.screen";
 
+const CONTAINER_OPS = Object.freeze(["inspect", "move", "resize", "width", "height", "hide", "show"]);
+const LABEL_OPS = Object.freeze(["inspect", "move", "width", "hide", "show"]);
+const CONTROL_OPS = Object.freeze(["inspect", "move", "width", "height", "hide", "show"]);
+const ACTION_CONTROL_OPS = Object.freeze(["inspect", "move", "width", "height", "hide", "show"]);
+const ACTION_OPS = Object.freeze(["inspect", "show", "hide", "move"]);
+const INSPECT_OPS = Object.freeze(["inspect"]);
+const CONTROL_LOCKED_OPS = Object.freeze(["rename"]);
+const ACTION_CONTROL_LOCKED_OPS = Object.freeze(["resize", "rename"]);
 const OPS = Object.freeze({
-  layout: Object.freeze(["inspect", "show", "hide", "move", "resize", "reset"]),
-  group: Object.freeze(["inspect", "show", "hide", "move", "resize"]),
-  field: Object.freeze(["inspect", "show", "hide", "move", "resize", "rename"]),
-  action: Object.freeze(["inspect", "show", "hide", "move", "rename"]),
-  protectedAction: Object.freeze(["inspect"]),
-  content: Object.freeze(["inspect", "show", "hide", "resize"]),
+  layout: CONTAINER_OPS,
+  group: CONTAINER_OPS,
+  field: CONTAINER_OPS,
+  control: CONTROL_OPS,
+  actionControl: ACTION_CONTROL_OPS,
+  label: LABEL_OPS,
+  action: ACTION_OPS,
+  protectedAction: INSPECT_OPS,
+  content: LABEL_OPS,
 });
 
-function element(id, name, type, role, parentId, order, allowedOps = OPS.layout, lockedOps = []) {
+const META = Object.freeze({
+  container: Object.freeze({
+    editGranularity: "container",
+    previewTargetMode: "self",
+    affectsContainer: true,
+  }),
+  element: Object.freeze({
+    editGranularity: "element",
+    previewTargetMode: "self",
+    affectsContainer: false,
+  }),
+  control: Object.freeze({
+    editGranularity: "control",
+    previewTargetMode: "self",
+    affectsContainer: false,
+  }),
+});
+
+function element(id, name, type, role, parentId, order, allowedOps = OPS.layout, lockedOps = [], metadata = {}) {
   return Object.freeze({
     id,
     name,
@@ -21,6 +50,7 @@ function element(id, name, type, role, parentId, order, allowedOps = OPS.layout,
     editable: allowedOps.length > 1,
     allowedOps: [...allowedOps],
     lockedOps: [...lockedOps],
+    ...metadata,
   });
 }
 
@@ -77,41 +107,41 @@ const RESTARBEITEN_UI_ELEMENTS = Object.freeze([
   element("restarbeiten.record.responsible", "Verantwortlich", "label", "responsible", "restarbeiten.record.metaColumn", 40, OPS.content),
 
   element("restarbeiten.editbox", "Editbox", "area", "layout", "restarbeiten.root", 30),
-  element("restarbeiten.editbox.header", "Editbox-Kopf", "componentPart", "layout", "restarbeiten.editbox", 10),
-  element("restarbeiten.editbox.header.currentRecord", "Aktueller Datensatz", "label", "structure", "restarbeiten.editbox.header", 10, OPS.content),
-  element("restarbeiten.editbox.action.new", "Neu", "button", "action", "restarbeiten.editbox.text.short", 20, OPS.protectedAction, ["move", "resize", "rename"]),
-  element("restarbeiten.editbox.action.delete", "Löschen", "button", "action", "restarbeiten.editbox.text.short", 40, OPS.protectedAction, ["move", "resize", "rename"]),
-  element("restarbeiten.editbox.text.short", "Kurztext", "field", "content", "restarbeiten.editbox", 20, OPS.field),
-  element("restarbeiten.editbox.text.short.label", "Kurztext / Gegenstand", "label", "content", "restarbeiten.editbox.text.short", 5, OPS.content),
-  element("restarbeiten.editbox.text.short.input", "Kurztext-Eingabe", "field", "content", "restarbeiten.editbox.text.short", 10, OPS.field),
-  element("restarbeiten.editbox.text.short.dictation", "Diktat Kurztext", "button", "action", "restarbeiten.editbox.text.short", 12, OPS.protectedAction, ["move", "resize", "rename"]),
-  element("restarbeiten.editbox.text.short.remaining", "Restzeichen Kurztext", "label", "validation", "restarbeiten.editbox.text.short", 15, OPS.content),
-  element("restarbeiten.editbox.text.long", "Langtext", "field", "content", "restarbeiten.editbox", 30, OPS.field),
-  element("restarbeiten.editbox.text.long.label", "Langtext / Beschreibung", "label", "content", "restarbeiten.editbox.text.long", 5, OPS.content),
-  element("restarbeiten.editbox.text.long.input", "Langtext-Eingabe", "field", "content", "restarbeiten.editbox.text.long", 10, OPS.field),
-  element("restarbeiten.editbox.text.long.dictation", "Diktat Langtext", "button", "action", "restarbeiten.editbox.text.long", 12, OPS.protectedAction, ["move", "resize", "rename"]),
-  element("restarbeiten.editbox.text.long.remaining", "Restzeichen Langtext", "label", "validation", "restarbeiten.editbox.text.long", 15, OPS.content),
-  element("restarbeiten.editbox.location", "Editbox-Verortung", "group", "layout", "restarbeiten.editbox", 40, OPS.group),
-  element("restarbeiten.editbox.location.level1", "L1", "field", "meta", "restarbeiten.editbox.location", 10, OPS.field),
-  element("restarbeiten.editbox.location.level1.label", "Haus", "label", "meta", "restarbeiten.editbox.location.level1", 5, OPS.content),
-  element("restarbeiten.editbox.location.level2", "L2", "field", "meta", "restarbeiten.editbox.location", 20, OPS.field),
-  element("restarbeiten.editbox.location.level2.label", "Geschoss", "label", "meta", "restarbeiten.editbox.location.level2", 5, OPS.content),
-  element("restarbeiten.editbox.location.level3", "L3", "field", "meta", "restarbeiten.editbox.location", 30, OPS.field),
-  element("restarbeiten.editbox.location.level3.label", "Einheit", "label", "meta", "restarbeiten.editbox.location.level3", 5, OPS.content),
-  element("restarbeiten.editbox.location.level4", "L4", "field", "meta", "restarbeiten.editbox.location", 40, OPS.field),
-  element("restarbeiten.editbox.location.level4.label", "Raum", "label", "meta", "restarbeiten.editbox.location.level4", 5, OPS.content),
-  element("restarbeiten.editbox.meta", "Editbox-Meta", "group", "meta", "restarbeiten.editbox", 50, OPS.group),
-  element("restarbeiten.editbox.meta.itemClass", "Klasse", "field", "meta", "restarbeiten.editbox.text.short", 30, OPS.field),
-  element("restarbeiten.editbox.meta.itemClass.label", "Klasse", "label", "meta", "restarbeiten.editbox.meta.itemClass", 5, OPS.content),
-  element("restarbeiten.editbox.meta.status", "Status", "field", "status", "restarbeiten.editbox.meta", 20, OPS.field),
-  element("restarbeiten.editbox.meta.status.label", "Status", "label", "meta", "restarbeiten.editbox.meta.status", 5, OPS.content),
-  element("restarbeiten.editbox.meta.dueDate", "Fertig bis", "field", "date", "restarbeiten.editbox.meta", 30, OPS.field),
-  element("restarbeiten.editbox.meta.dueDate.label", "Fertig bis", "label", "meta", "restarbeiten.editbox.meta.dueDate", 5, OPS.content),
-  element("restarbeiten.editbox.meta.responsible", "Verantwortlich", "field", "responsible", "restarbeiten.editbox.meta", 40, OPS.field),
-  element("restarbeiten.editbox.meta.responsible.label", "Verantwortlich", "label", "meta", "restarbeiten.editbox.meta.responsible", 5, OPS.content),
-  element("restarbeiten.editbox.validation.shortText", "Kurztext erforderlich", "label", "validation", "restarbeiten.editbox.meta", 45, OPS.content),
-  element("restarbeiten.editbox.meta.ampel", "Ampel", "statusIndicator", "status", "restarbeiten.editbox.meta", 50, OPS.content),
-  element("restarbeiten.editbox.meta.noteButton", "Notiz", "button", "action", "restarbeiten.editbox.meta", 60, OPS.protectedAction, ["move", "resize", "rename"]),
+  element("restarbeiten.editbox.header", "Editbox-Kopf", "componentPart", "layout", "restarbeiten.editbox", 10, OPS.group, [], META.container),
+  element("restarbeiten.editbox.header.currentRecord", "Aktueller Datensatz", "label", "structure", "restarbeiten.editbox.header", 10, OPS.label, [], META.element),
+  element("restarbeiten.editbox.action.new", "Neu", "button", "action", "restarbeiten.editbox.text.short", 20, OPS.actionControl, ACTION_CONTROL_LOCKED_OPS, META.control),
+  element("restarbeiten.editbox.action.delete", "Löschen", "button", "action", "restarbeiten.editbox.text.short", 40, OPS.actionControl, ACTION_CONTROL_LOCKED_OPS, META.control),
+  element("restarbeiten.editbox.text.short", "Kurztext", "field", "content", "restarbeiten.editbox", 20, OPS.field, [], META.container),
+  element("restarbeiten.editbox.text.short.label", "Kurztext / Gegenstand", "label", "content", "restarbeiten.editbox.text.short", 5, OPS.label, [], META.element),
+  element("restarbeiten.editbox.text.short.input", "Kurztext-Eingabe", "field", "content", "restarbeiten.editbox.text.short", 10, OPS.control, CONTROL_LOCKED_OPS, META.control),
+  element("restarbeiten.editbox.text.short.dictation", "Diktat Kurztext", "button", "action", "restarbeiten.editbox.text.short", 12, OPS.actionControl, ACTION_CONTROL_LOCKED_OPS, META.control),
+  element("restarbeiten.editbox.text.short.remaining", "Restzeichen Kurztext", "label", "validation", "restarbeiten.editbox.text.short", 15, OPS.label, [], META.element),
+  element("restarbeiten.editbox.text.long", "Langtext", "field", "content", "restarbeiten.editbox", 30, OPS.field, [], META.container),
+  element("restarbeiten.editbox.text.long.label", "Langtext / Beschreibung", "label", "content", "restarbeiten.editbox.text.long", 5, OPS.label, [], META.element),
+  element("restarbeiten.editbox.text.long.input", "Langtext-Eingabe", "field", "content", "restarbeiten.editbox.text.long", 10, OPS.control, CONTROL_LOCKED_OPS, META.control),
+  element("restarbeiten.editbox.text.long.dictation", "Diktat Langtext", "button", "action", "restarbeiten.editbox.text.long", 12, OPS.actionControl, ACTION_CONTROL_LOCKED_OPS, META.control),
+  element("restarbeiten.editbox.text.long.remaining", "Restzeichen Langtext", "label", "validation", "restarbeiten.editbox.text.long", 15, OPS.label, [], META.element),
+  element("restarbeiten.editbox.location", "Editbox-Verortung", "group", "layout", "restarbeiten.editbox", 40, OPS.group, [], META.container),
+  element("restarbeiten.editbox.location.level1", "L1", "field", "meta", "restarbeiten.editbox.location", 10, OPS.field, [], META.container),
+  element("restarbeiten.editbox.location.level1.label", "Haus", "label", "meta", "restarbeiten.editbox.location.level1", 5, OPS.label, [], META.element),
+  element("restarbeiten.editbox.location.level2", "L2", "field", "meta", "restarbeiten.editbox.location", 20, OPS.field, [], META.container),
+  element("restarbeiten.editbox.location.level2.label", "Geschoss", "label", "meta", "restarbeiten.editbox.location.level2", 5, OPS.label, [], META.element),
+  element("restarbeiten.editbox.location.level3", "L3", "field", "meta", "restarbeiten.editbox.location", 30, OPS.field, [], META.container),
+  element("restarbeiten.editbox.location.level3.label", "Einheit", "label", "meta", "restarbeiten.editbox.location.level3", 5, OPS.label, [], META.element),
+  element("restarbeiten.editbox.location.level4", "L4", "field", "meta", "restarbeiten.editbox.location", 40, OPS.field, [], META.container),
+  element("restarbeiten.editbox.location.level4.label", "Raum", "label", "meta", "restarbeiten.editbox.location.level4", 5, OPS.label, [], META.element),
+  element("restarbeiten.editbox.meta", "Editbox-Meta", "group", "meta", "restarbeiten.editbox", 50, OPS.group, [], META.container),
+  element("restarbeiten.editbox.meta.itemClass", "Klasse", "field", "meta", "restarbeiten.editbox.text.short", 30, OPS.field, [], META.container),
+  element("restarbeiten.editbox.meta.itemClass.label", "Klasse", "label", "meta", "restarbeiten.editbox.meta.itemClass", 5, OPS.label, [], META.element),
+  element("restarbeiten.editbox.meta.status", "Status", "field", "status", "restarbeiten.editbox.meta", 20, OPS.field, [], META.container),
+  element("restarbeiten.editbox.meta.status.label", "Status", "label", "meta", "restarbeiten.editbox.meta.status", 5, OPS.label, [], META.element),
+  element("restarbeiten.editbox.meta.dueDate", "Fertig bis", "field", "date", "restarbeiten.editbox.meta", 30, OPS.field, [], META.container),
+  element("restarbeiten.editbox.meta.dueDate.label", "Fertig bis", "label", "meta", "restarbeiten.editbox.meta.dueDate", 5, OPS.label, [], META.element),
+  element("restarbeiten.editbox.meta.responsible", "Verantwortlich", "field", "responsible", "restarbeiten.editbox.meta", 40, OPS.field, [], META.container),
+  element("restarbeiten.editbox.meta.responsible.label", "Verantwortlich", "label", "meta", "restarbeiten.editbox.meta.responsible", 5, OPS.label, [], META.element),
+  element("restarbeiten.editbox.validation.shortText", "Kurztext erforderlich", "label", "validation", "restarbeiten.editbox.meta", 45, OPS.label, [], META.element),
+  element("restarbeiten.editbox.meta.ampel", "Ampel", "statusIndicator", "status", "restarbeiten.editbox.meta", 50, OPS.label, [], META.element),
+  element("restarbeiten.editbox.meta.noteButton", "Notiz", "button", "action", "restarbeiten.editbox.meta", 60, OPS.actionControl, ACTION_CONTROL_LOCKED_OPS, META.control),
 
   element("restarbeiten.quicklane", "Quicklane", "toolbar", "layout", "restarbeiten.root", 40),
   element("restarbeiten.quicklane.group.navigation", "Quicklane Navigation", "group", "navigation", "restarbeiten.quicklane", 10, OPS.group),

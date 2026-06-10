@@ -94,6 +94,39 @@ async function runRestarbeitenEditorRegistryDomAnchorsTests(run) {
     assert.equal(scope.registry.length > 0, true);
   });
 
+  await run("Restarbeiten EditorRegistry: Editbox-Preview-Metadaten bleiben granular", () => {
+    const byId = (id) => registry.find((entry) => entry.id === id);
+    const assertPreviewMeta = (id, editGranularity, previewTargetMode, affectsContainer) => {
+      const entry = byId(id);
+      assert.equal(Boolean(entry), true, `${id} exists`);
+      assert.equal(entry.editGranularity, editGranularity, `${id} editGranularity`);
+      assert.equal(entry.previewTargetMode, previewTargetMode, `${id} previewTargetMode`);
+      assert.equal(entry.affectsContainer, affectsContainer, `${id} affectsContainer`);
+    };
+    const assertLocked = (id, lockedOps) => {
+      const entry = byId(id);
+      for (const op of lockedOps) {
+        assert.equal(entry.lockedOps.includes(op), true, `${id} locked ${op}`);
+        assert.equal(entry.allowedOps.includes(op), false, `${id} allowed ${op}`);
+      }
+    };
+
+    assertPreviewMeta("restarbeiten.editbox.text.short", "container", "self", true);
+    assertPreviewMeta("restarbeiten.editbox.text.short.label", "element", "self", false);
+    assertPreviewMeta("restarbeiten.editbox.text.short.input", "control", "self", false);
+    assertPreviewMeta("restarbeiten.editbox.action.new", "control", "self", false);
+    assertPreviewMeta("restarbeiten.editbox.action.delete", "control", "self", false);
+    assert.equal(byId("restarbeiten.editbox.text.short").type, "field");
+    assert.equal(byId("restarbeiten.editbox.text.short").role, "content");
+    assert.deepEqual(byId("restarbeiten.editbox.text.short.label").allowedOps, ["inspect", "move", "width", "hide", "show"]);
+    assert.deepEqual(byId("restarbeiten.editbox.text.short.input").allowedOps, ["inspect", "move", "width", "height", "hide", "show"]);
+    assert.deepEqual(byId("restarbeiten.editbox.action.new").allowedOps, ["inspect", "move", "width", "height", "hide", "show"]);
+    assert.deepEqual(byId("restarbeiten.editbox.action.delete").allowedOps, ["inspect", "move", "width", "height", "hide", "show"]);
+    assertLocked("restarbeiten.editbox.text.short.input", ["rename"]);
+    assertLocked("restarbeiten.editbox.action.new", ["resize", "rename"]);
+    assertLocked("restarbeiten.editbox.action.delete", ["resize", "rename"]);
+  });
+
   if (!process.exitCode) console.log("restarbeitenEditorRegistry.domAnchors.test.cjs passed");
 }
 

@@ -1,12 +1,38 @@
-const ROOT_OPS = Object.freeze(["move", "resize", "hide", "show", "spacing", "width", "height"]);
-const AREA_OPS = Object.freeze(["move", "resize", "hide", "show", "spacing", "width", "height"]);
-const GROUP_OPS = Object.freeze(["move", "resize", "hide", "show", "spacing"]);
-const FIELD_OPS = Object.freeze(["move", "resize", "hide", "show", "width", "height", "spacing"]);
-const LABEL_OPS = Object.freeze(["hide", "show", "label"]);
-const BUTTON_OPS = Object.freeze(["hide", "show"]);
-const LIST_OPS = Object.freeze(["move", "resize", "hide", "show", "spacing", "width", "height"]);
-const CARD_OPS = Object.freeze(["move", "resize", "hide", "show", "spacing", "width", "height"]);
-const STATUS_OPS = Object.freeze(["hide", "show"]);
+const CONTAINER_OPS = Object.freeze(["inspect", "move", "resize", "width", "height", "hide", "show"]);
+const LABEL_OPS = Object.freeze(["inspect", "move", "width", "hide", "show"]);
+const CONTROL_OPS = Object.freeze(["inspect", "move", "width", "height", "hide", "show"]);
+const ACTION_CONTROL_OPS = Object.freeze(["inspect", "move", "width", "height", "hide", "show"]);
+const ACTION_OPS = Object.freeze(["inspect", "show", "hide", "move"]);
+const INSPECT_OPS = Object.freeze(["inspect"]);
+const CONTROL_LOCKED_OPS = Object.freeze(["rename"]);
+const ACTION_CONTROL_LOCKED_OPS = Object.freeze(["resize", "rename"]);
+
+const ROOT_OPS = CONTAINER_OPS;
+const AREA_OPS = CONTAINER_OPS;
+const GROUP_OPS = CONTAINER_OPS;
+const FIELD_OPS = CONTAINER_OPS;
+const BUTTON_OPS = ACTION_OPS;
+const LIST_OPS = CONTAINER_OPS;
+const CARD_OPS = CONTAINER_OPS;
+const STATUS_OPS = LABEL_OPS;
+
+const META = Object.freeze({
+  container: Object.freeze({
+    editGranularity: "container",
+    previewTargetMode: "self",
+    affectsContainer: true,
+  }),
+  element: Object.freeze({
+    editGranularity: "element",
+    previewTargetMode: "self",
+    affectsContainer: false,
+  }),
+  control: Object.freeze({
+    editGranularity: "control",
+    previewTargetMode: "self",
+    affectsContainer: false,
+  }),
+});
 
 function createRegistryEntry({
   id,
@@ -17,6 +43,7 @@ function createRegistryEntry({
   order,
   allowedOps,
   lockedOps = [],
+  metadata = {},
 }) {
   const safeAllowedOps = [...allowedOps];
   const safeLockedOps = [...lockedOps];
@@ -31,6 +58,7 @@ function createRegistryEntry({
     editable: safeAllowedOps.length > 0,
     allowedOps: safeAllowedOps,
     lockedOps: safeLockedOps,
+    ...metadata,
   });
 }
 
@@ -606,6 +634,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox",
     order: 10,
     allowedOps: GROUP_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.header.currentRecord",
@@ -615,6 +644,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.header",
     order: 10,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.action.new",
@@ -623,7 +653,9 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     role: "action",
     parentId: "restarbeiten.editbox.text.short",
     order: 20,
-    allowedOps: BUTTON_OPS,
+    allowedOps: ACTION_CONTROL_OPS,
+    lockedOps: ACTION_CONTROL_LOCKED_OPS,
+    metadata: META.control,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.action.delete",
@@ -632,7 +664,9 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     role: "action",
     parentId: "restarbeiten.editbox.text.short",
     order: 40,
-    allowedOps: BUTTON_OPS,
+    allowedOps: ACTION_CONTROL_OPS,
+    lockedOps: ACTION_CONTROL_LOCKED_OPS,
+    metadata: META.control,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.text.short",
@@ -642,6 +676,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox",
     order: 20,
     allowedOps: FIELD_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.text.short.label",
@@ -651,6 +686,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.text.short",
     order: 5,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.text.short.input",
@@ -659,7 +695,9 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     role: "content",
     parentId: "restarbeiten.editbox.text.short",
     order: 10,
-    allowedOps: FIELD_OPS,
+    allowedOps: CONTROL_OPS,
+    lockedOps: CONTROL_LOCKED_OPS,
+    metadata: META.control,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.text.short.dictation",
@@ -668,7 +706,9 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     role: "action",
     parentId: "restarbeiten.editbox.text.short",
     order: 12,
-    allowedOps: BUTTON_OPS,
+    allowedOps: ACTION_CONTROL_OPS,
+    lockedOps: ACTION_CONTROL_LOCKED_OPS,
+    metadata: META.control,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.text.short.remaining",
@@ -678,6 +718,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.text.short",
     order: 15,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.text.long",
@@ -687,6 +728,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox",
     order: 30,
     allowedOps: FIELD_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.text.long.label",
@@ -696,6 +738,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.text.long",
     order: 5,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.text.long.input",
@@ -704,7 +747,9 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     role: "content",
     parentId: "restarbeiten.editbox.text.long",
     order: 10,
-    allowedOps: FIELD_OPS,
+    allowedOps: CONTROL_OPS,
+    lockedOps: CONTROL_LOCKED_OPS,
+    metadata: META.control,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.text.long.dictation",
@@ -713,7 +758,9 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     role: "action",
     parentId: "restarbeiten.editbox.text.long",
     order: 12,
-    allowedOps: BUTTON_OPS,
+    allowedOps: ACTION_CONTROL_OPS,
+    lockedOps: ACTION_CONTROL_LOCKED_OPS,
+    metadata: META.control,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.text.long.remaining",
@@ -723,6 +770,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.text.long",
     order: 15,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.location",
@@ -732,6 +780,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox",
     order: 40,
     allowedOps: GROUP_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.location.level1",
@@ -741,6 +790,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.location",
     order: 10,
     allowedOps: FIELD_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.location.level1.label",
@@ -750,6 +800,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.location.level1",
     order: 5,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.location.level2",
@@ -759,6 +810,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.location",
     order: 20,
     allowedOps: FIELD_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.location.level2.label",
@@ -768,6 +820,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.location.level2",
     order: 5,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.location.level3",
@@ -777,6 +830,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.location",
     order: 30,
     allowedOps: FIELD_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.location.level3.label",
@@ -786,6 +840,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.location.level3",
     order: 5,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.location.level4",
@@ -795,6 +850,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.location",
     order: 40,
     allowedOps: FIELD_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.location.level4.label",
@@ -804,6 +860,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.location.level4",
     order: 5,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta",
@@ -813,6 +870,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox",
     order: 50,
     allowedOps: GROUP_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.itemClass",
@@ -822,6 +880,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.text.short",
     order: 30,
     allowedOps: FIELD_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.itemClass.label",
@@ -831,6 +890,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.meta.itemClass",
     order: 5,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.status",
@@ -840,6 +900,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.meta",
     order: 20,
     allowedOps: FIELD_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.status.label",
@@ -849,6 +910,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.meta.status",
     order: 5,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.dueDate",
@@ -858,6 +920,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.meta",
     order: 30,
     allowedOps: FIELD_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.dueDate.label",
@@ -867,6 +930,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.meta.dueDate",
     order: 5,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.responsible",
@@ -876,6 +940,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.meta",
     order: 40,
     allowedOps: FIELD_OPS,
+    metadata: META.container,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.responsible.label",
@@ -885,6 +950,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.meta.responsible",
     order: 5,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.validation.shortText",
@@ -894,6 +960,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.meta",
     order: 45,
     allowedOps: LABEL_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.ampel",
@@ -903,6 +970,7 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     parentId: "restarbeiten.editbox.meta",
     order: 50,
     allowedOps: STATUS_OPS,
+    metadata: META.element,
   }),
   createRegistryEntry({
     id: "restarbeiten.editbox.meta.noteButton",
@@ -911,7 +979,9 @@ const RESTARBEITEN_MAIN_UI_REGISTRY = Object.freeze([
     role: "action",
     parentId: "restarbeiten.editbox.meta",
     order: 60,
-    allowedOps: BUTTON_OPS,
+    allowedOps: ACTION_CONTROL_OPS,
+    lockedOps: ACTION_CONTROL_LOCKED_OPS,
+    metadata: META.control,
   }),
 ]);
 

@@ -4,6 +4,7 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const RUNTIME_PATH = path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
+const BBM_REGISTRY_PATH = path.join(__dirname, "../../src/renderer/uiEditor/bbmUiEditorRegistry.js");
 const CORE_SHELL_PATH = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
 const CSS_PATH = path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.css");
 const PACKAGE_PATH = path.join(__dirname, "../../package.json");
@@ -201,6 +202,17 @@ function getLatestPreviewControls(doc) {
   return matches[matches.length - 1] || null;
 }
 
+function getPreviewPanel(doc) {
+  return doc.querySelector('[data-ui-editor-preview-panel="true"]');
+}
+
+function getRenderedText(node) {
+  if (!node) return "";
+  const ownText = node.textContent || "";
+  const childText = (node.children || []).map((child) => getRenderedText(child)).join("");
+  return `${ownText}${childText}`;
+}
+
 function matchesSelector(node, selector) {
   const raw = String(selector || "");
   if (raw === "button") return node.tagName === "BUTTON";
@@ -242,6 +254,12 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-preview-controls=\"true\"]") {
     return node.getAttribute("data-ui-editor-preview-controls") === "true";
+  }
+  if (raw === "[data-ui-editor-preview-panel=\"true\"]") {
+    return node.getAttribute("data-ui-editor-preview-panel") === "true";
+  }
+  if (raw === "[data-ui-editor-preview-drag-handle=\"true\"]") {
+    return node.getAttribute("data-ui-editor-preview-drag-handle") === "true";
   }
   if (raw === "[data-ui-editor-preview-selected]") {
     return Boolean(node.getAttribute("data-ui-editor-preview-selected"));
@@ -852,7 +870,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(longGroup.getAttribute("data-ui-editor-selected"), "true");
   });
 
-  await run("BBM UI-Editor-Runtime: Preview-Bereich wird erst nach registrierter Restarbeiten-Auswahl sichtbar", async () => {
+  await run("BBM UI-Editor-Runtime: Preview-Bedienung ist im aktiven Auswahlpfad sichtbar", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
     const win = {
@@ -877,26 +895,35 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     doc.body.appendChild(target);
 
     button.click();
-    assert.equal(Boolean(doc.querySelector('[data-ui-editor-preview-controls="true"]')), false);
+    let previewPanel = getPreviewPanel(doc);
+    assert.equal(Boolean(previewPanel), true);
+    assert.equal(getRenderedText(previewPanel).includes("Preview"), true);
+    assert.equal(getRenderedText(previewPanel).includes("Kein Element"), true);
+    assert.equal(getLatestPreviewAction(doc, "move-left").disabled, true);
 
     doc.dispatchEvent({ type: "click", target });
+    previewPanel = getPreviewPanel(doc);
+    const panelText = getRenderedText(previewPanel);
+    assert.equal(panelText.includes("Preview"), true);
+    assert.equal(panelText.includes("Element-ID: restarbeiten.editbox.text.short"), true);
+    assert.equal(panelText.includes("allowedOps: inspect, move, resize, hide, show"), true);
     const controls = getLatestPreviewControls(doc);
     assert.equal(Boolean(controls), true);
-    const details = controls.querySelector('[data-ui-editor-preview-selected]');
+    const details = previewPanel.querySelector('[data-ui-editor-preview-selected]');
     assert.equal(details.getAttribute("data-ui-editor-preview-selected"), "restarbeiten.editbox.text.short");
-    assert.equal(details.textContent.includes("Element: restarbeiten.editbox.text.short"), true);
+    assert.equal(details.textContent.includes("Element-ID: restarbeiten.editbox.text.short"), true);
     assert.equal(details.textContent.includes("allowedOps: inspect, move, resize, hide, show"), true);
-    assert.equal(getLatestPreviewAction(doc, "move-left").textContent, "← Move links");
-    assert.equal(getLatestPreviewAction(doc, "move-right").textContent, "→ Move rechts");
-    assert.equal(getLatestPreviewAction(doc, "move-up").textContent, "↑ Move hoch");
-    assert.equal(getLatestPreviewAction(doc, "move-down").textContent, "↓ Move runter");
+    assert.equal(getLatestPreviewAction(doc, "move-left").textContent, "Links");
+    assert.equal(getLatestPreviewAction(doc, "move-right").textContent, "Rechts");
+    assert.equal(getLatestPreviewAction(doc, "move-up").textContent, "Hoch");
+    assert.equal(getLatestPreviewAction(doc, "move-down").textContent, "Runter");
     assert.equal(getLatestPreviewAction(doc, "width-plus").textContent, "Breite +");
     assert.equal(getLatestPreviewAction(doc, "width-minus").textContent, "Breite -");
     assert.equal(getLatestPreviewAction(doc, "height-plus").textContent, "Hoehe +");
     assert.equal(getLatestPreviewAction(doc, "height-minus").textContent, "Hoehe -");
     assert.equal(getLatestPreviewAction(doc, "hide").textContent, "Ausblenden");
     assert.equal(getLatestPreviewAction(doc, "show").textContent, "Einblenden");
-    assert.equal(getLatestPreviewAction(doc, "reset").textContent, "Preview zuruecksetzen");
+    assert.equal(getLatestPreviewAction(doc, "reset").textContent, "Reset");
   });
 
   await run("BBM UI-Editor-Runtime: Restarbeiten-Preview wendet erlaubte Move/Resize/Hide-Operationen temporaer an", async () => {
@@ -947,6 +974,275 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(target.style.display, "");
   });
 
+  await run("BBM UI-Editor-Runtime: Editbox-Preview respektiert echte Registry-Granularitaet", async () => {
+    const mod = await loadRuntime();
+    const registryModule = await importEsmFromFile(BBM_REGISTRY_PATH);
+    const realRegistry = registryModule.getBbmUiEditorRegistry("restarbeiten.screen");
+    const requiredIds = [
+      "restarbeiten.editbox.text.short",
+      "restarbeiten.editbox.text.short.label",
+      "restarbeiten.editbox.text.short.input",
+      "restarbeiten.editbox.text.short.remaining",
+      "restarbeiten.editbox.action.new",
+      "restarbeiten.editbox.action.delete",
+    ];
+    const registryElements = requiredIds.map((id) => {
+      const element = realRegistry.elements.find((entry) => entry.id === id);
+      assert.equal(Boolean(element), true, `${id} exists in real registry`);
+      return element;
+    });
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "restarbeiten.screen",
+      moduleId: "restarbeiten",
+      elements: registryElements,
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      registryResolver: () => registry,
+    });
+
+    const group = doc.createElement("div");
+    group.className = "bbm-restarbeiten-text-field";
+    group.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.short");
+    group.style.width = "180px";
+    group.style.height = "44px";
+    const label = doc.createElement("span");
+    label.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.short.label");
+    label.style.width = "72px";
+    const input = doc.createElement("input");
+    input.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.short.input");
+    input.style.width = "88px";
+    input.style.height = "20px";
+    const sibling = doc.createElement("span");
+    sibling.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.short.remaining");
+    const newButton = doc.createElement("button");
+    newButton.setAttribute("data-ui-editor-id", "restarbeiten.editbox.action.new");
+    newButton.style.width = "32px";
+    newButton.style.height = "20px";
+    let newButtonActionCount = 0;
+    newButton.addEventListener("click", () => {
+      newButtonActionCount += 1;
+    });
+    const deleteButton = doc.createElement("button");
+    deleteButton.setAttribute("data-ui-editor-id", "restarbeiten.editbox.action.delete");
+    deleteButton.style.width = "52px";
+    deleteButton.style.height = "20px";
+    let deleteButtonActionCount = 0;
+    deleteButton.addEventListener("click", () => {
+      deleteButtonActionCount += 1;
+    });
+    group.append(label, input, sibling, newButton, deleteButton);
+    doc.body.appendChild(group);
+
+    button.click();
+
+    doc.dispatchEvent({ type: "click", target: group });
+    let panelText = getRenderedText(getPreviewPanel(doc));
+    assert.equal(panelText.includes("editGranularity: container"), true);
+    assert.equal(panelText.includes("previewTargetMode: self"), true);
+    assert.equal(panelText.includes("affectsContainer: true"), true);
+    assert.equal(panelText.includes("allowedOps: inspect, move, resize, width, height, hide, show"), true);
+    getLatestPreviewAction(doc, "move-right").click();
+    assert.equal(group.style.transform, "translate(5px, 0px)");
+    assert.equal(label.style.transform || "", "");
+    assert.equal(input.style.transform || "", "");
+    assert.equal(newButton.style.transform || "", "");
+    getLatestPreviewAction(doc, "width-plus").click();
+    assert.equal(group.style.width, "185px");
+    assert.equal(label.style.width, "72px");
+    assert.equal(input.style.width, "88px");
+    getLatestPreviewAction(doc, "height-plus").click();
+    assert.equal(group.style.height, "49px");
+    assert.equal(input.style.height, "20px");
+    getLatestPreviewAction(doc, "reset").click();
+    assert.equal(group.style.transform, "");
+    assert.equal(group.style.width, "180px");
+    assert.equal(group.style.height, "44px");
+
+    doc.dispatchEvent({ type: "click", target: label });
+    panelText = getRenderedText(getPreviewPanel(doc));
+    assert.equal(panelText.includes("Element-ID: restarbeiten.editbox.text.short.label"), true);
+    assert.equal(panelText.includes("Preview-Ziel-ID: restarbeiten.editbox.text.short.label"), true);
+    assert.equal(panelText.includes("editGranularity: element"), true);
+    assert.equal(panelText.includes("previewTargetMode: self"), true);
+    assert.equal(panelText.includes("affectsContainer: false"), true);
+    assert.equal(panelText.includes("allowedOps: inspect, move, width, hide, show"), true);
+    getLatestPreviewAction(doc, "move-right").click();
+    assert.equal(label.style.transform, "translate(5px, 0px)");
+    assert.equal(group.style.transform || "", "");
+    assert.equal(input.style.transform || "", "");
+    getLatestPreviewAction(doc, "width-plus").click();
+    assert.equal(label.style.width, "77px");
+    assert.equal(input.style.width, "88px");
+    getLatestPreviewAction(doc, "hide").click();
+    assert.equal(label.style.display, "none");
+    assert.equal(input.style.display || "", "");
+    assert.equal(sibling.style.display || "", "");
+    getLatestPreviewAction(doc, "reset").click();
+    assert.equal(label.style.transform, "");
+    assert.equal(label.style.width, "72px");
+    assert.equal(label.style.display, "");
+
+    doc.dispatchEvent({ type: "click", target: input });
+    panelText = getRenderedText(getPreviewPanel(doc));
+    assert.equal(panelText.includes("Element-ID: restarbeiten.editbox.text.short.input"), true);
+    assert.equal(panelText.includes("Preview-Ziel-ID: restarbeiten.editbox.text.short.input"), true);
+    assert.equal(panelText.includes("editGranularity: control"), true);
+    assert.equal(panelText.includes("previewTargetMode: self"), true);
+    assert.equal(panelText.includes("affectsContainer: false"), true);
+    assert.equal(panelText.includes("allowedOps: inspect, move, width, height, hide, show"), true);
+    assert.equal(panelText.includes("lockedOps: rename"), true);
+    assert.equal(getLatestPreviewAction(doc, "move-right").disabled, false);
+    assert.equal(getLatestPreviewAction(doc, "width-plus").disabled, false);
+    assert.equal(getLatestPreviewAction(doc, "height-plus").disabled, false);
+    getLatestPreviewAction(doc, "move-right").click();
+    assert.equal(group.style.transform || "", "");
+    assert.equal(label.style.transform, "");
+    assert.equal(sibling.style.transform || "", "");
+    assert.equal(input.style.transform, "translate(5px, 0px)");
+    getLatestPreviewAction(doc, "move-up").click();
+    assert.equal(input.style.transform, "translate(5px, -5px)");
+    assert.equal(group.style.transform || "", "");
+    getLatestPreviewAction(doc, "move-down").click();
+    assert.equal(input.style.transform, "translate(5px, 0px)");
+    assert.equal(group.style.transform || "", "");
+    getLatestPreviewAction(doc, "width-plus").click();
+    assert.equal(input.style.width, "93px");
+    assert.equal(group.style.width, "180px");
+    assert.equal(label.style.width, "72px");
+    assert.equal(sibling.style.width || "", "");
+    getLatestPreviewAction(doc, "height-plus").click();
+    assert.equal(input.style.height, "25px");
+    assert.equal(group.style.height, "44px");
+    assert.equal(label.style.height || "", "");
+    assert.equal(sibling.style.height || "", "");
+    getLatestPreviewAction(doc, "hide").click();
+    assert.equal(input.style.display, "none");
+    assert.equal(group.style.display || "", "");
+    assert.equal(label.style.display, "");
+    assert.equal(sibling.style.display || "", "");
+    getLatestPreviewAction(doc, "show").click();
+    assert.equal(input.style.display, "");
+    getLatestPreviewAction(doc, "reset").click();
+    assert.equal(input.style.transform, "");
+    assert.equal(input.style.width, "88px");
+    assert.equal(input.style.height, "20px");
+    assert.equal(input.style.display, "");
+
+    doc.dispatchEvent({ type: "click", target: newButton });
+    panelText = getRenderedText(getPreviewPanel(doc));
+    assert.equal(panelText.includes("Element-ID: restarbeiten.editbox.action.new"), true);
+    assert.equal(panelText.includes("Preview-Ziel-ID: restarbeiten.editbox.action.new"), true);
+    assert.equal(panelText.includes("editGranularity: control"), true);
+    assert.equal(panelText.includes("allowedOps: inspect, move, width, height, hide, show"), true);
+    getLatestPreviewAction(doc, "move-right").click();
+    assert.equal(newButton.style.transform, "translate(5px, 0px)");
+    assert.equal(group.style.transform || "", "");
+    getLatestPreviewAction(doc, "width-plus").click();
+    assert.equal(newButton.style.width, "37px");
+    getLatestPreviewAction(doc, "height-plus").click();
+    assert.equal(newButton.style.height, "25px");
+    getLatestPreviewAction(doc, "hide").click();
+    assert.equal(newButton.style.display, "none");
+    assert.equal(deleteButton.style.display || "", "");
+    assert.equal(newButtonActionCount, 0);
+    getLatestPreviewAction(doc, "reset").click();
+    assert.equal(newButton.style.transform, "");
+    assert.equal(newButton.style.width, "32px");
+    assert.equal(newButton.style.height, "20px");
+    assert.equal(newButton.style.display, "");
+
+    doc.dispatchEvent({ type: "click", target: deleteButton });
+    getLatestPreviewAction(doc, "width-plus").click();
+    getLatestPreviewAction(doc, "height-plus").click();
+    assert.equal(deleteButton.style.width, "57px");
+    assert.equal(deleteButton.style.height, "25px");
+    assert.equal(newButton.style.width, "32px");
+    assert.equal(deleteButtonActionCount, 0);
+
+    const selectedBeforePanelClick = getRenderedText(getPreviewPanel(doc));
+    doc.dispatchEvent({ type: "click", target: getPreviewPanel(doc) });
+    getLatestPreviewAction(doc, "reset").click();
+    assert.equal(getRenderedText(getPreviewPanel(doc)).includes("Element-ID: restarbeiten.editbox.action.delete"), true);
+    assert.equal(selectedBeforePanelClick.includes("Element-ID: restarbeiten.editbox.action.delete"), true);
+    assert.equal(deleteButton.style.width, "52px");
+    assert.equal(deleteButton.style.height, "20px");
+
+    doc.dispatchEvent({ type: "click", target: input });
+    getLatestPreviewAction(doc, "move-right").click();
+    getLatestPreviewAction(doc, "width-plus").click();
+    getLatestPreviewAction(doc, "height-plus").click();
+    getLatestPreviewAction(doc, "hide").click();
+    assert.equal(input.style.transform, "translate(5px, 0px)");
+    assert.equal(input.style.width, "93px");
+    assert.equal(input.style.height, "25px");
+    assert.equal(input.style.display, "none");
+    button.click();
+    assert.equal(input.style.transform, "");
+    assert.equal(input.style.width, "88px");
+    assert.equal(input.style.height, "20px");
+    assert.equal(input.style.display, "");
+  });
+
+  await run("BBM UI-Editor-Runtime: Preview-ZielauflÃ¶sung funktioniert generisch ueber Registry-Parent", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "sample.screen",
+      moduleId: "sample",
+      elements: [
+        { id: "sample.form.field", name: "Feld", type: "field", role: "content", parentId: "sample.form", allowedOps: ["inspect", "move", "resize", "hide", "show"], lockedOps: [] },
+        { id: "sample.form.field.input", name: "Feld-Eingabe", type: "field", role: "content", parentId: "sample.form.field", allowedOps: ["inspect", "move", "resize", "hide", "show"], lockedOps: [], previewTargetMode: "parent", editGranularity: "control", affectsContainer: true },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "sample.screen",
+      registryResolver: () => registry,
+    });
+
+    const parent = doc.createElement("div");
+    parent.className = "sample-field";
+    parent.setAttribute("data-ui-editor-id", "sample.form.field");
+    parent.style.width = "160px";
+    parent.style.height = "36px";
+    const input = doc.createElement("input");
+    input.setAttribute("data-ui-editor-id", "sample.form.field.input");
+    parent.appendChild(input);
+    doc.body.appendChild(parent);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target: input });
+
+    const panelText = getRenderedText(getPreviewPanel(doc));
+    assert.equal(panelText.includes("Element-ID: sample.form.field.input"), true);
+    assert.equal(panelText.includes('Preview-Ziel: div[data-ui-editor-id="sample.form.field"].sample-field(Parent-Preview-Ziel)'), true);
+
+    getLatestPreviewAction(doc, "move-right").click();
+    assert.equal(parent.style.transform, "translate(5px, 0px)");
+    assert.equal(input.style.transform || "", "");
+    getLatestPreviewAction(doc, "width-plus").click();
+    assert.equal(parent.style.width, "165px");
+    getLatestPreviewAction(doc, "hide").click();
+    assert.equal(parent.style.display, "none");
+    getLatestPreviewAction(doc, "reset").click();
+    assert.equal(parent.style.transform, "");
+    assert.equal(parent.style.width, "160px");
+    assert.equal(parent.style.display, "");
+  });
+
   await run("BBM UI-Editor-Runtime: Restarbeiten-Preview blockiert nicht erlaubte Operationen", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
@@ -980,7 +1276,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const resetButton = getLatestPreviewAction(doc, "reset");
     assert.equal(moveButton.disabled, true);
     assert.equal(resizeButton.disabled, true);
-    assert.equal(resetButton.disabled, false);
+    assert.equal(resetButton.disabled, true);
     assert.equal(mod.applyPreviewOperation(mod.createLauncherState({
       activeUiScope: "restarbeiten.screen",
       registeredElements: registry.elements,
@@ -990,6 +1286,84 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(target.style.transform || "", "");
     assert.equal(target.style.width, "80px");
     assert.equal(target.getAttribute("data-ui-editor-preview"), null);
+  });
+
+  await run("BBM UI-Editor-Runtime: Operation-Mapping fuer Resize bleibt generisch", async () => {
+    const mod = await loadRuntime();
+    const resizable = { allowedOps: ["inspect", "resize"], lockedOps: [] };
+    assert.equal(mod.isPreviewOperationAllowed(resizable, "resizeWidth"), true);
+    assert.equal(mod.isPreviewOperationAllowed(resizable, "resizeHeight"), true);
+
+    const widthOnly = { allowedOps: ["inspect", "width"], lockedOps: [] };
+    assert.equal(mod.isPreviewOperationAllowed(widthOnly, "resizeWidth"), true);
+    assert.equal(mod.isPreviewOperationAllowed(widthOnly, "resizeHeight"), false);
+
+    const heightOnly = { allowedOps: ["inspect", "height"], lockedOps: [] };
+    assert.equal(mod.isPreviewOperationAllowed(heightOnly, "resizeWidth"), false);
+    assert.equal(mod.isPreviewOperationAllowed(heightOnly, "resizeHeight"), true);
+
+    const lockedResize = { allowedOps: ["inspect", "resize"], lockedOps: ["resize"] };
+    assert.equal(mod.isPreviewOperationAllowed(lockedResize, "resizeWidth"), false);
+    assert.equal(mod.isPreviewOperationAllowed(lockedResize, "resizeHeight"), false);
+
+    const explicitSizeWithLockedResize = { allowedOps: ["inspect", "resize", "width", "height"], lockedOps: ["resize"] };
+    assert.equal(mod.isPreviewOperationAllowed(explicitSizeWithLockedResize, "resizeWidth"), true);
+    assert.equal(mod.isPreviewOperationAllowed(explicitSizeWithLockedResize, "resizeHeight"), true);
+
+    const lockedWidth = { allowedOps: ["inspect", "resize"], lockedOps: ["width"] };
+    assert.equal(mod.isPreviewOperationAllowed(lockedWidth, "resizeWidth"), false);
+    assert.equal(mod.isPreviewOperationAllowed(lockedWidth, "resizeHeight"), true);
+
+    const lockedHeight = { allowedOps: ["inspect", "resize"], lockedOps: ["height"] };
+    assert.equal(mod.isPreviewOperationAllowed(lockedHeight, "resizeWidth"), true);
+    assert.equal(mod.isPreviewOperationAllowed(lockedHeight, "resizeHeight"), false);
+
+    const lockedExact = { allowedOps: ["inspect", "resize"], lockedOps: ["resizeWidth", "resizeHeight"] };
+    assert.equal(mod.isPreviewOperationAllowed(lockedExact, "resizeWidth"), false);
+    assert.equal(mod.isPreviewOperationAllowed(lockedExact, "resizeHeight"), false);
+  });
+
+  await run("BBM UI-Editor-Runtime: Reset setzt nur das aktuell ausgewaehlte Preview-Ziel zurueck", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "sample.screen",
+      moduleId: "sample",
+      elements: [
+        { id: "sample.first", name: "Erstes Ziel", type: "label", role: "content", parentId: "sample.root", allowedOps: ["inspect", "width"], lockedOps: [], editGranularity: "element", previewTargetMode: "self", affectsContainer: false },
+        { id: "sample.second", name: "Zweites Ziel", type: "label", role: "content", parentId: "sample.root", allowedOps: ["inspect", "width"], lockedOps: [], editGranularity: "element", previewTargetMode: "self", affectsContainer: false },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "sample.screen",
+      registryResolver: () => registry,
+    });
+    const first = doc.createElement("span");
+    first.setAttribute("data-ui-editor-id", "sample.first");
+    first.style.width = "100px";
+    const second = doc.createElement("span");
+    second.setAttribute("data-ui-editor-id", "sample.second");
+    second.style.width = "120px";
+    doc.body.append(first, second);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target: first });
+    getLatestPreviewAction(doc, "width-plus").click();
+    assert.equal(first.style.width, "105px");
+
+    doc.dispatchEvent({ type: "click", target: second });
+    getLatestPreviewAction(doc, "width-plus").click();
+    assert.equal(second.style.width, "125px");
+
+    getLatestPreviewAction(doc, "reset").click();
+    assert.equal(first.style.width, "105px");
+    assert.equal(second.style.width, "120px");
   });
 
   await run("BBM UI-Editor-Runtime: Restarbeiten-Preview-Reset und Deaktivieren entfernen alle Preview-Styles", async () => {
@@ -1041,11 +1415,97 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(target.style.display, "none");
 
     button.click();
+    assert.equal(Boolean(getPreviewPanel(doc)), false);
     assert.equal(target.style.transform, "scale(1)");
     assert.equal(target.style.width, "120px");
     assert.equal(target.style.height, "30px");
     assert.equal(target.style.display, "");
     assert.equal(target.getAttribute("data-ui-editor-preview"), "false");
+  });
+
+  await run("BBM UI-Editor-Runtime: Preview-Panel ist am Header verschiebbar", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      innerWidth: 420,
+      innerHeight: 320,
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "sample.screen",
+      registryResolver: () => ({
+        uiScope: "sample.screen",
+        moduleId: "sample",
+        elements: [{ id: "sample.target", name: "Ziel", type: "field", role: "content", parentId: null, allowedOps: ["inspect", "move"], lockedOps: [] }],
+      }),
+    });
+    const target = doc.createElement("div");
+    target.setAttribute("data-ui-editor-id", "sample.target");
+    doc.body.appendChild(target);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target });
+
+    const panel = getPreviewPanel(doc);
+    const header = panel.querySelector('[data-ui-editor-preview-drag-handle="true"]');
+    panel.offsetWidth = 180;
+    panel.offsetHeight = 120;
+    assert.equal(Boolean(header), true);
+    assert.equal(header.style.cursor, "move");
+    assert.equal(getRenderedText(header).includes("Preview"), true);
+    assert.equal(getStatusText(doc.querySelector('[data-ui-editor-launcher-status="true"]')).includes("Auswahl: sample.target"), true);
+
+    const downEvent = {
+      type: "mousedown",
+      target: header,
+      clientX: 20,
+      clientY: 20,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+      stopPropagation() {
+        this.stopped = true;
+      },
+    };
+    header.dispatchEvent(downEvent);
+    assert.equal(downEvent.defaultPrevented, true);
+    assert.equal(downEvent.stopped, true);
+
+    doc.dispatchEvent({
+      type: "mousemove",
+      target: header,
+      clientX: 70,
+      clientY: 40,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+      stopPropagation() {
+        this.stopped = true;
+      },
+    });
+    assert.equal(panel.style.position, "fixed");
+    assert.equal(panel.style.left, "50px");
+    assert.equal(panel.style.top, "152px");
+    assert.equal(panel.style.right, "");
+
+    doc.dispatchEvent({ type: "mouseup", target: header });
+    doc.dispatchEvent({ type: "mousemove", target: header, clientX: 140, clientY: 140 });
+    assert.equal(panel.style.left, "50px");
+    assert.equal(panel.style.top, "152px");
+
+    doc.dispatchEvent({ type: "click", target: panel });
+    assert.equal(getStatusText(doc.querySelector('[data-ui-editor-launcher-status="true"]')).includes("Auswahl: sample.target"), true);
+
+    getLatestPreviewAction(doc, "move-right").click();
+    assert.equal(target.style.transform, "translate(5px, 0px)");
+    getLatestPreviewAction(doc, "panel-reset").click();
+    assert.equal(panel.style.left, "");
+    assert.equal(panel.style.right, "24px");
+    assert.equal(panel.style.top, "132px");
+    assert.equal(target.style.transform, "translate(5px, 0px)");
   });
 
   await run("BBM UI-Editor-Runtime: Erkennungspanel ist verschiebbar und ein-/ausblendbar", async () => {
@@ -1178,7 +1638,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(getStatusText(activeStatus).includes("Auswahl: protokoll.root"), true);
     assert.equal(getStatusText(activeStatus).includes("Name: Protokoll"), true);
-    assert.equal(Boolean(doc.querySelector('[data-ui-editor-preview-controls="true"]')), false);
+    assert.equal(Boolean(getPreviewPanel(doc)), true);
+    assert.equal(getLatestPreviewAction(doc, "move-right").disabled, true);
   });
 
   await run("BBM UI-Editor-Runtime: bleibt ohne Scan, Speicherung und Ziel-App-Aktion", async () => {
@@ -1200,6 +1661,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("writeFile"), false);
     assert.equal(source.includes("showEditorLabV2"), false);
     assert.equal(source.includes("showRestarbeitenV2"), false);
+    assert.equal(source.includes("RESTARBEITEN_PREVIEW_SCOPE"), false);
+    assert.equal(source.includes("restarbeiten.editbox"), false);
     assert.equal(coreShellSource.includes("showBbmUiEditorDemo"), false);
     assert.equal(coreShellSource.includes("getAvailableUiScopes"), true);
     assert.equal(coreShellSource.includes("registryResolver"), true);

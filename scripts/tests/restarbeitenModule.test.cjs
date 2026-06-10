@@ -1683,6 +1683,37 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(elements.find((element) => element.id === "restarbeiten.quicklane.action.ampel").parentId, "restarbeiten.quicklane.group.visibility");
     assert.equal(elements.find((element) => element.id === "restarbeiten.quicklane.output.print").parentId, "restarbeiten.quicklane.group.output");
 
+    const byId = (id) => elements.find((element) => element.id === id);
+    const assertPreviewMeta = (id, editGranularity, previewTargetMode, affectsContainer) => {
+      const element = byId(id);
+      assert.equal(Boolean(element), true, `${id} exists`);
+      assert.equal(element.editGranularity, editGranularity, `${id} editGranularity`);
+      assert.equal(element.previewTargetMode, previewTargetMode, `${id} previewTargetMode`);
+      assert.equal(element.affectsContainer, affectsContainer, `${id} affectsContainer`);
+    };
+    const assertLocked = (id, lockedOps) => {
+      const element = byId(id);
+      for (const op of lockedOps) {
+        assert.equal(element.lockedOps.includes(op), true, `${id} locked ${op}`);
+        assert.equal(element.allowedOps.includes(op), false, `${id} allowed ${op}`);
+      }
+    };
+
+    assertPreviewMeta("restarbeiten.editbox.text.short", "container", "self", true);
+    assertPreviewMeta("restarbeiten.editbox.text.short.label", "element", "self", false);
+    assertPreviewMeta("restarbeiten.editbox.text.short.input", "control", "self", false);
+    assertPreviewMeta("restarbeiten.editbox.action.new", "control", "self", false);
+    assertPreviewMeta("restarbeiten.editbox.action.delete", "control", "self", false);
+    assert.deepEqual(byId("restarbeiten.editbox.text.short.label").allowedOps, ["inspect", "move", "width", "hide", "show"]);
+    assert.deepEqual(byId("restarbeiten.editbox.text.short.input").allowedOps, ["inspect", "move", "width", "height", "hide", "show"]);
+    assert.deepEqual(byId("restarbeiten.editbox.action.new").allowedOps, ["inspect", "move", "width", "height", "hide", "show"]);
+    assert.deepEqual(byId("restarbeiten.editbox.action.delete").allowedOps, ["inspect", "move", "width", "height", "hide", "show"]);
+    assert.deepEqual(byId("restarbeiten.editbox.text.short.dictation").allowedOps, ["inspect", "move", "width", "height", "hide", "show"]);
+    assert.deepEqual(byId("restarbeiten.editbox.meta.noteButton").allowedOps, ["inspect", "move", "width", "height", "hide", "show"]);
+    assertLocked("restarbeiten.editbox.text.short.input", ["rename"]);
+    assertLocked("restarbeiten.editbox.action.new", ["resize", "rename"]);
+    assertLocked("restarbeiten.editbox.action.delete", ["resize", "rename"]);
+
     for (const element of elements) {
       for (const field of ["id", "name", "type", "role", "parentId", "order", "visible", "editable", "allowedOps", "lockedOps"]) {
         assert.equal(Object.prototype.hasOwnProperty.call(element, field), true, `${element.id}.${field}`);

@@ -2516,3 +2516,186 @@ Wichtig:
   - Lokale Sichtpruefung per `npm start`: UI-Editor sichtbar, Klick aktiviert/deaktiviert neutral, EditorLab V2 und Restarbeiten V2 nicht sichtbar, kein weisser Bildschirm.
 - Risiken/Hinweise:
   - `npm test` ist in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert; die gezielten Node-Tests liefen gruen.
+
+### K19.16 – Restarbeiten-Preview an aktiven Auswahlpfad anbinden
+- Status: erledigt
+- Beschreibung:
+  - Die Preview-Bedienung wird im aktiven UI-Editor-Kontext als sichtbares Panel gerendert.
+  - Das Panel wird beim Aktivieren sofort angezeigt und meldet ohne Auswahl `Kein Element ausgewählt`.
+  - Nach einer echten Auswahl ueber `targetSelection.js` aktualisiert `onSelectionChange(selection)` das Panel mit Element-ID, allowedOps und Preview-Buttons.
+  - Preview-Aktionen bleiben temporaer im Speicher; kein Schreiben in Registry, Layout-State, Fachlogik, Datenbank oder PDF.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - Manuelle Sichtpruefung in der echten Electron-DEV-App: UI-Editor einschalten, Restarbeiten-Element anklicken, Preview-Panel und Buttons testen.
+- Risiken/Hinweise:
+  - Das Panel ist bewusst an den aktiven Launcher-/Auswahlpfad angebunden und ersetzt keine Markierungslogik.
+  - Falls die App mehrere ueberlagerte DEV-Panels oeffnet, kann eine kleine Positionskorrektur noetig werden; die Preview bleibt trotzdem ohne Speicherung.
+
+### K19.17 – Restarbeiten-Editbox-Preview-Ziel auflösen
+- Status: erledigt
+- Beschreibung:
+  - Editbox-Innerelemente wie Eingaben und Labels behalten den blauen Auswahlrahmen auf dem ausgewählten Element.
+  - Die temporäre Preview-Style-Anwendung nutzt für diese Innerelemente den registrierten Parent-Container als sichtbares Preview-Ziel.
+  - Das Preview-Panel zeigt das tatsächlich veränderte Preview-Ziel an.
+  - Filterbar-Preview bleibt unverändert auf dem ausgewählten Ziel.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - Manuelle Sichtpruefung in der echten Electron-DEV-App: Restarbeiten-Editbox-Input anklicken, Preview-Ziel im Panel prüfen, Move/Resize/Hide/Show/Reset testen.
+- Risiken/Hinweise:
+  - Die Zielauflösung ist bewusst auf Restarbeiten-Editbox-Innerelemente begrenzt und schreibt keine Registrierung, Fachlogik oder Layoutwerte.
+
+### K19.18 – Preview-Zielauflösung generisch machen
+- Status: erledigt
+- Beschreibung:
+  - Die Preview-Zielauflösung im UI-Editor ist nicht mehr an Restarbeiten-, Editbox-, Filterbar- oder Feldnamen-IDs gekoppelt.
+  - Das Preview-Ziel wird generisch über Registry-`parentId`, vorhandene DOM-Ancestors mit `data-ui-editor-id`, Elementtyp/Rolle und optionale Registry-Metadaten aufgelöst.
+  - Unterstützte generische Metadaten sind `previewTargetMode`, `previewTarget`, `affectsContainer` und `editGranularity`; Werte wie `self` erzwingen das ausgewählte Element, Werte wie `parent`/`container` den registrierten Parent.
+  - Ohne explizite Metadaten wird nur bei eingebetteten Controls/Labels vorsichtig auf den registrierten Parent-Container gewechselt.
+  - Preview-Aktivierung ist nicht mehr auf den Restarbeiten-Scope hart codiert; aktive Operationen folgen der Registry über `allowedOps`/`lockedOps`.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - Manuelle Sichtpruefung in Restarbeiten bleibt Referenz; spaetere Module koennen dieselbe Zielauflösung ueber Registry-Daten nutzen.
+- Risiken/Hinweise:
+  - Alte Statuszeile K19.17 beschreibt den urspruenglichen Restarbeiten-Fix; K19.18 ersetzt dessen technische Sonderlogik durch den generischen Pfad.
+
+### K19.19 – Restarbeiten-Registry mit generischen Preview-Metadaten ausstatten
+- Status: erledigt
+- Beschreibung:
+  - Die Restarbeiten-Editbox liefert jetzt generische Preview-Metadaten fuer Container, Elementziele und Controls.
+  - Gruppen-/Layoutcontainer nutzen `editGranularity: "container"`, `previewTargetMode: "self"` und `affectsContainer: true`.
+  - Labels und Status-/Hinweiselemente nutzen `editGranularity: "element"`, `previewTargetMode: "self"` und `affectsContainer: false`.
+  - Inputs, Diktat-Buttons und UI-Control-Buttons sind als `control` beschrieben und uebernehmen keine Move-/Resize-Operationen vom Parent.
+  - Die UI-Editor-Runtime verwendet Parent-Ziele nur noch bei explizitem `previewTargetMode: "parent"` und zeigt Preview-Ziel, Granularitaet, Target-Mode, allowedOps und lockedOps im Panel.
+  - Preview-Panel-Buttons stoppen `mousedown`, damit Panel-Klicks die aktive Auswahl nicht verlieren.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js`
+  - `src/renderer/modules/restarbeiten/editor/registries/restarbeitenMainUiRegistry.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `scripts/tests/restarbeitenModule.test.cjs`
+  - `scripts/tests/restarbeitenEditorRegistry.domAnchors.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Manuelle Sichtpruefung in der echten Electron-DEV-App: Filterbar pruefen, Editbox-Gruppe/Label/Input/Neu/Loeschen anklicken, Preview-Ziel und deaktivierte Buttons im Panel pruefen, Move/Resize/Hide/Reset testen.
+- Risiken/Hinweise:
+  - Durch K19.20 ueberholt: `inspect` und `rename` sind im EditorRuntime-Operationsmodell jetzt fuer Registry-Validierung bekannt.
+  - Die fachliche Electron-Sichtpruefung bleibt als Nutzerabnahme offen.
+
+### K19.20 - UI-Editor Registry-Metadaten fuer Controls konsistent machen
+- Status: erledigt
+- Beschreibung:
+  - Restarbeiten-Controls nutzen in `restarbeitenUiElements.js` und `restarbeitenMainUiRegistry.js` jetzt konsistent `allowedOps: ["inspect"]`.
+  - Aktions-Controls wie Neu, Loeschen, Notiz und Diktat sind als `type: "button"`, `role: "action"`, `editGranularity: "control"`, `previewTargetMode: "self"` und `affectsContainer: false` beschrieben.
+  - Aktions-Controls erlauben nur `inspect`, `show` und `hide`; Move, Resize, Breite, Hoehe und Rename sind gesperrt.
+  - Die Runtime prueft `resizeWidth` und `resizeHeight` generisch gegen `allowedOps` und `lockedOps`; `resize`, `width`, `height`, `resizeWidth` und `resizeHeight` sperren die passenden Preview-Buttons.
+  - Die EditorRuntime-Operationen kennen jetzt `inspect`, `resizeWidth`, `resizeHeight` und `rename`, damit echte Registry-Eintraege validiert werden koennen.
+  - Tests pruefen die echten Restarbeiten-Eintraege `restarbeiten.editbox.text.short`, `.label`, `.input`, `.action.new` und `.action.delete` ueber den zentralen UI-Editor-Export und die Main-Registry.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `src/renderer/editorRuntime/registry/editorRegistryModel.js`
+  - `src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js`
+  - `src/renderer/modules/restarbeiten/editor/registries/restarbeitenMainUiRegistry.js`
+  - `scripts/tests/bbmUiEditorRegistry.test.cjs`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `scripts/tests/restarbeitenModule.test.cjs`
+  - `scripts/tests/restarbeitenEditorRegistry.domAnchors.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Fachliche Sichtpruefung in der echten Electron-DEV-App: Kurztext-Gruppe, Kurztext-Label, Kurztext-Input, Neu/Loeschen/Notiz/Diktat im Preview-Panel anklicken und Buttonzustand pruefen.
+- Risiken/Hinweise:
+  - Keine Speicherung, keine PDF-Logik, keine Fachaktion und keine Restarbeiten-Sonderlogik in der Runtime.
+  - Durch K19.21 ueberholt: Controls sind nicht mehr inspect-only, sondern auf `self` wieder sichtbar editierbar.
+  - Die fachliche Sichtpruefung bleibt als Nutzerabnahme offen.
+
+### K19.21 - UI-Editor Control- und Label-Granularitaet editierbar machen
+- Status: erledigt
+- Beschreibung:
+  - Die zu restriktive inspect-only-Regel fuer Controls wurde korrigiert.
+  - Generische Ops-Gruppen sind jetzt in beiden Restarbeiten-Registries konsistent: Container, Labels, Controls und Action-Controls haben getrennte allowedOps/lockedOps.
+  - Labels sind eigene Elemente mit `inspect`, `move`, `width`, `hide`, `show`.
+  - Inputs/Textareas/Selects sind Controls mit `inspect`, `width`, `height`, `hide`, `show`; Move bleibt gesperrt.
+  - Neu, Loeschen, Notiz und Diktat sind Action-Controls mit `inspect`, `move`, `width`, `height`, `hide`, `show`; Rename bleibt gesperrt und es wird keine Fachaktion ausgeloest.
+  - `previewTargetMode: "self"` wirkt weiterhin auf das ausgewaehlte Element selbst; Parent-Preview passiert nur bei ausdruecklichem `parent`/`previewTarget`.
+  - Der Panel-Reset setzt nur noch das aktuell ausgewaehlte Preview-Ziel zurueck; Editor-Deaktivierung entfernt weiter alle temporaeren Preview-Styles.
+  - `resizeWidth`/`resizeHeight` bleiben generisch ueber `width`, `height` oder `resize` gemappt; ein gesperrtes `resize` blockiert explizit erlaubtes `width`/`height` nicht.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js`
+  - `src/renderer/modules/restarbeiten/editor/registries/restarbeitenMainUiRegistry.js`
+  - `scripts/tests/bbmUiEditorRegistry.test.cjs`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `scripts/tests/restarbeitenModule.test.cjs`
+  - `scripts/tests/restarbeitenEditorRegistry.domAnchors.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Fachliche Sichtpruefung in der echten Electron-DEV-App: Label verschieben/Breite, Input Breite/Hoehe/Hide/Show, Neu/Loeschen Breite/Hoehe/Move/Hide/Show, Reset und Editor-aus-Aufraeumen pruefen.
+- Risiken/Hinweise:
+  - Keine Speicherung, keine PDF-Logik, keine Fachaktion und keine Restarbeiten-Sonderlogik in der Runtime.
+  - Die fachliche Electron-Sichtpruefung bleibt als Nutzerabnahme offen.
+
+### K19.22 - UI-Editor Input-Controls verschiebbar machen
+- Status: erledigt
+- Beschreibung:
+  - Die neue Fachvorgabe fuer Input/Textarea/Select/reine Controls ist in beiden Restarbeiten-Registries konsistent umgesetzt.
+  - `CONTROL_OPS` lautet jetzt `["inspect", "move", "width", "height", "hide", "show"]`.
+  - Input-Controls behalten `editGranularity: "control"`, `previewTargetMode: "self"` und `affectsContainer: false`.
+  - Fuer Input-Controls sind `move`, `width`, `height` und `resize` nicht mehr gesperrt; `lockedOps` enthaelt nur noch `rename`.
+  - Die Runtime bleibt generisch: Parent-Preview passiert nur bei explizitem `previewTargetMode: "parent"` oder explizitem Preview-Ziel.
+  - Tests pruefen mit echter Restarbeiten-Registry, dass der Kurztext-Input selbst verschoben, in Breite/Hoehe geaendert und ein-/ausgeblendet wird, waehrend Gruppe, Label und Geschwister unveraendert bleiben.
+- Betroffene Dateien:
+  - `src/renderer/modules/restarbeiten/uiEditor/restarbeitenUiElements.js`
+  - `src/renderer/modules/restarbeiten/editor/registries/restarbeitenMainUiRegistry.js`
+  - `scripts/tests/bbmUiEditorRegistry.test.cjs`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `scripts/tests/restarbeitenModule.test.cjs`
+  - `scripts/tests/restarbeitenEditorRegistry.domAnchors.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Fachliche Sichtpruefung in der echten Electron-DEV-App: Kurztext-Input links/rechts/hoch/runter, Breite/Hoehe, Hide/Show, Reset und Editor-aus-Aufraeumen pruefen.
+- Risiken/Hinweise:
+  - Keine Speicherung, keine PDF-Logik, keine Fachaktion und keine Restarbeiten-Sonderlogik in der Runtime.
+  - Die fachliche Electron-Sichtpruefung bleibt als Nutzerabnahme offen.
+
+### K19.23 - UI-Editor Preview-Panel verschiebbar machen
+- Status: erledigt
+- Beschreibung:
+  - Das UI-Editor-Preview-Panel hat jetzt einen Drag-Header mit `data-ui-editor-preview-drag-handle="true"`.
+  - Drag startet nur ueber den Header; Panel-Inhalt und Preview-Buttons starten keinen Drag.
+  - Beim Drag bleibt das Panel `position: fixed`; nach dem ersten Drag werden `left` und `top` gesetzt und `right` geleert.
+  - Die Position wird gegen den sichtbaren Viewport geklemmt, damit das Panel nicht vollstaendig verschwindet.
+  - `Panel zuruecksetzen` setzt nur die Panelposition auf rechts oben zurueck und veraendert keine Preview-Styles am Ziel-Element.
+  - Panel-`mousedown`/`click` und Preview-Buttons stoppen Default/Bubbling, damit die aktuelle Zielauswahl erhalten bleibt.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Fachliche Sichtpruefung in der echten Electron-DEV-App: Preview-Panel am Header ziehen, Panelposition zuruecksetzen, dabei Input-/Label-/Gruppen-Preview und Auswahl-Erhalt pruefen.
+- Risiken/Hinweise:
+  - Keine Speicherung der Panelposition; nach Deaktivieren/Aktivieren erscheint das Panel wieder an der Standardposition.
+  - Keine Registry-Aenderung, keine Fachlogik, keine PDF-Logik und keine Restarbeiten-Sonderlogik in der Runtime.

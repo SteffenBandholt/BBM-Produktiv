@@ -12,15 +12,19 @@ const LAUNCHER_STATUS_ATTRIBUTE = "data-ui-editor-launcher-status";
 const UI_EDITOR_ACTIVE_ATTRIBUTE = "data-ui-editor-active";
 const UI_EDITOR_SELECTED_ATTRIBUTE = "data-ui-editor-selected";
 const UI_EDITOR_PREVIEW_ATTRIBUTE = "data-ui-editor-preview";
-const RESTARBEITEN_PREVIEW_SCOPE = "restarbeiten.screen";
 const PREVIEW_MOVE_STEP = 5;
 const PREVIEW_RESIZE_STEP = 5;
+const PREVIEW_PANEL_DEFAULT_RIGHT = "24px";
+const PREVIEW_PANEL_DEFAULT_TOP = "132px";
+const PREVIEW_PANEL_VIEWPORT_MARGIN = 16;
 
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
 let launcherStatusNode = null;
 let launcherStatusContentNode = null;
 let launcherStatusReopenNode = null;
+let launcherPreviewPanelNode = null;
+let launcherPreviewPanelDragState = null;
 let launcherDocumentClickHandler = null;
 let launcherDocumentClickDocument = null;
 let launcherRuntimeState = null;
@@ -78,7 +82,30 @@ function normalizeReadonlyRegistryElements(registeredElements = null) {
       const parentId = element.parentId == null ? null : String(element.parentId).trim();
       const allowedOps = Array.isArray(element.allowedOps) ? element.allowedOps.map((entry) => String(entry)).filter(Boolean) : [];
       const lockedOps = Array.isArray(element.lockedOps) ? element.lockedOps.map((entry) => String(entry)).filter(Boolean) : [];
-      return { id, name, area, type, role, parentId, allowedOps, lockedOps };
+      const editGranularity = String(element.editGranularity ?? "").trim();
+      const previewTargetMode = String(element.previewTargetMode ?? "").trim();
+      const previewTarget = typeof element.previewTarget === "string"
+        ? element.previewTarget.trim()
+        : element.previewTarget && typeof element.previewTarget === "object"
+          ? { ...element.previewTarget }
+          : "";
+      const affectsContainer = typeof element.affectsContainer === "boolean" ? element.affectsContainer : null;
+      const layoutContainer = typeof element.layoutContainer === "boolean" ? element.layoutContainer : null;
+      return {
+        id,
+        name,
+        area,
+        type,
+        role,
+        parentId,
+        allowedOps,
+        lockedOps,
+        editGranularity,
+        previewTargetMode,
+        previewTarget,
+        affectsContainer,
+        layoutContainer,
+      };
     })
     .filter(Boolean);
 }
@@ -126,6 +153,7 @@ function createLauncherState({ activeUiScope = null, registeredElements = null, 
     selectedRegistry,
     selectedElement: null,
     selectedTargetNode: null,
+    selectedPreviewTargetNode: null,
     selectedTargetPreviousStyle: null,
     hoverElement: null,
     hoverTargetNode: null,
@@ -195,6 +223,12 @@ function removeExistingLauncherStatus(doc = getDocument()) {
   launcherStatusReopenNode = null;
 }
 
+function removeExistingPreviewPanel() {
+  stopPreviewPanelDrag();
+  removeNode(launcherPreviewPanelNode);
+  launcherPreviewPanelNode = null;
+}
+
 function getElementAllowedOps(element = null) {
   return Array.isArray(element?.allowedOps)
     ? element.allowedOps.map((entry) => String(entry || "").trim()).filter(Boolean)
@@ -213,10 +247,16 @@ function isPreviewOperationAllowed(element = null, operation = "") {
   const lockedOps = getElementLockedOps(element);
   if (!normalizedOperation || lockedOps.includes(normalizedOperation)) return false;
   if (normalizedOperation === "resizeWidth") {
-    return allowedOps.includes("resize") || allowedOps.includes("width");
+    if (lockedOps.includes("width")) return false;
+    if (allowedOps.includes("width")) return true;
+    if (lockedOps.includes("resize")) return false;
+    return allowedOps.includes("resize");
   }
   if (normalizedOperation === "resizeHeight") {
-    return allowedOps.includes("resize") || allowedOps.includes("height");
+    if (lockedOps.includes("height")) return false;
+    if (allowedOps.includes("height")) return true;
+    if (lockedOps.includes("resize")) return false;
+    return allowedOps.includes("resize");
   }
   return allowedOps.includes(normalizedOperation);
 }
@@ -258,6 +298,82 @@ function getTargetBaseSize(targetNode, propertyName) {
   const fallbackProperty = propertyName === "width" ? "offsetWidth" : "offsetHeight";
   const fallbackValue = Number(targetNode?.[fallbackProperty]);
   return Number.isFinite(fallbackValue) && fallbackValue > 0 ? fallbackValue : 0;
+}
+
+function getNodeUiEditorId(node = null) {
+  return String(node?.getAttribute?.("data-ui-editor-id") || "").trim();
+}
+
+function findAncestorUiEditorElementById(targetNode = null, elementId = "") {
+  const normalizedElementId = String(elementId || "").trim();
+  if (!targetNode || !normalizedElementId) return null;
+  let current = targetNode.parentElement || null;
+  while (current) {
+    if (getNodeUiEditorId(current) === normalizedElementId) return current;
+    current = current.parentElement || null;
+  }
+  return null;
+}
+
+function normalizePreviewTargetMode(value = null) {
+  if (typeof value === "string") return value.trim().toLowerCase();
+  if (value && typeof value === "object" && typeof value.mode === "string") {
+    return value.mode.trim().toLowerCase();
+  }
+  return "";
+}
+
+function getPreviewTargetMode(registryElement = null) {
+  const explicitMode = normalizePreviewTargetMode(registryElement?.previewTargetMode)
+    || normalizePreviewTargetMode(registryElement?.previewTarget)
+    || normalizePreviewTargetMode(registryElement?.affectsContainer)
+    || normalizePreviewTargetMode(registryElement?.editGranularity);
+  if (["self", "element", "selected"].includes(explicitMode)) return "self";
+  if (["parent", "container", "layoutcontainer", "layout-container"].includes(explicitMode)) return "parent";
+  return "auto";
+}
+
+function resolvePreviewTargetElement(state = {}, selection = {}) {
+  const selectionElement = selection.registryElement || selection.element || state.selectedElement || null;
+  const selectedId = String(selection.elementId || selectionElement?.id || "").trim();
+  const selectedElement = selectedId ? getRegisteredElementById(state, selectedId) || selectionElement : selectionElement;
+  const targetNode = selection.targetElement || state.selectedTargetNode || null;
+  if (!targetNode) return null;
+  const previewTargetMode = getPreviewTargetMode(selectedElement);
+  if (previewTargetMode !== "parent") return targetNode;
+
+  const parentTarget = findAncestorUiEditorElementById(targetNode, selectedElement?.parentId);
+  return parentTarget || targetNode;
+}
+
+function getPreviewTargetElement(state = {}) {
+  return state.selectedPreviewTargetNode || state.selectedTargetNode || null;
+}
+
+function describePreviewTargetElement(targetNode = null, selectedNode = null) {
+  if (!targetNode) return "nicht verfügbar";
+  const tagName = String(targetNode.tagName || "element").toLowerCase();
+  const uiEditorId = getNodeUiEditorId(targetNode);
+  const className = String(targetNode.className || "").trim().split(/\s+/u).filter(Boolean).join(".");
+  const parts = [tagName];
+  if (uiEditorId) parts.push(`[data-ui-editor-id="${uiEditorId}"]`);
+  if (className) parts.push(`.${className}`);
+  if (selectedNode && targetNode !== selectedNode) parts.push("(Parent-Preview-Ziel)");
+  return parts.join("");
+}
+
+function formatPreviewMetaValue(value = null) {
+  if (value === true) return "true";
+  if (value === false) return "false";
+  if (value == null || value === "") return "nicht gesetzt";
+  if (typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch (_error) {
+      return "[object]";
+    }
+  }
+  return String(value);
 }
 
 function applyPreviewState(targetNode, previewState) {
@@ -309,6 +425,13 @@ function resetAllPreviewChanges(state = {}) {
   return resetCount;
 }
 
+function resetSelectedPreviewChange(state = {}) {
+  const targetNode = getPreviewTargetElement(state);
+  const reset = resetPreviewForTarget(state, targetNode);
+  state.previewMessage = reset ? "Preview zurueckgesetzt." : "Keine Preview-Aenderung aktiv.";
+  return reset;
+}
+
 function clearUiEditorTargetSelection(state = {}) {
   const target = state.selectedTargetNode || null;
   if (target?.setAttribute) {
@@ -317,6 +440,7 @@ function clearUiEditorTargetSelection(state = {}) {
     target.style.boxShadow = state.selectedTargetPreviousStyle?.boxShadow || "";
   }
   state.selectedTargetNode = null;
+  state.selectedPreviewTargetNode = null;
   state.selectedElement = null;
   state.selectedTargetPreviousStyle = null;
   state.selectionMessage = "";
@@ -351,6 +475,7 @@ function removeExistingLauncher(doc = getDocument()) {
   removeNode(launcherHostNode);
   launcherHostNode = null;
   removeExistingLauncherStatus(doc);
+  removeExistingPreviewPanel();
   doc?.body?.setAttribute?.(UI_EDITOR_ACTIVE_ATTRIBUTE, "false");
 }
 
@@ -565,12 +690,14 @@ function installLauncherTargetSelectionController(doc, host, state) {
       renderPreviewControls(doc, status, state);
     },
     onSelectionChange(selection) {
-      state.selectedElement = selection.element;
+      state.selectedElement = selection.registryElement || selection.element;
       state.selectedTargetNode = selection.targetElement;
+      state.selectedPreviewTargetNode = resolvePreviewTargetElement(state, selection);
       state.selectionMessage = selection.message || "";
       const status = updateLauncherStatusHint(doc, host, state);
       renderReadonlyScopeButtons(doc, status, state);
       renderPreviewControls(doc, status, state);
+      renderPreviewPanel(doc, state);
     },
   });
   controller?.install?.();
@@ -599,6 +726,7 @@ function renderReadonlyScopeButtons(doc, status, state) {
       const updatedStatus = updateLauncherStatusHint(doc, status.parentElement, state);
       renderReadonlyScopeButtons(doc, updatedStatus, state);
       renderPreviewControls(doc, updatedStatus, state);
+      renderPreviewPanel(doc, state);
       installLauncherTargetSelectionController(doc, status.parentElement, state);
     });
     scopeList.appendChild(button);
@@ -612,18 +740,8 @@ function getSelectedRegistryElementForPreview(state = {}) {
   return selectedId ? getRegisteredElementById(state, selectedId) : null;
 }
 
-function isRestarbeitenPreviewScope(state = {}) {
-  const registry = getSelectedRegistryFromState(state);
-  return (registry.uiScope || state.activeUiScope) === RESTARBEITEN_PREVIEW_SCOPE;
-}
-
 function applyPreviewOperation(state = {}, operation = "", payload = {}) {
-  if (!isRestarbeitenPreviewScope(state)) {
-    state.previewMessage = "Preview nur fuer Restarbeiten freigegeben.";
-    return false;
-  }
-
-  const targetNode = state.selectedTargetNode || null;
+  const targetNode = getPreviewTargetElement(state);
   const registryElement = getSelectedRegistryElementForPreview(state);
   const normalizedOperation = String(operation || "").trim();
   if (!targetNode || !registryElement) {
@@ -668,6 +786,10 @@ function createPreviewControlButton(doc, label, actionId, handler) {
   button.setAttribute("aria-label", label);
   button.title = label;
   button.disabled = typeof handler !== "function";
+  button.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+  });
   button.addEventListener("click", (event) => {
     event.preventDefault();
     event.stopPropagation();
@@ -676,9 +798,260 @@ function createPreviewControlButton(doc, label, actionId, handler) {
   return button;
 }
 
+function clearNodeChildren(node) {
+  if (!node) return;
+  if (typeof node.replaceChildren === "function") {
+    node.replaceChildren();
+    return;
+  }
+  node.textContent = "";
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) {
+      if (child) {
+        child.parentNode = null;
+        child.parentElement = null;
+      }
+    }
+    node.children.length = 0;
+  }
+}
+
+function getPreviewPanelViewport(panel) {
+  const win = getWindow(panel?._uiEditorPreviewWindow);
+  const root = panel?.ownerDocument?.documentElement || null;
+  return {
+    width: Number(win?.innerWidth) || Number(root?.clientWidth) || 1024,
+    height: Number(win?.innerHeight) || Number(root?.clientHeight) || 768,
+  };
+}
+
+function clampPreviewPanelPosition(panel, left, top) {
+  const viewport = getPreviewPanelViewport(panel);
+  const width = Number(panel?.offsetWidth) || 320;
+  const height = Number(panel?.offsetHeight) || 220;
+  const minLeft = PREVIEW_PANEL_VIEWPORT_MARGIN;
+  const minTop = PREVIEW_PANEL_VIEWPORT_MARGIN;
+  const maxLeft = Math.max(minLeft, viewport.width - width - PREVIEW_PANEL_VIEWPORT_MARGIN);
+  const maxTop = Math.max(minTop, viewport.height - height - PREVIEW_PANEL_VIEWPORT_MARGIN);
+  return {
+    left: Math.min(Math.max(Number(left) || minLeft, minLeft), maxLeft),
+    top: Math.min(Math.max(Number(top) || minTop, minTop), maxTop),
+  };
+}
+
+function setPreviewPanelPosition(panel, left, top) {
+  if (!panel?.style) return;
+  const clamped = clampPreviewPanelPosition(panel, left, top);
+  panel.style.left = `${clamped.left}px`;
+  panel.style.top = `${clamped.top}px`;
+  panel.style.right = "";
+}
+
+function resetPreviewPanelPosition(panel) {
+  if (!panel?.style) return;
+  panel.style.left = "";
+  panel.style.right = PREVIEW_PANEL_DEFAULT_RIGHT;
+  panel.style.top = PREVIEW_PANEL_DEFAULT_TOP;
+}
+
+function stopPreviewPanelEvent(event) {
+  event?.preventDefault?.();
+  event?.stopPropagation?.();
+}
+
+function stopPreviewPanelDrag(event = null) {
+  stopPreviewPanelEvent(event);
+  const dragState = launcherPreviewPanelDragState;
+  if (dragState?.doc?.removeEventListener) {
+    dragState.doc.removeEventListener("mousemove", dragState.onMove, true);
+    dragState.doc.removeEventListener("mouseup", dragState.onUp, true);
+  }
+  launcherPreviewPanelDragState = null;
+}
+
+function movePreviewPanelDrag(event = {}) {
+  stopPreviewPanelEvent(event);
+  const dragState = launcherPreviewPanelDragState;
+  if (!dragState?.panel) return;
+  setPreviewPanelPosition(
+    dragState.panel,
+    dragState.startLeft + (Number(event.clientX) - dragState.startClientX),
+    dragState.startTop + (Number(event.clientY) - dragState.startClientY)
+  );
+}
+
+function startPreviewPanelDrag(panel, event = {}) {
+  if (!panel?.ownerDocument?.addEventListener) return;
+  stopPreviewPanelEvent(event);
+  const rect = typeof panel.getBoundingClientRect === "function"
+    ? panel.getBoundingClientRect()
+    : { left: Number.parseFloat(panel.style.left) || 0, top: Number.parseFloat(panel.style.top) || Number.parseFloat(PREVIEW_PANEL_DEFAULT_TOP) || 0 };
+  const startLeft = Number(rect.left) || 0;
+  const startTop = Number(rect.top) || Number.parseFloat(panel.style.top) || Number.parseFloat(PREVIEW_PANEL_DEFAULT_TOP) || 0;
+  const doc = panel.ownerDocument;
+  stopPreviewPanelDrag();
+  launcherPreviewPanelDragState = {
+    panel,
+    doc,
+    startLeft,
+    startTop,
+    startClientX: Number(event.clientX) || 0,
+    startClientY: Number(event.clientY) || 0,
+    onMove: movePreviewPanelDrag,
+    onUp: stopPreviewPanelDrag,
+  };
+  doc.addEventListener("mousemove", launcherPreviewPanelDragState.onMove, true);
+  doc.addEventListener("mouseup", launcherPreviewPanelDragState.onUp, true);
+}
+
+function stylePreviewPanel(panel) {
+  if (!panel?.style) return;
+  panel.style.position = "fixed";
+  panel.style.right = PREVIEW_PANEL_DEFAULT_RIGHT;
+  panel.style.top = PREVIEW_PANEL_DEFAULT_TOP;
+  panel.style.zIndex = "2147482997";
+  panel.style.boxSizing = "border-box";
+  panel.style.width = "320px";
+  panel.style.maxWidth = "calc(100vw - 48px)";
+  panel.style.maxHeight = "calc(100vh - 156px)";
+  panel.style.overflow = "auto";
+  panel.style.display = "block";
+  panel.style.padding = "12px";
+  panel.style.border = "1px solid #64748b";
+  panel.style.borderRadius = "8px";
+  panel.style.background = "#f8fafc";
+  panel.style.color = "#0f172a";
+  panel.style.font = "13px/1.4 system-ui, sans-serif";
+  panel.style.boxShadow = "0 8px 24px rgb(15 23 42 / 18%)";
+  panel.style.pointerEvents = "auto";
+}
+
+function ensurePreviewPanel(doc = getDocument()) {
+  if (!doc?.createElement) return null;
+  if (
+    launcherPreviewPanelNode?.ownerDocument === doc &&
+    (launcherPreviewPanelNode.parentElement || launcherPreviewPanelNode.parentNode)
+  ) {
+    return launcherPreviewPanelNode;
+  }
+
+  const panel = doc.createElement("div");
+  panel.className = "ui-editor-preview-panel";
+  panel.setAttribute("data-ui-editor-preview-panel", "true");
+  panel.setAttribute("role", "region");
+  panel.setAttribute("aria-label", "UI-Editor Preview");
+  panel.addEventListener("mousedown", stopPreviewPanelEvent);
+  panel.addEventListener("click", stopPreviewPanelEvent);
+  stylePreviewPanel(panel);
+  (doc.body || doc.documentElement)?.appendChild?.(panel);
+  launcherPreviewPanelNode = panel;
+  return panel;
+}
+
+function renderPreviewPanel(doc, state = {}) {
+  const panel = ensurePreviewPanel(doc);
+  if (!panel || !doc?.createElement) return null;
+  panel._uiEditorPreviewWindow = state.win || getWindow();
+  clearNodeChildren(panel);
+
+  const header = doc.createElement("div");
+  header.className = "ui-editor-preview-panel__header";
+  header.setAttribute("data-ui-editor-preview-drag-handle", "true");
+  header.style.cursor = "move";
+  header.style.display = "flex";
+  header.style.alignItems = "center";
+  header.style.justifyContent = "space-between";
+  header.style.gap = "8px";
+  header.style.marginBottom = "8px";
+  header.addEventListener("mousedown", (event) => startPreviewPanelDrag(panel, event));
+
+  const title = doc.createElement("div");
+  title.className = "ui-editor-preview-controls__title";
+  title.textContent = "Preview";
+  title.style.fontWeight = "700";
+
+  const resetPanelButton = doc.createElement("button");
+  resetPanelButton.type = "button";
+  resetPanelButton.textContent = "Panel zuruecksetzen";
+  resetPanelButton.title = "Panelposition zuruecksetzen";
+  resetPanelButton.setAttribute("data-ui-editor-preview-action", "panel-reset");
+  resetPanelButton.addEventListener("mousedown", stopPreviewPanelEvent);
+  resetPanelButton.addEventListener("click", (event) => {
+    stopPreviewPanelEvent(event);
+    resetPreviewPanelPosition(panel);
+  });
+
+  header.append(title, resetPanelButton);
+  panel.appendChild(header);
+
+  const registry = getSelectedRegistryFromState(state);
+  const selectedElement = getSelectedRegistryElementForPreview(state);
+  const targetNode = state.selectedTargetNode || null;
+  const previewTargetNode = getPreviewTargetElement(state);
+  const previewAvailable = Boolean(selectedElement && previewTargetNode);
+  const allowedOps = selectedElement ? getElementAllowedOps(selectedElement) : [];
+
+  const details = doc.createElement("div");
+  details.className = "ui-editor-preview-controls__details";
+  details.setAttribute("data-ui-editor-preview-selected", selectedElement?.id || "");
+  details.textContent = [
+    `Scope: ${getStatusScopeLabel(registry.uiScope || state.activeUiScope)}`,
+    selectedElement ? `Element-ID: ${selectedElement.id}` : "Kein Element ausgewählt",
+    selectedElement ? `Preview-Ziel-ID: ${getNodeUiEditorId(previewTargetNode) || "nicht gesetzt"}` : "",
+    `allowedOps: ${allowedOps.length > 0 ? allowedOps.join(", ") : "keine"}`,
+    selectedElement ? `lockedOps: ${getElementLockedOps(selectedElement).length > 0 ? getElementLockedOps(selectedElement).join(", ") : "keine"}` : "",
+    selectedElement ? `editGranularity: ${formatPreviewMetaValue(selectedElement.editGranularity)}` : "",
+    selectedElement ? `previewTargetMode: ${formatPreviewMetaValue(getPreviewTargetMode(selectedElement))}` : "",
+    selectedElement ? `affectsContainer: ${formatPreviewMetaValue(selectedElement.affectsContainer)}` : "",
+    selectedElement ? `Preview-Ziel: ${describePreviewTargetElement(previewTargetNode, targetNode)}` : "",
+    selectedElement && allowedOps.length <= 1 ? "Hinweis: Preview-Operationen deaktiviert." : "",
+    state.previewMessage ? `Status: ${state.previewMessage}` : "",
+  ].filter(Boolean).join("\n");
+  panel.appendChild(details);
+
+  const buttonGrid = doc.createElement("div");
+  buttonGrid.className = "ui-editor-preview-controls";
+  buttonGrid.setAttribute("data-ui-editor-preview-controls", "true");
+  buttonGrid.style.display = "grid";
+  buttonGrid.style.gridTemplateColumns = "repeat(2, minmax(112px, 1fr))";
+  buttonGrid.style.gap = "6px";
+  buttonGrid.style.marginTop = "10px";
+
+  const addButton = (label, operation, payload = {}, actionId = operation) => {
+    const allowed = previewAvailable && isPreviewOperationAllowed(selectedElement, operation);
+    buttonGrid.appendChild(createPreviewControlButton(doc, label, actionId, allowed
+      ? () => {
+          applyPreviewOperation(state, operation, payload);
+          renderPreviewPanel(doc, state);
+        }
+      : null));
+  };
+
+  addButton("Links", "move", { dx: -PREVIEW_MOVE_STEP, dy: 0 }, "move-left");
+  addButton("Rechts", "move", { dx: PREVIEW_MOVE_STEP, dy: 0 }, "move-right");
+  addButton("Hoch", "move", { dx: 0, dy: -PREVIEW_MOVE_STEP }, "move-up");
+  addButton("Runter", "move", { dx: 0, dy: PREVIEW_MOVE_STEP }, "move-down");
+  addButton("Breite -", "resizeWidth", { delta: -PREVIEW_RESIZE_STEP }, "width-minus");
+  addButton("Breite +", "resizeWidth", { delta: PREVIEW_RESIZE_STEP }, "width-plus");
+  addButton("Hoehe -", "resizeHeight", { delta: -PREVIEW_RESIZE_STEP }, "height-minus");
+  addButton("Hoehe +", "resizeHeight", { delta: PREVIEW_RESIZE_STEP }, "height-plus");
+  addButton("Ausblenden", "hide");
+  addButton("Einblenden", "show");
+
+  const hasPreviewState = Boolean(previewTargetNode && state.previewStates?.has?.(previewTargetNode));
+  buttonGrid.appendChild(createPreviewControlButton(doc, "Reset", "reset", hasPreviewState
+    ? () => {
+        resetSelectedPreviewChange(state);
+        renderPreviewPanel(doc, state);
+      }
+    : null));
+
+  panel.appendChild(buttonGrid);
+  return panel;
+}
+
 function renderPreviewControls(doc, status, state) {
   if (!doc?.createElement || !status) return;
-  if (!isRestarbeitenPreviewScope(state)) return;
   const content = getLauncherStatusContentNode(status);
   if (!content?.appendChild) return;
 
@@ -713,6 +1086,7 @@ function renderPreviewControls(doc, status, state) {
           const updatedStatus = updateLauncherStatusHint(doc, status.parentElement, state);
           renderReadonlyScopeButtons(doc, updatedStatus, state);
           renderPreviewControls(doc, updatedStatus, state);
+          renderPreviewPanel(doc, state);
         }
       : null));
   };
@@ -729,10 +1103,11 @@ function renderPreviewControls(doc, status, state) {
   addButton("Einblenden", "show");
 
   controls.appendChild(createPreviewControlButton(doc, "Preview zuruecksetzen", "reset", () => {
-    resetAllPreviewChanges(state);
+    resetSelectedPreviewChange(state);
     const updatedStatus = updateLauncherStatusHint(doc, status.parentElement, state);
     renderReadonlyScopeButtons(doc, updatedStatus, state);
     renderPreviewControls(doc, updatedStatus, state);
+    renderPreviewPanel(doc, state);
   }));
 
   content.appendChild(controls);
@@ -749,10 +1124,12 @@ function syncLauncherButtonState(button, state, { doc = getDocument(), host = nu
     const status = updateLauncherStatusHint(doc, host || button.parentElement, state);
     renderReadonlyScopeButtons(doc, status, state);
     renderPreviewControls(doc, status, state);
+    renderPreviewPanel(doc, state);
     installLauncherTargetSelectionController(doc, host || button.parentElement, state);
   } else {
     removeLauncherTargetSelectionController(state);
     removeExistingLauncherStatus(doc);
+    removeExistingPreviewPanel();
   }
 }
 
@@ -791,9 +1168,14 @@ function handleUiEditorDocumentClick(event, { state, doc, host }) {
   event?.preventDefault?.();
   event?.stopPropagation?.();
   markUiEditorTargetSelection(state, targetNode, registryElement);
+  state.selectedPreviewTargetNode = resolvePreviewTargetElement(state, {
+    registryElement,
+    targetElement: targetNode,
+  });
   const status = updateLauncherStatusHint(doc, host, state);
   renderReadonlyScopeButtons(doc, status, state);
   renderPreviewControls(doc, status, state);
+  renderPreviewPanel(doc, state);
 }
 
 function installLauncherDocumentClickHandler(doc, host, state) {
@@ -897,6 +1279,8 @@ export {
   getRegisteredElementById,
   handleUiEditorDocumentClick,
   isPreviewOperationAllowed,
+  resolvePreviewTargetElement,
   resetAllPreviewChanges,
+  renderPreviewPanel,
   renderLauncherButton,
 };
