@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.25 abgeschlossen: Der Trennschnitt zwischen BBM-Hostintegration, Restarbeiten-Modulankern und generischer UI-Editor-Runtime ist dokumentiert; keine Funktionsaenderung.
 - K19.24 abgeschlossen: Preview-Operationen erzeugen/aktualisieren temporaere ChangeRequests im UI-Editor-State; Reset, Verwerfen und Deaktivieren raeumen sie wieder auf.
 - K19.0 abgeschlossen: erste explizite UI-Elementliste fuer das Protokoll-Modul, ohne Editor-Integration und ohne produktive UI-Aenderung.
 - K19.7 abgeschlossen: installierter Einstieg unter `uiEditor/` war mit dem offiziellen BBM-Registry-Einstieg verbunden, ohne produktive UI-Aenderung.
@@ -50,6 +51,15 @@ Aktueller Stand:
 - [x] K19.13a BBM-Test an aktuelle UI-Editor-Installer-Artefakte anpassen
 - [x] K19.16a UI-Editor zeigt festen registrierten Scope aus BBM-Registry
 - [x] K19.24 UI-Editor Preview-Operationen als ChangeRequests sammeln
+- [x] K19.25 UI-Editor-Trennschnitt BBM vs Kit dokumentieren
+
+## Statusupdate K19.25
+- Der Trennschnitt zwischen generischer UI-Editor-Runtime, BBM-spezifischer Hostintegration und Restarbeiten-spezifischen Registry-/DOM-Ankern ist in `docs/UI_EDITOR_TRENNSCHNITT_BBM_VS_KIT.md` dokumentiert.
+- BBM ist als Referenz-/Host-App festgehalten; generische Runtime-Teile sollen spaeter ins UI-Editor-kit zurueckgefuehrt werden.
+- In BBM bleiben HostAdapter, aktive Scope-Auswahl, App-Anbindung, Registry-Resolver und Modul-Registries.
+- Restarbeiten bleibt Referenzmodul; seine IDs, DOM-Anker, Registry-Eintraege und fachlichen Elementzuordnungen gehoeren nicht ins kit.
+- Keine Code-Logik, keine Registry, keine Speicherung, keine Fachlogik und keine PDF-Logik wurden geaendert.
+- Naechster sinnvoller Schritt: BBM-HostAdapter-Schnittstelle stabilisieren oder UI-Editor-kit-Rueckfuehrung vorbereiten, weiterhin ohne Speicherung.
 
 ## Statusupdate K19.24
 - Preview-Operationen erzeugen jetzt zusaetzlich temporaere ChangeRequests im UI-Editor-State (`pendingChangeRequests`), ohne Speicherung.

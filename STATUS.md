@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-Trennschnitt BBM vs. UI-Editor-kit dokumentiert:
+  - BBM ist als Referenzintegration und Host-App beschrieben, nicht als dauerhafter Produktort generischer UI-Editor-Runtime.
+  - Generische Runtime-Teile wie Auswahlmodell, Target Selection, Preview-Panel, temporaere Preview-Operationen, `pendingChangeRequests`, ChangeRequest-Erzeugung und Guardrails sind als kit-Kandidaten abgegrenzt.
+  - In BBM bleiben CoreShell-/HostAdapter-Anbindung, aktive Scope-Auswahl, BBM-Registry-Resolver, App-Anbindung und Modul-Registries.
+  - Restarbeiten bleibt Referenzmodul; seine Registry, konkreten `data-ui-editor-id`-Anker, IDs und fachlichen Elementzuordnungen bleiben in BBM.
+  - Keine Funktionsaenderung, keine Speicherung, keine Registry-Aenderung, keine Fachlogik und keine PDF-Aenderung.
+  - Naechster offener Schritt: BBM-HostAdapter-Schnittstelle stabilisieren oder UI-Editor-kit-Rueckfuehrung vorbereiten, weiterhin ohne Speicherung.
+
 - UI-Editor Preview-ChangeRequests vorbereitet:
   - Preview-Operationen erzeugen/aktualisieren jetzt zusaetzlich temporaere ChangeRequests im UI-Editor-State.
   - Move wird je Preview-Ziel kumuliert; Width/Height werden als Delta kumuliert; Hide/Show ueberschreibt eine `visibility`-Aenderung.

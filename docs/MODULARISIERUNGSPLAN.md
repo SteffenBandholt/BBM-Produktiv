@@ -202,6 +202,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - M2.1 hat die Restarbeiten-Main/Body-Datensatzdarstellung im Blatt mit Tabellenkopf und dreizeiliger Datensatzstruktur nachgezogen
 - Der UI-Editor kann fuer bereits registrierte und markierbare Restarbeiten-UI-Elemente temporaere Preview-Aenderungen anwenden: Move, Resize und Hide/Show laufen nur gegen erlaubte `allowedOps`, bleiben im Speicher und werden per Reset oder Editor-Deaktivierung entfernt.
 - Preview-Operationen sammeln jetzt zusaetzlich temporaere ChangeRequests im UI-Editor-State; Move/Width/Height werden je Ziel dedupliziert bzw. kumuliert, Visibility wird ueberschrieben, weiterhin ohne Speicherung.
+- Der Trennschnitt zwischen BBM-Hostintegration, Restarbeiten-Modulankern und generischer UI-Editor-Runtime ist dokumentiert; BBM bleibt Referenz-/Host-App, die generischen Runtime-Teile sind Kandidaten fuer eine spaetere Rueckfuehrung ins UI-Editor-kit.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
