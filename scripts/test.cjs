@@ -32,6 +32,8 @@ const { runEditorRuntimeCatalogTests } = require("./tests/editorRuntime.catalog.
 const { runEditorPreviewRuntimeTests } = require("./tests/editorPreviewRuntime.test.cjs");
 const { runUiEditorKitPreviewRuntimeImportTests } = require("./tests/uiEditorKitPreviewRuntimeImport.test.cjs");
 const { runUiEditorKitPreviewRuntimeBridgeParityTests } = require("./tests/uiEditorKitPreviewRuntimeBridgeParity.test.cjs");
+const { runUiEditorKitPanelRuntimeImportTests } = require("./tests/uiEditorKitPanelRuntimeImport.test.cjs");
+const { runUiEditorKitPanelRuntimeBridgeTests } = require("./tests/uiEditorKitPanelRuntimeBridge.test.cjs");
 const { runUiEditorKitLocalDependencyTests } = require("./tests/uiEditorKitLocalDependency.test.cjs");
 const { runRestarbeitenEditorHostAdapterTests } = require("./tests/restarbeitenEditorHostAdapter.test.cjs");
 const { runRestarbeitenEditorRegistryDomAnchorsTests } = require("./tests/restarbeitenEditorRegistry.domAnchors.test.cjs");
@@ -162,6 +164,8 @@ async function main() {
   await runEditorPreviewRuntimeTests(run);
   await runUiEditorKitPreviewRuntimeImportTests(run);
   await runUiEditorKitPreviewRuntimeBridgeParityTests(run);
+  await runUiEditorKitPanelRuntimeImportTests(run);
+  await runUiEditorKitPanelRuntimeBridgeTests(run);
   await runUiEditorKitLocalDependencyTests(run);
   await runRestarbeitenEditorHostAdapterTests(run);
   await runRestarbeitenEditorRegistryDomAnchorsTests(run);

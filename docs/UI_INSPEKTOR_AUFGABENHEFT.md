@@ -5,6 +5,8 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.40 abgeschlossen: BBM hat eine renderer-kompatible Bridge fuer die UI-Editor-kit Panel-Runtime vorbereitet; der Launcher nutzt sie noch nicht produktiv.
+- K19.39 abgeschlossen: BBM prueft den offiziellen UI-Editor-kit Panel-Runtime-Importvertrag `ui-editor-kit/runtime/panel` per CommonJS und ESM; keine produktive Launcher-Umstellung.
 - K19.38 abgeschlossen: Panel-/Drag-/Rendering-Logik im BBM-Launcher inventarisiert und Trennschnitt BBM vs. UI-Editor-kit dokumentiert; keine Codeverschiebung.
 - K19.37 abgeschlossen: Lokaler Standard-Bezugsweg fuer das UI-Editor-kit dokumentiert und mit `npm run check:ui-editor-kit` pruefbar gemacht; keine Runtime-/Launcher-Aenderung.
 - K19.36 abgeschlossen: Abschlussmarker fuer die UI-Editor Preview-Runtime-Rueckfuehrung gesetzt; BBM ist Konsument, UI-Editor-kit ist Quelle, keine Funktionsaenderung.
@@ -78,6 +80,24 @@ Aktueller Stand:
 - [x] K19.36 Abschlussmarker Preview-Runtime-Rueckfuehrung setzen
 - [x] K19.37 Lokalen UI-Editor-kit-Bezugsweg dokumentieren und pruefen
 - [x] K19.38 UI-Editor Panel/Drag/Rendering inventarisieren
+- [x] K19.39 UI-Editor-kit Panel-Runtime Importvertrag pruefen
+- [x] K19.40 UI-Editor-kit Panel-Runtime Renderer-Bridge vorbereiten
+
+## Statusupdate K19.40
+- `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js` re-exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/panel/index.mjs`.
+- Der Electron-Renderer darf keinen Bare-Package-Import `ui-editor-kit/runtime/panel` verwenden.
+- `scripts/tests/uiEditorKitPanelRuntimeBridge.test.cjs` prueft Bridge-Existenz, relativen Kit-ESM-Pfad, verbotenen Bare-Import, verbotene Fach-/Storage-/DB-/IPC-/PDF-Begriffe, unveraenderte Preview-Bridge und fehlende Launcher-Integration.
+- `scripts/test.cjs` fuehrt den Bridge-Test in `npm test` mit aus.
+- `BbmUiEditorRuntimeLauncher.js` nutzt die Panel-Bridge noch nicht produktiv; produktive Panel-Modell-Integration bleibt ein eigenes spaeteres Paket.
+- Keine Launcher-Umstellung, keine DOM-Aenderung, kein Drag, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-Funktionsaenderung.
+
+## Statusupdate K19.39
+- Das UI-Editor-kit stellt eine neutrale Panel-Runtime ueber `ui-editor-kit/runtime/panel` bereit.
+- BBM prueft diesen offiziellen Importvertrag mit `scripts/tests/uiEditorKitPanelRuntimeImport.test.cjs`.
+- Geprueft werden CommonJS und ESM, erwartete Exporte, Default-State, Positionsnormalisierung, Offen/Geschlossen-State und ein neutrales ViewModel mit Buttons.
+- `scripts/test.cjs` fuehrt den Test in `npm test` mit aus.
+- `BbmUiEditorRuntimeLauncher.js` nutzt das Panel-Modell noch nicht produktiv; die Integration bleibt ein eigenes spaeteres Paket.
+- Keine Runtime-/Launcher-Codeaenderung, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-/DOM-Funktionsaenderung.
 
 ## Statusupdate K19.38
 - `docs/UI_EDITOR_PANEL_DRAG_RENDERING_INVENTAR.md` inventarisiert die verbliebene UI-nahe Launcher-Logik.

@@ -12,6 +12,8 @@ UI-Editor-kit -> src/runtime/preview/index.mjs -> src/renderer/uiEditor/uiEditor
 
 Dieses Dokument inventarisiert nur. Es beschreibt keine Codeverschiebung und keine Verhaltensaenderung.
 
+Nachfolgend wurde im UI-Editor-kit eine neutrale Panel-Runtime vorbereitet. BBM prueft den offiziellen Importvertrag `ui-editor-kit/runtime/panel` mit einem reinen Vertrags- und Minimalverhaltenstest. Fuer den Electron-Renderer ist zusaetzlich `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js` vorbereitet; sie zeigt relativ auf `node_modules/ui-editor-kit/src/runtime/panel/index.mjs`, weil Bare-Package-Imports im Renderer nicht zulaessig sind. Der BBM-Launcher verwendet dieses Panel-Modell noch nicht produktiv; es gibt weiterhin keine Panel-, Drag-, DOM- oder Rendering-Umstellung in BBM.
+
 ## Aktueller BBM-Stand
 
 Der relevante Launcher liegt in:
@@ -30,6 +32,14 @@ Der Launcher ist aktuell gleichzeitig:
 - Anwender der Kit-Preview-Runtime ueber `uiEditorKitPreviewRuntimeBridge.js`
 
 Die generischen Operationen, Zielmodell- und Pending-ChangeRequest-Hilfen kommen bereits aus dem UI-Editor-kit. Panel, Drag, Rendering und DOM-Style-Anwendung liegen noch im BBM-Launcher.
+
+Der neue Panel-Runtime-Importnachweis in BBM ist bewusst nur analytisch/testseitig:
+
+- `scripts/tests/uiEditorKitPanelRuntimeImport.test.cjs` prueft `ui-editor-kit/runtime/panel`.
+- Geprueft werden CommonJS und ESM, Default-State, Positionsnormalisierung, Offen/Geschlossen-State und neutrales ViewModel mit Buttons.
+- `scripts/tests/uiEditorKitPanelRuntimeBridge.test.cjs` prueft die renderer-kompatible Bridge auf den relativen Kit-ESM-Pfad, verbotenen Bare-Import, verbotene Fach-/Storage-/DB-/IPC-/PDF-Begriffe und fehlende Launcher-Integration.
+- Der Launcher importiert die Panel-Runtime nicht.
+- DOM-Panel, Drag-Controller, Style-Anwendung und HostAdapter-Orchestrierung bleiben unveraendert in BBM.
 
 ## Inventar im Launcher
 
@@ -427,8 +437,8 @@ Bestehende Abhaengigkeiten im Launcher:
 
 ## Empfohlene Reihenfolge fuer spaetere Pakete
 
-1. Neutrales Panel-State- und ViewModel-Modell im UI-Editor-kit vorbereiten.
-2. Preview-Control-Buttonmodell ohne DOM-Rendering extrahieren.
+1. Panel-State-, ViewModel-, Buttonmodell und Renderer-Bridge aus dem UI-Editor-kit weiter als stabilen Importvertrag absichern.
+2. Produktive BBM-Nutzung des Panel-Modells separat vorbereiten, noch ohne Drag- oder DOM-Rendering-Umbau.
 3. ChangeRequest-Summary- und Zielbeschreibung als reine Formatter/ViewModel-Hilfen schneiden.
 4. Drag-Controller als DOM-leichte, parametrierbare Hilfslogik vorbereiten.
 5. Erst danach optional DOM-Rendering-Komponenten oder Adapter pruefen.

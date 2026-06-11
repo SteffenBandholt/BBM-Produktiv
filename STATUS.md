@@ -17,12 +17,27 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-kit Panel-Runtime Renderer-Bridge vorbereitet:
+  - BBM hat `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js` als renderer-kompatible Bridge angelegt.
+  - Die Bridge re-exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/panel/index.mjs`.
+  - Der Electron-Renderer darf weiterhin keine Bare-Package-Imports wie `ui-editor-kit/runtime/panel` verwenden.
+  - `scripts/tests/uiEditorKitPanelRuntimeBridge.test.cjs` prueft Bridge-Pfad, verbotenen Bare-Import, Fach-/Storage-/DB-/IPC-/PDF-Begriffe, unveraenderte Preview-Bridge und dass der Launcher die Panel-Bridge noch nicht produktiv nutzt.
+  - Keine produktive Launcher-Umstellung, keine DOM-Aenderung, kein Drag, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
+
+- UI-Editor-kit Panel-Runtime Importvertrag in BBM pruefbar:
+  - Das UI-Editor-kit stellt die neutrale Panel-Runtime ueber `ui-editor-kit/runtime/panel` bereit.
+  - BBM prueft den offiziellen Panel-Runtime-Importvertrag mit `scripts/tests/uiEditorKitPanelRuntimeImport.test.cjs`.
+  - Geprueft werden CommonJS und ESM, erwartete Exporte, Default-State, Positionsnormalisierung, Offen/Geschlossen-State und ein neutrales Panel-ViewModel mit Buttons.
+  - `scripts/test.cjs` bindet den Importvertragstest in `npm test` ein.
+  - `BbmUiEditorRuntimeLauncher.js` nutzt das Panel-Modell noch nicht produktiv; Panel-, Drag-, DOM- und Rendering-Integration bleiben auch nach der Bridge-Vorbereitung ein separates spaeteres Paket.
+  - Keine Runtime-/Launcher-Codeaenderung, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Funktionsaenderung.
+
 - UI-Editor Panel/Drag/Rendering inventarisiert:
   - `docs/UI_EDITOR_PANEL_DRAG_RENDERING_INVENTAR.md` dokumentiert die im BBM-Launcher verbliebene UI-nahe Logik fuer Preview-Panel, Panel-Rendering, Panel-Position, Drag, Statusanzeige, Preview-Buttons, Reset/Verwerfen und Zielbeschreibung.
   - Kitfaehige Kandidaten sind abgegrenzt: Panel-State, Panel-Position, Drag-Controller, Preview-Control-Rendering, ChangeRequest-Summary-Anzeige, Reset-/Verwerfen-UI-Logik und neutrale Zielbeschreibung/Status-ViewModels.
   - In BBM verbleiben CoreShell-/DEV-Kontext, konkrete Electron-DOM-Einbindung, HostAdapter-Erzeugung, Scope-/Registry-Auswahl, Kit-Bridge und BBM-spezifische Start-/Lifecycle-Orchestrierung.
   - Keine Runtime-/Launcher-Codeaenderung, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Funktionsaenderung.
-  - Naechster technischer Schritt: zuerst neutrales Panel-State-/ViewModel-Modell im UI-Editor-kit vorbereiten, noch ohne BBM-Importumstellung.
+  - Der naechste technische Schritt nach Import- und Bridge-Nachweis ist ein eigenes Paket fuer die produktive Panel-Modell-Integration, weiterhin ohne automatische Panel-/Drag-Umbauten.
 
 - UI-Editor-kit lokaler Standard-Bezugsweg dokumentiert:
   - Standard-Root fuer Entwicklungs-Repos ist `C:\01_Projekte`.
