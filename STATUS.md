@@ -24,12 +24,14 @@ Sie ergÃ¤nzt:
   - Der offizielle Kit-Importvertrag `ui-editor-kit/runtime/preview` ist in BBM testbar; `package.json` nutzt dafuer lokal `file:../UI-Editor-kit`.
   - `scripts/tests/uiEditorKitPreviewRuntimeImport.test.cjs` prueft CommonJS, ESM, erwartete Exporte, Operation-Mapping und `unknown-host`.
   - `BbmUiEditorRuntimeLauncher.js` nutzt die Preview-Runtime jetzt produktiv aus dem UI-Editor-kit; im Electron-Renderer erfolgt das ueber `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`, weil der Renderer ohne Bundler keine Bare-Package-Specifier wie `ui-editor-kit/runtime/preview` aufloest.
+  - Der produktive Pfad ist jetzt mit `scripts/tests/uiEditorKitPreviewRuntimeBridgeParity.test.cjs` abgesichert: Kit -> browserfaehiges `index.mjs` ohne `.cjs`-Rueckfall -> BBM-Bridge -> Launcher.
   - Keine Entfernung der lokalen BBM-Runtime, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
   - Naechster offener Schritt: produktiven Bezugsweg fuer das externe Kit klaeren und lokale BBM-Runtime als Referenz/Fallback bewerten.
 
 - UI-Editor Preview-Runtime Exportstruktur vorbereitet:
   - `src/renderer/editorRuntime/preview/index.js` buendelt die generischen Preview-Runtime-Exports als neutralen Einstieg.
   - `BbmUiEditorRuntimeLauncher.js` importiert die produktive Preview-Runtime inzwischen ueber die renderer-kompatible Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`; dieser lokale Einstieg bleibt als Referenz/Fallback erhalten.
+  - Direkter Package-Bare-Import ist im Electron-Renderer nicht zulaessig; die Bridge zeigt auf `../../../node_modules/ui-editor-kit/src/runtime/preview/index.mjs`.
   - `docs/UI_EDITOR_PREVIEW_RUNTIME_API.md` dokumentiert Zweck, Exports, erwartete Datenstrukturen, Nicht-Ziele und spaetere Kit-Verwendung.
   - Es wurde kein Code ins externe UI-Editor-kit uebertragen.
   - Keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-Logik, keine Registry-Fachaenderung und keine Markierungslogik-Aenderung.

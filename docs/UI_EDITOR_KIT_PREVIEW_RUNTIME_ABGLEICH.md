@@ -22,6 +22,8 @@ Seit G8 nutzt der BBM-Launcher die Kit-Preview-Runtime produktiv:
 - der Electron-Renderer ohne Bundler/Import-Map kann Bare-Package-Specifier nicht aufloesen
 - `BbmUiEditorRuntimeLauncher.js` importiert deshalb die lokale Renderer-Bridge `./uiEditorKitPreviewRuntimeBridge.js`
 - die Bridge exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/preview/index.mjs`
+- der produktive Pfad ist damit: UI-Editor-kit -> browserfaehiges `index.mjs` -> BBM-Bridge -> Launcher
+- `index.mjs` darf fuer den Renderer nicht auf `.cjs` zurueckfallen
 - CommonJS und ESM werden in BBM weiter testseitig geprueft
 
 Die lokale BBM-Preview-Runtime bleibt erhalten und dient vorerst als Referenz/Fallback. Sie wird in diesem Paket nicht geloescht und nicht umgebaut.
@@ -39,7 +41,7 @@ Der BBM-Launcher bleibt Host-Orchestrator:
 
 - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
 
-Der Launcher importiert die generische Preview-Runtime jetzt ueber `./uiEditorKitPreviewRuntimeBridge.js` aus dem installierten UI-Editor-kit. Aktivierung, Status-/Paneldarstellung, DOM-Preview-Anwendung, Reset von Styles, Drag-Panel und HostAdapter-Anbindung bleiben weiterhin BBM-Orchestrierung und sind nicht Bestandteil der generischen Runtime.
+Der Launcher importiert die generische Preview-Runtime jetzt ueber `./uiEditorKitPreviewRuntimeBridge.js` aus dem installierten UI-Editor-kit. Die Bridge zeigt auf den browserfaehigen ESM-Einstieg des Kits. Aktivierung, Status-/Paneldarstellung, DOM-Preview-Anwendung, Reset von Styles, Drag-Panel und HostAdapter-Anbindung bleiben weiterhin BBM-Orchestrierung und sind nicht Bestandteil der generischen Runtime.
 
 ## Kit-Referenzstand
 
@@ -222,7 +224,7 @@ Die fruehere technische Abweichung der Modulform ist fuer den Testverbrauch gelo
 - Kit: CommonJS (`module.exports`, `require`) plus ESM-kompatibler Einstieg (`index.mjs`)
 - Package-Subpath: `ui-editor-kit/runtime/preview`
 
-Der Subpath ist in BBM ueber die lokale `file:../UI-Editor-kit`-Dependency fuer Node-Tests aufloesbar. Der Electron-Renderer nutzt produktiv eine kleine lokale Bridge mit relativem Pfad auf die installierte Kit-Runtime, weil Bare-Package-Imports im Browser-ESM-Kontext sonst zu einem weissen Screen fuehren.
+Der Subpath ist in BBM ueber die lokale `file:../UI-Editor-kit`-Dependency fuer Node-Tests aufloesbar. Der Electron-Renderer nutzt produktiv eine kleine lokale Bridge mit relativem Pfad auf die installierte Kit-Runtime, weil Bare-Package-Imports im Browser-ESM-Kontext sonst zu einem weissen Screen fuehren. Der Kit-Einstieg `index.mjs` muss dabei browserfaehiges natives ESM bleiben und darf keine `.cjs`-Dateien nachladen.
 
 Weiter offen bleibt die kontrollierte produktive Bezugsform:
 
@@ -294,6 +296,7 @@ Vor einer echten Umstellung muessen mindestens gruen sein:
 - Kit: `scripts/tests/preview-runtime-guardrail.test.cjs`
 - Kit: `npm test`
 - BBM: `scripts/tests/uiEditorKitPreviewRuntimeImport.test.cjs`
+- BBM: `scripts/tests/uiEditorKitPreviewRuntimeBridgeParity.test.cjs`
 
 ## Empfohlener naechster Schritt
 
