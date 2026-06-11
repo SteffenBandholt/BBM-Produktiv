@@ -14,17 +14,21 @@ Die Kernlogik ist gleichwertig:
 - gleicher neutraler Fallback `unknown-host`
 - gleiche Deduplizierung, Kumulierung, Summary und zielbezogener Reset
 
-Seit G7 ist der offizielle Kit-Importvertrag in BBM testweise angebunden:
+Seit G8 nutzt der BBM-Launcher die Kit-Preview-Runtime produktiv:
 
 - Package-Dependency: `ui-editor-kit` via `file:../UI-Editor-kit`
 - offizieller Importpfad: `ui-editor-kit/runtime/preview`
-- CommonJS und ESM werden in BBM testseitig geprueft
+- Node-Tests koennen den Package-Subpath direkt aufloesen
+- der Electron-Renderer ohne Bundler/Import-Map kann Bare-Package-Specifier nicht aufloesen
+- `BbmUiEditorRuntimeLauncher.js` importiert deshalb die lokale Renderer-Bridge `./uiEditorKitPreviewRuntimeBridge.js`
+- die Bridge exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/preview/index.mjs`
+- CommonJS und ESM werden in BBM weiter testseitig geprueft
 
-Es erfolgt weiterhin keine produktive BBM-Import-Umstellung. Die lokale BBM-Preview-Runtime bleibt aktive Fallback- und Referenzimplementierung.
+Die lokale BBM-Preview-Runtime bleibt erhalten und dient vorerst als Referenz/Fallback. Sie wird in diesem Paket nicht geloescht und nicht umgebaut.
 
 ## BBM-Referenzstand
 
-BBM verwendet aktuell weiter die funktionierende ESM-Runtime:
+BBM behaelt aktuell weiter die funktionierende lokale ESM-Runtime als Referenz/Fallback:
 
 - `src/renderer/editorRuntime/preview/editorPreviewOperations.js`
 - `src/renderer/editorRuntime/preview/editorPreviewTargetModel.js`
@@ -35,7 +39,7 @@ Der BBM-Launcher bleibt Host-Orchestrator:
 
 - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
 
-Der Launcher enthaelt weiterhin die konkrete Aktivierung, Status-/Paneldarstellung, DOM-Preview-Anwendung, Reset von Styles, Drag-Panel und HostAdapter-Anbindung. Diese Teile sind nicht Bestandteil der generischen Runtime.
+Der Launcher importiert die generische Preview-Runtime jetzt ueber `./uiEditorKitPreviewRuntimeBridge.js` aus dem installierten UI-Editor-kit. Aktivierung, Status-/Paneldarstellung, DOM-Preview-Anwendung, Reset von Styles, Drag-Panel und HostAdapter-Anbindung bleiben weiterhin BBM-Orchestrierung und sind nicht Bestandteil der generischen Runtime.
 
 ## Kit-Referenzstand
 
@@ -218,12 +222,11 @@ Die fruehere technische Abweichung der Modulform ist fuer den Testverbrauch gelo
 - Kit: CommonJS (`module.exports`, `require`) plus ESM-kompatibler Einstieg (`index.mjs`)
 - Package-Subpath: `ui-editor-kit/runtime/preview`
 
-Der Subpath ist in BBM testweise ueber die lokale `file:../UI-Editor-kit`-Dependency aufloesbar. Das ist noch keine produktive Launcher-Umstellung.
+Der Subpath ist in BBM ueber die lokale `file:../UI-Editor-kit`-Dependency fuer Node-Tests aufloesbar. Der Electron-Renderer nutzt produktiv eine kleine lokale Bridge mit relativem Pfad auf die installierte Kit-Runtime, weil Bare-Package-Imports im Browser-ESM-Kontext sonst zu einem weissen Screen fuehren.
 
-Vor einer echten Umstellung braucht BBM weiter eine kontrollierte produktive Bezugsform:
+Weiter offen bleibt die kontrollierte produktive Bezugsform:
 
 - Entscheidung, ob die lokale File-Dependency fuer Entwicklung reicht oder spaeter ein versionierter Bezug genutzt wird
-- Test- und Sichtpruefung nach produktiver Launcher-Import-Umstellung
 - klare Rueckfallstrategie fuer die lokale BBM-Referenzruntime
 
 ## Abweichungen
@@ -231,7 +234,7 @@ Vor einer echten Umstellung braucht BBM weiter eine kontrollierte produktive Bez
 1. Modulformat:
    - BBM nutzt ESM.
    - Kit bietet CommonJS und ESM-kompatiblen Subpath.
-   - Der Importvertrag ist testbar, aber noch nicht produktiv im Launcher genutzt.
+   - Der Importvertrag wird in Node testbar genutzt; der produktive Renderer-Launcher nutzt eine relative Bridge auf dieselbe Kit-Runtime.
 
 2. Zusatzexport im Kit:
    - `UI_EDITOR_ID_ATTRIBUTE`
@@ -248,13 +251,12 @@ Vor einer echten Umstellung braucht BBM weiter eine kontrollierte produktive Bez
 
 ## Risiken
 
-- BBM und Kit koennen wieder auseinanderlaufen, solange BBM weiter die lokale Runtime nutzt.
-- Eine direkte Import-Umstellung ohne Modulformat-Entscheidung koennte Build- oder Testprobleme erzeugen.
+- BBM und Kit koennen wieder auseinanderlaufen, wenn neue generische Preview-Logik wieder in BBM statt im Kit entsteht.
 - Die lokale `file:../UI-Editor-kit`-Dependency setzt einen Nachbar-Checkout voraus und ist vor einer breiteren CI-/Produktivnutzung als Bezugsweg zu bewerten.
 - Panel-/Drag-/DOM-Orchestrierung bleibt bewusst in BBM und darf nicht versehentlich als generische Runtime behandelt werden.
 - Spaetere Persistenz darf nicht mit der Preview-Runtime vermischt werden.
 
-## Notwendige Schritte vor echter Umstellung
+## Notwendige Schritte nach der Import-Umstellung
 
 1. Produktiven Bezugsweg festlegen:
    - lokale File-Dependency fuer Entwicklung,
@@ -262,9 +264,9 @@ Vor einer echten Umstellung braucht BBM weiter eine kontrollierte produktive Bez
    - vendored Build,
    - oder veroeffentlichte/versionierte Kit-Quelle.
 
-2. Produktive Importkante umstellen:
-   - `BbmUiEditorRuntimeLauncher.js` erst in eigenem Paket umstellen.
+2. Lokale Runtime-Fallbackstrategie festlegen:
    - Lokale BBM-Preview-Runtime zunaechst als Referenz/Fallback behalten.
+   - Spaetere Entfernung nur in einem eigenen Paket.
 
 3. Testvertrag ergaenzen:
    - BBM muss den spaeteren echten Importweg testen.
@@ -297,6 +299,6 @@ Vor einer echten Umstellung muessen mindestens gruen sein:
 
 Naechster sinnvoller Schritt ist ein eigenes Mini-Paket:
 
-- kontrollierte produktive Import-Umstellung im BBM-Launcher vorbereiten,
-- lokale BBM-Preview-Runtime zunaechst als Referenz/Fallback behalten,
-- danach Electron-DEV-Sichtpruefung fuer Preview, Reset, Verwerfen, Panel und Drag.
+- produktiven Bezugsweg fuer das UI-Editor-kit klaeren,
+- lokale BBM-Preview-Runtime als Referenz/Fallback bewerten,
+- spaetere Entfernung oder Fallback-Fassade nur getrennt planen.

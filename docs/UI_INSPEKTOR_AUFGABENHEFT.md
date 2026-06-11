@@ -8,6 +8,7 @@ Aktueller Stand:
 - K19.30 abgeschlossen: Ein neutraler Export-Einstieg fuer die generische Preview-Runtime liegt unter `src/renderer/editorRuntime/preview/index.js`; die API ist dokumentiert, ohne Code ins externe Kit zu uebertragen.
 - K19.31 abgeschlossen: BBM wurde gegen die im externen UI-Editor-kit umgesetzte Preview-Runtime abgeglichen; die APIs und Datenstrukturen sind kompatibel, eine produktive Import-Umstellung erfolgte nicht.
 - K19.32 abgeschlossen: BBM prueft den offiziellen Kit-Importvertrag `ui-editor-kit/runtime/preview` testweise ueber eine lokale `file:../UI-Editor-kit`-Dependency; CommonJS und ESM funktionieren, eine produktive Launcher-Umstellung erfolgte nicht.
+- K19.33 Hotfix abgeschlossen: `BbmUiEditorRuntimeLauncher.js` nutzt die Preview-Runtime produktiv aus dem UI-Editor-kit ueber die renderer-kompatible Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`; lokale BBM-Preview-Dateien bleiben als Referenz/Fallback erhalten.
 - K19.29 abgeschlossen: Der harte `targetAppId`-Fallback `"bbm"` wurde aus der generischen Preview-ChangeRequest-Logik entfernt; BBM liefert seinen Ziel-App-Wert nur noch ueber HostContext/HostAdapter.
 - K19.28 abgeschlossen: Die Rueckfuehrung der generischen Preview-Runtime ins UI-Editor-kit ist dokumentarisch vorbereitet; es wurde kein Code ins externe Kit uebertragen.
 - K19.27 abgeschlossen: Generische Preview-Operationen, Preview-Zielmodell und Pending-ChangeRequest-Hilfen liegen unter `src/renderer/editorRuntime/preview/`; der BBM-Launcher bleibt Orchestrator.
@@ -66,6 +67,16 @@ Aktueller Stand:
 - [x] K19.30 Preview-Runtime Exportstruktur fuer Kit-Rueckfuehrung vorbereiten
 - [x] K19.31 BBM gegen UI-Editor-kit Preview-Runtime abgleichen
 - [x] K19.32 BBM prueft UI-Editor-kit Preview-Runtime Importvertrag
+- [x] K19.33 BBM-Launcher nutzt UI-Editor-kit Preview-Runtime produktiv
+
+## Statusupdate K19.33 Hotfix
+- `BbmUiEditorRuntimeLauncher.js` importiert die generische Preview-Runtime jetzt produktiv ueber `./uiEditorKitPreviewRuntimeBridge.js`.
+- Node kann den offiziellen Package-Subpath `ui-editor-kit/runtime/preview` aufloesen; der Electron-Renderer ohne Bundler/Import-Map kann diesen Bare-Package-Specifier nicht aufloesen.
+- Die Bridge re-exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/preview/index.mjs` und verhindert damit den weissen Screen durch den Bare-Import.
+- Der Launcher nutzt weiterhin nur die benoetigten Runtime-Funktionen; Panel, Drag, Markierung, HostAdapter und DOM-Preview-Anwendung bleiben unveraendert in BBM.
+- Die lokale BBM-Preview-Runtime unter `src/renderer/editorRuntime/preview/` wurde nicht geloescht und nicht umgebaut; sie bleibt als Referenz/Fallback vorhanden.
+- Der Launcher-Test enthaelt Guardrails gegen Rueckfall auf `../editorRuntime/preview/index.js` und gegen direkten Bare-Import im Renderer.
+- Keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
 
 ## Statusupdate K19.32
 - BBM kann den offiziellen UI-Editor-kit-Preview-Runtime-Export `ui-editor-kit/runtime/preview` testweise verbrauchen.

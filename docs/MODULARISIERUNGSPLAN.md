@@ -209,7 +209,8 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Die generische Preview-ChangeRequest-Logik enthaelt keinen harten `targetAppId`-Fallback `"bbm"` mehr; Ziel-App-Kontext kommt aus HostContext, Registry oder State, sonst neutral aus `unknown-host`.
 - Ein neutraler Export-Einstieg fuer die generische Preview-Runtime liegt unter `src/renderer/editorRuntime/preview/index.js`; die API ist dokumentiert und bleibt ohne Codeuebertragung ins externe UI-Editor-kit.
 - Der fachlich/technische Abgleich zwischen BBM-Preview-Runtime und externer UI-Editor-kit-Preview-Runtime ist dokumentiert: Exportnamen, Datenstrukturen, Operation-Mapping, Zielmodell, Pending-ChangeRequests und Guardrails sind kompatibel; offen bleibt nur der spaetere Import-/Modulformat-Vertrag. Noch keine produktive Import-Umstellung und keine externe Abhaengigkeit.
-- Der offizielle UI-Editor-kit-Preview-Runtime-Importvertrag ist in BBM testbar: `ui-editor-kit/runtime/preview` wird ueber `file:../UI-Editor-kit` als lokale Dependency aufgeloest und per CommonJS sowie ESM geprueft. Die produktive BBM-Preview-Runtime und der Launcher bleiben unveraendert lokal aktiv.
+- Der offizielle UI-Editor-kit-Preview-Runtime-Importvertrag ist in BBM testbar: `ui-editor-kit/runtime/preview` wird ueber `file:../UI-Editor-kit` als lokale Dependency aufgeloest und per CommonJS sowie ESM geprueft. Die lokale BBM-Preview-Runtime bleibt nur noch Referenz/Fallback.
+- `BbmUiEditorRuntimeLauncher.js` nutzt die generische Preview-Runtime jetzt produktiv aus dem UI-Editor-kit. Der Node-Importvertrag bleibt `ui-editor-kit/runtime/preview`; der Electron-Renderer nutzt wegen fehlender Bare-Package-Aufloesung eine kleine lokale Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js` mit relativem Pfad auf die installierte Kit-Runtime. Die lokale BBM-Preview-Runtime unter `src/renderer/editorRuntime/preview/` bleibt unveraendert als Referenz/Fallback erhalten.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -217,7 +218,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Konsolidierung ist noch nicht Endabschluss
 - naechstes Restarbeiten-Paket fachlich getrennt planen, bevor Ausgabe/PDF/Notizen/Diktat ueber M1-Stubs hinaus umgesetzt werden
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
-- Produktive Import-Umstellung im BBM-Launcher erst in einem eigenen Paket durchfuehren; lokale BBM-Runtime bis dahin als Referenz/Fallback behalten
+- Produktiven Bezugsweg fuer das externe UI-Editor-kit klaeren; lokale BBM-Runtime als Referenz/Fallback nur in einem eigenen Paket entfernen oder umbauen
 
 ---
 

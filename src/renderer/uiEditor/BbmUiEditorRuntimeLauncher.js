@@ -13,7 +13,7 @@ import {
   removePendingChangeRequestsForTarget as removePendingChangeRequestsForTargetModel,
   resolvePreviewTargetElement as resolvePreviewTargetElementModel,
   upsertPreviewChangeRequest as upsertPreviewChangeRequestModel,
-} from "../editorRuntime/preview/index.js";
+} from "./uiEditorKitPreviewRuntimeBridge.js";
 
 void installedLauncherButtonArtifactModule;
 void installedTargetSelectionArtifactModule;

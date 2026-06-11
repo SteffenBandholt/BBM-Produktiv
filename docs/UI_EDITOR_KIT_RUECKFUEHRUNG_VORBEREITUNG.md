@@ -4,9 +4,9 @@
 
 Die ausgelagerten Preview-Runtime-Hilfen unter `src/renderer/editorRuntime/preview/` sind echte Kandidaten fuer eine spaetere Rueckfuehrung ins UI-Editor-kit. Sie sind fachneutral, arbeiten ohne Speicherung und enthalten keine BBM-, Restarbeiten-, Electron-, DB-, IPC- oder PDF-Logik.
 
-Nach dem externen Kit-Paket G6 liegt die generische Preview-Runtime im UI-Editor-kit technisch umgesetzt vor und ist ueber den offiziellen Package-Subpath `ui-editor-kit/runtime/preview` exportiert. Der BBM-Abgleich ist in `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` dokumentiert. Ergebnis: BBM und Kit sind fachlich kompatibel; seit G7 prueft BBM den offiziellen Importvertrag testweise ueber `file:../UI-Editor-kit`. Eine produktive BBM-Launcher-Umstellung ist weiterhin nicht erfolgt.
+Nach dem externen Kit-Paket G6 liegt die generische Preview-Runtime im UI-Editor-kit technisch umgesetzt vor und ist ueber den offiziellen Package-Subpath `ui-editor-kit/runtime/preview` exportiert. Der BBM-Abgleich ist in `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` dokumentiert. Ergebnis: BBM und Kit sind fachlich kompatibel; seit G8 nutzt `BbmUiEditorRuntimeLauncher.js` die Kit-Preview-Runtime produktiv. Der Electron-Renderer importiert sie ueber die lokale Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`, weil nur Node den Bare-Package-Subpath direkt aufloest.
 
-Dieses Paket uebertraegt keinen weiteren Code und stellt keine produktive BBM-Nutzung um. Es dokumentiert den Stand, die Kandidaten, die Exports, die Testanforderungen und die offenen Entkopplungen.
+Die lokale BBM-Preview-Runtime bleibt vorerst als Referenz/Fallback erhalten. Dieses Paket entfernt keine lokalen Runtime-Dateien und aendert keine HostAdapter-, Panel-, Drag-, Speicher-, DB-, IPC-, Fach- oder PDF-/Drucklogik.
 
 ## Aktueller BBM-Stand
 
@@ -178,12 +178,20 @@ export {
 } from "./preview/editorPendingChangeRequests.js";
 ```
 
-Im BBM-Repo bleibt der neutrale Sammel-Export `src/renderer/editorRuntime/preview/index.js` die produktiv aktive lokale Importkante. Der externe Kit-Vertrag ist zusaetzlich testbar ueber:
+Im BBM-Repo bleibt der neutrale Sammel-Export `src/renderer/editorRuntime/preview/index.js` als lokale Referenz/Fallback erhalten. Node-Tests pruefen den offiziellen Package-Vertrag weiterhin ueber:
 
 ```js
 import { getChangeRequestOperation } from "ui-editor-kit/runtime/preview";
 const previewRuntime = require("ui-editor-kit/runtime/preview");
 ```
+
+Der produktiv aktive Electron-Renderer-Import laeuft wegen fehlender Browser-Aufloesung fuer Bare-Package-Specifier ueber:
+
+```js
+import { getChangeRequestOperation } from "./uiEditorKitPreviewRuntimeBridge.js";
+```
+
+Die Bridge re-exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/preview/index.mjs`.
 
 Die API braucht als Eingaben nur neutrale Daten:
 
@@ -234,10 +242,10 @@ Die bestehenden BBM-Tests `scripts/tests/editorPreviewRuntime.test.cjs` koennen 
 
 ## Offene Entkopplungen
 
-Vor einer echten produktiven Rueckanbindung sind noch diese Punkte zu klaeren:
+Nach der produktiven Launcher-Importumstellung sind noch diese Punkte zu klaeren:
 
 - Produktiven Bezugsweg fuer das externe UI-Editor-kit festlegen: lokale File-Dependency, Workspace, vendored Build oder versionierte Quelle.
-- Produktive BBM-Importkante in einem eigenen Paket kontrolliert von lokalem Runtime-Index auf `ui-editor-kit/runtime/preview` umstellen.
+- Lokale BBM-Preview-Runtime als Referenz/Fallback bewerten; Entfernung nur in einem eigenen Paket.
 - ChangeRequest-Vertrag mit dem bestehenden Kit- oder BBM-Modell abgleichen.
 - `targetAppId` kommt jetzt aus dem HostContext, der Registry oder dem Runtime-State; die generische Preview-Runtime nutzt keinen BBM-Fallback mehr.
 - Entscheiden, ob `data-ui-editor-id` der verbindliche Kit-DOM-Anker bleibt oder als Attributname parametrierbar wird.
@@ -258,7 +266,7 @@ Vor einer echten produktiven Rueckanbindung sind noch diese Punkte zu klaeren:
 
 Naechstes kleines Paket:
 
-Die produktive BBM-Import-Umstellung im Launcher kontrolliert vorbereiten, noch mit lokaler BBM-Runtime als Referenz/Fallback.
+Den produktiven Bezugsweg fuer das externe UI-Editor-kit klaeren und die lokale BBM-Preview-Runtime als Referenz/Fallback bewerten.
 
 Eine echte BBM-Rueckanbindung darf erst danach erfolgen und muss getrennt pruefen:
 

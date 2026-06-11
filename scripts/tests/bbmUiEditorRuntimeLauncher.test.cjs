@@ -4,6 +4,7 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const RUNTIME_PATH = path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
+const PREVIEW_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js");
 const BBM_REGISTRY_PATH = path.join(__dirname, "../../src/renderer/uiEditor/bbmUiEditorRegistry.js");
 const CORE_SHELL_PATH = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
 const HOST_CONTRACT_PATH = path.join(__dirname, "../../src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js");
@@ -304,6 +305,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("uiEditor/targetSelection.js"), true);
     assert.equal(source.includes("../../../uiEditor/uiEditorLauncherButton.js"), true);
     assert.equal(source.includes("../../../uiEditor/targetSelection.js"), true);
+    assert.equal(source.includes('from "./uiEditorKitPreviewRuntimeBridge.js"'), true);
+    assert.equal(source.includes('from "ui-editor-kit/runtime/preview"'), false);
+    assert.equal(source.includes('from "../editorRuntime/preview/index.js"'), false);
     assert.equal(packageJson.build.files.includes("uiEditor/**/*"), true);
     assert.equal(source.includes("scanUiInspectorTargets"), false);
     assert.equal(source.includes("createUiInspectorPanel"), false);
@@ -322,6 +326,31 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(cssSource.includes("max-inline-size: 360px"), true);
     assert.equal(cssSource.includes('[data-ui-editor-launcher-active="true"]'), true);
     assert.equal(getCssNumber(cssSource, "z-index") > 12010, true);
+  });
+
+  await run("BBM UI-Editor-Runtime: Preview-Runtime-Bridge bleibt renderer-kompatibel und fachfrei", async () => {
+    assert.equal(fs.existsSync(PREVIEW_RUNTIME_BRIDGE_PATH), true);
+    const bridgeSource = fs.readFileSync(PREVIEW_RUNTIME_BRIDGE_PATH, "utf8");
+    assert.equal(
+      bridgeSource.includes("../../../node_modules/ui-editor-kit/src/runtime/preview/index.mjs"),
+      true
+    );
+    assert.equal(bridgeSource.includes("ui-editor-kit/runtime/preview"), false);
+    assert.equal(bridgeSource.includes("../editorRuntime/preview/index.js"), false);
+    for (const forbidden of [
+      "bbm",
+      "BBM",
+      "restarbeiten",
+      "Kurztext",
+      "editbox",
+      "filterbar",
+      "localStorage",
+      "writeFile",
+      "ipc",
+      "db",
+    ]) {
+      assert.equal(bridgeSource.includes(forbidden), false, forbidden);
+    }
   });
 
   await run("BBM UI-Editor-Runtime: Launcher ist nur im DEV-Kontext sichtbar", async () => {
