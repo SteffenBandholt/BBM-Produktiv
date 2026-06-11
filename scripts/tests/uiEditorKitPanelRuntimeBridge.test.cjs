@@ -52,10 +52,11 @@ function assertPanelBridgeContract() {
   }
 }
 
-function assertLauncherDoesNotUsePanelRuntimeYet() {
+function assertLauncherUsesPanelRuntimeBridgeOnly() {
   const source = fs.readFileSync(LAUNCHER_PATH, "utf8");
-  assert.equal(source.includes("uiEditorKitPanelRuntimeBridge.js"), false);
+  assert.equal(source.includes('from "./uiEditorKitPanelRuntimeBridge.js"'), true);
   assert.equal(source.includes("ui-editor-kit/runtime/panel"), false);
+  assert.equal(source.includes("node_modules/ui-editor-kit/src/runtime/panel/index.mjs"), false);
 }
 
 function assertPreviewBridgeUnchanged() {
@@ -99,7 +100,7 @@ function assertPanelRuntimeContract(runtime) {
 async function runUiEditorKitPanelRuntimeBridgeTests(run) {
   await run("UI-Editor-kit Panel-Runtime-Bridge: Renderer-Pfad ist vorbereitet", async () => {
     assertPanelBridgeContract();
-    assertLauncherDoesNotUsePanelRuntimeYet();
+    assertLauncherUsesPanelRuntimeBridgeOnly();
     assertPreviewBridgeUnchanged();
 
     const runtime = await importEsmFromFile(PANEL_BRIDGE_PATH);

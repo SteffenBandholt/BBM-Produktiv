@@ -216,6 +216,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Die im BBM-Launcher verbliebene UI-nahe Panel-/Drag-/Rendering-Logik ist inventarisiert: kitfaehige Kandidaten und in BBM verbleibende Host-Orchestrierung sind getrennt dokumentiert, ohne Codeverschiebung.
 - Die neutrale Panel-Runtime des UI-Editor-kit ist in BBM als Importvertrag pruefbar: `ui-editor-kit/runtime/panel` wird per CommonJS und ESM getestet, ohne produktive Launcher-Umstellung und ohne Panel-/Drag-/DOM-Aenderung.
 - Fuer die Panel-Runtime ist eine renderer-kompatible BBM-Bridge vorbereitet: `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js` zeigt relativ auf `node_modules/ui-editor-kit/src/runtime/panel/index.mjs`; der Launcher nutzt sie noch nicht produktiv.
+- Der BBM-Launcher nutzt das Kit-Panel-ViewModel jetzt vorbereitend ueber die Panel-Bridge: Titel, Ziel-IDs, Ops, Summary, StatusText und Button-Freigaben laufen durch `buildBbmPanelViewModel(...)`; Drag, Position, DOM-Rendering-Mechanik und Preview-Operationen bleiben im Launcher.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -224,7 +225,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - naechstes Restarbeiten-Paket fachlich getrennt planen, bevor Ausgabe/PDF/Notizen/Diktat ueber M1-Stubs hinaus umgesetzt werden
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
 - Spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit als separates Folgethema klaeren
-- Produktive Nutzung der Kit-Panel-Runtime im BBM-Launcher separat planen; dabei DOM-Grenzen, Drag-Abgrenzung und Electron-Sichtpruefung ausdruecklich trennen.
+- Weitere Auslagerung der Kit-Panel-Runtime im BBM-Launcher separat planen; dabei DOM-Grenzen, Drag-Abgrenzung und Electron-Sichtpruefung ausdruecklich trennen.
 
 ---
 

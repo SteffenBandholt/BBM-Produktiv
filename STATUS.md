@@ -17,12 +17,20 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-kit Panel-ViewModel im BBM-Launcher vorbereitend genutzt:
+  - `BbmUiEditorRuntimeLauncher.js` importiert `buildPanelViewModel` ausschliesslich ueber `./uiEditorKitPanelRuntimeBridge.js`.
+  - `buildBbmPanelViewModel(...)` fuehrt bestehende Launcher-Daten in ein neutrales Kit-Panel-ViewModel.
+  - Das Preview-Panel liest daraus Titel, Ziel-ID, Preview-Ziel-ID, `allowedOps`, `lockedOps`, StatusText, Summary und Button-Freigaben.
+  - Button-Handler, Schrittweiten, Preview-Operationen, Reset/Verwerfen, Drag, Panel-Position, Target Selection und DOM-Markierung bleiben im BBM-Launcher unveraendert.
+  - Kein Bare-Package-Import `ui-editor-kit/runtime/panel` im Renderer und keine direkte produktive Node-Modules-Nutzung ausser ueber die Bridge.
+  - Keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
+
 - UI-Editor-kit Panel-Runtime Renderer-Bridge vorbereitet:
   - BBM hat `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js` als renderer-kompatible Bridge angelegt.
   - Die Bridge re-exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/panel/index.mjs`.
   - Der Electron-Renderer darf weiterhin keine Bare-Package-Imports wie `ui-editor-kit/runtime/panel` verwenden.
-  - `scripts/tests/uiEditorKitPanelRuntimeBridge.test.cjs` prueft Bridge-Pfad, verbotenen Bare-Import, Fach-/Storage-/DB-/IPC-/PDF-Begriffe, unveraenderte Preview-Bridge und dass der Launcher die Panel-Bridge noch nicht produktiv nutzt.
-  - Keine produktive Launcher-Umstellung, keine DOM-Aenderung, kein Drag, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
+  - `scripts/tests/uiEditorKitPanelRuntimeBridge.test.cjs` prueft Bridge-Pfad, verbotenen Bare-Import, Fach-/Storage-/DB-/IPC-/PDF-Begriffe, unveraenderte Preview-Bridge und dass der Launcher die Panel-Runtime nur ueber die Bridge nutzt.
+  - Keine direkte Bare-Package-Nutzung im Renderer, keine DOM-Aenderung, kein Drag, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
 
 - UI-Editor-kit Panel-Runtime Importvertrag in BBM pruefbar:
   - Das UI-Editor-kit stellt die neutrale Panel-Runtime ueber `ui-editor-kit/runtime/panel` bereit.

@@ -5,6 +5,7 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const RUNTIME_PATH = path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
 const PREVIEW_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js");
+const PANEL_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js");
 const BBM_REGISTRY_PATH = path.join(__dirname, "../../src/renderer/uiEditor/bbmUiEditorRegistry.js");
 const CORE_SHELL_PATH = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
 const HOST_CONTRACT_PATH = path.join(__dirname, "../../src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js");
@@ -306,7 +307,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("../../../uiEditor/uiEditorLauncherButton.js"), true);
     assert.equal(source.includes("../../../uiEditor/targetSelection.js"), true);
     assert.equal(source.includes('from "./uiEditorKitPreviewRuntimeBridge.js"'), true);
+    assert.equal(source.includes('from "./uiEditorKitPanelRuntimeBridge.js"'), true);
     assert.equal(source.includes('from "ui-editor-kit/runtime/preview"'), false);
+    assert.equal(source.includes('from "ui-editor-kit/runtime/panel"'), false);
     assert.equal(source.includes('from "../editorRuntime/preview/index.js"'), false);
     assert.equal(packageJson.build.files.includes("uiEditor/**/*"), true);
     assert.equal(source.includes("scanUiInspectorTargets"), false);
@@ -351,6 +354,74 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     ]) {
       assert.equal(bridgeSource.includes(forbidden), false, forbidden);
     }
+  });
+
+  await run("BBM UI-Editor-Runtime: Panel-Runtime-Bridge bleibt renderer-kompatibel und fachfrei", async () => {
+    assert.equal(fs.existsSync(PANEL_RUNTIME_BRIDGE_PATH), true);
+    const bridgeSource = fs.readFileSync(PANEL_RUNTIME_BRIDGE_PATH, "utf8");
+    assert.equal(
+      bridgeSource.includes("../../../node_modules/ui-editor-kit/src/runtime/panel/index.mjs"),
+      true
+    );
+    assert.equal(bridgeSource.includes("ui-editor-kit/runtime/panel"), false);
+    for (const forbidden of [
+      "bbm",
+      "BBM",
+      "restarbeiten",
+      "Kurztext",
+      "editbox",
+      "filterbar",
+      "localStorage",
+      "writeFile",
+      "ipc",
+      "db",
+      "pdf",
+      "PDF",
+    ]) {
+      assert.equal(bridgeSource.includes(forbidden), false, forbidden);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Panel-ViewModel wird vorbereitend aus Launcher-Daten gebaut", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const target = doc.createElement("div");
+    target.setAttribute("data-ui-editor-id", "sample.target");
+    const registryElement = {
+      id: "sample.target",
+      name: "Ziel",
+      type: "field",
+      role: "content",
+      parentId: "sample.root",
+      allowedOps: ["inspect", "move", "resize", "hide"],
+      lockedOps: ["show"],
+      previewTargetMode: "self",
+    };
+    const state = mod.createLauncherState({
+      activeUiScope: "sample.screen",
+      registeredElements: [registryElement],
+    });
+    state.selectedElement = registryElement;
+    state.selectedTargetNode = target;
+    state.selectedPreviewTargetNode = target;
+    state.pendingChangeRequests = [
+      { elementId: "sample.target", operation: "move" },
+      { elementId: "sample.target", operation: "width" },
+    ];
+    state.previewMessage = "Aenderungen vorbereitet";
+
+    const viewModel = mod.buildBbmPanelViewModel(state);
+    assert.equal(viewModel.title, "Preview");
+    assert.equal(viewModel.targetId, "sample.target");
+    assert.equal(viewModel.previewTargetId, "sample.target");
+    assert.deepEqual(viewModel.allowedOps, ["inspect", "move", "resize", "hide"]);
+    assert.deepEqual(viewModel.lockedOps, ["show"]);
+    assert.equal(viewModel.pendingChangeSummary.total, 2);
+    assert.deepEqual(viewModel.pendingChangeSummary.operations, ["move", "width"]);
+    assert.equal(viewModel.statusText, "Aenderungen vorbereitet");
+    assert.equal(viewModel.buttons.some((button) => button.id === "move-left" && button.isEnabled), true);
+    assert.equal(viewModel.buttons.some((button) => button.id === "show" && button.isEnabled), false);
+    assert.equal(viewModel.canDiscard, true);
   });
 
   await run("BBM UI-Editor-Runtime: Launcher ist nur im DEV-Kontext sichtbar", async () => {

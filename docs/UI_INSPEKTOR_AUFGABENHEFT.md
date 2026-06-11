@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.41 abgeschlossen: BBM nutzt das UI-Editor-kit Panel-ViewModel vorbereitend im Launcher ueber die Panel-Bridge; sichtbares Verhalten soll unveraendert bleiben.
 - K19.40 abgeschlossen: BBM hat eine renderer-kompatible Bridge fuer die UI-Editor-kit Panel-Runtime vorbereitet; der Launcher nutzt sie noch nicht produktiv.
 - K19.39 abgeschlossen: BBM prueft den offiziellen UI-Editor-kit Panel-Runtime-Importvertrag `ui-editor-kit/runtime/panel` per CommonJS und ESM; keine produktive Launcher-Umstellung.
 - K19.38 abgeschlossen: Panel-/Drag-/Rendering-Logik im BBM-Launcher inventarisiert und Trennschnitt BBM vs. UI-Editor-kit dokumentiert; keine Codeverschiebung.
@@ -82,6 +83,15 @@ Aktueller Stand:
 - [x] K19.38 UI-Editor Panel/Drag/Rendering inventarisieren
 - [x] K19.39 UI-Editor-kit Panel-Runtime Importvertrag pruefen
 - [x] K19.40 UI-Editor-kit Panel-Runtime Renderer-Bridge vorbereiten
+- [x] K19.41 Panel-ViewModel im BBM-Launcher vorbereitend nutzen
+
+## Statusupdate K19.41
+- `BbmUiEditorRuntimeLauncher.js` importiert `buildPanelViewModel` ausschliesslich ueber `./uiEditorKitPanelRuntimeBridge.js`.
+- `buildBbmPanelViewModel(...)` baut aus bestehenden Launcher-Daten ein neutrales Kit-Panel-ViewModel.
+- Das Preview-Panel liest Titel, Ziel-ID, Preview-Ziel-ID, `allowedOps`, `lockedOps`, StatusText, Summary und Button-Freigaben aus dem ViewModel.
+- Drag, Panel-Position, Target Selection, DOM-Markierung, Button-Handler, Preview-Operationen und Reset/Verwerfen bleiben im BBM-Launcher.
+- Kein Bare-Package-Import `ui-editor-kit/runtime/panel` im Renderer und keine direkte produktive Node-Modules-Nutzung ausser ueber die Bridge.
+- Keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine beabsichtigte sichtbare Funktionsaenderung.
 
 ## Statusupdate K19.40
 - `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js` re-exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/panel/index.mjs`.

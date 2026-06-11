@@ -14,6 +14,7 @@ import {
   resolvePreviewTargetElement as resolvePreviewTargetElementModel,
   upsertPreviewChangeRequest as upsertPreviewChangeRequestModel,
 } from "./uiEditorKitPreviewRuntimeBridge.js";
+import { buildPanelViewModel } from "./uiEditorKitPanelRuntimeBridge.js";
 
 void installedLauncherButtonArtifactModule;
 void installedTargetSelectionArtifactModule;
@@ -760,6 +761,39 @@ function getSelectedRegistryElementForPreview(state = {}) {
   return selectedId ? getRegisteredElementById(state, selectedId) : null;
 }
 
+function buildBbmPanelViewModel(state = {}) {
+  const selectedElement = getSelectedRegistryElementForPreview(state);
+  const targetNode = state.selectedTargetNode || null;
+  const previewTargetNode = getPreviewTargetElement(state);
+  const previewTargetId = getNodeUiEditorId(previewTargetNode) || "";
+  const changeRequestSummary = getPendingChangeRequestSummary(
+    state,
+    selectedElement?.id || getPreviewTargetElementId(state, previewTargetNode)
+  );
+  const hasPreviewState = Boolean(previewTargetNode && state.previewStates?.has?.(previewTargetNode));
+
+  return buildPanelViewModel({
+    state: {
+      isOpen: true,
+      position: {},
+    },
+    title: "Preview",
+    element: selectedElement,
+    targetId: selectedElement?.id || "",
+    targetLabel: selectedElement?.name || selectedElement?.label || selectedElement?.id || "",
+    previewTarget: {
+      id: previewTargetId,
+      label: describePreviewTargetElement(previewTargetNode, targetNode),
+    },
+    allowedOps: selectedElement ? getElementAllowedOps(selectedElement) : [],
+    lockedOps: selectedElement ? getElementLockedOps(selectedElement) : [],
+    pendingChangeSummary: changeRequestSummary,
+    canReset: hasPreviewState,
+    canDiscard: changeRequestSummary.total > 0,
+    statusText: state.previewMessage || "",
+  });
+}
+
 function getNextChangeRequestId(state = {}) {
   state.changeRequestSequence = (Number(state.changeRequestSequence) || 0) + 1;
   return `preview-${state.changeRequestSequence}`;
@@ -1029,27 +1063,30 @@ function renderPreviewPanel(doc, state = {}) {
   const targetNode = state.selectedTargetNode || null;
   const previewTargetNode = getPreviewTargetElement(state);
   const previewAvailable = Boolean(selectedElement && previewTargetNode);
-  const allowedOps = selectedElement ? getElementAllowedOps(selectedElement) : [];
-  const changeRequestSummary = getPendingChangeRequestSummary(state, selectedElement?.id || getPreviewTargetElementId(state, previewTargetNode));
+  const panelViewModel = buildBbmPanelViewModel(state);
+  const allowedOps = panelViewModel.allowedOps;
+  const lockedOps = panelViewModel.lockedOps;
+  const changeRequestSummary = panelViewModel.pendingChangeSummary;
+  title.textContent = panelViewModel.title;
 
   const details = doc.createElement("div");
   details.className = "ui-editor-preview-controls__details";
-  details.setAttribute("data-ui-editor-preview-selected", selectedElement?.id || "");
+  details.setAttribute("data-ui-editor-preview-selected", panelViewModel.targetId);
   details.textContent = [
     `Scope: ${getStatusScopeLabel(registry.uiScope || state.activeUiScope)}`,
-    selectedElement ? `Element-ID: ${selectedElement.id}` : "Kein Element ausgewählt",
-    selectedElement ? `Preview-Ziel-ID: ${getNodeUiEditorId(previewTargetNode) || "nicht gesetzt"}` : "",
+    panelViewModel.targetId ? `Element-ID: ${panelViewModel.targetId}` : "Kein Element ausgewählt",
+    panelViewModel.targetId ? `Preview-Ziel-ID: ${panelViewModel.previewTargetId || "nicht gesetzt"}` : "",
     `allowedOps: ${allowedOps.length > 0 ? allowedOps.join(", ") : "keine"}`,
-    selectedElement ? `lockedOps: ${getElementLockedOps(selectedElement).length > 0 ? getElementLockedOps(selectedElement).join(", ") : "keine"}` : "",
+    selectedElement ? `lockedOps: ${lockedOps.length > 0 ? lockedOps.join(", ") : "keine"}` : "",
     selectedElement ? `editGranularity: ${formatPreviewMetaValue(selectedElement.editGranularity)}` : "",
     selectedElement ? `previewTargetMode: ${formatPreviewMetaValue(getPreviewTargetMode(selectedElement))}` : "",
     selectedElement ? `affectsContainer: ${formatPreviewMetaValue(selectedElement.affectsContainer)}` : "",
-    selectedElement ? `Preview-Ziel: ${describePreviewTargetElement(previewTargetNode, targetNode)}` : "",
+    selectedElement ? `Preview-Ziel: ${panelViewModel.previewTargetLabel}` : "",
     `Aenderungen vorbereitet: ${changeRequestSummary.total}`,
     selectedElement ? `Operationen aktuelles Element: ${changeRequestSummary.operations.length > 0 ? changeRequestSummary.operations.join(" / ") : "keine"}` : "",
     "Noch nicht gespeichert",
     selectedElement && allowedOps.length <= 1 ? "Hinweis: Preview-Operationen deaktiviert." : "",
-    state.previewMessage ? `Status: ${state.previewMessage}` : "",
+    panelViewModel.statusText ? `Status: ${panelViewModel.statusText}` : "",
   ].filter(Boolean).join("\n");
   panel.appendChild(details);
 
@@ -1061,8 +1098,11 @@ function renderPreviewPanel(doc, state = {}) {
   buttonGrid.style.gap = "6px";
   buttonGrid.style.marginTop = "10px";
 
-  const addButton = (label, operation, payload = {}, actionId = operation) => {
-    const allowed = previewAvailable && isPreviewOperationAllowed(selectedElement, operation);
+  const getButtonViewModel = (id) => panelViewModel.buttons.find((button) => button.id === id) || null;
+  const addButton = (fallbackLabel, operation, payload = {}, actionId = operation) => {
+    const buttonViewModel = getButtonViewModel(actionId);
+    const label = buttonViewModel?.label || fallbackLabel;
+    const allowed = previewAvailable && buttonViewModel?.isEnabled === true;
     buttonGrid.appendChild(createPreviewControlButton(doc, label, actionId, allowed
       ? () => {
           applyPreviewOperation(state, operation, payload);
@@ -1082,15 +1122,16 @@ function renderPreviewPanel(doc, state = {}) {
   addButton("Ausblenden", "hide");
   addButton("Einblenden", "show");
 
-  const hasPreviewState = Boolean(previewTargetNode && state.previewStates?.has?.(previewTargetNode));
-  buttonGrid.appendChild(createPreviewControlButton(doc, "Reset", "reset", hasPreviewState
+  const resetButtonViewModel = getButtonViewModel("reset");
+  buttonGrid.appendChild(createPreviewControlButton(doc, resetButtonViewModel?.label || "Reset", "reset", resetButtonViewModel?.isEnabled
     ? () => {
         resetSelectedPreviewChange(state);
         renderPreviewPanel(doc, state);
       }
     : null));
 
-  buttonGrid.appendChild(createPreviewControlButton(doc, "Aenderungen verwerfen", "discard-changes", changeRequestSummary.total > 0
+  const discardButtonViewModel = getButtonViewModel("discard");
+  buttonGrid.appendChild(createPreviewControlButton(doc, discardButtonViewModel?.label || "Aenderungen verwerfen", "discard-changes", discardButtonViewModel?.isEnabled
     ? () => {
         discardPendingPreviewChanges(state);
         renderPreviewPanel(doc, state);
@@ -1331,6 +1372,7 @@ export {
   getAvailableUiScopesText,
   getLauncherStatusText,
   getReadonlyLauncherStatusText,
+  buildBbmPanelViewModel,
   normalizeReadonlyRegisteredElements,
   normalizeAvailableUiScopes,
   ensureLauncherStatusHint,
