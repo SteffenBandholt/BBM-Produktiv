@@ -1005,6 +1005,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(state.pendingChangeRequests.length, 1);
     assert.equal(state.pendingChangeRequests[0].operation, "move");
     assert.equal(state.pendingChangeRequests[0].elementId, "sample.field.input");
+    assert.equal(state.pendingChangeRequests[0].targetAppId, "bbm");
     assert.equal(state.pendingChangeRequests[0].targetElementId, "sample.field.input");
     assert.equal(state.pendingChangeRequests[0].previewTargetMode, "self");
     assert.equal(state.pendingChangeRequests[0].source, "preview");
@@ -1093,6 +1094,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(mod.applyPreviewOperation(state, "move", { dx: 5, dy: 0 }), true);
     assert.equal(pendingSnapshots.length, 1);
     assert.equal(pendingSnapshots[0][0].source, "preview");
+    assert.equal(pendingSnapshots[0][0].targetAppId, "sample-app");
     assert.equal(pendingSnapshots[0][0].persistent, false);
     assert.equal(hostAdapter.submitChangeRequests(state.pendingChangeRequests).reason, "PERSISTENCE_DISABLED");
 

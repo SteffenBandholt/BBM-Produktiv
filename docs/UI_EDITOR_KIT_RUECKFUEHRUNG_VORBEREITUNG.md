@@ -229,7 +229,7 @@ Vor einer echten Codeuebertragung sind noch diese Punkte zu klaeren:
 - Zielpfad und Paketstruktur im externen UI-Editor-kit festlegen.
 - Zentralen Kit-Export definieren, z. B. `index.js` oder `preview/index.js`.
 - ChangeRequest-Vertrag mit dem bestehenden Kit- oder BBM-Modell abgleichen.
-- `targetAppId`-Fallback `bbm` entfernen oder hostneutral parametrieren.
+- `targetAppId` kommt jetzt aus dem HostContext, der Registry oder dem Runtime-State; die generische Preview-Runtime nutzt keinen BBM-Fallback mehr.
 - Entscheiden, ob `data-ui-editor-id` der verbindliche Kit-DOM-Anker bleibt oder als Attributname parametrierbar wird.
 - Preview-Style-Anwendung ist noch nicht in diesen Modulen enthalten; sie bleibt derzeit im BBM-Launcher.
 - Panel-Rendering und Drag-Verhalten sind noch nicht entkoppelt.
@@ -239,7 +239,7 @@ Vor einer echten Codeuebertragung sind noch diese Punkte zu klaeren:
 ## Risiken
 
 - BBM und UI-Editor-kit koennen wieder auseinanderlaufen, wenn weitere generische Preview-Logik im Launcher entsteht.
-- Der Fallback `targetAppId: "bbm"` in `editorPendingChangeRequests.js` ist fuer BBM kompatibel, vor Kit-Uebertragung aber nicht ideal.
+- Der neutrale Fallback `targetAppId: "unknown-host"` ist nur ein technischer Sicherheitswert; produktive Hosts sollen `targetAppId` ueber HostContext oder Registry liefern.
 - DOM-Naehe bleibt durch `data-ui-editor-id` bewusst vorhanden; das ist erlaubt, darf aber nicht zu automatischem DOM-Scan oder Bestandserkennung ausgebaut werden.
 - Fake-DOM-Tests ersetzen keine echte Sichtpruefung fuer Panel, Auswahlrahmen und temporaere Styles.
 - Eine spaetere Persistenz darf nicht versehentlich mit dieser Preview-Runtime vermischt werden.
@@ -248,7 +248,7 @@ Vor einer echten Codeuebertragung sind noch diese Punkte zu klaeren:
 
 Naechstes kleines Paket:
 
-Einen neutralen Kit-Exportplan fuer `preview/` festlegen und den `targetAppId`-Fallback hostneutral vorbereiten, weiterhin ohne Codeuebertragung ins externe Kit und ohne Speicherung.
+Einen neutralen Kit-Exportplan fuer `preview/` festlegen und den HostContext-Vertrag fuer Preview-ChangeRequests im Kit nachziehen, weiterhin ohne Codeuebertragung ins externe Kit und ohne Speicherung.
 
 Erst danach sollte ein eigenes Uebertragungspaket ins UI-Editor-kit folgen. Dieses Paket muss dann getrennt pruefen:
 

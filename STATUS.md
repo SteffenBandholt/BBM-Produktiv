@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Preview-Runtime targetAppId-Fallback hostneutral gemacht:
+  - Der harte Fallback `"bbm"` wurde aus `src/renderer/editorRuntime/preview/editorPendingChangeRequests.js` entfernt.
+  - `targetAppId` wird aus HostContext, Registry oder State bestimmt; als letzter technischer Fallback dient `unknown-host`.
+  - `BbmUiEditorRuntimeLauncher.js` reicht den HostAdapter-Kontext an die generische Preview-ChangeRequest-Logik weiter.
+  - BBM kann weiter `targetAppId: "bbm"` liefern, aber nur ueber HostContext/HostAdapter.
+  - Keine neue Preview-Funktion, keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Fachaenderung.
+
 - UI-Editor-kit-Rueckfuehrung der Preview-Runtime vorbereitet:
   - `docs/UI_EDITOR_KIT_RUECKFUEHRUNG_VORBEREITUNG.md` dokumentiert Kit-Kandidaten, Nicht-Kit-Kandidaten, API/Exports, notwendige Kit-Tests, offene Entkopplungen, Risiken und den empfohlenen naechsten Schritt.
   - Es wurde kein Code ins externe UI-Editor-kit uebertragen und keine Runtime-Funktion geaendert.

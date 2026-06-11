@@ -182,6 +182,12 @@ function notifyPendingChangeRequestsChanged(state = {}) {
   );
 }
 
+function getHostContextFromState(state = {}) {
+  const adapter = state.hostAdapter || null;
+  if (!adapter || typeof adapter.getHostContext !== "function") return {};
+  return adapter.getHostContext() || {};
+}
+
 function createLauncherState({
   activeUiScope = null,
   registeredElements = null,
@@ -766,6 +772,7 @@ function getNextChangeRequestId(state = {}) {
 function upsertPreviewChangeRequest(state = {}, registryElement = null, targetNode = null, operation = "", payload = {}) {
   return upsertPreviewChangeRequestModel({
     state,
+    hostContext: getHostContextFromState(state),
     registry: getSelectedRegistryFromState(state),
     registryElement,
     targetNode,

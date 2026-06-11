@@ -33,6 +33,8 @@ Die Runtime ist zustaendig fuer:
 
 Die Runtime speichert nichts, schreibt keine Fachdaten und loest keine Fachaktion aus.
 
+`targetAppId` fuer Preview-ChangeRequests kommt aus dem HostContext bzw. HostAdapter-Kontext oder aus der expliziten Registry. Die generische Preview-Runtime enthaelt keinen hart codierten BBM-Fallback mehr. BBM darf weiterhin `targetAppId: "bbm"` liefern, aber nur als Host-Kontext.
+
 ## Pflichtmethoden
 
 Der aktuelle Vertrag wird in `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js` geprueft.

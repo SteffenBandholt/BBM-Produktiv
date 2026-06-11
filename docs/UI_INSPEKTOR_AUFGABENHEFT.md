@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.29 abgeschlossen: Der harte `targetAppId`-Fallback `"bbm"` wurde aus der generischen Preview-ChangeRequest-Logik entfernt; BBM liefert seinen Ziel-App-Wert nur noch ueber HostContext/HostAdapter.
 - K19.28 abgeschlossen: Die Rueckfuehrung der generischen Preview-Runtime ins UI-Editor-kit ist dokumentarisch vorbereitet; es wurde kein Code ins externe Kit uebertragen.
 - K19.27 abgeschlossen: Generische Preview-Operationen, Preview-Zielmodell und Pending-ChangeRequest-Hilfen liegen unter `src/renderer/editorRuntime/preview/`; der BBM-Launcher bleibt Orchestrator.
 - K19.26 abgeschlossen: Die BBM-HostAdapter-Schnittstelle ist dokumentiert und testseitig stabilisiert; Runtime-Preview bleibt in-memory und ohne Speicherung.
@@ -58,6 +59,14 @@ Aktueller Stand:
 - [x] K19.26 BBM-HostAdapter-Schnittstelle stabilisieren
 - [x] K19.27 Generische Preview-Runtime-Hilfen aus BBM-Launcher auslagern
 - [x] K19.28 UI-Editor-kit-Rueckfuehrung der Preview-Runtime vorbereiten
+- [x] K19.29 Preview-Runtime targetAppId-Fallback hostneutral machen
+
+## Statusupdate K19.29
+- Der hart codierte `targetAppId`-Fallback `"bbm"` wurde aus `src/renderer/editorRuntime/preview/editorPendingChangeRequests.js` entfernt.
+- `targetAppId` wird jetzt aus HostContext, Registry oder State gelesen; nur wenn nichts davon vorhanden ist, wird der neutrale Fallback `unknown-host` gesetzt.
+- `BbmUiEditorRuntimeLauncher.js` reicht den HostAdapter-Kontext an die Preview-ChangeRequest-Logik weiter.
+- BBM kann weiterhin `targetAppId: "bbm"` bekommen, aber nur ueber den BBM-HostAdapter/HostContext.
+- Keine neue Preview-Funktion, keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Fachaenderung.
 
 ## Statusupdate K19.28
 - Die Vorbereitung fuer eine spaetere Rueckfuehrung der generischen Preview-Runtime ins UI-Editor-kit ist in `docs/UI_EDITOR_KIT_RUECKFUEHRUNG_VORBEREITUNG.md` dokumentiert.

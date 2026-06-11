@@ -4,6 +4,34 @@ import {
   getPreviewTargetMode,
 } from "./editorPreviewTargetModel.js";
 
+export const UNKNOWN_PREVIEW_TARGET_APP_ID = "unknown-host";
+
+function normalizeContextValue(value = null) {
+  return String(value ?? "").trim();
+}
+
+function resolvePreviewChangeRequestContext({
+  hostContext = {},
+  registry = {},
+  state = {},
+} = {}) {
+  const targetAppId = normalizeContextValue(hostContext.targetAppId)
+    || normalizeContextValue(registry.targetAppId)
+    || normalizeContextValue(state.targetAppId)
+    || UNKNOWN_PREVIEW_TARGET_APP_ID;
+  const moduleId = normalizeContextValue(hostContext.moduleId)
+    || normalizeContextValue(registry.moduleId)
+    || normalizeContextValue(state.moduleId);
+  const scopeId = normalizeContextValue(hostContext.scopeId)
+    || normalizeContextValue(hostContext.activeUiScope)
+    || normalizeContextValue(registry.scopeId)
+    || normalizeContextValue(registry.uiScope)
+    || normalizeContextValue(state.scopeId)
+    || normalizeContextValue(state.activeUiScope);
+
+  return { targetAppId, moduleId, scopeId };
+}
+
 export function removePendingChangeRequestsForTarget({
   state = {},
   targetNode = null,
@@ -20,6 +48,7 @@ export function removePendingChangeRequestsForTarget({
 
 export function upsertPreviewChangeRequest({
   state = {},
+  hostContext = {},
   registry = {},
   registryElement = null,
   targetNode = null,
@@ -39,12 +68,13 @@ export function upsertPreviewChangeRequest({
     request?.targetElementId === targetElementId &&
     request?.operation === normalizedOperation
   ));
+  const context = resolvePreviewChangeRequestContext({ hostContext, registry, state });
   const now = new Date().toISOString();
   const baseRequest = existing || {
     changeId: typeof getNextChangeRequestId === "function" ? getNextChangeRequestId(state) : "",
-    targetAppId: registry.targetAppId || "bbm",
-    moduleId: registry.moduleId || "",
-    scopeId: registry.uiScope || state.activeUiScope || "",
+    targetAppId: context.targetAppId,
+    moduleId: context.moduleId,
+    scopeId: context.scopeId,
     elementId: registryElement.id,
     operation: normalizedOperation,
     payload: {},

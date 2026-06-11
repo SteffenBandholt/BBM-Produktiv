@@ -109,6 +109,50 @@ async function runEditorPreviewRuntimeTests(run) {
     assert.equal(notifications.length > 0, true);
   });
 
+  await run("EditorRuntime Preview: targetAppId kommt aus HostContext oder neutralem Fallback", async () => {
+    const mod = await importEsmFromFile(CHANGE_REQUESTS_PATH);
+    const targetNode = createNode("sample.field.input");
+    const registryElement = { id: "sample.field.input", previewTargetMode: "self" };
+    const createState = () => ({
+      activeUiScope: "sample.screen",
+      selectedElement: registryElement,
+      pendingChangeRequests: [],
+      changeRequestSequence: 0,
+    });
+    const getNextChangeRequestId = (currentState) => {
+      currentState.changeRequestSequence += 1;
+      return `preview-${currentState.changeRequestSequence}`;
+    };
+
+    const hostState = createState();
+    mod.upsertPreviewChangeRequest({
+      state: hostState,
+      hostContext: { targetAppId: "sample-app", moduleId: "sample-host", scopeId: "sample.screen" },
+      registry: { targetAppId: "registry-app", moduleId: "sample-registry", uiScope: "sample.registry" },
+      registryElement,
+      targetNode,
+      operation: "move",
+      payload: { dx: 1, dy: 0 },
+      getNextChangeRequestId,
+    });
+    assert.equal(hostState.pendingChangeRequests[0].targetAppId, "sample-app");
+    assert.equal(hostState.pendingChangeRequests[0].moduleId, "sample-host");
+    assert.equal(hostState.pendingChangeRequests[0].scopeId, "sample.screen");
+
+    const fallbackState = createState();
+    mod.upsertPreviewChangeRequest({
+      state: fallbackState,
+      registry: {},
+      registryElement,
+      targetNode,
+      operation: "move",
+      payload: { dx: 1, dy: 0 },
+      getNextChangeRequestId,
+    });
+    assert.equal(fallbackState.pendingChangeRequests[0].targetAppId, "unknown-host");
+    assert.notEqual(fallbackState.pendingChangeRequests[0].targetAppId, "bbm");
+  });
+
   await run("EditorRuntime Preview: neue Module bleiben ohne Speicher- und Fach-Sonderlogik", () => {
     const source = [
       fs.readFileSync(OPERATIONS_PATH, "utf8"),
@@ -121,6 +165,7 @@ async function runEditorPreviewRuntimeTests(run) {
       "ipc",
       "ipcRenderer",
       "writeFile",
+      "BBM",
       "restarbeiten",
       "Kurztext",
       "Editbox",

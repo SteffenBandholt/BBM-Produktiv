@@ -42,7 +42,7 @@ export function validateEditorChangeRequest(changeRequest, { scope = null, regis
   const operation = normalizeString(changeRequest.operation);
 
   if (scope) {
-    if (normalizeString(scope.targetAppId || "bbm") && targetAppId !== normalizeString(scope.targetAppId || "bbm")) {
+    if (normalizeString(scope.targetAppId) && targetAppId !== normalizeString(scope.targetAppId)) {
       pushError(errors, "TARGET_APP_MISMATCH", `targetAppId does not match scope target app: ${targetAppId}`);
     }
     if (normalizeString(scope.moduleId) && moduleId !== normalizeString(scope.moduleId)) {
