@@ -207,6 +207,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Kleine generische Preview-Runtime-Hilfen wurden aus dem BBM-Launcher nach `src/renderer/editorRuntime/preview/` ausgelagert: Preview-Operationen, Preview-Zielmodell und temporaere Pending-ChangeRequests. Der Launcher bleibt BBM-Orchestrator; keine Speicherung, keine Registry-Aenderung und keine Fachlogik.
 - Die spaetere Rueckfuehrung dieser generischen Preview-Runtime-Hilfen ins UI-Editor-kit ist dokumentarisch vorbereitet: Kit-Kandidaten, Nicht-Kit-Kandidaten, API/Exports, notwendige Kit-Tests, offene Entkopplungen und Risiken sind festgehalten; noch keine Codeuebertragung ins externe Kit.
 - Die generische Preview-ChangeRequest-Logik enthaelt keinen harten `targetAppId`-Fallback `"bbm"` mehr; Ziel-App-Kontext kommt aus HostContext, Registry oder State, sonst neutral aus `unknown-host`.
+- Ein neutraler Export-Einstieg fuer die generische Preview-Runtime liegt unter `src/renderer/editorRuntime/preview/index.js`; die API ist dokumentiert und bleibt ohne Codeuebertragung ins externe UI-Editor-kit.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll

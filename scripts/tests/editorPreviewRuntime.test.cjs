@@ -7,6 +7,7 @@ const PREVIEW_DIR = path.join(__dirname, "../../src/renderer/editorRuntime/previ
 const OPERATIONS_PATH = path.join(PREVIEW_DIR, "editorPreviewOperations.js");
 const TARGET_MODEL_PATH = path.join(PREVIEW_DIR, "editorPreviewTargetModel.js");
 const CHANGE_REQUESTS_PATH = path.join(PREVIEW_DIR, "editorPendingChangeRequests.js");
+const INDEX_PATH = path.join(PREVIEW_DIR, "index.js");
 
 function createNode(id = "", parentElement = null) {
   return {
@@ -19,6 +20,26 @@ function createNode(id = "", parentElement = null) {
 }
 
 async function runEditorPreviewRuntimeTests(run) {
+  await run("EditorRuntime Preview: Index exportiert die neutrale Runtime-API", async () => {
+    const mod = await importEsmFromFile(INDEX_PATH);
+    for (const exportName of [
+      "getElementAllowedOps",
+      "getElementLockedOps",
+      "getChangeRequestOperation",
+      "isPreviewOperationAllowed",
+      "getNodeUiEditorId",
+      "getPreviewTargetMode",
+      "resolvePreviewTargetElement",
+      "getPreviewTargetElement",
+      "getPreviewTargetElementId",
+      "upsertPreviewChangeRequest",
+      "removePendingChangeRequestsForTarget",
+      "getPendingChangeRequestSummary",
+    ]) {
+      assert.equal(typeof mod[exportName], "function", `missing preview API export: ${exportName}`);
+    }
+  });
+
   await run("EditorRuntime Preview: Operation-Mapping und Sperren bleiben generisch", async () => {
     const mod = await importEsmFromFile(OPERATIONS_PATH);
 
@@ -158,6 +179,7 @@ async function runEditorPreviewRuntimeTests(run) {
       fs.readFileSync(OPERATIONS_PATH, "utf8"),
       fs.readFileSync(TARGET_MODEL_PATH, "utf8"),
       fs.readFileSync(CHANGE_REQUESTS_PATH, "utf8"),
+      fs.readFileSync(INDEX_PATH, "utf8"),
     ].join("\n");
     for (const forbidden of [
       "localStorage",
@@ -165,10 +187,14 @@ async function runEditorPreviewRuntimeTests(run) {
       "ipc",
       "ipcRenderer",
       "writeFile",
+      "db",
       "BBM",
+      "RESTARBEITEN",
       "restarbeiten",
       "Kurztext",
+      "editbox",
       "Editbox",
+      "filterbar",
       "Filterbar",
       "PDF",
     ]) {

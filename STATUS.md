@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Preview-Runtime Exportstruktur vorbereitet:
+  - `src/renderer/editorRuntime/preview/index.js` buendelt die generischen Preview-Runtime-Exports als neutralen Einstieg.
+  - `BbmUiEditorRuntimeLauncher.js` importiert die Preview-Hilfen ueber diese API-Kante; die Runtime-Funktionen selbst bleiben unveraendert.
+  - `docs/UI_EDITOR_PREVIEW_RUNTIME_API.md` dokumentiert Zweck, Exports, erwartete Datenstrukturen, Nicht-Ziele und spaetere Kit-Verwendung.
+  - Es wurde kein Code ins externe UI-Editor-kit uebertragen.
+  - Keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-Logik, keine Registry-Fachaenderung und keine Markierungslogik-Aenderung.
+
 - UI-Editor Preview-Runtime targetAppId-Fallback hostneutral gemacht:
   - Der harte Fallback `"bbm"` wurde aus `src/renderer/editorRuntime/preview/editorPendingChangeRequests.js` entfernt.
   - `targetAppId` wird aus HostContext, Registry oder State bestimmt; als letzter technischer Fallback dient `unknown-host`.

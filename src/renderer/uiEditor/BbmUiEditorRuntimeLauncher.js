@@ -4,20 +4,16 @@ import { createInMemoryBbmEditorHostAdapter } from "../editorRuntime/host/bbmEdi
 import {
   getElementAllowedOps,
   getElementLockedOps,
-  isPreviewOperationAllowed,
-} from "../editorRuntime/preview/editorPreviewOperations.js";
-import {
   getNodeUiEditorId,
+  getPendingChangeRequestSummary,
   getPreviewTargetElement,
   getPreviewTargetElementId,
   getPreviewTargetMode,
-  resolvePreviewTargetElement as resolvePreviewTargetElementModel,
-} from "../editorRuntime/preview/editorPreviewTargetModel.js";
-import {
-  getPendingChangeRequestSummary,
+  isPreviewOperationAllowed,
   removePendingChangeRequestsForTarget as removePendingChangeRequestsForTargetModel,
+  resolvePreviewTargetElement as resolvePreviewTargetElementModel,
   upsertPreviewChangeRequest as upsertPreviewChangeRequestModel,
-} from "../editorRuntime/preview/editorPendingChangeRequests.js";
+} from "../editorRuntime/preview/index.js";
 
 void installedLauncherButtonArtifactModule;
 void installedTargetSelectionArtifactModule;

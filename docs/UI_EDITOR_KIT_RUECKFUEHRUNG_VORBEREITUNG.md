@@ -10,6 +10,7 @@ Dieses Paket uebertraegt noch keinen Code ins externe UI-Editor-kit. Es dokument
 
 In BBM liegen die generischen Preview-Hilfen aktuell hier:
 
+- `src/renderer/editorRuntime/preview/index.js`
 - `src/renderer/editorRuntime/preview/editorPreviewOperations.js`
 - `src/renderer/editorRuntime/preview/editorPreviewTargetModel.js`
 - `src/renderer/editorRuntime/preview/editorPendingChangeRequests.js`
@@ -175,6 +176,8 @@ export {
 } from "./preview/editorPendingChangeRequests.js";
 ```
 
+Im BBM-Repo ist dafuer jetzt der neutrale Sammel-Export `src/renderer/editorRuntime/preview/index.js` vorbereitet. Er dient als stabile Importkante fuer BBM und als Vorlage fuer den spaeteren Kit-Einstieg, ohne bereits Code ins externe Kit zu uebertragen.
+
 Die API braucht als Eingaben nur neutrale Daten:
 
 - Registry-Element mit `id`, `parentId`, `allowedOps`, `lockedOps`, `previewTargetMode`, `previewTarget`, `editGranularity`, `affectsContainer`
@@ -227,7 +230,7 @@ Die bestehenden BBM-Tests `scripts/tests/editorPreviewRuntime.test.cjs` koennen 
 Vor einer echten Codeuebertragung sind noch diese Punkte zu klaeren:
 
 - Zielpfad und Paketstruktur im externen UI-Editor-kit festlegen.
-- Zentralen Kit-Export definieren, z. B. `index.js` oder `preview/index.js`.
+- Zentralen Kit-Export im externen Paket spiegeln, voraussichtlich nach dem BBM-Vorbild `preview/index.js`.
 - ChangeRequest-Vertrag mit dem bestehenden Kit- oder BBM-Modell abgleichen.
 - `targetAppId` kommt jetzt aus dem HostContext, der Registry oder dem Runtime-State; die generische Preview-Runtime nutzt keinen BBM-Fallback mehr.
 - Entscheiden, ob `data-ui-editor-id` der verbindliche Kit-DOM-Anker bleibt oder als Attributname parametrierbar wird.
@@ -248,7 +251,7 @@ Vor einer echten Codeuebertragung sind noch diese Punkte zu klaeren:
 
 Naechstes kleines Paket:
 
-Einen neutralen Kit-Exportplan fuer `preview/` festlegen und den HostContext-Vertrag fuer Preview-ChangeRequests im Kit nachziehen, weiterhin ohne Codeuebertragung ins externe Kit und ohne Speicherung.
+Den vorbereiteten BBM-Export-Einstieg `src/renderer/editorRuntime/preview/index.js` in einem getrennten Paket ins externe UI-Editor-kit uebernehmen und dort mit neutralen Kit-Tests absichern.
 
 Erst danach sollte ein eigenes Uebertragungspaket ins UI-Editor-kit folgen. Dieses Paket muss dann getrennt pruefen:
 

@@ -104,3 +104,8 @@
 **Beschluss:** BBM liefert dem UI-Editor eine explizite HostAdapter-Schnittstelle mit HostContext, Registry, Layout-State, Capabilities und In-Memory-ChangeRequest-Rueckmeldung; Persistenz bleibt deaktiviert.
 
 **Begruendung:** Der UI-Editor soll spaeter ins UI-Editor-kit rueckfuehrbar bleiben. BBM bleibt Host- und Referenz-App, waehrend generische Runtime-Logik nicht dauerhaft an CoreShell, Restarbeiten-IDs oder BBM-Fachpfade gekoppelt wird.
+
+## Entscheidung 022
+**Beschluss:** Die generische Preview-Runtime erhaelt mit `src/renderer/editorRuntime/preview/index.js` einen neutralen Sammel-Export.
+
+**Begruendung:** Ein stabiler Export-Einstieg macht die spaetere Rueckfuehrung ins UI-Editor-kit pruefbar, ohne Code bereits ins externe Kit zu uebertragen oder BBM-spezifische Orchestrierung mitzunehmen.

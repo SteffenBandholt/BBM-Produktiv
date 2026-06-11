@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.30 abgeschlossen: Ein neutraler Export-Einstieg fuer die generische Preview-Runtime liegt unter `src/renderer/editorRuntime/preview/index.js`; die API ist dokumentiert, ohne Code ins externe Kit zu uebertragen.
 - K19.29 abgeschlossen: Der harte `targetAppId`-Fallback `"bbm"` wurde aus der generischen Preview-ChangeRequest-Logik entfernt; BBM liefert seinen Ziel-App-Wert nur noch ueber HostContext/HostAdapter.
 - K19.28 abgeschlossen: Die Rueckfuehrung der generischen Preview-Runtime ins UI-Editor-kit ist dokumentarisch vorbereitet; es wurde kein Code ins externe Kit uebertragen.
 - K19.27 abgeschlossen: Generische Preview-Operationen, Preview-Zielmodell und Pending-ChangeRequest-Hilfen liegen unter `src/renderer/editorRuntime/preview/`; der BBM-Launcher bleibt Orchestrator.
@@ -60,6 +61,14 @@ Aktueller Stand:
 - [x] K19.27 Generische Preview-Runtime-Hilfen aus BBM-Launcher auslagern
 - [x] K19.28 UI-Editor-kit-Rueckfuehrung der Preview-Runtime vorbereiten
 - [x] K19.29 Preview-Runtime targetAppId-Fallback hostneutral machen
+- [x] K19.30 Preview-Runtime Exportstruktur fuer Kit-Rueckfuehrung vorbereiten
+
+## Statusupdate K19.30
+- `src/renderer/editorRuntime/preview/index.js` buendelt die generischen Preview-Runtime-Exports als neutralen Einstieg.
+- `BbmUiEditorRuntimeLauncher.js` nutzt diesen Einstieg, ohne die Preview-Funktionen selbst zu veraendern.
+- `docs/UI_EDITOR_PREVIEW_RUNTIME_API.md` dokumentiert Zweck, Exports, erwartete Datenstrukturen, Nicht-Ziele und spaetere Kit-Nutzung.
+- Die bestehende Kit-Rueckfuehrungsdoku verweist auf den vorbereiteten Export-Einstieg.
+- Keine Codeuebertragung ins externe UI-Editor-kit, keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Markierungslogik-Aenderung.
 
 ## Statusupdate K19.29
 - Der hart codierte `targetAppId`-Fallback `"bbm"` wurde aus `src/renderer/editorRuntime/preview/editorPendingChangeRequests.js` entfernt.
