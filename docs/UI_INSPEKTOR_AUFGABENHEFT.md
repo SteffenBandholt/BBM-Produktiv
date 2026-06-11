@@ -6,6 +6,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
 - K19.30 abgeschlossen: Ein neutraler Export-Einstieg fuer die generische Preview-Runtime liegt unter `src/renderer/editorRuntime/preview/index.js`; die API ist dokumentiert, ohne Code ins externe Kit zu uebertragen.
+- K19.31 abgeschlossen: BBM wurde gegen die im externen UI-Editor-kit umgesetzte Preview-Runtime abgeglichen; die APIs und Datenstrukturen sind kompatibel, eine produktive Import-Umstellung erfolgte nicht.
 - K19.29 abgeschlossen: Der harte `targetAppId`-Fallback `"bbm"` wurde aus der generischen Preview-ChangeRequest-Logik entfernt; BBM liefert seinen Ziel-App-Wert nur noch ueber HostContext/HostAdapter.
 - K19.28 abgeschlossen: Die Rueckfuehrung der generischen Preview-Runtime ins UI-Editor-kit ist dokumentarisch vorbereitet; es wurde kein Code ins externe Kit uebertragen.
 - K19.27 abgeschlossen: Generische Preview-Operationen, Preview-Zielmodell und Pending-ChangeRequest-Hilfen liegen unter `src/renderer/editorRuntime/preview/`; der BBM-Launcher bleibt Orchestrator.
@@ -62,6 +63,15 @@ Aktueller Stand:
 - [x] K19.28 UI-Editor-kit-Rueckfuehrung der Preview-Runtime vorbereiten
 - [x] K19.29 Preview-Runtime targetAppId-Fallback hostneutral machen
 - [x] K19.30 Preview-Runtime Exportstruktur fuer Kit-Rueckfuehrung vorbereiten
+- [x] K19.31 BBM gegen UI-Editor-kit Preview-Runtime abgleichen
+
+## Statusupdate K19.31
+- BBM-Preview-Runtime und externe UI-Editor-kit-Preview-Runtime sind fachlich/technisch abgeglichen.
+- Dokumentiert in `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md`.
+- Exportnamen, Operation-Mapping, `allowedOps`/`lockedOps`, `previewTargetMode`, Target-Aufloesung, `pendingChangeRequests`, `unknown-host`, `source: "preview"`, `persistent: false`, Deduplizierung, Summary und Reset je Ziel sind kompatibel.
+- Abweichungen sind dokumentiert: BBM nutzt ESM, das Kit CommonJS; das Kit exportiert zusaetzlich `UI_EDITOR_ID_ATTRIBUTE` und akzeptiert boolean `true` als `parent`.
+- Kein produktiver Importwechsel, keine externe Package-Abhaengigkeit, keine Speicherung, keine DB, kein IPC, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
+- Ein neuer Test gegen den externen Kit-Pfad wurde bewusst nicht ergaenzt, weil ein harter lokaler Neben-Checkout-Pfad normale BBM-Testlaeufe und CI instabil machen wuerde.
 
 ## Statusupdate K19.30
 - `src/renderer/editorRuntime/preview/index.js` buendelt die generischen Preview-Runtime-Exports als neutralen Einstieg.

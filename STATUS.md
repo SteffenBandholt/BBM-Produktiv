@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-kit Preview-Runtime-Abgleich dokumentiert:
+  - `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` vergleicht die BBM-Preview-Runtime mit der externen UI-Editor-kit-Runtime.
+  - Exportnamen, Datenstrukturen, Operation-Mapping, `allowedOps`/`lockedOps`, `previewTargetMode`, Target-Aufloesung, `pendingChangeRequests`, `unknown-host`, `source: "preview"`, `persistent: false`, Deduplizierung, Summary und Reset je Ziel sind kompatibel.
+  - Dokumentierte Abweichungen: BBM nutzt ESM, das Kit CommonJS; das Kit exportiert zusaetzlich `UI_EDITOR_ID_ATTRIBUTE` und akzeptiert boolean `true` als `parent`.
+  - Keine produktive Import-Umstellung, keine neue externe Abhaengigkeit, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
+  - Naechster offener Schritt: Import-/Package-Vertrag zwischen BBM und UI-Editor-kit festlegen, inklusive ESM/CommonJS-Bruecke.
+
 - UI-Editor Preview-Runtime Exportstruktur vorbereitet:
   - `src/renderer/editorRuntime/preview/index.js` buendelt die generischen Preview-Runtime-Exports als neutralen Einstieg.
   - `BbmUiEditorRuntimeLauncher.js` importiert die Preview-Hilfen ueber diese API-Kante; die Runtime-Funktionen selbst bleiben unveraendert.

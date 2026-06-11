@@ -4,6 +4,8 @@
 
 Die ausgelagerten Preview-Runtime-Hilfen unter `src/renderer/editorRuntime/preview/` sind echte Kandidaten fuer eine spaetere Rueckfuehrung ins UI-Editor-kit. Sie sind fachneutral, arbeiten ohne Speicherung und enthalten keine BBM-, Restarbeiten-, Electron-, DB-, IPC- oder PDF-Logik.
 
+Nach dem externen Kit-Paket G3 liegt die generische Preview-Runtime im UI-Editor-kit technisch umgesetzt vor. Der BBM-Abgleich ist in `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` dokumentiert. Ergebnis: BBM und Kit sind fachlich kompatibel; vor einer echten BBM-Import-Umstellung muss noch der Import-/Package-Vertrag inklusive ESM/CommonJS-Bruecke festgelegt werden.
+
 Dieses Paket uebertraegt noch keinen Code ins externe UI-Editor-kit. Es dokumentiert nur den Stand, die Kandidaten, die noetigen Exports, die Testanforderungen und die offenen Entkopplungen.
 
 ## Aktueller BBM-Stand
@@ -251,12 +253,13 @@ Vor einer echten Codeuebertragung sind noch diese Punkte zu klaeren:
 
 Naechstes kleines Paket:
 
-Den vorbereiteten BBM-Export-Einstieg `src/renderer/editorRuntime/preview/index.js` in einem getrennten Paket ins externe UI-Editor-kit uebernehmen und dort mit neutralen Kit-Tests absichern.
+Den Import-/Package-Vertrag zwischen BBM und UI-Editor-kit festlegen, noch ohne produktive Umstellung. Dabei ist zu entscheiden, ob das Kit einen ESM-kompatiblen Export bereitstellt oder BBM eine CommonJS-Bruecke nutzt.
 
-Erst danach sollte ein eigenes Uebertragungspaket ins UI-Editor-kit folgen. Dieses Paket muss dann getrennt pruefen:
+Eine echte BBM-Rueckanbindung darf erst danach erfolgen und muss getrennt pruefen:
 
 - API-Kompatibilitaet
+- Modulformat/Importweg
 - neutrale Kit-Tests
-- keine BBM-/Restarbeiten-Begriffe
+- keine BBM-/Restarbeiten-Begriffe in der Kit-Runtime
 - keine Speicher-, DB-, IPC- oder PDF-Wege
 - unveraendertes Verhalten in BBM nach Rueckanbindung

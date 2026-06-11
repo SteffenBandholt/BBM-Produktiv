@@ -208,6 +208,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Die spaetere Rueckfuehrung dieser generischen Preview-Runtime-Hilfen ins UI-Editor-kit ist dokumentarisch vorbereitet: Kit-Kandidaten, Nicht-Kit-Kandidaten, API/Exports, notwendige Kit-Tests, offene Entkopplungen und Risiken sind festgehalten; noch keine Codeuebertragung ins externe Kit.
 - Die generische Preview-ChangeRequest-Logik enthaelt keinen harten `targetAppId`-Fallback `"bbm"` mehr; Ziel-App-Kontext kommt aus HostContext, Registry oder State, sonst neutral aus `unknown-host`.
 - Ein neutraler Export-Einstieg fuer die generische Preview-Runtime liegt unter `src/renderer/editorRuntime/preview/index.js`; die API ist dokumentiert und bleibt ohne Codeuebertragung ins externe UI-Editor-kit.
+- Der fachlich/technische Abgleich zwischen BBM-Preview-Runtime und externer UI-Editor-kit-Preview-Runtime ist dokumentiert: Exportnamen, Datenstrukturen, Operation-Mapping, Zielmodell, Pending-ChangeRequests und Guardrails sind kompatibel; offen bleibt nur der spaetere Import-/Modulformat-Vertrag. Noch keine produktive Import-Umstellung und keine externe Abhaengigkeit.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -215,6 +216,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Konsolidierung ist noch nicht Endabschluss
 - naechstes Restarbeiten-Paket fachlich getrennt planen, bevor Ausgabe/PDF/Notizen/Diktat ueber M1-Stubs hinaus umgesetzt werden
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
+- Import-/Package-Vertrag zwischen BBM und UI-Editor-kit vor einer echten Runtime-Umstellung festlegen; ESM/CommonJS-Bruecke klaeren
 
 ---
 

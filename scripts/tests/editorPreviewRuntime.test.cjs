@@ -28,6 +28,8 @@ async function runEditorPreviewRuntimeTests(run) {
       "getChangeRequestOperation",
       "isPreviewOperationAllowed",
       "getNodeUiEditorId",
+      "findAncestorUiEditorElementById",
+      "normalizePreviewTargetMode",
       "getPreviewTargetMode",
       "resolvePreviewTargetElement",
       "getPreviewTargetElement",
@@ -107,15 +109,17 @@ async function runEditorPreviewRuntimeTests(run) {
     upsert("move", { dx: 2, dy: 4 });
     upsert("resizeWidth", { delta: 5 });
     upsert("resizeWidth", { delta: -2 });
+    upsert("resizeHeight", { delta: 7 });
     upsert("hide", {});
     upsert("show", {});
 
-    assert.equal(state.pendingChangeRequests.length, 3);
+    assert.equal(state.pendingChangeRequests.length, 4);
     assert.deepEqual(state.pendingChangeRequests.find((request) => request.operation === "move").payload, { dx: 5, dy: 4 });
     assert.deepEqual(state.pendingChangeRequests.find((request) => request.operation === "width").payload, { delta: 3 });
+    assert.deepEqual(state.pendingChangeRequests.find((request) => request.operation === "height").payload, { delta: 7 });
     assert.deepEqual(state.pendingChangeRequests.find((request) => request.operation === "visibility").payload, { visible: true });
     assert.equal(state.pendingChangeRequests.every((request) => request.source === "preview" && request.persistent === false), true);
-    assert.deepEqual(mod.getPendingChangeRequestSummary(state, "sample.field.input").operations.sort(), ["move", "visibility", "width"]);
+    assert.deepEqual(mod.getPendingChangeRequestSummary(state, "sample.field.input").operations.sort(), ["height", "move", "visibility", "width"]);
 
     const removed = mod.removePendingChangeRequestsForTarget({
       state,
@@ -125,7 +129,7 @@ async function runEditorPreviewRuntimeTests(run) {
       },
     });
 
-    assert.equal(removed, 3);
+    assert.equal(removed, 4);
     assert.equal(state.pendingChangeRequests.length, 0);
     assert.equal(notifications.length > 0, true);
   });
