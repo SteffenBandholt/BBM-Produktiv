@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-kit-Rueckfuehrung der Preview-Runtime vorbereitet:
+  - `docs/UI_EDITOR_KIT_RUECKFUEHRUNG_VORBEREITUNG.md` dokumentiert Kit-Kandidaten, Nicht-Kit-Kandidaten, API/Exports, notwendige Kit-Tests, offene Entkopplungen, Risiken und den empfohlenen naechsten Schritt.
+  - Es wurde kein Code ins externe UI-Editor-kit uebertragen und keine Runtime-Funktion geaendert.
+  - Der vorhandene Preview-Runtime-Guardrail-Test wurde nur um den allgemeinen verbotenen Begriff `ipc` erweitert.
+  - Keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Aenderung.
+
 - UI-Editor generische Preview-Runtime-Hilfen ausgelagert:
   - Kleine fachneutrale Runtime-Einheiten liegen jetzt unter `src/renderer/editorRuntime/preview/`.
   - Ausgelagert sind Operation-Mapping und `allowedOps`/`lockedOps`-Auswertung, Preview-Zielmodell (`self`/`parent`) und temporaere Pending-ChangeRequest-Hilfen.

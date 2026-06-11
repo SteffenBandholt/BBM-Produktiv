@@ -205,6 +205,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Der Trennschnitt zwischen BBM-Hostintegration, Restarbeiten-Modulankern und generischer UI-Editor-Runtime ist dokumentiert; BBM bleibt Referenz-/Host-App, die generischen Runtime-Teile sind Kandidaten fuer eine spaetere Rueckfuehrung ins UI-Editor-kit.
 - Die BBM-HostAdapter-Schnittstelle ist als kleiner Contract stabilisiert: HostContext, Registry, Layout-State, Capabilities und In-Memory-ChangeRequest-Rueckmeldung sind beschrieben und testseitig abgesichert, Persistenz bleibt deaktiviert.
 - Kleine generische Preview-Runtime-Hilfen wurden aus dem BBM-Launcher nach `src/renderer/editorRuntime/preview/` ausgelagert: Preview-Operationen, Preview-Zielmodell und temporaere Pending-ChangeRequests. Der Launcher bleibt BBM-Orchestrator; keine Speicherung, keine Registry-Aenderung und keine Fachlogik.
+- Die spaetere Rueckfuehrung dieser generischen Preview-Runtime-Hilfen ins UI-Editor-kit ist dokumentarisch vorbereitet: Kit-Kandidaten, Nicht-Kit-Kandidaten, API/Exports, notwendige Kit-Tests, offene Entkopplungen und Risiken sind festgehalten; noch keine Codeuebertragung ins externe Kit.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll

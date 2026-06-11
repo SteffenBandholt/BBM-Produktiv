@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.28 abgeschlossen: Die Rueckfuehrung der generischen Preview-Runtime ins UI-Editor-kit ist dokumentarisch vorbereitet; es wurde kein Code ins externe Kit uebertragen.
 - K19.27 abgeschlossen: Generische Preview-Operationen, Preview-Zielmodell und Pending-ChangeRequest-Hilfen liegen unter `src/renderer/editorRuntime/preview/`; der BBM-Launcher bleibt Orchestrator.
 - K19.26 abgeschlossen: Die BBM-HostAdapter-Schnittstelle ist dokumentiert und testseitig stabilisiert; Runtime-Preview bleibt in-memory und ohne Speicherung.
 - K19.25 abgeschlossen: Der Trennschnitt zwischen BBM-Hostintegration, Restarbeiten-Modulankern und generischer UI-Editor-Runtime ist dokumentiert; keine Funktionsaenderung.
@@ -56,6 +57,14 @@ Aktueller Stand:
 - [x] K19.25 UI-Editor-Trennschnitt BBM vs Kit dokumentieren
 - [x] K19.26 BBM-HostAdapter-Schnittstelle stabilisieren
 - [x] K19.27 Generische Preview-Runtime-Hilfen aus BBM-Launcher auslagern
+- [x] K19.28 UI-Editor-kit-Rueckfuehrung der Preview-Runtime vorbereiten
+
+## Statusupdate K19.28
+- Die Vorbereitung fuer eine spaetere Rueckfuehrung der generischen Preview-Runtime ins UI-Editor-kit ist in `docs/UI_EDITOR_KIT_RUECKFUEHRUNG_VORBEREITUNG.md` dokumentiert.
+- Dokumentiert sind Kit-Kandidaten, Nicht-Kit-Kandidaten, notwendige API/Exports, notwendige Kit-Tests, offene Entkopplungen, Risiken und der empfohlene naechste Schritt.
+- Es wurde kein Code ins externe UI-Editor-kit uebertragen und keine Runtime-Funktion geaendert.
+- Der bestehende Preview-Runtime-Guardrail-Test wurde nur um den allgemeinen verbotenen Begriff `ipc` erweitert.
+- Keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Aenderung.
 
 ## Statusupdate K19.27
 - Generische Preview-Hilfen wurden aus `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js` in kleine neutrale Module unter `src/renderer/editorRuntime/preview/` ausgelagert.

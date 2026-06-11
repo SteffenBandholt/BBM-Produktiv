@@ -118,6 +118,7 @@ async function runEditorPreviewRuntimeTests(run) {
     for (const forbidden of [
       "localStorage",
       "sessionStorage",
+      "ipc",
       "ipcRenderer",
       "writeFile",
       "restarbeiten",
