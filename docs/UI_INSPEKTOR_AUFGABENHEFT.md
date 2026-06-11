@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.38 abgeschlossen: Panel-/Drag-/Rendering-Logik im BBM-Launcher inventarisiert und Trennschnitt BBM vs. UI-Editor-kit dokumentiert; keine Codeverschiebung.
 - K19.37 abgeschlossen: Lokaler Standard-Bezugsweg fuer das UI-Editor-kit dokumentiert und mit `npm run check:ui-editor-kit` pruefbar gemacht; keine Runtime-/Launcher-Aenderung.
 - K19.36 abgeschlossen: Abschlussmarker fuer die UI-Editor Preview-Runtime-Rueckfuehrung gesetzt; BBM ist Konsument, UI-Editor-kit ist Quelle, keine Funktionsaenderung.
 - K19.30 abgeschlossen: Historisch wurde ein neutraler Export-Einstieg fuer die generische Preview-Runtime unter `src/renderer/editorRuntime/preview/index.js` vorbereitet; durch K19.35 ist diese lokale Runtime entfernt.
@@ -76,6 +77,15 @@ Aktueller Stand:
 - [x] K19.35 Lokale BBM-Preview-Runtime entfernen
 - [x] K19.36 Abschlussmarker Preview-Runtime-Rueckfuehrung setzen
 - [x] K19.37 Lokalen UI-Editor-kit-Bezugsweg dokumentieren und pruefen
+- [x] K19.38 UI-Editor Panel/Drag/Rendering inventarisieren
+
+## Statusupdate K19.38
+- `docs/UI_EDITOR_PANEL_DRAG_RENDERING_INVENTAR.md` inventarisiert die verbliebene UI-nahe Launcher-Logik.
+- Dokumentiert sind Launcher-Aktivierung, Target Selection, Panel-Erzeugung, Panel-Rendering, Panel-Drag, Preview-Bedienlogik, Reset/Verwerfen, Statusanzeige, HostAdapter-Anbindung, Registry-/Scope-Aufloesung und DOM-/Renderer-spezifische Teile.
+- Kitfaehige Kandidaten: Panel-State, Panel-Position, Drag-Controller, Preview-Control-Rendering, ChangeRequest-Summary-Anzeige, Reset-/Verwerfen-UI-Logik und Zielbeschreibung/Status-ViewModels.
+- In BBM verbleiben CoreShell-/DEV-Kontext, konkrete Electron-DOM-Einbindung, HostAdapter-Erzeugung, Scope-/Registry-Auswahl, Kit-Bridge und BBM-spezifische Start-/Lifecycle-Orchestrierung.
+- Keine Runtime-/Launcher-Codeaenderung, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik, keine Restarbeiten-Sonderlogik und keine Panel-/Drag-Funktionsaenderung.
+- Empfohlener naechster technischer Schritt: neutrales Panel-State-/ViewModel-Modell im UI-Editor-kit vorbereiten.
 
 ## Statusupdate K19.37
 - Standard-Root fuer Entwicklungs-Repos ist `C:\01_Projekte`.

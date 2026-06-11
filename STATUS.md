@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Panel/Drag/Rendering inventarisiert:
+  - `docs/UI_EDITOR_PANEL_DRAG_RENDERING_INVENTAR.md` dokumentiert die im BBM-Launcher verbliebene UI-nahe Logik fuer Preview-Panel, Panel-Rendering, Panel-Position, Drag, Statusanzeige, Preview-Buttons, Reset/Verwerfen und Zielbeschreibung.
+  - Kitfaehige Kandidaten sind abgegrenzt: Panel-State, Panel-Position, Drag-Controller, Preview-Control-Rendering, ChangeRequest-Summary-Anzeige, Reset-/Verwerfen-UI-Logik und neutrale Zielbeschreibung/Status-ViewModels.
+  - In BBM verbleiben CoreShell-/DEV-Kontext, konkrete Electron-DOM-Einbindung, HostAdapter-Erzeugung, Scope-/Registry-Auswahl, Kit-Bridge und BBM-spezifische Start-/Lifecycle-Orchestrierung.
+  - Keine Runtime-/Launcher-Codeaenderung, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Funktionsaenderung.
+  - Naechster technischer Schritt: zuerst neutrales Panel-State-/ViewModel-Modell im UI-Editor-kit vorbereiten, noch ohne BBM-Importumstellung.
+
 - UI-Editor-kit lokaler Standard-Bezugsweg dokumentiert:
   - Standard-Root fuer Entwicklungs-Repos ist `C:\01_Projekte`.
   - UI-Editor-kit bleibt eigenes Repo unter `C:\01_Projekte\UI-Editor-kit`; BBM und weitere Repos sind Konsumenten.

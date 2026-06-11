@@ -247,6 +247,7 @@ Die bestehenden BBM-Tests `scripts/tests/editorPreviewRuntime.test.cjs` laufen j
 
 Die Rueckfuehrung der Preview-Runtime ist abgeschlossen. Diese Punkte sind bewusst getrennte Folgepakete:
 
+- Panel-/Drag-/Rendering-Logik ist in `docs/UI_EDITOR_PANEL_DRAG_RENDERING_INVENTAR.md` inventarisiert; eine spaetere Auslagerung muss bei neutralem Panel-State/ViewModel beginnen und darf keine BBM-Host-Orchestrierung ins Kit ziehen.
 - Spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit klaeren; der lokale Entwicklungs-Bezug per `file:../UI-Editor-kit` ist dokumentiert und pruefbar.
 - Lokale BBM-Preview-Runtime ist entfernt; neue generische Runtime-Logik muss ins UI-Editor-kit.
 - ChangeRequest-Vertrag mit dem bestehenden Kit- oder BBM-Modell abgleichen.
