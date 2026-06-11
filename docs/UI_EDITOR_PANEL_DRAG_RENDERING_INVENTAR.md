@@ -42,6 +42,14 @@ Der neue Panel-Runtime-Importnachweis in BBM ist bewusst nur analytisch/testseit
 - Das Preview-Panel liest daraus Titel, Ziel-ID, Preview-Ziel-ID, `allowedOps`, `lockedOps`, Summary, StatusText und Button-Freigaben.
 - DOM-Panel, Drag-Controller, Style-Anwendung, Button-Handler, Preview-Operationen und HostAdapter-Orchestrierung bleiben unveraendert in BBM.
 
+Ausgeblendete Elemente sind als eigenes Folgethema konzipiert:
+
+- Hide bedeutet nur `visible = false`; Registry/Layout-State behalten das Element.
+- Weil ausgeblendete Elemente im sichtbaren Layout nicht mehr anklickbar sind, braucht es spaeter einen separaten Wiedereinstieg.
+- Das Panel soll keine dauerhafte Elementliste bekommen.
+- Vorgesehen ist ein kompakter Button wie `Ausgeblendete: 3`, der spaeter ein temporaeres Popover/Dropdown oeffnet.
+- Das Konzept ist in `docs/UI_EDITOR_HIDDEN_ELEMENTS_BUTTON_KONZEPT.md` dokumentiert.
+
 ## Inventar im Launcher
 
 ### Launcher-Aktivierung
@@ -439,12 +447,13 @@ Bestehende Abhaengigkeiten im Launcher:
 ## Empfohlene Reihenfolge fuer spaetere Pakete
 
 1. Panel-ViewModel-Nutzung im BBM-Launcher mit Electron-Sichtpruefung stabil halten.
-2. Weitere BBM-Nutzung des Panel-Modells separat vorbereiten, noch ohne Drag- oder DOM-Rendering-Umbau.
-3. ChangeRequest-Summary- und Zielbeschreibung als reine Formatter/ViewModel-Hilfen schneiden.
-4. Drag-Controller als DOM-leichte, parametrierbare Hilfslogik vorbereiten.
-5. Erst danach optional DOM-Rendering-Komponenten oder Adapter pruefen.
-6. Preview-Style-Anwendung und Reset nur mit separatem Style-Adaptervertrag betrachten.
-7. BBM-Launcher zuletzt auf eine einzelne Kit-Panel-Fassade umstellen, wenn Tests und Electron-Sichtpruefung stehen.
+2. G19: neutrales Hidden-Elements-ViewModel im UI-Editor-kit vorbereiten.
+3. G20: BBM Importvertrag/Bridge fuer Hidden-Elements-Modell pruefen.
+4. G21: kompakten Button im BBM-Panel ohne Popover anzeigen.
+5. G22: Popover/Dropdown mit Einblenden-Aktion ergaenzen.
+6. G23: Persistenz und echte Speicherung separat klaeren.
+7. Weitere BBM-Nutzung des Panel-Modells separat vorbereiten, noch ohne Drag- oder DOM-Rendering-Umbau.
+8. Drag-Controller als DOM-leichte, parametrierbare Hilfslogik vorbereiten.
 
 ## Nicht-Ziele dieses Inventars
 

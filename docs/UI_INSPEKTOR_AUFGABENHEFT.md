@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.42 abgeschlossen: Bedienkonzept fuer ausgeblendete Elemente als kompakter Panel-Button mit spaeterem Popover dokumentiert; keine UI- oder Launcher-Aenderung.
 - K19.41 abgeschlossen: BBM nutzt das UI-Editor-kit Panel-ViewModel vorbereitend im Launcher ueber die Panel-Bridge; sichtbares Verhalten soll unveraendert bleiben.
 - K19.40 abgeschlossen: BBM hat eine renderer-kompatible Bridge fuer die UI-Editor-kit Panel-Runtime vorbereitet; der Launcher nutzt sie noch nicht produktiv.
 - K19.39 abgeschlossen: BBM prueft den offiziellen UI-Editor-kit Panel-Runtime-Importvertrag `ui-editor-kit/runtime/panel` per CommonJS und ESM; keine produktive Launcher-Umstellung.
@@ -84,6 +85,15 @@ Aktueller Stand:
 - [x] K19.39 UI-Editor-kit Panel-Runtime Importvertrag pruefen
 - [x] K19.40 UI-Editor-kit Panel-Runtime Renderer-Bridge vorbereiten
 - [x] K19.41 Panel-ViewModel im BBM-Launcher vorbereitend nutzen
+- [x] K19.42 Hidden-Elements Button-Konzept dokumentieren
+
+## Statusupdate K19.42
+- `docs/UI_EDITOR_HIDDEN_ELEMENTS_BUTTON_KONZEPT.md` dokumentiert das Bedienkonzept fuer ausgeblendete Elemente.
+- Grundregel: Hide entfernt kein Element aus Registry oder Layout-State; Hide bedeutet nur `visible = false`.
+- Das Editorpanel soll schlank bleiben und spaeter nur einen kompakten Button wie `Ausgeblendete: 3` erhalten.
+- Popover/Dropdown mit Einblenden-Aktion bleibt ein spaeteres Paket.
+- Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im UI-Editor-kit, G20 BBM Importvertrag/Bridge, G21 kompakter Button ohne Popover, G22 Popover/Dropdown, G23 Persistenz separat.
+- Keine Launcher-Funktionsaenderung, keine neue Panel-UI, kein Popover, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Drag-/DOM-Aenderung.
 
 ## Statusupdate K19.41
 - `BbmUiEditorRuntimeLauncher.js` importiert `buildPanelViewModel` ausschliesslich ueber `./uiEditorKitPanelRuntimeBridge.js`.

@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements-Button konzipiert:
+  - `docs/UI_EDITOR_HIDDEN_ELEMENTS_BUTTON_KONZEPT.md` dokumentiert das spaetere Bedienkonzept fuer ausgeblendete Elemente.
+  - Grundregel: Hide entfernt kein Element aus Registry oder Layout-State, sondern bedeutet nur `visible = false`.
+  - Das Panel soll schlank bleiben; statt dauerhafter Liste ist spaeter ein kompakter Button wie `Ausgeblendete: 3` vorgesehen.
+  - Ein Popover/Dropdown mit `Einblenden` je Element bleibt ein spaeteres Paket.
+  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit, G20 BBM Importvertrag/Bridge, G21 kompakter Button ohne Popover, G22 Popover/Dropdown, G23 Persistenz separat.
+  - Keine Launcher-Funktionsaenderung, keine neue Panel-UI, kein Popover, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
+
 - UI-Editor-kit Panel-ViewModel im BBM-Launcher vorbereitend genutzt:
   - `BbmUiEditorRuntimeLauncher.js` importiert `buildPanelViewModel` ausschliesslich ueber `./uiEditorKitPanelRuntimeBridge.js`.
   - `buildBbmPanelViewModel(...)` fuehrt bestehende Launcher-Daten in ein neutrales Kit-Panel-ViewModel.
