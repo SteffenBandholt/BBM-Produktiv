@@ -109,3 +109,5 @@
 **Beschluss:** Die generische Preview-Runtime erhaelt mit `src/renderer/editorRuntime/preview/index.js` einen neutralen Sammel-Export.
 
 **Begruendung:** Ein stabiler Export-Einstieg macht die spaetere Rueckfuehrung ins UI-Editor-kit pruefbar, ohne Code bereits ins externe Kit zu uebertragen oder BBM-spezifische Orchestrierung mitzunehmen.
+
+**Status:** Historisch. Die lokale BBM-Preview-Runtime wurde nach der Kit-Uebernahme entfernt; produktive Quelle ist jetzt das UI-Editor-kit ueber `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`.

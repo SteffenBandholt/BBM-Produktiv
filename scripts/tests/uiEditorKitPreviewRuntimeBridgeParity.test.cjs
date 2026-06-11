@@ -7,7 +7,7 @@ const REPO_ROOT = path.resolve(__dirname, "../..");
 const LAUNCHER_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
 const BRIDGE_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js");
 const KIT_ESM_PATH = path.join(REPO_ROOT, "node_modules/ui-editor-kit/src/runtime/preview/index.mjs");
-const LOCAL_REFERENCE_RUNTIME_PATH = path.join(REPO_ROOT, "src/renderer/editorRuntime/preview/index.js");
+const LOCAL_PREVIEW_RUNTIME_DIR = path.join(REPO_ROOT, "src/renderer/editorRuntime/preview");
 
 const FORBIDDEN_BRIDGE_FRAGMENTS = Object.freeze([
   "bbm",
@@ -52,20 +52,17 @@ function assertKitEsmIsBrowserNative() {
   assert.equal(kitSource.includes("createRequire"), false, "Kit-ESM-Einstieg darf kein createRequire enthalten.");
 }
 
-function assertRuntimeParity(activeRuntime, referenceRuntime) {
-  assert.equal(activeRuntime.getChangeRequestOperation("resizeWidth"), referenceRuntime.getChangeRequestOperation("resizeWidth"));
+function assertNoLocalPreviewRuntime() {
+  assert.equal(fs.existsSync(LOCAL_PREVIEW_RUNTIME_DIR), false, "Lokale BBM-Preview-Runtime darf nicht mehr produktiv im Repo liegen.");
+}
+
+function assertRuntimeContract(activeRuntime) {
   assert.equal(activeRuntime.getChangeRequestOperation("resizeWidth"), "width");
-  assert.equal(activeRuntime.getChangeRequestOperation("resizeHeight"), referenceRuntime.getChangeRequestOperation("resizeHeight"));
   assert.equal(activeRuntime.getChangeRequestOperation("resizeHeight"), "height");
-  assert.equal(activeRuntime.getChangeRequestOperation("hide"), referenceRuntime.getChangeRequestOperation("hide"));
   assert.equal(activeRuntime.getChangeRequestOperation("hide"), "visibility");
-  assert.equal(activeRuntime.getChangeRequestOperation("show"), referenceRuntime.getChangeRequestOperation("show"));
   assert.equal(activeRuntime.getChangeRequestOperation("show"), "visibility");
-  assert.equal(activeRuntime.getPreviewTargetMode({ previewTargetMode: "self" }), referenceRuntime.getPreviewTargetMode({ previewTargetMode: "self" }));
   assert.equal(activeRuntime.getPreviewTargetMode({ previewTargetMode: "self" }), "self");
-  assert.equal(activeRuntime.getPreviewTargetMode({ previewTargetMode: "parent" }), referenceRuntime.getPreviewTargetMode({ previewTargetMode: "parent" }));
   assert.equal(activeRuntime.getPreviewTargetMode({ previewTargetMode: "parent" }), "parent");
-  assert.equal(activeRuntime.UNKNOWN_PREVIEW_TARGET_APP_ID, referenceRuntime.UNKNOWN_PREVIEW_TARGET_APP_ID);
   assert.equal(activeRuntime.UNKNOWN_PREVIEW_TARGET_APP_ID, "unknown-host");
 }
 
@@ -74,10 +71,10 @@ async function runUiEditorKitPreviewRuntimeBridgeParityTests(run) {
     assertLauncherUsesBridgeOnly();
     assertBridgeContract();
     assertKitEsmIsBrowserNative();
+    assertNoLocalPreviewRuntime();
 
     const activeRuntime = await importEsmFromFile(BRIDGE_PATH);
-    const referenceRuntime = await importEsmFromFile(LOCAL_REFERENCE_RUNTIME_PATH);
-    assertRuntimeParity(activeRuntime, referenceRuntime);
+    assertRuntimeContract(activeRuntime);
   });
 }
 

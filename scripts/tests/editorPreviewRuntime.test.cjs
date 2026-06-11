@@ -1,13 +1,8 @@
 const assert = require("node:assert/strict");
-const fs = require("node:fs");
 const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
-const PREVIEW_DIR = path.join(__dirname, "../../src/renderer/editorRuntime/preview");
-const OPERATIONS_PATH = path.join(PREVIEW_DIR, "editorPreviewOperations.js");
-const TARGET_MODEL_PATH = path.join(PREVIEW_DIR, "editorPreviewTargetModel.js");
-const CHANGE_REQUESTS_PATH = path.join(PREVIEW_DIR, "editorPendingChangeRequests.js");
-const INDEX_PATH = path.join(PREVIEW_DIR, "index.js");
+const PREVIEW_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js");
 
 function createNode(id = "", parentElement = null) {
   return {
@@ -19,9 +14,13 @@ function createNode(id = "", parentElement = null) {
   };
 }
 
+async function loadPreviewRuntime() {
+  return importEsmFromFile(PREVIEW_RUNTIME_BRIDGE_PATH);
+}
+
 async function runEditorPreviewRuntimeTests(run) {
-  await run("EditorRuntime Preview: Index exportiert die neutrale Runtime-API", async () => {
-    const mod = await importEsmFromFile(INDEX_PATH);
+  await run("EditorRuntime Preview: Bridge exportiert die Kit-Runtime-API", async () => {
+    const mod = await loadPreviewRuntime();
     for (const exportName of [
       "getElementAllowedOps",
       "getElementLockedOps",
@@ -43,7 +42,7 @@ async function runEditorPreviewRuntimeTests(run) {
   });
 
   await run("EditorRuntime Preview: Operation-Mapping und Sperren bleiben generisch", async () => {
-    const mod = await importEsmFromFile(OPERATIONS_PATH);
+    const mod = await loadPreviewRuntime();
 
     assert.equal(mod.getChangeRequestOperation("resizeWidth"), "width");
     assert.equal(mod.getChangeRequestOperation("resizeHeight"), "height");
@@ -59,7 +58,7 @@ async function runEditorPreviewRuntimeTests(run) {
   });
 
   await run("EditorRuntime Preview: Zielmodell wertet self und parent ohne Fachbegriffe aus", async () => {
-    const mod = await importEsmFromFile(TARGET_MODEL_PATH);
+    const mod = await loadPreviewRuntime();
     const root = createNode("sample.root");
     const field = createNode("sample.field", root);
     const input = createNode("sample.field.input", field);
@@ -79,7 +78,7 @@ async function runEditorPreviewRuntimeTests(run) {
   });
 
   await run("EditorRuntime Preview: Pending ChangeRequests kumulieren und deduplizieren generisch", async () => {
-    const mod = await importEsmFromFile(CHANGE_REQUESTS_PATH);
+    const mod = await loadPreviewRuntime();
     const targetNode = createNode("sample.field.input");
     const registryElement = { id: "sample.field.input", previewTargetMode: "self" };
     const state = {
@@ -135,7 +134,7 @@ async function runEditorPreviewRuntimeTests(run) {
   });
 
   await run("EditorRuntime Preview: targetAppId kommt aus HostContext oder neutralem Fallback", async () => {
-    const mod = await importEsmFromFile(CHANGE_REQUESTS_PATH);
+    const mod = await loadPreviewRuntime();
     const targetNode = createNode("sample.field.input");
     const registryElement = { id: "sample.field.input", previewTargetMode: "self" };
     const createState = () => ({
@@ -176,34 +175,6 @@ async function runEditorPreviewRuntimeTests(run) {
     });
     assert.equal(fallbackState.pendingChangeRequests[0].targetAppId, "unknown-host");
     assert.notEqual(fallbackState.pendingChangeRequests[0].targetAppId, "bbm");
-  });
-
-  await run("EditorRuntime Preview: neue Module bleiben ohne Speicher- und Fach-Sonderlogik", () => {
-    const source = [
-      fs.readFileSync(OPERATIONS_PATH, "utf8"),
-      fs.readFileSync(TARGET_MODEL_PATH, "utf8"),
-      fs.readFileSync(CHANGE_REQUESTS_PATH, "utf8"),
-      fs.readFileSync(INDEX_PATH, "utf8"),
-    ].join("\n");
-    for (const forbidden of [
-      "localStorage",
-      "sessionStorage",
-      "ipc",
-      "ipcRenderer",
-      "writeFile",
-      "db",
-      "BBM",
-      "RESTARBEITEN",
-      "restarbeiten",
-      "Kurztext",
-      "editbox",
-      "Editbox",
-      "filterbar",
-      "Filterbar",
-      "PDF",
-    ]) {
-      assert.equal(source.includes(forbidden), false, `forbidden runtime term: ${forbidden}`);
-    }
   });
 }
 

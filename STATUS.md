@@ -18,40 +18,40 @@ Sie ergÃ¤nzt:
 ## Aktueller Gesamtstand
 
 - UI-Editor-kit Preview-Runtime-Abgleich dokumentiert:
-  - `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` vergleicht die BBM-Preview-Runtime mit der externen UI-Editor-kit-Runtime.
+  - `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` dokumentiert den Abgleich der frueheren BBM-Preview-Runtime mit der externen UI-Editor-kit-Runtime.
   - Exportnamen, Datenstrukturen, Operation-Mapping, `allowedOps`/`lockedOps`, `previewTargetMode`, Target-Aufloesung, `pendingChangeRequests`, `unknown-host`, `source: "preview"`, `persistent: false`, Deduplizierung, Summary und Reset je Ziel sind kompatibel.
   - Dokumentierte Abweichungen: BBM nutzt ESM, das Kit CommonJS; das Kit exportiert zusaetzlich `UI_EDITOR_ID_ATTRIBUTE` und akzeptiert boolean `true` als `parent`.
   - Der offizielle Kit-Importvertrag `ui-editor-kit/runtime/preview` ist in BBM testbar; `package.json` nutzt dafuer lokal `file:../UI-Editor-kit`.
   - `scripts/tests/uiEditorKitPreviewRuntimeImport.test.cjs` prueft CommonJS, ESM, erwartete Exporte, Operation-Mapping und `unknown-host`.
   - `BbmUiEditorRuntimeLauncher.js` nutzt die Preview-Runtime jetzt produktiv aus dem UI-Editor-kit; im Electron-Renderer erfolgt das ueber `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`, weil der Renderer ohne Bundler keine Bare-Package-Specifier wie `ui-editor-kit/runtime/preview` aufloest.
   - Der produktive Pfad ist jetzt mit `scripts/tests/uiEditorKitPreviewRuntimeBridgeParity.test.cjs` abgesichert: Kit -> browserfaehiges `index.mjs` ohne `.cjs`-Rueckfall -> BBM-Bridge -> Launcher.
-  - Keine Entfernung der lokalen BBM-Runtime, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
-  - Naechster offener Schritt: produktiven Bezugsweg fuer das externe Kit klaeren und lokale BBM-Runtime als Referenz/Fallback bewerten.
+  - Die lokale BBM-Preview-Runtime unter `src/renderer/editorRuntime/preview/` ist entfernt; einzige Runtime-Quelle ist das UI-Editor-kit.
+  - Keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
+  - Naechster offener Schritt: produktiven Bezugsweg fuer das externe Kit klaeren.
 
-- UI-Editor Preview-Runtime Exportstruktur vorbereitet:
-  - `src/renderer/editorRuntime/preview/index.js` buendelt die generischen Preview-Runtime-Exports als neutralen Einstieg.
-  - `BbmUiEditorRuntimeLauncher.js` importiert die produktive Preview-Runtime inzwischen ueber die renderer-kompatible Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`; dieser lokale Einstieg bleibt als Referenz/Fallback erhalten.
+- UI-Editor Preview-Runtime Quelle konsolidiert:
+  - Die lokale BBM-Preview-Runtime wurde entfernt.
+  - `BbmUiEditorRuntimeLauncher.js` importiert die produktive Preview-Runtime ueber die renderer-kompatible Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`.
   - Direkter Package-Bare-Import ist im Electron-Renderer nicht zulaessig; die Bridge zeigt auf `../../../node_modules/ui-editor-kit/src/runtime/preview/index.mjs`.
-  - `docs/UI_EDITOR_PREVIEW_RUNTIME_API.md` dokumentiert Zweck, Exports, erwartete Datenstrukturen, Nicht-Ziele und spaetere Kit-Verwendung.
-  - Es wurde kein Code ins externe UI-Editor-kit uebertragen.
+  - `scripts/tests/editorPreviewRuntime.test.cjs` prueft die Runtime-Vertraege jetzt ueber die Bridge.
   - Keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-Logik, keine Registry-Fachaenderung und keine Markierungslogik-Aenderung.
 
 - UI-Editor Preview-Runtime targetAppId-Fallback hostneutral gemacht:
-  - Der harte Fallback `"bbm"` wurde aus `src/renderer/editorRuntime/preview/editorPendingChangeRequests.js` entfernt.
+  - Der harte Fallback `"bbm"` wurde aus der generischen Preview-Runtime entfernt und die lokale BBM-Kopie ist inzwischen geloescht.
   - `targetAppId` wird aus HostContext, Registry oder State bestimmt; als letzter technischer Fallback dient `unknown-host`.
   - `BbmUiEditorRuntimeLauncher.js` reicht den HostAdapter-Kontext an die generische Preview-ChangeRequest-Logik weiter.
   - BBM kann weiter `targetAppId: "bbm"` liefern, aber nur ueber HostContext/HostAdapter.
   - Keine neue Preview-Funktion, keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Fachaenderung.
 
-- UI-Editor-kit-Rueckfuehrung der Preview-Runtime vorbereitet:
+- UI-Editor-kit-Rueckfuehrung der Preview-Runtime umgesetzt:
   - `docs/UI_EDITOR_KIT_RUECKFUEHRUNG_VORBEREITUNG.md` dokumentiert Kit-Kandidaten, Nicht-Kit-Kandidaten, API/Exports, notwendige Kit-Tests, offene Entkopplungen, Risiken und den empfohlenen naechsten Schritt.
-  - Es wurde kein Code ins externe UI-Editor-kit uebertragen und keine Runtime-Funktion geaendert.
-  - Der vorhandene Preview-Runtime-Guardrail-Test wurde nur um den allgemeinen verbotenen Begriff `ipc` erweitert.
+  - Die generische Preview-Runtime liegt jetzt im externen UI-Editor-kit und wird in BBM ueber die Bridge genutzt.
+  - Die lokale BBM-Kopie ist entfernt.
   - Keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Aenderung.
 
-- UI-Editor generische Preview-Runtime-Hilfen ausgelagert:
-  - Kleine fachneutrale Runtime-Einheiten liegen jetzt unter `src/renderer/editorRuntime/preview/`.
-  - Ausgelagert sind Operation-Mapping und `allowedOps`/`lockedOps`-Auswertung, Preview-Zielmodell (`self`/`parent`) und temporaere Pending-ChangeRequest-Hilfen.
+- UI-Editor generische Preview-Runtime-Hilfen ausgelagert und ins Kit ueberfuehrt:
+  - Die frueheren fachneutralen Runtime-Einheiten unter `src/renderer/editorRuntime/preview/` sind entfernt.
+  - Operation-Mapping, `allowedOps`/`lockedOps`-Auswertung, Preview-Zielmodell (`self`/`parent`) und temporaere Pending-ChangeRequest-Hilfen kommen aus dem UI-Editor-kit.
   - `BbmUiEditorRuntimeLauncher.js` bleibt der BBM-sichtbare Launcher/Panel-Orchestrator fuer DOM-Panel, Drag-Panel, HostAdapter, Zielauswahl und Status-Rendering.
   - Keine neue Preview-Funktion, keine Speicherung, kein localStorage, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Aenderung.
   - Geprueft mit gezieltem Preview-Runtime-Test, bestehendem BBM-Launcher-Test, `npm test`, `git diff --check` und Guardrail-Suche gegen verbotene Speicher-/Fachbegriffe.

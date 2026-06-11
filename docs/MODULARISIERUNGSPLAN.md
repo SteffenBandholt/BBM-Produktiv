@@ -204,14 +204,14 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Preview-Operationen sammeln jetzt zusaetzlich temporaere ChangeRequests im UI-Editor-State; Move/Width/Height werden je Ziel dedupliziert bzw. kumuliert, Visibility wird ueberschrieben, weiterhin ohne Speicherung.
 - Der Trennschnitt zwischen BBM-Hostintegration, Restarbeiten-Modulankern und generischer UI-Editor-Runtime ist dokumentiert; BBM bleibt Referenz-/Host-App, die generischen Runtime-Teile sind Kandidaten fuer eine spaetere Rueckfuehrung ins UI-Editor-kit.
 - Die BBM-HostAdapter-Schnittstelle ist als kleiner Contract stabilisiert: HostContext, Registry, Layout-State, Capabilities und In-Memory-ChangeRequest-Rueckmeldung sind beschrieben und testseitig abgesichert, Persistenz bleibt deaktiviert.
-- Kleine generische Preview-Runtime-Hilfen wurden aus dem BBM-Launcher nach `src/renderer/editorRuntime/preview/` ausgelagert: Preview-Operationen, Preview-Zielmodell und temporaere Pending-ChangeRequests. Der Launcher bleibt BBM-Orchestrator; keine Speicherung, keine Registry-Aenderung und keine Fachlogik.
+- Historisch wurden kleine generische Preview-Runtime-Hilfen aus dem BBM-Launcher nach `src/renderer/editorRuntime/preview/` ausgelagert; diese lokale Runtime ist inzwischen entfernt.
 - Die spaetere Rueckfuehrung dieser generischen Preview-Runtime-Hilfen ins UI-Editor-kit ist dokumentarisch vorbereitet: Kit-Kandidaten, Nicht-Kit-Kandidaten, API/Exports, notwendige Kit-Tests, offene Entkopplungen und Risiken sind festgehalten; noch keine Codeuebertragung ins externe Kit.
 - Die generische Preview-ChangeRequest-Logik enthaelt keinen harten `targetAppId`-Fallback `"bbm"` mehr; Ziel-App-Kontext kommt aus HostContext, Registry oder State, sonst neutral aus `unknown-host`.
-- Ein neutraler Export-Einstieg fuer die generische Preview-Runtime liegt unter `src/renderer/editorRuntime/preview/index.js`; die API ist dokumentiert und bleibt ohne Codeuebertragung ins externe UI-Editor-kit.
+- Der neutrale Export-Einstieg liegt nicht mehr in BBM; die generische Preview-Runtime kommt aus dem UI-Editor-kit.
 - Der fachlich/technische Abgleich zwischen BBM-Preview-Runtime und externer UI-Editor-kit-Preview-Runtime ist dokumentiert: Exportnamen, Datenstrukturen, Operation-Mapping, Zielmodell, Pending-ChangeRequests und Guardrails sind kompatibel; offen bleibt nur der spaetere Import-/Modulformat-Vertrag. Noch keine produktive Import-Umstellung und keine externe Abhaengigkeit.
-- Der offizielle UI-Editor-kit-Preview-Runtime-Importvertrag ist in BBM testbar: `ui-editor-kit/runtime/preview` wird ueber `file:../UI-Editor-kit` als lokale Dependency aufgeloest und per CommonJS sowie ESM geprueft. Die lokale BBM-Preview-Runtime bleibt nur noch Referenz/Fallback.
-- `BbmUiEditorRuntimeLauncher.js` nutzt die generische Preview-Runtime jetzt produktiv aus dem UI-Editor-kit. Der Node-Importvertrag bleibt `ui-editor-kit/runtime/preview`; der Electron-Renderer nutzt wegen fehlender Bare-Package-Aufloesung eine kleine lokale Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js` mit relativem Pfad auf die installierte Kit-Runtime. Die lokale BBM-Preview-Runtime unter `src/renderer/editorRuntime/preview/` bleibt unveraendert als Referenz/Fallback erhalten.
-- Der produktive Pfad ist abgesichert: Kit -> browserfaehiges `src/runtime/preview/index.mjs` ohne `.cjs`-Rueckfall -> BBM-Bridge -> Launcher. `scripts/tests/uiEditorKitPreviewRuntimeBridgeParity.test.cjs` vergleicht zentrale Operationen und den `unknown-host`-Fallback gegen die lokale BBM-Referenzruntime.
+- Der offizielle UI-Editor-kit-Preview-Runtime-Importvertrag ist in BBM testbar: `ui-editor-kit/runtime/preview` wird ueber `file:../UI-Editor-kit` als lokale Dependency aufgeloest und per CommonJS sowie ESM geprueft.
+- `BbmUiEditorRuntimeLauncher.js` nutzt die generische Preview-Runtime produktiv aus dem UI-Editor-kit. Der Node-Importvertrag bleibt `ui-editor-kit/runtime/preview`; der Electron-Renderer nutzt wegen fehlender Bare-Package-Aufloesung die Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js` mit relativem Pfad auf die installierte Kit-Runtime.
+- Der produktive Pfad ist abgesichert: Kit -> browserfaehiges `src/runtime/preview/index.mjs` ohne `.cjs`-Rueckfall -> BBM-Bridge -> Launcher. Die lokale BBM-Preview-Runtime unter `src/renderer/editorRuntime/preview/` ist entfernt.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -219,7 +219,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Konsolidierung ist noch nicht Endabschluss
 - naechstes Restarbeiten-Paket fachlich getrennt planen, bevor Ausgabe/PDF/Notizen/Diktat ueber M1-Stubs hinaus umgesetzt werden
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
-- Produktiven Bezugsweg fuer das externe UI-Editor-kit klaeren; lokale BBM-Runtime als Referenz/Fallback nur in einem eigenen Paket entfernen oder umbauen
+- Produktiven Bezugsweg fuer das externe UI-Editor-kit klaeren
 
 ---
 

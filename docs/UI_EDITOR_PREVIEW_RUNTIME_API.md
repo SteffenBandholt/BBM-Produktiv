@@ -2,13 +2,15 @@
 
 ## Zweck
 
-Die Preview-Runtime-API buendelt die fachneutralen Hilfen fuer temporaere UI-Editor-Vorschauen. Sie ist der vorbereitete Einstieg fuer eine spaetere Rueckfuehrung ins externe UI-Editor-kit.
+Die Preview-Runtime-API buendelt die fachneutralen Hilfen fuer temporaere UI-Editor-Vorschauen. Die lokale BBM-Kopie wurde entfernt; die fachliche Runtime-Quelle ist jetzt das externe UI-Editor-kit.
 
-Aktueller Export-Einstieg in BBM:
+Aktueller produktiver BBM-Pfad:
 
-- `src/renderer/editorRuntime/preview/index.js`
+- UI-Editor-kit `src/runtime/preview/index.mjs`
+- BBM-Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`
+- Launcher `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
 
-Dieser Einstieg uebertraegt noch keinen Code ins externe Kit. Er stellt nur eine stabile, neutrale Importkante im BBM-Repo bereit.
+Der fruehere lokale Einstieg `src/renderer/editorRuntime/preview/index.js` ist entfernt.
 
 ## Exportierte Funktionen
 
@@ -97,8 +99,8 @@ Nicht Teil dieser Preview-Runtime-API sind:
 - PDF-, Druck-, Mail-, Upload-, Import- oder Autosave-Logik
 - alte Editor-, EditorLab-, EditorV2-, `editor.html`-, `editor.js`- oder `editorIpc.js`-Pfade
 
-## Spaetere Verwendung im UI-Editor-kit
+## Verwendung im UI-Editor-kit
 
-Bei einer spaeteren Rueckfuehrung kann `preview/index.js` als fachneutraler Kit-Einstieg dienen. Das Kit sollte die gleichen Exports mit neutralen Tests absichern und keine BBM- oder Modulbegriffe aufnehmen.
+Das Kit stellt die gleichen Exports mit neutralen Tests bereit und darf keine BBM- oder Modulbegriffe aufnehmen.
 
-BBM bleibt in diesem Stand nur Host- und Referenz-App. App-spezifische Werte wie `targetAppId: "bbm"` muessen aus HostContext, HostAdapter oder Registry kommen, nicht aus der generischen Preview-Runtime.
+BBM bleibt Host-App. App-spezifische Werte wie `targetAppId: "bbm"` muessen aus HostContext, HostAdapter oder Registry kommen, nicht aus der generischen Preview-Runtime.

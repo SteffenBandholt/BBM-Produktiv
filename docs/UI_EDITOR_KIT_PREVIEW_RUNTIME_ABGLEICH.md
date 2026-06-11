@@ -26,16 +26,11 @@ Seit G8 nutzt der BBM-Launcher die Kit-Preview-Runtime produktiv:
 - `index.mjs` darf fuer den Renderer nicht auf `.cjs` zurueckfallen
 - CommonJS und ESM werden in BBM weiter testseitig geprueft
 
-Die lokale BBM-Preview-Runtime bleibt erhalten und dient vorerst als Referenz/Fallback. Sie wird in diesem Paket nicht geloescht und nicht umgebaut.
+Die lokale BBM-Preview-Runtime wurde in G10 entfernt. Einzige fachliche Runtime-Quelle ist jetzt das UI-Editor-kit.
 
 ## BBM-Referenzstand
 
-BBM behaelt aktuell weiter die funktionierende lokale ESM-Runtime als Referenz/Fallback:
-
-- `src/renderer/editorRuntime/preview/editorPreviewOperations.js`
-- `src/renderer/editorRuntime/preview/editorPreviewTargetModel.js`
-- `src/renderer/editorRuntime/preview/editorPendingChangeRequests.js`
-- `src/renderer/editorRuntime/preview/index.js`
+BBM enthaelt keine eigene produktive Preview-Runtime mehr unter `src/renderer/editorRuntime/preview/`.
 
 Der BBM-Launcher bleibt Host-Orchestrator:
 
@@ -229,7 +224,6 @@ Der Subpath ist in BBM ueber die lokale `file:../UI-Editor-kit`-Dependency fuer 
 Weiter offen bleibt die kontrollierte produktive Bezugsform:
 
 - Entscheidung, ob die lokale File-Dependency fuer Entwicklung reicht oder spaeter ein versionierter Bezug genutzt wird
-- klare Rueckfallstrategie fuer die lokale BBM-Referenzruntime
 
 ## Abweichungen
 
@@ -266,9 +260,9 @@ Weiter offen bleibt die kontrollierte produktive Bezugsform:
    - vendored Build,
    - oder veroeffentlichte/versionierte Kit-Quelle.
 
-2. Lokale Runtime-Fallbackstrategie festlegen:
-   - Lokale BBM-Preview-Runtime zunaechst als Referenz/Fallback behalten.
-   - Spaetere Entfernung nur in einem eigenen Paket.
+2. Lokale Runtime entfernt:
+   - `src/renderer/editorRuntime/preview/` ist nicht mehr die Runtime-Quelle.
+   - Rueckfall auf lokale Preview-Imports ist testseitig verboten.
 
 3. Testvertrag ergaenzen:
    - BBM muss den spaeteren echten Importweg testen.
@@ -276,8 +270,8 @@ Weiter offen bleibt die kontrollierte produktive Bezugsform:
 
 4. Migration klein schneiden:
    - erst Importkante auf eine einzelne Runtime-Fassade umstellen,
-   - dann BBM-Referenzmodule entfernen oder als Kompatibilitaetsschicht behalten,
-   - erst danach weitere Aufraeumarbeiten.
+   - BBM-Referenzmodule sind entfernt,
+   - weitere Aufraeumarbeiten bleiben getrennt.
 
 5. Sichtpruefung im Electron-DEV-Kontext:
    - Preview anwenden,
@@ -303,5 +297,5 @@ Vor einer echten Umstellung muessen mindestens gruen sein:
 Naechster sinnvoller Schritt ist ein eigenes Mini-Paket:
 
 - produktiven Bezugsweg fuer das UI-Editor-kit klaeren,
-- lokale BBM-Preview-Runtime als Referenz/Fallback bewerten,
-- spaetere Entfernung oder Fallback-Fassade nur getrennt planen.
+- produktiven Bezugsweg fuer das UI-Editor-kit klaeren,
+- weitere Aufraeumarbeiten getrennt planen.
