@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.37 abgeschlossen: Lokaler Standard-Bezugsweg fuer das UI-Editor-kit dokumentiert und mit `npm run check:ui-editor-kit` pruefbar gemacht; keine Runtime-/Launcher-Aenderung.
 - K19.36 abgeschlossen: Abschlussmarker fuer die UI-Editor Preview-Runtime-Rueckfuehrung gesetzt; BBM ist Konsument, UI-Editor-kit ist Quelle, keine Funktionsaenderung.
 - K19.30 abgeschlossen: Historisch wurde ein neutraler Export-Einstieg fuer die generische Preview-Runtime unter `src/renderer/editorRuntime/preview/index.js` vorbereitet; durch K19.35 ist diese lokale Runtime entfernt.
 - K19.31 abgeschlossen: BBM wurde gegen die im externen UI-Editor-kit umgesetzte Preview-Runtime abgeglichen; die APIs und Datenstrukturen sind kompatibel. Die damals noch offene produktive Import-Umstellung ist durch K19.33/K19.36 abgeschlossen.
@@ -74,6 +75,17 @@ Aktueller Stand:
 - [x] K19.34 Produktiven Preview-Runtime-Pfad absichern
 - [x] K19.35 Lokale BBM-Preview-Runtime entfernen
 - [x] K19.36 Abschlussmarker Preview-Runtime-Rueckfuehrung setzen
+- [x] K19.37 Lokalen UI-Editor-kit-Bezugsweg dokumentieren und pruefen
+
+## Statusupdate K19.37
+- Standard-Root fuer Entwicklungs-Repos ist `C:\01_Projekte`.
+- UI-Editor-kit liegt als eigenes Repo unter `C:\01_Projekte\UI-Editor-kit`; BBM und weitere Repos bleiben Konsumenten.
+- Standardinstallation in Konsumenten-Repos: `npm install ..\UI-Editor-kit --save`.
+- Erwarteter Eintrag in `package.json`: `"ui-editor-kit": "file:../UI-Editor-kit"`.
+- `docs/UI_EDITOR_KIT_LOKALER_BEZUGSWEG.md` dokumentiert diesen lokalen, einfachen und reproduzierbaren Weg ohne npm-Publish, private Registry oder Monorepo-Umbau.
+- `scripts/checkUiEditorKitDependency.cjs` prueft Nachbar-Repo, Kit-Preview-Runtime-Einstiege, BBM-Dependency und installierte `node_modules`-Runtime.
+- Neues npm-Script: `npm run check:ui-editor-kit`.
+- Keine Runtime-/Launcher-Codeaenderung, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
 
 ## Statusupdate K19.36
 - Preview-Runtime-Rueckfuehrung ist abgeschlossen.

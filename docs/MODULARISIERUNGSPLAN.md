@@ -212,6 +212,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Der offizielle UI-Editor-kit-Preview-Runtime-Importvertrag ist in BBM testbar: `ui-editor-kit/runtime/preview` wird ueber `file:../UI-Editor-kit` als lokale Dependency aufgeloest und per CommonJS sowie ESM geprueft.
 - `BbmUiEditorRuntimeLauncher.js` nutzt die generische Preview-Runtime produktiv aus dem UI-Editor-kit. Der Node-Importvertrag bleibt `ui-editor-kit/runtime/preview`; der Electron-Renderer nutzt wegen fehlender Bare-Package-Aufloesung die Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js` mit relativem Pfad auf die installierte Kit-Runtime.
 - Der produktive Pfad ist abgesichert: Kit -> browserfaehiges `src/runtime/preview/index.mjs` ohne `.cjs`-Rueckfall -> BBM-Bridge -> Launcher. Die lokale BBM-Preview-Runtime unter `src/renderer/editorRuntime/preview/` ist entfernt.
+- Der lokale Standard-Bezugsweg fuer das externe UI-Editor-kit ist dokumentiert und pruefbar: Repos liegen unter `C:\01_Projekte`, Konsumenten installieren mit `npm install ..\UI-Editor-kit --save`, BBM prueft den Bezug mit `npm run check:ui-editor-kit`.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -219,7 +220,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Konsolidierung ist noch nicht Endabschluss
 - naechstes Restarbeiten-Paket fachlich getrennt planen, bevor Ausgabe/PDF/Notizen/Diktat ueber M1-Stubs hinaus umgesetzt werden
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
-- Produktiven Bezugsweg fuer das externe UI-Editor-kit als separates Folgethema klaeren
+- Spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit als separates Folgethema klaeren
 
 ---
 

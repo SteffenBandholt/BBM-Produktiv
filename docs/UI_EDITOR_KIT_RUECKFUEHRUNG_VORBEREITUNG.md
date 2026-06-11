@@ -182,6 +182,20 @@ import { getChangeRequestOperation } from "./uiEditorKitPreviewRuntimeBridge.js"
 
 Die Bridge re-exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/preview/index.mjs`. Dieser Kit-Einstieg muss browserfaehiges natives ESM bleiben und darf im Renderer nicht auf `.cjs` zurueckfallen.
 
+Der lokale Entwicklungs-Bezugsweg ist in `docs/UI_EDITOR_KIT_LOKALER_BEZUGSWEG.md` dokumentiert. Standard ist:
+
+```powershell
+npm install ..\UI-Editor-kit --save
+```
+
+Damit erwartet BBM in `package.json`:
+
+```json
+"ui-editor-kit": "file:../UI-Editor-kit"
+```
+
+Geprueft wird dieser Bezug mit `npm run check:ui-editor-kit`.
+
 Die API braucht als Eingaben nur neutrale Daten:
 
 - Registry-Element mit `id`, `parentId`, `allowedOps`, `lockedOps`, `previewTargetMode`, `previewTarget`, `editGranularity`, `affectsContainer`
@@ -233,7 +247,7 @@ Die bestehenden BBM-Tests `scripts/tests/editorPreviewRuntime.test.cjs` laufen j
 
 Die Rueckfuehrung der Preview-Runtime ist abgeschlossen. Diese Punkte sind bewusst getrennte Folgepakete:
 
-- Produktiven Bezugsweg fuer das externe UI-Editor-kit festlegen: lokale File-Dependency, Workspace, vendored Build oder versionierte Quelle.
+- Spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit klaeren; der lokale Entwicklungs-Bezug per `file:../UI-Editor-kit` ist dokumentiert und pruefbar.
 - Lokale BBM-Preview-Runtime ist entfernt; neue generische Runtime-Logik muss ins UI-Editor-kit.
 - ChangeRequest-Vertrag mit dem bestehenden Kit- oder BBM-Modell abgleichen.
 - `targetAppId` kommt jetzt aus dem HostContext, der Registry oder dem Runtime-State; die generische Preview-Runtime nutzt keinen BBM-Fallback mehr.
@@ -255,7 +269,7 @@ Die Rueckfuehrung der Preview-Runtime ist abgeschlossen. Diese Punkte sind bewus
 
 Naechstes kleines Paket:
 
-Den produktiven Bezugsweg fuer das externe UI-Editor-kit klaeren. Die Preview-Runtime-Rueckfuehrung selbst ist abgeschlossen; eine Bezugsweg-Entscheidung darf keine Runtime-/Launcher-Logik nebenbei veraendern.
+Den spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit klaeren. Die Preview-Runtime-Rueckfuehrung selbst ist abgeschlossen; eine Bezugsweg-Entscheidung darf keine Runtime-/Launcher-Logik nebenbei veraendern. Der lokale Entwicklungs-Bezug bleibt `npm install ..\UI-Editor-kit --save`.
 
 Ein spaeteres Bezugsweg-Paket muss getrennt pruefen:
 

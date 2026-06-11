@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-kit lokaler Standard-Bezugsweg dokumentiert:
+  - Standard-Root fuer Entwicklungs-Repos ist `C:\01_Projekte`.
+  - UI-Editor-kit bleibt eigenes Repo unter `C:\01_Projekte\UI-Editor-kit`; BBM und weitere Repos sind Konsumenten.
+  - Standardinstallation in Konsumenten-Repos: `npm install ..\UI-Editor-kit --save`.
+  - Erwarteter Eintrag: `"ui-editor-kit": "file:../UI-Editor-kit"`.
+  - `docs/UI_EDITOR_KIT_LOKALER_BEZUGSWEG.md` dokumentiert den uebertragbaren lokalen Bezugsweg.
+  - `npm run check:ui-editor-kit` prueft Nachbar-Repo, installierte Dependency und Preview-Runtime-Einstiege `.mjs`/`.cjs`.
+  - Keine Runtime-/Launcher-Funktionsaenderung, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
+
 - UI-Editor Preview-Runtime-Rueckfuehrung abgeschlossen:
   - BBM ist jetzt Konsument der Preview-Runtime; fachliche Quelle ist ausschliesslich das externe UI-Editor-kit.
   - Produktivpfad: UI-Editor-kit -> browserfaehiges `src/runtime/preview/index.mjs` -> `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js` -> `BbmUiEditorRuntimeLauncher.js`.
@@ -24,7 +33,7 @@ Sie ergÃ¤nzt:
   - Der Electron-Renderer nutzt bewusst die lokale Bridge, weil Bare-Package-Specifier ohne Bundler/Import-Map nicht aufgeloest werden.
   - Der Kit-ESM-Einstieg fuer den Renderer darf nicht auf `.cjs`, `require` oder `createRequire` zurueckfallen.
   - Keine Runtime-/Launcher-Funktionsaenderung, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-/Markierungs-Aenderung.
-  - Offenes Folgethema, getrennt von der Rueckfuehrung: produktiven Bezugsweg fuer das externe Kit klaeren.
+  - Der lokale Entwicklungs-Bezugsweg ist inzwischen dokumentiert und pruefbar; ein spaeterer versionierter Produktiv-/Release-Bezug bleibt ein getrenntes Folgethema.
 
 - UI-Editor-kit Preview-Runtime-Abgleich dokumentiert:
   - `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` dokumentiert den Abgleich der frueheren BBM-Preview-Runtime mit der externen UI-Editor-kit-Runtime.

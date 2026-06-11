@@ -225,7 +225,8 @@ Der Subpath ist in BBM ueber die lokale `file:../UI-Editor-kit`-Dependency fuer 
 
 Weiter offen bleibt die kontrollierte produktive Bezugsform:
 
-- Entscheidung, ob die lokale File-Dependency fuer Entwicklung reicht oder spaeter ein versionierter Bezug genutzt wird
+- Der lokale Entwicklungs-Bezugsweg ist festgelegt und pruefbar: Repos unter `C:\01_Projekte`, Installation per `npm install ..\UI-Editor-kit --save`, erwarteter Eintrag `"ui-editor-kit": "file:../UI-Editor-kit"`.
+- Offen bleibt nur, ob spaeter fuer Release/CI ein versionierter Bezug genutzt wird.
 
 ## Abweichungen
 
@@ -264,11 +265,11 @@ Weiter offen bleibt die kontrollierte produktive Bezugsform:
    - `src/renderer/editorRuntime/preview/` ist nicht mehr die Runtime-Quelle.
    - Rueckfall auf lokale Preview-Imports ist testseitig verboten.
 
-3. Separates Folgethema Bezugsweg:
-   - lokale File-Dependency fuer Entwicklung,
-   - Workspace,
-   - vendored Build,
-   - oder veroeffentlichte/versionierte Kit-Quelle.
+3. Lokaler Entwicklungs-Bezugsweg:
+   - Repos liegen standardmaessig unter `C:\01_Projekte`.
+   - Konsumenten installieren mit `npm install ..\UI-Editor-kit --save`.
+   - `package.json` enthaelt `"ui-editor-kit": "file:../UI-Editor-kit"`.
+   - BBM prueft den Bezug mit `npm run check:ui-editor-kit`.
 
 4. Testvertrag erhalten:
    - BBM muss den produktiven Bridge-Pfad und den Kit-Importvertrag weiter testen.
@@ -302,5 +303,5 @@ Fuer den abgeschlossenen Stand muessen mindestens gruen bleiben:
 
 Naechster sinnvoller Schritt ist ein eigenes Mini-Paket:
 
-- produktiven Bezugsweg fuer das UI-Editor-kit klaeren,
+- spaeteren versionierten Produktiv-/Release-Bezug fuer das UI-Editor-kit getrennt klaeren,
 - weitere Aufraeumarbeiten getrennt planen.

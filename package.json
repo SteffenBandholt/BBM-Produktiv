@@ -15,7 +15,8 @@
     "lint:fix": "eslint \"src/**/*.js\" --fix",
     "fix:electron-deps": "electron-builder install-app-deps",
     "postinstall": "electron-builder install-app-deps",
-    "test:node": "node scripts/test.cjs"
+    "test:node": "node scripts/test.cjs",
+    "check:ui-editor-kit": "node scripts/checkUiEditorKitDependency.cjs"
   },
   "devDependencies": {
     "electron": "^30.0.0",
