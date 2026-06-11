@@ -1,12 +1,23 @@
-# UI-Editor-kit Rueckfuehrung Vorbereitung
+# UI-Editor-kit Preview-Runtime Rueckfuehrung
 
 ## Kurzfazit
 
-Die frueher ausgelagerten Preview-Runtime-Hilfen unter `src/renderer/editorRuntime/preview/` wurden fachneutral ins UI-Editor-kit ueberfuehrt und in BBM entfernt.
+Status: abgeschlossen.
+
+Die frueher ausgelagerten Preview-Runtime-Hilfen unter `src/renderer/editorRuntime/preview/` wurden fachneutral ins UI-Editor-kit ueberfuehrt und in BBM entfernt. BBM ist jetzt Konsument der Runtime, nicht mehr deren fachliche Quelle.
 
 Nach dem externen Kit-Paket G6 liegt die generische Preview-Runtime im UI-Editor-kit technisch umgesetzt vor und ist ueber den offiziellen Package-Subpath `ui-editor-kit/runtime/preview` exportiert. Der BBM-Abgleich ist in `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` dokumentiert. Ergebnis: BBM und Kit sind fachlich kompatibel; seit G8 nutzt `BbmUiEditorRuntimeLauncher.js` die Kit-Preview-Runtime produktiv. Der Electron-Renderer importiert sie ueber die lokale Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`, weil nur Node den Bare-Package-Subpath direkt aufloest. Der produktive Pfad ist: Kit -> browserfaehiges `index.mjs` -> BBM-Bridge -> Launcher.
 
 Die lokale BBM-Preview-Runtime ist nicht mehr vorhanden. Dieses Paket aendert keine HostAdapter-, Panel-, Drag-, Speicher-, DB-, IPC-, Fach- oder PDF-/Drucklogik.
+
+## Historie
+
+- Zunaechst wurden generische Preview-Hilfen aus dem BBM-Launcher in lokale BBM-Module ausgelagert.
+- Danach wurden Zielstruktur, API-Vertrag und Guardrails fuer das UI-Editor-kit vorbereitet.
+- BBM und UI-Editor-kit wurden fachlich abgeglichen; die Runtime-Vertraege sind kompatibel.
+- Das UI-Editor-kit erhielt CommonJS-, ESM- und Package-Subpath-Exporte.
+- BBM stellte produktiv auf die Kit-Runtime um und nutzt wegen Electron/native ESM eine lokale Renderer-Bridge.
+- Die lokale BBM-Preview-Runtime wurde entfernt; neue generische Preview-Runtime-Logik gehoert ins UI-Editor-kit.
 
 ## Aktueller BBM-Stand
 
@@ -218,9 +229,9 @@ Im Kit sollten mindestens diese Tests existieren:
 
 Die bestehenden BBM-Tests `scripts/tests/editorPreviewRuntime.test.cjs` laufen jetzt gegen die BBM-Bridge und damit gegen die Kit-Runtime. BBM prueft den offiziellen Kit-Subpath mit `scripts/tests/uiEditorKitPreviewRuntimeImport.test.cjs`, inklusive CommonJS, ESM und `unknown-host`-Fallback. Der produktive Renderer-Pfad ueber die Bridge wird zusaetzlich mit `scripts/tests/uiEditorKitPreviewRuntimeBridgeParity.test.cjs` abgesichert.
 
-## Offene Entkopplungen
+## Abgegrenzte Folgethemen
 
-Nach der produktiven Launcher-Importumstellung sind noch diese Punkte zu klaeren:
+Die Rueckfuehrung der Preview-Runtime ist abgeschlossen. Diese Punkte sind bewusst getrennte Folgepakete:
 
 - Produktiven Bezugsweg fuer das externe UI-Editor-kit festlegen: lokale File-Dependency, Workspace, vendored Build oder versionierte Quelle.
 - Lokale BBM-Preview-Runtime ist entfernt; neue generische Runtime-Logik muss ins UI-Editor-kit.
@@ -244,9 +255,9 @@ Nach der produktiven Launcher-Importumstellung sind noch diese Punkte zu klaeren
 
 Naechstes kleines Paket:
 
-Den produktiven Bezugsweg fuer das externe UI-Editor-kit klaeren.
+Den produktiven Bezugsweg fuer das externe UI-Editor-kit klaeren. Die Preview-Runtime-Rueckfuehrung selbst ist abgeschlossen; eine Bezugsweg-Entscheidung darf keine Runtime-/Launcher-Logik nebenbei veraendern.
 
-Eine echte BBM-Rueckanbindung darf erst danach erfolgen und muss getrennt pruefen:
+Ein spaeteres Bezugsweg-Paket muss getrennt pruefen:
 
 - API-Kompatibilitaet
 - Modulformat/Importweg

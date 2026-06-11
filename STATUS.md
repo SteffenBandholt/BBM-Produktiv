@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Preview-Runtime-Rueckfuehrung abgeschlossen:
+  - BBM ist jetzt Konsument der Preview-Runtime; fachliche Quelle ist ausschliesslich das externe UI-Editor-kit.
+  - Produktivpfad: UI-Editor-kit -> browserfaehiges `src/runtime/preview/index.mjs` -> `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js` -> `BbmUiEditorRuntimeLauncher.js`.
+  - Die lokale BBM-Preview-Runtime unter `src/renderer/editorRuntime/preview/` ist entfernt.
+  - Der Electron-Renderer nutzt bewusst die lokale Bridge, weil Bare-Package-Specifier ohne Bundler/Import-Map nicht aufgeloest werden.
+  - Der Kit-ESM-Einstieg fuer den Renderer darf nicht auf `.cjs`, `require` oder `createRequire` zurueckfallen.
+  - Keine Runtime-/Launcher-Funktionsaenderung, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-/Markierungs-Aenderung.
+  - Offenes Folgethema, getrennt von der Rueckfuehrung: produktiven Bezugsweg fuer das externe Kit klaeren.
+
 - UI-Editor-kit Preview-Runtime-Abgleich dokumentiert:
   - `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` dokumentiert den Abgleich der frueheren BBM-Preview-Runtime mit der externen UI-Editor-kit-Runtime.
   - Exportnamen, Datenstrukturen, Operation-Mapping, `allowedOps`/`lockedOps`, `previewTargetMode`, Target-Aufloesung, `pendingChangeRequests`, `unknown-host`, `source: "preview"`, `persistent: false`, Deduplizierung, Summary und Reset je Ziel sind kompatibel.
@@ -27,7 +36,7 @@ Sie ergÃ¤nzt:
   - Der produktive Pfad ist jetzt mit `scripts/tests/uiEditorKitPreviewRuntimeBridgeParity.test.cjs` abgesichert: Kit -> browserfaehiges `index.mjs` ohne `.cjs`-Rueckfall -> BBM-Bridge -> Launcher.
   - Die lokale BBM-Preview-Runtime unter `src/renderer/editorRuntime/preview/` ist entfernt; einzige Runtime-Quelle ist das UI-Editor-kit.
   - Keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
-  - Naechster offener Schritt: produktiven Bezugsweg fuer das externe Kit klaeren.
+  - Rueckfuehrung abgeschlossen; der produktive Bezugsweg fuer das externe Kit bleibt ein separates Folgethema.
 
 - UI-Editor Preview-Runtime Quelle konsolidiert:
   - Die lokale BBM-Preview-Runtime wurde entfernt.
@@ -44,7 +53,7 @@ Sie ergÃ¤nzt:
   - Keine neue Preview-Funktion, keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Fachaenderung.
 
 - UI-Editor-kit-Rueckfuehrung der Preview-Runtime umgesetzt:
-  - `docs/UI_EDITOR_KIT_RUECKFUEHRUNG_VORBEREITUNG.md` dokumentiert Kit-Kandidaten, Nicht-Kit-Kandidaten, API/Exports, notwendige Kit-Tests, offene Entkopplungen, Risiken und den empfohlenen naechsten Schritt.
+  - `docs/UI_EDITOR_KIT_RUECKFUEHRUNG_VORBEREITUNG.md` dokumentiert Historie, Kit-Quelle, BBM-Bridge, Nicht-Kit-Anteile, Tests, abgegrenzte Folgethemen und Risiken.
   - Die generische Preview-Runtime liegt jetzt im externen UI-Editor-kit und wird in BBM ueber die Bridge genutzt.
   - Die lokale BBM-Kopie ist entfernt.
   - Keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Aenderung.
@@ -63,7 +72,7 @@ Sie ergÃ¤nzt:
   - `submitChangeRequests` bleibt bewusst blockiert mit `PERSISTENCE_DISABLED`; `pendingChangeRequests` werden nur in-memory gemeldet.
   - Der BBM Runtime-Launcher kann optional einen HostAdapter verwenden und bleibt mit `activeUiScope`, `registeredElements`, `availableUiScopes` und `registryResolver` kompatibel.
   - Keine Speicherung, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Restarbeiten-Sonderlogik in der Runtime.
-  - Naechster offener Schritt: spaetere UI-Editor-kit-Rueckfuehrung in kleinen extrahierbaren Runtime-Einheiten vorbereiten.
+  - Die spaetere UI-Editor-kit-Rueckfuehrung dieser Preview-Runtime ist inzwischen abgeschlossen; weitere HostAdapter-Arbeiten bleiben getrennte Pakete.
 
 - UI-Editor-Trennschnitt BBM vs. UI-Editor-kit dokumentiert:
   - BBM ist als Referenzintegration und Host-App beschrieben, nicht als dauerhafter Produktort generischer UI-Editor-Runtime.
@@ -71,7 +80,7 @@ Sie ergÃ¤nzt:
   - In BBM bleiben CoreShell-/HostAdapter-Anbindung, aktive Scope-Auswahl, BBM-Registry-Resolver, App-Anbindung und Modul-Registries.
   - Restarbeiten bleibt Referenzmodul; seine Registry, konkreten `data-ui-editor-id`-Anker, IDs und fachlichen Elementzuordnungen bleiben in BBM.
   - Keine Funktionsaenderung, keine Speicherung, keine Registry-Aenderung, keine Fachlogik und keine PDF-Aenderung.
-  - Naechster offener Schritt: BBM-HostAdapter-Schnittstelle stabilisieren oder UI-Editor-kit-Rueckfuehrung vorbereiten, weiterhin ohne Speicherung.
+  - Die Preview-Runtime-Rueckfuehrung ist inzwischen abgeschlossen; weitere Kit- oder HostAdapter-Schnitte bleiben getrennte Pakete.
 
 - UI-Editor Preview-ChangeRequests vorbereitet:
   - Preview-Operationen erzeugen/aktualisieren jetzt zusaetzlich temporaere ChangeRequests im UI-Editor-State.

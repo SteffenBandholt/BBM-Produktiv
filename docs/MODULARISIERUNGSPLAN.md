@@ -202,13 +202,13 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - M2.1 hat die Restarbeiten-Main/Body-Datensatzdarstellung im Blatt mit Tabellenkopf und dreizeiliger Datensatzstruktur nachgezogen
 - Der UI-Editor kann fuer bereits registrierte und markierbare Restarbeiten-UI-Elemente temporaere Preview-Aenderungen anwenden: Move, Resize und Hide/Show laufen nur gegen erlaubte `allowedOps`, bleiben im Speicher und werden per Reset oder Editor-Deaktivierung entfernt.
 - Preview-Operationen sammeln jetzt zusaetzlich temporaere ChangeRequests im UI-Editor-State; Move/Width/Height werden je Ziel dedupliziert bzw. kumuliert, Visibility wird ueberschrieben, weiterhin ohne Speicherung.
-- Der Trennschnitt zwischen BBM-Hostintegration, Restarbeiten-Modulankern und generischer UI-Editor-Runtime ist dokumentiert; BBM bleibt Referenz-/Host-App, die generischen Runtime-Teile sind Kandidaten fuer eine spaetere Rueckfuehrung ins UI-Editor-kit.
+- Der Trennschnitt zwischen BBM-Hostintegration, Restarbeiten-Modulankern und generischer UI-Editor-Runtime ist dokumentiert; BBM bleibt Host-/Konsument-App, die generische Preview-Runtime ist ins UI-Editor-kit zurueckgefuehrt.
 - Die BBM-HostAdapter-Schnittstelle ist als kleiner Contract stabilisiert: HostContext, Registry, Layout-State, Capabilities und In-Memory-ChangeRequest-Rueckmeldung sind beschrieben und testseitig abgesichert, Persistenz bleibt deaktiviert.
 - Historisch wurden kleine generische Preview-Runtime-Hilfen aus dem BBM-Launcher nach `src/renderer/editorRuntime/preview/` ausgelagert; diese lokale Runtime ist inzwischen entfernt.
-- Die spaetere Rueckfuehrung dieser generischen Preview-Runtime-Hilfen ins UI-Editor-kit ist dokumentarisch vorbereitet: Kit-Kandidaten, Nicht-Kit-Kandidaten, API/Exports, notwendige Kit-Tests, offene Entkopplungen und Risiken sind festgehalten; noch keine Codeuebertragung ins externe Kit.
+- Die Rueckfuehrung dieser generischen Preview-Runtime-Hilfen ins UI-Editor-kit ist abgeschlossen: Kit-Quelle, Nicht-Kit-Anteile, API/Exports, Tests, abgegrenzte Folgethemen und Risiken sind dokumentiert.
 - Die generische Preview-ChangeRequest-Logik enthaelt keinen harten `targetAppId`-Fallback `"bbm"` mehr; Ziel-App-Kontext kommt aus HostContext, Registry oder State, sonst neutral aus `unknown-host`.
 - Der neutrale Export-Einstieg liegt nicht mehr in BBM; die generische Preview-Runtime kommt aus dem UI-Editor-kit.
-- Der fachlich/technische Abgleich zwischen BBM-Preview-Runtime und externer UI-Editor-kit-Preview-Runtime ist dokumentiert: Exportnamen, Datenstrukturen, Operation-Mapping, Zielmodell, Pending-ChangeRequests und Guardrails sind kompatibel; offen bleibt nur der spaetere Import-/Modulformat-Vertrag. Noch keine produktive Import-Umstellung und keine externe Abhaengigkeit.
+- Der fachlich/technische Abgleich zwischen BBM-Preview-Runtime und externer UI-Editor-kit-Preview-Runtime ist dokumentiert: Exportnamen, Datenstrukturen, Operation-Mapping, Zielmodell, Pending-ChangeRequests und Guardrails sind kompatibel; der Abgleich fuehrte zur produktiven Kit-Nutzung ueber die BBM-Bridge.
 - Der offizielle UI-Editor-kit-Preview-Runtime-Importvertrag ist in BBM testbar: `ui-editor-kit/runtime/preview` wird ueber `file:../UI-Editor-kit` als lokale Dependency aufgeloest und per CommonJS sowie ESM geprueft.
 - `BbmUiEditorRuntimeLauncher.js` nutzt die generische Preview-Runtime produktiv aus dem UI-Editor-kit. Der Node-Importvertrag bleibt `ui-editor-kit/runtime/preview`; der Electron-Renderer nutzt wegen fehlender Bare-Package-Aufloesung die Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js` mit relativem Pfad auf die installierte Kit-Runtime.
 - Der produktive Pfad ist abgesichert: Kit -> browserfaehiges `src/runtime/preview/index.mjs` ohne `.cjs`-Rueckfall -> BBM-Bridge -> Launcher. Die lokale BBM-Preview-Runtime unter `src/renderer/editorRuntime/preview/` ist entfernt.
@@ -219,7 +219,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Konsolidierung ist noch nicht Endabschluss
 - naechstes Restarbeiten-Paket fachlich getrennt planen, bevor Ausgabe/PDF/Notizen/Diktat ueber M1-Stubs hinaus umgesetzt werden
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
-- Produktiven Bezugsweg fuer das externe UI-Editor-kit klaeren
+- Produktiven Bezugsweg fuer das externe UI-Editor-kit als separates Folgethema klaeren
 
 ---
 

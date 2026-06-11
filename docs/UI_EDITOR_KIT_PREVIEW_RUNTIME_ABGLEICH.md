@@ -4,6 +4,8 @@
 
 BBM und das externe UI-Editor-kit sind fuer die generische Preview-Runtime fachlich kompatibel.
 
+Der Abgleich fuehrte zur produktiven Kit-Nutzung in BBM. Die lokale BBM-Preview-Runtime ist entfernt; einzige fachliche Quelle ist das UI-Editor-kit. Die BBM-Bridge bleibt nur der renderer-spezifische Adapter fuer Electron/native ESM.
+
 Die Kernlogik ist gleichwertig:
 
 - gleiche zentrale Preview-Operationen
@@ -252,36 +254,40 @@ Weiter offen bleibt die kontrollierte produktive Bezugsform:
 - Panel-/Drag-/DOM-Orchestrierung bleibt bewusst in BBM und darf nicht versehentlich als generische Runtime behandelt werden.
 - Spaetere Persistenz darf nicht mit der Preview-Runtime vermischt werden.
 
-## Notwendige Schritte nach der Import-Umstellung
+## Stand nach der Import-Umstellung
 
-1. Produktiven Bezugsweg festlegen:
-   - lokale File-Dependency fuer Entwicklung,
-   - Workspace,
-   - vendored Build,
-   - oder veroeffentlichte/versionierte Kit-Quelle.
+1. Produktiver Runtime-Pfad:
+   - UI-Editor-kit -> browserfaehiges `src/runtime/preview/index.mjs` -> BBM-Bridge -> Launcher.
+   - `BbmUiEditorRuntimeLauncher.js` nutzt keine lokale Preview-Runtime und keinen Bare-Package-Import.
 
 2. Lokale Runtime entfernt:
    - `src/renderer/editorRuntime/preview/` ist nicht mehr die Runtime-Quelle.
    - Rueckfall auf lokale Preview-Imports ist testseitig verboten.
 
-3. Testvertrag ergaenzen:
-   - BBM muss den spaeteren echten Importweg testen.
+3. Separates Folgethema Bezugsweg:
+   - lokale File-Dependency fuer Entwicklung,
+   - Workspace,
+   - vendored Build,
+   - oder veroeffentlichte/versionierte Kit-Quelle.
+
+4. Testvertrag erhalten:
+   - BBM muss den produktiven Bridge-Pfad und den Kit-Importvertrag weiter testen.
    - Kit muss weiter `preview-runtime.test.cjs` und Guardrails ausfuehren.
 
-4. Migration klein schneiden:
-   - erst Importkante auf eine einzelne Runtime-Fassade umstellen,
-   - BBM-Referenzmodule sind entfernt,
+5. Weitere Migration klein schneiden:
+   - Runtime-/Launcher-Logik nicht nebenbei veraendern,
+   - BBM-Referenzmodule bleiben entfernt,
    - weitere Aufraeumarbeiten bleiben getrennt.
 
-5. Sichtpruefung im Electron-DEV-Kontext:
+6. Sichtpruefung im Electron-DEV-Kontext:
    - Preview anwenden,
    - Reset je Ziel,
    - Aenderungen verwerfen,
    - Panel/Drag unveraendert.
 
-## Tests vor echter Umstellung
+## Abschluss- und Regressionstests
 
-Vor einer echten Umstellung muessen mindestens gruen sein:
+Fuer den abgeschlossenen Stand muessen mindestens gruen bleiben:
 
 - BBM: `scripts/tests/editorPreviewRuntime.test.cjs`
 - BBM: `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
@@ -296,6 +302,5 @@ Vor einer echten Umstellung muessen mindestens gruen sein:
 
 Naechster sinnvoller Schritt ist ein eigenes Mini-Paket:
 
-- produktiven Bezugsweg fuer das UI-Editor-kit klaeren,
 - produktiven Bezugsweg fuer das UI-Editor-kit klaeren,
 - weitere Aufraeumarbeiten getrennt planen.

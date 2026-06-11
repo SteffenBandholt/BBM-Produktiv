@@ -2,7 +2,9 @@
 
 ## Zweck
 
-Die Preview-Runtime-API buendelt die fachneutralen Hilfen fuer temporaere UI-Editor-Vorschauen. Die lokale BBM-Kopie wurde entfernt; die fachliche Runtime-Quelle ist jetzt das externe UI-Editor-kit.
+Dieses BBM-Dokument ist nur noch ein Verweis- und Integrationshinweis. Die Preview-Runtime-API buendelt die fachneutralen Hilfen fuer temporaere UI-Editor-Vorschauen; die fachliche API-Quelle liegt im externen UI-Editor-kit.
+
+Die lokale BBM-Kopie wurde entfernt. BBM konsumiert die Runtime ueber die renderer-kompatible Bridge und ist nicht mehr der fachliche Ort der API.
 
 Aktueller produktiver BBM-Pfad:
 
@@ -10,7 +12,7 @@ Aktueller produktiver BBM-Pfad:
 - BBM-Bridge `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`
 - Launcher `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
 
-Der fruehere lokale Einstieg `src/renderer/editorRuntime/preview/index.js` ist entfernt.
+Der fruehere lokale Einstieg `src/renderer/editorRuntime/preview/index.js` ist entfernt. Neue generische Preview-Runtime-Logik gehoert ins UI-Editor-kit; BBM-spezifisch bleibt nur die Bridge-/Hostintegration.
 
 ## Exportierte Funktionen
 
@@ -104,3 +106,11 @@ Nicht Teil dieser Preview-Runtime-API sind:
 Das Kit stellt die gleichen Exports mit neutralen Tests bereit und darf keine BBM- oder Modulbegriffe aufnehmen.
 
 BBM bleibt Host-App. App-spezifische Werte wie `targetAppId: "bbm"` muessen aus HostContext, HostAdapter oder Registry kommen, nicht aus der generischen Preview-Runtime.
+
+## Abschlussstand in BBM
+
+- UI-Editor-kit ist die einzige fachliche Runtime-Quelle.
+- BBM nutzt die Runtime produktiv ueber `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`.
+- Der Electron-Renderer darf keinen Bare-Package-Import `ui-editor-kit/runtime/preview` verwenden.
+- Das browserfaehige Kit-ESM darf nicht auf `.cjs`, `require` oder `createRequire` zurueckfallen.
+- Panel, Drag, Markierung, HostAdapter und DOM-Preview-Anwendung bleiben BBM-Orchestrierung.
