@@ -7,6 +7,7 @@ Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
 - K19.30 abgeschlossen: Ein neutraler Export-Einstieg fuer die generische Preview-Runtime liegt unter `src/renderer/editorRuntime/preview/index.js`; die API ist dokumentiert, ohne Code ins externe Kit zu uebertragen.
 - K19.31 abgeschlossen: BBM wurde gegen die im externen UI-Editor-kit umgesetzte Preview-Runtime abgeglichen; die APIs und Datenstrukturen sind kompatibel, eine produktive Import-Umstellung erfolgte nicht.
+- K19.32 abgeschlossen: BBM prueft den offiziellen Kit-Importvertrag `ui-editor-kit/runtime/preview` testweise ueber eine lokale `file:../UI-Editor-kit`-Dependency; CommonJS und ESM funktionieren, eine produktive Launcher-Umstellung erfolgte nicht.
 - K19.29 abgeschlossen: Der harte `targetAppId`-Fallback `"bbm"` wurde aus der generischen Preview-ChangeRequest-Logik entfernt; BBM liefert seinen Ziel-App-Wert nur noch ueber HostContext/HostAdapter.
 - K19.28 abgeschlossen: Die Rueckfuehrung der generischen Preview-Runtime ins UI-Editor-kit ist dokumentarisch vorbereitet; es wurde kein Code ins externe Kit uebertragen.
 - K19.27 abgeschlossen: Generische Preview-Operationen, Preview-Zielmodell und Pending-ChangeRequest-Hilfen liegen unter `src/renderer/editorRuntime/preview/`; der BBM-Launcher bleibt Orchestrator.
@@ -64,6 +65,14 @@ Aktueller Stand:
 - [x] K19.29 Preview-Runtime targetAppId-Fallback hostneutral machen
 - [x] K19.30 Preview-Runtime Exportstruktur fuer Kit-Rueckfuehrung vorbereiten
 - [x] K19.31 BBM gegen UI-Editor-kit Preview-Runtime abgleichen
+- [x] K19.32 BBM prueft UI-Editor-kit Preview-Runtime Importvertrag
+
+## Statusupdate K19.32
+- BBM kann den offiziellen UI-Editor-kit-Preview-Runtime-Export `ui-editor-kit/runtime/preview` testweise verbrauchen.
+- `package.json` enthaelt dafuer die lokale Dependency `ui-editor-kit: file:../UI-Editor-kit`; `package-lock.json` wurde entsprechend aktualisiert.
+- `scripts/tests/uiEditorKitPreviewRuntimeImport.test.cjs` prueft CommonJS und ESM, erwartete Exporte, Operation-Mapping und den neutralen Fallback `targetAppId: "unknown-host"`.
+- `BbmUiEditorRuntimeLauncher.js` wurde nicht umgestellt und nutzt produktiv weiter die lokale BBM-Preview-Runtime unter `src/renderer/editorRuntime/preview/`.
+- Keine Entfernung der lokalen BBM-Preview-Dateien, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
 
 ## Statusupdate K19.31
 - BBM-Preview-Runtime und externe UI-Editor-kit-Preview-Runtime sind fachlich/technisch abgeglichen.

@@ -21,8 +21,10 @@ Sie ergÃ¤nzt:
   - `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` vergleicht die BBM-Preview-Runtime mit der externen UI-Editor-kit-Runtime.
   - Exportnamen, Datenstrukturen, Operation-Mapping, `allowedOps`/`lockedOps`, `previewTargetMode`, Target-Aufloesung, `pendingChangeRequests`, `unknown-host`, `source: "preview"`, `persistent: false`, Deduplizierung, Summary und Reset je Ziel sind kompatibel.
   - Dokumentierte Abweichungen: BBM nutzt ESM, das Kit CommonJS; das Kit exportiert zusaetzlich `UI_EDITOR_ID_ATTRIBUTE` und akzeptiert boolean `true` als `parent`.
-  - Keine produktive Import-Umstellung, keine neue externe Abhaengigkeit, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
-  - Naechster offener Schritt: Import-/Package-Vertrag zwischen BBM und UI-Editor-kit festlegen, inklusive ESM/CommonJS-Bruecke.
+  - Der offizielle Kit-Importvertrag `ui-editor-kit/runtime/preview` ist in BBM testbar; `package.json` nutzt dafuer lokal `file:../UI-Editor-kit`.
+  - `scripts/tests/uiEditorKitPreviewRuntimeImport.test.cjs` prueft CommonJS, ESM, erwartete Exporte, Operation-Mapping und `unknown-host`.
+  - Keine produktive Import-Umstellung im Launcher, keine Entfernung der lokalen BBM-Runtime, keine Speicherung, keine DB, kein IPC-Schreibweg, kein localStorage, keine Fachlogik, keine PDF-/Drucklogik und keine Panel-/Drag-Aenderung.
+  - Naechster offener Schritt: kontrollierte produktive Launcher-Import-Umstellung in einem eigenen Paket vorbereiten.
 
 - UI-Editor Preview-Runtime Exportstruktur vorbereitet:
   - `src/renderer/editorRuntime/preview/index.js` buendelt die generischen Preview-Runtime-Exports als neutralen Einstieg.

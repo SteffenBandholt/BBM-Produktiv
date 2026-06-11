@@ -4,9 +4,9 @@
 
 Die ausgelagerten Preview-Runtime-Hilfen unter `src/renderer/editorRuntime/preview/` sind echte Kandidaten fuer eine spaetere Rueckfuehrung ins UI-Editor-kit. Sie sind fachneutral, arbeiten ohne Speicherung und enthalten keine BBM-, Restarbeiten-, Electron-, DB-, IPC- oder PDF-Logik.
 
-Nach dem externen Kit-Paket G3 liegt die generische Preview-Runtime im UI-Editor-kit technisch umgesetzt vor. Der BBM-Abgleich ist in `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` dokumentiert. Ergebnis: BBM und Kit sind fachlich kompatibel; vor einer echten BBM-Import-Umstellung muss noch der Import-/Package-Vertrag inklusive ESM/CommonJS-Bruecke festgelegt werden.
+Nach dem externen Kit-Paket G6 liegt die generische Preview-Runtime im UI-Editor-kit technisch umgesetzt vor und ist ueber den offiziellen Package-Subpath `ui-editor-kit/runtime/preview` exportiert. Der BBM-Abgleich ist in `docs/UI_EDITOR_KIT_PREVIEW_RUNTIME_ABGLEICH.md` dokumentiert. Ergebnis: BBM und Kit sind fachlich kompatibel; seit G7 prueft BBM den offiziellen Importvertrag testweise ueber `file:../UI-Editor-kit`. Eine produktive BBM-Launcher-Umstellung ist weiterhin nicht erfolgt.
 
-Dieses Paket uebertraegt noch keinen Code ins externe UI-Editor-kit. Es dokumentiert nur den Stand, die Kandidaten, die noetigen Exports, die Testanforderungen und die offenen Entkopplungen.
+Dieses Paket uebertraegt keinen weiteren Code und stellt keine produktive BBM-Nutzung um. Es dokumentiert den Stand, die Kandidaten, die Exports, die Testanforderungen und die offenen Entkopplungen.
 
 ## Aktueller BBM-Stand
 
@@ -178,7 +178,12 @@ export {
 } from "./preview/editorPendingChangeRequests.js";
 ```
 
-Im BBM-Repo ist dafuer jetzt der neutrale Sammel-Export `src/renderer/editorRuntime/preview/index.js` vorbereitet. Er dient als stabile Importkante fuer BBM und als Vorlage fuer den spaeteren Kit-Einstieg, ohne bereits Code ins externe Kit zu uebertragen.
+Im BBM-Repo bleibt der neutrale Sammel-Export `src/renderer/editorRuntime/preview/index.js` die produktiv aktive lokale Importkante. Der externe Kit-Vertrag ist zusaetzlich testbar ueber:
+
+```js
+import { getChangeRequestOperation } from "ui-editor-kit/runtime/preview";
+const previewRuntime = require("ui-editor-kit/runtime/preview");
+```
 
 Die API braucht als Eingaben nur neutrale Daten:
 
@@ -225,14 +230,14 @@ Im Kit sollten mindestens diese Tests existieren:
   - keine PDF-/Drucklogik
   - keine alten Editorpfade
 
-Die bestehenden BBM-Tests `scripts/tests/editorPreviewRuntime.test.cjs` koennen als Vorlage dienen. Fuer das Kit muessen sie mit neutralen IDs wie `sample.screen` und `sample.field.input` laufen.
+Die bestehenden BBM-Tests `scripts/tests/editorPreviewRuntime.test.cjs` koennen als Vorlage dienen. Fuer das Kit muessen sie mit neutralen IDs wie `sample.screen` und `sample.field.input` laufen. BBM prueft den offiziellen Kit-Subpath mit `scripts/tests/uiEditorKitPreviewRuntimeImport.test.cjs`, inklusive CommonJS, ESM und `unknown-host`-Fallback.
 
 ## Offene Entkopplungen
 
-Vor einer echten Codeuebertragung sind noch diese Punkte zu klaeren:
+Vor einer echten produktiven Rueckanbindung sind noch diese Punkte zu klaeren:
 
-- Zielpfad und Paketstruktur im externen UI-Editor-kit festlegen.
-- Zentralen Kit-Export im externen Paket spiegeln, voraussichtlich nach dem BBM-Vorbild `preview/index.js`.
+- Produktiven Bezugsweg fuer das externe UI-Editor-kit festlegen: lokale File-Dependency, Workspace, vendored Build oder versionierte Quelle.
+- Produktive BBM-Importkante in einem eigenen Paket kontrolliert von lokalem Runtime-Index auf `ui-editor-kit/runtime/preview` umstellen.
 - ChangeRequest-Vertrag mit dem bestehenden Kit- oder BBM-Modell abgleichen.
 - `targetAppId` kommt jetzt aus dem HostContext, der Registry oder dem Runtime-State; die generische Preview-Runtime nutzt keinen BBM-Fallback mehr.
 - Entscheiden, ob `data-ui-editor-id` der verbindliche Kit-DOM-Anker bleibt oder als Attributname parametrierbar wird.
@@ -253,7 +258,7 @@ Vor einer echten Codeuebertragung sind noch diese Punkte zu klaeren:
 
 Naechstes kleines Paket:
 
-Den Import-/Package-Vertrag zwischen BBM und UI-Editor-kit festlegen, noch ohne produktive Umstellung. Dabei ist zu entscheiden, ob das Kit einen ESM-kompatiblen Export bereitstellt oder BBM eine CommonJS-Bruecke nutzt.
+Die produktive BBM-Import-Umstellung im Launcher kontrolliert vorbereiten, noch mit lokaler BBM-Runtime als Referenz/Fallback.
 
 Eine echte BBM-Rueckanbindung darf erst danach erfolgen und muss getrennt pruefen:
 
