@@ -160,6 +160,13 @@ Ziel:
 - renderer-kompatibler Zugriff ueber Bridge, falls noetig
 - keine Launcher-UI
 
+Status:
+
+- erledigt
+- BBM prueft `ui-editor-kit/runtime/hidden-elements` per CommonJS und ESM.
+- `src/renderer/uiEditor/uiEditorKitHiddenElementsRuntimeBridge.js` zeigt auf `../../../node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs`.
+- Der Launcher nutzt die Bridge noch nicht produktiv.
+
 ### G21
 
 Kompakten Button im BBM-Panel ohne Popover anzeigen.

@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.43 abgeschlossen: BBM prueft den UI-Editor-kit Hidden-Elements-Runtime-Importvertrag und hat eine renderer-kompatible Bridge vorbereitet; keine Launcher- oder Panel-UI-Nutzung.
 - K19.42 abgeschlossen: Bedienkonzept fuer ausgeblendete Elemente als kompakter Panel-Button mit spaeterem Popover dokumentiert; keine UI- oder Launcher-Aenderung.
 - K19.41 abgeschlossen: BBM nutzt das UI-Editor-kit Panel-ViewModel vorbereitend im Launcher ueber die Panel-Bridge; sichtbares Verhalten soll unveraendert bleiben.
 - K19.40 abgeschlossen: BBM hat eine renderer-kompatible Bridge fuer die UI-Editor-kit Panel-Runtime vorbereitet; der Launcher nutzt sie noch nicht produktiv.
@@ -86,6 +87,15 @@ Aktueller Stand:
 - [x] K19.40 UI-Editor-kit Panel-Runtime Renderer-Bridge vorbereiten
 - [x] K19.41 Panel-ViewModel im BBM-Launcher vorbereitend nutzen
 - [x] K19.42 Hidden-Elements Button-Konzept dokumentieren
+- [x] K19.43 Hidden-Elements Runtime-Importvertrag und Renderer-Bridge vorbereiten
+
+## Statusupdate K19.43
+- BBM prueft den offiziellen Kit-Subpath `ui-editor-kit/runtime/hidden-elements` mit `scripts/tests/uiEditorKitHiddenElementsRuntimeImport.test.cjs`.
+- CommonJS und ESM werden getestet; sichtbar ausgeblendete Elemente, Button-ViewModel, Popover-ViewModel und neutrale `show`-Aktionen sind abgesichert.
+- `src/renderer/uiEditor/uiEditorKitHiddenElementsRuntimeBridge.js` re-exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs`.
+- `scripts/tests/uiEditorKitHiddenElementsRuntimeBridge.test.cjs` sichert Bridge-Pfad, fehlenden Bare-Import, fehlende Launcher-Nutzung und unveraenderte Preview-/Panel-Bridges ab.
+- `BbmUiEditorRuntimeLauncher.js` nutzt die Hidden-Elements-Runtime noch nicht produktiv.
+- Kein Button, kein Popover, keine DOM-Aenderung, kein Drag, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
 
 ## Statusupdate K19.42
 - `docs/UI_EDITOR_HIDDEN_ELEMENTS_BUTTON_KONZEPT.md` dokumentiert das Bedienkonzept fuer ausgeblendete Elemente.

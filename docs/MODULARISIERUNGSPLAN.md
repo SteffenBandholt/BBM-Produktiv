@@ -218,6 +218,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Fuer die Panel-Runtime ist eine renderer-kompatible BBM-Bridge vorbereitet: `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js` zeigt relativ auf `node_modules/ui-editor-kit/src/runtime/panel/index.mjs`; der Launcher nutzt sie noch nicht produktiv.
 - Der BBM-Launcher nutzt das Kit-Panel-ViewModel jetzt vorbereitend ueber die Panel-Bridge: Titel, Ziel-IDs, Ops, Summary, StatusText und Button-Freigaben laufen durch `buildBbmPanelViewModel(...)`; Drag, Position, DOM-Rendering-Mechanik und Preview-Operationen bleiben im Launcher.
 - Fuer ausgeblendete Elemente ist ein schlankes Bedienkonzept dokumentiert: Hide bleibt `visible = false`, Elemente bleiben in Registry/Layout-State, und spaeter soll ein kompakter Button mit temporaerem Popover statt dauerhafter Panel-Liste folgen.
+- Der offizielle UI-Editor-kit-Hidden-Elements-Runtime-Importvertrag ist in BBM testbar: `ui-editor-kit/runtime/hidden-elements` wird per CommonJS und ESM geprueft; fuer den Electron-Renderer ist `src/renderer/uiEditor/uiEditorKitHiddenElementsRuntimeBridge.js` mit relativem Pfad auf `node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs` vorbereitet.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -227,7 +228,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
 - Spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit als separates Folgethema klaeren
 - Weitere Auslagerung der Kit-Panel-Runtime im BBM-Launcher separat planen; dabei DOM-Grenzen, Drag-Abgrenzung und Electron-Sichtpruefung ausdruecklich trennen.
-- Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel, G20 BBM Importvertrag/Bridge, G21 kompakter Button ohne Popover, G22 Popover, G23 Persistenz separat.
+- Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel und G20 BBM Importvertrag/Bridge sind erledigt; G21 kompakter Button ohne Popover, G22 Popover und G23 Persistenz bleiben separat.
 
 ---
 

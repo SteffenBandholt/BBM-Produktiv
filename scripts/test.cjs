@@ -34,6 +34,8 @@ const { runUiEditorKitPreviewRuntimeImportTests } = require("./tests/uiEditorKit
 const { runUiEditorKitPreviewRuntimeBridgeParityTests } = require("./tests/uiEditorKitPreviewRuntimeBridgeParity.test.cjs");
 const { runUiEditorKitPanelRuntimeImportTests } = require("./tests/uiEditorKitPanelRuntimeImport.test.cjs");
 const { runUiEditorKitPanelRuntimeBridgeTests } = require("./tests/uiEditorKitPanelRuntimeBridge.test.cjs");
+const { runUiEditorKitHiddenElementsRuntimeImportTests } = require("./tests/uiEditorKitHiddenElementsRuntimeImport.test.cjs");
+const { runUiEditorKitHiddenElementsRuntimeBridgeTests } = require("./tests/uiEditorKitHiddenElementsRuntimeBridge.test.cjs");
 const { runUiEditorKitLocalDependencyTests } = require("./tests/uiEditorKitLocalDependency.test.cjs");
 const { runRestarbeitenEditorHostAdapterTests } = require("./tests/restarbeitenEditorHostAdapter.test.cjs");
 const { runRestarbeitenEditorRegistryDomAnchorsTests } = require("./tests/restarbeitenEditorRegistry.domAnchors.test.cjs");
@@ -166,6 +168,8 @@ async function main() {
   await runUiEditorKitPreviewRuntimeBridgeParityTests(run);
   await runUiEditorKitPanelRuntimeImportTests(run);
   await runUiEditorKitPanelRuntimeBridgeTests(run);
+  await runUiEditorKitHiddenElementsRuntimeImportTests(run);
+  await runUiEditorKitHiddenElementsRuntimeBridgeTests(run);
   await runUiEditorKitLocalDependencyTests(run);
   await runRestarbeitenEditorHostAdapterTests(run);
   await runRestarbeitenEditorRegistryDomAnchorsTests(run);

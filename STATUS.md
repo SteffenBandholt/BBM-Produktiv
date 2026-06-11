@@ -17,12 +17,19 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-kit Hidden-Elements-Runtime Importvertrag und Renderer-Bridge vorbereitet:
+  - BBM prueft den offiziellen Kit-Subpath `ui-editor-kit/runtime/hidden-elements` mit `scripts/tests/uiEditorKitHiddenElementsRuntimeImport.test.cjs`.
+  - CommonJS und ESM sind testweise verfuegbar.
+  - `src/renderer/uiEditor/uiEditorKitHiddenElementsRuntimeBridge.js` re-exportiert relativ aus `../../../node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs`.
+  - `scripts/tests/uiEditorKitHiddenElementsRuntimeBridge.test.cjs` prueft Bridge-Pfad, verbotenen Bare-Import, unveraenderte Preview-/Panel-Bridge, fehlende Launcher-Nutzung und Fach-/Storage-/DB-/IPC-/PDF-Guardrails.
+  - `BbmUiEditorRuntimeLauncher.js` nutzt die Hidden-Elements-Runtime noch nicht produktiv; kein Button, kein Popover, keine DOM-Aenderung, keine Speicherung und keine Fachlogik.
+
 - UI-Editor Hidden-Elements-Button konzipiert:
   - `docs/UI_EDITOR_HIDDEN_ELEMENTS_BUTTON_KONZEPT.md` dokumentiert das spaetere Bedienkonzept fuer ausgeblendete Elemente.
   - Grundregel: Hide entfernt kein Element aus Registry oder Layout-State, sondern bedeutet nur `visible = false`.
   - Das Panel soll schlank bleiben; statt dauerhafter Liste ist spaeter ein kompakter Button wie `Ausgeblendete: 3` vorgesehen.
   - Ein Popover/Dropdown mit `Einblenden` je Element bleibt ein spaeteres Paket.
-  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit, G20 BBM Importvertrag/Bridge, G21 kompakter Button ohne Popover, G22 Popover/Dropdown, G23 Persistenz separat.
+  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit und G20 BBM Importvertrag/Bridge sind erledigt; G21 kompakter Button ohne Popover, G22 Popover/Dropdown und G23 Persistenz bleiben separat.
   - Keine Launcher-Funktionsaenderung, keine neue Panel-UI, kein Popover, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
 
 - UI-Editor-kit Panel-ViewModel im BBM-Launcher vorbereitend genutzt:
