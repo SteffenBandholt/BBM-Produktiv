@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor generische Preview-Runtime-Hilfen ausgelagert:
+  - Kleine fachneutrale Runtime-Einheiten liegen jetzt unter `src/renderer/editorRuntime/preview/`.
+  - Ausgelagert sind Operation-Mapping und `allowedOps`/`lockedOps`-Auswertung, Preview-Zielmodell (`self`/`parent`) und temporaere Pending-ChangeRequest-Hilfen.
+  - `BbmUiEditorRuntimeLauncher.js` bleibt der BBM-sichtbare Launcher/Panel-Orchestrator fuer DOM-Panel, Drag-Panel, HostAdapter, Zielauswahl und Status-Rendering.
+  - Keine neue Preview-Funktion, keine Speicherung, kein localStorage, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Aenderung.
+  - Geprueft mit gezieltem Preview-Runtime-Test, bestehendem BBM-Launcher-Test, `npm test`, `git diff --check` und Guardrail-Suche gegen verbotene Speicher-/Fachbegriffe.
+  - Naechster offener Schritt: fachliche Sichtpruefung im lokalen Electron-DEV-Kontext.
+
 - UI-Editor HostAdapter-Schnittstelle stabilisiert:
   - Der vorhandene Contract unter `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js` wurde erweitert, keine zweite Contract-Struktur angelegt.
   - Der HostAdapter beschreibt jetzt `getHostContext`, `getRegistry`, `getCurrentLayoutState`, `getCapabilities`, `onPendingChangeRequestsChanged` und `submitChangeRequests`.

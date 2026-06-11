@@ -1,6 +1,23 @@
 import * as installedLauncherButtonArtifactModule from "../../../uiEditor/uiEditorLauncherButton.js";
 import * as installedTargetSelectionArtifactModule from "../../../uiEditor/targetSelection.js";
 import { createInMemoryBbmEditorHostAdapter } from "../editorRuntime/host/bbmEditorHostAdapterContract.js";
+import {
+  getElementAllowedOps,
+  getElementLockedOps,
+  isPreviewOperationAllowed,
+} from "../editorRuntime/preview/editorPreviewOperations.js";
+import {
+  getNodeUiEditorId,
+  getPreviewTargetElement,
+  getPreviewTargetElementId,
+  getPreviewTargetMode,
+  resolvePreviewTargetElement as resolvePreviewTargetElementModel,
+} from "../editorRuntime/preview/editorPreviewTargetModel.js";
+import {
+  getPendingChangeRequestSummary,
+  removePendingChangeRequestsForTarget as removePendingChangeRequestsForTargetModel,
+  upsertPreviewChangeRequest as upsertPreviewChangeRequestModel,
+} from "../editorRuntime/preview/editorPendingChangeRequests.js";
 
 void installedLauncherButtonArtifactModule;
 void installedTargetSelectionArtifactModule;
@@ -275,38 +292,6 @@ function removeExistingPreviewPanel() {
   launcherPreviewPanelNode = null;
 }
 
-function getElementAllowedOps(element = null) {
-  return Array.isArray(element?.allowedOps)
-    ? element.allowedOps.map((entry) => String(entry || "").trim()).filter(Boolean)
-    : [];
-}
-
-function getElementLockedOps(element = null) {
-  return Array.isArray(element?.lockedOps)
-    ? element.lockedOps.map((entry) => String(entry || "").trim()).filter(Boolean)
-    : [];
-}
-
-function isPreviewOperationAllowed(element = null, operation = "") {
-  const normalizedOperation = String(operation || "").trim();
-  const allowedOps = getElementAllowedOps(element);
-  const lockedOps = getElementLockedOps(element);
-  if (!normalizedOperation || lockedOps.includes(normalizedOperation)) return false;
-  if (normalizedOperation === "resizeWidth") {
-    if (lockedOps.includes("width")) return false;
-    if (allowedOps.includes("width")) return true;
-    if (lockedOps.includes("resize")) return false;
-    return allowedOps.includes("resize");
-  }
-  if (normalizedOperation === "resizeHeight") {
-    if (lockedOps.includes("height")) return false;
-    if (allowedOps.includes("height")) return true;
-    if (lockedOps.includes("resize")) return false;
-    return allowedOps.includes("resize");
-  }
-  return allowedOps.includes(normalizedOperation);
-}
-
 function getPreviewOriginalStyle(targetNode) {
   return {
     transform: targetNode?.style?.transform || "",
@@ -346,58 +331,15 @@ function getTargetBaseSize(targetNode, propertyName) {
   return Number.isFinite(fallbackValue) && fallbackValue > 0 ? fallbackValue : 0;
 }
 
-function getNodeUiEditorId(node = null) {
-  return String(node?.getAttribute?.("data-ui-editor-id") || "").trim();
-}
-
-function findAncestorUiEditorElementById(targetNode = null, elementId = "") {
-  const normalizedElementId = String(elementId || "").trim();
-  if (!targetNode || !normalizedElementId) return null;
-  let current = targetNode.parentElement || null;
-  while (current) {
-    if (getNodeUiEditorId(current) === normalizedElementId) return current;
-    current = current.parentElement || null;
-  }
-  return null;
-}
-
-function normalizePreviewTargetMode(value = null) {
-  if (typeof value === "string") return value.trim().toLowerCase();
-  if (value && typeof value === "object" && typeof value.mode === "string") {
-    return value.mode.trim().toLowerCase();
-  }
-  return "";
-}
-
-function getPreviewTargetMode(registryElement = null) {
-  const explicitMode = normalizePreviewTargetMode(registryElement?.previewTargetMode)
-    || normalizePreviewTargetMode(registryElement?.previewTarget)
-    || normalizePreviewTargetMode(registryElement?.affectsContainer)
-    || normalizePreviewTargetMode(registryElement?.editGranularity);
-  if (["self", "element", "selected"].includes(explicitMode)) return "self";
-  if (["parent", "container", "layoutcontainer", "layout-container"].includes(explicitMode)) return "parent";
-  return "auto";
-}
-
 function resolvePreviewTargetElement(state = {}, selection = {}) {
   const selectionElement = selection.registryElement || selection.element || state.selectedElement || null;
   const selectedId = String(selection.elementId || selectionElement?.id || "").trim();
-  const selectedElement = selectedId ? getRegisteredElementById(state, selectedId) || selectionElement : selectionElement;
-  const targetNode = selection.targetElement || state.selectedTargetNode || null;
-  if (!targetNode) return null;
-  const previewTargetMode = getPreviewTargetMode(selectedElement);
-  if (previewTargetMode !== "parent") return targetNode;
-
-  const parentTarget = findAncestorUiEditorElementById(targetNode, selectedElement?.parentId);
-  return parentTarget || targetNode;
-}
-
-function getPreviewTargetElement(state = {}) {
-  return state.selectedPreviewTargetNode || state.selectedTargetNode || null;
-}
-
-function getPreviewTargetElementId(state = {}, targetNode = null) {
-  return getNodeUiEditorId(targetNode) || String(state?.selectedElement?.id || "").trim();
+  return resolvePreviewTargetElementModel({
+    selectionElement,
+    selectedId,
+    targetNode: selection.targetElement || state.selectedTargetNode || null,
+    getRegisteredElementById: (uiEditorId) => getRegisteredElementById(state, uiEditorId),
+  });
 }
 
 function describePreviewTargetElement(targetNode = null, selectedNode = null) {
@@ -465,13 +407,11 @@ function resetPreviewForTarget(state = {}, targetNode = null) {
 }
 
 function removePendingChangeRequestsForTarget(state = {}, targetNode = null) {
-  if (!Array.isArray(state.pendingChangeRequests)) return 0;
-  const targetElementId = getPreviewTargetElementId(state, targetNode);
-  if (!targetElementId) return 0;
-  const previousCount = state.pendingChangeRequests.length;
-  state.pendingChangeRequests = state.pendingChangeRequests.filter((request) => request?.targetElementId !== targetElementId);
-  if (previousCount !== state.pendingChangeRequests.length) notifyPendingChangeRequestsChanged(state);
-  return previousCount - state.pendingChangeRequests.length;
+  return removePendingChangeRequestsForTargetModel({
+    state,
+    targetNode,
+    notify: notifyPendingChangeRequestsChanged,
+  });
 }
 
 function resetAllPreviewChanges(state = {}) {
@@ -818,83 +758,22 @@ function getSelectedRegistryElementForPreview(state = {}) {
   return selectedId ? getRegisteredElementById(state, selectedId) : null;
 }
 
-function getChangeRequestOperation(operation = "") {
-  if (operation === "resizeWidth") return "width";
-  if (operation === "resizeHeight") return "height";
-  if (operation === "hide" || operation === "show") return "visibility";
-  return operation;
-}
-
 function getNextChangeRequestId(state = {}) {
   state.changeRequestSequence = (Number(state.changeRequestSequence) || 0) + 1;
   return `preview-${state.changeRequestSequence}`;
 }
 
 function upsertPreviewChangeRequest(state = {}, registryElement = null, targetNode = null, operation = "", payload = {}) {
-  if (!registryElement || !targetNode) return null;
-  if (!Array.isArray(state.pendingChangeRequests)) state.pendingChangeRequests = [];
-
-  const registry = getSelectedRegistryFromState(state);
-  const normalizedOperation = getChangeRequestOperation(operation);
-  const targetElementId = getPreviewTargetElementId(state, targetNode);
-  if (!normalizedOperation || !targetElementId) return null;
-
-  const existing = state.pendingChangeRequests.find((request) => (
-    request?.targetElementId === targetElementId &&
-    request?.operation === normalizedOperation
-  ));
-  const now = new Date().toISOString();
-  const baseRequest = existing || {
-    changeId: getNextChangeRequestId(state),
-    targetAppId: registry.targetAppId || "bbm",
-    moduleId: registry.moduleId || "",
-    scopeId: registry.uiScope || state.activeUiScope || "",
-    elementId: registryElement.id,
-    operation: normalizedOperation,
-    payload: {},
-    createdAt: now,
-    source: "preview",
-    previewTargetMode: getPreviewTargetMode(registryElement),
-    targetElementId,
-    persistent: false,
-  };
-
-  if (normalizedOperation === "move") {
-    baseRequest.payload = {
-      dx: (Number(baseRequest.payload?.dx) || 0) + (Number(payload.dx) || 0),
-      dy: (Number(baseRequest.payload?.dy) || 0) + (Number(payload.dy) || 0),
-    };
-  } else if (normalizedOperation === "width" || normalizedOperation === "height") {
-    baseRequest.payload = {
-      delta: (Number(baseRequest.payload?.delta) || 0) + (Number(payload.delta) || 0),
-    };
-  } else if (normalizedOperation === "visibility") {
-    baseRequest.payload = {
-      visible: operation === "show",
-    };
-  }
-
-  baseRequest.elementId = registryElement.id;
-  baseRequest.previewTargetMode = getPreviewTargetMode(registryElement);
-  baseRequest.targetElementId = targetElementId;
-  baseRequest.updatedAt = now;
-
-  if (!existing) state.pendingChangeRequests.push(baseRequest);
-  notifyPendingChangeRequestsChanged(state);
-  return baseRequest;
-}
-
-function getPendingChangeRequestSummary(state = {}, elementId = "") {
-  const requests = Array.isArray(state.pendingChangeRequests) ? state.pendingChangeRequests : [];
-  const normalizedElementId = String(elementId || "").trim();
-  const elementRequests = normalizedElementId
-    ? requests.filter((request) => request?.elementId === normalizedElementId || request?.targetElementId === normalizedElementId)
-    : [];
-  const operations = Array.from(new Set(elementRequests.map((request) => request?.operation).filter(Boolean)));
-  return {
-    total: requests.length,
-    operations,
-  };
+  return upsertPreviewChangeRequestModel({
+    state,
+    registry: getSelectedRegistryFromState(state),
+    registryElement,
+    targetNode,
+    operation,
+    payload,
+    getNextChangeRequestId,
+    notify: notifyPendingChangeRequestsChanged,
+  });
 }
 
 function applyPreviewOperation(state = {}, operation = "", payload = {}) {

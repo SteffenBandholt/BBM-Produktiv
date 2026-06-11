@@ -29,6 +29,7 @@ const { runUiEditorContractTests } = require("./tests/uiEditorContract.test.cjs"
 const { runUiV2EditorV2RulesTests } = require("./tests/uiV2EditorV2Rules.test.cjs");
 const { runEditorLabV2Tests } = require("./tests/editorLabV2.test.cjs");
 const { runEditorRuntimeCatalogTests } = require("./tests/editorRuntime.catalog.test.cjs");
+const { runEditorPreviewRuntimeTests } = require("./tests/editorPreviewRuntime.test.cjs");
 const { runRestarbeitenEditorHostAdapterTests } = require("./tests/restarbeitenEditorHostAdapter.test.cjs");
 const { runRestarbeitenEditorRegistryDomAnchorsTests } = require("./tests/restarbeitenEditorRegistry.domAnchors.test.cjs");
 const { runEditorScopeInspectorTests } = require("./tests/editorScopeInspector.test.cjs");
@@ -155,6 +156,7 @@ async function main() {
   await runUiV2EditorV2RulesTests(run);
   await runEditorLabV2Tests(run);
   await runEditorRuntimeCatalogTests(run);
+  await runEditorPreviewRuntimeTests(run);
   await runRestarbeitenEditorHostAdapterTests(run);
   await runRestarbeitenEditorRegistryDomAnchorsTests(run);
   await runEditorScopeInspectorTests(run);

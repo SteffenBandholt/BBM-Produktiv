@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.27 abgeschlossen: Generische Preview-Operationen, Preview-Zielmodell und Pending-ChangeRequest-Hilfen liegen unter `src/renderer/editorRuntime/preview/`; der BBM-Launcher bleibt Orchestrator.
 - K19.26 abgeschlossen: Die BBM-HostAdapter-Schnittstelle ist dokumentiert und testseitig stabilisiert; Runtime-Preview bleibt in-memory und ohne Speicherung.
 - K19.25 abgeschlossen: Der Trennschnitt zwischen BBM-Hostintegration, Restarbeiten-Modulankern und generischer UI-Editor-Runtime ist dokumentiert; keine Funktionsaenderung.
 - K19.24 abgeschlossen: Preview-Operationen erzeugen/aktualisieren temporaere ChangeRequests im UI-Editor-State; Reset, Verwerfen und Deaktivieren raeumen sie wieder auf.
@@ -54,6 +55,15 @@ Aktueller Stand:
 - [x] K19.24 UI-Editor Preview-Operationen als ChangeRequests sammeln
 - [x] K19.25 UI-Editor-Trennschnitt BBM vs Kit dokumentieren
 - [x] K19.26 BBM-HostAdapter-Schnittstelle stabilisieren
+- [x] K19.27 Generische Preview-Runtime-Hilfen aus BBM-Launcher auslagern
+
+## Statusupdate K19.27
+- Generische Preview-Hilfen wurden aus `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js` in kleine neutrale Module unter `src/renderer/editorRuntime/preview/` ausgelagert.
+- Ausgelagert sind Operation-Mapping und `allowedOps`/`lockedOps`-Auswertung, Preview-Zielmodell (`self`/`parent`), sowie Erzeugung, Kumulierung, Deduplizierung, Zusammenfassung und zielbezogenes Entfernen temporaerer `pendingChangeRequests`.
+- Der BBM-Launcher bleibt fuer DOM-Panel, Drag-Panel, HostAdapter-Anbindung, Zielauswahl und Status-Rendering zustaendig.
+- Keine neue Preview-Funktion, keine Speicherung, kein localStorage, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Registry-Aenderung.
+- Neue Tests nutzen `sample.screen`/`sample.field` und pruefen die generischen Module sowie Guardrails gegen Speicher- und Ziel-App-Sonderlogik.
+- Naechster sinnvoller Schritt: fachliche Sichtpruefung in der echten Electron-DEV-App; danach kann ein spaeteres Paket weitere UI-Editor-kit-Rueckfuehrung vorbereiten.
 
 ## Statusupdate K19.26
 - Die BBM-HostAdapter-Schnittstelle ist in `docs/UI_EDITOR_HOSTADAPTER_CONTRACT.md` dokumentiert.
