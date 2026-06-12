@@ -21,6 +21,7 @@ Package-Exports:
 - `ui-editor-kit/runtime/preview`
 - `ui-editor-kit/runtime/panel`
 - `ui-editor-kit/runtime/hidden-elements`
+- `ui-editor-kit/runtime/surface`
 
 Die Preview-Runtime liefert neutrale Operationen, Preview-Zielaufloesung und Pending-ChangeRequest-Hilfen.
 
@@ -28,7 +29,9 @@ Die Panel-Runtime liefert aktuell Panel-State, Positionsnormalisierung, Open/Clo
 
 Die Hidden-Elements-Runtime liefert Hidden-Elements-Normalisierung, Button-ViewModel und Popover-ViewModel.
 
-Nicht vorhanden ist aktuell eine abgeschlossene SurfaceRuntime oder DragRuntime als eigener offizieller Kit-Export.
+Die Surface-Runtime liefert seit G37 ein neutrales Modell mit Normalisierung und Validierung fuer `ui-screen`, `panel`, `pdf-page`, `canvas` und `plan`.
+
+Nicht vorhanden ist aktuell eine abgeschlossene DragRuntime als eigener offizieller Kit-Export.
 
 ### BBM
 
@@ -38,6 +41,7 @@ Relevante BBM-Dateien:
 - `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`
 - `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js`
 - `src/renderer/uiEditor/uiEditorKitHiddenElementsRuntimeBridge.js`
+- `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterFactory.js`
 - `src/renderer/modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js`
@@ -45,6 +49,8 @@ Relevante BBM-Dateien:
 - `src/renderer/editorRuntime/scopes/editorScopeTypes.js`
 
 Der Electron-Renderer nutzt bewusst Bridge-Dateien mit relativem Pfad in `node_modules`, weil Bare-Package-Imports wie `ui-editor-kit/runtime/panel` im Renderer nicht zulaessig sind.
+
+Die Surface-Bridge ist seit G38 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt.
 
 BBM besitzt weiterhin:
 
@@ -290,11 +296,15 @@ Wichtig: G36 aktiviert keine PDF-/Plan-/Canvas-Bearbeitung.
 - reine Modell-/Validator-Tests,
 - keine BBM-Produktivnutzung.
 
+Status: erledigt im UI-Editor-kit.
+
 ### G38: BBM Surface-Bridge vorbereiten
 
 - renderer-kompatible Bridge fuer eine spaetere `ui-editor-kit/runtime/surface`,
 - Importvertrag testen,
 - kein Launcher-Umbau.
+
+Status: erledigt in BBM. Die Bridge ist pruefbar, aber nicht produktiv genutzt.
 
 ### G39: UI-Screen-SurfaceAdapter fuer BBM vorbereiten
 

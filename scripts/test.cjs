@@ -36,6 +36,7 @@ const { runUiEditorKitPanelRuntimeImportTests } = require("./tests/uiEditorKitPa
 const { runUiEditorKitPanelRuntimeBridgeTests } = require("./tests/uiEditorKitPanelRuntimeBridge.test.cjs");
 const { runUiEditorKitHiddenElementsRuntimeImportTests } = require("./tests/uiEditorKitHiddenElementsRuntimeImport.test.cjs");
 const { runUiEditorKitHiddenElementsRuntimeBridgeTests } = require("./tests/uiEditorKitHiddenElementsRuntimeBridge.test.cjs");
+const { runUiEditorKitSurfaceRuntimeBridgeTests } = require("./tests/uiEditorKitSurfaceRuntimeBridge.test.cjs");
 const { runUiEditorKitLocalDependencyTests } = require("./tests/uiEditorKitLocalDependency.test.cjs");
 const { runEditorLayoutOverrideModelTests } = require("./tests/editorLayoutOverrideModel.test.cjs");
 const { runUiEditorLayoutOverridesRepoTests } = require("./tests/uiEditorLayoutOverridesRepo.test.cjs");
@@ -173,6 +174,7 @@ async function main() {
   await runUiEditorKitPanelRuntimeBridgeTests(run);
   await runUiEditorKitHiddenElementsRuntimeImportTests(run);
   await runUiEditorKitHiddenElementsRuntimeBridgeTests(run);
+  await runUiEditorKitSurfaceRuntimeBridgeTests(run);
   await runUiEditorKitLocalDependencyTests(run);
   await runEditorLayoutOverrideModelTests(run);
   await runUiEditorLayoutOverridesRepoTests(run);

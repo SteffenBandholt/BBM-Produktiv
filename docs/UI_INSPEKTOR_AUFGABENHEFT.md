@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.60 abgeschlossen: BBM kann die UI-Editor-kit Surface-Runtime ueber `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` testweise laden; `ui-screen` und `pdf-page` werden normalisiert/validiert, ohne Launcher- oder Produktivnutzung.
 - K19.59 abgeschlossen: UI-Editor-kit Zielarchitektur fuer Surface-, Panel-, Drag- und spaetere PDF-/Plan-/Canvas-Faehigkeit ist in `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md` dokumentiert; keine Produktivlogik aktiviert.
 - K19.58 abgeschlossen: Hidden-Elements-Block ist als stabiler Referenzstand in `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` dokumentiert; keine neue Produktivlogik und keine weitere Scope-Freigabe.
 - K19.57 abgeschlossen: Freigabe weiterer Hidden-Elements-Scopes ist als Allowlist/Policy vorbereitet; aktiv bleibt nur `restarbeiten.ui.main`.
@@ -120,6 +121,15 @@ Aktueller Stand:
 - [x] K19.57 Hidden-Elements Scope-Freigabe-Policy vorbereiten
 - [x] K19.58 Hidden-Elements-Block als Referenzstand abschliessen
 - [x] K19.59 UI-Editor-kit Surface-/Panel-/Drag-/PDF-Zielarchitektur inventarisieren
+- [x] K19.60 UI-Editor-kit Surface-Runtime in BBM per Bridge pruefen
+
+## Statusupdate K19.60
+- `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` ist als renderer-kompatible Bridge auf `node_modules/ui-editor-kit/src/runtime/surface/index.mjs` vorbereitet.
+- `scripts/tests/uiEditorKitSurfaceRuntimeBridge.test.cjs` prueft Bridge-Ladbarkeit, Surface-Funktionen, unterstuetzte Typen, Ablehnung unbekannter Typen sowie `ui-screen`- und `pdf-page`-Beispielmodelle.
+- Der Test ist in `scripts/test.cjs` eingebunden.
+- Keine Produktivnutzung im Launcher, keine sichtbare UI-Aenderung, keine PDF-/Canvas-/Drag-Aktivierung, keine neue Persistenz, keine Registry-Aenderung und keine neuen Scopes.
+- UI-Editor-kit speichert nicht; BBM bleibt Host fuer Registry, Scopes, Persistenz, Rechte, DB/IPC und Fachlogik.
+- Naechste getrennte Folgepakete bleiben: G39 UI-Screen-SurfaceAdapter, G40 DragRuntime, G41 optionale BBM-Panel-Drag-Nutzung.
 
 ## Statusupdate K19.59
 - `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md` dokumentiert das Zielbild fuer Surface, SurfaceAdapter, PanelRuntime, DragRuntime, HostAdapter, Registry, ChangeRequest und LayoutState.

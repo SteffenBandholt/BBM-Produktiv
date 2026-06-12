@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-kit Surface-Runtime in BBM per Bridge pruefbar:
+  - G38 legt `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` als renderer-kompatible Bridge auf `node_modules/ui-editor-kit/src/runtime/surface/index.mjs` an.
+  - Der Bridge-Test prueft `SUPPORTED_SURFACE_TYPES`, `normalizeSurfaceModel`, `validateSurfaceModel`, `isSupportedSurfaceType`, ein `ui-screen`-Beispiel und ein `pdf-page`-Beispiel.
+  - Der Launcher nutzt die Surface-Runtime noch nicht produktiv; es gibt keine UI-Aenderung, keine PDF-/Canvas-/Drag-Aktivierung, keine neue Persistenz, keine Registry-Aenderung und keinen Bare-Package-Import im Renderer.
+  - UI-Editor-kit speichert weiterhin nicht; BBM bleibt Host fuer Registry, Scopes, Persistenz, Rechte, DB/IPC und Fachlogik.
+
 - UI-Editor-kit Surface-/Panel-/Drag-/PDF-Zielarchitektur inventarisiert:
   - G36 dokumentiert in `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md` das Zielbild fuer Surface, SurfaceAdapter, PanelRuntime, DragRuntime, HostAdapter, Registry, ChangeRequest und LayoutState.
   - Das Dokument trennt klar: UI-Editor-kit liefert neutrale Runtime-/ViewModel-/Surface-Hilfen; BBM bleibt fuer konkrete Scopes, Registry, Persistenz, Rechte, DB/IPC, HostAdapter, Module und Fachlogik verantwortlich.

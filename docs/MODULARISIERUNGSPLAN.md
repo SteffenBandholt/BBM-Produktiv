@@ -235,6 +235,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Die Freigabe weiterer Hidden-Elements-Scopes ist als Policy vorbereitet: `visibilityPersistenceScopePolicy` erlaubt aktuell ausschliesslich `restarbeiten.ui.main`; bekannte andere Scopes, unbekannte Scopes und Wildcards bleiben blockiert, und weitere Scopes brauchen eigene Freigabepakete.
 - Der Hidden-Elements-Block ist als stabiler Referenzstand abgeschlossen: `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` dokumentiert Button/Popover, Datenfluss, ChangeRequest-Modell, Pilot-Persistenz, Restore-Pfad, Scope-Policy, Sicherheitsgrenzen, Nicht-Ziele und Test-/Guardrail-Referenzen. Es wurde keine neue Produktivlogik und keine weitere Scope-Freigabe aktiviert.
 - Die Zielarchitektur fuer UI-Editor-kit Surface-, Panel-, Drag- und spaetere PDF-/Plan-/Canvas-Faehigkeit ist inventarisiert: `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md` beschreibt aktuelles Kit-/BBM-Inventar, neutrales Surface-Zielmodell, Kit-vs-Host-Trennung, Sicherheitsgrenzen und Folgepakete G37 ff.; es wurde keine Produktivlogik aktiviert.
+- Die UI-Editor-kit Surface-Runtime ist in BBM ueber eine reine Renderer-Bridge pruefbar: `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` zeigt relativ auf die installierte Kit-Runtime, und der Bridge-Test validiert Surface-Typen sowie `ui-screen`-/`pdf-page`-Beispielmodelle. Es gibt keine Launcher-Nutzung, keine UI-/PDF-/Canvas-/Drag-Aktivierung, keine Persistenz und keine neue Scope-Freigabe.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -244,7 +245,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
 - Spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit als separates Folgethema klaeren
 - Weitere Auslagerung der Kit-Panel-Runtime im BBM-Launcher separat planen; dabei DOM-Grenzen, Drag-Abgrenzung und Electron-Sichtpruefung ausdruecklich trennen.
-- Surface-/Panel-/Drag-Folgeschritte getrennt halten: G36 Zielarchitektur ist erledigt; G37 Surface-Modell im Kit, G38 BBM Surface-Bridge, G39 UI-Screen-SurfaceAdapter, G40 DragRuntime und G41 optionale BBM-Panel-Drag-Nutzung bleiben separate Pakete.
+- Surface-/Panel-/Drag-Folgeschritte getrennt halten: G36 Zielarchitektur, G37 Surface-Modell im Kit und G38 BBM Surface-Bridge sind erledigt; G39 UI-Screen-SurfaceAdapter, G40 DragRuntime und G41 optionale BBM-Panel-Drag-Nutzung bleiben separate Pakete.
 - Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover, G23 Persistenz-Trennschnitt, G24 Layout-State-Lesen, G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz-Vorbereitung, G28 Speicherort-/Freigabeentscheidung, G29 technische Speicher-Modellvorbereitung, G30 validierter HostAdapter-Dry-Run, G31 Pilot-Persistenz fuer `restarbeiten.ui.main`, G32 Restore-Absicherung, G33 Pilot-Ruecksetzpfad, G34 Scope-Freigabe-Policy und G35 Referenzabschluss sind erledigt; weitere echte Scope-Freigaben bleiben separat.
 
 ---
