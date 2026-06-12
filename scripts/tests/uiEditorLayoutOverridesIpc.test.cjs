@@ -94,4 +94,25 @@ async function runUiEditorLayoutOverridesIpcTests(run) {
   });
 }
 
+if (require.main === module) {
+  const run = async (name, fn) => {
+    try {
+      const out = fn();
+      if (out && typeof out.then === "function") await out;
+      console.log(`ok - ${name}`);
+    } catch (err) {
+      console.error(`not ok - ${name}`);
+      console.error(err?.stack || err?.message || err);
+      process.exitCode = 1;
+    }
+  };
+
+  runUiEditorLayoutOverridesIpcTests(run).then(() => {
+    if (!process.exitCode) console.log("uiEditorLayoutOverridesIpc.test.cjs passed");
+  }).catch((err) => {
+    console.error(err?.stack || err?.message || err);
+    process.exitCode = 1;
+  });
+}
+
 module.exports = { runUiEditorLayoutOverridesIpcTests };

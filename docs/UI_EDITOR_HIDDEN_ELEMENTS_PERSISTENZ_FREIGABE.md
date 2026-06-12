@@ -4,7 +4,7 @@
 
 G28 legte Speicherort-Empfehlung, Zielstruktur, Freigabegrenzen und Umsetzungsreihenfolge fuer persistente Hidden-Element-Overrides fest.
 
-Stand nach G31: Die Persistenz ist nur fuer den Pilot-Scope `restarbeiten.ui.main` aktiv.
+Stand nach G32: Die Persistenz ist nur fuer den Pilot-Scope `restarbeiten.ui.main` aktiv, und der Restore-Leseweg ist testseitig abgesichert.
 
 Weiterhin deaktiviert bleiben:
 
@@ -14,7 +14,7 @@ Weiterhin deaktiviert bleiben:
 - keine globale Aktivierung von `canPersistVisibility: true`
 - keine Persistenz fuer andere Scopes
 - keine Persistenz fuer Move, Resize, Text, Fachfelder oder sonstige Operationen
-- kein automatisches Wiederherstellen beim App-Start ausserhalb des aktuellen Layout-State-Lesewegs
+- kein automatisches Wiederherstellen beim App-Start ausserhalb des freigegebenen Pilot-Layout-State-Lesewegs
 
 ## Ausgangspunkt
 
@@ -301,9 +301,13 @@ Status:
 
 ### G32: Wiederherstellung beim App-Start fuer Pilot-Scope
 
-- gespeicherte Overrides fuer den Pilot-Scope lesen
-- Effective-State bilden
-- Hidden-Elements-Liste konsistent initialisieren
+Status:
+
+- erledigt als technische Restore-Absicherung fuer `restarbeiten.ui.main`.
+- Gespeicherte Overrides werden ueber `loadCurrentLayoutState()` aus dem BBM-Speicher gelesen.
+- `getCurrentLayoutState("restarbeiten.ui.main")` liefert die geladenen Datensaetze mit `overrides.visible` und top-level `visible`.
+- Die Hidden-Elements-Logik erkennt `visible: false` als hidden und zaehlt `visible: true` nicht als hidden.
+- Registry, UI-Editor-kit, weitere Scopes, PDF-/Drucklogik und Fachlogik bleiben unveraendert.
 
 ### G33: UI-Pruefung und Ruecksetzfunktion
 
@@ -400,4 +404,26 @@ Weiterhin nicht Teil des Stands:
 - kein `writeFile`
 - keine Registry-Mutation
 - keine PDF-/Drucklogik
-- keine App-Start-Wiederherstellung als eigenes Initial-Load-Paket; G32 bleibt dafuer getrennt
+- Restore-Absicherung bleibt als G32 getrennt
+
+## Stand nach G32
+
+G32 aktiviert keine weitere Persistenz und keine neue UI.
+
+Abgesichert ist:
+
+- Ein gueltiger Visibility-Override fuer `restarbeiten.ui.main` kann gespeichert werden.
+- Ein neuer HostAdapter-/Lesezyklus laedt den gespeicherten Override ueber `loadCurrentLayoutState()`.
+- `getCurrentLayoutState("restarbeiten.ui.main")` liefert danach `visible: false` bzw. nach erneutem Speichern `visible: true`.
+- Die Hidden-Elements-Logik nutzt diesen Layout-State und zaehlt nur `visible: false` als ausgeblendet.
+- Andere Scopes, unbekannte `elementId`, Nicht-Visibility-Operationen und ungueltige `payload.visible` bleiben blockiert.
+
+Weiterhin nicht Teil des Stands:
+
+- keine globale Scope-Freigabe
+- keine Persistenz fuer Move/Resize/Text/Fachfelder
+- kein `localStorage`
+- kein `writeFile`
+- keine Registry-Mutation
+- keine PDF-/Drucklogik
+- kein UI-Editor-kit-Speicher

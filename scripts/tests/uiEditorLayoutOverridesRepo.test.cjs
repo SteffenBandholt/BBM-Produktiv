@@ -3,6 +3,44 @@ const fs = require("node:fs");
 const os = require("node:os");
 const path = require("node:path");
 const Module = require("node:module");
+const { spawnSync } = require("node:child_process");
+
+function rerunWithElectronNodeIfNeeded() {
+  if (process.versions.electron || process.env.BBM_UI_EDITOR_LAYOUT_OVERRIDES_REPO_ELECTRON_NODE === "1") {
+    return false;
+  }
+  const isWindows = process.platform === "win32";
+  const electronCandidates = isWindows
+    ? [
+        path.resolve(process.cwd(), "node_modules", "electron", "dist", "electron.exe"),
+        path.resolve(process.cwd(), "node_modules", ".bin", "electron.cmd"),
+      ]
+    : [path.resolve(process.cwd(), "node_modules", ".bin", "electron")];
+  const electronBinary = electronCandidates.find((candidate) => fs.existsSync(candidate));
+  if (!electronBinary) return false;
+
+  const useCmdLauncher = isWindows && electronBinary.toLowerCase().endsWith(".cmd");
+  const child = spawnSync(
+    useCmdLauncher ? "cmd.exe" : electronBinary,
+    useCmdLauncher
+      ? ["/d", "/s", "/c", `"${electronBinary}" "${__filename}"`]
+      : [__filename],
+    {
+      env: {
+        ...process.env,
+        ELECTRON_RUN_AS_NODE: "1",
+        BBM_UI_EDITOR_LAYOUT_OVERRIDES_REPO_ELECTRON_NODE: "1",
+      },
+      stdio: "inherit",
+    }
+  );
+  if (child.error) {
+    console.error(child.error?.message || child.error);
+    process.exit(1);
+  }
+  process.exit(typeof child.status === "number" ? child.status : 1);
+  return true;
+}
 
 async function withTempUiEditorLayoutOverridesRepo(fn) {
   const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), "bbm-ui-editor-layout-overrides-"));
@@ -138,6 +176,29 @@ async function runUiEditorLayoutOverridesRepoTests(run) {
         /overrides\.visible must be boolean/
       );
     });
+  });
+}
+
+if (require.main === module) {
+  rerunWithElectronNodeIfNeeded();
+
+  const run = async (name, fn) => {
+    try {
+      const out = fn();
+      if (out && typeof out.then === "function") await out;
+      console.log(`ok - ${name}`);
+    } catch (err) {
+      console.error(`not ok - ${name}`);
+      console.error(err?.stack || err?.message || err);
+      process.exitCode = 1;
+    }
+  };
+
+  runUiEditorLayoutOverridesRepoTests(run).then(() => {
+    if (!process.exitCode) console.log("uiEditorLayoutOverridesRepo.test.cjs passed");
+  }).catch((err) => {
+    console.error(err?.stack || err?.message || err);
+    process.exitCode = 1;
   });
 }
 

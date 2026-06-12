@@ -170,6 +170,84 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.deepEqual(storageAdapter.getCurrentLayoutState()[0].overrides, { visible: true });
   });
 
+  await run("Restarbeiten HostAdapter: Restore-Zyklus liest gespeicherte Visibility-Overrides neu ein", async () => {
+    const savedOverrides = [];
+    const storageApi = {
+      async list(filter) {
+        return {
+          ok: true,
+          data: savedOverrides.filter((entry) => (
+            entry.targetAppId === filter.targetAppId
+            && entry.moduleId === filter.moduleId
+            && entry.scopeId === filter.scopeId
+          )),
+        };
+      },
+      async save(override) {
+        const record = {
+          ...override,
+          createdAt: override.createdAt || "2026-06-08T22:30:00.000Z",
+          updatedAt: "2026-06-08T22:31:00.000Z",
+        };
+        const index = savedOverrides.findIndex((entry) => (
+          entry.targetAppId === record.targetAppId
+          && entry.moduleId === record.moduleId
+          && entry.scopeId === record.scopeId
+          && entry.elementId === record.elementId
+        ));
+        if (index >= 0) {
+          savedOverrides.splice(index, 1, record);
+        } else {
+          savedOverrides.push(record);
+        }
+        return { ok: true, data: record };
+      },
+    };
+    const firstAdapter = adapterModule.createRestarbeitenMainUiHostAdapter({ storageApi });
+    const registryBefore = firstAdapter.getRegistry();
+    const persistentVisibilityRequest = {
+      ...validChangeRequest,
+      changeId: "chg-visibility-restore-1",
+      operation: "visibility",
+      payload: { visible: false },
+      source: "preview",
+      persistent: true,
+    };
+
+    const saveHiddenResult = await firstAdapter.submitChangeRequests([persistentVisibilityRequest]);
+    assert.equal(saveHiddenResult.ok, true);
+    assert.equal(savedOverrides.length, 1);
+    assert.deepEqual(savedOverrides[0].overrides, { visible: false });
+
+    const restoredHiddenAdapter = adapterModule.createRestarbeitenMainUiHostAdapter({ storageApi });
+    const restoreHiddenResult = await restoredHiddenAdapter.loadCurrentLayoutState();
+    assert.equal(restoreHiddenResult.ok, true);
+    assert.equal(restoreHiddenResult.layoutState.length, 1);
+    assert.equal(restoreHiddenResult.layoutState[0].scopeId, "restarbeiten.ui.main");
+    assert.equal(restoreHiddenResult.layoutState[0].elementId, "restarbeiten.editbox.text.short");
+    assert.deepEqual(restoreHiddenResult.layoutState[0].overrides, { visible: false });
+    assert.equal(restoreHiddenResult.layoutState[0].visible, false);
+    assert.deepEqual(restoredHiddenAdapter.getCurrentLayoutState()[0].overrides, { visible: false });
+    assert.equal(restoredHiddenAdapter.getCurrentLayoutState()[0].visible, false);
+    assert.deepEqual(restoredHiddenAdapter.getRegistry(), registryBefore);
+
+    const saveVisibleResult = await firstAdapter.submitChangeRequests([{
+      ...persistentVisibilityRequest,
+      changeId: "chg-visibility-restore-2",
+      payload: { visible: true },
+    }]);
+    assert.equal(saveVisibleResult.ok, true);
+    assert.equal(savedOverrides.length, 1);
+    assert.deepEqual(savedOverrides[0].overrides, { visible: true });
+
+    const restoredVisibleAdapter = adapterModule.createRestarbeitenMainUiHostAdapter({ storageApi });
+    const restoreVisibleResult = await restoredVisibleAdapter.loadCurrentLayoutState();
+    assert.equal(restoreVisibleResult.ok, true);
+    assert.deepEqual(restoredVisibleAdapter.getCurrentLayoutState()[0].overrides, { visible: true });
+    assert.equal(restoredVisibleAdapter.getCurrentLayoutState()[0].visible, true);
+    assert.deepEqual(restoredVisibleAdapter.getRegistry(), registryBefore);
+  });
+
   await run("Restarbeiten HostAdapter: persistent Visibility ohne Storage wird klar blockiert", async () => {
     const result = await adapter.submitChangeRequests([{
       ...validChangeRequest,
@@ -322,6 +400,25 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
   });
 
   if (!process.exitCode) console.log("restarbeitenEditorHostAdapter.test.cjs passed");
+}
+
+if (require.main === module) {
+  const run = async (name, fn) => {
+    try {
+      const out = fn();
+      if (out && typeof out.then === "function") await out;
+      console.log(`ok - ${name}`);
+    } catch (err) {
+      console.error(`not ok - ${name}`);
+      console.error(err?.stack || err?.message || err);
+      process.exitCode = 1;
+    }
+  };
+
+  runRestarbeitenEditorHostAdapterTests(run).catch((err) => {
+    console.error(err?.stack || err?.message || err);
+    process.exitCode = 1;
+  });
 }
 
 module.exports = { runRestarbeitenEditorHostAdapterTests };

@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.55 abgeschlossen: Restore gespeicherter Hidden-Element-Visibility-Overrides ist fuer den Pilot-Scope `restarbeiten.ui.main` testseitig abgesichert; `getCurrentLayoutState(...)` liefert nach neuem Lesezyklus `visible: false/true` an die Hidden-Elements-Logik.
 - K19.54 abgeschlossen: Pilot-Persistenz fuer Hidden-Element-Visibility-Overrides ist nur fuer `restarbeiten.ui.main` aktiv; gespeichert wird ausschliesslich `overrides.visible` ueber BBM-seitiges Repo/IPC hinter dem HostAdapter.
 - K19.53 abgeschlossen: HostAdapter-Dry-Run validiert `persistent: true` Visibility-ChangeRequests und blockiert sie weiterhin ohne Speicherung.
 - K19.52 abgeschlossen: Hidden-Elements-Persistenzspeicher ist technisch als neutrales Modell mit Validierung vorbereitet; Persistenz bleibt deaktiviert und es gibt keinen Speicherweg.
@@ -110,6 +111,16 @@ Aktueller Stand:
 - [x] K19.52 Hidden-Elements Persistenzspeicher technisch vorbereiten, aber deaktiviert lassen
 - [x] K19.53 Validierten HostAdapter-Dry-Run fuer persistent=true Visibility-ChangeRequests vorbereiten
 - [x] K19.54 Pilot-Persistenz fuer Hidden-Element-Visibility-Overrides in restarbeiten.ui.main aktivieren
+- [x] K19.55 Restore gespeicherter Hidden-Element-Visibility-Overrides fuer restarbeiten.ui.main absichern
+
+## Statusupdate K19.55
+- Die Wiederherstellung gespeicherter Hidden-Element-Visibility-Overrides ist fuer den Pilot-Scope `restarbeiten.ui.main` abgesichert.
+- Der technische Restore-Pfad laeuft ueber den Restarbeiten-HostAdapter: `loadCurrentLayoutState()` liest gespeicherte Overrides, `getCurrentLayoutState("restarbeiten.ui.main")` liefert den Layout-State an den Launcher.
+- Ein neuer Adapter-/Lesezyklus wurde testseitig simuliert: `visible: false` wird als hidden erkannt, nach `visible: true` wird das Element nicht mehr als hidden gezaehlt.
+- Andere Scopes, unbekannte `elementId`, Nicht-Visibility-Operationen und ungueltige `payload.visible` bleiben blockiert.
+- Registry, UI-Editor-kit, PDF-/Drucklogik, Fachlogik, Drag, Target-Selection, `localStorage` und Dateiablage bleiben unveraendert.
+- Keine Produktivcode-Aenderung war fuer G32 noetig; der vorhandene G31-Leseweg wurde durch HostAdapter- und Launcher-Tests abgesichert.
+- Folgepakete bleiben getrennt: G33 UI-Pruefung/Reset, G34 weitere Scopes.
 
 ## Statusupdate K19.54
 - Die echte Persistenz fuer Hidden-Element-Visibility-Overrides ist nur fuer den Pilot-Scope `restarbeiten.ui.main` aktiv.
@@ -119,9 +130,9 @@ Aktueller Stand:
 - Gespeicherte Overrides werden ueber `getCurrentLayoutState(...)` als neutrale Layout-State-Datensaetze mit `overrides.visible` gelesen.
 - Andere Scopes, Nicht-Visibility-Operationen, ungueltige Payloads, unbekannte `elementId` und unkontrollierte Instanzen bleiben blockiert.
 - Registry, UI-Editor-kit, PDF-/Drucklogik, Fachlogik, Drag und Target-Selection bleiben unveraendert; kein `localStorage` und kein Datei-Schreibweg.
-- App-Start-Wiederherstellung als initiales Laden persistierter Overrides bleibt getrennt fuer G32.
+- App-Start-/Restore-Absicherung ist durch K19.55/G32 nachgezogen.
 - Abgesichert durch neue Storage-/IPC-Tests, HostAdapter-Tests und den bestehenden Hidden-Elements-Layout-State-Leser im Launcher.
-- Folgepakete bleiben getrennt: G32 App-Start-Wiederherstellung, G33 UI-Pruefung/Reset, G34 weitere Scopes.
+- Folgepakete bleiben getrennt: G33 UI-Pruefung/Reset, G34 weitere Scopes.
 
 ## Statusupdate K19.53
 - `persistent: true` Visibility-ChangeRequests werden im HostAdapter-Dry-Run jetzt gegen das G29-Override-Modell validiert.

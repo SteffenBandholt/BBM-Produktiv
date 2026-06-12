@@ -67,6 +67,13 @@ Stand nach G31:
 - Der Restarbeiten-HostAdapter liefert gespeicherte Overrides ueber `getCurrentLayoutState(...)`.
 - Andere Scopes und andere Operationen bleiben gesperrt.
 
+Stand nach G32:
+
+- Der Restore-Leseweg fuer den Pilot-Scope ist testseitig abgesichert.
+- Nach einem neuen Adapter-/Lesezyklus liefert `getCurrentLayoutState("restarbeiten.ui.main")` gespeicherte `overrides.visible` wieder als Layout-State.
+- `visible: false` wird von der Hidden-Elements-Logik als hidden erkannt; `visible: true` wird nicht als hidden gezaehlt.
+- Registry, UI-Editor-kit, weitere Scopes, PDF-/Drucklogik und Fachlogik bleiben unveraendert.
+
 ## Aktueller Stand
 
 Im BBM-Preview-Panel gibt es:
@@ -75,13 +82,14 @@ Im BBM-Preview-Panel gibt es:
 - ein kleines Popover,
 - `Einblenden` fuer temporaere Preview-Hide-Aenderungen.
 
-Aktuelle Datenquelle ist nur der laufende in-memory Preview-State im Launcher:
+Die Hidden-Elements-Datenquelle setzt sich heute zusammen aus Registry, geladenem Layout-State und laufendem in-memory Preview-State:
 
 - `state.previewStates`
 - `state.pendingChangeRequests`
 - daraus abgeleitete Hidden-Elements-ViewModels aus dem UI-Editor-kit
+- `getCurrentLayoutState(...)` des HostAdapters fuer geladene Layout-Overrides
 
-Seit G24 gibt es eine lesende Registry-/Layout-State-Hidden-Ermittlung im Launcher. Seit G31 kann dieser Layout-State fuer den Pilot-Scope aus gespeicherten Visibility-Overrides kommen.
+Seit G24 gibt es eine lesende Registry-/Layout-State-Hidden-Ermittlung im Launcher. Seit G31 kann dieser Layout-State fuer den Pilot-Scope aus gespeicherten Visibility-Overrides kommen. Seit G32 ist dieser Restore-Leseweg testseitig abgesichert.
 
 ## Problem
 
@@ -348,9 +356,13 @@ Status:
 
 ### G32: Wiederherstellung beim App-Start fuer Pilot-Scope
 
-- persistierte Layout-Overrides laden.
-- Effective-State bilden.
-- UI und Hidden-Elements-Liste konsistent initialisieren.
+Status:
+
+- erledigt als technische Restore-Absicherung fuer den Pilot-Scope.
+- `loadCurrentLayoutState()` liest persistierte Layout-Overrides aus dem BBM-Speicher.
+- `getCurrentLayoutState("restarbeiten.ui.main")` stellt den geladenen Layout-State bereit.
+- Die Hidden-Elements-Liste initialisiert sich daraus konsistent: `visible: false` zaehlt als hidden, `visible: true` nicht.
+- Keine globale Scope-Freigabe, keine Registry-Mutation, kein UI-Editor-kit-Speicher, kein `localStorage`, kein Datei-Schreibweg und keine PDF-/Drucklogik.
 
 ### G33: UI-Pruefung und Ruecksetzfunktion
 

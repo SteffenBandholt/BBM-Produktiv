@@ -122,6 +122,8 @@ G30 nutzt dieses Modell im HostAdapter-Dry-Run: `persistent: true` Visibility-Ch
 
 G31 nutzt dieselbe Validierung fuer den Pilot-Scope produktiv: Gueltige `persistent: true` Visibility-Requests fuer `restarbeiten.ui.main` werden als `overrides.visible` gespeichert und ueber `getCurrentLayoutState(...)` wieder gelesen. Ungueltige Requests, unbekannte `elementId`, andere Scopes und Nicht-Visibility-Operationen bleiben blockiert.
 
+G32 sichert den Restore-Leseweg ab: Der Restarbeiten-HostAdapter laedt gespeicherte Pilot-Overrides ueber `loadCurrentLayoutState()` aus dem BBM-Speicher und stellt sie ueber `getCurrentLayoutState("restarbeiten.ui.main")` bereit. Die Hidden-Elements-Logik darf daraus `visible: false` als hidden ableiten; `visible: true` zaehlt nicht als hidden. Diese Absicherung erweitert keine Capabilities und gibt keine weiteren Scopes frei.
+
 ## Nicht erlaubt
 
 Ausserhalb des G31-Pilotpfads darf der HostAdapter nicht:

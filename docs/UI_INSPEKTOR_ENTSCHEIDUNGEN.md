@@ -120,3 +120,5 @@
 **Auswirkung:** Erste spaetere Freigabe darf nur fuer einen klaren Pilot-Scope wie `restarbeiten.ui.main` erfolgen. `canPersistVisibility` bleibt bis dahin `false`, `persistent: true` bleibt blockiert, und App-Start-Wiederherstellung ist ein eigenes Folgepaket.
 
 **Status nach G31:** Der Pilot-Scope `restarbeiten.ui.main` ist als einzige Ausnahme freigegeben. `canPersistVisibility` ist nur dort aktiv; weitere Scopes und App-Start-Wiederherstellung bleiben separate Folgepakete.
+
+**Status nach G32:** Der Restore-Leseweg fuer `restarbeiten.ui.main` ist testseitig abgesichert. Gespeicherte Visibility-Overrides werden ueber den Restarbeiten-HostAdapter geladen und ueber `getCurrentLayoutState(...)` an die Hidden-Elements-Logik geliefert; weitere Scopes bleiben gesperrt.

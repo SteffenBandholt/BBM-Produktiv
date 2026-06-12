@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements Restore fuer Pilot-Scope abgesichert:
+  - G32 weist technisch nach, dass gespeicherte Visibility-Overrides fuer `restarbeiten.ui.main` nach einem neuen Adapter-/Lesezyklus wieder als Layout-State verfuegbar sind.
+  - Der Restore-Pfad laeuft ueber den Restarbeiten-HostAdapter: `loadCurrentLayoutState()` liest den BBM-Speicher, `getCurrentLayoutState(scopeId)` liefert die Datensaetze an den Launcher.
+  - `visible: false` wird von der Hidden-Elements-Logik als ausgeblendet gezaehlt; nach `visible: true` wird das Element nicht mehr als hidden gezaehlt.
+  - Andere Scopes, unbekannte `elementId`, Nicht-Visibility-Operationen und ungueltige `payload.visible`-Werte bleiben blockiert.
+  - Registry, UI-Editor-kit, PDF-/Drucklogik, Fachlogik, Drag und Target-Selection bleiben unveraendert; kein `localStorage` und kein Datei-Schreibweg.
+  - G32 hat keine Produktivcode-Aenderung benoetigt; abgesichert wurde der vorhandene Pilot-Leseweg durch HostAdapter- und Launcher-Tests.
+
 - UI-Editor Hidden-Elements Pilot-Persistenz fuer `restarbeiten.ui.main` aktiviert:
   - Ein eigener BBM-seitiger Speicherweg `ui_editor_layout_overrides` ist angelegt, mit Repository, IPC-Handlern und Preload-Methoden.
   - Aktiviert ist nur der Pilot-Scope `restarbeiten.ui.main`; andere Scopes bleiben blockiert.
@@ -25,7 +33,7 @@ Sie ergÃ¤nzt:
   - `submitChangeRequests(...)` speichert nur `persistent: true` / `operation: "visibility"` fuer bekannte Registry-Elemente; ungueltige Payloads, unbekannte `elementId` und andere Scopes bleiben `INVALID_CHANGE_REQUEST`.
   - `getCurrentLayoutState(...)` liefert gespeicherte Override-Datensaetze als Layout-State; der Hidden-Elements-Leser beruecksichtigt jetzt auch `overrides.visible`.
   - Registry, UI-Editor-kit, PDF-/Drucklogik, Fachlogik, Drag und Target-Selection bleiben unveraendert; kein `localStorage` und kein Datei-Schreibweg.
-  - App-Start-Wiederherstellung ueber initiales Laden persistierter Overrides bleibt als G32 getrennt.
+  - Der Restore-Leseweg fuer persistierte Overrides ist durch G32 testseitig abgesichert.
 
 - UI-Editor Hidden-Elements HostAdapter-Dry-Run fuer `persistent: true` validiert:
   - `submitChangeRequests(...)` validiert persistente Visibility-ChangeRequests jetzt ueber das G29-Override-Modell.
