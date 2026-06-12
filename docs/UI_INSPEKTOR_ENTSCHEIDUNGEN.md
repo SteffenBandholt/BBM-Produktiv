@@ -137,3 +137,5 @@
 **Auswirkung:** UI-Editor-kit bleibt fachfrei und speicherfrei. BBM bleibt Host fuer Registry, Rechte, Persistenz, DB/IPC und konkrete Surface-Freigaben. G36 dokumentiert nur das Zielbild; SurfaceRuntime, DragRuntime, PDF-/Plan-Anbindung und weitere Freigaben bleiben eigene Folgepakete.
 
 **Status nach G38:** Die SurfaceRuntime existiert im UI-Editor-kit und ist in BBM ueber eine renderer-kompatible Bridge testweise ladbar. BBM nutzt sie noch nicht produktiv; Launcher, UI, PDF, Canvas, Drag, Registry, Persistenz und Scope-Freigaben bleiben unveraendert.
+
+**Status nach G39:** Ein erster read-only SurfaceAdapter fuer `restarbeiten.ui.main` erzeugt ein neutrales `ui-screen`-Surface-Modell aus HostAdapter-/Registry-Daten und LayoutState. Der Adapter validiert ueber die Kit-Bridge, wird aber nicht produktiv im Launcher genutzt und aktiviert keine Drag-, PDF-, Canvas- oder Persistenzfunktion.

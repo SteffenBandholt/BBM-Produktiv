@@ -42,6 +42,7 @@ Relevante BBM-Dateien:
 - `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js`
 - `src/renderer/uiEditor/uiEditorKitHiddenElementsRuntimeBridge.js`
 - `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js`
+- `src/renderer/uiEditor/surfaceAdapters/restarbeitenMainSurfaceAdapter.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterFactory.js`
 - `src/renderer/modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js`
@@ -51,6 +52,8 @@ Relevante BBM-Dateien:
 Der Electron-Renderer nutzt bewusst Bridge-Dateien mit relativem Pfad in `node_modules`, weil Bare-Package-Imports wie `ui-editor-kit/runtime/panel` im Renderer nicht zulaessig sind.
 
 Die Surface-Bridge ist seit G38 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt.
+
+Der erste BBM-SurfaceAdapter-Pilot ist seit G39 read-only vorhanden. Er uebersetzt `restarbeiten.ui.main` aus vorhandener Registry und aktuellem LayoutState in ein neutrales `ui-screen`-Surface-Modell und validiert es ueber die Surface-Runtime-Bridge. Er wird noch nicht produktiv im Launcher verwendet.
 
 BBM besitzt weiterhin:
 
@@ -311,6 +314,8 @@ Status: erledigt in BBM. Die Bridge ist pruefbar, aber nicht produktiv genutzt.
 - Registry plus DOM-Anker in neutrales Surface-Modell uebersetzen,
 - nur lesend,
 - keine neue Persistenz und keine UI-Aenderung.
+
+Status: read-only Pilot fuer `restarbeiten.ui.main` erledigt. Noch keine DOM-Vermessung, keine Launcher-Nutzung und kein Drag.
 
 ### G40: DragRuntime als neutrale Kit-Hilfe vorbereiten
 

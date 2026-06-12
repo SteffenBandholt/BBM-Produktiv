@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.61 abgeschlossen: Read-only SurfaceAdapter-Pilot fuer `restarbeiten.ui.main` erzeugt ein neutrales `ui-screen`-Surface-Modell aus Registry plus LayoutState und validiert es ueber die UI-Editor-kit Surface-Bridge; keine Produktivnutzung.
 - K19.60 abgeschlossen: BBM kann die UI-Editor-kit Surface-Runtime ueber `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` testweise laden; `ui-screen` und `pdf-page` werden normalisiert/validiert, ohne Launcher- oder Produktivnutzung.
 - K19.59 abgeschlossen: UI-Editor-kit Zielarchitektur fuer Surface-, Panel-, Drag- und spaetere PDF-/Plan-/Canvas-Faehigkeit ist in `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md` dokumentiert; keine Produktivlogik aktiviert.
 - K19.58 abgeschlossen: Hidden-Elements-Block ist als stabiler Referenzstand in `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` dokumentiert; keine neue Produktivlogik und keine weitere Scope-Freigabe.
@@ -122,6 +123,16 @@ Aktueller Stand:
 - [x] K19.58 Hidden-Elements-Block als Referenzstand abschliessen
 - [x] K19.59 UI-Editor-kit Surface-/Panel-/Drag-/PDF-Zielarchitektur inventarisieren
 - [x] K19.60 UI-Editor-kit Surface-Runtime in BBM per Bridge pruefen
+- [x] K19.61 Read-only SurfaceAdapter-Pilot fuer restarbeiten.ui.main vorbereiten
+
+## Statusupdate K19.61
+- `src/renderer/uiEditor/surfaceAdapters/restarbeitenMainSurfaceAdapter.js` baut read-only ein Surface-Modell fuer `restarbeiten.ui.main`.
+- Datenquelle sind vorhandene HostAdapter-/Registry-Daten und der aktuelle LayoutState; `visible` wird read-only aus `overrides.visible` beruecksichtigt.
+- Das Modell nutzt `surfaceType: "ui-screen"` und `coordinateSystem: "css-pixels"` und wird ueber `uiEditorKitSurfaceRuntimeBridge.js` normalisiert/validiert.
+- Bounds bleiben bewusst weg, weil keine DOM-Vermessung erfolgt.
+- `canHide` folgt hide/show-faehigen Registry-Elementen; `canMove` und `canResize` bleiben false, solange Drag nicht freigegeben ist.
+- Keine Launcher-Produktivnutzung, keine sichtbare UI-Aenderung, keine Drag-/PDF-/Canvas-Aktivierung, keine Persistenz, keine Registry-Aenderung und keine neuen Scopes.
+- Naechste getrennte Folgepakete: kontrollierte Launcher-/Panel-Nutzung oder G40 DragRuntime, jeweils separat.
 
 ## Statusupdate K19.60
 - `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` ist als renderer-kompatible Bridge auf `node_modules/ui-editor-kit/src/runtime/surface/index.mjs` vorbereitet.

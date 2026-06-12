@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-kit SurfaceAdapter-Pilot fuer Restarbeiten read-only vorbereitet:
+  - G39 legt `src/renderer/uiEditor/surfaceAdapters/restarbeitenMainSurfaceAdapter.js` an.
+  - Der Adapter liest den Pilot-Scope `restarbeiten.ui.main` ueber HostAdapter-/Registry-Daten, beruecksichtigt vorhandenen LayoutState fuer `visible` read-only und erzeugt ein neutrales `ui-screen`-Surface-Modell mit `css-pixels`.
+  - Das Surface-Modell wird ueber die BBM-Bridge zur UI-Editor-kit Surface-Runtime normalisiert und validiert.
+  - Bounds werden noch nicht gesetzt, weil keine DOM-Vermessung erfolgt; `canMove` und `canResize` bleiben false.
+  - Keine Launcher-Produktivnutzung, keine sichtbare UI-Aenderung, kein Drag, kein PDF/Canvas, keine Persistenz, keine Registry-Aenderung und keine neuen Scopes.
+
 - UI-Editor-kit Surface-Runtime in BBM per Bridge pruefbar:
   - G38 legt `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` als renderer-kompatible Bridge auf `node_modules/ui-editor-kit/src/runtime/surface/index.mjs` an.
   - Der Bridge-Test prueft `SUPPORTED_SURFACE_TYPES`, `normalizeSurfaceModel`, `validateSurfaceModel`, `isSupportedSurfaceType`, ein `ui-screen`-Beispiel und ein `pdf-page`-Beispiel.
