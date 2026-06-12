@@ -45,11 +45,12 @@ function assertHiddenElementsBridgeContract() {
   }
 }
 
-function assertLauncherDoesNotUseHiddenElementsRuntimeYet() {
+function assertLauncherUsesHiddenElementsRuntimeOnlyViaBridge() {
   const source = fs.readFileSync(LAUNCHER_PATH, "utf8");
-  assert.equal(source.includes("uiEditorKitHiddenElementsRuntimeBridge.js"), false);
+  assert.equal(source.includes('from "./uiEditorKitHiddenElementsRuntimeBridge.js"'), true);
   assert.equal(source.includes("ui-editor-kit/runtime/hidden-elements"), false);
   assert.equal(source.includes("node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs"), false);
+  assert.equal(source.includes("buildHiddenElementsPopoverViewModel"), false);
 }
 
 function assertExistingBridgesUnchanged() {
@@ -69,7 +70,7 @@ function assertExistingBridgesUnchanged() {
 async function runUiEditorKitHiddenElementsRuntimeBridgeTests(run) {
   await run("UI-Editor-kit Hidden-Elements-Runtime-Bridge: Renderer-Pfad ist vorbereitet", async () => {
     assertHiddenElementsBridgeContract();
-    assertLauncherDoesNotUseHiddenElementsRuntimeYet();
+    assertLauncherUsesHiddenElementsRuntimeOnlyViaBridge();
     assertExistingBridgesUnchanged();
 
     const runtime = await importEsmFromFile(HIDDEN_ELEMENTS_BRIDGE_PATH);

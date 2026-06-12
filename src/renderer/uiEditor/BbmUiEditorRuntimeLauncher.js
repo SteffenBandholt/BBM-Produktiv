@@ -14,6 +14,7 @@ import {
   resolvePreviewTargetElement as resolvePreviewTargetElementModel,
   upsertPreviewChangeRequest as upsertPreviewChangeRequestModel,
 } from "./uiEditorKitPreviewRuntimeBridge.js";
+import { buildHiddenElementsButtonViewModel } from "./uiEditorKitHiddenElementsRuntimeBridge.js";
 import { buildPanelViewModel } from "./uiEditorKitPanelRuntimeBridge.js";
 
 void installedLauncherButtonArtifactModule;
@@ -794,6 +795,25 @@ function buildBbmPanelViewModel(state = {}) {
   });
 }
 
+function buildBbmHiddenElementsButtonViewModel(state = {}) {
+  const elements = [];
+  const previewStates = state.previewStates instanceof Map ? state.previewStates : null;
+  if (previewStates) {
+    for (const [targetNode, previewState] of previewStates.entries()) {
+      const elementId = getNodeUiEditorId(targetNode);
+      if (!elementId) continue;
+      const registryElement = getRegisteredElementById(state, elementId);
+      elements.push({
+        elementId,
+        label: registryElement?.name || registryElement?.label || elementId,
+        visible: previewState?.hidden ? false : true,
+        canShow: registryElement ? isPreviewOperationAllowed(registryElement, "show") : true,
+      });
+    }
+  }
+  return buildHiddenElementsButtonViewModel({ elements });
+}
+
 function getNextChangeRequestId(state = {}) {
   state.changeRequestSequence = (Number(state.changeRequestSequence) || 0) + 1;
   return `preview-${state.changeRequestSequence}`;
@@ -1090,6 +1110,29 @@ function renderPreviewPanel(doc, state = {}) {
   ].filter(Boolean).join("\n");
   panel.appendChild(details);
 
+  const hiddenElementsButtonViewModel = buildBbmHiddenElementsButtonViewModel(state);
+  const hiddenElementsRow = doc.createElement("div");
+  hiddenElementsRow.className = "ui-editor-preview-hidden-elements";
+  hiddenElementsRow.style.marginTop = "8px";
+
+  const hiddenElementsButton = doc.createElement("button");
+  hiddenElementsButton.type = "button";
+  hiddenElementsButton.textContent = hiddenElementsButtonViewModel.label || "Ausgeblendete: 0";
+  hiddenElementsButton.disabled = hiddenElementsButtonViewModel.enabled !== true;
+  hiddenElementsButton.setAttribute("data-ui-editor-hidden-elements-button", "true");
+  hiddenElementsButton.setAttribute("data-ui-editor-hidden-elements-count", String(hiddenElementsButtonViewModel.hiddenCount || 0));
+  hiddenElementsButton.setAttribute("aria-disabled", hiddenElementsButton.disabled ? "true" : "false");
+  hiddenElementsButton.title = hiddenElementsButton.disabled
+    ? "Keine ausgeblendeten Elemente"
+    : "Ausgeblendete Elemente anzeigen";
+  hiddenElementsButton.style.width = "100%";
+  hiddenElementsButton.style.textAlign = "left";
+  hiddenElementsButton.style.opacity = hiddenElementsButton.disabled ? "0.62" : "1";
+  hiddenElementsButton.addEventListener("mousedown", stopPreviewPanelEvent);
+  hiddenElementsButton.addEventListener("click", stopPreviewPanelEvent);
+  hiddenElementsRow.appendChild(hiddenElementsButton);
+  panel.appendChild(hiddenElementsRow);
+
   const buttonGrid = doc.createElement("div");
   buttonGrid.className = "ui-editor-preview-controls";
   buttonGrid.setAttribute("data-ui-editor-preview-controls", "true");
@@ -1373,6 +1416,7 @@ export {
   getLauncherStatusText,
   getReadonlyLauncherStatusText,
   buildBbmPanelViewModel,
+  buildBbmHiddenElementsButtonViewModel,
   normalizeReadonlyRegisteredElements,
   normalizeAvailableUiScopes,
   ensureLauncherStatusHint,

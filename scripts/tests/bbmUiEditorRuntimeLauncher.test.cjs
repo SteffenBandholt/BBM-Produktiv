@@ -6,6 +6,7 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 const RUNTIME_PATH = path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
 const PREVIEW_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js");
 const PANEL_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js");
+const HIDDEN_ELEMENTS_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitHiddenElementsRuntimeBridge.js");
 const BBM_REGISTRY_PATH = path.join(__dirname, "../../src/renderer/uiEditor/bbmUiEditorRegistry.js");
 const CORE_SHELL_PATH = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
 const HOST_CONTRACT_PATH = path.join(__dirname, "../../src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js");
@@ -267,6 +268,9 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-editor-preview-selected]") {
     return Boolean(node.getAttribute("data-ui-editor-preview-selected"));
   }
+  if (raw === "[data-ui-editor-hidden-elements-button=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hidden-elements-button") === "true";
+  }
   if (raw === "[data-ui-editor-id]") {
     return Boolean(node.getAttribute("data-ui-editor-id"));
   }
@@ -308,8 +312,12 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("../../../uiEditor/targetSelection.js"), true);
     assert.equal(source.includes('from "./uiEditorKitPreviewRuntimeBridge.js"'), true);
     assert.equal(source.includes('from "./uiEditorKitPanelRuntimeBridge.js"'), true);
+    assert.equal(source.includes('from "./uiEditorKitHiddenElementsRuntimeBridge.js"'), true);
     assert.equal(source.includes('from "ui-editor-kit/runtime/preview"'), false);
     assert.equal(source.includes('from "ui-editor-kit/runtime/panel"'), false);
+    assert.equal(source.includes('from "ui-editor-kit/runtime/hidden-elements"'), false);
+    assert.equal(source.includes("node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs"), false);
+    assert.equal(source.includes("buildHiddenElementsPopoverViewModel"), false);
     assert.equal(source.includes('from "../editorRuntime/preview/index.js"'), false);
     assert.equal(packageJson.build.files.includes("uiEditor/**/*"), true);
     assert.equal(source.includes("scanUiInspectorTargets"), false);
@@ -382,6 +390,29 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     }
   });
 
+  await run("BBM UI-Editor-Runtime: Hidden-Elements-Runtime-Bridge wird renderer-kompatibel genutzt", async () => {
+    assert.equal(fs.existsSync(HIDDEN_ELEMENTS_RUNTIME_BRIDGE_PATH), true);
+    const bridgeSource = fs.readFileSync(HIDDEN_ELEMENTS_RUNTIME_BRIDGE_PATH, "utf8");
+    const launcherSource = fs.readFileSync(RUNTIME_PATH, "utf8");
+    assert.equal(
+      bridgeSource.includes("../../../node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs"),
+      true
+    );
+    assert.equal(bridgeSource.includes("ui-editor-kit/runtime/hidden-elements"), false);
+    assert.equal(launcherSource.includes('from "./uiEditorKitHiddenElementsRuntimeBridge.js"'), true);
+    assert.equal(launcherSource.includes('from "ui-editor-kit/runtime/hidden-elements"'), false);
+    assert.equal(launcherSource.includes("node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs"), false);
+    assert.equal(launcherSource.includes("buildHiddenElementsPopoverViewModel"), false);
+    for (const forbidden of [
+      "localStorage",
+      "writeFile",
+      "ipcRenderer",
+      "ipcMain",
+    ]) {
+      assert.equal(launcherSource.includes(forbidden), false, forbidden);
+    }
+  });
+
   await run("BBM UI-Editor-Runtime: Panel-ViewModel wird vorbereitend aus Launcher-Daten gebaut", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
@@ -422,6 +453,41 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(viewModel.buttons.some((button) => button.id === "move-left" && button.isEnabled), true);
     assert.equal(viewModel.buttons.some((button) => button.id === "show" && button.isEnabled), false);
     assert.equal(viewModel.canDiscard, true);
+  });
+
+  await run("BBM UI-Editor-Runtime: Hidden-Elements-Button-ViewModel bleibt kompakt und neutral", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const target = doc.createElement("div");
+    target.setAttribute("data-ui-editor-id", "sample.hidden");
+    const registryElement = {
+      id: "sample.hidden",
+      name: "Ausblendbares Ziel",
+      type: "field",
+      role: "content",
+      parentId: "sample.root",
+      allowedOps: ["inspect", "hide", "show"],
+      lockedOps: [],
+      previewTargetMode: "self",
+    };
+    const state = mod.createLauncherState({
+      activeUiScope: "sample.screen",
+      registeredElements: [registryElement],
+    });
+
+    const emptyViewModel = mod.buildBbmHiddenElementsButtonViewModel(state);
+    assert.deepEqual(emptyViewModel, {
+      visible: false,
+      enabled: false,
+      label: "Ausgeblendete: 0",
+      hiddenCount: 0,
+    });
+
+    state.previewStates.set(target, { hidden: true });
+    const hiddenViewModel = mod.buildBbmHiddenElementsButtonViewModel(state);
+    assert.equal(hiddenViewModel.hiddenCount, 1);
+    assert.equal(hiddenViewModel.label, "Ausgeblendete: 1");
+    assert.equal(hiddenViewModel.enabled, true);
   });
 
   await run("BBM UI-Editor-Runtime: Launcher ist nur im DEV-Kontext sichtbar", async () => {
@@ -1014,6 +1080,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(details.getAttribute("data-ui-editor-preview-selected"), "restarbeiten.editbox.text.short");
     assert.equal(details.textContent.includes("Element-ID: restarbeiten.editbox.text.short"), true);
     assert.equal(details.textContent.includes("allowedOps: inspect, move, resize, hide, show"), true);
+    const hiddenButton = previewPanel.querySelector('[data-ui-editor-hidden-elements-button="true"]');
+    assert.equal(Boolean(hiddenButton), true);
+    assert.equal(hiddenButton.textContent, "Ausgeblendete: 0");
+    assert.equal(hiddenButton.disabled, true);
+    assert.equal(hiddenButton.getAttribute("data-ui-editor-hidden-elements-count"), "0");
     assert.equal(getLatestPreviewAction(doc, "move-left").textContent, "Links");
     assert.equal(getLatestPreviewAction(doc, "move-right").textContent, "Rechts");
     assert.equal(getLatestPreviewAction(doc, "move-up").textContent, "Hoch");
@@ -1070,9 +1141,16 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     getLatestPreviewAction(doc, "hide").click();
     assert.equal(target.style.display, "none");
+    let hiddenButton = getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-button="true"]');
+    assert.equal(hiddenButton.textContent, "Ausgeblendete: 1");
+    assert.equal(hiddenButton.disabled, false);
+    assert.equal(hiddenButton.getAttribute("data-ui-editor-hidden-elements-count"), "1");
 
     getLatestPreviewAction(doc, "show").click();
     assert.equal(target.style.display, "");
+    hiddenButton = getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-button="true"]');
+    assert.equal(hiddenButton.textContent, "Ausgeblendete: 0");
+    assert.equal(hiddenButton.disabled, true);
   });
 
   await run("BBM UI-Editor-Runtime: Preview-Operationen erzeugen deduplizierte ChangeRequests im State", async () => {

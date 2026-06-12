@@ -177,6 +177,15 @@ Ziel:
 - noch keine Liste
 - noch keine Einblenden-Aktion
 
+Status:
+
+- erledigt
+- `BbmUiEditorRuntimeLauncher.js` importiert `buildHiddenElementsButtonViewModel` ausschliesslich ueber `./uiEditorKitHiddenElementsRuntimeBridge.js`.
+- Das Preview-Panel zeigt einen kompakten Button/Platzhalter mit `Ausgeblendete: 0`.
+- Bei temporaer per Preview ausgeblendeten Elementen zaehlt der Button aus dem vorhandenen in-memory Preview-State hoch.
+- Der Klick ist bewusst nur ein neutraler Platzhalter: kein Popover, keine Liste, keine Einblenden-Aktion.
+- Echte Hidden-Ermittlung aus Registry/Layout-State und Persistenz bleiben spaetere Pakete.
+
 ### G22
 
 Popover/Dropdown mit `Einblenden`-Aktion ergaenzen.
