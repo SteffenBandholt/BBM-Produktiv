@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.46 abgeschlossen: Hidden-Elements Datenquelle und Persistenz-Trennschnitt sind dokumentiert; keine Speicherlogik und keine Launcher-Funktionsaenderung.
 - K19.45 abgeschlossen: BBM zeigt ein kompaktes Hidden-Elements-Popover im Preview-Panel; `Einblenden` funktioniert fuer temporaere Preview-Hide-Aenderungen, ohne Persistenz.
 - K19.44 abgeschlossen: BBM zeigt im Preview-Panel einen kompakten Hidden-Elements-Button/Platzhalter ueber die UI-Editor-kit Hidden-Elements-Bridge; kein Popover, keine Einblenden-Aktion, keine Persistenz.
 - K19.43 abgeschlossen: BBM prueft den UI-Editor-kit Hidden-Elements-Runtime-Importvertrag und hat eine renderer-kompatible Bridge vorbereitet; die damals fehlende Launcher-/Panel-Nutzung ist durch K19.44 ueberholt.
@@ -92,6 +93,16 @@ Aktueller Stand:
 - [x] K19.43 Hidden-Elements Runtime-Importvertrag und Renderer-Bridge vorbereiten
 - [x] K19.44 Kompakten Hidden-Elements-Button im BBM-Preview-Panel anzeigen
 - [x] K19.45 Kompaktes Hidden-Elements-Popover im BBM-Preview-Panel vorbereiten
+- [x] K19.46 Hidden-Elements Datenquelle und Persistenz-Trennschnitt festlegen
+
+## Statusupdate K19.46
+- `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_TRENNSCHNITT.md` dokumentiert den Trennschnitt fuer echte Hidden-Elements-Daten und spaetere Persistenz.
+- Registry bleibt die statische Element-Landkarte; Elemente werden bei Hide nicht geloescht.
+- Echte Hidden-Elements sollen spaeter aus Registry plus `getCurrentLayoutState()` abgeleitet werden.
+- Pending ChangeRequests bleiben vorbereitete, nicht persistierte Hide-/Show-Aenderungen.
+- Dauerhafte Persistenz gehoert spaeter als BBM-seitiger Layout-Override hinter den HostAdapter; das UI-Editor-kit speichert nichts.
+- Folgepakete sind abgegrenzt: G24 Layout-State-Lesen, G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz nach Freigabe, G28 Wiederherstellung beim App-Start.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage, keine neue UI, kein Popover-Umbau, keine Drag-/Target-Selection-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
 
 ## Statusupdate K19.45
 - `BbmUiEditorRuntimeLauncher.js` importiert `buildHiddenElementsPopoverViewModel` ausschliesslich ueber `./uiEditorKitHiddenElementsRuntimeBridge.js`.

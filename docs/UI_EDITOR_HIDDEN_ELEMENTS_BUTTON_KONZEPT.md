@@ -216,6 +216,25 @@ Ziel:
 - kein Vermischen mit Button-/Popover-Einfuehrung
 - klare Storage-/HostAdapter-Entscheidung
 
+Status:
+
+- erledigt als Trennschnitt, nicht als Implementierung
+- Dokumentiert in `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_TRENNSCHNITT.md`.
+- Empfohlene Datenquelle fuer echte Hidden-Elements: Registry plus Layout-State.
+- Empfohlener spaeterer Persistenzpfad: BBM-seitiger Layout-Override hinter dem HostAdapter.
+- UI-Editor-kit bleibt generisch und speichert nichts selbst.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage und keine neue UI.
+
+### G24 bis G28
+
+Empfohlene Folgepakete:
+
+- G24: Hidden-Elements aus echtem Layout-State lesen, noch ohne Schreiben.
+- G25: Hide/Show als ChangeRequest sauber modellieren.
+- G26: HostAdapter-Dry-Run fuer Hidden-Element-Aenderungen.
+- G27: Persistenz erst nach Freigabe.
+- G28: Wiederherstellen beim App-Start.
+
 ## Nicht-Ziele dieses Pakets
 
 - keine Persistenz

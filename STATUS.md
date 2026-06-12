@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements Persistenz-Trennschnitt festgelegt:
+  - `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_TRENNSCHNITT.md` dokumentiert Datenquelle, Speichergrenze und Folgepakete.
+  - Empfohlene Datenquelle fuer echte Hidden-Elements ist spaeter Registry plus `getCurrentLayoutState()`.
+  - Empfohlener Persistenzpfad ist ein BBM-seitiger Layout-Override hinter dem HostAdapter, nicht das UI-Editor-kit.
+  - Pending ChangeRequests bleiben vorbereitete, nicht persistierte Aenderungen.
+  - Keine Persistenz, keine DB, kein IPC, kein localStorage, keine neue UI und keine Launcher-Funktionsaenderung.
+
 - UI-Editor Hidden-Elements-Popover im Preview-Panel vorbereitet:
   - Der kompakte Hidden-Elements-Button toggelt bei `Ausgeblendete: 1+` ein kleines Popover direkt im bestehenden Preview-Panel.
   - Das Popover nutzt `buildHiddenElementsPopoverViewModel` ausschliesslich ueber `./uiEditorKitHiddenElementsRuntimeBridge.js`.
@@ -42,7 +49,7 @@ Sie ergÃ¤nzt:
   - Grundregel: Hide entfernt kein Element aus Registry oder Layout-State, sondern bedeutet nur `visible = false`.
   - Das Panel soll schlank bleiben; statt dauerhafter Liste ist spaeter ein kompakter Button wie `Ausgeblendete: 3` vorgesehen.
   - Das Popover/Dropdown mit `Einblenden` fuer temporaere Preview-Hides ist durch G22 vorbereitet.
-  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit, G20 BBM Importvertrag/Bridge, G21 kompakter Button und G22 Popover sind erledigt; G23 Persistenz bleibt separat.
+  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover und G23 Persistenz-Trennschnitt sind erledigt; G24 bis G28 bleiben separat.
   - Weiterhin keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
 
 - UI-Editor-kit Panel-ViewModel im BBM-Launcher vorbereitend genutzt:
