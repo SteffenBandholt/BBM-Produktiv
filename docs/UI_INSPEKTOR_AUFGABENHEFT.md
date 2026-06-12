@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.59 abgeschlossen: UI-Editor-kit Zielarchitektur fuer Surface-, Panel-, Drag- und spaetere PDF-/Plan-/Canvas-Faehigkeit ist in `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md` dokumentiert; keine Produktivlogik aktiviert.
 - K19.58 abgeschlossen: Hidden-Elements-Block ist als stabiler Referenzstand in `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` dokumentiert; keine neue Produktivlogik und keine weitere Scope-Freigabe.
 - K19.57 abgeschlossen: Freigabe weiterer Hidden-Elements-Scopes ist als Allowlist/Policy vorbereitet; aktiv bleibt nur `restarbeiten.ui.main`.
 - K19.56 abgeschlossen: Gespeicherte Hidden-Element-Visibility-Overrides koennen im bestehenden kompakten Popover fuer den Pilot-Scope `restarbeiten.ui.main` einzeln oder per `Alle einblenden` auf sichtbar zurueckgesetzt werden; weitere Scopes bleiben gesperrt.
@@ -118,6 +119,15 @@ Aktueller Stand:
 - [x] K19.56 Hidden-Elements Pilot-Ruecksetzpfad im kompakten Popover absichern
 - [x] K19.57 Hidden-Elements Scope-Freigabe-Policy vorbereiten
 - [x] K19.58 Hidden-Elements-Block als Referenzstand abschliessen
+- [x] K19.59 UI-Editor-kit Surface-/Panel-/Drag-/PDF-Zielarchitektur inventarisieren
+
+## Statusupdate K19.59
+- `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md` dokumentiert das Zielbild fuer Surface, SurfaceAdapter, PanelRuntime, DragRuntime, HostAdapter, Registry, ChangeRequest und LayoutState.
+- Aktueller Stand von UI-Editor-kit Preview-/Panel-/Hidden-Elements-Runtimes, BBM-Bridges, HostAdapter, Registry-/Scope-Dateien und PDF-/Plan-nahen Bereichen ist inventarisiert.
+- Das neutrale Surface-Zielmodell fuer `ui-screen`, `pdf-page` und `canvas-view` ist rein dokumentarisch beschrieben.
+- UI-Editor-kit speichert nicht; Persistenz bleibt Host-seitig und Scope-/Surface-basiert kontrolliert.
+- Keine Produktivlogik, keine UI-Aenderung, keine neue Persistenz, keine neue Scope-Freigabe, keine PDF-Aktivierung, keine Drag-Aenderung und kein Bare-Package-Import im Renderer.
+- Empfohlene Folgepakete: G37 Surface-Modell im Kit, G38 BBM Surface-Bridge, G39 UI-Screen-SurfaceAdapter, G40 DragRuntime, G41 optionale BBM-Panel-Drag-Nutzung, G42 PDF-/Plan-Surface-Spezifikation.
 
 ## Statusupdate K19.58
 - Der Hidden-Elements-Block ist als Referenzstand abgeschlossen.

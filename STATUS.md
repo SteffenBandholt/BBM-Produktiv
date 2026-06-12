@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-kit Surface-/Panel-/Drag-/PDF-Zielarchitektur inventarisiert:
+  - G36 dokumentiert in `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md` das Zielbild fuer Surface, SurfaceAdapter, PanelRuntime, DragRuntime, HostAdapter, Registry, ChangeRequest und LayoutState.
+  - Das Dokument trennt klar: UI-Editor-kit liefert neutrale Runtime-/ViewModel-/Surface-Hilfen; BBM bleibt fuer konkrete Scopes, Registry, Persistenz, Rechte, DB/IPC, HostAdapter, Module und Fachlogik verantwortlich.
+  - UI-, PDF-, Plan- und Canvas-Ansichten duerfen spaeter nur ueber neutrale Adaptermodelle angeschlossen werden.
+  - Keine Produktivlogik, keine UI-Aenderung, keine neue Persistenz, keine neue Scope-Freigabe, keine PDF-Aktivierung, keine Drag-Aenderung und kein Bare-Package-Import im Renderer.
+
 - UI-Editor Hidden-Elements-Block als Referenzstand abgeschlossen:
   - G35 dokumentiert den gesamten Hidden-Elements-Block in `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md`.
   - Der Referenzstand beschreibt Button/Popover, Datenfluss, ChangeRequest-Modell, Pilot-Persistenz, Restore ueber `getCurrentLayoutState(scopeId)`, Scope-Policy und Sicherheitsgrenzen.

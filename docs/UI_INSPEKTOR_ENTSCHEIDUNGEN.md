@@ -128,3 +128,10 @@
 **Status nach G34:** Weitere Hidden-Elements-Visibility-Persistenz-Scopes duerfen nur per expliziter Allowlist/Policy freigegeben werden. Die Policy enthaelt aktuell ausschliesslich `restarbeiten.ui.main`; bekannte andere Scopes, unbekannte Scopes und Wildcards bleiben gesperrt.
 
 **Status nach G35:** Der Hidden-Elements-Block ist als Referenzstand abgeschlossen. `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` beschreibt den stabilen Ist-Stand von Button/Popover ueber Datenfluss, ChangeRequest- und Persistenzmodell bis zu Restore, Scope-Policy und Sicherheitsgrenzen. G35 aktiviert keine neue Produktivlogik und keinen weiteren Scope.
+
+## Entscheidung 024
+**Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
+
+**Begruendung:** Panel-, Hidden-Elements- und Preview-Runtime sind bereits teilweise kitseitig vorhanden, waehrend BBM weiterhin konkrete Scopes, Registry, HostAdapter, Persistenz und Renderer-Anbindung besitzt. Ein SurfaceAdapter-Schnitt trennt generische Editor-Faehigkeiten von Host-Fachlogik und verhindert, dass PDF-, Plan- oder Canvas-Logik direkt in BBM-Launcher- oder Kit-Sonderpfade einwandert.
+
+**Auswirkung:** UI-Editor-kit bleibt fachfrei und speicherfrei. BBM bleibt Host fuer Registry, Rechte, Persistenz, DB/IPC und konkrete Surface-Freigaben. G36 dokumentiert nur das Zielbild; SurfaceRuntime, DragRuntime, PDF-/Plan-Anbindung und weitere Freigaben bleiben eigene Folgepakete.

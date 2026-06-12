@@ -156,6 +156,7 @@ Moegliche Folgepakete muessen separat geschnitten werden:
 - Rollback-/Reset-Verhalten je Scope pruefen,
 - Sichtpruefung fuer neue sichtbare UI-Aenderungen nachziehen,
 - spaeter Produkt-/Lizenzregeln fuer Scope-Freigaben klaeren.
+- Surface-/Panel-/Drag-Zielarchitektur separat weiterfuehren, siehe `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md`.
 
 Keines dieser Folgepakete ist durch diesen Referenzstand automatisch aktiviert.
 

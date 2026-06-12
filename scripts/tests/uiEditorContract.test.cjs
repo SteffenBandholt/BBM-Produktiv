@@ -116,6 +116,10 @@ async function runUiEditorContractTests(run) {
     __dirname,
     "../../docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md"
   );
+  const surfacePanelDragArchitecturePath = path.join(
+    __dirname,
+    "../../docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md"
+  );
 
   await run("UI Editor Vertrag: Doku ist vorhanden und nennt die Pflichtbegriffe", () => {
     const source = assertDocContains(contractPath, [
@@ -174,6 +178,17 @@ async function runUiEditorContractTests(run) {
       "getCurrentLayoutState",
       "UI-Editor-kit speichert nicht",
       "Registry bleibt unverändert",
+    ]);
+  });
+
+  await run("UI-Editor-kit Surface-/Panel-/Drag-Architektur: Doku nennt die Kernbegriffe", () => {
+    assertDocContains(surfacePanelDragArchitecturePath, [
+      "SurfaceAdapter",
+      "PanelRuntime",
+      "DragRuntime",
+      "pdf-page",
+      "UI-Editor-kit speichert nicht",
+      "Persistenz bleibt Host-seitig",
     ]);
   });
 
