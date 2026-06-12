@@ -6,7 +6,7 @@ Ausgeblendete UI-Editor-Elemente sind im sichtbaren Layout nicht mehr anklickbar
 
 Das Editorpanel soll trotzdem schlank bleiben. Deshalb wird fuer spaetere Pakete kein dauerhaft sichtbarer Elementlistenbereich vorgesehen, sondern ein kompakter Panel-Button fuer ausgeblendete Elemente.
 
-Dieses Dokument beschreibt nur Konzept und Trennschnitt. Es baut keine produktive UI, kein Popover, keine Hidden-Element-Logik und keine Speicherung.
+Dieses Dokument startete als Konzept und Trennschnitt. Der spaetere Stand ist unten historisch nachgefuehrt: Button und kompaktes Popover sind vorbereitet, Persistenz und echte Layout-State-Hidden-Ermittlung bleiben weiterhin ausgeschlossen.
 
 ## Problem
 
@@ -196,6 +196,16 @@ Ziel:
 - pro Element ein neutraler Show-Command
 - keine Speicherung
 
+Status:
+
+- erledigt
+- Der Button toggelt bei `Ausgeblendete: 1+` ein kleines Popover direkt im bestehenden Preview-Panel.
+- Das Popover nutzt `buildHiddenElementsPopoverViewModel` ueber `./uiEditorKitHiddenElementsRuntimeBridge.js`.
+- Die Liste ist nur temporaer sichtbar und bleibt klein.
+- Pro Eintrag gibt es eine neutrale Aktion `Einblenden`.
+- `Einblenden` ist fuer temporaere Preview-Hide-Aenderungen umgesetzt und nutzt nur den vorhandenen in-memory Preview-State.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage, keine echte Layout-State-Speicherung.
+
 ### G23
 
 Persistenz und echte Speicherung separat klaeren.
@@ -208,10 +218,8 @@ Ziel:
 
 ## Nicht-Ziele dieses Pakets
 
-- keine Launcher-Funktionsaenderung
-- keine neue Panel-UI
-- kein Popover
-- keine Hidden-Element-Logik
+- keine Persistenz
+- keine echte Layout-State-Hidden-Ermittlung
 - keine Speicherung
 - keine DB
 - kein IPC

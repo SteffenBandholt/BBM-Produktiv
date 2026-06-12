@@ -50,7 +50,8 @@ function assertLauncherUsesHiddenElementsRuntimeOnlyViaBridge() {
   assert.equal(source.includes('from "./uiEditorKitHiddenElementsRuntimeBridge.js"'), true);
   assert.equal(source.includes("ui-editor-kit/runtime/hidden-elements"), false);
   assert.equal(source.includes("node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs"), false);
-  assert.equal(source.includes("buildHiddenElementsPopoverViewModel"), false);
+  assert.equal(source.includes("buildHiddenElementsPopoverViewModel"), true);
+  assert.equal(source.includes("data-ui-editor-hidden-elements-popover"), true);
 }
 
 function assertExistingBridgesUnchanged() {

@@ -17,11 +17,18 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements-Popover im Preview-Panel vorbereitet:
+  - Der kompakte Hidden-Elements-Button toggelt bei `Ausgeblendete: 1+` ein kleines Popover direkt im bestehenden Preview-Panel.
+  - Das Popover nutzt `buildHiddenElementsPopoverViewModel` ausschliesslich ueber `./uiEditorKitHiddenElementsRuntimeBridge.js`.
+  - Pro Eintrag wird eine neutrale Aktion `Einblenden` angezeigt; sie wirkt nur auf temporaere Preview-Hide-Aenderungen im vorhandenen in-memory Preview-State.
+  - Wenn danach keine ausgeblendeten Preview-Elemente mehr vorhanden sind, schliesst das Popover und der Button faellt auf `Ausgeblendete: 0` zurueck.
+  - Keine grosse Dauerliste, keine Persistenz, keine DB, kein IPC, kein localStorage, keine Fachlogik und kein Bare-Package-Import im Renderer.
+
 - UI-Editor Hidden-Elements-Button im Preview-Panel vorbereitet:
   - `BbmUiEditorRuntimeLauncher.js` nutzt `buildHiddenElementsButtonViewModel` ausschliesslich ueber `./uiEditorKitHiddenElementsRuntimeBridge.js`.
   - Das Preview-Panel zeigt einen kompakten Button/Platzhalter `Ausgeblendete: 0`; bei temporaer per Preview ausgeblendeten Elementen steigt der Zaehler, z. B. `Ausgeblendete: 1`.
   - Datenquelle ist nur der vorhandene in-memory Preview-State; echte Registry-/Layout-State-Hidden-Ermittlung folgt spaeter.
-  - Der Button fuehrt noch keine Aktion aus und oeffnet kein Popover.
+  - Durch G22 erweitert: Der Button kann nun ein kompaktes Popover fuer temporaere Preview-Hides oeffnen.
   - Kein Bare-Package-Import `ui-editor-kit/runtime/hidden-elements` im Renderer, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
 
 - UI-Editor-kit Hidden-Elements-Runtime Importvertrag und Renderer-Bridge vorbereitet:
@@ -34,9 +41,9 @@ Sie ergÃ¤nzt:
   - `docs/UI_EDITOR_HIDDEN_ELEMENTS_BUTTON_KONZEPT.md` dokumentiert das spaetere Bedienkonzept fuer ausgeblendete Elemente.
   - Grundregel: Hide entfernt kein Element aus Registry oder Layout-State, sondern bedeutet nur `visible = false`.
   - Das Panel soll schlank bleiben; statt dauerhafter Liste ist spaeter ein kompakter Button wie `Ausgeblendete: 3` vorgesehen.
-  - Ein Popover/Dropdown mit `Einblenden` je Element bleibt ein spaeteres Paket.
-  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit, G20 BBM Importvertrag/Bridge und G21 kompakter Button ohne Popover sind erledigt; G22 Popover/Dropdown und G23 Persistenz bleiben separat.
-  - Keine Launcher-Funktionsaenderung, keine neue Panel-UI, kein Popover, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
+  - Das Popover/Dropdown mit `Einblenden` fuer temporaere Preview-Hides ist durch G22 vorbereitet.
+  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit, G20 BBM Importvertrag/Bridge, G21 kompakter Button und G22 Popover sind erledigt; G23 Persistenz bleibt separat.
+  - Weiterhin keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
 
 - UI-Editor-kit Panel-ViewModel im BBM-Launcher vorbereitend genutzt:
   - `BbmUiEditorRuntimeLauncher.js` importiert `buildPanelViewModel` ausschliesslich ueber `./uiEditorKitPanelRuntimeBridge.js`.

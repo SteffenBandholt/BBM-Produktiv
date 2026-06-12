@@ -271,6 +271,12 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-editor-hidden-elements-button=\"true\"]") {
     return node.getAttribute("data-ui-editor-hidden-elements-button") === "true";
   }
+  if (raw === "[data-ui-editor-hidden-elements-popover=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hidden-elements-popover") === "true";
+  }
+  if (raw === "[data-ui-editor-hidden-elements-action=\"show\"]") {
+    return node.getAttribute("data-ui-editor-hidden-elements-action") === "show";
+  }
   if (raw === "[data-ui-editor-id]") {
     return Boolean(node.getAttribute("data-ui-editor-id"));
   }
@@ -317,7 +323,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes('from "ui-editor-kit/runtime/panel"'), false);
     assert.equal(source.includes('from "ui-editor-kit/runtime/hidden-elements"'), false);
     assert.equal(source.includes("node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs"), false);
-    assert.equal(source.includes("buildHiddenElementsPopoverViewModel"), false);
+    assert.equal(source.includes("buildHiddenElementsPopoverViewModel"), true);
+    assert.equal(source.includes("data-ui-editor-hidden-elements-popover"), true);
     assert.equal(source.includes('from "../editorRuntime/preview/index.js"'), false);
     assert.equal(packageJson.build.files.includes("uiEditor/**/*"), true);
     assert.equal(source.includes("scanUiInspectorTargets"), false);
@@ -402,7 +409,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(launcherSource.includes('from "./uiEditorKitHiddenElementsRuntimeBridge.js"'), true);
     assert.equal(launcherSource.includes('from "ui-editor-kit/runtime/hidden-elements"'), false);
     assert.equal(launcherSource.includes("node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs"), false);
-    assert.equal(launcherSource.includes("buildHiddenElementsPopoverViewModel"), false);
+    assert.equal(launcherSource.includes("buildHiddenElementsPopoverViewModel"), true);
     for (const forbidden of [
       "localStorage",
       "writeFile",
@@ -483,11 +490,35 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       hiddenCount: 0,
     });
 
-    state.previewStates.set(target, { hidden: true });
+    target.style.display = "none";
+    state.previewStates.set(target, {
+      originalStyle: { transform: "", width: "", height: "", display: "" },
+      dx: 0,
+      dy: 0,
+      widthDelta: 0,
+      heightDelta: 0,
+      baseWidth: 0,
+      baseHeight: 0,
+      hidden: true,
+    });
     const hiddenViewModel = mod.buildBbmHiddenElementsButtonViewModel(state);
     assert.equal(hiddenViewModel.hiddenCount, 1);
     assert.equal(hiddenViewModel.label, "Ausgeblendete: 1");
     assert.equal(hiddenViewModel.enabled, true);
+
+    const popoverViewModel = mod.buildBbmHiddenElementsPopoverViewModel(state);
+    assert.equal(popoverViewModel.title, "Ausgeblendete Elemente");
+    assert.deepEqual(popoverViewModel.items, [
+      {
+        elementId: "sample.hidden",
+        label: "Ausblendbares Ziel",
+        action: "show",
+        enabled: true,
+      },
+    ]);
+    assert.equal(mod.showHiddenPreviewElement(state, "sample.hidden"), true);
+    assert.equal(target.style.display, "");
+    assert.equal(mod.buildBbmHiddenElementsButtonViewModel(state).hiddenCount, 0);
   });
 
   await run("BBM UI-Editor-Runtime: Launcher ist nur im DEV-Kontext sichtbar", async () => {
@@ -1145,7 +1176,30 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(hiddenButton.textContent, "Ausgeblendete: 1");
     assert.equal(hiddenButton.disabled, false);
     assert.equal(hiddenButton.getAttribute("data-ui-editor-hidden-elements-count"), "1");
+    assert.equal(Boolean(getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-popover="true"]')), false);
+    hiddenButton.click();
+    let hiddenPopover = getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-popover="true"]');
+    assert.equal(Boolean(hiddenPopover), true);
+    assert.equal(getRenderedText(hiddenPopover).includes("Ausgeblendete Elemente"), true);
+    assert.equal(getRenderedText(hiddenPopover).includes("Kurztext"), true);
+    const showHiddenButton = hiddenPopover.querySelector('[data-ui-editor-hidden-elements-action="show"]');
+    assert.equal(Boolean(showHiddenButton), true);
+    assert.equal(showHiddenButton.disabled, false);
+    hiddenButton = getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-button="true"]');
+    hiddenButton.click();
+    assert.equal(Boolean(getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-popover="true"]')), false);
+    hiddenButton = getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-button="true"]');
+    hiddenButton.click();
+    hiddenPopover = getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-popover="true"]');
+    hiddenPopover.querySelector('[data-ui-editor-hidden-elements-action="show"]').click();
+    assert.equal(target.style.display, "");
+    hiddenButton = getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-button="true"]');
+    assert.equal(hiddenButton.textContent, "Ausgeblendete: 0");
+    assert.equal(hiddenButton.disabled, true);
+    assert.equal(Boolean(getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-popover="true"]')), false);
 
+    getLatestPreviewAction(doc, "hide").click();
+    assert.equal(target.style.display, "none");
     getLatestPreviewAction(doc, "show").click();
     assert.equal(target.style.display, "");
     hiddenButton = getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-button="true"]');

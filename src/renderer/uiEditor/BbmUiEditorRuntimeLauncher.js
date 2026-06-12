@@ -14,7 +14,10 @@ import {
   resolvePreviewTargetElement as resolvePreviewTargetElementModel,
   upsertPreviewChangeRequest as upsertPreviewChangeRequestModel,
 } from "./uiEditorKitPreviewRuntimeBridge.js";
-import { buildHiddenElementsButtonViewModel } from "./uiEditorKitHiddenElementsRuntimeBridge.js";
+import {
+  buildHiddenElementsButtonViewModel,
+  buildHiddenElementsPopoverViewModel,
+} from "./uiEditorKitHiddenElementsRuntimeBridge.js";
 import { buildPanelViewModel } from "./uiEditorKitPanelRuntimeBridge.js";
 
 void installedLauncherButtonArtifactModule;
@@ -227,6 +230,7 @@ function createLauncherState({
     pendingChangeRequests: [],
     changeRequestSequence: 0,
     previewMessage: "",
+    hiddenElementsPopoverOpen: false,
     targetSelectionController: null,
     targetSelectionPanelController: null,
     win: null,
@@ -796,6 +800,14 @@ function buildBbmPanelViewModel(state = {}) {
 }
 
 function buildBbmHiddenElementsButtonViewModel(state = {}) {
+  return buildHiddenElementsButtonViewModel({ elements: getBbmHiddenElementsViewModelInput(state) });
+}
+
+function buildBbmHiddenElementsPopoverViewModel(state = {}) {
+  return buildHiddenElementsPopoverViewModel({ elements: getBbmHiddenElementsViewModelInput(state) });
+}
+
+function getBbmHiddenElementsViewModelInput(state = {}) {
   const elements = [];
   const previewStates = state.previewStates instanceof Map ? state.previewStates : null;
   if (previewStates) {
@@ -811,7 +823,37 @@ function buildBbmHiddenElementsButtonViewModel(state = {}) {
       });
     }
   }
-  return buildHiddenElementsButtonViewModel({ elements });
+  return elements;
+}
+
+function getPreviewStateEntryByElementId(state = {}, elementId = "") {
+  const normalizedElementId = String(elementId || "").trim();
+  const previewStates = state.previewStates instanceof Map ? state.previewStates : null;
+  if (!normalizedElementId || !previewStates) return null;
+  for (const [targetNode, previewState] of previewStates.entries()) {
+    if (getNodeUiEditorId(targetNode) === normalizedElementId) {
+      return { targetNode, previewState };
+    }
+  }
+  return null;
+}
+
+function showHiddenPreviewElement(state = {}, elementId = "") {
+  const entry = getPreviewStateEntryByElementId(state, elementId);
+  if (!entry?.previewState?.hidden) return false;
+  const registryElement = getRegisteredElementById(state, elementId);
+  if (registryElement && !isPreviewOperationAllowed(registryElement, "show")) return false;
+
+  entry.previewState.hidden = false;
+  applyPreviewState(entry.targetNode, entry.previewState);
+  if (registryElement) {
+    upsertPreviewChangeRequest(state, registryElement, entry.targetNode, "show", {});
+  }
+  state.previewMessage = "Element wieder eingeblendet.";
+  if (buildBbmHiddenElementsButtonViewModel(state).hiddenCount < 1) {
+    state.hiddenElementsPopoverOpen = false;
+  }
+  return true;
 }
 
 function getNextChangeRequestId(state = {}) {
@@ -1111,6 +1153,9 @@ function renderPreviewPanel(doc, state = {}) {
   panel.appendChild(details);
 
   const hiddenElementsButtonViewModel = buildBbmHiddenElementsButtonViewModel(state);
+  if (hiddenElementsButtonViewModel.hiddenCount < 1) {
+    state.hiddenElementsPopoverOpen = false;
+  }
   const hiddenElementsRow = doc.createElement("div");
   hiddenElementsRow.className = "ui-editor-preview-hidden-elements";
   hiddenElementsRow.style.marginTop = "8px";
@@ -1129,8 +1174,64 @@ function renderPreviewPanel(doc, state = {}) {
   hiddenElementsButton.style.textAlign = "left";
   hiddenElementsButton.style.opacity = hiddenElementsButton.disabled ? "0.62" : "1";
   hiddenElementsButton.addEventListener("mousedown", stopPreviewPanelEvent);
-  hiddenElementsButton.addEventListener("click", stopPreviewPanelEvent);
+  hiddenElementsButton.addEventListener("click", (event) => {
+    stopPreviewPanelEvent(event);
+    if (hiddenElementsButtonViewModel.hiddenCount < 1) {
+      state.hiddenElementsPopoverOpen = false;
+      return;
+    }
+    state.hiddenElementsPopoverOpen = !state.hiddenElementsPopoverOpen;
+    renderPreviewPanel(doc, state);
+  });
   hiddenElementsRow.appendChild(hiddenElementsButton);
+  if (state.hiddenElementsPopoverOpen && hiddenElementsButtonViewModel.hiddenCount > 0) {
+    const popoverViewModel = buildBbmHiddenElementsPopoverViewModel(state);
+    const popover = doc.createElement("div");
+    popover.className = "ui-editor-preview-hidden-elements__popover";
+    popover.setAttribute("data-ui-editor-hidden-elements-popover", "true");
+    popover.style.marginTop = "6px";
+    popover.style.padding = "8px";
+    popover.style.border = "1px solid #cbd5e1";
+    popover.style.borderRadius = "6px";
+    popover.style.background = "#ffffff";
+
+    const popoverTitle = doc.createElement("div");
+    popoverTitle.textContent = popoverViewModel.title || "Ausgeblendete Elemente";
+    popoverTitle.style.fontWeight = "700";
+    popoverTitle.style.marginBottom = "6px";
+    popover.appendChild(popoverTitle);
+
+    for (const item of popoverViewModel.items || []) {
+      const row = doc.createElement("div");
+      row.setAttribute("data-ui-editor-hidden-elements-item", item.elementId || "");
+      row.style.display = "flex";
+      row.style.alignItems = "center";
+      row.style.justifyContent = "space-between";
+      row.style.gap = "8px";
+      row.style.marginTop = "4px";
+
+      const label = doc.createElement("span");
+      label.textContent = item.label || item.elementId || "Element";
+      row.appendChild(label);
+
+      const showButton = doc.createElement("button");
+      showButton.type = "button";
+      showButton.textContent = "Einblenden";
+      showButton.disabled = item.enabled !== true || item.action !== "show";
+      showButton.setAttribute("data-ui-editor-hidden-elements-action", "show");
+      showButton.setAttribute("data-ui-editor-hidden-elements-target", item.elementId || "");
+      showButton.addEventListener("mousedown", stopPreviewPanelEvent);
+      showButton.addEventListener("click", (event) => {
+        stopPreviewPanelEvent(event);
+        if (showHiddenPreviewElement(state, item.elementId)) {
+          renderPreviewPanel(doc, state);
+        }
+      });
+      row.appendChild(showButton);
+      popover.appendChild(row);
+    }
+    hiddenElementsRow.appendChild(popover);
+  }
   panel.appendChild(hiddenElementsRow);
 
   const buttonGrid = doc.createElement("div");
@@ -1417,6 +1518,8 @@ export {
   getReadonlyLauncherStatusText,
   buildBbmPanelViewModel,
   buildBbmHiddenElementsButtonViewModel,
+  buildBbmHiddenElementsPopoverViewModel,
+  showHiddenPreviewElement,
   normalizeReadonlyRegisteredElements,
   normalizeAvailableUiScopes,
   ensureLauncherStatusHint,

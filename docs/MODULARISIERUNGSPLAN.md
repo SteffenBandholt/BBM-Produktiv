@@ -220,6 +220,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Fuer ausgeblendete Elemente ist ein schlankes Bedienkonzept dokumentiert: Hide bleibt `visible = false`, Elemente bleiben in Registry/Layout-State, und spaeter soll ein kompakter Button mit temporaerem Popover statt dauerhafter Panel-Liste folgen.
 - Der offizielle UI-Editor-kit-Hidden-Elements-Runtime-Importvertrag ist in BBM testbar: `ui-editor-kit/runtime/hidden-elements` wird per CommonJS und ESM geprueft; fuer den Electron-Renderer ist `src/renderer/uiEditor/uiEditorKitHiddenElementsRuntimeBridge.js` mit relativem Pfad auf `node_modules/ui-editor-kit/src/runtime/hiddenElements/index.mjs` vorbereitet.
 - Der kompakte Hidden-Elements-Button ist im BBM-Preview-Panel vorbereitet: Der Launcher nutzt `buildHiddenElementsButtonViewModel` ueber die Hidden-Elements-Bridge, zeigt `Ausgeblendete: 0` deaktiviert und zaehlt temporaer per Preview ausgeblendete Elemente aus dem in-memory Preview-State; Popover, Einblenden-Aktion und Persistenz bleiben ausgeschlossen.
+- Das kompakte Hidden-Elements-Popover ist im BBM-Preview-Panel vorbereitet: Der Launcher nutzt `buildHiddenElementsPopoverViewModel` ueber dieselbe Bridge, toggelt ein kleines Popover bei `Ausgeblendete: 1+` und kann temporaere Preview-Hide-Aenderungen ueber `Einblenden` wieder aufheben; Persistenz und echte Registry-/Layout-State-Ermittlung bleiben ausgeschlossen.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -229,7 +230,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
 - Spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit als separates Folgethema klaeren
 - Weitere Auslagerung der Kit-Panel-Runtime im BBM-Launcher separat planen; dabei DOM-Grenzen, Drag-Abgrenzung und Electron-Sichtpruefung ausdruecklich trennen.
-- Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel, G20 BBM Importvertrag/Bridge und G21 kompakter Button ohne Popover sind erledigt; G22 Popover und G23 Persistenz bleiben separat.
+- Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel, G20 BBM Importvertrag/Bridge, G21 kompakter Button und G22 Popover sind erledigt; G23 Persistenz bleibt separat.
 
 ---
 
