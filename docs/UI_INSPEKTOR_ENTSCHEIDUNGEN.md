@@ -126,3 +126,5 @@
 **Status nach G33:** Der bestehende kompakte Hidden-Elements-Popover darf gespeicherte Pilot-Overrides fuer `restarbeiten.ui.main` wieder auf sichtbar setzen. Dies geschieht nur ueber validierte `persistent: true` Visibility-ChangeRequests mit `payload.visible === true`; weitere Scopes und andere Operationen bleiben gesperrt.
 
 **Status nach G34:** Weitere Hidden-Elements-Visibility-Persistenz-Scopes duerfen nur per expliziter Allowlist/Policy freigegeben werden. Die Policy enthaelt aktuell ausschliesslich `restarbeiten.ui.main`; bekannte andere Scopes, unbekannte Scopes und Wildcards bleiben gesperrt.
+
+**Status nach G35:** Der Hidden-Elements-Block ist als Referenzstand abgeschlossen. `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` beschreibt den stabilen Ist-Stand von Button/Popover ueber Datenfluss, ChangeRequest- und Persistenzmodell bis zu Restore, Scope-Policy und Sicherheitsgrenzen. G35 aktiviert keine neue Produktivlogik und keinen weiteren Scope.

@@ -128,6 +128,8 @@ G33 nutzt den freigegebenen Pilotpfad auch fuer das Ruecksetzen gespeicherter Hi
 
 G34 ergaenzt eine explizite Scope-Policy: `src/renderer/editorRuntime/host/visibilityPersistenceScopePolicy.js`. `VISIBILITY_PERSISTENCE_ALLOWED_SCOPES` enthaelt aktuell nur `restarbeiten.ui.main`. Der Contract akzeptiert persistente Visibility-Requests nur, wenn der HostAdapter-Scope selbst in dieser Policy erlaubt ist; `canPersistVisibility: true` allein reicht nicht fuer eine globale Freigabe.
 
+G35 schliesst den Hidden-Elements-Block dokumentarisch als Referenzstand ab. Der verbindliche Ist-Stand steht in `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md`: Registry plus `getCurrentLayoutState(scopeId)` plus Pending-/Preview-State bilden das Hidden-Elements-ViewModel aus dem UI-Editor-kit; Persistenz bleibt auf `operation: "visibility"` mit Boolean-`payload.visible`, `persistent: true` und Scope `restarbeiten.ui.main` begrenzt. G35 erweitert den Contract nicht und gibt keinen weiteren Scope frei.
+
 ## Nicht erlaubt
 
 Ausserhalb des G31-Pilotpfads darf der HostAdapter nicht:

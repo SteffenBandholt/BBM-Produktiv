@@ -112,6 +112,10 @@ function assertDocContains(filePath, requiredSnippets) {
 async function runUiEditorContractTests(run) {
   const contractPath = path.join(__dirname, "../../docs/UI_EDITOR_VERTRAG.md");
   const restarbeitenMapPath = path.join(__dirname, "../../docs/ui-landkarten/RESTARBEITEN.md");
+  const hiddenElementsReferencePath = path.join(
+    __dirname,
+    "../../docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md"
+  );
 
   await run("UI Editor Vertrag: Doku ist vorhanden und nennt die Pflichtbegriffe", () => {
     const source = assertDocContains(contractPath, [
@@ -160,6 +164,17 @@ async function runUiEditorContractTests(run) {
     assert.equal(source.includes("bleibt unber"), true);
     assert.equal(source.includes("Diese Restarbeiten-Rahmenlandkarte"), true);
     assert.equal(source.includes("Protokoll nicht"), true);
+  });
+
+  await run("Hidden-Elements-Referenzstand: Doku nennt die Kernbegriffe", () => {
+    assertDocContains(hiddenElementsReferencePath, [
+      "restarbeiten.ui.main",
+      "visibility",
+      "persistent",
+      "getCurrentLayoutState",
+      "UI-Editor-kit speichert nicht",
+      "Registry bleibt unverändert",
+    ]);
   });
 
   await run("UI-Editor-Hilfslogik: gueltige Targets bestehen die Pruefung", () => {

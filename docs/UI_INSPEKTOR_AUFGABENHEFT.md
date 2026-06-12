@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.58 abgeschlossen: Hidden-Elements-Block ist als stabiler Referenzstand in `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` dokumentiert; keine neue Produktivlogik und keine weitere Scope-Freigabe.
 - K19.57 abgeschlossen: Freigabe weiterer Hidden-Elements-Scopes ist als Allowlist/Policy vorbereitet; aktiv bleibt nur `restarbeiten.ui.main`.
 - K19.56 abgeschlossen: Gespeicherte Hidden-Element-Visibility-Overrides koennen im bestehenden kompakten Popover fuer den Pilot-Scope `restarbeiten.ui.main` einzeln oder per `Alle einblenden` auf sichtbar zurueckgesetzt werden; weitere Scopes bleiben gesperrt.
 - K19.55 abgeschlossen: Restore gespeicherter Hidden-Element-Visibility-Overrides ist fuer den Pilot-Scope `restarbeiten.ui.main` testseitig abgesichert; `getCurrentLayoutState(...)` liefert nach neuem Lesezyklus `visible: false/true` an die Hidden-Elements-Logik.
@@ -116,6 +117,14 @@ Aktueller Stand:
 - [x] K19.55 Restore gespeicherter Hidden-Element-Visibility-Overrides fuer restarbeiten.ui.main absichern
 - [x] K19.56 Hidden-Elements Pilot-Ruecksetzpfad im kompakten Popover absichern
 - [x] K19.57 Hidden-Elements Scope-Freigabe-Policy vorbereiten
+- [x] K19.58 Hidden-Elements-Block als Referenzstand abschliessen
+
+## Statusupdate K19.58
+- Der Hidden-Elements-Block ist als Referenzstand abgeschlossen.
+- `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` dokumentiert Kurzfazit, Bedienlogik, Datenfluss, ChangeRequest-Modell, Persistenzmodell, Restore-Pfad, Scope-Policy, Sicherheitsgrenzen, bewusst nicht umgesetzte Punkte, Folgepakete und Test-/Guardrail-Referenzen.
+- Aktiv bleibt ausschliesslich `restarbeiten.ui.main`; weitere Scopes, globale Freigabe, Move-/Resize-/Text-Persistenz, Registry-Mutation, UI-Editor-kit-Speicher, `localStorage`, Dateiablage, PDF-/Drucklogik und Fachlogik bleiben ausgeschlossen.
+- Dieses Paket ist Doku/Test; keine produktive UI-/Launcher-/HostAdapter-/DB-/IPC-Funktionsaenderung.
+- Folgepaket bleibt getrennt: jede echte weitere Scope-Freigabe braucht eigenes Paket mit Tests, Restore- und Ruecksetzabsicherung.
 
 ## Statusupdate K19.57
 - Die Freigabe weiterer Hidden-Elements-Visibility-Persistenz-Scopes ist als explizite Allowlist/Policy vorbereitet.

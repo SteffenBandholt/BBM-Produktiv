@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements-Block als Referenzstand abgeschlossen:
+  - G35 dokumentiert den gesamten Hidden-Elements-Block in `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md`.
+  - Der Referenzstand beschreibt Button/Popover, Datenfluss, ChangeRequest-Modell, Pilot-Persistenz, Restore ueber `getCurrentLayoutState(scopeId)`, Scope-Policy und Sicherheitsgrenzen.
+  - Aktiv bleibt ausschliesslich `restarbeiten.ui.main`; weitere Scopes bleiben blockiert und brauchen eigene Folgepakete.
+  - Keine neue Produktivlogik, keine neue Scope-Freigabe, keine UI-/Launcher-Funktionsaenderung, keine Registry-Aenderung, kein `localStorage`, kein `writeFile`, keine PDF-/Drucklogik und keine Fachlogik.
+
 - UI-Editor Hidden-Elements Scope-Freigabe-Modell vorbereitet:
   - G34 fuehrt eine explizite Allowlist/Policy fuer Visibility-Persistenz ein.
   - Aktiv erlaubt bleibt ausschliesslich `restarbeiten.ui.main`; bekannte andere Scopes, unbekannte Scopes und Wildcards bleiben blockiert.

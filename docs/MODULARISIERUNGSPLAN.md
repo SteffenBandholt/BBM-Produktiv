@@ -233,6 +233,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Die Wiederherstellung gespeicherter Hidden-Element-Visibility-Overrides ist fuer den Pilot-Scope testseitig abgesichert: Nach einem neuen Adapter-/Lesezyklus liefert `getCurrentLayoutState("restarbeiten.ui.main")` wieder `visible: false/true`, und die Hidden-Elements-Logik zaehlt nur `visible: false` als hidden.
 - Der Hidden-Elements-Pilot-Ruecksetzpfad ist im bestehenden kompakten Popover abgesichert: gespeicherte `visible: false`-Overrides fuer `restarbeiten.ui.main` koennen einzeln oder ueber `Alle einblenden` per validiertem `persistent: true` / `payload.visible === true` zurueckgesetzt werden; andere Scopes und nicht freigegebene Adapter bleiben deaktiviert.
 - Die Freigabe weiterer Hidden-Elements-Scopes ist als Policy vorbereitet: `visibilityPersistenceScopePolicy` erlaubt aktuell ausschliesslich `restarbeiten.ui.main`; bekannte andere Scopes, unbekannte Scopes und Wildcards bleiben blockiert, und weitere Scopes brauchen eigene Freigabepakete.
+- Der Hidden-Elements-Block ist als stabiler Referenzstand abgeschlossen: `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` dokumentiert Button/Popover, Datenfluss, ChangeRequest-Modell, Pilot-Persistenz, Restore-Pfad, Scope-Policy, Sicherheitsgrenzen, Nicht-Ziele und Test-/Guardrail-Referenzen. Es wurde keine neue Produktivlogik und keine weitere Scope-Freigabe aktiviert.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -242,7 +243,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
 - Spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit als separates Folgethema klaeren
 - Weitere Auslagerung der Kit-Panel-Runtime im BBM-Launcher separat planen; dabei DOM-Grenzen, Drag-Abgrenzung und Electron-Sichtpruefung ausdruecklich trennen.
-- Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover, G23 Persistenz-Trennschnitt, G24 Layout-State-Lesen, G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz-Vorbereitung, G28 Speicherort-/Freigabeentscheidung, G29 technische Speicher-Modellvorbereitung, G30 validierter HostAdapter-Dry-Run, G31 Pilot-Persistenz fuer `restarbeiten.ui.main`, G32 Restore-Absicherung, G33 Pilot-Ruecksetzpfad und G34 Scope-Freigabe-Policy sind erledigt; weitere echte Scope-Freigaben bleiben separat.
+- Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover, G23 Persistenz-Trennschnitt, G24 Layout-State-Lesen, G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz-Vorbereitung, G28 Speicherort-/Freigabeentscheidung, G29 technische Speicher-Modellvorbereitung, G30 validierter HostAdapter-Dry-Run, G31 Pilot-Persistenz fuer `restarbeiten.ui.main`, G32 Restore-Absicherung, G33 Pilot-Ruecksetzpfad, G34 Scope-Freigabe-Policy und G35 Referenzabschluss sind erledigt; weitere echte Scope-Freigaben bleiben separat.
 
 ---
 

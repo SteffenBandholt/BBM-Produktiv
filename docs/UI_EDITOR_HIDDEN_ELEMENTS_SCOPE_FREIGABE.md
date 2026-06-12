@@ -101,3 +101,16 @@ Vor jeder neuen Scope-Freigabe muessen mindestens nachgezogen werden:
 G34 liefert nur das Freigabemodell und Guardrails.
 
 Es wurde keine weitere Scope-Persistenz aktiviert.
+
+## Referenzstand nach G35
+
+Der Hidden-Elements-Block ist in `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` als stabiler Referenzstand dokumentiert.
+
+Diese Scope-Freigabe bleibt unveraendert:
+
+- aktiv erlaubt: `restarbeiten.ui.main`
+- keine globale Freigabe
+- keine weiteren Scopes
+- weitere Scope-Freigaben nur ueber eigenes Folgepaket
+
+G35 ist ein Abschluss-/Referenzpaket und aktiviert keine neue Produktivlogik.
