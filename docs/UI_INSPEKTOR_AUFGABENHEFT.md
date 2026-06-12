@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.50 abgeschlossen: Hidden-Elements-Persistenz ist vorbereitet und dokumentiert; `canPersistVisibility` bleibt `false`, `persistent: true` bleibt mit `PERSISTENCE_DISABLED` blockiert und es gibt weiterhin keine produktive Speicherung.
 - K19.49 abgeschlossen: HostAdapter-Dry-Run fuer Hidden-Element-Visibility-ChangeRequests ist abgesichert; keine Persistenz und keine sichtbare UI-Aenderung.
 - K19.48 abgeschlossen: Hide/Show ist als einheitlicher Visibility-ChangeRequest abgesichert; keine Persistenz und keine HostAdapter-Schreibausfuehrung.
 - K19.47 abgeschlossen: Hidden-Elements werden im BBM-Launcher zusaetzlich lesend aus Registry plus Layout-State beruecksichtigt; keine Schreiblogik und keine Persistenz.
@@ -100,6 +101,17 @@ Aktueller Stand:
 - [x] K19.47 Hidden-Elements aus echtem Layout-State lesen, noch ohne Schreiben
 - [x] K19.48 Hide/Show als ChangeRequest sauber modellieren
 - [x] K19.49 HostAdapter-Dry-Run fuer Hidden-Element-Visibility-ChangeRequests absichern
+- [x] K19.50 Hidden-Elements-Persistenz vorbereiten, aber deaktiviert lassen
+
+## Statusupdate K19.50
+- Das spaetere Hidden-Elements-Persistenzmodell ist dokumentiert: neutraler Override mit `scopeId`, `elementId` und `overrides.visible` oder spaeterer `visibility`-ChangeRequest.
+- `persistent: false` bleibt Standard fuer Preview-Requests.
+- `persistent: true` darf noch nicht produktiv ausgefuehrt werden und wird weiter mit `PERSISTENCE_DISABLED` blockiert.
+- `getCapabilities()` enthaelt vorbereitend `canPersistVisibility: false`; versehentlich uebergebene Persistenz-Capabilities werden auf deaktiviert normalisiert.
+- `submitChangeRequests(...)` meldet fuer Visibility-Requests zusaetzlich `visibilityPersistenceDisabled: true`.
+- Das UI-Editor-kit speichert weiterhin nichts selbst; BBM entscheidet spaeter separat ueber den konkreten Speicherort.
+- Keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik, keine automatische Wiederherstellung beim App-Start, keine UI-/Launcher-/Drag-/Target-Selection-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
+- Folgepaket bleibt abgegrenzt: G28 Wiederherstellung beim App-Start erst nach freigegebener Persistenz.
 
 ## Statusupdate K19.49
 - Visibility-ChangeRequests fuer Hidden-Element-Hide/Show werden ueber `onPendingChangeRequestsChanged(...)` an den HostAdapter gemeldet.

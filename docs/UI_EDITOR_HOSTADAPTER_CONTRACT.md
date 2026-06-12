@@ -69,11 +69,13 @@ Der Kontext enthaelt keine Fachdaten, keine Datensatz-IDs und keine Datenbankinf
 - `preview`
 - `pendingChangeRequests`
 - `persistence`
+- `canPersistVisibility`
 - `dryRunOnly`
 
 Aktuell gilt verbindlich:
 
 - `persistence: false`
+- `canPersistVisibility: false`
 - `dryRunOnly: true`
 
 Auch wenn ein Host versehentlich Persistenz als Capability uebergibt, normalisiert der Vertrag sie auf deaktiviert.
@@ -90,6 +92,7 @@ Diese Rueckmeldung ist keine Speicherung.
 - `blocked: true`
 - `reason: "PERSISTENCE_DISABLED"`
 - `persistenceDisabled: true`
+- `canPersistVisibility: false`
 - `dryRunOnly: true`
 
 Fuer Hidden-Elemente gilt derselbe Dry-Run-Vertrag:
@@ -98,6 +101,8 @@ Fuer Hidden-Elemente gilt derselbe Dry-Run-Vertrag:
 - Show wird als `operation: "visibility"` mit `payload.visible === true` gemeldet.
 - `onPendingChangeRequestsChanged(changeRequests)` darf diese Requests in-memory anzeigen oder diagnostizieren.
 - `submitChangeRequests(changeRequests)` darf sie nicht speichern, sondern muss weiterhin blockiert bleiben.
+- Wenn ein Visibility-Request uebergeben wird, meldet die Blockadeantwort `visibilityPersistenceDisabled: true`.
+- Auch `persistent: true` darf in diesem Stand nicht produktiv ausgefuehrt werden.
 
 ## Nicht erlaubt
 

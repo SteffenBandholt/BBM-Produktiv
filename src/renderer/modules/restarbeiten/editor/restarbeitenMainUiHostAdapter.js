@@ -12,6 +12,11 @@ const SCOPE = Object.freeze({
   scopeId: "restarbeiten.ui.main",
 });
 
+function hasVisibilityChangeRequest(changeRequests = []) {
+  return Array.isArray(changeRequests)
+    && changeRequests.some((entry) => entry?.operation === "visibility");
+}
+
 export function createRestarbeitenMainUiHostAdapter() {
   const registry = getRestarbeitenMainUiRegistry();
   const pendingChangeRequests = [];
@@ -62,6 +67,8 @@ export function createRestarbeitenMainUiHostAdapter() {
         blocked: true,
         reason: "PERSISTENCE_DISABLED",
         persistenceDisabled: true,
+        visibilityPersistenceDisabled: hasVisibilityChangeRequest(changeRequests),
+        canPersistVisibility: false,
         dryRunOnly: true,
         changeRequests: Array.isArray(changeRequests) ? changeRequests.map((entry) => ({ ...entry })) : [],
       };

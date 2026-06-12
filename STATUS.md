@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements Persistenz vorbereitet, aber deaktiviert:
+  - Das spaetere Persistenzmodell ist in `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_VORBEREITUNG.md` dokumentiert.
+  - Neutraler spaeterer Override: `scopeId`, `elementId`, `overrides.visible`.
+  - Spaeterer ChangeRequest bleibt `operation: "visibility"` mit `payload.visible === false/true`.
+  - `persistent: false` bleibt Standard; `persistent: true` wird weiterhin mit `PERSISTENCE_DISABLED` blockiert.
+  - `getCapabilities()` meldet vorbereitend `canPersistVisibility: false`; `submitChangeRequests(...)` meldet fuer Visibility-Requests `visibilityPersistenceDisabled: true`.
+  - Keine produktive Speicherung, keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik, keine automatische Wiederherstellung, keine UI-/Launcher-Aenderung und keine PDF-/Drucklogik.
+
 - UI-Editor Hidden-Elements HostAdapter-Dry-Run abgesichert:
   - Visibility-ChangeRequests fuer Hide/Show werden ueber `onPendingChangeRequestsChanged(...)` an den HostAdapter gemeldet.
   - Hide wird als `operation: "visibility"` mit `payload.visible === false` gemeldet, Show als dieselbe Operation mit `payload.visible === true`.

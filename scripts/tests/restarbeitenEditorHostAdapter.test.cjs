@@ -10,6 +10,10 @@ const HOST_CONTRACT_PATH = path.join(
   __dirname,
   "../../src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js"
 );
+const HOST_ADAPTER_PATH = path.join(
+  __dirname,
+  "../../src/renderer/modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js"
+);
 const REGISTRY_PATH = path.join(
   __dirname,
   "../../src/renderer/modules/restarbeiten/editor/registries/restarbeitenMainUiRegistry.js"
@@ -77,6 +81,7 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(capabilities.preview, true);
     assert.equal(capabilities.pendingChangeRequests, true);
     assert.equal(capabilities.persistence, false);
+    assert.equal(capabilities.canPersistVisibility, false);
     assert.equal(capabilities.dryRunOnly, true);
   });
 
@@ -97,7 +102,48 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(result.blocked, true);
     assert.equal(result.reason, "PERSISTENCE_DISABLED");
     assert.equal(result.persistenceDisabled, true);
+    assert.equal(result.canPersistVisibility, false);
     assert.equal(result.dryRunOnly, true);
+  });
+
+  await run("Restarbeiten HostAdapter: persistent Visibility-Requests bleiben blockiert", () => {
+    const persistentVisibilityRequest = {
+      ...validChangeRequest,
+      changeId: "chg-visibility-persistent-1",
+      operation: "visibility",
+      payload: {
+        visible: false,
+      },
+      source: "preview",
+      persistent: true,
+    };
+    const result = adapter.submitChangeRequests([persistentVisibilityRequest]);
+    assert.equal(result.ok, false);
+    assert.equal(result.blocked, true);
+    assert.equal(result.reason, "PERSISTENCE_DISABLED");
+    assert.equal(result.persistenceDisabled, true);
+    assert.equal(result.visibilityPersistenceDisabled, true);
+    assert.equal(result.canPersistVisibility, false);
+    assert.equal(result.dryRunOnly, true);
+    assert.equal(result.changeRequests.length, 1);
+    assert.equal(result.changeRequests[0].operation, "visibility");
+    assert.equal(result.changeRequests[0].persistent, true);
+    assert.deepEqual(result.changeRequests[0].payload, { visible: false });
+  });
+
+  await run("Restarbeiten HostAdapter: bleibt ohne Storage-, IPC- und DB-Schreibweg", () => {
+    const source = require("node:fs").readFileSync(HOST_ADAPTER_PATH, "utf8");
+    for (const forbidden of [
+      "localStorage",
+      "sessionStorage",
+      "writeFile",
+      "ipcRenderer",
+      "ipcMain",
+      ".prepare(",
+      ".run(",
+    ]) {
+      assert.equal(source.includes(forbidden), false, forbidden);
+    }
   });
 
   await run("Restarbeiten HostAdapter: gueltiger Change Request wird nur blockiert", () => {

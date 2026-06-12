@@ -12,6 +12,7 @@ export const DEFAULT_HOST_ADAPTER_CAPABILITIES = Object.freeze({
   preview: true,
   pendingChangeRequests: true,
   persistence: false,
+  canPersistVisibility: false,
   dryRunOnly: true,
 });
 
@@ -47,8 +48,14 @@ export function normalizeHostCapabilities(capabilities = {}) {
     ...DEFAULT_HOST_ADAPTER_CAPABILITIES,
     ...clonePlainObject(capabilities),
     persistence: false,
+    canPersistVisibility: false,
     dryRunOnly: true,
   };
+}
+
+function hasVisibilityChangeRequest(changeRequests = []) {
+  return Array.isArray(changeRequests)
+    && changeRequests.some((entry) => entry?.operation === "visibility");
 }
 
 export function validateHostAdapterShape(adapter) {
@@ -148,6 +155,8 @@ export function createInMemoryBbmEditorHostAdapter({
         blocked: true,
         reason: "PERSISTENCE_DISABLED",
         persistenceDisabled: true,
+        visibilityPersistenceDisabled: hasVisibilityChangeRequest(changeRequests),
+        canPersistVisibility: false,
         dryRunOnly: true,
         changeRequests: cloneArray(changeRequests),
       };

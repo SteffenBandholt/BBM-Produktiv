@@ -26,6 +26,15 @@ Stand nach G25:
 - Der Request bleibt `source: "preview"` und `persistent: false`.
 - Pro Preview-Ziel wird der Visibility-Request ueberschrieben, nicht dupliziert.
 
+Stand nach G27:
+
+- Das spaetere Persistenzmodell ist in `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_VORBEREITUNG.md` beschrieben.
+- `persistent: false` bleibt Standard fuer Preview-Requests.
+- `persistent: true` wird weiterhin mit `PERSISTENCE_DISABLED` blockiert.
+- Die HostAdapter-Capability `canPersistVisibility` ist vorbereitet, bleibt aber `false`.
+- `submitChangeRequests(...)` meldet fuer Visibility-Requests `visibilityPersistenceDisabled: true`.
+- Es gibt weiterhin keine DB-, IPC-, Datei-, localStorage- oder Layout-State-Schreiblogik.
+
 ## Aktueller Stand
 
 Im BBM-Preview-Panel gibt es:
@@ -153,8 +162,10 @@ Bestehende relevante Methoden:
 Aktuell ist Persistenz im Contract deaktiviert:
 
 - `persistence: false`
+- `canPersistVisibility: false`
 - `dryRunOnly: true`
 - `submitChangeRequests()` blockiert mit `PERSISTENCE_DISABLED`
+- Visibility-Requests werden mit `visibilityPersistenceDisabled: true` als nicht persistierbar markiert
 
 Empfehlung:
 
@@ -250,6 +261,18 @@ Status:
 - Speicherort und Datenmodell festlegen.
 - Erst dann DB/IPC/Storage bauen.
 - Separate technische und fachliche Abnahme.
+
+Status:
+
+- erledigt als Vorbereitung, nicht als Aktivierung.
+- Das neutrale spaetere Override-Modell ist dokumentiert:
+  `{ scopeId, elementId, overrides: { visible } }`.
+- Das spaetere ChangeRequest-Modell ist dokumentiert:
+  `operation: "visibility"`, `payload.visible`, optional spaeter `persistent: true`.
+- `persistent: true` bleibt in G27 blockiert.
+- `canPersistVisibility` bleibt `false`.
+- `submitChangeRequests(...)` blockiert weiter mit `PERSISTENCE_DISABLED`.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik, keine automatische Wiederherstellung und keine UI-/Launcher-Funktionsaenderung.
 
 ### G28: Wiederherstellen beim App-Start
 

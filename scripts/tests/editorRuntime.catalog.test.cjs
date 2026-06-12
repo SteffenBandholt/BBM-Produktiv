@@ -182,6 +182,7 @@ async function runEditorRuntimeCatalogTests(run) {
       ],
       capabilities: {
         persistence: true,
+        canPersistVisibility: true,
       },
     });
 
@@ -195,12 +196,24 @@ async function runEditorRuntimeCatalogTests(run) {
     assert.equal(adapter.getRegistry("sample.scope").elements[0].id, "sample.root");
     assert.deepEqual(adapter.getCurrentLayoutState(), []);
     assert.equal(adapter.getCapabilities().persistence, false);
+    assert.equal(adapter.getCapabilities().canPersistVisibility, false);
     assert.equal(adapter.getCapabilities().dryRunOnly, true);
     assert.equal(adapter.onPendingChangeRequestsChanged([{ changeId: "chg-1" }]).persistent, false);
-    const submitResult = adapter.submitChangeRequests([{ changeId: "chg-1" }]);
+    const submitResult = adapter.submitChangeRequests([{
+      changeId: "chg-visibility-1",
+      operation: "visibility",
+      payload: { visible: false },
+      source: "preview",
+      persistent: true,
+    }]);
     assert.equal(submitResult.ok, false);
+    assert.equal(submitResult.blocked, true);
     assert.equal(submitResult.reason, "PERSISTENCE_DISABLED");
     assert.equal(submitResult.persistenceDisabled, true);
+    assert.equal(submitResult.visibilityPersistenceDisabled, true);
+    assert.equal(submitResult.canPersistVisibility, false);
+    assert.equal(submitResult.dryRunOnly, true);
+    assert.equal(submitResult.changeRequests[0].persistent, true);
   });
 
   if (!process.exitCode) console.log("editorRuntime.catalog.test.cjs passed");

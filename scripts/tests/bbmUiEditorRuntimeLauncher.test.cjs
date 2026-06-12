@@ -1495,10 +1495,29 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(dryRunResult.blocked, true);
     assert.equal(dryRunResult.reason, "PERSISTENCE_DISABLED");
     assert.equal(dryRunResult.persistenceDisabled, true);
+    assert.equal(dryRunResult.visibilityPersistenceDisabled, true);
+    assert.equal(dryRunResult.canPersistVisibility, false);
     assert.equal(dryRunResult.dryRunOnly, true);
     assert.equal(dryRunResult.changeRequests.length, 1);
     assert.equal(dryRunResult.changeRequests[0].operation, "visibility");
     assert.deepEqual(dryRunResult.changeRequests[0].payload, { visible: true });
+
+    const persistentDryRunResult = hostAdapter.submitChangeRequests([
+      {
+        ...state.pendingChangeRequests[0],
+        persistent: true,
+        payload: { visible: false },
+      },
+    ]);
+    assert.equal(persistentDryRunResult.ok, false);
+    assert.equal(persistentDryRunResult.blocked, true);
+    assert.equal(persistentDryRunResult.reason, "PERSISTENCE_DISABLED");
+    assert.equal(persistentDryRunResult.persistenceDisabled, true);
+    assert.equal(persistentDryRunResult.visibilityPersistenceDisabled, true);
+    assert.equal(persistentDryRunResult.canPersistVisibility, false);
+    assert.equal(persistentDryRunResult.dryRunOnly, true);
+    assert.equal(persistentDryRunResult.changeRequests[0].persistent, true);
+    assert.deepEqual(persistentDryRunResult.changeRequests[0].payload, { visible: false });
 
     mod.resetAllPreviewChanges(state);
     assert.equal(pendingSnapshots[pendingSnapshots.length - 1].length, 0);
