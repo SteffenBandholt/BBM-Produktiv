@@ -92,11 +92,46 @@ Weiterhin gilt:
 - kein `writeFile`
 - kein Wiederherstellen beim App-Start
 
+## Stand nach G29
+
+Die technische Grundlage fuer spaetere UI-Editor-Layout-Overrides ist vorbereitet:
+
+- `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js`
+- `normalizeEditorLayoutOverride(input)`
+- `validateEditorLayoutOverride(input)`
+- `buildVisibilityOverrideFromChangeRequest(changeRequest)`
+- `isVisibilityOverridePersistable(changeRequest, capabilities)`
+
+Das Modell ist rein datenbasiert. Es normalisiert und validiert nur den spaeteren Override-Payload:
+
+```js
+{
+  targetAppId: "bbm",
+  moduleId: "restarbeiten",
+  scopeId: "restarbeiten.ui.main",
+  elementId: "example.field",
+  overrides: {
+    visible: false
+  },
+  source: "ui-editor",
+  createdAt: "ISO-Date",
+  updatedAt: "ISO-Date"
+}
+```
+
+Weiterhin gilt:
+
+- `canPersistVisibility` bleibt `false`
+- `persistent: true` bleibt im HostAdapter blockiert
+- `isVisibilityOverridePersistable(...)` liefert im aktuellen Capability-Zustand `false`
+- kein DB-, IPC-, Datei-, `localStorage`- oder App-Start-Weg wurde ergaenzt
+
 ## Pruefung
 
-G27 wird durch HostAdapter- und Launcher-Tests abgesichert:
+G27 bis G29 werden durch Modell-, HostAdapter- und Launcher-Tests abgesichert:
 
 - `persistent: true` fuer `operation: "visibility"` bleibt blockiert.
 - `persistent: false` bleibt Preview/Dry-Run/in-memory.
 - `canPersistVisibility` bleibt `false`.
 - Es entstehen keine DB-/IPC-/Datei-/Storage-Schreibwege.
+- Das G29-Modell akzeptiert nur `overrides.visible` als Boolean und blockiert fehlende, unbekannte oder unkontrollierte Element-IDs.

@@ -108,6 +108,8 @@ Fuer Hidden-Elemente gilt derselbe Dry-Run-Vertrag:
 
 Eine spaetere Verarbeitung von `persistent: true` darf erst nach separater Freigabe erfolgen. Der HostAdapter muss dann Scope, `elementId`, Operation und Payload gegen Registry und Freigabeliste validieren. Bis dahin bleibt der Dry-Run verbindlich.
 
+G29 ergaenzt dafuer nur ein technisches Datenmodell unter `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js`. Dieses Modell kann Visibility-Overrides normalisieren, validieren und aus ChangeRequests ableiten, ist aber nicht an `submitChangeRequests(...)`, DB, IPC, Datei- oder App-Start-Logik angebunden. Solange `persistence: false`, `canPersistVisibility: false` oder `dryRunOnly: true` gilt, bleibt `isVisibilityOverridePersistable(...)` fuer aktuelle Requests `false`.
+
 ## Nicht erlaubt
 
 Der HostAdapter darf in diesem Stand nicht:

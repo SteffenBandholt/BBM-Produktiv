@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements Persistenzspeicher technisch vorbereitet, aber deaktiviert:
+  - `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js` definiert ein neutrales, rein datenbasiertes UI-Editor-Layout-Override-Modell.
+  - Enthalten sind Normalisierung, Validierung, Mapping eines `visibility`-ChangeRequests auf `overrides.visible` und eine Persistierbarkeitspruefung.
+  - Die aktuelle Persistierbarkeitspruefung liefert bei `canPersistVisibility: false`, `persistence: false` oder `dryRunOnly: true` weiterhin `false`.
+  - Es gibt keinen Speicherweg: keine DB-Migration, kein IPC, kein `localStorage`, kein `writeFile`, keine neue Speicherdatei, kein App-Start-Wiederherstellen und keine UI-Aenderung.
+  - Abgesichert durch `scripts/tests/editorLayoutOverrideModel.test.cjs`.
+
 - UI-Editor Hidden-Elements Speicherort und Persistenzfreigabe festgelegt:
   - `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_FREIGABE.md` dokumentiert die G28-Entscheidung.
   - Empfehlung: eigener BBM-seitiger UI-Editor-Layout-Override-Speicher hinter dem HostAdapter.

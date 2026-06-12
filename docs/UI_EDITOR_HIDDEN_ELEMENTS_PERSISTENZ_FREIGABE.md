@@ -272,9 +272,12 @@ Spaeteres Zielbild:
 
 ### G29: Persistenzspeicher technisch vorbereiten, aber deaktiviert
 
-- eigenes Schema-/Repo-Konzept fuer UI-Editor-Overrides vorbereiten
-- noch keine produktive Schreibausfuehrung
-- keine IPC-Freigabe
+Status:
+
+- erledigt als technische Modellvorbereitung, nicht als Speicheraktivierung.
+- `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js` definiert Normalisierung, Validierung, ChangeRequest-Mapping und Persistierbarkeitspruefung fuer Visibility-Overrides.
+- `scripts/tests/editorLayoutOverrideModel.test.cjs` prueft gueltige Overrides, Pflichtfelder, Boolean-`visible`, unbekannte/unkontrollierte Element-IDs, `persistent: false`, blockiertes `persistent: true` bei deaktivierter Capability und fehlende Speicherwege.
+- Keine produktive Schreibausfuehrung, keine DB-Migration, kein Repo, kein IPC, kein `localStorage`, kein `writeFile`, keine Speicherdatei und kein App-Start-Wiederherstellen.
 
 ### G30: HostAdapter-Persistenz-Dry-Run mit validiertem Payload
 
@@ -321,4 +324,21 @@ Nicht Teil von G28:
 - keine neue Speicherdatei
 - keine UI-Aenderung
 - keine produktive Persistenz
+- kein App-Start-Load
+
+## Stand nach G29
+
+G29 ergaenzt nur ein neutrales technisches Modell und Guardrail-Tests.
+
+Weiterhin nicht Teil des Stands:
+
+- keine DB-Migration
+- kein produktives Repo
+- kein IPC-Schreibweg
+- kein `localStorage`
+- kein `writeFile`
+- keine neue Speicherdatei
+- keine UI-Aenderung
+- keine Aktivierung von `canPersistVisibility: true`
+- keine produktive HostAdapter-Schreibausfuehrung
 - kein App-Start-Load

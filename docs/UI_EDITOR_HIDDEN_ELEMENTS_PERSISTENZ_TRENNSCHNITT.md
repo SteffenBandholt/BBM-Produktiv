@@ -44,6 +44,14 @@ Stand nach G28:
 - Erster spaeterer Pilot-Scope ist `restarbeiten.ui.main`; keine globale Freigabe.
 - Persistenz bleibt deaktiviert.
 
+Stand nach G29:
+
+- Ein neutrales technisches Modell fuer spaetere UI-Editor-Layout-Overrides liegt unter `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js`.
+- Das Modell normalisiert und validiert `targetAppId`, `moduleId`, `scopeId`, `elementId` und `overrides.visible`.
+- `buildVisibilityOverrideFromChangeRequest(...)` kann einen `visibility`-ChangeRequest in einen Override-Payload uebersetzen.
+- `isVisibilityOverridePersistable(...)` bleibt bei den aktuellen Capabilities `false`.
+- Es gibt weiterhin keine DB-, IPC-, Datei-, localStorage-, Launcher- oder App-Start-Integration.
+
 ## Aktueller Stand
 
 Im BBM-Preview-Panel gibt es:
@@ -295,9 +303,12 @@ Status:
 
 ### G29: Persistenzspeicher technisch vorbereiten, aber deaktiviert
 
-- eigenes Schema-/Repo-Konzept fuer UI-Editor-Overrides vorbereiten.
-- noch keine produktive Schreibausfuehrung.
-- keine IPC-Freigabe.
+Status:
+
+- erledigt als Modell-/Validator-/Testvorbereitung.
+- `editorLayoutOverrideModel.js` enthaelt nur rein datenbasierte Normalisierung, Validierung, ChangeRequest-Mapping und Persistierbarkeitspruefung.
+- Die Persistierbarkeitspruefung kann nur mit spaeter explizit aktivierten Capabilities `true` liefern; im aktuellen HostAdapter-Zustand bleibt sie `false`.
+- Keine produktive Schreibausfuehrung, keine DB, kein IPC, kein localStorage, kein writeFile, keine Speicherdatei, keine UI-Aenderung und kein App-Start-Wiederherstellen.
 
 ### G30: HostAdapter-Persistenz-Dry-Run mit validiertem Payload
 
