@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements HostAdapter-Dry-Run fuer `persistent: true` validiert:
+  - `submitChangeRequests(...)` validiert persistente Visibility-ChangeRequests jetzt ueber das G29-Override-Modell.
+  - Gueltige Requests werden in einen Override-Payload uebersetzt und als Dry-Run mit `PERSISTENCE_DISABLED` blockiert.
+  - Ungueltige `payload.visible`-Werte und unbekannte `elementId` werden als `INVALID_CHANGE_REQUEST` blockiert.
+  - `canPersistVisibility` bleibt `false`, `dryRunOnly` bleibt `true`; es gibt weiterhin keine DB, kein IPC, kein `localStorage`, kein `writeFile`, keine Speicherdatei und kein App-Start-Wiederherstellen.
+
 - UI-Editor Hidden-Elements Persistenzspeicher technisch vorbereitet, aber deaktiviert:
   - `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js` definiert ein neutrales, rein datenbasiertes UI-Editor-Layout-Override-Modell.
   - Enthalten sind Normalisierung, Validierung, Mapping eines `visibility`-ChangeRequests auf `overrides.visible` und eine Persistierbarkeitspruefung.

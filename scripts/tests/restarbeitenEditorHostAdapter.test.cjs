@@ -125,10 +125,62 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(result.visibilityPersistenceDisabled, true);
     assert.equal(result.canPersistVisibility, false);
     assert.equal(result.dryRunOnly, true);
+    assert.equal(result.validation.ok, true);
+    assert.equal(result.validation.count, 1);
+    assert.equal(result.validation.entries[0].validation.ok, true);
+    assert.equal(result.validation.entries[0].persistable, false);
+    assert.deepEqual(result.validation.entries[0].override.overrides, { visible: false });
     assert.equal(result.changeRequests.length, 1);
     assert.equal(result.changeRequests[0].operation, "visibility");
     assert.equal(result.changeRequests[0].persistent, true);
     assert.deepEqual(result.changeRequests[0].payload, { visible: false });
+  });
+
+  await run("Restarbeiten HostAdapter: invalides persistent Visibility-Payload wird abgelehnt", () => {
+    const result = adapter.submitChangeRequests([{
+      ...validChangeRequest,
+      changeId: "chg-visibility-invalid-visible-1",
+      operation: "visibility",
+      payload: {
+        visible: "false",
+      },
+      source: "preview",
+      persistent: true,
+    }]);
+
+    assert.equal(result.ok, false);
+    assert.equal(result.blocked, true);
+    assert.equal(result.reason, "INVALID_CHANGE_REQUEST");
+    assert.equal(result.persistenceDisabled, true);
+    assert.equal(result.visibilityPersistenceDisabled, true);
+    assert.equal(result.canPersistVisibility, false);
+    assert.equal(result.dryRunOnly, true);
+    assert.equal(result.validation.ok, false);
+    assert.ok(result.validation.errors.some((error) => error.code === "VISIBLE_NOT_BOOLEAN"));
+  });
+
+  await run("Restarbeiten HostAdapter: unbekannte persistent Visibility-elementId wird abgelehnt", () => {
+    const result = adapter.submitChangeRequests([{
+      ...validChangeRequest,
+      changeId: "chg-visibility-unknown-element-1",
+      elementId: "restarbeiten.editbox.text.unknown",
+      operation: "visibility",
+      payload: {
+        visible: false,
+      },
+      source: "preview",
+      persistent: true,
+    }]);
+
+    assert.equal(result.ok, false);
+    assert.equal(result.blocked, true);
+    assert.equal(result.reason, "INVALID_CHANGE_REQUEST");
+    assert.equal(result.persistenceDisabled, true);
+    assert.equal(result.visibilityPersistenceDisabled, true);
+    assert.equal(result.canPersistVisibility, false);
+    assert.equal(result.dryRunOnly, true);
+    assert.equal(result.validation.ok, false);
+    assert.ok(result.validation.errors.some((error) => error.code === "ELEMENT_ID_UNKNOWN"));
   });
 
   await run("Restarbeiten HostAdapter: bleibt ohne Storage-, IPC- und DB-Schreibweg", () => {

@@ -228,6 +228,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Die Hidden-Elements-Persistenz ist vorbereitet, aber nicht produktiv aktiviert: Das spaetere Override-/ChangeRequest-Modell ist dokumentiert, `canPersistVisibility` bleibt `false`, `persistent: true` wird mit `PERSISTENCE_DISABLED` blockiert, und es gibt weiterhin keine DB-/IPC-/Datei-/Storage-Schreiblogik.
 - Die Speicherort- und Freigabeentscheidung fuer Hidden-Elements-Persistenz ist dokumentiert: empfohlen ist ein eigener BBM-seitiger UI-Editor-Layout-Override-Speicher hinter dem HostAdapter, erster spaeterer Pilot-Scope ist `restarbeiten.ui.main`, TableLayouts bleiben nur technisches Vorbild und Persistenz bleibt deaktiviert.
 - Der Hidden-Elements-Persistenzspeicher ist technisch vorbereitet, aber weiter deaktiviert: `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js` liefert nur Datenmodell, Validierung, ChangeRequest-Mapping und Persistierbarkeitspruefung; es gibt weiterhin keine DB-, IPC-, Datei-, localStorage-, Launcher- oder App-Start-Integration.
+- Der HostAdapter-Dry-Run validiert `persistent: true` Visibility-ChangeRequests jetzt gegen das Override-Modell und Registry-IDs: gueltige Requests bleiben mit `PERSISTENCE_DISABLED` blockiert, ungueltige `visible`-Werte oder unbekannte `elementId` liefern `INVALID_CHANGE_REQUEST`; Persistenz bleibt deaktiviert.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -237,7 +238,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
 - Spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit als separates Folgethema klaeren
 - Weitere Auslagerung der Kit-Panel-Runtime im BBM-Launcher separat planen; dabei DOM-Grenzen, Drag-Abgrenzung und Electron-Sichtpruefung ausdruecklich trennen.
-- Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover, G23 Persistenz-Trennschnitt, G24 Layout-State-Lesen, G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz-Vorbereitung, G28 Speicherort-/Freigabeentscheidung und G29 technische Speicher-Modellvorbereitung sind erledigt; G30 bis G34 bleiben separat und duerfen Persistenz nur schrittweise freigeben.
+- Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover, G23 Persistenz-Trennschnitt, G24 Layout-State-Lesen, G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz-Vorbereitung, G28 Speicherort-/Freigabeentscheidung, G29 technische Speicher-Modellvorbereitung und G30 validierter HostAdapter-Dry-Run sind erledigt; G31 bis G34 bleiben separat und duerfen Persistenz nur schrittweise freigeben.
 
 ---
 

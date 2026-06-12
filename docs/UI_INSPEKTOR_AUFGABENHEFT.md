@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.53 abgeschlossen: HostAdapter-Dry-Run validiert `persistent: true` Visibility-ChangeRequests und blockiert sie weiterhin ohne Speicherung.
 - K19.52 abgeschlossen: Hidden-Elements-Persistenzspeicher ist technisch als neutrales Modell mit Validierung vorbereitet; Persistenz bleibt deaktiviert und es gibt keinen Speicherweg.
 - K19.51 abgeschlossen: Speicherort, Zielstruktur, Freigabegrenzen und Folgepakete fuer Hidden-Elements-Persistenz sind dokumentiert; Persistenz bleibt deaktiviert.
 - K19.50 abgeschlossen: Hidden-Elements-Persistenz ist vorbereitet und dokumentiert; `canPersistVisibility` bleibt `false`, `persistent: true` bleibt mit `PERSISTENCE_DISABLED` blockiert und es gibt weiterhin keine produktive Speicherung.
@@ -106,6 +107,16 @@ Aktueller Stand:
 - [x] K19.50 Hidden-Elements-Persistenz vorbereiten, aber deaktiviert lassen
 - [x] K19.51 Hidden-Elements Speicherort und Persistenzfreigabe festlegen
 - [x] K19.52 Hidden-Elements Persistenzspeicher technisch vorbereiten, aber deaktiviert lassen
+- [x] K19.53 Validierten HostAdapter-Dry-Run fuer persistent=true Visibility-ChangeRequests vorbereiten
+
+## Statusupdate K19.53
+- `persistent: true` Visibility-ChangeRequests werden im HostAdapter-Dry-Run jetzt gegen das G29-Override-Modell validiert.
+- Gueltige Requests werden in einen Override-Payload uebersetzt, aber mit `PERSISTENCE_DISABLED` blockiert.
+- Ungueltige `payload.visible`-Werte und unbekannte `elementId` werden mit `INVALID_CHANGE_REQUEST` blockiert.
+- `canPersistVisibility` bleibt `false`, `dryRunOnly` bleibt `true`.
+- Keine echte Speicherung, keine DB-Migration, kein IPC, kein localStorage, kein writeFile, keine neue Speicherdatei, keine HostAdapter-Schreibausfuehrung, kein App-Start-Wiederherstellen und keine UI-/Launcher-/Drag-/Target-Selection-/PDF-/Fachlogik-Aenderung.
+- Abgesichert durch `scripts/tests/restarbeitenEditorHostAdapter.test.cjs` und `scripts/tests/editorLayoutOverrideModel.test.cjs`; bestehende Launcher-Tests bleiben relevante Guardrails.
+- Folgepakete bleiben getrennt: G31 Pilot-Persistenz, G32 App-Start-Wiederherstellung, G33 UI-Pruefung/Reset, G34 weitere Scopes.
 
 ## Statusupdate K19.52
 - `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js` bereitet ein neutrales UI-Editor-Layout-Override-Modell vor.

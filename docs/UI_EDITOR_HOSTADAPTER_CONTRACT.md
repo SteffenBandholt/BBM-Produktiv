@@ -108,7 +108,9 @@ Fuer Hidden-Elemente gilt derselbe Dry-Run-Vertrag:
 
 Eine spaetere Verarbeitung von `persistent: true` darf erst nach separater Freigabe erfolgen. Der HostAdapter muss dann Scope, `elementId`, Operation und Payload gegen Registry und Freigabeliste validieren. Bis dahin bleibt der Dry-Run verbindlich.
 
-G29 ergaenzt dafuer nur ein technisches Datenmodell unter `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js`. Dieses Modell kann Visibility-Overrides normalisieren, validieren und aus ChangeRequests ableiten, ist aber nicht an `submitChangeRequests(...)`, DB, IPC, Datei- oder App-Start-Logik angebunden. Solange `persistence: false`, `canPersistVisibility: false` oder `dryRunOnly: true` gilt, bleibt `isVisibilityOverridePersistable(...)` fuer aktuelle Requests `false`.
+G29 ergaenzt dafuer nur ein technisches Datenmodell unter `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js`. Dieses Modell kann Visibility-Overrides normalisieren, validieren und aus ChangeRequests ableiten, ist aber nicht an DB, IPC, Datei- oder App-Start-Logik angebunden. Solange `persistence: false`, `canPersistVisibility: false` oder `dryRunOnly: true` gilt, bleibt `isVisibilityOverridePersistable(...)` fuer aktuelle Requests `false`.
+
+G30 nutzt dieses Modell im HostAdapter-Dry-Run: `persistent: true` Visibility-ChangeRequests werden gegen Scope, Registry-`elementId` und Boolean-`payload.visible` validiert. Gueltige Requests bleiben mit `PERSISTENCE_DISABLED` blockiert. Ungueltige Requests werden mit `INVALID_CHANGE_REQUEST` blockiert. Diese Validierung ist keine Speicherfreigabe.
 
 ## Nicht erlaubt
 

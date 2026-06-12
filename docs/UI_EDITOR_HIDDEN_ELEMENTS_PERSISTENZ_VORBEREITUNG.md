@@ -126,6 +126,23 @@ Weiterhin gilt:
 - `isVisibilityOverridePersistable(...)` liefert im aktuellen Capability-Zustand `false`
 - kein DB-, IPC-, Datei-, `localStorage`- oder App-Start-Weg wurde ergaenzt
 
+## Stand nach G30
+
+Der HostAdapter-Dry-Run validiert `persistent: true` Visibility-ChangeRequests:
+
+- `operation` muss `visibility` sein
+- `payload.visible` muss boolean sein
+- `scopeId` muss zum freigegebenen HostAdapter-Scope passen
+- `elementId` muss in der Registry bekannt und kontrollierbar sein
+- der Request wird in einen Override-Payload uebersetzt
+
+Das Ergebnis bleibt blockiert:
+
+- gueltige persistente Visibility-Requests liefern weiter `PERSISTENCE_DISABLED`
+- ungueltige Requests liefern `INVALID_CHANGE_REQUEST`
+- `canPersistVisibility` bleibt `false`
+- es wird nichts gespeichert
+
 ## Pruefung
 
 G27 bis G29 werden durch Modell-, HostAdapter- und Launcher-Tests abgesichert:
@@ -135,3 +152,4 @@ G27 bis G29 werden durch Modell-, HostAdapter- und Launcher-Tests abgesichert:
 - `canPersistVisibility` bleibt `false`.
 - Es entstehen keine DB-/IPC-/Datei-/Storage-Schreibwege.
 - Das G29-Modell akzeptiert nur `overrides.visible` als Boolean und blockiert fehlende, unbekannte oder unkontrollierte Element-IDs.
+- Der G30-HostAdapter-Dry-Run validiert `persistent: true` und bleibt ohne Speicherweg.

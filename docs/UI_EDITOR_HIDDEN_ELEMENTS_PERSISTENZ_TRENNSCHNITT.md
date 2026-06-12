@@ -52,6 +52,13 @@ Stand nach G29:
 - `isVisibilityOverridePersistable(...)` bleibt bei den aktuellen Capabilities `false`.
 - Es gibt weiterhin keine DB-, IPC-, Datei-, localStorage-, Launcher- oder App-Start-Integration.
 
+Stand nach G30:
+
+- Der HostAdapter-Dry-Run validiert `persistent: true` Visibility-ChangeRequests gegen Scope, Registry-`elementId` und Boolean-`payload.visible`.
+- Gueltige Requests werden in Override-Payloads uebersetzt, aber weiter mit `PERSISTENCE_DISABLED` blockiert.
+- Ungueltige `visible`-Werte oder unbekannte `elementId` werden als `INVALID_CHANGE_REQUEST` blockiert.
+- `canPersistVisibility` bleibt `false`; es wird weiterhin nichts geschrieben.
+
 ## Aktueller Stand
 
 Im BBM-Preview-Panel gibt es:
@@ -312,10 +319,13 @@ Status:
 
 ### G30: HostAdapter-Persistenz-Dry-Run mit validiertem Payload
 
-- `persistent: true` validieren.
-- Scope und `elementId` pruefen.
-- Payload pruefen.
-- weiterhin nicht speichern.
+Status:
+
+- erledigt als validierter Dry-Run.
+- `persistent: true` wird erkannt, in einen Override-Payload uebersetzt und validiert.
+- Gueltige Requests bleiben mit `PERSISTENCE_DISABLED` blockiert.
+- Ungueltige `visible`-Werte oder unbekannte `elementId` liefern `INVALID_CHANGE_REQUEST`.
+- Keine produktive Schreibausfuehrung, keine DB, kein IPC, kein localStorage, kein writeFile, keine Speicherdatei, keine UI-Aenderung und kein App-Start-Wiederherstellen.
 
 ### G31: Pilot-Persistenz fuer einen Scope aktivieren
 

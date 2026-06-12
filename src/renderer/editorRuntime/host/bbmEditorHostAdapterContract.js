@@ -1,3 +1,9 @@
+import {
+  buildVisibilityOverrideFromChangeRequest,
+  isVisibilityOverridePersistable,
+  validateEditorLayoutOverride,
+} from "../layout/editorLayoutOverrideModel.js";
+
 export const REQUIRED_HOST_ADAPTER_METHODS = Object.freeze([
   "getHostContext",
   "getRegistry",
@@ -56,6 +62,55 @@ export function normalizeHostCapabilities(capabilities = {}) {
 function hasVisibilityChangeRequest(changeRequests = []) {
   return Array.isArray(changeRequests)
     && changeRequests.some((entry) => entry?.operation === "visibility");
+}
+
+function normalizeRegistryElements(registry) {
+  if (Array.isArray(registry)) return registry;
+  if (registry && Array.isArray(registry.elements)) return registry.elements;
+  return [];
+}
+
+export function validatePersistentVisibilityChangeRequestsDryRun(
+  changeRequests = [],
+  { scope = {}, registry = [], capabilities = {} } = {}
+) {
+  const requests = Array.isArray(changeRequests) ? changeRequests : [];
+  const persistentVisibilityRequests = requests.filter(
+    (entry) => entry?.operation === "visibility" && entry?.persistent === true
+  );
+  const registryElements = normalizeRegistryElements(registry);
+  const allowedScopes = scope?.scopeId ? [scope.scopeId] : null;
+  const entries = persistentVisibilityRequests.map((changeRequest) => {
+    const override = buildVisibilityOverrideFromChangeRequest(changeRequest);
+    const validation = validateEditorLayoutOverride(override, {
+      registry: registryElements,
+      allowedScopes,
+    });
+    const persistable = validation.ok && isVisibilityOverridePersistable(changeRequest, capabilities);
+    return {
+      changeId: changeRequest.changeId,
+      elementId: changeRequest.elementId,
+      operation: changeRequest.operation,
+      persistent: changeRequest.persistent === true,
+      override,
+      validation,
+      persistable,
+      blocked: true,
+      reason: "PERSISTENCE_DISABLED",
+    };
+  });
+
+  const errors = entries.flatMap((entry) => entry.validation.errors || []);
+
+  return {
+    ok: errors.length === 0,
+    dryRunOnly: true,
+    persistenceDisabled: true,
+    canPersistVisibility: false,
+    count: entries.length,
+    entries,
+    errors,
+  };
 }
 
 export function validateHostAdapterShape(adapter) {
@@ -150,6 +205,25 @@ export function createInMemoryBbmEditorHostAdapter({
     },
 
     submitChangeRequests(changeRequests = []) {
+      const registryForScope = resolveRegistry(normalizedContext.scopeId);
+      const visibilityDryRun = validatePersistentVisibilityChangeRequestsDryRun(changeRequests, {
+        scope: normalizedContext,
+        registry: registryForScope,
+        capabilities: normalizedCapabilities,
+      });
+      if (!visibilityDryRun.ok) {
+        return {
+          ok: false,
+          blocked: true,
+          reason: "INVALID_CHANGE_REQUEST",
+          persistenceDisabled: true,
+          visibilityPersistenceDisabled: hasVisibilityChangeRequest(changeRequests),
+          canPersistVisibility: false,
+          dryRunOnly: true,
+          validation: visibilityDryRun,
+          changeRequests: cloneArray(changeRequests),
+        };
+      }
       return {
         ok: false,
         blocked: true,
@@ -158,6 +232,7 @@ export function createInMemoryBbmEditorHostAdapter({
         visibilityPersistenceDisabled: hasVisibilityChangeRequest(changeRequests),
         canPersistVisibility: false,
         dryRunOnly: true,
+        validation: visibilityDryRun,
         changeRequests: cloneArray(changeRequests),
       };
     },

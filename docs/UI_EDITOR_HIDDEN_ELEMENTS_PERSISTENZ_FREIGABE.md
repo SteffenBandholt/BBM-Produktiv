@@ -281,10 +281,13 @@ Status:
 
 ### G30: HostAdapter-Persistenz-Dry-Run mit validiertem Payload
 
-- `persistent: true` validieren
-- Scope und `elementId` pruefen
-- Payload pruefen
-- weiterhin nicht speichern
+Status:
+
+- erledigt als validierter Dry-Run, nicht als Speicheraktivierung.
+- `persistent: true` Visibility-ChangeRequests werden gegen Scope, Registry-`elementId` und `payload.visible` validiert.
+- Gueltige Requests werden in einen Override-Payload uebersetzt und mit `PERSISTENCE_DISABLED` blockiert.
+- Ungueltige `visible`-Werte oder unbekannte `elementId` werden mit `INVALID_CHANGE_REQUEST` blockiert.
+- Weiterhin keine produktive Schreibausfuehrung, keine DB-Migration, kein Repo, kein IPC, kein `localStorage`, kein `writeFile`, keine Speicherdatei und kein App-Start-Wiederherstellen.
 
 ### G31: Pilot-Persistenz fuer einen Scope aktivieren
 
@@ -340,5 +343,27 @@ Weiterhin nicht Teil des Stands:
 - keine neue Speicherdatei
 - keine UI-Aenderung
 - keine Aktivierung von `canPersistVisibility: true`
+- keine produktive HostAdapter-Schreibausfuehrung
+- kein App-Start-Load
+
+## Stand nach G30
+
+G30 erweitert nur den HostAdapter-Dry-Run:
+
+- `persistent: true` wird erkannt und validiert.
+- Validierung nutzt das neutrale Override-Modell aus G29.
+- Gueltige Visibility-Requests bleiben blockiert, weil Persistenz deaktiviert ist.
+- `canPersistVisibility` bleibt `false`.
+- `submitChangeRequests(...)` liefert weiterhin Dry-Run-/Blockadeantworten.
+
+Weiterhin nicht Teil des Stands:
+
+- keine DB-Migration
+- kein produktives Repo
+- kein IPC-Schreibweg
+- kein `localStorage`
+- kein `writeFile`
+- keine neue Speicherdatei
+- keine UI-Aenderung
 - keine produktive HostAdapter-Schreibausfuehrung
 - kein App-Start-Load

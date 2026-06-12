@@ -201,6 +201,10 @@ async function runEditorRuntimeCatalogTests(run) {
     assert.equal(adapter.onPendingChangeRequestsChanged([{ changeId: "chg-1" }]).persistent, false);
     const submitResult = adapter.submitChangeRequests([{
       changeId: "chg-visibility-1",
+      targetAppId: "sample-app",
+      moduleId: "sample",
+      scopeId: "sample.scope",
+      elementId: "sample.root",
       operation: "visibility",
       payload: { visible: false },
       source: "preview",

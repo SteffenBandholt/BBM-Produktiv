@@ -3,6 +3,7 @@ import { validateEditorChangeRequest } from "../../../editorRuntime/changeReques
 import {
   normalizeHostCapabilities,
   normalizeHostContext,
+  validatePersistentVisibilityChangeRequestsDryRun,
   validateHostAdapterShape,
 } from "../../../editorRuntime/host/bbmEditorHostAdapterContract.js";
 
@@ -62,6 +63,25 @@ export function createRestarbeitenMainUiHostAdapter() {
     },
 
     submitChangeRequests(changeRequests = []) {
+      const capabilities = this.getCapabilities();
+      const visibilityDryRun = validatePersistentVisibilityChangeRequestsDryRun(changeRequests, {
+        scope: SCOPE,
+        registry,
+        capabilities,
+      });
+      if (!visibilityDryRun.ok) {
+        return {
+          ok: false,
+          blocked: true,
+          reason: "INVALID_CHANGE_REQUEST",
+          persistenceDisabled: true,
+          visibilityPersistenceDisabled: hasVisibilityChangeRequest(changeRequests),
+          canPersistVisibility: false,
+          dryRunOnly: true,
+          validation: visibilityDryRun,
+          changeRequests: Array.isArray(changeRequests) ? changeRequests.map((entry) => ({ ...entry })) : [],
+        };
+      }
       return {
         ok: false,
         blocked: true,
@@ -70,6 +90,7 @@ export function createRestarbeitenMainUiHostAdapter() {
         visibilityPersistenceDisabled: hasVisibilityChangeRequest(changeRequests),
         canPersistVisibility: false,
         dryRunOnly: true,
+        validation: visibilityDryRun,
         changeRequests: Array.isArray(changeRequests) ? changeRequests.map((entry) => ({ ...entry })) : [],
       };
     },

@@ -138,6 +138,27 @@ async function runEditorLayoutOverrideModelTests(run) {
     });
   });
 
+  await run("EditorLayoutOverrideModel: Nicht-Visibility-ChangeRequest erzeugt keinen gueltigen Visibility-Override", () => {
+    const override = model.buildVisibilityOverrideFromChangeRequest({
+      targetAppId: "bbm",
+      moduleId: "restarbeiten",
+      scopeId: "restarbeiten.ui.main",
+      elementId: "example.field",
+      operation: "move",
+      payload: {
+        visible: false,
+      },
+      createdAt: "2026-06-12T11:00:00.000Z",
+    });
+    const validation = model.validateEditorLayoutOverride(override, {
+      registry: [{ id: "example.field" }],
+      allowedScopes: ["restarbeiten.ui.main"],
+    });
+
+    assert.equal(validation.ok, false);
+    assert.ok(validation.errors.some((error) => error.code === "VISIBLE_NOT_BOOLEAN"));
+  });
+
   await run("EditorLayoutOverrideModel: Persistierbarkeit bleibt standardmaessig gesperrt", () => {
     const persistentFalse = {
       ...validOverride,
