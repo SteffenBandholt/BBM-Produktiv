@@ -229,7 +229,6 @@ Status:
 
 Empfohlene Folgepakete:
 
-- G25: Hide/Show als ChangeRequest sauber modellieren.
 - G26: HostAdapter-Dry-Run fuer Hidden-Element-Aenderungen.
 - G27: Persistenz erst nach Freigabe.
 - G28: Wiederherstellen beim App-Start.
@@ -247,6 +246,32 @@ Status:
 - Layout-State-hidden Elemente koennen im Popover erscheinen; `Einblenden` bleibt fuer diese Eintraege ohne Preview-State deaktiviert, bis ein Schreibpaket existiert.
 - Temporaere Preview-Hides koennen weiterhin ueber `Einblenden` aufgehoben werden.
 - Keine Persistenz, keine DB, kein IPC, kein localStorage und keine HostAdapter-Schreibmethode.
+
+### G25
+
+Hide/Show als ChangeRequest sauber modellieren.
+
+Status:
+
+- erledigt
+- Hide und Show laufen als gemeinsamer Visibility-ChangeRequest:
+
+```js
+{
+  operation: "visibility",
+  payload: {
+    visible: false
+  },
+  source: "preview",
+  persistent: false
+}
+```
+
+- Einblenden nutzt dieselbe Operation mit `payload.visible === true`.
+- Pro Preview-Ziel gibt es hoechstens einen Visibility-Request; Hide und Show ueberschreiben diesen Request.
+- Pending-/Preview-State ueberschreibt Layout-State weiterhin nur temporaer.
+- Layout-State-only Hidden-Elemente bleiben sichtbar, aber `Einblenden` bleibt ohne Preview-State deaktiviert, bis ein sicherer HostAdapter-Dry-Run oder Schreibpfad existiert.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage und keine HostAdapter-Schreibausfuehrung.
 
 ## Nicht-Ziele dieses Pakets
 

@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.48 abgeschlossen: Hide/Show ist als einheitlicher Visibility-ChangeRequest abgesichert; keine Persistenz und keine HostAdapter-Schreibausfuehrung.
 - K19.47 abgeschlossen: Hidden-Elements werden im BBM-Launcher zusaetzlich lesend aus Registry plus Layout-State beruecksichtigt; keine Schreiblogik und keine Persistenz.
 - K19.46 abgeschlossen: Hidden-Elements Datenquelle und Persistenz-Trennschnitt sind dokumentiert; keine Speicherlogik und keine Launcher-Funktionsaenderung.
 - K19.45 abgeschlossen: BBM zeigt ein kompaktes Hidden-Elements-Popover im Preview-Panel; `Einblenden` funktioniert fuer temporaere Preview-Hide-Aenderungen, ohne Persistenz.
@@ -96,6 +97,18 @@ Aktueller Stand:
 - [x] K19.45 Kompaktes Hidden-Elements-Popover im BBM-Preview-Panel vorbereiten
 - [x] K19.46 Hidden-Elements Datenquelle und Persistenz-Trennschnitt festlegen
 - [x] K19.47 Hidden-Elements aus echtem Layout-State lesen, noch ohne Schreiben
+- [x] K19.48 Hide/Show als ChangeRequest sauber modellieren
+
+## Statusupdate K19.48
+- Hide und Show sind als einheitlicher Visibility-ChangeRequest abgesichert.
+- Hide erzeugt bzw. nutzt `operation: "visibility"` mit `payload.visible === false`.
+- Show erzeugt bzw. nutzt `operation: "visibility"` mit `payload.visible === true`.
+- Der bestehende Kit-Vertrag bleibt erhalten: `source: "preview"` und `persistent: false`.
+- Pro Preview-Ziel wird ein vorhandener Visibility-Request ueberschrieben, sodass keine widerspruechlichen Hide-/Show-Requests entstehen.
+- Pending-/Preview-State ueberschreibt Layout-State weiterhin nur temporaer.
+- Layout-State-only Hidden-Elemente bleiben ohne Preview-State im Popover sichtbar, aber `Einblenden` bleibt dafuer deaktiviert, bis ein sicherer HostAdapter-Dry-Run oder Schreibpfad existiert.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik, keine HostAdapter-Schreibausfuehrung, keine Drag-/Target-Selection-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
+- Folgepakete bleiben abgegrenzt: G26 HostAdapter-Dry-Run, G27 Persistenz nach Freigabe, G28 Wiederherstellung beim App-Start.
 
 ## Statusupdate K19.47
 - `BbmUiEditorRuntimeLauncher.js` baut die Hidden-Elements-Eingabe jetzt aus Registry, lesendem `getCurrentLayoutState(...)`, Pending-Visibility-ChangeRequests und in-memory Preview-State.

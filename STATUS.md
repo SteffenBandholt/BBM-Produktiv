@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hide/Show als Visibility-ChangeRequest abgesichert:
+  - Hide und Show werden als einheitlicher ChangeRequest `operation: "visibility"` modelliert.
+  - Hide nutzt `payload: { visible: false }`, Show nutzt `payload: { visible: true }`.
+  - Pro Preview-Ziel wird der bestehende Visibility-Request ueberschrieben statt ein widerspruechlicher zweiter Request erzeugt.
+  - Der bestehende Kit-Vertrag bleibt erhalten: `source: "preview"` und `persistent: false`.
+  - Layout-State-only Hidden-Elemente bleiben lesbar, aber `Einblenden` erzeugt dafuer noch keinen Request, weil ohne sicheres DOM-/Schreibziel keine HostAdapter-Ausfuehrung erfolgen soll.
+  - Keine Persistenz, keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik und keine HostAdapter-Schreibausfuehrung.
+
 - UI-Editor Hidden-Elements lesen echten Layout-State mit:
   - `BbmUiEditorRuntimeLauncher.js` fuehrt Registry, lesenden `getCurrentLayoutState(...)`, Pending-Visibility-ChangeRequests und in-memory Preview-State zu einer neutralen Elementliste fuer das Kit-Hidden-Elements-ViewModel zusammen.
   - Reihenfolge: Registry liefert bekannte Elemente und Labels, Layout-State liefert `visible`-Overrides, Pending-/Preview-State ueberschreibt temporaer.
@@ -56,7 +64,7 @@ Sie ergÃ¤nzt:
   - Grundregel: Hide entfernt kein Element aus Registry oder Layout-State, sondern bedeutet nur `visible = false`.
   - Das Panel soll schlank bleiben; statt dauerhafter Liste ist spaeter ein kompakter Button wie `Ausgeblendete: 3` vorgesehen.
   - Das Popover/Dropdown mit `Einblenden` fuer temporaere Preview-Hides ist durch G22 vorbereitet.
-  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover und G23 Persistenz-Trennschnitt sind erledigt; G24 bis G28 bleiben separat.
+  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover, G23 Persistenz-Trennschnitt, G24 Layout-State-Lesen und G25 ChangeRequest-Modell sind erledigt; G26 bis G28 bleiben separat.
   - Weiterhin keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
 
 - UI-Editor-kit Panel-ViewModel im BBM-Launcher vorbereitend genutzt:

@@ -18,6 +18,14 @@ Stand nach G24:
 - Pending-/Preview-State ueberschreibt Layout-State temporaer.
 - Es wird weiterhin nichts geschrieben oder persistiert.
 
+Stand nach G25:
+
+- Hide/Show ist als einheitlicher Visibility-ChangeRequest abgesichert.
+- Hide nutzt `operation: "visibility"` mit `payload.visible === false`.
+- Show nutzt `operation: "visibility"` mit `payload.visible === true`.
+- Der Request bleibt `source: "preview"` und `persistent: false`.
+- Pro Preview-Ziel wird der Visibility-Request ueberschrieben, nicht dupliziert.
+
 ## Aktueller Stand
 
 Im BBM-Preview-Panel gibt es:
@@ -214,6 +222,15 @@ Status:
 - Operationen und Payload fuer `visible = false/true` festlegen.
 - Deduplizierung und Reset-Verhalten pruefen.
 - Weiterhin ohne Persistenz.
+
+Status:
+
+- erledigt
+- Die bestehende Kit-Preview-Runtime normalisiert `hide` und `show` auf `visibility`.
+- BBM sichert den Vertrag testseitig ab: `payload.visible === false` fuer Hide, `payload.visible === true` fuer Show.
+- Hide/Show fuer dasselbe Preview-Ziel ueberschreiben denselben Pending Request.
+- Layout-State-only Hidden-Elemente bleiben ohne Preview-State nicht einblendbar; ein vorbereitender `visible: true`-Request dafuer folgt erst mit sicherem Dry-Run-/HostAdapter-Pfad.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage und keine HostAdapter-Schreibausfuehrung.
 
 ### G26: HostAdapter-Dry-Run fuer Hidden-Element-Aenderungen
 

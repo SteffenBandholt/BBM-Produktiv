@@ -573,6 +573,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         enabled: false,
       },
     ]);
+    assert.equal(mod.showHiddenPreviewElement(state, "sample.layout.hidden"), false);
+    assert.equal(state.pendingChangeRequests.length, 0);
     assert.equal(hostAdapter.submitChangeRequests([]).reason, "PERSISTENCE_DISABLED");
   });
 
@@ -1378,11 +1380,34 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(target.style.height, "35px");
 
     mod.applyPreviewOperation(state, "hide");
-    mod.applyPreviewOperation(state, "show");
-    const visibilityRequests = state.pendingChangeRequests.filter((request) => request.operation === "visibility");
+    let visibilityRequests = state.pendingChangeRequests.filter((request) => request.operation === "visibility");
     assert.equal(visibilityRequests.length, 1);
+    assert.equal(visibilityRequests[0].operation, "visibility");
+    assert.equal(visibilityRequests[0].elementId, "sample.field.input");
+    assert.equal(visibilityRequests[0].targetElementId, "sample.field.input");
+    assert.equal(visibilityRequests[0].targetAppId, "bbm");
+    assert.equal(visibilityRequests[0].moduleId, "");
+    assert.equal(visibilityRequests[0].scopeId, "sample.screen");
+    assert.equal(visibilityRequests[0].source, "preview");
+    assert.equal(visibilityRequests[0].persistent, false);
+    assert.equal(visibilityRequests[0].previewTargetMode, "self");
+    assert.deepEqual(visibilityRequests[0].payload, { visible: false });
+    const visibilityChangeId = visibilityRequests[0].changeId;
+    assert.equal(target.style.display, "none");
+
+    mod.applyPreviewOperation(state, "show");
+    visibilityRequests = state.pendingChangeRequests.filter((request) => request.operation === "visibility");
+    assert.equal(visibilityRequests.length, 1);
+    assert.equal(visibilityRequests[0].changeId, visibilityChangeId);
     assert.deepEqual(visibilityRequests[0].payload, { visible: true });
     assert.equal(target.style.display, "");
+
+    mod.applyPreviewOperation(state, "hide");
+    visibilityRequests = state.pendingChangeRequests.filter((request) => request.operation === "visibility");
+    assert.equal(visibilityRequests.length, 1);
+    assert.equal(visibilityRequests[0].changeId, visibilityChangeId);
+    assert.deepEqual(visibilityRequests[0].payload, { visible: false });
+    assert.equal(target.style.display, "none");
 
     assert.deepEqual(mod.getPendingChangeRequestSummary(state, "sample.field.input").operations.sort(), ["height", "move", "visibility", "width"]);
     mod.resetSelectedPreviewChange(state);
