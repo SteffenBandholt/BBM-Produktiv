@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.56 abgeschlossen: Gespeicherte Hidden-Element-Visibility-Overrides koennen im bestehenden kompakten Popover fuer den Pilot-Scope `restarbeiten.ui.main` einzeln oder per `Alle einblenden` auf sichtbar zurueckgesetzt werden; weitere Scopes bleiben gesperrt.
 - K19.55 abgeschlossen: Restore gespeicherter Hidden-Element-Visibility-Overrides ist fuer den Pilot-Scope `restarbeiten.ui.main` testseitig abgesichert; `getCurrentLayoutState(...)` liefert nach neuem Lesezyklus `visible: false/true` an die Hidden-Elements-Logik.
 - K19.54 abgeschlossen: Pilot-Persistenz fuer Hidden-Element-Visibility-Overrides ist nur fuer `restarbeiten.ui.main` aktiv; gespeichert wird ausschliesslich `overrides.visible` ueber BBM-seitiges Repo/IPC hinter dem HostAdapter.
 - K19.53 abgeschlossen: HostAdapter-Dry-Run validiert `persistent: true` Visibility-ChangeRequests und blockiert sie weiterhin ohne Speicherung.
@@ -112,6 +113,16 @@ Aktueller Stand:
 - [x] K19.53 Validierten HostAdapter-Dry-Run fuer persistent=true Visibility-ChangeRequests vorbereiten
 - [x] K19.54 Pilot-Persistenz fuer Hidden-Element-Visibility-Overrides in restarbeiten.ui.main aktivieren
 - [x] K19.55 Restore gespeicherter Hidden-Element-Visibility-Overrides fuer restarbeiten.ui.main absichern
+- [x] K19.56 Hidden-Elements Pilot-Ruecksetzpfad im kompakten Popover absichern
+
+## Statusupdate K19.56
+- Der bestehende kompakte Hidden-Elements-Popover erlaubt fuer gespeicherte Pilot-Overrides in `restarbeiten.ui.main` jetzt `Einblenden`.
+- Die Runtime erzeugt dafuer einen validierten `persistent: true` Visibility-ChangeRequest mit `payload.visible === true`.
+- Bei mehreren aktiv einblendbaren Pilot-Overrides erscheint kompakt `Alle einblenden`.
+- Layout-State-only Elemente ohne freigegebene Persistenz-Capability bleiben deaktiviert.
+- Keine globale Scope-Freigabe, keine Persistenz fuer Move/Resize/Text/Fachfelder, keine Registry-Mutation, kein UI-Editor-kit-Speicher, kein `localStorage`, kein Datei-Schreibweg, keine PDF-/Drucklogik, keine Fachlogik und keine Drag-/Target-Selection-Aenderung.
+- Abgesichert durch Launcher- und HostAdapter-Tests; Electron-Sichtpruefung ist fuer G33 erforderlich, weil die Popover-Bedienung sichtbar erweitert wurde.
+- Folgepaket bleibt getrennt: G34 weitere Scopes erst nach eigener Freigabe.
 
 ## Statusupdate K19.55
 - Die Wiederherstellung gespeicherter Hidden-Element-Visibility-Overrides ist fuer den Pilot-Scope `restarbeiten.ui.main` abgesichert.

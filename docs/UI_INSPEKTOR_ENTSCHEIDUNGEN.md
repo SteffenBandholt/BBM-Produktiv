@@ -122,3 +122,5 @@
 **Status nach G31:** Der Pilot-Scope `restarbeiten.ui.main` ist als einzige Ausnahme freigegeben. `canPersistVisibility` ist nur dort aktiv; weitere Scopes und App-Start-Wiederherstellung bleiben separate Folgepakete.
 
 **Status nach G32:** Der Restore-Leseweg fuer `restarbeiten.ui.main` ist testseitig abgesichert. Gespeicherte Visibility-Overrides werden ueber den Restarbeiten-HostAdapter geladen und ueber `getCurrentLayoutState(...)` an die Hidden-Elements-Logik geliefert; weitere Scopes bleiben gesperrt.
+
+**Status nach G33:** Der bestehende kompakte Hidden-Elements-Popover darf gespeicherte Pilot-Overrides fuer `restarbeiten.ui.main` wieder auf sichtbar setzen. Dies geschieht nur ueber validierte `persistent: true` Visibility-ChangeRequests mit `payload.visible === true`; weitere Scopes und andere Operationen bleiben gesperrt.

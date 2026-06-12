@@ -281,6 +281,9 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-editor-hidden-elements-action=\"show\"]") {
     return node.getAttribute("data-ui-editor-hidden-elements-action") === "show";
   }
+  if (raw === "[data-ui-editor-hidden-elements-action=\"show-all\"]") {
+    return node.getAttribute("data-ui-editor-hidden-elements-action") === "show-all";
+  }
   if (raw === "[data-ui-editor-id]") {
     return Boolean(node.getAttribute("data-ui-editor-id"));
   }
@@ -627,7 +630,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         elementId: "restarbeiten.editbox.text.short",
         label: "Kurztext",
         action: "show",
-        enabled: false,
+        enabled: true,
       },
     ]);
 
@@ -643,6 +646,130 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     });
     assert.equal(mod.buildBbmHiddenElementsButtonViewModel(visibleState).hiddenCount, 0);
     assert.deepEqual(mod.buildBbmHiddenElementsPopoverViewModel(visibleState).items, []);
+  });
+
+  await run("BBM UI-Editor-Runtime: gespeicherte Pilot-Hidden-Elements lassen sich persistent einblenden", async () => {
+    const [mod, adapterModule] = await Promise.all([
+      loadRuntime(),
+      importEsmFromFile(RESTARBEITEN_HOST_ADAPTER_PATH),
+    ]);
+    const savedOverrides = [
+      {
+        targetAppId: "bbm",
+        moduleId: "restarbeiten",
+        scopeId: "restarbeiten.ui.main",
+        elementId: "restarbeiten.editbox.text.short",
+        overrides: { visible: false },
+        source: "ui-editor",
+        createdAt: "2026-06-08T22:30:00.000Z",
+        updatedAt: "2026-06-08T22:31:00.000Z",
+      },
+    ];
+    const storageApi = {
+      async list() {
+        return { ok: true, data: savedOverrides };
+      },
+      async save(override) {
+        const record = {
+          ...override,
+          createdAt: override.createdAt || "2026-06-08T22:30:00.000Z",
+          updatedAt: "2026-06-08T22:32:00.000Z",
+        };
+        const index = savedOverrides.findIndex((entry) => entry.elementId === record.elementId);
+        if (index >= 0) {
+          savedOverrides.splice(index, 1, record);
+        } else {
+          savedOverrides.push(record);
+        }
+        return { ok: true, data: record };
+      },
+    };
+    const hostAdapter = adapterModule.createRestarbeitenMainUiHostAdapter({ storageApi });
+    await hostAdapter.loadCurrentLayoutState();
+    const state = mod.createLauncherState({
+      activeUiScope: "restarbeiten.ui.main",
+      hostAdapter,
+    });
+
+    assert.equal(mod.buildBbmHiddenElementsButtonViewModel(state).hiddenCount, 1);
+    assert.equal(mod.buildBbmHiddenElementsPopoverViewModel(state).items[0].enabled, true);
+
+    const showResult = await mod.showHiddenElement(state, "restarbeiten.editbox.text.short");
+    assert.equal(showResult, true);
+    assert.equal(savedOverrides.length, 1);
+    assert.deepEqual(savedOverrides[0].overrides, { visible: true });
+    assert.deepEqual(hostAdapter.getCurrentLayoutState()[0].overrides, { visible: true });
+    assert.equal(mod.buildBbmHiddenElementsButtonViewModel(state).hiddenCount, 0);
+    assert.deepEqual(mod.buildBbmHiddenElementsPopoverViewModel(state).items, []);
+    assert.equal(state.pendingChangeRequests.length, 0);
+  });
+
+  await run("BBM UI-Editor-Runtime: Hidden-Elements-Popover bietet kompaktes Alle-einblenden fuer Pilot-Overrides", async () => {
+    const [mod, adapterModule] = await Promise.all([
+      loadRuntime(),
+      importEsmFromFile(RESTARBEITEN_HOST_ADAPTER_PATH),
+    ]);
+    const doc = createFakeDocument();
+    const savedOverrides = [
+      {
+        targetAppId: "bbm",
+        moduleId: "restarbeiten",
+        scopeId: "restarbeiten.ui.main",
+        elementId: "restarbeiten.editbox.text.short",
+        overrides: { visible: false },
+        source: "ui-editor",
+      },
+      {
+        targetAppId: "bbm",
+        moduleId: "restarbeiten",
+        scopeId: "restarbeiten.ui.main",
+        elementId: "restarbeiten.editbox.text.long",
+        overrides: { visible: false },
+        source: "ui-editor",
+      },
+    ];
+    const storageApi = {
+      async list() {
+        return { ok: true, data: savedOverrides };
+      },
+      async save(override) {
+        const record = {
+          ...override,
+          createdAt: override.createdAt || "2026-06-08T22:30:00.000Z",
+          updatedAt: "2026-06-08T22:32:00.000Z",
+        };
+        const index = savedOverrides.findIndex((entry) => entry.elementId === record.elementId);
+        if (index >= 0) {
+          savedOverrides.splice(index, 1, record);
+        } else {
+          savedOverrides.push(record);
+        }
+        return { ok: true, data: record };
+      },
+    };
+    const hostAdapter = adapterModule.createRestarbeitenMainUiHostAdapter({ storageApi });
+    await hostAdapter.loadCurrentLayoutState();
+    const state = mod.createLauncherState({
+      activeUiScope: "restarbeiten.ui.main",
+      hostAdapter,
+    });
+    state.hiddenElementsPopoverOpen = true;
+
+    mod.renderPreviewPanel(doc, state);
+    assert.equal(mod.buildBbmHiddenElementsButtonViewModel(state).hiddenCount, 2);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-hidden-elements-popover="true"]')), true);
+    assert.equal(doc.querySelectorAll('[data-ui-editor-hidden-elements-action="show"]').length, 2);
+    const showAllButton = doc.querySelector('[data-ui-editor-hidden-elements-action="show-all"]');
+    assert.equal(Boolean(showAllButton), true);
+    assert.equal(showAllButton.textContent, "Alle einblenden");
+
+    showAllButton.click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.deepEqual(savedOverrides.map((entry) => entry.overrides.visible), [true, true]);
+    assert.equal(mod.buildBbmHiddenElementsButtonViewModel(state).hiddenCount, 0);
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-hidden-elements-popover="true"]')), false);
+    assert.equal(state.pendingChangeRequests.length, 0);
   });
 
   await run("BBM UI-Editor-Runtime: Hidden-Elements deduplizieren und Preview-State gewinnt vor Layout-State", async () => {
@@ -1385,6 +1512,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     hiddenButton.click();
     hiddenPopover = getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-popover="true"]');
     hiddenPopover.querySelector('[data-ui-editor-hidden-elements-action="show"]').click();
+    await new Promise((resolve) => setTimeout(resolve, 0));
     assert.equal(target.style.display, "");
     hiddenButton = getPreviewPanel(doc).querySelector('[data-ui-editor-hidden-elements-button="true"]');
     assert.equal(hiddenButton.textContent, "Ausgeblendete: 0");

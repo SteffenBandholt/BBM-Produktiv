@@ -166,6 +166,9 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
       payload: { visible: true },
     }]);
     assert.equal(showResult.ok, true);
+    assert.equal(showResult.changeRequests[0].operation, "visibility");
+    assert.equal(showResult.changeRequests[0].persistent, true);
+    assert.deepEqual(showResult.changeRequests[0].payload, { visible: true });
     assert.equal(showResult.saved[0].overrides.visible, true);
     assert.deepEqual(storageAdapter.getCurrentLayoutState()[0].overrides, { visible: true });
   });

@@ -189,6 +189,12 @@ function getHostContextFromState(state = {}) {
   return adapter.getHostContext() || {};
 }
 
+function getHostCapabilitiesFromState(state = {}) {
+  const adapter = state.hostAdapter || null;
+  if (!adapter || typeof adapter.getCapabilities !== "function") return {};
+  return adapter.getCapabilities() || {};
+}
+
 function createLauncherState({
   activeUiScope = null,
   registeredElements = null,
@@ -823,6 +829,9 @@ function getCurrentLayoutStateFromHost(state = {}) {
 function getVisibilityFromLayoutStateEntry(entry = null) {
   if (!entry || typeof entry !== "object") return null;
   if (typeof entry.visible === "boolean") return entry.visible;
+  if (entry.overrides && typeof entry.overrides === "object" && typeof entry.overrides.visible === "boolean") {
+    return entry.overrides.visible;
+  }
   if (entry.layoutValue && typeof entry.layoutValue === "object" && typeof entry.layoutValue.visible === "boolean") {
     return entry.layoutValue.visible;
   }
@@ -830,6 +839,24 @@ function getVisibilityFromLayoutStateEntry(entry = null) {
     return entry.payload.visible;
   }
   return null;
+}
+
+function canPersistVisibilityForElement(state = {}, elementId = "") {
+  const registryElement = getRegisteredElementById(state, elementId);
+  if (!registryElement || !isPreviewOperationAllowed(registryElement, "show")) return false;
+  const context = getHostContextFromState(state);
+  const capabilities = getHostCapabilitiesFromState(state);
+  const scopeId = String(state.activeUiScope || context.scopeId || context.activeUiScope || "").trim();
+  return Boolean(
+    context.targetAppId === "bbm"
+      && context.moduleId === "restarbeiten"
+      && scopeId === "restarbeiten.ui.main"
+      && capabilities.persistence === true
+      && capabilities.canPersistVisibility === true
+      && capabilities.dryRunOnly !== true
+      && state.hostAdapter
+      && typeof state.hostAdapter.submitChangeRequests === "function"
+  );
 }
 
 function upsertHiddenElementsInputEntry(elementsById, elementId = "", patch = {}) {
@@ -872,7 +899,7 @@ function getBbmHiddenElementsViewModelInput(state = {}) {
     upsertHiddenElementsInputEntry(elementsById, elementId, {
       label: registryElement?.name || registryElement?.label || layoutEntry?.label || elementId,
       visible,
-      canShow: false,
+      canShow: visible === false ? canPersistVisibilityForElement(state, elementId) : false,
     });
   }
 
@@ -937,6 +964,51 @@ function showHiddenPreviewElement(state = {}, elementId = "") {
     state.hiddenElementsPopoverOpen = false;
   }
   return true;
+}
+
+function buildPersistentVisibilityChangeRequest(state = {}, registryElement = null, visible = true) {
+  if (!registryElement?.id || typeof visible !== "boolean") return null;
+  const context = getHostContextFromState(state);
+  const scopeId = String(state.activeUiScope || context.scopeId || context.activeUiScope || "").trim();
+  const createdAt = new Date().toISOString();
+  return {
+    changeId: getNextChangeRequestId(state),
+    targetAppId: context.targetAppId || "bbm",
+    moduleId: context.moduleId || "",
+    scopeId,
+    elementId: registryElement.id,
+    targetElementId: registryElement.id,
+    operation: "visibility",
+    payload: { visible },
+    source: "preview",
+    persistent: true,
+    previewTargetMode: getPreviewTargetMode(registryElement),
+    createdAt,
+    updatedAt: createdAt,
+  };
+}
+
+async function showPersistentHiddenElement(state = {}, elementId = "") {
+  const normalizedElementId = String(elementId || "").trim();
+  if (!normalizedElementId || !canPersistVisibilityForElement(state, normalizedElementId)) return false;
+  const registryElement = getRegisteredElementById(state, normalizedElementId);
+  const changeRequest = buildPersistentVisibilityChangeRequest(state, registryElement, true);
+  if (!changeRequest) return false;
+  const result = await state.hostAdapter.submitChangeRequests([changeRequest]);
+  if (!result?.ok || result.persisted !== true) {
+    state.previewMessage = "Einblenden nicht gespeichert.";
+    return false;
+  }
+  state.previewMessage = "Element dauerhaft eingeblendet.";
+  if (buildBbmHiddenElementsButtonViewModel(state).hiddenCount < 1) {
+    state.hiddenElementsPopoverOpen = false;
+  }
+  return true;
+}
+
+async function showHiddenElement(state = {}, elementId = "") {
+  if (showHiddenPreviewElement(state, elementId)) return true;
+  return showPersistentHiddenElement(state, elementId);
 }
 
 function getNextChangeRequestId(state = {}) {
@@ -1269,6 +1341,8 @@ function renderPreviewPanel(doc, state = {}) {
   hiddenElementsRow.appendChild(hiddenElementsButton);
   if (state.hiddenElementsPopoverOpen && hiddenElementsButtonViewModel.hiddenCount > 0) {
     const popoverViewModel = buildBbmHiddenElementsPopoverViewModel(state);
+    const popoverItems = Array.isArray(popoverViewModel.items) ? popoverViewModel.items : [];
+    const showablePopoverItems = popoverItems.filter((item) => item?.enabled === true && item?.action === "show");
     const popover = doc.createElement("div");
     popover.className = "ui-editor-preview-hidden-elements__popover";
     popover.setAttribute("data-ui-editor-hidden-elements-popover", "true");
@@ -1284,7 +1358,24 @@ function renderPreviewPanel(doc, state = {}) {
     popoverTitle.style.marginBottom = "6px";
     popover.appendChild(popoverTitle);
 
-    for (const item of popoverViewModel.items || []) {
+    if (showablePopoverItems.length > 1) {
+      const showAllButton = doc.createElement("button");
+      showAllButton.type = "button";
+      showAllButton.textContent = "Alle einblenden";
+      showAllButton.setAttribute("data-ui-editor-hidden-elements-action", "show-all");
+      showAllButton.style.marginBottom = "6px";
+      showAllButton.addEventListener("mousedown", stopPreviewPanelEvent);
+      showAllButton.addEventListener("click", async (event) => {
+        stopPreviewPanelEvent(event);
+        for (const item of showablePopoverItems) {
+          await showHiddenElement(state, item.elementId);
+        }
+        renderPreviewPanel(doc, state);
+      });
+      popover.appendChild(showAllButton);
+    }
+
+    for (const item of popoverItems) {
       const row = doc.createElement("div");
       row.setAttribute("data-ui-editor-hidden-elements-item", item.elementId || "");
       row.style.display = "flex";
@@ -1304,9 +1395,9 @@ function renderPreviewPanel(doc, state = {}) {
       showButton.setAttribute("data-ui-editor-hidden-elements-action", "show");
       showButton.setAttribute("data-ui-editor-hidden-elements-target", item.elementId || "");
       showButton.addEventListener("mousedown", stopPreviewPanelEvent);
-      showButton.addEventListener("click", (event) => {
+      showButton.addEventListener("click", async (event) => {
         stopPreviewPanelEvent(event);
-        if (showHiddenPreviewElement(state, item.elementId)) {
+        if (await showHiddenElement(state, item.elementId)) {
           renderPreviewPanel(doc, state);
         }
       });
@@ -1602,6 +1693,7 @@ export {
   buildBbmPanelViewModel,
   buildBbmHiddenElementsButtonViewModel,
   buildBbmHiddenElementsPopoverViewModel,
+  showHiddenElement,
   showHiddenPreviewElement,
   normalizeReadonlyRegisteredElements,
   normalizeAvailableUiScopes,

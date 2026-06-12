@@ -74,13 +74,20 @@ Stand nach G32:
 - `visible: false` wird von der Hidden-Elements-Logik als hidden erkannt; `visible: true` wird nicht als hidden gezaehlt.
 - Registry, UI-Editor-kit, weitere Scopes, PDF-/Drucklogik und Fachlogik bleiben unveraendert.
 
+Stand nach G33:
+
+- Gespeicherte Hidden-Overrides fuer `restarbeiten.ui.main` koennen im bestehenden kompakten Popover wieder eingeblendet werden.
+- Der Launcher erzeugt dafuer nur im Pilot-Scope einen validierten `persistent: true` Visibility-ChangeRequest mit `payload.visible === true`.
+- Bei mehr als einem freigegebenen Eintrag erscheint kompakt `Alle einblenden`.
+- Nicht freigegebene Layout-State-only Elemente bleiben nicht einblendbar; weitere Scopes bleiben gesperrt.
+
 ## Aktueller Stand
 
 Im BBM-Preview-Panel gibt es:
 
 - einen kompakten Hidden-Elements-Button,
 - ein kleines Popover,
-- `Einblenden` fuer temporaere Preview-Hide-Aenderungen.
+- `Einblenden` fuer temporaere Preview-Hide-Aenderungen und seit G33 fuer gespeicherte Pilot-Overrides aus `restarbeiten.ui.main`.
 
 Die Hidden-Elements-Datenquelle setzt sich heute zusammen aus Registry, geladenem Layout-State und laufendem in-memory Preview-State:
 
@@ -366,9 +373,13 @@ Status:
 
 ### G33: UI-Pruefung und Ruecksetzfunktion
 
-- Electron-Sichtpruefung.
-- Reset einzelner Hidden-Overrides.
-- Reset fuer Pilot-Scope.
+Status:
+
+- erledigt als enger Pilot-Ruecksetzpfad im bestehenden Hidden-Elements-Popover.
+- Einzelne gespeicherte Hidden-Overrides fuer `restarbeiten.ui.main` koennen per `Einblenden` auf `overrides.visible: true` gesetzt werden.
+- Bei mehreren aktiv einblendbaren Pilot-Overrides erscheint `Alle einblenden`.
+- Die Aktion bleibt an HostContext, Registry-Element, Capability `canPersistVisibility: true`, `dryRunOnly: false` und `submitChangeRequests(...)` gebunden.
+- Keine globale Scope-Freigabe, keine Registry-Mutation, kein UI-Editor-kit-Speicher, kein `localStorage`, kein Datei-Schreibweg und keine PDF-/Drucklogik.
 
 ### G34: Freigabe weiterer Scopes erst nach Test
 

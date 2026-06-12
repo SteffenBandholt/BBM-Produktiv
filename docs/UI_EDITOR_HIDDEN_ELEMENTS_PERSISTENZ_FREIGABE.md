@@ -4,7 +4,7 @@
 
 G28 legte Speicherort-Empfehlung, Zielstruktur, Freigabegrenzen und Umsetzungsreihenfolge fuer persistente Hidden-Element-Overrides fest.
 
-Stand nach G32: Die Persistenz ist nur fuer den Pilot-Scope `restarbeiten.ui.main` aktiv, und der Restore-Leseweg ist testseitig abgesichert.
+Stand nach G33: Die Persistenz ist nur fuer den Pilot-Scope `restarbeiten.ui.main` aktiv. Der Restore-Leseweg und der kompakte Ruecksetzpfad im Hidden-Elements-Popover sind testseitig abgesichert.
 
 Weiterhin deaktiviert bleiben:
 
@@ -38,6 +38,8 @@ Hide/Show ist als ChangeRequest modelliert:
 ```
 
 Seit G31 speichert der Restarbeiten-HostAdapter fuer `restarbeiten.ui.main` validierte `persistent: true` Visibility-ChangeRequests. Andere Scopes und andere Operationen bleiben blockiert.
+
+Seit G33 nutzt der bestehende Hidden-Elements-Popover diesen freigegebenen Pilotpfad auch zum Einblenden gespeicherter Hidden-Overrides. Dabei wird `payload.visible === true` gespeichert; weitere Scopes bleiben deaktiviert.
 
 ## Speicherort-Optionen
 
@@ -311,9 +313,13 @@ Status:
 
 ### G33: UI-Pruefung und Ruecksetzfunktion
 
-- fachliche Sichtpruefung im Electron-Kontext
-- Reset fuer einzelne Hidden-Overrides
-- Reset fuer Pilot-Scope
+Status:
+
+- erledigt als enger Pilot-Ruecksetzpfad im bestehenden Hidden-Elements-Popover.
+- Einzelne gespeicherte Hidden-Overrides fuer `restarbeiten.ui.main` koennen per `Einblenden` auf `overrides.visible: true` gesetzt werden.
+- Bei mehreren aktiv einblendbaren Pilot-Overrides erscheint `Alle einblenden`.
+- Die Aktion bleibt an HostContext, Registry-Element, Capability `canPersistVisibility: true`, `dryRunOnly: false` und `submitChangeRequests(...)` gebunden.
+- Keine globale Scope-Freigabe, keine Registry-Mutation, kein UI-Editor-kit-Speicher, kein `localStorage`, kein Datei-Schreibweg und keine PDF-/Drucklogik.
 
 ### G34: Freigabe weiterer Scopes erst nach Test
 
@@ -417,6 +423,26 @@ Abgesichert ist:
 - `getCurrentLayoutState("restarbeiten.ui.main")` liefert danach `visible: false` bzw. nach erneutem Speichern `visible: true`.
 - Die Hidden-Elements-Logik nutzt diesen Layout-State und zaehlt nur `visible: false` als ausgeblendet.
 - Andere Scopes, unbekannte `elementId`, Nicht-Visibility-Operationen und ungueltige `payload.visible` bleiben blockiert.
+
+Weiterhin nicht Teil des Stands:
+
+- keine globale Scope-Freigabe
+- keine Persistenz fuer Move/Resize/Text/Fachfelder
+- kein `localStorage`
+- kein `writeFile`
+- keine Registry-Mutation
+- keine PDF-/Drucklogik
+- kein UI-Editor-kit-Speicher
+
+## Stand nach G33
+
+G33 erweitert nur die bestehende kompakte Popover-Bedienung fuer den freigegebenen Pilot-Scope.
+
+Aktiv ist:
+
+- `Einblenden` fuer gespeicherte Hidden-Overrides aus `getCurrentLayoutState("restarbeiten.ui.main")`, wenn der HostAdapter `canPersistVisibility: true`, `persistence: true` und `dryRunOnly: false` meldet.
+- Speicherung eines validierten `persistent: true` Visibility-ChangeRequests mit `payload.visible === true`.
+- `Alle einblenden` nur dann, wenn mehr als ein aktiv einblendbarer Pilot-Eintrag vorhanden ist.
 
 Weiterhin nicht Teil des Stands:
 

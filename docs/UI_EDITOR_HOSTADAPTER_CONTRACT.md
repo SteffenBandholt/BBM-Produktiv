@@ -124,6 +124,8 @@ G31 nutzt dieselbe Validierung fuer den Pilot-Scope produktiv: Gueltige `persist
 
 G32 sichert den Restore-Leseweg ab: Der Restarbeiten-HostAdapter laedt gespeicherte Pilot-Overrides ueber `loadCurrentLayoutState()` aus dem BBM-Speicher und stellt sie ueber `getCurrentLayoutState("restarbeiten.ui.main")` bereit. Die Hidden-Elements-Logik darf daraus `visible: false` als hidden ableiten; `visible: true` zaehlt nicht als hidden. Diese Absicherung erweitert keine Capabilities und gibt keine weiteren Scopes frei.
 
+G33 nutzt den freigegebenen Pilotpfad auch fuer das Ruecksetzen gespeicherter Hidden-Overrides: Der Launcher darf fuer `restarbeiten.ui.main` und bekannte Registry-Elemente einen `persistent: true` Visibility-ChangeRequest mit `payload.visible === true` an `submitChangeRequests(...)` uebergeben, wenn der HostAdapter `persistence: true`, `canPersistVisibility: true` und `dryRunOnly: false` meldet. Andere Scopes und In-Memory-/Dry-Run-Adapter bleiben blockiert.
+
 ## Nicht erlaubt
 
 Ausserhalb des G31-Pilotpfads darf der HostAdapter nicht:

@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements Pilot-Ruecksetzpfad im Popover abgesichert:
+  - G33 erlaubt im bestehenden kompakten Hidden-Elements-Popover das Einblenden gespeicherter Pilot-Overrides fuer `restarbeiten.ui.main`.
+  - Einzelnes `Einblenden` erzeugt nur fuer diesen Pilot-Scope einen validierten `persistent: true` Visibility-ChangeRequest mit `payload.visible === true`.
+  - Bei mehreren aktiv einblendbaren Pilot-Overrides erscheint kompakt `Alle einblenden`; die Aktion speichert nur `overrides.visible: true` fuer validierte Registry-Elemente.
+  - Der In-Memory-/Dry-Run-Pfad ohne freigegebene Capability bleibt gesperrt; dort bleiben Layout-State-only Elemente im Popover nicht einblendbar.
+  - Andere Scopes, Move/Resize/Text/Fachfelder, Registry, UI-Editor-kit, PDF-/Drucklogik, Fachlogik, Drag und Target-Selection bleiben unveraendert; kein `localStorage` und kein Datei-Schreibweg.
+
 - UI-Editor Hidden-Elements Restore fuer Pilot-Scope abgesichert:
   - G32 weist technisch nach, dass gespeicherte Visibility-Overrides fuer `restarbeiten.ui.main` nach einem neuen Adapter-/Lesezyklus wieder als Layout-State verfuegbar sind.
   - Der Restore-Pfad laeuft ueber den Restarbeiten-HostAdapter: `loadCurrentLayoutState()` liest den BBM-Speicher, `getCurrentLayoutState(scopeId)` liefert die Datensaetze an den Launcher.
@@ -82,7 +89,7 @@ Sie ergÃ¤nzt:
 - UI-Editor Hidden-Elements lesen echten Layout-State mit:
   - `BbmUiEditorRuntimeLauncher.js` fuehrt Registry, lesenden `getCurrentLayoutState(...)`, Pending-Visibility-ChangeRequests und in-memory Preview-State zu einer neutralen Elementliste fuer das Kit-Hidden-Elements-ViewModel zusammen.
   - Reihenfolge: Registry liefert bekannte Elemente und Labels, Layout-State liefert `visible`-Overrides, Pending-/Preview-State ueberschreibt temporaer.
-  - Layout-State-only ausgeblendete Elemente erscheinen im Popover, `Einblenden` bleibt dafuer aber deaktiviert, solange kein sicherer Schreib-/Persistenzpfad existiert.
+  - Layout-State-only ausgeblendete Elemente erscheinen im Popover; seit G33 ist `Einblenden` nur fuer den freigegebenen Pilot-Scope `restarbeiten.ui.main` aktiv, alle anderen Layout-State-only Faelle bleiben deaktiviert.
   - Temporaer per Preview ausgeblendete Elemente koennen weiterhin ueber das Popover wieder eingeblendet werden.
   - Keine Persistenz, keine DB, kein IPC, kein localStorage, keine HostAdapter-Schreibmethode, keine Drag-/Target-Selection-Aenderung und kein Bare-Package-Import im Renderer.
 

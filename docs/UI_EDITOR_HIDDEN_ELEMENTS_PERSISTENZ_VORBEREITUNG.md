@@ -188,9 +188,30 @@ Weiterhin blockiert bleibt:
 - UI-Editor-kit-Speicherung
 - `localStorage`, Datei-Schreibwege, PDF-/Drucklogik und Fachlogik
 
+## Stand nach G33
+
+Der bestehende Hidden-Elements-Popover kann gespeicherte Pilot-Overrides fuer `restarbeiten.ui.main` zuruecksetzen.
+
+Nachgewiesen wurde:
+
+- Aus `getCurrentLayoutState(...)` gelesene `visible: false`-Overrides sind im Pilot-Scope einblendbar.
+- `Einblenden` baut einen `persistent: true` Visibility-ChangeRequest mit `payload.visible === true`.
+- Der Restarbeiten-HostAdapter speichert daraus nur `overrides.visible: true`.
+- `Alle einblenden` fasst mehrere aktiv einblendbare Pilot-Eintraege kompakt zusammen.
+- Nicht freigegebene Layout-State-only Faelle bleiben deaktiviert.
+
+Weiterhin blockiert bleibt:
+
+- andere Scopes
+- andere Operationen als `visibility`
+- ungueltige `payload.visible`-Werte
+- unbekannte oder unkontrollierte `elementId`
+- UI-Editor-kit-Speicherung
+- `localStorage`, Datei-Schreibwege, PDF-/Drucklogik und Fachlogik
+
 ## Pruefung
 
-G27 bis G32 werden durch Modell-, HostAdapter-, Storage-/IPC- und Launcher-Tests abgesichert:
+G27 bis G33 werden durch Modell-, HostAdapter-, Storage-/IPC- und Launcher-Tests abgesichert:
 
 - `persistent: true` fuer `operation: "visibility"` wird nur im Pilot-Scope gespeichert.
 - `persistent: false` bleibt Preview/Dry-Run/in-memory.
@@ -199,3 +220,4 @@ G27 bis G32 werden durch Modell-, HostAdapter-, Storage-/IPC- und Launcher-Tests
 - Das G29-Modell akzeptiert nur `overrides.visible` als Boolean und blockiert fehlende, unbekannte oder unkontrollierte Element-IDs.
 - Der G31-HostAdapter speichert nur validierte Visibility-Overrides und liest sie als Layout-State zurueck.
 - Der G32-Restore-Test simuliert einen neuen Adapter-/Lesezyklus und prueft, dass die Hidden-Elements-Logik `visible: false` als hidden und `visible: true` nicht als hidden behandelt.
+- Der G33-Launcher-Test prueft einzelnes Einblenden und `Alle einblenden` fuer gespeicherte Pilot-Overrides.
