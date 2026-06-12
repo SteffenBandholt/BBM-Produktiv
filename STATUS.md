@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements HostAdapter-Dry-Run abgesichert:
+  - Visibility-ChangeRequests fuer Hide/Show werden ueber `onPendingChangeRequestsChanged(...)` an den HostAdapter gemeldet.
+  - Hide wird als `operation: "visibility"` mit `payload.visible === false` gemeldet, Show als dieselbe Operation mit `payload.visible === true`.
+  - `submitChangeRequests(...)` bleibt ein reiner Dry-Run-/Blockadepfad und liefert weiter `PERSISTENCE_DISABLED`, `persistenceDisabled: true` und `dryRunOnly: true`.
+  - Die uebergebenen ChangeRequests bleiben `source: "preview"` und `persistent: false`.
+  - Keine Persistenz, keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik, keine Layout-State-Schreiblogik und keine sichtbare UI-Aenderung.
+
 - UI-Editor Hide/Show als Visibility-ChangeRequest abgesichert:
   - Hide und Show werden als einheitlicher ChangeRequest `operation: "visibility"` modelliert.
   - Hide nutzt `payload: { visible: false }`, Show nutzt `payload: { visible: true }`.

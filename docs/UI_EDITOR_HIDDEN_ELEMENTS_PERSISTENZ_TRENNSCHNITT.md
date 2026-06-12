@@ -237,6 +237,14 @@ Status:
 - `submitChangeRequests()` oder separaten Dry-Run kontrolliert pruefen.
 - Validierung ohne dauerhafte Uebernahme.
 
+Status:
+
+- erledigt
+- Visibility-ChangeRequests fuer Hide/Show koennen dem HostAdapter ueber `onPendingChangeRequestsChanged(...)` als vorbereitete In-Memory-Aenderungen gemeldet werden.
+- `submitChangeRequests(...)` bleibt bewusst blockiert und liefert weiter `PERSISTENCE_DISABLED`, `persistenceDisabled: true` und `dryRunOnly: true`.
+- Der Dry-Run gibt die uebergebenen ChangeRequests nur zurueck; daraus entsteht kein Layout-State-Write und keine dauerhafte Speicherung.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik und keine HostAdapter-Schreibausfuehrung.
+
 ### G27: Persistenz erst nach Freigabe
 
 - Speicherort und Datenmodell festlegen.

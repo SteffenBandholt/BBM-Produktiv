@@ -92,6 +92,13 @@ Diese Rueckmeldung ist keine Speicherung.
 - `persistenceDisabled: true`
 - `dryRunOnly: true`
 
+Fuer Hidden-Elemente gilt derselbe Dry-Run-Vertrag:
+
+- Hide wird als `operation: "visibility"` mit `payload.visible === false` gemeldet.
+- Show wird als `operation: "visibility"` mit `payload.visible === true` gemeldet.
+- `onPendingChangeRequestsChanged(changeRequests)` darf diese Requests in-memory anzeigen oder diagnostizieren.
+- `submitChangeRequests(changeRequests)` darf sie nicht speichern, sondern muss weiterhin blockiert bleiben.
+
 ## Nicht erlaubt
 
 Der HostAdapter darf in diesem Stand nicht:

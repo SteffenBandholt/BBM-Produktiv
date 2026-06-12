@@ -229,7 +229,6 @@ Status:
 
 Empfohlene Folgepakete:
 
-- G26: HostAdapter-Dry-Run fuer Hidden-Element-Aenderungen.
 - G27: Persistenz erst nach Freigabe.
 - G28: Wiederherstellen beim App-Start.
 
@@ -272,6 +271,19 @@ Status:
 - Pending-/Preview-State ueberschreibt Layout-State weiterhin nur temporaer.
 - Layout-State-only Hidden-Elemente bleiben sichtbar, aber `Einblenden` bleibt ohne Preview-State deaktiviert, bis ein sicherer HostAdapter-Dry-Run oder Schreibpfad existiert.
 - Keine Persistenz, keine DB, kein IPC, kein localStorage und keine HostAdapter-Schreibausfuehrung.
+
+### G26
+
+HostAdapter-Dry-Run fuer Hidden-Element-Visibility-ChangeRequests vorbereiten.
+
+Status:
+
+- erledigt
+- Visibility-ChangeRequests fuer Hide/Show werden ueber `onPendingChangeRequestsChanged(...)` in-memory an den HostAdapter gemeldet.
+- Der gemeldete Request bleibt ein Preview-Request mit `source: "preview"` und `persistent: false`.
+- `submitChangeRequests(...)` akzeptiert die Requests nur als Dry-Run-Eingabe und blockiert weiter mit `reason: "PERSISTENCE_DISABLED"`, `persistenceDisabled: true` und `dryRunOnly: true`.
+- Es wurde keine Schreibmethode, keine Persistenz, keine DB, kein IPC, kein localStorage und keine Datei-Schreiblogik eingefuehrt.
+- Das kompakte Button-/Popover-Konzept bleibt unveraendert; echte Persistenz folgt erst nach separater Freigabe.
 
 ## Nicht-Ziele dieses Pakets
 

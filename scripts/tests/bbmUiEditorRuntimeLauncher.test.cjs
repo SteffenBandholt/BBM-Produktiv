@@ -1423,7 +1423,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(target.style.transform, "");
   });
 
-  await run("BBM UI-Editor-Runtime: HostAdapter empfaengt Pending ChangeRequests nur in-memory", async () => {
+  await run("BBM UI-Editor-Runtime: HostAdapter empfaengt Visibility-ChangeRequests nur als Dry-Run", async () => {
     const [mod, hostContract] = await Promise.all([
       loadRuntime(),
       importEsmFromFile(HOST_CONTRACT_PATH),
@@ -1472,12 +1472,33 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     assert.equal(state.selectedRegistry.targetAppId, "sample-app");
     assert.equal(state.selectedRegistry.moduleId, "sample");
-    assert.equal(mod.applyPreviewOperation(state, "move", { dx: 5, dy: 0 }), true);
+    assert.equal(mod.applyPreviewOperation(state, "hide", {}), true);
     assert.equal(pendingSnapshots.length, 1);
+    assert.equal(pendingSnapshots[0].length, 1);
+    assert.equal(pendingSnapshots[0][0].operation, "visibility");
+    assert.deepEqual(pendingSnapshots[0][0].payload, { visible: false });
     assert.equal(pendingSnapshots[0][0].source, "preview");
     assert.equal(pendingSnapshots[0][0].targetAppId, "sample-app");
     assert.equal(pendingSnapshots[0][0].persistent, false);
-    assert.equal(hostAdapter.submitChangeRequests(state.pendingChangeRequests).reason, "PERSISTENCE_DISABLED");
+
+    assert.equal(mod.applyPreviewOperation(state, "show", {}), true);
+    assert.equal(pendingSnapshots.length, 2);
+    assert.equal(pendingSnapshots[1].length, 1);
+    assert.equal(pendingSnapshots[1][0].changeId, pendingSnapshots[0][0].changeId);
+    assert.equal(pendingSnapshots[1][0].operation, "visibility");
+    assert.deepEqual(pendingSnapshots[1][0].payload, { visible: true });
+    assert.equal(pendingSnapshots[1][0].source, "preview");
+    assert.equal(pendingSnapshots[1][0].persistent, false);
+
+    const dryRunResult = hostAdapter.submitChangeRequests(state.pendingChangeRequests);
+    assert.equal(dryRunResult.ok, false);
+    assert.equal(dryRunResult.blocked, true);
+    assert.equal(dryRunResult.reason, "PERSISTENCE_DISABLED");
+    assert.equal(dryRunResult.persistenceDisabled, true);
+    assert.equal(dryRunResult.dryRunOnly, true);
+    assert.equal(dryRunResult.changeRequests.length, 1);
+    assert.equal(dryRunResult.changeRequests[0].operation, "visibility");
+    assert.deepEqual(dryRunResult.changeRequests[0].payload, { visible: true });
 
     mod.resetAllPreviewChanges(state);
     assert.equal(pendingSnapshots[pendingSnapshots.length - 1].length, 0);

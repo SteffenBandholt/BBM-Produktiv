@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.49 abgeschlossen: HostAdapter-Dry-Run fuer Hidden-Element-Visibility-ChangeRequests ist abgesichert; keine Persistenz und keine sichtbare UI-Aenderung.
 - K19.48 abgeschlossen: Hide/Show ist als einheitlicher Visibility-ChangeRequest abgesichert; keine Persistenz und keine HostAdapter-Schreibausfuehrung.
 - K19.47 abgeschlossen: Hidden-Elements werden im BBM-Launcher zusaetzlich lesend aus Registry plus Layout-State beruecksichtigt; keine Schreiblogik und keine Persistenz.
 - K19.46 abgeschlossen: Hidden-Elements Datenquelle und Persistenz-Trennschnitt sind dokumentiert; keine Speicherlogik und keine Launcher-Funktionsaenderung.
@@ -98,6 +99,16 @@ Aktueller Stand:
 - [x] K19.46 Hidden-Elements Datenquelle und Persistenz-Trennschnitt festlegen
 - [x] K19.47 Hidden-Elements aus echtem Layout-State lesen, noch ohne Schreiben
 - [x] K19.48 Hide/Show als ChangeRequest sauber modellieren
+- [x] K19.49 HostAdapter-Dry-Run fuer Hidden-Element-Visibility-ChangeRequests absichern
+
+## Statusupdate K19.49
+- Visibility-ChangeRequests fuer Hidden-Element-Hide/Show werden ueber `onPendingChangeRequestsChanged(...)` an den HostAdapter gemeldet.
+- Hide wird als `operation: "visibility"` mit `payload.visible === false` gemeldet; Show nutzt dieselbe Operation mit `payload.visible === true`.
+- Die Requests bleiben Preview-Requests mit `source: "preview"` und `persistent: false`.
+- `submitChangeRequests(...)` bleibt bewusst blockiert und liefert `PERSISTENCE_DISABLED`, `persistenceDisabled: true` und `dryRunOnly: true`.
+- Der Dry-Run speichert nichts und schreibt keinen Layout-State.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik, keine Drag-/Target-Selection-Aenderung, keine sichtbare UI-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
+- Folgepakete bleiben abgegrenzt: G27 Persistenz nach Freigabe, G28 Wiederherstellung beim App-Start.
 
 ## Statusupdate K19.48
 - Hide und Show sind als einheitlicher Visibility-ChangeRequest abgesichert.
