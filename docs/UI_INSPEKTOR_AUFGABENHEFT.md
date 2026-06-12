@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.47 abgeschlossen: Hidden-Elements werden im BBM-Launcher zusaetzlich lesend aus Registry plus Layout-State beruecksichtigt; keine Schreiblogik und keine Persistenz.
 - K19.46 abgeschlossen: Hidden-Elements Datenquelle und Persistenz-Trennschnitt sind dokumentiert; keine Speicherlogik und keine Launcher-Funktionsaenderung.
 - K19.45 abgeschlossen: BBM zeigt ein kompaktes Hidden-Elements-Popover im Preview-Panel; `Einblenden` funktioniert fuer temporaere Preview-Hide-Aenderungen, ohne Persistenz.
 - K19.44 abgeschlossen: BBM zeigt im Preview-Panel einen kompakten Hidden-Elements-Button/Platzhalter ueber die UI-Editor-kit Hidden-Elements-Bridge; kein Popover, keine Einblenden-Aktion, keine Persistenz.
@@ -94,6 +95,17 @@ Aktueller Stand:
 - [x] K19.44 Kompakten Hidden-Elements-Button im BBM-Preview-Panel anzeigen
 - [x] K19.45 Kompaktes Hidden-Elements-Popover im BBM-Preview-Panel vorbereiten
 - [x] K19.46 Hidden-Elements Datenquelle und Persistenz-Trennschnitt festlegen
+- [x] K19.47 Hidden-Elements aus echtem Layout-State lesen, noch ohne Schreiben
+
+## Statusupdate K19.47
+- `BbmUiEditorRuntimeLauncher.js` baut die Hidden-Elements-Eingabe jetzt aus Registry, lesendem `getCurrentLayoutState(...)`, Pending-Visibility-ChangeRequests und in-memory Preview-State.
+- Registry liefert bekannte Elemente und Labels; Layout-State liefert `visible`-Overrides.
+- Pending-/Preview-State ueberschreibt Layout-State temporaer, damit Preview-Hide/Show weiter Vorrang hat.
+- Doppelte Element-IDs werden dedupliziert.
+- Layout-State-only Hidden-Elemente koennen im Popover erscheinen; `Einblenden` bleibt fuer diese Eintraege deaktiviert, solange kein sicherer Schreibpfad existiert.
+- Temporaere Preview-Hides koennen weiter ueber `Einblenden` in-memory aufgehoben werden.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage, keine neue UI, kein Popover-Umbau, keine Drag-/Target-Selection-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
+- Folgepakete bleiben abgegrenzt: G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz nach Freigabe, G28 Wiederherstellung beim App-Start.
 
 ## Statusupdate K19.46
 - `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_TRENNSCHNITT.md` dokumentiert den Trennschnitt fuer echte Hidden-Elements-Daten und spaetere Persistenz.

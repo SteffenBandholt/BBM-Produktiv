@@ -17,9 +17,16 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements lesen echten Layout-State mit:
+  - `BbmUiEditorRuntimeLauncher.js` fuehrt Registry, lesenden `getCurrentLayoutState(...)`, Pending-Visibility-ChangeRequests und in-memory Preview-State zu einer neutralen Elementliste fuer das Kit-Hidden-Elements-ViewModel zusammen.
+  - Reihenfolge: Registry liefert bekannte Elemente und Labels, Layout-State liefert `visible`-Overrides, Pending-/Preview-State ueberschreibt temporaer.
+  - Layout-State-only ausgeblendete Elemente erscheinen im Popover, `Einblenden` bleibt dafuer aber deaktiviert, solange kein sicherer Schreib-/Persistenzpfad existiert.
+  - Temporaer per Preview ausgeblendete Elemente koennen weiterhin ueber das Popover wieder eingeblendet werden.
+  - Keine Persistenz, keine DB, kein IPC, kein localStorage, keine HostAdapter-Schreibmethode, keine Drag-/Target-Selection-Aenderung und kein Bare-Package-Import im Renderer.
+
 - UI-Editor Hidden-Elements Persistenz-Trennschnitt festgelegt:
   - `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_TRENNSCHNITT.md` dokumentiert Datenquelle, Speichergrenze und Folgepakete.
-  - Empfohlene Datenquelle fuer echte Hidden-Elements ist spaeter Registry plus `getCurrentLayoutState()`.
+  - Empfohlene Datenquelle fuer echte Hidden-Elements ist Registry plus `getCurrentLayoutState()`; dieser lesende Pfad ist inzwischen im Launcher vorbereitet.
   - Empfohlener Persistenzpfad ist ein BBM-seitiger Layout-Override hinter dem HostAdapter, nicht das UI-Editor-kit.
   - Pending ChangeRequests bleiben vorbereitete, nicht persistierte Aenderungen.
   - Keine Persistenz, keine DB, kein IPC, kein localStorage, keine neue UI und keine Launcher-Funktionsaenderung.
@@ -34,7 +41,7 @@ Sie ergÃ¤nzt:
 - UI-Editor Hidden-Elements-Button im Preview-Panel vorbereitet:
   - `BbmUiEditorRuntimeLauncher.js` nutzt `buildHiddenElementsButtonViewModel` ausschliesslich ueber `./uiEditorKitHiddenElementsRuntimeBridge.js`.
   - Das Preview-Panel zeigt einen kompakten Button/Platzhalter `Ausgeblendete: 0`; bei temporaer per Preview ausgeblendeten Elementen steigt der Zaehler, z. B. `Ausgeblendete: 1`.
-  - Datenquelle ist nur der vorhandene in-memory Preview-State; echte Registry-/Layout-State-Hidden-Ermittlung folgt spaeter.
+  - Durch G24 erweitert: Die Datenquelle beruecksichtigt jetzt auch Registry plus lesenden Layout-State; wenn kein Layout-State vorhanden ist, bleibt das bisherige Preview-State-Verhalten stabil.
   - Durch G22 erweitert: Der Button kann nun ein kompaktes Popover fuer temporaere Preview-Hides oeffnen.
   - Kein Bare-Package-Import `ui-editor-kit/runtime/hidden-elements` im Renderer, keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
 

@@ -807,23 +807,106 @@ function buildBbmHiddenElementsPopoverViewModel(state = {}) {
   return buildHiddenElementsPopoverViewModel({ elements: getBbmHiddenElementsViewModelInput(state) });
 }
 
+function getCurrentLayoutStateFromHost(state = {}) {
+  const adapter = state.hostAdapter || null;
+  if (!adapter || typeof adapter.getCurrentLayoutState !== "function") return [];
+  const context = getHostContextFromState(state);
+  const scopeId = state.activeUiScope || context.scopeId || context.activeUiScope || "";
+  const layoutState = adapter.getCurrentLayoutState(scopeId);
+  if (Array.isArray(layoutState)) return layoutState;
+  if (Array.isArray(layoutState?.elements)) return layoutState.elements;
+  if (Array.isArray(layoutState?.layoutState)) return layoutState.layoutState;
+  if (Array.isArray(layoutState?.overrides)) return layoutState.overrides;
+  return [];
+}
+
+function getVisibilityFromLayoutStateEntry(entry = null) {
+  if (!entry || typeof entry !== "object") return null;
+  if (typeof entry.visible === "boolean") return entry.visible;
+  if (entry.layoutValue && typeof entry.layoutValue === "object" && typeof entry.layoutValue.visible === "boolean") {
+    return entry.layoutValue.visible;
+  }
+  if (entry.payload && typeof entry.payload === "object" && typeof entry.payload.visible === "boolean") {
+    return entry.payload.visible;
+  }
+  return null;
+}
+
+function upsertHiddenElementsInputEntry(elementsById, elementId = "", patch = {}) {
+  const normalizedElementId = String(elementId || "").trim();
+  if (!normalizedElementId) return null;
+  const previous = elementsById.get(normalizedElementId) || {
+    elementId: normalizedElementId,
+    label: normalizedElementId,
+    visible: true,
+    canShow: false,
+  };
+  const next = {
+    ...previous,
+    ...patch,
+    elementId: normalizedElementId,
+  };
+  elementsById.set(normalizedElementId, next);
+  return next;
+}
+
 function getBbmHiddenElementsViewModelInput(state = {}) {
-  const elements = [];
+  const elementsById = new Map();
+  const registry = getSelectedRegistryFromState(state);
+
+  for (const registryElement of registry.elements || []) {
+    const elementId = String(registryElement?.id || "").trim();
+    if (!elementId) continue;
+    upsertHiddenElementsInputEntry(elementsById, elementId, {
+      label: registryElement?.name || registryElement?.label || elementId,
+      visible: registryElement?.visible === false ? false : true,
+      canShow: false,
+    });
+  }
+
+  for (const layoutEntry of getCurrentLayoutStateFromHost(state)) {
+    const elementId = String(layoutEntry?.elementId || layoutEntry?.id || "").trim();
+    const visible = getVisibilityFromLayoutStateEntry(layoutEntry);
+    if (!elementId || typeof visible !== "boolean") continue;
+    const registryElement = getRegisteredElementById(state, elementId);
+    upsertHiddenElementsInputEntry(elementsById, elementId, {
+      label: registryElement?.name || registryElement?.label || layoutEntry?.label || elementId,
+      visible,
+      canShow: false,
+    });
+  }
+
+  const previewVisibilityById = new Map();
+  for (const changeRequest of Array.isArray(state.pendingChangeRequests) ? state.pendingChangeRequests : []) {
+    const elementId = String(changeRequest?.elementId || changeRequest?.targetElementId || "").trim();
+    if (!elementId || changeRequest?.operation !== "visibility") continue;
+    const visible = changeRequest?.payload?.visible;
+    if (typeof visible === "boolean") previewVisibilityById.set(elementId, visible);
+  }
+
+  for (const [elementId, visible] of previewVisibilityById.entries()) {
+    const registryElement = getRegisteredElementById(state, elementId);
+    upsertHiddenElementsInputEntry(elementsById, elementId, {
+      label: registryElement?.name || registryElement?.label || elementId,
+      visible,
+      canShow: false,
+    });
+  }
+
   const previewStates = state.previewStates instanceof Map ? state.previewStates : null;
   if (previewStates) {
     for (const [targetNode, previewState] of previewStates.entries()) {
       const elementId = getNodeUiEditorId(targetNode);
       if (!elementId) continue;
       const registryElement = getRegisteredElementById(state, elementId);
-      elements.push({
-        elementId,
+      upsertHiddenElementsInputEntry(elementsById, elementId, {
         label: registryElement?.name || registryElement?.label || elementId,
         visible: previewState?.hidden ? false : true,
-        canShow: registryElement ? isPreviewOperationAllowed(registryElement, "show") : true,
+        canShow: previewState?.hidden ? (registryElement ? isPreviewOperationAllowed(registryElement, "show") : true) : false,
       });
     }
   }
-  return elements;
+  return Array.from(elementsById.values());
 }
 
 function getPreviewStateEntryByElementId(state = {}, elementId = "") {

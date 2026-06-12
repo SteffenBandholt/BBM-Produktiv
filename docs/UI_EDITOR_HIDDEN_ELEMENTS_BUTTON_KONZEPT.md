@@ -6,7 +6,7 @@ Ausgeblendete UI-Editor-Elemente sind im sichtbaren Layout nicht mehr anklickbar
 
 Das Editorpanel soll trotzdem schlank bleiben. Deshalb wird fuer spaetere Pakete kein dauerhaft sichtbarer Elementlistenbereich vorgesehen, sondern ein kompakter Panel-Button fuer ausgeblendete Elemente.
 
-Dieses Dokument startete als Konzept und Trennschnitt. Der spaetere Stand ist unten historisch nachgefuehrt: Button und kompaktes Popover sind vorbereitet, Persistenz und echte Layout-State-Hidden-Ermittlung bleiben weiterhin ausgeschlossen.
+Dieses Dokument startete als Konzept und Trennschnitt. Der spaetere Stand ist unten historisch nachgefuehrt: Button und kompaktes Popover sind vorbereitet; echte Layout-State-Hidden-Ermittlung wird seit G24 lesend beruecksichtigt. Persistenz und Schreiben bleiben weiterhin ausgeschlossen.
 
 ## Problem
 
@@ -229,16 +229,29 @@ Status:
 
 Empfohlene Folgepakete:
 
-- G24: Hidden-Elements aus echtem Layout-State lesen, noch ohne Schreiben.
 - G25: Hide/Show als ChangeRequest sauber modellieren.
 - G26: HostAdapter-Dry-Run fuer Hidden-Element-Aenderungen.
 - G27: Persistenz erst nach Freigabe.
 - G28: Wiederherstellen beim App-Start.
 
+### G24
+
+Hidden-Elements aus echtem Layout-State lesen, noch ohne Schreiben.
+
+Status:
+
+- erledigt
+- Der Launcher baut die Hidden-Elements-Eingabe aus Registry, lesendem `getCurrentLayoutState(...)`, Pending-Visibility-ChangeRequests und in-memory Preview-State.
+- Reihenfolge: Registry liefert bekannte Elemente und Labels, Layout-State liefert `visible`-Overrides, Pending-/Preview-State gewinnt temporaer.
+- Doppelte Element-IDs werden dedupliziert.
+- Layout-State-hidden Elemente koennen im Popover erscheinen; `Einblenden` bleibt fuer diese Eintraege ohne Preview-State deaktiviert, bis ein Schreibpaket existiert.
+- Temporaere Preview-Hides koennen weiterhin ueber `Einblenden` aufgehoben werden.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage und keine HostAdapter-Schreibmethode.
+
 ## Nicht-Ziele dieses Pakets
 
 - keine Persistenz
-- keine echte Layout-State-Hidden-Ermittlung
+- keine Layout-State-Schreiblogik
 - keine Speicherung
 - keine DB
 - kein IPC

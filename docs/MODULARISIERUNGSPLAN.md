@@ -222,6 +222,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - Der kompakte Hidden-Elements-Button ist im BBM-Preview-Panel vorbereitet: Der Launcher nutzt `buildHiddenElementsButtonViewModel` ueber die Hidden-Elements-Bridge, zeigt `Ausgeblendete: 0` deaktiviert und zaehlt temporaer per Preview ausgeblendete Elemente aus dem in-memory Preview-State; Popover, Einblenden-Aktion und Persistenz bleiben ausgeschlossen.
 - Das kompakte Hidden-Elements-Popover ist im BBM-Preview-Panel vorbereitet: Der Launcher nutzt `buildHiddenElementsPopoverViewModel` ueber dieselbe Bridge, toggelt ein kleines Popover bei `Ausgeblendete: 1+` und kann temporaere Preview-Hide-Aenderungen ueber `Einblenden` wieder aufheben; Persistenz und echte Registry-/Layout-State-Ermittlung bleiben ausgeschlossen.
 - Der Persistenz-Trennschnitt fuer Hidden-Elements ist dokumentiert: Registry bleibt statische Landkarte, echte Hidden-Liste soll spaeter aus Registry plus Layout-State entstehen, Pending ChangeRequests bleiben Vorschau/Dry-Run, und dauerhafte Overrides gehoeren in BBM hinter den HostAdapter.
+- Hidden-Elements werden jetzt zusaetzlich lesend aus Registry plus `getCurrentLayoutState(...)` beruecksichtigt: Layout-State-Overrides fuer `visible = false` erscheinen im Hidden-Elements-Popover, Pending-/Preview-State gewinnt temporaer, und doppelte Element-IDs werden dedupliziert. Schreiben und Persistenz bleiben ausgeschlossen.
 
 **Noch offen**
 - weitere kleine Nachweise sinnvoll
@@ -231,7 +232,7 @@ Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeig
 - fachliche Sichtpruefung der Restarbeiten-Edit-Preview im lokalen Electron-DEV-Kontext
 - Spaeteren versionierten Produktiv-/Release-Bezug fuer das externe UI-Editor-kit als separates Folgethema klaeren
 - Weitere Auslagerung der Kit-Panel-Runtime im BBM-Launcher separat planen; dabei DOM-Grenzen, Drag-Abgrenzung und Electron-Sichtpruefung ausdruecklich trennen.
-- Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover und G23 Persistenz-Trennschnitt sind erledigt; G24 Layout-State-Lesen, G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz und G28 Wiederherstellung bleiben separat.
+- Hidden-Elements-Folgeschritte getrennt halten: G19 Kit-ViewModel, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover, G23 Persistenz-Trennschnitt und G24 Layout-State-Lesen sind erledigt; G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz und G28 Wiederherstellung bleiben separat.
 
 ---
 

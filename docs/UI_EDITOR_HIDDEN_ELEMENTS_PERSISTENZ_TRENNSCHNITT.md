@@ -12,6 +12,12 @@ Empfehlung:
 - Persistierte Layout-Overrides liegen spaeter in BBM hinter dem HostAdapter.
 - Das UI-Editor-kit bleibt generisch und speichert nichts selbst.
 
+Stand nach G24:
+
+- BBM liest Hidden-Elements zusaetzlich aus Registry plus `getCurrentLayoutState(...)`.
+- Pending-/Preview-State ueberschreibt Layout-State temporaer.
+- Es wird weiterhin nichts geschrieben oder persistiert.
+
 ## Aktueller Stand
 
 Im BBM-Preview-Panel gibt es:
@@ -26,7 +32,7 @@ Aktuelle Datenquelle ist nur der laufende in-memory Preview-State im Launcher:
 - `state.pendingChangeRequests`
 - daraus abgeleitete Hidden-Elements-ViewModels aus dem UI-Editor-kit
 
-Es gibt noch keine echte Registry-/Layout-State-Hidden-Ermittlung und keine dauerhafte Speicherung.
+Seit G24 gibt es eine lesende Registry-/Layout-State-Hidden-Ermittlung im Launcher. Es gibt weiterhin keine dauerhafte Speicherung.
 
 ## Problem
 
@@ -194,6 +200,14 @@ In BBM bleibt:
 - `getCurrentLayoutState()` als lesende Quelle nutzen.
 - Registry plus Layout-State zu effektivem `visible`-Status kombinieren.
 - Noch kein Schreiben.
+
+Status:
+
+- erledigt
+- Der Launcher fuehrt Registry-Elemente, Layout-State-Overrides, Pending-Visibility-ChangeRequests und Preview-State zusammen.
+- Layout-State-only Hidden-Elemente koennen angezeigt werden; `Einblenden` bleibt dafuer deaktiviert, solange kein Schreibpfad existiert.
+- Temporaere Preview-Hides gewinnen vor Layout-State und koennen weiter in-memory eingeblendet werden.
+- Doppelte Element-IDs werden dedupliziert.
 
 ### G25: Hide/Show als ChangeRequest sauber modellieren
 

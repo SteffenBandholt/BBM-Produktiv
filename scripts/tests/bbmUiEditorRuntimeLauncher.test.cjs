@@ -521,6 +521,130 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(mod.buildBbmHiddenElementsButtonViewModel(state).hiddenCount, 0);
   });
 
+  await run("BBM UI-Editor-Runtime: Hidden-Elements lesen Layout-State defensiv ohne Schreibweg", async () => {
+    const [mod, hostContract] = await Promise.all([
+      loadRuntime(),
+      importEsmFromFile(HOST_CONTRACT_PATH),
+    ]);
+    const registry = {
+      targetAppId: "sample-app",
+      uiScope: "sample.screen",
+      moduleId: "sample",
+      elements: [
+        {
+          id: "sample.layout.hidden",
+          name: "Layout-hidden Ziel",
+          type: "field",
+          role: "content",
+          parentId: "sample.root",
+          allowedOps: ["inspect", "hide", "show"],
+          lockedOps: [],
+          previewTargetMode: "self",
+        },
+      ],
+    };
+    const hostAdapter = hostContract.createInMemoryBbmEditorHostAdapter({
+      hostContext: {
+        targetAppId: "sample-app",
+        moduleId: "sample",
+        activeUiScope: "sample.screen",
+      },
+      registry,
+      currentLayoutState: [
+        { elementId: "sample.layout.hidden", layoutValue: { visible: false } },
+      ],
+    });
+    const state = mod.createLauncherState({
+      activeUiScope: "sample.screen",
+      hostAdapter,
+    });
+
+    const buttonViewModel = mod.buildBbmHiddenElementsButtonViewModel(state);
+    assert.equal(buttonViewModel.hiddenCount, 1);
+    assert.equal(buttonViewModel.label, "Ausgeblendete: 1");
+    assert.equal(buttonViewModel.enabled, true);
+
+    const popoverViewModel = mod.buildBbmHiddenElementsPopoverViewModel(state);
+    assert.deepEqual(popoverViewModel.items, [
+      {
+        elementId: "sample.layout.hidden",
+        label: "Layout-hidden Ziel",
+        action: "show",
+        enabled: false,
+      },
+    ]);
+    assert.equal(hostAdapter.submitChangeRequests([]).reason, "PERSISTENCE_DISABLED");
+  });
+
+  await run("BBM UI-Editor-Runtime: Hidden-Elements deduplizieren und Preview-State gewinnt vor Layout-State", async () => {
+    const [mod, hostContract] = await Promise.all([
+      loadRuntime(),
+      importEsmFromFile(HOST_CONTRACT_PATH),
+    ]);
+    const doc = createFakeDocument();
+    const registry = {
+      targetAppId: "sample-app",
+      uiScope: "sample.screen",
+      moduleId: "sample",
+      elements: [
+        { id: "sample.layout.first", name: "Erstes Layout-Ziel", type: "field", role: "content", parentId: "sample.root", allowedOps: ["inspect", "hide", "show"], lockedOps: [], previewTargetMode: "self" },
+        { id: "sample.layout.second", name: "Zweites Layout-Ziel", type: "field", role: "content", parentId: "sample.root", allowedOps: ["inspect", "hide", "show"], lockedOps: [], previewTargetMode: "self" },
+        { id: "sample.preview.third", name: "Preview-Ziel", type: "field", role: "content", parentId: "sample.root", allowedOps: ["inspect", "hide", "show"], lockedOps: [], previewTargetMode: "self" },
+      ],
+    };
+    const hostAdapter = hostContract.createInMemoryBbmEditorHostAdapter({
+      hostContext: {
+        targetAppId: "sample-app",
+        moduleId: "sample",
+        activeUiScope: "sample.screen",
+      },
+      registry,
+      currentLayoutState: [
+        { elementId: "sample.layout.first", visible: false },
+        { elementId: "sample.layout.first", layoutValue: { visible: false } },
+        { elementId: "sample.layout.second", visible: true },
+        { elementId: "sample.preview.third", visible: true },
+      ],
+    });
+    const state = mod.createLauncherState({
+      activeUiScope: "sample.screen",
+      hostAdapter,
+    });
+    state.pendingChangeRequests = [
+      { elementId: "sample.layout.first", operation: "visibility", payload: { visible: true } },
+      { elementId: "sample.layout.second", operation: "visibility", payload: { visible: false } },
+    ];
+    const previewTarget = doc.createElement("div");
+    previewTarget.setAttribute("data-ui-editor-id", "sample.preview.third");
+    state.previewStates.set(previewTarget, {
+      originalStyle: { transform: "", width: "", height: "", display: "" },
+      dx: 0,
+      dy: 0,
+      widthDelta: 0,
+      heightDelta: 0,
+      baseWidth: 0,
+      baseHeight: 0,
+      hidden: true,
+    });
+
+    const buttonViewModel = mod.buildBbmHiddenElementsButtonViewModel(state);
+    assert.equal(buttonViewModel.hiddenCount, 2);
+
+    const popoverViewModel = mod.buildBbmHiddenElementsPopoverViewModel(state);
+    assert.deepEqual(
+      popoverViewModel.items.map((item) => ({
+        elementId: item.elementId,
+        label: item.label,
+        enabled: item.enabled,
+      })),
+      [
+        { elementId: "sample.layout.second", label: "Zweites Layout-Ziel", enabled: false },
+        { elementId: "sample.preview.third", label: "Preview-Ziel", enabled: true },
+      ]
+    );
+    assert.equal(popoverViewModel.items.some((item) => item.elementId === "sample.layout.first"), false);
+  });
+
   await run("BBM UI-Editor-Runtime: Launcher ist nur im DEV-Kontext sichtbar", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
