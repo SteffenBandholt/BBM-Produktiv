@@ -20,10 +20,11 @@ const REGISTRY_PATH = path.join(
 );
 
 async function runRestarbeitenEditorHostAdapterTests(run) {
-  const [{ createBbmEditorHostAdapter }, { validateHostAdapterShape }, registryModule] = await Promise.all([
+  const [{ createBbmEditorHostAdapter }, { validateHostAdapterShape }, registryModule, adapterModule] = await Promise.all([
     importEsmFromFile(HOST_FACTORY_PATH),
     importEsmFromFile(HOST_CONTRACT_PATH),
     importEsmFromFile(REGISTRY_PATH),
+    importEsmFromFile(HOST_ADAPTER_PATH),
   ]);
 
   const registry = registryModule.getRestarbeitenMainUiRegistry();
@@ -69,7 +70,7 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(adapterRegistry[0].id, registry[0].id);
   });
 
-  await run("Restarbeiten HostAdapter: HostContext und Capabilities bleiben ohne Persistenz", () => {
+  await run("Restarbeiten HostAdapter: HostContext und Capabilities aktivieren nur Pilot-Visibility-Persistenz", () => {
     assert.deepEqual(adapter.getHostContext(), {
       targetAppId: "bbm",
       moduleId: "restarbeiten",
@@ -80,9 +81,9 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(capabilities.selection, true);
     assert.equal(capabilities.preview, true);
     assert.equal(capabilities.pendingChangeRequests, true);
-    assert.equal(capabilities.persistence, false);
-    assert.equal(capabilities.canPersistVisibility, false);
-    assert.equal(capabilities.dryRunOnly, true);
+    assert.equal(capabilities.persistence, true);
+    assert.equal(capabilities.canPersistVisibility, true);
+    assert.equal(capabilities.dryRunOnly, false);
   });
 
   await run("Restarbeiten HostAdapter: Layout-State startet leer", () => {
@@ -96,8 +97,8 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(result.count, 1);
   });
 
-  await run("Restarbeiten HostAdapter: ChangeRequests koennen nicht persistiert werden", () => {
-    const result = adapter.submitChangeRequests([validChangeRequest]);
+  await run("Restarbeiten HostAdapter: Nicht-Visibility-ChangeRequests bleiben blockiert", async () => {
+    const result = await adapter.submitChangeRequests([validChangeRequest]);
     assert.equal(result.ok, false);
     assert.equal(result.blocked, true);
     assert.equal(result.reason, "PERSISTENCE_DISABLED");
@@ -106,7 +107,29 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(result.dryRunOnly, true);
   });
 
-  await run("Restarbeiten HostAdapter: persistent Visibility-Requests bleiben blockiert", () => {
+  await run("Restarbeiten HostAdapter: persistent Visibility-Requests werden im Pilot-Scope gespeichert", async () => {
+    const savedOverrides = [];
+    const storageAdapter = adapterModule.createRestarbeitenMainUiHostAdapter({
+      storageApi: {
+        async list() {
+          return { ok: true, data: savedOverrides };
+        },
+        async save(override) {
+          const record = {
+            ...override,
+            createdAt: override.createdAt || "2026-06-08T22:30:00.000Z",
+            updatedAt: "2026-06-08T22:31:00.000Z",
+          };
+          const index = savedOverrides.findIndex((entry) => entry.elementId === record.elementId);
+          if (index >= 0) {
+            savedOverrides.splice(index, 1, record);
+          } else {
+            savedOverrides.push(record);
+          }
+          return { ok: true, data: record };
+        },
+      },
+    });
     const persistentVisibilityRequest = {
       ...validChangeRequest,
       changeId: "chg-visibility-persistent-1",
@@ -117,27 +140,57 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
       source: "preview",
       persistent: true,
     };
-    const result = adapter.submitChangeRequests([persistentVisibilityRequest]);
-    assert.equal(result.ok, false);
-    assert.equal(result.blocked, true);
-    assert.equal(result.reason, "PERSISTENCE_DISABLED");
-    assert.equal(result.persistenceDisabled, true);
-    assert.equal(result.visibilityPersistenceDisabled, true);
-    assert.equal(result.canPersistVisibility, false);
-    assert.equal(result.dryRunOnly, true);
+    const result = await storageAdapter.submitChangeRequests([persistentVisibilityRequest]);
+    assert.equal(result.ok, true);
+    assert.equal(result.accepted, true);
+    assert.equal(result.persisted, true);
+    assert.equal(result.reason, "PERSISTED");
     assert.equal(result.validation.ok, true);
     assert.equal(result.validation.count, 1);
     assert.equal(result.validation.entries[0].validation.ok, true);
-    assert.equal(result.validation.entries[0].persistable, false);
+    assert.equal(result.validation.entries[0].persistable, true);
     assert.deepEqual(result.validation.entries[0].override.overrides, { visible: false });
     assert.equal(result.changeRequests.length, 1);
     assert.equal(result.changeRequests[0].operation, "visibility");
     assert.equal(result.changeRequests[0].persistent, true);
     assert.deepEqual(result.changeRequests[0].payload, { visible: false });
+    assert.equal(savedOverrides.length, 1);
+    assert.equal(savedOverrides[0].scopeId, "restarbeiten.ui.main");
+    assert.equal(savedOverrides[0].elementId, "restarbeiten.editbox.text.short");
+    assert.deepEqual(savedOverrides[0].overrides, { visible: false });
+    assert.deepEqual(storageAdapter.getCurrentLayoutState()[0].overrides, { visible: false });
+
+    const showResult = await storageAdapter.submitChangeRequests([{
+      ...persistentVisibilityRequest,
+      changeId: "chg-visibility-persistent-2",
+      payload: { visible: true },
+    }]);
+    assert.equal(showResult.ok, true);
+    assert.equal(showResult.saved[0].overrides.visible, true);
+    assert.deepEqual(storageAdapter.getCurrentLayoutState()[0].overrides, { visible: true });
   });
 
-  await run("Restarbeiten HostAdapter: invalides persistent Visibility-Payload wird abgelehnt", () => {
-    const result = adapter.submitChangeRequests([{
+  await run("Restarbeiten HostAdapter: persistent Visibility ohne Storage wird klar blockiert", async () => {
+    const result = await adapter.submitChangeRequests([{
+      ...validChangeRequest,
+      changeId: "chg-visibility-no-storage-1",
+      operation: "visibility",
+      payload: {
+        visible: false,
+      },
+      source: "preview",
+      persistent: true,
+    }]);
+
+    assert.equal(result.ok, false);
+    assert.equal(result.blocked, true);
+    assert.equal(result.reason, "STORAGE_UNAVAILABLE");
+    assert.equal(result.canPersistVisibility, true);
+    assert.equal(result.dryRunOnly, false);
+  });
+
+  await run("Restarbeiten HostAdapter: invalides persistent Visibility-Payload wird abgelehnt", async () => {
+    const result = await adapter.submitChangeRequests([{
       ...validChangeRequest,
       changeId: "chg-visibility-invalid-visible-1",
       operation: "visibility",
@@ -151,16 +204,16 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(result.ok, false);
     assert.equal(result.blocked, true);
     assert.equal(result.reason, "INVALID_CHANGE_REQUEST");
-    assert.equal(result.persistenceDisabled, true);
+    assert.equal(result.persistenceDisabled, false);
     assert.equal(result.visibilityPersistenceDisabled, true);
-    assert.equal(result.canPersistVisibility, false);
-    assert.equal(result.dryRunOnly, true);
+    assert.equal(result.canPersistVisibility, true);
+    assert.equal(result.dryRunOnly, false);
     assert.equal(result.validation.ok, false);
     assert.ok(result.validation.errors.some((error) => error.code === "VISIBLE_NOT_BOOLEAN"));
   });
 
-  await run("Restarbeiten HostAdapter: unbekannte persistent Visibility-elementId wird abgelehnt", () => {
-    const result = adapter.submitChangeRequests([{
+  await run("Restarbeiten HostAdapter: unbekannte persistent Visibility-elementId wird abgelehnt", async () => {
+    const result = await adapter.submitChangeRequests([{
       ...validChangeRequest,
       changeId: "chg-visibility-unknown-element-1",
       elementId: "restarbeiten.editbox.text.unknown",
@@ -175,12 +228,42 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(result.ok, false);
     assert.equal(result.blocked, true);
     assert.equal(result.reason, "INVALID_CHANGE_REQUEST");
-    assert.equal(result.persistenceDisabled, true);
+    assert.equal(result.persistenceDisabled, false);
     assert.equal(result.visibilityPersistenceDisabled, true);
-    assert.equal(result.canPersistVisibility, false);
-    assert.equal(result.dryRunOnly, true);
+    assert.equal(result.canPersistVisibility, true);
+    assert.equal(result.dryRunOnly, false);
     assert.equal(result.validation.ok, false);
     assert.ok(result.validation.errors.some((error) => error.code === "ELEMENT_ID_UNKNOWN"));
+  });
+
+  await run("Restarbeiten HostAdapter: anderer Scope wird nicht gespeichert", async () => {
+    const savedOverrides = [];
+    const storageAdapter = adapterModule.createRestarbeitenMainUiHostAdapter({
+      storageApi: {
+        async save(override) {
+          savedOverrides.push(override);
+          return { ok: true, data: override };
+        },
+      },
+    });
+    const result = await storageAdapter.submitChangeRequests([{
+      ...validChangeRequest,
+      changeId: "chg-visibility-other-scope-1",
+      scopeId: "protokoll.topsScreen",
+      operation: "visibility",
+      payload: {
+        visible: false,
+      },
+      source: "preview",
+      persistent: true,
+    }]);
+
+    assert.equal(result.ok, false);
+    assert.equal(result.blocked, true);
+    assert.equal(result.reason, "INVALID_CHANGE_REQUEST");
+    assert.equal(result.validation.ok, false);
+    assert.ok(result.validation.errors.some((error) => error.code === "SCOPE_NOT_ALLOWED"));
+    assert.equal(savedOverrides.length, 0);
   });
 
   await run("Restarbeiten HostAdapter: bleibt ohne Storage-, IPC- und DB-Schreibweg", () => {
@@ -198,8 +281,8 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     }
   });
 
-  await run("Restarbeiten HostAdapter: gueltiger Change Request wird nur blockiert", () => {
-    const result = adapter.submitChangeRequest(validChangeRequest);
+  await run("Restarbeiten HostAdapter: gueltiger Change Request wird nur blockiert", async () => {
+    const result = await adapter.submitChangeRequest(validChangeRequest);
     assert.equal(result.ok, false);
     assert.equal(result.blocked, true);
     assert.equal(result.reason, "PERSISTENCE_DISABLED");
@@ -208,8 +291,8 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(result.validation.ok, true);
   });
 
-  await run("Restarbeiten HostAdapter: unbekannte elementId blockiert als INVALID_CHANGE_REQUEST", () => {
-    const result = adapter.submitChangeRequest({
+  await run("Restarbeiten HostAdapter: unbekannte elementId blockiert als INVALID_CHANGE_REQUEST", async () => {
+    const result = await adapter.submitChangeRequest({
       ...validChangeRequest,
       elementId: "restarbeiten.editbox.text.unknown",
     });
@@ -220,15 +303,15 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.ok(result.validation.errors.some((error) => error.code === "ELEMENT_ID_UNKNOWN"));
   });
 
-  await run("Restarbeiten HostAdapter: delete und recordId werden abgelehnt", () => {
-    const deleteResult = adapter.submitChangeRequest({
+  await run("Restarbeiten HostAdapter: delete und recordId werden abgelehnt", async () => {
+    const deleteResult = await adapter.submitChangeRequest({
       ...validChangeRequest,
       operation: "delete",
     });
     assert.equal(deleteResult.reason, "INVALID_CHANGE_REQUEST");
     assert.ok(deleteResult.validation.errors.some((error) => error.code === "FORBIDDEN_OPERATION"));
 
-    const recordIdResult = adapter.submitChangeRequest({
+    const recordIdResult = await adapter.submitChangeRequest({
       ...validChangeRequest,
       payload: {
         recordId: "4711",

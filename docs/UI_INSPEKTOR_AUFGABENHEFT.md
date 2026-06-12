@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.54 abgeschlossen: Pilot-Persistenz fuer Hidden-Element-Visibility-Overrides ist nur fuer `restarbeiten.ui.main` aktiv; gespeichert wird ausschliesslich `overrides.visible` ueber BBM-seitiges Repo/IPC hinter dem HostAdapter.
 - K19.53 abgeschlossen: HostAdapter-Dry-Run validiert `persistent: true` Visibility-ChangeRequests und blockiert sie weiterhin ohne Speicherung.
 - K19.52 abgeschlossen: Hidden-Elements-Persistenzspeicher ist technisch als neutrales Modell mit Validierung vorbereitet; Persistenz bleibt deaktiviert und es gibt keinen Speicherweg.
 - K19.51 abgeschlossen: Speicherort, Zielstruktur, Freigabegrenzen und Folgepakete fuer Hidden-Elements-Persistenz sind dokumentiert; Persistenz bleibt deaktiviert.
@@ -108,6 +109,19 @@ Aktueller Stand:
 - [x] K19.51 Hidden-Elements Speicherort und Persistenzfreigabe festlegen
 - [x] K19.52 Hidden-Elements Persistenzspeicher technisch vorbereiten, aber deaktiviert lassen
 - [x] K19.53 Validierten HostAdapter-Dry-Run fuer persistent=true Visibility-ChangeRequests vorbereiten
+- [x] K19.54 Pilot-Persistenz fuer Hidden-Element-Visibility-Overrides in restarbeiten.ui.main aktivieren
+
+## Statusupdate K19.54
+- Die echte Persistenz fuer Hidden-Element-Visibility-Overrides ist nur fuer den Pilot-Scope `restarbeiten.ui.main` aktiv.
+- Speicherweg: `ui_editor_layout_overrides` in der BBM-Datenbank, `src/main/db/uiEditorLayoutOverridesRepo.js`, `src/main/ipc/uiEditorLayoutOverridesIpc.js` und Preload-Methoden `uiEditorLayoutOverridesGetMany` / `uiEditorLayoutOverridesSave`.
+- Der Restarbeiten-HostAdapter meldet fuer diesen Scope `persistence: true`, `canPersistVisibility: true`, `dryRunOnly: false`.
+- Gespeichert werden nur validierte `persistent: true` ChangeRequests mit `operation: "visibility"` und boolean `payload.visible`.
+- Gespeicherte Overrides werden ueber `getCurrentLayoutState(...)` als neutrale Layout-State-Datensaetze mit `overrides.visible` gelesen.
+- Andere Scopes, Nicht-Visibility-Operationen, ungueltige Payloads, unbekannte `elementId` und unkontrollierte Instanzen bleiben blockiert.
+- Registry, UI-Editor-kit, PDF-/Drucklogik, Fachlogik, Drag und Target-Selection bleiben unveraendert; kein `localStorage` und kein Datei-Schreibweg.
+- App-Start-Wiederherstellung als initiales Laden persistierter Overrides bleibt getrennt fuer G32.
+- Abgesichert durch neue Storage-/IPC-Tests, HostAdapter-Tests und den bestehenden Hidden-Elements-Layout-State-Leser im Launcher.
+- Folgepakete bleiben getrennt: G32 App-Start-Wiederherstellung, G33 UI-Pruefung/Reset, G34 weitere Scopes.
 
 ## Statusupdate K19.53
 - `persistent: true` Visibility-ChangeRequests werden im HostAdapter-Dry-Run jetzt gegen das G29-Override-Modell validiert.

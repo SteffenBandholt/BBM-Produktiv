@@ -938,6 +938,53 @@ function ensureTableLayoutsSchema(dbConn) {
   }
 }
 
+function ensureUiEditorLayoutOverridesSchema(dbConn) {
+  if (!tableExists(dbConn, "ui_editor_layout_overrides")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS ui_editor_layout_overrides (
+        target_app_id TEXT NOT NULL,
+        module_id TEXT NOT NULL,
+        scope_id TEXT NOT NULL,
+        element_id TEXT NOT NULL,
+        overrides_json TEXT NOT NULL,
+        source TEXT NOT NULL DEFAULT 'ui-editor',
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        PRIMARY KEY (target_app_id, module_id, scope_id, element_id)
+      );
+    `);
+    return;
+  }
+
+  const addCol = (name, sqlType) => {
+    if (!columnExists(dbConn, "ui_editor_layout_overrides", name)) {
+      dbConn.exec(`ALTER TABLE ui_editor_layout_overrides ADD COLUMN ${name} ${sqlType};`);
+    }
+  };
+
+  addCol("target_app_id", "TEXT");
+  addCol("module_id", "TEXT");
+  addCol("scope_id", "TEXT");
+  addCol("element_id", "TEXT");
+  addCol("overrides_json", "TEXT");
+  addCol("source", "TEXT");
+
+  if (!columnExists(dbConn, "ui_editor_layout_overrides", "created_at")) {
+    dbConn.exec(`
+      ALTER TABLE ui_editor_layout_overrides
+      ADD COLUMN created_at TEXT NOT NULL
+      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));
+    `);
+  }
+  if (!columnExists(dbConn, "ui_editor_layout_overrides", "updated_at")) {
+    dbConn.exec(`
+      ALTER TABLE ui_editor_layout_overrides
+      ADD COLUMN updated_at TEXT NOT NULL
+      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));
+    `);
+  }
+}
+
 function ensureProjectCandidatesSchema(dbConn) {
   if (!tableExists(dbConn, "project_candidates")) {
     dbConn.exec(`
@@ -1790,6 +1837,7 @@ function ensureSchema(dbConn) {
 
   ensureDictionarySchema(dbConn);
   ensureTableLayoutsSchema(dbConn);
+  ensureUiEditorLayoutOverridesSchema(dbConn);
   ensureRestarbeitenSchema(dbConn);
   ensureAppSettingsSchema(dbConn);
   ensureLicenseAdminSchema(dbConn);

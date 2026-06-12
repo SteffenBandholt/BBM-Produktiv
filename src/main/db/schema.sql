@@ -179,3 +179,15 @@ CREATE TABLE IF NOT EXISTS dictionary_entries (
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
 );
+
+CREATE TABLE IF NOT EXISTS ui_editor_layout_overrides (
+  target_app_id TEXT NOT NULL,
+  module_id TEXT NOT NULL,
+  scope_id TEXT NOT NULL,
+  element_id TEXT NOT NULL,
+  overrides_json TEXT NOT NULL,
+  source TEXT NOT NULL DEFAULT 'ui-editor',
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  PRIMARY KEY (target_app_id, module_id, scope_id, element_id)
+);

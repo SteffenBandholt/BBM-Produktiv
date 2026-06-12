@@ -74,12 +74,43 @@ export function validatePersistentVisibilityChangeRequestsDryRun(
   changeRequests = [],
   { scope = {}, registry = [], capabilities = {} } = {}
 ) {
+  const result = validatePersistentVisibilityChangeRequests(changeRequests, {
+    scope,
+    registry,
+    capabilities: {
+      ...capabilities,
+      persistence: false,
+      canPersistVisibility: false,
+      dryRunOnly: true,
+    },
+  });
+  return {
+    ...result,
+    dryRunOnly: true,
+    persistenceDisabled: true,
+    canPersistVisibility: false,
+    entries: result.entries.map((entry) => ({
+      ...entry,
+      persistable: false,
+      blocked: true,
+      reason: "PERSISTENCE_DISABLED",
+    })),
+  };
+}
+
+export function validatePersistentVisibilityChangeRequests(
+  changeRequests = [],
+  { scope = {}, registry = [], capabilities = {} } = {}
+) {
   const requests = Array.isArray(changeRequests) ? changeRequests : [];
   const persistentVisibilityRequests = requests.filter(
     (entry) => entry?.operation === "visibility" && entry?.persistent === true
   );
   const registryElements = normalizeRegistryElements(registry);
   const allowedScopes = scope?.scopeId ? [scope.scopeId] : null;
+  const canPersistVisibility = capabilities.canPersistVisibility === true;
+  const dryRunOnly = capabilities.dryRunOnly === true;
+  const persistenceDisabled = capabilities.persistence !== true || !canPersistVisibility || dryRunOnly;
   const entries = persistentVisibilityRequests.map((changeRequest) => {
     const override = buildVisibilityOverrideFromChangeRequest(changeRequest);
     const validation = validateEditorLayoutOverride(override, {
@@ -95,8 +126,8 @@ export function validatePersistentVisibilityChangeRequestsDryRun(
       override,
       validation,
       persistable,
-      blocked: true,
-      reason: "PERSISTENCE_DISABLED",
+      blocked: !persistable,
+      reason: persistable ? "" : "PERSISTENCE_DISABLED",
     };
   });
 
@@ -104,9 +135,9 @@ export function validatePersistentVisibilityChangeRequestsDryRun(
 
   return {
     ok: errors.length === 0,
-    dryRunOnly: true,
-    persistenceDisabled: true,
-    canPersistVisibility: false,
+    dryRunOnly,
+    persistenceDisabled,
+    canPersistVisibility,
     count: entries.length,
     entries,
     errors,

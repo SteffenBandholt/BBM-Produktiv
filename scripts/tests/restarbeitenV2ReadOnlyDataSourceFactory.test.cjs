@@ -122,7 +122,11 @@ async function runRestarbeitenV2ReadOnlyDataSourceFactoryTests(run) {
   const allowedRestarbeitenMainFiles = new Set([
     "src/main/db/database.js",
     "src/main/db/restarbeitenRepo.js",
+    "src/main/db/schema.sql",
+    "src/main/db/uiEditorLayoutOverridesRepo.js",
     "src/main/ipc/restarbeitenIpc.js",
+    "src/main/ipc/uiEditorLayoutOverridesIpc.js",
+    "src/main/main.js",
     "src/main/preload.js",
   ]);
   assert.equal(

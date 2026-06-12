@@ -141,6 +141,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
   tableLayoutsListDefinitions: () => ipcRenderer.invoke("tableLayouts:listDefinitions"),
 
   // ============================================================
+  // UI-Editor Layout-Overrides (intern)
+  // ============================================================
+  uiEditorLayoutOverridesGetMany: (data) => ipcRenderer.invoke("uiEditorLayoutOverrides:getMany", data),
+  uiEditorLayoutOverridesSave: (data) => ipcRenderer.invoke("uiEditorLayoutOverrides:save", data),
+
+  // ============================================================
   // App
   // ============================================================
   appQuit: () => ipcRenderer.invoke("app:quit"),

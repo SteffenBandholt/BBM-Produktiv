@@ -16,6 +16,7 @@ const { registerProjectFirmsIpc } = require("./ipc/projectFirmsIpc");
 const { registerParticipantsIpc } = require("./ipc/participantsIpc");
 const { registerPrintIpc } = require("./ipc/printIpc");
 const { registerTableLayoutsIpc } = require("./ipc/tableLayoutsIpc");
+const { registerUiEditorLayoutOverridesIpc } = require("./ipc/uiEditorLayoutOverridesIpc");
 const { registerSettingsIpc } = require("./ipc/settingsIpc");
 const { registerProjectSettingsIpc } = require("./ipc/projectSettingsIpc");
 const { registerEditorIpc } = require("./ipc/editorIpc");
@@ -559,6 +560,7 @@ app.whenReady().then(async () => {
   registerParticipantsIpc();
   registerPrintIpc();
   registerTableLayoutsIpc();
+  registerUiEditorLayoutOverridesIpc();
   registerSettingsIpc();
   registerProjectSettingsIpc();
   registerEditorIpc({ getMainWindow: () => mainWindow });

@@ -59,6 +59,14 @@ Stand nach G30:
 - Ungueltige `visible`-Werte oder unbekannte `elementId` werden als `INVALID_CHANGE_REQUEST` blockiert.
 - `canPersistVisibility` bleibt `false`; es wird weiterhin nichts geschrieben.
 
+Stand nach G31:
+
+- Der Pilot-Scope `restarbeiten.ui.main` hat echte Visibility-Persistenz.
+- Gespeichert wird nur `overrides.visible` fuer validierte Registry-Elemente.
+- Der Speicher liegt BBM-seitig hinter dem HostAdapter in `ui_editor_layout_overrides`.
+- Der Restarbeiten-HostAdapter liefert gespeicherte Overrides ueber `getCurrentLayoutState(...)`.
+- Andere Scopes und andere Operationen bleiben gesperrt.
+
 ## Aktueller Stand
 
 Im BBM-Preview-Panel gibt es:
@@ -73,7 +81,7 @@ Aktuelle Datenquelle ist nur der laufende in-memory Preview-State im Launcher:
 - `state.pendingChangeRequests`
 - daraus abgeleitete Hidden-Elements-ViewModels aus dem UI-Editor-kit
 
-Seit G24 gibt es eine lesende Registry-/Layout-State-Hidden-Ermittlung im Launcher. Es gibt weiterhin keine dauerhafte Speicherung.
+Seit G24 gibt es eine lesende Registry-/Layout-State-Hidden-Ermittlung im Launcher. Seit G31 kann dieser Layout-State fuer den Pilot-Scope aus gespeicherten Visibility-Overrides kommen.
 
 ## Problem
 
@@ -329,9 +337,14 @@ Status:
 
 ### G31: Pilot-Persistenz fuer einen Scope aktivieren
 
-- nur `restarbeiten.ui.main`.
-- nur `visibility`.
-- nur validierte Registry-Elemente.
+Status:
+
+- erledigt.
+- Nur `restarbeiten.ui.main`.
+- Nur `visibility`.
+- Nur validierte Registry-Elemente.
+- Speicherweg: BBM-Repo `uiEditorLayoutOverridesRepo`, IPC `uiEditorLayoutOverrides:*`, Preload-Methoden, Restarbeiten-HostAdapter.
+- Kein Kit-Speicher, keine Registry-Mutation, kein `localStorage`, kein `writeFile`, keine PDF-/Drucklogik.
 
 ### G32: Wiederherstellung beim App-Start fuer Pilot-Scope
 

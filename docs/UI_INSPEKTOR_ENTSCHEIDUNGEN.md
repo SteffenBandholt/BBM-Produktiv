@@ -118,3 +118,5 @@
 **Begruendung:** Registry, DOM, localStorage und TableLayout-Speicher duerfen nicht fuer Hidden-Element-Nutzerzustand zweckentfremdet werden. Der HostAdapter bleibt die Grenze zwischen generischer Runtime und BBM-Speicherung, waehrend das UI-Editor-kit weiterhin nichts selbst speichert.
 
 **Auswirkung:** Erste spaetere Freigabe darf nur fuer einen klaren Pilot-Scope wie `restarbeiten.ui.main` erfolgen. `canPersistVisibility` bleibt bis dahin `false`, `persistent: true` bleibt blockiert, und App-Start-Wiederherstellung ist ein eigenes Folgepaket.
+
+**Status nach G31:** Der Pilot-Scope `restarbeiten.ui.main` ist als einzige Ausnahme freigegeben. `canPersistVisibility` ist nur dort aktiv; weitere Scopes und App-Start-Wiederherstellung bleiben separate Folgepakete.

@@ -4,7 +4,7 @@
 
 Der HostAdapter trennt BBM als Host-App von der generischen UI-Editor-Runtime.
 
-BBM liefert Kontext, Scope, Registry und erlaubte Faehigkeiten. Die UI-Editor-Runtime erzeugt Auswahl, Preview und temporaere `pendingChangeRequests`. In diesem Paket entsteht keine Speicherung.
+BBM liefert Kontext, Scope, Registry und erlaubte Faehigkeiten. Die UI-Editor-Runtime erzeugt Auswahl, Preview und temporaere `pendingChangeRequests`. Seit G31 darf nur der Pilot-HostAdapter fuer `restarbeiten.ui.main` validierte Visibility-Overrides speichern.
 
 ## Verantwortungen des BBM-Hosts
 
@@ -72,7 +72,7 @@ Der Kontext enthaelt keine Fachdaten, keine Datensatz-IDs und keine Datenbankinf
 - `canPersistVisibility`
 - `dryRunOnly`
 
-Aktuell gilt verbindlich:
+Standardmaessig gilt verbindlich:
 
 - `persistence: false`
 - `canPersistVisibility: false`
@@ -80,7 +80,15 @@ Aktuell gilt verbindlich:
 
 Auch wenn ein Host versehentlich Persistenz als Capability uebergibt, normalisiert der Vertrag sie auf deaktiviert.
 
-G28 legt als Zielarchitektur fest: Sichtbarkeits-Persistenz wird spaeter nur fuer explizit freigegebene Scopes hinter dem HostAdapter geoeffnet. Der erste denkbare Pilot-Scope ist `restarbeiten.ui.main`; eine globale Freigabe fuer alle Module ist ausgeschlossen.
+G31 oeffnet davon nur den explizit freigegebenen Restarbeiten-Pilot abweichend:
+
+- Scope: `restarbeiten.ui.main`
+- `persistence: true`
+- `canPersistVisibility: true`
+- `dryRunOnly: false`
+- nur fuer `operation: "visibility"` mit `persistent: true`
+
+Eine globale Freigabe fuer alle Module ist ausgeschlossen.
 
 ## ChangeRequests
 
@@ -110,11 +118,13 @@ Eine spaetere Verarbeitung von `persistent: true` darf erst nach separater Freig
 
 G29 ergaenzt dafuer nur ein technisches Datenmodell unter `src/renderer/editorRuntime/layout/editorLayoutOverrideModel.js`. Dieses Modell kann Visibility-Overrides normalisieren, validieren und aus ChangeRequests ableiten, ist aber nicht an DB, IPC, Datei- oder App-Start-Logik angebunden. Solange `persistence: false`, `canPersistVisibility: false` oder `dryRunOnly: true` gilt, bleibt `isVisibilityOverridePersistable(...)` fuer aktuelle Requests `false`.
 
-G30 nutzt dieses Modell im HostAdapter-Dry-Run: `persistent: true` Visibility-ChangeRequests werden gegen Scope, Registry-`elementId` und Boolean-`payload.visible` validiert. Gueltige Requests bleiben mit `PERSISTENCE_DISABLED` blockiert. Ungueltige Requests werden mit `INVALID_CHANGE_REQUEST` blockiert. Diese Validierung ist keine Speicherfreigabe.
+G30 nutzt dieses Modell im HostAdapter-Dry-Run: `persistent: true` Visibility-ChangeRequests werden gegen Scope, Registry-`elementId` und Boolean-`payload.visible` validiert. Gueltige Requests bleiben mit `PERSISTENCE_DISABLED` blockiert. Ungueltige Requests werden mit `INVALID_CHANGE_REQUEST` blockiert.
+
+G31 nutzt dieselbe Validierung fuer den Pilot-Scope produktiv: Gueltige `persistent: true` Visibility-Requests fuer `restarbeiten.ui.main` werden als `overrides.visible` gespeichert und ueber `getCurrentLayoutState(...)` wieder gelesen. Ungueltige Requests, unbekannte `elementId`, andere Scopes und Nicht-Visibility-Operationen bleiben blockiert.
 
 ## Nicht erlaubt
 
-Der HostAdapter darf in diesem Stand nicht:
+Ausserhalb des G31-Pilotpfads darf der HostAdapter nicht:
 
 - Datenbank schreiben
 - IPC-Schreibwege oeffnen

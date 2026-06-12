@@ -143,13 +143,36 @@ Das Ergebnis bleibt blockiert:
 - `canPersistVisibility` bleibt `false`
 - es wird nichts gespeichert
 
+## Stand nach G31
+
+Die Pilot-Persistenz ist fuer `restarbeiten.ui.main` aktiv.
+
+Aktiviert wurde:
+
+- eigener BBM-seitiger Speicher `ui_editor_layout_overrides`
+- Repository und IPC hinter dem HostAdapter
+- Preload-Methoden fuer den Renderer
+- `canPersistVisibility: true` nur im Restarbeiten-HostAdapter fuer `restarbeiten.ui.main`
+- Speicherung validierter `persistent: true` Visibility-ChangeRequests
+- Lesen gespeicherter Overrides ueber `getCurrentLayoutState(...)`
+
+Weiterhin blockiert bleibt:
+
+- andere Scopes
+- andere Operationen als `visibility`
+- ungueltige `payload.visible`-Werte
+- unbekannte oder unkontrollierte `elementId`
+- Registry-Mutation
+- UI-Editor-kit-Speicherung
+- `localStorage`, Datei-Schreibwege, PDF-/Drucklogik und Fachlogik
+
 ## Pruefung
 
-G27 bis G29 werden durch Modell-, HostAdapter- und Launcher-Tests abgesichert:
+G27 bis G31 werden durch Modell-, HostAdapter-, Storage-/IPC- und Launcher-Tests abgesichert:
 
-- `persistent: true` fuer `operation: "visibility"` bleibt blockiert.
+- `persistent: true` fuer `operation: "visibility"` wird nur im Pilot-Scope gespeichert.
 - `persistent: false` bleibt Preview/Dry-Run/in-memory.
-- `canPersistVisibility` bleibt `false`.
-- Es entstehen keine DB-/IPC-/Datei-/Storage-Schreibwege.
+- `canPersistVisibility` ist nur fuer `restarbeiten.ui.main` aktiv.
+- Es entstehen keine `localStorage`- oder Datei-Schreibwege.
 - Das G29-Modell akzeptiert nur `overrides.visible` als Boolean und blockiert fehlende, unbekannte oder unkontrollierte Element-IDs.
-- Der G30-HostAdapter-Dry-Run validiert `persistent: true` und bleibt ohne Speicherweg.
+- Der G31-HostAdapter speichert nur validierte Visibility-Overrides und liest sie als Layout-State zurueck.

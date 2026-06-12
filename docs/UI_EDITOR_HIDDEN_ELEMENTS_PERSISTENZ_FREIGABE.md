@@ -2,21 +2,19 @@
 
 ## Kurzfazit
 
-G28 legt nur Speicherort-Empfehlung, Zielstruktur, Freigabegrenzen und Umsetzungsreihenfolge fuer persistente Hidden-Element-Overrides fest.
+G28 legte Speicherort-Empfehlung, Zielstruktur, Freigabegrenzen und Umsetzungsreihenfolge fuer persistente Hidden-Element-Overrides fest.
 
-Persistenz bleibt aktuell deaktiviert:
+Stand nach G31: Die Persistenz ist nur fuer den Pilot-Scope `restarbeiten.ui.main` aktiv.
 
-- keine echte Speicherung
-- keine DB-Migration
-- kein IPC-Schreibweg
+Weiterhin deaktiviert bleiben:
+
 - kein `localStorage`
 - kein `writeFile`
-- keine neue Speicherdatei
-- keine Aktivierung von `canPersistVisibility: true`
-- keine produktive HostAdapter-Schreibausfuehrung
-- kein Wiederherstellen beim App-Start
-
-Eine technische Umsetzung folgt erst nach ausdruecklicher Freigabe in einem spaeteren Paket.
+- keine Speicherdatei
+- keine globale Aktivierung von `canPersistVisibility: true`
+- keine Persistenz fuer andere Scopes
+- keine Persistenz fuer Move, Resize, Text, Fachfelder oder sonstige Operationen
+- kein automatisches Wiederherstellen beim App-Start ausserhalb des aktuellen Layout-State-Lesewegs
 
 ## Ausgangspunkt
 
@@ -39,7 +37,7 @@ Hide/Show ist als ChangeRequest modelliert:
 }
 ```
 
-Der HostAdapter nimmt Visibility-ChangeRequests nur als Dry-Run entgegen. `persistent: true` bleibt mit `PERSISTENCE_DISABLED` blockiert. `canPersistVisibility` bleibt `false`.
+Seit G31 speichert der Restarbeiten-HostAdapter fuer `restarbeiten.ui.main` validierte `persistent: true` Visibility-ChangeRequests. Andere Scopes und andere Operationen bleiben blockiert.
 
 ## Speicherort-Optionen
 
@@ -291,10 +289,15 @@ Status:
 
 ### G31: Pilot-Persistenz fuer einen Scope aktivieren
 
-- nur `restarbeiten.ui.main`
-- nur `visibility`
-- nur validierte Registry-Elemente
-- `canPersistVisibility` nur fuer diesen Scope kontrolliert oeffnen
+Status:
+
+- erledigt als enger Pilot fuer `restarbeiten.ui.main`.
+- Eigener BBM-Speicher `ui_editor_layout_overrides` mit Repo, IPC und Preload-Methoden ist vorhanden.
+- Gespeichert wird nur `operation: "visibility"` mit `persistent: true` und Boolean-`payload.visible`.
+- `elementId` muss in der Registry bekannt und kontrollierbar sein.
+- Der HostAdapter liest gespeicherte Datensaetze als neutralen Layout-State zurueck.
+- Andere Scopes, andere Operationen und ungueltige Payloads werden nicht gespeichert.
+- UI-Editor-kit, Registry, PDF-/Drucklogik, Fachlogik, Drag und Target-Selection bleiben unveraendert.
 
 ### G32: Wiederherstellung beim App-Start fuer Pilot-Scope
 
@@ -367,3 +370,34 @@ Weiterhin nicht Teil des Stands:
 - keine UI-Aenderung
 - keine produktive HostAdapter-Schreibausfuehrung
 - kein App-Start-Load
+
+## Stand nach G31
+
+G31 aktiviert die echte Persistenz nur fuer den Pilot-Scope:
+
+- `scopeId === "restarbeiten.ui.main"`
+- `targetAppId === "bbm"`
+- `moduleId === "restarbeiten"`
+- `operation === "visibility"`
+- `persistent === true`
+- `payload.visible` ist boolean
+- `elementId` ist in der Registry bekannt und nicht unkontrolliert instanzbezogen
+- `getCapabilities()` meldet fuer diesen Adapter `canPersistVisibility: true`
+
+Speicherweg:
+
+- Main: `src/main/db/uiEditorLayoutOverridesRepo.js`
+- Tabelle: `ui_editor_layout_overrides`
+- IPC: `uiEditorLayoutOverrides:getMany`, `uiEditorLayoutOverrides:save`
+- Preload: `uiEditorLayoutOverridesGetMany`, `uiEditorLayoutOverridesSave`
+- Renderer: Restarbeiten-HostAdapter hinter der HostAdapter-Grenze
+
+Weiterhin nicht Teil des Stands:
+
+- keine globale Scope-Freigabe
+- keine Persistenz fuer Move/Resize/Text/Fachfelder
+- kein `localStorage`
+- kein `writeFile`
+- keine Registry-Mutation
+- keine PDF-/Drucklogik
+- keine App-Start-Wiederherstellung als eigenes Initial-Load-Paket; G32 bleibt dafuer getrennt
