@@ -35,6 +35,15 @@ Stand nach G27:
 - `submitChangeRequests(...)` meldet fuer Visibility-Requests `visibilityPersistenceDisabled: true`.
 - Es gibt weiterhin keine DB-, IPC-, Datei-, localStorage- oder Layout-State-Schreiblogik.
 
+Stand nach G28:
+
+- Die Speicherort- und Freigabeentscheidung ist in `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_FREIGABE.md` dokumentiert.
+- Empfohlen ist ein eigener BBM-seitiger UI-Editor-Layout-Override-Speicher hinter dem HostAdapter.
+- TableLayout bleibt nur technisches Vorbild und wird nicht fuer Hidden-Element-Visibility zweckentfremdet.
+- Zielstruktur ist ein Datensatz pro Element-Override mit `targetAppId`, `moduleId`, `scopeId`, `elementId`, `overrides.visible`, `source`, `createdAt` und `updatedAt`.
+- Erster spaeterer Pilot-Scope ist `restarbeiten.ui.main`; keine globale Freigabe.
+- Persistenz bleibt deaktiviert.
+
 ## Aktueller Stand
 
 Im BBM-Preview-Panel gibt es:
@@ -276,9 +285,49 @@ Status:
 
 ### G28: Wiederherstellen beim App-Start
 
-- Persistierte Layout-Overrides laden.
+Historische Bezeichnung ueberholt. G28 ist jetzt die Speicherort- und Persistenzfreigabeentscheidung.
+
+Status:
+
+- erledigt als Dokumentation, nicht als Umsetzung.
+- Speicherort-Empfehlung, Ziel-Datenstruktur, Freigabegrenzen, Sicherheitsregeln und Folgepakete sind in `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_FREIGABE.md` festgelegt.
+- Keine Persistenz, keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik, keine UI-Aenderung und kein Wiederherstellen beim App-Start.
+
+### G29: Persistenzspeicher technisch vorbereiten, aber deaktiviert
+
+- eigenes Schema-/Repo-Konzept fuer UI-Editor-Overrides vorbereiten.
+- noch keine produktive Schreibausfuehrung.
+- keine IPC-Freigabe.
+
+### G30: HostAdapter-Persistenz-Dry-Run mit validiertem Payload
+
+- `persistent: true` validieren.
+- Scope und `elementId` pruefen.
+- Payload pruefen.
+- weiterhin nicht speichern.
+
+### G31: Pilot-Persistenz fuer einen Scope aktivieren
+
+- nur `restarbeiten.ui.main`.
+- nur `visibility`.
+- nur validierte Registry-Elemente.
+
+### G32: Wiederherstellung beim App-Start fuer Pilot-Scope
+
+- persistierte Layout-Overrides laden.
 - Effective-State bilden.
 - UI und Hidden-Elements-Liste konsistent initialisieren.
+
+### G33: UI-Pruefung und Ruecksetzfunktion
+
+- Electron-Sichtpruefung.
+- Reset einzelner Hidden-Overrides.
+- Reset fuer Pilot-Scope.
+
+### G34: Freigabe weiterer Scopes erst nach Test
+
+- keine automatische Ausweitung.
+- jeder weitere Scope braucht eigene Freigabe, Tests und Sichtpruefung.
 
 ## Nicht Teil von G23
 

@@ -69,6 +69,29 @@ Nicht enthalten:
 - Der HostAdapter bleibt die Grenze fuer eine spaetere Uebernahme.
 - Registry und Layout-State bleiben lesende Quellen fuer die Hidden-Elements-Ermittlung, solange Persistenz nicht freigegeben ist.
 
+## Stand nach G28
+
+Die Speicherort- und Freigabeentscheidung ist in `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_FREIGABE.md` festgelegt.
+
+Empfehlung:
+
+- eigener BBM-seitiger UI-Editor-Layout-Override-Speicher hinter dem HostAdapter
+- ein Datensatz pro Element-Override
+- erster spaeterer Pilot-Scope: `restarbeiten.ui.main`
+- keine globale Freigabe fuer alle Module
+- keine PDF-/Druckauswirkung im ersten Persistenzschritt
+
+Weiterhin gilt:
+
+- `canPersistVisibility` bleibt `false`
+- `persistent: true` bleibt blockiert
+- keine echte Speicherung
+- keine DB-Migration
+- kein IPC-Schreibweg
+- kein `localStorage`
+- kein `writeFile`
+- kein Wiederherstellen beim App-Start
+
 ## Pruefung
 
 G27 wird durch HostAdapter- und Launcher-Tests abgesichert:

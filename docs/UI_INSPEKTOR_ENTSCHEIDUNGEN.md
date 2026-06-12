@@ -111,3 +111,10 @@
 **Begruendung:** Ein stabiler Export-Einstieg macht die spaetere Rueckfuehrung ins UI-Editor-kit pruefbar, ohne Code bereits ins externe Kit zu uebertragen oder BBM-spezifische Orchestrierung mitzunehmen.
 
 **Status:** Historisch. Die lokale BBM-Preview-Runtime wurde nach der Kit-Uebernahme entfernt; produktive Quelle ist jetzt das UI-Editor-kit ueber `src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js`.
+
+## Entscheidung 023
+**Beschluss:** Persistente Hidden-Element-Visibility-Overrides gehoeren spaeter in einen eigenen BBM-seitigen UI-Editor-Layout-Override-Speicher hinter dem HostAdapter.
+
+**Begruendung:** Registry, DOM, localStorage und TableLayout-Speicher duerfen nicht fuer Hidden-Element-Nutzerzustand zweckentfremdet werden. Der HostAdapter bleibt die Grenze zwischen generischer Runtime und BBM-Speicherung, waehrend das UI-Editor-kit weiterhin nichts selbst speichert.
+
+**Auswirkung:** Erste spaetere Freigabe darf nur fuer einen klaren Pilot-Scope wie `restarbeiten.ui.main` erfolgen. `canPersistVisibility` bleibt bis dahin `false`, `persistent: true` bleibt blockiert, und App-Start-Wiederherstellung ist ein eigenes Folgepaket.

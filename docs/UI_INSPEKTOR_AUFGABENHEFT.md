@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.51 abgeschlossen: Speicherort, Zielstruktur, Freigabegrenzen und Folgepakete fuer Hidden-Elements-Persistenz sind dokumentiert; Persistenz bleibt deaktiviert.
 - K19.50 abgeschlossen: Hidden-Elements-Persistenz ist vorbereitet und dokumentiert; `canPersistVisibility` bleibt `false`, `persistent: true` bleibt mit `PERSISTENCE_DISABLED` blockiert und es gibt weiterhin keine produktive Speicherung.
 - K19.49 abgeschlossen: HostAdapter-Dry-Run fuer Hidden-Element-Visibility-ChangeRequests ist abgesichert; keine Persistenz und keine sichtbare UI-Aenderung.
 - K19.48 abgeschlossen: Hide/Show ist als einheitlicher Visibility-ChangeRequest abgesichert; keine Persistenz und keine HostAdapter-Schreibausfuehrung.
@@ -102,6 +103,17 @@ Aktueller Stand:
 - [x] K19.48 Hide/Show als ChangeRequest sauber modellieren
 - [x] K19.49 HostAdapter-Dry-Run fuer Hidden-Element-Visibility-ChangeRequests absichern
 - [x] K19.50 Hidden-Elements-Persistenz vorbereiten, aber deaktiviert lassen
+- [x] K19.51 Hidden-Elements Speicherort und Persistenzfreigabe festlegen
+
+## Statusupdate K19.51
+- `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_FREIGABE.md` legt die G28-Entscheidung fest.
+- Empfohlener Speicherort ist ein eigener BBM-seitiger UI-Editor-Layout-Override-Speicher hinter dem HostAdapter.
+- Ziel-Datenstruktur ist ein Datensatz pro Element-Override mit `targetAppId`, `moduleId`, `scopeId`, `elementId`, `overrides.visible`, `source`, `createdAt` und `updatedAt`.
+- Erste spaetere Freigabegrenze ist nur der Pilot-Scope `restarbeiten.ui.main`; keine globale Freigabe fuer alle Module.
+- Registry, localStorage und versteckte DOM-Zustaende sind als Speicherort ausgeschlossen; TableLayouts bleiben nur technisches Vorbild.
+- Folgepakete sind abgegrenzt: G29 Speicher technisch vorbereiten, G30 validierter HostAdapter-Dry-Run, G31 Pilot-Persistenz, G32 App-Start-Wiederherstellung, G33 UI-Pruefung/Reset, G34 weitere Scopes.
+- Keine echte Speicherung, keine DB-Migration, kein IPC, kein localStorage, kein writeFile, keine neue Speicherdatei, keine UI-/Launcher-/Drag-/Target-Selection-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
+- `canPersistVisibility` bleibt `false`; `persistent: true` bleibt blockiert.
 
 ## Statusupdate K19.50
 - Das spaetere Hidden-Elements-Persistenzmodell ist dokumentiert: neutraler Override mit `scopeId`, `elementId` und `overrides.visible` oder spaeterer `visibility`-ChangeRequest.
@@ -111,7 +123,7 @@ Aktueller Stand:
 - `submitChangeRequests(...)` meldet fuer Visibility-Requests zusaetzlich `visibilityPersistenceDisabled: true`.
 - Das UI-Editor-kit speichert weiterhin nichts selbst; BBM entscheidet spaeter separat ueber den konkreten Speicherort.
 - Keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik, keine automatische Wiederherstellung beim App-Start, keine UI-/Launcher-/Drag-/Target-Selection-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
-- Folgepaket bleibt abgegrenzt: G28 Wiederherstellung beim App-Start erst nach freigegebener Persistenz.
+- Folgepakete bleiben abgegrenzt: G28 Speicherort-/Freigabeentscheidung ist erledigt; G29 bis G34 fuehren erst spaeter schrittweise zur technischen Vorbereitung, Pilot-Persistenz, App-Start-Wiederherstellung und weiteren Scope-Freigaben.
 
 ## Statusupdate K19.49
 - Visibility-ChangeRequests fuer Hidden-Element-Hide/Show werden ueber `onPendingChangeRequestsChanged(...)` an den HostAdapter gemeldet.
@@ -120,7 +132,7 @@ Aktueller Stand:
 - `submitChangeRequests(...)` bleibt bewusst blockiert und liefert `PERSISTENCE_DISABLED`, `persistenceDisabled: true` und `dryRunOnly: true`.
 - Der Dry-Run speichert nichts und schreibt keinen Layout-State.
 - Keine Persistenz, keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik, keine Drag-/Target-Selection-Aenderung, keine sichtbare UI-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
-- Folgepakete bleiben abgegrenzt: G27 Persistenz nach Freigabe, G28 Wiederherstellung beim App-Start.
+- Folgepakete bleiben abgegrenzt: G27 Persistenz-Vorbereitung, G28 Speicherort-/Freigabeentscheidung und danach G29 bis G34.
 
 ## Statusupdate K19.48
 - Hide und Show sind als einheitlicher Visibility-ChangeRequest abgesichert.
@@ -131,7 +143,7 @@ Aktueller Stand:
 - Pending-/Preview-State ueberschreibt Layout-State weiterhin nur temporaer.
 - Layout-State-only Hidden-Elemente bleiben ohne Preview-State im Popover sichtbar, aber `Einblenden` bleibt dafuer deaktiviert, bis ein sicherer HostAdapter-Dry-Run oder Schreibpfad existiert.
 - Keine Persistenz, keine DB, kein IPC, kein localStorage, keine Datei-Schreiblogik, keine HostAdapter-Schreibausfuehrung, keine Drag-/Target-Selection-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
-- Folgepakete bleiben abgegrenzt: G26 HostAdapter-Dry-Run, G27 Persistenz nach Freigabe, G28 Wiederherstellung beim App-Start.
+- Folgepakete bleiben abgegrenzt: G26 HostAdapter-Dry-Run, G27 Persistenz-Vorbereitung, G28 Speicherort-/Freigabeentscheidung und danach G29 bis G34.
 
 ## Statusupdate K19.47
 - `BbmUiEditorRuntimeLauncher.js` baut die Hidden-Elements-Eingabe jetzt aus Registry, lesendem `getCurrentLayoutState(...)`, Pending-Visibility-ChangeRequests und in-memory Preview-State.
@@ -141,7 +153,7 @@ Aktueller Stand:
 - Layout-State-only Hidden-Elemente koennen im Popover erscheinen; `Einblenden` bleibt fuer diese Eintraege deaktiviert, solange kein sicherer Schreibpfad existiert.
 - Temporaere Preview-Hides koennen weiter ueber `Einblenden` in-memory aufgehoben werden.
 - Keine Persistenz, keine DB, kein IPC, kein localStorage, keine neue UI, kein Popover-Umbau, keine Drag-/Target-Selection-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
-- Folgepakete bleiben abgegrenzt: G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz nach Freigabe, G28 Wiederherstellung beim App-Start.
+- Folgepakete bleiben abgegrenzt: G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz-Vorbereitung, G28 Speicherort-/Freigabeentscheidung und danach G29 bis G34.
 
 ## Statusupdate K19.46
 - `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_TRENNSCHNITT.md` dokumentiert den Trennschnitt fuer echte Hidden-Elements-Daten und spaetere Persistenz.
@@ -149,7 +161,7 @@ Aktueller Stand:
 - Echte Hidden-Elements sollen spaeter aus Registry plus `getCurrentLayoutState()` abgeleitet werden.
 - Pending ChangeRequests bleiben vorbereitete, nicht persistierte Hide-/Show-Aenderungen.
 - Dauerhafte Persistenz gehoert spaeter als BBM-seitiger Layout-Override hinter den HostAdapter; das UI-Editor-kit speichert nichts.
-- Folgepakete sind abgegrenzt: G24 Layout-State-Lesen, G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz nach Freigabe, G28 Wiederherstellung beim App-Start.
+- Folgepakete sind abgegrenzt: G24 Layout-State-Lesen, G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz-Vorbereitung, G28 Speicherort-/Freigabeentscheidung und danach G29 bis G34.
 - Keine Persistenz, keine DB, kein IPC, kein localStorage, keine neue UI, kein Popover-Umbau, keine Drag-/Target-Selection-Aenderung, keine Fachlogik und keine PDF-/Drucklogik.
 
 ## Statusupdate K19.45

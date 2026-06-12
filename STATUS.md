@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements Speicherort und Persistenzfreigabe festgelegt:
+  - `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_FREIGABE.md` dokumentiert die G28-Entscheidung.
+  - Empfehlung: eigener BBM-seitiger UI-Editor-Layout-Override-Speicher hinter dem HostAdapter.
+  - Zielstruktur: ein Datensatz pro `targetAppId`/`moduleId`/`scopeId`/`elementId` mit `overrides.visible`, `source`, `createdAt` und `updatedAt`.
+  - TableLayouts bleiben nur technisches Vorbild; Registry, localStorage und DOM-Zustaende sind als Speicherort ausgeschlossen.
+  - Erste Freigabegrenze bleibt ein spaeterer Pilot-Scope `restarbeiten.ui.main`; keine globale Modulfreigabe.
+  - Persistenz bleibt deaktiviert: `canPersistVisibility: false`, `persistent: true` weiter blockiert, keine DB, kein IPC, kein writeFile, keine UI-Aenderung und kein App-Start-Wiederherstellen.
+
 - UI-Editor Hidden-Elements Persistenz vorbereitet, aber deaktiviert:
   - Das spaetere Persistenzmodell ist in `docs/UI_EDITOR_HIDDEN_ELEMENTS_PERSISTENZ_VORBEREITUNG.md` dokumentiert.
   - Neutraler spaeterer Override: `scopeId`, `elementId`, `overrides.visible`.
@@ -79,7 +87,7 @@ Sie ergÃ¤nzt:
   - Grundregel: Hide entfernt kein Element aus Registry oder Layout-State, sondern bedeutet nur `visible = false`.
   - Das Panel soll schlank bleiben; statt dauerhafter Liste ist spaeter ein kompakter Button wie `Ausgeblendete: 3` vorgesehen.
   - Das Popover/Dropdown mit `Einblenden` fuer temporaere Preview-Hides ist durch G22 vorbereitet.
-  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover, G23 Persistenz-Trennschnitt, G24 Layout-State-Lesen und G25 ChangeRequest-Modell sind erledigt; G26 bis G28 bleiben separat.
+  - Folgeschritte sind abgegrenzt: G19 Hidden-Elements-ViewModel im Kit, G20 BBM Importvertrag/Bridge, G21 kompakter Button, G22 Popover, G23 Persistenz-Trennschnitt, G24 Layout-State-Lesen, G25 ChangeRequest-Modell, G26 HostAdapter-Dry-Run, G27 Persistenz-Vorbereitung und G28 Speicherort-/Freigabeentscheidung sind erledigt; G29 bis G34 bleiben separat.
   - Weiterhin keine Speicherung, keine DB, kein IPC, kein localStorage, keine Fachlogik und keine PDF-/Drucklogik.
 
 - UI-Editor-kit Panel-ViewModel im BBM-Launcher vorbereitend genutzt:

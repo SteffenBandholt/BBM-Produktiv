@@ -80,6 +80,8 @@ Aktuell gilt verbindlich:
 
 Auch wenn ein Host versehentlich Persistenz als Capability uebergibt, normalisiert der Vertrag sie auf deaktiviert.
 
+G28 legt als Zielarchitektur fest: Sichtbarkeits-Persistenz wird spaeter nur fuer explizit freigegebene Scopes hinter dem HostAdapter geoeffnet. Der erste denkbare Pilot-Scope ist `restarbeiten.ui.main`; eine globale Freigabe fuer alle Module ist ausgeschlossen.
+
 ## ChangeRequests
 
 Die UI-Editor-Runtime erzeugt temporaere ChangeRequests im Speicher. Sie duerfen ueber `onPendingChangeRequestsChanged(changeRequests)` an den Host zur Anzeige oder Diagnose gemeldet werden.
@@ -103,6 +105,8 @@ Fuer Hidden-Elemente gilt derselbe Dry-Run-Vertrag:
 - `submitChangeRequests(changeRequests)` darf sie nicht speichern, sondern muss weiterhin blockiert bleiben.
 - Wenn ein Visibility-Request uebergeben wird, meldet die Blockadeantwort `visibilityPersistenceDisabled: true`.
 - Auch `persistent: true` darf in diesem Stand nicht produktiv ausgefuehrt werden.
+
+Eine spaetere Verarbeitung von `persistent: true` darf erst nach separater Freigabe erfolgen. Der HostAdapter muss dann Scope, `elementId`, Operation und Payload gegen Registry und Freigabeliste validieren. Bis dahin bleibt der Dry-Run verbindlich.
 
 ## Nicht erlaubt
 
@@ -140,3 +144,5 @@ Der HostAdapter macht sichtbar, welche Eingaben die generische Runtime spaeter v
 - bewusst deaktivierte Persistenz
 
 Damit kann die generische Runtime spaeter aus BBM geloest und ins UI-Editor-kit ueberfuehrt werden, ohne BBM-CoreShell, BBM-Registry, Restarbeiten-IDs oder Fachlogik mitzunehmen.
+
+Der empfohlene spaetere Speicherort ist kein Teil des UI-Editor-kit, sondern ein eigener BBM-seitiger UI-Editor-Layout-Override-Speicher. Der HostAdapter bildet daraus beim Lesen den neutralen Layout-State fuer die Runtime.
