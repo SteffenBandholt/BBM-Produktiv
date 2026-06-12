@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.57 abgeschlossen: Freigabe weiterer Hidden-Elements-Scopes ist als Allowlist/Policy vorbereitet; aktiv bleibt nur `restarbeiten.ui.main`.
 - K19.56 abgeschlossen: Gespeicherte Hidden-Element-Visibility-Overrides koennen im bestehenden kompakten Popover fuer den Pilot-Scope `restarbeiten.ui.main` einzeln oder per `Alle einblenden` auf sichtbar zurueckgesetzt werden; weitere Scopes bleiben gesperrt.
 - K19.55 abgeschlossen: Restore gespeicherter Hidden-Element-Visibility-Overrides ist fuer den Pilot-Scope `restarbeiten.ui.main` testseitig abgesichert; `getCurrentLayoutState(...)` liefert nach neuem Lesezyklus `visible: false/true` an die Hidden-Elements-Logik.
 - K19.54 abgeschlossen: Pilot-Persistenz fuer Hidden-Element-Visibility-Overrides ist nur fuer `restarbeiten.ui.main` aktiv; gespeichert wird ausschliesslich `overrides.visible` ueber BBM-seitiges Repo/IPC hinter dem HostAdapter.
@@ -114,6 +115,16 @@ Aktueller Stand:
 - [x] K19.54 Pilot-Persistenz fuer Hidden-Element-Visibility-Overrides in restarbeiten.ui.main aktivieren
 - [x] K19.55 Restore gespeicherter Hidden-Element-Visibility-Overrides fuer restarbeiten.ui.main absichern
 - [x] K19.56 Hidden-Elements Pilot-Ruecksetzpfad im kompakten Popover absichern
+- [x] K19.57 Hidden-Elements Scope-Freigabe-Policy vorbereiten
+
+## Statusupdate K19.57
+- Die Freigabe weiterer Hidden-Elements-Visibility-Persistenz-Scopes ist als explizite Allowlist/Policy vorbereitet.
+- Aktiv bleibt ausschliesslich `restarbeiten.ui.main`.
+- Bekannte andere Scopes, unbekannte Scopes und Wildcards bleiben blockiert.
+- `canPersistVisibility: true` reicht ohne Policy-Freigabe nicht aus.
+- UI-Editor-kit, Registry, PDF-/Drucklogik, Fachlogik, Drag, Target-Selection, `localStorage` und Dateiablage bleiben unveraendert.
+- Abgesichert durch Policy-/Catalog-, HostAdapter-, Repo- und Launcher-Tests.
+- Folgepaket bleibt getrennt: jede echte weitere Scope-Freigabe braucht eigenes Paket mit Restore- und Ruecksetztests.
 
 ## Statusupdate K19.56
 - Der bestehende kompakte Hidden-Elements-Popover erlaubt fuer gespeicherte Pilot-Overrides in `restarbeiten.ui.main` jetzt `Einblenden`.

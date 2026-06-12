@@ -1,8 +1,12 @@
 import { createRestarbeitenMainUiHostAdapter } from "../../modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js";
+import { isVisibilityPersistenceAllowedForScope } from "./visibilityPersistenceScopePolicy.js";
 
 export function createBbmEditorHostAdapter(scopeId) {
   const normalizedScopeId = String(scopeId || "").trim();
-  if (normalizedScopeId === "restarbeiten.ui.main") {
+  if (isVisibilityPersistenceAllowedForScope(normalizedScopeId, {
+    targetAppId: "bbm",
+    moduleId: "restarbeiten",
+  })) {
     return createRestarbeitenMainUiHostAdapter();
   }
 

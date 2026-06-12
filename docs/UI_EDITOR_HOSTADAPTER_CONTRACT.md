@@ -126,6 +126,8 @@ G32 sichert den Restore-Leseweg ab: Der Restarbeiten-HostAdapter laedt gespeiche
 
 G33 nutzt den freigegebenen Pilotpfad auch fuer das Ruecksetzen gespeicherter Hidden-Overrides: Der Launcher darf fuer `restarbeiten.ui.main` und bekannte Registry-Elemente einen `persistent: true` Visibility-ChangeRequest mit `payload.visible === true` an `submitChangeRequests(...)` uebergeben, wenn der HostAdapter `persistence: true`, `canPersistVisibility: true` und `dryRunOnly: false` meldet. Andere Scopes und In-Memory-/Dry-Run-Adapter bleiben blockiert.
 
+G34 ergaenzt eine explizite Scope-Policy: `src/renderer/editorRuntime/host/visibilityPersistenceScopePolicy.js`. `VISIBILITY_PERSISTENCE_ALLOWED_SCOPES` enthaelt aktuell nur `restarbeiten.ui.main`. Der Contract akzeptiert persistente Visibility-Requests nur, wenn der HostAdapter-Scope selbst in dieser Policy erlaubt ist; `canPersistVisibility: true` allein reicht nicht fuer eine globale Freigabe.
+
 ## Nicht erlaubt
 
 Ausserhalb des G31-Pilotpfads darf der HostAdapter nicht:

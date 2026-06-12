@@ -17,9 +17,13 @@ const HOST_CONTRACT_PATH = path.join(
   __dirname,
   "../../src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js"
 );
+const VISIBILITY_POLICY_PATH = path.join(
+  __dirname,
+  "../../src/renderer/editorRuntime/host/visibilityPersistenceScopePolicy.js"
+);
 
 async function runEditorRuntimeCatalogTests(run) {
-  const [{ BBM_EDITOR_CATALOG, listEditorModules, findEditorScope }, scopeModule, scopeTypes, registryModel, validator, hostContract] =
+  const [{ BBM_EDITOR_CATALOG, listEditorModules, findEditorScope }, scopeModule, scopeTypes, registryModel, validator, hostContract, visibilityPolicy] =
     await Promise.all([
       importEsmFromFile(CATALOG_PATH),
       importEsmFromFile(RESTARBEITEN_SCOPE_PATH),
@@ -27,6 +31,7 @@ async function runEditorRuntimeCatalogTests(run) {
       importEsmFromFile(REGISTRY_MODEL_PATH),
       importEsmFromFile(REGISTRY_VALIDATOR_PATH),
       importEsmFromFile(HOST_CONTRACT_PATH),
+      importEsmFromFile(VISIBILITY_POLICY_PATH),
     ]);
 
   await run("EditorRuntime: Catalog existiert", () => {
@@ -170,6 +175,63 @@ async function runEditorRuntimeCatalogTests(run) {
     assert.ok(result.errors.some((error) => error.methodName === "submitChangeRequests"));
   });
 
+  await run("EditorRuntime: Visibility-Persistenz-Policy erlaubt nur den Pilot-Scope", () => {
+    assert.deepEqual(visibilityPolicy.VISIBILITY_PERSISTENCE_ALLOWED_SCOPES, ["restarbeiten.ui.main"]);
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("restarbeiten.ui.main"), true);
+    assert.equal(
+      visibilityPolicy.isVisibilityPersistenceAllowedForScope("restarbeiten.ui.main", {
+        targetAppId: "bbm",
+        moduleId: "restarbeiten",
+      }),
+      true
+    );
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("protokoll.topsScreen"), false);
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("restarbeiten.screen"), false);
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("bbm.demo.editorMove"), false);
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("unknown.scope"), false);
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("*"), false);
+    assert.deepEqual(
+      visibilityPolicy.getVisibilityPersistenceAllowedScopesForContext({
+        targetAppId: "bbm",
+        moduleId: "protokoll",
+      }),
+      []
+    );
+  });
+
+  await run("EditorRuntime: Contract blockiert persistente Visibility ausserhalb der Scope-Policy", () => {
+    const result = hostContract.validatePersistentVisibilityChangeRequests([{
+      changeId: "chg-policy-1",
+      targetAppId: "bbm",
+      moduleId: "protokoll",
+      scopeId: "protokoll.topsScreen",
+      elementId: "protokoll.root",
+      operation: "visibility",
+      payload: { visible: false },
+      source: "preview",
+      persistent: true,
+    }], {
+      scope: {
+        targetAppId: "bbm",
+        moduleId: "protokoll",
+        scopeId: "protokoll.topsScreen",
+      },
+      registry: [
+        { id: "protokoll.root", name: "Protokoll", allowedOps: ["inspect", "hide", "show"] },
+      ],
+      capabilities: {
+        persistence: true,
+        canPersistVisibility: true,
+        dryRunOnly: false,
+      },
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.persistenceDisabled, true);
+    assert.equal(result.canPersistVisibility, true);
+    assert.equal(result.entries[0].persistable, false);
+    assert.ok(result.errors.some((error) => error.code === "SCOPE_NOT_ALLOWED"));
+  });
+
   await run("EditorRuntime: InMemory HostAdapter liefert Kontext, Registry und blockiert Persistenz", () => {
     const adapter = hostContract.createInMemoryBbmEditorHostAdapter({
       hostContext: {
@@ -212,15 +274,35 @@ async function runEditorRuntimeCatalogTests(run) {
     }]);
     assert.equal(submitResult.ok, false);
     assert.equal(submitResult.blocked, true);
-    assert.equal(submitResult.reason, "PERSISTENCE_DISABLED");
+    assert.equal(submitResult.reason, "INVALID_CHANGE_REQUEST");
     assert.equal(submitResult.persistenceDisabled, true);
     assert.equal(submitResult.visibilityPersistenceDisabled, true);
     assert.equal(submitResult.canPersistVisibility, false);
     assert.equal(submitResult.dryRunOnly, true);
+    assert.ok(submitResult.validation.errors.some((error) => error.code === "SCOPE_NOT_ALLOWED"));
     assert.equal(submitResult.changeRequests[0].persistent, true);
   });
 
   if (!process.exitCode) console.log("editorRuntime.catalog.test.cjs passed");
+}
+
+if (require.main === module) {
+  const run = async (name, fn) => {
+    try {
+      const out = fn();
+      if (out && typeof out.then === "function") await out;
+      console.log(`ok - ${name}`);
+    } catch (err) {
+      console.error(`not ok - ${name}`);
+      console.error(err?.stack || err?.message || err);
+      process.exitCode = 1;
+    }
+  };
+
+  runEditorRuntimeCatalogTests(run).catch((err) => {
+    console.error(err?.stack || err?.message || err);
+    process.exitCode = 1;
+  });
 }
 
 module.exports = { runEditorRuntimeCatalogTests };

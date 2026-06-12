@@ -81,6 +81,13 @@ Stand nach G33:
 - Bei mehr als einem freigegebenen Eintrag erscheint kompakt `Alle einblenden`.
 - Nicht freigegebene Layout-State-only Elemente bleiben nicht einblendbar; weitere Scopes bleiben gesperrt.
 
+Stand nach G34:
+
+- Weitere Scopes werden nur ueber eine explizite Allowlist/Policy vorbereitet.
+- Aktiv erlaubt bleibt ausschliesslich `restarbeiten.ui.main`.
+- Bekannte andere Scopes, unbekannte Scopes und Wildcards bleiben blockiert.
+- Das Freigabeprinzip ist in `docs/UI_EDITOR_HIDDEN_ELEMENTS_SCOPE_FREIGABE.md` beschrieben.
+
 ## Aktueller Stand
 
 Im BBM-Preview-Panel gibt es:
@@ -381,10 +388,14 @@ Status:
 - Die Aktion bleibt an HostContext, Registry-Element, Capability `canPersistVisibility: true`, `dryRunOnly: false` und `submitChangeRequests(...)` gebunden.
 - Keine globale Scope-Freigabe, keine Registry-Mutation, kein UI-Editor-kit-Speicher, kein `localStorage`, kein Datei-Schreibweg und keine PDF-/Drucklogik.
 
-### G34: Freigabe weiterer Scopes erst nach Test
+### G34: Freigabe weiterer Scopes vorbereiten, aber nicht aktivieren
 
-- keine automatische Ausweitung.
-- jeder weitere Scope braucht eigene Freigabe, Tests und Sichtpruefung.
+Status:
+
+- erledigt als Scope-Freigabe-Policy ohne weitere produktive Scope-Aktivierung.
+- `VISIBILITY_PERSISTENCE_ALLOWED_SCOPES` enthaelt aktuell nur `restarbeiten.ui.main`.
+- Contract, HostAdapter, Launcher-Guard und Repo-Backstop pruefen gegen diese Policy bzw. dieselbe Allowlist-Grenze.
+- Weitere Scopes brauchen jeweils ein eigenes Freigabepaket mit Tests, Restore-Nachweis und Ruecksetzanforderung.
 
 ## Nicht Teil von G23
 

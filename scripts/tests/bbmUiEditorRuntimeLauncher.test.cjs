@@ -1706,11 +1706,12 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     ]);
     assert.equal(persistentDryRunResult.ok, false);
     assert.equal(persistentDryRunResult.blocked, true);
-    assert.equal(persistentDryRunResult.reason, "PERSISTENCE_DISABLED");
+    assert.equal(persistentDryRunResult.reason, "INVALID_CHANGE_REQUEST");
     assert.equal(persistentDryRunResult.persistenceDisabled, true);
     assert.equal(persistentDryRunResult.visibilityPersistenceDisabled, true);
     assert.equal(persistentDryRunResult.canPersistVisibility, false);
     assert.equal(persistentDryRunResult.dryRunOnly, true);
+    assert.ok(persistentDryRunResult.validation.errors.some((error) => error.code === "SCOPE_NOT_ALLOWED"));
     assert.equal(persistentDryRunResult.changeRequests[0].persistent, true);
     assert.deepEqual(persistentDryRunResult.changeRequests[0].payload, { visible: false });
 

@@ -6,6 +6,8 @@ const PILOT_SCOPE = Object.freeze({
   scopeId: "restarbeiten.ui.main",
 });
 
+const VISIBILITY_PERSISTENCE_ALLOWED_SCOPES = Object.freeze([PILOT_SCOPE]);
+
 const SOURCE = "ui-editor";
 
 function _db() {
@@ -53,11 +55,11 @@ function _normalizeIdentity(input = {}) {
 }
 
 function _assertPilotScope(identity) {
-  if (
-    identity.targetAppId !== PILOT_SCOPE.targetAppId
-    || identity.moduleId !== PILOT_SCOPE.moduleId
-    || identity.scopeId !== PILOT_SCOPE.scopeId
-  ) {
+  if (!VISIBILITY_PERSISTENCE_ALLOWED_SCOPES.some((entry) => (
+    identity.targetAppId === entry.targetAppId
+    && identity.moduleId === entry.moduleId
+    && identity.scopeId === entry.scopeId
+  ))) {
     throw new Error("UI_EDITOR_LAYOUT_OVERRIDE_SCOPE_NOT_ALLOWED");
   }
 }
@@ -204,6 +206,7 @@ function saveUiEditorLayoutOverride(input = {}) {
 
 module.exports = {
   PILOT_SCOPE,
+  VISIBILITY_PERSISTENCE_ALLOWED_SCOPES,
   listUiEditorLayoutOverrides,
   getUiEditorLayoutOverride: getUiEditorLayoutOverride,
   saveUiEditorLayoutOverride,

@@ -14,17 +14,22 @@ const HOST_ADAPTER_PATH = path.join(
   __dirname,
   "../../src/renderer/modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js"
 );
+const VISIBILITY_POLICY_PATH = path.join(
+  __dirname,
+  "../../src/renderer/editorRuntime/host/visibilityPersistenceScopePolicy.js"
+);
 const REGISTRY_PATH = path.join(
   __dirname,
   "../../src/renderer/modules/restarbeiten/editor/registries/restarbeitenMainUiRegistry.js"
 );
 
 async function runRestarbeitenEditorHostAdapterTests(run) {
-  const [{ createBbmEditorHostAdapter }, { validateHostAdapterShape }, registryModule, adapterModule] = await Promise.all([
+  const [{ createBbmEditorHostAdapter }, { validateHostAdapterShape }, registryModule, adapterModule, visibilityPolicy] = await Promise.all([
     importEsmFromFile(HOST_FACTORY_PATH),
     importEsmFromFile(HOST_CONTRACT_PATH),
     importEsmFromFile(REGISTRY_PATH),
     importEsmFromFile(HOST_ADAPTER_PATH),
+    importEsmFromFile(VISIBILITY_POLICY_PATH),
   ]);
 
   const registry = registryModule.getRestarbeitenMainUiRegistry();
@@ -84,6 +89,23 @@ async function runRestarbeitenEditorHostAdapterTests(run) {
     assert.equal(capabilities.persistence, true);
     assert.equal(capabilities.canPersistVisibility, true);
     assert.equal(capabilities.dryRunOnly, false);
+  });
+
+  await run("Restarbeiten HostAdapter: Scope-Policy laesst nur restarbeiten.ui.main zu", () => {
+    assert.deepEqual(visibilityPolicy.VISIBILITY_PERSISTENCE_ALLOWED_SCOPES, ["restarbeiten.ui.main"]);
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("restarbeiten.ui.main", adapter.getHostContext()), true);
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("restarbeiten.screen", adapter.getHostContext()), false);
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("protokoll.topsScreen", adapter.getHostContext()), false);
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("unknown.scope", adapter.getHostContext()), false);
+    assert.equal(visibilityPolicy.isVisibilityPersistenceAllowedForScope("*", adapter.getHostContext()), false);
+    assert.throws(
+      () => createBbmEditorHostAdapter("protokoll.topsScreen"),
+      /Unsupported editor scope/
+    );
+    assert.throws(
+      () => createBbmEditorHostAdapter("unknown.scope"),
+      /Unsupported editor scope/
+    );
   });
 
   await run("Restarbeiten HostAdapter: Layout-State startet leer", () => {

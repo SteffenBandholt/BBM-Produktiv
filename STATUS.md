@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor Hidden-Elements Scope-Freigabe-Modell vorbereitet:
+  - G34 fuehrt eine explizite Allowlist/Policy fuer Visibility-Persistenz ein.
+  - Aktiv erlaubt bleibt ausschliesslich `restarbeiten.ui.main`; bekannte andere Scopes, unbekannte Scopes und Wildcards bleiben blockiert.
+  - `canPersistVisibility: true` kann keine globale Freigabe mehr erzwingen; der Contract prueft zusaetzlich die Scope-Policy.
+  - Das BBM-Repo fuer `ui_editor_layout_overrides` hat denselben Allowlist-Backstop und speichert weiterhin nur den Pilot-Scope.
+  - Keine Registry-Aenderung, kein UI-Editor-kit-Speicher, keine PDF-/Drucklogik, keine Fachlogik, kein `localStorage` und kein Datei-Schreibweg.
+
 - UI-Editor Hidden-Elements Pilot-Ruecksetzpfad im Popover abgesichert:
   - G33 erlaubt im bestehenden kompakten Hidden-Elements-Popover das Einblenden gespeicherter Pilot-Overrides fuer `restarbeiten.ui.main`.
   - Einzelnes `Einblenden` erzeugt nur fuer diesen Pilot-Scope einen validierten `persistent: true` Visibility-ChangeRequest mit `payload.visible === true`.

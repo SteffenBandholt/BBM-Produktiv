@@ -3,6 +3,7 @@ import {
   isVisibilityOverridePersistable,
   validateEditorLayoutOverride,
 } from "../layout/editorLayoutOverrideModel.js";
+import { isVisibilityPersistenceAllowedForScope } from "./visibilityPersistenceScopePolicy.js";
 
 export const REQUIRED_HOST_ADAPTER_METHODS = Object.freeze([
   "getHostContext",
@@ -107,17 +108,18 @@ export function validatePersistentVisibilityChangeRequests(
     (entry) => entry?.operation === "visibility" && entry?.persistent === true
   );
   const registryElements = normalizeRegistryElements(registry);
-  const allowedScopes = scope?.scopeId ? [scope.scopeId] : null;
+  const scopeAllowed = isVisibilityPersistenceAllowedForScope(scope?.scopeId, scope);
+  const allowedScopes = scopeAllowed && scope?.scopeId ? [scope.scopeId] : [];
   const canPersistVisibility = capabilities.canPersistVisibility === true;
   const dryRunOnly = capabilities.dryRunOnly === true;
-  const persistenceDisabled = capabilities.persistence !== true || !canPersistVisibility || dryRunOnly;
+  const persistenceDisabled = capabilities.persistence !== true || !canPersistVisibility || dryRunOnly || !scopeAllowed;
   const entries = persistentVisibilityRequests.map((changeRequest) => {
     const override = buildVisibilityOverrideFromChangeRequest(changeRequest);
     const validation = validateEditorLayoutOverride(override, {
       registry: registryElements,
       allowedScopes,
     });
-    const persistable = validation.ok && isVisibilityOverridePersistable(changeRequest, capabilities);
+    const persistable = validation.ok && scopeAllowed && isVisibilityOverridePersistable(changeRequest, capabilities);
     return {
       changeId: changeRequest.changeId,
       elementId: changeRequest.elementId,

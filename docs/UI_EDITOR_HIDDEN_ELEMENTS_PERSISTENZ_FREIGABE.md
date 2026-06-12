@@ -4,7 +4,7 @@
 
 G28 legte Speicherort-Empfehlung, Zielstruktur, Freigabegrenzen und Umsetzungsreihenfolge fuer persistente Hidden-Element-Overrides fest.
 
-Stand nach G33: Die Persistenz ist nur fuer den Pilot-Scope `restarbeiten.ui.main` aktiv. Der Restore-Leseweg und der kompakte Ruecksetzpfad im Hidden-Elements-Popover sind testseitig abgesichert.
+Stand nach G34: Die Persistenz ist nur fuer den Pilot-Scope `restarbeiten.ui.main` aktiv. Der Restore-Leseweg, der kompakte Ruecksetzpfad und die Scope-Allowlist/Policy sind testseitig abgesichert.
 
 Weiterhin deaktiviert bleiben:
 
@@ -40,6 +40,8 @@ Hide/Show ist als ChangeRequest modelliert:
 Seit G31 speichert der Restarbeiten-HostAdapter fuer `restarbeiten.ui.main` validierte `persistent: true` Visibility-ChangeRequests. Andere Scopes und andere Operationen bleiben blockiert.
 
 Seit G33 nutzt der bestehende Hidden-Elements-Popover diesen freigegebenen Pilotpfad auch zum Einblenden gespeicherter Hidden-Overrides. Dabei wird `payload.visible === true` gespeichert; weitere Scopes bleiben deaktiviert.
+
+Seit G34 ist die Freigabe weiterer Scopes als explizite Allowlist/Policy dokumentiert und technisch abgesichert. Aktuell enthaelt die Policy nur `restarbeiten.ui.main`; weitere Scopes brauchen eigene Freigabepakete.
 
 ## Speicherort-Optionen
 
@@ -453,3 +455,31 @@ Weiterhin nicht Teil des Stands:
 - keine Registry-Mutation
 - keine PDF-/Drucklogik
 - kein UI-Editor-kit-Speicher
+
+## Stand nach G34
+
+G34 aktiviert keine weitere Persistenz.
+
+Ergaenzt wurde:
+
+- Policy-Datei `src/renderer/editorRuntime/host/visibilityPersistenceScopePolicy.js`
+- Allowlist `VISIBILITY_PERSISTENCE_ALLOWED_SCOPES`
+- Policy-Funktion `isVisibilityPersistenceAllowedForScope(scopeId, context)`
+- Repo-Backstop mit expliziter Allowlist fuer `ui_editor_layout_overrides`
+- Doku `docs/UI_EDITOR_HIDDEN_ELEMENTS_SCOPE_FREIGABE.md`
+
+Aktiv erlaubt bleibt:
+
+- `restarbeiten.ui.main`
+
+Weiterhin blockiert bleiben:
+
+- `protokoll.topsScreen`
+- `restarbeiten.screen`
+- `bbm.demo.editorMove`
+- unbekannte Scopes
+- Wildcards
+- Move-/Resize-/Text-/Fachfeld-Persistenz
+- Registry-Mutation
+- UI-Editor-kit-Speicherung
+- PDF-/Drucklogik

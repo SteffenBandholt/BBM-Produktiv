@@ -142,6 +142,11 @@ async function runUiEditorLayoutOverridesRepoTests(run) {
   await run("UI-Editor LayoutOverridesRepo: blockiert andere Scopes und Nicht-Visibility", () => {
     return withTempUiEditorLayoutOverridesRepo(({ db, repo }) => {
       db.initDatabase();
+      assert.equal(repo.PILOT_SCOPE.scopeId, "restarbeiten.ui.main");
+      assert.deepEqual(
+        repo.VISIBILITY_PERSISTENCE_ALLOWED_SCOPES.map((entry) => entry.scopeId),
+        ["restarbeiten.ui.main"]
+      );
 
       assert.throws(
         () => repo.saveUiEditorLayoutOverride({
@@ -149,6 +154,28 @@ async function runUiEditorLayoutOverridesRepoTests(run) {
           moduleId: "protokoll",
           scopeId: "protokoll.topsScreen",
           elementId: "protokoll.root",
+          overrides: { visible: false },
+        }),
+        /UI_EDITOR_LAYOUT_OVERRIDE_SCOPE_NOT_ALLOWED/
+      );
+
+      assert.throws(
+        () => repo.saveUiEditorLayoutOverride({
+          targetAppId: "bbm",
+          moduleId: "restarbeiten",
+          scopeId: "unknown.scope",
+          elementId: "restarbeiten.editbox.text.short",
+          overrides: { visible: false },
+        }),
+        /UI_EDITOR_LAYOUT_OVERRIDE_SCOPE_NOT_ALLOWED/
+      );
+
+      assert.throws(
+        () => repo.saveUiEditorLayoutOverride({
+          targetAppId: "bbm",
+          moduleId: "restarbeiten",
+          scopeId: "*",
+          elementId: "restarbeiten.editbox.text.short",
           overrides: { visible: false },
         }),
         /UI_EDITOR_LAYOUT_OVERRIDE_SCOPE_NOT_ALLOWED/

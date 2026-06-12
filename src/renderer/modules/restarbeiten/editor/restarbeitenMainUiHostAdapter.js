@@ -7,6 +7,7 @@ import {
   validatePersistentVisibilityChangeRequestsDryRun,
   validateHostAdapterShape,
 } from "../../../editorRuntime/host/bbmEditorHostAdapterContract.js";
+import { isVisibilityPersistenceAllowedForScope } from "../../../editorRuntime/host/visibilityPersistenceScopePolicy.js";
 
 const SCOPE = Object.freeze({
   targetAppId: "bbm",
@@ -19,7 +20,7 @@ const PILOT_CAPABILITIES = Object.freeze({
   preview: true,
   pendingChangeRequests: true,
   persistence: true,
-  canPersistVisibility: true,
+  canPersistVisibility: isVisibilityPersistenceAllowedForScope(SCOPE.scopeId, SCOPE),
   dryRunOnly: false,
 });
 

@@ -209,9 +209,28 @@ Weiterhin blockiert bleibt:
 - UI-Editor-kit-Speicherung
 - `localStorage`, Datei-Schreibwege, PDF-/Drucklogik und Fachlogik
 
+## Stand nach G34
+
+Die Freigabe weiterer Scopes ist als Policy vorbereitet, aber nicht aktiviert.
+
+Nachgewiesen wurde:
+
+- `VISIBILITY_PERSISTENCE_ALLOWED_SCOPES` enthaelt nur `restarbeiten.ui.main`.
+- `isVisibilityPersistenceAllowedForScope(...)` liefert fuer bekannte andere, unbekannte und Wildcard-Scopes `false`.
+- Der HostAdapter-Contract blockiert persistente Visibility-Requests ausserhalb dieser Policy.
+- Das BBM-Repo fuer `ui_editor_layout_overrides` blockiert andere Scopes weiterhin als Backstop.
+
+Weiterhin blockiert bleibt:
+
+- jede weitere Scope-Persistenz
+- globale Freigabe
+- Move-/Resize-/Text-/Fachfeld-Persistenz
+- UI-Editor-kit-Speicherung
+- `localStorage`, Datei-Schreibwege, PDF-/Drucklogik und Fachlogik
+
 ## Pruefung
 
-G27 bis G33 werden durch Modell-, HostAdapter-, Storage-/IPC- und Launcher-Tests abgesichert:
+G27 bis G34 werden durch Modell-, HostAdapter-, Storage-/IPC-, Policy- und Launcher-Tests abgesichert:
 
 - `persistent: true` fuer `operation: "visibility"` wird nur im Pilot-Scope gespeichert.
 - `persistent: false` bleibt Preview/Dry-Run/in-memory.
@@ -221,3 +240,4 @@ G27 bis G33 werden durch Modell-, HostAdapter-, Storage-/IPC- und Launcher-Tests
 - Der G31-HostAdapter speichert nur validierte Visibility-Overrides und liest sie als Layout-State zurueck.
 - Der G32-Restore-Test simuliert einen neuen Adapter-/Lesezyklus und prueft, dass die Hidden-Elements-Logik `visible: false` als hidden und `visible: true` nicht als hidden behandelt.
 - Der G33-Launcher-Test prueft einzelnes Einblenden und `Alle einblenden` fuer gespeicherte Pilot-Overrides.
+- Der G34-Policy-Test prueft, dass nur `restarbeiten.ui.main` erlaubt ist und andere Scopes/Wildcards blockiert bleiben.

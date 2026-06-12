@@ -19,6 +19,7 @@ import {
   buildHiddenElementsPopoverViewModel,
 } from "./uiEditorKitHiddenElementsRuntimeBridge.js";
 import { buildPanelViewModel } from "./uiEditorKitPanelRuntimeBridge.js";
+import { isVisibilityPersistenceAllowedForScope } from "../editorRuntime/host/visibilityPersistenceScopePolicy.js";
 
 void installedLauncherButtonArtifactModule;
 void installedTargetSelectionArtifactModule;
@@ -848,9 +849,7 @@ function canPersistVisibilityForElement(state = {}, elementId = "") {
   const capabilities = getHostCapabilitiesFromState(state);
   const scopeId = String(state.activeUiScope || context.scopeId || context.activeUiScope || "").trim();
   return Boolean(
-    context.targetAppId === "bbm"
-      && context.moduleId === "restarbeiten"
-      && scopeId === "restarbeiten.ui.main"
+    isVisibilityPersistenceAllowedForScope(scopeId, context)
       && capabilities.persistence === true
       && capabilities.canPersistVisibility === true
       && capabilities.dryRunOnly !== true
