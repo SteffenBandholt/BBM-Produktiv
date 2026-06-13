@@ -705,6 +705,29 @@ Wildcards und leere IDs bleiben blockiert. Es gibt keine echte Umschaltung,
 keine sichtbare UI-Aenderung, keine Bearbeitung, keinen Drag, kein Resize und
 keine Persistenz.
 
+### G59: SurfaceSelection-State read-only im Launcher verwenden
+
+Launcher-Datenfluss:
+
+```text
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSelectionForLauncher(...)
+-> buildReadonlySurfaceSelectionState(...)
+-> buildReadonlySurfaceSelectionModel(...)
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> kompakte read-only Surface-Auswahl/SurfaceInfo
+```
+
+Status nach G59: Der Launcher verwendet den vorbereiteten
+SurfaceSelection-State als interne read-only Quelle fuer die vorhandene
+kompakte Anzeige. Sichtbar bleibt nur `restarbeiten.ui.main` mit dem Label
+`Restarbeiten`; die SurfaceInfo bleibt fuer dieselbe Surface sichtbar.
+`pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, Wildcards und
+leere IDs bleiben blockiert und erscheinen nicht im Panel. Es gibt keine echte
+Umschaltung, keine neue UI-Struktur, keine Bearbeitung, keinen Drag, kein
+Resize und keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

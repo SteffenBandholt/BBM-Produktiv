@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.79 abgeschlossen: SurfaceSelection-State wird im BBM-Launcher read-only als interne Quelle fuer Surface-Auswahl und SurfaceInfo genutzt; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne echte Umschaltung, Drag, Resize oder Persistenz.
 - K19.78 abgeschlossen: SurfaceSelection-State read-only vorbereitet; nur `restarbeiten.ui.main` kann ausgewaehlt sein, PDF/Plan, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert, ohne echte Umschaltung oder Persistenz.
 - K19.77 abgeschlossen: Surface-Auswahl read-only im Editorpanel als Referenzstand dokumentiert; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne echte Umschaltung, Dropdown, Drag, Resize oder Persistenz.
 - K19.76 abgeschlossen: Surface-Auswahl read-only im Editorpanel sichtbar; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne Umschaltung, PDF/Plan-Freigabe, Drag, Resize oder Persistenz.
@@ -158,6 +159,14 @@ Aktueller Stand:
 - [x] K19.76 Surface-Auswahl read-only im Editorpanel sichtbar machen
 - [x] K19.77 Surface-Auswahl read-only im Editorpanel als Referenzstand abschliessen
 - [x] K19.78 SurfaceSelection-State read-only vorbereiten
+- [x] K19.79 SurfaceSelection-State read-only im Launcher verwenden
+
+## Statusupdate K19.79
+- `BbmUiEditorRuntimeLauncher.js` nutzt den read-only SurfaceSelection-State als interne Quelle fuer die vorhandene Surface-Auswahl und SurfaceInfo.
+- Ausgewaehlt bleibt ausschliesslich `restarbeiten.ui.main`.
+- Sichtbar bleibt die kompakte Anzeige `Restarbeiten`; PDF/Plan, unbekannte SurfaceIds, Wildcards und leere IDs erscheinen nicht.
+- Blockierte Auswahlwuensche fallen defensiv auf den Pilot zurueck oder werden ohne Panelbruch abgefangen.
+- Keine echte Umschaltung, keine neue UI-Struktur, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
 
 ## Statusupdate K19.78
 - `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionState.js` baut einen defensiven read-only SurfaceSelection-State.

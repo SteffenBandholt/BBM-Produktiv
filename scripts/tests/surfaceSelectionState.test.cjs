@@ -91,18 +91,19 @@ async function runSurfaceSelectionStateTests(run) {
     assert.equal(state.readonly, true);
   });
 
-  await run("SurfaceSelectionState: bleibt ohne Launcher-Aktivierung, Drag, Resize und Speicherpfad", () => {
+  await run("SurfaceSelectionState: wird im Launcher read-only genutzt, ohne Drag, Resize und Speicherpfad", () => {
     const stateSource = fs.readFileSync(STATE_PATH, "utf8");
     const launcherSource = fs.readFileSync(LAUNCHER_PATH, "utf8");
 
     assertNoStorageOrWritePath(stateSource, "SurfaceSelectionState");
+    assertNoStorageOrWritePath(launcherSource, "Launcher");
     assert.equal(stateSource.includes("canDrag: true"), false);
     assert.equal(stateSource.includes("canResize: true"), false);
     assert.equal(stateSource.includes("canPersist: true"), false);
     assert.equal(stateSource.includes("wildcard"), false);
     assert.equal(stateSource.includes("default: true"), false);
-    assert.equal(launcherSource.includes("surfaceSelectionState"), false);
-    assert.equal(launcherSource.includes("buildReadonlySurfaceSelectionState"), false);
+    assert.equal(launcherSource.includes('from "./surfaceAdapters/surfaceSelectionState.js"'), true);
+    assert.equal(launcherSource.includes("buildReadonlySurfaceSelectionState"), true);
     assert.equal(launcherSource.includes("selectSurface"), false);
     assert.equal(launcherSource.includes("data-ui-editor-surface-list"), false);
   });

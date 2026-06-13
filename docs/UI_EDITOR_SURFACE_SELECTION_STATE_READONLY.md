@@ -7,6 +7,10 @@ welche Surface aktuell ausgewaehlt ist, welche SurfaceIds im Editor ueberhaupt
 auswaehlbar waeren und welche Auswahlwuensche blockiert werden. Er aktiviert
 keine echte Umschaltung, keine neue sichtbare UI und keine Persistenz.
 
+Seit G59 verwendet der BBM-Launcher diesen State read-only als interne Quelle
+fuer die vorhandene kompakte Surface-Auswahl und SurfaceInfo. Die sichtbare
+Ausgabe bleibt unveraendert.
+
 ## Aktueller State
 
 ```js
@@ -47,17 +51,18 @@ verfuegbar ist.
 ## Datenfluss
 
 ```text
-BBM-Test / spaeter Host-Aufruf
+BBM-Test / BBM-Launcher
 -> buildReadonlySurfaceSelectionState(...)
 -> SurfaceSelectionModel
 -> SurfacePolicy
 -> visibleInEditor-Pruefung
 -> SurfaceAdapterCatalog
 -> read-only SurfaceSelection-State
+-> kompakte read-only Surface-Auswahl/SurfaceInfo
 ```
 
-Der State ist nur Vorbereitung. Der BBM-Launcher nutzt ihn noch nicht
-produktiv; die sichtbare G56-Auswahl bleibt unveraendert.
+Der State ist nur read-only angebunden. Die sichtbare G56/G57-Auswahl bleibt
+unveraendert und zeigt weiterhin nur `Restarbeiten`.
 
 ## Sicherheitsgrenzen
 
@@ -69,6 +74,7 @@ Guardrail-Begriff: keine Persistenz.
 - Keine echte Umschaltung.
 - Keine Dropdown-/Listen-UI mit weiteren Optionen.
 - Keine weitere Surface sichtbar oder auswaehlbar.
+- Launcher verwendet den State nur als interne Quelle.
 - Kein Drag.
 - Kein Resize.
 - Keine Persistenz.
@@ -84,7 +90,6 @@ Guardrail-Begriff: keine Persistenz.
 
 ## Ausdruecklich nicht aktiviert
 
-- Keine Produktivintegration im Launcher.
 - Keine sichtbare UI-Aenderung.
 - Keine Surface-Umschaltung.
 - Keine PDF-/Canvas-/Plan-Surface sichtbar oder auswaehlbar.

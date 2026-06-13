@@ -209,3 +209,10 @@ SurfaceIds sowie blockierte Auswahlwuensche. Aktuell kann nur
 `restarbeiten.ui.main` ausgewaehlt sein; PDF/Plan, unbekannte SurfaceIds,
 Wildcards und leere IDs bleiben blockiert. Es gibt keine echte Umschaltung,
 keine sichtbare UI-Aenderung und keine Persistenz.
+
+**Status nach G59:** Der BBM-Launcher nutzt den read-only
+SurfaceSelection-State als interne Quelle fuer die vorhandene kompakte
+Surface-Auswahl und SurfaceInfo. Sichtbar bleibt nur `restarbeiten.ui.main`
+mit dem Label `Restarbeiten`; PDF/Plan, unbekannte SurfaceIds, Wildcards und
+leere IDs bleiben blockiert. Es gibt keine echte Umschaltung, keine neue
+UI-Struktur, keine Bearbeitung, keinen Drag, kein Resize und keine Persistenz.

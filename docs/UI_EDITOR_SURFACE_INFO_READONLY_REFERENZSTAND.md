@@ -13,6 +13,8 @@ Seit G57 ist die Surface-Auswahl in
 read-only Referenzstand abgeschlossen.
 Seit G58 existiert zusaetzlich ein interner read-only SurfaceSelection-State;
 die SurfaceInfo-Anzeige bleibt dadurch unveraendert.
+Seit G59 nutzt der BBM-Launcher diesen State read-only als interne Quelle fuer
+Surface-Auswahl und SurfaceInfo; die sichtbare Ausgabe bleibt unveraendert.
 
 ## Aktueller read-only Stand
 
@@ -21,6 +23,7 @@ die SurfaceInfo-Anzeige bleibt dadurch unveraendert.
 - Die SurfaceInfo wird nur fuer `restarbeiten.ui.main` aufgebaut.
 - Seit G56 nutzt das Panel das read-only SurfaceSelection-Modell sichtbar, aber
   nur als kompakte Anzeige fuer `restarbeiten.ui.main`.
+- Seit G59 geht diese Anzeige intern vom read-only SurfaceSelection-State aus.
 - Die SurfaceRuntime des UI-Editor-kit validiert das neutrale SurfaceModel
   ueber die BBM-Bridge.
 - UI-Editor-kit speichert nicht.
@@ -64,6 +67,7 @@ Wildcards werden nicht automatisch aufgeloest.
 ```text
 Editorpanel im BBM-Launcher
 -> buildReadonlySurfaceSelectionForLauncher(...)
+-> buildReadonlySurfaceSelectionState(...)
 -> buildReadonlySurfaceSelectionModel(...)
 -> SurfaceAdapterCatalog
 -> SurfacePolicy
@@ -73,7 +77,8 @@ Editorpanel im BBM-Launcher
 ## Datenfluss SurfaceSelection-State
 
 ```text
-buildReadonlySurfaceSelectionState(...)
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSelectionState(...)
 -> SurfaceSelectionModel
 -> SurfacePolicy
 -> SurfaceAdapterCatalog
@@ -103,6 +108,7 @@ schreibt keine Zustaende.
 - Keine Surface-Liste.
 - Keine echte Surface-Umschaltung.
 - SurfaceSelection ist nur als sichtbare read-only Auswahl fuer `restarbeiten.ui.main` angebunden.
+- SurfaceSelection-State ist nur als interne read-only Quelle fuer `restarbeiten.ui.main` angebunden.
 - Keine Bearbeitung.
 - Kein Drag.
 - Guardrail-Begriff: kein Drag.

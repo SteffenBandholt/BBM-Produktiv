@@ -16,6 +16,8 @@ Seit G57 ist diese sichtbare read-only Surface-Auswahl als Referenzstand in
 Seit G58 ist ein interner read-only SurfaceSelection-State vorbereitet. Er
 nutzt dieselbe `visibleInEditor`-Grenze und macht keine weitere Surface
 sichtbar.
+Seit G59 nutzt der BBM-Launcher diesen State read-only als interne Quelle fuer
+die bestehende kompakte Surface-Auswahl und SurfaceInfo.
 
 ## Aktuelle Policy
 
@@ -108,15 +110,17 @@ Sichtbare Surface-Auswahl seit G56:
 ```text
 Editorpanel im BBM-Launcher
 -> buildReadonlySurfaceSelectionForLauncher(...)
+-> buildReadonlySurfaceSelectionState(...)
 -> buildReadonlySurfaceSelectionModel(...)
 -> SurfacePolicy
 -> kompakte read-only Anzeige fuer restarbeiten.ui.main
 ```
 
-Read-only SurfaceSelection-State seit G58:
+Read-only SurfaceSelection-State im Launcher seit G59:
 
 ```text
-buildReadonlySurfaceSelectionState(...)
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSelectionState(...)
 -> SurfaceSelectionModel
 -> SurfacePolicy
 -> blockierte Auswahlwuensche
@@ -136,7 +140,7 @@ buildReadonlySurfaceSelectionState(...)
 - `canPersist: false` fuer alle bekannten SurfaceIds.
 - Sichtbare Surface-Auswahl nur read-only fuer `restarbeiten.ui.main`.
 - Keine Surface-Umschaltung.
-- SurfaceSelection-State nur intern vorbereitet.
+- SurfaceSelection-State nur intern read-only angebunden.
 - Keine automatische Surface-Liste.
 - SurfaceSelection ist nur als read-only Anzeige angebunden.
 - Nur kompakte read-only SurfaceInfo fuer `restarbeiten.ui.main`.

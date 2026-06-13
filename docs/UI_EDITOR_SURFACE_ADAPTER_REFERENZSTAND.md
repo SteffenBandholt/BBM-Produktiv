@@ -90,6 +90,9 @@ read-only Referenzstand abgeschlossen.
 Seit G58 ist ein interner read-only SurfaceSelection-State vorbereitet. Er
 bleibt an Katalog und SurfacePolicy gebunden und aktiviert keine echte
 Umschaltung.
+Seit G59 nutzt der BBM-Launcher diesen State read-only als interne Quelle fuer
+die vorhandene kompakte Surface-Auswahl und SurfaceInfo; die sichtbare Ausgabe
+bleibt unveraendert.
 
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
@@ -169,16 +172,17 @@ Sichtbare Surface-Auswahl seit G56:
 ```text
 Editorpanel im BBM-Launcher
 -> buildReadonlySurfaceSelectionForLauncher(...)
+-> buildReadonlySurfaceSelectionState(...)
 -> buildReadonlySurfaceSelectionModel(...)
 -> SurfaceAdapterCatalog
 -> SurfacePolicy
 -> kompakte read-only Anzeige fuer restarbeiten.ui.main
 ```
 
-SurfaceSelection-State seit G58:
+SurfaceSelection-State im Launcher seit G59:
 
 ```text
-BBM-Test / spaeter Host-Aufruf
+BBM-Test / BBM-Launcher
 -> buildReadonlySurfaceSelectionState(...)
 -> SurfaceSelectionModel
 -> SurfaceAdapterCatalog
@@ -199,7 +203,7 @@ BBM-Test / spaeter Host-Aufruf
 - Keine grosse neue Panel-Sektion.
 - Keine automatische Surface-Liste.
 - SurfaceSelection ist nur read-only sichtbar angebunden.
-- SurfaceSelection-State ist nur read-only vorbereitet.
+- SurfaceSelection-State ist im Launcher nur read-only angebunden.
 - Keine Surface-Umschaltung.
 - Keine PDF-/Plan-Bearbeitung.
 - Keine PDF-/Canvas-Renderlogik.
@@ -217,8 +221,6 @@ BBM-Test / spaeter Host-Aufruf
 
 ## Ausdruecklich nicht aktiviert
 
-- Keine Launcher-Integration.
-- Keine sichtbare Launcher-Nutzung.
 - Keine produktive Surface-Auswahl.
 - Keine PDF- oder Plan-Bearbeitung.
 - Keine Canvas-Bearbeitung.

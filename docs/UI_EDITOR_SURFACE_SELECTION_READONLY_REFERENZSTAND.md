@@ -12,13 +12,15 @@ keine Persistenz.
 Seit G58 ist ein interner read-only SurfaceSelection-State vorbereitet. Dieser
 State aendert den sichtbaren Referenzstand nicht und aktiviert keine echte
 Umschaltung.
+Seit G59 verwendet der BBM-Launcher diesen State read-only als interne Quelle.
+Der sichtbare Referenzstand bleibt unveraendert.
 
 ## Aktueller read-only Stand
 
 - Das bestehende Editorpanel zeigt eine kompakte Surface-Auswahl.
 - Die Anzeige ist rein lesend.
-- Die Anzeige basiert auf dem SurfaceSelectionModel, der SurfacePolicy und dem
-  SurfaceAdapterCatalog.
+- Die Anzeige basiert auf dem SurfaceSelection-State, dem SurfaceSelectionModel,
+  der SurfacePolicy und dem SurfaceAdapterCatalog.
 - Sichtbar bleibt nur der Pilot `restarbeiten.ui.main`.
 - PDF-/Plan-Surfaces bleiben unsichtbar und nicht auswaehlbar.
 - UI-Editor-kit speichert nicht.
@@ -63,6 +65,7 @@ weiterer SurfaceIds.
 
 ```text
 Editorpanel im BBM-Launcher
+-> SurfaceSelection-State
 -> SurfaceSelectionModel
 -> SurfacePolicy
 -> visibleInEditor-Pruefung
@@ -72,10 +75,12 @@ Editorpanel im BBM-Launcher
 -> kompakte SurfaceInfo im Panel
 ```
 
-Read-only State-Vorbereitung seit G58:
+Read-only State-Anbindung seit G59:
 
 ```text
-buildReadonlySurfaceSelectionState(...)
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSelectionForLauncher(...)
+-> buildReadonlySurfaceSelectionState(...)
 -> SurfaceSelectionModel
 -> SurfacePolicy
 -> visibleInEditor-Pruefung
@@ -94,7 +99,7 @@ Guardrail-Begriff: keine Persistenz.
 
 - Read-only.
 - Keine echte Umschaltung.
-- SurfaceSelection-State nur intern vorbereitet.
+- SurfaceSelection-State nur intern read-only angebunden.
 - Keine grosse Surface-Liste.
 - Kein Dropdown mit weiteren Optionen.
 - Keine Bearbeitung.

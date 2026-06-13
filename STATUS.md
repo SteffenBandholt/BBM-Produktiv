@@ -17,11 +17,18 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- SurfaceSelection-State read-only im Launcher verwendet:
+  - G59 bindet den vorbereiteten State aus `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionState.js` im BBM-Launcher als interne read-only Quelle an.
+  - Surface-Auswahl und SurfaceInfo gehen defensiv vom State aus; sichtbar bleibt weiterhin nur `restarbeiten.ui.main` mit dem Label `Restarbeiten`.
+  - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, Wildcards und leere IDs bleiben blockiert und erscheinen nicht im Panel.
+  - Es gibt keine echte Umschaltung, keine neue UI-Struktur, keine Bearbeitungsbuttons, kein Drag, kein Resize und keine Persistenz.
+  - Wegen Launcher-Code-Aenderung ist eine Electron-Sichtpruefung fuer G59 erforderlich.
+
 - SurfaceSelection-State read-only vorbereitet:
   - G58 legt `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionState.js` als defensives read-only State-Modul an.
   - Der State erlaubt aktuell nur `restarbeiten.ui.main` als ausgewaehlte Surface und fuehrt `restarbeiten.ui.main` als einzige verfuegbare SurfaceId.
   - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, Wildcards und leere IDs werden als Auswahlwunsch blockiert.
-  - Es gibt keine echte Umschaltung, keine neue sichtbare UI, keine Launcher-Produktivintegration, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
+  - Es gibt keine echte Umschaltung, keine neue sichtbare UI, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
   - Dokumentiert ist der Stand in `docs/UI_EDITOR_SURFACE_SELECTION_STATE_READONLY.md`.
 
 - Surface-Auswahl read-only im Editorpanel als Referenzstand abgeschlossen:
