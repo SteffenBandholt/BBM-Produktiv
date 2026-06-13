@@ -5,14 +5,15 @@
 Die SurfacePolicy ist als read-only Rechte-/Freigabeschicht vorbereitet. Sie
 entscheidet aktuell nur, welche bekannten SurfaceIds ueber den
 SurfaceAdapterCatalog lesbar sind und welche Editor-Faehigkeiten weiterhin
-gesperrt bleiben. Es gibt keine produktive UI-Nutzung.
+gesperrt bleiben. Seit G53 ist `restarbeiten.ui.main` als erste kompakte
+read-only SurfaceInfo im Editorpanel sichtbar.
 
 ## Aktuelle Policy
 
 ```text
 restarbeiten.ui.main
 readable: true
-visibleInEditor: false
+visibleInEditor: true
 canHide: true
 canDrag: false
 canResize: false
@@ -63,17 +64,23 @@ BBM-Test / spaeter Host-Aufruf
 Der Katalog bleibt dadurch an eine explizite Allowlist gebunden. Eine bekannte
 SurfaceId ist nur lesbar, wenn die Policy `readable: true` meldet.
 
+Sichtbare Editorpanel-Info ist zusaetzlich an `visibleInEditor: true`
+gebunden. Aktuell gilt das nur fuer `restarbeiten.ui.main`.
+
 ## Sicherheitsgrenzen
 
 - Keine globale Freigabe.
 - Keine Wildcard.
 - Kein Default-Adapter.
 - Unbekannte SurfaceIds bleiben blockiert.
-- `visibleInEditor: false` fuer alle bekannten SurfaceIds.
+- `visibleInEditor: true` nur fuer `restarbeiten.ui.main`.
+- `visibleInEditor: false` fuer `pdf.plan.page.1` und `plan.canvas.default`.
 - `canDrag: false` fuer alle bekannten SurfaceIds.
 - `canResize: false` fuer alle bekannten SurfaceIds.
 - `canPersist: false` fuer alle bekannten SurfaceIds.
 - Keine sichtbare Surface-Auswahl.
+- Keine automatische Surface-Liste.
+- Nur kompakte read-only SurfaceInfo fuer `restarbeiten.ui.main`.
 - Keine produktive Launcher-Nutzung.
 - Keine PDF-/Plan-Bearbeitung.
 - Keine Canvas-Bearbeitung.
@@ -90,7 +97,6 @@ SurfaceId ist nur lesbar, wenn die Policy `readable: true` meldet.
 
 ## Bewusst nicht aktiviert
 
-- Keine Anzeige von Surfaces im Editorpanel.
 - Keine neue Panel-Sektion.
 - Keine automatische Surface-Liste.
 - Keine produktive Surface-Auswahl.

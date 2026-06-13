@@ -49,12 +49,13 @@ async function runSurfacePolicyTests(run) {
   await run("SurfacePolicy: Restarbeiten UI-Surface bleibt nur read-only vorbereitet", () => {
     assertPolicy(policyModule.getSurfacePolicy("restarbeiten.ui.main"), {
       readable: true,
-      visibleInEditor: false,
+      visibleInEditor: true,
       canHide: true,
       canDrag: false,
       canResize: false,
       canPersist: false,
     });
+    assert.equal(policyModule.isSurfaceVisibleInEditor("restarbeiten.ui.main"), true);
   });
 
   await run("SurfacePolicy: PDF- und Plan-Surface bleiben ohne Editor-Aktivierung", () => {
@@ -124,7 +125,8 @@ async function runSurfacePolicyTests(run) {
       "restarbeiten.ui.main",
       "pdf.plan.page.1",
       "plan.canvas.default",
-      "visibleInEditor: false",
+      "visibleInEditor: true",
+      "pdf.plan.page.1",
       "canPersist: false",
       "UI-Editor-kit speichert nicht",
     ]) {

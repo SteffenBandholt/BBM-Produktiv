@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Erste sichtbare read-only SurfaceInfo im Editorpanel fuer Pilot-Surface vorbereitet:
+  - G53 setzt `visibleInEditor: true` ausschliesslich fuer `restarbeiten.ui.main`.
+  - Das bestehende Editorpanel zeigt eine kompakte read-only SurfaceInfo mit SurfaceId, Typ und Elementanzahl.
+  - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben im Editor unsichtbar.
+  - Es gibt keine Surface-Liste, keine Surface-Auswahl, keine Bearbeitungsbuttons und keine PDF-/Canvas-/Plan-Anzeige.
+  - Drag, Resize und Persistenz bleiben fuer alle SurfaceIds gesperrt; kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
+
 - Surface-Rechte-/Policy-Schicht read-only vorbereitet:
   - G52 legt `src/renderer/uiEditor/surfaceAdapters/surfacePolicy.js` als explizite read-only SurfacePolicy an.
   - Bekannte SurfaceIds bleiben `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`.

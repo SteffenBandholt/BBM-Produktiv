@@ -71,8 +71,10 @@ Der Katalogstand ist seit G50 als read-only Referenz dokumentiert. Das Referenzd
 Der BBM-Launcher kann den Katalog seit G51 read-only testseitig ueber `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese Hilfsfunktion ist nicht an den sichtbaren Renderpfad angebunden und erzeugt keine Panel- oder Surface-Anzeige.
 
 Die SurfacePolicy ist seit G52 read-only vorbereitet. Sie erlaubt die bekannten
-SurfaceIds nur lesend, haelt `visibleInEditor`, Drag, Resize und Persistenz
-ausgeschaltet und blockiert unbekannte SurfaceIds sowie Wildcards vollstaendig.
+SurfaceIds nur lesend, haelt Drag, Resize und Persistenz ausgeschaltet und
+blockiert unbekannte SurfaceIds sowie Wildcards vollstaendig. Seit G53 ist
+`visibleInEditor: true` nur fuer `restarbeiten.ui.main` gesetzt, damit eine
+kompakte read-only SurfaceInfo im Editorpanel erscheinen darf.
 Der SurfaceAdapterCatalog prueft die Lesefreigabe defensiv ueber diese Policy.
 
 Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
@@ -569,6 +571,29 @@ plan.canvas.default: readable true, keine Editor-/Hide-/Drag-/Resize-/Persist-Fr
 
 Unbekannte SurfaceIds, Wildcards und leere IDs bleiben voll blockiert. Der
 Katalog bleibt read-only und es wird keine sichtbare Surface-Auswahl aktiviert.
+
+### G53: Erste sichtbare read-only SurfaceInfo vorbereiten
+
+Sichtbarer Pilot:
+
+```text
+Surface: restarbeiten.ui.main
+Typ: ui-screen
+Elemente: <Anzahl>
+```
+
+Grenzen:
+
+- Nur `restarbeiten.ui.main` ist `visibleInEditor: true`.
+- `pdf.plan.page.1` bleibt `visibleInEditor: false`.
+- `plan.canvas.default` bleibt `visibleInEditor: false`.
+- Keine Surface-Liste.
+- Keine Surface-Auswahl.
+- Keine Bearbeitungsbuttons.
+- Kein Drag.
+- Kein Resize.
+- Keine Persistenz.
+- Keine PDF-/Plan-/Canvas-Bearbeitung.
 
 ## Nicht-Ziele von G36
 

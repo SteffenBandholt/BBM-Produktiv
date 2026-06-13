@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.73 abgeschlossen: Erste sichtbare read-only SurfaceInfo fuer `restarbeiten.ui.main` im Editorpanel vorbereitet; PDF/Plan bleiben unsichtbar, ohne Surface-Auswahl, Drag, Resize oder Persistenz.
 - K19.72 abgeschlossen: Surface-Rechte-/Policy-Schicht read-only vorbereitet; bekannte SurfaceIds sind nur lesbar, Editor-Sichtbarkeit, Drag, Resize und Persistenz bleiben aus, unbekannte SurfaceIds/Wildcards sind voll blockiert.
 - K19.71 abgeschlossen: BBM-Launcher kann den SurfaceAdapter-Katalog read-only testseitig nutzen; es gibt keine sichtbare Surface-Anzeige und keine Produktivnutzung.
 - K19.70 abgeschlossen: SurfaceAdapter-Katalog ist als read-only Referenzstand dokumentiert; bekannte SurfaceIds, Blockaden, Datenfluss und Sicherheitsgrenzen sind festgehalten.
@@ -146,6 +147,14 @@ Aktueller Stand:
 - [x] K19.70 SurfaceAdapter-Katalog als read-only Referenzstand abschliessen
 - [x] K19.71 SurfaceAdapter-Katalog read-only im Launcher vorbereiten
 - [x] K19.72 Surface-Rechte-/Policy-Schicht read-only vorbereiten
+- [x] K19.73 Erste sichtbare read-only SurfaceInfo fuer Pilot-Surface vorbereiten
+
+## Statusupdate K19.73
+- `restarbeiten.ui.main` ist als einzige SurfaceId `visibleInEditor: true`.
+- Das bestehende Editorpanel zeigt eine kompakte read-only SurfaceInfo mit SurfaceId, Typ und Elementanzahl.
+- `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben im Editor unsichtbar.
+- Keine Surface-Liste, keine Surface-Auswahl und keine Bearbeitungsbuttons fuer Surface.
+- Kein Drag, kein Resize, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
 
 ## Statusupdate K19.72
 - `src/renderer/uiEditor/surfaceAdapters/surfacePolicy.js` definiert eine explizite read-only Policy fuer `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`.

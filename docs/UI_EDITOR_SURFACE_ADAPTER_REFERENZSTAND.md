@@ -72,9 +72,10 @@ kontrollierter Such- und Testpunkt fuer bekannte Adapter.
 
 Seit G52 ist dem Katalog eine read-only SurfacePolicy vorgeschaltet. Bekannte
 Adapter werden nur geliefert, wenn die Policy fuer die SurfaceId
-`readable: true` meldet. Diese Policy ist keine UI-Freigabe: Alle bekannten
-SurfaceIds bleiben `visibleInEditor: false`, `canDrag: false`,
-`canResize: false` und `canPersist: false`.
+`readable: true` meldet. Seit G53 ist `restarbeiten.ui.main` zusaetzlich als
+kompakte read-only SurfaceInfo im Editorpanel sichtbar. Das ist keine
+Bearbeitungsfreigabe: Drag, Resize und Persistenz bleiben weiterhin fuer alle
+SurfaceIds gesperrt; PDF und Plan bleiben `visibleInEditor: false`.
 
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
@@ -132,7 +133,8 @@ BBM-Launcher-Test
 - Unbekannte SurfaceIds blockiert.
 - SurfacePolicy blockiert unbekannte SurfaceIds und Wildcards vollstaendig.
 - Bekannte SurfaceIds sind nur read-only lesbar.
-- Keine Editor-Sichtbarkeit ueber die Policy.
+- Editor-Sichtbarkeit nur fuer die kompakte read-only SurfaceInfo von `restarbeiten.ui.main`.
+- Keine Editor-Sichtbarkeit fuer PDF-/Plan-Surfaces.
 - Keine Produktivnutzung im Launcher.
 - Keine sichtbare Surface-Anzeige im Launcher.
 - Keine neue Panel-Sektion.

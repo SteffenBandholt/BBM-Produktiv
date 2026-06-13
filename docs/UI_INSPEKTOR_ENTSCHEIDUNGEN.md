@@ -167,3 +167,10 @@ SurfaceIds auf gesperrt und blockiert unbekannte SurfaceIds, Wildcards und
 leere IDs vollstaendig. Der SurfaceAdapterCatalog ist defensiv an
 `readable: true` gebunden; sichtbare UI, PDF-/Plan-/Canvas-Bearbeitung, Drag
 und Persistenz bleiben nicht aktiviert.
+
+**Status nach G53:** `restarbeiten.ui.main` ist als erster sichtbarer
+read-only Surface-Pilot im bestehenden Editorpanel freigegeben. Sichtbar ist
+nur eine kompakte SurfaceInfo mit SurfaceId, Typ und Elementanzahl. PDF- und
+Plan-Surfaces bleiben `visibleInEditor: false`; unbekannte SurfaceIds und
+Wildcards bleiben blockiert. Es gibt keine Surface-Liste, keine Surface-Auswahl,
+keine Bearbeitungsbuttons, keinen Drag, kein Resize und keine Persistenz.

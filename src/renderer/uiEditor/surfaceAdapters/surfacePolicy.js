@@ -19,7 +19,7 @@ export const BLOCKED_SURFACE_POLICY = Object.freeze({
 const SURFACE_POLICIES = Object.freeze({
   "restarbeiten.ui.main": Object.freeze({
     readable: true,
-    visibleInEditor: false,
+    visibleInEditor: true,
     canHide: true,
     canDrag: false,
     canResize: false,

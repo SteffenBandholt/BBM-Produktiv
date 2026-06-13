@@ -24,6 +24,7 @@ import {
   calculatePanelDragPosition,
 } from "./uiEditorKitPanelRuntimeBridge.js";
 import { validateSurfaceModelById } from "./surfaceAdapters/surfaceAdapterCatalog.js";
+import { isSurfaceVisibleInEditor } from "./surfaceAdapters/surfacePolicy.js";
 import { isVisibilityPersistenceAllowedForScope } from "../editorRuntime/host/visibilityPersistenceScopePolicy.js";
 
 void installedLauncherButtonArtifactModule;
@@ -42,6 +43,7 @@ const PREVIEW_RESIZE_STEP = 5;
 const PREVIEW_PANEL_DEFAULT_RIGHT = "24px";
 const PREVIEW_PANEL_DEFAULT_TOP = "132px";
 const PREVIEW_PANEL_VIEWPORT_MARGIN = 16;
+const READONLY_SURFACE_INFO_SURFACE_ID = "restarbeiten.ui.main";
 
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
@@ -1363,6 +1365,8 @@ function renderPreviewPanel(doc, state = {}) {
   ].filter(Boolean).join("\n");
   panel.appendChild(details);
 
+  appendReadonlyPilotInfo(doc, panel, state);
+
   const hiddenElementsButtonViewModel = buildBbmHiddenElementsButtonViewModel(state);
   if (hiddenElementsButtonViewModel.hiddenCount < 1) {
     state.hiddenElementsPopoverOpen = false;
@@ -1701,6 +1705,44 @@ function buildReadonlySurfaceModelForLauncher(surfaceId, input = {}) {
   return validateSurfaceModelById(surfaceId, input);
 }
 
+function buildReadonlySurfaceInfoForLauncher(surfaceId, input = {}) {
+  const normalizedSurfaceId = String(surfaceId || "").trim();
+  if (!normalizedSurfaceId || !isSurfaceVisibleInEditor(normalizedSurfaceId)) return null;
+  const result = buildReadonlySurfaceModelForLauncher(normalizedSurfaceId, input);
+  if (!result?.ok || !result.surfaceModel) return null;
+
+  return {
+    surfaceId: result.surfaceModel.surfaceId || normalizedSurfaceId,
+    surfaceType: result.surfaceModel.surfaceType || "unbekannt",
+    elementCount: Array.isArray(result.surfaceModel.elements) ? result.surfaceModel.elements.length : 0,
+  };
+}
+
+function appendReadonlyPilotInfo(doc, panel, state = {}) {
+  if (!doc?.createElement || !panel?.appendChild) return null;
+  const surfaceInfo = buildReadonlySurfaceInfoForLauncher(READONLY_SURFACE_INFO_SURFACE_ID);
+  if (!surfaceInfo) return null;
+
+  const info = doc.createElement("div");
+  info.className = "ui-editor-preview-surface-info";
+  info.setAttribute("data-ui-editor-surface-info", "true");
+  info.setAttribute("data-ui-editor-surface-id", surfaceInfo.surfaceId);
+  info.style.marginTop = "8px";
+  info.style.padding = "8px";
+  info.style.border = "1px solid #cbd5e1";
+  info.style.borderRadius = "6px";
+  info.style.background = "#f8fafc";
+  info.style.fontSize = "12px";
+  info.style.lineHeight = "1.35";
+  info.textContent = [
+    `Surface: ${surfaceInfo.surfaceId}`,
+    `Typ: ${surfaceInfo.surfaceType}`,
+    `Elemente: ${surfaceInfo.elementCount}`,
+  ].join("\n");
+  panel.appendChild(info);
+  return info;
+}
+
 export async function installBbmUiEditorRuntimeLauncher({
   header = null,
   devEnabled = null,
@@ -1766,6 +1808,7 @@ export {
   handleUiEditorDocumentClick,
   isPreviewOperationAllowed,
   buildReadonlySurfaceModelForLauncher,
+  buildReadonlySurfaceInfoForLauncher,
   calculatePreviewPanelDragPositionWithRuntime,
   resolvePreviewTargetElement,
   resetAllPreviewChanges,
