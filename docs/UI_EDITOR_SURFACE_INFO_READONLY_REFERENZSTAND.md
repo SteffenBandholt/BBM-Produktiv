@@ -11,6 +11,8 @@ Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
 Seit G57 ist die Surface-Auswahl in
 `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md` als eigener
 read-only Referenzstand abgeschlossen.
+Seit G58 existiert zusaetzlich ein interner read-only SurfaceSelection-State;
+die SurfaceInfo-Anzeige bleibt dadurch unveraendert.
 
 ## Aktueller read-only Stand
 
@@ -66,6 +68,16 @@ Editorpanel im BBM-Launcher
 -> SurfaceAdapterCatalog
 -> SurfacePolicy
 -> kompakte read-only Surface-Auswahl im Panel
+```
+
+## Datenfluss SurfaceSelection-State
+
+```text
+buildReadonlySurfaceSelectionState(...)
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> read-only State ohne sichtbare Umschaltung
 ```
 
 ## Datenfluss SurfaceInfo

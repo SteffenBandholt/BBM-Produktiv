@@ -202,3 +202,10 @@ abgeschlossen. `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md`
 dokumentiert die sichtbare Grenze, den Datenfluss, Policy-Grenzen,
 Sicherheitsgrenzen und Nicht-Ziele. Es wurde keine Produktivlogik geaendert und
 keine weitere Surface sichtbar gemacht.
+
+**Status nach G58:** Ein interner read-only SurfaceSelection-State ist
+vorbereitet. Er beschreibt die aktuelle Auswahl, verfuegbare und blockierte
+SurfaceIds sowie blockierte Auswahlwuensche. Aktuell kann nur
+`restarbeiten.ui.main` ausgewaehlt sein; PDF/Plan, unbekannte SurfaceIds,
+Wildcards und leere IDs bleiben blockiert. Es gibt keine echte Umschaltung,
+keine sichtbare UI-Aenderung und keine Persistenz.

@@ -680,6 +680,31 @@ und nicht auswaehlbar. Es gibt keine echte Umschaltung, keine grosse
 Surface-Liste, kein Dropdown, keine Bearbeitung, keinen Drag, kein Resize und
 keine Persistenz.
 
+### G58: SurfaceSelection-State read-only vorbereiten
+
+State-Modul:
+
+- `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionState.js`
+
+Read-only Datenfluss:
+
+```text
+buildReadonlySurfaceSelectionState(...)
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> visibleInEditor-Pruefung
+-> SurfaceAdapterCatalog
+-> read-only SurfaceSelection-State
+```
+
+Status nach G58: Der interne State beschreibt `selectedSurfaceId`,
+`availableSurfaceIds`, `blockedSurfaceIds`, `readonly` und ob ein
+Auswahlwunsch erlaubt ist. Aktuell kann nur `restarbeiten.ui.main` ausgewaehlt
+sein. `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds,
+Wildcards und leere IDs bleiben blockiert. Es gibt keine echte Umschaltung,
+keine sichtbare UI-Aenderung, keine Bearbeitung, keinen Drag, kein Resize und
+keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

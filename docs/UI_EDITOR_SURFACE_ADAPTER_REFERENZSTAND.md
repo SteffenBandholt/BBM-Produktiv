@@ -87,6 +87,9 @@ Editorpanel dieses Modell sichtbar, aber nur als kompakte read-only Anzeige fuer
 Seit G57 ist diese Anzeige in
 `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md` als stabiler
 read-only Referenzstand abgeschlossen.
+Seit G58 ist ein interner read-only SurfaceSelection-State vorbereitet. Er
+bleibt an Katalog und SurfacePolicy gebunden und aktiviert keine echte
+Umschaltung.
 
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
@@ -172,6 +175,17 @@ Editorpanel im BBM-Launcher
 -> kompakte read-only Anzeige fuer restarbeiten.ui.main
 ```
 
+SurfaceSelection-State seit G58:
+
+```text
+BBM-Test / spaeter Host-Aufruf
+-> buildReadonlySurfaceSelectionState(...)
+-> SurfaceSelectionModel
+-> SurfaceAdapterCatalog
+-> SurfacePolicy
+-> read-only SurfaceSelection-State
+```
+
 ## Sicherheitsgrenzen
 
 - Keine Wildcard.
@@ -185,6 +199,7 @@ Editorpanel im BBM-Launcher
 - Keine grosse neue Panel-Sektion.
 - Keine automatische Surface-Liste.
 - SurfaceSelection ist nur read-only sichtbar angebunden.
+- SurfaceSelection-State ist nur read-only vorbereitet.
 - Keine Surface-Umschaltung.
 - Keine PDF-/Plan-Bearbeitung.
 - Keine PDF-/Canvas-Renderlogik.

@@ -10,6 +10,8 @@ neue Launcher-Funktion.
 
 Seit G57 ist dieser sichtbare read-only Stand als Referenz dokumentiert:
 `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md`.
+Seit G58 ist zusaetzlich ein interner read-only SurfaceSelection-State
+vorbereitet: `docs/UI_EDITOR_SURFACE_SELECTION_STATE_READONLY.md`.
 
 ## Aktueller Modellstand
 
@@ -81,6 +83,16 @@ Editorpanel im BBM-Launcher
 -> kompakte read-only Surface-Auswahl im bestehenden Panel
 ```
 
+## Datenfluss State-Vorbereitung
+
+```text
+buildReadonlySurfaceSelectionState(...)
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> read-only SurfaceSelection-State
+```
+
 ## Sicherheitsgrenzen
 
 Guardrail-Begriff: sichtbare read-only Auswahl.
@@ -88,6 +100,7 @@ Guardrail-Begriff: keine PDF-/Plan-Surface sichtbar.
 
 - Sichtbare read-only Auswahl nur fuer `restarbeiten.ui.main`.
 - Keine Umschaltung.
+- SurfaceSelection-State ist nur vorbereitet.
 - Keine Dropdown-/Listen-UI.
 - Keine PDF-/Plan-Surface sichtbar.
 - Keine Bearbeitung.

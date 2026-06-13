@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- SurfaceSelection-State read-only vorbereitet:
+  - G58 legt `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionState.js` als defensives read-only State-Modul an.
+  - Der State erlaubt aktuell nur `restarbeiten.ui.main` als ausgewaehlte Surface und fuehrt `restarbeiten.ui.main` als einzige verfuegbare SurfaceId.
+  - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, Wildcards und leere IDs werden als Auswahlwunsch blockiert.
+  - Es gibt keine echte Umschaltung, keine neue sichtbare UI, keine Launcher-Produktivintegration, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
+  - Dokumentiert ist der Stand in `docs/UI_EDITOR_SURFACE_SELECTION_STATE_READONLY.md`.
+
 - Surface-Auswahl read-only im Editorpanel als Referenzstand abgeschlossen:
   - G57 dokumentiert den G56-Stand in `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md`.
   - Referenzstand: kompakte read-only Surface-Auswahl fuer `restarbeiten.ui.main` mit Label `Restarbeiten`; SurfaceInfo bleibt direkt darunter sichtbar.

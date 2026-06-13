@@ -1,0 +1,103 @@
+# UI-Editor SurfaceSelection-State read-only
+
+## Kurzfazit
+
+Der SurfaceSelection-State ist read-only vorbereitet. Er beschreibt intern,
+welche Surface aktuell ausgewaehlt ist, welche SurfaceIds im Editor ueberhaupt
+auswaehlbar waeren und welche Auswahlwuensche blockiert werden. Er aktiviert
+keine echte Umschaltung, keine neue sichtbare UI und keine Persistenz.
+
+## Aktueller State
+
+```js
+{
+  selectedSurfaceId: "restarbeiten.ui.main",
+  requestedSurfaceId: "",
+  readonly: true,
+  availableSurfaceIds: ["restarbeiten.ui.main"],
+  blockedSurfaceIds: [
+    "pdf.plan.page.1",
+    "plan.canvas.default"
+  ],
+  selectionAllowed: true,
+  reason: "readonly-single-surface"
+}
+```
+
+Aktuell kann nur `restarbeiten.ui.main` ausgewaehlt sein. Das Label der
+sichtbaren read-only Auswahl bleibt `Restarbeiten`.
+
+## Blockierte Auswahlwuensche
+
+Diese SurfaceIds duerfen nicht ausgewaehlt werden:
+
+```text
+pdf.plan.page.1
+plan.canvas.default
+unbekannte SurfaceIds
+*
+leere IDs
+```
+
+Wenn eine blockierte SurfaceId als Wunsch uebergeben wird, wird sie nicht
+ausgewaehlt. Der State faellt defensiv auf den einzigen erlaubten Pilot
+`restarbeiten.ui.main` zurueck, sofern dieser im aktuellen read-only Modell
+verfuegbar ist.
+
+## Datenfluss
+
+```text
+BBM-Test / spaeter Host-Aufruf
+-> buildReadonlySurfaceSelectionState(...)
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> visibleInEditor-Pruefung
+-> SurfaceAdapterCatalog
+-> read-only SurfaceSelection-State
+```
+
+Der State ist nur Vorbereitung. Der BBM-Launcher nutzt ihn noch nicht
+produktiv; die sichtbare G56-Auswahl bleibt unveraendert.
+
+## Sicherheitsgrenzen
+
+Guardrail-Begriff: kein Drag.
+Guardrail-Begriff: kein Resize.
+Guardrail-Begriff: keine Persistenz.
+
+- Read-only.
+- Keine echte Umschaltung.
+- Keine Dropdown-/Listen-UI mit weiteren Optionen.
+- Keine weitere Surface sichtbar oder auswaehlbar.
+- Kein Drag.
+- Kein Resize.
+- Keine Persistenz.
+- Kein `localStorage`.
+- Kein `writeFile`.
+- Kein IPC-Schreibweg.
+- Keine DB-Aenderung.
+- Keine Registry-Aenderung.
+- Keine Fachlogik.
+- Kein Bare-Package-Import im Renderer.
+- UI-Editor-kit speichert nicht.
+- BBM bleibt Host fuer Rechte, Scopes, Persistenz, DB/IPC und Fachlogik.
+
+## Ausdruecklich nicht aktiviert
+
+- Keine Produktivintegration im Launcher.
+- Keine sichtbare UI-Aenderung.
+- Keine Surface-Umschaltung.
+- Keine PDF-/Canvas-/Plan-Surface sichtbar oder auswaehlbar.
+- Keine Bearbeitungsbuttons.
+- Keine Drag-/Resize-Aktivierung.
+- Keine Speicherlogik.
+
+## Testreferenz
+
+- `node scripts/tests/surfaceSelectionState.test.cjs`
+- `node scripts/tests/surfaceSelectionModel.test.cjs`
+- `node scripts/tests/surfacePolicy.test.cjs`
+- `node scripts/tests/surfaceAdapterCatalog.test.cjs`
+- `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+- `npm test`
+- `git diff --check`

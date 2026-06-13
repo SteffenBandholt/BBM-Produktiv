@@ -13,6 +13,9 @@ Seit G56 nutzt das Editorpanel das daraus abgeleitete SurfaceSelection-Modell
 sichtbar, aber nur read-only fuer `restarbeiten.ui.main`.
 Seit G57 ist diese sichtbare read-only Surface-Auswahl als Referenzstand in
 `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md` dokumentiert.
+Seit G58 ist ein interner read-only SurfaceSelection-State vorbereitet. Er
+nutzt dieselbe `visibleInEditor`-Grenze und macht keine weitere Surface
+sichtbar.
 
 ## Aktuelle Policy
 
@@ -110,6 +113,16 @@ Editorpanel im BBM-Launcher
 -> kompakte read-only Anzeige fuer restarbeiten.ui.main
 ```
 
+Read-only SurfaceSelection-State seit G58:
+
+```text
+buildReadonlySurfaceSelectionState(...)
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> blockierte Auswahlwuensche
+-> read-only State
+```
+
 ## Sicherheitsgrenzen
 
 - Keine globale Freigabe.
@@ -123,6 +136,7 @@ Editorpanel im BBM-Launcher
 - `canPersist: false` fuer alle bekannten SurfaceIds.
 - Sichtbare Surface-Auswahl nur read-only fuer `restarbeiten.ui.main`.
 - Keine Surface-Umschaltung.
+- SurfaceSelection-State nur intern vorbereitet.
 - Keine automatische Surface-Liste.
 - SurfaceSelection ist nur als read-only Anzeige angebunden.
 - Nur kompakte read-only SurfaceInfo fuer `restarbeiten.ui.main`.

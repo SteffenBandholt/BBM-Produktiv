@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.78 abgeschlossen: SurfaceSelection-State read-only vorbereitet; nur `restarbeiten.ui.main` kann ausgewaehlt sein, PDF/Plan, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert, ohne echte Umschaltung oder Persistenz.
 - K19.77 abgeschlossen: Surface-Auswahl read-only im Editorpanel als Referenzstand dokumentiert; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne echte Umschaltung, Dropdown, Drag, Resize oder Persistenz.
 - K19.76 abgeschlossen: Surface-Auswahl read-only im Editorpanel sichtbar; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne Umschaltung, PDF/Plan-Freigabe, Drag, Resize oder Persistenz.
 - K19.75 abgeschlossen: Surface-Auswahlmodell read-only vorbereitet; Modell enthaelt aktuell nur `restarbeiten.ui.main`, ohne sichtbare Auswahl, PDF/Plan-Freigabe, Drag, Resize oder Persistenz.
@@ -156,6 +157,14 @@ Aktueller Stand:
 - [x] K19.75 Surface-Auswahlmodell read-only vorbereiten
 - [x] K19.76 Surface-Auswahl read-only im Editorpanel sichtbar machen
 - [x] K19.77 Surface-Auswahl read-only im Editorpanel als Referenzstand abschliessen
+- [x] K19.78 SurfaceSelection-State read-only vorbereiten
+
+## Statusupdate K19.78
+- `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionState.js` baut einen defensiven read-only SurfaceSelection-State.
+- Der State enthaelt `selectedSurfaceId`, `requestedSurfaceId`, `availableSurfaceIds`, `blockedSurfaceIds`, `readonly`, `selectionAllowed` und `reason`.
+- Aktuell kann nur `restarbeiten.ui.main` ausgewaehlt sein.
+- `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, Wildcards und leere IDs bleiben blockiert.
+- Keine echte Umschaltung, keine sichtbare UI-Aenderung, keine Launcher-Produktivintegration, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
 
 ## Statusupdate K19.77
 - `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md` dokumentiert den stabilen read-only Stand der kompakten Surface-Auswahl im Editorpanel.
