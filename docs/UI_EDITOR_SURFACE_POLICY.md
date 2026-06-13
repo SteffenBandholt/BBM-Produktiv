@@ -11,6 +11,8 @@ read-only SurfaceInfo im Editorpanel sichtbar. Seit G54 ist dieser Stand in
 abgeschlossen.
 Seit G56 nutzt das Editorpanel das daraus abgeleitete SurfaceSelection-Modell
 sichtbar, aber nur read-only fuer `restarbeiten.ui.main`.
+Seit G57 ist diese sichtbare read-only Surface-Auswahl als Referenzstand in
+`docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md` dokumentiert.
 
 ## Aktuelle Policy
 

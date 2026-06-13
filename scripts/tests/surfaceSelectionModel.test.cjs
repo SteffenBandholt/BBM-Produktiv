@@ -9,6 +9,7 @@ const CATALOG_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/surfaceAdapters
 const POLICY_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/surfaceAdapters/surfacePolicy.js");
 const LAUNCHER_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
 const DOC_PATH = path.join(REPO_ROOT, "docs/UI_EDITOR_SURFACE_SELECTION_READONLY.md");
+const REFERENCE_DOC_PATH = path.join(REPO_ROOT, "docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md");
 
 function assertNoStorageOrWritePath(source, label) {
   for (const forbidden of [
@@ -130,6 +131,24 @@ async function runSurfaceSelectionModelTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `SurfaceSelection-Dokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("SurfaceSelectionModel: Referenzdokument enthaelt Kernbegriffe", () => {
+    assert.equal(fs.existsSync(REFERENCE_DOC_PATH), true, "SurfaceSelection-Referenzdokument fehlt.");
+    const docSource = fs.readFileSync(REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "read-only",
+      "keine echte Umschaltung",
+      "kein Drag",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `SurfaceSelection-Referenzdokument enthaelt ${required} nicht.`);
     }
   });
 }

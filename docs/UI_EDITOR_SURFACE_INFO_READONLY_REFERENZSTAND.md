@@ -8,6 +8,9 @@ read-only Referenzstand abgeschlossen. Sichtbar ist nur der Pilot
 Elementanzahl. Seit G56 steht darueber zusaetzlich eine kompakte read-only
 Surface-Auswahl fuer denselben Pilot. Es gibt keine Umschaltung, keine
 Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
+Seit G57 ist die Surface-Auswahl in
+`docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md` als eigener
+read-only Referenzstand abgeschlossen.
 
 ## Aktueller read-only Stand
 

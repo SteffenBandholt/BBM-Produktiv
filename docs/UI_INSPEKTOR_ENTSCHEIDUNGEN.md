@@ -196,3 +196,9 @@ dem Label `Restarbeiten`. PDF-/Plan-Surfaces, unbekannte SurfaceIds und
 Wildcards bleiben unsichtbar; es gibt keine Surface-Umschaltung, keine
 Dropdown-/Listen-UI, keine Bearbeitung, keinen Drag, kein Resize und keine
 Persistenz.
+
+**Status nach G57:** Der sichtbare G56-Stand ist als Referenzstand
+abgeschlossen. `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md`
+dokumentiert die sichtbare Grenze, den Datenfluss, Policy-Grenzen,
+Sicherheitsgrenzen und Nicht-Ziele. Es wurde keine Produktivlogik geaendert und
+keine weitere Surface sichtbar gemacht.

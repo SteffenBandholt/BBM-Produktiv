@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Surface-Auswahl read-only im Editorpanel als Referenzstand abgeschlossen:
+  - G57 dokumentiert den G56-Stand in `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md`.
+  - Referenzstand: kompakte read-only Surface-Auswahl fuer `restarbeiten.ui.main` mit Label `Restarbeiten`; SurfaceInfo bleibt direkt darunter sichtbar.
+  - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben unsichtbar und nicht auswaehlbar.
+  - Keine neue Produktivlogik, keine echte Umschaltung, keine Dropdown-/Listen-UI, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
+  - Keine Electron-Sichtpruefung noetig, weil nur Doku und Guardrail-Test geaendert wurden.
+
 - Surface-Auswahl read-only im Editorpanel sichtbar:
   - G56 bindet das bestehende read-only SurfaceSelection-Modell im BBM-Launcher an das Editorpanel an.
   - Sichtbar ist ausschliesslich `restarbeiten.ui.main` mit dem Label `Restarbeiten`.

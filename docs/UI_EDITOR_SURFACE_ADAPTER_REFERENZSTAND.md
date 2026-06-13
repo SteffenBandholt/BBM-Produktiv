@@ -84,6 +84,9 @@ Seit G55 existiert zusaetzlich ein read-only SurfaceSelection-Modell unter
 Katalog nur zusammen mit der SurfacePolicy. Seit G56 nutzt das bestehende
 Editorpanel dieses Modell sichtbar, aber nur als kompakte read-only Anzeige fuer
 `restarbeiten.ui.main`.
+Seit G57 ist diese Anzeige in
+`docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md` als stabiler
+read-only Referenzstand abgeschlossen.
 
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese

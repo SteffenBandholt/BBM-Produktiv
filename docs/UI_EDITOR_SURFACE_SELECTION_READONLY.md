@@ -8,6 +8,9 @@ Auswahl zeigt aktuell ausschliesslich den Pilot `restarbeiten.ui.main` als
 `Restarbeiten`. Sie aktiviert keine Umschaltung, keine Bearbeitung und keine
 neue Launcher-Funktion.
 
+Seit G57 ist dieser sichtbare read-only Stand als Referenz dokumentiert:
+`docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md`.
+
 ## Aktueller Modellstand
 
 Die SurfaceSelection wird aus zwei hostseitigen Quellen abgeleitet:

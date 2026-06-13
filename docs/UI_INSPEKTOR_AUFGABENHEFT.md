@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.77 abgeschlossen: Surface-Auswahl read-only im Editorpanel als Referenzstand dokumentiert; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne echte Umschaltung, Dropdown, Drag, Resize oder Persistenz.
 - K19.76 abgeschlossen: Surface-Auswahl read-only im Editorpanel sichtbar; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne Umschaltung, PDF/Plan-Freigabe, Drag, Resize oder Persistenz.
 - K19.75 abgeschlossen: Surface-Auswahlmodell read-only vorbereitet; Modell enthaelt aktuell nur `restarbeiten.ui.main`, ohne sichtbare Auswahl, PDF/Plan-Freigabe, Drag, Resize oder Persistenz.
 - K19.74 abgeschlossen: SurfaceInfo read-only im Editorpanel als Referenzstand dokumentiert; sichtbar bleibt nur `restarbeiten.ui.main`, PDF/Plan und unbekannte SurfaceIds bleiben unsichtbar, ohne neue Produktivlogik.
@@ -154,6 +155,14 @@ Aktueller Stand:
 - [x] K19.74 SurfaceInfo read-only im Editorpanel als Referenzstand abschliessen
 - [x] K19.75 Surface-Auswahlmodell read-only vorbereiten
 - [x] K19.76 Surface-Auswahl read-only im Editorpanel sichtbar machen
+- [x] K19.77 Surface-Auswahl read-only im Editorpanel als Referenzstand abschliessen
+
+## Statusupdate K19.77
+- `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md` dokumentiert den stabilen read-only Stand der kompakten Surface-Auswahl im Editorpanel.
+- Sichtbar und auswaehlbar bleibt ausschliesslich `restarbeiten.ui.main` mit dem Label `Restarbeiten`.
+- `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben unsichtbar und nicht auswaehlbar.
+- Die SurfaceInfo bleibt direkt unter der Surface-Auswahl sichtbar.
+- Keine echte Umschaltung, keine grosse Surface-Liste, kein Dropdown, keine Bearbeitung, kein Drag, kein Resize, keine Persistenz und keine neue Produktivlogik.
 
 ## Statusupdate K19.76
 - `BbmUiEditorRuntimeLauncher.js` nutzt das read-only SurfaceSelection-Modell fuer eine kompakte Anzeige im bestehenden Editorpanel.

@@ -666,6 +666,20 @@ Umschaltung, keine Dropdown-/Listen-UI, keine Bearbeitung, keinen Drag, kein
 Resize und keine Persistenz. Die SurfaceInfo bleibt als separate read-only Info
 erhalten.
 
+### G57: Surface-Auswahl read-only als Referenzstand abschliessen
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md`
+
+Status nach G57: Der G56-Stand ist dokumentarisch und testseitig als stabiler
+read-only Referenzstand abgeschlossen. Sichtbar bleibt nur
+`restarbeiten.ui.main`/`Restarbeiten`; `pdf.plan.page.1`,
+`plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben unsichtbar
+und nicht auswaehlbar. Es gibt keine echte Umschaltung, keine grosse
+Surface-Liste, kein Dropdown, keine Bearbeitung, keinen Drag, kein Resize und
+keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,
