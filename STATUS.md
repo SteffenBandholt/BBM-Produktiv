@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- SurfaceAdapter-Katalog read-only im Launcher vorbereitet:
+  - G51 ergaenzt im BBM-Launcher den testseitigen Helper `buildReadonlySurfaceModelForLauncher(surfaceId, input)`.
+  - Der Helper nutzt den zentralen `SurfaceAdapterCatalog` read-only und kann Modelle fuer `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default` abrufen/validieren.
+  - Unbekannte SurfaceIds bleiben mit `UNKNOWN_SURFACE_ADAPTER` blockiert; es gibt keine Wildcard und keinen Default-Adapter.
+  - Es gibt keine sichtbare Surface-Anzeige, keine neue Panel-Sektion, keine automatische Surface-Liste und keine produktive Surface-Auswahl.
+  - Keine PDF-/Canvas-/Plan-Bearbeitung, kein Drag, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
+
 - SurfaceAdapter-Katalog als read-only Referenzstand abgeschlossen:
   - G50 dokumentiert den stabilen Katalogstand in `docs/UI_EDITOR_SURFACE_ADAPTER_REFERENZSTAND.md`.
   - Referenzstand: SurfaceRuntime-Bridge, Restarbeiten-UI-SurfaceAdapter, PDF-/Plan-SurfaceAdapter-Skelett und zentraler SurfaceAdapterCatalog sind read-only vorbereitet.

@@ -109,15 +109,17 @@ async function runSurfaceAdapterCatalogTests(run) {
     assert.equal(result.validation.errors[0].code, "UNKNOWN_SURFACE_ADAPTER");
   });
 
-  await run("SurfaceAdapter-Katalog: bleibt ohne Launcher-Produktivnutzung und Speicherpfad", () => {
+  await run("SurfaceAdapter-Katalog: bleibt ohne sichtbare Launcher-Produktivnutzung und Speicherpfad", () => {
     const catalogSource = fs.readFileSync(CATALOG_PATH, "utf8");
     const launcherSource = fs.readFileSync(LAUNCHER_PATH, "utf8");
 
     assertNoStorageOrWritePath(catalogSource, "SurfaceAdapter-Katalog");
     assert.equal(catalogSource.includes("ui-editor-kit/runtime/surface"), false);
     assert.equal(catalogSource.includes("uiEditorKitSurfaceRuntimeBridge.js"), true);
-    assert.equal(launcherSource.includes("surfaceAdapterCatalog"), false);
-    assert.equal(launcherSource.includes("surfaceAdapters/surfaceAdapterCatalog"), false);
+    assert.equal(launcherSource.includes('from "./surfaceAdapters/surfaceAdapterCatalog.js"'), true);
+    assert.equal(launcherSource.includes("data-ui-editor-surface-list"), false);
+    assert.equal(launcherSource.includes("data-ui-editor-surface-model"), false);
+    assert.equal(launcherSource.includes("renderSurface"), false);
   });
 
   await run("SurfaceAdapter-Katalog: beruehrt keine PDF-/Canvas-Renderpfade", () => {

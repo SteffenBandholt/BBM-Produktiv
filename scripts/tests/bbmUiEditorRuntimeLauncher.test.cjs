@@ -500,6 +500,88 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(viewModel.canDiscard, true);
   });
 
+  await run("BBM UI-Editor-Runtime: SurfaceAdapter-Katalog bleibt read-only testseitig abrufbar", async () => {
+    const mod = await loadRuntime();
+
+    assert.equal(typeof mod.buildReadonlySurfaceModelForLauncher, "function");
+
+    const restarbeitenResult = mod.buildReadonlySurfaceModelForLauncher("restarbeiten.ui.main", {
+      hostAdapter: {
+        getRegistry() {
+          return [
+            {
+              id: "restarbeiten.root",
+              name: "Restarbeiten",
+              visible: true,
+              allowedOps: ["inspect", "hide", "show"],
+              lockedOps: [],
+            },
+          ];
+        },
+        getCurrentLayoutState() {
+          return [];
+        },
+      },
+    });
+    assert.equal(restarbeitenResult.ok, true);
+    assert.equal(restarbeitenResult.surfaceModel.surfaceId, "restarbeiten.ui.main");
+    assert.equal(restarbeitenResult.surfaceModel.surfaceType, "ui-screen");
+
+    const pdfResult = mod.buildReadonlySurfaceModelForLauncher("pdf.plan.page.1", { pageNumber: 9 });
+    assert.equal(pdfResult.ok, true);
+    assert.equal(pdfResult.surfaceModel.surfaceId, "pdf.plan.page.1");
+    assert.equal(pdfResult.surfaceModel.surfaceType, "pdf-page");
+    assert.equal(pdfResult.surfaceModel.coordinateSystem, "pdf-points");
+    assert.equal(pdfResult.surfaceModel.pageNumber, 1);
+
+    const planResult = mod.buildReadonlySurfaceModelForLauncher("plan.canvas.default");
+    assert.equal(planResult.ok, true);
+    assert.equal(planResult.surfaceModel.surfaceId, "plan.canvas.default");
+    assert.equal(planResult.surfaceModel.surfaceType, "plan");
+    assert.equal(planResult.surfaceModel.coordinateSystem, "canvas-pixels");
+
+    const unknownResult = mod.buildReadonlySurfaceModelForLauncher("pdf.plan.page.2");
+    assert.equal(unknownResult.ok, false);
+    assert.equal(unknownResult.surfaceModel, null);
+    assert.equal(unknownResult.validation.errors[0].code, "UNKNOWN_SURFACE_ADAPTER");
+  });
+
+  await run("BBM UI-Editor-Runtime: SurfaceAdapter-Katalog erzeugt keine sichtbare Surface-Anzeige", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "sample.screen",
+      registryResolver: () => ({
+        uiScope: "sample.screen",
+        moduleId: "sample",
+        elements: [],
+      }),
+    });
+
+    button.click();
+
+    const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    const renderedText = getRenderedText(doc.body);
+    assert.equal(source.includes('from "./surfaceAdapters/surfaceAdapterCatalog.js"'), true);
+    assert.equal(source.includes("localStorage"), false);
+    assert.equal(source.includes("writeFile"), false);
+    assert.equal(source.includes("ipcRenderer"), false);
+    assert.equal(source.includes("ipcMain"), false);
+    assert.equal(source.includes(".prepare("), false);
+    assert.equal(source.includes(".run("), false);
+    assert.equal(doc.querySelector('[data-ui-editor-surface-list="true"]'), null);
+    assert.equal(doc.querySelector('[data-ui-editor-surface-model="true"]'), null);
+    assert.equal(renderedText.includes("SurfaceAdapterCatalog"), false);
+    assert.equal(renderedText.includes("pdf.plan.page.1"), false);
+    assert.equal(renderedText.includes("plan.canvas.default"), false);
+  });
+
   await run("BBM UI-Editor-Runtime: Hidden-Elements-Button-ViewModel bleibt kompakt und neutral", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();

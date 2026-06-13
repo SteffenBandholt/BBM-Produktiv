@@ -66,6 +66,8 @@ Der zentrale SurfaceAdapter-Katalog ist seit G49 read-only vorhanden. Er listet 
 
 Der Katalogstand ist seit G50 als read-only Referenz dokumentiert. Das Referenzdokument beschreibt Adapter, bekannte SurfaceIds, blockierte unbekannte SurfaceIds, Datenfluss, Sicherheitsgrenzen, Nicht-Ziele und moegliche Folgepakete.
 
+Der BBM-Launcher kann den Katalog seit G51 read-only testseitig ueber `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese Hilfsfunktion ist nicht an den sichtbaren Renderpfad angebunden und erzeugt keine Panel- oder Surface-Anzeige.
+
 Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
 
 Die Panel-/Drag-Baseline des BBM-Launchers ist seit G42 testseitig abgesichert: Das bestehende Preview-Panel wird weiterhin ueber die vorhandene Launcher-Logik geoeffnet, geschlossen, verschoben, defensiv im Viewport normalisiert und zurueckgesetzt. Hidden-Elements-Button/Popover bleiben Teil derselben Baseline.
@@ -517,6 +519,35 @@ Harte Grenzen:
 - BBM bleibt Host fuer Rechte, Scopes, Persistenz, DB/IPC und Fachlogik.
 
 Status nach G50: Der SurfaceAdapter-Katalog ist dokumentarisch als stabiler read-only Referenzstand abgeschlossen. G50 aktiviert keine neue Produktivlogik.
+
+### G51: SurfaceAdapter-Katalog read-only im Launcher vorbereiten
+
+Launcher-Hilfsfunktion:
+
+- `buildReadonlySurfaceModelForLauncher(surfaceId, input)`
+
+Testseitig gepruefte SurfaceIds:
+
+```text
+restarbeiten.ui.main
+pdf.plan.page.1
+plan.canvas.default
+```
+
+Grenzen:
+
+- Unbekannte SurfaceIds bleiben mit `UNKNOWN_SURFACE_ADAPTER` blockiert.
+- Keine Wildcard.
+- Kein Default-Adapter.
+- Keine sichtbare Surface-Anzeige.
+- Keine neue Panel-Sektion.
+- Keine produktive Surface-Auswahl.
+- Keine PDF-/Canvas-/Plan-Bearbeitung.
+- Kein Drag.
+- Keine Persistenz.
+- Keine PDF-/Plan-Renderintegration.
+
+Status nach G51: Der Launcher kann den SurfaceAdapter-Katalog read-only testseitig verwenden. Es ist keine sichtbare Nutzung aktiviert.
 
 ## Nicht-Ziele von G36
 

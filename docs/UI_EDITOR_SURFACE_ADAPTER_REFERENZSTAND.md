@@ -70,6 +70,11 @@ Der SurfaceAdapterCatalog stellt read-only Hilfen bereit:
 Der Katalog ist keine Freigabelogik fuer Produktivnutzung. Er ist nur ein
 kontrollierter Such- und Testpunkt fuer bekannte Adapter.
 
+Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
+`buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
+Hilfsfunktion erzeugt keine sichtbare Surface-Anzeige und aktiviert keine
+produktive Surface-Auswahl.
+
 ## Bekannte SurfaceIds
 
 ```text
@@ -102,12 +107,26 @@ BBM-Test / spaeter Host-Aufruf
 -> Validierung/Normalisierung
 ```
 
+Launcher-Testpfad seit G51:
+
+```text
+BBM-Launcher-Test
+-> buildReadonlySurfaceModelForLauncher(surfaceId, input)
+-> SurfaceAdapterCatalog
+-> konkreter read-only SurfaceAdapter
+-> neutrales SurfaceModel
+-> SurfaceRuntime-Validierung
+```
+
 ## Sicherheitsgrenzen
 
 - Keine Wildcard.
 - Kein Default-Adapter.
 - Unbekannte SurfaceIds blockiert.
 - Keine Produktivnutzung im Launcher.
+- Keine sichtbare Surface-Anzeige im Launcher.
+- Keine neue Panel-Sektion.
+- Keine automatische Surface-Liste.
 - Keine sichtbare UI-Aenderung.
 - Keine PDF-/Plan-Bearbeitung.
 - Keine PDF-/Canvas-Renderlogik.
@@ -126,6 +145,7 @@ BBM-Test / spaeter Host-Aufruf
 ## Ausdruecklich nicht aktiviert
 
 - Keine Launcher-Integration.
+- Keine sichtbare Launcher-Nutzung.
 - Keine produktive Surface-Auswahl.
 - Keine PDF- oder Plan-Bearbeitung.
 - Keine Canvas-Bearbeitung.

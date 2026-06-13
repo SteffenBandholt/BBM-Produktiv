@@ -23,6 +23,7 @@ import {
   buildPanelViewModel,
   calculatePanelDragPosition,
 } from "./uiEditorKitPanelRuntimeBridge.js";
+import { validateSurfaceModelById } from "./surfaceAdapters/surfaceAdapterCatalog.js";
 import { isVisibilityPersistenceAllowedForScope } from "../editorRuntime/host/visibilityPersistenceScopePolicy.js";
 
 void installedLauncherButtonArtifactModule;
@@ -1696,6 +1697,10 @@ function isRuntimeLauncherDevEnabled({ header = null, devEnabled = null } = {}) 
   return false;
 }
 
+function buildReadonlySurfaceModelForLauncher(surfaceId, input = {}) {
+  return validateSurfaceModelById(surfaceId, input);
+}
+
 export async function installBbmUiEditorRuntimeLauncher({
   header = null,
   devEnabled = null,
@@ -1760,6 +1765,7 @@ export {
   getRegisteredElementById,
   handleUiEditorDocumentClick,
   isPreviewOperationAllowed,
+  buildReadonlySurfaceModelForLauncher,
   calculatePreviewPanelDragPositionWithRuntime,
   resolvePreviewTargetElement,
   resetAllPreviewChanges,

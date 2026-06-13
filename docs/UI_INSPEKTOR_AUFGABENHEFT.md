@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.71 abgeschlossen: BBM-Launcher kann den SurfaceAdapter-Katalog read-only testseitig nutzen; es gibt keine sichtbare Surface-Anzeige und keine Produktivnutzung.
 - K19.70 abgeschlossen: SurfaceAdapter-Katalog ist als read-only Referenzstand dokumentiert; bekannte SurfaceIds, Blockaden, Datenfluss und Sicherheitsgrenzen sind festgehalten.
 - K19.69 abgeschlossen: SurfaceAdapter-Katalog ist read-only vorbereitet; bekannte SurfaceIds sind zentral auffindbar und unbekannte SurfaceIds werden kontrolliert blockiert.
 - K19.68 abgeschlossen: PDF-/Plan-Surfaces sind read-only als BBM-Adapter-Skelett vorbereitet; die Modelle validieren ueber die SurfaceRuntime-Bridge, ohne Produktivnutzung, Renderlogik, Drag oder Persistenz.
@@ -142,6 +143,14 @@ Aktueller Stand:
 - [x] K19.68 PDF-/Plan-Surface read-only vorbereiten
 - [x] K19.69 SurfaceAdapter-Katalog read-only vorbereiten
 - [x] K19.70 SurfaceAdapter-Katalog als read-only Referenzstand abschliessen
+- [x] K19.71 SurfaceAdapter-Katalog read-only im Launcher vorbereiten
+
+## Statusupdate K19.71
+- `BbmUiEditorRuntimeLauncher.js` exportiert `buildReadonlySurfaceModelForLauncher(surfaceId, input)` als read-only Testhelfer.
+- Testseitig koennen `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default` als neutrale SurfaceModels abgerufen/validiert werden.
+- Unbekannte SurfaceIds bleiben mit `UNKNOWN_SURFACE_ADAPTER` blockiert; es gibt keine Wildcard und keinen Default-Adapter.
+- Keine sichtbare Surface-Anzeige, keine neue Panel-Sektion, keine automatische Surface-Liste und keine produktive Surface-Auswahl.
+- Keine PDF-/Canvas-/Plan-Bearbeitung, kein Drag, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
 
 ## Statusupdate K19.70
 - `docs/UI_EDITOR_SURFACE_ADAPTER_REFERENZSTAND.md` dokumentiert den stabilen read-only SurfaceAdapter-Stand.
