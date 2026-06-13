@@ -59,6 +59,8 @@ Der erste BBM-SurfaceAdapter-Pilot ist seit G39 read-only vorhanden. Er ueberset
 
 Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
 
+Die Panel-/Drag-Baseline des BBM-Launchers ist seit G42 testseitig abgesichert: Das bestehende Preview-Panel wird weiterhin ueber die vorhandene Launcher-Logik geoeffnet, geschlossen, verschoben, defensiv im Viewport normalisiert und zurueckgesetzt. Hidden-Elements-Button/Popover bleiben Teil derselben Baseline. Die DragRuntime-Bridge ist nur testseitiger Vergleichspunkt; sie wird noch nicht produktiv importiert oder aufgerufen.
+
 BBM besitzt weiterhin:
 
 - konkrete Scopes,
@@ -328,18 +330,23 @@ Status: read-only Pilot fuer `restarbeiten.ui.main` erledigt. Noch keine DOM-Ver
 
 Status: erledigt im UI-Editor-kit als neutrale Rechenruntime ohne DOM-Events und ohne Persistenz.
 
-### G41: BBM-Panel-Drag optional auf Kit-Hilfe umstellen
+### G41: BBM DragRuntime-Bridge pruefen
 
-- nur wenn G40 stabil ist,
-- Electron-Sichtpruefung erforderlich,
+- renderer-kompatible DragRuntime-Bridge in BBM,
+- Importvertrag und neutrale Drag-Rechnung testen,
+- keine produktive Launcher-Nutzung,
 - keine Persistenz- oder Scope-Aenderung.
 
 Status nach G41: Noch keine Umstellung. Zunaechst ist nur die DragRuntime-Bridge in BBM testbar; produktive Panel-/Launcher-Nutzung bleibt separat.
 
-### G42: PDF-/Plan-Surface nur dokumentarisch spezifizieren
+### G42: Panel-/Drag-Baseline im BBM-Launcher absichern
 
-- Koordinatensysteme, Bounds, Element-IDs und Freigabegrenzen festlegen,
-- keine PDF-Funktion aktivieren.
+- bestehende Launcher-Panel-Initialisierung, Open/Close und Positionsnormalisierung testseitig absichern,
+- Hidden-Elements-Button/Popover als unveraenderte Panel-Baseline mitpruefen,
+- DragRuntime-Bridge nur testseitig als Vergleichspunkt nutzen,
+- keine Produktivnutzung der DragRuntime und keine Event-/DOM-Aenderung.
+
+Status nach G42: Baseline ist abgesichert. Die Panel-Drag-Rechnung liegt weiterhin im BBM-Launcher; eine spaetere kontrollierte Berechnungsauslagerung in die DragRuntime bleibt ein eigenes Folgepaket mit eigener Sichtpruefung.
 
 ## Nicht-Ziele von G36
 

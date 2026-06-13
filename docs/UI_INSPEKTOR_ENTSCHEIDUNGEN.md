@@ -141,3 +141,5 @@
 **Status nach G39:** Ein erster read-only SurfaceAdapter fuer `restarbeiten.ui.main` erzeugt ein neutrales `ui-screen`-Surface-Modell aus HostAdapter-/Registry-Daten und LayoutState. Der Adapter validiert ueber die Kit-Bridge, wird aber nicht produktiv im Launcher genutzt und aktiviert keine Drag-, PDF-, Canvas- oder Persistenzfunktion.
 
 **Status nach G41:** Die DragRuntime existiert im UI-Editor-kit und ist in BBM ueber eine renderer-kompatible Bridge testweise ladbar. BBM nutzt sie noch nicht produktiv; es gibt keine DOM-/Pointer-/Maus-Anbindung, keine echte Verschiebung, keine UI-, PDF-, Canvas- oder Persistenzfunktion.
+
+**Status nach G42:** Die bestehende Panel-/Drag-Baseline im BBM-Launcher ist testseitig abgesichert. Panel-Initialisierung, Open/Close, defensive Positionsnormalisierung, Panel-Reset und Hidden-Elements-Button/Popover bleiben unveraendert. Die DragRuntime bleibt nur testseitig verfuegbar und wird vom Launcher weiterhin nicht produktiv importiert oder aufgerufen; DOM-/Event-Anbindung bleibt Host-/Launcher-Aufgabe.

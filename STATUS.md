@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Panel-/Drag-Baseline im BBM-Launcher abgesichert:
+  - G42 erweitert den bestehenden Launcher-Test um eine Baseline fuer das aktuelle verschiebbare Preview-Panel.
+  - Abgesichert sind Launcher-Initialisierung, Panel-Open/Close, defensive Panel-Positionsnormalisierung mit Viewport-Margin, Panel-Reset, Hidden-Elements-Button/Popover und Preview-Reset beim Deaktivieren.
+  - Die DragRuntime-Bridge ist im Test als verfuegbarer Vergleichspunkt ladbar, wird aber im Launcher weiterhin nicht importiert und nicht produktiv aufgerufen.
+  - Die aktuelle Panel-Drag-Rechnung liegt weiterhin im BBM-Launcher; DOM-/Event-Anbindung bleibt bewusst Host-/Launcher-Aufgabe.
+  - Keine sichtbare UI-Aenderung, keine neue Drag-Aktivierung, keine PDF-/Canvas-/Plan-Aktivierung, keine Persistenz, keine Registry-Aenderung, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg und keine DB-Schreiblogik.
+  - Naechster sinnvoller Schritt ist eine eigene kontrollierte Berechnungsauslagerung, nicht UI-Ausbau.
+
 - UI-Editor-kit DragRuntime in BBM per Bridge pruefbar:
   - G41 legt `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js` als renderer-kompatible Bridge auf `node_modules/ui-editor-kit/src/runtime/drag/index.mjs` an.
   - Der Bridge-Test prueft Bounds-/Delta-Normalisierung und -Validierung, `applyDragDelta(...)`, `clampBoundsToConstraints(...)`, `buildDragResult(...)` und die Coordinate-Systems `css-pixels`, `pdf-points`, `canvas-pixels`.

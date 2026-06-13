@@ -7,6 +7,7 @@ const RUNTIME_PATH = path.join(__dirname, "../../src/renderer/uiEditor/BbmUiEdit
 const PREVIEW_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitPreviewRuntimeBridge.js");
 const PANEL_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js");
 const HIDDEN_ELEMENTS_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitHiddenElementsRuntimeBridge.js");
+const DRAG_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js");
 const BBM_REGISTRY_PATH = path.join(__dirname, "../../src/renderer/uiEditor/bbmUiEditorRegistry.js");
 const CORE_SHELL_PATH = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
 const HOST_CONTRACT_PATH = path.join(__dirname, "../../src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js");
@@ -425,6 +426,28 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     ]) {
       assert.equal(launcherSource.includes(forbidden), false, forbidden);
     }
+  });
+
+  await run("BBM UI-Editor-Runtime: DragRuntime-Bridge bleibt Baseline-Vergleich ohne Launcher-Aktivierung", async () => {
+    assert.equal(fs.existsSync(DRAG_RUNTIME_BRIDGE_PATH), true);
+    const launcherSource = fs.readFileSync(RUNTIME_PATH, "utf8");
+    const bridgeSource = fs.readFileSync(DRAG_RUNTIME_BRIDGE_PATH, "utf8");
+    assert.equal(
+      bridgeSource.trim(),
+      'export * from "../../../node_modules/ui-editor-kit/src/runtime/drag/index.mjs";'
+    );
+    assert.equal(bridgeSource.includes("ui-editor-kit/runtime/drag"), false);
+    assert.equal(launcherSource.includes('from "./uiEditorKitDragRuntimeBridge.js"'), false);
+    assert.equal(launcherSource.includes("ui-editor-kit/runtime/drag"), false);
+    assert.equal(launcherSource.includes("node_modules/ui-editor-kit/src/runtime/drag/index.mjs"), false);
+    assert.equal(launcherSource.includes("applyDragDelta"), false);
+    assert.equal(launcherSource.includes("clampBoundsToConstraints"), false);
+    assert.equal(launcherSource.includes("buildDragResult"), false);
+
+    const dragRuntime = await importEsmFromFile(DRAG_RUNTIME_BRIDGE_PATH);
+    assert.equal(typeof dragRuntime.applyDragDelta, "function");
+    assert.equal(typeof dragRuntime.clampBoundsToConstraints, "function");
+    assert.equal(dragRuntime.isSupportedDragCoordinateSystem("css-pixels"), true);
   });
 
   await run("BBM UI-Editor-Runtime: Panel-ViewModel wird vorbereitend aus Launcher-Daten gebaut", async () => {
@@ -2307,6 +2330,120 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(panel.style.right, "24px");
     assert.equal(panel.style.top, "132px");
     assert.equal(target.style.transform, "translate(5px, 0px)");
+  });
+
+  await run("BBM UI-Editor-Runtime: Panel-Drag-Baseline bleibt Launcher-lokal und ohne Persistenz", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      innerWidth: 360,
+      innerHeight: 260,
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const registry = {
+      uiScope: "sample.screen",
+      moduleId: "sample",
+      elements: [
+        {
+          id: "sample.target",
+          name: "Ziel",
+          type: "field",
+          role: "content",
+          parentId: "sample.root",
+          allowedOps: ["inspect", "move", "hide", "show"],
+          lockedOps: [],
+          previewTargetMode: "self",
+        },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "sample.screen",
+      registryResolver: () => registry,
+    });
+    const target = doc.createElement("div");
+    target.setAttribute("data-ui-editor-id", "sample.target");
+    doc.body.appendChild(target);
+
+    button.click();
+    assert.equal(Boolean(getPreviewPanel(doc)), true);
+    doc.dispatchEvent({ type: "click", target });
+
+    const panel = getPreviewPanel(doc);
+    const header = panel.querySelector('[data-ui-editor-preview-drag-handle="true"]');
+    const hiddenButton = doc.querySelector('[data-ui-editor-hidden-elements-button="true"]');
+    assert.equal(Boolean(panel), true);
+    assert.equal(Boolean(header), true);
+    assert.equal(hiddenButton.textContent, "Ausgeblendete: 0");
+    assert.equal(hiddenButton.disabled, true);
+    panel.offsetWidth = 180;
+    panel.offsetHeight = 120;
+
+    header.dispatchEvent({
+      type: "mousedown",
+      target: header,
+      clientX: 10,
+      clientY: 10,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+      stopPropagation() {
+        this.stopped = true;
+      },
+    });
+    doc.dispatchEvent({
+      type: "mousemove",
+      target: header,
+      clientX: -200,
+      clientY: -200,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+      stopPropagation() {
+        this.stopped = true;
+      },
+    });
+    assert.equal(panel.style.position, "fixed");
+    assert.equal(panel.style.left, "16px");
+    assert.equal(panel.style.top, "16px");
+    assert.equal(panel.style.right, "");
+
+    doc.dispatchEvent({
+      type: "mousemove",
+      target: header,
+      clientX: 900,
+      clientY: 900,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+      stopPropagation() {
+        this.stopped = true;
+      },
+    });
+    assert.equal(panel.style.left, "164px");
+    assert.equal(panel.style.top, "124px");
+    doc.dispatchEvent({ type: "mouseup", target: header });
+
+    getLatestPreviewAction(doc, "hide").click();
+    const enabledHiddenButton = doc.querySelector('[data-ui-editor-hidden-elements-button="true"]');
+    assert.equal(enabledHiddenButton.textContent, "Ausgeblendete: 1");
+    assert.equal(enabledHiddenButton.disabled, false);
+    enabledHiddenButton.click();
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-hidden-elements-popover="true"]')), true);
+
+    getLatestPreviewAction(doc, "panel-reset").click();
+    assert.equal(panel.style.left, "");
+    assert.equal(panel.style.right, "24px");
+    assert.equal(panel.style.top, "132px");
+    assert.equal(target.style.display, "none");
+
+    button.click();
+    assert.equal(Boolean(getPreviewPanel(doc)), false);
+    assert.equal(doc.body.getAttribute("data-ui-editor-active"), "false");
+    assert.equal(target.style.display, "");
+    assert.equal(target.getAttribute("data-ui-editor-preview"), "false");
   });
 
   await run("BBM UI-Editor-Runtime: Erkennungspanel ist verschiebbar und ein-/ausblendbar", async () => {

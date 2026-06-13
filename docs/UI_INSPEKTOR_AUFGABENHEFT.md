@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.63 abgeschlossen: Panel-/Drag-Baseline im BBM-Launcher ist testseitig abgesichert; bestehende Panel-Initialisierung, Open/Close, Positionsnormalisierung, Hidden-Elements-Button/Popover und DragRuntime-Nichtnutzung bleiben unveraendert.
 - K19.62 abgeschlossen: BBM kann die UI-Editor-kit DragRuntime ueber `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js` testweise laden; Bounds, Delta, Apply, Clamp und Coordinate-Systems werden geprueft, ohne produktives Verschieben.
 - K19.61 abgeschlossen: Read-only SurfaceAdapter-Pilot fuer `restarbeiten.ui.main` erzeugt ein neutrales `ui-screen`-Surface-Modell aus Registry plus LayoutState und validiert es ueber die UI-Editor-kit Surface-Bridge; keine Produktivnutzung.
 - K19.60 abgeschlossen: BBM kann die UI-Editor-kit Surface-Runtime ueber `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` testweise laden; `ui-screen` und `pdf-page` werden normalisiert/validiert, ohne Launcher- oder Produktivnutzung.
@@ -126,6 +127,15 @@ Aktueller Stand:
 - [x] K19.60 UI-Editor-kit Surface-Runtime in BBM per Bridge pruefen
 - [x] K19.61 Read-only SurfaceAdapter-Pilot fuer restarbeiten.ui.main vorbereiten
 - [x] K19.62 UI-Editor-kit DragRuntime in BBM per Bridge pruefen
+- [x] K19.63 Panel-/Drag-Baseline im BBM-Launcher absichern
+
+## Statusupdate K19.63
+- `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs` sichert die aktuelle Panel-/Drag-Baseline des BBM-Launchers ab.
+- Geprueft sind Launcher-Initialisierung, Preview-Panel-Open/Close, defensive Panel-Positionsnormalisierung im Viewport, Panel-Reset, Hidden-Elements-Button/Popover und Preview-Reset beim Deaktivieren.
+- `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js` bleibt testseitig ladbar, wird vom Launcher aber weiterhin nicht importiert und nicht produktiv aufgerufen.
+- Die aktuelle Panel-Drag-Rechnung und DOM-/Event-Anbindung bleiben im BBM-Launcher/Host; eine spaetere kontrollierte Berechnungsauslagerung bleibt ein eigenes Folgepaket.
+- Keine sichtbare UI-Aenderung, keine neue Drag-Aktivierung, keine Pointer-/Maus-/DOM-Event-Aenderung, keine PDF-/Canvas-/Plan-Aktivierung, keine Persistenz, keine Registry-Aenderung, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg und keine DB-Schreiblogik.
+- UI-Editor-kit speichert nicht; BBM bleibt Host fuer DOM/Event-Anbindung, Registry, Scopes, Persistenz, Rechte, DB/IPC und Fachlogik.
 
 ## Statusupdate K19.62
 - `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js` ist als renderer-kompatible Bridge auf `node_modules/ui-editor-kit/src/runtime/drag/index.mjs` vorbereitet.
