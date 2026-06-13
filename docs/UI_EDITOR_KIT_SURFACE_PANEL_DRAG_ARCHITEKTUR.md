@@ -359,6 +359,14 @@ Status nach G42: Baseline ist abgesichert. Die Panel-Drag-Rechnung liegt weiterh
 
 Status nach G43: Die reine Positionsberechnung ist kontrolliert ueber die DragRuntime-Bridge angebunden. Event-Anbindung, DOM, Reset und Rendering bleiben Host-/Launcher-Aufgabe; PDF, Canvas, Plan, Registry und Persistenz bleiben unveraendert.
 
+### G44: Panel-Drag-Sichtpruefung als Referenz absichern
+
+- lokale Electron-DEV-App mit `npm start` starten,
+- UI-Editor-Button, Panel-Oeffnen, Panel-Drag, Viewport-Begrenzung, Reset, Schliessen/Wieder-Oeffnen und Hidden-Elements-Bereich sichtbar pruefen,
+- Ergebnis nur dokumentieren, keine weitere Drag-Auslagerung und keine neue Funktion aktivieren.
+
+Status nach G44: Die G43-Umstellung ist sichtbar geprueft. Die DragRuntime uebernimmt weiterhin nur die Positionsberechnung; DOM-/Mouse-Events, Startpositionsmessung, Style-Setzen, Reset, Open/Close und Rendering bleiben im BBM-Launcher. PDF, Canvas, Plan, Registry und Persistenz bleiben unveraendert.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

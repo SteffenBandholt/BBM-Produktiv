@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.65 abgeschlossen: Panel-Drag-Sichtpruefung nach der G43-Umstellung in der lokalen Electron-DEV-App bestanden; Button, Panel-Oeffnen, Drag, Viewport-Begrenzung, Reset, Schliessen/Wieder-Oeffnen und Hidden-Elements-Bereich bleiben sichtbar stabil.
 - K19.64 abgeschlossen: Die reine Preview-Panel-Positionsberechnung im BBM-Launcher nutzt kontrolliert `buildDragResult(...)` aus der UI-Editor-kit DragRuntime-Bridge; DOM-/Event-Anbindung, Reset und Rendering bleiben im Host/Launcher.
 - K19.63 abgeschlossen: Panel-/Drag-Baseline im BBM-Launcher ist testseitig abgesichert; bestehende Panel-Initialisierung, Open/Close, Positionsnormalisierung, Hidden-Elements-Button/Popover und DragRuntime-Nichtnutzung bleiben unveraendert.
 - K19.62 abgeschlossen: BBM kann die UI-Editor-kit DragRuntime ueber `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js` testweise laden; Bounds, Delta, Apply, Clamp und Coordinate-Systems werden geprueft, ohne produktives Verschieben.
@@ -130,6 +131,13 @@ Aktueller Stand:
 - [x] K19.62 UI-Editor-kit DragRuntime in BBM per Bridge pruefen
 - [x] K19.63 Panel-/Drag-Baseline im BBM-Launcher absichern
 - [x] K19.64 Panel-Positionsberechnung kontrolliert ueber UI-Editor-kit DragRuntime vorbereiten
+- [x] K19.65 Panel-Drag-Sichtpruefung nach DragRuntime-Umstellung als Referenz absichern
+
+## Statusupdate K19.65
+- Lokale Electron-Sichtpruefung per `npm start` bestanden.
+- Geprueft wurden UI-Editor-Button sichtbar, Panel oeffnen, Panel verschieben, Panel bleibt im sichtbaren Bereich, Panel zuruecksetzen, Panel schliessen/wieder oeffnen und Hidden-Elements-Bereich im Panel.
+- Die DragRuntime bleibt auf reine Positionsberechnung begrenzt; DOM-/Mouse-Events, Startpositionsmessung, Style-Setzen, Reset, Open/Close und Rendering bleiben im BBM-Launcher.
+- Keine Produktivcode-Aenderung, keine neue UI-Funktion, keine weitere Drag-Auslagerung, keine Persistenz, keine Registry-Aenderung, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB und keine PDF-/Canvas-/Plan-Aktivierung.
 
 ## Statusupdate K19.64
 - `BbmUiEditorRuntimeLauncher.js` importiert `buildDragResult(...)` ausschliesslich ueber `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js`.
