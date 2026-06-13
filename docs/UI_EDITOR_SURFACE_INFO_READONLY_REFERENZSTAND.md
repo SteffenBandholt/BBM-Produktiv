@@ -13,6 +13,8 @@ kein Resize und keine Persistenz.
 - Das bestehende Editorpanel im BBM-Launcher zeigt eine kompakte SurfaceInfo.
 - Die SurfaceInfo ist rein lesend.
 - Die SurfaceInfo wird nur fuer `restarbeiten.ui.main` aufgebaut.
+- Seit G55 existiert zusaetzlich ein read-only SurfaceSelection-Modell fuer eine
+  spaetere Auswahl; es wird im Panel noch nicht sichtbar genutzt.
 - Die SurfaceRuntime des UI-Editor-kit validiert das neutrale SurfaceModel
   ueber die BBM-Bridge.
 - UI-Editor-kit speichert nicht.
@@ -73,6 +75,7 @@ schreibt keine Zustaende.
 - Read-only.
 - Keine Surface-Liste.
 - Keine Surface-Auswahl.
+- Keine sichtbare Auswahl aus dem SurfaceSelection-Modell.
 - Keine Bearbeitung.
 - Kein Drag.
 - Guardrail-Begriff: kein Drag.

@@ -82,6 +82,20 @@ Editorpanel im BBM-Launcher
 -> kompakte SurfaceInfo im Panel
 ```
 
+Read-only SurfaceSelection seit G55:
+
+```text
+buildReadonlySurfaceSelectionModel(...)
+-> getVisibleEditorSurfaceIds(...)
+-> SurfaceAdapterCatalog
+-> SurfacePolicy
+-> SurfaceSelection-Modell
+```
+
+Auch dieses Modell ist an `readable === true` und `visibleInEditor === true`
+gebunden. Aktuell ist dadurch nur `restarbeiten.ui.main` enthalten; PDF/Plan
+und unbekannte SurfaceIds bleiben ausgeschlossen.
+
 ## Sicherheitsgrenzen
 
 - Keine globale Freigabe.
@@ -95,6 +109,7 @@ Editorpanel im BBM-Launcher
 - `canPersist: false` fuer alle bekannten SurfaceIds.
 - Keine sichtbare Surface-Auswahl.
 - Keine automatische Surface-Liste.
+- SurfaceSelection ist nur als read-only Modell vorbereitet.
 - Nur kompakte read-only SurfaceInfo fuer `restarbeiten.ui.main`.
 - Keine produktive Launcher-Nutzung.
 - Keine PDF-/Plan-Bearbeitung.

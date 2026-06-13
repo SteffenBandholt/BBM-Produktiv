@@ -181,3 +181,11 @@ dokumentiert sichtbaren Pilot, nicht sichtbare Surfaces, Policy-Grenzen,
 Datenfluss, Sicherheitsgrenzen und Nicht-Ziele. G54 aktiviert keine neue
 Produktivlogik, keine weitere SurfaceId, keine Surface-Auswahl, keine
 Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
+
+**Status nach G55:** Ein read-only SurfaceSelection-Modell ist vorbereitet.
+`surfaceSelectionModel.js` nimmt nur SurfaceIds auf, die im
+SurfaceAdapterCatalog bekannt sind und laut SurfacePolicy `readable === true`
+sowie `visibleInEditor === true` melden. Aktuell ist dadurch nur
+`restarbeiten.ui.main` enthalten. PDF/Plan, unbekannte SurfaceIds und
+Wildcards bleiben nicht auswaehlbar. Es gibt keine sichtbare Auswahl, keine
+Bearbeitung, keinen Drag, kein Resize und keine Persistenz.

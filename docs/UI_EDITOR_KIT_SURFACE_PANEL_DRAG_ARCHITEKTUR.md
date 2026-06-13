@@ -620,6 +620,31 @@ Referenzstand abgeschlossen. Sichtbar bleibt nur `restarbeiten.ui.main`.
 bleiben unsichtbar. Es gibt keine Surface-Liste, keine Surface-Auswahl, keine
 Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
 
+### G55: Surface-Auswahlmodell read-only vorbereiten
+
+Modell:
+
+- `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionModel.js`
+- `docs/UI_EDITOR_SURFACE_SELECTION_READONLY.md`
+
+Aktueller Datenfluss:
+
+```text
+BBM-Test / spaeter Editorpanel-Host
+-> buildReadonlySurfaceSelectionModel(...)
+-> getVisibleEditorSurfaceIds(...)
+-> SurfaceAdapterCatalog
+-> SurfacePolicy
+-> read-only SurfaceSelection-Modell
+```
+
+Status nach G55: Das Auswahlmodell ist nur vorbereitet. Es enthaelt aktuell
+ausschliesslich `restarbeiten.ui.main`, weil nur diese SurfaceId im Katalog
+bekannt, lesbar und `visibleInEditor: true` ist. `pdf.plan.page.1`,
+`plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben nicht
+auswaehlbar. Es gibt keine sichtbare Auswahl, keine Dropdown-/Listen-UI, keine
+Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

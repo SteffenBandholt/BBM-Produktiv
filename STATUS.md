@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Surface-Auswahlmodell read-only vorbereitet:
+  - G55 legt `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionModel.js` als rein lesendes Modell/ViewModel an.
+  - Das Modell beruecksichtigt nur SurfaceIds, die im SurfaceAdapterCatalog bekannt sind und laut SurfacePolicy `readable === true` sowie `visibleInEditor === true` melden.
+  - Aktuell ist dadurch nur `restarbeiten.ui.main` im Auswahlmodell enthalten; `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben ausgeschlossen.
+  - Es gibt weiterhin keine sichtbare Surface-Auswahl, keine Dropdown-/Listen-UI, keine neue Panel-Sektion und keine Launcher-Produktivnutzung.
+  - Keine Bearbeitung, kein Drag, kein Resize, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB-Aenderung, keine Registry-Aenderung und keine Fachlogik.
+
 - SurfaceInfo read-only im Editorpanel als Referenzstand abgeschlossen:
   - G54 dokumentiert den G53-Stand in `docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md`.
   - Sichtbar bleibt ausschliesslich `restarbeiten.ui.main` mit SurfaceId, SurfaceType und Elementanzahl.

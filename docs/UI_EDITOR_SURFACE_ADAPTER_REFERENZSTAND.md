@@ -79,6 +79,10 @@ SurfaceIds gesperrt; PDF und Plan bleiben `visibleInEditor: false`.
 Seit G54 ist dieser sichtbare SurfaceInfo-Stand als eigener read-only
 Referenzstand dokumentiert:
 `docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md`.
+Seit G55 existiert zusaetzlich ein read-only SurfaceSelection-Modell unter
+`src/renderer/uiEditor/surfaceAdapters/surfaceSelectionModel.js`. Es nutzt den
+Katalog nur zusammen mit der SurfacePolicy und aktiviert keine sichtbare
+Auswahl.
 
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
@@ -142,6 +146,17 @@ Editorpanel im BBM-Launcher
 -> kompakte SurfaceInfo im Panel
 ```
 
+SurfaceSelection-Modell seit G55:
+
+```text
+BBM-Test / spaeter Editorpanel-Host
+-> buildReadonlySurfaceSelectionModel(...)
+-> getVisibleEditorSurfaceIds(...)
+-> SurfaceAdapterCatalog
+-> SurfacePolicy
+-> read-only SurfaceSelection-Modell
+```
+
 ## Sicherheitsgrenzen
 
 - Keine Wildcard.
@@ -155,6 +170,8 @@ Editorpanel im BBM-Launcher
 - Keine sichtbare Surface-Anzeige im Launcher.
 - Keine neue Panel-Sektion.
 - Keine automatische Surface-Liste.
+- SurfaceSelection ist nur als Modell vorbereitet.
+- Keine sichtbare Surface-Auswahl aus dem Modell.
 - Keine sichtbare UI-Aenderung.
 - Keine PDF-/Plan-Bearbeitung.
 - Keine PDF-/Canvas-Renderlogik.

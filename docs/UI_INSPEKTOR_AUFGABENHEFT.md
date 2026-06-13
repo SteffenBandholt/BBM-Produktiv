@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.75 abgeschlossen: Surface-Auswahlmodell read-only vorbereitet; Modell enthaelt aktuell nur `restarbeiten.ui.main`, ohne sichtbare Auswahl, PDF/Plan-Freigabe, Drag, Resize oder Persistenz.
 - K19.74 abgeschlossen: SurfaceInfo read-only im Editorpanel als Referenzstand dokumentiert; sichtbar bleibt nur `restarbeiten.ui.main`, PDF/Plan und unbekannte SurfaceIds bleiben unsichtbar, ohne neue Produktivlogik.
 - K19.73 abgeschlossen: Erste sichtbare read-only SurfaceInfo fuer `restarbeiten.ui.main` im Editorpanel vorbereitet; PDF/Plan bleiben unsichtbar, ohne Surface-Auswahl, Drag, Resize oder Persistenz.
 - K19.72 abgeschlossen: Surface-Rechte-/Policy-Schicht read-only vorbereitet; bekannte SurfaceIds sind nur lesbar, Editor-Sichtbarkeit, Drag, Resize und Persistenz bleiben aus, unbekannte SurfaceIds/Wildcards sind voll blockiert.
@@ -150,6 +151,14 @@ Aktueller Stand:
 - [x] K19.72 Surface-Rechte-/Policy-Schicht read-only vorbereiten
 - [x] K19.73 Erste sichtbare read-only SurfaceInfo fuer Pilot-Surface vorbereiten
 - [x] K19.74 SurfaceInfo read-only im Editorpanel als Referenzstand abschliessen
+- [x] K19.75 Surface-Auswahlmodell read-only vorbereiten
+
+## Statusupdate K19.75
+- `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionModel.js` baut ein read-only SurfaceSelection-Modell aus SurfaceAdapterCatalog und SurfacePolicy.
+- Aufgenommen werden nur SurfaceIds, die bekannt, `readable === true` und `visibleInEditor === true` sind.
+- Aktuell ist nur `restarbeiten.ui.main` im Modell enthalten.
+- `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben nicht auswaehlbar.
+- Keine sichtbare Surface-Auswahl, keine Dropdown-/Listen-UI, keine neue Panel-Sektion, keine Bearbeitung, kein Drag, kein Resize, keine Persistenz und keine Launcher-Produktivnutzung.
 
 ## Statusupdate K19.74
 - `docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md` dokumentiert den stabilen read-only Stand der kompakten SurfaceInfo im Editorpanel.
