@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.68 abgeschlossen: PDF-/Plan-Surfaces sind read-only als BBM-Adapter-Skelett vorbereitet; die Modelle validieren ueber die SurfaceRuntime-Bridge, ohne Produktivnutzung, Renderlogik, Drag oder Persistenz.
 - K19.67 abgeschlossen: Panel/Drag-Umstellung ist als Referenzstand dokumentiert; Datenfluss, PanelRuntime-Helper, Host-Grenzen, Sicherheitsgrenzen und Testreferenzen sind festgehalten.
 - K19.66 abgeschlossen: BBM nutzt fuer die reine Preview-Panel-Positionsberechnung den PanelRuntime-Panel-Drag-Helper ueber `uiEditorKitPanelRuntimeBridge.js`; direkte DragRuntime-Nutzung im Launcher fuer Panel-Positionierung ist entfernt.
 - K19.65 abgeschlossen: Panel-Drag-Sichtpruefung nach der G43-Umstellung in der lokalen Electron-DEV-App bestanden; Button, Panel-Oeffnen, Drag, Viewport-Begrenzung, Reset, Schliessen/Wieder-Oeffnen und Hidden-Elements-Bereich bleiben sichtbar stabil.
@@ -136,6 +137,14 @@ Aktueller Stand:
 - [x] K19.65 Panel-Drag-Sichtpruefung nach DragRuntime-Umstellung als Referenz absichern
 - [x] K19.66 BBM-Launcher auf PanelRuntime-Panel-Drag-Helper umstellen
 - [x] K19.67 Panel/Drag-Umstellung als Referenzstand abschliessen
+- [x] K19.68 PDF-/Plan-Surface read-only vorbereiten
+
+## Statusupdate K19.68
+- `src/renderer/uiEditor/surfaceAdapters/pdfPlanSurfaceAdapter.js` erzeugt ein read-only PDF-Surface-Modell mit `surfaceType: "pdf-page"`, `coordinateSystem: "pdf-points"`, `pageNumber` und leerer `elements`-Liste.
+- Optional erzeugt derselbe Adapter ein read-only Plan-Surface-Modell mit `surfaceType: "plan"`, `coordinateSystem: "canvas-pixels"` und leerer `elements`-Liste.
+- Die Modelle werden ausschliesslich ueber `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` normalisiert und validiert.
+- Keine Launcher-Produktivnutzung, keine sichtbare UI-Aenderung, keine PDF-/Canvas-Renderlogik, kein Drag auf PDF/Plan, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
+- Host bleibt fuer spaetere Rechte, Persistenz und echte PDF-/Planlogik zustaendig; UI-Editor-kit speichert nicht.
 
 ## Statusupdate K19.67
 - `docs/UI_EDITOR_PANEL_DRAG_REFERENZSTAND.md` dokumentiert den stabilen Panel/Drag-Stand.
@@ -203,7 +212,7 @@ Aktueller Stand:
 - Das neutrale Surface-Zielmodell fuer `ui-screen`, `pdf-page` und `canvas-view` ist rein dokumentarisch beschrieben.
 - UI-Editor-kit speichert nicht; Persistenz bleibt Host-seitig und Scope-/Surface-basiert kontrolliert.
 - Keine Produktivlogik, keine UI-Aenderung, keine neue Persistenz, keine neue Scope-Freigabe, keine PDF-Aktivierung, keine Drag-Aenderung und kein Bare-Package-Import im Renderer.
-- Empfohlene Folgepakete: G37 Surface-Modell im Kit, G38 BBM Surface-Bridge, G39 UI-Screen-SurfaceAdapter, G40 DragRuntime, G41 optionale BBM-Panel-Drag-Nutzung, G42 PDF-/Plan-Surface-Spezifikation.
+- Historische Folgepakete G37 bis G48 sind inzwischen bis zum read-only PDF-/Plan-Surface-Skelett umgesetzt; echte PDF-/Plan-Bearbeitung bleibt ein separates spaeteres Paket.
 
 ## Statusupdate K19.58
 - Der Hidden-Elements-Block ist als Referenzstand abgeschlossen.

@@ -39,6 +39,7 @@ const { runUiEditorKitHiddenElementsRuntimeBridgeTests } = require("./tests/uiEd
 const { runUiEditorKitSurfaceRuntimeBridgeTests } = require("./tests/uiEditorKitSurfaceRuntimeBridge.test.cjs");
 const { runUiEditorKitDragRuntimeBridgeTests } = require("./tests/uiEditorKitDragRuntimeBridge.test.cjs");
 const { runRestarbeitenSurfaceAdapterTests } = require("./tests/restarbeitenSurfaceAdapter.test.cjs");
+const { runPdfPlanSurfaceAdapterTests } = require("./tests/pdfPlanSurfaceAdapter.test.cjs");
 const { runUiEditorKitLocalDependencyTests } = require("./tests/uiEditorKitLocalDependency.test.cjs");
 const { runEditorLayoutOverrideModelTests } = require("./tests/editorLayoutOverrideModel.test.cjs");
 const { runUiEditorLayoutOverridesRepoTests } = require("./tests/uiEditorLayoutOverridesRepo.test.cjs");
@@ -179,6 +180,7 @@ async function main() {
   await runUiEditorKitSurfaceRuntimeBridgeTests(run);
   await runUiEditorKitDragRuntimeBridgeTests(run);
   await runRestarbeitenSurfaceAdapterTests(run);
+  await runPdfPlanSurfaceAdapterTests(run);
   await runUiEditorKitLocalDependencyTests(run);
   await runEditorLayoutOverrideModelTests(run);
   await runUiEditorLayoutOverridesRepoTests(run);

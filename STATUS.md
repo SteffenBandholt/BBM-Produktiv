@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- PDF-/Plan-Surface read-only vorbereitet:
+  - G48 legt `src/renderer/uiEditor/surfaceAdapters/pdfPlanSurfaceAdapter.js` als reines Adapter-Skelett an.
+  - Das PDF-Modell ist `surfaceId: "pdf.plan.page.<pageNumber>"`, `surfaceType: "pdf-page"`, `coordinateSystem: "pdf-points"`, `pageNumber` und eine leere `elements`-Liste.
+  - Das optionale Plan-Modell ist `surfaceId: "plan.canvas.default"`, `surfaceType: "plan"`, `coordinateSystem: "canvas-pixels"` und eine leere `elements`-Liste.
+  - Beide Modelle werden ueber `uiEditorKitSurfaceRuntimeBridge.js` normalisiert und validiert.
+  - Keine Launcher-Produktivnutzung, keine sichtbare UI-Aenderung, keine PDF-/Canvas-Renderlogik, kein Drag auf PDF/Plan, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
+
 - Panel/Drag-Umstellung als Referenzstand abgeschlossen:
   - G47 dokumentiert den aktuellen Panel/Drag-Stand in `docs/UI_EDITOR_PANEL_DRAG_REFERENZSTAND.md` und in der Surface-/Panel-/Drag-Architektur.
   - Datenfluss: Mouse-/DOM-Event im BBM-Launcher -> Start-Bounds + Delta + Viewport-Bounds -> `uiEditorKitPanelRuntimeBridge` -> PanelRuntime Panel-Drag-Helper im UI-Editor-kit -> berechnete Bounds -> Style-Setzen im BBM-Launcher.

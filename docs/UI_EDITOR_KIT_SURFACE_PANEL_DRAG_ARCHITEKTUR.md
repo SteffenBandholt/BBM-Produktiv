@@ -45,6 +45,7 @@ Relevante BBM-Dateien:
 - `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js`
 - `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js`
 - `src/renderer/uiEditor/surfaceAdapters/restarbeitenMainSurfaceAdapter.js`
+- `src/renderer/uiEditor/surfaceAdapters/pdfPlanSurfaceAdapter.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterFactory.js`
 - `src/renderer/modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js`
@@ -56,6 +57,8 @@ Der Electron-Renderer nutzt bewusst Bridge-Dateien mit relativem Pfad in `node_m
 Die Surface-Bridge ist seit G38 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt.
 
 Der erste BBM-SurfaceAdapter-Pilot ist seit G39 read-only vorhanden. Er uebersetzt `restarbeiten.ui.main` aus vorhandener Registry und aktuellem LayoutState in ein neutrales `ui-screen`-Surface-Modell und validiert es ueber die Surface-Runtime-Bridge. Er wird noch nicht produktiv im Launcher verwendet.
+
+Das erste PDF-/Plan-SurfaceAdapter-Skelett ist seit G48 read-only vorhanden. Es erzeugt leere neutrale Modelle fuer `pdf-page` und `plan` und validiert sie ueber die Surface-Runtime-Bridge. Es wird nicht im Launcher genutzt und bindet keine PDF-, Canvas-, Plan-, Drag- oder Renderlogik an.
 
 Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
 
@@ -399,6 +402,40 @@ Referenzgrenzen:
 - keine Registry-Aenderung und keine Fachlogik.
 
 Status nach G47: Der Panel/Drag-Block ist dokumentarisch als Referenzstand abgeschlossen. `docs/UI_EDITOR_PANEL_DRAG_REFERENZSTAND.md` haelt Datenfluss, verwendete PanelRuntime-Funktionen, Sicherheitsgrenzen, Nicht-Ziele und Testreferenzen fest. G47 aktiviert keine neue Produktivlogik.
+
+### G48: PDF-/Plan-Surface read-only vorbereiten
+
+Aktuelle read-only Modelle:
+
+```text
+PDF:
+surfaceId: "pdf.plan.page.<pageNumber>"
+surfaceType: "pdf-page"
+coordinateSystem: "pdf-points"
+pageNumber: <positive integer>
+elements: []
+
+Plan:
+surfaceId: "plan.canvas.default"
+surfaceType: "plan"
+coordinateSystem: "canvas-pixels"
+elements: []
+```
+
+Referenzgrenzen:
+
+- SurfaceRuntime validiert nur das neutrale Modell.
+- `pdfPlanSurfaceAdapter.js` importiert die Runtime nur ueber `uiEditorKitSurfaceRuntimeBridge.js`.
+- Keine produktive Launcher-Nutzung.
+- Keine sichtbare UI-Aenderung.
+- Keine PDF-Bearbeitung.
+- Keine PDF-/Canvas-Renderlogik.
+- Kein Drag auf PDF oder Plan.
+- Keine Persistenz.
+- Kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg und keine DB.
+- Keine Registry-Aenderung und keine Fachlogik.
+
+Status nach G48: PDF-/Plan-Surfaces sind in BBM nur als read-only Adapter-Skelett vorbereitet. Der Host bleibt fuer spaetere Rechte, Persistenz und echte PDF-/Planlogik zustaendig; UI-Editor-kit speichert nicht.
 
 ## Nicht-Ziele von G36
 
