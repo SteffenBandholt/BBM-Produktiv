@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Panel-Positionsberechnung im BBM-Launcher kontrolliert ueber DragRuntime:
+  - G43 nutzt `buildDragResult(...)` aus `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js` fuer die reine Preview-Panel-Positionsrechnung.
+  - DOM-/Mouse-Event-Anbindung, Startpositionsermittlung, Style-Setzen, Panel-Open/Close, Reset und Hidden-Elements-Button/Popover bleiben im BBM-Launcher.
+  - Abgesichert sind positive und negative Delta-Bewegung, Clamp am linken/oberen sowie rechten/unteren Viewport-Rand, Panel-Reset, Open/Close und Hidden-Elements-Popover.
+  - Kein Bare-Package-Import im Renderer; die DragRuntime kommt ausschliesslich ueber die Bridge.
+  - Keine neue UI, keine neue Panel-Funktion, keine Persistenz, keine Registry-Aenderung, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB und keine PDF-/Canvas-/Plan-Aktivierung.
+
 - Panel-/Drag-Baseline im BBM-Launcher abgesichert:
   - G42 erweitert den bestehenden Launcher-Test um eine Baseline fuer das aktuelle verschiebbare Preview-Panel.
   - Abgesichert sind Launcher-Initialisierung, Panel-Open/Close, defensive Panel-Positionsnormalisierung mit Viewport-Margin, Panel-Reset, Hidden-Elements-Button/Popover und Preview-Reset beim Deaktivieren.

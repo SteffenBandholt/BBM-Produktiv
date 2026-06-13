@@ -59,7 +59,9 @@ Der erste BBM-SurfaceAdapter-Pilot ist seit G39 read-only vorhanden. Er ueberset
 
 Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
 
-Die Panel-/Drag-Baseline des BBM-Launchers ist seit G42 testseitig abgesichert: Das bestehende Preview-Panel wird weiterhin ueber die vorhandene Launcher-Logik geoeffnet, geschlossen, verschoben, defensiv im Viewport normalisiert und zurueckgesetzt. Hidden-Elements-Button/Popover bleiben Teil derselben Baseline. Die DragRuntime-Bridge ist nur testseitiger Vergleichspunkt; sie wird noch nicht produktiv importiert oder aufgerufen.
+Die Panel-/Drag-Baseline des BBM-Launchers ist seit G42 testseitig abgesichert: Das bestehende Preview-Panel wird weiterhin ueber die vorhandene Launcher-Logik geoeffnet, geschlossen, verschoben, defensiv im Viewport normalisiert und zurueckgesetzt. Hidden-Elements-Button/Popover bleiben Teil derselben Baseline.
+
+Seit G43 nutzt der BBM-Launcher die DragRuntime-Bridge kontrolliert fuer die reine Preview-Panel-Positionsberechnung. Verwendet wird `buildDragResult(...)` mit `coordinateSystem: "css-pixels"`. DOM-/Mouse-Event-Anbindung, Startpositionsmessung, Style-Setzen, Reset, Open/Close und Hidden-Elements-Panelbestandteile bleiben im Host/Launcher.
 
 BBM besitzt weiterhin:
 
@@ -347,6 +349,15 @@ Status nach G41: Noch keine Umstellung. Zunaechst ist nur die DragRuntime-Bridge
 - keine Produktivnutzung der DragRuntime und keine Event-/DOM-Aenderung.
 
 Status nach G42: Baseline ist abgesichert. Die Panel-Drag-Rechnung liegt weiterhin im BBM-Launcher; eine spaetere kontrollierte Berechnungsauslagerung in die DragRuntime bleibt ein eigenes Folgepaket mit eigener Sichtpruefung.
+
+### G43: Panel-Positionsberechnung ueber DragRuntime vorbereiten
+
+- `buildDragResult(...)` aus der DragRuntime-Bridge fuer reine Panel-Positionsrechnung verwenden,
+- DOM-/Mouse-Event-Code im Launcher belassen,
+- bestehendes sichtbares Verhalten beibehalten,
+- keine neue Panel-Funktion und keine Persistenz.
+
+Status nach G43: Die reine Positionsberechnung ist kontrolliert ueber die DragRuntime-Bridge angebunden. Event-Anbindung, DOM, Reset und Rendering bleiben Host-/Launcher-Aufgabe; PDF, Canvas, Plan, Registry und Persistenz bleiben unveraendert.
 
 ## Nicht-Ziele von G36
 

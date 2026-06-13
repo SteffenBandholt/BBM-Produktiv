@@ -428,7 +428,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     }
   });
 
-  await run("BBM UI-Editor-Runtime: DragRuntime-Bridge bleibt Baseline-Vergleich ohne Launcher-Aktivierung", async () => {
+  await run("BBM UI-Editor-Runtime: DragRuntime-Bridge wird nur fuer Panel-Positionsrechnung genutzt", async () => {
     assert.equal(fs.existsSync(DRAG_RUNTIME_BRIDGE_PATH), true);
     const launcherSource = fs.readFileSync(RUNTIME_PATH, "utf8");
     const bridgeSource = fs.readFileSync(DRAG_RUNTIME_BRIDGE_PATH, "utf8");
@@ -437,12 +437,13 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       'export * from "../../../node_modules/ui-editor-kit/src/runtime/drag/index.mjs";'
     );
     assert.equal(bridgeSource.includes("ui-editor-kit/runtime/drag"), false);
-    assert.equal(launcherSource.includes('from "./uiEditorKitDragRuntimeBridge.js"'), false);
+    assert.equal(launcherSource.includes('import { buildDragResult } from "./uiEditorKitDragRuntimeBridge.js";'), true);
     assert.equal(launcherSource.includes("ui-editor-kit/runtime/drag"), false);
     assert.equal(launcherSource.includes("node_modules/ui-editor-kit/src/runtime/drag/index.mjs"), false);
     assert.equal(launcherSource.includes("applyDragDelta"), false);
     assert.equal(launcherSource.includes("clampBoundsToConstraints"), false);
-    assert.equal(launcherSource.includes("buildDragResult"), false);
+    assert.equal(launcherSource.includes("calculatePreviewPanelDragPositionWithRuntime"), true);
+    assert.equal(launcherSource.match(/buildDragResult/g).length, 2);
 
     const dragRuntime = await importEsmFromFile(DRAG_RUNTIME_BRIDGE_PATH);
     assert.equal(typeof dragRuntime.applyDragDelta, "function");
@@ -2444,6 +2445,41 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(doc.body.getAttribute("data-ui-editor-active"), "false");
     assert.equal(target.style.display, "");
     assert.equal(target.getAttribute("data-ui-editor-preview"), "false");
+  });
+
+  await run("BBM UI-Editor-Runtime: Panel-Positionsrechnung nutzt DragRuntime-Paritaet", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = { innerWidth: 360, innerHeight: 260 };
+    const panel = doc.createElement("div");
+    panel._uiEditorPreviewWindow = win;
+    panel.offsetWidth = 180;
+    panel.offsetHeight = 120;
+
+    assert.deepEqual(mod.calculatePreviewPanelDragPositionWithRuntime(panel, {
+      startLeft: 20,
+      startTop: 40,
+      deltaX: 30,
+      deltaY: 10,
+    }), { left: 50, top: 50 });
+    assert.deepEqual(mod.calculatePreviewPanelDragPositionWithRuntime(panel, {
+      startLeft: 80,
+      startTop: 70,
+      deltaX: -30,
+      deltaY: -20,
+    }), { left: 50, top: 50 });
+    assert.deepEqual(mod.calculatePreviewPanelDragPositionWithRuntime(panel, {
+      startLeft: 20,
+      startTop: 40,
+      deltaX: -200,
+      deltaY: -200,
+    }), { left: 16, top: 16 });
+    assert.deepEqual(mod.calculatePreviewPanelDragPositionWithRuntime(panel, {
+      startLeft: 20,
+      startTop: 40,
+      deltaX: 900,
+      deltaY: 900,
+    }), { left: 164, top: 124 });
   });
 
   await run("BBM UI-Editor-Runtime: Erkennungspanel ist verschiebbar und ein-/ausblendbar", async () => {

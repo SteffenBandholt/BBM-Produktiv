@@ -143,3 +143,5 @@
 **Status nach G41:** Die DragRuntime existiert im UI-Editor-kit und ist in BBM ueber eine renderer-kompatible Bridge testweise ladbar. BBM nutzt sie noch nicht produktiv; es gibt keine DOM-/Pointer-/Maus-Anbindung, keine echte Verschiebung, keine UI-, PDF-, Canvas- oder Persistenzfunktion.
 
 **Status nach G42:** Die bestehende Panel-/Drag-Baseline im BBM-Launcher ist testseitig abgesichert. Panel-Initialisierung, Open/Close, defensive Positionsnormalisierung, Panel-Reset und Hidden-Elements-Button/Popover bleiben unveraendert. Die DragRuntime bleibt nur testseitig verfuegbar und wird vom Launcher weiterhin nicht produktiv importiert oder aufgerufen; DOM-/Event-Anbindung bleibt Host-/Launcher-Aufgabe.
+
+**Status nach G43:** Die reine Preview-Panel-Positionsberechnung nutzt im BBM-Launcher kontrolliert `buildDragResult(...)` aus der DragRuntime-Bridge. Diese Nutzung ist auf `css-pixels` und das Editor-Panel begrenzt; DOM-/Mouse-Events, Startpositionsmessung, Style-Setzen, Reset und Rendering bleiben Host-/Launcher-Aufgabe. Persistenz, Registry, PDF, Canvas und Plan bleiben unveraendert.

@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.64 abgeschlossen: Die reine Preview-Panel-Positionsberechnung im BBM-Launcher nutzt kontrolliert `buildDragResult(...)` aus der UI-Editor-kit DragRuntime-Bridge; DOM-/Event-Anbindung, Reset und Rendering bleiben im Host/Launcher.
 - K19.63 abgeschlossen: Panel-/Drag-Baseline im BBM-Launcher ist testseitig abgesichert; bestehende Panel-Initialisierung, Open/Close, Positionsnormalisierung, Hidden-Elements-Button/Popover und DragRuntime-Nichtnutzung bleiben unveraendert.
 - K19.62 abgeschlossen: BBM kann die UI-Editor-kit DragRuntime ueber `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js` testweise laden; Bounds, Delta, Apply, Clamp und Coordinate-Systems werden geprueft, ohne produktives Verschieben.
 - K19.61 abgeschlossen: Read-only SurfaceAdapter-Pilot fuer `restarbeiten.ui.main` erzeugt ein neutrales `ui-screen`-Surface-Modell aus Registry plus LayoutState und validiert es ueber die UI-Editor-kit Surface-Bridge; keine Produktivnutzung.
@@ -128,6 +129,14 @@ Aktueller Stand:
 - [x] K19.61 Read-only SurfaceAdapter-Pilot fuer restarbeiten.ui.main vorbereiten
 - [x] K19.62 UI-Editor-kit DragRuntime in BBM per Bridge pruefen
 - [x] K19.63 Panel-/Drag-Baseline im BBM-Launcher absichern
+- [x] K19.64 Panel-Positionsberechnung kontrolliert ueber UI-Editor-kit DragRuntime vorbereiten
+
+## Statusupdate K19.64
+- `BbmUiEditorRuntimeLauncher.js` importiert `buildDragResult(...)` ausschliesslich ueber `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js`.
+- Der kleine Helper `calculatePreviewPanelDragPositionWithRuntime(...)` bildet Startposition, Delta und Viewport-Grenzen auf `coordinateSystem: "css-pixels"` ab.
+- DOM-/Mouse-Event-Anbindung, Startpositionsmessung, Style-Setzen, Panel-Open/Close, Panel-Reset und Hidden-Elements-Button/Popover bleiben im BBM-Launcher.
+- Tests pruefen positive und negative Delta-Bewegung, Clamp am linken/oberen sowie rechten/unteren Viewport-Rand, Panel-Reset, Open/Close und Hidden-Elements-Popover.
+- Kein Bare-Package-Import im Renderer, keine neue UI, keine neue Panel-Funktion, keine Persistenz, keine Registry-Aenderung, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB und keine PDF-/Canvas-/Plan-Aktivierung.
 
 ## Statusupdate K19.63
 - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs` sichert die aktuelle Panel-/Drag-Baseline des BBM-Launchers ab.

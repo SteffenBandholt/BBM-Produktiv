@@ -19,6 +19,7 @@ import {
   buildHiddenElementsPopoverViewModel,
 } from "./uiEditorKitHiddenElementsRuntimeBridge.js";
 import { buildPanelViewModel } from "./uiEditorKitPanelRuntimeBridge.js";
+import { buildDragResult } from "./uiEditorKitDragRuntimeBridge.js";
 import { isVisibilityPersistenceAllowedForScope } from "../editorRuntime/host/visibilityPersistenceScopePolicy.js";
 
 void installedLauncherButtonArtifactModule;
@@ -1129,9 +1130,61 @@ function clampPreviewPanelPosition(panel, left, top) {
   };
 }
 
+function normalizePreviewPanelNumber(value, fallback) {
+  const numericValue = Number(value);
+  return Number.isFinite(numericValue) ? numericValue : fallback;
+}
+
+function calculatePreviewPanelDragPositionWithRuntime(panel, {
+  startLeft = 0,
+  startTop = 0,
+  deltaX = 0,
+  deltaY = 0,
+} = {}) {
+  const viewport = getPreviewPanelViewport(panel);
+  const width = Number(panel?.offsetWidth) || 320;
+  const height = Number(panel?.offsetHeight) || 220;
+  const minLeft = PREVIEW_PANEL_VIEWPORT_MARGIN;
+  const minTop = PREVIEW_PANEL_VIEWPORT_MARGIN;
+  const maxLeft = Math.max(minLeft, viewport.width - width - PREVIEW_PANEL_VIEWPORT_MARGIN);
+  const maxTop = Math.max(minTop, viewport.height - height - PREVIEW_PANEL_VIEWPORT_MARGIN);
+  const result = buildDragResult({
+    elementId: "bbm.uiEditor.previewPanel",
+    coordinateSystem: "css-pixels",
+    startBounds: {
+      x: normalizePreviewPanelNumber(startLeft, minLeft),
+      y: normalizePreviewPanelNumber(startTop, minTop),
+      width,
+      height,
+    },
+    delta: {
+      x: normalizePreviewPanelNumber(deltaX, 0),
+      y: normalizePreviewPanelNumber(deltaY, 0),
+    },
+    constraints: {
+      minX: minLeft,
+      minY: minTop,
+      maxX: maxLeft,
+      maxY: maxTop,
+    },
+  });
+
+  if (!result.ok || !result.bounds) {
+    return clampPreviewPanelPosition(panel, startLeft + deltaX, startTop + deltaY);
+  }
+
+  return {
+    left: result.bounds.x,
+    top: result.bounds.y,
+  };
+}
+
 function setPreviewPanelPosition(panel, left, top) {
   if (!panel?.style) return;
-  const clamped = clampPreviewPanelPosition(panel, left, top);
+  const clamped = calculatePreviewPanelDragPositionWithRuntime(panel, {
+    startLeft: left,
+    startTop: top,
+  });
   panel.style.left = `${clamped.left}px`;
   panel.style.top = `${clamped.top}px`;
   panel.style.right = "";
@@ -1163,11 +1216,13 @@ function movePreviewPanelDrag(event = {}) {
   stopPreviewPanelEvent(event);
   const dragState = launcherPreviewPanelDragState;
   if (!dragState?.panel) return;
-  setPreviewPanelPosition(
-    dragState.panel,
-    dragState.startLeft + (Number(event.clientX) - dragState.startClientX),
-    dragState.startTop + (Number(event.clientY) - dragState.startClientY)
-  );
+  const nextPosition = calculatePreviewPanelDragPositionWithRuntime(dragState.panel, {
+    startLeft: dragState.startLeft,
+    startTop: dragState.startTop,
+    deltaX: Number(event.clientX) - dragState.startClientX,
+    deltaY: Number(event.clientY) - dragState.startClientY,
+  });
+  setPreviewPanelPosition(dragState.panel, nextPosition.left, nextPosition.top);
 }
 
 function startPreviewPanelDrag(panel, event = {}) {
@@ -1704,6 +1759,7 @@ export {
   getRegisteredElementById,
   handleUiEditorDocumentClick,
   isPreviewOperationAllowed,
+  calculatePreviewPanelDragPositionWithRuntime,
   resolvePreviewTargetElement,
   resetAllPreviewChanges,
   resetSelectedPreviewChange,
