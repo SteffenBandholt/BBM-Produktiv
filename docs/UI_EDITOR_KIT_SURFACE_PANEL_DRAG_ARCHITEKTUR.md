@@ -46,6 +46,8 @@ Relevante BBM-Dateien:
 - `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js`
 - `src/renderer/uiEditor/surfaceAdapters/restarbeitenMainSurfaceAdapter.js`
 - `src/renderer/uiEditor/surfaceAdapters/pdfPlanSurfaceAdapter.js`
+- `src/renderer/uiEditor/surfaceAdapters/surfaceAdapterCatalog.js`
+- `docs/UI_EDITOR_SURFACE_ADAPTER_REFERENZSTAND.md`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterFactory.js`
 - `src/renderer/modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js`
@@ -59,6 +61,10 @@ Die Surface-Bridge ist seit G38 testweise vorhanden. Sie wird noch nicht im Laun
 Der erste BBM-SurfaceAdapter-Pilot ist seit G39 read-only vorhanden. Er uebersetzt `restarbeiten.ui.main` aus vorhandener Registry und aktuellem LayoutState in ein neutrales `ui-screen`-Surface-Modell und validiert es ueber die Surface-Runtime-Bridge. Er wird noch nicht produktiv im Launcher verwendet.
 
 Das erste PDF-/Plan-SurfaceAdapter-Skelett ist seit G48 read-only vorhanden. Es erzeugt leere neutrale Modelle fuer `pdf-page` und `plan` und validiert sie ueber die Surface-Runtime-Bridge. Es wird nicht im Launcher genutzt und bindet keine PDF-, Canvas-, Plan-, Drag- oder Renderlogik an.
+
+Der zentrale SurfaceAdapter-Katalog ist seit G49 read-only vorhanden. Er listet nur explizit bekannte SurfaceIds, verbindet sie mit den vorhandenen Adapterfunktionen und validiert Modelle ueber die Surface-Runtime-Bridge. Er wird nicht im Launcher oder produktiven UI-Pfaden genutzt.
+
+Der Katalogstand ist seit G50 als read-only Referenz dokumentiert. Das Referenzdokument beschreibt Adapter, bekannte SurfaceIds, blockierte unbekannte SurfaceIds, Datenfluss, Sicherheitsgrenzen, Nicht-Ziele und moegliche Folgepakete.
 
 Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
 
@@ -436,6 +442,81 @@ Referenzgrenzen:
 - Keine Registry-Aenderung und keine Fachlogik.
 
 Status nach G48: PDF-/Plan-Surfaces sind in BBM nur als read-only Adapter-Skelett vorbereitet. Der Host bleibt fuer spaetere Rechte, Persistenz und echte PDF-/Planlogik zustaendig; UI-Editor-kit speichert nicht.
+
+### G49: SurfaceAdapter-Katalog read-only vorbereiten
+
+Bekannte SurfaceIds:
+
+```text
+restarbeiten.ui.main
+pdf.plan.page.1
+plan.canvas.default
+```
+
+Katalogfunktionen:
+
+- `getKnownSurfaceAdapterIds()`
+- `getSurfaceAdapterById(surfaceId)`
+- `isKnownSurfaceAdapterId(surfaceId)`
+- `buildSurfaceModelById(surfaceId, input)`
+- `validateSurfaceModelById(surfaceId, input)`
+
+Referenzgrenzen:
+
+- Kein Default-Adapter fuer unbekannte SurfaceIds.
+- Keine Wildcard-Freigabe.
+- Unbekannte SurfaceIds liefern `UNKNOWN_SURFACE_ADAPTER`.
+- SurfaceRuntime wird nur ueber `uiEditorKitSurfaceRuntimeBridge.js` importiert.
+- Keine produktive Launcher-Nutzung.
+- Keine sichtbare UI-Aenderung.
+- Keine PDF-/Canvas-/Plan-Bearbeitung.
+- Kein Drag.
+- Keine Persistenz.
+- Kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg und keine DB.
+- Keine Registry-Aenderung und keine Fachlogik.
+
+Status nach G49: BBM kann bekannte SurfaceAdapter read-only zentral finden, Modelle bauen und ueber die SurfaceRuntime-Bridge validieren. Host bleibt spaeter fuer Rechte, Scopes, Persistenz und echte Surface-Integration zustaendig.
+
+### G50: SurfaceAdapter-Katalog als Referenzstand abschliessen
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_ADAPTER_REFERENZSTAND.md`
+
+Aktueller Datenfluss:
+
+```text
+BBM-Test / spaeter Host-Aufruf
+-> SurfaceAdapterCatalog
+-> konkreter read-only SurfaceAdapter
+-> neutrales SurfaceModel
+-> uiEditorKitSurfaceRuntimeBridge
+-> SurfaceRuntime im UI-Editor-kit
+-> Validierung/Normalisierung
+```
+
+Bekannte SurfaceIds:
+
+```text
+restarbeiten.ui.main
+pdf.plan.page.1
+plan.canvas.default
+```
+
+Harte Grenzen:
+
+- Keine Wildcard.
+- Kein Default-Adapter.
+- Unbekannte SurfaceIds werden mit `UNKNOWN_SURFACE_ADAPTER` blockiert.
+- Keine Produktivnutzung im Launcher.
+- Keine sichtbare UI-Aenderung.
+- Keine PDF-/Plan-Bearbeitung.
+- Kein Drag.
+- Keine Persistenz.
+- UI-Editor-kit speichert nicht.
+- BBM bleibt Host fuer Rechte, Scopes, Persistenz, DB/IPC und Fachlogik.
+
+Status nach G50: Der SurfaceAdapter-Katalog ist dokumentarisch als stabiler read-only Referenzstand abgeschlossen. G50 aktiviert keine neue Produktivlogik.
 
 ## Nicht-Ziele von G36
 

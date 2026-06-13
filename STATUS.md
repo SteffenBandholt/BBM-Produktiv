@@ -17,6 +17,20 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- SurfaceAdapter-Katalog als read-only Referenzstand abgeschlossen:
+  - G50 dokumentiert den stabilen Katalogstand in `docs/UI_EDITOR_SURFACE_ADAPTER_REFERENZSTAND.md`.
+  - Referenzstand: SurfaceRuntime-Bridge, Restarbeiten-UI-SurfaceAdapter, PDF-/Plan-SurfaceAdapter-Skelett und zentraler SurfaceAdapterCatalog sind read-only vorbereitet.
+  - Bekannte SurfaceIds bleiben `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`; unbekannte SurfaceIds werden mit `UNKNOWN_SURFACE_ADAPTER` blockiert.
+  - Datenfluss: BBM-Test/spaeter Host-Aufruf -> SurfaceAdapterCatalog -> konkreter read-only SurfaceAdapter -> neutrales SurfaceModel -> `uiEditorKitSurfaceRuntimeBridge` -> SurfaceRuntime im UI-Editor-kit -> Validierung/Normalisierung.
+  - Keine Produktivlogik, keine Launcher-Nutzung, keine sichtbare UI-Aenderung, keine PDF-/Canvas-/Plan-Bearbeitung, kein Drag, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
+
+- SurfaceAdapter-Katalog read-only vorbereitet:
+  - G49 legt `src/renderer/uiEditor/surfaceAdapters/surfaceAdapterCatalog.js` als zentralen read-only Katalog an.
+  - Bekannte SurfaceIds sind `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`.
+  - Der Katalog liefert bekannte AdapterIds, Adapter-Metadaten, Modellaufbau und Validierung ueber `uiEditorKitSurfaceRuntimeBridge.js`.
+  - Unbekannte SurfaceIds wie `pdf.plan.page.2` oder Wildcards werden kontrolliert mit `UNKNOWN_SURFACE_ADAPTER` abgelehnt.
+  - Keine Launcher-Produktivnutzung, keine sichtbare UI-Aenderung, keine PDF-/Canvas-/Plan-Bearbeitung, kein Drag, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
+
 - PDF-/Plan-Surface read-only vorbereitet:
   - G48 legt `src/renderer/uiEditor/surfaceAdapters/pdfPlanSurfaceAdapter.js` als reines Adapter-Skelett an.
   - Das PDF-Modell ist `surfaceId: "pdf.plan.page.<pageNumber>"`, `surfaceType: "pdf-page"`, `coordinateSystem: "pdf-points"`, `pageNumber` und eine leere `elements`-Liste.

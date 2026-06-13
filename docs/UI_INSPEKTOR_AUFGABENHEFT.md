@@ -5,6 +5,8 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.70 abgeschlossen: SurfaceAdapter-Katalog ist als read-only Referenzstand dokumentiert; bekannte SurfaceIds, Blockaden, Datenfluss und Sicherheitsgrenzen sind festgehalten.
+- K19.69 abgeschlossen: SurfaceAdapter-Katalog ist read-only vorbereitet; bekannte SurfaceIds sind zentral auffindbar und unbekannte SurfaceIds werden kontrolliert blockiert.
 - K19.68 abgeschlossen: PDF-/Plan-Surfaces sind read-only als BBM-Adapter-Skelett vorbereitet; die Modelle validieren ueber die SurfaceRuntime-Bridge, ohne Produktivnutzung, Renderlogik, Drag oder Persistenz.
 - K19.67 abgeschlossen: Panel/Drag-Umstellung ist als Referenzstand dokumentiert; Datenfluss, PanelRuntime-Helper, Host-Grenzen, Sicherheitsgrenzen und Testreferenzen sind festgehalten.
 - K19.66 abgeschlossen: BBM nutzt fuer die reine Preview-Panel-Positionsberechnung den PanelRuntime-Panel-Drag-Helper ueber `uiEditorKitPanelRuntimeBridge.js`; direkte DragRuntime-Nutzung im Launcher fuer Panel-Positionierung ist entfernt.
@@ -138,6 +140,24 @@ Aktueller Stand:
 - [x] K19.66 BBM-Launcher auf PanelRuntime-Panel-Drag-Helper umstellen
 - [x] K19.67 Panel/Drag-Umstellung als Referenzstand abschliessen
 - [x] K19.68 PDF-/Plan-Surface read-only vorbereiten
+- [x] K19.69 SurfaceAdapter-Katalog read-only vorbereiten
+- [x] K19.70 SurfaceAdapter-Katalog als read-only Referenzstand abschliessen
+
+## Statusupdate K19.70
+- `docs/UI_EDITOR_SURFACE_ADAPTER_REFERENZSTAND.md` dokumentiert den stabilen read-only SurfaceAdapter-Stand.
+- Bekannte SurfaceIds bleiben `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`.
+- Unbekannte SurfaceIds werden mit `UNKNOWN_SURFACE_ADAPTER` blockiert; es gibt keine Wildcard und keinen Default-Adapter.
+- Datenfluss: BBM-Test/spaeter Host-Aufruf -> SurfaceAdapterCatalog -> konkreter read-only SurfaceAdapter -> neutrales SurfaceModel -> `uiEditorKitSurfaceRuntimeBridge` -> SurfaceRuntime im UI-Editor-kit -> Validierung/Normalisierung.
+- Keine Produktivlogik, keine Launcher-Nutzung, keine sichtbare UI-Aenderung, keine PDF-/Canvas-/Plan-Bearbeitung, kein Drag, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
+- UI-Editor-kit speichert nicht; BBM bleibt Host fuer Rechte, Scopes, Persistenz, DB/IPC und Fachlogik.
+
+## Statusupdate K19.69
+- `src/renderer/uiEditor/surfaceAdapters/surfaceAdapterCatalog.js` listet die bekannten read-only SurfaceAdapter zentral.
+- Bekannte SurfaceIds sind `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`.
+- Der Katalog baut und validiert Surface-Modelle ueber `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js`.
+- Unbekannte SurfaceIds und Wildcards werden kontrolliert mit `UNKNOWN_SURFACE_ADAPTER` abgelehnt; es gibt keinen Default-Adapter.
+- Keine Launcher-Produktivnutzung, keine sichtbare UI-Aenderung, keine PDF-/Canvas-/Plan-Bearbeitung, kein Drag, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
+- Host bleibt spaeter fuer Rechte, Scopes, Persistenz und echte Surface-Integration zustaendig.
 
 ## Statusupdate K19.68
 - `src/renderer/uiEditor/surfaceAdapters/pdfPlanSurfaceAdapter.js` erzeugt ein read-only PDF-Surface-Modell mit `surfaceType: "pdf-page"`, `coordinateSystem: "pdf-points"`, `pageNumber` und leerer `elements`-Liste.
