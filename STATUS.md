@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- UI-Editor-kit DragRuntime in BBM per Bridge pruefbar:
+  - G41 legt `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js` als renderer-kompatible Bridge auf `node_modules/ui-editor-kit/src/runtime/drag/index.mjs` an.
+  - Der Bridge-Test prueft Bounds-/Delta-Normalisierung und -Validierung, `applyDragDelta(...)`, `clampBoundsToConstraints(...)`, `buildDragResult(...)` und die Coordinate-Systems `css-pixels`, `pdf-points`, `canvas-pixels`.
+  - Beispielrechnung: Startbounds `(10,20,100,30)` plus Delta `(15,-5)` ergeben `(25,15,100,30)`; Constraints clampen ausserhalb liegende Werte.
+  - Der Launcher nutzt die DragRuntime noch nicht produktiv; es gibt keine DOM-/Pointer-/Maus-Anbindung, keine echte Verschiebung, keine UI-Aenderung, keine PDF-/Canvas-/Plan-Aktivierung, keine Persistenz, keine Registry-Aenderung und keine neuen Scopes.
+  - UI-Editor-kit speichert weiterhin nicht; BBM bleibt Host fuer Registry, Scopes, Persistenz, Rechte, DB/IPC und Fachlogik.
+
 - UI-Editor-kit SurfaceAdapter-Pilot fuer Restarbeiten read-only vorbereitet:
   - G39 legt `src/renderer/uiEditor/surfaceAdapters/restarbeitenMainSurfaceAdapter.js` an.
   - Der Adapter liest den Pilot-Scope `restarbeiten.ui.main` ueber HostAdapter-/Registry-Daten, beruecksichtigt vorhandenen LayoutState fuer `visible` read-only und erzeugt ein neutrales `ui-screen`-Surface-Modell mit `css-pixels`.

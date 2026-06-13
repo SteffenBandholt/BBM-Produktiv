@@ -37,6 +37,7 @@ const { runUiEditorKitPanelRuntimeBridgeTests } = require("./tests/uiEditorKitPa
 const { runUiEditorKitHiddenElementsRuntimeImportTests } = require("./tests/uiEditorKitHiddenElementsRuntimeImport.test.cjs");
 const { runUiEditorKitHiddenElementsRuntimeBridgeTests } = require("./tests/uiEditorKitHiddenElementsRuntimeBridge.test.cjs");
 const { runUiEditorKitSurfaceRuntimeBridgeTests } = require("./tests/uiEditorKitSurfaceRuntimeBridge.test.cjs");
+const { runUiEditorKitDragRuntimeBridgeTests } = require("./tests/uiEditorKitDragRuntimeBridge.test.cjs");
 const { runRestarbeitenSurfaceAdapterTests } = require("./tests/restarbeitenSurfaceAdapter.test.cjs");
 const { runUiEditorKitLocalDependencyTests } = require("./tests/uiEditorKitLocalDependency.test.cjs");
 const { runEditorLayoutOverrideModelTests } = require("./tests/editorLayoutOverrideModel.test.cjs");
@@ -176,6 +177,7 @@ async function main() {
   await runUiEditorKitHiddenElementsRuntimeImportTests(run);
   await runUiEditorKitHiddenElementsRuntimeBridgeTests(run);
   await runUiEditorKitSurfaceRuntimeBridgeTests(run);
+  await runUiEditorKitDragRuntimeBridgeTests(run);
   await runRestarbeitenSurfaceAdapterTests(run);
   await runUiEditorKitLocalDependencyTests(run);
   await runEditorLayoutOverrideModelTests(run);

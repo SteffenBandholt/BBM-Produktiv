@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.62 abgeschlossen: BBM kann die UI-Editor-kit DragRuntime ueber `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js` testweise laden; Bounds, Delta, Apply, Clamp und Coordinate-Systems werden geprueft, ohne produktives Verschieben.
 - K19.61 abgeschlossen: Read-only SurfaceAdapter-Pilot fuer `restarbeiten.ui.main` erzeugt ein neutrales `ui-screen`-Surface-Modell aus Registry plus LayoutState und validiert es ueber die UI-Editor-kit Surface-Bridge; keine Produktivnutzung.
 - K19.60 abgeschlossen: BBM kann die UI-Editor-kit Surface-Runtime ueber `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` testweise laden; `ui-screen` und `pdf-page` werden normalisiert/validiert, ohne Launcher- oder Produktivnutzung.
 - K19.59 abgeschlossen: UI-Editor-kit Zielarchitektur fuer Surface-, Panel-, Drag- und spaetere PDF-/Plan-/Canvas-Faehigkeit ist in `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md` dokumentiert; keine Produktivlogik aktiviert.
@@ -124,6 +125,15 @@ Aktueller Stand:
 - [x] K19.59 UI-Editor-kit Surface-/Panel-/Drag-/PDF-Zielarchitektur inventarisieren
 - [x] K19.60 UI-Editor-kit Surface-Runtime in BBM per Bridge pruefen
 - [x] K19.61 Read-only SurfaceAdapter-Pilot fuer restarbeiten.ui.main vorbereiten
+- [x] K19.62 UI-Editor-kit DragRuntime in BBM per Bridge pruefen
+
+## Statusupdate K19.62
+- `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js` ist als renderer-kompatible Bridge auf `node_modules/ui-editor-kit/src/runtime/drag/index.mjs` vorbereitet.
+- `scripts/tests/uiEditorKitDragRuntimeBridge.test.cjs` prueft Bridge-Ladbarkeit, Drag-Funktionen, unterstuetzte Coordinate-Systems, Ablehnung unbekannter Systeme, Bounds-/Delta-Rechnung, Constraint-Clamping und negative Bounds.
+- Der Test ist in `scripts/test.cjs` eingebunden.
+- Keine Produktivnutzung im Launcher, keine sichtbare UI-Aenderung, keine DOM-/Pointer-/Maus-Anbindung, keine echte Verschiebung, keine PDF-/Canvas-/Plan-Aktivierung, keine Persistenz, keine Registry-Aenderung und keine neuen Scopes.
+- UI-Editor-kit speichert nicht; BBM bleibt Host fuer Registry, Scopes, Persistenz, Rechte, DB/IPC und Fachlogik.
+- Eine spaetere kontrollierte Launcher-/Panel-Nutzung bleibt ein eigenes Paket.
 
 ## Statusupdate K19.61
 - `src/renderer/uiEditor/surfaceAdapters/restarbeitenMainSurfaceAdapter.js` baut read-only ein Surface-Modell fuer `restarbeiten.ui.main`.
@@ -132,7 +142,7 @@ Aktueller Stand:
 - Bounds bleiben bewusst weg, weil keine DOM-Vermessung erfolgt.
 - `canHide` folgt hide/show-faehigen Registry-Elementen; `canMove` und `canResize` bleiben false, solange Drag nicht freigegeben ist.
 - Keine Launcher-Produktivnutzung, keine sichtbare UI-Aenderung, keine Drag-/PDF-/Canvas-Aktivierung, keine Persistenz, keine Registry-Aenderung und keine neuen Scopes.
-- Naechste getrennte Folgepakete: kontrollierte Launcher-/Panel-Nutzung oder G40 DragRuntime, jeweils separat.
+- Naechste getrennte Folgepakete: kontrollierte Launcher-/Panel-Nutzung nach DragRuntime-Bridge, jeweils separat.
 
 ## Statusupdate K19.60
 - `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js` ist als renderer-kompatible Bridge auf `node_modules/ui-editor-kit/src/runtime/surface/index.mjs` vorbereitet.
@@ -140,7 +150,7 @@ Aktueller Stand:
 - Der Test ist in `scripts/test.cjs` eingebunden.
 - Keine Produktivnutzung im Launcher, keine sichtbare UI-Aenderung, keine PDF-/Canvas-/Drag-Aktivierung, keine neue Persistenz, keine Registry-Aenderung und keine neuen Scopes.
 - UI-Editor-kit speichert nicht; BBM bleibt Host fuer Registry, Scopes, Persistenz, Rechte, DB/IPC und Fachlogik.
-- Naechste getrennte Folgepakete bleiben: G39 UI-Screen-SurfaceAdapter, G40 DragRuntime, G41 optionale BBM-Panel-Drag-Nutzung.
+- Naechste getrennte Folgepakete bleiben: G39 UI-Screen-SurfaceAdapter, G40 DragRuntime, G41 DragRuntime-Bridge und danach optionale BBM-Panel-Drag-Nutzung.
 
 ## Statusupdate K19.59
 - `docs/UI_EDITOR_KIT_SURFACE_PANEL_DRAG_ARCHITEKTUR.md` dokumentiert das Zielbild fuer Surface, SurfaceAdapter, PanelRuntime, DragRuntime, HostAdapter, Registry, ChangeRequest und LayoutState.

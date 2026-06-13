@@ -22,6 +22,7 @@ Package-Exports:
 - `ui-editor-kit/runtime/panel`
 - `ui-editor-kit/runtime/hidden-elements`
 - `ui-editor-kit/runtime/surface`
+- `ui-editor-kit/runtime/drag`
 
 Die Preview-Runtime liefert neutrale Operationen, Preview-Zielaufloesung und Pending-ChangeRequest-Hilfen.
 
@@ -31,7 +32,7 @@ Die Hidden-Elements-Runtime liefert Hidden-Elements-Normalisierung, Button-ViewM
 
 Die Surface-Runtime liefert seit G37 ein neutrales Modell mit Normalisierung und Validierung fuer `ui-screen`, `panel`, `pdf-page`, `canvas` und `plan`.
 
-Nicht vorhanden ist aktuell eine abgeschlossene DragRuntime als eigener offizieller Kit-Export.
+Die DragRuntime liefert seit G40 neutrale Bounds-/Delta-Normalisierung, Validierung, Apply-/Clamp-Berechnung und Ergebnisbildung fuer `css-pixels`, `pdf-points` und `canvas-pixels`.
 
 ### BBM
 
@@ -42,6 +43,7 @@ Relevante BBM-Dateien:
 - `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js`
 - `src/renderer/uiEditor/uiEditorKitHiddenElementsRuntimeBridge.js`
 - `src/renderer/uiEditor/uiEditorKitSurfaceRuntimeBridge.js`
+- `src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js`
 - `src/renderer/uiEditor/surfaceAdapters/restarbeitenMainSurfaceAdapter.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterFactory.js`
@@ -54,6 +56,8 @@ Der Electron-Renderer nutzt bewusst Bridge-Dateien mit relativem Pfad in `node_m
 Die Surface-Bridge ist seit G38 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt.
 
 Der erste BBM-SurfaceAdapter-Pilot ist seit G39 read-only vorhanden. Er uebersetzt `restarbeiten.ui.main` aus vorhandener Registry und aktuellem LayoutState in ein neutrales `ui-screen`-Surface-Modell und validiert es ueber die Surface-Runtime-Bridge. Er wird noch nicht produktiv im Launcher verwendet.
+
+Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
 
 BBM besitzt weiterhin:
 
@@ -322,11 +326,15 @@ Status: read-only Pilot fuer `restarbeiten.ui.main` erledigt. Noch keine DOM-Ver
 - Drag-State, Start/Move/Stop und Clamping als reine Funktionen,
 - BBM nutzt sie noch nicht produktiv.
 
+Status: erledigt im UI-Editor-kit als neutrale Rechenruntime ohne DOM-Events und ohne Persistenz.
+
 ### G41: BBM-Panel-Drag optional auf Kit-Hilfe umstellen
 
 - nur wenn G40 stabil ist,
 - Electron-Sichtpruefung erforderlich,
 - keine Persistenz- oder Scope-Aenderung.
+
+Status nach G41: Noch keine Umstellung. Zunaechst ist nur die DragRuntime-Bridge in BBM testbar; produktive Panel-/Launcher-Nutzung bleibt separat.
 
 ### G42: PDF-/Plan-Surface nur dokumentarisch spezifizieren
 
