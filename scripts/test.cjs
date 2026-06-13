@@ -41,6 +41,7 @@ const { runUiEditorKitDragRuntimeBridgeTests } = require("./tests/uiEditorKitDra
 const { runRestarbeitenSurfaceAdapterTests } = require("./tests/restarbeitenSurfaceAdapter.test.cjs");
 const { runPdfPlanSurfaceAdapterTests } = require("./tests/pdfPlanSurfaceAdapter.test.cjs");
 const { runSurfaceAdapterCatalogTests } = require("./tests/surfaceAdapterCatalog.test.cjs");
+const { runSurfacePolicyTests } = require("./tests/surfacePolicy.test.cjs");
 const { runUiEditorKitLocalDependencyTests } = require("./tests/uiEditorKitLocalDependency.test.cjs");
 const { runEditorLayoutOverrideModelTests } = require("./tests/editorLayoutOverrideModel.test.cjs");
 const { runUiEditorLayoutOverridesRepoTests } = require("./tests/uiEditorLayoutOverridesRepo.test.cjs");
@@ -183,6 +184,7 @@ async function main() {
   await runRestarbeitenSurfaceAdapterTests(run);
   await runPdfPlanSurfaceAdapterTests(run);
   await runSurfaceAdapterCatalogTests(run);
+  await runSurfacePolicyTests(run);
   await runUiEditorKitLocalDependencyTests(run);
   await runEditorLayoutOverrideModelTests(run);
   await runUiEditorLayoutOverridesRepoTests(run);

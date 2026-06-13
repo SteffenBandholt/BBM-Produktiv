@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Surface-Rechte-/Policy-Schicht read-only vorbereitet:
+  - G52 legt `src/renderer/uiEditor/surfaceAdapters/surfacePolicy.js` als explizite read-only SurfacePolicy an.
+  - Bekannte SurfaceIds bleiben `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`.
+  - Alle bekannten SurfaceIds sind nur lesbar; `visibleInEditor`, `canDrag`, `canResize` und `canPersist` bleiben false.
+  - Nur `restarbeiten.ui.main` meldet vorbereitend `canHide: true`; PDF-/Plan-Surfaces bleiben auch fuer Hide gesperrt.
+  - Unbekannte SurfaceIds, Wildcards und leere IDs bleiben voll blockiert; der SurfaceAdapterCatalog prueft die Lesefreigabe defensiv ueber die Policy.
+  - Keine sichtbare UI-Aenderung, keine produktive Launcher-Nutzung, keine PDF-/Canvas-/Plan-Bearbeitung, kein Drag, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und keine Fachlogik.
+
 - SurfaceAdapter-Katalog read-only im Launcher vorbereitet:
   - G51 ergaenzt im BBM-Launcher den testseitigen Helper `buildReadonlySurfaceModelForLauncher(surfaceId, input)`.
   - Der Helper nutzt den zentralen `SurfaceAdapterCatalog` read-only und kann Modelle fuer `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default` abrufen/validieren.

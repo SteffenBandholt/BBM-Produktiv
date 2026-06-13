@@ -70,6 +70,12 @@ Der SurfaceAdapterCatalog stellt read-only Hilfen bereit:
 Der Katalog ist keine Freigabelogik fuer Produktivnutzung. Er ist nur ein
 kontrollierter Such- und Testpunkt fuer bekannte Adapter.
 
+Seit G52 ist dem Katalog eine read-only SurfacePolicy vorgeschaltet. Bekannte
+Adapter werden nur geliefert, wenn die Policy fuer die SurfaceId
+`readable: true` meldet. Diese Policy ist keine UI-Freigabe: Alle bekannten
+SurfaceIds bleiben `visibleInEditor: false`, `canDrag: false`,
+`canResize: false` und `canPersist: false`.
+
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
 Hilfsfunktion erzeugt keine sichtbare Surface-Anzeige und aktiviert keine
@@ -99,6 +105,7 @@ erlaubt.
 
 ```text
 BBM-Test / spaeter Host-Aufruf
+-> SurfacePolicy
 -> SurfaceAdapterCatalog
 -> konkreter read-only SurfaceAdapter
 -> neutrales SurfaceModel
@@ -123,6 +130,9 @@ BBM-Launcher-Test
 - Keine Wildcard.
 - Kein Default-Adapter.
 - Unbekannte SurfaceIds blockiert.
+- SurfacePolicy blockiert unbekannte SurfaceIds und Wildcards vollstaendig.
+- Bekannte SurfaceIds sind nur read-only lesbar.
+- Keine Editor-Sichtbarkeit ueber die Policy.
 - Keine Produktivnutzung im Launcher.
 - Keine sichtbare Surface-Anzeige im Launcher.
 - Keine neue Panel-Sektion.
@@ -156,7 +166,7 @@ BBM-Launcher-Test
 
 ## Moegliche naechste Pakete
 
-- Rechte-/Policy-Schicht fuer Surface-Freigaben vorbereiten.
+- Sichtbare Surface-Freigaben nur ueber eigene Folgepakete und nicht ueber den read-only Katalog.
 - Weitere SurfaceIds nur explizit und einzeln freigeben.
 - Read-only Host-Aufruf ausserhalb des Launchers testen.
 - PDF-/Plan-Landkarten separat fachlich definieren.
@@ -169,6 +179,7 @@ BBM-Launcher-Test
 - `node scripts/tests/restarbeitenSurfaceAdapter.test.cjs`
 - `node scripts/tests/pdfPlanSurfaceAdapter.test.cjs`
 - `node scripts/tests/surfaceAdapterCatalog.test.cjs`
+- `node scripts/tests/surfacePolicy.test.cjs`
 - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
 - `npm test`
 - `git diff --check`

@@ -47,7 +47,9 @@ Relevante BBM-Dateien:
 - `src/renderer/uiEditor/surfaceAdapters/restarbeitenMainSurfaceAdapter.js`
 - `src/renderer/uiEditor/surfaceAdapters/pdfPlanSurfaceAdapter.js`
 - `src/renderer/uiEditor/surfaceAdapters/surfaceAdapterCatalog.js`
+- `src/renderer/uiEditor/surfaceAdapters/surfacePolicy.js`
 - `docs/UI_EDITOR_SURFACE_ADAPTER_REFERENZSTAND.md`
+- `docs/UI_EDITOR_SURFACE_POLICY.md`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterFactory.js`
 - `src/renderer/modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js`
@@ -67,6 +69,11 @@ Der zentrale SurfaceAdapter-Katalog ist seit G49 read-only vorhanden. Er listet 
 Der Katalogstand ist seit G50 als read-only Referenz dokumentiert. Das Referenzdokument beschreibt Adapter, bekannte SurfaceIds, blockierte unbekannte SurfaceIds, Datenfluss, Sicherheitsgrenzen, Nicht-Ziele und moegliche Folgepakete.
 
 Der BBM-Launcher kann den Katalog seit G51 read-only testseitig ueber `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese Hilfsfunktion ist nicht an den sichtbaren Renderpfad angebunden und erzeugt keine Panel- oder Surface-Anzeige.
+
+Die SurfacePolicy ist seit G52 read-only vorbereitet. Sie erlaubt die bekannten
+SurfaceIds nur lesend, haelt `visibleInEditor`, Drag, Resize und Persistenz
+ausgeschaltet und blockiert unbekannte SurfaceIds sowie Wildcards vollstaendig.
+Der SurfaceAdapterCatalog prueft die Lesefreigabe defensiv ueber diese Policy.
 
 Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
 
@@ -548,6 +555,20 @@ Grenzen:
 - Keine PDF-/Plan-Renderintegration.
 
 Status nach G51: Der Launcher kann den SurfaceAdapter-Katalog read-only testseitig verwenden. Es ist keine sichtbare Nutzung aktiviert.
+
+### G52: SurfacePolicy read-only vorbereiten
+
+Die SurfacePolicy definiert fuer bekannte SurfaceIds eine defensive
+Rechte-/Freigabeschicht:
+
+```text
+restarbeiten.ui.main: readable true, canHide true, sonst keine Editor-/Drag-/Resize-/Persist-Freigabe
+pdf.plan.page.1: readable true, keine Editor-/Hide-/Drag-/Resize-/Persist-Freigabe
+plan.canvas.default: readable true, keine Editor-/Hide-/Drag-/Resize-/Persist-Freigabe
+```
+
+Unbekannte SurfaceIds, Wildcards und leere IDs bleiben voll blockiert. Der
+Katalog bleibt read-only und es wird keine sichtbare Surface-Auswahl aktiviert.
 
 ## Nicht-Ziele von G36
 

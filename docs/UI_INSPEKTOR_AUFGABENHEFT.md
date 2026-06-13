@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.72 abgeschlossen: Surface-Rechte-/Policy-Schicht read-only vorbereitet; bekannte SurfaceIds sind nur lesbar, Editor-Sichtbarkeit, Drag, Resize und Persistenz bleiben aus, unbekannte SurfaceIds/Wildcards sind voll blockiert.
 - K19.71 abgeschlossen: BBM-Launcher kann den SurfaceAdapter-Katalog read-only testseitig nutzen; es gibt keine sichtbare Surface-Anzeige und keine Produktivnutzung.
 - K19.70 abgeschlossen: SurfaceAdapter-Katalog ist als read-only Referenzstand dokumentiert; bekannte SurfaceIds, Blockaden, Datenfluss und Sicherheitsgrenzen sind festgehalten.
 - K19.69 abgeschlossen: SurfaceAdapter-Katalog ist read-only vorbereitet; bekannte SurfaceIds sind zentral auffindbar und unbekannte SurfaceIds werden kontrolliert blockiert.
@@ -144,6 +145,15 @@ Aktueller Stand:
 - [x] K19.69 SurfaceAdapter-Katalog read-only vorbereiten
 - [x] K19.70 SurfaceAdapter-Katalog als read-only Referenzstand abschliessen
 - [x] K19.71 SurfaceAdapter-Katalog read-only im Launcher vorbereiten
+- [x] K19.72 Surface-Rechte-/Policy-Schicht read-only vorbereiten
+
+## Statusupdate K19.72
+- `src/renderer/uiEditor/surfaceAdapters/surfacePolicy.js` definiert eine explizite read-only Policy fuer `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`.
+- Alle bekannten SurfaceIds bleiben `visibleInEditor: false`, `canDrag: false`, `canResize: false` und `canPersist: false`.
+- `canHide: true` ist nur fuer `restarbeiten.ui.main` vorbereitet; PDF-/Plan-Surfaces bleiben auch fuer Hide gesperrt.
+- Unbekannte SurfaceIds, Wildcards und leere IDs bleiben voll blockiert.
+- Der SurfaceAdapterCatalog prueft bekannte Adapter defensiv gegen `readable: true`.
+- Keine sichtbare Surface-Anzeige, keine neue Panel-Sektion, keine produktive Surface-Auswahl, keine PDF-/Canvas-/Plan-Bearbeitung, kein Drag und keine Persistenz.
 
 ## Statusupdate K19.71
 - `BbmUiEditorRuntimeLauncher.js` exportiert `buildReadonlySurfaceModelForLauncher(surfaceId, input)` als read-only Testhelfer.

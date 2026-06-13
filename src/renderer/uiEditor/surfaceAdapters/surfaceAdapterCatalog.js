@@ -16,6 +16,9 @@ import {
   buildPlanSurfaceModel,
   validatePdfPlanSurfaceModel,
 } from "./pdfPlanSurfaceAdapter.js";
+import {
+  isSurfaceReadable,
+} from "./surfacePolicy.js";
 
 export const PDF_PLAN_PAGE_1_SURFACE_ID = "pdf.plan.page.1";
 
@@ -71,7 +74,9 @@ export function getKnownSurfaceAdapterIds() {
 }
 
 export function getSurfaceAdapterById(surfaceId) {
-  return SURFACE_ADAPTER_CATALOG[String(surfaceId || "")] || null;
+  const normalizedSurfaceId = String(surfaceId || "");
+  if (!isSurfaceReadable(normalizedSurfaceId)) return null;
+  return SURFACE_ADAPTER_CATALOG[normalizedSurfaceId] || null;
 }
 
 export function isKnownSurfaceAdapterId(surfaceId) {

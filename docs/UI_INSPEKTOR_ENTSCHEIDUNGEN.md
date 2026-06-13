@@ -159,3 +159,11 @@
 **Status nach G50:** Der SurfaceAdapter-Katalog ist als read-only Referenzstand abgeschlossen. `docs/UI_EDITOR_SURFACE_ADAPTER_REFERENZSTAND.md` dokumentiert vorhandene Adapter, bekannte SurfaceIds, `UNKNOWN_SURFACE_ADAPTER` fuer unbekannte SurfaceIds, Datenfluss, Sicherheitsgrenzen und Nicht-Ziele. G50 aktiviert keine Produktivlogik, keine Launcher-Nutzung, keine PDF-/Plan-Bearbeitung, keinen Drag und keine Persistenz.
 
 **Status nach G51:** Der BBM-Launcher kann den SurfaceAdapter-Katalog read-only testseitig ueber `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Geprueft sind `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`; unbekannte SurfaceIds bleiben blockiert. Es gibt keine sichtbare Surface-Anzeige, keine Panel-Sektion, keine produktive Surface-Auswahl, keine PDF-/Plan-Bearbeitung, keinen Drag und keine Persistenz.
+
+**Status nach G52:** Eine read-only SurfacePolicy ist vorbereitet. Sie erlaubt
+`restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default` nur lesend,
+setzt `visibleInEditor`, Drag, Resize und Persistenz fuer alle bekannten
+SurfaceIds auf gesperrt und blockiert unbekannte SurfaceIds, Wildcards und
+leere IDs vollstaendig. Der SurfaceAdapterCatalog ist defensiv an
+`readable: true` gebunden; sichtbare UI, PDF-/Plan-/Canvas-Bearbeitung, Drag
+und Persistenz bleiben nicht aktiviert.
