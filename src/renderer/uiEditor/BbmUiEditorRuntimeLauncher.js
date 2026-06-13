@@ -18,8 +18,11 @@ import {
   buildHiddenElementsButtonViewModel,
   buildHiddenElementsPopoverViewModel,
 } from "./uiEditorKitHiddenElementsRuntimeBridge.js";
-import { buildPanelViewModel } from "./uiEditorKitPanelRuntimeBridge.js";
-import { buildDragResult } from "./uiEditorKitDragRuntimeBridge.js";
+import {
+  PANEL_DRAG_COORDINATE_SYSTEM,
+  buildPanelViewModel,
+  calculatePanelDragPosition,
+} from "./uiEditorKitPanelRuntimeBridge.js";
 import { isVisibilityPersistenceAllowedForScope } from "../editorRuntime/host/visibilityPersistenceScopePolicy.js";
 
 void installedLauncherButtonArtifactModule;
@@ -1146,11 +1149,9 @@ function calculatePreviewPanelDragPositionWithRuntime(panel, {
   const height = Number(panel?.offsetHeight) || 220;
   const minLeft = PREVIEW_PANEL_VIEWPORT_MARGIN;
   const minTop = PREVIEW_PANEL_VIEWPORT_MARGIN;
-  const maxLeft = Math.max(minLeft, viewport.width - width - PREVIEW_PANEL_VIEWPORT_MARGIN);
-  const maxTop = Math.max(minTop, viewport.height - height - PREVIEW_PANEL_VIEWPORT_MARGIN);
-  const result = buildDragResult({
-    elementId: "bbm.uiEditor.previewPanel",
-    coordinateSystem: "css-pixels",
+  const result = calculatePanelDragPosition({
+    panelId: "bbm.uiEditor.previewPanel",
+    coordinateSystem: PANEL_DRAG_COORDINATE_SYSTEM,
     startBounds: {
       x: normalizePreviewPanelNumber(startLeft, minLeft),
       y: normalizePreviewPanelNumber(startTop, minTop),
@@ -1161,11 +1162,11 @@ function calculatePreviewPanelDragPositionWithRuntime(panel, {
       x: normalizePreviewPanelNumber(deltaX, 0),
       y: normalizePreviewPanelNumber(deltaY, 0),
     },
-    constraints: {
-      minX: minLeft,
-      minY: minTop,
-      maxX: maxLeft,
-      maxY: maxTop,
+    viewportBounds: {
+      x: minLeft,
+      y: minTop,
+      width: Math.max(0, viewport.width - (PREVIEW_PANEL_VIEWPORT_MARGIN * 2)),
+      height: Math.max(0, viewport.height - (PREVIEW_PANEL_VIEWPORT_MARGIN * 2)),
     },
   });
 

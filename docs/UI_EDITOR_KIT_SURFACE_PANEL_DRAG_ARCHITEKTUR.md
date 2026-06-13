@@ -61,7 +61,7 @@ Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im 
 
 Die Panel-/Drag-Baseline des BBM-Launchers ist seit G42 testseitig abgesichert: Das bestehende Preview-Panel wird weiterhin ueber die vorhandene Launcher-Logik geoeffnet, geschlossen, verschoben, defensiv im Viewport normalisiert und zurueckgesetzt. Hidden-Elements-Button/Popover bleiben Teil derselben Baseline.
 
-Seit G43 nutzt der BBM-Launcher die DragRuntime-Bridge kontrolliert fuer die reine Preview-Panel-Positionsberechnung. Verwendet wird `buildDragResult(...)` mit `coordinateSystem: "css-pixels"`. DOM-/Mouse-Event-Anbindung, Startpositionsmessung, Style-Setzen, Reset, Open/Close und Hidden-Elements-Panelbestandteile bleiben im Host/Launcher.
+Seit G43 nutzte der BBM-Launcher die DragRuntime-Bridge kontrolliert fuer die reine Preview-Panel-Positionsberechnung. Verwendet wurde `buildDragResult(...)` mit `coordinateSystem: "css-pixels"`. Seit G46 laeuft diese Panel-Positionsrechnung ueber den PanelRuntime-Panel-Drag-Helper aus der Panel-Bridge; die DragRuntime bleibt intern im UI-Editor-kit. DOM-/Mouse-Event-Anbindung, Startpositionsmessung, Style-Setzen, Reset, Open/Close und Hidden-Elements-Panelbestandteile bleiben im Host/Launcher.
 
 BBM besitzt weiterhin:
 
@@ -366,6 +366,15 @@ Status nach G43: Die reine Positionsberechnung ist kontrolliert ueber die DragRu
 - Ergebnis nur dokumentieren, keine weitere Drag-Auslagerung und keine neue Funktion aktivieren.
 
 Status nach G44: Die G43-Umstellung ist sichtbar geprueft. Die DragRuntime uebernimmt weiterhin nur die Positionsberechnung; DOM-/Mouse-Events, Startpositionsmessung, Style-Setzen, Reset, Open/Close und Rendering bleiben im BBM-Launcher. PDF, Canvas, Plan, Registry und Persistenz bleiben unveraendert.
+
+### G46: BBM-Panelrechnung ueber PanelRuntime-Helper fuehren
+
+- PanelRuntime-Bridge stellt `PANEL_DRAG_COORDINATE_SYSTEM`, `normalizePanelDragInput(...)`, `buildPanelDragResult(...)` und `calculatePanelDragPosition(...)` bereit,
+- BBM-Launcher nutzt fuer die Preview-Panel-Positionsberechnung `calculatePanelDragPosition(...)`,
+- direkte DragRuntime-Nutzung im Launcher fuer Panel-Positionierung entfernen,
+- DOM-/Mouse-Event-Code, Style-Setzen, Reset, Open/Close und Hidden-Elements im Launcher belassen.
+
+Status nach G46: Die reine Preview-Panel-Positionsrechnung laeuft ueber den PanelRuntime-Panel-Drag-Helper. Die DragRuntime bleibt kit-intern hinter dem Helper. Sichtbares Verhalten, Event-Anbindung, Reset, Open/Close und Hidden-Elements bleiben unveraendert; PDF, Canvas, Plan, Registry und Persistenz bleiben unveraendert.
 
 ## Nicht-Ziele von G36
 

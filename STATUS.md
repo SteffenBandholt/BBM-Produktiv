@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Preview-Panel-Positionsberechnung im BBM-Launcher auf PanelRuntime-Helper umgestellt:
+  - G46 nutzt fuer die reine Preview-Panel-Positionsrechnung `calculatePanelDragPosition(...)` und `PANEL_DRAG_COORDINATE_SYSTEM` aus `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js`.
+  - Die vorherige direkte Launcher-Nutzung von `buildDragResult(...)` aus `uiEditorKitDragRuntimeBridge.js` ist fuer Panel-Positionierung entfernt; DragRuntime bleibt kit-intern hinter dem Panel-Helper.
+  - DOM-/Mouse-Event-Anbindung, Startpositionsermittlung, Style-Setzen, Panel-Open/Close, Reset und Hidden-Elements-Button/Popover bleiben im BBM-Launcher.
+  - Abgesichert sind PanelRuntime-Bridge-Exports, positive und negative Delta-Bewegung, Clamp links/oben und rechts/unten, Panel-Reset, Open/Close und Hidden-Elements-Popover.
+  - Keine neue UI, keine neue Panel-Funktion, keine Persistenz, keine Registry-Aenderung, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB und keine PDF-/Canvas-/Plan-Aktivierung.
+
 - Panel-Drag-Sichtpruefung nach DragRuntime-Umstellung abgeschlossen:
   - G44 hat die G43-Umstellung in der lokalen Electron-DEV-App per `npm start` sichtbar geprueft.
   - Geprueft wurden UI-Editor-Button sichtbar, Panel oeffnen, Panel verschieben, Panel bleibt im sichtbaren Bereich, Panel zuruecksetzen, Panel schliessen/wieder oeffnen und Hidden-Elements-Bereich im Panel.

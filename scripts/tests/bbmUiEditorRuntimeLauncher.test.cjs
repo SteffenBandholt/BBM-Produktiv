@@ -387,6 +387,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       true
     );
     assert.equal(bridgeSource.includes("ui-editor-kit/runtime/panel"), false);
+    const panelRuntime = await importEsmFromFile(PANEL_RUNTIME_BRIDGE_PATH);
+    assert.equal(panelRuntime.PANEL_DRAG_COORDINATE_SYSTEM, "css-pixels");
+    assert.equal(typeof panelRuntime.normalizePanelDragInput, "function");
+    assert.equal(typeof panelRuntime.buildPanelDragResult, "function");
+    assert.equal(typeof panelRuntime.calculatePanelDragPosition, "function");
     for (const forbidden of [
       "bbm",
       "BBM",
@@ -428,7 +433,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     }
   });
 
-  await run("BBM UI-Editor-Runtime: DragRuntime-Bridge wird nur fuer Panel-Positionsrechnung genutzt", async () => {
+  await run("BBM UI-Editor-Runtime: DragRuntime-Bridge bleibt testbar, Launcher nutzt PanelRuntime-Helper", async () => {
     assert.equal(fs.existsSync(DRAG_RUNTIME_BRIDGE_PATH), true);
     const launcherSource = fs.readFileSync(RUNTIME_PATH, "utf8");
     const bridgeSource = fs.readFileSync(DRAG_RUNTIME_BRIDGE_PATH, "utf8");
@@ -437,13 +442,15 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       'export * from "../../../node_modules/ui-editor-kit/src/runtime/drag/index.mjs";'
     );
     assert.equal(bridgeSource.includes("ui-editor-kit/runtime/drag"), false);
-    assert.equal(launcherSource.includes('import { buildDragResult } from "./uiEditorKitDragRuntimeBridge.js";'), true);
+    assert.equal(launcherSource.includes('from "./uiEditorKitDragRuntimeBridge.js"'), false);
+    assert.equal(launcherSource.includes("buildDragResult({"), false);
+    assert.equal(launcherSource.includes("calculatePanelDragPosition"), true);
+    assert.equal(launcherSource.includes("PANEL_DRAG_COORDINATE_SYSTEM"), true);
     assert.equal(launcherSource.includes("ui-editor-kit/runtime/drag"), false);
     assert.equal(launcherSource.includes("node_modules/ui-editor-kit/src/runtime/drag/index.mjs"), false);
     assert.equal(launcherSource.includes("applyDragDelta"), false);
     assert.equal(launcherSource.includes("clampBoundsToConstraints"), false);
     assert.equal(launcherSource.includes("calculatePreviewPanelDragPositionWithRuntime"), true);
-    assert.equal(launcherSource.match(/buildDragResult/g).length, 2);
 
     const dragRuntime = await importEsmFromFile(DRAG_RUNTIME_BRIDGE_PATH);
     assert.equal(typeof dragRuntime.applyDragDelta, "function");
@@ -2447,7 +2454,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(target.getAttribute("data-ui-editor-preview"), "false");
   });
 
-  await run("BBM UI-Editor-Runtime: Panel-Positionsrechnung nutzt DragRuntime-Paritaet", async () => {
+  await run("BBM UI-Editor-Runtime: Panel-Positionsrechnung nutzt PanelRuntime-Helper-Paritaet", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
     const win = { innerWidth: 360, innerHeight: 260 };

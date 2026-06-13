@@ -33,6 +33,9 @@ const EXPECTED_FUNCTION_EXPORTS = Object.freeze([
   "setPanelOpen",
   "buildPanelViewModel",
   "createPreviewButtons",
+  "normalizePanelDragInput",
+  "buildPanelDragResult",
+  "calculatePanelDragPosition",
 ]);
 
 function assertPanelBridgeContract() {
@@ -55,8 +58,11 @@ function assertPanelBridgeContract() {
 function assertLauncherUsesPanelRuntimeBridgeOnly() {
   const source = fs.readFileSync(LAUNCHER_PATH, "utf8");
   assert.equal(source.includes('from "./uiEditorKitPanelRuntimeBridge.js"'), true);
+  assert.equal(source.includes("calculatePanelDragPosition"), true);
+  assert.equal(source.includes("PANEL_DRAG_COORDINATE_SYSTEM"), true);
   assert.equal(source.includes("ui-editor-kit/runtime/panel"), false);
   assert.equal(source.includes("node_modules/ui-editor-kit/src/runtime/panel/index.mjs"), false);
+  assert.equal(source.includes('from "./uiEditorKitDragRuntimeBridge.js"'), false);
 }
 
 function assertPreviewBridgeUnchanged() {
@@ -94,6 +100,23 @@ function assertPanelRuntimeContract(runtime) {
     top: 0,
     right: null,
     bottom: 20,
+  });
+
+  assert.equal(runtime.PANEL_DRAG_COORDINATE_SYSTEM, "css-pixels");
+  const result = runtime.calculatePanelDragPosition({
+    panelId: "preview-panel",
+    startBounds: { x: 100, y: 80, width: 320, height: 240 },
+    delta: { x: 30, y: -20 },
+    viewportBounds: { x: 0, y: 0, width: 1200, height: 800 },
+    coordinateSystem: "css-pixels",
+  });
+  assert.deepEqual(result, {
+    ok: true,
+    errors: [],
+    panelId: "preview-panel",
+    bounds: { x: 130, y: 60, width: 320, height: 240 },
+    changed: true,
+    coordinateSystem: "css-pixels",
   });
 }
 

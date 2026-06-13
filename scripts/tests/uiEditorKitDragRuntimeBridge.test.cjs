@@ -61,13 +61,15 @@ function assertDragBridgeContract() {
   }
 }
 
-function assertLauncherUsesDragRuntimeOnlyViaBridgeForPanelPosition() {
+function assertLauncherNoLongerUsesDragRuntimeForPanelPosition() {
   const source = fs.readFileSync(LAUNCHER_PATH, "utf8");
-  assert.equal(source.includes('import { buildDragResult } from "./uiEditorKitDragRuntimeBridge.js";'), true);
+  assert.equal(source.includes('from "./uiEditorKitDragRuntimeBridge.js"'), false);
+  assert.equal(source.includes("buildDragResult({"), false);
+  assert.equal(source.includes("calculatePanelDragPosition"), true);
   assert.equal(source.includes("ui-editor-kit/runtime/drag"), false);
   assert.equal(source.includes("node_modules/ui-editor-kit/src/runtime/drag/index.mjs"), false);
   assert.equal(source.includes("calculatePreviewPanelDragPositionWithRuntime"), true);
-  assert.equal(source.includes("coordinateSystem: \"css-pixels\""), true);
+  assert.equal(source.includes("PANEL_DRAG_COORDINATE_SYSTEM"), true);
   assert.equal(source.includes("pdf-points"), false);
   assert.equal(source.includes("canvas-pixels"), false);
   assert.equal(source.includes("addEventListener(\"mousemove\""), true);
@@ -212,7 +214,7 @@ function assertDragRuntimeContract(runtime) {
 async function runUiEditorKitDragRuntimeBridgeTests(run) {
   await run("UI-Editor-kit Drag-Runtime-Bridge: Renderer-Pfad ist vorbereitet", async () => {
     assertDragBridgeContract();
-    assertLauncherUsesDragRuntimeOnlyViaBridgeForPanelPosition();
+    assertLauncherNoLongerUsesDragRuntimeForPanelPosition();
     assertExistingBridgesUnchanged();
     assertNoStorageOrEventPath(fs.readFileSync(KIT_DRAG_ESM_PATH, "utf8"));
 
