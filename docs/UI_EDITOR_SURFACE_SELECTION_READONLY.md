@@ -2,10 +2,11 @@
 
 ## Kurzfazit
 
-Das SurfaceSelection-Modell ist read-only vorbereitet. Es beschreibt, welche
-SurfaceIds spaeter in einer kontrollierten Auswahl erscheinen duerften. Es
-aktiviert keine sichtbare Auswahl im Editorpanel und aendert keinen
-Launcher-Renderpfad.
+Das SurfaceSelection-Modell ist read-only vorbereitet und wird seit G56 im
+bestehenden Editorpanel kompakt sichtbar genutzt. Die sichtbare read-only
+Auswahl zeigt aktuell ausschliesslich den Pilot `restarbeiten.ui.main` als
+`Restarbeiten`. Sie aktiviert keine Umschaltung, keine Bearbeitung und keine
+neue Launcher-Funktion.
 
 ## Aktueller Modellstand
 
@@ -55,7 +56,7 @@ Beispiel:
 Es gibt kein Default-true. Capabilities werden nur aus der SurfacePolicy
 uebernommen.
 
-## Datenfluss
+## Datenfluss Modell
 
 ```text
 BBM-Test / spaeter Editorpanel-Host
@@ -66,9 +67,24 @@ BBM-Test / spaeter Editorpanel-Host
 -> read-only SurfaceSelection-Modell
 ```
 
+## Datenfluss sichtbare Anzeige
+
+```text
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSelectionForLauncher(...)
+-> buildReadonlySurfaceSelectionModel(...)
+-> SurfaceAdapterCatalog
+-> SurfacePolicy
+-> kompakte read-only Surface-Auswahl im bestehenden Panel
+```
+
 ## Sicherheitsgrenzen
 
-- Keine sichtbare Auswahl.
+Guardrail-Begriff: sichtbare read-only Auswahl.
+Guardrail-Begriff: keine PDF-/Plan-Surface sichtbar.
+
+- Sichtbare read-only Auswahl nur fuer `restarbeiten.ui.main`.
+- Keine Umschaltung.
 - Keine Dropdown-/Listen-UI.
 - Keine PDF-/Plan-Surface sichtbar.
 - Keine Bearbeitung.
@@ -90,9 +106,9 @@ BBM-Test / spaeter Editorpanel-Host
 
 ## Ausdruecklich nicht aktiviert
 
-- Keine neue Panel-Sektion.
+- Keine neue grosse Panel-Sektion.
 - Keine Surface-Liste.
-- Keine produktive Surface-Auswahl.
+- Keine produktive Surface-Umschaltung.
 - Keine Erweiterung der sichtbaren SurfaceIds.
 - Keine automatische PDF-/Plan-Freigabe.
 - Keine Drag-/Resize-/Persistenz-Ausfuehrung.

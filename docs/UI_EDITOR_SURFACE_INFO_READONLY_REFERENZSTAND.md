@@ -5,16 +5,17 @@
 Die erste sichtbare SurfaceInfo im bestehenden Editorpanel ist als stabiler
 read-only Referenzstand abgeschlossen. Sichtbar ist nur der Pilot
 `restarbeiten.ui.main`. Angezeigt werden SurfaceId, SurfaceType und
-Elementanzahl. Es gibt keine Surface-Auswahl, keine Bearbeitung, keinen Drag,
-kein Resize und keine Persistenz.
+Elementanzahl. Seit G56 steht darueber zusaetzlich eine kompakte read-only
+Surface-Auswahl fuer denselben Pilot. Es gibt keine Umschaltung, keine
+Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
 
 ## Aktueller read-only Stand
 
 - Das bestehende Editorpanel im BBM-Launcher zeigt eine kompakte SurfaceInfo.
 - Die SurfaceInfo ist rein lesend.
 - Die SurfaceInfo wird nur fuer `restarbeiten.ui.main` aufgebaut.
-- Seit G55 existiert zusaetzlich ein read-only SurfaceSelection-Modell fuer eine
-  spaetere Auswahl; es wird im Panel noch nicht sichtbar genutzt.
+- Seit G56 nutzt das Panel das read-only SurfaceSelection-Modell sichtbar, aber
+  nur als kompakte Anzeige fuer `restarbeiten.ui.main`.
 - Die SurfaceRuntime des UI-Editor-kit validiert das neutrale SurfaceModel
   ueber die BBM-Bridge.
 - UI-Editor-kit speichert nicht.
@@ -53,7 +54,18 @@ Wildcards werden nicht automatisch aufgeloest.
 - Die SurfacePolicy ist keine Bearbeitungsfreigabe.
 - Drag, Resize und Persistenz bleiben fuer alle SurfaceIds gesperrt.
 
-## Datenfluss
+## Datenfluss Surface-Auswahl
+
+```text
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSelectionForLauncher(...)
+-> buildReadonlySurfaceSelectionModel(...)
+-> SurfaceAdapterCatalog
+-> SurfacePolicy
+-> kompakte read-only Surface-Auswahl im Panel
+```
+
+## Datenfluss SurfaceInfo
 
 ```text
 Editorpanel im BBM-Launcher
@@ -74,8 +86,8 @@ schreibt keine Zustaende.
 
 - Read-only.
 - Keine Surface-Liste.
-- Keine Surface-Auswahl.
-- Keine sichtbare Auswahl aus dem SurfaceSelection-Modell.
+- Keine echte Surface-Umschaltung.
+- SurfaceSelection ist nur als sichtbare read-only Auswahl fuer `restarbeiten.ui.main` angebunden.
 - Keine Bearbeitung.
 - Kein Drag.
 - Guardrail-Begriff: kein Drag.

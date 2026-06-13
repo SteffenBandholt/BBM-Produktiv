@@ -24,6 +24,7 @@ import {
   calculatePanelDragPosition,
 } from "./uiEditorKitPanelRuntimeBridge.js";
 import { validateSurfaceModelById } from "./surfaceAdapters/surfaceAdapterCatalog.js";
+import { buildReadonlySurfaceSelectionModel } from "./surfaceAdapters/surfaceSelectionModel.js";
 import { isSurfaceVisibleInEditor } from "./surfaceAdapters/surfacePolicy.js";
 import { isVisibilityPersistenceAllowedForScope } from "../editorRuntime/host/visibilityPersistenceScopePolicy.js";
 
@@ -1365,6 +1366,7 @@ function renderPreviewPanel(doc, state = {}) {
   ].filter(Boolean).join("\n");
   panel.appendChild(details);
 
+  appendReadonlySurfaceSelection(doc, panel);
   appendReadonlyPilotInfo(doc, panel, state);
 
   const hiddenElementsButtonViewModel = buildBbmHiddenElementsButtonViewModel(state);
@@ -1718,6 +1720,41 @@ function buildReadonlySurfaceInfoForLauncher(surfaceId, input = {}) {
   };
 }
 
+function buildReadonlySurfaceSelectionForLauncher(input = {}) {
+  const model = buildReadonlySurfaceSelectionModel(input);
+  return {
+    surfaces: Array.isArray(model?.surfaces) ? model.surfaces : [],
+  };
+}
+
+function appendReadonlySurfaceSelection(doc, panel) {
+  if (!doc?.createElement || !panel?.appendChild) return null;
+  const selectionModel = buildReadonlySurfaceSelectionForLauncher();
+  const surfaces = Array.isArray(selectionModel.surfaces) ? selectionModel.surfaces : [];
+  const selectedSurface = surfaces.find((surface) => surface?.selected === true) || surfaces[0] || null;
+  if (!selectedSurface) return null;
+
+  const selection = doc.createElement("div");
+  selection.className = "ui-editor-preview-surface-selection";
+  selection.setAttribute("data-ui-editor-surface-selection", "true");
+  selection.setAttribute("data-ui-editor-surface-id", selectedSurface.surfaceId || "");
+  selection.setAttribute("data-ui-editor-surface-readonly", "true");
+  selection.setAttribute("data-ui-editor-surface-count", String(surfaces.length));
+  selection.style.marginTop = "8px";
+  selection.style.padding = "8px";
+  selection.style.border = "1px solid #cbd5e1";
+  selection.style.borderRadius = "6px";
+  selection.style.background = "#ffffff";
+  selection.style.fontSize = "12px";
+  selection.style.lineHeight = "1.35";
+  selection.textContent = [
+    "Surface-Auswahl",
+    `Auswahl: ${selectedSurface.label || selectedSurface.surfaceId || "nicht verfuegbar"}`,
+  ].join("\n");
+  panel.appendChild(selection);
+  return selection;
+}
+
 function appendReadonlyPilotInfo(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
   const surfaceInfo = buildReadonlySurfaceInfoForLauncher(READONLY_SURFACE_INFO_SURFACE_ID);
@@ -1809,6 +1846,7 @@ export {
   isPreviewOperationAllowed,
   buildReadonlySurfaceModelForLauncher,
   buildReadonlySurfaceInfoForLauncher,
+  buildReadonlySurfaceSelectionForLauncher,
   calculatePreviewPanelDragPositionWithRuntime,
   resolvePreviewTargetElement,
   resetAllPreviewChanges,

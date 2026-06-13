@@ -189,3 +189,10 @@ sowie `visibleInEditor === true` melden. Aktuell ist dadurch nur
 `restarbeiten.ui.main` enthalten. PDF/Plan, unbekannte SurfaceIds und
 Wildcards bleiben nicht auswaehlbar. Es gibt keine sichtbare Auswahl, keine
 Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
+
+**Status nach G56:** Die SurfaceSelection ist im bestehenden Editorpanel
+sichtbar, bleibt aber read-only. Angezeigt wird nur `restarbeiten.ui.main` mit
+dem Label `Restarbeiten`. PDF-/Plan-Surfaces, unbekannte SurfaceIds und
+Wildcards bleiben unsichtbar; es gibt keine Surface-Umschaltung, keine
+Dropdown-/Listen-UI, keine Bearbeitung, keinen Drag, kein Resize und keine
+Persistenz.

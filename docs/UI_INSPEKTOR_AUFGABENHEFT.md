@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.76 abgeschlossen: Surface-Auswahl read-only im Editorpanel sichtbar; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne Umschaltung, PDF/Plan-Freigabe, Drag, Resize oder Persistenz.
 - K19.75 abgeschlossen: Surface-Auswahlmodell read-only vorbereitet; Modell enthaelt aktuell nur `restarbeiten.ui.main`, ohne sichtbare Auswahl, PDF/Plan-Freigabe, Drag, Resize oder Persistenz.
 - K19.74 abgeschlossen: SurfaceInfo read-only im Editorpanel als Referenzstand dokumentiert; sichtbar bleibt nur `restarbeiten.ui.main`, PDF/Plan und unbekannte SurfaceIds bleiben unsichtbar, ohne neue Produktivlogik.
 - K19.73 abgeschlossen: Erste sichtbare read-only SurfaceInfo fuer `restarbeiten.ui.main` im Editorpanel vorbereitet; PDF/Plan bleiben unsichtbar, ohne Surface-Auswahl, Drag, Resize oder Persistenz.
@@ -152,6 +153,14 @@ Aktueller Stand:
 - [x] K19.73 Erste sichtbare read-only SurfaceInfo fuer Pilot-Surface vorbereiten
 - [x] K19.74 SurfaceInfo read-only im Editorpanel als Referenzstand abschliessen
 - [x] K19.75 Surface-Auswahlmodell read-only vorbereiten
+- [x] K19.76 Surface-Auswahl read-only im Editorpanel sichtbar machen
+
+## Statusupdate K19.76
+- `BbmUiEditorRuntimeLauncher.js` nutzt das read-only SurfaceSelection-Modell fuer eine kompakte Anzeige im bestehenden Editorpanel.
+- Sichtbar ist nur `restarbeiten.ui.main` mit dem Label `Restarbeiten`.
+- `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben unsichtbar und nicht auswaehlbar.
+- Keine Umschaltung, keine Dropdown-/Listen-UI, keine Bearbeitungsbuttons, kein Drag, kein Resize und keine Persistenz.
+- Keine PDF-/Plan-/Canvas-Bearbeitung, keine Registry-Aenderung, keine DB-/IPC-Schreiblogik und keine Fachlogik.
 
 ## Statusupdate K19.75
 - `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionModel.js` baut ein read-only SurfaceSelection-Modell aus SurfaceAdapterCatalog und SurfacePolicy.

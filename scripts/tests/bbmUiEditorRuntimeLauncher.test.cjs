@@ -288,6 +288,9 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-editor-surface-info=\"true\"]") {
     return node.getAttribute("data-ui-editor-surface-info") === "true";
   }
+  if (raw === "[data-ui-editor-surface-selection=\"true\"]") {
+    return node.getAttribute("data-ui-editor-surface-selection") === "true";
+  }
   if (raw === "[data-ui-editor-id]") {
     return Boolean(node.getAttribute("data-ui-editor-id"));
   }
@@ -508,6 +511,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     assert.equal(typeof mod.buildReadonlySurfaceModelForLauncher, "function");
     assert.equal(typeof mod.buildReadonlySurfaceInfoForLauncher, "function");
+    assert.equal(typeof mod.buildReadonlySurfaceSelectionForLauncher, "function");
 
     const restarbeitenResult = mod.buildReadonlySurfaceModelForLauncher("restarbeiten.ui.main", {
       hostAdapter: {
@@ -574,9 +578,21 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(unknownResult.surfaceModel, null);
     assert.equal(unknownResult.validation.errors[0].code, "UNKNOWN_SURFACE_ADAPTER");
     assert.equal(mod.buildReadonlySurfaceInfoForLauncher("pdf.plan.page.2"), null);
+
+    const selectionModel = mod.buildReadonlySurfaceSelectionForLauncher({
+      surfaceIds: [
+        "restarbeiten.ui.main",
+        "pdf.plan.page.1",
+        "plan.canvas.default",
+        "unknown.surface",
+      ],
+    });
+    assert.deepEqual(selectionModel.surfaces.map((surface) => surface.surfaceId), ["restarbeiten.ui.main"]);
+    assert.equal(selectionModel.surfaces[0].label, "Restarbeiten");
+    assert.equal(selectionModel.surfaces[0].readonly, true);
   });
 
-  await run("BBM UI-Editor-Runtime: zeigt nur kompakte read-only SurfaceInfo fuer Pilot", async () => {
+  await run("BBM UI-Editor-Runtime: zeigt nur kompakte read-only Surface-Auswahl und SurfaceInfo fuer Pilot", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
     const win = {
@@ -598,8 +614,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
     const renderedText = getRenderedText(doc.body);
+    const surfaceSelection = doc.querySelector('[data-ui-editor-surface-selection="true"]');
     const surfaceInfo = doc.querySelector('[data-ui-editor-surface-info="true"]');
     assert.equal(source.includes('from "./surfaceAdapters/surfaceAdapterCatalog.js"'), true);
+    assert.equal(source.includes('from "./surfaceAdapters/surfaceSelectionModel.js"'), true);
     assert.equal(source.includes('from "./surfaceAdapters/surfacePolicy.js"'), true);
     assert.equal(source.includes("localStorage"), false);
     assert.equal(source.includes("writeFile"), false);
@@ -609,6 +627,13 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes(".run("), false);
     assert.equal(doc.querySelector('[data-ui-editor-surface-list="true"]'), null);
     assert.equal(doc.querySelector('[data-ui-editor-surface-model="true"]'), null);
+    assert.equal(Boolean(surfaceSelection), true);
+    assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-id"), "restarbeiten.ui.main");
+    assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-readonly"), "true");
+    assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-count"), "1");
+    assert.equal(getRenderedText(surfaceSelection).includes("Surface-Auswahl"), true);
+    assert.equal(getRenderedText(surfaceSelection).includes("Auswahl: Restarbeiten"), true);
+    assert.equal(surfaceSelection.querySelector("button"), null);
     assert.equal(Boolean(surfaceInfo), true);
     assert.equal(surfaceInfo.getAttribute("data-ui-editor-surface-id"), "restarbeiten.ui.main");
     assert.equal(getRenderedText(surfaceInfo).includes("Surface: restarbeiten.ui.main"), true);

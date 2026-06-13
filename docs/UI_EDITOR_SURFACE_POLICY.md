@@ -9,6 +9,8 @@ gesperrt bleiben. Seit G53 ist `restarbeiten.ui.main` als erste kompakte
 read-only SurfaceInfo im Editorpanel sichtbar. Seit G54 ist dieser Stand in
 `docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md` als Referenz
 abgeschlossen.
+Seit G56 nutzt das Editorpanel das daraus abgeleitete SurfaceSelection-Modell
+sichtbar, aber nur read-only fuer `restarbeiten.ui.main`.
 
 ## Aktuelle Policy
 
@@ -96,6 +98,16 @@ Auch dieses Modell ist an `readable === true` und `visibleInEditor === true`
 gebunden. Aktuell ist dadurch nur `restarbeiten.ui.main` enthalten; PDF/Plan
 und unbekannte SurfaceIds bleiben ausgeschlossen.
 
+Sichtbare Surface-Auswahl seit G56:
+
+```text
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSelectionForLauncher(...)
+-> buildReadonlySurfaceSelectionModel(...)
+-> SurfacePolicy
+-> kompakte read-only Anzeige fuer restarbeiten.ui.main
+```
+
 ## Sicherheitsgrenzen
 
 - Keine globale Freigabe.
@@ -107,11 +119,12 @@ und unbekannte SurfaceIds bleiben ausgeschlossen.
 - `canDrag: false` fuer alle bekannten SurfaceIds.
 - `canResize: false` fuer alle bekannten SurfaceIds.
 - `canPersist: false` fuer alle bekannten SurfaceIds.
-- Keine sichtbare Surface-Auswahl.
+- Sichtbare Surface-Auswahl nur read-only fuer `restarbeiten.ui.main`.
+- Keine Surface-Umschaltung.
 - Keine automatische Surface-Liste.
-- SurfaceSelection ist nur als read-only Modell vorbereitet.
+- SurfaceSelection ist nur als read-only Anzeige angebunden.
 - Nur kompakte read-only SurfaceInfo fuer `restarbeiten.ui.main`.
-- Keine produktive Launcher-Nutzung.
+- Keine produktive Umschalt- oder Bearbeitungsnutzung im Launcher.
 - Keine PDF-/Plan-Bearbeitung.
 - Keine Canvas-Bearbeitung.
 - Kein Drag auf PDF, Plan oder UI-Surfaces.
@@ -127,9 +140,9 @@ und unbekannte SurfaceIds bleiben ausgeschlossen.
 
 ## Bewusst nicht aktiviert
 
-- Keine neue Panel-Sektion.
+- Keine grosse neue Panel-Sektion.
 - Keine automatische Surface-Liste.
-- Keine produktive Surface-Auswahl.
+- Keine produktive Surface-Umschaltung.
 - Keine Freigabe weiterer SurfaceIds.
 - Keine Aktivierung von PDF-/Plan-/Canvas-Bearbeitung.
 - Keine Drag-/Resize-/Persistenz-Ausfuehrung.

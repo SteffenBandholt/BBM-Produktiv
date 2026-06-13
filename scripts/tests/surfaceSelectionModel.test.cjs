@@ -97,15 +97,17 @@ async function runSurfaceSelectionModelTests(run) {
     });
   });
 
-  await run("SurfaceSelectionModel: bleibt ohne Speicherpfad und ohne sichtbare Launcher-Nutzung", () => {
+  await run("SurfaceSelectionModel: sichtbare Launcher-Nutzung bleibt read-only und ohne Speicherpfad", () => {
     const selectionSource = fs.readFileSync(SELECTION_MODEL_PATH, "utf8");
     const launcherSource = fs.readFileSync(LAUNCHER_PATH, "utf8");
 
     assertNoStorageOrWritePath(selectionSource, "SurfaceSelectionModel");
+    assertNoStorageOrWritePath(launcherSource, "Launcher");
     assert.equal(selectionSource.includes("ui-editor-kit/runtime/surface"), false);
-    assert.equal(launcherSource.includes("surfaceSelectionModel"), false);
-    assert.equal(launcherSource.includes("buildReadonlySurfaceSelectionModel"), false);
-    assert.equal(launcherSource.includes("data-ui-editor-surface-selection"), false);
+    assert.equal(launcherSource.includes('from "./surfaceAdapters/surfaceSelectionModel.js"'), true);
+    assert.equal(launcherSource.includes("buildReadonlySurfaceSelectionModel"), true);
+    assert.equal(launcherSource.includes("buildReadonlySurfaceSelectionForLauncher"), true);
+    assert.equal(launcherSource.includes("data-ui-editor-surface-selection"), true);
     assert.equal(launcherSource.includes("data-ui-editor-surface-list"), false);
     assert.equal(launcherSource.includes("selectSurface"), false);
   });
@@ -119,7 +121,9 @@ async function runSurfaceSelectionModelTests(run) {
       "restarbeiten.ui.main",
       "pdf.plan.page.1",
       "plan.canvas.default",
-      "keine sichtbare Auswahl",
+      "sichtbare read-only Auswahl",
+      "keine Umschaltung",
+      "keine PDF-/Plan-Surface sichtbar",
       "kein Drag",
       "kein Resize",
       "keine Persistenz",

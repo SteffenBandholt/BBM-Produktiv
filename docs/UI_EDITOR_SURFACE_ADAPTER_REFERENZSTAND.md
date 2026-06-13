@@ -81,8 +81,9 @@ Referenzstand dokumentiert:
 `docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md`.
 Seit G55 existiert zusaetzlich ein read-only SurfaceSelection-Modell unter
 `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionModel.js`. Es nutzt den
-Katalog nur zusammen mit der SurfacePolicy und aktiviert keine sichtbare
-Auswahl.
+Katalog nur zusammen mit der SurfacePolicy. Seit G56 nutzt das bestehende
+Editorpanel dieses Modell sichtbar, aber nur als kompakte read-only Anzeige fuer
+`restarbeiten.ui.main`.
 
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
@@ -157,6 +158,17 @@ BBM-Test / spaeter Editorpanel-Host
 -> read-only SurfaceSelection-Modell
 ```
 
+Sichtbare Surface-Auswahl seit G56:
+
+```text
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSelectionForLauncher(...)
+-> buildReadonlySurfaceSelectionModel(...)
+-> SurfaceAdapterCatalog
+-> SurfacePolicy
+-> kompakte read-only Anzeige fuer restarbeiten.ui.main
+```
+
 ## Sicherheitsgrenzen
 
 - Keine Wildcard.
@@ -164,15 +176,13 @@ BBM-Test / spaeter Editorpanel-Host
 - Unbekannte SurfaceIds blockiert.
 - SurfacePolicy blockiert unbekannte SurfaceIds und Wildcards vollstaendig.
 - Bekannte SurfaceIds sind nur read-only lesbar.
-- Editor-Sichtbarkeit nur fuer die kompakte read-only SurfaceInfo von `restarbeiten.ui.main`.
+- Editor-Sichtbarkeit nur fuer kompakte read-only Surface-Auswahl und SurfaceInfo von `restarbeiten.ui.main`.
 - Keine Editor-Sichtbarkeit fuer PDF-/Plan-Surfaces.
-- Keine Produktivnutzung im Launcher.
-- Keine sichtbare Surface-Anzeige im Launcher.
-- Keine neue Panel-Sektion.
+- Keine Produktivnutzung fuer Surface-Umschaltung im Launcher.
+- Keine grosse neue Panel-Sektion.
 - Keine automatische Surface-Liste.
-- SurfaceSelection ist nur als Modell vorbereitet.
-- Keine sichtbare Surface-Auswahl aus dem Modell.
-- Keine sichtbare UI-Aenderung.
+- SurfaceSelection ist nur read-only sichtbar angebunden.
+- Keine Surface-Umschaltung.
 - Keine PDF-/Plan-Bearbeitung.
 - Keine PDF-/Canvas-Renderlogik.
 - Kein Drag.

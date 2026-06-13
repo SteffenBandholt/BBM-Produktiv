@@ -645,6 +645,27 @@ bekannt, lesbar und `visibleInEditor: true` ist. `pdf.plan.page.1`,
 auswaehlbar. Es gibt keine sichtbare Auswahl, keine Dropdown-/Listen-UI, keine
 Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
 
+### G56: Surface-Auswahl read-only im Editorpanel sichtbar machen
+
+Sichtbarer Datenfluss:
+
+```text
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSelectionForLauncher(...)
+-> buildReadonlySurfaceSelectionModel(...)
+-> SurfaceAdapterCatalog
+-> SurfacePolicy
+-> sichtbare read-only Surface-Auswahl
+```
+
+Status nach G56: Das bestehende Editorpanel zeigt zusaetzlich eine kompakte
+read-only Surface-Auswahl fuer den einzigen freigegebenen Pilot
+`restarbeiten.ui.main` mit dem Label `Restarbeiten`. PDF-/Plan-Surfaces,
+unbekannte SurfaceIds und Wildcards bleiben unsichtbar. Es gibt keine
+Umschaltung, keine Dropdown-/Listen-UI, keine Bearbeitung, keinen Drag, kein
+Resize und keine Persistenz. Die SurfaceInfo bleibt als separate read-only Info
+erhalten.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

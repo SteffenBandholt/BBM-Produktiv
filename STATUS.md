@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Surface-Auswahl read-only im Editorpanel sichtbar:
+  - G56 bindet das bestehende read-only SurfaceSelection-Modell im BBM-Launcher an das Editorpanel an.
+  - Sichtbar ist ausschliesslich `restarbeiten.ui.main` mit dem Label `Restarbeiten`.
+  - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben unsichtbar und nicht auswaehlbar.
+  - Es gibt keine Umschaltung, keine Dropdown-/Listen-UI, keine Bearbeitungsbuttons, kein Drag, kein Resize und keine Persistenz.
+  - Keine PDF-/Canvas-/Plan-Bearbeitung, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB-Aenderung, keine Registry-Aenderung und keine Fachlogik.
+
 - Surface-Auswahlmodell read-only vorbereitet:
   - G55 legt `src/renderer/uiEditor/surfaceAdapters/surfaceSelectionModel.js` als rein lesendes Modell/ViewModel an.
   - Das Modell beruecksichtigt nur SurfaceIds, die im SurfaceAdapterCatalog bekannt sind und laut SurfacePolicy `readable === true` sowie `visibleInEditor === true` melden.
