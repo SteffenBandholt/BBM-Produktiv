@@ -6,7 +6,9 @@ Die SurfacePolicy ist als read-only Rechte-/Freigabeschicht vorbereitet. Sie
 entscheidet aktuell nur, welche bekannten SurfaceIds ueber den
 SurfaceAdapterCatalog lesbar sind und welche Editor-Faehigkeiten weiterhin
 gesperrt bleiben. Seit G53 ist `restarbeiten.ui.main` als erste kompakte
-read-only SurfaceInfo im Editorpanel sichtbar.
+read-only SurfaceInfo im Editorpanel sichtbar. Seit G54 ist dieser Stand in
+`docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md` als Referenz
+abgeschlossen.
 
 ## Aktuelle Policy
 
@@ -66,6 +68,19 @@ SurfaceId ist nur lesbar, wenn die Policy `readable: true` meldet.
 
 Sichtbare Editorpanel-Info ist zusaetzlich an `visibleInEditor: true`
 gebunden. Aktuell gilt das nur fuer `restarbeiten.ui.main`.
+
+Referenzierter Editorpanel-Datenfluss seit G54:
+
+```text
+Editorpanel im BBM-Launcher
+-> SurfacePolicy
+-> visibleInEditor-Pruefung
+-> buildReadonlySurfaceModelForLauncher(...)
+-> SurfaceAdapterCatalog
+-> restarbeitenMainSurfaceAdapter
+-> SurfaceRuntime-Validierung ueber Bridge
+-> kompakte SurfaceInfo im Panel
+```
 
 ## Sicherheitsgrenzen
 

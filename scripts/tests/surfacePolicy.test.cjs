@@ -8,6 +8,10 @@ const POLICY_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/surfaceAdapters/
 const CATALOG_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/surfaceAdapters/surfaceAdapterCatalog.js");
 const LAUNCHER_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
 const POLICY_DOC_PATH = path.join(REPO_ROOT, "docs/UI_EDITOR_SURFACE_POLICY.md");
+const SURFACE_INFO_REFERENCE_DOC_PATH = path.join(
+  REPO_ROOT,
+  "docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md",
+);
 
 const KNOWN_SURFACE_IDS = [
   "restarbeiten.ui.main",
@@ -131,6 +135,24 @@ async function runSurfacePolicyTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `SurfacePolicy-Dokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("SurfacePolicy: SurfaceInfo-Referenzdokument enthaelt Kernbegriffe", () => {
+    assert.equal(fs.existsSync(SURFACE_INFO_REFERENCE_DOC_PATH), true, "SurfaceInfo-Referenzdokument fehlt.");
+    const docSource = fs.readFileSync(SURFACE_INFO_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "read-only",
+      "keine Surface-Auswahl",
+      "kein Drag",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `SurfaceInfo-Referenzdokument enthaelt ${required} nicht.`);
     }
   });
 }

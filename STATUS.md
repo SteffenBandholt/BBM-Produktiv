@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- SurfaceInfo read-only im Editorpanel als Referenzstand abgeschlossen:
+  - G54 dokumentiert den G53-Stand in `docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md`.
+  - Sichtbar bleibt ausschliesslich `restarbeiten.ui.main` mit SurfaceId, SurfaceType und Elementanzahl.
+  - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben unsichtbar.
+  - Die Grenze bleibt read-only: keine Surface-Liste, keine Surface-Auswahl, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
+  - Produktivcode wurde nicht erweitert; es gibt weiterhin kein `localStorage`, kein `writeFile`, keinen IPC-Schreibweg, keine DB-Aenderung, keine Registry-Aenderung und keine Fachlogik.
+
 - Erste sichtbare read-only SurfaceInfo im Editorpanel fuer Pilot-Surface vorbereitet:
   - G53 setzt `visibleInEditor: true` ausschliesslich fuer `restarbeiten.ui.main`.
   - Das bestehende Editorpanel zeigt eine kompakte read-only SurfaceInfo mit SurfaceId, Typ und Elementanzahl.

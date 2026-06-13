@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.74 abgeschlossen: SurfaceInfo read-only im Editorpanel als Referenzstand dokumentiert; sichtbar bleibt nur `restarbeiten.ui.main`, PDF/Plan und unbekannte SurfaceIds bleiben unsichtbar, ohne neue Produktivlogik.
 - K19.73 abgeschlossen: Erste sichtbare read-only SurfaceInfo fuer `restarbeiten.ui.main` im Editorpanel vorbereitet; PDF/Plan bleiben unsichtbar, ohne Surface-Auswahl, Drag, Resize oder Persistenz.
 - K19.72 abgeschlossen: Surface-Rechte-/Policy-Schicht read-only vorbereitet; bekannte SurfaceIds sind nur lesbar, Editor-Sichtbarkeit, Drag, Resize und Persistenz bleiben aus, unbekannte SurfaceIds/Wildcards sind voll blockiert.
 - K19.71 abgeschlossen: BBM-Launcher kann den SurfaceAdapter-Katalog read-only testseitig nutzen; es gibt keine sichtbare Surface-Anzeige und keine Produktivnutzung.
@@ -148,6 +149,14 @@ Aktueller Stand:
 - [x] K19.71 SurfaceAdapter-Katalog read-only im Launcher vorbereiten
 - [x] K19.72 Surface-Rechte-/Policy-Schicht read-only vorbereiten
 - [x] K19.73 Erste sichtbare read-only SurfaceInfo fuer Pilot-Surface vorbereiten
+- [x] K19.74 SurfaceInfo read-only im Editorpanel als Referenzstand abschliessen
+
+## Statusupdate K19.74
+- `docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md` dokumentiert den stabilen read-only Stand der kompakten SurfaceInfo im Editorpanel.
+- Sichtbar bleibt ausschliesslich `restarbeiten.ui.main`.
+- `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards bleiben unsichtbar.
+- Datenfluss: Editorpanel -> SurfacePolicy -> `visibleInEditor` -> `buildReadonlySurfaceModelForLauncher(...)` -> SurfaceAdapterCatalog -> `restarbeitenMainSurfaceAdapter` -> SurfaceRuntime-Validierung ueber Bridge -> kompakte SurfaceInfo.
+- Keine Surface-Liste, keine Surface-Auswahl, keine Bearbeitung, kein Drag, kein Resize, keine Persistenz, keine PDF-/Plan-Bearbeitung und keine neue Produktivlogik.
 
 ## Statusupdate K19.73
 - `restarbeiten.ui.main` ist als einzige SurfaceId `visibleInEditor: true`.

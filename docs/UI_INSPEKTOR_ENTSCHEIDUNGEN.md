@@ -174,3 +174,10 @@ nur eine kompakte SurfaceInfo mit SurfaceId, Typ und Elementanzahl. PDF- und
 Plan-Surfaces bleiben `visibleInEditor: false`; unbekannte SurfaceIds und
 Wildcards bleiben blockiert. Es gibt keine Surface-Liste, keine Surface-Auswahl,
 keine Bearbeitungsbuttons, keinen Drag, kein Resize und keine Persistenz.
+
+**Status nach G54:** Die kompakte read-only SurfaceInfo ist als Referenzstand
+abgeschlossen. `docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md`
+dokumentiert sichtbaren Pilot, nicht sichtbare Surfaces, Policy-Grenzen,
+Datenfluss, Sicherheitsgrenzen und Nicht-Ziele. G54 aktiviert keine neue
+Produktivlogik, keine weitere SurfaceId, keine Surface-Auswahl, keine
+Bearbeitung, keinen Drag, kein Resize und keine Persistenz.

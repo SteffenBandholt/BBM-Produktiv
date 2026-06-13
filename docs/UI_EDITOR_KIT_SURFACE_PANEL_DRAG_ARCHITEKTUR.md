@@ -595,6 +595,31 @@ Grenzen:
 - Keine Persistenz.
 - Keine PDF-/Plan-/Canvas-Bearbeitung.
 
+### G54: SurfaceInfo read-only als Referenzstand abschliessen
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md`
+
+Aktueller Datenfluss:
+
+```text
+Editorpanel im BBM-Launcher
+-> SurfacePolicy
+-> visibleInEditor-Pruefung
+-> buildReadonlySurfaceModelForLauncher(...)
+-> SurfaceAdapterCatalog
+-> restarbeitenMainSurfaceAdapter
+-> SurfaceRuntime-Validierung ueber Bridge
+-> kompakte SurfaceInfo im Panel
+```
+
+Status nach G54: Die sichtbare SurfaceInfo ist dokumentarisch als read-only
+Referenzstand abgeschlossen. Sichtbar bleibt nur `restarbeiten.ui.main`.
+`pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds und Wildcards
+bleiben unsichtbar. Es gibt keine Surface-Liste, keine Surface-Auswahl, keine
+Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

@@ -76,6 +76,9 @@ Adapter werden nur geliefert, wenn die Policy fuer die SurfaceId
 kompakte read-only SurfaceInfo im Editorpanel sichtbar. Das ist keine
 Bearbeitungsfreigabe: Drag, Resize und Persistenz bleiben weiterhin fuer alle
 SurfaceIds gesperrt; PDF und Plan bleiben `visibleInEditor: false`.
+Seit G54 ist dieser sichtbare SurfaceInfo-Stand als eigener read-only
+Referenzstand dokumentiert:
+`docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md`.
 
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
@@ -124,6 +127,19 @@ BBM-Launcher-Test
 -> konkreter read-only SurfaceAdapter
 -> neutrales SurfaceModel
 -> SurfaceRuntime-Validierung
+```
+
+Editorpanel-Info seit G53/G54:
+
+```text
+Editorpanel im BBM-Launcher
+-> SurfacePolicy
+-> visibleInEditor-Pruefung
+-> buildReadonlySurfaceModelForLauncher(...)
+-> SurfaceAdapterCatalog
+-> restarbeitenMainSurfaceAdapter
+-> SurfaceRuntime-Validierung ueber Bridge
+-> kompakte SurfaceInfo im Panel
 ```
 
 ## Sicherheitsgrenzen
