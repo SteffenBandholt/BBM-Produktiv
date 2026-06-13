@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Panel/Drag-Umstellung als Referenzstand abgeschlossen:
+  - G47 dokumentiert den aktuellen Panel/Drag-Stand in `docs/UI_EDITOR_PANEL_DRAG_REFERENZSTAND.md` und in der Surface-/Panel-/Drag-Architektur.
+  - Datenfluss: Mouse-/DOM-Event im BBM-Launcher -> Start-Bounds + Delta + Viewport-Bounds -> `uiEditorKitPanelRuntimeBridge` -> PanelRuntime Panel-Drag-Helper im UI-Editor-kit -> berechnete Bounds -> Style-Setzen im BBM-Launcher.
+  - Referenzgrenze: DOM-/Mouse-/Pointer-Anbindung, Style-Setzen, Panel-Open/Close, Reset und Hidden-Elements bleiben im BBM-Launcher; UI-Editor-kit speichert nicht.
+  - Keine Produktivcode-Aenderung, keine neue UI-Funktion, keine weitere Drag-Auslagerung, keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung und kein PDF/Canvas/Plan.
+
 - Preview-Panel-Positionsberechnung im BBM-Launcher auf PanelRuntime-Helper umgestellt:
   - G46 nutzt fuer die reine Preview-Panel-Positionsrechnung `calculatePanelDragPosition(...)` und `PANEL_DRAG_COORDINATE_SYSTEM` aus `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js`.
   - Die vorherige direkte Launcher-Nutzung von `buildDragResult(...)` aus `uiEditorKitDragRuntimeBridge.js` ist fuer Panel-Positionierung entfernt; DragRuntime bleibt kit-intern hinter dem Panel-Helper.

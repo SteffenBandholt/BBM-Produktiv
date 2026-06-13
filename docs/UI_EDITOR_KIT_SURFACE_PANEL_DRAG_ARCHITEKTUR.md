@@ -376,6 +376,30 @@ Status nach G44: Die G43-Umstellung ist sichtbar geprueft. Die DragRuntime ueber
 
 Status nach G46: Die reine Preview-Panel-Positionsrechnung laeuft ueber den PanelRuntime-Panel-Drag-Helper. Die DragRuntime bleibt kit-intern hinter dem Helper. Sichtbares Verhalten, Event-Anbindung, Reset, Open/Close und Hidden-Elements bleiben unveraendert; PDF, Canvas, Plan, Registry und Persistenz bleiben unveraendert.
 
+### G47: Panel/Drag-Referenzstand abschliessen
+
+Aktueller Datenfluss:
+
+```text
+Mouse-/DOM-Event im BBM-Launcher
+-> Start-Bounds + Delta + Viewport-Bounds
+-> uiEditorKitPanelRuntimeBridge
+-> PanelRuntime Panel-Drag-Helper im UI-Editor-kit
+-> berechnete Bounds
+-> Style-Setzen im BBM-Launcher
+```
+
+Referenzgrenzen:
+
+- DOM-/Mouse-/Pointer-Anbindung bleibt im BBM-Launcher,
+- Style-Setzen, Panel-Open/Close, Panel-Reset und Hidden-Elements-Button/Popover bleiben im Launcher,
+- UI-Editor-kit speichert nicht,
+- keine Persistenz,
+- kein PDF/Canvas/Plan,
+- keine Registry-Aenderung und keine Fachlogik.
+
+Status nach G47: Der Panel/Drag-Block ist dokumentarisch als Referenzstand abgeschlossen. `docs/UI_EDITOR_PANEL_DRAG_REFERENZSTAND.md` haelt Datenfluss, verwendete PanelRuntime-Funktionen, Sicherheitsgrenzen, Nicht-Ziele und Testreferenzen fest. G47 aktiviert keine neue Produktivlogik.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

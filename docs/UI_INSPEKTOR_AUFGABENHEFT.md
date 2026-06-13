@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.67 abgeschlossen: Panel/Drag-Umstellung ist als Referenzstand dokumentiert; Datenfluss, PanelRuntime-Helper, Host-Grenzen, Sicherheitsgrenzen und Testreferenzen sind festgehalten.
 - K19.66 abgeschlossen: BBM nutzt fuer die reine Preview-Panel-Positionsberechnung den PanelRuntime-Panel-Drag-Helper ueber `uiEditorKitPanelRuntimeBridge.js`; direkte DragRuntime-Nutzung im Launcher fuer Panel-Positionierung ist entfernt.
 - K19.65 abgeschlossen: Panel-Drag-Sichtpruefung nach der G43-Umstellung in der lokalen Electron-DEV-App bestanden; Button, Panel-Oeffnen, Drag, Viewport-Begrenzung, Reset, Schliessen/Wieder-Oeffnen und Hidden-Elements-Bereich bleiben sichtbar stabil.
 - K19.64 abgeschlossen: Die reine Preview-Panel-Positionsberechnung im BBM-Launcher nutzt kontrolliert `buildDragResult(...)` aus der UI-Editor-kit DragRuntime-Bridge; DOM-/Event-Anbindung, Reset und Rendering bleiben im Host/Launcher.
@@ -134,6 +135,14 @@ Aktueller Stand:
 - [x] K19.64 Panel-Positionsberechnung kontrolliert ueber UI-Editor-kit DragRuntime vorbereiten
 - [x] K19.65 Panel-Drag-Sichtpruefung nach DragRuntime-Umstellung als Referenz absichern
 - [x] K19.66 BBM-Launcher auf PanelRuntime-Panel-Drag-Helper umstellen
+- [x] K19.67 Panel/Drag-Umstellung als Referenzstand abschliessen
+
+## Statusupdate K19.67
+- `docs/UI_EDITOR_PANEL_DRAG_REFERENZSTAND.md` dokumentiert den stabilen Panel/Drag-Stand.
+- Datenfluss: Mouse-/DOM-Event im BBM-Launcher -> Start-Bounds + Delta + Viewport-Bounds -> `uiEditorKitPanelRuntimeBridge` -> PanelRuntime Panel-Drag-Helper im UI-Editor-kit -> berechnete Bounds -> Style-Setzen im BBM-Launcher.
+- DOM-/Mouse-/Pointer-Anbindung, Style-Setzen, Panel-Open/Close, Panel-Reset und Hidden-Elements-Button/Popover bleiben im BBM-Launcher.
+- UI-Editor-kit speichert nicht; keine Persistenz, kein `localStorage`, kein `writeFile`, kein IPC-Schreibweg, keine DB, keine Registry-Aenderung, keine Fachlogik und kein PDF/Canvas/Plan.
+- Keine Produktivcode-Aenderung, keine neue UI-Funktion und keine weitere Drag-Auslagerung.
 
 ## Statusupdate K19.66
 - `BbmUiEditorRuntimeLauncher.js` importiert fuer Panel-Positionierung `calculatePanelDragPosition(...)` und `PANEL_DRAG_COORDINATE_SYSTEM` ueber `src/renderer/uiEditor/uiEditorKitPanelRuntimeBridge.js`.
