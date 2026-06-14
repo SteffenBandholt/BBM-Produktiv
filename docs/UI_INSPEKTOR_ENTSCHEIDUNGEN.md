@@ -257,3 +257,10 @@ vorgeschaltete Referenz; sichtbar bleiben `Restarbeiten` und die SurfaceInfo
 `restarbeiten.ui.main` / `ui-screen` / Elementanzahl. G64 aktiviert keine
 echte Umschaltung, keine sichtbare UI-Aenderung, keine Launcher-Produktivintegration,
 keinen Drag, kein Resize und keine Persistenz.
+
+**Status nach G65:** Ein read-only SurfaceSwitch-Request/Command-Handler ist
+mit `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_READONLY.md` vorbereitet. Er
+prueft Wuensche defensiv gegen das SurfaceSwitch-Modell, laesst nur
+`restarbeiten.ui.main` zu und setzt `changed` immer auf `false`. G65 aktiviert
+keine echte Umschaltung, keine sichtbare UI-Aenderung, keinen Drag, kein
+Resize und keine Persistenz.

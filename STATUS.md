@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- SurfaceSwitch-Request/Command-Handler read-only vorbereitet:
+  - G65 fuegt `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchCommand.js` als defensiven Request-/Command-Handler hinzu.
+  - Der Handler prueft Wechselwuensche read-only gegen das SurfaceSwitch-Modell und gibt nur ein Ergebnis zurueck.
+  - `restarbeiten.ui.main` bleibt das einzige erlaubte/resolved Ziel; `changed` bleibt false.
+  - PDF/Plan/unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert.
+  - Keine echte Umschaltung, keine sichtbare UI-Aenderung, keine Persistenz, kein Drag und kein Resize.
+
 - SurfaceSwitch-Modell read-only im Launcher als Referenzstand abgeschlossen:
   - G64 dokumentiert den G63-Stand in `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
   - Der BBM-Launcher nutzt `buildReadonlySurfaceSwitchResultForLauncher(...)` nur intern read-only als vorgeschaltete Referenz vor der SurfaceSelection.

@@ -19,6 +19,10 @@ Seit G64 ist dieser Launcher-Einsatz als abgeschlossener
 read-only Referenzstand dokumentiert:
 `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
 
+Seit G65 ist zusaetzlich ein defensiver read-only
+SurfaceSwitch-Request/Command-Handler vorbereitet:
+`docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_READONLY.md`.
+
 ## Aktueller read-only Stand
 
 - Modell: `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js`

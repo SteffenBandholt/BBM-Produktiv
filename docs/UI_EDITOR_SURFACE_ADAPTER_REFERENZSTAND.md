@@ -110,6 +110,10 @@ Seit G64 ist dieser Launcher-Einsatz als eigener read-only Referenzstand
 abgeschlossen:
 `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
 
+Seit G65 ist zusaetzlich ein defensiver read-only
+SurfaceSwitch-Request/Command-Handler vorbereitet:
+`docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_READONLY.md`.
+
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
 Hilfsfunktion erzeugt keine sichtbare Surface-Anzeige und aktiviert keine

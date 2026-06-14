@@ -887,6 +887,19 @@ blockiert. Sichtbar bleiben nur `Restarbeiten` und die SurfaceInfo
 Umschaltung, keine sichtbare UI-Aenderung, keine Launcher-Produktivintegration,
 keinen Drag, kein Resize und keine Persistenz.
 
+### G65: SurfaceSwitch-Request/Command-Handler read-only vorbereiten
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_READONLY.md`
+
+Status nach G65: Der Handler ist nur read-only vorbereitet. Er prueft
+Wechselwuensche defensiv gegen den SurfaceSwitch-Stand und gibt nur ein
+Ergebnis zurueck. `restarbeiten.ui.main` bleibt erlaubt; PDF/Plan/unbekannte
+SurfaceIds, `*` und leere IDs bleiben blockiert. `changed` bleibt false. Es
+gibt keine echte Umschaltung, keine sichtbare UI-Aenderung, keine Bearbeitung,
+kein Drag, kein Resize und keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

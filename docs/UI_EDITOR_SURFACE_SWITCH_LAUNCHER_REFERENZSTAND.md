@@ -11,6 +11,10 @@ kompakte Surface-Auswahl mit `Restarbeiten` und die SurfaceInfo fuer
 Es gibt keine echte Umschaltung, keine sichtbare UI-Aenderung und keine
 Launcher-Produktivintegration.
 
+Seit G65 ist zusaetzlich ein defensiver read-only
+SurfaceSwitch-Request/Command-Handler vorbereitet:
+`docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_READONLY.md`.
+
 ## Aktueller read-only Stand
 
 - Launcher-Helfer:
