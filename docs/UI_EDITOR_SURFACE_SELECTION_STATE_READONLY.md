@@ -11,6 +11,9 @@ Seit G59 verwendet der BBM-Launcher diesen State read-only als interne Quelle
 fuer die vorhandene kompakte Surface-Auswahl und SurfaceInfo. Die sichtbare
 Ausgabe bleibt unveraendert.
 
+Seit G60 ist diese Launcher-Nutzung als eigener Referenzstand dokumentiert:
+`docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`.
+
 ## Aktueller State
 
 ```js

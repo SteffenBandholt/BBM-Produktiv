@@ -728,6 +728,34 @@ leere IDs bleiben blockiert und erscheinen nicht im Panel. Es gibt keine echte
 Umschaltung, keine neue UI-Struktur, keine Bearbeitung, keinen Drag, kein
 Resize und keine Persistenz.
 
+### G60: SurfaceSelection-State im Launcher als Referenzstand abschliessen
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`
+
+Referenz-Datenfluss:
+
+```text
+Editorpanel im BBM-Launcher
+-> SurfaceSelection-State
+-> erlaubte selectedSurfaceId
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> read-only SurfaceModel
+-> kompakte Surface-Auswahl im Panel
+-> kompakte SurfaceInfo im Panel
+```
+
+Status nach G60: Der G59-Stand ist dokumentarisch und testseitig als stabiler
+read-only Referenzstand abgeschlossen. Sichtbar bleibt nur `Restarbeiten` fuer
+`restarbeiten.ui.main`; die SurfaceInfo bleibt `restarbeiten.ui.main` /
+`ui-screen` / Elementanzahl. `pdf.plan.page.1`, `plan.canvas.default`,
+unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert. Es gibt keine neue
+Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung, keine
+Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

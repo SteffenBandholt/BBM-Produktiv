@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.80 abgeschlossen: Der SurfaceSelection-State im BBM-Launcher ist als read-only Referenzstand dokumentiert; `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md` beschreibt Datenfluss, sichtbare Grenze, internen State, blockierte SurfaceIds und Sicherheitsgrenzen, ohne Produktivlogik, UI-Aenderung, Drag, Resize oder Persistenz.
 - K19.79 abgeschlossen: SurfaceSelection-State wird im BBM-Launcher read-only als interne Quelle fuer Surface-Auswahl und SurfaceInfo genutzt; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne echte Umschaltung, Drag, Resize oder Persistenz.
 - K19.78 abgeschlossen: SurfaceSelection-State read-only vorbereitet; nur `restarbeiten.ui.main` kann ausgewaehlt sein, PDF/Plan, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert, ohne echte Umschaltung oder Persistenz.
 - K19.77 abgeschlossen: Surface-Auswahl read-only im Editorpanel als Referenzstand dokumentiert; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne echte Umschaltung, Dropdown, Drag, Resize oder Persistenz.
@@ -160,6 +161,15 @@ Aktueller Stand:
 - [x] K19.77 Surface-Auswahl read-only im Editorpanel als Referenzstand abschliessen
 - [x] K19.78 SurfaceSelection-State read-only vorbereiten
 - [x] K19.79 SurfaceSelection-State read-only im Launcher verwenden
+- [x] K19.80 SurfaceSelection-State im Launcher als read-only Referenzstand abschliessen
+
+## Statusupdate K19.80
+- `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md` dokumentiert den G59-Stand als stabilen read-only Referenzstand.
+- Referenzstand: `selectedSurfaceId` und `availableSurfaceIds` bleiben ausschliesslich `restarbeiten.ui.main`.
+- Sichtbar bleibt nur die kompakte Surface-Auswahl `Restarbeiten` und die SurfaceInfo `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
+- `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert.
+- Keine Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
+- Fehlende Grundlagen-/Regeldateien bleiben bewusst unberuehrt und sind ein separates Repo-Hygiene-Thema.
 
 ## Statusupdate K19.79
 - `BbmUiEditorRuntimeLauncher.js` nutzt den read-only SurfaceSelection-State als interne Quelle fuer die vorhandene Surface-Auswahl und SurfaceInfo.

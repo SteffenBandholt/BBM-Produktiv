@@ -7,6 +7,10 @@ const REPO_ROOT = path.resolve(__dirname, "../..");
 const STATE_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/surfaceAdapters/surfaceSelectionState.js");
 const LAUNCHER_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js");
 const DOC_PATH = path.join(REPO_ROOT, "docs/UI_EDITOR_SURFACE_SELECTION_STATE_READONLY.md");
+const LAUNCHER_REFERENCE_DOC_PATH = path.join(
+  REPO_ROOT,
+  "docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md"
+);
 
 function assertNoStorageOrWritePath(source, label) {
   for (const forbidden of [
@@ -125,6 +129,24 @@ async function runSurfaceSelectionStateTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `SurfaceSelection-State-Dokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("SurfaceSelectionState: Launcher-Referenzdokument enthaelt Kernbegriffe", () => {
+    assert.equal(fs.existsSync(LAUNCHER_REFERENCE_DOC_PATH), true, "SurfaceSelection-State-Launcher-Referenzdokument fehlt.");
+    const docSource = fs.readFileSync(LAUNCHER_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "read-only",
+      "keine echte Umschaltung",
+      "kein Drag",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Launcher-Referenzdokument enthaelt ${required} nicht.`);
     }
   });
 }

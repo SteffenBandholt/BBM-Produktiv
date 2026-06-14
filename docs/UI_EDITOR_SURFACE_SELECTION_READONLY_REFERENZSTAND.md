@@ -14,6 +14,9 @@ State aendert den sichtbaren Referenzstand nicht und aktiviert keine echte
 Umschaltung.
 Seit G59 verwendet der BBM-Launcher diesen State read-only als interne Quelle.
 Der sichtbare Referenzstand bleibt unveraendert.
+Seit G60 ist diese Launcher-State-Nutzung als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`.
 
 ## Aktueller read-only Stand
 
@@ -140,6 +143,7 @@ Guardrail-Begriff: keine Persistenz.
 
 ## Testreferenz
 
+- `node scripts/tests/surfaceSelectionState.test.cjs`
 - `node scripts/tests/surfaceSelectionModel.test.cjs`
 - `node scripts/tests/surfacePolicy.test.cjs`
 - `node scripts/tests/surfaceAdapterCatalog.test.cjs`

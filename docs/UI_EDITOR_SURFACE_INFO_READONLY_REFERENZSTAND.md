@@ -15,6 +15,9 @@ Seit G58 existiert zusaetzlich ein interner read-only SurfaceSelection-State;
 die SurfaceInfo-Anzeige bleibt dadurch unveraendert.
 Seit G59 nutzt der BBM-Launcher diesen State read-only als interne Quelle fuer
 Surface-Auswahl und SurfaceInfo; die sichtbare Ausgabe bleibt unveraendert.
+Seit G60 ist diese Launcher-State-Nutzung als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`.
 
 ## Aktueller read-only Stand
 

@@ -14,6 +14,8 @@ Seit G58 ist zusaetzlich ein interner read-only SurfaceSelection-State
 vorbereitet: `docs/UI_EDITOR_SURFACE_SELECTION_STATE_READONLY.md`.
 Seit G59 nutzt der BBM-Launcher diesen State read-only als interne Quelle fuer
 die bestehende kompakte Anzeige. Die sichtbare Ausgabe bleibt unveraendert.
+Seit G60 ist der Launcher-State-Referenzstand abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`.
 
 ## Aktueller Modellstand
 

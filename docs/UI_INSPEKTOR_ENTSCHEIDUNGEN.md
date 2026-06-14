@@ -216,3 +216,10 @@ Surface-Auswahl und SurfaceInfo. Sichtbar bleibt nur `restarbeiten.ui.main`
 mit dem Label `Restarbeiten`; PDF/Plan, unbekannte SurfaceIds, Wildcards und
 leere IDs bleiben blockiert. Es gibt keine echte Umschaltung, keine neue
 UI-Struktur, keine Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
+
+**Status nach G60:** Der G59-Stand ist als eigener read-only
+Launcher-Referenzstand abgeschlossen. `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`
+dokumentiert Datenfluss, sichtbare Grenze, internen State, blockierte
+SurfaceIds, Sicherheitsgrenzen und moegliche Folgepakete. G60 aktiviert keine
+Produktivlogik, keine sichtbare UI-Aenderung, keine weitere Surface, keinen
+Drag, kein Resize und keine Persistenz.

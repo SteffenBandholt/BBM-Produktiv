@@ -18,6 +18,9 @@ nutzt dieselbe `visibleInEditor`-Grenze und macht keine weitere Surface
 sichtbar.
 Seit G59 nutzt der BBM-Launcher diesen State read-only als interne Quelle fuer
 die bestehende kompakte Surface-Auswahl und SurfaceInfo.
+Seit G60 ist dieser Launcher-State-Stand als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`.
 
 ## Aktuelle Policy
 
@@ -169,6 +172,7 @@ Editorpanel im BBM-Launcher
 
 ## Testreferenz
 
+- `node scripts/tests/surfaceSelectionState.test.cjs`
 - `node scripts/tests/surfacePolicy.test.cjs`
 - `node scripts/tests/surfaceAdapterCatalog.test.cjs`
 - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
