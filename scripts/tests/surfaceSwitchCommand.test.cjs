@@ -10,7 +10,7 @@ const COMMAND_PATH = path.join(
 );
 const DOC_PATH = path.join(
   REPO_ROOT,
-  "docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_READONLY.md"
+  "docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md"
 );
 
 function assertNoStorageOrWritePath(source, label) {
@@ -112,6 +112,8 @@ async function runSurfaceSwitchCommandTests(run) {
       "pdf.plan.page.1",
       "plan.canvas.default",
       "read-only",
+      "changed",
+      "false",
       "keine echte Umschaltung",
       "kein Drag",
       "keine Persistenz",
@@ -142,4 +144,3 @@ if (require.main === module) {
 }
 
 module.exports = { runSurfaceSwitchCommandTests };
-

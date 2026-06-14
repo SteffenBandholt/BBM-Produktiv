@@ -7,6 +7,9 @@ Wechselwuensche defensiv entgegen, prueft sie read-only gegen das
 SurfaceSwitch-Modell und gibt ein Ergebnis zurueck. Es gibt keine echte
 Umschaltung, keine sichtbare UI-Aenderung und keine Persistenz.
 
+Die stabile G66-Referenzbeschreibung steht in
+`docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md`.
+
 ## Aktueller read-only Stand
 
 - Handler:
@@ -55,6 +58,8 @@ SurfaceSwitch-Request
 -> erlaubt / blockiert
 -> read-only Ergebnis
 ```
+
+Die volle Kette ist im G66-Referenzstand dokumentiert.
 
 ## Sicherheitsgrenzen
 

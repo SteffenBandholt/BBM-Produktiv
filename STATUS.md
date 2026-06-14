@@ -23,6 +23,7 @@ Sie ergÃ¤nzt:
   - `restarbeiten.ui.main` bleibt das einzige erlaubte/resolved Ziel; `changed` bleibt false.
   - PDF/Plan/unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert.
   - Keine echte Umschaltung, keine sichtbare UI-Aenderung, keine Persistenz, kein Drag und kein Resize.
+  - G66 schliesst den Request-/Command-Handler als Referenzstand in `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md` ab; die komplette Request-/Command-Kette, erlaubte und blockierte Ziele, Rueckgabeverhalten, Sicherheitsgrenzen und Folgepakete sind dokumentiert.
 
 - SurfaceSwitch-Modell read-only im Launcher als Referenzstand abgeschlossen:
   - G64 dokumentiert den G63-Stand in `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.

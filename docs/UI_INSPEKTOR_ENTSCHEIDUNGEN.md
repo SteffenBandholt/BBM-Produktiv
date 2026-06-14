@@ -264,3 +264,11 @@ prueft Wuensche defensiv gegen das SurfaceSwitch-Modell, laesst nur
 `restarbeiten.ui.main` zu und setzt `changed` immer auf `false`. G65 aktiviert
 keine echte Umschaltung, keine sichtbare UI-Aenderung, keinen Drag, kein
 Resize und keine Persistenz.
+
+**Status nach G66:** Der read-only SurfaceSwitch-Request/Command-Handler ist
+mit `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md` als
+Referenzstand abgeschlossen. Die komplette Request-/Command-Kette, erlaubte
+und blockierte Ziele, Rueckgabeverhalten, Sicherheitsgrenzen und Folgepakete
+sind dokumentiert. G66 aktiviert keine Produktivlogik, keine sichtbare
+UI-Aenderung, keine Launcher-Produktivintegration, keine echte Umschaltung,
+keinen Drag, kein Resize und keine Persistenz.

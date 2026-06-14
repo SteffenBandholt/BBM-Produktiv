@@ -14,6 +14,8 @@ Launcher-Produktivintegration.
 Seit G65 ist zusaetzlich ein defensiver read-only
 SurfaceSwitch-Request/Command-Handler vorbereitet:
 `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_READONLY.md`.
+Der G66-Referenzstand dazu ist in
+`docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md` dokumentiert.
 
 ## Aktueller read-only Stand
 

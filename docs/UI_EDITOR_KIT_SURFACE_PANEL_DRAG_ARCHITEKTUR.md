@@ -900,6 +900,18 @@ SurfaceIds, `*` und leere IDs bleiben blockiert. `changed` bleibt false. Es
 gibt keine echte Umschaltung, keine sichtbare UI-Aenderung, keine Bearbeitung,
 kein Drag, kein Resize und keine Persistenz.
 
+### G66: SurfaceSwitch-Request/Command-Handler als Referenzstand abschliessen
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md`
+
+Status nach G66: Der Handler bleibt read-only und ist als stabiler
+Referenzstand dokumentiert. Die komplette Request-/Command-Kette, erlaubte und
+blockierte Ziele, Rueckgabeverhalten, Sicherheitsgrenzen und Folgepakete sind
+festgehalten. Es gibt keine Produktivlogik, keine sichtbare UI-Aenderung,
+keine echte Umschaltung, keinen Drag, kein Resize und keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

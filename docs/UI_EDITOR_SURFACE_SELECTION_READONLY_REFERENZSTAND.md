@@ -33,6 +33,8 @@ abgeschlossen:
 Seit G65 ist zusaetzlich ein defensiver read-only
 SurfaceSwitch-Request/Command-Handler vorbereitet:
 `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_READONLY.md`.
+Der G66-Referenzstand dazu steht in
+`docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md`.
 
 ## Aktueller read-only Stand
 
