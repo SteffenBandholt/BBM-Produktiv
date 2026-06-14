@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.83 abgeschlossen: SurfaceSwitch-Modell wird im BBM-Launcher intern read-only genutzt; sichtbar bleibt `restarbeiten.ui.main`/`Restarbeiten` und die bestehende SurfaceInfo, ohne echte Umschaltung, neue UI, Drag, Resize oder Persistenz.
 - K19.82 abgeschlossen: SurfaceSwitch-read-only Referenzstand dokumentiert; `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md` beschreibt erlaubte und blockierte Wechselziele, Datenfluss, Sicherheitsgrenzen und Nicht-Ziele, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
 - K19.81 abgeschlossen: Surface-Umschaltungsmodell read-only vorbereitet; nur `restarbeiten.ui.main` kann als Ziel aufgeloest werden, PDF/Plan, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert, ohne echte Umschaltung, UI-Aenderung, Drag, Resize oder Persistenz.
 - K19.80 abgeschlossen: Der SurfaceSelection-State im BBM-Launcher ist als read-only Referenzstand dokumentiert; `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md` beschreibt Datenfluss, sichtbare Grenze, internen State, blockierte SurfaceIds und Sicherheitsgrenzen, ohne Produktivlogik, UI-Aenderung, Drag, Resize oder Persistenz.
@@ -166,6 +167,15 @@ Aktueller Stand:
 - [x] K19.80 SurfaceSelection-State im Launcher als read-only Referenzstand abschliessen
 - [x] K19.81 Surface-Umschaltungsmodell read-only vorbereiten
 - [x] K19.82 SurfaceSwitch-read-only als Referenzstand abschliessen
+- [x] K19.83 SurfaceSwitch-Modell read-only im Launcher verwenden
+
+## Statusupdate K19.83
+- `BbmUiEditorRuntimeLauncher.js` nutzt `buildReadonlySurfaceSwitchResultForLauncher(...)` intern read-only.
+- Erlaubt und resolved bleibt ausschliesslich `restarbeiten.ui.main`.
+- `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert.
+- Sichtbar bleibt die kompakte Surface-Auswahl `Restarbeiten` und die SurfaceInfo `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
+- Keine echte Umschaltung, keine neue sichtbare UI, keine PDF-/Plan-Auswahl, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
+- Fehlende Grundlagen-/Regeldateien bleiben bewusst unberuehrt und sind ein separates Repo-Hygiene-Thema.
 
 ## Statusupdate K19.82
 - `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md` dokumentiert den G61-Stand als stabilen read-only Referenzstand.

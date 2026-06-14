@@ -21,6 +21,9 @@ defensive Referenz fuer Wechselwuensche:
 Seit G62 ist dieser SurfaceSwitch-Stand als read-only Referenzstand
 abgeschlossen:
 `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
+Seit G63 verwendet der BBM-Launcher das SurfaceSwitch-Modell intern read-only,
+bevor der resolved SurfaceSelection-State fuer die bestehende Anzeige genutzt
+wird.
 
 ## Aktueller State
 
@@ -97,6 +100,16 @@ SurfaceSwitch-Wunsch
 -> kein produktiver Wechsel im Launcher
 ```
 
+Launcher-Nutzung seit G63:
+
+```text
+BBM-Launcher
+-> buildReadonlySurfaceSwitchResultForLauncher(...)
+-> resolvedSurfaceId restarbeiten.ui.main
+-> SurfaceSelection-State
+-> kompakte read-only Surface-Auswahl/SurfaceInfo
+```
+
 Der State ist nur read-only angebunden. Die sichtbare G56/G57-Auswahl bleibt
 unveraendert und zeigt weiterhin nur `Restarbeiten`.
 
@@ -113,6 +126,7 @@ Guardrail-Begriff: keine Persistenz.
 - Launcher verwendet den State nur als interne Quelle.
 - Surface-Umschaltungsmodell verwendet den State nur als read-only Referenz.
 - SurfaceSwitch-Referenzstand aktiviert keinen produktiven Wechsel.
+- Launcher nutzt SurfaceSwitch nur intern read-only.
 - Kein Drag.
 - Kein Resize.
 - Keine Persistenz.

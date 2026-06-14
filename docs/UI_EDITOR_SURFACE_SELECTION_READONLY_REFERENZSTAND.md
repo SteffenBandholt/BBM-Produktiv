@@ -23,6 +23,8 @@ unveraendert.
 Seit G62 ist dieser SurfaceSwitch-Stand als eigener read-only Referenzstand
 abgeschlossen:
 `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
+Seit G63 nutzt der BBM-Launcher das SurfaceSwitch-Modell intern read-only. Der
+sichtbare Referenzstand bleibt unveraendert.
 
 ## Aktueller read-only Stand
 
@@ -126,6 +128,16 @@ SurfaceSwitch-Wunsch
 -> kein produktiver Wechsel im Launcher
 ```
 
+Launcher-Nutzung seit G63:
+
+```text
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSwitchResultForLauncher(...)
+-> resolvedSurfaceId restarbeiten.ui.main
+-> kompakte read-only Surface-Auswahl
+-> kompakte SurfaceInfo
+```
+
 ## Sicherheitsgrenzen
 
 Guardrail-Begriff: kein Drag.
@@ -136,6 +148,7 @@ Guardrail-Begriff: keine Persistenz.
 - SurfaceSelection-State nur intern read-only angebunden.
 - Surface-Umschaltungsmodell nur intern read-only vorbereitet.
 - SurfaceSwitch-Referenzstand nur dokumentarisch abgeschlossen.
+- SurfaceSwitch wird im Launcher nur intern read-only verwendet.
 - Keine grosse Surface-Liste.
 - Kein Dropdown mit weiteren Optionen.
 - Keine Bearbeitung.

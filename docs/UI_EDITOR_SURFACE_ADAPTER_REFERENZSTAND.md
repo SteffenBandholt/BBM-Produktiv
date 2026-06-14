@@ -103,6 +103,8 @@ Umschaltung.
 Seit G62 ist dieser SurfaceSwitch-Stand als read-only Referenzstand
 abgeschlossen:
 `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
+Seit G63 nutzt der BBM-Launcher das SurfaceSwitch-Modell intern read-only und
+bleibt dabei an Katalog, Policy und SurfaceSelection gebunden.
 
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
@@ -225,6 +227,16 @@ SurfaceSwitch-Wunsch
 -> kein produktiver Wechsel im Launcher
 ```
 
+Launcher-Nutzung seit G63:
+
+```text
+BBM-Launcher
+-> buildReadonlySurfaceSwitchResultForLauncher(...)
+-> SurfaceSwitchModel
+-> SurfaceAdapterCatalog/SurfacePolicy ueber SurfaceSelection
+-> resolvedSurfaceId restarbeiten.ui.main
+```
+
 ## Sicherheitsgrenzen
 
 - Keine Wildcard.
@@ -241,6 +253,7 @@ SurfaceSwitch-Wunsch
 - SurfaceSelection-State ist im Launcher nur read-only angebunden.
 - Surface-Umschaltungsmodell ist nur read-only vorbereitet.
 - SurfaceSwitch-Referenzstand aktiviert keinen produktiven Launcher-Wechsel.
+- Launcher nutzt SurfaceSwitch nur intern read-only.
 - Keine Surface-Umschaltung.
 - Keine PDF-/Plan-Bearbeitung.
 - Keine PDF-/Canvas-Renderlogik.

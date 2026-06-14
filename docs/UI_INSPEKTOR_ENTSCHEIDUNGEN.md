@@ -240,3 +240,11 @@ SurfacePolicy und SurfaceAdapterCatalog sowie die Sicherheitsgrenzen. G62
 aktiviert keine Produktivlogik, keine Launcher-Produktivintegration, keine
 sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und
 keine Persistenz.
+
+**Status nach G63:** Der BBM-Launcher nutzt das SurfaceSwitch-Modell intern
+read-only ueber `buildReadonlySurfaceSwitchResultForLauncher(...)`.
+Wechselwuensche werden defensiv resolved; erlaubt bleibt nur
+`restarbeiten.ui.main`. Die sichtbare Surface-Auswahl `Restarbeiten` und die
+SurfaceInfo bleiben unveraendert. G63 aktiviert keine echte Umschaltung, keine
+PDF-/Plan-Auswahl, keine neue UI, keinen Drag, kein Resize und keine
+Persistenz.

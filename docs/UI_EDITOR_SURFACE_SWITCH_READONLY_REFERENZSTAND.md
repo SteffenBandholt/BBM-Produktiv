@@ -8,12 +8,17 @@ SurfaceSwitch-Wunsch im aktuellen Stand erlaubt waere. Aufgeloest wird
 ausschliesslich `restarbeiten.ui.main`; es gibt keine echte Umschaltung und
 keine Launcher-Produktivintegration.
 
+Seit G63 verwendet der BBM-Launcher diesen Referenzstand intern read-only. Die
+sichtbare UI bleibt unveraendert.
+
 ## Aktueller read-only Stand
 
 - Modell: `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js`
 - Referenzdokument der Vorbereitung:
   `docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`
 - Referenzstand: dieses Dokument
+- Launcher-Helfer seit G63:
+  `buildReadonlySurfaceSwitchResultForLauncher(...)`
 - Erlaubtes `resolvedSurfaceId`: `restarbeiten.ui.main`
 - Blockierte Ziele bleiben auf `restarbeiten.ui.main` zurueckgefuehrt.
 - UI-Editor-kit speichert nicht.
@@ -66,6 +71,16 @@ SurfaceSwitch-Wunsch
 -> kein produktiver Wechsel im Launcher
 ```
 
+Launcher-Nutzung seit G63:
+
+```text
+BBM-Launcher
+-> buildReadonlySurfaceSwitchResultForLauncher(...)
+-> SurfaceSwitchModel
+-> erlaubtes resolvedSurfaceId
+-> bestehende read-only Surface-Auswahl/SurfaceInfo
+```
+
 Der Datenfluss ist nur ein Modell- und Nachweispfad. Er rendert nichts, startet
 keine Host-Aktion und fuehrt keine Surface im Launcher um.
 
@@ -74,6 +89,7 @@ keine Host-Aktion und fuehrt keine Surface im Launcher um.
 - read-only.
 - keine echte Umschaltung.
 - keine Launcher-Produktivintegration.
+- Launcher-Nutzung nur intern read-only.
 - keine sichtbare UI-Aenderung.
 - keine PDF-/Plan-Auswahl.
 - keine Bearbeitung.

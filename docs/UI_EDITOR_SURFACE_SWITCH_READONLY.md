@@ -11,6 +11,10 @@ keine Persistenz.
 Seit G62 ist dieser Stand als eigener read-only Referenzstand abgeschlossen:
 `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
 
+Seit G63 verwendet der BBM-Launcher das Modell intern read-only ueber
+`buildReadonlySurfaceSwitchResultForLauncher(...)`. Die sichtbare Anzeige
+bleibt unveraendert.
+
 ## Aktueller read-only Stand
 
 - Modell: `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js`
@@ -73,6 +77,16 @@ SurfaceSwitch-Wunsch
 -> kein produktiver Wechsel im Launcher
 ```
 
+Launcher-Nutzung seit G63:
+
+```text
+BBM-Launcher
+-> buildReadonlySurfaceSwitchResultForLauncher(...)
+-> SurfaceSwitchModel
+-> resolvedSurfaceId restarbeiten.ui.main
+-> bestehende read-only Surface-Auswahl/SurfaceInfo
+```
+
 Das Modell loest kein Rendering, keinen Panel-Umbau und keine Host-Aktion aus.
 
 ## Sicherheitsgrenzen
@@ -98,6 +112,7 @@ Das Modell loest kein Rendering, keinen Panel-Umbau und keine Host-Aktion aus.
 - Keine neue Produktivlogik im Launcher.
 - Keine sichtbare UI-Aenderung.
 - Keine Launcher-Produktivintegration.
+- Launcher nutzt das Modell nur intern read-only.
 - Keine weitere Surface sichtbar oder auswaehlbar.
 - Keine PDF-/Canvas-/Plan-Bearbeitung.
 - Keine Bearbeitungsbuttons.

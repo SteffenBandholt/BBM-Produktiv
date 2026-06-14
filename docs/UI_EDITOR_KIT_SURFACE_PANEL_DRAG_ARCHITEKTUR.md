@@ -92,6 +92,11 @@ dokumentiert erlaubte und blockierte Wechselziele, Datenfluss,
 Sicherheitsgrenzen, Nicht-Ziele und Folgepakete. Es wurde keine
 Produktivlogik aktiviert.
 
+Der BBM-Launcher nutzt das SurfaceSwitch-Modell seit G63 intern read-only ueber
+`buildReadonlySurfaceSwitchResultForLauncher(...)`. Die sichtbare
+Surface-Auswahl und SurfaceInfo bleiben unveraendert; es gibt keine echte
+Umschaltung.
+
 Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
 
 Die Panel-/Drag-Baseline des BBM-Launchers ist seit G42 testseitig abgesichert: Das bestehende Preview-Panel wird weiterhin ueber die vorhandene Launcher-Logik geoeffnet, geschlossen, verschoben, defensiv im Viewport normalisiert und zurueckgesetzt. Hidden-Elements-Button/Popover bleiben Teil derselben Baseline.
@@ -824,6 +829,33 @@ SurfaceIds, `*` und leere IDs bleiben blockiert. Es gibt keine neue
 Produktivlogik, keine Launcher-Produktivintegration, keine sichtbare
 UI-Aenderung, keine echte Umschaltung, keine Bearbeitung, keinen Drag, kein
 Resize und keine Persistenz.
+
+### G63: SurfaceSwitch-Modell read-only im Launcher verwenden
+
+Launcher-Hilfsfunktion:
+
+- `buildReadonlySurfaceSwitchResultForLauncher(targetSurfaceId, input)`
+
+Launcher-Datenfluss:
+
+```text
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSwitchResultForLauncher(...)
+-> SurfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> resolvedSurfaceId restarbeiten.ui.main
+-> bestehende kompakte Surface-Auswahl/SurfaceInfo
+```
+
+Status nach G63: Der Launcher fuehrt interne Wechselwuensche defensiv ueber
+das SurfaceSwitch-Modell. Sichtbar bleibt nur `restarbeiten.ui.main` mit dem
+Label `Restarbeiten`; SurfaceInfo bleibt `restarbeiten.ui.main` / `ui-screen`
+/ Elementanzahl. PDF/Plan, unbekannte SurfaceIds, `*` und leere IDs bleiben
+blockiert. Es gibt keine echte Umschaltung, keine neue UI, keine Bearbeitung,
+keinen Drag, kein Resize und keine Persistenz.
 
 ## Nicht-Ziele von G36
 

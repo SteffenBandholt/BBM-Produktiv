@@ -26,6 +26,7 @@ import {
 import { validateSurfaceModelById } from "./surfaceAdapters/surfaceAdapterCatalog.js";
 import { buildReadonlySurfaceSelectionModel } from "./surfaceAdapters/surfaceSelectionModel.js";
 import { buildReadonlySurfaceSelectionState } from "./surfaceAdapters/surfaceSelectionState.js";
+import { buildReadonlySurfaceSwitchResult } from "./surfaceAdapters/surfaceSwitchModel.js";
 import { isSurfaceVisibleInEditor } from "./surfaceAdapters/surfacePolicy.js";
 import { isVisibilityPersistenceAllowedForScope } from "../editorRuntime/host/visibilityPersistenceScopePolicy.js";
 
@@ -1737,8 +1738,35 @@ function buildReadonlySurfaceSelectionStateForLauncher(input = {}) {
   }
 }
 
+function buildReadonlySurfaceSwitchResultForLauncher(targetSurfaceId, input = {}) {
+  try {
+    return buildReadonlySurfaceSwitchResult({
+      ...input,
+      targetSurfaceId,
+    });
+  } catch (_error) {
+    const normalizedTargetSurfaceId = String(targetSurfaceId || "").trim();
+    const fallbackSurfaceId = READONLY_SURFACE_INFO_SURFACE_ID;
+    return {
+      allowed: false,
+      readonly: true,
+      fromSurfaceId: fallbackSurfaceId,
+      targetSurfaceId: normalizedTargetSurfaceId,
+      resolvedSurfaceId: fallbackSurfaceId,
+      reason: "surface-switch-readonly-error",
+    };
+  }
+}
+
 function buildReadonlySurfaceSelectionForLauncher(input = {}) {
-  const selectionState = buildReadonlySurfaceSelectionStateForLauncher(input);
+  const switchResult = buildReadonlySurfaceSwitchResultForLauncher(
+    input.selectedSurfaceId || input.targetSurfaceId || "",
+    input
+  );
+  const selectionState = buildReadonlySurfaceSelectionStateForLauncher({
+    ...input,
+    selectedSurfaceId: switchResult.resolvedSurfaceId,
+  });
   const model = buildReadonlySurfaceSelectionModel({
     ...input,
     surfaceIds: selectionState.availableSurfaceIds,
@@ -1747,6 +1775,7 @@ function buildReadonlySurfaceSelectionForLauncher(input = {}) {
   return {
     surfaces: Array.isArray(model?.surfaces) ? model.surfaces : [],
     state: selectionState,
+    switchResult,
   };
 }
 
@@ -1782,10 +1811,11 @@ function appendReadonlySurfaceSelection(doc, panel, state = {}) {
 
 function appendReadonlyPilotInfo(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
-  const selectionState = buildReadonlySurfaceSelectionStateForLauncher({
-    selectedSurfaceId: state?.readonlySurfaceSelectionRequestedSurfaceId || "",
-  });
-  const surfaceId = selectionState.selectedSurfaceId || READONLY_SURFACE_INFO_SURFACE_ID;
+  const switchResult = buildReadonlySurfaceSwitchResultForLauncher(
+    state?.readonlySurfaceSelectionRequestedSurfaceId || "",
+    state
+  );
+  const surfaceId = switchResult.resolvedSurfaceId || READONLY_SURFACE_INFO_SURFACE_ID;
   const surfaceInfo = buildReadonlySurfaceInfoForLauncher(surfaceId);
   if (!surfaceInfo) return null;
 
@@ -1875,6 +1905,7 @@ export {
   isPreviewOperationAllowed,
   buildReadonlySurfaceModelForLauncher,
   buildReadonlySurfaceInfoForLauncher,
+  buildReadonlySurfaceSwitchResultForLauncher,
   buildReadonlySurfaceSelectionStateForLauncher,
   buildReadonlySurfaceSelectionForLauncher,
   calculatePreviewPanelDragPositionWithRuntime,

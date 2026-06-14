@@ -511,6 +511,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     assert.equal(typeof mod.buildReadonlySurfaceModelForLauncher, "function");
     assert.equal(typeof mod.buildReadonlySurfaceInfoForLauncher, "function");
+    assert.equal(typeof mod.buildReadonlySurfaceSwitchResultForLauncher, "function");
     assert.equal(typeof mod.buildReadonlySurfaceSelectionStateForLauncher, "function");
     assert.equal(typeof mod.buildReadonlySurfaceSelectionForLauncher, "function");
 
@@ -580,6 +581,26 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(unknownResult.validation.errors[0].code, "UNKNOWN_SURFACE_ADAPTER");
     assert.equal(mod.buildReadonlySurfaceInfoForLauncher("pdf.plan.page.2"), null);
 
+    const allowedSwitchResult = mod.buildReadonlySurfaceSwitchResultForLauncher("restarbeiten.ui.main");
+    assert.deepEqual(allowedSwitchResult, {
+      allowed: true,
+      readonly: true,
+      fromSurfaceId: "restarbeiten.ui.main",
+      targetSurfaceId: "restarbeiten.ui.main",
+      resolvedSurfaceId: "restarbeiten.ui.main",
+      reason: "readonly-current-surface",
+    });
+
+    for (const blockedSurfaceId of ["pdf.plan.page.1", "plan.canvas.default", "unknown.surface", "*", "", "   "]) {
+      const switchResult = mod.buildReadonlySurfaceSwitchResultForLauncher(blockedSurfaceId);
+      assert.equal(switchResult.allowed, false);
+      assert.equal(switchResult.readonly, true);
+      assert.equal(switchResult.fromSurfaceId, "restarbeiten.ui.main");
+      assert.equal(switchResult.targetSurfaceId, String(blockedSurfaceId || "").trim());
+      assert.equal(switchResult.resolvedSurfaceId, "restarbeiten.ui.main");
+      assert.equal(switchResult.reason, "surface-not-selectable-readonly");
+    }
+
     const selectionModel = mod.buildReadonlySurfaceSelectionForLauncher({
       surfaceIds: [
         "restarbeiten.ui.main",
@@ -590,10 +611,12 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       selectedSurfaceId: "pdf.plan.page.1",
     });
     assert.equal(selectionModel.state.selectedSurfaceId, "restarbeiten.ui.main");
-    assert.equal(selectionModel.state.requestedSurfaceId, "pdf.plan.page.1");
+    assert.equal(selectionModel.state.requestedSurfaceId, "restarbeiten.ui.main");
+    assert.equal(selectionModel.switchResult.targetSurfaceId, "pdf.plan.page.1");
+    assert.equal(selectionModel.switchResult.resolvedSurfaceId, "restarbeiten.ui.main");
+    assert.equal(selectionModel.switchResult.allowed, false);
     assert.equal(selectionModel.state.readonly, true);
-    assert.equal(selectionModel.state.selectionAllowed, false);
-    assert.equal(selectionModel.state.blockedSurfaceIds.includes("pdf.plan.page.1"), true);
+    assert.equal(selectionModel.state.selectionAllowed, true);
     assert.equal(selectionModel.state.blockedSurfaceIds.includes("plan.canvas.default"), true);
     assert.equal(selectionModel.state.blockedSurfaceIds.includes("unknown.surface"), true);
     assert.deepEqual(selectionModel.surfaces.map((surface) => surface.surfaceId), ["restarbeiten.ui.main"]);
@@ -616,6 +639,16 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       if (blockedSurfaceId) {
         assert.equal(selectionState.blockedSurfaceIds.includes(blockedSurfaceId), true);
       }
+    }
+
+    for (const blockedSurfaceId of ["pdf.plan.page.1", "plan.canvas.default", "unknown.surface", "*", ""]) {
+      const switchedSelectionModel = mod.buildReadonlySurfaceSelectionForLauncher({
+        selectedSurfaceId: blockedSurfaceId,
+      });
+      assert.equal(switchedSelectionModel.switchResult.resolvedSurfaceId, "restarbeiten.ui.main");
+      assert.equal(switchedSelectionModel.state.selectedSurfaceId, "restarbeiten.ui.main");
+      assert.equal(switchedSelectionModel.surfaces.length, 1);
+      assert.equal(switchedSelectionModel.surfaces[0].label, "Restarbeiten");
     }
   });
 
@@ -646,7 +679,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes('from "./surfaceAdapters/surfaceAdapterCatalog.js"'), true);
     assert.equal(source.includes('from "./surfaceAdapters/surfaceSelectionModel.js"'), true);
     assert.equal(source.includes('from "./surfaceAdapters/surfaceSelectionState.js"'), true);
+    assert.equal(source.includes('from "./surfaceAdapters/surfaceSwitchModel.js"'), true);
     assert.equal(source.includes('from "./surfaceAdapters/surfacePolicy.js"'), true);
+    assert.equal(source.includes("buildReadonlySurfaceSwitchResultForLauncher"), true);
     assert.equal(source.includes("localStorage"), false);
     assert.equal(source.includes("writeFile"), false);
     assert.equal(source.includes("ipcRenderer"), false);

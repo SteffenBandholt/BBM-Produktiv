@@ -16,6 +16,8 @@ sichtbar unveraendert.
 Seit G62 ist dieser SurfaceSwitch-Stand als eigener read-only Referenzstand
 abgeschlossen:
 `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
+Seit G63 nutzt der Launcher das SurfaceSwitch-Modell intern read-only, ohne
+die sichtbare Surface-Auswahl oder SurfaceInfo zu veraendern.
 
 ## Aktueller read-only Stand
 
@@ -68,6 +70,18 @@ SurfaceSwitch-Wunsch
 -> SurfaceAdapterCatalog
 -> erlaubtes resolvedSurfaceId
 -> kein produktiver Wechsel im Launcher
+```
+
+Launcher-Nutzung seit G63:
+
+```text
+Editorpanel im BBM-Launcher
+-> buildReadonlySurfaceSwitchResultForLauncher(...)
+-> SurfaceSwitchModel
+-> resolvedSurfaceId restarbeiten.ui.main
+-> SurfaceSelection-State
+-> kompakte Surface-Auswahl im Panel
+-> kompakte SurfaceInfo im Panel
 ```
 
 ## Sichtbare UI-Grenze
@@ -128,6 +142,7 @@ Diese SurfaceIds duerfen durch G60 weder sichtbar noch auswaehlbar werden.
 - Keine echte Umschaltung.
 - Surface-Umschaltungsmodell nur read-only als Referenz, nicht als Ausfuehrung.
 - SurfaceSwitch-Referenzstand ohne Launcher-Produktivintegration.
+- G63 nutzt SurfaceSwitch im Launcher nur intern read-only.
 - Guardrail-Begriff: keine echte Umschaltung.
 - Kein Dropdown mit weiteren Optionen.
 - Keine grosse Surface-Liste.
