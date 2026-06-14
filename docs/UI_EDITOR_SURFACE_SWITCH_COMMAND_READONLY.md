@@ -12,6 +12,8 @@ Die stabile G66-Referenzbeschreibung steht in
 G67 nutzt diesen Command intern read-only im BBM-Launcher.
 Der G68-Referenzstand dazu ist in
 `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md` dokumentiert.
+Der G69-Gesamt-Referenzstand dazu ist in
+`docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md` dokumentiert.
 
 ## Aktueller read-only Stand
 

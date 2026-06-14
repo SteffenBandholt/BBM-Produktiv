@@ -7,6 +7,8 @@ Referenzstand abgeschlossen. Der Launcher nutzt den defensiven
 Request-/Command-Helfer intern, ohne sichtbare UI-Aenderung und ohne echte
 Umschaltung. Nur `restarbeiten.ui.main` bleibt als resolvedSurfaceId
 erlaubt.
+Der G69-Gesamt-Referenzstand dazu ist in
+`docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md` dokumentiert.
 
 ## Aktueller read-only Stand
 
@@ -124,4 +126,3 @@ nicht sichtbar:
 - Echte Surface-Umschaltung nur als eigenes Freigabepaket.
 - Weitere Request-/Command-Typen nur getrennt und defensiv vorbereiten.
 - Launcher-UI nur bei expliziter Produktivfreigabe erweitern.
-

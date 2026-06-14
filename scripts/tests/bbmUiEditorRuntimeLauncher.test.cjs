@@ -21,6 +21,10 @@ const SWITCH_COMMAND_LAUNCHER_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md"
 );
+const SURFACE_GESAMT_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md"
+);
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -2930,6 +2934,27 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `Launcher-Command-Referenzdokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Gesamt-Referenzdokument bleibt vorhanden", async () => {
+    assert.equal(fs.existsSync(SURFACE_GESAMT_DOC_PATH), true, "Gesamt-Referenzdokument fehlt.");
+    const docSource = fs.readFileSync(SURFACE_GESAMT_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "SurfaceSwitchCommand",
+      "SurfaceSelectionState",
+      "SurfacePolicy",
+      "read-only",
+      "keine echte Surface-Umschaltung",
+      "kein Drag",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Gesamt-Referenzdokument enthaelt ${required} nicht.`);
     }
   });
 

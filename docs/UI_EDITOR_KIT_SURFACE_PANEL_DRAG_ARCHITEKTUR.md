@@ -936,6 +936,19 @@ UI-Grenze, Sicherheitsgrenzen und Folgepakete sind festgehalten. Es gibt
 keine Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung,
 keinen Drag, kein Resize und keine Persistenz.
 
+### G69: Gesamten read-only Surface-Steuerungsstand als Referenz abschliessen
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md`
+
+Status nach G69: Der gesamte read-only Surface-Steuerungsstand ist als
+Gesamt-Referenz dokumentiert. Komponenten, Gesamtdatenfluss, sichtbare
+UI-Grenze, erlaubte und blockierte SurfaceIds, Sicherheitsgrenzen und
+Folgepakete sind festgehalten. Es gibt keine Produktivlogik, keine sichtbare
+UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und keine
+Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

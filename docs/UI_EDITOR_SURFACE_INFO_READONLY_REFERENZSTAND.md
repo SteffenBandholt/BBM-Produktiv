@@ -18,6 +18,9 @@ Surface-Auswahl und SurfaceInfo; die sichtbare Ausgabe bleibt unveraendert.
 Seit G60 ist diese Launcher-State-Nutzung als eigener read-only Referenzstand
 abgeschlossen:
 `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`.
+Seit G69 ist der gesamte read-only Surface-Steuerungsstand als Gesamt-Referenz
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md`.
 
 ## Aktueller read-only Stand
 

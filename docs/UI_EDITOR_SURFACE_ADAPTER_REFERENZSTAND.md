@@ -119,6 +119,8 @@ G67 nutzt den Command intern read-only im Launcher, ohne neue
 Surface-Freigabe.
 Der G68-Referenzstand dazu steht in
 `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md`.
+Der G69-Gesamt-Referenzstand dazu steht in
+`docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md`.
 
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese

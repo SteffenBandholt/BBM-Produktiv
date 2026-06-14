@@ -286,3 +286,11 @@ dokumentiert Launcher-Datenfluss, Command-/Request-Verhalten, sichtbare
 UI-Grenze, Sicherheitsgrenzen und Folgepakete. G68 aktiviert keine
 Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung, keinen
 Drag, kein Resize und keine Persistenz.
+
+**Status nach G69:** Der gesamte read-only Surface-Steuerungsstand ist als
+Gesamt-Referenz abgeschlossen. `docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md`
+dokumentiert die Kette von SurfaceRuntime-Bridge bis Launcher, inklusive
+Komponenten, Datenfluss, sichtbarer UI-Grenze, erlaubter und blockierter
+SurfaceIds, Sicherheitsgrenzen und Folgepakete. G69 aktiviert keine
+Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung, keinen
+Drag, kein Resize und keine Persistenz.
