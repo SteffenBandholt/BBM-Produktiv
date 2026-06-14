@@ -117,6 +117,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - `weitere Module` dosiert sichtbarer und tragfaehiger machen
 - kleine Nachweise und Konsolidierungen mitziehen, wo sie den Umbau direkt belegen
 - der erreichte Screen-Stand in `Protokoll` bleibt dabei sichtbar abgesichert
+- der read-only Surface-Gesamtstand wurde mit G69 abgeschlossen und mit G70 zusaetzlich als Integrations-/Freigabecheck bestaetigt; nur `restarbeiten.ui.main` bleibt sichtbar/resolved, weitere SurfaceIds bleiben blockiert
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

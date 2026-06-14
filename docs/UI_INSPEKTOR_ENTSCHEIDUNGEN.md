@@ -294,3 +294,10 @@ Komponenten, Datenfluss, sichtbarer UI-Grenze, erlaubter und blockierter
 SurfaceIds, Sicherheitsgrenzen und Folgepakete. G69 aktiviert keine
 Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung, keinen
 Drag, kein Resize und keine Persistenz.
+
+**Status nach G70:** Der Gesamtstand ist zusaetzlich als Integrations-/Freigabecheck
+abgesichert. `docs/UI_EDITOR_SURFACE_READONLY_INTEGRATION_CHECK.md` dokumentiert
+die geprueften Komponenten, den erlaubten Surface-Bereich, die blockierten
+SurfaceIds, die sichtbare UI-Grenze und die offenen Freigabeentscheidungen. G70
+aktiviert keine Produktivlogik, keine sichtbare UI-Aenderung, keine echte
+Umschaltung, keinen Drag, kein Resize und keine Persistenz.

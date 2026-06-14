@@ -19,6 +19,7 @@ Surface-Umschaltung und keine sichtbare UI-Änderung.
 - SurfaceSwitchModel vorhanden.
 - SurfaceSwitchCommand vorhanden.
 - BbmUiEditorRuntimeLauncher nutzt die read-only Kette defensiv.
+- G70 bestaetigt den Gesamtstand zusaetzlich als Integrations-/Freigabecheck.
 - Sichtbar im Editorpanel bleibt nur `Restarbeiten` mit der SurfaceInfo
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.
@@ -129,4 +130,3 @@ blockiert:
 - Drag, Resize und Persistenz jeweils getrennt planen, testen und sichtbar
   abnehmen.
 - Launcher-UI nur bei expliziter Produktivfreigabe erweitern.
-

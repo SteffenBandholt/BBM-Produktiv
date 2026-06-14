@@ -34,6 +34,7 @@ Sie ergÃ¤nzt:
   - Sichtbar bleiben `Restarbeiten` und die SurfaceInfo `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
   - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert.
   - Keine echte Umschaltung, keine sichtbare UI-Aenderung, keine Launcher-Produktivintegration, kein Drag, kein Resize und keine Persistenz.
+  - G70 bestaetigt den Gesamtstand zusaetzlich als Integrations-/Freigabecheck in `docs/UI_EDITOR_SURFACE_READONLY_INTEGRATION_CHECK.md`; die read-only Kette bleibt unveraendert und nur `restarbeiten.ui.main` bleibt sichtbar/resolved.
 
 - SurfaceSwitch-Modell read-only im Launcher verwendet:
   - G63 bindet `surfaceSwitchModel.js` intern defensiv im BBM-Launcher an.

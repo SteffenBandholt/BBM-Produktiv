@@ -25,6 +25,10 @@ const SURFACE_GESAMT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md"
 );
+const SURFACE_INTEGRATION_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_READONLY_INTEGRATION_CHECK.md"
+);
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -2955,6 +2959,30 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `Gesamt-Referenzdokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Integrationsdokument bleibt vorhanden", async () => {
+    assert.equal(fs.existsSync(SURFACE_INTEGRATION_DOC_PATH), true, "Integrationsdokument fehlt.");
+    const docSource = fs.readFileSync(SURFACE_INTEGRATION_DOC_PATH, "utf8");
+
+    for (const required of [
+      "SurfaceRuntime-Bridge",
+      "SurfaceAdapterCatalog",
+      "SurfacePolicy",
+      "SurfaceSelectionModel",
+      "SurfaceSelectionState",
+      "SurfaceSwitchModel",
+      "SurfaceSwitchCommand",
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "read-only",
+      "keine echte Surface-Umschaltung",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Integrationsdokument enthaelt ${required} nicht.`);
     }
   });
 

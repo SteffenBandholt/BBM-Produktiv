@@ -949,6 +949,11 @@ Folgepakete sind festgehalten. Es gibt keine Produktivlogik, keine sichtbare
 UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und keine
 Persistenz.
 
+Status nach G70: Der Gesamtstand ist zusaetzlich als Integrations- und
+Freigabecheck bestaetigt. Die read-only Kette bleibt unveraendert, nur
+`restarbeiten.ui.main` bleibt sichtbar/resolved, und die blockierten SurfaceIds
+bleiben gesperrt.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,
