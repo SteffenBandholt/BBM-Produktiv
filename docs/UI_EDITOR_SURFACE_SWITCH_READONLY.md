@@ -8,6 +8,9 @@ Aktuell ist ausschliesslich der bestehende Pilot `restarbeiten.ui.main`
 erlaubt. Es gibt keine echte Umschaltung, keine sichtbare UI-Aenderung und
 keine Persistenz.
 
+Seit G62 ist dieser Stand als eigener read-only Referenzstand abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
+
 ## Aktueller read-only Stand
 
 - Modell: `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js`
@@ -57,6 +60,19 @@ Wechselwunsch
 -> read-only Ergebnis
 ```
 
+Referenzfluss seit G62:
+
+```text
+SurfaceSwitch-Wunsch
+-> SurfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> erlaubtes resolvedSurfaceId
+-> kein produktiver Wechsel im Launcher
+```
+
 Das Modell loest kein Rendering, keinen Panel-Umbau und keine Host-Aktion aus.
 
 ## Sicherheitsgrenzen
@@ -81,6 +97,7 @@ Das Modell loest kein Rendering, keinen Panel-Umbau und keine Host-Aktion aus.
 
 - Keine neue Produktivlogik im Launcher.
 - Keine sichtbare UI-Aenderung.
+- Keine Launcher-Produktivintegration.
 - Keine weitere Surface sichtbar oder auswaehlbar.
 - Keine PDF-/Canvas-/Plan-Bearbeitung.
 - Keine Bearbeitungsbuttons.
@@ -90,6 +107,7 @@ Das Modell loest kein Rendering, keinen Panel-Umbau und keine Host-Aktion aus.
 ## Testreferenz
 
 - `node scripts/tests/surfaceSwitchModel.test.cjs`
+- `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`
 - `node scripts/tests/surfaceSelectionState.test.cjs`
 - `node scripts/tests/surfaceSelectionModel.test.cjs`
 - `node scripts/tests/surfacePolicy.test.cjs`

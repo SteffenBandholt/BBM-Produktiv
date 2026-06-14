@@ -86,6 +86,12 @@ Wechselwuensche entgegen, laesst aber nur den aktuellen Pilot
 blockiert. Es gibt keine Launcher-Code-Aenderung, keine sichtbare UI-Aenderung,
 keine echte Umschaltung, keinen Drag, kein Resize und keine Persistenz.
 
+Der SurfaceSwitch-Stand ist seit G62 als read-only Referenzstand
+abgeschlossen. `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`
+dokumentiert erlaubte und blockierte Wechselziele, Datenfluss,
+Sicherheitsgrenzen, Nicht-Ziele und Folgepakete. Es wurde keine
+Produktivlogik aktiviert.
+
 Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
 
 Die Panel-/Drag-Baseline des BBM-Launchers ist seit G42 testseitig abgesichert: Das bestehende Preview-Panel wird weiterhin ueber die vorhandene Launcher-Logik geoeffnet, geschlossen, verschoben, defensiv im Viewport normalisiert und zurueckgesetzt. Hidden-Elements-Button/Popover bleiben Teil derselben Baseline.
@@ -791,6 +797,33 @@ werden mit `surface-not-selectable-readonly` blockiert und auf
 `restarbeiten.ui.main` zurueckgefuehrt. Es gibt keine echte Umschaltung, keine
 Launcher-Produktivnutzung, keine sichtbare UI-Aenderung, keine weitere
 Surface, keinen Drag, kein Resize und keine Persistenz.
+
+### G62: SurfaceSwitch-read-only als Referenzstand abschliessen
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`
+
+Referenz-Datenfluss:
+
+```text
+SurfaceSwitch-Wunsch
+-> SurfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> erlaubtes resolvedSurfaceId
+-> kein produktiver Wechsel im Launcher
+```
+
+Status nach G62: Der G61-Stand ist dokumentarisch und testseitig als stabiler
+read-only Referenzstand abgeschlossen. Erlaubt und aufgeloest bleibt nur
+`restarbeiten.ui.main`; `pdf.plan.page.1`, `plan.canvas.default`, unbekannte
+SurfaceIds, `*` und leere IDs bleiben blockiert. Es gibt keine neue
+Produktivlogik, keine Launcher-Produktivintegration, keine sichtbare
+UI-Aenderung, keine echte Umschaltung, keine Bearbeitung, keinen Drag, kein
+Resize und keine Persistenz.
 
 ## Nicht-Ziele von G36
 

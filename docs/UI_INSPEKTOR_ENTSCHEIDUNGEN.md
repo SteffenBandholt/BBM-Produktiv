@@ -231,3 +231,12 @@ loest nur `restarbeiten.ui.main` auf. PDF/Plan, unbekannte SurfaceIds, `*` und
 leere IDs bleiben mit `surface-not-selectable-readonly` blockiert. G61
 aktiviert keine echte Umschaltung, keine Launcher-Produktivnutzung, keine
 sichtbare UI-Aenderung, keinen Drag, kein Resize und keine Persistenz.
+
+**Status nach G62:** Der G61-Stand ist als eigener read-only Referenzstand
+abgeschlossen. `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`
+dokumentiert erlaubte und blockierte Wechselziele, den Datenfluss ueber
+SurfaceSwitchModel, SurfaceSelection-State, SurfaceSelectionModel,
+SurfacePolicy und SurfaceAdapterCatalog sowie die Sicherheitsgrenzen. G62
+aktiviert keine Produktivlogik, keine Launcher-Produktivintegration, keine
+sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und
+keine Persistenz.

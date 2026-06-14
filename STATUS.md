@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- SurfaceSwitch-read-only Referenzstand abgeschlossen:
+  - G62 dokumentiert den G61-Stand in `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
+  - Referenzstand: Nur `restarbeiten.ui.main` bleibt als `resolvedSurfaceId` erlaubt.
+  - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, Wildcards und leere IDs bleiben blockiert und fuehren defensiv auf `restarbeiten.ui.main` zurueck.
+  - Keine Produktivlogik, keine Launcher-Produktivintegration, keine sichtbare UI-Aenderung, keine echte Umschaltung, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
+  - G62 aendert nur Doku und einen Doku-Guardrail-Test; Electron-Sichtpruefung ist nicht noetig.
+
 - Surface-Umschaltungsmodell read-only vorbereitet:
   - G61 legt `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js` als defensives read-only Modell fuer Surface-Wechselwuensche an.
   - Erlaubt ist nur `restarbeiten.ui.main`; `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, Wildcards und leere IDs bleiben blockiert und werden auf `restarbeiten.ui.main` zurueckgefuehrt.

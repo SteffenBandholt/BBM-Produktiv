@@ -24,6 +24,9 @@ abgeschlossen:
 Seit G61 ist ein defensives read-only Surface-Umschaltungsmodell vorbereitet:
 `docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`. Es nutzt dieselbe
 `visibleInEditor`-Grenze und loest nur `restarbeiten.ui.main` auf.
+Seit G62 ist dieser SurfaceSwitch-Stand als read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
 
 ## Aktuelle Policy
 
@@ -145,6 +148,19 @@ Wechselwunsch
 -> read-only Ergebnis
 ```
 
+SurfaceSwitch-Referenzfluss seit G62:
+
+```text
+SurfaceSwitch-Wunsch
+-> SurfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> erlaubtes resolvedSurfaceId
+-> kein produktiver Wechsel im Launcher
+```
+
 ## Sicherheitsgrenzen
 
 - Keine globale Freigabe.
@@ -160,6 +176,7 @@ Wechselwunsch
 - Keine Surface-Umschaltung.
 - SurfaceSelection-State nur intern read-only angebunden.
 - Surface-Umschaltungsmodell nur intern read-only vorbereitet.
+- SurfaceSwitch-Referenzstand ohne Launcher-Produktivintegration.
 - Keine automatische Surface-Liste.
 - SurfaceSelection ist nur als read-only Anzeige angebunden.
 - Nur kompakte read-only SurfaceInfo fuer `restarbeiten.ui.main`.
@@ -191,6 +208,7 @@ Wechselwunsch
 
 - `node scripts/tests/surfaceSelectionState.test.cjs`
 - `node scripts/tests/surfaceSwitchModel.test.cjs`
+- `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`
 - `node scripts/tests/surfacePolicy.test.cjs`
 - `node scripts/tests/surfaceAdapterCatalog.test.cjs`
 - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`

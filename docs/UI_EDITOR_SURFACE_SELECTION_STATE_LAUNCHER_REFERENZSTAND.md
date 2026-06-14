@@ -13,6 +13,9 @@ Seit G61 ist darauf aufbauend ein defensives read-only
 Surface-Umschaltungsmodell vorbereitet:
 `docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`. Der Launcher-Referenzstand bleibt
 sichtbar unveraendert.
+Seit G62 ist dieser SurfaceSwitch-Stand als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
 
 ## Aktueller read-only Stand
 
@@ -52,6 +55,19 @@ Wechselwunsch
 -> SurfacePolicy
 -> SurfaceAdapterCatalog
 -> read-only Ergebnis
+```
+
+G62 referenziert denselben Pfad als abgeschlossenen Referenzstand:
+
+```text
+SurfaceSwitch-Wunsch
+-> SurfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> erlaubtes resolvedSurfaceId
+-> kein produktiver Wechsel im Launcher
 ```
 
 ## Sichtbare UI-Grenze
@@ -111,6 +127,7 @@ Diese SurfaceIds duerfen durch G60 weder sichtbar noch auswaehlbar werden.
 - Read-only.
 - Keine echte Umschaltung.
 - Surface-Umschaltungsmodell nur read-only als Referenz, nicht als Ausfuehrung.
+- SurfaceSwitch-Referenzstand ohne Launcher-Produktivintegration.
 - Guardrail-Begriff: keine echte Umschaltung.
 - Kein Dropdown mit weiteren Optionen.
 - Keine grosse Surface-Liste.
@@ -146,6 +163,7 @@ Diese SurfaceIds duerfen durch G60 weder sichtbar noch auswaehlbar werden.
 
 - Echte Surface-Umschaltung nur als eigenes Konzept- und Freigabepaket.
 - Das G61-Surface-Umschaltungsmodell ist nur ein defensiver Referenzstand.
+- Der G62-Abschluss aktiviert weiterhin keine echte Surface-Umschaltung.
 - Weitere SurfaceIds nur ueber eigene Policy-/Allowlist-Freigabe sichtbar
   machen.
 - PDF-/Plan-Surfaces separat read-only sichtbar machen, falls fachlich
@@ -158,6 +176,7 @@ Diese SurfaceIds duerfen durch G60 weder sichtbar noch auswaehlbar werden.
 
 - `npm run check:ui-editor-kit`
 - `node scripts/tests/surfaceSwitchModel.test.cjs`
+- `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`
 - `node scripts/tests/surfaceSelectionState.test.cjs`
 - `node scripts/tests/surfaceSelectionModel.test.cjs`
 - `node scripts/tests/surfacePolicy.test.cjs`

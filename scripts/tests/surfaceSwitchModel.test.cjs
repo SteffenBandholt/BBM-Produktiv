@@ -6,6 +6,7 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 const REPO_ROOT = path.resolve(__dirname, "../..");
 const SWITCH_MODEL_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js");
 const DOC_PATH = path.join(REPO_ROOT, "docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md");
+const REFERENCE_DOC_PATH = path.join(REPO_ROOT, "docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md");
 
 function assertNoStorageOrWritePath(source, label) {
   for (const forbidden of [
@@ -127,6 +128,24 @@ async function runSurfaceSwitchModelTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `SurfaceSwitch-Dokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("SurfaceSwitchModel: Referenzdokument enthaelt Kernbegriffe", () => {
+    assert.equal(fs.existsSync(REFERENCE_DOC_PATH), true, "SurfaceSwitch-Referenzdokument fehlt.");
+    const docSource = fs.readFileSync(REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "read-only",
+      "keine echte Umschaltung",
+      "kein Drag",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `SurfaceSwitch-Referenzdokument enthaelt ${required} nicht.`);
     }
   });
 }

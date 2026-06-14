@@ -20,6 +20,9 @@ abgeschlossen:
 Seit G61 ist ein defensives read-only Surface-Umschaltungsmodell vorbereitet:
 `docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`. Der sichtbare Referenzstand bleibt
 unveraendert.
+Seit G62 ist dieser SurfaceSwitch-Stand als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
 
 ## Aktueller read-only Stand
 
@@ -110,6 +113,19 @@ Wechselwunsch
 -> read-only Ergebnis
 ```
 
+SurfaceSwitch-Referenzfluss seit G62:
+
+```text
+SurfaceSwitch-Wunsch
+-> SurfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> erlaubtes resolvedSurfaceId
+-> kein produktiver Wechsel im Launcher
+```
+
 ## Sicherheitsgrenzen
 
 Guardrail-Begriff: kein Drag.
@@ -119,6 +135,7 @@ Guardrail-Begriff: keine Persistenz.
 - Keine echte Umschaltung.
 - SurfaceSelection-State nur intern read-only angebunden.
 - Surface-Umschaltungsmodell nur intern read-only vorbereitet.
+- SurfaceSwitch-Referenzstand nur dokumentarisch abgeschlossen.
 - Keine grosse Surface-Liste.
 - Kein Dropdown mit weiteren Optionen.
 - Keine Bearbeitung.
@@ -162,6 +179,7 @@ Guardrail-Begriff: keine Persistenz.
 
 - `node scripts/tests/surfaceSelectionState.test.cjs`
 - `node scripts/tests/surfaceSwitchModel.test.cjs`
+- `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`
 - `node scripts/tests/surfaceSelectionModel.test.cjs`
 - `node scripts/tests/surfacePolicy.test.cjs`
 - `node scripts/tests/surfaceAdapterCatalog.test.cjs`

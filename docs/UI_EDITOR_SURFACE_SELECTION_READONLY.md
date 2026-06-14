@@ -19,6 +19,9 @@ Seit G60 ist der Launcher-State-Referenzstand abgeschlossen:
 Seit G61 ist ein defensives read-only Surface-Umschaltungsmodell vorbereitet:
 `docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`. Es bleibt bei
 `restarbeiten.ui.main` als einzig aufloesbarer SurfaceId.
+Seit G62 ist dieser SurfaceSwitch-Stand als read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
 
 ## Aktueller Modellstand
 
@@ -113,6 +116,19 @@ Wechselwunsch
 -> read-only Ergebnis
 ```
 
+Referenzfluss seit G62:
+
+```text
+SurfaceSwitch-Wunsch
+-> SurfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> erlaubtes resolvedSurfaceId
+-> kein produktiver Wechsel im Launcher
+```
+
 ## Sicherheitsgrenzen
 
 Guardrail-Begriff: sichtbare read-only Auswahl.
@@ -122,6 +138,7 @@ Guardrail-Begriff: keine PDF-/Plan-Surface sichtbar.
 - Keine Umschaltung.
 - SurfaceSelection-State wird im Launcher nur read-only als Quelle genutzt.
 - Surface-Umschaltungsmodell ist nur ein read-only Referenzmodell.
+- SurfaceSwitch-Referenzstand aktiviert keine echte Umschaltung.
 - Keine Dropdown-/Listen-UI.
 - Keine PDF-/Plan-Surface sichtbar.
 - Keine Bearbeitung.
@@ -155,6 +172,7 @@ Guardrail-Begriff: keine PDF-/Plan-Surface sichtbar.
 
 - `node scripts/tests/surfaceSelectionModel.test.cjs`
 - `node scripts/tests/surfaceSwitchModel.test.cjs`
+- `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`
 - `node scripts/tests/surfacePolicy.test.cjs`
 - `node scripts/tests/surfaceAdapterCatalog.test.cjs`
 - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`

@@ -18,6 +18,9 @@ Seit G61 nutzt das read-only Surface-Umschaltungsmodell diesen State als
 defensive Referenz fuer Wechselwuensche:
 `docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`. Auch dort bleibt nur
 `restarbeiten.ui.main` aufloesbar.
+Seit G62 ist dieser SurfaceSwitch-Stand als read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`.
 
 ## Aktueller State
 
@@ -81,6 +84,19 @@ Wechselwunsch
 -> read-only Ergebnis
 ```
 
+Referenzfluss seit G62:
+
+```text
+SurfaceSwitch-Wunsch
+-> SurfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> erlaubtes resolvedSurfaceId
+-> kein produktiver Wechsel im Launcher
+```
+
 Der State ist nur read-only angebunden. Die sichtbare G56/G57-Auswahl bleibt
 unveraendert und zeigt weiterhin nur `Restarbeiten`.
 
@@ -96,6 +112,7 @@ Guardrail-Begriff: keine Persistenz.
 - Keine weitere Surface sichtbar oder auswaehlbar.
 - Launcher verwendet den State nur als interne Quelle.
 - Surface-Umschaltungsmodell verwendet den State nur als read-only Referenz.
+- SurfaceSwitch-Referenzstand aktiviert keinen produktiven Wechsel.
 - Kein Drag.
 - Kein Resize.
 - Keine Persistenz.
@@ -123,6 +140,7 @@ Guardrail-Begriff: keine Persistenz.
 
 - `node scripts/tests/surfaceSelectionState.test.cjs`
 - `node scripts/tests/surfaceSwitchModel.test.cjs`
+- `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md`
 - `node scripts/tests/surfaceSelectionModel.test.cjs`
 - `node scripts/tests/surfacePolicy.test.cjs`
 - `node scripts/tests/surfaceAdapterCatalog.test.cjs`
