@@ -119,6 +119,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - der erreichte Screen-Stand in `Protokoll` bleibt dabei sichtbar abgesichert
 - der read-only Surface-Gesamtstand wurde mit G69 abgeschlossen und mit G70 zusaetzlich als Integrations-/Freigabecheck bestaetigt; nur `restarbeiten.ui.main` bleibt sichtbar/resolved, weitere SurfaceIds bleiben blockiert
 - G71 legt mit `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md` eine Freigabematrix fuer die naechste Surface-Phase an; empfohlen wird zuerst eine kontrollierte read-only Erweiterung statt sofort Drag oder Persistenz
+- G72 bewertet PDF/Plan-Surfaces fachlich read-only in `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md`; Sichtbarkeit und Auswahl bleiben weiter blockiert, Drag und Persistenz ebenfalls
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

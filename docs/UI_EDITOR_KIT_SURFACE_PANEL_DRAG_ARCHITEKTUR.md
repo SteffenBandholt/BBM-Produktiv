@@ -958,6 +958,11 @@ Status nach G71: Eine Freigabematrix fuer die naechste Surface-Phase ist
 angelegt. Sie priorisiert kontrollierte read-only Erweiterungen und haelt
 Drag, Resize und Persistenz als getrennte, spaetere Themen.
 
+Status nach G72: PDF-/Plan-Surfaces sind fachlich read-only bewertet, ohne
+Sichtbarkeit oder Auswahl freizugeben. `pdf.plan.page.1` und
+`plan.canvas.default` bleiben im Katalog vorhanden, aber im Panel weiterhin
+blockiert.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

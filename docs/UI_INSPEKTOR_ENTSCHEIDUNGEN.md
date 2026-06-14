@@ -307,3 +307,10 @@ vorbereitet. `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md` beschreibt
 mögliche Folgephasen, Freigabefragen, Risiken, Prioritaet und Stop-/Go-Kriterien.
 G71 aktiviert keine Produktivlogik, keine sichtbare UI-Aenderung, keine echte
 Umschaltung, keinen Drag, kein Resize und keine Persistenz.
+
+**Status nach G72:** PDF-/Plan-Surfaces sind fachlich read-only bewertet.
+`docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md` beschreibt den
+aktuellen Blockierstatus, Nutzen, Risiken, harte Grenzen und Stop-/Go-Kriterien,
+ohne Sichtbarkeit oder Auswahl freizugeben. G72 aktiviert keine Produktivlogik,
+keine sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein
+Resize und keine Persistenz.

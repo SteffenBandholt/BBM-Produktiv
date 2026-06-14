@@ -22,6 +22,9 @@ Surface-Umschaltung und keine sichtbare UI-Änderung.
 - G70 bestaetigt den Gesamtstand zusaetzlich als Integrations-/Freigabecheck.
 - G71 haelt die naechste Surface-Phase ueber eine Freigabematrix in
   `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md` offen.
+- G72 bewertet PDF/Plan-Surfaces read-only in
+  `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md`, ohne Sichtbarkeit
+  oder Auswahl freizugeben.
 - Sichtbar im Editorpanel bleibt nur `Restarbeiten` mit der SurfaceInfo
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.

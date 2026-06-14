@@ -33,6 +33,10 @@ const SURFACE_NEXT_PHASE_MATRIX_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md"
 );
+const PDF_PLAN_BERATUNG_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md"
+);
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -3006,6 +3010,25 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "G72",
     ]) {
       assert.equal(docSource.includes(required), true, `Freigabematrix enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: PDF-Plan-Bewertung bleibt vorhanden", async () => {
+    assert.equal(fs.existsSync(PDF_PLAN_BERATUNG_DOC_PATH), true, "PDF-Plan-Bewertungsdokument fehlt.");
+    const docSource = fs.readFileSync(PDF_PLAN_BERATUNG_DOC_PATH, "utf8");
+
+    for (const required of [
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "restarbeiten.ui.main",
+      "read-only",
+      "nicht sichtbar",
+      "nicht auswählbar",
+      "kein Drag",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `PDF-Plan-Bewertungsdokument enthaelt ${required} nicht.`);
     }
   });
 

@@ -113,3 +113,7 @@ fuer die naechste Surface-Phase.
 ## Empfohlener naechster Schritt
 
 G72 - PDF/Plan-Surface weiterhin read-only fachlich bewerten oder alternativ eine zweite UI-Surface read-only sichtbar vorbereiten.
+
+G72 selbst verengt diesen Weg fachlich auf eine Bewertung der PDF-/Plan-Surfaces
+in `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md`, ohne Sichtbarkeit
+oder Auswahl freizugeben.

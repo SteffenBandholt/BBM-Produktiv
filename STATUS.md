@@ -36,6 +36,7 @@ Sie ergÃ¤nzt:
   - Keine echte Umschaltung, keine sichtbare UI-Aenderung, keine Launcher-Produktivintegration, kein Drag, kein Resize und keine Persistenz.
   - G70 bestaetigt den Gesamtstand zusaetzlich als Integrations-/Freigabecheck in `docs/UI_EDITOR_SURFACE_READONLY_INTEGRATION_CHECK.md`; die read-only Kette bleibt unveraendert und nur `restarbeiten.ui.main` bleibt sichtbar/resolved.
   - G71 fuegt mit `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md` eine Freigabematrix fuer die naechste Surface-Phase hinzu; sie priorisiert kontrollierte read-only Erweiterungen und haelt Drag, Resize und Persistenz weiterhin getrennt.
+  - G72 bewertet PDF/Plan-Surfaces fachlich read-only in `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md`; `pdf.plan.page.1` und `plan.canvas.default` bleiben im Katalog vorhanden, aber unsichtbar und nicht auswählbar.
 
 - SurfaceSwitch-Modell read-only im Launcher verwendet:
   - G63 bindet `surfaceSwitchModel.js` intern defensiv im BBM-Launcher an.

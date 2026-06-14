@@ -81,3 +81,5 @@ blockiert:
 - Drag, Resize und Persistenz jeweils separat behandeln
 - die Freigabematrix fuer die naechste Surface-Phase liegt in
   `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md`
+- die PDF/Plan-Bewertung liegt in
+  `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md`
