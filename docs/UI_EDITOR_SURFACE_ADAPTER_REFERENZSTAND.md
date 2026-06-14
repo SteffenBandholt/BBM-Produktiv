@@ -106,6 +106,10 @@ abgeschlossen:
 Seit G63 nutzt der BBM-Launcher das SurfaceSwitch-Modell intern read-only und
 bleibt dabei an Katalog, Policy und SurfaceSelection gebunden.
 
+Seit G64 ist dieser Launcher-Einsatz als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
+
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
 Hilfsfunktion erzeugt keine sichtbare Surface-Anzeige und aktiviert keine

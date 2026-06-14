@@ -19,6 +19,10 @@ abgeschlossen:
 Seit G63 nutzt der Launcher das SurfaceSwitch-Modell intern read-only, ohne
 die sichtbare Surface-Auswahl oder SurfaceInfo zu veraendern.
 
+Seit G64 ist dieser Launcher-Einsatz als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
+
 ## Aktueller read-only Stand
 
 - Der Launcher baut die Surface-Auswahl defensiv aus dem

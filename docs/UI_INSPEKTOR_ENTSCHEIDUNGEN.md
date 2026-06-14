@@ -248,3 +248,12 @@ Wechselwuensche werden defensiv resolved; erlaubt bleibt nur
 SurfaceInfo bleiben unveraendert. G63 aktiviert keine echte Umschaltung, keine
 PDF-/Plan-Auswahl, keine neue UI, keinen Drag, kein Resize und keine
 Persistenz.
+
+**Status nach G64:** Der BBM-Launcher ist mit
+`docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md` als read-only
+Referenzstand dokumentiert. Der Launcher nutzt
+`buildReadonlySurfaceSwitchResultForLauncher(...)` nur intern als
+vorgeschaltete Referenz; sichtbar bleiben `Restarbeiten` und die SurfaceInfo
+`restarbeiten.ui.main` / `ui-screen` / Elementanzahl. G64 aktiviert keine
+echte Umschaltung, keine sichtbare UI-Aenderung, keine Launcher-Produktivintegration,
+keinen Drag, kein Resize und keine Persistenz.

@@ -25,6 +25,10 @@ Seit G63 verwendet der BBM-Launcher das SurfaceSwitch-Modell intern read-only,
 bevor der resolved SurfaceSelection-State fuer die bestehende Anzeige genutzt
 wird.
 
+Seit G64 ist dieser Launcher-Einsatz als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
+
 ## Aktueller State
 
 ```js

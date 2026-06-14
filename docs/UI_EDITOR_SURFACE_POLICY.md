@@ -30,6 +30,10 @@ abgeschlossen:
 Seit G63 nutzt der BBM-Launcher das SurfaceSwitch-Modell intern read-only; die
 Policy-Grenze bleibt unveraendert.
 
+Seit G64 ist dieser Launcher-Einsatz als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
+
 ## Aktuelle Policy
 
 ```text

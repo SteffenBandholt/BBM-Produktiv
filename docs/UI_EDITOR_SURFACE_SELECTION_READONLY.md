@@ -25,6 +25,10 @@ abgeschlossen:
 Seit G63 verwendet der BBM-Launcher das SurfaceSwitch-Modell intern read-only;
 die kompakte Auswahl bleibt sichtbar unveraendert.
 
+Seit G64 ist dieser Launcher-Einsatz als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
+
 ## Aktueller Modellstand
 
 Die SurfaceSelection wird aus zwei hostseitigen Quellen abgeleitet:

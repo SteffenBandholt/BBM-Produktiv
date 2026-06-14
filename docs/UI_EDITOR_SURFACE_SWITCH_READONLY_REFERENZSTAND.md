@@ -11,6 +11,10 @@ keine Launcher-Produktivintegration.
 Seit G63 verwendet der BBM-Launcher diesen Referenzstand intern read-only. Die
 sichtbare UI bleibt unveraendert.
 
+Seit G64 ist der Launcher-Einsatz als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
+
 ## Aktueller read-only Stand
 
 - Modell: `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js`

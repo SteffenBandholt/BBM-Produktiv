@@ -7,6 +7,7 @@ const REPO_ROOT = path.resolve(__dirname, "../..");
 const SWITCH_MODEL_PATH = path.join(REPO_ROOT, "src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js");
 const DOC_PATH = path.join(REPO_ROOT, "docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md");
 const REFERENCE_DOC_PATH = path.join(REPO_ROOT, "docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md");
+const LAUNCHER_REFERENCE_DOC_PATH = path.join(REPO_ROOT, "docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md");
 
 function assertNoStorageOrWritePath(source, label) {
   for (const forbidden of [
@@ -146,6 +147,27 @@ async function runSurfaceSwitchModelTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `SurfaceSwitch-Referenzdokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("SurfaceSwitchModel: Launcher-Referenzdokument enthaelt Kernbegriffe", () => {
+    assert.equal(fs.existsSync(LAUNCHER_REFERENCE_DOC_PATH), true, "SurfaceSwitch-Launcher-Referenzdokument fehlt.");
+    const docSource = fs.readFileSync(LAUNCHER_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "read-only",
+      "keine echte Umschaltung",
+      "kein Drag",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+      "Editorpanel im BBM-Launcher",
+      "Surface-Auswahl: Restarbeiten",
+      "SurfaceInfo: restarbeiten.ui.main / ui-screen / Elementanzahl",
+    ]) {
+      assert.equal(docSource.includes(required), true, `SurfaceSwitch-Launcher-Referenzdokument enthaelt ${required} nicht.`);
     }
   });
 }

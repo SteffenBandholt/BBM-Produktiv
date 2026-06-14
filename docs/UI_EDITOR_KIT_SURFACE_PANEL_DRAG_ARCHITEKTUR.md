@@ -857,6 +857,36 @@ Label `Restarbeiten`; SurfaceInfo bleibt `restarbeiten.ui.main` / `ui-screen`
 blockiert. Es gibt keine echte Umschaltung, keine neue UI, keine Bearbeitung,
 keinen Drag, kein Resize und keine Persistenz.
 
+### G64: SurfaceSwitch-Modell im Launcher read-only als Referenzstand abschliessen
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`
+
+Launcher-Datenfluss:
+
+```text
+Editorpanel im BBM-Launcher
+-> read-only SurfaceSwitchModel
+-> erlaubtes resolvedSurfaceId
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> read-only SurfaceModel
+-> kompakte Surface-Auswahl im Panel
+-> kompakte SurfaceInfo im Panel
+```
+
+Status nach G64: Der Launcher-Referenzstand ist dokumentarisch und
+testseitig als stabiler read-only Abschluss festgehalten. Erlaubt und
+resolved bleibt nur `restarbeiten.ui.main`; `pdf.plan.page.1`,
+`plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben
+blockiert. Sichtbar bleiben nur `Restarbeiten` und die SurfaceInfo
+`restarbeiten.ui.main` / `ui-screen` / Elementanzahl. Es gibt keine echte
+Umschaltung, keine sichtbare UI-Aenderung, keine Launcher-Produktivintegration,
+keinen Drag, kein Resize und keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

@@ -15,6 +15,10 @@ Seit G63 verwendet der BBM-Launcher das Modell intern read-only ueber
 `buildReadonlySurfaceSwitchResultForLauncher(...)`. Die sichtbare Anzeige
 bleibt unveraendert.
 
+Seit G64 ist dieser Launcher-Einsatz als abgeschlossener
+read-only Referenzstand dokumentiert:
+`docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
+
 ## Aktueller read-only Stand
 
 - Modell: `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js`

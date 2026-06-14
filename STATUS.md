@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- SurfaceSwitch-Modell read-only im Launcher als Referenzstand abgeschlossen:
+  - G64 dokumentiert den G63-Stand in `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
+  - Der BBM-Launcher nutzt `buildReadonlySurfaceSwitchResultForLauncher(...)` nur intern read-only als vorgeschaltete Referenz vor der SurfaceSelection.
+  - Sichtbar bleiben `Restarbeiten` und die SurfaceInfo `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
+  - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert.
+  - Keine echte Umschaltung, keine sichtbare UI-Aenderung, keine Launcher-Produktivintegration, kein Drag, kein Resize und keine Persistenz.
+
 - SurfaceSwitch-Modell read-only im Launcher verwendet:
   - G63 bindet `surfaceSwitchModel.js` intern defensiv im BBM-Launcher an.
   - `buildReadonlySurfaceSwitchResultForLauncher(...)` prueft Wechselwuensche read-only und liefert weiterhin nur `restarbeiten.ui.main` als `resolvedSurfaceId`.

@@ -26,6 +26,10 @@ abgeschlossen:
 Seit G63 nutzt der BBM-Launcher das SurfaceSwitch-Modell intern read-only. Der
 sichtbare Referenzstand bleibt unveraendert.
 
+Seit G64 ist der Launcher-Einsatz als eigener read-only Referenzstand
+abgeschlossen:
+`docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
+
 ## Aktueller read-only Stand
 
 - Das bestehende Editorpanel zeigt eine kompakte Surface-Auswahl.
