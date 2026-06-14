@@ -121,3 +121,7 @@ sichtbar / resolved:
    Testpaket begleiten lassen.
 4. Vor jeder weiteren Surface-Phase die aktuelle Ein-Surface-Grenze
    testseitig konservieren.
+
+Die spaetere explizite Freigabevorlage ist in
+`docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md` vorbereitet, gibt aber
+selbst noch nichts frei.

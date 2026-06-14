@@ -117,3 +117,7 @@ G72 - PDF/Plan-Surface weiterhin read-only fachlich bewerten oder alternativ ein
 G72 selbst verengt diesen Weg fachlich auf eine Bewertung der PDF-/Plan-Surfaces
 in `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md`, ohne Sichtbarkeit
 oder Auswahl freizugeben.
+
+G73 bereitet danach eine Surface-Policy-Freigabevorlage vor, die spaetere
+Einzelfreigaben strikt read-only, explizit und ohne Wildcards oder Default-true
+vorzeichnen soll.

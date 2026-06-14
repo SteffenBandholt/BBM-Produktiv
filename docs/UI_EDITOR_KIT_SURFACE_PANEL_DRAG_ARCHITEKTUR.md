@@ -963,6 +963,10 @@ Sichtbarkeit oder Auswahl freizugeben. `pdf.plan.page.1` und
 `plan.canvas.default` bleiben im Katalog vorhanden, aber im Panel weiterhin
 blockiert.
 
+Status nach G73: Eine Surface-Policy-Freigabevorlage ist vorbereitet. Sie
+definiert nur die Form spaeterer Einzelfreigaben und aktiviert keine neue
+Surface, keine Sichtbarkeit und keine Auswahl.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

@@ -314,3 +314,10 @@ aktuellen Blockierstatus, Nutzen, Risiken, harte Grenzen und Stop-/Go-Kriterien,
 ohne Sichtbarkeit oder Auswahl freizugeben. G72 aktiviert keine Produktivlogik,
 keine sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein
 Resize und keine Persistenz.
+
+**Status nach G73:** Eine Surface-Policy-Freigabevorlage ist vorbereitet.
+`docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md` beschreibt spaetere
+Einzelfreigaben, Pflichtpruefungen, Minimalfreigabe und verbotene Kopplungen,
+ohne eine Surface tatsaechlich freizugeben. G73 aktiviert keine Produktivlogik,
+keine sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein
+Resize und keine Persistenz.

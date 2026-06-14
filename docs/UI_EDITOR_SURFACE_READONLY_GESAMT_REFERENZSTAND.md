@@ -25,6 +25,9 @@ Surface-Umschaltung und keine sichtbare UI-Änderung.
 - G72 bewertet PDF/Plan-Surfaces read-only in
   `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md`, ohne Sichtbarkeit
   oder Auswahl freizugeben.
+- G73 bereitet die Surface-Policy-Freigabevorlage in
+  `docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md` vor, ohne eine Freigabe
+  auszusprechen.
 - Sichtbar im Editorpanel bleibt nur `Restarbeiten` mit der SurfaceInfo
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.
