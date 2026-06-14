@@ -301,3 +301,9 @@ die geprueften Komponenten, den erlaubten Surface-Bereich, die blockierten
 SurfaceIds, die sichtbare UI-Grenze und die offenen Freigabeentscheidungen. G70
 aktiviert keine Produktivlogik, keine sichtbare UI-Aenderung, keine echte
 Umschaltung, keinen Drag, kein Resize und keine Persistenz.
+
+**Status nach G71:** Die naechste Surface-Phase ist ueber eine Freigabematrix
+vorbereitet. `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md` beschreibt
+mögliche Folgephasen, Freigabefragen, Risiken, Prioritaet und Stop-/Go-Kriterien.
+G71 aktiviert keine Produktivlogik, keine sichtbare UI-Aenderung, keine echte
+Umschaltung, keinen Drag, kein Resize und keine Persistenz.

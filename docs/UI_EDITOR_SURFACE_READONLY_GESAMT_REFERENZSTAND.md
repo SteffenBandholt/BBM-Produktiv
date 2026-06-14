@@ -20,6 +20,8 @@ Surface-Umschaltung und keine sichtbare UI-Änderung.
 - SurfaceSwitchCommand vorhanden.
 - BbmUiEditorRuntimeLauncher nutzt die read-only Kette defensiv.
 - G70 bestaetigt den Gesamtstand zusaetzlich als Integrations-/Freigabecheck.
+- G71 haelt die naechste Surface-Phase ueber eine Freigabematrix in
+  `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md` offen.
 - Sichtbar im Editorpanel bleibt nur `Restarbeiten` mit der SurfaceInfo
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.

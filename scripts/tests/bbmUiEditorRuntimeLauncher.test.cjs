@@ -29,6 +29,10 @@ const SURFACE_INTEGRATION_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_READONLY_INTEGRATION_CHECK.md"
 );
+const SURFACE_NEXT_PHASE_MATRIX_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md"
+);
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -2983,6 +2987,25 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `Integrationsdokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Freigabematrix bleibt vorhanden", async () => {
+    assert.equal(fs.existsSync(SURFACE_NEXT_PHASE_MATRIX_DOC_PATH), true, "Freigabematrix fehlt.");
+    const docSource = fs.readFileSync(SURFACE_NEXT_PHASE_MATRIX_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Freigabematrix",
+      "read-only",
+      "keine echte Surface-Umschaltung",
+      "kein Drag",
+      "keine Persistenz",
+      "PDF",
+      "Plan",
+      "UI-Editor-kit speichert nicht",
+      "G72",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Freigabematrix enthaelt ${required} nicht.`);
     }
   });
 

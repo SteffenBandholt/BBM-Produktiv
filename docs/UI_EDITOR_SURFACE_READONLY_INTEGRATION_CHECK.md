@@ -79,3 +79,5 @@ blockiert:
 - weitere SurfaceIds nur ueber eigene Policy-Freigabe
 - sichtbare PDF-/Plan-Surfaces nur ueber eigenes Paket
 - Drag, Resize und Persistenz jeweils separat behandeln
+- die Freigabematrix fuer die naechste Surface-Phase liegt in
+  `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md`

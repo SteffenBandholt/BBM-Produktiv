@@ -954,6 +954,10 @@ Freigabecheck bestaetigt. Die read-only Kette bleibt unveraendert, nur
 `restarbeiten.ui.main` bleibt sichtbar/resolved, und die blockierten SurfaceIds
 bleiben gesperrt.
 
+Status nach G71: Eine Freigabematrix fuer die naechste Surface-Phase ist
+angelegt. Sie priorisiert kontrollierte read-only Erweiterungen und haelt
+Drag, Resize und Persistenz als getrennte, spaetere Themen.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,
