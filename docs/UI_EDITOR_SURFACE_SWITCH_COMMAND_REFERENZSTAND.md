@@ -6,6 +6,8 @@ Der SurfaceSwitch-Request/Command-Handler ist read-only abgeschlossen. Ein
 angefragter Wechsel wird defensiv ueber den Command-Handler und das
 SurfaceSwitch-Modell ausgewertet, aber nicht produktiv umgesetzt. Nur
 `restarbeiten.ui.main` bleibt als resolvedSurfaceId bestehen.
+G67 nutzt den Command intern read-only im BBM-Launcher, ohne sichtbare
+UI-Aenderung.
 
 ## Aktueller read-only Stand
 

@@ -9,6 +9,7 @@ Umschaltung, keine sichtbare UI-Aenderung und keine Persistenz.
 
 Die stabile G66-Referenzbeschreibung steht in
 `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md`.
+G67 nutzt diesen Command intern read-only im BBM-Launcher.
 
 ## Aktueller read-only Stand
 

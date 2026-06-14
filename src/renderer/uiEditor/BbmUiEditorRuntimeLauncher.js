@@ -26,7 +26,7 @@ import {
 import { validateSurfaceModelById } from "./surfaceAdapters/surfaceAdapterCatalog.js";
 import { buildReadonlySurfaceSelectionModel } from "./surfaceAdapters/surfaceSelectionModel.js";
 import { buildReadonlySurfaceSelectionState } from "./surfaceAdapters/surfaceSelectionState.js";
-import { buildReadonlySurfaceSwitchResult } from "./surfaceAdapters/surfaceSwitchModel.js";
+import { handleReadonlySurfaceSwitchRequest } from "./surfaceAdapters/surfaceSwitchCommand.js";
 import { isSurfaceVisibleInEditor } from "./surfaceAdapters/surfacePolicy.js";
 import { isVisibilityPersistenceAllowedForScope } from "../editorRuntime/host/visibilityPersistenceScopePolicy.js";
 
@@ -1740,10 +1740,16 @@ function buildReadonlySurfaceSelectionStateForLauncher(input = {}) {
 
 function buildReadonlySurfaceSwitchResultForLauncher(targetSurfaceId, input = {}) {
   try {
-    return buildReadonlySurfaceSwitchResult({
+    const switchResult = handleReadonlySurfaceSwitchRequestForLauncher(targetSurfaceId, input);
+    const selectionState = buildReadonlySurfaceSelectionStateForLauncher({
       ...input,
-      targetSurfaceId,
+      selectedSurfaceId: input.fromSurfaceId || input.selectedSurfaceId,
     });
+    return {
+      ...switchResult,
+      fromSurfaceId: selectionState.selectedSurfaceId || READONLY_SURFACE_INFO_SURFACE_ID,
+      targetSurfaceId: switchResult.requestedSurfaceId || String(targetSurfaceId || "").trim(),
+    };
   } catch (_error) {
     const normalizedTargetSurfaceId = String(targetSurfaceId || "").trim();
     const fallbackSurfaceId = READONLY_SURFACE_INFO_SURFACE_ID;
@@ -1752,10 +1758,23 @@ function buildReadonlySurfaceSwitchResultForLauncher(targetSurfaceId, input = {}
       readonly: true,
       fromSurfaceId: fallbackSurfaceId,
       targetSurfaceId: normalizedTargetSurfaceId,
+      requestedSurfaceId: normalizedTargetSurfaceId,
       resolvedSurfaceId: fallbackSurfaceId,
+      changed: false,
       reason: "surface-switch-readonly-error",
     };
   }
+}
+
+function handleReadonlySurfaceSwitchRequestForLauncher(targetSurfaceId, input = {}) {
+  const switchResult = handleReadonlySurfaceSwitchRequest({
+    ...input,
+    targetSurfaceId,
+  });
+  return {
+    ...switchResult,
+    resolvedSurfaceId: switchResult.resolvedSurfaceId || READONLY_SURFACE_INFO_SURFACE_ID,
+  };
 }
 
 function buildReadonlySurfaceSelectionForLauncher(input = {}) {
@@ -1905,6 +1924,7 @@ export {
   isPreviewOperationAllowed,
   buildReadonlySurfaceModelForLauncher,
   buildReadonlySurfaceInfoForLauncher,
+  handleReadonlySurfaceSwitchRequestForLauncher,
   buildReadonlySurfaceSwitchResultForLauncher,
   buildReadonlySurfaceSelectionStateForLauncher,
   buildReadonlySurfaceSelectionForLauncher,

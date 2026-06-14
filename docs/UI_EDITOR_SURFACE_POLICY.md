@@ -39,6 +39,8 @@ SurfaceSwitch-Request/Command-Handler vorbereitet:
 `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_READONLY.md`.
 Der G66-Referenzstand dazu ist in
 `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md` dokumentiert.
+G67 nutzt den Command intern read-only im Launcher, ohne Persistenz oder
+sichtbare UI-Aenderung.
 
 ## Aktuelle Policy
 

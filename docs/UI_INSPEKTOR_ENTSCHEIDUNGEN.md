@@ -272,3 +272,10 @@ und blockierte Ziele, Rueckgabeverhalten, Sicherheitsgrenzen und Folgepakete
 sind dokumentiert. G66 aktiviert keine Produktivlogik, keine sichtbare
 UI-Aenderung, keine Launcher-Produktivintegration, keine echte Umschaltung,
 keinen Drag, kein Resize und keine Persistenz.
+
+**Status nach G67:** Der BBM-Launcher verwendet den read-only
+SurfaceSwitch-Command intern ueber `handleReadonlySurfaceSwitchRequestForLauncher(...)`.
+Sichtbare Surface-Auswahl und SurfaceInfo bleiben unveraendert; `changed`
+bleibt `false`. G67 aktiviert keine Produktivlogik, keine sichtbare
+UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und keine
+Persistenz.

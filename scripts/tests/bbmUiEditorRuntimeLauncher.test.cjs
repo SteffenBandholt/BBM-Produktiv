@@ -511,6 +511,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     assert.equal(typeof mod.buildReadonlySurfaceModelForLauncher, "function");
     assert.equal(typeof mod.buildReadonlySurfaceInfoForLauncher, "function");
+    assert.equal(typeof mod.handleReadonlySurfaceSwitchRequestForLauncher, "function");
     assert.equal(typeof mod.buildReadonlySurfaceSwitchResultForLauncher, "function");
     assert.equal(typeof mod.buildReadonlySurfaceSelectionStateForLauncher, "function");
     assert.equal(typeof mod.buildReadonlySurfaceSelectionForLauncher, "function");
@@ -581,13 +582,39 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(unknownResult.validation.errors[0].code, "UNKNOWN_SURFACE_ADAPTER");
     assert.equal(mod.buildReadonlySurfaceInfoForLauncher("pdf.plan.page.2"), null);
 
-    const allowedSwitchResult = mod.buildReadonlySurfaceSwitchResultForLauncher("restarbeiten.ui.main");
-    assert.deepEqual(allowedSwitchResult, {
+    const launcherAllowedSwitchResult = mod.handleReadonlySurfaceSwitchRequestForLauncher(
+      "restarbeiten.ui.main"
+    );
+    assert.deepEqual(launcherAllowedSwitchResult, {
+      handled: true,
       allowed: true,
       readonly: true,
+      requestedSurfaceId: "restarbeiten.ui.main",
+      resolvedSurfaceId: "restarbeiten.ui.main",
+      changed: false,
+      reason: "readonly-current-surface",
+    });
+
+    const launcherBlockedSwitchResult = mod.handleReadonlySurfaceSwitchRequestForLauncher(
+      "pdf.plan.page.1"
+    );
+    assert.equal(launcherBlockedSwitchResult.allowed, false);
+    assert.equal(launcherBlockedSwitchResult.readonly, true);
+    assert.equal(launcherBlockedSwitchResult.requestedSurfaceId, "pdf.plan.page.1");
+    assert.equal(launcherBlockedSwitchResult.resolvedSurfaceId, "restarbeiten.ui.main");
+    assert.equal(launcherBlockedSwitchResult.changed, false);
+    assert.equal(launcherBlockedSwitchResult.reason, "surface-not-selectable-readonly");
+
+    const allowedSwitchResult = mod.buildReadonlySurfaceSwitchResultForLauncher("restarbeiten.ui.main");
+    assert.deepEqual(allowedSwitchResult, {
+      handled: true,
+      allowed: true,
+      readonly: true,
+      requestedSurfaceId: "restarbeiten.ui.main",
       fromSurfaceId: "restarbeiten.ui.main",
       targetSurfaceId: "restarbeiten.ui.main",
       resolvedSurfaceId: "restarbeiten.ui.main",
+      changed: false,
       reason: "readonly-current-surface",
     });
 
@@ -679,8 +706,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes('from "./surfaceAdapters/surfaceAdapterCatalog.js"'), true);
     assert.equal(source.includes('from "./surfaceAdapters/surfaceSelectionModel.js"'), true);
     assert.equal(source.includes('from "./surfaceAdapters/surfaceSelectionState.js"'), true);
-    assert.equal(source.includes('from "./surfaceAdapters/surfaceSwitchModel.js"'), true);
+    assert.equal(source.includes('from "./surfaceAdapters/surfaceSwitchCommand.js"'), true);
+    assert.equal(source.includes('from "./surfaceAdapters/surfaceSwitchModel.js"'), false);
     assert.equal(source.includes('from "./surfaceAdapters/surfacePolicy.js"'), true);
+    assert.equal(source.includes("handleReadonlySurfaceSwitchRequestForLauncher"), true);
     assert.equal(source.includes("buildReadonlySurfaceSwitchResultForLauncher"), true);
     assert.equal(source.includes("localStorage"), false);
     assert.equal(source.includes("writeFile"), false);
@@ -2873,6 +2902,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(coreShellSource.includes("activeScopeId: activeUiScope"), true);
     assert.equal(source.includes("getStatusScopeLabel"), true);
     assert.equal(source.includes("activeUiScope"), true);
+    assert.equal(source.includes('from "./surfaceAdapters/surfaceSwitchCommand.js"'), true);
+    assert.equal(source.includes("handleReadonlySurfaceSwitchRequestForLauncher"), true);
+    assert.equal(source.includes('from "./surfaceAdapters/surfaceSwitchModel.js"'), false);
   });
 
 }

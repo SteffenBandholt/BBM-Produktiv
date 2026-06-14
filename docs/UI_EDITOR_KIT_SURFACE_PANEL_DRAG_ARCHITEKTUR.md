@@ -912,6 +912,18 @@ blockierte Ziele, Rueckgabeverhalten, Sicherheitsgrenzen und Folgepakete sind
 festgehalten. Es gibt keine Produktivlogik, keine sichtbare UI-Aenderung,
 keine echte Umschaltung, keinen Drag, kein Resize und keine Persistenz.
 
+### G67: SurfaceSwitch-Command read-only im Launcher verwenden
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md`
+
+Status nach G67: Der Launcher nutzt den SurfaceSwitch-Command intern read-only
+ueber `handleReadonlySurfaceSwitchRequestForLauncher(...)`. Sichtbare
+Surface-Auswahl und SurfaceInfo bleiben unveraendert, `changed` bleibt false
+und nur `restarbeiten.ui.main` bleibt erlaubt/resolved. Es gibt keine echte
+Umschaltung, keinen Drag, kein Resize und keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,
