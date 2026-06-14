@@ -17,6 +17,12 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Surface-Umschaltungsmodell read-only vorbereitet:
+  - G61 legt `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js` als defensives read-only Modell fuer Surface-Wechselwuensche an.
+  - Erlaubt ist nur `restarbeiten.ui.main`; `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, Wildcards und leere IDs bleiben blockiert und werden auf `restarbeiten.ui.main` zurueckgefuehrt.
+  - Dokumentiert ist der Stand in `docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`.
+  - Keine Launcher-Code-Aenderung, keine sichtbare UI-Aenderung, keine echte Umschaltung, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
+
 - SurfaceSelection-State im Launcher als read-only Referenzstand abgeschlossen:
   - G60 dokumentiert den G59-Stand in `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`.
   - Referenzstand: Der BBM-Launcher nutzt den SurfaceSelection-State nur intern read-only; sichtbar bleibt `restarbeiten.ui.main` mit dem Label `Restarbeiten` und SurfaceInfo `ui-screen`/Elementanzahl.

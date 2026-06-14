@@ -9,6 +9,11 @@ vorhandene kompakte Surface-Auswahl und SurfaceInfo. Sichtbar bleibt nur
 Umschaltung, keine weitere Surface, keine Bearbeitung, kein Drag, kein Resize
 und keine Persistenz.
 
+Seit G61 ist darauf aufbauend ein defensives read-only
+Surface-Umschaltungsmodell vorbereitet:
+`docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`. Der Launcher-Referenzstand bleibt
+sichtbar unveraendert.
+
 ## Aktueller read-only Stand
 
 - Der Launcher baut die Surface-Auswahl defensiv aus dem
@@ -36,6 +41,18 @@ Editorpanel im BBM-Launcher
 
 Der Datenfluss bleibt hostkontrolliert. Der Launcher fragt nur den erlaubten
 read-only Zustand ab und erzeugt daraus die bestehende kompakte Anzeige.
+
+G61 ergaenzt nur einen internen Modellpfad fuer Wechselwuensche:
+
+```text
+Wechselwunsch
+-> surfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> read-only Ergebnis
+```
 
 ## Sichtbare UI-Grenze
 
@@ -93,6 +110,7 @@ Diese SurfaceIds duerfen durch G60 weder sichtbar noch auswaehlbar werden.
 
 - Read-only.
 - Keine echte Umschaltung.
+- Surface-Umschaltungsmodell nur read-only als Referenz, nicht als Ausfuehrung.
 - Guardrail-Begriff: keine echte Umschaltung.
 - Kein Dropdown mit weiteren Optionen.
 - Keine grosse Surface-Liste.
@@ -117,6 +135,7 @@ Diese SurfaceIds duerfen durch G60 weder sichtbar noch auswaehlbar werden.
 - Keine sichtbare UI-Aenderung.
 - Keine neue Surface sichtbar gemacht.
 - Keine echte Surface-Umschaltung.
+- Keine echte Surface-Umschaltung durch G61.
 - Keine PDF-/Canvas-/Plan-Surface sichtbar oder auswaehlbar.
 - Keine Bearbeitungsbuttons.
 - Keine Drag-/Resize-Aktivierung.
@@ -126,6 +145,7 @@ Diese SurfaceIds duerfen durch G60 weder sichtbar noch auswaehlbar werden.
 ## Moegliche naechste Pakete
 
 - Echte Surface-Umschaltung nur als eigenes Konzept- und Freigabepaket.
+- Das G61-Surface-Umschaltungsmodell ist nur ein defensiver Referenzstand.
 - Weitere SurfaceIds nur ueber eigene Policy-/Allowlist-Freigabe sichtbar
   machen.
 - PDF-/Plan-Surfaces separat read-only sichtbar machen, falls fachlich
@@ -137,6 +157,7 @@ Diese SurfaceIds duerfen durch G60 weder sichtbar noch auswaehlbar werden.
 ## Testreferenz
 
 - `npm run check:ui-editor-kit`
+- `node scripts/tests/surfaceSwitchModel.test.cjs`
 - `node scripts/tests/surfaceSelectionState.test.cjs`
 - `node scripts/tests/surfaceSelectionModel.test.cjs`
 - `node scripts/tests/surfacePolicy.test.cjs`

@@ -16,6 +16,9 @@ Seit G59 nutzt der BBM-Launcher diesen State read-only als interne Quelle fuer
 die bestehende kompakte Anzeige. Die sichtbare Ausgabe bleibt unveraendert.
 Seit G60 ist der Launcher-State-Referenzstand abgeschlossen:
 `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`.
+Seit G61 ist ein defensives read-only Surface-Umschaltungsmodell vorbereitet:
+`docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`. Es bleibt bei
+`restarbeiten.ui.main` als einzig aufloesbarer SurfaceId.
 
 ## Aktueller Modellstand
 
@@ -98,6 +101,18 @@ buildReadonlySurfaceSelectionState(...)
 -> read-only SurfaceSelection-State
 ```
 
+## Datenfluss Umschaltungsmodell
+
+```text
+Wechselwunsch
+-> surfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> read-only Ergebnis
+```
+
 ## Sicherheitsgrenzen
 
 Guardrail-Begriff: sichtbare read-only Auswahl.
@@ -106,6 +121,7 @@ Guardrail-Begriff: keine PDF-/Plan-Surface sichtbar.
 - Sichtbare read-only Auswahl nur fuer `restarbeiten.ui.main`.
 - Keine Umschaltung.
 - SurfaceSelection-State wird im Launcher nur read-only als Quelle genutzt.
+- Surface-Umschaltungsmodell ist nur ein read-only Referenzmodell.
 - Keine Dropdown-/Listen-UI.
 - Keine PDF-/Plan-Surface sichtbar.
 - Keine Bearbeitung.
@@ -130,6 +146,7 @@ Guardrail-Begriff: keine PDF-/Plan-Surface sichtbar.
 - Keine neue grosse Panel-Sektion.
 - Keine Surface-Liste.
 - Keine produktive Surface-Umschaltung.
+- Keine echte Surface-Umschaltung.
 - Keine Erweiterung der sichtbaren SurfaceIds.
 - Keine automatische PDF-/Plan-Freigabe.
 - Keine Drag-/Resize-/Persistenz-Ausfuehrung.
@@ -137,6 +154,7 @@ Guardrail-Begriff: keine PDF-/Plan-Surface sichtbar.
 ## Testreferenz
 
 - `node scripts/tests/surfaceSelectionModel.test.cjs`
+- `node scripts/tests/surfaceSwitchModel.test.cjs`
 - `node scripts/tests/surfacePolicy.test.cjs`
 - `node scripts/tests/surfaceAdapterCatalog.test.cjs`
 - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`

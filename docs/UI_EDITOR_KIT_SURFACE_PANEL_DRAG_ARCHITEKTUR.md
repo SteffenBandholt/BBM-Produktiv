@@ -48,8 +48,10 @@ Relevante BBM-Dateien:
 - `src/renderer/uiEditor/surfaceAdapters/pdfPlanSurfaceAdapter.js`
 - `src/renderer/uiEditor/surfaceAdapters/surfaceAdapterCatalog.js`
 - `src/renderer/uiEditor/surfaceAdapters/surfacePolicy.js`
+- `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js`
 - `docs/UI_EDITOR_SURFACE_ADAPTER_REFERENZSTAND.md`
 - `docs/UI_EDITOR_SURFACE_POLICY.md`
+- `docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js`
 - `src/renderer/editorRuntime/host/bbmEditorHostAdapterFactory.js`
 - `src/renderer/modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js`
@@ -76,6 +78,13 @@ blockiert unbekannte SurfaceIds sowie Wildcards vollstaendig. Seit G53 ist
 `visibleInEditor: true` nur fuer `restarbeiten.ui.main` gesetzt, damit eine
 kompakte read-only SurfaceInfo im Editorpanel erscheinen darf.
 Der SurfaceAdapterCatalog prueft die Lesefreigabe defensiv ueber diese Policy.
+
+Das Surface-Umschaltungsmodell ist seit G61 read-only vorbereitet. Es nimmt
+Wechselwuensche entgegen, laesst aber nur den aktuellen Pilot
+`restarbeiten.ui.main` als aufloesbares Ziel zu. `pdf.plan.page.1`,
+`plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben
+blockiert. Es gibt keine Launcher-Code-Aenderung, keine sichtbare UI-Aenderung,
+keine echte Umschaltung, keinen Drag, kein Resize und keine Persistenz.
 
 Die DragRuntime-Bridge ist seit G41 testweise vorhanden. Sie wird noch nicht im Launcher oder in produktiven Screens genutzt und bindet keine DOM-, Pointer- oder Maus-Events an.
 
@@ -755,6 +764,33 @@ read-only Referenzstand abgeschlossen. Sichtbar bleibt nur `Restarbeiten` fuer
 unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert. Es gibt keine neue
 Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung, keine
 Bearbeitung, keinen Drag, kein Resize und keine Persistenz.
+
+### G61: Surface-Umschaltungsmodell read-only vorbereiten
+
+Modell:
+
+- `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js`
+- `docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`
+
+Read-only Datenfluss:
+
+```text
+Wechselwunsch
+-> surfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> read-only Ergebnis
+```
+
+Status nach G61: Das Modell beschreibt nur, ob ein Wechselwunsch im aktuellen
+Referenzstand erlaubt waere. Erlaubt ist ausschliesslich
+`restarbeiten.ui.main`; PDF/Plan, unbekannte SurfaceIds, `*` und leere IDs
+werden mit `surface-not-selectable-readonly` blockiert und auf
+`restarbeiten.ui.main` zurueckgefuehrt. Es gibt keine echte Umschaltung, keine
+Launcher-Produktivnutzung, keine sichtbare UI-Aenderung, keine weitere
+Surface, keinen Drag, kein Resize und keine Persistenz.
 
 ## Nicht-Ziele von G36
 

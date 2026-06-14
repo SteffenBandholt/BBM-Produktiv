@@ -96,6 +96,10 @@ bleibt unveraendert.
 Seit G60 ist diese Launcher-State-Nutzung als eigener read-only Referenzstand
 abgeschlossen:
 `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`.
+Seit G61 ist ein defensives read-only Surface-Umschaltungsmodell vorbereitet:
+`docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`. Es nutzt Katalog und Policy nur
+ueber den bestehenden SurfaceSelection-State und aktiviert keine echte
+Umschaltung.
 
 Seit G51 kann der BBM-Launcher den Katalog read-only testseitig ueber
 `buildReadonlySurfaceModelForLauncher(surfaceId, input)` verwenden. Diese
@@ -193,6 +197,18 @@ BBM-Test / BBM-Launcher
 -> read-only SurfaceSelection-State
 ```
 
+Surface-Umschaltungsmodell seit G61:
+
+```text
+Wechselwunsch
+-> surfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfaceAdapterCatalog
+-> SurfacePolicy
+-> read-only Ergebnis
+```
+
 ## Sicherheitsgrenzen
 
 - Keine Wildcard.
@@ -207,6 +223,7 @@ BBM-Test / BBM-Launcher
 - Keine automatische Surface-Liste.
 - SurfaceSelection ist nur read-only sichtbar angebunden.
 - SurfaceSelection-State ist im Launcher nur read-only angebunden.
+- Surface-Umschaltungsmodell ist nur read-only vorbereitet.
 - Keine Surface-Umschaltung.
 - Keine PDF-/Plan-Bearbeitung.
 - Keine PDF-/Canvas-Renderlogik.
@@ -225,6 +242,7 @@ BBM-Test / BBM-Launcher
 ## Ausdruecklich nicht aktiviert
 
 - Keine produktive Surface-Auswahl.
+- Keine echte Surface-Umschaltung.
 - Keine PDF- oder Plan-Bearbeitung.
 - Keine Canvas-Bearbeitung.
 - Keine DragRuntime-Nutzung auf PDF/Plan.
@@ -247,6 +265,7 @@ BBM-Test / BBM-Launcher
 - `node scripts/tests/restarbeitenSurfaceAdapter.test.cjs`
 - `node scripts/tests/pdfPlanSurfaceAdapter.test.cjs`
 - `node scripts/tests/surfaceAdapterCatalog.test.cjs`
+- `node scripts/tests/surfaceSwitchModel.test.cjs`
 - `node scripts/tests/surfacePolicy.test.cjs`
 - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
 - `npm test`

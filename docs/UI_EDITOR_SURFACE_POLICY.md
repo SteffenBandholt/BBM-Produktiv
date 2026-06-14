@@ -21,6 +21,9 @@ die bestehende kompakte Surface-Auswahl und SurfaceInfo.
 Seit G60 ist dieser Launcher-State-Stand als eigener read-only Referenzstand
 abgeschlossen:
 `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md`.
+Seit G61 ist ein defensives read-only Surface-Umschaltungsmodell vorbereitet:
+`docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md`. Es nutzt dieselbe
+`visibleInEditor`-Grenze und loest nur `restarbeiten.ui.main` auf.
 
 ## Aktuelle Policy
 
@@ -130,6 +133,18 @@ Editorpanel im BBM-Launcher
 -> read-only State
 ```
 
+Read-only Surface-Umschaltungsmodell seit G61:
+
+```text
+Wechselwunsch
+-> surfaceSwitchModel
+-> SurfaceSelection-State
+-> SurfaceSelectionModel
+-> SurfacePolicy
+-> SurfaceAdapterCatalog
+-> read-only Ergebnis
+```
+
 ## Sicherheitsgrenzen
 
 - Keine globale Freigabe.
@@ -144,6 +159,7 @@ Editorpanel im BBM-Launcher
 - Sichtbare Surface-Auswahl nur read-only fuer `restarbeiten.ui.main`.
 - Keine Surface-Umschaltung.
 - SurfaceSelection-State nur intern read-only angebunden.
+- Surface-Umschaltungsmodell nur intern read-only vorbereitet.
 - Keine automatische Surface-Liste.
 - SurfaceSelection ist nur als read-only Anzeige angebunden.
 - Nur kompakte read-only SurfaceInfo fuer `restarbeiten.ui.main`.
@@ -166,6 +182,7 @@ Editorpanel im BBM-Launcher
 - Keine grosse neue Panel-Sektion.
 - Keine automatische Surface-Liste.
 - Keine produktive Surface-Umschaltung.
+- Keine echte Umschaltung.
 - Keine Freigabe weiterer SurfaceIds.
 - Keine Aktivierung von PDF-/Plan-/Canvas-Bearbeitung.
 - Keine Drag-/Resize-/Persistenz-Ausfuehrung.
@@ -173,6 +190,7 @@ Editorpanel im BBM-Launcher
 ## Testreferenz
 
 - `node scripts/tests/surfaceSelectionState.test.cjs`
+- `node scripts/tests/surfaceSwitchModel.test.cjs`
 - `node scripts/tests/surfacePolicy.test.cjs`
 - `node scripts/tests/surfaceAdapterCatalog.test.cjs`
 - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`

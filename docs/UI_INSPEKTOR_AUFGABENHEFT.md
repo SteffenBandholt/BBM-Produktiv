@@ -5,6 +5,7 @@ Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt versch
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
+- K19.81 abgeschlossen: Surface-Umschaltungsmodell read-only vorbereitet; nur `restarbeiten.ui.main` kann als Ziel aufgeloest werden, PDF/Plan, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert, ohne echte Umschaltung, UI-Aenderung, Drag, Resize oder Persistenz.
 - K19.80 abgeschlossen: Der SurfaceSelection-State im BBM-Launcher ist als read-only Referenzstand dokumentiert; `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md` beschreibt Datenfluss, sichtbare Grenze, internen State, blockierte SurfaceIds und Sicherheitsgrenzen, ohne Produktivlogik, UI-Aenderung, Drag, Resize oder Persistenz.
 - K19.79 abgeschlossen: SurfaceSelection-State wird im BBM-Launcher read-only als interne Quelle fuer Surface-Auswahl und SurfaceInfo genutzt; sichtbar bleibt nur `restarbeiten.ui.main`/`Restarbeiten`, ohne echte Umschaltung, Drag, Resize oder Persistenz.
 - K19.78 abgeschlossen: SurfaceSelection-State read-only vorbereitet; nur `restarbeiten.ui.main` kann ausgewaehlt sein, PDF/Plan, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert, ohne echte Umschaltung oder Persistenz.
@@ -162,6 +163,15 @@ Aktueller Stand:
 - [x] K19.78 SurfaceSelection-State read-only vorbereiten
 - [x] K19.79 SurfaceSelection-State read-only im Launcher verwenden
 - [x] K19.80 SurfaceSelection-State im Launcher als read-only Referenzstand abschliessen
+- [x] K19.81 Surface-Umschaltungsmodell read-only vorbereiten
+
+## Statusupdate K19.81
+- `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js` beschreibt Wechselwuensche nur als read-only Ergebnis.
+- Erlaubt bleibt ausschliesslich `restarbeiten.ui.main`.
+- `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert und werden auf `restarbeiten.ui.main` zurueckgefuehrt.
+- `docs/UI_EDITOR_SURFACE_SWITCH_READONLY.md` dokumentiert Datenfluss, Ergebnisformen, Sicherheitsgrenzen und Nicht-Ziele.
+- Keine Launcher-Code-Aenderung, keine sichtbare UI-Aenderung, keine echte Umschaltung, keine Bearbeitung, kein Drag, kein Resize und keine Persistenz.
+- Fehlende Grundlagen-/Regeldateien bleiben bewusst unberuehrt und sind ein separates Repo-Hygiene-Thema.
 
 ## Statusupdate K19.80
 - `docs/UI_EDITOR_SURFACE_SELECTION_STATE_LAUNCHER_REFERENZSTAND.md` dokumentiert den G59-Stand als stabilen read-only Referenzstand.

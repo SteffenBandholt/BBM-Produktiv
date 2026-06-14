@@ -223,3 +223,11 @@ dokumentiert Datenfluss, sichtbare Grenze, internen State, blockierte
 SurfaceIds, Sicherheitsgrenzen und moegliche Folgepakete. G60 aktiviert keine
 Produktivlogik, keine sichtbare UI-Aenderung, keine weitere Surface, keinen
 Drag, kein Resize und keine Persistenz.
+
+**Status nach G61:** Ein defensives read-only Surface-Umschaltungsmodell ist
+vorbereitet. `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchModel.js`
+wertet Wechselwuensche gegen den bestehenden SurfaceSelection-State aus und
+loest nur `restarbeiten.ui.main` auf. PDF/Plan, unbekannte SurfaceIds, `*` und
+leere IDs bleiben mit `surface-not-selectable-readonly` blockiert. G61
+aktiviert keine echte Umschaltung, keine Launcher-Produktivnutzung, keine
+sichtbare UI-Aenderung, keinen Drag, kein Resize und keine Persistenz.
