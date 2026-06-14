@@ -41,6 +41,10 @@ const SURFACE_POLICY_FREIGABE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md"
 );
+const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
+);
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -3052,6 +3056,28 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Electron-Sichtprüfung",
     ]) {
       assert.equal(docSource.includes(required), true, `Surface-Policy-Freigabevorlage enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Surface-Freigabe-Kandidat bleibt vorhanden", async () => {
+    assert.equal(fs.existsSync(SURFACE_FREIGABE_KANDIDAT_DOC_PATH), true, "Surface-Freigabe-Kandidat fehlt.");
+    const docSource = fs.readFileSync(SURFACE_FREIGABE_KANDIDAT_DOC_PATH, "utf8");
+
+    for (const required of [
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "restarbeiten.ui.main",
+      "read-only",
+      "nicht sichtbar",
+      "nicht auswählbar",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "keine Wildcard",
+      "kein Default-true",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Surface-Freigabe-Kandidat enthaelt ${required} nicht.`);
     }
   });
 

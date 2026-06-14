@@ -125,3 +125,6 @@ sichtbar / resolved:
 Die spaetere explizite Freigabevorlage ist in
 `docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md` vorbereitet, gibt aber
 selbst noch nichts frei.
+
+Der erste konkrete Kandidat fuer spaetere Einzelfreigabe ist
+`docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md`.

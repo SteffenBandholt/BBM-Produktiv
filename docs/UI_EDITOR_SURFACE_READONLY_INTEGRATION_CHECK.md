@@ -85,3 +85,5 @@ blockiert:
   `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md`
 - die Surface-Policy-Freigabevorlage liegt in
   `docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md`
+- der konkrete Kandidat liegt in
+  `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md`

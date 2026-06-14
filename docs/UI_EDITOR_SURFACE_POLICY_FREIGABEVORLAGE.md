@@ -137,3 +137,10 @@ Eine Sichtbarkeitsfreigabe darf nicht automatisch aktivieren:
 3. Tests fuer Freigabe und Blockierung anderer Surfaces nachziehen.
 4. Erst bei sichtbarer UI die Electron-Sichtpruefung planen und bestehen.
 5. Drag, Resize und Persistenz immer als eigene, getrennte Pakete behandeln.
+
+## Kandidatenbezug
+
+- `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md` beschreibt
+  den ersten konkreten Kandidaten `pdf.plan.page.1`.
+- Diese Vorlage gibt selbst nichts frei und bleibt die allgemeine Form fuer
+  spaetere Einzelfreigaben.

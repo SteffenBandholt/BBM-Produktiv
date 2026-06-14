@@ -121,3 +121,6 @@ oder Auswahl freizugeben.
 G73 bereitet danach eine Surface-Policy-Freigabevorlage vor, die spaetere
 Einzelfreigaben strikt read-only, explizit und ohne Wildcards oder Default-true
 vorzeichnen soll.
+
+G74 konkretisiert darauf aufbauend `pdf.plan.page.1` als einzelnen
+Freigabe-Kandidaten, ohne die Policy selbst zu aendern.

@@ -967,6 +967,10 @@ Status nach G73: Eine Surface-Policy-Freigabevorlage ist vorbereitet. Sie
 definiert nur die Form spaeterer Einzelfreigaben und aktiviert keine neue
 Surface, keine Sichtbarkeit und keine Auswahl.
 
+Status nach G74: `pdf.plan.page.1` ist als einzelner Freigabe-Kandidat
+vorgezeichnet, jedoch weiterhin ohne Policy-Freigabe, Sichtbarkeit oder
+Auswahl.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

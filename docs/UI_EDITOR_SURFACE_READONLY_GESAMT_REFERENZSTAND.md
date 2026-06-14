@@ -28,6 +28,9 @@ Surface-Umschaltung und keine sichtbare UI-Änderung.
 - G73 bereitet die Surface-Policy-Freigabevorlage in
   `docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md` vor, ohne eine Freigabe
   auszusprechen.
+- G74 konkretisiert `pdf.plan.page.1` als einzelnen Freigabe-Kandidaten in
+  `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md`, ohne die
+  Policy zu aendern.
 - Sichtbar im Editorpanel bleibt nur `Restarbeiten` mit der SurfaceInfo
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.

@@ -321,3 +321,10 @@ Einzelfreigaben, Pflichtpruefungen, Minimalfreigabe und verbotene Kopplungen,
 ohne eine Surface tatsaechlich freizugeben. G73 aktiviert keine Produktivlogik,
 keine sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein
 Resize und keine Persistenz.
+
+**Status nach G74:** `pdf.plan.page.1` ist als einzelner Freigabe-Kandidat
+vorbereitet. `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md`
+beschreibt den Kandidaten, den minimalen spaeteren Freigabeumfang und die
+Stop-/Go-Kriterien, ohne die Policy zu aendern. G74 aktiviert keine
+Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung, keinen
+Drag, kein Resize und keine Persistenz.
