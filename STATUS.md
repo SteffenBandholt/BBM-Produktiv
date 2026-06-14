@@ -25,6 +25,7 @@ Sie ergÃ¤nzt:
   - Keine echte Umschaltung, keine sichtbare UI-Aenderung, keine Persistenz, kein Drag und kein Resize.
   - G66 schliesst den Request-/Command-Handler als Referenzstand in `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md` ab; die komplette Request-/Command-Kette, erlaubte und blockierte Ziele, Rueckgabeverhalten, Sicherheitsgrenzen und Folgepakete sind dokumentiert.
   - G67 nutzt den SurfaceSwitch-Command intern read-only im Launcher; die sichtbare Surface-Auswahl und SurfaceInfo bleiben unveraendert, `changed` bleibt false und nur `restarbeiten.ui.main` bleibt erlaubt/resolved.
+  - G68 schliesst den SurfaceSwitch-Command im Launcher als Referenzstand in `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md` ab; Datenfluss, Command-/Request-Verhalten, sichtbare UI-Grenze, Sicherheitsgrenzen und Folgepakete sind dokumentiert.
 
 - SurfaceSwitch-Modell read-only im Launcher als Referenzstand abgeschlossen:
   - G64 dokumentiert den G63-Stand in `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.

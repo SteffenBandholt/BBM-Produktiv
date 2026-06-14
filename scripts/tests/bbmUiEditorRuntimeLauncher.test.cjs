@@ -17,6 +17,10 @@ const RESTARBEITEN_HOST_ADAPTER_PATH = path.join(
 );
 const CSS_PATH = path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.css");
 const PACKAGE_PATH = path.join(__dirname, "../../package.json");
+const SWITCH_COMMAND_LAUNCHER_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md"
+);
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -2905,6 +2909,28 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes('from "./surfaceAdapters/surfaceSwitchCommand.js"'), true);
     assert.equal(source.includes("handleReadonlySurfaceSwitchRequestForLauncher"), true);
     assert.equal(source.includes('from "./surfaceAdapters/surfaceSwitchModel.js"'), false);
+  });
+
+  await run("BBM UI-Editor-Runtime: Launcher-Command-Referenzdokument bleibt vorhanden", async () => {
+    assert.equal(fs.existsSync(SWITCH_COMMAND_LAUNCHER_DOC_PATH), true, "Launcher-Command-Referenzdokument fehlt.");
+    const docSource = fs.readFileSync(SWITCH_COMMAND_LAUNCHER_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Editorpanel im BBM-Launcher",
+      "handleReadonlySurfaceSwitchRequestForLauncher(...)",
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "read-only",
+      "changed",
+      "false",
+      "keine echte Umschaltung",
+      "kein Drag",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Launcher-Command-Referenzdokument enthaelt ${required} nicht.`);
+    }
   });
 
 }

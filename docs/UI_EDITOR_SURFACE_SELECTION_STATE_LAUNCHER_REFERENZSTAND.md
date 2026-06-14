@@ -30,6 +30,8 @@ Der G66-Referenzstand dazu steht in
 `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md`.
 G67 nutzt den Command intern read-only im Launcher; Surface-Auswahl und
 SurfaceInfo bleiben unveraendert.
+Der G68-Referenzstand dazu steht in
+`docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md`.
 
 ## Aktueller read-only Stand
 

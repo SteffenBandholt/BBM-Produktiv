@@ -26,6 +26,8 @@ Der G66-Referenzstand dazu ist in
 `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md` dokumentiert.
 G67 verwendet den Command intern read-only im Launcher, ohne sichtbare
 Umschaltung.
+Der G68-Referenzstand dazu ist in
+`docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md` dokumentiert.
 
 ## Aktueller read-only Stand
 

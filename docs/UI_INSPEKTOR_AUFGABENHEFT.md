@@ -7,7 +7,8 @@ Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
 - K19.85 abgeschlossen: SurfaceSwitch-Request/Command-Handler read-only vorbereitet; `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_READONLY.md` dokumentiert den defensiven Handler, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
 - K19.86 abgeschlossen: SurfaceSwitch-Request/Command-Handler als read-only Referenzstand abgeschlossen; `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md` dokumentiert die komplette Request-/Command-Kette, erlaubte und blockierte Ziele, Rueckgabeverhalten, Sicherheitsgrenzen und Folgepakete, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
-- K19.87 in Arbeit: SurfaceSwitch-Command wird im Launcher read-only verwendet; `BbmUiEditorRuntimeLauncher.js` bindet den defensiven Command intern an, ohne sichtbare UI-Aenderung, echte Umschaltung, Drag, Resize oder Persistenz.
+- K19.87 abgeschlossen: SurfaceSwitch-Command wird im Launcher read-only verwendet; `BbmUiEditorRuntimeLauncher.js` bindet den defensiven Command intern an, ohne sichtbare UI-Aenderung, echte Umschaltung, Drag, Resize oder Persistenz.
+- K19.88 abgeschlossen: SurfaceSwitch-Command im Launcher als Referenzstand abgeschlossen; `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md` dokumentiert Launcher-Datenfluss, Command-/Request-Verhalten, sichtbare UI-Grenze, Sicherheitsgrenzen und Folgepakete, ohne Produktivlogik, UI-Aenderung, echte Umschaltung, Drag, Resize oder Persistenz.
 - K19.84 abgeschlossen: SurfaceSwitch-Modell im BBM-Launcher als Referenzstand abgeschlossen; `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md` dokumentiert den read-only Launcher-Datenfluss, die sichtbare UI-Grenze und die Sicherheitsgrenzen, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
 - K19.83 abgeschlossen: SurfaceSwitch-Modell wird im BBM-Launcher intern read-only genutzt; sichtbar bleibt `restarbeiten.ui.main`/`Restarbeiten` und die bestehende SurfaceInfo, ohne echte Umschaltung, neue UI, Drag, Resize oder Persistenz.
 - K19.82 abgeschlossen: SurfaceSwitch-read-only Referenzstand dokumentiert; `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md` beschreibt erlaubte und blockierte Wechselziele, Datenfluss, Sicherheitsgrenzen und Nicht-Ziele, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
@@ -175,7 +176,8 @@ Aktueller Stand:
 - [x] K19.84 SurfaceSwitch-Modell im Launcher read-only als Referenzstand abschliessen
 - [x] K19.85 SurfaceSwitch-Request/Command-Handler read-only vorbereiten
 - [x] K19.86 SurfaceSwitch-Request/Command-Handler als Referenzstand abschliessen
-- [ ] K19.87 SurfaceSwitch-Command read-only im Launcher verwenden
+- [x] K19.87 SurfaceSwitch-Command read-only im Launcher verwenden
+- [x] K19.88 SurfaceSwitch-Command im Launcher als Referenzstand abschliessen
 
 ## Statusupdate K19.83
 - `BbmUiEditorRuntimeLauncher.js` nutzt `buildReadonlySurfaceSwitchResultForLauncher(...)` intern read-only.

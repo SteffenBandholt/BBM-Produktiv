@@ -279,3 +279,10 @@ Sichtbare Surface-Auswahl und SurfaceInfo bleiben unveraendert; `changed`
 bleibt `false`. G67 aktiviert keine Produktivlogik, keine sichtbare
 UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und keine
 Persistenz.
+
+**Status nach G68:** Der SurfaceSwitch-Command im Launcher ist als stabiler
+read-only Referenzstand abgeschlossen. `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md`
+dokumentiert Launcher-Datenfluss, Command-/Request-Verhalten, sichtbare
+UI-Grenze, Sicherheitsgrenzen und Folgepakete. G68 aktiviert keine
+Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung, keinen
+Drag, kein Resize und keine Persistenz.

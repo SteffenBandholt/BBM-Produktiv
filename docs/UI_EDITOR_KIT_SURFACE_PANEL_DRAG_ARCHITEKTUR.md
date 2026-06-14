@@ -924,6 +924,18 @@ Surface-Auswahl und SurfaceInfo bleiben unveraendert, `changed` bleibt false
 und nur `restarbeiten.ui.main` bleibt erlaubt/resolved. Es gibt keine echte
 Umschaltung, keinen Drag, kein Resize und keine Persistenz.
 
+### G68: SurfaceSwitch-Command im Launcher als Referenzstand abschliessen
+
+Referenzdokument:
+
+- `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md`
+
+Status nach G68: Der Launcher-Command-Stand ist als stabiler read-only
+Referenzstand dokumentiert. Datenfluss, Command-/Request-Verhalten, sichtbare
+UI-Grenze, Sicherheitsgrenzen und Folgepakete sind festgehalten. Es gibt
+keine Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung,
+keinen Drag, kein Resize und keine Persistenz.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,
