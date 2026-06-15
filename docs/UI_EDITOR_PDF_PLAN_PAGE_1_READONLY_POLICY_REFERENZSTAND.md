@@ -84,6 +84,8 @@ Drag-Aktivierung, keine Resize-Aktivierung und keine Persistenz.
 
 ## Electron-Sichtpruefung
 
-Erforderlich, weil die sichtbare Surface-Auswahl jetzt um `pdf.plan.page.1`
-erweitert ist. Geprueft werden muss, dass nur die read-only Auswahl sichtbar
-ist und keine echten Bedienelemente entstanden sind.
+Die zugehoerige Sichtpruefung ist mit G76 abgeschlossen und in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` dokumentiert.
+Geprueft wurde, dass nur die read-only Auswahl `Restarbeiten - PDF Plan Seite 1`
+sichtbar ist, `plan.canvas.default` nicht erscheint und die SurfaceInfo
+weiterhin `restarbeiten.ui.main` zeigt.

@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- PDF Plan Seite 1 read-only Sichtpruefung und Referenz abgesichert:
+  - G76 dokumentiert den sichtbaren G75-Stand in `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md`.
+  - Die sichtbare Surface-Auswahl zeigt `Restarbeiten` und `PDF Plan Seite 1`.
+  - Die SurfaceInfo zeigt weiterhin den Hoststand `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
+  - `plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert.
+  - Es gibt weiterhin keine echte Surface-Umschaltung, kein Drag, kein Resize und keine Persistenz.
+  - Produktivcode bleibt unveraendert; G76 zieht nur Doku und Guardrail-Tests nach.
+
 - SurfaceSwitch-Request/Command-Handler read-only vorbereitet:
   - G65 fuegt `src/renderer/uiEditor/surfaceAdapters/surfaceSwitchCommand.js` als defensiven Request-/Command-Handler hinzu.
   - Der Handler prueft Wechselwuensche read-only gegen das SurfaceSwitch-Modell und gibt nur ein Ergebnis zurueck.

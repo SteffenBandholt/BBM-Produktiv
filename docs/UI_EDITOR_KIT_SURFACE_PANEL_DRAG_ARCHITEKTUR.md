@@ -971,6 +971,15 @@ Status nach G74: `pdf.plan.page.1` ist als einzelner Freigabe-Kandidat
 vorgezeichnet, jedoch weiterhin ohne Policy-Freigabe, Sichtbarkeit oder
 Auswahl.
 
+Status nach G75: `pdf.plan.page.1` ist per read-only Policy sichtbar
+freigegeben. `plan.canvas.default` bleibt blockiert; Drag, Resize und
+Persistenz bleiben deaktiviert.
+
+Status nach G76: Der sichtbare G75-Stand ist zusaetzlich in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` abgesichert.
+Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`, waehrend die
+SurfaceInfo weiterhin den Hoststand `restarbeiten.ui.main` behaelt.
+
 ## Nicht-Ziele von G36
 
 - keine Produktivlogik,

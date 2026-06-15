@@ -49,6 +49,9 @@ blockiert:
 - keine weitere Surface-Auswahl
 - keine sichtbare PDF-/Plan-Oberflaeche
 
+Der sichtbare G75-Stand ist zusaetzlich in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` dokumentiert.
+
 ## Sicherheitsgrenzen
 
 - read-only

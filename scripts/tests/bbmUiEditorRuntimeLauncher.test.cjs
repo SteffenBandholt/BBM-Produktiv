@@ -45,6 +45,10 @@ const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
 );
+const PDF_PAGE_SICHTPRUEFUNG_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md"
+);
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -762,6 +766,12 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-id"), "restarbeiten.ui.main");
     assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-readonly"), "true");
     assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-count"), "2");
+    assert.equal(renderedText.includes("Restarbeiten"), true);
+    assert.equal(renderedText.includes("PDF Plan Seite 1"), true);
+    assert.equal(renderedText.includes("plan.canvas.default"), false);
+    assert.equal(Boolean(surfaceInfo), true);
+    assert.equal(getRenderedText(surfaceInfo).includes("restarbeiten.ui.main"), true);
+    assert.equal(source.includes('const READONLY_SURFACE_INFO_SURFACE_ID = "restarbeiten.ui.main";'), true);
   });
 
   await run("BBM UI-Editor-Runtime: Hidden-Elements-Button-ViewModel bleibt kompakt und neutral", async () => {
@@ -3072,6 +3082,25 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `Surface-Freigabe-Kandidat enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: PDF-Plan-Sichtpruefungsdokument bleibt vorhanden", async () => {
+    assert.equal(fs.existsSync(PDF_PAGE_SICHTPRUEFUNG_DOC_PATH), true, "PDF-Plan-Sichtpruefungsdokument fehlt.");
+    const docSource = fs.readFileSync(PDF_PAGE_SICHTPRUEFUNG_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Restarbeiten - PDF Plan Seite 1",
+      "SurfaceInfo zeigt weiterhin den Hoststand `restarbeiten.ui.main`",
+      "plan.canvas.default",
+      "unbekannte SurfaceIds",
+      "keine Bearbeitung moeglich",
+      "kein Drag",
+      "kein Resize",
+      "keine Speicher-/Persistenzfunktion sichtbar",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `PDF-Plan-Sichtpruefungsdokument enthaelt ${required} nicht.`);
     }
   });
 

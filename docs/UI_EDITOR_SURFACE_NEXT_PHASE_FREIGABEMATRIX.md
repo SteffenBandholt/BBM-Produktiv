@@ -2,16 +2,17 @@
 
 ## Kurzfazit
 
-Der read-only Surface-Stand ist stabil abgesichert. Sichtbar bleibt nur
-`restarbeiten.ui.main`, die Surface-Auswahl zeigt `Restarbeiten`, und die
-SurfaceInfo bleibt auf `restarbeiten.ui.main` / `ui-screen` / Elementanzahl
-begrenzt. Diese Matrix dient nur der Entscheidungs- und Freigabevorbereitung
-fuer die naechste Surface-Phase.
+Der read-only Surface-Stand ist stabil abgesichert. Sichtbar bleiben
+`restarbeiten.ui.main` und `pdf.plan.page.1`, die Surface-Auswahl zeigt
+`Restarbeiten - PDF Plan Seite 1`, und die SurfaceInfo bleibt auf
+`restarbeiten.ui.main` / `ui-screen` / Elementanzahl begrenzt. Diese Matrix
+dient nur der Entscheidungs- und Freigabevorbereitung fuer die naechste
+Surface-Phase.
 
 ## Aktueller gesicherter read-only Stand
 
-- nur `restarbeiten.ui.main` ist sichtbar und resolved
-- `pdf.plan.page.1` bleibt blockiert
+- `restarbeiten.ui.main` bleibt sichtbar und als Hoststand praesent
+- `pdf.plan.page.1` ist read-only sichtbar
 - `plan.canvas.default` bleibt blockiert
 - unbekannte SurfaceIds bleiben blockiert
 - `*` bleibt blockiert
@@ -112,12 +113,10 @@ fuer die naechste Surface-Phase.
 
 ## Empfohlener naechster Schritt
 
-G76 - `plan.canvas.default` weiterhin read-only fachlich bewerten oder alternativ eine weitere UI-Surface read-only sichtbar vorbereiten.
-
-`pdf.plan.page.1` ist mit G75 bereits read-only sichtbar freigegeben. Der
-naechste Schritt kann deshalb entweder den Plan weiter fachlich absichern oder
-eine weitere UI-Surface read-only vorbereiten, ohne Drag oder Persistenz zu
-aktivieren.
+Nach G76 ist der Sichtstand von `pdf.plan.page.1` dokumentiert und abgesichert.
+Der naechste Schritt kann deshalb entweder `plan.canvas.default` weiter
+fachlich blockiert halten oder eine weitere klar abgegrenzte read-only
+Surface-Freigabe vorbereiten, ohne Drag oder Persistenz zu aktivieren.
 
 ## Status nach G75
 
@@ -125,3 +124,11 @@ aktivieren.
 `plan.canvas.default` bleibt blockiert. Die naechste Phase kann sich daher
 auf eine weitere kontrollierte read-only Erweiterung konzentrieren, statt
 sofort Drag oder Persistenz zu ziehen.
+
+## Status nach G76
+
+Die sichtbare Referenz ist zusaetzlich abgesichert:
+
+- Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`
+- SurfaceInfo bleibt `restarbeiten.ui.main`
+- `plan.canvas.default` bleibt blockiert

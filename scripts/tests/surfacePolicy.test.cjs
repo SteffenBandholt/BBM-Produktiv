@@ -12,6 +12,10 @@ const SURFACE_INFO_REFERENCE_DOC_PATH = path.join(
   REPO_ROOT,
   "docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md",
 );
+const PDF_PAGE_SICHTPRUEFUNG_DOC_PATH = path.join(
+  REPO_ROOT,
+  "docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md",
+);
 
 const KNOWN_SURFACE_IDS = [
   "restarbeiten.ui.main",
@@ -163,6 +167,24 @@ async function runSurfacePolicyTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `SurfaceInfo-Referenzdokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("SurfacePolicy: PDF-Plan-Sichtpruefungsdokument enthaelt Kernbegriffe", () => {
+    assert.equal(fs.existsSync(PDF_PAGE_SICHTPRUEFUNG_DOC_PATH), true, "PDF-Plan-Sichtpruefungsdokument fehlt.");
+    const docSource = fs.readFileSync(PDF_PAGE_SICHTPRUEFUNG_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Restarbeiten - PDF Plan Seite 1",
+      "SurfaceInfo zeigt weiterhin den Hoststand `restarbeiten.ui.main`",
+      "plan.canvas.default",
+      "keine echte Surface-Umschaltung",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `PDF-Plan-Sichtpruefungsdokument enthaelt ${required} nicht.`);
     }
   });
 }

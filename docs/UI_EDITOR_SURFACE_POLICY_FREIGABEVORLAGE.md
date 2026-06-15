@@ -16,8 +16,8 @@ aus. Sichtbar bleibt weiterhin nur `restarbeiten.ui.main`.
 
 ## Aktueller gesicherter read-only Stand
 
-- nur `restarbeiten.ui.main` ist sichtbar und resolved
-- `pdf.plan.page.1` ist blockiert
+- `restarbeiten.ui.main` ist sichtbar und bleibt im Hoststand praesent
+- `pdf.plan.page.1` ist read-only sichtbar
 - `plan.canvas.default` ist blockiert
 - unbekannte SurfaceIds bleiben blockiert
 - `*` bleibt blockiert
@@ -151,3 +151,12 @@ Die Vorlage wurde exemplarisch auf `pdf.plan.page.1` angewendet. Die Surface
 ist nun read-only sichtbar freigegeben; `plan.canvas.default` bleibt
 blockiert. Drag, Resize, Persistenz und Wildcards bleiben weiterhin getrennt
 gesperrt.
+
+## Status nach G76
+
+Die sichtbare Referenz ist zusaetzlich ueber
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` abgesichert.
+
+- Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`
+- SurfaceInfo bleibt `restarbeiten.ui.main`
+- `plan.canvas.default` bleibt blockiert

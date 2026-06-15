@@ -117,3 +117,14 @@ Dieser Block war die Freigabevorlage. G75 setzt ihn nun fuer
 3. Tests fuer Sichtbarkeit, Blockierung und Nicht-Freigabe anderer Surfaces konservativ halten.
 4. Bei sichtbarer UI die Electron-Sichtpruefung ausfuehren.
 5. Drag, Resize und Persistenz als eigene, getrennte Folgepakete behandeln.
+
+## Status nach G76
+
+Die zugehoerige Sichtpruefung ist dokumentiert:
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md`.
+
+- Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`
+- SurfaceInfo zeigt weiterhin `restarbeiten.ui.main`
+- `plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben
+  blockiert
+- Drag, Resize und Persistenz bleiben deaktiviert

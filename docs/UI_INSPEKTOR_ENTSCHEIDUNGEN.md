@@ -131,6 +131,11 @@
 
 **Status nach G75:** `pdf.plan.page.1` ist per SurfacePolicy read-only sichtbar freigegeben. `plan.canvas.default` bleibt blockiert, und die sichtbare Surface-Auswahl darf nun einen zweiten Eintrag zeigen, ohne Drag, Resize oder Persistenz zu aktivieren.
 
+**Status nach G76:** Der sichtbare G75-Stand ist zusaetzlich in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` dokumentiert und
+gegen Regressionen abgesichert. Surface-Auswahl zeigt
+`Restarbeiten - PDF Plan Seite 1`; SurfaceInfo bleibt `restarbeiten.ui.main`.
+
 ## Entscheidung 024
 **Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
 

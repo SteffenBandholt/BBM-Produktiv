@@ -34,6 +34,10 @@ Surface-Umschaltung und keine sichtbare UI-Änderung.
 - G75 setzt `pdf.plan.page.1` nun per read-only Policy sichtbar frei; die
   Surface-Auswahl zeigt damit mehr als einen Eintrag, waehrend
   `plan.canvas.default` blockiert bleibt.
+- G76 sichert diesen sichtbaren G75-Stand zusaetzlich in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` ab; die
+  Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`, waehrend die
+  SurfaceInfo weiterhin `restarbeiten.ui.main` bleibt.
 - Die SurfaceInfo im Editorpanel bleibt im Default-Fall
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.

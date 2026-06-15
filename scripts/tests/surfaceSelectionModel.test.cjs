@@ -127,6 +127,8 @@ async function runSurfaceSelectionModelTests(run) {
     assert.equal(launcherSource.includes("data-ui-editor-surface-selection"), true);
     assert.equal(launcherSource.includes("data-ui-editor-surface-list"), false);
     assert.equal(launcherSource.includes("selectSurface"), false);
+    assert.equal(selectionSource.includes("default: true"), false);
+    assert.equal(selectionSource.includes("wildcard"), false);
   });
 
   await run("SurfaceSelectionModel: Dokumentation enthaelt Kernbegriffe", () => {

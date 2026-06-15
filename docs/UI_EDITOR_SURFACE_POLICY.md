@@ -249,3 +249,13 @@ BBM-Launcher
 `pdf.plan.page.1` ist jetzt per Policy read-only sichtbar freigegeben.
 `plan.canvas.default` bleibt blockiert. Die Policy bleibt damit eine
 explizite read-only Allowlist ohne Drag, Resize oder Persistenz.
+
+## Status nach G76
+
+Der sichtbare Referenzstand dazu ist in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` festgehalten.
+
+- Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`
+- SurfaceInfo bleibt `restarbeiten.ui.main`
+- keine Wildcard
+- kein Default-true

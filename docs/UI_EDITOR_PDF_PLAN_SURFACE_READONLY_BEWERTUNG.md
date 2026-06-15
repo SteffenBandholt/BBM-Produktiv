@@ -11,30 +11,36 @@ moeglichen Sichtbarkeit ein, ohne die jetzige Grenze zu verschieben.
 
 - `pdf.plan.page.1` ist im Katalog vorhanden
 - `plan.canvas.default` ist im Katalog vorhanden
-- beide Surfaces sind aktuell nicht sichtbar
-- beide Surfaces sind aktuell nicht auswaehlbar
-- beide Surfaces sind aktuell nicht als echte Interaktionsziele aktiviert
-- `restarbeiten.ui.main` bleibt sichtbar / resolved
+- `pdf.plan.page.1` ist read-only sichtbar
+- `plan.canvas.default` ist weiterhin nicht sichtbar
+- `pdf.plan.page.1` ist nur read-only sichtbar und bleibt ohne Bearbeitung
+- `plan.canvas.default` bleibt nicht auswaehlbar
+- beide Surfaces bleiben ohne echte Interaktionsziele
+- `restarbeiten.ui.main` bleibt vorhanden und traegt weiterhin die SurfaceInfo
 
 ## Vorhandene SurfaceIds
 
 ```text
-vorhanden, aber blockiert:
+sichtbar, aber nur read-only:
 - pdf.plan.page.1
+
+vorhanden, aber blockiert:
 - plan.canvas.default
 
-sichtbar / resolved:
+weiterhin vorhanden:
 - restarbeiten.ui.main
 ```
 
 ## Aktueller Blockierstatus
 
 - `surfaceAdapterCatalog.js` kennt die PDF-/Plan-Surfaces
-- `surfacePolicy.js` setzt fuer beide keine Editor-Sichtbarkeit
+- `surfacePolicy.js` setzt fuer `pdf.plan.page.1` read-only Sichtbarkeit
+- `surfacePolicy.js` haelt `plan.canvas.default` weiter unsichtbar
 - `surfaceSelectionModel.js` nimmt nur sichtbare Editor-Surfaces auf
-- `surfaceSelectionState.js` und `surfaceSwitchModel.js` halten die read-only
-  Ein-Surface-Grenze
-- `surfaceSwitchCommand.js` resolved weiterhin nur `restarbeiten.ui.main`
+- `surfaceSelectionState.js` haelt die read-only Sichtbarkeit auf die
+  explizite Zweierauswahl `restarbeiten.ui.main` / `pdf.plan.page.1`
+- `surfaceSwitchModel.js` und `surfaceSwitchCommand.js` erlauben
+  `pdf.plan.page.1` read-only, ohne echte Umschaltung oder Persistenz
 
 ## Fachlicher Nutzen einer spaeteren Sichtbarkeit
 
@@ -129,9 +135,16 @@ selbst noch nichts frei.
 Der erste konkrete Kandidat fuer spaetere Einzelfreigabe ist
 `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md`.
 
-## Status nach G75
+## Status nach G75 / G76
 
 `pdf.plan.page.1` ist nun als read-only Surface sichtbar freigegeben.
 `plan.canvas.default` bleibt blockiert. Die sichtbare Surface-Auswahl darf
 damit eine zweite Einzelfreigabe zeigen, ohne Drag, Resize oder Persistenz zu
 aktivieren.
+
+G76 dokumentiert die sichtbare Referenz zusaetzlich:
+
+- Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`
+- SurfaceInfo bleibt auf `restarbeiten.ui.main`
+- keine PDF-Bearbeitung
+- keine Plan-/Canvas-Interaktion
