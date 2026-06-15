@@ -9,12 +9,13 @@ Aktueller Stand:
 - K19.86 abgeschlossen: SurfaceSwitch-Request/Command-Handler als read-only Referenzstand abgeschlossen; `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_REFERENZSTAND.md` dokumentiert die komplette Request-/Command-Kette, erlaubte und blockierte Ziele, Rueckgabeverhalten, Sicherheitsgrenzen und Folgepakete, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
 - K19.87 abgeschlossen: SurfaceSwitch-Command wird im Launcher read-only verwendet; `BbmUiEditorRuntimeLauncher.js` bindet den defensiven Command intern an, ohne sichtbare UI-Aenderung, echte Umschaltung, Drag, Resize oder Persistenz.
 - K19.88 abgeschlossen: SurfaceSwitch-Command im Launcher als Referenzstand abgeschlossen; `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md` dokumentiert Launcher-Datenfluss, Command-/Request-Verhalten, sichtbare UI-Grenze, Sicherheitsgrenzen und Folgepakete, ohne Produktivlogik, UI-Aenderung, echte Umschaltung, Drag, Resize oder Persistenz.
-- K19.89 in Arbeit: Der gesamte read-only Surface-Steuerungsstand wird als Gesamt-Referenz abgeschlossen; `docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md` dokumentiert die Kette von SurfaceRuntime-Bridge bis Launcher, ohne Produktivlogik, UI-Aenderung, echte Umschaltung, Drag, Resize oder Persistenz.
+- K19.89 abgeschlossen: Der gesamte read-only Surface-Steuerungsstand ist als Gesamt-Referenz abgeschlossen; `docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md` dokumentiert die Kette von SurfaceRuntime-Bridge bis Launcher, ohne Produktivlogik, UI-Aenderung, echte Umschaltung, Drag, Resize oder Persistenz.
 - K19.90 abgeschlossen: Der read-only Surface-Gesamtstand ist zusaetzlich als Integrations-/Freigabecheck abgesichert; `docs/UI_EDITOR_SURFACE_READONLY_INTEGRATION_CHECK.md` dokumentiert die geprueften Komponenten, den erlaubten Surface-Bereich, die blockierten SurfaceIds, die sichtbare UI-Grenze und die offenen Freigabeentscheidungen, ohne Produktivlogik, UI-Aenderung, echte Umschaltung, Drag, Resize oder Persistenz.
 - K19.91 abgeschlossen: Eine Freigabematrix fuer die naechste Surface-Phase liegt mit `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md` vor; sie priorisiert kontrollierte read-only Erweiterungen und grenzt Drag, Resize und Persistenz bewusst ab.
 - K19.92 abgeschlossen: PDF-/Plan-Surfaces sind read-only fachlich bewertet; `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md` beschreibt den aktuellen Blockierstatus, Nutzen, Risiken und Stop-/Go-Kriterien, ohne Sichtbarkeit oder Auswahl freizugeben.
 - K19.93 abgeschlossen: Eine Surface-Policy-Freigabevorlage ist mit `docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md` vorbereitet; sie definiert Minimalfreigabe, Pflichtpruefungen und verbotene Kopplungen, ohne eine Surface tatsaechlich freizugeben.
 - K19.94 abgeschlossen: `pdf.plan.page.1` ist als einzelner Surface-Freigabe-Kandidat mit `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md` vorgezeichnet; die Policy bleibt unveraendert und alle anderen Surfaces bleiben blockiert.
+- K19.95 abgeschlossen: `pdf.plan.page.1` ist per SurfacePolicy read-only sichtbar freigegeben; `plan.canvas.default` bleibt blockiert und die sichtbare Surface-Auswahl kann damit um einen zweiten Eintrag wachsen.
 - K19.84 abgeschlossen: SurfaceSwitch-Modell im BBM-Launcher als Referenzstand abgeschlossen; `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md` dokumentiert den read-only Launcher-Datenfluss, die sichtbare UI-Grenze und die Sicherheitsgrenzen, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
 - K19.83 abgeschlossen: SurfaceSwitch-Modell wird im BBM-Launcher intern read-only genutzt; sichtbar bleibt `restarbeiten.ui.main`/`Restarbeiten` und die bestehende SurfaceInfo, ohne echte Umschaltung, neue UI, Drag, Resize oder Persistenz.
 - K19.82 abgeschlossen: SurfaceSwitch-read-only Referenzstand dokumentiert; `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md` beschreibt erlaubte und blockierte Wechselziele, Datenfluss, Sicherheitsgrenzen und Nicht-Ziele, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
@@ -184,7 +185,7 @@ Aktueller Stand:
 - [x] K19.86 SurfaceSwitch-Request/Command-Handler als Referenzstand abschliessen
 - [x] K19.87 SurfaceSwitch-Command read-only im Launcher verwenden
 - [x] K19.88 SurfaceSwitch-Command im Launcher als Referenzstand abschliessen
-- [ ] K19.89 Gesamten read-only Surface-Steuerungsstand als Referenz abschliessen
+- [x] K19.89 Gesamten read-only Surface-Steuerungsstand als Referenz abschliessen
 
 ## Statusupdate K19.83
 - `BbmUiEditorRuntimeLauncher.js` nutzt `buildReadonlySurfaceSwitchResultForLauncher(...)` intern read-only.

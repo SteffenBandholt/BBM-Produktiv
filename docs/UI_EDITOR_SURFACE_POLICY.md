@@ -59,7 +59,7 @@ canPersist: false
 
 pdf.plan.page.1
 readable: true
-visibleInEditor: false
+visibleInEditor: true
 canHide: false
 canDrag: false
 canResize: false
@@ -195,8 +195,8 @@ BBM-Launcher
 - Keine Wildcard.
 - Kein Default-Adapter.
 - Unbekannte SurfaceIds bleiben blockiert.
-- `visibleInEditor: true` nur fuer `restarbeiten.ui.main`.
-- `visibleInEditor: false` fuer `pdf.plan.page.1` und `plan.canvas.default`.
+- `visibleInEditor: true` fuer `restarbeiten.ui.main` und `pdf.plan.page.1`.
+- `visibleInEditor: false` fuer `plan.canvas.default`.
 - `canDrag: false` fuer alle bekannten SurfaceIds.
 - `canResize: false` fuer alle bekannten SurfaceIds.
 - `canPersist: false` fuer alle bekannten SurfaceIds.
@@ -243,3 +243,9 @@ BBM-Launcher
 - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
 - `npm test`
 - `git diff --check`
+
+## Status nach G75
+
+`pdf.plan.page.1` ist jetzt per Policy read-only sichtbar freigegeben.
+`plan.canvas.default` bleibt blockiert. Die Policy bleibt damit eine
+explizite read-only Allowlist ohne Drag, Resize oder Persistenz.

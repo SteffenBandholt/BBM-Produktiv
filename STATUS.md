@@ -29,10 +29,12 @@ Sie ergÃ¤nzt:
   - G69 schliesst den gesamten read-only Surface-Steuerungsstand als Gesamt-Referenz in `docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md` ab; die Kette aus Bridge, Katalog, Policy, Selection, Switch und Launcher ist dokumentiert.
 
 - SurfaceSwitch-Modell read-only im Launcher als Referenzstand abgeschlossen:
+  - G75 setzt `pdf.plan.page.1` nun per read-only Policy sichtbar frei.
+  - Die Surface-Auswahl kann damit `PDF Plan Seite 1` zusaetzlich zeigen; `plan.canvas.default` bleibt blockiert.
   - G64 dokumentiert den G63-Stand in `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md`.
   - Der BBM-Launcher nutzt `buildReadonlySurfaceSwitchResultForLauncher(...)` nur intern read-only als vorgeschaltete Referenz vor der SurfaceSelection.
-  - Sichtbar bleiben `Restarbeiten` und die SurfaceInfo `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
-  - `pdf.plan.page.1`, `plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert.
+  - Sichtbar bleiben `Restarbeiten` und `PDF Plan Seite 1`; die SurfaceInfo bleibt `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
+  - `plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert.
   - Keine echte Umschaltung, keine sichtbare UI-Aenderung, keine Launcher-Produktivintegration, kein Drag, kein Resize und keine Persistenz.
   - G70 bestaetigt den Gesamtstand zusaetzlich als Integrations-/Freigabecheck in `docs/UI_EDITOR_SURFACE_READONLY_INTEGRATION_CHECK.md`; die read-only Kette bleibt unveraendert und nur `restarbeiten.ui.main` bleibt sichtbar/resolved.
   - G71 fuegt mit `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md` eine Freigabematrix fuer die naechste Surface-Phase hinzu; sie priorisiert kontrollierte read-only Erweiterungen und haelt Drag, Resize und Persistenz weiterhin getrennt.

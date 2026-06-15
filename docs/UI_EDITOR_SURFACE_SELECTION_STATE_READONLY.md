@@ -162,6 +162,7 @@ Guardrail-Begriff: keine Persistenz.
 - Keine Surface-Umschaltung.
 - Keine echte Umschaltung ueber das Surface-Umschaltungsmodell.
 - Keine PDF-/Canvas-/Plan-Surface sichtbar oder auswaehlbar.
+- PDF/Plan bleibt im Sinne der Bearbeitung nicht sichtbar.
 - Keine Bearbeitungsbuttons.
 - Keine Drag-/Resize-Aktivierung.
 - Keine Speicherlogik.

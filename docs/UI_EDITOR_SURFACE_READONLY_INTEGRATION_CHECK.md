@@ -4,7 +4,8 @@
 
 Der read-only Surface-Gesamtstand ist technisch konsistent und als
 Integrationsbasis vor einem spaeteren Produktivschritt freigehalten. Sichtbar
-bleibt nur `restarbeiten.ui.main`. Die Kette aus
+bleibt nur `restarbeiten.ui.main`; seit G75 darf `pdf.plan.page.1` read-only
+sichtbar erscheinen. Die Kette aus
 SurfaceRuntime-Bridge, SurfaceAdapterCatalog, SurfacePolicy,
 SurfaceSelectionModel, SurfaceSelectionState, SurfaceSwitchModel,
 SurfaceSwitchCommand und Launcher-read-only-Anbindung bleibt defensiv und
@@ -26,13 +27,13 @@ ohne echte Umschaltung.
 ```text
 erlaubt / resolved / sichtbar:
 - restarbeiten.ui.main
+- pdf.plan.page.1
 ```
 
 ## Blockierte SurfaceIds
 
 ```text
 blockiert:
-- pdf.plan.page.1
 - plan.canvas.default
 - unbekannte SurfaceIds
 - *
@@ -41,7 +42,7 @@ blockiert:
 
 ## Sichtbare UI-Grenze
 
-- sichtbar bleibt nur `Restarbeiten`
+- sichtbar bleiben `Restarbeiten` und `PDF Plan Seite 1`
 - SurfaceInfo bleibt `restarbeiten.ui.main` / `ui-screen` / Elementanzahl
 - keine Surface-Liste
 - kein Dropdown
@@ -67,7 +68,8 @@ blockiert:
 ## Offene Freigabeentscheidungen vor echter Umschaltung
 
 - separate Freigabe fuer produktive Surface-Umschaltung
-- separate Freigabe fuer PDF-/Plan-Surfaces im sichtbaren Launcher
+- `pdf.plan.page.1` ist bereits als read-only sichtbare PDF-Surface freigegeben
+- `plan.canvas.default` bleibt separat blockiert
 - separate Freigabe fuer weitere SurfaceIds
 - separate Freigabe fuer Drag
 - separate Freigabe fuer Resize
@@ -77,7 +79,7 @@ blockiert:
 
 - echte Surface-Umschaltung als eigenes Freigabepaket
 - weitere SurfaceIds nur ueber eigene Policy-Freigabe
-- sichtbare PDF-/Plan-Surfaces nur ueber eigenes Paket
+- sichtbare PDF-/Plan-Surfaces fuer `pdf.plan.page.1` sind read-only freigegeben
 - Drag, Resize und Persistenz jeweils separat behandeln
 - die Freigabematrix fuer die naechste Surface-Phase liegt in
   `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md`

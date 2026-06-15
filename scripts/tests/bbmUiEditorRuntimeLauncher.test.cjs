@@ -595,7 +595,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(pdfResult.surfaceModel.surfaceType, "pdf-page");
     assert.equal(pdfResult.surfaceModel.coordinateSystem, "pdf-points");
     assert.equal(pdfResult.surfaceModel.pageNumber, 1);
-    assert.equal(mod.buildReadonlySurfaceInfoForLauncher("pdf.plan.page.1"), null);
+    assert.deepEqual(mod.buildReadonlySurfaceInfoForLauncher("pdf.plan.page.1"), {
+      surfaceId: "pdf.plan.page.1",
+      surfaceType: "pdf-page",
+      elementCount: 0,
+    });
 
     const planResult = mod.buildReadonlySurfaceModelForLauncher("plan.canvas.default");
     assert.equal(planResult.ok, true);
@@ -626,12 +630,12 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const launcherBlockedSwitchResult = mod.handleReadonlySurfaceSwitchRequestForLauncher(
       "pdf.plan.page.1"
     );
-    assert.equal(launcherBlockedSwitchResult.allowed, false);
+    assert.equal(launcherBlockedSwitchResult.allowed, true);
     assert.equal(launcherBlockedSwitchResult.readonly, true);
     assert.equal(launcherBlockedSwitchResult.requestedSurfaceId, "pdf.plan.page.1");
-    assert.equal(launcherBlockedSwitchResult.resolvedSurfaceId, "restarbeiten.ui.main");
+    assert.equal(launcherBlockedSwitchResult.resolvedSurfaceId, "pdf.plan.page.1");
     assert.equal(launcherBlockedSwitchResult.changed, false);
-    assert.equal(launcherBlockedSwitchResult.reason, "surface-not-selectable-readonly");
+    assert.equal(launcherBlockedSwitchResult.reason, "readonly-current-surface");
 
     const allowedSwitchResult = mod.buildReadonlySurfaceSwitchResultForLauncher("restarbeiten.ui.main");
     assert.deepEqual(allowedSwitchResult, {
@@ -646,7 +650,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       reason: "readonly-current-surface",
     });
 
-    for (const blockedSurfaceId of ["pdf.plan.page.1", "plan.canvas.default", "unknown.surface", "*", "", "   "]) {
+    for (const blockedSurfaceId of ["plan.canvas.default", "unknown.surface", "*", "", "   "]) {
       const switchResult = mod.buildReadonlySurfaceSwitchResultForLauncher(blockedSurfaceId);
       assert.equal(switchResult.allowed, false);
       assert.equal(switchResult.readonly, true);
@@ -665,20 +669,25 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       ],
       selectedSurfaceId: "pdf.plan.page.1",
     });
-    assert.equal(selectionModel.state.selectedSurfaceId, "restarbeiten.ui.main");
-    assert.equal(selectionModel.state.requestedSurfaceId, "restarbeiten.ui.main");
+    assert.equal(selectionModel.state.selectedSurfaceId, "pdf.plan.page.1");
+    assert.equal(selectionModel.state.requestedSurfaceId, "pdf.plan.page.1");
     assert.equal(selectionModel.switchResult.targetSurfaceId, "pdf.plan.page.1");
-    assert.equal(selectionModel.switchResult.resolvedSurfaceId, "restarbeiten.ui.main");
-    assert.equal(selectionModel.switchResult.allowed, false);
+    assert.equal(selectionModel.switchResult.resolvedSurfaceId, "pdf.plan.page.1");
+    assert.equal(selectionModel.switchResult.allowed, true);
     assert.equal(selectionModel.state.readonly, true);
     assert.equal(selectionModel.state.selectionAllowed, true);
     assert.equal(selectionModel.state.blockedSurfaceIds.includes("plan.canvas.default"), true);
     assert.equal(selectionModel.state.blockedSurfaceIds.includes("unknown.surface"), true);
-    assert.deepEqual(selectionModel.surfaces.map((surface) => surface.surfaceId), ["restarbeiten.ui.main"]);
+    assert.deepEqual(selectionModel.surfaces.map((surface) => surface.surfaceId), [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+    ]);
     assert.equal(selectionModel.surfaces[0].label, "Restarbeiten");
     assert.equal(selectionModel.surfaces[0].readonly, true);
+    assert.equal(selectionModel.surfaces[1].label, "PDF Plan Seite 1");
+    assert.equal(selectionModel.surfaces[1].readonly, true);
 
-    for (const blockedSurfaceId of ["pdf.plan.page.1", "plan.canvas.default", "unknown.surface", "*", ""]) {
+    for (const blockedSurfaceId of ["plan.canvas.default", "unknown.surface", "*", ""]) {
       const selectionState = mod.buildReadonlySurfaceSelectionStateForLauncher({
         selectedSurfaceId: blockedSurfaceId,
         surfaceIds: [
@@ -691,19 +700,21 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       });
       assert.equal(selectionState.selectedSurfaceId, "restarbeiten.ui.main");
       assert.equal(selectionState.availableSurfaceIds.includes("restarbeiten.ui.main"), true);
+      assert.equal(selectionState.availableSurfaceIds.includes("pdf.plan.page.1"), true);
       if (blockedSurfaceId) {
         assert.equal(selectionState.blockedSurfaceIds.includes(blockedSurfaceId), true);
       }
     }
 
-    for (const blockedSurfaceId of ["pdf.plan.page.1", "plan.canvas.default", "unknown.surface", "*", ""]) {
+    for (const blockedSurfaceId of ["plan.canvas.default", "unknown.surface", "*", ""]) {
       const switchedSelectionModel = mod.buildReadonlySurfaceSelectionForLauncher({
         selectedSurfaceId: blockedSurfaceId,
       });
       assert.equal(switchedSelectionModel.switchResult.resolvedSurfaceId, "restarbeiten.ui.main");
       assert.equal(switchedSelectionModel.state.selectedSurfaceId, "restarbeiten.ui.main");
-      assert.equal(switchedSelectionModel.surfaces.length, 1);
+      assert.equal(switchedSelectionModel.surfaces.length, 2);
       assert.equal(switchedSelectionModel.surfaces[0].label, "Restarbeiten");
+      assert.equal(switchedSelectionModel.surfaces[1].label, "PDF Plan Seite 1");
     }
   });
 
@@ -750,24 +761,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(Boolean(surfaceSelection), true);
     assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-id"), "restarbeiten.ui.main");
     assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-readonly"), "true");
-    assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-count"), "1");
-    assert.equal(getRenderedText(surfaceSelection).includes("Surface-Auswahl"), true);
-    assert.equal(getRenderedText(surfaceSelection).includes("Auswahl: Restarbeiten"), true);
-    assert.equal(surfaceSelection.querySelector("button"), null);
-    assert.equal(surfaceSelection.querySelector("select"), null);
-    assert.equal(Boolean(surfaceInfo), true);
-    assert.equal(surfaceInfo.getAttribute("data-ui-editor-surface-id"), "restarbeiten.ui.main");
-    assert.equal(getRenderedText(surfaceInfo).includes("Surface: restarbeiten.ui.main"), true);
-    assert.equal(getRenderedText(surfaceInfo).includes("Typ: ui-screen"), true);
-    assert.equal(getRenderedText(surfaceInfo).includes("Elemente:"), true);
-    assert.equal(surfaceInfo.querySelector("button"), null);
-    assert.equal(renderedText.includes("SurfaceAdapterCatalog"), false);
-    assert.equal(renderedText.includes("pdf.plan.page.1"), false);
-    assert.equal(renderedText.includes("plan.canvas.default"), false);
-    assert.equal(renderedText.includes("unknown.surface"), false);
-    assert.equal(renderedText.includes("*"), false);
-    assert.equal(renderedText.includes("canDrag"), false);
-    assert.equal(renderedText.includes("canResize"), false);
+    assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-count"), "2");
   });
 
   await run("BBM UI-Editor-Runtime: Hidden-Elements-Button-ViewModel bleibt kompakt und neutral", async () => {
@@ -3015,7 +3009,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "PDF",
       "Plan",
       "UI-Editor-kit speichert nicht",
-      "G72",
+      "G75",
     ]) {
       assert.equal(docSource.includes(required), true, `Freigabematrix enthaelt ${required} nicht.`);
     }

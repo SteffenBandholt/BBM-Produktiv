@@ -128,3 +128,10 @@ selbst noch nichts frei.
 
 Der erste konkrete Kandidat fuer spaetere Einzelfreigabe ist
 `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md`.
+
+## Status nach G75
+
+`pdf.plan.page.1` ist nun als read-only Surface sichtbar freigegeben.
+`plan.canvas.default` bleibt blockiert. Die sichtbare Surface-Auswahl darf
+damit eine zweite Einzelfreigabe zeigen, ohne Drag, Resize oder Persistenz zu
+aktivieren.

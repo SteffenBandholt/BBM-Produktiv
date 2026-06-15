@@ -317,3 +317,9 @@ BBM-Launcher
 - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
 - `npm test`
 - `git diff --check`
+
+## Status nach G75
+
+`pdf.plan.page.1` kann jetzt per Policy read-only sichtbar werden.
+`plan.canvas.default` bleibt blockiert. Der Katalog bleibt dadurch weiterhin
+eine neutrale Aufloeseschicht ohne Drag, Resize oder Persistenz.

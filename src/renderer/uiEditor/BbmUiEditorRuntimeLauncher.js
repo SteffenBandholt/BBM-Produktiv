@@ -1822,7 +1822,10 @@ function appendReadonlySurfaceSelection(doc, panel, state = {}) {
   selection.style.lineHeight = "1.35";
   selection.textContent = [
     "Surface-Auswahl",
-    `Auswahl: ${selectedSurface.label || selectedSurface.surfaceId || "nicht verfuegbar"}`,
+    ...surfaces.map((surface) => {
+      const label = surface.label || surface.surfaceId || "nicht verfuegbar";
+      return `${surface.selected ? "•" : "-"} ${label}`;
+    }),
   ].join("\n");
   panel.appendChild(selection);
   return selection;

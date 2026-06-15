@@ -144,3 +144,10 @@ Eine Sichtbarkeitsfreigabe darf nicht automatisch aktivieren:
   den ersten konkreten Kandidaten `pdf.plan.page.1`.
 - Diese Vorlage gibt selbst nichts frei und bleibt die allgemeine Form fuer
   spaetere Einzelfreigaben.
+
+## Status nach G75
+
+Die Vorlage wurde exemplarisch auf `pdf.plan.page.1` angewendet. Die Surface
+ist nun read-only sichtbar freigegeben; `plan.canvas.default` bleibt
+blockiert. Drag, Resize, Persistenz und Wildcards bleiben weiterhin getrennt
+gesperrt.

@@ -34,16 +34,18 @@ async function runSurfaceSelectionModelTests(run) {
   ]);
 
   await run("SurfaceSelectionModel: sichtbare Editor-SurfaceIds kommen aus Katalog und Policy", () => {
-    assert.deepEqual(selectionModule.getVisibleEditorSurfaceIds(), ["restarbeiten.ui.main"]);
+    assert.deepEqual(selectionModule.getVisibleEditorSurfaceIds(), ["restarbeiten.ui.main", "pdf.plan.page.1"]);
     assert.equal(catalogModule.isKnownSurfaceAdapterId("restarbeiten.ui.main"), true);
     assert.equal(policyModule.isSurfaceReadable("restarbeiten.ui.main"), true);
     assert.equal(policyModule.isSurfaceVisibleInEditor("restarbeiten.ui.main"), true);
+    assert.equal(policyModule.isSurfaceReadable("pdf.plan.page.1"), true);
+    assert.equal(policyModule.isSurfaceVisibleInEditor("pdf.plan.page.1"), true);
   });
 
-  await run("SurfaceSelectionModel: Auswahlmodell enthaelt nur restarbeiten.ui.main", () => {
+  await run("SurfaceSelectionModel: Auswahlmodell enthaelt restarbeiten.ui.main und PDF-Seite 1", () => {
     const model = selectionModule.buildReadonlySurfaceSelectionModel();
 
-    assert.equal(model.surfaces.length, 1);
+    assert.equal(model.surfaces.length, 2);
     assert.deepEqual(model.surfaces[0], {
       surfaceId: "restarbeiten.ui.main",
       label: "Restarbeiten",
@@ -56,9 +58,21 @@ async function runSurfaceSelectionModelTests(run) {
         canPersist: false,
       },
     });
+    assert.deepEqual(model.surfaces[1], {
+      surfaceId: "pdf.plan.page.1",
+      label: "PDF Plan Seite 1",
+      surfaceType: "pdf-page",
+      selected: false,
+      readonly: true,
+      capabilities: {
+        canDrag: false,
+        canResize: false,
+        canPersist: false,
+      },
+    });
   });
 
-  await run("SurfaceSelectionModel: PDF, Plan, unbekannte SurfaceIds und Wildcard werden nicht aufgenommen", () => {
+  await run("SurfaceSelectionModel: PDF-Seite bleibt sichtbar, Plan, unbekannte SurfaceIds und Wildcard werden nicht aufgenommen", () => {
     const model = selectionModule.buildReadonlySurfaceSelectionModel({
       surfaceIds: [
         "restarbeiten.ui.main",
@@ -70,13 +84,14 @@ async function runSurfaceSelectionModelTests(run) {
       selectedSurfaceId: "pdf.plan.page.1",
     });
 
-    assert.deepEqual(model.surfaces.map((surface) => surface.surfaceId), ["restarbeiten.ui.main"]);
+    assert.deepEqual(model.surfaces.map((surface) => surface.surfaceId), ["restarbeiten.ui.main", "pdf.plan.page.1"]);
     assert.equal(selectionModule.isSurfaceSelectableInEditor("restarbeiten.ui.main"), true);
-    assert.equal(selectionModule.isSurfaceSelectableInEditor("pdf.plan.page.1"), false);
+    assert.equal(selectionModule.isSurfaceSelectableInEditor("pdf.plan.page.1"), true);
     assert.equal(selectionModule.isSurfaceSelectableInEditor("plan.canvas.default"), false);
     assert.equal(selectionModule.isSurfaceSelectableInEditor("unknown.surface"), false);
     assert.equal(selectionModule.isSurfaceSelectableInEditor("*"), false);
-    assert.equal(model.surfaces[0].selected, true);
+    assert.equal(model.surfaces[0].selected, false);
+    assert.equal(model.surfaces[1].selected, true);
   });
 
   await run("SurfaceSelectionModel: kein Default-true fuer Auswahl oder Capabilities", () => {
@@ -88,7 +103,8 @@ async function runSurfaceSelectionModelTests(run) {
       selectedSurfaceId: "unknown.surface",
     });
 
-    assert.deepEqual(emptyModel, { surfaces: [] });
+    assert.equal(emptyModel.surfaces.length, 1);
+    assert.equal(emptyModel.surfaces[0].selected, true);
     assert.equal(model.surfaces[0].selected, true);
     assert.equal(model.surfaces[0].readonly, true);
     assert.deepEqual(model.surfaces[0].capabilities, {
@@ -124,7 +140,7 @@ async function runSurfaceSelectionModelTests(run) {
       "plan.canvas.default",
       "sichtbare read-only Auswahl",
       "keine Umschaltung",
-      "keine PDF-/Plan-Surface sichtbar",
+      "keine Bearbeitung",
       "kein Drag",
       "kein Resize",
       "keine Persistenz",

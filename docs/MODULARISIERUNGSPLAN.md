@@ -121,6 +121,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G71 legt mit `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md` eine Freigabematrix fuer die naechste Surface-Phase an; empfohlen wird zuerst eine kontrollierte read-only Erweiterung statt sofort Drag oder Persistenz
 - G72 bewertet PDF/Plan-Surfaces fachlich read-only in `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md`; Sichtbarkeit und Auswahl bleiben weiter blockiert, Drag und Persistenz ebenfalls
 - G73 bereitet mit `docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md` eine Surface-Policy-Freigabevorlage vor; die Vorlage bleibt rein dokumentarisch und gibt nichts frei
+- G75 setzt `pdf.plan.page.1` per SurfacePolicy read-only sichtbar frei; `plan.canvas.default` bleibt blockiert und Drag/Persistenz bleiben getrennt
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

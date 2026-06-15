@@ -27,7 +27,7 @@ const SURFACE_POLICIES = Object.freeze({
   }),
   "pdf.plan.page.1": Object.freeze({
     readable: true,
-    visibleInEditor: false,
+    visibleInEditor: true,
     canHide: false,
     canDrag: false,
     canResize: false,

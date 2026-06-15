@@ -24,7 +24,7 @@ export function handleReadonlySurfaceSwitchRequest(input = {}) {
     allowed: switchResult.allowed === true,
     readonly: true,
     requestedSurfaceId,
-    resolvedSurfaceId: READONLY_RESOLVED_SURFACE_ID,
+    resolvedSurfaceId: switchResult.resolvedSurfaceId || READONLY_RESOLVED_SURFACE_ID,
     changed: false,
     reason: switchResult.reason,
   };
@@ -37,4 +37,3 @@ export function buildReadonlySurfaceSwitchCommand(input = {}) {
 export function executeReadonlySurfaceSwitchCommand(input = {}) {
   return handleReadonlySurfaceSwitchRequest(input);
 }
-

@@ -162,3 +162,10 @@ schreibt keine Zustaende.
 - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
 - `npm test`
 - `git diff --check`
+
+## Status nach G75
+
+Die SurfaceInfo bleibt fuer `restarbeiten.ui.main` der Default-Fall. Die
+Surface-Auswahl darf zusaetzlich `pdf.plan.page.1` read-only anzeigen; das
+veraendert die SurfaceInfo-Grenze selbst nicht und aktiviert keine
+Bearbeitung, keinen Drag und keine Persistenz.

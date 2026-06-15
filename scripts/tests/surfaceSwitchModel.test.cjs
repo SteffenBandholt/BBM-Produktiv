@@ -27,7 +27,7 @@ function assertNoStorageOrWritePath(source, label) {
 async function runSurfaceSwitchModelTests(run) {
   const switchModule = await importEsmFromFile(SWITCH_MODEL_PATH);
 
-  await run("SurfaceSwitchModel: erlaubt nur den aktuellen read-only Pilot", () => {
+  await run("SurfaceSwitchModel: erlaubt den aktuellen read-only Pilot und die freigegebene PDF-Seite", () => {
     const result = switchModule.buildReadonlySurfaceSwitchResult({
       targetSurfaceId: "restarbeiten.ui.main",
     });
@@ -45,11 +45,27 @@ async function runSurfaceSwitchModelTests(run) {
       switchModule.resolveReadonlySurfaceSwitchTarget("restarbeiten.ui.main"),
       "restarbeiten.ui.main"
     );
+
+    const pdfResult = switchModule.buildReadonlySurfaceSwitchResult({
+      targetSurfaceId: "pdf.plan.page.1",
+    });
+    assert.deepEqual(pdfResult, {
+      allowed: true,
+      readonly: true,
+      fromSurfaceId: "restarbeiten.ui.main",
+      targetSurfaceId: "pdf.plan.page.1",
+      resolvedSurfaceId: "pdf.plan.page.1",
+      reason: "readonly-current-surface",
+    });
+    assert.equal(switchModule.canSwitchReadonlySurface("pdf.plan.page.1"), true);
+    assert.equal(
+      switchModule.resolveReadonlySurfaceSwitchTarget("pdf.plan.page.1"),
+      "pdf.plan.page.1"
+    );
   });
 
-  await run("SurfaceSwitchModel: blockiert PDF, Plan, unbekannte und leere Ziele", () => {
+  await run("SurfaceSwitchModel: blockiert Plan, unbekannte und leere Ziele", () => {
     for (const blockedSurfaceId of [
-      "pdf.plan.page.1",
       "plan.canvas.default",
       "unknown.surface",
       "*",
@@ -89,9 +105,9 @@ async function runSurfaceSwitchModelTests(run) {
 
     assert.equal(result.allowed, false);
     assert.equal(result.readonly, true);
-    assert.equal(result.fromSurfaceId, "restarbeiten.ui.main");
+    assert.equal(result.fromSurfaceId, "pdf.plan.page.1");
     assert.equal(result.targetSurfaceId, "plan.canvas.default");
-    assert.equal(result.resolvedSurfaceId, "restarbeiten.ui.main");
+    assert.equal(result.resolvedSurfaceId, "pdf.plan.page.1");
     assert.equal(result.reason, "surface-not-selectable-readonly");
   });
 

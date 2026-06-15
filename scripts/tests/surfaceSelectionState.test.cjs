@@ -36,18 +36,19 @@ async function runSurfaceSelectionStateTests(run) {
     assert.equal(state.selectedSurfaceId, "restarbeiten.ui.main");
     assert.equal(state.requestedSurfaceId, "");
     assert.equal(state.readonly, true);
-    assert.deepEqual(state.availableSurfaceIds, ["restarbeiten.ui.main"]);
-    assert.deepEqual(state.blockedSurfaceIds, ["pdf.plan.page.1", "plan.canvas.default"]);
+    assert.deepEqual(state.availableSurfaceIds, ["restarbeiten.ui.main", "pdf.plan.page.1"]);
+    assert.deepEqual(state.blockedSurfaceIds, ["plan.canvas.default"]);
     assert.equal(state.selectionAllowed, true);
     assert.equal(state.reason, "readonly-single-surface");
   });
 
-  await run("SurfaceSelectionState: erlaubt nur restarbeiten.ui.main", () => {
+  await run("SurfaceSelectionState: erlaubt restarbeiten.ui.main und pdf.plan.page.1", () => {
     assert.equal(stateModule.isReadonlySurfaceSelectionAllowed("restarbeiten.ui.main"), true);
+    assert.equal(stateModule.isReadonlySurfaceSelectionAllowed("pdf.plan.page.1"), true);
     assert.equal(stateModule.resolveReadonlySelectedSurfaceId({ selectedSurfaceId: "restarbeiten.ui.main" }), "restarbeiten.ui.main");
+    assert.equal(stateModule.resolveReadonlySelectedSurfaceId({ selectedSurfaceId: "pdf.plan.page.1" }), "pdf.plan.page.1");
 
     for (const blockedSurfaceId of [
-      "pdf.plan.page.1",
       "plan.canvas.default",
       "unknown.surface",
       "*",
@@ -64,7 +65,6 @@ async function runSurfaceSelectionStateTests(run) {
 
   await run("SurfaceSelectionState: blockierte Auswahlwuensche fallen defensiv auf Pilot zurueck", () => {
     for (const blockedSurfaceId of [
-      "pdf.plan.page.1",
       "plan.canvas.default",
       "unknown.surface",
       "*",
@@ -75,22 +75,23 @@ async function runSurfaceSelectionStateTests(run) {
 
       assert.equal(state.selectedSurfaceId, "restarbeiten.ui.main");
       assert.equal(state.requestedSurfaceId, blockedSurfaceId);
-      assert.deepEqual(state.availableSurfaceIds, ["restarbeiten.ui.main"]);
+      assert.deepEqual(state.availableSurfaceIds, ["restarbeiten.ui.main", "pdf.plan.page.1"]);
       assert.equal(state.blockedSurfaceIds.includes(blockedSurfaceId), true);
+      assert.equal(state.blockedSurfaceIds.includes("plan.canvas.default"), true);
       assert.equal(state.selectionAllowed, false);
       assert.equal(state.reason, "surface-selection-blocked");
     }
   });
 
   await run("SurfaceSelectionState: leere Auswahlwuensche fallen auf den Pilot zurueck", () => {
-    const state = stateModule.buildReadonlySurfaceSelectionState({
-      selectedSurfaceId: "",
-      surfaceIds: ["pdf.plan.page.1", "plan.canvas.default", "unknown.surface", "*"],
-    });
+      const state = stateModule.buildReadonlySurfaceSelectionState({
+        selectedSurfaceId: "",
+        surfaceIds: ["pdf.plan.page.1", "plan.canvas.default", "unknown.surface", "*"],
+      });
 
     assert.equal(state.selectedSurfaceId, "restarbeiten.ui.main");
-    assert.deepEqual(state.availableSurfaceIds, ["restarbeiten.ui.main"]);
-    assert.deepEqual(state.blockedSurfaceIds, ["pdf.plan.page.1", "plan.canvas.default", "unknown.surface", "*"]);
+    assert.deepEqual(state.availableSurfaceIds, ["restarbeiten.ui.main", "pdf.plan.page.1"]);
+    assert.deepEqual(state.blockedSurfaceIds, ["plan.canvas.default", "unknown.surface", "*"]);
     assert.equal(state.selectionAllowed, true);
     assert.equal(state.readonly, true);
   });
@@ -123,6 +124,7 @@ async function runSurfaceSelectionStateTests(run) {
       "plan.canvas.default",
       "read-only",
       "keine echte Umschaltung",
+      "nicht sichtbar",
       "kein Drag",
       "kein Resize",
       "keine Persistenz",

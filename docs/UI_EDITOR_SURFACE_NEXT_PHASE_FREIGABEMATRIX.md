@@ -112,15 +112,16 @@ fuer die naechste Surface-Phase.
 
 ## Empfohlener naechster Schritt
 
-G72 - PDF/Plan-Surface weiterhin read-only fachlich bewerten oder alternativ eine zweite UI-Surface read-only sichtbar vorbereiten.
+G76 - `plan.canvas.default` weiterhin read-only fachlich bewerten oder alternativ eine weitere UI-Surface read-only sichtbar vorbereiten.
 
-G72 selbst verengt diesen Weg fachlich auf eine Bewertung der PDF-/Plan-Surfaces
-in `docs/UI_EDITOR_PDF_PLAN_SURFACE_READONLY_BEWERTUNG.md`, ohne Sichtbarkeit
-oder Auswahl freizugeben.
+`pdf.plan.page.1` ist mit G75 bereits read-only sichtbar freigegeben. Der
+naechste Schritt kann deshalb entweder den Plan weiter fachlich absichern oder
+eine weitere UI-Surface read-only vorbereiten, ohne Drag oder Persistenz zu
+aktivieren.
 
-G73 bereitet danach eine Surface-Policy-Freigabevorlage vor, die spaetere
-Einzelfreigaben strikt read-only, explizit und ohne Wildcards oder Default-true
-vorzeichnen soll.
+## Status nach G75
 
-G74 konkretisiert darauf aufbauend `pdf.plan.page.1` als einzelnen
-Freigabe-Kandidaten, ohne die Policy selbst zu aendern.
+`pdf.plan.page.1` ist nun per Policy read-only sichtbar freigegeben.
+`plan.canvas.default` bleibt blockiert. Die naechste Phase kann sich daher
+auf eine weitere kontrollierte read-only Erweiterung konzentrieren, statt
+sofort Drag oder Persistenz zu ziehen.

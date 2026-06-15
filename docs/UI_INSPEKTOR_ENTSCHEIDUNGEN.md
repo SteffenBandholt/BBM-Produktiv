@@ -129,6 +129,8 @@
 
 **Status nach G35:** Der Hidden-Elements-Block ist als Referenzstand abgeschlossen. `docs/UI_EDITOR_HIDDEN_ELEMENTS_REFERENZSTAND.md` beschreibt den stabilen Ist-Stand von Button/Popover ueber Datenfluss, ChangeRequest- und Persistenzmodell bis zu Restore, Scope-Policy und Sicherheitsgrenzen. G35 aktiviert keine neue Produktivlogik und keinen weiteren Scope.
 
+**Status nach G75:** `pdf.plan.page.1` ist per SurfacePolicy read-only sichtbar freigegeben. `plan.canvas.default` bleibt blockiert, und die sichtbare Surface-Auswahl darf nun einen zweiten Eintrag zeigen, ohne Drag, Resize oder Persistenz zu aktivieren.
+
 ## Entscheidung 024
 **Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
 

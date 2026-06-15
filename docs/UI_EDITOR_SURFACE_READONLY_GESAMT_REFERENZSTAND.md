@@ -31,7 +31,10 @@ Surface-Umschaltung und keine sichtbare UI-Änderung.
 - G74 konkretisiert `pdf.plan.page.1` als einzelnen Freigabe-Kandidaten in
   `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md`, ohne die
   Policy zu aendern.
-- Sichtbar im Editorpanel bleibt nur `Restarbeiten` mit der SurfaceInfo
+- G75 setzt `pdf.plan.page.1` nun per read-only Policy sichtbar frei; die
+  Surface-Auswahl zeigt damit mehr als einen Eintrag, waehrend
+  `plan.canvas.default` blockiert bleibt.
+- Die SurfaceInfo im Editorpanel bleibt im Default-Fall
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.
 - BBM bleibt Host fuer Rechte, Scopes, Persistenz, DB/IPC und Fachlogik.
@@ -72,10 +75,10 @@ Umschaltung, keine Bearbeitung und keine Speicherwege.
 ```text
 sichtbar:
 - Surface-Auswahl: Restarbeiten
+- Surface-Auswahl: PDF Plan Seite 1
 - SurfaceInfo: restarbeiten.ui.main / ui-screen / Elementanzahl
 
 nicht sichtbar:
-- pdf.plan.page.1
 - plan.canvas.default
 - unbekannte SurfaceIds
 - *
@@ -89,9 +92,9 @@ kein Dropdown und keine weiteren auswählbaren SurfaceIds.
 ```text
 erlaubt / sichtbar / resolved:
 - restarbeiten.ui.main
+- pdf.plan.page.1
 
 blockiert:
-- pdf.plan.page.1
 - plan.canvas.default
 - unbekannte SurfaceIds
 - *
