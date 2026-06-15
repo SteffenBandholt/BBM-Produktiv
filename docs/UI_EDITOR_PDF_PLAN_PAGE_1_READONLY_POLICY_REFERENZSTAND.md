@@ -61,6 +61,13 @@ nicht sichtbar:
 Die Sichtbarkeit ist read-only. Sie benoetigt keine Bearbeitungsbuttons, keine
 Drag-Aktivierung, keine Resize-Aktivierung und keine Persistenz.
 
+Seit G78 ergaenzt das bestehende UI-Editor-Panel zusaetzlich einen kleinen
+Hinweis:
+
+```text
+PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
+```
+
 ## Nicht aktivierte Funktionen
 
 - keine echte Surface-Umschaltung
@@ -92,3 +99,6 @@ weiterhin `restarbeiten.ui.main` zeigt.
 
 Die offene Einordnung dieses SurfaceInfo-Verhaltens ist zusaetzlich in
 `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md` beschrieben.
+Der sichtbare Hinweisstand ist zusaetzlich in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_HINWEIS_REFERENZSTAND.md`
+festgehalten.

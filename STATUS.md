@@ -17,6 +17,21 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Read-only Hinweis fuer PDF Plan Seite 1 sichtbar ergaenzt:
+  - G78 ergaenzt im bestehenden UI-Editor-Panel einen kleinen Hinweis fuer
+    `pdf.plan.page.1`.
+  - Sichtbarer Hinweistext:
+    `PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.`
+  - Die Surface-Auswahl zeigt weiterhin `Restarbeiten - PDF Plan Seite 1`.
+  - Die SurfaceInfo zeigt weiterhin `restarbeiten.ui.main` /
+    `ui-screen` / Elementanzahl.
+  - `plan.canvas.default`, unbekannte SurfaceIds, `*` und leere IDs bleiben
+    blockiert.
+  - Keine echte Surface-Umschaltung, kein Drag, kein Resize und keine
+    Persistenz.
+  - G78 aendert nur den sichtbaren Hinweis im Panel, die zugehoerigen
+    Guardrail-Tests und die Referenzdoku.
+
 - SurfaceInfo-Verhalten nach PDF Plan Seite 1 read-only Freigabe als offene
   Entscheidung dokumentiert:
   - G77 legt `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md` als

@@ -49,6 +49,10 @@ const PDF_PAGE_SICHTPRUEFUNG_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md"
 );
+const PDF_PAGE_HINT_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_HINWEIS_REFERENZSTAND.md"
+);
 const SURFACE_INFO_ENTSCHEIDUNG_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md"
@@ -327,6 +331,9 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-editor-surface-selection=\"true\"]") {
     return node.getAttribute("data-ui-editor-surface-selection") === "true";
   }
+  if (raw === "[data-ui-editor-surface-readonly-hint=\"true\"]") {
+    return node.getAttribute("data-ui-editor-surface-readonly-hint") === "true";
+  }
   if (raw === "[data-ui-editor-id]") {
     return Boolean(node.getAttribute("data-ui-editor-id"));
   }
@@ -551,6 +558,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(typeof mod.buildReadonlySurfaceSwitchResultForLauncher, "function");
     assert.equal(typeof mod.buildReadonlySurfaceSelectionStateForLauncher, "function");
     assert.equal(typeof mod.buildReadonlySurfaceSelectionForLauncher, "function");
+    assert.equal(typeof mod.buildReadonlyPdfPlanPage1HintForLauncher, "function");
+    assert.equal(
+      mod.READONLY_PDF_PLAN_PAGE_1_HINT_TEXT,
+      "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz."
+    );
 
     const restarbeitenResult = mod.buildReadonlySurfaceModelForLauncher("restarbeiten.ui.main", {
       hostAdapter: {
@@ -694,6 +706,13 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(selectionModel.surfaces[0].readonly, true);
     assert.equal(selectionModel.surfaces[1].label, "PDF Plan Seite 1");
     assert.equal(selectionModel.surfaces[1].readonly, true);
+    assert.deepEqual(mod.buildReadonlyPdfPlanPage1HintForLauncher({
+      selectedSurfaceId: "pdf.plan.page.1",
+    }), {
+      surfaceId: "pdf.plan.page.1",
+      text: "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
+      readonly: true,
+    });
 
     for (const blockedSurfaceId of ["plan.canvas.default", "unknown.surface", "*", ""]) {
       const selectionState = mod.buildReadonlySurfaceSelectionStateForLauncher({
@@ -726,7 +745,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     }
   });
 
-  await run("BBM UI-Editor-Runtime: zeigt nur kompakte read-only Surface-Auswahl und SurfaceInfo fuer Pilot", async () => {
+  await run("BBM UI-Editor-Runtime: zeigt kompakte read-only Surface-Auswahl, Hinweis und unveraenderte SurfaceInfo", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
     const win = {
@@ -749,6 +768,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
     const renderedText = getRenderedText(doc.body);
     const surfaceSelection = doc.querySelector('[data-ui-editor-surface-selection="true"]');
+    const readonlyHint = doc.querySelector('[data-ui-editor-surface-readonly-hint="true"]');
     const surfaceInfo = doc.querySelector('[data-ui-editor-surface-info="true"]');
     assert.equal(source.includes('from "./surfaceAdapters/surfaceAdapterCatalog.js"'), true);
     assert.equal(source.includes('from "./surfaceAdapters/surfaceSelectionModel.js"'), true);
@@ -772,10 +792,19 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-count"), "2");
     assert.equal(renderedText.includes("Restarbeiten"), true);
     assert.equal(renderedText.includes("PDF Plan Seite 1"), true);
+    assert.equal(Boolean(readonlyHint), true);
+    assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
+    assert.equal(
+      getRenderedText(readonlyHint),
+      "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz."
+    );
     assert.equal(renderedText.includes("plan.canvas.default"), false);
     assert.equal(Boolean(surfaceInfo), true);
     assert.equal(getRenderedText(surfaceInfo).includes("restarbeiten.ui.main"), true);
     assert.equal(source.includes('const READONLY_SURFACE_INFO_SURFACE_ID = "restarbeiten.ui.main";'), true);
+    assert.equal(source.includes('const READONLY_PDF_PLAN_PAGE_1_SURFACE_ID = "pdf.plan.page.1";'), true);
+    assert.equal(source.includes("READONLY_PDF_PLAN_PAGE_1_HINT_TEXT"), true);
+    assert.equal(source.includes("data-ui-editor-surface-readonly-hint"), true);
   });
 
   await run("BBM UI-Editor-Runtime: Hidden-Elements-Button-ViewModel bleibt kompakt und neutral", async () => {
@@ -3096,6 +3125,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     for (const required of [
       "Restarbeiten - PDF Plan Seite 1",
       "SurfaceInfo zeigt weiterhin den Hoststand `restarbeiten.ui.main`",
+      "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
       "plan.canvas.default",
       "unbekannte SurfaceIds",
       "keine Bearbeitung moeglich",
@@ -3108,6 +3138,24 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     }
   });
 
+  await run("BBM UI-Editor-Runtime: PDF-Plan-Hinweis-Referenzdokument bleibt vorhanden", async () => {
+    assert.equal(fs.existsSync(PDF_PAGE_HINT_REFERENCE_DOC_PATH), true, "PDF-Plan-Hinweis-Referenzdokument fehlt.");
+    const docSource = fs.readFileSync(PDF_PAGE_HINT_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
+      "SurfaceInfo bleibt Hoststand",
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "kein Resize",
+      "keine Persistenz",
+      "Electron-Sichtpruefung",
+    ]) {
+      assert.equal(docSource.includes(required), true, `PDF-Plan-Hinweis-Referenzdokument enthaelt ${required} nicht.`);
+    }
+  });
+
   await run("BBM UI-Editor-Runtime: SurfaceInfo-Entscheidungsdokument bleibt vorhanden", async () => {
     assert.equal(fs.existsSync(SURFACE_INFO_ENTSCHEIDUNG_DOC_PATH), true, "SurfaceInfo-Entscheidungsdokument fehlt.");
     const docSource = fs.readFileSync(SURFACE_INFO_ENTSCHEIDUNG_DOC_PATH, "utf8");
@@ -3117,6 +3165,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "pdf.plan.page.1",
       "SurfaceInfo",
       "Restarbeiten - PDF Plan Seite 1",
+      "Read-only Hinweis",
       "keine echte Surface-Umschaltung",
       "kein Drag",
       "keine Persistenz",

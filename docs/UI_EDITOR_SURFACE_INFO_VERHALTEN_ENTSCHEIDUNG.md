@@ -82,6 +82,16 @@ Eine Aenderung an SurfaceInfo erst in einem eigenen spaeteren Paket umsetzen,
 mit Electron-Sichtpruefung.
 ```
 
+## Status nach G78
+
+- Im bestehenden UI-Editor-Panel gibt es jetzt einen kleinen read-only Hinweis:
+  `PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.`
+- Dieser Read-only Hinweis ergaenzt die sichtbare Einordnung, ohne die
+  SurfaceInfo umzubauen.
+- SurfaceInfo bleibt weiterhin `restarbeiten.ui.main`.
+- Die Empfehlung aus G77 bleibt damit unveraendert: kein stiller Umbau der
+  SurfaceInfo, sondern klare Trennung zwischen Hinweis und Hoststand.
+
 ## Stop-/Go-Kriterien
 
 ### Go

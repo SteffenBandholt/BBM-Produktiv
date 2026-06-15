@@ -29,6 +29,7 @@ SurfaceInfo weiterhin den Hoststand `restarbeiten.ui.main` /
 
 - das bestehende Editorpanel bleibt kompakt
 - die read-only Surface-Auswahl ist sichtbar
+- ein kleiner read-only Hinweis fuer `pdf.plan.page.1` ist sichtbar
 - eine zusaetzliche PDF-/Plan-Bearbeitungsoberflaeche erscheint nicht
 - es gibt keine neue Listen-, Dropdown- oder Bearbeitungs-UI
 
@@ -50,6 +51,19 @@ SurfaceInfo zeigt weiterhin den Hoststand `restarbeiten.ui.main`.
 - das Verhalten wurde in G76 nur dokumentiert, nicht geaendert
 - falls spaeter fachlich eine SurfaceInfo fuer `pdf.plan.page.1` noetig wird,
   ist das ein eigenes Folgepaket
+
+## Read-only Hinweis
+
+Direkt sichtbar ist zusaetzlich:
+
+```text
+PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
+```
+
+- der Hinweis bleibt klein und rein informativ
+- er enthaelt keine Buttons
+- er loest keine Umschaltung aus
+- er loest keine Speicherung aus
 
 ## Weiterhin blockierte SurfaceIds
 
@@ -96,6 +110,7 @@ Direkt sichtbar geprueft:
 
 - BBM startet sichtbar ohne UI-Fehlermeldung
 - der UI-Editor-Launcher ist sichtbar
+- der neue read-only Hinweis fuer `pdf.plan.page.1` ist sichtbar
 - kein zusaetzlicher Produktivdialog oder Fehlerbildschirm erscheint
 
 Der detaillierte G75-Sichtstand der read-only Surface-Auswahl und der
@@ -117,6 +132,10 @@ Guardrail-Kette abgesichert:
 - `surfaceAdapterCatalog.test.cjs`
 - `bbmUiEditorRuntimeLauncher.test.cjs`
 
+Der zusaetzliche sichtbare Hinweisstand ist in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_HINWEIS_REFERENZSTAND.md`
+als Referenz dokumentiert.
+
 ## Offene Punkte / bewusste Grenzen
 
 - Die sichtbare Freigabe betrifft weiterhin nur `pdf.plan.page.1`.
@@ -125,5 +144,8 @@ Guardrail-Kette abgesichert:
   spaetere fachliche Umdeutung ist nicht Teil von G76.
 - Die formale Entscheidungsgrundlage dazu liegt jetzt in
   `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`.
+- Der sichtbare Hinweis ist zusaetzlich in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_HINWEIS_REFERENZSTAND.md`
+  referenziert.
 - Drag, Resize, Persistenz und echte Surface-Umschaltung bleiben getrennte
   Folgepakete.

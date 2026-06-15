@@ -142,6 +142,12 @@ dokumentiert. Empfehlung fuer diese Phase bleibt, die SurfaceInfo nicht
 umzubauen und eine spaetere Aenderung nur in einem eigenen UI-/Freigabepaket
 mit Sichtpruefung zu behandeln.
 
+**Status nach G78:** Das bestehende UI-Editor-Panel zeigt jetzt zusaetzlich
+den Hinweis `PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung,
+kein Drag, keine Persistenz.`. SurfaceInfo bleibt bewusst auf
+`restarbeiten.ui.main`; der Hinweis ersetzt keine Umschaltung und keine
+zweite SurfaceInfo.
+
 ## Entscheidung 024
 **Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
 

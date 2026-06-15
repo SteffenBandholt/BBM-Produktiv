@@ -141,3 +141,11 @@ Die Entscheidung ueber ein spaeter anderes SurfaceInfo-Verhalten bleibt offen
 und ist in `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`
 dokumentiert. Empfohlen bleibt vorerst Variante A: aktuelles Verhalten
 beibehalten.
+
+## Status nach G78
+
+Ein kleiner sichtbarer read-only Hinweis fuer `pdf.plan.page.1` ist jetzt im
+bestehenden UI-Editor-Panel ergaenzt. Damit ist die sichtbare PDF-Freigabe
+klarer benannt, ohne die SurfaceInfo umzubauen. SurfaceInfo bleibt
+`restarbeiten.ui.main`; echte Umschaltung, Drag, Resize und Persistenz bleiben
+weiterhin getrennte Folgepakete.

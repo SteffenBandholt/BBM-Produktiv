@@ -4,8 +4,9 @@
 
 Der read-only Surface-Gesamtstand ist technisch konsistent und als
 Integrationsbasis vor einem spaeteren Produktivschritt freigehalten. Sichtbar
-bleibt nur `restarbeiten.ui.main`; seit G75 darf `pdf.plan.page.1` read-only
-sichtbar erscheinen. Die Kette aus
+bleiben `restarbeiten.ui.main` und `pdf.plan.page.1`; SurfaceInfo bleibt dabei
+auf `restarbeiten.ui.main`, und der zusaetzliche PDF-Hinweis bleibt rein
+informativ. Die Kette aus
 SurfaceRuntime-Bridge, SurfaceAdapterCatalog, SurfacePolicy,
 SurfaceSelectionModel, SurfaceSelectionState, SurfaceSwitchModel,
 SurfaceSwitchCommand und Launcher-read-only-Anbindung bleibt defensiv und
@@ -43,6 +44,7 @@ blockiert:
 ## Sichtbare UI-Grenze
 
 - sichtbar bleiben `Restarbeiten` und `PDF Plan Seite 1`
+- ein kleiner read-only Hinweis fuer `pdf.plan.page.1` ist sichtbar
 - SurfaceInfo bleibt `restarbeiten.ui.main` / `ui-screen` / Elementanzahl
 - keine Surface-Liste
 - kein Dropdown
@@ -53,6 +55,9 @@ Der sichtbare G75-Stand ist zusaetzlich in
 `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` dokumentiert.
 Die offene Einordnung der SurfaceInfo dazu liegt in
 `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`.
+Der sichtbare Hinweisstand ist zusaetzlich in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_HINWEIS_REFERENZSTAND.md`
+dokumentiert.
 
 ## Sicherheitsgrenzen
 

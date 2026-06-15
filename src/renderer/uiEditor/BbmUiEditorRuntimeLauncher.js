@@ -47,6 +47,8 @@ const PREVIEW_PANEL_DEFAULT_RIGHT = "24px";
 const PREVIEW_PANEL_DEFAULT_TOP = "132px";
 const PREVIEW_PANEL_VIEWPORT_MARGIN = 16;
 const READONLY_SURFACE_INFO_SURFACE_ID = "restarbeiten.ui.main";
+const READONLY_PDF_PLAN_PAGE_1_SURFACE_ID = "pdf.plan.page.1";
+const READONLY_PDF_PLAN_PAGE_1_HINT_TEXT = "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.";
 
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
@@ -1369,6 +1371,7 @@ function renderPreviewPanel(doc, state = {}) {
   panel.appendChild(details);
 
   appendReadonlySurfaceSelection(doc, panel, state);
+  appendReadonlyPdfPlanPage1Hint(doc, panel, state);
   appendReadonlyPilotInfo(doc, panel, state);
 
   const hiddenElementsButtonViewModel = buildBbmHiddenElementsButtonViewModel(state);
@@ -1798,6 +1801,20 @@ function buildReadonlySurfaceSelectionForLauncher(input = {}) {
   };
 }
 
+function buildReadonlyPdfPlanPage1HintForLauncher(input = {}) {
+  const selectionModel = buildReadonlySurfaceSelectionForLauncher(input);
+  const pdfSurface = Array.isArray(selectionModel?.surfaces)
+    ? selectionModel.surfaces.find((surface) => surface?.surfaceId === READONLY_PDF_PLAN_PAGE_1_SURFACE_ID)
+    : null;
+  if (!pdfSurface || pdfSurface.readonly !== true) return null;
+
+  return {
+    surfaceId: READONLY_PDF_PLAN_PAGE_1_SURFACE_ID,
+    text: READONLY_PDF_PLAN_PAGE_1_HINT_TEXT,
+    readonly: true,
+  };
+}
+
 function appendReadonlySurfaceSelection(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
   const selectionModel = buildReadonlySurfaceSelectionForLauncher({
@@ -1829,6 +1846,31 @@ function appendReadonlySurfaceSelection(doc, panel, state = {}) {
   ].join("\n");
   panel.appendChild(selection);
   return selection;
+}
+
+function appendReadonlyPdfPlanPage1Hint(doc, panel, state = {}) {
+  if (!doc?.createElement || !panel?.appendChild) return null;
+  const hint = buildReadonlyPdfPlanPage1HintForLauncher({
+    selectedSurfaceId: state?.readonlySurfaceSelectionRequestedSurfaceId || "",
+  });
+  if (!hint) return null;
+
+  const hintNode = doc.createElement("div");
+  hintNode.className = "ui-editor-preview-surface-readonly-hint";
+  hintNode.setAttribute("data-ui-editor-surface-readonly-hint", "true");
+  hintNode.setAttribute("data-ui-editor-surface-id", hint.surfaceId);
+  hintNode.setAttribute("data-ui-editor-surface-readonly", "true");
+  hintNode.style.marginTop = "8px";
+  hintNode.style.padding = "6px 8px";
+  hintNode.style.border = "1px solid #cbd5e1";
+  hintNode.style.borderRadius = "6px";
+  hintNode.style.background = "#fff7ed";
+  hintNode.style.color = "#9a3412";
+  hintNode.style.fontSize = "11px";
+  hintNode.style.lineHeight = "1.35";
+  hintNode.textContent = hint.text;
+  panel.appendChild(hintNode);
+  return hintNode;
 }
 
 function appendReadonlyPilotInfo(doc, panel, state = {}) {
@@ -1931,10 +1973,12 @@ export {
   buildReadonlySurfaceSwitchResultForLauncher,
   buildReadonlySurfaceSelectionStateForLauncher,
   buildReadonlySurfaceSelectionForLauncher,
+  buildReadonlyPdfPlanPage1HintForLauncher,
   calculatePreviewPanelDragPositionWithRuntime,
   resolvePreviewTargetElement,
   resetAllPreviewChanges,
   resetSelectedPreviewChange,
   renderPreviewPanel,
   renderLauncherButton,
+  READONLY_PDF_PLAN_PAGE_1_HINT_TEXT,
 };

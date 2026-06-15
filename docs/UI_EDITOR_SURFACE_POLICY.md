@@ -10,7 +10,7 @@ read-only SurfaceInfo im Editorpanel sichtbar. Seit G54 ist dieser Stand in
 `docs/UI_EDITOR_SURFACE_INFO_READONLY_REFERENZSTAND.md` als Referenz
 abgeschlossen.
 Seit G56 nutzt das Editorpanel das daraus abgeleitete SurfaceSelection-Modell
-sichtbar, aber nur read-only fuer `restarbeiten.ui.main`.
+sichtbar, aber nur read-only fuer freigegebene SurfaceIds.
 Seit G57 ist diese sichtbare read-only Surface-Auswahl als Referenzstand in
 `docs/UI_EDITOR_SURFACE_SELECTION_READONLY_REFERENZSTAND.md` dokumentiert.
 Seit G58 ist ein interner read-only SurfaceSelection-State vorbereitet. Er
@@ -103,7 +103,8 @@ Der Katalog bleibt dadurch an eine explizite Allowlist gebunden. Eine bekannte
 SurfaceId ist nur lesbar, wenn die Policy `readable: true` meldet.
 
 Sichtbare Editorpanel-Info ist zusaetzlich an `visibleInEditor: true`
-gebunden. Aktuell gilt das nur fuer `restarbeiten.ui.main`.
+gebunden. Aktuell gilt das fuer `restarbeiten.ui.main` und
+`pdf.plan.page.1`.
 
 Referenzierter Editorpanel-Datenfluss seit G54:
 
@@ -129,8 +130,9 @@ buildReadonlySurfaceSelectionModel(...)
 ```
 
 Auch dieses Modell ist an `readable === true` und `visibleInEditor === true`
-gebunden. Aktuell ist dadurch nur `restarbeiten.ui.main` enthalten; PDF/Plan
-und unbekannte SurfaceIds bleiben ausgeschlossen.
+gebunden. Aktuell sind dadurch `restarbeiten.ui.main` und
+`pdf.plan.page.1` enthalten; `plan.canvas.default` sowie unbekannte
+SurfaceIds bleiben ausgeschlossen.
 
 Sichtbare Surface-Auswahl seit G56:
 
@@ -140,7 +142,7 @@ Editorpanel im BBM-Launcher
 -> buildReadonlySurfaceSelectionState(...)
 -> buildReadonlySurfaceSelectionModel(...)
 -> SurfacePolicy
--> kompakte read-only Anzeige fuer restarbeiten.ui.main
+-> kompakte read-only Anzeige fuer Restarbeiten und PDF Plan Seite 1
 ```
 
 Read-only SurfaceSelection-State im Launcher seit G59:
@@ -200,7 +202,7 @@ BBM-Launcher
 - `canDrag: false` fuer alle bekannten SurfaceIds.
 - `canResize: false` fuer alle bekannten SurfaceIds.
 - `canPersist: false` fuer alle bekannten SurfaceIds.
-- Sichtbare Surface-Auswahl nur read-only fuer `restarbeiten.ui.main`.
+- Sichtbare Surface-Auswahl nur read-only fuer freigegebene SurfaceIds.
 - Keine Surface-Umschaltung.
 - SurfaceSelection-State nur intern read-only angebunden.
 - Surface-Umschaltungsmodell nur intern read-only vorbereitet.
@@ -266,3 +268,17 @@ Die fachlich/technische Einordnung dieses SurfaceInfo-Verhaltens ist in
 `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md` als offene
 Entscheidungsgrundlage dokumentiert. Empfehlung: vorerst keine Aenderung an
 der SurfaceInfo und kein stiller Uebergang in echte Umschaltung.
+
+## Status nach G78
+
+Das bestehende UI-Editor-Panel zeigt jetzt zusaetzlich einen kleinen
+read-only Hinweis fuer `pdf.plan.page.1`:
+
+```text
+PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
+```
+
+Die SurfacePolicy bleibt unveraendert. SurfaceInfo bleibt
+`restarbeiten.ui.main`, `plan.canvas.default` bleibt blockiert, und es gibt
+weiterhin keine echte Umschaltung, kein Drag, kein Resize und keine
+Persistenz.

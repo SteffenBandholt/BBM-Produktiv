@@ -8,7 +8,9 @@ abgeschlossen. Im BBM-Launcher bleiben `restarbeiten.ui.main` und
 `restarbeiten.ui.main`. Die Kette aus SurfaceAdapterCatalog, SurfacePolicy,
 SurfaceSelectionModel, SurfaceSelectionState, SurfaceSwitchModel und
 SurfaceSwitchCommand arbeitet defensiv read-only. Es gibt keine echte
-Surface-Umschaltung und keine sichtbare UI-Änderung.
+Surface-Umschaltung; sichtbare UI-Ergaenzungen bleiben auf die kompakte
+Surface-Auswahl, den kleinen Read-only Hinweis und die bestehende SurfaceInfo
+begrenzt.
 
 ## Aktueller Gesamtstand
 
@@ -42,6 +44,9 @@ Surface-Umschaltung und keine sichtbare UI-Änderung.
 - G77 dokumentiert diese SurfaceInfo-Grenze als offene Entscheidung in
   `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`; empfohlen bleibt,
   das Verhalten vorerst nicht umzubauen.
+- G78 ergaenzt dazu einen kleinen sichtbaren read-only Hinweis im bestehenden
+  Panel; die SurfaceInfo bleibt trotzdem unveraendert auf
+  `restarbeiten.ui.main`.
 - Die SurfaceInfo im Editorpanel bleibt im Default-Fall
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.
@@ -72,6 +77,7 @@ BBM-Launcher
 -> SurfaceRuntime-Validierung
 -> read-only SurfaceModel
 -> Surface-Auswahl Restarbeiten
+-> Read-only Hinweis fuer pdf.plan.page.1
 -> SurfaceInfo restarbeiten.ui.main
 ```
 
@@ -84,6 +90,7 @@ Umschaltung, keine Bearbeitung und keine Speicherwege.
 sichtbar:
 - Surface-Auswahl: Restarbeiten
 - Surface-Auswahl: PDF Plan Seite 1
+- Read-only Hinweis: PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
 - SurfaceInfo: restarbeiten.ui.main / ui-screen / Elementanzahl
 
 nicht sichtbar:
@@ -93,7 +100,7 @@ nicht sichtbar:
 ```
 
 Die sichtbare Grenze bleibt stabil und kompakt. Es gibt keine Surface-Liste,
-kein Dropdown und keine weiteren auswählbaren SurfaceIds.
+kein Dropdown und keine weiteren auswaehlbaren SurfaceIds.
 
 ## Erlaubte und blockierte SurfaceIds
 
@@ -113,7 +120,7 @@ blockiert:
 
 - read-only
 - keine echte Umschaltung
-- keine sichtbare UI-Aenderung
+- keine neue Bedienlogik
 - keine PDF-/Plan-Auswahl
 - keine Bearbeitung
 - kein Drag
