@@ -69,3 +69,13 @@ Geprueft wurde:
 - kein Resize
 - keine Persistenzfunktion sichtbar
 - keine UI-Fehlermeldung sichtbar
+
+## Nachtrag G79
+
+- Die getrennte manuelle Zielrouten-Abnahme liegt jetzt in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md`.
+- Ergebnis des Nachtrags:
+  `Manuelle Sichtpruefung nicht vollstaendig bestanden / nicht vollstaendig erreichbar`.
+- Dieser Hinweis-Referenzstand bleibt damit als technischer Sicht- und
+  Guardrail-Stand bestehen; die direkte Restarbeiten-Zielroute ist separat
+  dokumentiert.

@@ -17,6 +17,22 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Manuelle Zielrouten-Sichtpruefung fuer PDF Plan Seite 1 dokumentiert:
+  - G79 legt `docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md` als
+    eigene Abnahme-/Sichtpruefungsreferenz an.
+  - Geprueft am `2026-06-15` auf Branch
+    `ui-editor-kit/pdf-plan-page-1-manuelle-sichtpruefung` per `npm start`.
+  - BBM, UI-Editor-Launcher und Projekte-Ansicht waren sichtbar.
+  - Sichtbare Projektkacheln umfassten unter anderem `Nr.: 125 / test`,
+    `Nr.: 555 / schule` und `Nr.: 04-2026 / UI-Polish fuer BBM`.
+  - Die konkrete Zielroute `Restarbeiten` war in dieser Sitzung ueber die
+    sichtbaren Projektkachel-Aktionslinks nicht reproduzierbar erreichbar.
+  - Ergebnis:
+    `Manuelle Sichtpruefung nicht vollstaendig bestanden / nicht vollstaendig erreichbar`
+  - G79 aendert keine Produktivlogik, keine sichtbare UI, keine Surface-
+    Freigabe, kein Drag, kein Resize und keine Persistenz; das Paket zieht nur
+    Doku und einen Guardrail-Test nach.
+
 - Read-only Hinweis fuer PDF Plan Seite 1 sichtbar ergaenzt:
   - G78 ergaenzt im bestehenden UI-Editor-Panel einen kleinen Hinweis fuer
     `pdf.plan.page.1`.

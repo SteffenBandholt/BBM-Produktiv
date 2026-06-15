@@ -47,6 +47,10 @@ begrenzt.
 - G78 ergaenzt dazu einen kleinen sichtbaren read-only Hinweis im bestehenden
   Panel; die SurfaceInfo bleibt trotzdem unveraendert auf
   `restarbeiten.ui.main`.
+- G79 dokumentiert die getrennte manuelle Zielrouten-Sichtpruefung in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md`; BBM, Launcher
+  und Projekte-Ansicht waren sichtbar, die konkrete Restarbeiten-Zielroute war
+  in dieser Sitzung aber nicht reproduzierbar erreichbar.
 - Die SurfaceInfo im Editorpanel bleibt im Default-Fall
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.

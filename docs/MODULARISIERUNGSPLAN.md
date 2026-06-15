@@ -125,6 +125,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G76 sichert den sichtbaren G75-Stand in `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` ab; die Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`, waehrend die SurfaceInfo weiterhin `restarbeiten.ui.main` bleibt
 - G77 dokumentiert das SurfaceInfo-Verhalten nach dieser Freigabe in `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`; empfohlen bleibt, die SurfaceInfo vorerst nicht umzubauen und einen spaeteren UI-Schritt getrennt zu behandeln
 - G78 ergaenzt im bestehenden UI-Editor-Panel einen kleinen read-only Hinweis fuer `pdf.plan.page.1`; die SurfaceInfo bleibt unveraendert auf `restarbeiten.ui.main`, und es gibt weiterhin keine echte Umschaltung, kein Drag und keine Persistenz
+- G79 dokumentiert die manuelle Zielrouten-Sichtpruefung in `docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md`; BBM, Launcher und Projekte-Ansicht waren sichtbar, die konkrete Restarbeiten-Zielroute war in dieser Sitzung aber nicht reproduzierbar erreichbar und wurde deshalb ehrlich als `nicht vollstaendig bestanden / nicht vollstaendig erreichbar` festgehalten
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

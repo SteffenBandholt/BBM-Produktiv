@@ -92,6 +92,16 @@ mit Electron-Sichtpruefung.
 - Die Empfehlung aus G77 bleibt damit unveraendert: kein stiller Umbau der
   SurfaceInfo, sondern klare Trennung zwischen Hinweis und Hoststand.
 
+## Status nach G79
+
+- Die getrennte manuelle Zielrouten-Sichtpruefung ist in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md` dokumentiert.
+- Ergebnis:
+  `Manuelle Sichtpruefung nicht vollstaendig bestanden / nicht vollstaendig erreichbar`.
+- Damit bleibt die hier dokumentierte Empfehlung unveraendert:
+  SurfaceInfo nicht still umbauen, sondern den Zwischenstand und die offene
+  Restarbeiten-Zielrouten-Abnahme sauber getrennt halten.
+
 ## Stop-/Go-Kriterien
 
 ### Go

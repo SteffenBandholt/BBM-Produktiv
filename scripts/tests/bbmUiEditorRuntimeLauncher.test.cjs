@@ -53,6 +53,10 @@ const PDF_PAGE_HINT_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_HINWEIS_REFERENZSTAND.md"
 );
+const PDF_PAGE_MANUAL_SICHTPRUEFUNG_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md"
+);
 const SURFACE_INFO_ENTSCHEIDUNG_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md"
@@ -3153,6 +3157,27 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Electron-Sichtpruefung",
     ]) {
       assert.equal(docSource.includes(required), true, `PDF-Plan-Hinweis-Referenzdokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: PDF-Plan-manuelle-Sichtpruefung bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(PDF_PAGE_MANUAL_SICHTPRUEFUNG_DOC_PATH),
+      true,
+      "PDF-Plan-manuelle-Sichtpruefung fehlt."
+    );
+    const docSource = fs.readFileSync(PDF_PAGE_MANUAL_SICHTPRUEFUNG_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Restarbeiten - PDF Plan Seite 1",
+      "restarbeiten.ui.main",
+      "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
+      "plan.canvas.default",
+      "kein Drag",
+      "keine Persistenz",
+      "Manuelle Sichtpruefung nicht vollstaendig bestanden / nicht vollstaendig erreichbar",
+    ]) {
+      assert.equal(docSource.includes(required), true, `PDF-Plan-manuelle-Sichtpruefung enthaelt ${required} nicht.`);
     }
   });
 

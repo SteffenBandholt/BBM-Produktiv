@@ -138,6 +138,13 @@ als Referenz dokumentiert.
 
 ## Offene Punkte / bewusste Grenzen
 
+- Die gesonderte manuelle Zielrouten-Abnahme ist in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md` nachgezogen.
+- Ergebnis dieses G79-Nachtrags:
+  `Manuelle Sichtpruefung nicht vollstaendig bestanden / nicht vollstaendig erreichbar`.
+- Damit bleibt dieses Dokument der technische Referenz- und Guardrail-Stand;
+  die direkte Restarbeiten-Zielrouten-Bestaetigung ist separat und ehrlich
+  dokumentiert.
 - Die sichtbare Freigabe betrifft weiterhin nur `pdf.plan.page.1`.
 - `plan.canvas.default` bleibt bewusst separat blockiert.
 - Die SurfaceInfo folgt weiterhin dem Hoststand `restarbeiten.ui.main`; eine

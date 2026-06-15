@@ -148,6 +148,13 @@ kein Drag, keine Persistenz.`. SurfaceInfo bleibt bewusst auf
 `restarbeiten.ui.main`; der Hinweis ersetzt keine Umschaltung und keine
 zweite SurfaceInfo.
 
+**Status nach G79:** Die getrennte manuelle Zielrouten-Sichtpruefung ist in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md` dokumentiert.
+BBM, Launcher und Projekte-Ansicht waren sichtbar; die konkrete
+Restarbeiten-Zielroute war in dieser Sitzung aber nicht reproduzierbar
+erreichbar. Ergebnis:
+`Manuelle Sichtpruefung nicht vollstaendig bestanden / nicht vollstaendig erreichbar`.
+
 ## Entscheidung 024
 **Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
 
