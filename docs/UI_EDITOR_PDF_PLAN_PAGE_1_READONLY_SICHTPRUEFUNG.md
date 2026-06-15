@@ -123,5 +123,7 @@ Guardrail-Kette abgesichert:
 - `plan.canvas.default` bleibt bewusst separat blockiert.
 - Die SurfaceInfo folgt weiterhin dem Hoststand `restarbeiten.ui.main`; eine
   spaetere fachliche Umdeutung ist nicht Teil von G76.
+- Die formale Entscheidungsgrundlage dazu liegt jetzt in
+  `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`.
 - Drag, Resize, Persistenz und echte Surface-Umschaltung bleiben getrennte
   Folgepakete.

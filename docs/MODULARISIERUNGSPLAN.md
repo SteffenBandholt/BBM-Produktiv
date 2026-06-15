@@ -123,6 +123,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G73 bereitet mit `docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md` eine Surface-Policy-Freigabevorlage vor; die Vorlage bleibt rein dokumentarisch und gibt nichts frei
 - G75 setzt `pdf.plan.page.1` per SurfacePolicy read-only sichtbar frei; `plan.canvas.default` bleibt blockiert und Drag/Persistenz bleiben getrennt
 - G76 sichert den sichtbaren G75-Stand in `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` ab; die Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`, waehrend die SurfaceInfo weiterhin `restarbeiten.ui.main` bleibt
+- G77 dokumentiert das SurfaceInfo-Verhalten nach dieser Freigabe in `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`; empfohlen bleibt, die SurfaceInfo vorerst nicht umzubauen und einen spaeteren UI-Schritt getrennt zu behandeln
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

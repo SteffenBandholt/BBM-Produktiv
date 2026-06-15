@@ -89,3 +89,6 @@ Die zugehoerige Sichtpruefung ist mit G76 abgeschlossen und in
 Geprueft wurde, dass nur die read-only Auswahl `Restarbeiten - PDF Plan Seite 1`
 sichtbar ist, `plan.canvas.default` nicht erscheint und die SurfaceInfo
 weiterhin `restarbeiten.ui.main` zeigt.
+
+Die offene Einordnung dieses SurfaceInfo-Verhaltens ist zusaetzlich in
+`docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md` beschrieben.

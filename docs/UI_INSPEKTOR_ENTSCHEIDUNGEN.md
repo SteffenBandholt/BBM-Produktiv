@@ -136,6 +136,12 @@
 gegen Regressionen abgesichert. Surface-Auswahl zeigt
 `Restarbeiten - PDF Plan Seite 1`; SurfaceInfo bleibt `restarbeiten.ui.main`.
 
+**Status nach G77:** Das SurfaceInfo-Verhalten ist als offene
+Entscheidungsgrundlage in `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`
+dokumentiert. Empfehlung fuer diese Phase bleibt, die SurfaceInfo nicht
+umzubauen und eine spaetere Aenderung nur in einem eigenen UI-/Freigabepaket
+mit Sichtpruefung zu behandeln.
+
 ## Entscheidung 024
 **Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
 

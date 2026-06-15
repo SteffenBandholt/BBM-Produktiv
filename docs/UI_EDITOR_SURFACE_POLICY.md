@@ -259,3 +259,10 @@ Der sichtbare Referenzstand dazu ist in
 - SurfaceInfo bleibt `restarbeiten.ui.main`
 - keine Wildcard
 - kein Default-true
+
+## Status nach G77
+
+Die fachlich/technische Einordnung dieses SurfaceInfo-Verhaltens ist in
+`docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md` als offene
+Entscheidungsgrundlage dokumentiert. Empfehlung: vorerst keine Aenderung an
+der SurfaceInfo und kein stiller Uebergang in echte Umschaltung.

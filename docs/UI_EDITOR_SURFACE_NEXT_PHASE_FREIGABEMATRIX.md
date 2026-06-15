@@ -74,6 +74,8 @@ Surface-Phase.
 - Darf read-only nur eine zweite UI-Surface gezeigt werden, bevor PDF/Plan dazukommt?
 - Ist eine zweite Surface als klarer Pilot besser als ein fruehes Drag-/Resize-Thema?
 - Welche Scope-Allowlist gilt fuer spaetere Persistenzthemen?
+- Soll die SurfaceInfo kuenftig weiter den Hoststand zeigen oder spaeter auf
+  die zusaetzlich sichtbare read-only Surface reagieren?
 
 ## Technische Risiken
 
@@ -132,3 +134,10 @@ Die sichtbare Referenz ist zusaetzlich abgesichert:
 - Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`
 - SurfaceInfo bleibt `restarbeiten.ui.main`
 - `plan.canvas.default` bleibt blockiert
+
+## Status nach G77
+
+Die Entscheidung ueber ein spaeter anderes SurfaceInfo-Verhalten bleibt offen
+und ist in `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`
+dokumentiert. Empfohlen bleibt vorerst Variante A: aktuelles Verhalten
+beibehalten.

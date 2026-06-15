@@ -49,6 +49,10 @@ const PDF_PAGE_SICHTPRUEFUNG_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md"
 );
+const SURFACE_INFO_ENTSCHEIDUNG_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md"
+);
 
 function createFakeDocument() {
   const createNode = (tag, doc) => {
@@ -3101,6 +3105,24 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `PDF-Plan-Sichtpruefungsdokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: SurfaceInfo-Entscheidungsdokument bleibt vorhanden", async () => {
+    assert.equal(fs.existsSync(SURFACE_INFO_ENTSCHEIDUNG_DOC_PATH), true, "SurfaceInfo-Entscheidungsdokument fehlt.");
+    const docSource = fs.readFileSync(SURFACE_INFO_ENTSCHEIDUNG_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "SurfaceInfo",
+      "Restarbeiten - PDF Plan Seite 1",
+      "keine echte Surface-Umschaltung",
+      "kein Drag",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `SurfaceInfo-Entscheidungsdokument enthaelt ${required} nicht.`);
     }
   });
 

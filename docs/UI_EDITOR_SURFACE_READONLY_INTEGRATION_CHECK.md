@@ -51,6 +51,8 @@ blockiert:
 
 Der sichtbare G75-Stand ist zusaetzlich in
 `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` dokumentiert.
+Die offene Einordnung der SurfaceInfo dazu liegt in
+`docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`.
 
 ## Sicherheitsgrenzen
 

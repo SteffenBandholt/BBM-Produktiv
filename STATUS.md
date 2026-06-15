@@ -17,6 +17,20 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- SurfaceInfo-Verhalten nach PDF Plan Seite 1 read-only Freigabe als offene
+  Entscheidung dokumentiert:
+  - G77 legt `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md` als
+    Entscheidungsgrundlage an.
+  - Die Surface-Auswahl zeigt weiterhin `Restarbeiten - PDF Plan Seite 1`.
+  - Die SurfaceInfo zeigt weiterhin `restarbeiten.ui.main` /
+    `ui-screen` / Elementanzahl.
+  - G77 beschreibt die Varianten Beibehalten, spaeter auf Auswahl beziehen
+    oder zweigeteilt anzeigen.
+  - Empfehlung fuer diese Phase: SurfaceInfo nicht aendern, sondern den
+    Zwischenstand bewusst dokumentieren.
+  - Keine Produktivlogik, keine sichtbare UI, keine echte Umschaltung, kein
+    Drag, kein Resize und keine Persistenz.
+
 - PDF Plan Seite 1 read-only Sichtpruefung und Referenz abgesichert:
   - G76 dokumentiert den sichtbaren G75-Stand in `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md`.
   - Die sichtbare Surface-Auswahl zeigt `Restarbeiten` und `PDF Plan Seite 1`.

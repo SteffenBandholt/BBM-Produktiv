@@ -3,8 +3,9 @@
 ## Kurzfazit
 
 Der gesamte read-only Surface-Steuerungsstand ist als stabile Referenz
-abgeschlossen. Im BBM-Launcher bleibt nur `restarbeiten.ui.main` sichtbar und
-resolved. Die Kette aus SurfaceAdapterCatalog, SurfacePolicy,
+abgeschlossen. Im BBM-Launcher bleiben `restarbeiten.ui.main` und
+`pdf.plan.page.1` sichtbar; die SurfaceInfo bleibt dabei auf
+`restarbeiten.ui.main`. Die Kette aus SurfaceAdapterCatalog, SurfacePolicy,
 SurfaceSelectionModel, SurfaceSelectionState, SurfaceSwitchModel und
 SurfaceSwitchCommand arbeitet defensiv read-only. Es gibt keine echte
 Surface-Umschaltung und keine sichtbare UI-Änderung.
@@ -38,6 +39,9 @@ Surface-Umschaltung und keine sichtbare UI-Änderung.
   `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` ab; die
   Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`, waehrend die
   SurfaceInfo weiterhin `restarbeiten.ui.main` bleibt.
+- G77 dokumentiert diese SurfaceInfo-Grenze als offene Entscheidung in
+  `docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md`; empfohlen bleibt,
+  das Verhalten vorerst nicht umzubauen.
 - Die SurfaceInfo im Editorpanel bleibt im Default-Fall
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.
