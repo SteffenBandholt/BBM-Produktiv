@@ -77,6 +77,10 @@ const UI_EDITOR_FOUNDATIONS_RELEASE_DECISION_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md"
 );
+const UI_EDITOR_FOUNDATIONS_NEEDS_ANALYSIS_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_GRUNDLAGEN_BEDARFSANALYSE.md"
+);
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
@@ -3445,6 +3449,34 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `UI-Editor-Grundlagen-Freigabeentscheidung enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: G92-Bedarfsanalyse fuer fehlende Grundlagen bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_FOUNDATIONS_NEEDS_ANALYSIS_DOC_PATH),
+      true,
+      "UI-Editor-Grundlagen-Bedarfsanalyse fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_FOUNDATIONS_NEEDS_ANALYSIS_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Diese Bedarfsanalyse ersetzt keine der fehlenden Pflichtunterlagen. Sie legt keine Pflichtgrundlage an und erteilt keine Freigabe fuer G90 oder spaetere UI-/PDF-Umsetzungen.",
+      "docs/EDITOR_BAUPLAN.md",
+      "docs/UI_ELEMENT_KATALOG.md",
+      "docs/UI_BAU_UND_PRUEFREGELN.md",
+      "docs/ZIEL_APP_ANBINDUNG.md",
+      "docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md",
+      "Abgrenzung: keine Ersatzfreigabe",
+      "Abgrenzung: keine Pflichtdatei wurde angelegt",
+      "G90 bleibt",
+      "blockiert.",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `UI-Editor-Grundlagen-Bedarfsanalyse enthaelt ${required} nicht.`
       );
     }
   });

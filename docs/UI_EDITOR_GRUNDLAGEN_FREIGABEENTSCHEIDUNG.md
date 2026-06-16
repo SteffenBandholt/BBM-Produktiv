@@ -131,5 +131,6 @@ Keine Ersatzfreigabe pauschal erteilen. Zuerst entweder die fehlenden Pflichtunt
 
 ## Naechster sauberer Schritt
 
-Der Nutzer entscheidet zwischen Option A, B, C oder D. Erst danach darf ein
-neues Folgepaket geplant werden. Ohne Entscheidung bleibt G90 blockiert.
+G92 hat die reine Bedarfsanalyse der fehlenden Grundlagen vorbereitet. Der
+Nutzer entscheidet weiterhin zwischen Option A, B, C oder D. Erst danach darf
+ein neues Folgepaket geplant werden. Ohne Entscheidung bleibt G90 blockiert.

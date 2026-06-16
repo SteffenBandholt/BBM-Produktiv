@@ -438,3 +438,9 @@ UI-Editor-Grundlagen ist in
 keine Ersatzfreigabe und legt keine Pflichtunterlagen als Platzhalter an. G90
 bleibt bis zur Nutzerentscheidung blockiert; Produktivlogik, sichtbare UI,
 SurfaceInfo, Drag, Resize und Persistenz bleiben unveraendert.
+
+**Status nach G92:** Die Bedarfsanalyse fuer die fehlenden UI-Editor-
+Grundlagen ist in `docs/UI_EDITOR_GRUNDLAGEN_BEDARFSANALYSE.md` vorbereitet.
+G92 ersetzt keine Pflichtunterlage und erteilt keine Freigabe. G90 bleibt
+blockiert, bis die Grundlagen regulaer erstellt oder ein eng begrenzter
+Folgepfad ausdruecklich entschieden ist.

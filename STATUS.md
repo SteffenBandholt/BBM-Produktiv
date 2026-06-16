@@ -26,6 +26,15 @@ Sie ergÃ¤nzt:
   - Keine Produktivlogik, keine sichtbare UI, keine echte Surface-Umschaltung,
     kein Drag, kein Resize und keine Persistenz wurden geaendert.
 
+- Bedarfsanalyse fuer die fehlenden UI-Editor-Grundlagen vorbereitet:
+  - G92 dokumentiert den spaeteren Inhalt der fehlenden Pflichtunterlagen in
+    `docs/UI_EDITOR_GRUNDLAGEN_BEDARFSANALYSE.md`.
+  - Es wurde keine Pflichtdatei angelegt und keine Freigabe erteilt.
+  - G90 bleibt blockiert, bis die Grundlagen regulaer erstellt oder ein eng
+    begrenzter Folgepfad ausdruecklich entschieden ist.
+  - Keine Produktivlogik, keine sichtbare UI, keine echte Surface-Umschaltung,
+    kein Drag, kein Resize und keine Persistenz wurden geaendert.
+
 - G90 bleibt wegen fehlender UI-Editor-Grundlagen gestoppt:
   - G90a dokumentiert den Stopp in
     `docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md`.

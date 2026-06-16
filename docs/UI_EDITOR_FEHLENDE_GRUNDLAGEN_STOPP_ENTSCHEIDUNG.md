@@ -118,3 +118,12 @@ werden.
 - G91 erteilt keine Ersatzfreigabe.
 - Die fehlenden Pflichtunterlagen werden weiterhin nicht improvisiert angelegt.
 - G90 bleibt bis zu einer ausdruecklichen Nutzerentscheidung blockiert.
+
+## Nachtrag G92
+
+- Die Bedarfsanalyse ist in
+  `docs/UI_EDITOR_GRUNDLAGEN_BEDARFSANALYSE.md` vorbereitet.
+- G92 ersetzt keine Pflichtunterlage und erteilt keine Freigabe.
+- Die fehlenden Pflichtunterlagen werden weiterhin nicht angelegt.
+- G90 bleibt blockiert, bis die Grundlagen regulaer erstellt oder eine
+  ausdrueckliche Entscheidung fuer einen eng begrenzten Folgepfad vorliegt.
