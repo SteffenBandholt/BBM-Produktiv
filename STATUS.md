@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Surface-Auswahl keine aktive Surface-Umschaltung technisch abgesichert:
+  - G89 dokumentiert `docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md`.
+  - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+  - `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+  - SurfaceInfo bleibt bewusst `restarbeiten.ui.main`.
+  - Keine aktive Umschaltung, kein Drag, kein Resize, keine Persistenz und keine Schreibwege.
+
 - Surface-Auswahl-Kontext als Referenzstand abgesichert:
   - G88 dokumentiert `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md`.
   - Die Surface-Auswahl bleibt eine read-only Sichtbarkeits-/Kontextanzeige.

@@ -170,3 +170,15 @@ Keine Drag-/Resize-/Persistenz-Arbeiten beginnen.
 
 Danach kann ein separates technisches Umschaltpaket vorbereitet werden, das
 die fachlichen Entscheidungen nur umsetzt, aber nicht erweitert.
+
+## Nachtrag G89
+
+- Die technische Guardrail-Absicherung ist jetzt zusaetzlich in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md`
+  dokumentiert.
+- Die Auswahl bleibt read-only Sichtbarkeits-/Kontextanzeige; sie ist keine
+  aktive Surface-Umschaltung und keine Grundlage fuer Schreibwege.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface, waehrend
+  `pdf.plan.page.1` und `plan.canvas.default` read-only sichtbar bleiben.
+- SurfaceInfo bleibt bewusst `restarbeiten.ui.main`; Drag, Resize,
+  Persistenz, Wildcard und Default-true bleiben blockiert.

@@ -45,6 +45,9 @@ Der G68-Referenzstand dazu ist in
 `docs/UI_EDITOR_SURFACE_SWITCH_COMMAND_LAUNCHER_REFERENZSTAND.md` dokumentiert.
 Der G69-Gesamt-Referenzstand dazu ist in
 `docs/UI_EDITOR_SURFACE_READONLY_GESAMT_REFERENZSTAND.md` dokumentiert.
+Seit G89 ist die technische Guardrail-Absicherung fuer die Surface-Auswahl als
+keine aktive Umschaltung dokumentiert:
+`docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md`.
 
 ## Aktuelle Policy
 
@@ -212,6 +215,7 @@ BBM-Launcher
 - SurfaceSelection ist nur als read-only Anzeige angebunden.
 - Nur kompakte read-only SurfaceInfo fuer `restarbeiten.ui.main`.
 - Keine produktive Umschalt- oder Bearbeitungsnutzung im Launcher.
+- Surface-Auswahl ist keine aktive Surface-Umschaltung.
 - Keine PDF-/Plan-Bearbeitung.
 - Keine Canvas-Bearbeitung.
 - Kein Drag auf PDF, Plan oder UI-Surfaces.

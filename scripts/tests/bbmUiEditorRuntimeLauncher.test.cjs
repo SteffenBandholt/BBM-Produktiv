@@ -65,6 +65,10 @@ const SURFACE_AUSWAHL_KONTEXT_REFERENZ_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md"
 );
+const SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md"
+);
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
@@ -3332,6 +3336,50 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         true,
         `Surface-Auswahl-Kontext-Referenzdokument enthaelt ${required} nicht.`
       );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Surface-Auswahl bleibt keine aktive Surface-Umschaltung", async () => {
+    assert.equal(
+      fs.existsSync(SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH),
+      true,
+      "Surface-Auswahl-Guardrail-Dokument fehlt."
+    );
+    const docSource = fs.readFileSync(SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "SurfaceInfo bleibt bewusst `restarbeiten.ui.main`",
+      "keine aktive Surface-Umschaltung",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "keine Schreibwege",
+      "keine Wildcard",
+      "kein Default-true",
+      "leere IDs",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Surface-Auswahl-Guardrail-Dokument enthaelt ${required} nicht.`);
+    }
+
+    const runtimeSource = fs.readFileSync(RUNTIME_PATH, "utf8");
+    assert.equal(
+      runtimeSource.includes('const READONLY_SURFACE_INFO_SURFACE_ID = "restarbeiten.ui.main";'),
+      true
+    );
+    for (const forbidden of [
+      "activeSurfaceId",
+      "setActiveSurface",
+      "activateSurface",
+      "selectSurface",
+      "localStorage",
+      "writeFile",
+      "default: true",
+      "wildcard",
+    ]) {
+      assert.equal(runtimeSource.includes(forbidden), false, `Runtime enthaelt gesperrtes Fragment: ${forbidden}`);
     }
   });
 

@@ -125,6 +125,22 @@ async function runSurfaceSelectionStateTests(run) {
     assert.equal(launcherSource.includes("data-ui-editor-surface-list"), false);
   });
 
+  await run("SurfaceSelectionState: bleibt Hoststand und kein aktiver Umschaltpfad", () => {
+    const stateSource = fs.readFileSync(STATE_PATH, "utf8");
+    for (const forbidden of [
+      "activeSurfaceId",
+      "setActiveSurface",
+      "activateSurface",
+      "selectSurface",
+      "localStorage",
+      "writeFile",
+      "default: true",
+      "wildcard",
+    ]) {
+      assert.equal(stateSource.includes(forbidden), false, `SurfaceSelectionState enthaelt gesperrtes Fragment: ${forbidden}`);
+    }
+  });
+
   await run("SurfaceSelectionState: Dokumentation enthaelt Kernbegriffe", () => {
     assert.equal(fs.existsSync(DOC_PATH), true, "SurfaceSelection-State-Dokument fehlt.");
     const docSource = fs.readFileSync(DOC_PATH, "utf8");

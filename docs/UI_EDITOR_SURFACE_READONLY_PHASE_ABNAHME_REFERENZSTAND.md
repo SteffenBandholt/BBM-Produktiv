@@ -115,6 +115,17 @@ Wenn spaetere Anpassungen benoetigt werden, sollen sie als eigene, klein
 geschnittene Pakete folgen: weitere Surface-Freigaben, echte Umschaltung,
 Drag/Resize und Persistenz getrennt voneinander und erst nach neuer Freigabe.
 
+## Nachtrag G89
+
+- Die technische Guardrail-Absicherung ist jetzt zusaetzlich in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md`
+  dokumentiert.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar,
+  aber keine aktive Bearbeitungs-Surface.
+- SurfaceInfo bleibt bewusst `restarbeiten.ui.main`; keine aktive
+  Umschaltung, keine Persistenz und keine Schreibwege.
+
 ## Nachtrag G87
 
 - Die Surface-Auswahl ist jetzt fachlich als read-only Sichtbarkeits-/Kontextanzeige

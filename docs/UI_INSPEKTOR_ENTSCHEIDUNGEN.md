@@ -416,3 +416,11 @@ haelt die Einordnung als read-only Sichtbarkeits-/Kontextanzeige fest und
 schliesst Fehlinterpretationen aus. G88 aktiviert keine Produktivlogik, keine
 sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und
 keine Persistenz.
+
+**Status nach G89:** Die technische Guardrail-Absicherung der Surface-Auswahl
+ist jetzt in `docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md`
+dokumentiert. `restarbeiten.ui.main` bleibt Hoststand, `pdf.plan.page.1` und
+`plan.canvas.default` bleiben read-only sichtbar, und SurfaceInfo bleibt
+bewusst auf `restarbeiten.ui.main`. G89 aktiviert keine Produktivlogik, keine
+sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und
+keine Persistenz.

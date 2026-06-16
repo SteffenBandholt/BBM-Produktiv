@@ -144,6 +144,22 @@ async function runSurfaceSwitchModelTests(run) {
     }
   });
 
+  await run("SurfaceSwitchModel: bleibt keine aktive Surface und kein Schreibpfad", () => {
+    const source = fs.readFileSync(SWITCH_MODEL_PATH, "utf8");
+    for (const forbidden of [
+      "activeSurfaceId",
+      "setActiveSurface",
+      "activateSurface",
+      "selectSurface",
+      "localStorage",
+      "writeFile",
+      "default: true",
+      "wildcard",
+    ]) {
+      assert.equal(source.includes(forbidden), false, `SurfaceSwitchModel enthaelt gesperrtes Fragment: ${forbidden}`);
+    }
+  });
+
   await run("SurfaceSwitchModel: Dokumentation enthaelt Kernbegriffe", () => {
     assert.equal(fs.existsSync(DOC_PATH), true, "SurfaceSwitch-Dokument fehlt.");
     const docSource = fs.readFileSync(DOC_PATH, "utf8");

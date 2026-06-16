@@ -118,3 +118,13 @@ eigenen Paket mit separater Freigabe vorbereitet werden.
   `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md`
   abgesichert.
 - Die Surface-Auswahl bleibt weiterhin keine aktive Surface.
+
+## Nachtrag G89
+
+- Die technische Guardrail-Absicherung ist jetzt zusaetzlich in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md`
+  dokumentiert.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface, waehrend
+  `pdf.plan.page.1` und `plan.canvas.default` read-only sichtbar bleiben.
+- SurfaceInfo bleibt bewusst `restarbeiten.ui.main`; aktive Umschaltung,
+  Drag, Resize, Persistenz und Schreibwege bleiben blockiert.

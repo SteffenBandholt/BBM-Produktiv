@@ -126,6 +126,22 @@ async function runSurfaceSwitchCommandTests(run) {
     }
   });
 
+  await run("SurfaceSwitchCommand: bleibt kein aktiver Umschaltpfad", () => {
+    const source = fs.readFileSync(COMMAND_PATH, "utf8");
+    for (const forbidden of [
+      "activeSurfaceId",
+      "setActiveSurface",
+      "activateSurface",
+      "selectSurface",
+      "localStorage",
+      "writeFile",
+      "default: true",
+      "wildcard",
+    ]) {
+      assert.equal(source.includes(forbidden), false, `SurfaceSwitchCommand enthaelt gesperrtes Fragment: ${forbidden}`);
+    }
+  });
+
   await run("SurfaceSwitchCommand: Dokumentation enthaelt Kernbegriffe", () => {
     assert.equal(fs.existsSync(DOC_PATH), true, "SurfaceSwitch-Command-Dokument fehlt.");
     const docSource = fs.readFileSync(DOC_PATH, "utf8");

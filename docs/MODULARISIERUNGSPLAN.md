@@ -133,6 +133,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G84 buendelt die neue Zwei-Surface-Sichtpruefung in `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`; `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface, und SurfaceInfo bleibt bewusst dort
 - G85 schliesst die gesamte read-only Surface-Phase in `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md` ab; `restarbeiten.ui.main` bleibt Host-/Bestandssurface, `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar, und weitere Freigaben bleiben getrennte Folgepakete
 - G86 bereitet mit `docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md` die Diskussion einer spaeteren echten Surface-Umschaltung vor; aktive Surface, SurfaceInfo-Verhalten, Risiken und harte Grenzen sind beschrieben, aber es gibt keine Umsetzung und keine neue Freigabe
+- G89 sichert die Surface-Auswahl technisch als keine aktive Surface-Umschaltung ab; `docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md` dokumentiert Hoststand, read-only Sichtbarkeit, blockierte IDs und fehlende Schreibwege
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

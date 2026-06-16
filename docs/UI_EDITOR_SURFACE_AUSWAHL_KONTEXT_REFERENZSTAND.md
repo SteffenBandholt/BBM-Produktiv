@@ -97,3 +97,14 @@ konsequenter Read-only-Hinweis auf die bereits freigegebenen Flächen.
 Die Surface-Auswahl bleibt vorerst als read-only Kontextanzeige bestehen.
 Eine aktive Surface darf erst in einem eigenen spaeteren Paket vorbereitet
 werden, getrennt von Drag, Resize und Persistenz.
+
+## Nachtrag G89
+
+- Die technische Guardrail-Absicherung ist jetzt zusaetzlich in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md`
+  dokumentiert.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar,
+  aber keine aktive Bearbeitungs-Surface.
+- SurfaceInfo bleibt bewusst `restarbeiten.ui.main`; keine aktive
+  Umschaltung, keine Persistenz und keine Schreibwege.

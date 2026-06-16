@@ -1076,3 +1076,30 @@ Hinweis:
   - `npm test` (in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert)
 - Nächster Schritt:
   - Lokale Sichtprüfung per `npm start`.
+### K19.109 - Surface-Auswahl technisch gegen aktive Umschaltung absichern
+- Status: erledigt
+- Beschreibung:
+  - Die Surface-Auswahl bleibt fachlich und technisch eine read-only Sichtbarkeits-/Kontextanzeige.
+  - `restarbeiten.ui.main` bleibt Host-/Bestandssurface; `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+  - SurfaceInfo bleibt bewusst `restarbeiten.ui.main`.
+  - Unbekannte SurfaceIds, `*` und leere IDs bleiben blockiert.
+  - Drag, Resize, Persistenz und Schreibwege bleiben weiterhin ausgeschlossen.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md`
+  - `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md`
+  - `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md`
+  - `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_SURFACE_POLICY.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+  - `STATUS.md`
+- Tests:
+  - `node scripts/tests/surfaceSelectionModel.test.cjs`
+  - `node scripts/tests/surfaceSelectionState.test.cjs`
+  - `node scripts/tests/surfaceSwitchModel.test.cjs`
+  - `node scripts/tests/surfaceSwitchCommand.test.cjs`
+  - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `npm test`
+- NÃ¤chster Schritt:
+  - Keine Produktivlogik-Aenderung; naechste Schritte bleiben in der fachlichen Oberplanung getrennt.

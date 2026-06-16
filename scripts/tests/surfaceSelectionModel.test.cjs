@@ -156,6 +156,22 @@ async function runSurfaceSelectionModelTests(run) {
     assert.equal(selectionSource.includes("wildcard"), false);
   });
 
+  await run("SurfaceSelectionModel: bleibt keine aktive Surface und kein Schreibpfad", () => {
+    const selectionSource = fs.readFileSync(SELECTION_MODEL_PATH, "utf8");
+    for (const forbidden of [
+      "activeSurfaceId",
+      "setActiveSurface",
+      "activateSurface",
+      "selectSurface",
+      "localStorage",
+      "writeFile",
+      "default: true",
+      "wildcard",
+    ]) {
+      assert.equal(selectionSource.includes(forbidden), false, `SurfaceSelectionModel enthaelt gesperrtes Fragment: ${forbidden}`);
+    }
+  });
+
   await run("SurfaceSelectionModel: Dokumentation enthaelt Kernbegriffe", () => {
     assert.equal(fs.existsSync(DOC_PATH), true, "SurfaceSelection-Dokument fehlt.");
     const docSource = fs.readFileSync(DOC_PATH, "utf8");
