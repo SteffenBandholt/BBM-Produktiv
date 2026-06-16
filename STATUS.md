@@ -17,6 +17,20 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Restarbeiten-Zielroute fuer UI-Editor-Sichtpruefung geklaert:
+  - G80 dokumentiert `docs/UI_EDITOR_RESTARBEITEN_ZIELROUTE_SICHTPRUEFUNG.md`
+    als reproduzierbaren Weg in den read-only Zielstand.
+  - Bestaetigter Klickpfad:
+    `Start` -> `Projekte` -> Projektkachel `Nr.: 04-2026 / UI-Polish fuer BBM`
+    -> `Restarbeiten` -> `UI-Editor`.
+  - Der sichtbare Zielstand bleibt:
+    `Restarbeiten - PDF Plan Seite 1`, `restarbeiten.ui.main`, der read-only
+    Hinweis und blockiertes `plan.canvas.default`.
+  - Ergebnis:
+    `Manuelle Sichtpruefung bestanden`
+  - G80 aendert keine Produktivlogik, keine sichtbare UI und keine
+    Laufzeit-Schiene; das Paket zieht nur Doku und Guardrail nach.
+
 - Manuelle Zielrouten-Sichtpruefung fuer PDF Plan Seite 1 dokumentiert:
   - G79 legt `docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md` als
     eigene Abnahme-/Sichtpruefungsreferenz an.

@@ -79,3 +79,14 @@ Geprueft wurde:
 - Dieser Hinweis-Referenzstand bleibt damit als technischer Sicht- und
   Guardrail-Stand bestehen; die direkte Restarbeiten-Zielroute ist separat
   dokumentiert.
+
+## Nachtrag G80
+
+- Die direkte Restarbeiten-Zielroute ist inzwischen in
+  `docs/UI_EDITOR_RESTARBEITEN_ZIELROUTE_SICHTPRUEFUNG.md` reproduzierbar
+  dokumentiert.
+- Bestaetigter Klickpfad:
+  `Start` -> `Projekte` -> Projektkachel `Nr.: 04-2026 / UI-Polish fuer BBM`
+  -> `Restarbeiten` -> `UI-Editor`
+- Der sichtbare Hinweis-Referenzstand bleibt dabei unveraendert:
+  `PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.`

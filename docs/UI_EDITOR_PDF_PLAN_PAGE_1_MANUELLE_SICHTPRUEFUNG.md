@@ -101,3 +101,17 @@ aber diese fehlende direkte Restarbeiten-Zielrouten-Bestaetigung nicht.
   `plan.canvas.default`,
   kein Drag,
   keine Persistenz
+
+## Nachtrag G80
+
+- Die zuvor offene Zielroute ist inzwischen in
+  `docs/UI_EDITOR_RESTARBEITEN_ZIELROUTE_SICHTPRUEFUNG.md` reproduzierbar
+  dokumentiert.
+- Bestaetigter Klickpfad:
+  `Start` -> `Projekte` -> Projektkachel `Nr.: 04-2026 / UI-Polish fuer BBM`
+  -> `Restarbeiten` -> `UI-Editor`
+- Der dabei sichtbare Zielstand bleibt:
+  `Restarbeiten - PDF Plan Seite 1`,
+  `restarbeiten.ui.main`,
+  `PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.`,
+  `plan.canvas.default`

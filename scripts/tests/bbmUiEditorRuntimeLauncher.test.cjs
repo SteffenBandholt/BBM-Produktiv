@@ -57,6 +57,10 @@ const PDF_PAGE_MANUAL_SICHTPRUEFUNG_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md"
 );
+const RESTARBEITEN_ZIELROUTE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_RESTARBEITEN_ZIELROUTE_SICHTPRUEFUNG.md"
+);
 const SURFACE_INFO_ENTSCHEIDUNG_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md"
@@ -3178,6 +3182,27 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Manuelle Sichtpruefung nicht vollstaendig bestanden / nicht vollstaendig erreichbar",
     ]) {
       assert.equal(docSource.includes(required), true, `PDF-Plan-manuelle-Sichtpruefung enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Restarbeiten-Zielrouten-Dokument bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(RESTARBEITEN_ZIELROUTE_DOC_PATH),
+      true,
+      "Restarbeiten-Zielrouten-Dokument fehlt."
+    );
+    const docSource = fs.readFileSync(RESTARBEITEN_ZIELROUTE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Restarbeiten - PDF Plan Seite 1",
+      "restarbeiten.ui.main",
+      "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
+      "kein Drag",
+      "keine Persistenz",
+      "plan.canvas.default",
+      "Manuelle Sichtpruefung bestanden",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Restarbeiten-Zielrouten-Dokument enthaelt ${required} nicht.`);
     }
   });
 

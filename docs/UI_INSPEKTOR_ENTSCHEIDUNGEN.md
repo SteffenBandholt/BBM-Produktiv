@@ -155,6 +155,14 @@ Restarbeiten-Zielroute war in dieser Sitzung aber nicht reproduzierbar
 erreichbar. Ergebnis:
 `Manuelle Sichtpruefung nicht vollstaendig bestanden / nicht vollstaendig erreichbar`.
 
+**Status nach G80:** Die konkrete Restarbeiten-Zielroute ist nun
+reproduzierbar bestaetigt und in
+`docs/UI_EDITOR_RESTARBEITEN_ZIELROUTE_SICHTPRUEFUNG.md` dokumentiert. Der
+Pfad `Start` -> `Projekte` -> Projektkachel `Nr.: 04-2026 / UI-Polish fuer BBM`
+-> `Restarbeiten` -> `UI-Editor` fuehrt zum read-only Zielstand mit
+`Restarbeiten - PDF Plan Seite 1`, `restarbeiten.ui.main`, sichtbarem Hinweis,
+blockiertem `plan.canvas.default`, ohne Drag, Resize oder Persistenz.
+
 ## Entscheidung 024
 **Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
 
