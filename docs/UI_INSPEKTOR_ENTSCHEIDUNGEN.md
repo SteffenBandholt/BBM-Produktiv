@@ -424,3 +424,10 @@ dokumentiert. `restarbeiten.ui.main` bleibt Hoststand, `pdf.plan.page.1` und
 bewusst auf `restarbeiten.ui.main`. G89 aktiviert keine Produktivlogik, keine
 sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und
 keine Persistenz.
+
+**Status nach G90a:** G90 bleibt wegen fehlender verpflichtender
+UI-Editor-Grundlagen gestoppt. Die Stop-Entscheidung ist in
+`docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md` dokumentiert. Der
+geplante sichtbare Hinweis zur Surface-Auswahl wurde nicht umgesetzt; es gibt
+keine Produktivlogik-Aenderung, keine sichtbare UI-Aenderung, keine echte
+Surface-Umschaltung, kein Drag, kein Resize und keine Persistenz.

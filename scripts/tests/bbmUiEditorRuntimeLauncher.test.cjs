@@ -69,6 +69,10 @@ const SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md"
 );
+const UI_EDITOR_MISSING_FOUNDATIONS_STOP_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md"
+);
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
@@ -3380,6 +3384,34 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "wildcard",
     ]) {
       assert.equal(runtimeSource.includes(forbidden), false, `Runtime enthaelt gesperrtes Fragment: ${forbidden}`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: G90-Stopp wegen fehlender UI-Editor-Grundlagen bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_MISSING_FOUNDATIONS_STOP_DOC_PATH),
+      true,
+      "UI-Editor-Grundlagen-Stopp-Dokument fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_MISSING_FOUNDATIONS_STOP_DOC_PATH, "utf8");
+
+    for (const required of [
+      "G90 bleibt gestoppt. Ein sichtbarer UI-Hinweis zur Surface-Auswahl darf erst umgesetzt werden, wenn die laut Projektregeln verpflichtenden UI-Editor-Grundlagen vorhanden oder durch eine ausdrueckliche Entscheidung ersetzt/freigegeben sind.",
+      "docs/EDITOR_BAUPLAN.md",
+      "docs/UI_ELEMENT_KATALOG.md",
+      "docs/UI_BAU_UND_PRUEFREGELN.md",
+      "docs/ZIEL_APP_ANBINDUNG.md",
+      "docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md",
+      "Surface-Auswahl-Hinweis im UI",
+      "sichtbare UI-Aenderungen am UI-Editor-Panel",
+      "DB-/IPC-Schreibwege",
+      "Stop-/Entscheidungsdokumentation",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `UI-Editor-Grundlagen-Stopp-Dokument enthaelt ${required} nicht.`
+      );
     }
   });
 

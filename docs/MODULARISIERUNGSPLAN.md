@@ -134,6 +134,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G85 schliesst die gesamte read-only Surface-Phase in `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md` ab; `restarbeiten.ui.main` bleibt Host-/Bestandssurface, `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar, und weitere Freigaben bleiben getrennte Folgepakete
 - G86 bereitet mit `docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md` die Diskussion einer spaeteren echten Surface-Umschaltung vor; aktive Surface, SurfaceInfo-Verhalten, Risiken und harte Grenzen sind beschrieben, aber es gibt keine Umsetzung und keine neue Freigabe
 - G89 sichert die Surface-Auswahl technisch als keine aktive Surface-Umschaltung ab; `docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md` dokumentiert Hoststand, read-only Sichtbarkeit, blockierte IDs und fehlende Schreibwege
+- G90a dokumentiert den G90-Stopp wegen fehlender UI-Editor-Grundlagen in `docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md`; G90 bleibt gestoppt, der sichtbare Hinweis zur Surface-Auswahl wurde nicht umgesetzt, und Produktivlogik/UI/Drag/Resize/Persistenz bleiben unveraendert
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

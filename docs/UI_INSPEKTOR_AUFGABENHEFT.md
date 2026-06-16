@@ -29,6 +29,7 @@ Aktueller Stand:
 - K19.106 abgeschlossen: Das Konzept fuer eine spaetere echte Surface-Umschaltung ist in `docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md` vorbereitet; Varianten, Risiken, harte Grenzen und Stop-/Go-Kriterien sind dokumentiert, ohne Umsetzung oder neue Freigabe.
 - K19.107 abgeschlossen: Der Surface-Auswahl-Kontext ist in `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md` fachlich entschieden; die Surface-Auswahl bleibt eine read-only Sichtbarkeits-/Kontextanzeige und keine aktive Surface.
 - K19.108 abgeschlossen: Der Surface-Auswahl-Kontext ist jetzt in `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md` als stabiler Referenzstand gebuendelt; die Surface-Auswahl bleibt eine read-only Sichtbarkeits-/Kontextanzeige und keine aktive Surface.
+- K19.110 abgeschlossen: G90a dokumentiert den G90-Stopp wegen fehlender verpflichtender UI-Editor-Grundlagen in `docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md`; G90 bleibt gestoppt und der sichtbare UI-Hinweis zur Surface-Auswahl wurde nicht umgesetzt.
 - K19.84 abgeschlossen: SurfaceSwitch-Modell im BBM-Launcher als Referenzstand abgeschlossen; `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md` dokumentiert den read-only Launcher-Datenfluss, die sichtbare UI-Grenze und die Sicherheitsgrenzen, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
 - K19.83 abgeschlossen: SurfaceSwitch-Modell wird im BBM-Launcher intern read-only genutzt; sichtbar bleibt `restarbeiten.ui.main`/`Restarbeiten` und die bestehende SurfaceInfo, ohne echte Umschaltung, neue UI, Drag, Resize oder Persistenz.
 - K19.82 abgeschlossen: SurfaceSwitch-read-only Referenzstand dokumentiert; `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md` beschreibt erlaubte und blockierte Wechselziele, Datenfluss, Sicherheitsgrenzen und Nicht-Ziele, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
@@ -1103,3 +1104,32 @@ Hinweis:
   - `npm test`
 - NÃ¤chster Schritt:
   - Keine Produktivlogik-Aenderung; naechste Schritte bleiben in der fachlichen Oberplanung getrennt.
+
+### K19.110 - Fehlende UI-Editor-Grundlagen und G90-Stopp dokumentieren
+- Status: erledigt
+- Beschreibung:
+  - G90 bleibt gestoppt, weil verpflichtende UI-Editor-Grundlagen fehlen.
+  - Die fehlenden Unterlagen und die Stop-Regel sind in
+    `docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md`
+    dokumentiert.
+  - Es wurde kein sichtbarer UI-Hinweis zur Surface-Auswahl umgesetzt.
+  - Keine Produktivlogik, keine sichtbare UI-Aenderung, keine echte
+    Surface-Umschaltung, kein Drag, kein Resize und keine Persistenz.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md`
+  - `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+  - `STATUS.md`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+- Tests:
+  - `npm run check:ui-editor-kit`
+  - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `npm test`
+  - `git diff --check`
+- Naechster Schritt:
+  - Nutzerentscheidung: fehlende Grundlagen bereitstellen oder eine
+    ausdrueckliche Ersatz-/Freigabeentscheidung fuer das eng begrenzte
+    Hinweis-Paket treffen.

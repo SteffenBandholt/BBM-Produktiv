@@ -108,3 +108,15 @@ werden, getrennt von Drag, Resize und Persistenz.
   aber keine aktive Bearbeitungs-Surface.
 - SurfaceInfo bleibt bewusst `restarbeiten.ui.main`; keine aktive
   Umschaltung, keine Persistenz und keine Schreibwege.
+
+## Nachtrag G90a
+
+- G90 bleibt wegen fehlender verpflichtender UI-Editor-Grundlagen gestoppt.
+- Die Stop-Entscheidung ist in
+  `docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md` dokumentiert.
+- Der geplante sichtbare Hinweis
+  `Surface-Auswahl zeigt nur read-only Kontext. Keine aktive Umschaltung.`
+  wurde nicht umgesetzt.
+- Bis zur Klaerung bleiben sichtbare UI-Aenderungen am UI-Editor-Panel,
+  SurfaceInfo-Umbau, Drag, Resize, Persistenz, PDF-/Plan-Bearbeitung und
+  DB-/IPC-Schreibwege blockiert.
