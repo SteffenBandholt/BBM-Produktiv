@@ -114,3 +114,10 @@ die bestaetigten read-only Nachweise zu einer abgeschlossenen Phase.
 Wenn spaetere Anpassungen benoetigt werden, sollen sie als eigene, klein
 geschnittene Pakete folgen: weitere Surface-Freigaben, echte Umschaltung,
 Drag/Resize und Persistenz getrennt voneinander und erst nach neuer Freigabe.
+
+## Nachtrag G86
+
+- Die naechste Diskussion zur echten Surface-Umschaltung wird jetzt in
+  `docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md`
+  vorbereitet.
+- Die read-only Phase bleibt unveraendert abgeschlossen.

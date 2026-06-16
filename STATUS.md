@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Surface-Umschaltungs-Konzept ohne Umsetzung vorbereitet:
+  - G86 dokumentiert `docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md`.
+  - Die read-only Surface-Phase bleibt unveraendert abgeschlossen.
+  - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+  - `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+  - SurfaceInfo bleibt bewusst `restarbeiten.ui.main`.
+  - Die naechste echte Umschaltung bleibt nur konzeptionell vorbereitet,
+    nicht umgesetzt.
+
 - Gesamte read-only Surface-Phase als Abnahme-/Referenzstand abgeschlossen:
   - G85 dokumentiert `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md`.
   - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.

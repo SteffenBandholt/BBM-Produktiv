@@ -139,3 +139,12 @@ dokumentiert.
 - `restarbeiten.ui.main` bleibt Hoststand.
 - `pdf.plan.page.1` bleibt read-only sichtbar.
 - `plan.canvas.default` bleibt read-only sichtbar.
+
+## Nachtrag G86
+
+- Die naechste Diskussionsstufe zur echten Surface-Umschaltung ist jetzt in
+  `docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md`
+  beschrieben.
+- Der Integrationscheck bleibt read-only und unveraendert.
+- `restarbeiten.ui.main` bleibt Hoststand.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.

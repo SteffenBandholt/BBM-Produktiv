@@ -395,3 +395,10 @@ buendelt `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`
 unter klaren read-only Grenzen. G85 aktiviert keine Produktivlogik, keine
 sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und
 keine Persistenz.
+
+**Status nach G86:** Das Konzept fuer eine spaetere echte Surface-Umschaltung
+ist nun vorbereitet. `docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md`
+beschreibt Varianten, Risiken, harte Grenzen und Stop-/Go-Kriterien, ohne eine
+Umschaltung freizugeben. G86 aktiviert keine Produktivlogik, keine sichtbare
+UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und keine
+Persistenz.

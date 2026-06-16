@@ -202,3 +202,13 @@ blockiert:
 - `plan.canvas.default` bleibt read-only sichtbar.
 - Weitere Surface-Freigaben, echte Umschaltung, Drag und Persistenz bleiben
   getrennte Folgepakete.
+
+## Nachtrag G86
+
+- Die naechste Diskussionsstufe zur echten Surface-Umschaltung ist jetzt in
+  `docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md`
+  konzeptionell vorbereitet.
+- Der Gesamt-Referenzstand bleibt unveraendert read-only.
+- `restarbeiten.ui.main` bleibt Hoststand.
+- `pdf.plan.page.1` bleibt read-only sichtbar.
+- `plan.canvas.default` bleibt read-only sichtbar.

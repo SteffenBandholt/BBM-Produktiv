@@ -53,6 +53,10 @@ const SURFACE_PHASE_ABNAHME_REFERENZ_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md"
 );
+const SURFACE_SWITCHING_KONZEPT_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md"
+);
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
@@ -3242,6 +3246,33 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `Surface-Phase-Abnahmereferenz enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Surface-Switching-Konzept bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(SURFACE_SWITCHING_KONZEPT_DOC_PATH),
+      true,
+      "Surface-Switching-Konzept fehlt."
+    );
+    const docSource = fs.readFileSync(SURFACE_SWITCHING_KONZEPT_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "keine echte Surface-Umschaltung",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "keine Wildcard",
+      "kein Default-true",
+      "UI-Editor-kit speichert nicht",
+      "SurfaceInfo",
+      "Stop-/Go-Kriterien",
+      "Empfohlener naechster Schritt",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Surface-Switching-Konzept enthaelt ${required} nicht.`);
     }
   });
 

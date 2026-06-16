@@ -326,3 +326,12 @@ Persistenz:
 - `pdf.plan.page.1` bleibt read-only sichtbar.
 - `plan.canvas.default` bleibt read-only sichtbar.
 - Weitere Freigaben oder echte Interaktion bleiben getrennte Folgepakete.
+
+## Status nach G86
+
+- Die Diskussion einer spaeteren echten Surface-Umschaltung ist jetzt nur
+  konzeptionell vorbereitet.
+- `docs/UI_EDITOR_SURFACE_SWITCHING_KONZEPT_OHNE_UMSETZUNG.md` beschreibt
+  Varianten, Risiken und harte Grenzen, ohne etwas freizugeben.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
