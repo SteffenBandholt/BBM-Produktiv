@@ -120,3 +120,12 @@ werden, getrennt von Drag, Resize und Persistenz.
 - Bis zur Klaerung bleiben sichtbare UI-Aenderungen am UI-Editor-Panel,
   SurfaceInfo-Umbau, Drag, Resize, Persistenz, PDF-/Plan-Bearbeitung und
   DB-/IPC-Schreibwege blockiert.
+
+## Nachtrag G91
+
+- Die Entscheidungsoptionen fuer den Umgang mit den fehlenden UI-Editor-
+  Grundlagen sind in
+  `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md` dokumentiert.
+- Es wurde keine Ersatzfreigabe erteilt.
+- G90 bleibt bis zur Nutzerentscheidung blockiert.
+- Der read-only Surface-Auswahl-Kontext bleibt unveraendert.

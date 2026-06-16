@@ -110,3 +110,11 @@ Naechster sauberer Schritt ist eine ausdrueckliche Nutzerentscheidung:
 
 Erst danach darf ein neues Umsetzungspaket fuer den sichtbaren Hinweis geplant
 werden.
+
+## Nachtrag G91
+
+- Die Freigabe-/Ersatzentscheidung ist in
+  `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md` vorbereitet.
+- G91 erteilt keine Ersatzfreigabe.
+- Die fehlenden Pflichtunterlagen werden weiterhin nicht improvisiert angelegt.
+- G90 bleibt bis zu einer ausdruecklichen Nutzerentscheidung blockiert.

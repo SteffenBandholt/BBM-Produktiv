@@ -73,6 +73,10 @@ const UI_EDITOR_MISSING_FOUNDATIONS_STOP_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md"
 );
+const UI_EDITOR_FOUNDATIONS_RELEASE_DECISION_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md"
+);
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
@@ -3411,6 +3415,36 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `UI-Editor-Grundlagen-Stopp-Dokument enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: G91-Freigabeentscheidung fuer fehlende Grundlagen bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_FOUNDATIONS_RELEASE_DECISION_DOC_PATH),
+      true,
+      "UI-Editor-Grundlagen-Freigabeentscheidung fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_FOUNDATIONS_RELEASE_DECISION_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Option A: Pflichtunterlagen vollstaendig und regulaer erstellen",
+      "Option B: Ausdrueckliche Ersatzfreigabe nur fuer den kleinen read-only Hinweis",
+      "Option C: G90 dauerhaft verwerfen",
+      "Option D: Stopp beibehalten und zunaechst Grundlagen-Bedarfsanalyse erstellen",
+      "docs/EDITOR_BAUPLAN.md",
+      "docs/UI_ELEMENT_KATALOG.md",
+      "docs/UI_BAU_UND_PRUEFREGELN.md",
+      "docs/ZIEL_APP_ANBINDUNG.md",
+      "docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md",
+      "Keine Ersatzfreigabe pauschal erteilen.",
+      "Surface-Auswahl zeigt nur read-only Kontext. Keine aktive Umschaltung.",
+      "G90 bleibt bis zur Nutzerentscheidung blockiert",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `UI-Editor-Grundlagen-Freigabeentscheidung enthaelt ${required} nicht.`
       );
     }
   });

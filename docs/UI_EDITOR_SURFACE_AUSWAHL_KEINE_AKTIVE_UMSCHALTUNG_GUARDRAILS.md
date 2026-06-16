@@ -61,3 +61,12 @@ und faehrt keinen Drag-/Resize- oder Schreibpfad an.
 - Keine Produktivlogik, keine sichtbare UI-Aenderung, keine echte
   Surface-Umschaltung, kein Drag, kein Resize und keine Persistenz wurden
   aktiviert.
+
+## Nachtrag G91
+
+- G91 dokumentiert die Optionen A bis D fuer eine Nutzerentscheidung in
+  `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.
+- Es gibt weiterhin keine allgemeine UI-/PDF-Freigabe.
+- Der Hinweis zur Surface-Auswahl bleibt bis zur Nutzerentscheidung blockiert.
+- Drag, Resize, Persistenz, SurfaceInfo-Umbau und aktive Surface-Umschaltung
+  bleiben gesperrt.

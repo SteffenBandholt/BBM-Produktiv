@@ -431,3 +431,10 @@ UI-Editor-Grundlagen gestoppt. Die Stop-Entscheidung ist in
 geplante sichtbare Hinweis zur Surface-Auswahl wurde nicht umgesetzt; es gibt
 keine Produktivlogik-Aenderung, keine sichtbare UI-Aenderung, keine echte
 Surface-Umschaltung, kein Drag, kein Resize und keine Persistenz.
+
+**Status nach G91:** Die Freigabe-/Ersatzentscheidung fuer die fehlenden
+UI-Editor-Grundlagen ist in
+`docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md` vorbereitet. G91 erteilt
+keine Ersatzfreigabe und legt keine Pflichtunterlagen als Platzhalter an. G90
+bleibt bis zur Nutzerentscheidung blockiert; Produktivlogik, sichtbare UI,
+SurfaceInfo, Drag, Resize und Persistenz bleiben unveraendert.
