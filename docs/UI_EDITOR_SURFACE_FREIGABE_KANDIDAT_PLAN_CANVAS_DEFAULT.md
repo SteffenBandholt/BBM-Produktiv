@@ -2,9 +2,9 @@
 
 ## Kurzfazit
 
-`plan.canvas.default` ist technisch bereits bekannt, aber in G82 weiterhin
-blockiert. Dieses Dokument bewertet nur den moeglichen naechsten read-only
-Kandidaten und spricht keine Freigabe aus.
+`plan.canvas.default` ist jetzt explizit per Policy read-only sichtbar
+freigegeben. Das Dokument bleibt als enger Bewertungs- und Referenzstand
+erhalten, aber der Kandidat ist nicht mehr blockiert.
 
 ## Kandidat
 
@@ -12,29 +12,28 @@ Kandidaten und spricht keine Freigabe aus.
 
 ## Aktueller Status
 
-- vorhanden, aber weiterhin blockiert
-- nicht sichtbar
-- nicht auswählbar
+- vorhanden und read-only sichtbar
+- auswählbar als weitere SurfaceId im read-only Auswahlstand
 - `pdf.plan.page.1` bleibt bereits read-only sichtbar
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface
-- keine weitere Surface wurde freigegeben
+- keine Bearbeitung, kein Drag, kein Resize und keine Persistenz
 
-## Fachlicher Nutzen einer spaeteren read-only Sichtbarkeit
+## Fachlicher Nutzen einer weiteren read-only Sichtbarkeit
 
-- Eine Plan- oder Canvas-Fläche koennte als neutrale Referenz fuer Layout-
-  und Oberflaechenkontrolle dienen.
-- Fachlich waere eine feste Sicht auf die Canvas hilfreich, wenn spaeter
-  reine Orientierung oder Vergleich ohne Bearbeitung benoetigt wird.
-- Die Surface koennte als kontrollierter Kontext fuer technische Sichttests
+- Eine Plan- oder Canvas-Fläche kann als neutrale Referenz für Layout- und
+  Oberflächenkontrolle dienen.
+- Fachlich ist eine feste Sicht auf die Canvas hilfreich, wenn später reine
+  Orientierung oder Vergleich ohne Bearbeitung benötigt wird.
+- Die Surface kann als kontrollierter Kontext für technische Sichttests
   dienen, ohne eine echte Bearbeitung zu aktivieren.
 
 ## Technischer Nutzen
 
 - Der Katalog kennt die SurfaceId bereits.
-- Das Datenmodell fuer PDF-/Plan-Surfaces ist vorhanden.
-- Policy, Selection, Switch-Model und Launcher-Referenz sind bereits
-  vorbereitet und koennen spaeter minimal erweitert werden.
-- Eine spaetere Einzelfreigabe waere technisch klein nachvollziehbar, wenn
+- Das Datenmodell für PDF-/Plan-Surfaces ist vorhanden.
+- Policy, Selection, Switch-Modell und Launcher-Referenz sind bereits
+  vorbereitet und können minimal erweitert werden.
+- Eine spätere Einzelfreigabe bleibt technisch klein nachvollziehbar, wenn
   exakt eine SurfaceId angepasst wird.
 
 ## Technische Voraussetzungen
@@ -42,14 +41,14 @@ Kandidaten und spricht keine Freigabe aus.
 - explizite Policy-Freigabe nur fuer `plan.canvas.default`
 - `pdf.plan.page.1` bleibt unveraendert read-only sichtbar
 - unbekannte SurfaceIds bleiben blockiert
-- Auswahlmodelle und Tests werden nur fuer den konkreten Kandidaten angepasst
-- eine sichtbare UI wird erst mit separater Electron-Sichtpruefung freigegeben
+- Auswahlmodelle und Tests sichern die einzelne SurfaceId ab
+- die sichtbare UI bleibt weiterhin read-only und ohne Bedienlogik
 
 ## Risiken
 
 - eine zu breite Freigabe koennte `pdf.plan.page.1` oder andere Surfaces
   ungewollt mitziehen
-- Canvas-Sichtbarkeit kann fälschlich als Bearbeitungsfreigabe verstanden
+- Canvas-Sichtbarkeit kann faelschlich als Bearbeitungsfreigabe verstanden
   werden
 - ein Default-true oder eine Wildcard wuerde die bestehende Grenze aufweichen
 - Drag, Resize und Persistenz duerfen nicht heimlich mitaktiviert werden
@@ -57,7 +56,7 @@ Kandidaten und spricht keine Freigabe aus.
 ## Harte Grenzen
 
 ```text
-vorhanden, aber weiterhin blockiert:
+vorhanden und read-only sichtbar:
 - plan.canvas.default
 
 bereits read-only sichtbar:
@@ -67,23 +66,21 @@ Host-/Bestandssurface:
 - restarbeiten.ui.main
 ```
 
-- `plan.canvas.default` bleibt in G82 unsichtbar
-- `plan.canvas.default` bleibt in G82 nicht auswählbar
 - keine echte Surface-Umschaltung
 - keine Bearbeitung
 - kein Drag
 - kein Resize
 - keine Persistenz
-- keine Plan-/Canvas-Interaktion
+- keine Plan-/Canvas-Bearbeitung
 - keine PDF-Bearbeitung
 - keine DB-/IPC-Schreibwege
 - keine Wildcard
 - kein Default-true
 - UI-Editor-kit speichert nicht
 
-## Späterer Minimalumfang
+## Spaeterer Minimalumfang
 
-Dieser Block ist nur ein Vorschlag fuer ein spaeteres Freigabepaket:
+Dieser Block bleibt die minimal benoetigte read-only Form fuer die Surface:
 
 ```text
 readable: true
@@ -99,7 +96,7 @@ canPersist: false
 ### Go fuer ein spaeteres Freigabepaket
 
 - genau `plan.canvas.default` wird freigegeben
-- die Policy wird explizit und minimal angepasst
+- die Policy bleibt explizit und minimal
 - `pdf.plan.page.1` bleibt unveraendert read-only sichtbar
 - unbekannte SurfaceIds bleiben blockiert
 - keine Drag-/Resize-/Persistenz-Rechte entstehen
@@ -131,12 +128,14 @@ canPersist: false
 
 ## Offene Grenzen
 
-- keine Freigabe in G82
-- keine sichtbare UI-Änderung in G82
-- keine Produktivlogik in G82
+- keine weitere Freigabe ueber `plan.canvas.default` hinaus
+- keine sichtbare UI-Aenderung ohne eigene Pruefung
+- keine Produktivlogik
 
-## Empfohlener naechster Schritt
+## Nachtrag G83
 
-- den Kandidaten nur dokumentarisch fuehren
-- ein spaeteres Freigabepaket erst starten, wenn die Policy explizit und
-  minimal geaendert wird
+- `plan.canvas.default` ist jetzt explizit read-only sichtbar freigegeben.
+- Die Freigabe bleibt auf genau diese SurfaceId begrenzt.
+- `pdf.plan.page.1` bleibt read-only sichtbar.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- Drag, Resize, Persistenz und jede echte Umschaltung bleiben deaktiviert.

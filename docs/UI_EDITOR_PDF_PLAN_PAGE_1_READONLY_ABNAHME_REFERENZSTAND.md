@@ -12,6 +12,10 @@ Ergebnis:
 Abnahmereferenz abgeschlossen
 ```
 
+Seit G83 ist `plan.canvas.default` zusaetzlich read-only sichtbar
+freigegeben. Die Abnahmereferenz fuer `pdf.plan.page.1` bleibt davon
+unberuehrt.
+
 ## Gesicherter Stand
 
 ```text
@@ -21,7 +25,7 @@ freigegeben:
 Host-/Bestandssurface:
 - restarbeiten.ui.main
 
-weiterhin blockiert:
+weiterhin read-only sichtbar:
 - plan.canvas.default
 - unbekannte SurfaceIds
 - *
@@ -39,18 +43,19 @@ Start -> Projekte -> Nr.: 04-2026 / UI-Polish fuer BBM -> Restarbeiten -> UI-Edi
 ```text
 Surface-Auswahl:
 - Restarbeiten - PDF Plan Seite 1
+- Plan Canvas
 
 SurfaceInfo:
 - restarbeiten.ui.main
 
 Hinweis:
-- PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
+- PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
 ```
 
 ## Surface-Auswahl
 
 - `Restarbeiten - PDF Plan Seite 1` bleibt sichtbar.
-- `plan.canvas.default` erscheint nicht.
+- `Plan Canvas` ist zusaetzlich read-only sichtbar.
 - unbekannte SurfaceIds, `*` und leere IDs erscheinen nicht.
 
 ## SurfaceInfo-Verhalten
@@ -63,7 +68,7 @@ Hinweis:
 ## Hinweistext
 
 ```text
-PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
+PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
 ```
 
 - rein informativ
@@ -74,7 +79,6 @@ PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine
 ## Weiterhin blockierte SurfaceIds
 
 ```text
-- plan.canvas.default
 - unbekannte SurfaceIds
 - *
 - leere IDs
@@ -128,4 +132,10 @@ PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine
 - `plan.canvas.default` wird nun nur als naechster Kandidat bewertet, ohne
   Freigabe und ohne Policy-Änderung.
 - Die Abnahmereferenz fuer `pdf.plan.page.1` bleibt davon unberuehrt.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+
+## Nachtrag G83
+
+- `plan.canvas.default` ist nun zusaetzlich read-only sichtbar freigegeben.
+- Die Abnahmereferenz fuer `pdf.plan.page.1` bleibt unveraendert.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.

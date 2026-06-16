@@ -3,17 +3,17 @@
 ## Kurzfazit
 
 Der read-only Surface-Stand ist stabil abgesichert. Sichtbar bleiben
-`restarbeiten.ui.main` und `pdf.plan.page.1`, die Surface-Auswahl zeigt
-`Restarbeiten - PDF Plan Seite 1`, und die SurfaceInfo bleibt auf
-`restarbeiten.ui.main` / `ui-screen` / Elementanzahl begrenzt. Diese Matrix
-dient nur der Entscheidungs- und Freigabevorbereitung fuer die naechste
-Surface-Phase.
+`restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`, die
+Surface-Auswahl zeigt `Restarbeiten`, `PDF Plan Seite 1` und `Plan Canvas`,
+und die SurfaceInfo bleibt auf `restarbeiten.ui.main` / `ui-screen` /
+Elementanzahl begrenzt. Diese Matrix dient nur der Entscheidungs- und
+Freigabevorbereitung fuer die naechste Surface-Phase.
 
 ## Aktueller gesicherter read-only Stand
 
 - `restarbeiten.ui.main` bleibt sichtbar und als Hoststand praesent
 - `pdf.plan.page.1` ist read-only sichtbar
-- `plan.canvas.default` bleibt blockiert
+- `plan.canvas.default` ist read-only sichtbar
 - unbekannte SurfaceIds bleiben blockiert
 - `*` bleibt blockiert
 - leere IDs bleiben blockiert
@@ -116,16 +116,16 @@ Surface-Phase.
 ## Empfohlener naechster Schritt
 
 Nach G76 ist der Sichtstand von `pdf.plan.page.1` dokumentiert und abgesichert.
-Der naechste Schritt kann deshalb entweder `plan.canvas.default` weiter
-fachlich blockiert halten oder eine weitere klar abgegrenzte read-only
-Surface-Freigabe vorbereiten, ohne Drag oder Persistenz zu aktivieren.
+Mit G83 ist `plan.canvas.default` ebenfalls read-only sichtbar; der naechste
+Schritt kann deshalb nur weitere klar abgegrenzte read-only Erweiterungen
+vorbereiten, ohne Drag oder Persistenz zu aktivieren.
 
 ## Status nach G75
 
 `pdf.plan.page.1` ist nun per Policy read-only sichtbar freigegeben.
-`plan.canvas.default` bleibt blockiert. Die naechste Phase kann sich daher
-auf eine weitere kontrollierte read-only Erweiterung konzentrieren, statt
-sofort Drag oder Persistenz zu ziehen.
+`plan.canvas.default` ist ebenfalls read-only sichtbar. Die naechste Phase
+kann sich daher auf weitere kontrollierte read-only Erweiterungen
+konzentrieren, statt sofort Drag oder Persistenz zu ziehen.
 
 ## Status nach G76
 
@@ -133,7 +133,7 @@ Die sichtbare Referenz ist zusaetzlich abgesichert:
 
 - Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`
 - SurfaceInfo bleibt `restarbeiten.ui.main`
-- `plan.canvas.default` bleibt blockiert
+- `plan.canvas.default` ist read-only sichtbar
 
 ## Status nach G77
 
@@ -156,12 +156,11 @@ Die read-only Abnahmereferenz fuer `pdf.plan.page.1` ist jetzt in
 `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
 gebuendelt. Diese Matrix bleibt davon unberuehrt: sie dient weiter nur der
 Freigabevorbereitung fuer spaetere Schritte, waehrend `plan.canvas.default`
-und echte Umschaltung weiterhin blockiert bleiben.
+und echte Umschaltung read-only getrennt bleiben.
 
 ## Status nach G82
 
-`plan.canvas.default` ist jetzt nur als naechster Kandidat dokumentiert. Die
-Matrix gibt nichts frei, sondern haelt weiter an der Trennung fest:
-`pdf.plan.page.1` bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt
-Host-/Bestandssurface und die naechste echte Freigabe braucht ein eigenes
-Paket.
+`plan.canvas.default` ist jetzt read-only sichtbar freigegeben. Die Matrix
+haelt weiter an der Trennung fest: `pdf.plan.page.1` bleibt read-only
+sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface und weitere
+echte Freigaben brauchen eigene Pakete.

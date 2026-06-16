@@ -35,7 +35,7 @@ const SURFACE_POLICIES = Object.freeze({
   }),
   "plan.canvas.default": Object.freeze({
     readable: true,
-    visibleInEditor: false,
+    visibleInEditor: true,
     canHide: false,
     canDrag: false,
     canResize: false,

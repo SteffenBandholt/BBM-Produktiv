@@ -93,3 +93,9 @@ dort ueber den vorhandenen `UI-Editor`-Launcher in den read-only Zielstand.
 - Die Zielrouten-Referenz bleibt unveraendert; `plan.canvas.default` wird
   nur als naechster Kandidat bewertet.
 - Der Klickpfad fuehrt weiterhin zum read-only Abnahmestand.
+
+## Nachtrag G83
+
+- `plan.canvas.default` ist jetzt zusaetzlich read-only sichtbar.
+- Die konkrete Restarbeiten-Zielroute bleibt unveraendert.
+- Die SurfaceInfo bleibt weiterhin `restarbeiten.ui.main`.

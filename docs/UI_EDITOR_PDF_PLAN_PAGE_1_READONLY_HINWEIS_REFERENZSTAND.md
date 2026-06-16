@@ -9,13 +9,14 @@ sichtbar. Er erklaert die bereits freigegebene Sichtbarkeit von
 ## Sichtbarer Hinweis
 
 ```text
-PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
+PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
 ```
 
 ## Warum der Hinweis noetig ist
 
 - `pdf.plan.page.1` ist sichtbar, aber weiterhin nur read-only
-- die Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`
+- die Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1` und zusaetzlich
+  die read-only Plan-Canvas-Surface
 - die SurfaceInfo bleibt bewusst auf `restarbeiten.ui.main`
 - der Hinweis trennt deshalb sichtbare PDF-Surface und Hoststand klarer
 
@@ -28,7 +29,7 @@ PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine
 
 ## Weiterhin blockierte Funktionen
 
-- `plan.canvas.default` bleibt blockiert
+- `plan.canvas.default` ist read-only sichtbar
 - unbekannte SurfaceIds bleiben blockiert
 - `*` bleibt blockiert
 - leere IDs bleiben blockiert
@@ -60,10 +61,10 @@ ueber `npm start` geprueft.
 
 Geprueft wurde:
 
-- Surface-Auswahl zeigt weiterhin `Restarbeiten - PDF Plan Seite 1`
+- Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1` und `Plan Canvas`
 - SurfaceInfo zeigt weiterhin `restarbeiten.ui.main`
 - der neue Hinweis ist sichtbar
-- `plan.canvas.default` erscheint nicht
+- `plan.canvas.default` erscheint als weitere read-only Surface
 - keine Bearbeitung moeglich
 - kein Drag
 - kein Resize
@@ -104,3 +105,9 @@ Geprueft wurde:
 - `plan.canvas.default` wird jetzt nur als Kandidat bewertet, ohne den
   sichtbaren Hinweisstand oder die bestehende Blockade zu aendern.
 - Der Hinweistext bleibt unveraendert.
+
+## Nachtrag G83
+
+- `plan.canvas.default` ist jetzt zusaetzlich read-only sichtbar.
+- Der Hinweistext benennt deshalb auch `Plan Canvas`.
+- SurfaceInfo bleibt bewusst auf `restarbeiten.ui.main`.

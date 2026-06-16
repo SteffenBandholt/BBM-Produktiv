@@ -11,6 +11,7 @@ import {
 
 const SURFACE_SELECTION_LABELS = Object.freeze({
   "restarbeiten.ui.main": "Restarbeiten",
+  "plan.canvas.default": "Plan Canvas",
 });
 
 function normalizeSurfaceId(surfaceId) {

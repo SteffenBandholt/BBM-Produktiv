@@ -177,6 +177,13 @@ dokumentiert. Es gibt keine neue Freigabe, keine Policy-Aenderung und keine
 neue Sichtbarkeit; `pdf.plan.page.1` bleibt read-only sichtbar und
 `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
 
+**Status nach G83:** `plan.canvas.default` ist jetzt explizit read-only
+sichtbar freigegeben und in
+`docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_POLICY_REFERENZSTAND.md`
+dokumentiert. `pdf.plan.page.1` bleibt read-only sichtbar und
+`restarbeiten.ui.main` bleibt Host-/Bestandssurface; Drag, Resize und
+Persistenz bleiben getrennt.
+
 ## Entscheidung 024
 **Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
 

@@ -38,7 +38,7 @@ async function runSurfaceSwitchCommandTests(run) {
     assert.equal(typeof commandModule.executeReadonlySurfaceSwitchCommand, "function");
   });
 
-  await run("SurfaceSwitchCommand: erlaubt restarbeiten.ui.main und PDF-Seite 1 read-only", () => {
+  await run("SurfaceSwitchCommand: erlaubt restarbeiten.ui.main, PDF-Seite 1 und Plan Canvas read-only", () => {
     const result = commandModule.handleReadonlySurfaceSwitchRequest({
       targetSurfaceId: "restarbeiten.ui.main",
     });
@@ -73,11 +73,23 @@ async function runSurfaceSwitchCommandTests(run) {
       changed: false,
       reason: "readonly-current-surface",
     });
+
+    const planResult = commandModule.handleReadonlySurfaceSwitchRequest({
+      targetSurfaceId: "plan.canvas.default",
+    });
+    assert.deepEqual(planResult, {
+      handled: true,
+      allowed: true,
+      readonly: true,
+      requestedSurfaceId: "plan.canvas.default",
+      resolvedSurfaceId: "plan.canvas.default",
+      changed: false,
+      reason: "readonly-current-surface",
+    });
   });
 
-  await run("SurfaceSwitchCommand: blockiert Plan, unbekannte, Wildcard und leere Ziele", () => {
+  await run("SurfaceSwitchCommand: blockiert unbekannte, Wildcard und leere Ziele", () => {
     for (const blockedSurfaceId of [
-      "plan.canvas.default",
       "unknown.surface",
       "*",
       "",

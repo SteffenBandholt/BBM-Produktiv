@@ -1,4 +1,4 @@
-const assert = require("node:assert/strict");
+﻿const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
@@ -40,6 +40,10 @@ const PDF_PLAN_BERATUNG_DOC_PATH = path.join(
 const SURFACE_POLICY_FREIGABE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md"
+);
+const PLAN_CANVAS_POLICY_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_POLICY_REFERENZSTAND.md"
 );
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
@@ -577,7 +581,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(typeof mod.buildReadonlyPdfPlanPage1HintForLauncher, "function");
     assert.equal(
       mod.READONLY_PDF_PLAN_PAGE_1_HINT_TEXT,
-      "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz."
+      "PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz."
     );
 
     const restarbeitenResult = mod.buildReadonlySurfaceModelForLauncher("restarbeiten.ui.main", {
@@ -642,7 +646,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(planResult.surfaceModel.surfaceId, "plan.canvas.default");
     assert.equal(planResult.surfaceModel.surfaceType, "plan");
     assert.equal(planResult.surfaceModel.coordinateSystem, "canvas-pixels");
-    assert.equal(mod.buildReadonlySurfaceInfoForLauncher("plan.canvas.default"), null);
+    assert.deepEqual(mod.buildReadonlySurfaceInfoForLauncher("plan.canvas.default"), {
+      surfaceId: "plan.canvas.default",
+      surfaceType: "plan",
+      elementCount: 0,
+    });
 
     const unknownResult = mod.buildReadonlySurfaceModelForLauncher("pdf.plan.page.2");
     assert.equal(unknownResult.ok, false);
@@ -686,7 +694,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       reason: "readonly-current-surface",
     });
 
-    for (const blockedSurfaceId of ["plan.canvas.default", "unknown.surface", "*", "", "   "]) {
+    for (const blockedSurfaceId of ["unknown.surface", "*", "", "   "]) {
       const switchResult = mod.buildReadonlySurfaceSwitchResultForLauncher(blockedSurfaceId);
       assert.equal(switchResult.allowed, false);
       assert.equal(switchResult.readonly, true);
@@ -712,25 +720,28 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(selectionModel.switchResult.allowed, true);
     assert.equal(selectionModel.state.readonly, true);
     assert.equal(selectionModel.state.selectionAllowed, true);
-    assert.equal(selectionModel.state.blockedSurfaceIds.includes("plan.canvas.default"), true);
+    assert.equal(selectionModel.state.blockedSurfaceIds.includes("plan.canvas.default"), false);
     assert.equal(selectionModel.state.blockedSurfaceIds.includes("unknown.surface"), true);
     assert.deepEqual(selectionModel.surfaces.map((surface) => surface.surfaceId), [
       "restarbeiten.ui.main",
       "pdf.plan.page.1",
+      "plan.canvas.default",
     ]);
     assert.equal(selectionModel.surfaces[0].label, "Restarbeiten");
     assert.equal(selectionModel.surfaces[0].readonly, true);
     assert.equal(selectionModel.surfaces[1].label, "PDF Plan Seite 1");
     assert.equal(selectionModel.surfaces[1].readonly, true);
+    assert.equal(selectionModel.surfaces[2].label, "Plan Canvas");
+    assert.equal(selectionModel.surfaces[2].readonly, true);
     assert.deepEqual(mod.buildReadonlyPdfPlanPage1HintForLauncher({
       selectedSurfaceId: "pdf.plan.page.1",
     }), {
       surfaceId: "pdf.plan.page.1",
-      text: "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
+      text: "PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
       readonly: true,
     });
 
-    for (const blockedSurfaceId of ["plan.canvas.default", "unknown.surface", "*", ""]) {
+    for (const blockedSurfaceId of ["unknown.surface", "*", ""]) {
       const selectionState = mod.buildReadonlySurfaceSelectionStateForLauncher({
         selectedSurfaceId: blockedSurfaceId,
         surfaceIds: [
@@ -744,20 +755,22 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       assert.equal(selectionState.selectedSurfaceId, "restarbeiten.ui.main");
       assert.equal(selectionState.availableSurfaceIds.includes("restarbeiten.ui.main"), true);
       assert.equal(selectionState.availableSurfaceIds.includes("pdf.plan.page.1"), true);
+      assert.equal(selectionState.availableSurfaceIds.includes("plan.canvas.default"), true);
       if (blockedSurfaceId) {
         assert.equal(selectionState.blockedSurfaceIds.includes(blockedSurfaceId), true);
       }
     }
 
-    for (const blockedSurfaceId of ["plan.canvas.default", "unknown.surface", "*", ""]) {
+    for (const blockedSurfaceId of ["unknown.surface", "*", ""]) {
       const switchedSelectionModel = mod.buildReadonlySurfaceSelectionForLauncher({
         selectedSurfaceId: blockedSurfaceId,
       });
       assert.equal(switchedSelectionModel.switchResult.resolvedSurfaceId, "restarbeiten.ui.main");
       assert.equal(switchedSelectionModel.state.selectedSurfaceId, "restarbeiten.ui.main");
-      assert.equal(switchedSelectionModel.surfaces.length, 2);
+      assert.equal(switchedSelectionModel.surfaces.length, 3);
       assert.equal(switchedSelectionModel.surfaces[0].label, "Restarbeiten");
       assert.equal(switchedSelectionModel.surfaces[1].label, "PDF Plan Seite 1");
+      assert.equal(switchedSelectionModel.surfaces[2].label, "Plan Canvas");
     }
   });
 
@@ -805,14 +818,15 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(Boolean(surfaceSelection), true);
     assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-id"), "restarbeiten.ui.main");
     assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-readonly"), "true");
-    assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-count"), "2");
+    assert.equal(surfaceSelection.getAttribute("data-ui-editor-surface-count"), "3");
     assert.equal(renderedText.includes("Restarbeiten"), true);
     assert.equal(renderedText.includes("PDF Plan Seite 1"), true);
+    assert.equal(renderedText.includes("Plan Canvas"), true);
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
     assert.equal(
       getRenderedText(readonlyHint),
-      "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz."
+      "PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz."
     );
     assert.equal(renderedText.includes("plan.canvas.default"), false);
     assert.equal(Boolean(surfaceInfo), true);
@@ -2346,7 +2360,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(input.style.display, "");
   });
 
-  await run("BBM UI-Editor-Runtime: Preview-ZielauflÃ¶sung funktioniert generisch ueber Registry-Parent", async () => {
+  await run("BBM UI-Editor-Runtime: Preview-Zielauflösung funktioniert generisch ueber Registry-Parent", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
     const win = {
@@ -3002,6 +3016,12 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "changed",
       "false",
       "keine echte Umschaltung",
+      "Surface-Auswahl",
+      "SurfaceInfo",
+      "Surface-Auswahl",
+      "SurfaceInfo",
+      "Surface-Auswahl",
+      "SurfaceInfo",
       "kein Drag",
       "keine Persistenz",
       "UI-Editor-kit speichert nicht",
@@ -3083,8 +3103,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "plan.canvas.default",
       "restarbeiten.ui.main",
       "read-only",
-      "nicht sichtbar",
-      "nicht auswählbar",
+      "freigegeben",
+      "read-only sichtbar",
+      "Surface-Auswahl",
       "kein Drag",
       "keine Persistenz",
       "UI-Editor-kit speichert nicht",
@@ -3105,14 +3126,16 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "keine Persistenz",
       "keine Wildcard",
       "kein Default-true",
+      "Surface-Auswahl",
+      "SurfaceInfo",
       "UI-Editor-kit speichert nicht",
-      "Electron-Sichtprüfung",
+      "Electron-Sichtpruefung",
     ]) {
       assert.equal(docSource.includes(required), true, `Surface-Policy-Freigabevorlage enthaelt ${required} nicht.`);
     }
   });
 
-  await run("BBM UI-Editor-Runtime: Surface-Freigabe-Kandidat bleibt vorhanden", async () => {
+  await run("BBM UI-Editor-Runtime: Surface-Freigabe-Kandidat bleibt vorhanden und ist read-only freigegeben", async () => {
     assert.equal(fs.existsSync(SURFACE_FREIGABE_KANDIDAT_DOC_PATH), true, "Surface-Freigabe-Kandidat fehlt.");
     const docSource = fs.readFileSync(SURFACE_FREIGABE_KANDIDAT_DOC_PATH, "utf8");
 
@@ -3121,8 +3144,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "plan.canvas.default",
       "restarbeiten.ui.main",
       "read-only",
-      "nicht sichtbar",
-      "nicht auswählbar",
+      "freigegeben",
+      "ausw",
+      "SurfaceInfo",
       "kein Drag",
       "kein Resize",
       "keine Persistenz",
@@ -3134,6 +3158,31 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     }
   });
 
+  await run("BBM UI-Editor-Runtime: Plan-Canvas-Policy-Referenzdokument bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(PLAN_CANVAS_POLICY_REFERENCE_DOC_PATH),
+      true,
+      "Plan-Canvas-Policy-Referenzdokument fehlt."
+    );
+    const docSource = fs.readFileSync(PLAN_CANVAS_POLICY_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "plan.canvas.default",
+      "readable: true",
+      "visibleInEditor: true",
+      "canDrag: false",
+      "canResize: false",
+      "canPersist: false",
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "SurfaceInfo bleibt bewusst darauf stehen",
+      "Surface-Auswahl",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Plan-Canvas-Policy-Referenzdokument enthaelt ${required} nicht.`);
+    }
+  });
+
   await run("BBM UI-Editor-Runtime: PDF-Plan-Sichtpruefungsdokument bleibt vorhanden", async () => {
     assert.equal(fs.existsSync(PDF_PAGE_SICHTPRUEFUNG_DOC_PATH), true, "PDF-Plan-Sichtpruefungsdokument fehlt.");
     const docSource = fs.readFileSync(PDF_PAGE_SICHTPRUEFUNG_DOC_PATH, "utf8");
@@ -3141,10 +3190,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     for (const required of [
       "Restarbeiten - PDF Plan Seite 1",
       "SurfaceInfo zeigt weiterhin den Hoststand `restarbeiten.ui.main`",
-      "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
+      "PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
       "plan.canvas.default",
       "unbekannte SurfaceIds",
-      "keine Bearbeitung moeglich",
+      "keine Bearbeitung",
       "kein Drag",
       "kein Resize",
       "keine Speicher-/Persistenzfunktion sichtbar",
@@ -3159,8 +3208,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const docSource = fs.readFileSync(PDF_PAGE_HINT_REFERENCE_DOC_PATH, "utf8");
 
     for (const required of [
-      "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
-      "SurfaceInfo bleibt Hoststand",
+      "PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.",
+      "SurfaceInfo zeigt weiterhin `restarbeiten.ui.main`",
       "restarbeiten.ui.main",
       "pdf.plan.page.1",
       "plan.canvas.default",
@@ -3226,7 +3275,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "pdf.plan.page.1",
       "restarbeiten.ui.main",
       "Restarbeiten - PDF Plan Seite 1",
-      "PDF Plan Seite 1 ist nur read-only sichtbar",
+      "PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar",
       "Start -> Projekte",
       "Nr.: 04-2026 / UI-Polish fuer BBM",
       "plan.canvas.default",
@@ -3252,8 +3301,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "pdf.plan.page.1",
       "restarbeiten.ui.main",
       "read-only",
-      "nicht sichtbar",
-      "nicht auswählbar",
+      "auswählbar",
+      "read-only Auswahlstand",
       "kein Drag",
       "kein Resize",
       "keine Persistenz",

@@ -27,7 +27,7 @@ function assertNoStorageOrWritePath(source, label) {
 async function runSurfaceSwitchModelTests(run) {
   const switchModule = await importEsmFromFile(SWITCH_MODEL_PATH);
 
-  await run("SurfaceSwitchModel: erlaubt den aktuellen read-only Pilot und die freigegebene PDF-Seite", () => {
+  await run("SurfaceSwitchModel: erlaubt den aktuellen read-only Pilot, die freigegebene PDF-Seite und Plan Canvas", () => {
     const result = switchModule.buildReadonlySurfaceSwitchResult({
       targetSurfaceId: "restarbeiten.ui.main",
     });
@@ -62,11 +62,27 @@ async function runSurfaceSwitchModelTests(run) {
       switchModule.resolveReadonlySurfaceSwitchTarget("pdf.plan.page.1"),
       "pdf.plan.page.1"
     );
+
+    const planResult = switchModule.buildReadonlySurfaceSwitchResult({
+      targetSurfaceId: "plan.canvas.default",
+    });
+    assert.deepEqual(planResult, {
+      allowed: true,
+      readonly: true,
+      fromSurfaceId: "restarbeiten.ui.main",
+      targetSurfaceId: "plan.canvas.default",
+      resolvedSurfaceId: "plan.canvas.default",
+      reason: "readonly-current-surface",
+    });
+    assert.equal(switchModule.canSwitchReadonlySurface("plan.canvas.default"), true);
+    assert.equal(
+      switchModule.resolveReadonlySurfaceSwitchTarget("plan.canvas.default"),
+      "plan.canvas.default"
+    );
   });
 
-  await run("SurfaceSwitchModel: blockiert Plan, unbekannte und leere Ziele", () => {
+  await run("SurfaceSwitchModel: blockiert unbekannte und leere Ziele", () => {
     for (const blockedSurfaceId of [
-      "plan.canvas.default",
       "unknown.surface",
       "*",
       "",
@@ -97,18 +113,18 @@ async function runSurfaceSwitchModelTests(run) {
     }
   });
 
-  await run("SurfaceSwitchModel: blockierte fromSurfaceId erzwingt keinen Zielwechsel", () => {
+  await run("SurfaceSwitchModel: plan.canvas.default bleibt zwischen freigegebenen Zielen umschaltbar", () => {
     const result = switchModule.buildReadonlySurfaceSwitchResult({
       fromSurfaceId: "pdf.plan.page.1",
       targetSurfaceId: "plan.canvas.default",
     });
 
-    assert.equal(result.allowed, false);
+    assert.equal(result.allowed, true);
     assert.equal(result.readonly, true);
     assert.equal(result.fromSurfaceId, "pdf.plan.page.1");
     assert.equal(result.targetSurfaceId, "plan.canvas.default");
-    assert.equal(result.resolvedSurfaceId, "pdf.plan.page.1");
-    assert.equal(result.reason, "surface-not-selectable-readonly");
+    assert.equal(result.resolvedSurfaceId, "plan.canvas.default");
+    assert.equal(result.reason, "readonly-current-surface");
   });
 
   await run("SurfaceSwitchModel: bleibt frei von Speicher-, Drag-, Resize- und Launcher-Pfaden", () => {

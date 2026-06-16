@@ -3,9 +3,10 @@
 ## Kurzfazit
 
 Der gesamte read-only Surface-Steuerungsstand ist als stabile Referenz
-abgeschlossen. Im BBM-Launcher bleiben `restarbeiten.ui.main` und
-`pdf.plan.page.1` sichtbar; die SurfaceInfo bleibt dabei auf
-`restarbeiten.ui.main`. Die Kette aus SurfaceAdapterCatalog, SurfacePolicy,
+abgeschlossen. Im BBM-Launcher bleiben `restarbeiten.ui.main`,
+`pdf.plan.page.1` und `plan.canvas.default` sichtbar; die SurfaceInfo
+bleibt dabei auf `restarbeiten.ui.main`. Die Kette aus SurfaceAdapterCatalog,
+SurfacePolicy,
 SurfaceSelectionModel, SurfaceSelectionState, SurfaceSwitchModel und
 SurfaceSwitchCommand arbeitet defensiv read-only. Es gibt keine echte
 Surface-Umschaltung; sichtbare UI-Ergaenzungen bleiben auf die kompakte
@@ -35,8 +36,7 @@ begrenzt.
   `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md`, ohne die
   Policy zu aendern.
 - G75 setzt `pdf.plan.page.1` nun per read-only Policy sichtbar frei; die
-  Surface-Auswahl zeigt damit mehr als einen Eintrag, waehrend
-  `plan.canvas.default` blockiert bleibt.
+  Surface-Auswahl zeigt damit mehr als einen Eintrag.
 - G76 sichert diesen sichtbaren G75-Stand zusaetzlich in
   `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_SICHTPRUEFUNG.md` ab; die
   Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`, waehrend die
@@ -51,6 +51,9 @@ begrenzt.
   `docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md`; BBM, Launcher
   und Projekte-Ansicht waren sichtbar, die konkrete Restarbeiten-Zielroute war
   in dieser Sitzung aber nicht reproduzierbar erreichbar.
+- G83 setzt `plan.canvas.default` zusaetzlich read-only sichtbar frei; die
+  Surface-Auswahl kann damit `Plan Canvas` anzeigen, waehrend die SurfaceInfo
+  bewusst `restarbeiten.ui.main` bleibt.
 - Die SurfaceInfo im Editorpanel bleibt im Default-Fall
   `restarbeiten.ui.main` / `ui-screen` / Elementanzahl.
 - `changed` bleibt `false`.
@@ -94,11 +97,11 @@ Umschaltung, keine Bearbeitung und keine Speicherwege.
 sichtbar:
 - Surface-Auswahl: Restarbeiten
 - Surface-Auswahl: PDF Plan Seite 1
-- Read-only Hinweis: PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
+- Surface-Auswahl: Plan Canvas
+- Read-only Hinweis: PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
 - SurfaceInfo: restarbeiten.ui.main / ui-screen / Elementanzahl
 
 nicht sichtbar:
-- plan.canvas.default
 - unbekannte SurfaceIds
 - *
 ```
@@ -112,9 +115,9 @@ kein Dropdown und keine weiteren auswaehlbaren SurfaceIds.
 erlaubt / sichtbar / resolved:
 - restarbeiten.ui.main
 - pdf.plan.page.1
+- plan.canvas.default
 
 blockiert:
-- plan.canvas.default
 - unbekannte SurfaceIds
 - *
 - leere IDs
@@ -125,7 +128,7 @@ blockiert:
 - read-only
 - keine echte Umschaltung
 - keine neue Bedienlogik
-- keine PDF-/Plan-Auswahl
+- keine PDF-/Plan-Auswahl als Bearbeitung
 - keine Bearbeitung
 - kein Drag
 - kein Resize

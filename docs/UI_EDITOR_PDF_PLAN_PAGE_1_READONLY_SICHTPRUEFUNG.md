@@ -4,9 +4,9 @@
 
 Die sichtbare read-only Freigabe fuer `pdf.plan.page.1` ist im lokalen
 Electron-DEV-Lauf verifiziert und als Referenz abgesichert. Sichtbar bleibt die
-kompakte Surface-Auswahl `Restarbeiten - PDF Plan Seite 1`, waehrend die
-SurfaceInfo weiterhin den Hoststand `restarbeiten.ui.main` /
-`ui-screen` / Elementanzahl zeigt.
+kompakte Surface-Auswahl `Restarbeiten - PDF Plan Seite 1` mit zusaetzlichem
+`Plan Canvas`, waehrend die SurfaceInfo weiterhin den Hoststand
+`restarbeiten.ui.main` / `ui-screen` / Elementanzahl zeigt.
 
 ## Ausgangsstand nach G75
 
@@ -14,8 +14,9 @@ SurfaceInfo weiterhin den Hoststand `restarbeiten.ui.main` /
   `pdf.plan.page.1` nur read-only sichtbar
 - weiterhin vorhanden:
   `restarbeiten.ui.main`
-- weiterhin blockiert:
+- zusaetzlich read-only sichtbar:
   `plan.canvas.default`
+- weiterhin blockiert:
   unbekannte SurfaceIds
   `*`
   leere IDs
@@ -35,11 +36,11 @@ SurfaceInfo weiterhin den Hoststand `restarbeiten.ui.main` /
 
 ## Surface-Auswahl
 
-Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`.
+Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1` und `Plan Canvas`.
 
 - `Restarbeiten` bleibt als vorhandene UI-Surface sichtbar
 - `PDF Plan Seite 1` erscheint zusaetzlich nur read-only
-- `plan.canvas.default` erscheint nicht
+- `plan.canvas.default` erscheint zusaetzlich als read-only Surface
 - unbekannte SurfaceIds, `*` und leere IDs erscheinen nicht
 
 ## SurfaceInfo-Verhalten
@@ -57,7 +58,7 @@ SurfaceInfo zeigt weiterhin den Hoststand `restarbeiten.ui.main`.
 Direkt sichtbar ist zusaetzlich:
 
 ```text
-PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
+PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.
 ```
 
 - der Hinweis bleibt klein und rein informativ
@@ -69,7 +70,6 @@ PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine
 
 ```text
 blockiert:
-- plan.canvas.default
 - unbekannte SurfaceIds
 - *
 - leere IDs
@@ -171,3 +171,9 @@ als Referenz dokumentiert.
   dokumentierte Sichtstand bleibt unveraendert.
 - Die Sichtpruefung selbst bleibt die Grundlage fuer die read-only
   Abnahmekette.
+
+## Nachtrag G83
+
+- `plan.canvas.default` ist jetzt zusaetzlich read-only sichtbar.
+- Die SurfaceInfo bleibt weiterhin bewusst `restarbeiten.ui.main`.
+- Der technische G76-Sichtstand bleibt als PDF-Seiten-Referenz bestehen.

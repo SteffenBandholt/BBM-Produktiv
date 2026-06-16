@@ -18,7 +18,7 @@ aus. Sichtbar bleibt weiterhin nur `restarbeiten.ui.main`.
 
 - `restarbeiten.ui.main` ist sichtbar und bleibt im Hoststand praesent
 - `pdf.plan.page.1` ist read-only sichtbar
-- `plan.canvas.default` ist blockiert
+- `plan.canvas.default` ist read-only sichtbar
 - unbekannte SurfaceIds bleiben blockiert
 - `*` bleibt blockiert
 - leere IDs bleiben blockiert
@@ -168,5 +168,12 @@ Die sichtbare Referenz ist zusaetzlich ueber
 - Der neue Kandidat ist nur dokumentarisch in
   `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PLAN_CANVAS_DEFAULT.md`
   beschrieben.
+- `pdf.plan.page.1` bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt
+  Host-/Bestandssurface.
+
+## Nachtrag G83
+
+- `plan.canvas.default` ist jetzt explizit read-only sichtbar freigegeben.
+- Die Freigabevorlage bleibt weiterhin auf genau eine SurfaceId begrenzt.
 - `pdf.plan.page.1` bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt
   Host-/Bestandssurface.

@@ -67,7 +67,7 @@ canPersist: false
 
 plan.canvas.default
 readable: true
-visibleInEditor: false
+visibleInEditor: true
 canHide: false
 canDrag: false
 canResize: false
@@ -103,8 +103,8 @@ Der Katalog bleibt dadurch an eine explizite Allowlist gebunden. Eine bekannte
 SurfaceId ist nur lesbar, wenn die Policy `readable: true` meldet.
 
 Sichtbare Editorpanel-Info ist zusaetzlich an `visibleInEditor: true`
-gebunden. Aktuell gilt das fuer `restarbeiten.ui.main` und
-`pdf.plan.page.1`.
+gebunden. Aktuell gilt das fuer `restarbeiten.ui.main`,
+`pdf.plan.page.1` und `plan.canvas.default`.
 
 Referenzierter Editorpanel-Datenfluss seit G54:
 
@@ -130,9 +130,9 @@ buildReadonlySurfaceSelectionModel(...)
 ```
 
 Auch dieses Modell ist an `readable === true` und `visibleInEditor === true`
-gebunden. Aktuell sind dadurch `restarbeiten.ui.main` und
-`pdf.plan.page.1` enthalten; `plan.canvas.default` sowie unbekannte
-SurfaceIds bleiben ausgeschlossen.
+gebunden. Aktuell sind dadurch `restarbeiten.ui.main`, `pdf.plan.page.1`
+und `plan.canvas.default` enthalten; unbekannte SurfaceIds bleiben
+ausgeschlossen.
 
 Sichtbare Surface-Auswahl seit G56:
 
@@ -197,8 +197,8 @@ BBM-Launcher
 - Keine Wildcard.
 - Kein Default-Adapter.
 - Unbekannte SurfaceIds bleiben blockiert.
-- `visibleInEditor: true` fuer `restarbeiten.ui.main` und `pdf.plan.page.1`.
-- `visibleInEditor: false` fuer `plan.canvas.default`.
+- `visibleInEditor: true` fuer `restarbeiten.ui.main`, `pdf.plan.page.1`
+  und `plan.canvas.default`.
 - `canDrag: false` fuer alle bekannten SurfaceIds.
 - `canResize: false` fuer alle bekannten SurfaceIds.
 - `canPersist: false` fuer alle bekannten SurfaceIds.
@@ -297,3 +297,14 @@ und `plan.canvas.default` bleibt blockiert.
 Die SurfacePolicy selbst wird in G82 nicht geaendert; `pdf.plan.page.1`
 bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface
 und `plan.canvas.default` bleibt blockiert.
+
+## Status nach G83
+
+`plan.canvas.default` ist jetzt explizit read-only sichtbar freigegeben.
+Die SurfacePolicy bleibt weiterhin explizit und ohne Drag, Resize oder
+Persistenz:
+
+- `restarbeiten.ui.main` sichtbar
+- `pdf.plan.page.1` sichtbar
+- `plan.canvas.default` sichtbar
+- unbekannte SurfaceIds blockiert

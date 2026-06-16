@@ -66,7 +66,7 @@ async function runSurfacePolicyTests(run) {
     assert.equal(policyModule.isSurfaceVisibleInEditor("restarbeiten.ui.main"), true);
   });
 
-  await run("SurfacePolicy: PDF-Seite 1 ist read-only sichtbar, Plan bleibt blockiert", () => {
+  await run("SurfacePolicy: PDF-Seite 1 und Plan Canvas sind read-only sichtbar", () => {
     assertPolicy(policyModule.getSurfacePolicy("pdf.plan.page.1"), {
       readable: true,
       visibleInEditor: true,
@@ -79,13 +79,13 @@ async function runSurfacePolicyTests(run) {
 
     assertPolicy(policyModule.getSurfacePolicy("plan.canvas.default"), {
       readable: true,
-      visibleInEditor: false,
+      visibleInEditor: true,
       canHide: false,
       canDrag: false,
       canResize: false,
       canPersist: false,
     });
-    assert.equal(policyModule.isSurfaceVisibleInEditor("plan.canvas.default"), false);
+    assert.equal(policyModule.isSurfaceVisibleInEditor("plan.canvas.default"), true);
   });
 
   await run("SurfacePolicy: unbekannte SurfaceIds und Wildcards sind voll blockiert", () => {

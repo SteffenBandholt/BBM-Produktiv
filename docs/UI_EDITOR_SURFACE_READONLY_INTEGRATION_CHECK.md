@@ -4,9 +4,9 @@
 
 Der read-only Surface-Gesamtstand ist technisch konsistent und als
 Integrationsbasis vor einem spaeteren Produktivschritt freigehalten. Sichtbar
-bleiben `restarbeiten.ui.main` und `pdf.plan.page.1`; SurfaceInfo bleibt dabei
-auf `restarbeiten.ui.main`, und der zusaetzliche PDF-Hinweis bleibt rein
-informativ. Die Kette aus
+bleiben `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`;
+SurfaceInfo bleibt dabei auf `restarbeiten.ui.main`, und die Hinweisspur
+bleibt rein informativ. Die Kette aus
 SurfaceRuntime-Bridge, SurfaceAdapterCatalog, SurfacePolicy,
 SurfaceSelectionModel, SurfaceSelectionState, SurfaceSwitchModel,
 SurfaceSwitchCommand und Launcher-read-only-Anbindung bleibt defensiv und
@@ -29,13 +29,13 @@ ohne echte Umschaltung.
 erlaubt / resolved / sichtbar:
 - restarbeiten.ui.main
 - pdf.plan.page.1
+- plan.canvas.default
 ```
 
 ## Blockierte SurfaceIds
 
 ```text
 blockiert:
-- plan.canvas.default
 - unbekannte SurfaceIds
 - *
 - leere IDs
@@ -43,7 +43,7 @@ blockiert:
 
 ## Sichtbare UI-Grenze
 
-- sichtbar bleiben `Restarbeiten` und `PDF Plan Seite 1`
+- sichtbar bleiben `Restarbeiten`, `PDF Plan Seite 1` und `Plan Canvas`
 - ein kleiner read-only Hinweis fuer `pdf.plan.page.1` ist sichtbar
 - SurfaceInfo bleibt `restarbeiten.ui.main` / `ui-screen` / Elementanzahl
 - keine Surface-Liste
@@ -79,7 +79,7 @@ dokumentiert.
 
 - separate Freigabe fuer produktive Surface-Umschaltung
 - `pdf.plan.page.1` ist bereits als read-only sichtbare PDF-Surface freigegeben
-- `plan.canvas.default` bleibt separat blockiert
+- `plan.canvas.default` ist ebenfalls read-only sichtbar
 - separate Freigabe fuer weitere SurfaceIds
 - separate Freigabe fuer Drag
 - separate Freigabe fuer Resize
@@ -90,6 +90,7 @@ dokumentiert.
 - echte Surface-Umschaltung als eigenes Freigabepaket
 - weitere SurfaceIds nur ueber eigene Policy-Freigabe
 - sichtbare PDF-/Plan-Surfaces fuer `pdf.plan.page.1` sind read-only freigegeben
+- `plan.canvas.default` ist ebenfalls read-only sichtbar
 - Drag, Resize und Persistenz jeweils separat behandeln
 - die Freigabematrix fuer die naechste Surface-Phase liegt in
   `docs/UI_EDITOR_SURFACE_NEXT_PHASE_FREIGABEMATRIX.md`
@@ -115,3 +116,9 @@ dokumentiert.
 - Der Integrationscheck aendert keine Freigabe und keine Sichtbarkeit.
 - `pdf.plan.page.1` bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt
   Hoststand und `plan.canvas.default` bleibt blockiert.
+
+## Nachtrag G83
+
+- `plan.canvas.default` ist jetzt zusaetzlich read-only sichtbar freigegeben.
+- Die Integrationsbasis bleibt defensiv und ohne echte Umschaltung.
+- `restarbeiten.ui.main` bleibt Hoststand.

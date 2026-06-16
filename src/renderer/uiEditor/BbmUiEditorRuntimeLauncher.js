@@ -48,7 +48,7 @@ const PREVIEW_PANEL_DEFAULT_TOP = "132px";
 const PREVIEW_PANEL_VIEWPORT_MARGIN = 16;
 const READONLY_SURFACE_INFO_SURFACE_ID = "restarbeiten.ui.main";
 const READONLY_PDF_PLAN_PAGE_1_SURFACE_ID = "pdf.plan.page.1";
-const READONLY_PDF_PLAN_PAGE_1_HINT_TEXT = "PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.";
+const READONLY_PDF_PLAN_PAGE_1_HINT_TEXT = "PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.";
 
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
