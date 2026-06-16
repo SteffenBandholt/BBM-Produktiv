@@ -290,3 +290,10 @@ Die gebuendelte Abnahmereferenz fuer `pdf.plan.page.1` ist jetzt in
 zusammengefasst. Die SurfacePolicy bleibt dabei unveraendert: `pdf.plan.page.1`
 ist read-only sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface
 und `plan.canvas.default` bleibt blockiert.
+
+## Status nach G82
+
+`plan.canvas.default` wird jetzt nur als naechster Kandidat dokumentiert.
+Die SurfacePolicy selbst wird in G82 nicht geaendert; `pdf.plan.page.1`
+bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface
+und `plan.canvas.default` bleibt blockiert.

@@ -65,6 +65,10 @@ const PDF_PAGE_ABNAHME_REFERENZ_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md"
 );
+const PLAN_CANVAS_CANDIDATE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PLAN_CANVAS_DEFAULT.md"
+);
 const SURFACE_INFO_ENTSCHEIDUNG_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md"
@@ -3232,6 +3236,32 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `PDF-Plan-Abnahmereferenz enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Plan-Canvas-Kandidat bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(PLAN_CANVAS_CANDIDATE_DOC_PATH),
+      true,
+      "Plan-Canvas-Kandidat fehlt."
+    );
+    const docSource = fs.readFileSync(PLAN_CANVAS_CANDIDATE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "plan.canvas.default",
+      "pdf.plan.page.1",
+      "restarbeiten.ui.main",
+      "read-only",
+      "nicht sichtbar",
+      "nicht auswählbar",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "keine Wildcard",
+      "kein Default-true",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Plan-Canvas-Kandidat enthaelt ${required} nicht.`);
     }
   });
 

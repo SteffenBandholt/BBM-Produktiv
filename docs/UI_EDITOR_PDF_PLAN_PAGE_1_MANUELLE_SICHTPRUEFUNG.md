@@ -123,3 +123,9 @@ aber diese fehlende direkte Restarbeiten-Zielrouten-Bestaetigung nicht.
 - Die gebuendelte Abschlussreferenz liegt jetzt in
   `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`.
 - Der bestaetigte Sichtstand selbst bleibt unveraendert.
+
+## Nachtrag G82
+
+- `plan.canvas.default` wird nur als naechster Kandidat bewertet; die manuelle
+  Sichtpruefung bleibt unberuehrt.
+- Die G80-Bestaetigung wird weiterhin nur referenziell genutzt.

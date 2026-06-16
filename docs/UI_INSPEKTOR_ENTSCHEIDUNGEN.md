@@ -170,6 +170,13 @@ gebuendelt. `pdf.plan.page.1` bleibt nur read-only sichtbar,
 als Referenz abgeschlossen, ohne eine neue Surface oder echte Umschaltung
 einzufuehren.
 
+**Status nach G82:** `plan.canvas.default` wird jetzt nur als naechster
+Kandidat bewertet und in
+`docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PLAN_CANVAS_DEFAULT.md`
+dokumentiert. Es gibt keine neue Freigabe, keine Policy-Aenderung und keine
+neue Sichtbarkeit; `pdf.plan.page.1` bleibt read-only sichtbar und
+`restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+
 ## Entscheidung 024
 **Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
 

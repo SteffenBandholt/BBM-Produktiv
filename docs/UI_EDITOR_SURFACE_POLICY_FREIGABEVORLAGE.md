@@ -160,3 +160,13 @@ Die sichtbare Referenz ist zusaetzlich ueber
 - Surface-Auswahl zeigt `Restarbeiten - PDF Plan Seite 1`
 - SurfaceInfo bleibt `restarbeiten.ui.main`
 - `plan.canvas.default` bleibt blockiert
+
+## Nachtrag G82
+
+- Die Freigabevorlage bleibt unveraendert und gibt `plan.canvas.default`
+  weiterhin nicht frei.
+- Der neue Kandidat ist nur dokumentarisch in
+  `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PLAN_CANVAS_DEFAULT.md`
+  beschrieben.
+- `pdf.plan.page.1` bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt
+  Host-/Bestandssurface.

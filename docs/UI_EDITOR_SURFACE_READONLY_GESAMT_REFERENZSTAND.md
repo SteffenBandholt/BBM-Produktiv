@@ -172,3 +172,11 @@ blockiert:
 - Der Gesamt-Referenzstand bleibt unveraendert: `restarbeiten.ui.main`
   bleibt Hoststand, `pdf.plan.page.1` bleibt read-only sichtbar, und
   `plan.canvas.default` bleibt blockiert.
+
+## Nachtrag G82
+
+- `plan.canvas.default` wird jetzt nur als naechster Kandidat dokumentiert,
+  ohne Freigabe und ohne Aenderung an der read-only Kette.
+- Der Gesamt-Referenzstand bleibt bestehen: `pdf.plan.page.1` ist
+  read-only sichtbar, `restarbeiten.ui.main` bleibt Hoststand, und
+  `plan.canvas.default` bleibt blockiert.

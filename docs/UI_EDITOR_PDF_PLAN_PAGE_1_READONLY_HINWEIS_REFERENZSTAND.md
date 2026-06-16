@@ -98,3 +98,9 @@ Geprueft wurde:
   mitgefuehrt.
 - Der Hinweistext selbst, der sichtbare Zustand und die Blockaden bleiben
   unveraendert.
+
+## Nachtrag G82
+
+- `plan.canvas.default` wird jetzt nur als Kandidat bewertet, ohne den
+  sichtbaren Hinweisstand oder die bestehende Blockade zu aendern.
+- Der Hinweistext bleibt unveraendert.

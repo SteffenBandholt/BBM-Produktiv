@@ -122,3 +122,10 @@ PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine
 - keine weitere Aenderung am abgenommenen read-only Stand
 - nur bei neuer fachlicher Freigabe ein eigenes Folgepaket fuer weitere
   SurfaceIds oder Interaktionen starten
+
+## Nachtrag G82
+
+- `plan.canvas.default` wird nun nur als naechster Kandidat bewertet, ohne
+  Freigabe und ohne Policy-Änderung.
+- Die Abnahmereferenz fuer `pdf.plan.page.1` bleibt davon unberuehrt.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.

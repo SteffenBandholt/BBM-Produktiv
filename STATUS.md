@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- plan.canvas.default als naechster Kandidat bewertet:
+  - G82 dokumentiert `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PLAN_CANVAS_DEFAULT.md`.
+  - `plan.canvas.default` bleibt weiter blockiert und nicht auswählbar.
+  - `pdf.plan.page.1` bleibt read-only sichtbar.
+  - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+  - Es gibt keine Policy-Aenderung und keine neue Freigabe.
+  - G82 aendert keine Produktivlogik, keine sichtbare UI und keine
+    Laufzeit-Schiene; das Paket zieht nur Doku und Guardrail nach.
+
 - PDF Plan Seite 1 read-only Abnahmereferenz abgeschlossen:
   - G81 buendelt den bestaetigten Stand in
     `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`.

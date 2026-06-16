@@ -87,3 +87,9 @@ dort ueber den vorhandenen `UI-Editor`-Launcher in den read-only Zielstand.
   `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
   zusammengefasst.
 - Der Klickpfad und der sichtbare Zielstand bleiben unveraendert.
+
+## Nachtrag G82
+
+- Die Zielrouten-Referenz bleibt unveraendert; `plan.canvas.default` wird
+  nur als naechster Kandidat bewertet.
+- Der Klickpfad fuehrt weiterhin zum read-only Abnahmestand.

@@ -157,3 +157,11 @@ Die read-only Abnahmereferenz fuer `pdf.plan.page.1` ist jetzt in
 gebuendelt. Diese Matrix bleibt davon unberuehrt: sie dient weiter nur der
 Freigabevorbereitung fuer spaetere Schritte, waehrend `plan.canvas.default`
 und echte Umschaltung weiterhin blockiert bleiben.
+
+## Status nach G82
+
+`plan.canvas.default` ist jetzt nur als naechster Kandidat dokumentiert. Die
+Matrix gibt nichts frei, sondern haelt weiter an der Trennung fest:
+`pdf.plan.page.1` bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt
+Host-/Bestandssurface und die naechste echte Freigabe braucht ein eigenes
+Paket.

@@ -108,3 +108,10 @@ dokumentiert.
 - Der Integrationscheck bleibt unveraendert: `restarbeiten.ui.main` bleibt
   Hoststand, `pdf.plan.page.1` bleibt read-only sichtbar und
   `plan.canvas.default` bleibt blockiert.
+
+## Nachtrag G82
+
+- `plan.canvas.default` ist nun nur als naechster Kandidat dokumentiert.
+- Der Integrationscheck aendert keine Freigabe und keine Sichtbarkeit.
+- `pdf.plan.page.1` bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt
+  Hoststand und `plan.canvas.default` bleibt blockiert.

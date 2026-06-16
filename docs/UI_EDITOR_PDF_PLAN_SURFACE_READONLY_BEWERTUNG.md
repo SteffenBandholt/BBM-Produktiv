@@ -135,6 +135,13 @@ selbst noch nichts frei.
 Der erste konkrete Kandidat fuer spaetere Einzelfreigabe ist
 `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md`.
 
+## Nachtrag G82
+
+`plan.canvas.default` wird jetzt zusaetzlich als naechster Kandidat bewertet.
+Die Bewertung aendert nichts an der aktuellen Blockade und gibt nichts frei;
+sie verweist nur auf das neue Kandidatendokument
+`docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PLAN_CANVAS_DEFAULT.md`.
+
 ## Status nach G75 / G76
 
 `pdf.plan.page.1` ist nun als read-only Surface sichtbar freigegeben.

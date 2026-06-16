@@ -164,3 +164,10 @@ als Referenz dokumentiert.
   zusammengefasst.
 - Der hier dokumentierte Sichtstand bleibt die technische Grundlage der
   Abschlussreferenz.
+
+## Nachtrag G82
+
+- `plan.canvas.default` wird nur als nachgelagerter Kandidat bewertet; der
+  dokumentierte Sichtstand bleibt unveraendert.
+- Die Sichtpruefung selbst bleibt die Grundlage fuer die read-only
+  Abnahmekette.
