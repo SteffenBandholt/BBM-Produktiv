@@ -78,3 +78,12 @@ dort ueber den vorhandenen `UI-Editor`-Launcher in den read-only Zielstand.
 - keine fuer diese Sichtpruefungsroute
 - weitere Freigaben, Routing-Varianten oder UI-Umbaustufen bleiben spaeteren
   LV-Positionen vorbehalten
+
+## Nachtrag G81
+
+- Diese Route bleibt die reproduzierbare Zielrouten-Referenz fuer das
+  Abschlussdokument.
+- Die Abnahmereferenz ist jetzt zusaetzlich in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
+  zusammengefasst.
+- Der Klickpfad und der sichtbare Zielstand bleiben unveraendert.

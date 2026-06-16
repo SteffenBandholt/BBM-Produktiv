@@ -163,3 +163,12 @@ blockiert:
 - Drag, Resize und Persistenz jeweils getrennt planen, testen und sichtbar
   abnehmen.
 - Launcher-UI nur bei expliziter Produktivfreigabe erweitern.
+
+## Nachtrag G81
+
+- Die gebuendelte Abnahmereferenz fuer `pdf.plan.page.1` ist jetzt in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
+  zusammengefasst.
+- Der Gesamt-Referenzstand bleibt unveraendert: `restarbeiten.ui.main`
+  bleibt Hoststand, `pdf.plan.page.1` bleibt read-only sichtbar, und
+  `plan.canvas.default` bleibt blockiert.

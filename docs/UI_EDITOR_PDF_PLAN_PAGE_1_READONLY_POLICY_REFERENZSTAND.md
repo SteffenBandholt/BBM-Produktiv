@@ -102,3 +102,12 @@ Die offene Einordnung dieses SurfaceInfo-Verhaltens ist zusaetzlich in
 Der sichtbare Hinweisstand ist zusaetzlich in
 `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_HINWEIS_REFERENZSTAND.md`
 festgehalten.
+
+## Nachtrag G81
+
+- Die Policy selbst bleibt unveraendert.
+- Die gebuendelte Abschlussreferenz ist in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
+  zusammengefasst.
+- `pdf.plan.page.1` bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt
+  Host-/Bestandssurface, und `plan.canvas.default` bleibt blockiert.

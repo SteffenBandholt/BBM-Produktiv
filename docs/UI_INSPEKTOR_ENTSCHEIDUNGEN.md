@@ -163,6 +163,13 @@ Pfad `Start` -> `Projekte` -> Projektkachel `Nr.: 04-2026 / UI-Polish fuer BBM`
 `Restarbeiten - PDF Plan Seite 1`, `restarbeiten.ui.main`, sichtbarem Hinweis,
 blockiertem `plan.canvas.default`, ohne Drag, Resize oder Persistenz.
 
+**Status nach G81:** Die Abnahmereferenz ist jetzt in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
+gebuendelt. `pdf.plan.page.1` bleibt nur read-only sichtbar,
+`restarbeiten.ui.main` bleibt Host-/Bestandssurface und der Stand wird damit
+als Referenz abgeschlossen, ohne eine neue Surface oder echte Umschaltung
+einzufuehren.
+
 ## Entscheidung 024
 **Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
 

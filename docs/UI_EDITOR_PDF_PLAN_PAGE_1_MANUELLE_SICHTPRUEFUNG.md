@@ -115,3 +115,11 @@ aber diese fehlende direkte Restarbeiten-Zielrouten-Bestaetigung nicht.
   `restarbeiten.ui.main`,
   `PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.`,
   `plan.canvas.default`
+
+## Nachtrag G81
+
+- Die manuelle Sichtpruefung bleibt die historische Abnahmereferenz fuer den
+  live bestaetigten G80-Stand.
+- Die gebuendelte Abschlussreferenz liegt jetzt in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`.
+- Der bestaetigte Sichtstand selbst bleibt unveraendert.

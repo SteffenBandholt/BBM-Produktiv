@@ -149,3 +149,11 @@ bestehenden UI-Editor-Panel ergaenzt. Damit ist die sichtbare PDF-Freigabe
 klarer benannt, ohne die SurfaceInfo umzubauen. SurfaceInfo bleibt
 `restarbeiten.ui.main`; echte Umschaltung, Drag, Resize und Persistenz bleiben
 weiterhin getrennte Folgepakete.
+
+## Status nach G81
+
+Die read-only Abnahmereferenz fuer `pdf.plan.page.1` ist jetzt in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
+gebuendelt. Diese Matrix bleibt davon unberuehrt: sie dient weiter nur der
+Freigabevorbereitung fuer spaetere Schritte, waehrend `plan.canvas.default`
+und echte Umschaltung weiterhin blockiert bleiben.

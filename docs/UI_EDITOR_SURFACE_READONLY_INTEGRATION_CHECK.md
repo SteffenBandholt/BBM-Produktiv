@@ -99,3 +99,12 @@ dokumentiert.
   `docs/UI_EDITOR_SURFACE_POLICY_FREIGABEVORLAGE.md`
 - der konkrete Kandidat liegt in
   `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md`
+
+## Nachtrag G81
+
+- Die abschliessende Referenz fuer den read-only PDF-Plan-Stand ist in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
+  gebuendelt.
+- Der Integrationscheck bleibt unveraendert: `restarbeiten.ui.main` bleibt
+  Hoststand, `pdf.plan.page.1` bleibt read-only sichtbar und
+  `plan.canvas.default` bleibt blockiert.

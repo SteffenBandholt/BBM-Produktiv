@@ -127,3 +127,9 @@ mit Electron-Sichtpruefung.
 - In G77 wird nichts umgesetzt, sondern nur die Entscheidungsgrundlage
   dokumentiert.
 - Aktuell bleibt Variante A die empfohlene Zwischenloesung.
+
+## Nachtrag G81
+
+- Die dokumentierte Entscheidung bleibt bestehen und wird jetzt in der
+  Abschlussreferenz fuer den read-only PDF-Plan-Stand mitgefuehrt.
+- Die SurfaceInfo selbst bleibt unveraendert auf `restarbeiten.ui.main`.

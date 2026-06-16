@@ -127,6 +127,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G78 ergaenzt im bestehenden UI-Editor-Panel einen kleinen read-only Hinweis fuer `pdf.plan.page.1`; die SurfaceInfo bleibt unveraendert auf `restarbeiten.ui.main`, und es gibt weiterhin keine echte Umschaltung, kein Drag und keine Persistenz
 - G79 dokumentiert die manuelle Zielrouten-Sichtpruefung in `docs/UI_EDITOR_PDF_PLAN_PAGE_1_MANUELLE_SICHTPRUEFUNG.md`; BBM, Launcher und Projekte-Ansicht waren sichtbar, die konkrete Restarbeiten-Zielroute war in dieser Sitzung aber nicht reproduzierbar erreichbar und wurde deshalb ehrlich als `nicht vollstaendig bestanden / nicht vollstaendig erreichbar` festgehalten
 - G80 klaert die konkrete Restarbeiten-Zielroute in `docs/UI_EDITOR_RESTARBEITEN_ZIELROUTE_SICHTPRUEFUNG.md`; der reproduzierbare Pfad laeuft ueber `Start` -> `Projekte` -> Projektkachel `Nr.: 04-2026 / UI-Polish fuer BBM` -> `Restarbeiten` -> `UI-Editor` und fuehrt zum read-only Zielstand mit `Restarbeiten - PDF Plan Seite 1`, `restarbeiten.ui.main`, blockiertem `plan.canvas.default`, ohne Drag, Resize oder Persistenz
+- G81 schliesst die read-only Abnahmereferenz in `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md` ab; `pdf.plan.page.1` bleibt nur read-only sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface, und `plan.canvas.default` bleibt blockiert
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

@@ -156,3 +156,11 @@ als Referenz dokumentiert.
   referenziert.
 - Drag, Resize, Persistenz und echte Surface-Umschaltung bleiben getrennte
   Folgepakete.
+
+## Nachtrag G81
+
+- Die Abschlussreferenz ist jetzt in
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
+  zusammengefasst.
+- Der hier dokumentierte Sichtstand bleibt die technische Grundlage der
+  Abschlussreferenz.

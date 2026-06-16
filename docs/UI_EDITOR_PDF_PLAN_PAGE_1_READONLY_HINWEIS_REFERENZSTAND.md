@@ -90,3 +90,11 @@ Geprueft wurde:
   -> `Restarbeiten` -> `UI-Editor`
 - Der sichtbare Hinweis-Referenzstand bleibt dabei unveraendert:
   `PDF Plan Seite 1 ist nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.`
+
+## Nachtrag G81
+
+- Der Hinweisstand wird jetzt in der gebuendelten Abschlussreferenz
+  `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
+  mitgefuehrt.
+- Der Hinweistext selbst, der sichtbare Zustand und die Blockaden bleiben
+  unveraendert.

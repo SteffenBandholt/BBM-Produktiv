@@ -61,6 +61,10 @@ const RESTARBEITEN_ZIELROUTE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_RESTARBEITEN_ZIELROUTE_SICHTPRUEFUNG.md"
 );
+const PDF_PAGE_ABNAHME_REFERENZ_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md"
+);
 const SURFACE_INFO_ENTSCHEIDUNG_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_INFO_VERHALTEN_ENTSCHEIDUNG.md"
@@ -3203,6 +3207,31 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Manuelle Sichtpruefung bestanden",
     ]) {
       assert.equal(docSource.includes(required), true, `Restarbeiten-Zielrouten-Dokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: PDF-Plan-Abnahmereferenz bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(PDF_PAGE_ABNAHME_REFERENZ_DOC_PATH),
+      true,
+      "PDF-Plan-Abnahmereferenz fehlt."
+    );
+    const docSource = fs.readFileSync(PDF_PAGE_ABNAHME_REFERENZ_DOC_PATH, "utf8");
+
+    for (const required of [
+      "pdf.plan.page.1",
+      "restarbeiten.ui.main",
+      "Restarbeiten - PDF Plan Seite 1",
+      "PDF Plan Seite 1 ist nur read-only sichtbar",
+      "Start -> Projekte",
+      "Nr.: 04-2026 / UI-Polish fuer BBM",
+      "plan.canvas.default",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `PDF-Plan-Abnahmereferenz enthaelt ${required} nicht.`);
     }
   });
 

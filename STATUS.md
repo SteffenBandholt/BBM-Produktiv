@@ -17,6 +17,21 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- PDF Plan Seite 1 read-only Abnahmereferenz abgeschlossen:
+  - G81 buendelt den bestaetigten Stand in
+    `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`.
+  - Freigegeben bleibt `pdf.plan.page.1` nur read-only sichtbar.
+  - Host-/Bestandssurface bleibt `restarbeiten.ui.main`.
+  - Weiterhin blockiert bleiben `plan.canvas.default`, unbekannte SurfaceIds,
+    `*` und leere IDs.
+  - Bestaetigter Klickpfad:
+    `Start` -> `Projekte` -> `Nr.: 04-2026 / UI-Polish fuer BBM` ->
+    `Restarbeiten` -> `UI-Editor`.
+  - Ergebnis:
+    `Abnahmereferenz abgeschlossen`
+  - G81 aendert keine Produktivlogik, keine sichtbare UI und keine
+    Laufzeit-Schiene; das Paket zieht nur Doku und Guardrail nach.
+
 - Restarbeiten-Zielroute fuer UI-Editor-Sichtpruefung geklaert:
   - G80 dokumentiert `docs/UI_EDITOR_RESTARBEITEN_ZIELROUTE_SICHTPRUEFUNG.md`
     als reproduzierbaren Weg in den read-only Zielstand.

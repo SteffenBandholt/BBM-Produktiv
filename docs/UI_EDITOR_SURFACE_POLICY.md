@@ -282,3 +282,11 @@ Die SurfacePolicy bleibt unveraendert. SurfaceInfo bleibt
 `restarbeiten.ui.main`, `plan.canvas.default` bleibt blockiert, und es gibt
 weiterhin keine echte Umschaltung, kein Drag, kein Resize und keine
 Persistenz.
+
+## Status nach G81
+
+Die gebuendelte Abnahmereferenz fuer `pdf.plan.page.1` ist jetzt in
+`docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md`
+zusammengefasst. Die SurfacePolicy bleibt dabei unveraendert: `pdf.plan.page.1`
+ist read-only sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface
+und `plan.canvas.default` bleibt blockiert.
