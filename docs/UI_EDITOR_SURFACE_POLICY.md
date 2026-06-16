@@ -335,3 +335,13 @@ Persistenz:
   Varianten, Risiken und harte Grenzen, ohne etwas freizugeben.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
 - `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+
+## Status nach G87
+
+- Die Surface-Auswahl bleibt als read-only Sichtbarkeits-/Kontextanzeige
+  fachlich entschieden.
+- `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md` dokumentiert
+  diese Einordnung.
+- Eine aktive Surface bleibt ein spaeteres eigenes Paket.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.

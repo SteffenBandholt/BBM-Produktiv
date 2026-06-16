@@ -212,3 +212,11 @@ blockiert:
 - `restarbeiten.ui.main` bleibt Hoststand.
 - `pdf.plan.page.1` bleibt read-only sichtbar.
 - `plan.canvas.default` bleibt read-only sichtbar.
+
+## Nachtrag G87
+
+- Die Surface-Auswahl bleibt als read-only Sichtbarkeits-/Kontextanzeige
+  fachlich eingeordnet.
+- Die Entscheidung steht in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md`.
+- Der Gesamt-Referenzstand bleibt ansonsten unveraendert read-only.

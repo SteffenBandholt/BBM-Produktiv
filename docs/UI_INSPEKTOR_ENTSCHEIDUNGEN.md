@@ -402,3 +402,10 @@ beschreibt Varianten, Risiken, harte Grenzen und Stop-/Go-Kriterien, ohne eine
 Umschaltung freizugeben. G86 aktiviert keine Produktivlogik, keine sichtbare
 UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und keine
 Persistenz.
+
+**Status nach G87:** Der Surface-Auswahl-Kontext ist jetzt fachlich
+entschieden. `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md`
+legt fest, dass die Surface-Auswahl vorerst eine read-only
+Sichtbarkeits-/Kontextanzeige bleibt und keine aktive Surface ist. G87
+aktiviert keine Produktivlogik, keine sichtbare UI-Aenderung, keine echte
+Umschaltung, keinen Drag, kein Resize und keine Persistenz.

@@ -148,3 +148,11 @@ dokumentiert.
 - Der Integrationscheck bleibt read-only und unveraendert.
 - `restarbeiten.ui.main` bleibt Hoststand.
 - `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+
+## Nachtrag G87
+
+- Die Surface-Auswahl bleibt als read-only Sichtbarkeits-/Kontextanzeige
+  fachlich entschieden.
+- `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md` beschreibt die
+  fachliche Einordnung.
+- Der Integrationscheck bleibt ansonsten unveraendert read-only.

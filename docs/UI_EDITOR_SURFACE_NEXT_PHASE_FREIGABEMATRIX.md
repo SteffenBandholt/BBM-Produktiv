@@ -190,3 +190,12 @@ echte Freigaben brauchen eigene Pakete.
 - Es gibt weiterhin keine Umsetzung und keine neue Freigabe.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
 - `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+
+## Status nach G87
+
+- Die Surface-Auswahl bleibt eine read-only Sichtbarkeits-/Kontextanzeige.
+- Die fachliche Entscheidung steht in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md`.
+- Eine aktive Surface bleibt ein spaeteres eigenes Paket.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.

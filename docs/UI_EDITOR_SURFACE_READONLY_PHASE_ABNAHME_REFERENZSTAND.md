@@ -115,6 +115,14 @@ Wenn spaetere Anpassungen benoetigt werden, sollen sie als eigene, klein
 geschnittene Pakete folgen: weitere Surface-Freigaben, echte Umschaltung,
 Drag/Resize und Persistenz getrennt voneinander und erst nach neuer Freigabe.
 
+## Nachtrag G87
+
+- Die Surface-Auswahl ist jetzt fachlich als read-only Sichtbarkeits-/Kontextanzeige
+  eingeordnet.
+- Die aktuelle Auswahl bleibt keine aktive Surface-Umschaltung.
+- Die Entscheidung steht in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md`.
+
 ## Nachtrag G86
 
 - Die naechste Diskussion zur echten Surface-Umschaltung wird jetzt in

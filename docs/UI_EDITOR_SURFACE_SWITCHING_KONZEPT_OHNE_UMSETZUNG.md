@@ -9,6 +9,13 @@ oder Interaktionsaenderung und keine Produktivlogik.
 
 - keine echte Surface-Umschaltung
 
+## Nachtrag G87
+
+- Die fachliche Bedeutung der aktuell sichtbaren Surface-Auswahl ist jetzt in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md`
+  festgelegt.
+- Die Auswahl bleibt vorerst eine read-only Sichtbarkeits-/Kontextanzeige.
+
 ## Ausgangsstand nach G85
 
 ```text
