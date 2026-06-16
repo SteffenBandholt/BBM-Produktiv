@@ -99,3 +99,11 @@ dort ueber den vorhandenen `UI-Editor`-Launcher in den read-only Zielstand.
 - `plan.canvas.default` ist jetzt zusaetzlich read-only sichtbar.
 - Die konkrete Restarbeiten-Zielroute bleibt unveraendert.
 - Die SurfaceInfo bleibt weiterhin `restarbeiten.ui.main`.
+
+## Nachtrag G85
+
+- Dieser Klickpfad bleibt die reproduzierbare Einstiegsspur in die
+  abgeschlossene read-only Surface-Phase.
+- Der Gesamtabschluss ist in
+  `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md`
+  gebuendelt.

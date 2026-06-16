@@ -172,3 +172,12 @@ echte Freigaben brauchen eigene Pakete.
   abgesichert.
 - `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+
+## Status nach G85
+
+- Die aktuelle read-only Surface-Phase ist jetzt als abgeschlossen
+  dokumentiert.
+- Weitere Surface-Freigaben oder echte Interaktion bleiben getrennte
+  Folgepakete.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.

@@ -88,3 +88,10 @@ kann, waehrend `restarbeiten.ui.main` als SurfaceInfo stehen bleibt.
 - `pdf.plan.page.1` bleibt read-only sichtbar.
 - `plan.canvas.default` bleibt read-only sichtbar.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+
+## Nachtrag G85
+
+- `plan.canvas.default` bleibt read-only sichtbar und ist Teil der
+  abgeschlossenen Gesamtphase.
+- Der Gesamtabschluss steht in
+  `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md`.

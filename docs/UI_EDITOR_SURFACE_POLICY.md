@@ -317,3 +317,12 @@ Persistenz:
 - `pdf.plan.page.1` bleibt read-only sichtbar.
 - `plan.canvas.default` bleibt read-only sichtbar.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+
+## Status nach G85
+
+- Die gesamte read-only Surface-Phase ist jetzt als abgeschlossen
+  dokumentiert.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- `pdf.plan.page.1` bleibt read-only sichtbar.
+- `plan.canvas.default` bleibt read-only sichtbar.
+- Weitere Freigaben oder echte Interaktion bleiben getrennte Folgepakete.

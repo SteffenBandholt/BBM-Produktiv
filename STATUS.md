@@ -17,6 +17,17 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Gesamte read-only Surface-Phase als Abnahme-/Referenzstand abgeschlossen:
+  - G85 dokumentiert `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md`.
+  - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+  - `pdf.plan.page.1` bleibt read-only sichtbar.
+  - `plan.canvas.default` bleibt read-only sichtbar.
+  - SurfaceInfo bleibt bewusst `restarbeiten.ui.main`.
+  - Keine echte Surface-Umschaltung, kein Drag, kein Resize und keine
+    Persistenz.
+  - Empfohlene naechste Phase: weitere Surface-Freigaben oder echte
+    Interaktion nur als eigene, getrennte Pakete.
+
 - Plan Canvas read-only Sichtpruefung und Referenzstand abgesichert:
   - G84 dokumentiert `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`.
   - `pdf.plan.page.1` ist weiterhin explizit read-only sichtbar.

@@ -388,3 +388,10 @@ beschreibt den Kandidaten, den minimalen spaeteren Freigabeumfang und die
 Stop-/Go-Kriterien, ohne die Policy zu aendern. G74 aktiviert keine
 Produktivlogik, keine sichtbare UI-Aenderung, keine echte Umschaltung, keinen
 Drag, kein Resize und keine Persistenz.
+
+**Status nach G85:** Die gesamte read-only Surface-Phase ist nun als
+abgeschlossener Referenzstand dokumentiert. `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md`
+buendelt `restarbeiten.ui.main`, `pdf.plan.page.1` und `plan.canvas.default`
+unter klaren read-only Grenzen. G85 aktiviert keine Produktivlogik, keine
+sichtbare UI-Aenderung, keine echte Umschaltung, keinen Drag, kein Resize und
+keine Persistenz.

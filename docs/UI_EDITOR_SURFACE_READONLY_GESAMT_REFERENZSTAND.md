@@ -191,3 +191,14 @@ blockiert:
   abgesichert.
 - `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
 - `restarbeiten.ui.main` bleibt Hoststand.
+
+## Nachtrag G85
+
+- Die gesamte read-only Surface-Phase ist jetzt als Abschlussreferenz in
+  `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md`
+  gebuendelt.
+- `restarbeiten.ui.main` bleibt Hoststand.
+- `pdf.plan.page.1` bleibt read-only sichtbar.
+- `plan.canvas.default` bleibt read-only sichtbar.
+- Weitere Surface-Freigaben, echte Umschaltung, Drag und Persistenz bleiben
+  getrennte Folgepakete.

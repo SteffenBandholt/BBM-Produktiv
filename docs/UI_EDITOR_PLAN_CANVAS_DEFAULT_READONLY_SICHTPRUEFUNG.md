@@ -137,3 +137,11 @@ zwingend noetig.
 - `pdf.plan.page.1` bleibt read-only sichtbar.
 - `plan.canvas.default` bleibt read-only sichtbar.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+
+## Nachtrag G85
+
+- Diese Sichtpruefung bleibt Teil der jetzt abgeschlossenen read-only
+  Surface-Phase.
+- Der Gesamtabschluss ist in
+  `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md`
+  gebuendelt.

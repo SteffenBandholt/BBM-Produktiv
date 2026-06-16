@@ -149,3 +149,11 @@ PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung,
 - `pdf.plan.page.1` bleibt read-only sichtbar.
 - `plan.canvas.default` bleibt read-only sichtbar.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+
+## Nachtrag G85
+
+- Diese Abnahmereferenz bleibt Teil der abgeschlossenen read-only
+  Surface-Phase.
+- Der Gesamtabschluss ist in
+  `docs/UI_EDITOR_SURFACE_READONLY_PHASE_ABNAHME_REFERENZSTAND.md`
+  gebuendelt.
