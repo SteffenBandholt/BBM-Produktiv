@@ -16,6 +16,13 @@ oder Interaktionsaenderung und keine Produktivlogik.
   festgelegt.
 - Die Auswahl bleibt vorerst eine read-only Sichtbarkeits-/Kontextanzeige.
 
+## Nachtrag G88
+
+- Der Surface-Auswahl-Kontext ist jetzt als Referenzstand in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md`
+  abgesichert.
+- Die read-only Surface-Phase bleibt unveraendert abgeschlossen.
+
 ## Ausgangsstand nach G85
 
 ```text

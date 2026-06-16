@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Surface-Auswahl-Kontext als Referenzstand abgesichert:
+  - G88 dokumentiert `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md`.
+  - Die Surface-Auswahl bleibt eine read-only Sichtbarkeits-/Kontextanzeige.
+  - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+  - `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+  - SurfaceInfo bleibt bewusst `restarbeiten.ui.main`.
+  - Eine aktive Surface bleibt ein spaeteres eigenes Paket.
+
 - Surface-Auswahl-Kontext fachlich entschieden:
   - G87 dokumentiert `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md`.
   - Die Surface-Auswahl bleibt vorerst eine read-only Sichtbarkeits-/Kontextanzeige.

@@ -111,3 +111,10 @@ Eine echte aktive Surface darf erst in einem eigenen spaeteren Paket vorbereitet
 Die Surface-Auswahl bleibt vorerst read-only sichtbar und fachlich als
 Kontextanzeige festgelegt. Eine spaetere aktive Surface darf nur in einem
 eigenen Paket mit separater Freigabe vorbereitet werden.
+
+## Nachtrag G88
+
+- Der Abschnitt ist jetzt als stabiler Referenzstand in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md`
+  abgesichert.
+- Die Surface-Auswahl bleibt weiterhin keine aktive Surface.

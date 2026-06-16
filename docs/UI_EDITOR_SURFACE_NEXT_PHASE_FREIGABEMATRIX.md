@@ -199,3 +199,12 @@ echte Freigaben brauchen eigene Pakete.
 - Eine aktive Surface bleibt ein spaeteres eigenes Paket.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
 - `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+
+## Status nach G88
+
+- Der Surface-Auswahl-Kontext ist jetzt als Referenzstand abgesichert.
+- `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md`
+  dokumentiert den stabilen Referenzstand.
+- Eine aktive Surface bleibt ein spaeteres eigenes Paket.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.

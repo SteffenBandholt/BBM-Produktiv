@@ -61,6 +61,10 @@ const SURFACE_AUSWAHL_KONTEXT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md"
 );
+const SURFACE_AUSWAHL_KONTEXT_REFERENZ_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md"
+);
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
@@ -3300,6 +3304,34 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `Surface-Auswahl-Kontext-Dokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Surface-Auswahl-Kontext-Referenz bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(SURFACE_AUSWAHL_KONTEXT_REFERENZ_DOC_PATH),
+      true,
+      "Surface-Auswahl-Kontext-Referenzdokument fehlt."
+    );
+    const docSource = fs.readFileSync(SURFACE_AUSWAHL_KONTEXT_REFERENZ_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "Surface-Auswahl",
+      "read-only Sichtbarkeits-/Kontextanzeige",
+      "keine aktive Surface-Umschaltung",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Surface-Auswahl-Kontext-Referenzdokument enthaelt ${required} nicht.`
+      );
     }
   });
 

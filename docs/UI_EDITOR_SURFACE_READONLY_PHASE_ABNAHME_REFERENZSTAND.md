@@ -123,6 +123,13 @@ Drag/Resize und Persistenz getrennt voneinander und erst nach neuer Freigabe.
 - Die Entscheidung steht in
   `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_ENTSCHEIDUNG.md`.
 
+## Nachtrag G88
+
+- Der Surface-Auswahl-Kontext ist jetzt als Referenzstand in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md`
+  abgesichert.
+- Die read-only Surface-Phase bleibt unveraendert abgeschlossen.
+
 ## Nachtrag G86
 
 - Die naechste Diskussion zur echten Surface-Umschaltung wird jetzt in
