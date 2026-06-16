@@ -45,6 +45,10 @@ const PLAN_CANVAS_POLICY_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_POLICY_REFERENZSTAND.md"
 );
+const PLAN_CANVAS_SICHTPRUEFUNG_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md"
+);
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
@@ -3180,6 +3184,32 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "UI-Editor-kit speichert nicht",
     ]) {
       assert.equal(docSource.includes(required), true, `Plan-Canvas-Policy-Referenzdokument enthaelt ${required} nicht.`);
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Plan-Canvas-Sichtpruefungsdokument bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(PLAN_CANVAS_SICHTPRUEFUNG_DOC_PATH),
+      true,
+      "Plan-Canvas-Sichtpruefungsdokument fehlt."
+    );
+    const docSource = fs.readFileSync(PLAN_CANVAS_SICHTPRUEFUNG_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Plan Canvas",
+      "PDF Plan Seite 1",
+      "plan.canvas.default",
+      "pdf.plan.page.1",
+      "restarbeiten.ui.main",
+      "read-only sichtbar",
+      "Surface-Auswahl",
+      "SurfaceInfo",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(docSource.includes(required), true, `Plan-Canvas-Sichtpruefungsdokument enthaelt ${required} nicht.`);
     }
   });
 

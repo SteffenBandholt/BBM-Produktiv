@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Plan Canvas read-only Sichtpruefung und Referenzstand abgesichert:
+  - G84 dokumentiert `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`.
+  - `pdf.plan.page.1` ist weiterhin explizit read-only sichtbar.
+  - `plan.canvas.default` ist weiterhin explizit read-only sichtbar.
+  - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+  - SurfaceInfo bleibt bewusst `restarbeiten.ui.main`.
+  - Kein Drag, kein Resize, keine Persistenz und keine echte Umschaltung.
+
 - plan.canvas.default explizit read-only sichtbar freigegeben:
   - G83 dokumentiert `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_POLICY_REFERENZSTAND.md`.
   - `plan.canvas.default` ist jetzt read-only sichtbar und darf in der Surface-Auswahl erscheinen.

@@ -183,3 +183,11 @@ blockiert:
 - Der Gesamt-Referenzstand bleibt bestehen: `pdf.plan.page.1` ist
   read-only sichtbar, `restarbeiten.ui.main` bleibt Hoststand, und
   `plan.canvas.default` bleibt blockiert.
+
+## Nachtrag G84
+
+- Der Zwei-Surface-read-only-Stand ist jetzt zusaetzlich in
+  `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`
+  abgesichert.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+- `restarbeiten.ui.main` bleibt Hoststand.

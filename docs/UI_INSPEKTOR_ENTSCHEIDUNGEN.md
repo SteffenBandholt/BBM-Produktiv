@@ -184,6 +184,11 @@ dokumentiert. `pdf.plan.page.1` bleibt read-only sichtbar und
 `restarbeiten.ui.main` bleibt Host-/Bestandssurface; Drag, Resize und
 Persistenz bleiben getrennt.
 
+**Status nach G84:** Der Zwei-Surface-read-only-Stand ist jetzt in
+`docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`
+referenziert. `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only
+sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+
 ## Entscheidung 024
 **Beschluss:** Das UI-Editor-kit soll kuenftig ueber ein neutrales Surface-Modell erweitert werden, damit UI-Screens, Module, Editor-Panels und spaeter PDF-/Plan-/Canvas-Ansichten ueber Adaptermodelle bedient werden koennen.
 

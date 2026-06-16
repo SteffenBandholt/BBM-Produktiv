@@ -122,3 +122,11 @@ dokumentiert.
 - `plan.canvas.default` ist jetzt zusaetzlich read-only sichtbar freigegeben.
 - Die Integrationsbasis bleibt defensiv und ohne echte Umschaltung.
 - `restarbeiten.ui.main` bleibt Hoststand.
+
+## Nachtrag G84
+
+- Der Zwei-Surface-read-only-Stand ist jetzt zusaetzlich in
+  `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`
+  referenziert.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+- `restarbeiten.ui.main` bleibt Hoststand.

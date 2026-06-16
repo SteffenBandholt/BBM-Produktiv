@@ -111,3 +111,12 @@ Geprueft wurde:
 - `plan.canvas.default` ist jetzt zusaetzlich read-only sichtbar.
 - Der Hinweistext benennt deshalb auch `Plan Canvas`.
 - SurfaceInfo bleibt bewusst auf `restarbeiten.ui.main`.
+
+## Nachtrag G84
+
+- Die Hinweisreferenz bleibt unveraendert.
+- Die Plan-Canvas-Sichtpruefung ist jetzt in
+  `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`
+  ergaenzt.
+- `pdf.plan.page.1` bleibt read-only sichtbar.
+- `plan.canvas.default` bleibt read-only sichtbar.

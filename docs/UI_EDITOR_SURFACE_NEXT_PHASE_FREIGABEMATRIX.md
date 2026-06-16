@@ -164,3 +164,11 @@ und echte Umschaltung read-only getrennt bleiben.
 haelt weiter an der Trennung fest: `pdf.plan.page.1` bleibt read-only
 sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface und weitere
 echte Freigaben brauchen eigene Pakete.
+
+## Status nach G84
+
+- Der Zwei-Surface-read-only-Stand ist jetzt in
+  `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`
+  abgesichert.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.

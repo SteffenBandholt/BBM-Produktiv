@@ -130,6 +130,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G81 schliesst die read-only Abnahmereferenz in `docs/UI_EDITOR_PDF_PLAN_PAGE_1_READONLY_ABNAHME_REFERENZSTAND.md` ab; `pdf.plan.page.1` bleibt nur read-only sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface, und `plan.canvas.default` bleibt blockiert
 - G82 bewertet `plan.canvas.default` nur als naechsten read-only Kandidaten in `docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PLAN_CANVAS_DEFAULT.md`; `pdf.plan.page.1` bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface, und `plan.canvas.default` bleibt weiter blockiert
 - G83 setzt `plan.canvas.default` jetzt explizit read-only sichtbar frei in `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_POLICY_REFERENZSTAND.md`; `pdf.plan.page.1` bleibt read-only sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface, und SurfaceInfo bleibt bewusst dort
+- G84 buendelt die neue Zwei-Surface-Sichtpruefung in `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`; `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar, `restarbeiten.ui.main` bleibt Host-/Bestandssurface, und SurfaceInfo bleibt bewusst dort
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

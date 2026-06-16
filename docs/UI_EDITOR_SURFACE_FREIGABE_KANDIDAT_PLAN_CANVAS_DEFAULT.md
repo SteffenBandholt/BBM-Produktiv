@@ -139,3 +139,11 @@ canPersist: false
 - `pdf.plan.page.1` bleibt read-only sichtbar.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
 - Drag, Resize, Persistenz und jede echte Umschaltung bleiben deaktiviert.
+
+## Nachtrag G84
+
+- Die Freigabe bleibt unveraendert auf `plan.canvas.default` begrenzt.
+- Die Sichtpruefungsreferenz liegt jetzt in
+  `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`.
+- `pdf.plan.page.1` bleibt read-only sichtbar.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.

@@ -139,3 +139,13 @@ PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung,
 - `plan.canvas.default` ist nun zusaetzlich read-only sichtbar freigegeben.
 - Die Abnahmereferenz fuer `pdf.plan.page.1` bleibt unveraendert.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+
+## Nachtrag G84
+
+- Die Abnahmereferenz bleibt unveraendert.
+- Die Plan-Canvas-Sichtpruefung ist jetzt in
+  `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`
+  gebuendelt.
+- `pdf.plan.page.1` bleibt read-only sichtbar.
+- `plan.canvas.default` bleibt read-only sichtbar.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.

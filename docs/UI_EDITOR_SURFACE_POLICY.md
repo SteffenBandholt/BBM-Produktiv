@@ -308,3 +308,12 @@ Persistenz:
 - `pdf.plan.page.1` sichtbar
 - `plan.canvas.default` sichtbar
 - unbekannte SurfaceIds blockiert
+
+## Status nach G84
+
+- Der Zwei-Surface-read-only-Stand ist jetzt zusaetzlich in
+  `docs/UI_EDITOR_PLAN_CANVAS_DEFAULT_READONLY_SICHTPRUEFUNG.md`
+  dokumentiert.
+- `pdf.plan.page.1` bleibt read-only sichtbar.
+- `plan.canvas.default` bleibt read-only sichtbar.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
