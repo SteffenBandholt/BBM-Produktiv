@@ -1210,9 +1210,8 @@ Hinweis:
   - `npm test`
   - `git diff --check`
 - Naechster Schritt:
-  - Die uebrigen Grundlagen `UI_ELEMENT_KATALOG.md`,
-    `UI_BAU_UND_PRUEFREGELN.md` und `UI_PDF_ENTWURFSENTSCHEIDUNG.md`
-    getrennt nachziehen.
+  - Die Grundlagenreihe mit `UI_PDF_ENTWURFSENTSCHEIDUNG.md` als letzter
+    Minimalgrundlage abschliessen.
 
 ### K19.114 - Grundlagen 2/3: UI-Elementkatalog und Bau-/Pruefregeln erstellen
 - Status: erledigt
@@ -1234,5 +1233,5 @@ Hinweis:
   - `npm test`
   - `git diff --check`
 - Naechster Schritt:
-  - Die verbleibende PDF-/Plan-Grundlage `UI_PDF_ENTWURFSENTSCHEIDUNG.md`
-    getrennt nachziehen.
+  - Keine weitere Minimalgrundlage offen; spaetere UI-/PDF-Arbeiten bleiben
+    an die Stop-Regel und die Freigabe geknuepft.

@@ -2,11 +2,12 @@
 
 ## Kurzfazit
 
-Nach Grundlagen 2/3 sind nun vier Minimal-Grundlagen regulaer vorhanden:
+Nach Grundlagen 3/3 sind nun alle fuenf Minimal-Grundlagen regulaer vorhanden:
 `docs/EDITOR_BAUPLAN.md`, `docs/ZIEL_APP_ANBINDUNG.md`,
-`docs/UI_ELEMENT_KATALOG.md` und `docs/UI_BAU_UND_PRUEFREGELN.md`. G91 bleibt
-als Entscheidungsdokument fuer den damaligen Stopp erhalten; eine pauschale
-Ersatzfreigabe wurde weiterhin nicht erteilt.
+`docs/UI_ELEMENT_KATALOG.md`, `docs/UI_BAU_UND_PRUEFREGELN.md` und
+`docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`. G91 bleibt als Entscheidungsdokument
+fuer den damaligen Stopp erhalten; eine pauschale Ersatzfreigabe wurde
+weiterhin nicht erteilt.
 
 G91 bereitet nur die Entscheidung vor, wie mit den fehlenden UI-Editor-
 Grundlagen umzugehen ist. Es wird keine Ersatzfreigabe erteilt, keine
@@ -26,19 +27,18 @@ G90 bleibt bis zur Nutzerentscheidung blockiert.
 - Die Surface-Auswahl bleibt read-only Kontextanzeige und keine aktive
   Surface-Umschaltung.
 
-## Fehlende Pflichtunterlagen
+## Nachgezogene Pflichtunterlagen
 
-- `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`
-
-Bereits nachgezogen:
+Alle fuenf Minimal-Grundlagen sind jetzt vorhanden:
 
 - `docs/EDITOR_BAUPLAN.md`
 - `docs/ZIEL_APP_ANBINDUNG.md`
 - `docs/UI_ELEMENT_KATALOG.md`
 - `docs/UI_BAU_UND_PRUEFREGELN.md`
+- `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`
 
-G91 selbst hat diese Dateien nicht angelegt; sie wurden erst mit Grundlagen 1/3
-regulaer erstellt.
+G91 selbst hat diese Dateien nicht angelegt; sie wurden erst mit Grundlagen
+1/3, 2/3 und 3/3 regulaer erstellt.
 
 ## Geltende Stop-Regel
 
@@ -99,8 +99,7 @@ Konsequenz:
 
 Konsequenz:
 - Kein weiterer Aufwand fuer dieses Hinweis-Paket.
-- Die allgemeine Grundlagenluecke bleibt fuer spaetere UI-/PDF-Arbeiten
-  bestehen.
+- Die historische Grundlagenluecke ist inzwischen geschlossen.
 
 ### Option D: Stopp beibehalten und zunaechst Grundlagen-Bedarfsanalyse erstellen
 
@@ -125,7 +124,7 @@ Keine Ersatzfreigabe pauschal erteilen. Zuerst entweder die fehlenden Pflichtunt
 - B: kleinster Weg fuer genau einen Hinweis, aber nur mit ausdruecklicher
   Nutzerfreigabe und ohne allgemeine Freigabewirkung.
 - C: kein UI-Risiko, aber der gewuenschte Hinweis bleibt aus.
-- D: kontrollierte Vorarbeit, aber G90 bleibt vorerst blockiert.
+- D: kontrollierte Vorarbeit, aber G90 blieb vor der Regelklaerung blockiert.
 
 ## Weiterhin blockierte Arbeiten
 
@@ -142,7 +141,7 @@ Keine Ersatzfreigabe pauschal erteilen. Zuerst entweder die fehlenden Pflichtunt
 ## Naechster sauberer Schritt
 
 G92 hat die reine Bedarfsanalyse der fehlenden Grundlagen vorbereitet.
-Grundlagen 1/3 und 2/3 haben die Minimal-Grundlagen fuer Bauplan,
-Ziel-App-Anbindung, Elementkatalog und Bau-/Pruefregeln erstellt. Die
-verbleibende PDF-/Plan-Grundlage muss weiterhin getrennt nachgezogen werden,
-bevor darauf gestuetzte UI-/PDF-Umsetzungen freigegeben werden.
+Grundlagen 1/3, 2/3 und 3/3 haben die Minimal-Grundlagen fuer Bauplan,
+Ziel-App-Anbindung, Elementkatalog, Bau-/Pruefregeln und PDF-/Plan-
+Entwurfsentscheidung erstellt. Spaetere UI-/PDF-Umsetzungen bleiben dennoch
+getrennt an die Stop-Regel gebunden.

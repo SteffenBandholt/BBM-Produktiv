@@ -28,9 +28,9 @@ Sie ergÃ¤nzt:
   - Keine Produktivlogik, keine sichtbare UI, keine echte Surface-Umschaltung,
     kein Drag, kein Resize, keine Persistenz, kein DB-/IPC-Schreibweg und kein
     Dateischreiben wurden geaendert.
-  - Weiterhin offen bleiben `docs/UI_ELEMENT_KATALOG.md`,
+  - Die Minimalgrundlagenreihe wird mit `docs/UI_ELEMENT_KATALOG.md`,
     `docs/UI_BAU_UND_PRUEFREGELN.md` und
-    `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
+    `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md` fortgesetzt.
 
 - Grundlagen 2/3 fuer den UI-Editor regulaer minimal erstellt:
   - `docs/UI_ELEMENT_KATALOG.md` beschreibt die aktuell zulässigen
@@ -41,7 +41,16 @@ Sie ergÃ¤nzt:
     `git diff --check` und Electron-Sichtpruefung bei sichtbarer UI.
   - Keine Produktivlogik, keine sichtbare UI, kein Drag, kein Resize, keine
     Persistenz und keine DB-/IPC-Schreibwege wurden geaendert.
-  - Weiterhin offen bleibt nur `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
+  - `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md` schliesst die Grundlagenreihe als
+    letzte Minimalgrundlage ab.
+
+- Grundlagen 3/3 fuer den UI-Editor regulaer minimal erstellt:
+  - `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md` beschreibt die PDF-/Plan-/Canvas-
+    Entwurfsentscheidung fuer `pdf.plan.page.1` und `plan.canvas.default`.
+  - `restarbeiten.ui.main` bleibt Host-/Bestandssurface; SurfaceInfo bleibt
+    dort.
+  - Keine PDF-Bearbeitung, keine Plan-/Canvas-Interaktion, keine Persistenz
+    und keine DB-/IPC-Schreibwege wurden geaendert.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
@@ -64,11 +73,10 @@ Sie ergÃ¤nzt:
 - G90 bleibt wegen fehlender UI-Editor-Grundlagen gestoppt:
   - G90a dokumentiert den Stopp in
     `docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md`.
-  - Weiterhin fehlend sind `docs/UI_ELEMENT_KATALOG.md`,
-    `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
   - `docs/EDITOR_BAUPLAN.md`, `docs/ZIEL_APP_ANBINDUNG.md`,
     `docs/UI_ELEMENT_KATALOG.md` und `docs/UI_BAU_UND_PRUEFREGELN.md` wurden
     mit Grundlagen 1/3 und 2/3 nachgezogen.
+  - `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md` schliesst die alte Luecke nun ab.
   - Der geplante sichtbare UI-Hinweis zur Surface-Auswahl wurde nicht
     umgesetzt.
   - Keine Produktivlogik, keine sichtbare UI, keine echte Surface-Umschaltung,

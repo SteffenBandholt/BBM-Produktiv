@@ -85,6 +85,10 @@ const UI_EDITOR_BAUPLAN_DOC_PATH = path.join(__dirname, "../../docs/EDITOR_BAUPL
 const UI_EDITOR_TARGET_APP_BINDING_DOC_PATH = path.join(__dirname, "../../docs/ZIEL_APP_ANBINDUNG.md");
 const UI_EDITOR_ELEMENT_CATALOG_DOC_PATH = path.join(__dirname, "../../docs/UI_ELEMENT_KATALOG.md");
 const UI_EDITOR_BUILD_RULES_DOC_PATH = path.join(__dirname, "../../docs/UI_BAU_UND_PRUEFREGELN.md");
+const UI_EDITOR_PDF_DESIGN_DECISION_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md"
+);
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
@@ -3536,6 +3540,36 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     assert.equal(buildRulesSource.includes("Electron-Sichtpruefung"), true, "Sichtpruefung fehlt.");
     assert.equal(buildRulesSource.includes("npm start"), true, "Sichtpruefungsregel fehlt.");
+  });
+
+  await run("BBM UI-Editor-Runtime: Grundlagen 3/3 bleiben minimal vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_PDF_DESIGN_DECISION_DOC_PATH),
+      true,
+      "UI_PDF_ENTWURFSENTSCHEIDUNG.md fehlt."
+    );
+
+    const pdfDesignDecisionSource = fs.readFileSync(UI_EDITOR_PDF_DESIGN_DECISION_DOC_PATH, "utf8");
+
+    for (const required of [
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "pdf-points",
+      "canvas-pixels",
+      "keine PDF-Bearbeitung",
+      "keine Plan-/Canvas-Interaktion",
+      "keine Persistenz",
+      "kein Drag",
+      "kein Resize",
+      "restarbeiten.ui.main",
+      "Host-/Bestandssurface",
+    ]) {
+      assert.equal(
+        pdfDesignDecisionSource.includes(required),
+        true,
+        `UI_PDF_ENTWURFSENTSCHEIDUNG.md enthaelt ${required} nicht.`
+      );
+    }
   });
 
   await run("BBM UI-Editor-Runtime: PDF-Plan-Sichtpruefungsdokument bleibt vorhanden", async () => {

@@ -5,8 +5,9 @@
 BBM-Produktiv bleibt der Host fuer den UI-Editor. Das UI-Editor-kit liefert
 generische Runtime-Bausteine, speichert aber nicht. Die aktuelle Anbindung ist
 read-only begrenzt und aktiviert keine neue Persistenz, keine Schreibwege und
-keine Aenderungen ausserhalb des UI-Editor-Kontextes. Die naechste
-Grundlagenstufe ergaenzt diese Host-Anbindung um Elementkatalog und Bau-/Pruefregeln.
+keine Aenderungen ausserhalb des UI-Editor-Kontextes. Zusammen mit
+Elementkatalog, Bau-/Pruefregeln und PDF-/Plan-Entwurfsentscheidung ist die
+Minimalgrundlage jetzt abgeschlossen.
 
 ## Ziel-App-Kontext BBM-Produktiv
 

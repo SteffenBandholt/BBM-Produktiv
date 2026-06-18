@@ -139,6 +139,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G92 ergaenzt mit `docs/UI_EDITOR_GRUNDLAGEN_BEDARFSANALYSE.md` die reine Bedarfsanalyse fuer die fehlenden UI-Editor-Grundlagen; die Pflichtunterlagen bleiben unangelegt und G90 bleibt blockiert
 - Grundlagen 1/3 erstellt `docs/EDITOR_BAUPLAN.md` und `docs/ZIEL_APP_ANBINDUNG.md` als knappe Minimal-Grundlagen; `restarbeiten.ui.main` bleibt Host-/Bestandssurface, `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar, und aktive Surface-Umschaltung, Drag, Resize, Persistenz, PDF-/Plan-Bearbeitung sowie DB-/IPC-Schreibwege bleiben gesperrt
 - Grundlagen 2/3 erstellt `docs/UI_ELEMENT_KATALOG.md` und `docs/UI_BAU_UND_PRUEFREGELN.md` als knappe Minimal-Grundlagen; Elementkatalog und Bau-/Pruefregeln sind nun vorhanden, und die verbleibende PDF-/Plan-Grundlage bleibt getrennt offen
+- Grundlagen 3/3 erstellt `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md` als knappe Minimal-Grundlage; `restarbeiten.ui.main` bleibt Host-/Bestandssurface, `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar, und PDF-/Plan-Bearbeitung, Koordinaten-Speicherung sowie DB-/IPC-Schreibwege bleiben gesperrt
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

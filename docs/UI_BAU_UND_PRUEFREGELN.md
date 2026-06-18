@@ -4,7 +4,8 @@
 
 Diese Regeln beschreiben, wie kleine UI-Aenderungen sicher gebaut und
 geprueft werden. Ohne klare Grundlage wird nicht gebaut; sichtbare UI braucht
-immer eine Electron-Sichtpruefung.
+immer eine Electron-Sichtpruefung. Die PDF-/Plan-Entwurfsentscheidung ergaenzt
+die minimale Grundlagenreihe.
 
 ## Zweck der Bau- und Pruefregeln
 

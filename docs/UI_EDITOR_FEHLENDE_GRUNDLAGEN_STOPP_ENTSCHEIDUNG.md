@@ -2,12 +2,12 @@
 
 ## Kurzfazit
 
-Nach Grundlagen 2/3 sind nun vier Minimal-Grundlagen regulaer vorhanden:
+Nach Grundlagen 3/3 sind nun alle fuenf Minimal-Grundlagen regulaer vorhanden:
 `docs/EDITOR_BAUPLAN.md`, `docs/ZIEL_APP_ANBINDUNG.md`,
-`docs/UI_ELEMENT_KATALOG.md` und `docs/UI_BAU_UND_PRUEFREGELN.md`. Diese
-Stopp-Entscheidung bleibt als Dokumentation des damaligen G90-Stopps bestehen;
-vollstaendige UI-/PDF-Umsetzungen bleiben wegen der verbleibenden PDF-/Plan-
-Grundlage weiterhin nicht automatisch freigegeben.
+`docs/UI_ELEMENT_KATALOG.md`, `docs/UI_BAU_UND_PRUEFREGELN.md` und
+`docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`. Diese Stopp-Entscheidung bleibt als
+Dokumentation des damaligen G90-Stopps bestehen; vollstaendige UI-/PDF-
+Umsetzungen bleiben weiter an die Stop-Regel gebunden.
 
 G90 bleibt gestoppt. Die fuer UI-/PDF-Umsetzungen laut Projektregeln
 verpflichtenden UI-Editor-Grundlagen sind im Repo nicht vollstaendig
@@ -38,13 +38,7 @@ fuehrenden UI-Editor-Unterlagen und eine vollstaendige UI-/PDF-
 Entwurfsentscheidung. Die fuehrenden Unterlagen sind aktuell nicht vollstaendig
 vorhanden.
 
-## Fehlende Pflichtunterlagen
-
-Die folgende Existenzpruefung ergab am Paketbeginn:
-
-- `docs/UI_ELEMENT_KATALOG.md`: fehlt
-- `docs/UI_BAU_UND_PRUEFREGELN.md`: fehlt
-- `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`: fehlt
+## Rueckblick auf die fruehere Existenzpruefung
 
 Vorhanden ist inzwischen:
 
@@ -53,6 +47,7 @@ Vorhanden ist inzwischen:
 - `docs/ZIEL_APP_ANBINDUNG.md`
 - `docs/UI_ELEMENT_KATALOG.md`
 - `docs/UI_BAU_UND_PRUEFREGELN.md`
+- `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`
 
 ## Regelquelle / Stop-Regel
 
@@ -71,7 +66,7 @@ bauen.
 
 ## Warum keine Improvisation erlaubt ist
 
-Die fehlenden Grundlagen definieren Vertrag, Katalog, Bau-/Pruefregeln,
+Die Grundlagen definieren Vertrag, Katalog, Bau-/Pruefregeln,
 Ziel-App-Anbindung und Entwurfsentscheidung fuer UI-/PDF-Arbeiten. Sie duerfen
 nicht durch Platzhalter ersetzt werden, weil dadurch unklar waere, welche
 Elemente editorfaehig sind, welche Operationen erlaubt sind und welche
@@ -111,14 +106,8 @@ Ohne diese Klaerung bleibt G90 gestoppt.
 
 ## Naechster sauberer Schritt
 
-Naechster sauberer Schritt ist eine ausdrueckliche Nutzerentscheidung:
-
-- entweder die fehlenden Grundlagen vollstaendig bereitstellen,
-- oder eine begrenzte, dokumentierte Freigabeentscheidung fuer den kleinen
-  read-only Hinweis treffen.
-
-Erst danach darf ein neues Umsetzungspaket fuer den sichtbaren Hinweis geplant
-werden.
+Naechster sauberer Schritt ist keine weitere Grundlagenrecherche, sondern die
+normale fachliche Nutzung der nun vollstaendigen Minimalgrundlagenreihe.
 
 ## Nachtrag G91
 

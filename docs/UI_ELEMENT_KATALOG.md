@@ -3,8 +3,10 @@
 ## Kurzfazit
 
 Dieser Katalog legt fest, welche UI-Elemente im UI-Editor aktuell bekannt und
-zulässig sind. Im jetzigen Stand geht es nur um read-only oder kontextbezogene
-Elemente; bearbeitbare UI-Elemente kommen erst mit eigener Freigabe dazu.
+zulassig sind. Im jetzigen Stand geht es nur um read-only oder
+kontextbezogene Elemente; bearbeitbare UI-Elemente kommen erst mit eigener
+Freigabe dazu. Die PDF-/Plan-Entwurfsentscheidung ist separat geregelt und liegt
+ebenfalls vor.
 
 ## Zweck des Elementkatalogs
 
@@ -34,7 +36,7 @@ Elemente zwingend vorhanden sein muessen.
 - Persistenzstatus
 - Testabdeckung
 
-## Aktuell nicht zulässig ohne eigene Freigabe
+## Aktuell nicht zulaessig ohne eigene Freigabe
 
 - bearbeitbare PDF-/Plan-Elemente
 - kein Drag

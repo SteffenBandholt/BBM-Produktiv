@@ -459,3 +459,9 @@ vorhanden. Sie legen die aktuell zulässigen Element- und Kontextarten sowie
 die Bau-/Pruefregeln fest. Die verbleibende PDF-/Plan-Grundlage bleibt
 weiterhin getrennt offen; aktive Surface-Umschaltung, Drag, Resize,
 Persistenz, PDF-/Plan-Bearbeitung und DB-/IPC-Schreibwege bleiben gesperrt.
+
+**Status nach Grundlagen 3/3:** `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md` ist
+jetzt als knappe Minimal-Grundlage vorhanden. `restarbeiten.ui.main` bleibt
+Host-/Bestandssurface, `pdf.plan.page.1` und `plan.canvas.default` bleiben
+read-only sichtbar, und PDF-/Plan-Bearbeitung, Koordinaten-Speicherung sowie
+DB-/IPC-Schreibwege bleiben gesperrt.

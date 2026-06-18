@@ -4,16 +4,16 @@
 
 Der UI-Editor in BBM-Produktiv bleibt aktuell ein kontrollierter read-only
 Kontext fuer den bestehenden Restarbeiten-Host. Er zeigt bekannte Surfaces und
-Kontextinformationen an, aktiviert aber keine echte Surface-Umschaltung, kein Drag,
-kein Resize und keine Persistenz.
+Kontextinformationen an, aktiviert aber keine echte Surface-Umschaltung, kein
+Drag, kein Resize und keine Persistenz. Mit dem Elementkatalog, den Bau-
+und Pruefregeln sowie der PDF-/Plan-Entwurfsentscheidung ist die minimale
+Grundlagenreihe jetzt vollstaendig.
 
 ## Zweck des UI-Editors
 
 Der UI-Editor soll spaeter freigegebene UI-Elemente kontrolliert anzeigen und
 bearbeitbar machen. In der aktuellen BBM-Phase dient er nur als sicherer
-Host-Kontext fuer read-only Surface-Informationen und Guardrails. Die naechste
-Grundlagenstufe wird durch `docs/UI_ELEMENT_KATALOG.md` und
-`docs/UI_BAU_UND_PRUEFREGELN.md` ergaenzt.
+Host-Kontext fuer read-only Surface-Informationen und Guardrails.
 
 ## Aktueller Stand
 
@@ -27,9 +27,7 @@ Grundlagenstufe wird durch `docs/UI_ELEMENT_KATALOG.md` und
 
 - Launcher/Panel bleiben BBM-Hostintegration.
 - Das Panel darf den aktuellen Editor-Kontext anzeigen.
-- Surface-Auswahl und SurfaceInfo sind getrennt zu betrachten:
-  - Auswahl: sichtbare read-only Kontextliste.
-  - SurfaceInfo: Host-/Bestandssurface `restarbeiten.ui.main`.
+- Surface-Auswahl und SurfaceInfo sind getrennt zu betrachten.
 - Fachaktionen und Schreibwege duerfen nicht ueber das Panel ausgeloest werden.
 
 ## Erlaubte Arbeiten
@@ -42,9 +40,9 @@ Grundlagenstufe wird durch `docs/UI_ELEMENT_KATALOG.md` und
 ## Nicht erlaubte Arbeiten ohne eigene Freigabe
 
 - aktive Surface-Umschaltung
-- Drag
-- Resize
-- Persistenz
+- kein Drag
+- kein Resize
+- keine Persistenz
 - PDF-/Plan-Bearbeitung
 - DB-/IPC-Schreibwege
 - `localStorage`

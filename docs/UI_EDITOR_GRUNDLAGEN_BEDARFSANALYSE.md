@@ -2,11 +2,11 @@
 
 ## Kurzfazit
 
-Nach Grundlagen 2/3 sind nun vier Minimal-Grundlagen regulaer vorhanden:
+Nach Grundlagen 3/3 sind nun alle fuenf Minimal-Grundlagen regulaer vorhanden:
 `docs/EDITOR_BAUPLAN.md`, `docs/ZIEL_APP_ANBINDUNG.md`,
-`docs/UI_ELEMENT_KATALOG.md` und `docs/UI_BAU_UND_PRUEFREGELN.md`. Diese
-Bedarfsanalyse bleibt als Vorgeschichte zu G92 erhalten; offen bleibt nur noch
-`docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
+`docs/UI_ELEMENT_KATALOG.md`, `docs/UI_BAU_UND_PRUEFREGELN.md` und
+`docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`. Diese Bedarfsanalyse bleibt als
+Vorgeschichte zu G92 erhalten.
 
 G92 ist eine reine Bedarfsanalyse. Sie beschreibt, welche Inhalte die fehlenden
 UI-Editor-Grundlagen spaeter enthalten muessen, ohne die fehlenden
@@ -31,9 +31,7 @@ Die Bedarfsanalyse soll die spaetere Erstellung der fehlenden Grundlagen
 vorbereiten, damit die nachfolgenden UI-/PDF-Schritte nicht improvisiert
 werden muessen. Sie beschreibt nur den Bedarf, nicht die fertige Datei.
 
-## Fehlende Pflichtunterlagen
-
-- `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`
+## Bedarfsanalyse-Rueckblick
 
 Bereits regulaer minimal erstellt:
 
@@ -41,6 +39,7 @@ Bereits regulaer minimal erstellt:
 - `docs/ZIEL_APP_ANBINDUNG.md`
 - `docs/UI_ELEMENT_KATALOG.md`
 - `docs/UI_BAU_UND_PRUEFREGELN.md`
+- `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`
 
 ## Erwarteter Inhalt je fehlender Pflichtunterlage
 
@@ -120,6 +119,5 @@ knapp und belastbar vorhanden. Offen bleibt nur noch die
 
 ## Empfohlener naechster Schritt
 
-Die uebrigen fehlenden Pflichtunterlagen sollten spaeter regulaer erstellt
-werden. Bis dahin bleiben UI-/PDF-Umsetzungen ohne vollstaendige Grundlage
-blockiert.
+Die Grundlagenreihe ist nun vollstaendig. Spaetere UI-/PDF-Umsetzungen bleiben
+dennoch an die Stop-Regel und den Freigabeumfang gebunden.
