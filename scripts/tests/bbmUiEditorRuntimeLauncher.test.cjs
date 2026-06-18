@@ -83,6 +83,8 @@ const UI_EDITOR_FOUNDATIONS_NEEDS_ANALYSIS_DOC_PATH = path.join(
 );
 const UI_EDITOR_BAUPLAN_DOC_PATH = path.join(__dirname, "../../docs/EDITOR_BAUPLAN.md");
 const UI_EDITOR_TARGET_APP_BINDING_DOC_PATH = path.join(__dirname, "../../docs/ZIEL_APP_ANBINDUNG.md");
+const UI_EDITOR_ELEMENT_CATALOG_DOC_PATH = path.join(__dirname, "../../docs/UI_ELEMENT_KATALOG.md");
+const UI_EDITOR_BUILD_RULES_DOC_PATH = path.join(__dirname, "../../docs/UI_BAU_UND_PRUEFREGELN.md");
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
@@ -3471,7 +3473,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "docs/ZIEL_APP_ANBINDUNG.md",
       "docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md",
       "Abgrenzung: keine Ersatzfreigabe",
-      "Nachtrag Grundlagen 1/3",
+      "Nachtrag Grundlagen 2/3",
       "G90 bleibt",
       "blockiert.",
     ]) {
@@ -3503,6 +3505,37 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       true,
       "ZIEL_APP_ANBINDUNG.md muss festhalten, dass UI-Editor-kit nicht speichert."
     );
+  });
+
+  await run("BBM UI-Editor-Runtime: Grundlagen 2/3 bleiben minimal vorhanden", async () => {
+    assert.equal(fs.existsSync(UI_EDITOR_ELEMENT_CATALOG_DOC_PATH), true, "UI_ELEMENT_KATALOG.md fehlt.");
+    assert.equal(fs.existsSync(UI_EDITOR_BUILD_RULES_DOC_PATH), true, "UI_BAU_UND_PRUEFREGELN.md fehlt.");
+
+    const elementCatalogSource = fs.readFileSync(UI_EDITOR_ELEMENT_CATALOG_DOC_PATH, "utf8");
+    const buildRulesSource = fs.readFileSync(UI_EDITOR_BUILD_RULES_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "keine Wildcard",
+      "kein Default-true",
+      "keine Persistenz",
+      "kein Drag",
+      "kein Resize",
+    ]) {
+      assert.equal(
+        elementCatalogSource.includes(required),
+        true,
+        `UI_ELEMENT_KATALOG.md enthaelt ${required} nicht.`
+      );
+      assert.equal(
+        buildRulesSource.includes(required),
+        true,
+        `UI_BAU_UND_PRUEFREGELN.md enthaelt ${required} nicht.`
+      );
+    }
+
+    assert.equal(buildRulesSource.includes("Electron-Sichtpruefung"), true, "Sichtpruefung fehlt.");
+    assert.equal(buildRulesSource.includes("npm start"), true, "Sichtpruefungsregel fehlt.");
   });
 
   await run("BBM UI-Editor-Runtime: PDF-Plan-Sichtpruefungsdokument bleibt vorhanden", async () => {

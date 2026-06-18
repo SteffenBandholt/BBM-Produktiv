@@ -2,11 +2,12 @@
 
 ## Kurzfazit
 
-Nach Grundlagen 1/3 sind `docs/EDITOR_BAUPLAN.md` und
-`docs/ZIEL_APP_ANBINDUNG.md` regulaer minimal vorhanden. Diese
+Nach Grundlagen 2/3 sind nun vier Minimal-Grundlagen regulaer vorhanden:
+`docs/EDITOR_BAUPLAN.md`, `docs/ZIEL_APP_ANBINDUNG.md`,
+`docs/UI_ELEMENT_KATALOG.md` und `docs/UI_BAU_UND_PRUEFREGELN.md`. Diese
 Stopp-Entscheidung bleibt als Dokumentation des damaligen G90-Stopps bestehen;
-vollstaendige UI-/PDF-Umsetzungen bleiben wegen weiterer fehlender Grundlagen
-weiterhin nicht automatisch freigegeben.
+vollstaendige UI-/PDF-Umsetzungen bleiben wegen der verbleibenden PDF-/Plan-
+Grundlage weiterhin nicht automatisch freigegeben.
 
 G90 bleibt gestoppt. Die fuer UI-/PDF-Umsetzungen laut Projektregeln
 verpflichtenden UI-Editor-Grundlagen sind im Repo nicht vollstaendig
@@ -50,6 +51,8 @@ Vorhanden ist inzwischen:
 - `docs/UI_EDITOR_VERTRAG.md`
 - `docs/EDITOR_BAUPLAN.md`
 - `docs/ZIEL_APP_ANBINDUNG.md`
+- `docs/UI_ELEMENT_KATALOG.md`
+- `docs/UI_BAU_UND_PRUEFREGELN.md`
 
 ## Regelquelle / Stop-Regel
 
@@ -143,3 +146,11 @@ werden.
 - Weiterhin nicht freigegeben sind aktive Surface-Umschaltung, Drag, Resize,
   Persistenz, PDF-/Plan-Bearbeitung sowie DB-/IPC-Schreibwege.
 - Die uebrigen Pflichtunterlagen bleiben offen.
+
+## Nachtrag Grundlagen 2/3
+
+- `docs/UI_ELEMENT_KATALOG.md` wurde als knappe Minimal-Grundlage erstellt.
+- `docs/UI_BAU_UND_PRUEFREGELN.md` wurde als knappe Minimal-Grundlage erstellt.
+- Die Dokumente bestaetigen die aktuell zulässigen Element- und Kontextarten
+  sowie die Bau-/Pruefpflichten fuer kleine UI-Aenderungen.
+- Weiterhin nicht freigegeben bleibt die PDF-/Plan-Grundlage.

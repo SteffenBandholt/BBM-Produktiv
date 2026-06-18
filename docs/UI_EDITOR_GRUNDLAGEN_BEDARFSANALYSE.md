@@ -2,10 +2,11 @@
 
 ## Kurzfazit
 
-Nach Grundlagen 1/3 sind `docs/EDITOR_BAUPLAN.md` und
-`docs/ZIEL_APP_ANBINDUNG.md` regulaer als Minimal-Grundlagen vorhanden. Diese
-Bedarfsanalyse bleibt als Vorgeschichte zu G92 erhalten; die uebrigen
-Pflichtunterlagen bleiben weiterhin offen.
+Nach Grundlagen 2/3 sind nun vier Minimal-Grundlagen regulaer vorhanden:
+`docs/EDITOR_BAUPLAN.md`, `docs/ZIEL_APP_ANBINDUNG.md`,
+`docs/UI_ELEMENT_KATALOG.md` und `docs/UI_BAU_UND_PRUEFREGELN.md`. Diese
+Bedarfsanalyse bleibt als Vorgeschichte zu G92 erhalten; offen bleibt nur noch
+`docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
 
 G92 ist eine reine Bedarfsanalyse. Sie beschreibt, welche Inhalte die fehlenden
 UI-Editor-Grundlagen spaeter enthalten muessen, ohne die fehlenden
@@ -32,14 +33,14 @@ werden muessen. Sie beschreibt nur den Bedarf, nicht die fertige Datei.
 
 ## Fehlende Pflichtunterlagen
 
-- `docs/UI_ELEMENT_KATALOG.md`
-- `docs/UI_BAU_UND_PRUEFREGELN.md`
 - `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`
 
 Bereits regulaer minimal erstellt:
 
 - `docs/EDITOR_BAUPLAN.md`
 - `docs/ZIEL_APP_ANBINDUNG.md`
+- `docs/UI_ELEMENT_KATALOG.md`
+- `docs/UI_BAU_UND_PRUEFREGELN.md`
 
 ## Erwarteter Inhalt je fehlender Pflichtunterlage
 
@@ -51,24 +52,6 @@ Bereits regulaer minimal erstellt:
 - erlaubte und nicht erlaubte Bedienhandlungen
 - Abgrenzung zu echter Surface-Umschaltung
 - Abgrenzung zu Drag/Resize/Persistenz
-
-### `docs/UI_ELEMENT_KATALOG.md`
-
-- zulaessige Elementtypen
-- Pflichtfelder je Element
-- Identitaeten und IDs
-- read-only vs. bearbeitbar
-- keine Wildcard-Elemente
-- kein Default-true
-
-### `docs/UI_BAU_UND_PRUEFREGELN.md`
-
-- Regeln fuer UI-Bau
-- Pruefregeln vor Umsetzung
-- Stop-Regeln
-- Testpflichten
-- Electron-Sichtpruefung bei sichtbarer UI
-- keine Umsetzung bei fehlender Grundlage
 
 ### `docs/ZIEL_APP_ANBINDUNG.md`
 
@@ -104,6 +87,17 @@ regulaer erstellt:
 Das ist keine UI-/PDF-Umsetzung und keine Ersatzfreigabe fuer die uebrigen
 Grundlagen.
 
+## Nachtrag Grundlagen 2/3
+
+Mit Grundlagen 2/3 wurden zwei weitere Minimal-Grundlagen regulaer erstellt:
+
+- `docs/UI_ELEMENT_KATALOG.md`
+- `docs/UI_BAU_UND_PRUEFREGELN.md`
+
+Damit sind die UI-Editor-Basics fuer Elementkatalog und Bau-/Pruefregeln nun
+knapp und belastbar vorhanden. Offen bleibt nur noch die
+`docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
+
 ## Weiterhin blockierte Arbeiten
 
 - sichtbare UI-Aenderungen am UI-Editor-Panel
@@ -119,9 +113,9 @@ Grundlagen.
 ## Moegliche Reihenfolge zur spaeteren Erstellung
 
 1. `docs/EDITOR_BAUPLAN.md`
-2. `docs/UI_ELEMENT_KATALOG.md`
-3. `docs/UI_BAU_UND_PRUEFREGELN.md`
-4. `docs/ZIEL_APP_ANBINDUNG.md`
+2. `docs/ZIEL_APP_ANBINDUNG.md`
+3. `docs/UI_ELEMENT_KATALOG.md`
+4. `docs/UI_BAU_UND_PRUEFREGELN.md`
 5. `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`
 
 ## Empfohlener naechster Schritt

@@ -1,0 +1,49 @@
+# UI-Elementkatalog
+
+## Kurzfazit
+
+Dieser Katalog legt fest, welche UI-Elemente im UI-Editor aktuell bekannt und
+zulässig sind. Im jetzigen Stand geht es nur um read-only oder kontextbezogene
+Elemente; bearbeitbare UI-Elemente kommen erst mit eigener Freigabe dazu.
+
+## Zweck des Elementkatalogs
+
+Der Katalog verhindert Raten. Er sagt klar, welche Elementarten der Editor
+ueberhaupt anfassen darf und welche Angaben spaeter fuer editorrelevante
+Elemente zwingend vorhanden sein muessen.
+
+## Aktueller Stand
+
+- UI-Elemente im Editor-Kontext sind aktuell read-only oder kontextbezogen.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- `pdf.plan.page.1` und `plan.canvas.default` sind nur read-only Zusatzkontexte.
+
+## Zulaessige Element- und Kontextarten
+
+- Host-/Bestandssurface-Kontext
+- read-only Surface-Kontext
+- reine Hinweis-/Infotexte nach Freigabe
+- Test-/Doku-/Guardrail-Elemente
+
+## Pflichtangaben fuer spaetere UI-Elemente
+
+- eindeutige ID
+- Surface-Zuordnung
+- read-only oder bearbeitbar
+- erlaubte Aktionen
+- Persistenzstatus
+- Testabdeckung
+
+## Aktuell nicht zulässig ohne eigene Freigabe
+
+- bearbeitbare PDF-/Plan-Elemente
+- kein Drag
+- kein Resize
+- keine Persistenz
+- keine Wildcard
+- kein Default-true
+
+## Stop-Regel
+
+Unbekannte Elementtypen nicht improvisieren. Wenn ein Element nicht klar in
+diesen Katalog passt, bleibt es blockiert, bis eine eigene Entscheidung vorliegt.

@@ -452,3 +452,10 @@ vorhanden. Sie bestaetigen `restarbeiten.ui.main` als Host-/Bestandssurface,
 schliessen aktive Surface-Umschaltung, Drag, Resize, Persistenz, PDF-/Plan-
 Bearbeitung sowie DB-/IPC-Schreibwege weiter aus. Das UI-Editor-kit speichert
 nicht; BBM-Produktiv bleibt Host.
+
+**Status nach Grundlagen 2/3:** `docs/UI_ELEMENT_KATALOG.md` und
+`docs/UI_BAU_UND_PRUEFREGELN.md` sind jetzt als knappe Minimal-Grundlagen
+vorhanden. Sie legen die aktuell zulässigen Element- und Kontextarten sowie
+die Bau-/Pruefregeln fest. Die verbleibende PDF-/Plan-Grundlage bleibt
+weiterhin getrennt offen; aktive Surface-Umschaltung, Drag, Resize,
+Persistenz, PDF-/Plan-Bearbeitung und DB-/IPC-Schreibwege bleiben gesperrt.

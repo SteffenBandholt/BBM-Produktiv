@@ -11,7 +11,9 @@ kein Resize und keine Persistenz.
 
 Der UI-Editor soll spaeter freigegebene UI-Elemente kontrolliert anzeigen und
 bearbeitbar machen. In der aktuellen BBM-Phase dient er nur als sicherer
-Host-Kontext fuer read-only Surface-Informationen und Guardrails.
+Host-Kontext fuer read-only Surface-Informationen und Guardrails. Die naechste
+Grundlagenstufe wird durch `docs/UI_ELEMENT_KATALOG.md` und
+`docs/UI_BAU_UND_PRUEFREGELN.md` ergaenzt.
 
 ## Aktueller Stand
 
