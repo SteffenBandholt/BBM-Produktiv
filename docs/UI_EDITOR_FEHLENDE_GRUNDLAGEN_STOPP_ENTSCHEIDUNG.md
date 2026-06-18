@@ -2,6 +2,12 @@
 
 ## Kurzfazit
 
+Nach Grundlagen 1/3 sind `docs/EDITOR_BAUPLAN.md` und
+`docs/ZIEL_APP_ANBINDUNG.md` regulaer minimal vorhanden. Diese
+Stopp-Entscheidung bleibt als Dokumentation des damaligen G90-Stopps bestehen;
+vollstaendige UI-/PDF-Umsetzungen bleiben wegen weiterer fehlender Grundlagen
+weiterhin nicht automatisch freigegeben.
+
 G90 bleibt gestoppt. Die fuer UI-/PDF-Umsetzungen laut Projektregeln
 verpflichtenden UI-Editor-Grundlagen sind im Repo nicht vollstaendig
 vorhanden. Deshalb darf der sichtbare Hinweis zur Surface-Auswahl nicht
@@ -35,15 +41,15 @@ vorhanden.
 
 Die folgende Existenzpruefung ergab am Paketbeginn:
 
-- `docs/EDITOR_BAUPLAN.md`: fehlt
 - `docs/UI_ELEMENT_KATALOG.md`: fehlt
 - `docs/UI_BAU_UND_PRUEFREGELN.md`: fehlt
-- `docs/ZIEL_APP_ANBINDUNG.md`: fehlt
 - `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`: fehlt
 
-Vorhanden ist:
+Vorhanden ist inzwischen:
 
 - `docs/UI_EDITOR_VERTRAG.md`
+- `docs/EDITOR_BAUPLAN.md`
+- `docs/ZIEL_APP_ANBINDUNG.md`
 
 ## Regelquelle / Stop-Regel
 
@@ -127,3 +133,13 @@ werden.
 - Die fehlenden Pflichtunterlagen werden weiterhin nicht angelegt.
 - G90 bleibt blockiert, bis die Grundlagen regulaer erstellt oder eine
   ausdrueckliche Entscheidung fuer einen eng begrenzten Folgepfad vorliegt.
+
+## Nachtrag Grundlagen 1/3
+
+- `docs/EDITOR_BAUPLAN.md` wurde als knappe Minimal-Grundlage erstellt.
+- `docs/ZIEL_APP_ANBINDUNG.md` wurde als knappe Minimal-Grundlage erstellt.
+- Die Dokumente bestaetigen `restarbeiten.ui.main` als Host-/Bestandssurface
+  und `pdf.plan.page.1` sowie `plan.canvas.default` als read-only Kontexte.
+- Weiterhin nicht freigegeben sind aktive Surface-Umschaltung, Drag, Resize,
+  Persistenz, PDF-/Plan-Bearbeitung sowie DB-/IPC-Schreibwege.
+- Die uebrigen Pflichtunterlagen bleiben offen.

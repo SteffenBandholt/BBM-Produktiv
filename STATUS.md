@@ -17,6 +17,21 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- Grundlagen 1/3 fuer den UI-Editor regulaer minimal erstellt:
+  - `docs/EDITOR_BAUPLAN.md` beschreibt den aktuellen read-only Bauplan:
+    `restarbeiten.ui.main` bleibt Host-/Bestandssurface, `pdf.plan.page.1`
+    und `plan.canvas.default` sind nur read-only sichtbar, SurfaceInfo bleibt
+    `restarbeiten.ui.main`.
+  - `docs/ZIEL_APP_ANBINDUNG.md` beschreibt die BBM-Hostanbindung:
+    BBM-Produktiv bleibt Host, UI-Editor-kit speichert nicht, und es gibt
+    keine Aenderung an `../UI-Editor-kit`.
+  - Keine Produktivlogik, keine sichtbare UI, keine echte Surface-Umschaltung,
+    kein Drag, kein Resize, keine Persistenz, kein DB-/IPC-Schreibweg und kein
+    Dateischreiben wurden geaendert.
+  - Weiterhin offen bleiben `docs/UI_ELEMENT_KATALOG.md`,
+    `docs/UI_BAU_UND_PRUEFREGELN.md` und
+    `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.
@@ -38,10 +53,11 @@ Sie ergÃ¤nzt:
 - G90 bleibt wegen fehlender UI-Editor-Grundlagen gestoppt:
   - G90a dokumentiert den Stopp in
     `docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md`.
-  - Fehlend sind `docs/EDITOR_BAUPLAN.md`,
-    `docs/UI_ELEMENT_KATALOG.md`, `docs/UI_BAU_UND_PRUEFREGELN.md`,
-    `docs/ZIEL_APP_ANBINDUNG.md` und
+  - Weiterhin fehlend sind `docs/UI_ELEMENT_KATALOG.md`,
+    `docs/UI_BAU_UND_PRUEFREGELN.md` und
     `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
+  - `docs/EDITOR_BAUPLAN.md` und `docs/ZIEL_APP_ANBINDUNG.md` wurden mit
+    Grundlagen 1/3 nachgezogen.
   - Der geplante sichtbare UI-Hinweis zur Surface-Auswahl wurde nicht
     umgesetzt.
   - Keine Produktivlogik, keine sichtbare UI, keine echte Surface-Umschaltung,

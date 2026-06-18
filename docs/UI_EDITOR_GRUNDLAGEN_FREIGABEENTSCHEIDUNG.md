@@ -2,6 +2,11 @@
 
 ## Kurzfazit
 
+Nach Grundlagen 1/3 sind `docs/EDITOR_BAUPLAN.md` und
+`docs/ZIEL_APP_ANBINDUNG.md` regulaer als Minimal-Grundlagen vorhanden. G91
+bleibt als Entscheidungsdokument fuer den damaligen Stopp erhalten; eine
+pauschale Ersatzfreigabe wurde weiterhin nicht erteilt.
+
 G91 bereitet nur die Entscheidung vor, wie mit den fehlenden UI-Editor-
 Grundlagen umzugehen ist. Es wird keine Ersatzfreigabe erteilt, keine
 Pflichtunterlage improvisiert und keine UI umgesetzt. G90 bleibt bis zu einer
@@ -22,13 +27,17 @@ G90 bleibt bis zur Nutzerentscheidung blockiert.
 
 ## Fehlende Pflichtunterlagen
 
-- `docs/EDITOR_BAUPLAN.md`
 - `docs/UI_ELEMENT_KATALOG.md`
 - `docs/UI_BAU_UND_PRUEFREGELN.md`
-- `docs/ZIEL_APP_ANBINDUNG.md`
 - `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`
 
-Diese Dateien werden durch G91 nicht angelegt.
+Bereits nachgezogen:
+
+- `docs/EDITOR_BAUPLAN.md`
+- `docs/ZIEL_APP_ANBINDUNG.md`
+
+G91 selbst hat diese Dateien nicht angelegt; sie wurden erst mit Grundlagen 1/3
+regulaer erstellt.
 
 ## Geltende Stop-Regel
 
@@ -131,6 +140,7 @@ Keine Ersatzfreigabe pauschal erteilen. Zuerst entweder die fehlenden Pflichtunt
 
 ## Naechster sauberer Schritt
 
-G92 hat die reine Bedarfsanalyse der fehlenden Grundlagen vorbereitet. Der
-Nutzer entscheidet weiterhin zwischen Option A, B, C oder D. Erst danach darf
-ein neues Folgepaket geplant werden. Ohne Entscheidung bleibt G90 blockiert.
+G92 hat die reine Bedarfsanalyse der fehlenden Grundlagen vorbereitet.
+Grundlagen 1/3 hat `EDITOR_BAUPLAN.md` und `ZIEL_APP_ANBINDUNG.md` minimal
+erstellt. Die verbleibenden Grundlagen muessen weiterhin getrennt nachgezogen
+werden, bevor darauf gestuetzte UI-/PDF-Umsetzungen freigegeben werden.

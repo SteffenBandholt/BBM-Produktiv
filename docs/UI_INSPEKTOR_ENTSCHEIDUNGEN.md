@@ -444,3 +444,11 @@ Grundlagen ist in `docs/UI_EDITOR_GRUNDLAGEN_BEDARFSANALYSE.md` vorbereitet.
 G92 ersetzt keine Pflichtunterlage und erteilt keine Freigabe. G90 bleibt
 blockiert, bis die Grundlagen regulaer erstellt oder ein eng begrenzter
 Folgepfad ausdruecklich entschieden ist.
+
+**Status nach Grundlagen 1/3:** `docs/EDITOR_BAUPLAN.md` und
+`docs/ZIEL_APP_ANBINDUNG.md` sind jetzt als knappe Minimal-Grundlagen
+vorhanden. Sie bestaetigen `restarbeiten.ui.main` als Host-/Bestandssurface,
+`pdf.plan.page.1` und `plan.canvas.default` als read-only Zusatzkontexte und
+schliessen aktive Surface-Umschaltung, Drag, Resize, Persistenz, PDF-/Plan-
+Bearbeitung sowie DB-/IPC-Schreibwege weiter aus. Das UI-Editor-kit speichert
+nicht; BBM-Produktiv bleibt Host.

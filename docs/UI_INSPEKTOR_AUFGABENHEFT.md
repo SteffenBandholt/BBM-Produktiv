@@ -32,6 +32,7 @@ Aktueller Stand:
 - K19.110 abgeschlossen: G90a dokumentiert den G90-Stopp wegen fehlender verpflichtender UI-Editor-Grundlagen in `docs/UI_EDITOR_FEHLENDE_GRUNDLAGEN_STOPP_ENTSCHEIDUNG.md`; G90 bleibt gestoppt und der sichtbare UI-Hinweis zur Surface-Auswahl wurde nicht umgesetzt.
 - K19.111 abgeschlossen: G91 bereitet die Nutzerentscheidung zu den fehlenden UI-Editor-Grundlagen in `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md` vor; es gibt keine Ersatzfreigabe, keine improvisierten Pflichtunterlagen und keine UI-/Produktivlogik-Aenderung.
 - K19.112 abgeschlossen: G92 dokumentiert die Bedarfsanalyse zu den fehlenden UI-Editor-Grundlagen in `docs/UI_EDITOR_GRUNDLAGEN_BEDARFSANALYSE.md`; die Pflichtunterlagen bleiben unangelegt und G90 bleibt blockiert.
+- K19.113 abgeschlossen: Grundlagen 1/3 erstellt `docs/EDITOR_BAUPLAN.md` und `docs/ZIEL_APP_ANBINDUNG.md` als knappe Minimal-Grundlagen; keine Produktivlogik, keine sichtbare UI, keine echte Surface-Umschaltung, kein Drag, kein Resize und keine Persistenz.
 - K19.84 abgeschlossen: SurfaceSwitch-Modell im BBM-Launcher als Referenzstand abgeschlossen; `docs/UI_EDITOR_SURFACE_SWITCH_LAUNCHER_REFERENZSTAND.md` dokumentiert den read-only Launcher-Datenfluss, die sichtbare UI-Grenze und die Sicherheitsgrenzen, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
 - K19.83 abgeschlossen: SurfaceSwitch-Modell wird im BBM-Launcher intern read-only genutzt; sichtbar bleibt `restarbeiten.ui.main`/`Restarbeiten` und die bestehende SurfaceInfo, ohne echte Umschaltung, neue UI, Drag, Resize oder Persistenz.
 - K19.82 abgeschlossen: SurfaceSwitch-read-only Referenzstand dokumentiert; `docs/UI_EDITOR_SURFACE_SWITCH_READONLY_REFERENZSTAND.md` beschreibt erlaubte und blockierte Wechselziele, Datenfluss, Sicherheitsgrenzen und Nicht-Ziele, ohne Produktivlogik, UI-Aenderung, Launcher-Produktivintegration, Drag, Resize oder Persistenz.
@@ -1187,3 +1188,27 @@ Hinweis:
   - `git diff --check`
 - Naechster Schritt:
   - regulaere Erstellung der fehlenden Grundlagen oder ausdrueckliche Nutzerentscheidung fuer den naechsten kleinen Folgepfad.
+
+### K19.113 - Grundlagen 1/3: Editor-Bauplan und Ziel-App-Anbindung erstellen
+- Status: erledigt
+- Beschreibung:
+  - `docs/EDITOR_BAUPLAN.md` wurde als knappe Minimal-Grundlage erstellt.
+  - `docs/ZIEL_APP_ANBINDUNG.md` wurde als knappe Minimal-Grundlage erstellt.
+  - Der Stand bleibt read-only: `restarbeiten.ui.main` ist Host-/Bestandssurface,
+    `pdf.plan.page.1` und `plan.canvas.default` sind nur Kontextanzeigen.
+  - Keine Produktivlogik, keine sichtbare UI, keine echte Surface-Umschaltung,
+    kein Drag, kein Resize, keine Persistenz und keine DB-/IPC-Schreibwege.
+- Betroffene Dateien:
+  - `docs/EDITOR_BAUPLAN.md`
+  - `docs/ZIEL_APP_ANBINDUNG.md`
+  - Status-/Plan-/Grundlagendokumente
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+- Tests:
+  - `npm run check:ui-editor-kit`
+  - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `npm test`
+  - `git diff --check`
+- Naechster Schritt:
+  - Die uebrigen Grundlagen `UI_ELEMENT_KATALOG.md`,
+    `UI_BAU_UND_PRUEFREGELN.md` und `UI_PDF_ENTWURFSENTSCHEIDUNG.md`
+    getrennt nachziehen.

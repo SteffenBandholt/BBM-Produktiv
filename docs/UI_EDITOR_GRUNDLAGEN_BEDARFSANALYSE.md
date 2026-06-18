@@ -2,6 +2,11 @@
 
 ## Kurzfazit
 
+Nach Grundlagen 1/3 sind `docs/EDITOR_BAUPLAN.md` und
+`docs/ZIEL_APP_ANBINDUNG.md` regulaer als Minimal-Grundlagen vorhanden. Diese
+Bedarfsanalyse bleibt als Vorgeschichte zu G92 erhalten; die uebrigen
+Pflichtunterlagen bleiben weiterhin offen.
+
 G92 ist eine reine Bedarfsanalyse. Sie beschreibt, welche Inhalte die fehlenden
 UI-Editor-Grundlagen spaeter enthalten muessen, ohne die fehlenden
 Pflichtdateien anzulegen oder eine Ersatzfreigabe zu erteilen. G90 bleibt
@@ -27,11 +32,14 @@ werden muessen. Sie beschreibt nur den Bedarf, nicht die fertige Datei.
 
 ## Fehlende Pflichtunterlagen
 
-- `docs/EDITOR_BAUPLAN.md`
 - `docs/UI_ELEMENT_KATALOG.md`
 - `docs/UI_BAU_UND_PRUEFREGELN.md`
-- `docs/ZIEL_APP_ANBINDUNG.md`
 - `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`
+
+Bereits regulaer minimal erstellt:
+
+- `docs/EDITOR_BAUPLAN.md`
+- `docs/ZIEL_APP_ANBINDUNG.md`
 
 ## Erwarteter Inhalt je fehlender Pflichtunterlage
 
@@ -85,10 +93,16 @@ werden muessen. Sie beschreibt nur den Bedarf, nicht die fertige Datei.
 Diese Analyse erweitert keine bestehende Freigabe. Sie benennt nur den Bedarf
 fuer die spaetere Erstellung der Grundlagen und laesst G90 weiterhin blockiert.
 
-## Abgrenzung: keine Pflichtdatei wurde angelegt
+## Nachtrag Grundlagen 1/3
 
-Die fuenf fehlenden Pflichtunterlagen wurden nicht erzeugt, nicht befuellt und
-nicht als Platzhalter vorbereitet.
+Mit Grundlagen 1/3 wurden zwei der damals fehlenden Pflichtunterlagen
+regulaer erstellt:
+
+- `docs/EDITOR_BAUPLAN.md`
+- `docs/ZIEL_APP_ANBINDUNG.md`
+
+Das ist keine UI-/PDF-Umsetzung und keine Ersatzfreigabe fuer die uebrigen
+Grundlagen.
 
 ## Weiterhin blockierte Arbeiten
 
@@ -112,5 +126,6 @@ nicht als Platzhalter vorbereitet.
 
 ## Empfohlener naechster Schritt
 
-Die fehlenden Pflichtunterlagen sollten spaeter regulaer und in der oben
-benannten Reihenfolge erstellt werden. Bis dahin bleibt G90 blockiert.
+Die uebrigen fehlenden Pflichtunterlagen sollten spaeter regulaer erstellt
+werden. Bis dahin bleiben UI-/PDF-Umsetzungen ohne vollstaendige Grundlage
+blockiert.

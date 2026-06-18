@@ -81,6 +81,8 @@ const UI_EDITOR_FOUNDATIONS_NEEDS_ANALYSIS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_GRUNDLAGEN_BEDARFSANALYSE.md"
 );
+const UI_EDITOR_BAUPLAN_DOC_PATH = path.join(__dirname, "../../docs/EDITOR_BAUPLAN.md");
+const UI_EDITOR_TARGET_APP_BINDING_DOC_PATH = path.join(__dirname, "../../docs/ZIEL_APP_ANBINDUNG.md");
 const SURFACE_FREIGABE_KANDIDAT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_FREIGABE_KANDIDAT_PDF_PLAN_PAGE_1.md"
@@ -3469,7 +3471,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "docs/ZIEL_APP_ANBINDUNG.md",
       "docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md",
       "Abgrenzung: keine Ersatzfreigabe",
-      "Abgrenzung: keine Pflichtdatei wurde angelegt",
+      "Nachtrag Grundlagen 1/3",
       "G90 bleibt",
       "blockiert.",
     ]) {
@@ -3479,6 +3481,28 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         `UI-Editor-Grundlagen-Bedarfsanalyse enthaelt ${required} nicht.`
       );
     }
+  });
+
+  await run("BBM UI-Editor-Runtime: Grundlagen 1/3 bleiben minimal vorhanden", async () => {
+    assert.equal(fs.existsSync(UI_EDITOR_BAUPLAN_DOC_PATH), true, "EDITOR_BAUPLAN.md fehlt.");
+    assert.equal(
+      fs.existsSync(UI_EDITOR_TARGET_APP_BINDING_DOC_PATH),
+      true,
+      "ZIEL_APP_ANBINDUNG.md fehlt."
+    );
+    const bauplanSource = fs.readFileSync(UI_EDITOR_BAUPLAN_DOC_PATH, "utf8");
+    const targetAppSource = fs.readFileSync(UI_EDITOR_TARGET_APP_BINDING_DOC_PATH, "utf8");
+
+    for (const required of ["restarbeiten.ui.main", "keine Persistenz", "kein Drag", "kein Resize"]) {
+      assert.equal(bauplanSource.includes(required), true, `EDITOR_BAUPLAN.md enthaelt ${required} nicht.`);
+      assert.equal(targetAppSource.includes(required), true, `ZIEL_APP_ANBINDUNG.md enthaelt ${required} nicht.`);
+    }
+
+    assert.equal(
+      targetAppSource.includes("UI-Editor-kit speichert nicht"),
+      true,
+      "ZIEL_APP_ANBINDUNG.md muss festhalten, dass UI-Editor-kit nicht speichert."
+    );
   });
 
   await run("BBM UI-Editor-Runtime: PDF-Plan-Sichtpruefungsdokument bleibt vorhanden", async () => {
