@@ -509,3 +509,9 @@ ist jetzt sichtbar. Sie zeigt nur `Status: gueltiger lokaler Entwurf` oder
 `Status: Hinweistext fehlt` plus `Speichern: nicht aktiv`, bleibt lokal und
 schreibt nichts. SurfaceInfo bleibt `restarbeiten.ui.main`; keine weitere
 Surface, kein Drag, kein Resize und keine Persistenz wurden freigegeben.
+
+**Status nach G101:** Der lokale Reset-Button fuer `Hinweis / Infotext` ist
+jetzt sichtbar. Er setzt nur den Standardtext zurueck und laesst Live-,
+Host-, Elementmodell-Vorschau und Entwurfspruefung sofort nachziehen.
+SurfaceInfo bleibt `restarbeiten.ui.main`; keine Speicherung, keine neue
+Surface und keine weitere Fachlogik wurden freigegeben.

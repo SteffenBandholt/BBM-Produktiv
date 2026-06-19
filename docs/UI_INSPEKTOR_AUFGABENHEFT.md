@@ -1403,3 +1403,24 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_VALIDIERUNG_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.122 - Hinweis-/Infotext-Entwurf lokal zuruecksetzen
+- Status: offen
+- Beschreibung:
+  - Der Button `Entwurf zuruecksetzen` stellt den Standardtext `Dies ist ein
+    nicht gespeicherter Hinweis-Entwurf.` lokal wieder her.
+  - Live-Vorschau, Host-Vorschau, Elementmodell-Vorschau und Entwurfspruefung
+    aktualisieren sich sofort.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; die laufenden Vorschauen,
+    Entwurfspruefung und Guardrails bleiben sichtbar.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/EDITOR_BAUPLAN.md`
+  - `docs/UI_ELEMENT_KATALOG.md`
+  - `docs/UI_BAU_UND_PRUEFREGELN.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ELEMENTMODELL_PREVIEW_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_VALIDIERUNG_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_RESET_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

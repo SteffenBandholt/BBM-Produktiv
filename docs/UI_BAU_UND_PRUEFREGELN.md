@@ -34,6 +34,8 @@ und die read-only Zusatzkontexte `pdf.plan.page.1` und `plan.canvas.default`.
   Hinweistext und speichert nichts
 - Die Entwurfspruefung bleibt lokal, bewertet nur leer oder gueltig und zeigt
   immer `Speichern: nicht aktiv`
+- Der Reset-Button fuer den Hinweis-/Infotext-Entwurf bleibt lokal und setzt
+  nur den Standardtext zurueck
 
 ## Bau-Regeln
 

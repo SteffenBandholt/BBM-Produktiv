@@ -19,6 +19,20 @@ leer ist oder nicht, und bleibt komplett ohne Speicherung.
 - leer oder nur aus Leerzeichen bestehend gilt als fehlend
 - keine weiteren Fachregeln
 
+## Sichtbarer Reset-Button
+
+- `Entwurf zuruecksetzen`
+- der Button stellt lokal den Standardtext wieder her
+- kein Speicherbutton
+
+## Verhalten des Resets
+
+- klickt man `Entwurf zuruecksetzen`, wird der Standardtext
+  `Dies ist ein nicht gespeicherter Hinweis-Entwurf.` wiederhergestellt
+- Live-Vorschau, Host-Vorschau, Elementmodell-Vorschau und Entwurfspruefung
+  aktualisieren sich sofort
+- kein localStorage und kein writeFile
+
 ## Verhalten der Live-Aktualisierung
 
 - aendert sich der Hinweistext, aktualisiert sich die Entwurfspruefung sofort

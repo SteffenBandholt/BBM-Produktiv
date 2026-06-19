@@ -4,7 +4,8 @@
 
 Im UI-Editor-Panel ist eine kleine read-only `Elementmodell-Vorschau` fuer
 `Hinweis / Infotext` sichtbar. Sie zeigt nur die modellierte Form des aktuell
-eingegebenen Hinweistexts und speichert nichts.
+eingegebenen Hinweistexts und speichert nichts. Der Reset-Button stellt den
+Standardtext lokal wieder her.
 
 ## Entwurfspruefung
 
@@ -22,6 +23,7 @@ eingegebenen Hinweistexts und speichert nichts.
 - `Status: nicht gespeichert`
 - aktueller Hinweistext
 - bleibt neben der Entwurfspruefung sichtbar
+- wird durch `Entwurf zuruecksetzen` wieder auf den Standardtext gesetzt
 
 ## Verhalten der Live-Aktualisierung
 

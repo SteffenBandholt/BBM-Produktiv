@@ -26,6 +26,8 @@ temporaer und zeigt denselben Text. Die Elementmodell-Vorschau bleibt
 read-only, zeigt Typ, Surface, Status und denselben Text und speichert nichts.
 Die Entwurfspruefung bleibt ebenfalls lokal, zeigt nur gueltig/leer plus
 `Speichern: nicht aktiv` und speichert nichts.
+Der Button `Entwurf zuruecksetzen` stellt den Standardtext lokal wieder her
+und speichert nichts.
 
 ## Aktueller Stand
 

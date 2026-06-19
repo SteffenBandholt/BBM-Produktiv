@@ -29,6 +29,8 @@ Elemente zwingend vorhanden sein muessen.
 - Die Elementmodell-Vorschau bleibt read-only und ohne Persistenz.
 - Die Entwurfspruefung bleibt lokal, zeigt nur gueltig/leer plus
   `Speichern: nicht aktiv` und speichert nichts.
+- Der Reset-Button fuer den Hinweis-/Infotext-Entwurf bleibt lokal und
+  stellt nur den Standardtext wieder her.
 
 ## Zulaessige Element- und Kontextarten
 

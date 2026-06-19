@@ -119,6 +119,13 @@ Sie ergÃ¤nzt:
     Vorschau, die Live-Vorschau, die Host-Vorschau und die Elementmodell-
     Vorschau bleiben bestehen.
 
+- G101 ergaenzt den lokalen Reset-Button im UI-Editor-Panel:
+  - `Entwurf zuruecksetzen` stellt den Standardtext wieder her und laesst
+    die lokalen Vorschauen sowie die Entwurfspruefung sofort nachziehen.
+  - Der Reset bleibt lokal, speichert nichts und benutzt keinen Schreibweg.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; alle bisherigen Hinweise und
+    Vorschauen bleiben bestehen.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

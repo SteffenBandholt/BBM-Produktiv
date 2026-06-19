@@ -2000,6 +2000,25 @@ function handleReadonlyHintInfotextDraftInput(
   return nextValue;
 }
 
+function resetReadonlyHintInfotextDraft(
+  state = {},
+  livePreview = null,
+  hostPreview = null,
+  elementModelPreview = null,
+  validationPreview = null
+) {
+  const nextValue = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT;
+  state.hintInfotextDraftText = nextValue;
+  return handleReadonlyHintInfotextDraftInput(
+    state,
+    nextValue,
+    livePreview,
+    hostPreview,
+    elementModelPreview,
+    validationPreview
+  );
+}
+
 function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
   const currentText = getReadonlyHintInfotextDraftText(state);
@@ -2071,7 +2090,32 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
     );
   });
 
-  inputGroup.append(inputLabel, input);
+  const resetButton = doc.createElement("button");
+  resetButton.type = "button";
+  resetButton.className = "ui-editor-preview-hint-infotext-draft__reset-button";
+  resetButton.setAttribute("data-ui-editor-hint-infotext-draft-reset", "true");
+  resetButton.textContent = "Entwurf zurücksetzen";
+  resetButton.style.justifySelf = "start";
+  resetButton.style.border = "1px solid #cbd5e1";
+  resetButton.style.borderRadius = "4px";
+  resetButton.style.background = "#ffffff";
+  resetButton.style.padding = "4px 8px";
+  resetButton.style.fontSize = "11px";
+  resetButton.style.lineHeight = "1.35";
+  resetButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    input.value = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT;
+    resetReadonlyHintInfotextDraft(
+      state,
+      livePreview,
+      hostPreview,
+      elementModelPreview,
+      validationPreview
+    );
+  });
+
+  inputGroup.append(inputLabel, input, resetButton);
 
   const liveTitle = doc.createElement("div");
   liveTitle.className = "ui-editor-preview-hint-infotext-draft__live-title";
