@@ -1476,3 +1476,14 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERFREIGABE_ENTSCHEIDUNG.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.127 - Hinweis-/Infotext-Speicherziel und BBM-Schreibweg dokumentieren
+- Status: offen
+- Beschreibung:
+  - Das moegliche spaetere Speicherziel ist `restarbeiten.ui.main` im
+    Zielkontext `Restarbeiten`; der Schreibweg ist noch nicht gebaut.
+  - Es bleibt eine reine Dokumentationsentscheidung ohne Schreibcode.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERZIEL_SCHREIBWEG_ENTSCHEIDUNG.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

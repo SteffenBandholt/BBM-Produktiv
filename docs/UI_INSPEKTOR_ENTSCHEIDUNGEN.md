@@ -536,3 +536,8 @@ ausgeschlossen.
 Entwurf ist weiterhin blockiert. Es gibt keinen Speicherbutton, keine
 Persistenz und keinen freigegebenen Schreibweg; eine spaetere Freigabe braucht
 eine eigene, getestete Entscheidung.
+
+**Status nach G106:** Das moegliche spaetere Speicherziel ist dokumentiert:
+`Restarbeiten` auf `restarbeiten.ui.main` fuer `Hinweis / Infotext` mit
+`draft` und `persisted: false` vor dem Speichern. Der konkrete BBM-
+Schreibweg bleibt getrennt und ist noch nicht gebaut.

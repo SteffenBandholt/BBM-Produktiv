@@ -79,3 +79,6 @@ Speicherintegration abzuleiten. Eine spaetere Extraktion bleibt getrennt in
 Eine spaetere Speicherfreigabe bleibt getrennt in
 `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERFREIGABE_ENTSCHEIDUNG.md`
 beschrieben.
+Das spaetere Speicherziel und der BBM-Schreibweg bleiben ebenfalls separat
+dokumentiert.
+Der konkrete Ziel-/Schreibweg-Stand ist Teil von G106 und bleibt dokumentarisch.

@@ -71,6 +71,8 @@ Bei sichtbarer UI gilt:
 
 - `npm start`
 - Klickpfad: `Start -> Projekte -> Nr.: 04-2026 / UI-Polish fuer BBM -> Restarbeiten -> UI-Editor`
+- G106 dokumentiert das spaetere Speicherziel, aber der BBM-Schreibweg bleibt
+  weiter ungebaut und damit regelmaessig blockiert.
 
 ## Stop-Regeln
 
@@ -79,3 +81,5 @@ Bei sichtbarer UI gilt:
 - nicht eindeutige Surface-/Element-Zuordnung
 - unklare Persistenz
 - unklare Schreibwege
+- das spaetere Speicherziel ist dokumentiert, der BBM-Schreibweg noch nicht
+  aktiv

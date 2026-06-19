@@ -10,10 +10,18 @@ Freigabe braucht eine eigene, klare Entscheidung und saubere Guardrails.
 
 - Speichern ist weiterhin nicht aktiv.
 - Der Hinweis-/Infotext-Entwurf bleibt lokal.
-- Die Payload-Vorschau ist nur Anzeige.
+- Die Payload-Vorschau bleibt reine Anzeige.
 - `persisted: false` ist verbindlich.
-- Es gibt keinen Speicherbutton, kein Submit, keine IPC-/DB-Aktion, kein
-  localStorage und kein writeFile.
+- Es gibt noch keinen Speicherbutton.
+- Es gibt noch keinen Submit.
+- Es gibt noch keinen IPC-Schreibweg.
+- Es gibt noch keinen DB-Schreibweg.
+- Es gibt noch keine persistente Element-Erstellung.
+- kein Speicherbutton
+- kein Submit
+- kein IPC-Schreibweg
+- kein DB-Schreibweg
+- keine persistente Element-Erstellung
 - kein localStorage
 - kein writeFile
 - keine IPC-/DB-Aktion
@@ -31,6 +39,11 @@ Freigabe braucht eine eigene, klare Entscheidung und saubere Guardrails.
 
 ## Voraussetzungen fuer spaetere Speicherfreigabe
 
+- Zielkontext: Restarbeiten
+- SurfaceId: restarbeiten.ui.main
+- Elementtyp: Hinweis / Infotext
+- Status vor Speicherung: draft
+- Persistenz vor Speicherung: persisted: false
 - eindeutige Entscheidung, wohin gespeichert wird
 - eindeutige Entscheidung, welche SurfaceId gespeichert werden darf
 - Validierung muss gueltigen Entwurf erzwingen
@@ -66,6 +79,8 @@ Freigabe braucht eine eigene, klare Entscheidung und saubere Guardrails.
 - automatische Persistenz beim Tippen
 - Default-true-Freigaben
 - Wildcard-Freigaben
+- kein automatisches Speichern beim Tippen
+- kein Speichern ueber Payload-Vorschau
 
 ## Notwendige Guardrails vor Speicherbutton
 
@@ -75,6 +90,17 @@ Freigabe braucht eine eigene, klare Entscheidung und saubere Guardrails.
 - keine Freigabe fuer read-only PDF-/Plan-Kontexte
 - keine automatische Persistenz
 - keine Nutzung der Payload-Vorschau als Speicherausloeser
+- Speichern nur bei gueltigem Hinweistext
+- Speichern nur auf `restarbeiten.ui.main`
+- Speichern nur fuer Elementtyp `Hinweis / Infotext`
+- Speichern nur durch sichtbare Nutzeraktion
+- kein automatisches Speichern beim Tippen
+- kein Speichern ueber Payload-Vorschau
+- kein Speichern in PDF-/Plan-read-only-Kontexte
+- keine Wildcards
+- keine Default-true-Freigaben
+- klarer Erfolgshinweis
+- klare Fehlermeldung
 
 ## Notwendige Tests vor Speicherbutton
 
@@ -84,6 +110,7 @@ Freigabe braucht eine eigene, klare Entscheidung und saubere Guardrails.
 - Test fuer den definierten BBM-Schreibweg
 - Test fuer blockierte Wege wie `localStorage`, `writeFile`, IPC und DB
 - Test fuer blockierte PDF-/Plan-read-only-Kontexte
+- Tests fuer erlaubten und blockierten Schreibweg
 
 ## Notwendige Electron-Sichtpruefung vor Speicherbutton
 
@@ -97,9 +124,16 @@ Freigabe braucht eine eigene, klare Entscheidung und saubere Guardrails.
 - BBM-Produktiv bleibt Host und entscheidet ueber eine spaetere Freigabe.
 - Die aktuelle Doku legt nur die Grenze fest, nicht den Speicherpfad.
 - Keine Aenderung an `../UI-Editor-kit`.
+- Das spaetere Speicherziel ist getrennt dokumentiert und beschreibt noch
+  keinen gebauten Schreibweg.
+- Der konkrete BBM-Schreibweg bleibt in
+  `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERZIEL_SCHREIBWEG_ENTSCHEIDUNG.md`
+  dokumentiert.
+- Der Ziel-/Schreibweg-Stand bleibt damit bewusst getrennt und deaktiviert.
 
 ## Empfohlener naechster Schritt
 
 Die aktuelle lokale Hinweis-/Infotext-Kette weiter stabil halten und erst dann
 eine eigenstaendige Speicherentscheidung vorbereiten, wenn Zielsurface und
-Schreibweg wirklich fachlich feststehen.
+Schreibweg wirklich fachlich feststehen. Der Schreibweg selbst bleibt noch
+nicht gebaut.

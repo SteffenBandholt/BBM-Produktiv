@@ -18,6 +18,11 @@ bleibt dort erst einmal verankert. Ein spaeteres Herausziehen in das
 - BBM-Dokumentation und BBM-Guardrails beschreiben den Stand, nicht das Kit.
 - Die spaetere Speicherfreigabe ist ein eigenes Folgepaket und bleibt hier
   bewusst ausgeklammert.
+- Das spaetere Speicherziel und der BBM-Schreibweg bleiben ebenfalls eigene
+  Folgepakete.
+- Der konkrete Ziel-/Schreibweg-Stand bleibt in einer eigenen Entscheidung
+  getrennt.
+- G106 beschreibt den Ziel-/Schreibweg-Stand getrennt von dieser Extraktionsgrenze.
 
 ## Was spaeter potenziell ins UI-Editor-kit gehoeren koennte
 

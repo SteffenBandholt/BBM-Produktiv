@@ -3925,14 +3925,22 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     for (const required of [
       "Speichern ist weiterhin nicht aktiv",
+      "Payload-Vorschau bleibt reine Anzeige",
       "persisted: false",
       "kein Speicherbutton",
       "kein Submit",
+      "kein IPC-Schreibweg",
+      "kein DB-Schreibweg",
+      "keine persistente Element-Erstellung",
       "kein localStorage",
       "kein writeFile",
-      "keine IPC-/DB-Aktion",
       "keine Wildcards",
       "keine Default-true-Freigaben",
+      "kein automatisches Speichern beim Tippen",
+      "kein Speichern ueber Payload-Vorschau",
+      "Speichern nur auf `restarbeiten.ui.main`",
+      "Speichern nur fuer Elementtyp `Hinweis / Infotext`",
+      "Speichern nur durch sichtbare Nutzeraktion",
       "Speichern bei leerem Hinweistext",
       "PDF-/Plan-read-only",
     ]) {

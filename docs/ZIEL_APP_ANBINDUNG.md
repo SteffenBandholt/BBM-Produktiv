@@ -19,6 +19,10 @@ Minimalgrundlage jetzt abgeschlossen.
 - Der kleine Surface-Auswahl-Hinweis im Panel bleibt BBM-seitig und ist nur
   informativ.
 - Die kompakte Statuszeile bleibt BBM-seitig und rein informativ.
+- Das spaetere Speicherziel und der BBM-Schreibweg bleiben ebenfalls separat
+  dokumentiert.
+- G106 beschreibt dieses spaetere Speicherziel nur dokumentarisch; es ist
+  noch nicht aktiv.
 
 ## Host-/Bestandssurface
 

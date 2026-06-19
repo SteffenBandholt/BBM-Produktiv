@@ -77,6 +77,8 @@ keinen Speicherbutton und keinen Schreibweg.
 - Bei sichtbarer UI-Aenderung ist eine Electron-Sichtpruefung erforderlich.
 - Wenn keine technische Pruefung existiert, muss das offen gemeldet werden.
 - G102 bestaetigt den lokalen Hinweis-/Infotext-Entwurf als Abschlusscheck.
+- G106 dokumentiert zusaetzlich das spaetere Speicherziel und den noch
+  fehlenden BBM-Schreibweg; gebaut wird davon noch nichts.
 
 ## Stop-Regel
 

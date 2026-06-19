@@ -65,6 +65,8 @@ Elemente zwingend vorhanden sein muessen.
 - keine Persistenz
 - keine Wildcard
 - kein Default-true
+- Das spaetere Speicherziel und der BBM-Schreibweg bleiben dokumentiert; sie
+  sind noch nicht aktiv.
 
 ## Stop-Regel
 
