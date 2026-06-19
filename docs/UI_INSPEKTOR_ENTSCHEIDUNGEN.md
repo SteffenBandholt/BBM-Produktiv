@@ -485,3 +485,7 @@ Persistenz zu aendern.
 **Status nach G95:** Die kleine read-only Elementkatalog-Ãœbersicht ist im
 UI-Editor-Panel sichtbar. Sie benennt erlaubte und gesperrte Elementarten,
 ohne SurfaceInfo, Erzeugung oder Persistenz zu aendern.
+
+**Status nach G96:** Die kleine Entwurfs-Vorschau fuer `Hinweis / Infotext`
+ist im UI-Editor-Panel sichtbar. Sie bleibt nur Vorschau, nicht gespeichert,
+und erweitert den Restarbeiten-Kontext ohne neue Bedien- oder Speicherlogik.

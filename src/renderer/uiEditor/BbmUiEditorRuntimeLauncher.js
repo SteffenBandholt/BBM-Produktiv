@@ -59,6 +59,12 @@ const READONLY_SURFACE_ELEMENT_CATALOG_LINES = [
   "Drag / Resize: gesperrt",
   "Speichern / Persistenz: gesperrt",
 ];
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_TITLE = "Entwurfs-Vorschau";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LINES = [
+  "Elementart: Hinweis / Infotext",
+  "Status: Vorschau, nicht gespeichert",
+  "Zielkontext: Restarbeiten",
+];
 
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
@@ -1380,6 +1386,7 @@ function renderPreviewPanel(doc, state = {}) {
   ].filter(Boolean).join("\n");
   panel.appendChild(details);
 
+  appendReadonlyHintInfotextDraftPreview(doc, panel);
   appendReadonlySurfaceSelection(doc, panel, state);
   appendReadonlySurfaceElementCatalogOverview(doc, panel);
   appendReadonlyPdfPlanPage1Hint(doc, panel, state);
@@ -1915,6 +1922,36 @@ function appendReadonlySurfaceElementCatalogOverview(doc, panel) {
   catalog.append(title, lines);
   panel.appendChild(catalog);
   return catalog;
+}
+
+function appendReadonlyHintInfotextDraftPreview(doc, panel) {
+  if (!doc?.createElement || !panel?.appendChild) return null;
+
+  const preview = doc.createElement("div");
+  preview.className = "ui-editor-preview-hint-infotext-draft";
+  preview.setAttribute("data-ui-editor-hint-infotext-draft-preview", "true");
+  preview.style.marginTop = "8px";
+  preview.style.padding = "8px";
+  preview.style.border = "1px solid #d1d5db";
+  preview.style.borderRadius = "6px";
+  preview.style.background = "#f8fafc";
+  preview.style.color = "#334155";
+  preview.style.fontSize = "11px";
+  preview.style.lineHeight = "1.35";
+
+  const title = doc.createElement("div");
+  title.className = "ui-editor-preview-hint-infotext-draft__title";
+  title.textContent = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_TITLE;
+  title.style.fontWeight = "700";
+  title.style.marginBottom = "4px";
+
+  const lines = doc.createElement("div");
+  lines.className = "ui-editor-preview-hint-infotext-draft__lines";
+  lines.textContent = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LINES.map((line) => `- ${line}`).join("\n");
+
+  preview.append(title, lines);
+  panel.appendChild(preview);
+  return preview;
 }
 
 function appendReadonlyPdfPlanPage1Hint(doc, panel, state = {}) {

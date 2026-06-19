@@ -145,6 +145,8 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G94 ergaenzt die kompakte Bedienzustands-Statuszeile im UI-Editor-Panel; sie bleibt informativ, nennt Restarbeiten sowie die read-only Zusatzkontexte und aktiviert keine Speicher- oder Surface-Logik
 - G95 ergaenzt die kleine Elementkatalog-Ãœbersicht im UI-Editor-Panel; sie bleibt informativ, nennt erlaubte und gesperrte Elementarten und aktiviert keine Erzeugungs-, Speicher- oder Surface-Logik
 
+- G96 ergaenzt die kleine nicht-persistente Entwurfs-Vorschau fuer `Hinweis / Infotext` im UI-Editor-Panel; sie bleibt informativ, zeigt nur Vorschau, nicht gespeichert, und aktiviert keine neue Bedien- oder Speicherlogik
+
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 
 Wenn der reale Repo-Stand einen kleineren und ehrlicheren naechsten Schritt zeigt, darf die Reihenfolge innerhalb der aktiven Achsen angepasst werden.

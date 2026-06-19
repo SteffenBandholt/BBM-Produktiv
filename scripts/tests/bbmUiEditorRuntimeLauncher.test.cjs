@@ -77,6 +77,10 @@ const UI_EDITOR_PANEL_STATUS_LINE_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_PANEL_BEDIENZUSTAND_STATUSZEILE_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_DRAFT_PREVIEW_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_PREVIEW_REFERENZSTAND.md"
+);
 const SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md"
@@ -409,6 +413,9 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-surface-element-catalog=\"true\"]") {
     return node.getAttribute("data-ui-editor-surface-element-catalog") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-draft-preview=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-draft-preview") === "true";
   }
   if (raw === "[data-ui-editor-surface-readonly-hint=\"true\"]") {
     return node.getAttribute("data-ui-editor-surface-readonly-hint") === "true";
@@ -857,6 +864,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const renderedText = getRenderedText(doc.body);
     const surfaceSelection = doc.querySelector('[data-ui-editor-surface-selection="true"]');
     const elementCatalog = doc.querySelector('[data-ui-editor-surface-element-catalog="true"]');
+    const hintInfotextDraftPreview = doc.querySelector('[data-ui-editor-hint-infotext-draft-preview="true"]');
     const readonlyHint = doc.querySelector('[data-ui-editor-surface-readonly-hint="true"]');
     const surfaceInfo = doc.querySelector('[data-ui-editor-surface-info="true"]');
     assert.equal(source.includes('from "./surfaceAdapters/surfaceAdapterCatalog.js"'), true);
@@ -901,6 +909,18 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     ]) {
       assert.equal(renderedText.includes(required), true, `Elementkatalog-Text enthaelt ${required} nicht.`);
     }
+    assert.equal(Boolean(hintInfotextDraftPreview), true);
+    assert.equal(renderedText.includes("Entwurfs-Vorschau"), true);
+    for (const required of [
+      "Elementart: Hinweis / Infotext",
+      "Status: Vorschau, nicht gespeichert",
+      "Zielkontext: Restarbeiten",
+    ]) {
+      assert.equal(renderedText.includes(required), true, `Entwurfs-Vorschau enthaelt ${required} nicht.`);
+    }
+    assert.equal(hintInfotextDraftPreview.querySelectorAll("button").length, 0);
+    assert.equal(hintInfotextDraftPreview.querySelectorAll("input").length, 0);
+    assert.equal(hintInfotextDraftPreview.querySelectorAll("select").length, 0);
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
     assert.equal(
@@ -3570,6 +3590,34 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Panel-Bedienzustand-Statuszeilen-Referenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Entwurfs-Vorschau bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_DRAFT_PREVIEW_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Entwurfs-Vorschau-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_DRAFT_PREVIEW_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Entwurfs-Vorschau",
+      "Elementart: Hinweis / Infotext",
+      "Status: Vorschau, nicht gespeichert",
+      "Zielkontext: Restarbeiten",
+      "Keine Speicherung",
+      "SurfaceInfo-Verhalten",
+      "restarbeiten.ui.main",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Entwurfs-Vorschau enthaelt ${required} nicht.`
       );
     }
   });

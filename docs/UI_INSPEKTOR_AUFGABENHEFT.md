@@ -1309,6 +1309,25 @@ Hinweis:
   - `docs/UI_EDITOR_PANEL_BEDIENZUSTAND_STATUSZEILE_REFERENZSTAND.md`
   - `docs/UI_EDITOR_PANEL_ELEMENTKATALOG_READONLY_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+
+### K19.118 - Hinweis-/Infotext als nicht-persistente Entwurfs-Vorschau vorbereiten
+- Status: erledigt
+- Beschreibung:
+  - Eine kleine Entwurfs-Vorschau zeigt `Hinweis / Infotext`, `Vorschau, nicht
+    gespeichert` und den Zielkontext `Restarbeiten`.
+  - Die Vorschau bleibt rein informativ, ohne Buttons, Eingabefelder oder
+    Speicherweg.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
+    die Bedienzustands-Statuszeile und der Elementkatalog bleiben sichtbar.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/EDITOR_BAUPLAN.md`
+  - `docs/UI_ELEMENT_KATALOG.md`
+  - `docs/UI_BAU_UND_PRUEFREGELN.md`
+  - `docs/UI_EDITOR_PANEL_ELEMENTKATALOG_READONLY_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_PREVIEW_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
 - Tests:
   - `npm run check:ui-editor-kit`

@@ -73,6 +73,14 @@ Sie ergÃ¤nzt:
   - SurfaceInfo bleibt `restarbeiten.ui.main`; Hinweis und read-only
     Zusatzkontexte bleiben bestehen.
 
+- G96 kleine Entwurfs-Vorschau fuer `Hinweis / Infotext` im UI-Editor-Panel
+  umgesetzt:
+  - Der neue Bereich zeigt `Entwurfs-Vorschau`, `Elementart: Hinweis /
+    Infotext`, `Status: Vorschau, nicht gespeichert` und `Zielkontext:
+    Restarbeiten`.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
+    die Bedienzustands-Statuszeile und der Elementkatalog bleiben bestehen.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

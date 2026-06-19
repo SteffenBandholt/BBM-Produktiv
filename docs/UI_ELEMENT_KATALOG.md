@@ -22,12 +22,15 @@ Elemente zwingend vorhanden sein muessen.
 - Der Surface-Auswahl-Hinweis ist nur lesende Kontextanzeige.
 - Die kompakte Statuszeile ist nur lesende Bedienzustandsanzeige.
 - Die neue Elementkatalog-Übersicht ist nur lesende Einordnung.
+- Die neue Entwurfs-Vorschau fuer `Hinweis / Infotext` bleibt nur Vorschau,
+  nicht gespeichert und ohne neue Bedienlogik.
 
 ## Zulaessige Element- und Kontextarten
 
 - Host-/Bestandssurface-Kontext
 - read-only Surface-Kontext
 - reine Hinweis-/Infotexte nach Freigabe
+- nicht-persistente Entwurfs-Vorschau fuer Hinweis-/Infotext
 - Test-/Doku-/Guardrail-Elemente
 - read-only Elementkatalog-Übersichten
 

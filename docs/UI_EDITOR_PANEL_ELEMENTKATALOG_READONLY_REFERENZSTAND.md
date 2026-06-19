@@ -2,8 +2,10 @@
 
 ## Kurzfazit
 
-Die kompakte Elementkatalog-Ãœbersicht im UI-Editor-Panel ist rein read-only
+Die kompakte Elementkatalog-Uebersicht im UI-Editor-Panel ist rein read-only
 und ergaenzt den sichtbaren Surface- und Bedienzustand ohne neue Bedienlogik.
+Darunter kann zusaetzlich eine kleine nicht-persistente Entwurfs-Vorschau fuer
+`Hinweis / Infotext` erscheinen.
 
 ## Sichtbarer Elementkatalog-Text
 

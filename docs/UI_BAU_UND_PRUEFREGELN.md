@@ -24,6 +24,8 @@ und die read-only Zusatzkontexte `pdf.plan.page.1` und `plan.canvas.default`.
 - read-only Kontexthinweise bleiben klein und ohne Bedienlogik
 - kompakte Statuszeilen bleiben informativ und ohne Speicherlogik
 - Elementkatalog-Uebersichten bleiben informativ und ohne Erzeugungslogik
+- Entwurfs-Vorschauen fuer `Hinweis / Infotext` bleiben informativ und ohne
+  Speicherung
 
 ## Bau-Regeln
 
