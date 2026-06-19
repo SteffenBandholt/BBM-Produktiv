@@ -6,7 +6,7 @@ Im UI-Editor-Panel gibt es jetzt eine kleine lokale Live-Vorschau fuer
 `Hinweis / Infotext`. Der Text kann im Panel geaendert werden, bleibt aber nur
 im laufenden UI-Editor sichtbar und wird nicht gespeichert.
 Aus diesem Text speist sich zusaetzlich die kleine Host-Vorschau im
-Restarbeiten-Kontext.
+Restarbeiten-Kontext und die read-only Elementmodell-Vorschau.
 
 ## Sichtbare Eingabe
 
@@ -21,6 +21,7 @@ Restarbeiten-Kontext.
 - aktualisiert sich sofort bei Eingabe
 - bleibt im gleichen Panel-Kontext
 - dient als Quelle fuer die Host-Vorschau
+- dient als Quelle fuer die Elementmodell-Vorschau
 
 ## Abgrenzung: keine Speicherung
 

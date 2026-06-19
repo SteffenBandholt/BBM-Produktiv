@@ -1359,3 +1359,25 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_PREVIEW_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.120 - Hinweis-/Infotext als nicht-persistente Elementmodell-Vorschau anzeigen
+- Status: offen
+- Beschreibung:
+  - Die Elementmodell-Vorschau zeigt `Typ: Hinweis / Infotext`, `Surface:
+    restarbeiten.ui.main`, `Status: nicht gespeichert` und den aktuellen
+    Hinweistext.
+  - Die Vorschau bleibt read-only und lokal, ohne Speicherweg.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
+    die Bedienzustands-Statuszeile, der Elementkatalog, die Entwurfs-Vorschau,
+    die Live-Vorschau und die Host-Vorschau bleiben sichtbar.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/EDITOR_BAUPLAN.md`
+  - `docs/UI_ELEMENT_KATALOG.md`
+  - `docs/UI_BAU_UND_PRUEFREGELN.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_PREVIEW_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_LIVE_PREVIEW_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ELEMENTMODELL_PREVIEW_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

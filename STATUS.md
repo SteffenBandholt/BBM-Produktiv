@@ -99,6 +99,16 @@ Sie ergÃ¤nzt:
     die Bedienzustands-Statuszeile, der Elementkatalog und beide Vorschauen
     bleiben bestehen.
 
+- G99 ergaenzt eine read-only Elementmodell-Vorschau im UI-Editor-Panel:
+  - Die neue Vorschau zeigt `Typ: Hinweis / Infotext`, `Surface:
+    restarbeiten.ui.main`, `Status: nicht gespeichert` und den aktuellen
+    Hinweistext.
+  - Die Elementmodell-Vorschau aktualisiert sich gemeinsam mit der Live- und
+    Host-Vorschau und bleibt rein temporaer.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
+    die Bedienzustands-Statuszeile, der Elementkatalog, die Entwurfs-Vorschau,
+    die Live-Vorschau und die Host-Vorschau bleiben bestehen.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

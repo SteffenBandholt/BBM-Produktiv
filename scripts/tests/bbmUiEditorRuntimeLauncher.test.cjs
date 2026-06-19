@@ -89,6 +89,10 @@ const UI_EDITOR_HINT_INFOTEXT_HOST_PREVIEW_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_PREVIEW_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_ELEMENTMODEL_PREVIEW_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_ELEMENTMODELL_PREVIEW_REFERENZSTAND.md"
+);
 const SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md"
@@ -435,6 +439,9 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-hint-infotext-host-preview=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-host-preview") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-elementmodel-preview=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-elementmodel-preview") === "true";
   }
   if (raw === "[data-ui-editor-surface-readonly-hint=\"true\"]") {
     return node.getAttribute("data-ui-editor-surface-readonly-hint") === "true";
@@ -887,6 +894,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const hintInfotextDraftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
     const hintInfotextLivePreview = doc.querySelector('[data-ui-editor-hint-infotext-live-preview="true"]');
     const hintInfotextHostPreview = doc.querySelector('[data-ui-editor-hint-infotext-host-preview="true"]');
+    const hintInfotextElementModelPreview = doc.querySelector('[data-ui-editor-hint-infotext-elementmodel-preview="true"]');
     const readonlyHint = doc.querySelector('[data-ui-editor-surface-readonly-hint="true"]');
     const surfaceInfo = doc.querySelector('[data-ui-editor-surface-info="true"]');
     assert.equal(source.includes('from "./surfaceAdapters/surfaceAdapterCatalog.js"'), true);
@@ -949,7 +957,13 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       hintInfotextHostPreview.textContent,
       "Hinweis / Infotext\nDies ist ein nicht gespeicherter Hinweis-Entwurf.\nnicht gespeichert"
     );
+    assert.equal(Boolean(hintInfotextElementModelPreview), true);
+    assert.equal(
+      hintInfotextElementModelPreview.textContent,
+      "Typ: Hinweis / Infotext\nSurface: restarbeiten.ui.main\nStatus: nicht gespeichert\nDies ist ein nicht gespeicherter Hinweis-Entwurf."
+    );
     assert.equal(renderedText.includes("Host-Vorschau"), true);
+    assert.equal(renderedText.includes("Elementmodell-Vorschau"), true);
     assert.equal(hintInfotextDraftPreview.querySelectorAll("button").length, 0);
     assert.equal(hintInfotextDraftPreview.querySelectorAll("textarea").length, 1);
     assert.equal(hintInfotextDraftPreview.querySelectorAll("select").length, 0);
@@ -962,11 +976,16 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const updatedHintInfotextDraftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
     const updatedHintInfotextLivePreview = doc.querySelector('[data-ui-editor-hint-infotext-live-preview="true"]');
     const updatedHintInfotextHostPreview = doc.querySelector('[data-ui-editor-hint-infotext-host-preview="true"]');
+    const updatedHintInfotextElementModelPreview = doc.querySelector('[data-ui-editor-hint-infotext-elementmodel-preview="true"]');
     assert.equal(updatedHintInfotextDraftInput.value, "Lokaler Hinweistext fuer die Vorschau.");
     assert.equal(updatedHintInfotextLivePreview.textContent, "Lokaler Hinweistext fuer die Vorschau.");
     assert.equal(
       updatedHintInfotextHostPreview.textContent,
       "Hinweis / Infotext\nLokaler Hinweistext fuer die Vorschau.\nnicht gespeichert"
+    );
+    assert.equal(
+      updatedHintInfotextElementModelPreview.textContent,
+      "Typ: Hinweis / Infotext\nSurface: restarbeiten.ui.main\nStatus: nicht gespeichert\nLokaler Hinweistext fuer die Vorschau."
     );
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
@@ -3727,6 +3746,37 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Host-Vorschau enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Elementmodell-Vorschau bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_ELEMENTMODEL_PREVIEW_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Elementmodell-Vorschau-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_ELEMENTMODEL_PREVIEW_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Elementmodell-Vorschau",
+      "Typ: Hinweis / Infotext",
+      "Surface: restarbeiten.ui.main",
+      "Status: nicht gespeichert",
+      "aktueller Hinweistext",
+      "keine Persistenz",
+      "kein localStorage",
+      "kein writeFile",
+      "restarbeiten.ui.main",
+      "SurfaceInfo-Verhalten",
+      "kein Drag",
+      "kein Resize",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Elementmodell-Vorschau enthaelt ${required} nicht.`
       );
     }
   });

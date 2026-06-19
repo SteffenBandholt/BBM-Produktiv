@@ -65,6 +65,10 @@ const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LIVE_TITLE = "Live-Vorschau";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_HOST_TITLE = "Host-Vorschau";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_HOST_KIND = "Hinweis / Infotext";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_HOST_STATUS = "nicht gespeichert";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_TITLE = "Elementmodell-Vorschau";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_TYPE = "Typ: Hinweis / Infotext";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_SURFACE = "Surface: restarbeiten.ui.main";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_STATUS = "Status: nicht gespeichert";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT = "Dies ist ein nicht gespeicherter Hinweis-Entwurf.";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LINES = [
   "Elementart: Hinweis / Infotext",
@@ -1945,7 +1949,22 @@ function formatReadonlyHintInfotextHostPreviewText(value = "") {
   ].filter(Boolean).join("\n");
 }
 
-function handleReadonlyHintInfotextDraftInput(state = {}, value = "", livePreview = null, hostPreview = null) {
+function formatReadonlyHintInfotextElementModelPreviewText(value = "") {
+  return [
+    READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_TYPE,
+    READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_SURFACE,
+    READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_STATUS,
+    String(value == null ? "" : value),
+  ].filter(Boolean).join("\n");
+}
+
+function handleReadonlyHintInfotextDraftInput(
+  state = {},
+  value = "",
+  livePreview = null,
+  hostPreview = null,
+  elementModelPreview = null
+) {
   const nextValue = String(value == null ? "" : value);
   state.hintInfotextDraftText = nextValue;
   if (livePreview) {
@@ -1953,6 +1972,9 @@ function handleReadonlyHintInfotextDraftInput(state = {}, value = "", livePrevie
   }
   if (hostPreview) {
     hostPreview.textContent = formatReadonlyHintInfotextHostPreviewText(nextValue);
+  }
+  if (elementModelPreview) {
+    elementModelPreview.textContent = formatReadonlyHintInfotextElementModelPreviewText(nextValue);
   }
   return nextValue;
 }
@@ -2008,10 +2030,10 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
   input.style.fontSize = "12px";
   input.style.lineHeight = "1.35";
   input.addEventListener("input", () => {
-    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview, hostPreview);
+    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview, hostPreview, elementModelPreview);
   });
   input.addEventListener("change", () => {
-    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview, hostPreview);
+    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview, hostPreview, elementModelPreview);
   });
 
   inputGroup.append(inputLabel, input);
@@ -2053,7 +2075,35 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
   hostPreview.style.minHeight = "24px";
   hostPreview.textContent = formatReadonlyHintInfotextHostPreviewText(currentText);
 
-  preview.append(title, lines, inputGroup, liveTitle, livePreview, hostTitle, hostPreview);
+  const elementModelTitle = doc.createElement("div");
+  elementModelTitle.className = "ui-editor-preview-hint-infotext-draft__elementmodel-title";
+  elementModelTitle.textContent = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_TITLE;
+  elementModelTitle.style.marginTop = "8px";
+  elementModelTitle.style.fontWeight = "700";
+
+  const elementModelPreview = doc.createElement("div");
+  elementModelPreview.className = "ui-editor-preview-hint-infotext-draft__elementmodel-preview";
+  elementModelPreview.setAttribute("data-ui-editor-hint-infotext-elementmodel-preview", "true");
+  elementModelPreview.style.marginTop = "4px";
+  elementModelPreview.style.padding = "6px 8px";
+  elementModelPreview.style.border = "1px solid #dbe4ee";
+  elementModelPreview.style.borderRadius = "4px";
+  elementModelPreview.style.background = "#ffffff";
+  elementModelPreview.style.whiteSpace = "pre-wrap";
+  elementModelPreview.style.minHeight = "24px";
+  elementModelPreview.textContent = formatReadonlyHintInfotextElementModelPreviewText(currentText);
+
+  preview.append(
+    title,
+    lines,
+    inputGroup,
+    liveTitle,
+    livePreview,
+    hostTitle,
+    hostPreview,
+    elementModelTitle,
+    elementModelPreview
+  );
   panel.appendChild(preview);
   return preview;
 }

@@ -26,6 +26,7 @@ Elemente zwingend vorhanden sein muessen.
   nicht gespeichert und ohne neue Bedienlogik.
 - Die Live-Vorschau mit `Hinweistext` bleibt lokal und ohne Persistenz.
 - Die Host-Vorschau bleibt im Restarbeiten-Kontext lokal und ohne Persistenz.
+- Die Elementmodell-Vorschau bleibt read-only und ohne Persistenz.
 
 ## Zulaessige Element- und Kontextarten
 

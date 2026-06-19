@@ -497,3 +497,9 @@ verloren gehen und aendert weder SurfaceInfo noch Schreibwege.
 **Status nach G98:** Zusaetzlich erscheint eine Host-Vorschau im
 Restarbeiten-Kontext. Sie spiegelt den aktuellen Hinweistext, zeigt
 `nicht gespeichert` und bleibt ebenfalls nur temporaer.
+
+**Status nach G99:** Die read-only Elementmodell-Vorschau fuer `Hinweis /
+Infotext` ist jetzt sichtbar und dokumentiert. Sie zeigt Typ, Surface, Status
+und den aktuellen Hinweistext, bleibt nicht gespeichert und erweitert die
+Host-/Live-Vorschau nur um eine weitere lokale Vorschau ohne neue Speicher-
+oder Umschaltlogik.

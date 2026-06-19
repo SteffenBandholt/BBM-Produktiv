@@ -1,25 +1,25 @@
-# UI-Editor Hinweis-Infotext Host Preview Referenzstand
+# UI-Editor Hinweis-Infotext Elementmodell Preview Referenzstand
 
 ## Kurzfazit
 
-Im Restarbeiten-/Host-Kontext erscheint eine kleine nicht-persistente
-`Host-Vorschau` fuer `Hinweis / Infotext`. Sie zeigt nur den aktuellen
-Eingabetext aus dem UI-Editor-Panel und bleibt rein temporaer. Die
-Elementmodell-Vorschau nutzt denselben Text.
+Im UI-Editor-Panel ist eine kleine read-only `Elementmodell-Vorschau` fuer
+`Hinweis / Infotext` sichtbar. Sie zeigt nur die modellierte Form des aktuell
+eingegebenen Hinweistexts und speichert nichts.
 
-## Sichtbare Host-Vorschau
+## Sichtbare Elementmodell-Vorschau
 
-- `Host-Vorschau`
-- `Hinweis / Infotext`
-- eingegebener Hinweistext
-- `nicht gespeichert`
-- Quelle fuer die Elementmodell-Vorschau
+- `Elementmodell-Vorschau`
+- `Typ: Hinweis / Infotext`
+- `Surface: restarbeiten.ui.main`
+- `Status: nicht gespeichert`
+- aktueller Hinweistext
 
 ## Verhalten der Live-Aktualisierung
 
-- aendert sich der Hinweistext im Panel, aktualisiert sich die Host-Vorschau
+- aendert sich der Hinweistext im Panel, aktualisiert sich auch die
+  Elementmodell-Vorschau
 - die Vorschau bleibt an den laufenden UI-Editor gebunden
-- kein extra Button und kein Submit
+- kein Button und kein Submit
 
 ## Abgrenzung: keine Speicherung
 
@@ -61,5 +61,5 @@ Elementmodell-Vorschau nutzt denselben Text.
 
 ## Electron-Sichtpruefung
 
-Erforderlich, weil die sichtbare UI erweitert wurde. Die Pruefung bestaetigt
-Sichtbarkeit und Live-Aktualisierung, nicht Speicherung.
+Erforderlich, weil die sichtbare UI erweitert wurde. Geprueft wird die
+Sichtbarkeit und die Live-Aktualisierung, nicht Speicherung.

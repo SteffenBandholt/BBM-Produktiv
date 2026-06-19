@@ -30,6 +30,8 @@ und die read-only Zusatzkontexte `pdf.plan.page.1` und `plan.canvas.default`.
   sichtbaren Entwurf und speichert nichts
 - Die Host-Vorschau bleibt lokal, spiegelt nur den Hinweistext und speichert
   nichts
+- Die Elementmodell-Vorschau bleibt read-only, zeigt nur den modellierten
+  Hinweistext und speichert nichts
 
 ## Bau-Regeln
 
