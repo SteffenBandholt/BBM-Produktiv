@@ -1381,3 +1381,25 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ELEMENTMODELL_PREVIEW_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.121 - Hinweis-/Infotext-Entwurf lokal validieren und Validierungsstatus anzeigen
+- Status: offen
+- Beschreibung:
+  - Die Entwurfspruefung zeigt `Status: gueltiger lokaler Entwurf` oder
+    `Status: Hinweistext fehlt` und immer `Speichern: nicht aktiv`.
+  - Die Pruefung bleibt lokal, wertet nur Trim gegen leer aus und speichert
+    nichts.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
+    die Bedienzustands-Statuszeile, der Elementkatalog, die Entwurfs-Vorschau,
+    die Live-Vorschau, die Host-Vorschau und die Elementmodell-Vorschau
+    bleiben sichtbar.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/EDITOR_BAUPLAN.md`
+  - `docs/UI_ELEMENT_KATALOG.md`
+  - `docs/UI_BAU_UND_PRUEFREGELN.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ELEMENTMODELL_PREVIEW_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_VALIDIERUNG_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

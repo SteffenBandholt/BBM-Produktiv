@@ -109,6 +109,16 @@ Sie ergÃ¤nzt:
     die Bedienzustands-Statuszeile, der Elementkatalog, die Entwurfs-Vorschau,
     die Live-Vorschau und die Host-Vorschau bleiben bestehen.
 
+- G100 ergaenzt die lokale Entwurfspruefung im UI-Editor-Panel:
+  - Die Entwurfspruefung zeigt `Status: gueltiger lokaler Entwurf` oder
+    `Status: Hinweistext fehlt` plus `Speichern: nicht aktiv`.
+  - Die Pruefung bleibt lokal, aktualisiert sich sofort beim Tippen und
+    speichert nichts.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
+    die Bedienzustands-Statuszeile, der Elementkatalog, die Entwurfs-
+    Vorschau, die Live-Vorschau, die Host-Vorschau und die Elementmodell-
+    Vorschau bleiben bestehen.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

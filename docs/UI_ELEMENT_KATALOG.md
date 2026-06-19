@@ -27,6 +27,8 @@ Elemente zwingend vorhanden sein muessen.
 - Die Live-Vorschau mit `Hinweistext` bleibt lokal und ohne Persistenz.
 - Die Host-Vorschau bleibt im Restarbeiten-Kontext lokal und ohne Persistenz.
 - Die Elementmodell-Vorschau bleibt read-only und ohne Persistenz.
+- Die Entwurfspruefung bleibt lokal, zeigt nur gueltig/leer plus
+  `Speichern: nicht aktiv` und speichert nichts.
 
 ## Zulaessige Element- und Kontextarten
 
@@ -34,6 +36,7 @@ Elemente zwingend vorhanden sein muessen.
 - read-only Surface-Kontext
 - reine Hinweis-/Infotexte nach Freigabe
 - nicht-persistente Entwurfs-Vorschau fuer Hinweis-/Infotext
+- nicht-persistente Entwurfspruefung fuer Hinweis-/Infotext
 - Test-/Doku-/Guardrail-Elemente
 - read-only Elementkatalog-Übersichten
 

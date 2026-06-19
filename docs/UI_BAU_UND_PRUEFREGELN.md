@@ -32,6 +32,8 @@ und die read-only Zusatzkontexte `pdf.plan.page.1` und `plan.canvas.default`.
   nichts
 - Die Elementmodell-Vorschau bleibt read-only, zeigt nur den modellierten
   Hinweistext und speichert nichts
+- Die Entwurfspruefung bleibt lokal, bewertet nur leer oder gueltig und zeigt
+  immer `Speichern: nicht aktiv`
 
 ## Bau-Regeln
 

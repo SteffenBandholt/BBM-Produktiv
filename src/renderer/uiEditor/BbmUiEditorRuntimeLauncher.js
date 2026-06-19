@@ -69,6 +69,10 @@ const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_TITLE = "Elementmodell-V
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_TYPE = "Typ: Hinweis / Infotext";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_SURFACE = "Surface: restarbeiten.ui.main";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_ELEMENTMODEL_STATUS = "Status: nicht gespeichert";
+const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
+const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
+const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY = "Status: Hinweistext fehlt";
+const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_SAVE_STATUS = "Speichern: nicht aktiv";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT = "Dies ist ein nicht gespeicherter Hinweis-Entwurf.";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LINES = [
   "Elementart: Hinweis / Infotext",
@@ -1958,12 +1962,26 @@ function formatReadonlyHintInfotextElementModelPreviewText(value = "") {
   ].filter(Boolean).join("\n");
 }
 
+function isReadonlyHintInfotextDraftValid(value = "") {
+  return String(value == null ? "" : value).trim().length > 0;
+}
+
+function formatReadonlyHintInfotextDraftValidationText(value = "") {
+  return [
+    isReadonlyHintInfotextDraftValid(value)
+      ? READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID
+      : READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY,
+    READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_SAVE_STATUS,
+  ].join("\n");
+}
+
 function handleReadonlyHintInfotextDraftInput(
   state = {},
   value = "",
   livePreview = null,
   hostPreview = null,
-  elementModelPreview = null
+  elementModelPreview = null,
+  validationPreview = null
 ) {
   const nextValue = String(value == null ? "" : value);
   state.hintInfotextDraftText = nextValue;
@@ -1975,6 +1993,9 @@ function handleReadonlyHintInfotextDraftInput(
   }
   if (elementModelPreview) {
     elementModelPreview.textContent = formatReadonlyHintInfotextElementModelPreviewText(nextValue);
+  }
+  if (validationPreview) {
+    validationPreview.textContent = formatReadonlyHintInfotextDraftValidationText(nextValue);
   }
   return nextValue;
 }
@@ -2030,10 +2051,24 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
   input.style.fontSize = "12px";
   input.style.lineHeight = "1.35";
   input.addEventListener("input", () => {
-    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview, hostPreview, elementModelPreview);
+    handleReadonlyHintInfotextDraftInput(
+      state,
+      input.value,
+      livePreview,
+      hostPreview,
+      elementModelPreview,
+      validationPreview
+    );
   });
   input.addEventListener("change", () => {
-    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview, hostPreview, elementModelPreview);
+    handleReadonlyHintInfotextDraftInput(
+      state,
+      input.value,
+      livePreview,
+      hostPreview,
+      elementModelPreview,
+      validationPreview
+    );
   });
 
   inputGroup.append(inputLabel, input);
@@ -2093,6 +2128,24 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
   elementModelPreview.style.minHeight = "24px";
   elementModelPreview.textContent = formatReadonlyHintInfotextElementModelPreviewText(currentText);
 
+  const validationTitle = doc.createElement("div");
+  validationTitle.className = "ui-editor-preview-hint-infotext-draft__validation-title";
+  validationTitle.textContent = READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE;
+  validationTitle.style.marginTop = "8px";
+  validationTitle.style.fontWeight = "700";
+
+  const validationPreview = doc.createElement("div");
+  validationPreview.className = "ui-editor-preview-hint-infotext-draft__validation-preview";
+  validationPreview.setAttribute("data-ui-editor-hint-infotext-draft-validation", "true");
+  validationPreview.style.marginTop = "4px";
+  validationPreview.style.padding = "6px 8px";
+  validationPreview.style.border = "1px solid #dbe4ee";
+  validationPreview.style.borderRadius = "4px";
+  validationPreview.style.background = "#ffffff";
+  validationPreview.style.whiteSpace = "pre-wrap";
+  validationPreview.style.minHeight = "24px";
+  validationPreview.textContent = formatReadonlyHintInfotextDraftValidationText(currentText);
+
   preview.append(
     title,
     lines,
@@ -2102,7 +2155,9 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
     hostTitle,
     hostPreview,
     elementModelTitle,
-    elementModelPreview
+    elementModelPreview,
+    validationTitle,
+    validationPreview
   );
   panel.appendChild(preview);
   return preview;

@@ -503,3 +503,9 @@ Infotext` ist jetzt sichtbar und dokumentiert. Sie zeigt Typ, Surface, Status
 und den aktuellen Hinweistext, bleibt nicht gespeichert und erweitert die
 Host-/Live-Vorschau nur um eine weitere lokale Vorschau ohne neue Speicher-
 oder Umschaltlogik.
+
+**Status nach G100:** Die lokale Entwurfspruefung fuer `Hinweis / Infotext`
+ist jetzt sichtbar. Sie zeigt nur `Status: gueltiger lokaler Entwurf` oder
+`Status: Hinweistext fehlt` plus `Speichern: nicht aktiv`, bleibt lokal und
+schreibt nichts. SurfaceInfo bleibt `restarbeiten.ui.main`; keine weitere
+Surface, kein Drag, kein Resize und keine Persistenz wurden freigegeben.

@@ -24,6 +24,8 @@ Live-Vorschau dazu bleibt lokal, nimmt nur den eingegebenen Hinweistext an und
 speichert nichts. Die Host-Vorschau im Restarbeiten-Kontext bleibt ebenfalls
 temporaer und zeigt denselben Text. Die Elementmodell-Vorschau bleibt
 read-only, zeigt Typ, Surface, Status und denselben Text und speichert nichts.
+Die Entwurfspruefung bleibt ebenfalls lokal, zeigt nur gueltig/leer plus
+`Speichern: nicht aktiv` und speichert nichts.
 
 ## Aktueller Stand
 

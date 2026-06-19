@@ -6,6 +6,14 @@ Im UI-Editor-Panel ist eine kleine read-only `Elementmodell-Vorschau` fuer
 `Hinweis / Infotext` sichtbar. Sie zeigt nur die modellierte Form des aktuell
 eingegebenen Hinweistexts und speichert nichts.
 
+## Entwurfspruefung
+
+- Sichtbarer Titel: `Entwurfspruefung`
+- Bei gueltigem Text: `Status: gueltiger lokaler Entwurf`
+- Bei leerem Text: `Status: Hinweistext fehlt`
+- Immer sichtbar: `Speichern: nicht aktiv`
+- Die Pruefung gilt lokal nach Trim; weitere Fachregeln gibt es nicht.
+
 ## Sichtbare Elementmodell-Vorschau
 
 - `Elementmodell-Vorschau`
@@ -13,11 +21,12 @@ eingegebenen Hinweistexts und speichert nichts.
 - `Surface: restarbeiten.ui.main`
 - `Status: nicht gespeichert`
 - aktueller Hinweistext
+- bleibt neben der Entwurfspruefung sichtbar
 
 ## Verhalten der Live-Aktualisierung
 
 - aendert sich der Hinweistext im Panel, aktualisiert sich auch die
-  Elementmodell-Vorschau
+  Elementmodell-Vorschau und die Entwurfspruefung
 - die Vorschau bleibt an den laufenden UI-Editor gebunden
 - kein Button und kein Submit
 
