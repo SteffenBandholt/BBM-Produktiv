@@ -79,6 +79,8 @@ keinen Speicherbutton und keinen Schreibweg.
 - G102 bestaetigt den lokalen Hinweis-/Infotext-Entwurf als Abschlusscheck.
 - G106 dokumentiert zusaetzlich das spaetere Speicherziel und den noch
   fehlenden BBM-Schreibweg; gebaut wird davon noch nichts.
+- G107 ordnet die vorhandenen BBM-Schreibwege ein und nennt den
+  Restarbeiten-Notizweg nur als naechsten fachlichen Kandidaten.
 
 ## Stop-Regel
 

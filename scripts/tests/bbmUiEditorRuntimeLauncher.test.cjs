@@ -113,6 +113,10 @@ const UI_EDITOR_HINT_INFOTEXT_STORAGE_RELEASE_DECISION_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERFREIGABE_ENTSCHEIDUNG.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_BBM_SCHREIBWEG_ANALYSE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_BBM_SCHREIBWEG_ANALYSE.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_KIT_EXTRAKTIONSGRENZE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_KIT_EXTRAKTIONSGRENZE.md"
@@ -3948,6 +3952,36 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Speicherfreigabe-Entscheidung enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-BBM-Schreibweg bleibt nur analysiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_BBM_SCHREIBWEG_ANALYSE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-BBM-Schreibweg-Analyse fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_BBM_SCHREIBWEG_ANALYSE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten:createNote",
+      "src/main/ipc/restarbeitenIpc.js",
+      "src/main/db/restarbeitenRepo.js",
+      "uiEditorLayoutOverrides:save",
+      "tops:*",
+      "projects:*",
+      "settings:*",
+      "Restarbeiten-Kontext",
+      "naechste sinnvolle Kandidat",
+      "kein Speicherweg gebaut",
+      "keine IPC-/DB-Schreibaktion",
+      "UI-Editor-kit",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-BBM-Schreibweg-Analyse enthaelt ${required} nicht.`
       );
     }
   });

@@ -53,6 +53,8 @@ createdFrom: ui-editor-draft
 - Es gibt noch keinen IPC-Schreibweg.
 - Es gibt noch keinen DB-Schreibweg.
 - Es gibt noch keine persistente Element-Erstellung.
+- Der naechste fachliche Kandidat wird in der BBM-Schreibweg-Analyse
+  eingeordnet.
 
 ## Warum der Schreibweg noch nicht gebaut wird
 

@@ -143,9 +143,12 @@ Sie ergÃ¤nzt:
   - G105 dokumentiert die fehlende Speicherfreigabe in
     `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERFREIGABE_ENTSCHEIDUNG.md`; der
     lokale Entwurf bleibt ohne Speicherbutton und ohne Persistenz.
-  - G106 dokumentiert das spaetere Speicherziel und den noch fehlenden
-    BBM-Schreibweg in
-    `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERZIEL_SCHREIBWEG_ENTSCHEIDUNG.md`.
+- G106 dokumentiert das spaetere Speicherziel und den noch fehlenden
+  BBM-Schreibweg in
+  `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERZIEL_SCHREIBWEG_ENTSCHEIDUNG.md`.
+- G107 analysiert die vorhandenen BBM-Schreibwege und ordnet den
+  Restarbeiten-Notizweg als naechsten sinnvollen Kandidaten ein; der konkrete
+  Schreibweg bleibt trotzdem noch ungebaut.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

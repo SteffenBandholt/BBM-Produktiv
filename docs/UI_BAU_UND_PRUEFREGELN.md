@@ -73,6 +73,8 @@ Bei sichtbarer UI gilt:
 - Klickpfad: `Start -> Projekte -> Nr.: 04-2026 / UI-Polish fuer BBM -> Restarbeiten -> UI-Editor`
 - G106 dokumentiert das spaetere Speicherziel, aber der BBM-Schreibweg bleibt
   weiter ungebaut und damit regelmaessig blockiert.
+- G107 analysiert die vorhandenen BBM-Schreibwege; fuer `Hinweis / Infotext`
+  bleibt der konkrete Restarbeiten-Schreibweg weiter zu freizugeben.
 
 ## Stop-Regeln
 

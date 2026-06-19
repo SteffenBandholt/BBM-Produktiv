@@ -37,6 +37,8 @@ Elemente zwingend vorhanden sein muessen.
   BBM-Auspraegung ist noch nicht neutralisiert.
 - Eine spaetere Speicherfreigabe bleibt ebenfalls separat; aktuell gibt es
   keinen Speicherbutton und keine Persistenz.
+- G107 ordnet den moeglichen spaeteren BBM-Schreibweg nur ein; der
+  Restarbeiten-Notizweg ist der naechste Kandidat, aber noch nicht aktiv.
 
 ## Zulaessige Element- und Kontextarten
 

@@ -541,3 +541,7 @@ eine eigene, getestete Entscheidung.
 `Restarbeiten` auf `restarbeiten.ui.main` fuer `Hinweis / Infotext` mit
 `draft` und `persisted: false` vor dem Speichern. Der konkrete BBM-
 Schreibweg bleibt getrennt und ist noch nicht gebaut.
+
+**Status nach G107:** Die vorhandenen BBM-Schreibwege sind jetzt analysiert.
+Der Restarbeiten-Notizweg ist der naechste fachliche Kandidat, bleibt aber
+weiterhin ungebaut und getrennt freizugeben.

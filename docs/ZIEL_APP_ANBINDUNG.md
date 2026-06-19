@@ -23,6 +23,9 @@ Minimalgrundlage jetzt abgeschlossen.
   dokumentiert.
 - G106 beschreibt dieses spaetere Speicherziel nur dokumentarisch; es ist
   noch nicht aktiv.
+- G107 analysiert die vorhandenen BBM-Schreibwege und stuetzt die
+  Einordnung, dass der Restarbeiten-Notizweg erst spaeter und getrennt
+  freigegeben werden muesste.
 
 ## Host-/Bestandssurface
 

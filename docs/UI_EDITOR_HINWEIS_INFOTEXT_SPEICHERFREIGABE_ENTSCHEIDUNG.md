@@ -17,6 +17,7 @@ Freigabe braucht eine eigene, klare Entscheidung und saubere Guardrails.
 - Es gibt noch keinen IPC-Schreibweg.
 - Es gibt noch keinen DB-Schreibweg.
 - Es gibt noch keine persistente Element-Erstellung.
+- Die BBM-Schreibweg-Analyse ist separat dokumentiert.
 - kein Speicherbutton
 - kein Submit
 - kein IPC-Schreibweg

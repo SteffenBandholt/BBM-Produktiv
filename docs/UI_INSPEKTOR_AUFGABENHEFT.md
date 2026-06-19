@@ -1487,3 +1487,16 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERZIEL_SCHREIBWEG_ENTSCHEIDUNG.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.128 - Vorhandene BBM-Schreibwege fuer Hinweis-/Infotext analysieren
+- Status: offen
+- Beschreibung:
+  - Vorhandene BBM-Schreibwege werden gegen den Hinweis-/Infotext-Entwurf
+    eingeordnet, damit der naechste spaetere Schreibweg fachlich sauber
+    und getrennt freigegeben werden kann.
+  - Der Restarbeiten-Notizweg ist der naechste naheliegende Kandidat, bleibt
+    aber weiterhin nur dokumentarisch betrachtet.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_BBM_SCHREIBWEG_ANALYSE.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
