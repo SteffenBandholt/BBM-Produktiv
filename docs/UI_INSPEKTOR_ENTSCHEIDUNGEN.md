@@ -521,3 +521,8 @@ Abschlusscheck gebuendelt. Eingabe, Live-Vorschau, Host-Vorschau,
 Elementmodell-Vorschau, Entwurfspruefung und Reset bleiben lokal,
 `SurfaceInfo` bleibt `restarbeiten.ui.main`, und es gibt weiterhin keine
 Persistenz oder weitere Freigabe.
+
+**Status nach G103:** Eine read-only Payload-Vorschau fuer `Hinweis /
+Infotext` ist sichtbar. Sie zeigt die technische Form des lokalen Entwurfs
+(`type`, `surfaceId`, `status`, `persisted` und Text), bleibt lokal und
+schreibt nichts; `SurfaceInfo` bleibt `restarbeiten.ui.main`.

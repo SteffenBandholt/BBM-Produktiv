@@ -1437,3 +1437,18 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_ABSCHLUSSCHECK.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.124 - Hinweis-/Infotext als read-only Payload-Vorschau anzeigen
+- Status: offen
+- Beschreibung:
+  - Eine kleine read-only `Payload-Vorschau` zeigt die technische Form des
+    aktuellen Hinweistext-Entwurfs: `type`, `surfaceId`, `status`,
+    `persisted` und den Text selbst.
+  - Die Vorschau bleibt lokal und schreibt nichts; SurfaceInfo bleibt
+    `restarbeiten.ui.main`.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_PAYLOAD_PREVIEW_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

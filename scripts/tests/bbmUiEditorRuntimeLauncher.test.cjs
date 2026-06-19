@@ -105,6 +105,10 @@ const UI_EDITOR_HINT_INFOTEXT_DRAFT_FINAL_CHECK_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_ABSCHLUSSCHECK.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_PAYLOAD_PREVIEW_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_PAYLOAD_PREVIEW_REFERENZSTAND.md"
+);
 const SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md"
@@ -454,6 +458,9 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-hint-infotext-elementmodel-preview=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-elementmodel-preview") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-payload-preview=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-payload-preview") === "true";
   }
   if (raw === "[data-ui-editor-hint-infotext-draft-validation=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-draft-validation") === "true";
@@ -913,6 +920,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const hintInfotextLivePreview = doc.querySelector('[data-ui-editor-hint-infotext-live-preview="true"]');
     const hintInfotextHostPreview = doc.querySelector('[data-ui-editor-hint-infotext-host-preview="true"]');
     const hintInfotextElementModelPreview = doc.querySelector('[data-ui-editor-hint-infotext-elementmodel-preview="true"]');
+    const hintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     const hintInfotextDraftValidation = doc.querySelector('[data-ui-editor-hint-infotext-draft-validation="true"]');
     const hintInfotextDraftReset = doc.querySelector('[data-ui-editor-hint-infotext-draft-reset="true"]');
     const readonlyHint = doc.querySelector('[data-ui-editor-surface-readonly-hint="true"]');
@@ -982,6 +990,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       hintInfotextElementModelPreview.textContent,
       "Typ: Hinweis / Infotext\nSurface: restarbeiten.ui.main\nStatus: nicht gespeichert\nDies ist ein nicht gespeicherter Hinweis-Entwurf."
     );
+    assert.equal(Boolean(hintInfotextPayloadPreview), true);
+    assert.equal(
+      hintInfotextPayloadPreview.textContent,
+      "type: Hinweis / Infotext\nsurfaceId: restarbeiten.ui.main\nstatus: draft\npersisted: false\nDies ist ein nicht gespeicherter Hinweis-Entwurf."
+    );
     assert.equal(Boolean(hintInfotextDraftValidation), true);
     assert.equal(
       hintInfotextDraftValidation.textContent,
@@ -989,6 +1002,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(renderedText.includes("Host-Vorschau"), true);
     assert.equal(renderedText.includes("Elementmodell-Vorschau"), true);
+    assert.equal(renderedText.includes("Payload-Vorschau"), true);
     assert.equal(renderedText.includes("Entwurfsprüfung"), true);
     assert.equal(renderedText.includes("Entwurf zurücksetzen"), true);
     assert.equal(Boolean(hintInfotextDraftReset), true);
@@ -1005,6 +1019,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const updatedHintInfotextLivePreview = doc.querySelector('[data-ui-editor-hint-infotext-live-preview="true"]');
     const updatedHintInfotextHostPreview = doc.querySelector('[data-ui-editor-hint-infotext-host-preview="true"]');
     const updatedHintInfotextElementModelPreview = doc.querySelector('[data-ui-editor-hint-infotext-elementmodel-preview="true"]');
+    const updatedHintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     const updatedHintInfotextDraftValidation = doc.querySelector('[data-ui-editor-hint-infotext-draft-validation="true"]');
     assert.equal(updatedHintInfotextDraftInput.value, "Lokaler Hinweistext fuer die Vorschau.");
     assert.equal(updatedHintInfotextLivePreview.textContent, "Lokaler Hinweistext fuer die Vorschau.");
@@ -1015,6 +1030,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(
       updatedHintInfotextElementModelPreview.textContent,
       "Typ: Hinweis / Infotext\nSurface: restarbeiten.ui.main\nStatus: nicht gespeichert\nLokaler Hinweistext fuer die Vorschau."
+    );
+    assert.equal(
+      updatedHintInfotextPayloadPreview.textContent,
+      "type: Hinweis / Infotext\nsurfaceId: restarbeiten.ui.main\nstatus: draft\npersisted: false\nLokaler Hinweistext fuer die Vorschau."
     );
     assert.equal(
       updatedHintInfotextDraftValidation.textContent,
@@ -1031,11 +1050,17 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       emptiedHintInfotextDraftValidation.textContent,
       "Status: Hinweistext fehlt\nSpeichern: nicht aktiv"
     );
+    const emptiedHintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
+    assert.equal(
+      emptiedHintInfotextPayloadPreview.textContent,
+      "type: Hinweis / Infotext\nsurfaceId: restarbeiten.ui.main\nstatus: draft\npersisted: false\n   "
+    );
     hintInfotextDraftReset.click();
     const resetHintInfotextDraftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
     const resetHintInfotextLivePreview = doc.querySelector('[data-ui-editor-hint-infotext-live-preview="true"]');
     const resetHintInfotextHostPreview = doc.querySelector('[data-ui-editor-hint-infotext-host-preview="true"]');
     const resetHintInfotextElementModelPreview = doc.querySelector('[data-ui-editor-hint-infotext-elementmodel-preview="true"]');
+    const resetHintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     const resetHintInfotextDraftValidation = doc.querySelector('[data-ui-editor-hint-infotext-draft-validation="true"]');
     assert.equal(resetHintInfotextDraftInput.value, "Dies ist ein nicht gespeicherter Hinweis-Entwurf.");
     assert.equal(resetHintInfotextLivePreview.textContent, "Dies ist ein nicht gespeicherter Hinweis-Entwurf.");
@@ -1046,6 +1071,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(
       resetHintInfotextElementModelPreview.textContent,
       "Typ: Hinweis / Infotext\nSurface: restarbeiten.ui.main\nStatus: nicht gespeichert\nDies ist ein nicht gespeicherter Hinweis-Entwurf."
+    );
+    assert.equal(
+      resetHintInfotextPayloadPreview.textContent,
+      "type: Hinweis / Infotext\nsurfaceId: restarbeiten.ui.main\nstatus: draft\npersisted: false\nDies ist ein nicht gespeicherter Hinweis-Entwurf."
     );
     assert.equal(
       resetHintInfotextDraftValidation.textContent,
@@ -3841,6 +3870,39 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Elementmodell-Vorschau enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Payload-Vorschau bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_PAYLOAD_PREVIEW_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Payload-Vorschau-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_PAYLOAD_PREVIEW_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Payload-Vorschau",
+      "type: Hinweis / Infotext",
+      "surfaceId: restarbeiten.ui.main",
+      "status: draft",
+      "persisted: false",
+      "aktueller Hinweistext",
+      "keine Persistenz",
+      "kein localStorage",
+      "kein writeFile",
+      "restarbeiten.ui.main",
+      "SurfaceInfo-Verhalten",
+      "kein Drag",
+      "kein Resize",
+      "UI-Editor-kit speichert nicht",
+      "Bedeutung fuer spaetere Kit-Extraktion",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Payload-Vorschau enthaelt ${required} nicht.`
       );
     }
   });

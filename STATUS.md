@@ -132,6 +132,12 @@ Sie ergÃ¤nzt:
   - Es gibt keine Speicherung, keine Persistenz und keinen Schreibweg.
   - SurfaceInfo bleibt `restarbeiten.ui.main`.
 
+- G103 ergaenzt eine read-only Payload-Vorschau im UI-Editor-Panel:
+  - Sie zeigt `type`, `surfaceId`, `status`, `persisted` und den aktuellen
+    Hinweistext.
+  - Die Vorschau bleibt lokal und schreibt nichts.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

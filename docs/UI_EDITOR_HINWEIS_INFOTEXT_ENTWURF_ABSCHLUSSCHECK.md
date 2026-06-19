@@ -12,6 +12,7 @@ Entwurfspruefung und Reset arbeiten lokal zusammen und schreiben nichts.
 - Live-Vorschau
 - Host-Vorschau
 - Elementmodell-Vorschau
+- Payload-Vorschau
 - Entwurfspruefung
 - `Entwurf zurücksetzen`
 
@@ -20,6 +21,7 @@ Entwurfspruefung und Reset arbeiten lokal zusammen und schreiben nichts.
 - Hinweistext-Eingabe ist lokal bearbeitbar.
 - Live-Vorschau, Host-Vorschau und Elementmodell-Vorschau aktualisieren sich
   beim Tippen.
+- Payload-Vorschau aktualisiert sich mit denselben lokalen Eingaben.
 - Entwurfspruefung unterscheidet gueltigen lokalen Entwurf und fehlenden
   Hinweistext.
 - `Speichern: nicht aktiv` bleibt sichtbar.
@@ -27,6 +29,8 @@ Entwurfspruefung und Reset arbeiten lokal zusammen und schreiben nichts.
 - `SurfaceInfo` bleibt `restarbeiten.ui.main`.
 - Es gibt keine Speicherung, keine Persistenz, keine DB-/IPC-Schreibwege,
   kein localStorage und kein writeFile.
+- Die Payload-Vorschau dient nur als technische Zwischenform und leitet keine
+  Speicher- oder Kit-Funktion ab.
 
 ## Eingabe- und Vorschauverhalten
 
@@ -35,6 +39,8 @@ Entwurfspruefung und Reset arbeiten lokal zusammen und schreiben nichts.
 - Die Host-Vorschau spiegelt denselben Text im Restarbeiten-Kontext.
 - Die Elementmodell-Vorschau bleibt read-only und zeigt Typ, Surface und
   Status des aktuellen Entwurfs.
+- Die Payload-Vorschau bleibt read-only und zeigt die technische Form des
+  lokalen Entwurfs.
 
 ## Validierungsverhalten
 
