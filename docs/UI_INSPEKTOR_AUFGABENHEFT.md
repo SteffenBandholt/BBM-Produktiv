@@ -1290,3 +1290,31 @@ Hinweis:
 - Naechster Schritt:
   - Nur ein naechstes enges UI-/Doku-Paket, wenn es wieder ohne neue
     Freigaben auskommt.
+
+### K19.117 - UI-Editor-Panel Elementkatalog read-only sichtbar machen
+- Status: erledigt
+- Beschreibung:
+  - Eine kleine read-only Elementkatalog-Uebersicht nennt erlaubte und
+    gesperrte Elementarten direkt im UI-Editor-Panel.
+  - Der sichtbare Surface-Auswahl-Hinweis und die Bedienzustands-Statuszeile
+    bleiben unveraendert bestehen.
+  - Es wurden keine neue Surface-Logik, keine Element-Erzeugung und keine
+    Speicherlogik aktiviert.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/EDITOR_BAUPLAN.md`
+  - `docs/UI_ELEMENT_KATALOG.md`
+  - `docs/UI_BAU_UND_PRUEFREGELN.md`
+  - `docs/UI_EDITOR_PANEL_BEDIENZUSTAND_STATUSZEILE_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_PANEL_ELEMENTKATALOG_READONLY_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+- Tests:
+  - `npm run check:ui-editor-kit`
+  - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `npm test`
+  - `git diff --check`
+- Naechster Schritt:
+  - Nur ein naechstes enges UI-/Doku-Paket, wenn es weiterhin klar read-only
+    bleibt.

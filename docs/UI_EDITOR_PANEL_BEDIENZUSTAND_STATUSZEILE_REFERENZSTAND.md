@@ -46,3 +46,9 @@ Speicherfunktion einzufuehren.
 
 Erforderlich, weil die Statuszeile im sichtbaren UI-Panel erscheint. Die
 Pruefung bestaetigt nur Sichtbarkeit und Grenzen, nicht neue Funktion.
+
+## Nachtrag G95
+
+- Die Elementkatalog-Uebersicht ergaenzt die Statuszeile als zweite kleine
+  reine Infobox.
+- Die Statuszeile bleibt unveraendert sichtbar und informativ.

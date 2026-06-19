@@ -51,6 +51,14 @@ const READONLY_PDF_PLAN_PAGE_1_SURFACE_ID = "pdf.plan.page.1";
 const READONLY_PDF_PLAN_PAGE_1_HINT_TEXT = "PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.";
 const READONLY_SURFACE_SELECTION_HINT_TEXT = "Surface-Auswahl zeigt nur read-only Kontext. Keine aktive Umschaltung.";
 const READONLY_SURFACE_SELECTION_STATUS_TEXT = "Bearbeitung: Restarbeiten | Zusatzkontexte: PDF/Plan read-only | Speichern: nicht aktiv";
+const READONLY_SURFACE_ELEMENT_CATALOG_TITLE = "Elementkatalog";
+const READONLY_SURFACE_ELEMENT_CATALOG_LINES = [
+  "Hinweis / Infotext: erlaubt",
+  "read-only Kontext: erlaubt",
+  "Bearbeitbare Elemente: gesperrt",
+  "Drag / Resize: gesperrt",
+  "Speichern / Persistenz: gesperrt",
+];
 
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
@@ -1373,6 +1381,7 @@ function renderPreviewPanel(doc, state = {}) {
   panel.appendChild(details);
 
   appendReadonlySurfaceSelection(doc, panel, state);
+  appendReadonlySurfaceElementCatalogOverview(doc, panel);
   appendReadonlyPdfPlanPage1Hint(doc, panel, state);
   appendReadonlyPilotInfo(doc, panel, state);
 
@@ -1876,6 +1885,36 @@ function appendReadonlySurfaceSelection(doc, panel, state = {}) {
   status.textContent = READONLY_SURFACE_SELECTION_STATUS_TEXT;
   panel.appendChild(status);
   return selection;
+}
+
+function appendReadonlySurfaceElementCatalogOverview(doc, panel) {
+  if (!doc?.createElement || !panel?.appendChild) return null;
+
+  const catalog = doc.createElement("div");
+  catalog.className = "ui-editor-preview-surface-element-catalog";
+  catalog.setAttribute("data-ui-editor-surface-element-catalog", "true");
+  catalog.setAttribute("data-ui-editor-surface-element-catalog-readonly", "true");
+  catalog.style.marginTop = "8px";
+  catalog.style.padding = "8px";
+  catalog.style.border = "1px solid #cbd5e1";
+  catalog.style.borderRadius = "6px";
+  catalog.style.background = "#ffffff";
+  catalog.style.fontSize = "11px";
+  catalog.style.lineHeight = "1.35";
+
+  const title = doc.createElement("div");
+  title.className = "ui-editor-preview-surface-element-catalog__title";
+  title.textContent = READONLY_SURFACE_ELEMENT_CATALOG_TITLE;
+  title.style.fontWeight = "700";
+  title.style.marginBottom = "4px";
+
+  const lines = doc.createElement("div");
+  lines.className = "ui-editor-preview-surface-element-catalog__lines";
+  lines.textContent = READONLY_SURFACE_ELEMENT_CATALOG_LINES.map((line) => `- ${line}`).join("\n");
+
+  catalog.append(title, lines);
+  panel.appendChild(catalog);
+  return catalog;
 }
 
 function appendReadonlyPdfPlanPage1Hint(doc, panel, state = {}) {

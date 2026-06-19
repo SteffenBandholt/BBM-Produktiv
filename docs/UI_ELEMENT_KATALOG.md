@@ -21,6 +21,7 @@ Elemente zwingend vorhanden sein muessen.
 - `pdf.plan.page.1` und `plan.canvas.default` sind nur read-only Zusatzkontexte.
 - Der Surface-Auswahl-Hinweis ist nur lesende Kontextanzeige.
 - Die kompakte Statuszeile ist nur lesende Bedienzustandsanzeige.
+- Die neue Elementkatalog-Übersicht ist nur lesende Einordnung.
 
 ## Zulaessige Element- und Kontextarten
 
@@ -28,6 +29,7 @@ Elemente zwingend vorhanden sein muessen.
 - read-only Surface-Kontext
 - reine Hinweis-/Infotexte nach Freigabe
 - Test-/Doku-/Guardrail-Elemente
+- read-only Elementkatalog-Übersichten
 
 ## Pflichtangaben fuer spaetere UI-Elemente
 

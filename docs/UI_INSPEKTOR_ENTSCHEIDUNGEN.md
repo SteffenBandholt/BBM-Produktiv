@@ -481,3 +481,7 @@ Schreibwege bleiben blockiert.
 UI-Editor-Panel sichtbar. Sie nennt den Restarbeiten-Hostkontext, die read-only
 Zusatzkontexte und den nicht aktiven Speicherzustand, ohne SurfaceInfo oder
 Persistenz zu aendern.
+
+**Status nach G95:** Die kleine read-only Elementkatalog-Ãœbersicht ist im
+UI-Editor-Panel sichtbar. Sie benennt erlaubte und gesperrte Elementarten,
+ohne SurfaceInfo, Erzeugung oder Persistenz zu aendern.

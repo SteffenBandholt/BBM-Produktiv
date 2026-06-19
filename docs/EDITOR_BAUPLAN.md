@@ -16,7 +16,9 @@ bearbeitbar machen. In der aktuellen BBM-Phase dient er nur als sicherer
 Host-Kontext fuer read-only Surface-Informationen und Guardrails. Der
 sichtbare Hinweis unter der Surface-Auswahl bleibt rein informativ und loest
 keine aktive Umschaltung aus. Die kompakte Statuszeile bleibt ebenso rein
-informativ und zeigt nur den Bedienzustand.
+informativ und zeigt nur den Bedienzustand. Die kleine Elementkatalog-
+Uebersicht bleibt ebenfalls rein informativ und benennt nur erlaubte und
+gesperrte Elementarten.
 
 ## Aktueller Stand
 

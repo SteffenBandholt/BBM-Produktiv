@@ -407,6 +407,9 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-editor-surface-selection=\"true\"]") {
     return node.getAttribute("data-ui-editor-surface-selection") === "true";
   }
+  if (raw === "[data-ui-editor-surface-element-catalog=\"true\"]") {
+    return node.getAttribute("data-ui-editor-surface-element-catalog") === "true";
+  }
   if (raw === "[data-ui-editor-surface-readonly-hint=\"true\"]") {
     return node.getAttribute("data-ui-editor-surface-readonly-hint") === "true";
   }
@@ -853,6 +856,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
     const renderedText = getRenderedText(doc.body);
     const surfaceSelection = doc.querySelector('[data-ui-editor-surface-selection="true"]');
+    const elementCatalog = doc.querySelector('[data-ui-editor-surface-element-catalog="true"]');
     const readonlyHint = doc.querySelector('[data-ui-editor-surface-readonly-hint="true"]');
     const surfaceInfo = doc.querySelector('[data-ui-editor-surface-info="true"]');
     assert.equal(source.includes('from "./surfaceAdapters/surfaceAdapterCatalog.js"'), true);
@@ -886,6 +890,17 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       renderedText.includes("Bearbeitung: Restarbeiten | Zusatzkontexte: PDF/Plan read-only | Speichern: nicht aktiv"),
       true
     );
+    assert.equal(Boolean(elementCatalog), true);
+    assert.equal(renderedText.includes("Elementkatalog"), true);
+    for (const required of [
+      "Hinweis / Infotext: erlaubt",
+      "read-only Kontext: erlaubt",
+      "Bearbeitbare Elemente: gesperrt",
+      "Drag / Resize: gesperrt",
+      "Speichern / Persistenz: gesperrt",
+    ]) {
+      assert.equal(renderedText.includes(required), true, `Elementkatalog-Text enthaelt ${required} nicht.`);
+    }
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
     assert.equal(
