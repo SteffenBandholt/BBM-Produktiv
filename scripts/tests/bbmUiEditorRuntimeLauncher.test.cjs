@@ -69,6 +69,10 @@ const SURFACE_AUSWAHL_READONLY_HINT_REFERENZ_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_READONLY_KONTEXT_HINWEIS_REFERENZSTAND.md"
 );
+const UI_EDITOR_FOUNDATIONS_SURFACE_HINT_CHECK_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_GRUNDLAGEN_SURFACE_HINWEIS_ABSCHLUSSCHECK.md"
+);
 const SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md"
@@ -3491,6 +3495,32 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `UI-Editor-Grundlagen-Freigabeentscheidung enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Grundlagen Surface-Hinweis Abschlusscheck bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_FOUNDATIONS_SURFACE_HINT_CHECK_DOC_PATH),
+      true,
+      "Grundlagen Surface-Hinweis Abschlusscheck fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_FOUNDATIONS_SURFACE_HINT_CHECK_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "Surface-Auswahl zeigt nur read-only Kontext. Keine aktive Umschaltung.",
+      "keine aktive Surface-Umschaltung",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Grundlagen Surface-Hinweis Abschlusscheck enthaelt ${required} nicht.`
       );
     }
   });

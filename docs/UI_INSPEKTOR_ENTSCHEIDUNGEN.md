@@ -469,3 +469,10 @@ DB-/IPC-Schreibwege bleiben gesperrt.
 **Status nach G90:** Der sichtbare read-only Kontext-Hinweis zur Surface-
 Auswahl ist jetzt umgesetzt. SurfaceInfo bleibt `restarbeiten.ui.main` und der
 Hinweis bleibt rein informativ.
+
+**Status nach G93:** Der Abschlusscheck zur Grundlagenreihe und zum sichtbaren
+Surface-Hinweis ist in
+`docs/UI_EDITOR_GRUNDLAGEN_SURFACE_HINWEIS_ABSCHLUSSCHECK.md` gebuendelt.
+Die fuenf Grundlagen bleiben vorhanden, der G90-Hinweis bleibt bestaetigt und
+aktive Surface-Umschaltung, SurfaceInfo-Umbau, Drag, Resize, Persistenz und
+Schreibwege bleiben blockiert.

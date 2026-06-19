@@ -59,6 +59,14 @@ Sie ergÃ¤nzt:
   - Keine aktive Surface-Umschaltung, kein Drag, kein Resize und keine
     Persistenz wurden geaendert.
 
+- G93 Abschlusscheck zu Grundlagen und Surface-Hinweis dokumentiert:
+  - `docs/UI_EDITOR_GRUNDLAGEN_SURFACE_HINWEIS_ABSCHLUSSCHECK.md` bestaetigt
+    die fuenf Grundlagen, den sichtbaren Hinweis und die weiterhin blockierten
+    Grenzen.
+  - Es wurden keine neue Produktivlogik und keine sichtbare UI geaendert.
+  - Die Electron-Sichtpruefung wird nur als bereits in G90 bestanden
+    referenziert.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

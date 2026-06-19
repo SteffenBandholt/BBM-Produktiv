@@ -1237,3 +1237,28 @@ Hinweis:
     an die Stop-Regel und die Freigabe geknuepft.
   - G90 setzt jetzt zusaetzlich den sichtbaren read-only Kontext-Hinweis zur
     Surface-Auswahl um.
+
+### K19.115 - Grundlagen- und Surface-Hinweis-Abschlusscheck dokumentieren
+- Status: erledigt
+- Beschreibung:
+  - `docs/UI_EDITOR_GRUNDLAGEN_SURFACE_HINWEIS_ABSCHLUSSCHECK.md` fasst die
+    fuenf Grundlagen, den sichtbaren G90-Hinweis und die blockierten Grenzen
+    knapp zusammen.
+  - Es wurde keine Produktivlogik und keine sichtbare UI geaendert.
+  - Die Electron-Sichtpruefung wird nur als bereits in G90 bestanden
+    referenziert.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_GRUNDLAGEN_SURFACE_HINWEIS_ABSCHLUSSCHECK.md`
+  - `STATUS.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+- Tests:
+  - `npm run check:ui-editor-kit`
+  - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `npm test`
+  - `git diff --check`
+- Naechster Schritt:
+  - Ein naechstes kleines Paket nur dann, wenn es wieder klar read-only oder
+    dokumentarisch bleibt.
