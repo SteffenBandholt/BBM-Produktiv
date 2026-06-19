@@ -147,6 +147,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 
 - G96 ergaenzt die kleine nicht-persistente Entwurfs-Vorschau fuer `Hinweis / Infotext` im UI-Editor-Panel; sie bleibt informativ, zeigt nur Vorschau, nicht gespeichert, und aktiviert keine neue Bedien- oder Speicherlogik
 - G97 ergaenzt die lokale Live-Vorschau fuer `Hinweis / Infotext` im UI-Editor-Panel; sie bleibt lokal, zeigt das Eingabefeld `Hinweistext` und die Live-Vorschau, ohne Persistenz oder neue Schreibwege
+- G98 ergaenzt die Host-Vorschau fuer `Hinweis / Infotext` im Restarbeiten-Kontext; sie bleibt temporaer, spiegelt den aktuellen Hinweistext und schreibt nichts
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

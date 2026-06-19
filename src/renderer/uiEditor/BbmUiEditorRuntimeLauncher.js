@@ -62,6 +62,9 @@ const READONLY_SURFACE_ELEMENT_CATALOG_LINES = [
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_TITLE = "Entwurfs-Vorschau";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_INPUT_LABEL = "Hinweistext";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LIVE_TITLE = "Live-Vorschau";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_HOST_TITLE = "Host-Vorschau";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_HOST_KIND = "Hinweis / Infotext";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_HOST_STATUS = "nicht gespeichert";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT = "Dies ist ein nicht gespeicherter Hinweis-Entwurf.";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LINES = [
   "Elementart: Hinweis / Infotext",
@@ -1934,11 +1937,22 @@ function getReadonlyHintInfotextDraftText(state = {}) {
     : String(state.hintInfotextDraftText);
 }
 
-function handleReadonlyHintInfotextDraftInput(state = {}, value = "", livePreview = null) {
+function formatReadonlyHintInfotextHostPreviewText(value = "") {
+  return [
+    READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_HOST_KIND,
+    String(value == null ? "" : value),
+    READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_HOST_STATUS,
+  ].filter(Boolean).join("\n");
+}
+
+function handleReadonlyHintInfotextDraftInput(state = {}, value = "", livePreview = null, hostPreview = null) {
   const nextValue = String(value == null ? "" : value);
   state.hintInfotextDraftText = nextValue;
   if (livePreview) {
     livePreview.textContent = nextValue;
+  }
+  if (hostPreview) {
+    hostPreview.textContent = formatReadonlyHintInfotextHostPreviewText(nextValue);
   }
   return nextValue;
 }
@@ -1994,10 +2008,10 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
   input.style.fontSize = "12px";
   input.style.lineHeight = "1.35";
   input.addEventListener("input", () => {
-    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview);
+    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview, hostPreview);
   });
   input.addEventListener("change", () => {
-    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview);
+    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview, hostPreview);
   });
 
   inputGroup.append(inputLabel, input);
@@ -2021,7 +2035,25 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
   livePreview.style.minHeight = "24px";
   livePreview.textContent = currentText;
 
-  preview.append(title, lines, inputGroup, liveTitle, livePreview);
+  const hostTitle = doc.createElement("div");
+  hostTitle.className = "ui-editor-preview-hint-infotext-draft__host-title";
+  hostTitle.textContent = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_HOST_TITLE;
+  hostTitle.style.marginTop = "8px";
+  hostTitle.style.fontWeight = "700";
+
+  const hostPreview = doc.createElement("div");
+  hostPreview.className = "ui-editor-preview-hint-infotext-draft__host-preview";
+  hostPreview.setAttribute("data-ui-editor-hint-infotext-host-preview", "true");
+  hostPreview.style.marginTop = "4px";
+  hostPreview.style.padding = "6px 8px";
+  hostPreview.style.border = "1px solid #dbe4ee";
+  hostPreview.style.borderRadius = "4px";
+  hostPreview.style.background = "#ffffff";
+  hostPreview.style.whiteSpace = "pre-wrap";
+  hostPreview.style.minHeight = "24px";
+  hostPreview.textContent = formatReadonlyHintInfotextHostPreviewText(currentText);
+
+  preview.append(title, lines, inputGroup, liveTitle, livePreview, hostTitle, hostPreview);
   panel.appendChild(preview);
   return preview;
 }

@@ -90,6 +90,15 @@ Sie ergÃ¤nzt:
   - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
     die Bedienzustands-Statuszeile und der Elementkatalog bleiben bestehen.
 
+- G98 ergaenzt eine nicht-persistente Host-Vorschau im Restarbeiten-Kontext:
+  - Die neue Host-Vorschau zeigt `Hinweis / Infotext`, den aktuellen
+    Hinweistext und `nicht gespeichert`.
+  - Die Host-Vorschau aktualisiert sich gemeinsam mit der Live-Vorschau und
+    bleibt rein temporaer.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
+    die Bedienzustands-Statuszeile, der Elementkatalog und beide Vorschauen
+    bleiben bestehen.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

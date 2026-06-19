@@ -1338,3 +1338,24 @@ Hinweis:
 - Naechster Schritt:
   - Nur ein naechstes enges UI-/Doku-Paket, wenn es weiterhin klar read-only
     bleibt.
+
+### K19.119 - Hinweis-/Infotext als nicht-persistente Host-Vorschau im Restarbeiten-Kontext anzeigen
+- Status: offen
+- Beschreibung:
+  - Die Host-Vorschau zeigt `Hinweis / Infotext`, den aktuellen Hinweistext
+    und `nicht gespeichert`.
+  - Die Vorschau bleibt lokal, spiegelt nur den Text aus dem Panel und speichert
+    nichts.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
+    die Bedienzustands-Statuszeile, der Elementkatalog, die Entwurfs-Vorschau
+    und die Live-Vorschau bleiben sichtbar.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/EDITOR_BAUPLAN.md`
+  - `docs/UI_ELEMENT_KATALOG.md`
+  - `docs/UI_BAU_UND_PRUEFREGELN.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_LIVE_PREVIEW_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_PREVIEW_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

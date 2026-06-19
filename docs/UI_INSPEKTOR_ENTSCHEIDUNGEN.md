@@ -493,3 +493,7 @@ und erweitert den Restarbeiten-Kontext ohne neue Bedien- oder Speicherlogik.
 **Status nach G97:** Die Entwurfs-Vorschau hat jetzt eine lokale Eingabe und
 eine Live-Vorschau. Der Text bleibt nicht gespeichert, kann beim Neuladen
 verloren gehen und aendert weder SurfaceInfo noch Schreibwege.
+
+**Status nach G98:** Zusaetzlich erscheint eine Host-Vorschau im
+Restarbeiten-Kontext. Sie spiegelt den aktuellen Hinweistext, zeigt
+`nicht gespeichert` und bleibt ebenfalls nur temporaer.

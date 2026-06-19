@@ -25,6 +25,7 @@ Elemente zwingend vorhanden sein muessen.
 - Die neue Entwurfs-Vorschau fuer `Hinweis / Infotext` bleibt nur Vorschau,
   nicht gespeichert und ohne neue Bedienlogik.
 - Die Live-Vorschau mit `Hinweistext` bleibt lokal und ohne Persistenz.
+- Die Host-Vorschau bleibt im Restarbeiten-Kontext lokal und ohne Persistenz.
 
 ## Zulaessige Element- und Kontextarten
 

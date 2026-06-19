@@ -28,6 +28,8 @@ und die read-only Zusatzkontexte `pdf.plan.page.1` und `plan.canvas.default`.
   Speicherung
 - Die Live-Vorschau mit `Hinweistext` bleibt lokal, aktualisiert nur den
   sichtbaren Entwurf und speichert nichts
+- Die Host-Vorschau bleibt lokal, spiegelt nur den Hinweistext und speichert
+  nichts
 
 ## Bau-Regeln
 
