@@ -33,6 +33,8 @@ Elemente zwingend vorhanden sein muessen.
 - Der Reset-Button fuer den Hinweis-/Infotext-Entwurf bleibt lokal und
   stellt nur den Standardtext wieder her.
 - G102 bestaetigt diese lokale Hinweis-/Infotext-Kette als Abschlussstand.
+- Die spaetere Kit-Extraktionsgrenze bleibt dokumentiert; die aktuelle
+  BBM-Auspraegung ist noch nicht neutralisiert.
 
 ## Zulaessige Element- und Kontextarten
 

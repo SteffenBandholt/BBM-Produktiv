@@ -61,6 +61,8 @@ Bearbeitungsflaeche.
 - kein Drag.
 - kein Resize.
 - keine Persistenz.
+- Die spaetere Kit-Extraktionsgrenze fuer den Hinweis-/Infotext bleibt in BBM
+  dokumentiert und ist noch keine Umstellung.
 
 ## Pruefpflicht
 

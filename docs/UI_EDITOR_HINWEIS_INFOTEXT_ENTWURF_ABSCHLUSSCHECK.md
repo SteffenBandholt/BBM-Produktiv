@@ -31,6 +31,8 @@ Entwurfspruefung und Reset arbeiten lokal zusammen und schreiben nichts.
   kein localStorage und kein writeFile.
 - Die Payload-Vorschau dient nur als technische Zwischenform und leitet keine
   Speicher- oder Kit-Funktion ab.
+- Die spaetere Kit-Extraktion bleibt als eigene Grenze in
+  `docs/UI_EDITOR_HINWEIS_INFOTEXT_KIT_EXTRAKTIONSGRENZE.md` dokumentiert.
 
 ## Eingabe- und Vorschauverhalten
 

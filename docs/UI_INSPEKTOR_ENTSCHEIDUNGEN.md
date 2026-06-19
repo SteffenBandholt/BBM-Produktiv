@@ -526,3 +526,8 @@ Persistenz oder weitere Freigabe.
 Infotext` ist sichtbar. Sie zeigt die technische Form des lokalen Entwurfs
 (`type`, `surfaceId`, `status`, `persisted` und Text), bleibt lokal und
 schreibt nichts; `SurfaceInfo` bleibt `restarbeiten.ui.main`.
+
+**Status nach G104:** Die Kit-Extraktionsgrenze fuer den Hinweis-/Infotext-
+Entwurf ist dokumentiert. BBM bleibt Host und Referenzstand, `UI-Editor-kit`
+bekommt spaeter nur generische Teile, und eine direkte 1:1-Kopie ist
+ausgeschlossen.

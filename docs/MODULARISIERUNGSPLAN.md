@@ -153,6 +153,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G101 ergaenzt den lokalen Reset-Button fuer `Hinweis / Infotext`; er setzt nur den Standardtext zurueck und aktualisiert die lokalen Vorschauen ohne Schreiben
 - G102 schliesst den lokalen Hinweis-/Infotext-Entwurf als Abschlusscheck ab; Eingabe, Vorschauen, Entwurfspruefung und Reset bleiben lokal und schreiben nichts
 - G103 ergaenzt eine read-only Payload-Vorschau fuer `Hinweis / Infotext`; sie zeigt die technische Payload-Form des lokalen Entwurfs und schreibt nichts
+- G104 dokumentiert die Kit-Extraktionsgrenze fuer `Hinweis / Infotext`; BBM bleibt Host, die lokale Vorschau wird nicht 1:1 ins `UI-Editor-kit` verschoben
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

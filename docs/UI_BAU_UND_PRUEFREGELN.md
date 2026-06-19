@@ -39,6 +39,8 @@ und die read-only Zusatzkontexte `pdf.plan.page.1` und `plan.canvas.default`.
 - Der Reset-Button fuer den Hinweis-/Infotext-Entwurf bleibt lokal und setzt
   nur den Standardtext zurueck
 - G102 prueft den lokalen Hinweis-/Infotext-Entwurf nur als Abschlusscheck
+- Die spaetere Extraktionsgrenze ins `UI-Editor-kit` bleibt ein eigener
+  Dokumentationspunkt und gibt hier nichts frei
 
 ## Bau-Regeln
 

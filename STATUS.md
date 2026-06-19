@@ -137,6 +137,9 @@ Sie ergÃ¤nzt:
     Hinweistext.
   - Die Vorschau bleibt lokal und schreibt nichts.
   - SurfaceInfo bleibt `restarbeiten.ui.main`.
+  - G104 dokumentiert die Kit-Extraktionsgrenze in
+    `docs/UI_EDITOR_HINWEIS_INFOTEXT_KIT_EXTRAKTIONSGRENZE.md`; BBM bleibt
+    Host und der lokale Entwurf wird noch nicht ins `UI-Editor-kit` kopiert.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

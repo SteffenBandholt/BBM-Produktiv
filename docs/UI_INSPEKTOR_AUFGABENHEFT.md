@@ -1452,3 +1452,16 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_PAYLOAD_PREVIEW_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.125 - Hinweis-/Infotext-Kit-Extraktionsgrenze dokumentieren
+- Status: offen
+- Beschreibung:
+  - Die BBM-spezifische Auspraegung bleibt Host und Referenzstand; eine
+    spaetere Kit-Extraktion ist nur fuer generische Text-, Preview- und
+    Validierungsteile denkbar.
+  - Es gibt keine direkte 1:1-Kopie, keine Persistenz und keine Freigabe zur
+    Umstellung in das externe Kit.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_KIT_EXTRAKTIONSGRENZE.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

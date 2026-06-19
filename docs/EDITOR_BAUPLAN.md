@@ -30,6 +30,8 @@ Die Entwurfspruefung bleibt ebenfalls lokal, zeigt nur gueltig/leer plus
 `Speichern: nicht aktiv` und speichert nichts.
 Der Button `Entwurf zuruecksetzen` stellt den Standardtext lokal wieder her
 und speichert nichts.
+Die spaetere Kit-Extraktionsgrenze fuer diesen Entwurf ist separat
+dokumentiert und aendert an diesem Hoststand nichts.
 
 ## Aktueller Stand
 
