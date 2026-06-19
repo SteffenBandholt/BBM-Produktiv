@@ -109,6 +109,10 @@ const UI_EDITOR_HINT_INFOTEXT_PAYLOAD_PREVIEW_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_PAYLOAD_PREVIEW_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_STORAGE_RELEASE_DECISION_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERFREIGABE_ENTSCHEIDUNG.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_KIT_EXTRAKTIONSGRENZE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_KIT_EXTRAKTIONSGRENZE.md"
@@ -3907,6 +3911,35 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Payload-Vorschau enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Speicherfreigabe bleibt blockiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_STORAGE_RELEASE_DECISION_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Speicherfreigabe-Entscheidung fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_STORAGE_RELEASE_DECISION_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Speichern ist weiterhin nicht aktiv",
+      "persisted: false",
+      "kein Speicherbutton",
+      "kein Submit",
+      "kein localStorage",
+      "kein writeFile",
+      "keine IPC-/DB-Aktion",
+      "keine Wildcards",
+      "keine Default-true-Freigaben",
+      "Speichern bei leerem Hinweistext",
+      "PDF-/Plan-read-only",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Speicherfreigabe-Entscheidung enthaelt ${required} nicht.`
       );
     }
   });

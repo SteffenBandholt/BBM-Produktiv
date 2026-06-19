@@ -35,6 +35,8 @@ Elemente zwingend vorhanden sein muessen.
 - G102 bestaetigt diese lokale Hinweis-/Infotext-Kette als Abschlussstand.
 - Die spaetere Kit-Extraktionsgrenze bleibt dokumentiert; die aktuelle
   BBM-Auspraegung ist noch nicht neutralisiert.
+- Eine spaetere Speicherfreigabe bleibt ebenfalls separat; aktuell gibt es
+  keinen Speicherbutton und keine Persistenz.
 
 ## Zulaessige Element- und Kontextarten
 

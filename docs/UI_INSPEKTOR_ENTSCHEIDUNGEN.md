@@ -531,3 +531,8 @@ schreibt nichts; `SurfaceInfo` bleibt `restarbeiten.ui.main`.
 Entwurf ist dokumentiert. BBM bleibt Host und Referenzstand, `UI-Editor-kit`
 bekommt spaeter nur generische Teile, und eine direkte 1:1-Kopie ist
 ausgeschlossen.
+
+**Status nach G105:** Die Speicherfreigabe fuer den Hinweis-/Infotext-
+Entwurf ist weiterhin blockiert. Es gibt keinen Speicherbutton, keine
+Persistenz und keinen freigegebenen Schreibweg; eine spaetere Freigabe braucht
+eine eigene, getestete Entscheidung.

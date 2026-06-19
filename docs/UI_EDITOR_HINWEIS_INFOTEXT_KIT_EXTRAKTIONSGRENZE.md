@@ -16,6 +16,8 @@ bleibt dort erst einmal verankert. Ein spaeteres Herausziehen in das
 - PDF-/Plan-Kontexte bleiben in BBM read-only sichtbar.
 - Das ist weiterhin BBM-spezifisch und noch nicht neutralisiert.
 - BBM-Dokumentation und BBM-Guardrails beschreiben den Stand, nicht das Kit.
+- Die spaetere Speicherfreigabe ist ein eigenes Folgepaket und bleibt hier
+  bewusst ausgeklammert.
 
 ## Was spaeter potenziell ins UI-Editor-kit gehoeren koennte
 

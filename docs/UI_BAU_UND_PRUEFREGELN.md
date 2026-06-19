@@ -41,6 +41,8 @@ und die read-only Zusatzkontexte `pdf.plan.page.1` und `plan.canvas.default`.
 - G102 prueft den lokalen Hinweis-/Infotext-Entwurf nur als Abschlusscheck
 - Die spaetere Extraktionsgrenze ins `UI-Editor-kit` bleibt ein eigener
   Dokumentationspunkt und gibt hier nichts frei
+- Eine spaetere Speicherfreigabe bleibt ebenfalls getrennt; aktuell gibt es
+  keinen Speicherbutton und keine Persistenz
 
 ## Bau-Regeln
 

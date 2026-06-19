@@ -140,6 +140,9 @@ Sie ergÃ¤nzt:
   - G104 dokumentiert die Kit-Extraktionsgrenze in
     `docs/UI_EDITOR_HINWEIS_INFOTEXT_KIT_EXTRAKTIONSGRENZE.md`; BBM bleibt
     Host und der lokale Entwurf wird noch nicht ins `UI-Editor-kit` kopiert.
+  - G105 dokumentiert die fehlende Speicherfreigabe in
+    `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERFREIGABE_ENTSCHEIDUNG.md`; der
+    lokale Entwurf bleibt ohne Speicherbutton und ohne Persistenz.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

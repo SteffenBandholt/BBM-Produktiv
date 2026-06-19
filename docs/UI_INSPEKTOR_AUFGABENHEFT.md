@@ -1465,3 +1465,14 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_KIT_EXTRAKTIONSGRENZE.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.126 - Hinweis-/Infotext-Speicherfreigabe dokumentieren
+- Status: offen
+- Beschreibung:
+  - Der lokale Entwurf bleibt ohne Speicherbutton und ohne Persistenz.
+  - Eine spaetere Speicherfreigabe braucht eine klare Zielsurface, einen
+    getesteten BBM-Schreibweg und harte Guardrails.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERFREIGABE_ENTSCHEIDUNG.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

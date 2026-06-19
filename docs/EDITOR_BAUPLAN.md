@@ -32,6 +32,8 @@ Der Button `Entwurf zuruecksetzen` stellt den Standardtext lokal wieder her
 und speichert nichts.
 Die spaetere Kit-Extraktionsgrenze fuer diesen Entwurf ist separat
 dokumentiert und aendert an diesem Hoststand nichts.
+Die Speicherfreigabe bleibt ebenfalls separat dokumentiert; aktuell gibt es
+keinen Speicherbutton und keinen Schreibweg.
 
 ## Aktueller Stand
 

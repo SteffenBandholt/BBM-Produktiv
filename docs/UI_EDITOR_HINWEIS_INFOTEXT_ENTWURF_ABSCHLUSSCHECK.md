@@ -33,6 +33,9 @@ Entwurfspruefung und Reset arbeiten lokal zusammen und schreiben nichts.
   Speicher- oder Kit-Funktion ab.
 - Die spaetere Kit-Extraktion bleibt als eigene Grenze in
   `docs/UI_EDITOR_HINWEIS_INFOTEXT_KIT_EXTRAKTIONSGRENZE.md` dokumentiert.
+- Eine Speicherfreigabe bleibt separat in
+  `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERFREIGABE_ENTSCHEIDUNG.md`
+  dokumentiert.
 
 ## Eingabe- und Vorschauverhalten
 

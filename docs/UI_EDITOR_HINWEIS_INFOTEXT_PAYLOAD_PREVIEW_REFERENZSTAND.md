@@ -76,3 +76,6 @@ Die Payload-Vorschau bleibt rein lokal als kleiner Referenzstand. Sie zeigt die
 technische Form bereits sichtbar an, ohne daraus eine echte Kit- oder
 Speicherintegration abzuleiten. Eine spaetere Extraktion bleibt getrennt in
 `docs/UI_EDITOR_HINWEIS_INFOTEXT_KIT_EXTRAKTIONSGRENZE.md` beschrieben.
+Eine spaetere Speicherfreigabe bleibt getrennt in
+`docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERFREIGABE_ENTSCHEIDUNG.md`
+beschrieben.
