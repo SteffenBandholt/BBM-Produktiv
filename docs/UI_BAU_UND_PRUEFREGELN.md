@@ -36,6 +36,7 @@ und die read-only Zusatzkontexte `pdf.plan.page.1` und `plan.canvas.default`.
   immer `Speichern: nicht aktiv`
 - Der Reset-Button fuer den Hinweis-/Infotext-Entwurf bleibt lokal und setzt
   nur den Standardtext zurueck
+- G102 prueft den lokalen Hinweis-/Infotext-Entwurf nur als Abschlusscheck
 
 ## Bau-Regeln
 

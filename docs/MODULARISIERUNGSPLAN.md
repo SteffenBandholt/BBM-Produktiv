@@ -151,6 +151,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G99 ergaenzt die read-only Elementmodell-Vorschau fuer `Hinweis / Infotext` im UI-Editor-Panel; sie bleibt temporaer, spiegelt Typ, Surface, Status und den aktuellen Hinweistext und schreibt nichts
 - G100 ergaenzt die lokale Entwurfspruefung fuer `Hinweis / Infotext`; sie bleibt nur Anzeige, bewertet leer/gueltig per Trim, zeigt immer `Speichern: nicht aktiv` und schreibt nichts
 - G101 ergaenzt den lokalen Reset-Button fuer `Hinweis / Infotext`; er setzt nur den Standardtext zurueck und aktualisiert die lokalen Vorschauen ohne Schreiben
+- G102 schliesst den lokalen Hinweis-/Infotext-Entwurf als Abschlusscheck ab; Eingabe, Vorschauen, Entwurfspruefung und Reset bleiben lokal und schreiben nichts
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

@@ -101,6 +101,10 @@ const UI_EDITOR_HINT_INFOTEXT_DRAFT_RESET_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_RESET_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_DRAFT_FINAL_CHECK_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_ABSCHLUSSCHECK.md"
+);
 const SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md"
@@ -3898,6 +3902,35 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Reset enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Abschlusscheck bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_DRAFT_FINAL_CHECK_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Abschlusscheck fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_DRAFT_FINAL_CHECK_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Hinweistext-Eingabe",
+      "Live-Vorschau",
+      "Host-Vorschau",
+      "Elementmodell-Vorschau",
+      "Entwurfspruefung",
+      "Entwurf zurücksetzen",
+      "Speichern: nicht aktiv",
+      "restarbeiten.ui.main",
+      "keine Persistenz",
+      "kein Drag",
+      "kein Resize",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Abschlusscheck enthaelt ${required} nicht.`
       );
     }
   });

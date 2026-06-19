@@ -126,6 +126,12 @@ Sie ergÃ¤nzt:
   - SurfaceInfo bleibt `restarbeiten.ui.main`; alle bisherigen Hinweise und
     Vorschauen bleiben bestehen.
 
+- G102 schliesst den lokalen Hinweis-/Infotext-Entwurf als Abschlusscheck ab:
+  - Eingabe, Live-Vorschau, Host-Vorschau, Elementmodell-Vorschau,
+    Entwurfspruefung und Reset bleiben lokal.
+  - Es gibt keine Speicherung, keine Persistenz und keinen Schreibweg.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

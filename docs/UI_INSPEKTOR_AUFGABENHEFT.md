@@ -1424,3 +1424,16 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_RESET_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.123 - Hinweis-/Infotext-Entwurf als Abschlusscheck bundeln
+- Status: offen
+- Beschreibung:
+  - Der bestehende lokale Entwurf wird als zusammenhaengender Abschlussstand
+    bestaetigt: Eingabe, Live-Vorschau, Host-Vorschau, Elementmodell-Vorschau,
+    Entwurfspruefung und Reset bleiben lokal.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; keine neue Speicherung, keine
+    weitere Surface und keine neue Fachlogik werden freigegeben.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_ABSCHLUSSCHECK.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

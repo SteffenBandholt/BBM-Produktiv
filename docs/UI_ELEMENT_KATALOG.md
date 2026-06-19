@@ -31,6 +31,7 @@ Elemente zwingend vorhanden sein muessen.
   `Speichern: nicht aktiv` und speichert nichts.
 - Der Reset-Button fuer den Hinweis-/Infotext-Entwurf bleibt lokal und
   stellt nur den Standardtext wieder her.
+- G102 bestaetigt diese lokale Hinweis-/Infotext-Kette als Abschlussstand.
 
 ## Zulaessige Element- und Kontextarten
 

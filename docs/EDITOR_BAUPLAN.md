@@ -70,6 +70,7 @@ und speichert nichts.
 - `git diff --check` ausfuehren.
 - Bei sichtbarer UI-Aenderung ist eine Electron-Sichtpruefung erforderlich.
 - Wenn keine technische Pruefung existiert, muss das offen gemeldet werden.
+- G102 bestaetigt den lokalen Hinweis-/Infotext-Entwurf als Abschlusscheck.
 
 ## Stop-Regel
 

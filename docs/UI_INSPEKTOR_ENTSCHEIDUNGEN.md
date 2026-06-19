@@ -515,3 +515,9 @@ jetzt sichtbar. Er setzt nur den Standardtext zurueck und laesst Live-,
 Host-, Elementmodell-Vorschau und Entwurfspruefung sofort nachziehen.
 SurfaceInfo bleibt `restarbeiten.ui.main`; keine Speicherung, keine neue
 Surface und keine weitere Fachlogik wurden freigegeben.
+
+**Status nach G102:** Der lokale Hinweis-/Infotext-Entwurf ist als
+Abschlusscheck gebuendelt. Eingabe, Live-Vorschau, Host-Vorschau,
+Elementmodell-Vorschau, Entwurfspruefung und Reset bleiben lokal,
+`SurfaceInfo` bleibt `restarbeiten.ui.main`, und es gibt weiterhin keine
+Persistenz oder weitere Freigabe.
