@@ -1,4 +1,4 @@
-import * as installedLauncherButtonArtifactModule from "../../../uiEditor/uiEditorLauncherButton.js";
+﻿import * as installedLauncherButtonArtifactModule from "../../../uiEditor/uiEditorLauncherButton.js";
 import * as installedTargetSelectionArtifactModule from "../../../uiEditor/targetSelection.js";
 import { createInMemoryBbmEditorHostAdapter } from "../editorRuntime/host/bbmEditorHostAdapterContract.js";
 import {
@@ -49,6 +49,7 @@ const PREVIEW_PANEL_VIEWPORT_MARGIN = 16;
 const READONLY_SURFACE_INFO_SURFACE_ID = "restarbeiten.ui.main";
 const READONLY_PDF_PLAN_PAGE_1_SURFACE_ID = "pdf.plan.page.1";
 const READONLY_PDF_PLAN_PAGE_1_HINT_TEXT = "PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.";
+const READONLY_SURFACE_SELECTION_HINT_TEXT = "Surface-Auswahl zeigt nur read-only Kontext. Keine aktive Umschaltung.";
 
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
@@ -549,7 +550,7 @@ function getReadonlyRegistryElementsText(registeredElements = null) {
   const elements = Array.isArray(registeredElements)
     ? registeredElements
     : normalizeReadonlyRegisteredElements(registeredElements);
-  if (elements.length < 1) return "Registrierte Elemente:\nnicht verfuegbar";
+  if (elements.length < 1) return "Registrierte Elemente:\nnicht verfügbar";
 
   const lines = elements.map((element) => {
     const parent = element.parentId == null ? "null" : element.parentId;
@@ -572,10 +573,10 @@ function getReadonlyRegistryElementsText(registeredElements = null) {
 
 function getAvailableUiScopesText(availableUiScopes = null) {
   const scopes = normalizeAvailableUiScopes(availableUiScopes);
-  if (scopes.length < 1) return "Verfuegbare Scopes:\nnicht verfuegbar";
+  if (scopes.length < 1) return "Verfügbare Scopes:\nnicht verfügbar";
 
   return [
-    "Verfuegbare Scopes:",
+    "Verfügbare Scopes:",
     "",
     ...scopes.map((scope) => {
       const details = [scope.moduleId, scope.status].filter(Boolean).join(" / ");
@@ -605,7 +606,7 @@ function getReadonlyLauncherStatusText(state = {}) {
     getAvailableUiScopesText(scopes),
     "",
     `Scope: ${getStatusScopeLabel(registry.uiScope || state.activeUiScope)}`,
-    `Modul: ${registry.moduleId || "nicht verfuegbar"}`,
+    `Modul: ${registry.moduleId || "nicht verfügbar"}`,
     `Elemente: ${registry.elements.length}`,
     registry.ok === false && registry.reason ? `Hinweis: ${registry.reason}` : "",
     hoverElement ? `Hover: ${hoverElement.id}` : "Hover: keine",
@@ -649,13 +650,13 @@ function ensureLauncherStatusHint(doc, host, state = {}) {
   const collapseButton = doc.createElement("button");
   collapseButton.type = "button";
   collapseButton.className = "ui-editor-launcher-status__action";
-  collapseButton.textContent = "–";
+  collapseButton.textContent = "â€“";
   collapseButton.title = "Einklappen";
   collapseButton.setAttribute("data-ui-editor-status-collapse", "true");
   const hideButton = doc.createElement("button");
   hideButton.type = "button";
   hideButton.className = "ui-editor-launcher-status__action";
-  hideButton.textContent = "×";
+  hideButton.textContent = "Ã—";
   hideButton.title = "Ausblenden";
   hideButton.setAttribute("data-ui-editor-status-hide", "true");
   actions.append(collapseButton, hideButton);
@@ -1354,7 +1355,7 @@ function renderPreviewPanel(doc, state = {}) {
   details.setAttribute("data-ui-editor-preview-selected", panelViewModel.targetId);
   details.textContent = [
     `Scope: ${getStatusScopeLabel(registry.uiScope || state.activeUiScope)}`,
-    panelViewModel.targetId ? `Element-ID: ${panelViewModel.targetId}` : "Kein Element ausgewählt",
+    panelViewModel.targetId ? `Element-ID: ${panelViewModel.targetId}` : "Kein Element ausgewÃ¤hlt",
     panelViewModel.targetId ? `Preview-Ziel-ID: ${panelViewModel.previewTargetId || "nicht gesetzt"}` : "",
     `allowedOps: ${allowedOps.length > 0 ? allowedOps.join(", ") : "keine"}`,
     selectedElement ? `lockedOps: ${lockedOps.length > 0 ? lockedOps.join(", ") : "keine"}` : "",
@@ -1568,10 +1569,10 @@ function renderPreviewControls(doc, status, state) {
       : null));
   };
 
-  addButton("← Move links", "move", { dx: -PREVIEW_MOVE_STEP, dy: 0 }, "move-left");
-  addButton("→ Move rechts", "move", { dx: PREVIEW_MOVE_STEP, dy: 0 }, "move-right");
-  addButton("↑ Move hoch", "move", { dx: 0, dy: -PREVIEW_MOVE_STEP }, "move-up");
-  addButton("↓ Move runter", "move", { dx: 0, dy: PREVIEW_MOVE_STEP }, "move-down");
+  addButton("â† Move links", "move", { dx: -PREVIEW_MOVE_STEP, dy: 0 }, "move-left");
+  addButton("â†’ Move rechts", "move", { dx: PREVIEW_MOVE_STEP, dy: 0 }, "move-right");
+  addButton("â†‘ Move hoch", "move", { dx: 0, dy: -PREVIEW_MOVE_STEP }, "move-up");
+  addButton("â†“ Move runter", "move", { dx: 0, dy: PREVIEW_MOVE_STEP }, "move-down");
   addButton("Breite -", "resizeWidth", { delta: -PREVIEW_RESIZE_STEP }, "width-minus");
   addButton("Breite +", "resizeWidth", { delta: PREVIEW_RESIZE_STEP }, "width-plus");
   addButton("Hoehe -", "resizeHeight", { delta: -PREVIEW_RESIZE_STEP }, "height-minus");
@@ -1840,11 +1841,23 @@ function appendReadonlySurfaceSelection(doc, panel, state = {}) {
   selection.textContent = [
     "Surface-Auswahl",
     ...surfaces.map((surface) => {
-      const label = surface.label || surface.surfaceId || "nicht verfuegbar";
+      const label = surface.label || surface.surfaceId || "nicht verfügbar";
       return `${surface.selected ? "•" : "-"} ${label}`;
     }),
   ].join("\n");
   panel.appendChild(selection);
+
+  const hint = doc.createElement("div");
+  hint.className = "ui-editor-preview-surface-selection-hint";
+  hint.setAttribute("data-ui-editor-surface-selection-hint", "true");
+  hint.setAttribute("data-ui-editor-surface-id", selectedSurface.surfaceId || "");
+  hint.setAttribute("data-ui-editor-surface-readonly", "true");
+  hint.style.marginTop = "4px";
+  hint.style.color = "#475569";
+  hint.style.fontSize = "11px";
+  hint.style.lineHeight = "1.3";
+  hint.textContent = READONLY_SURFACE_SELECTION_HINT_TEXT;
+  panel.appendChild(hint);
   return selection;
 }
 

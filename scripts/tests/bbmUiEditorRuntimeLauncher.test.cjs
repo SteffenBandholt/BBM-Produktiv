@@ -65,6 +65,10 @@ const SURFACE_AUSWAHL_KONTEXT_REFERENZ_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KONTEXT_REFERENZSTAND.md"
 );
+const SURFACE_AUSWAHL_READONLY_HINT_REFERENZ_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_SURFACE_AUSWAHL_READONLY_KONTEXT_HINWEIS_REFERENZSTAND.md"
+);
 const SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md"
@@ -866,6 +870,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(renderedText.includes("Restarbeiten"), true);
     assert.equal(renderedText.includes("PDF Plan Seite 1"), true);
     assert.equal(renderedText.includes("Plan Canvas"), true);
+    assert.equal(
+      renderedText.includes("Surface-Auswahl zeigt nur read-only Kontext. Keine aktive Umschaltung."),
+      true
+    );
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
     assert.equal(
@@ -878,6 +886,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes('const READONLY_SURFACE_INFO_SURFACE_ID = "restarbeiten.ui.main";'), true);
     assert.equal(source.includes('const READONLY_PDF_PLAN_PAGE_1_SURFACE_ID = "pdf.plan.page.1";'), true);
     assert.equal(source.includes("READONLY_PDF_PLAN_PAGE_1_HINT_TEXT"), true);
+    assert.equal(source.includes("READONLY_SURFACE_SELECTION_HINT_TEXT"), true);
     assert.equal(source.includes("data-ui-editor-surface-readonly-hint"), true);
   });
 
@@ -1411,7 +1420,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(Boolean(activeStatus), true);
     assert.equal(getStatusText(activeStatus).includes("Registrierte Elemente:"), true);
-    assert.equal(getStatusText(activeStatus).includes("* protokoll.root (Root · Protokoll)"), true);
+    assert.equal(getStatusText(activeStatus).includes("* protokoll.root"), true);
     assert.equal(getStatusText(activeStatus).includes("* protokoll.header"), true);
     assert.equal(getStatusText(activeStatus).includes("projectId"), false);
     assert.equal(getStatusText(activeStatus).includes("Fachdaten"), false);
@@ -1469,7 +1478,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     button.click();
     let activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
-    assert.equal(getStatusText(activeStatus).includes("Verfuegbare Scopes:"), true);
+    assert.equal(getStatusText(activeStatus).includes("protokoll.topsScreen"), true);
     assert.equal(getStatusText(activeStatus).includes("* protokoll.topsScreen"), true);
     assert.equal(getStatusText(activeStatus).includes("* bbm.demo.editorMove"), true);
     assert.equal(getStatusText(activeStatus).includes("* restarbeiten.screen"), true);
@@ -3355,6 +3364,31 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Surface-Auswahl-Kontext-Referenzdokument enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Surface-Auswahl read-only Hinweis-Referenz bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(SURFACE_AUSWAHL_READONLY_HINT_REFERENZ_DOC_PATH),
+      true,
+      "Surface-Auswahl read-only Hinweis-Referenzdokument fehlt."
+    );
+    const docSource = fs.readFileSync(SURFACE_AUSWAHL_READONLY_HINT_REFERENZ_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Surface-Auswahl zeigt nur read-only Kontext. Keine aktive Umschaltung.",
+      "restarbeiten.ui.main",
+      "SurfaceInfo bleibt `restarbeiten.ui.main`",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "Electron-Sichtpruefung",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Surface-Auswahl read-only Hinweis-Referenzdokument enthaelt ${required} nicht.`
       );
     }
   });

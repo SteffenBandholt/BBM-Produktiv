@@ -52,6 +52,13 @@ Sie ergÃ¤nzt:
   - Keine PDF-Bearbeitung, keine Plan-/Canvas-Interaktion, keine Persistenz
     und keine DB-/IPC-Schreibwege wurden geaendert.
 
+- G90 sichtbarer read-only Kontext-Hinweis zur Surface-Auswahl umgesetzt:
+  - Der Hinweis `Surface-Auswahl zeigt nur read-only Kontext. Keine aktive
+    Umschaltung.` ist im bestehenden UI-Editor-Panel sichtbar.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`.
+  - Keine aktive Surface-Umschaltung, kein Drag, kein Resize und keine
+    Persistenz wurden geaendert.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

@@ -13,7 +13,9 @@ Grundlagenreihe jetzt vollstaendig.
 
 Der UI-Editor soll spaeter freigegebene UI-Elemente kontrolliert anzeigen und
 bearbeitbar machen. In der aktuellen BBM-Phase dient er nur als sicherer
-Host-Kontext fuer read-only Surface-Informationen und Guardrails.
+Host-Kontext fuer read-only Surface-Informationen und Guardrails. Der
+sichtbare Hinweis unter der Surface-Auswahl bleibt rein informativ und loest
+keine aktive Umschaltung aus.
 
 ## Aktueller Stand
 

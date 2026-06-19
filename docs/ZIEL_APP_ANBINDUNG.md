@@ -16,6 +16,8 @@ Minimalgrundlage jetzt abgeschlossen.
 - Fachlogik, Registry-Freigaben, DB/IPC und spaetere Persistenz bleiben
   BBM-seitige Host-Verantwortung.
 - Das externe `UI-Editor-kit` wird in diesem Paket nicht geaendert.
+- Der kleine Surface-Auswahl-Hinweis im Panel bleibt BBM-seitig und ist nur
+  informativ.
 
 ## Host-/Bestandssurface
 

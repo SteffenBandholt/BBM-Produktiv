@@ -129,3 +129,11 @@ werden, getrennt von Drag, Resize und Persistenz.
 - Es wurde keine Ersatzfreigabe erteilt.
 - G90 bleibt bis zur Nutzerentscheidung blockiert.
 - Der read-only Surface-Auswahl-Kontext bleibt unveraendert.
+
+## Nachtrag G90b
+
+- Der sichtbare Kontext-Hinweis ist jetzt umgesetzt und in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_READONLY_KONTEXT_HINWEIS_REFERENZSTAND.md`
+  dokumentiert.
+- Die Surface-Auswahl bleibt read-only Kontextanzeige.
+- SurfaceInfo bleibt `restarbeiten.ui.main`.

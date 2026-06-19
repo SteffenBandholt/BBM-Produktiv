@@ -70,3 +70,11 @@ und faehrt keinen Drag-/Resize- oder Schreibpfad an.
 - Der Hinweis zur Surface-Auswahl bleibt bis zur Nutzerentscheidung blockiert.
 - Drag, Resize, Persistenz, SurfaceInfo-Umbau und aktive Surface-Umschaltung
   bleiben gesperrt.
+
+## Nachtrag G90b
+
+- Der sichtbare read-only Kontext-Hinweis ist jetzt umgesetzt und in
+  `docs/UI_EDITOR_SURFACE_AUSWAHL_READONLY_KONTEXT_HINWEIS_REFERENZSTAND.md`
+  referenziert.
+- `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
+- `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar.

@@ -34,6 +34,8 @@ aktive Bearbeitungsflaeche wird.
 - `plan.canvas.default`: `canvas-pixels`
 
 Eine Umrechnung oder Interaktion findet ohne eigene Freigabe nicht statt.
+Der Surface-Auswahl-Hinweis bleibt rein informativ und greift nicht in diese
+Entscheidung ein.
 
 ## Nicht erlaubt ohne eigene Freigabe
 

@@ -465,3 +465,7 @@ jetzt als knappe Minimal-Grundlage vorhanden. `restarbeiten.ui.main` bleibt
 Host-/Bestandssurface, `pdf.plan.page.1` und `plan.canvas.default` bleiben
 read-only sichtbar, und PDF-/Plan-Bearbeitung, Koordinaten-Speicherung sowie
 DB-/IPC-Schreibwege bleiben gesperrt.
+
+**Status nach G90:** Der sichtbare read-only Kontext-Hinweis zur Surface-
+Auswahl ist jetzt umgesetzt. SurfaceInfo bleibt `restarbeiten.ui.main` und der
+Hinweis bleibt rein informativ.

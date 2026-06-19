@@ -19,6 +19,7 @@ Elemente zwingend vorhanden sein muessen.
 - UI-Elemente im Editor-Kontext sind aktuell read-only oder kontextbezogen.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
 - `pdf.plan.page.1` und `plan.canvas.default` sind nur read-only Zusatzkontexte.
+- Der Surface-Auswahl-Hinweis ist nur lesende Kontextanzeige.
 
 ## Zulaessige Element- und Kontextarten
 

@@ -1235,3 +1235,5 @@ Hinweis:
 - Naechster Schritt:
   - Keine weitere Minimalgrundlage offen; spaetere UI-/PDF-Arbeiten bleiben
     an die Stop-Regel und die Freigabe geknuepft.
+  - G90 setzt jetzt zusaetzlich den sichtbaren read-only Kontext-Hinweis zur
+    Surface-Auswahl um.
