@@ -1315,8 +1315,8 @@ Hinweis:
 - Beschreibung:
   - Eine kleine Entwurfs-Vorschau zeigt `Hinweis / Infotext`, `Vorschau, nicht
     gespeichert` und den Zielkontext `Restarbeiten`.
-  - Die Vorschau bleibt rein informativ, ohne Buttons, Eingabefelder oder
-    Speicherweg.
+  - Die Vorschau bleibt rein informativ und ist die Basis fuer die lokale
+    Live-Vorschau mit Eingabefeld.
   - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
     die Bedienzustands-Statuszeile und der Elementkatalog bleiben sichtbar.
 - Betroffene Dateien:
@@ -1327,6 +1327,7 @@ Hinweis:
   - `docs/UI_BAU_UND_PRUEFREGELN.md`
   - `docs/UI_EDITOR_PANEL_ELEMENTKATALOG_READONLY_REFERENZSTAND.md`
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_PREVIEW_REFERENZSTAND.md`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_LIVE_PREVIEW_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
 - Tests:

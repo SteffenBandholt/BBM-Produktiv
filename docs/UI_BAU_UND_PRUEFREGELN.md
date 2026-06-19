@@ -26,6 +26,8 @@ und die read-only Zusatzkontexte `pdf.plan.page.1` und `plan.canvas.default`.
 - Elementkatalog-Uebersichten bleiben informativ und ohne Erzeugungslogik
 - Entwurfs-Vorschauen fuer `Hinweis / Infotext` bleiben informativ und ohne
   Speicherung
+- Die Live-Vorschau mit `Hinweistext` bleibt lokal, aktualisiert nur den
+  sichtbaren Entwurf und speichert nichts
 
 ## Bau-Regeln
 

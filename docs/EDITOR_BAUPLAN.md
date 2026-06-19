@@ -19,7 +19,9 @@ keine aktive Umschaltung aus. Die kompakte Statuszeile bleibt ebenso rein
 informativ und zeigt nur den Bedienzustand. Die kleine Elementkatalog-
 Uebersicht bleibt ebenfalls rein informativ und benennt nur erlaubte und
 gesperrte Elementarten. Die neue Entwurfs-Vorschau fuer `Hinweis / Infotext`
-bleibt nur eine nicht-persistente Vorschau im Restarbeiten-Kontext.
+bleibt nur eine nicht-persistente Vorschau im Restarbeiten-Kontext. Die
+Live-Vorschau dazu bleibt lokal, nimmt nur den eingegebenen Hinweistext an und
+speichert nichts.
 
 ## Aktueller Stand
 

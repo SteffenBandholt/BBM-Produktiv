@@ -60,6 +60,9 @@ const READONLY_SURFACE_ELEMENT_CATALOG_LINES = [
   "Speichern / Persistenz: gesperrt",
 ];
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_TITLE = "Entwurfs-Vorschau";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_INPUT_LABEL = "Hinweistext";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LIVE_TITLE = "Live-Vorschau";
+const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT = "Dies ist ein nicht gespeicherter Hinweis-Entwurf.";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LINES = [
   "Elementart: Hinweis / Infotext",
   "Status: Vorschau, nicht gespeichert",
@@ -270,6 +273,7 @@ function createLauncherState({
     targetSelectionPanelController: null,
     win: null,
     availableUiScopes: normalizeAvailableUiScopes(availableUiScopes),
+    hintInfotextDraftText: READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT,
     registryResolver: resolver,
     hostAdapter: adapter,
   };
@@ -1386,7 +1390,7 @@ function renderPreviewPanel(doc, state = {}) {
   ].filter(Boolean).join("\n");
   panel.appendChild(details);
 
-  appendReadonlyHintInfotextDraftPreview(doc, panel);
+  appendReadonlyHintInfotextDraftPreview(doc, panel, state);
   appendReadonlySurfaceSelection(doc, panel, state);
   appendReadonlySurfaceElementCatalogOverview(doc, panel);
   appendReadonlyPdfPlanPage1Hint(doc, panel, state);
@@ -1924,8 +1928,24 @@ function appendReadonlySurfaceElementCatalogOverview(doc, panel) {
   return catalog;
 }
 
-function appendReadonlyHintInfotextDraftPreview(doc, panel) {
+function getReadonlyHintInfotextDraftText(state = {}) {
+  return state?.hintInfotextDraftText == null
+    ? READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT
+    : String(state.hintInfotextDraftText);
+}
+
+function handleReadonlyHintInfotextDraftInput(state = {}, value = "", livePreview = null) {
+  const nextValue = String(value == null ? "" : value);
+  state.hintInfotextDraftText = nextValue;
+  if (livePreview) {
+    livePreview.textContent = nextValue;
+  }
+  return nextValue;
+}
+
+function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
+  const currentText = getReadonlyHintInfotextDraftText(state);
 
   const preview = doc.createElement("div");
   preview.className = "ui-editor-preview-hint-infotext-draft";
@@ -1949,7 +1969,59 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel) {
   lines.className = "ui-editor-preview-hint-infotext-draft__lines";
   lines.textContent = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LINES.map((line) => `- ${line}`).join("\n");
 
-  preview.append(title, lines);
+  const inputGroup = doc.createElement("div");
+  inputGroup.className = "ui-editor-preview-hint-infotext-draft__input-group";
+  inputGroup.style.marginTop = "8px";
+  inputGroup.style.display = "grid";
+  inputGroup.style.gap = "4px";
+
+  const inputLabel = doc.createElement("div");
+  inputLabel.className = "ui-editor-preview-hint-infotext-draft__input-label";
+  inputLabel.textContent = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_INPUT_LABEL;
+  inputLabel.style.fontWeight = "700";
+
+  const input = doc.createElement("textarea");
+  input.className = "ui-editor-preview-hint-infotext-draft__input";
+  input.setAttribute("data-ui-editor-hint-infotext-draft-input", "true");
+  input.rows = 3;
+  input.value = currentText;
+  input.style.width = "100%";
+  input.style.boxSizing = "border-box";
+  input.style.resize = "none";
+  input.style.border = "1px solid #cbd5e1";
+  input.style.borderRadius = "4px";
+  input.style.padding = "6px 8px";
+  input.style.fontSize = "12px";
+  input.style.lineHeight = "1.35";
+  input.addEventListener("input", () => {
+    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview);
+  });
+  input.addEventListener("change", () => {
+    handleReadonlyHintInfotextDraftInput(state, input.value, livePreview);
+  });
+
+  inputGroup.append(inputLabel, input);
+
+  const liveTitle = doc.createElement("div");
+  liveTitle.className = "ui-editor-preview-hint-infotext-draft__live-title";
+  liveTitle.textContent = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_LIVE_TITLE;
+  liveTitle.style.marginTop = "8px";
+  liveTitle.style.fontWeight = "700";
+
+  const livePreview = doc.createElement("div");
+  livePreview.className = "ui-editor-preview-hint-infotext-draft__live-preview";
+  livePreview.setAttribute("data-ui-editor-hint-infotext-live-preview", "true");
+  livePreview.setAttribute("aria-live", "polite");
+  livePreview.style.marginTop = "4px";
+  livePreview.style.padding = "6px 8px";
+  livePreview.style.border = "1px solid #dbe4ee";
+  livePreview.style.borderRadius = "4px";
+  livePreview.style.background = "#ffffff";
+  livePreview.style.whiteSpace = "pre-wrap";
+  livePreview.style.minHeight = "24px";
+  livePreview.textContent = currentText;
+
+  preview.append(title, lines, inputGroup, liveTitle, livePreview);
   panel.appendChild(preview);
   return preview;
 }

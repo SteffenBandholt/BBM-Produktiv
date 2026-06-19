@@ -489,3 +489,7 @@ ohne SurfaceInfo, Erzeugung oder Persistenz zu aendern.
 **Status nach G96:** Die kleine Entwurfs-Vorschau fuer `Hinweis / Infotext`
 ist im UI-Editor-Panel sichtbar. Sie bleibt nur Vorschau, nicht gespeichert,
 und erweitert den Restarbeiten-Kontext ohne neue Bedien- oder Speicherlogik.
+
+**Status nach G97:** Die Entwurfs-Vorschau hat jetzt eine lokale Eingabe und
+eine Live-Vorschau. Der Text bleibt nicht gespeichert, kann beim Neuladen
+verloren gehen und aendert weder SurfaceInfo noch Schreibwege.

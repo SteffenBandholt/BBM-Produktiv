@@ -81,6 +81,15 @@ Sie ergÃ¤nzt:
   - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
     die Bedienzustands-Statuszeile und der Elementkatalog bleiben bestehen.
 
+- G97 ergaenzt die lokale Live-Vorschau fuer `Hinweis / Infotext` im
+  UI-Editor-Panel:
+  - Die Entwurfs-Vorschau hat jetzt ein kleines Eingabefeld `Hinweistext` und
+    eine Live-Vorschau des eingegebenen Textes.
+  - Der Text bleibt nur im laufenden Panel, wird nicht gespeichert und geht
+    beim Neuladen verloren.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
+    die Bedienzustands-Statuszeile und der Elementkatalog bleiben bestehen.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

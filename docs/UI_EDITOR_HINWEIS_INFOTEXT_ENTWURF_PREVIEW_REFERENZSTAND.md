@@ -4,7 +4,8 @@
 
 Im UI-Editor-Panel ist eine kleine Entwurfs-Vorschau fuer `Hinweis / Infotext`
 sichtbar. Sie ist nur informativ, nicht gespeichert und bleibt an den
-Restarbeiten-Kontext gebunden.
+Restarbeiten-Kontext gebunden. Sie bildet die Grundlage fuer die lokale
+Live-Vorschau mit Eingabefeld.
 
 ## Sichtbarer Vorschau-Text
 
@@ -12,12 +13,15 @@ Restarbeiten-Kontext gebunden.
 - Elementart: Hinweis / Infotext
 - Status: Vorschau, nicht gespeichert
 - Zielkontext: Restarbeiten
+- Hinweistext
+- Live-Vorschau
 
 ## Zweck des Bereichs
 
 - erste kleine praktische Vorschau fuer einen erlaubten Elementtyp
 - nur Anzeige, keine echte Elementverwaltung
 - kein Speichern und keine Surface-Aenderung
+- Ausgangspunkt fuer die lokale Live-Vorschau ohne Persistenz
 
 ## Abgrenzung: keine Speicherung
 

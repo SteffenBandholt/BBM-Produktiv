@@ -81,6 +81,10 @@ const UI_EDITOR_HINT_INFOTEXT_DRAFT_PREVIEW_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_ENTWURF_PREVIEW_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_LIVE_PREVIEW_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_LIVE_PREVIEW_REFERENZSTAND.md"
+);
 const SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md"
@@ -345,6 +349,8 @@ function getRenderedText(node) {
 function matchesSelector(node, selector) {
   const raw = String(selector || "");
   if (raw === "button") return node.tagName === "BUTTON";
+  if (raw === "input") return node.tagName === "INPUT";
+  if (raw === "textarea") return node.tagName === "TEXTAREA";
   if (raw.startsWith("link[")) {
     return node.tagName === "LINK" && node.getAttribute("data-ui-editor-launcher-css") === "true";
   }
@@ -416,6 +422,12 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-hint-infotext-draft-preview=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-draft-preview") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-draft-input=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-draft-input") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-live-preview=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-live-preview") === "true";
   }
   if (raw === "[data-ui-editor-surface-readonly-hint=\"true\"]") {
     return node.getAttribute("data-ui-editor-surface-readonly-hint") === "true";
@@ -865,6 +877,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const surfaceSelection = doc.querySelector('[data-ui-editor-surface-selection="true"]');
     const elementCatalog = doc.querySelector('[data-ui-editor-surface-element-catalog="true"]');
     const hintInfotextDraftPreview = doc.querySelector('[data-ui-editor-hint-infotext-draft-preview="true"]');
+    const hintInfotextDraftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
+    const hintInfotextLivePreview = doc.querySelector('[data-ui-editor-hint-infotext-live-preview="true"]');
     const readonlyHint = doc.querySelector('[data-ui-editor-surface-readonly-hint="true"]');
     const surfaceInfo = doc.querySelector('[data-ui-editor-surface-info="true"]');
     assert.equal(source.includes('from "./surfaceAdapters/surfaceAdapterCatalog.js"'), true);
@@ -918,9 +932,23 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     ]) {
       assert.equal(renderedText.includes(required), true, `Entwurfs-Vorschau enthaelt ${required} nicht.`);
     }
+    assert.equal(Boolean(hintInfotextDraftInput), true);
+    assert.equal(hintInfotextDraftInput.value, "Dies ist ein nicht gespeicherter Hinweis-Entwurf.");
+    assert.equal(Boolean(hintInfotextLivePreview), true);
+    assert.equal(hintInfotextLivePreview.textContent, "Dies ist ein nicht gespeicherter Hinweis-Entwurf.");
     assert.equal(hintInfotextDraftPreview.querySelectorAll("button").length, 0);
-    assert.equal(hintInfotextDraftPreview.querySelectorAll("input").length, 0);
+    assert.equal(hintInfotextDraftPreview.querySelectorAll("textarea").length, 1);
     assert.equal(hintInfotextDraftPreview.querySelectorAll("select").length, 0);
+    hintInfotextDraftInput.value = "Lokaler Hinweistext fuer die Vorschau.";
+    hintInfotextDraftInput.dispatchEvent({
+      type: "input",
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    const updatedHintInfotextDraftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
+    const updatedHintInfotextLivePreview = doc.querySelector('[data-ui-editor-hint-infotext-live-preview="true"]');
+    assert.equal(updatedHintInfotextDraftInput.value, "Lokaler Hinweistext fuer die Vorschau.");
+    assert.equal(updatedHintInfotextLivePreview.textContent, "Lokaler Hinweistext fuer die Vorschau.");
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
     assert.equal(
@@ -3608,6 +3636,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Status: Vorschau, nicht gespeichert",
       "Zielkontext: Restarbeiten",
       "Keine Speicherung",
+      "Hinweistext",
+      "Live-Vorschau",
       "SurfaceInfo-Verhalten",
       "restarbeiten.ui.main",
       "kein Drag",
@@ -3618,6 +3648,36 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Entwurfs-Vorschau enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Live-Vorschau bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_LIVE_PREVIEW_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Live-Vorschau-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_LIVE_PREVIEW_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Hinweistext",
+      "Live-Vorschau",
+      "Dies ist ein nicht gespeicherter Hinweis-Entwurf.",
+      "keine Speicherung",
+      "kein localStorage",
+      "kein writeFile",
+      "restarbeiten.ui.main",
+      "SurfaceInfo-Verhalten",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Live-Vorschau enthaelt ${required} nicht.`
       );
     }
   });
