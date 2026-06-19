@@ -35,7 +35,8 @@ aktive Bearbeitungsflaeche wird.
 
 Eine Umrechnung oder Interaktion findet ohne eigene Freigabe nicht statt.
 Der Surface-Auswahl-Hinweis bleibt rein informativ und greift nicht in diese
-Entscheidung ein.
+Entscheidung ein. Die kompakte Statuszeile bleibt ebenfalls informativ und
+veraendert keine Koordinaten oder Surface-Wahl.
 
 ## Nicht erlaubt ohne eigene Freigabe
 

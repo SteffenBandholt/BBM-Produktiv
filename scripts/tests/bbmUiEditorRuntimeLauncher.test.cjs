@@ -73,6 +73,10 @@ const UI_EDITOR_FOUNDATIONS_SURFACE_HINT_CHECK_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_GRUNDLAGEN_SURFACE_HINWEIS_ABSCHLUSSCHECK.md"
 );
+const UI_EDITOR_PANEL_STATUS_LINE_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_PANEL_BEDIENZUSTAND_STATUSZEILE_REFERENZSTAND.md"
+);
 const SURFACE_AUSWAHL_NO_ACTIVE_SWITCH_GUARDRAILS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_SURFACE_AUSWAHL_KEINE_AKTIVE_UMSCHALTUNG_GUARDRAILS.md"
@@ -876,6 +880,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(renderedText.includes("Plan Canvas"), true);
     assert.equal(
       renderedText.includes("Surface-Auswahl zeigt nur read-only Kontext. Keine aktive Umschaltung."),
+      true
+    );
+    assert.equal(
+      renderedText.includes("Bearbeitung: Restarbeiten | Zusatzkontexte: PDF/Plan read-only | Speichern: nicht aktiv"),
       true
     );
     assert.equal(Boolean(readonlyHint), true);
@@ -3521,6 +3529,32 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Grundlagen Surface-Hinweis Abschlusscheck enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Panel-Bedienzustand-Statuszeilen-Referenz bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_PANEL_STATUS_LINE_REFERENCE_DOC_PATH),
+      true,
+      "Panel-Bedienzustand-Statuszeilen-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_PANEL_STATUS_LINE_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Bearbeitung: Restarbeiten | Zusatzkontexte: PDF/Plan read-only | Speichern: nicht aktiv",
+      "restarbeiten.ui.main",
+      "pdf.plan.page.1",
+      "plan.canvas.default",
+      "kein Drag",
+      "kein Resize",
+      "keine Persistenz",
+      "Electron-Sichtpruefung",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Panel-Bedienzustand-Statuszeilen-Referenz enthaelt ${required} nicht.`
       );
     }
   });

@@ -50,6 +50,7 @@ const READONLY_SURFACE_INFO_SURFACE_ID = "restarbeiten.ui.main";
 const READONLY_PDF_PLAN_PAGE_1_SURFACE_ID = "pdf.plan.page.1";
 const READONLY_PDF_PLAN_PAGE_1_HINT_TEXT = "PDF Plan Seite 1 und Plan Canvas sind nur read-only sichtbar. Keine Bearbeitung, kein Drag, keine Persistenz.";
 const READONLY_SURFACE_SELECTION_HINT_TEXT = "Surface-Auswahl zeigt nur read-only Kontext. Keine aktive Umschaltung.";
+const READONLY_SURFACE_SELECTION_STATUS_TEXT = "Bearbeitung: Restarbeiten | Zusatzkontexte: PDF/Plan read-only | Speichern: nicht aktiv";
 
 let installedLauncherCssNode = null;
 let launcherHostNode = null;
@@ -1858,6 +1859,22 @@ function appendReadonlySurfaceSelection(doc, panel, state = {}) {
   hint.style.lineHeight = "1.3";
   hint.textContent = READONLY_SURFACE_SELECTION_HINT_TEXT;
   panel.appendChild(hint);
+
+  const status = doc.createElement("div");
+  status.className = "ui-editor-preview-surface-selection-status";
+  status.setAttribute("data-ui-editor-surface-selection-status", "true");
+  status.setAttribute("data-ui-editor-surface-id", selectedSurface.surfaceId || "");
+  status.setAttribute("data-ui-editor-surface-readonly", "true");
+  status.style.marginTop = "4px";
+  status.style.padding = "6px 8px";
+  status.style.border = "1px solid #dbe4ee";
+  status.style.borderRadius = "6px";
+  status.style.background = "#f8fafc";
+  status.style.color = "#334155";
+  status.style.fontSize = "11px";
+  status.style.lineHeight = "1.3";
+  status.textContent = READONLY_SURFACE_SELECTION_STATUS_TEXT;
+  panel.appendChild(status);
   return selection;
 }
 

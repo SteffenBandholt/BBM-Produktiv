@@ -77,3 +77,10 @@ Ergebnis; er fuehrt keine neue Sichtpruefung aus.
 Die naechste kleine Aufgabe kann sich wieder auf eine eng abgegrenzte
 read-only oder dokumentarische UI-Editor-Verbesserung beschraenken, solange
 die genannten Grenzen unveraendert bleiben.
+
+## Nachtrag G94
+
+- Die kompakte Statuszeile ergaenzt den sichtbaren Hinweis ohne neue
+  Bedienlogik.
+- Sie zeigt weiterhin nur den aktuellen Restarbeiten-/Hostkontext und den
+  read-only PDF/Plan-Bezug.

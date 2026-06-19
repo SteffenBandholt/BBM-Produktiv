@@ -476,3 +476,8 @@ Surface-Hinweis ist in
 Die fuenf Grundlagen bleiben vorhanden, der G90-Hinweis bleibt bestaetigt und
 aktive Surface-Umschaltung, SurfaceInfo-Umbau, Drag, Resize, Persistenz und
 Schreibwege bleiben blockiert.
+
+**Status nach G94:** Die kompakte Bedienzustands-Statuszeile ist im
+UI-Editor-Panel sichtbar. Sie nennt den Restarbeiten-Hostkontext, die read-only
+Zusatzkontexte und den nicht aktiven Speicherzustand, ohne SurfaceInfo oder
+Persistenz zu aendern.

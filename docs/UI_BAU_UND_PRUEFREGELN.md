@@ -22,6 +22,7 @@ und die read-only Zusatzkontexte `pdf.plan.page.1` und `plan.canvas.default`.
 - sichtbare UI-Aenderungen brauchen Electron-Sichtpruefung
 - fehlende Grundlagen fuehren zu STOPP
 - read-only Kontexthinweise bleiben klein und ohne Bedienlogik
+- kompakte Statuszeilen bleiben informativ und ohne Speicherlogik
 
 ## Bau-Regeln
 

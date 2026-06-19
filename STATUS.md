@@ -67,6 +67,12 @@ Sie ergÃ¤nzt:
   - Die Electron-Sichtpruefung wird nur als bereits in G90 bestanden
     referenziert.
 
+- G94 kompakte Bedienzustands-Statuszeile im UI-Editor-Panel umgesetzt:
+  - Die Statuszeile nennt Restarbeiten, read-only PDF/Plan-Kontexte und den
+    nicht aktiven Speicherzustand.
+  - SurfaceInfo bleibt `restarbeiten.ui.main`; Hinweis und read-only
+    Zusatzkontexte bleiben bestehen.
+
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
     `docs/UI_EDITOR_GRUNDLAGEN_FREIGABEENTSCHEIDUNG.md`.

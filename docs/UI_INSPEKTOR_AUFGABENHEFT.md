@@ -1262,3 +1262,31 @@ Hinweis:
 - Naechster Schritt:
   - Ein naechstes kleines Paket nur dann, wenn es wieder klar read-only oder
     dokumentarisch bleibt.
+
+### K19.116 - UI-Editor-Panel Bedienzustand als kompakte Statuszeile anzeigen
+- Status: erledigt
+- Beschreibung:
+  - Eine kleine Statuszeile nennt den Restarbeiten-/Hostkontext, die read-only
+    PDF/Plan-Zusatzkontexte und den nicht aktiven Speicherzustand.
+  - Der sichtbare Surface-Auswahl-Hinweis bleibt unveraendert bestehen.
+  - Es wurden keine neue Surface-Logik und keine Speicherlogik aktiviert.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/EDITOR_BAUPLAN.md`
+  - `docs/ZIEL_APP_ANBINDUNG.md`
+  - `docs/UI_ELEMENT_KATALOG.md`
+  - `docs/UI_BAU_UND_PRUEFREGELN.md`
+  - `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`
+  - `docs/UI_EDITOR_GRUNDLAGEN_SURFACE_HINWEIS_ABSCHLUSSCHECK.md`
+  - `docs/UI_EDITOR_PANEL_BEDIENZUSTAND_STATUSZEILE_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+- Tests:
+  - `npm run check:ui-editor-kit`
+  - `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `npm test`
+  - `git diff --check`
+- Naechster Schritt:
+  - Nur ein naechstes enges UI-/Doku-Paket, wenn es wieder ohne neue
+    Freigaben auskommt.

@@ -20,6 +20,7 @@ Elemente zwingend vorhanden sein muessen.
 - `restarbeiten.ui.main` bleibt Host-/Bestandssurface.
 - `pdf.plan.page.1` und `plan.canvas.default` sind nur read-only Zusatzkontexte.
 - Der Surface-Auswahl-Hinweis ist nur lesende Kontextanzeige.
+- Die kompakte Statuszeile ist nur lesende Bedienzustandsanzeige.
 
 ## Zulaessige Element- und Kontextarten
 

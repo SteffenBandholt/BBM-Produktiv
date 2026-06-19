@@ -142,6 +142,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - Grundlagen 3/3 erstellt `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md` als knappe Minimal-Grundlage; `restarbeiten.ui.main` bleibt Host-/Bestandssurface, `pdf.plan.page.1` und `plan.canvas.default` bleiben read-only sichtbar, und PDF-/Plan-Bearbeitung, Koordinaten-Speicherung sowie DB-/IPC-Schreibwege bleiben gesperrt
 - G90 setzt den sichtbaren read-only Surface-Auswahl-Hinweis um; der Hinweis bleibt informativ, `restarbeiten.ui.main` bleibt SurfaceInfo, und die read-only Zusatzkontexte bleiben unveraendert
 - G93 buendelt den Abschlusscheck in `docs/UI_EDITOR_GRUNDLAGEN_SURFACE_HINWEIS_ABSCHLUSSCHECK.md`; die fuenf Grundlagen bleiben vorhanden, der G90-Hinweis bleibt bestaetigt, und aktive Surface-Umschaltung, SurfaceInfo-Umbau, Drag, Resize, Persistenz und Schreibwege bleiben blockiert
+- G94 ergaenzt die kompakte Bedienzustands-Statuszeile im UI-Editor-Panel; sie bleibt informativ, nennt Restarbeiten sowie die read-only Zusatzkontexte und aktiviert keine Speicher- oder Surface-Logik
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 
