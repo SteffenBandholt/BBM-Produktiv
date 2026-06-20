@@ -86,3 +86,11 @@ G109 fuegt nur einen sichtbaren, gesperrten Speicherbereich hinzu; die
 Payload-Vorschau bleibt reine Anzeige.
 G110 fuegt darin nur einen sichtbaren Freigabecheck hinzu; die
 Payload-Vorschau bleibt weiterhin rein lesend.
+
+## G111: Abschlusscheck
+
+- Die Payload-Vorschau bleibt rein lesend.
+- Sie bleibt Teil der Speicher-Vorbereitung, aktiviert aber keinen
+  Schreibweg.
+- Die sichtbare Speicher-Vorbereitung wird dadurch nur bestaetigt, nicht
+  erweitert.

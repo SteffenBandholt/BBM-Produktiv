@@ -93,3 +93,9 @@ Deaktivierung und die Trennung von Anzeige und Speicherung.
 
 Den sichtbaren Speicherbereich nur als gesperrten Referenzstand belassen, bis
 eine spaetere technische Freigabe wirklich vorliegt.
+
+## G111: Abschlusscheck
+
+- Die Speicher-Vorbereitung bleibt sichtbar und gesperrt.
+- Der Freigabecheck bleibt lesend und aktiviert keinen neuen Schreibweg.
+- `Entwurf speichern` bleibt deaktiviert.

@@ -81,6 +81,9 @@ Bei sichtbarer UI gilt:
   Wege bleiben weiter blockiert.
 - G110 ergaenzt darin einen sichtbaren Freigabecheck; der Speicherbutton
   bleibt deaktiviert und die Freigabe bleibt lesend.
+- G111 bestaetigt den Speicher-Vorbereitungsstand als Abschlusscheck; der
+  sichtbare Speicherbereich bleibt gesperrt und es entsteht kein neuer
+  Schreibweg.
 
 ## Stop-Regeln
 

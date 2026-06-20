@@ -84,3 +84,10 @@ Lesestatus und die Trennung zwischen Freigabecheck und Speichern.
 
 Den Freigabecheck nur als lesende Zwischenstufe stehen lassen, bis eine spaetere
 technische Speicherfreigabe wirklich explizit entschieden wird.
+
+## G111: Abschlusscheck
+
+- Die Speicher-Vorbereitung bleibt als Referenzstand bestaetigt.
+- Freigabecheck, gesperrter Speicherbereich und deaktivierter Button bleiben
+  nur Anzeige.
+- Es wird kein neuer Schreibweg freigegeben.

@@ -87,6 +87,9 @@ keinen Speicherbutton und keinen Schreibweg.
   deaktiviert.
 - G110 ergaenzt dort einen sichtbaren Freigabecheck; der Speicherbutton
   bleibt deaktiviert und der Status bleibt rein lesend.
+- G111 bestaetigt diesen Speicher-Vorbereitungsstand als Abschlusscheck;
+  sichtbarer Speicherbereich, Freigabecheck und deaktivierter Button bleiben
+  nur Anzeige.
 
 ## Stop-Regel
 

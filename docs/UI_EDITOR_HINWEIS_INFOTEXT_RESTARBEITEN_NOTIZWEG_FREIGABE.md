@@ -121,3 +121,9 @@ Die Freigabe nur als dokumentarische Zielrichtung stehen lassen und die
 spaetere technische Umsetzung erst nach eigener Detailfreigabe beginnen.
 G109 kann darauf aufsetzen und den Speicherbereich sichtbar, aber gesperrt
 anzeigen.
+
+## G111: Abschlusscheck
+
+- Der spaetere Restarbeiten-Notizweg bleibt nur die freigegebene Zielrichtung.
+- Die Speicher-Vorbereitung ist weiterhin rein lesend und baut keinen neuen
+  Schreibweg.

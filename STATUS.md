@@ -158,6 +158,9 @@ Sie ergÃ¤nzt:
 - G110 ergaenzt im gesperrten Speicherbereich den sichtbaren
   Freigabecheck; `Hinweistext gueltig` zieht lokal mit, der Button bleibt
   deaktiviert und es wird weiterhin nichts gespeichert.
+- G111 bestaetigt die Speicher-Vorbereitung als Abschluss- und
+  Referenzstand; der sichtbare Speicherbereich, der Freigabecheck und der
+  deaktivierte Button bleiben rein lesend.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

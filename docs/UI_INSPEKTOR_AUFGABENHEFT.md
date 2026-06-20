@@ -1535,3 +1535,14 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHER_FREIGABECHECK_UI_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.132 - Hinweis-/Infotext-Speicher-Vorbereitung als Abschlusscheck dokumentieren
+- Status: erledigt
+- Beschreibung:
+  - Der sichtbare Speicherbereich mit Freigabecheck wird als Abschluss- und
+    Referenzstand dokumentiert.
+  - Es bleibt bei Anzeige, deaktiviertem Button und blockiertem Schreibweg.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHER_VORBEREITUNG_ABSCHLUSSCHECK.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

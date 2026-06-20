@@ -75,6 +75,9 @@ Elemente zwingend vorhanden sein muessen.
   Anzeige, kein Speicherziel.
 - G110 ergaenzt dort einen sichtbaren Freigabecheck; der Speicherbutton bleibt
   deaktiviert und es entsteht kein neues Speicherziel.
+- G111 bestaetigt diesen Vorbereitungsstand als Abschlusscheck; sichtbarer
+  Speicherbereich und Freigabecheck bleiben lesend und erzeugen kein neues
+  Editor-Ziel.
 
 ## Stop-Regel
 

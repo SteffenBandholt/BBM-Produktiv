@@ -117,6 +117,10 @@ const UI_EDITOR_HINT_INFOTEXT_STORAGE_FREIGABECHECK_REFERENCE_DOC_PATH = path.jo
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHER_FREIGABECHECK_UI_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_STORAGE_PREPARATION_FINAL_CHECK_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHER_VORBEREITUNG_ABSCHLUSSCHECK.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_BBM_SCHREIBWEG_ANALYSE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_BBM_SCHREIBWEG_ANALYSE.md"
@@ -4055,6 +4059,37 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Speicher-Freigabecheck enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Speicher-Vorbereitung bleibt abschliessend dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_STORAGE_PREPARATION_FINAL_CHECK_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Speicher-Vorbereitung-Abschlusscheck fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_STORAGE_PREPARATION_FINAL_CHECK_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Speicherbereich ist sichtbar",
+      "Freigabecheck",
+      "restarbeiten:createNote",
+      "Schreibweg freigegeben: nein",
+      "Speicherbutton: deaktiviert",
+      "Persistenz: nicht aktiv",
+      "persisted: false",
+      "kein Speichern",
+      "kein Submit",
+      "keine IPC-/DB-Schreibaktion",
+      "kein localStorage",
+      "kein writeFile",
+      "restarbeiten.ui.main",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Speicher-Vorbereitung-Abschlusscheck enthaelt ${required} nicht.`
       );
     }
   });

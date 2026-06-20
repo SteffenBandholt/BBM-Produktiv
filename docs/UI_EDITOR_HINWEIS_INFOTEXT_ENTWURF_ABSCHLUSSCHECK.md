@@ -110,3 +110,9 @@ Entwurfspruefung und Reset arbeiten lokal zusammen und schreiben nichts.
 Nur eine fachlich freigegebene, neue UI-Editor-Aufgabe auf diesem Stand
 aufsetzen. Keine weitere Speicher-, Drag- oder Surface-Logik ohne eigene
 Freigabe.
+
+## G111: Abschlusscheck
+
+- Die Speicher-Vorbereitung bleibt separat dokumentiert.
+- Der Entwurfs-Abschlusscheck bleibt lokal und read-only.
+- Es entsteht dadurch kein neuer Schreibweg.

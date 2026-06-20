@@ -106,3 +106,9 @@ createdFrom: ui-editor-draft
 
 Die lokale Hinweis-/Infotext-Kette unveraendert halten und den BBM-Schreibweg
 erst dann bauen, wenn Ziel, Test und Rueckmeldung fachlich sauber feststehen.
+
+## G111: Abschlusscheck
+
+- Das Ziel `restarbeiten:createNote` bleibt nur vorbereitet.
+- Die Speicher-Vorbereitung ist als Abschlussstand bestaetigt.
+- Es wird weiterhin kein Schreibweg aktiv geschaltet.

@@ -78,6 +78,9 @@ Bearbeitungsflaeche.
   Schreibweg anzubinden.
 - G110 ergaenzt dort einen sichtbaren Freigabecheck; der Speicherbutton bleibt
   deaktiviert und `UI-Editor-kit` speichert weiterhin nicht.
+- G111 bestaetigt die Speicher-Vorbereitung als Abschlussstand; BBM bleibt
+  Host, `UI-Editor-kit` speichert weiterhin nicht und es wird kein neuer
+  Schreibweg freigegeben.
 
 ## Pruefpflicht
 

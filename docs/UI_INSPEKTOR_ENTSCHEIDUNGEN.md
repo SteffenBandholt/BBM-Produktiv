@@ -559,3 +559,7 @@ weiterhin keine Speicherung aus.
 sichtbarer Freigabecheck angekommen. Er zeigt nur den lokalen
 Validierungsstand, laesst den Speicherbutton deaktiviert und aktiviert keinen
 Schreibweg.
+
+**Status nach G111:** Die Speicher-Vorbereitung ist als Abschluss- und
+Referenzstand bestaetigt. Sichtbarer Speicherbereich, Freigabecheck und
+deaktivierter Button bleiben nur Anzeige und bauen keinen neuen Schreibweg.

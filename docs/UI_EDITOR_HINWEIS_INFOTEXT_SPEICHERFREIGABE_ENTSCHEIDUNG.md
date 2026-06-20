@@ -144,3 +144,9 @@ Die aktuelle lokale Hinweis-/Infotext-Kette weiter stabil halten und erst dann
 eine eigenstaendige Speicherentscheidung vorbereiten, wenn Zielsurface und
 Schreibweg wirklich fachlich feststehen. Der Schreibweg selbst bleibt noch
 nicht gebaut.
+
+## G111: Abschlusscheck
+
+- Die Speicherfreigabe bleibt bewusst aus.
+- Die Speicher-Vorbereitung ist nur dokumentarischer Referenzstand.
+- Es wird weiterhin kein neuer Schreibweg aktiviert.
