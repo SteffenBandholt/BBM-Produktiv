@@ -132,3 +132,9 @@ anzeigen.
 
 - `restarbeiten:createNote` ist der dokumentierte technische Zielvertrag.
 - Die Freigabe bleibt ohne angeschlossenen Speicherweg.
+
+## G113: Kontextbezug
+
+- Die Freigabe benennt den Zielweg, aber noch nicht die konkrete
+  `restarbeitId`.
+- Erst eine eindeutige Host-Zuordnung macht den Weg spaeter sicher nutzbar.

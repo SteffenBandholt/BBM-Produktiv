@@ -1557,3 +1557,14 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.134 - Hinweis-/Infotext-Restarbeiten-Kontext und restarbeitId analysieren
+- Status: erledigt
+- Beschreibung:
+  - Es wird dokumentiert, woher spaeter die passende `restarbeitId` bzw. der
+    Restarbeiten-Kontext kommen koennte.
+  - Es bleibt bei Analyse, ohne neue Uebergabestrategie im Runtime-Code.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_ANALYSE.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

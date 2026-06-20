@@ -83,6 +83,8 @@ Bearbeitungsflaeche.
   Schreibweg freigegeben.
 - G112 beschreibt den `restarbeiten:createNote`-Vertrag als BBM-seitige
   Grundlage, aber noch ohne angeschlossenen Speicherweg.
+- G113 betont die notwendige Host-Zuordnung von `restarbeitId`; der UI-Editor
+  bekommt diesen Kontext nicht aus sich selbst heraus.
 
 ## Pruefpflicht
 

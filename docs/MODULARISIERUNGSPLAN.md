@@ -168,6 +168,8 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
   keinen neuen Schreibweg
 - G112 dokumentiert den `restarbeiten:createNote`-Vertrag als fachliche
   Grundlage fuer einen spaeteren, noch nicht angeschlossenen Speicherweg
+- G113 klaert die Restarbeiten-Kontextzuordnung und die fehlende
+  `restarbeitId`-Uebergabe als naechste Trennstelle vor einem echten Schreiben
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

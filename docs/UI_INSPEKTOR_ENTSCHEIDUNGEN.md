@@ -567,3 +567,8 @@ deaktivierter Button bleiben nur Anzeige und bauen keinen neuen Schreibweg.
 **Status nach G112:** Der technische Vertrag von `restarbeiten:createNote`
 ist als naechste fachliche Grundlage dokumentiert. Der Speicherweg bleibt
 weiterhin unverbunden und deaktiviert.
+
+**Status nach G113:** Die Restarbeiten-Kontextzuordnung ist als naechste
+Analyse dokumentiert. Die passende `restarbeitId` kommt nicht aus dem
+UI-Editor-Draft selbst, sondern muss spaeter vom Host eindeutig uebergeben
+werden.

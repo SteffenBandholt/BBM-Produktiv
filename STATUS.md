@@ -163,6 +163,8 @@ Sie ergÃ¤nzt:
   deaktivierte Button bleiben rein lesend.
 - G112 dokumentiert den technischen Vertrag von `restarbeiten:createNote`;
   der Zielweg bleibt vorbereitet, aber weiterhin nicht angeschlossen.
+- G113 analysiert die Restarbeiten-Kontextzuordnung; die eindeutige
+  `restarbeitId` bleibt der entscheidende Host-Faktor vor spaeterem Speichern.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

@@ -92,6 +92,8 @@ keinen Speicherbutton und keinen Schreibweg.
   nur Anzeige.
 - G112 dokumentiert den technischen Vertrag von `restarbeiten:createNote`,
   ohne den Speicherweg anzuschliessen.
+- G113 klaert die Restarbeiten-Kontextzuordnung fuer spaetere Speicherung; die
+  `restarbeitId` bleibt dabei der entscheidende Host-Faktor.
 
 ## Stop-Regel
 

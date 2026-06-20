@@ -80,6 +80,8 @@ Elemente zwingend vorhanden sein muessen.
   Editor-Ziel.
 - G112 dokumentiert den spaeteren `restarbeiten:createNote`-Vertrag nur
   lesend; daraus entsteht noch kein neues Elementziel.
+- G113 zeigt die Luecke zwischen Draft und Restarbeiten-Zielkontext; ohne
+  `restarbeitId` bleibt Speichern blockiert.
 
 ## Stop-Regel
 

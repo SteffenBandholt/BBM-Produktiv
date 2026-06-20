@@ -86,6 +86,8 @@ Bei sichtbarer UI gilt:
   Schreibweg.
 - G112 beschreibt den `restarbeiten:createNote`-Vertrag nur dokumentarisch;
   anschliessend bleibt der Speicherweg weiterhin blockiert.
+- G113 ergaenzt die Regel um die notwendige Host-Zuordnung: Ohne eindeutige
+  `restarbeitId` bleibt jeder spaetere Speicherweg gesperrt.
 
 ## Stop-Regeln
 

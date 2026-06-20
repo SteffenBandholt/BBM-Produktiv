@@ -5,7 +5,8 @@
 Fuer `Hinweis / Infotext` gibt es mehrere bestehende BBM-Schreibwege, aber nur
 ein Teil davon passt fachlich zum spaeteren Speichern des Entwurfs. G108 gibt
 den Restarbeiten-Notizweg als spaeteren Ziel-Schreibweg frei; G112 klärt dazu
-nun den technischen `restarbeiten:createNote`-Vertrag genauer. Die anderen
+nun den technischen `restarbeiten:createNote`-Vertrag genauer; G113 trennt
+die fehlende Kontextzuordnung bis zur passenden `restarbeitId` ab. Die anderen
 vorhandenen Schreibwege sind gute Vergleichspunkte, aber fuer diesen Entwurf
 fachlich zu weit entfernt oder zu spezialisiert.
 
@@ -20,6 +21,8 @@ fachlich zu weit entfernt oder zu spezialisiert.
   - naechste sinnvolle Kandidat fuer den spaeteren Speicherweg
   - G112 dokumentiert den konkreten Create-Note-Vertrag als naechsten
     technischen Referenzstand
+  - G113 trennt die Frage nach der passenden `restarbeitId` als eigene
+    Host-Kontextanalyse ab
 - `uiEditorLayoutOverrides:save` ueber
   `src/main/ipc/uiEditorLayoutOverridesIpc.js`
   - technischer Schreibweg vorhanden
@@ -67,4 +70,5 @@ Begruendung:
 Wenn die Speicherung spaeter freigegeben wird, sollte zuerst der dokumentierte
 `restarbeiten:createNote`-Vertrag mit Guardrails und Tests in einen echten
 Speicherweg ueberfuehrt werden. Bis dahin bleibt diese Analyse nur eine
-Einordnung des naheliegenden BBM-Schreibwegs.
+Einordnung des naheliegenden BBM-Schreibwegs. G113 trennt danach die offene
+Kontextzuordnung zur konkreten `restarbeitId` weiter ab.

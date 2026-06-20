@@ -66,6 +66,7 @@ beschreibt nur diesen Vertrag, keinen neuen Speicherweg.
 - `projectId`
 - Restarbeiten-Kontext / zugehoeriger Datensatz
 - ggf. Benutzer-/Zeit-/Quelle-Information
+- G113 klaert dazu, woher die eindeutige `restarbeitId` kommen kann.
 
 ## Moegliche spaetere Zuordnung vom UI-Editor-Draft
 
@@ -129,3 +130,10 @@ Die Payload-Vorschau bleibt reine Anzeige.
 
 Den analysierten Vertrag nur als dokumentarische Grundlage stehen lassen und
 erst nach eigener Freigabe einen echten Speicherweg bauen.
+
+## G113: Kontextbezug
+
+- G113 ergaenzt die Analyse um die Frage, woher die passende `restarbeitId`
+  kommen kann.
+- Ohne diesen Host-Kontext bleibt der technische Vertrag zwar klar, aber noch
+  nicht sicher an die richtige Restarbeit gebunden.

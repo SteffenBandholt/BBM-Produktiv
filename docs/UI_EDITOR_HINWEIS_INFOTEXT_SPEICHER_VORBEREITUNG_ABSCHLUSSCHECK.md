@@ -109,6 +109,11 @@ Die Speicher-Vorbereitung nur als dokumentarischen Referenzstand stehen
 lassen, bis eine spaetere Freigabe fuer einen echten Speicherweg bewusst neu
 entschieden wird.
 
+## G113: Kontextbezug
+
+- Die Speicher-Vorbereitung benoetigt spaeter eine eindeutige `restarbeitId`.
+- Ohne Host-Zuordnung bleibt der Speicherbereich absichtlich blockiert.
+
 ## G112: Vertragsbezug
 
 - Der technische Zielvertrag wird separat in
