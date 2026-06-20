@@ -76,6 +76,7 @@ const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_STATUS = "status: draft";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_PERSISTED = "persisted: false";
 const READONLY_HINT_INFOTEXT_STORAGE_TITLE = "Speichern";
 const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TITLE = "Restarbeit-Kontext";
+const READONLY_HINT_INFOTEXT_HOST_CONTEXT_REQUIRED_SOURCE = "BBM-Restarbeiten-Host erforderlich";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_TITLE = "Freigabecheck";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE = "Hinweistext gültig: ja";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE = "Hinweistext gültig: nein";
@@ -260,6 +261,7 @@ function createLauncherState({
   availableUiScopes = null,
   registryResolver = null,
   hostAdapter = null,
+  hostContextStatus = null,
   onPendingChangeRequestsChanged = null,
 } = {}) {
   const normalizedScope = String(activeUiScope == null ? "" : activeUiScope).trim();
@@ -301,7 +303,7 @@ function createLauncherState({
     win: null,
     availableUiScopes: normalizeAvailableUiScopes(availableUiScopes),
     hintInfotextDraftText: READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT,
-    hostContextStatus: buildReadonlyHintInfotextHostContextStatusModel(),
+    hostContextStatus: normalizeHostContextStatus(hostContextStatus),
     registryResolver: resolver,
     hostAdapter: adapter,
   };
@@ -1866,7 +1868,7 @@ function buildReadonlyPdfPlanPage1HintForLauncher(input = {}) {
   };
 }
 
-function buildReadonlyHintInfotextHostContextStatusModel() {
+function createReadonlyHintInfotextHostContextStatusModel() {
   return {
     projectId: null,
     restarbeitId: null,
@@ -1874,23 +1876,71 @@ function buildReadonlyHintInfotextHostContextStatusModel() {
     targetSurfaceId: READONLY_SURFACE_INFO_SURFACE_ID,
     targetLabel: "nicht ausgewählt",
     elementType: "Hinweis / Infotext",
-    source: "BBM-Restarbeiten-Host erforderlich",
+    source: READONLY_HINT_INFOTEXT_HOST_CONTEXT_REQUIRED_SOURCE,
     isPresent: false,
   };
 }
 
+function normalizeReadonlyHintInfotextHostContextValue(value = "") {
+  if (typeof value === "string" || typeof value === "number" || typeof value === "bigint") {
+    return String(value).trim();
+  }
+  return "";
+}
+
+function normalizeHostContextStatus(input = null) {
+  const defaultStatus = createReadonlyHintInfotextHostContextStatusModel();
+  if (!input || typeof input !== "object") return defaultStatus;
+
+  const projectId = normalizeReadonlyHintInfotextHostContextValue(input.projectId);
+  const restarbeitId = normalizeReadonlyHintInfotextHostContextValue(input.restarbeitId);
+  const targetContext = normalizeReadonlyHintInfotextHostContextValue(input.targetContext);
+  const targetSurfaceId = normalizeReadonlyHintInfotextHostContextValue(input.targetSurfaceId);
+  const targetLabel = normalizeReadonlyHintInfotextHostContextValue(input.targetLabel);
+  const elementType = normalizeReadonlyHintInfotextHostContextValue(input.elementType);
+  const source = normalizeReadonlyHintInfotextHostContextValue(input.source) || defaultStatus.source;
+
+  const isPresent = Boolean(
+    projectId &&
+      restarbeitId &&
+      targetContext === defaultStatus.targetContext &&
+      targetSurfaceId === defaultStatus.targetSurfaceId &&
+      elementType === defaultStatus.elementType &&
+      targetLabel
+  );
+
+  if (!isPresent) return defaultStatus;
+
+  return {
+    projectId,
+    restarbeitId,
+    targetContext: defaultStatus.targetContext,
+    targetSurfaceId: defaultStatus.targetSurfaceId,
+    targetLabel,
+    elementType: defaultStatus.elementType,
+    source,
+    isPresent: true,
+  };
+}
+
+function buildReadonlyHintInfotextHostContextStatusModel(input = null) {
+  return normalizeHostContextStatus(input);
+}
+
 function getReadonlyHintInfotextHostContextStatus(state = {}) {
   if (state?.hostContextStatus && typeof state.hostContextStatus === "object") {
-    return state.hostContextStatus;
+    const normalizedHostContextStatus = normalizeHostContextStatus(state.hostContextStatus);
+    state.hostContextStatus = normalizedHostContextStatus;
+    return normalizedHostContextStatus;
   }
-  const hostContextStatus = buildReadonlyHintInfotextHostContextStatusModel();
+  const hostContextStatus = createReadonlyHintInfotextHostContextStatusModel();
   if (state && typeof state === "object") {
     state.hostContextStatus = hostContextStatus;
   }
   return hostContextStatus;
 }
 
-function formatReadonlyHintInfotextStorageContextText(hostContextStatus = buildReadonlyHintInfotextHostContextStatusModel()) {
+function formatReadonlyHintInfotextStorageContextText(hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()) {
   return [
     `Zielkontext: ${hostContextStatus.targetContext}`,
     `restarbeitId: ${hostContextStatus.restarbeitId ? hostContextStatus.restarbeitId : "nicht übergeben"}`,
@@ -1903,7 +1953,7 @@ function formatReadonlyHintInfotextStorageContextText(hostContextStatus = buildR
 
 function formatReadonlyHintInfotextStorageFreigabecheckText(
   value = "",
-  hostContextStatus = buildReadonlyHintInfotextHostContextStatusModel()
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()
 ) {
   return [
     isReadonlyHintInfotextDraftValid(value)
@@ -2522,6 +2572,7 @@ export {
   showHiddenPreviewElement,
   normalizeReadonlyRegisteredElements,
   normalizeAvailableUiScopes,
+  normalizeHostContextStatus,
   buildReadonlyHintInfotextHostContextStatusModel,
   getReadonlyHintInfotextHostContextStatus,
   ensureLauncherStatusHint,

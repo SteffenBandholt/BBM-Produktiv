@@ -143,3 +143,8 @@ normale fachliche Nutzung der nun vollstaendigen Minimalgrundlagenreihe.
 - Die Dokumente bestaetigen die aktuell zulässigen Element- und Kontextarten
   sowie die Bau-/Pruefpflichten fuer kleine UI-Aenderungen.
 - Weiterhin nicht freigegeben bleibt die PDF-/Plan-Grundlage.
+
+## Nachtrag G118
+
+- Der Host-Kontext wird lokal nur normalisiert; daraus folgt keine neue
+  Freigabe fuer UI-, PDF- oder Speicherwege.

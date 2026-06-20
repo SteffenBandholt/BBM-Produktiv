@@ -102,6 +102,8 @@ keinen Speicherbutton und keinen Schreibweg.
   bleibt der Speicherbutton weiterhin deaktiviert.
 - G117 ordnet die sichtbare Restarbeit-Kontextanzeige an ein lokales
   Statusmodell; echte Host-Daten kommen weiterhin nicht im Renderer an.
+- G118 normalisiert dieses lokale Statusmodell intern; die Anzeige bleibt
+  read-only und es entsteht keine neue Host-Uebergabe.
 
 ## Stop-Regel
 

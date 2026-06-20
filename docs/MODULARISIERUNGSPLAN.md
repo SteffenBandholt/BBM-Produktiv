@@ -448,3 +448,10 @@ Dabei gilt:
 - Die sichtbare Restarbeit-Kontextanzeige wird im Renderer aus einem lokalen
   Statusmodell abgeleitet.
 - Echte Host-Daten bleiben weiterhin Aufgabe des spaeteren Host-Pakets.
+
+## G118: Host-Kontext-Normalisierung
+
+- Der lokale Host-Kontext wird intern normalisiert, bevor die read-only
+  Anzeige ihn verwendet.
+- Es bleibt bei einer Vorstufe ohne echte Host-Uebergabe und ohne neue
+  Persistenz.

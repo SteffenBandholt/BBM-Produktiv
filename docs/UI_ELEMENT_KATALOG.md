@@ -90,6 +90,8 @@ Elemente zwingend vorhanden sein muessen.
   Speicherziel entsteht daraus noch nicht.
 - G117 laesst die sichtbare Kontextanzeige aus einem lokalen Statusmodell
   kommen; neue editorrelevante Ziele entstehen dadurch weiterhin nicht.
+- G118 normalisiert dieses lokale Modell nur intern; daraus entsteht kein
+  neuer editorrelevanter Zieltyp.
 
 ## Stop-Regel
 

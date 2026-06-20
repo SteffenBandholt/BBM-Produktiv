@@ -94,6 +94,8 @@ Bearbeitungsflaeche.
   `restarbeitId` kommen spaeter nur aus dem BBM-Host.
 - G117 zeigt die Host-Anzeige weiter nur als lokales Statusmodell; der BBM-
   Host liefert die echten Werte weiterhin nicht.
+- G118 normalisiert diese Host-Anzeige intern; BBM bleibt Host und es
+  entsteht keine neue Schreib- oder Speicherfreigabe.
 
 ## Pruefpflicht
 

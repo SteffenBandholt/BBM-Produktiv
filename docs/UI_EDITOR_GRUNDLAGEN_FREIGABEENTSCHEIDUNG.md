@@ -40,6 +40,9 @@ Alle fuenf Minimal-Grundlagen sind jetzt vorhanden:
 G91 selbst hat diese Dateien nicht angelegt; sie wurden erst mit Grundlagen
 1/3, 2/3 und 3/3 regulaer erstellt.
 
+G118 normalisiert den lokalen Host-Kontext nur intern; daraus folgt keine
+weitere Freigabe und keine Aenderung an der Grundlagenlage.
+
 ## Geltende Stop-Regel
 
 Der AGENTS-Block UI-Editor verlangt vor jeder UI- oder PDF-Umsetzung die

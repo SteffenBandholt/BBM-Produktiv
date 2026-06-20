@@ -1615,3 +1615,15 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_STATUSMODELL_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.139 - Hinweis-/Infotext-Host-Kontext normalisieren
+- Status: offen
+- Beschreibung:
+  - Der Renderer normalisiert den lokalen Host-Kontext intern, bevor die
+    read-only Anzeige ihn verwendet.
+  - Gueltige Werte werden getrimmt; ungueltige Werte fallen auf den Default
+    ohne Host-Kontext zurueck.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_NORMALISIERUNG_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

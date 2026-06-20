@@ -592,3 +592,7 @@ sie nicht.
 **Status nach G117:** Die sichtbare Restarbeit-Kontextanzeige wird jetzt aus
 einem lokalen Statusmodell abgeleitet. Echte Host-Daten bleiben weiterhin
 ausstehend.
+
+**Status nach G118:** Das lokale Host-Kontext-Statusmodell wird intern
+normalisiert. Die Anzeige bleibt read-only; echte Host-Uebergabe und neue
+Speicherwege entstehen daraus nicht.

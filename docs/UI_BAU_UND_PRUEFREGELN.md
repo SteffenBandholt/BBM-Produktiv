@@ -96,6 +96,8 @@ Bei sichtbarer UI gilt:
   Host-Daten bleibt Speichern blockiert.
 - G117 laesst die sichtbare Restarbeit-Kontextanzeige aus einem lokalen
   Statusmodell kommen; Speichern bleibt weiter gesperrt.
+- G118 normalisiert dieses lokale Modell nur intern; dadurch entsteht kein
+  neuer Schreibweg und keine neue Freigabe.
 
 ## Stop-Regeln
 

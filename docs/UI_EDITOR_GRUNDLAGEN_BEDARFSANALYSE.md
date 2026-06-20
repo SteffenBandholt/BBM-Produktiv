@@ -97,6 +97,9 @@ Damit sind die UI-Editor-Basics fuer Elementkatalog und Bau-/Pruefregeln nun
 knapp und belastbar vorhanden. Offen bleibt nur noch die
 `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
 
+G118 normalisiert den lokalen Host-Kontext nur intern; daran aendert sich
+nichts an der Freigabelage dieser Grundlagen.
+
 ## Weiterhin blockierte Arbeiten
 
 - sichtbare UI-Aenderungen am UI-Editor-Panel

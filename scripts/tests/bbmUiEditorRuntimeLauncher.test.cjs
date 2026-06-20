@@ -133,6 +133,10 @@ const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_STATUS_MODEL_REFERENCE_DOC_PATH = pat
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_STATUSMODELL_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_NORMALIZATION_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_NORMALISIERUNG_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_CONTRACT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md"
@@ -4353,6 +4357,139 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     const state = mod.createLauncherState({ activeUiScope: "restarbeiten.ui.main" });
     assert.deepEqual(state.hostContextStatus, statusModel);
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Host-Kontext-Normalisierung bleibt sicher", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_NORMALIZATION_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Host-Kontext-Normalisierungs-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_NORMALIZATION_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "normalizeHostContextStatus",
+      "Default ohne Host-Kontext",
+      "projectId: null",
+      "restarbeitId: null",
+      "targetContext: Restarbeiten",
+      "targetSurfaceId: restarbeiten.ui.main",
+      "targetLabel: nicht ausgewählt",
+      "elementType: Hinweis / Infotext",
+      "keine IPC-/DB-Anbindung",
+      "Persistenzverhalten",
+      "SurfaceInfo-Verhalten",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Host-Kontext-Normalisierungs-Referenz enthaelt ${required} nicht.`
+      );
+    }
+
+    const mod = await loadRuntime();
+    assert.equal(typeof mod.normalizeHostContextStatus, "function");
+
+    const defaultStatus = mod.normalizeHostContextStatus();
+    assert.deepEqual(defaultStatus, {
+      projectId: null,
+      restarbeitId: null,
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "nicht ausgewählt",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host erforderlich",
+      isPresent: false,
+    });
+
+    const validStatus = mod.normalizeHostContextStatus({
+      projectId: "project-42",
+      restarbeitId: "restarbeit-99",
+      targetContext: " Restarbeiten ",
+      targetSurfaceId: " restarbeiten.ui.main ",
+      targetLabel: " UI-Polish fuer BBM ",
+      elementType: " Hinweis / Infotext ",
+      source: " BBM-Restarbeiten-Host ",
+      extra: "ignored",
+    });
+    assert.deepEqual(validStatus, {
+      projectId: "project-42",
+      restarbeitId: "restarbeit-99",
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "UI-Polish fuer BBM",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host",
+      isPresent: true,
+    });
+
+    for (const [label, input] of [
+      [
+        "fehlende projectId",
+        {
+          restarbeitId: "restarbeit-99",
+          targetContext: "Restarbeiten",
+          targetSurfaceId: "restarbeiten.ui.main",
+          targetLabel: "UI-Polish fuer BBM",
+          elementType: "Hinweis / Infotext",
+        },
+      ],
+      [
+        "falsche targetSurfaceId",
+        {
+          projectId: "project-42",
+          restarbeitId: "restarbeit-99",
+          targetContext: "Restarbeiten",
+          targetSurfaceId: "pdf.plan.page.1",
+          targetLabel: "UI-Polish fuer BBM",
+          elementType: "Hinweis / Infotext",
+        },
+      ],
+      [
+        "falscher targetContext",
+        {
+          projectId: "project-42",
+          restarbeitId: "restarbeit-99",
+          targetContext: "Protokoll",
+          targetSurfaceId: "restarbeiten.ui.main",
+          targetLabel: "UI-Polish fuer BBM",
+          elementType: "Hinweis / Infotext",
+        },
+      ],
+      [
+        "falscher elementType",
+        {
+          projectId: "project-42",
+          restarbeitId: "restarbeit-99",
+          targetContext: "Restarbeiten",
+          targetSurfaceId: "restarbeiten.ui.main",
+          targetLabel: "UI-Polish fuer BBM",
+          elementType: "Plan / Canvas",
+        },
+      ],
+      [
+        "leeres targetLabel",
+        {
+          projectId: "project-42",
+          restarbeitId: "restarbeit-99",
+          targetContext: "Restarbeiten",
+          targetSurfaceId: "restarbeiten.ui.main",
+          targetLabel: "   ",
+          elementType: "Hinweis / Infotext",
+        },
+      ],
+    ]) {
+      const normalized = mod.normalizeHostContextStatus(input);
+      assert.equal(normalized.isPresent, false, `${label} darf nicht als vorhanden gelten.`);
+      assert.deepEqual(normalized, defaultStatus, `${label} muss auf den Default-Status fallen.`);
+    }
+
+    const state = mod.createLauncherState({
+      activeUiScope: "restarbeiten.ui.main",
+      hostContextStatus: validStatus,
+    });
+    assert.deepEqual(state.hostContextStatus, validStatus);
   });
 
   await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-BBM-Schreibweg bleibt nur analysiert", async () => {

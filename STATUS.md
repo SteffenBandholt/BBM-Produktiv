@@ -173,6 +173,8 @@ Sie ergÃ¤nzt:
   `restarbeitId` bleiben Host-Daten und werden nicht im UI-Editor geraten.
 - G117 laesst die sichtbare Restarbeit-Kontextanzeige aus einem lokalen
   Statusmodell ableiten; `projectId` und `restarbeitId` bleiben dabei leer.
+- G118 normalisiert diesen lokalen Host-Kontext nur intern; es bleibt bei
+  einer read-only Vorstufe ohne echte Host-Uebergabe.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
