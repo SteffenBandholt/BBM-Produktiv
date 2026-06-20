@@ -167,6 +167,8 @@ Sie ergÃ¤nzt:
   `restarbeitId` bleibt der entscheidende Host-Faktor vor spaeterem Speichern.
 - G114 legt die spaetere Host-Uebergabe von `restarbeitId` fest; der
   UI-Editor darf die Ziel-Restarbeit nicht selbst suchen oder raten.
+- G115 zeigt den fehlenden Restarbeiten-Host-Kontext sichtbar im UI-Editor-
+  Panel an; die Anzeige bleibt lesend und speichert nichts.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

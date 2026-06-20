@@ -88,6 +88,8 @@ Bearbeitungsflaeche.
 - G114 legt die spaetere Uebergabeentscheidung fest: `restarbeitId` kommt aus
   `RestarbeitenScreen` bzw. `notesPopup.restarbeitId`, nicht aus einer Suche im
   UI-Editor.
+- G115 zeigt den fehlenden Host-Kontext im UI-Editor sichtbar an; die Anzeige
+  bleibt read-only und speichert nichts.
 
 ## Pruefpflicht
 

@@ -579,3 +579,8 @@ werden.
 dokumentiert. `RestarbeitenScreen` bzw. `notesPopup.restarbeitId` sind die
 zugelassene Quelle; der UI-Editor darf die Ziel-Restarbeit nicht selbst
 suchen oder raten.
+
+**Status nach G115:** Der fehlende Restarbeiten-Host-Kontext wird jetzt
+sichtbar angezeigt. `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_FEHLT_UI_REFERENZSTAND.md`
+beschreibt den read-only Sichtstand; `restarbeitId` bleibt unuebergeben und
+Speichern bleibt gesperrt.

@@ -1581,3 +1581,14 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_UEBERGABEENTSCHEIDUNG.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.136 - Fehlenden Restarbeiten-Host-Kontext sichtbar anzeigen
+- Status: offen
+- Beschreibung:
+  - Der Speicherbereich im UI-Editor zeigt jetzt lesend, dass `restarbeitId`
+    fehlt und der Host-Kontext noch nicht uebergeben wurde.
+  - Die Anzeige bleibt read-only und blockiert den Speicherbutton weiter.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_FEHLT_UI_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

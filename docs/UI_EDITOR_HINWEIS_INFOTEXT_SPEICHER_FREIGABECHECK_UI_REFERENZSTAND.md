@@ -11,6 +11,7 @@ Schreibweg.
 - Bereichstitel: `Freigabecheck`
 - `Hinweistext gültig: ja` oder `Hinweistext gültig: nein`
 - `Ziel-Surface: restarbeiten.ui.main`
+- `Restarbeit-Kontext vorhanden: nein`
 - `Schreibweg freigegeben: nein`
 - `Speicherbutton: deaktiviert`
 - `Persistenz: nicht aktiv`
@@ -91,3 +92,9 @@ technische Speicherfreigabe wirklich explizit entschieden wird.
 - Freigabecheck, gesperrter Speicherbereich und deaktivierter Button bleiben
   nur Anzeige.
 - Es wird kein neuer Schreibweg freigegeben.
+
+## G115: Host-Kontextanzeige
+
+- Der Freigabecheck zeigt jetzt zusätzlich den fehlenden Restarbeiten-Host-
+  Kontext.
+- Das ist nur Anzeige und keine Übergabe.

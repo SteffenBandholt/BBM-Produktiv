@@ -90,6 +90,8 @@ Bei sichtbarer UI gilt:
   `restarbeitId` bleibt jeder spaetere Speicherweg gesperrt.
 - G114 verschiebt die Entscheidung zur Uebergabe selbst an den Host:
   `restarbeitId` wird nicht im UI-Editor gesucht oder geraten.
+- G115 zeigt den fehlenden Host-Kontext sichtbar an; die Anzeige bleibt
+  read-only und blockiert Speichern weiter.
 
 ## Stop-Regeln
 

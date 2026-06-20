@@ -164,3 +164,8 @@ Speicherweg ueberfuehrt werden.
 - Zulassung kommt nur aus dem Host-Kontext `RestarbeitenScreen` bzw. aus
   `notesPopup.restarbeitId`, wenn die UI aus der konkreten Restarbeit heraus
   geoeffnet wurde.
+
+## G115: Sichtbarer Host-Kontext
+
+- Der fehlende Host-Kontext wird jetzt im UI-Editor sichtbar angezeigt.
+- Die Analyse bleibt Grundlage; die Anzeige ist keine Uebergabe.

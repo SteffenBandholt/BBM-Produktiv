@@ -84,6 +84,8 @@ Elemente zwingend vorhanden sein muessen.
   `restarbeitId` bleibt Speichern blockiert.
 - G114 legt fest, dass die Ziel-Restarbeit vom Host kommt und nicht im
   UI-Editor gesucht oder geraten wird.
+- G115 zeigt den fehlenden Host-Kontext nur als lesende Kontextanzeige; daraus
+  entsteht noch kein neues Elementziel.
 
 ## Stop-Regel
 

@@ -96,6 +96,8 @@ keinen Speicherbutton und keinen Schreibweg.
   `restarbeitId` bleibt dabei der entscheidende Host-Faktor.
 - G114 legt fest, dass der Host die Ziel-Restarbeit eindeutig uebergibt und
   der UI-Editor sie nicht selbst suchen oder raten darf.
+- G115 zeigt den fehlenden Restarbeiten-Host-Kontext sichtbar an; das ist
+  reine Anzeige und kein Speicherweg.
 
 ## Stop-Regel
 

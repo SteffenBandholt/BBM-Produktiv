@@ -9,9 +9,11 @@ deaktivierter Button gehoeren zusammen, ohne dass Speichern aktiviert wird.
 ## Gepruefter Ist-Stand
 
 - Speicherbereich ist sichtbar.
+- Restarbeit-Kontext ist sichtbar und meldet fehlenden Host-Kontext.
 - Ziel `restarbeiten:createNote` ist sichtbar, aber nicht angeschlossen.
 - Freigabecheck ist sichtbar.
 - Hinweistext-Gueltigkeit wird lokal angezeigt.
+- `Restarbeit-Kontext vorhanden: nein` bleibt sichtbar.
 - `Schreibweg freigegeben: nein` bleibt sichtbar.
 - `Speicherbutton: deaktiviert` bleibt sichtbar.
 - `Persistenz: nicht aktiv` bleibt sichtbar.
@@ -28,11 +30,21 @@ deaktivierter Button gehoeren zusammen, ohne dass Speichern aktiviert wird.
 - `Status: gesperrt`
 - `persisted: false`
 
+## Sichtbarer Restarbeit-Kontext
+
+- `Restarbeit-Kontext`
+- `Zielkontext: Restarbeiten`
+- `restarbeitId: nicht übergeben`
+- `Ziel-Restarbeit: nicht ausgewählt`
+- `Kontextquelle: BBM-Restarbeiten-Host erforderlich`
+- `Speichern bleibt gesperrt`
+
 ## Sichtbarer Freigabecheck
 
 - `Freigabecheck`
 - `Hinweistext gültig: ja` oder `Hinweistext gültig: nein`
 - `Ziel-Surface: restarbeiten.ui.main`
+- `Restarbeit-Kontext vorhanden: nein`
 - `Schreibweg freigegeben: nein`
 - `Speicherbutton: deaktiviert`
 - `Persistenz: nicht aktiv`
@@ -125,3 +137,8 @@ entschieden wird.
 - Die Host-Zuordnung wird spaeter nur eindeutig uebergeben, nicht im Editor
   gesucht.
 - Bis dahin bleibt der Speicherbereich weiterhin blockiert.
+
+## G115: Sichtbarer Host-Kontext fehlt
+
+- Der fehlende Host-Kontext wird jetzt sichtbar angezeigt.
+- Die Anzeige bleibt lesend und aktiviert keinen Schreibweg.

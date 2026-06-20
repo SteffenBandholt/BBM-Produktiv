@@ -117,3 +117,8 @@ Die Payload-Vorschau bleibt reine Anzeige.
 Die Host-Strategie spaeter in Code nur dort anschliessen, wo die konkrete
 Restarbeit bereits eindeutig feststeht. Bis dahin bleibt die Uebergabe nur
 Dokumentation.
+
+## G115: Sichtbarer Host-Kontext
+
+- Der fehlende Restarbeiten-Host-Kontext wird jetzt sichtbar angezeigt.
+- Die Anzeige bleibt lesend und ersetzt keine Uebergabe.

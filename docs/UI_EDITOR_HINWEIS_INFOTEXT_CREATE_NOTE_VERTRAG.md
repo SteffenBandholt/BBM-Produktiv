@@ -142,3 +142,8 @@ erst nach eigener Freigabe einen echten Speicherweg bauen.
 
 - Die spaetere `restarbeitId` muss vom BBM-Restarbeiten-Host kommen.
 - Der UI-Editor selbst darf die Ziel-Restarbeit nicht suchen oder raten.
+
+## G115: Sichtbarer Host-Kontext
+
+- Der fehlende Host-Kontext bleibt sichtbar im UI-Editor markiert.
+- Der Vertrag bleibt unveraendert; es gibt keine Speicherung.

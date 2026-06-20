@@ -121,6 +121,10 @@ const UI_EDITOR_HINT_INFOTEXT_STORAGE_PREPARATION_FINAL_CHECK_DOC_PATH = path.jo
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHER_VORBEREITUNG_ABSCHLUSSCHECK.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_RESTARBEIT_CONTEXT_MISSING_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_FEHLT_UI_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_CONTRACT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md"
@@ -1004,6 +1008,32 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       renderedText.includes("Bearbeitung: Restarbeiten | Zusatzkontexte: PDF/Plan read-only | Speichern: nicht aktiv"),
       true
     );
+    assert.equal(Boolean(hintInfotextStoragePreview), true);
+    assert.equal(
+      getRenderedText(hintInfotextStoragePreview).includes("Restarbeit-Kontext"),
+      true,
+      "Speicherbereich muss den Restarbeit-Kontext sichtbar machen."
+    );
+    assert.equal(
+      getRenderedText(hintInfotextStoragePreview).includes("Zielkontext: Restarbeiten"),
+      true
+    );
+    assert.equal(
+      getRenderedText(hintInfotextStoragePreview).includes("restarbeitId: nicht übergeben"),
+      true
+    );
+    assert.equal(
+      getRenderedText(hintInfotextStoragePreview).includes("Ziel-Restarbeit: nicht ausgewählt"),
+      true
+    );
+    assert.equal(
+      getRenderedText(hintInfotextStoragePreview).includes("Kontextquelle: BBM-Restarbeiten-Host erforderlich"),
+      true
+    );
+    assert.equal(
+      getRenderedText(hintInfotextStoragePreview).includes("Speichern bleibt gesperrt"),
+      true
+    );
     assert.equal(Boolean(elementCatalog), true);
     assert.equal(renderedText.includes("Elementkatalog"), true);
     for (const required of [
@@ -1122,7 +1152,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const updatedHintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
     assert.equal(
       updatedHintInfotextStorageCheck.textContent,
-      "Hinweistext gültig: ja\nZiel-Surface: restarbeiten.ui.main\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
+      "Hinweistext gültig: ja\nZiel-Surface: restarbeiten.ui.main\nRestarbeit-Kontext vorhanden: nein\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
     );
     assert.equal(
       updatedHintInfotextDraftValidation.textContent,
@@ -1142,7 +1172,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const emptiedHintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
     assert.equal(
       emptiedHintInfotextStorageCheck.textContent,
-      "Hinweistext gültig: nein\nZiel-Surface: restarbeiten.ui.main\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
+      "Hinweistext gültig: nein\nZiel-Surface: restarbeiten.ui.main\nRestarbeit-Kontext vorhanden: nein\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
     );
     const emptiedHintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     assert.equal(
@@ -1177,7 +1207,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(
       resetHintInfotextStorageCheck.textContent,
-      "Hinweistext gültig: ja\nZiel-Surface: restarbeiten.ui.main\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
+      "Hinweistext gültig: ja\nZiel-Surface: restarbeiten.ui.main\nRestarbeit-Kontext vorhanden: nein\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
     );
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
@@ -4056,6 +4086,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Hinweistext gültig: ja",
       "Hinweistext gültig: nein",
       "Ziel-Surface: restarbeiten.ui.main",
+      "Restarbeit-Kontext vorhanden: nein",
       "Schreibweg freigegeben: nein",
       "Speicherbutton: deaktiviert",
       "Persistenz: nicht aktiv",
@@ -4087,6 +4118,13 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Speicherbereich ist sichtbar",
       "Freigabecheck",
       "restarbeiten:createNote",
+      "Restarbeit-Kontext",
+      "Zielkontext: Restarbeiten",
+      "restarbeitId: nicht übergeben",
+      "Ziel-Restarbeit: nicht ausgewählt",
+      "Kontextquelle: BBM-Restarbeiten-Host erforderlich",
+      "Speichern bleibt gesperrt",
+      "Restarbeit-Kontext vorhanden: nein",
       "Schreibweg freigegeben: nein",
       "Speicherbutton: deaktiviert",
       "Persistenz: nicht aktiv",
@@ -4187,12 +4225,41 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "persisted: false",
       "restarbeiten.ui.main",
       "Hinweis / Infotext",
+      "Restarbeit-Kontext",
       "UI-Editor-kit",
     ]) {
       assert.equal(
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Restarbeit-Kontext-Uebergabeentscheidung enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Restarbeit-Kontext bleibt sichtbar fehlend", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_RESTARBEIT_CONTEXT_MISSING_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Restarbeit-Kontext-fehlt-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_RESTARBEIT_CONTEXT_MISSING_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Restarbeit-Kontext",
+      "Zielkontext: Restarbeiten",
+      "restarbeitId: nicht übergeben",
+      "Ziel-Restarbeit: nicht ausgewählt",
+      "Kontextquelle: BBM-Restarbeiten-Host erforderlich",
+      "Speichern bleibt gesperrt",
+      "Restarbeit-Kontext vorhanden: nein",
+      "restarbeiten.ui.main",
+      "persisted: false",
+      "UI-Editor-kit",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Restarbeit-Kontext-fehlt-Referenz enthaelt ${required} nicht.`
       );
     }
   });

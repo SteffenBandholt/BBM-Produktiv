@@ -75,10 +75,17 @@ const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_SURFACE_ID = "surfaceId: rest
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_STATUS = "status: draft";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_PERSISTED = "persisted: false";
 const READONLY_HINT_INFOTEXT_STORAGE_TITLE = "Speichern";
+const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TITLE = "Restarbeit-Kontext";
+const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TARGET_CONTEXT_LINE = "Zielkontext: Restarbeiten";
+const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_RESTARBEIT_ID_LINE = "restarbeitId: nicht übergeben";
+const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TARGET_RESTARBEIT_LINE = "Ziel-Restarbeit: nicht ausgewählt";
+const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_SOURCE_LINE = "Kontextquelle: BBM-Restarbeiten-Host erforderlich";
+const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_LOCK_LINE = "Speichern bleibt gesperrt";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_TITLE = "Freigabecheck";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE = "Hinweistext gültig: ja";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE = "Hinweistext gültig: nein";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_TARGET_SURFACE_LINE = "Ziel-Surface: restarbeiten.ui.main";
+const READONLY_HINT_INFOTEXT_STORAGE_CHECK_RESTARBEIT_CONTEXT_LINE = "Restarbeit-Kontext vorhanden: nein";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_RELEASE_LINE = "Schreibweg freigegeben: nein";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_BUTTON_LINE = "Speicherbutton: deaktiviert";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_PERSISTENCE_LINE = "Persistenz: nicht aktiv";
@@ -2010,6 +2017,7 @@ function formatReadonlyHintInfotextStorageFreigabecheckText(value = "") {
       ? READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE
       : READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE,
     READONLY_HINT_INFOTEXT_STORAGE_CHECK_TARGET_SURFACE_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_CHECK_RESTARBEIT_CONTEXT_LINE,
     READONLY_HINT_INFOTEXT_STORAGE_CHECK_RELEASE_LINE,
     READONLY_HINT_INFOTEXT_STORAGE_CHECK_BUTTON_LINE,
     READONLY_HINT_INFOTEXT_STORAGE_CHECK_PERSISTENCE_LINE,
@@ -2307,6 +2315,23 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   title.style.fontWeight = "700";
   title.style.marginBottom = "4px";
 
+  const contextTitle = doc.createElement("div");
+  contextTitle.className = "ui-editor-preview-hint-infotext-storage__context-title";
+  contextTitle.textContent = READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TITLE;
+  contextTitle.style.fontWeight = "700";
+  contextTitle.style.marginTop = "8px";
+  contextTitle.style.marginBottom = "4px";
+
+  const contextLines = doc.createElement("div");
+  contextLines.className = "ui-editor-preview-hint-infotext-storage__context-lines";
+  contextLines.textContent = [
+    READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TARGET_CONTEXT_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_RESTARBEIT_ID_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TARGET_RESTARBEIT_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_SOURCE_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_LOCK_LINE,
+  ].join("\n");
+
   const lines = doc.createElement("div");
   lines.className = "ui-editor-preview-hint-infotext-storage__lines";
   lines.textContent = [
@@ -2355,7 +2380,7 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   button.addEventListener("mousedown", stopPreviewPanelEvent);
   button.addEventListener("click", stopPreviewPanelEvent);
 
-  storage.append(title, lines, freigabecheckTitle, freigabecheck, button);
+  storage.append(title, contextTitle, contextLines, lines, freigabecheckTitle, freigabecheck, button);
   panel.appendChild(storage);
   return storage;
 }
