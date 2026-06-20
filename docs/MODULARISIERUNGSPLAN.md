@@ -166,6 +166,8 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G111 bestaetigt die Speicher-Vorbereitung als Abschlussstand; der sichtbare
   Speicherbereich und der Freigabecheck bleiben rein lesend und blockieren
   keinen neuen Schreibweg
+- G112 dokumentiert den `restarbeiten:createNote`-Vertrag als fachliche
+  Grundlage fuer einen spaeteren, noch nicht angeschlossenen Speicherweg
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

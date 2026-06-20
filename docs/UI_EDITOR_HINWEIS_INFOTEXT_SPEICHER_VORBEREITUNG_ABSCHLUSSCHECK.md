@@ -108,3 +108,9 @@ deaktivierter Button gehoeren zusammen, ohne dass Speichern aktiviert wird.
 Die Speicher-Vorbereitung nur als dokumentarischen Referenzstand stehen
 lassen, bis eine spaetere Freigabe fuer einen echten Speicherweg bewusst neu
 entschieden wird.
+
+## G112: Vertragsbezug
+
+- Der technische Zielvertrag wird separat in
+  `docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md` dokumentiert.
+- Die Speicher-Vorbereitung bleibt davon unberuehrt und weiterhin blockiert.

@@ -81,6 +81,8 @@ Bearbeitungsflaeche.
 - G111 bestaetigt die Speicher-Vorbereitung als Abschlussstand; BBM bleibt
   Host, `UI-Editor-kit` speichert weiterhin nicht und es wird kein neuer
   Schreibweg freigegeben.
+- G112 beschreibt den `restarbeiten:createNote`-Vertrag als BBM-seitige
+  Grundlage, aber noch ohne angeschlossenen Speicherweg.
 
 ## Pruefpflicht
 

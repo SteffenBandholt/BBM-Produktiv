@@ -84,6 +84,8 @@ Bei sichtbarer UI gilt:
 - G111 bestaetigt den Speicher-Vorbereitungsstand als Abschlusscheck; der
   sichtbare Speicherbereich bleibt gesperrt und es entsteht kein neuer
   Schreibweg.
+- G112 beschreibt den `restarbeiten:createNote`-Vertrag nur dokumentarisch;
+  anschliessend bleibt der Speicherweg weiterhin blockiert.
 
 ## Stop-Regeln
 

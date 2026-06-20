@@ -1546,3 +1546,14 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHER_VORBEREITUNG_ABSCHLUSSCHECK.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.133 - Hinweis-/Infotext-Create-Note-Vertrag dokumentieren
+- Status: erledigt
+- Beschreibung:
+  - Der technische Vertrag von `restarbeiten:createNote` wird als
+    naechste fachliche Grundlage dokumentiert.
+  - Es bleibt bei Analyse, ohne angeschlossenen Speicherweg.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

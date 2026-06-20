@@ -563,3 +563,7 @@ Schreibweg.
 **Status nach G111:** Die Speicher-Vorbereitung ist als Abschluss- und
 Referenzstand bestaetigt. Sichtbarer Speicherbereich, Freigabecheck und
 deaktivierter Button bleiben nur Anzeige und bauen keinen neuen Schreibweg.
+
+**Status nach G112:** Der technische Vertrag von `restarbeiten:createNote`
+ist als naechste fachliche Grundlage dokumentiert. Der Speicherweg bleibt
+weiterhin unverbunden und deaktiviert.

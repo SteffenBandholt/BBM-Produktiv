@@ -121,6 +121,10 @@ const UI_EDITOR_HINT_INFOTEXT_STORAGE_PREPARATION_FINAL_CHECK_DOC_PATH = path.jo
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHER_VORBEREITUNG_ABSCHLUSSCHECK.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_CONTRACT_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_BBM_SCHREIBWEG_ANALYSE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_BBM_SCHREIBWEG_ANALYSE.md"
@@ -4090,6 +4094,36 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Speicher-Vorbereitung-Abschlusscheck enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Create-Note-Vertrag bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_CONTRACT_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Create-Note-Vertrag fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_CONTRACT_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten:createNote",
+      "createNote",
+      "restarbeitenIpc",
+      "restarbeitenRepo",
+      "kein Speicherweg angeschlossen",
+      "Button `Entwurf speichern` bleibt deaktiviert",
+      "kein Submit",
+      "keine IPC-/DB-Schreibaktion",
+      "persisted: false",
+      "Payload-Vorschau bleibt reine Anzeige",
+      "restarbeiten.ui.main",
+      "UI-Editor-kit",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Create-Note-Vertrag enthaelt ${required} nicht.`
       );
     }
   });

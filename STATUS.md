@@ -161,6 +161,8 @@ Sie ergÃ¤nzt:
 - G111 bestaetigt die Speicher-Vorbereitung als Abschluss- und
   Referenzstand; der sichtbare Speicherbereich, der Freigabecheck und der
   deaktivierte Button bleiben rein lesend.
+- G112 dokumentiert den technischen Vertrag von `restarbeiten:createNote`;
+  der Zielweg bleibt vorbereitet, aber weiterhin nicht angeschlossen.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

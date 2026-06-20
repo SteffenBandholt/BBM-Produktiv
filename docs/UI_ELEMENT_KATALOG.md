@@ -78,6 +78,8 @@ Elemente zwingend vorhanden sein muessen.
 - G111 bestaetigt diesen Vorbereitungsstand als Abschlusscheck; sichtbarer
   Speicherbereich und Freigabecheck bleiben lesend und erzeugen kein neues
   Editor-Ziel.
+- G112 dokumentiert den spaeteren `restarbeiten:createNote`-Vertrag nur
+  lesend; daraus entsteht noch kein neues Elementziel.
 
 ## Stop-Regel
 

@@ -4,11 +4,10 @@
 
 Fuer `Hinweis / Infotext` gibt es mehrere bestehende BBM-Schreibwege, aber nur
 ein Teil davon passt fachlich zum spaeteren Speichern des Entwurfs. G108 gibt
-den Restarbeiten-Notizweg als spaeteren Ziel-Schreibweg frei; er ist der
-naechste sinnvolle Kandidat, liegt im richtigen Hostkontext und hat bereits
-einen klaren IPC-/Repo-/DB-Pfad. Die anderen vorhandenen Schreibwege sind gute
-Vergleichspunkte, aber fuer diesen Entwurf fachlich zu weit entfernt oder zu
-spezialisiert.
+den Restarbeiten-Notizweg als spaeteren Ziel-Schreibweg frei; G112 klärt dazu
+nun den technischen `restarbeiten:createNote`-Vertrag genauer. Die anderen
+vorhandenen Schreibwege sind gute Vergleichspunkte, aber fuer diesen Entwurf
+fachlich zu weit entfernt oder zu spezialisiert.
 
 ## Gepruefte BBM-Schreibwege
 
@@ -18,6 +17,9 @@ spezialisiert.
   - schreibt in den Restarbeiten-Kontext
   - hat bereits den BBM-Hostpfad bis zur DB
   - passt am ehesten zu einem spaeteren speicherbaren Hinweistext
+  - naechste sinnvolle Kandidat fuer den spaeteren Speicherweg
+  - G112 dokumentiert den konkreten Create-Note-Vertrag als naechsten
+    technischen Referenzstand
 - `uiEditorLayoutOverrides:save` ueber
   `src/main/ipc/uiEditorLayoutOverridesIpc.js`
   - technischer Schreibweg vorhanden
@@ -50,6 +52,7 @@ Begruendung:
 
 ## Was daraus noch nicht folgt
 
+- kein Speicherweg angeschlossen
 - kein Speicherweg gebaut
 - kein Speicherbutton
 - kein Submit
@@ -61,6 +64,7 @@ Begruendung:
 
 ## Naechster praktischer Schritt
 
-Wenn die Speicherung spaeter freigegeben wird, sollte zuerst ein kleiner,
-expliziter Restarbeiten-Notizpfad mit Guardrails definiert werden. Bis dahin
-bleibt diese Analyse nur eine Einordnung des naheliegenden BBM-Schreibwegs.
+Wenn die Speicherung spaeter freigegeben wird, sollte zuerst der dokumentierte
+`restarbeiten:createNote`-Vertrag mit Guardrails und Tests in einen echten
+Speicherweg ueberfuehrt werden. Bis dahin bleibt diese Analyse nur eine
+Einordnung des naheliegenden BBM-Schreibwegs.

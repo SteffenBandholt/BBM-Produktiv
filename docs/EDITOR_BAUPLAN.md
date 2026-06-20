@@ -90,6 +90,8 @@ keinen Speicherbutton und keinen Schreibweg.
 - G111 bestaetigt diesen Speicher-Vorbereitungsstand als Abschlusscheck;
   sichtbarer Speicherbereich, Freigabecheck und deaktivierter Button bleiben
   nur Anzeige.
+- G112 dokumentiert den technischen Vertrag von `restarbeiten:createNote`,
+  ohne den Speicherweg anzuschliessen.
 
 ## Stop-Regel
 

@@ -127,3 +127,8 @@ anzeigen.
 - Der spaetere Restarbeiten-Notizweg bleibt nur die freigegebene Zielrichtung.
 - Die Speicher-Vorbereitung ist weiterhin rein lesend und baut keinen neuen
   Schreibweg.
+
+## G112: Vertragsbezug
+
+- `restarbeiten:createNote` ist der dokumentierte technische Zielvertrag.
+- Die Freigabe bleibt ohne angeschlossenen Speicherweg.
