@@ -154,3 +154,13 @@ Die Payload-Vorschau bleibt reine Anzeige.
 Zuerst eine klare Host-Strategie fuer die Uebergabe von `restarbeitId`
 festlegen. Danach kann der Dokumentationsstand spaeter in einen echten
 Speicherweg ueberfuehrt werden.
+
+## G114: Uebergabestrategie
+
+- Die Folgeentscheidung ist jetzt in
+  `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_UEBERGABEENTSCHEIDUNG.md`
+  dokumentiert.
+- `restarbeitId` wird nicht im UI-Editor gesucht oder geraten.
+- Zulassung kommt nur aus dem Host-Kontext `RestarbeitenScreen` bzw. aus
+  `notesPopup.restarbeitId`, wenn die UI aus der konkreten Restarbeit heraus
+  geoeffnet wurde.

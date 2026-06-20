@@ -129,6 +129,10 @@ const UI_EDITOR_HINT_INFOTEXT_RESTARBEIT_CONTEXT_ANALYSIS_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_ANALYSE.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_RESTARBEIT_CONTEXT_TRANSFER_DECISION_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_UEBERGABEENTSCHEIDUNG.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_BBM_SCHREIBWEG_ANALYSE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_BBM_SCHREIBWEG_ANALYSE.md"
@@ -4159,6 +4163,36 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Restarbeit-Kontext-Analyse enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Restarbeit-Kontext-Uebergabe bleibt entschieden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_RESTARBEIT_CONTEXT_TRANSFER_DECISION_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Restarbeit-Kontext-Uebergabeentscheidung fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_RESTARBEIT_CONTEXT_TRANSFER_DECISION_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeitId",
+      "projectId",
+      "RestarbeitenScreen",
+      "notesPopup.restarbeitId",
+      "nicht im UI-Editor gesucht oder geraten",
+      "Button `Entwurf speichern` bleibt deaktiviert",
+      "kein Submit",
+      "keine IPC-/DB-Schreibaktion",
+      "persisted: false",
+      "restarbeiten.ui.main",
+      "Hinweis / Infotext",
+      "UI-Editor-kit",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Restarbeit-Kontext-Uebergabeentscheidung enthaelt ${required} nicht.`
       );
     }
   });

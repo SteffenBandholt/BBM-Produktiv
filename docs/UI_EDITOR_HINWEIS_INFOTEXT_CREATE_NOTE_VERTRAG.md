@@ -137,3 +137,8 @@ erst nach eigener Freigabe einen echten Speicherweg bauen.
   kommen kann.
 - Ohne diesen Host-Kontext bleibt der technische Vertrag zwar klar, aber noch
   nicht sicher an die richtige Restarbeit gebunden.
+
+## G114: Uebergabestrategie
+
+- Die spaetere `restarbeitId` muss vom BBM-Restarbeiten-Host kommen.
+- Der UI-Editor selbst darf die Ziel-Restarbeit nicht suchen oder raten.

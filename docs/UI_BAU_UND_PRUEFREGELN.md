@@ -88,6 +88,8 @@ Bei sichtbarer UI gilt:
   anschliessend bleibt der Speicherweg weiterhin blockiert.
 - G113 ergaenzt die Regel um die notwendige Host-Zuordnung: Ohne eindeutige
   `restarbeitId` bleibt jeder spaetere Speicherweg gesperrt.
+- G114 verschiebt die Entscheidung zur Uebergabe selbst an den Host:
+  `restarbeitId` wird nicht im UI-Editor gesucht oder geraten.
 
 ## Stop-Regeln
 

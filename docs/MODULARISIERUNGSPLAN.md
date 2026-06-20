@@ -170,6 +170,8 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
   Grundlage fuer einen spaeteren, noch nicht angeschlossenen Speicherweg
 - G113 klaert die Restarbeiten-Kontextzuordnung und die fehlende
   `restarbeitId`-Uebergabe als naechste Trennstelle vor einem echten Schreiben
+- G114 legt die Host-Uebergabe von `restarbeitId` fest: Der UI-Editor darf
+  die Ziel-Restarbeit nicht selbst suchen oder raten.
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

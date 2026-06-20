@@ -165,6 +165,8 @@ Sie ergÃ¤nzt:
   der Zielweg bleibt vorbereitet, aber weiterhin nicht angeschlossen.
 - G113 analysiert die Restarbeiten-Kontextzuordnung; die eindeutige
   `restarbeitId` bleibt der entscheidende Host-Faktor vor spaeterem Speichern.
+- G114 legt die spaetere Host-Uebergabe von `restarbeitId` fest; der
+  UI-Editor darf die Ziel-Restarbeit nicht selbst suchen oder raten.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

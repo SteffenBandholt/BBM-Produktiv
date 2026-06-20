@@ -119,3 +119,9 @@ entschieden wird.
 - Der technische Zielvertrag wird separat in
   `docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md` dokumentiert.
 - Die Speicher-Vorbereitung bleibt davon unberuehrt und weiterhin blockiert.
+
+## G114: Uebergabestrategie
+
+- Die Host-Zuordnung wird spaeter nur eindeutig uebergeben, nicht im Editor
+  gesucht.
+- Bis dahin bleibt der Speicherbereich weiterhin blockiert.

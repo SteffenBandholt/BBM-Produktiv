@@ -1568,3 +1568,16 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_ANALYSE.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.135 - Hinweis-/Infotext-Restarbeiten-Kontextuebergabe entscheiden
+- Status: offen
+- Beschreibung:
+  - Die spaetere `restarbeitId`-Uebergabe wird auf den Host festgelegt; der
+    UI-Editor darf sie nicht selbst suchen oder raten.
+  - `RestarbeitenScreen` bzw. `notesPopup.restarbeitId` bleiben die
+    dokumentierte Quelle, solange die UI aus der konkreten Restarbeit heraus
+    geoeffnet wird.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_UEBERGABEENTSCHEIDUNG.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

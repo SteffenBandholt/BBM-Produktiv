@@ -138,3 +138,8 @@ anzeigen.
 - Die Freigabe benennt den Zielweg, aber noch nicht die konkrete
   `restarbeitId`.
 - Erst eine eindeutige Host-Zuordnung macht den Weg spaeter sicher nutzbar.
+
+## G114: Uebergabestrategie
+
+- Die `restarbeitId` kommt nur aus dem Host-Kontext.
+- Der UI-Editor darf die Ziel-Restarbeit nicht selbst aufloesen.

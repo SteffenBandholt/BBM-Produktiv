@@ -85,6 +85,9 @@ Bearbeitungsflaeche.
   Grundlage, aber noch ohne angeschlossenen Speicherweg.
 - G113 betont die notwendige Host-Zuordnung von `restarbeitId`; der UI-Editor
   bekommt diesen Kontext nicht aus sich selbst heraus.
+- G114 legt die spaetere Uebergabeentscheidung fest: `restarbeitId` kommt aus
+  `RestarbeitenScreen` bzw. `notesPopup.restarbeitId`, nicht aus einer Suche im
+  UI-Editor.
 
 ## Pruefpflicht
 

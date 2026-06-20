@@ -94,6 +94,8 @@ keinen Speicherbutton und keinen Schreibweg.
   ohne den Speicherweg anzuschliessen.
 - G113 klaert die Restarbeiten-Kontextzuordnung fuer spaetere Speicherung; die
   `restarbeitId` bleibt dabei der entscheidende Host-Faktor.
+- G114 legt fest, dass der Host die Ziel-Restarbeit eindeutig uebergibt und
+  der UI-Editor sie nicht selbst suchen oder raten darf.
 
 ## Stop-Regel
 

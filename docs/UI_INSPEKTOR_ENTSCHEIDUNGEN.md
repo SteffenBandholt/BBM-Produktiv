@@ -572,3 +572,10 @@ weiterhin unverbunden und deaktiviert.
 Analyse dokumentiert. Die passende `restarbeitId` kommt nicht aus dem
 UI-Editor-Draft selbst, sondern muss spaeter vom Host eindeutig uebergeben
 werden.
+
+**Status nach G114:** Die Folgeentscheidung zur Host-Uebergabe von
+`restarbeitId` ist in
+`docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_UEBERGABEENTSCHEIDUNG.md`
+dokumentiert. `RestarbeitenScreen` bzw. `notesPopup.restarbeitId` sind die
+zugelassene Quelle; der UI-Editor darf die Ziel-Restarbeit nicht selbst
+suchen oder raten.

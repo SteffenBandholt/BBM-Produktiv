@@ -82,6 +82,8 @@ Elemente zwingend vorhanden sein muessen.
   lesend; daraus entsteht noch kein neues Elementziel.
 - G113 zeigt die Luecke zwischen Draft und Restarbeiten-Zielkontext; ohne
   `restarbeitId` bleibt Speichern blockiert.
+- G114 legt fest, dass die Ziel-Restarbeit vom Host kommt und nicht im
+  UI-Editor gesucht oder geraten wird.
 
 ## Stop-Regel
 
