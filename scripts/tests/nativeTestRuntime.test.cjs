@@ -12,14 +12,14 @@ function runNativeTestRuntimeTests(run) {
     const wrapperContent = fs.readFileSync(wrapperPath, "utf8");
 
     assert.ok(pkg.scripts?.test, "package.json scripts.test fehlt");
-    assert.equal(pkg.scripts.test, "node scripts/runElectronNodeTest.cjs");
+    assert.equal(pkg.scripts.test, "node --max-old-space-size=8192 scripts/runElectronNodeTest.cjs");
     assert.notEqual(pkg.scripts.test, "node scripts/test.cjs");
 
     assert.ok(pkg.scripts?.["test:node"], "package.json scripts.test:node fehlt");
     assert.equal(pkg.scripts["test:node"], "node scripts/test.cjs");
 
     assert.match(wrapperContent, /ELECTRON_RUN_AS_NODE/);
-    assert.match(wrapperContent, /max-old-space-size/);
+    assert.match(wrapperContent, /--max-old-space-size=8192/);
     assert.match(wrapperContent, /electron\.exe/);
     assert.match(wrapperContent, /".bin"/);
     assert.match(wrapperContent, /"electron"/);
