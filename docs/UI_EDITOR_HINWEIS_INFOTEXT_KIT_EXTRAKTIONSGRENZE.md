@@ -20,6 +20,8 @@ bleibt dort erst einmal verankert. Ein spaeteres Herausziehen in das
   bewusst ausgeklammert.
 - Das spaetere Speicherziel und der BBM-Schreibweg bleiben ebenfalls eigene
   Folgepakete.
+- G108 trennt die Zielrichtung fuer den spaeteren Schreibweg bewusst vom Kit-
+  Schnitt.
 - Der konkrete Ziel-/Schreibweg-Stand bleibt in einer eigenen Entscheidung
   getrennt.
 - G106 beschreibt den Ziel-/Schreibweg-Stand getrennt von dieser Extraktionsgrenze.

@@ -5,6 +5,8 @@
 Ein moegliches spaeteres Speicherziel ist beschrieben, aber noch nicht gebaut.
 Der `Hinweis / Infotext`-Entwurf bleibt bis auf Weiteres lokal. Es gibt noch
 keinen BBM-Schreibweg, der dieses Ziel sicher bedienen wuerde.
+G108 macht daraus nun die dokumentarische Freigabe des Restarbeiten-Notizwegs
+als spaeteren Ziel-Schreibweg.
 
 ## Aktueller Nicht-Speicher-Stand
 

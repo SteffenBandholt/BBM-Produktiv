@@ -26,6 +26,8 @@ Minimalgrundlage jetzt abgeschlossen.
 - G107 analysiert die vorhandenen BBM-Schreibwege und stuetzt die
   Einordnung, dass der Restarbeiten-Notizweg erst spaeter und getrennt
   freigegeben werden muesste.
+- G108 gibt diese Zielrichtung dokumentarisch frei; BBM bleibt Host und der
+  Schreibweg bleibt ungebaut.
 
 ## Host-/Bestandssurface
 

@@ -149,6 +149,9 @@ Sie ergÃ¤nzt:
 - G107 analysiert die vorhandenen BBM-Schreibwege und ordnet den
   Restarbeiten-Notizweg als naechsten sinnvollen Kandidaten ein; der konkrete
   Schreibweg bleibt trotzdem noch ungebaut.
+- G108 gibt den Restarbeiten-Notizweg als spaeteren Ziel-Schreibweg fuer
+  `Hinweis / Infotext` frei; das ist nur eine dokumentarische Freigabe ohne
+  Umsetzung.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

@@ -117,6 +117,10 @@ const UI_EDITOR_HINT_INFOTEXT_BBM_SCHREIBWEG_ANALYSE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_BBM_SCHREIBWEG_ANALYSE.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_RESTARBEITEN_NOTIZWEG_FREIGABE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEITEN_NOTIZWEG_FREIGABE.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_KIT_EXTRAKTIONSGRENZE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_KIT_EXTRAKTIONSGRENZE.md"
@@ -3982,6 +3986,38 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-BBM-Schreibweg-Analyse enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Restarbeiten-Notizweg bleibt nur freigegeben", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_RESTARBEITEN_NOTIZWEG_FREIGABE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Restarbeiten-Notizweg-Freigabe fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_RESTARBEITEN_NOTIZWEG_FREIGABE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "restarbeiten:createNote",
+      "restarbeiten.ui.main",
+      "Hinweis / Infotext",
+      "kein Speicherweg gebaut",
+      "kein Speicherbutton",
+      "kein Submit",
+      "keine IPC-/DB-Schreibaktion",
+      "Payload-Vorschau bleibt reine Anzeige",
+      "persisted: false",
+      "kein localStorage",
+      "kein writeFile",
+      "keine Wildcards",
+      "keine Default-true-Freigaben",
+      "nicht UI-Editor-kit",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Restarbeiten-Notizweg-Freigabe enthaelt ${required} nicht.`
       );
     }
   });

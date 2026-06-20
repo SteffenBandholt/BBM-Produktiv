@@ -1500,3 +1500,15 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_BBM_SCHREIBWEG_ANALYSE.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.129 - Restarbeiten-Notizweg fuer Hinweis-/Infotext freigeben
+- Status: offen
+- Beschreibung:
+  - Der bestehende Restarbeiten-Notizweg wird als spaeterer Ziel-Schreibweg
+    fuer `Hinweis / Infotext` dokumentarisch freigegeben.
+  - Die Freigabe bleibt bewusst ohne technische Umsetzung, ohne Speicherbutton
+    und ohne neue Schreiblogik.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEITEN_NOTIZWEG_FREIGABE.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

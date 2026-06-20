@@ -3,11 +3,12 @@
 ## Kurzfazit
 
 Fuer `Hinweis / Infotext` gibt es mehrere bestehende BBM-Schreibwege, aber nur
-ein Teil davon passt fachlich zum spaeteren Speichern des Entwurfs. Der
-naechste sinnvolle Kandidat ist der Restarbeiten-Notizweg; er liegt im
-richtigen Hostkontext und hat bereits einen klaren IPC-/Repo-/DB-Pfad. Die
-anderen vorhandenen Schreibwege sind gute Vergleichspunkte, aber fuer diesen
-Entwurf fachlich zu weit entfernt oder zu spezialisiert.
+ein Teil davon passt fachlich zum spaeteren Speichern des Entwurfs. G108 gibt
+den Restarbeiten-Notizweg als spaeteren Ziel-Schreibweg frei; er ist der
+naechste sinnvolle Kandidat, liegt im richtigen Hostkontext und hat bereits
+einen klaren IPC-/Repo-/DB-Pfad. Die anderen vorhandenen Schreibwege sind gute
+Vergleichspunkte, aber fuer diesen Entwurf fachlich zu weit entfernt oder zu
+spezialisiert.
 
 ## Gepruefte BBM-Schreibwege
 

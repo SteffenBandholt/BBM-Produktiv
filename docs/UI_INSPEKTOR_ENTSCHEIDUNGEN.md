@@ -545,3 +545,8 @@ Schreibweg bleibt getrennt und ist noch nicht gebaut.
 **Status nach G107:** Die vorhandenen BBM-Schreibwege sind jetzt analysiert.
 Der Restarbeiten-Notizweg ist der naechste fachliche Kandidat, bleibt aber
 weiterhin ungebaut und getrennt freizugeben.
+
+**Status nach G108:** Der Restarbeiten-Notizweg ist als spaeterer Ziel-
+Schreibweg fuer `Hinweis / Infotext` dokumentarisch freigegeben. Es bleibt
+bei der Zielrichtung ohne Umsetzung, ohne Speicherbutton und ohne neue
+Schreiblogik.

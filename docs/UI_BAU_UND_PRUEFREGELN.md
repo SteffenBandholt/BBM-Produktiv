@@ -75,6 +75,8 @@ Bei sichtbarer UI gilt:
   weiter ungebaut und damit regelmaessig blockiert.
 - G107 analysiert die vorhandenen BBM-Schreibwege; fuer `Hinweis / Infotext`
   bleibt der konkrete Restarbeiten-Schreibweg weiter zu freizugeben.
+- G108 gibt diese Zielrichtung frei, ohne daraus einen aktiven Schreibweg zu
+  machen.
 
 ## Stop-Regeln
 

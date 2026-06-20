@@ -81,6 +81,8 @@ keinen Speicherbutton und keinen Schreibweg.
   fehlenden BBM-Schreibweg; gebaut wird davon noch nichts.
 - G107 ordnet die vorhandenen BBM-Schreibwege ein und nennt den
   Restarbeiten-Notizweg nur als naechsten fachlichen Kandidaten.
+- G108 gibt diesen Restarbeiten-Notizweg als spaetere Zielrichtung frei,
+  ohne den Speicherweg selbst zu bauen.
 
 ## Stop-Regel
 

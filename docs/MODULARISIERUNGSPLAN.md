@@ -157,6 +157,7 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G105 dokumentiert die fehlende Speicherfreigabe fuer `Hinweis / Infotext`; ein Speicherbutton oder echte Persistenz bleiben gesperrt
 - G106 dokumentiert das spaetere Speicherziel und den noch fehlenden BBM-Schreibweg fuer `Hinweis / Infotext`; Speicher bleibt weiter aus
 - G107 analysiert die vorhandenen BBM-Schreibwege und benoetigt fuer `Hinweis / Infotext` weiterhin einen eigenen, erst spaeter freizugebenden Schreibweg
+- G108 gibt den Restarbeiten-Notizweg als spaeteren Ziel-Schreibweg frei; die technische Umsetzung bleibt bewusst offen
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

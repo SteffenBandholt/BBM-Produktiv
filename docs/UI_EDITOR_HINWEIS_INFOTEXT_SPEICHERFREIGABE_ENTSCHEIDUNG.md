@@ -5,6 +5,8 @@
 Speichern ist fuer den `Hinweis / Infotext`-Entwurf weiterhin nicht aktiv.
 Der Stand bleibt lokal, read-only und ohne Schreibweg. Eine spaetere
 Freigabe braucht eine eigene, klare Entscheidung und saubere Guardrails.
+G108 ordnet die Zielrichtung nun auf den Restarbeiten-Notizweg ein, ohne
+damit einen Speicherweg zu bauen.
 
 ## Aktueller Nicht-Speicher-Stand
 
