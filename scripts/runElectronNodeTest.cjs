@@ -23,37 +23,18 @@ if (!electronBinary) {
 const testScript = path.resolve(__dirname, "test.cjs");
 const useCmdLauncher = isWindows && electronBinary.toLowerCase().endsWith(".cmd");
 const spawnCommand = useCmdLauncher ? "cmd.exe" : electronBinary;
+// Der Heap muss beim echten Electron-Testprozess per Startargument gesetzt werden,
+// nicht erst in dessen Laufzeitumgebung.
+const electronHeapFlag = "--max-old-space-size=8192";
 const spawnArgs = useCmdLauncher
-  ? ["/d", "/s", "/c", `"${electronBinary}" "${testScript}"`]
-  : [testScript];
-const TEST_HEAP_LIMIT_MB = 8192;
-
-function withMaxOldSpaceSize(nodeOptions = "") {
-  const normalized = String(nodeOptions || "").trim();
-  const limitFlag = `--max-old-space-size=${TEST_HEAP_LIMIT_MB}`;
-
-  if (!normalized) return limitFlag;
-
-  const parts = normalized.split(/\s+/).filter(Boolean);
-  const existingIndex = parts.findIndex((entry) => entry.startsWith("--max-old-space-size="));
-  if (existingIndex >= 0) {
-    const existingValue = Number(parts[existingIndex].split("=", 2)[1]);
-    if (Number.isFinite(existingValue) && existingValue >= TEST_HEAP_LIMIT_MB) {
-      return normalized;
-    }
-    parts[existingIndex] = limitFlag;
-    return parts.join(" ");
-  }
-
-  parts.push(limitFlag);
-  return parts.join(" ");
-}
+  ? ["/d", "/s", "/c", `"${electronBinary}" ${electronHeapFlag} "${testScript}"`]
+  : [electronHeapFlag, testScript];
 
 const child = spawnSync(spawnCommand, spawnArgs, {
   env: {
     ...process.env,
     ELECTRON_RUN_AS_NODE: "1",
-    NODE_OPTIONS: withMaxOldSpaceSize(process.env.NODE_OPTIONS),
+    NODE_OPTIONS: String(process.env.NODE_OPTIONS || "").trim(),
   },
   stdio: "inherit",
 });
