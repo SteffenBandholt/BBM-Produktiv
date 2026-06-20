@@ -19,6 +19,7 @@ function runNativeTestRuntimeTests(run) {
     assert.equal(pkg.scripts["test:node"], "node scripts/test.cjs");
 
     assert.match(wrapperContent, /ELECTRON_RUN_AS_NODE/);
+    assert.match(wrapperContent, /max-old-space-size/);
     assert.match(wrapperContent, /electron\.exe/);
     assert.match(wrapperContent, /".bin"/);
     assert.match(wrapperContent, /"electron"/);
