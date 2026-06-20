@@ -478,6 +478,12 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-editor-hint-infotext-payload-preview=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-payload-preview") === "true";
   }
+  if (raw === "[data-ui-editor-hint-infotext-storage-preview=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-storage-preview") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-save-button=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-save-button") === "true";
+  }
   if (raw === "[data-ui-editor-hint-infotext-draft-validation=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-draft-validation") === "true";
   }
@@ -937,6 +943,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const hintInfotextHostPreview = doc.querySelector('[data-ui-editor-hint-infotext-host-preview="true"]');
     const hintInfotextElementModelPreview = doc.querySelector('[data-ui-editor-hint-infotext-elementmodel-preview="true"]');
     const hintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
+    const hintInfotextStoragePreview = doc.querySelector('[data-ui-editor-hint-infotext-storage-preview="true"]');
+    const hintInfotextSaveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
     const hintInfotextDraftValidation = doc.querySelector('[data-ui-editor-hint-infotext-draft-validation="true"]');
     const hintInfotextDraftReset = doc.querySelector('[data-ui-editor-hint-infotext-draft-reset="true"]');
     const readonlyHint = doc.querySelector('[data-ui-editor-surface-readonly-hint="true"]');
@@ -1011,6 +1019,24 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       hintInfotextPayloadPreview.textContent,
       "type: Hinweis / Infotext\nsurfaceId: restarbeiten.ui.main\nstatus: draft\npersisted: false\nDies ist ein nicht gespeicherter Hinweis-Entwurf."
     );
+    assert.equal(Boolean(hintInfotextStoragePreview), true);
+    for (const required of [
+      "Speichern",
+      "Speicherweg: Restarbeiten-Notizweg vorbereitet",
+      "Ziel: restarbeiten:createNote",
+      "Status: gesperrt",
+      "persisted: false",
+      "Entwurf speichern",
+    ]) {
+      assert.equal(
+        getRenderedText(hintInfotextStoragePreview).includes(required),
+        true,
+        `Speicherbereich enthaelt ${required} nicht.`
+      );
+    }
+    assert.equal(Boolean(hintInfotextSaveButton), true);
+    assert.equal(hintInfotextSaveButton.disabled, true);
+    assert.equal(hintInfotextSaveButton.getAttribute("aria-disabled"), "true");
     assert.equal(Boolean(hintInfotextDraftValidation), true);
     assert.equal(
       hintInfotextDraftValidation.textContent,
@@ -1019,6 +1045,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(renderedText.includes("Host-Vorschau"), true);
     assert.equal(renderedText.includes("Elementmodell-Vorschau"), true);
     assert.equal(renderedText.includes("Payload-Vorschau"), true);
+    assert.equal(renderedText.includes("Speichern"), true);
+    assert.equal(renderedText.includes("Speicherweg: Restarbeiten-Notizweg vorbereitet"), true);
+    assert.equal(renderedText.includes("Ziel: restarbeiten:createNote"), true);
+    assert.equal(renderedText.includes("Status: gesperrt"), true);
     assert.equal(renderedText.includes("Entwurfsprüfung"), true);
     assert.equal(renderedText.includes("Entwurf zurücksetzen"), true);
     assert.equal(Boolean(hintInfotextDraftReset), true);

@@ -110,8 +110,12 @@ Die Payload-Vorschau bleibt reine Anzeige.
 - Das `UI-Editor-kit` speichert nicht.
 - Die Freigabe hier betrifft nur die BBM-Hostseite.
 - Keine Aenderung an `../UI-Editor-kit`.
+- G109 zeigt den Speicherbereich sichtbar an, aber weiterhin ohne aktive
+  Speicherung.
 
 ## Empfohlener naechster Schritt
 
 Die Freigabe nur als dokumentarische Zielrichtung stehen lassen und die
 spaetere technische Umsetzung erst nach eigener Detailfreigabe beginnen.
+G109 kann darauf aufsetzen und den Speicherbereich sichtbar, aber gesperrt
+anzeigen.

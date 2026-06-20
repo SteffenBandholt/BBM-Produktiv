@@ -1512,3 +1512,14 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEITEN_NOTIZWEG_FREIGABE.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.130 - Hinweis-/Infotext-Speicherbereich sichtbar aber gesperrt anzeigen
+- Status: offen
+- Beschreibung:
+  - Im UI-Editor-Panel wird ein sichtbarer, aber deaktivierter Speicherbereich
+    fuer den Hinweis-/Infotext vorbereitet.
+  - Der Bereich bleibt reine Anzeige und loest keine Speicherung aus.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERN_GESPERRT_UI_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

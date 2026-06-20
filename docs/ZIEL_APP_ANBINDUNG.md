@@ -74,6 +74,8 @@ Bearbeitungsflaeche.
   dokumentiert und ist noch keine Umstellung.
 - Eine spaetere Speicherfreigabe fuer den Hinweis-/Infotext bleibt ebenfalls
   separat und ist noch keine Umstellung.
+- G109 zeigt den gesperrten Speicherbereich in BBM, ohne einen aktiven
+  Schreibweg anzubinden.
 
 ## Pruefpflicht
 

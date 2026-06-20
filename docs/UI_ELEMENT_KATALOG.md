@@ -71,6 +71,8 @@ Elemente zwingend vorhanden sein muessen.
 - kein Default-true
 - Das spaetere Speicherziel und der BBM-Schreibweg bleiben dokumentiert; sie
   sind noch nicht aktiv.
+- G109 zeigt einen gesperrten Speicherbereich im Editor-Kontext; das ist nur
+  Anzeige, kein Speicherziel.
 
 ## Stop-Regel
 

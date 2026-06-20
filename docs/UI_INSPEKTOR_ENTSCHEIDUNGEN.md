@@ -550,3 +550,7 @@ weiterhin ungebaut und getrennt freizugeben.
 Schreibweg fuer `Hinweis / Infotext` dokumentarisch freigegeben. Es bleibt
 bei der Zielrichtung ohne Umsetzung, ohne Speicherbutton und ohne neue
 Schreiblogik.
+
+**Status nach G109:** Ein sichtbarer Speicherbereich ist im UI-Editor-Panel
+vorbereitet. Er bleibt gesperrt, zeigt nur die Zielrichtung an und loest
+weiterhin keine Speicherung aus.

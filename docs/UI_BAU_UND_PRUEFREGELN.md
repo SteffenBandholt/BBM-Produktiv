@@ -77,6 +77,8 @@ Bei sichtbarer UI gilt:
   bleibt der konkrete Restarbeiten-Schreibweg weiter zu freizugeben.
 - G108 gibt diese Zielrichtung frei, ohne daraus einen aktiven Schreibweg zu
   machen.
+- G109 erlaubt einen sichtbar gesperrten Speicherbereich; aktiv speichernde
+  Wege bleiben weiter blockiert.
 
 ## Stop-Regeln
 

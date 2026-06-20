@@ -126,6 +126,8 @@ damit einen Speicherweg zu bauen.
 - Das `UI-Editor-kit` speichert nicht.
 - BBM-Produktiv bleibt Host und entscheidet ueber eine spaetere Freigabe.
 - Die aktuelle Doku legt nur die Grenze fest, nicht den Speicherpfad.
+- G109 zeigt den Speicherbereich sichtbar an, aber weiterhin ohne aktive
+  Speicherung.
 - Keine Aenderung an `../UI-Editor-kit`.
 - Das spaetere Speicherziel ist getrennt dokumentiert und beschreibt noch
   keinen gebauten Schreibweg.

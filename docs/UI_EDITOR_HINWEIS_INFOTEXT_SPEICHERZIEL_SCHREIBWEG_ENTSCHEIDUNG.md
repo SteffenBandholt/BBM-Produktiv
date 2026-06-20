@@ -96,6 +96,8 @@ createdFrom: ui-editor-draft
 
 - Das `UI-Editor-kit` speichert nicht.
 - Der hier beschriebene Schreibweg ist BBM-seitig und noch nicht gebaut.
+- G109 zeigt den Speicherbereich sichtbar, aber weiterhin ohne aktive
+  Speicherung.
 - Keine Aenderung an `../UI-Editor-kit`.
 
 ## Empfohlener naechster Schritt

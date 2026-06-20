@@ -83,6 +83,8 @@ keinen Speicherbutton und keinen Schreibweg.
   Restarbeiten-Notizweg nur als naechsten fachlichen Kandidaten.
 - G108 gibt diesen Restarbeiten-Notizweg als spaetere Zielrichtung frei,
   ohne den Speicherweg selbst zu bauen.
+- G109 zeigt den Speicherbereich sichtbar an, laesst ihn aber gesperrt und
+  deaktiviert.
 
 ## Stop-Regel
 

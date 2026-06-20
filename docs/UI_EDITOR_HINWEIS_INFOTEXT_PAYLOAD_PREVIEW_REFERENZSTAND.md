@@ -82,3 +82,5 @@ beschrieben.
 Das spaetere Speicherziel und der BBM-Schreibweg bleiben ebenfalls separat
 dokumentiert.
 Der konkrete Ziel-/Schreibweg-Stand ist Teil von G106 und bleibt dokumentarisch.
+G109 fuegt nur einen sichtbaren, gesperrten Speicherbereich hinzu; die
+Payload-Vorschau bleibt reine Anzeige.

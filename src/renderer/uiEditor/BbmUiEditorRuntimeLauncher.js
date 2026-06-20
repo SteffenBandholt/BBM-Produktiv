@@ -74,6 +74,12 @@ const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_TYPE = "type: Hinweis / Infot
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_SURFACE_ID = "surfaceId: restarbeiten.ui.main";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_STATUS = "status: draft";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_PERSISTED = "persisted: false";
+const READONLY_HINT_INFOTEXT_STORAGE_TITLE = "Speichern";
+const READONLY_HINT_INFOTEXT_STORAGE_ROUTE_LINE = "Speicherweg: Restarbeiten-Notizweg vorbereitet";
+const READONLY_HINT_INFOTEXT_STORAGE_TARGET_LINE = "Ziel: restarbeiten:createNote";
+const READONLY_HINT_INFOTEXT_STORAGE_STATUS_LINE = "Status: gesperrt";
+const READONLY_HINT_INFOTEXT_STORAGE_PERSISTED_LINE = "persisted: false";
+const READONLY_HINT_INFOTEXT_STORAGE_BUTTON_LABEL = "Entwurf speichern";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY = "Status: Hinweistext fehlt";
@@ -1407,6 +1413,7 @@ function renderPreviewPanel(doc, state = {}) {
   panel.appendChild(details);
 
   appendReadonlyHintInfotextDraftPreview(doc, panel, state);
+  appendReadonlyHintInfotextStoragePreview(doc, panel);
   appendReadonlySurfaceSelection(doc, panel, state);
   appendReadonlySurfaceElementCatalogOverview(doc, panel);
   appendReadonlyPdfPlanPage1Hint(doc, panel, state);
@@ -2249,6 +2256,59 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
   );
   panel.appendChild(preview);
   return preview;
+}
+
+function appendReadonlyHintInfotextStoragePreview(doc, panel) {
+  if (!doc?.createElement || !panel?.appendChild) return null;
+
+  const storage = doc.createElement("div");
+  storage.className = "ui-editor-preview-hint-infotext-storage";
+  storage.setAttribute("data-ui-editor-hint-infotext-storage-preview", "true");
+  storage.style.marginTop = "8px";
+  storage.style.padding = "8px";
+  storage.style.border = "1px solid #d1d5db";
+  storage.style.borderRadius = "6px";
+  storage.style.background = "#f8fafc";
+  storage.style.color = "#334155";
+  storage.style.fontSize = "11px";
+  storage.style.lineHeight = "1.35";
+
+  const title = doc.createElement("div");
+  title.className = "ui-editor-preview-hint-infotext-storage__title";
+  title.textContent = READONLY_HINT_INFOTEXT_STORAGE_TITLE;
+  title.style.fontWeight = "700";
+  title.style.marginBottom = "4px";
+
+  const lines = doc.createElement("div");
+  lines.className = "ui-editor-preview-hint-infotext-storage__lines";
+  lines.textContent = [
+    READONLY_HINT_INFOTEXT_STORAGE_ROUTE_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_TARGET_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_STATUS_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_PERSISTED_LINE,
+  ].map((line) => `- ${line}`).join("\n");
+
+  const button = doc.createElement("button");
+  button.type = "button";
+  button.className = "ui-editor-preview-hint-infotext-storage__button";
+  button.setAttribute("data-ui-editor-hint-infotext-save-button", "true");
+  button.disabled = true;
+  button.setAttribute("aria-disabled", "true");
+  button.title = "Speichern bleibt gesperrt";
+  button.textContent = READONLY_HINT_INFOTEXT_STORAGE_BUTTON_LABEL;
+  button.style.marginTop = "8px";
+  button.style.padding = "6px 10px";
+  button.style.border = "1px solid #cbd5e1";
+  button.style.borderRadius = "4px";
+  button.style.background = "#e2e8f0";
+  button.style.color = "#64748b";
+  button.style.cursor = "not-allowed";
+  button.addEventListener("mousedown", stopPreviewPanelEvent);
+  button.addEventListener("click", stopPreviewPanelEvent);
+
+  storage.append(title, lines, button);
+  panel.appendChild(storage);
+  return storage;
 }
 
 function appendReadonlyPdfPlanPage1Hint(doc, panel, state = {}) {

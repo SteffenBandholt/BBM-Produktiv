@@ -152,6 +152,9 @@ Sie ergÃ¤nzt:
 - G108 gibt den Restarbeiten-Notizweg als spaeteren Ziel-Schreibweg fuer
   `Hinweis / Infotext` frei; das ist nur eine dokumentarische Freigabe ohne
   Umsetzung.
+- G109 ergaenzt einen sichtbaren, aber gesperrten Speicherbereich im
+  UI-Editor-Panel; der Button bleibt deaktiviert und es wird nichts
+  gespeichert.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in
