@@ -153,3 +153,9 @@ erst nach eigener Freigabe einen echten Speicherweg bauen.
 - `restarbeiten:createNote` bleibt Zielvertrag, aber `projectId` und
   `restarbeitId` werden weiterhin nur dokumentarisch als Host-Vorbedingung
   beschrieben.
+
+## G117: Host-Kontext-Statusmodell
+
+- Die sichtbare Anzeige nutzt ein lokales Statusmodell.
+- Der Vertrag bleibt unveraendert; `projectId` und `restarbeitId` fehlen
+  weiterhin im Renderer.

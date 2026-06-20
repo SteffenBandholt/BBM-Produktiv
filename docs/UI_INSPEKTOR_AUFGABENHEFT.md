@@ -1604,3 +1604,14 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_DATENVERTRAG.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.138 - Hinweis-/Infotext-Host-Kontext-Statusmodell dokumentieren
+- Status: offen
+- Beschreibung:
+  - Der Renderer bekommt ein lokales Host-Kontext-Statusmodell fuer die
+    sichtbare Anzeige.
+  - `projectId` und `restarbeitId` bleiben dabei weiterhin leer.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_STATUSMODELL_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

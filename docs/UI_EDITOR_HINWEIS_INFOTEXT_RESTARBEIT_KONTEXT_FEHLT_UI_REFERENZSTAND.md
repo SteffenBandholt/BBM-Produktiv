@@ -95,3 +95,8 @@ Host-Übergabe bewusst freigegeben und technisch umgesetzt wird.
   dokumentiert.
 - `projectId` und `restarbeitId` bleiben Host-Daten und werden im
   UI-Editor nicht geraten.
+
+## G117: Host-Kontext-Statusmodell
+
+- Die sichtbare Anzeige wird jetzt aus einem lokalen Statusmodell abgeleitet.
+- `restarbeitId` bleibt dabei weiterhin unuebergeben.

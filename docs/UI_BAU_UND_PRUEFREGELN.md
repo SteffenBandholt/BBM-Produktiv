@@ -94,6 +94,8 @@ Bei sichtbarer UI gilt:
   read-only und blockiert Speichern weiter.
 - G116 dokumentiert den spaeteren Host-Kontext-Datenvertrag; ohne diese
   Host-Daten bleibt Speichern blockiert.
+- G117 laesst die sichtbare Restarbeit-Kontextanzeige aus einem lokalen
+  Statusmodell kommen; Speichern bleibt weiter gesperrt.
 
 ## Stop-Regeln
 

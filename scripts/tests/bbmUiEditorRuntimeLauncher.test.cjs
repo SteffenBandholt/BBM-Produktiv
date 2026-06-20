@@ -129,6 +129,10 @@ const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_CONTRACT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_DATENVERTRAG.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_STATUS_MODEL_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_STATUSMODELL_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_CONTRACT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md"
@@ -4298,6 +4302,57 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         `Hinweis-/Infotext-Host-Kontextdatenvertrag enthaelt ${required} nicht.`
       );
     }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Host-Kontext-Statusmodell bleibt lokal", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_STATUS_MODEL_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Host-Kontext-Statusmodell-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_STATUS_MODEL_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Statusmodell",
+      "projectId: null",
+      "restarbeitId: null",
+      "targetContext: Restarbeiten",
+      "targetSurfaceId: restarbeiten.ui.main",
+      "targetLabel: nicht ausgewählt",
+      "elementType: Hinweis / Infotext",
+      "source: BBM-Restarbeiten-Host erforderlich",
+      "isPresent: false",
+      "keine IPC-/DB-Anbindung",
+      "Persistenzverhalten",
+      "SurfaceInfo-Verhalten",
+      "Electron-Sichtprüfung",
+      "UI-Editor-kit speichert nicht",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Host-Kontext-Statusmodell-Referenz enthaelt ${required} nicht.`
+      );
+    }
+
+    const mod = await loadRuntime();
+    assert.equal(typeof mod.buildReadonlyHintInfotextHostContextStatusModel, "function");
+    assert.equal(typeof mod.getReadonlyHintInfotextHostContextStatus, "function");
+
+    const statusModel = mod.buildReadonlyHintInfotextHostContextStatusModel();
+    assert.deepEqual(statusModel, {
+      projectId: null,
+      restarbeitId: null,
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "nicht ausgewählt",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host erforderlich",
+      isPresent: false,
+    });
+
+    const state = mod.createLauncherState({ activeUiScope: "restarbeiten.ui.main" });
+    assert.deepEqual(state.hostContextStatus, statusModel);
   });
 
   await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-BBM-Schreibweg bleibt nur analysiert", async () => {

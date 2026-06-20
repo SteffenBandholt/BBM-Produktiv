@@ -588,3 +588,7 @@ Speichern bleibt gesperrt.
 **Status nach G116:** Der spaetere Host-Kontext-Datenvertrag ist dokumentiert.
 `projectId` und `restarbeitId` sind Host-Daten; der UI-Editor sucht oder rät
 sie nicht.
+
+**Status nach G117:** Die sichtbare Restarbeit-Kontextanzeige wird jetzt aus
+einem lokalen Statusmodell abgeleitet. Echte Host-Daten bleiben weiterhin
+ausstehend.

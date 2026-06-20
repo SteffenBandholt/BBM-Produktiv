@@ -76,19 +76,10 @@ const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_STATUS = "status: draft";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_PERSISTED = "persisted: false";
 const READONLY_HINT_INFOTEXT_STORAGE_TITLE = "Speichern";
 const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TITLE = "Restarbeit-Kontext";
-const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TARGET_CONTEXT_LINE = "Zielkontext: Restarbeiten";
-const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_RESTARBEIT_ID_LINE = "restarbeitId: nicht übergeben";
-const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TARGET_RESTARBEIT_LINE = "Ziel-Restarbeit: nicht ausgewählt";
-const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_SOURCE_LINE = "Kontextquelle: BBM-Restarbeiten-Host erforderlich";
-const READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_LOCK_LINE = "Speichern bleibt gesperrt";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_TITLE = "Freigabecheck";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE = "Hinweistext gültig: ja";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE = "Hinweistext gültig: nein";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_TARGET_SURFACE_LINE = "Ziel-Surface: restarbeiten.ui.main";
-const READONLY_HINT_INFOTEXT_STORAGE_CHECK_RESTARBEIT_CONTEXT_LINE = "Restarbeit-Kontext vorhanden: nein";
-const READONLY_HINT_INFOTEXT_STORAGE_CHECK_RELEASE_LINE = "Schreibweg freigegeben: nein";
-const READONLY_HINT_INFOTEXT_STORAGE_CHECK_BUTTON_LINE = "Speicherbutton: deaktiviert";
-const READONLY_HINT_INFOTEXT_STORAGE_CHECK_PERSISTENCE_LINE = "Persistenz: nicht aktiv";
 const READONLY_HINT_INFOTEXT_STORAGE_ROUTE_LINE = "Speicherweg: Restarbeiten-Notizweg vorbereitet";
 const READONLY_HINT_INFOTEXT_STORAGE_TARGET_LINE = "Ziel: restarbeiten:createNote";
 const READONLY_HINT_INFOTEXT_STORAGE_STATUS_LINE = "Status: gesperrt";
@@ -310,6 +301,7 @@ function createLauncherState({
     win: null,
     availableUiScopes: normalizeAvailableUiScopes(availableUiScopes),
     hintInfotextDraftText: READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT,
+    hostContextStatus: buildReadonlyHintInfotextHostContextStatusModel(),
     registryResolver: resolver,
     hostAdapter: adapter,
   };
@@ -1874,6 +1866,57 @@ function buildReadonlyPdfPlanPage1HintForLauncher(input = {}) {
   };
 }
 
+function buildReadonlyHintInfotextHostContextStatusModel() {
+  return {
+    projectId: null,
+    restarbeitId: null,
+    targetContext: "Restarbeiten",
+    targetSurfaceId: READONLY_SURFACE_INFO_SURFACE_ID,
+    targetLabel: "nicht ausgewählt",
+    elementType: "Hinweis / Infotext",
+    source: "BBM-Restarbeiten-Host erforderlich",
+    isPresent: false,
+  };
+}
+
+function getReadonlyHintInfotextHostContextStatus(state = {}) {
+  if (state?.hostContextStatus && typeof state.hostContextStatus === "object") {
+    return state.hostContextStatus;
+  }
+  const hostContextStatus = buildReadonlyHintInfotextHostContextStatusModel();
+  if (state && typeof state === "object") {
+    state.hostContextStatus = hostContextStatus;
+  }
+  return hostContextStatus;
+}
+
+function formatReadonlyHintInfotextStorageContextText(hostContextStatus = buildReadonlyHintInfotextHostContextStatusModel()) {
+  return [
+    `Zielkontext: ${hostContextStatus.targetContext}`,
+    `restarbeitId: ${hostContextStatus.restarbeitId ? hostContextStatus.restarbeitId : "nicht übergeben"}`,
+    `Ziel-Restarbeit: ${hostContextStatus.targetLabel}`,
+    `Kontextquelle: ${hostContextStatus.source}`,
+    hostContextStatus.isPresent === true ? "Restarbeit-Kontext vorhanden: ja" : "Restarbeit-Kontext vorhanden: nein",
+    hostContextStatus.isPresent === true ? "Speichern bleibt freigegeben" : "Speichern bleibt gesperrt",
+  ].join("\n");
+}
+
+function formatReadonlyHintInfotextStorageFreigabecheckText(
+  value = "",
+  hostContextStatus = buildReadonlyHintInfotextHostContextStatusModel()
+) {
+  return [
+    isReadonlyHintInfotextDraftValid(value)
+      ? READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE
+      : READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE,
+    `Ziel-Surface: ${hostContextStatus.targetSurfaceId}`,
+    `Restarbeit-Kontext vorhanden: ${hostContextStatus.isPresent === true ? "ja" : "nein"}`,
+    `Schreibweg freigegeben: ${hostContextStatus.isPresent === true ? "ja" : "nein"}`,
+    "Speicherbutton: deaktiviert",
+    "Persistenz: nicht aktiv",
+  ].join("\n");
+}
+
 function appendReadonlySurfaceSelection(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
   const selectionModel = buildReadonlySurfaceSelectionForLauncher({
@@ -2008,19 +2051,6 @@ function formatReadonlyHintInfotextDraftValidationText(value = "") {
       ? READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID
       : READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY,
     READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_SAVE_STATUS,
-  ].join("\n");
-}
-
-function formatReadonlyHintInfotextStorageFreigabecheckText(value = "") {
-  return [
-    isReadonlyHintInfotextDraftValid(value)
-      ? READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE
-      : READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE,
-    READONLY_HINT_INFOTEXT_STORAGE_CHECK_TARGET_SURFACE_LINE,
-    READONLY_HINT_INFOTEXT_STORAGE_CHECK_RESTARBEIT_CONTEXT_LINE,
-    READONLY_HINT_INFOTEXT_STORAGE_CHECK_RELEASE_LINE,
-    READONLY_HINT_INFOTEXT_STORAGE_CHECK_BUTTON_LINE,
-    READONLY_HINT_INFOTEXT_STORAGE_CHECK_PERSISTENCE_LINE,
   ].join("\n");
 }
 
@@ -2296,6 +2326,7 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
 
 function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
+  const hostContextStatus = getReadonlyHintInfotextHostContextStatus(state);
 
   const storage = doc.createElement("div");
   storage.className = "ui-editor-preview-hint-infotext-storage";
@@ -2324,13 +2355,7 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
 
   const contextLines = doc.createElement("div");
   contextLines.className = "ui-editor-preview-hint-infotext-storage__context-lines";
-  contextLines.textContent = [
-    READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TARGET_CONTEXT_LINE,
-    READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_RESTARBEIT_ID_LINE,
-    READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_TARGET_RESTARBEIT_LINE,
-    READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_SOURCE_LINE,
-    READONLY_HINT_INFOTEXT_STORAGE_CONTEXT_LOCK_LINE,
-  ].join("\n");
+  contextLines.textContent = formatReadonlyHintInfotextStorageContextText(hostContextStatus);
 
   const lines = doc.createElement("div");
   lines.className = "ui-editor-preview-hint-infotext-storage__lines";
@@ -2358,7 +2383,8 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   freigabecheck.style.background = "#ffffff";
   freigabecheck.style.minHeight = "24px";
   freigabecheck.textContent = formatReadonlyHintInfotextStorageFreigabecheckText(
-    getReadonlyHintInfotextDraftText(state)
+    getReadonlyHintInfotextDraftText(state),
+    hostContextStatus
   );
   state.hintInfotextStorageCheckPreview = freigabecheck;
 
@@ -2496,6 +2522,8 @@ export {
   showHiddenPreviewElement,
   normalizeReadonlyRegisteredElements,
   normalizeAvailableUiScopes,
+  buildReadonlyHintInfotextHostContextStatusModel,
+  getReadonlyHintInfotextHostContextStatus,
   ensureLauncherStatusHint,
   applyPreviewOperation,
   discardPendingPreviewChanges,

@@ -171,6 +171,8 @@ Sie ergÃ¤nzt:
   Panel an; die Anzeige bleibt lesend und speichert nichts.
 - G116 dokumentiert den spaeteren Host-Kontext-Datenvertrag; `projectId` und
   `restarbeitId` bleiben Host-Daten und werden nicht im UI-Editor geraten.
+- G117 laesst die sichtbare Restarbeit-Kontextanzeige aus einem lokalen
+  Statusmodell ableiten; `projectId` und `restarbeitId` bleiben dabei leer.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

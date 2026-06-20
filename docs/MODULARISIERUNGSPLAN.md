@@ -442,3 +442,9 @@ Dabei gilt:
 - Der Projektkachel-Start nutzt den bestehenden Projektmodulpfad `openProjectModule(projectId, "restarbeiten", { project })`.
 
 - Hotfix M13.2 nachgezogen: `Restarbeiten` ist fuer die Projektkachel nicht nur ueber Test-Stub sichtbar, sondern wird ueber die tatsaechliche Runtime-Projektmodulliste geliefert.
+
+## G117: Host-Kontext-Statusmodell
+
+- Die sichtbare Restarbeit-Kontextanzeige wird im Renderer aus einem lokalen
+  Statusmodell abgeleitet.
+- Echte Host-Daten bleiben weiterhin Aufgabe des spaeteren Host-Pakets.

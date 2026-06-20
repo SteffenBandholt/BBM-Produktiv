@@ -139,3 +139,11 @@ Die Payload-Vorschau bleibt reine Anzeige.
 
 Den Vertrag nur dokumentarisch stehen lassen und erst nach einer bewussten
 Host-Freigabe in Code verdrahten.
+
+## G117: Host-Kontext-Statusmodell
+
+- Der Renderer leitet die sichtbare Anzeige jetzt aus einem lokalen
+  Statusmodell ab.
+- `projectId` und `restarbeitId` bleiben dabei weiterhin `null`.
+- Diese Doku bleibt die spaetere Vertragsgrundlage; das Statusmodell ist nur
+  ein interner Zwischenstand.

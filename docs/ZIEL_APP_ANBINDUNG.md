@@ -92,6 +92,8 @@ Bearbeitungsflaeche.
   bleibt read-only und speichert nichts.
 - G116 legt den spaeteren Host-Kontext-Datenvertrag fest; `projectId` und
   `restarbeitId` kommen spaeter nur aus dem BBM-Host.
+- G117 zeigt die Host-Anzeige weiter nur als lokales Statusmodell; der BBM-
+  Host liefert die echten Werte weiterhin nicht.
 
 ## Pruefpflicht
 

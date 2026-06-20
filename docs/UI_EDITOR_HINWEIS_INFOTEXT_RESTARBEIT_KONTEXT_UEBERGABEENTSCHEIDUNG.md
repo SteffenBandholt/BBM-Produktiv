@@ -127,3 +127,8 @@ Dokumentation.
 
 - Die spaetere Uebergabe bleibt an `projectId` und `restarbeitId` gebunden.
 - Der Datenvertrag ist dokumentiert, aber technisch noch nicht verdrahtet.
+
+## G117: Host-Kontext-Statusmodell
+
+- Der Renderer bildet den sichtbaren Kontext aus einem lokalen Statusmodell.
+- Die Uebergabeentscheidung bleibt davon unberuehrt.

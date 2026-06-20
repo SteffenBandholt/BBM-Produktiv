@@ -100,6 +100,8 @@ keinen Speicherbutton und keinen Schreibweg.
   reine Anzeige und kein Speicherweg.
 - G116 dokumentiert den spaeteren Host-Kontext-Datenvertrag; ohne Host-Daten
   bleibt der Speicherbutton weiterhin deaktiviert.
+- G117 ordnet die sichtbare Restarbeit-Kontextanzeige an ein lokales
+  Statusmodell; echte Host-Daten kommen weiterhin nicht im Renderer an.
 
 ## Stop-Regel
 

@@ -88,6 +88,8 @@ Elemente zwingend vorhanden sein muessen.
   entsteht noch kein neues Elementziel.
 - G116 ergaenzt dazu nur den spaeteren Host-Kontext-Datenvertrag; ein
   Speicherziel entsteht daraus noch nicht.
+- G117 laesst die sichtbare Kontextanzeige aus einem lokalen Statusmodell
+  kommen; neue editorrelevante Ziele entstehen dadurch weiterhin nicht.
 
 ## Stop-Regel
 

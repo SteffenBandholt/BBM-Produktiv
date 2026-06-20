@@ -148,3 +148,8 @@ entschieden wird.
 - Der spaetere Host-Kontext-Datenvertrag ist jetzt separat dokumentiert.
 - Die Speicher-Vorbereitung bleibt weiterhin gesperrt, bis der Host diesen
   Kontext bewusst liefert.
+
+## G117: Host-Kontext-Statusmodell
+
+- Die sichtbare Anzeige kommt jetzt aus einem lokalen Statusmodell.
+- Der Speicherbereich bleibt davon unberuehrt weiterhin gesperrt.
