@@ -108,6 +108,9 @@ keinen Speicherbutton und keinen Schreibweg.
   keine weitere UI-Freigabe.
 - G120 bereitet nur eine optionale Host-Kontext-Aufnahme vor; der sichtbare
   Standard bleibt gleich.
+- G121 dokumentiert die spaetere Host-Kontext-UEbergabe als
+  Freigabeentscheidung; echte Quelle, Bedingungen und Speichergrenzen sind
+  damit klar getrennt.
 
 ## Stop-Regel
 

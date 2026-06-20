@@ -120,3 +120,10 @@ ein spaeterer Host die echten Werte bewusst liefert.
 
 - Der Launcher kann spaeter optional einen Host-Kontext aufnehmen.
 - Der Abschlussstand bleibt dabei unveraendert und gesperrt.
+
+## G121: Host-Kontext-UEbergabe Freigabeentscheidung
+
+- Die Abschlussdoku bleibt nur die Vorstufe fuer eine spaetere echte
+  Host-Kontext-UEbergabe.
+- Eine Umsetzung braucht weiterhin eindeutige Host-Daten und bleibt ohne
+  Freigabe gesperrt.

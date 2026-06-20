@@ -179,6 +179,9 @@ Sie ergÃ¤nzt:
   bleibt read-only und der Speicherweg bleibt gesperrt.
 - G120 bereitet eine optionale Host-Kontext-Aufnahme im Launcher vor; der
   sichtbare Default bleibt unveraendert und der Speicherweg bleibt gesperrt.
+- G121 dokumentiert die spaetere Host-Kontext-UEbergabe als
+  Freigabeentscheidung; echte Quelle, Bedingungen und weiterhin blockierte
+  Speicherwege sind klar begrenzt.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

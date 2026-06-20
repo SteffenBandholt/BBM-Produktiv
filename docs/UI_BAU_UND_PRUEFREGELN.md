@@ -102,6 +102,8 @@ Bei sichtbarer UI gilt:
   ohne neue Aktivierung.
 - G120 erlaubt nur eine optionale interne Aufnahme; der Speicherstatus bleibt
   gesperrt.
+- G121 dokumentiert die spaetere Host-Kontext-UEbergabe nur als
+  Freigabeentscheidung; die Speicherregeln bleiben gesperrt.
 
 ## Stop-Regeln
 

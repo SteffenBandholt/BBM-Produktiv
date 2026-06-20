@@ -176,6 +176,9 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
   Speicherweg bleibt weiter blockiert.
 - G116 dokumentiert den spaeteren Host-Kontext-Datenvertrag; `projectId` und
   `restarbeitId` bleiben Host-Daten und werden nicht im UI-Editor geraten.
+- G121 dokumentiert die spaetere Host-Kontext-UEbergabe als
+  Freigabeentscheidung; Restarbeiten-Host, `restarbeitId`, Zielkontext und
+  blockierte Speicherwege sind damit klar getrennt.
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 
@@ -465,3 +468,10 @@ Dabei gilt:
 
 - Der Launcher kann optional einen Host-Kontext annehmen und normalisieren.
 - Ohne Uebergabe bleibt der Default unveraendert und read-only.
+
+## G121: Host-Kontext-UEbergabe Freigabeentscheidung
+
+- Die spaetere Host-Uebergabe fuer `Hinweis / Infotext` bleibt nur als
+  Freigabeentscheidung dokumentiert.
+- Quelle, Zielkontext, `normalizeHostContextStatus` und blockierte
+  Speicherwege sind klar eingegrenzt; eine Umsetzung folgt erst spaeter.

@@ -604,3 +604,8 @@ daraus nicht.
 **Status nach G120:** Der Launcher kann optional einen Host-Kontext
 aufnehmen. Der sichtbare Default bleibt gleich; eine echte Host-Uebergabe
 entsteht dadurch nicht.
+
+**Status nach G121:** Die spaetere echte Host-Kontext-UEbergabe ist nur als
+Freigabeentscheidung dokumentiert. Quelle, Bedingungen, Tests und blockierte
+Speicherwege bleiben klar begrenzt; eine Umsetzung folgt erst mit eigener
+Freigabe.

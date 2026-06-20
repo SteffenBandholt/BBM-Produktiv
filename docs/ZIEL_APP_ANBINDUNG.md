@@ -100,6 +100,9 @@ Bearbeitungsflaeche.
   neue Ziel-App-Anbindung.
 - G120 erlaubt nur eine optionale interne Aufnahme; eine echte Host-
   Uebergabe bleibt ausgespart.
+- G121 dokumentiert die spaetere Host-Kontext-UEbergabe als
+  Freigabeentscheidung; `UI-Editor-kit` bleibt speicherfrei und BBM bleibt
+  Host.
 
 ## Pruefpflicht
 

@@ -148,3 +148,9 @@ Dokumentation.
 - Die Uebergabeentscheidung bleibt getrennt von der optionalen Aufnahme im
   Launcher.
 - Es entsteht keine echte Host-Uebergabe.
+
+## G121: Host-Kontext-UEbergabe Freigabeentscheidung
+
+- Die vorhandene Uebergabeentscheidung bleibt die Grundlage; jetzt ist nur
+  noch die spaetere Freigabe fuer die echte Host-UEbergabe offen.
+- Ohne explizite Host-Freigabe bleibt jede `restarbeitId`-Uebergabe gesperrt.

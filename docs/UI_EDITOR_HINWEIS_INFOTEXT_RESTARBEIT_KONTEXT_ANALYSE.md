@@ -180,3 +180,8 @@ Speicherweg ueberfuehrt werden.
 
 - Die Analyse bleibt als Abschlussstand erhalten.
 - Keine echte Host-Uebergabe und kein Speicherweg werden daraus.
+
+## G121: Host-Kontext-UEbergabe Freigabeentscheidung
+
+- Die Analyse zeigt weiterhin nur die Luecke bis zur echten Host-Freigabe.
+- Ohne explizite Host-UEbergabe bleibt `restarbeitId` ein reiner Host-Wert.

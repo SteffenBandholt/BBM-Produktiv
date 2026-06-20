@@ -164,3 +164,9 @@ Host-Freigabe in Code verdrahten.
 - Der Datenvertrag bleibt unveraendert und kann optional von einem Host
   befuellt werden.
 - Ohne Uebergabe bleibt die Vertragslage nur dokumentarisch.
+
+## G121: Host-Kontext-UEbergabe Freigabeentscheidung
+
+- Die dokumentierte Vertragslage bleibt eine Vorstufe fuer die spaetere
+  echte Host-Kontext-UEbergabe.
+- Ohne explizite Host-Freigabe entsteht daraus noch kein Speicherweg.

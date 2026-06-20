@@ -112,3 +112,10 @@ den bestehenden read-only Speicherzustand und `restarbeiten.ui.main` gebunden.
 
 Die optionale Aufnahme nur als internen Vorbereitungspfad stehen lassen, bis
 der Host sie spaeter bewusst mit echten Daten befuellt.
+
+## G121: Host-Kontext-UEbergabe Freigabeentscheidung
+
+- Die optionale Aufnahme bleibt getrennt von der spaeteren echten
+  Host-Kontext-UEbergabe.
+- Eine Umsetzung braucht weiterhin die explizite Host-Freigabe mit
+  eindeutiger `restarbeitId`, `projectId` und Zielkontext `Restarbeiten`.

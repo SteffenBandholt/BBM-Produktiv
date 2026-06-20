@@ -145,6 +145,10 @@ const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_HOST_TRANSFER_RELEASE_DECISION_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_UEBERGABE_FREIGABEENTSCHEIDUNG.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_CONTRACT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md"
@@ -4609,6 +4613,38 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Host-Kontext-Optionale-Aufnahme enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Host-Kontext-UEbergabe-Freigabeentscheidung bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_HOST_TRANSFER_RELEASE_DECISION_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Host-Uebergabe-Freigabeentscheidung fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_HOST_TRANSFER_RELEASE_DECISION_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Freigabeentscheidung",
+      "RestarbeitenScreen",
+      "notesPopup.restarbeitId",
+      "projectId",
+      "restarbeitId",
+      "normalizeHostContextStatus",
+      "isPresent: false",
+      "restarbeiten.ui.main",
+      "Hinweis / Infotext",
+      "nicht zulässig",
+      "kein Submit",
+      "keine IPC-/DB-Schreibaktion",
+      "kein localStorage",
+      "kein writeFile",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Host-Uebergabe-Freigabeentscheidung enthaelt ${required} nicht.`
       );
     }
   });

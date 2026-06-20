@@ -96,6 +96,8 @@ Elemente zwingend vorhanden sein muessen.
   ohne neue Zielklasse.
 - G120 ergaenzt nur einen optionalen Aufnahmepfad; neue Zielarten entstehen
   dadurch nicht.
+- G121 dokumentiert die spaetere Host-Kontext-UEbergabe nur als
+  Freigabeentscheidung; ohne Host-Freigabe bleibt der Katalog unveraendert.
 
 ## Stop-Regel
 
