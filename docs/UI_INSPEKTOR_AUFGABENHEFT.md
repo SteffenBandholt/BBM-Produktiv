@@ -1637,3 +1637,14 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_ABSCHLUSSCHECK.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.141 - Hinweis-/Infotext-Host-Kontext optional aufnehmen
+- Status: offen
+- Beschreibung:
+  - Der Launcher kann optional einen Host-Kontext entgegennehmen und nur
+    intern normalisieren.
+  - Ohne Uebergabe bleibt der sichtbare Default unveraendert.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

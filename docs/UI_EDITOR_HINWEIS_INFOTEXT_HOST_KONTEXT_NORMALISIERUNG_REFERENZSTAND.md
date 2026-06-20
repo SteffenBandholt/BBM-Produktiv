@@ -101,3 +101,9 @@ die echten Werte bewusst liefert.
 
 - Die Normalisierung bleibt als Abschlussstand erhalten.
 - Es folgt keine echte Host-Uebergabe und kein Speicherweg.
+
+## G120: Optionale Host-Kontext-Aufnahme
+
+- Die Normalisierung bleibt auch fuer einen optional uebergebenen Kontext
+  die einzige Bewertung.
+- Ohne Uebergabe bleibt der Default unveraendert.

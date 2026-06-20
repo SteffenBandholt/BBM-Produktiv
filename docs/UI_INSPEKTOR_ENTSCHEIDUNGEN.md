@@ -600,3 +600,7 @@ Speicherwege entstehen daraus nicht.
 **Status nach G119:** Der Host-Kontext ist als Abschlussstand bestaetigt.
 Die Vorbereitung bleibt dokumentiert; neue Freigaben oder Speicherwege folgen
 daraus nicht.
+
+**Status nach G120:** Der Launcher kann optional einen Host-Kontext
+aufnehmen. Der sichtbare Default bleibt gleich; eine echte Host-Uebergabe
+entsteht dadurch nicht.

@@ -460,3 +460,8 @@ Dabei gilt:
 
 - Der vorbereitete Host-Kontext bleibt als Abschlussstand dokumentiert.
 - Es folgt keine neue Funktion und keine neue Freigabe.
+
+## G120: Optionale Host-Kontext-Aufnahme
+
+- Der Launcher kann optional einen Host-Kontext annehmen und normalisieren.
+- Ohne Uebergabe bleibt der Default unveraendert und read-only.

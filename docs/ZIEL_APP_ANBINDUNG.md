@@ -98,6 +98,8 @@ Bearbeitungsflaeche.
   entsteht keine neue Schreib- oder Speicherfreigabe.
 - G119 bestaetigt den Host-Kontext nur als Abschlussstand; es gibt keine
   neue Ziel-App-Anbindung.
+- G120 erlaubt nur eine optionale interne Aufnahme; eine echte Host-
+  Uebergabe bleibt ausgespart.
 
 ## Pruefpflicht
 

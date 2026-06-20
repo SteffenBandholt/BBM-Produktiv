@@ -106,6 +106,8 @@ keinen Speicherbutton und keinen Schreibweg.
   read-only und es entsteht keine neue Host-Uebergabe.
 - G119 bestaetigt den Host-Kontext nur als Abschlussstand; daraus folgt
   keine weitere UI-Freigabe.
+- G120 bereitet nur eine optionale Host-Kontext-Aufnahme vor; der sichtbare
+  Standard bleibt gleich.
 
 ## Stop-Regel
 

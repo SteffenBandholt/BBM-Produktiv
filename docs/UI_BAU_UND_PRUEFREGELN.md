@@ -100,6 +100,8 @@ Bei sichtbarer UI gilt:
   neuer Schreibweg und keine neue Freigabe.
 - G119 bestaetigt den Host-Kontext nur als Abschlussstand; die Regeln bleiben
   ohne neue Aktivierung.
+- G120 erlaubt nur eine optionale interne Aufnahme; der Speicherstatus bleibt
+  gesperrt.
 
 ## Stop-Regeln
 

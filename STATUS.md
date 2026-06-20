@@ -177,6 +177,8 @@ Sie ergÃ¤nzt:
   einer read-only Vorstufe ohne echte Host-Uebergabe.
 - G119 bestaetigt diesen Host-Kontext als Abschlussstand; die Vorbereitung
   bleibt read-only und der Speicherweg bleibt gesperrt.
+- G120 bereitet eine optionale Host-Kontext-Aufnahme im Launcher vor; der
+  sichtbare Default bleibt unveraendert und der Speicherweg bleibt gesperrt.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

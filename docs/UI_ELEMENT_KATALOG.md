@@ -94,6 +94,8 @@ Elemente zwingend vorhanden sein muessen.
   neuer editorrelevanter Zieltyp.
 - G119 bestaetigt den Host-Kontext nur als Abschlussstand; der Katalog bleibt
   ohne neue Zielklasse.
+- G120 ergaenzt nur einen optionalen Aufnahmepfad; neue Zielarten entstehen
+  dadurch nicht.
 
 ## Stop-Regel
 

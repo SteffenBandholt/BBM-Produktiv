@@ -141,6 +141,10 @@ const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_FINAL_CHECK_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_ABSCHLUSSCHECK.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_CONTRACT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md"
@@ -4494,6 +4498,62 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       hostContextStatus: validStatus,
     });
     assert.deepEqual(state.hostContextStatus, validStatus);
+
+    const stateFromOptionalHostContext = mod.createLauncherState({
+      activeUiScope: "restarbeiten.ui.main",
+      hostContext: validStatus,
+    });
+    assert.deepEqual(stateFromOptionalHostContext.hostContextStatus, validStatus);
+
+    const stateFromInvalidHostContext = mod.createLauncherState({
+      activeUiScope: "restarbeiten.ui.main",
+      hostContext: {
+        projectId: "project-42",
+        restarbeitId: "restarbeit-99",
+        targetContext: "Restarbeiten",
+        targetSurfaceId: "pdf.plan.page.1",
+        targetLabel: "UI-Polish fuer BBM",
+        elementType: "Hinweis / Infotext",
+      },
+    });
+    assert.deepEqual(stateFromInvalidHostContext.hostContextStatus, defaultStatus);
+  });
+
+  await run("BBM UI-Editor-Runtime: optionaler Host-Kontext bleibt intern und aktiviert nicht", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const validHostContext = {
+      projectId: "project-42",
+      restarbeitId: "restarbeit-99",
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "UI-Polish fuer BBM",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host",
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.ui.main",
+      hostContext: validHostContext,
+      registryResolver: () => ({
+        uiScope: "restarbeiten.ui.main",
+        moduleId: "restarbeiten",
+        elements: [],
+      }),
+    });
+
+    button.click();
+
+    const storageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
+    const saveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
+
+    assert.equal(storageCheck.textContent.includes("Speicherbutton: deaktiviert"), true);
+    assert.equal(saveButton.disabled, true);
   });
 
   await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Host-Kontext-Abschlusscheck bleibt dokumentiert", async () => {
@@ -4523,6 +4583,32 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Host-Kontext-Abschlusscheck enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: optionale Host-Kontext-Aufnahme bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Host-Kontext-Optionale-Aufnahme fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Host-Kontext",
+      "normalizeHostContextStatus",
+      "Default ohne Host-Kontext",
+      "Entwurf speichern",
+      "restarbeiten.ui.main",
+      "UI-Editor-kit speichert nicht",
+      "kein Submit",
+      "kein writeFile",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Host-Kontext-Optionale-Aufnahme enthaelt ${required} nicht.`
       );
     }
   });

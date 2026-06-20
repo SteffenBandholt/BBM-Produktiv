@@ -158,3 +158,9 @@ Host-Freigabe in Code verdrahten.
 
 - Die Vertragsdoku bleibt als gesicherter Abschlussstand erhalten.
 - Keine echte Host-Uebergabe und kein Speicherweg werden daraus.
+
+## G120: Optionale Host-Kontext-Aufnahme
+
+- Der Datenvertrag bleibt unveraendert und kann optional von einem Host
+  befuellt werden.
+- Ohne Uebergabe bleibt die Vertragslage nur dokumentarisch.

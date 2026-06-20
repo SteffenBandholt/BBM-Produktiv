@@ -261,6 +261,7 @@ function createLauncherState({
   availableUiScopes = null,
   registryResolver = null,
   hostAdapter = null,
+  hostContext = null,
   hostContextStatus = null,
   onPendingChangeRequestsChanged = null,
 } = {}) {
@@ -303,7 +304,7 @@ function createLauncherState({
     win: null,
     availableUiScopes: normalizeAvailableUiScopes(availableUiScopes),
     hintInfotextDraftText: READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT,
-    hostContextStatus: normalizeHostContextStatus(hostContextStatus),
+    hostContextStatus: normalizeHostContextStatus(hostContextStatus ?? hostContext),
     registryResolver: resolver,
     hostAdapter: adapter,
   };
@@ -2524,6 +2525,8 @@ export async function installBbmUiEditorRuntimeLauncher({
   availableUiScopes = null,
   registryResolver = null,
   hostAdapter = null,
+  hostContext = null,
+  hostContextStatus = null,
   onPendingChangeRequestsChanged = null,
   doc = getDocument(),
   win = getWindow(),
@@ -2544,6 +2547,8 @@ export async function installBbmUiEditorRuntimeLauncher({
     availableUiScopes,
     registryResolver,
     hostAdapter,
+    hostContext,
+    hostContextStatus,
     onPendingChangeRequestsChanged,
   });
   state.win = win || null;

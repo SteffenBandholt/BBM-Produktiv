@@ -142,3 +142,9 @@ Dokumentation.
 
 - Die Uebergabeentscheidung bleibt als Abschlussstand erhalten.
 - Keine echte Host-Uebergabe und kein Speicherweg werden daraus.
+
+## G120: Optionale Host-Kontext-Aufnahme
+
+- Die Uebergabeentscheidung bleibt getrennt von der optionalen Aufnahme im
+  Launcher.
+- Es entsteht keine echte Host-Uebergabe.

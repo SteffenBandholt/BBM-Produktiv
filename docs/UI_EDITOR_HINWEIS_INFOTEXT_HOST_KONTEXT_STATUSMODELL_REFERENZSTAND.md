@@ -108,3 +108,8 @@ Host-Freigabe die echten Werte bewusst liefert.
 
 - Der Statusmodell-Stand bleibt als Abschlussstand erhalten.
 - Keine neue Freigabe und kein Speicherweg folgen daraus.
+
+## G120: Optionale Host-Kontext-Aufnahme
+
+- Das Statusmodell kann spaeter optional mit Host-Daten gefuellt werden.
+- Der Default bleibt ohne Uebergabe unveraendert.

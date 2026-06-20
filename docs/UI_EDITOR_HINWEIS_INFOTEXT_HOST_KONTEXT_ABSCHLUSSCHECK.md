@@ -115,3 +115,8 @@ Der Speicherbutton darf spaeter nur aktiv werden, wenn:
 
 Den Host-Kontext weiter nur als vorbereiteten Zwischenstand behandeln, bis
 ein spaeterer Host die echten Werte bewusst liefert.
+
+## G120: Optionale Host-Kontext-Aufnahme
+
+- Der Launcher kann spaeter optional einen Host-Kontext aufnehmen.
+- Der Abschlussstand bleibt dabei unveraendert und gesperrt.
