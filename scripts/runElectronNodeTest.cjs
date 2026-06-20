@@ -23,18 +23,17 @@ if (!electronBinary) {
 const testScript = path.resolve(__dirname, "test.cjs");
 const useCmdLauncher = isWindows && electronBinary.toLowerCase().endsWith(".cmd");
 const spawnCommand = useCmdLauncher ? "cmd.exe" : electronBinary;
-// Der Heap muss beim echten Electron-Testprozess per Startargument gesetzt werden,
-// nicht erst in dessen Laufzeitumgebung.
-const electronHeapFlag = "--max-old-space-size=8192";
+const heapFlag = "--max-old-space-size=8192";
 const spawnArgs = useCmdLauncher
-  ? ["/d", "/s", "/c", `"${electronBinary}" ${electronHeapFlag} "${testScript}"`]
-  : [electronHeapFlag, testScript];
+  ? ["/d", "/s", "/c", `"${electronBinary}" "${heapFlag}" "${testScript}"`]
+  : [heapFlag, testScript];
 
 const child = spawnSync(spawnCommand, spawnArgs, {
   env: {
     ...process.env,
+    // Der eigentliche Test-Kindprozess startet als Electron-Node-Prozess.
     ELECTRON_RUN_AS_NODE: "1",
-    NODE_OPTIONS: String(process.env.NODE_OPTIONS || "").trim(),
+    NODE_OPTIONS: `${process.env.NODE_OPTIONS ? `${process.env.NODE_OPTIONS} ` : ""}--max-old-space-size=8192`,
   },
   stdio: "inherit",
 });

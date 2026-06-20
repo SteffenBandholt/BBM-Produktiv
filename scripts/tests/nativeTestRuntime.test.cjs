@@ -12,7 +12,7 @@ function runNativeTestRuntimeTests(run) {
     const wrapperContent = fs.readFileSync(wrapperPath, "utf8");
 
     assert.ok(pkg.scripts?.test, "package.json scripts.test fehlt");
-    assert.equal(pkg.scripts.test, "node --max-old-space-size=8192 scripts/runElectronNodeTest.cjs");
+    assert.equal(pkg.scripts.test, "node scripts/runElectronNodeTest.cjs");
     assert.notEqual(pkg.scripts.test, "node scripts/test.cjs");
 
     assert.ok(pkg.scripts?.["test:node"], "package.json scripts.test:node fehlt");
@@ -21,11 +21,11 @@ function runNativeTestRuntimeTests(run) {
     assert.match(wrapperContent, /ELECTRON_RUN_AS_NODE/);
     assert.match(wrapperContent, /--max-old-space-size=8192/);
     assert.match(wrapperContent, /electron\.exe/);
-    assert.match(wrapperContent, /".bin"/);
-    assert.match(wrapperContent, /"electron"/);
     assert.match(wrapperContent, /test\.cjs/);
-    assert.doesNotMatch(wrapperContent, /require\(["']better-sqlite3["']\)/);
+    assert.match(wrapperContent, /NODE_OPTIONS/);
+    assert.doesNotMatch(wrapperContent, /npm_node_execpath|process\.execPath/);
     assert.doesNotMatch(wrapperContent, /electron-builder install-app-deps/);
+    assert.doesNotMatch(wrapperContent, /require\(["']better-sqlite3["']\)/);
 
     assert.equal(pkg.scripts.postinstall, "electron-builder install-app-deps");
     assert.equal(pkg.scripts["fix:electron-deps"], "electron-builder install-app-deps");

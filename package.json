@@ -10,7 +10,7 @@
     "start:raw": "set ELECTRON_RUN_AS_NODE=&& electron .",
     "pack": "electron-builder --dir",
     "dist": "node scripts/dist.cjs",
-    "test": "node --max-old-space-size=8192 scripts/runElectronNodeTest.cjs",
+    "test": "node scripts/runElectronNodeTest.cjs",
     "lint": "eslint \"src/**/*.js\"",
     "lint:fix": "eslint \"src/**/*.js\" --fix",
     "fix:electron-deps": "electron-builder install-app-deps",
