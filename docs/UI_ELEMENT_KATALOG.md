@@ -73,6 +73,8 @@ Elemente zwingend vorhanden sein muessen.
   sind noch nicht aktiv.
 - G109 zeigt einen gesperrten Speicherbereich im Editor-Kontext; das ist nur
   Anzeige, kein Speicherziel.
+- G110 ergaenzt dort einen sichtbaren Freigabecheck; der Speicherbutton bleibt
+  deaktiviert und es entsteht kein neues Speicherziel.
 
 ## Stop-Regel
 

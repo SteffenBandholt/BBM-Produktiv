@@ -155,6 +155,9 @@ Sie ergÃ¤nzt:
 - G109 ergaenzt einen sichtbaren, aber gesperrten Speicherbereich im
   UI-Editor-Panel; der Button bleibt deaktiviert und es wird nichts
   gespeichert.
+- G110 ergaenzt im gesperrten Speicherbereich den sichtbaren
+  Freigabecheck; `Hinweistext gueltig` zieht lokal mit, der Button bleibt
+  deaktiviert und es wird weiterhin nichts gespeichert.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

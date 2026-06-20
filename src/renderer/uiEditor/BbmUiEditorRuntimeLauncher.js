@@ -75,6 +75,13 @@ const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_SURFACE_ID = "surfaceId: rest
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_STATUS = "status: draft";
 const READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_PAYLOAD_PERSISTED = "persisted: false";
 const READONLY_HINT_INFOTEXT_STORAGE_TITLE = "Speichern";
+const READONLY_HINT_INFOTEXT_STORAGE_CHECK_TITLE = "Freigabecheck";
+const READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE = "Hinweistext gültig: ja";
+const READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE = "Hinweistext gültig: nein";
+const READONLY_HINT_INFOTEXT_STORAGE_CHECK_TARGET_SURFACE_LINE = "Ziel-Surface: restarbeiten.ui.main";
+const READONLY_HINT_INFOTEXT_STORAGE_CHECK_RELEASE_LINE = "Schreibweg freigegeben: nein";
+const READONLY_HINT_INFOTEXT_STORAGE_CHECK_BUTTON_LINE = "Speicherbutton: deaktiviert";
+const READONLY_HINT_INFOTEXT_STORAGE_CHECK_PERSISTENCE_LINE = "Persistenz: nicht aktiv";
 const READONLY_HINT_INFOTEXT_STORAGE_ROUTE_LINE = "Speicherweg: Restarbeiten-Notizweg vorbereitet";
 const READONLY_HINT_INFOTEXT_STORAGE_TARGET_LINE = "Ziel: restarbeiten:createNote";
 const READONLY_HINT_INFOTEXT_STORAGE_STATUS_LINE = "Status: gesperrt";
@@ -1413,7 +1420,7 @@ function renderPreviewPanel(doc, state = {}) {
   panel.appendChild(details);
 
   appendReadonlyHintInfotextDraftPreview(doc, panel, state);
-  appendReadonlyHintInfotextStoragePreview(doc, panel);
+  appendReadonlyHintInfotextStoragePreview(doc, panel, state);
   appendReadonlySurfaceSelection(doc, panel, state);
   appendReadonlySurfaceElementCatalogOverview(doc, panel);
   appendReadonlyPdfPlanPage1Hint(doc, panel, state);
@@ -1997,6 +2004,18 @@ function formatReadonlyHintInfotextDraftValidationText(value = "") {
   ].join("\n");
 }
 
+function formatReadonlyHintInfotextStorageFreigabecheckText(value = "") {
+  return [
+    isReadonlyHintInfotextDraftValid(value)
+      ? READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE
+      : READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_CHECK_TARGET_SURFACE_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_CHECK_RELEASE_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_CHECK_BUTTON_LINE,
+    READONLY_HINT_INFOTEXT_STORAGE_CHECK_PERSISTENCE_LINE,
+  ].join("\n");
+}
+
 function handleReadonlyHintInfotextDraftInput(
   state = {},
   value = "",
@@ -2004,7 +2023,8 @@ function handleReadonlyHintInfotextDraftInput(
   hostPreview = null,
   elementModelPreview = null,
   payloadPreview = null,
-  validationPreview = null
+  validationPreview = null,
+  storageCheckPreview = null
 ) {
   const nextValue = String(value == null ? "" : value);
   state.hintInfotextDraftText = nextValue;
@@ -2023,6 +2043,9 @@ function handleReadonlyHintInfotextDraftInput(
   if (validationPreview) {
     validationPreview.textContent = formatReadonlyHintInfotextDraftValidationText(nextValue);
   }
+  if (storageCheckPreview) {
+    storageCheckPreview.textContent = formatReadonlyHintInfotextStorageFreigabecheckText(nextValue);
+  }
   return nextValue;
 }
 
@@ -2032,7 +2055,8 @@ function resetReadonlyHintInfotextDraft(
   hostPreview = null,
   elementModelPreview = null,
   payloadPreview = null,
-  validationPreview = null
+  validationPreview = null,
+  storageCheckPreview = null
 ) {
   const nextValue = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT;
   state.hintInfotextDraftText = nextValue;
@@ -2043,7 +2067,8 @@ function resetReadonlyHintInfotextDraft(
     hostPreview,
     elementModelPreview,
     payloadPreview,
-    validationPreview
+    validationPreview,
+    storageCheckPreview
   );
 }
 
@@ -2105,7 +2130,8 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
       hostPreview,
       elementModelPreview,
       payloadPreview,
-      validationPreview
+      validationPreview,
+      state.hintInfotextStorageCheckPreview || null
     );
   });
   input.addEventListener("change", () => {
@@ -2116,7 +2142,8 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
       hostPreview,
       elementModelPreview,
       payloadPreview,
-      validationPreview
+      validationPreview,
+      state.hintInfotextStorageCheckPreview || null
     );
   });
 
@@ -2142,7 +2169,8 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
       hostPreview,
       elementModelPreview,
       payloadPreview,
-      validationPreview
+      validationPreview,
+      state.hintInfotextStorageCheckPreview || null
     );
   });
 
@@ -2258,7 +2286,7 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
   return preview;
 }
 
-function appendReadonlyHintInfotextStoragePreview(doc, panel) {
+function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
 
   const storage = doc.createElement("div");
@@ -2286,7 +2314,28 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel) {
     READONLY_HINT_INFOTEXT_STORAGE_TARGET_LINE,
     READONLY_HINT_INFOTEXT_STORAGE_STATUS_LINE,
     READONLY_HINT_INFOTEXT_STORAGE_PERSISTED_LINE,
-  ].map((line) => `- ${line}`).join("\n");
+  ].join("\n");
+
+  const freigabecheckTitle = doc.createElement("div");
+  freigabecheckTitle.className = "ui-editor-preview-hint-infotext-storage__check-title";
+  freigabecheckTitle.textContent = READONLY_HINT_INFOTEXT_STORAGE_CHECK_TITLE;
+  freigabecheckTitle.style.fontWeight = "700";
+  freigabecheckTitle.style.marginTop = "8px";
+  freigabecheckTitle.style.marginBottom = "4px";
+
+  const freigabecheck = doc.createElement("div");
+  freigabecheck.className = "ui-editor-preview-hint-infotext-storage__check";
+  freigabecheck.setAttribute("data-ui-editor-hint-infotext-storage-check", "true");
+  freigabecheck.style.whiteSpace = "pre-wrap";
+  freigabecheck.style.padding = "6px 8px";
+  freigabecheck.style.border = "1px solid #dbe4ee";
+  freigabecheck.style.borderRadius = "4px";
+  freigabecheck.style.background = "#ffffff";
+  freigabecheck.style.minHeight = "24px";
+  freigabecheck.textContent = formatReadonlyHintInfotextStorageFreigabecheckText(
+    getReadonlyHintInfotextDraftText(state)
+  );
+  state.hintInfotextStorageCheckPreview = freigabecheck;
 
   const button = doc.createElement("button");
   button.type = "button";
@@ -2306,7 +2355,7 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel) {
   button.addEventListener("mousedown", stopPreviewPanelEvent);
   button.addEventListener("click", stopPreviewPanelEvent);
 
-  storage.append(title, lines, button);
+  storage.append(title, lines, freigabecheckTitle, freigabecheck, button);
   panel.appendChild(storage);
   return storage;
 }

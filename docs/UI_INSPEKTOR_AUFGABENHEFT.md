@@ -1514,12 +1514,24 @@ Hinweis:
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
 
 ### K19.130 - Hinweis-/Infotext-Speicherbereich sichtbar aber gesperrt anzeigen
-- Status: offen
+- Status: erledigt
 - Beschreibung:
   - Im UI-Editor-Panel wird ein sichtbarer, aber deaktivierter Speicherbereich
     fuer den Hinweis-/Infotext vorbereitet.
   - Der Bereich bleibt reine Anzeige und loest keine Speicherung aus.
 - Betroffene Dateien:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERN_GESPERRT_UI_REFERENZSTAND.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.131 - Hinweis-/Infotext-Speicher-Freigabecheck sichtbar anzeigen
+- Status: erledigt
+- Beschreibung:
+  - Im gesperrten Speicherbereich wird zusaetzlich ein sichtbarer
+    Freigabecheck angezeigt, der nur den lokalen Validierungsstand beschreibt.
+  - Der Speicherbutton bleibt deaktiviert; Speichern, Submit und neue
+    Schreibwege bleiben blockiert.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHER_FREIGABECHECK_UI_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

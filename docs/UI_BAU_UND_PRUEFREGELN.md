@@ -79,6 +79,8 @@ Bei sichtbarer UI gilt:
   machen.
 - G109 erlaubt einen sichtbar gesperrten Speicherbereich; aktiv speichernde
   Wege bleiben weiter blockiert.
+- G110 ergaenzt darin einen sichtbaren Freigabecheck; der Speicherbutton
+  bleibt deaktiviert und die Freigabe bleibt lesend.
 
 ## Stop-Regeln
 

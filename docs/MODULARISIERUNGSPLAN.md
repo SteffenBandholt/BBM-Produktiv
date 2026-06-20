@@ -160,6 +160,9 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G108 gibt den Restarbeiten-Notizweg als spaeteren Ziel-Schreibweg frei; die technische Umsetzung bleibt bewusst offen
 - G109 zeigt den gesperrten Speicherbereich im UI-Editor-Panel sichtbar an;
   die technische Speicherung bleibt weiter blockiert
+- G110 ergaenzt im gesperrten Speicherbereich einen sichtbaren
+  Freigabecheck; der Button bleibt deaktiviert und es wird weiterhin nichts
+  gespeichert
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

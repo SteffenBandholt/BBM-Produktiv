@@ -112,6 +112,8 @@ Die Payload-Vorschau bleibt reine Anzeige.
 - Keine Aenderung an `../UI-Editor-kit`.
 - G109 zeigt den Speicherbereich sichtbar an, aber weiterhin ohne aktive
   Speicherung.
+- G110 legt darin einen sichtbaren Freigabecheck nach, ohne den Schreibweg
+  zu aktivieren.
 
 ## Empfohlener naechster Schritt
 

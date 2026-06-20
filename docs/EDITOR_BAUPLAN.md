@@ -85,6 +85,8 @@ keinen Speicherbutton und keinen Schreibweg.
   ohne den Speicherweg selbst zu bauen.
 - G109 zeigt den Speicherbereich sichtbar an, laesst ihn aber gesperrt und
   deaktiviert.
+- G110 ergaenzt dort einen sichtbaren Freigabecheck; der Speicherbutton
+  bleibt deaktiviert und der Status bleibt rein lesend.
 
 ## Stop-Regel
 

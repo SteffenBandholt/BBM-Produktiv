@@ -76,6 +76,8 @@ Bearbeitungsflaeche.
   separat und ist noch keine Umstellung.
 - G109 zeigt den gesperrten Speicherbereich in BBM, ohne einen aktiven
   Schreibweg anzubinden.
+- G110 ergaenzt dort einen sichtbaren Freigabecheck; der Speicherbutton bleibt
+  deaktiviert und `UI-Editor-kit` speichert weiterhin nicht.
 
 ## Pruefpflicht
 

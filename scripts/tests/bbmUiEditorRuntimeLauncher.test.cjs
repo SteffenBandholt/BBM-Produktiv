@@ -113,6 +113,10 @@ const UI_EDITOR_HINT_INFOTEXT_STORAGE_RELEASE_DECISION_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERFREIGABE_ENTSCHEIDUNG.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_STORAGE_FREIGABECHECK_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHER_FREIGABECHECK_UI_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_BBM_SCHREIBWEG_ANALYSE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_BBM_SCHREIBWEG_ANALYSE.md"
@@ -480,6 +484,9 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-hint-infotext-storage-preview=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-storage-preview") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-storage-check=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-storage-check") === "true";
   }
   if (raw === "[data-ui-editor-hint-infotext-save-button=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-save-button") === "true";
@@ -944,6 +951,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const hintInfotextElementModelPreview = doc.querySelector('[data-ui-editor-hint-infotext-elementmodel-preview="true"]');
     const hintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     const hintInfotextStoragePreview = doc.querySelector('[data-ui-editor-hint-infotext-storage-preview="true"]');
+    const hintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
     const hintInfotextSaveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
     const hintInfotextDraftValidation = doc.querySelector('[data-ui-editor-hint-infotext-draft-validation="true"]');
     const hintInfotextDraftReset = doc.querySelector('[data-ui-editor-hint-infotext-draft-reset="true"]');
@@ -1020,8 +1028,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "type: Hinweis / Infotext\nsurfaceId: restarbeiten.ui.main\nstatus: draft\npersisted: false\nDies ist ein nicht gespeicherter Hinweis-Entwurf."
     );
     assert.equal(Boolean(hintInfotextStoragePreview), true);
+    assert.equal(getRenderedText(hintInfotextStoragePreview).includes("Freigabecheck"), true);
     for (const required of [
-      "Speichern",
       "Speicherweg: Restarbeiten-Notizweg vorbereitet",
       "Ziel: restarbeiten:createNote",
       "Status: gesperrt",
@@ -1032,6 +1040,20 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         getRenderedText(hintInfotextStoragePreview).includes(required),
         true,
         `Speicherbereich enthaelt ${required} nicht.`
+      );
+    }
+    assert.equal(Boolean(hintInfotextStorageCheck), true);
+    for (const required of [
+      "Hinweistext gültig: ja",
+      "Ziel-Surface: restarbeiten.ui.main",
+      "Schreibweg freigegeben: nein",
+      "Speicherbutton: deaktiviert",
+      "Persistenz: nicht aktiv",
+    ]) {
+      assert.equal(
+        getRenderedText(hintInfotextStorageCheck).includes(required),
+        true,
+        `Freigabecheck enthaelt ${required} nicht.`
       );
     }
     assert.equal(Boolean(hintInfotextSaveButton), true);
@@ -1081,6 +1103,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       updatedHintInfotextPayloadPreview.textContent,
       "type: Hinweis / Infotext\nsurfaceId: restarbeiten.ui.main\nstatus: draft\npersisted: false\nLokaler Hinweistext fuer die Vorschau."
     );
+    const updatedHintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
+    assert.equal(
+      updatedHintInfotextStorageCheck.textContent,
+      "Hinweistext gültig: ja\nZiel-Surface: restarbeiten.ui.main\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
+    );
     assert.equal(
       updatedHintInfotextDraftValidation.textContent,
       "Status: gültiger lokaler Entwurf\nSpeichern: nicht aktiv"
@@ -1096,6 +1123,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       emptiedHintInfotextDraftValidation.textContent,
       "Status: Hinweistext fehlt\nSpeichern: nicht aktiv"
     );
+    const emptiedHintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
+    assert.equal(
+      emptiedHintInfotextStorageCheck.textContent,
+      "Hinweistext gültig: nein\nZiel-Surface: restarbeiten.ui.main\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
+    );
     const emptiedHintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     assert.equal(
       emptiedHintInfotextPayloadPreview.textContent,
@@ -1108,6 +1140,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const resetHintInfotextElementModelPreview = doc.querySelector('[data-ui-editor-hint-infotext-elementmodel-preview="true"]');
     const resetHintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     const resetHintInfotextDraftValidation = doc.querySelector('[data-ui-editor-hint-infotext-draft-validation="true"]');
+    const resetHintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
     assert.equal(resetHintInfotextDraftInput.value, "Dies ist ein nicht gespeicherter Hinweis-Entwurf.");
     assert.equal(resetHintInfotextLivePreview.textContent, "Dies ist ein nicht gespeicherter Hinweis-Entwurf.");
     assert.equal(
@@ -1125,6 +1158,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(
       resetHintInfotextDraftValidation.textContent,
       "Status: gültiger lokaler Entwurf\nSpeichern: nicht aktiv"
+    );
+    assert.equal(
+      resetHintInfotextStorageCheck.textContent,
+      "Hinweistext gültig: ja\nZiel-Surface: restarbeiten.ui.main\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
     );
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
@@ -3986,6 +4023,38 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Speicherfreigabe-Entscheidung enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Speicher-Freigabecheck bleibt vorhanden", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_STORAGE_FREIGABECHECK_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Speicher-Freigabecheck-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_STORAGE_FREIGABECHECK_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Freigabecheck",
+      "Hinweistext gültig: ja",
+      "Hinweistext gültig: nein",
+      "Ziel-Surface: restarbeiten.ui.main",
+      "Schreibweg freigegeben: nein",
+      "Speicherbutton: deaktiviert",
+      "Persistenz: nicht aktiv",
+      "restarbeiten:createNote",
+      "keine IPC-/DB-Anbindung",
+      "persisted: false",
+      "restarbeiten.ui.main",
+      "Weiterhin blockiert",
+      "Testabdeckung",
+      "Electron-Sichtpruefung",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Speicher-Freigabecheck enthaelt ${required} nicht.`
       );
     }
   });

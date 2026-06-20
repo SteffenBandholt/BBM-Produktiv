@@ -128,6 +128,8 @@ damit einen Speicherweg zu bauen.
 - Die aktuelle Doku legt nur die Grenze fest, nicht den Speicherpfad.
 - G109 zeigt den Speicherbereich sichtbar an, aber weiterhin ohne aktive
   Speicherung.
+- G110 ergaenzt dort einen sichtbaren Freigabecheck; der Speicherbutton bleibt
+  deaktiviert und es wird weiter nichts gespeichert.
 - Keine Aenderung an `../UI-Editor-kit`.
 - Das spaetere Speicherziel ist getrennt dokumentiert und beschreibt noch
   keinen gebauten Schreibweg.

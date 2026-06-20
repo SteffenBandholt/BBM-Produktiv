@@ -554,3 +554,8 @@ Schreiblogik.
 **Status nach G109:** Ein sichtbarer Speicherbereich ist im UI-Editor-Panel
 vorbereitet. Er bleibt gesperrt, zeigt nur die Zielrichtung an und loest
 weiterhin keine Speicherung aus.
+
+**Status nach G110:** Im gesperrten Speicherbereich ist zusaetzlich ein
+sichtbarer Freigabecheck angekommen. Er zeigt nur den lokalen
+Validierungsstand, laesst den Speicherbutton deaktiviert und aktiviert keinen
+Schreibweg.

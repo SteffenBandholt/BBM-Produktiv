@@ -98,6 +98,8 @@ createdFrom: ui-editor-draft
 - Der hier beschriebene Schreibweg ist BBM-seitig und noch nicht gebaut.
 - G109 zeigt den Speicherbereich sichtbar, aber weiterhin ohne aktive
   Speicherung.
+- G110 ergaenzt dort einen sichtbaren Freigabecheck; der Schreibweg bleibt
+  weiter deaktiviert.
 - Keine Aenderung an `../UI-Editor-kit`.
 
 ## Empfohlener naechster Schritt

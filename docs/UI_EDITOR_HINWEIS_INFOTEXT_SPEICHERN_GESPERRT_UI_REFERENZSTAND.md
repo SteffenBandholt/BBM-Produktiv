@@ -4,6 +4,8 @@
 
 Im UI-Editor-Panel ist ein sichtbarer Speicherbereich vorbereitet. Er zeigt die
 fachliche Zielrichtung, bleibt aber gesperrt und loest keine Speicherung aus.
+G110 ergaenzt darin einen sichtbaren Freigabecheck, der nur den lokalen
+Validierungsstand anzeigt.
 
 ## Sichtbarer Speicherbereich
 
@@ -18,6 +20,16 @@ fachliche Zielrichtung, bleibt aber gesperrt und loest keine Speicherung aus.
 - Button: `Entwurf speichern`
 - der Button ist sichtbar, aber deaktiviert
 - ein Klick darf keine Speicherung ausloesen
+
+## G110: Freigabecheck
+
+- `Freigabecheck`
+- `Hinweistext gültig: ja` oder `Hinweistext gültig: nein`
+- `Ziel-Surface: restarbeiten.ui.main`
+- `Schreibweg freigegeben: nein`
+- `Speicherbutton: deaktiviert`
+- `Persistenz: nicht aktiv`
+- der Check aktualisiert sich sofort beim Tippen
 
 ## Warum Speichern weiterhin gesperrt bleibt
 
