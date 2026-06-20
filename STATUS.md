@@ -175,6 +175,8 @@ Sie ergÃ¤nzt:
   Statusmodell ableiten; `projectId` und `restarbeitId` bleiben dabei leer.
 - G118 normalisiert diesen lokalen Host-Kontext nur intern; es bleibt bei
   einer read-only Vorstufe ohne echte Host-Uebergabe.
+- G119 bestaetigt diesen Host-Kontext als Abschlussstand; die Vorbereitung
+  bleibt read-only und der Speicherweg bleibt gesperrt.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

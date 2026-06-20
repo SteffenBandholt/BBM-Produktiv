@@ -169,3 +169,14 @@ Speicherweg ueberfuehrt werden.
 
 - Der fehlende Host-Kontext wird jetzt im UI-Editor sichtbar angezeigt.
 - Die Analyse bleibt Grundlage; die Anzeige ist keine Uebergabe.
+
+## G118: Host-Kontext-Normalisierung
+
+- Der lokale Host-Kontext wird intern normalisiert, bevor die Anzeige ihn
+  nutzt.
+- Daraus folgt keine neue Uebergabe oder Freigabe.
+
+## G119: Host-Kontext-Abschlusscheck
+
+- Die Analyse bleibt als Abschlussstand erhalten.
+- Keine echte Host-Uebergabe und kein Speicherweg werden daraus.

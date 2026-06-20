@@ -153,3 +153,14 @@ entschieden wird.
 
 - Die sichtbare Anzeige kommt jetzt aus einem lokalen Statusmodell.
 - Der Speicherbereich bleibt davon unberuehrt weiterhin gesperrt.
+
+## G118: Host-Kontext-Normalisierung
+
+- Der lokale Host-Kontext wird intern normalisiert, bevor die Anzeige ihn
+  nutzt.
+- Die Sperre bleibt unveraendert.
+
+## G119: Host-Kontext-Abschlusscheck
+
+- Der Speicher-Vorbereitungsstand bleibt als Abschlussstand erhalten.
+- Kein Speicherweg wird daraus aktiviert.

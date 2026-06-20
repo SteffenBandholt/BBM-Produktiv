@@ -96,3 +96,8 @@ Speicherzustand und `restarbeiten.ui.main`.
 
 Die Normalisierung nur als interne Vorstufe behalten, bis ein spaeterer Host
 die echten Werte bewusst liefert.
+
+## G119: Host-Kontext-Abschlusscheck
+
+- Die Normalisierung bleibt als Abschlussstand erhalten.
+- Es folgt keine echte Host-Uebergabe und kein Speicherweg.

@@ -97,3 +97,14 @@ Speicherzustand und `restarbeiten.ui.main`.
 
 Den lokalen Statusstand nur als Zwischenmodell behalten, bis eine spaetere
 Host-Freigabe die echten Werte bewusst liefert.
+
+## G118: Host-Kontext-Normalisierung
+
+- Der Renderer normalisiert den lokalen Host-Kontext vor der Anzeige.
+- Die Werte bleiben read-only und werden nicht als echte Host-Uebergabe
+  verstanden.
+
+## G119: Host-Kontext-Abschlusscheck
+
+- Der Statusmodell-Stand bleibt als Abschlussstand erhalten.
+- Keine neue Freigabe und kein Speicherweg folgen daraus.

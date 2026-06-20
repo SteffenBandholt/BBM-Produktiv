@@ -98,6 +98,8 @@ Bei sichtbarer UI gilt:
   Statusmodell kommen; Speichern bleibt weiter gesperrt.
 - G118 normalisiert dieses lokale Modell nur intern; dadurch entsteht kein
   neuer Schreibweg und keine neue Freigabe.
+- G119 bestaetigt den Host-Kontext nur als Abschlussstand; die Regeln bleiben
+  ohne neue Aktivierung.
 
 ## Stop-Regeln
 

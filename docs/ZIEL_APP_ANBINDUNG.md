@@ -96,6 +96,8 @@ Bearbeitungsflaeche.
   Host liefert die echten Werte weiterhin nicht.
 - G118 normalisiert diese Host-Anzeige intern; BBM bleibt Host und es
   entsteht keine neue Schreib- oder Speicherfreigabe.
+- G119 bestaetigt den Host-Kontext nur als Abschlussstand; es gibt keine
+  neue Ziel-App-Anbindung.
 
 ## Pruefpflicht
 

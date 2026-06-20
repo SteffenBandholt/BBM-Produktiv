@@ -1627,3 +1627,13 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_NORMALISIERUNG_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.140 - Hinweis-/Infotext-Host-Kontext abschliessen
+- Status: offen
+- Beschreibung:
+  - Der gepruefte Host-Kontext wird als Abschlussstand dokumentiert.
+  - Es folgt keine neue Freigabe und kein Speicherweg.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_ABSCHLUSSCHECK.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

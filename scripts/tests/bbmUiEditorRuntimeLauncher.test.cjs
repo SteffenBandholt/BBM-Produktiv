@@ -137,6 +137,10 @@ const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_NORMALIZATION_REFERENCE_DOC_PATH = pa
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_NORMALISIERUNG_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_FINAL_CHECK_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_ABSCHLUSSCHECK.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_CONTRACT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md"
@@ -4490,6 +4494,37 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       hostContextStatus: validStatus,
     });
     assert.deepEqual(state.hostContextStatus, validStatus);
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Host-Kontext-Abschlusscheck bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_FINAL_CHECK_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Host-Kontext-Abschlusscheck fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_FINAL_CHECK_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Host-Kontext",
+      "projectId",
+      "restarbeitId",
+      "isPresent: false",
+      "restarbeiten.ui.main",
+      "Hinweis / Infotext",
+      "nicht gesucht",
+      "nicht geraten",
+      "Button `Entwurf speichern` bleibt deaktiviert",
+      "kein Submit",
+      "keine IPC-/DB-Schreibaktion",
+      "kein localStorage",
+      "kein writeFile",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Host-Kontext-Abschlusscheck enthaelt ${required} nicht.`
+      );
+    }
   });
 
   await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-BBM-Schreibweg bleibt nur analysiert", async () => {

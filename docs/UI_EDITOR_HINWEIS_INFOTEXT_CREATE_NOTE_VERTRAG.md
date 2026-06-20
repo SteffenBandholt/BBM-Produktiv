@@ -159,3 +159,14 @@ erst nach eigener Freigabe einen echten Speicherweg bauen.
 - Die sichtbare Anzeige nutzt ein lokales Statusmodell.
 - Der Vertrag bleibt unveraendert; `projectId` und `restarbeitId` fehlen
   weiterhin im Renderer.
+
+## G118: Host-Kontext-Normalisierung
+
+- Der lokale Host-Kontext wird intern normalisiert, ohne den Vertrag zu
+  aendern.
+- Die Voraussetzungen bleiben dokumentarisch.
+
+## G119: Host-Kontext-Abschlusscheck
+
+- Der Vertrag bleibt als Abschlussstand erhalten.
+- Keine echte Host-Uebergabe und kein Speicherweg werden daraus.

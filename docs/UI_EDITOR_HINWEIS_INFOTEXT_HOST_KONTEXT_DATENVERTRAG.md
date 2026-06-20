@@ -147,3 +147,14 @@ Host-Freigabe in Code verdrahten.
 - `projectId` und `restarbeitId` bleiben dabei weiterhin `null`.
 - Diese Doku bleibt die spaetere Vertragsgrundlage; das Statusmodell ist nur
   ein interner Zwischenstand.
+
+## G118: Host-Kontext-Normalisierung
+
+- Der lokale Host-Kontext wird intern normalisiert, ohne den Vertrag zu
+  aendern.
+- Ungueltige oder fehlende Werte fallen auf den Default zurueck.
+
+## G119: Host-Kontext-Abschlusscheck
+
+- Die Vertragsdoku bleibt als gesicherter Abschlussstand erhalten.
+- Keine echte Host-Uebergabe und kein Speicherweg werden daraus.

@@ -455,3 +455,8 @@ Dabei gilt:
   Anzeige ihn verwendet.
 - Es bleibt bei einer Vorstufe ohne echte Host-Uebergabe und ohne neue
   Persistenz.
+
+## G119: Host-Kontext-Abschlusscheck
+
+- Der vorbereitete Host-Kontext bleibt als Abschlussstand dokumentiert.
+- Es folgt keine neue Funktion und keine neue Freigabe.

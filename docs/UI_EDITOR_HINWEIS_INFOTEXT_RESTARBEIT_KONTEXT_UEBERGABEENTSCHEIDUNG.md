@@ -132,3 +132,13 @@ Dokumentation.
 
 - Der Renderer bildet den sichtbaren Kontext aus einem lokalen Statusmodell.
 - Die Uebergabeentscheidung bleibt davon unberuehrt.
+
+## G118: Host-Kontext-Normalisierung
+
+- Der lokale Host-Kontext wird intern normalisiert, ohne neue Uebergabe.
+- Die Entscheidung bleibt unveraendert.
+
+## G119: Host-Kontext-Abschlusscheck
+
+- Die Uebergabeentscheidung bleibt als Abschlussstand erhalten.
+- Keine echte Host-Uebergabe und kein Speicherweg werden daraus.

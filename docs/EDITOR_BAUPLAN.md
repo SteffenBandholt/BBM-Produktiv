@@ -104,6 +104,8 @@ keinen Speicherbutton und keinen Schreibweg.
   Statusmodell; echte Host-Daten kommen weiterhin nicht im Renderer an.
 - G118 normalisiert dieses lokale Statusmodell intern; die Anzeige bleibt
   read-only und es entsteht keine neue Host-Uebergabe.
+- G119 bestaetigt den Host-Kontext nur als Abschlussstand; daraus folgt
+  keine weitere UI-Freigabe.
 
 ## Stop-Regel
 

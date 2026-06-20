@@ -100,3 +100,13 @@ Host-Übergabe bewusst freigegeben und technisch umgesetzt wird.
 
 - Die sichtbare Anzeige wird jetzt aus einem lokalen Statusmodell abgeleitet.
 - `restarbeitId` bleibt dabei weiterhin unuebergeben.
+
+## G118: Host-Kontext-Normalisierung
+
+- Der lokale Host-Kontext bleibt nur intern normalisiert.
+- Die Sichtanzeige bleibt dadurch weiterhin read-only.
+
+## G119: Host-Kontext-Abschlusscheck
+
+- Der fehlende Kontext bleibt als Abschlussstand sichtbar.
+- Keine neue Freigabe und kein Speicherweg werden daraus.

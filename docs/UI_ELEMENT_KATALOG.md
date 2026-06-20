@@ -92,6 +92,8 @@ Elemente zwingend vorhanden sein muessen.
   kommen; neue editorrelevante Ziele entstehen dadurch weiterhin nicht.
 - G118 normalisiert dieses lokale Modell nur intern; daraus entsteht kein
   neuer editorrelevanter Zieltyp.
+- G119 bestaetigt den Host-Kontext nur als Abschlussstand; der Katalog bleibt
+  ohne neue Zielklasse.
 
 ## Stop-Regel
 
