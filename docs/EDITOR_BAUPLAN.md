@@ -98,6 +98,8 @@ keinen Speicherbutton und keinen Schreibweg.
   der UI-Editor sie nicht selbst suchen oder raten darf.
 - G115 zeigt den fehlenden Restarbeiten-Host-Kontext sichtbar an; das ist
   reine Anzeige und kein Speicherweg.
+- G116 dokumentiert den spaeteren Host-Kontext-Datenvertrag; ohne Host-Daten
+  bleibt der Speicherbutton weiterhin deaktiviert.
 
 ## Stop-Regel
 

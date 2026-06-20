@@ -86,6 +86,8 @@ Elemente zwingend vorhanden sein muessen.
   UI-Editor gesucht oder geraten wird.
 - G115 zeigt den fehlenden Host-Kontext nur als lesende Kontextanzeige; daraus
   entsteht noch kein neues Elementziel.
+- G116 ergaenzt dazu nur den spaeteren Host-Kontext-Datenvertrag; ein
+  Speicherziel entsteht daraus noch nicht.
 
 ## Stop-Regel
 

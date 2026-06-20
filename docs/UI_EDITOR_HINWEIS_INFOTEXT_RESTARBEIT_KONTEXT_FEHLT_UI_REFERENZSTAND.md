@@ -87,3 +87,11 @@ Speichern.
 
 Die Anzeige nur als lesenden Zwischenstand stehen lassen, bis die konkrete
 Host-Übergabe bewusst freigegeben und technisch umgesetzt wird.
+
+## G116: Host-Kontext-Datenvertrag
+
+- Der spaetere Datenvertrag wird in
+  `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_DATENVERTRAG.md`
+  dokumentiert.
+- `projectId` und `restarbeitId` bleiben Host-Daten und werden im
+  UI-Editor nicht geraten.

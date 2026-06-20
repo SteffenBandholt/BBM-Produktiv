@@ -1592,3 +1592,15 @@ Hinweis:
   - `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_FEHLT_UI_REFERENZSTAND.md`
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`
+
+### K19.137 - Hinweis-/Infotext-Host-Kontextdatenvertrag dokumentieren
+- Status: offen
+- Beschreibung:
+  - Der spaetere Host-Kontext-Datenvertrag fuer `Hinweis / Infotext` wird
+    dokumentarisch beschrieben.
+  - `projectId` und `restarbeitId` bleiben Host-Daten; der UI-Editor darf sie
+    nicht suchen oder raten.
+- Betroffene Dateien:
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_DATENVERTRAG.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/UI_INSPEKTOR_ENTSCHEIDUNGEN.md`

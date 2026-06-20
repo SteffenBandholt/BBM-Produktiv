@@ -92,6 +92,8 @@ Bei sichtbarer UI gilt:
   `restarbeitId` wird nicht im UI-Editor gesucht oder geraten.
 - G115 zeigt den fehlenden Host-Kontext sichtbar an; die Anzeige bleibt
   read-only und blockiert Speichern weiter.
+- G116 dokumentiert den spaeteren Host-Kontext-Datenvertrag; ohne diese
+  Host-Daten bleibt Speichern blockiert.
 
 ## Stop-Regeln
 

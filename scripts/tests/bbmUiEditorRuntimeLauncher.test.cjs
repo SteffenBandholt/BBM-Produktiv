@@ -125,6 +125,10 @@ const UI_EDITOR_HINT_INFOTEXT_RESTARBEIT_CONTEXT_MISSING_REFERENCE_DOC_PATH = pa
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_FEHLT_UI_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_CONTRACT_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_DATENVERTRAG.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_CONTRACT_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_VERTRAG.md"
@@ -4260,6 +4264,38 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Restarbeit-Kontext-fehlt-Referenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Host-Kontextdatenvertrag bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_CONTRACT_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Host-Kontextdatenvertrag fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_CONTRACT_DOC_PATH, "utf8");
+
+    for (const required of [
+      "Host-Kontext-Datenvertrag",
+      "projectId",
+      "restarbeitId",
+      "targetContext",
+      "targetSurfaceId",
+      "restarbeiten.ui.main",
+      "targetLabel",
+      "Hinweis / Infotext",
+      "nicht im UI-Editor geraten",
+      "Button `Entwurf speichern` bleibt deaktiviert",
+      "kein Submit",
+      "keine IPC-/DB-Schreibaktion",
+      "persisted: false",
+      "UI-Editor-kit",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Host-Kontextdatenvertrag enthaelt ${required} nicht.`
       );
     }
   });

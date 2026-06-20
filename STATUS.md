@@ -169,6 +169,8 @@ Sie ergÃ¤nzt:
   UI-Editor darf die Ziel-Restarbeit nicht selbst suchen oder raten.
 - G115 zeigt den fehlenden Restarbeiten-Host-Kontext sichtbar im UI-Editor-
   Panel an; die Anzeige bleibt lesend und speichert nichts.
+- G116 dokumentiert den spaeteren Host-Kontext-Datenvertrag; `projectId` und
+  `restarbeitId` bleiben Host-Daten und werden nicht im UI-Editor geraten.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

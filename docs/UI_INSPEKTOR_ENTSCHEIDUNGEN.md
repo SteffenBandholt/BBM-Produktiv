@@ -584,3 +584,7 @@ suchen oder raten.
 sichtbar angezeigt. `docs/UI_EDITOR_HINWEIS_INFOTEXT_RESTARBEIT_KONTEXT_FEHLT_UI_REFERENZSTAND.md`
 beschreibt den read-only Sichtstand; `restarbeitId` bleibt unuebergeben und
 Speichern bleibt gesperrt.
+
+**Status nach G116:** Der spaetere Host-Kontext-Datenvertrag ist dokumentiert.
+`projectId` und `restarbeitId` sind Host-Daten; der UI-Editor sucht oder rät
+sie nicht.

@@ -142,3 +142,9 @@ entschieden wird.
 
 - Der fehlende Host-Kontext wird jetzt sichtbar angezeigt.
 - Die Anzeige bleibt lesend und aktiviert keinen Schreibweg.
+
+## G116: Host-Kontext-Datenvertrag
+
+- Der spaetere Host-Kontext-Datenvertrag ist jetzt separat dokumentiert.
+- Die Speicher-Vorbereitung bleibt weiterhin gesperrt, bis der Host diesen
+  Kontext bewusst liefert.

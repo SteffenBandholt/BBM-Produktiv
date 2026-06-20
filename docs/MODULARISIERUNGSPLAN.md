@@ -174,6 +174,8 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
   die Ziel-Restarbeit nicht selbst suchen oder raten.
 - G115 zeigt den fehlenden Restarbeiten-Host-Kontext sichtbar an; der
   Speicherweg bleibt weiter blockiert.
+- G116 dokumentiert den spaeteren Host-Kontext-Datenvertrag; `projectId` und
+  `restarbeitId` bleiben Host-Daten und werden nicht im UI-Editor geraten.
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

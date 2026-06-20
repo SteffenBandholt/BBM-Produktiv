@@ -122,3 +122,8 @@ Dokumentation.
 
 - Der fehlende Restarbeiten-Host-Kontext wird jetzt sichtbar angezeigt.
 - Die Anzeige bleibt lesend und ersetzt keine Uebergabe.
+
+## G116: Host-Kontext-Datenvertrag
+
+- Die spaetere Uebergabe bleibt an `projectId` und `restarbeitId` gebunden.
+- Der Datenvertrag ist dokumentiert, aber technisch noch nicht verdrahtet.

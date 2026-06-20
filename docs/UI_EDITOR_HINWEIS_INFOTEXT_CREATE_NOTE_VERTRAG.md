@@ -147,3 +147,9 @@ erst nach eigener Freigabe einen echten Speicherweg bauen.
 
 - Der fehlende Host-Kontext bleibt sichtbar im UI-Editor markiert.
 - Der Vertrag bleibt unveraendert; es gibt keine Speicherung.
+
+## G116: Host-Kontext-Datenvertrag
+
+- `restarbeiten:createNote` bleibt Zielvertrag, aber `projectId` und
+  `restarbeitId` werden weiterhin nur dokumentarisch als Host-Vorbedingung
+  beschrieben.

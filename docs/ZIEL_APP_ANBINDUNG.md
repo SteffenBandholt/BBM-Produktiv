@@ -90,6 +90,8 @@ Bearbeitungsflaeche.
   UI-Editor.
 - G115 zeigt den fehlenden Host-Kontext im UI-Editor sichtbar an; die Anzeige
   bleibt read-only und speichert nichts.
+- G116 legt den spaeteren Host-Kontext-Datenvertrag fest; `projectId` und
+  `restarbeitId` kommen spaeter nur aus dem BBM-Host.
 
 ## Pruefpflicht
 
