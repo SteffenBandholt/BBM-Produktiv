@@ -185,6 +185,10 @@ const UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_ADAPTER_GATED_REFERENCE_DOC_PATH =
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_ADAPTER_GATED_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_SAVE_BUTTON_RELEASE_DECISION_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERBUTTON_FREIGABEENTSCHEIDUNG.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -5779,6 +5783,38 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Produktiv-Save-Adapter-Gate-Referenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Speicherbutton-Freigabeentscheidung bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_SAVE_BUTTON_RELEASE_DECISION_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Speicherbutton-Freigabeentscheidung fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_SAVE_BUTTON_RELEASE_DECISION_DOC_PATH, "utf8");
+
+    for (const required of [
+      "G133",
+      "Speicherbutton",
+      "restarbeitId",
+      "noteText",
+      "restarbeiten:createNote",
+      "window.bbmDb.restarbeitenCreateNote",
+      "Default-true",
+      "Gate geschlossen",
+      "persisted",
+      "previewOnly",
+      "Doppelklick",
+      "Entwurf bleibt erhalten",
+      "Konfiguration bleibt false",
+      "kein Produktiv-Speichern",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Speicherbutton-Freigabeentscheidung enthaelt ${required} nicht.`
       );
     }
   });

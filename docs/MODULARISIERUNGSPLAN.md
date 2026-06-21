@@ -659,3 +659,27 @@ Dabei gilt:
 - Es gibt keine automatische Produktivfreigabe, keine ENV-/DEV-Aktivierung,
   keinen localStorage-/writeFile-Weg, kein Default-true, keine Wildcard und
   keine Aenderung am `UI-Editor-kit`.
+
+## G133: Speicherbutton-Freigabeentscheidung dokumentiert
+
+- Vor der ersten echten Aktivierung des Hinweis-/Infotext-Speicherbuttons ist
+  die Freigabeentscheidung dokumentiert.
+- Die spaetere Button-Aktivierung verlangt gueltigen Host-Kontext, gueltige
+  `projectId`, gueltige `restarbeitId`, Zielkontext `Restarbeiten`,
+  Ziel-Surface `restarbeiten.ui.main`, Elementtyp `Hinweis / Infotext`,
+  gueltigen Hinweistext, vollstaendige Payload, explizite
+  Schreibfreigabe-Konfiguration `true`, offenes Gate, verfuegbaren
+  Save-Adapter, erreichbaren Produktiv-Save-Adapter und keine laufende
+  Speicherung.
+- Harte Sperren sind dokumentiert: fehlende `restarbeitId`, leerer
+  Hinweistext, ungueltiger Host-Kontext, falsche Surface, falscher
+  Elementtyp, Konfiguration `false`, Gate geschlossen, DEV-/ENV-Modus allein,
+  vorhandene Payload allein, vorhandener Adapter allein und laufende
+  Speicherung.
+- Spaetere Klickregeln sind festgehalten: genau ein Save-Versuch, Schutz vor
+  Doppelklick, Button-Sperre waehrend Save, sichtbare Erfolgs-/Fehlermeldung
+  und erhaltener Entwurf bei Fehler.
+- Fuer G133 bleibt der Standardpfad geschlossen: Speicherbutton deaktiviert,
+  Gate geschlossen, Konfiguration `false`, Produktiv-Save-Adapter nur
+  vorbereitet, kein Produktiv-Speichern, `persisted: false` und
+  `previewOnly: true`.

@@ -3687,3 +3687,37 @@ Wichtig:
   - Keine automatische Produktivfreigabe, keine DEV-/ENV-Aktivierung, kein
     Default-true, keine Wildcard, kein localStorage, kein writeFile und keine
     Aenderung am `UI-Editor-kit`.
+
+### G133 - UI-Editor Hinweis/Infotext Speicherbutton-Freigabeentscheidung
+- Status: erledigt
+- Beschreibung:
+  - Die Freigabeentscheidung fuer eine spaetere echte Aktivierung des
+    Hinweis-/Infotext-Speicherbuttons ist dokumentiert.
+  - Das Dokument beschreibt Mindestbedingungen fuer eine spaetere
+    Button-Aktivierung: gueltiger Host-Kontext, `projectId`, `restarbeitId`,
+    Zielkontext `Restarbeiten`, Ziel-Surface `restarbeiten.ui.main`,
+    Elementtyp `Hinweis / Infotext`, gueltiger Hinweistext, vollstaendige
+    Payload, explizite Schreibfreigabe-Konfiguration `true`, offenes Gate,
+    verfuegbarer Save-Adapter, erreichbarer Produktiv-Save-Adapter und keine
+    laufende Speicherung.
+  - Harte Sperrbedingungen und spaetere Klickregeln sind festgehalten,
+    inklusive Doppelklick-Schutz, sichtbarer Erfolgs-/Fehlermeldung und
+    erhaltenem Entwurf bei Fehler.
+  - G133 aktiviert nichts: Speicherbutton bleibt deaktiviert, Gate bleibt
+    geschlossen, Konfiguration bleibt `false`, Produktiv-Save-Adapter bleibt
+    nur vorbereitet, `persisted: false` und `previewOnly: true`.
+- Betroffene Dateien:
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERBUTTON_FREIGABEENTSCHEIDUNG.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Eine echte Speicherbutton-Aktivierung bleibt ein separater spaeterer
+    Meilenstein mit expliziter Freigabe.
+- Risiken/Hinweise:
+  - Kein Produktiv-Speicherweg, kein echter Speicherklick, kein Gate-Flip,
+    keine Aenderung der Schreibfreigabe-Konfiguration auf `true`, kein
+    DB-/IPC-/Datei-/localStorage-Schreibweg und keine Aenderung am
+    `UI-Editor-kit`.
