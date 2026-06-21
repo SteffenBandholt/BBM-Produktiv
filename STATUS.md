@@ -3650,3 +3650,40 @@ Wichtig:
     kein DB-/IPC-/Datei-/localStorage-Schreibweg, kein Default-true, keine
     DEV-/ENV-Aktivierung, keine Wildcard und keine Aenderung am
     `UI-Editor-kit`.
+
+### G132 - UI-Editor Hinweis/Infotext Produktiv-Save-Adapter hinter Gate
+- Status: erledigt
+- Beschreibung:
+  - Der BBM-Launcher hat einen lokalen Produktiv-Save-Adapter fuer den
+    spaeteren Restarbeiten-Notizweg vorbereitet.
+  - Die Zielsignatur ist dokumentiert und testseitig abgesichert:
+    `window.bbmDb.restarbeitenCreateNote({ restarbeitId, noteText })`;
+    Zielkanal bleibt `restarbeiten:createNote`.
+  - Der UI-Speicherbereich zeigt zusaetzlich
+    `Produktiv-Save-Adapter: vorbereitet`,
+    `Produktiv-Ausfuehrung im Standardpfad: gesperrt` und die
+    Produktiv-Payload `restarbeitId, noteText`.
+  - Der positive Produktiv-Adaptertest laeuft nur mit expliziter
+    Testfreigabe und Stub: `mode: productive-save-adapter-gated-test`,
+    `writeReleaseEnabled: true`, `gateOpen: true` und
+    `useProductiveAdapter: true`.
+  - Erfolgs-, Fehler-, Ausnahme- und Schutzfaelle sind testseitig
+    abgesichert; der Standardpfad bleibt blockiert.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_ADAPTER_GATED_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Eine echte Produktivfreigabe des Restarbeiten-Notizwegs bleibt ein
+    separater spaeterer Meilenstein.
+- Risiken/Hinweise:
+  - UI-Standardpfad weiter geschlossen: Konfiguration `false`, Gate
+    geschlossen, Save-Ausfuehrung blockiert, Speicherbutton deaktiviert,
+    `persisted: false` und `previewOnly: true`.
+  - Keine automatische Produktivfreigabe, keine DEV-/ENV-Aktivierung, kein
+    Default-true, keine Wildcard, kein localStorage, kein writeFile und keine
+    Aenderung am `UI-Editor-kit`.

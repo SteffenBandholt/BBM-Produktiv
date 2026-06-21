@@ -181,6 +181,10 @@ const UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_RELEASE_DECISION_DOC_PATH = path.j
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_FREIGABEENTSCHEIDUNG.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_ADAPTER_GATED_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_ADAPTER_GATED_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -1237,7 +1241,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(
       hintInfotextSaveAdapterPreview.textContent,
-      "Adapter: vorbereitet\nZieladapter: Restarbeiten-Notizweg\nZielmethode: window.bbmDb.restarbeitenCreateNote\nZielkanal: restarbeiten:createNote\nAusführung: blockiert\nGrund: Schreibfreigabe-Gate geschlossen\npersisted: false\npreviewOnly: true"
+      "Adapter: vorbereitet\nProduktiv-Save-Adapter: vorbereitet\nZieladapter: Restarbeiten-Notizweg\nZielmethode: window.bbmDb.restarbeitenCreateNote\nZielkanal: restarbeiten:createNote\nAusführung: blockiert\nProduktiv-Ausführung im Standardpfad: gesperrt\nProduktiv-Payload: restarbeitId, noteText\nGrund: Schreibfreigabe-Gate geschlossen\npersisted: false\npreviewOnly: true"
     );
     assert.equal(
       hintInfotextSaveHandlerPreview.textContent,
@@ -4810,7 +4814,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(
       saveAdapterPreview.textContent,
-      "Adapter: vorbereitet\nZieladapter: Restarbeiten-Notizweg\nZielmethode: window.bbmDb.restarbeitenCreateNote\nZielkanal: restarbeiten:createNote\nAusführung: blockiert\nGrund: Schreibfreigabe-Gate geschlossen\npersisted: false\npreviewOnly: true"
+      "Adapter: vorbereitet\nProduktiv-Save-Adapter: vorbereitet\nZieladapter: Restarbeiten-Notizweg\nZielmethode: window.bbmDb.restarbeitenCreateNote\nZielkanal: restarbeiten:createNote\nAusführung: blockiert\nProduktiv-Ausführung im Standardpfad: gesperrt\nProduktiv-Payload: restarbeitId, noteText\nGrund: Schreibfreigabe-Gate geschlossen\npersisted: false\npreviewOnly: true"
     );
     assert.equal(
       saveExecutionPreview.textContent,
@@ -5089,6 +5093,251 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes('invoke("restarbeiten:createNote"'), false);
     assert.equal(source.includes('handle("restarbeiten:createNote"'), false);
     assert.equal(source.includes("process.env"), false);
+    assert.equal(source.includes("localStorage"), false);
+    assert.equal(source.includes("writeFile"), false);
+  });
+
+  await run("BBM UI-Editor-Runtime: Produktiv-Save-Adapter bleibt hinter expliziter Testfreigabe", async () => {
+    const mod = await loadRuntime();
+    assert.equal(typeof mod.executeReadonlyHintInfotextProductiveSaveAdapter, "function");
+
+    const validHostContext = mod.normalizeHostContextStatus({
+      projectId: "project-42",
+      restarbeitId: "restarbeit-99",
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "UI-Polish fuer BBM",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host",
+    });
+    const noteText = "Dies ist ein kontrollierter Produktiv-Adapter-Test.";
+    const standardResult = mod.executeReadonlyHintInfotextSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+    });
+    assert.equal(standardResult.blocked, true);
+    assert.equal(standardResult.executed, false);
+    assert.equal(standardResult.gateOpen, false);
+    assert.equal(standardResult.writeReleased, false);
+    assert.equal(standardResult.persisted, false);
+    assert.equal(standardResult.previewOnly, true);
+
+    const successfulCalls = [];
+    const successfulWin = {
+      bbmDb: {
+        async restarbeitenCreateNote(payload) {
+          successfulCalls.push(payload);
+          return {
+            ok: true,
+            note: {
+              id: "note-1",
+              restarbeitId: payload.restarbeitId,
+              noteText: payload.noteText,
+            },
+          };
+        },
+      },
+    };
+    const successResult = await mod.executeReadonlyHintInfotextSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      testOnly: {
+        mode: "productive-save-adapter-gated-test",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        useProductiveAdapter: true,
+        win: successfulWin,
+      },
+    });
+    assert.equal(successfulCalls.length, 1);
+    assert.deepEqual(successfulCalls[0], {
+      restarbeitId: "restarbeit-99",
+      noteText,
+    });
+    assert.deepEqual(successResult, {
+      ok: true,
+      blocked: false,
+      reason: "Restarbeiten-Notiz gespeichert",
+      blockReasons: [],
+      payload: {
+        restarbeitId: "restarbeit-99",
+        noteText,
+      },
+      adapterResult: {
+        ok: true,
+        blocked: false,
+        reason: "Restarbeiten-Notiz gespeichert",
+        payload: {
+          restarbeitId: "restarbeit-99",
+          noteText,
+        },
+        result: {
+          ok: true,
+          note: {
+            id: "note-1",
+            restarbeitId: "restarbeit-99",
+            noteText,
+          },
+        },
+        note: {
+          id: "note-1",
+          restarbeitId: "restarbeit-99",
+          noteText,
+        },
+        executed: true,
+        persisted: true,
+        previewOnly: false,
+      },
+      payloadComplete: true,
+      hintTextValid: true,
+      adapterPrepared: true,
+      adapterExecutionBlocked: false,
+      gateOpen: true,
+      writeReleased: true,
+      executed: true,
+      persisted: true,
+      previewOnly: false,
+    });
+
+    const failingCalls = [];
+    const failingResult = await mod.executeReadonlyHintInfotextSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      testOnly: {
+        mode: "productive-save-adapter-gated-test",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        useProductiveAdapter: true,
+        win: {
+          bbmDb: {
+            async restarbeitenCreateNote(payload) {
+              failingCalls.push(payload);
+              return { ok: false, error: "Testfehler" };
+            },
+          },
+        },
+      },
+    });
+    assert.equal(failingCalls.length, 1);
+    assert.equal(failingResult.ok, false);
+    assert.equal(failingResult.executed, true);
+    assert.equal(failingResult.persisted, false);
+    assert.equal(failingResult.previewOnly, false);
+    assert.equal(failingResult.reason, "Testfehler");
+    assert.deepEqual(failingResult.adapterResult.result, { ok: false, error: "Testfehler" });
+
+    const throwingResult = await mod.executeReadonlyHintInfotextProductiveSaveAdapter({
+      payload: { restarbeitId: "restarbeit-99", noteText },
+      win: {
+        bbmDb: {
+          async restarbeitenCreateNote() {
+            throw new Error("Adapter-Ausnahme");
+          },
+        },
+      },
+    });
+    assert.equal(throwingResult.ok, false);
+    assert.equal(throwingResult.executed, true);
+    assert.equal(throwingResult.persisted, false);
+    assert.equal(throwingResult.previewOnly, false);
+    assert.equal(throwingResult.reason, "Adapter-Ausnahme");
+
+    const guardedCalls = [];
+    const guardedWin = {
+      bbmDb: {
+        async restarbeitenCreateNote(payload) {
+          guardedCalls.push(payload);
+          return { ok: true, note: { id: "note-guard" } };
+        },
+      },
+    };
+    for (const [label, input] of [
+      [
+        "DEV-artiger Kontext",
+        {
+          value: noteText,
+          hostContextStatus: validHostContext,
+          testOnly: {
+            mode: "dev",
+            writeReleaseEnabled: true,
+            gateOpen: true,
+            useProductiveAdapter: true,
+            win: guardedWin,
+          },
+        },
+      ],
+      [
+        "vorhandene Payload ohne Freigabe",
+        {
+          value: noteText,
+          hostContextStatus: validHostContext,
+          testOnly: {
+            mode: "productive-save-adapter-gated-test",
+            useProductiveAdapter: true,
+            win: guardedWin,
+          },
+        },
+      ],
+      [
+        "vorhandene restarbeitId ohne Gate",
+        {
+          value: noteText,
+          hostContextStatus: validHostContext,
+          testOnly: {
+            mode: "productive-save-adapter-gated-test",
+            writeReleaseEnabled: true,
+            useProductiveAdapter: true,
+            win: guardedWin,
+          },
+        },
+      ],
+      [
+        "leerer Hinweistext",
+        {
+          value: "   ",
+          hostContextStatus: validHostContext,
+          testOnly: {
+            mode: "productive-save-adapter-gated-test",
+            writeReleaseEnabled: true,
+            gateOpen: true,
+            useProductiveAdapter: true,
+            win: guardedWin,
+          },
+        },
+      ],
+      [
+        "fehlende restarbeitId",
+        {
+          value: noteText,
+          hostContextStatus: mod.buildReadonlyHintInfotextHostContextStatusModel(),
+          testOnly: {
+            mode: "productive-save-adapter-gated-test",
+            writeReleaseEnabled: true,
+            gateOpen: true,
+            useProductiveAdapter: true,
+            win: guardedWin,
+          },
+        },
+      ],
+    ]) {
+      const before = guardedCalls.length;
+      const blockedResult = mod.executeReadonlyHintInfotextSave(input);
+      assert.equal(blockedResult.blocked, true, `${label} muss blockiert bleiben.`);
+      assert.equal(blockedResult.executed, false, `${label} darf den Adapter nicht ausfuehren.`);
+      assert.equal(blockedResult.persisted, false, `${label} darf nicht persistieren.`);
+      assert.equal(blockedResult.previewOnly, true, `${label} bleibt Preview-only.`);
+      assert.equal(guardedCalls.length, before, `${label} darf restarbeitenCreateNote nicht aufrufen.`);
+    }
+
+    const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    assert.equal(source.includes("executeReadonlyHintInfotextProductiveSaveAdapter"), true);
+    assert.equal(source.includes("productive-save-adapter-gated-test"), true);
+    assert.equal(source.includes("writeReleaseEnabled: false"), true);
+    assert.equal(source.includes("process.env"), false);
+    assert.equal(source.includes("window.bbmDb.restarbeitenCreateNote("), false);
+    assert.equal(source.includes(".restarbeitenCreateNote("), false);
+    assert.equal(source.includes('invoke("restarbeiten:createNote"'), false);
+    assert.equal(source.includes('handle("restarbeiten:createNote"'), false);
     assert.equal(source.includes("localStorage"), false);
     assert.equal(source.includes("writeFile"), false);
   });
@@ -5494,6 +5743,42 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Produktiv-Save-Freigabeentscheidung enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Produktiv-Save-Adapter-Gate bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_ADAPTER_GATED_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Produktiv-Save-Adapter-Gate-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(
+      UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_ADAPTER_GATED_REFERENCE_DOC_PATH,
+      "utf8"
+    );
+
+    for (const required of [
+      "G132",
+      "Produktiv-Save-Adapter",
+      "window.bbmDb.restarbeitenCreateNote",
+      "restarbeiten:createNote",
+      "{ restarbeitId, noteText }",
+      "writeReleaseEnabled: false",
+      "Gate geschlossen",
+      "Speicherbutton deaktiviert",
+      "persisted false",
+      "previewOnly true",
+      "explizite Testfreigabe",
+      "Fehlerfall",
+      "kein localStorage",
+      "kein writeFile",
+      "keine Aenderung am `UI-Editor-kit`",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Produktiv-Save-Adapter-Gate-Referenz enthaelt ${required} nicht.`
       );
     }
   });

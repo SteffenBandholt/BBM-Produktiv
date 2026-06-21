@@ -637,3 +637,25 @@ Dabei gilt:
 - Es gibt keinen Produktiv-Schreibweg, keinen IPC-/DB-/Datei-/localStorage-
   Schreibweg, keine Gate-Freigabe, kein Default-true, keine DEV-/ENV-
   Aktivierung, keine Wildcard und keine Aenderung am `UI-Editor-kit`.
+
+## G132: Produktiv-Save-Adapter kontrolliert hinter Gate vorbereitet
+
+- Der UI-Editor hat im BBM-Launcher einen lokalen Produktiv-Save-Adapter fuer
+  den spaeteren Restarbeiten-Notizweg vorbereitet.
+- Die dokumentierte Zielsignatur ist
+  `window.bbmDb.restarbeitenCreateNote({ restarbeitId, noteText })`; der
+  Zielkanal bleibt `restarbeiten:createNote`.
+- Sichtbar/testbar sind `Produktiv-Save-Adapter: vorbereitet`,
+  `Produktiv-Ausfuehrung im Standardpfad: gesperrt`, Zieladapter,
+  Zielmethode, Zielkanal und Produktiv-Payload `restarbeitId, noteText`.
+- Der positive Adapterpfad ist nur mit expliziter Testfreigabe erreichbar:
+  `mode: productive-save-adapter-gated-test`, `writeReleaseEnabled: true`,
+  `gateOpen: true`, `useProductiveAdapter: true` und injiziertem Stub.
+- Der UI-Standardpfad bleibt geschlossen: Konfiguration `false`, Gate
+  geschlossen, Save-Ausfuehrung blockiert, Speicherbutton deaktiviert,
+  `persisted: false` und `previewOnly: true`.
+- Fehlerfaelle, fehlende `restarbeitId`, leerer Hinweistext, DEV-Kontext,
+  vorhandene Payload und vorhandene `restarbeitId` oeffnen das Gate nicht.
+- Es gibt keine automatische Produktivfreigabe, keine ENV-/DEV-Aktivierung,
+  keinen localStorage-/writeFile-Weg, kein Default-true, keine Wildcard und
+  keine Aenderung am `UI-Editor-kit`.

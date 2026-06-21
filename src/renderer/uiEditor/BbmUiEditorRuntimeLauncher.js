@@ -103,6 +103,9 @@ const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_PREPARED_LINE = "Adapter: vorbereitet"
 const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_ADAPTER = "Restarbeiten-Notizweg";
 const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_METHOD = "window.bbmDb.restarbeitenCreateNote";
 const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_CHANNEL = "restarbeiten:createNote";
+const READONLY_HINT_INFOTEXT_PRODUCTIVE_SAVE_ADAPTER_PREPARED_LINE = "Produktiv-Save-Adapter: vorbereitet";
+const READONLY_HINT_INFOTEXT_PRODUCTIVE_SAVE_ADAPTER_STANDARD_BLOCKED_LINE =
+  "Produktiv-Ausführung im Standardpfad: gesperrt";
 const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_TITLE = "Save-Ausführung";
 const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_PREPARED_LINE = "Save-Ausführung: vorbereitet";
 const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_STANDARD_BLOCKED_LINE =
@@ -2149,14 +2152,96 @@ function formatReadonlyHintInfotextSaveAdapterText() {
   const saveAdapter = getReadonlyHintInfotextSaveAdapterDescriptor();
   return [
     READONLY_HINT_INFOTEXT_SAVE_ADAPTER_PREPARED_LINE,
+    READONLY_HINT_INFOTEXT_PRODUCTIVE_SAVE_ADAPTER_PREPARED_LINE,
     `Zieladapter: ${saveAdapter.targetAdapter}`,
     `Zielmethode: ${saveAdapter.targetMethod}`,
     `Zielkanal: ${saveAdapter.targetChannel}`,
     `Ausführung: ${saveAdapter.executionBlocked ? "blockiert" : "freigegeben"}`,
+    READONLY_HINT_INFOTEXT_PRODUCTIVE_SAVE_ADAPTER_STANDARD_BLOCKED_LINE,
+    "Produktiv-Payload: restarbeitId, noteText",
     `Grund: ${saveAdapter.blockReason}`,
     "persisted: false",
     "previewOnly: true",
   ].join("\n");
+}
+
+async function executeReadonlyHintInfotextProductiveSaveAdapter({ payload = null, win = null } = {}) {
+  const restarbeitId = String(payload && payload.restarbeitId != null ? payload.restarbeitId : "").trim();
+  const noteText = String(payload && payload.noteText != null ? payload.noteText : "").trim();
+  if (restarbeitId.length === 0) {
+    return Object.freeze({
+      ok: false,
+      blocked: true,
+      reason: "restarbeitId fehlt",
+      executed: false,
+      persisted: false,
+      previewOnly: true,
+    });
+  }
+  if (noteText.length === 0) {
+    return Object.freeze({
+      ok: false,
+      blocked: true,
+      reason: "Hinweistext fehlt",
+      executed: false,
+      persisted: false,
+      previewOnly: true,
+    });
+  }
+  const createNote = win && win.bbmDb ? win.bbmDb.restarbeitenCreateNote : null;
+  if (typeof createNote !== "function") {
+    return Object.freeze({
+      ok: false,
+      blocked: true,
+      reason: "window.bbmDb.restarbeitenCreateNote nicht verfügbar",
+      executed: false,
+      persisted: false,
+      previewOnly: true,
+    });
+  }
+  const savePayload = Object.freeze({ restarbeitId, noteText });
+  try {
+    const response = await createNote(savePayload);
+    if (response && response.ok === true) {
+      return Object.freeze({
+        ok: true,
+        blocked: false,
+        reason: "Restarbeiten-Notiz gespeichert",
+        payload: savePayload,
+        result: response,
+        note: response.note || null,
+        executed: true,
+        persisted: true,
+        previewOnly: false,
+      });
+    }
+    return Object.freeze({
+      ok: false,
+      blocked: false,
+      reason:
+        response && typeof response.error === "string" && response.error.length > 0
+          ? response.error
+          : "Restarbeiten-Notiz konnte nicht gespeichert werden",
+      payload: savePayload,
+      result: response || null,
+      executed: true,
+      persisted: false,
+      previewOnly: false,
+    });
+  } catch (error) {
+    return Object.freeze({
+      ok: false,
+      blocked: false,
+      reason:
+        error && typeof error.message === "string" && error.message.length > 0
+          ? error.message
+          : "Restarbeiten-Notiz konnte nicht gespeichert werden",
+      payload: savePayload,
+      executed: true,
+      persisted: false,
+      previewOnly: false,
+    });
+  }
 }
 
 function executeReadonlyHintInfotextSave({
@@ -2200,6 +2285,40 @@ function executeReadonlyHintInfotextSave({
       persisted: false,
       previewOnly: true,
     });
+  }
+  const productiveAdapterTestPath =
+    testOnly
+    && testOnly.mode === "productive-save-adapter-gated-test"
+    && testOnly.writeReleaseEnabled === true
+    && testOnly.gateOpen === true
+    && testOnly.useProductiveAdapter === true;
+  if (productiveAdapterTestPath && payloadComplete && hintTextValid) {
+    const payload = Object.freeze({
+      restarbeitId: hostContextStatus.restarbeitId,
+      noteText: String(value == null ? "" : value).trim(),
+    });
+    return executeReadonlyHintInfotextProductiveSaveAdapter({
+      payload,
+      win: testOnly.win || null,
+    }).then((adapterResult) =>
+      Object.freeze({
+        ok: adapterResult.ok === true,
+        blocked: adapterResult.blocked === true,
+        reason: adapterResult.reason,
+        blockReasons: Object.freeze([]),
+        payload,
+        adapterResult,
+        payloadComplete: true,
+        hintTextValid: true,
+        adapterPrepared: true,
+        adapterExecutionBlocked: false,
+        gateOpen: true,
+        writeReleased: true,
+        executed: adapterResult.executed === true,
+        persisted: adapterResult.persisted === true,
+        previewOnly: adapterResult.previewOnly === true,
+      })
+    );
   }
   const blockReasons = [];
   if (writeGate.gateOpen !== true) {
@@ -3034,6 +3153,7 @@ export {
   buildReadonlyHintInfotextHostContextStatusModel,
   getReadonlyHintInfotextSaveAdapterDescriptor,
   executeReadonlyHintInfotextBlockedSaveHandler,
+  executeReadonlyHintInfotextProductiveSaveAdapter,
   executeReadonlyHintInfotextSave,
   getReadonlyHintInfotextHostContextStatus,
   ensureLauncherStatusHint,
