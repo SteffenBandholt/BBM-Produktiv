@@ -733,3 +733,27 @@ Dabei gilt:
   `restarbeiten:createNote`-Aufruf, keinen IPC-/DB-/Datei-/localStorage-
   Schreibweg, kein Default-true, keine Wildcard und keine Aenderung am
   `UI-Editor-kit`.
+
+## G136: Speicherklick-Pfad hinter Gate vorbereitet
+
+- Der UI-Editor hat im BBM-Launcher einen lokalen Speicherklick-Pfad fuer
+  Hinweis-/Infotext hinter dem bestehenden Gate vorbereitet.
+- Sichtbar/testbar sind `Speicherklick: vorbereitet`,
+  `Klickpfad im Standard: blockiert`, `Letzter Klickstatus`,
+  `buttonEnabled: false`, `canStartSave: false`, `persisted: false` und
+  `previewOnly: true`.
+- Der UI-Standardpfad bleibt geschlossen: Gate geschlossen,
+  Speicherbutton deaktiviert, kein Produktiv-Speichern, kein
+  automatischer Aufruf von `window.bbmDb.restarbeitenCreateNote` oder
+  `restarbeiten:createNote`.
+- Der isolierte Testpfad `mode: save-click-gated-test-release` darf nur mit
+  expliziter Schreibfreigabe, offenem Gate, vollstaendiger Payload,
+  gueltigem Host-Kontext und Stub fuer `window.bbmDb.restarbeitenCreateNote`
+  ausfuehren.
+- Doppelklick waehrend `saving`, identische Payload nach Erfolg und
+  Fehler-/Retry-Verhalten sind testseitig abgesichert.
+- DEV-Kontext, ENV-Kontext, vorhandene Payload, vorhandene `restarbeitId`,
+  fehlender Host-Kontext, leerer Hinweistext und fehlendes Gate oeffnen den
+  Klickpfad nicht.
+- Es gibt keinen IPC-/DB-/Datei-/localStorage-Schreibweg, kein
+  Default-true, keine Wildcard und keine Aenderung am `UI-Editor-kit`.

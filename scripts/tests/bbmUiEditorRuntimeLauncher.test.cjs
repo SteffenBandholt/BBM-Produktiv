@@ -197,6 +197,10 @@ const UI_EDITOR_HINT_INFOTEXT_SAVE_DOUBLE_CLICK_GUARD_REFERENCE_DOC_PATH = path.
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SAVE_DOPPELKLICK_SCHUTZ_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_SAVE_CLICK_GATED_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SAVE_CLICK_GATED_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -608,6 +612,9 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-hint-infotext-save-guard-state-preview=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-save-guard-state-preview") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-save-click-state-preview=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-save-click-state-preview") === "true";
   }
   if (raw === "[data-ui-editor-hint-infotext-save-button=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-save-button") === "true";
@@ -4827,6 +4834,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const saveGuardStatePreview = doc.querySelector(
       '[data-ui-editor-hint-infotext-save-guard-state-preview="true"]'
     );
+    const saveClickStatePreview = doc.querySelector(
+      '[data-ui-editor-hint-infotext-save-click-state-preview="true"]'
+    );
     const saveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
     const draftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
 
@@ -4878,6 +4888,16 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(saveGuardStatePreview.textContent.includes("restarbeitId=restarbeit-99"), true);
     assert.equal(saveGuardStatePreview.textContent.includes("persisted: false"), true);
     assert.equal(saveGuardStatePreview.textContent.includes("previewOnly: true"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("Speicherklick: vorbereitet"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("Klickpfad im Standard: blockiert"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("Letzter Klickstatus: nicht ausgef"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("Klickpfad blockiert: ja"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("buttonEnabled: false"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("canStartSave: false"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("Gate offen: nein"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("Payload vollst"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("persisted: false"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("previewOnly: true"), true);
     assert.deepEqual(
       mod.executeReadonlyHintInfotextBlockedSaveHandler({
         value: "Dies ist ein nicht gespeicherter Hinweis-Entwurf.",
@@ -4960,6 +4980,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(saveGuardStatePreview.textContent.includes("currentPayloadSignature: nicht vollst"), true);
     assert.equal(saveGuardStatePreview.textContent.includes("persisted: false"), true);
     assert.equal(saveGuardStatePreview.textContent.includes("previewOnly: true"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("Klickpfad blockiert: ja"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("Payload vollst"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("Hinweistext g"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("buttonEnabled: false"), true);
+    assert.equal(saveClickStatePreview.textContent.includes("canStartSave: false"), true);
     assert.deepEqual(
       mod.executeReadonlyHintInfotextBlockedSaveHandler({
         value: "   ",
@@ -5013,6 +5038,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("executeReadonlyHintInfotextSave"), true);
     assert.equal(source.includes("buildReadonlyHintInfotextSaveGuardState"), true);
     assert.equal(source.includes("executeReadonlyHintInfotextGuardedSave"), true);
+    assert.equal(source.includes("buildReadonlyHintInfotextSaveClickState"), true);
+    assert.equal(source.includes("executeReadonlyHintInfotextSaveClick"), true);
     assert.equal(source.includes("executed: false"), true);
     assert.equal(source.includes("targetMethod: READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_METHOD"), true);
     assert.equal(
@@ -5827,6 +5854,315 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("writeFile"), false);
   });
 
+  await run("BBM UI-Editor-Runtime: Speicherklick-Pfad bleibt Standard-blockiert und nur testseitig positiv", async () => {
+    const mod = await loadRuntime();
+    const noteText = "Dies ist ein kontrollierter Speicherklick-Test.";
+    const changedNoteText = "Dies ist ein geaenderter Speicherklick-Test.";
+    const validHostContext = mod.normalizeHostContextStatus({
+      projectId: "project-42",
+      restarbeitId: "restarbeit-99",
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "UI-Polish fuer BBM",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host",
+    });
+    assert.equal(validHostContext.isPresent, true);
+    assert.equal(typeof mod.buildReadonlyHintInfotextSaveClickState, "function");
+    assert.equal(typeof mod.executeReadonlyHintInfotextSaveClick, "function");
+
+    const standardClickState = mod.buildReadonlyHintInfotextSaveClickState({
+      value: noteText,
+      hostContextStatus: validHostContext,
+    });
+    assert.equal(standardClickState.clickPrepared, true);
+    assert.equal(standardClickState.clickPathBlocked, true);
+    assert.equal(standardClickState.buttonEnabled, false);
+    assert.equal(standardClickState.canStartSave, false);
+    assert.equal(standardClickState.gateOpen, false);
+    assert.equal(standardClickState.payloadComplete, true);
+    assert.equal(standardClickState.persisted, false);
+    assert.equal(standardClickState.previewOnly, true);
+
+    let standardWriteCalls = 0;
+    const standardResult = await mod.executeReadonlyHintInfotextSaveClick({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      testOnly: {
+        mode: "dev",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        useProductiveAdapter: true,
+        win: {
+          bbmDb: {
+            restarbeitenCreateNote() {
+              standardWriteCalls += 1;
+              return { ok: true };
+            },
+          },
+        },
+      },
+    });
+    assert.equal(standardResult.blocked, true);
+    assert.equal(standardResult.executed, false);
+    assert.equal(standardResult.persisted, false);
+    assert.equal(standardResult.previewOnly, true);
+    assert.equal(standardWriteCalls, 0);
+
+    const clickState = {};
+    const successfulCalls = [];
+    const successfulWin = {
+      bbmDb: {
+        async restarbeitenCreateNote(payload) {
+          successfulCalls.push(payload);
+          return {
+            ok: true,
+            note: {
+              id: "note-click-1",
+              restarbeitId: payload.restarbeitId,
+              noteText: payload.noteText,
+            },
+          };
+        },
+      },
+    };
+    const successResult = await mod.executeReadonlyHintInfotextSaveClick({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      clickState,
+      testOnly: {
+        mode: "save-click-gated-test-release",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        useProductiveAdapter: true,
+        win: successfulWin,
+      },
+    });
+    assert.equal(successfulCalls.length, 1);
+    assert.deepEqual(successfulCalls[0], {
+      restarbeitId: "restarbeit-99",
+      noteText,
+    });
+    assert.equal(successResult.ok, true);
+    assert.equal(successResult.blocked, false);
+    assert.equal(successResult.executed, true);
+    assert.equal(successResult.persisted, true);
+    assert.equal(successResult.previewOnly, false);
+    assert.equal(clickState.saveState, "success");
+    assert.equal(clickState.lastClickStatus, "success");
+    assert.equal(
+      clickState.lastSavedPayloadSignature,
+      "restarbeitId=restarbeit-99\nnoteText=Dies ist ein kontrollierter Speicherklick-Test."
+    );
+
+    const duplicateResult = await mod.executeReadonlyHintInfotextSaveClick({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      clickState,
+      testOnly: {
+        mode: "save-click-gated-test-release",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        useProductiveAdapter: true,
+        win: successfulWin,
+      },
+    });
+    assert.equal(duplicateResult.blocked, true);
+    assert.equal(duplicateResult.executed, false);
+    assert.equal(duplicateResult.duplicateBlocked, true);
+    assert.equal(successfulCalls.length, 1);
+
+    let releaseAdapter = null;
+    const slowCalls = [];
+    const slowClickState = {};
+    const slowWin = {
+      bbmDb: {
+        restarbeitenCreateNote(payload) {
+          slowCalls.push(payload);
+          return new Promise((resolve) => {
+            releaseAdapter = () => resolve({ ok: true, note: { id: "note-click-slow" } });
+          });
+        },
+      },
+    };
+    const firstClick = mod.executeReadonlyHintInfotextSaveClick({
+      value: changedNoteText,
+      hostContextStatus: validHostContext,
+      clickState: slowClickState,
+      testOnly: {
+        mode: "save-click-gated-test-release",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        useProductiveAdapter: true,
+        win: slowWin,
+      },
+    });
+    assert.equal(slowClickState.saveState, "saving");
+    const secondClickWhileSaving = await mod.executeReadonlyHintInfotextSaveClick({
+      value: changedNoteText,
+      hostContextStatus: validHostContext,
+      clickState: slowClickState,
+      testOnly: {
+        mode: "save-click-gated-test-release",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        useProductiveAdapter: true,
+        win: slowWin,
+      },
+    });
+    assert.equal(secondClickWhileSaving.blocked, true);
+    assert.equal(secondClickWhileSaving.executed, false);
+    assert.equal(secondClickWhileSaving.inFlightBlocked, true);
+    assert.equal(slowCalls.length, 1);
+    releaseAdapter();
+    const firstClickResult = await firstClick;
+    assert.equal(firstClickResult.ok, true);
+    assert.equal(firstClickResult.persisted, true);
+    assert.equal(slowCalls.length, 1);
+
+    const failingClickState = {};
+    let failingCalls = 0;
+    const failingResult = await mod.executeReadonlyHintInfotextSaveClick({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      clickState: failingClickState,
+      testOnly: {
+        mode: "save-click-gated-test-release",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        useProductiveAdapter: true,
+        win: {
+          bbmDb: {
+            async restarbeitenCreateNote(payload) {
+              failingCalls += 1;
+              return { ok: false, error: `Testfehler: ${payload.restarbeitId}` };
+            },
+          },
+        },
+      },
+    });
+    assert.equal(failingCalls, 1);
+    assert.equal(failingResult.ok, false);
+    assert.equal(failingResult.executed, true);
+    assert.equal(failingResult.persisted, false);
+    assert.equal(failingResult.previewOnly, true);
+    assert.equal(failingResult.lastClickStatus, "error");
+    assert.equal(failingClickState.lastSavedPayloadSignature || "", "");
+    const retryAfterError = mod.buildReadonlyHintInfotextSaveClickState({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      clickState: failingClickState,
+      testOnly: {
+        mode: "save-click-gated-test-release",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        useProductiveAdapter: true,
+      },
+    });
+    assert.equal(retryAfterError.canStartSave, true);
+    assert.equal(retryAfterError.duplicateBlocked, false);
+
+    const guardedCalls = [];
+    const guardedWin = {
+      bbmDb: {
+        restarbeitenCreateNote(payload) {
+          guardedCalls.push(payload);
+          return { ok: true };
+        },
+      },
+    };
+    for (const [label, input] of [
+      [
+        "DEV-Kontext",
+        {
+          value: noteText,
+          hostContextStatus: validHostContext,
+          testOnly: {
+            mode: "dev",
+            writeReleaseEnabled: true,
+            gateOpen: true,
+            useProductiveAdapter: true,
+            win: guardedWin,
+          },
+        },
+      ],
+      [
+        "vorhandene Payload ohne Freigabe",
+        {
+          value: noteText,
+          hostContextStatus: validHostContext,
+          testOnly: {
+            mode: "save-click-gated-test-release",
+            useProductiveAdapter: true,
+            win: guardedWin,
+          },
+        },
+      ],
+      [
+        "vorhandene restarbeitId ohne Gate",
+        {
+          value: noteText,
+          hostContextStatus: validHostContext,
+          testOnly: {
+            mode: "save-click-gated-test-release",
+            writeReleaseEnabled: true,
+            useProductiveAdapter: true,
+            win: guardedWin,
+          },
+        },
+      ],
+      [
+        "leerer Hinweistext",
+        {
+          value: "   ",
+          hostContextStatus: validHostContext,
+          testOnly: {
+            mode: "save-click-gated-test-release",
+            writeReleaseEnabled: true,
+            gateOpen: true,
+            useProductiveAdapter: true,
+            win: guardedWin,
+          },
+        },
+      ],
+      [
+        "fehlende restarbeitId",
+        {
+          value: noteText,
+          hostContextStatus: mod.buildReadonlyHintInfotextHostContextStatusModel(),
+          testOnly: {
+            mode: "save-click-gated-test-release",
+            writeReleaseEnabled: true,
+            gateOpen: true,
+            useProductiveAdapter: true,
+            win: guardedWin,
+          },
+        },
+      ],
+    ]) {
+      const before = guardedCalls.length;
+      const blockedResult = await mod.executeReadonlyHintInfotextSaveClick(input);
+      assert.equal(blockedResult.blocked, true, `${label} muss blockiert bleiben.`);
+      assert.equal(blockedResult.executed, false, `${label} darf den Produktiv-Adapter nicht ausfuehren.`);
+      assert.equal(blockedResult.persisted, false, `${label} darf nicht persistieren.`);
+      assert.equal(blockedResult.previewOnly, true, `${label} bleibt Preview-only.`);
+      assert.equal(guardedCalls.length, before, `${label} darf restarbeitenCreateNote nicht aufrufen.`);
+    }
+
+    const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    assert.equal(source.includes("buildReadonlyHintInfotextSaveClickState"), true);
+    assert.equal(source.includes("executeReadonlyHintInfotextSaveClick"), true);
+    assert.equal(source.includes("save-click-gated-test-release"), true);
+    assert.equal(source.includes("button.disabled = true"), true);
+    assert.equal(source.includes("process.env"), false);
+    assert.equal(source.includes("window.bbmDb.restarbeitenCreateNote("), false);
+    assert.equal(source.includes(".restarbeitenCreateNote("), false);
+    assert.equal(source.includes('invoke("restarbeiten:createNote"'), false);
+    assert.equal(source.includes('handle("restarbeiten:createNote"'), false);
+    assert.equal(source.includes("localStorage"), false);
+    assert.equal(source.includes("writeFile"), false);
+  });
+
   await run("BBM UI-Editor-Runtime: Speicherbereitschaft aktualisiert Host-Kontext beim Oeffnen", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
@@ -6372,6 +6708,41 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Doppelklick-Speicherschutz-Referenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Speicherklick-Gate bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_SAVE_CLICK_GATED_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Speicherklick-Gate-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_SAVE_CLICK_GATED_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "G136",
+      "Speicherklick: vorbereitet",
+      "Klickpfad im Standard: blockiert",
+      "Letzter Klickstatus",
+      "save-click-gated-test-release",
+      "window.bbmDb.restarbeitenCreateNote",
+      "restarbeiten:createNote",
+      "restarbeitId",
+      "noteText",
+      "Doppelklick",
+      "identische Payload",
+      "persisted: false",
+      "previewOnly: true",
+      "kein Produktiv-Speichern",
+      "kein localStorage",
+      "kein writeFile",
+      "kein Default-true",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Speicherklick-Gate-Referenz enthaelt ${required} nicht.`
       );
     }
   });

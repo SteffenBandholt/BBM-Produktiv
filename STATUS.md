@@ -3792,3 +3792,37 @@ Wichtig:
   - Keine DEV-/ENV-Aktivierung, kein Default-true, keine Wildcard, kein
     automatischer `window.bbmDb.restarbeitenCreateNote`- oder
     `restarbeiten:createNote`-Aufruf und keine Aenderung am `UI-Editor-kit`.
+
+### G136 - UI-Editor Hinweis/Infotext Speicherklick-Pfad hinter Gate
+- Status: erledigt
+- Beschreibung:
+  - Der BBM-Launcher hat einen lokalen Speicherklick-Pfad fuer
+    Hinweis-/Infotext hinter dem bestehenden Gate vorbereitet.
+  - Sichtbar/testbar sind `Speicherklick: vorbereitet`,
+    `Klickpfad im Standard: blockiert`, `Letzter Klickstatus`,
+    `buttonEnabled: false`, `canStartSave: false`, `persisted: false` und
+    `previewOnly: true`.
+  - Der isolierte Testpfad `mode: save-click-gated-test-release` prueft den
+    kontrollierten positiven Klickpfad mit Stub fuer
+    `window.bbmDb.restarbeitenCreateNote`.
+  - Doppelklick waehrend `saving`, identische Payload nach Erfolg und
+    Fehler-/Retry-Verhalten bleiben abgesichert.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SAVE_CLICK_GATED_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Ein Produktiv-Speicherklick im normalen UI-Pfad bleibt ein separater
+    spaeterer Meilenstein mit ausdruecklicher Freigabe.
+- Risiken/Hinweise:
+  - UI-Standardpfad weiter geschlossen: Gate geschlossen, Speicherbutton
+    deaktiviert, kein Produktiv-Speichern, `persisted: false` und
+    `previewOnly: true`.
+  - Keine DEV-/ENV-Aktivierung, kein Default-true, keine Wildcard, kein
+    automatischer `window.bbmDb.restarbeitenCreateNote`- oder
+    `restarbeiten:createNote`-Aufruf, kein IPC-/DB-/Datei-/localStorage-
+    Schreibweg und keine Aenderung am `UI-Editor-kit`.

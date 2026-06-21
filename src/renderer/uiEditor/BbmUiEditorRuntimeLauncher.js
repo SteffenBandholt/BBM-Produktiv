@@ -123,6 +123,10 @@ const READONLY_HINT_INFOTEXT_SAVE_GUARD_DOUBLE_CLICK_LINE = "Doppelklickschutz: 
 const READONLY_HINT_INFOTEXT_SAVE_GUARD_DUPLICATE_LINE =
   "Mehrfachspeicherung gleicher Payload: vorbereitet";
 const READONLY_HINT_INFOTEXT_SAVE_GUARD_STANDARD_BLOCKED_LINE = "Standardpfad: gesperrt";
+const READONLY_HINT_INFOTEXT_SAVE_CLICK_TITLE = "Speicherklick";
+const READONLY_HINT_INFOTEXT_SAVE_CLICK_PREPARED_LINE = "Speicherklick: vorbereitet";
+const READONLY_HINT_INFOTEXT_SAVE_CLICK_STANDARD_BLOCKED_LINE = "Klickpfad im Standard: blockiert";
+const READONLY_HINT_INFOTEXT_SAVE_CLICK_NOT_EXECUTED_LINE = "Letzter Klickstatus: nicht ausgeführt";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY = "Status: Hinweistext fehlt";
@@ -2409,6 +2413,211 @@ function formatReadonlyHintInfotextSaveGuardStateText(
   ].join("\n");
 }
 
+function createReadonlyHintInfotextSaveClickButtonTestRelease(testOnly = null, clickState = {}) {
+  const explicitClickRelease =
+    testOnly
+    && testOnly.mode === "save-click-gated-test-release"
+    && testOnly.writeReleaseEnabled === true
+    && testOnly.gateOpen === true
+    && testOnly.useProductiveAdapter === true;
+  if (!explicitClickRelease) return null;
+  return {
+    mode: "save-button-gated-test-release",
+    writeReleaseEnabled: true,
+    gateOpen: true,
+    adapterAvailable: true,
+    isSaving: clickState?.saveState === "saving",
+    alreadySavedIdentical: clickState?.alreadySavedIdentical === true,
+  };
+}
+
+function buildReadonlyHintInfotextSaveClickState({
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  clickState = null,
+  testOnly = null,
+} = {}) {
+  const normalizedClickState = clickState && typeof clickState === "object" ? clickState : {};
+  const buttonTestRelease = createReadonlyHintInfotextSaveClickButtonTestRelease(testOnly, normalizedClickState);
+  const buttonState = buildReadonlyHintInfotextSaveButtonState({
+    value,
+    hostContextStatus,
+    testOnly: buttonTestRelease,
+  });
+  const guardState = buildReadonlyHintInfotextSaveGuardState({
+    value,
+    hostContextStatus,
+    saveState: normalizedClickState.saveState || "",
+    lastSavedPayloadSignature: normalizedClickState.lastSavedPayloadSignature || "",
+    testOnly:
+      buttonTestRelease
+        ? {
+            mode: "save-guard-isolated-test",
+            writeReleaseEnabled: true,
+            gateOpen: true,
+            adapter() {
+              return { ok: true };
+            },
+          }
+        : null,
+  });
+  const explicitClickRelease = buttonTestRelease !== null;
+  const clickBlocked =
+    explicitClickRelease !== true
+    || buttonState.buttonEnabled !== true
+    || guardState.canStartSave !== true;
+  const blockReasons = [];
+  if (explicitClickRelease !== true) blockReasons.push(READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON);
+  if (buttonState.buttonEnabled !== true) blockReasons.push(...buttonState.blockReasons);
+  if (guardState.canStartSave !== true) blockReasons.push(...guardState.blockReasons);
+  return Object.freeze({
+    clickPrepared: true,
+    clickPathBlocked: clickBlocked,
+    lastClickStatus: normalizedClickState.lastClickStatus || "not-executed",
+    buttonEnabled: buttonState.buttonEnabled === true,
+    gateOpen: explicitClickRelease === true,
+    payloadComplete: buttonState.payloadComplete === true,
+    hintTextValid: buttonState.hintTextValid === true,
+    canStartSave: guardState.canStartSave === true,
+    duplicateBlocked: guardState.duplicateBlocked === true,
+    inFlightBlocked: guardState.inFlightBlocked === true,
+    currentPayloadSignature: guardState.currentPayloadSignature,
+    lastSavedPayloadSignature: guardState.lastSavedPayloadSignature,
+    standardPath: "blocked",
+    persisted: false,
+    previewOnly: true,
+    reason: clickBlocked ? blockReasons[0] || READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON : "explizite Testfreigabe aktiv",
+    blockReasons: Object.freeze(Array.from(new Set(blockReasons))),
+  });
+}
+
+async function executeReadonlyHintInfotextSaveClick({
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  clickState = null,
+  testOnly = null,
+} = {}) {
+  const mutableClickState = clickState && typeof clickState === "object" ? clickState : {};
+  const clickModel = buildReadonlyHintInfotextSaveClickState({
+    value,
+    hostContextStatus,
+    clickState: mutableClickState,
+    testOnly,
+  });
+  if (clickModel.clickPathBlocked === true) {
+    mutableClickState.lastClickStatus = "blocked";
+    return Object.freeze({
+      ok: false,
+      blocked: true,
+      reason: clickModel.reason,
+      blockReasons: clickModel.blockReasons,
+      clickPrepared: true,
+      clickPathBlocked: true,
+      lastClickStatus: "blocked",
+      buttonEnabled: clickModel.buttonEnabled,
+      gateOpen: clickModel.gateOpen,
+      payloadComplete: clickModel.payloadComplete,
+      hintTextValid: clickModel.hintTextValid,
+      canStartSave: false,
+      duplicateBlocked: clickModel.duplicateBlocked,
+      inFlightBlocked: clickModel.inFlightBlocked,
+      executed: false,
+      persisted: false,
+      previewOnly: true,
+    });
+  }
+
+  mutableClickState.saveState = "saving";
+  mutableClickState.lastClickStatus = "saving";
+  const payload = Object.freeze({
+    restarbeitId: hostContextStatus.restarbeitId,
+    noteText: String(value == null ? "" : value).trim(),
+  });
+  const currentPayloadSignature = buildReadonlyHintInfotextSavePayloadSignature({ value, hostContextStatus });
+  const adapterResult = await executeReadonlyHintInfotextProductiveSaveAdapter({
+    payload,
+    win: testOnly?.win || null,
+  });
+  if (adapterResult.ok === true) {
+    mutableClickState.saveState = "success";
+    mutableClickState.lastClickStatus = "success";
+    mutableClickState.lastSavedPayloadSignature = currentPayloadSignature;
+    return Object.freeze({
+      ok: true,
+      blocked: false,
+      reason: adapterResult.reason,
+      blockReasons: Object.freeze([]),
+      clickPrepared: true,
+      clickPathBlocked: false,
+      lastClickStatus: "success",
+      payload,
+      adapterResult,
+      buttonEnabled: true,
+      gateOpen: true,
+      payloadComplete: true,
+      hintTextValid: true,
+      canStartSave: false,
+      duplicateBlocked: false,
+      inFlightBlocked: false,
+      executed: adapterResult.executed === true,
+      persisted: adapterResult.persisted === true,
+      previewOnly: adapterResult.previewOnly === true,
+    });
+  }
+  mutableClickState.saveState = "error";
+  mutableClickState.lastClickStatus = "error";
+  return Object.freeze({
+    ok: false,
+    blocked: adapterResult.blocked === true,
+    reason: adapterResult.reason,
+    blockReasons: Object.freeze([]),
+    clickPrepared: true,
+    clickPathBlocked: false,
+    lastClickStatus: "error",
+    payload,
+    adapterResult,
+    buttonEnabled: true,
+    gateOpen: true,
+    payloadComplete: true,
+    hintTextValid: true,
+    canStartSave: false,
+    duplicateBlocked: false,
+    inFlightBlocked: false,
+    executed: adapterResult.executed === true,
+    persisted: false,
+    previewOnly: true,
+  });
+}
+
+function formatReadonlyHintInfotextSaveClickStateText(
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  clickState = null
+) {
+  const clickModel = buildReadonlyHintInfotextSaveClickState({ value, hostContextStatus, clickState });
+  const lastClickStatusLabel = {
+    "not-executed": "nicht ausgeführt",
+    blocked: "blockiert",
+    saving: "laeuft",
+    success: "erfolgreich",
+    error: "Fehler",
+  }[clickModel.lastClickStatus] || "nicht ausgeführt";
+  return [
+    READONLY_HINT_INFOTEXT_SAVE_CLICK_PREPARED_LINE,
+    READONLY_HINT_INFOTEXT_SAVE_CLICK_STANDARD_BLOCKED_LINE,
+    `Letzter Klickstatus: ${lastClickStatusLabel}`,
+    `Klickpfad blockiert: ${clickModel.clickPathBlocked ? "ja" : "nein"}`,
+    `buttonEnabled: ${clickModel.buttonEnabled ? "true" : "false"}`,
+    `canStartSave: ${clickModel.canStartSave ? "true" : "false"}`,
+    `Gate offen: ${clickModel.gateOpen ? "ja" : "nein"}`,
+    `Payload vollständig: ${clickModel.payloadComplete ? "ja" : "nein"}`,
+    `Hinweistext gültig: ${clickModel.hintTextValid ? "ja" : "nein"}`,
+    `Grund: ${clickModel.reason}`,
+    "persisted: false",
+    "previewOnly: true",
+  ].join("\n");
+}
+
 function getReadonlyHintInfotextSaveAdapterDescriptor() {
   return Object.freeze({
     adapterPrepared: true,
@@ -2728,6 +2937,13 @@ function updateReadonlyHintInfotextStoragePreviews(state = {}, value = "") {
       hostContextStatus
     );
   }
+  if (state.hintInfotextSaveClickStatePreview) {
+    state.hintInfotextSaveClickStatePreview.textContent = formatReadonlyHintInfotextSaveClickStateText(
+      value,
+      hostContextStatus,
+      state.hintInfotextSaveClickState || null
+    );
+  }
 }
 
 function appendReadonlySurfaceSelection(doc, panel, state = {}) {
@@ -2901,6 +3117,9 @@ function handleReadonlyHintInfotextDraftInput(
     || state.hintInfotextSaveHandlerPreview
     || state.hintInfotextSaveAdapterPreview
     || state.hintInfotextSaveExecutionPreview
+    || state.hintInfotextSaveButtonStatePreview
+    || state.hintInfotextSaveGuardStatePreview
+    || state.hintInfotextSaveClickStatePreview
   ) {
     updateReadonlyHintInfotextStoragePreviews(state, nextValue);
   }
@@ -3147,6 +3366,7 @@ function appendReadonlyHintInfotextDraftPreview(doc, panel, state = {}) {
 function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
   const hostContextStatus = getReadonlyHintInfotextHostContextStatus(state);
+  state.hintInfotextSaveClickState = state.hintInfotextSaveClickState || {};
 
   const storage = doc.createElement("div");
   storage.className = "ui-editor-preview-hint-infotext-storage";
@@ -3359,6 +3579,29 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   );
   state.hintInfotextSaveGuardStatePreview = saveGuardState;
 
+  const saveClickStateTitle = doc.createElement("div");
+  saveClickStateTitle.className = "ui-editor-preview-hint-infotext-storage__save-click-state-title";
+  saveClickStateTitle.textContent = READONLY_HINT_INFOTEXT_SAVE_CLICK_TITLE;
+  saveClickStateTitle.style.fontWeight = "700";
+  saveClickStateTitle.style.marginTop = "8px";
+  saveClickStateTitle.style.marginBottom = "4px";
+
+  const saveClickState = doc.createElement("div");
+  saveClickState.className = "ui-editor-preview-hint-infotext-storage__save-click-state";
+  saveClickState.setAttribute("data-ui-editor-hint-infotext-save-click-state-preview", "true");
+  saveClickState.style.whiteSpace = "pre-wrap";
+  saveClickState.style.padding = "6px 8px";
+  saveClickState.style.border = "1px solid #dbe4ee";
+  saveClickState.style.borderRadius = "4px";
+  saveClickState.style.background = "#ffffff";
+  saveClickState.style.minHeight = "24px";
+  saveClickState.textContent = formatReadonlyHintInfotextSaveClickStateText(
+    getReadonlyHintInfotextDraftText(state),
+    hostContextStatus,
+    state.hintInfotextSaveClickState
+  );
+  state.hintInfotextSaveClickStatePreview = saveClickState;
+
   const button = doc.createElement("button");
   button.type = "button";
   button.className = "ui-editor-preview-hint-infotext-storage__button";
@@ -3375,7 +3618,16 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   button.style.color = "#64748b";
   button.style.cursor = "not-allowed";
   button.addEventListener("mousedown", stopPreviewPanelEvent);
-  button.addEventListener("click", stopPreviewPanelEvent);
+  button.addEventListener("click", (event) => {
+    stopPreviewPanelEvent(event);
+    executeReadonlyHintInfotextSaveClick({
+      value: getReadonlyHintInfotextDraftText(state),
+      hostContextStatus: getReadonlyHintInfotextHostContextStatus(state),
+      clickState: state.hintInfotextSaveClickState,
+    }).finally(() => {
+      updateReadonlyHintInfotextStoragePreviews(state, getReadonlyHintInfotextDraftText(state));
+    });
+  });
 
   storage.append(
     title,
@@ -3398,6 +3650,8 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
     saveButtonState,
     saveGuardStateTitle,
     saveGuardState,
+    saveClickStateTitle,
+    saveClickState,
     button
   );
   panel.appendChild(storage);
@@ -3524,11 +3778,13 @@ export {
   buildReadonlyHintInfotextSaveButtonState,
   buildReadonlyHintInfotextSavePayloadSignature,
   buildReadonlyHintInfotextSaveGuardState,
+  buildReadonlyHintInfotextSaveClickState,
   getReadonlyHintInfotextSaveAdapterDescriptor,
   executeReadonlyHintInfotextBlockedSaveHandler,
   executeReadonlyHintInfotextProductiveSaveAdapter,
   executeReadonlyHintInfotextSave,
   executeReadonlyHintInfotextGuardedSave,
+  executeReadonlyHintInfotextSaveClick,
   getReadonlyHintInfotextHostContextStatus,
   ensureLauncherStatusHint,
   applyPreviewOperation,
