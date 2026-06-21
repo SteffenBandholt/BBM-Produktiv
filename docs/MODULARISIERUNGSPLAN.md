@@ -188,6 +188,10 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
   bleibt `nein`, Speichern bleibt gesperrt und `persisted: false`. Der
   Host-Kontext wird beim Oeffnen des Launchers frisch ueber den bestehenden
   CoreShell-Resolver gelesen.
+- G124 zeigt die spaetere Create-Note-Payload fuer `Hinweis / Infotext` als
+  read-only Vorschau an; `restarbeiten:createNote`, `restarbeitId`,
+  `noteText`, `projectId`, `previewOnly: true` und `persisted: false` bleiben
+  reine Anzeige, der Schreibweg bleibt gesperrt.
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 
@@ -504,3 +508,15 @@ Dabei gilt:
   wird.
 - Es gibt keinen `restarbeiten:createNote`-Aufruf, keinen
   `window.bbmDb.restarbeitenCreateNote`-Aufruf und keine IPC-/DB-Persistenz.
+
+## G124: Create-Note-Payload als Vorschau anzeigen
+
+- Der UI-Editor zeigt im bestehenden Speicherbereich eine read-only
+  Create-Note-Payload-Vorschau fuer den spaeteren Restarbeiten-Notizweg.
+- Die Vorschau wird nur aus normalisiertem Host-Kontext, aktuellem Hinweistext
+  und festen Sperrstatuswerten gebildet.
+- `Ziel: restarbeiten:createNote`, `restarbeitId`, `noteText`, `projectId`,
+  `previewOnly: true`, `persisted: false` und `Schreibweg freigegeben: nein`
+  bleiben reine Anzeige.
+- Es gibt keinen Speicheraufruf, keinen DB-/IPC-Schreibweg, keinen Submit und
+  keine Aenderung am `UI-Editor-kit`.

@@ -86,6 +86,8 @@ const READONLY_HINT_INFOTEXT_STORAGE_TARGET_LINE = "Ziel: Restarbeiten-Notizweg 
 const READONLY_HINT_INFOTEXT_STORAGE_STATUS_LINE = "Status: gesperrt";
 const READONLY_HINT_INFOTEXT_STORAGE_PERSISTED_LINE = "persisted: false";
 const READONLY_HINT_INFOTEXT_STORAGE_BUTTON_LABEL = "Entwurf speichern";
+const READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TITLE = "Create-Note-Payload-Vorschau";
+const READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TARGET = "Ziel: restarbeiten:createNote";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY = "Status: Hinweistext fehlt";
@@ -2005,6 +2007,41 @@ function formatReadonlyHintInfotextStorageFreigabecheckText(
   ].join("\n");
 }
 
+function formatReadonlyHintInfotextCreateNotePayloadPreviewText(
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()
+) {
+  const hintText = String(value == null ? "" : value);
+  const hintTextValid = isReadonlyHintInfotextDraftValid(hintText);
+  const payloadComplete = hostContextStatus.isPresent === true && hintTextValid;
+  return [
+    `Payload vollständig: ${payloadComplete ? "ja" : "nein"}`,
+    READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TARGET,
+    `restarbeitId: ${hostContextStatus.restarbeitId ? hostContextStatus.restarbeitId : "nicht übergeben"}`,
+    `noteText: ${payloadComplete ? hintText : "nicht bereit"}`,
+    `projectId: ${hostContextStatus.projectId ? hostContextStatus.projectId : "nicht übergeben"}`,
+    "persisted: false",
+    "previewOnly: true",
+    "Schreibweg freigegeben: nein",
+  ].join("\n");
+}
+
+function updateReadonlyHintInfotextStoragePreviews(state = {}, value = "") {
+  const hostContextStatus = getReadonlyHintInfotextHostContextStatus(state);
+  if (state.hintInfotextStorageCheckPreview) {
+    state.hintInfotextStorageCheckPreview.textContent = formatReadonlyHintInfotextStorageFreigabecheckText(
+      value,
+      hostContextStatus
+    );
+  }
+  if (state.hintInfotextCreateNotePayloadPreview) {
+    state.hintInfotextCreateNotePayloadPreview.textContent = formatReadonlyHintInfotextCreateNotePayloadPreviewText(
+      value,
+      hostContextStatus
+    );
+  }
+}
+
 function appendReadonlySurfaceSelection(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
   const selectionModel = buildReadonlySurfaceSelectionForLauncher({
@@ -2169,11 +2206,8 @@ function handleReadonlyHintInfotextDraftInput(
   if (validationPreview) {
     validationPreview.textContent = formatReadonlyHintInfotextDraftValidationText(nextValue);
   }
-  if (storageCheckPreview) {
-    storageCheckPreview.textContent = formatReadonlyHintInfotextStorageFreigabecheckText(
-      nextValue,
-      getReadonlyHintInfotextHostContextStatus(state)
-    );
+  if (storageCheckPreview || state.hintInfotextCreateNotePayloadPreview) {
+    updateReadonlyHintInfotextStoragePreviews(state, nextValue);
   }
   return nextValue;
 }
@@ -2479,6 +2513,28 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   );
   state.hintInfotextStorageCheckPreview = freigabecheck;
 
+  const createNotePayloadTitle = doc.createElement("div");
+  createNotePayloadTitle.className = "ui-editor-preview-hint-infotext-storage__payload-title";
+  createNotePayloadTitle.textContent = READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TITLE;
+  createNotePayloadTitle.style.fontWeight = "700";
+  createNotePayloadTitle.style.marginTop = "8px";
+  createNotePayloadTitle.style.marginBottom = "4px";
+
+  const createNotePayload = doc.createElement("div");
+  createNotePayload.className = "ui-editor-preview-hint-infotext-storage__payload";
+  createNotePayload.setAttribute("data-ui-editor-hint-infotext-create-note-payload-preview", "true");
+  createNotePayload.style.whiteSpace = "pre-wrap";
+  createNotePayload.style.padding = "6px 8px";
+  createNotePayload.style.border = "1px solid #dbe4ee";
+  createNotePayload.style.borderRadius = "4px";
+  createNotePayload.style.background = "#ffffff";
+  createNotePayload.style.minHeight = "24px";
+  createNotePayload.textContent = formatReadonlyHintInfotextCreateNotePayloadPreviewText(
+    getReadonlyHintInfotextDraftText(state),
+    hostContextStatus
+  );
+  state.hintInfotextCreateNotePayloadPreview = createNotePayload;
+
   const button = doc.createElement("button");
   button.type = "button";
   button.className = "ui-editor-preview-hint-infotext-storage__button";
@@ -2497,7 +2553,17 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   button.addEventListener("mousedown", stopPreviewPanelEvent);
   button.addEventListener("click", stopPreviewPanelEvent);
 
-  storage.append(title, contextTitle, contextLines, lines, freigabecheckTitle, freigabecheck, button);
+  storage.append(
+    title,
+    contextTitle,
+    contextLines,
+    lines,
+    freigabecheckTitle,
+    freigabecheck,
+    createNotePayloadTitle,
+    createNotePayload,
+    button
+  );
   panel.appendChild(storage);
   return storage;
 }

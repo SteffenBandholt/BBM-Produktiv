@@ -149,6 +149,10 @@ const UI_EDITOR_HINT_INFOTEXT_STORAGE_READINESS_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERBEREITSCHAFT_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_PREVIEW_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_CREATE_NOTE_PAYLOAD_PREVIEW_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -539,6 +543,9 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-hint-infotext-storage-check=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-storage-check") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-create-note-payload-preview=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-create-note-payload-preview") === "true";
   }
   if (raw === "[data-ui-editor-hint-infotext-save-button=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-save-button") === "true";
@@ -1004,6 +1011,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const hintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     const hintInfotextStoragePreview = doc.querySelector('[data-ui-editor-hint-infotext-storage-preview="true"]');
     const hintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
+    const hintInfotextCreateNotePayloadPreview = doc.querySelector(
+      '[data-ui-editor-hint-infotext-create-note-payload-preview="true"]'
+    );
     const hintInfotextSaveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
     const hintInfotextDraftValidation = doc.querySelector('[data-ui-editor-hint-infotext-draft-validation="true"]');
     const hintInfotextDraftReset = doc.querySelector('[data-ui-editor-hint-infotext-draft-reset="true"]');
@@ -1121,6 +1131,13 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Elementtyp: Hinweis / Infotext",
       "Schreibweg freigegeben: nein",
       "Speichern: gesperrt",
+      "Create-Note-Payload-Vorschau",
+      "Payload vollständig: nein",
+      "Ziel: restarbeiten:createNote",
+      "restarbeitId: nicht übergeben",
+      "noteText: nicht bereit",
+      "projectId: nicht übergeben",
+      "previewOnly: true",
     ]) {
       assert.equal(
         getRenderedText(hintInfotextStoragePreview).includes(required),
@@ -1128,6 +1145,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         `Speicherbereich enthaelt ${required} nicht.`
       );
     }
+    assert.equal(Boolean(hintInfotextCreateNotePayloadPreview), true);
+    assert.equal(
+      hintInfotextCreateNotePayloadPreview.textContent,
+      "Payload vollständig: nein\nZiel: restarbeiten:createNote\nrestarbeitId: nicht übergeben\nnoteText: nicht bereit\nprojectId: nicht übergeben\npersisted: false\npreviewOnly: true\nSchreibweg freigegeben: nein"
+    );
     assert.equal(Boolean(hintInfotextStorageCheck), true);
     for (const required of [
       "Hinweistext gültig: ja",
@@ -1197,9 +1219,16 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "type: Hinweis / Infotext\nsurfaceId: restarbeiten.ui.main\nstatus: draft\npersisted: false\nLokaler Hinweistext fuer die Vorschau."
     );
     const updatedHintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
+    const updatedHintInfotextCreateNotePayloadPreview = doc.querySelector(
+      '[data-ui-editor-hint-infotext-create-note-payload-preview="true"]'
+    );
     assert.equal(
       updatedHintInfotextStorageCheck.textContent,
       "Hinweistext gültig: ja\nHost-Kontext vorhanden: nein\nprojectId vorhanden: nein\nrestarbeitId vorhanden: nein\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nSpeichern: gesperrt\nSpeicherbutton: deaktiviert\npersisted: false"
+    );
+    assert.equal(
+      updatedHintInfotextCreateNotePayloadPreview.textContent,
+      "Payload vollständig: nein\nZiel: restarbeiten:createNote\nrestarbeitId: nicht übergeben\nnoteText: nicht bereit\nprojectId: nicht übergeben\npersisted: false\npreviewOnly: true\nSchreibweg freigegeben: nein"
     );
     assert.equal(
       updatedHintInfotextDraftValidation.textContent,
@@ -1217,9 +1246,16 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Status: Hinweistext fehlt\nSpeichern: nicht aktiv"
     );
     const emptiedHintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
+    const emptiedHintInfotextCreateNotePayloadPreview = doc.querySelector(
+      '[data-ui-editor-hint-infotext-create-note-payload-preview="true"]'
+    );
     assert.equal(
       emptiedHintInfotextStorageCheck.textContent,
       "Hinweistext gültig: nein\nHost-Kontext vorhanden: nein\nprojectId vorhanden: nein\nrestarbeitId vorhanden: nein\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nSpeichern: gesperrt\nSpeicherbutton: deaktiviert\npersisted: false"
+    );
+    assert.equal(
+      emptiedHintInfotextCreateNotePayloadPreview.textContent,
+      "Payload vollständig: nein\nZiel: restarbeiten:createNote\nrestarbeitId: nicht übergeben\nnoteText: nicht bereit\nprojectId: nicht übergeben\npersisted: false\npreviewOnly: true\nSchreibweg freigegeben: nein"
     );
     const emptiedHintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     assert.equal(
@@ -1234,6 +1270,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const resetHintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     const resetHintInfotextDraftValidation = doc.querySelector('[data-ui-editor-hint-infotext-draft-validation="true"]');
     const resetHintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
+    const resetHintInfotextCreateNotePayloadPreview = doc.querySelector(
+      '[data-ui-editor-hint-infotext-create-note-payload-preview="true"]'
+    );
     assert.equal(resetHintInfotextDraftInput.value, "Dies ist ein nicht gespeicherter Hinweis-Entwurf.");
     assert.equal(resetHintInfotextLivePreview.textContent, "Dies ist ein nicht gespeicherter Hinweis-Entwurf.");
     assert.equal(
@@ -1255,6 +1294,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(
       resetHintInfotextStorageCheck.textContent,
       "Hinweistext gültig: ja\nHost-Kontext vorhanden: nein\nprojectId vorhanden: nein\nrestarbeitId vorhanden: nein\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nSpeichern: gesperrt\nSpeicherbutton: deaktiviert\npersisted: false"
+    );
+    assert.equal(
+      resetHintInfotextCreateNotePayloadPreview.textContent,
+      "Payload vollständig: nein\nZiel: restarbeiten:createNote\nrestarbeitId: nicht übergeben\nnoteText: nicht bereit\nprojectId: nicht übergeben\npersisted: false\npreviewOnly: true\nSchreibweg freigegeben: nein"
     );
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
@@ -4585,6 +4628,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     const storagePreview = doc.querySelector('[data-ui-editor-hint-infotext-storage-preview="true"]');
     const storageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
+    const createNotePayloadPreview = doc.querySelector(
+      '[data-ui-editor-hint-infotext-create-note-payload-preview="true"]'
+    );
     const saveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
     const draftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
 
@@ -4597,6 +4643,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(
       storageCheck.textContent,
       "Hinweistext gültig: ja\nHost-Kontext vorhanden: ja\nprojectId vorhanden: ja\nrestarbeitId vorhanden: ja\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext\ntechnisch/fachlich speicherbereit: ja\nSchreibweg freigegeben: nein\nSpeichern: gesperrt\nSpeicherbutton: deaktiviert\npersisted: false"
+    );
+    assert.equal(
+      createNotePayloadPreview.textContent,
+      "Payload vollständig: ja\nZiel: restarbeiten:createNote\nrestarbeitId: restarbeit-99\nnoteText: Dies ist ein nicht gespeicherter Hinweis-Entwurf.\nprojectId: project-42\npersisted: false\npreviewOnly: true\nSchreibweg freigegeben: nein"
     );
     assert.equal(saveButton.disabled, true);
     assert.equal(saveButton.getAttribute("aria-disabled"), "true");
@@ -4613,11 +4663,16 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       storageCheck.textContent,
       "Hinweistext gültig: nein\nHost-Kontext vorhanden: ja\nprojectId vorhanden: ja\nrestarbeitId vorhanden: ja\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nSpeichern: gesperrt\nSpeicherbutton: deaktiviert\npersisted: false"
     );
+    assert.equal(
+      createNotePayloadPreview.textContent,
+      "Payload vollständig: nein\nZiel: restarbeiten:createNote\nrestarbeitId: restarbeit-99\nnoteText: nicht bereit\nprojectId: project-42\npersisted: false\npreviewOnly: true\nSchreibweg freigegeben: nein"
+    );
 
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
     assert.equal(source.includes("restarbeitenCreateNote"), false);
     assert.equal(source.includes("window.bbmDb"), false);
-    assert.equal(source.includes("restarbeiten:createNote"), false);
+    assert.equal(source.includes('invoke("restarbeiten:createNote"'), false);
+    assert.equal(source.includes('handle("restarbeiten:createNote"'), false);
     assert.equal(source.includes("localStorage"), false);
     assert.equal(source.includes("writeFile"), false);
   });
@@ -4698,6 +4753,42 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Speicherbereitschaft-Referenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Create-Note-Payload-Vorschau bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_PREVIEW_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Create-Note-Payload-Vorschau-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_PREVIEW_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "G124",
+      "Create-Note-Payload-Vorschau",
+      "Payload vollständig: ja/nein",
+      "Ziel: `restarbeiten:createNote`",
+      "`restarbeitId`",
+      "`noteText`",
+      "`projectId`",
+      "previewOnly: true",
+      "persisted: false",
+      "Schreibweg freigegeben: nein",
+      "kein Aufruf von `restarbeiten:createNote`",
+      "kein `window.bbmDb.restarbeitenCreateNote`",
+      "kein IPC-Schreibweg",
+      "kein DB-Schreibweg",
+      "kein localStorage",
+      "kein writeFile",
+      "kein Submit",
+      "UI-Editor-kit bleibt unveraendert",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Create-Note-Payload-Vorschau-Referenz enthaelt ${required} nicht.`
       );
     }
   });

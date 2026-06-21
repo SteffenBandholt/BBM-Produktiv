@@ -94,6 +94,17 @@ Sie ergÃ¤nzt:
     `window.bbmDb.restarbeitenCreateNote`, kein IPC-/DB-Schreibweg und keine
     Aenderung am `UI-Editor-kit`.
 
+- G124 Create-Note-Payload-Vorschau fuer `Hinweis / Infotext` sichtbar
+  gemacht:
+  - Der BBM-Launcher zeigt im bestehenden Speicherbereich eine read-only
+    Vorschau der spaeteren Restarbeiten-Notizpayload mit Ziel
+    `restarbeiten:createNote`, `restarbeitId`, `noteText`, `projectId`,
+    `previewOnly: true`, `persisted: false` und `Schreibweg freigegeben: nein`.
+  - Ohne gueltigen Host-Kontext oder ohne gueltigen Hinweistext bleibt die
+    Payload als unvollstaendig markiert.
+  - Es gibt weiterhin keinen Speicheraufruf, keinen IPC-/DB-Schreibweg, keinen
+    Submit und keine Aenderung am `UI-Editor-kit`.
+
 - G97 ergaenzt die lokale Live-Vorschau fuer `Hinweis / Infotext` im
   UI-Editor-Panel:
   - Die Entwurfs-Vorschau hat jetzt ein kleines Eingabefeld `Hinweistext` und
