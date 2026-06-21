@@ -189,6 +189,10 @@ const UI_EDITOR_HINT_INFOTEXT_SAVE_BUTTON_RELEASE_DECISION_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERBUTTON_FREIGABEENTSCHEIDUNG.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_SAVE_BUTTON_GATED_TEST_RELEASE_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERBUTTON_GATED_TESTFREIGABE_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -594,6 +598,9 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-hint-infotext-save-execution-preview=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-save-execution-preview") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-save-button-state-preview=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-save-button-state-preview") === "true";
   }
   if (raw === "[data-ui-editor-hint-infotext-save-button=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-save-button") === "true";
@@ -1074,6 +1081,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const hintInfotextSaveExecutionPreview = doc.querySelector(
       '[data-ui-editor-hint-infotext-save-execution-preview="true"]'
     );
+    const hintInfotextSaveButtonStatePreview = doc.querySelector(
+      '[data-ui-editor-hint-infotext-save-button-state-preview="true"]'
+    );
     const hintInfotextSaveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
     const hintInfotextDraftValidation = doc.querySelector('[data-ui-editor-hint-infotext-draft-validation="true"]');
     const hintInfotextDraftReset = doc.querySelector('[data-ui-editor-hint-infotext-draft-reset="true"]');
@@ -1217,6 +1227,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Save-Ausführung: vorbereitet",
       "Ausführung im Standardzustand: blockiert",
       "Ausgeführt: nein",
+      "Speicherbutton-Aktivierung",
+      "Button-Aktivierungsprüfung: vorbereitet",
+      "Button im Standardpfad: deaktiviert",
+      "Aktivierung nur mit expliziter Freigabe",
+      "buttonEnabled: false",
       "Ausführung: blockiert",
       "Letztes Speicherergebnis: nicht ausgeführt",
     ]) {
@@ -1239,6 +1254,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(Boolean(hintInfotextSaveHandlerPreview), true);
     assert.equal(Boolean(hintInfotextSaveAdapterPreview), true);
     assert.equal(Boolean(hintInfotextSaveExecutionPreview), true);
+    assert.equal(Boolean(hintInfotextSaveButtonStatePreview), true);
     assert.equal(
       hintInfotextSaveExecutionPreview.textContent,
       "Save-Ausführung: vorbereitet\nAusführung im Standardzustand: blockiert\nAusgeführt: nein\nBlockiergrund: Schreibfreigabe-Gate geschlossen\nPayload vollständig: nein\nHinweistext gültig: ja\nAdapter vorbereitet: ja\npersisted: false\npreviewOnly: true"
@@ -1246,6 +1262,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(
       hintInfotextSaveAdapterPreview.textContent,
       "Adapter: vorbereitet\nProduktiv-Save-Adapter: vorbereitet\nZieladapter: Restarbeiten-Notizweg\nZielmethode: window.bbmDb.restarbeitenCreateNote\nZielkanal: restarbeiten:createNote\nAusführung: blockiert\nProduktiv-Ausführung im Standardpfad: gesperrt\nProduktiv-Payload: restarbeitId, noteText\nGrund: Schreibfreigabe-Gate geschlossen\npersisted: false\npreviewOnly: true"
+    );
+    assert.equal(
+      hintInfotextSaveButtonStatePreview.textContent,
+      "Button-Aktivierungsprüfung: vorbereitet\nButton im Standardpfad: deaktiviert\nAktivierung nur mit expliziter Freigabe\nbuttonEnabled: false\nGrund: Host-Kontext fehlt\nPayload vollständig: nein\nHinweistext gültig: ja\nAdapter verfügbar: nein\nSpeicherung läuft: nein\npersisted: false\npreviewOnly: true"
     );
     assert.equal(
       hintInfotextSaveHandlerPreview.textContent,
@@ -4737,6 +4757,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const mod = await loadRuntime();
     assert.equal(typeof mod.executeReadonlyHintInfotextBlockedSaveHandler, "function");
     assert.equal(typeof mod.executeReadonlyHintInfotextSave, "function");
+    assert.equal(typeof mod.buildReadonlyHintInfotextSaveButtonState, "function");
     assert.equal(typeof mod.getReadonlyHintInfotextSaveAdapterDescriptor, "function");
     assert.deepEqual(mod.getReadonlyHintInfotextSaveAdapterDescriptor(), {
       adapterPrepared: true,
@@ -4791,6 +4812,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const saveHandlerPreview = doc.querySelector('[data-ui-editor-hint-infotext-save-handler-preview="true"]');
     const saveAdapterPreview = doc.querySelector('[data-ui-editor-hint-infotext-save-adapter-preview="true"]');
     const saveExecutionPreview = doc.querySelector('[data-ui-editor-hint-infotext-save-execution-preview="true"]');
+    const saveButtonStatePreview = doc.querySelector(
+      '[data-ui-editor-hint-infotext-save-button-state-preview="true"]'
+    );
     const saveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
     const draftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
 
@@ -4823,6 +4847,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(
       saveExecutionPreview.textContent,
       "Save-Ausführung: vorbereitet\nAusführung im Standardzustand: blockiert\nAusgeführt: nein\nBlockiergrund: Schreibfreigabe-Gate geschlossen\nPayload vollständig: ja\nHinweistext gültig: ja\nAdapter vorbereitet: ja\npersisted: false\npreviewOnly: true"
+    );
+    assert.equal(
+      saveButtonStatePreview.textContent,
+      "Button-Aktivierungsprüfung: vorbereitet\nButton im Standardpfad: deaktiviert\nAktivierung nur mit expliziter Freigabe\nbuttonEnabled: false\nGrund: Schreibfreigabe-Gate geschlossen\nPayload vollständig: ja\nHinweistext gültig: ja\nAdapter verfügbar: nein\nSpeicherung läuft: nein\npersisted: false\npreviewOnly: true"
     );
     assert.deepEqual(
       mod.executeReadonlyHintInfotextBlockedSaveHandler({
@@ -4896,6 +4924,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(
       saveExecutionPreview.textContent,
       "Save-Ausführung: vorbereitet\nAusführung im Standardzustand: blockiert\nAusgeführt: nein\nBlockiergrund: Schreibfreigabe-Gate geschlossen\nPayload vollständig: nein\nHinweistext gültig: nein\nAdapter vorbereitet: ja\npersisted: false\npreviewOnly: true"
+    );
+    assert.equal(
+      saveButtonStatePreview.textContent,
+      "Button-Aktivierungsprüfung: vorbereitet\nButton im Standardpfad: deaktiviert\nAktivierung nur mit expliziter Freigabe\nbuttonEnabled: false\nGrund: Payload unvollständig\nPayload vollständig: nein\nHinweistext gültig: nein\nAdapter verfügbar: nein\nSpeicherung läuft: nein\npersisted: false\npreviewOnly: true"
     );
     assert.deepEqual(
       mod.executeReadonlyHintInfotextBlockedSaveHandler({
@@ -5337,6 +5369,193 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("executeReadonlyHintInfotextProductiveSaveAdapter"), true);
     assert.equal(source.includes("productive-save-adapter-gated-test"), true);
     assert.equal(source.includes("writeReleaseEnabled: false"), true);
+    assert.equal(source.includes("process.env"), false);
+    assert.equal(source.includes("window.bbmDb.restarbeitenCreateNote("), false);
+    assert.equal(source.includes(".restarbeitenCreateNote("), false);
+    assert.equal(source.includes('invoke("restarbeiten:createNote"'), false);
+    assert.equal(source.includes('handle("restarbeiten:createNote"'), false);
+    assert.equal(source.includes("localStorage"), false);
+    assert.equal(source.includes("writeFile"), false);
+  });
+
+  await run("BBM UI-Editor-Runtime: Speicherbutton-Aktivierung bleibt Standard-deaktiviert und nur testseitig positiv", async () => {
+    const mod = await loadRuntime();
+    const noteText = "Dies ist ein kontrollierter Button-Aktivierungstest.";
+    const validHostContext = mod.normalizeHostContextStatus({
+      projectId: "project-42",
+      restarbeitId: "restarbeit-99",
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "UI-Polish fuer BBM",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host",
+    });
+    assert.equal(validHostContext.isPresent, true);
+
+    assert.deepEqual(
+      mod.buildReadonlyHintInfotextSaveButtonState({
+        value: noteText,
+        hostContextStatus: validHostContext,
+      }),
+      {
+        buttonPrepared: true,
+        buttonEnabled: false,
+        reason: "Schreibfreigabe-Gate geschlossen",
+        blockReasons: [
+          "Schreibfreigabe-Gate geschlossen",
+          "explizite Testfreigabe fehlt",
+          "Save-Adapter nicht freigegeben",
+        ],
+        standardPath: "disabled",
+        requiresExplicitRelease: true,
+        hostContextPresent: true,
+        restarbeitIdPresent: true,
+        payloadComplete: true,
+        hintTextValid: true,
+        gateOpen: false,
+        writeReleased: false,
+        adapterAvailable: false,
+        isSaving: false,
+        alreadySavedIdentical: false,
+        persisted: false,
+        previewOnly: true,
+      }
+    );
+
+    const noHostState = mod.buildReadonlyHintInfotextSaveButtonState({
+      value: noteText,
+      hostContextStatus: mod.buildReadonlyHintInfotextHostContextStatusModel(),
+    });
+    assert.equal(noHostState.buttonEnabled, false);
+    assert.equal(noHostState.reason, "Host-Kontext fehlt");
+    assert.equal(noHostState.blockReasons.includes("Payload unvollständig"), true);
+    assert.equal(noHostState.blockReasons.includes("restarbeitId fehlt"), true);
+
+    const missingRestarbeitState = mod.buildReadonlyHintInfotextSaveButtonState({
+      value: noteText,
+      hostContextStatus: mod.normalizeHostContextStatus({
+        projectId: "project-42",
+        restarbeitId: "",
+        targetContext: "Restarbeiten",
+        targetSurfaceId: "restarbeiten.ui.main",
+        targetLabel: "UI-Polish fuer BBM",
+        elementType: "Hinweis / Infotext",
+      }),
+    });
+    assert.equal(missingRestarbeitState.buttonEnabled, false);
+    assert.equal(missingRestarbeitState.blockReasons.includes("restarbeitId fehlt"), true);
+
+    const emptyTextState = mod.buildReadonlyHintInfotextSaveButtonState({
+      value: "   ",
+      hostContextStatus: validHostContext,
+      testOnly: {
+        mode: "save-button-gated-test-release",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapterAvailable: true,
+      },
+    });
+    assert.equal(emptyTextState.buttonEnabled, false);
+    assert.equal(emptyTextState.payloadComplete, false);
+    assert.equal(emptyTextState.hintTextValid, false);
+    assert.equal(emptyTextState.blockReasons.includes("Hinweistext fehlt"), true);
+
+    const positiveState = mod.buildReadonlyHintInfotextSaveButtonState({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      testOnly: {
+        mode: "save-button-gated-test-release",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapterAvailable: true,
+        isSaving: false,
+        alreadySavedIdentical: false,
+      },
+    });
+    assert.deepEqual(positiveState, {
+      buttonPrepared: true,
+      buttonEnabled: true,
+      reason: "explizite Testfreigabe aktiv",
+      blockReasons: [],
+      standardPath: "disabled",
+      requiresExplicitRelease: true,
+      hostContextPresent: true,
+      restarbeitIdPresent: true,
+      payloadComplete: true,
+      hintTextValid: true,
+      gateOpen: true,
+      writeReleased: true,
+      adapterAvailable: true,
+      isSaving: false,
+      alreadySavedIdentical: false,
+      persisted: false,
+      previewOnly: true,
+    });
+
+    for (const [label, testOnly] of [
+      ["DEV-Kontext", { mode: "dev", writeReleaseEnabled: true, gateOpen: true, adapterAvailable: true }],
+      ["ENV-artiger Kontext", { mode: "env", writeReleaseEnabled: true, gateOpen: true, adapterAvailable: true }],
+      ["nur vorhandene Payload", null],
+      ["vorhandener Adapter ohne Freigabe", { adapterAvailable: true }],
+      ["vorhandene restarbeitId ohne Gate", { mode: "save-button-gated-test-release", writeReleaseEnabled: true }],
+      [
+        "laufende Speicherung",
+        {
+          mode: "save-button-gated-test-release",
+          writeReleaseEnabled: true,
+          gateOpen: true,
+          adapterAvailable: true,
+          isSaving: true,
+        },
+      ],
+      [
+        "identischer Save",
+        {
+          mode: "save-button-gated-test-release",
+          writeReleaseEnabled: true,
+          gateOpen: true,
+          adapterAvailable: true,
+          alreadySavedIdentical: true,
+        },
+      ],
+    ]) {
+      const state = mod.buildReadonlyHintInfotextSaveButtonState({
+        value: noteText,
+        hostContextStatus: validHostContext,
+        testOnly,
+      });
+      assert.equal(state.buttonEnabled, false, `${label} darf den Button nicht aktivieren.`);
+      assert.equal(state.standardPath, "disabled", `${label} darf den Standardpfad nicht oeffnen.`);
+      assert.equal(state.persisted, false, `${label} darf nicht persistieren.`);
+      assert.equal(state.previewOnly, true, `${label} bleibt Preview-only.`);
+    }
+
+    let writeCalled = false;
+    const saveButtonState = mod.buildReadonlyHintInfotextSaveButtonState({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      testOnly: {
+        mode: "save-button-gated-test-release",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapterAvailable: true,
+        win: {
+          bbmDb: {
+            restarbeitenCreateNote() {
+              writeCalled = true;
+            },
+          },
+        },
+      },
+    });
+    assert.equal(saveButtonState.buttonEnabled, true);
+    assert.equal(writeCalled, false);
+
+    const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    assert.equal(source.includes("buildReadonlyHintInfotextSaveButtonState"), true);
+    assert.equal(source.includes("save-button-gated-test-release"), true);
+    assert.equal(source.includes("button.disabled = true"), true);
+    assert.equal(source.includes("buttonEnabled: false"), true);
     assert.equal(source.includes("process.env"), false);
     assert.equal(source.includes("window.bbmDb.restarbeitenCreateNote("), false);
     assert.equal(source.includes(".restarbeitenCreateNote("), false);
@@ -5815,6 +6034,42 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Speicherbutton-Freigabeentscheidung enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Speicherbutton-Gated-Testfreigabe bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_SAVE_BUTTON_GATED_TEST_RELEASE_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Speicherbutton-Gated-Testfreigabe-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(
+      UI_EDITOR_HINT_INFOTEXT_SAVE_BUTTON_GATED_TEST_RELEASE_REFERENCE_DOC_PATH,
+      "utf8"
+    );
+
+    for (const required of [
+      "G134",
+      "Button-Aktivierungspruefung: vorbereitet",
+      "Button im Standardpfad: deaktiviert",
+      "Aktivierung nur mit expliziter Freigabe",
+      "save-button-gated-test-release",
+      "buttonEnabled: true",
+      "buttonEnabled: false",
+      "Schreibfreigabe-Gate geschlossen",
+      "restarbeitId",
+      "noteText",
+      "kein Produktiv-Speichern",
+      "kein `window.bbmDb.restarbeitenCreateNote`",
+      "kein `restarbeiten:createNote`",
+      "persisted: false",
+      "previewOnly: true",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Speicherbutton-Gated-Testfreigabe-Referenz enthaelt ${required} nicht.`
       );
     }
   });

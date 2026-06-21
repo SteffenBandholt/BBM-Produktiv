@@ -3721,3 +3721,41 @@ Wichtig:
     keine Aenderung der Schreibfreigabe-Konfiguration auf `true`, kein
     DB-/IPC-/Datei-/localStorage-Schreibweg und keine Aenderung am
     `UI-Editor-kit`.
+
+### G134 - UI-Editor Hinweis/Infotext Speicherbutton-Gated-Testfreigabe
+- Status: erledigt
+- Beschreibung:
+  - Der BBM-Launcher hat eine zentrale lokale
+    Speicherbutton-ViewModel-Entscheidung fuer Hinweis-/Infotext vorbereitet.
+  - Im Speicherbereich ist sichtbar/testbar:
+    `Button-Aktivierungspruefung: vorbereitet`,
+    `Button im Standardpfad: deaktiviert`,
+    `Aktivierung nur mit expliziter Freigabe` und `buttonEnabled: false`.
+  - Der isolierte Positivpfad kann nur mit expliziter Testfreigabe
+    `mode: save-button-gated-test-release`, `writeReleaseEnabled: true`,
+    `gateOpen: true`, vollstaendiger Payload, gueltigem Host-Kontext,
+    gueltigem Hinweistext, verfuegbarem Adapter und ohne laufende Speicherung
+    `buttonEnabled: true` liefern.
+  - Standard-, Schutz- und Positivpfad sind testseitig abgesichert; die
+    positive Button-Entscheidung ruft keinen Produktiv-Save-Adapter auf.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERBUTTON_GATED_TESTFREIGABE_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Ein echter Speicherbutton-Klick und Produktiv-Speicherweg bleiben separate
+    spaetere Meilensteine mit expliziter Freigabe.
+- Risiken/Hinweise:
+  - UI-Standardpfad weiter geschlossen: Konfiguration `false`, Gate
+    geschlossen, Speicherbutton deaktiviert, Save-Ausfuehrung blockiert,
+    Produktiv-Save-Adapter nur vorbereitet, `persisted: false` und
+    `previewOnly: true`.
+  - Kein Produktiv-Speicherklick, kein automatischer
+    `window.bbmDb.restarbeitenCreateNote`-Aufruf, kein
+    `restarbeiten:createNote`-Aufruf, kein IPC-/DB-/Datei-/localStorage-
+    Schreibweg, kein Default-true, keine Wildcard und keine Aenderung am
+    `UI-Editor-kit`.

@@ -683,3 +683,28 @@ Dabei gilt:
   Gate geschlossen, Konfiguration `false`, Produktiv-Save-Adapter nur
   vorbereitet, kein Produktiv-Speichern, `persisted: false` und
   `previewOnly: true`.
+
+## G134: Speicherbutton-Aktivierungslogik hinter Testfreigabe vorbereitet
+
+- Der UI-Editor hat im BBM-Launcher eine zentrale lokale
+  Speicherbutton-ViewModel-Entscheidung fuer Hinweis-/Infotext vorbereitet.
+- Sichtbar/testbar sind `Button-Aktivierungspruefung: vorbereitet`,
+  `Button im Standardpfad: deaktiviert`, `Aktivierung nur mit expliziter
+  Freigabe` und `buttonEnabled: false`.
+- Der isolierte Positivpfad kann nur mit expliziter Testfreigabe
+  `mode: save-button-gated-test-release`, `writeReleaseEnabled: true`,
+  `gateOpen: true`, vollstaendiger Payload, gueltigem Host-Kontext,
+  gueltigem Hinweistext, verfuegbarem Adapter und ohne laufende Speicherung
+  `buttonEnabled: true` liefern.
+- Der UI-Standardpfad bleibt geschlossen: Konfiguration `false`, Gate
+  geschlossen, Speicherbutton deaktiviert, Save-Ausfuehrung blockiert,
+  Produktiv-Save-Adapter nur vorbereitet, `persisted: false` und
+  `previewOnly: true`.
+- DEV-Kontext, ENV-Kontext, vorhandene Payload, vorhandener Adapter,
+  vorhandene `restarbeitId`, leerer Hinweistext, fehlender Host-Kontext,
+  laufende Speicherung und identischer Save oeffnen den Button nicht.
+- Es gibt keinen Produktiv-Speicherklick, keinen automatischen
+  `window.bbmDb.restarbeitenCreateNote`-Aufruf, keinen
+  `restarbeiten:createNote`-Aufruf, keinen IPC-/DB-/Datei-/localStorage-
+  Schreibweg, kein Default-true, keine Wildcard und keine Aenderung am
+  `UI-Editor-kit`.

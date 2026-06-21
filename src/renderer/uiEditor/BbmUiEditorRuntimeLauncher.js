@@ -111,6 +111,12 @@ const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_PREPARED_LINE = "Save-Ausführung: v
 const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_STANDARD_BLOCKED_LINE =
   "Ausführung im Standardzustand: blockiert";
 const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_NOT_EXECUTED_LINE = "Ausgeführt: nein";
+const READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_TITLE = "Speicherbutton-Aktivierung";
+const READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_PREPARED_LINE = "Button-Aktivierungsprüfung: vorbereitet";
+const READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_STANDARD_DISABLED_LINE =
+  "Button im Standardpfad: deaktiviert";
+const READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_EXPLICIT_RELEASE_LINE =
+  "Aktivierung nur mit expliziter Freigabe";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY = "Status: Hinweistext fehlt";
@@ -2099,6 +2105,99 @@ function formatReadonlyHintInfotextWriteGateText(
   ].join("\n");
 }
 
+function buildReadonlyHintInfotextSaveButtonState({
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  testOnly = null,
+} = {}) {
+  const writeGate = buildReadonlyHintInfotextWriteGateViewModel({ value, hostContextStatus });
+  const hintTextValid = isReadonlyHintInfotextDraftValid(value);
+  const payloadComplete = writeGate.payloadComplete === true;
+  const restarbeitIdPresent = Boolean(hostContextStatus && hostContextStatus.restarbeitId);
+  const explicitRelease =
+    testOnly
+    && testOnly.mode === "save-button-gated-test-release"
+    && testOnly.writeReleaseEnabled === true
+    && testOnly.gateOpen === true;
+  const adapterAvailable = explicitRelease === true && testOnly.adapterAvailable === true;
+  const isSaving = testOnly && testOnly.isSaving === true;
+  const alreadySavedIdentical = testOnly && testOnly.alreadySavedIdentical === true;
+  const canEnable =
+    explicitRelease === true
+    && adapterAvailable === true
+    && hostContextStatus.isPresent === true
+    && restarbeitIdPresent === true
+    && payloadComplete === true
+    && hintTextValid === true
+    && isSaving !== true
+    && alreadySavedIdentical !== true;
+  const blockReasons = [];
+  if (hostContextStatus.isPresent !== true) {
+    blockReasons.push("Host-Kontext fehlt");
+  }
+  if (restarbeitIdPresent !== true) {
+    blockReasons.push("restarbeitId fehlt");
+  }
+  if (payloadComplete !== true) {
+    blockReasons.push("Payload unvollständig");
+  }
+  if (hintTextValid !== true) {
+    blockReasons.push("Hinweistext fehlt");
+  }
+  if (explicitRelease !== true) {
+    blockReasons.push(READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON);
+    blockReasons.push("explizite Testfreigabe fehlt");
+  }
+  if (adapterAvailable !== true) {
+    blockReasons.push("Save-Adapter nicht freigegeben");
+  }
+  if (isSaving === true) {
+    blockReasons.push("Speicherung läuft");
+  }
+  if (alreadySavedIdentical === true) {
+    blockReasons.push("identischer Save bereits abgeschlossen");
+  }
+  return Object.freeze({
+    buttonPrepared: true,
+    buttonEnabled: canEnable,
+    reason: canEnable ? "explizite Testfreigabe aktiv" : blockReasons[0] || READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
+    blockReasons: Object.freeze(Array.from(new Set(blockReasons))),
+    standardPath: "disabled",
+    requiresExplicitRelease: true,
+    hostContextPresent: hostContextStatus.isPresent === true,
+    restarbeitIdPresent,
+    payloadComplete,
+    hintTextValid,
+    gateOpen: explicitRelease === true && testOnly.gateOpen === true,
+    writeReleased: explicitRelease === true && testOnly.writeReleaseEnabled === true,
+    adapterAvailable,
+    isSaving: isSaving === true,
+    alreadySavedIdentical: alreadySavedIdentical === true,
+    persisted: false,
+    previewOnly: true,
+  });
+}
+
+function formatReadonlyHintInfotextSaveButtonStateText(
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()
+) {
+  const buttonState = buildReadonlyHintInfotextSaveButtonState({ value, hostContextStatus });
+  return [
+    READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_PREPARED_LINE,
+    READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_STANDARD_DISABLED_LINE,
+    READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_EXPLICIT_RELEASE_LINE,
+    `buttonEnabled: ${buttonState.buttonEnabled ? "true" : "false"}`,
+    `Grund: ${buttonState.reason}`,
+    `Payload vollständig: ${buttonState.payloadComplete ? "ja" : "nein"}`,
+    `Hinweistext gültig: ${buttonState.hintTextValid ? "ja" : "nein"}`,
+    `Adapter verfügbar: ${buttonState.adapterAvailable ? "ja" : "nein"}`,
+    `Speicherung läuft: ${buttonState.isSaving ? "ja" : "nein"}`,
+    "persisted: false",
+    "previewOnly: true",
+  ].join("\n");
+}
+
 function getReadonlyHintInfotextSaveAdapterDescriptor() {
   return Object.freeze({
     adapterPrepared: true,
@@ -2402,6 +2501,12 @@ function updateReadonlyHintInfotextStoragePreviews(state = {}, value = "") {
   }
   if (state.hintInfotextSaveExecutionPreview) {
     state.hintInfotextSaveExecutionPreview.textContent = formatReadonlyHintInfotextSaveExecutionText(
+      value,
+      hostContextStatus
+    );
+  }
+  if (state.hintInfotextSaveButtonStatePreview) {
+    state.hintInfotextSaveButtonStatePreview.textContent = formatReadonlyHintInfotextSaveButtonStateText(
       value,
       hostContextStatus
     );
@@ -2993,6 +3098,28 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   );
   state.hintInfotextSaveExecutionPreview = saveExecution;
 
+  const saveButtonStateTitle = doc.createElement("div");
+  saveButtonStateTitle.className = "ui-editor-preview-hint-infotext-storage__save-button-state-title";
+  saveButtonStateTitle.textContent = READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_TITLE;
+  saveButtonStateTitle.style.fontWeight = "700";
+  saveButtonStateTitle.style.marginTop = "8px";
+  saveButtonStateTitle.style.marginBottom = "4px";
+
+  const saveButtonState = doc.createElement("div");
+  saveButtonState.className = "ui-editor-preview-hint-infotext-storage__save-button-state";
+  saveButtonState.setAttribute("data-ui-editor-hint-infotext-save-button-state-preview", "true");
+  saveButtonState.style.whiteSpace = "pre-wrap";
+  saveButtonState.style.padding = "6px 8px";
+  saveButtonState.style.border = "1px solid #dbe4ee";
+  saveButtonState.style.borderRadius = "4px";
+  saveButtonState.style.background = "#ffffff";
+  saveButtonState.style.minHeight = "24px";
+  saveButtonState.textContent = formatReadonlyHintInfotextSaveButtonStateText(
+    getReadonlyHintInfotextDraftText(state),
+    hostContextStatus
+  );
+  state.hintInfotextSaveButtonStatePreview = saveButtonState;
+
   const button = doc.createElement("button");
   button.type = "button";
   button.className = "ui-editor-preview-hint-infotext-storage__button";
@@ -3028,6 +3155,8 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
     saveAdapter,
     saveExecutionTitle,
     saveExecution,
+    saveButtonStateTitle,
+    saveButtonState,
     button
   );
   panel.appendChild(storage);
@@ -3151,6 +3280,7 @@ export {
   normalizeAvailableUiScopes,
   normalizeHostContextStatus,
   buildReadonlyHintInfotextHostContextStatusModel,
+  buildReadonlyHintInfotextSaveButtonState,
   getReadonlyHintInfotextSaveAdapterDescriptor,
   executeReadonlyHintInfotextBlockedSaveHandler,
   executeReadonlyHintInfotextProductiveSaveAdapter,
