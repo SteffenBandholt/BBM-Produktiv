@@ -82,18 +82,16 @@ const READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE = "Hinweistext gültig: ja
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE = "Hinweistext gültig: nein";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_TARGET_SURFACE_LINE = "Ziel-Surface: restarbeiten.ui.main";
 const READONLY_HINT_INFOTEXT_STORAGE_ROUTE_LINE = "Speicherweg: Restarbeiten-Notizweg vorbereitet";
-const READONLY_HINT_INFOTEXT_STORAGE_TARGET_LINE = "Ziel: Restarbeiten-Notizweg (nicht angeschlossen)";
-const READONLY_HINT_INFOTEXT_STORAGE_STATUS_LINE = "Status: gesperrt";
+const READONLY_HINT_INFOTEXT_STORAGE_TARGET_LINE = "Ziel: Restarbeiten-Notizweg (kontrolliert angeschlossen)";
+const READONLY_HINT_INFOTEXT_STORAGE_STATUS_LINE = "Status: hinter Gate";
 const READONLY_HINT_INFOTEXT_STORAGE_PERSISTED_LINE = "persisted: false";
 const READONLY_HINT_INFOTEXT_STORAGE_BUTTON_LABEL = "Entwurf speichern";
 const READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TITLE = "Create-Note-Payload-Vorschau";
 const READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TARGET = "Ziel: restarbeiten:createNote";
 const READONLY_HINT_INFOTEXT_WRITE_GATE_TITLE = "Schreibfreigabe-Gate";
-const READONLY_HINT_INFOTEXT_WRITE_GATE_STATE_LINE = "Schreibfreigabe-Gate: geschlossen";
 const READONLY_HINT_INFOTEXT_WRITE_GATE_SOURCE_LINE = "Freigabequelle: Konfiguration";
-const READONLY_HINT_INFOTEXT_WRITE_GATE_VALUE_LINE = "Freigabewert: false";
 const READONLY_HINT_INFOTEXT_WRITE_GATE_REASON_LINE =
-  "Grund: echter Restarbeiten-Notizweg noch nicht freigegeben";
+  "Grund: Produktiv-Speicherweg nur bei vollständigem Restarbeiten-Kontext freigegeben";
 const READONLY_HINT_INFOTEXT_SAVE_HANDLER_TITLE = "Speicher-Handler";
 const READONLY_HINT_INFOTEXT_SAVE_HANDLER_PREPARED_LINE = "Speicher-Handler: vorbereitet";
 const READONLY_HINT_INFOTEXT_SAVE_HANDLER_STATUS_LINE = "Handler-Status: blockiert";
@@ -105,7 +103,7 @@ const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_METHOD = "window.bbmDb.restarbe
 const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_CHANNEL = "restarbeiten:createNote";
 const READONLY_HINT_INFOTEXT_PRODUCTIVE_SAVE_ADAPTER_PREPARED_LINE = "Produktiv-Save-Adapter: vorbereitet";
 const READONLY_HINT_INFOTEXT_PRODUCTIVE_SAVE_ADAPTER_STANDARD_BLOCKED_LINE =
-  "Produktiv-Ausführung im Standardpfad: gesperrt";
+  "Produktiv-Ausführung im Standardpfad: nur nach aktivem Button-Klick";
 const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_TITLE = "Save-Ausführung";
 const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_PREPARED_LINE = "Save-Ausführung: vorbereitet";
 const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_STANDARD_BLOCKED_LINE =
@@ -114,7 +112,7 @@ const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_NOT_EXECUTED_LINE = "Ausgeführt: ne
 const READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_TITLE = "Speicherbutton-Aktivierung";
 const READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_PREPARED_LINE = "Button-Aktivierungsprüfung: vorbereitet";
 const READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_STANDARD_DISABLED_LINE =
-  "Button im Standardpfad: deaktiviert";
+  "Button im Standardpfad: bedingt aktivierbar";
 const READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_EXPLICIT_RELEASE_LINE =
   "Aktivierung nur mit expliziter Freigabe";
 const READONLY_HINT_INFOTEXT_SAVE_GUARD_TITLE = "Speicherschutz";
@@ -122,10 +120,10 @@ const READONLY_HINT_INFOTEXT_SAVE_GUARD_PREPARED_LINE = "Speicherschutz: vorbere
 const READONLY_HINT_INFOTEXT_SAVE_GUARD_DOUBLE_CLICK_LINE = "Doppelklickschutz: aktiv";
 const READONLY_HINT_INFOTEXT_SAVE_GUARD_DUPLICATE_LINE =
   "Mehrfachspeicherung gleicher Payload: vorbereitet";
-const READONLY_HINT_INFOTEXT_SAVE_GUARD_STANDARD_BLOCKED_LINE = "Standardpfad: gesperrt";
+const READONLY_HINT_INFOTEXT_SAVE_GUARD_STANDARD_BLOCKED_LINE = "Standardpfad: hinter Gate";
 const READONLY_HINT_INFOTEXT_SAVE_CLICK_TITLE = "Speicherklick";
 const READONLY_HINT_INFOTEXT_SAVE_CLICK_PREPARED_LINE = "Speicherklick: vorbereitet";
-const READONLY_HINT_INFOTEXT_SAVE_CLICK_STANDARD_BLOCKED_LINE = "Klickpfad im Standard: blockiert";
+const READONLY_HINT_INFOTEXT_SAVE_CLICK_STANDARD_BLOCKED_LINE = "Klickpfad im Standard: hinter Gate";
 const READONLY_HINT_INFOTEXT_SAVE_CLICK_NOT_EXECUTED_LINE = "Letzter Klickstatus: nicht ausgeführt";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
@@ -1310,8 +1308,25 @@ function resetPreviewPanelPosition(panel) {
   panel.style.top = PREVIEW_PANEL_DEFAULT_TOP;
 }
 
+function isPreviewPanelEditableEventTarget(target = null) {
+  let current = target && typeof target === "object" ? target : null;
+  while (current) {
+    const tagName = String(current.tagName || "").toUpperCase();
+    if (tagName === "TEXTAREA" || tagName === "INPUT" || tagName === "SELECT") {
+      return current.disabled !== true && current.readOnly !== true;
+    }
+    if (current.getAttribute?.("contenteditable") === "true" || current.isContentEditable === true) {
+      return true;
+    }
+    current = current.parentElement || current.parentNode || null;
+  }
+  return false;
+}
+
 function stopPreviewPanelEvent(event) {
-  event?.preventDefault?.();
+  if (!isPreviewPanelEditableEventTarget(event?.target || null)) {
+    event?.preventDefault?.();
+  }
   event?.stopPropagation?.();
 }
 
@@ -2004,6 +2019,7 @@ function getReadonlyHintInfotextHostContextStatus(state = {}) {
 function formatReadonlyHintInfotextStorageContextText(hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()) {
   const projectIdPresent = Boolean(hostContextStatus.projectId);
   const restarbeitIdPresent = Boolean(hostContextStatus.restarbeitId);
+  const writeReleased = getReadonlyHintInfotextWriteReleaseConfig().writeReleaseEnabled === true;
   return [
     `Host-Kontext vorhanden: ${hostContextStatus.isPresent === true ? "ja" : "nein"}`,
     `projectId vorhanden: ${projectIdPresent ? "ja" : "nein"}`,
@@ -2014,8 +2030,8 @@ function formatReadonlyHintInfotextStorageContextText(hostContextStatus = create
     `restarbeitId: ${hostContextStatus.restarbeitId ? hostContextStatus.restarbeitId : "nicht übergeben"}`,
     `Ziel-Restarbeit: ${hostContextStatus.targetLabel}`,
     `Kontextquelle: ${hostContextStatus.source}`,
-    "Schreibweg freigegeben: nein",
-    "Speichern: gesperrt",
+    `Schreibweg freigegeben: ${writeReleased ? "ja" : "nein"}`,
+    "Speichern: nur bei vollständigem Gate aktiv",
     "persisted: false",
   ].join("\n");
 }
@@ -2028,6 +2044,7 @@ function formatReadonlyHintInfotextStorageFreigabecheckText(
   const projectIdPresent = Boolean(hostContextStatus.projectId);
   const restarbeitIdPresent = Boolean(hostContextStatus.restarbeitId);
   const technicallyReady = hostContextStatus.isPresent === true && hintTextValid;
+  const writeGate = buildReadonlyHintInfotextWriteGateViewModel({ value, hostContextStatus });
   return [
     hintTextValid
       ? READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE
@@ -2039,9 +2056,9 @@ function formatReadonlyHintInfotextStorageFreigabecheckText(
     `Ziel-Surface: ${hostContextStatus.targetSurfaceId}`,
     `Elementtyp: ${hostContextStatus.elementType}`,
     `technisch/fachlich speicherbereit: ${technicallyReady ? "ja" : "nein"}`,
-    "Schreibweg freigegeben: nein",
-    "Speichern: gesperrt",
-    "Speicherbutton: deaktiviert",
+    `Schreibweg freigegeben: ${writeGate.writeReleased ? "ja" : "nein"}`,
+    `Speichern: ${writeGate.gateOpen ? "bereit" : "gesperrt"}`,
+    `Speicherbutton: ${writeGate.gateOpen ? "prüft Adapter" : "deaktiviert"}`,
     "persisted: false",
   ].join("\n");
 }
@@ -2052,17 +2069,37 @@ function buildReadonlyHintInfotextWriteGateViewModel({
 } = {}) {
   const releaseConfig = getReadonlyHintInfotextWriteReleaseConfig();
   const hintTextValid = isReadonlyHintInfotextDraftValid(value);
-  const payloadComplete = hostContextStatus.isPresent === true && hintTextValid;
+  const hostContextValid = hostContextStatus.isPresent === true;
+  const projectIdPresent = Boolean(hostContextStatus && hostContextStatus.projectId);
+  const restarbeitIdPresent = Boolean(hostContextStatus && hostContextStatus.restarbeitId);
+  const targetContextValid = hostContextStatus?.targetContext === "Restarbeiten";
+  const targetSurfaceValid = hostContextStatus?.targetSurfaceId === READONLY_SURFACE_INFO_SURFACE_ID;
+  const elementTypeValid = hostContextStatus?.elementType === "Hinweis / Infotext";
+  const payloadComplete =
+    hostContextValid
+    && projectIdPresent
+    && restarbeitIdPresent
+    && targetContextValid
+    && targetSurfaceValid
+    && elementTypeValid
+    && hintTextValid;
   const writeReleaseEnabled = releaseConfig.writeReleaseEnabled === true;
+  const gateOpen = writeReleaseEnabled === true && payloadComplete === true;
   return Object.freeze({
-    gateOpen: false,
+    gateOpen,
     releaseSource: releaseConfig.source,
     releaseValue: writeReleaseEnabled,
-    reason: releaseConfig.reason,
+    reason: gateOpen ? "alle Speicherbedingungen erfüllt" : releaseConfig.reason,
+    hostContextValid,
+    projectIdPresent,
+    restarbeitIdPresent,
+    targetContextValid,
+    targetSurfaceValid,
+    elementTypeValid,
     payloadComplete,
     technicallyReady: payloadComplete,
-    writeReleased: false,
-    buttonEnabled: false,
+    writeReleased: gateOpen,
+    buttonEnabled: gateOpen,
     persisted: false,
     previewOnly: true,
   });
@@ -2071,8 +2108,8 @@ function buildReadonlyHintInfotextWriteGateViewModel({
 function getReadonlyHintInfotextWriteReleaseConfig() {
   return Object.freeze({
     source: "configuration",
-    writeReleaseEnabled: false,
-    reason: "echter Restarbeiten-Notizweg noch nicht freigegeben",
+    writeReleaseEnabled: true,
+    reason: "Produktiv-Speicherweg nur bei vollständigem Restarbeiten-Kontext freigegeben",
   });
 }
 
@@ -2091,7 +2128,7 @@ function formatReadonlyHintInfotextCreateNotePayloadPreviewText(
     `projectId: ${hostContextStatus.projectId ? hostContextStatus.projectId : "nicht übergeben"}`,
     "persisted: false",
     "previewOnly: true",
-    "Schreibweg freigegeben: nein",
+    `Schreibweg freigegeben: ${writeGate.writeReleased ? "ja" : "nein"}`,
   ].join("\n");
 }
 
@@ -2101,15 +2138,15 @@ function formatReadonlyHintInfotextWriteGateText(
 ) {
   const writeGate = buildReadonlyHintInfotextWriteGateViewModel({ value, hostContextStatus });
   return [
-    READONLY_HINT_INFOTEXT_WRITE_GATE_STATE_LINE,
+    `Schreibfreigabe-Gate: ${writeGate.gateOpen ? "offen" : "geschlossen"}`,
     READONLY_HINT_INFOTEXT_WRITE_GATE_SOURCE_LINE,
-    READONLY_HINT_INFOTEXT_WRITE_GATE_VALUE_LINE,
+    `Freigabewert: ${writeGate.releaseValue ? "true" : "false"}`,
     `Grund: ${writeGate.reason}`,
     `Payload vollständig: ${writeGate.payloadComplete ? "ja" : "nein"}`,
     `technisch/fachlich speicherbereit: ${writeGate.technicallyReady ? "ja" : "nein"}`,
-    "Schreibweg freigegeben: nein",
-    "Button aktivierbar: nein",
-    "Speicherbutton: deaktiviert",
+    `Schreibweg freigegeben: ${writeGate.writeReleased ? "ja" : "nein"}`,
+    `Button aktivierbar: ${writeGate.buttonEnabled ? "ja" : "nein"}`,
+    `Speicherbutton: ${writeGate.buttonEnabled ? "Adapterprüfung" : "deaktiviert"}`,
     "persisted: false",
     "previewOnly: true",
   ].join("\n");
@@ -2118,22 +2155,38 @@ function formatReadonlyHintInfotextWriteGateText(
 function buildReadonlyHintInfotextSaveButtonState({
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  runtime = null,
   testOnly = null,
 } = {}) {
   const writeGate = buildReadonlyHintInfotextWriteGateViewModel({ value, hostContextStatus });
   const hintTextValid = isReadonlyHintInfotextDraftValid(value);
   const payloadComplete = writeGate.payloadComplete === true;
   const restarbeitIdPresent = Boolean(hostContextStatus && hostContextStatus.restarbeitId);
+  const runtimeWin = runtime && typeof runtime === "object" ? runtime.win : null;
+  const runtimeClickState = runtime && typeof runtime === "object" ? runtime.clickState : null;
+  const productiveRelease = writeGate.gateOpen === true && writeGate.writeReleased === true;
   const explicitRelease =
     testOnly
     && testOnly.mode === "save-button-gated-test-release"
     && testOnly.writeReleaseEnabled === true
     && testOnly.gateOpen === true;
-  const adapterAvailable = explicitRelease === true && testOnly.adapterAvailable === true;
-  const isSaving = testOnly && testOnly.isSaving === true;
-  const alreadySavedIdentical = testOnly && testOnly.alreadySavedIdentical === true;
+  const adapterAvailable =
+    (explicitRelease === true && testOnly.adapterAvailable === true)
+    || Boolean(runtimeWin?.bbmDb && typeof runtimeWin.bbmDb.restarbeitenCreateNote === "function");
+  const isSaving =
+    (testOnly && testOnly.isSaving === true)
+    || runtimeClickState?.saveState === "saving";
+  const currentPayloadSignature = buildReadonlyHintInfotextSavePayloadSignature({ value, hostContextStatus });
+  const lastSavedPayloadSignature = String(runtimeClickState?.lastSavedPayloadSignature || "").trim();
+  const alreadySavedIdentical =
+    (testOnly && testOnly.alreadySavedIdentical === true)
+    || (
+      Boolean(currentPayloadSignature)
+      && Boolean(lastSavedPayloadSignature)
+      && currentPayloadSignature === lastSavedPayloadSignature
+    );
   const canEnable =
-    explicitRelease === true
+    (explicitRelease === true || productiveRelease === true)
     && adapterAvailable === true
     && hostContextStatus.isPresent === true
     && restarbeitIdPresent === true
@@ -2154,12 +2207,11 @@ function buildReadonlyHintInfotextSaveButtonState({
   if (hintTextValid !== true) {
     blockReasons.push("Hinweistext fehlt");
   }
-  if (explicitRelease !== true) {
+  if (writeGate.gateOpen !== true && explicitRelease !== true) {
     blockReasons.push(READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON);
-    blockReasons.push("explizite Testfreigabe fehlt");
   }
   if (adapterAvailable !== true) {
-    blockReasons.push("Save-Adapter nicht freigegeben");
+    blockReasons.push("Save-Adapter nicht verfügbar");
   }
   if (isSaving === true) {
     blockReasons.push("Speicherung läuft");
@@ -2170,16 +2222,16 @@ function buildReadonlyHintInfotextSaveButtonState({
   return Object.freeze({
     buttonPrepared: true,
     buttonEnabled: canEnable,
-    reason: canEnable ? "explizite Testfreigabe aktiv" : blockReasons[0] || READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
+    reason: canEnable ? "alle Speicherbedingungen erfüllt" : blockReasons[0] || READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
     blockReasons: Object.freeze(Array.from(new Set(blockReasons))),
-    standardPath: "disabled",
-    requiresExplicitRelease: true,
+    standardPath: "gated",
+    requiresExplicitRelease: false,
     hostContextPresent: hostContextStatus.isPresent === true,
     restarbeitIdPresent,
     payloadComplete,
     hintTextValid,
-    gateOpen: explicitRelease === true && testOnly.gateOpen === true,
-    writeReleased: explicitRelease === true && testOnly.writeReleaseEnabled === true,
+    gateOpen: writeGate.gateOpen === true || (explicitRelease === true && testOnly.gateOpen === true),
+    writeReleased: writeGate.writeReleased === true || (explicitRelease === true && testOnly.writeReleaseEnabled === true),
     adapterAvailable,
     isSaving: isSaving === true,
     alreadySavedIdentical: alreadySavedIdentical === true,
@@ -2190,19 +2242,21 @@ function buildReadonlyHintInfotextSaveButtonState({
 
 function formatReadonlyHintInfotextSaveButtonStateText(
   value = "",
-  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  runtime = null
 ) {
-  const buttonState = buildReadonlyHintInfotextSaveButtonState({ value, hostContextStatus });
+  const buttonState = buildReadonlyHintInfotextSaveButtonState({ value, hostContextStatus, runtime });
   return [
     READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_PREPARED_LINE,
     READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_STANDARD_DISABLED_LINE,
-    READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_EXPLICIT_RELEASE_LINE,
+    "Aktivierung nur mit vollständigem Restarbeiten-Kontext und Adapter",
     `buttonEnabled: ${buttonState.buttonEnabled ? "true" : "false"}`,
     `Grund: ${buttonState.reason}`,
     `Payload vollständig: ${buttonState.payloadComplete ? "ja" : "nein"}`,
     `Hinweistext gültig: ${buttonState.hintTextValid ? "ja" : "nein"}`,
     `Adapter verfügbar: ${buttonState.adapterAvailable ? "ja" : "nein"}`,
     `Speicherung läuft: ${buttonState.isSaving ? "ja" : "nein"}`,
+    `identische Payload gespeichert: ${buttonState.alreadySavedIdentical ? "ja" : "nein"}`,
     "persisted: false",
     "previewOnly: true",
   ].join("\n");
@@ -2223,15 +2277,20 @@ function buildReadonlyHintInfotextSaveGuardState({
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
   saveState = "",
   lastSavedPayloadSignature = "",
+  runtime = null,
   testOnly = null,
 } = {}) {
-  const buttonState = buildReadonlyHintInfotextSaveButtonState({ value, hostContextStatus, testOnly });
+  const buttonState = buildReadonlyHintInfotextSaveButtonState({ value, hostContextStatus, runtime, testOnly });
   const explicitGuardRelease =
     testOnly
     && testOnly.mode === "save-guard-isolated-test"
     && testOnly.writeReleaseEnabled === true
     && testOnly.gateOpen === true
     && typeof testOnly.adapter === "function";
+  const productiveGuardRelease =
+    buttonState.gateOpen === true
+    && buttonState.writeReleased === true
+    && buttonState.adapterAvailable === true;
   const currentPayloadSignature = buildReadonlyHintInfotextSavePayloadSignature({ value, hostContextStatus });
   const normalizedLastSavedPayloadSignature = String(lastSavedPayloadSignature || "").trim();
   const saving = saveState === "saving" || testOnly?.saveState === "saving";
@@ -2243,7 +2302,7 @@ function buildReadonlyHintInfotextSaveGuardState({
     && currentPayloadSignature === normalizedLastSavedPayloadSignature;
   const inFlightBlocked = saving === true;
   const canStartSave =
-    explicitGuardRelease === true
+    (explicitGuardRelease === true || productiveGuardRelease === true)
     && buttonState.payloadComplete === true
     && buttonState.hintTextValid === true
     && buttonState.hostContextPresent === true
@@ -2260,9 +2319,8 @@ function buildReadonlyHintInfotextSaveGuardState({
           ? "success"
           : "blocked";
   const blockReasons = [];
-  if (explicitGuardRelease !== true) {
+  if (explicitGuardRelease !== true && productiveGuardRelease !== true) {
     blockReasons.push(READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON);
-    blockReasons.push("explizite Testfreigabe fehlt");
   }
   if (buttonState.payloadComplete !== true) blockReasons.push("Payload unvollständig");
   if (buttonState.hintTextValid !== true) blockReasons.push("Hinweistext fehlt");
@@ -2281,11 +2339,11 @@ function buildReadonlyHintInfotextSaveGuardState({
     standardPath: "blocked",
     doubleClickProtection: true,
     duplicateProtection: true,
-    gateOpen: explicitGuardRelease === true,
-    writeReleased: explicitGuardRelease === true,
+    gateOpen: explicitGuardRelease === true || productiveGuardRelease === true,
+    writeReleased: explicitGuardRelease === true || productiveGuardRelease === true,
     persisted: false,
     previewOnly: true,
-    reason: canStartSave ? "explizite Testfreigabe aktiv" : blockReasons[0] || READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
+    reason: canStartSave ? "alle Speicherbedingungen erfüllt" : blockReasons[0] || READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
     blockReasons: Object.freeze(Array.from(new Set(blockReasons))),
   });
 }
@@ -2394,9 +2452,10 @@ async function executeReadonlyHintInfotextGuardedSave({
 
 function formatReadonlyHintInfotextSaveGuardStateText(
   value = "",
-  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  runtime = null
 ) {
-  const guardState = buildReadonlyHintInfotextSaveGuardState({ value, hostContextStatus });
+  const guardState = buildReadonlyHintInfotextSaveGuardState({ value, hostContextStatus, runtime });
   return [
     READONLY_HINT_INFOTEXT_SAVE_GUARD_PREPARED_LINE,
     `Save-Status: ${guardState.saveState}`,
@@ -2435,20 +2494,34 @@ function buildReadonlyHintInfotextSaveClickState({
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
   clickState = null,
+  runtime = null,
   testOnly = null,
 } = {}) {
   const normalizedClickState = clickState && typeof clickState === "object" ? clickState : {};
   const buttonTestRelease = createReadonlyHintInfotextSaveClickButtonTestRelease(testOnly, normalizedClickState);
+  const runtimeWithClickState = {
+    ...(runtime && typeof runtime === "object" ? runtime : {}),
+    clickState: normalizedClickState,
+  };
   const buttonState = buildReadonlyHintInfotextSaveButtonState({
     value,
     hostContextStatus,
+    runtime: runtimeWithClickState,
     testOnly: buttonTestRelease,
   });
+  const clickReleaseActive =
+    buttonTestRelease !== null
+    || (
+      buttonState.gateOpen === true
+      && buttonState.writeReleased === true
+      && buttonState.adapterAvailable === true
+    );
   const guardState = buildReadonlyHintInfotextSaveGuardState({
     value,
     hostContextStatus,
     saveState: normalizedClickState.saveState || "",
     lastSavedPayloadSignature: normalizedClickState.lastSavedPayloadSignature || "",
+    runtime: runtimeWithClickState,
     testOnly:
       buttonTestRelease
         ? {
@@ -2461,21 +2534,26 @@ function buildReadonlyHintInfotextSaveClickState({
           }
         : null,
   });
-  const explicitClickRelease = buttonTestRelease !== null;
   const clickBlocked =
-    explicitClickRelease !== true
+    clickReleaseActive !== true
     || buttonState.buttonEnabled !== true
     || guardState.canStartSave !== true;
   const blockReasons = [];
-  if (explicitClickRelease !== true) blockReasons.push(READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON);
+  if (clickReleaseActive !== true) blockReasons.push(READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON);
   if (buttonState.buttonEnabled !== true) blockReasons.push(...buttonState.blockReasons);
   if (guardState.canStartSave !== true) blockReasons.push(...guardState.blockReasons);
+  const lastClickStatus = normalizedClickState.lastClickStatus || "not-executed";
+  const lastSavePersisted =
+    lastClickStatus === "success"
+    && Boolean(guardState.currentPayloadSignature)
+    && guardState.currentPayloadSignature === guardState.lastSavedPayloadSignature;
   return Object.freeze({
     clickPrepared: true,
     clickPathBlocked: clickBlocked,
-    lastClickStatus: normalizedClickState.lastClickStatus || "not-executed",
+    lastClickStatus,
+    lastMessage: normalizedClickState.lastSaveResultReason || "",
     buttonEnabled: buttonState.buttonEnabled === true,
-    gateOpen: explicitClickRelease === true,
+    gateOpen: buttonState.gateOpen === true,
     payloadComplete: buttonState.payloadComplete === true,
     hintTextValid: buttonState.hintTextValid === true,
     canStartSave: guardState.canStartSave === true,
@@ -2483,10 +2561,10 @@ function buildReadonlyHintInfotextSaveClickState({
     inFlightBlocked: guardState.inFlightBlocked === true,
     currentPayloadSignature: guardState.currentPayloadSignature,
     lastSavedPayloadSignature: guardState.lastSavedPayloadSignature,
-    standardPath: "blocked",
-    persisted: false,
-    previewOnly: true,
-    reason: clickBlocked ? blockReasons[0] || READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON : "explizite Testfreigabe aktiv",
+    standardPath: "gated",
+    persisted: lastSavePersisted,
+    previewOnly: lastSavePersisted !== true,
+    reason: clickBlocked ? blockReasons[0] || READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON : "alle Speicherbedingungen erfüllt",
     blockReasons: Object.freeze(Array.from(new Set(blockReasons))),
   });
 }
@@ -2495,17 +2573,24 @@ async function executeReadonlyHintInfotextSaveClick({
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
   clickState = null,
+  runtime = null,
   testOnly = null,
 } = {}) {
   const mutableClickState = clickState && typeof clickState === "object" ? clickState : {};
+  const runtimeWithClickState = {
+    ...(runtime && typeof runtime === "object" ? runtime : {}),
+    clickState: mutableClickState,
+  };
   const clickModel = buildReadonlyHintInfotextSaveClickState({
     value,
     hostContextStatus,
     clickState: mutableClickState,
+    runtime: runtimeWithClickState,
     testOnly,
   });
   if (clickModel.clickPathBlocked === true) {
     mutableClickState.lastClickStatus = "blocked";
+    mutableClickState.lastSaveResultReason = clickModel.reason;
     return Object.freeze({
       ok: false,
       blocked: true,
@@ -2536,11 +2621,12 @@ async function executeReadonlyHintInfotextSaveClick({
   const currentPayloadSignature = buildReadonlyHintInfotextSavePayloadSignature({ value, hostContextStatus });
   const adapterResult = await executeReadonlyHintInfotextProductiveSaveAdapter({
     payload,
-    win: testOnly?.win || null,
+    win: testOnly?.win || runtimeWithClickState.win || null,
   });
   if (adapterResult.ok === true) {
     mutableClickState.saveState = "success";
     mutableClickState.lastClickStatus = "success";
+    mutableClickState.lastSaveResultReason = adapterResult.reason;
     mutableClickState.lastSavedPayloadSignature = currentPayloadSignature;
     return Object.freeze({
       ok: true,
@@ -2566,6 +2652,7 @@ async function executeReadonlyHintInfotextSaveClick({
   }
   mutableClickState.saveState = "error";
   mutableClickState.lastClickStatus = "error";
+  mutableClickState.lastSaveResultReason = adapterResult.reason;
   return Object.freeze({
     ok: false,
     blocked: adapterResult.blocked === true,
@@ -2592,9 +2679,10 @@ async function executeReadonlyHintInfotextSaveClick({
 function formatReadonlyHintInfotextSaveClickStateText(
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
-  clickState = null
+  clickState = null,
+  runtime = null
 ) {
-  const clickModel = buildReadonlyHintInfotextSaveClickState({ value, hostContextStatus, clickState });
+  const clickModel = buildReadonlyHintInfotextSaveClickState({ value, hostContextStatus, clickState, runtime });
   const lastClickStatusLabel = {
     "not-executed": "nicht ausgeführt",
     blocked: "blockiert",
@@ -2613,8 +2701,9 @@ function formatReadonlyHintInfotextSaveClickStateText(
     `Payload vollständig: ${clickModel.payloadComplete ? "ja" : "nein"}`,
     `Hinweistext gültig: ${clickModel.hintTextValid ? "ja" : "nein"}`,
     `Grund: ${clickModel.reason}`,
-    "persisted: false",
-    "previewOnly: true",
+    `Letzte Meldung: ${clickModel.lastMessage || "nicht vorhanden"}`,
+    `persisted: ${clickModel.persisted ? "true" : "false"}`,
+    `previewOnly: ${clickModel.previewOnly ? "true" : "false"}`,
   ].join("\n");
 }
 
@@ -2624,8 +2713,8 @@ function getReadonlyHintInfotextSaveAdapterDescriptor() {
     targetAdapter: READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_ADAPTER,
     targetMethod: READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_METHOD,
     targetChannel: READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_CHANNEL,
-    executionBlocked: true,
-    blockReason: READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
+    executionBlocked: false,
+    blockReason: "Ausführung nur nach aktivem Button-Klick",
     persisted: false,
     previewOnly: true,
   });
@@ -2640,11 +2729,11 @@ function executeReadonlyHintInfotextBlockedSaveHandler({
   return Object.freeze({
     ok: false,
     blocked: true,
-    reason: saveAdapter.blockReason,
+    reason: writeGate.gateOpen ? "Speicher-Handler wartet auf Button-Klick" : READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
     payloadComplete: writeGate.payloadComplete,
     saveAdapterPrepared: saveAdapter.adapterPrepared,
-    saveAdapterExecutionBlocked: saveAdapter.executionBlocked,
-    gateOpen: false,
+    saveAdapterExecutionBlocked: writeGate.gateOpen !== true,
+    gateOpen: writeGate.gateOpen === true,
     persisted: false,
     previewOnly: true,
   });
@@ -2657,7 +2746,7 @@ function formatReadonlyHintInfotextSaveHandlerText(
   const handlerResult = executeReadonlyHintInfotextBlockedSaveHandler({ value, hostContextStatus });
   return [
     READONLY_HINT_INFOTEXT_SAVE_HANDLER_PREPARED_LINE,
-    READONLY_HINT_INFOTEXT_SAVE_HANDLER_STATUS_LINE,
+    `Handler-Status: ${handlerResult.gateOpen ? "bereit hinter Button-Klick" : "blockiert"}`,
     `Blockiergrund: ${handlerResult.reason}`,
     "Letztes Speicherergebnis: nicht ausgeführt",
     `Payload vollständig: ${handlerResult.payloadComplete ? "ja" : "nein"}`,
@@ -2852,20 +2941,19 @@ function executeReadonlyHintInfotextSave({
   if (writeGate.writeReleased !== true) {
     blockReasons.push("Schreibfreigabe fehlt");
   }
-  if (saveAdapter.executionBlocked === true) {
-    blockReasons.push("Save-Adapter blockiert");
-  }
+  blockReasons.push("Button-Klick erforderlich");
+  const readyBehindButton = writeGate.gateOpen === true && payloadComplete === true && hintTextValid === true;
   return Object.freeze({
     ok: false,
     blocked: true,
-    reason: READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
+    reason: readyBehindButton ? "Speicher-Handler wartet auf Button-Klick" : READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
     blockReasons: Object.freeze(Array.from(new Set(blockReasons))),
     payloadComplete,
     hintTextValid,
     adapterPrepared: saveAdapter.adapterPrepared === true,
     adapterExecutionBlocked: saveAdapter.executionBlocked === true,
-    gateOpen: false,
-    writeReleased: false,
+    gateOpen: writeGate.gateOpen === true,
+    writeReleased: writeGate.writeReleased === true,
     executed: false,
     persisted: false,
     previewOnly: true,
@@ -2879,7 +2967,7 @@ function formatReadonlyHintInfotextSaveExecutionText(
   const saveExecution = executeReadonlyHintInfotextSave({ value, hostContextStatus });
   return [
     READONLY_HINT_INFOTEXT_SAVE_EXECUTION_PREPARED_LINE,
-    READONLY_HINT_INFOTEXT_SAVE_EXECUTION_STANDARD_BLOCKED_LINE,
+    "Ausführung im Standardzustand: wartet auf Button-Klick",
     READONLY_HINT_INFOTEXT_SAVE_EXECUTION_NOT_EXECUTED_LINE,
     `Blockiergrund: ${saveExecution.reason}`,
     `Payload vollständig: ${saveExecution.payloadComplete ? "ja" : "nein"}`,
@@ -2892,6 +2980,10 @@ function formatReadonlyHintInfotextSaveExecutionText(
 
 function updateReadonlyHintInfotextStoragePreviews(state = {}, value = "") {
   const hostContextStatus = getReadonlyHintInfotextHostContextStatus(state);
+  const runtime = {
+    win: state.win || null,
+    clickState: state.hintInfotextSaveClickState || null,
+  };
   if (state.hintInfotextStorageCheckPreview) {
     state.hintInfotextStorageCheckPreview.textContent = formatReadonlyHintInfotextStorageFreigabecheckText(
       value,
@@ -2928,21 +3020,38 @@ function updateReadonlyHintInfotextStoragePreviews(state = {}, value = "") {
   if (state.hintInfotextSaveButtonStatePreview) {
     state.hintInfotextSaveButtonStatePreview.textContent = formatReadonlyHintInfotextSaveButtonStateText(
       value,
-      hostContextStatus
+      hostContextStatus,
+      runtime
     );
   }
   if (state.hintInfotextSaveGuardStatePreview) {
     state.hintInfotextSaveGuardStatePreview.textContent = formatReadonlyHintInfotextSaveGuardStateText(
       value,
-      hostContextStatus
+      hostContextStatus,
+      runtime
     );
   }
   if (state.hintInfotextSaveClickStatePreview) {
     state.hintInfotextSaveClickStatePreview.textContent = formatReadonlyHintInfotextSaveClickStateText(
       value,
       hostContextStatus,
-      state.hintInfotextSaveClickState || null
+      state.hintInfotextSaveClickState || null,
+      runtime
     );
+  }
+  if (state.hintInfotextSaveButtonElement) {
+    const buttonState = buildReadonlyHintInfotextSaveButtonState({
+      value,
+      hostContextStatus,
+      runtime,
+    });
+    const enabled = buttonState.buttonEnabled === true;
+    state.hintInfotextSaveButtonElement.disabled = !enabled;
+    state.hintInfotextSaveButtonElement.setAttribute("aria-disabled", enabled ? "false" : "true");
+    state.hintInfotextSaveButtonElement.title = enabled ? "Hinweis als Restarbeiten-Notiz speichern" : buttonState.reason;
+    state.hintInfotextSaveButtonElement.style.background = enabled ? "#ffffff" : "#e2e8f0";
+    state.hintInfotextSaveButtonElement.style.color = enabled ? "#1f2937" : "#64748b";
+    state.hintInfotextSaveButtonElement.style.cursor = enabled ? "pointer" : "not-allowed";
   }
 }
 
@@ -3367,6 +3476,10 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   if (!doc?.createElement || !panel?.appendChild) return null;
   const hostContextStatus = getReadonlyHintInfotextHostContextStatus(state);
   state.hintInfotextSaveClickState = state.hintInfotextSaveClickState || {};
+  const runtime = {
+    win: state.win || null,
+    clickState: state.hintInfotextSaveClickState,
+  };
 
   const storage = doc.createElement("div");
   storage.className = "ui-editor-preview-hint-infotext-storage";
@@ -3553,7 +3666,8 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   saveButtonState.style.minHeight = "24px";
   saveButtonState.textContent = formatReadonlyHintInfotextSaveButtonStateText(
     getReadonlyHintInfotextDraftText(state),
-    hostContextStatus
+    hostContextStatus,
+    runtime
   );
   state.hintInfotextSaveButtonStatePreview = saveButtonState;
 
@@ -3575,7 +3689,8 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   saveGuardState.style.minHeight = "24px";
   saveGuardState.textContent = formatReadonlyHintInfotextSaveGuardStateText(
     getReadonlyHintInfotextDraftText(state),
-    hostContextStatus
+    hostContextStatus,
+    runtime
   );
   state.hintInfotextSaveGuardStatePreview = saveGuardState;
 
@@ -3598,7 +3713,8 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   saveClickState.textContent = formatReadonlyHintInfotextSaveClickStateText(
     getReadonlyHintInfotextDraftText(state),
     hostContextStatus,
-    state.hintInfotextSaveClickState
+    state.hintInfotextSaveClickState,
+    runtime
   );
   state.hintInfotextSaveClickStatePreview = saveClickState;
 
@@ -3606,17 +3722,26 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   button.type = "button";
   button.className = "ui-editor-preview-hint-infotext-storage__button";
   button.setAttribute("data-ui-editor-hint-infotext-save-button", "true");
-  button.disabled = true;
-  button.setAttribute("aria-disabled", "true");
-  button.title = "Speichern bleibt gesperrt";
+  const initialButtonState = buildReadonlyHintInfotextSaveButtonState({
+    value: getReadonlyHintInfotextDraftText(state),
+    hostContextStatus,
+    runtime,
+  });
+  button.disabled = initialButtonState.buttonEnabled !== true;
+  button.setAttribute("aria-disabled", initialButtonState.buttonEnabled === true ? "false" : "true");
+  button.title =
+    initialButtonState.buttonEnabled === true
+      ? "Hinweis als Restarbeiten-Notiz speichern"
+      : initialButtonState.reason;
   button.textContent = READONLY_HINT_INFOTEXT_STORAGE_BUTTON_LABEL;
   button.style.marginTop = "8px";
   button.style.padding = "6px 10px";
   button.style.border = "1px solid #cbd5e1";
   button.style.borderRadius = "4px";
-  button.style.background = "#e2e8f0";
-  button.style.color = "#64748b";
-  button.style.cursor = "not-allowed";
+  button.style.background = initialButtonState.buttonEnabled === true ? "#ffffff" : "#e2e8f0";
+  button.style.color = initialButtonState.buttonEnabled === true ? "#1f2937" : "#64748b";
+  button.style.cursor = initialButtonState.buttonEnabled === true ? "pointer" : "not-allowed";
+  state.hintInfotextSaveButtonElement = button;
   button.addEventListener("mousedown", stopPreviewPanelEvent);
   button.addEventListener("click", (event) => {
     stopPreviewPanelEvent(event);
@@ -3624,6 +3749,10 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
       value: getReadonlyHintInfotextDraftText(state),
       hostContextStatus: getReadonlyHintInfotextHostContextStatus(state),
       clickState: state.hintInfotextSaveClickState,
+      runtime: {
+        win: state.win || null,
+        clickState: state.hintInfotextSaveClickState,
+      },
     }).finally(() => {
       updateReadonlyHintInfotextStoragePreviews(state, getReadonlyHintInfotextDraftText(state));
     });

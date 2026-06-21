@@ -757,3 +757,30 @@ Dabei gilt:
   Klickpfad nicht.
 - Es gibt keinen IPC-/DB-/Datei-/localStorage-Schreibweg, kein
   Default-true, keine Wildcard und keine Aenderung am `UI-Editor-kit`.
+
+## G137: Produktiv-Speicherbutton unter strengen Bedingungen aktiviert
+
+- Der UI-Editor aktiviert den Hinweis-/Infotext-Speicherbutton im
+  BBM-Launcher nur bei vollstaendigem Restarbeiten-Kontext und gueltigem
+  Hinweistext.
+- Erforderlich sind `projectId`, `restarbeitId`, Zielkontext
+  `Restarbeiten`, Ziel-Surface `restarbeiten.ui.main`, Elementtyp
+  `Hinweis / Infotext`, vollstaendige Payload, offene Schreibfreigabe,
+  verfuegbarer Produktiv-Save-Adapter, kein laufender Save und keine bereits
+  gespeicherte identische Payload.
+- Der echte Speicheraufruf erfolgt nur nach aktivem Button-Klick ueber
+  `window.bbmDb.restarbeitenCreateNote({ restarbeitId, noteText })`; der
+  Zielkanal bleibt `restarbeiten:createNote`.
+- Erfolg wird sichtbar als erfolgreicher Save-Zustand mit `persisted: true`
+  und `previewOnly: false` abgebildet; Fehler bleiben sichtbar,
+  `persisted: false`, `previewOnly: true` und erhalten den Entwurf.
+- Doppelklick waehrend `saving`, identische Mehrfachspeicherung nach Erfolg,
+  fehlende `restarbeitId`, leerer Hinweistext, fehlender/falscher Kontext,
+  DEV-/ENV-Modus allein und fehlender Adapter bleiben blockiert.
+- G137-FIX trennt Editieren und Speichern: Das Hinweis-/Infotext-Textfeld
+  bleibt fokussierbar und editierbar, auch wenn Gate, Button oder Adapter das
+  Speichern blockieren. Die Payload-Vorschau uebernimmt den geaenderten
+  `noteText`.
+- Kein automatisches Speichern beim Oeffnen, keine automatische
+  Restarbeit-Auswahl, keine Wildcard, kein localStorage-/writeFile-Weg und
+  keine Aenderung am `UI-Editor-kit`.

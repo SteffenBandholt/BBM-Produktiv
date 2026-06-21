@@ -3826,3 +3826,43 @@ Wichtig:
     automatischer `window.bbmDb.restarbeitenCreateNote`- oder
     `restarbeiten:createNote`-Aufruf, kein IPC-/DB-/Datei-/localStorage-
     Schreibweg und keine Aenderung am `UI-Editor-kit`.
+
+### G137 - UI-Editor Hinweis/Infotext Produktiv-Speicherbutton aktiviert
+- Status: erledigt
+- Beschreibung:
+  - Der Hinweis-/Infotext-Speicherbutton wird im BBM-Launcher nur unter
+    vollstaendigen Restarbeiten-Bedingungen aktiv.
+  - Erforderlich sind Host-Kontext, `projectId`, `restarbeitId`,
+    Zielkontext `Restarbeiten`, Ziel-Surface `restarbeiten.ui.main`,
+    Elementtyp `Hinweis / Infotext`, gueltiger Hinweistext, vollstaendige
+    Payload, offene Schreibfreigabe, verfuegbarer Produktiv-Adapter, keine
+    laufende Speicherung und keine bereits gespeicherte identische Payload.
+  - Der echte Klickpfad ruft ausschliesslich
+    `window.bbmDb.restarbeitenCreateNote({ restarbeitId, noteText })` auf.
+  - Erfolg setzt `persisted: true` und `previewOnly: false`; Fehler bleibt
+    `persisted: false` und `previewOnly: true` und erhaelt den Entwurf.
+  - Doppelklick waehrend `saving` und identische Mehrfachspeicherung nach
+    Erfolg bleiben blockiert.
+  - G137-FIX trennt Editieren und Speichern wieder sauber: Das
+    Hinweis-/Infotext-Textfeld bleibt fokussierbar und editierbar, auch wenn
+    Gate/Button das Speichern blockieren. Die lokale Payload-Vorschau
+    uebernimmt den geaenderten `noteText`.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_AKTIVIERUNG_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Sicht-/Fachabnahme im Electron-UI-Pfad und danach ggf. weitere
+    UX-Verfeinerung der Erfolg-/Fehleranzeige als eigener Meilenstein.
+- Risiken/Hinweise:
+  - Kein automatisches Speichern beim Oeffnen, keine automatische
+    Restarbeit-Auswahl, keine DEV-/ENV-Aktivierung als alleinige Bedingung,
+    kein Default-true ohne vollstaendige Gate-Pruefung, keine Wildcard, kein
+    localStorage/writeFile und keine Aenderung am `UI-Editor-kit`.
+  - Sichtpruefung bleibt fuer die konkrete Route
+    `Start -> Projekte -> 04-2026 / UI-Polish fuer BBM -> Restarbeiten ->
+    UI-Editor` fachlich abzunehmen.
