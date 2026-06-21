@@ -88,6 +88,11 @@ const READONLY_HINT_INFOTEXT_STORAGE_PERSISTED_LINE = "persisted: false";
 const READONLY_HINT_INFOTEXT_STORAGE_BUTTON_LABEL = "Entwurf speichern";
 const READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TITLE = "Create-Note-Payload-Vorschau";
 const READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TARGET = "Ziel: restarbeiten:createNote";
+const READONLY_HINT_INFOTEXT_WRITE_GATE_TITLE = "Schreibfreigabe-Gate";
+const READONLY_HINT_INFOTEXT_WRITE_GATE_STATE_LINE = "Schreibfreigabe-Gate: geschlossen";
+const READONLY_HINT_INFOTEXT_WRITE_GATE_SOURCE_LINE = "Freigabequelle: nicht gesetzt";
+const READONLY_HINT_INFOTEXT_WRITE_GATE_REASON_LINE =
+  "Grund: echter Restarbeiten-Notizweg noch nicht freigegeben";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY = "Status: Hinweistext fehlt";
@@ -2007,13 +2012,32 @@ function formatReadonlyHintInfotextStorageFreigabecheckText(
   ].join("\n");
 }
 
+function buildReadonlyHintInfotextWriteGateViewModel({
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+} = {}) {
+  const hintTextValid = isReadonlyHintInfotextDraftValid(value);
+  const payloadComplete = hostContextStatus.isPresent === true && hintTextValid;
+  return Object.freeze({
+    gateOpen: false,
+    releaseSource: "nicht gesetzt",
+    reason: "echter Restarbeiten-Notizweg noch nicht freigegeben",
+    payloadComplete,
+    technicallyReady: payloadComplete,
+    writeReleased: false,
+    buttonEnabled: false,
+    persisted: false,
+    previewOnly: true,
+  });
+}
+
 function formatReadonlyHintInfotextCreateNotePayloadPreviewText(
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()
 ) {
   const hintText = String(value == null ? "" : value);
-  const hintTextValid = isReadonlyHintInfotextDraftValid(hintText);
-  const payloadComplete = hostContextStatus.isPresent === true && hintTextValid;
+  const writeGate = buildReadonlyHintInfotextWriteGateViewModel({ value: hintText, hostContextStatus });
+  const payloadComplete = writeGate.payloadComplete;
   return [
     `Payload vollständig: ${payloadComplete ? "ja" : "nein"}`,
     READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TARGET,
@@ -2023,6 +2047,25 @@ function formatReadonlyHintInfotextCreateNotePayloadPreviewText(
     "persisted: false",
     "previewOnly: true",
     "Schreibweg freigegeben: nein",
+  ].join("\n");
+}
+
+function formatReadonlyHintInfotextWriteGateText(
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()
+) {
+  const writeGate = buildReadonlyHintInfotextWriteGateViewModel({ value, hostContextStatus });
+  return [
+    READONLY_HINT_INFOTEXT_WRITE_GATE_STATE_LINE,
+    READONLY_HINT_INFOTEXT_WRITE_GATE_SOURCE_LINE,
+    READONLY_HINT_INFOTEXT_WRITE_GATE_REASON_LINE,
+    `Payload vollständig: ${writeGate.payloadComplete ? "ja" : "nein"}`,
+    `technisch/fachlich speicherbereit: ${writeGate.technicallyReady ? "ja" : "nein"}`,
+    "Schreibweg freigegeben: nein",
+    "Button aktivierbar: nein",
+    "Speicherbutton: deaktiviert",
+    "persisted: false",
+    "previewOnly: true",
   ].join("\n");
 }
 
@@ -2036,6 +2079,12 @@ function updateReadonlyHintInfotextStoragePreviews(state = {}, value = "") {
   }
   if (state.hintInfotextCreateNotePayloadPreview) {
     state.hintInfotextCreateNotePayloadPreview.textContent = formatReadonlyHintInfotextCreateNotePayloadPreviewText(
+      value,
+      hostContextStatus
+    );
+  }
+  if (state.hintInfotextWriteGatePreview) {
+    state.hintInfotextWriteGatePreview.textContent = formatReadonlyHintInfotextWriteGateText(
       value,
       hostContextStatus
     );
@@ -2206,7 +2255,7 @@ function handleReadonlyHintInfotextDraftInput(
   if (validationPreview) {
     validationPreview.textContent = formatReadonlyHintInfotextDraftValidationText(nextValue);
   }
-  if (storageCheckPreview || state.hintInfotextCreateNotePayloadPreview) {
+  if (storageCheckPreview || state.hintInfotextCreateNotePayloadPreview || state.hintInfotextWriteGatePreview) {
     updateReadonlyHintInfotextStoragePreviews(state, nextValue);
   }
   return nextValue;
@@ -2535,6 +2584,28 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   );
   state.hintInfotextCreateNotePayloadPreview = createNotePayload;
 
+  const writeGateTitle = doc.createElement("div");
+  writeGateTitle.className = "ui-editor-preview-hint-infotext-storage__write-gate-title";
+  writeGateTitle.textContent = READONLY_HINT_INFOTEXT_WRITE_GATE_TITLE;
+  writeGateTitle.style.fontWeight = "700";
+  writeGateTitle.style.marginTop = "8px";
+  writeGateTitle.style.marginBottom = "4px";
+
+  const writeGate = doc.createElement("div");
+  writeGate.className = "ui-editor-preview-hint-infotext-storage__write-gate";
+  writeGate.setAttribute("data-ui-editor-hint-infotext-write-gate-preview", "true");
+  writeGate.style.whiteSpace = "pre-wrap";
+  writeGate.style.padding = "6px 8px";
+  writeGate.style.border = "1px solid #dbe4ee";
+  writeGate.style.borderRadius = "4px";
+  writeGate.style.background = "#ffffff";
+  writeGate.style.minHeight = "24px";
+  writeGate.textContent = formatReadonlyHintInfotextWriteGateText(
+    getReadonlyHintInfotextDraftText(state),
+    hostContextStatus
+  );
+  state.hintInfotextWriteGatePreview = writeGate;
+
   const button = doc.createElement("button");
   button.type = "button";
   button.className = "ui-editor-preview-hint-infotext-storage__button";
@@ -2562,6 +2633,8 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
     freigabecheck,
     createNotePayloadTitle,
     createNotePayload,
+    writeGateTitle,
+    writeGate,
     button
   );
   panel.appendChild(storage);

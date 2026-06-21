@@ -105,6 +105,19 @@ Sie ergÃ¤nzt:
   - Es gibt weiterhin keinen Speicheraufruf, keinen IPC-/DB-Schreibweg, keinen
     Submit und keine Aenderung am `UI-Editor-kit`.
 
+- G125 Schreibfreigabe-Gate fuer `Hinweis / Infotext` vorbereitet:
+  - Der BBM-Launcher zeigt im bestehenden Speicherbereich ein zentrales
+    Schreibfreigabe-Gate mit `Schreibfreigabe-Gate: geschlossen`,
+    `Freigabequelle: nicht gesetzt` und dem Grund, dass der echte
+    Restarbeiten-Notizweg noch nicht freigegeben ist.
+  - `Payload vollständig` und `technisch/fachlich speicherbereit` koennen bei
+    gueltigem Host-Kontext und Hinweistext `ja` sein; das Gate bleibt trotzdem
+    geschlossen, `Schreibweg freigegeben: nein`, `Button aktivierbar: nein`,
+    `persisted: false` und `previewOnly: true`.
+  - Es gibt weiterhin keinen Speicheraufruf, keinen IPC-/DB-Schreibweg, keinen
+    Submit, kein Default-true, keine Wildcard und keine Aenderung am
+    `UI-Editor-kit`.
+
 - G97 ergaenzt die lokale Live-Vorschau fuer `Hinweis / Infotext` im
   UI-Editor-Panel:
   - Die Entwurfs-Vorschau hat jetzt ein kleines Eingabefeld `Hinweistext` und

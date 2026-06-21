@@ -520,3 +520,16 @@ Dabei gilt:
   bleiben reine Anzeige.
 - Es gibt keinen Speicheraufruf, keinen DB-/IPC-Schreibweg, keinen Submit und
   keine Aenderung am `UI-Editor-kit`.
+
+## G125: Schreibfreigabe-Gate vorbereitet
+
+- Der UI-Editor zeigt im bestehenden Speicherbereich ein zentrales
+  Schreibfreigabe-Gate fuer den spaeteren Restarbeiten-Notizweg.
+- Die Gate-Entscheidung trennt `Payload vollständig` und
+  `technisch/fachlich speicherbereit` von der tatsaechlichen Freigabe.
+- Fuer G125 bleibt das Gate fest geschlossen:
+  `Schreibfreigabe-Gate: geschlossen`, `Freigabequelle: nicht gesetzt`,
+  `Schreibweg freigegeben: nein`, `Button aktivierbar: nein`,
+  `persisted: false` und `previewOnly: true`.
+- Es gibt keinen Speicheraufruf, keinen DB-/IPC-Schreibweg, keinen Submit,
+  kein Default-true, keine Wildcard und keine Aenderung am `UI-Editor-kit`.
