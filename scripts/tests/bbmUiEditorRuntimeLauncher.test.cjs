@@ -177,6 +177,10 @@ const UI_EDITOR_HINT_INFOTEXT_FAKE_ADAPTER_POSITIVE_TEST_REFERENCE_DOC_PATH = pa
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_FAKE_ADAPTER_POSITIVTEST_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_RELEASE_DECISION_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_FREIGABEENTSCHEIDUNG.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -5459,6 +5463,37 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Fake-Adapter-Positivtest-Referenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Produktiv-Save-Freigabeentscheidung bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_RELEASE_DECISION_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Produktiv-Save-Freigabeentscheidung fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_RELEASE_DECISION_DOC_PATH, "utf8");
+
+    for (const required of [
+      "G131",
+      "window.bbmDb.restarbeitenCreateNote",
+      "restarbeiten:createNote",
+      "restarbeitId",
+      "noteText",
+      "Default-true",
+      "Gate bleibt geschlossen",
+      "previewOnly",
+      "persisted",
+      "Speicherbutton bleibt deaktiviert",
+      "Save-Ausfuehrung bleibt blockiert",
+      "kein Produktiv-Schreibweg",
+      "keine Aenderung der Schreibfreigabe-Konfiguration auf `true`",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Produktiv-Save-Freigabeentscheidung enthaelt ${required} nicht.`
       );
     }
   });

@@ -3620,3 +3620,33 @@ Wichtig:
   - Kein Produktiv-Schreibweg, keine ENV-/DEV-Aktivierung, kein DB-/IPC-
     Schreibweg, kein Submit, kein Default-true, keine Wildcard und keine
     Aenderung am `UI-Editor-kit`.
+
+### G131 - UI-Editor Hinweis/Infotext Produktiv-Save-Freigabeentscheidung
+- Status: erledigt
+- Beschreibung:
+  - Die Freigabeentscheidung fuer einen spaeteren echten
+    Hinweis-/Infotext-Produktiv-Speicherweg ist dokumentiert.
+  - Das Dokument beschreibt Zielmethode
+    `window.bbmDb.restarbeitenCreateNote`, Zielkanal
+    `restarbeiten:createNote`, konkrete `restarbeitId` und Payload
+    `restarbeitId` plus `noteText`.
+  - Mindestbedingungen, nicht zulaessige Aktivierungen und Abnahmekriterien
+    fuer den spaeteren echten Speichermeilenstein sind festgehalten.
+  - G131 aktiviert nichts: Gate bleibt geschlossen, Konfiguration bleibt
+    `false`, Speicherbutton bleibt deaktiviert, Save-Ausfuehrung bleibt
+    blockiert, `persisted: false` und `previewOnly: true` bleiben bestehen.
+- Betroffene Dateien:
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_FREIGABEENTSCHEIDUNG.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Ein echter Produktiv-Speicherweg darf erst in einem separaten
+    Folgemeilenstein nach dieser Freigabeentscheidung umgesetzt werden.
+- Risiken/Hinweise:
+  - Kein Produktiv-Schreibweg, keine Gate-Freigabe, kein aktivierter Button,
+    kein DB-/IPC-/Datei-/localStorage-Schreibweg, kein Default-true, keine
+    DEV-/ENV-Aktivierung, keine Wildcard und keine Aenderung am
+    `UI-Editor-kit`.

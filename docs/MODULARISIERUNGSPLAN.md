@@ -618,3 +618,22 @@ Dabei gilt:
 - Es gibt keinen tatsaechlichen Produktiv-Schreibaufruf, keine ENV-
   Aktivierung, keinen DB-/IPC-Schreibweg, keinen Submit, kein Default-true,
   keine Wildcard und keine Aenderung am `UI-Editor-kit`.
+
+## G131: Produktiv-Save-Freigabeentscheidung dokumentiert
+
+- Vor dem ersten echten Hinweis-/Infotext-Produktiv-Speicherweg ist die
+  Freigabeentscheidung mit Mindestbedingungen und Abnahmekriterien
+  dokumentiert.
+- Der spaetere Zielweg bleibt klar eingegrenzt:
+  `window.bbmDb.restarbeitenCreateNote`, `restarbeiten:createNote`,
+  konkrete `restarbeitId` und Payload aus `restarbeitId` plus `noteText`.
+- Die spaetere Freigabe verlangt gueltigen Host-Kontext, gueltige
+  `projectId`, gueltige `restarbeitId`, gueltigen Hinweistext,
+  vollstaendige Payload, explizite Schreibfreigabe, offenes Gate,
+  verfuegbaren Save-Adapter, Fehlerbehandlung und sichtbare Rueckmeldung.
+- Fuer G131 bleibt der Standardpfad unveraendert geschlossen:
+  Konfiguration `false`, Gate geschlossen, Save-Ausfuehrung blockiert,
+  Speicherbutton deaktiviert, `persisted: false` und `previewOnly: true`.
+- Es gibt keinen Produktiv-Schreibweg, keinen IPC-/DB-/Datei-/localStorage-
+  Schreibweg, keine Gate-Freigabe, kein Default-true, keine DEV-/ENV-
+  Aktivierung, keine Wildcard und keine Aenderung am `UI-Editor-kit`.
