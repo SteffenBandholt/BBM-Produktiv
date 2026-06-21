@@ -19,10 +19,13 @@ function runNativeTestRuntimeTests(run) {
     assert.equal(pkg.scripts["test:node"], "node scripts/test.cjs");
 
     assert.match(wrapperContent, /ELECTRON_RUN_AS_NODE/);
-    assert.match(wrapperContent, /--max-old-space-size=8192/);
     assert.match(wrapperContent, /electron\.exe/);
     assert.match(wrapperContent, /test\.cjs/);
-    assert.match(wrapperContent, /NODE_OPTIONS/);
+    assert.match(wrapperContent, /--run-group/);
+    assert.match(wrapperContent, /buildElectronTestGroups/);
+    assert.match(wrapperContent, /Electron 30\/V8/);
+    assert.match(wrapperContent, /4 GB Heap/);
+    assert.doesNotMatch(wrapperContent, /NODE_OPTIONS/);
     assert.doesNotMatch(wrapperContent, /npm_node_execpath|process\.execPath/);
     assert.doesNotMatch(wrapperContent, /electron-builder install-app-deps/);
     assert.doesNotMatch(wrapperContent, /require\(["']better-sqlite3["']\)/);
