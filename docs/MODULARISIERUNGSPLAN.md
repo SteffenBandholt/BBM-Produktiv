@@ -182,6 +182,12 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G122 schliesst die echte Host-Kontext-UEbergabe aus dem
   Restarbeiten-Host an den UI-Editor an; der Default bleibt ohne eindeutige
   Restarbeit unveraendert und der Speicherweg gesperrt.
+- G123 zeigt die Speicherbereitschaft fuer `Hinweis / Infotext` sichtbar an:
+  Host-Kontext, `projectId`, `restarbeitId`, Zielkontext, Ziel-Surface,
+  Elementtyp und Hinweistext werden pruefbar ausgewiesen; der Schreibweg
+  bleibt `nein`, Speichern bleibt gesperrt und `persisted: false`. Der
+  Host-Kontext wird beim Oeffnen des Launchers frisch ueber den bestehenden
+  CoreShell-Resolver gelesen.
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 
@@ -484,3 +490,17 @@ Dabei gilt:
 - Der Restarbeiten-Host liefert den Host-Kontext nur bei eindeutiger
   Restarbeit an den Launcher weiter.
 - Default, Speicherstatus und read-only Grenzen bleiben unveraendert.
+
+## G123: Speicherbereitschaft anzeigen, Speichern gesperrt lassen
+
+- Der UI-Editor zeigt fuer den lokalen Hinweis-/Infotext-Entwurf, ob
+  Host-Kontext, `projectId`, `restarbeitId`, Zielkontext, Ziel-Surface,
+  Elementtyp und Hinweistext technisch/fachlich speicherbereit waeren.
+- Die Anzeige bleibt aus lokalen Daten abgeleitet; `Schreibweg freigegeben`
+  bleibt `nein`, `Speichern` bleibt `gesperrt`, `persisted: false` bleibt
+  sichtbar.
+- Der Launcher liest den Host-Kontext beim Oeffnen ueber den bestehenden
+  CoreShell-Resolver neu, damit nachgeladene Restarbeiten-Auswahl sichtbar
+  wird.
+- Es gibt keinen `restarbeiten:createNote`-Aufruf, keinen
+  `window.bbmDb.restarbeitenCreateNote`-Aufruf und keine IPC-/DB-Persistenz.

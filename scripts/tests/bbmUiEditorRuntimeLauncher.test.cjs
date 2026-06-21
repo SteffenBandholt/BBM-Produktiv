@@ -145,6 +145,10 @@ const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_FINAL_CHECK_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_ABSCHLUSSCHECK.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_STORAGE_READINESS_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERBEREITSCHAFT_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -1059,7 +1063,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       true
     );
     assert.equal(
-      getRenderedText(hintInfotextStoragePreview).includes("Speichern bleibt gesperrt"),
+      getRenderedText(hintInfotextStoragePreview).includes("Speichern: gesperrt"),
       true
     );
     assert.equal(Boolean(elementCatalog), true);
@@ -1105,10 +1109,18 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(getRenderedText(hintInfotextStoragePreview).includes("Freigabecheck"), true);
     for (const required of [
       "Speicherweg: Restarbeiten-Notizweg vorbereitet",
-      "Ziel: restarbeiten:createNote",
+      "Ziel: Restarbeiten-Notizweg (nicht angeschlossen)",
       "Status: gesperrt",
       "persisted: false",
       "Entwurf speichern",
+      "Host-Kontext vorhanden: nein",
+      "projectId vorhanden: nein",
+      "restarbeitId vorhanden: nein",
+      "Zielkontext: Restarbeiten",
+      "Ziel-Surface: restarbeiten.ui.main",
+      "Elementtyp: Hinweis / Infotext",
+      "Schreibweg freigegeben: nein",
+      "Speichern: gesperrt",
     ]) {
       assert.equal(
         getRenderedText(hintInfotextStoragePreview).includes(required),
@@ -1119,10 +1131,17 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(Boolean(hintInfotextStorageCheck), true);
     for (const required of [
       "Hinweistext gültig: ja",
+      "Host-Kontext vorhanden: nein",
+      "projectId vorhanden: nein",
+      "restarbeitId vorhanden: nein",
+      "Zielkontext: Restarbeiten",
       "Ziel-Surface: restarbeiten.ui.main",
+      "Elementtyp: Hinweis / Infotext",
+      "technisch/fachlich speicherbereit: nein",
       "Schreibweg freigegeben: nein",
+      "Speichern: gesperrt",
       "Speicherbutton: deaktiviert",
-      "Persistenz: nicht aktiv",
+      "persisted: false",
     ]) {
       assert.equal(
         getRenderedText(hintInfotextStorageCheck).includes(required),
@@ -1143,7 +1162,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(renderedText.includes("Payload-Vorschau"), true);
     assert.equal(renderedText.includes("Speichern"), true);
     assert.equal(renderedText.includes("Speicherweg: Restarbeiten-Notizweg vorbereitet"), true);
-    assert.equal(renderedText.includes("Ziel: restarbeiten:createNote"), true);
+    assert.equal(renderedText.includes("Ziel: Restarbeiten-Notizweg (nicht angeschlossen)"), true);
     assert.equal(renderedText.includes("Status: gesperrt"), true);
     assert.equal(renderedText.includes("Entwurfsprüfung"), true);
     assert.equal(renderedText.includes("Entwurf zurücksetzen"), true);
@@ -1180,7 +1199,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const updatedHintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
     assert.equal(
       updatedHintInfotextStorageCheck.textContent,
-      "Hinweistext gültig: ja\nZiel-Surface: restarbeiten.ui.main\nRestarbeit-Kontext vorhanden: nein\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
+      "Hinweistext gültig: ja\nHost-Kontext vorhanden: nein\nprojectId vorhanden: nein\nrestarbeitId vorhanden: nein\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nSpeichern: gesperrt\nSpeicherbutton: deaktiviert\npersisted: false"
     );
     assert.equal(
       updatedHintInfotextDraftValidation.textContent,
@@ -1200,7 +1219,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const emptiedHintInfotextStorageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
     assert.equal(
       emptiedHintInfotextStorageCheck.textContent,
-      "Hinweistext gültig: nein\nZiel-Surface: restarbeiten.ui.main\nRestarbeit-Kontext vorhanden: nein\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
+      "Hinweistext gültig: nein\nHost-Kontext vorhanden: nein\nprojectId vorhanden: nein\nrestarbeitId vorhanden: nein\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nSpeichern: gesperrt\nSpeicherbutton: deaktiviert\npersisted: false"
     );
     const emptiedHintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     assert.equal(
@@ -1235,7 +1254,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(
       resetHintInfotextStorageCheck.textContent,
-      "Hinweistext gültig: ja\nZiel-Surface: restarbeiten.ui.main\nRestarbeit-Kontext vorhanden: nein\nSchreibweg freigegeben: nein\nSpeicherbutton: deaktiviert\nPersistenz: nicht aktiv"
+      "Hinweistext gültig: ja\nHost-Kontext vorhanden: nein\nprojectId vorhanden: nein\nrestarbeitId vorhanden: nein\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nSpeichern: gesperrt\nSpeicherbutton: deaktiviert\npersisted: false"
     );
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
@@ -3411,6 +3430,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       true
     );
     assert.equal(coreShellSource.includes("activeScopeId: activeUiScope"), true);
+    assert.equal(coreShellSource.includes("hostContext: () => resolveUiEditorHostContext(router)"), true);
     assert.equal(source.includes("getStatusScopeLabel"), true);
     assert.equal(source.includes("activeUiScope"), true);
     assert.equal(source.includes('from "./surfaceAdapters/surfaceSwitchCommand.js"'), true);
@@ -4527,11 +4547,17 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.deepEqual(stateFromInvalidHostContext.hostContextStatus, defaultStatus);
   });
 
-  await run("BBM UI-Editor-Runtime: optionaler Host-Kontext bleibt intern und aktiviert nicht", async () => {
+  await run("BBM UI-Editor-Runtime: Speicherbereitschaft zeigt Host-Kontext, bleibt aber gesperrt", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
+    let writeCalled = false;
     const win = {
       uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+      bbmDb: {
+        restarbeitenCreateNote() {
+          writeCalled = true;
+        },
+      },
     };
     const validHostContext = {
       projectId: "project-42",
@@ -4557,11 +4583,123 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
 
     button.click();
 
+    const storagePreview = doc.querySelector('[data-ui-editor-hint-infotext-storage-preview="true"]');
     const storageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
     const saveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
+    const draftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
 
-    assert.equal(storageCheck.textContent.includes("Speicherbutton: deaktiviert"), true);
+    assert.equal(
+      getRenderedText(storagePreview).includes(
+        "Host-Kontext vorhanden: ja\nprojectId vorhanden: ja\nrestarbeitId vorhanden: ja\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext"
+      ),
+      true
+    );
+    assert.equal(
+      storageCheck.textContent,
+      "Hinweistext gültig: ja\nHost-Kontext vorhanden: ja\nprojectId vorhanden: ja\nrestarbeitId vorhanden: ja\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext\ntechnisch/fachlich speicherbereit: ja\nSchreibweg freigegeben: nein\nSpeichern: gesperrt\nSpeicherbutton: deaktiviert\npersisted: false"
+    );
     assert.equal(saveButton.disabled, true);
+    assert.equal(saveButton.getAttribute("aria-disabled"), "true");
+    saveButton.click();
+    assert.equal(writeCalled, false);
+
+    draftInput.value = "   ";
+    draftInput.dispatchEvent({
+      type: "input",
+      preventDefault() {},
+      stopPropagation() {},
+    });
+    assert.equal(
+      storageCheck.textContent,
+      "Hinweistext gültig: nein\nHost-Kontext vorhanden: ja\nprojectId vorhanden: ja\nrestarbeitId vorhanden: ja\nZielkontext: Restarbeiten\nZiel-Surface: restarbeiten.ui.main\nElementtyp: Hinweis / Infotext\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nSpeichern: gesperrt\nSpeicherbutton: deaktiviert\npersisted: false"
+    );
+
+    const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    assert.equal(source.includes("restarbeitenCreateNote"), false);
+    assert.equal(source.includes("window.bbmDb"), false);
+    assert.equal(source.includes("restarbeiten:createNote"), false);
+    assert.equal(source.includes("localStorage"), false);
+    assert.equal(source.includes("writeFile"), false);
+  });
+
+  await run("BBM UI-Editor-Runtime: Speicherbereitschaft aktualisiert Host-Kontext beim Oeffnen", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    let currentHostContext = null;
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.ui.main",
+      hostContext: () => currentHostContext,
+      registryResolver: () => ({
+        uiScope: "restarbeiten.ui.main",
+        moduleId: "restarbeiten",
+        elements: [],
+      }),
+    });
+
+    currentHostContext = {
+      projectId: "project-42",
+      restarbeitId: "restarbeit-99",
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "Nr. 1 - Abdichtung fehlt",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host",
+    };
+    button.click();
+
+    const storageCheck = doc.querySelector('[data-ui-editor-hint-infotext-storage-check="true"]');
+    assert.equal(storageCheck.textContent.includes("Host-Kontext vorhanden: ja"), true);
+    assert.equal(storageCheck.textContent.includes("projectId vorhanden: ja"), true);
+    assert.equal(storageCheck.textContent.includes("restarbeitId vorhanden: ja"), true);
+    assert.equal(storageCheck.textContent.includes("technisch/fachlich speicherbereit: ja"), true);
+    assert.equal(storageCheck.textContent.includes("Schreibweg freigegeben: nein"), true);
+    assert.equal(storageCheck.textContent.includes("Speichern: gesperrt"), true);
+    assert.equal(storageCheck.textContent.includes("persisted: false"), true);
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Speicherbereitschaft bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_STORAGE_READINESS_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Speicherbereitschaft-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_STORAGE_READINESS_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "G123",
+      "Speicherbereitschaft",
+      "Host-Kontext vorhanden: ja/nein",
+      "projectId vorhanden: ja/nein",
+      "restarbeitId vorhanden: ja/nein",
+      "Zielkontext: Restarbeiten",
+      "Ziel-Surface: restarbeiten.ui.main",
+      "Elementtyp: Hinweis / Infotext",
+      "Hinweistext gueltig: ja/nein",
+      "technisch/fachlich speicherbereit",
+      "Schreibweg freigegeben: nein",
+      "Speichern: gesperrt",
+      "persisted: false",
+      "kein `restarbeiten:createNote`",
+      "kein `window.bbmDb.restarbeitenCreateNote`",
+      "kein IPC-Schreibweg",
+      "kein DB-Schreibweg",
+      "kein localStorage",
+      "kein writeFile",
+      "kein Submit",
+      "UI-Editor-kit bleibt unveraendert",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Speicherbereitschaft-Referenz enthaelt ${required} nicht.`
+      );
+    }
   });
 
   await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Host-Kontext-Abschlusscheck bleibt dokumentiert", async () => {

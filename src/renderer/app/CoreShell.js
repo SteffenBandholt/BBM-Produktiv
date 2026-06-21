@@ -137,7 +137,7 @@ export default class CoreShell {
           registeredElements: uiEditorRegistry?.elements,
           availableUiScopes: getAvailableUiScopes(),
           registryResolver: getBbmUiEditorRegistry,
-          hostContext: resolveUiEditorHostContext(router),
+          hostContext: () => resolveUiEditorHostContext(router),
         })
       ).catch((error) => {
         if (refreshToken === uiEditorRuntimeRefreshToken) {

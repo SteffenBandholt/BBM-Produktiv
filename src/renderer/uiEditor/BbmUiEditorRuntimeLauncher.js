@@ -82,7 +82,7 @@ const READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE = "Hinweistext gültig: ja
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE = "Hinweistext gültig: nein";
 const READONLY_HINT_INFOTEXT_STORAGE_CHECK_TARGET_SURFACE_LINE = "Ziel-Surface: restarbeiten.ui.main";
 const READONLY_HINT_INFOTEXT_STORAGE_ROUTE_LINE = "Speicherweg: Restarbeiten-Notizweg vorbereitet";
-const READONLY_HINT_INFOTEXT_STORAGE_TARGET_LINE = "Ziel: restarbeiten:createNote";
+const READONLY_HINT_INFOTEXT_STORAGE_TARGET_LINE = "Ziel: Restarbeiten-Notizweg (nicht angeschlossen)";
 const READONLY_HINT_INFOTEXT_STORAGE_STATUS_LINE = "Status: gesperrt";
 const READONLY_HINT_INFOTEXT_STORAGE_PERSISTED_LINE = "persisted: false";
 const READONLY_HINT_INFOTEXT_STORAGE_BUTTON_LABEL = "Entwurf speichern";
@@ -255,6 +255,15 @@ function getHostCapabilitiesFromState(state = {}) {
   return adapter.getCapabilities() || {};
 }
 
+function resolveReadonlyHintInfotextHostContextInput(hostContext = null) {
+  if (typeof hostContext !== "function") return hostContext;
+  try {
+    return hostContext();
+  } catch {
+    return null;
+  }
+}
+
 function createLauncherState({
   activeUiScope = null,
   registeredElements = null,
@@ -304,7 +313,10 @@ function createLauncherState({
     win: null,
     availableUiScopes: normalizeAvailableUiScopes(availableUiScopes),
     hintInfotextDraftText: READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_DEFAULT_TEXT,
-    hostContextStatus: normalizeHostContextStatus(hostContextStatus ?? hostContext),
+    hostContextProvider: typeof hostContext === "function" ? hostContext : null,
+    hostContextStatus: normalizeHostContextStatus(
+      hostContextStatus ?? resolveReadonlyHintInfotextHostContextInput(hostContext)
+    ),
     registryResolver: resolver,
     hostAdapter: adapter,
   };
@@ -1929,6 +1941,13 @@ function buildReadonlyHintInfotextHostContextStatusModel(input = null) {
 }
 
 function getReadonlyHintInfotextHostContextStatus(state = {}) {
+  if (typeof state?.hostContextProvider === "function") {
+    const normalizedHostContextStatus = normalizeHostContextStatus(
+      resolveReadonlyHintInfotextHostContextInput(state.hostContextProvider)
+    );
+    state.hostContextStatus = normalizedHostContextStatus;
+    return normalizedHostContextStatus;
+  }
   if (state?.hostContextStatus && typeof state.hostContextStatus === "object") {
     const normalizedHostContextStatus = normalizeHostContextStatus(state.hostContextStatus);
     state.hostContextStatus = normalizedHostContextStatus;
@@ -1942,13 +1961,21 @@ function getReadonlyHintInfotextHostContextStatus(state = {}) {
 }
 
 function formatReadonlyHintInfotextStorageContextText(hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()) {
+  const projectIdPresent = Boolean(hostContextStatus.projectId);
+  const restarbeitIdPresent = Boolean(hostContextStatus.restarbeitId);
   return [
+    `Host-Kontext vorhanden: ${hostContextStatus.isPresent === true ? "ja" : "nein"}`,
+    `projectId vorhanden: ${projectIdPresent ? "ja" : "nein"}`,
+    `restarbeitId vorhanden: ${restarbeitIdPresent ? "ja" : "nein"}`,
     `Zielkontext: ${hostContextStatus.targetContext}`,
+    `Ziel-Surface: ${hostContextStatus.targetSurfaceId}`,
+    `Elementtyp: ${hostContextStatus.elementType}`,
     `restarbeitId: ${hostContextStatus.restarbeitId ? hostContextStatus.restarbeitId : "nicht übergeben"}`,
     `Ziel-Restarbeit: ${hostContextStatus.targetLabel}`,
     `Kontextquelle: ${hostContextStatus.source}`,
-    hostContextStatus.isPresent === true ? "Restarbeit-Kontext vorhanden: ja" : "Restarbeit-Kontext vorhanden: nein",
-    hostContextStatus.isPresent === true ? "Speichern bleibt freigegeben" : "Speichern bleibt gesperrt",
+    "Schreibweg freigegeben: nein",
+    "Speichern: gesperrt",
+    "persisted: false",
   ].join("\n");
 }
 
@@ -1956,15 +1983,25 @@ function formatReadonlyHintInfotextStorageFreigabecheckText(
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()
 ) {
+  const hintTextValid = isReadonlyHintInfotextDraftValid(value);
+  const projectIdPresent = Boolean(hostContextStatus.projectId);
+  const restarbeitIdPresent = Boolean(hostContextStatus.restarbeitId);
+  const technicallyReady = hostContextStatus.isPresent === true && hintTextValid;
   return [
-    isReadonlyHintInfotextDraftValid(value)
+    hintTextValid
       ? READONLY_HINT_INFOTEXT_STORAGE_CHECK_VALID_LINE
       : READONLY_HINT_INFOTEXT_STORAGE_CHECK_INVALID_LINE,
+    `Host-Kontext vorhanden: ${hostContextStatus.isPresent === true ? "ja" : "nein"}`,
+    `projectId vorhanden: ${projectIdPresent ? "ja" : "nein"}`,
+    `restarbeitId vorhanden: ${restarbeitIdPresent ? "ja" : "nein"}`,
+    `Zielkontext: ${hostContextStatus.targetContext}`,
     `Ziel-Surface: ${hostContextStatus.targetSurfaceId}`,
-    `Restarbeit-Kontext vorhanden: ${hostContextStatus.isPresent === true ? "ja" : "nein"}`,
-    `Schreibweg freigegeben: ${hostContextStatus.isPresent === true ? "ja" : "nein"}`,
+    `Elementtyp: ${hostContextStatus.elementType}`,
+    `technisch/fachlich speicherbereit: ${technicallyReady ? "ja" : "nein"}`,
+    "Schreibweg freigegeben: nein",
+    "Speichern: gesperrt",
     "Speicherbutton: deaktiviert",
-    "Persistenz: nicht aktiv",
+    "persisted: false",
   ].join("\n");
 }
 
@@ -2133,7 +2170,10 @@ function handleReadonlyHintInfotextDraftInput(
     validationPreview.textContent = formatReadonlyHintInfotextDraftValidationText(nextValue);
   }
   if (storageCheckPreview) {
-    storageCheckPreview.textContent = formatReadonlyHintInfotextStorageFreigabecheckText(nextValue);
+    storageCheckPreview.textContent = formatReadonlyHintInfotextStorageFreigabecheckText(
+      nextValue,
+      getReadonlyHintInfotextHostContextStatus(state)
+    );
   }
   return nextValue;
 }

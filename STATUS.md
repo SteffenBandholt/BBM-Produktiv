@@ -81,6 +81,19 @@ Sie ergÃ¤nzt:
   - SurfaceInfo bleibt `restarbeiten.ui.main`; der Surface-Auswahl-Hinweis,
     die Bedienzustands-Statuszeile und der Elementkatalog bleiben bestehen.
 
+- G123 Speicherbereitschaft fuer `Hinweis / Infotext` sichtbar gemacht:
+  - Der BBM-Launcher zeigt im bestehenden Speicherbereich, ob Host-Kontext,
+    `projectId`, `restarbeitId`, Zielkontext, Ziel-Surface, Elementtyp und
+    Hinweistext technisch/fachlich speicherbereit waeren.
+  - CoreShell reicht den vorhandenen Host-Kontext-Resolver als Provider weiter;
+    der Launcher normalisiert den Kontext beim Oeffnen frisch, damit eine
+    nachgeladene Restarbeiten-Auswahl sichtbar wird.
+  - Der Schreibweg bleibt fest `nein`, Speichern bleibt gesperrt und
+    `persisted: false` bleibt sichtbar.
+  - Kein `restarbeiten:createNote`, kein
+    `window.bbmDb.restarbeitenCreateNote`, kein IPC-/DB-Schreibweg und keine
+    Aenderung am `UI-Editor-kit`.
+
 - G97 ergaenzt die lokale Live-Vorschau fuer `Hinweis / Infotext` im
   UI-Editor-Panel:
   - Die Entwurfs-Vorschau hat jetzt ein kleines Eingabefeld `Hinweistext` und
