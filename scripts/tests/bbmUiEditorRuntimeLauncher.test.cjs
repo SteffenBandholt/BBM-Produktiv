@@ -1,4 +1,4 @@
-﻿const assert = require("node:assert/strict");
+const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
@@ -156,6 +156,10 @@ const UI_EDITOR_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_PREVIEW_REFERENCE_DOC_PATH = p
 const UI_EDITOR_HINT_INFOTEXT_WRITE_GATE_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SCHREIBFREIGABE_GATE_REFERENZSTAND.md"
+);
+const UI_EDITOR_HINT_INFOTEXT_WRITE_RELEASE_CONFIG_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SCHREIBFREIGABE_KONFIGURATION_REFERENZSTAND.md"
 );
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
@@ -1150,7 +1154,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "previewOnly: true",
       "Schreibfreigabe-Gate",
       "Schreibfreigabe-Gate: geschlossen",
-      "Freigabequelle: nicht gesetzt",
+      "Freigabequelle: Konfiguration",
+      "Freigabewert: false",
       "Grund: echter Restarbeiten-Notizweg noch nicht freigegeben",
       "Button aktivierbar: nein",
     ]) {
@@ -1168,7 +1173,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(Boolean(hintInfotextWriteGatePreview), true);
     assert.equal(
       hintInfotextWriteGatePreview.textContent,
-      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: nicht gesetzt\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: nein\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
+      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: Konfiguration\nFreigabewert: false\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: nein\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
     );
     assert.equal(Boolean(hintInfotextStorageCheck), true);
     for (const required of [
@@ -1255,7 +1260,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(
       updatedHintInfotextWriteGatePreview.textContent,
-      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: nicht gesetzt\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: nein\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
+      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: Konfiguration\nFreigabewert: false\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: nein\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
     );
     assert.equal(
       updatedHintInfotextDraftValidation.textContent,
@@ -1289,7 +1294,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(
       emptiedHintInfotextWriteGatePreview.textContent,
-      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: nicht gesetzt\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: nein\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
+      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: Konfiguration\nFreigabewert: false\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: nein\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
     );
     const emptiedHintInfotextPayloadPreview = doc.querySelector('[data-ui-editor-hint-infotext-payload-preview="true"]');
     assert.equal(
@@ -1338,7 +1343,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(
       resetHintInfotextWriteGatePreview.textContent,
-      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: nicht gesetzt\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: nein\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
+      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: Konfiguration\nFreigabewert: false\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: nein\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
     );
     assert.equal(Boolean(readonlyHint), true);
     assert.equal(readonlyHint.getAttribute("data-ui-editor-surface-id"), "pdf.plan.page.1");
@@ -4692,7 +4697,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(
       writeGatePreview.textContent,
-      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: nicht gesetzt\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: ja\ntechnisch/fachlich speicherbereit: ja\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
+      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: Konfiguration\nFreigabewert: false\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: ja\ntechnisch/fachlich speicherbereit: ja\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
     );
     assert.equal(saveButton.disabled, true);
     assert.equal(saveButton.getAttribute("aria-disabled"), "true");
@@ -4715,13 +4720,16 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(
       writeGatePreview.textContent,
-      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: nicht gesetzt\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: nein\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
+      "Schreibfreigabe-Gate: geschlossen\nFreigabequelle: Konfiguration\nFreigabewert: false\nGrund: echter Restarbeiten-Notizweg noch nicht freigegeben\nPayload vollständig: nein\ntechnisch/fachlich speicherbereit: nein\nSchreibweg freigegeben: nein\nButton aktivierbar: nein\nSpeicherbutton: deaktiviert\npersisted: false\npreviewOnly: true"
     );
 
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
     assert.equal(source.includes("buildReadonlyHintInfotextWriteGateViewModel"), true);
+    assert.equal(source.includes("getReadonlyHintInfotextWriteReleaseConfig"), true);
+    assert.equal(source.includes("writeReleaseEnabled: false"), true);
     assert.equal(source.includes("gateOpen: false"), true);
     assert.equal(source.includes("buttonEnabled: false"), true);
+    assert.equal(source.includes("process.env"), false);
     assert.equal(source.includes("restarbeitenCreateNote"), false);
     assert.equal(source.includes("window.bbmDb"), false);
     assert.equal(source.includes('invoke("restarbeiten:createNote"'), false);
@@ -4882,6 +4890,50 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Schreibfreigabe-Gate-Referenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Schreibfreigabe-Konfiguration bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_WRITE_RELEASE_CONFIG_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Schreibfreigabe-Konfiguration-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_WRITE_RELEASE_CONFIG_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "G126",
+      "Schreibfreigabe-Konfiguration",
+      "Freigabequelle: Konfiguration",
+      "Freigabewert: false",
+      "writeReleaseEnabled: false",
+      "source: configuration",
+      "Schreibfreigabe-Gate: geschlossen",
+      "Payload vollständig: ja/nein",
+      "technisch/fachlich speicherbereit: ja/nein",
+      "Schreibweg freigegeben: nein",
+      "Button aktivierbar: nein",
+      "Speicherbutton: deaktiviert",
+      "persisted: false",
+      "previewOnly: true",
+      "keine ENV-Variable",
+      "keine DEV-Modus-Aktivierung",
+      "kein Aufruf von `restarbeiten:createNote`",
+      "kein `window.bbmDb.restarbeitenCreateNote`",
+      "kein IPC-Schreibweg",
+      "kein DB-Schreibweg",
+      "kein localStorage",
+      "kein writeFile",
+      "kein Submit",
+      "kein Default-true",
+      "keine Wildcard",
+      "UI-Editor-kit bleibt unveraendert",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Schreibfreigabe-Konfiguration-Referenz enthaelt ${required} nicht.`
       );
     }
   });

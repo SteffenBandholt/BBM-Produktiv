@@ -118,6 +118,17 @@ Sie ergÃ¤nzt:
     Submit, kein Default-true, keine Wildcard und keine Aenderung am
     `UI-Editor-kit`.
 
+- G126 Schreibfreigabe-Konfiguration fuer `Hinweis / Infotext` vorbereitet:
+  - Das Schreibfreigabe-Gate liest jetzt eine zentrale lokale Konfiguration mit
+    `Freigabequelle: Konfiguration` und `Freigabewert: false`.
+  - Vollstaendige Payload, gueltiger Host-Kontext, gueltiger Hinweistext und
+    DEV-Kontext oeffnen das Gate nicht; `Schreibweg freigegeben: nein`,
+    `Button aktivierbar: nein`, `persisted: false` und `previewOnly: true`
+    bleiben bestehen.
+  - Es gibt weiterhin keinen Speicheraufruf, keine ENV-Aktivierung, keinen
+    IPC-/DB-Schreibweg, keinen Submit, kein Default-true, keine Wildcard und
+    keine Aenderung am `UI-Editor-kit`.
+
 - G97 ergaenzt die lokale Live-Vorschau fuer `Hinweis / Infotext` im
   UI-Editor-Panel:
   - Die Entwurfs-Vorschau hat jetzt ein kleines Eingabefeld `Hinweistext` und

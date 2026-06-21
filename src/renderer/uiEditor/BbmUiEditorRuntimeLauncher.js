@@ -90,7 +90,8 @@ const READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TITLE = "Create-Note-Payload-Vo
 const READONLY_HINT_INFOTEXT_CREATE_NOTE_PAYLOAD_TARGET = "Ziel: restarbeiten:createNote";
 const READONLY_HINT_INFOTEXT_WRITE_GATE_TITLE = "Schreibfreigabe-Gate";
 const READONLY_HINT_INFOTEXT_WRITE_GATE_STATE_LINE = "Schreibfreigabe-Gate: geschlossen";
-const READONLY_HINT_INFOTEXT_WRITE_GATE_SOURCE_LINE = "Freigabequelle: nicht gesetzt";
+const READONLY_HINT_INFOTEXT_WRITE_GATE_SOURCE_LINE = "Freigabequelle: Konfiguration";
+const READONLY_HINT_INFOTEXT_WRITE_GATE_VALUE_LINE = "Freigabewert: false";
 const READONLY_HINT_INFOTEXT_WRITE_GATE_REASON_LINE =
   "Grund: echter Restarbeiten-Notizweg noch nicht freigegeben";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
@@ -2016,18 +2017,29 @@ function buildReadonlyHintInfotextWriteGateViewModel({
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
 } = {}) {
+  const releaseConfig = getReadonlyHintInfotextWriteReleaseConfig();
   const hintTextValid = isReadonlyHintInfotextDraftValid(value);
   const payloadComplete = hostContextStatus.isPresent === true && hintTextValid;
+  const writeReleaseEnabled = releaseConfig.writeReleaseEnabled === true;
   return Object.freeze({
     gateOpen: false,
-    releaseSource: "nicht gesetzt",
-    reason: "echter Restarbeiten-Notizweg noch nicht freigegeben",
+    releaseSource: releaseConfig.source,
+    releaseValue: writeReleaseEnabled,
+    reason: releaseConfig.reason,
     payloadComplete,
     technicallyReady: payloadComplete,
     writeReleased: false,
     buttonEnabled: false,
     persisted: false,
     previewOnly: true,
+  });
+}
+
+function getReadonlyHintInfotextWriteReleaseConfig() {
+  return Object.freeze({
+    source: "configuration",
+    writeReleaseEnabled: false,
+    reason: "echter Restarbeiten-Notizweg noch nicht freigegeben",
   });
 }
 
@@ -2058,7 +2070,8 @@ function formatReadonlyHintInfotextWriteGateText(
   return [
     READONLY_HINT_INFOTEXT_WRITE_GATE_STATE_LINE,
     READONLY_HINT_INFOTEXT_WRITE_GATE_SOURCE_LINE,
-    READONLY_HINT_INFOTEXT_WRITE_GATE_REASON_LINE,
+    READONLY_HINT_INFOTEXT_WRITE_GATE_VALUE_LINE,
+    `Grund: ${writeGate.reason}`,
     `Payload vollständig: ${writeGate.payloadComplete ? "ja" : "nein"}`,
     `technisch/fachlich speicherbereit: ${writeGate.technicallyReady ? "ja" : "nein"}`,
     "Schreibweg freigegeben: nein",

@@ -533,3 +533,16 @@ Dabei gilt:
   `persisted: false` und `previewOnly: true`.
 - Es gibt keinen Speicheraufruf, keinen DB-/IPC-Schreibweg, keinen Submit,
   kein Default-true, keine Wildcard und keine Aenderung am `UI-Editor-kit`.
+
+## G126: Schreibfreigabe-Konfiguration vorbereitet
+
+- Das Schreibfreigabe-Gate nutzt jetzt eine zentrale lokale Konfiguration als
+  ausdrueckliche Freigabequelle.
+- Fuer G126 bleibt diese Konfiguration geschlossen:
+  `Freigabequelle: Konfiguration`, `Freigabewert: false` und
+  `writeReleaseEnabled: false`.
+- Vollstaendige Payload, gueltiger Host-Kontext, gueltiger Hinweistext,
+  vorhandene `restarbeitId` und DEV-Kontext oeffnen das Gate nicht.
+- Es gibt keinen Speicheraufruf, keine ENV-Aktivierung, keinen DB-/IPC-
+  Schreibweg, keinen Submit, kein Default-true, keine Wildcard und keine
+  Aenderung am `UI-Editor-kit`.
