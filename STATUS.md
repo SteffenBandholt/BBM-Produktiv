@@ -3759,3 +3759,36 @@ Wichtig:
     `restarbeiten:createNote`-Aufruf, kein IPC-/DB-/Datei-/localStorage-
     Schreibweg, kein Default-true, keine Wildcard und keine Aenderung am
     `UI-Editor-kit`.
+
+### G135 - UI-Editor Hinweis/Infotext Doppelklick-/Mehrfachspeicher-Schutz
+- Status: erledigt
+- Beschreibung:
+  - Der BBM-Launcher hat einen lokalen Save-Guard fuer Hinweis-/Infotext
+    vorbereitet.
+  - Sichtbar/testbar sind `Speicherschutz: vorbereitet`,
+    `Save-Status`, `Doppelklickschutz: aktiv`,
+    `Mehrfachspeicherung gleicher Payload: vorbereitet`,
+    `Standardpfad: gesperrt` und `canStartSave: false`.
+  - Der isolierte Testpfad `mode: save-guard-isolated-test` prueft
+    Doppelklickschutz, Duplikatschutz nach Erfolg und Fehlerbehandlung mit
+    erhaltenem Entwurf.
+  - `persisted: true` ist nur im erfolgreichen isolierten Testpfad moeglich;
+    der UI-Standardpfad bleibt `persisted: false` und `previewOnly: true`.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_SAVE_DOPPELKLICK_SCHUTZ_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Ein echter Speicherklick und Produktiv-Speicherweg bleiben separate
+    spaetere Meilensteine mit expliziter Freigabe.
+- Risiken/Hinweise:
+  - UI-Standardpfad weiter geschlossen: Gate geschlossen, Speicherbutton
+    deaktiviert, kein Produktiv-Speichern, `persisted: false` und
+    `previewOnly: true`.
+  - Keine DEV-/ENV-Aktivierung, kein Default-true, keine Wildcard, kein
+    automatischer `window.bbmDb.restarbeitenCreateNote`- oder
+    `restarbeiten:createNote`-Aufruf und keine Aenderung am `UI-Editor-kit`.

@@ -708,3 +708,28 @@ Dabei gilt:
   `restarbeiten:createNote`-Aufruf, keinen IPC-/DB-/Datei-/localStorage-
   Schreibweg, kein Default-true, keine Wildcard und keine Aenderung am
   `UI-Editor-kit`.
+
+## G135: Doppelklick- und Mehrfachspeicher-Schutz vorbereitet
+
+- Der UI-Editor hat im BBM-Launcher einen lokalen Save-Guard fuer
+  Hinweis-/Infotext vorbereitet.
+- Sichtbar/testbar sind `Speicherschutz: vorbereitet`, `Save-Status`,
+  `Doppelklickschutz: aktiv`, `Mehrfachspeicherung gleicher Payload:
+  vorbereitet`, `Standardpfad: gesperrt`, `duplicateBlocked`,
+  `inFlightBlocked`, `lastSavedPayloadSignature` und
+  `currentPayloadSignature`.
+- Der UI-Standardpfad bleibt geschlossen: Gate geschlossen,
+  Speicherbutton deaktiviert, `canStartSave: false`, kein
+  Produktiv-Speichern, `persisted: false` und `previewOnly: true`.
+- Der isolierte Testpfad `mode: save-guard-isolated-test` prueft, dass
+  waehrend `saving` kein zweiter Save startet, identische Payload nach
+  Erfolg blockiert wird und Fehler den Entwurf ohne Erfolgssignatur erhalten.
+- `persisted: true` entsteht nur im erfolgreichen isolierten Testpfad; der
+  normale UI-Pfad persistiert nicht.
+- DEV-Kontext, ENV-Kontext, vorhandene Payload, vorhandener Adapter und
+  vorhandene `restarbeitId` oeffnen den Standardpfad nicht.
+- Es gibt keinen Produktiv-Speicherklick, keinen automatischen
+  `window.bbmDb.restarbeitenCreateNote`-Aufruf, keinen
+  `restarbeiten:createNote`-Aufruf, keinen IPC-/DB-/Datei-/localStorage-
+  Schreibweg, kein Default-true, keine Wildcard und keine Aenderung am
+  `UI-Editor-kit`.

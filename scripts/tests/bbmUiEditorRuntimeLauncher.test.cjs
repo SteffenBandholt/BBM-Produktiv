@@ -193,6 +193,10 @@ const UI_EDITOR_HINT_INFOTEXT_SAVE_BUTTON_GATED_TEST_RELEASE_REFERENCE_DOC_PATH 
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SPEICHERBUTTON_GATED_TESTFREIGABE_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_SAVE_DOUBLE_CLICK_GUARD_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SAVE_DOPPELKLICK_SCHUTZ_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -601,6 +605,9 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-hint-infotext-save-button-state-preview=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-save-button-state-preview") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-save-guard-state-preview=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-save-guard-state-preview") === "true";
   }
   if (raw === "[data-ui-editor-hint-infotext-save-button=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-save-button") === "true";
@@ -4758,6 +4765,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(typeof mod.executeReadonlyHintInfotextBlockedSaveHandler, "function");
     assert.equal(typeof mod.executeReadonlyHintInfotextSave, "function");
     assert.equal(typeof mod.buildReadonlyHintInfotextSaveButtonState, "function");
+    assert.equal(typeof mod.buildReadonlyHintInfotextSaveGuardState, "function");
+    assert.equal(typeof mod.executeReadonlyHintInfotextGuardedSave, "function");
     assert.equal(typeof mod.getReadonlyHintInfotextSaveAdapterDescriptor, "function");
     assert.deepEqual(mod.getReadonlyHintInfotextSaveAdapterDescriptor(), {
       adapterPrepared: true,
@@ -4815,6 +4824,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const saveButtonStatePreview = doc.querySelector(
       '[data-ui-editor-hint-infotext-save-button-state-preview="true"]'
     );
+    const saveGuardStatePreview = doc.querySelector(
+      '[data-ui-editor-hint-infotext-save-guard-state-preview="true"]'
+    );
     const saveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
     const draftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
 
@@ -4852,6 +4864,20 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       saveButtonStatePreview.textContent,
       "Button-Aktivierungsprüfung: vorbereitet\nButton im Standardpfad: deaktiviert\nAktivierung nur mit expliziter Freigabe\nbuttonEnabled: false\nGrund: Schreibfreigabe-Gate geschlossen\nPayload vollständig: ja\nHinweistext gültig: ja\nAdapter verfügbar: nein\nSpeicherung läuft: nein\npersisted: false\npreviewOnly: true"
     );
+    assert.equal(saveGuardStatePreview.textContent.includes("Speicherschutz: vorbereitet"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("Save-Status: blocked"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("Doppelklickschutz: aktiv"), true);
+    assert.equal(
+      saveGuardStatePreview.textContent.includes("Mehrfachspeicherung gleicher Payload: vorbereitet"),
+      true
+    );
+    assert.equal(saveGuardStatePreview.textContent.includes("Standardpfad: gesperrt"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("canStartSave: false"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("duplicateBlocked: false"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("inFlightBlocked: false"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("restarbeitId=restarbeit-99"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("persisted: false"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("previewOnly: true"), true);
     assert.deepEqual(
       mod.executeReadonlyHintInfotextBlockedSaveHandler({
         value: "Dies ist ein nicht gespeicherter Hinweis-Entwurf.",
@@ -4929,6 +4955,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       saveButtonStatePreview.textContent,
       "Button-Aktivierungsprüfung: vorbereitet\nButton im Standardpfad: deaktiviert\nAktivierung nur mit expliziter Freigabe\nbuttonEnabled: false\nGrund: Payload unvollständig\nPayload vollständig: nein\nHinweistext gültig: nein\nAdapter verfügbar: nein\nSpeicherung läuft: nein\npersisted: false\npreviewOnly: true"
     );
+    assert.equal(saveGuardStatePreview.textContent.includes("Save-Status: blocked"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("canStartSave: false"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("currentPayloadSignature: nicht vollst"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("persisted: false"), true);
+    assert.equal(saveGuardStatePreview.textContent.includes("previewOnly: true"), true);
     assert.deepEqual(
       mod.executeReadonlyHintInfotextBlockedSaveHandler({
         value: "   ",
@@ -4980,6 +5011,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("getReadonlyHintInfotextSaveAdapterDescriptor"), true);
     assert.equal(source.includes("executeReadonlyHintInfotextBlockedSaveHandler"), true);
     assert.equal(source.includes("executeReadonlyHintInfotextSave"), true);
+    assert.equal(source.includes("buildReadonlyHintInfotextSaveGuardState"), true);
+    assert.equal(source.includes("executeReadonlyHintInfotextGuardedSave"), true);
     assert.equal(source.includes("executed: false"), true);
     assert.equal(source.includes("targetMethod: READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_METHOD"), true);
     assert.equal(
@@ -5565,6 +5598,235 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("writeFile"), false);
   });
 
+  await run("BBM UI-Editor-Runtime: Speicherschutz blockiert Doppelklick und identische Mehrfachspeicherung", async () => {
+    const mod = await loadRuntime();
+    const noteText = "Dies ist ein kontrollierter Speicherschutz-Test.";
+    const changedNoteText = "Dies ist ein geaenderter Speicherschutz-Test.";
+    const validHostContext = mod.normalizeHostContextStatus({
+      projectId: "project-42",
+      restarbeitId: "restarbeit-99",
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "UI-Polish fuer BBM",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host",
+    });
+    assert.equal(validHostContext.isPresent, true);
+
+    assert.deepEqual(
+      mod.buildReadonlyHintInfotextSaveGuardState({
+        value: noteText,
+        hostContextStatus: validHostContext,
+      }),
+      {
+        guardPrepared: true,
+        saveState: "blocked",
+        canStartSave: false,
+        duplicateBlocked: false,
+        inFlightBlocked: false,
+        lastSavedPayloadSignature: "",
+        currentPayloadSignature: "restarbeitId=restarbeit-99\nnoteText=Dies ist ein kontrollierter Speicherschutz-Test.",
+        standardPath: "blocked",
+        doubleClickProtection: true,
+        duplicateProtection: true,
+        gateOpen: false,
+        writeReleased: false,
+        persisted: false,
+        previewOnly: true,
+        reason: "Schreibfreigabe-Gate geschlossen",
+        blockReasons: [
+          "Schreibfreigabe-Gate geschlossen",
+          "explizite Testfreigabe fehlt",
+        ],
+      }
+    );
+
+    const standardResult = await mod.executeReadonlyHintInfotextGuardedSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+    });
+    assert.equal(standardResult.blocked, true);
+    assert.equal(standardResult.canStartSave, false);
+    assert.equal(standardResult.saveState, "blocked");
+    assert.equal(standardResult.executed, false);
+    assert.equal(standardResult.persisted, false);
+    assert.equal(standardResult.previewOnly, true);
+
+    let adapterCalls = 0;
+    let releaseAdapter = null;
+    const guardedState = {};
+    const firstSave = mod.executeReadonlyHintInfotextGuardedSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      guardState: guardedState,
+      testOnly: {
+        mode: "save-guard-isolated-test",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapter(payload) {
+          adapterCalls += 1;
+          return new Promise((resolve) => {
+            releaseAdapter = () => resolve({ ok: true, payload });
+          });
+        },
+      },
+    });
+    assert.equal(guardedState.saveState, "saving");
+    const secondSaveWhileSaving = await mod.executeReadonlyHintInfotextGuardedSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      guardState: guardedState,
+      testOnly: {
+        mode: "save-guard-isolated-test",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapter() {
+          adapterCalls += 1;
+          return { ok: true };
+        },
+      },
+    });
+    assert.equal(secondSaveWhileSaving.blocked, true);
+    assert.equal(secondSaveWhileSaving.saveState, "saving");
+    assert.equal(secondSaveWhileSaving.inFlightBlocked, true);
+    assert.equal(adapterCalls, 1);
+    releaseAdapter();
+    const firstResult = await firstSave;
+    assert.equal(firstResult.ok, true);
+    assert.equal(firstResult.persisted, true);
+    assert.equal(firstResult.previewOnly, false);
+    assert.equal(guardedState.saveState, "success");
+    assert.equal(
+      guardedState.lastSavedPayloadSignature,
+      "restarbeitId=restarbeit-99\nnoteText=Dies ist ein kontrollierter Speicherschutz-Test."
+    );
+
+    const duplicateResult = await mod.executeReadonlyHintInfotextGuardedSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      guardState: guardedState,
+      testOnly: {
+        mode: "save-guard-isolated-test",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapter() {
+          adapterCalls += 1;
+          return { ok: true };
+        },
+      },
+    });
+    assert.equal(duplicateResult.blocked, true);
+    assert.equal(duplicateResult.duplicateBlocked, true);
+    assert.equal(duplicateResult.executed, false);
+    assert.equal(adapterCalls, 1);
+
+    const changedState = mod.buildReadonlyHintInfotextSaveGuardState({
+      value: changedNoteText,
+      hostContextStatus: validHostContext,
+      lastSavedPayloadSignature: guardedState.lastSavedPayloadSignature,
+      testOnly: {
+        mode: "save-guard-isolated-test",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapter() {
+          return { ok: true };
+        },
+      },
+    });
+    assert.equal(changedState.canStartSave, true);
+    assert.equal(changedState.duplicateBlocked, false);
+
+    const failingState = {};
+    let failingCalls = 0;
+    const failingResult = await mod.executeReadonlyHintInfotextGuardedSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      guardState: failingState,
+      testOnly: {
+        mode: "save-guard-isolated-test",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapter() {
+          failingCalls += 1;
+          throw new Error("Fake-Adapter-Fehler");
+        },
+      },
+    });
+    assert.equal(failingCalls, 1);
+    assert.equal(failingResult.saveState, "error");
+    assert.equal(failingResult.persisted, false);
+    assert.equal(failingResult.previewOnly, true);
+    assert.equal(failingResult.payload.noteText, noteText);
+    assert.equal(failingState.lastSavedPayloadSignature || "", "");
+    const retryAfterError = mod.buildReadonlyHintInfotextSaveGuardState({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      saveState: failingState.saveState,
+      lastSavedPayloadSignature: failingState.lastSavedPayloadSignature,
+      testOnly: {
+        mode: "save-guard-isolated-test",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapter() {
+          return { ok: true };
+        },
+      },
+    });
+    assert.equal(retryAfterError.canStartSave, true);
+    assert.equal(retryAfterError.duplicateBlocked, false);
+
+    for (const [label, testOnly] of [
+      ["DEV-Kontext", { mode: "dev", writeReleaseEnabled: true, gateOpen: true, adapter() {} }],
+      ["ENV-Kontext", { mode: "env", writeReleaseEnabled: true, gateOpen: true, adapter() {} }],
+      ["vorhandene Payload", null],
+      ["vorhandener Adapter", { adapter() {} }],
+      ["vorhandene restarbeitId", { mode: "save-guard-isolated-test", adapter() {} }],
+    ]) {
+      const state = mod.buildReadonlyHintInfotextSaveGuardState({
+        value: noteText,
+        hostContextStatus: validHostContext,
+        testOnly,
+      });
+      assert.equal(state.canStartSave, false, `${label} darf den Speicherschutz nicht oeffnen.`);
+      assert.equal(state.standardPath, "blocked", `${label} darf den Standardpfad nicht oeffnen.`);
+      assert.equal(state.persisted, false, `${label} darf nicht persistieren.`);
+      assert.equal(state.previewOnly, true, `${label} bleibt Preview-only.`);
+    }
+
+    let writeCalled = false;
+    await mod.executeReadonlyHintInfotextGuardedSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      testOnly: {
+        mode: "dev",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapter: {
+          bbmDb: {
+            restarbeitenCreateNote() {
+              writeCalled = true;
+            },
+          },
+        },
+      },
+    });
+    assert.equal(writeCalled, false);
+
+    const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    assert.equal(source.includes("buildReadonlyHintInfotextSaveGuardState"), true);
+    assert.equal(source.includes("executeReadonlyHintInfotextGuardedSave"), true);
+    assert.equal(source.includes("save-guard-isolated-test"), true);
+    assert.equal(source.includes("button.disabled = true"), true);
+    assert.equal(source.includes("canStartSave: false"), true);
+    assert.equal(source.includes("process.env"), false);
+    assert.equal(source.includes("window.bbmDb.restarbeitenCreateNote("), false);
+    assert.equal(source.includes(".restarbeitenCreateNote("), false);
+    assert.equal(source.includes('invoke("restarbeiten:createNote"'), false);
+    assert.equal(source.includes('handle("restarbeiten:createNote"'), false);
+    assert.equal(source.includes("localStorage"), false);
+    assert.equal(source.includes("writeFile"), false);
+  });
+
   await run("BBM UI-Editor-Runtime: Speicherbereitschaft aktualisiert Host-Kontext beim Oeffnen", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
@@ -6070,6 +6332,46 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Speicherbutton-Gated-Testfreigabe-Referenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Doppelklick-Speicherschutz bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_SAVE_DOUBLE_CLICK_GUARD_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Doppelklick-Speicherschutz-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(
+      UI_EDITOR_HINT_INFOTEXT_SAVE_DOUBLE_CLICK_GUARD_REFERENCE_DOC_PATH,
+      "utf8"
+    );
+
+    for (const required of [
+      "G135",
+      "Speicherschutz: vorbereitet",
+      "Save-Status",
+      "Doppelklickschutz: aktiv",
+      "Mehrfachspeicherung gleicher Payload",
+      "Standardpfad: gesperrt",
+      "canStartSave: false",
+      "save-guard-isolated-test",
+      "duplicateBlocked",
+      "inFlightBlocked",
+      "lastSavedPayloadSignature",
+      "currentPayloadSignature",
+      "persisted: false",
+      "previewOnly: true",
+      "kein Produktiv-Speichern",
+      "kein `window.bbmDb.restarbeitenCreateNote`",
+      "kein `restarbeiten:createNote`",
+      "kein localStorage",
+      "kein writeFile",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Doppelklick-Speicherschutz-Referenz enthaelt ${required} nicht.`
       );
     }
   });

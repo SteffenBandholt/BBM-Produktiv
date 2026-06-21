@@ -117,6 +117,12 @@ const READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_STANDARD_DISABLED_LINE =
   "Button im Standardpfad: deaktiviert";
 const READONLY_HINT_INFOTEXT_SAVE_BUTTON_STATE_EXPLICIT_RELEASE_LINE =
   "Aktivierung nur mit expliziter Freigabe";
+const READONLY_HINT_INFOTEXT_SAVE_GUARD_TITLE = "Speicherschutz";
+const READONLY_HINT_INFOTEXT_SAVE_GUARD_PREPARED_LINE = "Speicherschutz: vorbereitet";
+const READONLY_HINT_INFOTEXT_SAVE_GUARD_DOUBLE_CLICK_LINE = "Doppelklickschutz: aktiv";
+const READONLY_HINT_INFOTEXT_SAVE_GUARD_DUPLICATE_LINE =
+  "Mehrfachspeicherung gleicher Payload: vorbereitet";
+const READONLY_HINT_INFOTEXT_SAVE_GUARD_STANDARD_BLOCKED_LINE = "Standardpfad: gesperrt";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY = "Status: Hinweistext fehlt";
@@ -2198,6 +2204,211 @@ function formatReadonlyHintInfotextSaveButtonStateText(
   ].join("\n");
 }
 
+function buildReadonlyHintInfotextSavePayloadSignature({
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+} = {}) {
+  const restarbeitId = String(hostContextStatus?.restarbeitId || "").trim();
+  const noteText = String(value == null ? "" : value).trim();
+  if (!restarbeitId || !noteText) return "";
+  return `restarbeitId=${restarbeitId}\nnoteText=${noteText}`;
+}
+
+function buildReadonlyHintInfotextSaveGuardState({
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  saveState = "",
+  lastSavedPayloadSignature = "",
+  testOnly = null,
+} = {}) {
+  const buttonState = buildReadonlyHintInfotextSaveButtonState({ value, hostContextStatus, testOnly });
+  const explicitGuardRelease =
+    testOnly
+    && testOnly.mode === "save-guard-isolated-test"
+    && testOnly.writeReleaseEnabled === true
+    && testOnly.gateOpen === true
+    && typeof testOnly.adapter === "function";
+  const currentPayloadSignature = buildReadonlyHintInfotextSavePayloadSignature({ value, hostContextStatus });
+  const normalizedLastSavedPayloadSignature = String(lastSavedPayloadSignature || "").trim();
+  const saving = saveState === "saving" || testOnly?.saveState === "saving";
+  const success = saveState === "success" || testOnly?.saveState === "success";
+  const error = saveState === "error" || testOnly?.saveState === "error";
+  const duplicateBlocked =
+    Boolean(currentPayloadSignature)
+    && Boolean(normalizedLastSavedPayloadSignature)
+    && currentPayloadSignature === normalizedLastSavedPayloadSignature;
+  const inFlightBlocked = saving === true;
+  const canStartSave =
+    explicitGuardRelease === true
+    && buttonState.payloadComplete === true
+    && buttonState.hintTextValid === true
+    && buttonState.hostContextPresent === true
+    && buttonState.restarbeitIdPresent === true
+    && inFlightBlocked !== true
+    && duplicateBlocked !== true;
+  const resolvedSaveState = canStartSave
+    ? "idle"
+    : inFlightBlocked
+      ? "saving"
+      : error
+        ? "error"
+        : success && duplicateBlocked
+          ? "success"
+          : "blocked";
+  const blockReasons = [];
+  if (explicitGuardRelease !== true) {
+    blockReasons.push(READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON);
+    blockReasons.push("explizite Testfreigabe fehlt");
+  }
+  if (buttonState.payloadComplete !== true) blockReasons.push("Payload unvollständig");
+  if (buttonState.hintTextValid !== true) blockReasons.push("Hinweistext fehlt");
+  if (buttonState.hostContextPresent !== true) blockReasons.push("Host-Kontext fehlt");
+  if (buttonState.restarbeitIdPresent !== true) blockReasons.push("restarbeitId fehlt");
+  if (inFlightBlocked === true) blockReasons.push("Speicherung läuft bereits");
+  if (duplicateBlocked === true) blockReasons.push("identische Payload bereits gespeichert");
+  return Object.freeze({
+    guardPrepared: true,
+    saveState: resolvedSaveState,
+    canStartSave,
+    duplicateBlocked,
+    inFlightBlocked,
+    lastSavedPayloadSignature: normalizedLastSavedPayloadSignature,
+    currentPayloadSignature,
+    standardPath: "blocked",
+    doubleClickProtection: true,
+    duplicateProtection: true,
+    gateOpen: explicitGuardRelease === true,
+    writeReleased: explicitGuardRelease === true,
+    persisted: false,
+    previewOnly: true,
+    reason: canStartSave ? "explizite Testfreigabe aktiv" : blockReasons[0] || READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
+    blockReasons: Object.freeze(Array.from(new Set(blockReasons))),
+  });
+}
+
+async function executeReadonlyHintInfotextGuardedSave({
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  guardState = null,
+  testOnly = null,
+} = {}) {
+  const mutableGuardState = guardState && typeof guardState === "object" ? guardState : {};
+  const baseGuard = buildReadonlyHintInfotextSaveGuardState({
+    value,
+    hostContextStatus,
+    saveState: mutableGuardState.saveState || "",
+    lastSavedPayloadSignature: mutableGuardState.lastSavedPayloadSignature || "",
+    testOnly,
+  });
+  if (baseGuard.canStartSave !== true) {
+    return Object.freeze({
+      ok: false,
+      blocked: true,
+      reason: baseGuard.reason,
+      blockReasons: baseGuard.blockReasons,
+      saveState: baseGuard.saveState,
+      canStartSave: false,
+      duplicateBlocked: baseGuard.duplicateBlocked,
+      inFlightBlocked: baseGuard.inFlightBlocked,
+      currentPayloadSignature: baseGuard.currentPayloadSignature,
+      lastSavedPayloadSignature: baseGuard.lastSavedPayloadSignature,
+      executed: false,
+      persisted: false,
+      previewOnly: true,
+    });
+  }
+
+  mutableGuardState.saveState = "saving";
+  const payload = Object.freeze({
+    restarbeitId: hostContextStatus.restarbeitId,
+    noteText: String(value == null ? "" : value),
+    projectId: hostContextStatus.projectId,
+    previewOnly: true,
+    persisted: false,
+  });
+  try {
+    const adapterResult = await testOnly.adapter(payload);
+    if (adapterResult && adapterResult.ok === true) {
+      mutableGuardState.saveState = "success";
+      mutableGuardState.lastSavedPayloadSignature = baseGuard.currentPayloadSignature;
+      return Object.freeze({
+        ok: true,
+        blocked: false,
+        reason: "isolierter Guard-Testpfad ausgeführt",
+        blockReasons: Object.freeze([]),
+        payload,
+        adapterResult,
+        saveState: "success",
+        canStartSave: false,
+        duplicateBlocked: false,
+        inFlightBlocked: false,
+        currentPayloadSignature: baseGuard.currentPayloadSignature,
+        lastSavedPayloadSignature: mutableGuardState.lastSavedPayloadSignature,
+        executed: true,
+        persisted: true,
+        previewOnly: false,
+      });
+    }
+    mutableGuardState.saveState = "error";
+    return Object.freeze({
+      ok: false,
+      blocked: false,
+      reason: adapterResult?.reason || adapterResult?.error || "isolierter Guard-Testpfad fehlgeschlagen",
+      blockReasons: Object.freeze([]),
+      payload,
+      adapterResult: adapterResult || null,
+      saveState: "error",
+      canStartSave: false,
+      duplicateBlocked: false,
+      inFlightBlocked: false,
+      currentPayloadSignature: baseGuard.currentPayloadSignature,
+      lastSavedPayloadSignature: String(mutableGuardState.lastSavedPayloadSignature || "").trim(),
+      executed: true,
+      persisted: false,
+      previewOnly: true,
+    });
+  } catch (error) {
+    mutableGuardState.saveState = "error";
+    return Object.freeze({
+      ok: false,
+      blocked: false,
+      reason: error?.message || "isolierter Guard-Testpfad fehlgeschlagen",
+      blockReasons: Object.freeze([]),
+      payload,
+      saveState: "error",
+      canStartSave: false,
+      duplicateBlocked: false,
+      inFlightBlocked: false,
+      currentPayloadSignature: baseGuard.currentPayloadSignature,
+      lastSavedPayloadSignature: String(mutableGuardState.lastSavedPayloadSignature || "").trim(),
+      executed: true,
+      persisted: false,
+      previewOnly: true,
+    });
+  }
+}
+
+function formatReadonlyHintInfotextSaveGuardStateText(
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()
+) {
+  const guardState = buildReadonlyHintInfotextSaveGuardState({ value, hostContextStatus });
+  return [
+    READONLY_HINT_INFOTEXT_SAVE_GUARD_PREPARED_LINE,
+    `Save-Status: ${guardState.saveState}`,
+    READONLY_HINT_INFOTEXT_SAVE_GUARD_DOUBLE_CLICK_LINE,
+    READONLY_HINT_INFOTEXT_SAVE_GUARD_DUPLICATE_LINE,
+    READONLY_HINT_INFOTEXT_SAVE_GUARD_STANDARD_BLOCKED_LINE,
+    `canStartSave: ${guardState.canStartSave ? "true" : "false"}`,
+    `duplicateBlocked: ${guardState.duplicateBlocked ? "true" : "false"}`,
+    `inFlightBlocked: ${guardState.inFlightBlocked ? "true" : "false"}`,
+    `currentPayloadSignature: ${guardState.currentPayloadSignature || "nicht vollständig"}`,
+    `lastSavedPayloadSignature: ${guardState.lastSavedPayloadSignature || "nicht gesetzt"}`,
+    "persisted: false",
+    "previewOnly: true",
+  ].join("\n");
+}
+
 function getReadonlyHintInfotextSaveAdapterDescriptor() {
   return Object.freeze({
     adapterPrepared: true,
@@ -2507,6 +2718,12 @@ function updateReadonlyHintInfotextStoragePreviews(state = {}, value = "") {
   }
   if (state.hintInfotextSaveButtonStatePreview) {
     state.hintInfotextSaveButtonStatePreview.textContent = formatReadonlyHintInfotextSaveButtonStateText(
+      value,
+      hostContextStatus
+    );
+  }
+  if (state.hintInfotextSaveGuardStatePreview) {
+    state.hintInfotextSaveGuardStatePreview.textContent = formatReadonlyHintInfotextSaveGuardStateText(
       value,
       hostContextStatus
     );
@@ -3120,6 +3337,28 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   );
   state.hintInfotextSaveButtonStatePreview = saveButtonState;
 
+  const saveGuardStateTitle = doc.createElement("div");
+  saveGuardStateTitle.className = "ui-editor-preview-hint-infotext-storage__save-guard-state-title";
+  saveGuardStateTitle.textContent = READONLY_HINT_INFOTEXT_SAVE_GUARD_TITLE;
+  saveGuardStateTitle.style.fontWeight = "700";
+  saveGuardStateTitle.style.marginTop = "8px";
+  saveGuardStateTitle.style.marginBottom = "4px";
+
+  const saveGuardState = doc.createElement("div");
+  saveGuardState.className = "ui-editor-preview-hint-infotext-storage__save-guard-state";
+  saveGuardState.setAttribute("data-ui-editor-hint-infotext-save-guard-state-preview", "true");
+  saveGuardState.style.whiteSpace = "pre-wrap";
+  saveGuardState.style.padding = "6px 8px";
+  saveGuardState.style.border = "1px solid #dbe4ee";
+  saveGuardState.style.borderRadius = "4px";
+  saveGuardState.style.background = "#ffffff";
+  saveGuardState.style.minHeight = "24px";
+  saveGuardState.textContent = formatReadonlyHintInfotextSaveGuardStateText(
+    getReadonlyHintInfotextDraftText(state),
+    hostContextStatus
+  );
+  state.hintInfotextSaveGuardStatePreview = saveGuardState;
+
   const button = doc.createElement("button");
   button.type = "button";
   button.className = "ui-editor-preview-hint-infotext-storage__button";
@@ -3157,6 +3396,8 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
     saveExecution,
     saveButtonStateTitle,
     saveButtonState,
+    saveGuardStateTitle,
+    saveGuardState,
     button
   );
   panel.appendChild(storage);
@@ -3281,10 +3522,13 @@ export {
   normalizeHostContextStatus,
   buildReadonlyHintInfotextHostContextStatusModel,
   buildReadonlyHintInfotextSaveButtonState,
+  buildReadonlyHintInfotextSavePayloadSignature,
+  buildReadonlyHintInfotextSaveGuardState,
   getReadonlyHintInfotextSaveAdapterDescriptor,
   executeReadonlyHintInfotextBlockedSaveHandler,
   executeReadonlyHintInfotextProductiveSaveAdapter,
   executeReadonlyHintInfotextSave,
+  executeReadonlyHintInfotextGuardedSave,
   getReadonlyHintInfotextHostContextStatus,
   ensureLauncherStatusHint,
   applyPreviewOperation,
