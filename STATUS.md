@@ -141,6 +141,19 @@ Sie ergÃ¤nzt:
     keinen IPC-/DB-Schreibweg, keinen Submit, kein Default-true, keine Wildcard
     und keine Aenderung am `UI-Editor-kit`.
 
+- G128 Save-Adapter fuer `Hinweis / Infotext` vorbereitet:
+  - Der BBM-Launcher beschreibt den spaeteren Restarbeiten-Notizweg jetzt mit
+    einem lokalen Descriptor: `Adapter: vorbereitet`,
+    `Zieladapter: Restarbeiten-Notizweg`,
+    `Zielmethode: window.bbmDb.restarbeitenCreateNote`,
+    `Zielkanal: restarbeiten:createNote` und `Ausfuehrung: blockiert`.
+  - Der bestehende blockierte Speicher-Handler liest diesen Descriptor nur als
+    Sicherheits-/Statusinformation; `Schreibfreigabe-Gate geschlossen`,
+    `persisted: false` und `previewOnly: true` bleiben bestehen.
+  - Es gibt weiterhin keinen tatsaechlichen Speicheraufruf, keine
+    ENV-/DEV-Aktivierung, keinen IPC-/DB-Schreibweg, keinen Submit, kein
+    Default-true, keine Wildcard und keine Aenderung am `UI-Editor-kit`.
+
 - G97 ergaenzt die lokale Live-Vorschau fuer `Hinweis / Infotext` im
   UI-Editor-Panel:
   - Die Entwurfs-Vorschau hat jetzt ein kleines Eingabefeld `Hinweistext` und

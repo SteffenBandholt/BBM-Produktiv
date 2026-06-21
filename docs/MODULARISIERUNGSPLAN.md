@@ -561,3 +561,20 @@ Dabei gilt:
 - Es gibt keinen Speicheraufruf, keine ENV-Aktivierung, keinen DB-/IPC-
   Schreibweg, keinen Submit, kein Default-true, keine Wildcard und keine
   Aenderung am `UI-Editor-kit`.
+
+## G128: Save-Adapter vorbereitet
+
+- Der UI-Editor beschreibt im BBM-Launcher den spaeteren Save-Adapter fuer
+  den Restarbeiten-Notizweg als lokale Dry-Run-Vorbereitung.
+- Sichtbar/testbar sind `Adapter: vorbereitet`,
+  `Zieladapter: Restarbeiten-Notizweg`,
+  `Zielmethode: window.bbmDb.restarbeitenCreateNote`,
+  `Zielkanal: restarbeiten:createNote` und `Ausfuehrung: blockiert`.
+- Der bestehende blockierte Speicher-Handler nutzt den Descriptor nur als
+  Status-/Sicherheitsinformation; die Ausfuehrung bleibt blockiert.
+- Vollstaendige Payload, gueltiger Host-Kontext, vorhandene `restarbeitId`,
+  gueltiger Hinweistext, DEV-Kontext und vorbereiteter Adapter oeffnen weder
+  Gate noch Handler.
+- Es gibt keinen tatsaechlichen Speicheraufruf, keine ENV-Aktivierung, keinen
+  DB-/IPC-Schreibweg, keinen Submit, kein Default-true, keine Wildcard und
+  keine Aenderung am `UI-Editor-kit`.

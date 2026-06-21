@@ -98,6 +98,11 @@ const READONLY_HINT_INFOTEXT_SAVE_HANDLER_TITLE = "Speicher-Handler";
 const READONLY_HINT_INFOTEXT_SAVE_HANDLER_PREPARED_LINE = "Speicher-Handler: vorbereitet";
 const READONLY_HINT_INFOTEXT_SAVE_HANDLER_STATUS_LINE = "Handler-Status: blockiert";
 const READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON = "Schreibfreigabe-Gate geschlossen";
+const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TITLE = "Save-Adapter";
+const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_PREPARED_LINE = "Adapter: vorbereitet";
+const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_ADAPTER = "Restarbeiten-Notizweg";
+const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_METHOD = "window.bbmDb.restarbeitenCreateNote";
+const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_CHANNEL = "restarbeiten:createNote";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY = "Status: Hinweistext fehlt";
@@ -2086,16 +2091,32 @@ function formatReadonlyHintInfotextWriteGateText(
   ].join("\n");
 }
 
+function getReadonlyHintInfotextSaveAdapterDescriptor() {
+  return Object.freeze({
+    adapterPrepared: true,
+    targetAdapter: READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_ADAPTER,
+    targetMethod: READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_METHOD,
+    targetChannel: READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_CHANNEL,
+    executionBlocked: true,
+    blockReason: READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
+    persisted: false,
+    previewOnly: true,
+  });
+}
+
 function executeReadonlyHintInfotextBlockedSaveHandler({
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
 } = {}) {
   const writeGate = buildReadonlyHintInfotextWriteGateViewModel({ value, hostContextStatus });
+  const saveAdapter = getReadonlyHintInfotextSaveAdapterDescriptor();
   return Object.freeze({
     ok: false,
     blocked: true,
-    reason: READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
+    reason: saveAdapter.blockReason,
     payloadComplete: writeGate.payloadComplete,
+    saveAdapterPrepared: saveAdapter.adapterPrepared,
+    saveAdapterExecutionBlocked: saveAdapter.executionBlocked,
     gateOpen: false,
     persisted: false,
     previewOnly: true,
@@ -2114,6 +2135,20 @@ function formatReadonlyHintInfotextSaveHandlerText(
     "Letztes Speicherergebnis: nicht ausgeführt",
     `Payload vollständig: ${handlerResult.payloadComplete ? "ja" : "nein"}`,
     `blocked: ${handlerResult.blocked ? "true" : "false"}`,
+    "persisted: false",
+    "previewOnly: true",
+  ].join("\n");
+}
+
+function formatReadonlyHintInfotextSaveAdapterText() {
+  const saveAdapter = getReadonlyHintInfotextSaveAdapterDescriptor();
+  return [
+    READONLY_HINT_INFOTEXT_SAVE_ADAPTER_PREPARED_LINE,
+    `Zieladapter: ${saveAdapter.targetAdapter}`,
+    `Zielmethode: ${saveAdapter.targetMethod}`,
+    `Zielkanal: ${saveAdapter.targetChannel}`,
+    `Ausführung: ${saveAdapter.executionBlocked ? "blockiert" : "freigegeben"}`,
+    `Grund: ${saveAdapter.blockReason}`,
     "persisted: false",
     "previewOnly: true",
   ].join("\n");
@@ -2144,6 +2179,9 @@ function updateReadonlyHintInfotextStoragePreviews(state = {}, value = "") {
       value,
       hostContextStatus
     );
+  }
+  if (state.hintInfotextSaveAdapterPreview) {
+    state.hintInfotextSaveAdapterPreview.textContent = formatReadonlyHintInfotextSaveAdapterText();
   }
 }
 
@@ -2316,6 +2354,7 @@ function handleReadonlyHintInfotextDraftInput(
     || state.hintInfotextCreateNotePayloadPreview
     || state.hintInfotextWriteGatePreview
     || state.hintInfotextSaveHandlerPreview
+    || state.hintInfotextSaveAdapterPreview
   ) {
     updateReadonlyHintInfotextStoragePreviews(state, nextValue);
   }
@@ -2689,6 +2728,25 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   );
   state.hintInfotextSaveHandlerPreview = saveHandler;
 
+  const saveAdapterTitle = doc.createElement("div");
+  saveAdapterTitle.className = "ui-editor-preview-hint-infotext-storage__save-adapter-title";
+  saveAdapterTitle.textContent = READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TITLE;
+  saveAdapterTitle.style.fontWeight = "700";
+  saveAdapterTitle.style.marginTop = "8px";
+  saveAdapterTitle.style.marginBottom = "4px";
+
+  const saveAdapter = doc.createElement("div");
+  saveAdapter.className = "ui-editor-preview-hint-infotext-storage__save-adapter";
+  saveAdapter.setAttribute("data-ui-editor-hint-infotext-save-adapter-preview", "true");
+  saveAdapter.style.whiteSpace = "pre-wrap";
+  saveAdapter.style.padding = "6px 8px";
+  saveAdapter.style.border = "1px solid #dbe4ee";
+  saveAdapter.style.borderRadius = "4px";
+  saveAdapter.style.background = "#ffffff";
+  saveAdapter.style.minHeight = "24px";
+  saveAdapter.textContent = formatReadonlyHintInfotextSaveAdapterText();
+  state.hintInfotextSaveAdapterPreview = saveAdapter;
+
   const button = doc.createElement("button");
   button.type = "button";
   button.className = "ui-editor-preview-hint-infotext-storage__button";
@@ -2720,6 +2778,8 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
     writeGate,
     saveHandlerTitle,
     saveHandler,
+    saveAdapterTitle,
+    saveAdapter,
     button
   );
   panel.appendChild(storage);
@@ -2843,6 +2903,7 @@ export {
   normalizeAvailableUiScopes,
   normalizeHostContextStatus,
   buildReadonlyHintInfotextHostContextStatusModel,
+  getReadonlyHintInfotextSaveAdapterDescriptor,
   executeReadonlyHintInfotextBlockedSaveHandler,
   getReadonlyHintInfotextHostContextStatus,
   ensureLauncherStatusHint,
