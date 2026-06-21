@@ -169,6 +169,10 @@ const UI_EDITOR_HINT_INFOTEXT_SAVE_ADAPTER_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SAVE_ADAPTER_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_SAVE_EXECUTION_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SAVE_AUSFUEHRUNG_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -571,6 +575,9 @@ function matchesSelector(node, selector) {
   }
   if (raw === "[data-ui-editor-hint-infotext-save-adapter-preview=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-save-adapter-preview") === "true";
+  }
+  if (raw === "[data-ui-editor-hint-infotext-save-execution-preview=\"true\"]") {
+    return node.getAttribute("data-ui-editor-hint-infotext-save-execution-preview") === "true";
   }
   if (raw === "[data-ui-editor-hint-infotext-save-button=\"true\"]") {
     return node.getAttribute("data-ui-editor-hint-infotext-save-button") === "true";
@@ -1048,6 +1055,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const hintInfotextSaveAdapterPreview = doc.querySelector(
       '[data-ui-editor-hint-infotext-save-adapter-preview="true"]'
     );
+    const hintInfotextSaveExecutionPreview = doc.querySelector(
+      '[data-ui-editor-hint-infotext-save-execution-preview="true"]'
+    );
     const hintInfotextSaveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
     const hintInfotextDraftValidation = doc.querySelector('[data-ui-editor-hint-infotext-draft-validation="true"]');
     const hintInfotextDraftReset = doc.querySelector('[data-ui-editor-hint-infotext-draft-reset="true"]');
@@ -1187,6 +1197,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       "Zieladapter: Restarbeiten-Notizweg",
       "Zielmethode: window.bbmDb.restarbeitenCreateNote",
       "Zielkanal: restarbeiten:createNote",
+      "Save-Ausführung",
+      "Save-Ausführung: vorbereitet",
+      "Ausführung im Standardzustand: blockiert",
+      "Ausgeführt: nein",
       "Ausführung: blockiert",
       "Letztes Speicherergebnis: nicht ausgeführt",
     ]) {
@@ -1208,6 +1222,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     );
     assert.equal(Boolean(hintInfotextSaveHandlerPreview), true);
     assert.equal(Boolean(hintInfotextSaveAdapterPreview), true);
+    assert.equal(Boolean(hintInfotextSaveExecutionPreview), true);
+    assert.equal(
+      hintInfotextSaveExecutionPreview.textContent,
+      "Save-Ausführung: vorbereitet\nAusführung im Standardzustand: blockiert\nAusgeführt: nein\nBlockiergrund: Schreibfreigabe-Gate geschlossen\nPayload vollständig: nein\nHinweistext gültig: ja\nAdapter vorbereitet: ja\npersisted: false\npreviewOnly: true"
+    );
     assert.equal(
       hintInfotextSaveAdapterPreview.textContent,
       "Adapter: vorbereitet\nZieladapter: Restarbeiten-Notizweg\nZielmethode: window.bbmDb.restarbeitenCreateNote\nZielkanal: restarbeiten:createNote\nAusführung: blockiert\nGrund: Schreibfreigabe-Gate geschlossen\npersisted: false\npreviewOnly: true"
@@ -4701,6 +4720,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
   await run("BBM UI-Editor-Runtime: Speicherbereitschaft zeigt Host-Kontext, bleibt aber gesperrt", async () => {
     const mod = await loadRuntime();
     assert.equal(typeof mod.executeReadonlyHintInfotextBlockedSaveHandler, "function");
+    assert.equal(typeof mod.executeReadonlyHintInfotextSave, "function");
     assert.equal(typeof mod.getReadonlyHintInfotextSaveAdapterDescriptor, "function");
     assert.deepEqual(mod.getReadonlyHintInfotextSaveAdapterDescriptor(), {
       adapterPrepared: true,
@@ -4754,6 +4774,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     const writeGatePreview = doc.querySelector('[data-ui-editor-hint-infotext-write-gate-preview="true"]');
     const saveHandlerPreview = doc.querySelector('[data-ui-editor-hint-infotext-save-handler-preview="true"]');
     const saveAdapterPreview = doc.querySelector('[data-ui-editor-hint-infotext-save-adapter-preview="true"]');
+    const saveExecutionPreview = doc.querySelector('[data-ui-editor-hint-infotext-save-execution-preview="true"]');
     const saveButton = doc.querySelector('[data-ui-editor-hint-infotext-save-button="true"]');
     const draftInput = doc.querySelector('[data-ui-editor-hint-infotext-draft-input="true"]');
 
@@ -4783,6 +4804,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       saveAdapterPreview.textContent,
       "Adapter: vorbereitet\nZieladapter: Restarbeiten-Notizweg\nZielmethode: window.bbmDb.restarbeitenCreateNote\nZielkanal: restarbeiten:createNote\nAusführung: blockiert\nGrund: Schreibfreigabe-Gate geschlossen\npersisted: false\npreviewOnly: true"
     );
+    assert.equal(
+      saveExecutionPreview.textContent,
+      "Save-Ausführung: vorbereitet\nAusführung im Standardzustand: blockiert\nAusgeführt: nein\nBlockiergrund: Schreibfreigabe-Gate geschlossen\nPayload vollständig: ja\nHinweistext gültig: ja\nAdapter vorbereitet: ja\npersisted: false\npreviewOnly: true"
+    );
     assert.deepEqual(
       mod.executeReadonlyHintInfotextBlockedSaveHandler({
         value: "Dies ist ein nicht gespeicherter Hinweis-Entwurf.",
@@ -4796,6 +4821,31 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         saveAdapterPrepared: true,
         saveAdapterExecutionBlocked: true,
         gateOpen: false,
+        persisted: false,
+        previewOnly: true,
+      }
+    );
+    assert.deepEqual(
+      mod.executeReadonlyHintInfotextSave({
+        value: "Dies ist ein nicht gespeicherter Hinweis-Entwurf.",
+        hostContextStatus: mod.normalizeHostContextStatus(validHostContext),
+      }),
+      {
+        ok: false,
+        blocked: true,
+        reason: "Schreibfreigabe-Gate geschlossen",
+        blockReasons: [
+          "Schreibfreigabe-Gate geschlossen",
+          "Schreibfreigabe fehlt",
+          "Save-Adapter blockiert",
+        ],
+        payloadComplete: true,
+        hintTextValid: true,
+        adapterPrepared: true,
+        adapterExecutionBlocked: true,
+        gateOpen: false,
+        writeReleased: false,
+        executed: false,
         persisted: false,
         previewOnly: true,
       }
@@ -4827,6 +4877,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       saveHandlerPreview.textContent,
       "Speicher-Handler: vorbereitet\nHandler-Status: blockiert\nBlockiergrund: Schreibfreigabe-Gate geschlossen\nLetztes Speicherergebnis: nicht ausgeführt\nPayload vollständig: nein\nblocked: true\npersisted: false\npreviewOnly: true"
     );
+    assert.equal(
+      saveExecutionPreview.textContent,
+      "Save-Ausführung: vorbereitet\nAusführung im Standardzustand: blockiert\nAusgeführt: nein\nBlockiergrund: Schreibfreigabe-Gate geschlossen\nPayload vollständig: nein\nHinweistext gültig: nein\nAdapter vorbereitet: ja\npersisted: false\npreviewOnly: true"
+    );
     assert.deepEqual(
       mod.executeReadonlyHintInfotextBlockedSaveHandler({
         value: "   ",
@@ -4844,12 +4898,41 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         previewOnly: true,
       }
     );
+    assert.deepEqual(
+      mod.executeReadonlyHintInfotextSave({
+        value: "   ",
+        hostContextStatus: mod.normalizeHostContextStatus(validHostContext),
+      }),
+      {
+        ok: false,
+        blocked: true,
+        reason: "Schreibfreigabe-Gate geschlossen",
+        blockReasons: [
+          "Schreibfreigabe-Gate geschlossen",
+          "Payload unvollständig",
+          "Hinweistext fehlt",
+          "Schreibfreigabe fehlt",
+          "Save-Adapter blockiert",
+        ],
+        payloadComplete: false,
+        hintTextValid: false,
+        adapterPrepared: true,
+        adapterExecutionBlocked: true,
+        gateOpen: false,
+        writeReleased: false,
+        executed: false,
+        persisted: false,
+        previewOnly: true,
+      }
+    );
 
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
     assert.equal(source.includes("buildReadonlyHintInfotextWriteGateViewModel"), true);
     assert.equal(source.includes("getReadonlyHintInfotextWriteReleaseConfig"), true);
     assert.equal(source.includes("getReadonlyHintInfotextSaveAdapterDescriptor"), true);
     assert.equal(source.includes("executeReadonlyHintInfotextBlockedSaveHandler"), true);
+    assert.equal(source.includes("executeReadonlyHintInfotextSave"), true);
+    assert.equal(source.includes("executed: false"), true);
     assert.equal(source.includes("targetMethod: READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_METHOD"), true);
     assert.equal(
       source.includes('const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_METHOD = "window.bbmDb.restarbeitenCreateNote";'),
@@ -4863,6 +4946,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("gateOpen: false"), true);
     assert.equal(source.includes("buttonEnabled: false"), true);
     assert.equal(source.includes("process.env"), false);
+    assert.equal(source.includes("saveAdapter.targetMethod("), false);
+    assert.equal(source.includes("targetMethod("), false);
     assert.equal(source.includes("window.bbmDb.restarbeitenCreateNote("), false);
     assert.equal(source.includes(".restarbeitenCreateNote("), false);
     assert.equal(source.includes('invoke("restarbeiten:createNote"'), false);
@@ -5152,6 +5237,53 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Save-Adapter-Referenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Save-Ausfuehrung bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_SAVE_EXECUTION_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Save-Ausfuehrung-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_SAVE_EXECUTION_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "G129",
+      "Save-Ausfuehrung",
+      "Save-Ausfuehrung: vorbereitet",
+      "Ausfuehrung im Standardzustand: blockiert",
+      "Ausgefuehrt: nein",
+      "Blockiergrund: Schreibfreigabe-Gate geschlossen",
+      "ok: false",
+      "blocked: true",
+      "executed: false",
+      "persisted: false",
+      "previewOnly: true",
+      "Payload unvollstaendig",
+      "Hinweistext leer",
+      "keine explizite Freigabe",
+      "vorbereiteter Adapter allein",
+      "kein echter Aufruf von `window.bbmDb.restarbeitenCreateNote` im Standardpfad",
+      "kein echter Aufruf von `restarbeiten:createNote` im Standardpfad",
+      "kein IPC-Schreibweg",
+      "kein DB-Schreibweg",
+      "kein localStorage",
+      "kein writeFile",
+      "kein Submit",
+      "kein aktivierter Speicherbutton",
+      "kein Default-true",
+      "keine Wildcard",
+      "keine ENV-Variable",
+      "keine DEV-Modus-Aktivierung",
+      "UI-Editor-kit bleibt unveraendert",
+      "bewusst kein isolierter Fake-Adapter-Positivtest",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Save-Ausfuehrung-Referenz enthaelt ${required} nicht.`
       );
     }
   });

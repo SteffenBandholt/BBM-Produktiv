@@ -154,6 +154,21 @@ Sie ergÃ¤nzt:
     ENV-/DEV-Aktivierung, keinen IPC-/DB-Schreibweg, keinen Submit, kein
     Default-true, keine Wildcard und keine Aenderung am `UI-Editor-kit`.
 
+- G129 Save-Ausfuehrung fuer `Hinweis / Infotext` vorbereitet:
+  - Der BBM-Launcher hat eine zentrale lokale Funktion
+    `executeReadonlyHintInfotextSave(...)`, die Payload, Hinweistext,
+    Schreibfreigabe, Gate und Adapterstatus prueft.
+  - Im Standardzustand liefert sie kontrolliert `ok: false`, `blocked: true`,
+    `executed: false`, `persisted: false` und `previewOnly: true`.
+  - Im Speicherbereich ist sichtbar: `Save-Ausfuehrung: vorbereitet`,
+    `Ausfuehrung im Standardzustand: blockiert`, `Ausgefuehrt: nein` und
+    `Blockiergrund: Schreibfreigabe-Gate geschlossen`.
+  - Ein isolierter Fake-Adapter-Positivtest wurde bewusst nicht ergaenzt; G129
+    bleibt beim blockierten Standardpfad.
+  - Es gibt weiterhin keinen tatsaechlichen Speicheraufruf, keine
+    ENV-/DEV-Aktivierung, keinen IPC-/DB-Schreibweg, keinen Submit, kein
+    Default-true, keine Wildcard und keine Aenderung am `UI-Editor-kit`.
+
 - G97 ergaenzt die lokale Live-Vorschau fuer `Hinweis / Infotext` im
   UI-Editor-Panel:
   - Die Entwurfs-Vorschau hat jetzt ein kleines Eingabefeld `Hinweistext` und

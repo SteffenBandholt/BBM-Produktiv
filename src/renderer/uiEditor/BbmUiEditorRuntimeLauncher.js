@@ -103,6 +103,11 @@ const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_PREPARED_LINE = "Adapter: vorbereitet"
 const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_ADAPTER = "Restarbeiten-Notizweg";
 const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_METHOD = "window.bbmDb.restarbeitenCreateNote";
 const READONLY_HINT_INFOTEXT_SAVE_ADAPTER_TARGET_CHANNEL = "restarbeiten:createNote";
+const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_TITLE = "Save-Ausführung";
+const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_PREPARED_LINE = "Save-Ausführung: vorbereitet";
+const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_STANDARD_BLOCKED_LINE =
+  "Ausführung im Standardzustand: blockiert";
+const READONLY_HINT_INFOTEXT_SAVE_EXECUTION_NOT_EXECUTED_LINE = "Ausgeführt: nein";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY = "Status: Hinweistext fehlt";
@@ -2154,6 +2159,65 @@ function formatReadonlyHintInfotextSaveAdapterText() {
   ].join("\n");
 }
 
+function executeReadonlyHintInfotextSave({
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+} = {}) {
+  const writeGate = buildReadonlyHintInfotextWriteGateViewModel({ value, hostContextStatus });
+  const saveAdapter = getReadonlyHintInfotextSaveAdapterDescriptor();
+  const hintTextValid = isReadonlyHintInfotextDraftValid(value);
+  const payloadComplete = writeGate.payloadComplete === true;
+  const blockReasons = [];
+  if (writeGate.gateOpen !== true) {
+    blockReasons.push(READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON);
+  }
+  if (payloadComplete !== true) {
+    blockReasons.push("Payload unvollständig");
+  }
+  if (hintTextValid !== true) {
+    blockReasons.push("Hinweistext fehlt");
+  }
+  if (writeGate.writeReleased !== true) {
+    blockReasons.push("Schreibfreigabe fehlt");
+  }
+  if (saveAdapter.executionBlocked === true) {
+    blockReasons.push("Save-Adapter blockiert");
+  }
+  return Object.freeze({
+    ok: false,
+    blocked: true,
+    reason: READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON,
+    blockReasons: Object.freeze(Array.from(new Set(blockReasons))),
+    payloadComplete,
+    hintTextValid,
+    adapterPrepared: saveAdapter.adapterPrepared === true,
+    adapterExecutionBlocked: saveAdapter.executionBlocked === true,
+    gateOpen: false,
+    writeReleased: false,
+    executed: false,
+    persisted: false,
+    previewOnly: true,
+  });
+}
+
+function formatReadonlyHintInfotextSaveExecutionText(
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel()
+) {
+  const saveExecution = executeReadonlyHintInfotextSave({ value, hostContextStatus });
+  return [
+    READONLY_HINT_INFOTEXT_SAVE_EXECUTION_PREPARED_LINE,
+    READONLY_HINT_INFOTEXT_SAVE_EXECUTION_STANDARD_BLOCKED_LINE,
+    READONLY_HINT_INFOTEXT_SAVE_EXECUTION_NOT_EXECUTED_LINE,
+    `Blockiergrund: ${saveExecution.reason}`,
+    `Payload vollständig: ${saveExecution.payloadComplete ? "ja" : "nein"}`,
+    `Hinweistext gültig: ${saveExecution.hintTextValid ? "ja" : "nein"}`,
+    `Adapter vorbereitet: ${saveExecution.adapterPrepared ? "ja" : "nein"}`,
+    "persisted: false",
+    "previewOnly: true",
+  ].join("\n");
+}
+
 function updateReadonlyHintInfotextStoragePreviews(state = {}, value = "") {
   const hostContextStatus = getReadonlyHintInfotextHostContextStatus(state);
   if (state.hintInfotextStorageCheckPreview) {
@@ -2182,6 +2246,12 @@ function updateReadonlyHintInfotextStoragePreviews(state = {}, value = "") {
   }
   if (state.hintInfotextSaveAdapterPreview) {
     state.hintInfotextSaveAdapterPreview.textContent = formatReadonlyHintInfotextSaveAdapterText();
+  }
+  if (state.hintInfotextSaveExecutionPreview) {
+    state.hintInfotextSaveExecutionPreview.textContent = formatReadonlyHintInfotextSaveExecutionText(
+      value,
+      hostContextStatus
+    );
   }
 }
 
@@ -2355,6 +2425,7 @@ function handleReadonlyHintInfotextDraftInput(
     || state.hintInfotextWriteGatePreview
     || state.hintInfotextSaveHandlerPreview
     || state.hintInfotextSaveAdapterPreview
+    || state.hintInfotextSaveExecutionPreview
   ) {
     updateReadonlyHintInfotextStoragePreviews(state, nextValue);
   }
@@ -2747,6 +2818,28 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   saveAdapter.textContent = formatReadonlyHintInfotextSaveAdapterText();
   state.hintInfotextSaveAdapterPreview = saveAdapter;
 
+  const saveExecutionTitle = doc.createElement("div");
+  saveExecutionTitle.className = "ui-editor-preview-hint-infotext-storage__save-execution-title";
+  saveExecutionTitle.textContent = READONLY_HINT_INFOTEXT_SAVE_EXECUTION_TITLE;
+  saveExecutionTitle.style.fontWeight = "700";
+  saveExecutionTitle.style.marginTop = "8px";
+  saveExecutionTitle.style.marginBottom = "4px";
+
+  const saveExecution = doc.createElement("div");
+  saveExecution.className = "ui-editor-preview-hint-infotext-storage__save-execution";
+  saveExecution.setAttribute("data-ui-editor-hint-infotext-save-execution-preview", "true");
+  saveExecution.style.whiteSpace = "pre-wrap";
+  saveExecution.style.padding = "6px 8px";
+  saveExecution.style.border = "1px solid #dbe4ee";
+  saveExecution.style.borderRadius = "4px";
+  saveExecution.style.background = "#ffffff";
+  saveExecution.style.minHeight = "24px";
+  saveExecution.textContent = formatReadonlyHintInfotextSaveExecutionText(
+    getReadonlyHintInfotextDraftText(state),
+    hostContextStatus
+  );
+  state.hintInfotextSaveExecutionPreview = saveExecution;
+
   const button = doc.createElement("button");
   button.type = "button";
   button.className = "ui-editor-preview-hint-infotext-storage__button";
@@ -2780,6 +2873,8 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
     saveHandler,
     saveAdapterTitle,
     saveAdapter,
+    saveExecutionTitle,
+    saveExecution,
     button
   );
   panel.appendChild(storage);
@@ -2905,6 +3000,7 @@ export {
   buildReadonlyHintInfotextHostContextStatusModel,
   getReadonlyHintInfotextSaveAdapterDescriptor,
   executeReadonlyHintInfotextBlockedSaveHandler,
+  executeReadonlyHintInfotextSave,
   getReadonlyHintInfotextHostContextStatus,
   ensureLauncherStatusHint,
   applyPreviewOperation,

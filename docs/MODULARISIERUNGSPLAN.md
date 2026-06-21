@@ -578,3 +578,24 @@ Dabei gilt:
 - Es gibt keinen tatsaechlichen Speicheraufruf, keine ENV-Aktivierung, keinen
   DB-/IPC-Schreibweg, keinen Submit, kein Default-true, keine Wildcard und
   keine Aenderung am `UI-Editor-kit`.
+
+## G129: Save-Ausfuehrung hinter geschlossenem Gate vorbereitet
+
+- Der UI-Editor hat im BBM-Launcher eine zentrale lokale
+  Save-Ausfuehrungsfunktion fuer Hinweis-/Infotext-Entwuerfe.
+- Die Funktion prueft Payload-Vollstaendigkeit, Hinweistext,
+  Schreibfreigabe-Konfiguration, Gate-Zustand und Save-Adapter-Status.
+- Fuer den Standardzustand bleibt die Rueckgabe blockiert:
+  `ok: false`, `blocked: true`, `executed: false`, `persisted: false` und
+  `previewOnly: true`.
+- Sichtbar/testbar sind `Save-Ausfuehrung: vorbereitet`,
+  `Ausfuehrung im Standardzustand: blockiert`, `Ausgefuehrt: nein` und
+  `Blockiergrund: Schreibfreigabe-Gate geschlossen`.
+- Ein isolierter Fake-Adapter-Positivtest wurde bewusst nicht ergaenzt; eine
+  positive Ausfuehrung bleibt ein eigener Folgeschritt.
+- Vollstaendige Payload, gueltiger Host-Kontext, vorhandene `restarbeitId`,
+  gueltiger Hinweistext, DEV-Kontext und vorbereiteter Adapter oeffnen weder
+  Gate noch Ausfuehrung.
+- Es gibt keinen tatsaechlichen Speicheraufruf, keine ENV-Aktivierung, keinen
+  DB-/IPC-Schreibweg, keinen Submit, kein Default-true, keine Wildcard und
+  keine Aenderung am `UI-Editor-kit`.
