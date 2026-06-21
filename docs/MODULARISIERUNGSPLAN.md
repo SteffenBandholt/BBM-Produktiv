@@ -599,3 +599,22 @@ Dabei gilt:
 - Es gibt keinen tatsaechlichen Speicheraufruf, keine ENV-Aktivierung, keinen
   DB-/IPC-Schreibweg, keinen Submit, kein Default-true, keine Wildcard und
   keine Aenderung am `UI-Editor-kit`.
+
+## G130: isolierter Fake-Adapter-Positivtest vorbereitet
+
+- Die lokale Save-Ausfuehrungsfunktion kann testseitig einen positiven Pfad
+  ausfuehren, wenn explizit `mode: isolated-fake-adapter-positive-test`,
+  `writeReleaseEnabled: true`, `gateOpen: true` und ein Fake-Adapter injiziert
+  werden.
+- Der Fake-Adapter existiert nur im Test, wird bei vollstaendiger Payload
+  genau einmal aufgerufen und erhaelt `restarbeitId`, `noteText`, `projectId`,
+  `previewOnly: true` und `persisted: false`.
+- Der UI-Standardpfad bleibt geschlossen: Schreibfreigabe-Konfiguration
+  `false`, Gate geschlossen, Save-Ausfuehrung blockiert, Speicherbutton
+  deaktiviert, `persisted: false` und `previewOnly: true`.
+- Vorhandene Payload, vorhandene `restarbeitId`, DEV-Kontext, ein
+  vorbereiteter Adapter oder unvollstaendige Test-Injection oeffnen das Gate
+  nicht.
+- Es gibt keinen tatsaechlichen Produktiv-Schreibaufruf, keine ENV-
+  Aktivierung, keinen DB-/IPC-Schreibweg, keinen Submit, kein Default-true,
+  keine Wildcard und keine Aenderung am `UI-Editor-kit`.

@@ -173,6 +173,10 @@ const UI_EDITOR_HINT_INFOTEXT_SAVE_EXECUTION_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_SAVE_AUSFUEHRUNG_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_FAKE_ADAPTER_POSITIVE_TEST_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_FAKE_ADAPTER_POSITIVTEST_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -4956,6 +4960,135 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("writeFile"), false);
   });
 
+  await run("BBM UI-Editor-Runtime: isolierter Fake-Adapter-Positivtest bleibt vom Produktivpfad getrennt", async () => {
+    const mod = await loadRuntime();
+    const validHostContext = mod.normalizeHostContextStatus({
+      projectId: "project-42",
+      restarbeitId: "restarbeit-99",
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "UI-Polish fuer BBM",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host",
+    });
+    const noteText = "Dies ist ein isolierter Fake-Adapter-Test.";
+
+    const standardResult = mod.executeReadonlyHintInfotextSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+    });
+    assert.equal(standardResult.blocked, true);
+    assert.equal(standardResult.executed, false);
+    assert.equal(standardResult.gateOpen, false);
+    assert.equal(standardResult.writeReleased, false);
+    assert.equal(standardResult.persisted, false);
+    assert.equal(standardResult.previewOnly, true);
+
+    const receivedPayloads = [];
+    const fakeAdapter = (payload) => {
+      receivedPayloads.push(payload);
+      return Object.freeze({
+        ok: true,
+        fakeAdapter: true,
+        receivedRestarbeitId: payload.restarbeitId,
+      });
+    };
+    const result = mod.executeReadonlyHintInfotextSave({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      testOnly: {
+        mode: "isolated-fake-adapter-positive-test",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapter: fakeAdapter,
+      },
+    });
+
+    assert.equal(receivedPayloads.length, 1);
+    assert.deepEqual(receivedPayloads[0], {
+      restarbeitId: "restarbeit-99",
+      noteText,
+      projectId: "project-42",
+      previewOnly: true,
+      persisted: false,
+    });
+    assert.deepEqual(result, {
+      ok: true,
+      blocked: false,
+      reason: "isolierter Fake-Adapter-Testpfad ausgeführt",
+      blockReasons: [],
+      payload: {
+        restarbeitId: "restarbeit-99",
+        noteText,
+        projectId: "project-42",
+        previewOnly: true,
+        persisted: false,
+      },
+      adapterResult: {
+        ok: true,
+        fakeAdapter: true,
+        receivedRestarbeitId: "restarbeit-99",
+      },
+      payloadComplete: true,
+      hintTextValid: true,
+      adapterPrepared: true,
+      adapterExecutionBlocked: false,
+      gateOpen: true,
+      writeReleased: true,
+      executed: true,
+      persisted: false,
+      previewOnly: true,
+    });
+
+    for (const [label, testOnly] of [
+      ["DEV-artiger Kontext", { mode: "dev", writeReleaseEnabled: true, gateOpen: true, adapter: fakeAdapter }],
+      ["nur vorhandene Payload", null],
+      ["nur restarbeitId und Adapter", { adapter: fakeAdapter }],
+      ["vorbereiteter Adapter ohne Freigabe", { mode: "isolated-fake-adapter-positive-test", adapter: fakeAdapter }],
+      [
+        "Gate ohne explizite Schreibfreigabe",
+        { mode: "isolated-fake-adapter-positive-test", gateOpen: true, adapter: fakeAdapter },
+      ],
+    ]) {
+      const before = receivedPayloads.length;
+      const blockedResult = mod.executeReadonlyHintInfotextSave({
+        value: noteText,
+        hostContextStatus: validHostContext,
+        testOnly,
+      });
+      assert.equal(blockedResult.blocked, true, `${label} muss blockiert bleiben.`);
+      assert.equal(blockedResult.executed, false, `${label} darf nicht ausfuehren.`);
+      assert.equal(blockedResult.gateOpen, false, `${label} darf das Gate nicht oeffnen.`);
+      assert.equal(blockedResult.writeReleased, false, `${label} darf nicht freigeben.`);
+      assert.equal(receivedPayloads.length, before, `${label} darf den Fake-Adapter nicht aufrufen.`);
+    }
+
+    const incompleteResult = mod.executeReadonlyHintInfotextSave({
+      value: "   ",
+      hostContextStatus: validHostContext,
+      testOnly: {
+        mode: "isolated-fake-adapter-positive-test",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapter: fakeAdapter,
+      },
+    });
+    assert.equal(incompleteResult.blocked, true);
+    assert.equal(incompleteResult.executed, false);
+    assert.equal(incompleteResult.payloadComplete, false);
+    assert.equal(incompleteResult.hintTextValid, false);
+    assert.equal(receivedPayloads.length, 1);
+
+    const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    assert.equal(source.includes("window.bbmDb.restarbeitenCreateNote("), false);
+    assert.equal(source.includes(".restarbeitenCreateNote("), false);
+    assert.equal(source.includes('invoke("restarbeiten:createNote"'), false);
+    assert.equal(source.includes('handle("restarbeiten:createNote"'), false);
+    assert.equal(source.includes("process.env"), false);
+    assert.equal(source.includes("localStorage"), false);
+    assert.equal(source.includes("writeFile"), false);
+  });
+
   await run("BBM UI-Editor-Runtime: Speicherbereitschaft aktualisiert Host-Kontext beim Oeffnen", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
@@ -5284,6 +5417,48 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Save-Ausfuehrung-Referenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Fake-Adapter-Positivtest bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_FAKE_ADAPTER_POSITIVE_TEST_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Fake-Adapter-Positivtest-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_HINT_INFOTEXT_FAKE_ADAPTER_POSITIVE_TEST_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "G130",
+      "isolierter Fake-Adapter-Positivtest",
+      "mode: isolated-fake-adapter-positive-test",
+      "writeReleaseEnabled: true",
+      "gateOpen: true",
+      "Fake-Adapter",
+      "genau einmal",
+      "restarbeitId",
+      "noteText",
+      "executed: true",
+      "persisted: false",
+      "previewOnly: true",
+      "Standardpfad bleibt geschlossen",
+      "kein Produktiv-Schreibweg",
+      "kein echter Aufruf von `window.bbmDb.restarbeitenCreateNote`",
+      "kein echter Aufruf von `restarbeiten:createNote`",
+      "kein IPC-Schreibweg",
+      "kein DB-Schreibweg",
+      "kein localStorage",
+      "kein writeFile",
+      "kein aktivierter Speicherbutton",
+      "keine ENV-Variable",
+      "keine DEV-Modus-Aktivierung",
+      "UI-Editor-kit bleibt unveraendert",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Fake-Adapter-Positivtest-Referenz enthaelt ${required} nicht.`
       );
     }
   });

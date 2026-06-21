@@ -3590,3 +3590,33 @@ Wichtig:
 - Risiken/Hinweise:
   - Keine Speicherung, kein localStorage, keine DB, kein IPC-Schreibweg, keine Fachlogik, keine PDF-Logik und keine Restarbeiten-Sonderlogik in der Runtime.
   - Die vorbereiteten ChangeRequests sind bewusst nur In-Memory-Auftraege fuer einen spaeteren Speicherschritt.
+
+### G130 - UI-Editor Hinweis/Infotext isolierter Fake-Adapter-Positivtest
+- Status: erledigt
+- Beschreibung:
+  - Die lokale Save-Ausfuehrungsfunktion fuer Hinweis-/Infotext kann im Test
+    einen isolierten positiven Pfad ausfuehren.
+  - Der positive Pfad ist nur ueber explizite Test-Injection erreichbar:
+    `mode: isolated-fake-adapter-positive-test`, `writeReleaseEnabled: true`,
+    `gateOpen: true` und ein injizierter Fake-Adapter.
+  - Der Fake-Adapter existiert nur im Test, wird bei vollstaendiger Payload
+    genau einmal aufgerufen und erhaelt `restarbeitId`, `noteText`,
+    `projectId`, `previewOnly: true` und `persisted: false`.
+  - Der UI-Standardpfad bleibt unveraendert geschlossen: Konfiguration
+    `false`, Gate geschlossen, Save-Ausfuehrung blockiert, Speicherbutton
+    deaktiviert, `persisted: false` und `previewOnly: true`.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_FAKE_ADAPTER_POSITIVTEST_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Eine echte Produktivfreigabe des Restarbeiten-Notizwegs bleibt ein
+    separater spaeterer Meilenstein.
+- Risiken/Hinweise:
+  - Kein Produktiv-Schreibweg, keine ENV-/DEV-Aktivierung, kein DB-/IPC-
+    Schreibweg, kein Submit, kein Default-true, keine Wildcard und keine
+    Aenderung am `UI-Editor-kit`.

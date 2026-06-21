@@ -2162,11 +2162,45 @@ function formatReadonlyHintInfotextSaveAdapterText() {
 function executeReadonlyHintInfotextSave({
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  testOnly = null,
 } = {}) {
   const writeGate = buildReadonlyHintInfotextWriteGateViewModel({ value, hostContextStatus });
   const saveAdapter = getReadonlyHintInfotextSaveAdapterDescriptor();
   const hintTextValid = isReadonlyHintInfotextDraftValid(value);
   const payloadComplete = writeGate.payloadComplete === true;
+  const isolatedTestPath =
+    testOnly
+    && testOnly.mode === "isolated-fake-adapter-positive-test"
+    && testOnly.writeReleaseEnabled === true
+    && testOnly.gateOpen === true
+    && typeof testOnly.adapter === "function";
+  if (isolatedTestPath && payloadComplete && hintTextValid) {
+    const payload = Object.freeze({
+      restarbeitId: hostContextStatus.restarbeitId,
+      noteText: String(value == null ? "" : value),
+      projectId: hostContextStatus.projectId,
+      previewOnly: true,
+      persisted: false,
+    });
+    const adapterResult = testOnly.adapter(payload);
+    return Object.freeze({
+      ok: true,
+      blocked: false,
+      reason: "isolierter Fake-Adapter-Testpfad ausgeführt",
+      blockReasons: Object.freeze([]),
+      payload,
+      adapterResult,
+      payloadComplete: true,
+      hintTextValid: true,
+      adapterPrepared: true,
+      adapterExecutionBlocked: false,
+      gateOpen: true,
+      writeReleased: true,
+      executed: true,
+      persisted: false,
+      previewOnly: true,
+    });
+  }
   const blockReasons = [];
   if (writeGate.gateOpen !== true) {
     blockReasons.push(READONLY_HINT_INFOTEXT_SAVE_HANDLER_BLOCKED_REASON);
