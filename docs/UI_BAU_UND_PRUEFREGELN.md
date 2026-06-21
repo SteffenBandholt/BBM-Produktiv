@@ -104,6 +104,8 @@ Bei sichtbarer UI gilt:
   gesperrt.
 - G121 dokumentiert die spaetere Host-Kontext-UEbergabe nur als
   Freigabeentscheidung; die Speicherregeln bleiben gesperrt.
+- G122 schliesst die echte Host-Kontext-UEbergabe aus dem Restarbeiten-Host
+  an den UI-Editor an; Speichern, Submit und Schreibwege bleiben gesperrt.
 
 ## Stop-Regeln
 

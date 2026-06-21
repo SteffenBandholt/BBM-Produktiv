@@ -185,3 +185,8 @@ Speicherweg ueberfuehrt werden.
 
 - Die Analyse zeigt weiterhin nur die Luecke bis zur echten Host-Freigabe.
 - Ohne explizite Host-UEbergabe bleibt `restarbeitId` ein reiner Host-Wert.
+
+## G122: Host-Kontext-UEbergabe aus Restarbeiten anschliessen
+
+- Die Analyse wird jetzt in der konkreten Restarbeiten-UEbergabe genutzt.
+- Die Host-Werte bleiben eindeutig und ohne Suche oder Raten.

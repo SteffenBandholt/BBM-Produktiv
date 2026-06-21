@@ -98,6 +98,8 @@ Elemente zwingend vorhanden sein muessen.
   dadurch nicht.
 - G121 dokumentiert die spaetere Host-Kontext-UEbergabe nur als
   Freigabeentscheidung; ohne Host-Freigabe bleibt der Katalog unveraendert.
+- G122 schliesst die echte Host-Kontext-UEbergabe aus dem Restarbeiten-Host
+  an den UI-Editor an; neue Zielklassen entstehen dadurch nicht.
 
 ## Stop-Regel
 

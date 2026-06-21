@@ -170,3 +170,9 @@ Host-Freigabe in Code verdrahten.
 - Die dokumentierte Vertragslage bleibt eine Vorstufe fuer die spaetere
   echte Host-Kontext-UEbergabe.
 - Ohne explizite Host-Freigabe entsteht daraus noch kein Speicherweg.
+
+## G122: Host-Kontext-UEbergabe aus Restarbeiten anschliessen
+
+- Der Datenvertrag wird jetzt nur bei eindeutiger Restarbeit mit echten
+  Host-Daten befuellt.
+- Ohne eindeutige Restarbeit bleibt der Vertrag leer und read-only.

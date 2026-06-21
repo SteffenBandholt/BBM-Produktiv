@@ -609,3 +609,8 @@ entsteht dadurch nicht.
 Freigabeentscheidung dokumentiert. Quelle, Bedingungen, Tests und blockierte
 Speicherwege bleiben klar begrenzt; eine Umsetzung folgt erst mit eigener
 Freigabe.
+
+**Status nach G122:** Die echte Host-Kontext-UEbergabe aus dem
+Restarbeiten-Host ist jetzt angeschlossen. Der sichtbare Default bleibt
+gesperrt, sobald keine eindeutige Restarbeit vorliegt; Speichern bleibt
+blockiert.

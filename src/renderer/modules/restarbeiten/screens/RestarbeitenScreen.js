@@ -112,6 +112,12 @@ function toSelectOptions(values = []) {
     .map((value) => ({ value, label: value }));
 }
 
+function buildUiEditorHostContextLabel(draft = {}) {
+  const runningNumber = normalizeText(draft.running_number);
+  const shortText = normalizeText(draft.short_text);
+  return [runningNumber ? `Nr. ${runningNumber}` : "", shortText].filter(Boolean).join(" - ");
+}
+
 export default class RestarbeitenScreen {
   constructor({ router, projectId, project, moduleId } = {}) {
     this.router = router || null;
@@ -191,6 +197,7 @@ export default class RestarbeitenScreen {
       this.isLoading = false;
       this._renderShell();
       this._publishQuicklaneState();
+      this.router?.refreshUiEditorRuntimeLauncher?.();
     }
   }
 
@@ -218,6 +225,23 @@ export default class RestarbeitenScreen {
     const id = normalizeText(restarbeitId);
     this._setStubMessage(id ? "Fotos folgen in einem späteren Paket." : "Kein Datensatz ausgewählt.");
     return { ok: Boolean(id), restarbeitId: id };
+  }
+
+  getUiEditorHostContext() {
+    const projectId = normalizeText(this.projectId);
+    const restarbeitId = normalizeText(this.notesPopup?.restarbeitId || this.selectedId || this.draft?.id);
+    const targetLabel = buildUiEditorHostContextLabel(this.draft);
+    if (!projectId || !restarbeitId || !targetLabel) return null;
+
+    return {
+      projectId,
+      restarbeitId,
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel,
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host",
+    };
   }
 
   _setStubMessage(message) {
@@ -265,10 +289,12 @@ export default class RestarbeitenScreen {
     const row = this.items.find((item) => normalizeText(item.id) === this.selectedId) || null;
     this.draft = row ? prepareDraft(row) : prepareDraft();
     if (render) this._renderShell();
+    this.router?.refreshUiEditorRuntimeLauncher?.();
   }
 
   _updateDraft(patch = {}, options = {}) {
     this.draft = prepareDraft({ ...this.draft, ...patch });
+    this.router?.refreshUiEditorRuntimeLauncher?.();
     if (options.render === false) return;
     this._renderShell();
   }
@@ -277,6 +303,7 @@ export default class RestarbeitenScreen {
     this.selectedId = null;
     this.draft = prepareDraft();
     this._renderShell();
+    this.router?.refreshUiEditorRuntimeLauncher?.();
   }
 
   async _saveDraft() {
@@ -346,6 +373,7 @@ export default class RestarbeitenScreen {
     } finally {
       this.notesPopup.isLoading = false;
       this._renderNotesPopup();
+      this.router?.refreshUiEditorRuntimeLauncher?.();
     }
   }
 
@@ -358,6 +386,7 @@ export default class RestarbeitenScreen {
       this.notesOverlay.parentElement.removeChild(this.notesOverlay);
     }
     this.notesOverlay = null;
+    this.router?.refreshUiEditorRuntimeLauncher?.();
   }
 
   async _addNoteFromPopup(noteText) {

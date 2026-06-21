@@ -127,3 +127,9 @@ ein spaeterer Host die echten Werte bewusst liefert.
   Host-Kontext-UEbergabe.
 - Eine Umsetzung braucht weiterhin eindeutige Host-Daten und bleibt ohne
   Freigabe gesperrt.
+
+## G122: Host-Kontext-UEbergabe aus Restarbeiten anschliessen
+
+- Der Abschlussstand wird jetzt aus dem eindeutigen Restarbeiten-Host
+  befuellt.
+- Der gesperrte Speicherstatus bleibt bestehen.

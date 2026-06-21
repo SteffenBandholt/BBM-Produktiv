@@ -38,6 +38,35 @@ function resolveActiveHostUiScope(router) {
   return getActiveUiScope();
 }
 
+export function resolveUiEditorHostContext(router) {
+  if (String(router?.activeSection || "").trim() !== "restarbeiten") return null;
+
+  const currentView = router?.currentView || router?.activeView || null;
+  if (currentView && typeof currentView.getUiEditorHostContext === "function") {
+    const hostContext = currentView.getUiEditorHostContext();
+    if (hostContext) return hostContext;
+  }
+
+  const projectId = String(currentView?.projectId || router?.currentProjectId || "").trim();
+  const restarbeitId = String(
+    currentView?.notesPopup?.restarbeitId || currentView?.selectedId || currentView?.draft?.id || ""
+  ).trim();
+  const runningNumber = String(currentView?.draft?.running_number || "").trim();
+  const shortText = String(currentView?.draft?.short_text || "").trim();
+  const targetLabel = [runningNumber ? `Nr. ${runningNumber}` : "", shortText].filter(Boolean).join(" - ");
+  if (!projectId || !restarbeitId || !targetLabel) return null;
+
+  return {
+    projectId,
+    restarbeitId,
+    targetContext: "Restarbeiten",
+    targetSurfaceId: "restarbeiten.ui.main",
+    targetLabel,
+    elementType: "Hinweis / Infotext",
+    source: "BBM-Restarbeiten-Host",
+  };
+}
+
 export default class CoreShell {
   constructor({ router, version } = {}) {
     this.router = router || null;
@@ -108,6 +137,7 @@ export default class CoreShell {
           registeredElements: uiEditorRegistry?.elements,
           availableUiScopes: getAvailableUiScopes(),
           registryResolver: getBbmUiEditorRegistry,
+          hostContext: resolveUiEditorHostContext(router),
         })
       ).catch((error) => {
         if (refreshToken === uiEditorRuntimeRefreshToken) {
@@ -115,6 +145,7 @@ export default class CoreShell {
         }
       });
     };
+    router.refreshUiEditorRuntimeLauncher = refreshUiEditorRuntimeLauncher;
 
     router.onSectionChange = (section) => {
       setActive(section);

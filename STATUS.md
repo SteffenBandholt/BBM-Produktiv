@@ -182,6 +182,9 @@ Sie ergÃ¤nzt:
 - G121 dokumentiert die spaetere Host-Kontext-UEbergabe als
   Freigabeentscheidung; echte Quelle, Bedingungen und weiterhin blockierte
   Speicherwege sind klar begrenzt.
+- G122 schliesst die echte Host-Kontext-UEbergabe aus dem
+  Restarbeiten-Host an den UI-Editor an; der Speicherweg bleibt gesperrt und
+  der Default ohne eindeutige Restarbeit unveraendert.
 
 - Freigabe-/Ersatzentscheidung fuer fehlende UI-Editor-Grundlagen vorbereitet:
   - G91 dokumentiert die Entscheidungsoptionen in

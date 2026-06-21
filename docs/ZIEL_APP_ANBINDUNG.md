@@ -103,6 +103,9 @@ Bearbeitungsflaeche.
 - G121 dokumentiert die spaetere Host-Kontext-UEbergabe als
   Freigabeentscheidung; `UI-Editor-kit` bleibt speicherfrei und BBM bleibt
   Host.
+- G122 schliesst die echte Host-Kontext-UEbergabe aus dem Restarbeiten-Host
+  an den UI-Editor an; `UI-Editor-kit` bleibt speicherfrei und der Default
+  bleibt gesperrt.
 
 ## Pruefpflicht
 

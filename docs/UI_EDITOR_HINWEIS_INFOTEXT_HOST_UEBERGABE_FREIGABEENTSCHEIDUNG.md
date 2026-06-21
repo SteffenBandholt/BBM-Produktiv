@@ -108,3 +108,9 @@ von Anzeige und Speichern visuell zu pruefen.
 
 Die Freigabe nur dokumentarisch stehen lassen und erst nach einer bewussten
 Host-Freigabe in Code verdrahten.
+
+## G122: Host-Kontext-UEbergabe aus Restarbeiten anschliessen
+
+- Die Freigabe ist jetzt technisch nur dort umgesetzt, wo eine Restarbeit
+  eindeutig als Host-Kontext vorliegt.
+- Default, Speichern und Schreibwege bleiben getrennt und gesperrt.

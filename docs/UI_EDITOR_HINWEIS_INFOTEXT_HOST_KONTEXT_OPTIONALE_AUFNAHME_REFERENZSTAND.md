@@ -119,3 +119,9 @@ der Host sie spaeter bewusst mit echten Daten befuellt.
   Host-Kontext-UEbergabe.
 - Eine Umsetzung braucht weiterhin die explizite Host-Freigabe mit
   eindeutiger `restarbeitId`, `projectId` und Zielkontext `Restarbeiten`.
+
+## G122: Host-Kontext-UEbergabe aus Restarbeiten anschliessen
+
+- Die optionale Aufnahme wird jetzt von der echten Restarbeiten-UEbergabe
+  gefuellt, wenn der Host eine eindeutige Restarbeit liefert.
+- Der Default bleibt ohne eindeutige Restarbeit unveraendert.

@@ -10,6 +10,10 @@ const HIDDEN_ELEMENTS_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/rend
 const DRAG_RUNTIME_BRIDGE_PATH = path.join(__dirname, "../../src/renderer/uiEditor/uiEditorKitDragRuntimeBridge.js");
 const BBM_REGISTRY_PATH = path.join(__dirname, "../../src/renderer/uiEditor/bbmUiEditorRegistry.js");
 const CORE_SHELL_PATH = path.join(__dirname, "../../src/renderer/app/CoreShell.js");
+const RESTARBEITEN_SCREEN_PATH = path.join(
+  __dirname,
+  "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js"
+);
 const HOST_CONTRACT_PATH = path.join(__dirname, "../../src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js");
 const RESTARBEITEN_HOST_ADAPTER_PATH = path.join(
   __dirname,
@@ -4615,6 +4619,64 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         `Hinweis-/Infotext-Host-Kontext-Optionale-Aufnahme enthaelt ${required} nicht.`
       );
     }
+  });
+
+  await run("BBM UI-Editor-Runtime: Restarbeiten-Host liefert den echten Host-Kontext nur bei eindeutiger Restarbeit", async () => {
+    const coreShellModule = await importEsmFromFile(CORE_SHELL_PATH);
+    const restarbeitenModule = await importEsmFromFile(RESTARBEITEN_SCREEN_PATH);
+    const RestarbeitenScreen = restarbeitenModule.default;
+
+    assert.equal(typeof coreShellModule.resolveUiEditorHostContext, "function");
+    assert.equal(typeof RestarbeitenScreen, "function");
+
+    const emptyScreen = new RestarbeitenScreen({ projectId: "projekt-77", project: { id: "projekt-77" } });
+    emptyScreen.selectedId = "";
+    emptyScreen.draft = {
+      id: "",
+      running_number: "",
+      short_text: "",
+    };
+    assert.equal(emptyScreen.getUiEditorHostContext(), null);
+    assert.equal(coreShellModule.resolveUiEditorHostContext({ activeSection: "restarbeiten", currentView: emptyScreen }), null);
+
+    const screen = new RestarbeitenScreen({ projectId: "projekt-77", project: { id: "projekt-77" } });
+    screen.selectedId = "restarbeit-77";
+    screen.draft = {
+      id: "restarbeit-77",
+      running_number: "12",
+      short_text: "Maueranschluss pruefen",
+    };
+
+    const hostContext = screen.getUiEditorHostContext();
+    assert.deepEqual(hostContext, {
+      projectId: "projekt-77",
+      restarbeitId: "restarbeit-77",
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "Nr. 12 - Maueranschluss pruefen",
+      elementType: "Hinweis / Infotext",
+      source: "BBM-Restarbeiten-Host",
+    });
+
+    assert.deepEqual(
+      coreShellModule.resolveUiEditorHostContext({
+        activeSection: "restarbeiten",
+        currentView: screen,
+      }),
+      hostContext
+    );
+
+    screen.projectId = "";
+    assert.equal(screen.getUiEditorHostContext(), null);
+    assert.equal(
+      coreShellModule.resolveUiEditorHostContext({ activeSection: "restarbeiten", currentView: screen }),
+      null
+    );
+
+    assert.equal(
+      coreShellModule.resolveUiEditorHostContext({ activeSection: "projects", currentView: screen }),
+      null
+    );
   });
 
   await run("BBM UI-Editor-Runtime: Host-Kontext-UEbergabe-Freigabeentscheidung bleibt dokumentiert", async () => {

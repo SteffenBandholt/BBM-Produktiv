@@ -111,6 +111,9 @@ keinen Speicherbutton und keinen Schreibweg.
 - G121 dokumentiert die spaetere Host-Kontext-UEbergabe als
   Freigabeentscheidung; echte Quelle, Bedingungen und Speichergrenzen sind
   damit klar getrennt.
+- G122 schliesst die echte Host-Kontext-UEbergabe aus dem Restarbeiten-Host
+  an den UI-Editor an; der Default ohne eindeutige Restarbeit bleibt
+  unveraendert.
 
 ## Stop-Regel
 

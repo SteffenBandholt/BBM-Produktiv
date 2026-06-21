@@ -179,6 +179,9 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - G121 dokumentiert die spaetere Host-Kontext-UEbergabe als
   Freigabeentscheidung; Restarbeiten-Host, `restarbeitId`, Zielkontext und
   blockierte Speicherwege sind damit klar getrennt.
+- G122 schliesst die echte Host-Kontext-UEbergabe aus dem
+  Restarbeiten-Host an den UI-Editor an; der Default bleibt ohne eindeutige
+  Restarbeit unveraendert und der Speicherweg gesperrt.
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 
@@ -475,3 +478,9 @@ Dabei gilt:
   Freigabeentscheidung dokumentiert.
 - Quelle, Zielkontext, `normalizeHostContextStatus` und blockierte
   Speicherwege sind klar eingegrenzt; eine Umsetzung folgt erst spaeter.
+
+## G122: Host-Kontext-UEbergabe aus Restarbeiten anschliessen
+
+- Der Restarbeiten-Host liefert den Host-Kontext nur bei eindeutiger
+  Restarbeit an den Launcher weiter.
+- Default, Speicherstatus und read-only Grenzen bleiben unveraendert.

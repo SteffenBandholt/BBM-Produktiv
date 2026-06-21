@@ -154,3 +154,9 @@ Dokumentation.
 - Die vorhandene Uebergabeentscheidung bleibt die Grundlage; jetzt ist nur
   noch die spaetere Freigabe fuer die echte Host-UEbergabe offen.
 - Ohne explizite Host-Freigabe bleibt jede `restarbeitId`-Uebergabe gesperrt.
+
+## G122: Host-Kontext-UEbergabe aus Restarbeiten anschliessen
+
+- Die Uebergabeentscheidung wird jetzt nur fuer eine eindeutig bekannte
+  Restarbeit genutzt.
+- Ohne eindeutigen Host-Kontext bleibt der Default gesperrt.
