@@ -546,3 +546,18 @@ Dabei gilt:
 - Es gibt keinen Speicheraufruf, keine ENV-Aktivierung, keinen DB-/IPC-
   Schreibweg, keinen Submit, kein Default-true, keine Wildcard und keine
   Aenderung am `UI-Editor-kit`.
+
+## G127: blockierter Speicher-Handler vorbereitet
+
+- Der UI-Editor hat im BBM-Launcher einen lokalen Speicher-Handler fuer
+  Hinweis-/Infotext-Entwuerfe, der ausdruecklich blockiert bleibt.
+- Direkte Handler-Aufrufe liefern nur `ok: false`, `blocked: true`,
+  `reason: Schreibfreigabe-Gate geschlossen`, `persisted: false` und
+  `previewOnly: true`.
+- Im Speicherbereich ist der Handler als vorbereitet/blockiert sichtbar,
+  inklusive Blockiergrund und letztem Speicherergebnis.
+- Vollstaendige Payload, gueltiger Host-Kontext, vorhandene `restarbeitId`,
+  gueltiger Hinweistext und DEV-Kontext oeffnen weder Gate noch Handler.
+- Es gibt keinen Speicheraufruf, keine ENV-Aktivierung, keinen DB-/IPC-
+  Schreibweg, keinen Submit, kein Default-true, keine Wildcard und keine
+  Aenderung am `UI-Editor-kit`.

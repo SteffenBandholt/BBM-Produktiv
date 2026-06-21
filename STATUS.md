@@ -129,6 +129,18 @@ Sie ergÃ¤nzt:
     IPC-/DB-Schreibweg, keinen Submit, kein Default-true, keine Wildcard und
     keine Aenderung am `UI-Editor-kit`.
 
+- G127 blockierten Speicher-Handler fuer `Hinweis / Infotext` vorbereitet:
+  - Der BBM-Launcher hat eine lokale Handler-Funktion, die bei direktem Aufruf
+    kontrolliert mit `ok: false`, `blocked: true`,
+    `reason: Schreibfreigabe-Gate geschlossen`, `persisted: false` und
+    `previewOnly: true` abbricht.
+  - Im Speicherbereich ist sichtbar: `Speicher-Handler: vorbereitet`,
+    `Handler-Status: blockiert`, `Blockiergrund: Schreibfreigabe-Gate
+    geschlossen` und `Letztes Speicherergebnis: nicht ausgeführt`.
+  - Es gibt weiterhin keinen Speicheraufruf, keine ENV-/DEV-Aktivierung,
+    keinen IPC-/DB-Schreibweg, keinen Submit, kein Default-true, keine Wildcard
+    und keine Aenderung am `UI-Editor-kit`.
+
 - G97 ergaenzt die lokale Live-Vorschau fuer `Hinweis / Infotext` im
   UI-Editor-Panel:
   - Die Entwurfs-Vorschau hat jetzt ein kleines Eingabefeld `Hinweistext` und
