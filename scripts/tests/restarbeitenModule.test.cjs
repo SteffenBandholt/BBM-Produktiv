@@ -1257,7 +1257,13 @@ async function runRestarbeitenModuleTests(run) {
       );
 
       triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.status"), "offen", "change");
-      triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.dueDate"), "2026-06-20", "change");
+      const futureDueDate = new Date();
+      futureDueDate.setUTCDate(futureDueDate.getUTCDate() + 14);
+      triggerValue(
+        findByUiId(screen.root, "restarbeiten.editbox.meta.dueDate"),
+        futureDueDate.toISOString().slice(0, 10),
+        "change"
+      );
       assert.equal(screen.draft.ampelState, "gruen");
       assert.equal(findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").children[0].dataset.state, "gruen");
     } finally {
