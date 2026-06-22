@@ -6997,8 +6997,10 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(launcherSource.includes(".restarbeitenCreateNote("), false);
     assert.equal(launcherSource.includes('invoke("restarbeiten:createNote"'), false);
     assert.equal(launcherSource.includes('handle("restarbeiten:createNote"'), false);
-    assert.equal(preloadSource.includes("uiEditorSaveElementOverride"), false);
-    assert.equal(preloadSource.includes("uiEditorElementOverrides:save"), false);
+    assert.equal(preloadSource.includes("uiEditorGetElementOverrides"), true);
+    assert.equal(preloadSource.includes("uiEditorSaveElementOverride"), true);
+    assert.equal(preloadSource.includes("uiEditorElementOverrides:list"), true);
+    assert.equal(preloadSource.includes("uiEditorElementOverrides:save"), true);
   });
 
   await run("BBM UI-Editor-Runtime: UI-Element-Save-Geruest validiert Payloads und bleibt standardmaessig blockiert", async () => {

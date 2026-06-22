@@ -48,6 +48,9 @@ const { runUiEditorKitLocalDependencyTests } = require("./tests/uiEditorKitLocal
 const { runEditorLayoutOverrideModelTests } = require("./tests/editorLayoutOverrideModel.test.cjs");
 const { runUiEditorLayoutOverridesRepoTests } = require("./tests/uiEditorLayoutOverridesRepo.test.cjs");
 const { runUiEditorLayoutOverridesIpcTests } = require("./tests/uiEditorLayoutOverridesIpc.test.cjs");
+const { runUiEditorElementOverridesRepoTests } = require("./tests/uiEditorElementOverridesRepo.test.cjs");
+const { runUiEditorElementOverridesIpcTests } = require("./tests/uiEditorElementOverridesIpc.test.cjs");
+const { runUiEditorElementOverridesPreloadTests } = require("./tests/uiEditorElementOverridesPreload.test.cjs");
 const { runRestarbeitenEditorHostAdapterTests } = require("./tests/restarbeitenEditorHostAdapter.test.cjs");
 const { runRestarbeitenEditorRegistryDomAnchorsTests } = require("./tests/restarbeitenEditorRegistry.domAnchors.test.cjs");
 const { runEditorScopeInspectorTests } = require("./tests/editorScopeInspector.test.cjs");
@@ -193,6 +196,9 @@ async function main() {
   await runEditorLayoutOverrideModelTests(run);
   await runUiEditorLayoutOverridesRepoTests(run);
   await runUiEditorLayoutOverridesIpcTests(run);
+  await runUiEditorElementOverridesRepoTests(run);
+  await runUiEditorElementOverridesIpcTests(run);
+  await runUiEditorElementOverridesPreloadTests(run);
   await runRestarbeitenEditorHostAdapterTests(run);
   await runRestarbeitenEditorRegistryDomAnchorsTests(run);
   await runEditorScopeInspectorTests(run);

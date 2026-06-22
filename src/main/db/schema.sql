@@ -191,3 +191,15 @@ CREATE TABLE IF NOT EXISTS ui_editor_layout_overrides (
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   PRIMARY KEY (target_app_id, module_id, scope_id, element_id)
 );
+
+CREATE TABLE IF NOT EXISTS ui_editor_element_overrides (
+  id TEXT PRIMARY KEY,
+  project_id TEXT NOT NULL,
+  surface_id TEXT NOT NULL,
+  element_id TEXT NOT NULL,
+  element_type TEXT NOT NULL,
+  changes_json TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  UNIQUE (project_id, surface_id, element_id)
+);

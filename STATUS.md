@@ -3998,3 +3998,46 @@ Wichtig:
     `restarbeitenCreateNote`, kein automatisches Speichern beim Oeffnen,
     kein localStorage/writeFile, keine Wildcard und keine Aenderung am
     `UI-Editor-kit`.
+
+### G142 - UI-Editor Element-Speichervertrag als Backend-/IPC-/Preload-Geruest
+- Status: erledigt
+- Beschreibung:
+  - Der UI-Element-Speichervertrag ist nun als getrenntes Backend-/IPC-/
+    Preload-Geruest implementiert.
+  - Neu sind `ui_editor_element_overrides`, das Repository
+    `src/main/db/uiEditorElementOverridesRepo.js`, die IPC-Kanaele
+    `uiEditorElementOverrides:list` und `uiEditorElementOverrides:save` sowie
+    die Preload-Methoden `window.bbmDb.uiEditorGetElementOverrides` und
+    `window.bbmDb.uiEditorSaveElementOverride`.
+  - Serverseitige Validierung blockiert fehlende Pflichtfelder, unbekannte
+    Surface-/Elementtypen, ungueltige `changes`, `noteText`, `restarbeitId`
+    und Diagnosefelder.
+  - Upsert ist pro `project_id`/`surface_id`/`element_id` umgesetzt; die
+    Rueckmeldung enthaelt `id`/`resultReference`.
+  - Der normale UI-Pfad bleibt weiter gesperrt; kein
+    `restarbeitenCreateNote`, kein `restarbeiten:createNote` und kein
+    unbeabsichtigter Produktiv-Save.
+- Betroffene Dateien:
+  - `src/main/db/database.js`
+  - `src/main/db/schema.sql`
+  - `src/main/db/uiEditorElementOverridesRepo.js`
+  - `src/main/ipc/uiEditorElementOverridesIpc.js`
+  - `src/main/main.js`
+  - `src/main/preload.js`
+  - `scripts/test.cjs`
+  - `scripts/tests/uiEditorElementOverridesRepo.test.cjs`
+  - `scripts/tests/uiEditorElementOverridesIpc.test.cjs`
+  - `scripts/tests/uiEditorElementOverridesPreload.test.cjs`
+  - `docs/UI_EDITOR_ELEMENT_SAVE_CONTRACT_BACKEND_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - G143: nur wenn fachlich gewollt, den produktiven UI-Element-Speicherweg
+    explizit freigeben und dabei Button, Fehlerbild und Erfolgsrueckmeldung
+    separat absichern.
+- Risiken/Hinweise:
+  - Kein Restarbeiten-Notizspeicherweg fuer UI-Elemente, kein localStorage,
+    kein writeFile, kein automatisches Speichern beim Oeffnen und keine
+    Wildcard-Freigabe.

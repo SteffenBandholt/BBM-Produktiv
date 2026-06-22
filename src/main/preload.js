@@ -147,6 +147,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
   uiEditorLayoutOverridesSave: (data) => ipcRenderer.invoke("uiEditorLayoutOverrides:save", data),
 
   // ============================================================
+  // UI-Editor Element-Overrides (intern)
+  // ============================================================
+  uiEditorGetElementOverrides: (data) => ipcRenderer.invoke("uiEditorElementOverrides:list", data),
+  uiEditorSaveElementOverride: (data) => ipcRenderer.invoke("uiEditorElementOverrides:save", data),
+
+  // ============================================================
   // App
   // ============================================================
   appQuit: () => ipcRenderer.invoke("app:quit"),

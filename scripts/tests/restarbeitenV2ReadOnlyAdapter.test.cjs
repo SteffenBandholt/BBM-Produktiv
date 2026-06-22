@@ -102,8 +102,10 @@ async function runRestarbeitenV2ReadOnlyAdapterTests(run) {
     "src/main/db/restarbeitenRepo.js",
     "src/main/db/schema.sql",
     "src/main/db/uiEditorLayoutOverridesRepo.js",
+    "src/main/db/uiEditorElementOverridesRepo.js",
     "src/main/ipc/restarbeitenIpc.js",
     "src/main/ipc/uiEditorLayoutOverridesIpc.js",
+    "src/main/ipc/uiEditorElementOverridesIpc.js",
     "src/main/main.js",
     "src/main/preload.js",
   ]);

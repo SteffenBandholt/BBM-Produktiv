@@ -869,3 +869,27 @@ Dabei gilt:
 - Ein positiver Save ist nur testseitig mit explizitem Stub-Modus moeglich;
   der normale UI-Pfad bleibt blockiert und nutzt keinen
   `restarbeitenCreateNote`-/`restarbeiten:createNote`-Weg.
+
+## G142: UI-Element-Speichervertrag als Backend-/IPC-/Preload-Geruest
+
+- Der neue UI-Element-Speichervertrag ist jetzt im Backend, IPC und Preload
+  angelegt, ohne den normalen UI-Produktivpfad freizugeben.
+- Neu sind `ui_editor_element_overrides`, das Repository
+  `src/main/db/uiEditorElementOverridesRepo.js`, die IPC-Kanaele
+  `uiEditorElementOverrides:list` und `uiEditorElementOverrides:save` sowie
+  die Preload-Methoden `window.bbmDb.uiEditorGetElementOverrides` und
+  `window.bbmDb.uiEditorSaveElementOverride`.
+- Serverseitig werden `projectId`, `surfaceId`, `elementId`, `elementType`
+  und `changes` strikt validiert; erlaubt sind nur die allowgelistete Surface
+  `restarbeiten.ui.main`, die Elementtypen `Hinweis / Infotext` und `label`
+  sowie die Change-Keys `text`, `label`, `visible` und `order`.
+- Notizfelder wie `noteText`, Restarbeiten-Felder wie `restarbeitId`,
+  Diagnosefelder und unbekannte Keys werden abgelehnt.
+- Der Speicherweg arbeitet per Upsert pro
+  `project_id`/`surface_id`/`element_id` und liefert eine
+  `resultReference`/`id` zur Rueckmeldung.
+- `restarbeitenCreateNote` und `restarbeiten:createNote` bleiben
+  ausdrücklich ungenutzt.
+- Der Renderer bleibt gesperrt; der normale UI-Pfad aktiviert keinen
+  Produktiv-Save ohne eine spaetere explizite Freigabe.
+- Neue Tests decken Repository, IPC und Preload getrennt ab.

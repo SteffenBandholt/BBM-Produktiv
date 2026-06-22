@@ -985,6 +985,58 @@ function ensureUiEditorLayoutOverridesSchema(dbConn) {
   }
 }
 
+function ensureUiEditorElementOverridesSchema(dbConn) {
+  if (!tableExists(dbConn, "ui_editor_element_overrides")) {
+    dbConn.exec(`
+      CREATE TABLE IF NOT EXISTS ui_editor_element_overrides (
+        id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        surface_id TEXT NOT NULL,
+        element_id TEXT NOT NULL,
+        element_type TEXT NOT NULL,
+        changes_json TEXT NOT NULL,
+        created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+        UNIQUE (project_id, surface_id, element_id)
+      );
+    `);
+    return;
+  }
+
+  const addCol = (name, sqlType) => {
+    if (!columnExists(dbConn, "ui_editor_element_overrides", name)) {
+      dbConn.exec(`ALTER TABLE ui_editor_element_overrides ADD COLUMN ${name} ${sqlType};`);
+    }
+  };
+
+  addCol("id", "TEXT");
+  addCol("project_id", "TEXT");
+  addCol("surface_id", "TEXT");
+  addCol("element_id", "TEXT");
+  addCol("element_type", "TEXT");
+  addCol("changes_json", "TEXT");
+
+  if (!columnExists(dbConn, "ui_editor_element_overrides", "created_at")) {
+    dbConn.exec(`
+      ALTER TABLE ui_editor_element_overrides
+      ADD COLUMN created_at TEXT NOT NULL
+      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));
+    `);
+  }
+  if (!columnExists(dbConn, "ui_editor_element_overrides", "updated_at")) {
+    dbConn.exec(`
+      ALTER TABLE ui_editor_element_overrides
+      ADD COLUMN updated_at TEXT NOT NULL
+      DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'));
+    `);
+  }
+
+  dbConn.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_ui_editor_element_overrides_identity
+    ON ui_editor_element_overrides (project_id, surface_id, element_id);
+  `);
+}
+
 function ensureProjectCandidatesSchema(dbConn) {
   if (!tableExists(dbConn, "project_candidates")) {
     dbConn.exec(`
@@ -1838,6 +1890,7 @@ function ensureSchema(dbConn) {
   ensureDictionarySchema(dbConn);
   ensureTableLayoutsSchema(dbConn);
   ensureUiEditorLayoutOverridesSchema(dbConn);
+  ensureUiEditorElementOverridesSchema(dbConn);
   ensureRestarbeitenSchema(dbConn);
   ensureAppSettingsSchema(dbConn);
   ensureLicenseAdminSchema(dbConn);
