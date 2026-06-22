@@ -19,6 +19,7 @@ const RESTARBEITEN_HOST_ADAPTER_PATH = path.join(
   __dirname,
   "../../src/renderer/modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js"
 );
+const PRELOAD_PATH = path.join(__dirname, "../../src/main/preload.js");
 const CSS_PATH = path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.css");
 const PACKAGE_PATH = path.join(__dirname, "../../package.json");
 const SWITCH_COMMAND_LAUNCHER_DOC_PATH = path.join(
@@ -212,6 +213,10 @@ const UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_STATUS_REFERENCE_DOC_PATH = path.j
 const UI_EDITOR_HINT_INFOTEXT_ELEMENT_EDITING_CORRECTION_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_ELEMENTBEARBEITUNG_FACHKORREKTUR_REFERENZSTAND.md"
+);
+const UI_EDITOR_ELEMENT_SAVE_CONTRACT_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_ELEMENT_SAVE_VERTRAG_REFERENZSTAND.md"
 );
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
@@ -6942,6 +6947,54 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         `Hinweis-/Infotext-Elementbearbeitung-Fachkorrektur-Referenz enthaelt ${required} nicht.`
       );
     }
+  });
+
+  await run("BBM UI-Editor-Runtime: UI-Element-Speichervertrag bleibt definiert, aber nicht implementiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_ELEMENT_SAVE_CONTRACT_REFERENCE_DOC_PATH),
+      true,
+      "UI-Editor-Element-Speichervertrag-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_ELEMENT_SAVE_CONTRACT_REFERENCE_DOC_PATH, "utf8");
+    const launcherSource = fs.readFileSync(RUNTIME_PATH, "utf8");
+    const preloadSource = fs.readFileSync(PRELOAD_PATH, "utf8");
+
+    for (const required of [
+      "G140",
+      "UI-Element",
+      "Speichervertrag",
+      "projectId",
+      "surfaceId",
+      "elementId",
+      "elementType",
+      "changes",
+      "uiEditorLayoutOverrides",
+      "tableLayouts",
+      "restarbeitenCreateNote",
+      "nicht als UI-Element-Speicherweg",
+      "uiEditorElementOverrides:save",
+      "uiEditorSaveElementOverride",
+      "ui_editor_element_overrides",
+      "kein localStorage",
+      "kein writeFile",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `UI-Editor-Element-Speichervertrag-Referenz enthaelt ${required} nicht.`
+      );
+    }
+
+    assert.equal(launcherSource.includes("Elementbearbeitung"), true);
+    assert.equal(launcherSource.includes("Elementtext"), true);
+    assert.equal(launcherSource.includes("UI-Element-Speicherstatus"), true);
+    assert.equal(launcherSource.includes("Speichervertrag für UI-Elementänderungen fehlt noch"), true);
+    assert.equal(launcherSource.includes("window.bbmDb.restarbeitenCreateNote("), false);
+    assert.equal(launcherSource.includes(".restarbeitenCreateNote("), false);
+    assert.equal(launcherSource.includes('invoke("restarbeiten:createNote"'), false);
+    assert.equal(launcherSource.includes('handle("restarbeiten:createNote"'), false);
+    assert.equal(preloadSource.includes("uiEditorSaveElementOverride"), false);
+    assert.equal(preloadSource.includes("uiEditorElementOverrides:save"), false);
   });
 
   await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Host-Kontext-Abschlusscheck bleibt dokumentiert", async () => {

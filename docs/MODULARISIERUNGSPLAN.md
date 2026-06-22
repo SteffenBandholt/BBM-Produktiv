@@ -826,3 +826,25 @@ Dabei gilt:
   `Speichervertrag fuer UI-Elementaenderungen fehlt noch`; der normale UI-Pfad
   nutzt weder `window.bbmDb.restarbeitenCreateNote` noch
   `restarbeiten:createNote`.
+
+## G140: UI-Element-Speichervertrag definiert
+
+- G140 dokumentiert den fachlich korrekten Zielvertrag fuer echte
+  UI-Elementaenderungen, ohne einen neuen produktiven Speicherweg zu bauen.
+- Die vorhandenen Speicherwege wurden bewertet: `uiEditorLayoutOverrides:*`
+  bleibt passend fuer Pilot-Visibility-Overrides, `tableLayouts:*` bleibt
+  passend fuer Tabellenlayouts; beide sind nicht der allgemeine Speicherort
+  fuer UI-Elementtext, Label, Beschriftung oder freie Eigenschaften.
+- Der Restarbeiten-Notizweg `restarbeitenCreateNote` /
+  `restarbeiten:createNote` ist ausdruecklich nicht als
+  UI-Element-Speicherweg geeignet.
+- Vorgeschlagen ist ein eigener Vertrag mit
+  `window.bbmDb.uiEditorSaveElementOverride(payload)`,
+  `uiEditorElementOverrides:save` und einer eigenen Tabelle
+  `ui_editor_element_overrides`.
+- Mindestpayload: `projectId`, `surfaceId`, `elementId`, `elementType` und
+  `changes`; ein spaeteres Implementierungspaket muss Repo, IPC, Preload,
+  Registry-Abgleich, Allowlist und sichtbare Fehler-/Erfolgsmeldung
+  getrennt umsetzen.
+- Der aktuelle UI-Pfad bleibt editierbar, aber Speichern bleibt blockiert,
+  bis dieser Vertrag implementiert und explizit freigegeben ist.

@@ -3932,3 +3932,38 @@ Wichtig:
     `window.bbmDb.restarbeitenCreateNote`, kein `restarbeiten:createNote`,
     kein IPC-/DB-Schreiben, kein localStorage/writeFile und keine Aenderung am
     `UI-Editor-kit`.
+
+### G140 - UI-Editor Speichervertrag fuer echte UI-Elementaenderungen
+- Status: erledigt
+- Beschreibung:
+  - Der Speichervertrag fuer echte UI-Elementaenderungen ist als
+    Referenzstand dokumentiert, ohne einen neuen produktiven Speicherweg zu
+    implementieren.
+  - Bewertet wurden `uiEditorLayoutOverrides:*`, `tableLayouts:*`,
+    Settings-/Projekt-/Fach-IPC-Wege und der Restarbeiten-Notizweg.
+  - Ergebnis: `uiEditorLayoutOverrides:*` passt nur fuer Pilot-Visibility,
+    `tableLayouts:*` nur fuer Tabellenlayouts; `restarbeitenCreateNote` /
+    `restarbeiten:createNote` ist nicht als UI-Element-Speicherweg geeignet.
+  - Vorgeschlagen ist ein eigener Vertrag mit
+    `window.bbmDb.uiEditorSaveElementOverride(payload)`,
+    `uiEditorElementOverrides:save`, `uiEditorElementOverrides:getMany` und
+    Tabelle `ui_editor_element_overrides`.
+  - Mindestpayload: `projectId`, `surfaceId`, `elementId`, `elementType` und
+    `changes`.
+  - Der UI-Pfad bleibt editierbar, aber echtes Speichern bleibt blockiert,
+    bis der Vertrag in einem Folgemeilenstein implementiert und freigegeben
+    ist.
+- Betroffene Dateien:
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_ELEMENT_SAVE_VERTRAG_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Umsetzung des neuen Vertrags als eigenes Repo-/IPC-/Preload-Paket mit
+    Registry-Abgleich und Allowlist, weiterhin ohne Restarbeiten-Notizweg.
+- Risiken/Hinweise:
+  - Kein neuer IPC-/DB-Kanal, kein localStorage/writeFile, kein Speichern beim
+    Oeffnen, keine Wildcard, kein Default-true und keine Aenderung am
+    `UI-Editor-kit`.
