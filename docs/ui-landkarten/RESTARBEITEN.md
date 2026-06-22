@@ -5,6 +5,8 @@
 - Sie ist fachliche Dokumentation und Vorbereitung.
 - Sie verändert die App nicht.
 
+M21-Klarstellung: Diese Datei ist historische Landkarten-Dokumentation. `Restarbeiten` ist in BBM erreichbar, bleibt aber fachlich/funktional unfertig und ist nur Pilot-Scope fuer das generische UI-Editor-kit. Neue Editor-Arbeiten laufen ueber die von der Ziel-App gelieferte ElementRegistry; keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
+
 ## 2. Status
 - M9 DOM-Markierungen minimal eingeführt.
 - Marker-IDs sind technisch in der bestehenden Restarbeiten-UI verankert.
@@ -104,6 +106,8 @@ Hinweis:
 - M12.1 schärft die Landkarte als Voraussetzung für spätere Layoutänderungen nach: Gruppenmarker auf Container-Ebene, Feldmarker darunter.
 - `restarbeiten.header` ist aktuell kein Pflichtmarker im Live-DOM.
 - Wiederholte Marker mit `::1`, `::2` usw. zählen als eine fachliche Basis-ID und werden vom UI-Inspektor zusammengefasst.
+
+M21-Status: Diese Marker- und Inspector-Begriffe beschreiben Altstand/Historie. Sie sind keine Zielrichtung fuer neue Arbeiten und duerfen nicht als automatische Registry-Ableitung verstanden werden.
 
 ## 5. Einstell-Ebenen
 

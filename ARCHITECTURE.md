@@ -36,6 +36,8 @@ Nicht jedes Modul ist ein auswählbares Projektmodul:
 - Auswählbare Projektmodule sind nur fachliche Arbeitsbereiche innerhalb eines Projekts.
 - Aktuell auswählbar ist `Protokoll`.
 - Spaeter moeglich ist `Restarbeiten`.
+- M21-Klarstellung: `Restarbeiten` ist in BBM bereits erreichbar, bleibt aber fachlich/funktional unfertig und ist fuer den UI-Editor nur Pilot-Scope.
+- M21-Klarstellung: `Protokoll` ist noch nicht fertig bereinigt und wird fuer UI-Editor-Themen defensiv/read-only eingeordnet.
 - `Ausgabe / Drucken / E-Mail` ist kein auswählbares Projektmodul, sondern ein Maschinenraum-Dienst.
 - `Audio / Diktat` ist kein auswählbares Projektmodul, sondern ein Maschinenraum-Dienst.
 - `Dictate` ist das Lizenz-/Produktfeature hinter dem sichtbaren Feature `audio`.
@@ -52,6 +54,7 @@ Nicht jedes Modul ist ein auswählbares Projektmodul:
 - Ein Projektklick startet nicht direkt `Protokoll`; er oeffnet den Projekt-Arbeitsbereich.
 - Der Projekt-Arbeitsbereich zeigt das aktive Projekt und bietet nur auswaehlbare Projektmodule an.
 - Aktuell ist `Protokoll` auswaehlbar; spaeter kann `Restarbeiten` hinzukommen.
+- Der UI-Editor-Status aendert diese Modulfreigabe nicht: `Restarbeiten` bleibt Pilot-Scope, `Protokoll` bleibt defensiv/read-only.
 - Maschinenraum-Dienste werden von Fachmodulen genutzt, aber nicht als gleichberechtigte Projektmodule angeboten.
 - Der Projekt-Arbeitsbereich ist technisch umgesetzt; der Projektklick fuehrt jetzt zuerst dort hin.
 
@@ -112,12 +115,30 @@ Dazu koennen insbesondere gehoeren:
 ### 3.3 Fachmodule
 Aktuell relevante Fachmodule:
 - `Protokoll`
+- `Restarbeiten` als erreichbarer, aber fachlich/funktional unfertiger Pilot-Scope fuer den UI-Editor
 
 Diese bleiben fachlich getrennt.
 
 `TopsScreen` ist **nicht** das Modul `Protokoll`, sondern nur der Arbeitsscreen fuer die Protokollerstellung innerhalb des Moduls `Protokoll`.
 
 Die heutige TOP-Workbench ist **nicht automatisch** der globale Standard fuer andere Module.
+
+### 3.4 UI-Editor-kit und Ziel-App-Prinzip
+
+BBM-Produktiv ist fuer das generische UI-Editor-kit nur Beispiel-/Pilot-Zielapp.
+
+Der UI-Editor bleibt generisch:
+- keine BBM-Fachlogik im Editor
+- keine Restarbeiten-Fachlogik im Editor
+- keine Protokoll-Fachlogik im Editor
+- keine Datenbank-, IPC- oder Speicherlogik als Editor-Fachlogik
+
+Das verbindliche Registry-Prinzip lautet:
+- Die Ziel-App liefert die ElementRegistry.
+- Der Editor liest ausschliesslich diese Registry.
+- Nicht registrierte Elemente existieren fuer den Editor nicht.
+- Der Editor darf die Ziel-App-Oberflaeche nicht selbst untersuchen.
+- Keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
 
 ---
 
@@ -131,6 +152,7 @@ Bei allen Umbauten gelten dauerhaft diese Leitplanken:
 - kein abrupter Komplettumbau
 - keine aggressive Massenmigration
 - keine vorschnelle Generalisierung von Fachlogik
+- keine automatische UI-Erkennung, kein UI-Scanning und keine automatische Registry-Befuellung fuer den UI-Editor
 - bestehende Funktionalitaet bleibt erhalten
 - Uebergaenge duerfen voruebergehend bestehen, muessen aber bewusst und ehrlich benannt bleiben
 

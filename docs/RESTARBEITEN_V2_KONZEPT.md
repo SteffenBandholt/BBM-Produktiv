@@ -3,11 +3,14 @@
 ## 1. Grundsatz
 Restarbeiten V2 ist eine neue technische UI-Struktur fuer das erste echte Fachmodul auf der UI-V2-/Editor-V2-Basis.
 
+M21-Klarstellung: `Restarbeiten` ist in BBM erreichbar, bleibt aber fachlich/funktional unfertig und ist nur Pilot-Scope fuer das generische UI-Editor-kit. Der UI-Editor bleibt generisch; die Ziel-App liefert die ElementRegistry und der Editor liest ausschliesslich diese Registry.
+
 Regeln:
 - die alte Restarbeiten-UI dient hoechstens fachlich als Orientierung
 - der alte UI-Inspector-Pfad wird nicht repariert
 - die Protokoll-Editbox wird nicht umgebaut
 - Protokoll bleibt unberuehrt
+- keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung
 
 Die neue Struktur wird bewusst sauber und getrennt aufgebaut.
 

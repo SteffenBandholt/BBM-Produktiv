@@ -11,6 +11,15 @@ Die maßgebliche Architektur lautet:
 Der Editor liest bewusst registrierte UI- und PDF-Elemente.
 Die Ziel-App wird editorfaehig vorbereitet, bleibt dabei aber fachlich unabhaengig.
 
+M21-Klarstellung fuer BBM-Produktiv:
+- BBM-Produktiv ist Beispiel-/Pilot-Zielapp fuer das generische UI-Editor-kit.
+- `Restarbeiten` ist erreichbar, aber fachlich/funktional unfertig und nur Pilot-Scope.
+- `Protokoll` ist noch nicht fertig bereinigt und fuer UI-Editor-Themen defensiv/read-only einzuordnen.
+- Der UI-Editor bleibt generisch und enthaelt keine BBM-, Restarbeiten- oder Protokoll-Fachlogik.
+- Die Ziel-App liefert die ElementRegistry; der Editor liest ausschliesslich diese Registry.
+- Nicht registrierte Elemente existieren fuer den Editor nicht.
+- Keine Selbstuntersuchung der Ziel-App-Oberflaeche, keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
+
 ## 2. Verbindliche Begriffe
 
 - Modul: fachlicher Bereich innerhalb der App

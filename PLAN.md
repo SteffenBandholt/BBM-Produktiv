@@ -27,6 +27,11 @@ Hinweis:
 - Audio / Diktat ist als Renderer-Modul begonnen; aktuell nur `TranscriptionService`, ohne Sidebar- oder Modulkatalog-Eintrag.
 - Lizenzverwaltung wird als naechster Admin-Meilenstein vorbereitet; Detailauftrag: [docs/modules/lizenzverwaltung.md](docs/modules/lizenzverwaltung.md).
 - Das Protokoll-Modul bleibt eingefroren.
+- M21: Das Protokoll-Modul ist noch nicht fertig bereinigt und fuer UI-Editor-Themen defensiv/read-only einzuordnen.
+- M21: `Restarbeiten` ist in BBM erreichbar, bleibt aber fachlich/funktional unfertig und ist der aktuelle Pilot-Scope fuer das generische UI-Editor-kit.
+- M21: BBM-Produktiv ist Beispiel-/Pilot-Zielapp; der UI-Editor bleibt generisch und enthaelt keine BBM-, Restarbeiten- oder Protokoll-Fachlogik.
+- M21: Die Ziel-App liefert die ElementRegistry; der Editor liest ausschliesslich diese Registry. Nicht registrierte Elemente existieren fuer den Editor nicht.
+- M21: Keine Selbstuntersuchung der Ziel-App-Oberflaeche, keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
 - `npm test` war gruen.
 - Das Mutter-/Kind-Prinzip ist die verbindliche Leitlinie fuer alle weiteren Modularisierungsschritte.
 - Auswählbare Projektmodule und Maschinenraum-Bereiche sind architektonisch getrennt.

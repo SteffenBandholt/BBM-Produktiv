@@ -117,6 +117,10 @@ Der aktuell sinnvolle Hauptfokus liegt auf **Achse B und Achse C**, flankiert vo
 - `weitere Module` dosiert sichtbarer und tragfaehiger machen
 - kleine Nachweise und Konsolidierungen mitziehen, wo sie den Umbau direkt belegen
 - der erreichte Screen-Stand in `Protokoll` bleibt dabei sichtbar abgesichert
+- M21-Einordnung: `Restarbeiten` ist erreichbar, aber fachlich/funktional unfertig und fuer den UI-Editor nur Pilot-Scope.
+- M21-Einordnung: `Protokoll` ist noch nicht fertig bereinigt und wird fuer UI-Editor-Themen defensiv/read-only behandelt.
+- M21-Einordnung: BBM-Produktiv ist Beispiel-/Pilot-Zielapp fuer das generische UI-Editor-kit; die Ziel-App liefert die ElementRegistry, der Editor liest ausschliesslich diese Registry.
+- Keine Selbstuntersuchung der Ziel-App-Oberflaeche, keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
 
 Der Kernrahmen bleibt weiter wichtig, aber die bereits erreichten kleinen Kernschritte sind fuer die naechsten Mini-Pakete nicht mehr der dominante erste Fokus.
 

@@ -36,6 +36,9 @@
 - kein BBM-Sonderding
 - Core des UI-Inspektors bleibt exportierbar und frei von BBM-Fachlogik
 - bestehende App-Bereiche werden nicht verändert, wenn der Auftrag nur Dokumentation betrifft
+- M21: Fuer neue Arbeiten gilt das generische UI-Editor-kit; BBM-Produktiv ist nur Beispiel-/Pilot-Zielapp.
+- M21: Die Ziel-App liefert die ElementRegistry; der Editor liest ausschliesslich diese Registry.
+- M21: Keine Selbstuntersuchung der Ziel-App-Oberflaeche, keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
 
 ## 4. Definition of Done
 Ein UI-Inspektor-Auftrag ist nur fertig, wenn:
@@ -95,6 +98,7 @@ Ein UI-Inspektor-Auftrag ist nur fertig, wenn:
 - keine stillen Nebenänderungen
 - keine App-Fachlogik ändern
 - keine Vermischung von Profi-UI-Ausbildung und Inspektor-Entwicklung
+- keine automatische Element- oder Registry-Erzeugung aus der bestehenden UI
 
 ## 10. Ablauf je Auftrag
 

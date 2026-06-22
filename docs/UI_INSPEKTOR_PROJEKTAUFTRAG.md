@@ -3,6 +3,8 @@
 ## Was soll gebaut werden?
 Ein neues, exportierbares UI-Inspektor-Modul als eigenständiges Produktbaustein-System. Es soll in verschiedene Apps eingebaut werden können und unabhängig von BBM-Fachlogik funktionieren.
 
+M21-Klarstellung: Dieser Projektauftrag ist historischer UI-Inspektor-Kontext. Verbindliche Zielrichtung fuer neue Arbeiten ist das generische UI-Editor-kit. BBM-Produktiv ist nur Beispiel-/Pilot-Zielapp; der Editor liest ausschliesslich die von der Ziel-App gelieferte ElementRegistry und untersucht die Ziel-App-Oberflaeche nicht selbst.
+
 ## Für wen?
 Für fachliche Anwender ohne Programmierkenntnisse.
 
@@ -39,6 +41,7 @@ Der UI-Inspektor ist ausdrücklich **nicht**:
 Außerdem kein Ziel:
 - Änderungen an bestehender Fachlogik
 - Änderungen an Router, Datenbank, Print/PDF, Restarbeiten, Protokoll oder Projektverwaltung im Rahmen dieses Grundlagenpakets
+- automatische UI-Erkennung, UI-Scanning, DOM-Scan oder automatische Registry-Befuellung
 
 ## Unterschied Bestand / neue UI
 Bestand:

@@ -10,6 +10,7 @@ Aktueller Stand:
 - K19.9a abgeschlossen: `uiEditor/` enthaelt installierte UI-Editor-Artefakte; die echte BBM-Registry bleibt separat unter `src/renderer/uiEditor/bbmUiEditorRegistry.js`; `scripts/test.cjs` ist nicht direkt an installierte Artefakt-Testdateien gekoppelt.
 - K19.13a abgeschlossen: Der BBM-Artefakttest erkennt `uiEditor.global` robust ueber `id`, `uiScope`, `uiScopeId` oder den Registry-Schluessel und verlangt `uiEditor/targetAppRegistry.js` als installiertes Pflichtartefakt.
 - K19.16a abgeschlossen: Der neutrale UI-Editor-Aktivmodus zeigt den festen aktiven BBM-Registry-Scope `protokoll.topsScreen`; bei leerem Scope wird `nicht erkannt` angezeigt.
+- M21 abgeschlossen: BBM-Produktiv ist als Beispiel-/Pilot-Zielapp vom generischen UI-Editor-kit getrennt dokumentiert; `Restarbeiten` ist erreichbarer unfertiger Pilot-Scope, `Protokoll` defensiv/read-only.
 
 ## Haken-System
 - `[x]` erledigt
@@ -48,6 +49,18 @@ Aktueller Stand:
 - [x] K19.9a BBM-Testeinbindung nach Neuinstallation der UI-Editor-Artefakte trennen
 - [x] K19.13a BBM-Test an aktuelle UI-Editor-Installer-Artefakte anpassen
 - [x] K19.16a UI-Editor zeigt festen registrierten Scope aus BBM-Registry
+- [x] M21 BBM-Zielapp sauber vom generischen UI-Editor-kit trennen
+
+## Statusupdate M21
+- BBM-Produktiv ist Beispiel-/Pilot-Zielapp fuer das generische UI-Editor-kit, nicht fachliche Grundlage des Editors.
+- Der UI-Editor bleibt generisch und enthaelt keine BBM-, Restarbeiten- oder Protokoll-Fachlogik.
+- `Restarbeiten` ist in BBM erreichbar, bleibt aber fachlich/funktional unfertig und ist nur Pilot-Scope.
+- `Protokoll` ist noch nicht fertig bereinigt und fuer UI-Editor-Themen defensiv/read-only einzuordnen.
+- Die Ziel-App liefert die ElementRegistry; der Editor liest ausschliesslich diese Registry.
+- Nicht registrierte Elemente existieren fuer den Editor nicht.
+- Keine Selbstuntersuchung der Ziel-App-Oberflaeche, keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
+- Alte UI-Inspector-/Scan-Begriffe bleiben nur als historischer Kontext stehen und sind fuer neue Arbeiten keine Zielrichtung.
+- Reines Doku-/Statuspaket ohne Code-, Fachlogik-, DB-, IPC-, UI-, Protokoll- oder Restarbeiten-Funktionsaenderung.
 
 ## Statusupdate K19.16a
 - `CoreShell` uebergibt den festen aktiven Scope aus `src/renderer/uiEditor/bbmUiEditorRegistry.js` an den neutralen Runtime-Launcher.
