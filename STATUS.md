@@ -3901,3 +3901,34 @@ Wichtig:
     Restarbeit-Auswahl, keine DEV-/ENV-Aktivierung als alleinige Bedingung,
     keine Wildcard, kein localStorage/writeFile und keine Aenderung am
     `UI-Editor-kit`.
+
+### G139 - UI-Editor Hinweis/Infotext Elementbearbeitung fachlich korrigiert
+- Status: erledigt
+- Beschreibung:
+  - Der normale UI-Editor-Pfad wurde fachlich von Restarbeiten-Notizspeichern
+    auf UI-Elementbearbeitung zurueckgefuehrt.
+  - Sichtbar sind jetzt `Elementbearbeitung`, `Elementtext`,
+    `UI-Element-Speicherstatus` und der Button `Aenderungen speichern`.
+  - Diagnose-/Altspurdetails zum Restarbeiten-Notizweg sind unter
+    `Diagnose / Entwicklerdetails` eingeklappt.
+  - Repo-Pruefung: Vorhanden sind `uiEditorLayoutOverrides:*` fuer
+    Sichtbarkeits-/Layout-Overrides und `tableLayouts:*`; ein allgemeiner
+    UI-Element-Speichervertrag fuer Text- oder Eigenschaftsaenderungen fehlt.
+  - Der normale UI-Pfad bleibt deshalb blockiert mit
+    `Speichervertrag fuer UI-Elementaenderungen fehlt noch`.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_ELEMENTBEARBEITUNG_FACHKORREKTUR_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Eigenen Speichervertrag fuer UI-Elementaenderungen fachlich entscheiden,
+    bevor ein echter UI-Element-Save gebaut wird.
+- Risiken/Hinweise:
+  - Kein Produktiv-Notizspeicherweg im normalen UI-Pfad, kein
+    `window.bbmDb.restarbeitenCreateNote`, kein `restarbeiten:createNote`,
+    kein IPC-/DB-Schreiben, kein localStorage/writeFile und keine Aenderung am
+    `UI-Editor-kit`.

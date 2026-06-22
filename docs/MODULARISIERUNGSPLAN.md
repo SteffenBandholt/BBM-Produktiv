@@ -809,3 +809,20 @@ Dabei gilt:
   Restarbeit-Auswahl, keine DEV-/ENV-Aktivierung als alleinige Bedingung,
   keine Wildcard, kein localStorage-/writeFile-Weg und keine Aenderung am
   `UI-Editor-kit`.
+
+## G139: Elementbearbeitung fachlich korrigiert
+
+- Der normale Hinweis-/Infotext-Pfad im UI-Editor wurde fachlich auf
+  UI-Elementbearbeitung zurueckgefuehrt; der Restarbeiten-Notizweg ist nicht
+  mehr der Hauptspeicherpfad fuer UI-Elementaenderungen.
+- Sichtbar sind `Elementbearbeitung`, `Elementtext`,
+  `UI-Element-Speicherstatus` und der Button `Aenderungen speichern`.
+- Diagnose-/Altspurdetails wie Create-Note-Payload, Gate, Adapter und
+  Klickstatus sind unter `Diagnose / Entwicklerdetails` eingeklappt.
+- Nach Repo-Pruefung existieren `uiEditorLayoutOverrides:*` fuer
+  Sichtbarkeits-/Layout-Overrides und `tableLayouts:*`; ein allgemeiner
+  UI-Element-Speichervertrag fuer Text- oder Eigenschaftsaenderungen fehlt.
+- Deshalb bleibt der Button deaktiviert mit dem Grund
+  `Speichervertrag fuer UI-Elementaenderungen fehlt noch`; der normale UI-Pfad
+  nutzt weder `window.bbmDb.restarbeitenCreateNote` noch
+  `restarbeiten:createNote`.
