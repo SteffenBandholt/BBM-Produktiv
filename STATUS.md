@@ -3866,3 +3866,38 @@ Wichtig:
   - Sichtpruefung bleibt fuer die konkrete Route
     `Start -> Projekte -> 04-2026 / UI-Polish fuer BBM -> Restarbeiten ->
     UI-Editor` fachlich abzunehmen.
+
+### G138 - UI-Editor Hinweis/Infotext Produktiv-Save-Status abgesichert
+- Status: erledigt
+- Beschreibung:
+  - Der bestehende Hinweis-/Infotext-Produktiv-Save-Pfad bleibt auf den
+    aktivierten Speicherbutton hinter Host-Kontext, Gate, Adapter,
+    Doppelklickschutz und Duplikatschutz begrenzt.
+  - Der Save-Status macht nun Erfolg, Fehler, blockierte Zustaende und
+    `saving` eindeutiger sichtbar und testbar.
+  - Nach Erfolg werden gespeicherte `restarbeitId`, gespeicherter `noteText`,
+    Ergebnisreferenz/Notiz-ID, `persisted: true`, `previewOnly: false` und
+    der Statusmarker `success` im Klick-State gefuehrt.
+  - Nach Fehler bleiben Entwurf und Payload erhalten; sichtbar/testbar sind
+    Fehlerhinweis, Statusmarker `error`, `persisted: false` und
+    `previewOnly: true`.
+  - Waehrend `saving` bleibt ein zweiter Save-Versuch blockiert; identische
+    Payload nach Erfolg wird weiter nicht erneut gespeichert.
+  - Das neue Referenzdokument beschreibt auch, wie der Produktiv-Save
+    kontrolliert wieder gesperrt werden kann.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_STATUS_ABSICHERUNG_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - Sicht-/Fachabnahme im Electron-UI-Pfad; danach nur getrennte
+    UX-Verfeinerung, falls noetig.
+- Risiken/Hinweise:
+  - Kein neuer Speicherweg, kein Speichern beim Oeffnen, keine automatische
+    Restarbeit-Auswahl, keine DEV-/ENV-Aktivierung als alleinige Bedingung,
+    keine Wildcard, kein localStorage/writeFile und keine Aenderung am
+    `UI-Editor-kit`.

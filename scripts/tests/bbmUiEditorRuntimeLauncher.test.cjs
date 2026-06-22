@@ -205,6 +205,10 @@ const UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_ACTIVATION_REFERENCE_DOC_PATH = pa
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_AKTIVIERUNG_REFERENZSTAND.md"
 );
+const UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_STATUS_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_STATUS_ABSICHERUNG_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -5371,7 +5375,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(failingResult.ok, false);
     assert.equal(failingResult.executed, true);
     assert.equal(failingResult.persisted, false);
-    assert.equal(failingResult.previewOnly, false);
+    assert.equal(failingResult.previewOnly, true);
     assert.equal(failingResult.reason, "Testfehler");
     assert.deepEqual(failingResult.adapterResult.result, { ok: false, error: "Testfehler" });
 
@@ -5388,7 +5392,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(throwingResult.ok, false);
     assert.equal(throwingResult.executed, true);
     assert.equal(throwingResult.persisted, false);
-    assert.equal(throwingResult.previewOnly, false);
+    assert.equal(throwingResult.previewOnly, true);
     assert.equal(throwingResult.reason, "Adapter-Ausnahme");
 
     const guardedCalls = [];
@@ -6045,12 +6049,39 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(successResult.executed, true);
     assert.equal(successResult.persisted, true);
     assert.equal(successResult.previewOnly, false);
+    assert.equal(successResult.savedRestarbeitId, "restarbeit-99");
+    assert.equal(successResult.savedNoteText, noteText);
+    assert.equal(successResult.resultReference, "note-click-1");
+    assert.equal(successResult.lastSaveStatusMarker, "success");
     assert.equal(clickState.saveState, "success");
     assert.equal(clickState.lastClickStatus, "success");
+    assert.equal(clickState.lastSavedRestarbeitId, "restarbeit-99");
+    assert.equal(clickState.lastSavedNoteText, noteText);
+    assert.equal(clickState.lastSaveResultReference, "note-click-1");
+    assert.equal(clickState.lastSaveStatusMarker, "success");
     assert.equal(
       clickState.lastSavedPayloadSignature,
       "restarbeitId=restarbeit-99\nnoteText=Dies ist ein kontrollierter Speicherklick-Test."
     );
+    const successStatusText = mod.buildReadonlyHintInfotextSaveClickState({
+      value: noteText,
+      hostContextStatus: validHostContext,
+      clickState,
+      testOnly: {
+        mode: "save-click-gated-test-release",
+        writeReleaseEnabled: true,
+        gateOpen: true,
+        adapterAvailable: true,
+        useProductiveAdapter: true,
+      },
+    });
+    assert.equal(successStatusText.lastClickStatus, "success");
+    assert.equal(successStatusText.lastSaveStatusMarker, "success");
+    assert.equal(successStatusText.persisted, true);
+    assert.equal(successStatusText.previewOnly, false);
+    assert.equal(successStatusText.lastSavedRestarbeitId, "restarbeit-99");
+    assert.equal(successStatusText.lastSavedNoteText, noteText);
+    assert.equal(successStatusText.lastSaveResultReference, "note-click-1");
 
     const duplicateResult = await mod.executeReadonlyHintInfotextSaveClick({
       value: noteText,
@@ -6067,6 +6098,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(duplicateResult.blocked, true);
     assert.equal(duplicateResult.executed, false);
     assert.equal(duplicateResult.duplicateBlocked, true);
+    assert.equal(duplicateResult.lastSaveStatusMarker, "blocked");
     assert.equal(successfulCalls.length, 1);
 
     let releaseAdapter = null;
@@ -6095,6 +6127,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
       },
     });
     assert.equal(slowClickState.saveState, "saving");
+    assert.equal(slowClickState.lastClickStatus, "saving");
+    assert.equal(slowClickState.lastSaveStatusMarker, "saving");
     const secondClickWhileSaving = await mod.executeReadonlyHintInfotextSaveClick({
       value: changedNoteText,
       hostContextStatus: validHostContext,
@@ -6110,6 +6144,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(secondClickWhileSaving.blocked, true);
     assert.equal(secondClickWhileSaving.executed, false);
     assert.equal(secondClickWhileSaving.inFlightBlocked, true);
+    assert.equal(secondClickWhileSaving.lastSaveStatusMarker, "blocked");
     assert.equal(slowCalls.length, 1);
     releaseAdapter();
     const firstClickResult = await firstClick;
@@ -6144,7 +6179,11 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(failingResult.persisted, false);
     assert.equal(failingResult.previewOnly, true);
     assert.equal(failingResult.lastClickStatus, "error");
+    assert.equal(failingResult.errorMessage, "Testfehler: restarbeit-99");
+    assert.equal(failingResult.lastSaveStatusMarker, "error");
     assert.equal(failingClickState.lastSavedPayloadSignature || "", "");
+    assert.equal(failingClickState.lastSaveError, "Testfehler: restarbeit-99");
+    assert.equal(failingClickState.lastSaveStatusMarker, "error");
     const retryAfterError = mod.buildReadonlyHintInfotextSaveClickState({
       value: noteText,
       hostContextStatus: validHostContext,
@@ -6159,6 +6198,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     });
     assert.equal(retryAfterError.canStartSave, true);
     assert.equal(retryAfterError.duplicateBlocked, false);
+    assert.equal(retryAfterError.lastSaveError, "Testfehler: restarbeit-99");
+    assert.equal(retryAfterError.lastSaveStatusMarker, "error");
 
     const guardedCalls = [];
     const guardedWin = {
@@ -6882,6 +6923,46 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
         docSource.includes(required),
         true,
         `Hinweis-/Infotext-Produktiv-Save-Aktivierungsreferenz enthaelt ${required} nicht.`
+      );
+    }
+  });
+
+  await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Produktiv-Save-Status bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_STATUS_REFERENCE_DOC_PATH),
+      true,
+      "Hinweis-/Infotext-Produktiv-Save-Statusreferenz fehlt."
+    );
+    const docSource = fs.readFileSync(
+      UI_EDITOR_HINT_INFOTEXT_PRODUCTIVE_SAVE_STATUS_REFERENCE_DOC_PATH,
+      "utf8"
+    );
+
+    for (const required of [
+      "G138",
+      "window.bbmDb.restarbeitenCreateNote",
+      "restarbeiten:createNote",
+      "restarbeitId",
+      "noteText",
+      "saving",
+      "success",
+      "error",
+      "persisted: true",
+      "previewOnly: false",
+      "persisted: false",
+      "previewOnly: true",
+      "Doppelklickschutz",
+      "Duplikatschutz",
+      "Notiz-ID",
+      "Statusmarker",
+      "kein localStorage",
+      "kein writeFile",
+      "Speichern ohne Button-Klick",
+    ]) {
+      assert.equal(
+        docSource.includes(required),
+        true,
+        `Hinweis-/Infotext-Produktiv-Save-Statusreferenz enthaelt ${required} nicht.`
       );
     }
   });

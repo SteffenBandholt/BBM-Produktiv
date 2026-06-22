@@ -2272,6 +2272,20 @@ function buildReadonlyHintInfotextSavePayloadSignature({
   return `restarbeitId=${restarbeitId}\nnoteText=${noteText}`;
 }
 
+function getReadonlyHintInfotextSaveResultReference(result = null) {
+  if (!result || typeof result !== "object") return "";
+  const candidates = [
+    result.note?.id,
+    result.note?.noteId,
+    result.note?.uuid,
+    result.noteId,
+    result.id,
+    result.reference,
+    result.resultId,
+  ];
+  return String(candidates.find((candidate) => String(candidate || "").trim()) || "").trim();
+}
+
 function buildReadonlyHintInfotextSaveGuardState({
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
@@ -2547,11 +2561,21 @@ function buildReadonlyHintInfotextSaveClickState({
     lastClickStatus === "success"
     && Boolean(guardState.currentPayloadSignature)
     && guardState.currentPayloadSignature === guardState.lastSavedPayloadSignature;
+  const lastSavedRestarbeitId = String(normalizedClickState.lastSavedRestarbeitId || "").trim();
+  const lastSavedNoteText = String(normalizedClickState.lastSavedNoteText || "");
+  const lastSaveResultReference = String(normalizedClickState.lastSaveResultReference || "").trim();
+  const lastSaveStatusMarker = String(normalizedClickState.lastSaveStatusMarker || "").trim();
+  const lastSaveError = String(normalizedClickState.lastSaveError || "").trim();
   return Object.freeze({
     clickPrepared: true,
     clickPathBlocked: clickBlocked,
     lastClickStatus,
     lastMessage: normalizedClickState.lastSaveResultReason || "",
+    lastSavedRestarbeitId,
+    lastSavedNoteText,
+    lastSaveResultReference,
+    lastSaveStatusMarker,
+    lastSaveError,
     buttonEnabled: buttonState.buttonEnabled === true,
     gateOpen: buttonState.gateOpen === true,
     payloadComplete: buttonState.payloadComplete === true,
@@ -2591,6 +2615,7 @@ async function executeReadonlyHintInfotextSaveClick({
   if (clickModel.clickPathBlocked === true) {
     mutableClickState.lastClickStatus = "blocked";
     mutableClickState.lastSaveResultReason = clickModel.reason;
+    mutableClickState.lastSaveStatusMarker = "blocked";
     return Object.freeze({
       ok: false,
       blocked: true,
@@ -2609,11 +2634,14 @@ async function executeReadonlyHintInfotextSaveClick({
       executed: false,
       persisted: false,
       previewOnly: true,
+      lastSaveStatusMarker: "blocked",
     });
   }
 
   mutableClickState.saveState = "saving";
   mutableClickState.lastClickStatus = "saving";
+  mutableClickState.lastSaveStatusMarker = "saving";
+  mutableClickState.lastSaveError = "";
   const payload = Object.freeze({
     restarbeitId: hostContextStatus.restarbeitId,
     noteText: String(value == null ? "" : value).trim(),
@@ -2628,6 +2656,10 @@ async function executeReadonlyHintInfotextSaveClick({
     mutableClickState.lastClickStatus = "success";
     mutableClickState.lastSaveResultReason = adapterResult.reason;
     mutableClickState.lastSavedPayloadSignature = currentPayloadSignature;
+    mutableClickState.lastSavedRestarbeitId = payload.restarbeitId;
+    mutableClickState.lastSavedNoteText = payload.noteText;
+    mutableClickState.lastSaveResultReference = getReadonlyHintInfotextSaveResultReference(adapterResult.result || adapterResult.note || null);
+    mutableClickState.lastSaveStatusMarker = "success";
     return Object.freeze({
       ok: true,
       blocked: false,
@@ -2648,11 +2680,17 @@ async function executeReadonlyHintInfotextSaveClick({
       executed: adapterResult.executed === true,
       persisted: adapterResult.persisted === true,
       previewOnly: adapterResult.previewOnly === true,
+      savedRestarbeitId: payload.restarbeitId,
+      savedNoteText: payload.noteText,
+      resultReference: mutableClickState.lastSaveResultReference,
+      lastSaveStatusMarker: "success",
     });
   }
   mutableClickState.saveState = "error";
   mutableClickState.lastClickStatus = "error";
   mutableClickState.lastSaveResultReason = adapterResult.reason;
+  mutableClickState.lastSaveError = adapterResult.reason;
+  mutableClickState.lastSaveStatusMarker = "error";
   return Object.freeze({
     ok: false,
     blocked: adapterResult.blocked === true,
@@ -2673,6 +2711,8 @@ async function executeReadonlyHintInfotextSaveClick({
     executed: adapterResult.executed === true,
     persisted: false,
     previewOnly: true,
+    errorMessage: adapterResult.reason,
+    lastSaveStatusMarker: "error",
   });
 }
 
@@ -2702,6 +2742,11 @@ function formatReadonlyHintInfotextSaveClickStateText(
     `Hinweistext gültig: ${clickModel.hintTextValid ? "ja" : "nein"}`,
     `Grund: ${clickModel.reason}`,
     `Letzte Meldung: ${clickModel.lastMessage || "nicht vorhanden"}`,
+    `Letzter Save-Statusmarker: ${clickModel.lastSaveStatusMarker || clickModel.lastClickStatus}`,
+    `Gespeicherte restarbeitId: ${clickModel.lastSavedRestarbeitId || "nicht vorhanden"}`,
+    `Gespeicherter noteText: ${clickModel.lastSavedNoteText || "nicht vorhanden"}`,
+    `Ergebnisreferenz: ${clickModel.lastSaveResultReference || "nicht vorhanden"}`,
+    `Fehlerhinweis: ${clickModel.lastSaveError || "nicht vorhanden"}`,
     `persisted: ${clickModel.persisted ? "true" : "false"}`,
     `previewOnly: ${clickModel.previewOnly ? "true" : "false"}`,
   ].join("\n");
@@ -2834,7 +2879,7 @@ async function executeReadonlyHintInfotextProductiveSaveAdapter({ payload = null
       result: response || null,
       executed: true,
       persisted: false,
-      previewOnly: false,
+      previewOnly: true,
     });
   } catch (error) {
     return Object.freeze({
@@ -2847,7 +2892,7 @@ async function executeReadonlyHintInfotextProductiveSaveAdapter({ payload = null
       payload: savePayload,
       executed: true,
       persisted: false,
-      previewOnly: false,
+      previewOnly: true,
     });
   }
 }
@@ -3745,7 +3790,7 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
   button.addEventListener("mousedown", stopPreviewPanelEvent);
   button.addEventListener("click", (event) => {
     stopPreviewPanelEvent(event);
-    executeReadonlyHintInfotextSaveClick({
+    const savePromise = executeReadonlyHintInfotextSaveClick({
       value: getReadonlyHintInfotextDraftText(state),
       hostContextStatus: getReadonlyHintInfotextHostContextStatus(state),
       clickState: state.hintInfotextSaveClickState,
@@ -3753,7 +3798,9 @@ function appendReadonlyHintInfotextStoragePreview(doc, panel, state = {}) {
         win: state.win || null,
         clickState: state.hintInfotextSaveClickState,
       },
-    }).finally(() => {
+    });
+    updateReadonlyHintInfotextStoragePreviews(state, getReadonlyHintInfotextDraftText(state));
+    savePromise.finally(() => {
       updateReadonlyHintInfotextStoragePreviews(state, getReadonlyHintInfotextDraftText(state));
     });
   });

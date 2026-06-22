@@ -784,3 +784,28 @@ Dabei gilt:
 - Kein automatisches Speichern beim Oeffnen, keine automatische
   Restarbeit-Auswahl, keine Wildcard, kein localStorage-/writeFile-Weg und
   keine Aenderung am `UI-Editor-kit`.
+
+## G138: Produktiv-Save-Status abgesichert
+
+- Der vorhandene Hinweis-/Infotext-Produktiv-Save-Pfad bleibt auf den
+  aktivierten Speicherbutton hinter Host-Kontext, Gate, Produktiv-Save-
+  Adapter, Doppelklickschutz und Duplikatschutz begrenzt.
+- Sichtbar/testbar sind jetzt die Statuszustaende vor dem Save, `saving`,
+  `success`, `error`, blockiert und Duplikat.
+- Nach Erfolg fuehrt der Klick-State gespeicherte `restarbeitId`,
+  gespeicherten `noteText`, Ergebnisreferenz/Notiz-ID, Statusmarker
+  `success`, `persisted: true` und `previewOnly: false`.
+- Nach Fehler fuehrt der Klick-State Fehlerhinweis, Statusmarker `error`,
+  `persisted: false` und `previewOnly: true`; Entwurf und Payload bleiben
+  erhalten und ein Retry bleibt moeglich, solange kein Erfolgssignatur-
+  Duplikat existiert.
+- Waehrend `saving` bleibt ein zweiter Save-Versuch blockiert; eine identische
+  Payload nach Erfolg wird weiter nicht erneut gespeichert, ein geaenderter
+  Hinweistext kann bei weiter gueltigen Bedingungen erneut gespeichert werden.
+- `docs/UI_EDITOR_HINWEIS_INFOTEXT_PRODUKTIV_SAVE_STATUS_ABSICHERUNG_REFERENZSTAND.md`
+  dokumentiert den Statusvertrag und den kontrollierten Rueckweg zum
+  gesperrten Produktiv-Save.
+- Kein neuer Speicherweg, kein Speichern beim Oeffnen, keine automatische
+  Restarbeit-Auswahl, keine DEV-/ENV-Aktivierung als alleinige Bedingung,
+  keine Wildcard, kein localStorage-/writeFile-Weg und keine Aenderung am
+  `UI-Editor-kit`.
