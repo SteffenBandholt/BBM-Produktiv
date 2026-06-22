@@ -3,6 +3,8 @@
 ## 1. Architekturziel
 Der UI-Inspektor wird als neues exportierbares Modul aufgebaut.
 
+M21-Klarstellung: Diese Datei enthaelt historischen UI-Inspektor-Kontext. Verbindliche Zielrichtung fuer neue Arbeiten ist das generische UI-Editor-kit. BBM-Produktiv ist nur Beispiel-/Pilot-Zielapp; der Editor bleibt frei von BBM-, Restarbeiten- und Protokoll-Fachlogik.
+
 Zielbild:
 - nicht BBM-spezifisch
 - kein Umbau des Tabellen-Kalibrators zur Hauptlösung
@@ -43,6 +45,13 @@ Wichtig:
 **Rolle im System:**
 - fachliche Erlaubnisliste, welche Stellschrauben pro Bereich sichtbar und änderbar sind
 - keine direkte Darstellung und keine Persistenzlogik
+
+**M21-Regel:**
+- Die Ziel-App liefert die ElementRegistry.
+- Der Editor liest ausschliesslich diese Registry.
+- Nicht registrierte Elemente existieren fuer den Editor nicht.
+- Der Editor darf die Ziel-App-Oberflaeche nicht selbst untersuchen.
+- Keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
 
 ### 2.3 Overlay
 **Aufgaben:**
@@ -211,6 +220,8 @@ Typische Einstellungen:
 - Bereiche müssen nachträglich erkannt und markiert werden
 - Inspektor hilft beim Sichtbarmachen und kontrollierten Einstellen
 - Adapter und Landkarte dokumentieren nachträglich, was fachlich anfassbar ist
+
+M21-Status: Diese Bestandspassage ist historisch. "Erkannt" bedeutet keine automatische Bestandserkennung und keinen DOM-Scan. Bestehende bekannte Elemente duerfen nur bewusst, explizit und pruefbar in der ElementRegistry der Ziel-App beschrieben werden.
 
 ### Neue UI
 - bei UI-Neubau muss eine Bereichs-Landkarte mitgeliefert werden

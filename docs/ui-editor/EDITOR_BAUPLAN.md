@@ -14,17 +14,31 @@ Der Editor erfindet keine Elemente.
 Der Editor arbeitet nur mit der freigegebenen UI-Elementliste.
 Der Editor analysiert keine bestehende UI und migriert keine Legacy-UI automatisch.
 
+## M21-Kontext BBM-Produktiv
+
+BBM-Produktiv ist fuer dieses Kit Beispiel-/Pilot-Zielapp, nicht fachliche Grundlage des Editors.
+
+Der UI-Editor bleibt generisch und enthaelt keine BBM-, Restarbeiten- oder Protokoll-Fachlogik.
+
+Aktuelle BBM-Einordnung:
+- `Restarbeiten` ist erreichbar, aber fachlich/funktional unfertig und nur Pilot-Scope.
+- `Protokoll` ist noch nicht fertig bereinigt und fuer UI-Editor-Themen defensiv/read-only zu behandeln.
+
 ## 2. Grundprinzip
 
 Eine editorfaehige Anwendungs-App muss ihre UI beim Bau beschreiben.
 
 Diese Beschreibung besteht aus einer klassifizierten UI-Elementliste.
 
+Im M21-Sprachgebrauch ist diese Liste die von der Ziel-App gelieferte ElementRegistry.
+
 Diese Liste enthaelt alle Elemente, die der Editor sehen, pruefen oder veraendern darf.
 
 Nicht registrierte Elemente gelten fuer den Editor als nicht vorhanden.
 
 Bestehende UI wird nicht nachtraeglich per Bestandsanalyse, UI-Erkennung oder UI-Scan in eine automatische UI-Elementliste ueberfuehrt.
+
+Der Editor liest ausschliesslich die ElementRegistry der Ziel-App. Er untersucht die Ziel-App-Oberflaeche nicht selbst und befuellt keine Registry automatisch.
 
 ## 3. Eigenstaendige Editor-App
 

@@ -22,6 +22,15 @@ Pflichtreihenfolge:
 - Zielgruppe: fachlicher Anwender ohne Programmierkenntnisse.
 - Bedienziel: echte UI-Bereiche sichtbar machen, anklicken, verständliche Stellschrauben anzeigen, später speichern/zurücksetzen.
 
+### M21-Klarstellung
+- Der Begriff UI-Inspector/UI-Inspektor beschreibt hier historischen Projektkontext; verbindliche Zielrichtung ist das generische UI-Editor-kit.
+- BBM-Produktiv ist nur Beispiel-/Pilot-Zielapp, nicht fachliche Grundlage des Editors.
+- `Restarbeiten` ist erreichbar, aber fachlich/funktional unfertig und nur Pilot-Scope.
+- `Protokoll` ist noch nicht fertig bereinigt und fuer UI-Editor-Themen defensiv/read-only einzuordnen.
+- Die Ziel-App liefert die ElementRegistry; der Editor liest ausschliesslich diese Registry.
+- Nicht registrierte Elemente existieren fuer den Editor nicht.
+- Historische Begriffe wie UI-Inspector, DOM-Scan, UI-Scanning, automatische Erkennung oder automatische Registry-Befuellung sind keine Zielrichtung und fuer neue Arbeiten verboten.
+
 ## 4. Aktueller Projektstand
 - M1.1 Projektfundament erledigt
 - M2 Arbeitsvertrag erledigt
@@ -75,6 +84,7 @@ Nicht fortführen:
 - Tabellen-Kalibrator als Bedienoberfläche des UI-Inspektors
 - direkte UI-Frickelei als Ersatz für den Inspektor
 - BBM-Fachlogik im Inspector-Core
+- DOM-Scan, UI-Scanning, automatische UI-Erkennung oder automatische Registry-Befuellung
 - vage Aufgaben wie „mach schöner“
 - Codearbeiten ohne Aufgabenheft-Update
 

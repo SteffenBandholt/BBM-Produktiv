@@ -5,6 +5,8 @@
 - Er ist noch kein Code.
 - Er verhindert, dass der UI-Inspektor wieder als zu großes Paket begonnen wird.
 
+M21-Klarstellung: Dieser Plan ist historischer UI-Inspektor-Kontext. Neue Arbeiten folgen dem generischen UI-Editor-kit: Die Ziel-App liefert die ElementRegistry, der Editor liest ausschliesslich diese Registry, und es gibt keine automatische UI-Erkennung, kein UI-Scanning, keinen DOM-Scan und keine automatische Registry-Befuellung.
+
 ## 2. Grundregel der Umsetzung
 - Ein Meilenstein = ein klarer Zweck.
 - Ein Paket = ein Branch = ein Commit = ein PR/Merge.
@@ -13,6 +15,8 @@
 - Kein Tabellen-Kalibrator-Umbau.
 - Kein Restarbeiten-Umbau als Abkürzung.
 - Aufgabenheft wird nach jedem Paket aktualisiert.
+- `Restarbeiten` ist in BBM erreichbar, aber fachlich/funktional unfertig und nur Pilot-Scope.
+- `Protokoll` ist noch nicht fertig bereinigt und fuer UI-Editor-Themen defensiv/read-only.
 
 ## 3. Meilensteinplan ab M6
 

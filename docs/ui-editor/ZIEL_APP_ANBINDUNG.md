@@ -8,6 +8,12 @@ Eine Ziel-App kann eine bestehende Anwendung oder eine neue Anwendung sein.
 
 Der UI-Editor bleibt eine eigenstaendige Editor-App. Er kann in die Ziel-App als Modul eingebunden werden, arbeitet aber nur ueber definierte Schnittstellen und Regeln.
 
+Aktuelle BBM-Einordnung nach M21:
+- BBM-Produktiv ist Beispiel-/Pilot-Zielapp fuer das generische UI-Editor-kit.
+- `Restarbeiten` ist in BBM erreichbar, aber fachlich/funktional unfertig und nur Pilot-Scope.
+- `Protokoll` ist noch nicht fertig bereinigt und fuer UI-Editor-Themen defensiv/read-only einzuordnen.
+- Der UI-Editor bleibt generisch und enthaelt keine BBM-, Restarbeiten- oder Protokoll-Fachlogik.
+
 ## 2. Grundsatz
 
 Die Ziel-App bleibt fachlich verantwortlich.
@@ -16,7 +22,15 @@ Der UI-Editor darf keine Fachlogik uebernehmen, keine Fachdaten veraendern und k
 
 Der UI-Editor arbeitet nur mit einer von der Ziel-App gelieferten, klassifizierten UI-Elementliste.
 
+Im M21-Sprachgebrauch ist diese Liste die ElementRegistry der Ziel-App.
+
+Die Ziel-App liefert die ElementRegistry.
+
+Der Editor liest ausschliesslich diese Registry.
+
 Nicht registrierte Elemente sind fuer den Editor nicht vorhanden.
+
+Der Editor darf die Ziel-App-Oberflaeche nicht selbst untersuchen.
 
 Die Regelpaket-Installation ist nur ein Ziel-App-Regelpaket-Bootstrap. Sie analysiert, scannt, erkennt, registriert oder migriert keine bestehende UI.
 
@@ -174,6 +188,7 @@ Die Ziel-App darf dem Editor nicht erlauben:
 - bestehende UI zu analysieren
 - bestehende UI zu scannen
 - eine automatische Bestandserkennung oder UI-Elementliste zu erzeugen
+- eine ElementRegistry automatisch zu befuellen
 - bestehende Legacy-UIs automatisch zu migrieren
 - nachtraegliche bewusste Registrierung als automatische Analyse, Scan, Erkennung oder Migration auszufuehren
 - Datenbankaktionen auszufuehren

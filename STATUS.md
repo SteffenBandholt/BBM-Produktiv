@@ -17,6 +17,16 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M21 BBM als Zielapp sauber vom generischen UI-Editor getrennt:
+  - BBM-Produktiv ist Beispiel-/Pilot-Zielapp fuer das generische UI-Editor-kit.
+  - Der UI-Editor bleibt generisch und enthaelt keine BBM-, Restarbeiten- oder Protokoll-Fachlogik.
+  - `Restarbeiten` ist in BBM erreichbar, bleibt aber fachlich/funktional unfertig und ist der aktuelle Pilot-Scope.
+  - `Protokoll` ist noch nicht fertig bereinigt und wird fuer UI-Editor-Themen defensiv/read-only behandelt.
+  - Registry-Prinzip festgeschrieben: Die Ziel-App liefert die ElementRegistry; der Editor liest ausschliesslich diese Registry; nicht registrierte Elemente existieren fuer den Editor nicht.
+  - Keine Selbstuntersuchung der Ziel-App-Oberflaeche, keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung.
+  - Reines Doku-/Statuspaket; keine Code-, Fachlogik-, DB-, IPC-, UI-, Protokoll- oder Restarbeiten-Funktionsaenderung.
+  - Naechster offener Schritt: fachliche Sichtung der Doku-Klarstellung; weitere Umbauten nur mit gesondertem Auftrag.
+
 - M2.3 Restarbeiten Notizhistorie und Notiz-Popup umgesetzt:
   - Der Notiz-Button in der Restarbeiten-Editbox ist fuer gespeicherte Datensaetze aktiv und oeffnet ein einfaches Popup mit Historie, leerem Zustand, Eingabefeld, Hinzufuegen, Drucken und Schliessen.
   - Neue Notizen werden nur mit nicht leerem Text gespeichert; das Popup bleibt offen und aktualisiert die Historie.

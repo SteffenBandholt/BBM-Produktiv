@@ -20,10 +20,14 @@
 
 **BegrÃ¼ndung:** So bleibt das Modul exportierbar, wÃ¤hrend App-Spezifika sauber ausgelagert werden.
 
+**M21-Klarstellung:** Fuer das generische UI-Editor-kit ist die von der Ziel-App gelieferte ElementRegistry verbindlich. Der Editor liest ausschliesslich diese Registry; nicht registrierte Elemente existieren fuer ihn nicht. BBM-Produktiv ist nur Beispiel-/Pilot-Zielapp.
+
 ## Entscheidung 005
 **Beschluss:** Bestehende UIs werden nachtrÃ¤glich erkannt/markiert; neue UIs werden kÃ¼nftig von Anfang an mit Bereichs-Landkarte gebaut.
 
 **BegrÃ¼ndung:** Das erlaubt BestandseinfÃ¼hrung und zukÃ¼nftige StabilitÃ¤t Ã¼ber einen gemeinsamen Arbeitsansatz.
+
+**M21-Status:** Historisch. Keine automatische UI-Erkennung, kein UI-Scanning, kein DOM-Scan und keine automatische Registry-Befuellung als Zielrichtung. Bestehende bekannte Elemente duerfen nur bewusst, explizit und pruefbar in der ElementRegistry der Ziel-App beschrieben werden.
 
 ## Entscheidung 006
 **Beschluss:** Der UI-Inspektor erhÃ¤lt einen verbindlichen Arbeitsvertrag.
@@ -81,10 +85,14 @@
 
 **BegrÃƒÂ¼ndung:** Der erste Schritt soll nur den aktuellen Screen scannen und den Zustand sichtbar machen, ohne Auswahl, Bearbeitung, Speicherung oder Overlay-Logik zu erweitern.
 
+**M21-Status:** Historisch. Scan-Begriffe beschreiben hier nur den alten Stand. Fuer neue Arbeiten gilt: keine Selbstuntersuchung der Ziel-App-Oberflaeche und keine automatische UI-Erkennung.
+
 ## Entscheidung 016
 **Beschluss:** Der UI-Editor-Scan bewertet nur Pflichtmarker als entscheidend, behandelt `restarbeiten.header` als optional und fasst Marker mit `::`-Suffixen als eine fachliche Basis-ID zusammen.
 
 **Begründung:** Damit der Status ehrlich bleibt, Mehrfachmarker nicht als fehlend zählen und ein nicht im Live-DOM verankerter Header nicht künstlich als Pflichtbedingung in den Scan eingeht.
+
+**M21-Status:** Historisch. Eine Registry darf nicht automatisch aus DOM-Markern befuellt werden; verbindlich ist nur die explizit gelieferte ElementRegistry der Ziel-App.
 ## Entscheidung 017
 **Beschluss:** M13.4b.1 verdrahtet im sichtbaren Scanpanel nur die Auswahlmodus-Schalter Rahmen/Feld/Einzelelement.
 
