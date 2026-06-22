@@ -3967,3 +3967,34 @@ Wichtig:
   - Kein neuer IPC-/DB-Kanal, kein localStorage/writeFile, kein Speichern beim
     Oeffnen, keine Wildcard, kein Default-true und keine Aenderung am
     `UI-Editor-kit`.
+
+### G141 - UI-Editor Element-Speichervertrag technisch vorbereitet
+- Status: erledigt
+- Beschreibung:
+  - Der BBM-Launcher enthaelt jetzt ein lokales Geruest fuer den
+    UI-Element-Speichervertrag, ohne einen produktiven IPC-/DB-Schreibweg zu
+    aktivieren.
+  - `validateUiEditorElementSavePayload` prueft Pflichtfelder,
+    Allowlist, erlaubte `changes`, unbekannte Felder und Notiz-/Diagnosefelder.
+  - Erlaubte Surface: `restarbeiten.ui.main`.
+  - Erlaubte Elementtypen: `Hinweis / Infotext`, `label`.
+  - Erlaubte Changes: `text`, `label`, `visible`, `order`.
+  - Fehlt der echte Vertrag, blockiert das Geruest mit
+    `UI-Element-Speichervertrag noch nicht implementiert`.
+  - Der isolierte Positivpfad ist nur testseitig per Stub-Freigabe erreichbar.
+- Betroffene Dateien:
+  - `src/renderer/uiEditor/BbmUiEditorRuntimeLauncher.js`
+  - `scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`
+  - `docs/UI_EDITOR_ELEMENT_SAVE_GERUEST_REFERENZSTAND.md`
+  - `docs/MODULARISIERUNGSPLAN.md`
+  - `STATUS.md`
+- Commit:
+  - nicht erstellt; Arbeitsstand bleibt uncommitted.
+- Naechster offener Schritt:
+  - G142: echten Repo-/IPC-/Preload-Vertrag als getrenntes Paket vorbereiten,
+    weiterhin mit Registry-Abgleich und ohne Restarbeiten-Notizweg.
+- Risiken/Hinweise:
+  - Kein neuer produktiver Save, kein Restarbeiten-Notizspeichern, kein
+    `restarbeitenCreateNote`, kein automatisches Speichern beim Oeffnen,
+    kein localStorage/writeFile, keine Wildcard und keine Aenderung am
+    `UI-Editor-kit`.

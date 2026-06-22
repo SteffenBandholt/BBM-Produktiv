@@ -218,6 +218,10 @@ const UI_EDITOR_ELEMENT_SAVE_CONTRACT_REFERENCE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_ELEMENT_SAVE_VERTRAG_REFERENZSTAND.md"
 );
+const UI_EDITOR_ELEMENT_SAVE_SCAFFOLD_REFERENCE_DOC_PATH = path.join(
+  __dirname,
+  "../../docs/UI_EDITOR_ELEMENT_SAVE_GERUEST_REFERENZSTAND.md"
+);
 const UI_EDITOR_HINT_INFOTEXT_HOST_CONTEXT_OPTIONAL_RECEIVE_DOC_PATH = path.join(
   __dirname,
   "../../docs/UI_EDITOR_HINWEIS_INFOTEXT_HOST_KONTEXT_OPTIONALE_AUFNAHME_REFERENZSTAND.md"
@@ -6995,6 +6999,134 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(launcherSource.includes('handle("restarbeiten:createNote"'), false);
     assert.equal(preloadSource.includes("uiEditorSaveElementOverride"), false);
     assert.equal(preloadSource.includes("uiEditorElementOverrides:save"), false);
+  });
+
+  await run("BBM UI-Editor-Runtime: UI-Element-Save-Geruest validiert Payloads und bleibt standardmaessig blockiert", async () => {
+    const mod = await importEsmFromFile(RUNTIME_PATH);
+    assert.equal(typeof mod.validateUiEditorElementSavePayload, "function");
+    assert.equal(typeof mod.executeUiEditorElementSaveContract, "function");
+    assert.equal(typeof mod.buildReadonlyHintInfotextUiElementSavePayload, "function");
+    assert.equal(typeof mod.isUiEditorElementSaveSurfaceAllowed, "function");
+    assert.equal(typeof mod.isUiEditorElementSaveElementTypeAllowed, "function");
+
+    const validPayload = {
+      projectId: "04-2026",
+      surfaceId: "restarbeiten.ui.main",
+      elementId: "restarbeiten.hinweisInfotext.text",
+      elementType: "Hinweis / Infotext",
+      changes: {
+        text: "Neuer Elementtext",
+      },
+    };
+    const validResult = mod.validateUiEditorElementSavePayload(validPayload);
+    assert.equal(validResult.ok, true);
+    assert.deepEqual(validResult.normalizedPayload.changes, { text: "Neuer Elementtext" });
+    assert.equal(mod.isUiEditorElementSaveSurfaceAllowed("restarbeiten.ui.main"), true);
+    assert.equal(mod.isUiEditorElementSaveSurfaceAllowed("unknown.surface"), false);
+    assert.equal(mod.isUiEditorElementSaveElementTypeAllowed("Hinweis / Infotext"), true);
+    assert.equal(mod.isUiEditorElementSaveElementTypeAllowed("unbekannt"), false);
+
+    for (const [label, payload, expected] of [
+      ["projectId", { ...validPayload, projectId: "" }, "projectId fehlt"],
+      ["surfaceId", { ...validPayload, surfaceId: "" }, "surfaceId fehlt"],
+      ["elementId", { ...validPayload, elementId: "" }, "elementId fehlt"],
+      ["changes", { ...validPayload, changes: {} }, "changes ist leer"],
+      ["surface", { ...validPayload, surfaceId: "unknown.surface" }, "Surface nicht erlaubt"],
+      ["elementType", { ...validPayload, elementType: "unbekannt" }, "Elementtyp nicht erlaubt"],
+      ["noteText", { ...validPayload, noteText: "Notiztext" }, "noteText ist fuer UI-Element-Speicherung nicht erlaubt"],
+      ["changes.noteText", { ...validPayload, changes: { noteText: "Notiztext" } }, "Unbekannte Aenderung: noteText"],
+    ]) {
+      const result = mod.validateUiEditorElementSavePayload(payload);
+      assert.equal(result.ok, false, `${label} muesste blockiert sein.`);
+      assert.equal(result.errors.includes(expected), true, `${label} enthaelt ${expected} nicht.`);
+    }
+
+    const noContractResult = await mod.executeUiEditorElementSaveContract({ payload: validPayload });
+    assert.equal(noContractResult.ok, false);
+    assert.equal(noContractResult.blocked, true);
+    assert.equal(noContractResult.executed, false);
+    assert.equal(noContractResult.reason, "UI-Element-Speichervertrag noch nicht implementiert");
+    assert.equal(noContractResult.persisted, false);
+    assert.equal(noContractResult.previewOnly, true);
+
+    const calls = [];
+    const stubResult = await mod.executeUiEditorElementSaveContract({
+      payload: validPayload,
+      testOnly: {
+        mode: "ui-element-save-contract-stub-test",
+        allowExecute: true,
+        adapter: async (payload) => {
+          calls.push(payload);
+          return { ok: true, id: "ui-element-save-1" };
+        },
+      },
+    });
+    assert.equal(stubResult.ok, true);
+    assert.equal(stubResult.executed, true);
+    assert.equal(stubResult.persisted, true);
+    assert.equal(stubResult.previewOnly, false);
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].projectId, "04-2026");
+    assert.equal(calls[0].surfaceId, "restarbeiten.ui.main");
+    assert.equal(calls[0].elementId, "restarbeiten.hinweisInfotext.text");
+    assert.equal(calls[0].elementType, "Hinweis / Infotext");
+    assert.deepEqual(calls[0].changes, { text: "Neuer Elementtext" });
+
+    const hostContextStatus = mod.buildReadonlyHintInfotextHostContextStatusModel({
+      projectId: "04-2026",
+      restarbeitId: "restarbeit-1",
+      targetContext: "Restarbeiten",
+      targetSurfaceId: "restarbeiten.ui.main",
+      targetLabel: "Restarbeit 1",
+      elementType: "Hinweis / Infotext",
+    });
+    const builtPayload = mod.buildReadonlyHintInfotextUiElementSavePayload({
+      value: "Direkter Elementtext",
+      hostContextStatus,
+    });
+    assert.equal(builtPayload.projectId, "04-2026");
+    assert.equal(builtPayload.surfaceId, "restarbeiten.ui.main");
+    assert.equal(builtPayload.elementType, "Hinweis / Infotext");
+    assert.deepEqual(builtPayload.changes, { text: "Direkter Elementtext" });
+
+    const source = fs.readFileSync(RUNTIME_PATH, "utf8");
+    assert.equal(source.includes("window.bbmDb.restarbeitenCreateNote("), false);
+    assert.equal(source.includes(".restarbeitenCreateNote("), false);
+    assert.equal(source.includes('invoke("restarbeiten:createNote"'), false);
+    assert.equal(source.match(/executeUiEditorElementSaveContract\s*\(/g)?.length, 1);
+  });
+
+  await run("BBM UI-Editor-Runtime: UI-Element-Save-Geruest bleibt dokumentiert", async () => {
+    assert.equal(
+      fs.existsSync(UI_EDITOR_ELEMENT_SAVE_SCAFFOLD_REFERENCE_DOC_PATH),
+      true,
+      "UI-Editor-Element-Save-Geruest-Referenz fehlt."
+    );
+    const docSource = fs.readFileSync(UI_EDITOR_ELEMENT_SAVE_SCAFFOLD_REFERENCE_DOC_PATH, "utf8");
+
+    for (const required of [
+      "G141",
+      "validateUiEditorElementSavePayload",
+      "projectId",
+      "surfaceId",
+      "elementId",
+      "elementType",
+      "changes",
+      "text",
+      "label",
+      "visible",
+      "order",
+      "restarbeiten.ui.main",
+      "Hinweis / Infotext",
+      "restarbeitenCreateNote",
+      "UI-Element-Speichervertrag noch nicht implementiert",
+      "uiEditorSaveElementOverride",
+      "kein localStorage",
+      "kein writeFile",
+      "G142",
+    ]) {
+      assert.equal(docSource.includes(required), true, `UI-Editor-Element-Save-Geruest-Referenz enthaelt ${required} nicht.`);
+    }
   });
 
   await run("BBM UI-Editor-Runtime: Hinweis-/Infotext-Host-Kontext-Abschlusscheck bleibt dokumentiert", async () => {

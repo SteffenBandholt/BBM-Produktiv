@@ -848,3 +848,24 @@ Dabei gilt:
   getrennt umsetzen.
 - Der aktuelle UI-Pfad bleibt editierbar, aber Speichern bleibt blockiert,
   bis dieser Vertrag implementiert und explizit freigegeben ist.
+
+## G141: UI-Element-Save-Geruest technisch vorbereitet
+
+- Der BBM-Launcher enthaelt jetzt ein lokales technisches Geruest fuer den
+  UI-Element-Speichervertrag, ohne einen produktiven IPC-/DB-Schreibweg zu
+  aktivieren.
+- Zentral vorbereitet sind `validateUiEditorElementSavePayload`,
+  `buildReadonlyHintInfotextUiElementSavePayload`,
+  `executeUiEditorElementSaveContract`,
+  `isUiEditorElementSaveSurfaceAllowed` und
+  `isUiEditorElementSaveElementTypeAllowed`.
+- Die Allowlist bleibt eng: Surface `restarbeiten.ui.main`, Elementtypen
+  `Hinweis / Infotext` und `label`; erlaubte Changes sind `text`, `label`,
+  `visible` und `order`.
+- Fehlende Pflichtfelder, leere `changes`, unbekannte Surface, unbekannter
+  Elementtyp, Diagnosefelder und Notizfelder wie `noteText` werden blockiert.
+- Wenn `uiEditorSaveElementOverride` noch nicht implementiert ist, liefert
+  das Geruest `UI-Element-Speichervertrag noch nicht implementiert`.
+- Ein positiver Save ist nur testseitig mit explizitem Stub-Modus moeglich;
+  der normale UI-Pfad bleibt blockiert und nutzt keinen
+  `restarbeitenCreateNote`-/`restarbeiten:createNote`-Weg.

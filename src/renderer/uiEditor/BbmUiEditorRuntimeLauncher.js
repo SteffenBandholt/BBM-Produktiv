@@ -84,6 +84,7 @@ const READONLY_HINT_INFOTEXT_STORAGE_CHECK_TARGET_SURFACE_LINE = "Ziel-Surface: 
 const READONLY_HINT_INFOTEXT_ELEMENT_SAVE_STATUS_TITLE = "UI-Element-Speicherstatus";
 const READONLY_HINT_INFOTEXT_ELEMENT_SAVE_TARGET_LINE = "Speicherziel: UI-Element-Konfiguration";
 const READONLY_HINT_INFOTEXT_ELEMENT_SAVE_CONTRACT_REASON = "Speichervertrag für UI-Elementänderungen fehlt noch";
+const UI_EDITOR_ELEMENT_SAVE_CONTRACT_NOT_IMPLEMENTED_REASON = "UI-Element-Speichervertrag noch nicht implementiert";
 const READONLY_HINT_INFOTEXT_NOTE_SAVE_NOT_USED_LINE = "Restarbeiten-Notizspeicherweg: nicht verwendet";
 const READONLY_HINT_INFOTEXT_DIAGNOSTICS_TITLE = "Diagnose / Entwicklerdetails";
 const READONLY_HINT_INFOTEXT_STORAGE_ROUTE_LINE = "Speicherweg: UI-Elementänderungen";
@@ -130,6 +131,28 @@ const READONLY_HINT_INFOTEXT_SAVE_CLICK_TITLE = "Speicherklick";
 const READONLY_HINT_INFOTEXT_SAVE_CLICK_PREPARED_LINE = "Speicherklick: vorbereitet";
 const READONLY_HINT_INFOTEXT_SAVE_CLICK_STANDARD_BLOCKED_LINE = "Klickpfad im Standard: hinter Gate";
 const READONLY_HINT_INFOTEXT_SAVE_CLICK_NOT_EXECUTED_LINE = "Letzter Klickstatus: nicht ausgeführt";
+const UI_EDITOR_ELEMENT_SAVE_ALLOWED_SURFACES = Object.freeze(["restarbeiten.ui.main"]);
+const UI_EDITOR_ELEMENT_SAVE_ALLOWED_ELEMENT_TYPES = Object.freeze(["Hinweis / Infotext", "label"]);
+const UI_EDITOR_ELEMENT_SAVE_ALLOWED_CHANGE_KEYS = Object.freeze(["text", "label", "visible", "order"]);
+const UI_EDITOR_ELEMENT_SAVE_ALLOWED_TOP_LEVEL_KEYS = Object.freeze([
+  "targetAppId",
+  "moduleId",
+  "projectId",
+  "surfaceId",
+  "elementId",
+  "elementType",
+  "changes",
+  "updatedAt",
+]);
+const UI_EDITOR_ELEMENT_SAVE_FORBIDDEN_TOP_LEVEL_KEYS = Object.freeze([
+  "restarbeitId",
+  "noteText",
+  "persisted",
+  "previewOnly",
+  "debugPayload",
+  "diagnostics",
+  "diagnosticState",
+]);
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_TITLE = "Entwurfsprüfung";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_VALID = "Status: gültiger lokaler Entwurf";
 const READONLY_HINT_INFOTEXT_DRAFT_VALIDATION_STATUS_EMPTY = "Status: Hinweistext fehlt";
@@ -2157,6 +2180,222 @@ function formatReadonlyHintInfotextWriteGateText(
   ].join("\n");
 }
 
+function normalizeUiEditorElementSaveText(value) {
+  return String(value == null ? "" : value).trim();
+}
+
+function isPlainUiEditorElementSaveObject(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function isUiEditorElementSaveSurfaceAllowed(surfaceId = "") {
+  return UI_EDITOR_ELEMENT_SAVE_ALLOWED_SURFACES.includes(normalizeUiEditorElementSaveText(surfaceId));
+}
+
+function isUiEditorElementSaveElementTypeAllowed(elementType = "") {
+  return UI_EDITOR_ELEMENT_SAVE_ALLOWED_ELEMENT_TYPES.includes(normalizeUiEditorElementSaveText(elementType));
+}
+
+function normalizeUiEditorElementSaveChanges(changes = {}) {
+  const normalized = {};
+  for (const key of UI_EDITOR_ELEMENT_SAVE_ALLOWED_CHANGE_KEYS) {
+    if (!Object.prototype.hasOwnProperty.call(changes, key)) continue;
+    const value = changes[key];
+    if (key === "text" || key === "label") {
+      normalized[key] = normalizeUiEditorElementSaveText(value);
+      continue;
+    }
+    if (key === "visible") {
+      normalized[key] = value;
+      continue;
+    }
+    if (key === "order") {
+      normalized[key] = Number(value);
+    }
+  }
+  return normalized;
+}
+
+function validateUiEditorElementSavePayload(payload = {}) {
+  const errors = [];
+  if (!isPlainUiEditorElementSaveObject(payload)) {
+    return Object.freeze({
+      ok: false,
+      reason: "Payload muss ein Objekt sein",
+      errors: Object.freeze(["Payload muss ein Objekt sein"]),
+      normalizedPayload: null,
+    });
+  }
+
+  for (const key of Object.keys(payload)) {
+    if (UI_EDITOR_ELEMENT_SAVE_FORBIDDEN_TOP_LEVEL_KEYS.includes(key)) {
+      errors.push(`${key} ist fuer UI-Element-Speicherung nicht erlaubt`);
+      continue;
+    }
+    if (!UI_EDITOR_ELEMENT_SAVE_ALLOWED_TOP_LEVEL_KEYS.includes(key)) {
+      errors.push(`Unbekanntes Payload-Feld: ${key}`);
+    }
+  }
+
+  const projectId = normalizeUiEditorElementSaveText(payload.projectId);
+  const surfaceId = normalizeUiEditorElementSaveText(payload.surfaceId);
+  const elementId = normalizeUiEditorElementSaveText(payload.elementId);
+  const elementType = normalizeUiEditorElementSaveText(payload.elementType);
+  const targetAppId = normalizeUiEditorElementSaveText(payload.targetAppId || "bbm");
+  const moduleId = normalizeUiEditorElementSaveText(payload.moduleId || "restarbeiten");
+  const updatedAt = normalizeUiEditorElementSaveText(payload.updatedAt);
+
+  if (!projectId) errors.push("projectId fehlt");
+  if (!surfaceId) {
+    errors.push("surfaceId fehlt");
+  } else if (!isUiEditorElementSaveSurfaceAllowed(surfaceId)) {
+    errors.push("Surface nicht erlaubt");
+  }
+  if (!elementId) errors.push("elementId fehlt");
+  if (!elementType) {
+    errors.push("elementType fehlt");
+  } else if (!isUiEditorElementSaveElementTypeAllowed(elementType)) {
+    errors.push("Elementtyp nicht erlaubt");
+  }
+
+  const changes = payload.changes;
+  if (!isPlainUiEditorElementSaveObject(changes)) {
+    errors.push("changes muss ein Objekt sein");
+  } else {
+    for (const key of Object.keys(changes)) {
+      if (!UI_EDITOR_ELEMENT_SAVE_ALLOWED_CHANGE_KEYS.includes(key)) {
+        errors.push(`Unbekannte Aenderung: ${key}`);
+      }
+      if (key === "noteText") {
+        errors.push("noteText ist keine UI-Element-Aenderung");
+      }
+    }
+    if (!Object.keys(changes).length) {
+      errors.push("changes ist leer");
+    }
+    if (Object.prototype.hasOwnProperty.call(changes, "text") && !normalizeUiEditorElementSaveText(changes.text)) {
+      errors.push("changes.text ist leer");
+    }
+    if (Object.prototype.hasOwnProperty.call(changes, "label") && !normalizeUiEditorElementSaveText(changes.label)) {
+      errors.push("changes.label ist leer");
+    }
+    if (Object.prototype.hasOwnProperty.call(changes, "visible") && typeof changes.visible !== "boolean") {
+      errors.push("changes.visible muss Boolean sein");
+    }
+    if (Object.prototype.hasOwnProperty.call(changes, "order") && !Number.isFinite(Number(changes.order))) {
+      errors.push("changes.order muss eine Zahl sein");
+    }
+  }
+
+  const normalizedChanges = isPlainUiEditorElementSaveObject(changes)
+    ? normalizeUiEditorElementSaveChanges(changes)
+    : {};
+  const normalizedPayload = Object.freeze({
+    targetAppId,
+    moduleId,
+    projectId,
+    surfaceId,
+    elementId,
+    elementType,
+    changes: Object.freeze(normalizedChanges),
+    ...(updatedAt ? { updatedAt } : {}),
+  });
+
+  return Object.freeze({
+    ok: errors.length === 0,
+    reason: errors[0] || "Payload gueltig",
+    errors: Object.freeze(errors),
+    normalizedPayload: errors.length === 0 ? normalizedPayload : null,
+  });
+}
+
+function buildReadonlyHintInfotextUiElementSavePayload({
+  value = "",
+  hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
+  elementId = "restarbeiten.hinweisInfotext.text",
+  elementType = READONLY_HINT_INFOTEXT_DRAFT_PREVIEW_HOST_KIND,
+} = {}) {
+  return Object.freeze({
+    targetAppId: "bbm",
+    moduleId: "restarbeiten",
+    projectId: normalizeUiEditorElementSaveText(hostContextStatus?.projectId),
+    surfaceId: READONLY_SURFACE_INFO_SURFACE_ID,
+    elementId: normalizeUiEditorElementSaveText(elementId),
+    elementType: normalizeUiEditorElementSaveText(elementType),
+    changes: Object.freeze({
+      text: String(value == null ? "" : value),
+    }),
+  });
+}
+
+async function executeUiEditorElementSaveContract({ payload = {}, win = null, testOnly = null } = {}) {
+  const validation = validateUiEditorElementSavePayload(payload);
+  if (!validation.ok) {
+    return Object.freeze({
+      ok: false,
+      blocked: true,
+      executed: false,
+      reason: validation.reason,
+      errors: validation.errors,
+      persisted: false,
+      previewOnly: true,
+    });
+  }
+
+  const api = win?.bbmDb || null;
+  const hasPreloadContract = typeof api?.uiEditorSaveElementOverride === "function";
+  const explicitTestRelease =
+    testOnly?.mode === "ui-element-save-contract-stub-test"
+    && testOnly.allowExecute === true;
+  const adapter = typeof testOnly?.adapter === "function"
+    ? testOnly.adapter
+    : explicitTestRelease && hasPreloadContract
+      ? api.uiEditorSaveElementOverride
+      : null;
+
+  if (explicitTestRelease !== true || typeof adapter !== "function") {
+    return Object.freeze({
+      ok: false,
+      blocked: true,
+      executed: false,
+      reason: UI_EDITOR_ELEMENT_SAVE_CONTRACT_NOT_IMPLEMENTED_REASON,
+      contractAvailable: hasPreloadContract,
+      validation,
+      payload: validation.normalizedPayload,
+      persisted: false,
+      previewOnly: true,
+    });
+  }
+
+  try {
+    const result = await adapter(validation.normalizedPayload);
+    return Object.freeze({
+      ok: result?.ok !== false,
+      blocked: false,
+      executed: true,
+      reason: result?.ok === false ? result?.error || "UI-Element-Speicherung fehlgeschlagen" : "UI-Element-Speicherung ausgefuehrt",
+      contractAvailable: true,
+      validation,
+      payload: validation.normalizedPayload,
+      result: result || null,
+      persisted: result?.ok !== false,
+      previewOnly: false,
+    });
+  } catch (err) {
+    return Object.freeze({
+      ok: false,
+      blocked: false,
+      executed: true,
+      reason: err?.message || String(err),
+      contractAvailable: true,
+      validation,
+      payload: validation.normalizedPayload,
+      persisted: false,
+      previewOnly: true,
+    });
+  }
+}
+
 function formatReadonlyHintInfotextElementSaveStatusText(
   value = "",
   hostContextStatus = createReadonlyHintInfotextHostContextStatusModel(),
@@ -4031,6 +4270,11 @@ export {
   normalizeAvailableUiScopes,
   normalizeHostContextStatus,
   buildReadonlyHintInfotextHostContextStatusModel,
+  isUiEditorElementSaveSurfaceAllowed,
+  isUiEditorElementSaveElementTypeAllowed,
+  validateUiEditorElementSavePayload,
+  buildReadonlyHintInfotextUiElementSavePayload,
+  executeUiEditorElementSaveContract,
   buildReadonlyHintInfotextSaveButtonState,
   buildReadonlyHintInfotextSavePayloadSignature,
   buildReadonlyHintInfotextSaveGuardState,
