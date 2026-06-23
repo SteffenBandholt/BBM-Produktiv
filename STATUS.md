@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M24 Restarbeiten-Fachspezifikation finalisiert:
+  - Neue Fachspezifikation unter `docs/M24_RESTARBEITEN_FACHSPEZIFIKATION.md`.
+  - Ergebnis: Der erste Nutzstand ist als textbasierte, projektbezogene Restarbeitenliste mit Pflichtfeldern, Statusmodell, 10-Tage-Ampelregel, Auto-Save-Entscheidung, Soft-Delete und einfacher Ausgabe fachlich spezifiziert.
+  - Fotos, Mail, Diktat, Detail-PDF, tiefe Archivverwaltung, vollstaendige Historie und UI-Editor-Spuren-Konsolidierung bleiben bewusst spaetere Themen.
+  - Restarbeiten bleibt BBM-Fachmodul; der generische UI-Editor bleibt frei von Restarbeiten-Fachlogik und liest ausschliesslich explizit gelieferte Registry-/Scope-Daten.
+  - Reines Doku-/Statuspaket; keine Code-, UI-, DB-, IPC-, Protokoll- oder UI-Editor-Funktionsaenderung.
+  - Empfohlener naechster Schritt: M25 als kleines Umsetzungspaket fuer Pflichtfelder, Status und Ampel schneiden.
+
 - M23 Restarbeiten fachliche Nutzbarkeitsgrenze festgelegt:
   - Neue Nutzbarkeitsgrenze unter `docs/M23_RESTARBEITEN_NUTZBARKEITSGRENZE.md`.
   - Ergebnis: Der erste echte Nutzstand braucht einen stabilen Erfassungs-, Bearbeitungs-, Status-, Frist-, Verantwortlichen-, Erledigungs-/Loesch- und einfachen Ausgabeablauf.
