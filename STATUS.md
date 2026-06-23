@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M23 Restarbeiten fachliche Nutzbarkeitsgrenze festgelegt:
+  - Neue Nutzbarkeitsgrenze unter `docs/M23_RESTARBEITEN_NUTZBARKEITSGRENZE.md`.
+  - Ergebnis: Der erste echte Nutzstand braucht einen stabilen Erfassungs-, Bearbeitungs-, Status-, Frist-, Verantwortlichen-, Erledigungs-/Loesch- und einfachen Ausgabeablauf.
+  - Fotos, Mail, Diktat, tiefe Archivverwaltung, vollstaendige Historie und UI-Editor-Spuren-Konsolidierung koennen spaeter folgen, sofern die Kernnutzung fachlich abgenommen wird.
+  - Restarbeiten bleibt BBM-Fachmodul; der generische UI-Editor bleibt frei von Restarbeiten-Fachlogik und liest ausschliesslich explizit gelieferte Registry-/Scope-Daten.
+  - Reines Doku-/Statuspaket; keine Code-, UI-, DB-, IPC-, Protokoll- oder UI-Editor-Funktionsaenderung.
+  - Empfohlener naechster Schritt: M24 fachliche Spezifikation des ersten Nutzstands finalisieren.
+
 - M22 Restarbeiten fachlicher Ist-Zustand dokumentiert:
   - Neue Ist-Analyse unter `docs/M22_RESTARBEITEN_IST_ANALYSE.md`.
   - Ergebnis: Restarbeiten ist in BBM technisch erreichbar und besitzt aktive Daten-, UI- und Testbausteine, bleibt aber fachlich/funktional unfertig.
