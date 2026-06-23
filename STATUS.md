@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M22 Restarbeiten fachlicher Ist-Zustand dokumentiert:
+  - Neue Ist-Analyse unter `docs/M22_RESTARBEITEN_IST_ANALYSE.md`.
+  - Ergebnis: Restarbeiten ist in BBM technisch erreichbar und besitzt aktive Daten-, UI- und Testbausteine, bleibt aber fachlich/funktional unfertig.
+  - Vorhanden sind Modulstart, Screen, Liste/Filter/Editbox/Quicklane, Create-/Update-/Soft-Delete-Wege, Notiz-Popup, Datenmodell/IPC/Repo und UI-Editor-Pilot-Scope.
+  - Unfertig bleiben insbesondere fachliche Abnahme, Foto-UI, echte PDF-/Druck-/Mail-Anbindung, Diktat-Anbindung, Notiz-Druck und Konsolidierung paralleler Editor-/Runtime-Spuren.
+  - Reines Analysepaket; keine Code-, Fachlogik-, DB-, IPC-, UI-, Protokoll- oder UI-Editor-Funktionsaenderung.
+  - Empfohlener naechster Schritt: M23 fachliche Nutzbarkeitsgrenze fuer Restarbeiten festlegen.
+
 - M21 BBM als Zielapp sauber vom generischen UI-Editor getrennt:
   - BBM-Produktiv ist Beispiel-/Pilot-Zielapp fuer das generische UI-Editor-kit.
   - Der UI-Editor bleibt generisch und enthaelt keine BBM-, Restarbeiten- oder Protokoll-Fachlogik.
