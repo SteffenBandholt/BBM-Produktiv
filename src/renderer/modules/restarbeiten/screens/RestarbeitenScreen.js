@@ -15,6 +15,10 @@ import { buildRestarbeitenEditbox } from "../RestarbeitenEditbox.js";
 import { buildRestarbeitenQuicklane } from "../RestarbeitenQuicklane.js";
 import { ensureRestarbeitenStyles } from "../styles.js";
 import {
+  canCreateRestarbeitDraft,
+  normalizeRestarbeitStatus,
+} from "../domain/restarbeitenRules.js";
+import {
   cleanupPopupHandlers,
   createPopupOverlay,
   registerPopupCloseHandlers,
@@ -48,7 +52,7 @@ function emptyDraft() {
   return {
     id: "",
     item_class: "rest",
-    status: "offen",
+    status: normalizeRestarbeitStatus("", { defaultForNew: true }),
     short_text: "",
     long_text: "",
     due_date: "",
@@ -61,11 +65,9 @@ function emptyDraft() {
   };
 }
 
-function normalizeDraftStatus(value) {
-  const raw = normalizeText(value).toLowerCase();
-  if (raw === "in_arbeit") return "in arbeit";
-  if (["offen", "in arbeit", "erledigt", "verzug"].includes(raw)) return raw;
-  return "offen";
+function normalizeDraftStatus(value, { defaultForNew = false } = {}) {
+  const normalized = normalizeRestarbeitStatus(value, { defaultForNew });
+  return normalized || normalizeText(value).toLowerCase();
 }
 
 function prepareDraft(source = {}) {
@@ -73,9 +75,9 @@ function prepareDraft(source = {}) {
     ...emptyDraft(),
     ...source,
     item_class: normalizeText(source.item_class) === "mangel" ? "mangel" : "rest",
-    status: normalizeDraftStatus(source.status),
+    status: normalizeDraftStatus(source.status, { defaultForNew: !source.id }),
     responsible_project_firm_id: normalizeText(source.responsible_project_firm_id),
-    responsible_label: normalizeText(source.responsible_project_firm_id) ? normalizeText(source.responsible_label) : "",
+    responsible_label: normalizeText(source.responsible_label),
   };
   draft.ampelState = getRestarbeitenAmpelState(draft);
   return draft;
@@ -87,8 +89,12 @@ function buildSavePayload(draft = {}) {
   delete payload.created_at;
   delete payload.running_number;
   payload.item_class = normalizeText(payload.item_class) === "mangel" ? "mangel" : "rest";
-  payload.status = normalizeDraftStatus(payload.status);
-  if (!normalizeText(payload.responsible_project_firm_id)) payload.responsible_label = "";
+  const normalizedStatus = normalizeRestarbeitStatus(payload.status, { defaultForNew: !payload.id });
+  if (normalizedStatus) {
+    payload.status = normalizedStatus;
+  } else {
+    delete payload.status;
+  }
   return payload;
 }
 
@@ -248,7 +254,7 @@ export default class RestarbeitenScreen {
   _getFilteredItems() {
     return (this.items || []).filter((row) => {
       if (this.filters.itemClass !== "all" && normalizeText(row.item_class) !== this.filters.itemClass) return false;
-      if (this.filters.status && normalizeText(row.status) !== this.filters.status) return false;
+      if (this.filters.status && normalizeRestarbeitStatus(row.status) !== this.filters.status) return false;
       if (this.filters.dueDate && normalizeText(row.due_date).slice(0, 10) !== this.filters.dueDate) return false;
       if (this.filters.responsible && normalizeText(row.responsible_label) !== this.filters.responsible) return false;
       for (let i = 1; i <= 4; i += 1) {
@@ -281,7 +287,7 @@ export default class RestarbeitenScreen {
 
   async _saveDraft() {
     if (!this.projectId) return;
-    if (!normalizeText(this.draft.short_text)) return;
+    if (!canCreateRestarbeitDraft(this.draft)) return;
     const payload = buildSavePayload(this.draft);
     let createdId = "";
     if (payload.id) {
@@ -298,7 +304,7 @@ export default class RestarbeitenScreen {
   }
 
   async _autoSaveDraft() {
-    if (!normalizeText(this.draft.short_text)) return;
+    if (!canCreateRestarbeitDraft(this.draft)) return;
     await this._saveDraft();
   }
 

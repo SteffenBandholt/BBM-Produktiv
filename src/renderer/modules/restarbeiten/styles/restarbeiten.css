@@ -386,6 +386,10 @@
   box-shadow: 0 0 0 2px rgba(135, 191, 255, 0.26);
 }
 
+.bbm-restarbeiten-record[data-fachlich-vollstaendig="false"] {
+  border-left: 3px solid var(--bbm-error);
+}
+
 .bbm-restarbeiten-record__number {
   font-size: 8.5pt;
   font-weight: 600;
@@ -467,6 +471,12 @@
   font-size: 8pt;
   font-weight: 400;
   line-height: 1.25;
+}
+
+.bbm-restarbeiten-record__required {
+  color: var(--bbm-error);
+  font-size: var(--bbm-rest-label-font-size);
+  font-weight: 700;
 }
 
 .bbm-restarbeiten-ampel {

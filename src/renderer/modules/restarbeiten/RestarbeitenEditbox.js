@@ -1,4 +1,10 @@
 import { resolveLocationLabels } from "./RestarbeitenFilterbar.js";
+import {
+  RESTARBEITEN_STATUS_OPTIONS,
+  getMissingRestarbeitRequiredFields,
+  getRestarbeitRequiredFieldSummary,
+  normalizeRestarbeitStatus,
+} from "./domain/restarbeitenRules.js";
 
 function createEl(tag, { className = "", text = "", uiId = "" } = {}) {
   const el = document.createElement(tag);
@@ -209,12 +215,16 @@ export function buildRestarbeitenEditbox({
 } = {}) {
   const labels = resolveLocationLabels(settings);
   const canSave = Boolean(String(draft.short_text || "").trim());
+  const missingRequiredFields = getMissingRestarbeitRequiredFields(draft);
+  const validationText = canSave ? getRestarbeitRequiredFieldSummary(draft) : "Kurztext erforderlich";
+  const normalizedStatus = normalizeRestarbeitStatus(draft.status) || "";
   const currentRecordLabel = draft.id ? `Nr.: ${draft.running_number || "?"} in Bearbeitung` : "Nr.: neu in Bearbeitung";
   let validation = null;
   const root = createEl("section", {
     className: "bbm-restarbeiten-editbox",
     uiId: "restarbeiten.editbox",
   });
+  root.dataset.fachlichVollstaendig = String(missingRequiredFields.length === 0);
 
   const header = createEl("div", {
     className: "bbm-restarbeiten-editbox__header",
@@ -275,7 +285,11 @@ export function buildRestarbeitenEditbox({
       labelControls: [classToggle, actions],
       onInput: (short_text) => {
         const hasShortText = Boolean(String(short_text || "").trim());
-        if (validation) validation.textContent = hasShortText ? "" : "Kurztext erforderlich";
+        if (validation) {
+          validation.textContent = hasShortText
+            ? getRestarbeitRequiredFieldSummary({ ...draft, short_text })
+            : "Kurztext erforderlich";
+        }
         onDraftChange?.({ short_text }, { render: false });
       },
       onCommit: () => onAutoSave?.(),
@@ -340,14 +354,11 @@ export function buildRestarbeitenEditbox({
     createField({
       label: "Status",
       labelUiId: "restarbeiten.editbox.meta.status.label",
-      value: draft.status === "in_arbeit" ? "in arbeit" : draft.status || "offen",
+      value: normalizedStatus,
       type: "select",
-      options: [
-        { value: "offen", label: "Offen" },
-        { value: "in arbeit", label: "In Arbeit" },
-        { value: "erledigt", label: "Erledigt" },
-        { value: "verzug", label: "Verzug" },
-      ],
+      options: normalizedStatus
+        ? RESTARBEITEN_STATUS_OPTIONS
+        : [{ value: "", label: "Status ungueltig" }, ...RESTARBEITEN_STATUS_OPTIONS],
       uiId: "restarbeiten.editbox.meta.status",
       onInput: (status) => onDraftChange?.({ status }),
       onCommit: () => onAutoSave?.(),
@@ -373,7 +384,7 @@ export function buildRestarbeitenEditbox({
   );
   validation = createEl("span", {
     className: "bbm-restarbeiten-validation",
-    text: canSave ? "" : "Kurztext erforderlich",
+    text: validationText,
     uiId: "restarbeiten.editbox.validation.shortText",
   });
   meta.appendChild(validation);

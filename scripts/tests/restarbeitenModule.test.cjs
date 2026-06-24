@@ -462,7 +462,7 @@ async function runRestarbeitenModuleTests(run) {
     const listAmpel = findByUiId(rendered.root, "restarbeiten.record.ampel");
     assert.equal(Boolean(listAmpel), true);
     assert.equal(listAmpel.children.length, 0);
-    assert.equal(["rot", "gruen", "neutral"].includes(listAmpel.dataset.state), true);
+    assert.equal(["rot", "orange", "gruen", "neutral"].includes(listAmpel.dataset.state), true);
   });
 
   await run("Restarbeiten: Screen stellt Quicklane-Methoden und M1-Bereiche bereit", async () => {
@@ -885,7 +885,7 @@ async function runRestarbeitenModuleTests(run) {
     ]);
     assert.equal(rest.itemClassLabel, "Restarbeit");
     assert.equal(rest.locationLine, "EG \u00b7 Flur");
-    assert.equal(emptyLocation.locationLine, "\u2014");
+    assert.equal(emptyLocation.locationLine, "Ort/Bereich fehlt");
   });
 
   await run("Restarbeiten: Statusauswahlen enthalten die verbindlichen Werte", async () => {
@@ -900,13 +900,16 @@ async function runRestarbeitenModuleTests(run) {
       const editOptions = collectOptions(editbox.buildRestarbeitenEditbox());
       for (const expected of [
         { value: "offen", label: "Offen" },
-        { value: "in arbeit", label: "In Arbeit" },
+        { value: "in_arbeit", label: "In Arbeit" },
         { value: "erledigt", label: "Erledigt" },
-        { value: "verzug", label: "Verzug" },
       ]) {
         assert.equal(filterOptions.some((option) => option.value === expected.value && option.label === expected.label), true, `filter ${expected.value}`);
         assert.equal(editOptions.some((option) => option.value === expected.value && option.label === expected.label), true, `editbox ${expected.value}`);
       }
+      assert.equal(filterOptions.some((option) => option.value === "verzug"), false);
+      assert.equal(editOptions.some((option) => option.value === "verzug"), false);
+      assert.equal(filterOptions.some((option) => option.value === "in arbeit"), false);
+      assert.equal(editOptions.some((option) => option.value === "in arbeit"), false);
     } finally {
       globalThis.document = prevDocument;
     }
@@ -1188,7 +1191,7 @@ async function runRestarbeitenModuleTests(run) {
 
       triggerValue(findByUiId(root, "restarbeiten.editbox.text.short"), "Neue Restarbeit", "input");
       assert.equal(screen.draft.short_text, "Neue Restarbeit");
-      assert.equal(validation.textContent, "");
+      assert.equal(validation.textContent, "Unvollstaendig: Ort/Bereich, Verantwortlich, Fertig bis");
       assert.equal(renderCalls, 0);
 
       triggerValue(findByUiId(root, "restarbeiten.editbox.text.long"), "Lange Beschreibung", "input");
@@ -1199,8 +1202,8 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(screen.draft.location_level_1, "Haus A");
       assert.equal(renderCalls, 0);
 
-      triggerValue(findByUiId(root, "restarbeiten.editbox.meta.status"), "verzug", "change");
-      assert.equal(screen.draft.ampelState, "rot");
+      triggerValue(findByUiId(root, "restarbeiten.editbox.meta.status"), "in_arbeit", "change");
+      assert.equal(screen.draft.ampelState, "neutral");
       assert.equal(renderCalls, 1);
     } finally {
       globalThis.document = prevDocument;
@@ -1248,13 +1251,19 @@ async function runRestarbeitenModuleTests(run) {
     try {
       const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
       const root = screen.render();
-      triggerValue(findByUiId(root, "restarbeiten.editbox.meta.status"), "verzug", "change");
+      const yesterday = new Date();
+      yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+      triggerValue(findByUiId(root, "restarbeiten.editbox.meta.dueDate"), yesterday.toISOString().slice(0, 10), "change");
       assert.equal(screen.draft.ampelState, "rot");
       assert.equal(findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").children[0].dataset.state, "rot");
       assert.equal(
         findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").parentElement,
         findByUiId(screen.root, "restarbeiten.editbox.meta")
       );
+
+      triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.status"), "erledigt", "change");
+      assert.equal(screen.draft.ampelState, "neutral");
+      assert.equal(findByUiId(screen.root, "restarbeiten.editbox.meta.ampel").children[0].dataset.state, "neutral");
 
       triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.status"), "offen", "change");
       const futureDueDate = new Date();
@@ -1573,31 +1582,33 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(css.includes(".bbm-restarbeiten-note {\n  width: 24px;\n  height: 24px;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  padding: 0;"), true);
   });
 
-  await run("Restarbeiten: Ampellogik nutzt keine Orange-Regel", async () => {
+  await run("Restarbeiten: Ampellogik nutzt 10-Tage-Warnfenster und erledigt ist neutral", async () => {
     const viewModel = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenListItems.js")
     );
-    const today = new Date(Date.UTC(2026, 5, 5));
+    const today = new Date(Date.UTC(2026, 5, 24));
     const cases = [
-      [{ status: "verzug" }, "rot"],
-      [{ status: "erledigt" }, "gruen"],
+      [{ status: "verzug" }, "neutral"],
+      [{ status: "erledigt" }, "neutral"],
+      [{ status: "erledigt", due_date: "2026-06-23" }, "neutral"],
       [{ status: "offen" }, "neutral"],
-      [{ status: "offen", due_date: "2026-06-05" }, "gruen"],
-      [{ status: "offen", due_date: "2026-06-20" }, "gruen"],
-      [{ status: "offen", due_date: "2026-06-04" }, "rot"],
+      [{ status: "offen", due_date: "2026-06-23" }, "rot"],
+      [{ status: "offen", due_date: "2026-06-24" }, "orange"],
+      [{ status: "offen", due_date: "2026-06-25" }, "orange"],
+      [{ status: "offen", due_date: "2026-07-04" }, "orange"],
+      [{ status: "offen", due_date: "2026-07-05" }, "gruen"],
       [{ status: "in arbeit" }, "neutral"],
-      [{ status: "in arbeit", due_date: "2026-06-20" }, "gruen"],
-      [{ status: "in arbeit", due_date: "2026-06-04" }, "rot"],
-      [{ status: "in_arbeit", due_date: "2026-06-20" }, "gruen"],
+      [{ status: "in arbeit", due_date: "2026-06-25" }, "orange"],
+      [{ status: "in_arbeit", due_date: "2026-07-05" }, "gruen"],
     ];
     const states = cases.map(([row, expected]) => {
       const actual = viewModel.getRestarbeitenAmpelState(row, today);
       assert.equal(actual, expected, JSON.stringify(row));
       return actual;
     });
-    assert.equal(states.includes("orange"), false);
-    assert.equal(viewModel.mapRestarbeitenStatusLabel("geprueft_erledigt"), "offen");
-    assert.equal(viewModel.mapRestarbeitenStatusLabel("zurueckgewiesen"), "offen");
+    assert.equal(states.includes("orange"), true);
+    assert.equal(viewModel.mapRestarbeitenStatusLabel("geprueft_erledigt"), "Status ungueltig");
+    assert.equal(viewModel.mapRestarbeitenStatusLabel("zurueckgewiesen"), "Status ungueltig");
     assert.equal(viewModel.getRestarbeitenAmpelState({ status: "geprueft_erledigt" }, today), "neutral");
     assert.equal(viewModel.getRestarbeitenAmpelState({ status: "zurueckgewiesen" }, today), "neutral");
   });

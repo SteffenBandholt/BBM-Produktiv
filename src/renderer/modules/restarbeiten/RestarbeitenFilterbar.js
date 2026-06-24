@@ -1,3 +1,5 @@
+import { RESTARBEITEN_STATUS_OPTIONS } from "./domain/restarbeitenRules.js";
+
 const DEFAULT_LOCATION_LABELS = ["Haus", "Geschoss", "Einheit", "Raum"];
 
 function createEl(tag, { className = "", text = "", uiId = "" } = {}) {
@@ -105,13 +107,7 @@ export function buildRestarbeitenFilterbar({
       label: "Status",
       labelUiId: "restarbeiten.filterbar.meta.status.label",
       value: filters.status || "",
-      options: [
-        { value: "", label: "Alle" },
-        { value: "offen", label: "Offen" },
-        { value: "in arbeit", label: "In Arbeit" },
-        { value: "erledigt", label: "Erledigt" },
-        { value: "verzug", label: "Verzug" },
-      ],
+      options: [{ value: "", label: "Alle" }, ...RESTARBEITEN_STATUS_OPTIONS],
       uiId: "restarbeiten.filterbar.meta.status",
       onChange: (status) => onFilterChange?.({ status }),
     }),

@@ -63,6 +63,7 @@ export function buildRestarbeitenList({
     row.type = "button";
     row.setAttribute("data-ui-editor-template-id", "restarbeiten.record");
     row.setAttribute("data-bbm-restarbeiten-record-id", String(item.id ?? ""));
+    row.setAttribute("data-fachlich-vollstaendig", String(item.isFachlichVollstaendig !== false));
     row.setAttribute("aria-selected", String(item.id === selectedId));
     row.addEventListener("click", () => onSelect?.(item.id));
 
@@ -102,6 +103,9 @@ export function buildRestarbeitenList({
     }
     appendText(metaColumn, "", item.statusLabel, "restarbeiten.record.status");
     appendText(metaColumn, "", item.responsibleLabel, "restarbeiten.record.responsible");
+    if (item.requiredFieldSummary) {
+      appendText(metaColumn, "bbm-restarbeiten-record__required", item.requiredFieldSummary);
+    }
 
     row.append(numberColumn, contentColumn, metaColumn);
     records.appendChild(row);

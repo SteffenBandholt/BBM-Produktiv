@@ -61,7 +61,7 @@ async function runRestarbeitenDataModelTests(run) {
     const conn = db.initDatabase();
     conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
     conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p2", "P2");
-    const item = repo.createRestarbeitItem({ project_id: "p1", location_level_1: "Haus A", location_level_2: "EG", location_level_3: "WE 1", location_level_4: "Kueche", status: "unbekannt" });
+    const item = repo.createRestarbeitItem({ project_id: "p1", short_text: "Verortete Restarbeit", location_level_1: "Haus A", location_level_2: "EG", location_level_3: "WE 1", location_level_4: "Kueche" });
     assert.equal(item.location_level_1, "Haus A");
     assert.equal(item.location_level_4, "Kueche");
     assert.equal(item.status, "offen");
@@ -74,20 +74,33 @@ async function runRestarbeitenDataModelTests(run) {
     assert.notEqual(s1.project_id, s2.project_id);
   }));
 
-  await run("Statuswerte: verzug erlaubt, in_arbeit normalisiert und unbekannt faellt auf offen", async () => withTemp(({ db, repo }) => {
+  await run("Statuswerte: M25 erlaubt offen, in_arbeit und erledigt ohne stille Fallbacks", async () => withTemp(({ db, repo }) => {
     const conn = db.initDatabase();
     conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
 
-    const overdue = repo.createRestarbeitItem({ project_id: "p1", short_text: "Verzug", status: "verzug" });
     const legacy = repo.createRestarbeitItem({ project_id: "p1", short_text: "Legacy", status: "in_arbeit" });
-    const invalid = repo.createRestarbeitItem({ project_id: "p1", short_text: "Invalid", status: "unbekannt" });
+    const legacySpace = repo.createRestarbeitItem({ project_id: "p1", short_text: "Legacy Space", status: "in arbeit" });
+    const done = repo.createRestarbeitItem({ project_id: "p1", short_text: "Done", status: "erledigt" });
+    const defaulted = repo.createRestarbeitItem({ project_id: "p1", short_text: "Default" });
 
-    assert.equal(overdue.status, "verzug");
-    assert.equal(legacy.status, "in arbeit");
-    assert.equal(invalid.status, "offen");
+    assert.equal(legacy.status, "in_arbeit");
+    assert.equal(legacySpace.status, "in_arbeit");
+    assert.equal(done.status, "erledigt");
+    assert.equal(defaulted.status, "offen");
 
-    const updated = repo.updateRestarbeitItem(invalid.id, { status: "verzug" });
-    assert.equal(updated.status, "verzug");
+    assert.throws(() => repo.createRestarbeitItem({ project_id: "p1", short_text: "Verzug", status: "verzug" }), /status invalid/);
+    assert.throws(() => repo.createRestarbeitItem({ project_id: "p1", short_text: "Invalid", status: "unbekannt" }), /status invalid/);
+    assert.throws(() => repo.updateRestarbeitItem(defaulted.id, { status: "verzug" }), /status invalid/);
+    assert.throws(() => repo.updateRestarbeitItem(defaulted.id, { status: "unbekannt" }), /status invalid/);
+  }));
+
+  await run("Restarbeit Create verlangt Kurztext", async () => withTemp(({ db, repo }) => {
+    const conn = db.initDatabase();
+    conn.prepare("INSERT INTO projects (id, name) VALUES (?, ?)").run("p1", "P1");
+
+    assert.throws(() => repo.createRestarbeitItem({ project_id: "p1" }), /short_text required/);
+    assert.throws(() => repo.createRestarbeitItem({ project_id: "p1", short_text: "   " }), /short_text required/);
+    assert.throws(() => repo.createRestarbeitItem({ project_id: "p1", short_text: null }), /short_text required/);
   }));
 
   await run("item_class default, akzeptierte Werte und Normalisierung", async () => withTemp(({ db, repo }) => {
@@ -140,7 +153,7 @@ async function runRestarbeitenDataModelTests(run) {
       short_text: "Neu",
       long_text: "Lang neu",
       item_class: "MANGEL",
-      status: "unbekannt",
+      status: "in_arbeit",
       due_date: "2026-06-01",
       responsible_project_firm_id: "f2",
       responsible_label: "Firma B",
@@ -154,7 +167,7 @@ async function runRestarbeitenDataModelTests(run) {
     assert.equal(updated.short_text, "Neu");
     assert.equal(updated.long_text, "Lang neu");
     assert.equal(updated.item_class, "mangel");
-    assert.equal(updated.status, "offen");
+    assert.equal(updated.status, "in_arbeit");
     assert.equal(updated.due_date, "2026-06-01");
     assert.equal(updated.responsible_project_firm_id, "f2");
     assert.equal(updated.responsible_label, "Firma B");
