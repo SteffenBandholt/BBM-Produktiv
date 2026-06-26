@@ -202,6 +202,12 @@ function createClassToggle({ value = "rest", uiId, labelUiId, onChange, onCommit
   return wrap;
 }
 
+function getValidationText(draft = {}) {
+  const hasShortText = Boolean(String(draft.short_text || "").trim());
+  if (hasShortText || draft.id) return getRestarbeitRequiredFieldSummary(draft);
+  return "Kurztext erforderlich";
+}
+
 export function buildRestarbeitenEditbox({
   settings = {},
   draft = {},
@@ -214,9 +220,8 @@ export function buildRestarbeitenEditbox({
   onAutoSave,
 } = {}) {
   const labels = resolveLocationLabels(settings);
-  const canSave = Boolean(String(draft.short_text || "").trim());
   const missingRequiredFields = getMissingRestarbeitRequiredFields(draft);
-  const validationText = canSave ? getRestarbeitRequiredFieldSummary(draft) : "Kurztext erforderlich";
+  const validationText = getValidationText(draft);
   const normalizedStatus = normalizeRestarbeitStatus(draft.status) || "";
   const currentRecordLabel = draft.id ? `Nr.: ${draft.running_number || "?"} in Bearbeitung` : "Nr.: neu in Bearbeitung";
   let validation = null;
@@ -284,11 +289,8 @@ export function buildRestarbeitenEditbox({
       maxLength: 87,
       labelControls: [classToggle, actions],
       onInput: (short_text) => {
-        const hasShortText = Boolean(String(short_text || "").trim());
         if (validation) {
-          validation.textContent = hasShortText
-            ? getRestarbeitRequiredFieldSummary({ ...draft, short_text })
-            : "Kurztext erforderlich";
+          validation.textContent = getValidationText({ ...draft, short_text });
         }
         onDraftChange?.({ short_text }, { render: false });
       },

@@ -29,6 +29,9 @@ async function runRestarbeitenRulesTests(run) {
     assert.equal(rules.canCreateRestarbeitDraft({ short_text: "   " }), false);
     assert.equal(rules.canCreateRestarbeitDraft({ short_text: null }), false);
     assert.equal(rules.canCreateRestarbeitDraft({ short_text: "Tuer einstellen" }), true);
+    assert.equal(rules.canPersistRestarbeitDraft({ id: "", short_text: "" }), false);
+    assert.equal(rules.canPersistRestarbeitDraft({ id: "ra-alt", short_text: "" }), true);
+    assert.equal(rules.canPersistRestarbeitDraft({ id: "", short_text: "Tuer einstellen" }), true);
   });
 
   await run("Restarbeiten M25: Pflichtfeldvollstaendigkeit erkennt fachliche Luecken", () => {
@@ -51,6 +54,8 @@ async function runRestarbeitenRulesTests(run) {
       rules.getRestarbeitRequiredFieldSummary({ short_text: "Tuer einstellen", status: "unbekannt" }),
       "Unvollstaendig: Ort/Bereich, Status, Verantwortlich, Fertig bis"
     );
+    assert.equal(rules.getRestarbeitNachpflegeLabel({ short_text: "Tuer einstellen", status: "unbekannt" }), "Nachpflege erforderlich");
+    assert.equal(rules.getRestarbeitNachpflegeLabel(complete), "");
   });
 
   await run("Restarbeiten M25: Ampel ist friststabil mit 10-Tage-Warnfenster", () => {

@@ -886,6 +886,11 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(rest.itemClassLabel, "Restarbeit");
     assert.equal(rest.locationLine, "EG \u00b7 Flur");
     assert.equal(emptyLocation.locationLine, "Ort/Bereich fehlt");
+    assert.equal(emptyLocation.nachpflegeLabel, "Nachpflege erforderlich");
+    assert.equal(
+      emptyLocation.requiredFieldSummary,
+      "Unvollstaendig: Kurztext, Ort/Bereich, Status, Verantwortlich, Fertig bis"
+    );
   });
 
   await run("Restarbeiten: Statusauswahlen enthalten die verbindlichen Werte", async () => {
@@ -1018,6 +1023,30 @@ async function runRestarbeitenModuleTests(run) {
       assert.equal(shortDictation.getAttribute("data-bbm-dictation-state"), "ready");
       assert.equal(findNodes(shortDictation, (node) => node.getAttribute?.("data-bbm-dictation-icon") === "ready").length, 1);
       assert.equal(findNodes(shortDictation, (node) => node.getAttribute?.("data-bbm-dictation-icon") === "recording").length, 1);
+    } finally {
+      globalThis.document = prevDocument;
+    }
+  });
+
+  await run("Restarbeiten: Editbox benennt fehlende Pflichtfelder bei bestehenden Alt-Datensaetzen", async () => {
+    const editbox = await importEsmFromFile(path.join(__dirname, "../../src/renderer/modules/restarbeiten/RestarbeitenEditbox.js"));
+    const prevDocument = globalThis.document;
+    globalThis.document = createFakeDocument();
+    try {
+      const root = editbox.buildRestarbeitenEditbox({
+        draft: {
+          id: "ra-alt",
+          item_class: "rest",
+          status: "offen",
+          short_text: "",
+          location_level_1: "",
+          responsible_label: "",
+          due_date: "",
+        },
+      });
+      const validation = findByUiId(root, "restarbeiten.editbox.validation.shortText");
+      assert.equal(root.dataset.fachlichVollstaendig, "false");
+      assert.equal(validation.textContent, "Unvollstaendig: Kurztext, Ort/Bereich, Verantwortlich, Fertig bis");
     } finally {
       globalThis.document = prevDocument;
     }
@@ -1361,6 +1390,65 @@ async function runRestarbeitenModuleTests(run) {
       await flush();
       assert.equal(calls.length, 0);
       assert.equal(screen.draft.id, "");
+    } finally {
+      globalThis.document = prevDocument;
+      globalThis.window = prevWindow;
+    }
+  });
+
+  await run("Restarbeiten: Auto-Save pflegt bestehenden Alt-Datensatz ohne Kurztext nach", async () => {
+    const mod = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/screens/RestarbeitenScreen.js")
+    );
+    const prevDocument = globalThis.document;
+    const prevWindow = globalThis.window;
+    const calls = [];
+    let rows = [{ id: "ra-alt", item_class: "rest", status: "offen", short_text: "", due_date: "" }];
+    globalThis.document = createFakeDocument();
+    globalThis.window = {
+      bbmDb: {
+        async restarbeitenListByProject() {
+          return { ok: true, items: rows };
+        },
+        async restarbeitenGetProjectSettings() {
+          return { ok: true, settings: {} };
+        },
+        async projectFirmsListByProject() {
+          return { ok: true, list: [] };
+        },
+        async restarbeitenUpdateItem(payload) {
+          calls.push({ type: "update", payload });
+          rows = rows.map((row) => (row.id === payload.id ? { ...row, ...payload.patch } : row));
+          return { ok: true, item: rows.find((row) => row.id === payload.id) };
+        },
+        async restarbeitenCreateItem(payload) {
+          calls.push({ type: "create", payload });
+          return { ok: true, item: { id: "should-not-create" } };
+        },
+      },
+      dispatchEvent() {},
+    };
+    try {
+      const screen = new mod.default({ projectId: "p-1", project: { id: "p-1" } });
+      screen.render();
+      await screen.load();
+      assert.equal(screen.draft.id, "ra-alt");
+      assert.equal(screen.draft.short_text, "");
+      assert.equal(screen.viewItems[0].nachpflegeLabel, "Nachpflege erforderlich");
+
+      const dueControl = triggerValue(findByUiId(screen.root, "restarbeiten.editbox.meta.dueDate"), "2026-07-15", "change");
+      triggerEvent(dueControl, "blur");
+      await flush();
+      await flush();
+      await flush();
+
+      assert.equal(calls.length, 1);
+      assert.equal(calls[0].type, "update");
+      assert.equal(calls[0].payload.id, "ra-alt");
+      assert.equal(calls[0].payload.patch.due_date, "2026-07-15");
+      assert.equal(calls[0].payload.patch.short_text, "");
+      assert.equal(calls[0].payload.patch.status, "offen");
+      assert.equal(calls[0].payload.patch.responsible_label, "");
     } finally {
       globalThis.document = prevDocument;
       globalThis.window = prevWindow;

@@ -413,6 +413,15 @@
   line-height: 1.15;
 }
 
+.bbm-restarbeiten-record__nachpflege {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--bbm-error);
+  font-size: var(--bbm-rest-label-font-size);
+  font-weight: 700;
+  line-height: 1.15;
+}
+
 .bbm-restarbeiten-record__location,
 .bbm-restarbeiten-record__meta {
   color: var(--bbm-muted);
