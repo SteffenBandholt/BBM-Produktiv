@@ -1,6 +1,7 @@
 import {
   calculateRestarbeitAmpel,
   getMissingRestarbeitRequiredFields,
+  getRestarbeitNachpflegeLabel,
   getRestarbeitRequiredFieldSummary,
   getRestarbeitStatusLabel,
   isRestarbeitFachlichVollstaendig,
@@ -62,6 +63,7 @@ export function toRestarbeitenListItem(row = {}, today = new Date()) {
   const longTextLine = toText(row.long_text, "\u2014");
   const missingRequiredFields = getMissingRestarbeitRequiredFields(row);
   const requiredFieldSummary = getRestarbeitRequiredFieldSummary(row);
+  const nachpflegeLabel = getRestarbeitNachpflegeLabel(row);
   const isFachlichVollstaendig = isRestarbeitFachlichVollstaendig(row);
 
   return {
@@ -85,6 +87,7 @@ export function toRestarbeitenListItem(row = {}, today = new Date()) {
     longTextLine,
     missingRequiredFields,
     requiredFieldSummary,
+    nachpflegeLabel,
     isFachlichVollstaendig,
     workLine1: shortTextLine,
     workLine2: longTextLine,

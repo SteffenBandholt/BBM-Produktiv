@@ -324,3 +324,10 @@ Dabei gilt:
 - Statuswerte sind auf `offen`, `in_arbeit` und `erledigt` begrenzt; unbekannte Status werden nicht still normalisiert.
 - Die Ampel folgt der M24-10-Tage-Regel und behandelt `erledigt` fristneutral.
 - Protokoll, UI-Editor-kit, PDF/Druck/Mail, Diktat/Audio, Fotoimport und Registry-Struktur bleiben ausserhalb dieses Pakets.
+
+### M26 Restarbeiten Nachpflege vorhandener Datensaetze abgesichert (neu)
+- Unvollstaendige Restarbeiten bleiben in Liste und Editbox klar als Nachpflegefaelle sichtbar.
+- Vorhandene Alt-Datensaetze koennen auch dann feldweise nachgepflegt werden, wenn der Kurztext noch fehlt.
+- Neue Datensaetze bleiben weiterhin gegen Anlegen ohne Kurztext gesperrt.
+- Es werden keine Platzhalter oder Fantasiewerte erzeugt; Statusmodell und M25-Ampellogik bleiben unveraendert.
+- Protokoll, UI-Editor-kit, PDF/Druck/Mail, Diktat/Audio, Fotoimport und Lizenzierung bleiben ausserhalb dieses Pakets.

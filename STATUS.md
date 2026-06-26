@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M26 Restarbeiten Nachpflege vorhandener Datensaetze abgesichert:
+  - Unvollstaendige Restarbeiten bleiben in der Liste als `Nachpflege erforderlich` sichtbar markiert.
+  - Die Editbox benennt bei vorhandenen Alt-Datensaetzen alle fehlenden Pflichtfelder, auch wenn der Kurztext leer ist.
+  - Vorhandene Datensaetze koennen feldweise nachgepflegt werden, ohne Platzhalter oder Fantasiewerte zu erzeugen.
+  - Neue Datensaetze bleiben weiter gegen Anlegen ohne Kurztext gesperrt.
+  - Statusmodell und M25-Ampellogik bleiben unveraendert.
+  - UI-Editor-kit, Protokoll, PDF/Druck/Mail, Diktat/Audio, Fotoimport und Lizenzierung blieben unveraendert.
+
 - M25 Restarbeiten Pflichtfelder, Status und Ampel technisch abgesichert:
   - Pflichtfeldvollstaendigkeit wird in Liste und Editbox sichtbar als unvollstaendig markiert.
   - Neue Restarbeiten koennen technisch nicht ohne Kurztext angelegt werden; fehlende weitere Pflichtfelder bleiben als Draft sichtbar unvollstaendig.

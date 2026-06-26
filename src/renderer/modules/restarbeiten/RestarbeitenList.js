@@ -76,6 +76,9 @@ export function buildRestarbeitenList({
     );
     appendText(numberColumn, "bbm-restarbeiten-record__date", item.dateLine, "restarbeiten.record.createdAt");
     appendText(numberColumn, "bbm-restarbeiten-record__class", item.itemClassLabel, "restarbeiten.record.itemClass");
+    if (item.nachpflegeLabel) {
+      appendText(numberColumn, "bbm-restarbeiten-record__nachpflege", item.nachpflegeLabel);
+    }
     const photos = appendText(numberColumn, "bbm-restarbeiten-record__photos", "Fotos", "restarbeiten.record.photos");
     photos.setAttribute("role", "button");
     photos.setAttribute("tabindex", "0");

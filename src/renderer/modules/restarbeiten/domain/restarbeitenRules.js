@@ -44,6 +44,10 @@ export function canCreateRestarbeitDraft(row = {}) {
   return Boolean(toRestarbeitenText(row.short_text));
 }
 
+export function canPersistRestarbeitDraft(row = {}) {
+  return Boolean(toRestarbeitenText(row.id)) || canCreateRestarbeitDraft(row);
+}
+
 export function getMissingRestarbeitRequiredFields(row = {}) {
   const missing = [];
   if (!toRestarbeitenText(row.short_text)) missing.push(RESTARBEITEN_REQUIRED_FIELDS[0]);
@@ -68,6 +72,10 @@ export function isRestarbeitFachlichVollstaendig(row = {}) {
 export function getRestarbeitRequiredFieldSummary(row = {}) {
   const labels = getMissingRestarbeitRequiredFields(row).map((field) => field.label);
   return labels.length ? `Unvollstaendig: ${labels.join(", ")}` : "";
+}
+
+export function getRestarbeitNachpflegeLabel(row = {}) {
+  return getMissingRestarbeitRequiredFields(row).length ? "Nachpflege erforderlich" : "";
 }
 
 function parseDateOnly(value) {

@@ -15,7 +15,7 @@ import { buildRestarbeitenEditbox } from "../RestarbeitenEditbox.js";
 import { buildRestarbeitenQuicklane } from "../RestarbeitenQuicklane.js";
 import { ensureRestarbeitenStyles } from "../styles.js";
 import {
-  canCreateRestarbeitDraft,
+  canPersistRestarbeitDraft,
   normalizeRestarbeitStatus,
 } from "../domain/restarbeitenRules.js";
 import {
@@ -287,7 +287,7 @@ export default class RestarbeitenScreen {
 
   async _saveDraft() {
     if (!this.projectId) return;
-    if (!canCreateRestarbeitDraft(this.draft)) return;
+    if (!canPersistRestarbeitDraft(this.draft)) return;
     const payload = buildSavePayload(this.draft);
     let createdId = "";
     if (payload.id) {
@@ -304,7 +304,7 @@ export default class RestarbeitenScreen {
   }
 
   async _autoSaveDraft() {
-    if (!canCreateRestarbeitDraft(this.draft)) return;
+    if (!canPersistRestarbeitDraft(this.draft)) return;
     await this._saveDraft();
   }
 
