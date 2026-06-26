@@ -3,9 +3,8 @@ const { initDatabase } = require("./database");
 
 const ALLOWED_STATUS = new Set([
   "offen",
-  "in arbeit",
+  "in_arbeit",
   "erledigt",
-  "verzug",
 ]);
 const ALLOWED_ITEM_CLASSES = new Set(["rest", "mangel"]);
 
@@ -21,13 +20,17 @@ function reqText(value, name) {
   return out;
 }
 
-function normalizeStatus(value) {
-  const clean = toText(value)?.toLowerCase();
-  if (!clean) return "offen";
+function normalizeStatus(value, { defaultForNew = false } = {}) {
+  const clean = toText(value)?.toLowerCase().replace(/\s+/g, "_");
+  if (!clean) return defaultForNew ? "offen" : null;
   if (ALLOWED_STATUS.has(clean)) return clean;
-  if (clean === "in_arbeit") return "in arbeit";
-  if (clean === "erledigt_gemeldet" || clean === "geprueft_erledigt") return "erledigt";
-  return "offen";
+  return null;
+}
+
+function reqStatus(value, options = {}) {
+  const normalized = normalizeStatus(value, options);
+  if (!normalized) throw new Error("status invalid");
+  return normalized;
 }
 
 function normalizeRestarbeitItemClass(value) {
@@ -47,7 +50,7 @@ function buildRestarbeitUpdatePatch(patch = {}) {
   if (patch.short_text !== undefined) out.short_text = toText(patch.short_text) || "";
   if (patch.long_text !== undefined) out.long_text = toText(patch.long_text) || "";
   if (patch.item_class !== undefined) out.item_class = normalizeRestarbeitItemClass(patch.item_class);
-  if (patch.status !== undefined) out.status = normalizeStatus(patch.status);
+  if (patch.status !== undefined) out.status = reqStatus(patch.status);
   if (patch.due_date !== undefined) out.due_date = toText(patch.due_date);
   if (patch.responsible_project_firm_id !== undefined) {
     out.responsible_project_firm_id = toText(patch.responsible_project_firm_id);
@@ -104,10 +107,10 @@ function createRestarbeitItem(projectIdOrPayload = {}, payload = {}) {
     location_level_2: toText(sourcePayload.location_level_2),
     location_level_3: toText(sourcePayload.location_level_3),
     location_level_4: toText(sourcePayload.location_level_4),
-    short_text: toText(sourcePayload.short_text) || "",
+    short_text: reqText(sourcePayload.short_text, "short_text"),
     long_text: toText(sourcePayload.long_text) || "",
     item_class: normalizeRestarbeitItemClass(sourcePayload.item_class),
-    status: normalizeStatus(sourcePayload.status),
+    status: reqStatus(sourcePayload.status, { defaultForNew: true }),
     due_date: toText(sourcePayload.due_date),
     responsible_project_firm_id: toText(sourcePayload.responsible_project_firm_id),
     responsible_label: toText(sourcePayload.responsible_label),

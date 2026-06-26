@@ -316,3 +316,11 @@ Dabei gilt:
 - Der Projektkachel-Start nutzt den bestehenden Projektmodulpfad `openProjectModule(projectId, "restarbeiten", { project })`.
 
 - Hotfix M13.2 nachgezogen: `Restarbeiten` ist fuer die Projektkachel nicht nur ueber Test-Stub sichtbar, sondern wird ueber die tatsaechliche Runtime-Projektmodulliste geliefert.
+
+### M25 Restarbeiten Pflichtfelder, Status und Ampel abgesichert (neu)
+- Restarbeiten nutzt eine fachmodulinterne Regelbasis fuer Pflichtfelder, Statuswerte und Ampel.
+- Pflichtfeldvollstaendigkeit wird sichtbar markiert, ohne neue UI-Editor-Funktion oder automatische UI-Erkennung einzufuehren.
+- Der erste technische Save/Create bleibt an einen vorhandenen Kurztext gebunden; weitere fehlende Pflichtfelder bleiben als unvollstaendiger Draft sichtbar.
+- Statuswerte sind auf `offen`, `in_arbeit` und `erledigt` begrenzt; unbekannte Status werden nicht still normalisiert.
+- Die Ampel folgt der M24-10-Tage-Regel und behandelt `erledigt` fristneutral.
+- Protokoll, UI-Editor-kit, PDF/Druck/Mail, Diktat/Audio, Fotoimport und Registry-Struktur bleiben ausserhalb dieses Pakets.

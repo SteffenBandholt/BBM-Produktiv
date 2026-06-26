@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M25 Restarbeiten Pflichtfelder, Status und Ampel technisch abgesichert:
+  - Pflichtfeldvollstaendigkeit wird in Liste und Editbox sichtbar als unvollstaendig markiert.
+  - Neue Restarbeiten koennen technisch nicht ohne Kurztext angelegt werden; fehlende weitere Pflichtfelder bleiben als Draft sichtbar unvollstaendig.
+  - Statuswerte sind fuer Restarbeiten auf `offen`, `in_arbeit` und `erledigt` begrenzt; unbekannte Werte werden nicht mehr still auf `offen` normalisiert.
+  - Die Ampel nutzt die M24-Regel: erledigt ist fristneutral, ohne Fertig-bis neutral, ueberfaellig rot, heute bis zehn Tage orange, ab elf Tagen gruen.
+  - UI-Editor-kit, Protokoll, PDF/Druck/Mail, Diktat/Audio, Fotoimport und Registry-Struktur blieben unveraendert.
+  - Neue UI-/PDF-Entwurfsentscheidung unter `docs/M25_UI_PDF_ENTWURFSENTSCHEIDUNG.md`.
+  - Naechster offener Schritt: M26 fachlich planen, insbesondere Verantwortlichen-/Ausgabe-/Abnahmegrenze ohne Editor-Fachlogik.
+
 - M24 Restarbeiten-Fachspezifikation finalisiert:
   - Neue Fachspezifikation unter `docs/M24_RESTARBEITEN_FACHSPEZIFIKATION.md`.
   - Ergebnis: Der erste Nutzstand ist als textbasierte, projektbezogene Restarbeitenliste mit Pflichtfeldern, Statusmodell, 10-Tage-Ampelregel, Auto-Save-Entscheidung, Soft-Delete und einfacher Ausgabe fachlich spezifiziert.
