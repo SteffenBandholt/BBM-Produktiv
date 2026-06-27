@@ -331,3 +331,11 @@ Dabei gilt:
 - Neue Datensaetze bleiben weiterhin gegen Anlegen ohne Kurztext gesperrt.
 - Es werden keine Platzhalter oder Fantasiewerte erzeugt; Statusmodell und M25-Ampellogik bleiben unveraendert.
 - Protokoll, UI-Editor-kit, PDF/Druck/Mail, Diktat/Audio, Fotoimport und Lizenzierung bleiben ausserhalb dieses Pakets.
+
+### M27 Restarbeiten Ausgabe- und Abnahmegrenze fachlich festgelegt (neu)
+- Die erste einfache Ausgabe ist als projektbezogene Restarbeitenliste fachlich abgegrenzt.
+- Ausgabefelder sind Nr., Kurztext, Ort/Bereich, Verantwortlich, Fertig bis, Status, Ampel/Fristbewertung und Hinweis auf unvollstaendige Pflichtfelder.
+- Unvollstaendige Datensaetze bleiben ausgabefaehig, werden aber als unvollstaendig gekennzeichnet; es werden keine Fantasiewerte oder Platzhalter erzeugt.
+- Erledigte Restarbeiten duerfen enthalten sein, muessen aber klar erkennbar erledigt und fristneutral behandelt sein.
+- Sortierung und Filterung sind nur fachlich beschrieben; PDF, Druck, Mail, Fotos und Detailanhaenge bleiben spaetere Pakete.
+- Protokoll, UI-Editor-kit, Datenbank, Diktat/Audio und technische Ausgabewege bleiben ausserhalb dieses Pakets.
