@@ -339,3 +339,10 @@ Dabei gilt:
 - Erledigte Restarbeiten duerfen enthalten sein, muessen aber klar erkennbar erledigt und fristneutral behandelt sein.
 - Sortierung und Filterung sind nur fachlich beschrieben; PDF, Druck, Mail, Fotos und Detailanhaenge bleiben spaetere Pakete.
 - Protokoll, UI-Editor-kit, Datenbank, Diktat/Audio und technische Ausgabewege bleiben ausserhalb dieses Pakets.
+
+### M27a UI-/PDF-Grundlagenpfade bereinigt (neu)
+- Die in `AGENTS.md` erwarteten UI-/PDF-Grundlagenpfade unter `docs/` sind als kurze Bruecken vorhanden.
+- Fuehrende Inhalte bleiben unter `docs/ui-editor/`; es wurde keine doppelte Fachlogik aufgebaut.
+- `docs/UI_EDITOR_VERTRAG.md` ist ebenfalls auf die fuehrende Vertragsfassung unter `docs/ui-editor/` ausgerichtet.
+- `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md` ist eine allgemeine Bruecke/Vorlage und keine M28-Entscheidung.
+- Restarbeiten-UI, Ausgabeansicht, PDF, Druck, Mail, UI-Editor-kit-Code, Protokoll und Datenbank bleiben unveraendert.
