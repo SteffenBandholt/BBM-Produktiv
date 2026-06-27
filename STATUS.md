@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M27a UI-/PDF-Grundlagenpfade bereinigt:
+  - Die von `AGENTS.md` erwarteten Root-Pfade fuer UI-/PDF-Grundlagen sind als kurze Bruecken angelegt.
+  - Fuehrende Inhalte bleiben unter `docs/ui-editor/`; es wurde keine doppelte Fachlogik aufgebaut.
+  - `docs/UI_EDITOR_VERTRAG.md` verweist jetzt ebenfalls auf die fuehrende Fassung unter `docs/ui-editor/`.
+  - `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md` ist nur eine allgemeine Bruecke/Vorlage, keine M28-Entscheidung.
+  - Keine Restarbeiten-UI, keine Ausgabeansicht, keine PDF-/Druck-/Mail-Funktion, kein UI-Editor-kit-Code, kein Protokoll und keine Datenbank wurden geaendert.
+
 - M27 Restarbeiten Ausgabe- und Abnahmegrenze fachlich festgelegt:
   - Neue Doku unter `docs/M27_RESTARBEITEN_AUSGABE_ABNAHMEGRENZE.md`.
   - Die erste einfache Ausgabe ist fachlich als projektbezogene Restarbeitenliste abgegrenzt.
