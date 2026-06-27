@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M27 Restarbeiten Ausgabe- und Abnahmegrenze fachlich festgelegt:
+  - Neue Doku unter `docs/M27_RESTARBEITEN_AUSGABE_ABNAHMEGRENZE.md`.
+  - Die erste einfache Ausgabe ist fachlich als projektbezogene Restarbeitenliste abgegrenzt.
+  - Enthaltene Felder: Nr., Kurztext, Ort/Bereich, Verantwortlich, Fertig bis, Status, Ampel/Fristbewertung und Hinweis auf unvollstaendige Pflichtfelder.
+  - Unvollstaendige Datensaetze bleiben ausgabefaehig, werden aber als unvollstaendig gekennzeichnet; es werden keine Fantasiewerte oder Platzhalter erzeugt.
+  - Erledigte Restarbeiten duerfen enthalten sein, muessen aber klar als erledigt erkennbar und fristneutral behandelt sein.
+  - Sortierung und Filterung sind nur fachlich beschrieben; PDF, Druck, Mail, Fotos, Detailanhaenge, Diktat/Audio, UI-Editor-kit, Protokoll und Datenbank bleiben unveraendert.
+  - Naechster offener Schritt: spaeteres technisches Ausgabe-Mini-Paket separat schneiden, inklusive eigener UI-/PDF-Entwurfsentscheidung.
+
 - M26 Restarbeiten Nachpflege vorhandener Datensaetze abgesichert:
   - Unvollstaendige Restarbeiten bleiben in der Liste als `Nachpflege erforderlich` sichtbar markiert.
   - Die Editbox benennt bei vorhandenen Alt-Datensaetzen alle fehlenden Pflichtfelder, auch wenn der Kurztext leer ist.
