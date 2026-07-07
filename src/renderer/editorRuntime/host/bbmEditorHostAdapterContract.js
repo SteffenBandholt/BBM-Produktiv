@@ -2,6 +2,7 @@ export const REQUIRED_HOST_ADAPTER_METHODS = Object.freeze([
   "getRegistry",
   "getCurrentLayoutState",
   "submitChangeRequest",
+  "resetLayoutState",
 ]);
 
 export function validateHostAdapterShape(adapter) {

@@ -17,6 +17,13 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M29 Globaler UI-Editor fuer Speichern, Laden und Reset abgesichert:
+  - Der vorhandene EditorRuntime-/HostAdapter-Pfad fuer `restarbeiten.ui.main` kann erlaubte neutrale Layoutaenderungen speichern, ueber `getCurrentLayoutState()` laden und ueber `resetLayoutState()` zuruecksetzen.
+  - Gespeichert werden nur neutrale Layoutwerte zu bewusst registrierten Elementen; unbekannte Element-IDs, gesperrte Operationen und Fach-/DOM-/Datenbank-/IPC-/Datensatz-Payloads werden blockiert.
+  - Der Speicherpfad nutzt keine automatische DOM-Erkennung, keine automatische Registry-Befuellung, keine Fachdaten, keine Datenbankmigration und keine fachlichen IPC-Wege.
+  - Keine PDF-, Druck-, Mail-, Diktat-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+  - Neue Doku: `docs/M29_UI_EDITOR_GLOBAL_SPEICHERN_LADEN.md`.
+
 - M28 Restarbeiten einfache Ausgabeansicht technisch vorbereitet:
   - Eine rein app-interne, lesende Ausgabevorschau ist im Restarbeiten-Modul vorhanden.
   - Die Vorschau zeigt Nr., Kurztext, Ort/Bereich, Verantwortlich, Fertig bis, Status, Ampel/Fristbewertung und Hinweise auf unvollstaendige Pflichtfelder.

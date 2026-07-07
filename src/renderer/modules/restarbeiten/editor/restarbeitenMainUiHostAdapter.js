@@ -1,6 +1,11 @@
 import { getRestarbeitenMainUiRegistry } from "./restarbeitenEditorScopes.js";
 import { validateEditorChangeRequest } from "../../../editorRuntime/changeRequests/editorChangeRequestValidator.js";
 import { validateHostAdapterShape } from "../../../editorRuntime/host/bbmEditorHostAdapterContract.js";
+import {
+  createEditorLayoutMemoryStorage,
+  createEditorLayoutStore,
+  normalizeEditorLayoutValue,
+} from "../../../editorRuntime/layout/editorLayoutPersistence.js";
 
 const SCOPE = Object.freeze({
   targetAppId: "bbm",
@@ -8,20 +13,28 @@ const SCOPE = Object.freeze({
   scopeId: "restarbeiten.ui.main",
 });
 
-export function createRestarbeitenMainUiHostAdapter() {
+function cloneRegistry(registry) {
+  return registry.map((entry) => ({
+    ...entry,
+    allowedOps: [...entry.allowedOps],
+    lockedOps: [...entry.lockedOps],
+  }));
+}
+
+export function createRestarbeitenMainUiHostAdapter({ layoutStorage = createEditorLayoutMemoryStorage() } = {}) {
   const registry = getRestarbeitenMainUiRegistry();
+  const layoutStore = createEditorLayoutStore({
+    scope: SCOPE,
+    storage: layoutStorage,
+  });
 
   const adapter = {
     getRegistry() {
-      return registry.map((entry) => ({
-        ...entry,
-        allowedOps: [...entry.allowedOps],
-        lockedOps: [...entry.lockedOps],
-      }));
+      return cloneRegistry(registry);
     },
 
     getCurrentLayoutState() {
-      return [];
+      return layoutStore.list();
     },
 
     submitChangeRequest(changeRequest) {
@@ -39,11 +52,42 @@ export function createRestarbeitenMainUiHostAdapter() {
         };
       }
 
+      const layoutValueResult = normalizeEditorLayoutValue(changeRequest.operation, changeRequest.payload);
+      if (!layoutValueResult.ok) {
+        return {
+          ok: false,
+          blocked: true,
+          reason: layoutValueResult.reason,
+          validation,
+        };
+      }
+
+      const layoutEntry = layoutStore.save(changeRequest, layoutValueResult.layoutValue);
       return {
-        ok: false,
-        blocked: true,
-        reason: "LAYOUT_WRITE_NOT_IMPLEMENTED",
+        ok: true,
+        blocked: false,
+        reason: null,
         validation,
+        layoutEntry,
+      };
+    },
+
+    resetLayoutState({ elementId = null } = {}) {
+      const normalizedElementId = String(elementId || "").trim();
+      if (normalizedElementId && !registry.some((entry) => entry.id === normalizedElementId)) {
+        return {
+          ok: false,
+          blocked: true,
+          reason: "ELEMENT_ID_UNKNOWN",
+          layoutState: layoutStore.list(),
+        };
+      }
+
+      return {
+        ok: true,
+        blocked: false,
+        reason: null,
+        layoutState: layoutStore.reset(normalizedElementId || null),
       };
     },
   };
