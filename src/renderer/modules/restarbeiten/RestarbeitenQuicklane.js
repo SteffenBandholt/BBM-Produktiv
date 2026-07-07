@@ -211,7 +211,8 @@ export function buildRestarbeitenQuicklane({
     createButton({
       id: "restarbeiten.quicklane.action.pdfPreview",
       icon: "📄",
-      title: "PDF-Vorschau",
+      title: "Ausgabevorschau",
+      ariaLabel: "Ausgabevorschau",
       onClick: onPreview,
     }),
     createButton({

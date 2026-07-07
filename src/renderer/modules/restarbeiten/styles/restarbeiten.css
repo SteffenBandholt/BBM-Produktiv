@@ -39,6 +39,10 @@
   overflow: hidden;
 }
 
+.bbm-restarbeiten-screen[data-output-preview="true"] {
+  grid-template-rows: 96px minmax(0, 1fr);
+}
+
 .bbm-restarbeiten-screen,
 .bbm-restarbeiten-screen * {
   box-sizing: border-box;
@@ -485,6 +489,95 @@
 .bbm-restarbeiten-record__required {
   color: var(--bbm-error);
   font-size: var(--bbm-rest-label-font-size);
+  font-weight: 700;
+}
+
+.bbm-restarbeiten-output {
+  display: grid;
+  justify-content: center;
+}
+
+.bbm-restarbeiten-output__paper {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  overflow: auto;
+}
+
+.bbm-restarbeiten-output__header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 12px;
+  align-items: center;
+  border-bottom: 1px solid var(--bbm-line);
+  padding-bottom: 10px;
+}
+
+.bbm-restarbeiten-output__header h2 {
+  margin: 0;
+  color: var(--bbm-text);
+  font-size: 13pt;
+  line-height: 1.2;
+}
+
+.bbm-restarbeiten-output__meta {
+  grid-column: 1;
+  color: var(--bbm-muted);
+  font-size: var(--bbm-rest-meta-font-size);
+}
+
+.bbm-restarbeiten-output__header .bbm-restarbeiten-button {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+.bbm-restarbeiten-output__table {
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+}
+
+.bbm-restarbeiten-output__row {
+  display: grid;
+  grid-template-columns: 42px minmax(120px, 1.4fr) minmax(110px, 1fr) minmax(90px, 0.8fr) 68px 66px 54px minmax(120px, 1fr);
+  gap: 6px;
+  align-items: start;
+  padding: 7px 6px;
+  border: 1px solid var(--bbm-line);
+  border-radius: 6px;
+  background: var(--bbm-surface-soft);
+  color: var(--bbm-text);
+  font-size: 7.8pt;
+  line-height: 1.25;
+}
+
+.bbm-restarbeiten-output__row--header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--bbm-panel);
+  color: var(--bbm-muted);
+  font-size: var(--bbm-rest-table-head-font-size);
+  font-weight: 700;
+}
+
+.bbm-restarbeiten-output__row[data-bbm-restarbeiten-output-complete="false"] {
+  border-left: 3px solid var(--bbm-error);
+}
+
+.bbm-restarbeiten-output__row[data-bbm-restarbeiten-output-done="true"] {
+  color: var(--bbm-muted);
+  background: #f5f7fb;
+}
+
+.bbm-restarbeiten-output__cell {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.bbm-restarbeiten-output__hint {
+  color: var(--bbm-error);
   font-weight: 700;
 }
 

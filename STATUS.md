@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M28 Restarbeiten einfache Ausgabeansicht technisch vorbereitet:
+  - Eine rein app-interne, lesende Ausgabevorschau ist im Restarbeiten-Modul vorhanden.
+  - Die Vorschau zeigt Nr., Kurztext, Ort/Bereich, Verantwortlich, Fertig bis, Status, Ampel/Fristbewertung und Hinweise auf unvollstaendige Pflichtfelder.
+  - Unvollstaendige Datensaetze bleiben sichtbar und werden als unvollstaendig gekennzeichnet; fehlende Fachwerte bleiben leer.
+  - Erledigte Datensaetze bleiben sichtbar und werden als erledigt/fristneutral behandelt.
+  - Die Vorschau speichert nicht, erzeugt keine Fantasiewerte und nutzt keine neuen IPC-, Datenbank-, PDF-, Druck- oder Mailwege.
+  - UI-Editor-kit, generische Editorlogik, Protokoll, Fotoausgabe, Diktat/Audio, Datenbank und Lizenzierung blieben unveraendert.
+
 - M27a UI-/PDF-Grundlagenpfade bereinigt:
   - Die von `AGENTS.md` erwarteten Root-Pfade fuer UI-/PDF-Grundlagen sind als kurze Bruecken angelegt.
   - Fuehrende Inhalte bleiben unter `docs/ui-editor/`; es wurde keine doppelte Fachlogik aufgebaut.
