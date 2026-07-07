@@ -798,8 +798,8 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(projectAction.getAttribute("aria-label"), "Projekt");
     assert.equal(firmsAction.title, "Firmen");
     assert.equal(firmsAction.getAttribute("aria-label"), "Firmen");
-    assert.equal(previewAction.title, "PDF-Vorschau");
-    assert.equal(previewAction.getAttribute("aria-label"), "PDF-Vorschau");
+    assert.equal(previewAction.title, "Ausgabevorschau");
+    assert.equal(previewAction.getAttribute("aria-label"), "Ausgabevorschau");
     assert.equal(printAction.title, "Drucken noch nicht verfügbar");
     assert.equal(printAction.getAttribute("aria-label"), "Drucken");
     assert.equal(mailAction.title, "E-Mail noch nicht verfügbar");
@@ -871,6 +871,9 @@ async function runRestarbeitenModuleTests(run) {
     const viewModel = await importEsmFromFile(
       path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenListItems.js")
     );
+    const outputViewModel = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenOutputViewModel.js")
+    );
     assert.equal(typeof dataSource.listRestarbeitenByProject, "function");
     assert.equal(typeof dataSource.getRestarbeitenProjectSettings, "function");
     assert.equal(typeof dataSource.listRestarbeitAttachments, "function");
@@ -879,6 +882,7 @@ async function runRestarbeitenModuleTests(run) {
     assert.equal(typeof dataSource.listResponsibleProjectFirms, "function");
     assert.equal(typeof dataSource.softDeleteRestarbeitItem, "function");
     assert.equal(typeof viewModel.toRestarbeitenListItems, "function");
+    assert.equal(typeof outputViewModel.toRestarbeitenOutputRows, "function");
     const [rest, emptyLocation] = viewModel.toRestarbeitenListItems([
       { id: "r", item_class: "rest", running_number: 1, location_level_1: "EG", location_level_2: "Flur" },
       { id: "e", item_class: "mangel", running_number: 2 },
@@ -891,6 +895,101 @@ async function runRestarbeitenModuleTests(run) {
       emptyLocation.requiredFieldSummary,
       "Unvollstaendig: Kurztext, Ort/Bereich, Status, Verantwortlich, Fertig bis"
     );
+  });
+
+  await run("Restarbeiten M28: Ausgabe-ViewModel bleibt lesend, vollstaendig und ohne Platzhalter", async () => {
+    const outputViewModel = await importEsmFromFile(
+      path.join(__dirname, "../../src/renderer/modules/restarbeiten/viewModel/restarbeitenOutputViewModel.js")
+    );
+    const today = new Date(Date.UTC(2026, 5, 24));
+    const rows = outputViewModel.toRestarbeitenOutputRows(
+      [
+        {
+          id: "done",
+          running_number: 3,
+          short_text: "Abnahme erfolgt",
+          location_level_1: "Haus B",
+          responsible_label: "Elektro GmbH",
+          due_date: "2026-06-01",
+          status: "erledigt",
+        },
+        {
+          id: "incomplete",
+          running_number: 2,
+          status: "offen",
+        },
+        {
+          id: "late",
+          running_number: 1,
+          short_text: "Tuer einstellen",
+          location_level_1: "Haus A",
+          location_level_2: "EG",
+          responsible_label: "Schreinerei",
+          due_date: "2026-06-23",
+          status: "offen",
+        },
+      ],
+      today
+    );
+
+    assert.deepEqual(rows.map((row) => row.id), ["late", "incomplete", "done"]);
+    assert.equal(rows[0].number, "1");
+    assert.equal(rows[0].shortText, "Tuer einstellen");
+    assert.equal(rows[0].location, "Haus A \u00b7 EG");
+    assert.equal(rows[0].responsible, "Schreinerei");
+    assert.equal(rows[0].dueDateLabel, "23.06.26");
+    assert.equal(rows[0].statusLabel, "offen");
+    assert.equal(rows[0].ampelLabel, "rot");
+    assert.equal(rows[0].incompleteHint, "");
+
+    assert.equal(rows[1].shortText, "");
+    assert.equal(rows[1].location, "");
+    assert.equal(rows[1].responsible, "");
+    assert.equal(rows[1].dueDateLabel, "");
+    assert.equal(rows[1].incompleteHint, "Unvollstaendig: Kurztext, Ort/Bereich, Verantwortlich, Fertig bis");
+    assert.equal(rows[1].isComplete, false);
+
+    assert.equal(rows[2].isDone, true);
+    assert.equal(rows[2].statusLabel, "erledigt");
+    assert.equal(rows[2].ampelLabel, "neutral");
+  });
+
+  await run("Restarbeiten M28: Ausgabevorschau zeigt nur lesende Liste und keine Editbox", async () => {
+    const rendered = await renderRouteScreen({ keepGlobals: true });
+    try {
+      const previewAction = findByUiId(rendered.root, "restarbeiten.quicklane.action.pdfPreview");
+      previewAction.dispatchEvent({ type: "click", preventDefault() {} });
+
+      const preview = findByData(rendered.root, "data-bbm-restarbeiten-output-preview", "true");
+      const screenRoot = findByUiId(rendered.root, "restarbeiten.root");
+      assert.equal(Boolean(preview), true, "output preview");
+      assert.equal(screenRoot.getAttribute("data-output-preview"), "true");
+      assert.equal(findByUiId(rendered.root, "restarbeiten.editbox"), null);
+
+      const text = collectText(preview);
+      for (const expected of [
+        "Nr.",
+        "Kurztext",
+        "Ort/Bereich",
+        "Verantwortlich",
+        "Fertig bis",
+        "Status",
+        "Ampel",
+        "Hinweis",
+        "Abdichtung im Bad fehlt",
+        "Mueller Trockenbau",
+        "offen",
+      ]) {
+        assert.equal(text.includes(expected), true, expected);
+      }
+
+      const rows = findNodes(preview, (entry) => entry.getAttribute?.("data-bbm-restarbeiten-output-row") === "true");
+      assert.equal(rows.length >= 1, true);
+      assert.equal(rows.every((row) => row.getAttribute("data-bbm-restarbeiten-output-complete") === "true"), true);
+      assert.equal(typeof rendered.root.querySelector("[data-bbm-restarbeiten-output-preview=\"true\"]"), "object");
+    } finally {
+      rendered.restoreGlobals();
+    }
   });
 
   await run("Restarbeiten: Statusauswahlen enthalten die verbindlichen Werte", async () => {

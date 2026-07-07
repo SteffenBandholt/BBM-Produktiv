@@ -346,3 +346,11 @@ Dabei gilt:
 - `docs/UI_EDITOR_VERTRAG.md` ist ebenfalls auf die fuehrende Vertragsfassung unter `docs/ui-editor/` ausgerichtet.
 - `docs/UI_PDF_ENTWURFSENTSCHEIDUNG.md` ist eine allgemeine Bruecke/Vorlage und keine M28-Entscheidung.
 - Restarbeiten-UI, Ausgabeansicht, PDF, Druck, Mail, UI-Editor-kit-Code, Protokoll und Datenbank bleiben unveraendert.
+
+### M28 Restarbeiten einfache Ausgabeansicht technisch vorbereitet (neu)
+- Eine rein app-interne Ausgabevorschau zeigt die M27-Felder als lesende projektbezogene Restarbeitenliste.
+- Unvollstaendige Datensaetze bleiben sichtbar und werden ohne Fantasiewerte oder Platzhalter als unvollstaendig gekennzeichnet.
+- Erledigte Datensaetze bleiben sichtbar und werden erledigt/fristneutral behandelt.
+- Die Ausgabevorschau nutzt eine einfache Sortierung; grosse neue Filterlogik wurde nicht gebaut.
+- Es wurden keine neuen IPC-, Datenbank-, PDF-, Druck-, Mail-, Foto-, Diktat-/Audio- oder Lizenzierungswege angelegt.
+- UI-Editor-kit, generische Editorlogik, Protokoll und Tabellenlayout-Editor blieben ausserhalb dieses Pakets.

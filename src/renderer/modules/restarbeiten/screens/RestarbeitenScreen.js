@@ -12,8 +12,10 @@ import { toRestarbeitenListItems, getRestarbeitenAmpelState } from "../viewModel
 import { buildRestarbeitenFilterbar } from "../RestarbeitenFilterbar.js";
 import { buildRestarbeitenMainBody } from "../RestarbeitenMainBody.js";
 import { buildRestarbeitenEditbox } from "../RestarbeitenEditbox.js";
+import { buildRestarbeitenOutputPreview } from "../RestarbeitenOutputPreview.js";
 import { buildRestarbeitenQuicklane } from "../RestarbeitenQuicklane.js";
 import { ensureRestarbeitenStyles } from "../styles.js";
+import { toRestarbeitenOutputRows } from "../viewModel/restarbeitenOutputViewModel.js";
 import {
   canPersistRestarbeitDraft,
   normalizeRestarbeitStatus,
@@ -157,6 +159,7 @@ export default class RestarbeitenScreen {
     };
     this._lastRestarbeitNotePrint = null;
     this.quicklanePinned = false;
+    this.outputPreviewOpen = false;
   }
 
   render() {
@@ -213,11 +216,18 @@ export default class RestarbeitenScreen {
   }
 
   openRestarbeitenPreview() {
-    this._setStubMessage("PDF Voransicht folgt in M2.");
+    this.outputPreviewOpen = true;
+    this.error = null;
+    this._renderShell();
   }
 
   openRestarbeitenOutput() {
-    this._setStubMessage("Ausgabe, Druck und E-Mail folgen in M2.");
+    this.openRestarbeitenPreview();
+  }
+
+  closeRestarbeitenPreview() {
+    this.outputPreviewOpen = false;
+    this._renderShell();
   }
 
   openRestarbeitPhotos(restarbeitId = this.selectedId) {
@@ -506,6 +516,7 @@ export default class RestarbeitenScreen {
     this.root.replaceChildren();
     const filteredRows = this._getFilteredItems();
     this.viewItems = toRestarbeitenListItems(filteredRows);
+    this.root.setAttribute("data-output-preview", this.outputPreviewOpen ? "true" : "false");
     const responsibleOptions = this.responsibleFirms
       .map((firm) => ({
         value: normalizeText(firm.id),
@@ -542,26 +553,37 @@ export default class RestarbeitenScreen {
         },
         onClose: () => this.router?.showProjectWorkspace?.(this.projectId, { project: this.project }),
       }),
-      buildRestarbeitenMainBody({
-        items: this.viewItems,
-        selectedId: this.selectedId,
-        showAmpel: this.showAmpelInList,
-        showLongtext: this.showLongtextInList,
-        onSelect: (id) => this._selectItem(id),
-        onPhotos: (id) => this.openRestarbeitPhotos(id),
-      }),
-      buildRestarbeitenEditbox({
-        settings: this.settings,
-        draft: this.draft,
-        showAmpel: this.showAmpelInList,
-        responsibleOptions,
-        onNew: () => this._newDraft(),
-        onDraftChange: (patch, options) => this._updateDraft(patch, options),
-        onDelete: () => this._deleteDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
-        onNote: () => this._openNotesPopup().catch((err) => this._setStubMessage(err?.message || String(err))),
-        onAutoSave: () => this._autoSaveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
-      })
+      this.outputPreviewOpen
+        ? buildRestarbeitenOutputPreview({
+            items: toRestarbeitenOutputRows(filteredRows),
+            projectName: normalizeText(this.project?.name || this.project?.project_name || this.project?.title),
+            onClose: () => this.closeRestarbeitenPreview(),
+          })
+        : buildRestarbeitenMainBody({
+            items: this.viewItems,
+            selectedId: this.selectedId,
+            showAmpel: this.showAmpelInList,
+            showLongtext: this.showLongtextInList,
+            onSelect: (id) => this._selectItem(id),
+            onPhotos: (id) => this.openRestarbeitPhotos(id),
+          })
     );
+
+    if (!this.outputPreviewOpen) {
+      this.root.appendChild(
+        buildRestarbeitenEditbox({
+          settings: this.settings,
+          draft: this.draft,
+          showAmpel: this.showAmpelInList,
+          responsibleOptions,
+          onNew: () => this._newDraft(),
+          onDraftChange: (patch, options) => this._updateDraft(patch, options),
+          onDelete: () => this._deleteDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
+          onNote: () => this._openNotesPopup().catch((err) => this._setStubMessage(err?.message || String(err))),
+          onAutoSave: () => this._autoSaveDraft().catch((err) => this._setStubMessage(err?.message || String(err))),
+        })
+      );
+    }
 
     if (this.isLoading || this.error) {
       const status = document.createElement("div");
