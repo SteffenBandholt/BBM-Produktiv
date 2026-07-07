@@ -354,3 +354,11 @@ Dabei gilt:
 - Die Ausgabevorschau nutzt eine einfache Sortierung; grosse neue Filterlogik wurde nicht gebaut.
 - Es wurden keine neuen IPC-, Datenbank-, PDF-, Druck-, Mail-, Foto-, Diktat-/Audio- oder Lizenzierungswege angelegt.
 - UI-Editor-kit, generische Editorlogik, Protokoll und Tabellenlayout-Editor blieben ausserhalb dieses Pakets.
+
+### M29 Globaler UI-Editor Speichern/Laden/Reset abgesichert (neu)
+- Der bestehende EditorRuntime-/HostAdapter-Pfad speichert fuer den Pilot-Scope `restarbeiten.ui.main` nur neutrale Layoutwerte zu bewusst registrierten Elementen.
+- Gespeicherte Layoutwerte koennen ueber den HostAdapter wieder geladen und per Reset einzeln oder vollstaendig entfernt werden.
+- Ungueltige Change Requests werden blockiert, insbesondere unbekannte Elemente, nicht erlaubte oder gesperrte Operationen sowie Fach-, DOM-, Datenbank-, IPC- und Datensatz-Payloads.
+- Es wurde keine automatische DOM-Erkennung, keine automatische Registry-Befuellung und kein Fachspeicher eingefuehrt.
+- PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik, Restarbeiten-Fachlogik, Datenbankmigration und neue fachliche IPC-Wege bleiben ausserhalb dieses Pakets.
+- Neue Doku: `docs/M29_UI_EDITOR_GLOBAL_SPEICHERN_LADEN.md`.

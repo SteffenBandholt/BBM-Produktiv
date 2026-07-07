@@ -165,6 +165,7 @@ async function runEditorRuntimeCatalogTests(run) {
     assert.equal(result.ok, false);
     assert.ok(result.errors.some((error) => error.methodName === "getCurrentLayoutState"));
     assert.ok(result.errors.some((error) => error.methodName === "submitChangeRequest"));
+    assert.ok(result.errors.some((error) => error.methodName === "resetLayoutState"));
   });
 
   if (!process.exitCode) console.log("editorRuntime.catalog.test.cjs passed");
