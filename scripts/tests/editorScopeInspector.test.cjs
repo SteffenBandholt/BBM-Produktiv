@@ -83,6 +83,102 @@ async function runEditorScopeInspectorTests(run) {
     assert.deepEqual(operationsResult.operations.effectiveOps, detailsResult.details.effectiveOps);
   });
 
+  await run("EditorScopeInspector: Layout-Control-Panel bietet Save/Load/Reset fuer registriertes Element", () => {
+    const panel = inspector.getLayoutControlPanel("restarbeiten.ui.main", "restarbeiten.editbox.text.short");
+    assert.equal(panel.ok, true);
+    assert.equal(panel.status.kind, "ready");
+    assert.equal(panel.selectedElement.id, "restarbeiten.editbox.text.short");
+    assert.ok(panel.controls.some((control) => control.id === "editor.layout.applySave" && control.enabled));
+    assert.ok(panel.controls.some((control) => control.id === "editor.layout.loadSaved" && control.enabled));
+    assert.ok(panel.controls.some((control) => control.id === "editor.layout.resetDefault" && control.enabled));
+    const saveControl = panel.controls.find((control) => control.id === "editor.layout.applySave");
+    assert.ok(saveControl.allowedOps.includes("move"));
+    assert.equal(saveControl.allowedOps.includes("label"), false);
+  });
+
+  await run("EditorScopeInspector: Layout-Aenderung wird angewendet und sichtbar bestaetigt", () => {
+    const applyResult = inspector.applyLayoutChange("restarbeiten.ui.main", {
+      elementId: "restarbeiten.editbox.text.short",
+      operation: "move",
+      payload: { x: 14, y: 28 },
+    });
+    assert.equal(applyResult.ok, true);
+    assert.equal(applyResult.blocked, false);
+    assert.equal(applyResult.status.kind, "success");
+    assert.equal(applyResult.status.message.includes("angewendet"), true);
+    assert.deepEqual(applyResult.layoutEntry.layoutValue, { x: 14, y: 28 });
+  });
+
+  await run("EditorScopeInspector: gespeicherter Layoutzustand wird geladen und gemeldet", () => {
+    const loadResult = inspector.loadLayoutState("restarbeiten.ui.main", {
+      elementId: "restarbeiten.editbox.text.short",
+    });
+    assert.equal(loadResult.ok, true);
+    assert.equal(loadResult.status.kind, "success");
+    assert.equal(loadResult.currentLayoutEntry.elementId, "restarbeiten.editbox.text.short");
+    assert.deepEqual(loadResult.currentLayoutEntry.layoutValue, { x: 14, y: 28 });
+  });
+
+  await run("EditorScopeInspector: Reset stellt den Standardzustand nachvollziehbar wieder her", () => {
+    const resetResult = inspector.resetLayoutState("restarbeiten.ui.main", {
+      elementId: "restarbeiten.editbox.text.short",
+    });
+    assert.equal(resetResult.ok, true);
+    assert.equal(resetResult.status.kind, "success");
+    assert.deepEqual(resetResult.layoutState, []);
+
+    const loadResult = inspector.loadLayoutState("restarbeiten.ui.main", {
+      elementId: "restarbeiten.editbox.text.short",
+    });
+    assert.equal(loadResult.ok, true);
+    assert.equal(loadResult.currentLayoutEntry, null);
+    assert.equal(loadResult.status.message.includes("Standardzustand"), true);
+  });
+
+  await run("EditorScopeInspector: unbekanntes Element blockiert sichtbare Bedienaktionen", () => {
+    const panel = inspector.getLayoutControlPanel("restarbeiten.ui.main", "restarbeiten.editbox.unknown");
+    assert.equal(panel.ok, false);
+    assert.equal(panel.status.kind, "blocked");
+    assert.equal(panel.status.reason, "ELEMENT_UNKNOWN");
+    assert.equal(panel.controls.every((control) => control.enabled === false), true);
+  });
+
+  await run("EditorScopeInspector: nicht layoutneutrale Operation wird sichtbar blockiert", () => {
+    const result = inspector.applyLayoutChange("restarbeiten.ui.main", {
+      elementId: "restarbeiten.editbox.text.short.label",
+      operation: "label",
+      payload: { label: "Kurztext" },
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.blocked, true);
+    assert.equal(result.reason, "OPERATION_NOT_LAYOUT_CONTROL_SAFE");
+    assert.equal(result.status.kind, "blocked");
+  });
+
+  await run("EditorScopeInspector: Fach-, DOM- und Datenbankpayloads werden nicht gespeichert", () => {
+    const forbiddenPayloads = [
+      { projectId: "p-1" },
+      { domNode: { id: "x" } },
+      { database: "app.db" },
+    ];
+
+    for (const payload of forbiddenPayloads) {
+      const result = inspector.applyLayoutChange("restarbeiten.ui.main", {
+        elementId: "restarbeiten.editbox.text.short",
+        operation: "move",
+        payload,
+      });
+      assert.equal(result.ok, false);
+      assert.equal(result.blocked, true);
+      assert.equal(result.status.kind, "blocked");
+    }
+
+    const loadResult = inspector.loadLayoutState("restarbeiten.ui.main", {
+      elementId: "restarbeiten.editbox.text.short",
+    });
+    assert.equal(loadResult.currentLayoutEntry, null);
+  });
+
   await run("EditorScopeInspector: unbekannter Scope wird sauber behandelt", () => {
     const unknown = inspector.inspectScope("does.not.exist");
     assert.equal(unknown.ok, false);

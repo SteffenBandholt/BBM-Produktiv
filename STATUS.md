@@ -17,6 +17,14 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M30 Globale UI-Editor-Bedienoberflaeche fuer Speichern, Laden und Reset abgesichert:
+  - Der bestehende EditorScopeInspector stellt fuer registrierte UI-Elemente neutrale Layout-Controls bereit: Aenderung anwenden/speichern, gespeicherten Zustand laden/anwenden und auf Standard zuruecksetzen.
+  - Die Bedienlogik nutzt ausschliesslich den vorhandenen EditorRuntime-/HostAdapter-/LayoutPersistence-Pfad aus M29 und gibt sichtbare Erfolgs- oder Blockade-Statusmeldungen zurueck.
+  - Unbekannte Elemente, nicht layoutneutrale Operationen sowie Fach-, DOM- und Datenbankpayloads werden sichtbar blockiert und nicht gespeichert.
+  - Es wurde keine Ziel-App-UI gescannt, keine automatische Registry-Befuellung eingefuehrt, keine Fachdaten gespeichert und keine Datenbank-/IPC-Fachlogik geaendert.
+  - Keine PDF-, Druck-, Mail-, Diktat-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+  - Neue Doku: `docs/M30_UI_EDITOR_BEDIENOBERFLAECHE_SPEICHERN_LADEN_RESET.md`.
+
 - M29 Globaler UI-Editor fuer Speichern, Laden und Reset abgesichert:
   - Der vorhandene EditorRuntime-/HostAdapter-Pfad fuer `restarbeiten.ui.main` kann erlaubte neutrale Layoutaenderungen speichern, ueber `getCurrentLayoutState()` laden und ueber `resetLayoutState()` zuruecksetzen.
   - Gespeichert werden nur neutrale Layoutwerte zu bewusst registrierten Elementen; unbekannte Element-IDs, gesperrte Operationen und Fach-/DOM-/Datenbank-/IPC-/Datensatz-Payloads werden blockiert.

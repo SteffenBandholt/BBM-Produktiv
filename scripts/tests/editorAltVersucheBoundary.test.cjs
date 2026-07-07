@@ -11,6 +11,8 @@ const CURRENT_EDITOR_FILES = [
   path.join(REPO_ROOT, "src/renderer/editorRuntime/changeRequests/editorChangeRequestValidator.js"),
   path.join(REPO_ROOT, "src/renderer/editorRuntime/host/bbmEditorHostAdapterContract.js"),
   path.join(REPO_ROOT, "src/renderer/editorRuntime/host/bbmEditorHostAdapterFactory.js"),
+  path.join(REPO_ROOT, "src/renderer/editorRuntime/inspector/editorLayoutControls.js"),
+  path.join(REPO_ROOT, "src/renderer/editorRuntime/inspector/editorScopeInspector.js"),
   path.join(REPO_ROOT, "src/renderer/editorRuntime/layout/editorLayoutPersistence.js"),
   path.join(REPO_ROOT, "src/renderer/editorRuntime/layout/editorLayoutStateModel.js"),
   path.join(REPO_ROOT, "src/renderer/editorRuntime/registry/editorRegistryModel.js"),

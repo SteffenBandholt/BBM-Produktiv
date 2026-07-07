@@ -362,3 +362,13 @@ Dabei gilt:
 - Es wurde keine automatische DOM-Erkennung, keine automatische Registry-Befuellung und kein Fachspeicher eingefuehrt.
 - PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik, Restarbeiten-Fachlogik, Datenbankmigration und neue fachliche IPC-Wege bleiben ausserhalb dieses Pakets.
 - Neue Doku: `docs/M29_UI_EDITOR_GLOBAL_SPEICHERN_LADEN.md`.
+
+### M30 Globale UI-Editor-Bedienoberflaeche Speichern/Laden/Reset abgesichert (neu)
+- Der bestehende EditorScopeInspector stellt ein neutrales Layout-Control-Modell fuer registrierte UI-Elemente bereit.
+- Bedienaktionen sind: Aenderung anwenden/speichern, gespeicherten Zustand laden/anwenden und auf Standard zuruecksetzen.
+- Erfolg und Fehler werden als Statusmeldungen zurueckgegeben; ungueltige Aktionen werden sichtbar blockiert.
+- Die Bedienlogik nutzt nur den vorhandenen HostAdapter- und LayoutPersistence-Pfad aus M29.
+- Unbekannte Elemente, nicht layoutneutrale Operationen sowie Fach-, DOM- und Datenbankpayloads werden nicht gespeichert.
+- Es wurde keine Ziel-App-UI gescannt, keine automatische Registry-Befuellung eingefuehrt und keine Fachlogik oder Datenbankmigration geaendert.
+- PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik und Restarbeiten-Fachlogik bleiben ausserhalb dieses Pakets.
+- Neue Doku: `docs/M30_UI_EDITOR_BEDIENOBERFLAECHE_SPEICHERN_LADEN_RESET.md`.
