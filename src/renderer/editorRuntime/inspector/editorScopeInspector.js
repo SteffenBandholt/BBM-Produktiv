@@ -1,6 +1,12 @@
 import { BBM_EDITOR_CATALOG, findEditorScope, listEditorModules, listEditorScopes } from "../catalog/bbmEditorCatalog.js";
 import { createBbmEditorHostAdapter } from "../host/bbmEditorHostAdapterFactory.js";
 import { validateEditorRegistry } from "../registry/editorRegistryValidator.js";
+import {
+  applyEditorLayoutChange,
+  createEditorLayoutControlPanel,
+  loadEditorLayoutState,
+  resetEditorLayoutState,
+} from "./editorLayoutControls.js";
 import { buildEditorRegistryTree } from "./editorRegistryTree.js";
 
 function normalizeId(value) {
@@ -15,6 +21,7 @@ function findCatalogScope(catalog, scopeId) {
       if (normalizeId(scope.scopeId) === needle) {
         return {
           ...scope,
+          targetAppId: catalog.targetAppId || "bbm",
           moduleId: module.moduleId,
           moduleLabel: module.moduleLabel,
         };
@@ -28,6 +35,16 @@ export function createEditorScopeInspector({
   catalog = BBM_EDITOR_CATALOG,
   hostAdapterFactory = createBbmEditorHostAdapter,
 } = {}) {
+  const hostAdapters = new Map();
+
+  function getHostAdapter(scopeId) {
+    const normalizedScopeId = normalizeId(scopeId);
+    if (!hostAdapters.has(normalizedScopeId)) {
+      hostAdapters.set(normalizedScopeId, hostAdapterFactory(normalizedScopeId));
+    }
+    return hostAdapters.get(normalizedScopeId);
+  }
+
   function getAvailableModules() {
     return Array.isArray(catalog?.modules)
       ? catalog.modules.map((module) => ({
@@ -70,7 +87,7 @@ export function createEditorScopeInspector({
 
     let hostAdapter;
     try {
-      hostAdapter = hostAdapterFactory(scope.scopeId);
+      hostAdapter = getHostAdapter(scope.scopeId);
     } catch (error) {
       const errorEntry = {
         code: error?.code || "HOST_ADAPTER_ERROR",
@@ -108,10 +125,138 @@ export function createEditorScopeInspector({
     };
   }
 
+  function prepareScopeContext(scopeId) {
+    const inspection = inspectScope(scopeId);
+    if (!inspection.ok) {
+      return {
+        ok: false,
+        inspection,
+        scope: inspection.scope,
+        registry: inspection.registry,
+        hostAdapter: null,
+      };
+    }
+
+    return {
+      ok: true,
+      inspection,
+      scope: inspection.scope,
+      registry: inspection.registry,
+      hostAdapter: getHostAdapter(inspection.scope.scopeId),
+    };
+  }
+
+  function getLayoutControlPanel(scopeId, elementId) {
+    const context = prepareScopeContext(scopeId);
+    if (!context.ok) {
+      return {
+        ok: false,
+        scope: context.scope,
+        elementId: normalizeId(elementId),
+        selectedElement: null,
+        currentLayoutEntry: null,
+        controls: [],
+        status: {
+          kind: "blocked",
+          message: "Scope kann nicht bedient werden.",
+          reason: context.inspection.errors?.[0]?.code || "SCOPE_UNAVAILABLE",
+        },
+        errors: context.inspection.errors || [],
+        warnings: context.inspection.warnings || [],
+      };
+    }
+
+    return createEditorLayoutControlPanel({
+      scope: context.scope,
+      registry: context.registry,
+      hostAdapter: context.hostAdapter,
+      elementId,
+    });
+  }
+
+  function applyLayoutChange(scopeId, { elementId, operation, payload } = {}) {
+    const context = prepareScopeContext(scopeId);
+    if (!context.ok) {
+      return {
+        ok: false,
+        blocked: true,
+        reason: context.inspection.errors?.[0]?.code || "SCOPE_UNAVAILABLE",
+        status: {
+          kind: "blocked",
+          message: "Aenderung wurde blockiert: Scope ist nicht verfuegbar.",
+        },
+        errors: context.inspection.errors || [],
+        warnings: context.inspection.warnings || [],
+      };
+    }
+
+    return applyEditorLayoutChange({
+      scope: context.scope,
+      registry: context.registry,
+      hostAdapter: context.hostAdapter,
+      elementId,
+      operation,
+      payload,
+    });
+  }
+
+  function loadLayoutState(scopeId, { elementId = null } = {}) {
+    const context = prepareScopeContext(scopeId);
+    if (!context.ok) {
+      return {
+        ok: false,
+        blocked: true,
+        reason: context.inspection.errors?.[0]?.code || "SCOPE_UNAVAILABLE",
+        status: {
+          kind: "blocked",
+          message: "Gespeicherter Zustand wurde nicht geladen: Scope ist nicht verfuegbar.",
+        },
+        layoutState: [],
+        currentLayoutEntry: null,
+        errors: context.inspection.errors || [],
+        warnings: context.inspection.warnings || [],
+      };
+    }
+
+    return loadEditorLayoutState({
+      registry: context.registry,
+      hostAdapter: context.hostAdapter,
+      elementId,
+    });
+  }
+
+  function resetLayoutState(scopeId, { elementId = null } = {}) {
+    const context = prepareScopeContext(scopeId);
+    if (!context.ok) {
+      return {
+        ok: false,
+        blocked: true,
+        reason: context.inspection.errors?.[0]?.code || "SCOPE_UNAVAILABLE",
+        status: {
+          kind: "blocked",
+          message: "Reset wurde blockiert: Scope ist nicht verfuegbar.",
+        },
+        layoutState: [],
+        errors: context.inspection.errors || [],
+        warnings: context.inspection.warnings || [],
+      };
+    }
+
+    return resetEditorLayoutState({
+      registry: context.registry,
+      hostAdapter: context.hostAdapter,
+      elementId,
+    });
+  }
+
   return {
     getAvailableModules,
     getAvailableScopes,
     inspectScope,
+    getLayoutControlPanel,
+    applyLayoutChange,
+    loadLayoutState,
+    resetLayoutState,
   };
 }
 
