@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M31 Globale UI-Editor-Bedienung sichtbar in der App angebunden:
+  - Die bestehende UI-Editor-Launcher-/Statusoberflaeche zeigt fuer registrierte Auswahlziele eine sichtbare neutrale Layoutbedienung.
+  - Fuer den vorhandenen Restarbeiten-Pilot wird der sichtbare Scope `restarbeiten.screen` auf den bestehenden Layout-/HostAdapter-Scope `restarbeiten.ui.main` abgebildet.
+  - Sichtbar sind ausgewaehltes registriertes Element, Layout-Scope, neutrale Operation, Anwenden/Speichern, Laden und Reset sowie Erfolg-/Blockiert-Meldungen.
+  - Die Bedienung nutzt die M30-Inspector-Controls und den M29-HostAdapter-/LayoutPersistence-Pfad; nicht registrierte Layoutziele bleiben blockiert.
+  - Es wurde keine automatische DOM-Erkennung, keine automatische Registry-Befuellung, keine Fachwertbearbeitung und keine Datenbankmigration eingefuehrt.
+  - Keine PDF-, Druck-, Mail-, Diktat-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+  - Neue Doku: `docs/M31_UI_EDITOR_SICHTBARE_BEDIENUNG_IN_APP.md`.
+
 - M30 Globale UI-Editor-Bedienoberflaeche fuer Speichern, Laden und Reset abgesichert:
   - Der bestehende EditorScopeInspector stellt fuer registrierte UI-Elemente neutrale Layout-Controls bereit: Aenderung anwenden/speichern, gespeicherten Zustand laden/anwenden und auf Standard zuruecksetzen.
   - Die Bedienlogik nutzt ausschliesslich den vorhandenen EditorRuntime-/HostAdapter-/LayoutPersistence-Pfad aus M29 und gibt sichtbare Erfolgs- oder Blockade-Statusmeldungen zurueck.

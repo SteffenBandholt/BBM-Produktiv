@@ -22,9 +22,14 @@ import { registerCoreShellKeyboardHandling } from "./coreShellKeyboard.js";
 import { createCoreShellNavigationRuntime } from "./coreShellNavigationRuntime.js";
 import { installBbmUiEditorRuntimeLauncher } from "../uiEditor/BbmUiEditorRuntimeLauncher.js";
 import { getActiveUiScope, getAvailableUiScopes, getBbmUiEditorRegistry } from "../uiEditor/bbmUiEditorRegistry.js";
+import { createEditorScopeInspector } from "../editorRuntime/inspector/editorScopeInspector.js";
 
 const HOST_UI_SCOPE_BY_SECTION = Object.freeze({
   restarbeiten: "restarbeiten.screen",
+});
+
+const LAYOUT_SCOPE_BY_UI_SCOPE = Object.freeze({
+  "restarbeiten.screen": "restarbeiten.ui.main",
 });
 
 function resolveActiveHostUiScope(router) {
@@ -36,6 +41,10 @@ function resolveActiveHostUiScope(router) {
   }
 
   return getActiveUiScope();
+}
+
+function resolveLayoutScopeForUiScope(uiScope) {
+  return LAYOUT_SCOPE_BY_UI_SCOPE[String(uiScope || "").trim()] || null;
 }
 
 export default class CoreShell {
@@ -95,6 +104,7 @@ export default class CoreShell {
     });
 
     let uiEditorRuntimeRefreshToken = 0;
+    const uiEditorLayoutInspector = createEditorScopeInspector();
     const refreshUiEditorRuntimeLauncher = () => {
       const activeUiScope = resolveActiveHostUiScope(router);
       const uiEditorRegistry = getBbmUiEditorRegistry(activeUiScope);
@@ -108,6 +118,8 @@ export default class CoreShell {
           registeredElements: uiEditorRegistry?.elements,
           availableUiScopes: getAvailableUiScopes(),
           registryResolver: getBbmUiEditorRegistry,
+          layoutInspector: uiEditorLayoutInspector,
+          layoutScopeResolver: resolveLayoutScopeForUiScope,
         })
       ).catch((error) => {
         if (refreshToken === uiEditorRuntimeRefreshToken) {
