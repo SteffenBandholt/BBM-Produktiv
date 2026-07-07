@@ -109,7 +109,14 @@ function normalizeReadonlyRegistry(registry = null) {
   };
 }
 
-function createLauncherState({ activeUiScope = null, registeredElements = null, availableUiScopes = null, registryResolver = null } = {}) {
+function createLauncherState({
+  activeUiScope = null,
+  registeredElements = null,
+  availableUiScopes = null,
+  registryResolver = null,
+  layoutInspector = null,
+  layoutScopeResolver = null,
+} = {}) {
   const normalizedScope = String(activeUiScope == null ? "" : activeUiScope).trim();
   const resolver = typeof registryResolver === "function" ? registryResolver : null;
   const selectedRegistry = resolver && normalizedScope
@@ -132,6 +139,15 @@ function createLauncherState({ activeUiScope = null, registeredElements = null, 
     win: null,
     availableUiScopes: normalizeAvailableUiScopes(availableUiScopes),
     registryResolver: resolver,
+    layoutInspector: layoutInspector && typeof layoutInspector === "object" ? layoutInspector : null,
+    layoutScopeResolver: typeof layoutScopeResolver === "function" ? layoutScopeResolver : null,
+    layoutOperation: "move",
+    layoutX: 0,
+    layoutY: 0,
+    layoutWidth: 320,
+    layoutHeight: 80,
+    layoutGap: 8,
+    layoutStatus: null,
   };
 }
 
@@ -325,6 +341,8 @@ function getReadonlyLauncherStatusText(state = {}) {
     selectedElement ? `Auswahl: ${selectedElement.id}` : "Auswahl: keine",
     state.selectionMessage ? `Auswahl-Hinweis: ${state.selectionMessage}` : "",
     selectedElement ? `Name: ${selectedElement.name || selectedElement.label || ""}` : "",
+    state.layoutStatus?.message ? `Layout: ${state.layoutStatus.message}` : "",
+    state.layoutStatus?.reason ? `Layout-Grund: ${state.layoutStatus.reason}` : "",
     "",
     getReadonlyRegistryElementsText(registry.elements),
   ].filter((line) => line !== "").join("\n");
@@ -411,8 +429,277 @@ function ensureLauncherStatusHint(doc, host, state = {}) {
 function updateLauncherStatusHint(doc, host, state = {}) {
   const status = ensureLauncherStatusHint(doc, host, state);
   const content = getLauncherStatusContentNode(status);
-  if (content) content.textContent = getReadonlyLauncherStatusText(state);
+  if (content) {
+    while (content.firstChild && typeof content.removeChild === "function") {
+      content.removeChild(content.firstChild);
+    }
+    if (Array.isArray(content.children)) content.children = [];
+    content.textContent = getReadonlyLauncherStatusText(state);
+  }
   return status;
+}
+
+function getLayoutScopeForState(state = {}) {
+  if (typeof state.layoutScopeResolver !== "function") return null;
+  const registry = getSelectedRegistryFromState(state);
+  const scope = state.layoutScopeResolver(registry.uiScope || state.activeUiScope);
+  const normalizedScope = String(scope == null ? "" : scope).trim();
+  return normalizedScope || null;
+}
+
+function getLayoutPanelForState(state = {}) {
+  const layoutScope = getLayoutScopeForState(state);
+  const elementId = String(state.selectedElement?.id || "").trim();
+  if (!state.layoutInspector || !layoutScope || !elementId) return null;
+  if (typeof state.layoutInspector.getLayoutControlPanel !== "function") return null;
+  return state.layoutInspector.getLayoutControlPanel(layoutScope, elementId);
+}
+
+function getSafeLayoutOperations(panel = null) {
+  const applyControl = Array.isArray(panel?.controls)
+    ? panel.controls.find((control) => control.id === "editor.layout.applySave")
+    : null;
+  return Array.isArray(applyControl?.allowedOps) ? applyControl.allowedOps : [];
+}
+
+function ensureLayoutOperation(state = {}, operations = []) {
+  if (operations.includes(state.layoutOperation)) return state.layoutOperation;
+  state.layoutOperation = operations[0] || "move";
+  return state.layoutOperation;
+}
+
+function createNeutralLayoutPayload(state = {}) {
+  const operation = String(state.layoutOperation || "").trim();
+  if (operation === "move") {
+    return {
+      x: Number(state.layoutX) || 0,
+      y: Number(state.layoutY) || 0,
+    };
+  }
+  if (operation === "resize") {
+    return {
+      width: Number(state.layoutWidth) || 320,
+      height: Number(state.layoutHeight) || 80,
+    };
+  }
+  if (operation === "width") return { width: Number(state.layoutWidth) || 320 };
+  if (operation === "height") return { height: Number(state.layoutHeight) || 80 };
+  if (operation === "spacing") return { gap: Number(state.layoutGap) || 8 };
+  return {};
+}
+
+function appendLayoutNumberInput(doc, container, { label, value, onInput }) {
+  const wrapper = doc.createElement("label");
+  wrapper.className = "ui-editor-layout-control__field";
+  const labelNode = doc.createElement("span");
+  labelNode.textContent = label;
+  const input = doc.createElement("input");
+  input.type = "number";
+  input.value = String(value);
+  input.setAttribute("data-ui-editor-layout-input", label);
+  input.addEventListener("input", () => onInput(input.value));
+  wrapper.append(labelNode, input);
+  container.appendChild(wrapper);
+  return input;
+}
+
+function renderLayoutPayloadInputs(doc, container, state = {}) {
+  const operation = String(state.layoutOperation || "").trim();
+  if (operation === "move") {
+    appendLayoutNumberInput(doc, container, {
+      label: "x",
+      value: state.layoutX,
+      onInput: (nextValue) => {
+        state.layoutX = nextValue;
+      },
+    });
+    appendLayoutNumberInput(doc, container, {
+      label: "y",
+      value: state.layoutY,
+      onInput: (nextValue) => {
+        state.layoutY = nextValue;
+      },
+    });
+  } else if (operation === "resize") {
+    appendLayoutNumberInput(doc, container, {
+      label: "width",
+      value: state.layoutWidth,
+      onInput: (nextValue) => {
+        state.layoutWidth = nextValue;
+      },
+    });
+    appendLayoutNumberInput(doc, container, {
+      label: "height",
+      value: state.layoutHeight,
+      onInput: (nextValue) => {
+        state.layoutHeight = nextValue;
+      },
+    });
+  } else if (operation === "width") {
+    appendLayoutNumberInput(doc, container, {
+      label: "width",
+      value: state.layoutWidth,
+      onInput: (nextValue) => {
+        state.layoutWidth = nextValue;
+      },
+    });
+  } else if (operation === "height") {
+    appendLayoutNumberInput(doc, container, {
+      label: "height",
+      value: state.layoutHeight,
+      onInput: (nextValue) => {
+        state.layoutHeight = nextValue;
+      },
+    });
+  } else if (operation === "spacing") {
+    appendLayoutNumberInput(doc, container, {
+      label: "gap",
+      value: state.layoutGap,
+      onInput: (nextValue) => {
+        state.layoutGap = nextValue;
+      },
+    });
+  }
+}
+
+function refreshLauncherPanel(doc, host, state = {}) {
+  const status = updateLauncherStatusHint(doc, host, state);
+  renderReadonlyScopeButtons(doc, status, state);
+  renderLayoutControls(doc, status, state);
+  return status;
+}
+
+function renderLayoutControls(doc, status, state = {}) {
+  const content = getLauncherStatusContentNode(status);
+  if (!doc?.createElement || !content) return null;
+
+  const layoutScope = getLayoutScopeForState(state);
+  const panel = getLayoutPanelForState(state);
+  const selectedElement = state.selectedElement || null;
+  const section = doc.createElement("div");
+  section.className = "ui-editor-layout-control";
+  section.setAttribute("data-ui-editor-layout-controls", "true");
+
+  const title = doc.createElement("strong");
+  title.textContent = "Layout";
+  section.appendChild(title);
+
+  const selected = doc.createElement("div");
+  selected.setAttribute("data-ui-editor-layout-selected", "true");
+  selected.textContent = selectedElement
+    ? `Ausgewaehltes Element: ${selectedElement.id}`
+    : "Ausgewaehltes Element: keine registrierte Auswahl";
+  section.appendChild(selected);
+
+  const scopeLine = doc.createElement("div");
+  scopeLine.textContent = layoutScope ? `Layout-Scope: ${layoutScope}` : "Layout-Scope: nicht verfuegbar";
+  section.appendChild(scopeLine);
+
+  if (!selectedElement || !layoutScope || !state.layoutInspector) {
+    const empty = doc.createElement("div");
+    empty.setAttribute("data-ui-editor-layout-message", "true");
+    empty.textContent = "Layoutbedienung wartet auf eine registrierte Auswahl.";
+    section.appendChild(empty);
+    content.appendChild(section);
+    return section;
+  }
+
+  if (!panel?.ok) {
+    const blocked = doc.createElement("div");
+    blocked.setAttribute("data-ui-editor-layout-message", "true");
+    blocked.textContent = panel?.status?.message || "Layoutbedienung blockiert.";
+    section.appendChild(blocked);
+    content.appendChild(section);
+    return section;
+  }
+
+  const operations = getSafeLayoutOperations(panel);
+  const operation = ensureLayoutOperation(state, operations);
+  const controlsRow = doc.createElement("div");
+  controlsRow.className = "ui-editor-layout-control__row";
+
+  const operationLabel = doc.createElement("label");
+  operationLabel.className = "ui-editor-layout-control__field";
+  const operationLabelText = doc.createElement("span");
+  operationLabelText.textContent = "Operation";
+  const operationSelect = doc.createElement("select");
+  operationSelect.setAttribute("data-ui-editor-layout-operation", "true");
+  for (const safeOperation of operations) {
+    const option = doc.createElement("option");
+    option.value = safeOperation;
+    option.textContent = safeOperation;
+    if (safeOperation === operation) option.selected = true;
+    operationSelect.appendChild(option);
+  }
+  operationSelect.addEventListener("change", () => {
+    state.layoutOperation = operationSelect.value;
+    refreshLauncherPanel(doc, status.parentElement, state);
+  });
+  operationLabel.append(operationLabelText, operationSelect);
+  controlsRow.appendChild(operationLabel);
+  renderLayoutPayloadInputs(doc, controlsRow, state);
+  section.appendChild(controlsRow);
+
+  const buttonRow = doc.createElement("div");
+  buttonRow.className = "ui-editor-layout-control__buttons";
+
+  const saveButton = doc.createElement("button");
+  saveButton.type = "button";
+  saveButton.textContent = "Anwenden/Speichern";
+  saveButton.setAttribute("data-ui-editor-layout-action", "applySave");
+  saveButton.disabled = operations.length < 1;
+  saveButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const result = state.layoutInspector.applyLayoutChange(layoutScope, {
+      elementId: selectedElement.id,
+      operation: state.layoutOperation,
+      payload: createNeutralLayoutPayload(state),
+    });
+    state.layoutStatus = result.status || null;
+    refreshLauncherPanel(doc, status.parentElement, state);
+  });
+
+  const loadButton = doc.createElement("button");
+  loadButton.type = "button";
+  loadButton.textContent = "Laden";
+  loadButton.setAttribute("data-ui-editor-layout-action", "loadSaved");
+  loadButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const result = state.layoutInspector.loadLayoutState(layoutScope, {
+      elementId: selectedElement.id,
+    });
+    state.layoutStatus = result.status || null;
+    refreshLauncherPanel(doc, status.parentElement, state);
+  });
+
+  const resetButton = doc.createElement("button");
+  resetButton.type = "button";
+  resetButton.textContent = "Reset";
+  resetButton.setAttribute("data-ui-editor-layout-action", "resetDefault");
+  resetButton.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const result = state.layoutInspector.resetLayoutState(layoutScope, {
+      elementId: selectedElement.id,
+    });
+    state.layoutStatus = result.status || null;
+    refreshLauncherPanel(doc, status.parentElement, state);
+  });
+
+  buttonRow.append(saveButton, loadButton, resetButton);
+  section.appendChild(buttonRow);
+
+  const stateLine = doc.createElement("div");
+  stateLine.setAttribute("data-ui-editor-layout-state", "true");
+  stateLine.textContent = panel.currentLayoutEntry
+    ? `Gespeichert: ${panel.currentLayoutEntry.operation}`
+    : panel.status.message;
+  section.appendChild(stateLine);
+
+  content.appendChild(section);
+  return section;
 }
 
 function setActiveScopeInState(state, nextScope) {
@@ -422,6 +709,7 @@ function setActiveScopeInState(state, nextScope) {
   state.selectedRegistry = state.registryResolver
     ? normalizeReadonlyRegistry(state.registryResolver(normalizedScope))
     : normalizeReadonlyRegistry({ uiScope: normalizedScope, elements: [] });
+  state.layoutStatus = null;
 }
 
 function installLauncherTargetSelectionController(doc, host, state) {
@@ -438,15 +726,14 @@ function installLauncherTargetSelectionController(doc, host, state) {
       state.hoverElement = selection.element;
       state.hoverTargetNode = selection.targetElement;
       state.hoverMessage = selection.message || "";
-      const status = updateLauncherStatusHint(doc, host, state);
-      renderReadonlyScopeButtons(doc, status, state);
+      refreshLauncherPanel(doc, host, state);
     },
     onSelectionChange(selection) {
       state.selectedElement = selection.element;
       state.selectedTargetNode = selection.targetElement;
       state.selectionMessage = selection.message || "";
-      const status = updateLauncherStatusHint(doc, host, state);
-      renderReadonlyScopeButtons(doc, status, state);
+      state.layoutStatus = null;
+      refreshLauncherPanel(doc, host, state);
     },
   });
   controller?.install?.();
@@ -472,8 +759,7 @@ function renderReadonlyScopeButtons(doc, status, state) {
       event.preventDefault();
       event.stopPropagation();
       setActiveScopeInState(state, scope.uiScope);
-      const updatedStatus = updateLauncherStatusHint(doc, status.parentElement, state);
-      renderReadonlyScopeButtons(doc, updatedStatus, state);
+      const updatedStatus = refreshLauncherPanel(doc, status.parentElement, state);
       installLauncherTargetSelectionController(doc, status.parentElement, state);
     });
     scopeList.appendChild(button);
@@ -490,8 +776,7 @@ function syncLauncherButtonState(button, state, { doc = getDocument(), host = nu
   doc?.body?.setAttribute?.(UI_EDITOR_ACTIVE_ATTRIBUTE, active ? "true" : "false");
 
   if (active) {
-    const status = updateLauncherStatusHint(doc, host || button.parentElement, state);
-    renderReadonlyScopeButtons(doc, status, state);
+    const status = refreshLauncherPanel(doc, host || button.parentElement, state);
     installLauncherTargetSelectionController(doc, host || button.parentElement, state);
   } else {
     removeLauncherTargetSelectionController(state);
@@ -534,8 +819,8 @@ function handleUiEditorDocumentClick(event, { state, doc, host }) {
   event?.preventDefault?.();
   event?.stopPropagation?.();
   markUiEditorTargetSelection(state, targetNode, registryElement);
-  const status = updateLauncherStatusHint(doc, host, state);
-  renderReadonlyScopeButtons(doc, status, state);
+  state.layoutStatus = null;
+  refreshLauncherPanel(doc, host, state);
 }
 
 function installLauncherDocumentClickHandler(doc, host, state) {
@@ -598,6 +883,8 @@ export async function installBbmUiEditorRuntimeLauncher({
   registeredElements = null,
   availableUiScopes = null,
   registryResolver = null,
+  layoutInspector = null,
+  layoutScopeResolver = null,
   doc = getDocument(),
   win = getWindow(),
   host = null,
@@ -611,7 +898,14 @@ export async function installBbmUiEditorRuntimeLauncher({
   ensureInstalledLauncherCss(doc);
   const artifact = await loadInstalledLauncherButton({ doc, win });
   const launcherHost = getLauncherHost(doc, host);
-  const state = createLauncherState({ activeUiScope, registeredElements, availableUiScopes, registryResolver });
+  const state = createLauncherState({
+    activeUiScope,
+    registeredElements,
+    availableUiScopes,
+    registryResolver,
+    layoutInspector,
+    layoutScopeResolver,
+  });
   state.win = win || null;
   return renderLauncherButton({ artifact, doc, host: launcherHost, state, onToggle });
 }

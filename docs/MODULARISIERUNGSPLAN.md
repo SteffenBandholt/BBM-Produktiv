@@ -372,3 +372,13 @@ Dabei gilt:
 - Es wurde keine Ziel-App-UI gescannt, keine automatische Registry-Befuellung eingefuehrt und keine Fachlogik oder Datenbankmigration geaendert.
 - PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik und Restarbeiten-Fachlogik bleiben ausserhalb dieses Pakets.
 - Neue Doku: `docs/M30_UI_EDITOR_BEDIENOBERFLAECHE_SPEICHERN_LADEN_RESET.md`.
+
+### M31 Globale UI-Editor-Bedienung sichtbar in der App angebunden (neu)
+- Die bestehende UI-Editor-Launcher-/Statusoberflaeche zeigt fuer registrierte Auswahlziele eine sichtbare neutrale Layoutbedienung.
+- Fuer den vorhandenen Restarbeiten-Pilot wird der sichtbare Scope `restarbeiten.screen` auf den bestehenden Layout-/HostAdapter-Scope `restarbeiten.ui.main` abgebildet.
+- Sichtbar sind ausgewaehltes Element, Layout-Scope, neutrale Operation, Anwenden/Speichern, Laden, Reset und Erfolg-/Blockiert-Meldungen.
+- Die Bedienung nutzt die vorhandenen M30-Inspector-Controls und den M29-HostAdapter-/LayoutPersistence-Pfad.
+- Nicht registrierte Layoutziele und ungueltige Aktionen bleiben sichtbar blockiert.
+- Es wurde keine automatische DOM-Erkennung, keine automatische Registry-Befuellung, keine Fachwertbearbeitung und keine Datenbankmigration eingefuehrt.
+- PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik und Restarbeiten-Fachlogik bleiben ausserhalb dieses Pakets.
+- Neue Doku: `docs/M31_UI_EDITOR_SICHTBARE_BEDIENUNG_IN_APP.md`.
