@@ -694,6 +694,167 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-hover-frame="true"]')), false);
   });
 
+  await run("BBM UI-Editor-Runtime: Scope-Wechsel setzt Auswahl zurueck und Layoutaktionen nutzen aktuellen Scope", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const calls = [];
+    const layoutInspector = {
+      getLayoutControlPanel(scopeId, elementId) {
+        calls.push(["panel", scopeId, elementId]);
+        return {
+          ok: true,
+          elementId,
+          selectedElement: { id: elementId, name: elementId },
+          currentLayoutEntry: null,
+          controls: [
+            { id: "editor.layout.applySave", enabled: true, allowedOps: ["move"] },
+            { id: "editor.layout.loadSaved", enabled: true, allowedOps: [] },
+            { id: "editor.layout.resetDefault", enabled: true, allowedOps: [] },
+          ],
+          status: { kind: "ready", message: "Standardzustand ist aktiv.", reason: null },
+        };
+      },
+      applyLayoutChange(scopeId, request) {
+        calls.push(["apply", scopeId, request]);
+        return {
+          ok: true,
+          status: { kind: "success", message: "Aenderung wurde angewendet und gespeichert.", reason: null },
+          layoutEntry: { elementId: request.elementId, operation: request.operation, layoutValue: request.payload },
+        };
+      },
+      loadLayoutState(scopeId, request) {
+        calls.push(["load", scopeId, request]);
+        return {
+          ok: true,
+          status: { kind: "success", message: "Gespeicherter Layoutzustand wurde geladen.", reason: null },
+          currentLayoutEntry: { elementId: request.elementId, operation: "move", layoutValue: { x: 0, y: 0 } },
+        };
+      },
+      resetLayoutState(scopeId, request) {
+        calls.push(["reset", scopeId, request]);
+        return {
+          ok: true,
+          status: { kind: "success", message: "Standardzustand wurde wiederhergestellt.", reason: null },
+          layoutState: [],
+        };
+      },
+    };
+    const registries = {
+      "protokoll.topsScreen": {
+        uiScope: "protokoll.topsScreen",
+        moduleId: "protokoll",
+        elements: [
+          { id: "protokoll.topsScreen.quicklane", name: "TOPS Quicklane", type: "toolbar", role: "layout", parentId: "protokoll.root", allowedOps: ["inspect", "move"], lockedOps: [] },
+        ],
+      },
+      "restarbeiten.screen": {
+        uiScope: "restarbeiten.screen",
+        moduleId: "restarbeiten",
+        elements: [
+          { id: "restarbeiten.editbox.text.short", name: "Kurztext", type: "field", role: "content", parentId: "restarbeiten.editbox", allowedOps: ["inspect", "move"], lockedOps: [] },
+        ],
+      },
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "protokoll.topsScreen",
+      availableUiScopes: [
+        { uiScope: "protokoll.topsScreen", moduleId: "protokoll", status: "available" },
+        { uiScope: "restarbeiten.screen", moduleId: "restarbeiten", status: "available" },
+      ],
+      registryResolver: (scopeId) => registries[scopeId] || { ok: false, uiScope: scopeId, elements: [], reason: "unknown" },
+      layoutInspector,
+      layoutScopeResolver: (uiScope) => uiScope === "restarbeiten.screen" ? "restarbeiten.ui.main" : uiScope,
+    });
+    const protokollTarget = doc.createElement("aside");
+    protokollTarget.setAttribute("data-ui-editor-id", "protokoll.topsScreen.quicklane");
+    const restarbeitenTarget = doc.createElement("input");
+    restarbeitenTarget.setAttribute("data-ui-editor-id", "restarbeiten.editbox.text.short");
+    doc.body.append(protokollTarget, restarbeitenTarget);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target: protokollTarget });
+    let activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Aktiver UI-Scope: protokoll.topsScreen"), true);
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: protokoll.topsScreen.quicklane"), true);
+    assert.equal(protokollTarget.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.querySelector('[data-ui-editor-scope-option="restarbeiten.screen"]').click();
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(button.getAttribute("data-ui-editor-active-ui-scope"), "restarbeiten.screen");
+    assert.equal(protokollTarget.getAttribute("data-ui-editor-selected"), "false");
+    assert.equal(getStatusText(activeStatus).includes("Aktiver UI-Scope: restarbeiten.screen"), true);
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: keine"), true);
+    assert.equal(doc.querySelector('[data-ui-editor-layout-selected="true"]').textContent, "Ausgewaehltes Element: keine registrierte Auswahl");
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-layout-action="applySave"]')), false);
+
+    doc.dispatchEvent({ type: "click", target: protokollTarget });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: keine"), true);
+    assert.notEqual(protokollTarget.getAttribute("data-ui-editor-selected"), "true");
+
+    doc.dispatchEvent({ type: "click", target: restarbeitenTarget });
+    activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Auswahl: restarbeiten.editbox.text.short"), true);
+    assert.equal(restarbeitenTarget.getAttribute("data-ui-editor-selected"), "true");
+    assert.equal(doc.querySelector('[data-ui-editor-layout-selected="true"]').textContent.includes("restarbeiten.editbox.text.short"), true);
+    assert.equal(doc.querySelector('[data-ui-editor-layout-controls="true"]').children.some((child) => child.textContent === "Layout-Scope: restarbeiten.ui.main"), true);
+
+    doc.querySelector('[data-ui-editor-layout-action="applySave"]').click();
+    doc.querySelector('[data-ui-editor-layout-action="loadSaved"]').click();
+    doc.querySelector('[data-ui-editor-layout-action="resetDefault"]').click();
+    assert.ok(calls.some((call) => call[0] === "apply" && call[1] === "restarbeiten.ui.main" && call[2].elementId === "restarbeiten.editbox.text.short"));
+    assert.ok(calls.some((call) => call[0] === "load" && call[1] === "restarbeiten.ui.main" && call[2].elementId === "restarbeiten.editbox.text.short"));
+    assert.ok(calls.some((call) => call[0] === "reset" && call[1] === "restarbeiten.ui.main" && call[2].elementId === "restarbeiten.editbox.text.short"));
+  });
+
+  await run("BBM UI-Editor-Runtime: unbekannter Scope blockiert Layoutbedienung verstaendlich", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "protokoll.topsScreen",
+      availableUiScopes: [
+        { uiScope: "protokoll.topsScreen", moduleId: "protokoll", status: "available" },
+        { uiScope: "unknown.scope", moduleId: "unknown", status: "blocked" },
+      ],
+      registryResolver: (scopeId) => scopeId === "protokoll.topsScreen"
+        ? {
+            uiScope: "protokoll.topsScreen",
+            moduleId: "protokoll",
+            elements: [{ id: "protokoll.root", name: "Protokoll", type: "root", role: "layout", parentId: null, allowedOps: ["inspect"], lockedOps: [] }],
+          }
+        : { ok: false, uiScope: scopeId, elements: [], reason: `Unknown UI scope: ${scopeId}` },
+      layoutInspector: {
+        getLayoutControlPanel() {
+          throw new Error("unknown scope must not request layout controls");
+        },
+      },
+      layoutScopeResolver: (uiScope) => uiScope === "protokoll.topsScreen" ? uiScope : null,
+    });
+
+    button.click();
+    doc.querySelector('[data-ui-editor-scope-option="unknown.scope"]').click();
+
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    const layoutMessage = doc.querySelector('[data-ui-editor-layout-message="true"]');
+    assert.equal(button.getAttribute("data-ui-editor-active-ui-scope"), "unknown.scope");
+    assert.equal(getStatusText(activeStatus).includes("Aktiver UI-Scope: unknown.scope"), true);
+    assert.equal(getStatusText(activeStatus).includes("Hinweis: Unknown UI scope: unknown.scope"), true);
+    assert.equal(layoutMessage.textContent, "Layoutbedienung blockiert: Unknown UI scope: unknown.scope");
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-layout-action="applySave"]')), false);
+  });
+
   await run("BBM UI-Editor-Runtime: Klick auf registrierte Restarbeiten-ID waehlt und markiert Ziel", async () => {
     const mod = await loadRuntime();
     const doc = createFakeDocument();
