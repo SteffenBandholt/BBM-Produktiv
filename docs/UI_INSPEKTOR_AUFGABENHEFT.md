@@ -3,7 +3,7 @@
 ## Projektstatus
 Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope).
 
-Statusupdate: M33 abgeschlossen (globaler UI-Editor fuer den Protokoll-/TOPS-Scope sichtbar angebunden).
+Statusupdate: M34 abgeschlossen (UI-Editor Scope-Wechsel und Bedienfuehrung abgesichert).
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
@@ -15,6 +15,7 @@ Aktueller Stand:
 - M21 abgeschlossen: BBM-Produktiv ist als Beispiel-/Pilot-Zielapp vom generischen UI-Editor-kit getrennt dokumentiert; `Restarbeiten` ist erreichbarer unfertiger Pilot-Scope, `Protokoll` defensiv/read-only.
 - M32 abgeschlossen: App-Start und sichtbarer Launcher wurden lokal geprueft; die Save/Load/Reset-Bedienfolge und Blockaden sind durch `npm test` abgedeckt.
 - M33 abgeschlossen: Der globale UI-Editor ist zusaetzlich fuer registrierte TOPS-Quicklane-Elemente im Scope `protokoll.topsScreen` bedienbar; Restarbeiten bleibt bedienbar.
+- M34 abgeschlossen: Aktiver UI-Scope, Auswahl und Layout-Scope sind beim Wechsel zwischen Restarbeiten und Protokoll/TOPS eindeutig; alte Auswahlen werden geloescht und unbekannte Scopes sichtbar blockiert.
 
 ## Haken-System
 - `[x]` erledigt
@@ -56,6 +57,16 @@ Aktueller Stand:
 - [x] M21 BBM-Zielapp sauber vom generischen UI-Editor-kit trennen
 - [x] M32 Globalen UI-Editor im App-Kontext per Smoke-Test und Abnahmeprotokoll pruefen
 - [x] M33 Globalen UI-Editor fuer den Protokoll-/TOPS-Scope sichtbar anbinden
+- [x] M34 UI-Editor Scope-Wechsel und Bedienfuehrung absichern
+
+## Statusupdate M34
+- Der globale UI-Editor zeigt den aktiven UI-Scope eindeutig als `Aktiver UI-Scope`.
+- Ein Wechsel zwischen `protokoll.topsScreen` und `restarbeiten.screen` loescht die bisherige Auswahl und verhindert, dass alte Ziele im falschen Scope weiterwirken.
+- Layoutaktionen bleiben an den aktuell aufgeloesten Layout-Scope gebunden: `protokoll.topsScreen` oder `restarbeiten.ui.main`.
+- Unbekannte Scopes zeigen eine sichtbare blockierte Layoutmeldung.
+- Neue Doku: `docs/M34_UI_EDITOR_SCOPE_WECHSEL_BEDIENFUEHRUNG.md`.
+- Keine PDF-/Druck-/Mail-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+- Naechster Schritt: fachliche Klick-Abnahme durch den Nutzer, falls die sichtbare Scope-Wechsel-Bedienfolge im echten App-Fenster zusaetzlich bestaetigt werden soll.
 
 ## Statusupdate M33
 - Der globale UI-Editor nutzt fuer `protokoll.topsScreen` nun einen neutralen EditorRuntime-/Layout-Scope.

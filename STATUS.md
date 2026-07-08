@@ -17,6 +17,16 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M34 UI-Editor Scope-Wechsel und Bedienfuehrung abgesichert:
+  - Neue Doku: `docs/M34_UI_EDITOR_SCOPE_WECHSEL_BEDIENFUEHRUNG.md`.
+  - Die Statusanzeige nennt den aktiven UI-Scope jetzt eindeutig als `Aktiver UI-Scope`.
+  - Beim Wechsel zwischen `protokoll.topsScreen` und `restarbeiten.screen` wird eine alte Auswahl sauber geloescht; falsche Scope-/Element-Kombinationen wirken nicht weiter.
+  - Speichern/Laden/Reset bleiben an den aktuell aufgeloesten Layout-Scope gebunden, also `protokoll.topsScreen` bzw. `restarbeiten.ui.main`.
+  - Unbekannte Scopes zeigen eine sichtbare blockierte Layoutmeldung mit Grund.
+  - Es wurde keine automatische DOM-Erkennung, keine neue Registry-Befuellung und keine Fachwertbearbeitung eingefuehrt.
+  - Keine PDF-, Druck-, Mail-, Diktat-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+  - `git diff --check`, `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`, `node scripts/ui-editor-contract-check.cjs --self-test`, `npm test` und `npm start` liefen gruen.
+
 - M33 Globalen UI-Editor fuer den Protokoll-/TOPS-Scope sichtbar angebunden:
   - Neue Doku: `docs/M33_UI_EDITOR_PROTOKOLL_SCOPE_ANBINDUNG.md`.
   - Der sichtbare App-Scope `protokoll.topsScreen` ist nun auch als neutraler EditorRuntime-/Layout-Scope angebunden.

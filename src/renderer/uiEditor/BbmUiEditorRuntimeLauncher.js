@@ -332,6 +332,7 @@ function getReadonlyLauncherStatusText(state = {}) {
     "UI-Editor aktiv",
     getAvailableUiScopesText(scopes),
     "",
+    `Aktiver UI-Scope: ${getStatusScopeLabel(registry.uiScope || state.activeUiScope)}`,
     `Scope: ${getStatusScopeLabel(registry.uiScope || state.activeUiScope)}`,
     `Modul: ${registry.moduleId || "nicht verfuegbar"}`,
     `Elemente: ${registry.elements.length}`,
@@ -455,6 +456,13 @@ function getLayoutPanelForState(state = {}) {
   return state.layoutInspector.getLayoutControlPanel(layoutScope, elementId);
 }
 
+function isSelectedElementInActiveRegistry(state = {}) {
+  const elementId = String(state.selectedElement?.id || "").trim();
+  if (!elementId) return true;
+  const registry = getSelectedRegistryFromState(state);
+  return registry.elements.some((element) => element.id === elementId);
+}
+
 function getSafeLayoutOperations(panel = null) {
   const applyControl = Array.isArray(panel?.controls)
     ? panel.controls.find((control) => control.id === "editor.layout.applySave")
@@ -576,6 +584,7 @@ function renderLayoutControls(doc, status, state = {}) {
   const layoutScope = getLayoutScopeForState(state);
   const panel = getLayoutPanelForState(state);
   const selectedElement = state.selectedElement || null;
+  const registry = getSelectedRegistryFromState(state);
   const section = doc.createElement("div");
   section.className = "ui-editor-layout-control";
   section.setAttribute("data-ui-editor-layout-controls", "true");
@@ -594,6 +603,26 @@ function renderLayoutControls(doc, status, state = {}) {
   const scopeLine = doc.createElement("div");
   scopeLine.textContent = layoutScope ? `Layout-Scope: ${layoutScope}` : "Layout-Scope: nicht verfuegbar";
   section.appendChild(scopeLine);
+
+  if (registry.ok === false) {
+    const blocked = doc.createElement("div");
+    blocked.setAttribute("data-ui-editor-layout-message", "true");
+    blocked.textContent = registry.reason
+      ? `Layoutbedienung blockiert: ${registry.reason}`
+      : "Layoutbedienung blockiert: Scope ist nicht verfuegbar.";
+    section.appendChild(blocked);
+    content.appendChild(section);
+    return section;
+  }
+
+  if (selectedElement && !isSelectedElementInActiveRegistry(state)) {
+    const blocked = doc.createElement("div");
+    blocked.setAttribute("data-ui-editor-layout-message", "true");
+    blocked.textContent = "Layoutbedienung blockiert: Auswahl gehoert nicht zum aktiven Scope.";
+    section.appendChild(blocked);
+    content.appendChild(section);
+    return section;
+  }
 
   if (!selectedElement || !layoutScope || !state.layoutInspector) {
     const empty = doc.createElement("div");
@@ -706,6 +735,7 @@ function setActiveScopeInState(state, nextScope) {
   const normalizedScope = String(nextScope == null ? "" : nextScope).trim();
   removeLauncherTargetSelectionController(state);
   state.activeUiScope = normalizedScope;
+  launcherHostNode?.setAttribute?.("data-ui-editor-active-ui-scope", normalizedScope);
   state.selectedRegistry = state.registryResolver
     ? normalizeReadonlyRegistry(state.registryResolver(normalizedScope))
     : normalizeReadonlyRegistry({ uiScope: normalizedScope, elements: [] });

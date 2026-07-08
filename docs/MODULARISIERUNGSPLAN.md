@@ -402,3 +402,12 @@ Dabei gilt:
 - Der Restarbeiten-Pilot bleibt ueber `restarbeiten.screen` -> `restarbeiten.ui.main` unveraendert bedienbar.
 - PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik, Restarbeiten-Fachlogik, Datenbankmigration und neue Editor-Grundsatzentscheidungen blieben ausserhalb dieses Pakets.
 - Neue Doku: `docs/M33_UI_EDITOR_PROTOKOLL_SCOPE_ANBINDUNG.md`.
+
+### M34 UI-Editor Scope-Wechsel und Bedienfuehrung abgesichert (neu)
+- Die sichtbare Bedienung nennt den aktiven UI-Scope eindeutig als `Aktiver UI-Scope`.
+- Beim Wechsel zwischen `protokoll.topsScreen` und `restarbeiten.screen` wird die bisherige Auswahl geloescht und kann nicht im falschen Scope weiterwirken.
+- Speichern/Laden/Reset nutzen weiterhin den aktuell sichtbaren/aktiven Layout-Scope: `protokoll.topsScreen` bzw. `restarbeiten.ui.main`.
+- Unbekannte oder nicht verfuegbare Scopes werden sichtbar blockiert und erhalten keine Layoutaktion.
+- Bestehende Restarbeiten- und Protokoll/TOPS-Scope-Tests bleiben gruen; neue Runtime-Tests sichern den Scope-Wechsel ab.
+- PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik, Restarbeiten-Fachlogik, Datenbankmigration, automatische DOM-Erkennung und neue Editor-Grundsatzentscheidungen blieben ausserhalb dieses Pakets.
+- Neue Doku: `docs/M34_UI_EDITOR_SCOPE_WECHSEL_BEDIENFUEHRUNG.md`.
