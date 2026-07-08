@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M36 UI-Editor Fixstand nach M29 bis M35 dokumentiert:
+  - Neue Doku: `docs/M36_UI_EDITOR_FIXSTAND_ABNAHME.md`.
+  - Der Fixstand haelt fest, dass der globale UI-Editor neutrale Layoutaenderungen speichern, laden und resetten kann.
+  - Bedienbar sind die Scopes `restarbeiten.screen` -> `restarbeiten.ui.main` und `protokoll.topsScreen` -> `protokoll.topsScreen`.
+  - Scope-Wechsel, Blockademeldungen, Bedienhinweise und Abnahmegrenzen aus M34/M35 bleiben Stand der Abnahme.
+  - Ausdruecklich nicht Teil des Editors bleiben PDF, Druck, Mail, Audio/Diktat, Fachlogik, Datenbankmigration, automatische DOM-Erkennung und weitere Modul-Anbindung.
+  - M36 ist ein reines Doku-/Fixstandpaket ohne Code-, UI- oder Architekturaenderung.
+  - `git diff --check`, `node scripts/ui-editor-contract-check.cjs --self-test` und `npm test` liefen gruen.
+
 - M35 UI-Editor Bedienhinweise und Abnahmegrenzen festgezogen:
   - Neue Doku: `docs/M35_UI_EDITOR_BEDIENHINWEISE_ABNAHMEGRENZEN.md`.
   - Die sichtbare UI-Editor-Bedienung nennt die Bediengrenze: nur neutrale Layoutaenderungen, keine Fachwerte.

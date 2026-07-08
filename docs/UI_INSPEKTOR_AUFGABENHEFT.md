@@ -3,7 +3,7 @@
 ## Projektstatus
 Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope).
 
-Statusupdate: M35 abgeschlossen (UI-Editor Bedienhinweise und Abnahmegrenzen festgezogen).
+Statusupdate: M36 abgeschlossen (UI-Editor Fixstand nach M29 bis M35 dokumentiert).
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
@@ -17,6 +17,7 @@ Aktueller Stand:
 - M33 abgeschlossen: Der globale UI-Editor ist zusaetzlich fuer registrierte TOPS-Quicklane-Elemente im Scope `protokoll.topsScreen` bedienbar; Restarbeiten bleibt bedienbar.
 - M34 abgeschlossen: Aktiver UI-Scope, Auswahl und Layout-Scope sind beim Wechsel zwischen Restarbeiten und Protokoll/TOPS eindeutig; alte Auswahlen werden geloescht und unbekannte Scopes sichtbar blockiert.
 - M35 abgeschlossen: Bedienhinweise und Abnahmegrenzen sind sichtbar festgezogen; der Editor bleibt fachneutral und bearbeitet keine Fachwerte.
+- M36 abgeschlossen: Der globale UI-Editor-Fixstand nach M29 bis M35 ist als Abnahmestand dokumentiert.
 
 ## Haken-System
 - `[x]` erledigt
@@ -60,6 +61,14 @@ Aktueller Stand:
 - [x] M33 Globalen UI-Editor fuer den Protokoll-/TOPS-Scope sichtbar anbinden
 - [x] M34 UI-Editor Scope-Wechsel und Bedienfuehrung absichern
 - [x] M35 UI-Editor Bedienhinweise und Abnahmegrenzen festziehen
+- [x] M36 UI-Editor Fixstand nach M29 bis M35 dokumentieren und absichern
+
+## Statusupdate M36
+- Der globale UI-Editor-Fixstand nach M29 bis M35 ist dokumentiert.
+- Fixiert sind neutrale Layoutaenderungen, Speichern/Laden/Reset, sichtbare App-Bedienung, Restarbeiten-Scope, Protokoll/TOPS-Scope, Scope-Wechsel und Bediengrenzen.
+- Neue Doku: `docs/M36_UI_EDITOR_FIXSTAND_ABNAHME.md`.
+- Keine PDF-/Druck-/Mail-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+- Keine weitere Modul-Anbindung, keine UI-Umbauten und keine neue Editor-Architektur wurden eingefuehrt.
 
 ## Statusupdate M35
 - Die sichtbare UI-Editor-Bedienung ergaenzt klare Bediengrenzen: nur neutrale Layoutaenderungen, keine Fachwerte.

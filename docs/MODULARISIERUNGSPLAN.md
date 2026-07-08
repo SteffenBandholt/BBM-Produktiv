@@ -420,3 +420,11 @@ Dabei gilt:
 - Restarbeiten- und Protokoll/TOPS-Bedienung bleiben auf den bestehenden Scopes; keine weitere Modul-Anbindung wurde eingefuehrt.
 - PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik, Restarbeiten-Fachlogik, Datenbankmigration, automatische DOM-Erkennung und neue Editor-Architekturentscheidungen blieben ausserhalb dieses Pakets.
 - Neue Doku: `docs/M35_UI_EDITOR_BEDIENHINWEISE_ABNAHMEGRENZEN.md`.
+
+### M36 UI-Editor Fixstand nach M29 bis M35 dokumentiert (neu)
+- Der globale UI-Editor-Fixstand ist als Abnahmestand dokumentiert.
+- Fixiert sind Speichern/Laden/Reset neutraler Layoutaenderungen, sichtbare App-Bedienung, Restarbeiten-Scope, Protokoll/TOPS-Scope, Scope-Wechsel und Bediengrenzen.
+- Angebundene Scopes bleiben `restarbeiten.screen` -> `restarbeiten.ui.main` und `protokoll.topsScreen` -> `protokoll.topsScreen`.
+- Weitere Themen wie zusaetzliche Scopes, neue bewusst registrierte Elemente, Usability-Ausbau oder fachliche Klick-Abnahme muessen nach diesem Fixstand separat beauftragt werden.
+- PDF, Druck, Mail, Diktat/Audio, Fachlogik, Datenbankmigration, automatische DOM-Erkennung, neue Modul-Anbindung und neue Editor-Architektur blieben ausserhalb dieses Pakets.
+- Neue Doku: `docs/M36_UI_EDITOR_FIXSTAND_ABNAHME.md`.
