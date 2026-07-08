@@ -17,6 +17,16 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M35 UI-Editor Bedienhinweise und Abnahmegrenzen festgezogen:
+  - Neue Doku: `docs/M35_UI_EDITOR_BEDIENHINWEISE_ABNAHMEGRENZEN.md`.
+  - Die sichtbare UI-Editor-Bedienung nennt die Bediengrenze: nur neutrale Layoutaenderungen, keine Fachwerte.
+  - PDF, Druck, Mail, Audio und DB-Fachlogik werden sichtbar als nicht Teil dieses Editors benannt.
+  - Das Layoutpanel zeigt ausgewaehltes Element, Layout-Scope, erlaubte neutrale Layoutoperationen und Block-/Statusmeldungen.
+  - Kein ausgewaehltes Element und unbekannte Elemente im aktiven Scope erzeugen sichtbare Blockmeldungen.
+  - Restarbeiten- und Protokoll/TOPS-Bedienung bleiben auf den bestehenden Scopes.
+  - Es wurde keine automatische DOM-Erkennung, keine weitere Modul-Anbindung und keine Fachlogik eingefuehrt.
+  - `git diff --check`, `node scripts/tests/bbmUiEditorRuntimeLauncher.test.cjs`, `node uiEditor/tests/uiEditorInstallation.test.cjs`, `node scripts/ui-editor-contract-check.cjs --self-test`, `npm test` und `npm start` liefen gruen.
+
 - M34 UI-Editor Scope-Wechsel und Bedienfuehrung abgesichert:
   - Neue Doku: `docs/M34_UI_EDITOR_SCOPE_WECHSEL_BEDIENFUEHRUNG.md`.
   - Die Statusanzeige nennt den aktiven UI-Scope jetzt eindeutig als `Aktiver UI-Scope`.

@@ -239,6 +239,12 @@ function matchesSelector(node, selector) {
   if (raw === "[data-ui-editor-layout-message=\"true\"]") {
     return node.getAttribute("data-ui-editor-layout-message") === "true";
   }
+  if (raw === "[data-ui-editor-layout-boundary=\"true\"]") {
+    return node.getAttribute("data-ui-editor-layout-boundary") === "true";
+  }
+  if (raw === "[data-ui-editor-layout-ops=\"true\"]") {
+    return node.getAttribute("data-ui-editor-layout-ops") === "true";
+  }
   if (raw === "[data-ui-editor-layout-operation=\"true\"]") {
     return node.getAttribute("data-ui-editor-layout-operation") === "true";
   }
@@ -465,6 +471,9 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     let panel = doc.querySelector('[data-ui-editor-layout-controls="true"]');
     assert.equal(Boolean(panel), true);
     assert.equal(doc.querySelector('[data-ui-editor-layout-selected="true"]').textContent.includes("restarbeiten.editbox.text.short"), true);
+    assert.equal(doc.querySelector('[data-ui-editor-layout-boundary="true"]').textContent.includes("keine Fachwerte"), true);
+    assert.equal(doc.querySelector('[data-ui-editor-layout-boundary="true"]').textContent.includes("PDF-, Druck-, Mail-, Audio- oder DB-Fachlogik"), true);
+    assert.equal(doc.querySelector('[data-ui-editor-layout-ops="true"]').textContent, "Erlaubte neutrale Layoutoperationen: move, resize");
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-layout-action="applySave"]')), true);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-layout-action="loadSaved"]')), true);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-layout-action="resetDefault"]')), true);
@@ -490,6 +499,45 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(getStatusText(doc.querySelector('[data-ui-editor-launcher-status="true"]')).includes("Layout: Standardzustand wurde wiederhergestellt."), true);
     panel = doc.querySelector('[data-ui-editor-layout-controls="true"]');
     assert.equal(Boolean(panel), true);
+  });
+
+  await run("BBM UI-Editor-Runtime: Bedienhinweise zeigen Grenzen und keine-Auswahl-Blockade", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "restarbeiten.screen",
+      availableUiScopes: [{ uiScope: "restarbeiten.screen", moduleId: "restarbeiten", status: "available" }],
+      registryResolver: () => ({
+        uiScope: "restarbeiten.screen",
+        moduleId: "restarbeiten",
+        elements: [
+          { id: "restarbeiten.editbox.text.short", name: "Kurztext", type: "field", role: "content", parentId: "restarbeiten.editbox", allowedOps: ["inspect", "move"], lockedOps: [] },
+        ],
+      }),
+      layoutInspector: {
+        getLayoutControlPanel() {
+          throw new Error("layout controls must wait for a registered selection");
+        },
+      },
+      layoutScopeResolver: () => "restarbeiten.ui.main",
+    });
+
+    button.click();
+
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Aktiver UI-Scope: restarbeiten.screen"), true);
+    assert.equal(getStatusText(activeStatus).includes("Bediengrenze: Nur neutrale Layoutaenderungen; keine Fachwerte."), true);
+    assert.equal(getStatusText(activeStatus).includes("Nicht Teil dieses Editors: PDF, Druck, Mail, Audio und DB-Fachlogik."), true);
+    assert.equal(doc.querySelector('[data-ui-editor-layout-selected="true"]').textContent, "Ausgewaehltes Element: keine registrierte Auswahl");
+    assert.equal(doc.querySelector('[data-ui-editor-layout-ops="true"]').textContent, "Erlaubte neutrale Layoutoperationen: keine, bis ein registriertes Element ausgewaehlt ist.");
+    assert.equal(doc.querySelector('[data-ui-editor-layout-message="true"]').textContent, "Layoutbedienung blockiert: Kein registriertes Element ausgewaehlt.");
+    assert.equal(Boolean(doc.querySelector('[data-ui-editor-layout-action="applySave"]')), false);
   });
 
   await run("BBM UI-Editor-Runtime: Layoutbedienung blockiert nicht registrierte Layoutziele sichtbar", async () => {
@@ -536,6 +584,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     button.click();
     doc.dispatchEvent({ type: "click", target });
 
+    assert.equal(doc.querySelector('[data-ui-editor-layout-boundary="true"]').textContent.includes("keine Fachwerte"), true);
     assert.equal(doc.querySelector('[data-ui-editor-layout-message="true"]').textContent.includes("blockiert"), true);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-layout-action="applySave"]')), false);
   });
@@ -852,6 +901,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(getStatusText(activeStatus).includes("Aktiver UI-Scope: unknown.scope"), true);
     assert.equal(getStatusText(activeStatus).includes("Hinweis: Unknown UI scope: unknown.scope"), true);
     assert.equal(layoutMessage.textContent, "Layoutbedienung blockiert: Unknown UI scope: unknown.scope");
+    assert.equal(doc.querySelector('[data-ui-editor-layout-boundary="true"]').textContent.includes("DB-Fachlogik"), true);
     assert.equal(Boolean(doc.querySelector('[data-ui-editor-layout-action="applySave"]')), false);
   });
 
@@ -1261,6 +1311,8 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(withoutId.getAttribute("data-ui-editor-selected"), null);
     const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
     assert.equal(getStatusText(activeStatus).includes("Auswahl: keine"), true);
+    assert.equal(getStatusText(activeStatus).includes("Auswahl-Hinweis: Element ist im aktiven Scope nicht registriert."), true);
+    assert.equal(getStatusText(activeStatus).includes("Layout: Layoutbedienung blockiert: Unbekanntes Element im aktiven Scope."), true);
     assert.equal(getStatusText(activeStatus).includes("restarbeiten.unknown"), false);
   });
 

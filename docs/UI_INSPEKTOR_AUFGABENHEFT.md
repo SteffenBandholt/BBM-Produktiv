@@ -3,7 +3,7 @@
 ## Projektstatus
 Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope).
 
-Statusupdate: M34 abgeschlossen (UI-Editor Scope-Wechsel und Bedienfuehrung abgesichert).
+Statusupdate: M35 abgeschlossen (UI-Editor Bedienhinweise und Abnahmegrenzen festgezogen).
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
@@ -16,6 +16,7 @@ Aktueller Stand:
 - M32 abgeschlossen: App-Start und sichtbarer Launcher wurden lokal geprueft; die Save/Load/Reset-Bedienfolge und Blockaden sind durch `npm test` abgedeckt.
 - M33 abgeschlossen: Der globale UI-Editor ist zusaetzlich fuer registrierte TOPS-Quicklane-Elemente im Scope `protokoll.topsScreen` bedienbar; Restarbeiten bleibt bedienbar.
 - M34 abgeschlossen: Aktiver UI-Scope, Auswahl und Layout-Scope sind beim Wechsel zwischen Restarbeiten und Protokoll/TOPS eindeutig; alte Auswahlen werden geloescht und unbekannte Scopes sichtbar blockiert.
+- M35 abgeschlossen: Bedienhinweise und Abnahmegrenzen sind sichtbar festgezogen; der Editor bleibt fachneutral und bearbeitet keine Fachwerte.
 
 ## Haken-System
 - `[x]` erledigt
@@ -58,6 +59,16 @@ Aktueller Stand:
 - [x] M32 Globalen UI-Editor im App-Kontext per Smoke-Test und Abnahmeprotokoll pruefen
 - [x] M33 Globalen UI-Editor fuer den Protokoll-/TOPS-Scope sichtbar anbinden
 - [x] M34 UI-Editor Scope-Wechsel und Bedienfuehrung absichern
+- [x] M35 UI-Editor Bedienhinweise und Abnahmegrenzen festziehen
+
+## Statusupdate M35
+- Die sichtbare UI-Editor-Bedienung ergaenzt klare Bediengrenzen: nur neutrale Layoutaenderungen, keine Fachwerte.
+- PDF, Druck, Mail, Audio und DB-Fachlogik werden sichtbar als nicht Teil dieses Editors benannt.
+- Das Layoutpanel zeigt ausgewaehltes Element, Layout-Scope, erlaubte neutrale Layoutoperationen und Block-/Statusmeldungen.
+- Kein ausgewaehltes Element und unbekannte Elemente im aktiven Scope werden sichtbar blockiert.
+- Neue Doku: `docs/M35_UI_EDITOR_BEDIENHINWEISE_ABNAHMEGRENZEN.md`.
+- Keine PDF-/Druck-/Mail-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+- `git diff --check`, Runtime-Test, Installations-/Neutralitaetstest, Vertrags-Selftest, `npm test` und `npm start` liefen gruen.
 
 ## Statusupdate M34
 - Der globale UI-Editor zeigt den aktiven UI-Scope eindeutig als `Aktiver UI-Scope`.

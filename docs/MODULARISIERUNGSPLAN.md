@@ -411,3 +411,12 @@ Dabei gilt:
 - Bestehende Restarbeiten- und Protokoll/TOPS-Scope-Tests bleiben gruen; neue Runtime-Tests sichern den Scope-Wechsel ab.
 - PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik, Restarbeiten-Fachlogik, Datenbankmigration, automatische DOM-Erkennung und neue Editor-Grundsatzentscheidungen blieben ausserhalb dieses Pakets.
 - Neue Doku: `docs/M34_UI_EDITOR_SCOPE_WECHSEL_BEDIENFUEHRUNG.md`.
+
+### M35 UI-Editor Bedienhinweise und Abnahmegrenzen festgezogen (neu)
+- Die globale UI-Editor-Bedienung zeigt klarer, dass nur neutrale Layoutaenderungen bearbeitet werden und keine Fachwerte.
+- PDF, Druck, Mail, Audio und DB-Fachlogik werden sichtbar als nicht Teil dieses Editors benannt.
+- Das Layoutpanel zeigt aktiven Layout-Scope, ausgewaehltes Element, erlaubte neutrale Layoutoperationen und aktuelle Block-/Statusmeldungen.
+- Kein ausgewaehltes Element, unbekannte Elemente, falscher Scope und unbekannter Scope werden sichtbar blockiert.
+- Restarbeiten- und Protokoll/TOPS-Bedienung bleiben auf den bestehenden Scopes; keine weitere Modul-Anbindung wurde eingefuehrt.
+- PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik, Restarbeiten-Fachlogik, Datenbankmigration, automatische DOM-Erkennung und neue Editor-Architekturentscheidungen blieben ausserhalb dieses Pakets.
+- Neue Doku: `docs/M35_UI_EDITOR_BEDIENHINWEISE_ABNAHMEGRENZEN.md`.

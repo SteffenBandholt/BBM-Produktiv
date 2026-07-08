@@ -202,14 +202,14 @@ function applyHoverMarker(targetElement) {
   return previousStyle;
 }
 
-function cloneSelection(activeScopeId, registryElement, targetElement) {
+function cloneSelection(activeScopeId, registryElement, targetElement, message = "") {
   return {
     activeScopeId,
     elementId: registryElement?.id || null,
     element: registryElement ? { ...registryElement } : null,
     targetElement: targetElement || null,
     hasTargetElement: Boolean(targetElement),
-    message: registryElement && !targetElement ? "Registry-Gruppe gewaehlt, kein DOM-Wrapper gefunden." : "",
+    message: message || (registryElement && !targetElement ? "Registry-Gruppe gewaehlt, kein DOM-Wrapper gefunden." : ""),
   };
 }
 
@@ -292,6 +292,7 @@ function createTargetSelectionController(options = {}) {
   let selectedRegistryElement = null;
   let selectedElementId = null;
   let selectedPreviousStyle = null;
+  let selectedMessage = "";
   let hoveredTargetElement = null;
   let hoveredRegistryElement = null;
   let hoveredElementId = null;
@@ -299,7 +300,7 @@ function createTargetSelectionController(options = {}) {
   let installed = false;
 
   function getSelection() {
-    return cloneSelection(activeScopeId, selectedRegistryElement, selectedTargetElement);
+    return cloneSelection(activeScopeId, selectedRegistryElement, selectedTargetElement, selectedMessage);
   }
 
   function getHover() {
@@ -321,6 +322,7 @@ function createTargetSelectionController(options = {}) {
     selectedRegistryElement = null;
     selectedElementId = null;
     selectedPreviousStyle = null;
+    selectedMessage = "";
     if (typeof uiState?.clearSelection === "function") {
       uiState.clearSelection();
     }
@@ -375,6 +377,7 @@ function createTargetSelectionController(options = {}) {
     selectedTargetElement = targetElement;
     selectedRegistryElement = registryElement;
     selectedElementId = registryElement.id;
+    selectedMessage = "";
     selectedPreviousStyle = targetElement ? applyTargetMarker(targetElement) : null;
     notifySelectionChange();
     return true;
@@ -388,7 +391,19 @@ function createTargetSelectionController(options = {}) {
 
   function handleClick(event) {
     const resolvedTarget = resolveRegisteredTargetFromChain(event, registryIndex, targetAttributeName, root);
-    if (!resolvedTarget) return false;
+    if (!resolvedTarget) {
+      const targetElement = findClosestTargetElement(event, targetAttributeName);
+      if (!targetElement) return false;
+      clearHover({ notify: false });
+      clearSelection();
+      selectedMessage = "Element ist im aktiven Scope nicht registriert.";
+      notifySelectionChange();
+      if (!isEditableEventTarget(event)) {
+        event?.preventDefault?.();
+      }
+      event?.stopPropagation?.();
+      return false;
+    }
     const selected = selectResolvedTarget(resolvedTarget.targetElement, resolvedTarget.registryElement);
     if (selected) {
       if (!isEditableEventTarget(event)) {
