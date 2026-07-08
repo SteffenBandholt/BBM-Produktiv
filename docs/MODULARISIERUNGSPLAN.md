@@ -382,3 +382,13 @@ Dabei gilt:
 - Es wurde keine automatische DOM-Erkennung, keine automatische Registry-Befuellung, keine Fachwertbearbeitung und keine Datenbankmigration eingefuehrt.
 - PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik und Restarbeiten-Fachlogik bleiben ausserhalb dieses Pakets.
 - Neue Doku: `docs/M31_UI_EDITOR_SICHTBARE_BEDIENUNG_IN_APP.md`.
+
+### M32 Globaler UI-Editor App-Smoke-Test und Abnahmeprotokoll (neu)
+- Der globale UI-Editor wurde als reines Pruef- und Dokumentationspaket im App-Kontext abgenommen.
+- `npm start` startete die App sichtbar; das Fenster `BBM` war vorhanden und antwortend.
+- Der UI-Editor-Launcher war im DEV-Kontext sichtbar.
+- Die Bedienfolge fuer registrierte Auswahl, Layout-Scope, Anwenden/Speichern, Laden, Reset und sichtbare Blockaden ist technisch durch `npm test` abgedeckt.
+- `git diff --check` und `npm test` liefen gruen.
+- Es wurde keine Codekorrektur vorgenommen.
+- PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik, Restarbeiten-Fachlogik, Datenbankmigration und neue Editor-Grundsatzentscheidungen blieben ausserhalb dieses Pakets.
+- Neue Doku: `docs/M32_UI_EDITOR_APP_SMOKE_TEST.md`.

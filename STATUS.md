@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M32 Globalen UI-Editor im App-Kontext per Smoke-Test und Abnahmeprotokoll geprueft:
+  - Neue Abnahmedoku: `docs/M32_UI_EDITOR_APP_SMOKE_TEST.md`.
+  - `npm start` startete die App sichtbar; das Fenster `BBM` war vorhanden und antwortend.
+  - Der UI-Editor-Launcher war im DEV-Kontext oben rechts sichtbar.
+  - Die weitere Bedienfolge fuer registrierte Auswahl, Layout-Scope, Anwenden/Speichern, Laden, Reset und sichtbare Blockaden ist technisch durch `npm test` abgedeckt.
+  - `git diff --check` und `npm test` liefen gruen; `npm test` endete mit `Alle Tests bestanden.`
+  - Es war keine Codekorrektur noetig.
+  - Keine PDF-, Druck-, Mail-, Diktat-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+
 - M31 Globale UI-Editor-Bedienung sichtbar in der App angebunden:
   - Die bestehende UI-Editor-Launcher-/Statusoberflaeche zeigt fuer registrierte Auswahlziele eine sichtbare neutrale Layoutbedienung.
   - Fuer den vorhandenen Restarbeiten-Pilot wird der sichtbare Scope `restarbeiten.screen` auf den bestehenden Layout-/HostAdapter-Scope `restarbeiten.ui.main` abgebildet.

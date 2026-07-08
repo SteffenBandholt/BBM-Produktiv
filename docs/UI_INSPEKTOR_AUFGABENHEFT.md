@@ -3,6 +3,8 @@
 ## Projektstatus
 Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope).
 
+Statusupdate: M32 abgeschlossen (globaler UI-Editor im App-Kontext per Smoke-Test und Abnahmeprotokoll geprueft).
+
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
 - K19.0 abgeschlossen: erste explizite UI-Elementliste fuer das Protokoll-Modul, ohne Editor-Integration und ohne produktive UI-Aenderung.
@@ -11,6 +13,7 @@ Aktueller Stand:
 - K19.13a abgeschlossen: Der BBM-Artefakttest erkennt `uiEditor.global` robust ueber `id`, `uiScope`, `uiScopeId` oder den Registry-Schluessel und verlangt `uiEditor/targetAppRegistry.js` als installiertes Pflichtartefakt.
 - K19.16a abgeschlossen: Der neutrale UI-Editor-Aktivmodus zeigt den festen aktiven BBM-Registry-Scope `protokoll.topsScreen`; bei leerem Scope wird `nicht erkannt` angezeigt.
 - M21 abgeschlossen: BBM-Produktiv ist als Beispiel-/Pilot-Zielapp vom generischen UI-Editor-kit getrennt dokumentiert; `Restarbeiten` ist erreichbarer unfertiger Pilot-Scope, `Protokoll` defensiv/read-only.
+- M32 abgeschlossen: App-Start und sichtbarer Launcher wurden lokal geprueft; die Save/Load/Reset-Bedienfolge und Blockaden sind durch `npm test` abgedeckt.
 
 ## Haken-System
 - `[x]` erledigt
@@ -50,6 +53,17 @@ Aktueller Stand:
 - [x] K19.13a BBM-Test an aktuelle UI-Editor-Installer-Artefakte anpassen
 - [x] K19.16a UI-Editor zeigt festen registrierten Scope aus BBM-Registry
 - [x] M21 BBM-Zielapp sauber vom generischen UI-Editor-kit trennen
+- [x] M32 Globalen UI-Editor im App-Kontext per Smoke-Test und Abnahmeprotokoll pruefen
+
+## Statusupdate M32
+- Der globale UI-Editor wurde nach M29/M30/M31 als reines Smoke-Test- und Abnahmepaket geprueft.
+- Neue Abnahmedoku: `docs/M32_UI_EDITOR_APP_SMOKE_TEST.md`.
+- `npm start` startete die App sichtbar; das Fenster `BBM` war vorhanden und antwortend.
+- Der UI-Editor-Launcher war im DEV-Kontext sichtbar.
+- Registrierte Auswahl, Layout-Scope, Anwenden/Speichern, Laden, Reset und sichtbare Blockaden sind technisch durch `npm test` abgedeckt.
+- Es wurde keine Codekorrektur vorgenommen.
+- Keine PDF-/Druck-/Mail-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+- Naechster Schritt: fachliche Klick-Abnahme durch den Nutzer, falls die sichtbare Bedienfolge im echten App-Fenster zusaetzlich bestaetigt werden soll.
 
 ## Statusupdate M21
 - BBM-Produktiv ist Beispiel-/Pilot-Zielapp fuer das generische UI-Editor-kit, nicht fachliche Grundlage des Editors.
