@@ -336,6 +336,8 @@ function getReadonlyLauncherStatusText(state = {}) {
     `Scope: ${getStatusScopeLabel(registry.uiScope || state.activeUiScope)}`,
     `Modul: ${registry.moduleId || "nicht verfuegbar"}`,
     `Elemente: ${registry.elements.length}`,
+    "Bediengrenze: Nur neutrale Layoutaenderungen; keine Fachwerte.",
+    "Nicht Teil dieses Editors: PDF, Druck, Mail, Audio und DB-Fachlogik.",
     registry.ok === false && registry.reason ? `Hinweis: ${registry.reason}` : "",
     hoverElement ? `Hover: ${hoverElement.id}` : "Hover: keine",
     state.hoverMessage ? `Hover-Hinweis: ${state.hoverMessage}` : "",
@@ -470,6 +472,20 @@ function getSafeLayoutOperations(panel = null) {
   return Array.isArray(applyControl?.allowedOps) ? applyControl.allowedOps : [];
 }
 
+function getLayoutOperationsHint(operations = [], selectedElement = null) {
+  if (operations.length > 0) return `Erlaubte neutrale Layoutoperationen: ${operations.join(", ")}`;
+  if (selectedElement) return "Erlaubte neutrale Layoutoperationen: keine fuer diese Auswahl freigegeben.";
+  return "Erlaubte neutrale Layoutoperationen: keine, bis ein registriertes Element ausgewaehlt ist.";
+}
+
+function appendLayoutMessage(doc, section, message) {
+  const node = doc.createElement("div");
+  node.setAttribute("data-ui-editor-layout-message", "true");
+  node.textContent = message;
+  section.appendChild(node);
+  return node;
+}
+
 function ensureLayoutOperation(state = {}, operations = []) {
   if (operations.includes(state.layoutOperation)) return state.layoutOperation;
   state.layoutOperation = operations[0] || "move";
@@ -582,7 +598,6 @@ function renderLayoutControls(doc, status, state = {}) {
   if (!doc?.createElement || !content) return null;
 
   const layoutScope = getLayoutScopeForState(state);
-  const panel = getLayoutPanelForState(state);
   const selectedElement = state.selectedElement || null;
   const registry = getSelectedRegistryFromState(state);
   const section = doc.createElement("div");
@@ -604,45 +619,61 @@ function renderLayoutControls(doc, status, state = {}) {
   scopeLine.textContent = layoutScope ? `Layout-Scope: ${layoutScope}` : "Layout-Scope: nicht verfuegbar";
   section.appendChild(scopeLine);
 
+  const boundaryLine = doc.createElement("div");
+  boundaryLine.setAttribute("data-ui-editor-layout-boundary", "true");
+  boundaryLine.textContent = "Grenze: Nur neutrale Layoutaenderungen; keine Fachwerte, PDF-, Druck-, Mail-, Audio- oder DB-Fachlogik.";
+  section.appendChild(boundaryLine);
+
   if (registry.ok === false) {
-    const blocked = doc.createElement("div");
-    blocked.setAttribute("data-ui-editor-layout-message", "true");
-    blocked.textContent = registry.reason
+    appendLayoutMessage(doc, section, registry.reason
       ? `Layoutbedienung blockiert: ${registry.reason}`
-      : "Layoutbedienung blockiert: Scope ist nicht verfuegbar.";
-    section.appendChild(blocked);
+      : "Layoutbedienung blockiert: Scope ist nicht verfuegbar.");
     content.appendChild(section);
     return section;
   }
 
   if (selectedElement && !isSelectedElementInActiveRegistry(state)) {
-    const blocked = doc.createElement("div");
-    blocked.setAttribute("data-ui-editor-layout-message", "true");
-    blocked.textContent = "Layoutbedienung blockiert: Auswahl gehoert nicht zum aktiven Scope.";
-    section.appendChild(blocked);
+    appendLayoutMessage(doc, section, "Layoutbedienung blockiert: Auswahl gehoert nicht zum aktiven Scope.");
     content.appendChild(section);
     return section;
   }
 
-  if (!selectedElement || !layoutScope || !state.layoutInspector) {
-    const empty = doc.createElement("div");
-    empty.setAttribute("data-ui-editor-layout-message", "true");
-    empty.textContent = "Layoutbedienung wartet auf eine registrierte Auswahl.";
-    section.appendChild(empty);
+  if (!selectedElement) {
+    const operationsLine = doc.createElement("div");
+    operationsLine.setAttribute("data-ui-editor-layout-ops", "true");
+    operationsLine.textContent = getLayoutOperationsHint([], null);
+    section.appendChild(operationsLine);
+    appendLayoutMessage(doc, section, "Layoutbedienung blockiert: Kein registriertes Element ausgewaehlt.");
     content.appendChild(section);
     return section;
   }
+
+  if (!layoutScope) {
+    appendLayoutMessage(doc, section, "Layoutbedienung blockiert: Kein Layout-Scope verfuegbar.");
+    content.appendChild(section);
+    return section;
+  }
+
+  if (!state.layoutInspector) {
+    appendLayoutMessage(doc, section, "Layoutbedienung blockiert: Layoutpruefung ist nicht verfuegbar.");
+    content.appendChild(section);
+    return section;
+  }
+
+  const panel = getLayoutPanelForState(state);
 
   if (!panel?.ok) {
-    const blocked = doc.createElement("div");
-    blocked.setAttribute("data-ui-editor-layout-message", "true");
-    blocked.textContent = panel?.status?.message || "Layoutbedienung blockiert.";
-    section.appendChild(blocked);
+    appendLayoutMessage(doc, section, panel?.status?.message || "Layoutbedienung blockiert.");
     content.appendChild(section);
     return section;
   }
 
   const operations = getSafeLayoutOperations(panel);
+  const operationsLine = doc.createElement("div");
+  operationsLine.setAttribute("data-ui-editor-layout-ops", "true");
+  operationsLine.textContent = getLayoutOperationsHint(operations, selectedElement);
+  section.appendChild(operationsLine);
+
   const operation = ensureLayoutOperation(state, operations);
   const controlsRow = doc.createElement("div");
   controlsRow.className = "ui-editor-layout-control__row";
@@ -762,7 +793,13 @@ function installLauncherTargetSelectionController(doc, host, state) {
       state.selectedElement = selection.element;
       state.selectedTargetNode = selection.targetElement;
       state.selectionMessage = selection.message || "";
-      state.layoutStatus = null;
+      state.layoutStatus = !selection.element && selection.message
+        ? {
+            kind: "blocked",
+            message: "Layoutbedienung blockiert: Unbekanntes Element im aktiven Scope.",
+            reason: "ELEMENT_UNKNOWN",
+          }
+        : null;
       refreshLauncherPanel(doc, host, state);
     },
   });
@@ -844,7 +881,21 @@ function handleUiEditorDocumentClick(event, { state, doc, host }) {
   const targetNode = findClickedUiEditorTarget(event);
   const uiEditorId = String(targetNode?.getAttribute?.("data-ui-editor-id") || "").trim();
   const registryElement = getRegisteredElementById(state, uiEditorId);
-  if (!targetNode || !registryElement) return;
+  if (!targetNode) return;
+
+  if (!registryElement) {
+    event?.preventDefault?.();
+    event?.stopPropagation?.();
+    clearUiEditorTargetSelection(state);
+    state.selectionMessage = "Element ist im aktiven Scope nicht registriert.";
+    state.layoutStatus = {
+      kind: "blocked",
+      message: "Layoutbedienung blockiert: Unbekanntes Element im aktiven Scope.",
+      reason: "ELEMENT_UNKNOWN",
+    };
+    refreshLauncherPanel(doc, host, state);
+    return;
+  }
 
   event?.preventDefault?.();
   event?.stopPropagation?.();
