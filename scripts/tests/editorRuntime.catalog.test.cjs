@@ -3,6 +3,10 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const CATALOG_PATH = path.join(__dirname, "../../src/renderer/editorRuntime/catalog/bbmEditorCatalog.js");
+const PROTOKOLL_SCOPE_PATH = path.join(
+  __dirname,
+  "../../src/renderer/modules/protokoll/editor/protokollEditorScopes.js"
+);
 const RESTARBEITEN_SCOPE_PATH = path.join(
   __dirname,
   "../../src/renderer/modules/restarbeiten/editor/restarbeitenEditorScopes.js"
@@ -19,9 +23,18 @@ const HOST_CONTRACT_PATH = path.join(
 );
 
 async function runEditorRuntimeCatalogTests(run) {
-  const [{ BBM_EDITOR_CATALOG, listEditorModules, findEditorScope }, scopeModule, scopeTypes, registryModel, validator, hostContract] =
+  const [
+    { BBM_EDITOR_CATALOG, listEditorModules, findEditorScope },
+    protokollScopeModule,
+    restarbeitenScopeModule,
+    scopeTypes,
+    registryModel,
+    validator,
+    hostContract,
+  ] =
     await Promise.all([
       importEsmFromFile(CATALOG_PATH),
+      importEsmFromFile(PROTOKOLL_SCOPE_PATH),
       importEsmFromFile(RESTARBEITEN_SCOPE_PATH),
       importEsmFromFile(SCOPE_TYPES_PATH),
       importEsmFromFile(REGISTRY_MODEL_PATH),
@@ -41,6 +54,33 @@ async function runEditorRuntimeCatalogTests(run) {
     assert.equal(restarbeiten.moduleLabel, "Restarbeiten");
   });
 
+  await run("EditorRuntime: Modul protokoll existiert", () => {
+    const modules = listEditorModules();
+    const protokoll = modules.find((module) => module.moduleId === "protokoll");
+    assert.ok(protokoll);
+    assert.equal(protokoll.moduleLabel, "Protokoll");
+  });
+
+  await run("EditorRuntime: Scope protokoll.topsScreen existiert", () => {
+    const scope = findEditorScope("protokoll.topsScreen");
+    assert.ok(scope);
+    assert.equal(scope.scopeId, "protokoll.topsScreen");
+    assert.equal(scope.kind, "ui");
+    assert.equal(scope.status, "ready");
+    assert.equal(Array.isArray(scope.registry), true);
+    assert.ok(scope.registry.length > 0);
+  });
+
+  await run("EditorRuntime: Protokoll-Scope-Helfer liefert den Ready-Scope", () => {
+    const scopes = protokollScopeModule.getProtokollEditorScopes();
+    const scope = scopes.find((entry) => entry.scopeId === protokollScopeModule.PROTOKOLL_TOPS_UI_SCOPE_ID);
+    assert.ok(scope);
+    assert.equal(scope.status, "ready");
+    assert.equal(scope.moduleId, "protokoll");
+    assert.equal(Array.isArray(scope.registry), true);
+    assert.ok(scope.registry.some((entry) => entry.id === "protokoll.topsScreen.quicklane"));
+  });
+
   await run("EditorRuntime: Scope restarbeiten.ui.main existiert", () => {
     const scope = findEditorScope("restarbeiten.ui.main");
     assert.ok(scope);
@@ -52,8 +92,8 @@ async function runEditorRuntimeCatalogTests(run) {
   });
 
   await run("EditorRuntime: Restarbeiten-Scope-Helfer liefert den Ready-Scope", () => {
-    const scopes = scopeModule.getRestarbeitenEditorScopes();
-    const scope = scopes.find((entry) => entry.scopeId === scopeModule.RESTARBEITEN_MAIN_UI_SCOPE_ID);
+    const scopes = restarbeitenScopeModule.getRestarbeitenEditorScopes();
+    const scope = scopes.find((entry) => entry.scopeId === restarbeitenScopeModule.RESTARBEITEN_MAIN_UI_SCOPE_ID);
     assert.ok(scope);
     assert.equal(scope.status, "ready");
     assert.equal(scope.moduleId, "restarbeiten");

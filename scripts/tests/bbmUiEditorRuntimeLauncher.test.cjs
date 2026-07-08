@@ -1137,6 +1137,94 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(getStatusText(activeStatus).includes("Name: Protokoll"), true);
   });
 
+  await run("BBM UI-Editor-Runtime: TOPS-Scope zeigt Layout-Scope und neutrale Controls", async () => {
+    const mod = await loadRuntime();
+    const doc = createFakeDocument();
+    const win = {
+      uiEditorLauncherButtonArtifact: require(path.join(__dirname, "../../uiEditor/uiEditorLauncherButton.js")),
+    };
+    const calls = [];
+    const layoutInspector = {
+      getLayoutControlPanel(scopeId, elementId) {
+        calls.push(["panel", scopeId, elementId]);
+        return {
+          ok: true,
+          elementId,
+          selectedElement: { id: elementId, name: "TOPS Quicklane" },
+          currentLayoutEntry: null,
+          controls: [
+            { id: "editor.layout.applySave", enabled: true, allowedOps: ["move", "hide", "show"] },
+            { id: "editor.layout.loadSaved", enabled: true, allowedOps: [] },
+            { id: "editor.layout.resetDefault", enabled: true, allowedOps: [] },
+          ],
+          status: { kind: "ready", message: "Standardzustand ist aktiv.", reason: null },
+        };
+      },
+      applyLayoutChange(scopeId, request) {
+        calls.push(["apply", scopeId, request]);
+        return {
+          ok: true,
+          status: { kind: "success", message: "Aenderung wurde angewendet und gespeichert.", reason: null },
+          layoutEntry: { elementId: request.elementId, operation: request.operation, layoutValue: request.payload },
+        };
+      },
+      loadLayoutState(scopeId, request) {
+        calls.push(["load", scopeId, request]);
+        return {
+          ok: true,
+          status: { kind: "success", message: "Gespeicherter Layoutzustand wurde geladen.", reason: null },
+          currentLayoutEntry: { elementId: request.elementId, operation: "move", layoutValue: { x: 0, y: 0 } },
+        };
+      },
+      resetLayoutState(scopeId, request) {
+        calls.push(["reset", scopeId, request]);
+        return {
+          ok: true,
+          status: { kind: "success", message: "Standardzustand wurde wiederhergestellt.", reason: null },
+          layoutState: [],
+        };
+      },
+    };
+    const registry = {
+      uiScope: "protokoll.topsScreen",
+      moduleId: "protokoll",
+      elements: [
+        { id: "protokoll.topsScreen.quicklane", name: "TOPS Quicklane", type: "toolbar", role: "layout", parentId: "protokoll.root", allowedOps: ["inspect", "move"], lockedOps: [] },
+      ],
+    };
+    const button = await mod.installBbmUiEditorRuntimeLauncher({
+      devEnabled: true,
+      doc,
+      win,
+      activeUiScope: "protokoll.topsScreen",
+      registryResolver: () => registry,
+      layoutInspector,
+      layoutScopeResolver: (uiScope) => uiScope === "protokoll.topsScreen" ? "protokoll.topsScreen" : null,
+    });
+    const target = doc.createElement("aside");
+    target.setAttribute("data-ui-editor-id", "protokoll.topsScreen.quicklane");
+    doc.body.appendChild(target);
+
+    button.click();
+    doc.dispatchEvent({ type: "click", target });
+
+    const activeStatus = doc.querySelector('[data-ui-editor-launcher-status="true"]');
+    assert.equal(getStatusText(activeStatus).includes("Scope: protokoll.topsScreen"), true);
+    const layoutPanel = doc.querySelector('[data-ui-editor-layout-controls="true"]');
+    assert.equal(layoutPanel.children.some((child) => child.textContent === "Layout-Scope: protokoll.topsScreen"), true);
+    assert.equal(doc.querySelector('[data-ui-editor-layout-selected="true"]').textContent.includes("protokoll.topsScreen.quicklane"), true);
+    assert.ok(calls.some((call) => call[0] === "panel" && call[1] === "protokoll.topsScreen"));
+
+    doc.querySelector('[data-ui-editor-layout-action="applySave"]').click();
+    assert.ok(calls.some((call) => call[0] === "apply" && call[1] === "protokoll.topsScreen"));
+
+    doc.querySelector('[data-ui-editor-layout-action="loadSaved"]').click();
+    assert.ok(calls.some((call) => call[0] === "load" && call[1] === "protokoll.topsScreen"));
+
+    doc.querySelector('[data-ui-editor-layout-action="resetDefault"]').click();
+    assert.ok(calls.some((call) => call[0] === "reset" && call[1] === "protokoll.topsScreen"));
+  });
+
   await run("BBM UI-Editor-Runtime: bleibt ohne Scan, Speicherung und Ziel-App-Aktion", async () => {
     const source = fs.readFileSync(RUNTIME_PATH, "utf8");
     const coreShellSource = fs.readFileSync(CORE_SHELL_PATH, "utf8");
@@ -1175,6 +1263,7 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("layoutInspector"), true);
     assert.equal(source.includes("layoutScopeResolver"), true);
     assert.equal(coreShellSource.includes("createEditorScopeInspector"), true);
+    assert.equal(coreShellSource.includes('"protokoll.topsScreen": "protokoll.topsScreen"'), true);
     assert.equal(coreShellSource.includes('"restarbeiten.screen": "restarbeiten.ui.main"'), true);
   });
 

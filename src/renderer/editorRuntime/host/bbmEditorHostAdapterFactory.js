@@ -1,7 +1,12 @@
+import { createProtokollTopsUiHostAdapter } from "../../modules/protokoll/editor/protokollTopsUiHostAdapter.js";
 import { createRestarbeitenMainUiHostAdapter } from "../../modules/restarbeiten/editor/restarbeitenMainUiHostAdapter.js";
 
 export function createBbmEditorHostAdapter(scopeId, options = {}) {
   const normalizedScopeId = String(scopeId || "").trim();
+  if (normalizedScopeId === "protokoll.topsScreen") {
+    return createProtokollTopsUiHostAdapter(options);
+  }
+
   if (normalizedScopeId === "restarbeiten.ui.main") {
     return createRestarbeitenMainUiHostAdapter(options);
   }

@@ -88,7 +88,9 @@ async function runRestarbeitenEditorRegistryDomAnchorsTests(run) {
   });
 
   await run("Restarbeiten EditorRegistry: Catalog verwendet den Ready-Scope", () => {
-    const scope = BBM_EDITOR_CATALOG.modules[0].scopes[0];
+    const restarbeitenModule = BBM_EDITOR_CATALOG.modules.find((entry) => entry.moduleId === "restarbeiten");
+    const scope = restarbeitenModule?.scopes?.find((entry) => entry.scopeId === scopeModule.RESTARBEITEN_MAIN_UI_SCOPE_ID);
+    assert.ok(scope);
     assert.equal(scope.scopeId, scopeModule.RESTARBEITEN_MAIN_UI_SCOPE_ID);
     assert.equal(scope.status, "ready");
     assert.equal(scope.registry.length > 0, true);
