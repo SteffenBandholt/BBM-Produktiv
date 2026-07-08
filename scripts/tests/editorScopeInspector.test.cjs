@@ -34,12 +34,23 @@ async function runEditorScopeInspectorTests(run) {
     assert.ok(modules.some((module) => module.moduleId === "restarbeiten"));
   });
 
+  await run("EditorScopeInspector: listet Modul protokoll", () => {
+    const modules = inspector.getAvailableModules();
+    assert.ok(modules.some((module) => module.moduleId === "protokoll"));
+  });
+
   await run("EditorScopeInspector: listet Scope restarbeiten.ui.main", () => {
     const scopes = inspector.getAvailableScopes();
     assert.ok(scopes.some((scope) => scope.scopeId === "restarbeiten.ui.main"));
   });
 
+  await run("EditorScopeInspector: listet Scope protokoll.topsScreen", () => {
+    const scopes = inspector.getAvailableScopes();
+    assert.ok(scopes.some((scope) => scope.scopeId === "protokoll.topsScreen"));
+  });
+
   const result = inspector.inspectScope("restarbeiten.ui.main");
+  const protokollResult = inspector.inspectScope("protokoll.topsScreen");
 
   await run("EditorScopeInspector: inspectScope ist ok", () => {
     assert.equal(result.ok, true);
@@ -55,6 +66,15 @@ async function runEditorScopeInspectorTests(run) {
   await run("EditorScopeInspector: Registry-Validation ist ok", () => {
     assert.equal(result.registryValidation.ok, true);
     assert.deepEqual(result.registryValidation.errors, []);
+  });
+
+  await run("EditorScopeInspector: Protokoll/TOPS-Scope ist valide", () => {
+    assert.equal(protokollResult.ok, true);
+    assert.equal(protokollResult.scope.scopeId, "protokoll.topsScreen");
+    assert.equal(protokollResult.registryValidation.ok, true);
+    assert.deepEqual(protokollResult.registryValidation.errors, []);
+    assert.equal(protokollResult.treeResult.tree.id, "protokoll.root");
+    assert.ok(protokollResult.registry.some((entry) => entry.id === "protokoll.topsScreen.quicklane"));
   });
 
   await run("EditorScopeInspector: Baum hat root restarbeiten.root", () => {
@@ -88,6 +108,19 @@ async function runEditorScopeInspectorTests(run) {
     assert.equal(panel.ok, true);
     assert.equal(panel.status.kind, "ready");
     assert.equal(panel.selectedElement.id, "restarbeiten.editbox.text.short");
+    assert.ok(panel.controls.some((control) => control.id === "editor.layout.applySave" && control.enabled));
+    assert.ok(panel.controls.some((control) => control.id === "editor.layout.loadSaved" && control.enabled));
+    assert.ok(panel.controls.some((control) => control.id === "editor.layout.resetDefault" && control.enabled));
+    const saveControl = panel.controls.find((control) => control.id === "editor.layout.applySave");
+    assert.ok(saveControl.allowedOps.includes("move"));
+    assert.equal(saveControl.allowedOps.includes("label"), false);
+  });
+
+  await run("EditorScopeInspector: Protokoll/TOPS bietet Save/Load/Reset fuer registriertes Element", () => {
+    const panel = inspector.getLayoutControlPanel("protokoll.topsScreen", "protokoll.topsScreen.quicklane");
+    assert.equal(panel.ok, true);
+    assert.equal(panel.status.kind, "ready");
+    assert.equal(panel.selectedElement.id, "protokoll.topsScreen.quicklane");
     assert.ok(panel.controls.some((control) => control.id === "editor.layout.applySave" && control.enabled));
     assert.ok(panel.controls.some((control) => control.id === "editor.layout.loadSaved" && control.enabled));
     assert.ok(panel.controls.some((control) => control.id === "editor.layout.resetDefault" && control.enabled));
@@ -135,6 +168,31 @@ async function runEditorScopeInspectorTests(run) {
     assert.equal(loadResult.status.message.includes("Standardzustand"), true);
   });
 
+  await run("EditorScopeInspector: Protokoll/TOPS Layoutzustand wird angewendet, geladen und resetet", () => {
+    const applyResult = inspector.applyLayoutChange("protokoll.topsScreen", {
+      elementId: "protokoll.topsScreen.quicklane",
+      operation: "move",
+      payload: { x: 6, y: 12 },
+    });
+    assert.equal(applyResult.ok, true);
+    assert.equal(applyResult.blocked, false);
+    assert.equal(applyResult.status.kind, "success");
+    assert.deepEqual(applyResult.layoutEntry.layoutValue, { x: 6, y: 12 });
+
+    const loadResult = inspector.loadLayoutState("protokoll.topsScreen", {
+      elementId: "protokoll.topsScreen.quicklane",
+    });
+    assert.equal(loadResult.ok, true);
+    assert.equal(loadResult.currentLayoutEntry.elementId, "protokoll.topsScreen.quicklane");
+    assert.deepEqual(loadResult.currentLayoutEntry.layoutValue, { x: 6, y: 12 });
+
+    const resetResult = inspector.resetLayoutState("protokoll.topsScreen", {
+      elementId: "protokoll.topsScreen.quicklane",
+    });
+    assert.equal(resetResult.ok, true);
+    assert.deepEqual(resetResult.layoutState, []);
+  });
+
   await run("EditorScopeInspector: unbekanntes Element blockiert sichtbare Bedienaktionen", () => {
     const panel = inspector.getLayoutControlPanel("restarbeiten.ui.main", "restarbeiten.editbox.unknown");
     assert.equal(panel.ok, false);
@@ -177,6 +235,21 @@ async function runEditorScopeInspectorTests(run) {
       elementId: "restarbeiten.editbox.text.short",
     });
     assert.equal(loadResult.currentLayoutEntry, null);
+  });
+
+  await run("EditorScopeInspector: Protokoll/TOPS blockiert Restarbeiten-ID und Fachpayload sichtbar", () => {
+    const wrongElement = inspector.getLayoutControlPanel("protokoll.topsScreen", "restarbeiten.quicklane");
+    assert.equal(wrongElement.ok, false);
+    assert.equal(wrongElement.status.kind, "blocked");
+
+    const forbiddenPayload = inspector.applyLayoutChange("protokoll.topsScreen", {
+      elementId: "protokoll.topsScreen.quicklane",
+      operation: "move",
+      payload: { topId: "top-1" },
+    });
+    assert.equal(forbiddenPayload.ok, false);
+    assert.equal(forbiddenPayload.blocked, true);
+    assert.equal(forbiddenPayload.status.kind, "blocked");
   });
 
   await run("EditorScopeInspector: unbekannter Scope wird sauber behandelt", () => {

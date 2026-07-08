@@ -17,6 +17,16 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M33 Globalen UI-Editor fuer den Protokoll-/TOPS-Scope sichtbar angebunden:
+  - Neue Doku: `docs/M33_UI_EDITOR_PROTOKOLL_SCOPE_ANBINDUNG.md`.
+  - Der sichtbare App-Scope `protokoll.topsScreen` ist nun auch als neutraler EditorRuntime-/Layout-Scope angebunden.
+  - Registrierte TOPS-Quicklane-Elemente koennen im sichtbaren globalen UI-Editor ausgewaehlt werden; Layout-Scope, Anwenden/Speichern, Laden und Reset sind verfuegbar.
+  - Blockierte Aktionen fuer unbekannte Elemente und Fach-/DOM-/Datenbankpayloads werden weiter sichtbar bzw. technisch blockiert.
+  - `restarbeiten.screen` bleibt unveraendert auf `restarbeiten.ui.main` abgebildet und bedienbar.
+  - Es wurde keine automatische DOM-Erkennung, keine automatische Registry-Befuellung und keine Fachwertbearbeitung eingefuehrt.
+  - Keine PDF-, Druck-, Mail-, Diktat-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+  - `git diff --check`, `node scripts/ui-editor-contract-check.cjs --self-test`, `npm test` und `npm start` liefen gruen.
+
 - M32 Globalen UI-Editor im App-Kontext per Smoke-Test und Abnahmeprotokoll geprueft:
   - Neue Abnahmedoku: `docs/M32_UI_EDITOR_APP_SMOKE_TEST.md`.
   - `npm start` startete die App sichtbar; das Fenster `BBM` war vorhanden und antwortend.

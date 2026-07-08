@@ -29,6 +29,7 @@ const HOST_UI_SCOPE_BY_SECTION = Object.freeze({
 });
 
 const LAYOUT_SCOPE_BY_UI_SCOPE = Object.freeze({
+  "protokoll.topsScreen": "protokoll.topsScreen",
   "restarbeiten.screen": "restarbeiten.ui.main",
 });
 

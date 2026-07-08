@@ -3,7 +3,7 @@
 ## Projektstatus
 Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope).
 
-Statusupdate: M32 abgeschlossen (globaler UI-Editor im App-Kontext per Smoke-Test und Abnahmeprotokoll geprueft).
+Statusupdate: M33 abgeschlossen (globaler UI-Editor fuer den Protokoll-/TOPS-Scope sichtbar angebunden).
 
 Aktueller Stand:
 - M1 bis M13.6a abgeschlossen.
@@ -14,6 +14,7 @@ Aktueller Stand:
 - K19.16a abgeschlossen: Der neutrale UI-Editor-Aktivmodus zeigt den festen aktiven BBM-Registry-Scope `protokoll.topsScreen`; bei leerem Scope wird `nicht erkannt` angezeigt.
 - M21 abgeschlossen: BBM-Produktiv ist als Beispiel-/Pilot-Zielapp vom generischen UI-Editor-kit getrennt dokumentiert; `Restarbeiten` ist erreichbarer unfertiger Pilot-Scope, `Protokoll` defensiv/read-only.
 - M32 abgeschlossen: App-Start und sichtbarer Launcher wurden lokal geprueft; die Save/Load/Reset-Bedienfolge und Blockaden sind durch `npm test` abgedeckt.
+- M33 abgeschlossen: Der globale UI-Editor ist zusaetzlich fuer registrierte TOPS-Quicklane-Elemente im Scope `protokoll.topsScreen` bedienbar; Restarbeiten bleibt bedienbar.
 
 ## Haken-System
 - `[x]` erledigt
@@ -54,6 +55,16 @@ Aktueller Stand:
 - [x] K19.16a UI-Editor zeigt festen registrierten Scope aus BBM-Registry
 - [x] M21 BBM-Zielapp sauber vom generischen UI-Editor-kit trennen
 - [x] M32 Globalen UI-Editor im App-Kontext per Smoke-Test und Abnahmeprotokoll pruefen
+- [x] M33 Globalen UI-Editor fuer den Protokoll-/TOPS-Scope sichtbar anbinden
+
+## Statusupdate M33
+- Der globale UI-Editor nutzt fuer `protokoll.topsScreen` nun einen neutralen EditorRuntime-/Layout-Scope.
+- Registrierte TOPS-Quicklane-Elemente koennen sichtbar ausgewaehlt werden; Layout-Scope, Anwenden/Speichern, Laden und Reset sind verfuegbar.
+- Neue Doku: `docs/M33_UI_EDITOR_PROTOKOLL_SCOPE_ANBINDUNG.md`.
+- Der Restarbeiten-Pilot bleibt ueber `restarbeiten.screen` -> `restarbeiten.ui.main` unveraendert bedienbar.
+- Unbekannte Elemente und Fach-/DOM-/Datenbankpayloads werden blockiert.
+- Keine PDF-/Druck-/Mail-/Audio-, Protokoll- oder Restarbeiten-Fachlogik wurde geaendert.
+- Naechster Schritt: fachliche Klick-Abnahme durch den Nutzer, falls die sichtbare TOPS-Bedienfolge im echten App-Fenster zusaetzlich bestaetigt werden soll.
 
 ## Statusupdate M32
 - Der globale UI-Editor wurde nach M29/M30/M31 als reines Smoke-Test- und Abnahmepaket geprueft.

@@ -392,3 +392,13 @@ Dabei gilt:
 - Es wurde keine Codekorrektur vorgenommen.
 - PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik, Restarbeiten-Fachlogik, Datenbankmigration und neue Editor-Grundsatzentscheidungen blieben ausserhalb dieses Pakets.
 - Neue Doku: `docs/M32_UI_EDITOR_APP_SMOKE_TEST.md`.
+
+### M33 Globaler UI-Editor Protokoll-/TOPS-Scope-Anbindung (neu)
+- Der globale UI-Editor ist zusaetzlich fuer den vorhandenen Scope `protokoll.topsScreen` bedienbar.
+- Die sichtbare Auswahl nutzt weiterhin nur registrierte TOPS-/Protokoll-Elemente; es wurde keine DOM-Erkennung und keine automatische Registry-Befuellung eingefuehrt.
+- Der neutrale EditorRuntime-/Layout-Scope fuer TOPS ist `protokoll.topsScreen`.
+- Registrierte TOPS-Quicklane-Elemente koennen neutral angewendet/gespeichert, geladen und zurueckgesetzt werden.
+- Unbekannte Elemente sowie Fach-, DOM- und Datenbankpayloads werden blockiert.
+- Der Restarbeiten-Pilot bleibt ueber `restarbeiten.screen` -> `restarbeiten.ui.main` unveraendert bedienbar.
+- PDF, Druck, Mail, Diktat/Audio, Protokoll-Fachlogik, Restarbeiten-Fachlogik, Datenbankmigration und neue Editor-Grundsatzentscheidungen blieben ausserhalb dieses Pakets.
+- Neue Doku: `docs/M33_UI_EDITOR_PROTOKOLL_SCOPE_ANBINDUNG.md`.
