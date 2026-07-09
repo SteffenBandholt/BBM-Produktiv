@@ -428,3 +428,11 @@ Dabei gilt:
 - Weitere Themen wie zusaetzliche Scopes, neue bewusst registrierte Elemente, Usability-Ausbau oder fachliche Klick-Abnahme muessen nach diesem Fixstand separat beauftragt werden.
 - PDF, Druck, Mail, Diktat/Audio, Fachlogik, Datenbankmigration, automatische DOM-Erkennung, neue Modul-Anbindung und neue Editor-Architektur blieben ausserhalb dieses Pakets.
 - Neue Doku: `docs/M36_UI_EDITOR_FIXSTAND_ABNAHME.md`.
+
+### M37 UI-Editor Klick-Abnahme dokumentiert (neu)
+- Die manuelle Klick-Abnahme des UI-Editor-Fixstands ist als Pruefliste dokumentiert.
+- Die Abnahme umfasst App-Start, sichtbaren UI-Editor, Restarbeiten- und Protokoll/TOPS-Scope, aktive Scope-Anzeige, Elementauswahl, Scope-Wechsel, Speichern/Laden/Reset und Blockademeldungen.
+- Fachwerte, PDF, Druck, Mail, Audio und DB-Fachlogik bleiben ausdruecklich ausserhalb der Abnahme.
+- M37 ist ein reines Doku-/Abnahmepaket ohne Code-, UI-, Fachlogik-, Modul- oder Architekturaenderung.
+- `git diff --check`, `node scripts/ui-editor-contract-check.cjs --self-test`, `npm test` und `npm start` liefen gruen; das App-Fenster `BBM` war sichtbar und antwortend.
+- Neue Doku: `docs/M37_UI_EDITOR_KLICK_ABNAHME.md`.
