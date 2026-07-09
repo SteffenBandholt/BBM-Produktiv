@@ -17,6 +17,15 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M37 UI-Editor Klick-Abnahme im echten App-Fenster dokumentiert:
+  - Neue Doku: `docs/M37_UI_EDITOR_KLICK_ABNAHME.md`.
+  - Die manuelle Klick-Abnahme ist als klare Pruefliste dokumentiert.
+  - Die Pruefliste umfasst App-Start, sichtbaren UI-Editor, Restarbeiten-Scope, Protokoll/TOPS-Scope, aktive Scope-Anzeige, Elementauswahl, Scope-Wechsel, Speichern/Laden/Reset, Blockademeldungen und Bediengrenzen.
+  - PDF, Druck, Mail, Audio und DB-Fachlogik sind ausdruecklich nicht Teil der Abnahme.
+  - M37 ist ein reines Doku-/Abnahmepaket ohne Code-, UI-, Fachlogik- oder Architekturaenderung.
+  - `git diff --check`, `node scripts/ui-editor-contract-check.cjs --self-test`, `npm test` und `npm start` liefen gruen.
+  - `npm start` startete die App sichtbar; das Fenster `BBM` war vorhanden und antwortend.
+
 - M36 UI-Editor Fixstand nach M29 bis M35 dokumentiert:
   - Neue Doku: `docs/M36_UI_EDITOR_FIXSTAND_ABNAHME.md`.
   - Der Fixstand haelt fest, dass der globale UI-Editor neutrale Layoutaenderungen speichern, laden und resetten kann.
