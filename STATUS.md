@@ -1,4 +1,4 @@
-﻿# STATUS.md â€” BBM-Produktiv
+# STATUS.md â€” BBM-Produktiv
 
 ## Zweck
 Diese Datei hÃ¤lt den tatsÃ¤chlichen Fortschritt fest.
@@ -16,6 +16,14 @@ Sie ergÃ¤nzt:
 ---
 
 ## Aktueller Gesamtstand
+
+- M51 UI-Editor-kit v0.2.0 technisch angebunden:
+  - BBM verweist als Ziel-App auf `ui-editor-kit` via `github:SteffenBandholt/UI-Editor-kit#v0.2.0`.
+  - Core-Vertrag, Manifest, HostAdapter, explizite Registry, Runtime-Bootstrap und MemoryLayoutStateStore sind testbar angebunden.
+  - Sichtbare Editor-Oberflaeche ist noch nicht integriert.
+  - Dauerhafte Layoutspeicherung bleibt fuer M52 oder spaeter offen.
+  - Neue Doku: `docs/M51_UI_EDITOR_KIT_V0.2.0_INTEGRATION.md`.
+  - Naechster offener Schritt: Installation/Lockfile in Umgebung mit GitHub-Zugriff verifizieren und dauerhafte Speicherentscheidung vorbereiten.
 
 - M37 UI-Editor Klick-Abnahme im echten App-Fenster dokumentiert:
   - Neue Doku: `docs/M37_UI_EDITOR_KLICK_ABNAHME.md`.
