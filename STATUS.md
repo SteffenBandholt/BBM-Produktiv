@@ -1,5 +1,15 @@
 # STATUS.md â€” BBM-Produktiv
 
+## M54 – Explizite UI-Element-Referenzen (2026-07-11)
+
+- CoreShell bindet vorhandene HTMLElement-Referenzen explizit an die M51/M52-Registry-IDs.
+- Referenzabbildung: `bbm.main.shell -> host`, `bbm.main.navigation -> sidebar`, `bbm.main.header -> headerEl`, `bbm.main.content -> content/contentRoot`.
+- `bbm.main.actions` bleibt bewusst ungebunden, weil kein einzelner vorhandener fachlich eindeutiger Aktionsbereich existiert.
+- Neue Doku: `docs/M54_EXPLIZITE_UI_ELEMENT_REFERENZEN.md`.
+- Der alte RuntimeLauncher wird in CoreShell nicht mehr automatisch parallel gestartet; `UI-Editor Status` bleibt erhalten.
+- Keine DOM-Suche, kein Overlay, kein Auswahlmodus, keine Layoutmutation und keine HTMLElement-Übertragung über IPC.
+- Naechster kleiner Schritt M55: fachlich eindeutigen Actions-Bereich klaeren, bevor `bbm.main.actions` gebunden wird.
+
 ## M53 – Bestand visuelle UI-Auswahl (2026-07-11)
 
 - Reines Analysepaket, kein Implementierungsversuch.

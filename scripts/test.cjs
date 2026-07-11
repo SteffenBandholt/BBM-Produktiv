@@ -83,6 +83,7 @@ const { runLicensePresentationTests } = require("./tests/licensePresentation.tes
 const { runNativeTestRuntimeTests } = require("./tests/nativeTestRuntime.test.cjs");
 const { runM51UiEditorKitIntegrationTests } = require("./tests/m51UiEditorKitIntegration.test.cjs");
 const { runM52UiEditorVisibleEntryTests } = require("./tests/m52UiEditorVisibleEntry.test.cjs");
+const { runM54UiElementRefsTests } = require("./tests/m54UiElementRefs.test.cjs");
 
 let failed = false;
 
@@ -213,6 +214,7 @@ async function main() {
   await runNativeTestRuntimeTests(run);
   await runM51UiEditorKitIntegrationTests(run);
   await runM52UiEditorVisibleEntryTests(run);
+  await runM54UiElementRefsTests(run);
 
   if (failed) {
     process.exitCode = 1;

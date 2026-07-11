@@ -64,6 +64,15 @@ Aktueller Stand:
 - [x] M36 UI-Editor Fixstand nach M29 bis M35 dokumentieren und absichern
 
 
+## Statusupdate M54
+- M54 bindet die vorhandenen CoreShell-HTMLElement-Referenzen explizit an die M51/M52-Registry-IDs.
+- Gebunden sind `bbm.main.shell -> host`, `bbm.main.navigation -> sidebar`, `bbm.main.header -> headerEl` und `bbm.main.content -> content/contentRoot`.
+- `bbm.main.actions` bleibt bewusst ungebunden, weil aktuell kein einzelner vorhandener HTMLElement-Aktionsbereich fachlich eindeutig passt.
+- Neue Doku: `docs/M54_EXPLIZITE_UI_ELEMENT_REFERENZEN.md`.
+- Der alte RuntimeLauncher wird in `CoreShell` nicht mehr automatisch parallel gestartet; die M52-Navigation `UI-Editor Status` bleibt erhalten.
+- Kein Auswahlmodus, kein Overlay, kein Hover, keine Layoutmutation, keine DOM-Suche und keine IPC-Übertragung von HTMLElement-Objekten.
+- Naechster Schritt: M55 klein planen, insbesondere den fachlich eindeutigen Actions-Bereich klaeren, bevor `bbm.main.actions` gebunden wird.
+
 ## Statusupdate M53
 - M53 ist als reines Analysepaket dokumentiert.
 - Neue Bestandsdoku: `docs/M53_BESTAND_VISUELLE_UI_AUSWAHL.md`.

@@ -1,3 +1,5 @@
+import { getBbmUiElementRefStatus } from "./bbmUiElementRefs.js";
+
 function createNode(tag, className = "") {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -42,6 +44,7 @@ export class BbmUiEditorStatusPanel {
     this.detailsNode = null;
     this.errorNode = null;
     this.status = null;
+    this.refStatus = null;
     this.elements = [];
     this.selectedElement = null;
   }
@@ -114,6 +117,7 @@ export class BbmUiEditorStatusPanel {
       : { ok: true, selectedElement: null };
 
     this.status = status;
+    this.refStatus = getBbmUiElementRefStatus();
     this.elements = Array.isArray(elementsResult?.elements) ? elementsResult.elements : [];
     this.selectedElement = detailsResult?.selectedElement || null;
     this.renderAll();
@@ -121,6 +125,7 @@ export class BbmUiEditorStatusPanel {
 
   showLoadError(error) {
     this.status = { ok: false, blockCode: "BBM_UI_EDITOR_RENDERER_STATUS_FAILED", message: error?.message || "" };
+    this.refStatus = getBbmUiElementRefStatus();
     this.elements = [];
     this.selectedElement = null;
     this.renderAll();
@@ -158,6 +163,8 @@ export class BbmUiEditorStatusPanel {
       createInfoRow("Aktiver Layout-Scope", status.activeLayoutScope),
       createInfoRow("Layoutprofil", status.activeLayoutProfileId),
       createInfoRow("Registrierte Elemente", status.registeredElementCount),
+      createInfoRow("UI-Referenzen gebunden", this.refStatus ? `${this.refStatus.count}/${this.refStatus.expectedCount}` : "nicht verfuegbar"),
+      createInfoRow("Fehlende Referenzen", this.refStatus ? formatList(this.refStatus.missingIds) : "nicht verfuegbar"),
       createInfoRow("LayoutStore verfuegbar", yesNo(status.layoutStoreAvailable)),
       createInfoRow("Layoutzustand vorhanden", yesNo(layout.hasStateForScopeAndProfile)),
       createInfoRow("Load/Save/Reset technisch", `${yesNo(layout.canLoad)} / ${yesNo(layout.canSave)} / ${yesNo(layout.canReset)}`),
