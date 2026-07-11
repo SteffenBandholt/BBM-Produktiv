@@ -1,4 +1,5 @@
 import { getBbmUiElementRefStatus } from "./bbmUiElementRefs.js";
+import { createBbmUiElementSelectionController } from "./bbmUiElementSelection.js";
 
 function createNode(tag, className = "") {
   const node = document.createElement(tag);
@@ -47,6 +48,9 @@ export class BbmUiEditorStatusPanel {
     this.refStatus = null;
     this.elements = [];
     this.selectedElement = null;
+    this.selectionController = null;
+    this.selectionMessage = "";
+    this.selectionModeActive = false;
   }
 
   render() {
@@ -84,11 +88,26 @@ export class BbmUiEditorStatusPanel {
 
     root.append(header, this.errorNode, intro, grid);
     this.root = root;
+    this.selectionController = createBbmUiElementSelectionController({
+      getPanelRoot: () => this.root,
+      getElementMeta: (elementId) => this.getElementMeta(elementId),
+      selectElement: ({ elementId }) => this.selectElement(elementId, { fromSelectionMode: true }),
+      onSelection: ({ elementId, meta }) => {
+        this.selectionMessage = `Ausgewaehlt: ${asText(meta?.label, elementId)}`;
+        this.selectionModeActive = this.selectionController?.isActive?.() || false;
+        this.renderAll();
+      },
+      onStateChange: (state) => {
+        this.selectionModeActive = Boolean(state?.active);
+        this.renderAll();
+      },
+    });
     this.refresh().catch((error) => this.showLoadError(error));
     return root;
   }
 
   async close() {
+    this.stopSelectionMode();
     try {
       await window.bbmDb?.uiEditorClose?.();
     } catch (_e) {
@@ -165,6 +184,9 @@ export class BbmUiEditorStatusPanel {
       createInfoRow("Registrierte Elemente", status.registeredElementCount),
       createInfoRow("UI-Referenzen gebunden", this.refStatus ? `${this.refStatus.count}/${this.refStatus.expectedCount}` : "nicht verfuegbar"),
       createInfoRow("Fehlende Referenzen", this.refStatus ? formatList(this.refStatus.missingIds) : "nicht verfuegbar"),
+      createInfoRow("Auswahlmodus", this.selectionModeActive ? "Aktiv" : "Inaktiv"),
+      createInfoRow("Gebundene Ziele", this.refStatus ? String(this.getSelectableBoundCount()) : "nicht verfuegbar"),
+      createInfoRow("Nicht verfuegbar", "bbm.main.actions"),
       createInfoRow("LayoutStore verfuegbar", yesNo(status.layoutStoreAvailable)),
       createInfoRow("Layoutzustand vorhanden", yesNo(layout.hasStateForScopeAndProfile)),
       createInfoRow("Load/Save/Reset technisch", `${yesNo(layout.canLoad)} / ${yesNo(layout.canSave)} / ${yesNo(layout.canReset)}`),
@@ -181,9 +203,32 @@ export class BbmUiEditorStatusPanel {
     resetSelection.textContent = "Auswahl zuruecksetzen";
     resetSelection.addEventListener("click", () => this.selectElement("").catch((error) => this.showLoadError(error)));
 
+    const startSelection = createNode("button", "bbm-ui-editor-panel__secondary");
+    startSelection.type = "button";
+    startSelection.textContent = "Auswahlmodus starten";
+    startSelection.disabled = !this.canStartSelectionMode();
+    startSelection.addEventListener("click", () => this.startSelectionMode());
+
+    const stopSelection = createNode("button", "bbm-ui-editor-panel__secondary");
+    stopSelection.type = "button";
+    stopSelection.textContent = "Auswahlmodus beenden";
+    stopSelection.disabled = !this.selectionModeActive;
+    stopSelection.addEventListener("click", () => this.stopSelectionMode());
+
     const actions = createNode("div", "bbm-ui-editor-panel__actions");
-    actions.append(reloadButton, resetSelection);
+    actions.append(reloadButton, resetSelection, startSelection, stopSelection);
     this.statusNode.append(title, list, actions);
+
+    if (this.selectionModeActive) {
+      const hint = createNode("p", "bbm-ui-editor-panel__notice");
+      hint.textContent = "Maus ueber einen BBM-Bereich bewegen und anklicken. Esc beendet den Auswahlmodus.";
+      this.statusNode.appendChild(hint);
+    }
+    if (this.selectionMessage) {
+      const selected = createNode("p", "bbm-ui-editor-panel__notice");
+      selected.textContent = this.selectionMessage;
+      this.statusNode.appendChild(selected);
+    }
   }
 
   renderElements() {
@@ -247,7 +292,41 @@ export class BbmUiEditorStatusPanel {
     this.detailsNode.appendChild(list);
   }
 
-  async selectElement(elementId) {
+  getElementMeta(elementId) {
+    return this.elements.find((element) => element.elementId === elementId) || null;
+  }
+
+  getSelectableBoundCount() {
+    const ids = new Set(this.refStatus?.registeredIds || []);
+    return ["bbm.main.navigation", "bbm.main.header", "bbm.main.content", "bbm.main.shell"].filter((elementId) => ids.has(elementId)).length;
+  }
+
+  canStartSelectionMode() {
+    if (this.selectionModeActive) return false;
+    if (!this.status?.runtimeStarted || !this.status?.adapterValid) return false;
+    return this.getSelectableBoundCount() > 0;
+  }
+
+  startSelectionMode() {
+    if (!this.canStartSelectionMode()) return;
+    this.selectionMessage = "";
+    this.selectionController?.start?.();
+    this.selectionModeActive = this.selectionController?.isActive?.() || false;
+    this.renderAll();
+  }
+
+  stopSelectionMode() {
+    this.selectionController?.stop?.();
+    this.selectionModeActive = false;
+    this.renderAll();
+  }
+
+  destroy() {
+    this.stopSelectionMode();
+    this.root = null;
+  }
+
+  async selectElement(elementId, options = {}) {
     const api = window.bbmDb || {};
     if (typeof api.uiEditorSelectElement !== "function") {
       this.status = { ok: false, blockCode: "BBM_UI_EDITOR_BRIDGE_MISSING" };
@@ -260,6 +339,12 @@ export class BbmUiEditorStatusPanel {
       return;
     }
     await this.refresh();
+    if (options.fromSelectionMode) {
+      const meta = this.getElementMeta(elementId);
+      this.selectionMessage = `Ausgewaehlt: ${asText(meta?.label, elementId)}`;
+      this.selectionModeActive = this.selectionController?.isActive?.() || false;
+      this.renderAll();
+    }
   }
 }
 

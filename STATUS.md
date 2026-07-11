@@ -1,5 +1,16 @@
 # STATUS.md â€” BBM-Produktiv
 
+## M55 – Visuelle UI-Auswahl ueber explizite Refs (2026-07-11)
+
+- Im bestehenden UI-Editor-Statuspanel gibt es einen kontrollierten Auswahlmodus fuer die vier in M54 gebundenen CoreShell-Refs.
+- Hover markiert genau ein explizit gebundenes Ziel mit Label und `elementId`; Klick waehlt ueber den bestehenden M52-Auswahlweg.
+- Zielaufloesung nutzt ausschliesslich M54-Refs und `contains(...)`; keine DOM-Suche, keine Selector-Fallbacks, keine Legacy-Runtime und keine zweite Registry.
+- `bbm.main.actions` bleibt bewusst ungebunden und nicht auswaehlbar.
+- Neue Dateien: `src/renderer/ui-editor/bbmUiElementSelection.js`, `src/renderer/ui-editor/bbmUiSelectionOverlay.js`, `scripts/tests/m55UiElementSelection.test.cjs`, `docs/M55_VISUELLE_UI_AUSWAHL_UEBER_EXPLIZITE_REFS.md`.
+- Geaendert: `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`, `scripts/test.cjs`, `docs/UI_INSPEKTOR_AUFGABENHEFT.md`.
+- Pruefung: M51-, M52-, M54-, M55-Tests, `scripts/test.cjs`, `git diff --check`; `npm start` nur soweit Umgebung moeglich.
+- Naechster kleiner Schritt M56: fachlich eindeutigen Actions-Bereich klaeren, ohne `bbm.main.actions` zu raten.
+
 ## M54 – Explizite UI-Element-Referenzen (2026-07-11)
 
 - CoreShell bindet vorhandene HTMLElement-Referenzen explizit an die M51/M52-Registry-IDs.

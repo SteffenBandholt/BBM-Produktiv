@@ -1059,24 +1059,17 @@ async function runProjektverwaltungModuleTests(run) {
   });
 
   await run("Projektverwaltung: MainHeader/CoreShell ohne alte DEV-Buttons und ohne Scanstatus", async () => {
-    assert.equal(coreShellSource.includes("installBbmUiEditorRuntimeLauncher"), true);
-    assert.equal(coreShellSource.includes("getActiveUiScope"), true);
-    assert.equal(coreShellSource.includes("getBbmUiEditorRegistry"), true);
-    assert.equal(coreShellSource.includes("resolveActiveHostUiScope"), true);
-    assert.equal(coreShellSource.includes('restarbeiten: "restarbeiten.screen"'), true);
-    assert.equal(coreShellSource.includes("if (sectionScope) return sectionScope;"), true);
-    assert.equal(coreShellSource.includes('return "protokoll.topsScreen"'), true);
-    assert.equal(coreShellSource.includes("return getActiveUiScope();"), true);
-    assert.equal(
-      coreShellSource.indexOf("if (sectionScope) return sectionScope;") <
-        coreShellSource.indexOf('return "protokoll.topsScreen"'),
-      true
-    );
-    assert.equal(coreShellSource.includes("refreshUiEditorRuntimeLauncher"), true);
-    assert.equal(coreShellSource.includes("activeScopeId: activeUiScope"), true);
-    assert.equal(coreShellSource.includes("activeUiScope,"), true);
-    assert.equal(coreShellSource.includes("registeredElements: uiEditorRegistry?.elements"), true);
-    assert.equal(coreShellSource.includes("activeUiScope: null"), false);
+    assert.equal(coreShellSource.includes("installBbmUiEditorRuntimeLauncher"), false);
+    assert.equal(coreShellSource.includes("refreshUiEditorRuntimeLauncher"), false);
+    assert.equal(coreShellSource.includes("getActiveUiScope"), false);
+    assert.equal(coreShellSource.includes("getBbmUiEditorRegistry"), false);
+    assert.equal(coreShellSource.includes("resolveActiveHostUiScope"), false);
+    assert.equal(coreShellSource.includes("bindCoreShellUiElementRefs"), true);
+    assert.equal(coreShellSource.includes('registerBbmUiElementRef("bbm.main.shell", host)'), true);
+    assert.equal(coreShellSource.includes('registerBbmUiElementRef("bbm.main.navigation", sidebar)'), true);
+    assert.equal(coreShellSource.includes('registerBbmUiElementRef("bbm.main.header", headerEl)'), true);
+    assert.equal(coreShellSource.includes('registerBbmUiElementRef("bbm.main.content", content)'), true);
+    assert.equal(coreShellSource.includes('registerBbmUiElementRef("bbm.main.actions"'), false);
     assert.equal(coreShellSource.includes("showEditorLabV2"), false);
     assert.equal(coreShellSource.includes("showRestarbeitenV2Dev"), false);
     assert.equal(coreShellSource.includes("scanUiInspectorTargets"), false);

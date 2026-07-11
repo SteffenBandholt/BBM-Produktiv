@@ -84,6 +84,7 @@ const { runNativeTestRuntimeTests } = require("./tests/nativeTestRuntime.test.cj
 const { runM51UiEditorKitIntegrationTests } = require("./tests/m51UiEditorKitIntegration.test.cjs");
 const { runM52UiEditorVisibleEntryTests } = require("./tests/m52UiEditorVisibleEntry.test.cjs");
 const { runM54UiElementRefsTests } = require("./tests/m54UiElementRefs.test.cjs");
+const { runM55UiElementSelectionTests } = require("./tests/m55UiElementSelection.test.cjs");
 
 let failed = false;
 
@@ -215,6 +216,7 @@ async function main() {
   await runM51UiEditorKitIntegrationTests(run);
   await runM52UiEditorVisibleEntryTests(run);
   await runM54UiElementRefsTests(run);
+  await runM55UiElementSelectionTests(run);
 
   if (failed) {
     process.exitCode = 1;

@@ -64,6 +64,14 @@ Aktueller Stand:
 - [x] M36 UI-Editor Fixstand nach M29 bis M35 dokumentieren und absichern
 
 
+## Statusupdate M55
+- M55 ergaenzt im bestehenden UI-Editor-Statuspanel einen ausdruecklich startbaren Auswahlmodus fuer die vier M54-Refs.
+- Gebundene auswählbare Ziele bleiben `bbm.main.shell`, `bbm.main.navigation`, `bbm.main.header` und `bbm.main.content`.
+- `bbm.main.actions` bleibt bewusst ungebunden und nicht auswaehlbar.
+- Zielaufloesung erfolgt nur ueber explizite HTMLElement-Refs und `contains(...)`; keine DOM-Suche, keine Legacy-Runtime, kein EditorV2-/UI-Inspector-Core.
+- Neue Doku: `docs/M55_VISUELLE_UI_AUSWAHL_UEBER_EXPLIZITE_REFS.md`.
+- Naechster Schritt: M56 klaert einen eindeutigen Actions-Bereich, bevor Actions gebunden werden kann.
+
 ## Statusupdate M54
 - M54 bindet die vorhandenen CoreShell-HTMLElement-Referenzen explizit an die M51/M52-Registry-IDs.
 - Gebunden sind `bbm.main.shell -> host`, `bbm.main.navigation -> sidebar`, `bbm.main.header -> headerEl` und `bbm.main.content -> content/contentRoot`.
