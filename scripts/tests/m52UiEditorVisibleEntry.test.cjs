@@ -104,6 +104,7 @@ async function runM52UiEditorVisibleEntryTests(run) {
     assert.match(router, /async showUiEditor\(\)/);
     assert.match(router, /const panel = createBbmUiEditorStatusPanel\(\{ router: this \}\);/);
     assert.match(router, /this\.show\(panel, \{/);
+    assert.doesNotMatch(router, /this\.show\(panel\.render\(\), \{/);
     assert.match(router, /showSettings\(\)/);
     assert.match(coreShell, /const routeButtons = shellNavigationRouteDefs\.map/);
     assert.match(coreShell, /const coreNavigationButtons = \[\.\.\.routeButtons, btnHelp\]/);
@@ -144,11 +145,15 @@ async function runM52UiEditorVisibleEntryTests(run) {
       contentRoot.appendChild(doc.createElement("p"));
       let activeSection = null;
       const showCalls = [];
+      let createdPanel = null;
+      let renderCallCount = 0;
       const router = {
         async show(view, options = {}) {
           activeSection = options.section || null;
           contentRoot.innerHTML = "";
           contentRoot.children = [];
+          assert.equal(view, createdPanel);
+          assert.equal(typeof view.render, "function");
           const rendered = view.render();
           contentRoot.appendChild(rendered);
           if (typeof view.load === "function") await view.load();
@@ -156,6 +161,12 @@ async function runM52UiEditorVisibleEntryTests(run) {
         },
         async showUiEditor() {
           const panel = panelModule.createBbmUiEditorStatusPanel({ router: this });
+          createdPanel = panel;
+          const originalRender = panel.render.bind(panel);
+          panel.render = () => {
+            renderCallCount += 1;
+            return originalRender();
+          };
           await this.show(panel, {
             section: "uiEditor",
             isTopsView: false,
@@ -181,6 +192,8 @@ async function runM52UiEditorVisibleEntryTests(run) {
       await button.onclick();
 
       assert.equal(showCalls.length, 1);
+      assert.equal(renderCallCount, 1);
+      assert.equal(showCalls[0].view, createdPanel);
       assert.equal(activeSection, "uiEditor");
       assert.equal(showCalls[0].options.section, "uiEditor");
       assert.equal(showCalls[0].rendered.tagName, "SECTION");
