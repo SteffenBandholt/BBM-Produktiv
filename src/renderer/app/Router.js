@@ -938,7 +938,8 @@ export default class Router {
 
   async showUiEditor() {
     injectBbmUiEditorStatusPanelStyles();
-    await this.show(createBbmUiEditorStatusPanel({ router: this }), {
+    const panel = createBbmUiEditorStatusPanel({ router: this });
+    await this.show(panel.render(), {
       section: "uiEditor",
       isTopsView: false,
       pageTitle: "UI-Editor",

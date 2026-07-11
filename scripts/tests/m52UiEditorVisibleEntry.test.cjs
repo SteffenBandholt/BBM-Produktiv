@@ -5,6 +5,7 @@ const path = require("node:path");
 const REPO_ROOT = path.join(__dirname, "../..");
 const { getBbmUiElementRegistry } = require("../../src/ui-editor/bbm-ui-element-registry.cjs");
 const { _m52 } = require("../../src/main/ipc/uiEditorIpc.js");
+const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 function read(file) {
   return fs.readFileSync(path.join(REPO_ROOT, file), "utf8");
@@ -37,6 +38,56 @@ function startTestSession() {
   _m52.ensureRuntime({ forceRestart: true, runtimeOptions: { coreApi: { createTargetAppAdapterRuntime: createContractRuntime } } });
 }
 
+function createPanelTestDocument() {
+  const createNode = (tag, doc) => ({
+    tagName: String(tag || "").toUpperCase(),
+    ownerDocument: doc,
+    children: [],
+    attributes: {},
+    className: "",
+    textContent: "",
+    hidden: false,
+    style: {},
+    type: "",
+    append(...nodes) {
+      for (const node of nodes) this.appendChild(node);
+    },
+    appendChild(node) {
+      if (node) {
+        node.parentElement = this;
+        this.children.push(node);
+      }
+      return node;
+    },
+    setAttribute(name, value) {
+      this.attributes[String(name)] = String(value);
+    },
+    getAttribute(name) {
+      return Object.hasOwn(this.attributes, String(name)) ? this.attributes[String(name)] : null;
+    },
+    addEventListener() {},
+  });
+
+  const doc = {
+    createElement(tag) {
+      return createNode(tag, doc);
+    },
+  };
+  doc.head = createNode("head", doc);
+  doc.body = createNode("body", doc);
+  return doc;
+}
+
+function findNode(node, predicate) {
+  if (!node) return null;
+  if (predicate(node)) return node;
+  for (const child of node.children || []) {
+    const found = findNode(child, predicate);
+    if (found) return found;
+  }
+  return null;
+}
+
 async function runM52UiEditorVisibleEntryTests(run) {
   await run("M52 Startpunkt: bestehende Navigation enthaelt kleinen UI-Editor-Einstieg", () => {
     const navigation = read("src/renderer/app/coreShellNavigation.js");
@@ -44,7 +95,8 @@ async function runM52UiEditorVisibleEntryTests(run) {
     assert.match(navigation, /label:\s*"UI-Editor"/);
     assert.match(navigation, /router\.showUiEditor\(\)/);
     assert.match(router, /async showUiEditor\(\)/);
-    assert.match(router, /createBbmUiEditorStatusPanel/);
+    assert.match(router, /const panel = createBbmUiEditorStatusPanel\(\{ router: this \}\);/);
+    assert.match(router, /this\.show\(panel\.render\(\), \{/);
     assert.match(router, /showSettings\(\)/);
   });
 
@@ -59,6 +111,51 @@ async function runM52UiEditorVisibleEntryTests(run) {
     assert.match(panel, /Elementdetails/);
     assert.match(panel, /data-bbm-ui-editor-close/);
     assert.match(panel, /uiEditorClose/);
+  });
+
+
+  await run("M52 Router-Fix: Panel-Instanz rendert DOM-Element fuer Router.show", async () => {
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    const doc = createPanelTestDocument();
+    const calls = [];
+    global.document = doc;
+    global.window = {
+      bbmDb: {
+        uiEditorOpen: async () => ({ ok: false, blockCode: "BBM_UI_EDITOR_TEST_BLOCK" }),
+      },
+    };
+
+    try {
+      const modulePath = path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
+      const { createBbmUiEditorStatusPanel } = await importEsmFromFile(modulePath);
+      const router = { showSettings: async () => calls.push("settings") };
+      const panel = createBbmUiEditorStatusPanel({ router });
+      assert.equal(typeof panel.render, "function");
+      const element = panel.render();
+      assert.equal(element.tagName, "SECTION");
+      assert.equal(element.getAttribute("data-bbm-ui-editor-panel"), "true");
+      assert.ok(findNode(element, (node) => node.textContent === "UI-Editor"));
+
+      const showCalls = [];
+      await (async function showUiEditorLikeRouter() {
+        const renderedPanel = panel.render();
+        await (async (domElement, options) => showCalls.push({ domElement, options }))(renderedPanel, {
+          section: "uiEditor",
+          isTopsView: false,
+          pageTitle: "UI-Editor",
+          hideSidebar: false,
+        });
+      })();
+
+      assert.equal(showCalls.length, 1);
+      assert.equal(showCalls[0].domElement.tagName, "SECTION");
+      assert.equal(showCalls[0].domElement.getAttribute("data-bbm-ui-editor-panel"), "true");
+      assert.equal(showCalls[0].options.section, "uiEditor");
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
   });
 
   await run("M52 Runtime: M51-Startfunktion wird ueber sichere IPC-Bruecke verwendet", () => {

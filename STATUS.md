@@ -25,6 +25,7 @@ Sie ergÃ¤nzt:
   - Layoutbearbeitung noch nicht moeglich: Kein Drag-and-drop, kein Resize, keine Farb-/Schriftbearbeitung und keine direkte Auswahl in der echten BBM-Oberflaeche.
   - Dauerhafte Layoutspeicherung noch nicht vorhanden: M52 zeigt nur den technischen MemoryLayoutStateStore-Status; keine DB-Migration und keine Fachdatenspeicherung.
   - Neue Doku: `docs/M52_UI_EDITOR_SICHTBARER_STARTPUNKT.md`.
+  - Nachbesserung PR #191: `showUiEditor()` rendert die Panel-Instanz jetzt vor der Uebergabe an den Router, damit der sichtbare Einstieg das Panel tatsaechlich oeffnet.
   - Naechster offener Schritt: M53 separat fuer konkrete, sichere Layout-Bedienfunktionen planen.
 
 - M51 UI-Editor-kit v0.2.0 technisch angebunden:
