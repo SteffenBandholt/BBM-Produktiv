@@ -1,5 +1,6 @@
 import { getBbmUiElementRefStatus } from "./bbmUiElementRefs.js";
 import { createBbmUiElementSelectionController } from "./bbmUiElementSelection.js";
+import { createBbmUiSelectedOverlay } from "./bbmUiSelectedOverlay.js";
 
 function createNode(tag, className = "") {
   const node = document.createElement(tag);
@@ -51,6 +52,7 @@ export class BbmUiEditorStatusPanel {
     this.selectionController = null;
     this.selectionMessage = "";
     this.selectionModeActive = false;
+    this.selectedOverlay = createBbmUiSelectedOverlay();
   }
 
   render() {
@@ -91,6 +93,7 @@ export class BbmUiEditorStatusPanel {
     this.selectionController = createBbmUiElementSelectionController({
       getPanelRoot: () => this.root,
       getElementMeta: (elementId) => this.getElementMeta(elementId),
+      isElementSelected: (elementId) => this.selectedElement?.elementId === elementId,
       selectElement: ({ elementId }) => this.selectElement(elementId, { fromSelectionMode: true }),
       onSelection: ({ elementId, meta }) => {
         this.selectionMessage = `Ausgewaehlt: ${asText(meta?.label, elementId)}`;
@@ -108,6 +111,7 @@ export class BbmUiEditorStatusPanel {
 
   async close() {
     this.stopSelectionMode();
+    this.selectedOverlay?.destroy?.();
     try {
       await window.bbmDb?.uiEditorClose?.();
     } catch (_e) {
@@ -127,6 +131,7 @@ export class BbmUiEditorStatusPanel {
       this.elements = [];
       this.selectedElement = null;
       this.renderAll();
+      this.syncSelectedOverlay();
       return;
     }
 
@@ -140,6 +145,7 @@ export class BbmUiEditorStatusPanel {
     this.elements = Array.isArray(elementsResult?.elements) ? elementsResult.elements : [];
     this.selectedElement = detailsResult?.selectedElement || null;
     this.renderAll();
+    this.syncSelectedOverlay();
   }
 
   showLoadError(error) {
@@ -148,6 +154,7 @@ export class BbmUiEditorStatusPanel {
     this.elements = [];
     this.selectedElement = null;
     this.renderAll();
+    this.syncSelectedOverlay();
   }
 
   renderAll() {
@@ -185,6 +192,7 @@ export class BbmUiEditorStatusPanel {
       createInfoRow("UI-Referenzen gebunden", this.refStatus ? `${this.refStatus.count}/${this.refStatus.expectedCount}` : "nicht verfuegbar"),
       createInfoRow("Fehlende Referenzen", this.refStatus ? formatList(this.refStatus.missingIds) : "nicht verfuegbar"),
       createInfoRow("Auswahlmodus", this.selectionModeActive ? "Aktiv" : "Inaktiv"),
+      createInfoRow("Visuell markiert", this.getVisualSelectionLabel()),
       createInfoRow("Gebundene Ziele", this.refStatus ? String(this.getSelectableBoundCount()) : "nicht verfuegbar"),
       createInfoRow("Nicht verfuegbar", "bbm.main.actions"),
       createInfoRow("LayoutStore verfuegbar", yesNo(status.layoutStoreAvailable)),
@@ -201,7 +209,7 @@ export class BbmUiEditorStatusPanel {
     const resetSelection = createNode("button", "bbm-ui-editor-panel__secondary");
     resetSelection.type = "button";
     resetSelection.textContent = "Auswahl zuruecksetzen";
-    resetSelection.addEventListener("click", () => this.selectElement("").catch((error) => this.showLoadError(error)));
+    resetSelection.addEventListener("click", () => this.resetSelection().catch((error) => this.showLoadError(error)));
 
     const startSelection = createNode("button", "bbm-ui-editor-panel__secondary");
     startSelection.type = "button";
@@ -319,10 +327,13 @@ export class BbmUiEditorStatusPanel {
     this.selectionController?.stop?.();
     this.selectionModeActive = false;
     this.renderAll();
+    this.syncSelectedOverlay();
   }
 
   destroy() {
-    this.stopSelectionMode();
+    this.selectionController?.destroy?.();
+    this.selectedOverlay?.destroy?.();
+    this.selectionModeActive = false;
     this.root = null;
   }
 
@@ -339,11 +350,35 @@ export class BbmUiEditorStatusPanel {
       return;
     }
     await this.refresh();
+    this.syncSelectedOverlay();
     if (options.fromSelectionMode) {
       const meta = this.getElementMeta(elementId);
       this.selectionMessage = `Ausgewaehlt: ${asText(meta?.label, elementId)}`;
       this.selectionModeActive = this.selectionController?.isActive?.() || false;
       this.renderAll();
+      this.syncSelectedOverlay();
+    }
+  }
+
+  async resetSelection() {
+    await this.selectElement("");
+    this.selectedOverlay?.clear?.();
+  }
+
+  getVisualSelectionLabel() {
+    return this.selectedElement ? asText(this.selectedElement.label, this.selectedElement.elementId) : "keine Auswahl";
+  }
+
+  syncSelectedOverlay() {
+    if (!this.selectedElement) {
+      this.selectedOverlay?.clear?.();
+      return false;
+    }
+    try {
+      return this.selectedOverlay?.sync?.(this.selectedElement) || false;
+    } catch (_error) {
+      this.selectedOverlay?.clear?.();
+      return false;
     }
   }
 }

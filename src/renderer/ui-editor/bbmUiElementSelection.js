@@ -25,12 +25,17 @@ function formatMetaLabel(elementId, getElementMeta) {
   return `${label} · ${elementId}`;
 }
 
+function isSelectedElement(elementId, isElementSelected) {
+  return typeof isElementSelected === "function" && isElementSelected(elementId);
+}
+
 export function createBbmUiElementSelectionController(options = {}) {
   const overlay = options.overlay || createBbmUiSelectionOverlay(options.overlayOptions || {});
   const selectElement = typeof options.selectElement === "function" ? options.selectElement : async () => {};
   const getElementMeta = typeof options.getElementMeta === "function" ? options.getElementMeta : () => null;
   const onStateChange = typeof options.onStateChange === "function" ? options.onStateChange : () => {};
   const onSelection = typeof options.onSelection === "function" ? options.onSelection : () => {};
+  const isElementSelected = typeof options.isElementSelected === "function" ? options.isElementSelected : () => false;
   let active = false;
   let shellElement = null;
   let ownerDocument = null;
@@ -71,11 +76,19 @@ export function createBbmUiElementSelectionController(options = {}) {
     if (hit.elementId === hoveredElementId && hit.element === hoveredElement) return;
     hoveredElementId = hit.elementId;
     hoveredElement = hit.element;
+    if (isSelectedElement(hit.elementId, isElementSelected)) {
+      overlay.clearHover();
+      return;
+    }
     overlay.updateHover({ targetElement: hit.element, label: formatMetaLabel(hit.elementId, getElementMeta) });
   }
 
   function refreshHover() {
     if (!hoveredElementId || !hoveredElement) return;
+    if (isSelectedElement(hoveredElementId, isElementSelected)) {
+      overlay.clearHover();
+      return;
+    }
     overlay.updateHover({ targetElement: hoveredElement, label: formatMetaLabel(hoveredElementId, getElementMeta) });
   }
 
