@@ -27,42 +27,77 @@ function createFallbackViewModels(hostAdapter) {
   };
 }
 
+function createBlockedViewModels(runtimeResult) {
+  const blockCode = runtimeResult?.blockCode || runtimeResult?.runtime?.blockCode || "BBM_UI_EDITOR_RUNTIME_NOT_STARTED";
+  return {
+    statusViewModel: { adapterValid: false, runtimeStarted: false, blockCode },
+    scopeViewModel: { activeUiScope: null, activeLayoutScope: null, activeLayoutProfileId: null, blockCode },
+    selectionViewModel: null,
+    layoutControlViewModel: null,
+  };
+}
+
+function getRuntimeBlockCode(runtimeResult) {
+  return runtimeResult?.blockCode || runtimeResult?.runtime?.blockCode || runtimeResult?.status || null;
+}
+
+function normalizeRuntimeViewModels(runtimeResult, hostAdapter) {
+  if (!runtimeResult?.ok) return createBlockedViewModels(runtimeResult);
+  const kitViewModels = runtimeResult?.runtime?.viewModels || runtimeResult?.viewModels || null;
+  if (kitViewModels) {
+    return {
+      ...kitViewModels,
+      statusViewModel: kitViewModels.statusViewModel || kitViewModels.runtimeStatus || { adapterValid: true, runtimeStarted: true },
+      scopeViewModel: kitViewModels.scopeViewModel || kitViewModels.scope || { activeUiScope: BBM_UI_SCOPE, activeLayoutScope: BBM_LAYOUT_SCOPE, activeLayoutProfileId: BBM_LAYOUT_PROFILE_ID },
+      selectionViewModel: kitViewModels.selectionViewModel || kitViewModels.selection || { selectElement: hostAdapter.selectElement },
+      layoutControlViewModel: kitViewModels.layoutControlViewModel || kitViewModels.layoutControls || null,
+    };
+  }
+  return createFallbackViewModels(hostAdapter);
+}
+
 function startBbmUiEditorRuntime(options = {}) {
-  const manifest = getBbmUiEditorManifest();
-  const registry = getBbmUiElementRegistry(manifest.defaultUiScope);
+  const manifest = options.manifest || getBbmUiEditorManifest();
+  const registry = options.registry || getBbmUiElementRegistry(manifest.uiScope || manifest.defaultUiScope || BBM_UI_SCOPE);
   const layoutStore = options.layoutStore || createMemoryLayoutStateStore();
   const hostAdapter = options.hostAdapter || createBbmHostAdapter({ layoutStore });
 
   try {
     const uiEditorKit = loadUiEditorKitPublicApi(options.coreApi);
     if (typeof uiEditorKit.createTargetAppAdapterRuntime !== "function") {
-      return { ok: false, blockCode: "BBM_UI_EDITOR_KIT_API_MISSING", message: "createTargetAppAdapterRuntime is not available on the public UI-Editor-kit API." };
+      return { ok: false, blockCode: "BBM_UI_EDITOR_KIT_API_MISSING", message: "createTargetAppAdapterRuntime is not available on the public UI-Editor-kit API.", viewModels: createBlockedViewModels({ blockCode: "BBM_UI_EDITOR_KIT_API_MISSING" }) };
     }
-    const runtime = uiEditorKit.createTargetAppAdapterRuntime({ manifest, hostAdapter, registry, layoutStore });
+    const runtimeResult = uiEditorKit.createTargetAppAdapterRuntime({ adapterManifest: manifest, manifest, hostAdapter, registry, layoutStore });
+    const ok = runtimeResult?.ok === true && runtimeResult?.runtime?.runtimeStatus?.ok !== false;
+    const blockCode = ok ? null : getRuntimeBlockCode(runtimeResult) || "BBM_UI_EDITOR_RUNTIME_START_FAILED";
     return {
-      ok: runtime?.ok !== false,
+      ok,
+      blockCode,
+      message: runtimeResult?.message || null,
       manifest,
       hostAdapter,
       registry,
       layoutStore,
-      runtime,
-      viewModels: runtime?.viewModels || createFallbackViewModels(hostAdapter),
+      runtime: runtimeResult,
+      viewModels: normalizeRuntimeViewModels(runtimeResult, hostAdapter),
     };
   } catch (error) {
-    return { ok: false, blockCode: error.code || "BBM_UI_EDITOR_RUNTIME_START_FAILED", message: error.message };
+    const blockCode = error.code || "BBM_UI_EDITOR_RUNTIME_START_FAILED";
+    return { ok: false, blockCode, message: error.message, manifest, hostAdapter, registry, layoutStore, runtime: null, viewModels: createBlockedViewModels({ blockCode }) };
   }
 }
 
 function getBbmUiEditorIntegrationStatus(runtimeResult) {
+  const blockCode = getRuntimeBlockCode(runtimeResult);
   if (!runtimeResult?.ok) {
-    return { adapterValid: false, runtimeStarted: false, blockCode: runtimeResult?.blockCode || "BBM_UI_EDITOR_RUNTIME_NOT_STARTED" };
+    return { adapterValid: false, runtimeStarted: false, blockCode: blockCode || "BBM_UI_EDITOR_RUNTIME_NOT_STARTED" };
   }
   return {
     adapterValid: true,
     runtimeStarted: true,
-    activeScope: runtimeResult.manifest.defaultUiScope,
-    activeLayoutScope: runtimeResult.manifest.defaultLayoutScope,
-    activeLayoutProfileId: runtimeResult.manifest.defaultLayoutProfileId,
+    activeScope: runtimeResult.manifest.uiScope || runtimeResult.manifest.defaultUiScope,
+    activeLayoutScope: runtimeResult.manifest.layoutScope || runtimeResult.manifest.defaultLayoutScope,
+    activeLayoutProfileId: runtimeResult.manifest.layoutProfileId || runtimeResult.manifest.defaultLayoutProfileId,
     registeredElementCount: runtimeResult.registry.elements.length,
     layoutStoreAvailable: Boolean(runtimeResult.layoutStore?.available),
     blockCode: null,

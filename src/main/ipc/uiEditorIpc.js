@@ -4,10 +4,14 @@ const { startBbmUiEditorRuntime, getBbmUiEditorIntegrationStatus } = require("..
 let session = null;
 let selectedElementId = null;
 
+function getRuntimeBlockCode(result) {
+  return result?.blockCode || result?.runtime?.blockCode || result?.runtime?.runtimeStatus?.blocked || result?.runtime?.status || null;
+}
+
 function sanitizeError(result) {
   return {
     ok: false,
-    blockCode: String(result?.blockCode || "BBM_UI_EDITOR_RUNTIME_UNAVAILABLE"),
+    blockCode: String(getRuntimeBlockCode(result) || "BBM_UI_EDITOR_RUNTIME_UNAVAILABLE"),
     message: "Der UI-Editor-Status ist aktuell nicht verfuegbar.",
   };
 }

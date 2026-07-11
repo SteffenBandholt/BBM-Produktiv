@@ -26,6 +26,7 @@ Sie ergÃ¤nzt:
   - Dauerhafte Layoutspeicherung noch nicht vorhanden: M52 zeigt nur den technischen MemoryLayoutStateStore-Status; keine DB-Migration und keine Fachdatenspeicherung.
   - Neue Doku: `docs/M52_UI_EDITOR_SICHTBARER_STARTPUNKT.md`.
   - Nachbesserung PR #191: Die produktive Navigation uebernimmt jetzt alle Route-Definitionen; `showUiEditor()` folgt der echten `Router.show()`-Schnittstelle, uebergibt die Panel-Instanz und laesst ausschliesslich den Router rendern.
+  - Runtime-Fix PR #191: Das BBM-Manifest enthaelt jetzt die Pflichtfelder des installierten UI-Editor-kit-v0.2.0-Vertrags; `startBbmUiEditorRuntime()` startet wieder ohne `invalid_adapter_manifest` und reicht echte Blockcodes weiter.
   - Naechster offener Schritt: M53 separat fuer konkrete, sichere Layout-Bedienfunktionen planen.
 
 - M51 UI-Editor-kit v0.2.0 technisch angebunden:

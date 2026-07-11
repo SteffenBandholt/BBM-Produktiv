@@ -230,6 +230,18 @@ async function runM52UiEditorVisibleEntryTests(run) {
     assert.doesNotMatch(preload, /eval|nodeIntegration\s*:\s*true|contextIsolation\s*:\s*false/);
   });
 
+
+  await run("M52 Fehlerweitergabe: invalid_adapter_manifest bleibt bis zur IPC-Statusantwort erhalten", () => {
+    const invalidManifest = { ...require("../../src/ui-editor/bbm-ui-editor-manifest.cjs").getBbmUiEditorManifest() };
+    delete invalidManifest.uiScope;
+    _m52.closeUiEditorSession();
+    _m52.ensureRuntime({ forceRestart: true, runtimeOptions: { manifest: invalidManifest } });
+    const status = _m52.getUiEditorStatus();
+    assert.equal(status.ok, false);
+    assert.equal(status.blockCode, "invalid_adapter_manifest");
+    _m52.closeUiEditorSession();
+  });
+
   await run("M52 Status: Ziel-App, Version, Scopes, Layoutprofil und Elementanzahl kommen aus M51", () => {
     _m52.closeUiEditorSession();
     startTestSession();
