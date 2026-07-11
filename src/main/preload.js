@@ -265,6 +265,12 @@ contextBridge.exposeInMainWorld("bbmDb", {
   uiEditorGetElements: () => ipcRenderer.invoke("uiEditor:getElements"),
   uiEditorSelectElement: (data) => ipcRenderer.invoke("uiEditor:selectElement", data),
   uiEditorGetSelectedElementDetails: () => ipcRenderer.invoke("uiEditor:getSelectedElementDetails"),
+  uiEditorCreateChangeDraft: (data) => ipcRenderer.invoke("uiEditor:createChangeDraft", data),
+  uiEditorGetChangeDraft: () => ipcRenderer.invoke("uiEditor:getChangeDraft"),
+  uiEditorDiscardChangeDraft: () => ipcRenderer.invoke("uiEditor:discardChangeDraft"),
+  uiEditorApplyChangeDraft: (data) => ipcRenderer.invoke("uiEditor:applyChangeDraft", data),
+  uiEditorLoadLayoutState: (data) => ipcRenderer.invoke("uiEditor:loadLayoutState", data),
+  uiEditorResetLayoutState: (data) => ipcRenderer.invoke("uiEditor:resetLayoutState", data),
 });
 
 contextBridge.exposeInMainWorld("bbmPrint", {

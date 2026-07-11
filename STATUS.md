@@ -1,3 +1,18 @@
+# M53 - UI-Editor Sichtbarkeitsentwurf / Apply / Reset
+
+Status: umgesetzt.
+
+- Draft moeglich fuer registrierte, in M53 freigegebene Elemente.
+- Apply moeglich fuer `visible` true/false ueber den bestehenden Runtime-/HostAdapter-Pfad.
+- Reset moeglich fuer das ausgewaehlte Element und Profil `default`.
+- Speicherung bleibt MemoryStore/Sitzungsspeicher; keine dauerhafte Speicherung.
+- Keine Groessen-, Positions-, Farb-, Schrift- oder Textbearbeitung.
+- Keine direkte DOM-Auswahl, kein DOM-Scan und keine automatische Registry.
+- Erlaubt: `bbm.main.header`, `bbm.main.actions`.
+- Gesperrt: `bbm.main.shell`, `bbm.main.navigation`, `bbm.main.content`.
+
+Naechster sinnvoller Schritt: M54 kann eine explizite sichere CoreShell-Bindung fuer sichtbare Anwendung des gespeicherten Layoutzustands klaeren.
+
 # STATUS.md â€” BBM-Produktiv
 
 ## Zweck

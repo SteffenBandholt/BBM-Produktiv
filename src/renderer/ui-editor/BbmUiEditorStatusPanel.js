@@ -40,10 +40,16 @@ export class BbmUiEditorStatusPanel {
     this.statusNode = null;
     this.elementsNode = null;
     this.detailsNode = null;
+    this.changeNode = null;
     this.errorNode = null;
     this.status = null;
     this.elements = [];
     this.selectedElement = null;
+    this.currentLayoutState = null;
+    this.currentDraft = null;
+    this.desiredVisible = true;
+    this.applyBusy = false;
+    this.resetBusy = false;
   }
 
   render() {
@@ -55,7 +61,7 @@ export class BbmUiEditorStatusPanel {
     const title = createNode("h1");
     title.textContent = "UI-Editor";
     const subtitle = createNode("p");
-    subtitle.textContent = "Technische Editor-Ansicht fuer BBM. Layoutaenderungen folgen in einem spaeteren Paket.";
+    subtitle.textContent = "Technische Editor-Ansicht fuer BBM. M53 erlaubt nur Sichtbarkeit als Entwurf im Sitzungsspeicher.";
     titleBox.append(title, subtitle);
 
     const closeButton = createNode("button", "bbm-ui-editor-panel__close");
@@ -77,7 +83,8 @@ export class BbmUiEditorStatusPanel {
     this.statusNode = createNode("section", "bbm-ui-editor-card");
     this.elementsNode = createNode("section", "bbm-ui-editor-card");
     this.detailsNode = createNode("section", "bbm-ui-editor-card");
-    grid.append(this.statusNode, this.elementsNode, this.detailsNode);
+    this.changeNode = createNode("section", "bbm-ui-editor-card");
+    grid.append(this.statusNode, this.elementsNode, this.detailsNode, this.changeNode);
 
     root.append(header, this.errorNode, intro, grid);
     this.root = root;
@@ -116,6 +123,14 @@ export class BbmUiEditorStatusPanel {
     this.status = status;
     this.elements = Array.isArray(elementsResult?.elements) ? elementsResult.elements : [];
     this.selectedElement = detailsResult?.selectedElement || null;
+    if (this.selectedElement && typeof api.uiEditorLoadLayoutState === "function") {
+      this.currentLayoutState = await api.uiEditorLoadLayoutState({ elementId: this.selectedElement.elementId });
+    } else {
+      this.currentLayoutState = null;
+    }
+    const draftResult = typeof api.uiEditorGetChangeDraft === "function" ? await api.uiEditorGetChangeDraft() : { ok: true, draft: null };
+    this.currentDraft = draftResult?.draft || null;
+    this.desiredVisible = this.currentDraft ? this.currentDraft.nextValue : this.currentLayoutState?.visible !== false;
     this.renderAll();
   }
 
@@ -130,6 +145,7 @@ export class BbmUiEditorStatusPanel {
     this.renderStatus();
     this.renderElements();
     this.renderDetails();
+    this.renderChange();
   }
 
   renderStatus() {
@@ -161,7 +177,8 @@ export class BbmUiEditorStatusPanel {
       createInfoRow("LayoutStore verfuegbar", yesNo(status.layoutStoreAvailable)),
       createInfoRow("Layoutzustand vorhanden", yesNo(layout.hasStateForScopeAndProfile)),
       createInfoRow("Load/Save/Reset technisch", `${yesNo(layout.canLoad)} / ${yesNo(layout.canSave)} / ${yesNo(layout.canReset)}`),
-      createInfoRow("Blockcode", status.blockCode || "kein Block")
+      createInfoRow("Blockcode", status.blockCode || "kein Block"),
+      createInfoRow("Speicherung", "nur Sitzungsspeicher")
     );
 
     const reloadButton = createNode("button", "bbm-ui-editor-panel__secondary");
@@ -235,9 +252,138 @@ export class BbmUiEditorStatusPanel {
       createInfoRow("Scope", element.scope),
       createInfoRow("Parent", element.parentId || "Root"),
       createInfoRow("Capabilities", formatList(element.capabilities)),
-      createInfoRow("Erlaubte Aenderungen", formatList(element.allowedChanges))
+      createInfoRow("Erlaubte Aenderungen", formatList(element.allowedChanges)),
+      createInfoRow("M53 aenderbar", element.m53Editable ? "Ja" : "Nein"),
+      createInfoRow("M53 Sperre", element.m53Editable ? "keine" : element.m53LockReason)
     );
     this.detailsNode.appendChild(list);
+  }
+
+
+  renderChange() {
+    if (!this.changeNode) return;
+    this.changeNode.innerHTML = "";
+    const title = createNode("h2");
+    title.textContent = "Layoutaenderung";
+    const notice = createNode("p", "bbm-ui-editor-panel__notice");
+    notice.textContent = "Layoutaenderungen werden in M53 nur fuer die aktuelle Sitzung gespeichert.";
+    this.changeNode.append(title, notice);
+
+    const element = this.selectedElement;
+    if (!element) {
+      const empty = createNode("p", "bbm-ui-editor-panel__empty");
+      empty.textContent = "Kein Element ausgewaehlt.";
+      this.changeNode.appendChild(empty);
+      return;
+    }
+
+    const currentVisible = this.currentLayoutState?.visible !== false;
+    const locked = !element.m53Editable || !this.status?.runtimeStarted || !this.status?.adapterValid;
+    const list = createNode("dl", "bbm-ui-editor-status-list");
+    list.append(
+      createInfoRow("Aktueller Zustand", currentVisible ? "Sichtbar" : "Ausgeblendet"),
+      createInfoRow("UI-Scope", element.scope),
+      createInfoRow("Layout-Scope", element.layoutScope),
+      createInfoRow("Layoutprofil", element.layoutProfileId),
+      createInfoRow("Speicher", "Sitzungsspeicher")
+    );
+
+    const select = createNode("select", "bbm-ui-editor-panel__select");
+    const visibleOption = createNode("option");
+    visibleOption.value = "true";
+    visibleOption.textContent = "Sichtbar";
+    const hiddenOption = createNode("option");
+    hiddenOption.value = "false";
+    hiddenOption.textContent = "Ausgeblendet";
+    select.append(visibleOption, hiddenOption);
+    select.value = String(this.desiredVisible !== false);
+    select.disabled = locked;
+    select.addEventListener("change", () => { this.desiredVisible = select.value === "true"; });
+
+    const fieldLabel = createNode("label", "bbm-ui-editor-panel__field");
+    fieldLabel.textContent = "Gewuenschter Zustand";
+    fieldLabel.appendChild(select);
+
+    const draftBox = createNode("div", "bbm-ui-editor-panel__draft");
+    if (this.currentDraft) {
+      const draft = this.currentDraft;
+      const draftList = createNode("dl", "bbm-ui-editor-status-list");
+      draftList.append(
+        createInfoRow("elementId", draft.elementId),
+        createInfoRow("Elementbezeichnung", draft.elementLabel),
+        createInfoRow("UI-Scope", draft.uiScope),
+        createInfoRow("Layout-Scope", draft.layoutScope),
+        createInfoRow("Layoutprofil", draft.layoutProfileId),
+        createInfoRow("Bisheriger Wert", String(draft.previousValue)),
+        createInfoRow("Neuer Wert", String(draft.nextValue)),
+        createInfoRow("Operation", draft.operation),
+        createInfoRow("Validierungsstatus", draft.valid ? "gueltig" : "abgelehnt"),
+        createInfoRow("Blockcode", draft.blockCode || "kein Block")
+      );
+      draftBox.appendChild(draftList);
+    } else {
+      draftBox.textContent = "Noch kein Entwurf erstellt.";
+    }
+
+    const createButton = createNode("button", "bbm-ui-editor-panel__secondary");
+    createButton.type = "button";
+    createButton.textContent = "Entwurf erstellen";
+    createButton.disabled = locked;
+    createButton.addEventListener("click", () => this.createDraft().catch((error) => this.showLoadError(error)));
+
+    const applyButton = createNode("button", "bbm-ui-editor-panel__secondary");
+    applyButton.type = "button";
+    applyButton.textContent = "Anwenden";
+    applyButton.disabled = locked || !this.currentDraft?.valid || this.applyBusy;
+    applyButton.addEventListener("click", () => this.applyDraft().catch((error) => this.showLoadError(error)));
+
+    const discardButton = createNode("button", "bbm-ui-editor-panel__secondary");
+    discardButton.type = "button";
+    discardButton.textContent = "Entwurf verwerfen";
+    discardButton.disabled = !this.currentDraft;
+    discardButton.addEventListener("click", () => this.discardDraft().catch((error) => this.showLoadError(error)));
+
+    const resetButton = createNode("button", "bbm-ui-editor-panel__secondary");
+    resetButton.type = "button";
+    resetButton.textContent = "Layout zuruecksetzen";
+    resetButton.disabled = !element || this.resetBusy;
+    resetButton.addEventListener("click", () => this.resetLayout().catch((error) => this.showLoadError(error)));
+
+    const reloadButton = createNode("button", "bbm-ui-editor-panel__secondary");
+    reloadButton.type = "button";
+    reloadButton.textContent = "Layoutstatus neu laden";
+    reloadButton.addEventListener("click", () => this.refresh().catch((error) => this.showLoadError(error)));
+
+    const actions = createNode("div", "bbm-ui-editor-panel__actions");
+    actions.append(createButton, applyButton, discardButton, resetButton, reloadButton);
+    this.changeNode.append(list, fieldLabel, draftBox, actions);
+  }
+
+  async createDraft() {
+    const result = await window.bbmDb?.uiEditorCreateChangeDraft?.({ visible: this.desiredVisible });
+    if (!result?.ok && this.errorNode) setNeutralError(this.errorNode, result);
+    await this.refresh();
+  }
+
+  async applyDraft() {
+    this.applyBusy = true;
+    const result = await window.bbmDb?.uiEditorApplyChangeDraft?.({});
+    this.applyBusy = false;
+    if (!result?.ok && this.errorNode) setNeutralError(this.errorNode, result);
+    await this.refresh();
+  }
+
+  async discardDraft() {
+    await window.bbmDb?.uiEditorDiscardChangeDraft?.();
+    await this.refresh();
+  }
+
+  async resetLayout() {
+    this.resetBusy = true;
+    const result = await window.bbmDb?.uiEditorResetLayoutState?.({ elementId: this.selectedElement?.elementId });
+    this.resetBusy = false;
+    if (!result?.ok && this.errorNode) setNeutralError(this.errorNode, result);
+    await this.refresh();
   }
 
   async selectElement(elementId) {

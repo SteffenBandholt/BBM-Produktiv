@@ -3,6 +3,7 @@ const { startBbmUiEditorRuntime, getBbmUiEditorIntegrationStatus } = require("..
 
 let session = null;
 let selectedElementId = null;
+let currentDraft = null;
 
 function getRuntimeBlockCode(result) {
   return result?.blockCode || result?.runtime?.blockCode || result?.runtime?.runtimeStatus?.blocked || result?.runtime?.status || null;
@@ -27,6 +28,9 @@ function cloneElement(element, selected = false) {
     parentId: element?.parentId == null ? null : String(element.parentId),
     capabilities: Array.isArray(element?.capabilities) ? element.capabilities.map(String) : [],
     allowedChanges: Array.isArray(element?.allowedChanges) ? element.allowedChanges.map(String) : [],
+    layoutDefaults: element?.layoutDefaults && typeof element.layoutDefaults === "object" ? { ...element.layoutDefaults } : {},
+    m53Editable: element?.elementId === "bbm.main.header" || element?.elementId === "bbm.main.actions",
+    m53LockReason: element?.elementId === "bbm.main.header" || element?.elementId === "bbm.main.actions" ? "" : "Dieses Element ist in M53 fuer Sichtbarkeitsaenderungen gesperrt.",
     selected: Boolean(selected),
   };
 }
@@ -124,8 +128,102 @@ function getSelectedUiEditorElementDetails() {
   return { ok: true, selectedElement: cloneElement(element, true) };
 }
 
+function getSelectedElement(runtimeResult) {
+  if (!selectedElementId) return null;
+  return (runtimeResult.registry.elements || []).find((entry) => entry.elementId === selectedElementId) || null;
+}
+
+function getElementVisible(runtimeResult, elementId) {
+  if (!elementId) return true;
+  const result = runtimeResult.hostAdapter.getElementLayoutState({
+    elementId,
+    layoutScope: runtimeResult.manifest.defaultLayoutScope,
+    layoutProfileId: runtimeResult.manifest.defaultLayoutProfileId,
+  });
+  return result?.ok ? result.visible : true;
+}
+
+function createDraftViewModel({ request, element, validation, currentVisible }) {
+  return {
+    elementId: request.elementId,
+    elementLabel: element?.label || request.elementId,
+    uiScope: request.uiScope,
+    layoutScope: request.layoutScope,
+    layoutProfileId: request.layoutProfileId,
+    previousValue: currentVisible,
+    nextValue: request.value,
+    operation: request.operation,
+    valid: Boolean(validation?.ok),
+    blockCode: validation?.ok ? null : String(validation?.blockCode || "BBM_UI_CHANGE_DRAFT_INVALID"),
+  };
+}
+
+function createChangeDraft(payload = {}) {
+  const runtimeResult = ensureRuntime();
+  if (!runtimeResult?.ok) return sanitizeError(runtimeResult);
+  const element = getSelectedElement(runtimeResult);
+  if (!element) return { ok: false, blockCode: "BBM_UI_CHANGE_NO_SELECTION", message: "Kein registriertes Element ausgewaehlt." };
+  const request = {
+    elementId: element.elementId,
+    uiScope: runtimeResult.manifest.defaultUiScope,
+    layoutScope: runtimeResult.manifest.defaultLayoutScope,
+    layoutProfileId: runtimeResult.manifest.defaultLayoutProfileId,
+    operation: "visibility.set",
+    property: "visible",
+    value: payload?.visible,
+  };
+  const validation = runtimeResult.hostAdapter.validateChangeRequest(request);
+  const draft = createDraftViewModel({ request, element, validation, currentVisible: getElementVisible(runtimeResult, element.elementId) });
+  currentDraft = { request, draft };
+  return { ok: validation.ok, draft, blockCode: validation.ok ? null : validation.blockCode, message: validation.message || null };
+}
+
+function getChangeDraft() {
+  return { ok: true, draft: currentDraft?.draft || null };
+}
+
+function discardChangeDraft() {
+  currentDraft = null;
+  return { ok: true, draft: null };
+}
+
+function applyChangeDraft(payload = {}) {
+  const runtimeResult = ensureRuntime();
+  if (!runtimeResult?.ok) return sanitizeError(runtimeResult);
+  if (!currentDraft?.request) return { ok: false, blockCode: "BBM_UI_CHANGE_DRAFT_INVALID", message: "Kein gueltiger Entwurf vorhanden." };
+  if (payload && typeof payload === "object" && Object.keys(payload).length > 0) {
+    const validation = runtimeResult.hostAdapter.validateChangeRequest(payload);
+    if (!validation.ok) return { ok: false, blockCode: validation.blockCode || "BBM_UI_CHANGE_DRAFT_INVALID", message: validation.message || "Manipulierte Payload wurde abgelehnt.", draft: currentDraft.draft };
+  }
+  const validation = runtimeResult.hostAdapter.validateChangeRequest(currentDraft.request);
+  if (!validation.ok) return { ok: false, blockCode: validation.blockCode || "BBM_UI_CHANGE_DRAFT_INVALID", message: validation.message || "Entwurf wurde abgelehnt.", draft: currentDraft.draft };
+  const result = runtimeResult.hostAdapter.submitChangeRequest(currentDraft.request);
+  if (!result?.ok) return { ok: false, blockCode: String(result?.blockCode || "BBM_UI_CHANGE_APPLY_FAILED"), message: "Layoutaenderung wurde nicht gespeichert.", draft: currentDraft.draft };
+  currentDraft = null;
+  return { ok: true, message: "Layoutaenderung angewendet", elementId: result.elementId, visible: result.visible, layoutProfileId: result.layoutProfileId, storage: "Sitzungsspeicher", layoutState: result.layoutState };
+}
+
+function loadLayoutState(payload = {}) {
+  const runtimeResult = ensureRuntime();
+  if (!runtimeResult?.ok) return sanitizeError(runtimeResult);
+  const elementId = String(payload?.elementId || selectedElementId || "").trim();
+  if (!elementId) return { ok: false, blockCode: "BBM_UI_CHANGE_NO_SELECTION", message: "Kein registriertes Element ausgewaehlt." };
+  return runtimeResult.hostAdapter.getElementLayoutState({ elementId, layoutScope: runtimeResult.manifest.defaultLayoutScope, layoutProfileId: runtimeResult.manifest.defaultLayoutProfileId });
+}
+
+function resetLayoutState(payload = {}) {
+  const runtimeResult = ensureRuntime();
+  if (!runtimeResult?.ok) return sanitizeError(runtimeResult);
+  const elementId = String(payload?.elementId || selectedElementId || "").trim();
+  if (!elementId) return { ok: false, blockCode: "BBM_UI_CHANGE_NO_SELECTION", message: "Kein registriertes Element ausgewaehlt." };
+  const result = runtimeResult.hostAdapter.resetLayoutState({ elementId, layoutScope: runtimeResult.manifest.defaultLayoutScope, layoutProfileId: runtimeResult.manifest.defaultLayoutProfileId });
+  if (currentDraft?.request?.elementId === elementId) currentDraft = null;
+  return result;
+}
+
 function closeUiEditorSession() {
   selectedElementId = null;
+  currentDraft = null;
   session = null;
   return { ok: true };
 }
@@ -137,6 +235,12 @@ function registerUiEditorIpc() {
   ipcMain.handle("uiEditor:getElements", async () => getUiEditorElements());
   ipcMain.handle("uiEditor:selectElement", async (_event, payload) => selectUiEditorElement(payload));
   ipcMain.handle("uiEditor:getSelectedElementDetails", async () => getSelectedUiEditorElementDetails());
+  ipcMain.handle("uiEditor:createChangeDraft", async (_event, payload) => createChangeDraft(payload));
+  ipcMain.handle("uiEditor:getChangeDraft", async () => getChangeDraft());
+  ipcMain.handle("uiEditor:discardChangeDraft", async () => discardChangeDraft());
+  ipcMain.handle("uiEditor:applyChangeDraft", async (_event, payload) => applyChangeDraft(payload));
+  ipcMain.handle("uiEditor:loadLayoutState", async (_event, payload) => loadLayoutState(payload));
+  ipcMain.handle("uiEditor:resetLayoutState", async (_event, payload) => resetLayoutState(payload));
 }
 
 module.exports = {
@@ -149,5 +253,11 @@ module.exports = {
     getUiEditorStatus,
     selectUiEditorElement,
     getSelectedUiEditorElementDetails,
+    createChangeDraft,
+    getChangeDraft,
+    discardChangeDraft,
+    applyChangeDraft,
+    loadLayoutState,
+    resetLayoutState,
   },
 };
