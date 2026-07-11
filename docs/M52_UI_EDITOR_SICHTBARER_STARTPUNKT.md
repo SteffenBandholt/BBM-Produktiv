@@ -6,9 +6,9 @@ M52 integriert einen bewusst kleinen sichtbaren Startpunkt fuer den UI-Editor in
 
 ## Sichtbarer Einstieg
 
-Der Einstieg liegt in der bestehenden linken BBM-Navigation als kleiner Eintrag `UI-Editor` neben den vorhandenen Kernzielen. Er oeffnet eine kompakte Statusansicht und startet nicht automatisch beim App-Start.
+Der Einstieg liegt in der bestehenden linken BBM-Navigation als kleiner Eintrag `UI-Editor Status` neben den vorhandenen Kernzielen. Er oeffnet eine kompakte Statusansicht und startet nicht automatisch beim App-Start.
 
-Der Einstieg verdraengt keine Fachfunktion und gilt nur fuer den in M51 erlaubten BBM-Scope `bbm.main`.
+Der Einstieg verdraengt keine Fachfunktion und gilt nur fuer den in M51 erlaubten BBM-Scope `bbm.main`. Der neue M52-Einstieg ist vom alten In-Place-Editor entkoppelt und ruft ausschliesslich `router.showUiEditor()` auf.
 
 ## Verwendete Runtime
 

@@ -17,7 +17,7 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
-- M52 UI-Editor sichtbarer technischer Startpunkt integriert:
+- M52 UI-Editor Status als sichtbarer technischer Startpunkt integriert:
   - Runtime angebunden: Die sichtbare Ansicht nutzt die oeffentliche M51-Runtime ueber `src/ui-editor/start-bbm-ui-editor-runtime.cjs`.
   - Status sichtbar: Runtime, Adapter, Ziel-App, Version, aktiver UI-Scope, Layout-Scope, Layoutprofil, LayoutStore und neutrale Blockcodes werden angezeigt.
   - Registry sichtbar: Die explizit registrierten BBM-Elemente aus dem Scope `bbm.main` werden gelistet.

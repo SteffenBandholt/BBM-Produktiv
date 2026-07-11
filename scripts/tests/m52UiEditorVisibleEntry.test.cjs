@@ -95,10 +95,11 @@ function findNode(node, predicate) {
 }
 
 async function runM52UiEditorVisibleEntryTests(run) {
-  await run("M52 Startpunkt: bestehende Navigation enthaelt kleinen UI-Editor-Einstieg", () => {
+  await run("M52 Startpunkt: bestehende Navigation enthaelt eindeutigen UI-Editor-Status-Einstieg", () => {
     const navigation = read("src/renderer/app/coreShellNavigation.js");
     const router = read("src/renderer/app/Router.js");
-    assert.match(navigation, /label:\s*"UI-Editor"/);
+    assert.match(navigation, /label:\s*"UI-Editor Status"/);
+    assert.doesNotMatch(navigation, /label:\s*"UI-Editor"[,}]/);
     assert.match(navigation, /router\.showUiEditor\(\)/);
     const coreShell = read("src/renderer/app/CoreShell.js");
     assert.match(router, /async showUiEditor\(\)/);
@@ -147,7 +148,11 @@ async function runM52UiEditorVisibleEntryTests(run) {
       const showCalls = [];
       let createdPanel = null;
       let renderCallCount = 0;
+      let legacyToggleCalls = 0;
       const router = {
+        legacyUiEditorToggle() {
+          legacyToggleCalls += 1;
+        },
         async show(view, options = {}) {
           activeSection = options.section || null;
           contentRoot.innerHTML = "";
@@ -179,7 +184,7 @@ async function runM52UiEditorVisibleEntryTests(run) {
       const routeDefs = navigationModule.createCoreShellNavigationRouteDefs(router);
       const uiEditorRoute = routeDefs.find((route) => route.key === "uiEditor");
       assert.ok(uiEditorRoute, "uiEditor route missing");
-      assert.equal(uiEditorRoute.label, "UI-Editor");
+      assert.equal(uiEditorRoute.label, "UI-Editor Status");
 
       const buttonsByKey = new Map();
       const button = buttonModule.createScreenRouteButton(
@@ -192,6 +197,7 @@ async function runM52UiEditorVisibleEntryTests(run) {
       await button.onclick();
 
       assert.equal(showCalls.length, 1);
+      assert.equal(legacyToggleCalls, 0);
       assert.equal(renderCallCount, 1);
       assert.equal(showCalls[0].view, createdPanel);
       assert.equal(activeSection, "uiEditor");
@@ -201,6 +207,9 @@ async function runM52UiEditorVisibleEntryTests(run) {
       assert.equal(contentRoot.children.length, 1);
       assert.equal(contentRoot.children[0], showCalls[0].rendered);
       assert.ok(findNode(contentRoot.children[0], (node) => node.textContent === "UI-Editor"));
+      assert.equal(findNode(contentRoot.children[0], (node) => node.getAttribute?.("data-ui-editor-launcher-host") === "true"), null);
+      assert.equal(findNode(contentRoot.children[0], (node) => node.getAttribute?.("data-ui-editor-panel") === "true"), null);
+      assert.equal(findNode(contentRoot.children[0], (node) => node.getAttribute?.("data-ui-editor-hover-frame") === "true"), null);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
