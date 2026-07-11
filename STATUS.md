@@ -17,6 +17,16 @@ Sie ergÃ¤nzt:
 
 ## Aktueller Gesamtstand
 
+- M52 UI-Editor sichtbarer technischer Startpunkt integriert:
+  - Runtime angebunden: Die sichtbare Ansicht nutzt die oeffentliche M51-Runtime ueber `src/ui-editor/start-bbm-ui-editor-runtime.cjs`.
+  - Status sichtbar: Runtime, Adapter, Ziel-App, Version, aktiver UI-Scope, Layout-Scope, Layoutprofil, LayoutStore und neutrale Blockcodes werden angezeigt.
+  - Registry sichtbar: Die explizit registrierten BBM-Elemente aus dem Scope `bbm.main` werden gelistet.
+  - Elementauswahl moeglich: Genau ein registriertes Element kann per `elementId` ausgewaehlt werden; unbekannte IDs werden blockiert.
+  - Layoutbearbeitung noch nicht moeglich: Kein Drag-and-drop, kein Resize, keine Farb-/Schriftbearbeitung und keine direkte Auswahl in der echten BBM-Oberflaeche.
+  - Dauerhafte Layoutspeicherung noch nicht vorhanden: M52 zeigt nur den technischen MemoryLayoutStateStore-Status; keine DB-Migration und keine Fachdatenspeicherung.
+  - Neue Doku: `docs/M52_UI_EDITOR_SICHTBARER_STARTPUNKT.md`.
+  - Naechster offener Schritt: M53 separat fuer konkrete, sichere Layout-Bedienfunktionen planen.
+
 - M51 UI-Editor-kit v0.2.0 technisch angebunden:
   - BBM verweist als Ziel-App auf `ui-editor-kit` via `github:SteffenBandholt/UI-Editor-kit#v0.2.0`.
   - Core-Vertrag, Manifest, HostAdapter, explizite Registry, Runtime-Bootstrap und MemoryLayoutStateStore sind testbar angebunden.

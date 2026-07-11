@@ -1,0 +1,151 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+
+const REPO_ROOT = path.join(__dirname, "../..");
+const { getBbmUiElementRegistry } = require("../../src/ui-editor/bbm-ui-element-registry.cjs");
+const { _m52 } = require("../../src/main/ipc/uiEditorIpc.js");
+
+function read(file) {
+  return fs.readFileSync(path.join(REPO_ROOT, file), "utf8");
+}
+
+function createContractRuntime({ hostAdapter, manifest, registry, layoutStore }) {
+  return {
+    ok: true,
+    manifest,
+    registry,
+    layoutStore,
+    viewModels: {
+      statusViewModel: { adapterValid: true, runtimeStarted: true },
+      scopeViewModel: {
+        activeUiScope: manifest.defaultUiScope,
+        activeLayoutScope: manifest.defaultLayoutScope,
+        activeLayoutProfileId: manifest.defaultLayoutProfileId,
+      },
+      selectionViewModel: { selectElement: hostAdapter.selectElement },
+      layoutControlViewModel: {
+        load: hostAdapter.getCurrentLayoutState,
+        save: hostAdapter.saveLayoutState,
+        reset: hostAdapter.resetLayoutState,
+      },
+    },
+  };
+}
+
+function startTestSession() {
+  _m52.ensureRuntime({ forceRestart: true, runtimeOptions: { coreApi: { createTargetAppAdapterRuntime: createContractRuntime } } });
+}
+
+async function runM52UiEditorVisibleEntryTests(run) {
+  await run("M52 Startpunkt: bestehende Navigation enthaelt kleinen UI-Editor-Einstieg", () => {
+    const navigation = read("src/renderer/app/coreShellNavigation.js");
+    const router = read("src/renderer/app/Router.js");
+    assert.match(navigation, /label:\s*"UI-Editor"/);
+    assert.match(navigation, /router\.showUiEditor\(\)/);
+    assert.match(router, /async showUiEditor\(\)/);
+    assert.match(router, /createBbmUiEditorStatusPanel/);
+    assert.match(router, /showSettings\(\)/);
+  });
+
+  await run("M52 Renderer-Panel: Kopf, Status, Elementliste, Details und Schliessen sind sichtbar vorbereitet", () => {
+    const panel = read("src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
+    assert.match(panel, /textContent = "UI-Editor"/);
+    assert.match(panel, /UI-Editor-kit/);
+    assert.match(panel, /targetAppId/);
+    assert.match(panel, /Aktiver UI-Scope/);
+    assert.match(panel, /Layoutprofil/);
+    assert.match(panel, /Registrierte UI-Elemente/);
+    assert.match(panel, /Elementdetails/);
+    assert.match(panel, /data-bbm-ui-editor-close/);
+    assert.match(panel, /uiEditorClose/);
+  });
+
+  await run("M52 Runtime: M51-Startfunktion wird ueber sichere IPC-Bruecke verwendet", () => {
+    const ipc = read("src/main/ipc/uiEditorIpc.js");
+    const main = read("src/main/main.js");
+    const preload = read("src/main/preload.js");
+    assert.match(ipc, /startBbmUiEditorRuntime/);
+    assert.match(ipc, /getBbmUiEditorIntegrationStatus/);
+    assert.match(ipc, /let session = null/);
+    assert.match(main, /registerUiEditorIpc\(\)/);
+    assert.match(preload, /uiEditorOpen/);
+    assert.match(preload, /uiEditorGetStatus/);
+    assert.match(preload, /uiEditorSelectElement/);
+    assert.doesNotMatch(preload, /eval|nodeIntegration\s*:\s*true|contextIsolation\s*:\s*false/);
+  });
+
+  await run("M52 Status: Ziel-App, Version, Scopes, Layoutprofil und Elementanzahl kommen aus M51", () => {
+    _m52.closeUiEditorSession();
+    startTestSession();
+    const status = _m52.getUiEditorStatus();
+    const registry = getBbmUiElementRegistry("bbm.main");
+    assert.equal(status.ok, true);
+    assert.equal(status.targetAppId, "bbm-produktiv");
+    assert.equal(status.targetAppName, "BBM");
+    assert.equal(status.uiEditorKitVersion, "v0.2.0");
+    assert.equal(status.activeUiScope, "bbm.main");
+    assert.equal(status.activeLayoutScope, "bbm.main-layout");
+    assert.equal(status.activeLayoutProfileId, "default");
+    assert.equal(status.registeredElementCount, registry.elements.length);
+    assert.equal(status.layoutStoreAvailable, true);
+    assert.equal(status.layout.canLoad, true);
+    assert.equal(status.layout.canSave, true);
+    assert.equal(status.layout.canReset, true);
+  });
+
+  await run("M52 Elementliste und Auswahl: nur explizite Registry-Elemente, gueltige Auswahl und unbekannte ID blockiert", () => {
+    _m52.closeUiEditorSession();
+    startTestSession();
+    const registry = getBbmUiElementRegistry("bbm.main");
+    const elements = _m52.getUiEditorElements();
+    assert.equal(elements.ok, true);
+    assert.deepEqual(elements.elements.map((element) => element.elementId), registry.elements.map((element) => element.elementId));
+    assert.equal(new Set(elements.elements.map((element) => element.elementId)).size, elements.elements.length);
+
+    const selected = _m52.selectUiEditorElement({ elementId: "bbm.main.content" });
+    assert.equal(selected.ok, true);
+    assert.equal(selected.selectedElement.elementId, "bbm.main.content");
+    const details = _m52.getSelectedUiEditorElementDetails();
+    assert.equal(details.ok, true);
+    assert.equal(details.selectedElement.label, "Inhaltsbereich");
+    assert.deepEqual(details.selectedElement.allowedChanges, ["layout.read", "layout.save", "layout.reset"]);
+
+    const blocked = _m52.selectUiEditorElement({ elementId: "bbm.main.unknown" });
+    assert.equal(blocked.ok, false);
+    assert.equal(blocked.blockCode, "BBM_UI_ELEMENT_UNKNOWN");
+    assert.doesNotMatch(blocked.message, /Error:| at /);
+  });
+
+  await run("M52 Sicherheit: keine DOM-Erkennung, kein eval, keine unsichere Electron-Option und keine Core-Kopie", () => {
+    const files = [
+      "src/main/ipc/uiEditorIpc.js",
+      "src/renderer/ui-editor/BbmUiEditorStatusPanel.js",
+      "src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js",
+    ];
+    const preload = read("src/main/preload.js");
+    const m52PreloadBlock = preload.slice(preload.indexOf("// UI-Editor M52"), preload.indexOf("});", preload.indexOf("// UI-Editor M52")));
+    const combined = files.map(read).join("\n") + "\n" + m52PreloadBlock;
+    assert.doesNotMatch(combined, /querySelectorAll|getElementsBy|MutationObserver|DOMParser|autoDiscovery\s*:\s*true/);
+    assert.doesNotMatch(combined, /eval\s*\(/);
+    assert.doesNotMatch(combined, /nodeIntegration\s*:\s*true|contextIsolation\s*:\s*false/);
+    assert.doesNotMatch(combined, /better-sqlite3|CREATE TABLE|ALTER TABLE|INSERT INTO|UPDATE\s+\w+\s+SET/);
+    assert.doesNotMatch(combined, /require\(["']ui-editor-kit["']\)/);
+    assert.match(read("src/ui-editor/start-bbm-ui-editor-runtime.cjs"), /require\("ui-editor-kit"\)/);
+  });
+
+  await run("M52 Dokumentation: M52-Doku, README und STATUS nennen sichtbaren Startpunkt und Grenzen", () => {
+    const doc = read("docs/M52_UI_EDITOR_SICHTBARER_STARTPUNKT.md");
+    const readme = read("README.md");
+    const status = read("STATUS.md");
+    assert.match(doc, /sichtbarer Einstieg/i);
+    assert.match(doc, /M53/);
+    assert.match(doc, /keine DOM-Erkennung|DOM-Erkennung/i);
+    assert.match(readme, /M52/);
+    assert.match(readme, /noch keine vollstaendige Bearbeitung/i);
+    assert.match(status, /M52/);
+    assert.match(status, /Layoutbearbeitung noch nicht moeglich/i);
+  });
+}
+
+module.exports = { runM52UiEditorVisibleEntryTests };

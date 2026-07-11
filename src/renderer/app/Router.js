@@ -15,6 +15,8 @@ import { createEditorLabScreen } from "../uiV2/editorLab/EditorLabScreen.js";
 import { createEditorLabRegistry } from "../uiV2/editorLab/editorLabRegistry.js";
 import { createEditorV2Core } from "../uiV2/editorV2/editorV2Core.js";
 import { createBbmUiEditorDemoScreen } from "../uiEditor/demo/BbmUiEditorDemoScreen.js";
+import { createBbmUiEditorStatusPanel } from "../ui-editor/BbmUiEditorStatusPanel.js";
+import { injectBbmUiEditorStatusPanelStyles } from "../ui-editor/bbmUiEditorStatusPanel.css.js";
 import {
   PROTOKOLL_WORK_SCREEN_ID,
   TopsScreen as ProtokollTopsScreen,
@@ -934,6 +936,16 @@ export default class Router {
     });
   }
 
+  async showUiEditor() {
+    injectBbmUiEditorStatusPanelStyles();
+    await this.show(createBbmUiEditorStatusPanel({ router: this }), {
+      section: "uiEditor",
+      isTopsView: false,
+      pageTitle: "UI-Editor",
+      hideSidebar: false,
+    });
+  }
+
   async showArchive() {
     const mod = await import("../modules/projektverwaltung/index.js");
     const V = mod.ArchiveScreen;
@@ -1072,6 +1084,10 @@ export default class Router {
       }
       if (c.section === "settings") {
         await this.showSettings();
+        return;
+      }
+      if (c.section === "uiEditor") {
+        await this.showUiEditor();
         return;
       }
       if (c.section === "firms") {
