@@ -4,5 +4,6 @@ export function createCoreShellNavigationRouteDefs(router) {
     { key: "projects", label: "Projekte", onClick: () => router.showProjects() },
     { key: "firms", label: "Firmen", onClick: () => router.showFirms() },
     { key: "settings", label: "Einstellungen", onClick: () => router.showSettings() },
+    { key: "uiEditor", label: "UI-Editor Status", onClick: () => router.showUiEditor() },
   ];
 }

@@ -23,6 +23,7 @@ const { registerProjectTransferIpc } = require("./ipc/projectTransferIpc");
 const { registerLicenseIpc, importLicenseFromFilePath } = require("./ipc/licenseIpc");
 const { registerAudioIpc } = require("./ipc/audioIpc");
 const { registerRestarbeitenIpc } = require("./ipc/restarbeitenIpc");
+const { registerUiEditorIpc } = require("./ipc/uiEditorIpc");
 const { checkLicense } = require("./licensing/licenseService");
 const { loadCustomerSetup } = require("./licensing/licenseStorage");
 const {
@@ -566,6 +567,7 @@ app.whenReady().then(async () => {
   registerLicenseIpc();
   registerAudioIpc();
   registerRestarbeitenIpc({ ipcMain });
+  registerUiEditorIpc();
 
   // ============================================================
   // ✅ Build Channel IPCs

@@ -255,6 +255,16 @@ contextBridge.exposeInMainWorld("bbmDb", {
   restarbeitenSetPrimaryAttachment: (data) => ipcRenderer.invoke("restarbeiten:setPrimaryAttachment", data),
   restarbeitenImportAttachments: (data) => ipcRenderer.invoke("restarbeiten:importAttachments", data),
   restarbeitenDeleteAttachment: (data) => ipcRenderer.invoke("restarbeiten:deleteAttachment", data),
+
+  // ============================================================
+  // UI-Editor M52: sichere, eng begrenzte Status-/Auswahlbruecke
+  // ============================================================
+  uiEditorOpen: () => ipcRenderer.invoke("uiEditor:open"),
+  uiEditorClose: () => ipcRenderer.invoke("uiEditor:close"),
+  uiEditorGetStatus: () => ipcRenderer.invoke("uiEditor:getStatus"),
+  uiEditorGetElements: () => ipcRenderer.invoke("uiEditor:getElements"),
+  uiEditorSelectElement: (data) => ipcRenderer.invoke("uiEditor:selectElement", data),
+  uiEditorGetSelectedElementDetails: () => ipcRenderer.invoke("uiEditor:getSelectedElementDetails"),
 });
 
 contextBridge.exposeInMainWorld("bbmPrint", {

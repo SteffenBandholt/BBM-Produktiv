@@ -3,27 +3,69 @@
 const { getBbmUiEditorManifest, BBM_UI_SCOPE, BBM_LAYOUT_SCOPE, BBM_LAYOUT_PROFILE_ID } = require("./bbm-ui-editor-manifest.cjs");
 const { getBbmUiElementRegistry, findBbmUiElement } = require("./bbm-ui-element-registry.cjs");
 
+function cloneValue(value) {
+  if (Array.isArray(value)) return value.map(cloneValue);
+  if (value && typeof value === "object") {
+    const clone = {};
+    Object.keys(value).forEach((key) => {
+      clone[key] = cloneValue(value[key]);
+    });
+    return clone;
+  }
+  return value;
+}
+
 function createMemoryLayoutStateStore(initialState = []) {
   const entries = new Map();
+  const layoutStates = new Map();
   for (const entry of initialState) {
-    if (entry?.elementId) entries.set(entry.elementId, { ...entry });
+    if (entry?.elementId) entries.set(entry.elementId, { ...entry, layoutValue: { ...(entry.layoutValue || {}) } });
   }
+
+  function selectorKey({ targetAppId = "bbm-produktiv", uiScope = BBM_UI_SCOPE, layoutScope = BBM_LAYOUT_SCOPE, layoutProfileId = BBM_LAYOUT_PROFILE_ID } = {}) {
+    return [targetAppId, uiScope, layoutScope, layoutProfileId].join("::");
+  }
+
+  function cloneEntries({ layoutScope = BBM_LAYOUT_SCOPE, layoutProfileId = BBM_LAYOUT_PROFILE_ID } = {}) {
+    return [...entries.values()]
+      .filter((entry) => entry.layoutScope === layoutScope && entry.layoutProfileId === layoutProfileId)
+      .map((entry) => ({ ...entry, layoutValue: { ...entry.layoutValue } }));
+  }
+
   return {
     kind: "memory",
     available: true,
     load({ layoutScope = BBM_LAYOUT_SCOPE, layoutProfileId = BBM_LAYOUT_PROFILE_ID } = {}) {
-      return [...entries.values()]
-        .filter((entry) => entry.layoutScope === layoutScope && entry.layoutProfileId === layoutProfileId)
-        .map((entry) => ({ ...entry, layoutValue: { ...entry.layoutValue } }));
+      return cloneEntries({ layoutScope, layoutProfileId });
     },
     save(entry) {
-      entries.set(entry.elementId, { ...entry, layoutValue: { ...entry.layoutValue } });
+      entries.set(entry.elementId, { ...entry, layoutValue: { ...(entry.layoutValue || {}) } });
       return { ok: true };
     },
     reset({ elementId } = {}) {
       if (elementId) entries.delete(elementId);
       else entries.clear();
       return { ok: true };
+    },
+    saveLayoutState(layoutState) {
+      const state = cloneValue(layoutState || {});
+      layoutStates.set(selectorKey(state), state);
+      return { ok: true, status: "layout_state_saved", layoutState: cloneValue(state) };
+    },
+    loadLayoutState(selector) {
+      const key = selectorKey(selector || {});
+      if (!layoutStates.has(key)) {
+        return { ok: false, status: "layout_profile_not_found", errors: [{ code: "layout_profile_not_found", message: "Layout-Profil wurde nicht gefunden." }] };
+      }
+      return { ok: true, status: "layout_state_loaded", layoutState: cloneValue(layoutStates.get(key)) };
+    },
+    resetLayoutState(selector) {
+      const key = selectorKey(selector || {});
+      if (!layoutStates.has(key)) {
+        return { ok: false, status: "layout_profile_not_found", errors: [{ code: "layout_profile_not_found", message: "Layout-Profil wurde nicht gefunden." }] };
+      }
+      layoutStates.delete(key);
+      return { ok: true, status: "layout_state_reset", reset: "removed" };
     },
   };
 }
@@ -46,10 +88,14 @@ function createBbmHostAdapter(options = {}) {
 
   return {
     manifest,
+    adapterManifest: manifest,
     layoutStore,
+    getAdapterManifest() {
+      return getBbmUiEditorManifest();
+    },
     getRegistry(uiScope = BBM_UI_SCOPE) {
       const scope = assertScope(uiScope);
-      if (!scope.ok) return { ...scope, elements: [] };
+      if (!scope.ok) return { ...scope, elements: [], listElements: () => [], getElementById: () => null, size: () => 0 };
       return getBbmUiElementRegistry(uiScope);
     },
     validateScope(uiScope = BBM_UI_SCOPE, layoutScope = BBM_LAYOUT_SCOPE) {
@@ -89,6 +135,15 @@ function createBbmHostAdapter(options = {}) {
       if (!manifest.layoutScopes.includes(layoutScope)) return block("BBM_LAYOUT_SCOPE_UNKNOWN", `Unknown layout scope: ${String(layoutScope)}`);
       layoutStore.reset({ elementId, layoutScope, layoutProfileId });
       return { ok: true, elementId: elementId || null, layoutScope, layoutProfileId };
+    },
+    submitChangeRequest(changeRequest) {
+      return {
+        ok: true,
+        accepted: true,
+        executed: false,
+        changeRequest: cloneValue(changeRequest || {}),
+        message: "M52 accepts only neutral technical UI-Editor requests; no BBM Fachaktion is executed.",
+      };
     },
   };
 }
