@@ -20,38 +20,42 @@ import { registerCoreShellHeaderBridge } from "./coreShellHeaderBridge.js";
 import { registerCoreShellContextControls } from "./coreShellContextControls.js";
 import { registerCoreShellKeyboardHandling } from "./coreShellKeyboard.js";
 import { createCoreShellNavigationRuntime } from "./coreShellNavigationRuntime.js";
-import { installBbmUiEditorRuntimeLauncher } from "../uiEditor/BbmUiEditorRuntimeLauncher.js";
-import { getActiveUiScope, getAvailableUiScopes, getBbmUiEditorRegistry } from "../uiEditor/bbmUiEditorRegistry.js";
-import { createEditorScopeInspector } from "../editorRuntime/inspector/editorScopeInspector.js";
+import {
+  clearBbmUiElementRefs,
+  getBbmUiElementRefStatus,
+  registerBbmUiElementRef,
+  unregisterBbmUiElementRef,
+} from "../ui-editor/bbmUiElementRefs.js";
 
-const HOST_UI_SCOPE_BY_SECTION = Object.freeze({
-  restarbeiten: "restarbeiten.screen",
-});
+const CORE_SHELL_BOUND_UI_ELEMENT_IDS = Object.freeze([
+  "bbm.main.shell",
+  "bbm.main.navigation",
+  "bbm.main.header",
+  "bbm.main.content",
+]);
 
-const LAYOUT_SCOPE_BY_UI_SCOPE = Object.freeze({
-  "protokoll.topsScreen": "protokoll.topsScreen",
-  "restarbeiten.screen": "restarbeiten.ui.main",
-});
-
-function resolveActiveHostUiScope(router) {
-  const sectionScope = HOST_UI_SCOPE_BY_SECTION[String(router?.activeSection || "").trim()];
-  if (sectionScope) return sectionScope;
-
-  if (router?.context?.ui?.isTopsView) {
-    return "protokoll.topsScreen";
+export function bindCoreShellUiElementRefs({ host, sidebar, headerEl, content } = {}) {
+  for (const elementId of CORE_SHELL_BOUND_UI_ELEMENT_IDS) {
+    unregisterBbmUiElementRef(elementId);
   }
 
-  return getActiveUiScope();
-}
+  registerBbmUiElementRef("bbm.main.shell", host);
+  registerBbmUiElementRef("bbm.main.navigation", sidebar);
+  registerBbmUiElementRef("bbm.main.header", headerEl);
+  registerBbmUiElementRef("bbm.main.content", content);
 
-function resolveLayoutScopeForUiScope(uiScope) {
-  return LAYOUT_SCOPE_BY_UI_SCOPE[String(uiScope || "").trim()] || null;
+  return getBbmUiElementRefStatus();
 }
 
 export default class CoreShell {
   constructor({ router, version } = {}) {
     this.router = router || null;
     this.version = version || "";
+    this.header = null;
+  }
+
+  destroy() {
+    clearBbmUiElementRefs();
     this.header = null;
   }
 
@@ -82,7 +86,10 @@ export default class CoreShell {
     this.header = header;
     const headerEl = header.render();
 
-    const { contentRoot: content, topBox, bottomBox, sidebar, bodyRow } = createCoreShellLayout({ headerEl });
+    clearBbmUiElementRefs();
+    const { host, contentRoot: content, topBox, bottomBox, sidebar, bodyRow } = createCoreShellLayout({ headerEl });
+    const uiElementRefStatus = bindCoreShellUiElementRefs({ host, sidebar, headerEl, content });
+    router.uiElementRefStatus = uiElementRefStatus;
 
     router.contentRoot = content;
     router.shellLayout = { sidebar, bodyRow };
@@ -104,34 +111,8 @@ export default class CoreShell {
       getUpdateContextButtons: () => updateContextButtons,
     });
 
-    let uiEditorRuntimeRefreshToken = 0;
-    const uiEditorLayoutInspector = createEditorScopeInspector();
-    const refreshUiEditorRuntimeLauncher = () => {
-      const activeUiScope = resolveActiveHostUiScope(router);
-      const uiEditorRegistry = getBbmUiEditorRegistry(activeUiScope);
-      const refreshToken = ++uiEditorRuntimeRefreshToken;
-      Promise.resolve(
-        installBbmUiEditorRuntimeLauncher({
-          header,
-          devEnabled: true,
-          activeScopeId: activeUiScope,
-          activeUiScope,
-          registeredElements: uiEditorRegistry?.elements,
-          availableUiScopes: getAvailableUiScopes(),
-          registryResolver: getBbmUiEditorRegistry,
-          layoutInspector: uiEditorLayoutInspector,
-          layoutScopeResolver: resolveLayoutScopeForUiScope,
-        })
-      ).catch((error) => {
-        if (refreshToken === uiEditorRuntimeRefreshToken) {
-          console.warn("[CoreShell] UI-Editor Runtime-Launcher konnte nicht aktualisiert werden:", error);
-        }
-      });
-    };
-
     router.onSectionChange = (section) => {
       setActive(section);
-      refreshUiEditorRuntimeLauncher();
     };
 
     const shellNavigationRouteDefs = createCoreShellNavigationRouteDefs(router);
@@ -155,7 +136,6 @@ export default class CoreShell {
 
     router.showHome();
     header.refresh();
-    refreshUiEditorRuntimeLauncher();
     if (typeof updateContextButtons === "function") {
       updateContextButtons();
     }
