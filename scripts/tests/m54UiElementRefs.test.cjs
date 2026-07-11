@@ -113,11 +113,11 @@ async function runM54UiElementRefsTests(run) {
     ]);
   });
 
-  await run("M54 Statuspanel: zeigt nur neutrale Referenzzahlen ohne Auswahlmodus oder Overlay", () => {
+  await run("M54 Statuspanel: zeigt Referenzzahlen und bleibt ohne Legacy-Runtime", () => {
     const panel = read("src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
     assert.match(panel, /UI-Referenzen gebunden/);
     assert.match(panel, /Fehlende Referenzen/);
-    assert.doesNotMatch(panel, /Auswahlmodus|Overlay|Hover|Rahmen/);
+    assert.doesNotMatch(panel, /installBbmUiEditorRuntimeLauncher|targetSelection|editorV2Core|UiInspectorOverlay/);
   });
 
   await run("M54 Dokumentation: Referenzabbildung, Lifecycle und Legacy-Pruefung sind dokumentiert", () => {

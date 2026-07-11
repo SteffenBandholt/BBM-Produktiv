@@ -1458,26 +1458,22 @@ async function runBbmUiEditorRuntimeLauncherTests(run) {
     assert.equal(source.includes("showEditorLabV2"), false);
     assert.equal(source.includes("showRestarbeitenV2"), false);
     assert.equal(coreShellSource.includes("showBbmUiEditorDemo"), false);
-    assert.equal(coreShellSource.includes("getAvailableUiScopes"), true);
-    assert.equal(coreShellSource.includes("registryResolver"), true);
-    assert.equal(coreShellSource.includes("resolveActiveHostUiScope"), true);
-    assert.equal(coreShellSource.includes('restarbeiten: "restarbeiten.screen"'), true);
-    assert.equal(coreShellSource.includes("if (sectionScope) return sectionScope;"), true);
-    assert.equal(coreShellSource.includes('return "protokoll.topsScreen"'), true);
-    assert.equal(coreShellSource.includes("return getActiveUiScope();"), true);
-    assert.equal(
-      coreShellSource.indexOf("if (sectionScope) return sectionScope;") <
-        coreShellSource.indexOf('return "protokoll.topsScreen"'),
-      true
-    );
-    assert.equal(coreShellSource.includes("activeScopeId: activeUiScope"), true);
+    assert.equal(coreShellSource.includes("installBbmUiEditorRuntimeLauncher"), false);
+    assert.equal(coreShellSource.includes("targetSelection"), false);
+    assert.equal(coreShellSource.includes("bindCoreShellUiElementRefs"), true);
+    assert.equal(coreShellSource.includes('registerBbmUiElementRef("bbm.main.shell", host)'), true);
+    assert.equal(coreShellSource.includes('registerBbmUiElementRef("bbm.main.navigation", sidebar)'), true);
+    assert.equal(coreShellSource.includes('registerBbmUiElementRef("bbm.main.header", headerEl)'), true);
+    assert.equal(coreShellSource.includes('registerBbmUiElementRef("bbm.main.content", content)'), true);
+    assert.equal(coreShellSource.includes('registerBbmUiElementRef("bbm.main.actions"'), false);
+    assert.equal(coreShellSource.includes("activeScopeId: activeUiScope"), false);
     assert.equal(source.includes("getStatusScopeLabel"), true);
     assert.equal(source.includes("activeUiScope"), true);
     assert.equal(source.includes("layoutInspector"), true);
     assert.equal(source.includes("layoutScopeResolver"), true);
-    assert.equal(coreShellSource.includes("createEditorScopeInspector"), true);
-    assert.equal(coreShellSource.includes('"protokoll.topsScreen": "protokoll.topsScreen"'), true);
-    assert.equal(coreShellSource.includes('"restarbeiten.screen": "restarbeiten.ui.main"'), true);
+    assert.equal(coreShellSource.includes("createEditorScopeInspector"), false);
+    assert.equal(coreShellSource.includes('"protokoll.topsScreen": "protokoll.topsScreen"'), false);
+    assert.equal(coreShellSource.includes('"restarbeiten.screen": "restarbeiten.ui.main"'), false);
   });
 
 }
