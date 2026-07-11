@@ -63,6 +63,15 @@ Aktueller Stand:
 - [x] M35 UI-Editor Bedienhinweise und Abnahmegrenzen festziehen
 - [x] M36 UI-Editor Fixstand nach M29 bis M35 dokumentieren und absichern
 
+
+## Statusupdate M53
+- M53 ist als reines Analysepaket dokumentiert.
+- Neue Bestandsdoku: `docs/M53_BESTAND_VISUELLE_UI_AUSWAHL.md`.
+- Historische UI-Inspector-, EditorV2- und TargetSelection-Pfade wurden gegen M51/M52 abgeglichen.
+- Keine Auswahlruntime, kein Overlay, keine UI-, IPC-, Registry- oder HostAdapter-Aenderung wurde umgesetzt.
+- Empfehlung: keine Legacy-Reaktivierung; nur Konzepte/Tests/visuelle Muster teilweise uebernehmen und die spaetere ElementRef-Bindung minimal neu auf Basis von UI-Editor-kit, BBM-Registry und HostAdapter bauen.
+- Naechster sinnvoller Schritt: M54 explizite ElementRef-Map fuer die fuenf BBM-M51/M52-Registry-Elemente vorbereiten, noch ohne sichtbares Overlay.
+
 ## Statusupdate M36
 - Der globale UI-Editor-Fixstand nach M29 bis M35 ist dokumentiert.
 - Fixiert sind neutrale Layoutaenderungen, Speichern/Laden/Reset, sichtbare App-Bedienung, Restarbeiten-Scope, Protokoll/TOPS-Scope, Scope-Wechsel und Bediengrenzen.
