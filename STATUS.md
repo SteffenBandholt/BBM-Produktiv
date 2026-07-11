@@ -1,5 +1,15 @@
 # STATUS.md â€” BBM-Produktiv
 
+## M53 – Bestand visuelle UI-Auswahl (2026-07-11)
+
+- Reines Analysepaket, kein Implementierungsversuch.
+- Historische visuelle Auswahlpfade untersucht: UI-Inspector M10-M13, Editor V2/EditorLab und installierte TargetSelection-Artefakte.
+- Ergebnisdokument angelegt: `docs/M53_BESTAND_VISUELLE_UI_AUSWAHL.md`.
+- Keine UI-, IPC-, Registry-, HostAdapter- oder Runtime-Aenderung.
+- Empfehlung: alte Runtime nicht reaktivieren; nur Overlay-Optik, Lifecycle-Ideen, Tests und explizites `elementRef`-Konzept als Vorlage nutzen.
+- Naechster kleiner Schritt: explizite ElementRef-Map fuer die M51/M52-Registry-Elemente pruefbar vorbereiten, ohne Overlay.
+
+
 ## Zweck
 Diese Datei hÃ¤lt den tatsÃ¤chlichen Fortschritt fest.
 
