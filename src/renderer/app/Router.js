@@ -937,14 +937,37 @@ export default class Router {
   }
 
   async showUiEditor() {
-    injectBbmUiEditorStatusPanelStyles();
-    const panel = createBbmUiEditorStatusPanel({ router: this });
-    await this.show(panel.render(), {
-      section: "uiEditor",
-      isTopsView: false,
-      pageTitle: "UI-Editor",
-      hideSidebar: false,
-    });
+    try {
+      injectBbmUiEditorStatusPanelStyles();
+      const panel = createBbmUiEditorStatusPanel({ router: this });
+      await this.show(panel, {
+        section: "uiEditor",
+        isTopsView: false,
+        pageTitle: "UI-Editor",
+        hideSidebar: false,
+      });
+    } catch (error) {
+      console.error("[ui-editor] status panel could not be opened:", error);
+      const fallbackView = {
+        render() {
+          const root = document.createElement("section");
+          root.setAttribute("data-bbm-ui-editor-panel", "true");
+          root.className = "bbm-ui-editor-panel";
+          const title = document.createElement("h1");
+          title.textContent = "UI-Editor";
+          const message = document.createElement("p");
+          message.textContent = "Der UI-Editor konnte nicht geladen werden. Bitte pruefen Sie den neutralen Statuscode BBM_UI_EDITOR_PANEL_OPEN_FAILED.";
+          root.append(title, message);
+          return root;
+        },
+      };
+      await this.show(fallbackView, {
+        section: "uiEditor",
+        isTopsView: false,
+        pageTitle: "UI-Editor",
+        hideSidebar: false,
+      });
+    }
   }
 
   async showArchive() {

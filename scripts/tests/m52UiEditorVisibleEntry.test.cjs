@@ -48,6 +48,8 @@ function createPanelTestDocument() {
     textContent: "",
     hidden: false,
     style: {},
+    dataset: {},
+    disabled: false,
     type: "",
     append(...nodes) {
       for (const node of nodes) this.appendChild(node);
@@ -66,6 +68,10 @@ function createPanelTestDocument() {
       return Object.hasOwn(this.attributes, String(name)) ? this.attributes[String(name)] : null;
     },
     addEventListener() {},
+    click() {
+      if (typeof this.onclick === "function") return this.onclick({ type: "click", target: this });
+      return undefined;
+    },
   });
 
   const doc = {
@@ -94,10 +100,14 @@ async function runM52UiEditorVisibleEntryTests(run) {
     const router = read("src/renderer/app/Router.js");
     assert.match(navigation, /label:\s*"UI-Editor"/);
     assert.match(navigation, /router\.showUiEditor\(\)/);
+    const coreShell = read("src/renderer/app/CoreShell.js");
     assert.match(router, /async showUiEditor\(\)/);
     assert.match(router, /const panel = createBbmUiEditorStatusPanel\(\{ router: this \}\);/);
-    assert.match(router, /this\.show\(panel\.render\(\), \{/);
+    assert.match(router, /this\.show\(panel, \{/);
     assert.match(router, /showSettings\(\)/);
+    assert.match(coreShell, /const routeButtons = shellNavigationRouteDefs\.map/);
+    assert.match(coreShell, /const coreNavigationButtons = \[\.\.\.routeButtons, btnHelp\]/);
+    assert.doesNotMatch(coreShell, /const \[btnHome, btnProjects, btnFirms, btnSettings\]/);
   });
 
   await run("M52 Renderer-Panel: Kopf, Status, Elementliste, Details und Schliessen sind sichtbar vorbereitet", () => {
@@ -114,11 +124,10 @@ async function runM52UiEditorVisibleEntryTests(run) {
   });
 
 
-  await run("M52 Router-Fix: Panel-Instanz rendert DOM-Element fuer Router.show", async () => {
+  await run("M52 echte Navigationskette: UI-Editor-Route bindet onClick und nutzt Router.show-Schnittstelle", async () => {
     const previousDocument = global.document;
     const previousWindow = global.window;
     const doc = createPanelTestDocument();
-    const calls = [];
     global.document = doc;
     global.window = {
       bbmDb: {
@@ -127,31 +136,58 @@ async function runM52UiEditorVisibleEntryTests(run) {
     };
 
     try {
-      const modulePath = path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
-      const { createBbmUiEditorStatusPanel } = await importEsmFromFile(modulePath);
-      const router = { showSettings: async () => calls.push("settings") };
-      const panel = createBbmUiEditorStatusPanel({ router });
-      assert.equal(typeof panel.render, "function");
-      const element = panel.render();
-      assert.equal(element.tagName, "SECTION");
-      assert.equal(element.getAttribute("data-bbm-ui-editor-panel"), "true");
-      assert.ok(findNode(element, (node) => node.textContent === "UI-Editor"));
+      const navigationModule = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/app/coreShellNavigation.js"));
+      const buttonModule = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/app/coreShellButtons.js"));
+      const panelModule = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js"));
 
+      const contentRoot = doc.createElement("main");
+      contentRoot.appendChild(doc.createElement("p"));
+      let activeSection = null;
       const showCalls = [];
-      await (async function showUiEditorLikeRouter() {
-        const renderedPanel = panel.render();
-        await (async (domElement, options) => showCalls.push({ domElement, options }))(renderedPanel, {
-          section: "uiEditor",
-          isTopsView: false,
-          pageTitle: "UI-Editor",
-          hideSidebar: false,
-        });
-      })();
+      const router = {
+        async show(view, options = {}) {
+          activeSection = options.section || null;
+          contentRoot.innerHTML = "";
+          contentRoot.children = [];
+          const rendered = view.render();
+          contentRoot.appendChild(rendered);
+          if (typeof view.load === "function") await view.load();
+          showCalls.push({ view, options, rendered, childCount: contentRoot.children.length });
+        },
+        async showUiEditor() {
+          const panel = panelModule.createBbmUiEditorStatusPanel({ router: this });
+          await this.show(panel, {
+            section: "uiEditor",
+            isTopsView: false,
+            pageTitle: "UI-Editor",
+            hideSidebar: false,
+          });
+        },
+      };
+
+      const routeDefs = navigationModule.createCoreShellNavigationRouteDefs(router);
+      const uiEditorRoute = routeDefs.find((route) => route.key === "uiEditor");
+      assert.ok(uiEditorRoute, "uiEditor route missing");
+      assert.equal(uiEditorRoute.label, "UI-Editor");
+
+      const buttonsByKey = new Map();
+      const button = buttonModule.createScreenRouteButton(
+        { buttonsByKey, runNavSafe: (fn) => async () => fn() },
+        uiEditorRoute
+      );
+      assert.equal(buttonsByKey.get("uiEditor"), button);
+      assert.equal(typeof button.onclick, "function");
+
+      await button.onclick();
 
       assert.equal(showCalls.length, 1);
-      assert.equal(showCalls[0].domElement.tagName, "SECTION");
-      assert.equal(showCalls[0].domElement.getAttribute("data-bbm-ui-editor-panel"), "true");
+      assert.equal(activeSection, "uiEditor");
       assert.equal(showCalls[0].options.section, "uiEditor");
+      assert.equal(showCalls[0].rendered.tagName, "SECTION");
+      assert.equal(showCalls[0].rendered.getAttribute("data-bbm-ui-editor-panel"), "true");
+      assert.equal(contentRoot.children.length, 1);
+      assert.equal(contentRoot.children[0], showCalls[0].rendered);
+      assert.ok(findNode(contentRoot.children[0], (node) => node.textContent === "UI-Editor"));
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
