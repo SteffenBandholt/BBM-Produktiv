@@ -62,7 +62,25 @@ Aktueller Stand:
 - [x] M34 UI-Editor Scope-Wechsel und Bedienfuehrung absichern
 - [x] M35 UI-Editor Bedienhinweise und Abnahmegrenzen festziehen
 - [x] M36 UI-Editor Fixstand nach M29 bis M35 dokumentieren und absichern
+- [x] M56 Dauerhaften Auswahlrahmen im UI-Editor-Statuspanel anzeigen
 
+
+
+
+## Statusupdate M56-Fix PR #196
+- Randfehler korrigiert: Klick auf ein zuvor gehovertes Element entfernt den blauen Hoverrahmen sofort, ohne weitere Mausbewegung.
+- Der Controller prueft den aktuellen Auswahlstatus nun auch bei unveraendertem Hoverziel erneut und stellt `syncHoverWithSelection()` fuer die Statuspanel-Synchronisation bereit.
+- Keine neue fachliche Auswahlhaltung; die Pruefung liest weiterhin live aus dem bestehenden `selectedElement`-Pfad.
+- `scripts/tests/m56PersistentSelectionFrame.test.cjs` deckt den tatsaechlichen Hover-Klick-Ablauf, Auswahlwechsel, Reset und Escape ab.
+
+## Statusupdate M56
+- M56 ergaenzt im bestehenden UI-Editor-Statuspanel einen dauerhaften orangefarbenen Auswahlrahmen fuer das aktuell im M52-Statusmodell ausgewaehlte Element.
+- Quelle bleibt ausschliesslich `selectedElement` nach `refresh()` beziehungsweise nach dem bestehenden `uiEditorSelectElement`-Pfad.
+- Hover bleibt blau und temporaer im aktiven Auswahlmodus; Auswahl bleibt orange sichtbar, auch nach Escape oder Auswahlmodus-Stopp.
+- `bbm.main.actions` bleibt ohne Rahmen, solange keine M54-HTMLElement-Referenz existiert.
+- Neue Doku: `docs/M56_DAUERHAFTER_AUSWAHLRAHMEN.md`.
+- Neue Tests: `scripts/tests/m56PersistentSelectionFrame.test.cjs`; `scripts/test.cjs` fuehrt den Test mit aus.
+- Naechster Schritt: M57 klaert als kleinstmoegliches Paket die fachlich eindeutige Actions-Referenz oder bestaetigt den weiteren Ausschluss.
 
 ## Statusupdate M55
 - M55 ergaenzt im bestehenden UI-Editor-Statuspanel einen ausdruecklich startbaren Auswahlmodus fuer die vier M54-Refs.

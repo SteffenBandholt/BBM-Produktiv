@@ -1,5 +1,46 @@
 # STATUS.md â€” BBM-Produktiv
 
+### M56-Fix PR #196 – Hoverrahmen nach Klick sofort entfernen
+- Status: erledigt
+- Beschreibung:
+  - Randfehler behoben: Wenn ein gehovertes Element angeklickt und dadurch ausgewaehlt wird, wird der blaue Hoverrahmen ohne weitere Mausbewegung entfernt.
+  - Der M55-Controller prueft den Auswahlstatus auch bei identischem Hoverziel erneut und bietet `syncHoverWithSelection()` fuer die Statuspanel-Synchronisation nach `refresh()`/`selectElement()`.
+  - Keine neue fachliche Auswahlhaltung, keine neue IPC-/Speicherlogik, keine Layoutmutation.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/bbmUiElementSelection.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m56PersistentSelectionFrame.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - M57 bleibt: fachlich eindeutige Actions-Referenz klaeren oder weiteren Ausschluss von `bbm.main.actions` bestaetigen.
+
+
+### M56 – Dauerhafter Auswahlrahmen im UI-Editor-Statuspanel
+- Status: erledigt
+- Beschreibung:
+  - Das bestehende M52-`selectedElement` steuert nun einen orangefarbenen, dauerhaften Auswahlrahmen.
+  - Hover bleibt blau, temporaer und an den aktiven Auswahlmodus gebunden; Auswahl bleibt nach Escape/Stop sichtbar.
+  - Reset leert die bestehende Auswahl ueber `uiEditorSelectElement({ elementId: "" })` und entfernt den Rahmen.
+  - Panel-Schliessen/Destroy entfernt Hover- und Auswahloverlays inklusive Scroll-/Resize-Listenern.
+  - `bbm.main.actions` bleibt ohne Fallback unmarkiert, solange keine explizite M54-Ref existiert.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiElementSelection.js`
+  - `src/renderer/ui-editor/bbmUiSelectedOverlay.js`
+  - `scripts/tests/m56PersistentSelectionFrame.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/M56_DAUERHAFTER_AUSWAHLRAHMEN.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - M57: fachlich eindeutige Actions-Referenz klaeren oder den weiteren Ausschluss von `bbm.main.actions` bestaetigen.
+- Risiken/Hinweise:
+  - Manuelle Windows-Pruefung bleibt fachlich nachzuholen; diese Umgebung kann die sichtbare Electron-Windows-Abnahme nicht ersetzen.
+
+
 ## M55 – Visuelle UI-Auswahl ueber explizite Refs (2026-07-11)
 
 - Im bestehenden UI-Editor-Statuspanel gibt es einen kontrollierten Auswahlmodus fuer die vier in M54 gebundenen CoreShell-Refs.
