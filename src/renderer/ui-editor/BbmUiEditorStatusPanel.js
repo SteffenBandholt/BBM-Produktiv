@@ -1,6 +1,7 @@
 import { getBbmUiElementRefStatus } from "./bbmUiElementRefs.js";
 import { createBbmUiElementSelectionController } from "./bbmUiElementSelection.js";
 import { createBbmUiSelectedOverlay } from "./bbmUiSelectedOverlay.js";
+import { createBbmKitSelectionHost } from "./bbmKitSelectionHost.js";
 
 function createNode(tag, className = "") {
   const node = document.createElement(tag);
@@ -49,7 +50,13 @@ export class BbmUiEditorStatusPanel {
     this.refStatus = null;
     this.elements = [];
     this.selectedElement = null;
+    this.bbmSelectionController = null;
+    this.kitSelectionController = null;
+    this.kitSelectionHost = null;
     this.selectionController = null;
+    this.selectionRuntime = "bbm";
+    this.hoverTargetLabel = "keines";
+    this.runtimeError = "";
     this.selectionMessage = "";
     this.selectionModeActive = false;
     this.selectedOverlay = createBbmUiSelectedOverlay();
@@ -90,28 +97,34 @@ export class BbmUiEditorStatusPanel {
 
     root.append(header, this.errorNode, intro, grid);
     this.root = root;
-    this.selectionController = createBbmUiElementSelectionController({
+    this.bbmSelectionController = createBbmUiElementSelectionController({
       getPanelRoot: () => this.root,
       getElementMeta: (elementId) => this.getElementMeta(elementId),
       isElementSelected: (elementId) => this.selectedElement?.elementId === elementId,
       selectElement: ({ elementId }) => this.selectElement(elementId, { fromSelectionMode: true }),
       onSelection: ({ elementId, meta }) => {
         this.selectionMessage = `Ausgewaehlt: ${asText(meta?.label, elementId)}`;
-        this.selectionModeActive = this.selectionController?.isActive?.() || false;
+        this.selectionModeActive = this.getActiveController()?.isActive?.() || false;
         this.renderAll();
       },
       onStateChange: (state) => {
         this.selectionModeActive = Boolean(state?.active);
+        this.hoverTargetLabel = this.formatElementLabel(state?.hoveredElementId);
         this.renderAll();
       },
     });
+    this.selectionController = this.bbmSelectionController;
     this.refresh().catch((error) => this.showLoadError(error));
     return root;
   }
 
   async close() {
     this.stopSelectionMode();
+    this.destroyKitController();
+    this.bbmSelectionController?.destroy?.();
     this.selectedOverlay?.destroy?.();
+    this.selectionRuntime = "bbm";
+    this.selectionController = this.bbmSelectionController;
     try {
       await window.bbmDb?.uiEditorClose?.();
     } catch (_e) {
@@ -132,7 +145,7 @@ export class BbmUiEditorStatusPanel {
       this.selectedElement = null;
       this.renderAll();
       this.syncSelectedOverlay();
-      this.selectionController?.syncHoverWithSelection?.();
+      this.getActiveController()?.syncHoverWithSelection?.();
       return;
     }
 
@@ -147,7 +160,7 @@ export class BbmUiEditorStatusPanel {
     this.selectedElement = detailsResult?.selectedElement || null;
     this.renderAll();
     this.syncSelectedOverlay();
-    this.selectionController?.syncHoverWithSelection?.();
+    this.getActiveController()?.syncHoverWithSelection?.();
   }
 
   showLoadError(error) {
@@ -157,7 +170,7 @@ export class BbmUiEditorStatusPanel {
     this.selectedElement = null;
     this.renderAll();
     this.syncSelectedOverlay();
-    this.selectionController?.syncHoverWithSelection?.();
+    this.getActiveController()?.syncHoverWithSelection?.();
   }
 
   renderAll() {
@@ -194,15 +207,36 @@ export class BbmUiEditorStatusPanel {
       createInfoRow("Registrierte Elemente", status.registeredElementCount),
       createInfoRow("UI-Referenzen gebunden", this.refStatus ? `${this.refStatus.count}/${this.refStatus.expectedCount}` : "nicht verfuegbar"),
       createInfoRow("Fehlende Referenzen", this.refStatus ? formatList(this.refStatus.missingIds) : "nicht verfuegbar"),
+      createInfoRow("Auswahl-Laufzeit", this.selectionRuntimeLabel()),
       createInfoRow("Auswahlmodus", this.selectionModeActive ? "Aktiv" : "Inaktiv"),
       createInfoRow("Visuell markiert", this.getVisualSelectionLabel()),
+      createInfoRow("Hover-Ziel", this.hoverTargetLabel || "keines"),
       createInfoRow("Gebundene Ziele", this.refStatus ? String(this.getSelectableBoundCount()) : "nicht verfuegbar"),
       createInfoRow("Nicht verfuegbar", "bbm.main.actions"),
+      createInfoRow("Letzter Runtime-Fehler", this.runtimeError || "keiner"),
       createInfoRow("LayoutStore verfuegbar", yesNo(status.layoutStoreAvailable)),
       createInfoRow("Layoutzustand vorhanden", yesNo(layout.hasStateForScopeAndProfile)),
       createInfoRow("Load/Save/Reset technisch", `${yesNo(layout.canLoad)} / ${yesNo(layout.canSave)} / ${yesNo(layout.canReset)}`),
       createInfoRow("Blockcode", status.blockCode || "kein Block")
     );
+
+
+    const runtimeLabel = createNode("label", "bbm-ui-editor-panel__runtime");
+    const runtimeText = createNode("span");
+    runtimeText.textContent = "Auswahl-Laufzeit:";
+    const runtimeSelect = createNode("select");
+    runtimeSelect.value = this.selectionRuntime;
+    const bbmOption = createNode("option");
+    bbmOption.value = "bbm";
+    bbmOption.textContent = "BBM";
+    const kitOption = createNode("option");
+    kitOption.value = "kit";
+    kitOption.textContent = "UI-Editor-kit";
+    runtimeSelect.append(bbmOption, kitOption);
+    runtimeSelect.addEventListener("change", () => {
+      this.switchSelectionRuntime(runtimeSelect.value).catch((error) => this.handleKitRuntimeError(error));
+    });
+    runtimeLabel.append(runtimeText, runtimeSelect);
 
     const reloadButton = createNode("button", "bbm-ui-editor-panel__secondary");
     reloadButton.type = "button";
@@ -228,7 +262,7 @@ export class BbmUiEditorStatusPanel {
 
     const actions = createNode("div", "bbm-ui-editor-panel__actions");
     actions.append(reloadButton, resetSelection, startSelection, stopSelection);
-    this.statusNode.append(title, list, actions);
+    this.statusNode.append(title, list, runtimeLabel, actions);
 
     if (this.selectionModeActive) {
       const hint = createNode("p", "bbm-ui-editor-panel__notice");
@@ -321,20 +355,22 @@ export class BbmUiEditorStatusPanel {
   startSelectionMode() {
     if (!this.canStartSelectionMode()) return;
     this.selectionMessage = "";
-    this.selectionController?.start?.();
-    this.selectionModeActive = this.selectionController?.isActive?.() || false;
+    this.getActiveController()?.start?.();
+    this.selectionModeActive = this.getActiveController()?.isActive?.() || false;
     this.renderAll();
   }
 
   stopSelectionMode() {
-    this.selectionController?.stop?.();
+    this.getActiveController()?.stop?.();
     this.selectionModeActive = false;
+    this.hoverTargetLabel = "keines";
     this.renderAll();
     this.syncSelectedOverlay();
   }
 
   destroy() {
-    this.selectionController?.destroy?.();
+    this.destroyKitController();
+    this.bbmSelectionController?.destroy?.();
     this.selectedOverlay?.destroy?.();
     this.selectionModeActive = false;
     this.root = null;
@@ -354,14 +390,14 @@ export class BbmUiEditorStatusPanel {
     }
     await this.refresh();
     this.syncSelectedOverlay();
-    this.selectionController?.syncHoverWithSelection?.();
+    this.getActiveController()?.syncHoverWithSelection?.();
     if (options.fromSelectionMode) {
       const meta = this.getElementMeta(elementId);
       this.selectionMessage = `Ausgewaehlt: ${asText(meta?.label, elementId)}`;
-      this.selectionModeActive = this.selectionController?.isActive?.() || false;
+      this.selectionModeActive = this.getActiveController()?.isActive?.() || false;
       this.renderAll();
       this.syncSelectedOverlay();
-      this.selectionController?.syncHoverWithSelection?.();
+      this.getActiveController()?.syncHoverWithSelection?.();
     }
   }
 
@@ -375,6 +411,7 @@ export class BbmUiEditorStatusPanel {
   }
 
   syncSelectedOverlay() {
+    if (this.selectionRuntime === "kit") return false;
     if (!this.selectedElement) {
       this.selectedOverlay?.clear?.();
       return false;
@@ -385,6 +422,107 @@ export class BbmUiEditorStatusPanel {
       this.selectedOverlay?.clear?.();
       return false;
     }
+  }
+
+  selectionRuntimeLabel() {
+    return this.selectionRuntime === "kit" ? "UI-Editor-kit" : "BBM";
+  }
+
+  getActiveController() {
+    return this.selectionRuntime === "kit" ? this.kitSelectionController : this.bbmSelectionController;
+  }
+
+  formatElementLabel(elementId) {
+    const normalized = String(elementId || "").trim();
+    if (!normalized) return "keines";
+    const meta = this.getElementMeta(normalized);
+    return asText(meta?.label, normalized);
+  }
+
+  createKitHost() {
+    this.kitSelectionHost = createBbmKitSelectionHost({
+      getRegistryElements: () => this.elements,
+      getSelectedElement: () => this.selectedElement,
+      selectElement: (elementId) => this.selectElement(elementId, { fromSelectionMode: true }),
+      getPanelRoot: () => this.root,
+      onStateChange: (state) => {
+        this.selectionModeActive = Boolean(state?.active);
+        this.hoverTargetLabel = this.formatElementLabel(state?.hoveredElementId || state?.hoverTargetId);
+        this.renderAll();
+      },
+      onSelection: (selection) => {
+        const elementId = selection?.elementId || selection?.selectedElementId || selection?.target?.elementId;
+        this.selectionMessage = `Ausgewaehlt: ${this.formatElementLabel(elementId)}`;
+        this.renderAll();
+      },
+      onError: (error) => this.handleKitRuntimeError(error),
+    });
+    return this.kitSelectionHost;
+  }
+
+  async ensureKitController() {
+    if (this.kitSelectionController) return this.kitSelectionController;
+    const uiEditorKit = await import("ui-editor-kit");
+    const createSelectionController = uiEditorKit?.createSelectionController || uiEditorKit?.default?.createSelectionController;
+    if (typeof createSelectionController !== "function") {
+      throw new Error("UI-Editor-kit Selection-Runtime ist nicht verfuegbar.");
+    }
+    const host = this.createKitHost();
+    this.kitSelectionController = createSelectionController({
+      host,
+      document,
+      window,
+      overlayOptions: { zIndex: 2147483190 },
+    });
+    return this.kitSelectionController;
+  }
+
+  destroyKitController() {
+    this.kitSelectionController?.stop?.();
+    this.kitSelectionController?.destroy?.();
+    this.kitSelectionController = null;
+    this.kitSelectionHost = null;
+  }
+
+  async switchSelectionRuntime(nextRuntime) {
+    const normalized = nextRuntime === "kit" ? "kit" : "bbm";
+    if (normalized === this.selectionRuntime) return;
+    this.stopSelectionMode();
+    if (normalized === "kit") {
+      this.bbmSelectionController?.stop?.();
+      this.selectedOverlay?.clear?.();
+      try {
+        await this.ensureKitController();
+        this.selectionRuntime = "kit";
+        this.selectionController = this.kitSelectionController;
+        this.runtimeError = "";
+      } catch (error) {
+        this.destroyKitController();
+        this.selectionRuntime = "bbm";
+        this.selectionController = this.bbmSelectionController;
+        this.runtimeError = error?.message || "Kit-Runtime konnte nicht gestartet werden.";
+      }
+    } else {
+      this.destroyKitController();
+      this.selectionRuntime = "bbm";
+      this.selectionController = this.bbmSelectionController;
+      this.runtimeError = "";
+      this.syncSelectedOverlay();
+    }
+    this.selectionModeActive = false;
+    this.hoverTargetLabel = "keines";
+    this.renderAll();
+  }
+
+  handleKitRuntimeError(error) {
+    this.runtimeError = error?.message || String(error || "Kit-Runtime-Fehler");
+    this.destroyKitController();
+    this.selectionModeActive = false;
+    this.hoverTargetLabel = "keines";
+    if (this.selectionRuntime === "kit") {
+      this.selectionController = null;
+    }
+    this.renderAll();
   }
 }
 

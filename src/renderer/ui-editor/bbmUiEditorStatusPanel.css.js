@@ -26,6 +26,8 @@ export function injectBbmUiEditorStatusPanelStyles() {
     .bbm-ui-editor-element[aria-pressed="true"] { border-color: #2563eb; background: #eff6ff; }
     .bbm-ui-editor-element span { color: #64748b; font-size: 12px; overflow-wrap: anywhere; }
     .bbm-ui-editor-element em { color: #2563eb; font-size: 12px; font-style: normal; font-weight: 800; }
+    .bbm-ui-editor-panel__runtime { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-weight: 700; color: #172033; }
+    .bbm-ui-editor-panel__runtime select { border: 1px solid #b9c4d0; border-radius: 8px; padding: 7px 10px; background: #fff; color: #172033; font-weight: 700; }
     .bbm-ui-editor-panel__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     .bbm-ui-editor-panel__empty { color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; }
     @media (max-width: 980px) { .bbm-ui-editor-panel__grid { grid-template-columns: 1fr; } }

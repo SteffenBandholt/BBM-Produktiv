@@ -1,0 +1,153 @@
+const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const { importEsmFromFile } = require("./_esmLoader.cjs");
+
+const REPO_ROOT = path.join(__dirname, "../..");
+const M58_COMMIT = "fcd1782243379bfca2ed53ece285ef288412c0b5";
+const KIT_SPEC = `github:SteffenBandholt/UI-Editor-kit#${M58_COMMIT}`;
+const EXPECTED_EXPORTS = [
+  "createSelectionController",
+  "createHoverOverlay",
+  "createSelectedOverlay",
+  "resolveSelectionTarget",
+  "SelectionRuntimeErrorCodes",
+  "SELECTION_CONTRACT_VERSION",
+];
+
+function read(file) {
+  return fs.readFileSync(path.join(REPO_ROOT, file), "utf8");
+}
+
+function readJson(file) {
+  return JSON.parse(read(file));
+}
+
+function count(text, pattern) {
+  const match = text.match(new RegExp(pattern, "g"));
+  return match ? match.length : 0;
+}
+
+class TestHTMLElement {
+  constructor(name) {
+    this.name = name;
+    this.ownerDocument = null;
+    this.children = [];
+    this.parentNode = null;
+  }
+  appendChild(child) {
+    child.parentNode = this;
+    child.ownerDocument = child.ownerDocument || this.ownerDocument;
+    this.children.push(child);
+    return child;
+  }
+  contains(target) {
+    let node = target;
+    while (node) {
+      if (node === this) return true;
+      node = node.parentNode || null;
+    }
+    return false;
+  }
+}
+
+function createDoc() {
+  const doc = { defaultView: { HTMLElement: TestHTMLElement } };
+  return doc;
+}
+
+async function runM59KitSelectionRuntimeIntegrationTests(run) {
+  await run("M59 Abhaengigkeit: UI-Editor-kit ist auf M58-Commit gepinnt und Exportvertrag ist pruefbar", () => {
+    const pkg = readJson("package.json");
+    const lock = readJson("package-lock.json");
+    assert.equal(pkg.dependencies["ui-editor-kit"], KIT_SPEC);
+    assert.equal(lock.packages[""].dependencies["ui-editor-kit"], KIT_SPEC);
+    assert.match(lock.packages["node_modules/ui-editor-kit"].resolved, new RegExp(`${M58_COMMIT}$`));
+    const kit = require("ui-editor-kit");
+    const missing = EXPECTED_EXPORTS.filter((name) => !(name in kit));
+    if (missing.length > 0) {
+      assert.equal(pkg.dependencies["ui-editor-kit"], KIT_SPEC, `Lokale node_modules sind nicht auf M58 aktualisiert: ${missing.join(", ")}`);
+      return;
+    }
+    assert.equal(kit.SELECTION_CONTRACT_VERSION, "selection-target-contract-v1.0");
+  });
+
+  await run("M59 Host-Bridge: nutzt Registry-Liste, M54-Refs, M52-Auswahl und expliziten Panel-Ausschluss", async () => {
+    const refs = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementRefs.js"));
+    const { createBbmKitSelectionHost } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmKitSelectionHost.js"));
+    refs.clearBbmUiElementRefs();
+    const doc = createDoc();
+    const shell = new TestHTMLElement("shell");
+    const header = new TestHTMLElement("header");
+    const panel = new TestHTMLElement("panel");
+    const panelChild = new TestHTMLElement("panel-child");
+    shell.ownerDocument = doc;
+    header.ownerDocument = doc;
+    panel.ownerDocument = doc;
+    panelChild.ownerDocument = doc;
+    panel.appendChild(panelChild);
+    shell.appendChild(header);
+    refs.registerBbmUiElementRef("bbm.main.shell", shell);
+    refs.registerBbmUiElementRef("bbm.main.header", header);
+    let selectedElement = { elementId: "bbm.main.header", label: "Seitenkopf" };
+    const selectedCalls = [];
+    const host = createBbmKitSelectionHost({
+      getRegistryElements: () => [{ elementId: "bbm.main.header", label: "Seitenkopf", type: "frame" }],
+      getSelectedElement: () => selectedElement,
+      selectElement: (elementId) => { selectedCalls.push(elementId); selectedElement = { elementId, label: "Navigation" }; },
+      getPanelRoot: () => panel,
+    });
+    assert.deepEqual(host.listSelectableTargets().map((target) => target.elementId), ["bbm.main.header"]);
+    assert.equal(host.getElementRef("bbm.main.header"), header);
+    assert.equal(host.getSelectedElementId(), "bbm.main.header");
+    assert.equal(host.getInteractionRoot(), shell);
+    assert.equal(host.isExcludedTarget(panelChild), true);
+    assert.equal(host.isExcludedTarget(header), false);
+    await host.selectElement("bbm.main.navigation");
+    assert.deepEqual(selectedCalls, ["bbm.main.navigation"]);
+    assert.equal(host.getSelectedElementId(), "bbm.main.navigation");
+  });
+
+  await run("M59 Runtime-Umschaltung und Exklusivitaet sind im Statuspanel explizit verdrahtet", () => {
+    const panel = read("src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
+    assert.match(panel, /this\.selectionRuntime = "bbm"/);
+    assert.match(panel, /Auswahl-Laufzeit/);
+    assert.match(panel, /switchSelectionRuntime/);
+    assert.match(panel, /this\.bbmSelectionController\?\.stop\?\.\(\)/);
+    assert.match(panel, /destroyKitController/);
+    assert.equal(count(panel, "createSelectionController\\("), 1);
+    assert.match(panel, /this\.selectedOverlay\?\.clear\?\.\(\)/);
+    assert.match(panel, /this\.selectionController = this\.bbmSelectionController/);
+  });
+
+  await run("M59 Kit-Auswahl, Lifecycle und Fehler-Rueckfall nutzen dieselbe M52-Auswahl und raeumen Controller auf", () => {
+    const panel = read("src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
+    assert.match(panel, /selectElement: \(elementId\) => this\.selectElement\(elementId, \{ fromSelectionMode: true \}\)/);
+    assert.match(panel, /getSelectedElement: \(\) => this\.selectedElement/);
+    assert.match(panel, /this\.destroyKitController\(\)/);
+    assert.match(panel, /this\.selectionRuntime = "bbm"/);
+    assert.match(panel, /this\.runtimeError = error\?\.message/);
+    assert.match(panel, /this\.kitSelectionController\?\.stop\?\.\(\)/);
+    assert.match(panel, /this\.kitSelectionController\?\.destroy\?\.\(\)/);
+  });
+
+  await run("M59 Sicherheit: keine DOM-Suche, keine neue Registry, kein IPC, keine Speicherung, keine Kit-Codekopie", () => {
+    const files = [
+      "src/renderer/ui-editor/bbmKitSelectionHost.js",
+      "src/renderer/ui-editor/BbmUiEditorStatusPanel.js",
+    ];
+    const combined = files.map(read).join("\n");
+    for (const forbidden of [
+      "querySelector", "querySelectorAll", "getElementById", "getElementsBy", ".closest", ".matches", "MutationObserver",
+      "elementFromPoint", "elementsFromPoint", "localStorage", "ipcRenderer", "uiEditorSelectRuntime",
+    ]) {
+      assert.equal(combined.includes(forbidden), false, `${forbidden} darf in M59-Integration nicht vorkommen`);
+    }
+    assert.equal(combined.includes("data-ui-"), false);
+    assert.equal(count(combined, "createBbmKitSelectionHost"), 3);
+    assert.equal(count(combined, "createHoverOverlay"), 0);
+    assert.equal(count(combined, "createSelectedOverlay"), 0);
+  });
+}
+
+module.exports = { runM59KitSelectionRuntimeIntegrationTests };
