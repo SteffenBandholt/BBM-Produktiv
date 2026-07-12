@@ -42,6 +42,7 @@ export function createBbmUiElementSelectionController(options = {}) {
   let ownerWindow = null;
   let hoveredElementId = "";
   let hoveredElement = null;
+  let hoveredElementSelected = false;
 
   function getPanelRoot() {
     return typeof options.getPanelRoot === "function" ? options.getPanelRoot() : options.panelRoot || null;
@@ -64,6 +65,7 @@ export function createBbmUiElementSelectionController(options = {}) {
   function clearHover() {
     hoveredElementId = "";
     hoveredElement = null;
+    hoveredElementSelected = false;
     overlay.clearHover();
   }
 
@@ -73,10 +75,12 @@ export function createBbmUiElementSelectionController(options = {}) {
       clearHover();
       return;
     }
-    if (hit.elementId === hoveredElementId && hit.element === hoveredElement) return;
+    const selectedNow = isSelectedElement(hit.elementId, isElementSelected);
+    if (hit.elementId === hoveredElementId && hit.element === hoveredElement && selectedNow === hoveredElementSelected) return;
     hoveredElementId = hit.elementId;
     hoveredElement = hit.element;
-    if (isSelectedElement(hit.elementId, isElementSelected)) {
+    hoveredElementSelected = selectedNow;
+    if (selectedNow) {
       overlay.clearHover();
       return;
     }
@@ -85,7 +89,9 @@ export function createBbmUiElementSelectionController(options = {}) {
 
   function refreshHover() {
     if (!hoveredElementId || !hoveredElement) return;
-    if (isSelectedElement(hoveredElementId, isElementSelected)) {
+    const selectedNow = isSelectedElement(hoveredElementId, isElementSelected);
+    hoveredElementSelected = selectedNow;
+    if (selectedNow) {
       overlay.clearHover();
       return;
     }
@@ -159,6 +165,7 @@ export function createBbmUiElementSelectionController(options = {}) {
       ownerWindow = ownerDocument?.defaultView || null;
       hoveredElementId = "";
       hoveredElement = null;
+      hoveredElementSelected = false;
       overlay.mount(ownerDocument);
       shellElement.addEventListener("pointermove", handlePointerMove);
       shellElement.addEventListener("click", handleClick, true);
@@ -181,6 +188,8 @@ export function createBbmUiElementSelectionController(options = {}) {
       return active;
     },
     getState,
+    refreshHover,
+    syncHoverWithSelection: refreshHover,
     resolveTargetForTest: resolveTarget,
   };
 }

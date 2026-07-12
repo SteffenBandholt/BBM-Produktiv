@@ -132,6 +132,7 @@ export class BbmUiEditorStatusPanel {
       this.selectedElement = null;
       this.renderAll();
       this.syncSelectedOverlay();
+      this.selectionController?.syncHoverWithSelection?.();
       return;
     }
 
@@ -146,6 +147,7 @@ export class BbmUiEditorStatusPanel {
     this.selectedElement = detailsResult?.selectedElement || null;
     this.renderAll();
     this.syncSelectedOverlay();
+    this.selectionController?.syncHoverWithSelection?.();
   }
 
   showLoadError(error) {
@@ -155,6 +157,7 @@ export class BbmUiEditorStatusPanel {
     this.selectedElement = null;
     this.renderAll();
     this.syncSelectedOverlay();
+    this.selectionController?.syncHoverWithSelection?.();
   }
 
   renderAll() {
@@ -351,12 +354,14 @@ export class BbmUiEditorStatusPanel {
     }
     await this.refresh();
     this.syncSelectedOverlay();
+    this.selectionController?.syncHoverWithSelection?.();
     if (options.fromSelectionMode) {
       const meta = this.getElementMeta(elementId);
       this.selectionMessage = `Ausgewaehlt: ${asText(meta?.label, elementId)}`;
       this.selectionModeActive = this.selectionController?.isActive?.() || false;
       this.renderAll();
       this.syncSelectedOverlay();
+      this.selectionController?.syncHoverWithSelection?.();
     }
   }
 

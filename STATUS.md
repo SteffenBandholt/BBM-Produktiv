@@ -1,5 +1,21 @@
 # STATUS.md â€” BBM-Produktiv
 
+### M56-Fix PR #196 – Hoverrahmen nach Klick sofort entfernen
+- Status: erledigt
+- Beschreibung:
+  - Randfehler behoben: Wenn ein gehovertes Element angeklickt und dadurch ausgewaehlt wird, wird der blaue Hoverrahmen ohne weitere Mausbewegung entfernt.
+  - Der M55-Controller prueft den Auswahlstatus auch bei identischem Hoverziel erneut und bietet `syncHoverWithSelection()` fuer die Statuspanel-Synchronisation nach `refresh()`/`selectElement()`.
+  - Keine neue fachliche Auswahlhaltung, keine neue IPC-/Speicherlogik, keine Layoutmutation.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/bbmUiElementSelection.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m56PersistentSelectionFrame.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - M57 bleibt: fachlich eindeutige Actions-Referenz klaeren oder weiteren Ausschluss von `bbm.main.actions` bestaetigen.
+
+
 ### M56 – Dauerhafter Auswahlrahmen im UI-Editor-Statuspanel
 - Status: erledigt
 - Beschreibung:

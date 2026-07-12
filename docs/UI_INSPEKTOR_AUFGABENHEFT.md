@@ -66,6 +66,13 @@ Aktueller Stand:
 
 
 
+
+## Statusupdate M56-Fix PR #196
+- Randfehler korrigiert: Klick auf ein zuvor gehovertes Element entfernt den blauen Hoverrahmen sofort, ohne weitere Mausbewegung.
+- Der Controller prueft den aktuellen Auswahlstatus nun auch bei unveraendertem Hoverziel erneut und stellt `syncHoverWithSelection()` fuer die Statuspanel-Synchronisation bereit.
+- Keine neue fachliche Auswahlhaltung; die Pruefung liest weiterhin live aus dem bestehenden `selectedElement`-Pfad.
+- `scripts/tests/m56PersistentSelectionFrame.test.cjs` deckt den tatsaechlichen Hover-Klick-Ablauf, Auswahlwechsel, Reset und Escape ab.
+
 ## Statusupdate M56
 - M56 ergaenzt im bestehenden UI-Editor-Statuspanel einen dauerhaften orangefarbenen Auswahlrahmen fuer das aktuell im M52-Statusmodell ausgewaehlte Element.
 - Quelle bleibt ausschliesslich `selectedElement` nach `refresh()` beziehungsweise nach dem bestehenden `uiEditorSelectElement`-Pfad.

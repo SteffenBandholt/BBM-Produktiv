@@ -219,6 +219,72 @@ async function runM56PersistentSelectionFrameTests(run) {
     assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
   });
 
+
+  await run("M56 Regression: Klick auf gehovertes Ziel entfernt blauen Hover sofort", async () => {
+    const { doc, shell, nav, header } = await setupRefs();
+    const previousDocument = global.document;
+    const previousWindow = global.window;
+    let selectedId = "";
+    const elements = [
+      { elementId: "bbm.main.header", label: "Seitenkopf", type: "frame", scope: "bbm", capabilities: [], allowedChanges: [] },
+      { elementId: "bbm.main.navigation", label: "Navigation", type: "frame", scope: "bbm", capabilities: [], allowedChanges: [] },
+    ];
+    global.document = doc;
+    global.window = {
+      bbmDb: {
+        uiEditorOpen: async () => ({ ok: true, runtimeStarted: true, adapterValid: true, layout: {} }),
+        uiEditorGetElements: async () => ({ ok: true, elements: elements.map((element) => ({ ...element, selected: element.elementId === selectedId })) }),
+        uiEditorGetSelectedElementDetails: async () => ({ ok: true, selectedElement: elements.find((element) => element.elementId === selectedId) || null }),
+        uiEditorSelectElement: async ({ elementId }) => { selectedId = elementId; return { ok: true }; },
+        uiEditorClose: async () => ({ ok: true }),
+      },
+    };
+    try {
+      const { createBbmUiEditorStatusPanel } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js"));
+      const panel = createBbmUiEditorStatusPanel({ router: { activeSection: "uiEditor", showSettings: async () => {} } });
+      const root = panel.render();
+      doc.body.appendChild(root);
+      await panel.refresh();
+      panel.startSelectionMode();
+
+      shell.dispatch("pointermove", eventFor(header));
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 1);
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
+
+      shell.dispatch("click", eventFor(header));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      assert.equal(selectedId, "bbm.main.header");
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 0);
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
+
+      shell.dispatch("pointermove", eventFor(nav));
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 1);
+      shell.dispatch("click", eventFor(nav));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      assert.equal(selectedId, "bbm.main.navigation");
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 0);
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
+
+      await panel.resetSelection();
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
+      shell.dispatch("pointermove", eventFor(nav));
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 1);
+
+      shell.dispatch("click", eventFor(header));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      shell.dispatch("pointermove", eventFor(nav));
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 1);
+      doc.dispatch("keydown", { key: "Escape" });
+      assert.equal(panel.selectedElement.elementId, "bbm.main.header");
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 0);
+      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
+      panel.destroy();
+    } finally {
+      global.document = previousDocument;
+      global.window = previousWindow;
+    }
+  });
+
   await run("M56 Statuspanel: selectedElement ist Quelle, refresh/select/reset/close/destroy synchronisieren", async () => {
     const { doc } = await setupRefs();
     const previousDocument = global.document;
