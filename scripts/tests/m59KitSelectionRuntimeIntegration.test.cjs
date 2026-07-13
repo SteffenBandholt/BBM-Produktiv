@@ -56,6 +56,49 @@ function createDoc() {
   return doc;
 }
 
+class TestNode {
+  constructor(tagName) {
+    this.tagName = tagName;
+    this.children = [];
+    this.attributes = {};
+    this.className = "";
+    this.hidden = false;
+    this.textContent = "";
+    this.type = "";
+    this.value = "";
+    this.disabled = false;
+  }
+  append(...children) {
+    this.children.push(...children);
+  }
+  appendChild(child) {
+    this.children.push(child);
+    return child;
+  }
+  setAttribute(name, value) {
+    this.attributes[name] = String(value);
+  }
+  addEventListener() {}
+  set innerHTML(_value) {
+    this.children = [];
+  }
+}
+
+function createPanelDocument() {
+  return {
+    createElement: (tagName) => new TestNode(tagName),
+  };
+}
+
+function findFirstNode(root, tagName) {
+  if (root?.tagName === tagName) return root;
+  for (const child of root?.children || []) {
+    const found = findFirstNode(child, tagName);
+    if (found) return found;
+  }
+  return null;
+}
+
 async function runM59KitSelectionRuntimeIntegrationTests(run) {
   await run("M59 Abhaengigkeit: UI-Editor-kit ist auf M59-Kit-Merge-Commit gepinnt und Exportvertrag ist pruefbar", () => {
     const pkg = readJson("package.json");
@@ -186,6 +229,35 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
       assert.equal(selectedClearCount, 3);
     } finally {
       global.window = previousWindow;
+    }
+  });
+
+  await run("M59 Verhalten: Runtime-Select behaelt Kit-Wert ueber renderAll", async () => {
+    const previousDocument = global.document;
+    try {
+      global.document = createPanelDocument();
+      const { BbmUiEditorStatusPanel } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js"));
+      const panel = new BbmUiEditorStatusPanel({});
+      panel.statusNode = new TestNode("section");
+      panel.elementsNode = new TestNode("section");
+      panel.detailsNode = new TestNode("section");
+      panel.errorNode = new TestNode("div");
+      panel.status = { ok: true };
+      panel.refStatus = { count: 0, expectedCount: 0, missingIds: [] };
+      panel.elements = [];
+      panel.selectedElement = null;
+      panel.selectionRuntime = "kit";
+
+      panel.renderAll();
+      assert.equal(findFirstNode(panel.statusNode, "select")?.value, "kit");
+      panel.renderAll();
+      assert.equal(findFirstNode(panel.statusNode, "select")?.value, "kit");
+
+      panel.selectionRuntime = "bbm";
+      panel.renderAll();
+      assert.equal(findFirstNode(panel.statusNode, "select")?.value, "bbm");
+    } finally {
+      global.document = previousDocument;
     }
   });
 

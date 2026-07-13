@@ -222,7 +222,6 @@ export class BbmUiEditorStatusPanel {
     const runtimeText = createNode("span");
     runtimeText.textContent = "Auswahl-Laufzeit:";
     const runtimeSelect = createNode("select");
-    runtimeSelect.value = this.selectionRuntime;
     const bbmOption = createNode("option");
     bbmOption.value = "bbm";
     bbmOption.textContent = "BBM";
@@ -230,6 +229,7 @@ export class BbmUiEditorStatusPanel {
     kitOption.value = "kit";
     kitOption.textContent = "UI-Editor-kit";
     runtimeSelect.append(bbmOption, kitOption);
+    runtimeSelect.value = this.selectionRuntime;
     runtimeSelect.addEventListener("change", () => {
       this.switchSelectionRuntime(runtimeSelect.value).catch((error) => this.handleKitRuntimeError(error));
     });
