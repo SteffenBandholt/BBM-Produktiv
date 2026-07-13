@@ -144,8 +144,7 @@ export class BbmUiEditorStatusPanel {
       this.elements = [];
       this.selectedElement = null;
       this.renderAll();
-      this.syncSelectedOverlay();
-      this.getActiveController()?.syncHoverWithSelection?.();
+      this.syncActiveSelectionRuntime();
       return;
     }
 
@@ -159,8 +158,7 @@ export class BbmUiEditorStatusPanel {
     this.elements = Array.isArray(elementsResult?.elements) ? elementsResult.elements : [];
     this.selectedElement = detailsResult?.selectedElement || null;
     this.renderAll();
-    this.syncSelectedOverlay();
-    this.getActiveController()?.syncHoverWithSelection?.();
+    this.syncActiveSelectionRuntime();
   }
 
   showLoadError(error) {
@@ -169,8 +167,7 @@ export class BbmUiEditorStatusPanel {
     this.elements = [];
     this.selectedElement = null;
     this.renderAll();
-    this.syncSelectedOverlay();
-    this.getActiveController()?.syncHoverWithSelection?.();
+    this.syncActiveSelectionRuntime();
   }
 
   renderAll() {
@@ -365,7 +362,7 @@ export class BbmUiEditorStatusPanel {
     this.selectionModeActive = false;
     this.hoverTargetLabel = "keines";
     this.renderAll();
-    this.syncSelectedOverlay();
+    this.syncActiveSelectionRuntime();
   }
 
   destroy() {
@@ -389,21 +386,20 @@ export class BbmUiEditorStatusPanel {
       return;
     }
     await this.refresh();
-    this.syncSelectedOverlay();
-    this.getActiveController()?.syncHoverWithSelection?.();
+    this.syncActiveSelectionRuntime();
     if (options.fromSelectionMode) {
       const meta = this.getElementMeta(elementId);
       this.selectionMessage = `Ausgewaehlt: ${asText(meta?.label, elementId)}`;
       this.selectionModeActive = this.getActiveController()?.isActive?.() || false;
       this.renderAll();
-      this.syncSelectedOverlay();
-      this.getActiveController()?.syncHoverWithSelection?.();
+      this.syncActiveSelectionRuntime();
     }
   }
 
   async resetSelection() {
     await this.selectElement("");
-    this.selectedOverlay?.clear?.();
+    this.selectedElement = null;
+    this.syncActiveSelectionRuntime();
   }
 
   getVisualSelectionLabel() {
@@ -422,6 +418,17 @@ export class BbmUiEditorStatusPanel {
       this.selectedOverlay?.clear?.();
       return false;
     }
+  }
+
+
+  syncActiveSelectionRuntime() {
+    if (this.selectionRuntime === "kit") {
+      this.selectedOverlay?.clear?.();
+      this.kitSelectionController?.syncWithSelection?.();
+      return;
+    }
+    this.syncSelectedOverlay();
+    this.bbmSelectionController?.syncHoverWithSelection?.();
   }
 
   selectionRuntimeLabel() {
@@ -472,7 +479,10 @@ export class BbmUiEditorStatusPanel {
       host,
       document,
       window,
-      overlayOptions: { zIndex: 2147483190 },
+      overlayOptions: {
+        hover: { zIndex: 2147483190 },
+        selected: { zIndex: 2147483191 },
+      },
     });
     return this.kitSelectionController;
   }
@@ -496,6 +506,7 @@ export class BbmUiEditorStatusPanel {
         this.selectionRuntime = "kit";
         this.selectionController = this.kitSelectionController;
         this.runtimeError = "";
+        this.syncActiveSelectionRuntime();
       } catch (error) {
         this.destroyKitController();
         this.selectionRuntime = "bbm";
@@ -507,7 +518,7 @@ export class BbmUiEditorStatusPanel {
       this.selectionRuntime = "bbm";
       this.selectionController = this.bbmSelectionController;
       this.runtimeError = "";
-      this.syncSelectedOverlay();
+      this.syncActiveSelectionRuntime();
     }
     this.selectionModeActive = false;
     this.hoverTargetLabel = "keines";

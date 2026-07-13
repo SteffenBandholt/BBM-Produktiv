@@ -117,6 +117,10 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
     assert.match(panel, /destroyKitController/);
     assert.equal(count(panel, "createSelectionController\\("), 1);
     assert.match(panel, /this\.selectedOverlay\?\.clear\?\.\(\)/);
+    assert.match(panel, /syncActiveSelectionRuntime/);
+    assert.match(panel, /syncWithSelection/);
+    assert.match(panel, /hover: \{ zIndex:/);
+    assert.match(panel, /selected: \{ zIndex:/);
     assert.match(panel, /this\.selectionController = this\.bbmSelectionController/);
   });
 
@@ -129,6 +133,56 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
     assert.match(panel, /this\.runtimeError = error\?\.message/);
     assert.match(panel, /this\.kitSelectionController\?\.stop\?\.\(\)/);
     assert.match(panel, /this\.kitSelectionController\?\.destroy\?\.\(\)/);
+  });
+
+
+  await run("M59 Verhalten: Kit-Synchronisation nutzt syncWithSelection bei Reset und Refresh", async () => {
+    const previousWindow = global.window;
+    try {
+      const { BbmUiEditorStatusPanel } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js"));
+      const panel = new BbmUiEditorStatusPanel({});
+      let kitSyncCount = 0;
+      let bbmHoverSyncCount = 0;
+      let selectedClearCount = 0;
+      let selectedSyncCount = 0;
+      panel.renderAll = () => {};
+      panel.selectionRuntime = "kit";
+      panel.selectedElement = { elementId: "bbm.main.header", label: "Seitenkopf" };
+      panel.kitSelectionController = { syncWithSelection() { kitSyncCount += 1; } };
+      panel.bbmSelectionController = { syncHoverWithSelection() { bbmHoverSyncCount += 1; } };
+      panel.selectedOverlay = {
+        clear() { selectedClearCount += 1; },
+        sync() { selectedSyncCount += 1; return true; },
+      };
+
+      panel.syncActiveSelectionRuntime();
+      assert.equal(kitSyncCount, 1);
+      assert.equal(bbmHoverSyncCount, 0);
+      assert.equal(selectedClearCount, 1);
+      assert.equal(selectedSyncCount, 0);
+
+      panel.selectElement = async () => { panel.selectedElement = null; };
+      await panel.resetSelection();
+      assert.equal(panel.selectedElement, null);
+      assert.equal(kitSyncCount, 2);
+      assert.equal(bbmHoverSyncCount, 0);
+      assert.equal(selectedClearCount, 2);
+
+      global.window = {
+        bbmDb: {
+          uiEditorOpen: async () => ({ ok: true, runtimeStarted: true, adapterValid: true }),
+          uiEditorGetElements: async () => ({ ok: true, elements: [] }),
+          uiEditorGetSelectedElementDetails: async () => ({ ok: true, selectedElement: null }),
+        },
+      };
+      await panel.refresh();
+      assert.equal(panel.selectedElement, null);
+      assert.equal(kitSyncCount, 3);
+      assert.equal(bbmHoverSyncCount, 0);
+      assert.equal(selectedClearCount, 3);
+    } finally {
+      global.window = previousWindow;
+    }
   });
 
   await run("M59 Sicherheit: keine DOM-Suche, keine neue Registry, kein IPC, keine Speicherung, keine Kit-Codekopie", () => {
@@ -151,3 +205,24 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
 }
 
 module.exports = { runM59KitSelectionRuntimeIntegrationTests };
+
+
+if (require.main === module) {
+  let failed = false;
+  const run = async (name, fn) => {
+    try {
+      await fn();
+      console.log(`ok - ${name}`);
+    } catch (error) {
+      failed = true;
+      console.error(`not ok - ${name}`);
+      console.error(error?.stack || error?.message || error);
+    }
+  };
+  runM59KitSelectionRuntimeIntegrationTests(run).then(() => {
+    if (failed) process.exitCode = 1;
+  }).catch((error) => {
+    process.exitCode = 1;
+    console.error(error?.stack || error?.message || error);
+  });
+}
