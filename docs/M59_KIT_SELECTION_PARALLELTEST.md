@@ -3,10 +3,10 @@
 ## Zweck
 M59 integriert die generische Selection-Runtime aus dem UI-Editor-kit erstmals kontrolliert in BBM. Ziel ist ein praktischer Vergleich mit der bewährten BBM-Auswahlruntime, ohne diese zu ersetzen.
 
-## M58-Commit-Pin
+## M59-Kit-Merge-Commit-Pin
 Die Abhängigkeit `ui-editor-kit` ist auf diesen Commit gepinnt:
 
-`github:SteffenBandholt/UI-Editor-kit#fcd1782243379bfca2ed53ece285ef288412c0b5`
+`github:SteffenBandholt/UI-Editor-kit#af1fbabd0b875a4ab382ed84c5cd986c3c7acb14`
 
 Der erwartete Selection-Vertrag ist `selection-target-contract-v1.0`.
 
@@ -14,7 +14,7 @@ Der erwartete Selection-Vertrag ist `selection-target-contract-v1.0`.
 Die M55/M56-Runtime bleibt erhalten und ist weiterhin die Voreinstellung. Sie nutzt die bestehenden expliziten BBM-Refs, den blauen Hoverrahmen und den orangefarbenen dauerhaften Auswahlrahmen.
 
 ## Neue Kit-Runtime
-Die Kit-Runtime wird nur erzeugt, wenn im Statuspanel auf `UI-Editor-kit` umgeschaltet wird. Sie wird über `createSelectionController({ host, document, window, overlayOptions })` angebunden. BBM kopiert keinen Kit-Controller- oder Overlay-Code.
+Die Kit-Runtime wird nur erzeugt, wenn im Statuspanel auf `UI-Editor-kit` umgeschaltet wird. Sie wird über `createSelectionController({ host, document, window, overlayOptions })` angebunden. BBM kopiert keinen Kit-Controller- oder Overlay-Code. Geladen wird der Browser-Bundle direkt aus `../../../node_modules/ui-editor-kit/dist/selection-runtime.browser.mjs`; ein dynamisches `import("ui-editor-kit")` wird im Renderer nicht verwendet.
 
 ## Runtime-Umschaltung
 Das Statuspanel zeigt `Auswahl-Laufzeit` mit den Optionen:

@@ -27,7 +27,7 @@
     "better-sqlite3": "^12.6.2",
     "extract-zip": "^2.0.1",
     "pdfjs-dist": "^4.10.38",
-    "ui-editor-kit": "github:SteffenBandholt/UI-Editor-kit#fcd1782243379bfca2ed53ece285ef288412c0b5",
+    "ui-editor-kit": "github:SteffenBandholt/UI-Editor-kit#af1fbabd0b875a4ab382ed84c5cd986c3c7acb14",
     "yauzl": "^3.2.1"
   },
   "build": {

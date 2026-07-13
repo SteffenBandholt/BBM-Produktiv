@@ -2744,7 +2744,7 @@ Wichtig:
 
 ## M59 – UI-Editor-kit Selection-Runtime Paralleltest
 - Status: umgesetzt in diesem Arbeitsstand.
-- UI-Editor-kit ist auf M58-Commit `fcd1782243379bfca2ed53ece285ef288412c0b5` gepinnt.
+- UI-Editor-kit ist auf M59-Kit-Merge-Commit `af1fbabd0b875a4ab382ed84c5cd986c3c7acb14` gepinnt.
 - Das Statuspanel kann zwischen `BBM` und `UI-Editor-kit` umschalten; Standard bleibt `BBM`.
 - Neue Host-Bridge: `src/renderer/ui-editor/bbmKitSelectionHost.js`.
 - Gemeinsame Auswahlwahrheit bleibt der bestehende M52-Auswahlstatus.

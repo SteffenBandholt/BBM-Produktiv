@@ -4,8 +4,8 @@ const path = require("node:path");
 const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const REPO_ROOT = path.join(__dirname, "../..");
-const M58_COMMIT = "fcd1782243379bfca2ed53ece285ef288412c0b5";
-const KIT_SPEC = `github:SteffenBandholt/UI-Editor-kit#${M58_COMMIT}`;
+const KIT_MERGE_COMMIT = "af1fbabd0b875a4ab382ed84c5cd986c3c7acb14";
+const KIT_SPEC = `github:SteffenBandholt/UI-Editor-kit#${KIT_MERGE_COMMIT}`;
 const EXPECTED_EXPORTS = [
   "createSelectionController",
   "createHoverOverlay",
@@ -57,19 +57,21 @@ function createDoc() {
 }
 
 async function runM59KitSelectionRuntimeIntegrationTests(run) {
-  await run("M59 Abhaengigkeit: UI-Editor-kit ist auf M58-Commit gepinnt und Exportvertrag ist pruefbar", () => {
+  await run("M59 Abhaengigkeit: UI-Editor-kit ist auf M59-Kit-Merge-Commit gepinnt und Exportvertrag ist pruefbar", () => {
     const pkg = readJson("package.json");
     const lock = readJson("package-lock.json");
     assert.equal(pkg.dependencies["ui-editor-kit"], KIT_SPEC);
     assert.equal(lock.packages[""].dependencies["ui-editor-kit"], KIT_SPEC);
-    assert.match(lock.packages["node_modules/ui-editor-kit"].resolved, new RegExp(`${M58_COMMIT}$`));
-    const kit = require("ui-editor-kit");
-    const missing = EXPECTED_EXPORTS.filter((name) => !(name in kit));
-    if (missing.length > 0) {
-      assert.equal(pkg.dependencies["ui-editor-kit"], KIT_SPEC, `Lokale node_modules sind nicht auf M58 aktualisiert: ${missing.join(", ")}`);
+    assert.match(lock.packages["node_modules/ui-editor-kit"].resolved, new RegExp(`${KIT_MERGE_COMMIT}$`));
+    const browserRuntimePath = path.join(REPO_ROOT, "node_modules/ui-editor-kit/dist/selection-runtime.browser.mjs");
+    if (!fs.existsSync(browserRuntimePath)) {
       return;
     }
-    assert.equal(kit.SELECTION_CONTRACT_VERSION, "selection-target-contract-v1.0");
+    return importEsmFromFile(browserRuntimePath).then((kit) => {
+      const missing = EXPECTED_EXPORTS.filter((name) => !(name in kit));
+      assert.deepEqual(missing, [], `Lokale node_modules sind nicht auf den M59-Kit-Merge-Commit aktualisiert: ${missing.join(", ")}`);
+      assert.equal(kit.SELECTION_CONTRACT_VERSION, "selection-target-contract-v1.0");
+    });
   });
 
   await run("M59 Host-Bridge: nutzt Registry-Liste, M54-Refs, M52-Auswahl und expliziten Panel-Ausschluss", async () => {
@@ -113,6 +115,8 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
     assert.match(panel, /this\.selectionRuntime = "bbm"/);
     assert.match(panel, /Auswahl-Laufzeit/);
     assert.match(panel, /switchSelectionRuntime/);
+    assert.match(panel, /selection-runtime\.browser\.mjs/);
+    assert.doesNotMatch(panel, /import\(["']ui-editor-kit["']\)/);
     assert.match(panel, /this\.bbmSelectionController\?\.stop\?\.\(\)/);
     assert.match(panel, /destroyKitController/);
     assert.equal(count(panel, "createSelectionController\\("), 1);

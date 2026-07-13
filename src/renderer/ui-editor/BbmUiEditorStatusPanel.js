@@ -469,7 +469,7 @@ export class BbmUiEditorStatusPanel {
 
   async ensureKitController() {
     if (this.kitSelectionController) return this.kitSelectionController;
-    const uiEditorKit = await import("ui-editor-kit");
+    const uiEditorKit = await import("../../../node_modules/ui-editor-kit/dist/selection-runtime.browser.mjs");
     const createSelectionController = uiEditorKit?.createSelectionController || uiEditorKit?.default?.createSelectionController;
     if (typeof createSelectionController !== "function") {
       throw new Error("UI-Editor-kit Selection-Runtime ist nicht verfuegbar.");
