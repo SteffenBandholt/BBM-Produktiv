@@ -18,17 +18,17 @@
     "test:node": "node scripts/test.cjs"
   },
   "devDependencies": {
-    "eslint": "^8.57.1",
     "electron": "^30.0.0",
-    "electron-builder": "^24.13.3"
+    "electron-builder": "^24.13.3",
+    "eslint": "^8.57.1"
   },
   "dependencies": {
-    "better-sqlite3": "^12.6.2",
-    "pdfjs-dist": "^4.10.38",
     "archiver": "^5.3.2",
+    "better-sqlite3": "^12.6.2",
     "extract-zip": "^2.0.1",
-    "yauzl": "^3.2.1",
-    "ui-editor-kit": "github:SteffenBandholt/UI-Editor-kit#v0.2.0"
+    "pdfjs-dist": "^4.10.38",
+    "ui-editor-kit": "github:SteffenBandholt/UI-Editor-kit#af1fbabd0b875a4ab382ed84c5cd986c3c7acb14",
+    "yauzl": "^3.2.1"
   },
   "build": {
     "appId": "de.bbm.baubesprechungsmanager",

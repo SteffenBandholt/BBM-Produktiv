@@ -63,6 +63,18 @@ Aktueller Stand:
 - [x] M35 UI-Editor Bedienhinweise und Abnahmegrenzen festziehen
 - [x] M36 UI-Editor Fixstand nach M29 bis M35 dokumentieren und absichern
 - [x] M56 Dauerhaften Auswahlrahmen im UI-Editor-Statuspanel anzeigen
+- [x] M59 UI-Editor-kit Selection-Runtime kontrolliert im BBM-Statuspanel parallel testbar machen
+
+## Statusupdate M59
+- M59 integriert die generische Selection-Runtime aus UI-Editor-kit M58 kontrolliert in BBM.
+- Die Abhängigkeit ist auf `af1fbabd0b875a4ab382ed84c5cd986c3c7acb14` gepinnt.
+- Standard im Statuspanel bleibt `BBM`; `UI-Editor-kit` ist als sitzungsbezogener Testmodus umschaltbar.
+- Die Host-Bridge `src/renderer/ui-editor/bbmKitSelectionHost.js` nutzt die bestehende Registry-Liste, den M54-Ref-Store und den M52-Auswahlstatus.
+- M55/M56 bleiben erhalten; es gibt keinen neuen fachlichen Selection Store, keine Speicherung der Runtime-Auswahl, keine DOM-Suche und keinen neuen IPC-Kanal.
+- Neue Doku: `docs/M59_KIT_SELECTION_PARALLELTEST.md`.
+- Neue Tests: `scripts/tests/m59KitSelectionRuntimeIntegration.test.cjs`; `scripts/test.cjs` führt den Test mit aus.
+- Nächster sinnvoller Schritt: Windows-Paralleltest durchführen und für M60 entscheiden, ob die Kit-Runtime weiter stabilisiert oder als künftiger Standard vorbereitet wird.
+
 
 
 

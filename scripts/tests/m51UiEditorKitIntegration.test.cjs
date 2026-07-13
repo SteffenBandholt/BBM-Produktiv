@@ -38,8 +38,8 @@ function createContractRuntime({ hostAdapter, manifest, registry, layoutStore })
 }
 
 async function runM51UiEditorKitIntegrationTests(run) {
-  await run("M51 Abhaengigkeit: UI-Editor-kit ist fest auf v0.2.0 gepinnt", () => {
-    assert.equal(packageJson.dependencies["ui-editor-kit"], "github:SteffenBandholt/UI-Editor-kit#v0.2.0");
+  await run("M51/M59 Abhaengigkeit: UI-Editor-kit ist fest auf M59-Kit-Merge-Commit gepinnt", () => {
+    assert.equal(packageJson.dependencies["ui-editor-kit"], "github:SteffenBandholt/UI-Editor-kit#af1fbabd0b875a4ab382ed84c5cd986c3c7acb14");
     assert.equal(/#main|#master|latest/.test(packageJson.dependencies["ui-editor-kit"]), false);
   });
 

@@ -2741,3 +2741,12 @@ Wichtig:
   - Lokale Sichtpruefung per `npm start`: UI-Editor sichtbar, Klick aktiviert/deaktiviert neutral, EditorLab V2 und Restarbeiten V2 nicht sichtbar, kein weisser Bildschirm.
 - Risiken/Hinweise:
   - `npm test` ist in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert; die gezielten Node-Tests liefen gruen.
+
+## M59 – UI-Editor-kit Selection-Runtime Paralleltest
+- Status: umgesetzt in diesem Arbeitsstand.
+- UI-Editor-kit ist auf M59-Kit-Merge-Commit `af1fbabd0b875a4ab382ed84c5cd986c3c7acb14` gepinnt.
+- Das Statuspanel kann zwischen `BBM` und `UI-Editor-kit` umschalten; Standard bleibt `BBM`.
+- Neue Host-Bridge: `src/renderer/ui-editor/bbmKitSelectionHost.js`.
+- Gemeinsame Auswahlwahrheit bleibt der bestehende M52-Auswahlstatus.
+- M55/M56-BBM-Runtime bleibt erhalten und wird nicht automatisch ersetzt.
+- Nächster Schritt: manueller Windows-Paralleltest und Entscheidung, ob M60 die Kit-Runtime weiter annähert oder als Standard vorbereitet.
