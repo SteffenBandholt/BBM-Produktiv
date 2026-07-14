@@ -64,6 +64,18 @@ Aktueller Stand:
 - [x] M36 UI-Editor Fixstand nach M29 bis M35 dokumentieren und absichern
 - [x] M56 Dauerhaften Auswahlrahmen im UI-Editor-Statuspanel anzeigen
 - [x] M59 UI-Editor-kit Selection-Runtime kontrolliert im BBM-Statuspanel parallel testbar machen
+- [x] M60 UI-Editor-kit Selection-Runtime im Statuspanel als Standard verwenden
+
+
+## Statusupdate M60
+- M60 macht die generische UI-Editor-kit Selection-Runtime im Entwicklungsbetrieb zur Standard-Auswahlruntime des UI-Editor-Statuspanels.
+- Beim Oeffnen startet das Panel sitzungsbezogen mit `selectionRuntime === "kit"` und initialisiert den Kit-Controller kontrolliert nach dem Laden der bestehenden BBM-Registry-Elemente.
+- Die BBM-Runtime bleibt vollstaendig erhalten, im Dropdown auswaehlbar und ist der dokumentierte Rueckfallweg.
+- Bei fehlerhafter Kit-Initialisierung werden angefangene Kit-Controller/Overlays bereinigt, `selectionRuntime` faellt auf `"bbm"` zurueck und der Runtime-Fehler bleibt sichtbar.
+- Schliessen, Destroy und Runtime-Wechsel stoppen und zerstoeren Kit-Controller sauber; wiederholtes Oeffnen erzeugt keine mehrfachen Kit-Controller pro Panel-Sitzung.
+- Neue Doku: `docs/M60_KIT_RUNTIME_STANDARD.md`.
+- Neue Tests: `scripts/tests/m60KitRuntimeStandard.test.cjs`; `scripts/test.cjs` fuehrt den Test mit aus.
+- Offener Punkt: manuelle Windows-Abnahme fuer sichtbares Dropdown, Kit-Start, BBM-Rueckfall und doppelte Overlayfreiheit nachholen.
 
 ## Statusupdate M59
 - M59 integriert die generische Selection-Runtime aus UI-Editor-kit M58 kontrolliert in BBM.

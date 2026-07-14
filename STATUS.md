@@ -1,5 +1,28 @@
 # STATUS.md â€” BBM-Produktiv
 
+### M60 – UI-Editor-kit Selection-Runtime als Standard
+- Status: erledigt
+- Beschreibung:
+  - Das UI-Editor-Statuspanel startet im Entwicklungsbetrieb sitzungsbezogen mit `selectionRuntime === "kit"`.
+  - Nach erfolgreichem Panel-Open wird der Kit-Controller kontrolliert ueber die bestehende M59-Host-Bridge initialisiert.
+  - BBM bleibt vollstaendig erhalten, ist im Dropdown auswaehlbar und dient als Rueckfallweg.
+  - Bei Kit-Initialisierungsfehlern werden angefangene Kit-Controller/Overlays bereinigt, `selectionRuntime` faellt auf `"bbm"` zurueck und der Runtime-Fehler bleibt sichtbar.
+  - Schliessen, Destroy und Runtime-Wechsel bereinigen Controller; wiederholtes Refresh/Oeffnen erzeugt keinen zweiten Kit-Controller pro Panel-Sitzung.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m59KitSelectionRuntimeIntegration.test.cjs`
+  - `scripts/tests/m60KitRuntimeStandard.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/M60_KIT_RUNTIME_STANDARD.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - Manuelle Windows-Abnahme: sichtbarer Kit-Standardstart, BBM-Rueckfall, Dropdown-Synchronitaet und doppelte Overlayfreiheit pruefen.
+- Risiken/Hinweise:
+  - Diese Umgebung ersetzt die sichtbare Electron-Windows-Abnahme nicht.
+
 ### M56-Fix PR #196 – Hoverrahmen nach Klick sofort entfernen
 - Status: erledigt
 - Beschreibung:
