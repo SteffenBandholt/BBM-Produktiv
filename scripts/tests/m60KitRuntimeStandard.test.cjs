@@ -79,24 +79,6 @@ function createPanelHarness(panel) {
   panel.elementsNode = new TestNode("section");
   panel.detailsNode = new TestNode("section");
   panel.errorNode = new TestNode("div");
-  panel.bbmSelectionController = {
-    startCount: 0,
-    stopCount: 0,
-    destroyCount: 0,
-    active: false,
-    start() { this.active = true; this.startCount += 1; },
-    stop() { this.active = false; this.stopCount += 1; },
-    destroy() { this.destroyCount += 1; },
-    isActive() { return this.active; },
-    syncHoverWithSelection() {},
-  };
-  panel.selectedOverlay = {
-    clearCount: 0,
-    destroyCount: 0,
-    clear() { this.clearCount += 1; },
-    sync() { return true; },
-    destroy() { this.destroyCount += 1; },
-  };
 }
 
 async function loadPanelClass() {
@@ -107,11 +89,11 @@ async function runM60KitRuntimeStandardTests(run) {
   await run("M60 Panel-Start: selectionRuntime ist standardmaessig kit", async () => {
     const { BbmUiEditorStatusPanel } = await loadPanelClass();
     const panel = new BbmUiEditorStatusPanel({});
-    assert.equal(panel.selectionRuntime, "kit");
-    assert.equal(panel.selectionController, null);
+    assert.equal(panel.selectionRuntimeLabel(), "UI-Editor-kit");
+    assert.equal(panel.kitSelectionController, null);
   });
 
-  await run("M60 Kit-Erfolg: aktive Runtime, Controller und Dropdown stehen auf kit", async () => {
+  await run("M60 Kit-Erfolg: aktive Runtime und Controller stehen auf kit", async () => {
     const previousWindow = global.window;
     const previousDocument = global.document;
     try {
@@ -127,10 +109,9 @@ async function runM60KitRuntimeStandardTests(run) {
       await panel.refresh();
 
       assert.equal(createCount, 1);
-      assert.equal(panel.selectionRuntime, "kit");
-      assert.equal(panel.selectionController, kitController);
+      assert.equal(panel.selectionRuntimeLabel(), "UI-Editor-kit");
       assert.equal(panel.kitSelectionController, kitController);
-      assert.equal(findFirstNode(panel.statusNode, "select")?.value, "kit");
+      assert.equal(findFirstNode(panel.statusNode, "select"), null);
       assert.equal(panel.runtimeError, "");
     } finally {
       global.window = previousWindow;
@@ -138,7 +119,7 @@ async function runM60KitRuntimeStandardTests(run) {
     }
   });
 
-  await run("M60 Kit-Fehler: faellt sichtbar und sauber auf BBM zurueck", async () => {
+  await run("M60 Kit-Fehler: bleibt sichtbar ohne BBM-Rueckfall", async () => {
     const previousWindow = global.window;
     const previousDocument = global.document;
     try {
@@ -151,11 +132,11 @@ async function runM60KitRuntimeStandardTests(run) {
 
       await panel.refresh();
 
-      assert.equal(panel.selectionRuntime, "bbm");
-      assert.equal(panel.selectionController, panel.bbmSelectionController);
+      assert.equal(panel.selectionRuntimeLabel(), "UI-Editor-kit");
       assert.equal(panel.kitSelectionController, null);
       assert.match(panel.runtimeError, /Kit kaputt/);
-      assert.equal(findFirstNode(panel.statusNode, "select")?.value, "bbm");
+      assert.equal(findFirstNode(panel.statusNode, "select"), null);
+      assert.equal(panel.canStartSelectionMode(), false);
     } finally {
       global.window = previousWindow;
       global.document = previousDocument;
@@ -173,15 +154,12 @@ async function runM60KitRuntimeStandardTests(run) {
       createPanelHarness(panel);
       const kitController = { stopCount: 0, destroyCount: 0, stop() { this.stopCount += 1; }, destroy() { this.destroyCount += 1; } };
       panel.kitSelectionController = kitController;
-      panel.selectionRuntime = "kit";
-      panel.selectionController = kitController;
 
       await panel.close();
 
       assert.equal(kitController.stopCount >= 1, true);
       assert.equal(kitController.destroyCount, 1);
       assert.equal(panel.kitSelectionController, null);
-      assert.equal(panel.selectedOverlay.destroyCount, 1);
 
       panel.kitSelectionController = kitController;
       panel.destroy();
@@ -214,43 +192,11 @@ async function runM60KitRuntimeStandardTests(run) {
       await panel.refresh();
 
       assert.equal(createCount, 1);
-      assert.equal(panel.selectionController, kitController);
+      assert.equal(panel.kitSelectionController, kitController);
     } finally {
       global.window = previousWindow;
       global.document = previousDocument;
     }
-  });
-
-  await run("M60 Manueller Wechsel kit -> bbm -> kit bleibt moeglich", async () => {
-    const previousDocument = global.document;
-    global.document = createPanelDocument();
-    const { BbmUiEditorStatusPanel } = await loadPanelClass();
-    const panel = new BbmUiEditorStatusPanel({});
-    createPanelHarness(panel);
-    const kitControllers = [];
-    panel.ensureKitController = async function createKit() {
-      const controller = { stopCount: 0, destroyCount: 0, syncWithSelection() {}, stop() { this.stopCount += 1; }, destroy() { this.destroyCount += 1; } };
-      kitControllers.push(controller);
-      this.kitSelectionController = controller;
-      return controller;
-    };
-
-    await panel.switchSelectionRuntime("bbm");
-    assert.equal(panel.selectionRuntime, "bbm");
-    assert.equal(panel.selectionController, panel.bbmSelectionController);
-
-    await panel.switchSelectionRuntime("kit");
-    assert.equal(panel.selectionRuntime, "kit");
-    assert.equal(panel.selectionController, kitControllers[0]);
-
-    await panel.switchSelectionRuntime("bbm");
-    assert.equal(panel.selectionRuntime, "bbm");
-    assert.equal(kitControllers[0].destroyCount, 1);
-
-    await panel.switchSelectionRuntime("kit");
-    assert.equal(panel.selectionRuntime, "kit");
-    assert.equal(panel.selectionController, kitControllers[1]);
-    global.document = previousDocument;
   });
 
   await run("M60 Sicherheit: keine DOM-Suche, Persistenz, neue Registry oder Kit-Repo-Aenderung", () => {
@@ -265,9 +211,11 @@ async function runM60KitRuntimeStandardTests(run) {
       assert.equal(combined.includes(forbidden), false, `${forbidden} darf in M60 nicht vorkommen`);
     }
     assert.match(combined, /createBbmKitSelectionHost/);
-    assert.match(combined, /this\.selectionRuntime = "kit"/);
+    assert.match(combined, /selectionRuntimeLabel\(\)/);
     assert.match(combined, /initializeDefaultSelectionRuntime/);
-    assert.match(combined, /this\.selectionRuntime = "bbm"/);
+    assert.doesNotMatch(combined, /switchSelectionRuntime/);
+    assert.doesNotMatch(combined, /this\.selectionRuntime = "bbm"/);
+    assert.doesNotMatch(combined, /createBbmUiElementSelectionController/);
   });
 }
 

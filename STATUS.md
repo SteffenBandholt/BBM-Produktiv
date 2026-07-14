@@ -1,5 +1,30 @@
 # STATUS.md â€” BBM-Produktiv
 
+### M61 – UI-Editor-kit Selection-Runtime exklusiv
+- Ergebnis:
+  - Das UI-Editor-Statuspanel nutzt fuer Hover und Auswahl ausschliesslich die UI-Editor-kit Selection-Runtime.
+  - Das Runtime-Dropdown und der stille Rueckfall auf die BBM-eigene Runtime wurden entfernt.
+  - Kit-Fehler bleiben im Statuspanel sichtbar; Auswahlstart bleibt ohne Kit-Controller blockiert.
+  - Schliessen/Destroy bereinigen den Kit-Controller ohne zweite Listener-/Overlay-Spur.
+- Geaenderte Dateien:
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m59KitSelectionRuntimeIntegration.test.cjs`
+  - `scripts/tests/m60KitRuntimeStandard.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/M61_KIT_RUNTIME_ONLY.md`
+  - `STATUS.md`
+- Pruefung:
+  - `node scripts/tests/m59KitSelectionRuntimeIntegration.test.cjs`
+  - `node scripts/tests/m60KitRuntimeStandard.test.cjs`
+  - `npm test` (Codex-Cloud-Umgebung: Electron-Systembibliothek `libatk-1.0.so.0` fehlt)
+- Risiken / offen:
+  - Manuelle Windows-/Electron-Abnahme fuer Hover, Auswahl, Reset, sichtbare Kit-Fehler und doppelte Overlayfreiheit bleibt fachlich offen.
+- Korrektur PR #199:
+  - M56-Regressionstests wurden M61-konform auf Kit-Synchronisation statt BBM-Overlay-/Controller-Erwartungen angepasst.
+  - Produktionscode blieb unveraendert.
+- Naechster Schritt:
+  - Manuelle Sichtpruefung im laufenden App-Fenster nachholen.
+
 ### M60 – UI-Editor-kit Selection-Runtime als Standard
 - Status: erledigt
 - Beschreibung:

@@ -65,7 +65,18 @@ Aktueller Stand:
 - [x] M56 Dauerhaften Auswahlrahmen im UI-Editor-Statuspanel anzeigen
 - [x] M59 UI-Editor-kit Selection-Runtime kontrolliert im BBM-Statuspanel parallel testbar machen
 - [x] M60 UI-Editor-kit Selection-Runtime im Statuspanel als Standard verwenden
+- [x] M61 UI-Editor-kit Selection-Runtime exklusiv im Statuspanel verwenden
 
+
+## Statusupdate M61
+- M61 entfernt die BBM-eigene Hover-/Selection-Runtime aus dem UI-Editor-Statuspanel.
+- Das Statuspanel zeigt kein Runtime-Dropdown mehr; die Auswahl-Laufzeit ist fest `UI-Editor-kit`.
+- Hover, Auswahl, Reset und Synchronisation laufen ueber den Kit-Controller und die bestehende M59-Host-Bridge.
+- Kit-Fehler bleiben sichtbar, fuehren aber nicht mehr zu einem stillen Rueckfall auf die alte BBM-Runtime.
+- Schliessen und Destroy bereinigen den Kit-Controller; wiederholtes Oeffnen erzeugt keinen zweiten Kit-Controller pro Panel-Sitzung.
+- Neue Doku: `docs/M61_KIT_RUNTIME_ONLY.md`.
+- Angepasste Tests: `scripts/tests/m59KitSelectionRuntimeIntegration.test.cjs` und `scripts/tests/m60KitRuntimeStandard.test.cjs`; `scripts/test.cjs` fuehrt beide weiter aus.
+- Offener Punkt: manuelle Windows-Abnahme fuer sichtbaren Kit-Start, Hover, Auswahl, Reset, Fehlermeldung und doppelte Overlayfreiheit nachholen.
 
 ## Statusupdate M60
 - M60 macht die generische UI-Editor-kit Selection-Runtime im Entwicklungsbetrieb zur Standard-Auswahlruntime des UI-Editor-Statuspanels.
