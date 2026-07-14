@@ -153,30 +153,29 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
     assert.equal(host.getSelectedElementId(), "bbm.main.navigation");
   });
 
-  await run("M59 Runtime-Umschaltung und Exklusivitaet sind im Statuspanel explizit verdrahtet", () => {
+  await run("M59/M61 Kit-Runtime ist im Statuspanel exklusiv verdrahtet", () => {
     const panel = read("src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
-    assert.match(panel, /this\.selectionRuntime = "bbm"/);
     assert.match(panel, /Auswahl-Laufzeit/);
-    assert.match(panel, /switchSelectionRuntime/);
+    assert.match(panel, /selectionRuntimeLabel\(\)/);
     assert.match(panel, /selection-runtime\.browser\.mjs/);
     assert.doesNotMatch(panel, /import\(["']ui-editor-kit["']\)/);
-    assert.match(panel, /this\.bbmSelectionController\?\.stop\?\.\(\)/);
+    assert.doesNotMatch(panel, /switchSelectionRuntime/);
+    assert.doesNotMatch(panel, /createBbmUiElementSelectionController/);
+    assert.doesNotMatch(panel, /bbmSelectionController/);
     assert.match(panel, /destroyKitController/);
     assert.equal(count(panel, "createSelectionController\\("), 1);
-    assert.match(panel, /this\.selectedOverlay\?\.clear\?\.\(\)/);
     assert.match(panel, /syncActiveSelectionRuntime/);
     assert.match(panel, /syncWithSelection/);
     assert.match(panel, /hover: \{ zIndex:/);
     assert.match(panel, /selected: \{ zIndex:/);
-    assert.match(panel, /this\.selectionController = this\.bbmSelectionController/);
   });
 
-  await run("M59 Kit-Auswahl, Lifecycle und Fehler-Rueckfall nutzen dieselbe M52-Auswahl und raeumen Controller auf", () => {
+  await run("M59/M61 Kit-Auswahl und Lifecycle nutzen dieselbe M52-Auswahl und raeumen Controller auf", () => {
     const panel = read("src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
     assert.match(panel, /selectElement: \(elementId\) => this\.selectElement\(elementId, \{ fromSelectionMode: true \}\)/);
     assert.match(panel, /getSelectedElement: \(\) => this\.selectedElement/);
     assert.match(panel, /this\.destroyKitController\(\)/);
-    assert.match(panel, /this\.selectionRuntime = "bbm"/);
+    assert.doesNotMatch(panel, /this\.selectionRuntime = "bbm"/);
     assert.match(panel, /this\.runtimeError = error\?\.message/);
     assert.match(panel, /this\.kitSelectionController\?\.stop\?\.\(\)/);
     assert.match(panel, /this\.kitSelectionController\?\.destroy\?\.\(\)/);
@@ -193,19 +192,13 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
       let selectedClearCount = 0;
       let selectedSyncCount = 0;
       panel.renderAll = () => {};
-      panel.selectionRuntime = "kit";
       panel.selectedElement = { elementId: "bbm.main.header", label: "Seitenkopf" };
       panel.kitSelectionController = { syncWithSelection() { kitSyncCount += 1; } };
-      panel.bbmSelectionController = { syncHoverWithSelection() { bbmHoverSyncCount += 1; } };
-      panel.selectedOverlay = {
-        clear() { selectedClearCount += 1; },
-        sync() { selectedSyncCount += 1; return true; },
-      };
 
       panel.syncActiveSelectionRuntime();
       assert.equal(kitSyncCount, 1);
       assert.equal(bbmHoverSyncCount, 0);
-      assert.equal(selectedClearCount, 1);
+      assert.equal(selectedClearCount, 0);
       assert.equal(selectedSyncCount, 0);
 
       panel.selectElement = async () => { panel.selectedElement = null; };
@@ -213,7 +206,7 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
       assert.equal(panel.selectedElement, null);
       assert.equal(kitSyncCount, 2);
       assert.equal(bbmHoverSyncCount, 0);
-      assert.equal(selectedClearCount, 2);
+      assert.equal(selectedClearCount, 0);
 
       global.window = {
         bbmDb: {
@@ -226,13 +219,13 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
       assert.equal(panel.selectedElement, null);
       assert.equal(kitSyncCount >= 3, true);
       assert.equal(bbmHoverSyncCount, 0);
-      assert.equal(selectedClearCount >= 3, true);
+      assert.equal(selectedClearCount, 0);
     } finally {
       global.window = previousWindow;
     }
   });
 
-  await run("M59 Verhalten: Runtime-Select behaelt Kit-Wert ueber renderAll", async () => {
+  await run("M59/M61 Verhalten: Runtime-Dropdown ist entfernt und Kit-Label bleibt sichtbar", async () => {
     const previousDocument = global.document;
     try {
       global.document = createPanelDocument();
@@ -246,16 +239,12 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
       panel.refStatus = { count: 0, expectedCount: 0, missingIds: [] };
       panel.elements = [];
       panel.selectedElement = null;
-      panel.selectionRuntime = "kit";
 
       panel.renderAll();
-      assert.equal(findFirstNode(panel.statusNode, "select")?.value, "kit");
+      assert.equal(findFirstNode(panel.statusNode, "select"), null);
+      assert.equal(panel.selectionRuntimeLabel(), "UI-Editor-kit");
       panel.renderAll();
-      assert.equal(findFirstNode(panel.statusNode, "select")?.value, "kit");
-
-      panel.selectionRuntime = "bbm";
-      panel.renderAll();
-      assert.equal(findFirstNode(panel.statusNode, "select")?.value, "bbm");
+      assert.equal(findFirstNode(panel.statusNode, "select"), null);
     } finally {
       global.document = previousDocument;
     }
