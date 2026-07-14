@@ -54,7 +54,7 @@ export class BbmUiEditorStatusPanel {
     this.kitSelectionController = null;
     this.kitSelectionHost = null;
     this.selectionController = null;
-    this.selectionRuntime = "bbm";
+    this.selectionRuntime = "kit";
     this.hoverTargetLabel = "keines";
     this.runtimeError = "";
     this.selectionMessage = "";
@@ -113,7 +113,6 @@ export class BbmUiEditorStatusPanel {
         this.renderAll();
       },
     });
-    this.selectionController = this.bbmSelectionController;
     this.refresh().catch((error) => this.showLoadError(error));
     return root;
   }
@@ -123,8 +122,8 @@ export class BbmUiEditorStatusPanel {
     this.destroyKitController();
     this.bbmSelectionController?.destroy?.();
     this.selectedOverlay?.destroy?.();
-    this.selectionRuntime = "bbm";
-    this.selectionController = this.bbmSelectionController;
+    this.selectionRuntime = "kit";
+    this.selectionController = null;
     try {
       await window.bbmDb?.uiEditorClose?.();
     } catch (_e) {
@@ -158,7 +157,7 @@ export class BbmUiEditorStatusPanel {
     this.elements = Array.isArray(elementsResult?.elements) ? elementsResult.elements : [];
     this.selectedElement = detailsResult?.selectedElement || null;
     this.renderAll();
-    this.syncActiveSelectionRuntime();
+    await this.initializeDefaultSelectionRuntime();
   }
 
   showLoadError(error) {
@@ -487,6 +486,39 @@ export class BbmUiEditorStatusPanel {
     return this.kitSelectionController;
   }
 
+  async initializeDefaultSelectionRuntime() {
+    if (!this.status?.ok || !this.status?.runtimeStarted || !this.status?.adapterValid) {
+      this.destroyKitController();
+      this.selectionRuntime = "bbm";
+      this.selectionController = this.bbmSelectionController;
+      this.syncActiveSelectionRuntime();
+      this.renderAll();
+      return;
+    }
+    if (this.selectionRuntime !== "kit") {
+      this.syncActiveSelectionRuntime();
+      return;
+    }
+    this.bbmSelectionController?.stop?.();
+    this.selectedOverlay?.clear?.();
+    try {
+      await this.ensureKitController();
+      this.selectionRuntime = "kit";
+      this.selectionController = this.kitSelectionController;
+      this.runtimeError = "";
+      this.syncActiveSelectionRuntime();
+    } catch (error) {
+      this.destroyKitController();
+      this.selectionRuntime = "bbm";
+      this.selectionController = this.bbmSelectionController;
+      this.runtimeError = error?.message || "Kit-Runtime konnte nicht gestartet werden.";
+      this.syncActiveSelectionRuntime();
+    }
+    this.selectionModeActive = false;
+    this.hoverTargetLabel = "keines";
+    this.renderAll();
+  }
+
   destroyKitController() {
     this.kitSelectionController?.stop?.();
     this.kitSelectionController?.destroy?.();
@@ -531,7 +563,9 @@ export class BbmUiEditorStatusPanel {
     this.selectionModeActive = false;
     this.hoverTargetLabel = "keines";
     if (this.selectionRuntime === "kit") {
-      this.selectionController = null;
+      this.selectionRuntime = "bbm";
+      this.selectionController = this.bbmSelectionController;
+      this.syncActiveSelectionRuntime();
     }
     this.renderAll();
   }
