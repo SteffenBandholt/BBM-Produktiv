@@ -121,6 +121,96 @@ function eventFor(target) {
   return { target, key: undefined, preventDefault() {}, stopPropagation() {}, stopImmediatePropagation() {} };
 }
 
+function createPanelHarness(panel, doc) {
+  panel.root = doc.createElement("section");
+  panel.root.setAttribute("data-bbm-ui-editor-panel", "true");
+  panel.statusNode = doc.createElement("section");
+  panel.elementsNode = doc.createElement("section");
+  panel.detailsNode = doc.createElement("section");
+  panel.errorNode = doc.createElement("div");
+  panel.root.append(panel.statusNode, panel.elementsNode, panel.detailsNode);
+  doc.body.appendChild(panel.root);
+}
+
+function createFakeKitSelectionController(host) {
+  let active = false;
+  let hoveredElementId = "";
+  let hoverVisible = false;
+  let pointerMoveHandler = null;
+  let clickHandler = null;
+  let interactionRoot = null;
+  const calls = { start: 0, stop: 0, destroy: 0, syncWithSelection: 0, select: 0 };
+
+  function resolveElementId(eventTarget) {
+    for (const target of host.listSelectableTargets()) {
+      const ref = host.getElementRef(target.elementId);
+      if (ref && (ref === eventTarget || ref.contains?.(eventTarget))) return target.elementId;
+    }
+    return "";
+  }
+
+  function publishState() {
+    host.onStateChange({
+      active,
+      hoveredElementId: hoverVisible ? hoveredElementId : "",
+      hoverTargetId: hoverVisible ? hoveredElementId : "",
+    });
+  }
+
+  function syncWithSelection() {
+    calls.syncWithSelection += 1;
+    hoverVisible = Boolean(hoveredElementId && hoveredElementId !== host.getSelectedElementId());
+    publishState();
+  }
+
+  return {
+    calls,
+    get hoverVisible() { return hoverVisible; },
+    get hoveredElementId() { return hoveredElementId; },
+    start() {
+      calls.start += 1;
+      if (active) return;
+      active = true;
+      interactionRoot = host.getInteractionRoot();
+      pointerMoveHandler = (event) => {
+        if (host.isExcludedTarget(event?.target)) return;
+        hoveredElementId = resolveElementId(event?.target);
+        hoverVisible = Boolean(hoveredElementId && hoveredElementId !== host.getSelectedElementId());
+        publishState();
+      };
+      clickHandler = (event) => {
+        if (!hoveredElementId || host.isExcludedTarget(event?.target)) return;
+        calls.select += 1;
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+        host.selectElement(hoveredElementId).then(() => {
+          host.onSelection({ elementId: hoveredElementId });
+          syncWithSelection();
+        }).catch((error) => host.onError(error));
+      };
+      interactionRoot?.addEventListener?.("pointermove", pointerMoveHandler);
+      interactionRoot?.addEventListener?.("click", clickHandler);
+      publishState();
+    },
+    stop() {
+      calls.stop += 1;
+      if (interactionRoot && pointerMoveHandler) interactionRoot.removeEventListener?.("pointermove", pointerMoveHandler);
+      if (interactionRoot && clickHandler) interactionRoot.removeEventListener?.("click", clickHandler);
+      active = false;
+      hoveredElementId = "";
+      hoverVisible = false;
+      publishState();
+    },
+    destroy() {
+      calls.destroy += 1;
+      this.stop();
+    },
+    isActive() { return active; },
+    syncWithSelection,
+  };
+}
+
+
 async function setupRefs() {
   const refs = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementRefs.js"));
   refs.clearBbmUiElementRefs();
@@ -225,6 +315,7 @@ async function runM56PersistentSelectionFrameTests(run) {
     const previousDocument = global.document;
     const previousWindow = global.window;
     let selectedId = "";
+    let fakeKitController = null;
     const elements = [
       { elementId: "bbm.main.header", label: "Seitenkopf", type: "frame", scope: "bbm", capabilities: [], allowedChanges: [] },
       { elementId: "bbm.main.navigation", label: "Navigation", type: "frame", scope: "bbm", capabilities: [], allowedChanges: [] },
@@ -242,43 +333,49 @@ async function runM56PersistentSelectionFrameTests(run) {
     try {
       const { createBbmUiEditorStatusPanel } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js"));
       const panel = createBbmUiEditorStatusPanel({ router: { activeSection: "uiEditor", showSettings: async () => {} } });
-      const root = panel.render();
-      doc.body.appendChild(root);
+      createPanelHarness(panel, doc);
+      panel.ensureKitController = async function ensureFakeKitController() {
+        if (this.kitSelectionController) return this.kitSelectionController;
+        fakeKitController = createFakeKitSelectionController(this.createKitHost());
+        this.kitSelectionController = fakeKitController;
+        return fakeKitController;
+      };
+
       await panel.refresh();
       panel.startSelectionMode();
 
       shell.dispatch("pointermove", eventFor(header));
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 1);
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
+      assert.equal(fakeKitController.hoveredElementId, "bbm.main.header");
+      assert.equal(fakeKitController.hoverVisible, true);
+      assert.equal(panel.selectedElement, null);
 
       shell.dispatch("click", eventFor(header));
       await new Promise((resolve) => setTimeout(resolve, 0));
       assert.equal(selectedId, "bbm.main.header");
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 0);
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
+      assert.equal(panel.selectedElement.elementId, "bbm.main.header");
+      assert.equal(fakeKitController.calls.syncWithSelection >= 1, true);
+      assert.equal(fakeKitController.hoveredElementId, "bbm.main.header");
+      assert.equal(fakeKitController.hoverVisible, false);
+      assert.equal(panel.getVisualSelectionLabel(), "Seitenkopf");
 
       shell.dispatch("pointermove", eventFor(nav));
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 1);
+      assert.equal(fakeKitController.hoveredElementId, "bbm.main.navigation");
+      assert.equal(fakeKitController.hoverVisible, true);
       shell.dispatch("click", eventFor(nav));
       await new Promise((resolve) => setTimeout(resolve, 0));
       assert.equal(selectedId, "bbm.main.navigation");
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 0);
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
+      assert.equal(panel.selectedElement.elementId, "bbm.main.navigation");
+      assert.equal(fakeKitController.hoveredElementId, "bbm.main.navigation");
+      assert.equal(fakeKitController.hoverVisible, false);
 
       await panel.resetSelection();
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
-      shell.dispatch("pointermove", eventFor(nav));
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 1);
+      assert.equal(selectedId, "");
+      assert.equal(panel.selectedElement, null);
+      assert.equal(fakeKitController.calls.syncWithSelection >= 2, true);
+      assert.equal(fakeKitController.hoverVisible, true);
 
-      shell.dispatch("click", eventFor(header));
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      shell.dispatch("pointermove", eventFor(nav));
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 1);
-      doc.dispatch("keydown", { key: "Escape" });
-      assert.equal(panel.selectedElement.elementId, "bbm.main.header");
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 0);
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
       panel.destroy();
+      assert.equal(fakeKitController.calls.destroy, 1);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;
@@ -290,6 +387,7 @@ async function runM56PersistentSelectionFrameTests(run) {
     const previousDocument = global.document;
     const previousWindow = global.window;
     let selectedId = "bbm.main.header";
+    let fakeKitController = null;
     const elements = [
       { elementId: "bbm.main.header", label: "Seitenkopf", type: "frame", scope: "bbm", capabilities: [], allowedChanges: [] },
       { elementId: "bbm.main.navigation", label: "Navigation", type: "frame", scope: "bbm", capabilities: [], allowedChanges: [] },
@@ -307,32 +405,48 @@ async function runM56PersistentSelectionFrameTests(run) {
     try {
       const { createBbmUiEditorStatusPanel } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js"));
       const panel = createBbmUiEditorStatusPanel({ router: { activeSection: "uiEditor", showSettings: async () => {} } });
-      const root = panel.render();
-      doc.body.appendChild(root);
+      createPanelHarness(panel, doc);
+      panel.ensureKitController = async function ensureFakeKitController() {
+        if (this.kitSelectionController) return this.kitSelectionController;
+        fakeKitController = createFakeKitSelectionController(this.createKitHost());
+        this.kitSelectionController = fakeKitController;
+        return fakeKitController;
+      };
+
       await panel.refresh();
       assert.equal(panel.selectedElement.elementId, "bbm.main.header");
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
-      assert.ok(walk(root, (node) => node.textContent === "Visuell markiert").length >= 1);
-      assert.ok(walk(root, (node) => node.textContent === "Seitenkopf").length >= 1);
+      assert.equal(panel.getVisualSelectionLabel(), "Seitenkopf");
+      assert.equal(fakeKitController.calls.syncWithSelection, 1);
+      assert.ok(walk(panel.root, (node) => node.textContent === "Visuell markiert").length >= 1);
+      assert.ok(walk(panel.root, (node) => node.textContent === "Seitenkopf").length >= 1);
+
       await panel.selectElement("bbm.main.navigation");
       assert.equal(panel.selectedElement.elementId, "bbm.main.navigation");
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
+      assert.equal(selectedId, "bbm.main.navigation");
+      assert.equal(fakeKitController.calls.syncWithSelection >= 3, true);
+
       await panel.resetSelection();
       assert.equal(selectedId, "");
       assert.equal(panel.selectedElement, null);
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
+      assert.equal(fakeKitController.calls.syncWithSelection >= 5, true);
+
       selectedId = "bbm.main.header";
       await panel.refresh();
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
+      assert.equal(panel.selectedElement.elementId, "bbm.main.header");
+      assert.equal(fakeKitController.calls.syncWithSelection >= 6, true);
+
       await panel.close();
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
+      assert.equal(fakeKitController.calls.stop >= 1, true);
+      assert.equal(fakeKitController.calls.destroy, 1);
+      assert.equal(panel.kitSelectionController, null);
+
       selectedId = "bbm.main.header";
       await panel.refresh();
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
+      assert.notEqual(panel.kitSelectionController, null);
+      const secondKitController = panel.kitSelectionController;
       panel.destroy();
-      assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
-      assert.equal((doc.listeners.get("scroll") || []).length, 0);
-      assert.equal((doc.defaultView.listeners.get("resize") || []).length, 0);
+      assert.equal(secondKitController.calls.destroy, 1);
+      assert.equal(panel.kitSelectionController, null);
     } finally {
       global.document = previousDocument;
       global.window = previousWindow;

@@ -19,6 +19,9 @@
   - `npm test` (Codex-Cloud-Umgebung: Electron-Systembibliothek `libatk-1.0.so.0` fehlt)
 - Risiken / offen:
   - Manuelle Windows-/Electron-Abnahme fuer Hover, Auswahl, Reset, sichtbare Kit-Fehler und doppelte Overlayfreiheit bleibt fachlich offen.
+- Korrektur PR #199:
+  - M56-Regressionstests wurden M61-konform auf Kit-Synchronisation statt BBM-Overlay-/Controller-Erwartungen angepasst.
+  - Produktionscode blieb unveraendert.
 - Naechster Schritt:
   - Manuelle Sichtpruefung im laufenden App-Fenster nachholen.
 
