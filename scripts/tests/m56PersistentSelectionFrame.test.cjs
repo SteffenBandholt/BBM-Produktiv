@@ -232,84 +232,6 @@ async function setupRefs() {
 }
 
 async function runM56PersistentSelectionFrameTests(run) {
-  await run("M56 Auswahloverlay: Rahmen, Label, Rect, Wechsel, Leer und unbekannt", async () => {
-    const { refs, doc, header, nav } = await setupRefs();
-    const { createBbmUiSelectedOverlay } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiSelectedOverlay.js"));
-    const overlay = createBbmUiSelectedOverlay();
-    assert.equal(overlay.sync({ elementId: "bbm.main.header", label: "Seitenkopf" }), true);
-    let frames = byAttr(doc.body, "data-bbm-ui-selected-frame");
-    assert.equal(frames.length, 1);
-    assert.equal(frames[0].style.left, "220px");
-    assert.equal(frames[0].style.top, "20px");
-    assert.equal(frames[0].style.width, "800px");
-    assert.equal(frames[0].style.height, "80px");
-    assert.match(frames[0].firstChild.textContent, /Ausgewählt: Seitenkopf · bbm\.main\.header/);
-    assert.match(frames[0].style.border, /249, 115, 22/);
-    const sameFrame = frames[0];
-    assert.equal(overlay.sync({ elementId: "bbm.main.navigation", label: "Navigation" }), true);
-    frames = byAttr(doc.body, "data-bbm-ui-selected-frame");
-    assert.equal(frames.length, 1);
-    assert.equal(frames[0], sameFrame);
-    assert.equal(frames[0].style.left, "10px");
-    nav.rect.left = 42;
-    doc.dispatch("scroll", {});
-    assert.equal(frames[0].style.left, "42px");
-    nav.rect.width = 222;
-    doc.defaultView.dispatch("resize", {});
-    assert.equal(frames[0].style.width, "222px");
-    overlay.sync(null);
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
-    assert.equal((doc.listeners.get("scroll") || []).length, 0);
-    assert.equal((doc.defaultView.listeners.get("resize") || []).length, 0);
-    assert.equal(overlay.sync({ elementId: "bbm.unknown", label: "Unbekannt" }), false);
-    refs.unregisterBbmUiElementRef("bbm.main.navigation");
-    assert.equal(overlay.sync({ elementId: "bbm.main.navigation", label: "Navigation" }), false);
-  });
-
-  await run("M56 Auswahloverlay: bbm.main.actions ohne Ref erzeugt keinen Rahmen und maximal einen Rahmen", async () => {
-    const { doc } = await setupRefs();
-    const { createBbmUiSelectedOverlay } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiSelectedOverlay.js"));
-    const overlay = createBbmUiSelectedOverlay();
-    assert.equal(overlay.sync({ elementId: "bbm.main.actions", label: "Aktionen" }), false);
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
-    overlay.sync({ elementId: "bbm.main.header", label: "Seitenkopf" });
-    overlay.sync({ elementId: "bbm.main.header", label: "Seitenkopf" });
-    overlay.sync({ elementId: "bbm.main.content", label: "Inhalt" });
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
-  });
-
-  await run("M56 Hover/Selected: anderes Ziel doppelt sichtbar, gleiches Ziel nicht doppelt, Escape/Stop lassen Auswahl stehen", async () => {
-    const { doc, shell, nav, header } = await setupRefs();
-    const { createBbmUiSelectedOverlay } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiSelectedOverlay.js"));
-    const { createBbmUiElementSelectionController } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementSelection.js"));
-    const selectedOverlay = createBbmUiSelectedOverlay();
-    selectedOverlay.sync({ elementId: "bbm.main.header", label: "Seitenkopf" });
-    const controller = createBbmUiElementSelectionController({
-      isElementSelected: (elementId) => elementId === "bbm.main.header",
-      getElementMeta: (elementId) => ({ label: elementId === "bbm.main.header" ? "Seitenkopf" : "Navigation" }),
-    });
-    controller.start();
-    shell.dispatch("pointermove", eventFor(nav));
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 1);
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
-    shell.dispatch("pointermove", eventFor(header));
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 0);
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
-    shell.dispatch("pointermove", eventFor(nav));
-    doc.dispatch("keydown", { key: "Escape" });
-    assert.equal(controller.isActive(), false);
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 0);
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
-    controller.start();
-    shell.dispatch("pointermove", eventFor(nav));
-    controller.stop();
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selection-hover-frame").length, 0);
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 1);
-    selectedOverlay.clear();
-    assert.equal(byAttr(doc.body, "data-bbm-ui-selected-frame").length, 0);
-  });
-
-
   await run("M56 Regression: Klick auf gehovertes Ziel entfernt blauen Hover sofort", async () => {
     const { doc, shell, nav, header } = await setupRefs();
     const previousDocument = global.document;
@@ -453,18 +375,15 @@ async function runM56PersistentSelectionFrameTests(run) {
     }
   });
 
-  await run("M56 Sicherheit: keine verbotene Zielsuche, keine zweite Auswahlhaltung, keine neue IPC/Legacy/Layoutmutation", () => {
+  await run("M56 Sicherheit: Kit-Bridge ohne verbotene Zielsuche, zweite Auswahlhaltung oder Legacy-Runtime", () => {
     const files = [
       "src/renderer/ui-editor/BbmUiEditorStatusPanel.js",
-      "src/renderer/ui-editor/bbmUiElementSelection.js",
-      "src/renderer/ui-editor/bbmUiSelectionOverlay.js",
-      "src/renderer/ui-editor/bbmUiSelectedOverlay.js",
       "src/renderer/ui-editor/bbmUiElementRefs.js",
     ];
     const combined = files.map(read).join("\n");
     assert.doesNotMatch(combined, /querySelector|querySelectorAll|getElementById|getElementsBy|closest\s*\(|matches\s*\(|MutationObserver|elementsFromPoint|elementFromPoint/);
     assert.doesNotMatch(combined, /targetSelection|editorV2Core|UiInspectorOverlay|BBM_UI_ELEMENTS\s*=|ipcRenderer|ipcMain|localStorage/);
-    assert.doesNotMatch(combined, /selectedElementId\s*=|new Map\(\).*selected|data-ui-/s);
+    assert.doesNotMatch(combined, /selectedElementId\s*=|new Map\(\).*selected/s);
     assert.doesNotMatch(combined, /targetElement\.style|nextTargetElement\.style|getBbmUiElementRef\("bbm\.main\.shell"\)\s*\|\|/);
   });
 

@@ -1,7 +1,7 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope).
+Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope). M62 abgeschlossen (alte BBM-Auswahlruntime entfernt; Statuspanel nutzt ausschliesslich Kit-Runtime).
 
 Statusupdate: M36 abgeschlossen (UI-Editor Fixstand nach M29 bis M35 dokumentiert).
 
@@ -66,7 +66,17 @@ Aktueller Stand:
 - [x] M59 UI-Editor-kit Selection-Runtime kontrolliert im BBM-Statuspanel parallel testbar machen
 - [x] M60 UI-Editor-kit Selection-Runtime im Statuspanel als Standard verwenden
 - [x] M61 UI-Editor-kit Selection-Runtime exklusiv im Statuspanel verwenden
+- [x] M62 Alte BBM-Auswahlruntime sicher entfernen und Kit-Vertraege weiter pruefen
 
+
+## Statusupdate M62
+- M62 entfernt die nicht mehr produktiv genutzte BBM-eigene Hover-/Selection-Runtime aus `src/renderer/ui-editor/`.
+- Geloescht sind `bbmUiElementSelection.js`, `bbmUiSelectionOverlay.js` und `bbmUiSelectedOverlay.js`.
+- Das Statuspanel besitzt ausschliesslich den Kit-Controller und die bestehende M59-Host-Bridge.
+- M55/M56-Vertraege bleiben ueber Kit-Bridge-/Statuspanel-Tests abgesichert: Hover auf expliziten M54-Refs, Auswahl desselben Ziels ohne doppelten Hover, Reset, Stop, Close/Destroy und keine doppelten Listener/Controller.
+- Neue Doku: `docs/M62_BBM_SELECTION_LEGACY_CLEANUP.md`.
+- Neuer Test: `scripts/tests/m62BbmSelectionLegacyCleanup.test.cjs`; M55/M56-Tests wurden auf Kit-Bridge-Vertraege umgestellt.
+- Offener Punkt: manuelle Windows-Abnahme fuer sichtbaren Kit-Start, Hover, Auswahl, Reset, Stop, Close/Destroy und doppelte Overlayfreiheit nachholen.
 
 ## Statusupdate M61
 - M61 entfernt die BBM-eigene Hover-/Selection-Runtime aus dem UI-Editor-Statuspanel.
