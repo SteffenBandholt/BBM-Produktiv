@@ -5,231 +5,148 @@ const { importEsmFromFile } = require("./_esmLoader.cjs");
 
 const REPO_ROOT = path.join(__dirname, "../..");
 
-function read(file) {
-  return fs.readFileSync(path.join(REPO_ROOT, file), "utf8");
-}
+function read(file) { return fs.readFileSync(path.join(REPO_ROOT, file), "utf8"); }
 
 class TestHTMLElement {
-  constructor(name, rect = {}) {
-    this.name = name;
-    this.parentNode = null;
-    this.children = [];
-    this.listeners = new Map();
-    this.ownerDocument = null;
-    this.rect = { left: 0, top: 0, width: 100, height: 100, ...rect };
-  }
-  appendChild(child) {
-    child.parentNode = this;
-    if (!child.ownerDocument) child.ownerDocument = this.ownerDocument;
-    this.children.push(child);
-    child.isConnected = true;
-    return child;
-  }
-  removeChild(child) {
-    this.children = this.children.filter((entry) => entry !== child);
-    child.parentNode = null;
-    child.isConnected = false;
-  }
-  contains(target) {
-    let node = target;
-    while (node) {
-      if (node === this) return true;
-      node = node.parentNode || null;
-    }
-    return false;
-  }
-  addEventListener(type, handler) {
-    const list = this.listeners.get(type) || [];
-    list.push(handler);
-    this.listeners.set(type, list);
-  }
-  removeEventListener(type, handler) {
-    const list = this.listeners.get(type) || [];
-    this.listeners.set(type, list.filter((entry) => entry !== handler));
-  }
-  dispatch(type, event) {
-    for (const handler of this.listeners.get(type) || []) handler(event);
-  }
-  getBoundingClientRect() {
-    return this.rect;
-  }
+  constructor(name) { this.name = name; this.parentNode = null; this.children = []; this.listeners = new Map(); this.ownerDocument = null; }
+  appendChild(child) { child.parentNode = this; child.ownerDocument = child.ownerDocument || this.ownerDocument; this.children.push(child); return child; }
+  contains(target) { let node = target; while (node) { if (node === this) return true; node = node.parentNode || null; } return false; }
+  addEventListener(type, handler) { const list = this.listeners.get(type) || []; list.push(handler); this.listeners.set(type, list); }
+  removeEventListener(type, handler) { const list = this.listeners.get(type) || []; this.listeners.set(type, list.filter((entry) => entry !== handler)); }
+  dispatch(type, event) { for (const handler of this.listeners.get(type) || []) handler(event); }
 }
 
-function createDoc() {
-  const doc = {
-    defaultView: { HTMLElement: TestHTMLElement, listeners: new Map() },
-    listeners: new Map(),
-    body: null,
-    createElement(name) {
-      const node = new TestHTMLElement(name);
-      node.ownerDocument = doc;
-      node.style = {};
-      node.attributes = new Map();
-      node.setAttribute = (key, value) => node.attributes.set(key, String(value));
-      node.firstChild = null;
-      const baseAppend = node.appendChild.bind(node);
-      node.appendChild = (child) => {
-        if (!node.firstChild) node.firstChild = child;
-        return baseAppend(child);
-      };
-      return node;
-    },
-    addEventListener(type, handler) {
-      const list = this.listeners.get(type) || [];
-      list.push(handler);
-      this.listeners.set(type, list);
-    },
-    removeEventListener(type, handler) {
-      const list = this.listeners.get(type) || [];
-      this.listeners.set(type, list.filter((entry) => entry !== handler));
-    },
-    dispatch(type, event) {
-      for (const handler of this.listeners.get(type) || []) handler(event);
-    },
-  };
-  doc.defaultView.addEventListener = function addEventListener(type, handler) {
-    const list = this.listeners.get(type) || [];
-    list.push(handler);
-    this.listeners.set(type, list);
-  };
-  doc.defaultView.removeEventListener = function removeEventListener(type, handler) {
-    const list = this.listeners.get(type) || [];
-    this.listeners.set(type, list.filter((entry) => entry !== handler));
-  };
-  doc.defaultView.dispatch = function dispatch(type, event) {
-    for (const handler of this.listeners.get(type) || []) handler(event);
-  };
-  doc.body = new TestHTMLElement("body");
-  doc.body.ownerDocument = doc;
-  return doc;
-}
-
-function eventFor(target) {
-  return {
-    target,
-    prevented: false,
-    stopped: false,
-    immediateStopped: false,
-    preventDefault() { this.prevented = true; },
-    stopPropagation() { this.stopped = true; },
-    stopImmediatePropagation() { this.immediateStopped = true; },
-  };
-}
+function eventFor(target) { return { target, prevented: false, stopped: false, preventDefault() { this.prevented = true; }, stopPropagation() { this.stopped = true; } }; }
 
 async function setupRefs() {
   const refs = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementRefs.js"));
   refs.clearBbmUiElementRefs();
-  const doc = createDoc();
-  const shell = new TestHTMLElement("shell", { width: 1000, height: 800 });
-  const nav = new TestHTMLElement("nav", { width: 200, height: 700 });
-  const header = new TestHTMLElement("header", { width: 800, height: 80 });
-  const content = new TestHTMLElement("content", { width: 800, height: 620 });
-  const panel = new TestHTMLElement("panel", { width: 300, height: 400 });
+  const doc = { defaultView: { HTMLElement: TestHTMLElement } };
+  const shell = new TestHTMLElement("shell");
+  const nav = new TestHTMLElement("nav");
+  const header = new TestHTMLElement("header");
+  const content = new TestHTMLElement("content");
+  const panel = new TestHTMLElement("panel");
   for (const node of [shell, nav, header, content, panel]) node.ownerDocument = doc;
-  shell.appendChild(nav);
-  shell.appendChild(header);
-  shell.appendChild(content);
-  content.appendChild(panel);
+  shell.appendChild(nav); shell.appendChild(header); shell.appendChild(content); content.appendChild(panel);
   refs.registerBbmUiElementRef("bbm.main.shell", shell);
   refs.registerBbmUiElementRef("bbm.main.navigation", nav);
   refs.registerBbmUiElementRef("bbm.main.header", header);
   refs.registerBbmUiElementRef("bbm.main.content", content);
-  return { refs, doc, shell, nav, header, content, panel };
+  return { refs, shell, nav, header, content, panel };
+}
+
+function createHostDrivenController(host) {
+  let active = false;
+  let hoveredElementId = "";
+  let pointerMoveHandler = null;
+  let clickHandler = null;
+  let interactionRoot = null;
+  const calls = { start: 0, stop: 0, destroy: 0, select: 0 };
+  function resolveElementId(eventTarget) {
+    for (const target of host.listSelectableTargets()) {
+      const ref = host.getElementRef(target.elementId);
+      if (ref && (ref === eventTarget || ref.contains?.(eventTarget))) return target.elementId;
+    }
+    return "";
+  }
+  function publishState() { host.onStateChange({ active, hoveredElementId }); }
+  return {
+    calls,
+    get hoveredElementId() { return hoveredElementId; },
+    start() {
+      calls.start += 1;
+      if (active) return;
+      active = true;
+      interactionRoot = host.getInteractionRoot();
+      pointerMoveHandler = (event) => {
+        if (host.isExcludedTarget(event?.target)) return;
+        hoveredElementId = resolveElementId(event?.target);
+        publishState();
+      };
+      clickHandler = (event) => {
+        if (!hoveredElementId || host.isExcludedTarget(event?.target)) return;
+        calls.select += 1;
+        event?.preventDefault?.();
+        event?.stopPropagation?.();
+        host.selectElement(hoveredElementId).then(() => host.onSelection({ elementId: hoveredElementId })).catch((error) => host.onError(error));
+      };
+      interactionRoot?.addEventListener?.("pointermove", pointerMoveHandler);
+      interactionRoot?.addEventListener?.("click", clickHandler);
+      publishState();
+    },
+    stop() {
+      calls.stop += 1;
+      if (interactionRoot && pointerMoveHandler) interactionRoot.removeEventListener?.("pointermove", pointerMoveHandler);
+      if (interactionRoot && clickHandler) interactionRoot.removeEventListener?.("click", clickHandler);
+      active = false; hoveredElementId = ""; publishState();
+    },
+    destroy() { calls.destroy += 1; this.stop(); },
+    isActive() { return active; },
+  };
 }
 
 async function runM55UiElementSelectionTests(run) {
-  await run("M55 Controller: Lifecycle, Listener und Escape sind zeitlich begrenzt", async () => {
-    const { shell, doc } = await setupRefs();
-    const { createBbmUiElementSelectionController } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementSelection.js"));
-    let destroyCount = 0;
-    const controller = createBbmUiElementSelectionController({ overlay: { mount() {}, updateHover() {}, clearHover() {}, destroy() { destroyCount += 1; } } });
-    assert.equal(controller.isActive(), false);
-    controller.start();
-    controller.start();
-    assert.equal(controller.isActive(), true);
+  await run("M55 Kit-Bridge: Zielaufloesung nutzt Registry-Liste, M54-Refs und Panel-Ausschluss", async () => {
+    const { nav, header, content, panel } = await setupRefs();
+    const { createBbmKitSelectionHost } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmKitSelectionHost.js"));
+    const host = createBbmKitSelectionHost({
+      getRegistryElements: () => [
+        { elementId: "bbm.main.navigation", label: "Navigation", type: "frame" },
+        { elementId: "bbm.main.header", label: "Seitenkopf", type: "frame" },
+        { elementId: "bbm.main.content", label: "Inhalt", type: "frame" },
+      ],
+      getPanelRoot: () => panel,
+    });
+    assert.deepEqual(host.listSelectableTargets().map((target) => target.elementId), ["bbm.main.navigation", "bbm.main.header", "bbm.main.content"]);
+    assert.equal(host.getElementRef("bbm.main.navigation"), nav);
+    assert.equal(host.getElementRef("bbm.main.header"), header);
+    assert.equal(host.getElementRef("bbm.main.content"), content);
+    assert.equal(host.isExcludedTarget(panel), true);
+    assert.equal(host.isExcludedTarget(header), false);
+  });
+
+  await run("M55 Kit-Bridge: Hover und Klick bleiben auf explizite Refs begrenzt", async () => {
+    const { shell, nav, header, panel } = await setupRefs();
+    const { createBbmKitSelectionHost } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmKitSelectionHost.js"));
+    const selected = [];
+    const states = [];
+    const host = createBbmKitSelectionHost({
+      getRegistryElements: () => [{ elementId: "bbm.main.navigation", label: "Navigation" }, { elementId: "bbm.main.header", label: "Seitenkopf" }],
+      selectElement: (elementId) => { selected.push(elementId); },
+      getPanelRoot: () => panel,
+      onStateChange: (state) => states.push(state),
+    });
+    const controller = createHostDrivenController(host);
+    controller.start(); controller.start();
     assert.equal(shell.listeners.get("pointermove").length, 1);
     assert.equal(shell.listeners.get("click").length, 1);
-    assert.equal(doc.listeners.get("keydown").length, 1);
-    doc.dispatch("keydown", { key: "Escape" });
-    assert.equal(controller.isActive(), false);
-    assert.equal(shell.listeners.get("pointermove").length, 0);
-    assert.equal(shell.listeners.get("click").length, 0);
-    assert.equal(destroyCount, 1);
-  });
-
-  await run("M55 Zielaufloesung: explizite Refs, konkretestes Ziel und Panel-Ausschluss", async () => {
-    const { shell, nav, header, content, panel } = await setupRefs();
-    const { createBbmUiElementSelectionController } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementSelection.js"));
-    const controller = createBbmUiElementSelectionController({ panelRoot: panel, overlay: { mount() {}, updateHover() {}, clearHover() {}, destroy() {} } });
-    controller.start();
-    assert.equal(controller.resolveTargetForTest(nav).elementId, "bbm.main.navigation");
-    assert.equal(controller.resolveTargetForTest(header).elementId, "bbm.main.header");
-    assert.equal(controller.resolveTargetForTest(content).elementId, "bbm.main.content");
-    assert.equal(controller.resolveTargetForTest(shell).elementId, "bbm.main.shell");
-    assert.equal(controller.resolveTargetForTest(panel), null);
-    assert.equal(controller.getState().unavailableIds.includes("bbm.main.actions"), true);
-    controller.stop();
-  });
-
-  await run("M55 Hover: ein Rahmen wird aktualisiert, Scroll/Resize erneuert, Stop entfernt Overlay", async () => {
-    const { shell, nav, header, doc } = await setupRefs();
-    const { createBbmUiElementSelectionController } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementSelection.js"));
-    const calls = [];
-    let destroyed = false;
-    const controller = createBbmUiElementSelectionController({
-      getElementMeta: (elementId) => ({ label: elementId === "bbm.main.header" ? "Seitenkopf" : "Hauptnavigation" }),
-      overlay: { mount() {}, updateHover(payload) { calls.push(payload); }, clearHover() { calls.push({ clear: true }); }, destroy() { destroyed = true; } },
-    });
-    controller.start();
     shell.dispatch("pointermove", eventFor(nav));
-    shell.dispatch("pointermove", eventFor(nav));
-    shell.dispatch("pointermove", eventFor(header));
-    doc.dispatch("scroll", {});
-    assert.equal(calls.filter((entry) => entry.targetElement).length, 3);
-    assert.match(calls[0].label, /Hauptnavigation · bbm\.main\.navigation/);
-    assert.match(calls[1].label, /Seitenkopf · bbm\.main\.header/);
-    shell.dispatch("pointermove", eventFor({}));
-    assert.equal(calls.some((entry) => entry.clear), true);
-    controller.stop();
-    assert.equal(destroyed, true);
-  });
-
-  await run("M55 Klick: Auswahlcallback nur aktiv und Panel-Klicks bleiben frei", async () => {
-    const { shell, nav, panel } = await setupRefs();
-    const { createBbmUiElementSelectionController } = await importEsmFromFile(path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementSelection.js"));
-    const selected = [];
-    const controller = createBbmUiElementSelectionController({ panelRoot: panel, selectElement: ({ elementId }) => selected.push(elementId), overlay: { mount() {}, updateHover() {}, clearHover() {}, destroy() {} } });
-    const inactiveEvent = eventFor(nav);
-    shell.dispatch("click", inactiveEvent);
-    assert.equal(inactiveEvent.prevented, false);
-    controller.start();
-    const panelEvent = eventFor(panel);
-    shell.dispatch("click", panelEvent);
-    assert.equal(panelEvent.prevented, false);
-    const navEvent = eventFor(nav);
-    shell.dispatch("click", navEvent);
+    assert.equal(controller.hoveredElementId, "bbm.main.navigation");
+    shell.dispatch("pointermove", eventFor(panel));
+    assert.equal(controller.hoveredElementId, "bbm.main.navigation");
+    const click = eventFor(nav);
+    shell.dispatch("click", click);
     await new Promise((resolve) => setTimeout(resolve, 0));
     assert.deepEqual(selected, ["bbm.main.navigation"]);
-    assert.equal(navEvent.prevented, true);
+    assert.equal(click.prevented, true);
+    shell.dispatch("pointermove", eventFor(header));
+    assert.equal(controller.hoveredElementId, "bbm.main.header");
     controller.stop();
-    const afterStopEvent = eventFor(nav);
-    shell.dispatch("click", afterStopEvent);
-    assert.equal(afterStopEvent.prevented, false);
+    assert.equal(shell.listeners.get("pointermove").length, 0);
+    assert.equal(shell.listeners.get("click").length, 0);
+    assert.equal(states.at(-1).active, false);
   });
 
-  await run("M55 Sicherheit: keine DOM-Suche, keine Legacy-Imports, keine zweite Registry", () => {
-    const files = [
-      "src/renderer/ui-editor/bbmUiElementSelection.js",
-      "src/renderer/ui-editor/bbmUiSelectionOverlay.js",
-      "src/renderer/ui-editor/BbmUiEditorStatusPanel.js",
-    ];
+  await run("M55 Sicherheit: alte BBM-Runtime ist nicht produktiv importiert und keine verbotene DOM-Suche", () => {
+    const files = ["src/renderer/ui-editor/BbmUiEditorStatusPanel.js", "src/renderer/ui-editor/bbmKitSelectionHost.js"];
     const combined = files.map(read).join("\n");
+    assert.doesNotMatch(combined, /createBbmUiElementSelectionController|createBbmUiSelectedOverlay|createBbmUiSelectionOverlay|bbmSelectionController|selectedOverlay/);
     assert.doesNotMatch(combined, /querySelector|querySelectorAll|getElementById|getElementsBy|closest\s*\(|matches\s*\(|MutationObserver|elementsFromPoint|elementFromPoint/);
-    assert.doesNotMatch(combined, /data-ui-|targetSelection|editorV2Core|UiInspectorOverlay|BBM_UI_ELEMENTS\s*=|ipcRenderer|ipcMain|HTMLElement.*send|send.*HTMLElement/);
-    assert.doesNotMatch(combined, /\.style\.(width|height|left|top|position)\s*=\s*[^;]*(target|ref|element)/);
+    assert.doesNotMatch(combined, /targetSelection|editorV2Core|UiInspectorOverlay|BBM_UI_ELEMENTS\s*=|ipcRenderer|ipcMain|HTMLElement.*send|send.*HTMLElement/);
   });
 
-  await run("M55 Dokumentation und Status sind nachgezogen", () => {
+  await run("M55 Dokumentation und Status bleiben historisch nachgezogen", () => {
     assert.match(read("docs/M55_VISUELLE_UI_AUSWAHL_UEBER_EXPLIZITE_REFS.md"), /Zielaufloesung ueber explizite Refs/);
     assert.match(read("STATUS.md"), /M55/);
     assert.match(read("docs/UI_INSPEKTOR_AUFGABENHEFT.md"), /M55/);
@@ -238,10 +155,7 @@ async function runM55UiElementSelectionTests(run) {
 
 if (require.main === module) {
   let failed = false;
-  const run = async (name, fn) => {
-    try { await fn(); console.log(`ok - ${name}`); }
-    catch (error) { failed = true; console.error(`not ok - ${name}`); console.error(error?.stack || error); }
-  };
+  const run = async (name, fn) => { try { await fn(); console.log(`ok - ${name}`); } catch (error) { failed = true; console.error(`not ok - ${name}`); console.error(error?.stack || error); } };
   runM55UiElementSelectionTests(run).then(() => { if (failed) process.exitCode = 1; });
 }
 

@@ -1,5 +1,31 @@
 # STATUS.md â€” BBM-Produktiv
 
+### M62 – BBM Selection Legacy Cleanup
+- Ergebnis:
+  - Die alte BBM-eigene Hover-/Selection-Runtime ist aus dem produktiven Code entfernt.
+  - Das Statuspanel bleibt ausschliesslich an die UI-Editor-kit Selection-Runtime und die BBM-Host-Bridge angebunden.
+  - M55/M56-Vertraege werden weiter ueber Kit-Runtime/Host-Bridge-Tests abgesichert.
+- Geloeschte Dateien:
+  - `src/renderer/ui-editor/bbmUiElementSelection.js`
+  - `src/renderer/ui-editor/bbmUiSelectionOverlay.js`
+  - `src/renderer/ui-editor/bbmUiSelectedOverlay.js`
+- Geaenderte Dateien:
+  - `scripts/tests/m55UiElementSelection.test.cjs`
+  - `scripts/tests/m56PersistentSelectionFrame.test.cjs`
+  - `scripts/tests/m62BbmSelectionLegacyCleanup.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `docs/M62_BBM_SELECTION_LEGACY_CLEANUP.md`
+  - `STATUS.md`
+- Pruefung:
+  - gezielter M62-Test
+  - bestehende M55-, M56-, M59-, M60- und M61/M60-nahe Tests
+  - `npm test`
+- Risiken / offen:
+  - Manuelle Windows-/Electron-Abnahme fuer sichtbaren Kit-Start, Hover, Auswahl, Reset, Stop, Close/Destroy und doppelte Overlayfreiheit bleibt offen.
+- Naechster Schritt:
+  - Manuelle Sichtpruefung im laufenden Windows-App-Fenster nachholen.
+
 ### M61 – UI-Editor-kit Selection-Runtime exklusiv
 - Ergebnis:
   - Das UI-Editor-Statuspanel nutzt fuer Hover und Auswahl ausschliesslich die UI-Editor-kit Selection-Runtime.
