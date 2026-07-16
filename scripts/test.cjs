@@ -89,6 +89,7 @@ const { runM56PersistentSelectionFrameTests } = require("./tests/m56PersistentSe
 const { runM59KitSelectionRuntimeIntegrationTests } = require("./tests/m59KitSelectionRuntimeIntegration.test.cjs");
 const { runM60KitRuntimeStandardTests } = require("./tests/m60KitRuntimeStandard.test.cjs");
 const { runM62BbmSelectionLegacyCleanupTests } = require("./tests/m62BbmSelectionLegacyCleanup.test.cjs");
+const { runM63aEditorIntegrationAuditTests } = require("./tests/m63aEditorIntegrationAudit.test.cjs");
 
 let failed = false;
 
@@ -225,6 +226,7 @@ async function main() {
   await runM59KitSelectionRuntimeIntegrationTests(run);
   await runM60KitRuntimeStandardTests(run);
   await runM62BbmSelectionLegacyCleanupTests(run);
+  await runM63aEditorIntegrationAuditTests(run);
 
   if (failed) {
     process.exitCode = 1;
