@@ -1,5 +1,6 @@
 import { getBbmUiElementRefStatus } from "./bbmUiElementRefs.js";
 import { createBbmKitSelectionHost } from "./bbmKitSelectionHost.js";
+import { createBbmEditorRuntimeInspectorBridge } from "./bbmEditorRuntimeInspectorBridge.js";
 
 function createNode(tag, className = "") {
   const node = document.createElement(tag);
@@ -54,6 +55,10 @@ export class BbmUiEditorStatusPanel {
     this.runtimeError = "";
     this.selectionMessage = "";
     this.selectionModeActive = false;
+    this.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
+      getRegistryElements: () => this.elements,
+      getSelectedElement: () => this.selectedElement,
+    });
   }
 
   render() {
@@ -288,6 +293,39 @@ export class BbmUiEditorStatusPanel {
       createInfoRow("Erlaubte Aenderungen", formatList(element.allowedChanges))
     );
     this.detailsNode.appendChild(list);
+    this.renderReadonlyLayoutControls();
+  }
+
+  renderReadonlyLayoutControls() {
+    if (!this.detailsNode) return;
+    const section = createNode("section", "bbm-ui-editor-layout-controls");
+    const title = createNode("h3");
+    title.textContent = "Layout-Steuerung";
+    section.appendChild(title);
+
+    const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: true, kind: "empty", controls: [], allowedOps: [] };
+    const list = createNode("dl", "bbm-ui-editor-status-list");
+    list.append(
+      createInfoRow("Inspector-Status", result.inspectorStatus || result.kind || "read_only"),
+      createInfoRow("Read-only", "Ja"),
+      createInfoRow("Editierbar", result.inspectorElement?.editable ? "Ja" : "Nein"),
+      createInfoRow("Erlaubte Layoutoperationen", formatList(result.allowedOps)),
+      createInfoRow("Control-IDs", formatList((result.controls || []).map((control) => control.id))),
+      createInfoRow("Hinweis", result.message || "Keine Operationen werden in M63B ausgefuehrt.")
+    );
+    section.appendChild(list);
+
+    if (Array.isArray(result.controls) && result.controls.length > 0) {
+      const controls = createNode("ul", "bbm-ui-editor-control-list");
+      for (const control of result.controls) {
+        const item = createNode("li");
+        item.textContent = `${asText(control.id)} · ${asText(control.label)} · ${control.enabled ? "vorhanden" : "gesperrt"}`;
+        controls.appendChild(item);
+      }
+      section.appendChild(controls);
+    }
+
+    this.detailsNode.appendChild(section);
   }
 
   getElementMeta(elementId) {

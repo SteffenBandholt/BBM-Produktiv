@@ -1,7 +1,7 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope). M62 abgeschlossen (alte BBM-Auswahlruntime entfernt; Statuspanel nutzt ausschliesslich Kit-Runtime).
+Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope). M62 abgeschlossen (alte BBM-Auswahlruntime entfernt; Statuspanel nutzt ausschliesslich Kit-Runtime). M63B abgeschlossen (read-only Inspector-Bridge im Statuspanel).
 
 Statusupdate: M36 abgeschlossen (UI-Editor Fixstand nach M29 bis M35 dokumentiert).
 
@@ -67,7 +67,20 @@ Aktueller Stand:
 - [x] M60 UI-Editor-kit Selection-Runtime im Statuspanel als Standard verwenden
 - [x] M61 UI-Editor-kit Selection-Runtime exklusiv im Statuspanel verwenden
 - [x] M62 Alte BBM-Auswahlruntime sicher entfernen und Kit-Vertraege weiter pruefen
+- [x] M63A Editor-Bestand und Integrationsplan dokumentieren
+- [x] M63B M51/M52-Auswahl read-only an EditorScopeInspector anbinden
 
+## Statusupdate M63B
+- M63B bindet die bestehende M51/M52-Auswahl read-only an den vorhandenen `EditorScopeInspector`-Layout-Control-Pfad an.
+- Neue Bridge: `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`.
+- Fuehrend bleiben M51/Kit-Ziel-App-Registry und M52 `selectedElement`; die Bridge haelt keine eigene Auswahlwahrheit und erzeugt keine zusaetzlichen Registry-Elemente.
+- Das Statuspanel zeigt im Elementdetail `Layout-Steuerung` mit Inspector-Status, read-only Hinweis, erlaubten Layoutoperationen und Control-IDs.
+- Fehlende `role`-/Pflichtvertraege werden sichtbar als `unsupported`/`blocked` behandelt; es wird nichts aus Label, CSS, Tagname oder DOM-Struktur geraten.
+- Keine Apply-/Save-/Load-/Reset-Ausfuehrung, keine LayoutStore-Schreiboperation, keine DOM-Suche, keine IPC-Erweiterung und keine direkte Style-Mutation.
+- Neue Doku: `docs/M63B_READONLY_INSPECTOR_BRIDGE.md`.
+- Neuer Guardrail-Test: `scripts/tests/m63bReadonlyInspectorBridge.test.cjs`; `scripts/test.cjs` fuehrt ihn mit aus.
+- Naechster sinnvoller Schritt: M63C darf spaeter genau eine vorhandene Inspector-Control-Operation sichtbar ausfuehrbar machen; Pilot aus vorhandenen Controls/Tests waehlen, keine neue Operation erfinden.
+- Offener Punkt: manuelle Windows-Abnahme fuer die sichtbare Statuspanel-Darstellung nachholen.
 
 ## Statusupdate M62
 - M62 entfernt die nicht mehr produktiv genutzte BBM-eigene Hover-/Selection-Runtime aus `src/renderer/ui-editor/`.
