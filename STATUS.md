@@ -2824,3 +2824,23 @@ Wichtig:
 - Gemeinsame Auswahlwahrheit bleibt der bestehende M52-Auswahlstatus.
 - M55/M56-BBM-Runtime bleibt erhalten und wird nicht automatisch ersetzt.
 - Nächster Schritt: manueller Windows-Paralleltest und Entscheidung, ob M60 die Kit-Runtime weiter annähert oder als Standard vorbereitet.
+
+### M63A – Editor-Bestand und Integrationsplan
+- Status: erledigt
+- Beschreibung:
+  - Vorhandener EditorRuntime-/Inspector-/Layout-/Registry-/HostAdapter-Bestand wurde analysiert und in einem Integrationsplan dokumentiert.
+  - Empfehlung: M63B nutzt eine kleine BBM-spezifische Inspector-Bridge zwischen M52-Auswahl und vorhandenem `EditorScopeInspector`; keine zweite Registry, keine zweite Auswahlhaltung, keine neue Persistenz.
+  - Pilotoperation fuer M63B: `move`, da der vorhandene End-to-End-Test Apply/Load/Reset damit fuer Restarbeiten und Protokoll abdeckt.
+  - Keine produktive UI- oder Layoutfunktion wurde eingebaut.
+- Betroffene Dateien:
+  - `docs/M63A_EDITOR_BESTAND_UND_INTEGRATIONSPLAN.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `scripts/tests/m63aEditorIntegrationAudit.test.cjs`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - M63B: kleine Bridge `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js` planen/umsetzen und zunaechst read-only an das vorhandene Statuspanel anbinden.
+- Risiken/Hinweise:
+  - M51-Hauptscope und editorRuntime-Modulscopes sind noch nicht deckungsgleich; die Bridge darf fehlende Metadaten nicht aus DOM oder Text erraten.
+  - Dauerhafte Persistenz bleibt gesondert zu entscheiden; M63A legt keinen neuen Persistenzweg an.

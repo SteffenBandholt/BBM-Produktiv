@@ -580,3 +580,16 @@ Hinweis:
   - `npm test` (in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert)
 - Nächster Schritt:
   - Lokale Sichtprüfung per `npm start`.
+
+## M63A Analysebefund – Editor-Bestand und Integrationsplan
+- M63A ist als reine Analyse- und Dokumentationsstufe abgeschlossen.
+- Der vorhandene Bestand unter `src/renderer/editorRuntime/`, `src/renderer/ui-editor/`, Modul-Editorregistries und relevante Tests wurde ausgewertet.
+- Befund: `EditorScopeInspector`, `editorLayoutControls`, `editorChangeRequestValidator`, HostAdapter-Vertrag und `editorLayoutPersistence` sind wiederverwendbar und duerfen fuer M63 nicht neu erfunden werden.
+- Fuehrend fuer die sichtbare Auswahl bleibt M52/M60: UI-Editor-kit Selection-Runtime -> `bbmKitSelectionHost` -> M52 `selectedElement`.
+- Fuehrend fuer die sichtbare Ziel-App-Registry bleibt die M51/Kit-Registry; keine zweite Registry und keine zweite Auswahlhaltung duerfen entstehen.
+- Empfehlung fuer M63B: kleine BBM-spezifische Inspector-Bridge, die die vorhandene Auswahl-ID und Registry-Metadaten an den vorhandenen Inspector weiterreicht.
+- Pilotoperation fuer spaetere Umsetzung: `move`, weil Apply/Load/Reset dafuer im vorhandenen Inspector-Test bereits end-to-end belegt sind.
+- Keine produktive UI-Erweiterung, keine Layoutoperation, keine Persistenz und kein alter EditorLab-/V2-Einstieg wurden in M63A aktiviert.
+- Dokumentation: `docs/M63A_EDITOR_BESTAND_UND_INTEGRATIONSPLAN.md`.
+- Neuer Guardrail-Test: `scripts/tests/m63aEditorIntegrationAudit.test.cjs`.
+- Naechster sinnvoller Schritt: M63B als read-only Bridge-Paket mit statischem/funktionalem Bridge-Test vorbereiten.
