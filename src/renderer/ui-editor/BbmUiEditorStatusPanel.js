@@ -1,5 +1,6 @@
 import { getBbmUiElementRefStatus } from "./bbmUiElementRefs.js";
 import { createBbmKitSelectionHost } from "./bbmKitSelectionHost.js";
+import { createBbmEditorRuntimeInspectorBridge } from "./bbmEditorRuntimeInspectorBridge.js";
 
 function createNode(tag, className = "") {
   const node = document.createElement(tag);
@@ -54,6 +55,10 @@ export class BbmUiEditorStatusPanel {
     this.runtimeError = "";
     this.selectionMessage = "";
     this.selectionModeActive = false;
+    this.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
+      getRegistryElements: () => this.elements,
+      getSelectedElement: () => this.selectedElement,
+    });
   }
 
   render() {
@@ -277,17 +282,23 @@ export class BbmUiEditorStatusPanel {
       return;
     }
 
-    const list = createNode("dl", "bbm-ui-editor-status-list");
-    list.append(
-      createInfoRow("Element-ID", element.elementId),
-      createInfoRow("Bezeichnung", element.label),
-      createInfoRow("Typ", element.type),
-      createInfoRow("Scope", element.scope),
-      createInfoRow("Parent", element.parentId || "Root"),
-      createInfoRow("Capabilities", formatList(element.capabilities)),
-      createInfoRow("Erlaubte Aenderungen", formatList(element.allowedChanges))
-    );
-    this.detailsNode.appendChild(list);
+    this.renderReadonlyLayoutControls(element);
+  }
+
+  renderReadonlyLayoutControls(element) {
+    if (!this.detailsNode || !element) return;
+    const section = createNode("section", "bbm-ui-editor-layout-controls");
+
+    const name = createNode("p", "bbm-ui-editor-panel__selected-name");
+    name.textContent = asText(element.label || element.name, element.elementId);
+    section.appendChild(name);
+
+    const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: true };
+    const hint = createNode("p", "bbm-ui-editor-panel__notice");
+    hint.textContent = result.ok ? "Bearbeitung wird vorbereitet." : "Bearbeitungsfunktionen sind derzeit nicht verfuegbar.";
+    section.appendChild(hint);
+
+    this.detailsNode.appendChild(section);
   }
 
   getElementMeta(elementId) {

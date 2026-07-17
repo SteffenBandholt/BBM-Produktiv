@@ -2844,3 +2844,26 @@ Wichtig:
 - Risiken/Hinweise:
   - M51-Hauptscope und editorRuntime-Modulscopes sind noch nicht deckungsgleich; die Bridge darf fehlende Metadaten nicht aus DOM oder Text erraten.
   - Dauerhafte Persistenz bleibt gesondert zu entscheiden; M63A legt keinen neuen Persistenzweg an.
+
+### M63B – Read-only Inspector-Bridge
+- Status: erledigt
+- Beschreibung:
+  - Neue Bridge `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js` verbindet die fuehrende M51-Registry und M52-Auswahl read-only mit dem vorhandenen `EditorScopeInspector`-Layout-Control-Pfad.
+  - M63B.1 korrigiert die sichtbare Statuspanel-Oberflaeche: Der Detailbereich zeigt hoechstens den lesbaren Elementnamen und den neutralen Platzhalter `Bearbeitung wird vorbereitet.`.
+  - Technische Inspector-/Bridge-/Runtime-Daten, Control-IDs, interne Operationsnamen, `allowedOps` und Fehlercodes bleiben intern und werden nicht sichtbar ausgegeben.
+  - `layout.read`, `layout.save` und `layout.reset` werden nicht mehr in konkrete EditorRuntime-Operationen uebersetzt; ohne explizites `allowedOps` bleibt die interne Anzeige bei `allowedOps: []`.
+  - Keine Layoutoperation, keine Speicherung, kein Reset, keine DOM-Suche, kein IPC und keine zweite Auswahlhaltung wurden eingebaut.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m63bReadonlyInspectorBridge.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/M63B_READONLY_INSPECTOR_BRIDGE.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - M63C darf spaeter genau eine vorhandene Inspector-Control-Operation sichtbar ausfuehrbar machen; keine neue Operation erfinden.
+- Risiken/Hinweise:
+  - Manuelle Windows-Abnahme fuer die sichtbare Statuspanel-Darstellung bleibt offen.
