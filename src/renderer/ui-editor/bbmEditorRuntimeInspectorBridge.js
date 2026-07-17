@@ -20,12 +20,6 @@ const ROLE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.actions": "action",
 });
 
-const RUNTIME_OPS_BY_ALLOWED_CHANGE = Object.freeze({
-  "layout.read": ["move"],
-  "layout.save": [],
-  "layout.reset": [],
-});
-
 function normalizeId(value) {
   return String(value ?? "").trim();
 }
@@ -44,8 +38,26 @@ function getSelectedElementId(selectedElement) {
 
 function toRuntimeAllowedOps(element) {
   if (Array.isArray(element?.allowedOps)) return unique(cloneList(element.allowedOps));
-  const fromAllowedChanges = cloneList(element?.allowedChanges).flatMap((change) => RUNTIME_OPS_BY_ALLOWED_CHANGE[change] || []);
-  return unique(fromAllowedChanges);
+
+  const capabilities = element?.capabilities;
+  if (capabilities && typeof capabilities === "object" && !Array.isArray(capabilities)) {
+    if (Array.isArray(capabilities.allowedOps)) return unique(cloneList(capabilities.allowedOps));
+    if (Array.isArray(capabilities.operations)) return unique(cloneList(capabilities.operations));
+    if (Array.isArray(capabilities.layoutOps)) return unique(cloneList(capabilities.layoutOps));
+  }
+
+  if (Array.isArray(capabilities)) {
+    const explicitOps = capabilities.flatMap((capability) => {
+      if (!capability || typeof capability !== "object" || Array.isArray(capability)) return [];
+      if (Array.isArray(capability.allowedOps)) return cloneList(capability.allowedOps);
+      if (Array.isArray(capability.operations)) return cloneList(capability.operations);
+      if (Array.isArray(capability.layoutOps)) return cloneList(capability.layoutOps);
+      return [];
+    });
+    return unique(explicitOps);
+  }
+
+  return [];
 }
 
 function isEditable(element) {
@@ -127,6 +139,17 @@ function createReadonlyCatalog({ scopeId, moduleId, targetAppId }) {
   };
 }
 
+function toReadonlyControls(controls) {
+  return Array.isArray(controls)
+    ? controls.map((control) => ({
+        ...control,
+        enabled: false,
+        readOnly: true,
+        m63bStatus: "in M63B nicht aktiv",
+      }))
+    : [];
+}
+
 function createReadonlyInspector({ inspector, inspectorFactory, registry, scopeId, moduleId, targetAppId }) {
   if (inspector) return inspector;
   const catalog = createReadonlyCatalog({ scopeId, moduleId, targetAppId });
@@ -176,10 +199,10 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
       return {
         ...status,
         scopeId,
-        inspectorStatus: panel?.status?.kind || "read_only",
+        inspectorStatus: "read_only",
         inspectorElement: panel?.selectedElement || null,
-        controlPanel: panel,
-        controls: Array.isArray(panel?.controls) ? panel.controls : [],
+        controlPanel: panel ? { ...panel, controls: toReadonlyControls(panel.controls) } : null,
+        controls: toReadonlyControls(panel?.controls),
         allowedOps: Array.isArray(panel?.selectedElement?.effectiveOps) ? [...panel.selectedElement.effectiveOps] : [],
         registry: snapshot.transformed.registry,
         errors: panel?.errors || [],

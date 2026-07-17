@@ -75,14 +75,26 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
     assert.equal(bridge.inspectSelectedElement().kind, "empty");
   });
 
-  await run("M63B Bridge: gueltiges Element liefert Inspector- und Control-Metadaten sowie vorhandene Operationen", () => {
+  await run("M63B Bridge: gueltiges M51-Element mit nur allowedChanges bleibt ohne konkrete Operationen", () => {
     const spy = createSpyInspector();
     const bridge = createBbmEditorRuntimeInspectorBridge({ registryElements: elements, selectedElement: elements[1], inspectorFactory: spy.inspectorFactory });
     const result = bridge.inspectSelectedElement();
     assert.equal(result.ok, true);
+    assert.equal(result.inspectorStatus, "read_only");
     assert.equal(result.inspectorElement.id, "bbm.main.header");
-    assert.deepEqual(result.allowedOps, ["move"]);
+    assert.deepEqual(result.allowedOps, []);
     assert.equal(result.controls[0].id, "editor.layout.applySave");
+    assert.equal(result.controls[0].enabled, false);
+    assert.equal(result.controls[0].m63bStatus, "in M63B nicht aktiv");
+  });
+
+  await run("M63B Bridge: explizites allowedOps uebernimmt genau diese Operation", () => {
+    const spy = createSpyInspector();
+    const explicit = [{ ...elements[0], allowedOps: ["move"] }];
+    const bridge = createBbmEditorRuntimeInspectorBridge({ registryElements: explicit, selectedElement: explicit[0], inspectorFactory: spy.inspectorFactory });
+    const result = bridge.inspectSelectedElement();
+    assert.deepEqual(result.allowedOps, ["move"]);
+    assert.deepEqual(result.registry[0].allowedOps, ["move"]);
   });
 
   await run("M63B Bridge: unbekannte ID und fehlende role/Pflichtfelder werden blockiert statt geraten", () => {
@@ -110,8 +122,12 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
       const text = collectText(panel.detailsNode);
       assert.match(text, /Layout-Steuerung/);
       assert.match(text, /Read-only/);
-      assert.match(text, /Erlaubte Layoutoperationen/);
+      assert.match(text, /Freigegebene Layoutoperationen/);
+      assert.match(text, /keine/);
+      assert.match(text, /In M63B werden keine Layoutaenderungen ausgefuehrt/);
       assert.match(text, /editor\.layout\.applySave/);
+      assert.match(text, /in M63B nicht aktiv/);
+      assert.doesNotMatch(text, /vorhanden/);
     } finally {
       global.document = oldDocument;
       global.window = oldWindow;

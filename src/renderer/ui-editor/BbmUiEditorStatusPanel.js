@@ -309,9 +309,9 @@ export class BbmUiEditorStatusPanel {
       createInfoRow("Inspector-Status", result.inspectorStatus || result.kind || "read_only"),
       createInfoRow("Read-only", "Ja"),
       createInfoRow("Editierbar", result.inspectorElement?.editable ? "Ja" : "Nein"),
-      createInfoRow("Erlaubte Layoutoperationen", formatList(result.allowedOps)),
+      createInfoRow("Freigegebene Layoutoperationen", formatList(result.allowedOps)),
       createInfoRow("Control-IDs", formatList((result.controls || []).map((control) => control.id))),
-      createInfoRow("Hinweis", result.message || "Keine Operationen werden in M63B ausgefuehrt.")
+      createInfoRow("Hinweis", result.message || "In M63B werden keine Layoutaenderungen ausgefuehrt.")
     );
     section.appendChild(list);
 
@@ -319,7 +319,7 @@ export class BbmUiEditorStatusPanel {
       const controls = createNode("ul", "bbm-ui-editor-control-list");
       for (const control of result.controls) {
         const item = createNode("li");
-        item.textContent = `${asText(control.id)} · ${asText(control.label)} · ${control.enabled ? "vorhanden" : "gesperrt"}`;
+        item.textContent = `${asText(control.id)} · ${asText(control.label)} · ${asText(control.m63bStatus, "in M63B nicht aktiv")}`;
         controls.appendChild(item);
       }
       section.appendChild(controls);

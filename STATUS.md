@@ -2849,7 +2849,8 @@ Wichtig:
 - Status: erledigt
 - Beschreibung:
   - Neue Bridge `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js` verbindet die fuehrende M51-Registry und M52-Auswahl read-only mit dem vorhandenen `EditorScopeInspector`-Layout-Control-Pfad.
-  - Das Statuspanel zeigt im Elementdetail jetzt `Layout-Steuerung` mit Inspector-Status, read-only Hinweis, erlaubten Layoutoperationen und Control-IDs.
+  - Das Statuspanel zeigt im Elementdetail jetzt `Layout-Steuerung` mit Inspector-Status, read-only Hinweis, konkret freigegebenen Layoutoperationen und Control-IDs.
+  - Korrektur PR #202: `layout.read`, `layout.save` und `layout.reset` werden nicht mehr in konkrete EditorRuntime-Operationen uebersetzt; ohne explizites `allowedOps` bleibt die Anzeige bei `allowedOps: []`.
   - Keine Layoutoperation, keine Speicherung, kein Reset, keine DOM-Suche, kein IPC und keine zweite Auswahlhaltung wurden eingebaut.
 - Betroffene Dateien:
   - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`

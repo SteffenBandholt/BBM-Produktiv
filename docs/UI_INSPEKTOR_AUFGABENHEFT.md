@@ -74,7 +74,8 @@ Aktueller Stand:
 - M63B bindet die bestehende M51/M52-Auswahl read-only an den vorhandenen `EditorScopeInspector`-Layout-Control-Pfad an.
 - Neue Bridge: `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`.
 - Fuehrend bleiben M51/Kit-Ziel-App-Registry und M52 `selectedElement`; die Bridge haelt keine eigene Auswahlwahrheit und erzeugt keine zusaetzlichen Registry-Elemente.
-- Das Statuspanel zeigt im Elementdetail `Layout-Steuerung` mit Inspector-Status, read-only Hinweis, erlaubten Layoutoperationen und Control-IDs.
+- Das Statuspanel zeigt im Elementdetail `Layout-Steuerung` mit Inspector-Status, read-only Hinweis, konkret freigegebenen Layoutoperationen und Control-IDs.
+- Korrektur PR #202: `layout.read`, `layout.save` und `layout.reset` werden nicht in konkrete EditorRuntime-Operationen uebersetzt; ohne explizites `allowedOps` bleibt die Anzeige bei `allowedOps: []`.
 - Fehlende `role`-/Pflichtvertraege werden sichtbar als `unsupported`/`blocked` behandelt; es wird nichts aus Label, CSS, Tagname oder DOM-Struktur geraten.
 - Keine Apply-/Save-/Load-/Reset-Ausfuehrung, keine LayoutStore-Schreiboperation, keine DOM-Suche, keine IPC-Erweiterung und keine direkte Style-Mutation.
 - Neue Doku: `docs/M63B_READONLY_INSPECTOR_BRIDGE.md`.

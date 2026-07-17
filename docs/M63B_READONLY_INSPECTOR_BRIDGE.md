@@ -21,7 +21,7 @@ Die Bridge bildet die M51-Felder deterministisch ab:
 | `parentId` | `parentId` | unveraendert |
 | Reihenfolge in der M51-Liste | `order` | numerischer Listenindex |
 | `editable`/`capabilities`/`allowedChanges` | `editable` | nur aus vorhandenen Capabilities/Aenderungsvertraegen |
-| `allowedOps` oder `allowedChanges` | `allowedOps` | vorhandene runtime-faehige Ops; `layout.read` wird fuer die read-only Inspector-Anzeige auf den dokumentierten M63A-Pilotpfad `move` abgebildet |
+| `allowedOps` oder explizite konkrete Operationsfelder in `capabilities` | `allowedOps` | nur bereits konkret benannte EditorRuntime-Operationen; `layout.read`, `layout.save` und `layout.reset` werden nicht in konkrete Operationen uebersetzt |
 | `lockedOps` | `lockedOps` | vorhandene Werte, sonst `[]` |
 | `visible`/`layoutDefaults.visible` | `visible` | vorhandener Wert, sonst `true` |
 
@@ -30,7 +30,7 @@ Die Bridge bildet die M51-Felder deterministisch ab:
 
 ## Read-only Status
 - Keine Auswahl: neutraler leerer Status ohne Controls.
-- Bekannte Auswahl: Inspector-/Control-Metadaten werden read-only angezeigt.
+- Bekannte Auswahl: Inspector-/Control-Metadaten werden read-only angezeigt; ohne konkret freigegebene Operationen bleibt `allowedOps: []`.
 - Unbekannte ID: blockierter Status ohne Controls.
 - Fehlender Vertrag: `unsupported`/`blocked`, ohne Raten fehlender Pflichtfelder.
 
@@ -41,7 +41,7 @@ Im Detailbereich erscheint `Layout-Steuerung` mit:
 - Editierbar/Gesperrt-Status,
 - Liste der erlaubten Layoutoperationen,
 - Control-IDs und Control-Metadaten,
-- Hinweis, dass M63B keine Operation ausfuehrt.
+- Hinweis: In M63B werden keine Layoutaenderungen ausgefuehrt.
 
 ## Bewusst nicht aktive Operationen
 M63B ruft nicht auf:
@@ -59,4 +59,4 @@ Es gibt keine neuen IPCs, keine Datenbanktabellen, kein `localStorage`, keine DO
 Inspector-/Adapterfehler werden als blockierter Status im Panel sichtbar. Die Auswahlruntime wird dadurch nicht gestoppt, die vorhandenen Statuspanel-Informationen bleiben nutzbar, und es wird keine Fallback-Registry aufgebaut.
 
 ## Scope fuer M63C
-M63C darf spaeter genau eine bereits vorhandene Operation aus dem EditorLayoutControls-Pfad sichtbar ausfuehrbar machen. Die Pilotoperation ist aus dem bestehenden Inspector-Control-Panel und den vorhandenen Tests zu waehlen; M63A dokumentiert `move` als naheliegenden Pilot. M63C darf keine neue Operation erfinden und muss vor jeder Ausfuehrung die bestehenden Validator-/HostAdapter-Grenzen nutzen.
+M63C darf spaeter genau eine bereits vorhandene Operation aus dem EditorLayoutControls-Pfad sichtbar ausfuehrbar machen. Die Pilotoperation ist aus dem bestehenden Inspector-Control-Panel, der fuehrenden Registry und den vorhandenen Tests zu waehlen. M63C darf keine neue Operation erfinden und muss vor jeder Ausfuehrung die bestehenden Validator-/HostAdapter-Grenzen nutzen.
