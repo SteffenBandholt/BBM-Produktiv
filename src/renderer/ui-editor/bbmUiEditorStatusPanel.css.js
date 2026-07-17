@@ -30,6 +30,11 @@ export function injectBbmUiEditorStatusPanelStyles() {
     .bbm-ui-editor-panel__runtime select { border: 1px solid #b9c4d0; border-radius: 8px; padding: 7px 10px; background: #fff; color: #172033; font-weight: 700; }
     .bbm-ui-editor-panel__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     .bbm-ui-editor-panel__empty { color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; }
+    .bbm-ui-editor-panel__selected-name { font-weight: 800; color: #172033; }
+    .bbm-ui-editor-layout-console { display: grid; gap: 12px; margin-top: 12px; }
+    .bbm-ui-editor-layout-console__group { border: 1px solid #d7dde5; border-radius: 10px; padding: 10px; background: #f8fafc; }
+    .bbm-ui-editor-layout-console__group h3 { margin: 0 0 8px; font-size: 14px; }
+    .bbm-ui-editor-layout-console__buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
     @media (max-width: 980px) { .bbm-ui-editor-panel__grid { grid-template-columns: 1fr; } }
   `;
   document.head?.appendChild(style);

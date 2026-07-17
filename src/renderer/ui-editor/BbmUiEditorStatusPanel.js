@@ -293,12 +293,72 @@ export class BbmUiEditorStatusPanel {
     name.textContent = asText(element.label || element.name, element.elementId);
     section.appendChild(name);
 
-    const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: true };
+    const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: false };
     const hint = createNode("p", "bbm-ui-editor-panel__notice");
-    hint.textContent = result.ok ? "Bearbeitung wird vorbereitet." : "Bearbeitungsfunktionen sind derzeit nicht verfuegbar.";
+    hint.textContent = result.ok ? "Kleine Schritte fuer Position und Groesse. Keine freie Werteingabe." : "Bearbeitungsfunktionen sind derzeit nicht verfuegbar.";
     section.appendChild(hint);
 
+    const consoleNode = createNode("div", "bbm-ui-editor-layout-console");
+    consoleNode.setAttribute("data-ui-inspector-id", "ui-editor.layout-console");
+    consoleNode.setAttribute("data-ui-editor-kind", "single");
+    consoleNode.setAttribute("data-ui-editor-label", "Layout-Konsole");
+    consoleNode.setAttribute("data-ui-editor-parent", "ui-editor.panel");
+    consoleNode.setAttribute("data-ui-editor-editable", "false");
+    consoleNode.setAttribute("data-ui-editor-ops", "move,resize");
+    consoleNode.append(
+      this.createLayoutButtonGroup("Verschieben", "ui-editor.layout-console.move", "move", [
+        ["up", "Nach oben"],
+        ["left", "Nach links"],
+        ["right", "Nach rechts"],
+        ["down", "Nach unten"],
+      ], result),
+      this.createLayoutButtonGroup("Groesse", "ui-editor.layout-console.size", "resize", [
+        ["narrower", "Schmaler"],
+        ["wider", "Breiter"],
+        ["lower", "Niedriger"],
+        ["higher", "Hoeher"],
+      ], result)
+    );
+    section.appendChild(consoleNode);
+
     this.detailsNode.appendChild(section);
+  }
+
+  createLayoutButtonGroup(label, inspectorId, operation, actions, result) {
+    const group = createNode("div", "bbm-ui-editor-layout-console__group");
+    group.setAttribute("data-ui-inspector-id", inspectorId);
+    group.setAttribute("data-ui-editor-kind", "single");
+    group.setAttribute("data-ui-editor-label", label);
+    group.setAttribute("data-ui-editor-parent", "ui-editor.layout-console");
+    group.setAttribute("data-ui-editor-editable", "false");
+    group.setAttribute("data-ui-editor-ops", operation);
+
+    const title = createNode("h3");
+    title.textContent = label;
+    const buttons = createNode("div", "bbm-ui-editor-layout-console__buttons");
+    const allowed = Array.isArray(result?.allowedOps) && result.allowedOps.includes(operation);
+    for (const [action, text] of actions) {
+      const button = createNode("button", "bbm-ui-editor-panel__secondary");
+      button.type = "button";
+      button.textContent = text;
+      button.disabled = !allowed;
+      button.setAttribute("data-ui-inspector-id", `${inspectorId}.${action}`);
+      button.setAttribute("data-ui-editor-kind", "single");
+      button.setAttribute("data-ui-editor-label", text);
+      button.setAttribute("data-ui-editor-parent", inspectorId);
+      button.setAttribute("data-ui-editor-editable", "false");
+      button.setAttribute("data-ui-editor-ops", operation);
+      button.addEventListener("click", () => this.applyLayoutAction(action));
+      buttons.appendChild(button);
+    }
+    group.append(title, buttons);
+    return group;
+  }
+
+  applyLayoutAction(action) {
+    const result = this.inspectorBridge?.applySelectedElementLayoutAction?.(action);
+    this.selectionMessage = result?.ok ? "Layoutschritt angewendet." : "Layoutschritt blockiert.";
+    this.renderAll();
   }
 
   getElementMeta(elementId) {

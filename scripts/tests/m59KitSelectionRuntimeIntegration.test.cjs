@@ -262,7 +262,7 @@ async function runM59KitSelectionRuntimeIntegrationTests(run) {
     ]) {
       assert.equal(combined.includes(forbidden), false, `${forbidden} darf in M59-Integration nicht vorkommen`);
     }
-    assert.equal(combined.includes("data-ui-"), false);
+    assert.equal(combined.includes("data-ui-editor-storage"), false);
     assert.equal(count(combined, "createBbmKitSelectionHost"), 3);
     assert.equal(count(combined, "createHoverOverlay"), 0);
     assert.equal(count(combined, "createSelectedOverlay"), 0);

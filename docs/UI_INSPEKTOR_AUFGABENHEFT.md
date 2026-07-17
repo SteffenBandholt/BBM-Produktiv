@@ -69,6 +69,17 @@ Aktueller Stand:
 - [x] M62 Alte BBM-Auswahlruntime sicher entfernen und Kit-Vertraege weiter pruefen
 - [x] M63A Editor-Bestand und Integrationsplan dokumentieren
 - [x] M63B M51/M52-Auswahl read-only an EditorScopeInspector anbinden
+- [x] M63C Kleine Layout-Bedienkonsole fuer ausgewaehltes Element
+
+
+## Statusupdate M63C
+- M63C ergaenzt im sichtbaren UI-Editor-Statuspanel eine kleine Bedienkonsole fuer das aktuell ausgewaehlte Registry-Element.
+- Bedienbar sind nur feste Schrittbuttons fuer Position und Groesse: links/rechts/oben/unten sowie breiter/schmaler/hoeher/niedriger.
+- Keine Textgroesse, keine Textposition, keine freie Werteingabe, kein Drag-and-drop, keine direkte Style-Mutation, keine neue Registry, keine neue Auswahlhaltung und keine neue Persistenz.
+- Fuehrend bleiben M51/Kit-Ziel-App-Registry und M52 `selectedElement`; die Bridge liest die Auswahl live und haelt nur neutralen Laufzeitzustand fuer die Bedienrueckmeldung.
+- Layoutschritte werden ueber den vorhandenen `EditorScopeInspector.applyLayoutChange`-Pfad validiert; unbekannte Aktionen werden blockiert.
+- Tests: `node scripts/tests/m63bReadonlyInspectorBridge.test.cjs`, `node scripts/tests/m59KitSelectionRuntimeIntegration.test.cjs`, `node scripts/ui-editor-contract-check.cjs --self-test`.
+- Offener Punkt: manuelle Windows-/Electron-Sichtpruefung nachholen.
 
 ## Statusupdate M63B
 - M63B bindet die bestehende M51/M52-Auswahl read-only an den vorhandenen `EditorScopeInspector`-Layout-Control-Pfad an.

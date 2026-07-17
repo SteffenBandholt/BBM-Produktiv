@@ -2867,3 +2867,26 @@ Wichtig:
   - M63C darf spaeter genau eine vorhandene Inspector-Control-Operation sichtbar ausfuehrbar machen; keine neue Operation erfinden.
 - Risiken/Hinweise:
   - Manuelle Windows-Abnahme fuer die sichtbare Statuspanel-Darstellung bleibt offen.
+
+### M63C – Kleine Layout-Bedienkonsole fuer ausgewaehltes Element
+- Status: erledigt
+- Beschreibung:
+  - Das UI-Editor-Statuspanel zeigt fuer das aktuell ausgewaehlte M51/M52-Element eine kompakte Bedienkonsole.
+  - Die Konsole bietet feste Schritt-Buttons fuer Verschieben sowie Breite/Hoehe: nach oben/unten/links/rechts, schmaler/breiter, niedriger/hoeher.
+  - Die Bridge nutzt weiterhin die fuehrende Registry und die bestehende Auswahl; es gibt keine zweite Registry, keine zweite Auswahlhaltung, keine freie Werteingabe und keine direkte Style-Mutation.
+  - Die Layoutschritte laufen ueber den vorhandenen `EditorScopeInspector.applyLayoutChange`-Pfad und bleiben neutral im Bridge-Laufzeitzustand.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
+  - `scripts/tests/m63bReadonlyInspectorBridge.test.cjs`
+  - `scripts/tests/m59KitSelectionRuntimeIntegration.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - `24b4e2f`
+- Naechster offener Schritt:
+  - Manuelle Electron-/Windows-Sichtpruefung: Konsole sichtbar, Schrittbuttons verstaendlich, keine freie Werteingabe, keine Fachaktionen.
+- Risiken/Hinweise:
+  - `npm test` bleibt in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert.
+  - `npm run test:node` laeuft bis zu nativen SQLite-Tests, ist aber durch eine `better-sqlite3`/Node ABI-Abweichung blockiert.
