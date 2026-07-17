@@ -27,7 +27,7 @@ function createSpyInspector() {
           return {
             ok: Boolean(selectedElement),
             selectedElement: selectedElement && { ...selectedElement, effectiveOps: [...selectedElement.allowedOps] },
-            controls: selectedElement ? [{ id: "editor.layout.applySave", label: "Aenderung anwenden/speichern", enabled: true, allowedOps: [...selectedElement.allowedOps] }] : [],
+            controls: selectedElement ? [{ id: "editor.layout.applySave", label: "Aenderung anwenden/speichern", enabled: selectedElement.allowedOps.length > 0, allowedOps: [...selectedElement.allowedOps] }] : [],
             status: { kind: selectedElement ? "ready" : "blocked" },
             errors: [],
             warnings: [],
@@ -76,17 +76,17 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
     assert.equal(bridge.inspectSelectedElement().kind, "empty");
   });
 
-  await run("M63C Bridge: gueltiges Layout-Element bietet Move und Resize", () => {
+  await run("M63B Bridge: gueltiges M51-Element ohne explizite allowedOps bleibt ohne konkrete Operationen", () => {
     const spy = createSpyInspector();
     const bridge = createBbmEditorRuntimeInspectorBridge({ registryElements: elements, selectedElement: elements[1], inspectorFactory: spy.inspectorFactory });
     const result = bridge.inspectSelectedElement();
     assert.equal(result.ok, true);
     assert.equal(result.inspectorStatus, "layout_ready");
     assert.equal(result.inspectorElement.id, "bbm.main.header");
-    assert.deepEqual(result.allowedOps, ["move", "resize"]);
+    assert.deepEqual(result.allowedOps, []);
     assert.equal(result.controls[0].id, "editor.layout.applySave");
-    assert.equal(result.controls[0].enabled, true);
-    assert.equal(result.controls[0].m63cStatus, "bereit");
+    assert.equal(result.controls[0].enabled, false);
+    assert.equal(result.controls[0].m63cStatus, "blockiert");
   });
 
   await run("M63B Bridge: explizites allowedOps uebernimmt genau diese Operation", () => {
@@ -108,7 +108,7 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
     assert.equal(bridge.inspectSelectedElement().reason, "ROLE_MISSING");
   });
 
-  await run("M63C Statuspanel: zeigt Elementname und kleine Layout-Konsole", async () => {
+  await run("M63B Statuspanel: zeigt Elementname und vorbereitete Layout-Konsole ohne Freigabe", async () => {
     const oldDocument = global.document;
     const oldWindow = global.window;
     global.document = { createElement: (tagName) => new TestNode(tagName) };
@@ -123,37 +123,23 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
       const text = collectText(panel.detailsNode);
       const tags = collectTags(panel.detailsNode);
       assert.match(text, /Header/);
-      assert.match(text, /Kleine Schritte fuer Position und Groesse/);
-      assert.match(text, /Nach oben/);
-      assert.match(text, /Nach links/);
-      assert.match(text, /Breiter/);
-      assert.match(text, /Hoeher/);
+      assert.match(text, /Move/);
+      assert.match(text, /Breite/);
+      assert.match(text, /Höhe/);
+      assert.match(text, /▲/);
+      assert.match(text, /●/);
       assert.doesNotMatch(text, /Textgroesse|Textposition|freie Werteingabe:/);
       assert.equal(tags.includes("button"), true);
       assert.equal(tags.includes("input"), false);
       assert.equal(tags.includes("select"), false);
-      assert.equal(panel.detailsNode.children[1].children[2].attributes["data-ui-inspector-id"], "ui-editor.layout-console");
     } finally {
       global.document = oldDocument;
       global.window = oldWindow;
     }
   });
 
-  await run("M63C Bridge: Layoutaktionen veraendern nur den ausgewaehlten neutralen Layoutzustand", () => {
-    const explicit = [{ ...elements[0], allowedOps: ["move", "resize"] }];
-    const bridge = createBbmEditorRuntimeInspectorBridge({ registryElements: explicit, selectedElement: explicit[0] });
-    const move = bridge.applySelectedElementLayoutAction("right");
-    assert.equal(move.ok, true);
-    assert.deepEqual(move.layoutEntry.layoutValue, { x: 8 });
-    const resize = bridge.applySelectedElementLayoutAction("higher");
-    assert.equal(resize.ok, true);
-    assert.deepEqual(resize.layoutEntry.layoutValue, { x: 8, height: 8 });
-    const unknown = bridge.applySelectedElementLayoutAction("free-value");
-    assert.equal(unknown.ok, false);
-    assert.equal(unknown.reason, "UNKNOWN_LAYOUT_ACTION");
-  });
 
-  await run("M63C Guardrails: keine direkte Style-/DOM-Suche/IPC/zweite Registry und keine freie Werteingabe", () => {
+  await run("M63B/M63C Guardrails: keine direkte Style-/DOM-Suche/IPC/zweite Registry und keine freie Werteingabe im Panel oder in der Bridge", () => {
     const bridgeSource = read("src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js");
     const panelSource = read("src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
     const combined = `${bridgeSource}\n${panelSource}`;

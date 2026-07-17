@@ -45,6 +45,7 @@ const BBM_UI_ELEMENTS = Object.freeze([
     parentId: "bbm.main.shell",
     capabilities: Object.freeze(["select", "layout"]),
     allowedChanges: ALLOWED_LAYOUT_OPS,
+    allowedOps: Object.freeze(["move", "resize"]),
     layoutDefaults: Object.freeze({ visible: true }),
     sourceRef: "src/renderer/app/CoreShell.js",
   }),
@@ -110,6 +111,7 @@ function cloneElement(element) {
     ...element,
     capabilities: [...element.capabilities],
     allowedChanges: [...element.allowedChanges],
+    ...(Array.isArray(element.allowedOps) ? { allowedOps: [...element.allowedOps] } : {}),
     layoutDefaults: { ...element.layoutDefaults },
   };
 }

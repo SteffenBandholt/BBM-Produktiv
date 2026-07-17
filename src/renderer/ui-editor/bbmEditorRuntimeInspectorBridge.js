@@ -1,9 +1,10 @@
 import { createEditorScopeInspector } from "../editorRuntime/inspector/editorScopeInspector.js";
+import { createBbmMainUiHostAdapter } from "./bbmMainUiHostAdapter.js";
 
 const DEFAULT_SCOPE_ID = "bbm.main.readonly";
 const DEFAULT_MODULE_ID = "bbm.main";
 const DEFAULT_TARGET_APP_ID = "bbm-produktiv";
-const LAYOUT_STEP = 8;
+export const M63C_LAYOUT_STEP = 1;
 
 const TYPE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.shell": "root",
@@ -47,9 +48,6 @@ function toRuntimeAllowedOps(element) {
     if (Array.isArray(capabilities.layoutOps)) return unique(cloneList(capabilities.layoutOps));
   }
 
-  if (Array.isArray(capabilities) && capabilities.map((capability) => normalizeId(capability)).includes("layout")) {
-    return ["move", "resize"];
-  }
 
   if (Array.isArray(capabilities)) {
     const explicitOps = capabilities.flatMap((capability) => {
@@ -114,35 +112,6 @@ function transformRegistry(elements) {
   };
 }
 
-function createLayoutHostAdapter(registry, state) {
-  return {
-    getRegistry() {
-      return registry.map((element) => ({ ...element, allowedOps: [...element.allowedOps], lockedOps: [...element.lockedOps] }));
-    },
-    getCurrentLayoutState() {
-      return [...state.values()].map((entry) => ({ ...entry, layoutValue: { ...entry.layoutValue } }));
-    },
-    submitChangeRequest(changeRequest) {
-      const elementId = normalizeId(changeRequest?.elementId);
-      const operation = normalizeId(changeRequest?.operation);
-      const payload = changeRequest?.payload && typeof changeRequest.payload === "object" ? changeRequest.payload : {};
-      const current = state.get(elementId)?.layoutValue || {};
-      const next = { ...current };
-      if (operation === "move") {
-        if (typeof payload.x === "number") next.x = (typeof next.x === "number" ? next.x : 0) + payload.x;
-        if (typeof payload.y === "number") next.y = (typeof next.y === "number" ? next.y : 0) + payload.y;
-      }
-      if (operation === "resize") {
-        if (typeof payload.width === "number") next.width = (typeof next.width === "number" ? next.width : 0) + payload.width;
-        if (typeof payload.height === "number") next.height = (typeof next.height === "number" ? next.height : 0) + payload.height;
-      }
-      const layoutEntry = { elementId, layoutValue: next, operation, updatedAt: changeRequest?.createdAt || new Date().toISOString() };
-      state.set(elementId, layoutEntry);
-      return { ok: true, accepted: true, executed: false, layoutEntry, changeRequest };
-    },
-  };
-}
-
 function createReadonlyCatalog({ scopeId, moduleId, targetAppId }) {
   return {
     targetAppId,
@@ -175,24 +144,26 @@ function toM63cControls(controls) {
 
 function createStepPayload(action) {
   const map = {
-    left: { operation: "move", payload: { x: -LAYOUT_STEP } },
-    right: { operation: "move", payload: { x: LAYOUT_STEP } },
-    up: { operation: "move", payload: { y: -LAYOUT_STEP } },
-    down: { operation: "move", payload: { y: LAYOUT_STEP } },
-    narrower: { operation: "resize", payload: { width: -LAYOUT_STEP } },
-    wider: { operation: "resize", payload: { width: LAYOUT_STEP } },
-    lower: { operation: "resize", payload: { height: -LAYOUT_STEP } },
-    higher: { operation: "resize", payload: { height: LAYOUT_STEP } },
+    left: { operation: "move", payload: { x: -M63C_LAYOUT_STEP } },
+    right: { operation: "move", payload: { x: M63C_LAYOUT_STEP } },
+    up: { operation: "move", payload: { y: -M63C_LAYOUT_STEP } },
+    down: { operation: "move", payload: { y: M63C_LAYOUT_STEP } },
+    widthLeft: { operation: "resize", payload: { width: -M63C_LAYOUT_STEP } },
+    widthRight: { operation: "resize", payload: { width: M63C_LAYOUT_STEP } },
+    heightUp: { operation: "resize", payload: { height: M63C_LAYOUT_STEP } },
+    heightDown: { operation: "resize", payload: { height: -M63C_LAYOUT_STEP } },
   };
   return map[normalizeId(action)] || null;
 }
 
-function createRuntimeInspector({ inspector, inspectorFactory, registry, scopeId, moduleId, targetAppId, state }) {
+function createRuntimeInspector({ inspector, inspectorFactory, hostAdapterFactory, registry, scopeId, moduleId, targetAppId }) {
   if (inspector) return inspector;
   const catalog = createReadonlyCatalog({ scopeId, moduleId, targetAppId });
-  const hostAdapter = createLayoutHostAdapter(registry, state);
   const factory = inspectorFactory || createEditorScopeInspector;
-  return factory({ catalog, hostAdapterFactory: () => hostAdapter });
+  const createHostAdapter = typeof hostAdapterFactory === "function"
+    ? hostAdapterFactory
+    : () => createBbmMainUiHostAdapter({ registry });
+  return factory({ catalog, hostAdapterFactory: () => createHostAdapter({ registry, scopeId, moduleId, targetAppId }) });
 }
 
 export function createBbmEditorRuntimeInspectorBridge(options = {}) {
@@ -201,8 +172,6 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
   const targetAppId = normalizeId(options.targetAppId) || DEFAULT_TARGET_APP_ID;
   const getRegistryElements = typeof options.getRegistryElements === "function" ? options.getRegistryElements : () => options.registryElements || [];
   const getSelectedElement = typeof options.getSelectedElement === "function" ? options.getSelectedElement : () => options.selectedElement || null;
-  const layoutState = new Map();
-
   function getSnapshot() {
     const registryElements = getRegistryElements() || [];
     const selectedElement = getSelectedElement() || null;
@@ -232,7 +201,7 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     const status = getStatus();
     if (!status.ok || status.kind === "empty") return { ...status, registry: snapshot.transformed.registry };
     try {
-      const inspector = createRuntimeInspector({ inspector: options.inspector, inspectorFactory: options.inspectorFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId, state: layoutState });
+      const inspector = createRuntimeInspector({ inspector: options.inspector, inspectorFactory: options.inspectorFactory, hostAdapterFactory: options.hostAdapterFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId });
       const panel = inspector.getLayoutControlPanel(scopeId, snapshot.selectedElementId);
       return {
         ...status,
@@ -261,7 +230,7 @@ export function createBbmEditorRuntimeInspectorBridge(options = {}) {
     if (!step) return { ok: false, blocked: true, reason: "UNKNOWN_LAYOUT_ACTION" };
     if (!status.ok || status.kind !== "ready") return { ok: false, blocked: true, reason: status.reason || "NO_SELECTED_ELEMENT" };
     const snapshot = getSnapshot();
-    const inspector = createRuntimeInspector({ inspector: options.inspector, inspectorFactory: options.inspectorFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId, state: layoutState });
+    const inspector = createRuntimeInspector({ inspector: options.inspector, inspectorFactory: options.inspectorFactory, hostAdapterFactory: options.hostAdapterFactory, registry: snapshot.transformed.registry, scopeId, moduleId, targetAppId });
     return inspector.applyLayoutChange(scopeId, {
       elementId: snapshot.selectedElementId,
       operation: step.operation,

@@ -73,12 +73,14 @@ Aktueller Stand:
 
 
 ## Statusupdate M63C
-- M63C ergaenzt im sichtbaren UI-Editor-Statuspanel eine kleine Bedienkonsole fuer das aktuell ausgewaehlte Registry-Element.
-- Bedienbar sind nur feste Schrittbuttons fuer Position und Groesse: links/rechts/oben/unten sowie breiter/schmaler/hoeher/niedriger.
-- Keine Textgroesse, keine Textposition, keine freie Werteingabe, kein Drag-and-drop, keine direkte Style-Mutation, keine neue Registry, keine neue Auswahlhaltung und keine neue Persistenz.
-- Fuehrend bleiben M51/Kit-Ziel-App-Registry und M52 `selectedElement`; die Bridge liest die Auswahl live und haelt nur neutralen Laufzeitzustand fuer die Bedienrueckmeldung.
-- Layoutschritte werden ueber den vorhandenen `EditorScopeInspector.applyLayoutChange`-Pfad validiert; unbekannte Aktionen werden blockiert.
-- Tests: `node scripts/tests/m63bReadonlyInspectorBridge.test.cjs`, `node scripts/tests/m59KitSelectionRuntimeIntegration.test.cjs`, `node scripts/ui-editor-contract-check.cjs --self-test`.
+- M63C korrigiert die sichtbare Bedienung auf drei Modi und ein gemeinsames Steuerkreuz: `[Move] [Breite] [Hoehe]` plus Pfeile und deaktiviertem Mittelpunkt.
+- Schrittweite ist `1`; die konkrete Operation kommt ausschliesslich aus explizitem `allowedOps`.
+- Pilotfreigabe: nur `bbm.main.navigation` erhaelt `allowedOps: ["move", "resize"]`; `capabilities: ["layout"]` wird nicht in konkrete Operationen uebersetzt.
+- Die Bridge haelt keinen eigenen Layoutzustand und nutzt keinen lokalen Map-Speicher mehr.
+- Layoutschritte laufen ueber `EditorScopeInspector` -> `EditorLayoutControls` -> `ChangeRequestValidator` -> BBM-main-HostAdapter -> vorhandenen `EditorLayoutStore` -> sichtbare Anwendung am registrierten M54-Ziel.
+- Keine Textgroesse, keine Textposition, keine freie Werteingabe, kein Drag-and-drop, keine direkte Style-Mutation im Panel/Bridge, keine neue Registry, keine neue Auswahlhaltung und keine neue Persistenz.
+- Neue Doku: `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`.
+- Neuer Guardrail-Test: `scripts/tests/m63cLayoutControlConsole.test.cjs`; `scripts/test.cjs` fuehrt ihn mit aus.
 - Offener Punkt: manuelle Windows-/Electron-Sichtpruefung nachholen.
 
 ## Statusupdate M63B

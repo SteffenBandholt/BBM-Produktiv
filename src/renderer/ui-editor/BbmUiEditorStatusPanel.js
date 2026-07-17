@@ -55,6 +55,7 @@ export class BbmUiEditorStatusPanel {
     this.runtimeError = "";
     this.selectionMessage = "";
     this.selectionModeActive = false;
+    this.activeLayoutControlMode = "move";
     this.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
       getRegistryElements: () => this.elements,
       getSelectedElement: () => this.selectedElement,
@@ -70,7 +71,7 @@ export class BbmUiEditorStatusPanel {
     const title = createNode("h1");
     title.textContent = "UI-Editor";
     const subtitle = createNode("p");
-    subtitle.textContent = "Technische Editor-Ansicht fuer BBM. Layoutaenderungen folgen in einem spaeteren Paket.";
+    subtitle.textContent = "Technische Editor-Ansicht fuer BBM. Freigegebene Layoutaenderungen laufen in kleinen Schritten.";
     titleBox.append(title, subtitle);
 
     const closeButton = createNode("button", "bbm-ui-editor-panel__close");
@@ -293,66 +294,67 @@ export class BbmUiEditorStatusPanel {
     name.textContent = asText(element.label || element.name, element.elementId);
     section.appendChild(name);
 
-    const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: false };
-    const hint = createNode("p", "bbm-ui-editor-panel__notice");
-    hint.textContent = result.ok ? "Kleine Schritte fuer Position und Groesse. Keine freie Werteingabe." : "Bearbeitungsfunktionen sind derzeit nicht verfuegbar.";
-    section.appendChild(hint);
-
+    const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: false, allowedOps: [] };
     const consoleNode = createNode("div", "bbm-ui-editor-layout-console");
-    consoleNode.setAttribute("data-ui-inspector-id", "ui-editor.layout-console");
-    consoleNode.setAttribute("data-ui-editor-kind", "single");
-    consoleNode.setAttribute("data-ui-editor-label", "Layout-Konsole");
-    consoleNode.setAttribute("data-ui-editor-parent", "ui-editor.panel");
-    consoleNode.setAttribute("data-ui-editor-editable", "false");
-    consoleNode.setAttribute("data-ui-editor-ops", "move,resize");
-    consoleNode.append(
-      this.createLayoutButtonGroup("Verschieben", "ui-editor.layout-console.move", "move", [
-        ["up", "Nach oben"],
-        ["left", "Nach links"],
-        ["right", "Nach rechts"],
-        ["down", "Nach unten"],
-      ], result),
-      this.createLayoutButtonGroup("Groesse", "ui-editor.layout-console.size", "resize", [
-        ["narrower", "Schmaler"],
-        ["wider", "Breiter"],
-        ["lower", "Niedriger"],
-        ["higher", "Hoeher"],
-      ], result)
-    );
-    section.appendChild(consoleNode);
+    const modes = createNode("div", "bbm-ui-editor-layout-console__modes");
+    for (const mode of ["move", "width", "height"]) {
+      const button = createNode("button", "bbm-ui-editor-layout-console__mode");
+      button.type = "button";
+      button.textContent = mode === "move" ? "Move" : mode === "width" ? "Breite" : "Höhe";
+      button.setAttribute("aria-pressed", this.activeLayoutControlMode === mode ? "true" : "false");
+      button.addEventListener("click", () => this.setLayoutControlMode(mode));
+      modes.appendChild(button);
+    }
 
+    const pad = createNode("div", "bbm-ui-editor-layout-console__pad");
+    const up = this.createControlPadButton("up", "▲", result);
+    const left = this.createControlPadButton("left", "◀", result);
+    const center = this.createControlPadButton("center", "●", result);
+    const right = this.createControlPadButton("right", "▶", result);
+    const down = this.createControlPadButton("down", "▼", result);
+    pad.append(up, left, center, right, down);
+
+    consoleNode.append(modes, pad);
+    section.appendChild(consoleNode);
     this.detailsNode.appendChild(section);
   }
 
-  createLayoutButtonGroup(label, inspectorId, operation, actions, result) {
-    const group = createNode("div", "bbm-ui-editor-layout-console__group");
-    group.setAttribute("data-ui-inspector-id", inspectorId);
-    group.setAttribute("data-ui-editor-kind", "single");
-    group.setAttribute("data-ui-editor-label", label);
-    group.setAttribute("data-ui-editor-parent", "ui-editor.layout-console");
-    group.setAttribute("data-ui-editor-editable", "false");
-    group.setAttribute("data-ui-editor-ops", operation);
+  setLayoutControlMode(mode) {
+    if (!["move", "width", "height"].includes(mode)) return;
+    this.activeLayoutControlMode = mode;
+    this.renderAll();
+  }
 
-    const title = createNode("h3");
-    title.textContent = label;
-    const buttons = createNode("div", "bbm-ui-editor-layout-console__buttons");
-    const allowed = Array.isArray(result?.allowedOps) && result.allowedOps.includes(operation);
-    for (const [action, text] of actions) {
-      const button = createNode("button", "bbm-ui-editor-panel__secondary");
-      button.type = "button";
-      button.textContent = text;
-      button.disabled = !allowed;
-      button.setAttribute("data-ui-inspector-id", `${inspectorId}.${action}`);
-      button.setAttribute("data-ui-editor-kind", "single");
-      button.setAttribute("data-ui-editor-label", text);
-      button.setAttribute("data-ui-editor-parent", inspectorId);
-      button.setAttribute("data-ui-editor-editable", "false");
-      button.setAttribute("data-ui-editor-ops", operation);
-      button.addEventListener("click", () => this.applyLayoutAction(action));
-      buttons.appendChild(button);
+  resolveLayoutPadAction(direction) {
+    const mode = this.activeLayoutControlMode || "move";
+    if (mode === "move") {
+      return { left: "left", right: "right", up: "up", down: "down" }[direction] || null;
     }
-    group.append(title, buttons);
-    return group;
+    if (mode === "width") {
+      return { left: "widthLeft", right: "widthRight" }[direction] || null;
+    }
+    if (mode === "height") {
+      return { up: "heightUp", down: "heightDown" }[direction] || null;
+    }
+    return null;
+  }
+
+  createControlPadButton(direction, label, result) {
+    const button = createNode("button", `bbm-ui-editor-layout-console__pad-button bbm-ui-editor-layout-console__pad-button--${direction}`);
+    button.type = "button";
+    button.textContent = label;
+    const action = this.resolveLayoutPadAction(direction);
+    const operation = action?.startsWith("width") || action?.startsWith("height") ? "resize" : action ? "move" : null;
+    const allowed = Boolean(result?.ok && operation && Array.isArray(result.allowedOps) && result.allowedOps.includes(operation));
+    button.disabled = !allowed;
+    button.setAttribute("aria-label", direction === "center" ? "Standard derzeit nicht verfügbar" : label);
+    if (direction === "center") {
+      button.title = "Standard derzeit nicht verfügbar";
+    }
+    if (action) {
+      button.addEventListener("click", () => this.applyLayoutAction(action));
+    }
+    return button;
   }
 
   applyLayoutAction(action) {

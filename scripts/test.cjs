@@ -91,6 +91,7 @@ const { runM60KitRuntimeStandardTests } = require("./tests/m60KitRuntimeStandard
 const { runM62BbmSelectionLegacyCleanupTests } = require("./tests/m62BbmSelectionLegacyCleanup.test.cjs");
 const { runM63aEditorIntegrationAuditTests } = require("./tests/m63aEditorIntegrationAudit.test.cjs");
 const { runM63bReadonlyInspectorBridgeTests } = require("./tests/m63bReadonlyInspectorBridge.test.cjs");
+const { runM63cLayoutControlConsoleTests } = require("./tests/m63cLayoutControlConsole.test.cjs");
 
 let failed = false;
 
@@ -229,6 +230,7 @@ async function main() {
   await runM62BbmSelectionLegacyCleanupTests(run);
   await runM63aEditorIntegrationAuditTests(run);
   await runM63bReadonlyInspectorBridgeTests(run);
+  await runM63cLayoutControlConsoleTests(run);
 
   if (failed) {
     process.exitCode = 1;

@@ -31,10 +31,17 @@ export function injectBbmUiEditorStatusPanelStyles() {
     .bbm-ui-editor-panel__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     .bbm-ui-editor-panel__empty { color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; }
     .bbm-ui-editor-panel__selected-name { font-weight: 800; color: #172033; }
-    .bbm-ui-editor-layout-console { display: grid; gap: 12px; margin-top: 12px; }
-    .bbm-ui-editor-layout-console__group { border: 1px solid #d7dde5; border-radius: 10px; padding: 10px; background: #f8fafc; }
-    .bbm-ui-editor-layout-console__group h3 { margin: 0 0 8px; font-size: 14px; }
-    .bbm-ui-editor-layout-console__buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+    .bbm-ui-editor-layout-console { display: grid; gap: 12px; margin-top: 12px; justify-items: center; }
+    .bbm-ui-editor-layout-console__modes { display: grid; grid-template-columns: repeat(3, minmax(72px, 1fr)); gap: 8px; width: 100%; }
+    .bbm-ui-editor-layout-console__mode, .bbm-ui-editor-layout-console__pad-button { border: 1px solid #b9c4d0; background: #fff; color: #172033; border-radius: 8px; padding: 8px 10px; font-weight: 800; cursor: pointer; }
+    .bbm-ui-editor-layout-console__mode[aria-pressed="true"] { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
+    .bbm-ui-editor-layout-console__pad { display: grid; grid-template-columns: repeat(3, 42px); grid-template-areas: ". up ." "left center right" ". down ."; gap: 8px; align-items: center; justify-content: center; }
+    .bbm-ui-editor-layout-console__pad-button--up { grid-area: up; }
+    .bbm-ui-editor-layout-console__pad-button--left { grid-area: left; }
+    .bbm-ui-editor-layout-console__pad-button--center { grid-area: center; }
+    .bbm-ui-editor-layout-console__pad-button--right { grid-area: right; }
+    .bbm-ui-editor-layout-console__pad-button--down { grid-area: down; }
+    .bbm-ui-editor-layout-console__mode:disabled, .bbm-ui-editor-layout-console__pad-button:disabled { opacity: 0.45; cursor: not-allowed; }
     @media (max-width: 980px) { .bbm-ui-editor-panel__grid { grid-template-columns: 1fr; } }
   `;
   document.head?.appendChild(style);
