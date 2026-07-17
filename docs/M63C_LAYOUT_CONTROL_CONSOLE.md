@@ -60,6 +60,25 @@ Er ist kein Layoutzustand, keine Auswahlhaltung und keine Persistenz.
 - links: deaktiviert
 - rechts: deaktiviert
 
+## Ausgangswerte fuer Groesse
+
+Beim ersten Breiten- oder Hoehenschritt darf kein `0`-Startwert verwendet werden.
+Der HostAdapter ermittelt den sicheren Ausgangswert in dieser Reihenfolge:
+
+1. expliziter Registry-/Layout-Standard des Elements
+2. bereits vorhandener gespeicherter Layoutwert
+3. einmalige aktuelle Groesse des explizit registrierten M54-HTMLElement-Refs per `getBoundingClientRect()`
+
+Nach dem ersten Groessenschritt ist der gespeicherte `EditorLayoutStore`-Wert fuehrend.
+Es gibt keinen zweiten dauerhaften Layoutzustand.
+
+Mindestgroessen:
+
+- Breite mindestens 20 px
+- Hoehe mindestens 20 px
+
+Registry-Standards fuer Mindestgroessen haben Vorrang, sofern sie vorhanden sind.
+
 ## Mittelpunkt
 
 Der Mittelpunkt bleibt deaktiviert, solange kein sicherer operationsbezogener Reset existiert.

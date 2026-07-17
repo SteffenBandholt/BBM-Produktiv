@@ -78,6 +78,7 @@ Aktueller Stand:
 - Pilotfreigabe: nur `bbm.main.navigation` erhaelt `allowedOps: ["move", "resize"]`; `capabilities: ["layout"]` wird nicht in konkrete Operationen uebersetzt.
 - Die Bridge haelt keinen eigenen Layoutzustand und nutzt keinen lokalen Map-Speicher mehr.
 - Layoutschritte laufen ueber `EditorScopeInspector` -> `EditorLayoutControls` -> `ChangeRequestValidator` -> BBM-main-HostAdapter -> vorhandenen `EditorLayoutStore` -> sichtbare Anwendung am registrierten M54-Ziel.
+- Breite/Hoehe starten beim ersten Groessenschritt aus Registry-/Layout-Standard, gespeichertem Layoutwert oder einmalig aus `getBoundingClientRect()` des expliziten M54-Refs; Mindestgroesse 20 px.
 - Keine Textgroesse, keine Textposition, keine freie Werteingabe, kein Drag-and-drop, keine direkte Style-Mutation im Panel/Bridge, keine neue Registry, keine neue Auswahlhaltung und keine neue Persistenz.
 - Neue Doku: `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`.
 - Neuer Guardrail-Test: `scripts/tests/m63cLayoutControlConsole.test.cjs`; `scripts/test.cjs` fuehrt ihn mit aus.

@@ -2875,6 +2875,7 @@ Wichtig:
   - Schrittweite ist `1`; unpassende Pfeile sind je Modus deaktiviert und der Mittelpunkt bleibt ohne sicheren operationsbezogenen Reset deaktiviert.
   - Konkrete Operationen kommen ausschliesslich aus explizitem `allowedOps`; Pilot ist nur `bbm.main.navigation` mit `move`/`resize`.
   - Die Bridge haelt keinen eigenen Layoutzustand und nutzt den vorhandenen Inspector-/LayoutControls-/Validator-/HostAdapter-/LayoutStore-Weg.
+  - Breite/Hoehe starten beim ersten Groessenschritt aus sicherem Basiswert statt `0`; Mindestgroesse 20 px.
 - Betroffene Dateien:
   - `src/ui-editor/bbm-ui-element-registry.cjs`
   - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
@@ -2889,7 +2890,7 @@ Wichtig:
   - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
   - `STATUS.md`
 - Commit:
-  - `144573d`
+  - `b700589`
 - Naechster offener Schritt:
   - Manuelle Electron-/Windows-Sichtpruefung: Konsole sichtbar, Moduswechsel und Steuerkreuz verstaendlich, keine freie Werteingabe, keine Fachaktionen.
 - Risiken/Hinweise:

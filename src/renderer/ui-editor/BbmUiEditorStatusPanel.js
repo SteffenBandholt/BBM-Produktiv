@@ -56,6 +56,7 @@ export class BbmUiEditorStatusPanel {
     this.selectionMessage = "";
     this.selectionModeActive = false;
     this.activeLayoutControlMode = "move";
+    this.lastRenderedLayoutControlElementId = "";
     this.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
       getRegistryElements: () => this.elements,
       getSelectedElement: () => this.selectedElement,
@@ -288,6 +289,12 @@ export class BbmUiEditorStatusPanel {
 
   renderReadonlyLayoutControls(element) {
     if (!this.detailsNode || !element) return;
+    const elementId = String(element.elementId || element.id || "").trim();
+    if (elementId !== this.lastRenderedLayoutControlElementId) {
+      this.activeLayoutControlMode = "move";
+      this.lastRenderedLayoutControlElementId = elementId;
+    }
+
     const section = createNode("section", "bbm-ui-editor-layout-controls");
 
     const name = createNode("p", "bbm-ui-editor-panel__selected-name");

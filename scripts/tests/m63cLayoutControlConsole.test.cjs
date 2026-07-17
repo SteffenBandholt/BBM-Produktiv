@@ -9,12 +9,15 @@ const BRIDGE_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmEditorRuntim
 const HOST_ADAPTER_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmMainUiHostAdapter.js");
 const REFS_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementRefs.js");
 const REGISTRY_PATH = path.join(REPO_ROOT, "src/ui-editor/bbm-ui-element-registry.cjs");
+const LAYOUT_PERSISTENCE_PATH = path.join(REPO_ROOT, "src/renderer/editorRuntime/layout/editorLayoutPersistence.js");
 
 function read(file) { return fs.readFileSync(path.join(REPO_ROOT, file), "utf8"); }
 
 class TestNode {
-  constructor(tagName) {
+  constructor(tagName, rect = { width: 240, height: 64 }) {
     this.tagName = tagName;
+    this.rect = { ...rect };
+    this.rectReadCount = 0;
     this.children = [];
     this.attributes = {};
     this.className = "";
@@ -35,6 +38,7 @@ class TestNode {
   setAttribute(name, value) { this.attributes[name] = String(value); }
   addEventListener(name, handler) { this.listeners[name] = handler; }
   click() { this.listeners.click?.({ target: this }); }
+  getBoundingClientRect() { this.rectReadCount += 1; return { ...this.rect }; }
   set innerHTML(_value) { this.children = []; }
 }
 
@@ -68,6 +72,7 @@ async function runM63cLayoutControlConsoleTests(run) {
   const { createBbmEditorRuntimeInspectorBridge, M63C_LAYOUT_STEP } = await importEsmFromFile(BRIDGE_PATH);
   const { createBbmMainUiHostAdapter } = await importEsmFromFile(HOST_ADAPTER_PATH);
   const refs = await importEsmFromFile(REFS_PATH);
+  const { createEditorLayoutMemoryStorage } = await importEsmFromFile(LAYOUT_PERSISTENCE_PATH);
 
   await run("M63C Konsole: genau drei Modi, ein Steuerkreuz und Standardmodus move", async () => withDom(() => {
     const panel = new BbmUiEditorStatusPanel({});
@@ -108,6 +113,19 @@ async function runM63cLayoutControlConsoleTests(run) {
     assert.equal(center.attributes["aria-label"], "Standard derzeit nicht verfügbar");
   }));
 
+  await run("M63C Konsole: neue Auswahl setzt Modus auf move zurueck", async () => withDom(() => {
+    const panel = new BbmUiEditorStatusPanel({});
+    panel.detailsNode = new TestNode("section");
+    panel.elements = registryElements;
+    panel.selectedElement = registryElements[1];
+    panel.renderDetails();
+    panel.setLayoutControlMode("height");
+    assert.equal(panel.activeLayoutControlMode, "height");
+    panel.selectedElement = registryElements[2];
+    panel.renderDetails();
+    assert.equal(panel.activeLayoutControlMode, "move");
+  }));
+
   await run("M63C Bridge: Schrittweite 1 und keine capability->operation-Ableitung", () => {
     assert.equal(M63C_LAYOUT_STEP, 1);
     let bridge = createBbmEditorRuntimeInspectorBridge({ registryElements, selectedElement: registryElements[0] });
@@ -120,16 +138,64 @@ async function runM63cLayoutControlConsoleTests(run) {
     refs.clearBbmUiElementRefs();
     const target = new TestNode("nav");
     refs.registerBbmUiElementRef("bbm.main.navigation", target);
-    const bridge = createBbmEditorRuntimeInspectorBridge({ registryElements, selectedElement: registryElements[1] });
+    const layoutStorage = createEditorLayoutMemoryStorage();
+    const bridge = createBbmEditorRuntimeInspectorBridge({
+      registryElements,
+      selectedElement: registryElements[1],
+      hostAdapterFactory: ({ registry }) => createBbmMainUiHostAdapter({ registry, layoutStorage }),
+    });
     const move = bridge.applySelectedElementLayoutAction("right");
     assert.equal(move.ok, true);
     assert.deepEqual(move.layoutEntry.layoutValue, { x: 1 });
     assert.equal(target.style.values.transform, "translate(1px, 0px)");
-    const resize = bridge.applySelectedElementLayoutAction("heightUp");
-    assert.equal(resize.ok, true);
-    assert.deepEqual(resize.layoutEntry.layoutValue, { x: 1, height: 1 });
-    assert.equal(target.style.values.height, "1px");
+
+    const widthRight = bridge.applySelectedElementLayoutAction("widthRight");
+    assert.equal(widthRight.ok, true);
+    assert.deepEqual(widthRight.layoutEntry.layoutValue, { x: 1, width: 241 });
+    assert.equal(target.style.values.width, "241px");
+    assert.equal(target.rectReadCount, 1);
+
+    target.rect.width = 999;
+    const widthLeft = bridge.applySelectedElementLayoutAction("widthLeft");
+    assert.equal(widthLeft.ok, true);
+    assert.deepEqual(widthLeft.layoutEntry.layoutValue, { x: 1, width: 240 });
+    assert.equal(target.style.values.width, "240px");
+    assert.equal(target.rectReadCount, 1);
+
+    const heightUp = bridge.applySelectedElementLayoutAction("heightUp");
+    assert.equal(heightUp.ok, true);
+    assert.deepEqual(heightUp.layoutEntry.layoutValue, { x: 1, width: 240, height: 65 });
+    assert.equal(target.style.values.height, "65px");
+    assert.equal(target.rectReadCount, 2);
+
+    target.rect.height = 999;
+    const heightDown = bridge.applySelectedElementLayoutAction("heightDown");
+    assert.equal(heightDown.ok, true);
+    assert.deepEqual(heightDown.layoutEntry.layoutValue, { x: 1, width: 240, height: 64 });
+    assert.equal(target.style.values.height, "64px");
+    assert.equal(target.rectReadCount, 2);
     assert.equal(createBbmMainUiHostAdapter({ registry: [] }).getCurrentLayoutState().length >= 0, true);
+    refs.clearBbmUiElementRefs();
+  }));
+
+  await run("M63C HostAdapter: Breite und Hoehe fallen nicht unter sichere Mindestgroesse", async () => withDom(() => {
+    refs.clearBbmUiElementRefs();
+    const target = new TestNode("nav", { width: 20, height: 20 });
+    refs.registerBbmUiElementRef("bbm.main.navigation", target);
+    const layoutStorage = createEditorLayoutMemoryStorage();
+    const bridge = createBbmEditorRuntimeInspectorBridge({
+      registryElements,
+      selectedElement: registryElements[1],
+      hostAdapterFactory: ({ registry }) => createBbmMainUiHostAdapter({ registry, layoutStorage }),
+    });
+    const width = bridge.applySelectedElementLayoutAction("widthLeft");
+    assert.equal(width.ok, true);
+    assert.equal(width.layoutEntry.layoutValue.width, 20);
+    assert.equal(target.style.values.width, "20px");
+    const height = bridge.applySelectedElementLayoutAction("heightDown");
+    assert.equal(height.ok, true);
+    assert.equal(height.layoutEntry.layoutValue.height, 20);
+    assert.equal(target.style.values.height, "20px");
     refs.clearBbmUiElementRefs();
   }));
 
