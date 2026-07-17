@@ -1,15 +1,15 @@
-# M63B – Read-only Inspector-Bridge
+# M63B.1 – Read-only Inspector-Bridge intern, sichtbare Konsole vorbereitet
 
 ## Zweck
-M63B verbindet die vorhandene BBM-M51/M52-Auswahl read-only mit dem bestehenden `EditorScopeInspector`-Pfad. Die Bridge zeigt im Statuspanel neutrale Layout-Control-Metadaten fuer das aktuell ausgewaehlte Registry-Element, ohne eine Layoutoperation auszufuehren.
+M63B.1 verbindet die vorhandene BBM-M51/M52-Auswahl intern read-only mit dem bestehenden `EditorScopeInspector`-Pfad. Die technische Bridge bleibt testbar und liefert interne Inspector-/Control-Metadaten, aber die sichtbare Statuspanel-Oberflaeche zeigt diese technischen Vertragsdaten nicht mehr direkt an.
 
 ## Fuehrende Registry
-Fuehrend bleibt die M51/Kit-Ziel-App-Registry. Die Bridge erzeugt keine fachlich neue Registry, keine zusaetzlichen Elemente und keine parallele Modulregistry. Sie transformiert die aktuelle Elementliste nur pro Aufruf in die editorRuntime-Form, die der bestehende Inspector erwartet.
+Fuehrend bleibt die M51/Kit-Ziel-App-Registry. Die Bridge erzeugt keine fachlich neue Registry, keine zusaetzlichen Elemente und keine parallele Modulregistry. Sie transformiert die aktuelle Elementliste nur pro Aufruf in die editorRuntime-Form, die der bestehende Inspector intern erwartet.
 
 ## Fuehrende Auswahl
 Fuehrend bleibt M52 `selectedElement`, geliefert ueber das bestehende Statuspanel und die UI-Editor-kit Selection-Runtime. Die Bridge haelt keine eigene Auswahlwahrheit und liest bei jedem Aufruf die aktuelle Auswahl.
 
-## Registry-Feldabbildung
+## Interne Registry-Feldabbildung
 Die Bridge bildet die M51-Felder deterministisch ab:
 
 | M51/Kit-Feld | editorRuntime-Feld | Regel |
@@ -26,25 +26,20 @@ Die Bridge bildet die M51-Felder deterministisch ab:
 | `visible`/`layoutDefaults.visible` | `visible` | vorhandener Wert, sonst `true` |
 
 ## Umgang mit `role` und fehlenden Feldern
-`role` wird nicht aus Label, CSS, Tagname, DOM-Struktur oder sichtbarer Ueberschrift abgeleitet. Die Bridge kennt nur eine kleine explizite statische Zuordnung fuer die bestehenden BBM-Hauptbereich-IDs. Elemente ohne kompatiblen Vertrag werden als `unsupported`/`blocked` sichtbar gemeldet.
+`role` wird nicht aus Label, CSS, Tagname, DOM-Struktur oder sichtbarer Ueberschrift abgeleitet. Die Bridge kennt nur eine kleine explizite statische Zuordnung fuer die bestehenden BBM-Hauptbereich-IDs. Elemente ohne kompatiblen Vertrag werden intern als `unsupported`/`blocked` gemeldet.
 
-## Read-only Status
-- Keine Auswahl: neutraler leerer Status ohne Controls.
-- Bekannte Auswahl: Inspector-/Control-Metadaten werden read-only angezeigt; ohne konkret freigegebene Operationen bleibt `allowedOps: []`.
-- Unbekannte ID: blockierter Status ohne Controls.
-- Fehlender Vertrag: `unsupported`/`blocked`, ohne Raten fehlender Pflichtfelder.
+## Sichtbare Oberflaeche in M63B.1
+Im Statuspanel-Detailbereich werden keine technischen Vertragsdaten angezeigt. Sichtbar ist hoechstens:
 
-## Sichtbare Informationen im Statuspanel
-Im Detailbereich erscheint `Layout-Steuerung` mit:
-- Inspector-Status,
-- Read-only-Hinweis,
-- Editierbar/Gesperrt-Status,
-- Liste der erlaubten Layoutoperationen,
-- Control-IDs und Control-Metadaten,
-- Hinweis: In M63B werden keine Layoutaenderungen ausgefuehrt.
+- der lesbare Name des ausgewaehlten Elements,
+- der kurze neutrale Platzhalter `Bearbeitung wird vorbereitet.`,
+- bei internem Fehler hoechstens `Bearbeitungsfunktionen sind derzeit nicht verfuegbar.`
+
+Nicht sichtbar sind insbesondere Inspector-Status, `read_only`, technische Control-IDs, interne Operationsnamen, `allowedOps`, Bridge-/Runtime-Begriffe oder technische Fehlercodes.
 
 ## Bewusst nicht aktive Operationen
-M63B ruft nicht auf:
+M63B.1 erzeugt keine aktiven Bedienelemente und ruft nicht auf:
+
 - `applyLayoutChange`,
 - `submitChangeRequest`,
 - Save/Write,
@@ -55,8 +50,26 @@ M63B ruft nicht auf:
 
 Es gibt keine neuen IPCs, keine Datenbanktabellen, kein `localStorage`, keine DOM-Suche und keine dynamische CSS-/JS-Ausfuehrung.
 
-## Fehlerverhalten
-Inspector-/Adapterfehler werden als blockierter Status im Panel sichtbar. Die Auswahlruntime wird dadurch nicht gestoppt, die vorhandenen Statuspanel-Informationen bleiben nutzbar, und es wird keine Fallback-Registry aufgebaut.
+## Zielbild fuer die fertige Bedienkonsole
+Der fertige UI-Editor soll keine technische Diagnoseansicht sein, sondern eine kleine praktische Bedienkonsole. M63C soll die sichtbare Struktur kompakt erweitern, ohne neue Operationen zu erfinden.
 
-## Scope fuer M63C
-M63C darf spaeter genau eine bereits vorhandene Operation aus dem EditorLayoutControls-Pfad sichtbar ausfuehrbar machen. Die Pilotoperation ist aus dem bestehenden Inspector-Control-Panel, der fuehrenden Registry und den vorhandenen Tests zu waehlen. M63C darf keine neue Operation erfinden und muss vor jeder Ausfuehrung die bestehenden Validator-/HostAdapter-Grenzen nutzen.
+Geplante sichtbare Modi fuer M63C:
+
+- Move
+- Breite
+- Hoehe
+- Text
+- Textposition
+
+Geplantes Bedienmuster fuer M63C:
+
+```text
+        ▲
+     ◀  •  ▶
+        ▼
+```
+
+Diese Modusauswahl und das Steuerkreuz werden in M63B.1 noch nicht erzeugt.
+
+## Fehlerverhalten
+Inspector-/Adapterfehler duerfen intern Details enthalten. Sichtbar bleibt nur der nutzerfreundliche Hinweis, dass Bearbeitungsfunktionen derzeit nicht verfuegbar sind. Die Auswahlruntime, Elementauswahl und der orange Auswahlrahmen bleiben davon unberuehrt.

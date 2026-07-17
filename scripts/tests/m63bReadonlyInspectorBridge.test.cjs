@@ -48,6 +48,7 @@ class TestNode {
   set innerHTML(_value) { this.children = []; }
 }
 function collectText(node) { return [node?.textContent || "", ...(node?.children || []).flatMap(collectText)].join("\n"); }
+function collectTags(node) { return [node?.tagName || "", ...(node?.children || []).flatMap(collectTags)].filter(Boolean); }
 
 async function runM63bReadonlyInspectorBridgeTests(run) {
   const { createBbmEditorRuntimeInspectorBridge } = await importEsmFromFile(BRIDGE_PATH);
@@ -107,7 +108,7 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
     assert.equal(bridge.inspectSelectedElement().reason, "ROLE_MISSING");
   });
 
-  await run("M63B Statuspanel: zeigt Layout-Steuerung und read-only Informationen", async () => {
+  await run("M63B Statuspanel: zeigt nur Elementname und neutralen Platzhalter", async () => {
     const oldDocument = global.document;
     const oldWindow = global.window;
     global.document = { createElement: (tagName) => new TestNode(tagName) };
@@ -120,14 +121,21 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
       panel.selectedElement = elements[1];
       panel.renderDetails();
       const text = collectText(panel.detailsNode);
-      assert.match(text, /Layout-Steuerung/);
-      assert.match(text, /Read-only/);
-      assert.match(text, /Freigegebene Layoutoperationen/);
-      assert.match(text, /keine/);
-      assert.match(text, /In M63B werden keine Layoutaenderungen ausgefuehrt/);
-      assert.match(text, /editor\.layout\.applySave/);
-      assert.match(text, /in M63B nicht aktiv/);
-      assert.doesNotMatch(text, /vorhanden/);
+      const tags = collectTags(panel.detailsNode);
+      assert.match(text, /Header/);
+      assert.match(text, /Bearbeitung wird vorbereitet\./);
+      assert.doesNotMatch(text, /Layout-Steuerung/);
+      assert.doesNotMatch(text, /Inspector-Status/);
+      assert.doesNotMatch(text, /read_only/);
+      assert.doesNotMatch(text, /Inspector/);
+      assert.doesNotMatch(text, /Control-IDs/);
+      assert.doesNotMatch(text, /allowedOps/);
+      assert.doesNotMatch(text, /Freigegebene Layoutoperationen/);
+      assert.doesNotMatch(text, /editor\.layout\./);
+      assert.doesNotMatch(text, /move|resize|spacing|width|height/);
+      assert.equal(tags.includes("button"), false);
+      assert.equal(tags.includes("input"), false);
+      assert.equal(tags.includes("select"), false);
     } finally {
       global.document = oldDocument;
       global.window = oldWindow;

@@ -1,7 +1,7 @@
 # UI-Inspektor Aufgabenheft
 
 ## Projektstatus
-Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope). M62 abgeschlossen (alte BBM-Auswahlruntime entfernt; Statuspanel nutzt ausschliesslich Kit-Runtime). M63B abgeschlossen (read-only Inspector-Bridge im Statuspanel).
+Status: M13.6a abgeschlossen (Panel ist aus dem Header gelöst und bleibt verschiebbar). K19.16a abgeschlossen (neutraler BBM-UI-Editor-Aktivmodus zeigt festen Registry-Scope). M62 abgeschlossen (alte BBM-Auswahlruntime entfernt; Statuspanel nutzt ausschliesslich Kit-Runtime). M63B.1 abgeschlossen (interne read-only Inspector-Bridge, sichtbare Konsole vorbereitet).
 
 Statusupdate: M36 abgeschlossen (UI-Editor Fixstand nach M29 bis M35 dokumentiert).
 
@@ -74,13 +74,14 @@ Aktueller Stand:
 - M63B bindet die bestehende M51/M52-Auswahl read-only an den vorhandenen `EditorScopeInspector`-Layout-Control-Pfad an.
 - Neue Bridge: `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`.
 - Fuehrend bleiben M51/Kit-Ziel-App-Registry und M52 `selectedElement`; die Bridge haelt keine eigene Auswahlwahrheit und erzeugt keine zusaetzlichen Registry-Elemente.
-- Das Statuspanel zeigt im Elementdetail `Layout-Steuerung` mit Inspector-Status, read-only Hinweis, konkret freigegebenen Layoutoperationen und Control-IDs.
-- Korrektur PR #202: `layout.read`, `layout.save` und `layout.reset` werden nicht in konkrete EditorRuntime-Operationen uebersetzt; ohne explizites `allowedOps` bleibt die Anzeige bei `allowedOps: []`.
-- Fehlende `role`-/Pflichtvertraege werden sichtbar als `unsupported`/`blocked` behandelt; es wird nichts aus Label, CSS, Tagname oder DOM-Struktur geraten.
+- M63B.1 korrigiert die sichtbare Statuspanel-Oberflaeche: Der Detailbereich zeigt hoechstens den lesbaren Elementnamen und den neutralen Platzhalter `Bearbeitung wird vorbereitet.`.
+- Technische Inspector-/Bridge-/Runtime-Daten, Control-IDs, interne Operationsnamen, `allowedOps` und Fehlercodes bleiben intern und werden nicht sichtbar ausgegeben.
+- `layout.read`, `layout.save` und `layout.reset` werden weiterhin nicht in konkrete EditorRuntime-Operationen uebersetzt; ohne explizites `allowedOps` bleibt die interne Anzeige bei `allowedOps: []`.
+- Fehlende `role`-/Pflichtvertraege werden intern als `unsupported`/`blocked` behandelt; es wird nichts aus Label, CSS, Tagname oder DOM-Struktur geraten.
 - Keine Apply-/Save-/Load-/Reset-Ausfuehrung, keine LayoutStore-Schreiboperation, keine DOM-Suche, keine IPC-Erweiterung und keine direkte Style-Mutation.
 - Neue Doku: `docs/M63B_READONLY_INSPECTOR_BRIDGE.md`.
 - Neuer Guardrail-Test: `scripts/tests/m63bReadonlyInspectorBridge.test.cjs`; `scripts/test.cjs` fuehrt ihn mit aus.
-- Naechster sinnvoller Schritt: M63C darf spaeter genau eine vorhandene Inspector-Control-Operation sichtbar ausfuehrbar machen; Pilot aus vorhandenen Controls/Tests waehlen, keine neue Operation erfinden.
+- Naechster sinnvoller Schritt: M63C darf die kompakte Bedienkonsole mit Modusauswahl und Steuerkreuz vorbereiten; Pilot aus vorhandenen Controls/Tests waehlen, keine neue Operation erfinden.
 - Offener Punkt: manuelle Windows-Abnahme fuer die sichtbare Statuspanel-Darstellung nachholen.
 
 ## Statusupdate M62

@@ -282,48 +282,21 @@ export class BbmUiEditorStatusPanel {
       return;
     }
 
-    const list = createNode("dl", "bbm-ui-editor-status-list");
-    list.append(
-      createInfoRow("Element-ID", element.elementId),
-      createInfoRow("Bezeichnung", element.label),
-      createInfoRow("Typ", element.type),
-      createInfoRow("Scope", element.scope),
-      createInfoRow("Parent", element.parentId || "Root"),
-      createInfoRow("Capabilities", formatList(element.capabilities)),
-      createInfoRow("Erlaubte Aenderungen", formatList(element.allowedChanges))
-    );
-    this.detailsNode.appendChild(list);
-    this.renderReadonlyLayoutControls();
+    this.renderReadonlyLayoutControls(element);
   }
 
-  renderReadonlyLayoutControls() {
-    if (!this.detailsNode) return;
+  renderReadonlyLayoutControls(element) {
+    if (!this.detailsNode || !element) return;
     const section = createNode("section", "bbm-ui-editor-layout-controls");
-    const title = createNode("h3");
-    title.textContent = "Layout-Steuerung";
-    section.appendChild(title);
 
-    const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: true, kind: "empty", controls: [], allowedOps: [] };
-    const list = createNode("dl", "bbm-ui-editor-status-list");
-    list.append(
-      createInfoRow("Inspector-Status", result.inspectorStatus || result.kind || "read_only"),
-      createInfoRow("Read-only", "Ja"),
-      createInfoRow("Editierbar", result.inspectorElement?.editable ? "Ja" : "Nein"),
-      createInfoRow("Freigegebene Layoutoperationen", formatList(result.allowedOps)),
-      createInfoRow("Control-IDs", formatList((result.controls || []).map((control) => control.id))),
-      createInfoRow("Hinweis", result.message || "In M63B werden keine Layoutaenderungen ausgefuehrt.")
-    );
-    section.appendChild(list);
+    const name = createNode("p", "bbm-ui-editor-panel__selected-name");
+    name.textContent = asText(element.label || element.name, element.elementId);
+    section.appendChild(name);
 
-    if (Array.isArray(result.controls) && result.controls.length > 0) {
-      const controls = createNode("ul", "bbm-ui-editor-control-list");
-      for (const control of result.controls) {
-        const item = createNode("li");
-        item.textContent = `${asText(control.id)} · ${asText(control.label)} · ${asText(control.m63bStatus, "in M63B nicht aktiv")}`;
-        controls.appendChild(item);
-      }
-      section.appendChild(controls);
-    }
+    const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: true };
+    const hint = createNode("p", "bbm-ui-editor-panel__notice");
+    hint.textContent = result.ok ? "Bearbeitung wird vorbereitet." : "Bearbeitungsfunktionen sind derzeit nicht verfuegbar.";
+    section.appendChild(hint);
 
     this.detailsNode.appendChild(section);
   }
