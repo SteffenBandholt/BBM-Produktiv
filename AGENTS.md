@@ -333,6 +333,188 @@ git fetch origin
 git diff --name-status <base-branch>...origin/<cloud-branch>
 npm test
 ```
+## Wahl des Codex-Arbeitsmodus
+
+Vor Beginn jeder Aufgabe muss Codex den passenden Arbeitsmodus bestimmen und in der Startplanung nennen.
+
+### 1. Normaler Arbeitsauftrag
+
+Geeignet für:
+
+- kleine, klar abgegrenzte Änderungen
+- einzelne Fehlerkorrekturen mit bekannter Ursache
+- Dokumentationsänderungen
+- Änderungen mit wenigen betroffenen Dateien
+- Aufgaben, die durch vorhandene automatisierte Tests ausreichend geprüft werden können
+
+Regeln:
+
+- keine Unteragenten ohne erkennbaren Nutzen
+- kein unnötig langer Goal-Lauf
+- Änderung minimal umsetzen
+- passende Tests ausführen
+- Ergebnis nach dem normalen Abschlussformat melden
+
+### 2. Goal-Arbeitslauf
+
+Ein Goal-Arbeitslauf ist zu verwenden, wenn:
+
+- eine vollständige Funktion umgesetzt werden soll
+- der gewünschte Endzustand klar ist, der Lösungsweg aber mehrere Schritte erfordert
+- Analyse, Umsetzung, Prüfung und Reparatur zusammengehören
+- die App nach Codeänderungen gestartet und praktisch geprüft werden muss
+- mehrere zusammenhängende Fehler bis zu einem definierten Endzustand behoben werden sollen
+
+Vor Beginn müssen feststehen:
+
+- Ziel
+- Nicht-Ziele
+- erlaubte Bereiche und Dateien
+- verbotene Bereiche und Dateien
+- Abschlusskriterien
+- vorgesehene Prüfungen
+- Bedingungen für einen Abbruch
+
+Verbindlicher Ablauf:
+
+1. Ausgangszustand untersuchen
+2. relevanten Fehler oder fehlende Funktion reproduzieren
+3. Änderung minimal umsetzen
+4. passende automatisierte Tests ausführen
+5. bei UI-Aufgaben die Anwendung praktisch prüfen
+6. gefundene Fehler reparieren
+7. Tests und Nutzerablauf erneut prüfen
+8. erst abschließen, wenn alle Abschlusskriterien erfüllt sind
+
+Ein Build allein gilt nicht als Nachweis, dass eine UI-Funktion funktioniert.
+
+Wenn das Ziel aufgrund eines Hindernisses nicht erreichbar ist, muss Codex stoppen und konkret melden:
+
+- Hindernis
+- bereits durchgeführte Schritte
+- betroffene Regeln oder Dateien
+- fehlender Nachweis
+- sauberer nächster Schritt
+
+### 3. Unteragenten
+
+Unteragenten sollen eingesetzt werden, wenn mehrere unabhängige Untersuchungen sinnvoll parallel durchgeführt werden können.
+
+Geeignete Aufgaben:
+
+- Architektur- und Dateianalyse
+- Untersuchung eines Datenflusses
+- Analyse vorhandener Tests
+- Suche nach Seiteneffekten
+- Prüfung unabhängiger Lösungsansätze
+- reproduzierbare UI- oder Laufzeituntersuchungen
+- Review einer bereits geplanten Änderung
+
+Regeln:
+
+- Jeder Unteragent erhält eine klar abgegrenzte Aufgabe.
+- Jeder Unteragent erhält ein eindeutiges Rückgabeformat.
+- Unteragenten sollen standardmäßig lesend und analysierend arbeiten.
+- Produktivcode wird grundsätzlich durch den Hauptagenten koordiniert.
+- Mehrere Unteragenten dürfen nicht unkoordiniert dieselben Dateien ändern.
+- Ergebnisse der Unteragenten müssen vor der Umsetzung im Haupt-Thread zusammengeführt und bewertet werden.
+- Unteragenten dürfen keine bestehenden Stop-Regeln, Architekturregeln oder Editor-Verträge umgehen.
+- Unteragenten sind kein Grund, mehrere unabhängige Meilensteine gleichzeitig umzusetzen.
+
+Unteragenten sind nicht erforderlich, wenn ihre Koordination mehr Aufwand verursacht als die eigentliche Aufgabe.
+
+### 4. Computer Use
+
+Computer Use ist einzusetzen, wenn eine Aufgabe das sichtbare Verhalten oder die tatsächliche Bedienung der Anwendung betrifft und die Umgebung dies unterstützt.
+
+Typische Fälle:
+
+- BBM starten
+- UI-Editor öffnen
+- Buttons, Menüs und Dialoge bedienen
+- Elemente anlegen, auswählen, verschieben oder löschen
+- Speichern und erneutes Laden prüfen
+- Fenstergrößen und sichtbare Überlagerungen kontrollieren
+- einen gemeldeten UI-Fehler reproduzieren
+- Screenshots vor und nach einer Änderung vergleichen
+- vollständige Nutzerabläufe prüfen
+
+Computer Use ist normalerweise nicht erforderlich bei:
+
+- reinen Dokumentationsänderungen
+- rein interner Programmlogik
+- ausreichend abgedeckten Unit-Tests
+- Änderungen ohne sichtbare oder bedienbare Auswirkung
+
+Regeln:
+
+- Das bloße Starten der App über das Terminal ist noch keine vollständige UI-Prüfung.
+- Ein Screenshot allein ersetzt keinen Bedienablauf.
+- Ein erfolgreicher Klick allein beweist nicht, dass der vollständige Ablauf funktioniert.
+- Nach einer Reparatur muss der betroffene Ablauf erneut geprüft werden.
+- Ausgeführte Klicks, Eingaben und geprüfte Ergebnisse müssen im Abschlussbericht genannt werden.
+- Nicht tatsächlich ausgeführte UI-Prüfungen dürfen nicht behauptet werden.
+- Computer Use darf keine verbotenen fachlichen Aktionen oder unzulässigen Datenänderungen ausführen.
+
+### 5. Entscheidung und Steuerung
+
+Die fachlichen Ziele und Grenzen kommen aus dem Nutzerauftrag.
+
+Codex bestimmt anhand dieser Regeln den geeigneten technischen Arbeitsmodus und nennt ihn vor Arbeitsbeginn:
+
+```text
+ARBEITSMODUS
+
+Gewählter Modus:
+- normaler Arbeitsauftrag
+- Goal-Arbeitslauf
+- Goal-Arbeitslauf mit Unteragenten
+
+Computer Use:
+- erforderlich
+- nicht erforderlich
+- nicht verfügbar
+
+Begründung:
+- ...
+
+Abschlusskriterien:
+- ...
+```
+
+Bei Editor-1-Aufgaben ist dieser Block Bestandteil der bestehenden `STARTPLANUNG`.
+
+Direkte Nutzeranweisungen zum Arbeitsmodus haben Vorrang. Die bestehenden Stop-Regeln, Meilensteinregeln, UI-/PDF-Entwurfsentscheidungen und Editor-Verträge bleiben uneingeschränkt gültig.
+
+### 6. Abschlussnachweis bei Goal- und UI-Aufgaben
+
+Zusätzlich zum normalen Abschlussformat muss berichtet werden:
+
+```text
+ARBEITSMODUS-ABSCHLUSS
+
+Verwendeter Modus:
+- ...
+
+Eingesetzte Unteragenten:
+- keine / Aufgabe und Ergebnis je Unteragent
+
+Computer-Use-Prüfung:
+- nicht erforderlich / nicht verfügbar / ausgeführt
+- geprüfter Nutzerablauf
+- beobachtetes Ergebnis
+
+Erfüllte Abschlusskriterien:
+- ...
+
+Nicht erfüllte Abschlusskriterien:
+- keine / ...
+
+Reparatur- und Wiederholungsrunde:
+- keine / durchgeführte Korrekturen und erneute Prüfung
+```
+
+Der Status `fertig` ist nur zulässig, wenn alle für den Auftrag definierten Abschlusskriterien erfüllt und tatsächlich geprüft wurden.
 
 ## Wenn keine Plan-Datei existiert
 Wenn `PLAN.md` oder eine vergleichbare Plandatei fehlt und die Aufgabe grÃ¶ÃŸer als ein Mini-Paket ist:
@@ -529,9 +711,11 @@ Je nach Elementtyp sind weitere Angaben erforderlich, zum Beispiel:
 - Keine Metaspalte ohne Rolle.
 - Kein Button ohne klare Trennung zwischen UI-Element und fachlicher Aktion.
 - Keine Parent-Struktur raten.
-- Keine bestehende UI analysieren.
+- Keine automatische Analyse bestehender UI.
 - Keine bestehende UI scannen.
 - Keine automatische Bestandserkennung.
+- Eine ausdrücklich beauftragte manuelle Architektur- und Dateianalyse ist zulässig.
+- Aus einer manuellen Analyse dürfen Elemente nur nach fachlicher Bestätigung explizit registriert werden.
 - Keine automatische UI-Elementliste erzeugen.
 - Keine bestehende Legacy-UI automatisch migrieren.
 - Keine Elemente erfinden.
