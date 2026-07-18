@@ -629,3 +629,12 @@ Hinweis:
 - Der UI-Editor-Arbeitsbereich enthaelt Bedienpanel und Testflaeche als getrennte Geschwisterbereiche.
 - `getPanelRoot()` bleibt auf das Bedienpanel begrenzt; Klicks in der Testflaeche laufen ueber die bestehende Kit-Auswahlruntime.
 - Der Realintegrationstest `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs` sichert ab, dass die Testkarte ausserhalb von `panelRoot` liegt, per echtem Klick in `selectedElement` uebernommen wird und Panelbuttons keine Zielauswahl ausloesen.
+
+## M64 Abschlussnotiz – UI-Editor-Testfläche
+- M64 erweitert die bisherige einzelne Testkarte zu einer kleinen expliziten UI-Editor-Testfläche.
+- Registrierte Testelemente: Testflächen-Root, Testkarte, Überschrift, Beispieltext, Beispielbutton-Hülle, Eingabefeld-Hülle, Auswahlfeld-Hülle und Beispieltabelle.
+- Alle Testelemente werden manuell über die führende Registry geführt und beim Rendern per explizitem HTMLElement-Ref gebunden.
+- Button, Eingabefeld und Auswahlfeld bleiben neutrale Hüllen: keine Fachaktion, keine Dateneingabe, keine Auswahlwertänderung, kein IPC und keine Datenbankaktion.
+- Die Testfläche bleibt außerhalb des ausgeschlossenen Bedienpanels; Auswahl und Layoutschritte laufen weiter über Kit-Auswahl, Inspector-Bridge, HostAdapter und Layout-State.
+- Neuer Guardrail-Test: `scripts/tests/m64UiEditorTestSurface.test.cjs`.
+- Nächster Schritt: manuelle Electron-/Windows-Sichtprüfung aller M64-Testelemente mit Auswahlrahmen und Move-/Resize-Schritten.

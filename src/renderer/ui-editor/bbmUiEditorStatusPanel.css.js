@@ -46,9 +46,13 @@ export function injectBbmUiEditorStatusPanelStyles() {
     .bbm-ui-editor-test-surface { margin-top: 16px; min-height: 360px; border: 1px dashed #f97316; border-radius: 14px; background: #fff7ed; padding: 28px; box-sizing: border-box; overflow: visible; }
     .bbm-ui-editor-test-surface h2 { margin: 0; color: #9a3412; }
     .bbm-ui-editor-test-surface__hint { max-width: 680px; color: #9a3412; margin-bottom: 24px; }
-    .bbm-ui-editor-test-card { width: 300px; height: 180px; box-sizing: border-box; border: 3px solid #f97316; border-radius: 14px; background: #ffffff; box-shadow: 0 12px 28px rgba(154, 52, 18, 0.16); padding: 18px; color: #172033; }
-    .bbm-ui-editor-test-card h3 { margin: 0 0 10px; color: #9a3412; font-size: 22px; }
-    .bbm-ui-editor-test-card p { margin: 0; color: #334155; line-height: 1.45; }
+    .bbm-ui-editor-test-card { width: 300px; min-height: 300px; box-sizing: border-box; border: 3px solid #f97316; border-radius: 14px; background: #ffffff; box-shadow: 0 12px 28px rgba(154, 52, 18, 0.16); padding: 18px; color: #172033; }
+    .bbm-ui-editor-test-card h3 { margin: 0 0 10px; display: block; border: 1px solid transparent; border-radius: 8px; padding: 4px 6px; color: #9a3412; font-size: 22px; }
+    .bbm-ui-editor-test-card p { margin: 0 0 10px; color: #334155; line-height: 1.45; border: 1px solid transparent; border-radius: 8px; padding: 4px 6px; }
+    .bbm-ui-editor-test-card__button-shell, .bbm-ui-editor-test-card__field-shell { display: inline-flex; align-items: center; min-height: 34px; box-sizing: border-box; border: 1px solid #cbd5e1; border-radius: 9px; background: #f8fafc; padding: 7px 10px; margin: 0 8px 8px 0; color: #172033; font-weight: 700; }
+    .bbm-ui-editor-test-card__button-shell { border-color: #fb923c; background: #fff7ed; color: #9a3412; }
+    .bbm-ui-editor-test-table { margin-top: 18px; width: 420px; border-collapse: collapse; background: #fff; color: #172033; box-shadow: 0 8px 20px rgba(154, 52, 18, 0.10); }
+    .bbm-ui-editor-test-table td { border: 1px solid #fed7aa; padding: 8px 10px; }
     @media (max-width: 980px) { .bbm-ui-editor-panel__grid { grid-template-columns: 1fr; } }
   `;
   document.head?.appendChild(style);

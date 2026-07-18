@@ -2970,3 +2970,31 @@ Wichtig:
 - Risiken/Hinweise:
   - `node scripts/test.cjs` bleibt in dieser Umgebung durch die bekannte native `better-sqlite3`/Node-ABI-Abweichung teilweise blockiert.
   - `npm test` bleibt in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert.
+
+### M64 – UI-Editor-Testfläche erweitert
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Die bisherige einzelne UI-Editor-Testkarte wurde zu einer neutralen M64-Testfläche mit Root, Testkarte, Überschrift, Beispieltext, Button-Hülle, Eingabefeld-Hülle, Auswahlfeld-Hülle und Beispieltabelle erweitert.
+  - Alle M64-Testelemente sind explizit in der führenden BBM-UI-Editor-Registry registriert und besitzen explizite HTMLElement-Refs beim Rendern.
+  - Die Testfläche bleibt außerhalb des ausgeschlossenen Bedienpanels; Auswahl und Layoutänderungen laufen weiter über UI-Editor-kit, Inspector-Bridge, HostAdapter und Layout-State.
+  - Button-/Feld-/Auswahl-Hüllen lösen keine Fachaktionen, keine Dateneingaben, keine IPC-/DB-Aktionen und keine Autosaves aus.
+- Betroffene Dateien:
+  - `src/ui-editor/bbm-ui-element-registry.cjs`
+  - `src/renderer/ui-editor/bbmUiElementRefs.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
+  - `scripts/ui-editor-contract-check.cjs`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs`
+  - `scripts/tests/m63cLayoutControlConsole.test.cjs`
+  - `scripts/tests/m54UiElementRefs.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Paket-Commit erstellt
+- Naechster offener Schritt:
+  - Manuelle Electron-/Windows-Sichtpruefung: UI-Editor oeffnen, jedes M64-Testelement auswaehlen, lesbaren Namen und orange Markierung pruefen, Move/Resize fuer Karte, Text-/Feld-/Button-Huellen und Tabelle ausfuehren.
+- Risiken/Hinweise:
+  - Praktische Computer-Use-Pruefung kann in dieser Cloud-Umgebung durch fehlende GUI/Electron-Systembibliotheken eingeschraenkt sein.

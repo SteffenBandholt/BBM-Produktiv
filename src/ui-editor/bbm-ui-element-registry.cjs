@@ -21,6 +21,50 @@ const KIT_LOCKED_OPS = Object.freeze([
   "modifyDomainData",
 ]);
 
+
+const M64_TEST_ELEMENTS = Object.freeze([
+  Object.freeze({
+    elementId: "bbm.uiEditorTest.workspace",
+    type: "root",
+    role: "test-workspace",
+    label: "UI-Editor-Testfläche",
+    scope: BBM_UI_SCOPE,
+    layoutScope: BBM_LAYOUT_SCOPE,
+    layoutProfileId: BBM_LAYOUT_PROFILE_ID,
+    parentId: null,
+    capabilities: Object.freeze(["select", "layout"]),
+    allowedChanges: ALLOWED_LAYOUT_OPS,
+    allowedOps: Object.freeze([]),
+    lockedOps: Object.freeze(["move", "resize", "hide", "delete"]),
+    editable: false,
+    layoutDefaults: Object.freeze({ visible: true }),
+    sourceRef: "src/renderer/ui-editor/BbmUiEditorStatusPanel.js",
+  }),
+  Object.freeze({
+    elementId: "bbm.uiEditorTest.card",
+    type: "container",
+    role: "content",
+    label: "Testkarte",
+    scope: BBM_UI_SCOPE,
+    layoutScope: BBM_LAYOUT_SCOPE,
+    layoutProfileId: BBM_LAYOUT_PROFILE_ID,
+    parentId: "bbm.uiEditorTest.workspace",
+    capabilities: Object.freeze(["select", "layout"]),
+    allowedChanges: ALLOWED_LAYOUT_OPS,
+    allowedOps: Object.freeze(["move", "resize"]),
+    lockedOps: Object.freeze(["delete"]),
+    editable: true,
+    layoutDefaults: Object.freeze({ visible: true, width: 300, height: 300, minWidth: 80, minHeight: 80 }),
+    sourceRef: "src/renderer/ui-editor/BbmUiEditorStatusPanel.js",
+  }),
+  Object.freeze({ elementId: "bbm.uiEditorTest.card.title", type: "text", role: "heading", label: "Überschrift", parentId: "bbm.uiEditorTest.card", editable: true, allowedOps: Object.freeze(["move", "resize"]), lockedOps: Object.freeze(["delete", "execute"]), layoutDefaults: Object.freeze({ visible: true, width: 240, height: 36, minWidth: 80, minHeight: 24 }), sourceRef: "src/renderer/ui-editor/BbmUiEditorStatusPanel.js", scope: BBM_UI_SCOPE, layoutScope: BBM_LAYOUT_SCOPE, layoutProfileId: BBM_LAYOUT_PROFILE_ID, capabilities: Object.freeze(["select", "layout"]), allowedChanges: ALLOWED_LAYOUT_OPS }),
+  Object.freeze({ elementId: "bbm.uiEditorTest.card.text", type: "text", role: "content", label: "Beispieltext", parentId: "bbm.uiEditorTest.card", editable: true, allowedOps: Object.freeze(["move", "resize"]), lockedOps: Object.freeze(["delete", "execute"]), layoutDefaults: Object.freeze({ visible: true, width: 250, height: 54, minWidth: 80, minHeight: 24 }), sourceRef: "src/renderer/ui-editor/BbmUiEditorStatusPanel.js", scope: BBM_UI_SCOPE, layoutScope: BBM_LAYOUT_SCOPE, layoutProfileId: BBM_LAYOUT_PROFILE_ID, capabilities: Object.freeze(["select", "layout"]), allowedChanges: ALLOWED_LAYOUT_OPS }),
+  Object.freeze({ elementId: "bbm.uiEditorTest.card.button", type: "action", role: "visual-control", label: "Beispielbutton", parentId: "bbm.uiEditorTest.card", editable: true, allowedOps: Object.freeze(["move", "resize"]), lockedOps: Object.freeze(["execute", "delete"]), layoutDefaults: Object.freeze({ visible: true, width: 150, height: 40, minWidth: 80, minHeight: 24 }), sourceRef: "src/renderer/ui-editor/BbmUiEditorStatusPanel.js", scope: BBM_UI_SCOPE, layoutScope: BBM_LAYOUT_SCOPE, layoutProfileId: BBM_LAYOUT_PROFILE_ID, capabilities: Object.freeze(["select", "layout"]), allowedChanges: ALLOWED_LAYOUT_OPS }),
+  Object.freeze({ elementId: "bbm.uiEditorTest.card.input", type: "field", role: "input", label: "Eingabefeld", parentId: "bbm.uiEditorTest.card", editable: true, allowedOps: Object.freeze(["move", "resize"]), lockedOps: Object.freeze(["write", "submit", "delete"]), layoutDefaults: Object.freeze({ visible: true, width: 220, height: 40, minWidth: 80, minHeight: 24 }), sourceRef: "src/renderer/ui-editor/BbmUiEditorStatusPanel.js", scope: BBM_UI_SCOPE, layoutScope: BBM_LAYOUT_SCOPE, layoutProfileId: BBM_LAYOUT_PROFILE_ID, capabilities: Object.freeze(["select", "layout"]), allowedChanges: ALLOWED_LAYOUT_OPS }),
+  Object.freeze({ elementId: "bbm.uiEditorTest.card.select", type: "field", role: "select", label: "Auswahlfeld", parentId: "bbm.uiEditorTest.card", editable: true, allowedOps: Object.freeze(["move", "resize"]), lockedOps: Object.freeze(["change-data", "submit", "delete"]), layoutDefaults: Object.freeze({ visible: true, width: 220, height: 40, minWidth: 80, minHeight: 24 }), sourceRef: "src/renderer/ui-editor/BbmUiEditorStatusPanel.js", scope: BBM_UI_SCOPE, layoutScope: BBM_LAYOUT_SCOPE, layoutProfileId: BBM_LAYOUT_PROFILE_ID, capabilities: Object.freeze(["select", "layout"]), allowedChanges: ALLOWED_LAYOUT_OPS }),
+  Object.freeze({ elementId: "bbm.uiEditorTest.table", type: "table", role: "content-table", label: "Beispieltabelle", parentId: "bbm.uiEditorTest.workspace", editable: true, allowedOps: Object.freeze(["move", "resize"]), lockedOps: Object.freeze(["edit-data", "delete"]), layoutDefaults: Object.freeze({ visible: true, width: 420, height: 170, minWidth: 160, minHeight: 80 }), sourceRef: "src/renderer/ui-editor/BbmUiEditorStatusPanel.js", scope: BBM_UI_SCOPE, layoutScope: BBM_LAYOUT_SCOPE, layoutProfileId: BBM_LAYOUT_PROFILE_ID, capabilities: Object.freeze(["select", "layout"]), allowedChanges: ALLOWED_LAYOUT_OPS }),
+]);
+
 const BBM_UI_ELEMENTS = Object.freeze([
   Object.freeze({
     elementId: "bbm.main.shell",
@@ -75,20 +119,7 @@ const BBM_UI_ELEMENTS = Object.freeze([
     sourceRef: "src/renderer/app/CoreShell.js",
   }),
 
-  Object.freeze({
-    elementId: "bbm.uiEditorTest.card",
-    type: "content",
-    label: "Testkarte",
-    scope: BBM_UI_SCOPE,
-    layoutScope: BBM_LAYOUT_SCOPE,
-    layoutProfileId: BBM_LAYOUT_PROFILE_ID,
-    parentId: "bbm.main.content",
-    capabilities: Object.freeze(["select", "layout"]),
-    allowedChanges: ALLOWED_LAYOUT_OPS,
-    allowedOps: Object.freeze(["move", "resize"]),
-    layoutDefaults: Object.freeze({ visible: true, width: 300, height: 180, minWidth: 80, minHeight: 80 }),
-    sourceRef: "src/renderer/ui-editor/BbmUiEditorStatusPanel.js",
-  }),
+  ...M64_TEST_ELEMENTS,
   Object.freeze({
     elementId: "bbm.main.actions",
     type: "actions",
@@ -109,7 +140,13 @@ const KIT_TYPE_BY_BBM_TYPE = Object.freeze({
   navigation: "area",
   header: "area",
   content: "area",
+  container: "group",
+  root: "root",
+  text: "text",
+  field: "field",
+  table: "table",
   actions: "area",
+  action: "button",
 });
 
 const KIT_ROLE_BY_BBM_TYPE = Object.freeze({
@@ -117,7 +154,13 @@ const KIT_ROLE_BY_BBM_TYPE = Object.freeze({
   navigation: "navigation",
   header: "layout",
   content: "content",
+  container: "content",
+  root: "test-workspace",
+  text: "content",
+  field: "input",
+  table: "content-table",
   actions: "action",
+  action: "visual-control",
 });
 
 function cloneElement(element) {
@@ -126,6 +169,9 @@ function cloneElement(element) {
     capabilities: [...element.capabilities],
     allowedChanges: [...element.allowedChanges],
     ...(Array.isArray(element.allowedOps) ? { allowedOps: [...element.allowedOps] } : {}),
+    ...(Array.isArray(element.lockedOps) ? { lockedOps: [...element.lockedOps] } : {}),
+    ...(Object.prototype.hasOwnProperty.call(element, "editable") ? { editable: Boolean(element.editable) } : {}),
+    ...(element.role ? { role: element.role } : {}),
     layoutDefaults: { ...element.layoutDefaults },
   };
 }
@@ -139,9 +185,9 @@ function toKitElement(element, order) {
     parentId: element.parentId,
     order,
     visible: element.layoutDefaults?.visible !== false,
-    editable: false,
-    allowedOps: [...KIT_ALLOWED_OPS],
-    lockedOps: [...KIT_LOCKED_OPS],
+    editable: Boolean(element.editable),
+    allowedOps: Array.isArray(element.allowedOps) ? [...element.allowedOps] : [...KIT_ALLOWED_OPS],
+    lockedOps: Array.isArray(element.lockedOps) ? [...element.lockedOps] : [...KIT_LOCKED_OPS],
     uiScope: element.scope,
     layoutScope: element.layoutScope,
   };

@@ -12,7 +12,18 @@ const TYPE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.header": "area",
   "bbm.main.content": "area",
   "bbm.main.actions": "area",
+  "bbm.uiEditorTest.workspace": "root",
   "bbm.uiEditorTest.card": "area",
+  "bbm.uiEditorTest.card.title": "label",
+  "bbm.uiEditorTest.card.text": "label",
+  "bbm.uiEditorTest.card.button": "button",
+  "bbm.uiEditorTest.card.input": "field",
+  "bbm.uiEditorTest.card.select": "field",
+  "bbm.uiEditorTest.table": "table",
+});
+
+const PARENT_BY_ELEMENT_ID = Object.freeze({
+  "bbm.uiEditorTest.workspace": "bbm.main.content",
 });
 
 const ROLE_BY_ELEMENT_ID = Object.freeze({
@@ -21,7 +32,14 @@ const ROLE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.header": "layout",
   "bbm.main.content": "content",
   "bbm.main.actions": "action",
+  "bbm.uiEditorTest.workspace": "layout",
   "bbm.uiEditorTest.card": "content",
+  "bbm.uiEditorTest.card.title": "content",
+  "bbm.uiEditorTest.card.text": "content",
+  "bbm.uiEditorTest.card.button": "action",
+  "bbm.uiEditorTest.card.input": "content",
+  "bbm.uiEditorTest.card.select": "content",
+  "bbm.uiEditorTest.table": "content",
 });
 
 function normalizeId(value) {
@@ -34,6 +52,12 @@ function cloneList(value) {
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
+}
+
+const RUNTIME_LAYOUT_OPS = Object.freeze(["move", "resize", "hide", "show", "label", "spacing", "width", "height", "fontSize", "fontWeight", "margin", "pageBreak", "columnWidth", "logoSize", "footerPosition"]);
+
+function toRuntimeLockedOps(element) {
+  return unique(cloneList(element?.lockedOps)).filter((op) => RUNTIME_LAYOUT_OPS.includes(op));
 }
 
 function getSelectedElementId(selectedElement) {
@@ -74,7 +98,7 @@ function isEditable(element) {
 
 function transformRegistryElement(element, order) {
   const id = normalizeId(element?.elementId || element?.id);
-  const role = element?.role || ROLE_BY_ELEMENT_ID[id];
+  const role = ROLE_BY_ELEMENT_ID[id] || element?.runtimeRole || element?.editorRuntimeRole || element?.role;
   const type = TYPE_BY_ELEMENT_ID[id] || element?.runtimeType || element?.editorRuntimeType;
 
   if (!id || !role || !type) {
@@ -94,13 +118,13 @@ function transformRegistryElement(element, order) {
       name: normalizeId(element?.label || element?.name || id),
       type,
       role,
-      parentId: element?.parentId ?? null,
+      parentId: Object.prototype.hasOwnProperty.call(PARENT_BY_ELEMENT_ID, id) ? PARENT_BY_ELEMENT_ID[id] : (element?.parentId ?? null),
       order,
       visible: element?.visible !== undefined ? Boolean(element.visible) : element?.layoutDefaults?.visible !== false,
       editable: isEditable(element),
       layoutDefaults: element?.layoutDefaults && typeof element.layoutDefaults === "object" ? { ...element.layoutDefaults } : {},
       allowedOps: toRuntimeAllowedOps(element),
-      lockedOps: cloneList(element?.lockedOps),
+      lockedOps: toRuntimeLockedOps(element),
     },
   };
 }

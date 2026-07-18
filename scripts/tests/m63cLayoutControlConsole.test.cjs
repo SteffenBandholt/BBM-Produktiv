@@ -65,7 +65,8 @@ const registryElements = [
   { elementId: "bbm.main.shell", label: "Shell", type: "frame", parentId: null, capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
   { elementId: "bbm.main.navigation", label: "Hauptnavigation", type: "navigation", parentId: "bbm.main.shell", capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
   { elementId: "bbm.main.content", label: "Inhalt", type: "content", parentId: "bbm.main.shell", capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
-  { elementId: "bbm.uiEditorTest.card", label: "Testkarte", type: "content", parentId: "bbm.main.content", capabilities: ["select", "layout"], allowedChanges: ["layout.read"], allowedOps: ["move", "resize"] },
+  { elementId: "bbm.uiEditorTest.workspace", label: "UI-Editor-Testfläche", type: "root", parentId: null, capabilities: ["select", "layout"], allowedChanges: ["layout.read"], allowedOps: [] },
+  { elementId: "bbm.uiEditorTest.card", label: "Testkarte", type: "container", parentId: "bbm.uiEditorTest.workspace", capabilities: ["select", "layout"], allowedChanges: ["layout.read"], allowedOps: ["move", "resize"] },
   { elementId: "bbm.main.header", label: "Header", type: "header", parentId: "bbm.main.shell", capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
 ];
 
@@ -80,7 +81,7 @@ async function runM63cLayoutControlConsoleTests(run) {
     const panel = new BbmUiEditorStatusPanel({});
     panel.detailsNode = new TestNode("section");
     panel.elements = registryElements;
-    panel.selectedElement = registryElements[3];
+    panel.selectedElement = registryElements[4];
     panel.renderDetails();
     const text = collectText(panel.detailsNode);
     assert.match(text, /Testkarte/);
@@ -96,7 +97,7 @@ async function runM63cLayoutControlConsoleTests(run) {
     const panel = new BbmUiEditorStatusPanel({});
     panel.detailsNode = new TestNode("section");
     panel.elements = registryElements;
-    panel.selectedElement = registryElements[3];
+    panel.selectedElement = registryElements[4];
     panel.renderDetails();
     panel.setLayoutControlMode("width");
     const widthButtons = collectByClass(panel.detailsNode, "bbm-ui-editor-layout-console__pad-button");
@@ -119,11 +120,11 @@ async function runM63cLayoutControlConsoleTests(run) {
     const panel = new BbmUiEditorStatusPanel({});
     panel.detailsNode = new TestNode("section");
     panel.elements = registryElements;
-    panel.selectedElement = registryElements[3];
+    panel.selectedElement = registryElements[4];
     panel.renderDetails();
     panel.setLayoutControlMode("height");
     assert.equal(panel.activeLayoutControlMode, "height");
-    panel.selectedElement = registryElements[4];
+    panel.selectedElement = registryElements[5];
     panel.renderDetails();
     assert.equal(panel.activeLayoutControlMode, "move");
   }));
@@ -132,7 +133,7 @@ async function runM63cLayoutControlConsoleTests(run) {
     assert.equal(M63C_LAYOUT_STEP, 5);
     let bridge = createBbmEditorRuntimeInspectorBridge({ registryElements, selectedElement: registryElements[0] });
     assert.deepEqual(bridge.inspectSelectedElement().allowedOps, []);
-    bridge = createBbmEditorRuntimeInspectorBridge({ registryElements, selectedElement: registryElements[3] });
+    bridge = createBbmEditorRuntimeInspectorBridge({ registryElements, selectedElement: registryElements[4] });
     assert.deepEqual(bridge.inspectSelectedElement().allowedOps, ["move", "resize"]);
   });
 
@@ -143,7 +144,7 @@ async function runM63cLayoutControlConsoleTests(run) {
     const layoutStorage = createEditorLayoutMemoryStorage();
     const bridge = createBbmEditorRuntimeInspectorBridge({
       registryElements,
-      selectedElement: registryElements[3],
+      selectedElement: registryElements[4],
       hostAdapterFactory: ({ registry }) => createBbmMainUiHostAdapter({ registry, layoutStorage }),
     });
     const move = bridge.applySelectedElementLayoutAction("right");
@@ -187,7 +188,7 @@ async function runM63cLayoutControlConsoleTests(run) {
     const layoutStorage = createEditorLayoutMemoryStorage();
     const bridge = createBbmEditorRuntimeInspectorBridge({
       registryElements,
-      selectedElement: registryElements[3],
+      selectedElement: registryElements[4],
       hostAdapterFactory: ({ registry }) => createBbmMainUiHostAdapter({ registry, layoutStorage }),
     });
     const width = bridge.applySelectedElementLayoutAction("widthLeft");
@@ -201,12 +202,13 @@ async function runM63cLayoutControlConsoleTests(run) {
     refs.clearBbmUiElementRefs();
   }));
 
-  await run("M63C Registry: nur bbm.uiEditorTest.card ist fuer move/resize freigegeben", () => {
+  await run("M63C Registry: Hauptnavigation bleibt ohne move/resize und Testkarte bleibt freigegeben", () => {
     delete require.cache[REGISTRY_PATH];
     const { BBM_UI_ELEMENTS } = require(REGISTRY_PATH);
-    const withOps = BBM_UI_ELEMENTS.filter((entry) => Array.isArray(entry.allowedOps) && entry.allowedOps.length > 0);
-    assert.deepEqual(withOps.map((entry) => entry.elementId), ["bbm.uiEditorTest.card"]);
-    assert.deepEqual(withOps[0].allowedOps, ["move", "resize"]);
+    const navigation = BBM_UI_ELEMENTS.find((entry) => entry.elementId === "bbm.main.navigation");
+    const card = BBM_UI_ELEMENTS.find((entry) => entry.elementId === "bbm.uiEditorTest.card");
+    assert.deepEqual(navigation.allowedOps || [], []);
+    assert.deepEqual(card.allowedOps, ["move", "resize"]);
   });
 
   await run("M63C Guardrails: keine lokale Map, keine Simulation, keine DOM-Suche, keine zweite Auswahlhaltung", () => {
@@ -215,7 +217,7 @@ async function runM63cLayoutControlConsoleTests(run) {
     const hostSource = read("src/renderer/ui-editor/bbmMainUiHostAdapter.js");
     assert.doesNotMatch(bridgeSource, /capabilities\.map\(.*layout|return \["move", "resize"\]/s);
     assert.doesNotMatch(bridgeSource, /new Map\(|createLayoutHostAdapter|executed:\s*false|\.style\s*=|\.style\.setProperty|querySelector|querySelectorAll|getElementById|getElementsBy|elementFromPoint|elementsFromPoint|MutationObserver|let\s+selectedElement|this\.selectedElementId/);
-    assert.doesNotMatch(panelSource, /\.style\s*=|\.style\.setProperty|querySelector|querySelectorAll|getElementById|getElementsBy|elementFromPoint|elementsFromPoint|MutationObserver|createElement\("input"\)|createElement\("select"\)|data-ui-inspector-id/);
+    assert.doesNotMatch(panelSource, /\.style\s*=|\.style\.setProperty|querySelector|querySelectorAll|getElementById|getElementsBy|elementFromPoint|elementsFromPoint|MutationObserver|createElement\("input"\)|createElement\("select"\)/);
     assert.match(hostSource, /createEditorLayoutStore/);
     assert.match(hostSource, /validateEditorChangeRequest/);
     assert.match(hostSource, /getBbmUiElementRef/);

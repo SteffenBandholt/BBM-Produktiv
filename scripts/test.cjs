@@ -93,6 +93,7 @@ const { runM63aEditorIntegrationAuditTests } = require("./tests/m63aEditorIntegr
 const { runM63bReadonlyInspectorBridgeTests } = require("./tests/m63bReadonlyInspectorBridge.test.cjs");
 const { runM63cLayoutControlConsoleTests } = require("./tests/m63cLayoutControlConsole.test.cjs");
 const { runM63cRealRegistryPanelIntegrationTests } = require("./tests/m63cRealRegistryPanelIntegration.test.cjs");
+const { runM64UiEditorTestSurfaceTests } = require("./tests/m64UiEditorTestSurface.test.cjs");
 
 let failed = false;
 
@@ -233,6 +234,7 @@ async function main() {
   await runM63bReadonlyInspectorBridgeTests(run);
   await runM63cLayoutControlConsoleTests(run);
   await runM63cRealRegistryPanelIntegrationTests(run);
+  await runM64UiEditorTestSurfaceTests(run);
 
   if (failed) {
     process.exitCode = 1;

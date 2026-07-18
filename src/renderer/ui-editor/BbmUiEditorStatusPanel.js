@@ -167,28 +167,160 @@ export class BbmUiEditorStatusPanel {
     this.renderDetails();
   }
 
-  renderTestSurface() {
-    if (!this.testSurfaceNode) return;
-    this.testSurfaceNode.innerHTML = "";
-    const title = createNode("h2");
-    title.textContent = "Testfläche";
-    const hint = createNode("p", "bbm-ui-editor-test-surface__hint");
-    hint.textContent = "Freie Entwicklungsfläche fuer M63C. Die Testkarte ist der einzige aktive visuelle Move-/Resize-Pilot.";
-    const card = createNode("article", "bbm-ui-editor-test-card");
-    card.setAttribute("data-ui-editor-id", "bbm.uiEditorTest.card");
-    card.setAttribute("data-ui-editor-label", "Testkarte");
-    const cardTitle = createNode("h3");
-    cardTitle.textContent = "Testkarte";
-    const text = createNode("p");
-    text.textContent = "Diese Karte liegt frei in der Testfläche. Move, Breite und Höhe sollen hier sichtbar wirken.";
-    card.append(cardTitle, text);
-    this.testSurfaceNode.append(title, hint, card);
+  createEditorTargetNode(tagName, className, elementId, label, kind, parentId, editable, ops) {
+    const node = createNode(tagName, className);
+    node.setAttribute("data-ui-inspector-id", elementId);
+    node.setAttribute("data-ui-editor-id", elementId);
+    node.setAttribute("data-ui-editor-kind", kind);
+    node.setAttribute("data-ui-editor-label", label);
+    node.setAttribute("data-ui-editor-parent", parentId || "");
+    node.setAttribute("data-ui-editor-editable", editable ? "true" : "false");
+    node.setAttribute("data-ui-editor-ops", Array.isArray(ops) ? ops.join(",") : "");
+    return node;
+  }
+
+  bindTestSurfaceElementRef(elementId, element) {
     try {
-      unregisterBbmUiElementRef("bbm.uiEditorTest.card");
-      registerBbmUiElementRef("bbm.uiEditorTest.card", card);
+      unregisterBbmUiElementRef(elementId);
+      registerBbmUiElementRef(elementId, element);
     } catch (error) {
       this.runtimeError = error?.message || String(error || "");
     }
+  }
+
+  renderTestSurface() {
+    if (!this.testSurfaceNode) return;
+    const testElementIds = [
+      "bbm.uiEditorTest.workspace",
+      "bbm.uiEditorTest.card",
+      "bbm.uiEditorTest.card.title",
+      "bbm.uiEditorTest.card.text",
+      "bbm.uiEditorTest.card.button",
+      "bbm.uiEditorTest.card.input",
+      "bbm.uiEditorTest.card.select",
+      "bbm.uiEditorTest.table",
+    ];
+    for (const elementId of testElementIds) {
+      try { unregisterBbmUiElementRef(elementId); } catch (_error) {}
+    }
+    this.testSurfaceNode.innerHTML = "";
+
+    const workspace = this.createEditorTargetNode(
+      "section",
+      "bbm-ui-editor-test-workspace",
+      "bbm.uiEditorTest.workspace",
+      "UI-Editor-Testfläche",
+      "root",
+      "",
+      false,
+      []
+    );
+    const title = createNode("h2");
+    title.textContent = "Testfläche";
+    const hint = createNode("p", "bbm-ui-editor-test-surface__hint");
+    hint.textContent = "Freie Entwicklungsfläche fuer M64. Alle Testelemente sind explizit registrierte Ziele; Bedienelemente fuehren keine Fachaktionen aus.";
+
+    const card = this.createEditorTargetNode(
+      "article",
+      "bbm-ui-editor-test-card",
+      "bbm.uiEditorTest.card",
+      "Testkarte",
+      "container",
+      "bbm.uiEditorTest.workspace",
+      true,
+      ["move", "resize"]
+    );
+    const cardTitle = this.createEditorTargetNode(
+      "h3",
+      "bbm-ui-editor-test-card__title",
+      "bbm.uiEditorTest.card.title",
+      "Überschrift",
+      "text",
+      "bbm.uiEditorTest.card",
+      true,
+      ["move", "resize"]
+    );
+    cardTitle.textContent = "Überschrift";
+    const text = this.createEditorTargetNode(
+      "p",
+      "bbm-ui-editor-test-card__text",
+      "bbm.uiEditorTest.card.text",
+      "Beispieltext",
+      "text",
+      "bbm.uiEditorTest.card",
+      true,
+      ["move", "resize"]
+    );
+    text.textContent = "Neutraler Beispieltext fuer Auswahl, Markierung und Layoutschritte.";
+    const buttonShell = this.createEditorTargetNode(
+      "div",
+      "bbm-ui-editor-test-card__button-shell",
+      "bbm.uiEditorTest.card.button",
+      "Beispielbutton",
+      "action",
+      "bbm.uiEditorTest.card",
+      true,
+      ["move", "resize"]
+    );
+    buttonShell.textContent = "Beispielbutton ohne Fachaktion";
+    buttonShell.setAttribute("role", "button");
+    buttonShell.setAttribute("aria-disabled", "true");
+    const inputShell = this.createEditorTargetNode(
+      "div",
+      "bbm-ui-editor-test-card__field-shell",
+      "bbm.uiEditorTest.card.input",
+      "Eingabefeld",
+      "field",
+      "bbm.uiEditorTest.card",
+      true,
+      ["move", "resize"]
+    );
+    inputShell.textContent = "Eingabefeld-Hülle (keine Dateneingabe)";
+    const selectShell = this.createEditorTargetNode(
+      "div",
+      "bbm-ui-editor-test-card__field-shell",
+      "bbm.uiEditorTest.card.select",
+      "Auswahlfeld",
+      "field",
+      "bbm.uiEditorTest.card",
+      true,
+      ["move", "resize"]
+    );
+    selectShell.textContent = "Auswahlfeld-Hülle (keine Datenänderung)";
+    card.append(cardTitle, text, buttonShell, inputShell, selectShell);
+
+    const table = this.createEditorTargetNode(
+      "table",
+      "bbm-ui-editor-test-table",
+      "bbm.uiEditorTest.table",
+      "Beispieltabelle",
+      "table",
+      "bbm.uiEditorTest.workspace",
+      true,
+      ["move", "resize"]
+    );
+    const tbody = createNode("tbody");
+    for (const row of [["Alpha", "Beispiel", "neutral"], ["Beta", "Demo", "neutral"]]) {
+      const tr = createNode("tr");
+      for (const value of row) {
+        const td = createNode("td");
+        td.textContent = value;
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+
+    workspace.append(title, hint, card, table);
+    this.testSurfaceNode.appendChild(workspace);
+    this.bindTestSurfaceElementRef("bbm.uiEditorTest.workspace", workspace);
+    this.bindTestSurfaceElementRef("bbm.uiEditorTest.card", card);
+    this.bindTestSurfaceElementRef("bbm.uiEditorTest.card.title", cardTitle);
+    this.bindTestSurfaceElementRef("bbm.uiEditorTest.card.text", text);
+    this.bindTestSurfaceElementRef("bbm.uiEditorTest.card.button", buttonShell);
+    this.bindTestSurfaceElementRef("bbm.uiEditorTest.card.input", inputShell);
+    this.bindTestSurfaceElementRef("bbm.uiEditorTest.card.select", selectShell);
+    this.bindTestSurfaceElementRef("bbm.uiEditorTest.table", table);
   }
 
   renderStatus() {
@@ -417,7 +549,7 @@ export class BbmUiEditorStatusPanel {
 
   getSelectableBoundCount() {
     const ids = new Set(this.refStatus?.registeredIds || []);
-    return ["bbm.main.navigation", "bbm.main.header", "bbm.main.content", "bbm.main.shell", "bbm.uiEditorTest.card"].filter((elementId) => ids.has(elementId)).length;
+    return ["bbm.main.navigation", "bbm.main.header", "bbm.main.content", "bbm.main.shell", "bbm.uiEditorTest.workspace", "bbm.uiEditorTest.card", "bbm.uiEditorTest.card.title", "bbm.uiEditorTest.card.text", "bbm.uiEditorTest.card.button", "bbm.uiEditorTest.card.input", "bbm.uiEditorTest.card.select", "bbm.uiEditorTest.table"].filter((elementId) => ids.has(elementId)).length;
   }
 
   canStartSelectionMode() {
@@ -446,7 +578,7 @@ export class BbmUiEditorStatusPanel {
   destroy() {
     this.destroyKitController();
     this.selectionModeActive = false;
-    try { unregisterBbmUiElementRef("bbm.uiEditorTest.card"); } catch (_error) {}
+    for (const elementId of ["bbm.uiEditorTest.workspace", "bbm.uiEditorTest.card", "bbm.uiEditorTest.card.title", "bbm.uiEditorTest.card.text", "bbm.uiEditorTest.card.button", "bbm.uiEditorTest.card.input", "bbm.uiEditorTest.card.select", "bbm.uiEditorTest.table"]) { try { unregisterBbmUiElementRef(elementId); } catch (_error) {} }
     this.panelRoot = null;
     this.root = null;
   }
