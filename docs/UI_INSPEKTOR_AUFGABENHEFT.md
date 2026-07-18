@@ -622,3 +622,10 @@ Hinweis:
 - Dokumentation: `docs/M63A_EDITOR_BESTAND_UND_INTEGRATIONSPLAN.md`.
 - Neuer Guardrail-Test: `scripts/tests/m63aEditorIntegrationAudit.test.cjs`.
 - Naechster sinnvoller Schritt: M63B als read-only Bridge-Paket mit statischem/funktionalem Bridge-Test vorbereiten.
+
+## M63C.4 Korrektur – Testfläche ausserhalb des Bedienpanels
+
+- Die M63C-Testkarte wird nicht mehr als Kind des ausgeschlossenen UI-Editor-Bedienpanels gerendert.
+- Der UI-Editor-Arbeitsbereich enthaelt Bedienpanel und Testflaeche als getrennte Geschwisterbereiche.
+- `getPanelRoot()` bleibt auf das Bedienpanel begrenzt; Klicks in der Testflaeche laufen ueber die bestehende Kit-Auswahlruntime.
+- Der Realintegrationstest `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs` sichert ab, dass die Testkarte ausserhalb von `panelRoot` liegt, per echtem Klick in `selectedElement` uebernommen wird und Panelbuttons keine Zielauswahl ausloesen.

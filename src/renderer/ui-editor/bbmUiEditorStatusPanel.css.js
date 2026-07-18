@@ -6,7 +6,8 @@ export function injectBbmUiEditorStatusPanelStyles() {
   const style = document.createElement("style");
   style.setAttribute("data-bbm-ui-editor-status-panel-styles", "true");
   style.textContent = `
-    .bbm-ui-editor-panel { padding: 22px; color: #172033; max-width: 1180px; margin: 0 auto; }
+    .bbm-ui-editor-workspace { padding: 22px; color: #172033; max-width: 1180px; margin: 0 auto; }
+    .bbm-ui-editor-panel { color: #172033; }
     .bbm-ui-editor-panel__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
     .bbm-ui-editor-panel h1 { margin: 0; font-size: 28px; }
     .bbm-ui-editor-panel h2 { margin: 0 0 12px; font-size: 17px; }

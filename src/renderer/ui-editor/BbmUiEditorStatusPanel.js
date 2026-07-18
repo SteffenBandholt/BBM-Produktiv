@@ -41,6 +41,7 @@ export class BbmUiEditorStatusPanel {
   constructor({ router } = {}) {
     this.router = router || null;
     this.root = null;
+    this.panelRoot = null;
     this.statusNode = null;
     this.elementsNode = null;
     this.detailsNode = null;
@@ -65,8 +66,13 @@ export class BbmUiEditorStatusPanel {
   }
 
   render() {
-    const root = createNode("section", "bbm-ui-editor-panel");
+    const root = createNode("section", "bbm-ui-editor-workspace");
     root.setAttribute("data-bbm-ui-editor-panel", "true");
+    root.setAttribute("data-bbm-ui-editor-workspace", "true");
+
+    const panelRoot = createNode("section", "bbm-ui-editor-panel");
+    panelRoot.setAttribute("data-bbm-ui-editor-panel-root", "true");
+    this.panelRoot = panelRoot;
 
     const header = createNode("div", "bbm-ui-editor-panel__header");
     const titleBox = createNode("div");
@@ -100,7 +106,8 @@ export class BbmUiEditorStatusPanel {
     this.testSurfaceNode = createNode("section", "bbm-ui-editor-test-surface");
     this.renderTestSurface();
 
-    root.append(header, this.errorNode, intro, grid, this.testSurfaceNode);
+    panelRoot.append(header, this.errorNode, intro, grid);
+    root.append(panelRoot, this.testSurfaceNode);
     this.root = root;
     this.refresh().catch((error) => this.showLoadError(error));
     return root;
@@ -410,7 +417,7 @@ export class BbmUiEditorStatusPanel {
 
   getSelectableBoundCount() {
     const ids = new Set(this.refStatus?.registeredIds || []);
-    return ["bbm.main.navigation", "bbm.main.header", "bbm.main.content", "bbm.main.shell"].filter((elementId) => ids.has(elementId)).length;
+    return ["bbm.main.navigation", "bbm.main.header", "bbm.main.content", "bbm.main.shell", "bbm.uiEditorTest.card"].filter((elementId) => ids.has(elementId)).length;
   }
 
   canStartSelectionMode() {
@@ -440,6 +447,7 @@ export class BbmUiEditorStatusPanel {
     this.destroyKitController();
     this.selectionModeActive = false;
     try { unregisterBbmUiElementRef("bbm.uiEditorTest.card"); } catch (_error) {}
+    this.panelRoot = null;
     this.root = null;
   }
 
@@ -496,7 +504,7 @@ export class BbmUiEditorStatusPanel {
       getRegistryElements: () => this.elements,
       getSelectedElement: () => this.selectedElement,
       selectElement: (elementId) => this.selectElement(elementId, { fromSelectionMode: true }),
-      getPanelRoot: () => this.root,
+      getPanelRoot: () => this.panelRoot,
       onStateChange: (state) => {
         this.selectionModeActive = Boolean(state?.active);
         this.hoverTargetLabel = this.formatElementLabel(state?.hoveredElementId || state?.hoverTargetId);

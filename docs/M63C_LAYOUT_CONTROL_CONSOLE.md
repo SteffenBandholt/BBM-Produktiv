@@ -127,3 +127,36 @@ Die sichtbare Anwendung erfolgt im HostAdapter ueber explizite M54-Refs.
 - Die Testkarte liegt sichtbar in der UI-Editor-Testflaeche, hat einen eigenen M54-Ref und darf als einziges Element aktiv bewegt und in Breite/Hoehe veraendert werden.
 - Die Start-UI enthaelt ansonsten nur grobe registrierte Bereiche der BBM-Hauptoberflaeche.
 - M64 erweitert diese kleine Testflaeche spaeter um: Ueberschrift, Text, Button, Eingabefeld, Auswahlfeld, Tabelle und verschachtelte Elemente.
+
+## Strukturelle Trennung von Bedienpanel und Testflaeche
+
+Die Testkarte darf nicht im DOM-Teilbaum des UI-Editor-Bedienpanels liegen.
+Der Auswahl-Host schliesst das Bedienpanel bewusst als Editorbedienung aus;
+deshalb wird M63C so montiert:
+
+```text
+UI-Editor-Arbeitsbereich
+├── Bedienpanel
+└── Testflaeche
+    └── Testkarte
+```
+
+`getPanelRoot()` liefert ausschliesslich das Bedienpanel. Die Testkarte liegt
+als Geschwisterelement der Panel-Wurzel in der separaten Testflaeche. Ein Klick
+auf die Testkarte laeuft dadurch ueber den bestehenden Kit-Auswahlweg und nicht
+ueber eine Sonderbehandlung im Panel.
+
+Pfad fuer die Auswahl:
+
+```text
+Testkarten-Ref
+→ Kit Selection Runtime
+→ host.selectElement(elementId)
+→ Panel.selectElement(...)
+→ selectedElement
+→ renderDetails()
+```
+
+Klicks auf Modebuttons oder Steuerkreuz bleiben Bedienpanel-Klicks und duerfen
+kein neues Zielelement auswaehlen. Klicks auf die Testkarte duerfen die Auswahl
+aendern.

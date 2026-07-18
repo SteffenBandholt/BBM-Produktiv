@@ -2948,3 +2948,25 @@ Wichtig:
 - Risiken/Hinweise:
   - `node scripts/test.cjs` bleibt in dieser Umgebung durch die bekannte native `better-sqlite3`/Node-ABI-Abweichung teilweise blockiert.
   - `npm test` bleibt in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert.
+
+### M63C.4 – Testfläche aus Bedienpanel herausgelöst
+- Status: korrigiert in PR #203
+- Beschreibung:
+  - Die UI-Editor-Seite trennt das ausgeschlossene Bedienpanel strukturell von der freien Testflaeche.
+  - `getPanelRoot()` liefert nur noch die Panel-Wurzel; die Testkarte liegt als Geschwisterelement ausserhalb dieses Teilbaums.
+  - Die Testkarte wird dadurch ueber den vorhandenen Kit-Auswahlweg in `selectedElement` uebernommen; Klicks auf Move-/Steuerkreuz-Buttons bleiben von der Zielauswahl ausgeschlossen.
+  - Der Realintegrationstest prueft echte Registry, echtes Panel, getrennte Testflaeche, echte Auswahl per Testkarten-Klick und anschliessende 5-px-Layoutwirkung.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
+  - `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs`
+  - `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - Korrektur-Commit dieses Arbeitsstands; Hash siehe Abschlussmeldung.
+- Naechster offener Schritt:
+  - Manuelle Windows-Abnahme: Testkarte anklicken, Elementdetails zeigen Testkarte, Move/Breite/Hoehe wirken jeweils sichtbar um 5 px.
+- Risiken/Hinweise:
+  - `node scripts/test.cjs` bleibt in dieser Umgebung durch die bekannte native `better-sqlite3`/Node-ABI-Abweichung teilweise blockiert.
+  - `npm test` bleibt in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert.
