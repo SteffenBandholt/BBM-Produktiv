@@ -638,3 +638,9 @@ Hinweis:
 - Die Testfläche bleibt außerhalb des ausgeschlossenen Bedienpanels; Auswahl und Layoutschritte laufen weiter über Kit-Auswahl, Inspector-Bridge, HostAdapter und Layout-State.
 - Neuer Guardrail-Test: `scripts/tests/m64UiEditorTestSurface.test.cjs`.
 - Nächster Schritt: manuelle Electron-/Windows-Sichtprüfung aller M64-Testelemente mit Auswahlrahmen und Move-/Resize-Schritten.
+
+## M64 Korrektur – Parent-Vertrag und Integrationsauswahl
+- Der M64-Parent-Override in der Inspector-Bridge wurde entfernt; Parent-IDs werden ausschließlich aus der führenden Registry übernommen.
+- `bbm.uiEditorTest.workspace` bleibt ein echtes Root-Element mit `parentId: null`; die Runtime unterstützt dafür eine Registry-Forest-Struktur ohne falsche Parent-Korrektur.
+- Der M64-Test prüft nun Kit-Auswahl, Elementdetails, Overlay-Ref-Auflösung und Layoutwirkung für alle M64-Testelemente.
+- Fachaktions-Guardrails sichern ab, dass Button-, Eingabe- und Auswahl-Hüllen ausschließlich Editor-Auswahlziele sind.

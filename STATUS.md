@@ -2998,3 +2998,22 @@ Wichtig:
   - Manuelle Electron-/Windows-Sichtpruefung: UI-Editor oeffnen, jedes M64-Testelement auswaehlen, lesbaren Namen und orange Markierung pruefen, Move/Resize fuer Karte, Text-/Feld-/Button-Huellen und Tabelle ausfuehren.
 - Risiken/Hinweise:
   - Praktische Computer-Use-Pruefung kann in dieser Cloud-Umgebung durch fehlende GUI/Electron-Systembibliotheken eingeschraenkt sein.
+
+### M64 Korrektur – Parent-Vertrag und Auswahlintegration
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Der in PR #204 gefundene Parent-Vertragsbruch wurde korrigiert: Die Bridge überschreibt `bbm.uiEditorTest.workspace` nicht mehr auf `bbm.main.content`.
+  - `transformRegistryElement()` übernimmt `parentId` wieder ausschließlich aus der führenden Registry.
+  - Das bestehende Runtime-Modell unterstützt mehrere Registry-Roots jetzt sauber als Forest mit internem virtuellem Tree-Root, ohne Registry-Parent-Werte zu verändern.
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs` prüft jetzt Kit-Auswahl, lesbare Elementdetails, Overlay-Ref-Auflösung, Layoutwirkung und Fachaktions-Guardrails für die M64-Testfläche.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/editorRuntime/registry/editorRegistryValidator.js`
+  - `src/renderer/editorRuntime/inspector/editorRegistryTree.js`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - Praktische Windows-/Electron-Abnahme von PR #204 lokal durchführen.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.

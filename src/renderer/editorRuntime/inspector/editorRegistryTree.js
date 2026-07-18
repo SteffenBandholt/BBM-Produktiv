@@ -106,10 +106,10 @@ export function buildEditorRegistryTree(registry) {
   }
 
   const rootEntries = entries.filter((entry) => normalizeId(entry.parentId) === "");
-  if (rootEntries.length !== 1) {
+  if (rootEntries.length < 1) {
     errors.push({
       code: "ROOT_COUNT_INVALID",
-      message: "registry must contain exactly one root element",
+      message: "registry must contain at least one root element",
     });
     return {
       ok: false,
@@ -119,7 +119,22 @@ export function buildEditorRegistryTree(registry) {
     };
   }
 
-  const root = cloneNode(rootEntries[0], { children: [] });
+  const root = rootEntries.length === 1
+    ? cloneNode(rootEntries[0], { children: [] })
+    : {
+        id: "editor.runtime.virtualRoot",
+        name: "Editor Runtime Root",
+        type: "root",
+        role: "structure",
+        parentId: null,
+        order: -1,
+        visible: true,
+        editable: false,
+        allowedOps: [],
+        lockedOps: [],
+        children: [],
+        virtual: true,
+      };
   const byParentId = new Map();
   for (const entry of entries) {
     const parentId = normalizeId(entry.parentId);
@@ -142,7 +157,15 @@ export function buildEditorRegistryTree(registry) {
     }
   }
 
-  attachChildren(root, byParentId, lookup, warnings);
+  if (root.virtual) {
+    for (const rootEntry of rootEntries.sort(compareEntries)) {
+      const rootNode = cloneNode(rootEntry, { children: [] });
+      attachChildren(rootNode, byParentId, lookup, warnings);
+      root.children.push(rootNode);
+    }
+  } else {
+    attachChildren(root, byParentId, lookup, warnings);
+  }
 
   const attachedIds = new Set();
   const stack = [root];

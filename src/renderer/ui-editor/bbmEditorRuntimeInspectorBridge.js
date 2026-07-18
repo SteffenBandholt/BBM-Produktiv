@@ -22,9 +22,6 @@ const TYPE_BY_ELEMENT_ID = Object.freeze({
   "bbm.uiEditorTest.table": "table",
 });
 
-const PARENT_BY_ELEMENT_ID = Object.freeze({
-  "bbm.uiEditorTest.workspace": "bbm.main.content",
-});
 
 const ROLE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.shell": "layout",
@@ -118,7 +115,7 @@ function transformRegistryElement(element, order) {
       name: normalizeId(element?.label || element?.name || id),
       type,
       role,
-      parentId: Object.prototype.hasOwnProperty.call(PARENT_BY_ELEMENT_ID, id) ? PARENT_BY_ELEMENT_ID[id] : (element?.parentId ?? null),
+      parentId: element?.parentId ?? null,
       order,
       visible: element?.visible !== undefined ? Boolean(element.visible) : element?.layoutDefaults?.visible !== false,
       editable: isEditable(element),

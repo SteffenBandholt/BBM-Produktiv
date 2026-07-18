@@ -115,8 +115,8 @@ export function validateEditorRegistry(registry) {
     }
   }
 
-  if (rootEntries.length !== 1) {
-    pushError(errors, "ROOT_COUNT_INVALID", "registry must contain exactly one root element");
+  if (rootEntries.length < 1) {
+    pushError(errors, "ROOT_COUNT_INVALID", "registry must contain at least one root element");
   }
 
   for (const [index, element] of registry.entries()) {
