@@ -119,7 +119,7 @@ async function runM51UiEditorKitIntegrationTests(run) {
     assert.equal(status.activeScope, "bbm.main");
     assert.equal(status.activeLayoutScope, "bbm.main-layout");
     assert.equal(status.activeLayoutProfileId, "default");
-    assert.equal(status.registeredElementCount, 5);
+    assert.equal(status.registeredElementCount, 6);
   });
 
   await run("M51 Runtime Fehlerfall: ungueltiges Manifest bleibt blockiert und meldet echten Blockcode", () => {

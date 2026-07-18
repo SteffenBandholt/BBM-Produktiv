@@ -69,6 +69,20 @@ Aktueller Stand:
 - [x] M62 Alte BBM-Auswahlruntime sicher entfernen und Kit-Vertraege weiter pruefen
 - [x] M63A Editor-Bestand und Integrationsplan dokumentieren
 - [x] M63B M51/M52-Auswahl read-only an EditorScopeInspector anbinden
+- [x] M63C Kleine Layout-Bedienkonsole fuer ausgewaehltes Element
+
+
+## Statusupdate M63C
+- M63C korrigiert die sichtbare Bedienung auf drei Modi und ein gemeinsames Steuerkreuz: `[Move] [Breite] [Hoehe]` plus Pfeile und deaktiviertem Mittelpunkt.
+- Schrittweite ist fuer M63C zunaechst `5`; die konkrete Operation kommt ausschliesslich aus explizitem `allowedOps`.
+- Pilotfreigabe: nur `bbm.uiEditorTest.card` (`Testkarte`) erhaelt `allowedOps: ["move", "resize"]`; `bbm.main.navigation`, Header, Main und Sidebar bleiben ohne aktive move/resize-Freigabe. `capabilities: ["layout"]` wird nicht in konkrete Operationen uebersetzt.
+- Die Bridge haelt keinen eigenen Layoutzustand und nutzt keinen lokalen Map-Speicher mehr.
+- Layoutschritte laufen ueber `EditorScopeInspector` -> `EditorLayoutControls` -> `ChangeRequestValidator` -> BBM-main-HostAdapter -> vorhandenen `EditorLayoutStore` -> sichtbare Anwendung am registrierten M54-Ziel.
+- Breite/Hoehe starten beim ersten Groessenschritt aus Registry-/Layout-Standard, gespeichertem Layoutwert oder einmalig aus `getBoundingClientRect()` des expliziten M54-Refs; Mindestgroesse 20 px. M63C validiert dies visuell an einer freien Testkarte statt am festen CoreShell-Grid.
+- Keine Textgroesse, keine Textposition, keine freie Werteingabe, kein Drag-and-drop, keine direkte Style-Mutation im Panel/Bridge, keine neue Registry, keine neue Auswahlhaltung und keine neue Persistenz.
+- Neue Doku: `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`.
+- Neuer Guardrail-Test: `scripts/tests/m63cLayoutControlConsole.test.cjs`; `scripts/test.cjs` fuehrt ihn mit aus.
+- Offener Punkt: manuelle Windows-/Electron-Sichtpruefung nachholen.
 
 ## Statusupdate M63B
 - M63B bindet die bestehende M51/M52-Auswahl read-only an den vorhandenen `EditorScopeInspector`-Layout-Control-Pfad an.
@@ -608,3 +622,10 @@ Hinweis:
 - Dokumentation: `docs/M63A_EDITOR_BESTAND_UND_INTEGRATIONSPLAN.md`.
 - Neuer Guardrail-Test: `scripts/tests/m63aEditorIntegrationAudit.test.cjs`.
 - Naechster sinnvoller Schritt: M63B als read-only Bridge-Paket mit statischem/funktionalem Bridge-Test vorbereiten.
+
+## M63C.4 Korrektur – Testfläche ausserhalb des Bedienpanels
+
+- Die M63C-Testkarte wird nicht mehr als Kind des ausgeschlossenen UI-Editor-Bedienpanels gerendert.
+- Der UI-Editor-Arbeitsbereich enthaelt Bedienpanel und Testflaeche als getrennte Geschwisterbereiche.
+- `getPanelRoot()` bleibt auf das Bedienpanel begrenzt; Klicks in der Testflaeche laufen ueber die bestehende Kit-Auswahlruntime.
+- Der Realintegrationstest `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs` sichert ab, dass die Testkarte ausserhalb von `panelRoot` liegt, per echtem Klick in `selectedElement` uebernommen wird und Panelbuttons keine Zielauswahl ausloesen.

@@ -27,6 +27,7 @@ function cloneElement(element, selected = false) {
     parentId: element?.parentId == null ? null : String(element.parentId),
     capabilities: Array.isArray(element?.capabilities) ? element.capabilities.map(String) : [],
     allowedChanges: Array.isArray(element?.allowedChanges) ? element.allowedChanges.map(String) : [],
+    allowedOps: Array.isArray(element?.allowedOps) ? element.allowedOps.map(String) : [],
     selected: Boolean(selected),
   };
 }

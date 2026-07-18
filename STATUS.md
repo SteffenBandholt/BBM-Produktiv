@@ -2867,3 +2867,106 @@ Wichtig:
   - M63C darf spaeter genau eine vorhandene Inspector-Control-Operation sichtbar ausfuehrbar machen; keine neue Operation erfinden.
 - Risiken/Hinweise:
   - Manuelle Windows-Abnahme fuer die sichtbare Statuspanel-Darstellung bleibt offen.
+
+### M63C – Kleine Layout-Bedienkonsole fuer ausgewaehltes Element
+- Status: korrigiert in PR #203
+- Beschreibung:
+  - Das UI-Editor-Statuspanel zeigt fuer das aktuell ausgewaehlte M51/M52-Element nur noch Elementname, drei Modi (`Move`, `Breite`, `Hoehe`) und ein gemeinsames Steuerkreuz.
+  - Schrittweite ist `1`; unpassende Pfeile sind je Modus deaktiviert und der Mittelpunkt bleibt ohne sicheren operationsbezogenen Reset deaktiviert.
+  - Konkrete Operationen kommen ausschliesslich aus explizitem `allowedOps`; Pilot ist nur `bbm.main.navigation` mit `move`/`resize`.
+  - Die Bridge haelt keinen eigenen Layoutzustand und nutzt den vorhandenen Inspector-/LayoutControls-/Validator-/HostAdapter-/LayoutStore-Weg.
+  - Breite/Hoehe starten beim ersten Groessenschritt aus sicherem Basiswert statt `0`; Mindestgroesse 20 px.
+- Betroffene Dateien:
+  - `src/ui-editor/bbm-ui-element-registry.cjs`
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
+  - `scripts/tests/m63cLayoutControlConsole.test.cjs`
+  - `scripts/tests/m63bReadonlyInspectorBridge.test.cjs`
+  - `scripts/tests/m59KitSelectionRuntimeIntegration.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - `b700589`
+- Naechster offener Schritt:
+  - Manuelle Electron-/Windows-Sichtpruefung: Konsole sichtbar, Moduswechsel und Steuerkreuz verstaendlich, keine freie Werteingabe, keine Fachaktionen.
+- Risiken/Hinweise:
+  - `npm test` kann in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert bleiben.
+  - Native SQLite-Tests koennen durch lokale `better-sqlite3`/Node-ABI-Abweichung blockiert bleiben.
+
+### M63C.2 – Reale Registry-/Panel-Aktivierung Hauptnavigation
+- Status: korrigiert in PR #203
+- Beschreibung:
+  - `allowedOps` bleibt jetzt auch ueber den Main-IPC-Klonpfad erhalten, damit die Hauptnavigation im Statuspanel nicht read-only/grau bleibt.
+  - Der aktive M63C-Weg nutzt den Layout-Scope `bbm.main-layout` statt `bbm.main.readonly`; Bridge, Catalog, ChangeRequest und BBM-HostAdapter verwenden denselben Scope.
+  - Modebuttons werden nur aktiviert, wenn die benoetigte konkrete Operation (`move` oder `resize`) aus `allowedOps` erlaubt ist.
+  - Neuer Realintegrationstest klickt echte Panel-Buttons mit echter Registry, echtem Inspector-/HostAdapter-/LayoutStore-Weg und explizitem M54-Test-Ref.
+- Betroffene Dateien:
+  - `src/main/ipc/uiEditorIpc.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`
+  - `STATUS.md`
+- Commit:
+  - Korrektur-Commit dieses Arbeitsstands (Hash siehe Abschlussmeldung)
+- Naechster offener Schritt:
+  - Manuelle Windows-Abnahme von Hauptnavigation: Move/Breite/Hoehe-Pfeile aktiv und sichtbar wirksam.
+- Risiken/Hinweise:
+  - `node scripts/test.cjs` bleibt in dieser Umgebung durch die bekannte native `better-sqlite3`/Node-ABI-Abweichung teilweise blockiert.
+
+### M63C.3 – Freie Testkarte statt CoreShell-Grid-Pilot
+- Status: korrigiert in PR #203
+- Beschreibung:
+  - `bbm.main.navigation` besitzt keine aktive `move`/`resize`-Freigabe mehr; CoreShell-Bereiche bleiben nur grob auswaehlbar.
+  - Neuer einziger visueller M63C-Pilot ist `bbm.uiEditorTest.card` (`Testkarte`) mit explizitem `allowedOps: ["move", "resize"]`.
+  - Die UI-Editor-Seite zeigt eine freie Entwicklungs-Testflaeche mit sichtbarer Testkarte, eigenem M54-Ref und klarer Rahmen-/Groessenwirkung.
+  - Schrittweite fuer Move/Breite/Hoehe ist fuer die manuelle Sichtpruefung auf 5 px gesetzt.
+  - Der Realintegrationstest klickt echte Panelbuttons fuer die Testkarte und prueft Transform, Breite/Hoehe sowie erneute Ref-Aufloesung fuer den Auswahlrahmen.
+- Betroffene Dateien:
+  - `src/ui-editor/bbm-ui-element-registry.cjs`
+  - `src/renderer/ui-editor/bbmUiElementRefs.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
+  - `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs`
+  - `scripts/tests/m63cLayoutControlConsole.test.cjs`
+  - `scripts/tests/m54UiElementRefs.test.cjs`
+  - `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Korrektur-Commit erstellt
+- Naechster offener Schritt:
+  - Manuelle Windows-Abnahme: UI-Editor -> Testflaeche, Testkarte auswaehlen, Move/Breite/Hoehe jeweils um 5 px sichtbar pruefen.
+- Risiken/Hinweise:
+  - `node scripts/test.cjs` bleibt in dieser Umgebung durch die bekannte native `better-sqlite3`/Node-ABI-Abweichung teilweise blockiert.
+  - `npm test` bleibt in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert.
+
+### M63C.4 – Testfläche aus Bedienpanel herausgelöst
+- Status: korrigiert in PR #203
+- Beschreibung:
+  - Die UI-Editor-Seite trennt das ausgeschlossene Bedienpanel strukturell von der freien Testflaeche.
+  - `getPanelRoot()` liefert nur noch die Panel-Wurzel; die Testkarte liegt als Geschwisterelement ausserhalb dieses Teilbaums.
+  - Die Testkarte wird dadurch ueber den vorhandenen Kit-Auswahlweg in `selectedElement` uebernommen; Klicks auf Move-/Steuerkreuz-Buttons bleiben von der Zielauswahl ausgeschlossen.
+  - Der Realintegrationstest prueft echte Registry, echtes Panel, getrennte Testflaeche, echte Auswahl per Testkarten-Klick und anschliessende 5-px-Layoutwirkung.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
+  - `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs`
+  - `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - Korrektur-Commit dieses Arbeitsstands; Hash siehe Abschlussmeldung.
+- Naechster offener Schritt:
+  - Manuelle Windows-Abnahme: Testkarte anklicken, Elementdetails zeigen Testkarte, Move/Breite/Hoehe wirken jeweils sichtbar um 5 px.
+- Risiken/Hinweise:
+  - `node scripts/test.cjs` bleibt in dieser Umgebung durch die bekannte native `better-sqlite3`/Node-ABI-Abweichung teilweise blockiert.
+  - `npm test` bleibt in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert.

@@ -1,4 +1,4 @@
-import { getBbmUiElementRefStatus } from "./bbmUiElementRefs.js";
+import { getBbmUiElementRefStatus, registerBbmUiElementRef, unregisterBbmUiElementRef } from "./bbmUiElementRefs.js";
 import { createBbmKitSelectionHost } from "./bbmKitSelectionHost.js";
 import { createBbmEditorRuntimeInspectorBridge } from "./bbmEditorRuntimeInspectorBridge.js";
 
@@ -41,9 +41,11 @@ export class BbmUiEditorStatusPanel {
   constructor({ router } = {}) {
     this.router = router || null;
     this.root = null;
+    this.panelRoot = null;
     this.statusNode = null;
     this.elementsNode = null;
     this.detailsNode = null;
+    this.testSurfaceNode = null;
     this.errorNode = null;
     this.status = null;
     this.refStatus = null;
@@ -55,6 +57,8 @@ export class BbmUiEditorStatusPanel {
     this.runtimeError = "";
     this.selectionMessage = "";
     this.selectionModeActive = false;
+    this.activeLayoutControlMode = "move";
+    this.lastRenderedLayoutControlElementId = "";
     this.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
       getRegistryElements: () => this.elements,
       getSelectedElement: () => this.selectedElement,
@@ -62,15 +66,20 @@ export class BbmUiEditorStatusPanel {
   }
 
   render() {
-    const root = createNode("section", "bbm-ui-editor-panel");
+    const root = createNode("section", "bbm-ui-editor-workspace");
     root.setAttribute("data-bbm-ui-editor-panel", "true");
+    root.setAttribute("data-bbm-ui-editor-workspace", "true");
+
+    const panelRoot = createNode("section", "bbm-ui-editor-panel");
+    panelRoot.setAttribute("data-bbm-ui-editor-panel-root", "true");
+    this.panelRoot = panelRoot;
 
     const header = createNode("div", "bbm-ui-editor-panel__header");
     const titleBox = createNode("div");
     const title = createNode("h1");
     title.textContent = "UI-Editor";
     const subtitle = createNode("p");
-    subtitle.textContent = "Technische Editor-Ansicht fuer BBM. Layoutaenderungen folgen in einem spaeteren Paket.";
+    subtitle.textContent = "Technische Editor-Ansicht fuer BBM. Freigegebene Layoutaenderungen laufen in kleinen Schritten.";
     titleBox.append(title, subtitle);
 
     const closeButton = createNode("button", "bbm-ui-editor-panel__close");
@@ -94,7 +103,11 @@ export class BbmUiEditorStatusPanel {
     this.detailsNode = createNode("section", "bbm-ui-editor-card");
     grid.append(this.statusNode, this.elementsNode, this.detailsNode);
 
-    root.append(header, this.errorNode, intro, grid);
+    this.testSurfaceNode = createNode("section", "bbm-ui-editor-test-surface");
+    this.renderTestSurface();
+
+    panelRoot.append(header, this.errorNode, intro, grid);
+    root.append(panelRoot, this.testSurfaceNode);
     this.root = root;
     this.refresh().catch((error) => this.showLoadError(error));
     return root;
@@ -152,6 +165,30 @@ export class BbmUiEditorStatusPanel {
     this.renderStatus();
     this.renderElements();
     this.renderDetails();
+  }
+
+  renderTestSurface() {
+    if (!this.testSurfaceNode) return;
+    this.testSurfaceNode.innerHTML = "";
+    const title = createNode("h2");
+    title.textContent = "Testfläche";
+    const hint = createNode("p", "bbm-ui-editor-test-surface__hint");
+    hint.textContent = "Freie Entwicklungsfläche fuer M63C. Die Testkarte ist der einzige aktive visuelle Move-/Resize-Pilot.";
+    const card = createNode("article", "bbm-ui-editor-test-card");
+    card.setAttribute("data-ui-editor-id", "bbm.uiEditorTest.card");
+    card.setAttribute("data-ui-editor-label", "Testkarte");
+    const cardTitle = createNode("h3");
+    cardTitle.textContent = "Testkarte";
+    const text = createNode("p");
+    text.textContent = "Diese Karte liegt frei in der Testfläche. Move, Breite und Höhe sollen hier sichtbar wirken.";
+    card.append(cardTitle, text);
+    this.testSurfaceNode.append(title, hint, card);
+    try {
+      unregisterBbmUiElementRef("bbm.uiEditorTest.card");
+      registerBbmUiElementRef("bbm.uiEditorTest.card", card);
+    } catch (error) {
+      this.runtimeError = error?.message || String(error || "");
+    }
   }
 
   renderStatus() {
@@ -287,18 +324,91 @@ export class BbmUiEditorStatusPanel {
 
   renderReadonlyLayoutControls(element) {
     if (!this.detailsNode || !element) return;
+    const elementId = String(element.elementId || element.id || "").trim();
+    if (elementId !== this.lastRenderedLayoutControlElementId) {
+      this.activeLayoutControlMode = "move";
+      this.lastRenderedLayoutControlElementId = elementId;
+    }
+
     const section = createNode("section", "bbm-ui-editor-layout-controls");
 
     const name = createNode("p", "bbm-ui-editor-panel__selected-name");
     name.textContent = asText(element.label || element.name, element.elementId);
     section.appendChild(name);
 
-    const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: true };
-    const hint = createNode("p", "bbm-ui-editor-panel__notice");
-    hint.textContent = result.ok ? "Bearbeitung wird vorbereitet." : "Bearbeitungsfunktionen sind derzeit nicht verfuegbar.";
-    section.appendChild(hint);
+    const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: false, allowedOps: [] };
+    const consoleNode = createNode("div", "bbm-ui-editor-layout-console");
+    const allowedOps = Array.isArray(result.allowedOps) ? result.allowedOps : [];
+    const modes = createNode("div", "bbm-ui-editor-layout-console__modes");
+    for (const mode of ["move", "width", "height"]) {
+      const button = createNode("button", "bbm-ui-editor-layout-console__mode");
+      const requiredOperation = mode === "move" ? "move" : "resize";
+      const enabled = Boolean(result?.ok && allowedOps.includes(requiredOperation));
+      button.type = "button";
+      button.textContent = mode === "move" ? "Move" : mode === "width" ? "Breite" : "Höhe";
+      button.disabled = !enabled;
+      button.setAttribute("aria-pressed", this.activeLayoutControlMode === mode ? "true" : "false");
+      button.addEventListener("click", () => {
+        if (enabled) this.setLayoutControlMode(mode);
+      });
+      modes.appendChild(button);
+    }
 
+    const pad = createNode("div", "bbm-ui-editor-layout-console__pad");
+    const up = this.createControlPadButton("up", "▲", result);
+    const left = this.createControlPadButton("left", "◀", result);
+    const center = this.createControlPadButton("center", "●", result);
+    const right = this.createControlPadButton("right", "▶", result);
+    const down = this.createControlPadButton("down", "▼", result);
+    pad.append(up, left, center, right, down);
+
+    consoleNode.append(modes, pad);
+    section.appendChild(consoleNode);
     this.detailsNode.appendChild(section);
+  }
+
+  setLayoutControlMode(mode) {
+    if (!["move", "width", "height"].includes(mode)) return;
+    this.activeLayoutControlMode = mode;
+    this.renderAll();
+  }
+
+  resolveLayoutPadAction(direction) {
+    const mode = this.activeLayoutControlMode || "move";
+    if (mode === "move") {
+      return { left: "left", right: "right", up: "up", down: "down" }[direction] || null;
+    }
+    if (mode === "width") {
+      return { left: "widthLeft", right: "widthRight" }[direction] || null;
+    }
+    if (mode === "height") {
+      return { up: "heightUp", down: "heightDown" }[direction] || null;
+    }
+    return null;
+  }
+
+  createControlPadButton(direction, label, result) {
+    const button = createNode("button", `bbm-ui-editor-layout-console__pad-button bbm-ui-editor-layout-console__pad-button--${direction}`);
+    button.type = "button";
+    button.textContent = label;
+    const action = this.resolveLayoutPadAction(direction);
+    const operation = action?.startsWith("width") || action?.startsWith("height") ? "resize" : action ? "move" : null;
+    const allowed = Boolean(result?.ok && operation && Array.isArray(result.allowedOps) && result.allowedOps.includes(operation));
+    button.disabled = !allowed;
+    button.setAttribute("aria-label", direction === "center" ? "Standard derzeit nicht verfügbar" : label);
+    if (direction === "center") {
+      button.title = "Standard derzeit nicht verfügbar";
+    }
+    if (action) {
+      button.addEventListener("click", () => this.applyLayoutAction(action));
+    }
+    return button;
+  }
+
+  applyLayoutAction(action) {
+    const result = this.inspectorBridge?.applySelectedElementLayoutAction?.(action);
+    this.selectionMessage = result?.ok ? "Layoutschritt angewendet." : "Layoutschritt blockiert.";
+    this.renderAll();
   }
 
   getElementMeta(elementId) {
@@ -307,7 +417,7 @@ export class BbmUiEditorStatusPanel {
 
   getSelectableBoundCount() {
     const ids = new Set(this.refStatus?.registeredIds || []);
-    return ["bbm.main.navigation", "bbm.main.header", "bbm.main.content", "bbm.main.shell"].filter((elementId) => ids.has(elementId)).length;
+    return ["bbm.main.navigation", "bbm.main.header", "bbm.main.content", "bbm.main.shell", "bbm.uiEditorTest.card"].filter((elementId) => ids.has(elementId)).length;
   }
 
   canStartSelectionMode() {
@@ -336,6 +446,8 @@ export class BbmUiEditorStatusPanel {
   destroy() {
     this.destroyKitController();
     this.selectionModeActive = false;
+    try { unregisterBbmUiElementRef("bbm.uiEditorTest.card"); } catch (_error) {}
+    this.panelRoot = null;
     this.root = null;
   }
 
@@ -392,7 +504,7 @@ export class BbmUiEditorStatusPanel {
       getRegistryElements: () => this.elements,
       getSelectedElement: () => this.selectedElement,
       selectElement: (elementId) => this.selectElement(elementId, { fromSelectionMode: true }),
-      getPanelRoot: () => this.root,
+      getPanelRoot: () => this.panelRoot,
       onStateChange: (state) => {
         this.selectionModeActive = Boolean(state?.active);
         this.hoverTargetLabel = this.formatElementLabel(state?.hoveredElementId || state?.hoverTargetId);

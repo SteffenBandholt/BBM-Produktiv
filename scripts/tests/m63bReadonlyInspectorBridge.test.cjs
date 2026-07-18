@@ -27,7 +27,7 @@ function createSpyInspector() {
           return {
             ok: Boolean(selectedElement),
             selectedElement: selectedElement && { ...selectedElement, effectiveOps: [...selectedElement.allowedOps] },
-            controls: selectedElement ? [{ id: "editor.layout.applySave", label: "Aenderung anwenden/speichern", enabled: true, allowedOps: [...selectedElement.allowedOps] }] : [],
+            controls: selectedElement ? [{ id: "editor.layout.applySave", label: "Aenderung anwenden/speichern", enabled: selectedElement.allowedOps.length > 0, allowedOps: [...selectedElement.allowedOps] }] : [],
             status: { kind: selectedElement ? "ready" : "blocked" },
             errors: [],
             warnings: [],
@@ -76,17 +76,17 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
     assert.equal(bridge.inspectSelectedElement().kind, "empty");
   });
 
-  await run("M63B Bridge: gueltiges M51-Element mit nur allowedChanges bleibt ohne konkrete Operationen", () => {
+  await run("M63B Bridge: gueltiges M51-Element ohne explizite allowedOps bleibt ohne konkrete Operationen", () => {
     const spy = createSpyInspector();
     const bridge = createBbmEditorRuntimeInspectorBridge({ registryElements: elements, selectedElement: elements[1], inspectorFactory: spy.inspectorFactory });
     const result = bridge.inspectSelectedElement();
     assert.equal(result.ok, true);
-    assert.equal(result.inspectorStatus, "read_only");
+    assert.equal(result.inspectorStatus, "layout_ready");
     assert.equal(result.inspectorElement.id, "bbm.main.header");
     assert.deepEqual(result.allowedOps, []);
     assert.equal(result.controls[0].id, "editor.layout.applySave");
     assert.equal(result.controls[0].enabled, false);
-    assert.equal(result.controls[0].m63bStatus, "in M63B nicht aktiv");
+    assert.equal(result.controls[0].m63cStatus, "blockiert");
   });
 
   await run("M63B Bridge: explizites allowedOps uebernimmt genau diese Operation", () => {
@@ -108,7 +108,7 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
     assert.equal(bridge.inspectSelectedElement().reason, "ROLE_MISSING");
   });
 
-  await run("M63B Statuspanel: zeigt nur Elementname und neutralen Platzhalter", async () => {
+  await run("M63B Statuspanel: zeigt Elementname und vorbereitete Layout-Konsole ohne Freigabe", async () => {
     const oldDocument = global.document;
     const oldWindow = global.window;
     global.document = { createElement: (tagName) => new TestNode(tagName) };
@@ -123,17 +123,13 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
       const text = collectText(panel.detailsNode);
       const tags = collectTags(panel.detailsNode);
       assert.match(text, /Header/);
-      assert.match(text, /Bearbeitung wird vorbereitet\./);
-      assert.doesNotMatch(text, /Layout-Steuerung/);
-      assert.doesNotMatch(text, /Inspector-Status/);
-      assert.doesNotMatch(text, /read_only/);
-      assert.doesNotMatch(text, /Inspector/);
-      assert.doesNotMatch(text, /Control-IDs/);
-      assert.doesNotMatch(text, /allowedOps/);
-      assert.doesNotMatch(text, /Freigegebene Layoutoperationen/);
-      assert.doesNotMatch(text, /editor\.layout\./);
-      assert.doesNotMatch(text, /move|resize|spacing|width|height/);
-      assert.equal(tags.includes("button"), false);
+      assert.match(text, /Move/);
+      assert.match(text, /Breite/);
+      assert.match(text, /Höhe/);
+      assert.match(text, /▲/);
+      assert.match(text, /●/);
+      assert.doesNotMatch(text, /Textgroesse|Textposition|freie Werteingabe:/);
+      assert.equal(tags.includes("button"), true);
       assert.equal(tags.includes("input"), false);
       assert.equal(tags.includes("select"), false);
     } finally {
@@ -142,12 +138,12 @@ async function runM63bReadonlyInspectorBridgeTests(run) {
     }
   });
 
-  await run("M63B Guardrails: keine Apply-/Save-/Load-/Reset-Ausfuehrung, kein LayoutStore-Write, keine DOM-Suche/IPC/zweite Registry", () => {
+
+  await run("M63B/M63C Guardrails: keine direkte Style-/DOM-Suche/IPC/zweite Registry und keine freie Werteingabe im Panel oder in der Bridge", () => {
     const bridgeSource = read("src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js");
     const panelSource = read("src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
     const combined = `${bridgeSource}\n${panelSource}`;
-    assert.doesNotMatch(bridgeSource, /\.applyLayoutChange\(|\.submitChangeRequest\(|\.resetLayoutState\(|\.write\(|\.clear\(|\.save\(/);
-    assert.doesNotMatch(combined, /querySelector|querySelectorAll|getElementById|getElementsBy|closest\(|matches\(|elementFromPoint|elementsFromPoint|MutationObserver|localStorage|ipcRenderer|\.style\s*=/);
+    assert.doesNotMatch(combined, /querySelector|querySelectorAll|getElementById|getElementsBy|closest\(|matches\(|elementFromPoint|elementsFromPoint|MutationObserver|localStorage|ipcRenderer|\.style\s*=|createElement\("input"\)|createElement\("select"\)/);
     assert.doesNotMatch(bridgeSource, /let\s+selectedElement|this\.selectedElement|let\s+selectedElementId|this\.selectedElementId/);
   });
 }

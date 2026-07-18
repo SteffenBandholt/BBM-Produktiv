@@ -74,6 +74,21 @@ const BBM_UI_ELEMENTS = Object.freeze([
     layoutDefaults: Object.freeze({ visible: true }),
     sourceRef: "src/renderer/app/CoreShell.js",
   }),
+
+  Object.freeze({
+    elementId: "bbm.uiEditorTest.card",
+    type: "content",
+    label: "Testkarte",
+    scope: BBM_UI_SCOPE,
+    layoutScope: BBM_LAYOUT_SCOPE,
+    layoutProfileId: BBM_LAYOUT_PROFILE_ID,
+    parentId: "bbm.main.content",
+    capabilities: Object.freeze(["select", "layout"]),
+    allowedChanges: ALLOWED_LAYOUT_OPS,
+    allowedOps: Object.freeze(["move", "resize"]),
+    layoutDefaults: Object.freeze({ visible: true, width: 300, height: 180, minWidth: 80, minHeight: 80 }),
+    sourceRef: "src/renderer/ui-editor/BbmUiEditorStatusPanel.js",
+  }),
   Object.freeze({
     elementId: "bbm.main.actions",
     type: "actions",
@@ -110,6 +125,7 @@ function cloneElement(element) {
     ...element,
     capabilities: [...element.capabilities],
     allowedChanges: [...element.allowedChanges],
+    ...(Array.isArray(element.allowedOps) ? { allowedOps: [...element.allowedOps] } : {}),
     layoutDefaults: { ...element.layoutDefaults },
   };
 }

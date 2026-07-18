@@ -6,7 +6,8 @@ export function injectBbmUiEditorStatusPanelStyles() {
   const style = document.createElement("style");
   style.setAttribute("data-bbm-ui-editor-status-panel-styles", "true");
   style.textContent = `
-    .bbm-ui-editor-panel { padding: 22px; color: #172033; max-width: 1180px; margin: 0 auto; }
+    .bbm-ui-editor-workspace { padding: 22px; color: #172033; max-width: 1180px; margin: 0 auto; }
+    .bbm-ui-editor-panel { color: #172033; }
     .bbm-ui-editor-panel__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
     .bbm-ui-editor-panel h1 { margin: 0; font-size: 28px; }
     .bbm-ui-editor-panel h2 { margin: 0 0 12px; font-size: 17px; }
@@ -30,6 +31,24 @@ export function injectBbmUiEditorStatusPanelStyles() {
     .bbm-ui-editor-panel__runtime select { border: 1px solid #b9c4d0; border-radius: 8px; padding: 7px 10px; background: #fff; color: #172033; font-weight: 700; }
     .bbm-ui-editor-panel__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
     .bbm-ui-editor-panel__empty { color: #64748b; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 10px; padding: 12px; }
+    .bbm-ui-editor-panel__selected-name { font-weight: 800; color: #172033; }
+    .bbm-ui-editor-layout-console { display: grid; gap: 12px; margin-top: 12px; justify-items: center; }
+    .bbm-ui-editor-layout-console__modes { display: grid; grid-template-columns: repeat(3, minmax(72px, 1fr)); gap: 8px; width: 100%; }
+    .bbm-ui-editor-layout-console__mode, .bbm-ui-editor-layout-console__pad-button { border: 1px solid #b9c4d0; background: #fff; color: #172033; border-radius: 8px; padding: 8px 10px; font-weight: 800; cursor: pointer; }
+    .bbm-ui-editor-layout-console__mode[aria-pressed="true"] { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
+    .bbm-ui-editor-layout-console__pad { display: grid; grid-template-columns: repeat(3, 42px); grid-template-areas: ". up ." "left center right" ". down ."; gap: 8px; align-items: center; justify-content: center; }
+    .bbm-ui-editor-layout-console__pad-button--up { grid-area: up; }
+    .bbm-ui-editor-layout-console__pad-button--left { grid-area: left; }
+    .bbm-ui-editor-layout-console__pad-button--center { grid-area: center; }
+    .bbm-ui-editor-layout-console__pad-button--right { grid-area: right; }
+    .bbm-ui-editor-layout-console__pad-button--down { grid-area: down; }
+    .bbm-ui-editor-layout-console__mode:disabled, .bbm-ui-editor-layout-console__pad-button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .bbm-ui-editor-test-surface { margin-top: 16px; min-height: 360px; border: 1px dashed #f97316; border-radius: 14px; background: #fff7ed; padding: 28px; box-sizing: border-box; overflow: visible; }
+    .bbm-ui-editor-test-surface h2 { margin: 0; color: #9a3412; }
+    .bbm-ui-editor-test-surface__hint { max-width: 680px; color: #9a3412; margin-bottom: 24px; }
+    .bbm-ui-editor-test-card { width: 300px; height: 180px; box-sizing: border-box; border: 3px solid #f97316; border-radius: 14px; background: #ffffff; box-shadow: 0 12px 28px rgba(154, 52, 18, 0.16); padding: 18px; color: #172033; }
+    .bbm-ui-editor-test-card h3 { margin: 0 0 10px; color: #9a3412; font-size: 22px; }
+    .bbm-ui-editor-test-card p { margin: 0; color: #334155; line-height: 1.45; }
     @media (max-width: 980px) { .bbm-ui-editor-panel__grid { grid-template-columns: 1fr; } }
   `;
   document.head?.appendChild(style);
