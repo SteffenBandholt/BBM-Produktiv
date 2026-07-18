@@ -303,13 +303,19 @@ export class BbmUiEditorStatusPanel {
 
     const result = this.inspectorBridge?.inspectSelectedElement?.() || { ok: false, allowedOps: [] };
     const consoleNode = createNode("div", "bbm-ui-editor-layout-console");
+    const allowedOps = Array.isArray(result.allowedOps) ? result.allowedOps : [];
     const modes = createNode("div", "bbm-ui-editor-layout-console__modes");
     for (const mode of ["move", "width", "height"]) {
       const button = createNode("button", "bbm-ui-editor-layout-console__mode");
+      const requiredOperation = mode === "move" ? "move" : "resize";
+      const enabled = Boolean(result?.ok && allowedOps.includes(requiredOperation));
       button.type = "button";
       button.textContent = mode === "move" ? "Move" : mode === "width" ? "Breite" : "Höhe";
+      button.disabled = !enabled;
       button.setAttribute("aria-pressed", this.activeLayoutControlMode === mode ? "true" : "false");
-      button.addEventListener("click", () => this.setLayoutControlMode(mode));
+      button.addEventListener("click", () => {
+        if (enabled) this.setLayoutControlMode(mode);
+      });
       modes.appendChild(button);
     }
 

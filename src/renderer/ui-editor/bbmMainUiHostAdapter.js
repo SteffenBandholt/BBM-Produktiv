@@ -10,7 +10,7 @@ import { getBbmUiElementRef } from "./bbmUiElementRefs.js";
 const SCOPE = Object.freeze({
   targetAppId: "bbm-produktiv",
   moduleId: "bbm.main",
-  scopeId: "bbm.main.readonly",
+  scopeId: "bbm.main-layout",
 });
 
 const sharedLayoutStorage = createEditorLayoutMemoryStorage();
@@ -117,7 +117,7 @@ function applyLayoutValueToRegisteredTarget(elementId, layoutValue) {
   return { ok: true, applied: true };
 }
 
-export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = sharedLayoutStorage } = {}) {
+export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = sharedLayoutStorage, onChangeRequest = null } = {}) {
   const runtimeRegistry = cloneRegistry(registry);
   const layoutStore = createEditorLayoutStore({
     scope: SCOPE,
@@ -134,6 +134,7 @@ export function createBbmMainUiHostAdapter({ registry = [], layoutStorage = shar
     },
 
     submitChangeRequest(changeRequest) {
+      if (typeof onChangeRequest === "function") onChangeRequest(changeRequest);
       const validation = validateEditorChangeRequest(changeRequest, {
         scope: SCOPE,
         registry: runtimeRegistry,

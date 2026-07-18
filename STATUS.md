@@ -2896,3 +2896,26 @@ Wichtig:
 - Risiken/Hinweise:
   - `npm test` kann in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert bleiben.
   - Native SQLite-Tests koennen durch lokale `better-sqlite3`/Node-ABI-Abweichung blockiert bleiben.
+
+### M63C.2 – Reale Registry-/Panel-Aktivierung Hauptnavigation
+- Status: korrigiert in PR #203
+- Beschreibung:
+  - `allowedOps` bleibt jetzt auch ueber den Main-IPC-Klonpfad erhalten, damit die Hauptnavigation im Statuspanel nicht read-only/grau bleibt.
+  - Der aktive M63C-Weg nutzt den Layout-Scope `bbm.main-layout` statt `bbm.main.readonly`; Bridge, Catalog, ChangeRequest und BBM-HostAdapter verwenden denselben Scope.
+  - Modebuttons werden nur aktiviert, wenn die benoetigte konkrete Operation (`move` oder `resize`) aus `allowedOps` erlaubt ist.
+  - Neuer Realintegrationstest klickt echte Panel-Buttons mit echter Registry, echtem Inspector-/HostAdapter-/LayoutStore-Weg und explizitem M54-Test-Ref.
+- Betroffene Dateien:
+  - `src/main/ipc/uiEditorIpc.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs`
+  - `scripts/test.cjs`
+  - `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`
+  - `STATUS.md`
+- Commit:
+  - Korrektur-Commit dieses Arbeitsstands (Hash siehe Abschlussmeldung)
+- Naechster offener Schritt:
+  - Manuelle Windows-Abnahme von Hauptnavigation: Move/Breite/Hoehe-Pfeile aktiv und sichtbar wirksam.
+- Risiken/Hinweise:
+  - `node scripts/test.cjs` bleibt in dieser Umgebung durch die bekannte native `better-sqlite3`/Node-ABI-Abweichung teilweise blockiert.

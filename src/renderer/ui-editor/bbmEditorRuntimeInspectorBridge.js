@@ -1,7 +1,7 @@
 import { createEditorScopeInspector } from "../editorRuntime/inspector/editorScopeInspector.js";
 import { createBbmMainUiHostAdapter } from "./bbmMainUiHostAdapter.js";
 
-const DEFAULT_SCOPE_ID = "bbm.main.readonly";
+const DEFAULT_SCOPE_ID = "bbm.main-layout";
 const DEFAULT_MODULE_ID = "bbm.main";
 const DEFAULT_TARGET_APP_ID = "bbm-produktiv";
 export const M63C_LAYOUT_STEP = 1;
@@ -112,7 +112,7 @@ function transformRegistry(elements) {
   };
 }
 
-function createReadonlyCatalog({ scopeId, moduleId, targetAppId }) {
+function createLayoutCatalog({ scopeId, moduleId, targetAppId }) {
   return {
     targetAppId,
     modules: [
@@ -122,8 +122,8 @@ function createReadonlyCatalog({ scopeId, moduleId, targetAppId }) {
         scopes: [
           {
             scopeId,
-            scopeLabel: "BBM Hauptbereich read-only",
-            layoutProfileId: "bbm.main.readonly",
+            scopeLabel: "BBM Hauptbereich Layout",
+            layoutProfileId: "default",
           },
         ],
       },
@@ -158,7 +158,7 @@ function createStepPayload(action) {
 
 function createRuntimeInspector({ inspector, inspectorFactory, hostAdapterFactory, registry, scopeId, moduleId, targetAppId }) {
   if (inspector) return inspector;
-  const catalog = createReadonlyCatalog({ scopeId, moduleId, targetAppId });
+  const catalog = createLayoutCatalog({ scopeId, moduleId, targetAppId });
   const factory = inspectorFactory || createEditorScopeInspector;
   const createHostAdapter = typeof hostAdapterFactory === "function"
     ? hostAdapterFactory

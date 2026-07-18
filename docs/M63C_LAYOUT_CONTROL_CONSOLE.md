@@ -118,3 +118,10 @@ Die sichtbare Anwendung erfolgt im HostAdapter ueber explizite M54-Refs.
 - keine lokale Map in der Bridge fuer Layoutzustand
 - keine automatische DOM-Suche
 - keine Simulation mit `executed: false`
+
+## Pilotgrenze und naechster Schritt
+
+- Die Hauptnavigation (`bbm.main.navigation`) ist in M63C nur ein technischer Pilot fuer den echten Layoutweg.
+- Die Start-UI enthaelt derzeit nur grobe registrierte Bereiche der BBM-Hauptoberflaeche.
+- Einzelne Buttons, Texte, Felder und Tabellen sind noch nicht als eigene M63C-Ziele registriert.
+- Eine eigene vielseitige Testflaeche fuer feinere Editor-Ziele folgt mit M64.
