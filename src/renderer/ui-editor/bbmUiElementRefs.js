@@ -5,6 +5,7 @@ const allowedElementIds = new Set([
   "bbm.main.header",
   "bbm.main.content",
   "bbm.main.actions",
+  "bbm.uiEditorTest.card",
 ]);
 
 function normalizeElementId(elementId) {

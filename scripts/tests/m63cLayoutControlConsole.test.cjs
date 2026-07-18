@@ -14,7 +14,7 @@ const LAYOUT_PERSISTENCE_PATH = path.join(REPO_ROOT, "src/renderer/editorRuntime
 function read(file) { return fs.readFileSync(path.join(REPO_ROOT, file), "utf8"); }
 
 class TestNode {
-  constructor(tagName, rect = { width: 240, height: 64 }) {
+  constructor(tagName, rect = { width: 300, height: 180 }) {
     this.tagName = tagName;
     this.rect = { ...rect };
     this.rectReadCount = 0;
@@ -63,7 +63,9 @@ async function withDom(fn) {
 
 const registryElements = [
   { elementId: "bbm.main.shell", label: "Shell", type: "frame", parentId: null, capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
-  { elementId: "bbm.main.navigation", label: "Hauptnavigation", type: "navigation", parentId: "bbm.main.shell", capabilities: ["select", "layout"], allowedChanges: ["layout.read"], allowedOps: ["move", "resize"] },
+  { elementId: "bbm.main.navigation", label: "Hauptnavigation", type: "navigation", parentId: "bbm.main.shell", capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
+  { elementId: "bbm.main.content", label: "Inhalt", type: "content", parentId: "bbm.main.shell", capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
+  { elementId: "bbm.uiEditorTest.card", label: "Testkarte", type: "content", parentId: "bbm.main.content", capabilities: ["select", "layout"], allowedChanges: ["layout.read"], allowedOps: ["move", "resize"] },
   { elementId: "bbm.main.header", label: "Header", type: "header", parentId: "bbm.main.shell", capabilities: ["select", "layout"], allowedChanges: ["layout.read"] },
 ];
 
@@ -78,10 +80,10 @@ async function runM63cLayoutControlConsoleTests(run) {
     const panel = new BbmUiEditorStatusPanel({});
     panel.detailsNode = new TestNode("section");
     panel.elements = registryElements;
-    panel.selectedElement = registryElements[1];
+    panel.selectedElement = registryElements[3];
     panel.renderDetails();
     const text = collectText(panel.detailsNode);
-    assert.match(text, /Hauptnavigation/);
+    assert.match(text, /Testkarte/);
     assert.deepEqual(collectByClass(panel.detailsNode, "bbm-ui-editor-layout-console__mode").map((node) => node.textContent), ["Move", "Breite", "Höhe"]);
     assert.equal(collectByClass(panel.detailsNode, "bbm-ui-editor-layout-console__pad").length, 1);
     const modes = collectByClass(panel.detailsNode, "bbm-ui-editor-layout-console__mode");
@@ -94,7 +96,7 @@ async function runM63cLayoutControlConsoleTests(run) {
     const panel = new BbmUiEditorStatusPanel({});
     panel.detailsNode = new TestNode("section");
     panel.elements = registryElements;
-    panel.selectedElement = registryElements[1];
+    panel.selectedElement = registryElements[3];
     panel.renderDetails();
     panel.setLayoutControlMode("width");
     const widthButtons = collectByClass(panel.detailsNode, "bbm-ui-editor-layout-console__pad-button");
@@ -117,62 +119,62 @@ async function runM63cLayoutControlConsoleTests(run) {
     const panel = new BbmUiEditorStatusPanel({});
     panel.detailsNode = new TestNode("section");
     panel.elements = registryElements;
-    panel.selectedElement = registryElements[1];
+    panel.selectedElement = registryElements[3];
     panel.renderDetails();
     panel.setLayoutControlMode("height");
     assert.equal(panel.activeLayoutControlMode, "height");
-    panel.selectedElement = registryElements[2];
+    panel.selectedElement = registryElements[4];
     panel.renderDetails();
     assert.equal(panel.activeLayoutControlMode, "move");
   }));
 
-  await run("M63C Bridge: Schrittweite 1 und keine capability->operation-Ableitung", () => {
-    assert.equal(M63C_LAYOUT_STEP, 1);
+  await run("M63C Bridge: Schrittweite 5 und keine capability->operation-Ableitung", () => {
+    assert.equal(M63C_LAYOUT_STEP, 5);
     let bridge = createBbmEditorRuntimeInspectorBridge({ registryElements, selectedElement: registryElements[0] });
     assert.deepEqual(bridge.inspectSelectedElement().allowedOps, []);
-    bridge = createBbmEditorRuntimeInspectorBridge({ registryElements, selectedElement: registryElements[1] });
+    bridge = createBbmEditorRuntimeInspectorBridge({ registryElements, selectedElement: registryElements[3] });
     assert.deepEqual(bridge.inspectSelectedElement().allowedOps, ["move", "resize"]);
   });
 
   await run("M63C HostAdapter: echter LayoutStore-Weg und sichtbare Hostaktion", async () => withDom(() => {
     refs.clearBbmUiElementRefs();
     const target = new TestNode("nav");
-    refs.registerBbmUiElementRef("bbm.main.navigation", target);
+    refs.registerBbmUiElementRef("bbm.uiEditorTest.card", target);
     const layoutStorage = createEditorLayoutMemoryStorage();
     const bridge = createBbmEditorRuntimeInspectorBridge({
       registryElements,
-      selectedElement: registryElements[1],
+      selectedElement: registryElements[3],
       hostAdapterFactory: ({ registry }) => createBbmMainUiHostAdapter({ registry, layoutStorage }),
     });
     const move = bridge.applySelectedElementLayoutAction("right");
     assert.equal(move.ok, true);
-    assert.deepEqual(move.layoutEntry.layoutValue, { x: 1 });
-    assert.equal(target.style.values.transform, "translate(1px, 0px)");
+    assert.deepEqual(move.layoutEntry.layoutValue, { x: 5 });
+    assert.equal(target.style.values.transform, "translate(5px, 0px)");
 
     const widthRight = bridge.applySelectedElementLayoutAction("widthRight");
     assert.equal(widthRight.ok, true);
-    assert.deepEqual(widthRight.layoutEntry.layoutValue, { x: 1, width: 241 });
-    assert.equal(target.style.values.width, "241px");
+    assert.deepEqual(widthRight.layoutEntry.layoutValue, { x: 5, width: 305 });
+    assert.equal(target.style.values.width, "305px");
     assert.equal(target.rectReadCount, 1);
 
     target.rect.width = 999;
     const widthLeft = bridge.applySelectedElementLayoutAction("widthLeft");
     assert.equal(widthLeft.ok, true);
-    assert.deepEqual(widthLeft.layoutEntry.layoutValue, { x: 1, width: 240 });
-    assert.equal(target.style.values.width, "240px");
+    assert.deepEqual(widthLeft.layoutEntry.layoutValue, { x: 5, width: 300 });
+    assert.equal(target.style.values.width, "300px");
     assert.equal(target.rectReadCount, 1);
 
     const heightUp = bridge.applySelectedElementLayoutAction("heightUp");
     assert.equal(heightUp.ok, true);
-    assert.deepEqual(heightUp.layoutEntry.layoutValue, { x: 1, width: 240, height: 65 });
-    assert.equal(target.style.values.height, "65px");
+    assert.deepEqual(heightUp.layoutEntry.layoutValue, { x: 5, width: 300, height: 185 });
+    assert.equal(target.style.values.height, "185px");
     assert.equal(target.rectReadCount, 2);
 
     target.rect.height = 999;
     const heightDown = bridge.applySelectedElementLayoutAction("heightDown");
     assert.equal(heightDown.ok, true);
-    assert.deepEqual(heightDown.layoutEntry.layoutValue, { x: 1, width: 240, height: 64 });
-    assert.equal(target.style.values.height, "64px");
+    assert.deepEqual(heightDown.layoutEntry.layoutValue, { x: 5, width: 300, height: 180 });
+    assert.equal(target.style.values.height, "180px");
     assert.equal(target.rectReadCount, 2);
     assert.equal(createBbmMainUiHostAdapter({ registry: [] }).getCurrentLayoutState().length >= 0, true);
     refs.clearBbmUiElementRefs();
@@ -181,11 +183,11 @@ async function runM63cLayoutControlConsoleTests(run) {
   await run("M63C HostAdapter: Breite und Hoehe fallen nicht unter sichere Mindestgroesse", async () => withDom(() => {
     refs.clearBbmUiElementRefs();
     const target = new TestNode("nav", { width: 20, height: 20 });
-    refs.registerBbmUiElementRef("bbm.main.navigation", target);
+    refs.registerBbmUiElementRef("bbm.uiEditorTest.card", target);
     const layoutStorage = createEditorLayoutMemoryStorage();
     const bridge = createBbmEditorRuntimeInspectorBridge({
       registryElements,
-      selectedElement: registryElements[1],
+      selectedElement: registryElements[3],
       hostAdapterFactory: ({ registry }) => createBbmMainUiHostAdapter({ registry, layoutStorage }),
     });
     const width = bridge.applySelectedElementLayoutAction("widthLeft");
@@ -199,11 +201,11 @@ async function runM63cLayoutControlConsoleTests(run) {
     refs.clearBbmUiElementRefs();
   }));
 
-  await run("M63C Registry: nur bbm.main.navigation ist fuer move/resize freigegeben", () => {
+  await run("M63C Registry: nur bbm.uiEditorTest.card ist fuer move/resize freigegeben", () => {
     delete require.cache[REGISTRY_PATH];
     const { BBM_UI_ELEMENTS } = require(REGISTRY_PATH);
     const withOps = BBM_UI_ELEMENTS.filter((entry) => Array.isArray(entry.allowedOps) && entry.allowedOps.length > 0);
-    assert.deepEqual(withOps.map((entry) => entry.elementId), ["bbm.main.navigation"]);
+    assert.deepEqual(withOps.map((entry) => entry.elementId), ["bbm.uiEditorTest.card"]);
     assert.deepEqual(withOps[0].allowedOps, ["move", "resize"]);
   });
 

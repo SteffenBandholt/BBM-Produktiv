@@ -42,6 +42,12 @@ export function injectBbmUiEditorStatusPanelStyles() {
     .bbm-ui-editor-layout-console__pad-button--right { grid-area: right; }
     .bbm-ui-editor-layout-console__pad-button--down { grid-area: down; }
     .bbm-ui-editor-layout-console__mode:disabled, .bbm-ui-editor-layout-console__pad-button:disabled { opacity: 0.45; cursor: not-allowed; }
+    .bbm-ui-editor-test-surface { margin-top: 16px; min-height: 360px; border: 1px dashed #f97316; border-radius: 14px; background: #fff7ed; padding: 28px; box-sizing: border-box; overflow: visible; }
+    .bbm-ui-editor-test-surface h2 { margin: 0; color: #9a3412; }
+    .bbm-ui-editor-test-surface__hint { max-width: 680px; color: #9a3412; margin-bottom: 24px; }
+    .bbm-ui-editor-test-card { width: 300px; height: 180px; box-sizing: border-box; border: 3px solid #f97316; border-radius: 14px; background: #ffffff; box-shadow: 0 12px 28px rgba(154, 52, 18, 0.16); padding: 18px; color: #172033; }
+    .bbm-ui-editor-test-card h3 { margin: 0 0 10px; color: #9a3412; font-size: 22px; }
+    .bbm-ui-editor-test-card p { margin: 0; color: #334155; line-height: 1.45; }
     @media (max-width: 980px) { .bbm-ui-editor-panel__grid { grid-template-columns: 1fr; } }
   `;
   document.head?.appendChild(style);

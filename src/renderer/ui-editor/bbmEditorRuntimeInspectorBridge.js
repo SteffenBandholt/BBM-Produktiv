@@ -4,7 +4,7 @@ import { createBbmMainUiHostAdapter } from "./bbmMainUiHostAdapter.js";
 const DEFAULT_SCOPE_ID = "bbm.main-layout";
 const DEFAULT_MODULE_ID = "bbm.main";
 const DEFAULT_TARGET_APP_ID = "bbm-produktiv";
-export const M63C_LAYOUT_STEP = 1;
+export const M63C_LAYOUT_STEP = 5;
 
 const TYPE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.shell": "root",
@@ -12,6 +12,7 @@ const TYPE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.header": "area",
   "bbm.main.content": "area",
   "bbm.main.actions": "area",
+  "bbm.uiEditorTest.card": "area",
 });
 
 const ROLE_BY_ELEMENT_ID = Object.freeze({
@@ -20,6 +21,7 @@ const ROLE_BY_ELEMENT_ID = Object.freeze({
   "bbm.main.header": "layout",
   "bbm.main.content": "content",
   "bbm.main.actions": "action",
+  "bbm.uiEditorTest.card": "content",
 });
 
 function normalizeId(value) {
@@ -96,6 +98,7 @@ function transformRegistryElement(element, order) {
       order,
       visible: element?.visible !== undefined ? Boolean(element.visible) : element?.layoutDefaults?.visible !== false,
       editable: isEditable(element),
+      layoutDefaults: element?.layoutDefaults && typeof element.layoutDefaults === "object" ? { ...element.layoutDefaults } : {},
       allowedOps: toRuntimeAllowedOps(element),
       lockedOps: cloneList(element?.lockedOps),
     },

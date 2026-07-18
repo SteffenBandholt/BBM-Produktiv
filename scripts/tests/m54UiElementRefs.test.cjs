@@ -39,7 +39,7 @@ async function runM54UiElementRefsTests(run) {
     const status = refs.getBbmUiElementRefStatus();
     assert.deepEqual(status.registeredIds, ["bbm.main.content"]);
     assert.equal(status.count, 1);
-    assert.equal(status.expectedCount, 5);
+    assert.equal(status.expectedCount, 6);
     refs.clearBbmUiElementRefs();
   });
 
@@ -109,6 +109,7 @@ async function runM54UiElementRefsTests(run) {
       "bbm.main.navigation",
       "bbm.main.header",
       "bbm.main.content",
+      "bbm.uiEditorTest.card",
       "bbm.main.actions",
     ]);
   });

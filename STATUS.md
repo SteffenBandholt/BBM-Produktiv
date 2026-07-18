@@ -2919,3 +2919,32 @@ Wichtig:
   - Manuelle Windows-Abnahme von Hauptnavigation: Move/Breite/Hoehe-Pfeile aktiv und sichtbar wirksam.
 - Risiken/Hinweise:
   - `node scripts/test.cjs` bleibt in dieser Umgebung durch die bekannte native `better-sqlite3`/Node-ABI-Abweichung teilweise blockiert.
+
+### M63C.3 – Freie Testkarte statt CoreShell-Grid-Pilot
+- Status: korrigiert in PR #203
+- Beschreibung:
+  - `bbm.main.navigation` besitzt keine aktive `move`/`resize`-Freigabe mehr; CoreShell-Bereiche bleiben nur grob auswaehlbar.
+  - Neuer einziger visueller M63C-Pilot ist `bbm.uiEditorTest.card` (`Testkarte`) mit explizitem `allowedOps: ["move", "resize"]`.
+  - Die UI-Editor-Seite zeigt eine freie Entwicklungs-Testflaeche mit sichtbarer Testkarte, eigenem M54-Ref und klarer Rahmen-/Groessenwirkung.
+  - Schrittweite fuer Move/Breite/Hoehe ist fuer die manuelle Sichtpruefung auf 5 px gesetzt.
+  - Der Realintegrationstest klickt echte Panelbuttons fuer die Testkarte und prueft Transform, Breite/Hoehe sowie erneute Ref-Aufloesung fuer den Auswahlrahmen.
+- Betroffene Dateien:
+  - `src/ui-editor/bbm-ui-element-registry.cjs`
+  - `src/renderer/ui-editor/bbmUiElementRefs.js`
+  - `src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js`
+  - `src/renderer/ui-editor/bbmMainUiHostAdapter.js`
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
+  - `scripts/tests/m63cRealRegistryPanelIntegration.test.cjs`
+  - `scripts/tests/m63cLayoutControlConsole.test.cjs`
+  - `scripts/tests/m54UiElementRefs.test.cjs`
+  - `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Commit:
+  - wird mit diesem Korrektur-Commit erstellt
+- Naechster offener Schritt:
+  - Manuelle Windows-Abnahme: UI-Editor -> Testflaeche, Testkarte auswaehlen, Move/Breite/Hoehe jeweils um 5 px sichtbar pruefen.
+- Risiken/Hinweise:
+  - `node scripts/test.cjs` bleibt in dieser Umgebung durch die bekannte native `better-sqlite3`/Node-ABI-Abweichung teilweise blockiert.
+  - `npm test` bleibt in dieser Umgebung durch fehlendes Electron-Systempaket `libatk-1.0.so.0` blockiert.

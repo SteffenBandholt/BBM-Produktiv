@@ -11,7 +11,8 @@ Die Konsole fuehrt nur explizit freigegebene neutrale Layoutoperationen aus.
 - Fuehrende Registry bleibt die vorhandene M51-Ziel-App-Registry.
 - Konkrete Layoutoperationen duerfen nur aus explizitem `allowedOps` kommen.
 - `capabilities: ["layout"]` ist keine Freigabe fuer `move` oder `resize`.
-- Pilotfreigabe in M63C: nur `bbm.main.navigation` mit `allowedOps: ["move", "resize"]`.
+- Pilotfreigabe in M63C: nur `bbm.uiEditorTest.card` (`Testkarte`) mit `allowedOps: ["move", "resize"]`.
+- `bbm.main.navigation`, Header, Main und Sidebar bleiben grobe auswaehlbare CoreShell-Bereiche ohne aktive Layoutbearbeitung.
 
 ## Zielbild der sichtbaren UI
 
@@ -41,22 +42,22 @@ Er ist kein Layoutzustand, keine Auswahlhaltung und keine Persistenz.
 
 ### Move
 
-- links: `move` mit `x: -1`
-- rechts: `move` mit `x: +1`
-- oben: `move` mit `y: -1`
-- unten: `move` mit `y: +1`
+- links: `move` mit `x: -5`
+- rechts: `move` mit `x: +5`
+- oben: `move` mit `y: -5`
+- unten: `move` mit `y: +5`
 
 ### Breite
 
-- links: `resize` mit `width: -1`
-- rechts: `resize` mit `width: +1`
+- links: `resize` mit `width: -5`
+- rechts: `resize` mit `width: +5`
 - oben: deaktiviert
 - unten: deaktiviert
 
 ### Hoehe
 
-- oben: `resize` mit `height: +1`
-- unten: `resize` mit `height: -1`
+- oben: `resize` mit `height: +5`
+- unten: `resize` mit `height: -5`
 - links: deaktiviert
 - rechts: deaktiviert
 
@@ -121,7 +122,8 @@ Die sichtbare Anwendung erfolgt im HostAdapter ueber explizite M54-Refs.
 
 ## Pilotgrenze und naechster Schritt
 
-- Die Hauptnavigation (`bbm.main.navigation`) ist in M63C nur ein technischer Pilot fuer den echten Layoutweg.
-- Die Start-UI enthaelt derzeit nur grobe registrierte Bereiche der BBM-Hauptoberflaeche.
-- Einzelne Buttons, Texte, Felder und Tabellen sind noch nicht als eigene M63C-Ziele registriert.
-- Eine eigene vielseitige Testflaeche fuer feinere Editor-Ziele folgt mit M64.
+- CoreShell-Bereiche wie Hauptnavigation, Header, Main und Sidebar sind keine geeigneten visuellen Resize-Piloten, weil sie Teil des festen Shell-/Grid-Layouts sind.
+- M63C wird deshalb an der freien Entwicklungs-Testkarte `bbm.uiEditorTest.card` validiert.
+- Die Testkarte liegt sichtbar in der UI-Editor-Testflaeche, hat einen eigenen M54-Ref und darf als einziges Element aktiv bewegt und in Breite/Hoehe veraendert werden.
+- Die Start-UI enthaelt ansonsten nur grobe registrierte Bereiche der BBM-Hauptoberflaeche.
+- M64 erweitert diese kleine Testflaeche spaeter um: Ueberschrift, Text, Button, Eingabefeld, Auswahlfeld, Tabelle und verschachtelte Elemente.

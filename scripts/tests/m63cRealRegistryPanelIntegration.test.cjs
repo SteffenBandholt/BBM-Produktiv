@@ -11,11 +11,12 @@ const REFS_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementRefs.
 const LAYOUT_PERSISTENCE_PATH = path.join(REPO_ROOT, "src/renderer/editorRuntime/layout/editorLayoutPersistence.js");
 
 class TestNode {
-  constructor(tagName, rect = { width: 240, height: 64 }) {
+  constructor(tagName, rect = { width: 300, height: 180, left: 40, top: 40 }) {
     this.tagName = tagName;
     this.rect = { ...rect };
     this.children = [];
     this.attributes = {};
+    this.dataset = {};
     this.className = "";
     this.textContent = "";
     this.type = "";
@@ -32,8 +33,9 @@ class TestNode {
   append(...children) { this.children.push(...children); }
   appendChild(child) { this.children.push(child); return child; }
   setAttribute(name, value) { this.attributes[name] = String(value); }
+  getAttribute(name) { return this.attributes[name] || ""; }
   addEventListener(name, handler) { this.listeners[name] = handler; }
-  click() { if (!this.disabled) this.listeners.click?.({ target: this }); }
+  click() { if (!this.disabled) return this.listeners.click?.({ target: this }); return undefined; }
   getBoundingClientRect() { return { ...this.rect }; }
   set innerHTML(_value) { this.children = []; }
 }
@@ -43,8 +45,22 @@ function collectByClass(node, classPart) {
     .filter((entry) => String(entry?.className || "").split(/\s+/).includes(classPart));
 }
 
+function findNode(node, predicate) {
+  if (!node) return null;
+  if (predicate(node)) return node;
+  for (const child of node.children || []) {
+    const found = findNode(child, predicate);
+    if (found) return found;
+  }
+  return null;
+}
+
 function buttonByText(root, text) {
   return collectByClass(root, "bbm-ui-editor-layout-console__mode").find((button) => button.textContent === text);
+}
+
+function elementButton(root, elementId) {
+  return findNode(root, (node) => node.attributes?.["data-bbm-ui-editor-element-id"] === elementId);
 }
 
 function padButton(root, direction) {
@@ -70,24 +86,27 @@ async function runM63cRealRegistryPanelIntegrationTests(run) {
   const refs = await importEsmFromFile(REFS_PATH);
   const { createEditorLayoutMemoryStorage } = await importEsmFromFile(LAYOUT_PERSISTENCE_PATH);
 
-  await run("M63C Realintegration: echte Registry aktiviert Hauptnavigation und echte Panel-Klicks wenden Layout an", async () => withDom(() => {
+  await run("M63C Realintegration: echte Testkarte ist auswählbar und Panel-Klicks wenden Layout sichtbar an", async () => withDom(async () => {
     const registryResult = getBbmUiElementRegistry();
     assert.equal(registryResult.ok, true);
     const realRegistry = registryResult.elements;
     const navigation = realRegistry.find((entry) => entry.elementId === "bbm.main.navigation");
-    assert.ok(navigation, "bbm.main.navigation muss in der echten Registry existieren");
-    assert.deepEqual(navigation.allowedOps, ["move", "resize"]);
+    const testCard = realRegistry.find((entry) => entry.elementId === "bbm.uiEditorTest.card");
+    assert.ok(navigation, "bbm.main.navigation muss weiter in der echten Registry existieren");
+    assert.deepEqual(navigation.allowedOps || [], []);
+    assert.ok(testCard, "bbm.uiEditorTest.card muss in der echten Registry existieren");
+    assert.deepEqual(testCard.allowedOps, ["move", "resize"]);
 
     refs.clearBbmUiElementRefs();
-    const target = new TestNode("nav", { width: 240, height: 64 });
-    refs.registerBbmUiElementRef("bbm.main.navigation", target);
     const changeRequests = [];
     const layoutStorage = createEditorLayoutMemoryStorage();
 
     const panel = new BbmUiEditorStatusPanel({});
+    panel.elementsNode = new TestNode("section");
     panel.detailsNode = new TestNode("section");
-    panel.elements = realRegistry.map((entry) => ({ ...entry, selected: entry.elementId === "bbm.main.navigation" }));
-    panel.selectedElement = { ...navigation, selected: true };
+    panel.testSurfaceNode = new TestNode("section");
+    panel.elements = realRegistry.map((entry) => ({ ...entry, selected: false }));
+    panel.selectedElement = null;
     panel.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
       registryElements: panel.elements,
       getSelectedElement: () => panel.selectedElement,
@@ -97,6 +116,25 @@ async function runM63cRealRegistryPanelIntegrationTests(run) {
         onChangeRequest: (request) => changeRequests.push({ ...request, payload: { ...request.payload } }),
       }),
     });
+
+    global.window.bbmDb.uiEditorSelectElement = async ({ elementId }) => {
+      panel.elements = realRegistry.map((entry) => ({ ...entry, selected: entry.elementId === elementId }));
+      panel.selectedElement = panel.elements.find((entry) => entry.elementId === elementId) || null;
+      return { ok: true, selectedElement: panel.selectedElement };
+    };
+    global.window.bbmDb.uiEditorOpen = async () => ({ ok: true, runtimeStarted: true, adapterValid: true });
+    global.window.bbmDb.uiEditorGetElements = async () => ({ ok: true, elements: panel.elements });
+    global.window.bbmDb.uiEditorGetSelectedElementDetails = async () => ({ ok: true, selectedElement: panel.selectedElement });
+
+    panel.renderTestSurface();
+    const target = refs.getBbmUiElementRef("bbm.uiEditorTest.card");
+    assert.ok(target, "Testkarten-Ref muss explizit registriert sein");
+    assert.equal(target.attributes["data-ui-editor-id"], "bbm.uiEditorTest.card");
+
+    panel.renderElements();
+    assert.ok(elementButton(panel.elementsNode, "bbm.uiEditorTest.card"), "Testkarte muss in der echten Elementliste auswählbar sein");
+    await panel.selectElement("bbm.uiEditorTest.card");
+    assert.equal(panel.selectedElement.elementId, "bbm.uiEditorTest.card");
 
     const status = panel.inspectorBridge.inspectSelectedElement();
     assert.equal(status.ok, true);
@@ -119,10 +157,10 @@ async function runM63cRealRegistryPanelIntegrationTests(run) {
 
     padButton(panel.detailsNode, "right").click();
     assert.equal(changeRequests.at(-1).scopeId, "bbm.main-layout");
-    assert.equal(changeRequests.at(-1).elementId, "bbm.main.navigation");
+    assert.equal(changeRequests.at(-1).elementId, "bbm.uiEditorTest.card");
     assert.equal(changeRequests.at(-1).operation, "move");
-    assert.deepEqual(changeRequests.at(-1).payload, { x: 1 });
-    assert.equal(target.style.values.transform, "translate(1px, 0px)");
+    assert.deepEqual(changeRequests.at(-1).payload, { x: 5 });
+    assert.equal(target.style.values.transform, "translate(5px, 0px)");
 
     buttonByText(panel.detailsNode, "Breite").click();
     assert.equal(buttonByText(panel.detailsNode, "Breite").attributes["aria-pressed"], "true");
@@ -131,11 +169,9 @@ async function runM63cRealRegistryPanelIntegrationTests(run) {
     assert.equal(padButton(panel.detailsNode, "up").disabled, true);
     assert.equal(padButton(panel.detailsNode, "down").disabled, true);
     padButton(panel.detailsNode, "right").click();
-    assert.equal(changeRequests.at(-1).scopeId, "bbm.main-layout");
-    assert.equal(changeRequests.at(-1).elementId, "bbm.main.navigation");
     assert.equal(changeRequests.at(-1).operation, "resize");
-    assert.deepEqual(changeRequests.at(-1).payload, { width: 1 });
-    assert.equal(target.style.values.width, "241px");
+    assert.deepEqual(changeRequests.at(-1).payload, { width: 5 });
+    assert.equal(target.style.values.width, "305px");
 
     buttonByText(panel.detailsNode, "Höhe").click();
     assert.equal(buttonByText(panel.detailsNode, "Höhe").attributes["aria-pressed"], "true");
@@ -144,12 +180,13 @@ async function runM63cRealRegistryPanelIntegrationTests(run) {
     assert.equal(padButton(panel.detailsNode, "left").disabled, true);
     assert.equal(padButton(panel.detailsNode, "right").disabled, true);
     padButton(panel.detailsNode, "up").click();
-    assert.equal(changeRequests.at(-1).scopeId, "bbm.main-layout");
-    assert.equal(changeRequests.at(-1).elementId, "bbm.main.navigation");
     assert.equal(changeRequests.at(-1).operation, "resize");
-    assert.deepEqual(changeRequests.at(-1).payload, { height: 1 });
-    assert.equal(target.style.values.height, "65px");
+    assert.deepEqual(changeRequests.at(-1).payload, { height: 5 });
+    assert.equal(target.style.values.height, "185px");
 
+    const resolvedAfterChange = refs.getBbmUiElementRef("bbm.uiEditorTest.card");
+    assert.equal(resolvedAfterChange, target, "Orange Overlay kann die Testkarte nach Änderung neu auflösen");
+    assert.equal(refs.getBbmUiElementRef("bbm.main.navigation") || null, null);
     refs.clearBbmUiElementRefs();
   }));
 }

@@ -74,11 +74,11 @@ Aktueller Stand:
 
 ## Statusupdate M63C
 - M63C korrigiert die sichtbare Bedienung auf drei Modi und ein gemeinsames Steuerkreuz: `[Move] [Breite] [Hoehe]` plus Pfeile und deaktiviertem Mittelpunkt.
-- Schrittweite ist `1`; die konkrete Operation kommt ausschliesslich aus explizitem `allowedOps`.
-- Pilotfreigabe: nur `bbm.main.navigation` erhaelt `allowedOps: ["move", "resize"]`; `capabilities: ["layout"]` wird nicht in konkrete Operationen uebersetzt.
+- Schrittweite ist fuer M63C zunaechst `5`; die konkrete Operation kommt ausschliesslich aus explizitem `allowedOps`.
+- Pilotfreigabe: nur `bbm.uiEditorTest.card` (`Testkarte`) erhaelt `allowedOps: ["move", "resize"]`; `bbm.main.navigation`, Header, Main und Sidebar bleiben ohne aktive move/resize-Freigabe. `capabilities: ["layout"]` wird nicht in konkrete Operationen uebersetzt.
 - Die Bridge haelt keinen eigenen Layoutzustand und nutzt keinen lokalen Map-Speicher mehr.
 - Layoutschritte laufen ueber `EditorScopeInspector` -> `EditorLayoutControls` -> `ChangeRequestValidator` -> BBM-main-HostAdapter -> vorhandenen `EditorLayoutStore` -> sichtbare Anwendung am registrierten M54-Ziel.
-- Breite/Hoehe starten beim ersten Groessenschritt aus Registry-/Layout-Standard, gespeichertem Layoutwert oder einmalig aus `getBoundingClientRect()` des expliziten M54-Refs; Mindestgroesse 20 px.
+- Breite/Hoehe starten beim ersten Groessenschritt aus Registry-/Layout-Standard, gespeichertem Layoutwert oder einmalig aus `getBoundingClientRect()` des expliziten M54-Refs; Mindestgroesse 20 px. M63C validiert dies visuell an einer freien Testkarte statt am festen CoreShell-Grid.
 - Keine Textgroesse, keine Textposition, keine freie Werteingabe, kein Drag-and-drop, keine direkte Style-Mutation im Panel/Bridge, keine neue Registry, keine neue Auswahlhaltung und keine neue Persistenz.
 - Neue Doku: `docs/M63C_LAYOUT_CONTROL_CONSOLE.md`.
 - Neuer Guardrail-Test: `scripts/tests/m63cLayoutControlConsole.test.cjs`; `scripts/test.cjs` fuehrt ihn mit aus.

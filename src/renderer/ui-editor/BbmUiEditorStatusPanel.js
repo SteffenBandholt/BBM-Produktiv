@@ -1,4 +1,4 @@
-import { getBbmUiElementRefStatus } from "./bbmUiElementRefs.js";
+import { getBbmUiElementRefStatus, registerBbmUiElementRef, unregisterBbmUiElementRef } from "./bbmUiElementRefs.js";
 import { createBbmKitSelectionHost } from "./bbmKitSelectionHost.js";
 import { createBbmEditorRuntimeInspectorBridge } from "./bbmEditorRuntimeInspectorBridge.js";
 
@@ -44,6 +44,7 @@ export class BbmUiEditorStatusPanel {
     this.statusNode = null;
     this.elementsNode = null;
     this.detailsNode = null;
+    this.testSurfaceNode = null;
     this.errorNode = null;
     this.status = null;
     this.refStatus = null;
@@ -96,7 +97,10 @@ export class BbmUiEditorStatusPanel {
     this.detailsNode = createNode("section", "bbm-ui-editor-card");
     grid.append(this.statusNode, this.elementsNode, this.detailsNode);
 
-    root.append(header, this.errorNode, intro, grid);
+    this.testSurfaceNode = createNode("section", "bbm-ui-editor-test-surface");
+    this.renderTestSurface();
+
+    root.append(header, this.errorNode, intro, grid, this.testSurfaceNode);
     this.root = root;
     this.refresh().catch((error) => this.showLoadError(error));
     return root;
@@ -154,6 +158,30 @@ export class BbmUiEditorStatusPanel {
     this.renderStatus();
     this.renderElements();
     this.renderDetails();
+  }
+
+  renderTestSurface() {
+    if (!this.testSurfaceNode) return;
+    this.testSurfaceNode.innerHTML = "";
+    const title = createNode("h2");
+    title.textContent = "Testfläche";
+    const hint = createNode("p", "bbm-ui-editor-test-surface__hint");
+    hint.textContent = "Freie Entwicklungsfläche fuer M63C. Die Testkarte ist der einzige aktive visuelle Move-/Resize-Pilot.";
+    const card = createNode("article", "bbm-ui-editor-test-card");
+    card.setAttribute("data-ui-editor-id", "bbm.uiEditorTest.card");
+    card.setAttribute("data-ui-editor-label", "Testkarte");
+    const cardTitle = createNode("h3");
+    cardTitle.textContent = "Testkarte";
+    const text = createNode("p");
+    text.textContent = "Diese Karte liegt frei in der Testfläche. Move, Breite und Höhe sollen hier sichtbar wirken.";
+    card.append(cardTitle, text);
+    this.testSurfaceNode.append(title, hint, card);
+    try {
+      unregisterBbmUiElementRef("bbm.uiEditorTest.card");
+      registerBbmUiElementRef("bbm.uiEditorTest.card", card);
+    } catch (error) {
+      this.runtimeError = error?.message || String(error || "");
+    }
   }
 
   renderStatus() {
@@ -411,6 +439,7 @@ export class BbmUiEditorStatusPanel {
   destroy() {
     this.destroyKitController();
     this.selectionModeActive = false;
+    try { unregisterBbmUiElementRef("bbm.uiEditorTest.card"); } catch (_error) {}
     this.root = null;
   }
 
