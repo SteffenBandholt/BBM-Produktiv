@@ -62,6 +62,7 @@ export class BbmUiEditorStatusPanel {
     this.editorActive = true;
     this.layoutSessionStatus = { ok: true, active: false, changedElementIds: [], changedCount: 0, changedByElementId: {} };
     this.layoutPersistenceStatus = "Noch nicht gespeichert";
+    this.resetDefaultsDialogOpen = false;
     this.savedLayoutLoadedForSession = false;
     this.inspectorBridge = createBbmEditorRuntimeInspectorBridge({
       getRegistryElements: () => this.elements,
@@ -509,7 +510,20 @@ export class BbmUiEditorStatusPanel {
     discardAll.textContent = "Alle Änderungen verwerfen";
     discardAll.disabled = changeCount === 0;
     discardAll.addEventListener("click", () => this.discardAllSessionChanges());
-    box.append(status, persistence, save, toggle, discardAll);
+    const resetDefaults = createNode("button", "bbm-ui-editor-panel__secondary bbm-ui-editor-panel__secondary--danger");
+    resetDefaults.type = "button";
+    resetDefaults.textContent = "Auf Standard zurücksetzen";
+    const savedLayoutFound = Boolean(this.layoutSessionStatus?.savedLayoutFound);
+    const deviatesFromDefaults = Boolean(this.layoutSessionStatus?.deviatesFromDefaults);
+    const resetAvailable = Boolean(this.editorActive && persistenceAvailable && persistencePersistent && (savedLayoutFound || deviatesFromDefaults));
+    resetDefaults.disabled = !resetAvailable;
+    resetDefaults.addEventListener("click", () => this.openResetDefaultsDialog());
+    const hint = createNode("p", "bbm-ui-editor-panel__empty");
+    hint.textContent = "Verwerfen: Änderungen dieser Sitzung zurücknehmen. Standard: gespeichertes Layout löschen.";
+    const resetHint = createNode("p", "bbm-ui-editor-panel__empty");
+    resetHint.textContent = "Gespeichertes Layout löschen und Standardwerte wiederherstellen";
+    box.append(status, persistence, save, toggle, discardAll, resetDefaults, resetHint, hint);
+    if (this.resetDefaultsDialogOpen) box.appendChild(this.renderResetDefaultsDialog());
     this.detailsNode.appendChild(box);
   }
 
@@ -632,6 +646,49 @@ export class BbmUiEditorStatusPanel {
     const result = this.inspectorBridge?.applySelectedElementLayoutAction?.(action);
     this.selectionMessage = result?.ok ? "Layoutschritt angewendet." : "Layoutschritt blockiert.";
     this.renderAll();
+  }
+
+  openResetDefaultsDialog() {
+    this.resetDefaultsDialogOpen = true;
+    this.renderAll();
+  }
+
+  closeResetDefaultsDialog() {
+    this.resetDefaultsDialogOpen = false;
+    this.renderAll();
+  }
+
+  renderResetDefaultsDialog() {
+    const dialog = createNode("div", "bbm-ui-editor-reset-defaults-dialog");
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+    const title = createNode("h3");
+    title.textContent = "Layout auf Standard zurücksetzen?";
+    const text = createNode("p", "bbm-ui-editor-panel__notice");
+    text.textContent = "Das gespeicherte Layout wird gelöscht. Alle Elemente werden auf ihre Standardposition und Standardgröße zurückgesetzt.";
+    const actions = createNode("div", "bbm-ui-editor-panel__actions");
+    const cancel = createNode("button", "bbm-ui-editor-panel__secondary");
+    cancel.type = "button";
+    cancel.textContent = "Abbrechen";
+    cancel.addEventListener("click", () => this.closeResetDefaultsDialog());
+    const confirm = createNode("button", "bbm-ui-editor-panel__secondary bbm-ui-editor-panel__secondary--danger");
+    confirm.type = "button";
+    confirm.textContent = "Auf Standard zurücksetzen";
+    confirm.setAttribute("data-destructive", "true");
+    confirm.addEventListener("click", () => this.confirmResetLayoutToDefaults());
+    actions.append(cancel, confirm);
+    dialog.append(title, text, actions);
+    return dialog;
+  }
+
+  confirmResetLayoutToDefaults() {
+    const result = this.inspectorBridge?.resetLayoutToDefaults?.();
+    this.layoutSessionStatus = result?.status || this.layoutSessionStatus;
+    this.resetDefaultsDialogOpen = false;
+    this.layoutPersistenceStatus = result?.ok ? "Standardlayout aktiv" : "Layout konnte nicht auf Standard zurückgesetzt werden.";
+    this.selectionMessage = result?.ok ? "Standardlayout aktiv." : "Layout konnte nicht auf Standard zurückgesetzt werden.";
+    this.renderAll();
+    this.syncActiveSelectionRuntime();
   }
 
   saveLayoutSession() {

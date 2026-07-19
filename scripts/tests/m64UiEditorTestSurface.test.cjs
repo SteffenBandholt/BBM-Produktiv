@@ -227,14 +227,16 @@ async function applyLayoutTriple({ panel, changeRequests }, elementId, target, d
   assert.equal(changeRequests.at(-1).elementId, elementId);
   assert.equal(changeRequests.at(-1).operation, "resize");
   assert.deepEqual(changeRequests.at(-1).payload, { width: 5 });
-  assert.equal(target.style.values.width, `${Number(defaults.width || 300) + 5}px`);
+  const baseWidth = Number(defaults.width || target.getBoundingClientRect?.().width || 300);
+  assert.equal(target.style.values.width, `${baseWidth + 5}px`);
 
   buttonByText(panel.detailsNode, "Höhe").click();
   padButton(panel.detailsNode, "up").click();
   assert.equal(changeRequests.at(-1).elementId, elementId);
   assert.equal(changeRequests.at(-1).operation, "resize");
   assert.deepEqual(changeRequests.at(-1).payload, { height: 5 });
-  assert.equal(target.style.values.height, `${Number(defaults.height || 180) + 5}px`);
+  const baseHeight = Number(defaults.height || target.getBoundingClientRect?.().height || 180);
+  assert.equal(target.style.values.height, `${baseHeight + 5}px`);
   assert.equal(panel.selectedElement?.elementId, elementId);
   assert.equal(changeRequests.length, beforeChangeCount + 3);
 }
@@ -440,13 +442,13 @@ async function runM64UiEditorTestSurfaceTests(run) {
     const baselineHeight = target.style.values.height;
     assert.equal(padButton(context.panel.detailsNode, "center").disabled, true);
     assert.equal(context.panel.selectedElement?.editable, true);
-    await applyLayoutTriple(context, "bbm.uiEditorTest.card", target, { width: 300, height: 300 });
+    await applyLayoutTriple(context, "bbm.uiEditorTest.card", target);
     assert.equal(context.panel.hasSessionChange("bbm.uiEditorTest.card"), true);
     assert.match(collectText(context.panel.detailsNode), /Änderungen offen: 1/);
     const discardCenter = padButton(context.panel.detailsNode, "center");
     assert.equal(discardCenter.disabled, false);
     discardCenter.click();
-    assert.equal(target.style.values.transform, baselineTransform || "translate(0px, 0px)");
+    assert.equal(target.style.values.transform, baselineTransform);
     assert.equal(target.style.values.width, baselineWidth);
     assert.equal(target.style.values.height, baselineHeight);
     assert.equal(context.panel.selectedElement?.elementId, "bbm.uiEditorTest.card");
@@ -462,18 +464,18 @@ async function runM64UiEditorTestSurfaceTests(run) {
   await run("M64 Sitzung: Alle Änderungen verwerfen setzt mehrere Elemente auf Baseline zurück", async () => withDom(async ({ doc, win }) => {
     const context = await createIntegratedPanel({ doc, win });
     const card = await selectByRealClick(context, "bbm.uiEditorTest.card");
-    await applyLayoutTriple(context, "bbm.uiEditorTest.card", card, { width: 300, height: 300 });
+    await applyLayoutTriple(context, "bbm.uiEditorTest.card", card);
     const title = await selectByRealClick(context, "bbm.uiEditorTest.card.title");
-    await applyLayoutTriple(context, "bbm.uiEditorTest.card.title", title, { width: 240, height: 36 });
+    await applyLayoutTriple(context, "bbm.uiEditorTest.card.title", title);
     assert.match(collectText(context.panel.detailsNode), /Änderungen offen: 2/);
     const discardAll = findNode(context.panel.detailsNode, (node) => String(node.tagName).toLowerCase() === "button" && node.textContent === "Alle Änderungen verwerfen");
     assert.ok(discardAll);
     assert.equal(discardAll.disabled, false);
     discardAll.click();
-    assert.equal(card.style.values.transform, "translate(0px, 0px)");
+    assert.equal(card.style.values.transform, undefined);
     assert.equal(card.style.values.width, undefined);
     assert.equal(card.style.values.height, undefined);
-    assert.equal(title.style.values.transform, "translate(0px, 0px)");
+    assert.equal(title.style.values.transform, undefined);
     assert.equal(title.style.values.width, undefined);
     assert.equal(title.style.values.height, undefined);
     assert.match(collectText(context.panel.detailsNode), /Keine offenen Änderungen/);
