@@ -6,7 +6,7 @@ export function injectBbmUiEditorStatusPanelStyles() {
   const style = document.createElement("style");
   style.setAttribute("data-bbm-ui-editor-status-panel-styles", "true");
   style.textContent = `
-    .bbm-ui-editor-workspace { padding: 22px; color: #172033; max-width: 1180px; margin: 0 auto; }
+    .bbm-ui-editor-workspace { padding: 22px; color: #172033; max-width: 1280px; margin: 0 auto; }
     .bbm-ui-editor-panel { color: #172033; }
     .bbm-ui-editor-panel__header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 14px; }
     .bbm-ui-editor-panel h1 { margin: 0; font-size: 28px; }
@@ -16,7 +16,7 @@ export function injectBbmUiEditorStatusPanelStyles() {
     .bbm-ui-editor-panel__close:hover, .bbm-ui-editor-panel__secondary:hover { background: #eef4fb; }
     .bbm-ui-editor-panel__notice { background: #eef6ff; border: 1px solid #c9ddf3; border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
     .bbm-ui-editor-panel__error { background: #fff7ed; border: 1px solid #fdba74; color: #9a3412; border-radius: 10px; padding: 10px 12px; margin-bottom: 12px; font-weight: 700; }
-    .bbm-ui-editor-panel__grid { display: grid; grid-template-columns: minmax(260px, 0.9fr) minmax(300px, 1fr) minmax(280px, 1fr); gap: 14px; align-items: start; }
+    .bbm-ui-editor-panel__grid { display: grid; grid-template-columns: minmax(260px, 0.9fr) minmax(300px, 1fr); gap: 14px; align-items: start; margin-bottom: 16px; }
     .bbm-ui-editor-card { background: #fff; border: 1px solid #d7dde5; border-radius: 12px; padding: 14px; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06); }
     .bbm-ui-editor-status-list { display: grid; gap: 8px; margin: 0; }
     .bbm-ui-editor-status-row { display: grid; grid-template-columns: minmax(130px, 0.9fr) minmax(120px, 1fr); gap: 8px; border-bottom: 1px solid #edf0f4; padding-bottom: 7px; }
@@ -43,7 +43,9 @@ export function injectBbmUiEditorStatusPanelStyles() {
     .bbm-ui-editor-layout-console__pad-button--right { grid-area: right; }
     .bbm-ui-editor-layout-console__pad-button--down { grid-area: down; }
     .bbm-ui-editor-layout-console__mode:disabled, .bbm-ui-editor-layout-console__pad-button:disabled { opacity: 0.45; cursor: not-allowed; }
-    .bbm-ui-editor-test-surface { margin-top: 16px; min-height: 360px; border: 1px dashed #f97316; border-radius: 14px; background: #fff7ed; padding: 28px; box-sizing: border-box; overflow: visible; }
+    .bbm-ui-editor-test-layout { display: grid; grid-template-columns: minmax(650px, 1fr) minmax(320px, 380px); gap: 16px; align-items: start; }
+    .bbm-ui-editor-test-control-panel { position: sticky; top: 16px; align-self: start; display: grid; gap: 14px; }
+    .bbm-ui-editor-test-surface { min-height: 360px; border: 1px dashed #f97316; border-radius: 14px; background: #fff7ed; padding: 28px; box-sizing: border-box; overflow: visible; min-width: 0; }
     .bbm-ui-editor-test-surface h2 { margin: 0; color: #9a3412; }
     .bbm-ui-editor-test-surface__hint { max-width: 680px; color: #9a3412; margin-bottom: 24px; }
     .bbm-ui-editor-test-card { width: 300px; min-height: 300px; box-sizing: border-box; border: 3px solid #f97316; border-radius: 14px; background: #ffffff; box-shadow: 0 12px 28px rgba(154, 52, 18, 0.16); padding: 18px; color: #172033; }
@@ -53,7 +55,7 @@ export function injectBbmUiEditorStatusPanelStyles() {
     .bbm-ui-editor-test-card__button-shell { border-color: #fb923c; background: #fff7ed; color: #9a3412; }
     .bbm-ui-editor-test-table { margin-top: 18px; width: 420px; border-collapse: collapse; background: #fff; color: #172033; box-shadow: 0 8px 20px rgba(154, 52, 18, 0.10); }
     .bbm-ui-editor-test-table td { border: 1px solid #fed7aa; padding: 8px 10px; }
-    @media (max-width: 980px) { .bbm-ui-editor-panel__grid { grid-template-columns: 1fr; } }
+    @media (max-width: 1100px) { .bbm-ui-editor-panel__grid, .bbm-ui-editor-test-layout { grid-template-columns: 1fr; } .bbm-ui-editor-test-control-panel { position: static; } .bbm-ui-editor-test-surface { overflow-x: auto; } }
   `;
   document.head?.appendChild(style);
 }

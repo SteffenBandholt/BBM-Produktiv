@@ -66,11 +66,17 @@ export class BbmUiEditorStatusPanel {
   }
 
   render() {
-    const root = createNode("section", "bbm-ui-editor-workspace");
+    const root = createNode("section", "bbm-ui-editor-workspace bbm-ui-editor-panel");
     root.setAttribute("data-bbm-ui-editor-panel", "true");
     root.setAttribute("data-bbm-ui-editor-workspace", "true");
 
-    const panelRoot = createNode("section", "bbm-ui-editor-panel");
+    const technicalPanel = createNode("section", "bbm-ui-editor-panel__top");
+    technicalPanel.setAttribute("data-bbm-ui-editor-panel", "true");
+
+    const testLayout = createNode("section", "bbm-ui-editor-test-layout");
+    testLayout.setAttribute("data-bbm-ui-editor-test-layout", "true");
+
+    const panelRoot = createNode("aside", "bbm-ui-editor-test-control-panel");
     panelRoot.setAttribute("data-bbm-ui-editor-panel-root", "true");
     this.panelRoot = panelRoot;
 
@@ -100,14 +106,16 @@ export class BbmUiEditorStatusPanel {
     const grid = createNode("div", "bbm-ui-editor-panel__grid");
     this.statusNode = createNode("section", "bbm-ui-editor-card");
     this.elementsNode = createNode("section", "bbm-ui-editor-card");
-    this.detailsNode = createNode("section", "bbm-ui-editor-card");
-    grid.append(this.statusNode, this.elementsNode, this.detailsNode);
+    this.detailsNode = createNode("section", "bbm-ui-editor-card bbm-ui-editor-card--details");
+    grid.append(this.statusNode, this.elementsNode);
 
     this.testSurfaceNode = createNode("section", "bbm-ui-editor-test-surface");
     this.renderTestSurface();
 
-    panelRoot.append(header, this.errorNode, intro, grid);
-    root.append(panelRoot, this.testSurfaceNode);
+    panelRoot.appendChild(this.detailsNode);
+    testLayout.append(this.testSurfaceNode, panelRoot);
+    technicalPanel.append(header, this.errorNode, intro, grid);
+    root.append(technicalPanel, testLayout);
     this.root = root;
     this.refresh().catch((error) => this.showLoadError(error));
     return root;
@@ -496,6 +504,11 @@ export class BbmUiEditorStatusPanel {
 
     consoleNode.append(modes, pad);
     section.appendChild(consoleNode);
+    if (this.selectionMessage) {
+      const selected = createNode("p", "bbm-ui-editor-panel__notice");
+      selected.textContent = this.selectionMessage;
+      section.appendChild(selected);
+    }
     this.detailsNode.appendChild(section);
   }
 

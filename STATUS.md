@@ -3040,3 +3040,21 @@ Wichtig:
   - PR #204 erneut lokal unter Windows/Electron öffnen und UI-Editor-Status sowie M64-Testfläche praktisch abnehmen.
 - Risiken/Hinweise:
   - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.
+
+### M64 Korrektur 3 – ergonomische Prüfanordnung
+- Status: umgesetzt in diesem Arbeitsstand.
+- Beschreibung:
+  - Die M64-Prüffläche ist für wiederholte manuelle Tests ergonomisch in Testfläche und kompaktes Steuerpanel aufgeteilt.
+  - Auf breiten Fenstern steht das Steuerpanel neben der Testfläche und bleibt per `position: sticky` sichtbar.
+  - Unter ca. 1100px fällt die Darstellung auf eine Spalte zurück, ohne horizontale Scrollpflicht im Arbeitsbereich zu erzwingen.
+  - Auswahl-, Parent-, Registry-, HostAdapter-, Layout-State-, Kit- und IPC-Verträge wurden nicht geändert.
+- Betroffene Dateien:
+  - `src/renderer/ui-editor/BbmUiEditorStatusPanel.js`
+  - `src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js`
+  - `scripts/tests/m64UiEditorTestSurface.test.cjs`
+  - `docs/UI_INSPEKTOR_AUFGABENHEFT.md`
+  - `STATUS.md`
+- Naechster offener Schritt:
+  - PR #204 lokal unter Windows/Electron öffnen und die neue Desktop-/Responsive-Prüfanordnung sichtbar abnehmen.
+- Risiken/Hinweise:
+  - Computer Use bleibt in dieser Cloud-Umgebung durch fehlende Electron-Systembibliothek eingeschränkt.

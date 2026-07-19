@@ -11,6 +11,7 @@ const REPO_ROOT = path.join(__dirname, "../..");
 const PANEL_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/BbmUiEditorStatusPanel.js");
 const BRIDGE_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmEditorRuntimeInspectorBridge.js");
 const HOST_ADAPTER_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmMainUiHostAdapter.js");
+const CSS_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiEditorStatusPanel.css.js");
 const REFS_PATH = path.join(REPO_ROOT, "src/renderer/ui-editor/bbmUiElementRefs.js");
 const LAYOUT_PERSISTENCE_PATH = path.join(REPO_ROOT, "src/renderer/editorRuntime/layout/editorLayoutPersistence.js");
 const KIT_RUNTIME_PATH = path.join(REPO_ROOT, "node_modules/ui-editor-kit/dist/selection-runtime.browser.mjs");
@@ -311,6 +312,59 @@ async function runM64UiEditorTestSurfaceTests(run) {
     assert.match(renderedText, /Alpha/);
     refs.clearBbmUiElementRefs();
   }));
+
+
+  await run("M64 Pruefanordnung: Testflaeche und Steuerpanel bleiben getrennt nebeneinander vorbereitet", async () => withDom(async () => {
+    const { BbmUiEditorStatusPanel } = await importEsmFromFile(PANEL_PATH);
+    const refs = await importEsmFromFile(REFS_PATH);
+    refs.clearBbmUiElementRefs();
+    const panel = new BbmUiEditorStatusPanel({});
+    const root = panel.render();
+    const testLayout = collectByClass(root, "bbm-ui-editor-test-layout")[0];
+    const controlPanel = collectByClass(root, "bbm-ui-editor-test-control-panel")[0];
+    assert.ok(testLayout, "gemeinsamer M64-Pruefarbeitsbereich muss existieren");
+    assert.ok(controlPanel, "kompaktes M64-Steuerpanel muss existieren");
+    assert.equal(panel.panelRoot, controlPanel);
+    assert.equal(testLayout.children.includes(panel.testSurfaceNode), true);
+    assert.equal(testLayout.children.includes(controlPanel), true);
+    assert.equal(controlPanel.contains(panel.detailsNode), true);
+    assert.equal(panel.panelRoot.contains(panel.testSurfaceNode), false, "panelRoot darf die Testflaeche nicht enthalten");
+    assert.equal(panel.testSurfaceNode.contains(panel.panelRoot), false, "Testflaeche darf das Bedienpanel nicht enthalten");
+    const buttonShell = refs.getBbmUiElementRef("bbm.uiEditorTest.card.button");
+    assert.ok(buttonShell, "Testelement-Ref bleibt ausserhalb des panelRoot gebunden");
+    assert.equal(panel.panelRoot.contains(buttonShell), false);
+    refs.clearBbmUiElementRefs();
+  }));
+
+  await run("M64 Pruefanordnung: Steuerbuttons bleiben ausgeschlossen und Testelemente auswaehlbar", async () => withDom(async ({ doc, win }) => {
+    const context = await createIntegratedPanel({ doc, win });
+    await selectByRealClick(context, "bbm.uiEditorTest.card.title");
+    assert.equal(context.panel.selectedElement?.elementId, "bbm.uiEditorTest.card.title");
+    const move = buttonByText(context.panel.detailsNode, "Move");
+    const right = padButton(context.panel.detailsNode, "right");
+    assert.ok(move, "Move-Schalter muss im kompakten Steuerpanel sichtbar sein");
+    assert.ok(right, "Steuerkreuz muss im kompakten Steuerpanel sichtbar sein");
+    assert.equal(context.panel.panelRoot.contains(move), true);
+    assert.equal(context.panel.panelRoot.contains(right), true);
+    assert.equal(context.panel.kitSelectionHost.isExcludedTarget(move), true);
+    assert.equal(context.panel.kitSelectionHost.isExcludedTarget(right), true);
+    assert.equal(context.panel.panelRoot.contains(context.panel.testSurfaceNode), false);
+    const beforeSelected = context.panel.selectedElement?.elementId;
+    context.interactionRoot.dispatch("click", { target: move });
+    await flushSelection();
+    assert.equal(context.panel.selectedElement?.elementId, beforeSelected);
+    context.refs.clearBbmUiElementRefs();
+  }));
+
+  await run("M64 Pruefanordnung: sticky Desktop-CSS und responsive Einspaltigkeit sind vorhanden", () => {
+    const cssSource = fs.readFileSync(CSS_PATH, "utf8");
+    assert.match(cssSource, /\.bbm-ui-editor-test-layout\s*\{[^}]*display:\s*grid/i);
+    assert.match(cssSource, /grid-template-columns:\s*minmax\(650px,\s*1fr\)\s+minmax\(320px,\s*380px\)/i);
+    assert.match(cssSource, /\.bbm-ui-editor-test-control-panel\s*\{[^}]*position:\s*sticky[^}]*top:\s*16px[^}]*align-self:\s*start/is);
+    assert.doesNotMatch(cssSource, /\.bbm-ui-editor-test-control-panel\s*\{[^}]*position:\s*(?:fixed|absolute)/is);
+    assert.match(cssSource, /@media\s*\(max-width:\s*1100px\)[^{]*\{[^}]*\.bbm-ui-editor-test-layout[^}]*grid-template-columns:\s*1fr/is);
+    assert.match(cssSource, /@media\s*\(max-width:\s*1100px\)[\s\S]*\.bbm-ui-editor-test-control-panel\s*\{\s*position:\s*static/is);
+  });
 
   await run("M64 Integration: alle M64-Elemente sind per Kit-Klick auswaehlbar und zeigen Namen/Overlay", async () => withDom(async ({ doc, win }) => {
     const context = await createIntegratedPanel({ doc, win });

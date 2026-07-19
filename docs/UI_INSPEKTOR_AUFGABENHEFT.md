@@ -650,3 +650,9 @@ Hinweis:
 - Einziger Root der BBM-Registry ist wieder `bbm.main.shell`.
 - `bbm.uiEditorTest.workspace` ist als Testflächen-Container unter `bbm.main.content` eingeordnet und wird nicht mehr als Root behandelt.
 - Der M64-Test prüft nun zusätzlich den echten `startBbmUiEditorRuntime()`-Pfad und den echten IPC-Status-/Elementpfad über `uiEditorIpc._m52`.
+
+## M64 Korrektur 3 – ergonomische Prüfanordnung
+- Die M64-Testfläche ist für wiederholte manuelle Tests in einen sichtbaren Prüfarbeitsbereich mit Testfläche und kompaktem Steuerpanel eingeordnet.
+- Auf Desktop-Breiten liegt das Steuerpanel neben der Testfläche und bleibt per Sticky-Verhalten sichtbar.
+- Unter ca. 1100px fällt die Prüfanordnung auf eine einspaltige Darstellung zurück.
+- Auswahl- und Layoutvertrag bleiben unverändert; die Testfläche bleibt außerhalb des ausgeschlossenen Bedienpanel-Roots.
